@@ -40,6 +40,28 @@
 /* Macro For NYSM value received in VHT TLV */
 #define VHT_SGI_NYSM 3
 
+/* struct htt_dbgfs_cfg - structure to maintain required htt data
+ * @msg_word: htt msg sent to upper layer
+ * @m: qdf debugfs file pointer
+ */
+struct htt_dbgfs_cfg {
+	uint32_t *msg_word;
+	qdf_debugfs_file_t m;
+};
+
+/* Cookie MSB bits assigned for different use case.
+ * Note: User can't use last 3 bits, as it is reserved for pdev_id.
+ * If in future number of pdev are more than 3.
+ */
+/* Reserve for default case */
+#define DBG_STATS_COOKIE_DEFAULT 0x0
+
+/* Reserve for DP Stats: 3rd bit */
+#define DBG_STATS_COOKIE_DP_STATS 0x8
+
+/* Reserve for HTT Stats debugfs support: 4th bit */
+#define DBG_STATS_COOKIE_HTT_DBGFS 0x10
+
 /**
  * Bitmap of HTT PPDU TLV types for Default mode
  */
@@ -2329,4 +2351,46 @@ dp_hmwds_ast_add_notify(struct dp_peer *peer,
 {
 }
 #endif
+
+#ifdef HTT_STATS_DEBUGFS_SUPPORT
+/* dp_pdev_htt_stats_dbgfs_init() - Function to allocate memory and initialize
+ * debugfs for HTT stats
+ * @pdev: dp pdev handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_pdev_htt_stats_dbgfs_init(struct dp_pdev *pdev);
+
+/* dp_pdev_htt_stats_dbgfs_deinit() - Function to remove debugfs entry for
+ * HTT stats
+ * @pdev: dp pdev handle
+ *
+ * Return: none
+ */
+void dp_pdev_htt_stats_dbgfs_deinit(struct dp_pdev *pdev);
+#else
+
+/* dp_pdev_htt_stats_dbgfs_init() - Function to allocate memory and initialize
+ * debugfs for HTT stats
+ * @pdev: dp pdev handle
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+dp_pdev_htt_stats_dbgfs_init(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/* dp_pdev_htt_stats_dbgfs_deinit() - Function to remove debugfs entry for
+ * HTT stats
+ * @pdev: dp pdev handle
+ *
+ * Return: none
+ */
+static inline void
+dp_pdev_htt_stats_dbgfs_deinit(struct dp_pdev *pdev)
+{
+}
+#endif /* HTT_STATS_DEBUGFS_SUPPORT */
 #endif /* #ifndef _DP_INTERNAL_H_ */

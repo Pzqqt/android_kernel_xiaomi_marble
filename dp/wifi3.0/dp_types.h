@@ -28,7 +28,7 @@
 #include <qdf_lro.h>
 #include <queue.h>
 #include <htt_common.h>
-
+#include <htt_stats.h>
 #include <cdp_txrx_cmn.h>
 #ifdef DP_MOB_DEFS
 #include <cds_ieee80211_common.h>
@@ -1717,6 +1717,42 @@ struct dp_rx_mon_enh_trailer_data {
 };
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
 
+#ifdef HTT_STATS_DEBUGFS_SUPPORT
+/* Number of debugfs entries created for HTT stats */
+#define PDEV_HTT_STATS_DBGFS_SIZE HTT_DBG_NUM_EXT_STATS
+
+/* struct pdev_htt_stats_dbgfs_priv - Structure to maintain debugfs information
+ * of HTT stats
+ * @pdev: dp pdev of debugfs entry
+ * @stats_id: stats id of debugfs entry
+ */
+struct pdev_htt_stats_dbgfs_priv {
+	struct dp_pdev *pdev;
+	uint16_t stats_id;
+};
+
+/* struct pdev_htt_stats_dbgfs_cfg - PDEV level data structure for debugfs
+ * support for HTT stats
+ * @debugfs_entry: qdf_debugfs directory entry
+ * @m: qdf debugfs file handler
+ * @pdev_htt_stats_dbgfs_ops: File operations of entry created
+ * @priv: HTT stats debugfs private object
+ * @htt_stats_dbgfs_event: HTT stats event for debugfs support
+ * @lock: HTT stats debugfs lock
+ * @htt_stats_dbgfs_msg_process: Function callback to print HTT stats
+ */
+struct pdev_htt_stats_dbgfs_cfg {
+	qdf_dentry_t debugfs_entry[PDEV_HTT_STATS_DBGFS_SIZE];
+	qdf_debugfs_file_t m;
+	struct qdf_debugfs_fops
+			pdev_htt_stats_dbgfs_ops[PDEV_HTT_STATS_DBGFS_SIZE - 1];
+	struct pdev_htt_stats_dbgfs_priv priv[PDEV_HTT_STATS_DBGFS_SIZE - 1];
+	qdf_event_t htt_stats_dbgfs_event;
+	qdf_mutex_t lock;
+	void (*htt_stats_dbgfs_msg_process)(void *data, A_INT32 len);
+};
+#endif /* HTT_STATS_DEBUGFS_SUPPORT */
+
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/**
@@ -2091,6 +2127,10 @@ struct dp_pdev {
 
 	/* Maintains first status buffer's paddr of a PPDU */
 	uint64_t status_buf_addr;
+#ifdef HTT_STATS_DEBUGFS_SUPPORT
+	/* HTT stats debugfs params */
+	struct pdev_htt_stats_dbgfs_cfg *dbgfs_cfg;
+#endif
 };
 
 struct dp_peer;

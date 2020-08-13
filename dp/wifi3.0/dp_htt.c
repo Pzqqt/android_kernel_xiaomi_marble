@@ -1950,6 +1950,47 @@ dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+
+#ifdef HTT_STATS_DEBUGFS_SUPPORT
+/* dp_send_htt_stats_dbgfs_msg() - Function to send htt data to upper layer
+ * @pdev: dp pdev handle
+ * @msg_word: HTT msg
+ * @msg_len: Length of HTT msg sent
+ *
+ * Return: none
+ */
+static inline void
+dp_htt_stats_dbgfs_send_msg(struct dp_pdev *pdev, uint32_t *msg_word,
+			    uint32_t msg_len)
+{
+	struct htt_dbgfs_cfg dbgfs_cfg;
+	int done = 0;
+
+	/* send 5th word of HTT msg to upper layer */
+	dbgfs_cfg.msg_word = (msg_word + 4);
+	dbgfs_cfg.m = pdev->dbgfs_cfg->m;
+	msg_len = qdf_min(msg_len, (uint32_t)DP_EXT_MSG_LENGTH);
+
+	if (pdev->dbgfs_cfg->htt_stats_dbgfs_msg_process)
+		pdev->dbgfs_cfg->htt_stats_dbgfs_msg_process(&dbgfs_cfg,
+							     (msg_len + 4));
+
+	/* Get TLV Done bit from 4th msg word */
+	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*(msg_word + 3));
+	if (done) {
+		if (qdf_event_set(&pdev->dbgfs_cfg->htt_stats_dbgfs_event))
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "Failed to set event for debugfs htt stats");
+	}
+}
+#else
+static inline void
+dp_htt_stats_dbgfs_send_msg(struct dp_pdev *pdev, uint32_t *msg_word,
+			    uint32_t msg_len)
+{
+}
+#endif /* HTT_STATS_DEBUGFS_SUPPORT */
+
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
  * @htt_stats: htt stats info
@@ -1981,8 +2022,8 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 	uint32_t msg_remain_len = 0;
 	uint32_t tlv_remain_len = 0;
 	uint32_t *tlv_start;
-	int cookie_val;
-	int cookie_msb;
+	int cookie_val = 0;
+	int cookie_msb = 0;
 	int pdev_id;
 	bool copy_stats = false;
 	struct dp_pdev *pdev;
@@ -2007,9 +2048,15 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 		pdev_id = *(msg_word + 2) & HTT_PID_BIT_MASK;
 		pdev = soc->pdev_list[pdev_id];
 
-		if (cookie_msb >> 2) {
-			copy_stats = true;
+		if (!cookie_val && (cookie_msb & DBG_STATS_COOKIE_HTT_DBGFS)) {
+			dp_htt_stats_dbgfs_send_msg(pdev, msg_word,
+						    htt_stats->msg_len);
+			qdf_nbuf_free(htt_msg);
+			continue;
 		}
+
+		if (cookie_msb & DBG_STATS_COOKIE_DP_STATS)
+			copy_stats = true;
 
 		/* read 5th word */
 		msg_word = msg_word + 4;
@@ -5011,8 +5058,10 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	/* word 7 */
 	msg_word++;
 	*msg_word = 0;
-	/*Using last 2 bits for pdev_id */
-	cookie_msb = ((cookie_msb << 2) | pdev->pdev_id);
+	/* Currently Using last 2 bits for pdev_id
+	 * For future reference, reserving 3 bits in cookie_msb for pdev_id
+	 */
+	cookie_msb = (cookie_msb | pdev->pdev_id);
 	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, cookie_msb);
 
 	pkt = htt_htc_pkt_alloc(soc);

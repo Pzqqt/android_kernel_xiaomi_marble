@@ -4250,6 +4250,8 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	if (pdev->filter)
 		dp_mon_filter_dealloc(pdev);
 
+	dp_pdev_htt_stats_dbgfs_deinit(pdev);
+
 	dp_pdev_srng_deinit(pdev);
 
 	dp_ipa_uc_detach(pdev->soc, pdev);
@@ -8141,14 +8143,14 @@ dp_get_fw_peer_stats(struct cdp_soc_t *soc, uint8_t pdev_id,
 		dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 					  config_param0, config_param1,
 					  config_param2, config_param3,
-					  0, 1, 0);
+					  0, DBG_STATS_COOKIE_DP_STATS, 0);
 		qdf_wait_single_event(&pdev->fw_peer_stats_event,
 				      DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC);
 	} else {
 		dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 					  config_param0, config_param1,
 					  config_param2, config_param3,
-					  0, 0, 0);
+					  0, DBG_STATS_COOKIE_DEFAULT, 0);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -8191,7 +8193,7 @@ dp_get_htt_stats(struct cdp_soc_t *soc, uint8_t pdev_id, void *data,
 	dp_h2t_ext_stats_msg_send(pdev, req->stats_id,
 				req->config_param0, req->config_param1,
 				req->config_param2, req->config_param3,
-				req->cookie, 0, 0);
+				req->cookie, DBG_STATS_COOKIE_DEFAULT, 0);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -9175,7 +9177,7 @@ dp_txrx_stats_publish(struct cdp_soc_t *soc, uint8_t pdev_id,
 
 	dp_aggregate_pdev_stats(pdev);
 	req.stats = (enum cdp_stats)HTT_DBG_EXT_STATS_PDEV_TX;
-	req.cookie_val = 1;
+	req.cookie_val = DBG_STATS_COOKIE_DP_STATS;
 	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
 				req.param1, req.param2, req.param3, 0,
 				req.cookie_val, 0);
@@ -9183,7 +9185,7 @@ dp_txrx_stats_publish(struct cdp_soc_t *soc, uint8_t pdev_id,
 	msleep(DP_MAX_SLEEP_TIME);
 
 	req.stats = (enum cdp_stats)HTT_DBG_EXT_STATS_PDEV_RX;
-	req.cookie_val = 1;
+	req.cookie_val = DBG_STATS_COOKIE_DP_STATS;
 	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
 				req.param1, req.param2, req.param3, 0,
 				req.cookie_val, 0);
@@ -9272,11 +9274,12 @@ static int dp_fw_stats_process(struct dp_vdev *vdev,
 		return dp_h2t_ext_stats_msg_send(pdev,
 				HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT,
 				req->param0, req->param1, req->param2,
-				req->param3, 0, 0, mac_id);
+				req->param3, 0, DBG_STATS_COOKIE_DEFAULT,
+				mac_id);
 	} else {
 		return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
 				req->param1, req->param2, req->param3,
-				0, 0, mac_id);
+				0, DBG_STATS_COOKIE_DEFAULT, mac_id);
 	}
 }
 
@@ -13176,6 +13179,12 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 		goto fail9;
 	}
 
+	if (dp_pdev_htt_stats_dbgfs_init(pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "Failed to initialize pdev HTT stats debugfs");
+		goto fail10;
+	}
+
 	/* initialize sw rx descriptors */
 	dp_rx_pdev_desc_pool_init(pdev);
 	/* initialize sw monitor rx descriptors */
@@ -13194,6 +13203,8 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 		qdf_skb_mem_stats_read());
 
 	return QDF_STATUS_SUCCESS;
+fail10:
+	dp_rx_fst_detach(soc, pdev);
 fail9:
 	dp_ipa_uc_detach(soc, pdev);
 fail8:
