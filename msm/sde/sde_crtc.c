@@ -1686,10 +1686,11 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 					sde_crtc->name, lm->idx - LM_0,
 					ctl->idx - CTL_0);
 			ctl->ops.setup_blendstage(ctl, mixer[i].hw_lm->idx,
-					NULL);
+					NULL, true);
 		} else {
 			ctl->ops.setup_blendstage(ctl, mixer[i].hw_lm->idx,
-					&sde_crtc->stage_cfg[lm_layout]);
+					&sde_crtc->stage_cfg[lm_layout],
+					false);
 		}
 	}
 

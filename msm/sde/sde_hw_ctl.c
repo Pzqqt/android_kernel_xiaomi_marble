@@ -946,7 +946,8 @@ static void _sde_hw_ctl_get_mixer_cfg(struct sde_hw_ctl *ctx,
 }
 
 static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
-	enum sde_lm lm, struct sde_hw_stage_cfg *stage_cfg)
+	enum sde_lm lm, struct sde_hw_stage_cfg *stage_cfg,
+	bool disable_border)
 {
 	struct sde_hw_blk_reg_map *c;
 	struct sde_ctl_mixer_cfg cfg = { 0 };
@@ -964,8 +965,9 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 	if (stage_cfg)
 		_sde_hw_ctl_get_mixer_cfg(ctx, stage_cfg, stages, &cfg);
 
-	if ((!cfg.cfg && !cfg.ext && !cfg.ext2 && !cfg.ext3) ||
-			(stage_cfg && !stage_cfg->stage[0][0]))
+	if (!disable_border &&
+			((!cfg.cfg && !cfg.ext && !cfg.ext2 && !cfg.ext3) ||
+			(stage_cfg && !stage_cfg->stage[0][0])))
 		cfg.cfg |= CTL_MIXER_BORDER_OUT;
 
 	SDE_REG_WRITE(c, CTL_LAYER(lm), cfg.cfg);

@@ -423,12 +423,14 @@ struct sde_hw_ctl_ops {
 
 	/**
 	 * Configure layer mixer to pipe configuration
-	 * @ctx       : ctl path ctx pointer
-	 * @lm        : layer mixer enumeration
-	 * @cfg       : blend stage configuration
+	 * @ctx           : ctl path ctx pointer
+	 * @lm            : layer mixer enumeration
+	 * @cfg           : blend stage configuration
+	 * @disable_border: if true disable border, else enable border out
 	 */
 	void (*setup_blendstage)(struct sde_hw_ctl *ctx,
-		enum sde_lm lm, struct sde_hw_stage_cfg *cfg);
+		enum sde_lm lm, struct sde_hw_stage_cfg *cfg,
+		bool disable_border);
 
 	/**
 	 * Get all the sspp staged on a layer mixer

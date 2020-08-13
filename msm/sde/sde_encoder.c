@@ -4173,7 +4173,7 @@ int sde_encoder_helper_reset_mixers(struct sde_encoder_phys *phys_enc,
 		/* only enable border color on LM */
 		if (phys_enc->hw_ctl->ops.setup_blendstage)
 			phys_enc->hw_ctl->ops.setup_blendstage(
-				phys_enc->hw_ctl, hw_lm->idx, NULL);
+				phys_enc->hw_ctl, hw_lm->idx, NULL, false);
 	}
 
 	if (!lm_valid) {
