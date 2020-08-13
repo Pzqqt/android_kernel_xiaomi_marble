@@ -3023,8 +3023,10 @@ send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	qdf_mem_copy(buf_ptr, params->pmkid, PMKID_LEN);
-	WMI_LOGD("%s: vdev_id:%d status:%d bssid:%pM", __func__, cmd->vdev_id,
-		 cmd->preauth_status, params->bssid.bytes);
+	WMI_LOGD("%s: vdev_id:%d status:%d bssid:"QDF_MAC_ADDR_FMT,
+		 __func__, cmd->vdev_id,
+		 cmd->preauth_status,
+		 QDF_MAC_ADDR_REF(params->bssid.bytes));
 
 	wmi_mtrace(WMI_ROAM_PREAUTH_STATUS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
