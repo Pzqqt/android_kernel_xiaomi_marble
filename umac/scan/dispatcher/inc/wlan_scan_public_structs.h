@@ -467,6 +467,12 @@ struct fils_filter_info {
 };
 #endif
 
+/*
+ * struct filter_arg: Opaque pointer for the filter arguments
+ */
+struct filter_arg;
+typedef struct filter_arg *bss_filter_arg_t;
+
 /**
  * struct scan_filter: scan filter
  * @enable_adaptive_11r:    flag to check if adaptive 11r ini is enabled
@@ -497,6 +503,10 @@ struct fils_filter_info {
  * @bssid_list: bssid list
  * @ssid_list: ssid list
  * @chan_freq_list: channel frequency list, frequency unit: MHz
+ * @match_security_func: Function pointer to custom security filter
+ * @match_security_func_arg: Function argument to custom security filter
+ * @ccx_validate_bss: Function pointer to custom bssid filter
+ * @ccx_validate_bss_arg: Function argument to custom bssid filter
  */
 struct scan_filter {
 	uint8_t enable_adaptive_11r:1,
@@ -526,6 +536,10 @@ struct scan_filter {
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_FILTER_NUM_BSSID];
 	struct wlan_ssid ssid_list[WLAN_SCAN_FILTER_NUM_SSID];
 	qdf_freq_t chan_freq_list[NUM_CHANNELS];
+	bool (*match_security_func)(void *, struct scan_cache_entry *);
+	bss_filter_arg_t match_security_func_arg;
+	bool (*ccx_validate_bss)(void *, struct scan_cache_entry *, int);
+	bss_filter_arg_t ccx_validate_bss_arg;
 };
 
 /**
