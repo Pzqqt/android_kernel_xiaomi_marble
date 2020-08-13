@@ -3028,13 +3028,18 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 
 	num_users = ppdu_desc->bar_num_users;
 
-	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR) {
-		for (i = 0; i < num_users; i++) {
-			if (ppdu_desc->user[i].user_pos == 0) {
+	for (i = 0; i < num_users; i++) {
+		if (ppdu_desc->user[i].user_pos == 0) {
+			if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR) {
 				/* update phy mode for bar frame */
 				ppdu_desc->phy_mode =
 					ppdu_desc->user[i].preamble;
 				ppdu_desc->user[0].mcs = ppdu_desc->user[i].mcs;
+				break;
+			}
+			if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_CTRL) {
+				ppdu_desc->frame_ctrl =
+					ppdu_desc->user[i].frame_ctrl;
 				break;
 			}
 		}
