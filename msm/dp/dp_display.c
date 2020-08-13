@@ -63,6 +63,7 @@ enum dp_display_states {
 	DP_STATE_ABORTED                = BIT(8),
 	DP_STATE_HDCP_ABORTED           = BIT(9),
 	DP_STATE_SRC_PWRDN              = BIT(10),
+	DP_STATE_TUI_ACTIVE             = BIT(11),
 };
 
 static char *dp_display_state_name(enum dp_display_states state)
@@ -115,6 +116,10 @@ static char *dp_display_state_name(enum dp_display_states state)
 	if (state & DP_STATE_SRC_PWRDN)
 		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
 			"SRC_PWRDN");
+
+	if (state & DP_STATE_TUI_ACTIVE)
+		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
+			"TUI_ACTIVE");
 
 	if (!strlen(buf))
 		return "DISCONNECTED";
@@ -667,6 +672,74 @@ error:
 	return rc;
 }
 
+static void dp_display_pause_audio(struct dp_display_private *dp, bool pause)
+{
+	struct dp_panel *dp_panel;
+	int idx;
+
+	for (idx = DP_STREAM_0; idx < DP_STREAM_MAX; idx++) {
+		if (!dp->active_panels[idx])
+			continue;
+		dp_panel = dp->active_panels[idx];
+
+		if (dp_panel->audio_supported)
+			dp_panel->audio->tui_active = pause;
+	}
+}
+
+static int dp_display_pre_hw_release(void *data)
+{
+	struct dp_display_private *dp;
+	struct dp_display *dp_display = data;
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+
+	if (!dp_display)
+		return -EINVAL;
+
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
+
+	mutex_lock(&dp->session_lock);
+
+	dp_display_state_add(DP_STATE_TUI_ACTIVE);
+	cancel_work_sync(&dp->connect_work);
+	cancel_work_sync(&dp->attention_work);
+	flush_workqueue(dp->wq);
+
+	dp_display_pause_audio(dp, true);
+	disable_irq(dp->irq);
+
+	mutex_unlock(&dp->session_lock);
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	return 0;
+}
+
+static int dp_display_post_hw_acquire(void *data)
+{
+	struct dp_display_private *dp;
+	struct dp_display *dp_display = data;
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+
+	if (!dp_display)
+		return -EINVAL;
+
+	dp = container_of(dp_display, struct dp_display_private, dp_display);
+
+	mutex_lock(&dp->session_lock);
+
+	dp_display_state_remove(DP_STATE_TUI_ACTIVE);
+	dp_display_pause_audio(dp, false);
+	enable_irq(dp->irq);
+
+	mutex_unlock(&dp->session_lock);
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	return 0;
+}
+
+
 static int dp_display_bind(struct device *dev, struct device *master,
 		void *data)
 {
@@ -674,6 +747,10 @@ static int dp_display_bind(struct device *dev, struct device *master,
 	struct dp_display_private *dp;
 	struct drm_device *drm;
 	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_vm_ops vm_event_ops = {
+		.vm_pre_hw_release = dp_display_pre_hw_release,
+		.vm_post_hw_acquire = dp_display_post_hw_acquire,
+	};
 
 	if (!dev || !pdev || !master) {
 		DP_ERR("invalid param(s), dev %pK, pdev %pK, master %pK\n",
@@ -693,6 +770,8 @@ static int dp_display_bind(struct device *dev, struct device *master,
 
 	dp->dp_display.drm_dev = drm;
 	dp->priv = drm->dev_private;
+	msm_register_vm_event(master, dev, &vm_event_ops,
+			(void *)&dp->dp_display);
 end:
 	return rc;
 }
@@ -826,6 +905,15 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp)
 
 	reinit_completion(&dp->notification_comp);
 	dp_display_send_hpd_event(dp);
+
+	/*
+	 * Skip the wait if TUI is active considering that the user mode will
+	 * not act on the notification until after the TUI session is over.
+	 */
+	if (dp_display_state_is(DP_STATE_TUI_ACTIVE)) {
+		dp_display_state_log("[TUI is active, skipping wait]");
+		goto skip_wait;
+	}
 
 	if (hpd && dp->mst.mst_active)
 		goto skip_wait;
@@ -1200,25 +1288,29 @@ static int dp_display_usbpd_configure_cb(struct device *dev)
 
 	if (!dev) {
 		DP_ERR("invalid dev\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 
 	dp = dev_get_drvdata(dev);
 	if (!dp) {
 		DP_ERR("no driver data found\n");
-		rc = -ENODEV;
-		goto end;
+		return -ENODEV;
 	}
 
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
 	    && !dp->parser->gpio_aux_switch) {
 		rc = dp->aux->aux_switch(dp->aux, true, dp->hpd->orientation);
 		if (rc)
-			goto end;
+			return rc;
 	}
 
 	mutex_lock(&dp->session_lock);
+
+	if (dp_display_state_is(DP_STATE_TUI_ACTIVE)) {
+		dp_display_state_log("[TUI is active]");
+		mutex_unlock(&dp->session_lock);
+		return 0;
+	}
 
 	dp_display_state_remove(DP_STATE_ABORTED);
 	dp_display_state_add(DP_STATE_CONFIGURED);
@@ -1231,8 +1323,8 @@ static int dp_display_usbpd_configure_cb(struct device *dev)
 	else
 		dp->process_hpd_connect = true;
 	mutex_unlock(&dp->session_lock);
-end:
-	return rc;
+
+	return 0;
 }
 
 static int dp_display_stream_pre_disable(struct dp_display_private *dp,
@@ -1267,6 +1359,11 @@ static void dp_display_clean(struct dp_display_private *dp)
 	struct dp_link_hdcp_status *status = &dp->link->hdcp_status;
 
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
+
+	if (dp_display_state_is(DP_STATE_TUI_ACTIVE)) {
+		DP_WARN("TUI is active\n");
+		return;
+	}
 
 	if (dp_display_is_hdcp_enabled(dp) &&
 			status->hdcp_state != HDCP_STATE_INACTIVE) {
@@ -1550,7 +1647,24 @@ static int dp_display_usbpd_attention_cb(struct device *dev)
 
 	if (!dp->hpd->hpd_high) {
 		dp_display_disconnect_sync(dp);
-	} else if ((dp->hpd->hpd_irq && dp_display_state_is(DP_STATE_READY)) ||
+		return 0;
+	}
+
+	/*
+	 * Ignore all the attention messages except HPD LOW when TUI is
+	 * active, so user mode can be notified of the disconnect event. This
+	 * allows user mode to tear down the control path after the TUI
+	 * session is over. Ideally this should never happen, but on the off
+	 * chance that there is a race condition in which there is a IRQ HPD
+	 * during tear down of DP at TUI start then this check might help avoid
+	 * a potential issue accessing registers in attention processing.
+	 */
+	if (dp_display_state_is(DP_STATE_TUI_ACTIVE)) {
+		DP_WARN("TUI is active\n");
+		return 0;
+	}
+
+	if ((dp->hpd->hpd_irq && dp_display_state_is(DP_STATE_READY)) ||
 			dp->debug->mst_hpd_sim) {
 		queue_work(dp->wq, &dp->attention_work);
 	} else if (dp->process_hpd_connect ||
@@ -1569,6 +1683,11 @@ static void dp_display_connect_work(struct work_struct *work)
 	int rc = 0;
 	struct dp_display_private *dp = container_of(work,
 			struct dp_display_private, connect_work);
+
+	if (dp_display_state_is(DP_STATE_TUI_ACTIVE)) {
+		dp_display_state_log("[TUI is active]");
+		return;
+	}
 
 	if (dp_display_state_is(DP_STATE_ABORTED)) {
 		DP_WARN("HPD off requested\n");
