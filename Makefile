@@ -29,7 +29,8 @@ msm-vidc-objs   := driver/vidc/src/msm_vidc_v4l2.o \
                    driver/vidc/src/msm_vidc_debug.o \
                    driver/vidc/src/msm_vidc_memory.o \
                    driver/vidc/src/venus_hfi.o \
-                   driver/vidc/src/hfi_packet.o
+                   driver/vidc/src/hfi_packet.o \
+                   driver/vidc/src/venus_hfi_response.o
 
 ifneq ($(CONFIG_ARCH_QTI_VM), y)
 ifeq ($(CONFIG_ARCH_LAHAINA), y)

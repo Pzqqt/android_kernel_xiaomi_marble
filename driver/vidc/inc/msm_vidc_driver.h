@@ -103,7 +103,9 @@ struct msm_vidc_map_info *msm_vidc_get_map_info(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type);
 struct msm_vidc_alloc_info *msm_vidc_get_alloc_info(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type);
-
+struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
+		u32 session_id);
+void put_inst(struct msm_vidc_inst *inst);
 void core_lock(struct msm_vidc_core *core, const char *function);
 void core_unlock(struct msm_vidc_core *core, const char *function);
 void inst_lock(struct msm_vidc_inst *inst, const char *function);

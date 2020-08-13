@@ -110,6 +110,7 @@ struct msm_vidc_inst {
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
 	struct msm_vidc_inst_capability   *capabilities;
+	struct completion                  completions[MAX_SIGNAL];
 };
 
 #endif // _MSM_VIDC_INST_H_

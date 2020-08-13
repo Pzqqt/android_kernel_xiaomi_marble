@@ -589,6 +589,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	int rc = 0;
 	struct msm_vidc_inst *inst;
 	struct msm_vidc_core *core;
+	int i = 0;
 
 	d_vpr_h("%s()\n", __func__);
 	core = vidc_core;
@@ -667,6 +668,9 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
 	inst->request = false;
+	for (i = 0; i < MAX_SIGNAL; i++)
+		init_completion(&inst->completions[i]);
+
 	//inst->debugfs_root =
 	//	msm_vidc_debugfs_init_inst(inst, core->debugfs_root);
 

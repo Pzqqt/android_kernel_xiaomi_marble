@@ -76,5 +76,6 @@ int __interrupt_init(struct msm_vidc_core *core);
 int __setup_ucregion_memmap(struct msm_vidc_core *core);
 int __raise_interrupt(struct msm_vidc_core *core);
 int __power_off(struct msm_vidc_core *core);
+bool __core_in_valid_state(struct msm_vidc_core *core);
 
 #endif // _VENUS_HFI_H_

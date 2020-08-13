@@ -429,7 +429,7 @@ int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
 		goto err_debug;
 
 	/* HFI_PROP_DEBUG_CONFIG */
-	payload = debug_config; /*TODO:Change later*/
+	payload = 0; /*TODO:Change later*/
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_DEBUG_CONFIG,
 				   HFI_HOST_FLAGS_NONE,

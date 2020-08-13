@@ -87,6 +87,13 @@ enum vidc_msg_prio {
 #define d_vpr_b(__fmt, ...) \
 			dprintk(VIDC_BUS, DEFAULT_SID, __fmt, ##__VA_ARGS__)
 
+#define dprintk_firmware(__level, __fmt, ...)	\
+	do { \
+		pr_err(FW_DBG_TAG __fmt, \
+			"fw", \
+			##__VA_ARGS__); \
+	} while (0)
+
 #define MSM_VIDC_ERROR(value)					\
 	do {	if (value)					\
 			d_vpr_e("BugOn");		\

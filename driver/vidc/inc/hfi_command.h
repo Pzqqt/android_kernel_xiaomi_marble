@@ -127,12 +127,13 @@ struct metapayload_header {
 };
 
 enum hfi_property_mode_type {
-	HFI_MODE_NONE = 0,
-	HFI_MODE_PORT_SETTINGS_CHANGE = BIT(0),
-	HFI_MODE_PROPERTY = BIT(1),
-	HFI_MODE_METADATA = BIT(2),
+	HFI_MODE_NONE                  = 0,
+	HFI_MODE_PORT_SETTINGS_CHANGE  = BIT(0),
+	HFI_MODE_PROPERTY              = BIT(1),
+	HFI_MODE_METADATA              = BIT(2),
 };
 
+#define HFI_CMD_BEGIN                                           0x0
 #define HFI_CMD_INIT                                            0x1
 #define HFI_CMD_POWER_COLLAPSE                                  0x2
 #define HFI_CMD_OPEN                                            0x3
@@ -145,6 +146,6 @@ enum hfi_property_mode_type {
 #define HFI_CMD_DELIVERY_MODE                                   0xA
 #define HFI_CMD_SUBSCRIBE_MODE                                  0xB
 #define HFI_CMD_SETTINGS_CHANGE                                 0xC
-
+#define HFI_CMD_END                                             0xD
 
 #endif //__H_HFI_COMMAND_H__

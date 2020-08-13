@@ -23,6 +23,9 @@
 #include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
 #include "hfi_packet.h"
+#include "venus_hfi_response.h"
+
+#define MIN_PAYLOAD_SIZE 3
 
 static int __resume(struct msm_vidc_core *core);
 static int __suspend(struct msm_vidc_core *core);
@@ -150,7 +153,7 @@ static void __strict_check(struct msm_vidc_core *core)
 	__fatal_error(core, !mutex_is_locked(&core->lock));
 }
 
-static bool __core_in_valid_state(struct msm_vidc_core *core)
+bool __core_in_valid_state(struct msm_vidc_core *core)
 {
 	return core->state != MSM_VIDC_CORE_ERROR;
 }
@@ -566,6 +569,7 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	d_vpr_e("skip writing packet\n");
 	return 0;
 
+
 	packet_size_in_words = (*(u32 *)packet) >> 2;
 	if (!packet_size_in_words || packet_size_in_words >
 		qinfo->q_array.mem_size>>2) {
@@ -624,7 +628,7 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	mb();
 	return 0;
 }
-#if 0
+
 static int __read_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 		u32 *pb_tx_req_is_set)
 {
@@ -748,7 +752,7 @@ static int __read_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 
 	return rc;
 }
-#endif
+
 /* Writes into cmdq without raising an interrupt */
 static int __iface_cmdq_write_relaxed(struct msm_vidc_core *core,
 		void *pkt, bool *requires_interrupt)
@@ -814,7 +818,7 @@ static int __iface_cmdq_write(struct msm_vidc_core *core,
 
 	return rc;
 }
-/*
+
 static int __iface_msgq_read(struct msm_vidc_core *core, void *pkt)
 {
 	u32 tx_req_is_set = 0;
@@ -845,8 +849,9 @@ static int __iface_msgq_read(struct msm_vidc_core *core, void *pkt)
 		if (tx_req_is_set)
 			call_venus_op(core, raise_interrupt, core);
 		rc = 0;
-	} else
+	} else {
 		rc = -ENODATA;
+	}
 
 read_error_null:
 	return rc;
@@ -882,7 +887,74 @@ static int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt)
 dbg_error_null:
 	return rc;
 }
-*/
+
+/*TODO:darshana needs discussion*/
+static void __flush_debug_queue(struct msm_vidc_core *core, u8 *header)
+{
+	bool local_packet = false;
+	enum vidc_msg_prio log_level = msm_vidc_debug;
+	struct hfi_packet *pkt;
+	u32 payload = 0;
+
+	if (!header) {
+		header = kzalloc(VIDC_IFACEQ_VAR_HUGE_PKT_SIZE, GFP_KERNEL);
+		if (!header) {
+			d_vpr_e("%s: Fail to allocate mem\n", __func__);
+			return;
+		}
+
+		local_packet = true;
+
+		/*
+		 * Local packet is used when error occurred.
+		 * It is good to print these logs to printk as well.
+		 */
+		log_level |= FW_PRINTK;
+	}
+
+#define SKIP_INVALID_PKT(pkt_size, payload_size, pkt_hdr_size) ({ \
+		if (pkt_size < pkt_hdr_size || \
+			payload_size < MIN_PAYLOAD_SIZE || \
+			payload_size > \
+			(pkt_size - pkt_hdr_size + sizeof(u8))) { \
+			d_vpr_e("%s: invalid msg size - %d\n", \
+				__func__, payload_size); \
+			continue; \
+		} \
+	})
+
+	while (!__iface_dbgq_read(core, header)) {
+		struct hfi_header *hdr =
+			(struct hfi_header *) header;
+
+		if (!validate_packet((u8 *)pkt, core->response_packet,
+				core->packet_size, __func__))
+			return;
+
+		pkt = (struct hfi_packet *)(hdr + sizeof(struct hfi_header));
+		if (pkt->type == HFI_PROP_DEBUG_LOG_LEVEL) {
+			SKIP_INVALID_PKT(pkt->size,
+				sizeof(u32), sizeof(*pkt));
+
+			payload = (u32) *((u8 *)pkt + sizeof(struct hfi_packet));
+
+			/*
+			 * All fw messages starts with new line character. This
+			 * causes dprintk to print this message in two lines
+			 * in the kernel log. Ignoring the first character
+			 * from the message fixes this to print it in a single
+			 * line.
+			 */
+			//pkt->rg_msg_data[sizeof(u32)-1] = '\0';
+			dprintk_firmware(log_level, "%s", &payload);
+		}
+	}
+#undef SKIP_INVALID_PKT
+
+	if (local_packet)
+		kfree(header);
+}
+
 static int __sys_set_debug(struct msm_vidc_core *core, u32 debug)
 {
 	int rc = 0;
@@ -2192,9 +2264,29 @@ static void __unload_fw(struct msm_vidc_core *core)
 	d_vpr_h("Firmware unloaded successfully\n");
 }
 
+static int __response_handler(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	while (!__iface_msgq_read(core, core->response_packet)) {
+		rc = handle_response(core, core->response_packet);
+		if (rc)
+			continue;
+		/* check for system error */
+		if (core->state != MSM_VIDC_CORE_INIT)
+			break;
+	}
+
+	__schedule_power_collapse_work(core);
+	__flush_debug_queue(core, core->response_packet);
+
+	return rc;
+}
+
 void venus_hfi_work_handler(struct work_struct *work)
 {
 	struct msm_vidc_core *core;
+	int num_responses = 0;
 
 	core = container_of(work, struct msm_vidc_core, device_work);
 	if (!core) {
@@ -2202,6 +2294,21 @@ void venus_hfi_work_handler(struct work_struct *work)
 		return;
 	}
 	d_vpr_e("%s(): core %pK\n", __func__, core);
+
+	mutex_lock(&core->lock);
+	if (__resume(core)) {
+		d_vpr_e("%s: Power on failed\n", __func__);
+		goto err_no_work;
+	}
+
+	call_venus_op(core, clear_interrupt, core);
+	mutex_unlock(&core->lock);
+	num_responses = __response_handler(core);
+
+err_no_work:
+	mutex_unlock(&core->lock);
+	if (!call_venus_op(core, watchdog, core, core->intr_status))
+		enable_irq(core->dt->irq);
 }
 
 void venus_hfi_pm_work_handler(struct work_struct *work)
@@ -2273,6 +2380,14 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 		return -ENOMEM;
 	}
 
+	core->response_packet = kzalloc(core->packet_size, GFP_KERNEL);
+	if (!core->response_packet) {
+		d_vpr_e("%s(): core response packet allocation failed\n",
+			__func__);
+		kfree(core->packet);
+		return -ENOMEM;
+	}
+
 	rc = __load_fw(core);
 	if (rc)
 		return rc;
@@ -2311,6 +2426,7 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 error:
 	d_vpr_h("%s(): failed\n", __func__);
 	__unload_fw(core);
+	kfree(core->response_packet);
 	kfree(core->packet);
 	return rc;
 }

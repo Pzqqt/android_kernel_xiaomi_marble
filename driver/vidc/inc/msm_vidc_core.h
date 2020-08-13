@@ -96,6 +96,7 @@ struct msm_vidc_core {
 	u32                                    last_packet_type;
 	u8                                    *packet;
 	u32                                    packet_size;
+	u8                                    *response_packet;
 	struct v4l2_file_operations           *v4l2_file_ops;
 	struct v4l2_ioctl_ops                 *v4l2_ioctl_ops;
 	struct v4l2_ctrl_ops                  *v4l2_ctrl_ops;
@@ -106,6 +107,7 @@ struct msm_vidc_core {
 	struct msm_vidc_memory_ops            *mem_ops;
 	u32                                    header_id;
 	u32                                    packet_id;
+	struct completion                      init_done;
 };
 
 #endif // _MSM_VIDC_CORE_H_

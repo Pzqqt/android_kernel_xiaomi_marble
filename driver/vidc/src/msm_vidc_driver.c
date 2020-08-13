@@ -14,6 +14,7 @@
 #include "msm_vidc_memory.h"
 #include "msm_vidc_debug.h"
 #include "venus_hfi.h"
+#include "msm_vidc.h"
 
 #define COUNT_BITS(a, out) ({       \
 	while ((a) >= 1) {          \
@@ -901,6 +902,11 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	if (rc)
 		goto unlock;
 
+	core->state = MSM_VIDC_CORE_INIT;
+	init_completion(&core->init_done);
+	core->smmu_fault_handled = false;
+	core->ssr.trigger = false;
+
 	rc = venus_hfi_core_init(core);
 	if (rc) {
 		d_vpr_e("%s: core init failed\n", __func__);
@@ -908,9 +914,18 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 		goto unlock;
 	}
 
-	core->state = MSM_VIDC_CORE_INIT;
-	core->smmu_fault_handled = false;
-	core->ssr.trigger = false;
+	mutex_unlock(&core->lock);
+	/*TODO: acquire lock or not */
+	rc = wait_for_completion_timeout(&core->init_done, msecs_to_jiffies(
+			core->platform->data.core_data[DEBUG_TIMEOUT].value));
+	if (!rc) {
+		d_vpr_e("%s: system init timed out\n", __func__);
+		//msm_comm_kill_session(inst);
+		rc = -EIO;
+	} else {
+		rc = 0;
+	}
+	mutex_lock(&core->lock);
 
 unlock:
 	mutex_unlock(&core->lock);
@@ -943,6 +958,47 @@ void msm_vidc_fw_unload_handler(struct work_struct *work)
 
 void msm_vidc_batch_handler(struct work_struct *work)
 {
+}
+
+struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
+		u32 session_id)
+{
+	struct msm_vidc_inst *inst = NULL;
+	bool matches = false;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return NULL;
+	}
+
+	mutex_lock(&core->lock);
+	list_for_each_entry(inst, &core->instances, list) {
+		if (inst->session_id == session_id) {
+			matches = true;
+			break;
+		}
+	}
+	inst = (matches && kref_get_unless_zero(&inst->kref)) ? inst : NULL;
+	mutex_unlock(&core->lock);
+	return inst;
+}
+
+static void put_inst_helper(struct kref *kref)
+{
+	struct msm_vidc_inst *inst = container_of(kref,
+			struct msm_vidc_inst, kref);
+
+	msm_vidc_close(inst);
+}
+
+void put_inst(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	kref_put(&inst->kref, put_inst_helper);
 }
 
 void core_lock(struct msm_vidc_core *core, const char *function)

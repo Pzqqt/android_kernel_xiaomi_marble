@@ -299,6 +299,12 @@ enum profiling_points {
 	MAX_PROFILING_POINTS,
 };
 
+enum signal_session_response {
+	SIGNAL_CMD_STOP  = 0,
+	SIGNAL_CMD_CLOSE,
+	MAX_SIGNAL,
+};
+
 #define HFI_MASK_QHDR_TX_TYPE			0xFF000000
 #define HFI_MASK_QHDR_RX_TYPE			0x00FF0000
 #define HFI_MASK_QHDR_PRI_TYPE			0x0000FF00

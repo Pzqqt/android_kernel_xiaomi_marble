@@ -43,4 +43,3 @@ int hfi_packet_session_property(struct msm_vidc_inst *inst,
 	u32 pkt_type, u32 flags, u32 port,
 	u32 payload_type, void *payload, u32 payload_size);
 #endif // _HFI_PACKET_H_
-
