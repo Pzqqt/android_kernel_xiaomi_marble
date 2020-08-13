@@ -2948,6 +2948,7 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc, enum hal_ring_ty
 	case WBM2SW_RELEASE:
 	case REO_DST:
 	case RXDMA_BUF:
+	case REO_EXCEPTION:
 		status = ((nss_config) & (1 << ring_num));
 		break;
 	default:
@@ -3108,6 +3109,28 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		 */
 		wlan_cfg_set_host2rxdma_ring_mask(soc->wlan_cfg_ctx,
 			group_number, mask);
+	}
+
+	grp_mask = &soc->wlan_cfg_ctx->int_rx_err_ring_mask[0];
+
+	for (j = 0; j < num_ring; j++) {
+		if (!dp_soc_ring_if_nss_offloaded(soc, REO_EXCEPTION, j)) {
+			continue;
+		}
+
+		/*
+		 * Group number corresponding to rx err ring.
+		 */
+		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
+		if (group_number < 0) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				  FL("ring not part of any group; ring_type: %d,ring_num %d"),
+				  REO_EXCEPTION, j);
+			return;
+		}
+
+		wlan_cfg_set_rx_err_ring_mask(soc->wlan_cfg_ctx,
+					      group_number, 0);
 	}
 }
 
