@@ -36,6 +36,8 @@
 #include <pld_common.h>
 #endif
 #include <qdf_module.h>
+#include "wlan_dfs_lmac_api.h"
+#include "../../core/src/dfs_internal.h"
 
 struct dfs_nol_info {
 	uint16_t num_chans;
@@ -1566,7 +1568,10 @@ bool utils_dfs_is_spoof_done(struct wlan_objmgr_pdev *pdev)
 	if (!dfs)
 		return false;
 
-	return !!dfs->dfs_spoof_test_done;
+	if (lmac_is_host_dfs_check_support_enabled(dfs->dfs_pdev_obj) &&
+	    utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN)
+		return !!dfs->dfs_spoof_test_done;
+	return true;
 }
 #endif
 
