@@ -1366,6 +1366,18 @@ struct deauth_req {
 	uint16_t reasonCode;
 };
 
+/**
+ * struct deauth_retry_params - deauth retry params
+ * @peer_mac: peer mac
+ * @reason_code: reason for disconnect indication
+ * @retry_cnt: retry count
+ */
+struct deauth_retry_params {
+	struct qdf_mac_addr peer_macaddr;
+	uint16_t reason_code;
+	uint8_t retry_cnt;
+};
+
 /* / Definition for Deauthetication response */
 struct deauth_rsp {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_RSP */

@@ -3220,6 +3220,10 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 	QDF_STATUS status_code;
 	struct scheduler_msg msg = {0};
+	tLimMlmDeauthReq *deauth_req;
+	struct pe_session *session = NULL;
+
+	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 
 	pe_debug("tx_complete = %s tx_success = %d",
 		(tx_success == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
@@ -3227,6 +3231,22 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
 
 	if (buf)
 		qdf_nbuf_free(buf);
+	if (deauth_req)
+		session = pe_find_session_by_session_id(mac_ctx,
+				deauth_req->sessionId);
+	if (tx_success != WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK && session &&
+	    session->deauth_retry.retry_cnt) {
+		if (tx_timer_running(
+			&mac_ctx->lim.lim_timers.gLimDeauthAckTimer))
+			lim_deactivate_and_change_timer(mac_ctx,
+							eLIM_DEAUTH_ACK_TIMER);
+		lim_send_deauth_mgmt_frame(mac_ctx,
+				session->deauth_retry.reason_code,
+				session->deauth_retry.peer_macaddr.bytes,
+				session, true);
+		session->deauth_retry.retry_cnt--;
+		return QDF_STATUS_SUCCESS;
+	}
 	msg.type = (uint16_t) WMA_DEAUTH_TX_COMP;
 	msg.bodyptr = params;
 	msg.bodyval = tx_success;
@@ -3594,6 +3614,15 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      pe_session,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
+		if (pe_session->opmode == QDF_STA_MODE &&
+		    mac->mlme_cfg->sta.deauth_retry_cnt &&
+		    !pe_session->deauth_retry.retry_cnt) {
+			pe_session->deauth_retry.retry_cnt =
+				mac->mlme_cfg->sta.deauth_retry_cnt;
+			pe_session->deauth_retry.reason_code = nReason;
+			qdf_mem_copy(pe_session->deauth_retry.peer_macaddr.bytes,
+					 peer, QDF_MAC_ADDR_SIZE);
+		}
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
 			wma_tx_frameWithTxComplete(mac, pPacket, (uint16_t) nBytes,

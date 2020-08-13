@@ -195,6 +195,31 @@
 
 /*
  * <ini>
+ * deauth_retry_cnt- No. of deauth retries if the Tx is failed
+ * @Min: 0
+ * @Max: 4
+ * @Default: 2
+ *
+ * This ini is used to set retry deauth if Tx is not success.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DEAUTH_RETRY_CNT CFG_INI_UINT( \
+	"deauth_retry_cnt", \
+	0, \
+	4, \
+	2, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Set Deauth retry count")
+
+/*
+ * <ini>
  * gDot11PMode - 802.11p mode
  * @Min: CFG_11P_DISABLED
  * @Max: CFG_11P_CONCURRENT
@@ -441,6 +466,7 @@
 	CFG(CFG_PPS_ENABLE_5G_EBT) \
 	CFG(CFG_ENABLE_DEAUTH_BEFORE_CONNECTION) \
 	CFG(CFG_DOT11P_MODE) \
+	CFG(CFG_DEAUTH_RETRY_CNT) \
 	CFG(CFG_ENABLE_GO_CTS2SELF_FOR_STA) \
 	CFG(CFG_QCN_IE_SUPPORT) \
 	CFG(CFG_STA_MCAST_MCC_REST_TIME) \

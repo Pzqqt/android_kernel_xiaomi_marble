@@ -1331,6 +1331,7 @@ enum station_keepalive_method {
  * @dot11p_mode:                    Set 802.11p mode
  * @fils_max_chan_guard_time:       Set maximum channel guard time
  * @current_rssi:                   Current rssi
+ * @deauth_retry_cnt:               Deauth retry count
  * @ignore_peer_erp_info:           Ignore peer infrormation
  * @sta_prefer_80mhz_over_160mhz:   Set Sta preference to connect in 80HZ/160HZ
  * @enable_5g_ebt:                  Set default 5G early beacon termination
@@ -1351,6 +1352,7 @@ struct wlan_mlme_sta_cfg {
 	enum dot11p_mode dot11p_mode;
 	uint8_t fils_max_chan_guard_time;
 	uint8_t current_rssi;
+	uint8_t deauth_retry_cnt;
 	bool ignore_peer_erp_info;
 	bool sta_prefer_80mhz_over_160mhz;
 	bool enable_5g_ebt;
