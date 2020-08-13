@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,8 +44,13 @@
 
 /* Max hold time in micro seconds, 0 to disable detection*/
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_IRQ         10000
-#define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH        1000000
 #define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK                 0
+
+#if QDF_LOCK_STATS
+#define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH        2000000
+#else
+#define QDF_MAX_HOLD_TIME_ALOWED_SPINLOCK_BH        1000000
+#endif
 
 #if !QDF_LOCK_STATS
 struct lock_stats {};
