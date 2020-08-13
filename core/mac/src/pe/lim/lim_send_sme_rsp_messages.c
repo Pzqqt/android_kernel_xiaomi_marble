@@ -1568,6 +1568,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	uint16_t chan_space = 0;
 	struct ch_params ch_params = {0};
 	uint32_t channel_bonding_mode;
+	uint8_t country_code[CDS_COUNTRY_CODE_LEN + 1];
 
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
 	tLimChannelSwitchInfo *lim_ch_switch = NULL;
@@ -1647,7 +1648,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		 channel_bonding_mode);
 
 	session_entry->htSupportedChannelWidthSet = false;
-
+	wlan_reg_read_current_country(mac_ctx->psoc, country_code);
 	if (channel_bonding_mode &&
 	    ((session_entry->vhtCapability && session_entry->htCapability) ||
 	      lim_is_session_he_capable(session_entry))) {
@@ -1680,7 +1681,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			} else {
 				chan_space =
 				wlan_reg_dmn_get_chanwidth_from_opclass(
-						mac_ctx->scan.countryCodeCurrent,
+						country_code,
 						csa_params->channel,
 						csa_params->new_op_class);
 			}
@@ -1753,7 +1754,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				& lim_xcsa_ie_present) {
 			chan_space =
 				wlan_reg_dmn_get_chanwidth_from_opclass(
-						mac_ctx->scan.countryCodeCurrent,
+						country_code,
 						csa_params->channel,
 						csa_params->new_op_class);
 			lim_ch_switch->state =
