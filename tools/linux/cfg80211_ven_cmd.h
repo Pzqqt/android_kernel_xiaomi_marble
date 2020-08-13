@@ -1214,6 +1214,11 @@ enum _ol_ath_param_t {
 #endif
 	/* DCS Wideband (5-7GHz) policy */
 	OL_ATH_PARAM_DCS_WIDEBAND_POLICY = 451,
+#ifdef QCA_CBT_INSTRUMENTATION
+	/* Support get_call_map() for CBT */
+	OL_ATH_PARAM_FUNC_CALL_MAP = 452,
+#endif
+
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3133,6 +3138,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DCS_WIDEBAND_POLICY, SET_PARAM, 1},
 	{"get_dcs_wideband_policy",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DCS_WIDEBAND_POLICY, GET_PARAM, 0},
+#ifdef QCA_CBT_INSTRUMENTATION
+	{"get_call_map",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_FUNC_CALL_MAP, SET_PARAM, 1},
+#endif
 };
 #endif
 #endif
