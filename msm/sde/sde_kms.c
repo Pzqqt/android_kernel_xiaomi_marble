@@ -1008,6 +1008,8 @@ int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
 
 	ddev = sde_kms->dev;
 
+	pm_runtime_get_sync(ddev->dev);
+
 	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
 
 	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
@@ -1282,6 +1284,8 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 
 	if (vm_ops->vm_release)
 		rc = vm_ops->vm_release(sde_kms);
+
+	pm_runtime_put_sync(ddev->dev);
 
 	return rc;
 }
