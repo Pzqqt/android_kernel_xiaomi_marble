@@ -9599,6 +9599,11 @@ typedef struct {
                                                     * and WMI_VDEV_START_REQUEST_CMD. Based on this parameter need to make decision like
                                                     * vdev Pause/Unpause at WMI_VDEV_START_REQUEST_CMD.
                                                     */
+/* get/set/check macros for VDEV_FLAGS_SCAN_MODE_VAP flag */
+#define WMI_SCAN_MODE_VDEV_FLAG_GET(flag)            WMI_GET_BITS(flag, 4, 1)
+#define WMI_SCAN_MODE_VDEV_FLAG_SET(flag, val)       WMI_SET_BITS(flag, 4, 1, val)
+
+#define WMI_SCAN_MODE_VDEV_FLAG_ENABLED(flag)        ((flag & VDEV_FLAGS_SCAN_MODE_VAP) ? 1 : 0)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_create_cmd_fixed_param */
@@ -10397,6 +10402,7 @@ typedef struct {
      *     VDEV_FLAGS_TRANSMIT_AP
      *     VDEV_FLAGS_NON_TRANSMIT_AP
      *     VDEV_FLAGS_EMA_MODE
+     *     VDEV_FLAGS_SCAN_MODE_VAP - if the vdev is used for scan radio
      */
     A_UINT32 mbss_capability_flags;
 
@@ -26020,8 +26026,12 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SCAN_RADIO_CAPABILITIES_EXT2 */
     A_UINT32 phy_id;
     /*
-     * [0] 1 - SCAN_RADIO supported  0 - SCAN_RADIO  not supported
-     * [1] 1 - DFS enabled           0 - DFS disabled
+     * Bit 0:
+     *     1 - SCAN_RADIO supported  0 - SCAN_RADIO  not supported
+     *     Refer to WMI_SCAN_RADIO_CAP_SCAN_RADIO_FLAG_SET, GET macros
+     * Bit 1:
+     *     1 - DFS enabled           0 - DFS disabled
+     *     Refer to WMI_SCAN_RADIO_CAP_DFS_FLAG_SET, GET macros
      * [2:31] reserved
      */
     A_UINT32 flags;
