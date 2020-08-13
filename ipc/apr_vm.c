@@ -23,7 +23,6 @@
 #include <linux/ipc_logging.h>
 #include <linux/of_platform.h>
 #include <soc/qcom/subsystem_restart.h>
-#include <soc/qcom/scm.h>
 #include <soc/snd_event.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/audio_notifier.h>
