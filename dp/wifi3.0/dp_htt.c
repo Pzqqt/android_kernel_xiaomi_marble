@@ -452,6 +452,7 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 	DP_STATS_INCC(peer, tx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
 	DP_STATS_INCC(peer, tx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
+	DP_STATS_INCC(peer, tx.pream_punct_cnt, 1, ppdu->pream_punct);
 
 	dp_peer_stats_notify(pdev, peer);
 
@@ -2708,6 +2709,8 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_SUCCESS_GET(*tag_buf);
 	ppdu_desc->rts_failure =
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_GET(*tag_buf);
+	ppdu_user_desc->pream_punct =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_GET(*tag_buf);
 
 	ppdu_info->compltn_common_tlv++;
 

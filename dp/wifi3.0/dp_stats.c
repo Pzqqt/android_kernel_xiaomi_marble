@@ -5340,6 +5340,8 @@ void dp_print_tx_rates(struct dp_vdev *vdev)
 	DP_PRINT_STATS("LDPC = %d", pdev->stats.tx.ldpc);
 	DP_PRINT_STATS("Retries = %d", pdev->stats.tx.retries);
 	DP_PRINT_STATS("Last ack rssi = %d\n", pdev->stats.tx.last_ack_rssi);
+	DP_PRINT_STATS("Number of PPDU's with Punctured Preamble = %d",
+			   pdev->stats.tx.pream_punct_cnt);
 
 	DP_PRINT_STATS("Aggregation:\n");
 	DP_PRINT_STATS("Number of Msdu's Part of Ampdus = %d",

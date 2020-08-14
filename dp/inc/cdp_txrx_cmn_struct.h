@@ -1609,6 +1609,7 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @delayed_ba: delayed ba bit
  * @ack_ba_tlv: ack ba recv tlv bit
  * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
+ * @pream_punct: Preamble Punctured PPDU
  * UL_BSR_TRIG/UNKNOWN
  * @ba_seq_no: Block Ack sequence number
  * @ba_bitmap: Block Ack bitmap
@@ -1658,7 +1659,8 @@ struct cdp_tx_completion_ppdu_user {
 		 short_retries:4,
 		 tx_ratecode:16,
 		 is_ampdu:1,
-		 ppdu_type:5;
+		 ppdu_type:5,
+		 pream_punct:1;
 	uint32_t success_bytes;
 	uint32_t retry_bytes;
 	uint32_t failed_bytes;

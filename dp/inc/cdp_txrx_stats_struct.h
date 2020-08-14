@@ -877,6 +877,7 @@ struct protocol_trace_count {
  * @tx_byte_rate: Bytes Trasmitted in last one sec
  * @tx_data_rate: Data Transmitted in last one sec
  * @sgi_count[MAX_GI]: SGI count
+ * @pream_punct_cnt: Preamble Punctured count
  * @nss[SS_COUNT]: Packet count for different num_spatial_stream values
  * @bw[MAX_BW]: Packet Count for different bandwidths
  * @wme_ac_type[WME_AC_MAX]: Wireless Multimedia type Count
@@ -960,6 +961,7 @@ struct cdp_tx_stats {
 	uint32_t tx_data_ucast_rate;
 	struct cdp_pkt_type pkt_type[DOT11_MAX];
 	uint32_t sgi_count[MAX_GI];
+	uint32_t pream_punct_cnt;
 
 	uint32_t nss[SS_COUNT];
 

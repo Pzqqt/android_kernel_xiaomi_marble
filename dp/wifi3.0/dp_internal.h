@@ -589,6 +589,7 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 	tgtobj->stats.tx.ofdma += srcobj->tx.ofdma;
 	tgtobj->stats.tx.stbc += srcobj->tx.stbc;
 	tgtobj->stats.tx.ldpc += srcobj->tx.ldpc;
+	tgtobj->stats.tx.pream_punct_cnt += srcobj->tx.pream_punct_cnt;
 	tgtobj->stats.tx.retries += srcobj->tx.retries;
 	tgtobj->stats.tx.non_amsdu_cnt += srcobj->tx.non_amsdu_cnt;
 	tgtobj->stats.tx.amsdu_cnt += srcobj->tx.amsdu_cnt;
@@ -777,6 +778,7 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 	tgtobj->tx.ofdma += srcobj->stats.tx.ofdma;
 	tgtobj->tx.stbc += srcobj->stats.tx.stbc;
 	tgtobj->tx.ldpc += srcobj->stats.tx.ldpc;
+	tgtobj->tx.pream_punct_cnt += srcobj->stats.tx.pream_punct_cnt;
 	tgtobj->tx.retries += srcobj->stats.tx.retries;
 	tgtobj->tx.non_amsdu_cnt += srcobj->stats.tx.non_amsdu_cnt;
 	tgtobj->tx.amsdu_cnt += srcobj->stats.tx.amsdu_cnt;
