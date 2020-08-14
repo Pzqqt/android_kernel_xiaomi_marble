@@ -2220,14 +2220,12 @@ void dfs_agile_soc_obj_init(struct wlan_dfs *dfs,
 {
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
-	dfs_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
-							    WLAN_UMAC_COMP_DFS);
+	dfs_soc_obj = dfs->dfs_soc_obj;
 	dfs->dfs_psoc_idx = dfs_soc_obj->num_dfs_privs;
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 		 "dfs->dfs_psoc_idx: %d ", dfs->dfs_psoc_idx);
 	dfs_soc_obj->dfs_priv[dfs_soc_obj->num_dfs_privs].dfs = dfs;
 	dfs_soc_obj->num_dfs_privs++;
-	dfs->dfs_soc_obj = dfs_soc_obj;
 
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_soc_obj->num_dfs_privs: %d ",
 		 dfs_soc_obj->num_dfs_privs);
