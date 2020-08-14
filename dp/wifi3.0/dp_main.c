@@ -735,7 +735,8 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	struct dp_ast_entry *ast_entry = NULL;
 	struct dp_peer *peer;
 	struct dp_pdev *pdev;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -747,7 +748,7 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 					      0, vdev->vdev_id,
 					      DP_MOD_ID_CDP);
 		if (!peer) {
-			dp_vdev_unref_delete(soc, vdev);
+			dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -768,7 +769,7 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 		qdf_spin_unlock_bh(&soc->ast_lock);
 	}
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4340,6 +4341,46 @@ static void dp_soc_reset_txrx_ring_map(struct dp_soc *soc)
 		soc->tx_ring_map[i] = 0;
 }
 
+/*
+ * dp_soc_print_inactive_objects() - prints inactive peer and vdev list
+ * @soc: DP SOC handle
+ *
+ */
+static void dp_soc_print_inactive_objects(struct dp_soc *soc)
+{
+	struct dp_peer *peer = NULL;
+	struct dp_peer *tmp_peer = NULL;
+	struct dp_vdev *vdev = NULL;
+	struct dp_vdev *tmp_vdev = NULL;
+	int i = 0;
+	uint32_t count;
+
+	if (TAILQ_EMPTY(&soc->inactive_peer_list) &&
+	    TAILQ_EMPTY(&soc->inactive_vdev_list))
+		return;
+
+	TAILQ_FOREACH_SAFE(peer, &soc->inactive_peer_list,
+			   inactive_list_elem, tmp_peer) {
+		for (i = 0; i < DP_MOD_ID_MAX; i++) {
+			count = qdf_atomic_read(&peer->mod_refs[i]);
+			if (count)
+				DP_PRINT_STATS("peer %pK Module id %u ==> %u",
+					       peer, i, count);
+		}
+	}
+
+	TAILQ_FOREACH_SAFE(vdev, &soc->inactive_vdev_list,
+			   inactive_list_elem, tmp_vdev) {
+		for (i = 0; i < DP_MOD_ID_MAX; i++) {
+			count = qdf_atomic_read(&vdev->mod_refs[i]);
+			if (count)
+				DP_PRINT_STATS("vdev %pK Module id %u ==> %u",
+					       vdev, i, count);
+		}
+	}
+	QDF_BUG(0);
+}
+
 /**
  * dp_soc_deinit() - Deinitialize txrx SOC
  * @txrx_soc: Opaque DP SOC handle
@@ -4388,8 +4429,10 @@ static void dp_soc_deinit(void *txrx_soc)
 	dp_soc_srng_deinit(soc);
 
 	dp_hw_link_desc_ring_deinit(soc);
-	QDF_ASSERT(TAILQ_EMPTY(&soc->inactive_peer_list));
+
+	dp_soc_print_inactive_objects(soc);
 	qdf_spinlock_destroy(&soc->inactive_peer_list_lock);
+	qdf_spinlock_destroy(&soc->inactive_vdev_list_lock);
 
 	htt_soc_htc_dealloc(soc->htt_handle);
 
@@ -4952,7 +4995,7 @@ static void dp_vdev_id_map_tbl_add(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->vdev_map_lock);
 
-	if (dp_vdev_get_ref(soc, vdev) !=
+	if (dp_vdev_get_ref(soc, vdev, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "unable to get vdev reference at MAP vdev %pK vdev_id %u",
@@ -4983,7 +5026,7 @@ static void dp_vdev_id_map_tbl_remove(struct dp_soc *soc,
 	QDF_ASSERT(soc->vdev_id_map[vdev->vdev_id] == vdev);
 
 	soc->vdev_id_map[vdev->vdev_id] = NULL;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CONFIG);
 	qdf_spin_unlock_bh(&soc->vdev_map_lock);
 }
 
@@ -5000,7 +5043,7 @@ static void dp_vdev_pdev_list_add(struct dp_soc *soc,
 				  struct dp_vdev *vdev)
 {
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	if (dp_vdev_get_ref(soc, vdev) !=
+	if (dp_vdev_get_ref(soc, vdev, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "unable to get vdev reference at MAP vdev %pK",
@@ -5038,7 +5081,7 @@ static void dp_vdev_pdev_list_remove(struct dp_soc *soc,
 
 	if (found) {
 		TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CONFIG);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "vdev:%pK not found in pdev:%pK vdevlist:%pK",
@@ -5070,6 +5113,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
 	struct dp_vdev *vdev = qdf_mem_malloc(sizeof(*vdev));
+	int i = 0;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -5106,8 +5150,12 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->sec_type = cdp_sec_type_none;
 	vdev->multipass_en = false;
 	qdf_atomic_init(&vdev->ref_cnt);
+	for (i = 0; i < DP_MOD_ID_MAX; i++)
+		qdf_atomic_init(&vdev->mod_refs[i]);
+
 	/* Take one reference for create*/
 	qdf_atomic_inc(&vdev->ref_cnt);
+	qdf_atomic_inc(&vdev->mod_refs[DP_MOD_ID_CONFIG]);
 	vdev->num_peers = 0;
 #ifdef notyet
 	vdev->filters_num = 0;
@@ -5190,8 +5238,8 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 					 struct ol_txrx_ops *txrx_ops)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev =	dp_vdev_get_ref_by_id(soc, vdev_id,
+						      DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -5230,7 +5278,7 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		"DP Vdev Register success");
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5318,7 +5366,8 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	struct dp_neighbour_peer *peer = NULL;
 	struct dp_neighbour_peer *temp_peer = NULL;
 	struct dp_peer *vap_self_peer = NULL;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -5326,7 +5375,7 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	pdev = vdev->pdev;
 
 	vap_self_peer = dp_sta_vdev_self_peer_ref_n_get(soc, vdev,
-							DP_MOD_ID_PEER_CONFIG);
+							DP_MOD_ID_CONFIG);
 	if (vap_self_peer) {
 		qdf_spin_lock_bh(&soc->ast_lock);
 		if (vap_self_peer->self_ast_entry) {
@@ -5337,7 +5386,7 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 
 		dp_peer_delete_wifi3((struct cdp_soc_t *)soc, vdev->vdev_id,
 				     vap_self_peer->mac_addr.raw, 0);
-		dp_peer_unref_delete(vap_self_peer, DP_MOD_ID_PEER_CONFIG);
+		dp_peer_unref_delete(vap_self_peer, DP_MOD_ID_CONFIG);
 	}
 
 	/*
@@ -5388,11 +5437,16 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	if (vdev->opmode != wlan_op_mode_monitor)
 		dp_vdev_pdev_list_remove(soc, pdev, vdev);
 
-	/* release reference taken at dp_vdev_create */
-	dp_vdev_unref_delete(soc, vdev);
-
 	/* release reference taken above for find */
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+
+	qdf_spin_lock_bh(&soc->inactive_vdev_list_lock);
+	TAILQ_INSERT_TAIL(&soc->inactive_vdev_list, vdev, inactive_list_elem);
+	qdf_spin_unlock_bh(&soc->inactive_vdev_list_lock);
+
+	/* release reference taken at dp_vdev_create */
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CONFIG);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5428,14 +5482,14 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 
 	peer = dp_peer_find_hash_find(vdev->pdev->soc, peer_mac_addr,
 				      0, vdev->vdev_id,
-				      DP_MOD_ID_PEER_CONFIG);
+				      DP_MOD_ID_CONFIG);
 	if (!peer)
 		return NULL;
 
 	if (peer->bss_peer)
 		return peer;
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 	return NULL;
 }
 #else
@@ -5446,14 +5500,14 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 
 	peer = dp_peer_find_hash_find(vdev->pdev->soc, peer_mac_addr,
 				      0, vdev->vdev_id,
-				      DP_MOD_ID_PEER_CONFIG);
+				      DP_MOD_ID_CONFIG);
 	if (!peer)
 		return NULL;
 
 	if (peer->bss_peer && (peer->vdev->vdev_id == vdev->vdev_id))
 		return peer;
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 	return NULL;
 }
 #endif
@@ -5515,7 +5569,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	if (!peer_mac_addr)
 		return QDF_STATUS_E_FAILURE;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -5567,7 +5621,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/*
@@ -5591,7 +5645,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			  soc->ctrl_psoc,
 			  WLAN_MD_DP_PEER, "dp_peer");
 	if (!peer) {
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_FAILURE; /* failure */
 	}
 
@@ -5602,7 +5656,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	/* store provided params */
 	peer->vdev = vdev;
 	/* get the vdev reference for new peer */
-	dp_vdev_get_ref(soc, vdev);
+	dp_vdev_get_ref(soc, vdev, DP_MOD_ID_CHILD);
 
 	if ((vdev->opmode == wlan_op_mode_sta) &&
 	    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
@@ -5630,7 +5684,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	/* keep one reference for attach */
 	qdf_atomic_inc(&peer->ref_cnt);
-	qdf_atomic_inc(&peer->mod_refs[DP_MOD_ID_PEER_CONFIG]);
+	qdf_atomic_inc(&peer->mod_refs[DP_MOD_ID_CONFIG]);
 
 	dp_peer_vdev_list_add(soc, vdev, peer);
 
@@ -5707,7 +5761,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6080,7 +6134,8 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_pdev *pdev;
 	struct dp_neighbour_peer *peer = NULL;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev || !macaddr)
 		goto fail0;
@@ -6160,12 +6215,12 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 	}
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return 1;
 
 fail0:
 	if (vdev)
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return 0;
 }
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
@@ -6302,14 +6357,20 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
  * dp_vdev_unref_delete() - check and process vdev delete
  * @soc : DP specific soc pointer
  * @vdev: DP specific vdev pointer
+ * @mod_id: module id
  *
  */
-void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev)
+void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev,
+			  enum dp_mod_id mod_id)
 {
 	ol_txrx_vdev_delete_cb vdev_delete_cb = NULL;
 	void *vdev_delete_context = NULL;
 	uint8_t vdev_id = vdev->vdev_id;
 	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_vdev *tmp_vdev = NULL;
+	uint8_t found = 0;
+
+	QDF_ASSERT(qdf_atomic_dec_return(&vdev->mod_refs[mod_id]) >= 0);
 
 	/* Return if this is not the last reference*/
 	if (!qdf_atomic_dec_and_test(&vdev->ref_cnt))
@@ -6342,6 +6403,21 @@ void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev)
 
 free_vdev:
 	qdf_spinlock_destroy(&vdev->peer_list_lock);
+
+	qdf_spin_lock_bh(&soc->inactive_vdev_list_lock);
+	TAILQ_FOREACH(tmp_vdev, &soc->inactive_vdev_list,
+		      inactive_list_elem) {
+		if (tmp_vdev == vdev) {
+			found = 1;
+			break;
+		}
+	}
+	if (found)
+		TAILQ_REMOVE(&soc->inactive_vdev_list, vdev,
+			     inactive_list_elem);
+	/* delete this peer from the list */
+	qdf_spin_unlock_bh(&soc->inactive_vdev_list_lock);
+
 	dp_info("deleting vdev object %pK (%pM)",
 		vdev, vdev->mac_addr.raw);
 	wlan_minidump_remove(vdev);
@@ -6358,7 +6434,7 @@ free_vdev:
  * @mod_id:         ID of module releasing reference
  *
  */
-void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id mod_id)
+void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 {
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
@@ -6436,7 +6512,7 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id mod_id)
 		/*
 		 * Decrement ref count taken at peer create
 		 */
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CHILD);
 	}
 }
 
@@ -6513,7 +6589,7 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 	 * PEER_UNMAP message arrives to remove the other
 	 * reference, added by the PEER_MAP message.
 	 */
-	dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 	/*
 	 * Remove the reference taken above
 	 */
@@ -6534,14 +6610,15 @@ static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_soc_t *soc_hdl,
 					 uint8_t vdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	uint8_t *mac = NULL;
 
 	if (!vdev)
 		return NULL;
 
 	mac = vdev->mac_addr.raw;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 
 	return mac;
 }
@@ -6559,13 +6636,14 @@ static int dp_vdev_set_wds(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id((struct dp_soc *)soc, vdev_id);
+		dp_vdev_get_ref_by_id((struct dp_soc *)soc, vdev_id,
+				      DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	vdev->wds_enabled = val;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6592,7 +6670,8 @@ static uint8_t dp_get_mon_vdev_from_pdev_wifi3(struct cdp_soc_t *soc_hdl,
 static int dp_get_opmode(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	int opmode;
 
 	if (!vdev) {
@@ -6600,7 +6679,7 @@ static int dp_get_opmode(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 		return -EINVAL;
 	}
 	opmode = vdev->opmode;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 
 	return opmode;
 }
@@ -6621,14 +6700,15 @@ void dp_get_os_rx_handles_from_vdev_wifi3(struct cdp_soc_t *soc_hdl,
 					  ol_osif_vdev_handle *osif_vdev_p)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return;
 
 	*stack_fn_p = vdev->osif_rx_stack;
 	*osif_vdev_p = vdev->osif_vdev;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 }
 
 /**
@@ -6643,14 +6723,15 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(
 						uint8_t vdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	struct dp_pdev *pdev;
 
 	if (!vdev)
 		return NULL;
 
 	pdev = vdev->pdev;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return pdev ? (struct cdp_cfg *)pdev->wlan_cfg_ctx : NULL;
 }
 
@@ -6809,8 +6890,8 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc_hdl,
 	struct dp_pdev *pdev;
 	uint32_t num_entries;
 	struct dp_srng *mon_buf_ring;
-	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!vdev)
@@ -6878,7 +6959,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc_hdl,
 	}
 
 fail:
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return status;
 }
 
@@ -7062,13 +7143,13 @@ static void dp_enable_vdev_peer_protocol_count(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_vdev *vdev;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 	if (!vdev)
 		return;
 
 	dp_info("enable %d vdev_id %d", enable, vdev_id);
 	vdev->peer_protocol_count_track = enable;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 }
 
 static void dp_enable_vdev_peer_protocol_drop_mask(struct cdp_soc_t *soc_hdl,
@@ -7078,13 +7159,13 @@ static void dp_enable_vdev_peer_protocol_drop_mask(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_vdev *vdev;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 	if (!vdev)
 		return;
 
 	dp_info("drop_mask %d vdev_id %d", drop_mask, vdev_id);
 	vdev->peer_protocol_count_dropmask = drop_mask;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 }
 
 static int dp_is_vdev_peer_protocol_count_enabled(struct cdp_soc_t *soc_hdl,
@@ -7094,7 +7175,7 @@ static int dp_is_vdev_peer_protocol_count_enabled(struct cdp_soc_t *soc_hdl,
 	struct dp_vdev *vdev;
 	int peer_protocol_count_track;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 	if (!vdev)
 		return 0;
 
@@ -7103,7 +7184,7 @@ static int dp_is_vdev_peer_protocol_count_enabled(struct cdp_soc_t *soc_hdl,
 	peer_protocol_count_track =
 		vdev->peer_protocol_count_track;
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return peer_protocol_count_track;
 }
 
@@ -7114,7 +7195,7 @@ static int dp_get_vdev_peer_protocol_drop_mask(struct cdp_soc_t *soc_hdl,
 	struct dp_vdev *vdev;
 	int peer_protocol_count_dropmask;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 	if (!vdev)
 		return 0;
 
@@ -7123,7 +7204,7 @@ static int dp_get_vdev_peer_protocol_drop_mask(struct cdp_soc_t *soc_hdl,
 	peer_protocol_count_dropmask =
 		vdev->peer_protocol_count_dropmask;
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return peer_protocol_count_dropmask;
 }
 
@@ -7354,12 +7435,12 @@ static QDF_STATUS dp_get_device_stats(struct cdp_soc_t *soc_hdl, uint8_t id,
 
 	switch (type) {
 	case UPDATE_VDEV_STATS:
-		vdev = dp_vdev_get_ref_by_id(soc, id);
+		vdev = dp_vdev_get_ref_by_id(soc, id, DP_MOD_ID_CDP);
 
 		if (vdev) {
 			status = dp_vdev_getstats((struct cdp_vdev *)vdev,
 						  stats);
-			dp_vdev_unref_delete(soc, vdev);
+			dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		}
 		return status;
 	case UPDATE_PDEV_STATS:
@@ -8340,22 +8421,18 @@ dp_calculate_delay_stats(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 			 qdf_nbuf_t nbuf)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(cdp_soc);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_SUCCESS;
 
-	if (vdev->pdev->delay_stats_flag) {
+	if (vdev->pdev->delay_stats_flag)
 		dp_rx_compute_delay(vdev, nbuf);
-	} else {
-		/*
-		 * Update the per peer delay stats
-		 */
+	else
 		dp_rx_update_peer_delay_stats(soc, nbuf);
 
-	}
-
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8373,7 +8450,8 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 				    cdp_config_param_type *val)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(cdp_soc);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -8392,11 +8470,11 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "param value %d is wrong\n",
 			  param);
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8415,7 +8493,7 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 {
 	struct dp_soc *dsoc = (struct dp_soc *)cdp_soc;
 	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id(dsoc, vdev_id);
+		dp_vdev_get_ref_by_id(dsoc, vdev_id, DP_MOD_ID_CDP);
 	uint32_t var = 0;
 
 	if (!vdev)
@@ -8505,7 +8583,7 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 	}
 
 	dp_tx_vdev_update_search_flags((struct dp_vdev *)vdev);
-	dp_vdev_unref_delete(dsoc, vdev);
+	dp_vdev_unref_delete(dsoc, vdev, DP_MOD_ID_CDP);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8652,15 +8730,16 @@ dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS dp_set_vdev_dscp_tid_map_wifi3(ol_txrx_soc_handle soc,
+static QDF_STATUS dp_set_vdev_dscp_tid_map_wifi3(ol_txrx_soc_handle cdp_soc,
 						 uint8_t vdev_id,
 						 uint8_t map_id)
 {
-	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id((struct dp_soc *)soc, vdev_id);
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(cdp_soc);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	if (vdev) {
 		vdev->dscp_tid_map_id = map_id;
-		dp_vdev_unref_delete((struct dp_soc *)soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -8757,7 +8836,8 @@ static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc_hdl,
 						 uint16_t stats_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -8776,7 +8856,7 @@ static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc_hdl,
 		break;
 	}
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8927,7 +9007,8 @@ static int dp_txrx_get_vdev_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct cdp_vdev_stats *vdev_stats;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return 1;
@@ -8940,7 +9021,7 @@ static int dp_txrx_get_vdev_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 	}
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return 0;
 }
 
@@ -9112,7 +9193,8 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 	int fw_stats;
 	enum cdp_stats stats;
 	int num_stats;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
 	if (!vdev || !req) {
@@ -9169,7 +9251,7 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 				"Wrong Input for TxRx Stats");
 fail0:
 	if (vdev)
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return status;
 }
 
@@ -9393,7 +9475,8 @@ dp_txrx_data_tx_cb_set(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		       ol_txrx_data_tx_cb callback, void *ctxt)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return;
@@ -9401,7 +9484,7 @@ dp_txrx_data_tx_cb_set(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	vdev->tx_non_std_data_callback.func = callback;
 	vdev->tx_non_std_data_callback.ctxt = ctxt;
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 }
 
 /**
@@ -9451,16 +9534,19 @@ dp_pdev_set_dp_txrx_handle(struct cdp_soc_t *soc, uint8_t pdev_id,
  *
  * Return: opaque pointer to dp txrx handle
  */
-static void *dp_vdev_get_dp_ext_handle(ol_txrx_soc_handle soc, uint8_t vdev_id)
+static void *dp_vdev_get_dp_ext_handle(ol_txrx_soc_handle soc_hdl,
+				       uint8_t vdev_id)
 {
-	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id((struct dp_soc *)soc, vdev_id);
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	void *dp_ext_handle;
 
 	if (!vdev)
 		return NULL;
 	dp_ext_handle = vdev->vdev_dp_ext_handle;
 
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return dp_ext_handle;
 }
 
@@ -9477,7 +9563,8 @@ dp_vdev_set_dp_ext_handle(ol_txrx_soc_handle soc_hdl, uint8_t vdev_id,
 			  uint16_t size)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	void *dp_ext_handle;
 
 	if (!vdev)
@@ -9486,13 +9573,13 @@ dp_vdev_set_dp_ext_handle(ol_txrx_soc_handle soc_hdl, uint8_t vdev_id,
 	dp_ext_handle = qdf_mem_malloc(size);
 
 	if (!dp_ext_handle) {
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	vdev->vdev_dp_ext_handle = dp_ext_handle;
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -9698,7 +9785,8 @@ static QDF_STATUS  dp_vdev_get_neighbour_rssi(struct cdp_soc_t *soc_hdl,
 					      uint8_t *rssi)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	struct dp_pdev *pdev;
 	struct dp_neighbour_peer *peer = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -9719,7 +9807,7 @@ static QDF_STATUS  dp_vdev_get_neighbour_rssi(struct cdp_soc_t *soc_hdl,
 		}
 	}
 	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return status;
 }
 
@@ -9731,8 +9819,8 @@ dp_config_for_nac_rssi(struct cdp_soc_t *cdp_soc,
 		       uint8_t chan_num)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
-	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	struct dp_pdev *pdev;
 
 	if (!vdev)
@@ -9759,7 +9847,7 @@ dp_config_for_nac_rssi(struct cdp_soc_t *cdp_soc,
 			(soc->ctrl_psoc, pdev->pdev_id,
 			 vdev->vdev_id, cmd, bssid, client_macaddr);
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 #endif
@@ -10195,14 +10283,15 @@ static QDF_STATUS dp_set_vdev_pcp_tid_map_wifi3(struct cdp_soc_t *soc_hdl,
 						uint8_t pcp, uint8_t tid)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	vdev->pcp_tid_map[pcp] = tid;
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -10536,8 +10625,8 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct cdp_vdev_stats *vdev_stats = NULL;
 	uint32_t tx_success;
-	struct dp_vdev *vdev =
-		(struct dp_vdev *)dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -10549,7 +10638,7 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 	if (!vdev_stats) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "DP alloc failure - unable to get alloc vdev stats");
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return 0;
 	}
 
@@ -10558,7 +10647,7 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 	tx_success = vdev_stats->tx.tx_success.num;
 	qdf_mem_free(vdev_stats);
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 	return tx_success;
 }
 
@@ -10751,7 +10840,8 @@ static QDF_STATUS
 dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
 	struct dp_peer *peer = NULL;
 	QDF_STATUS status;
 	struct dp_req_rx_hw_stats_t *rx_hw_stats;
@@ -10825,7 +10915,7 @@ out:
 	if (peer)
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	if (vdev)
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 
 	return status;
 }
@@ -11413,6 +11503,8 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	TAILQ_INIT(&soc->inactive_peer_list);
 	qdf_spinlock_create(&soc->inactive_peer_list_lock);
+	TAILQ_INIT(&soc->inactive_vdev_list);
+	qdf_spinlock_create(&soc->inactive_vdev_list_lock);
 	qdf_spinlock_create(&soc->htt_stats.lock);
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
@@ -12069,7 +12161,7 @@ uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 {
 	struct dp_soc *dp_soc = (struct dp_soc *)soc;
 	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id(dp_soc, vdev_id);
+		dp_vdev_get_ref_by_id(dp_soc, vdev_id, DP_MOD_ID_CDP);
 	struct dp_peer *peer;
 	uint16_t new_mac_cnt = 0;
 
@@ -12086,7 +12178,7 @@ uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		}
 	}
 	qdf_spin_unlock_bh(&vdev->peer_list_lock);
-	dp_vdev_unref_delete(dp_soc, vdev);
+	dp_vdev_unref_delete(dp_soc, vdev, DP_MOD_ID_CDP);
 	return new_mac_cnt;
 }
 

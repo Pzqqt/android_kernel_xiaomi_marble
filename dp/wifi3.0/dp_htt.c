@@ -2414,12 +2414,13 @@ static void dp_process_ppdu_stats_user_common_tlv(
 
 	/* returning earlier causes other feilds unpopulated */
 	if (peer_id == DP_SCAN_PEER_ID) {
-		vdev = dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id);
+		vdev = dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id,
+					     DP_MOD_ID_TX_PPDU_STATS);
 		if (!vdev)
 			return;
 		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
 			     QDF_MAC_ADDR_SIZE);
-		dp_vdev_unref_delete(pdev->soc, vdev);
+		dp_vdev_unref_delete(pdev->soc, vdev, DP_MOD_ID_TX_PPDU_STATS);
 	} else {
 		peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
 					     DP_MOD_ID_TX_PPDU_STATS);
@@ -2432,12 +2433,14 @@ static void dp_process_ppdu_stats_user_common_tlv(
 			 * peer's peer_id but it was removed
 			 */
 			vdev = dp_vdev_get_ref_by_id(pdev->soc,
-						     ppdu_desc->vdev_id);
+						     ppdu_desc->vdev_id,
+						     DP_MOD_ID_TX_PPDU_STATS);
 			if (!vdev)
 				return;
 			qdf_mem_copy(ppdu_user_desc->mac_addr,
 				     vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-			dp_vdev_unref_delete(pdev->soc, vdev);
+			dp_vdev_unref_delete(pdev->soc, vdev,
+					     DP_MOD_ID_TX_PPDU_STATS);
 			return;
 		}
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
@@ -2477,10 +2480,12 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
 	if (peer_id == DP_SCAN_PEER_ID) {
-		vdev = dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id);
+		vdev = dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id,
+					     DP_MOD_ID_TX_PPDU_STATS);
 		if (!vdev)
 			return;
-		dp_vdev_unref_delete(pdev->soc, vdev);
+		dp_vdev_unref_delete(pdev->soc, vdev,
+				     DP_MOD_ID_TX_PPDU_STATS);
 	}
 	ppdu_user_desc->peer_id = peer_id;
 

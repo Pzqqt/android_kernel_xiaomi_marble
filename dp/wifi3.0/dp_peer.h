@@ -28,7 +28,7 @@
 
 typedef void dp_peer_iter_func(struct dp_soc *soc, struct dp_peer *peer,
 			       void *arg);
-void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id id);
+void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id id);
 
 /**
  * dp_peer_get_ref() - Returns peer object given the peer id
@@ -43,7 +43,7 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id id);
 static inline
 QDF_STATUS dp_peer_get_ref(struct dp_soc *soc,
 			   struct dp_peer *peer,
-			   enum dp_peer_mod_id mod_id)
+			   enum dp_mod_id mod_id)
 {
 	if (!qdf_atomic_inc_not_zero(&peer->ref_cnt))
 		return QDF_STATUS_E_INVAL;
@@ -66,7 +66,7 @@ QDF_STATUS dp_peer_get_ref(struct dp_soc *soc,
 static inline struct dp_peer *
 __dp_peer_get_ref_by_id(struct dp_soc *soc,
 			uint16_t peer_id,
-			enum dp_peer_mod_id mod_id)
+			enum dp_mod_id mod_id)
 
 {
 	struct dp_peer *peer;
@@ -97,7 +97,7 @@ __dp_peer_get_ref_by_id(struct dp_soc *soc,
 static inline
 struct dp_peer *dp_peer_get_ref_by_id(struct dp_soc *soc,
 				      uint16_t peer_id,
-				      enum dp_peer_mod_id mod_id)
+				      enum dp_mod_id mod_id)
 {
 	struct dp_peer *peer;
 
@@ -153,7 +153,7 @@ dp_clear_peer_internal(struct dp_soc *soc, struct dp_peer *peer)
  */
 static inline void
 dp_vdev_iterate_peer(struct dp_vdev *vdev, dp_peer_iter_func *func, void *arg,
-		     enum dp_peer_mod_id mod_id)
+		     enum dp_mod_id mod_id)
 {
 	struct dp_peer *peer;
 	struct dp_peer *tmp_peer;
@@ -189,7 +189,7 @@ dp_vdev_iterate_peer(struct dp_vdev *vdev, dp_peer_iter_func *func, void *arg,
  */
 static inline void
 dp_pdev_iterate_peer(struct dp_pdev *pdev, dp_peer_iter_func *func, void *arg,
-		     enum dp_peer_mod_id mod_id)
+		     enum dp_mod_id mod_id)
 {
 	struct dp_vdev *vdev;
 
@@ -214,7 +214,7 @@ dp_pdev_iterate_peer(struct dp_pdev *pdev, dp_peer_iter_func *func, void *arg,
  */
 static inline void
 dp_soc_iterate_peer(struct dp_soc *soc, dp_peer_iter_func *func, void *arg,
-		    enum dp_peer_mod_id mod_id)
+		    enum dp_mod_id mod_id)
 {
 	struct dp_pdev *pdev;
 	int i;
@@ -248,7 +248,7 @@ static inline void
 dp_vdev_iterate_peer_lock_safe(struct dp_vdev *vdev,
 			       dp_peer_iter_func *func,
 			       void *arg,
-			       enum dp_peer_mod_id mod_id)
+			       enum dp_mod_id mod_id)
 {
 	struct dp_peer *peer;
 	struct dp_peer *tmp_peer;
@@ -315,7 +315,7 @@ static inline void
 dp_pdev_iterate_peer_lock_safe(struct dp_pdev *pdev,
 			       dp_peer_iter_func *func,
 			       void *arg,
-			       enum dp_peer_mod_id mod_id)
+			       enum dp_mod_id mod_id)
 {
 	struct dp_peer *peer;
 	struct dp_peer *tmp_peer;
@@ -396,7 +396,7 @@ static inline void
 dp_soc_iterate_peer_lock_safe(struct dp_soc *soc,
 			      dp_peer_iter_func *func,
 			      void *arg,
-			      enum dp_peer_mod_id mod_id)
+			      enum dp_mod_id mod_id)
 {
 	struct dp_pdev *pdev;
 	int i;
@@ -748,8 +748,8 @@ static inline void dp_peer_ext_stats_ctx_dealloc(struct dp_soc *soc,
 
 struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
 					   struct dp_vdev *vdev,
-					   enum dp_peer_mod_id mod_id);
+					   enum dp_mod_id mod_id);
 struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
 						struct dp_vdev *vdev,
-						enum dp_peer_mod_id mod_id);
+						enum dp_mod_id mod_id);
 #endif /* _DP_PEER_H_ */

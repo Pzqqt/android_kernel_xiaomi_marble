@@ -169,11 +169,12 @@ enum dp_peer_state {
 };
 
 /**
- * enum for modules ids of peer reference
+ * enum for modules ids of
  */
-enum dp_peer_mod_id {
+enum dp_mod_id {
 	DP_MOD_ID_TX_COMP,
 	DP_MOD_ID_RX,
+	DP_MOD_ID_HTT_COMP,
 	DP_MOD_ID_RX_ERR,
 	DP_MOD_ID_TX_PPDU_STATS,
 	DP_MOD_ID_RX_PPDU_STATS,
@@ -182,10 +183,16 @@ enum dp_peer_mod_id {
 	DP_MOD_ID_TX_MULTIPASS,
 	DP_MOD_ID_TX_CAPTURE,
 	DP_MOD_ID_NSS_OFFLOAD,
-	DP_MOD_ID_PEER_CONFIG,
+	DP_MOD_ID_CONFIG,
 	DP_MOD_ID_HTT,
 	DP_MOD_ID_IPA,
 	DP_MOD_ID_AST,
+	DP_MOD_ID_MCAST2UCAST,
+	DP_MOD_ID_CHILD,
+	DP_MOD_ID_MESH,
+	DP_MOD_ID_TX_EXCEPTION,
+	DP_MOD_ID_TDLS,
+	DP_MOD_ID_MISC,
 	DP_MOD_ID_MAX,
 };
 
@@ -1508,6 +1515,8 @@ struct dp_soc {
 	struct dp_last_op_info last_op_info;
 	TAILQ_HEAD(, dp_peer) inactive_peer_list;
 	qdf_spinlock_t inactive_peer_list_lock;
+	TAILQ_HEAD(, dp_vdev) inactive_vdev_list;
+	qdf_spinlock_t inactive_vdev_list_lock;
 	/* lock to protect vdev_id_map table*/
 	qdf_spinlock_t vdev_map_lock;
 };
@@ -2303,6 +2312,9 @@ struct dp_vdev {
 #endif
 	/* callback to collect connectivity stats */
 	ol_txrx_stats_rx_fp stats_cb;
+	uint32_t num_peers;
+	/* entry to inactive_list*/
+	TAILQ_ENTRY(dp_vdev) inactive_list_elem;
 
 #ifdef WLAN_SUPPORT_RX_FISA
 	/**
@@ -2316,7 +2328,7 @@ struct dp_vdev {
 	 * peer is created for VDEV
 	 */
 	qdf_atomic_t ref_cnt;
-	uint32_t num_peers;
+	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
 };
 
 

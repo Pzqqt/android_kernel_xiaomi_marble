@@ -244,7 +244,7 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 	index = dp_peer_find_hash_index(soc, &peer->mac_addr);
 	qdf_spin_lock_bh(&soc->peer_hash_lock);
 
-	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_PEER_CONFIG) !=
+	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "unable to get peer reference at MAP mac %pM",
@@ -277,7 +277,7 @@ void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
 			   struct dp_peer *peer)
 {
 	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_PEER_CONFIG) !=
+	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "unable to get peer reference at MAP mac %pM",
@@ -321,7 +321,7 @@ void dp_peer_vdev_list_remove(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (found) {
 		TAILQ_REMOVE(&peer->vdev->peer_list, peer,
 			     peer_list_elem);
-		dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+		dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 		vdev->num_peers--;
 	} else {
 		/*Ignoring the remove operation as peer not found*/
@@ -348,7 +348,7 @@ void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
 
-	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_PEER_CONFIG) !=
+	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "unable to get peer reference at MAP mac %pM peer_id %u",
@@ -385,7 +385,7 @@ void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
 	qdf_spin_lock_bh(&soc->peer_map_lock);
 	peer = soc->peer_id_to_obj_map[peer_id];
 	soc->peer_id_to_obj_map[peer_id] = NULL;
-	dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 	qdf_spin_unlock_bh(&soc->peer_map_lock);
 }
 
@@ -1659,7 +1659,7 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
  */
 struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id,
-	enum dp_peer_mod_id mod_id)
+	enum dp_mod_id mod_id)
 {
 	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
 	unsigned index;
@@ -1719,7 +1719,7 @@ void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer)
 	QDF_ASSERT(found);
 	TAILQ_REMOVE(&soc->peer_hash.bins[index], peer, hash_list_elem);
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 	qdf_spin_unlock_bh(&soc->peer_hash_lock);
 }
 
@@ -1758,9 +1758,9 @@ void dp_peer_find_hash_erase(struct dp_soc *soc)
 				/* incr to one */
 				qdf_atomic_inc(&peer->ref_cnt);
 				qdf_atomic_inc(&peer->mod_refs
-						[DP_MOD_ID_PEER_CONFIG]);
+						[DP_MOD_ID_CONFIG]);
 				dp_peer_unref_delete(peer,
-						     DP_MOD_ID_PEER_CONFIG);
+						     DP_MOD_ID_CONFIG);
 			}
 		}
 	}
@@ -1930,7 +1930,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	QDF_ASSERT(peer_id <= soc->max_peers);
 	/* check if there's already a peer object with this MAC address */
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
-		0 /* is aligned */, vdev_id, DP_MOD_ID_PEER_CONFIG);
+		0 /* is aligned */, vdev_id, DP_MOD_ID_CONFIG);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		  "%s: peer %pK ID %d vid %d mac %pM",
 		  __func__, peer, peer_id, vdev_id, peer_mac_addr);
@@ -1948,7 +1948,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 		 * is received ignore this event
 		 */
 		if (peer->peer_state == DP_PEER_STATE_LOGICAL_DELETE) {
-			dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+			dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 			dp_alert("Peer %pK[%pM] logical delete state vid %d",
 				 peer, peer_mac_addr, vdev_id);
 			return NULL;
@@ -2147,7 +2147,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	 * Remove a reference to the peer.
 	 * If there are no more references, delete the peer object.
 	 */
-	dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 }
 
 void
@@ -4264,7 +4264,7 @@ dp_set_michael_key(struct cdp_soc_t *soc,
  */
 struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
 					   struct dp_vdev *vdev,
-					   enum dp_peer_mod_id mod_id)
+					   enum dp_mod_id mod_id)
 {
 	struct dp_peer *peer = NULL;
 
@@ -4298,7 +4298,7 @@ struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
  */
 struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
 						struct dp_vdev *vdev,
-						enum dp_peer_mod_id mod_id)
+						enum dp_mod_id mod_id)
 {
 	struct dp_peer *peer;
 

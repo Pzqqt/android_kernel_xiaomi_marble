@@ -1786,7 +1786,8 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			    qdf_nbuf_t nbuf, bool *fwd_success)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_IPA);
 	struct dp_pdev *pdev;
 	struct dp_peer *da_peer;
 	struct dp_peer *sa_peer;
@@ -1862,7 +1863,7 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	status = true;
 out:
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_IPA);
 	return status;
 }
 

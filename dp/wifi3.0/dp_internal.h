@@ -956,7 +956,8 @@ void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
 				uint16_t peer_id);
 void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
 				   uint16_t peer_id);
-void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev);
+void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev,
+			  enum dp_mod_id mod_id);
 /*
  * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
  * @peer: Datapath peer
@@ -981,7 +982,7 @@ extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 					      uint8_t *peer_mac_addr,
 					      int mac_addr_is_aligned,
 					      uint8_t vdev_id,
-					      enum dp_peer_mod_id id);
+					      enum dp_mod_id id);
 
 #ifdef DP_PEER_EXTENDED_API
 /**
@@ -2132,15 +2133,19 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
  *
  * @soc		: core DP soc context
  * @vdev	: DP vdev
+ * @mod_id	: module id
  *
  * Return:	QDF_STATUS_SUCCESS if reference held successfully
  *		else QDF_STATUS_E_INVAL
  */
 static inline
-QDF_STATUS dp_vdev_get_ref(struct dp_soc *soc, struct dp_vdev *vdev)
+QDF_STATUS dp_vdev_get_ref(struct dp_soc *soc, struct dp_vdev *vdev,
+			   enum dp_mod_id mod_id)
 {
 	if (!qdf_atomic_inc_not_zero(&vdev->ref_cnt))
 		return QDF_STATUS_E_INVAL;
+
+	qdf_atomic_inc(&vdev->mod_refs[mod_id]);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2149,11 +2154,13 @@ QDF_STATUS dp_vdev_get_ref(struct dp_soc *soc, struct dp_vdev *vdev)
  * dp_vdev_get_ref_by_id() - Returns vdev object given the vdev id
  * @soc: core DP soc context
  * @vdev_id: vdev id from vdev object can be retrieved
+ * @mod_id: module id which is requesting the reference
  *
  * Return: struct dp_vdev*: Pointer to DP vdev object
  */
 static inline struct dp_vdev *
-dp_vdev_get_ref_by_id(struct dp_soc *soc, uint8_t vdev_id)
+dp_vdev_get_ref_by_id(struct dp_soc *soc, uint8_t vdev_id,
+		      enum dp_mod_id mod_id)
 {
 	struct dp_vdev *vdev = NULL;
 	if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
@@ -2162,7 +2169,7 @@ dp_vdev_get_ref_by_id(struct dp_soc *soc, uint8_t vdev_id)
 	qdf_spin_lock_bh(&soc->vdev_map_lock);
 	vdev = soc->vdev_id_map[vdev_id];
 
-	if (!vdev || dp_vdev_get_ref(soc, vdev) != QDF_STATUS_SUCCESS) {
+	if (!vdev || dp_vdev_get_ref(soc, vdev, mod_id) != QDF_STATUS_SUCCESS) {
 		qdf_spin_unlock_bh(&soc->vdev_map_lock);
 		return NULL;
 	}

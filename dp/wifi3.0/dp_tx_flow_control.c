@@ -342,10 +342,12 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 		pool->status = FLOW_POOL_INVALID;
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		/* Reset TX desc associated to this Vdev as NULL */
-		vdev = dp_vdev_get_ref_by_id(soc, pool->flow_pool_id);
+		vdev = dp_vdev_get_ref_by_id(soc, pool->flow_pool_id,
+					     DP_MOD_ID_MISC);
 		if (vdev) {
 			dp_tx_desc_flush(vdev->pdev, vdev, false);
-			dp_vdev_unref_delete(soc, vdev);
+			dp_vdev_unref_delete(soc, vdev,
+					     DP_MOD_ID_MISC);
 		}
 		dp_err("avail desc less than pool size");
 		return -EAGAIN;
@@ -372,7 +374,7 @@ static void dp_tx_flow_pool_vdev_map(struct dp_pdev *pdev,
 	struct dp_vdev *vdev;
 	struct dp_soc *soc = pdev->soc;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		   "%s: invalid vdev_id %d",
@@ -385,7 +387,7 @@ static void dp_tx_flow_pool_vdev_map(struct dp_pdev *pdev,
 	pool->pool_owner_ctx = soc;
 	pool->flow_pool_id = vdev_id;
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 }
 
 /**
@@ -402,7 +404,7 @@ static void dp_tx_flow_pool_vdev_unmap(struct dp_pdev *pdev,
 	struct dp_vdev *vdev;
 	struct dp_soc *soc = pdev->soc;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		   "%s: invalid vdev_id %d",
@@ -411,7 +413,7 @@ static void dp_tx_flow_pool_vdev_unmap(struct dp_pdev *pdev,
 	}
 
 	vdev->pool = NULL;
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 }
 
 /**

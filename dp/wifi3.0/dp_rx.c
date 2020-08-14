@@ -1876,7 +1876,7 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 		goto deliver_fail;
 
 	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_RX);
 	if (!vdev || vdev->delete.pending || !vdev->osif_rx)
 		goto deliver_fail;
 
@@ -1902,7 +1902,7 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 		    vdev->osif_rx(vdev->osif_vdev, nbuf))
 			goto deliver_fail;
 		DP_STATS_INC(soc, rx.err.pkt_delivered_no_peer, 1);
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_RX);
 		return;
 	}
 
@@ -1911,7 +1911,7 @@ deliver_fail:
 			 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
 	qdf_nbuf_free(nbuf);
 	if (vdev)
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_RX);
 }
 #else
 static inline

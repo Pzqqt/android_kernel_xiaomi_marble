@@ -4347,7 +4347,7 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_vdev *vdev;
 
-	vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_GENERIC_STATS);
 	if (!vdev)
 		return;
 
@@ -4355,7 +4355,7 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc_hdl,
 		dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, NULL,
 						       is_egress, is_rx);
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_GENERIC_STATS);
 }
 #endif
 
