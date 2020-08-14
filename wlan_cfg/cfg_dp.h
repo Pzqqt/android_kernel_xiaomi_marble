@@ -891,6 +891,10 @@
 	CFG_INI_BOOL("dp_rx_monitor_protocol_flow_tag_enable", true, \
 		     "Enable/Disable Rx Protocol & Flow tags in Monitor mode")
 
+#define CFG_DP_TX_PER_PKT_VDEV_ID_CHECK \
+	CFG_INI_BOOL("dp_tx_allow_per_pkt_vdev_id_check", false, \
+		     "Enable/Disable tx Per Pkt vdev id check")
+
 /*
  * <ini>
  * dp_rx_fisa_enable - Control Rx datapath FISA
@@ -1072,5 +1076,6 @@
 		CFG(CFG_DP_RX_PENDING_LO_THRESHOLD) \
 		CFG(CFG_DP_LEGACY_MODE_CSUM_DISABLE) \
 		CFG(CFG_DP_POLL_MODE_ENABLE) \
-		CFG(CFG_DP_SWLM_ENABLE)
+		CFG(CFG_DP_SWLM_ENABLE) \
+		CFG(CFG_DP_TX_PER_PKT_VDEV_ID_CHECK)
 #endif /* _CFG_DP_H_ */

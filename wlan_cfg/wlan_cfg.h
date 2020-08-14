@@ -190,6 +190,7 @@ struct wlan_srng_cfg {
  * @rx_pending_high_threshold: threshold of starting pkt drop
  * @rx_pending_low_threshold: threshold of stopping pkt drop
  * @is_swlm_enabled: flag to enable/disable SWLM
+ * @tx_per_pkt_vdev_id_check: Enable tx perpkt vdev id check
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -300,6 +301,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t rx_pending_low_threshold;
 	bool is_poll_mode_enabled;
 	uint8_t is_swlm_enabled;
+	bool tx_per_pkt_vdev_id_check;
 };
 
 /**
@@ -1352,6 +1354,28 @@ wlan_cfg_set_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg,
  */
 bool
 wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_set_tx_per_pkt_vdev_id_check() - set flag to enable perpkt
+ *                                              vdev id check in tx.
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ * @val: feature flag value
+ *
+ * Return: None
+ */
+void
+wlan_cfg_set_tx_per_pkt_vdev_id_check(struct wlan_cfg_dp_soc_ctxt *cfg,
+				      bool val);
+
+/**
+ * wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled() - get flag to check if
+ *                              perpkt vdev id check is enabled in tx.
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: true if feature is enabled, false otherwise
+ */
+bool
+wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /**
  * wlan_cfg_fill_interrupt_mask() - set interrupt mask

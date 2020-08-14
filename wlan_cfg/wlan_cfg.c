@@ -621,6 +621,9 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_cfg_ctx->is_poll_mode_enabled =
 			cfg_get(psoc, CFG_DP_POLL_MODE_ENABLE);
 	wlan_cfg_ctx->is_swlm_enabled = cfg_get(psoc, CFG_DP_SWLM_ENABLE);
+	wlan_cfg_ctx->tx_per_pkt_vdev_id_check =
+			cfg_get(psoc, CFG_DP_TX_PER_PKT_VDEV_ID_CHECK);
+
 	return wlan_cfg_ctx;
 }
 
@@ -1399,6 +1402,19 @@ bool
 wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->is_rx_mon_protocol_flow_tag_enabled;
+}
+
+void
+wlan_cfg_set_tx_per_pkt_vdev_id_check(struct wlan_cfg_dp_soc_ctxt *cfg,
+				      bool val)
+{
+	cfg->tx_per_pkt_vdev_id_check = val;
+}
+
+bool
+wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tx_per_pkt_vdev_id_check;
 }
 
 void
