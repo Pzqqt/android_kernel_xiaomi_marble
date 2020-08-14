@@ -177,7 +177,7 @@ struct cfr_metadata_version_3 {
 	u_int8_t    capture_type; /* cfr_capture_type */
 	u_int8_t    sts_count;
 	u_int8_t    num_rx_chain;
-	u_int32_t   timestamp;
+	u_int64_t   timestamp;
 	u_int32_t   length;
 	u_int8_t    is_mu_ppdu;
 	u_int8_t    num_mu_users;
