@@ -567,7 +567,9 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 {
 	uint16_t len;
 	uint8_t is_frag;
-	struct dp_peer *da_peer;
+	uint16_t da_peer_id = HTT_INVALID_PEER;
+	struct dp_peer *da_peer = NULL;
+	bool is_da_bss_peer = false;
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
 	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
@@ -591,18 +593,28 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			return false;
 		}
 
-		da_peer = ast_entry->peer;
+		da_peer_id = ast_entry->peer_id;
 
-		if (!da_peer)
+		if (da_peer_id == HTT_INVALID_PEER)
 			return false;
 		/* TA peer cannot be same as peer(DA) on which AST is present
 		 * this indicates a change in topology and that AST entries
 		 * are yet to be updated.
 		 */
-		if (da_peer == ta_peer)
+		if (da_peer_id == ta_peer->peer_id)
 			return false;
 
-		if (da_peer->vdev == ta_peer->vdev && !da_peer->bss_peer) {
+		if (ast_entry->vdev_id != ta_peer->vdev->vdev_id)
+			return false;
+
+		da_peer = dp_peer_get_ref_by_id(soc, da_peer_id,
+						DP_MOD_ID_RX);
+		if (!da_peer)
+			return false;
+		is_da_bss_peer = da_peer->bss_peer;
+		dp_peer_unref_delete(da_peer, DP_MOD_ID_RX);
+
+		if (!is_da_bss_peer) {
 			len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 			is_frag = qdf_nbuf_is_frag(nbuf);
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));

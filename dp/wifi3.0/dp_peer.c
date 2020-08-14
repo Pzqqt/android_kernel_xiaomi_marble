@@ -43,7 +43,7 @@
 
 #ifdef FEATURE_WDS
 static inline bool
-dp_peer_ast_free_in_unmap_supported(struct dp_peer *peer,
+dp_peer_ast_free_in_unmap_supported(struct dp_soc *soc,
 				    struct dp_ast_entry *ast_entry)
 {
 	/* if peer map v2 is enabled we are not freeing ast entry
@@ -62,7 +62,7 @@ dp_peer_ast_free_in_unmap_supported(struct dp_peer *peer,
 }
 #else
 static inline bool
-dp_peer_ast_free_in_unmap_supported(struct dp_peer *peer,
+dp_peer_ast_free_in_unmap_supported(struct dp_soc *soc,
 				    struct dp_ast_entry *ast_entry)
 {
 	return false;
@@ -597,27 +597,31 @@ void dp_peer_ast_hash_remove(struct dp_soc *soc,
 }
 
 /*
- * dp_peer_ast_list_find() - Find AST entry by MAC address from peer ast list
+ * dp_peer_ast_hash_find_by_vdevid() - Find AST entry by MAC address
  * @soc: SoC handle
- * @peer: peer handle
- * @ast_mac_addr: mac address
  *
- * It assumes caller has taken the ast lock to protect the access to ast list
+ * It assumes caller has taken the ast lock to protect the access to
+ * AST hash table
  *
  * Return: AST entry
  */
-struct dp_ast_entry *dp_peer_ast_list_find(struct dp_soc *soc,
-					   struct dp_peer *peer,
-					   uint8_t *ast_mac_addr)
+struct dp_ast_entry *dp_peer_ast_hash_find_by_vdevid(struct dp_soc *soc,
+						     uint8_t *ast_mac_addr,
+						     uint8_t vdev_id)
 {
-	struct dp_ast_entry *ast_entry = NULL;
-	union dp_align_mac_addr *mac_addr =
-		(union dp_align_mac_addr *)ast_mac_addr;
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	uint32_t index;
+	struct dp_ast_entry *ase;
 
-	TAILQ_FOREACH(ast_entry, &peer->ast_entry_list, ase_list_elem) {
-		if (!dp_peer_find_mac_addr_cmp(mac_addr,
-					       &ast_entry->mac_addr)) {
-			return ast_entry;
+	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
+		     ast_mac_addr, QDF_MAC_ADDR_SIZE);
+	mac_addr = &local_mac_addr_aligned;
+
+	index = dp_peer_ast_hash_index(soc, mac_addr);
+	TAILQ_FOREACH(ase, &soc->ast_hash.bins[index], hash_list_elem) {
+		if ((vdev_id == ase->vdev_id) &&
+		    !dp_peer_find_mac_addr_cmp(mac_addr, &ase->mac_addr)) {
+			return ase;
 		}
 	}
 
@@ -722,7 +726,7 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	ast_entry = dp_peer_ast_list_find(soc, peer, mac_addr);
+	ast_entry = dp_peer_ast_hash_find_by_vdevid(soc, mac_addr, vdev_id);
 
 	if (is_wds) {
 		/*
@@ -747,7 +751,7 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 				cookie = ast_entry->cookie;
 				peer_type = ast_entry->type;
 
-				dp_peer_unlink_ast_entry(soc, ast_entry);
+				dp_peer_unlink_ast_entry(soc, ast_entry, peer);
 				dp_peer_free_ast_entry(soc, ast_entry);
 
 				qdf_spin_unlock_bh(&soc->ast_lock);
@@ -781,6 +785,11 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 		peer_type = ast_entry->type;
 		ast_entry->ast_hash_value = ast_hash;
 		ast_entry->is_mapped = TRUE;
+		qdf_assert_always(ast_entry->peer_id == HTT_INVALID_PEER);
+
+		ast_entry->peer_id = peer->peer_id;
+		TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry,
+				  ase_list_elem);
 	}
 
 	if (ast_entry || (peer->vdev && peer->vdev->proxysta_vdev)) {
@@ -1012,7 +1021,7 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 			 */
 			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
 			    (type == CDP_TXRX_AST_TYPE_MEC) &&
-			    (ast_entry->peer == peer)) {
+			    (ast_entry->peer_id == peer->peer_id)) {
 				ast_entry->is_active = FALSE;
 				dp_peer_del_ast(soc, ast_entry);
 			}
@@ -1037,6 +1046,9 @@ add_ast_entry:
 	ast_entry->pdev_id = vdev->pdev->pdev_id;
 	ast_entry->is_mapped = false;
 	ast_entry->delete_in_progress = false;
+	ast_entry->peer_id = HTT_INVALID_PEER;
+	ast_entry->next_hop = 0;
+	ast_entry->vdev_id = vdev->vdev_id;
 
 	switch (type) {
 	case CDP_TXRX_AST_TYPE_STATIC:
@@ -1060,6 +1072,9 @@ add_ast_entry:
 	case CDP_TXRX_AST_TYPE_WDS_HM_SEC:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_WDS_HM_SEC;
+		ast_entry->peer_id = peer->peer_id;
+		TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry,
+				  ase_list_elem);
 		break;
 	case CDP_TXRX_AST_TYPE_MEC:
 		ast_entry->next_hop = 1;
@@ -1087,14 +1102,10 @@ add_ast_entry:
 	soc->num_ast_entries++;
 	dp_peer_ast_hash_add(soc, ast_entry);
 
-	ast_entry->peer = peer;
-
 	if (type == CDP_TXRX_AST_TYPE_MEC)
 		qdf_mem_copy(next_node_mac, peer->vdev->mac_addr.raw, 6);
 	else
 		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
-
-	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 	if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
 	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
@@ -1156,6 +1167,7 @@ void dp_peer_free_ast_entry(struct dp_soc *soc,
  * dp_peer_unlink_ast_entry() - Free up the ast entry memory
  * @soc: SoC handle
  * @ast_entry: Address search entry
+ * @peer: peer
  *
  * This API is used to remove/unlink AST entry from the peer list
  * and hash list.
@@ -1163,14 +1175,20 @@ void dp_peer_free_ast_entry(struct dp_soc *soc,
  * Return: None
  */
 void dp_peer_unlink_ast_entry(struct dp_soc *soc,
-			      struct dp_ast_entry *ast_entry)
+			      struct dp_ast_entry *ast_entry,
+			      struct dp_peer *peer)
 {
+	if (!peer)
+		return;
+
+	if (ast_entry->peer_id == HTT_INVALID_PEER)
+		return;
 	/*
 	 * NOTE: Ensure that call to this API is done
 	 * after soc->ast_lock is taken
 	 */
-	struct dp_peer *peer = ast_entry->peer;
 
+	qdf_assert_always(ast_entry->peer_id == peer->peer_id);
 	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 	if (ast_entry == peer->self_ast_entry)
@@ -1183,7 +1201,7 @@ void dp_peer_unlink_ast_entry(struct dp_soc *soc,
 	if (ast_entry->is_mapped)
 		soc->ast_table[ast_entry->ast_idx] = NULL;
 
-	ast_entry->peer = NULL;
+	ast_entry->peer_id = HTT_INVALID_PEER;
 }
 
 /*
@@ -1199,7 +1217,7 @@ void dp_peer_unlink_ast_entry(struct dp_soc *soc,
  */
 void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
-	struct dp_peer *peer;
+	struct dp_peer *peer = NULL;
 
 	if (!ast_entry)
 		return;
@@ -1209,12 +1227,14 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 
 	ast_entry->delete_in_progress = true;
 
-	peer = ast_entry->peer;
-	dp_peer_ast_send_wds_del(soc, ast_entry);
+	peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+				     DP_MOD_ID_AST);
+
+	dp_peer_ast_send_wds_del(soc, ast_entry, peer);
 
 	/* Remove SELF and STATIC entries in teardown itself */
 	if (!ast_entry->next_hop)
-		dp_peer_unlink_ast_entry(soc, ast_entry);
+		dp_peer_unlink_ast_entry(soc, ast_entry, peer);
 
 	if (ast_entry->is_mapped)
 		soc->ast_table[ast_entry->ast_idx] = NULL;
@@ -1226,18 +1246,23 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	 * if peer_id is invalid we did not get the peer map event
 	 * for the peer free ast entry from here only in this case
 	 */
-	if (dp_peer_ast_free_in_unmap_supported(peer, ast_entry))
-		return;
+	if (dp_peer_ast_free_in_unmap_supported(soc, ast_entry))
+		goto end;
 
 	/* for WDS secondary entry ast_entry->next_hop would be set so
 	 * unlinking has to be done explicitly here.
 	 * As this entry is not a mapped entry unmap notification from
 	 * FW wil not come. Hence unlinkling is done right here.
 	 */
+
 	if (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC)
-		dp_peer_unlink_ast_entry(soc, ast_entry);
+		dp_peer_unlink_ast_entry(soc, ast_entry, peer);
 
 	dp_peer_free_ast_entry(soc, ast_entry);
+
+end:
+	if (peer)
+		dp_peer_unref_delete(peer, DP_MOD_ID_AST);
 }
 
 /*
@@ -1284,16 +1309,22 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	/*
 	 * Avoids flood of WMI update messages sent to FW for same peer.
 	 */
-	if (qdf_unlikely(ast_entry->peer == peer) &&
+	if (qdf_unlikely(ast_entry->peer_id == peer->peer_id) &&
 	    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
-	    (ast_entry->peer->vdev == peer->vdev) &&
+	    (ast_entry->vdev_id == peer->vdev->vdev_id) &&
 	    (ast_entry->is_active))
 		return 0;
 
-	old_peer = ast_entry->peer;
+	old_peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+					 DP_MOD_ID_AST);
+	if (!old_peer)
+		return 0;
+
 	TAILQ_REMOVE(&old_peer->ast_entry_list, ast_entry, ase_list_elem);
 
-	ast_entry->peer = peer;
+	dp_peer_unref_delete(old_peer, DP_MOD_ID_AST);
+
+	ast_entry->peer_id = peer->peer_id;
 	ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
 	ast_entry->pdev_id = peer->vdev->pdev->pdev_id;
 	ast_entry->is_active = TRUE;
@@ -1435,29 +1466,33 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 #endif
 
 void dp_peer_ast_send_wds_del(struct dp_soc *soc,
-			      struct dp_ast_entry *ast_entry)
+			      struct dp_ast_entry *ast_entry,
+			      struct dp_peer *peer)
 {
-	struct dp_peer *peer = ast_entry->peer;
 	struct cdp_soc_t *cdp_soc = &soc->cdp_soc;
+	bool delete_in_fw = false;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_TRACE,
-		  "%s: ast_entry->type: %d pdevid: %u vdev: %u mac_addr: %pM next_hop: %u peer_mac: %pM\n",
-		  __func__, ast_entry->type, peer->vdev->pdev->pdev_id,
-		  peer->vdev->vdev_id, ast_entry->mac_addr.raw,
-		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
+		  "%s: ast_entry->type: %d pdevid: %u vdev: %u mac_addr: %pM next_hop: %u peer_id: %uM\n",
+		  __func__, ast_entry->type, ast_entry->pdev_id,
+		  ast_entry->vdev_id, ast_entry->mac_addr.raw,
+		  ast_entry->next_hop, ast_entry->peer_id);
 
 	/*
-	 * If peer delete_in_progress is set, the peer is about to get
+	 * If peer is NULL, the peer is about to get
 	 * teared down with a peer delete command to firmware,
 	 * which will cleanup all the wds ast entries.
 	 * So, no need to send explicit wds ast delete to firmware.
 	 */
 	if (ast_entry->next_hop) {
+		if (peer)
+			delete_in_fw = true;
+
 		cdp_soc->ol_ops->peer_del_wds_entry(soc->ctrl_psoc,
-						    peer->vdev->vdev_id,
+						    ast_entry->vdev_id,
 						    ast_entry->mac_addr.raw,
 						    ast_entry->type,
-						    !peer->delete_in_progress);
+						    delete_in_fw);
 	}
 
 }
@@ -1483,18 +1518,18 @@ static uint32_t dp_peer_ast_free_wds_entries(struct dp_soc *soc,
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry) {
-		if (ast_entry->next_hop) {
-			if (ast_entry->is_mapped)
-				soc->ast_table[ast_entry->ast_idx] = NULL;
-
-			dp_peer_unlink_ast_entry(soc, ast_entry);
-			DP_STATS_INC(soc, ast.deleted, 1);
-			dp_peer_ast_hash_remove(soc, ast_entry);
-			TAILQ_INSERT_TAIL(&ast_local_list, ast_entry,
-					  ase_list_elem);
-			soc->num_ast_entries--;
+		if (ast_entry->next_hop)
 			num_ast++;
-		}
+
+		if (ast_entry->is_mapped)
+			soc->ast_table[ast_entry->ast_idx] = NULL;
+
+		dp_peer_unlink_ast_entry(soc, ast_entry, peer);
+		DP_STATS_INC(soc, ast.deleted, 1);
+		dp_peer_ast_hash_remove(soc, ast_entry);
+		TAILQ_INSERT_TAIL(&ast_local_list, ast_entry,
+				  ase_list_elem);
+		soc->num_ast_entries--;
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -1551,6 +1586,7 @@ dp_peer_clean_wds_entries(struct dp_soc *soc, struct dp_peer *peer,
  * dp_peer_ast_free_entry_by_mac() - find ast entry by MAC address and delete
  * @soc: soc handle
  * @peer: peer handle
+ * @vdev_id: vdev_id
  * @mac_addr: mac address of the AST entry to searc and delete
  *
  * find the ast entry from the peer list using the mac address and free
@@ -1560,6 +1596,7 @@ dp_peer_clean_wds_entries(struct dp_soc *soc, struct dp_peer *peer,
  */
 static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 					 struct dp_peer *peer,
+					 uint8_t vdev_id,
 					 uint8_t *mac_addr)
 {
 	struct dp_ast_entry *ast_entry;
@@ -1573,7 +1610,7 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	ast_entry = dp_peer_ast_list_find(soc, peer, mac_addr);
+	ast_entry = dp_peer_ast_hash_find_by_vdevid(soc, mac_addr, vdev_id);
 	if (!ast_entry) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return QDF_STATUS_E_NOENT;
@@ -1585,7 +1622,8 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 	cookie = ast_entry->cookie;
 
 
-	dp_peer_unlink_ast_entry(soc, ast_entry);
+	dp_peer_unlink_ast_entry(soc, ast_entry, peer);
+
 	dp_peer_free_ast_entry(soc, ast_entry);
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -2043,9 +2081,9 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	/* If V2 Peer map messages are enabled AST entry has to be freed here
 	 */
 	if (is_wds) {
-		if (!dp_peer_ast_free_entry_by_mac(soc, peer, mac_addr)) {
+		if (!dp_peer_ast_free_entry_by_mac(soc, peer, vdev_id,
+						   mac_addr))
 			return;
-		}
 
 		dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
 			 peer, peer->peer_id,

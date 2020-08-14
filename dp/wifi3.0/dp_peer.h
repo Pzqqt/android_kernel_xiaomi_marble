@@ -160,12 +160,12 @@ struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
 						     uint8_t *ast_mac_addr,
 						     uint8_t pdev_id);
 
+struct dp_ast_entry *dp_peer_ast_hash_find_by_vdevid(struct dp_soc *soc,
+						     uint8_t *ast_mac_addr,
+						     uint8_t vdev_id);
+
 struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
 					       uint8_t *ast_mac_addr);
-
-struct dp_ast_entry *dp_peer_ast_list_find(struct dp_soc *soc,
-					   struct dp_peer *peer,
-					   uint8_t *ast_mac_addr);
 
 uint8_t dp_peer_ast_get_pdev_id(struct dp_soc *soc,
 				struct dp_ast_entry *ast_entry);
@@ -179,7 +179,8 @@ void dp_peer_ast_set_type(struct dp_soc *soc,
 				enum cdp_txrx_ast_entry_type type);
 
 void dp_peer_ast_send_wds_del(struct dp_soc *soc,
-			      struct dp_ast_entry *ast_entry);
+			      struct dp_ast_entry *ast_entry,
+			      struct dp_peer *peer);
 
 void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 			   struct cdp_soc *dp_soc,
@@ -193,7 +194,8 @@ void dp_peer_free_ast_entry(struct dp_soc *soc,
 			    struct dp_ast_entry *ast_entry);
 
 void dp_peer_unlink_ast_entry(struct dp_soc *soc,
-			      struct dp_ast_entry *ast_entry);
+			      struct dp_ast_entry *ast_entry,
+			      struct dp_peer *peer);
 
 #define DP_AST_ASSERT(_condition) \
 	do { \

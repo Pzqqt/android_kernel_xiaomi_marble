@@ -220,13 +220,14 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 		}
 
 		ast_entry = soc->ast_table[ast_index];
-		if (!ast_entry) {
+		if (!ast_entry || ast_entry->peer_id == HTT_INVALID_PEER) {
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
 
-		peer = ast_entry->peer;
-		if (!peer || peer->peer_id == HTT_INVALID_PEER) {
+		peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+					     DP_MOD_ID_RX_PPDU_STATS);
+		if (!peer) {
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
@@ -286,6 +287,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 		rx_stats_peruser->vdev_id = peer->vdev->vdev_id;
 		rx_stats_peruser->mu_ul_info_valid = 0;
 
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_PPDU_STATS);
 		if (cdp_rx_ppdu->u.ppdu_type == HAL_RX_TYPE_MU_OFDMA ||
 		    cdp_rx_ppdu->u.ppdu_type == HAL_RX_TYPE_MU_MIMO) {
 			if (rx_user_status->mu_ul_info_valid) {
@@ -372,13 +374,14 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	}
 
 	ast_entry = soc->ast_table[ast_index];
-	if (!ast_entry) {
+	if (!ast_entry || ast_entry->peer_id == HTT_INVALID_PEER) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
 		cdp_rx_ppdu->num_users = 0;
 		goto end;
 	}
-	peer = ast_entry->peer;
-	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
+	peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+				     DP_MOD_ID_RX_PPDU_STATS);
+	if (!peer) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
 		cdp_rx_ppdu->num_users = 0;
 		goto end;
@@ -428,6 +431,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->num_msdu = 0;
 
 	dp_rx_populate_cdp_indication_ppdu_user(pdev, ppdu_info, cdp_rx_ppdu);
+
+	dp_peer_unref_delete(peer, DP_MOD_ID_RX_PPDU_STATS);
 
 	return;
 end:
@@ -1075,19 +1080,21 @@ dp_rx_mon_handle_cfr_mu_info(struct dp_pdev *pdev,
 		}
 
 		ast_entry = soc->ast_table[ast_index];
-		if (!ast_entry) {
+		if (!ast_entry || ast_entry->peer_id == HTT_INVALID_PEER) {
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
 
-		peer = ast_entry->peer;
-		if (!peer || peer->peer_id == HTT_INVALID_PEER) {
+		peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+					     DP_MOD_ID_RX_PPDU_STATS);
+		if (!peer) {
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
 
 		qdf_mem_copy(rx_stats_peruser->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_PPDU_STATS);
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -1458,15 +1465,19 @@ dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
 	if (ast_index < wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
 		ast_entry = soc->ast_table[ast_index];
 		if (ast_entry) {
-			peer = ast_entry->peer;
-			if (peer && (peer->peer_id != HTT_INVALID_PEER)) {
-				if (peer->peer_based_pktlog_filter) {
+			peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+						     DP_MOD_ID_RX_PPDU_STATS);
+			if (peer) {
+				if ((peer->peer_id != HTT_INVALID_PEER) &&
+				    (peer->peer_based_pktlog_filter)) {
 					dp_wdi_event_handler(
 							WDI_EVENT_RX_DESC, soc,
 							status_nbuf,
 							peer->peer_id,
 							WDI_NO_VAL, pdev_id);
 				}
+				dp_peer_unref_delete(peer,
+						     DP_MOD_ID_RX_PPDU_STATS);
 			}
 		}
 	}

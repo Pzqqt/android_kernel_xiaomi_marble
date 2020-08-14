@@ -1665,8 +1665,8 @@ int dp_tx_frame_is_drop(struct dp_vdev *vdev, uint8_t *srcmac, uint8_t *dstmac)
 	src_ast_entry = dp_peer_ast_hash_find_by_pdevid
 				(soc, srcmac, vdev->pdev->pdev_id);
 	if (dst_ast_entry && src_ast_entry) {
-		if (dst_ast_entry->peer->peer_id ==
-				src_ast_entry->peer->peer_id)
+		if (dst_ast_entry->peer_id ==
+				src_ast_entry->peer_id)
 			return 1;
 	}
 
@@ -2379,7 +2379,7 @@ void dp_tx_nawds_handler(struct cdp_soc_t *soc, struct dp_vdev *vdev,
 	qdf_nbuf_t nbuf_clone = NULL;
 	struct dp_soc *dp_soc = (struct dp_soc *)soc;
 	uint16_t peer_id = DP_INVALID_PEER;
-	struct dp_peer *sa_peer = NULL;
+	uint16_t sa_peer_id = DP_INVALID_PEER;
 	struct dp_ast_entry *ast_entry = NULL;
 	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
@@ -2392,7 +2392,7 @@ void dp_tx_nawds_handler(struct cdp_soc_t *soc, struct dp_vdev *vdev,
 					 vdev->pdev->pdev_id);
 
 		if (ast_entry)
-			sa_peer = ast_entry->peer;
+			sa_peer_id = ast_entry->peer_id;
 		qdf_spin_unlock_bh(&dp_soc->ast_lock);
 	}
 
@@ -2403,7 +2403,7 @@ void dp_tx_nawds_handler(struct cdp_soc_t *soc, struct dp_vdev *vdev,
 			/* Multicast packets needs to be
 			 * dropped in case of intra bss forwarding
 			 */
-			if (sa_peer == peer) {
+			if (sa_peer_id == peer->peer_id) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  " %s: multicast packet",  __func__);

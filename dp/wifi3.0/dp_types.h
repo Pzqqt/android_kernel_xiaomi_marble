@@ -951,9 +951,9 @@ struct dp_ast_free_cb_params {
  * dp_ast_entry
  *
  * @ast_idx: Hardware AST Index
+ * @peer_id: Next Hop peer_id (for non-WDS nodes, this will be point to
+ *           associated peer with this MAC address)
  * @mac_addr:  MAC Address for this AST entry
- * @peer: Next Hop peer (for non-WDS nodes, this will be point to
- *        associated peer with this MAC address)
  * @next_hop: Set to 1 if this is for a WDS node
  * @is_active: flag to indicate active data traffic on this node
  *             (used for aging out/expiry)
@@ -974,12 +974,13 @@ struct dp_ast_free_cb_params {
  */
 struct dp_ast_entry {
 	uint16_t ast_idx;
+	uint16_t peer_id;
 	union dp_align_mac_addr mac_addr;
-	struct dp_peer *peer;
 	bool next_hop;
 	bool is_active;
 	bool is_mapped;
 	uint8_t pdev_id;
+	uint8_t vdev_id;
 	uint16_t ast_hash_value;
 	qdf_atomic_t ref_cnt;
 	enum cdp_txrx_ast_entry_type type;

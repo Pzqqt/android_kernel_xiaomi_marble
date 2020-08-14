@@ -115,8 +115,9 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			 * ast is not in ast_table, we use the below API to get
 			 * AST entry for STA's own mac_address.
 			 */
-			ase = dp_peer_ast_list_find(soc, peer,
-						    &data[QDF_MAC_ADDR_SIZE]);
+			ase = dp_peer_ast_hash_find_by_vdevid
+				(soc, &data[QDF_MAC_ADDR_SIZE],
+				 peer->vdev->vdev_id);
 			if (ase) {
 				ase->ast_idx = sa_idx;
 				soc->ast_table[sa_idx] = ase;
@@ -142,7 +143,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 		}
 
 		if ((ase->type == CDP_TXRX_AST_TYPE_MEC) ||
-				(ase->peer != peer)) {
+				(ase->peer_id != peer->peer_id)) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,
