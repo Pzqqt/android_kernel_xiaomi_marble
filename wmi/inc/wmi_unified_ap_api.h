@@ -565,26 +565,6 @@ wmi_unified_set_qboost_param_cmd_send(wmi_unified_t wmi_handle,
 				      struct set_qboost_params *param);
 
 /**
- *  wmi_unified_gpio_config_cmd_send() - WMI gpio config function
- *  @wmi_handle: handle to WMI.
- *  @param: pointer to hold gpio config param
- *
- *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_gpio_config_cmd_send(wmi_unified_t wmi_handle,
-					    struct gpio_config_params *param);
-
-/**
- *  wmi_unified_gpio_output_cmd_send() - WMI gpio config function
- *  @wmi_handle: handle to WMI.
- *  @param param: pointer to hold gpio config param
- *
- *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_gpio_output_cmd_send(wmi_unified_t wmi_handle,
-					    struct gpio_output_params *param);
-
-/**
  *  wmi_unified_mcast_group_update_cmd_send() - WMI mcast grp update cmd function
  *  @wmi_handle: handle to WMI.
  *  @param: pointer to hold mcast grp param

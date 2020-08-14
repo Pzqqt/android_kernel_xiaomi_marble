@@ -455,25 +455,6 @@ QDF_STATUS wmi_unified_set_qboost_param_cmd_send(
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_gpio_config_cmd_send(
-		wmi_unified_t wmi_handle,
-		struct gpio_config_params *param)
-{
-	if (wmi_handle->ops->send_gpio_config_cmd)
-		return wmi_handle->ops->send_gpio_config_cmd(wmi_handle, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS wmi_unified_gpio_output_cmd_send(wmi_unified_t wmi_handle,
-					    struct gpio_output_params *param)
-{
-	if (wmi_handle->ops->send_gpio_output_cmd)
-		return wmi_handle->ops->send_gpio_output_cmd(wmi_handle, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 QDF_STATUS wmi_unified_mcast_group_update_cmd_send(
 		wmi_unified_t wmi_handle,
 		struct mcast_group_update_params *param)

@@ -1980,103 +1980,6 @@ send_set_qboost_param_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_gpio_config_cmd_tlv() - send gpio config to fw
- * @wmi_handle: wmi handle
- * @param: pointer to hold gpio config param
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS
-send_gpio_config_cmd_tlv(wmi_unified_t wmi_handle,
-			 struct gpio_config_params *param)
-{
-	wmi_gpio_config_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len;
-	QDF_STATUS ret;
-
-	len = sizeof(*cmd);
-
-	/* Sanity Checks */
-	if (param->pull_type > WMI_GPIO_PULL_DOWN ||
-	    param->intr_mode > WMI_GPIO_INTTYPE_LEVEL_HIGH) {
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cmd = (wmi_gpio_config_cmd_fixed_param *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_gpio_config_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(
-				wmi_gpio_config_cmd_fixed_param));
-	cmd->gpio_num = param->gpio_num;
-	cmd->input = param->input;
-	cmd->pull_type = param->pull_type;
-	cmd->intr_mode = param->intr_mode;
-
-	wmi_mtrace(WMI_GPIO_CONFIG_CMDID, NO_SESSION, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
-			WMI_GPIO_CONFIG_CMDID);
-
-	if (ret != 0) {
-		WMI_LOGE("Sending GPIO config cmd failed");
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-}
-
-/**
- * send_gpio_output_cmd_tlv() - send gpio output to fw
- * @wmi_handle: wmi handle
- * @param: pointer to hold gpio output param
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS
-send_gpio_output_cmd_tlv(wmi_unified_t wmi_handle,
-			 struct gpio_output_params *param)
-{
-	wmi_gpio_output_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len;
-	QDF_STATUS ret;
-
-	len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cmd = (wmi_gpio_output_cmd_fixed_param *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_gpio_output_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(
-				wmi_gpio_output_cmd_fixed_param));
-	cmd->gpio_num = param->gpio_num;
-	cmd->set = param->set;
-
-	wmi_mtrace(WMI_GPIO_OUTPUT_CMDID, NO_SESSION, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
-			WMI_GPIO_OUTPUT_CMDID);
-
-	if (ret != 0) {
-		WMI_LOGE("Sending GPIO output cmd failed");
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-
-}
-
-/**
  * send_mcast_group_update_cmd_tlv() - send mcast group update cmd to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold mcast update param
@@ -2709,8 +2612,6 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_fils_discovery_send_cmd = send_fils_discovery_send_cmd_tlv;
 #endif /* WLAN_SUPPORT_FILS */
 	ops->send_set_qboost_param_cmd = send_set_qboost_param_cmd_tlv;
-	ops->send_gpio_config_cmd = send_gpio_config_cmd_tlv;
-	ops->send_gpio_output_cmd = send_gpio_output_cmd_tlv;
 	ops->send_mcast_group_update_cmd = send_mcast_group_update_cmd_tlv;
 	ops->send_pdev_qvit_cmd = send_pdev_qvit_cmd_tlv;
 	ops->send_wmm_update_cmd = send_wmm_update_cmd_tlv;
