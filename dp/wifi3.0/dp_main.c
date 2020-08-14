@@ -9736,18 +9736,14 @@ static void *dp_peer_get_wlan_stats_ctx(struct cdp_soc_t *soc_hdl,
 
 	if (mac_addr) {
 		peer = dp_peer_find_hash_find(soc, mac_addr,
-					      0, vdev_id);
+					      0, vdev_id,
+					      DP_MOD_ID_CDP);
 		if (!peer)
 			return NULL;
 
-		if (peer->delete_in_progress) {
-			dp_peer_unref_delete(peer);
-			return NULL;
-		}
-
 		wlanstats_ctx = peer->wlanstats_ctx;
 
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	}
 
 	return wlanstats_ctx;
