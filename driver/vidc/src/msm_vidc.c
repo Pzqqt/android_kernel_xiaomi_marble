@@ -119,9 +119,9 @@ int msm_vidc_enum_fmt(void *instance, struct v4l2_fmtdesc *f)
 		return -EINVAL;
 
 	if (inst->domain == MSM_VIDC_DECODER)
-		return 0;//msm_vdec_enum_fmt(instance, f);
+		return -EINVAL;//msm_vdec_enum_fmt(instance, f);
 	else if (inst->domain == MSM_VIDC_ENCODER)
-		return 0;//msm_venc_enum_fmt(instance, f);
+		return -EINVAL;//msm_venc_enum_fmt(instance, f);
 	return -EINVAL;
 }
 EXPORT_SYMBOL(msm_vidc_enum_fmt);
@@ -203,6 +203,25 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 	if (!inst || !f)
 		return -EINVAL;
 
+	if (f->type == INPUT_PLANE) {
+		if (inst->state != MSM_VIDC_OPEN &&
+		    inst->state != MSM_VIDC_START_OUTPUT) {
+			s_vpr_e(inst->sid,
+				"%s: s_fmt(%d) not allowed in %d state\n",
+				__func__, f->type, inst->state);
+			return -EINVAL;
+		}
+	} else if (f->type == OUTPUT_PLANE) {
+		if (inst->state != MSM_VIDC_OPEN &&
+		    inst->state != MSM_VIDC_START_INPUT &&
+		    inst->state != MSM_VIDC_DRAIN_START_INPUT) {
+			s_vpr_e(inst->sid,
+				"%s: s_fmt(%d) not allowed in %d state\n",
+				__func__, f->type, inst->state);
+			return -EINVAL;
+		}
+	}
+
 	if (inst->domain == MSM_VIDC_DECODER)
 		rc = msm_vdec_s_fmt(inst, f);
 	if (inst->domain == MSM_VIDC_ENCODER)
@@ -269,17 +288,41 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 	if (!inst || !b)
 		return -EINVAL;
 
-	port = msm_vidc_get_port_from_type(b->type);
+	mutex_lock(&inst->lock);
+
+	if (b->type == INPUT_PLANE) {
+		if (inst->state != MSM_VIDC_OPEN &&
+		    inst->state != MSM_VIDC_START_OUTPUT) {
+			s_vpr_e(inst->sid,
+				"%s: reqbufs(%d) not allowed in %d state\n",
+				__func__, b->type, inst->state);
+			return -EINVAL;
+		}
+	} else if (b->type == OUTPUT_PLANE) {
+		if (inst->state != MSM_VIDC_OPEN &&
+		    inst->state != MSM_VIDC_START_INPUT &&
+		    inst->state != MSM_VIDC_DRAIN_START_INPUT) {
+			s_vpr_e(inst->sid,
+				"%s: reqbufs(%d) not allowed in %d state\n",
+				__func__, b->type, inst->state);
+			return -EINVAL;
+		}
+	}
+
+	port = msm_vidc_get_port_from_v4l2_type(b->type);
 	if (port < 0) {
 		d_vpr_e("%s: invalid queue type %d\n", __func__, b->type);
 		return -EINVAL;
 	}
-	mutex_lock(&inst->lock);
 	rc = vb2_reqbufs(&inst->vb2q[port], b);
-	mutex_unlock(&inst->lock);
-	if (rc)
-		s_vpr_e(inst->sid, "%s: vb2_reqbufs failed, %d\n", rc);
+	if (rc) {
+		s_vpr_e(inst->sid, "%s: vb2_reqbufs(%d) failed, %d\n",
+			__func__, b->type, rc);
+		goto unlock;
+	}
 
+unlock:
+	mutex_unlock(&inst->lock);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_reqbufs);
@@ -297,50 +340,168 @@ int msm_vidc_dqbuf(void *instance, struct v4l2_buffer *b)
 }
 EXPORT_SYMBOL(msm_vidc_dqbuf);
 
-int msm_vidc_streamon(void *instance, enum v4l2_buf_type i)
+int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
+	enum msm_vidc_inst_state new_state = 0;
 	int port;
 
 	if (!inst)
 		return -EINVAL;
 
-	port = msm_vidc_get_port_from_type(i);
-	if (port < 0) {
-		d_vpr_e("%s: invalid buf type %d\n", __func__, i);
-		return -EINVAL;
-	}
 	mutex_lock(&inst->lock);
-	rc = vb2_streamon(&inst->vb2q[port], i);
-	mutex_unlock(&inst->lock);
-	if (rc)
-		s_vpr_e(inst->sid, "%s: vb2_streamon failed, %d\n", rc);
 
+	if (type == INPUT_PLANE) {
+		if (inst->state != MSM_VIDC_OPEN &&
+		    inst->state != MSM_VIDC_START_OUTPUT) {
+			s_vpr_e(inst->sid,
+				"%s: streamon(%d) not allowed in %d state\n",
+				__func__, type, inst->state);
+			rc = -EINVAL;
+			goto unlock;
+		}
+	} else if (type == OUTPUT_PLANE) {
+		if (inst->state != MSM_VIDC_OPEN &&
+		    inst->state != MSM_VIDC_START_INPUT &&
+		    inst->state != MSM_VIDC_DRAIN_START_INPUT) {
+			s_vpr_e(inst->sid,
+				"%s: streamon(%d) not allowed in %d state\n",
+				__func__, type, inst->state);
+			rc = -EINVAL;
+			goto unlock;
+		}
+	}
+
+	port = msm_vidc_get_port_from_v4l2_type(type);
+	if (port < 0) {
+		d_vpr_e("%s: invalid buf type %d\n", __func__, type);
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	rc = vb2_streamon(&inst->vb2q[port], type);
+	if (rc) {
+		s_vpr_e(inst->sid, "%s: vb2_streamon(%d) failed, %d\n",
+			__func__, type, rc);
+		goto unlock;
+	}
+
+	if (type == INPUT_PLANE) {
+		if (inst->state == MSM_VIDC_OPEN) {
+			new_state = MSM_VIDC_START_INPUT;
+		} else if (inst->state == MSM_VIDC_START_OUTPUT) {
+			new_state = MSM_VIDC_START;
+		}
+		rc = msm_vidc_change_inst_state(inst, new_state);
+		if (rc)
+			goto unlock;
+	} else if (type == OUTPUT_PLANE) {
+		if (inst->state == MSM_VIDC_OPEN) {
+			new_state = MSM_VIDC_START_OUTPUT;
+		} else if (inst->state == MSM_VIDC_START_INPUT) {
+			new_state = MSM_VIDC_START;
+		} else if (inst->state == MSM_VIDC_DRAIN_START_INPUT) {
+			if (0 /* check if input port settings change pending */)
+				new_state = MSM_VIDC_DRC_DRAIN;
+			else
+				new_state = MSM_VIDC_DRAIN;
+		}
+		rc = msm_vidc_change_inst_state(inst, new_state);
+		if (rc)
+			goto unlock;
+	}
+
+unlock:
+	mutex_unlock(&inst->lock);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_streamon);
 
-int msm_vidc_streamoff(void *instance, enum v4l2_buf_type i)
+int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
+	enum msm_vidc_inst_state new_state = 0;
 	int port;
 
 	if (!inst)
 		return -EINVAL;
 
-	port = msm_vidc_get_port_from_type(i);
-	if (port < 0) {
-		d_vpr_e("%s: invalid buf type %d\n", __func__, i);
-		return -EINVAL;
-	}
 	mutex_lock(&inst->lock);
-	rc = vb2_streamoff(&inst->vb2q[port], i);
-	mutex_unlock(&inst->lock);
-	if (rc)
-		s_vpr_e(inst->sid, "%s: vb2_streamoff failed, %d\n", rc);
 
+	if (type == INPUT_PLANE) {
+		if (inst->state == MSM_VIDC_OPEN ||
+		    inst->state == MSM_VIDC_START_OUTPUT) {
+			s_vpr_e(inst->sid,
+				"%s: streamoff(%d) not allowed in %d state\n",
+				__func__, type, inst->state);
+			rc = -EINVAL;
+			goto unlock;
+		}
+	} else if (type == OUTPUT_PLANE) {
+		if (inst->state == MSM_VIDC_OPEN ||
+		    inst->state == MSM_VIDC_START_INPUT) {
+			s_vpr_e(inst->sid,
+				"%s: streamoff(%d) not allowed in %d state\n",
+				__func__, type, inst->state);
+			rc = -EINVAL;
+			goto unlock;
+		}
+	}
+
+	port = msm_vidc_get_port_from_v4l2_type(type);
+	if (port < 0) {
+		d_vpr_e("%s: invalid buf type %d\n", __func__, type);
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	rc = vb2_streamoff(&inst->vb2q[port], type);
+	if (rc) {
+		s_vpr_e(inst->sid, "%s: vb2_streamoff(%d) failed, %d\n",
+			__func__, type, rc);
+		goto unlock;
+	}
+
+	if (type == INPUT_PLANE) {
+		if (inst->state == MSM_VIDC_START_INPUT) {
+			new_state = MSM_VIDC_OPEN;
+		} else if (inst->state == MSM_VIDC_START) {
+			new_state = MSM_VIDC_START_OUTPUT;
+		} else if (inst->state == MSM_VIDC_DRC ||
+			   inst->state == MSM_VIDC_DRC_LAST_FLAG ||
+			   inst->state == MSM_VIDC_DRAIN ||
+		           inst->state == MSM_VIDC_DRAIN_LAST_FLAG ||
+			   inst->state == MSM_VIDC_DRC_DRAIN ||
+			   inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG ||
+			   inst->state == MSM_VIDC_DRAIN_START_INPUT) {
+			new_state = MSM_VIDC_START_OUTPUT;
+			/* discard pending port settings change if any */
+		}
+		rc = msm_vidc_change_inst_state(inst, new_state);
+		if (rc)
+			goto unlock;
+	} else if (type == OUTPUT_PLANE) {
+		if (inst->state == MSM_VIDC_START_OUTPUT) {
+			new_state = MSM_VIDC_OPEN;
+		} else if (inst->state == MSM_VIDC_START ||
+			   inst->state == MSM_VIDC_DRAIN ||
+			   inst->state == MSM_VIDC_DRAIN_LAST_FLAG ||
+			   inst->state == MSM_VIDC_DRC ||
+			   inst->state == MSM_VIDC_DRC_LAST_FLAG ||
+			   inst->state == MSM_VIDC_DRC_DRAIN) {
+			new_state = MSM_VIDC_START_INPUT;
+		} else if (inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG) {
+			new_state = MSM_VIDC_DRAIN_START_INPUT;
+		}
+		rc = msm_vidc_change_inst_state(inst, new_state);
+		if (rc)
+			goto unlock;
+	}
+
+unlock:
+	mutex_unlock(&inst->lock);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_streamoff);
@@ -357,44 +518,46 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 }
 EXPORT_SYMBOL(msm_vidc_enum_framesizes);
 
-int msm_vidc_subscribe_event(void *inst,
+int msm_vidc_subscribe_event(void *instance,
 		const struct v4l2_event_subscription *sub)
 {
 	int rc = 0;
-	struct msm_vidc_inst *vidc_inst = (struct msm_vidc_inst *)inst;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
 	if (!inst || !sub)
 		return -EINVAL;
 
-	rc = v4l2_event_subscribe(&vidc_inst->event_handler,
+	s_vpr_e(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
+	rc = v4l2_event_subscribe(&inst->event_handler,
 		sub, MAX_EVENTS, NULL);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_subscribe_event);
 
-int msm_vidc_unsubscribe_event(void *inst,
+int msm_vidc_unsubscribe_event(void *instance,
 		const struct v4l2_event_subscription *sub)
 {
 	int rc = 0;
-	struct msm_vidc_inst *vidc_inst = (struct msm_vidc_inst *)inst;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
 	if (!inst || !sub)
 		return -EINVAL;
 
-	rc = v4l2_event_unsubscribe(&vidc_inst->event_handler, sub);
+	s_vpr_e(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
+	rc = v4l2_event_unsubscribe(&inst->event_handler, sub);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_unsubscribe_event);
 
-int msm_vidc_dqevent(void *inst, struct v4l2_event *event)
+int msm_vidc_dqevent(void *instance, struct v4l2_event *event)
 {
 	int rc = 0;
-	struct msm_vidc_inst *vidc_inst = (struct msm_vidc_inst *)inst;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
 	if (!inst || !event)
 		return -EINVAL;
 
-	rc = v4l2_event_dequeue(&vidc_inst->event_handler, event, false);
+	rc = v4l2_event_dequeue(&inst->event_handler, event, false);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_dqevent);
@@ -455,6 +618,20 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->buffers.scratch_2.list);
 	INIT_LIST_HEAD(&inst->buffers.persist.list);
 	INIT_LIST_HEAD(&inst->buffers.persist_1.list);
+	INIT_LIST_HEAD(&inst->allocations.scratch.list);
+	INIT_LIST_HEAD(&inst->allocations.scratch_1.list);
+	INIT_LIST_HEAD(&inst->allocations.scratch_2.list);
+	INIT_LIST_HEAD(&inst->allocations.persist.list);
+	INIT_LIST_HEAD(&inst->allocations.persist_1.list);
+	INIT_LIST_HEAD(&inst->maps.input.list);
+	INIT_LIST_HEAD(&inst->maps.input_meta.list);
+	INIT_LIST_HEAD(&inst->maps.output.list);
+	INIT_LIST_HEAD(&inst->maps.output_meta.list);
+	INIT_LIST_HEAD(&inst->maps.scratch.list);
+	INIT_LIST_HEAD(&inst->maps.scratch_1.list);
+	INIT_LIST_HEAD(&inst->maps.scratch_2.list);
+	INIT_LIST_HEAD(&inst->maps.persist.list);
+	INIT_LIST_HEAD(&inst->maps.persist_1.list);
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
 	//inst->debugfs_root =
@@ -476,7 +653,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 			goto error;
 	}
 
-	rc = msm_vidc_queue_init(inst);
+	rc = msm_vidc_vb2_queue_init(inst);
 	if (rc)
 		goto error;
 

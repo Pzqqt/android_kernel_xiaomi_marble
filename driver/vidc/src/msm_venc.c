@@ -35,11 +35,11 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	f->fmt.pix.pixelformat = V4L2_PIX_FMT_H264;
 	f->fmt.pix.bytesperline = 0;
 	f->fmt.pix.sizeimage = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_OUTPUT);
+			inst, MSM_VIDC_BUF_OUTPUT);
 	inst->buffers.output.min_count =
-			call_session_op(core, min_count, inst, MSM_VIDC_OUTPUT);
+			call_session_op(core, min_count, inst, MSM_VIDC_BUF_OUTPUT);
 	inst->buffers.output.extra_count =
-			call_session_op(core, extra_count, inst, MSM_VIDC_OUTPUT);
+			call_session_op(core, extra_count, inst, MSM_VIDC_BUF_OUTPUT);
 	inst->buffers.output.actual_count =
 			inst->buffers.output.min_count +
 			inst->buffers.output.extra_count;
@@ -49,7 +49,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	f->type = OUTPUT_META_PLANE;
 	f->fmt.meta.dataformat = V4L2_PIX_FMT_VIDC_META;
 	f->fmt.meta.buffersize = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_OUTPUT_META);
+			inst, MSM_VIDC_BUF_OUTPUT_META);
 	inst->buffers.output_meta.min_count = inst->buffers.output.min_count;
 	inst->buffers.output_meta.extra_count = inst->buffers.output.extra_count;
 	inst->buffers.output_meta.actual_count = inst->buffers.output.actual_count;
@@ -64,11 +64,11 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 		msm_vidc_convert_color_fmt(f->fmt.pix.pixelformat), DEFAULT_HEIGHT);
 	f->fmt.pix.bytesperline = f->fmt.pix.width;
 	f->fmt.pix.sizeimage = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_INPUT);
+			inst, MSM_VIDC_BUF_INPUT);
 	inst->buffers.input.min_count =
-			call_session_op(core, min_count, inst, MSM_VIDC_INPUT);
+			call_session_op(core, min_count, inst, MSM_VIDC_BUF_INPUT);
 	inst->buffers.input.extra_count =
-			call_session_op(core, extra_count, inst, MSM_VIDC_INPUT);
+			call_session_op(core, extra_count, inst, MSM_VIDC_BUF_INPUT);
 	inst->buffers.input.actual_count =
 			inst->buffers.input.min_count +
 			inst->buffers.input.extra_count;
@@ -78,7 +78,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	f->type = INPUT_META_PLANE;
 	f->fmt.meta.dataformat = V4L2_PIX_FMT_VIDC_META;
 	f->fmt.meta.buffersize = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_INPUT_META);
+			inst, MSM_VIDC_BUF_INPUT_META);
 	inst->buffers.input_meta.min_count = inst->buffers.input.min_count;
 	inst->buffers.input_meta.extra_count = inst->buffers.input.extra_count;
 	inst->buffers.input_meta.actual_count = inst->buffers.input.actual_count;

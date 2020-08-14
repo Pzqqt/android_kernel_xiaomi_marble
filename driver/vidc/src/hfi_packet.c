@@ -6,57 +6,134 @@
 #include "hfi_packet.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
+#include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_platform.h"
 
-static u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
-	enum msm_vidc_buffer_type buf_type)
+u32 get_hfi_port(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type)
 {
-	switch (buf_type) {
-	case MSM_VIDC_QUEUE:
-		return 0; /* TODO */
-	case MSM_VIDC_INPUT:
+	u32 hfi_port = HFI_PORT_NONE;
+
+	if (is_decode_session(inst)) {
+		switch(buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			hfi_port = HFI_PORT_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			hfi_port = HFI_PORT_RAW;
+			break;
+		default:
+			s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+				__func__, buffer_type);
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			hfi_port = HFI_PORT_RAW;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			hfi_port = HFI_PORT_BITSTREAM;
+			break;
+		default:
+			s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+				__func__, buffer_type);
+			break;
+		}
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid domain %#x\n",
+			__func__, inst->domain);
+	}
+
+	return hfi_port;
+}
+
+u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
+	enum msm_vidc_buffer_type buffer_type)
+{
+	switch (buffer_type) {
+	case MSM_VIDC_BUF_INPUT:
 		if (domain == MSM_VIDC_DECODER)
-			return HFI_PORT_BITSTREAM;
+			return HFI_BUFFER_BITSTREAM;
 		else
-			return HFI_PORT_RAW;
-	case MSM_VIDC_OUTPUT:
+			return HFI_BUFFER_RAW;
+	case MSM_VIDC_BUF_OUTPUT:
 		if (domain == MSM_VIDC_DECODER)
-			return HFI_PORT_RAW;
+			return HFI_BUFFER_RAW;
 		else
-			return HFI_PORT_BITSTREAM;
-	case MSM_VIDC_INPUT_META:
-	case MSM_VIDC_OUTPUT_META:
+			return HFI_BUFFER_BITSTREAM;
+	case MSM_VIDC_BUF_INPUT_META:
+	case MSM_VIDC_BUF_OUTPUT_META:
 		return HFI_BUFFER_METADATA;
-	case MSM_VIDC_DPB:
-		return HFI_BUFFER_DPB;
-	case MSM_VIDC_ARP:
-		return HFI_BUFFER_ARP;
-	case MSM_VIDC_LINE:
-		return HFI_BUFFER_LINE;
-	case MSM_VIDC_BIN:
-		return HFI_BUFFER_BIN;
+	case MSM_VIDC_BUF_SCRATCH:
+		return HFI_BUFFER_SCRATCH;
+	case MSM_VIDC_BUF_SCRATCH_1:
+		return HFI_BUFFER_SCRATCH_1;
+	case MSM_VIDC_BUF_SCRATCH_2:
+		return HFI_BUFFER_SCRATCH_2;
+	case MSM_VIDC_BUF_PERSIST:
+		return HFI_BUFFER_PERSIST;
+	case MSM_VIDC_BUF_PERSIST_1:
+		return HFI_BUFFER_PERSIST_1;
 	default:
-		d_vpr_e("%s: Invalid buffer type %d\n",
-			__func__, buf_type);
+		d_vpr_e("invalid buffer type %d\n",
+			buffer_type);
 		return 0;
 	}
 }
 
-static u32 get_hfi_buffer_flags(enum msm_vidc_buffer_attributes attr)
+u32 get_hfi_codec(struct msm_vidc_inst *inst)
 {
-	switch (attr) {
-	case MSM_VIDC_DEFERRED_SUBMISSION:
-		return 0; /*not sure what it should be mapped to??*/
-	case MSM_VIDC_READ_ONLY:
-		return HFI_BUF_HOST_FLAG_READONLY;
-	case MSM_VIDC_PENDING_RELEASE:
-		return HFI_BUF_HOST_FLAG_RELEASE;
+	switch (inst->codec) {
+	case MSM_VIDC_H264:
+		if (inst->domain == MSM_VIDC_ENCODER)
+			return HFI_CODEC_ENCODE_AVC;
+		else
+			return HFI_CODEC_DECODE_AVC;
+	case MSM_VIDC_HEVC:
+		if (inst->domain == MSM_VIDC_ENCODER)
+			return HFI_CODEC_ENCODE_HEVC;
+		else
+			return HFI_CODEC_DECODE_HEVC;
+	case MSM_VIDC_VP9:
+		return HFI_CODEC_DECODE_VP9;
+	case MSM_VIDC_MPEG2:
+		return HFI_CODEC_DECODE_MPEG2;
 	default:
-		d_vpr_e("%s: Invalid buffer attribute %d\n",
-			__func__, attr);
+		d_vpr_e("invalid codec %d, domain %d\n",
+			inst->codec, inst->domain);
 		return 0;
 	}
+}
+
+int get_hfi_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer, struct hfi_buffer *buf)
+{
+	if (!inst || !buffer || !buf) {
+		d_vpr_e("%: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	memset(buf, 0, sizeof(struct hfi_buffer));
+	buf->type = get_hfi_buffer_type(inst->domain, buffer->type);
+	buf->index = buffer->index;
+	buf->base_address = buffer->device_addr;
+	buf->addr_offset = 0;
+	buf->buffer_size = buffer->buffer_size;
+	buf->data_offset = buffer->data_offset;
+	buf->data_size = buffer->data_size;
+	if (buffer->attr & MSM_VIDC_ATTR_READ_ONLY)
+		buf->flags |= HFI_BUF_HOST_FLAG_READONLY;
+	if (buffer->attr & MSM_VIDC_ATTR_PENDING_RELEASE)
+		buf->flags |= HFI_BUF_HOST_FLAG_RELEASE;
+	buf->timestamp = buffer->timestamp;
+
+	return 0;
 }
 
 int hfi_create_header(u8 *pkt, u32 session_id,
@@ -99,34 +176,6 @@ int hfi_create_packet(u8 *packet, u32 packet_size, u32 *offset,
 		memcpy((u8 *)pkt + sizeof(struct hfi_packet),
 			payload, payload_size);
 	*offset = *offset + pkt->size;
-	return 0;
-}
-
-int hfi_create_buffer(u8 *packet, u32 packet_size, u32 *offset,
-	enum msm_vidc_domain_type domain, struct msm_vidc_buffer *data)
-{
-	u32 available_size = packet_size - *offset;
-	u32 buf_size = sizeof(struct hfi_buffer);
-	struct hfi_buffer *buf = (struct hfi_buffer *)packet;
-
-	if (available_size < sizeof(struct hfi_buffer)) {
-		d_vpr_e("%s: Bad buffer Size for buffer type %d\n",
-			__func__, data->type);
-		return -EINVAL;
-	}
-
-	memset(buf, 0, buf_size);
-
-	buf->type = get_hfi_buffer_type(domain, data->type);
-	buf->index = data->index;
-	buf->base_address = data->device_addr;
-	buf->addr_offset = 0;
-	buf->buffer_size = data->buffer_size;
-	buf->data_offset = data->data_offset;
-	buf->data_size = data->data_size;
-	buf->flags = get_hfi_buffer_flags(data->attr);
-	buf->timestamp = data->timestamp;
-	*offset = *offset + buf_size;
 	return 0;
 }
 
@@ -474,34 +523,35 @@ err_cmd:
 	return rc;
 }
 
-int hfi_packet_create_property(struct msm_vidc_inst *inst,
-	void *pkt, u32 pkt_size, u32 pkt_type, u32 flags,
-	u32 port, u32 payload, u32 payload_type, u32 payload_size)
+int hfi_packet_session_property(struct msm_vidc_inst *inst,
+	u32 pkt_type, u32 flags, u32 port, u32 payload_type,
+	void *payload, u32 payload_size)
 {
 	int rc = 0;
 	u32 num_packets = 0, offset = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core || !pkt) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: Invalid params\n", __func__);
 		return -EINVAL;
 	}
 
 	core = inst->core;
 	offset = sizeof(struct hfi_header);
-	rc = hfi_create_packet(pkt, pkt_size, &offset,
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+				&offset,
 				pkt_type,
 				flags,
 				payload_type,
 				port,
 				core->packet_id++,
-				&payload,
+				payload,
 				payload_size);
 	if (rc)
 		goto err_prop;
 	num_packets++;
 
-	rc = hfi_create_header(pkt, inst->session_id,
+	rc = hfi_create_header(inst->packet, inst->session_id,
 				   core->header_id++,
 				   num_packets,
 				   offset);

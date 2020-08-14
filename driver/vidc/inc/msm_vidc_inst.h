@@ -90,6 +90,7 @@ struct msm_vidc_inst {
 	struct v4l2_ctrl                 **ctrls;
 	u32                                num_ctrls;
 	struct vb2_queue                   vb2q[MAX_PORT];
+	struct msm_vidc_crop               crop;
 	struct msm_vidc_properties         prop;
 	struct msm_vidc_power              power;
 	struct msm_vidc_buffers            buffers;
@@ -102,6 +103,7 @@ struct msm_vidc_inst {
 	struct list_head                   input_ts;
 	struct list_head                   enc_input_crs;
 	struct list_head                   decode_bitrate_data;
+	bool                               session_created;
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
 };

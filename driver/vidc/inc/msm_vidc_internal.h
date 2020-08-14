@@ -96,21 +96,23 @@ enum msm_vidc_colorformat_type {
 };
 
 enum msm_vidc_buffer_type {
-	MSM_VIDC_QUEUE             = BIT(0),
-	MSM_VIDC_INPUT             = BIT(1),
-	MSM_VIDC_OUTPUT            = BIT(2),
-	MSM_VIDC_INPUT_META        = BIT(3),
-	MSM_VIDC_OUTPUT_META       = BIT(4),
-	MSM_VIDC_DPB               = BIT(5),
-	MSM_VIDC_ARP               = BIT(6),
-	MSM_VIDC_LINE              = BIT(7),
-	MSM_VIDC_BIN               = BIT(8),
+	MSM_VIDC_BUF_QUEUE             = BIT(0),
+	MSM_VIDC_BUF_INPUT             = BIT(1),
+	MSM_VIDC_BUF_OUTPUT            = BIT(2),
+	MSM_VIDC_BUF_INPUT_META        = BIT(3),
+	MSM_VIDC_BUF_OUTPUT_META       = BIT(4),
+	MSM_VIDC_BUF_SCRATCH           = BIT(5),
+	MSM_VIDC_BUF_SCRATCH_1         = BIT(6),
+	MSM_VIDC_BUF_SCRATCH_2         = BIT(7),
+	MSM_VIDC_BUF_PERSIST           = BIT(8),
+	MSM_VIDC_BUF_PERSIST_1         = BIT(9),
 };
 
 enum msm_vidc_buffer_attributes {
-	MSM_VIDC_DEFERRED_SUBMISSION       = BIT(0),
-	MSM_VIDC_READ_ONLY                 = BIT(1),
-	MSM_VIDC_PENDING_RELEASE           = BIT(2),
+	MSM_VIDC_ATTR_DEFERRED_SUBMISSION       = BIT(0),
+	MSM_VIDC_ATTR_READ_ONLY                 = BIT(1),
+	MSM_VIDC_ATTR_PENDING_RELEASE           = BIT(2),
+	MSM_VIDC_ATTR_QUEUED                    = BIT(3),
 };
 
 enum msm_vidc_buffer_region {
@@ -385,6 +387,7 @@ struct msm_vidc_power {
 };
 
 struct msm_vidc_alloc {
+	struct list_head            list;
 	enum msm_vidc_buffer_type   buffer_type;
 	enum msm_vidc_buffer_region region;
 	u32                         size;
@@ -400,6 +403,7 @@ struct msm_vidc_alloc_info {
 };
 
 struct msm_vidc_map {
+	struct list_head            list;
 	bool                        valid;
 	enum msm_vidc_buffer_type   buffer_type;
 	enum msm_vidc_buffer_region region;
@@ -415,6 +419,7 @@ struct msm_vidc_map_info {
 };
 
 struct msm_vidc_buffer {
+	struct list_head                   list;
 	bool                               valid;
 	enum msm_vidc_buffer_type          type;
 	u32                                index;
@@ -435,6 +440,13 @@ struct msm_vidc_buffer_info {
 	u32                    extra_count;
 	u32                    actual_count;
 	u32                    size;
+};
+
+struct msm_vidc_crop {
+	u32 x;
+	u32 y;
+	u32 width;
+	u32 height;
 };
 
 struct msm_vidc_properties {

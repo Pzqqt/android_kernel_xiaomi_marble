@@ -8,6 +8,8 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
+#include "msm_vdec.h"
+#include "msm_venc.h"
 #include "msm_vidc_debug.h"
 
 void *msm_vb2_get_userptr(struct device *dev, unsigned long vaddr,
@@ -44,7 +46,7 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_type(q->type);
+	port = msm_vidc_get_port_from_v4l2_type(q->type);
 	if (port < 0) {
 		d_vpr_e("%s: invalid queue type %d\n", __func__, q->type);
 		return -EINVAL;
@@ -96,12 +98,29 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 			__func__, q->type);
 		return 0;
 	}
+	if (!is_decode_session(inst) && !is_encode_session(inst)) {
+		s_vpr_e(inst->sid, "%s: invalid session %d\n",
+			__func__, inst->domain);
+		return -EINVAL;
+	}
 	s_vpr_h(inst->sid, "Streamon: %d\n", q->type);
 
+	if (!inst->session_created) {
+		rc = msm_vidc_session_open(inst);
+		if (rc)
+			return -EINVAL;
+	}
+
 	if (q->type == INPUT_PLANE) {
-		rc = msm_vidc_start_input(inst);
-	} else if (q->type == INPUT_PLANE) {
-		rc = msm_vidc_start_output(inst);
+		if (is_decode_session(inst))
+			rc = msm_vdec_start_input(inst);
+		//else if (is_encode_session(inst))
+		//	rc = msm_venc_start_input(inst);
+	} else if (q->type == OUTPUT_PLANE) {
+		if (is_decode_session(inst))
+			rc = msm_vdec_start_output(inst);
+		//else if (is_encode_session(inst))
+		//	rc = msm_venc_start_output(inst);
 	} else {
 		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, q->type);
 		rc = -EINVAL;

@@ -6,10 +6,14 @@
 #include <linux/interrupt.h>
 
 #include "msm_vidc_iris2.h"
+#include "msm_vidc_buffer_iris2.h"
 #include "venus_hfi.h"
+#include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
+#include "msm_vidc_driver.h"
 #include "msm_vidc_dt.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_buffer.h"
 #include "msm_vidc_debug.h"
 
 
@@ -490,52 +494,161 @@ static struct msm_vidc_venus_ops iris2_ops = {
 	.noc_error_info = __noc_error_info_iris2,
 };
 
-static int msm_vidc_buffer_size(struct msm_vidc_inst *inst,
-		enum msm_vidc_buffer_type type)
+static int msm_vidc_buffer_size_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
 {
-	int rc = 0;
-
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
+	int size = 0;
 
 	d_vpr_h("%s()\n", __func__);
-	return rc;
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return size;
+	}
+
+	if (is_decode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+			size = msm_vidc_decoder_input_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			size = msm_vidc_decoder_output_size(inst);
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+			size = msm_vidc_decoder_input_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT_META:
+			size = msm_vidc_decoder_output_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH:
+			size = msm_vidc_decoder_scratch_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH_1:
+			size = msm_vidc_decoder_scratch_1_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_PERSIST_1:
+			size = msm_vidc_decoder_persist_1_size_iris2(inst);
+			break;
+		default:
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+			size = msm_vidc_encoder_input_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			size = msm_vidc_encoder_output_size(inst);
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+			size = msm_vidc_encoder_input_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT_META:
+			size = msm_vidc_encoder_output_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH:
+			size = msm_vidc_encoder_scratch_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH_1:
+			size = msm_vidc_encoder_scratch_1_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH_2:
+			size = msm_vidc_encoder_scratch_2_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+			size = msm_vidc_encoder_persist_size_iris2(inst);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return size;
 }
 
-static int msm_vidc_buffer_min_count(struct msm_vidc_inst *inst,
-		enum msm_vidc_buffer_type type)
+static int msm_vidc_min_count_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
 {
-	int rc = 0;
+	int count = 0;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
 	d_vpr_h("%s()\n", __func__);
-	return rc;
+
+	if (is_decode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			count = msm_vidc_input_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			count = msm_vidc_output_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH:
+		case MSM_VIDC_BUF_SCRATCH_1:
+		case MSM_VIDC_BUF_PERSIST_1:
+			count = 1;
+			break;
+		default:
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			count = msm_vidc_input_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			count = msm_vidc_output_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_SCRATCH:
+		case MSM_VIDC_BUF_SCRATCH_1:
+		case MSM_VIDC_BUF_SCRATCH_2:
+		case MSM_VIDC_BUF_PERSIST:
+			count = 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return count;
 }
 
-static int msm_vidc_buffer_extra_count(struct msm_vidc_inst *inst,
-		enum msm_vidc_buffer_type type)
+static int msm_vidc_extra_count_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
 {
-	int rc = 0;
+	int count = 0;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
 	d_vpr_h("%s()\n", __func__);
-	return rc;
+
+	switch (buffer_type) {
+	case MSM_VIDC_BUF_INPUT:
+	case MSM_VIDC_BUF_INPUT_META:
+		count = msm_vidc_input_extra_count(inst);
+		break;
+	case MSM_VIDC_BUF_OUTPUT:
+	case MSM_VIDC_BUF_OUTPUT_META:
+		count = msm_vidc_output_extra_count(inst);
+		break;
+	default:
+		break;
+	}
+
+	return count;
 }
 
 static struct msm_vidc_session_ops msm_session_ops = {
-	.buffer_size = msm_vidc_buffer_size,
-	.min_count = msm_vidc_buffer_min_count,
-	.extra_count = msm_vidc_buffer_extra_count,
+	.buffer_size = msm_vidc_buffer_size_iris2,
+	.min_count = msm_vidc_min_count_iris2,
+	.extra_count = msm_vidc_extra_count_iris2,
 	.calc_freq = NULL,
 	.calc_bw = NULL,
 	.decide_work_route = NULL,

@@ -46,10 +46,19 @@ struct hfi_resource_syscache_info_type {
 	struct hfi_resource_subcache_type rg_subcache_entries[1];
 };
 
+int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer, struct msm_vidc_buffer *metabuf);
+int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer);
+int venus_hfi_start_input(struct msm_vidc_inst *inst);
+int venus_hfi_stop_input(struct msm_vidc_inst *inst);
+int venus_hfi_start_output(struct msm_vidc_inst *inst);
+int venus_hfi_stop_output(struct msm_vidc_inst *inst);
+int venus_hfi_session_close(struct msm_vidc_inst *inst);
+int venus_hfi_session_open(struct msm_vidc_inst *inst);
 int venus_hfi_core_init(struct msm_vidc_core *core);
 int venus_hfi_core_release(struct msm_vidc_core *core);
 int venus_hfi_suspend(struct msm_vidc_core *core);
-int venus_hfi_session_open(struct msm_vidc_core *core, struct msm_vidc_inst *inst);
 void venus_hfi_work_handler(struct work_struct *work);
 void venus_hfi_pm_work_handler(struct work_struct *work);
 

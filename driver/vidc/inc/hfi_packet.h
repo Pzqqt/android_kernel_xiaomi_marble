@@ -13,6 +13,13 @@
 #include "hfi_property.h"
 #include "hfi_definition.h"
 
+u32 get_hfi_port(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type);
+u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
+	enum msm_vidc_buffer_type buffer_type);
+u32 get_hfi_codec(struct msm_vidc_inst *inst);
+int get_hfi_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer, struct hfi_buffer *buf);
 int hfi_create_header(u8 *pkt, u32 session_id,
 	u32 header_id, u32 num_packets, u32 total_size);
 int hfi_create_packet(u8 *packet, u32 packet_size, u32 *offset,
@@ -32,8 +39,8 @@ int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
 int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	u32 pkt_type, u32 flags, u32 port, u32 session_id,
 	u32 payload_type, void *payload, u32 payload_size);
-int hfi_packet_create_property(struct msm_vidc_inst *inst,
-	void *pkt, u32 pkt_size, u32 pkt_type, u32 flags,
-	u32 port, u32 payload, u32 payload_type, u32 payload_size);
+int hfi_packet_session_property(struct msm_vidc_inst *inst,
+	u32 pkt_type, u32 flags, u32 port,
+	u32 payload_type, void *payload, u32 payload_size);
 #endif // _HFI_PACKET_H_
 
