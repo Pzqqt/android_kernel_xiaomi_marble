@@ -452,21 +452,23 @@ static QDF_STATUS extract_twt_add_dialog_comp_event_tlv(
  * twt parameters, as part of add dialog completion event
  * @wmi_hdl: wmi handle
  * @evt_buf: Pointer event buffer
- * @additional_params: twt additional parameters to extract
+ * @evt_buf_len: length of the add dialog event buffer
  * @idx: index of num_twt_params
+ * @additional_params: twt additional parameters to extract
  *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_INVAL for failure
  */
 static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 (
 	wmi_unified_t wmi_handle, uint8_t *evt_buf,
-	struct wmi_twt_add_dialog_additional_params *additional_params,
-	uint32_t idx
+	uint32_t evt_buf_len, uint32_t idx,
+	struct wmi_twt_add_dialog_additional_params *additional_params
 )
 {
 	WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID_param_tlvs *param_buf;
 	wmi_twt_add_dialog_complete_event_fixed_param *ev;
 	uint32_t flags = 0;
+	uint32_t expected_len;
 
 	param_buf = (WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
@@ -476,7 +478,12 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 
 	ev = param_buf->fixed_param;
 
-	if (ev->status != WMI_HOST_ADD_TWT_STATUS_OK) {
+	/*
+	 * For Alternate values from AP, Firmware sends additional params
+	 * with WMI_HOST_ADD_TWT_STATUS_DENIED
+	 */
+	if (ev->status != WMI_HOST_ADD_TWT_STATUS_OK &&
+	    ev->status != WMI_HOST_ADD_TWT_STATUS_DENIED) {
 		WMI_LOGE("Status of add dialog complete is not success");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -489,6 +496,16 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 
 	if (!param_buf->twt_params) {
 		WMI_LOGE("Unable to extract additional twt parameters");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	expected_len = (sizeof(wmi_twt_add_dialog_complete_event_fixed_param) +
+			WMI_TLV_HDR_SIZE + (param_buf->num_twt_params *
+			sizeof(wmi_twt_add_dialog_additional_params)));
+
+	if (evt_buf_len != expected_len) {
+		WMI_LOGE("Got invalid len data from FW %d expected %d",
+			 evt_buf_len, expected_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
