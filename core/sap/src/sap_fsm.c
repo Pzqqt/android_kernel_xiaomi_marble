@@ -1083,7 +1083,6 @@ static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 	}
 	mac_ctx->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
 	sap_cac_reset_notify(mac_handle);
-	qdf_mem_zero(&mac_ctx->sap, sizeof(mac_ctx->sap));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1170,11 +1169,9 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 		QDF_MAX_NO_OF_MODE;
 	sap_clear_global_dfs_param(mac_handle);
 	sap_free_roam_profile(&sapctx->csr_roamProfile);
+	sap_err("Set sapCtxList null for session %d", sapctx->sessionId);
 	qdf_mem_zero(sapctx, sizeof(*sapctx));
 	sapctx->sessionId = WLAN_UMAC_VDEV_ID_MAX;
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Initializing State: %d, sap_ctx value = %pK", __func__,
-		sapctx->fsm_state, sapctx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2680,6 +2677,34 @@ static inline QDF_STATUS
 sap_fsm_send_csa_restart_req(struct mac_context *mac_ctx,
 			     struct sap_context *sap_ctx)
 {
+	QDF_STATUS status;
+
+	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(
+				mac_ctx->psoc, sap_ctx->sessionId,
+				mac_ctx->sap.SapDfsInfo.target_chan_freq,
+				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_SAP);
+
+	/*
+	 * If hw_mode_status is QDF_STATUS_E_FAILURE, mean HW
+	 * mode change was required but driver failed to set HW
+	 * mode so ignore CSA for the channel.
+	 */
+	if (status == QDF_STATUS_E_FAILURE) {
+		sap_err("HW change required but failed to set hw mode");
+		return status;
+	}
+
+	/*
+	 * If hw_mode_status is QDF_STATUS_SUCCESS mean HW mode
+	 * change was required and was successfully requested so
+	 * the channel switch will continue after HW mode change
+	 * completion.
+	 */
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		sap_info("Channel change will continue after HW mode change");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	return sme_csa_restart(mac_ctx, sap_ctx->sessionId);
 }
 
