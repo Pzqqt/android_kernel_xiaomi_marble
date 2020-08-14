@@ -6052,10 +6052,6 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-			if (!peer) {
-				dp_err("DP Invalid Peer refernce");
-				return;
-			}
 
 			if (peer->delete_in_progress) {
 				dp_err("DP Peer deletion in progress");

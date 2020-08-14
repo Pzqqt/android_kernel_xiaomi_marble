@@ -62,14 +62,14 @@ struct dp_peer *dp_peer_find_by_id(struct dp_soc *soc,
 {
 	struct dp_peer *peer;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&soc->peer_map_lock);
 	peer = __dp_peer_find_by_id(soc, peer_id);
 	if (!peer || (peer && peer->delete_in_progress)) {
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		qdf_spin_unlock_bh(&soc->peer_map_lock);
 		return NULL;
 	}
 	qdf_atomic_inc(&peer->ref_cnt);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&soc->peer_map_lock);
 
 	return peer;
 }

@@ -784,6 +784,7 @@ dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 		pdev = soc->pdev_list[i];
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			qdf_spin_lock_bh(&vdev->peer_list_lock);
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
@@ -793,6 +794,7 @@ dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 						dp_peer_del_ast(soc, ase);
 				}
 			}
+			qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		}
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
@@ -823,6 +825,7 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 		pdev = soc->pdev_list[i];
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			qdf_spin_lock_bh(&vdev->peer_list_lock);
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
@@ -835,6 +838,7 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 					dp_peer_del_ast(soc, ase);
 				}
 			}
+			qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		}
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
@@ -1238,6 +1242,7 @@ void dp_print_ast_stats(struct dp_soc *soc)
 		pdev = soc->pdev_list[i];
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			qdf_spin_lock_bh(&vdev->peer_list_lock);
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
 				    DP_PRINT_STATS("%6d mac_addr = %pM"
@@ -1265,6 +1270,7 @@ void dp_print_ast_stats(struct dp_soc *soc)
 					    vdev->vdev_id);
 				}
 			}
+			qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		}
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
@@ -1289,11 +1295,8 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 	struct dp_peer *peer = NULL;
 
 	DP_PRINT_STATS("Dumping Peer Table  Stats:");
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		if (!peer) {
-			DP_PRINT_STATS("Invalid Peer");
-			return;
-		}
 		DP_PRINT_STATS("    peer_mac_addr = %pM"
 			       " nawds_enabled = %d"
 			       " bss_peer = %d"
@@ -1311,6 +1314,7 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			       peer->delete_in_progress,
 			       peer->peer_id);
 	}
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 }
 
 #ifdef WLAN_DP_PER_RING_TYPE_CONFIG
@@ -3791,19 +3795,18 @@ QDF_STATUS dp_mon_rings_alloc(struct dp_soc *soc, struct dp_pdev *pdev)
 void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
-	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = NULL;
 	struct dp_peer *peer = NULL;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		qdf_spin_lock_bh(&vdev->peer_list_lock);
 		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 			dp_cal_client_update_peer_stats(&peer->stats);
 		}
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 #else
 void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
@@ -4348,7 +4351,6 @@ static void dp_soc_deinit(void *txrx_soc)
 	DEINIT_RX_HW_STATS_LOCK(soc);
 
 	qdf_spinlock_destroy(&soc->ast_lock);
-	qdf_spinlock_destroy(&soc->peer_ref_mutex);
 
 	qdf_nbuf_queue_free(&soc->htt_stats.msg);
 
@@ -4979,6 +4981,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	 * TCL descriptors for packets transmitted from this VDEV
 	 */
 
+	qdf_spinlock_create(&vdev->peer_list_lock);
 	TAILQ_INIT(&vdev->peer_list);
 	dp_peer_multipass_list_init(vdev);
 
@@ -5128,7 +5131,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 		}
 	}
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (!unmap_only && n < soc->max_peers)
 			peer_array[n++] = peer;
@@ -5137,7 +5140,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 			if (j < soc->max_peers)
 				peer_ids[j++] = peer->peer_id;
 	}
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 
 	/*
 	 * If peer id is invalid, need to flush the peer if
@@ -5243,7 +5246,7 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	 * Use peer_ref_mutex while accessing peer_list, in case
 	 * a peer is in the process of being removed from the list.
 	 */
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	/* check that the vdev has no peers allocated */
 	if (!TAILQ_EMPTY(&vdev->peer_list)) {
 		/* debug print - will be removed later */
@@ -5258,10 +5261,10 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 		vdev->delete.pending = 1;
 		vdev->delete.callback = callback;
 		vdev->delete.context = cb_context;
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 
 	if (wlan_op_mode_monitor == vdev->opmode)
 		goto free_vdev;
@@ -5304,6 +5307,7 @@ free_vdev:
 		vdev->vdev_dp_ext_handle = NULL;
 	}
 
+	qdf_spinlock_destroy(&vdev->peer_list_lock);
 	dp_info("deleting vdev object %pK (%pM)", vdev, vdev->mac_addr.raw);
 
 	qdf_mem_free(vdev);
@@ -5539,20 +5543,13 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	/* reset the ast index to flowid table */
 	dp_peer_reset_flowq_map(peer);
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 
 	qdf_atomic_init(&peer->ref_cnt);
 
 	/* keep one reference for attach */
 	qdf_atomic_inc(&peer->ref_cnt);
 
-	/* add this peer into the vdev's list */
-	if (wlan_op_mode_sta == vdev->opmode)
-		TAILQ_INSERT_HEAD(&vdev->peer_list, peer, peer_list_elem);
-	else
-		TAILQ_INSERT_TAIL(&vdev->peer_list, peer, peer_list_elem);
-
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	dp_peer_vdev_list_add(soc, vdev, peer);
 
 	/* TODO: See if hash based search is required */
 	dp_peer_find_hash_add(soc, peer);
@@ -6142,9 +6139,7 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			  "%s: Peer is NULL!\n", __func__);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
-		qdf_spin_lock_bh(&soc->peer_ref_mutex);
 		peer->authorize = authorize ? 1 : 0;
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
 
 	if (peer)
@@ -6240,8 +6235,6 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
-	struct dp_peer *tmppeer;
-	int found = 0;
 	uint16_t peer_id;
 	uint16_t vdev_id;
 	bool vdev_delete = false;
@@ -6259,7 +6252,6 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	 * vdev's list of peers is empty, to make sure that list is not modified
 	 * concurrently with the empty check.
 	 */
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_id;
 		vdev_id = vdev->vdev_id;
@@ -6269,7 +6261,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		 * peer object map is removed
 		 */
 		if (peer_id != HTT_INVALID_PEER)
-			soc->peer_id_to_obj_map[peer_id] = NULL;
+			dp_peer_find_id_to_obj_remove(soc, peer_id);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "Deleting peer %pK (%pM)", peer, peer->mac_addr.raw);
@@ -6283,22 +6275,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		}
 		qdf_spin_unlock_bh(&soc->ast_lock);
 
-		TAILQ_FOREACH(tmppeer, &peer->vdev->peer_list, peer_list_elem) {
-			if (tmppeer == peer) {
-				found = 1;
-				break;
-			}
-		}
-
-		if (found) {
-			TAILQ_REMOVE(&peer->vdev->peer_list, peer,
-				peer_list_elem);
-		} else {
-			/*Ignoring the remove operation as peer not found*/
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "peer:%pK not found in vdev:%pK peerlist:%pK",
-				  peer, vdev, &peer->vdev->peer_list);
-		}
+		vdev_delete = dp_peer_vdev_list_remove(soc, vdev, peer);
 
 		/*
 		 * Deallocate the extended stats contenxt
@@ -6329,17 +6306,6 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		vdev_opmode = vdev->opmode;
 		qdf_mem_copy(vdev_mac_addr, vdev->mac_addr.raw,
 			     QDF_MAC_ADDR_SIZE);
-		/*
-		 * check whether the parent vdev is pending for deleting
-		 * and no peers left.
-		 */
-		if (vdev->delete.pending && TAILQ_EMPTY(&vdev->peer_list))
-			vdev_delete = true;
-		/*
-		 * Now that there are no references to the peer, we can
-		 * release the peer reference lock.
-		 */
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 		wlan_minidump_remove(peer);
 		/*
@@ -6356,8 +6322,6 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		if (vdev_delete)
 			dp_delete_pending_vdev(pdev, vdev, vdev_id);
 
-	} else {
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
 }
 
@@ -7062,8 +7026,10 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 
 	qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem)
 		dp_update_vdev_stats(vdev_stats, peer);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
@@ -7093,7 +7059,6 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		DP_UPDATE_STATS(pdev, pdev->invalid_peer);
 
 	soc = pdev->soc;
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
@@ -7102,7 +7067,6 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		dp_update_pdev_ingress_stats(pdev, vdev);
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	qdf_mem_free(vdev_stats);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
@@ -7143,9 +7107,7 @@ static QDF_STATUS dp_vdev_getstats(struct cdp_vdev *vdev_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	dp_aggregate_vdev_stats(vdev, vdev_stats);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	stats->tx_packets = vdev_stats->tx_i.rcvd.num;
 	stats->tx_bytes = vdev_stats->tx_i.rcvd.bytes;
@@ -7332,6 +7294,7 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev, struct dp_soc *soc)
 
 	hif_clear_napi_stats(vdev->pdev->soc->hif_handle);
 
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		struct dp_rx_tid *rx_tid;
 		uint8_t tid;
@@ -7348,6 +7311,7 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev, struct dp_soc *soc)
 				     UPDATE_PEER_STATS, vdev->pdev->pdev_id);
 #endif
 	}
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
@@ -8789,9 +8753,7 @@ static int dp_txrx_get_vdev_stats(struct cdp_soc_t *soc, uint8_t vdev_id,
 	vdev_stats = (struct cdp_vdev_stats *)buf;
 
 	if (is_aggregate) {
-		qdf_spin_lock_bh(&((struct dp_soc *)soc)->peer_ref_mutex);
 		dp_aggregate_vdev_stats(vdev, buf);
-		qdf_spin_unlock_bh(&((struct dp_soc *)soc)->peer_ref_mutex);
 	} else {
 		qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 	}
@@ -9794,9 +9756,9 @@ static QDF_STATUS dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 	if (!pdev)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		qdf_spin_lock_bh(&vdev->peer_list_lock);
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 			if (peer && !peer->bss_peer)
 				dp_wdi_event_handler(
@@ -9805,9 +9767,9 @@ static QDF_STATUS dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 					peer->peer_id,
 					WDI_NO_VAL, pdev_id);
 		}
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -10397,9 +10359,7 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 		return 0;
 	}
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	dp_aggregate_vdev_stats(vdev, vdev_stats);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	tx_success = vdev_stats->tx.tx_success.num;
 	qdf_mem_free(vdev_stats);
@@ -11239,7 +11199,6 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);
 
-	qdf_spinlock_create(&soc->peer_ref_mutex);
 	qdf_spinlock_create(&soc->ast_lock);
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
@@ -11903,17 +11862,17 @@ uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			      u_int8_t newmac[][QDF_MAC_ADDR_SIZE],
 			      u_int16_t mac_cnt)
 {
-	struct dp_vdev *vdev =
-		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
-						   vdev_id);
 	struct dp_soc *dp_soc = (struct dp_soc *)soc;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3(dp_soc,
+						   vdev_id);
 	struct dp_peer *peer;
 	uint16_t new_mac_cnt = 0;
 
 	if (!vdev)
 		return new_mac_cnt;
 
-	qdf_spin_lock_bh(&dp_soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (peer->bss_peer)
 			continue;
@@ -11922,7 +11881,7 @@ uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			new_mac_cnt++;
 		}
 	}
-	qdf_spin_unlock_bh(&dp_soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	return new_mac_cnt;
 }
 

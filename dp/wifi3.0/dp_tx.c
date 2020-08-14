@@ -2396,7 +2396,7 @@ void dp_tx_nawds_handler(struct cdp_soc_t *soc, struct dp_vdev *vdev,
 		qdf_spin_unlock_bh(&dp_soc->ast_lock);
 	}
 
-	qdf_spin_lock_bh(&dp_soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (!peer->bss_peer && peer->nawds_enabled) {
 			peer_id = peer->peer_id;
@@ -2436,7 +2436,7 @@ void dp_tx_nawds_handler(struct cdp_soc_t *soc, struct dp_vdev *vdev,
 		}
 	}
 
-	qdf_spin_unlock_bh(&dp_soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 }
 
 /**
@@ -2658,6 +2658,7 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	}
 	is_ucast = !is_mcast;
 
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (peer->bss_peer)
 			continue;
@@ -2673,11 +2674,13 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 			break;
 		}
 	}
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 #endif
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		DP_TX_FREE_SINGLE_BUF(vdev->pdev->soc, tx_desc->nbuf);
 	} else {
+		qdf_spin_lock_bh(&vdev->peer_list_lock);
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 			if ((peer->peer_id != HTT_INVALID_PEER) &&
 #ifdef WDS_VENDOR_EXTENSION
@@ -2726,6 +2729,7 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 				}
 			}
 		}
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	}
 
 	qdf_nbuf_free(nbuf);

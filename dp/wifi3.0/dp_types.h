@@ -1285,13 +1285,10 @@ struct dp_soc {
 		qdf_dma_mem_context(memctx);
 	} me_buf;
 
-	/**
-	 * peer ref mutex:
-	 * 1. Protect peer object lookups until the returned peer object's
-	 *	reference count is incremented.
-	 * 2. Provide mutex when accessing peer object lookup structures.
-	 */
-	DP_MUTEX_TYPE peer_ref_mutex;
+	/* Protect peer hash table */
+	DP_MUTEX_TYPE peer_hash_lock;
+	/* Protect peer_id_to_objmap */
+	DP_MUTEX_TYPE peer_map_lock;
 
 	/* maximum value for peer_id */
 	uint32_t max_peers;
@@ -2120,6 +2117,8 @@ struct dp_vdev {
 
 	/* dp_peer list */
 	TAILQ_HEAD(, dp_peer) peer_list;
+	/* to protect peer_list */
+	DP_MUTEX_TYPE peer_list_lock;
 
 	/* RX call back function to flush GRO packets*/
 	ol_txrx_rx_gro_flush_ind_fp osif_gro_flush;

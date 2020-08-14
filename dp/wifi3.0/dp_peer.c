@@ -114,6 +114,12 @@ static int dp_peer_ast_table_attach(struct dp_soc *soc)
 	return 0; /* success */
 }
 
+/*
+ * dp_peer_find_map_attach() - allocate memory for peer_id_to_obj_map
+ * @soc: soc handle
+ *
+ * return: none
+ */
 static int dp_peer_find_map_attach(struct dp_soc *soc)
 {
 	uint32_t max_peers, peer_map_size;
@@ -138,6 +144,8 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 	 * that are not in use set to 0.
 	 */
 	qdf_mem_zero(soc->peer_id_to_obj_map, peer_map_size);
+
+	qdf_spinlock_create(&soc->peer_map_lock);
 	return 0; /* success */
 }
 
@@ -155,24 +163,18 @@ static int dp_log2_ceil(unsigned int value)
 	return log2;
 }
 
-static int dp_peer_find_add_id_to_obj(
-	struct dp_peer *peer,
-	uint16_t peer_id)
-{
-
-	if (peer->peer_id == HTT_INVALID_PEER) {
-		peer->peer_id = peer_id;
-		return 0; /* success */
-	}
-	return QDF_STATUS_E_FAILURE; /* failure */
-}
-
 #define DP_PEER_HASH_LOAD_MULT  2
 #define DP_PEER_HASH_LOAD_SHIFT 0
 
 #define DP_AST_HASH_LOAD_MULT  2
 #define DP_AST_HASH_LOAD_SHIFT 0
 
+/*
+ * dp_peer_find_hash_attach() - allocate memory for peer_hash table
+ * @soc: soc handle
+ *
+ * return: none
+ */
 static int dp_peer_find_hash_attach(struct dp_soc *soc)
 {
 	int i, hash_elems, log2;
@@ -195,14 +197,22 @@ static int dp_peer_find_hash_attach(struct dp_soc *soc)
 	for (i = 0; i < hash_elems; i++)
 		TAILQ_INIT(&soc->peer_hash.bins[i]);
 
+	qdf_spinlock_create(&soc->peer_hash_lock);
 	return 0;
 }
 
+/*
+ * dp_peer_find_hash_detach() - cleanup memory for peer_hash table
+ * @soc: soc handle
+ *
+ * return: none
+ */
 static void dp_peer_find_hash_detach(struct dp_soc *soc)
 {
 	if (soc->peer_hash.bins) {
 		qdf_mem_free(soc->peer_hash.bins);
 		soc->peer_hash.bins = NULL;
+		qdf_spinlock_destroy(&soc->peer_hash_lock);
 	}
 }
 
@@ -220,13 +230,19 @@ static inline unsigned dp_peer_find_hash_index(struct dp_soc *soc,
 	return index;
 }
 
-
+/*
+ * dp_peer_find_hash_add() - add peer to peer_hash_table
+ * @soc: soc handle
+ * @peer: peer handle
+ *
+ * return: none
+ */
 void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 {
 	unsigned index;
 
 	index = dp_peer_find_hash_index(soc, &peer->mac_addr);
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&soc->peer_hash_lock);
 	/*
 	 * It is important to add the new peer at the tail of the peer list
 	 * with the bin index.  Together with having the hash_find function
@@ -235,7 +251,118 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 	 * found first.
 	 */
 	TAILQ_INSERT_TAIL(&soc->peer_hash.bins[index], peer, hash_list_elem);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&soc->peer_hash_lock);
+}
+
+/*
+ * dp_peer_vdev_list_add() - add peer into vdev list
+ * @soc: soc handle
+ * @vdev: vdev handle
+ * @peer: peer handle
+ *
+ * return: none
+ */
+void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
+			   struct dp_peer *peer)
+{
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
+
+	/* add this peer into the vdev's list */
+	if (wlan_op_mode_sta == vdev->opmode)
+		TAILQ_INSERT_HEAD(&vdev->peer_list, peer, peer_list_elem);
+	else
+		TAILQ_INSERT_TAIL(&vdev->peer_list, peer, peer_list_elem);
+
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
+}
+
+/*
+ * dp_peer_vdev_list_remove() - remove peer from vdev list
+ * @soc: SoC handle
+ * @vdev: VDEV handle
+ * @peer: peer handle
+ *
+ * Return: true when vdev need to be deleted and current peer
+ *         is last in the peer_list
+ */
+uint8_t dp_peer_vdev_list_remove(struct dp_soc *soc, struct dp_vdev *vdev,
+				 struct dp_peer *peer)
+{
+	uint8_t found = 0;
+	struct dp_peer *tmppeer = NULL;
+	uint8_t vdev_delete = false;
+
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
+	TAILQ_FOREACH(tmppeer, &peer->vdev->peer_list, peer_list_elem) {
+		if (tmppeer == peer) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (found) {
+		TAILQ_REMOVE(&peer->vdev->peer_list, peer,
+			     peer_list_elem);
+	} else {
+		/*Ignoring the remove operation as peer not found*/
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "peer:%pK not found in vdev:%pK peerlist:%pK",
+			  peer, vdev, &peer->vdev->peer_list);
+	}
+
+	/*
+	 * check whether the parent vdev is pending for deleting
+	 * and no peers left.
+	 */
+	if (vdev->delete.pending && TAILQ_EMPTY(&vdev->peer_list))
+		vdev_delete = true;
+
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
+
+	return vdev_delete;
+}
+
+/*
+ * dp_peer_find_id_to_obj_add() - Add peer into peer_id table
+ * @soc: SoC handle
+ * @peer: peer handle
+ * @peer_id: peer_id
+ *
+ * Return: None
+ */
+void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
+				struct dp_peer *peer,
+				uint16_t peer_id)
+{
+	QDF_ASSERT(peer_id <= soc->max_peers);
+
+	qdf_spin_lock_bh(&soc->peer_map_lock);
+	if (!soc->peer_id_to_obj_map[peer_id]) {
+		soc->peer_id_to_obj_map[peer_id] = peer;
+	} else {
+		/* Peer map event came for peer_id which
+		 * is already mapped, this is not expected
+		 */
+		QDF_ASSERT(0);
+	}
+	qdf_spin_unlock_bh(&soc->peer_map_lock);
+}
+
+/*
+ * dp_peer_find_id_to_obj_remove() - remove peer from peer_id table
+ * @soc: SoC handle
+ * @peer_id: peer_id
+ *
+ * Return: None
+ */
+void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
+				   uint16_t peer_id)
+{
+	QDF_ASSERT(peer_id <= soc->max_peers);
+
+	qdf_spin_lock_bh(&soc->peer_map_lock);
+	soc->peer_id_to_obj_map[peer_id] = NULL;
+	qdf_spin_unlock_bh(&soc->peer_map_lock);
 }
 
 /*
@@ -267,7 +394,7 @@ static bool dp_peer_exist_on_pdev(struct dp_soc *soc,
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = dp_peer_find_hash_index(soc, mac_addr);
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&soc->peer_hash_lock);
 	TAILQ_FOREACH(peer, &soc->peer_hash.bins[index], hash_list_elem) {
 		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
 		    (peer->vdev->pdev == pdev)) {
@@ -275,7 +402,7 @@ static bool dp_peer_exist_on_pdev(struct dp_soc *soc,
 			break;
 		}
 	}
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&soc->peer_hash_lock);
 	return found;
 }
 
@@ -1449,6 +1576,17 @@ static int dp_peer_ast_free_entry_by_mac(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * dp_peer_find_hash_find() - returns peer from peer_hash_table matching
+ *                            vdev_id and mac_address
+ * @soc: soc handle
+ * @peer_mac_addr: peer mac address
+ * @mac_addr_is_aligned: is mac addr alligned
+ * @vdev_id: vdev_id
+ *
+ * return: peer in sucsess
+ *         NULL in failure
+ */
 struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id)
 {
@@ -1465,7 +1603,7 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = dp_peer_find_hash_index(soc, mac_addr);
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&soc->peer_hash_lock);
 	TAILQ_FOREACH(peer, &soc->peer_hash.bins[index], hash_list_elem) {
 		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
 			((peer->vdev->vdev_id == vdev_id) ||
@@ -1474,14 +1612,21 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 			 * the lock
 			 */
 			qdf_atomic_inc(&peer->ref_cnt);
-			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+			qdf_spin_unlock_bh(&soc->peer_hash_lock);
 			return peer;
 		}
 	}
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&soc->peer_hash_lock);
 	return NULL; /* failure */
 }
 
+/*
+ * dp_peer_find_hash_remove() - remove peer from peer_hash_table
+ * @soc: soc handle
+ * @peer: peer handle
+ *
+ * return: none
+ */
 void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer)
 {
 	unsigned index;
@@ -1491,21 +1636,9 @@ void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer)
 	index = dp_peer_find_hash_index(soc, &peer->mac_addr);
 	/* Check if tail is not empty before delete*/
 	QDF_ASSERT(!TAILQ_EMPTY(&soc->peer_hash.bins[index]));
-	/*
-	 * DO NOT take the peer_ref_mutex lock here - it needs to be taken
-	 * by the caller.
-	 * The caller needs to hold the lock from the time the peer object's
-	 * reference count is decremented and tested up through the time the
-	 * reference to the peer object is removed from the hash table, by
-	 * this function.
-	 * Holding the lock only while removing the peer object reference
-	 * from the hash table keeps the hash table consistent, but does not
-	 * protect against a new HL tx context starting to use the peer object
-	 * if it looks up the peer object from its MAC address just after the
-	 * peer ref count is decremented to zero, but just before the peer
-	 * object reference is removed from the hash table.
-	 */
-	 TAILQ_FOREACH(tmppeer, &soc->peer_hash.bins[index], hash_list_elem) {
+
+	qdf_spin_lock_bh(&soc->peer_hash_lock);
+	TAILQ_FOREACH(tmppeer, &soc->peer_hash.bins[index], hash_list_elem) {
 		if (tmppeer == peer) {
 			found = 1;
 			break;
@@ -1513,6 +1646,7 @@ void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer)
 	}
 	QDF_ASSERT(found);
 	TAILQ_REMOVE(&soc->peer_hash.bins[index], peer, hash_list_elem);
+	qdf_spin_unlock_bh(&soc->peer_hash_lock);
 }
 
 void dp_peer_find_hash_erase(struct dp_soc *soc)
@@ -1561,11 +1695,18 @@ static void dp_peer_ast_table_detach(struct dp_soc *soc)
 	}
 }
 
+/*
+ * dp_peer_find_map_detach() - cleanup memory for peer_id_to_obj_map
+ * @soc: soc handle
+ *
+ * return: none
+ */
 static void dp_peer_find_map_detach(struct dp_soc *soc)
 {
 	if (soc->peer_id_to_obj_map) {
 		qdf_mem_free(soc->peer_id_to_obj_map);
 		soc->peer_id_to_obj_map = NULL;
+		qdf_spinlock_destroy(&soc->peer_map_lock);
 	}
 }
 
@@ -1690,6 +1831,17 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 			rx_tid->pn_size);
 }
 
+/*
+ * dp_peer_find_add_id() - map peer_id with peer
+ * @soc: soc handle
+ * @peer_mac_addr: peer mac address
+ * @peer_id: peer id to be mapped
+ * @hw_peer_id: HW ast index
+ * @vdev_id: vdev_id
+ *
+ * return: peer in success
+ *         NULL in failure
+ */
 static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, uint16_t peer_id, uint16_t hw_peer_id,
 	uint8_t vdev_id)
@@ -1711,20 +1863,13 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "%s: ref_cnt: %d", __func__,
 			   qdf_atomic_read(&peer->ref_cnt));
-		if (!soc->peer_id_to_obj_map[peer_id])
-			soc->peer_id_to_obj_map[peer_id] = peer;
-		else {
-			/* Peer map event came for peer_id which
-			 * is already mapped, this is not expected
-			 */
-			QDF_ASSERT(0);
-		}
 
-		if (dp_peer_find_add_id_to_obj(peer, peer_id)) {
-			/* TBDXXX: assert for now */
-			QDF_ASSERT(0);
-		} else {
+		dp_peer_find_id_to_obj_add(soc, peer, peer_id);
+		if (peer->peer_id == HTT_INVALID_PEER) {
+			peer->peer_id = peer_id;
 			dp_peer_tid_peer_id_update(peer, peer->peer_id);
+		} else {
+			QDF_ASSERT(0);
 		}
 
 		return peer;
@@ -1767,7 +1912,11 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 	 * obj map
 	 */
 	if (is_wds) {
-		peer = soc->peer_id_to_obj_map[peer_id];
+		peer = dp_peer_find_by_id(soc, peer_id);
+
+		err = dp_peer_map_ast(soc, peer, peer_mac_addr, hw_peer_id,
+				      vdev_id, ast_hash, is_wds);
+
 	} else {
 		/*
 		 * It's the responsibility of the CP and FW to ensure
@@ -1817,9 +1966,9 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 			}
 
 		}
+		err = dp_peer_map_ast(soc, peer, peer_mac_addr, hw_peer_id,
+				      vdev_id, ast_hash, is_wds);
 	}
-	err = dp_peer_map_ast(soc, peer, peer_mac_addr,
-			      hw_peer_id, vdev_id, ast_hash, is_wds);
 
 	return err;
 }
@@ -1873,7 +2022,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	dp_info("peer_unmap_event (soc:%pK) peer_id %d peer %pK",
 		soc, peer_id, peer);
 
-	soc->peer_id_to_obj_map[peer_id] = NULL;
+	dp_peer_find_id_to_obj_remove(soc, peer_id);
 	peer->peer_id = HTT_INVALID_PEER;
 
 	/*
@@ -4076,18 +4225,18 @@ struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
 {
 	struct dp_peer *peer;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (peer->bss_peer)
 			break;
 	}
 
 	if (!peer || !qdf_atomic_inc_not_zero(&peer->ref_cnt)) {
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		return NULL;
 	}
 
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	return peer;
 }
 
@@ -4106,17 +4255,17 @@ struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
 	if (vdev->opmode != wlan_op_mode_sta)
 		return NULL;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (peer->sta_self_peer)
 			break;
 	}
 
 	if (!peer || !qdf_atomic_inc_not_zero(&peer->ref_cnt)) {
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		return NULL;
 	}
 
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	return peer;
 }

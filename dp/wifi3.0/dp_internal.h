@@ -945,7 +945,15 @@ extern void dp_peer_find_detach(struct dp_soc *soc);
 extern void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_erase(struct dp_soc *soc);
-
+void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
+			   struct dp_peer *peer);
+uint8_t dp_peer_vdev_list_remove(struct dp_soc *soc, struct dp_vdev *vdev,
+				 struct dp_peer *peer);
+void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
+				struct dp_peer *peer,
+				uint16_t peer_id);
+void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
+				   uint16_t peer_id);
 /*
  * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
  * @peer: Datapath peer
