@@ -393,6 +393,7 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
 	uint8_t pdev_id;
 	QDF_STATUS status;
 	bool is_5ghz = false;
@@ -453,6 +454,9 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	dfs->dfs_is_offload_enabled = dfs_tx_ops->dfs_is_tgt_offload(psoc);
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_offload %d",
 		 dfs->dfs_is_offload_enabled);
+	dfs_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							    WLAN_UMAC_COMP_DFS);
+	dfs->dfs_soc_obj = dfs_soc_obj;
 	dfs_agile_soc_obj_init(dfs, psoc);
 
 	if (dfs_attach(dfs) == 1) {
