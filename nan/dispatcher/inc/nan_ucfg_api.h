@@ -463,6 +463,19 @@ bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev);
  * Return: QDF_STATUS
  */
 QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_is_nan_allowed_on_freq() - Check if NAN is allowed on given freq
+ * @pdev: pdev context
+ * @freq: Frequency to be checked
+ *
+ * Check if NAN/NDP can be enabled on given frequency.
+ * Validate SRD channels based on the ini and reg domain. Assume rest of the
+ * channels support NAN/NDP for now.
+ *
+ * Return: True if NAN is allowed on the given frequency
+ */
+bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -575,6 +588,12 @@ static inline
 QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
+{
+	return false;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
