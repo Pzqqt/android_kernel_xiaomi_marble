@@ -228,9 +228,18 @@ QDF_STATUS dp_tx_pdev_init(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf);
 
+qdf_nbuf_t dp_tx_send_vdev_id_check(struct cdp_soc_t *soc, uint8_t vdev_id,
+				    qdf_nbuf_t nbuf);
+
 qdf_nbuf_t dp_tx_send_exception(struct cdp_soc_t *soc, uint8_t vdev_id,
 				qdf_nbuf_t nbuf,
 				struct cdp_tx_exception_metadata *tx_exc);
+
+qdf_nbuf_t dp_tx_send_exception_vdev_id_check(struct cdp_soc_t *soc,
+					      uint8_t vdev_id,
+					      qdf_nbuf_t nbuf,
+				struct cdp_tx_exception_metadata *tx_exc);
+
 qdf_nbuf_t dp_tx_send_mesh(struct cdp_soc_t *soc, uint8_t vdev_id,
 			   qdf_nbuf_t nbuf);
 qdf_nbuf_t

@@ -5894,6 +5894,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.tx_i.dropped.ring_full);
 		DP_PRINT_STATS("Enqueue fail: %u",
 			       pdev->stats.tx_i.dropped.enqueue_fail);
+		DP_PRINT_STATS("Pkt dropped in vdev-id check: %u",
+			       pdev->stats.tx_i.dropped.fail_per_pkt_vdev_id_check);
 		DP_PRINT_STATS("DMA Error: %u",
 			       pdev->stats.tx_i.dropped.dma_error);
 
@@ -6135,6 +6137,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		       pdev->stats.tx_i.dropped.desc_na.num);
 	DP_PRINT_STATS("	HW enqueue failed= %d",
 		       pdev->stats.tx_i.dropped.enqueue_fail);
+	DP_PRINT_STATS("	Pkt dropped in vdev-id check= %d",
+		       pdev->stats.tx_i.dropped.fail_per_pkt_vdev_id_check);
 	DP_PRINT_STATS("	Resources Full = %d",
 		       pdev->stats.tx_i.dropped.res_full);
 	DP_PRINT_STATS("	FW removed Pkts = %u",

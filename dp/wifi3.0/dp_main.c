@@ -5363,6 +5363,38 @@ fail0:
 }
 
 /**
+ * dp_vdev_register_tx_handler() - Register Tx handler
+ * @vdev: struct dp_vdev *
+ * @soc: struct dp_soc *
+ * @txrx_ops: struct ol_txrx_ops *
+ */
+static inline void dp_vdev_register_tx_handler(struct dp_vdev *vdev,
+					       struct dp_soc *soc,
+					       struct ol_txrx_ops *txrx_ops)
+{
+	/* Enable vdev_id check only for ap, if flag is enabled */
+
+	if (vdev->mesh_vdev)
+		txrx_ops->tx.tx = dp_tx_send_mesh;
+	else if ((wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx)) &&
+		 (vdev->opmode == wlan_op_mode_ap))
+		txrx_ops->tx.tx = dp_tx_send_vdev_id_check;
+	else
+		txrx_ops->tx.tx = dp_tx_send;
+
+	/* Avoid check in regular exception Path */
+	if ((wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx)) &&
+	    (vdev->opmode == wlan_op_mode_ap))
+		txrx_ops->tx.tx_exception = dp_tx_send_exception_vdev_id_check;
+	else
+		txrx_ops->tx.tx_exception = dp_tx_send_exception;
+
+	dp_alert("Configure tx_vdev_id_chk_handler Feature Flag: %d and mode:%d for vdev_id:%d",
+		 wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx),
+		 vdev->opmode, vdev->vdev_id);
+}
+
+/**
  * dp_vdev_register_wifi3() - Register VDEV operations from osif layer
  * @soc: Datapath soc handle
  * @vdev_id: id of Datapath VDEV handle
@@ -5406,13 +5438,7 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 #endif
 	vdev->me_convert = txrx_ops->me_convert;
 
-	/* TODO: Enable the following once Tx code is integrated */
-	if (vdev->mesh_vdev)
-		txrx_ops->tx.tx = dp_tx_send_mesh;
-	else
-		txrx_ops->tx.tx = dp_tx_send;
-
-	txrx_ops->tx.tx_exception = dp_tx_send_exception;
+	dp_vdev_register_tx_handler(vdev, soc, txrx_ops);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		"DP Vdev Register success");

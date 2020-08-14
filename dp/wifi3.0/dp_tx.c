@@ -2366,6 +2366,42 @@ static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 }
 
 /**
+ * dp_tx_per_pkt_vdev_id_check() - vdev id check for frame
+ * @nbuf: qdf_nbuf_t
+ * @vdev: struct dp_vdev *
+ *
+ * Allow packet for processing only if it is for peer client which is
+ * connected with same vap. Drop packet if client is connected to
+ * different vap.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+dp_tx_per_pkt_vdev_id_check(qdf_nbuf_t nbuf, struct dp_vdev *vdev)
+{
+	struct dp_ast_entry *dst_ast_entry = NULL;
+	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
+
+	if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) ||
+	    DP_FRAME_IS_BROADCAST((eh)->ether_dhost))
+		return QDF_STATUS_SUCCESS;
+
+	qdf_spin_lock_bh(&vdev->pdev->soc->ast_lock);
+	dst_ast_entry = dp_peer_ast_hash_find_by_vdevid(vdev->pdev->soc,
+							eh->ether_dhost,
+							vdev->vdev_id);
+
+	/* If there is no ast entry, return failure */
+	if (qdf_unlikely(!dst_ast_entry)) {
+		qdf_spin_unlock_bh(&vdev->pdev->soc->ast_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_spin_unlock_bh(&vdev->pdev->soc->ast_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * dp_tx_send_exception() - Transmit a frame on a given VAP in exception path
  * @soc: DP soc handle
  * @vdev_id: id of DP vdev handle
@@ -2481,6 +2517,50 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TX_EXCEPTION);
 	return nbuf;
+
+fail:
+	if (vdev)
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TX_EXCEPTION);
+	dp_verbose_debug("pkt send failed");
+	return nbuf;
+}
+
+/**
+ * dp_tx_send_exception_vdev_id_check() - Transmit a frame on a given VAP
+ *      in exception path in special case to avoid regular exception path chk.
+ * @soc: DP soc handle
+ * @vdev_id: id of DP vdev handle
+ * @nbuf: skb
+ * @tx_exc_metadata: Handle that holds exception path meta data
+ *
+ * Entry point for Core Tx layer (DP_TX) invoked from
+ * hard_start_xmit in OSIF/HDD to transmit frames through fw
+ *
+ * Return: NULL on success,
+ *         nbuf when it fails to send
+ */
+qdf_nbuf_t
+dp_tx_send_exception_vdev_id_check(struct cdp_soc_t *soc_hdl,
+				   uint8_t vdev_id, qdf_nbuf_t nbuf,
+		     struct cdp_tx_exception_metadata *tx_exc_metadata)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_TX_EXCEPTION);
+
+	if (qdf_unlikely(!vdev))
+		goto fail;
+
+	if (qdf_unlikely(dp_tx_per_pkt_vdev_id_check(nbuf, vdev)
+			== QDF_STATUS_E_FAILURE)) {
+		DP_STATS_INC(vdev, tx_i.dropped.fail_per_pkt_vdev_id_check, 1);
+		goto fail;
+	}
+
+	/* Unref count as it will agin be taken inside dp_tx_exception */
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TX_EXCEPTION);
+
+	return dp_tx_send_exception(soc_hdl, vdev_id, nbuf, tx_exc_metadata);
 
 fail:
 	if (vdev)
@@ -2849,6 +2929,49 @@ send_multiple:
 		dp_tx_raw_prepare_unset(vdev->pdev->soc, nbuf);
 
 	return nbuf;
+}
+
+/**
+ * dp_tx_send_vdev_id_check() - Transmit a frame on a given VAP in special
+ *      case to vaoid check in perpkt path.
+ * @soc: DP soc handle
+ * @vdev_id: id of DP vdev handle
+ * @nbuf: skb
+ *
+ * Entry point for Core Tx layer (DP_TX) invoked from
+ * hard_start_xmit in OSIF/HDD to transmit packet through dp_tx_send
+ * with special condition to avoid per pkt check in dp_tx_send
+ *
+ * Return: NULL on success,
+ *         nbuf when it fails to send
+ */
+qdf_nbuf_t dp_tx_send_vdev_id_check(struct cdp_soc_t *soc_hdl,
+				    uint8_t vdev_id, qdf_nbuf_t nbuf)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = NULL;
+
+	if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
+		return nbuf;
+
+	/*
+	 * dp_vdev_get_ref_by_id does does a atomic operation avoid using
+	 * this in per packet path.
+	 *
+	 * As in this path vdev memory is already protected with netdev
+	 * tx lock
+	 */
+	vdev = soc->vdev_id_map[vdev_id];
+	if (qdf_unlikely(!vdev))
+		return nbuf;
+
+	if (qdf_unlikely(dp_tx_per_pkt_vdev_id_check(nbuf, vdev)
+			== QDF_STATUS_E_FAILURE)) {
+		DP_STATS_INC(vdev, tx_i.dropped.fail_per_pkt_vdev_id_check, 1);
+		return nbuf;
+	}
+
+	return dp_tx_send(soc_hdl, vdev_id, nbuf);
 }
 
 /**

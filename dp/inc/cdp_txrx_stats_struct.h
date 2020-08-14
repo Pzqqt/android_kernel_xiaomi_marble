@@ -1187,6 +1187,7 @@ struct cdp_rx_stats {
  * @enqueue_fail: hw enqueue fail
  * @dma_error: dma fail
  * @res_full: Resource Full: Congestion Control
+ * @fail_per_pkt_vdev_id_check: Per pkt vdev id check
  * @exception_fw: packets sent to fw
  * @completion_fw: packets completions received from fw
  * @cce_classified:Number of packets classified by CCE
@@ -1244,6 +1245,7 @@ struct cdp_tx_ingress_stats {
 		uint32_t res_full;
 		/* headroom insufficient */
 		uint32_t headroom_insufficient;
+		uint32_t fail_per_pkt_vdev_id_check;
 	} dropped;
 
 	/* Mesh packets info */

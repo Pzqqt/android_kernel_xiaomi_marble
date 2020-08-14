@@ -730,6 +730,7 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.dma_error);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.ring_full);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.enqueue_fail);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.fail_per_pkt_vdev_id_check);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.desc_na.num);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.res_full);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.headroom_insufficient);
@@ -743,6 +744,7 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 		tgtobj->stats.tx_i.dropped.dma_error +
 		tgtobj->stats.tx_i.dropped.ring_full +
 		tgtobj->stats.tx_i.dropped.enqueue_fail +
+		tgtobj->stats.tx_i.dropped.fail_per_pkt_vdev_id_check +
 		tgtobj->stats.tx_i.dropped.desc_na.num +
 		tgtobj->stats.tx_i.dropped.res_full;
 
