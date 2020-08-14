@@ -2970,6 +2970,8 @@ int ipa_reset_quota_stats(enum ipa_client_type client);
 
 int ipa_reset_all_quota_stats(void);
 
+int ipa_drop_stats_init(void);
+
 int ipa_init_drop_stats(u32 pipe_bitmask);
 
 int ipa_get_drop_stats(struct ipa_drop_stats_all *out);
