@@ -2461,7 +2461,6 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 		struct ppdu_info *ppdu_info)
 {
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
@@ -2484,20 +2483,7 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 							  ppdu_desc->vdev_id);
 		if (!vdev)
 			return;
-		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
-			     QDF_MAC_ADDR_SIZE);
-	} else {
-		peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-					     DP_MOD_ID_TX_PPDU_STATS);
-		if (peer) {
-			ppdu_desc->vdev_id = peer->vdev->vdev_id;
-			qdf_mem_copy(ppdu_user_desc->mac_addr,
-				     peer->mac_addr.raw,
-				     QDF_MAC_ADDR_SIZE);
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-		}
 	}
-
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->tid =
@@ -2567,7 +2553,6 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	uint32_t size = CDP_BA_64_BIT_MAP_SIZE_DWORDS;
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
 
@@ -2578,18 +2563,9 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 	peer_id =
 	HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-				     DP_MOD_ID_TX_PPDU_STATS);
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	if (peer) {
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
@@ -2622,7 +2598,6 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	uint32_t size = CDP_BA_256_BIT_MAP_SIZE_DWORDS;
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
 
@@ -2633,18 +2608,9 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 	peer_id =
 	HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-				     DP_MOD_ID_TX_PPDU_STATS);
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	if (peer) {
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
@@ -2671,7 +2637,6 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 		struct ppdu_info *ppdu_info)
 {
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
@@ -2686,18 +2651,9 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	peer_id =
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-				     DP_MOD_ID_TX_PPDU_STATS);
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	if (peer) {
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->completion_status =
@@ -2808,7 +2764,6 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	uint8_t curr_user_index = 0;
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
@@ -2818,18 +2773,9 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 	peer_id =
 	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-				     DP_MOD_ID_TX_PPDU_STATS);
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	if (peer) {
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
@@ -2857,7 +2803,6 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	uint8_t curr_user_index = 0;
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
@@ -2867,18 +2812,9 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 	peer_id =
 	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-				     DP_MOD_ID_TX_PPDU_STATS);
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	if (peer) {
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
@@ -2901,7 +2837,6 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 		struct ppdu_info *ppdu_info)
 {
 	uint16_t peer_id;
-	struct dp_peer *peer;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
@@ -2913,17 +2848,9 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 	peer_id =
 	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-				     DP_MOD_ID_TX_PPDU_STATS);
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	if (peer) {
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
-	}
 	if (!ppdu_user_desc->ack_ba_tlv) {
 		ppdu_user_desc->ack_ba_tlv = 1;
 	} else {
@@ -3548,10 +3475,9 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
 		ppdu_desc->num_msdu += ppdu_desc->user[i].num_msdu;
 
-		peer = dp_peer_find_hash_find(pdev->soc,
-					      ppdu_desc->user[i].mac_addr,
-					      0, ppdu_desc->vdev_id,
-					      DP_MOD_ID_TX_PPDU_STATS);
+		peer = dp_peer_get_ref_by_id(pdev->soc,
+					     ppdu_desc->user[i].peer_id,
+					     DP_MOD_ID_TX_PPDU_STATS);
 		/**
 		 * This check is to make sure peer is not deleted
 		 * after processing the TLVs.

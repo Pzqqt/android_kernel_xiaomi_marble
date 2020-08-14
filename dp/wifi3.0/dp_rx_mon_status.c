@@ -536,10 +536,8 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 	for (i = 0; i < ppdu->num_users && i < CDP_MU_MAX_USERS; i++) {
 		peer = NULL;
 		ppdu_user = &ppdu->user[i];
-		if (ppdu_user->peer_id != HTT_INVALID_PEER)
-			peer = dp_peer_find_hash_find(soc, ppdu_user->mac_addr,
-						      0, ppdu_user->vdev_id,
-						      DP_MOD_ID_RX_PPDU_STATS);
+		peer = dp_peer_get_ref_by_id(soc, ppdu_user->peer_id,
+					     DP_MOD_ID_RX_PPDU_STATS);
 
 		if (!peer)
 			peer = pdev->invalid_peer;
