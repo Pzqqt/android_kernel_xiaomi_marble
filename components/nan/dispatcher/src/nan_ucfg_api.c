@@ -32,6 +32,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "cfg_ucfg_api.h"
 #include "cfg_nan.h"
+#include "wlan_mlme_api.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -1254,4 +1255,19 @@ QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
 
 	qdf_mem_free(disable_ind);
 	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
+{
+	bool nan_allowed = false;
+
+	/* Check for SRD channels only */
+	if (!wlan_reg_is_etsi13_srd_chan_for_freq(pdev, freq))
+		return true;
+
+	wlan_mlme_get_srd_master_mode_for_vdev(wlan_pdev_get_psoc(pdev),
+					       QDF_NAN_DISC_MODE,
+					       &nan_allowed);
+
+	return nan_allowed;
 }

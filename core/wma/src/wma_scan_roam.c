@@ -168,6 +168,9 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 			chan_p->dfs_set = 1;
 		}
 
+		if (chan_list->chanParam[i].nan_disabled)
+			chan_p->nan_disabled = 1;
+
 		if (chan_p->mhz < WMA_2_4_GHZ_MAX_FREQ) {
 			chan_p->phy_mode = MODE_11G;
 			if (chan_list->vht_en && chan_list->vht_24_en)
