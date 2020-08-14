@@ -1220,6 +1220,8 @@ enum _ol_ath_param_t {
 #endif
 	/* Configure punctured band setting */
 	OL_ATH_PARAM_PUNCTURED_BAND = 453,
+	/* Control frame configuration for MBSSID */
+	OL_ATH_PARAM_HE_MBSSID_CTRL_FRAME_CONFIG = 454,
 
 };
 
@@ -3148,6 +3150,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PUNCTURED_BAND, SET_PARAM, 1},
 	{"get_puncture_band",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PUNCTURED_BAND, GET_PARAM, 0},
+	{"he_mbssid_ctrl_frame_config",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_HE_MBSSID_CTRL_FRAME_CONFIG, SET_PARAM, 1},
+	{"g_he_mbssid_ctrl_frame_config",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_HE_MBSSID_CTRL_FRAME_CONFIG, GET_PARAM, 0},
 };
 #endif
 #endif
