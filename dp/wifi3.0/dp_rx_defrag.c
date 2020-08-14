@@ -212,7 +212,8 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 				     rx_tid[rx_reorder->tid]);
 		qdf_spin_unlock_bh(&rx_reorder->tid_lock);
 
-		temp_peer = dp_peer_find_by_id(soc, peer->peer_id);
+		temp_peer = dp_peer_get_ref_by_id(soc, peer->peer_id,
+						  DP_MOD_ID_RX_ERR);
 		if (temp_peer == peer) {
 			qdf_spin_lock_bh(&rx_reorder->tid_lock);
 			dp_rx_reorder_flush_frag(peer, rx_reorder->tid);
@@ -220,7 +221,7 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 		}
 
 		if (temp_peer)
-			dp_peer_unref_delete(temp_peer);
+			dp_peer_unref_delete(temp_peer, DP_MOD_ID_RX_ERR);
 
 	}
 }
@@ -1616,7 +1617,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	/* Check if the packet is from a valid peer */
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
 					mpdu_desc_info->peer_meta_data);
-	peer = dp_peer_find_by_id(soc, peer_id);
+	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 
 	if (!peer) {
 		/* We should not receive anything from unknown peer
@@ -1779,7 +1780,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			now_ms + pdev->soc->rx.defrag.timeout_ms;
 
 		dp_rx_defrag_waitlist_add(peer, tid);
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 
 		return QDF_STATUS_SUCCESS;
 	}
@@ -1825,7 +1826,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 	dp_rx_defrag_cleanup(peer, tid);
 
-	dp_peer_unref_delete(peer);
+	dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1842,7 +1843,7 @@ err_free_desc:
 
 end:
 	if (peer)
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 
 	DP_STATS_INC(soc, rx.rx_frag_err, 1);
 	return QDF_STATUS_E_DEFRAG_ERROR;

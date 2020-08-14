@@ -1764,7 +1764,7 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 	struct dp_peer *vdev_peer;
 	uint16_t len;
 
-	vdev_peer = dp_vdev_bss_peer_ref_n_get(pdev->soc, vdev);
+	vdev_peer = dp_vdev_bss_peer_ref_n_get(pdev->soc, vdev, DP_MOD_ID_IPA);
 	if (qdf_unlikely(!vdev_peer))
 		return nbuf;
 
@@ -1773,12 +1773,12 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 
 	if (dp_tx_send((struct cdp_soc_t *)pdev->soc, vdev->vdev_id, nbuf)) {
 		DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.fail, 1, len);
-		dp_peer_unref_delete(vdev_peer);
+		dp_peer_unref_delete(vdev_peer, DP_MOD_ID_IPA);
 		return nbuf;
 	}
 
 	DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.pkts, 1, len);
-	dp_peer_unref_delete(vdev_peer);
+	dp_peer_unref_delete(vdev_peer, DP_MOD_ID_IPA);
 	return NULL;
 }
 
@@ -1834,19 +1834,19 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	if (!qdf_mem_cmp(eh->h_dest, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
 		return false;
 
-	da_peer = dp_find_peer_by_addr_and_vdev(dp_pdev_to_cdp_pdev(pdev),
-						dp_vdev_to_cdp_vdev(vdev),
-						eh->h_dest);
-
+	da_peer = dp_peer_find_hash_find(soc, eh->h_dest, 0, vdev->vdev_id,
+					 DP_MOD_ID_IPA);
 	if (!da_peer)
 		return false;
 
-	sa_peer = dp_find_peer_by_addr_and_vdev(dp_pdev_to_cdp_pdev(pdev),
-						dp_vdev_to_cdp_vdev(vdev),
-						eh->h_source);
+	dp_peer_unref_delete(da_peer, DP_MOD_ID_IPA);
 
+	da_peer = dp_peer_find_hash_find(soc, eh->h_source, 0, vdev->vdev_id,
+					 DP_MOD_ID_IPA);
 	if (!sa_peer)
 		return false;
+
+	dp_peer_unref_delete(sa_peer, DP_MOD_ID_IPA);
 
 	/*
 	 * In intra-bss forwarding scenario, skb is allocated by IPA driver.

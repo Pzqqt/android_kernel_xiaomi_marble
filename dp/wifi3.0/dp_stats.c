@@ -4307,7 +4307,8 @@ void dp_vdev_peer_stats_update_protocol_cnt(struct dp_vdev *vdev,
 		mac = eh->ether_dhost;
 
 	if (!peer) {
-		peer = dp_peer_find_hash_find(soc, mac, 0, vdev->vdev_id);
+		peer = dp_peer_find_hash_find(soc, mac, 0, vdev->vdev_id,
+					      DP_MOD_ID_GENERIC_STATS);
 		new_peer_ref = true;
 		if (!peer)
 			return;
@@ -4334,7 +4335,7 @@ void dp_vdev_peer_stats_update_protocol_cnt(struct dp_vdev *vdev,
 		protocol_trace_cnt[prot].ingress_cnt++;
 dp_vdev_peer_stats_update_protocol_cnt_free_peer:
 	if (new_peer_ref)
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_GENERIC_STATS);
 }
 
 void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc,
@@ -6057,7 +6058,11 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 				dp_err("DP Peer deletion in progress");
 				continue;
 			}
-			qdf_atomic_inc(&peer->ref_cnt);
+			if (dp_peer_get_ref(pdev->soc, peer,
+					    DP_MOD_ID_GENERIC_STATS) !=
+							QDF_STATUS_SUCCESS)
+				continue;
+
 			waitcnt = 0;
 			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
 			while (!(qdf_atomic_read(&pdev->stats_cmd_complete)) &&
@@ -6067,7 +6072,7 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 				waitcnt++;
 			}
 			qdf_atomic_set(&pdev->stats_cmd_complete, 0);
-			dp_peer_unref_delete(peer);
+			dp_peer_unref_delete(peer, DP_MOD_ID_GENERIC_STATS);
 		}
 	}
 }

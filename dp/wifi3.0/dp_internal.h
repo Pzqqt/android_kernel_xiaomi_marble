@@ -975,11 +975,12 @@ extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
-void dp_peer_unref_delete(struct dp_peer *peer);
-extern void *dp_find_peer_by_addr(struct cdp_pdev *dev,
-	uint8_t *peer_mac_addr);
+void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id id);
 extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
-	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id);
+					      uint8_t *peer_mac_addr,
+					      int mac_addr_is_aligned,
+					      uint8_t vdev_id,
+					      enum dp_peer_mod_id id);
 
 #ifdef DP_PEER_EXTENDED_API
 /**
@@ -1045,10 +1046,6 @@ bool dp_find_peer_exist_on_vdev(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 bool dp_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
 				      uint8_t vdev_id, uint8_t *peer_addr,
 				      uint16_t max_bssid);
-
-void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
-		struct cdp_vdev *vdev,
-		uint8_t *peer_addr);
 
 /**
  * dp_peer_state_update() - update peer local state

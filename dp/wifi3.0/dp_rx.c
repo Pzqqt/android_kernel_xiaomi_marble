@@ -2481,10 +2481,12 @@ done:
 		peer_id =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
 
 		if (qdf_unlikely(!peer)) {
-			peer = dp_peer_find_by_id(soc, peer_id);
+			peer = dp_peer_get_ref_by_id(soc, peer_id,
+						     DP_MOD_ID_RX);
 		} else if (peer && peer->peer_id != peer_id) {
-			dp_peer_unref_delete(peer);
-			peer = dp_peer_find_by_id(soc, peer_id);
+			dp_peer_unref_delete(peer, DP_MOD_ID_RX);
+			peer = dp_peer_get_ref_by_id(soc, peer_id,
+						     DP_MOD_ID_RX);
 		}
 
 		if (peer) {
@@ -2754,7 +2756,7 @@ done:
 	}
 
 	if (qdf_likely(peer))
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX);
 
 	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
 		if (quota) {

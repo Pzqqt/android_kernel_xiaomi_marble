@@ -148,6 +148,27 @@ struct dp_rx_fst;
 struct dp_mon_filter;
 struct dp_mon_mpdu;
 
+/**
+ * enum for modules ids of peer reference
+ */
+enum dp_peer_mod_id {
+	DP_MOD_ID_TX_COMP,
+	DP_MOD_ID_RX,
+	DP_MOD_ID_RX_ERR,
+	DP_MOD_ID_TX_PPDU_STATS,
+	DP_MOD_ID_RX_PPDU_STATS,
+	DP_MOD_ID_CDP,
+	DP_MOD_ID_GENERIC_STATS,
+	DP_MOD_ID_TX_MULTIPASS,
+	DP_MOD_ID_TX_CAPTURE,
+	DP_MOD_ID_NSS_OFFLOAD,
+	DP_MOD_ID_PEER_CONFIG,
+	DP_MOD_ID_HTT,
+	DP_MOD_ID_IPA,
+	DP_MOD_ID_AST,
+	DP_MOD_ID_MAX,
+};
+
 #define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
 	TAILQ_FOREACH((_vdev), &(_pdev)->vdev_list, vdev_list_elem)
 
@@ -2462,6 +2483,8 @@ struct dp_peer {
 #endif
 	/* entry to inactive_list*/
 	TAILQ_ENTRY(dp_peer) inactive_list_elem;
+
+	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
 };
 
 /*

@@ -533,7 +533,8 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		ppdu_user = &ppdu->user[i];
 		if (ppdu_user->peer_id != HTT_INVALID_PEER)
 			peer = dp_peer_find_hash_find(soc, ppdu_user->mac_addr,
-						      0, ppdu_user->vdev_id);
+						      0, ppdu_user->vdev_id,
+						      DP_MOD_ID_RX_PPDU_STATS);
 
 		if (!peer)
 			peer = pdev->invalid_peer;
@@ -703,7 +704,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 				     &peer->stats, ppdu->peer_id,
 				     UPDATE_PEER_STATS, pdev->pdev_id);
 #endif
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_PPDU_STATS);
 	}
 }
 #endif

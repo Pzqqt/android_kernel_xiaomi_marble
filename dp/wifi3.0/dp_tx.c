@@ -3667,7 +3667,8 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		if (qdf_likely(desc->flags & DP_TX_DESC_FLAG_SIMPLE)) {
 			struct dp_pdev *pdev = desc->pdev;
 
-			peer = dp_peer_find_by_id(soc, desc->peer_id);
+			peer = dp_peer_get_ref_by_id(soc, desc->peer_id,
+						     DP_MOD_ID_TX_COMP);
 			if (qdf_likely(peer)) {
 				/*
 				 * Increment peer statistics
@@ -3680,7 +3681,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 						HAL_TX_TQM_RR_FRAME_ACKED)
 					peer->stats.tx.tx_failed++;
 
-				dp_peer_unref_delete(peer);
+				dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
 			}
 
 			qdf_assert(pdev);
@@ -3701,7 +3702,8 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 			continue;
 		}
 		hal_tx_comp_get_status(&desc->comp, &ts, soc->hal_soc);
-		peer = dp_peer_find_by_id(soc, ts.peer_id);
+		peer = dp_peer_get_ref_by_id(soc, ts.peer_id,
+					     DP_MOD_ID_TX_COMP);
 		dp_tx_comp_process_tx_status(soc, desc, &ts, peer, ring_id);
 
 		netbuf = desc->nbuf;
@@ -3712,14 +3714,13 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		dp_tx_comp_process_desc(soc, desc, &ts, peer);
 
 		if (peer)
-			dp_peer_unref_delete(peer);
+			dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
 
 		next = desc->next;
 
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
-
 }
 
 /**
@@ -3820,14 +3821,15 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 			tid_stats->htt_status_cnt[tx_status]++;
 		}
 
-		peer = dp_peer_find_by_id(soc, ts.peer_id);
+		peer = dp_peer_get_ref_by_id(soc, ts.peer_id,
+					     DP_MOD_ID_TX_COMP);
 
 		dp_tx_comp_process_tx_status(soc, tx_desc, &ts, peer, ring_id);
 		dp_tx_comp_process_desc(soc, tx_desc, &ts, peer);
 		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 
 		if (qdf_likely(peer))
-			dp_peer_unref_delete(peer);
+			dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
 
 		break;
 	}

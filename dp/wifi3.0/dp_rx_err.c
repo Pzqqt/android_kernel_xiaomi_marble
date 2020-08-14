@@ -395,7 +395,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 				mpdu_desc_info->peer_meta_data);
 
 
-	peer = dp_peer_find_by_id(soc, peer_id);
+	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 
 	if (qdf_likely(peer)) {
 		/*
@@ -405,7 +405,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 			"discard rx due to PN error for peer  %pK  %pM",
 			peer, peer->mac_addr.raw);
 
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Packet received with PN error");
@@ -442,7 +442,7 @@ dp_rx_oor_handle(struct dp_soc *soc,
 				FRAME_MASK_IPV4_EAPOL | FRAME_MASK_IPV6_DHCP;
 	struct dp_peer *peer = NULL;
 
-	peer = dp_peer_find_by_id(soc, peer_id);
+	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 	if (!peer) {
 		dp_info_rl("peer not found");
 		goto free_nbuf;
@@ -451,13 +451,13 @@ dp_rx_oor_handle(struct dp_soc *soc,
 	if (dp_rx_deliver_special_frame(soc, peer, nbuf, frame_mask,
 					rx_tlv_hdr)) {
 		DP_STATS_INC(soc, rx.err.reo_err_oor_to_stack, 1);
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 		return;
 	}
 
 free_nbuf:
 	if (peer)
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 
 	DP_STATS_INC(soc, rx.err.reo_err_oor_drop, 1);
 	qdf_nbuf_free(nbuf);
@@ -789,7 +789,7 @@ dp_2k_jump_handle(struct dp_soc *soc,
 	struct dp_rx_tid *rx_tid = NULL;
 	uint32_t frame_mask = FRAME_MASK_IPV4_ARP;
 
-	peer = dp_peer_find_by_id(soc, peer_id);
+	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "peer not found");
@@ -833,14 +833,13 @@ nbuf_deliver:
 	if (dp_rx_deliver_special_frame(soc, peer, nbuf, frame_mask,
 					rx_tlv_hdr)) {
 		DP_STATS_INC(soc, rx.err.rx_2k_jump_to_stack, 1);
-		dp_peer_unref_delete(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 		return;
 	}
 
 free_nbuf:
 	if (peer)
-		dp_peer_unref_delete(peer);
-
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 	DP_STATS_INC(soc, rx.err.rx_2k_jump_drop, 1);
 	qdf_nbuf_free(nbuf);
 }
@@ -883,8 +882,8 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 	 * received MPDU
 	 */
 	if (wh)
-		peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev,
-					    wh->i_addr2);
+		peer = dp_peer_find_hash_find(soc, wh->i_addr2, 0,
+					      DP_VDEV_ALL, DP_MOD_ID_RX_ERR);
 	if (peer) {
 		dp_verbose_debug("MPDU sw_peer_id & ast_idx is corrupted");
 		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,
@@ -893,6 +892,7 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 				 1, qdf_nbuf_len(nbuf));
 		qdf_nbuf_free(nbuf);
 
+		dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 		return true;
 	}
 	return false;
@@ -2014,7 +2014,7 @@ done:
 
 		peer_id = hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
 							   rx_tlv_hdr);
-		peer = dp_peer_find_by_id(soc, peer_id);
+		peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 
 		if (!peer)
 			dp_info_rl("peer is null peer_id%u err_src%u err_rsn%u",
@@ -2041,7 +2041,7 @@ done:
 			dp_info_rl("scattered msdu dropped");
 			nbuf = next;
 			if (peer)
-				dp_peer_unref_delete(peer);
+				dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 			continue;
 		}
 
@@ -2176,7 +2176,7 @@ done:
 		}
 
 		if (peer)
-			dp_peer_unref_delete(peer);
+			dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
 
 		nbuf = next;
 	}

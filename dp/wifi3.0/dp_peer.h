@@ -26,11 +26,26 @@
 
 #define DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC 5000
 
+/**
+ * dp_peer_get_ref() - Returns peer object given the peer id
+ *
+ * @soc		: core DP soc context
+ * @peer	: DP peer
+ * @mod_id	: id of module requesting the reference
+ *
+ * Return:	QDF_STATUS_SUCCESS if reference held successfully
+ *		else QDF_STATUS_E_INVAL
+ */
 static inline
-QDF_STATUS dp_peer_get_ref(struct dp_soc *soc, struct dp_peer *peer)
+QDF_STATUS dp_peer_get_ref(struct dp_soc *soc,
+			   struct dp_peer *peer,
+			   enum dp_peer_mod_id mod_id)
 {
 	if (!qdf_atomic_inc_not_zero(&peer->ref_cnt))
 		return QDF_STATUS_E_INVAL;
+
+	if (mod_id > DP_MOD_ID_RX)
+		qdf_atomic_inc(&peer->mod_refs[mod_id]);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -45,7 +60,7 @@ QDF_STATUS dp_peer_get_ref(struct dp_soc *soc, struct dp_peer *peer)
  */
 static inline struct dp_peer *
 __dp_peer_find_by_id(struct dp_soc *soc,
-		   uint16_t peer_id)
+		     uint16_t peer_id)
 {
 	struct dp_peer *peer;
 
@@ -57,27 +72,30 @@ __dp_peer_find_by_id(struct dp_soc *soc,
 }
 
 /**
- * dp_peer_find_by_id() - Returns peer object given the peer id
+ * dp_peer_get_ref_by_id() - Returns peer object given the peer id
  *                        if delete_in_progress in not set for peer
  *
  * @soc		: core DP soc context
  * @peer_id	: peer id from peer object can be retrieved
+ * @mod_id      : ID ot module requesting reference
  *
  * Return: struct dp_peer*: Pointer to DP peer object
  */
 static inline
-struct dp_peer *dp_peer_find_by_id(struct dp_soc *soc,
-				   uint16_t peer_id)
+struct dp_peer *dp_peer_get_ref_by_id(struct dp_soc *soc,
+				      uint16_t peer_id,
+				      enum dp_peer_mod_id mod_id)
 {
 	struct dp_peer *peer;
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
 	peer = __dp_peer_find_by_id(soc, peer_id);
-	if (!peer || (peer && peer->delete_in_progress)) {
+	if (!peer || peer->delete_in_progress ||
+	    (dp_peer_get_ref(soc, peer, mod_id) != QDF_STATUS_SUCCESS)) {
 		qdf_spin_unlock_bh(&soc->peer_map_lock);
 		return NULL;
 	}
-	qdf_atomic_inc(&peer->ref_cnt);
+
 	qdf_spin_unlock_bh(&soc->peer_map_lock);
 
 	return peer;
@@ -176,15 +194,6 @@ void dp_peer_free_ast_entry(struct dp_soc *soc,
 
 void dp_peer_unlink_ast_entry(struct dp_soc *soc,
 			      struct dp_ast_entry *ast_entry);
-
-/*
- * dp_peer_find_by_id_exist - check if peer exists for given id
- * @soc: core DP soc context
- * @peer_id: peer id from peer object can be retrieved
- *
- * Return: true if peer exists of false otherwise
- */
-bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id);
 
 #define DP_AST_ASSERT(_condition) \
 	do { \
@@ -396,7 +405,9 @@ static inline void dp_peer_ext_stats_ctx_dealloc(struct dp_soc *soc,
 #endif
 
 struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
-					   struct dp_vdev *vdev);
+					   struct dp_vdev *vdev,
+					   enum dp_peer_mod_id mod_id);
 struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
-						struct dp_vdev *vdev);
+						struct dp_vdev *vdev,
+						enum dp_peer_mod_id mod_id);
 #endif /* _DP_PEER_H_ */
