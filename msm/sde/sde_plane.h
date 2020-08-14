@@ -196,6 +196,15 @@ void sde_plane_ctl_flush(struct drm_plane *plane, struct sde_hw_ctl *ctl,
 void sde_plane_restore(struct drm_plane *plane);
 
 /**
+ * _sde_plane_set_qos_lut - set danger, safe and creq LUT of the given plane
+ * @plane:		Pointer to drm plane
+ * @crtc:		Pointer to drm crtc to find refresh rate on mode
+ * @fb:			Pointer to framebuffer associated with the given plane
+ */
+void _sde_plane_set_qos_lut(struct drm_plane *plane,
+		struct drm_crtc *crtc,
+		struct drm_framebuffer *fb);
+/**
  * sde_plane_flush - final plane operations before commit flush
  * @plane: Pointer to drm plane structure
  */
