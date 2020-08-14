@@ -4969,6 +4969,9 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->drop_unenc = 1;
 	vdev->sec_type = cdp_sec_type_none;
 	vdev->multipass_en = false;
+	qdf_atomic_init(&vdev->ref_cnt);
+	/* Take one reference for create*/
+	qdf_atomic_inc(&vdev->ref_cnt);
 #ifdef notyet
 	vdev->filters_num = 0;
 #endif
@@ -5032,7 +5035,6 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_create_wifi3((struct cdp_soc_t *)soc, vdev_id,
 				     vdev->mac_addr.raw);
-
 	return QDF_STATUS_SUCCESS;
 
 fail0:
@@ -5242,32 +5244,6 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	 * still need to get vdev pointer by vdev_id.
 	 */
 	soc->vdev_id_map[vdev->vdev_id] = NULL;
-	/*
-	 * Use peer_ref_mutex while accessing peer_list, in case
-	 * a peer is in the process of being removed from the list.
-	 */
-	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	/* check that the vdev has no peers allocated */
-	if (!TAILQ_EMPTY(&vdev->peer_list)) {
-		/* debug print - will be removed later */
-		dp_warn("not deleting vdev object %pK (%pM) until deletion finishes for all its peers",
-			vdev, vdev->mac_addr.raw);
-
-		if (vdev->vdev_dp_ext_handle) {
-			qdf_mem_free(vdev->vdev_dp_ext_handle);
-			vdev->vdev_dp_ext_handle = NULL;
-		}
-		/* indicate that the vdev needs to be deleted */
-		vdev->delete.pending = 1;
-		vdev->delete.callback = callback;
-		vdev->delete.context = cb_context;
-		qdf_spin_unlock_bh(&vdev->peer_list_lock);
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_spin_unlock_bh(&vdev->peer_list_lock);
-
-	if (wlan_op_mode_monitor == vdev->opmode)
-		goto free_vdev;
 
 	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
 	if (!soc->hw_nac_monitor_support) {
@@ -5287,34 +5263,16 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	}
 	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	/* remove the vdev from its parent pdev's list */
-	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-
-	dp_tx_vdev_detach(vdev);
-	wlan_minidump_remove(vdev);
-
-free_vdev:
-	if (wlan_op_mode_monitor == vdev->opmode) {
-		if (soc->intr_mode == DP_INTR_POLL)
-			qdf_timer_sync_cancel(&soc->int_timer);
-		pdev->monitor_vdev = NULL;
-	}
-
 	if (vdev->vdev_dp_ext_handle) {
 		qdf_mem_free(vdev->vdev_dp_ext_handle);
 		vdev->vdev_dp_ext_handle = NULL;
 	}
+	/* indicate that the vdev needs to be deleted */
+	vdev->delete.pending = 1;
+	vdev->delete.callback = callback;
+	vdev->delete.context = cb_context;
 
-	qdf_spinlock_destroy(&vdev->peer_list_lock);
-	dp_info("deleting vdev object %pK (%pM)", vdev, vdev->mac_addr.raw);
-
-	qdf_mem_free(vdev);
-
-	if (callback)
-		callback(cb_context);
-
+	dp_vdev_unref_delete(soc, vdev);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5446,7 +5404,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	if (peer) {
 		qdf_atomic_init(&peer->is_default_route_set);
-		dp_peer_cleanup(vdev, peer, true);
+		dp_peer_cleanup(vdev, peer);
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		dp_peer_delete_ast_entries(soc, peer);
@@ -5459,20 +5417,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			ast_type = CDP_TXRX_AST_TYPE_SELF;
 		}
 		dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
-		/*
-		* Control path maintains a node count which is incremented
-		* for every new peer create command. Since new peer is not being
-		* created and earlier reference is reused here,
-		* peer_unref_delete event is sent to control path to
-		* increment the count back.
-		*/
-		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(
-				soc->ctrl_psoc,
-				pdev->pdev_id,
-				peer->mac_addr.raw, vdev->mac_addr.raw,
-				vdev->opmode);
-		}
 
 		peer->valid = 1;
 		dp_local_peer_id_alloc(pdev, peer);
@@ -5492,6 +5436,8 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		dp_set_peer_isolation(peer, false);
 
+		for (i = 0; i < DP_MAX_TIDS; i++)
+			qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/*
@@ -5523,6 +5469,8 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	/* store provided params */
 	peer->vdev = vdev;
+	/* get the vdev reference for new peer */
+	dp_vdev_get_ref(soc, vdev);
 
 	if ((vdev->opmode == wlan_op_mode_sta) &&
 	    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
@@ -5542,7 +5490,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	/* reset the ast index to flowid table */
 	dp_peer_reset_flowq_map(peer);
-
 
 	qdf_atomic_init(&peer->ref_cnt);
 
@@ -5621,7 +5568,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	dp_peer_tx_capture_filter_check(pdev, peer);
 
 	dp_set_peer_isolation(peer, false);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5776,7 +5722,6 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	dp_info("pdev: %d vdev :%d opmode:%u hash-based-steering:%d default-reo_dest:%u",
 		pdev->pdev_id, vdev->vdev_id,
 		vdev->opmode, hash_based, reo_dest);
-
 
 	/*
 	 * There are corner cases where the AD1 = AD2 = "VAPs address"
@@ -6148,76 +6093,57 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	return status;
 }
 
-/*
- * dp_peer_release_mem() - free dp peer handle memory
- * @soc: dataptah soc handle
- * @pdev: datapath pdev handle
- * @peer: datapath peer handle
- * @vdev_opmode: Vdev operation mode
- * @vdev_mac_addr: Vdev Mac address
- *
- * Return: None
- */
-static void dp_peer_release_mem(struct dp_soc *soc,
-				struct dp_pdev *pdev,
-				struct dp_peer *peer,
-				enum wlan_op_mode vdev_opmode,
-				uint8_t *vdev_mac_addr)
-{
-	if (soc->cdp_soc.ol_ops->peer_unref_delete)
-		soc->cdp_soc.ol_ops->peer_unref_delete(
-				soc->ctrl_psoc,
-				pdev->pdev_id,
-				peer->mac_addr.raw, vdev_mac_addr,
-				vdev_opmode);
-
-	/*
-	 * Peer AST list hast to be empty here
-	 */
-	DP_AST_ASSERT(TAILQ_EMPTY(&peer->ast_entry_list));
-
-	qdf_mem_free(peer);
-}
-
 /**
- * dp_delete_pending_vdev() - check and process vdev delete
- * @pdev: DP specific pdev pointer
+ * dp_vdev_unref_delete() - check and process vdev delete
+ * @soc : DP specific soc pointer
  * @vdev: DP specific vdev pointer
- * @vdev_id: vdev id corresponding to vdev
  *
- * This API does following:
- * 1) It releases tx flow pools buffers as vdev is
- *    going down and no peers are associated.
- * 2) It also detaches vdev before cleaning vdev (struct dp_vdev) memory
  */
-static void dp_delete_pending_vdev(struct dp_pdev *pdev, struct dp_vdev *vdev,
-				   uint8_t vdev_id)
+void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev)
 {
 	ol_txrx_vdev_delete_cb vdev_delete_cb = NULL;
 	void *vdev_delete_context = NULL;
+	uint8_t vdev_id = vdev->vdev_id;
+	struct dp_pdev *pdev = vdev->pdev;
+
+	/* Return if this is not the last reference*/
+	if (!qdf_atomic_dec_and_test(&vdev->ref_cnt))
+		return;
+
+	/*
+	 * This should be set as last reference need to released
+	 * after cdp_vdev_detach() is called
+	 *
+	 * if this assert is hit there is a ref count issue
+	 */
+	QDF_ASSERT(vdev->delete.pending);
 
 	vdev_delete_cb = vdev->delete.callback;
 	vdev_delete_context = vdev->delete.context;
 
 	dp_info("deleting vdev object %pK (%pM)- its last peer is done",
 		vdev, vdev->mac_addr.raw);
+
+	if (wlan_op_mode_monitor == vdev->opmode) {
+		if (soc->intr_mode == DP_INTR_POLL)
+			qdf_timer_sync_cancel(&soc->int_timer);
+		pdev->monitor_vdev = NULL;
+		goto free_vdev;
+	}
 	/* all peers are gone, go ahead and delete it */
 	dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
 			FLOW_TYPE_VDEV, vdev_id);
 	dp_tx_vdev_detach(vdev);
 
-	pdev->soc->vdev_id_map[vdev_id] = NULL;
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
-	if (wlan_op_mode_monitor == vdev->opmode) {
-		pdev->monitor_vdev = NULL;
-	} else {
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
-
+free_vdev:
+	qdf_spinlock_destroy(&vdev->peer_list_lock);
 	dp_info("deleting vdev object %pK (%pM)",
 		vdev, vdev->mac_addr.raw);
+	wlan_minidump_remove(vdev);
 	qdf_mem_free(vdev);
 	vdev = NULL;
 
@@ -6236,11 +6162,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	uint16_t peer_id;
-	uint16_t vdev_id;
-	bool vdev_delete = false;
 	struct cdp_peer_cookie peer_cookie;
-	enum wlan_op_mode vdev_opmode;
-	uint8_t vdev_mac_addr[QDF_MAC_ADDR_SIZE];
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -6254,28 +6176,15 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	 */
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_id;
-		vdev_id = vdev->vdev_id;
 
 		/*
 		 * Make sure that the reference to the peer in
 		 * peer object map is removed
 		 */
-		if (peer_id != HTT_INVALID_PEER)
-			dp_peer_find_id_to_obj_remove(soc, peer_id);
+		QDF_ASSERT(peer_id == HTT_INVALID_PEER);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "Deleting peer %pK (%pM)", peer, peer->mac_addr.raw);
-
-		/* remove the reference to the peer from the hash table */
-		dp_peer_find_hash_remove(soc, peer);
-
-		qdf_spin_lock_bh(&soc->ast_lock);
-		if (peer->self_ast_entry) {
-			dp_peer_del_ast(soc, peer->self_ast_entry);
-		}
-		qdf_spin_unlock_bh(&soc->ast_lock);
-
-		vdev_delete = dp_peer_vdev_list_remove(soc, vdev, peer);
 
 		/*
 		 * Deallocate the extended stats contenxt
@@ -6290,38 +6199,25 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 					peer->wlanstats_ctx;
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 		dp_wdi_event_handler(WDI_EVENT_PEER_DESTROY,
-				     pdev->soc,
+				     soc,
 				     (void *)&peer_cookie,
 				     peer->peer_id,
 				     WDI_NO_VAL,
 				     pdev->pdev_id);
 #endif
 		peer->wlanstats_ctx = NULL;
-
-		/* cleanup the peer data */
-		dp_peer_cleanup(vdev, peer, false);
-		if (!peer->bss_peer)
-			DP_UPDATE_STATS(vdev, peer);
-		/* save vdev related member in case vdev freed */
-		vdev_opmode = vdev->opmode;
-		qdf_mem_copy(vdev_mac_addr, vdev->mac_addr.raw,
-			     QDF_MAC_ADDR_SIZE);
-
 		wlan_minidump_remove(peer);
 		/*
-		 * Invoke soc.ol_ops->peer_unref_delete out of
-		 * peer_ref_mutex in case deadlock issue.
+		 * Peer AST list hast to be empty here
 		 */
-		dp_peer_release_mem(soc, pdev, peer,
-				    vdev_opmode,
-				    vdev_mac_addr);
-		/*
-		 * Delete the vdev if it's waiting all peer deleted
-		 * and it's chance now.
-		 */
-		if (vdev_delete)
-			dp_delete_pending_vdev(pdev, vdev, vdev_id);
+		DP_AST_ASSERT(TAILQ_EMPTY(&peer->ast_entry_list));
 
+		qdf_mem_free(peer);
+
+		/*
+		 * Decrement ref count taken at peer create
+		 */
+		dp_vdev_unref_delete(soc, vdev);
 	}
 }
 
@@ -6352,6 +6248,10 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_peer *peer = dp_peer_find_hash_find(soc, peer_mac,
 						      0, vdev_id);
+	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
 
 	/* Peer can be null for monitor vap mac address */
 	if (!peer) {
@@ -6380,6 +6280,11 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 
 	qdf_spinlock_destroy(&peer->peer_info_lock);
 	dp_peer_multipass_list_remove(peer);
+
+	/* remove the reference to the peer from the hash table */
+	dp_peer_find_hash_remove(soc, peer);
+
+	dp_peer_vdev_list_remove(soc, vdev, peer);
 
 	/*
 	 * Remove the reference added during peer_attach.
@@ -7128,7 +7033,6 @@ static QDF_STATUS dp_vdev_getstats(struct cdp_vdev *vdev_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-
 /**
  * dp_pdev_getstats() - get pdev packet level stats
  * @pdev_handle: Datapath PDEV handle
@@ -7571,7 +7475,6 @@ dp_pdev_tid_stats_osif_drop(struct dp_pdev *pdev, uint32_t val)
 {
 	pdev->stats.tid_stats.osif_drop += val;
 }
-
 
 /*
  * dp_config_debug_sniffer()- API to enable/disable debug sniffer
@@ -9472,27 +9375,12 @@ dp_peer_teardown_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			  "%s: Invalid peer\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/*
-	 * For BSS peer, new peer is not created on alloc_node if the
-	 * peer with same address already exists , instead refcnt is
-	 * increased for existing peer. Correspondingly in delete path,
-	 * only refcnt is decreased; and peer is only deleted , when all
-	 * references are deleted. So delete_in_progress should not be set
-	 * for bss_peer, unless only 3 reference remains (peer map reference,
-	 * peer hash table reference and above local reference).
-	 */
-	if ((peer->vdev->opmode == wlan_op_mode_ap) && peer->bss_peer &&
-	    (qdf_atomic_read(&peer->ref_cnt) > 3)) {
-		status =  QDF_STATUS_E_FAILURE;
-		goto fail;
-	}
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	peer->delete_in_progress = true;
 	dp_peer_delete_ast_entries(soc, peer);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
-fail:
 	if (peer)
 		dp_peer_unref_delete(peer);
 	return status;

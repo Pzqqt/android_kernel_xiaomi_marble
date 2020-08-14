@@ -2263,6 +2263,11 @@ struct dp_vdev {
 	uint8_t fisa_disallowed[MAX_REO_DEST_RINGS];
 	uint8_t fisa_force_flushed[MAX_REO_DEST_RINGS];
 #endif
+	/*
+	 * Refcount for VDEV currently incremented when
+	 * peer is created for VDEV
+	 */
+	qdf_atomic_t ref_cnt;
 };
 
 

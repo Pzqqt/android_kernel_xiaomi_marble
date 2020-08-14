@@ -25,6 +25,16 @@
 #define DP_INVALID_PEER_ID 0xffff
 
 #define DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC 5000
+
+static inline
+QDF_STATUS dp_peer_get_ref(struct dp_soc *soc, struct dp_peer *peer)
+{
+	if (!qdf_atomic_inc_not_zero(&peer->ref_cnt))
+		return QDF_STATUS_E_INVAL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * __dp_peer_find_by_id() - Returns peer object given the peer id
  *

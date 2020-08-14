@@ -947,13 +947,14 @@ extern void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_erase(struct dp_soc *soc);
 void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
 			   struct dp_peer *peer);
-uint8_t dp_peer_vdev_list_remove(struct dp_soc *soc, struct dp_vdev *vdev,
-				 struct dp_peer *peer);
+void dp_peer_vdev_list_remove(struct dp_soc *soc, struct dp_vdev *vdev,
+			      struct dp_peer *peer);
 void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
 				struct dp_peer *peer,
 				uint16_t peer_id);
 void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
 				   uint16_t peer_id);
+void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev);
 /*
  * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
  * @peer: Datapath peer
@@ -972,10 +973,8 @@ void dp_peer_ppdu_delayed_ba_cleanup(struct dp_peer *peer);
 
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer);
-void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
-		     bool reuse);
-void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer,
-			bool reuse);
+void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
+void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 void dp_peer_unref_delete(struct dp_peer *peer);
 extern void *dp_find_peer_by_addr(struct cdp_pdev *dev,
 	uint8_t *peer_mac_addr);
@@ -2299,4 +2298,22 @@ dp_hmwds_ast_add_notify(struct dp_peer *peer,
 {
 }
 #endif
+
+/**
+ * dp_vdev_get_ref() - API to take a reference for VDEV object
+ *
+ * @soc		: core DP soc context
+ * @vdev	: DP vdev
+ *
+ * Return:	QDF_STATUS_SUCCESS if reference held successfully
+ *		else QDF_STATUS_E_INVAL
+ */
+static inline
+QDF_STATUS dp_vdev_get_ref(struct dp_soc *soc, struct dp_vdev *vdev)
+{
+	if (!qdf_atomic_inc_not_zero(&vdev->ref_cnt))
+		return QDF_STATUS_E_INVAL;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* #ifndef _DP_INTERNAL_H_ */
