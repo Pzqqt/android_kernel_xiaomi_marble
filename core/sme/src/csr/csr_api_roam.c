@@ -18842,6 +18842,7 @@ csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
 			  uint8_t reason)
 {
 	QDF_STATUS status;
+	bool sup_disabled_roam;
 	struct wlan_objmgr_vdev *vdev;
 	struct mlme_roam_after_data_stall *vdev_roam_params;
 	enum roam_offload_state cur_state = mlme_get_roam_state(mac->psoc,
@@ -18867,6 +18868,28 @@ csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
 		csr_roam_switch_to_rso_stop(mac, vdev_id, reason);
 		break;
 	case WLAN_ROAM_RSO_STOPPED:
+		/*
+		 * When Supplicant disabled roaming is set and roam invoke
+		 * command is received from userspace, fw starts to roam.
+		 * But meanwhile if a disassoc/deauth is received from AP or if
+		 * NB disconnect is initiated while supplicant disabled roam,
+		 * RSO stop with ROAM scan mode as 0 is not sent to firmware
+		 * since the previous state was RSO_STOPPED. This could lead
+		 * to firmware not sending peer unmap event for the current
+		 * AP. To avoid this, if previous RSO stop was sent with
+		 * ROAM scan mode as 4, send RSO stop with Roam scan mode as 0
+		 * and then switch to ROAM_DEINIT.
+		 */
+		sup_disabled_roam =
+			mlme_get_supplicant_disabled_roaming(mac->psoc,
+							     vdev_id);
+		if (sup_disabled_roam) {
+			sme_debug("vdev[%d]: supplicant disabled roam. clear roam scan mode",
+				  vdev_id);
+			csr_post_rso_stop(mac, vdev_id, REASON_DISCONNECTED);
+		}
+		break;
+
 	case WLAN_ROAM_INIT:
 		break;
 
