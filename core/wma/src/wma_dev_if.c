@@ -923,6 +923,12 @@ static void wma_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
 				       IS_WLAN_PHYMODE_VHT(old_peer_phymode),
 				       IS_WLAN_PHYMODE_HE(old_peer_phymode));
 
+	if (new_phymode == old_peer_phymode) {
+		wma_debug("Ignore update as old %d and new %d phymode are same for mac "QDF_MAC_ADDR_STR,
+			  old_peer_phymode, new_phymode,
+			  QDF_MAC_ADDR_ARRAY(peer_mac_addr));
+		return;
+	}
 	wlan_peer_set_phymode(peer, new_phymode);
 
 	fw_phymode = wma_host_to_fw_phymode(new_phymode);
