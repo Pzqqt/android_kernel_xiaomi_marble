@@ -2721,11 +2721,6 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 						QDF_TRACE_LEVEL_DEBUG,
 						FL("pkt send failed"));
 					qdf_nbuf_free(nbuf_copy);
-				} else {
-					if (peer_id != DP_INVALID_PEER)
-						DP_STATS_INC_PKT(peer,
-							tx.nawds_mcast,
-							1, qdf_nbuf_len(nbuf));
 				}
 			}
 		}

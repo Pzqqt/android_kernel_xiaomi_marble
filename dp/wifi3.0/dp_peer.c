@@ -292,6 +292,7 @@ void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
 	else
 		TAILQ_INSERT_TAIL(&vdev->peer_list, peer, peer_list_elem);
 
+	vdev->num_peers++;
 	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 }
 
@@ -321,6 +322,7 @@ void dp_peer_vdev_list_remove(struct dp_soc *soc, struct dp_vdev *vdev,
 		TAILQ_REMOVE(&peer->vdev->peer_list, peer,
 			     peer_list_elem);
 		dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+		vdev->num_peers--;
 	} else {
 		/*Ignoring the remove operation as peer not found*/
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2081,7 +2083,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	struct dp_peer *peer;
 	struct dp_vdev *vdev = NULL;
 
-	peer = __dp_peer_find_by_id(soc, peer_id);
+	peer = __dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_HTT);
 
 	/*
 	 * Currently peer IDs are assigned for vdevs as well as peers.
@@ -2098,14 +2100,17 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	 */
 	if (is_wds) {
 		if (!dp_peer_ast_free_entry_by_mac(soc, peer, vdev_id,
-						   mac_addr))
+						   mac_addr)) {
+			dp_peer_unref_delete(peer, DP_MOD_ID_HTT);
 			return;
+		}
 
 		dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
 			 peer, peer->peer_id,
 			 peer->mac_addr.raw, mac_addr, vdev_id,
 			 is_wds);
 
+		dp_peer_unref_delete(peer, DP_MOD_ID_HTT);
 		return;
 	} else {
 		dp_peer_clean_wds_entries(soc, peer, free_wds_count);
@@ -2137,6 +2142,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 
 	dp_peer_update_state(soc, peer, DP_PEER_STATE_INACTIVE);
+	dp_peer_unref_delete(peer, DP_MOD_ID_HTT);
 	/*
 	 * Remove a reference to the peer.
 	 * If there are no more references, delete the peer object.

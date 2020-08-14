@@ -698,6 +698,27 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 }
 
 /*
+ * dp_peer_reset_ast_entries() - Deletes all HMWDS entries for a peer
+ * @soc_handle:		Datapath SOC handle
+ * @peer:		DP peer
+ * @arg:		callback argument
+ *
+ * Return: None
+ */
+static void
+dp_peer_reset_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
+{
+	struct dp_ast_entry *ast_entry = NULL;
+	struct dp_ast_entry *tmp_ast_entry;
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, tmp_ast_entry) {
+		if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
+		    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+			dp_peer_del_ast(soc, ast_entry);
+	}
+}
+
+/*
  * dp_wds_reset_ast_wifi3() - Reset the is_active param for ast entry
  * @soc_handle:		Datapath SOC handle
  * @wds_macaddr:	WDS entry MAC Address
@@ -712,7 +733,6 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry *ast_entry = NULL;
-	struct dp_ast_entry *tmp_ast_entry;
 	struct dp_peer *peer;
 	struct dp_pdev *pdev;
 	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
@@ -731,11 +751,7 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 		}
 
 		qdf_spin_lock_bh(&soc->ast_lock);
-		DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, tmp_ast_entry) {
-			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
-			    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
-				dp_peer_del_ast(soc, ast_entry);
-		}
+		dp_peer_reset_ast_entries(soc, peer, NULL);
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 
@@ -759,6 +775,7 @@ static QDF_STATUS dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 /*
  * dp_wds_reset_ast_table_wifi3() - Reset the is_active param for all ast entry
  * @soc:		Datapath SOC handle
+ * @vdev_id:		id of vdev object
  *
  * Return: QDF_STATUS
  */
@@ -767,36 +784,40 @@ dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 			     uint8_t vdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
-	struct dp_pdev *pdev;
-	struct dp_vdev *vdev;
-	struct dp_peer *peer;
-	struct dp_ast_entry *ase, *temp_ase;
-	int i;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
-		pdev = soc->pdev_list[i];
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-			qdf_spin_lock_bh(&vdev->peer_list_lock);
-			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
-					if ((ase->type ==
-						CDP_TXRX_AST_TYPE_WDS_HM) ||
-					    (ase->type ==
-						CDP_TXRX_AST_TYPE_WDS_HM_SEC))
-						dp_peer_del_ast(soc, ase);
-				}
-			}
-			qdf_spin_unlock_bh(&vdev->peer_list_lock);
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
-
+	dp_soc_iterate_peer(soc, dp_peer_reset_ast_entries, NULL,
+			    DP_MOD_ID_CDP);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_peer_flush_ast_entries() - Delete all wds and hmwds ast entries of a peer
+ * @soc:		Datapath SOC
+ * @peer:		Datapath peer
+ * @arg:		arg to callback
+ *
+ * Return: None
+ */
+static void
+dp_peer_flush_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
+{
+	struct dp_ast_entry *ase = NULL;
+	struct dp_ast_entry *temp_ase;
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
+		if ((ase->type ==
+			CDP_TXRX_AST_TYPE_STATIC) ||
+			(ase->type ==
+			 CDP_TXRX_AST_TYPE_SELF) ||
+			(ase->type ==
+			 CDP_TXRX_AST_TYPE_STA_BSS))
+			continue;
+		dp_peer_del_ast(soc, ase);
+	}
 }
 
 /*
@@ -808,35 +829,11 @@ dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
-	struct dp_pdev *pdev;
-	struct dp_vdev *vdev;
-	struct dp_peer *peer;
-	struct dp_ast_entry *ase, *temp_ase;
-	int i;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
-		pdev = soc->pdev_list[i];
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-			qdf_spin_lock_bh(&vdev->peer_list_lock);
-			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
-					if ((ase->type ==
-						CDP_TXRX_AST_TYPE_STATIC) ||
-						(ase->type ==
-						 CDP_TXRX_AST_TYPE_SELF) ||
-						(ase->type ==
-						 CDP_TXRX_AST_TYPE_STA_BSS))
-						continue;
-					dp_peer_del_ast(soc, ase);
-				}
-			}
-			qdf_spin_unlock_bh(&vdev->peer_list_lock);
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
+	dp_soc_iterate_peer(soc, dp_peer_flush_ast_entries, NULL,
+			    DP_MOD_ID_CDP);
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
@@ -1218,25 +1215,59 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 	ring_params->flags |= HAL_SRNG_MSI_INTR;
 }
 
+#ifdef FEATURE_AST
+/**
+ * dp_print_peer_ast_entries() - Dump AST entries of peer
+ * @soc: Datapath soc handle
+ * @peer: Datapath peer
+ * @arg: argument to iterate function
+ *
+ * return void
+ */
+static void
+dp_print_peer_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
+{
+	struct dp_ast_entry *ase, *tmp_ase;
+	uint32_t num_entries = 0;
+	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
+			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS",
+			"DA", "HMWDS_SEC"};
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
+	    DP_PRINT_STATS("%6d mac_addr = %pM"
+		    " peer_mac_addr = %pM"
+		    " peer_id = %u"
+		    " type = %s"
+		    " next_hop = %d"
+		    " is_active = %d"
+		    " ast_idx = %d"
+		    " ast_hash = %d"
+		    " delete_in_progress = %d"
+		    " pdev_id = %d"
+		    " vdev_id = %d",
+		    ++num_entries,
+		    ase->mac_addr.raw,
+		    peer->mac_addr.raw,
+		    ase->peer_id,
+		    type[ase->type],
+		    ase->next_hop,
+		    ase->is_active,
+		    ase->ast_idx,
+		    ase->ast_hash_value,
+		    ase->delete_in_progress,
+		    ase->pdev_id,
+		    ase->vdev_id);
+	}
+}
+
 /**
  * dp_print_ast_stats() - Dump AST table contents
  * @soc: Datapath soc handle
  *
  * return void
  */
-#ifdef FEATURE_AST
 void dp_print_ast_stats(struct dp_soc *soc)
 {
-	uint8_t i;
-	uint8_t num_entries = 0;
-	struct dp_vdev *vdev;
-	struct dp_pdev *pdev;
-	struct dp_peer *peer;
-	struct dp_ast_entry *ase, *tmp_ase;
-	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
-			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS",
-			"DA", "HMWDS_SEC"};
-
 	DP_PRINT_STATS("AST Stats:");
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
 	DP_PRINT_STATS("	Entries Deleted = %d", soc->stats.ast.deleted);
@@ -1248,42 +1279,10 @@ void dp_print_ast_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("AST Table:");
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
-		pdev = soc->pdev_list[i];
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-			qdf_spin_lock_bh(&vdev->peer_list_lock);
-			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
-				    DP_PRINT_STATS("%6d mac_addr = %pM"
-					    " peer_mac_addr = %pM"
-					    " peer_id = %u"
-					    " type = %s"
-					    " next_hop = %d"
-					    " is_active = %d"
-					    " ast_idx = %d"
-					    " ast_hash = %d"
-					    " delete_in_progress = %d"
-					    " pdev_id = %d"
-					    " vdev_id = %d",
-					    ++num_entries,
-					    ase->mac_addr.raw,
-					    peer->mac_addr.raw,
-					    ase->peer_id,
-					    type[ase->type],
-					    ase->next_hop,
-					    ase->is_active,
-					    ase->ast_idx,
-					    ase->ast_hash_value,
-					    ase->delete_in_progress,
-					    ase->pdev_id,
-					    vdev->vdev_id);
-				}
-			}
-			qdf_spin_unlock_bh(&vdev->peer_list_lock);
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
+
+	dp_soc_iterate_peer(soc, dp_print_peer_ast_entries, NULL,
+			    DP_MOD_ID_GENERIC_STATS);
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #else
@@ -1295,34 +1294,43 @@ void dp_print_ast_stats(struct dp_soc *soc)
 #endif
 
 /**
- *  dp_print_peer_table() - Dump all Peer stats
+ * dp_print_peer_info() - Dump peer info
+ * @soc: Datapath soc handle
+ * @peer: Datapath peer handle
+ * @arg: argument to iter function
+ *
+ * return void
+ */
+static void
+dp_print_peer_info(struct dp_soc *soc, struct dp_peer *peer, void *arg)
+{
+	DP_PRINT_STATS("    peer_mac_addr = %pM"
+		       " nawds_enabled = %d"
+		       " bss_peer = %d"
+		       " wds_enabled = %d"
+		       " tx_cap_enabled = %d"
+		       " rx_cap_enabled = %d"
+		       " peer id = %d",
+		       peer->mac_addr.raw,
+		       peer->nawds_enabled,
+		       peer->bss_peer,
+		       peer->wds_enabled,
+		       peer->tx_cap_enabled,
+		       peer->rx_cap_enabled,
+		       peer->peer_id);
+}
+
+/**
+ * dp_print_peer_table() - Dump all Peer stats
  * @vdev: Datapath Vdev handle
  *
  * return void
  */
 static void dp_print_peer_table(struct dp_vdev *vdev)
 {
-	struct dp_peer *peer = NULL;
-
 	DP_PRINT_STATS("Dumping Peer Table  Stats:");
-	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		DP_PRINT_STATS("    peer_mac_addr = %pM"
-			       " nawds_enabled = %d"
-			       " bss_peer = %d"
-			       " wds_enabled = %d"
-			       " tx_cap_enabled = %d"
-			       " rx_cap_enabled = %d"
-			       " peer id = %d",
-			       peer->mac_addr.raw,
-			       peer->nawds_enabled,
-			       peer->bss_peer,
-			       peer->wds_enabled,
-			       peer->tx_cap_enabled,
-			       peer->rx_cap_enabled,
-			       peer->peer_id);
-	}
-	qdf_spin_unlock_bh(&vdev->peer_list_lock);
+	dp_vdev_iterate_peer(vdev, dp_print_peer_info, NULL,
+			     DP_MOD_ID_GENERIC_STATS);
 }
 
 #ifdef WLAN_DP_PER_RING_TYPE_CONFIG
@@ -3796,25 +3804,29 @@ QDF_STATUS dp_mon_rings_alloc(struct dp_soc *soc, struct dp_pdev *pdev)
 }
 #endif
 
+#ifdef ATH_SUPPORT_EXT_STAT
+/*dp_peer_cal_clients_stats_update - update peer stats on cal client timer
+ * @soc : Datapath SOC
+ * @peer : Datapath peer
+ * @arg : argument to iter function
+ */
+static void
+dp_peer_cal_clients_stats_update(struct dp_soc *soc,
+				 struct dp_peer *peer,
+				 void *arg)
+{
+	dp_cal_client_update_peer_stats(&peer->stats);
+}
+
 /*dp_iterate_update_peer_list - update peer stats on cal client timer
  * @pdev_hdl: pdev handle
  */
-#ifdef ATH_SUPPORT_EXT_STAT
 void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
-	struct dp_vdev *vdev = NULL;
-	struct dp_peer *peer = NULL;
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-		qdf_spin_lock_bh(&vdev->peer_list_lock);
-		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-			dp_cal_client_update_peer_stats(&peer->stats);
-		}
-		qdf_spin_unlock_bh(&vdev->peer_list_lock);
-	}
-	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	dp_pdev_iterate_peer(pdev, dp_peer_cal_clients_stats_update, NULL,
+			     DP_MOD_ID_CDP);
 }
 #else
 void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
@@ -4982,6 +4994,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	qdf_atomic_init(&vdev->ref_cnt);
 	/* Take one reference for create*/
 	qdf_atomic_inc(&vdev->ref_cnt);
+	vdev->num_peers = 0;
 #ifdef notyet
 	vdev->filters_num = 0;
 #endif
@@ -5110,6 +5123,28 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc,
 }
 
 /**
+ * dp_peer_delete() - delete DP peer
+ *
+ * @soc: Datatpath soc
+ * @peer: Datapath peer
+ * @arg: argument to iter function
+ *
+ * Return: void
+ */
+static void
+dp_peer_delete(struct dp_soc *soc,
+	       struct dp_peer *peer,
+	       void *arg)
+{
+	if (!peer->valid)
+		return;
+
+	dp_peer_delete_wifi3((struct cdp_soc_t *)soc,
+			     peer->vdev->vdev_id,
+			     peer->mac_addr.raw, 0);
+}
+
+/**
  * dp_vdev_flush_peers() - Forcibily Flush peers of vdev
  * @vdev: Datapath VDEV handle
  * @unmap_only: Flag to indicate "only unmap"
@@ -5122,80 +5157,35 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_peer *peer;
-	uint16_t *peer_ids;
-	struct dp_peer **peer_array = NULL;
-	uint8_t i = 0, j = 0;
-	uint8_t m = 0, n = 0;
+	uint32_t i = 0;
 
-	peer_ids = qdf_mem_malloc(soc->max_peers * sizeof(*peer_ids));
-	if (!peer_ids) {
-		dp_err("DP alloc failure - unable to flush peers");
-		return;
-	}
 
-	if (!unmap_only) {
-		peer_array = qdf_mem_malloc(
-				soc->max_peers * sizeof(struct dp_peer *));
-		if (!peer_array) {
-			qdf_mem_free(peer_ids);
-			dp_err("DP alloc failure - unable to flush peers");
-			return;
-		}
-	}
+	if (!unmap_only)
+		dp_vdev_iterate_peer(vdev, dp_peer_delete, NULL,
+				     DP_MOD_ID_CDP);
 
-	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		if (!unmap_only && n < soc->max_peers)
-			peer_array[n++] = peer;
-
-		if (peer->peer_id != HTT_INVALID_PEER)
-			if (j < soc->max_peers)
-				peer_ids[j++] = peer->peer_id;
-	}
-	qdf_spin_unlock_bh(&vdev->peer_list_lock);
-
-	/*
-	 * If peer id is invalid, need to flush the peer if
-	 * peer valid flag is true, this is needed for NAN + SSR case.
-	 */
-	if (!unmap_only) {
-		for (m = 0; m < n ; m++) {
-			peer = peer_array[m];
-
-			dp_info("peer: %pM is getting deleted",
-				peer->mac_addr.raw);
-			/* only if peer valid is true */
-			if (peer->valid)
-				dp_peer_delete_wifi3((struct cdp_soc_t *)soc,
-						     vdev->vdev_id,
-						     peer->mac_addr.raw, 0);
-		}
-		qdf_mem_free(peer_array);
-	}
-
-	for (i = 0; i < j ; i++) {
-		peer = __dp_peer_find_by_id(soc, peer_ids[i]);
+	for (i = 0; i < soc->max_peers ; i++) {
+		peer = __dp_peer_get_ref_by_id(soc, i, DP_MOD_ID_CDP);
 
 		if (!peer)
 			continue;
 
-		dp_info("peer ref cnt %d", qdf_atomic_read(&peer->ref_cnt));
-		/*
-		 * set ref count to one to force delete the peers
-		 * with ref count leak
-		 */
-		SET_PEER_REF_CNT_ONE(peer);
+		if (peer->vdev != vdev) {
+			dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+			continue;
+		}
+
 		dp_info("peer: %pM is getting unmap",
 			peer->mac_addr.raw);
 
-		dp_rx_peer_unmap_handler(soc, peer_ids[i],
+		dp_rx_peer_unmap_handler(soc, i,
 					 vdev->vdev_id,
 					 peer->mac_addr.raw, 0,
 					 DP_PEER_WDS_COUNT_INVALID);
+		SET_PEER_REF_CNT_ONE(peer);
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	}
 
-	qdf_mem_free(peer_ids);
-	dp_info("Flushed peers for vdev object %pK ", vdev);
 }
 
 /*
@@ -6960,7 +6950,6 @@ void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 			     struct cdp_vdev_stats *vdev_stats)
 {
-	struct dp_peer *peer = NULL;
 	struct dp_soc *soc = NULL;
 
 	if (!vdev || !vdev->pdev)
@@ -6970,10 +6959,8 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 
 	qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 
-	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem)
-		dp_update_vdev_stats(vdev_stats, peer);
-	qdf_spin_unlock_bh(&vdev->peer_list_lock);
+	dp_vdev_iterate_peer(vdev, dp_update_vdev_stats, vdev_stats,
+			     DP_MOD_ID_GENERIC_STATS);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
@@ -7206,6 +7193,35 @@ void dp_print_napi_stats(struct dp_soc *soc)
 }
 
 /**
+ * dp_txrx_host_peer_stats_clr): Reinitialize the txrx peer stats
+ * @soc: Datapath soc
+ * @peer: Datatpath peer
+ * @arg: argument to iter function
+ *
+ * Return: QDF_STATUS
+ */
+static inline void
+dp_txrx_host_peer_stats_clr(struct dp_soc *soc,
+			    struct dp_peer *peer,
+			    void *arg)
+{
+	struct dp_rx_tid *rx_tid;
+	uint8_t tid;
+
+	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+		rx_tid = &peer->rx_tid[tid];
+		DP_STATS_CLR(rx_tid);
+	}
+	DP_STATS_CLR(peer);
+
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, peer->vdev->pdev->soc,
+			     &peer->stats,  peer->peer_id,
+			     UPDATE_PEER_STATS, peer->vdev->pdev->pdev_id);
+#endif
+}
+
+/**
  * dp_txrx_host_stats_clr(): Reinitialize the txrx stats
  * @vdev: DP_VDEV handle
  * @dp_soc: DP_SOC handle
@@ -7215,8 +7231,6 @@ void dp_print_napi_stats(struct dp_soc *soc)
 static inline QDF_STATUS
 dp_txrx_host_stats_clr(struct dp_vdev *vdev, struct dp_soc *soc)
 {
-	struct dp_peer *peer = NULL;
-
 	if (!vdev || !vdev->pdev)
 		return QDF_STATUS_E_FAILURE;
 
@@ -7237,24 +7251,8 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev, struct dp_soc *soc)
 
 	hif_clear_napi_stats(vdev->pdev->soc->hif_handle);
 
-	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		struct dp_rx_tid *rx_tid;
-		uint8_t tid;
-
-		for (tid = 0; tid < DP_MAX_TIDS; tid++) {
-			rx_tid = &peer->rx_tid[tid];
-			DP_STATS_CLR(rx_tid);
-		}
-
-		DP_STATS_CLR(peer);
-#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
-		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
-				     &peer->stats,  peer->peer_id,
-				     UPDATE_PEER_STATS, vdev->pdev->pdev_id);
-#endif
-	}
-	qdf_spin_unlock_bh(&vdev->peer_list_lock);
+	dp_vdev_iterate_peer(vdev, dp_txrx_host_peer_stats_clr, NULL,
+			     DP_MOD_ID_GENERIC_STATS);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
@@ -9675,32 +9673,47 @@ static void dp_soc_set_rate_stats_ctx(struct cdp_soc_t *soc_handle,
 }
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+/**
+ * dp_peer_flush_rate_stats_req(): Flush peer rate stats
+ * @soc: Datapath SOC handle
+ * @peer: Datapath peer
+ * @arg: argument to iter function
+ *
+ * Return: QDF_STATUS
+ */
+static void
+dp_peer_flush_rate_stats_req(struct dp_soc *soc, struct dp_peer *peer,
+			     void *arg)
+{
+	if (peer->bss_peer)
+		return;
+
+	dp_wdi_event_handler(
+		WDI_EVENT_FLUSH_RATE_STATS_REQ,
+		soc, peer->wlanstats_ctx,
+		peer->peer_id,
+		WDI_NO_VAL, peer->vdev->pdev->pdev_id);
+}
+
+/**
+ * dp_flush_rate_stats_req(): Flush peer rate stats in pdev
+ * @soc_hdl: Datapath SOC handle
+ * @pdev_id: pdev_id
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 					  uint8_t pdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	struct dp_vdev *vdev = NULL;
-	struct dp_peer *peer = NULL;
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
 	if (!pdev)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		qdf_spin_lock_bh(&vdev->peer_list_lock);
-		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-			if (peer && !peer->bss_peer)
-				dp_wdi_event_handler(
-					WDI_EVENT_FLUSH_RATE_STATS_REQ,
-					soc, peer->wlanstats_ctx,
-					peer->peer_id,
-					WDI_NO_VAL, pdev_id);
-		}
-		qdf_spin_unlock_bh(&vdev->peer_list_lock);
-	}
-	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	dp_pdev_iterate_peer(pdev, dp_peer_flush_rate_stats_req, NULL,
+			     DP_MOD_ID_CDP);
 
 	return QDF_STATUS_SUCCESS;
 }

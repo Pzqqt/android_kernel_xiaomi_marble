@@ -703,9 +703,11 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 
 }
 
-static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
-					struct dp_peer *srcobj)
+static inline void dp_update_vdev_stats(struct dp_soc *soc,
+					struct dp_peer *srcobj,
+					void *arg)
 {
+	struct cdp_vdev_stats *tgtobj = (struct cdp_vdev_stats *)arg;
 	uint8_t i;
 	uint8_t pream_type;
 
@@ -975,7 +977,6 @@ extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
-void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id id);
 extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 					      uint8_t *peer_mac_addr,
 					      int mac_addr_is_aligned,

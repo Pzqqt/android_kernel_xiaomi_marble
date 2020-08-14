@@ -6040,37 +6040,29 @@ void dp_txrx_path_stats(struct dp_soc *soc)
  * dp_aggregate_pdev_ctrl_frames_stats()- function to agreegate peer stats
  * Current scope is bar received count
  *
- * @pdev_handle: DP_PDEV handle
+ * @soc : Datapath SOC handle
+ * @peer: Datapath peer handle
+ * @arg : argument to iterate function
  *
  * Return: void
  */
 static void
-dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
+dp_peer_ctrl_frames_stats_get(struct dp_soc *soc,
+			      struct dp_peer *peer,
+			      void *arg)
 {
-	struct dp_vdev *vdev;
-	struct dp_peer *peer;
 	uint32_t waitcnt;
+	struct dp_pdev *pdev = peer->vdev->pdev;
 
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-
-			if (dp_peer_get_ref(pdev->soc, peer,
-					    DP_MOD_ID_GENERIC_STATS) !=
-							QDF_STATUS_SUCCESS)
-				continue;
-
-			waitcnt = 0;
-			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
-			while (!(qdf_atomic_read(&pdev->stats_cmd_complete)) &&
-			       waitcnt < 10) {
-				schedule_timeout_interruptible(
-						STATS_PROC_TIMEOUT);
-				waitcnt++;
-			}
-			qdf_atomic_set(&pdev->stats_cmd_complete, 0);
-			dp_peer_unref_delete(peer, DP_MOD_ID_GENERIC_STATS);
-		}
+	waitcnt = 0;
+	dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
+	while (!(qdf_atomic_read(&pdev->stats_cmd_complete)) &&
+	       waitcnt < 10) {
+		schedule_timeout_interruptible(
+				STATS_PROC_TIMEOUT);
+		waitcnt++;
 	}
+	qdf_atomic_set(&pdev->stats_cmd_complete, 0);
 }
 
 void
@@ -6282,8 +6274,9 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("	Failed frag alloc = %u",
 		       pdev->stats.replenish.frag_alloc_fail);
 
+	dp_pdev_iterate_peer_lock_safe(pdev, dp_peer_ctrl_frames_stats_get,
+				       NULL, DP_MOD_ID_GENERIC_STATS);
 	/* Get bar_recv_cnt */
-	dp_aggregate_pdev_ctrl_frames_stats(pdev);
 	DP_PRINT_STATS("BAR Received Count: = %u",
 		       pdev->stats.rx.bar_recv_cnt);
 

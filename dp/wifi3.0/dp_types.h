@@ -86,6 +86,13 @@
 #define MAX_VDEV_CNT 51
 #endif
 
+/* Max no. of VDEVs, a PDEV can support */
+#ifdef WLAN_PDEV_MAX_VDEVS
+#define DP_PDEV_MAX_VDEVS WLAN_PDEV_MAX_VDEVS
+#else
+#define DP_PDEV_MAX_VDEVS 17
+#endif
+
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
 #define MAX_REO_DEST_RINGS 4
@@ -2305,6 +2312,7 @@ struct dp_vdev {
 	 * peer is created for VDEV
 	 */
 	qdf_atomic_t ref_cnt;
+	uint32_t num_peers;
 };
 
 
