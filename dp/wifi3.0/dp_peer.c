@@ -885,9 +885,13 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 	is_peer_found = dp_peer_exist_on_pdev(soc, mac_addr, 0, pdev);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	if (peer->delete_in_progress) {
-		qdf_spin_unlock_bh(&soc->ast_lock);
-		return QDF_STATUS_E_BUSY;
+
+	if (peer->peer_state != DP_PEER_STATE_ACTIVE) {
+		if ((type != CDP_TXRX_AST_TYPE_STATIC) &&
+		    (type != CDP_TXRX_AST_TYPE_SELF)) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			return QDF_STATUS_E_BUSY;
+		}
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -1296,7 +1300,8 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	 *  2) Peer delete is already triggered
 	 *  3) We did not get the HTT map for create event
 	 */
-	if (ast_entry->delete_in_progress || peer->delete_in_progress ||
+	if (ast_entry->delete_in_progress ||
+	    (peer->peer_state != DP_PEER_STATE_ACTIVE) ||
 	    !ast_entry->is_mapped)
 		return ret;
 
@@ -1936,6 +1941,16 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 			  "%s: ref_cnt: %d", __func__,
 			   qdf_atomic_read(&peer->ref_cnt));
 
+		/*
+		 * if peer is in logical delete CP triggered delete before map
+		 * is received ignore this event
+		 */
+		if (peer->peer_state == DP_PEER_STATE_LOGICAL_DELETE) {
+			dp_peer_unref_delete(peer, DP_MOD_ID_PEER_CONFIG);
+			dp_alert("Peer %pK[%pM] logical delete state vid %d",
+				 peer, peer_mac_addr, vdev_id);
+			return NULL;
+		}
 		dp_peer_find_id_to_obj_add(soc, peer, peer_id);
 		if (peer->peer_id == HTT_INVALID_PEER) {
 			peer->peer_id = peer_id;
@@ -1944,6 +1959,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 			QDF_ASSERT(0);
 		}
 
+		dp_peer_update_state(soc, peer, DP_PEER_STATE_ACTIVE);
 		return peer;
 	}
 
@@ -2119,6 +2135,8 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
 	TAILQ_INSERT_TAIL(&soc->inactive_peer_list, peer, inactive_list_elem);
 	qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
+
+	dp_peer_update_state(soc, peer, DP_PEER_STATE_INACTIVE);
 	/*
 	 * Remove a reference to the peer.
 	 * If there are no more references, delete the peer object.
@@ -2298,8 +2316,7 @@ QDF_STATUS dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	uint32_t alloc_tries = 0;
 	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
-	if (peer->delete_in_progress ||
-	    !qdf_atomic_read(&peer->is_default_route_set))
+	if (!qdf_atomic_read(&peer->is_default_route_set))
 		return QDF_STATUS_E_FAILURE;
 
 	rx_tid->ba_win_size = ba_window_size;

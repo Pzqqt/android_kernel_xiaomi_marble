@@ -149,6 +149,19 @@ struct dp_mon_filter;
 struct dp_mon_mpdu;
 
 /**
+ * enum for DP peer state
+ */
+enum dp_peer_state {
+	DP_PEER_STATE_NONE,
+	DP_PEER_STATE_INIT,
+	DP_PEER_STATE_ACTIVE,
+	DP_PEER_STATE_LOGICAL_DELETE,
+	DP_PEER_STATE_INACTIVE,
+	DP_PEER_STATE_FREED,
+	DP_PEER_STATE_INVALID,
+};
+
+/**
  * enum for modules ids of peer reference
  */
 enum dp_peer_mod_id {
@@ -2413,7 +2426,7 @@ struct dp_peer {
 		rx_cap_enabled:1, /* Peer's rx-capture is enabled */
 		valid:1, /* valid bit */
 		in_twt:1, /* in TWT session */
-		delete_in_progress:1, /*delete_in_progress bit*/
+		delete_in_progress:1, /* Indicate kickout sent */
 		sta_self_peer:1; /* Indicate STA self peer */
 
 #ifdef QCA_SUPPORT_PEER_ISOLATION
@@ -2486,6 +2499,8 @@ struct dp_peer {
 	TAILQ_ENTRY(dp_peer) inactive_list_elem;
 
 	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
+
+	uint8_t peer_state;
 };
 
 /*

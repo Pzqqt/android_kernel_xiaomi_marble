@@ -6054,10 +6054,6 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 
-			if (peer->delete_in_progress) {
-				dp_err("DP Peer deletion in progress");
-				continue;
-			}
 			if (dp_peer_get_ref(pdev->soc, peer,
 					    DP_MOD_ID_GENERIC_STATS) !=
 							QDF_STATUS_SUCCESS)

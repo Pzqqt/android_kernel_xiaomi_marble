@@ -1313,7 +1313,6 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			       " wds_enabled = %d"
 			       " tx_cap_enabled = %d"
 			       " rx_cap_enabled = %d"
-			       " delete in progress = %d"
 			       " peer id = %d",
 			       peer->mac_addr.raw,
 			       peer->nawds_enabled,
@@ -1321,7 +1320,6 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			       peer->wds_enabled,
 			       peer->tx_cap_enabled,
 			       peer->rx_cap_enabled,
-			       peer->delete_in_progress,
 			       peer->peer_id);
 	}
 	qdf_spin_unlock_bh(&vdev->peer_list_lock);
@@ -5423,7 +5421,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		dp_peer_delete_ast_entries(soc, peer);
-		peer->delete_in_progress = false;
 		qdf_spin_unlock_bh(&soc->ast_lock);
 
 		if ((vdev->opmode == wlan_op_mode_sta) &&
@@ -5453,6 +5450,8 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		for (i = 0; i < DP_MAX_TIDS; i++)
 			qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
+
+		dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/*
@@ -5587,6 +5586,9 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	dp_peer_tx_capture_filter_check(pdev, peer);
 
 	dp_set_peer_isolation(peer, false);
+
+	dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6245,10 +6247,8 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_peer_mod_id mod_id)
 				     inactive_list_elem);
 		/* delete this peer from the list */
 		qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
-		/*
-		 * Peer AST list hast to be empty here
-		 */
 		DP_AST_ASSERT(TAILQ_EMPTY(&peer->ast_entry_list));
+		dp_peer_update_state(soc, peer, DP_PEER_STATE_FREED);
 
 		qdf_mem_free(peer);
 
@@ -6288,7 +6288,6 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 						      0, vdev_id,
 						      DP_MOD_ID_CDP);
 	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
-
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
@@ -9418,9 +9417,13 @@ dp_peer_teardown_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (peer->peer_state == DP_PEER_STATE_INIT)
+		dp_peer_cleanup(peer->vdev, peer);
+
 	qdf_spin_lock_bh(&soc->ast_lock);
-	peer->delete_in_progress = true;
 	dp_peer_delete_ast_entries(soc, peer);
+
+	dp_peer_update_state(soc, peer, DP_PEER_STATE_LOGICAL_DELETE);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
