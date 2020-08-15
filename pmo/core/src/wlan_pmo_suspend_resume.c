@@ -961,6 +961,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	int ret;
 	struct pmo_wow_enable_params wow_params = {0};
 	qdf_time_t begin, end;
+	int pending;
 
 	pmo_enter();
 
@@ -1024,6 +1025,13 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	if (ret) {
 		status = qdf_status_from_os_return(ret);
 		goto pmo_bus_resume;
+	}
+
+	pending = cdp_rx_get_pending(cds_get_context(QDF_MODULE_ID_SOC));
+	if (pending) {
+		pmo_debug("Prevent suspend, RX frame pending %d", pending);
+		status = QDF_STATUS_E_BUSY;
+		goto resume_hif;
 	}
 
 	if (pld_cb) {
