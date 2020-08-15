@@ -41,6 +41,11 @@
 #define RATE_STATS_LOCK_ACQUIRE(lock) qdf_spin_lock_bh(lock)
 #define RATE_STATS_LOCK_RELEASE(lock) qdf_spin_unlock_bh(lock)
 
+#define STATS_CTX_LOCK_CREATE(lock) qdf_spinlock_create(lock)
+#define STATS_CTX_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
+#define STATS_CTX_LOCK_ACQUIRE(lock) qdf_spin_lock_bh(lock)
+#define STATS_CTX_LOCK_RELEASE(lock) qdf_spin_unlock_bh(lock)
+
 struct cdp_pdev;
 
 /**
@@ -168,6 +173,8 @@ enum rdk_stats_version {
  * @rxs_cache_miss: rate index recevied is not in cache database
  * @stats_ver: peer statistics version
  * @is_lithium: is lithium or legacy
+ * @tx_ctx_lock: tx context soc level lock
+ * @rx_ctx_lock: rx context soc level lock
  */
 struct wlan_soc_rate_stats_ctx {
 	struct cdp_soc_t *soc;
@@ -181,6 +188,8 @@ struct wlan_soc_rate_stats_ctx {
 	uint32_t rxs_cache_miss;
 	enum rdk_stats_version stats_ver;
 	bool is_lithium;
+	qdf_spinlock_t tx_ctx_lock;
+	qdf_spinlock_t rx_ctx_lock;
 };
 
 /**
