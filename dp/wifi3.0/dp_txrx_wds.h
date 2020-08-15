@@ -230,7 +230,6 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 		ast->is_active = TRUE;
 
 	if (sa_sw_peer_id != ta_peer->peer_id) {
-		sa_peer = ast->peer;
 
 		if ((ast->type != CDP_TXRX_AST_TYPE_STATIC) &&
 		    (ast->type != CDP_TXRX_AST_TYPE_SELF) &&
@@ -279,8 +278,13 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 		 * Kickout, when direct associated peer(SA) roams
 		 * to another AP and reachable via TA peer
 		 */
+		sa_peer = dp_peer_get_ref_by_id(soc, ast->peer_id,
+						DP_MOD_ID_RX);
+		if (!sa_peer)
+			return;
+
 		if ((sa_peer->vdev->opmode == wlan_op_mode_ap) &&
-		    !sa_peer->delete_in_progress) {
+		    sa_peer->delete_in_progress) {
 			qdf_mem_copy(wds_src_mac,
 				     (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
 				     QDF_MAC_ADDR_SIZE);
@@ -292,6 +296,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 					wds_src_mac);
 			}
 		}
+		dp_peer_unref_delete(sa_peer, DP_MOD_ID_RX);
 		return;
 	}
 
