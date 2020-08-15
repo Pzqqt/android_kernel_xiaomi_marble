@@ -2651,4 +2651,18 @@ cdp_soc_config_full_mon_mode(ol_txrx_soc_handle soc, uint8_t val)
 	return soc->ops->mon_ops->config_full_mon_mode(soc, val);
 }
 
+/**
+ * cdp_rx_get_pending() - Get number of pending frames of RX threads
+ * @soc: opaque soc handle
+ * Return: number of pending frames
+ */
+static inline int
+cdp_rx_get_pending(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ol_ops ||
+	    !soc->ol_ops->dp_rx_get_pending)
+		return 0;
+
+	return soc->ol_ops->dp_rx_get_pending(soc);
+}
 #endif /* _CDP_TXRX_CMN_H_ */

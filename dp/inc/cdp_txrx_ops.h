@@ -1101,6 +1101,7 @@ struct ol_if_ops {
 				 uint8_t pdev_id);
 	QDF_STATUS(*nss_stats_clr)(struct cdp_ctrl_objmgr_psoc *psoc,
 				   uint8_t vdev_id);
+	int (*dp_rx_get_pending)(ol_txrx_soc_handle soc);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
