@@ -1841,7 +1841,7 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_peer_unref_delete(da_peer, DP_MOD_ID_IPA);
 
-	da_peer = dp_peer_find_hash_find(soc, eh->h_source, 0, vdev->vdev_id,
+	sa_peer = dp_peer_find_hash_find(soc, eh->h_source, 0, vdev->vdev_id,
 					 DP_MOD_ID_IPA);
 	if (!sa_peer)
 		return false;
