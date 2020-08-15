@@ -241,6 +241,11 @@ struct dbg_tx_comp_ppdu {
 	struct dbg_tx_comp_ppdu_user user[];
 };
 
+struct tid_q_len {
+	uint64_t defer_msdu_len;
+	uint64_t tasklet_msdu_len;
+	uint64_t pending_q_len;
+};
 /*
  * dp_peer_tid_peer_id_update() – update peer_id to tid structure
  * @peer: Datapath peer
