@@ -1037,6 +1037,7 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	void *hif_ctx;
 	void *dp_soc;
 	struct pmo_wow_enable_params pmo_params;
+	int pending;
 
 	hdd_info("starting bus suspend");
 
@@ -1098,6 +1099,13 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 		goto resume_pmo;
 	}
 
+	pending = cdp_rx_get_pending(cds_get_context(QDF_MODULE_ID_SOC));
+	if (pending) {
+		hdd_debug("Prevent suspend, RX frame pending %d", pending);
+		err = -EBUSY;
+		goto resume_hif;
+	}
+
 	/*
 	 * Remove bus votes at the very end, after making sure there are no
 	 * pending bus transactions from WLAN SOC for TX/RX.
@@ -1106,6 +1114,10 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 
 	hdd_info("bus suspend succeeded");
 	return 0;
+
+resume_hif:
+	status = hif_bus_resume(hif_ctx);
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
 resume_pmo:
 	status = ucfg_pmo_psoc_bus_resume_req(hdd_ctx->psoc,

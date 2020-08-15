@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,3 +87,47 @@ QDF_STATUS dp_txrx_deinit(ol_txrx_soc_handle soc)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * dp_rx_tm_get_pending() - get number of frame in thread
+ * nbuf queue pending
+ * @soc: ol_txrx_soc_handle object
+ *
+ * Return: number of frames
+ */
+#ifdef FEATURE_WLAN_DP_RX_THREADS
+int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
+{
+	int i;
+	int num_pending = 0;
+	struct dp_rx_thread *rx_thread;
+	struct dp_txrx_handle *dp_ext_hdl;
+	struct dp_rx_tm_handle *rx_tm_hdl;
+
+	if (!soc)
+		return 0;
+
+	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
+	if (!dp_ext_hdl)
+		return 0;
+
+	rx_tm_hdl = &dp_ext_hdl->rx_tm_hdl;
+
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
+		rx_thread = rx_tm_hdl->rx_thread[i];
+		if (!rx_thread)
+			continue;
+		num_pending += qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue);
+	}
+
+	if (num_pending)
+		dp_debug("pending frames in thread queue %d", num_pending);
+
+	return num_pending;
+}
+#else
+int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
+{
+	return 0;
+}
+#endif

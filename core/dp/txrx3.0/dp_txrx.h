@@ -434,4 +434,13 @@ QDF_STATUS dp_txrx_set_cpu_mask(ol_txrx_soc_handle soc, qdf_cpu_mask *new_mask)
 }
 
 #endif /* FEATURE_WLAN_DP_RX_THREADS */
+
+/**
+ * dp_rx_tm_get_pending() - get number of frame in thread
+ * nbuf queue pending
+ * @soc: ol_txrx_soc_handle object
+ *
+ * Return: number of frames
+ */
+int dp_rx_tm_get_pending(ol_txrx_soc_handle soc);
 #endif /* _DP_TXRX_H */

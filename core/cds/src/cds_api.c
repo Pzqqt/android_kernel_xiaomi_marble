@@ -121,6 +121,7 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.is_roam_inprogress = wma_is_roam_in_progress,
 	.get_con_mode = cds_get_conparam,
 	.send_delba = cds_send_delba,
+	.dp_rx_get_pending = dp_rx_tm_get_pending,
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 #else
