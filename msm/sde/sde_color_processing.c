@@ -30,6 +30,7 @@ struct sde_cp_node {
 	struct list_head active_list;
 	struct list_head dirty_list;
 	bool is_dspp_feature;
+	bool lm_flush_override;
 	u32 prop_blob_sz;
 	struct sde_irq_callback *irq;
 };
@@ -1974,7 +1975,8 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 			dirty_list) {
 		sde_cp_crtc_setfeature(prop_node, sde_crtc);
 		sde_cp_dspp_flush_helper(sde_crtc, prop_node->feature);
-		if (prop_node->is_dspp_feature)
+		if (prop_node->is_dspp_feature &&
+				!prop_node->lm_flush_override)
 			set_dspp_flush = true;
 		else
 			set_lm_flush = true;
@@ -2636,10 +2638,18 @@ static void dspp_rc_install_property(struct drm_crtc *crtc)
 	char feature_name[256];
 	struct sde_kms *kms = NULL;
 	struct sde_mdss_cfg *catalog = NULL;
+	struct sde_cp_node *prop_node = NULL;
+	struct sde_crtc *sde_crtc = NULL;
 	u32 version;
 
 	if (!crtc) {
 		DRM_ERROR("invalid arguments");
+		return;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("invalid sde_crtc %pK\n", sde_crtc);
 		return;
 	}
 
@@ -2653,6 +2663,19 @@ static void dspp_rc_install_property(struct drm_crtc *crtc)
 		sde_cp_crtc_install_blob_property(crtc, feature_name,
 				SDE_CP_CRTC_DSPP_RC_MASK,
 				sizeof(struct drm_msm_rc_mask_cfg));
+
+		/* Override flush mechanism to use layer mixer flush bits */
+		if (!catalog->rc_lm_flush_override)
+			break;
+
+		DRM_DEBUG("rc using lm flush override\n");
+		list_for_each_entry(prop_node, &sde_crtc->feature_list,
+				feature_list) {
+			if (prop_node->feature == SDE_CP_CRTC_DSPP_RC_MASK) {
+				prop_node->lm_flush_override = true;
+				break;
+			}
+		}
 
 		break;
 	default:
