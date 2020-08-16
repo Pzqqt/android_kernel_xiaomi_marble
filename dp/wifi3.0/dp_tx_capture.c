@@ -6257,11 +6257,11 @@ static QDF_STATUS debug_ppdu_log_enable_write(void *priv,
 		/* initialize ppdu_desc_log to 1 */
 		ptr_log_info->ppdu_desc_log = 1;
 	} else {
-		/* if ppdu_desc log already 1 return success */
-		if (ptr_log_info->ppdu_desc_log)
+		/* if ppdu_desc log already 0 return success */
+		if (!ptr_log_info->ppdu_desc_log)
 			return QDF_STATUS_SUCCESS;
 
-		/* initialize ppdu_desc_log to 1 */
+		/* initialize ppdu_desc_log to 0 */
 		ptr_log_info->ppdu_desc_log = 0;
 	}
 	return QDF_STATUS_SUCCESS;
