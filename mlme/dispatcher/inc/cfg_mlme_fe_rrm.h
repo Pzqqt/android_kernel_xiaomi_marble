@@ -28,7 +28,7 @@
  * gRrmEnable - Enable/Disable RRM on STA
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to controls the capabilities (11 k) included
  * in the capabilities field for STA.
@@ -42,7 +42,7 @@
  * </ini>
  */
 #define CFG_RRM_ENABLE CFG_INI_BOOL("gRrmEnable", \
-				    0, \
+				    1, \
 				    "Enable/Disable RRM")
 
 /*
