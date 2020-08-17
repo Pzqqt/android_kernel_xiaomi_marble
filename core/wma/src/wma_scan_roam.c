@@ -2872,10 +2872,14 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
 	bss_chan = wlan_vdev_mlme_get_bss_chan(iface->vdev);
 	des_chan->ch_phymode = bss_phymode;
-	des_chan->ch_freq = chan->mhz;
-	des_chan->ch_cfreq1 = chan->band_center_freq1;
-	des_chan->ch_cfreq2 = chan->band_center_freq2;
 	des_chan->ch_width = iface->chan_width;
+	if (chan) {
+		des_chan->ch_freq = chan->mhz;
+		des_chan->ch_cfreq1 = chan->band_center_freq1;
+		des_chan->ch_cfreq2 = chan->band_center_freq2;
+	} else {
+		wma_err("LFR3: invalid chan");
+	}
 	qdf_mem_copy(bss_chan, des_chan, sizeof(struct wlan_channel));
 
 	if (!vdev_mlme)
