@@ -565,7 +565,7 @@ EXPORT_SYMBOL(rmnet_frag_flow_command);
 static int rmnet_frag_deaggregate_one(struct sk_buff *skb,
 				      struct rmnet_port *port,
 				      struct list_head *list,
-				      u32 start)
+				      u32 start, u32 priority)
 {
 	struct skb_shared_info *shinfo = skb_shinfo(skb);
 	struct rmnet_frag_descriptor *frag_desc;
@@ -619,6 +619,7 @@ static int rmnet_frag_deaggregate_one(struct sk_buff *skb,
 	if (!frag_desc)
 		return -1;
 
+	frag_desc->priority = priority;
 	pkt_len += sizeof(*maph);
 	if (port->data_format & RMNET_FLAGS_INGRESS_MAP_CKSUMV4) {
 		pkt_len += sizeof(struct rmnet_map_dl_csum_trailer);
@@ -697,13 +698,14 @@ static int rmnet_frag_deaggregate_one(struct sk_buff *skb,
 }
 
 void rmnet_frag_deaggregate(struct sk_buff *skb, struct rmnet_port *port,
-			    struct list_head *list)
+			    struct list_head *list, u32 priority)
 {
 	u32 start = 0;
 	int rc;
 
 	while (start < skb->len) {
-		rc = rmnet_frag_deaggregate_one(skb, port, list, start);
+		rc = rmnet_frag_deaggregate_one(skb, port, list, start,
+						priority);
 		if (rc < 0)
 			return;
 
@@ -967,6 +969,8 @@ skip_frags:
 	if (frag_desc->gso_segs > 1)
 		rmnet_frag_gso_stamp(head_skb, frag_desc);
 
+	/* Propagate original priority value */
+	head_skb->priority = frag_desc->priority;
 	return head_skb;
 }
 
@@ -1608,7 +1612,7 @@ void rmnet_frag_ingress_handler(struct sk_buff *skb,
 	while (skb) {
 		struct sk_buff *skb_frag;
 
-		rmnet_frag_deaggregate(skb, port, &desc_list);
+		rmnet_frag_deaggregate(skb, port, &desc_list, skb->priority);
 		if (!list_empty(&desc_list)) {
 			struct rmnet_frag_descriptor *frag_desc, *tmp;
 

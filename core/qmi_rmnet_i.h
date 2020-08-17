@@ -51,6 +51,7 @@ struct rmnet_bearer_map {
 	u16 last_seq;
 	u32 bytes_in_flight;
 	u32 last_adjusted_grant;
+	bool is_low_latency;
 	bool tcp_bidir;
 	bool rat_switch;
 	bool tx_off;

@@ -32,6 +32,7 @@
 #define NLMSG_CLIENT_DELETE 5
 #define NLMSG_SCALE_FACTOR 6
 #define NLMSG_WQ_FREQUENCY 7
+#define NLMSG_CHANNEL_SWITCH 8
 
 #define FLAG_DFC_MASK 0x000F
 #define FLAG_POWERSAVE_MASK 0x0010
@@ -704,7 +705,8 @@ qmi_rmnet_delete_client(void *port, struct qmi_info *qmi, struct tcmsg *tcm)
 	__qmi_rmnet_delete_client(port, qmi, idx);
 }
 
-void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
+void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
+			   int attr_len)
 {
 	struct qmi_info *qmi = (struct qmi_info *)rmnet_get_qmi_pt(port);
 	struct tcmsg *tcm = (struct tcmsg *)tcm_pt;
@@ -741,7 +743,11 @@ void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
 				rmnet_reset_qmi_pt(port);
 				kfree(qmi);
 			}
-		} else if (tcm->tcm_ifindex & FLAG_POWERSAVE_MASK) {
+
+			return;
+		}
+
+		if (tcm->tcm_ifindex & FLAG_POWERSAVE_MASK) {
 			qmi_rmnet_work_init(port);
 			rmnet_set_powersave_format(port);
 		}
@@ -767,6 +773,11 @@ void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
 		break;
 	case NLMSG_WQ_FREQUENCY:
 		rmnet_wq_frequency = tcm->tcm_ifindex;
+		break;
+	case NLMSG_CHANNEL_SWITCH:
+		if (!qmi || !DFC_SUPPORTED_MODE(dfc_mode) ||
+		    !qmi_rmnet_has_dfc_client(qmi))
+			return;
 		break;
 	default:
 		pr_debug("%s(): No handler\n", __func__);
@@ -869,6 +880,35 @@ bool qmi_rmnet_all_flows_enabled(struct net_device *dev)
 EXPORT_SYMBOL(qmi_rmnet_all_flows_enabled);
 
 #ifdef CONFIG_QTI_QMI_DFC
+bool qmi_rmnet_flow_is_low_latency(struct net_device *dev, int ip_type,
+				   u32 mark)
+{
+	struct qos_info *qos = rmnet_get_qos_pt(dev);
+	struct rmnet_bearer_map *bearer;
+	struct rmnet_flow_map *itm;
+	bool ret = false;
+
+	if (!qos)
+		goto out;
+
+	spin_lock_bh(&qos->qos_lock);
+	itm = qmi_rmnet_get_flow_map(qos, mark, ip_type);
+	if (!itm)
+		goto out_unlock;
+
+	bearer = itm->bearer;
+	if (!bearer)
+		goto out_unlock;
+
+	ret = bearer->is_low_latency;
+
+out_unlock:
+	spin_unlock_bh(&qos->qos_lock);
+out:
+	return ret;
+}
+EXPORT_SYMBOL(qmi_rmnet_flow_is_low_latency);
+
 void qmi_rmnet_burst_fc_check(struct net_device *dev,
 			      int ip_type, u32 mark, unsigned int len)
 {
