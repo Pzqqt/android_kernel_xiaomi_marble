@@ -2133,7 +2133,7 @@ static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
 
 	trace_printk("%s enter\n", __func__);
 	mutex_lock(&swrm->devlock);
-	if (!swrm->dev_up) {
+	if (swrm->state == SWR_MSTR_SSR || !swrm->dev_up) {
 		if (swrm->wake_irq > 0) {
 			if (unlikely(!irq_get_irq_data(swrm->wake_irq))) {
 				pr_err("%s: irq data is NULL\n", __func__);
