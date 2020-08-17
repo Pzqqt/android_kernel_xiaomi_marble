@@ -5641,12 +5641,17 @@ typedef struct {
  * @freqnum:
  *   chan[0 ~ 7]: frequency number
  * @pdev_id: pdev_id
+ * @num_freq: number of valid frequency in freqnum
+ * @num_nfdbr_dbm: number of valid entries in dbr/dbm array
+ *
  */
 typedef struct {
 	int8_t nfdbr[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
 	int8_t nfdbm[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
 	uint32_t freqnum[WMI_HOST_RXG_CAL_CHAN_MAX];
 	uint32_t pdev_id;
+	uint16_t num_freq;
+	uint16_t num_nfdbr_dbm;
 } wmi_host_pdev_nfcal_power_all_channels_event;
 
 /**
