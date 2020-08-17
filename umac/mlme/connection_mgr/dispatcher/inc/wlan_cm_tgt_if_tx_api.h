@@ -23,7 +23,7 @@
 #ifndef CM_TGT_IF_TX_API_H__
 #define CM_TGT_IF_TX_API_H__
 
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 
 #define GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev) \
 	(wlan_vdev_mlme_get_ext_hdl(vdev)->cm_roam.tx_ops)

@@ -98,6 +98,29 @@ cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 /**
+ * cm_roam_bss_load_config() - set bss load config
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @params: bss load config parameters
+ *
+ * This function is used to set bss load config parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_bss_load_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			struct wlan_roam_bss_load_config *params)
+{
+	params->vdev_id = vdev_id;
+	wlan_mlme_get_bss_load_threshold(psoc, &params->bss_load_threshold);
+	wlan_mlme_get_bss_load_sample_time(psoc, &params->bss_load_sample_time);
+	wlan_mlme_get_bss_load_rssi_threshold_5ghz(
+					psoc, &params->rssi_threshold_5ghz);
+	wlan_mlme_get_bss_load_rssi_threshold_24ghz(
+					psoc, &params->rssi_threshold_24ghz);
+}
+
+/**
  * cm_roam_disconnect_params() - set disconnect roam parameters
  * @psoc: psoc pointer
  * @vdev_id: vdev id
@@ -151,6 +174,12 @@ cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 static void
+cm_roam_bss_load_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			struct wlan_roam_bss_load_config *params)
+{
+}
+
+static void
 cm_roam_disconnect_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			  struct wlan_roam_disconnect_params *params)
 {
@@ -162,6 +191,37 @@ cm_roam_idle_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 {
 }
 #endif
+
+/**
+ * cm_roam_mawc_params() - set roam mawc parameters
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @params: roam mawc parameters
+ *
+ * This function is used to set roam mawc parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_mawc_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    struct wlan_roam_mawc_params *params)
+{
+	bool mawc_enabled;
+	bool mawc_roam_enabled;
+
+	params->vdev_id = vdev_id;
+	wlan_mlme_get_mawc_enabled(psoc, &mawc_enabled);
+	wlan_mlme_get_mawc_roam_enabled(psoc, &mawc_roam_enabled);
+	params->enable = mawc_enabled && mawc_roam_enabled;
+	wlan_mlme_get_mawc_roam_traffic_threshold(
+				psoc, &params->traffic_load_threshold);
+	wlan_mlme_get_mawc_roam_ap_rssi_threshold(
+				psoc, &params->best_ap_rssi_threshold);
+	wlan_mlme_get_mawc_roam_rssi_high_adjust(
+				psoc, &params->rssi_stationary_high_adjust);
+	wlan_mlme_get_mawc_roam_rssi_low_adjust(
+				psoc, &params->rssi_stationary_low_adjust);
+}
 
 /**
  * cm_roam_init_req() - roam init request handling
@@ -214,6 +274,8 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &start_req->beacon_miss_cnt);
 	cm_roam_reason_vsie(psoc, vdev_id, &start_req->reason_vsie_enable);
 	cm_roam_triggers(psoc, vdev_id, &start_req->roam_triggers);
+	cm_roam_mawc_params(psoc, vdev_id, &start_req->mawc_params);
+	cm_roam_bss_load_config(psoc, vdev_id, &start_req->bss_load_config);
 	cm_roam_disconnect_params(psoc, vdev_id, &start_req->disconnect_params);
 	cm_roam_idle_params(psoc, vdev_id, &start_req->idle_params);
 

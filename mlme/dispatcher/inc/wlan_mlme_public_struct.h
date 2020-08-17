@@ -1577,8 +1577,8 @@ struct wlan_mlme_lfr_cfg {
 	bool wes_mode_enabled;
 	uint32_t mawc_roam_traffic_threshold;
 	uint32_t mawc_roam_ap_rssi_threshold;
-	uint32_t mawc_roam_rssi_high_adjust;
-	uint32_t mawc_roam_rssi_low_adjust;
+	uint8_t mawc_roam_rssi_high_adjust;
+	uint8_t mawc_roam_rssi_low_adjust;
 	uint32_t roam_rssi_abs_threshold;
 	uint8_t rssi_threshold_offset_5g;
 	uint8_t early_stop_scan_min_threshold;

@@ -2781,4 +2781,127 @@ wlan_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val);
+
+/**
+ * wlan_mlme_get_mawc_enabled() - Get mawc enabled status
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mawc_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * wlan_mlme_get_mawc_roam_enabled() - Get mawc roam enabled status
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mawc_roam_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * wlan_mlme_get_mawc_roam_traffic_threshold() - Get mawc traffic threshold
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mawc_roam_traffic_threshold(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *val);
+
+/**
+ * wlan_mlme_get_mawc_roam_ap_rssi_threshold() - Get AP RSSI threshold for
+ * MAWC roaming
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mawc_roam_ap_rssi_threshold(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *val);
+
+/**
+ * wlan_mlme_get_mawc_roam_rssi_high_adjust() - Get high adjustment value
+ * for suppressing scan
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mawc_roam_rssi_high_adjust(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *val);
+
+/**
+ * wlan_mlme_get_mawc_roam_rssi_low_adjust() - Get low adjustment value
+ * for suppressing scan
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_mawc_roam_rssi_low_adjust(struct wlan_objmgr_psoc *psoc,
+					uint8_t *val);
+
+/**
+ * wlan_mlme_get_bss_load_enabled() - Get bss load based roam trigger
+ * enabled status
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_bss_load_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * wlan_mlme_get_bss_load_threshold() - Get bss load threshold
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_bss_load_threshold(struct wlan_objmgr_psoc *psoc, uint32_t *val);
+
+/**
+ * wlan_mlme_get_bss_load_sample_time() - Get bss load sample time
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_bss_load_sample_time(struct wlan_objmgr_psoc *psoc,
+				   uint32_t *val);
+
+/**
+ * wlan_mlme_get_bss_load_rssi_threshold_5ghz() - Get bss load RSSI
+ * threshold on 5G
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_bss_load_rssi_threshold_5ghz(struct wlan_objmgr_psoc *psoc,
+					   int32_t *val);
+
+/**
+ * wlan_mlme_get_bss_load_rssi_threshold_24ghz() - Get bss load RSSI
+ * threshold on 2.4G
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_bss_load_rssi_threshold_24ghz(struct wlan_objmgr_psoc *psoc,
+					    int32_t *val);
 #endif /* _WLAN_MLME_API_H_ */

@@ -22,7 +22,7 @@
 #define _WMI_UNIFIED_ROAM_API_H_
 
 #include <wmi_unified_roam_param.h>
-#include <wlan_cm_roam_public_srtuct.h>
+#include <wlan_cm_roam_public_struct.h>
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**
@@ -126,7 +126,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_scan_period(
  */
 QDF_STATUS
 wmi_unified_roam_mawc_params_cmd(wmi_unified_t wmi_handle,
-				 struct wmi_mawc_roam_params *params);
+				 struct wlan_roam_mawc_params *params);
 
 /**
  * wmi_unified_roam_scan_filter_cmd() - send roam scan whitelist,
@@ -398,12 +398,13 @@ QDF_STATUS wmi_unified_send_btm_config(wmi_unified_t wmi_handle,
 /**
  * wmi_unified_send_bss_load_config() - Send bss load trigger params to fw
  * @wmi_handle:  wmi handle
- * @params: pointer to wmi_bss_load_config
+ * @params: pointer to wlan_roam_bss_load_config
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wmi_unified_send_bss_load_config(wmi_unified_t wmi_handle,
-					    struct wmi_bss_load_config *params);
+QDF_STATUS wmi_unified_send_bss_load_config(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_bss_load_config *params);
 
 /**
  * wmi_unified_offload_11k_cmd() - send 11k offload command

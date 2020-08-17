@@ -571,8 +571,9 @@ send_roam_scan_offload_scan_period_cmd_tlv(
 }
 #endif
 
-static QDF_STATUS send_roam_mawc_params_cmd_tlv(wmi_unified_t wmi_handle,
-		struct wmi_mawc_roam_params *params)
+static QDF_STATUS send_roam_mawc_params_cmd_tlv(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_mawc_params *params)
 {
 	wmi_buf_t buf = NULL;
 	QDF_STATUS status;
@@ -2830,7 +2831,7 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_roam_bss_load_config_tlv() - send roam load bss trigger configuration
  * @wmi_handle: wmi handle
- * @parms: pointer to wmi_bss_load_config
+ * @parms: pointer to wlan_roam_bss_load_config
  *
  * This function sends the roam load bss trigger configuration to fw.
  * the bss_load_threshold parameter is used to configure the maximum
@@ -2840,7 +2841,7 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_roam_bss_load_config_tlv(wmi_unified_t wmi_handle,
-			      struct wmi_bss_load_config *params)
+			      struct wlan_roam_bss_load_config *params)
 {
 	wmi_roam_bss_load_config_cmd_fixed_param *cmd;
 	wmi_buf_t buf;

@@ -216,7 +216,8 @@ struct ap_profile {
  * ap over the roam score of the current ap
  * @roam_trigger_bitmap: bitmap of roam triggers on which roam_score_delta
  * will be applied
- * @vendor_roam_score_algorithm: Preferred algorithm for roam candidate selection
+ * @vendor_roam_score_algorithm: Preferred algorithm for roam candidate
+ * selection
  * @cand_min_roam_score_delta: candidate min roam score delta value
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
@@ -353,6 +354,24 @@ struct ap_profile_params {
 	struct roam_trigger_score_delta score_delta_param[NUM_OF_ROAM_TRIGGERS];
 };
 
+/**
+ * struct wlan_roam_mawc_params - Motion Aided wireless connectivity params
+ * @vdev_id: VDEV on which the parameters should be applied
+ * @enable: MAWC roaming feature enable/disable
+ * @traffic_load_threshold: Traffic threshold in kBps for MAWC roaming
+ * @best_ap_rssi_threshold: AP RSSI Threshold for MAWC roaming
+ * @rssi_stationary_high_adjust: High RSSI adjustment value to suppress scan
+ * @rssi_stationary_low_adjust: Low RSSI adjustment value to suppress scan
+ */
+struct wlan_roam_mawc_params {
+	uint8_t vdev_id;
+	bool enable;
+	uint32_t traffic_load_threshold;
+	uint32_t best_ap_rssi_threshold;
+	uint8_t rssi_stationary_high_adjust;
+	uint8_t rssi_stationary_low_adjust;
+};
+
 #define MAX_SSID_ALLOWED_LIST    4
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
@@ -445,7 +464,6 @@ struct wlan_roam_btm_config {
 	uint32_t btm_candidate_min_score;
 };
 
-
 /**
  * struct wlan_roam_neighbor_report_params -neighbour report params
  * @time_offset: time offset after 11k offload command to trigger a neighbor
@@ -484,6 +502,27 @@ struct wlan_roam_11k_offload_params {
 	uint32_t vdev_id;
 	uint32_t offload_11k_bitmask;
 	struct wlan_roam_neighbor_report_params neighbor_report_params;
+};
+
+/**
+ * struct wlan_roam_bss_load_config - BSS load trigger parameters
+ * @vdev_id: VDEV on which the parameters should be applied
+ * @bss_load_threshold: BSS load threshold after which roam scan should trigger
+ * @bss_load_sample_time: Time duration in milliseconds for which the bss load
+ * trigger needs to be enabled
+ * @rssi_threshold_5ghz: RSSI threshold of the current connected AP below which
+ * roam should be triggered if bss load threshold exceeds the configured value.
+ * This value is applicable only when we are connected in 5GHz band.
+ * @rssi_threshold_24ghz: RSSI threshold of the current connected AP below which
+ * roam should be triggered if bss load threshold exceeds the configured value.
+ * This value is applicable only when we are connected in 2.4GHz band.
+ */
+struct wlan_roam_bss_load_config {
+	uint32_t vdev_id;
+	uint32_t bss_load_threshold;
+	uint32_t bss_load_sample_time;
+	int32_t rssi_threshold_5ghz;
+	int32_t rssi_threshold_24ghz;
 };
 
 /**
@@ -698,9 +737,11 @@ struct wlan_roam_scan_period_params {
  * @roam_triggers: roam triggers parameters
  * @scan_period_params: roam scan period parameters
  * @profile_params: ap profile parameters
+ * @mawc_params: mawc parameters
  * @scan_filter_params: roam scan filter parameters
  * @btm_config: btm configuration
  * @roam_11k_params: 11k params
+ * @bss_load_config: bss load config
  * @disconnect_params: disconnect params
  * @idle_params: idle params
  */
@@ -711,9 +752,11 @@ struct wlan_roam_start_config {
 	struct wlan_roam_triggers roam_triggers;
 	struct wlan_roam_scan_period_params scan_period_params;
 	struct ap_profile_params profile_params;
+	struct wlan_roam_mawc_params mawc_params;
 	struct wlan_roam_scan_filter_params scan_filter_params;
 	struct wlan_roam_btm_config btm_config;
 	struct wlan_roam_11k_offload_params roam_11k_params;
+	struct wlan_roam_bss_load_config bss_load_config;
 	struct wlan_roam_disconnect_params disconnect_params;
 	struct wlan_roam_idle_params idle_params;
 	/* other wmi cmd structures */
@@ -873,10 +916,10 @@ struct set_pcl_req {
  * @send_roam_abort: send roam abort
  */
 struct wlan_cm_roam_tx_ops {
-	QDF_STATUS (*send_vdev_set_pcl_cmd) (struct wlan_objmgr_vdev *vdev,
-					     struct set_pcl_req *req);
+	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
+					    struct set_pcl_req *req);
 #ifdef ROAM_OFFLOAD_V1
-	QDF_STATUS (*send_roam_offload_init_req) (
+	QDF_STATUS (*send_roam_offload_init_req)(
 			struct wlan_objmgr_vdev *vdev,
 			struct wlan_roam_offload_init_params *params);
 
@@ -884,12 +927,14 @@ struct wlan_cm_roam_tx_ops {
 					  struct wlan_roam_start_config *req);
 	QDF_STATUS (*send_roam_stop_offload)(struct wlan_objmgr_vdev *vdev,
 					     struct wlan_roam_stop_config *req);
-	QDF_STATUS (*send_roam_update_config)(struct wlan_objmgr_vdev *vdev,
-					   struct wlan_roam_update_config *req);
+	QDF_STATUS (*send_roam_update_config)(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_roam_update_config *req);
 	QDF_STATUS (*send_roam_abort)(struct wlan_objmgr_vdev *vdev,
 				      uint8_t vdev_id);
-	QDF_STATUS (*send_roam_per_config)(struct wlan_objmgr_vdev *vdev,
-					  struct wlan_per_roam_config_req *req);
+	QDF_STATUS (*send_roam_per_config)(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_per_roam_config_req *req);
 #endif
 };
 

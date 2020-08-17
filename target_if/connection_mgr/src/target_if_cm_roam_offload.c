@@ -601,6 +601,26 @@ target_if_cm_roam_scan_offload_ap_profile(
 }
 
 /**
+ * target_if_cm_roam_scan_mawc_params() - send roam macw to
+ * firmware
+ * @wmi_handle: wmi handle
+ * @req: roam macw parameters
+ *
+ * Send WMI_ROAM_CONFIGURE_MAWC_CMDID parameters to firmware
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_mawc_params(wmi_unified_t wmi_handle,
+				   struct wlan_roam_mawc_params *req)
+{
+	if (!wmi_service_enabled(wmi_handle, wmi_service_hw_db2dbm_support))
+		req->best_ap_rssi_threshold -= NOISE_FLOOR_DBM_DEFAULT;
+
+	return wmi_unified_roam_mawc_params_cmd(wmi_handle, req);
+}
+
+/**
  * target_if_cm_roam_scan_filter() - send roam scan filter to firmware
  * @wmi_handle: wmi handle
  * @command: rso command
@@ -705,6 +725,42 @@ target_if_cm_roam_offload_11k_params(wmi_unified_t wmi_handle,
 	return status;
 }
 
+/**
+ * target_if_cm_roam_bss_load_config() - send bss load config params to firmware
+ * @wmi_handle: wmi handle
+ * @req: bss load config parameters
+ *
+ * Send WMI_ROAM_BSS_LOAD_CONFIG_CMDID parameters to firmware
+ *
+ * Return: QDF status
+ */
+static void
+target_if_cm_roam_bss_load_config(wmi_unified_t wmi_handle,
+				  struct wlan_roam_bss_load_config *req)
+{
+	QDF_STATUS status;
+	bool db2dbm_enabled;
+
+	db2dbm_enabled = wmi_service_enabled(wmi_handle,
+					     wmi_service_hw_db2dbm_support);
+	if (!db2dbm_enabled) {
+		req->rssi_threshold_5ghz -= NOISE_FLOOR_DBM_DEFAULT;
+		req->rssi_threshold_5ghz &= 0x000000ff;
+
+		req->rssi_threshold_24ghz -= NOISE_FLOOR_DBM_DEFAULT;
+		req->rssi_threshold_24ghz &= 0x000000ff;
+	}
+
+	target_if_debug("Bss load trig params vdev %u threshold %u sample_time: %u 5Ghz RSSI threshold:%d 2.4G rssi threshold:%d",
+			req->vdev_id, req->bss_load_threshold,
+			req->bss_load_sample_time, req->rssi_threshold_5ghz,
+			req->rssi_threshold_24ghz);
+
+	status = wmi_unified_send_bss_load_config(wmi_handle, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("failed to send bss load trigger config command");
+}
+
 static uint32_t
 target_if_get_wmi_roam_offload_flag(uint32_t flag)
 {
@@ -768,6 +824,8 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	wmi_unified_t wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	bool bss_load_enabled;
 
 	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
 	if (!wmi_handle)
@@ -810,6 +868,17 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto end;
 
+	if (wmi_service_enabled(wmi_handle, wmi_service_mawc_support)) {
+		status = target_if_cm_roam_scan_mawc_params(wmi_handle,
+							    &req->mawc_params);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Sending roaming MAWC params failed");
+			goto end;
+		} else {
+			target_if_debug("MAWC roaming not supported by firmware");
+		}
+	}
+
 	status = target_if_cm_roam_scan_filter(wmi_handle,
 					       ROAM_SCAN_OFFLOAD_START,
 					       &req->scan_filter_params);
@@ -835,6 +904,17 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 		target_if_err("11k offload enable not sent, status %d", status);
 		goto end;
 	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		target_if_err("psoc handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_mlme_get_bss_load_enabled(psoc, &bss_load_enabled);
+	if (bss_load_enabled)
+		target_if_cm_roam_bss_load_config(wmi_handle,
+						  &req->bss_load_config);
 
 	target_if_cm_roam_disconnect_params(wmi_handle, ROAM_SCAN_OFFLOAD_START,
 					    &req->disconnect_params);
