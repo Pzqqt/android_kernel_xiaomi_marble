@@ -2327,7 +2327,7 @@ struct roam_offload_scan_req {
 	bool roam_force_rssi_trigger;
 	/* bss load triggered roam related params */
 	bool bss_load_trig_enabled;
-	struct wmi_bss_load_config bss_load_config;
+	struct wlan_roam_bss_load_config bss_load_config;
 	bool roaming_scan_policy;
 	uint32_t roam_scan_inactivity_time;
 	uint32_t roam_inactive_data_packet_count;

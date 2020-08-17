@@ -46,7 +46,7 @@
 #include "wma_api.h"
 #include "wmi_unified_param.h"
 #include "wmi.h"
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2

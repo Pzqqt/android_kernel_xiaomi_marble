@@ -24,7 +24,7 @@
 #define WLAN_CM_ROAM_API_H__
 
 #include "wlan_mlme_dbg.h"
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 

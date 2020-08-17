@@ -224,7 +224,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
 		struct roam_offload_scan_req *roam_req)
 {
-	struct wmi_mawc_roam_params *params;
+	struct wlan_roam_mawc_params *params;
 	QDF_STATUS status;
 
 	if (!roam_req) {
@@ -1670,7 +1670,7 @@ wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
  */
 static
 void wma_send_roam_bss_load_config(WMA_HANDLE handle,
-				   struct wmi_bss_load_config *params)
+				   struct wlan_roam_bss_load_config *params)
 {
 	QDF_STATUS status;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
@@ -1907,7 +1907,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	uint32_t mode = 0;
 	uint8_t enable_roam_reason_vsie = 0;
 	struct wma_txrx_node *intr = NULL;
-	struct wmi_bss_load_config *bss_load_cfg;
+	struct wlan_roam_bss_load_config *bss_load_cfg;
 
 	if (!mac) {
 		wma_err("mac is NULL");

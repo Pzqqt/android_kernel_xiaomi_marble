@@ -21,7 +21,7 @@
 #ifndef TARGET_IF_CM_ROAM_OFFLOAD_H__
 #define TARGET_IF_CM_ROAM_OFFLOAD_H__
 
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 
 /**
  * target_if_cm_roam_register_tx_ops  - Target IF API to register roam

@@ -25,7 +25,7 @@
 #ifndef _WLAN_CM_ROAM_OFFLOAD_H_
 #define _WLAN_CM_ROAM_OFFLOAD_H_
 
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 

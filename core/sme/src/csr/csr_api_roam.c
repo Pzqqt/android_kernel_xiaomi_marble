@@ -19997,9 +19997,9 @@ wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason)
 
 	if (reason == REASON_OS_REQUESTED_ROAMING_NOW) {
 		scan_offload_rsp = qdf_mem_malloc(sizeof(*scan_offload_rsp));
-		if (!scan_offload_rsp) {
+		if (!scan_offload_rsp)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		cds_msg.type = eWNI_SME_ROAM_SCAN_OFFLOAD_RSP;
 		scan_offload_rsp->sessionId = vdev_id;
 		scan_offload_rsp->reason = reason;

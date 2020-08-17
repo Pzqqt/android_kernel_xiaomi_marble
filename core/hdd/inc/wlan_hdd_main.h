@@ -105,7 +105,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "pld_common.h"
 #include <dp_txrx.h>
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 #include "qdf_periodic_work.h"

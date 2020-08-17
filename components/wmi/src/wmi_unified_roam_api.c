@@ -95,7 +95,7 @@ wmi_unified_roam_scan_offload_scan_period(wmi_unified_t wmi_handle,
 
 QDF_STATUS wmi_unified_roam_mawc_params_cmd(
 			wmi_unified_t wmi_handle,
-			struct wmi_mawc_roam_params *params)
+			struct wlan_roam_mawc_params *params)
 {
 	if (wmi_handle->ops->send_roam_mawc_params_cmd)
 		return wmi_handle->ops->send_roam_mawc_params_cmd(wmi_handle,
@@ -318,8 +318,9 @@ QDF_STATUS wmi_unified_send_btm_config(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_send_bss_load_config(wmi_unified_t wmi_handle,
-					    struct wmi_bss_load_config *params)
+QDF_STATUS wmi_unified_send_bss_load_config(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_bss_load_config *params)
 {
 	if (wmi_handle->ops->send_roam_bss_load_config)
 		return wmi_handle->ops->send_roam_bss_load_config(wmi_handle,

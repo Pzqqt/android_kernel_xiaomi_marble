@@ -35,7 +35,7 @@
 #include "wlan_nan_api.h"
 #include "nan_public_structs.h"
 #include "wlan_reg_services_api.h"
-#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_public_struct.h"
 #include "csr_neighbor_roam.h"
 #include "wlan_mlme_main.h"
 
