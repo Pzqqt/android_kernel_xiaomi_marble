@@ -3142,7 +3142,8 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	}
 
 	if (topology == VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY ||
-	    topology == VPM_TX_VOICE_FLUENCE_SM_COPP_TOPOLOGY)
+	    topology == VPM_TX_VOICE_FLUENCE_SM_COPP_TOPOLOGY ||
+	    topology == AUDIO_RX_MONO_VOIP_COPP_TOPOLOGY)
 		channel_mode = 1;
 
 	/*
