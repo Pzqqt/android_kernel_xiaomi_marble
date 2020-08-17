@@ -237,11 +237,11 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 		}
 		bolero_clk_rsc_fs_gen_request(tx_priv->dev,
 					true);
+		regcache_mark_dirty(regmap);
+		regcache_sync_region(regmap,
+				TX_START_OFFSET,
+				TX_MAX_OFFSET);
 		if (tx_priv->tx_mclk_users == 0) {
-			regcache_mark_dirty(regmap);
-			regcache_sync_region(regmap,
-					TX_START_OFFSET,
-					TX_MAX_OFFSET);
 			/* 9.6MHz MCLK, set value 0x00 if other frequency */
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK, 0x01, 0x01);
