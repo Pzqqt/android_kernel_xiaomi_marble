@@ -801,6 +801,30 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 }
 EXPORT_SYMBOL(wsa883x_codec_info_create_codec_entry);
 
+/*
+ * wsa883x_codec_get_dev_num - returns swr device number
+ * @component: Codec instance
+ *
+ * Return: swr device number on success or negative error
+ * code on failure.
+ */
+int wsa883x_codec_get_dev_num(struct snd_soc_component *component)
+{
+	struct wsa883x_priv *wsa883x;
+
+	if (!component)
+		return -EINVAL;
+
+	wsa883x = snd_soc_component_get_drvdata(component);
+	if (!wsa883x) {
+		pr_err("%s: wsa883x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	return wsa883x->swr_slave->dev_num;
+}
+EXPORT_SYMBOL(wsa883x_codec_get_dev_num);
+
 static int wsa883x_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
