@@ -2222,6 +2222,27 @@ static uint32_t hdd_update_band_cap_from_dot11mode(
 	return band_capability;
 }
 
+#ifdef FEATURE_WPSS_THERMAL_MITIGATION
+static inline
+void hdd_update_multi_client_thermal_support(struct hdd_context *hdd_ctx)
+{
+	struct wmi_unified *wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(hdd_ctx->psoc);
+	if (!wmi_handle)
+		return;
+
+	hdd_ctx->multi_client_thermal_mitigation =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_thermal_multi_client_support);
+}
+#else
+static inline
+void hdd_update_multi_client_thermal_support(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
@@ -2526,6 +2547,7 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 			  cfg->bcast_twt_support);
 
 	hdd_update_score_config(hdd_ctx);
+	hdd_update_multi_client_thermal_support(hdd_ctx);
 
 	return 0;
 

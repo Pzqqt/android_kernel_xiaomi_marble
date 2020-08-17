@@ -109,6 +109,9 @@ struct wlan_fwol_coex_config {
  * @throttle_period: Thermal throttle period value
  * @throttle_dutycycle_level: Array of throttle duty cycle levels
  * @thermal_sampling_time: sampling time for thermal mitigation in ms
+ * @mon_id: Monitor client id either the wpps or apps
+ * @priority_apps: Priority of the apps mitigation to consider by fw
+ * @priority_wpps: Priority of the wpps mitigation to consider by fw
  */
 struct wlan_fwol_thermal_temp {
 	bool     thermal_mitigation_enable;
@@ -117,6 +120,9 @@ struct wlan_fwol_thermal_temp {
 	uint16_t thermal_temp_max_level[FWOL_THERMAL_LEVEL_MAX];
 	uint32_t throttle_dutycycle_level[FWOL_THERMAL_THROTTLE_LEVEL_MAX];
 	uint16_t thermal_sampling_time;
+	uint8_t mon_id;
+	uint8_t priority_apps;
+	uint8_t priority_wpps;
 };
 
 /**

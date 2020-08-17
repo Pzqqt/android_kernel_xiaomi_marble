@@ -1736,6 +1736,7 @@ struct hdd_adapter_ops_history {
  * @pm_qos_req: pm_qos request for all cpu cores
  * @qos_cpu_mask: voted cpu core mask
  * @adapter_ops_wq: High priority workqueue for handling adapter operations
+ * @multi_client_thermal_mitigation: Multi client thermal mitigation by fw
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2070,6 +2071,9 @@ struct hdd_context {
 	qdf_workqueue_t *adapter_ops_wq;
 	struct hdd_adapter_ops_history adapter_ops_history;
 	bool ll_stats_per_chan_rx_tx_time;
+#ifdef FEATURE_WPSS_THERMAL_MITIGATION
+	bool multi_client_thermal_mitigation;
+#endif
 };
 
 /**

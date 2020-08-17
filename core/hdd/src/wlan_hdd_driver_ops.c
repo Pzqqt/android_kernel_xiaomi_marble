@@ -46,6 +46,7 @@
 #include <linux/suspend.h>
 #include <qdf_notifier.h>
 #include <qdf_hang_event_notifier.h>
+#include "wlan_hdd_thermal.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -511,6 +512,7 @@ static int __hdd_soc_probe(struct device *dev,
 	cds_set_driver_loaded(true);
 	cds_set_load_in_progress(false);
 	hdd_start_complete(0);
+	hdd_thermal_mitigation_register(hdd_ctx, dev);
 
 	hdd_soc_load_unlock(dev);
 
@@ -684,7 +686,6 @@ static void __hdd_soc_remove(struct device *dev)
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
-
 	if (!hdd_wait_for_debugfs_threads_completion())
 		hdd_warn("Debugfs threads are still active attempting driver unload anyway");
 
@@ -692,6 +693,7 @@ static void __hdd_soc_remove(struct device *dev)
 		hdd_wlan_stop_modules(hdd_ctx, false);
 		qdf_nbuf_deinit_replenish_timer();
 	} else {
+		hdd_thermal_mitigation_unregister(hdd_ctx, dev);
 		hdd_wlan_exit(hdd_ctx);
 	}
 
@@ -1986,6 +1988,7 @@ struct pld_driver_ops wlan_drv_ops = {
 	.runtime_suspend = wlan_hdd_pld_runtime_suspend,
 	.runtime_resume = wlan_hdd_pld_runtime_resume,
 #endif
+	.set_curr_therm_cdev_state = wlan_hdd_pld_set_thermal_mitigation,
 };
 
 int wlan_hdd_register_driver(void)

@@ -27,6 +27,9 @@
 #include "qdf_trace.h"
 #include "sme_api.h"
 #include "qdf_status.h"
+#include <wlan_fw_offload_main.h>
+#include "wlan_hdd_thermal.h"
+#include <wlan_fwol_ucfg_api.h>
 
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 #ifndef QCN7605_SUPPORT
@@ -59,6 +62,14 @@ __hdd_sysfs_thermal_cfg_store(struct hdd_context *hdd_ctx,
 	uint16_t val5, val6;
 	QDF_STATUS status;
 	int ret;
+	struct thermal_mitigation_params therm_cfg_params;
+	struct wlan_fwol_thermal_temp thermal_temp = {0};
+
+	status = ucfg_fwol_get_thermal_temp(hdd_ctx->psoc, &thermal_temp);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err_rl("Failed to get fwol thermal obj");
+		return status;
+	}
 
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
@@ -130,9 +141,18 @@ __hdd_sysfs_thermal_cfg_store(struct hdd_context *hdd_ctx,
 	    val6 <= val5)
 		return -EINVAL;
 
+	therm_cfg_params.enable = val1;
+	therm_cfg_params.dc = val2;
+	therm_cfg_params.levelconf[0].dcoffpercent = val3;
+	therm_cfg_params.levelconf[0].priority = val4;
+	therm_cfg_params.levelconf[0].tmplwm = val7;
+	hdd_thermal_fill_clientid_priority(THERMAL_MONITOR_APPS,
+					   thermal_temp.priority_apps,
+					   thermal_temp.priority_wpps,
+					   &therm_cfg_params);
+
 	status = sme_set_thermal_throttle_cfg(hdd_ctx->mac_handle,
-					      val1, val2, val3,
-					      val4, val7);
+					      &therm_cfg_params);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);

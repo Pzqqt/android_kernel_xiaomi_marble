@@ -1166,3 +1166,9 @@ endif
 
 #Enable Hang Event
 CONFIG_WLAN_HANG_EVENT := y
+
+ifeq ($(CONFIG_CNSS_QCA6750), y)
+ifeq ($(CONFIG_FW_THERMAL_THROTTLE), y)
+CONFIG_WLAN_THERMAL_MULTI_CLIENT_SUPPORT := y
+endif
+endif

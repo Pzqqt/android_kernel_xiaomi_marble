@@ -15841,55 +15841,42 @@ QDF_STATUS sme_motion_det_base_line_enable(
  * sme_set_thermal_throttle_cfg() - SME API to set the thermal throttle
  * configuration parameters
  * @mac_handle: Opaque handle to the global MAC context
- * @enable: Enable Throttle
- * @dc: duty cycle in msecs
- * @dc_off_percent: duty cycle off percentage
- * @prio: Disables the transmit queues in fw that have lower priority
- * than value defined by prio
- * @target_temp: Target temperature
+ * @therm_params: structure of thermal configuration parameters
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_set_thermal_throttle_cfg(mac_handle_t mac_handle, bool enable,
-					uint32_t dc, uint32_t dc_off_percent,
-					uint32_t prio, uint32_t target_temp)
+QDF_STATUS sme_set_thermal_throttle_cfg(mac_handle_t mac_handle,
+			struct thermal_mitigation_params *therm_params)
+
 {
 	struct scheduler_msg msg;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct thermal_mitigation_params *therm_cfg_params;
 
+	therm_cfg_params = qdf_mem_malloc(sizeof(*therm_cfg_params));
+	if (!therm_cfg_params)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_set(therm_cfg_params, sizeof(*therm_cfg_params), 0);
+	qdf_mem_copy(therm_cfg_params, therm_params, sizeof(*therm_cfg_params));
+
+	qdf_mem_set(&msg, sizeof(msg), 0);
+	msg.type = WMA_SET_THERMAL_THROTTLE_CFG;
+	msg.reserved = 0;
+	msg.bodyptr = therm_cfg_params;
+
 	qdf_status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == qdf_status) {
-		therm_cfg_params = qdf_mem_malloc(sizeof(*therm_cfg_params));
-		if (!therm_cfg_params) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-
-		therm_cfg_params->enable = enable;
-		therm_cfg_params->dc = dc;
-		therm_cfg_params->levelconf[0].dcoffpercent = dc_off_percent;
-		therm_cfg_params->levelconf[0].priority = prio;
-		therm_cfg_params->levelconf[0].tmplwm = target_temp;
-		therm_cfg_params->num_thermal_conf = 1;
-
-		qdf_mem_set(&msg, sizeof(msg), 0);
-		msg.type = WMA_SET_THERMAL_THROTTLE_CFG;
-		msg.reserved = 0;
-		msg.bodyptr = therm_cfg_params;
-
-		qdf_status =  scheduler_post_message(QDF_MODULE_ID_SME,
-						     QDF_MODULE_ID_WMA,
-						     QDF_MODULE_ID_WMA, &msg);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			sme_err("failed to schedule throttle config req %d",
-				qdf_status);
-			qdf_mem_free(therm_cfg_params);
-			qdf_status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
+	qdf_status =  scheduler_post_message(QDF_MODULE_ID_SME,
+					     QDF_MODULE_ID_WMA,
+					     QDF_MODULE_ID_WMA, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		sme_err("failed to schedule throttle config req %d",
+			qdf_status);
+		qdf_mem_free(therm_cfg_params);
+		qdf_status = QDF_STATUS_E_FAILURE;
 	}
+	sme_release_global_lock(&mac->sme);
 	return qdf_status;
 }
 
