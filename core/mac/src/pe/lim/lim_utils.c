@@ -51,6 +51,7 @@
 #include "wlan_reg_services_api.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_ucfg_api.h"
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 #include "wma_he.h"
 #endif
@@ -5633,6 +5634,7 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 				       uint8_t vdev_id)
 {
 	uint8_t vht_caps[DOT11F_IE_VHTCAPS_MAX_LEN + 2] = {0};
+	bool vht_for_2g_enabled = false;
 	tSirMacVHTCapabilityInfo *p_vht_cap =
 			(tSirMacVHTCapabilityInfo *)(&vht_caps[2]);
 	QDF_STATUS status_5g, status_2g;
@@ -5662,6 +5664,12 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 				CDS_BAND_5GHZ, &vht_caps[2],
 				DOT11F_IE_VHTCAPS_MIN_LEN);
+	/* Send VHT CAP for 2.4G band based on CFG_ENABLE_VHT_FOR_24GHZ ini */
+	ucfg_mlme_get_vht_for_24ghz(mac_ctx->psoc, &vht_for_2g_enabled);
+
+	if (!vht_for_2g_enabled)
+		return status_5g;
+
 
 	/* Get LDPC and over write for 2G */
 	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_2437);
