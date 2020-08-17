@@ -340,7 +340,7 @@
  *
  * Supported features: Thermal Mitigation
  *
- *</ini>
+ * </ini>
  */
 #define CFG_THERMAL_SAMPLING_TIME CFG_INI_UINT( \
 				"gThermalSamplingTime", \
@@ -349,6 +349,56 @@
 				100, \
 				CFG_VALUE_OR_DEFAULT, \
 				"Thermal mitigation sampling time")
+
+/* <ini>
+ * gThermalAppsPriority - Configure the thermal mitigation APPS priority
+ *
+ * @Min: 1
+ * @Max: 10
+ * @Default: 1
+ *
+ * This ini will control the priority of the thermal mitigation in FW.
+ * FW will consider this priority while applying the duty cycle from the
+ * multiple clients. 1 being the least priority and 10 being highest.
+ *
+ * Usage: External
+ *
+ * Supported features: Thermal Mitigation
+ *
+ * </ini>
+ */
+#define CFG_THERMAL_APPS_PRIORITY CFG_INI_UINT( \
+				"gThermalAppsPriority", \
+				1, \
+				10, \
+				1, \
+				CFG_VALUE_OR_DEFAULT, \
+				"Thermal mitigation priority for APPS")
+
+/* <ini>
+ * gThermalWppsPriority - Configure the thermal mitigation WPPS priority
+ *
+ * @Min: 1
+ * @Max: 10
+ * @Default: 1
+ *
+ * This ini will control the priority of the thermal mitigation in FW.
+ * FW will consider this priority while applying the duty cycle from the
+ * multiple clients. 1 being the least priority and 10 being highest.
+ *
+ * Usage: External
+ *
+ * Supported features: Thermal Mitigation
+ *
+ * </ini>
+ */
+#define CFG_THERMAL_WPPS_PRIOITY CFG_INI_UINT( \
+				"gThermalWppsPriority", \
+				1, \
+				10, \
+				1, \
+				CFG_VALUE_OR_DEFAULT, \
+				"Thermal mitigation priority for WPPS")
 
 #define CFG_THERMAL_TEMP_ALL \
 	CFG(CFG_THERMAL_TEMP_MIN_LEVEL0) \
@@ -367,7 +417,9 @@
 	CFG(CFG_THROTTLE_DUTY_CYCLE_LEVEL3) \
 	CFG(CFG_THROTTLE_DUTY_CYCLE_LEVEL4) \
 	CFG(CFG_THROTTLE_DUTY_CYCLE_LEVEL5) \
-	CFG(CFG_THERMAL_SAMPLING_TIME)
+	CFG(CFG_THERMAL_SAMPLING_TIME) \
+	CFG(CFG_THERMAL_APPS_PRIORITY) \
+	CFG(CFG_THERMAL_WPPS_PRIOITY)
 
 #endif
 

@@ -147,6 +147,10 @@ fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL4);
 	thermal_temp->throttle_dutycycle_level[5] =
 				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL5);
+	thermal_temp->priority_apps =
+				cfg_get(psoc, CFG_THERMAL_APPS_PRIORITY);
+	thermal_temp->priority_wpps =
+				cfg_get(psoc, CFG_THERMAL_WPPS_PRIOITY);
 }
 
 QDF_STATUS fwol_init_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
