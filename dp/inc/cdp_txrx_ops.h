@@ -1131,6 +1131,13 @@ struct ol_if_ops {
 	void (*dp_prealloc_put_consistent)(qdf_size_t size,
 					   void *vaddr_unligned,
 					   qdf_dma_addr_t paddr);
+	void (*dp_get_multi_pages)(uint32_t desc_type,
+				   size_t element_size,
+				   uint16_t element_num,
+				   struct qdf_mem_multi_page_t *pages,
+				   bool cacheable);
+	void (*dp_put_multi_pages)(uint32_t desc_type,
+				   struct qdf_mem_multi_page_t *pages);
 #endif
 	int (*get_soc_nss_cfg)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle);
 

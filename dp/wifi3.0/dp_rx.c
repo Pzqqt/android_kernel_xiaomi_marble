@@ -3159,6 +3159,7 @@ dp_rx_pdev_desc_pool_alloc(struct dp_pdev *pdev)
 	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 	rx_sw_desc_num = wlan_cfg_get_dp_soc_rx_sw_desc_num(soc->wlan_cfg_ctx);
 
+	rx_desc_pool->desc_type = DP_RX_DESC_BUF_TYPE;
 	status = dp_rx_desc_pool_alloc(soc,
 				       rx_sw_desc_num,
 				       rx_desc_pool);

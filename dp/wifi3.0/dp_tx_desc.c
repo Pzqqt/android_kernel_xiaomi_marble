@@ -98,10 +98,10 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 
 	desc_size = DP_TX_DESC_SIZE(sizeof(struct dp_tx_desc_s));
 	tx_desc_pool = &((soc)->tx_desc[(pool_id)]);
-	qdf_mem_multi_pages_alloc(soc->osdev,
-				  &tx_desc_pool->desc_pages,
-				  desc_size, num_elem,
-				  0, true);
+	dp_desc_multi_pages_mem_alloc(soc, DP_TX_DESC_TYPE,
+				      &tx_desc_pool->desc_pages,
+				      desc_size, num_elem,
+				      0, true);
 
 	if (!tx_desc_pool->desc_pages.num_pages) {
 		dp_err("Multi page alloc fail, tx desc");
@@ -123,8 +123,9 @@ void dp_tx_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	tx_desc_pool = &((soc)->tx_desc[pool_id]);
 
 	if (tx_desc_pool->desc_pages.num_pages)
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &tx_desc_pool->desc_pages, 0, true);
+		dp_desc_multi_pages_mem_free(soc, DP_TX_DESC_TYPE,
+					     &tx_desc_pool->desc_pages, 0,
+					     true);
 }
 
 /**
@@ -221,7 +222,8 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 	for (pool_id = 0; pool_id < num_pool; pool_id++) {
 		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
 		memctx = qdf_get_dma_mem_context(dp_tx_ext_desc_pool, memctx);
-		qdf_mem_multi_pages_alloc(soc->osdev,
+		dp_desc_multi_pages_mem_alloc(
+					  soc, DP_TX_EXT_DESC_TYPE,
 					  &dp_tx_ext_desc_pool->desc_pages,
 					  elem_size,
 					  num_elem,
@@ -243,7 +245,9 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 	 */
 	for (pool_id = 0; pool_id < num_pool; pool_id++) {
 		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
-		qdf_mem_multi_pages_alloc(soc->osdev,
+		dp_desc_multi_pages_mem_alloc(
+					  soc,
+					  DP_TX_EXT_DESC_LINK_TYPE,
 					  &dp_tx_ext_desc_pool->desc_link_pages,
 					  link_elem_size,
 					  num_elem,
@@ -261,9 +265,10 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 free_ext_desc_page:
 	for (count = 0; count < pool_id; pool_id++) {
 		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &dp_tx_ext_desc_pool->desc_link_pages,
-					 0, true);
+		dp_desc_multi_pages_mem_free(
+					soc, DP_TX_EXT_DESC_LINK_TYPE,
+					&dp_tx_ext_desc_pool->desc_link_pages,
+					0, true);
 	}
 	pool_id = num_pool;
 
@@ -271,9 +276,10 @@ fail_exit:
 	for (count = 0; count < pool_id; pool_id++) {
 		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
 		memctx = qdf_get_dma_mem_context(dp_tx_ext_desc_pool, memctx);
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &dp_tx_ext_desc_pool->desc_pages,
-					 memctx, false);
+		dp_desc_multi_pages_mem_free(
+					soc, DP_TX_EXT_DESC_TYPE,
+					&dp_tx_ext_desc_pool->desc_pages,
+					memctx, false);
 	}
 	return status;
 }
@@ -381,13 +387,15 @@ void dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t num_pool)
 		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
 		memctx = qdf_get_dma_mem_context(dp_tx_ext_desc_pool, memctx);
 
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &dp_tx_ext_desc_pool->desc_link_pages,
-					 0, true);
+		dp_desc_multi_pages_mem_free(
+					soc, DP_TX_EXT_DESC_LINK_TYPE,
+					&dp_tx_ext_desc_pool->desc_link_pages,
+					0, true);
 
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &dp_tx_ext_desc_pool->desc_pages,
-					 memctx, false);
+		dp_desc_multi_pages_mem_free(
+					soc, DP_TX_EXT_DESC_TYPE,
+					&dp_tx_ext_desc_pool->desc_pages,
+					memctx, false);
 	}
 }
 
@@ -428,10 +436,12 @@ QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 	for (pool_id = 0; pool_id < num_pool; pool_id++) {
 		tso_desc_pool = &soc->tx_tso_desc[pool_id];
 		tso_desc_pool->num_free = 0;
-		qdf_mem_multi_pages_alloc(soc->osdev,
-					  &tso_desc_pool->desc_pages,
-					  desc_size,
-					  num_elem, 0, true);
+		dp_desc_multi_pages_mem_alloc(
+					soc,
+					DP_TX_TSO_DESC_TYPE,
+					&tso_desc_pool->desc_pages,
+					desc_size,
+					num_elem, 0, true);
 
 		if (!tso_desc_pool->desc_pages.num_pages) {
 			dp_err("Multi page alloc fail, tx desc");
@@ -443,9 +453,9 @@ QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 fail:
 	for (i = 0; i < pool_id; i++) {
 		tso_desc_pool = &soc->tx_tso_desc[i];
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &tso_desc_pool->desc_pages,
-					 0, true);
+		dp_desc_multi_pages_mem_free(soc, DP_TX_TSO_DESC_TYPE,
+					     &tso_desc_pool->desc_pages,
+					     0, true);
 	}
 	return QDF_STATUS_E_NOMEM;
 }
@@ -463,8 +473,9 @@ void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t num_pool)
 
 	for (pool_id = 0; pool_id < num_pool; pool_id++) {
 		tso_desc_pool = &soc->tx_tso_desc[pool_id];
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &tso_desc_pool->desc_pages, 0, true);
+		dp_desc_multi_pages_mem_free(soc, DP_TX_TSO_DESC_TYPE,
+					     &tso_desc_pool->desc_pages,
+					     0, true);
 	}
 }
 
@@ -554,10 +565,10 @@ QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 	for (pool_id = 0; pool_id < num_pool; pool_id++) {
 		tso_num_seg_pool = &soc->tx_tso_num_seg[pool_id];
 		tso_num_seg_pool->num_free = 0;
-		qdf_mem_multi_pages_alloc(soc->osdev,
-					  &tso_num_seg_pool->desc_pages,
-					  desc_size,
-					  num_elem, 0, true);
+		dp_desc_multi_pages_mem_alloc(soc, DP_TX_TSO_NUM_SEG_TYPE,
+					      &tso_num_seg_pool->desc_pages,
+					      desc_size,
+					      num_elem, 0, true);
 
 		if (!tso_num_seg_pool->desc_pages.num_pages) {
 			dp_err("Multi page alloc fail, tso_num_seg_pool");
@@ -569,9 +580,9 @@ QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 fail:
 	for (i = 0; i < pool_id; i++) {
 		tso_num_seg_pool = &soc->tx_tso_num_seg[i];
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &tso_num_seg_pool->desc_pages,
-					 0, true);
+		dp_desc_multi_pages_mem_free(soc, DP_TX_TSO_NUM_SEG_TYPE,
+					     &tso_num_seg_pool->desc_pages,
+					     0, true);
 	}
 	return QDF_STATUS_E_NOMEM;
 }
@@ -590,9 +601,9 @@ void dp_tx_tso_num_seg_pool_free(struct dp_soc *soc, uint8_t num_pool)
 
 	for (pool_id = 0; pool_id < num_pool; pool_id++) {
 		tso_num_seg_pool = &soc->tx_tso_num_seg[pool_id];
-		qdf_mem_multi_pages_free(soc->osdev,
-					 &tso_num_seg_pool->desc_pages,
-					 0, true);
+		dp_desc_multi_pages_mem_free(soc, DP_TX_TSO_NUM_SEG_TYPE,
+					     &tso_num_seg_pool->desc_pages,
+					     0, true);
 	}
 }
 

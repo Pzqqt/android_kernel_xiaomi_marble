@@ -1495,6 +1495,59 @@ static inline void dp_srng_mem_free_consistent(struct dp_soc *soc,
 	}
 }
 
+void dp_desc_multi_pages_mem_alloc(struct dp_soc *soc,
+				   enum dp_desc_type desc_type,
+				   struct qdf_mem_multi_page_t *pages,
+				   size_t element_size,
+				   uint16_t element_num,
+				   qdf_dma_context_t memctxt,
+				   bool cacheable)
+{
+	if (!soc->cdp_soc.ol_ops->dp_get_multi_pages) {
+		dp_warn("dp_get_multi_pages is null!");
+		goto qdf;
+	}
+
+	pages->num_pages = 0;
+	pages->is_mem_prealloc = 0;
+	soc->cdp_soc.ol_ops->dp_get_multi_pages(desc_type,
+						element_size,
+						element_num,
+						pages,
+						cacheable);
+	if (pages->num_pages)
+		goto end;
+
+qdf:
+	qdf_mem_multi_pages_alloc(soc->osdev, pages, element_size,
+				  element_num, memctxt, cacheable);
+end:
+	dp_info("%s desc_type %d element_size %d element_num %d cacheable %d",
+		pages->is_mem_prealloc ? "pre-alloc" : "dynamic-alloc",
+		desc_type, (int)element_size, element_num, cacheable);
+}
+
+void dp_desc_multi_pages_mem_free(struct dp_soc *soc,
+				  enum dp_desc_type desc_type,
+				  struct qdf_mem_multi_page_t *pages,
+				  qdf_dma_context_t memctxt,
+				  bool cacheable)
+{
+	if (pages->is_mem_prealloc) {
+		if (!soc->cdp_soc.ol_ops->dp_put_multi_pages) {
+			dp_warn("dp_put_multi_pages is null!");
+			QDF_BUG(0);
+			return;
+		}
+
+		soc->cdp_soc.ol_ops->dp_put_multi_pages(desc_type, pages);
+		qdf_mem_zero(pages, sizeof(*pages));
+	} else {
+		qdf_mem_multi_pages_free(soc->osdev, pages,
+					 memctxt, cacheable);
+	}
+}
+
 #else
 
 static inline
@@ -2490,7 +2543,8 @@ void dp_hw_link_desc_pool_banks_free(struct dp_soc *soc, uint32_t mac_id)
 	if (pages->dma_pages) {
 		wlan_minidump_remove((void *)
 				     pages->dma_pages->page_v_addr_start);
-		qdf_mem_multi_pages_free(soc->osdev, pages, 0, false);
+		dp_desc_multi_pages_mem_free(soc, DP_HW_LINK_DESC_TYPE,
+					     pages, 0, false);
 	}
 }
 
@@ -2578,11 +2632,11 @@ QDF_STATUS dp_hw_link_desc_pool_banks_alloc(struct dp_soc *soc, uint32_t mac_id)
 		  FL("total_mem_size: %d"), total_mem_size);
 
 	dp_set_max_page_size(pages, max_alloc_size);
-	qdf_mem_multi_pages_alloc(soc->osdev,
-				  pages,
-				  link_desc_size,
-				  *total_link_descs,
-				  0, false);
+	dp_desc_multi_pages_mem_alloc(soc, DP_HW_LINK_DESC_TYPE,
+				      pages,
+				      link_desc_size,
+				      *total_link_descs,
+				      0, false);
 	if (!pages->num_pages) {
 		dp_err("Multi page alloc fail for hw link desc pool");
 		return QDF_STATUS_E_FAULT;

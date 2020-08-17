@@ -59,6 +59,7 @@ struct qdf_mem_dma_page_t {
  * @num_pages: Number of allocation needed pages
  * @dma_pages: page information storage in case of coherent memory
  * @cacheable_pages: page information storage in case of cacheable memory
+ * @is_mem_prealloc: flag for multiple pages pre-alloc or not
  */
 struct qdf_mem_multi_page_t {
 	uint16_t num_element_per_page;
@@ -66,6 +67,9 @@ struct qdf_mem_multi_page_t {
 	struct qdf_mem_dma_page_t *dma_pages;
 	void **cacheable_pages;
 	qdf_size_t page_size;
+#ifdef DP_MEM_PRE_ALLOC
+	uint8_t is_mem_prealloc;
+#endif
 };
 
 

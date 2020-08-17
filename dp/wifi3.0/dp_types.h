@@ -367,6 +367,28 @@ struct dp_rx_nbuf_frag_info {
 };
 
 /**
+ * enum dp_desc_type - source type for multiple pages allocation
+ * @DP_TX_DESC_TYPE: DP SW TX descriptor
+ * @DP_TX_EXT_DESC_TYPE: DP TX msdu extension descriptor
+ * @DP_TX_EXT_DESC_LINK_TYPE: DP link descriptor for msdu ext_desc
+ * @DP_TX_TSO_DESC_TYPE: DP TX TSO descriptor
+ * @DP_TX_TSO_NUM_SEG_TYPE: DP TX number of segments
+ * @DP_RX_DESC_BUF_TYPE: DP RX SW descriptor
+ * @DP_RX_DESC_STATUS_TYPE: DP RX SW descriptor for monitor status
+ * @DP_HW_LINK_DESC_TYPE: DP HW link descriptor
+ */
+enum dp_desc_type {
+	DP_TX_DESC_TYPE,
+	DP_TX_EXT_DESC_TYPE,
+	DP_TX_EXT_DESC_LINK_TYPE,
+	DP_TX_TSO_DESC_TYPE,
+	DP_TX_TSO_NUM_SEG_TYPE,
+	DP_RX_DESC_BUF_TYPE,
+	DP_RX_DESC_STATUS_TYPE,
+	DP_HW_LINK_DESC_TYPE,
+};
+
+/**
  * struct rx_desc_pool
  * @pool_size: number of RX descriptor in the pool
  * @elem_size: Element size
@@ -378,6 +400,7 @@ struct dp_rx_nbuf_frag_info {
  * @buf_size: Buffer size
  * @buf_alignment: Buffer alignment
  * @rx_mon_dest_frag_enable: Enable frag processing for mon dest buffer
+ * @desc_type: type of desc this pool serves
  */
 struct rx_desc_pool {
 	uint32_t pool_size;
@@ -393,6 +416,7 @@ struct rx_desc_pool {
 	uint16_t buf_size;
 	uint8_t buf_alignment;
 	bool rx_mon_dest_frag_enable;
+	enum dp_desc_type desc_type;
 };
 
 /**

@@ -2152,6 +2152,7 @@ dp_rx_pdev_mon_status_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id)
 
 	dp_debug("Mon RX Desc Pool[%d] entries=%u", pdev_id, num_entries);
 
+	rx_desc_pool->desc_type = DP_RX_DESC_STATUS_TYPE;
 	return dp_rx_desc_pool_alloc(soc, num_entries + 1, rx_desc_pool);
 }
 
