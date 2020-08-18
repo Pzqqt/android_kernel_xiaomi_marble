@@ -3423,14 +3423,13 @@ static int voice_send_cvp_deregister_cal_cmd(struct voice_data *v)
 		goto done;
 	}
 
-	mutex_lock(&common.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(
 			common.cal_data[cal_index]);
 	if (cal_block == NULL) {
 		pr_err("%s: Cal block is NULL, index %d!\n",
 			__func__, cal_index);
 		ret = -EINVAL;
-		goto unlock;
+		goto done;
 	}
 	pr_debug("%s: use hyp assigned %d\n",__func__, hyp_assigned);
 	if (cal_block->cma_mem && hyp_assigned) {
@@ -3438,7 +3437,7 @@ static int voice_send_cvp_deregister_cal_cmd(struct voice_data *v)
 		    cal_block->map_data.map_size <= 0) {
 			pr_err("%s: No address to map!\n", __func__);
 			ret = -EINVAL;
-			goto unlock;
+			goto done;
 		}
 		ret = hyp_assign_phys(cal_block->cal_data.paddr,
 				      cal_block->map_data.map_size,
@@ -3448,7 +3447,7 @@ static int voice_send_cvp_deregister_cal_cmd(struct voice_data *v)
 				__func__, ret, cal_block->cal_data.paddr,
 				cal_block->map_data.map_size);
 			ret = -EINVAL;
-			goto unlock;
+			goto done;
 		} else {
 			hyp_assigned = false;
 			pr_debug("%s: hyp_assign_phys success\n", __func__);
@@ -3461,11 +3460,9 @@ static int voice_send_cvp_deregister_cal_cmd(struct voice_data *v)
 				v->async_err));
 		ret = adsp_err_get_lnx_err_code(
 				v->async_err);
-		goto unlock;
+		goto done;
 	}
 
-unlock:
-	mutex_unlock(&common.cal_data[cal_index]->lock);
 done:
 	return ret;
 }
@@ -3948,19 +3945,19 @@ static int voice_unmap_cal_memory(int32_t cal_type,
 					__func__, v->session_id, result2);
 
 				result = result2;
+			} else {
+				if (cal_type == CVP_VOCPROC_DYNAMIC_CAL_TYPE)
+					voice_send_cvp_deregister_vol_cal_cmd(v);
+				else if (cal_type == CVP_VOCPROC_STATIC_CAL_TYPE)
+					voice_send_cvp_deregister_cal_cmd(v);
+				else if (cal_type == CVP_VOCDEV_CFG_CAL_TYPE)
+					voice_send_cvp_deregister_dev_cfg_cmd(v);
+				else if (cal_type == CVS_VOCSTRM_STATIC_CAL_TYPE)
+					voice_send_cvs_deregister_cal_cmd(v);
+				else
+					pr_err("%s: Invalid cal type %d!\n",
+						__func__, cal_type);
 			}
-
-			if (cal_type == CVP_VOCPROC_DYNAMIC_CAL_TYPE)
-				voice_send_cvp_deregister_vol_cal_cmd(v);
-			else if (cal_type == CVP_VOCPROC_STATIC_CAL_TYPE)
-				voice_send_cvp_deregister_cal_cmd(v);
-			else if (cal_type == CVP_VOCDEV_CFG_CAL_TYPE)
-				voice_send_cvp_deregister_dev_cfg_cmd(v);
-			else if (cal_type == CVS_VOCSTRM_STATIC_CAL_TYPE)
-				voice_send_cvs_deregister_cal_cmd(v);
-			else
-				pr_err("%s: Invalid cal type %d!\n",
-					__func__, cal_type);
 
 			result2 = voice_send_start_voice_cmd(v);
 			if (result2) {
@@ -5383,7 +5380,9 @@ static int voice_destroy_vocproc(struct voice_data *v)
 	}
 
 	voice_send_cvp_deregister_vol_cal_cmd(v);
+	mutex_lock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
 	voice_send_cvp_deregister_cal_cmd(v);
+	mutex_unlock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
 	voice_send_cvp_deregister_dev_cfg_cmd(v);
 	voice_send_cvs_deregister_cal_cmd(v);
 
@@ -7233,7 +7232,9 @@ int voc_disable_device(uint32_t session_id)
 		}
 		rtac_remove_voice(voice_get_cvs_handle(v));
 		voice_send_cvp_deregister_vol_cal_cmd(v);
+		mutex_lock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
 		voice_send_cvp_deregister_cal_cmd(v);
+		mutex_unlock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
 		voice_send_cvp_deregister_dev_cfg_cmd(v);
 
 		/* Unload topology modules */
