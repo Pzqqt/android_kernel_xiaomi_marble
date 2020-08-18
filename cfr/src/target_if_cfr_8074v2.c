@@ -186,7 +186,7 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 			 */
 			if ((pdev_cfrobj->dbr_evt_cnt -
 				pdev_cfrobj->release_cnt) >= MAX_LUT_ENTRIES) {
-				cfr_err("cookie = %u dbr_cnt = %d, release_cnt = %d",
+				cfr_err("cookie = %u dbr_cnt = %llu, release_cnt = %llu",
 					cookie, pdev_cfrobj->dbr_evt_cnt,
 					pdev_cfrobj->release_cnt);
 				dump_lut(pdev);
