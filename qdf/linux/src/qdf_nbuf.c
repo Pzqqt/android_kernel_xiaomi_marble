@@ -2977,21 +2977,13 @@ struct qdf_tso_cmn_seg_info_t {
  *
  * Return: byte offset length of 8 bytes aligned.
  */
-#ifdef WAR_TXDMA_LIMITATION
+#ifdef FIX_TXDMA_LIMITATION
 static uint8_t qdf_nbuf_adj_tso_frag(struct sk_buff *skb)
 {
 	uint32_t eit_hdr_len;
 	uint8_t *eit_hdr;
 	uint8_t byte_8_align_offset;
 
-	/*
-	 * Workaround for TXDMA HW limitation.
-	 * ADDR0&0x1FFFFFFF8 should not equal ADDR1&0x1FFFFFFF8.
-	 * Otherwise, TXDMA will run into exception, which cause TX fail.
-	 * ADDR0: the address of last words in previous buffer;
-	 * ADDR1: the address of first words in next buffer;
-	 * To avoid this, shift several bytes for ADDR0.
-	 */
 	eit_hdr = skb->data;
 	eit_hdr_len = (skb_transport_header(skb)
 		 - skb_mac_header(skb)) + tcp_hdrlen(skb);
