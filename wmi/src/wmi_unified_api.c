@@ -2105,6 +2105,17 @@ wmi_extract_composite_phyerr(wmi_unified_t wmi_handle, void *evt_buf,
 }
 
 QDF_STATUS
+wmi_extract_pmf_bcn_protect_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				  wmi_host_pmf_bcn_protect_stats *bcn_stats)
+{
+	if (wmi_handle->ops->extract_pmf_bcn_protect_stats)
+		return wmi_handle->ops->extract_pmf_bcn_protect_stats(
+				wmi_handle, evt_buf, bcn_stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
 wmi_extract_unit_test(wmi_unified_t wmi_handle, void *evt_buf,
 		      wmi_unit_test_event *unit_test, uint32_t maxspace)
 {

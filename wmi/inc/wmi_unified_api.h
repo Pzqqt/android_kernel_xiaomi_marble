@@ -3015,6 +3015,18 @@ wmi_extract_profile_data(wmi_unified_t wmi_handle, void *evt_buf, uint8_t idx,
 			 wmi_host_wlan_profile_t *profile_data);
 
 /**
+ * wmi_extract_pmf_bcn_protect_stats() - extract pmf bcn stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @bcn_stats: Pointer to hold pmf bcn protect stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_pmf_bcn_protect_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				  wmi_host_pmf_bcn_protect_stats *bcn_stats);
+
+/**
  * extract_unit_test() - extract unit test from event
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer

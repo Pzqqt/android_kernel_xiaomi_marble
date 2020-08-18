@@ -1731,6 +1731,9 @@ QDF_STATUS (*extract_all_stats_count)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_pdev_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_pdev_stats *pdev_stats);
 
+QDF_STATUS (*extract_pmf_bcn_protect_stats)(wmi_unified_t wmi_handle,
+		void *evt_buf, wmi_host_pmf_bcn_protect_stats *pmf_bcn_stats);
+
 QDF_STATUS (*extract_unit_test)(wmi_unified_t wmi_handle, void *evt_buf,
 		wmi_unit_test_event *unit_test, uint32_t maxspace);
 

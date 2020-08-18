@@ -136,6 +136,10 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_ADV_STATS;
 		break;
 
+	case WMI_REQUEST_PMF_BCN_PROTECT_STAT:
+		stats_param->stats_id |= WMI_HOST_REQUEST_PMF_BCN_PROTECT_STAT;
+		break;
+
 	default:
 		stats_param->stats_id = 0;
 		break;
@@ -451,6 +455,43 @@ extract_peer_extd_stats_tlv(wmi_unified_t wmi_handle,
 
 }
 
+/**
+ * extract_pmf_bcn_protect_stats_tlv() - extract pmf bcn stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @pmf_bcn_stats: Pointer to hold pmf bcn protect stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+
+static QDF_STATUS
+extract_pmf_bcn_protect_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				  wmi_host_pmf_bcn_protect_stats *pmf_bcn_stats)
+{
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_stats_event_fixed_param *ev_param;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf)
+		return QDF_STATUS_E_FAILURE;
+
+	ev_param = (wmi_stats_event_fixed_param *)param_buf->fixed_param;
+
+	if ((ev_param->stats_id & WMI_REQUEST_PMF_BCN_PROTECT_STAT) &&
+	    param_buf->pmf_bcn_protect_stats) {
+		pmf_bcn_stats->igtk_mic_fail_cnt =
+			param_buf->pmf_bcn_protect_stats->igtk_mic_fail_cnt;
+		pmf_bcn_stats->igtk_replay_cnt =
+			param_buf->pmf_bcn_protect_stats->igtk_replay_cnt;
+		pmf_bcn_stats->bcn_mic_fail_cnt =
+			param_buf->pmf_bcn_protect_stats->bcn_mic_fail_cnt;
+		pmf_bcn_stats->bcn_replay_cnt =
+			param_buf->pmf_bcn_protect_stats->bcn_replay_cnt;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_cp_stats_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -461,6 +502,7 @@ void wmi_cp_stats_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_vdev_stats = extract_vdev_stats_tlv;
 	ops->extract_peer_stats = extract_peer_stats_tlv;
 	ops->extract_peer_extd_stats = extract_peer_extd_stats_tlv;
+	ops->extract_pmf_bcn_protect_stats = extract_pmf_bcn_protect_stats_tlv,
 
 	wmi_mc_cp_stats_attach_tlv(wmi_handle);
 }
