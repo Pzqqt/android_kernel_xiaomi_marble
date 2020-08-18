@@ -63,6 +63,8 @@ static void hif_target_dump_access_log(void);
 
 /* Maximum number of Copy Engine's supported */
 #define CE_HTT_H2T_MSG_SRC_NENTRIES 2048
+#define CE_HTT_H2T_MSG_SRC_NENTRIES_QCA6390 256
+#define CE_HTT_H2T_MSG_SRC_NENTRIES_QCA6490 256
 #define CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B 4096
 #define CE_HTT_H2T_MSG_SRC_NENTRIES_QCN7605 4096
 
@@ -1157,7 +1159,7 @@ static struct CE_attr host_ce_config_wlan_qca6390[] = {
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
-		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
+		CE_HTT_H2T_MSG_SRC_NENTRIES_QCA6390, 256, 0, NULL,},
 	/* target -> host PKTLOG */
 #ifdef REMOVE_PKT_LOG
 	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
@@ -1214,7 +1216,7 @@ static struct CE_attr host_ce_config_wlan_qca6490[] = {
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
-		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
+		CE_HTT_H2T_MSG_SRC_NENTRIES_QCA6490, 256, 0, NULL,},
 	/* target -> host PKTLOG */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
 	/* Target autonomous HIF_memcpy */
