@@ -4194,12 +4194,19 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
+	struct hdd_station_ctx *sta_ctx;
 
 	/* Enable Roaming on STA interface which was disabled before CSA */
 	if (adapter->device_mode == QDF_STA_MODE)
 		sme_start_roaming(mac_handle, adapter->vdev_id,
 				  REASON_DRIVER_ENABLED,
 				  RSO_CHANNEL_SWITCH);
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (sta_ctx) {
+		sta_ctx->conn_info.chan_freq = roam_info->chan_info.mhz;
+		sta_ctx->conn_info.ch_width = roam_info->chan_info.ch_width;
+	}
 
 	chan_change.chan_freq = roam_info->chan_info.mhz;
 	chan_change.chan_params.ch_width =
