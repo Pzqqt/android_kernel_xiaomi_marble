@@ -410,7 +410,7 @@ ssize_t debug_filtered_wmi_cmds_write(struct file *file,
 	}
 
 	if (wmi_add_to_record_list(wmi_handle, k, WMI_CMD)) {
-		WMI_LOGE("Add cmd %d to WMI_CMD list failed");
+		WMI_LOGE("Add cmd %d to WMI_CMD list failed", k);
 		return 0;
 	}
 
@@ -447,7 +447,7 @@ ssize_t debug_filtered_wmi_evts_write(struct file *file,
 	}
 
 	if (wmi_add_to_record_list(wmi_handle, k, WMI_EVT)) {
-		WMI_LOGE("Add cmd %d to WMI_EVT list failed");
+		WMI_LOGE("Add cmd %d to WMI_EVT list failed", k);
 		return 0;
 	}
 
