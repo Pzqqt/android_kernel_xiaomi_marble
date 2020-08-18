@@ -3769,6 +3769,12 @@ typedef struct {
      * the target and host.
      */
     A_UINT32 max_ap_vaps;
+
+    /** @brief cbc_flow_ena
+     * When cbc_flow_ena is se, halphy will do Cold Boot Calibration flow.
+     * Otherwise, halphy will do normal flow.
+     */
+    A_UINT32 cbc_flow_ena;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
