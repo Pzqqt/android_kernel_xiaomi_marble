@@ -209,5 +209,4 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_cm_set_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
 					bool value);
-
 #endif

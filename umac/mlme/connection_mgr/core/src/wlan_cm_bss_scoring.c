@@ -204,32 +204,6 @@ static int32_t cm_calculate_rssi_score(struct rssi_config_score *score_param,
 }
 
 /**
- * cm_calculate_pcl_score() - Calculate PCL score based on PCL weightage
- * @pcl_chan_weight: pcl weight of BSS channel
- * @pcl_weightage: PCL _weightage out of total weightage
- *
- * Return : pcl score
- */
-static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
-				      uint8_t pcl_weightage)
-{
-	int32_t pcl_score = 0;
-	int32_t temp_pcl_chan_weight = 0;
-
-	if (pcl_chan_weight) {
-		temp_pcl_chan_weight =
-			(CM_MAX_WEIGHT_OF_PCL_CHANNELS - pcl_chan_weight);
-		temp_pcl_chan_weight = qdf_do_div(temp_pcl_chan_weight,
-					  CM_PCL_GROUPS_WEIGHT_DIFFERENCE);
-		pcl_score = pcl_weightage - temp_pcl_chan_weight;
-		if (pcl_score < 0)
-			pcl_score = 0;
-	}
-
-	return pcl_score * CM_MAX_PCT_SCORE;
-}
-
-/**
  * cm_rssi_is_same_bucket() - check if both rssi fall in same bucket
  * @rssi_top_thresh: high rssi threshold of the the window
  * @low_rssi_threshold: low rssi of the window
@@ -439,6 +413,7 @@ static int32_t cm_calculate_congestion_score(struct scan_cache_entry *entry,
 	uint32_t window_size;
 	uint8_t index;
 	int32_t good_rssi_threshold;
+	uint8_t chan_congestion_weight;
 
 	*congestion_pct = cm_get_congestion_pct(entry);
 
@@ -453,15 +428,18 @@ static int32_t cm_calculate_congestion_score(struct scan_cache_entry *entry,
 	good_rssi_threshold =
 		score_params->rssi_score.good_rssi_threshold * (-1);
 
+	chan_congestion_weight =
+		score_params->weight_config.channel_congestion_weightage;
+
 	/* For bad zone rssi get score from last index */
 	if (entry->rssi_raw <= good_rssi_threshold)
 		return cm_get_score_for_index(
 			score_params->esp_qbss_scoring.num_slot,
-			score_params->weight_config.channel_congestion_weightage,
+			chan_congestion_weight,
 			&score_params->esp_qbss_scoring);
 
 	if (!*congestion_pct)
-		return score_params->weight_config.channel_congestion_weightage *
+		return chan_congestion_weight *
 			   CM_GET_SCORE_PERCENTAGE(
 			   score_params->esp_qbss_scoring.score_pcnt3_to_0,
 			   CM_SCORE_INDEX_0);
@@ -476,8 +454,8 @@ static int32_t cm_calculate_congestion_score(struct scan_cache_entry *entry,
 		index = score_params->esp_qbss_scoring.num_slot;
 
 	return cm_get_score_for_index(index,
-		score_params->weight_config.channel_congestion_weightage,
-		&score_params->esp_qbss_scoring);
+				      chan_congestion_weight,
+				      &score_params->esp_qbss_scoring);
 }
 
 /**
@@ -521,6 +499,88 @@ static int32_t cm_calculate_nss_score(struct wlan_objmgr_psoc *psoc,
 
 	return (score_config->weight_config.nss_weightage * score_pct *
 		prorated_pct) / CM_MAX_PCT_SCORE;
+}
+
+#ifdef WLAN_POLICY_MGR_ENABLE
+static uint32_t cm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
+			       qdf_freq_t bss_channel_freq,
+			       uint8_t vdev_nss_2g, uint8_t vdev_nss_5g)
+{
+	/*
+	 * If station support nss as 2*2 but AP support NSS as 1*1,
+	 * this AP will be given half weight compare to AP which are having
+	 * NSS as 2*2.
+	 */
+
+	if (policy_mgr_is_chnl_in_diff_band(
+	    psoc, bss_channel_freq) &&
+	    policy_mgr_is_hw_dbs_capable(psoc) &&
+	    !(policy_mgr_is_hw_dbs_2x2_capable(psoc)))
+		return 1;
+
+	return (WLAN_REG_IS_24GHZ_CH_FREQ(bss_channel_freq) ?
+		vdev_nss_2g :
+		vdev_nss_5g);
+}
+#else
+static uint32_t cm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
+			       qdf_freq_t bss_channel_freq,
+			       uint8_t vdev_nss_2g, uint8_t vdev_nss_5g)
+{
+	return (WLAN_REG_IS_24GHZ_CH_FREQ(bss_channel_freq) ?
+		vdev_nss_2g :
+		vdev_nss_5g);
+}
+#endif
+
+#ifdef CONN_MGR_ADV_FEATURE
+static bool
+cm_get_pcl_weight_of_channel(uint32_t chan_freq,
+			     struct pcl_freq_weight_list *pcl_lst,
+			     int *pcl_chan_weight)
+{
+	int i;
+	bool found = false;
+
+	if (!pcl_lst)
+		return found;
+
+	for (i = 0; i < pcl_lst->num_of_pcl_channels; i++) {
+		if (pcl_lst->pcl_freq_list[i] == chan_freq) {
+			*pcl_chan_weight = pcl_lst->pcl_weight_list[i];
+			found = true;
+			break;
+		}
+	}
+
+	return found;
+}
+
+/**
+ * cm_calculate_pcl_score() - Calculate PCL score based on PCL weightage
+ * @pcl_chan_weight: pcl weight of BSS channel
+ * @pcl_weightage: PCL _weightage out of total weightage
+ *
+ * Return : pcl score
+ */
+static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
+				      uint8_t pcl_weightage)
+{
+	int32_t pcl_score = 0;
+	int32_t temp_pcl_chan_weight = 0;
+
+	if (pcl_chan_weight) {
+		temp_pcl_chan_weight =
+			(CM_MAX_WEIGHT_OF_PCL_CHANNELS - pcl_chan_weight);
+		temp_pcl_chan_weight = qdf_do_div(
+					temp_pcl_chan_weight,
+					CM_PCL_GROUPS_WEIGHT_DIFFERENCE);
+		pcl_score = pcl_weightage - temp_pcl_chan_weight;
+		if (pcl_score < 0)
+			pcl_score = 0;
+	}
+
+	return pcl_score * CM_MAX_PCT_SCORE;
 }
 
 /**
@@ -629,7 +689,8 @@ cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
 		 * Currently assuming STA Tx Power to be 20dBm, though later it
 		 * need to fetched from hal-phy API.
 		 */
-		normalized_ap_tx_pwr = (20 - (*ap_tx_pwr_dbm - entry->rssi_raw));
+		normalized_ap_tx_pwr =
+			(20 - (*ap_tx_pwr_dbm - entry->rssi_raw));
 	}
 
 	rssi_score_param = &score_params->rssi_score;
@@ -651,16 +712,19 @@ cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
 	} else if (normalized_ap_tx_pwr > good_rssi_threshold) {
 		/* Uplink RSSI lies between best to good rssi threshold */
 		ap_tx_pwr_factor =
-			cm_get_rssi_pcnt_for_slot(best_rssi_threshold,
-				good_rssi_threshold, 100, good_rssi_pcnt,
-				good_bucket_size, normalized_ap_tx_pwr);
+			cm_get_rssi_pcnt_for_slot(
+					best_rssi_threshold,
+					good_rssi_threshold, 100,
+					good_rssi_pcnt,
+					good_bucket_size, normalized_ap_tx_pwr);
 	} else {
 		/* Uplink RSSI lies between good to best rssi threshold */
 		ap_tx_pwr_factor =
-			cm_get_rssi_pcnt_for_slot(good_rssi_threshold,
-				bad_rssi_threshold, good_rssi_pcnt,
-				bad_rssi_pcnt, bad_bucket_size,
-				normalized_ap_tx_pwr);
+			cm_get_rssi_pcnt_for_slot(
+					good_rssi_threshold,
+					bad_rssi_threshold, good_rssi_pcnt,
+					bad_rssi_pcnt, bad_bucket_size,
+					normalized_ap_tx_pwr);
 	}
 
 	score  = score_params->weight_config.oce_ap_tx_pwr_weightage *
@@ -669,36 +733,41 @@ cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
 	return score;
 }
 
-#ifdef WLAN_POLICY_MGR_ENABLE
-
-static uint32_t cm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
-			       qdf_freq_t bss_channel_freq,
-			       uint8_t vdev_nss_2g, uint8_t vdev_nss_5g)
-{
-	/*
-	 * If station support nss as 2*2 but AP support NSS as 1*1,
-	 * this AP will be given half weight compare to AP which are having
-	 * NSS as 2*2.
-	 */
-
-	if (policy_mgr_is_chnl_in_diff_band(
-	    psoc, bss_channel_freq) &&
-	    policy_mgr_is_hw_dbs_capable(psoc) &&
-	    !(policy_mgr_is_hw_dbs_2x2_capable(psoc)))
-		return 1;
-
-	return (WLAN_REG_IS_24GHZ_CH_FREQ(bss_channel_freq) ?
-		vdev_nss_2g :
-		vdev_nss_5g);
-}
 #else
-static uint32_t cm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
-			       qdf_freq_t bss_channel_freq,
-			       uint8_t vdev_nss_2g, uint8_t vdev_nss_5g)
+static bool
+cm_get_pcl_weight_of_channel(uint32_t chan_freq,
+			     struct pcl_freq_weight_list *pcl_lst,
+			     int *pcl_chan_weight)
 {
-	return (WLAN_REG_IS_24GHZ_CH_FREQ(bss_channel_freq) ?
-		vdev_nss_2g :
-		vdev_nss_5g);
+	return false;
+}
+
+static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
+				      uint8_t pcl_weightage)
+{
+	return 0;
+}
+
+static int32_t cm_calculate_oce_wan_score(struct scan_cache_entry *entry,
+					  struct scoring_cfg *score_params)
+{
+	return 0;
+}
+
+static uint32_t
+cm_calculate_oce_subnet_id_weightage(struct scan_cache_entry *entry,
+				     struct scoring_cfg *score_params,
+				     bool *oce_subnet_id_present)
+{
+	return 0;
+}
+
+static uint32_t
+cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
+				     struct scoring_cfg *score_params,
+				     int8_t *ap_tx_pwr_dbm)
+{
+	return 0;
 }
 #endif
 
@@ -923,28 +992,6 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	entry->bss_score = score;
 
 	return score;
-}
-
-static bool
-cm_get_pcl_weight_of_channel(uint32_t chan_freq,
-			     struct pcl_freq_weight_list *pcl_lst,
-			     int *pcl_chan_weight)
-{
-	int i;
-	bool found = false;
-
-	if (!pcl_lst)
-		return found;
-
-	for (i = 0; i < pcl_lst->num_of_pcl_channels; i++) {
-		if (pcl_lst->pcl_freq_list[i] == chan_freq) {
-			*pcl_chan_weight = pcl_lst->pcl_weight_list[i];
-			found = true;
-			break;
-		}
-	}
-
-	return found;
 }
 
 static void cm_list_insert_sorted(qdf_list_t *scan_list,
