@@ -177,7 +177,7 @@ bool spf_core_is_apm_ready(void)
 			ret = true;
 			break;
 		}
-		usleep_range(300000, 300050);
+		usleep_range(50000, 50050);
 		if (!time_after(timeout, jiffies)) {
 			ret = false;
 			break;
