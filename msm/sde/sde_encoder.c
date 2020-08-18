@@ -1264,8 +1264,13 @@ static int _sde_encoder_update_rsc_client(
 		qsync_mode = sde_connector_get_qsync_mode(
 				sde_enc->cur_master->connector);
 
-	if (sde_encoder_in_clone_mode(drm_enc) ||
-			(disp_info->display_type != SDE_CONNECTOR_PRIMARY) ||
+	/* left primary encoder keep vote */
+	if (sde_encoder_in_clone_mode(drm_enc)) {
+		SDE_EVT32(rsc_state, SDE_EVTLOG_FUNC_CASE1);
+		return 0;
+	}
+
+	if ((disp_info->display_type != SDE_CONNECTOR_PRIMARY) ||
 			(disp_info->display_type && qsync_mode))
 		rsc_state = enable ? SDE_RSC_CLK_STATE : SDE_RSC_IDLE_STATE;
 	else if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
