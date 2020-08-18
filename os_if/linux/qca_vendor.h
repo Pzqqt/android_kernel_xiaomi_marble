@@ -9651,6 +9651,25 @@ enum qca_vendor_wlan_sta_guard_interval {
  * when queried in the connected state. When queried in the disconnected
  * state, this corresponds to the latest ANI level at the instance of
  * disconnection.
+ * @QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BIP_MIC_ERROR_COUNT: u32, used in STA mode
+ * only. This represents the number of group addressed robust management frames
+ * received from this station with an invalid MIC or a missing MME when PMF is
+ * enabled.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BIP_REPLAY_COUNT: u32, used in STA mode
+ * only. This represents the number of group addressed robust management frames
+ * received from this station with the packet number less than or equal to the
+ * last received packet number when PMF is enabled.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_MIC_ERROR_COUNT: u32, used in STA
+ * mode only. This represents the number of Beacon frames received from this
+ * station with an invalid MIC or a missing MME when beacon protection is
+ * enabled.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_REPLAY_COUNT: u32, used in STA mode
+ * only. This represents number of Beacon frames received from this station with
+ * the packet number less than or equal to the last received packet number when
+ * beacon protection is enabled.
  */
 enum qca_wlan_vendor_attr_get_sta_info {
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_INVALID = 0,
@@ -9689,6 +9708,10 @@ enum qca_wlan_vendor_attr_get_sta_info {
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX_TX_POWER = 33,
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_LATEST_TX_POWER = 34,
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_ANI_LEVEL = 35,
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BIP_MIC_ERROR_COUNT = 39,
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BIP_REPLAY_COUNT = 40,
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_MIC_ERROR_COUNT = 41,
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_REPLAY_COUNT = 42,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_AFTER_LAST,
