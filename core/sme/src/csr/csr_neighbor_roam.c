@@ -1318,7 +1318,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 
 	status =
 		csr_roam_copy_profile(mac_ctx, profile,
-				      session->pCurRoamProfile);
+				      session->pCurRoamProfile, session_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Profile copy failed");
 		goto end;

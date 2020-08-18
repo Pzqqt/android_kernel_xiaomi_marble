@@ -546,7 +546,7 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		eCSR_ROAM_HANDOVER_SUCCESS);
 	/* Free the profile.. Just to make sure we dont leak memory here */
 	csr_release_profile(mac_ctx,
-		&neighbor_roam_info->csrNeighborRoamProfile);
+			    &neighbor_roam_info->csrNeighborRoamProfile);
 	/*
 	 * Create the Handoff AP profile. Copy the currently connected profile
 	 * and update only the BSSID and channel number. This should happen

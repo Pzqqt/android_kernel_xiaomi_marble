@@ -33,7 +33,7 @@
 #include "wlan_serialization_legacy_api.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_crypto_global_api.h"
-
+#include "wlan_cm_roam_api.h"
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
 	{0x00, 0x50, 0xf2, 0x00}
@@ -3554,7 +3554,9 @@ bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static inline void csr_free_fils_profile_info(struct csr_roam_profile *profile)
+static inline
+void csr_free_fils_profile_info(struct mac_context *mac,
+				struct csr_roam_profile *profile)
 {
 	if (profile->fils_con_info) {
 		qdf_mem_free(profile->fils_con_info);
@@ -3568,11 +3570,13 @@ static inline void csr_free_fils_profile_info(struct csr_roam_profile *profile)
 	}
 }
 #else
-static inline void csr_free_fils_profile_info(struct csr_roam_profile *profile)
+static inline void csr_free_fils_profile_info(struct mac_context *mac,
+					      struct csr_roam_profile *profile)
 { }
 #endif
 
-void csr_release_profile(struct mac_context *mac, struct csr_roam_profile *pProfile)
+void csr_release_profile(struct mac_context *mac,
+			 struct csr_roam_profile *pProfile)
 {
 	if (pProfile) {
 		if (pProfile->BSSIDs.bssid) {
@@ -3611,7 +3615,7 @@ void csr_release_profile(struct mac_context *mac, struct csr_roam_profile *pProf
 			qdf_mem_free(pProfile->ChannelInfo.freq_list);
 			pProfile->ChannelInfo.freq_list = NULL;
 		}
-		csr_free_fils_profile_info(pProfile);
+		csr_free_fils_profile_info(mac, pProfile);
 		qdf_mem_zero(pProfile, sizeof(struct csr_roam_profile));
 	}
 }

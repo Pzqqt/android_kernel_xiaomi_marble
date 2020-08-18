@@ -26,6 +26,7 @@
 #include <qdf_crypto.h>
 #include "qdf_util.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_cm_roam_api.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 
@@ -530,7 +531,8 @@ static void lim_generate_key_auth(struct pe_session *pe_session)
  *
  * Return: None
  */
-static void lim_get_keys(struct pe_session *pe_session)
+static void lim_get_keys(struct mac_context *mac_ctx,
+			 struct pe_session *pe_session)
 {
 	uint8_t key_label[] = PTK_KEY_LABEL;
 	uint8_t *data;
@@ -543,6 +545,7 @@ static void lim_get_keys(struct pe_session *pe_session)
 	uint8_t fils_ft_len = 0;
 	uint8_t tk_len = lim_get_tk_len(pe_session->encryptType);
 	uint8_t *buf;
+	QDF_STATUS status;
 
 	if (!fils_info)
 		return;
@@ -611,6 +614,12 @@ static void lim_get_keys(struct pe_session *pe_session)
 	if (pe_session->is11Rconnection && fils_ft_len) {
 		qdf_mem_copy(fils_info->fils_ft, buf, fils_ft_len);
 		fils_info->fils_ft_len = fils_ft_len;
+		status = wlan_cm_update_fils_ft(mac_ctx->psoc,
+						pe_session->vdev_id,
+						fils_info->fils_ft,
+						fils_ft_len);
+		if  (QDF_IS_STATUS_ERROR(status))
+			pe_err("Failed to update FILS FT to mlme");
 	}
 	qdf_mem_zero(data, data_len);
 	qdf_mem_free(data);
@@ -1384,7 +1393,7 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 			rx_auth_frm_body->wrapped_data_len))
 			return false;
 	}
-	lim_get_keys(pe_session);
+	lim_get_keys(mac_ctx, pe_session);
 	if (pe_session->is11Rconnection) {
 		status = lim_generate_fils_pmkr0(pe_session);
 		if (QDF_IS_STATUS_ERROR(status))
@@ -1404,62 +1413,63 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 			    struct join_req *sme_join_req)
 {
 	struct pe_fils_session *pe_fils_info;
-	struct cds_fils_connection_info *fils_config_info;
+	struct wlan_fils_connection_info *fils_info = NULL;
 	tDot11fIERSN dot11f_ie_rsn = {0};
 	uint32_t ret;
 
-	fils_config_info = &sme_join_req->fils_con_info;
-	pe_fils_info = session->fils_info;
+	fils_info = wlan_cm_get_fils_connection_info(mac_ctx->psoc,
+						     session->vdev_id);
+	if (!fils_info)
+		return;
 
+	pe_fils_info = session->fils_info;
 	if (!pe_fils_info)
 		return;
 
-	if (fils_config_info->is_fils_connection == false)
+	if (!fils_info->is_fils_connection)
 		return;
 
-	pe_fils_info->is_fils_connection =
-		fils_config_info->is_fils_connection;
-	pe_fils_info->keyname_nai_length =
-		fils_config_info->key_nai_length;
-	pe_fils_info->fils_rrk_len =
-		fils_config_info->r_rk_length;
-	pe_fils_info->akm = fils_config_info->akm_type;
-	pe_fils_info->auth = fils_config_info->auth_type;
-	pe_fils_info->sequence_number = fils_config_info->sequence_number;
-	if (fils_config_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH) {
+	pe_fils_info->is_fils_connection = fils_info->is_fils_connection;
+	pe_fils_info->keyname_nai_length = fils_info->key_nai_length;
+	pe_fils_info->fils_rrk_len = fils_info->r_rk_length;
+	pe_fils_info->akm = fils_info->akm_type;
+	pe_fils_info->auth = fils_info->auth_type;
+	pe_fils_info->sequence_number = fils_info->erp_sequence_number;
+
+	if (fils_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH) {
 		pe_err("Restricting the key_nai_length of %d to max %d",
-		       fils_config_info->key_nai_length,
+		       fils_info->key_nai_length,
 		       FILS_MAX_KEYNAME_NAI_LENGTH);
-		fils_config_info->key_nai_length = FILS_MAX_KEYNAME_NAI_LENGTH;
+		fils_info->key_nai_length = FILS_MAX_KEYNAME_NAI_LENGTH;
 	}
 
-	if (fils_config_info->key_nai_length) {
+	if (fils_info->key_nai_length) {
 		pe_fils_info->keyname_nai_data =
-			qdf_mem_malloc(fils_config_info->key_nai_length);
+			qdf_mem_malloc(fils_info->key_nai_length);
 		if (!pe_fils_info->keyname_nai_data)
 			return;
 
 		qdf_mem_copy(pe_fils_info->keyname_nai_data,
-			     fils_config_info->keyname_nai,
-			     fils_config_info->key_nai_length);
+			     fils_info->keyname_nai,
+			     fils_info->key_nai_length);
 	}
 
-	if (fils_config_info->r_rk_length) {
+	if (fils_info->r_rk_length) {
 		pe_fils_info->fils_rrk =
-			qdf_mem_malloc(fils_config_info->r_rk_length);
-		if (!pe_fils_info->fils_rrk) {
+			qdf_mem_malloc(fils_info->r_rk_length);
+		if (!pe_fils_info->fils_rrk)
 			qdf_mem_free(pe_fils_info->keyname_nai_data);
 			return;
-		}
 
-		if (fils_config_info->r_rk_length <= FILS_MAX_RRK_LENGTH)
+		if (fils_info->r_rk_length <= WLAN_FILS_MAX_RRK_LENGTH)
 			qdf_mem_copy(pe_fils_info->fils_rrk,
-				     fils_config_info->r_rk,
-				     fils_config_info->r_rk_length);
+				     fils_info->r_rk,
+				     fils_info->r_rk_length);
 	}
 
-	qdf_mem_copy(pe_fils_info->fils_pmkid, fils_config_info->pmkid,
+	qdf_mem_copy(pe_fils_info->fils_pmkid, fils_info->pmkid,
 		     PMKID_LEN);
+
 	pe_fils_info->rsn_ie_len = sme_join_req->rsnIE.length;
 	qdf_mem_copy(pe_fils_info->rsn_ie,
 		     sme_join_req->rsnIE.rsnIEdata,
@@ -1484,25 +1494,25 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 	else
 		pe_err("FT-FILS: Invalid RSN IE");
 
-	pe_fils_info->fils_pmk_len = fils_config_info->pmk_len;
-	if (fils_config_info->pmk_len) {
+	pe_fils_info->fils_pmk_len = fils_info->pmk_len;
+	if (fils_info->pmk_len) {
 		pe_fils_info->fils_pmk =
-			qdf_mem_malloc(fils_config_info->pmk_len);
+			qdf_mem_malloc(fils_info->pmk_len);
 		if (!pe_fils_info->fils_pmk) {
 			qdf_mem_free(pe_fils_info->keyname_nai_data);
 			qdf_mem_free(pe_fils_info->fils_rrk);
 			return;
 		}
-		qdf_mem_copy(pe_fils_info->fils_pmk, fils_config_info->pmk,
-			     fils_config_info->pmk_len);
+		qdf_mem_copy(pe_fils_info->fils_pmk, fils_info->pmk,
+			     fils_info->pmk_len);
 	}
-	pe_debug("fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d",
-		 fils_config_info->is_fils_connection,
-		 fils_config_info->key_nai_length,
-		 fils_config_info->r_rk_length,
-		 fils_config_info->akm_type,
-		 fils_config_info->auth_type,
-		 fils_config_info->pmk_len);
+	pe_debug("FILS: fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d",
+		 fils_info->is_fils_connection,
+		 fils_info->key_nai_length,
+		 fils_info->r_rk_length,
+		 fils_info->akm_type,
+		 fils_info->auth_type,
+		 fils_info->pmk_len);
 }
 
 #define EXTENDED_IE_HEADER_LEN 3
@@ -2182,11 +2192,11 @@ void lim_update_fils_rik(struct pe_session *pe_session,
 	 */
 	if ((!lim_is_fils_connection(pe_session) ||
 	     !pe_fils_info) && (req_buffer->is_fils_connection)) {
-		if (roam_fils_params->rrk_length > FILS_MAX_RRK_LENGTH) {
+		if (roam_fils_params->rrk_length > WLAN_FILS_MAX_RRK_LENGTH) {
 			if (lim_is_fils_connection(pe_session))
 				pe_debug("FILS rrk len(%d) max (%d)",
 					 roam_fils_params->rrk_length,
-					 FILS_MAX_RRK_LENGTH);
+					 WLAN_FILS_MAX_RRK_LENGTH);
 			return;
 		}
 
@@ -2203,12 +2213,12 @@ void lim_update_fils_rik(struct pe_session *pe_session,
 		pe_debug("No FILS info available in the session");
 		return;
 	}
-	if ((pe_fils_info->fils_rik_len > FILS_MAX_RIK_LENGTH) ||
+	if (pe_fils_info->fils_rik_len > WLAN_FILS_MAX_RIK_LENGTH ||
 	    !pe_fils_info->fils_rik) {
 		if (pe_fils_info->fils_rik)
 			pe_debug("Fils rik len(%d) max %d",
 				 pe_fils_info->fils_rik_len,
-				 FILS_MAX_RIK_LENGTH);
+				 WLAN_FILS_MAX_RIK_LENGTH);
 		return;
 	}
 

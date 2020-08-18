@@ -139,7 +139,8 @@ QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 
 QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 				 struct csr_roam_profile *pDstProfile,
-				 struct csr_roam_profile *pSrcProfile);
+				 struct csr_roam_profile *pSrcProfile,
+				 uint8_t vdev_id);
 QDF_STATUS csr_roam_start(struct mac_context *mac);
 void csr_roam_stop(struct mac_context *mac, uint32_t sessionId);
 

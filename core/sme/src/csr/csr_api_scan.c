@@ -213,10 +213,10 @@ csr_handle_fils_scan_for_ssid_failure(struct csr_roam_profile *roam_profile,
 	if (roam_profile && roam_profile->fils_con_info &&
 	    roam_profile->fils_con_info->is_fils_connection) {
 		sme_debug("send roam_info for FILS connection failure, seq %d",
-			  roam_profile->fils_con_info->sequence_number);
+			  roam_profile->fils_con_info->erp_sequence_number);
 		roam_info->is_fils_connection = true;
 		roam_info->fils_seq_num =
-				roam_profile->fils_con_info->sequence_number;
+			roam_profile->fils_con_info->erp_sequence_number;
 		return true;
 	}
 
@@ -1332,7 +1332,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 	else
 		status = csr_roam_copy_profile(mac_ctx,
 					session->scan_info.profile,
-					profile);
+					profile, session_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
 	scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);

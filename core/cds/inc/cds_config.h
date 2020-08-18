@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -106,27 +106,4 @@ struct cds_config_info {
 	uint32_t num_vdevs;
 	bool enable_tx_compl_tsf64;
 };
-
-#ifdef WLAN_FEATURE_FILS_SK
-#define FILS_MAX_KEYNAME_NAI_LENGTH 253
-#define FILS_MAX_REALM_LEN 255
-#define FILS_MAX_RRK_LENGTH 64
-#define FILS_MAX_RIK_LENGTH FILS_MAX_RRK_LENGTH
-
-struct cds_fils_connection_info {
-	bool is_fils_connection;
-	uint8_t keyname_nai[FILS_MAX_KEYNAME_NAI_LENGTH];
-	uint32_t key_nai_length;
-	uint16_t sequence_number;
-	uint8_t r_rk[FILS_MAX_RRK_LENGTH];
-	uint32_t r_rk_length;
-	uint8_t realm[FILS_MAX_REALM_LEN];
-	uint32_t realm_len;
-	uint8_t akm_type;
-	uint8_t auth_type;
-	uint8_t pmk[MAX_PMK_LEN];
-	uint8_t pmk_len;
-	uint8_t pmkid[PMKID_LEN];
-};
-#endif
 #endif /* !defined( __CDS_CONFIG_H ) */

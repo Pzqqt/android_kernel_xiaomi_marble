@@ -29,6 +29,7 @@
 #include "sir_mac_prot_def.h"
 #include "csr_link_list.h"
 #include "wlan_scan_public_structs.h"
+#include "wlan_mlme_public_struct.h"
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
 
@@ -718,7 +719,7 @@ struct csr_roam_profile {
 #ifdef WLAN_FEATURE_FILS_SK
 	uint8_t *hlp_ie;
 	uint32_t hlp_ie_len;
-	struct cds_fils_connection_info *fils_con_info;
+	struct wlan_fils_connection_info *fils_con_info;
 #endif
 	bool force_rsne_override;
 };

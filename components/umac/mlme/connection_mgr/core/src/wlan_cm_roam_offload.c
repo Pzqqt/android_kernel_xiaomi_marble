@@ -27,6 +27,7 @@
 #include "wlan_cm_tgt_if_tx_api.h"
 #include "wlan_cm_roam_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "wlan_crypto_global_api.h"
 
 /**
  * cm_roam_scan_bmiss_cnt() - set roam beacon miss count
@@ -211,6 +212,83 @@ static void
 cm_roam_idle_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		    struct wlan_roam_idle_params *params)
 {
+}
+#endif
+
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FILS_SK)
+QDF_STATUS cm_roam_scan_offload_add_fils_params(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_roam_scan_offload_params *rso_cfg,
+		uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	uint32_t usr_name_len;
+	struct wlan_fils_connection_info *fils_info;
+	struct wlan_roam_fils_params *fils_roam_config =
+				&rso_cfg->fils_roam_config;
+
+	fils_info = wlan_cm_get_fils_connection_info(psoc, vdev_id);
+	if (!fils_info)
+		return QDF_STATUS_SUCCESS;
+
+	if (fils_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH ||
+	    fils_info->r_rk_length > WLAN_FILS_MAX_RRK_LENGTH) {
+		mlme_err("Fils info len error: keyname nai len(%d) rrk len(%d)",
+			 fils_info->key_nai_length, fils_info->r_rk_length);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	fils_roam_config->next_erp_seq_num = fils_info->erp_sequence_number;
+
+	usr_name_len =
+		qdf_str_copy_all_before_char(fils_info->keyname_nai,
+					     sizeof(fils_info->keyname_nai),
+					     fils_roam_config->username,
+					     sizeof(fils_roam_config->username),
+					     '@');
+	if (fils_info->key_nai_length <= usr_name_len) {
+		mlme_err("Fils info len error: key nai len %d, user name len %d",
+			 fils_info->key_nai_length, usr_name_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fils_roam_config->username_length = usr_name_len;
+	qdf_mem_copy(fils_roam_config->rrk, fils_info->r_rk,
+		     fils_info->r_rk_length);
+	fils_roam_config->rrk_length = fils_info->r_rk_length;
+	fils_roam_config->realm_len = fils_info->key_nai_length -
+				fils_roam_config->username_length - 1;
+	qdf_mem_copy(fils_roam_config->realm,
+		     (fils_info->keyname_nai +
+		     fils_roam_config->username_length + 1),
+		     fils_roam_config->realm_len);
+
+	/*
+	 * Set add FILS tlv true for initial FULL EAP connection and subsequent
+	 * FILS connection.
+	 */
+	rso_cfg->add_fils_tlv = true;
+	mlme_debug("Fils: next_erp_seq_num %d rrk_len %d realm_len:%d",
+		   fils_info->erp_sequence_number,
+		   fils_info->r_rk_length,
+		   fils_info->realm_len);
+	if (!fils_info->is_fils_connection)
+		return QDF_STATUS_SUCCESS;
+
+	/* Update rik from crypto to fils roam config buffer */
+	status = wlan_crypto_create_fils_rik(fils_info->r_rk,
+					     fils_info->r_rk_length,
+					     fils_info->rik,
+					     &fils_info->rik_length);
+	qdf_mem_copy(fils_roam_config->rik, fils_info->rik,
+		     fils_info->rik_length);
+	fils_roam_config->rik_length = fils_info->rik_length;
+
+	fils_roam_config->fils_ft_len = fils_info->fils_ft_len;
+	qdf_mem_copy(fils_roam_config->fils_ft, fils_info->fils_ft,
+		     fils_info->fils_ft_len);
+
+	return status;
 }
 #endif
 

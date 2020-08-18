@@ -18910,7 +18910,7 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
-	struct cds_fils_connection_info *fils_con_info;
+	struct wlan_fils_connection_info *fils_con_info;
 
 	fils_con_info = roam_profile->fils_con_info;
 	if (!fils_con_info) {
@@ -18943,8 +18943,8 @@ static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
 		  req->fils_erp_username_len, req->fils_erp_rrk_len,
 		  req->fils_erp_realm_len);
 
-	if (req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH ||
-	    req->fils_erp_realm_len > FILS_MAX_REALM_LEN ||
+	if (req->fils_erp_rrk_len > WLAN_FILS_MAX_RRK_LENGTH ||
+	    req->fils_erp_realm_len > WLAN_FILS_MAX_REALM_LEN ||
 	    req->fils_erp_username_len > FILS_MAX_KEYNAME_NAI_LENGTH) {
 		hdd_err("length incorrect, user=%zu rrk=%zu realm=%zu",
 			req->fils_erp_username_len, req->fils_erp_rrk_len,
@@ -19022,7 +19022,7 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		goto fils_conn_fail;
 
 	roam_profile->fils_con_info->is_fils_connection = true;
-	roam_profile->fils_con_info->sequence_number =
+	roam_profile->fils_con_info->erp_sequence_number =
 			(req->fils_erp_next_seq_num + 1);
 	roam_profile->fils_con_info->auth_type = auth_type;
 
@@ -23365,7 +23365,7 @@ hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 	struct csr_roam_profile *roam_profile;
-	struct cds_fils_connection_info *fils_info;
+	struct wlan_fils_connection_info *fils_info;
 	enum eAniAuthType auth_type;
 
 	roam_profile = hdd_roam_profile(adapter);
@@ -23399,10 +23399,10 @@ hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
 					req->fils_erp_realm_len);
 		}
 
-		fils_info->sequence_number = req->fils_erp_next_seq_num + 1;
+		fils_info->erp_sequence_number = req->fils_erp_next_seq_num + 1;
 		fils_info->r_rk_length = req->fils_erp_rrk_len;
 
-		if (fils_info->r_rk_length > FILS_MAX_RRK_LENGTH) {
+		if (fils_info->r_rk_length > WLAN_FILS_MAX_RRK_LENGTH) {
 			hdd_err("r_rk_length is invalid");
 			return -EINVAL;
 		}
