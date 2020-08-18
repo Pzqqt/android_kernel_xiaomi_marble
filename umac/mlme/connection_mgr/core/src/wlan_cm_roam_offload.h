@@ -25,6 +25,7 @@
 #ifndef _WLAN_CM_ROAM_OFFLOAD_H_
 #define _WLAN_CM_ROAM_OFFLOAD_H_
 
+#include "qdf_str.h"
 #include "wlan_cm_roam_public_struct.h"
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -112,4 +113,22 @@ cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
-#endif
+
+#ifdef ROAM_OFFLOAD_V1
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FILS_SK)
+QDF_STATUS cm_roam_scan_offload_add_fils_params(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_roam_scan_offload_params *rso_cfg,
+		uint8_t vdev_id);
+#else
+static inline
+QDF_STATUS cm_roam_scan_offload_add_fils_params(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_roam_scan_offload_params *rso_cfg,
+		uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_ROAM_OFFLOAD && WLAN_FEATURE_FILS_SK */
+#endif /* ROAM_OFFLOAD_V1 */
+#endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */

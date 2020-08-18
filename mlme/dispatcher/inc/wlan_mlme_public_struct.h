@@ -27,6 +27,7 @@
 #include <reg_services_public_struct.h>
 #include <wmi_unified_param.h>
 #include <sir_api.h>
+#include "wlan_cm_roam_public_struct.h"
 
 #define CFG_VALID_CHANNEL_LIST_LEN              100
 
@@ -524,10 +525,6 @@ struct mlme_ht_info_field_2 {
 #endif
 
 #ifdef WLAN_FEATURE_FILS_SK
-#define FILS_MAX_KEYNAME_NAI_LENGTH 253
-#define FILS_MAX_REALM_LEN 255
-#define FILS_MAX_RRK_LENGTH 64
-#define FILS_MAX_RIK_LENGTH FILS_MAX_RRK_LENGTH
 
 /**
  * struct wlan_fils_connection_info  - Fils connection parameters
@@ -535,9 +532,11 @@ struct mlme_ht_info_field_2 {
  * authentication algorithm as 4
  * @keyname_nai: key name network access identifier
  * @key_nai_length:  key name network access identifier length
- * @sequence_number: FILS ERP sequence number
+ * @erp_sequence_number: FILS ERP sequence number
  * @r_rk: re-authentication Root Key length
  * @r_rk_length: reauthentication root keys length
+ * @rik: Re-authentication integrity key
+ * @rik_length: Re-Authentication integrity key length
  * @realm: Realm name
  * @realm_len: Realm length
  * @akm_type: FILS connection akm
@@ -545,21 +544,27 @@ struct mlme_ht_info_field_2 {
  * @pmk: Pairwise master key
  * @pmk_len: Pairwise master key length
  * @pmkid: Pairwise master key ID
+ * @fils_ft: FILS FT key
+ * @fils_ft_len: Length of FILS FT
  */
 struct wlan_fils_connection_info {
 	bool is_fils_connection;
 	uint8_t keyname_nai[FILS_MAX_KEYNAME_NAI_LENGTH];
 	uint32_t key_nai_length;
-	uint16_t sequence_number;
-	uint8_t r_rk[FILS_MAX_RRK_LENGTH];
+	uint32_t erp_sequence_number;
+	uint8_t r_rk[WLAN_FILS_MAX_RRK_LENGTH];
 	uint32_t r_rk_length;
-	uint8_t realm[FILS_MAX_REALM_LEN];
+	uint8_t rik[WLAN_FILS_MAX_RIK_LENGTH];
+	uint32_t rik_length;
+	uint8_t realm[WLAN_FILS_MAX_REALM_LEN];
 	uint32_t realm_len;
 	uint8_t akm_type;
 	uint8_t auth_type;
 	uint8_t pmk[MAX_PMK_LEN];
 	uint8_t pmk_len;
 	uint8_t pmkid[PMKID_LEN];
+	uint8_t fils_ft[WLAN_FILS_FT_MAX_LEN];
+	uint8_t fils_ft_len;
 };
 #endif
 

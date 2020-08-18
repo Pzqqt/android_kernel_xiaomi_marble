@@ -270,7 +270,22 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 					struct set_pcl_cmd_params *params);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-#ifndef ROAM_OFFLOAD_V1
+#ifdef ROAM_OFFLOAD_V1
+/**
+ * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
+ * @wmi_handle: wmi handle
+ * @scan_cmd_fp: scan related parameters
+ * @rso_cfg: roam scan offload parameters
+ *
+ * This function reads the incoming @rso_cfg and fill in the destination
+ * WMI structure and send down the roam scan configs down to the firmware
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_scan_offload_params *rso_cfg);
+#else
 /**
  * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
  * @wmi_handle: wmi handle

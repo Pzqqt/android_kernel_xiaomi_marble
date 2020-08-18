@@ -293,6 +293,56 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * wlan_cm_get_fils_connection_info  - Copy fils connection information from
+ * mlme vdev private object
+ * @psoc: Pointer to psoc object
+ * @dst_fils_info: Destination buffer to copy the fils info
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id);
+
+/**
+ * wlan_cm_update_mlme_fils_connection_info  - Update FILS connection info
+ * to mlme vdev private object
+ * @psoc: Pointer to psoc object
+ * @src_fils_info: Current profile FILS connection information
+ * @vdev_id: vdev_id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_fils_connection_info *src_fils_info,
+		uint8_t vdev_id);
+
+/**
+ * wlan_cm_update_fils_ft - Update the FILS FT derived to mlme
+ * @psoc: Psoc pointer
+ * @vdev_id: vdev id
+ * @fils_ft: Pointer to FILS FT
+ * @fils_ft_len: FILS FT length
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_update_fils_ft(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id, uint8_t *fils_ft,
+				  uint8_t fils_ft_len);
+#else
+static inline
+struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id)
+{
+	return NULL;
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
@@ -419,7 +469,6 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   uint8_t vdev_id,
 				   struct wlan_cm_roam_vendor_btm_params
 								*param);
-
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,

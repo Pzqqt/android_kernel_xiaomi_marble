@@ -186,7 +186,7 @@ struct mlme_legacy_priv {
 	bool roam_reason_better_ap;
 	uint32_t hb_failure_rssi;
 #ifdef WLAN_FEATURE_FILS_SK
-	struct wlan_fils_connection_info fils_con_info;
+	struct wlan_fils_connection_info *fils_con_info;
 #endif
 };
 

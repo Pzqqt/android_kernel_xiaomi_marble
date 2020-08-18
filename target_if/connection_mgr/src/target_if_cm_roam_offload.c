@@ -127,6 +127,14 @@ target_if_vdev_set_param(wmi_unified_t wmi_handle, uint32_t vdev_id,
 	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
 }
 
+static QDF_STATUS target_if_cm_roam_scan_offload_mode(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg)
+{
+	return wmi_unified_roam_scan_offload_mode_cmd(wmi_handle,
+						      rso_mode_cfg);
+}
+
 /**
  * target_if_cm_roam_scan_bmiss_cnt() - set bmiss count to fw
  * @wmi_handle: wmi handle
@@ -353,6 +361,7 @@ target_if_cm_roam_idle_params(wmi_unified_t wmi_handle, uint8_t command,
 {
 }
 #endif
+
 /**
  * target_if_cm_roam_scan_offload_rssi_thresh() - Send roam scan rssi threshold
  * commands to wmi
@@ -913,6 +922,14 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 		} else {
 			target_if_debug("MAWC roaming not supported by firmware");
 		}
+	}
+
+	status = target_if_cm_roam_scan_offload_mode(wmi_handle,
+						     &req->rso_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Send RSO mode cmd failed",
+			      req->rso_config.vdev_id);
+		goto end;
 	}
 
 	status = target_if_cm_roam_scan_filter(wmi_handle,

@@ -1071,6 +1071,7 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
 	target_if_cm_roam_register_tx_ops(
 			&vdev_mlme->ext_vdev_ptr->cm_roam.tx_ops);
 
@@ -1126,6 +1127,10 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 	mlme_free_self_disconnect_ies(vdev_mlme->vdev);
 	mlme_free_peer_disconnect_ies(vdev_mlme->vdev);
 	mlme_free_sae_auth_retry(vdev_mlme->vdev);
+
+	qdf_mem_free(vdev_mlme->ext_vdev_ptr->fils_con_info);
+	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
+
 	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
 	vdev_mlme->ext_vdev_ptr = NULL;
 

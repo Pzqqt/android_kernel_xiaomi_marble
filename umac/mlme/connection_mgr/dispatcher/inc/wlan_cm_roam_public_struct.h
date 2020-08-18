@@ -88,6 +88,14 @@
 #define REASON_ROAM_HANDOFF_DONE                    52
 #define REASON_ROAM_ABORT                           53
 
+#define FILS_MAX_KEYNAME_NAI_LENGTH 253
+#define WLAN_FILS_MAX_REALM_LEN 255
+#define WLAN_FILS_MAX_RRK_LENGTH 64
+#define WLAN_FILS_MAX_RIK_LENGTH WLAN_FILS_MAX_RRK_LENGTH
+#define WLAN_FILS_FT_MAX_LEN          48
+
+#define WLAN_MAX_PMK_DUMP_BYTES 6
+
 /**
  * enum roam_cfg_param  - Type values for roaming parameters used as index
  * for get/set of roaming config values(pNeighborRoamInfo in legacy)
@@ -631,11 +639,8 @@ struct wlan_per_roam_config_req {
 #define RSSI_MIN_VALUE                   (-128)
 #define RSSI_MAX_VALUE                   (127)
 
-#define WLAN_FILS_MAX_RRK_LENGTH      64
-#define WLAN_FILS_MAX_RIK_LENGTH      64
-#define WLAN_FILS_MAX_REALM_LENGTH    256
+#ifdef WLAN_FEATURE_FILS_SK
 #define WLAN_FILS_MAX_USERNAME_LENGTH 16
-#define WLAN_FILS_FT_MAX_LEN          48
 
 /**
  * struct wlan_roam_fils_params - Roaming FILS params
@@ -659,11 +664,12 @@ struct wlan_roam_fils_params {
 	uint32_t rrk_length;
 	uint8_t rik[WLAN_FILS_MAX_RIK_LENGTH];
 	uint32_t rik_length;
-	uint8_t realm[WLAN_FILS_MAX_REALM_LENGTH];
+	uint8_t realm[WLAN_FILS_MAX_REALM_LEN];
 	uint32_t realm_len;
 	uint8_t fils_ft[WLAN_FILS_FT_MAX_LEN];
 	uint8_t fils_ft_len;
 };
+#endif
 
 /**
  * struct wlan_roam_scan_params  - Roaming scan parameters
@@ -826,6 +832,8 @@ struct wlan_rso_11r_params {
 	bool is_11r_assoc;
 	bool is_adaptive_11r;
 	bool enable_ft_im_roaming;
+	uint8_t psk_pmk[WMI_ROAM_SCAN_PSK_SIZE];
+	uint32_t pmk_len;
 	uint32_t r0kh_id_length;
 	uint8_t r0kh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
 	struct mobility_domain_info mdid;
@@ -868,8 +876,8 @@ struct wlan_roam_scan_offload_params {
 	uint32_t vdev_id;
 	uint8_t is_rso_stop;
 	/* Parameters common for LFR-3.0 and LFR-2.0 */
+	bool roaming_scan_policy;
 	struct wlan_roam_scan_mode_params rso_mode_info;
-	struct wlan_roam_scan_params scan_params;
 	uint32_t assoc_ie_length;
 	uint8_t  assoc_ie[MAX_ASSOC_IE_LENGTH];
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -1058,6 +1066,7 @@ struct wlan_roam_start_config {
  * roam stop
  * @reason: roaming reason
  * @middle_of_roaming: in the middle of roaming
+ * @rso_config: Roam scan mode config
  * @roam_11k_params: 11k params
  * @btm_config: btm configuration
  * @scan_filter_params: roam scan filter parameters
@@ -1069,6 +1078,7 @@ struct wlan_roam_start_config {
 struct wlan_roam_stop_config {
 	uint8_t reason;
 	uint8_t middle_of_roaming;
+	struct wlan_roam_scan_offload_params rso_config;
 	struct wlan_roam_11k_offload_params roam_11k_params;
 	struct wlan_roam_btm_config btm_config;
 	struct wlan_roam_scan_filter_params scan_filter_params;
@@ -1085,6 +1095,7 @@ struct wlan_roam_stop_config {
  * @scan_filter_params: roam scan filter parameters
  * @scan_period_params: roam scan period parameters
  * @rssi_change_params: roam scan rssi change parameters
+ * @rso_config: roam scan mode configurations
  * @profile_params: ap profile parameters
  * @rssi_params: roam scan rssi threshold parameters
  * @disconnect_params: disconnect params
@@ -1096,6 +1107,7 @@ struct wlan_roam_update_config {
 	struct wlan_roam_scan_filter_params scan_filter_params;
 	struct wlan_roam_scan_period_params scan_period_params;
 	struct wlan_roam_rssi_change_params rssi_change_params;
+	struct wlan_roam_scan_offload_params rso_config;
 	struct ap_profile_params profile_params;
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
 	struct wlan_roam_disconnect_params disconnect_params;

@@ -508,3 +508,116 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_fils_connection_info *src_fils_info,
+		uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!src_fils_info) {
+		qdf_mem_free(mlme_priv->fils_con_info);
+		mlme_priv->fils_con_info = NULL;
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (mlme_priv->fils_con_info)
+		qdf_mem_free(mlme_priv->fils_con_info);
+
+	mlme_priv->fils_con_info =
+		qdf_mem_malloc(sizeof(struct wlan_fils_connection_info));
+	if (!mlme_priv->fils_con_info) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_copy(mlme_priv->fils_con_info, src_fils_info,
+		     sizeof(struct wlan_fils_connection_info));
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return NULL;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return NULL;
+	}
+
+	if (!mlme_priv->fils_con_info) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return NULL;
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return mlme_priv->fils_con_info;
+}
+
+QDF_STATUS wlan_cm_update_fils_ft(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id, uint8_t *fils_ft,
+				  uint8_t fils_ft_len)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!mlme_priv->fils_con_info || !fils_ft || !fils_ft_len ||
+	    !mlme_priv->fils_con_info->is_fils_connection) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->fils_con_info->fils_ft_len = fils_ft_len;
+	qdf_mem_copy(mlme_priv->fils_con_info->fils_ft, fils_ft, fils_ft_len);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
