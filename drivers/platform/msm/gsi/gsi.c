@@ -15,6 +15,13 @@
 #include "gsi_reg.h"
 #include "gsi_emulation.h"
 
+#include <asm/arch_timer.h>
+#include <linux/sched/clock.h>
+#include <linux/jiffies.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/delay.h>
+
 #define GSI_CMD_TIMEOUT (5*HZ)
 #define GSI_START_CMD_TIMEOUT_MS 1000
 #define GSI_CMD_POLL_CNT 5
@@ -776,6 +783,7 @@ static void gsi_handle_irq(void)
 	uint32_t type;
 	int ee = gsi_ctx->per.ee;
 	unsigned long cnt = 0;
+	int index;
 
 	while (1) {
 		if (!gsi_ctx->per.clk_status_cb())
@@ -787,6 +795,15 @@ static void gsi_handle_irq(void)
 			break;
 
 		GSIDBG_LOW("type 0x%x\n", type);
+		index = gsi_ctx->gsi_isr_cache_index;
+		gsi_ctx->gsi_isr_cache[index].timestamp =
+			sched_clock();
+		gsi_ctx->gsi_isr_cache[index].qtimer =
+			__arch_counter_get_cntvct();
+		gsi_ctx->gsi_isr_cache[index].interrupt_type = type;
+		gsi_ctx->gsi_isr_cache_index++;
+		if (gsi_ctx->gsi_isr_cache_index == GSI_ISR_CACHE_MAX)
+			gsi_ctx->gsi_isr_cache_index = 0;
 
 		if (type & GSI_EE_n_CNTXT_TYPE_IRQ_CH_CTRL_BMSK)
 			gsi_handle_ch_ctrl(ee);
@@ -1363,6 +1380,7 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 	}
 
 	*dev_hdl = (uintptr_t)gsi_ctx;
+	gsi_ctx->gsi_isr_cache_index = 0;
 
 	return GSI_STATUS_SUCCESS;
 }
