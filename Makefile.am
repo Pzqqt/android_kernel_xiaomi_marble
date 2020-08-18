@@ -64,6 +64,8 @@ all:
 	$(shell ln -s $(KERNEL_SRC)/drivers/base/regmap/internal.h $(shell pwd)/include/soc/internal.h)
 	$(shell rm -fr $(shell pwd)/soc/pinctrl-utils.h)
 	$(shell ln -s $(KERNEL_SRC)/drivers/pinctrl/pinctrl-utils.h $(shell pwd)/soc/pinctrl-utils.h)
+	$(shell rm -fr $(shell pwd)/include/soc/qcom/secure_buffer.h)
+	$(shell ln -s $(KERNEL_SRC)/include/soc/qcom/secure_buffer.h $(shell pwd)/include/soc/qcom/secure_buffer.h)
 	$(shell mkdir $(shell pwd)/linux)
 	$(shell mkdir $(shell pwd)/sound)
 	$(shell mkdir $(shell pwd)/linux/mfd)
