@@ -6368,6 +6368,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_info_entry *entry;
 	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
+	bool is_wcd938x = false;
 
 	pdata = snd_soc_card_get_drvdata(rtd->card);
 	if(!pdata)
@@ -6387,9 +6388,11 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
-	if (!component) {
+	if (!component)
 		component = snd_soc_rtdcom_lookup(rtd, WCD937X_DRV_NAME);
-	}
+	else
+		is_wcd938x = true;
+
 	if (!component) {
 		pr_err("%s component is NULL\n", __func__);
 		return -EINVAL;
@@ -6460,7 +6463,12 @@ mbhc_cfg_cal:
 	if (!mbhc_calibration)
 		return -ENOMEM;
 	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+
+	if (is_wcd938x)
+		ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	else
+		ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+
 	if (ret) {
 		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
 			__func__, ret);
