@@ -357,18 +357,29 @@ void wma_update_per_roam_config(WMA_HANDLE handle,
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && !defined(ROAM_OFFLOAD_V1)
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					roam_offload_param *
 					roam_offload_params,
 					struct roam_offload_scan_req *roam_req);
 #endif
 
+#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
 				      scan_cmd_fp,
 				      struct roam_offload_scan_req *roam_req,
 				      uint32_t mode, uint32_t vdev_id);
+#else
+static inline QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
+				      wmi_start_scan_cmd_fixed_param *
+				      scan_cmd_fp,
+				      struct roam_offload_scan_req *roam_req,
+				      uint32_t mode, uint32_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wma_roam_scan_mawc_params() - send roam scan mode request to fw

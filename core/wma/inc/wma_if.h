@@ -321,7 +321,7 @@ typedef struct sLimMlmSetKeysReq {
 } tLimMlmSetKeysReq, *tpLimMlmSetKeysReq;
 
 /**
- * struct struct bss_params - parameters required for add bss params
+ * struct bss_params - parameters required for add bss params
  * @bssId: MAC Address/BSSID
  * @nwType: network type
  * @shortSlotTimeSupported: is short slot time supported or not
@@ -385,7 +385,7 @@ struct add_bss_rsp {
 };
 
 /**
- * struct struct del_bss_resp - params required for del bss response
+ * struct del_bss_resp - params required for del bss response
  * @status: QDF status
  * @vdev_id: vdev_id
  */

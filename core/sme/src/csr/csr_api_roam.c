@@ -19995,7 +19995,7 @@ wlan_cm_roam_fill_update_config_req(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg cds_msg = {0};
 	struct roam_offload_scan_rsp *scan_offload_rsp;
 

@@ -1576,6 +1576,7 @@ extract_roam_initial_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
+#ifndef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * wmi_add_fils_tlv() - Add FILS TLV to roam scan offload command
@@ -2114,6 +2115,7 @@ send_roam_scan_mode_cmd:
 
 	return status;
 }
+#endif
 
 /**
  * convert_roam_trigger_reason() - Function to convert unified Roam trigger
@@ -3208,8 +3210,10 @@ void wmi_roam_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_roam_mawc_params_cmd = send_roam_mawc_params_cmd_tlv;
 	ops->send_roam_scan_filter_cmd =
 			send_roam_scan_filter_cmd_tlv;
+#ifndef ROAM_OFFLOAD_V1
 	ops->send_roam_scan_offload_mode_cmd =
 			send_roam_scan_offload_mode_cmd_tlv;
+#endif
 	ops->send_roam_scan_offload_ap_profile_cmd =
 			send_roam_scan_offload_ap_profile_cmd_tlv;
 	ops->send_roam_scan_offload_cmd = send_roam_scan_offload_cmd_tlv;

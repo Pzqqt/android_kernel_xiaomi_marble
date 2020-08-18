@@ -618,6 +618,263 @@ struct wlan_per_roam_config_req {
 #define RSSI_MIN_VALUE                   (-128)
 #define RSSI_MAX_VALUE                   (127)
 
+#define WLAN_FILS_MAX_RRK_LENGTH      64
+#define WLAN_FILS_MAX_RIK_LENGTH      64
+#define WLAN_FILS_MAX_REALM_LENGTH    256
+#define WLAN_FILS_MAX_USERNAME_LENGTH 16
+#define WLAN_FILS_FT_MAX_LEN          48
+
+/**
+ * struct wlan_roam_fils_params - Roaming FILS params
+ * @next_erp_seq_num: next ERP sequence number
+ * @username: username
+ * @username_length: username length
+ * @rrk: RRK
+ * @rrk_length: length of @rrk
+ * @rik: RIK
+ * @rik_length: length of @rik
+ * @realm: realm
+ * @realm_len: length of @realm
+ * @fils_ft: xx_key for FT-FILS connection
+ * @fils_ft_len: length of FT-FILS
+ */
+struct wlan_roam_fils_params {
+	uint32_t next_erp_seq_num;
+	uint8_t username[WLAN_FILS_MAX_USERNAME_LENGTH];
+	uint32_t username_length;
+	uint8_t rrk[WLAN_FILS_MAX_RRK_LENGTH];
+	uint32_t rrk_length;
+	uint8_t rik[WLAN_FILS_MAX_RIK_LENGTH];
+	uint32_t rik_length;
+	uint8_t realm[WLAN_FILS_MAX_REALM_LENGTH];
+	uint32_t realm_len;
+	uint8_t fils_ft[WLAN_FILS_FT_MAX_LEN];
+	uint8_t fils_ft_len;
+};
+
+/**
+ * struct wlan_roam_scan_params  - Roaming scan parameters
+ * @vdev_id: vdev id
+ * @dwell_time_passive: dwell time in msec on passive channels
+ * @dwell_time_active: dwell time in msec on active channels
+ * @burst_duration: Burst duration time in msec
+ * @min_rest_time: min time in msec on the BSS channel,only valid if atleast
+ * one VDEV is active
+ * @max_rest_time: max rest time in msec on the BSS channel,only valid if
+ * at least one VDEV is active
+ * @probe_spacing_time: time in msec between 2 consequetive probe requests with
+ * in a set
+ * @probe_delay: delay in msec before sending first probe request after
+ * switching to a channel
+ * @repeat_probe_time: time in msec between 2 consequetive probe requests within
+ * a set
+ * @max_scan_time: maximum time in msec allowed for scan
+ * @idle_time: data inactivity time in msec on bss channel that will be used by
+ * scanner for measuring the inactivity
+ * @n_probes: Max number of probes to be sent
+ * @scan_ctrl_flags: Scan control flags
+ * @scan_ctrl_flags_ext: Scan control flags extended
+ * @num_chan: number of channels
+ * @num_bssid: number of bssids in tlv bssid_list[]
+ * @ie_len: number of bytes in ie data. In the TLV ie_data[]
+ * @dwell_time_active_2g: dwell time in msec on active 2G channels.
+ * @dwell_time_active_6ghz: dwell time in msec when 6 GHz channel
+ * @dwell_time_passive_6ghz: Passive scan dwell time in msec for 6Ghz channel.
+ * @scan_start_offset: Offset time is in milliseconds per channel
+ */
+struct wlan_roam_scan_params {
+	uint32_t vdev_id;
+	uint32_t dwell_time_passive;
+	uint32_t dwell_time_active;
+	uint32_t burst_duration;
+	uint32_t min_rest_time;
+	uint32_t max_rest_time;
+	uint32_t probe_spacing_time;
+	uint32_t probe_delay;
+	uint32_t repeat_probe_time;
+	uint32_t max_scan_time;
+	uint32_t idle_time;
+	uint32_t n_probes;
+	uint32_t scan_ctrl_flags;
+	uint32_t scan_ctrl_flags_ext;
+	uint32_t num_chan;
+	uint32_t num_bssid;
+	uint32_t ie_len;
+	uint32_t dwell_time_active_2g;
+	uint32_t dwell_time_active_6ghz;
+	uint32_t dwell_time_passive_6ghz;
+	uint32_t scan_start_offset;
+};
+
+/**
+ * struct wlan_roam_scan_mode_params  - WMI_ROAM_SCAN_MODE command fixed_param
+ * wmi_roam_scan_mode_fixed_param related params
+ * @roam_scan_mode: Roam scan mode flags
+ * @min_delay_btw_scans: Minimum duration allowed between two consecutive roam
+ * scans in millisecs.
+ * @min_delay_roam_trigger_bitmask: Roaming triggers for which the min delay
+ * between roam scans is applicable(bitmask of enum WMI_ROAM_TRIGGER_REASON_ID)
+ */
+struct wlan_roam_scan_mode_params {
+	uint32_t roam_scan_mode;
+	uint32_t min_delay_btw_scans;
+	uint32_t min_delay_roam_trigger_bitmask;
+};
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * struct wlan_rso_lfr3_params  - LFR-3.0 roam offload params to be filled
+ * in the wmi_roam_offload_tlv_param TLV of WMI_ROAM_SCAN_MODE command.
+ * @roam_rssi_cat_gap: RSSI category gap
+ * @prefer_5ghz: Prefer 5G candidate AP
+ * @select_5gz_margin: Prefer connecting to 5G AP even if its RSSI is lower by
+ * select_5g_margin dBm
+ * @reassoc_failure_timeout: reassociation response failure timeout
+ * @ho_delay_for_rx: Time in millisecs to delay hand-off by this duration to
+ * receive pending Rx frames from current BSS
+ * @roam_retry_count: maximum number of software retries for preauth and
+ * reassoc req
+ * @roam_preauth_no_ack_timeout: duration in millsecs to wait before another SW
+ * retry made if no ack seen for previous frame
+ * @diable_self_roam: Disable roaming to current connected BSS.
+ * @rct_validity_timer: duration value for which the entries in
+ * roam candidate table(rct) are valid
+ */
+struct wlan_rso_lfr3_params {
+	uint8_t roam_rssi_cat_gap;
+	uint8_t prefer_5ghz;
+	uint8_t select_5ghz_margin;
+	uint32_t reassoc_failure_timeout;
+	uint32_t ho_delay_for_rx;
+	uint32_t roam_retry_count;
+	uint32_t roam_preauth_no_ack_timeout;
+	bool disable_self_roam;
+	uint32_t rct_validity_timer;
+};
+
+#define WLAN_ROAM_OFFLOAD_NUM_MCS_SET     (16)
+/**
+ * struct wlan_lfr3_roam_offload_param  - LFR3 Roaming offload parameters
+ * @capability: RSN capabilities
+ * @ht_caps_info: HT capabilities information
+ * @ampdu_param: AMPDU configs
+ * @ht_ext_cap: HT extended capabilities info
+ * @ht_txbf: HT Tx Beamform capabilities
+ * @asel_cap: Antena selection capabilities
+ * @qos_enabled: QoS enabled
+ * @qos_caps: QoS capabilities
+ * @wmm_caps: WMM capabilities
+ * @mcsset: MCS set
+ */
+struct wlan_rso_lfr3_caps {
+	uint32_t capability;
+	uint32_t ht_caps_info;
+	uint32_t ampdu_param;
+	uint32_t ht_ext_cap;
+	uint32_t ht_txbf;
+	uint32_t asel_cap;
+	uint32_t qos_enabled;
+	uint32_t qos_caps;
+	uint32_t wmm_caps;
+	/* since this is 4 byte aligned, we don't declare it as tlv array */
+	uint32_t mcsset[WLAN_ROAM_OFFLOAD_NUM_MCS_SET >> 2];
+};
+
+/**
+ * struct wlan_rso_11i_params  - LFR-3.0 related parameters to be filled in
+ * wmi_roam_11i_offload_tlv_param TLV in the WMI_ROAM_SCAN_MODE command.
+ * @roam_key_mgmt_offload_enabled: Enable 4-way HS offload to firmware
+ * @fw_okc: use OKC in firmware
+ * @fw_pmksa_cache: use PMKSA cache in firmware
+ * @is_sae_same_pmk: Flag to indicate fw whether WLAN_SAE_SINGLE_PMK feature is
+ * enable or not
+ * @psk_pmk: pre shared key/pairwise master key
+ * @pmk_len: length of PMK
+ */
+struct wlan_rso_11i_params {
+	bool roam_key_mgmt_offload_enabled;
+	bool fw_okc;
+	bool fw_pmksa_cache;
+	bool is_sae_same_pmk;
+	uint8_t psk_pmk[WMI_ROAM_SCAN_PSK_SIZE];
+	uint32_t pmk_len;
+};
+
+/**
+ * struct wlan_rso_11r_params  - LFR-3.0 parameters to fill
+ * wmi_roam_11r_offload_tlv_param TLV related info in WMI_ROAM_SCAN_MODE command
+ * @enable_ft_im_roaming: Flag to enable/disable FT-IM roaming upon receiving
+ * deauth
+ * @rokh_id_length: r0kh id length
+ * @rokh_id: r0kh id
+ * @mdid: mobility domain info
+ */
+struct wlan_rso_11r_params {
+	bool is_11r_assoc;
+	bool is_adaptive_11r;
+	bool enable_ft_im_roaming;
+	uint32_t r0kh_id_length;
+	uint8_t r0kh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
+	struct mobility_domain_info mdid;
+};
+
+/**
+ * struct wlan_rso_ese_params  - LFR-3.0 parameters to fill the
+ * wmi_roam_ese_offload_tlv_param TLV related info in WMI_ROAM_SCAN_MODE command
+ * @is_ese_assoc: flag to determine ese assoc
+ * @krk: KRK
+ * @btk: BTK
+ */
+struct wlan_rso_ese_params {
+	bool is_ese_assoc;
+	uint8_t krk[WMI_KRK_KEY_LEN];
+	uint8_t btk[WMI_BTK_KEY_LEN];
+};
+#endif
+
+/**
+ * struct roam_offload_scan_params - structure containing roaming offload scan
+ * parameters to be filled over WMI_ROAM_SCAN_MODE command.
+ * @vdev_id: vdev id
+ * @is_rso_stop: flag to tell whether roam req is valid or NULL
+ * @rso_mode_info: Roam scan mode related parameters
+ * @scan_params: Roaming scan related parameters
+ * @assoc_ie_length: Assoc IE length
+ * @assoc_ie: Assoc IE buffer
+ * @roam_offload_enabled: flag for offload enable
+ * @add_fils_tlv: add FILS TLV boolean
+ * @akm: authentication key management mode
+ * @rso_lfr3_params: Candidate selection and other lfr-3.0 offload parameters
+ * @rso_lfr3_caps: Self capabilities
+ * @rso_11i_info: PMK, PMKSA, SAE single PMK related parameters
+ * @rso_11r_info: FT related parameters
+ * @rso_ese_info: ESE related parameters
+ * @fils_roam_config: roam fils params
+ */
+struct wlan_roam_scan_offload_params {
+	uint32_t vdev_id;
+	uint8_t is_rso_stop;
+	/* Parameters common for LFR-3.0 and LFR-2.0 */
+	struct wlan_roam_scan_mode_params rso_mode_info;
+	struct wlan_roam_scan_params scan_params;
+	uint32_t assoc_ie_length;
+	uint8_t  assoc_ie[MAX_ASSOC_IE_LENGTH];
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	/* Parameters specific to LFR-3.0 */
+	bool roam_offload_enabled;
+	bool add_fils_tlv;
+	int akm;
+	struct wlan_rso_lfr3_params rso_lfr3_params;
+	struct wlan_rso_lfr3_caps rso_lfr3_caps;
+	struct wlan_rso_11i_params rso_11i_info;
+	struct wlan_rso_11r_params rso_11r_info;
+	struct wlan_rso_ese_params rso_ese_info;
+#ifdef WLAN_FEATURE_FILS_SK
+	struct wlan_roam_fils_params fils_roam_config;
+#endif
+#endif
+};
+
 /**
  * struct wlan_roam_offload_scan_rssi_params - structure containing
  *              parameters for roam offload scan based on RSSI
@@ -751,6 +1008,7 @@ struct wlan_roam_start_config {
 	struct wlan_roam_reason_vsie_enable reason_vsie_enable;
 	struct wlan_roam_triggers roam_triggers;
 	struct wlan_roam_scan_period_params scan_period_params;
+	struct wlan_roam_scan_offload_params rso_config;
 	struct ap_profile_params profile_params;
 	struct wlan_roam_mawc_params mawc_params;
 	struct wlan_roam_scan_filter_params scan_filter_params;

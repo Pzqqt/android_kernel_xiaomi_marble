@@ -3432,6 +3432,7 @@ lim_send_vdev_restart(struct mac_context *mac,
 	vdev_mgr_start_send(mlme_obj,  true);
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * __lim_process_roam_scan_offload_req() - Process Roam scan offload from csr
  * @mac_ctx: Pointer to Global MAC structure
@@ -3487,6 +3488,12 @@ static void __lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
 		qdf_mem_free(req_buffer);
 	}
 }
+#else
+static inline void
+__lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
+				    uint32_t *msg_buf)
+{}
+#endif
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 #ifndef ROAM_OFFLOAD_V1

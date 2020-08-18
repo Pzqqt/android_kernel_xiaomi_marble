@@ -258,7 +258,9 @@ QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
 
 	return status;
 }
+
 #ifdef WLAN_FEATURE_FILS_SK
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wma_roam_scan_fill_fils_params() - API to fill FILS params in RSO command
  * @wma_handle: WMA handle
@@ -303,6 +305,7 @@ static void wma_roam_scan_fill_fils_params(tp_wma_handle wma_handle,
 	qdf_mem_copy(dst_fils_params->realm, src_fils_params->realm,
 		     dst_fils_params->realm_len);
 }
+#endif
 #else
 static inline void wma_roam_scan_fill_fils_params(
 					tp_wma_handle wma_handle,
@@ -347,6 +350,7 @@ static void wma_handle_disconnect_reason(tp_wma_handle wma_handle,
  * Return: None
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef ROAM_OFFLOAD_V1
 static void wma_roam_scan_offload_set_params(
 				tp_wma_handle wma_handle,
 				struct roam_offload_scan_params *params,
@@ -399,6 +403,7 @@ static void wma_roam_scan_offload_set_params(
 		 params->roam_offload_params.roam_preauth_no_ack_timeout,
 		 params->is_sae_same_pmk);
 }
+#endif
 
 int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 					   uint32_t len)
@@ -450,6 +455,7 @@ static void wma_roam_scan_offload_set_params(
 {}
 #endif
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wma_roam_scan_offload_mode() - send roam scan mode request to fw
  * @wma_handle: pointer to wma context
@@ -526,7 +532,6 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	return status;
 }
 
-#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS
 wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 				  struct roam_offload_scan_req *roam_req)
@@ -4096,6 +4101,7 @@ err:
 }
 #endif
 
+#ifndef ROAM_OFFLOAD_V1
 #define RSN_CAPS_SHIFT               16
 /**
  * wma_roam_scan_fill_self_caps() - fill capabilities
@@ -4222,6 +4228,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	roam_offload_params->wmm_caps = 0x4 & 0xFF;
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * wma_set_ric_req() - set ric request element

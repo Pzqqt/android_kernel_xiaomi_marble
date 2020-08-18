@@ -2166,6 +2166,7 @@ QDF_STATUS aead_decrypt_assoc_rsp(struct mac_context *mac_ctx,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 void lim_update_fils_rik(struct pe_session *pe_session,
 			 struct roam_offload_scan_req *req_buffer)
 {
@@ -2220,4 +2221,5 @@ void lim_update_fils_rik(struct pe_session *pe_session,
 	pe_debug("fils rik len %d ft-len:%d", roam_fils_params->rik_length,
 		 pe_fils_info->fils_ft_len);
 }
+#endif
 #endif
