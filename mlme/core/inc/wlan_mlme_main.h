@@ -162,6 +162,7 @@ struct wlan_mlme_roam {
  * @sae_auth_retry: SAE auth retry information
  * @roam_reason_better_ap: roam due to better AP found
  * @better_ap_hb_failure_rssi: heartbeat failure AP RSSI
+ * @fils_con_info: Pointer to fils connection info from csr roam profile
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -184,6 +185,9 @@ struct mlme_legacy_priv {
 	struct sae_auth_retry sae_retry;
 	bool roam_reason_better_ap;
 	uint32_t hb_failure_rssi;
+#ifdef WLAN_FEATURE_FILS_SK
+	struct wlan_fils_connection_info fils_con_info;
+#endif
 };
 
 /**

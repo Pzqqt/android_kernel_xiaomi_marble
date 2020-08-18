@@ -209,6 +209,7 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
+#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
 				wmi_unified_t wmi_handle,
 				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
@@ -220,6 +221,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 QDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(
 				wmi_unified_t wmi_handle,

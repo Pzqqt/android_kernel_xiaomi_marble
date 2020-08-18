@@ -270,6 +270,7 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 					struct set_pcl_cmd_params *params);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
  * @wmi_handle: wmi handle
@@ -285,6 +286,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
 				wmi_unified_t wmi_handle,
 				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
 				struct roam_offload_scan_params *roam_req);
+#endif
 
 /**
  * wmi_unified_send_roam_scan_offload_ap_cmd() - set roam ap profile in fw
