@@ -1744,8 +1744,8 @@ static int sde_cp_crtc_check_pu_features(struct drm_crtc *crtc)
 			hw_cfg.mixer_info = sde_crtc->mixers[j].hw_lm;
 			hw_cfg.ctl = sde_crtc->mixers[j].hw_ctl;
 			hw_cfg.displayh = hw_cfg.num_of_mixers *
-					sde_crtc_state->lm_roi[i].w;
-			hw_cfg.displayv = sde_crtc_state->lm_roi[i].h;
+					sde_crtc_state->lm_roi[j].w;
+			hw_cfg.displayv = sde_crtc_state->lm_roi[j].h;
 
 			ret = check_pu_feature(hw_dspp, &hw_cfg, sde_crtc);
 			if (ret) {
