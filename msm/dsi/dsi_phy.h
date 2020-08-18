@@ -75,6 +75,7 @@ enum phy_ulps_return_type {
  * @allow_phy_power_off: True if PHY is allowed to power off when idle
  * @regulator_min_datarate_bps: Minimum per lane data rate to turn on regulator
  * @regulator_required: True if phy regulator is required
+ * @dfps_trigger_mdpintf_flush: mdp intf flush controls dfps trigger.
  */
 struct msm_dsi_phy {
 	struct platform_device *pdev;
@@ -102,6 +103,7 @@ struct msm_dsi_phy {
 	bool allow_phy_power_off;
 	u32 regulator_min_datarate_bps;
 	bool regulator_required;
+	bool dfps_trigger_mdpintf_flush;
 };
 
 /**
@@ -323,6 +325,14 @@ int dsi_phy_update_phy_timings(struct msm_dsi_phy *phy,
 void dsi_phy_config_dynamic_refresh(struct msm_dsi_phy *phy,
 				    struct dsi_dyn_clk_delay *delay,
 				    bool is_master);
+/**
+ * dsi_phy_dynamic_refresh_trigger_sel() - dynamic refresh trigger select.
+ * @phy:	DSI PHY handle
+ * @is_master:	Boolean to indicate if for master or slave.
+ */
+void dsi_phy_dynamic_refresh_trigger_sel(struct msm_dsi_phy *phy,
+		bool is_master);
+
 /**
  * dsi_phy_dynamic_refresh_trigger() - trigger dynamic refresh
  * @phy:	DSI PHY handle
