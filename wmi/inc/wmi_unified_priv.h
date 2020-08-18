@@ -82,7 +82,7 @@
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#include <wlan_cm_roam_public_srtuct.h>
+#include <wlan_cm_roam_public_struct.h>
 #endif
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
@@ -640,8 +640,9 @@ QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(
 					struct roam_scan_period_params *params);
 #endif
 
-QDF_STATUS (*send_roam_mawc_params_cmd)(wmi_unified_t wmi_handle,
-		struct wmi_mawc_roam_params *params);
+QDF_STATUS (*send_roam_mawc_params_cmd)(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_mawc_params *params);
 
 QDF_STATUS (*send_roam_scan_filter_cmd)(wmi_unified_t wmi_handle,
 				struct roam_scan_filter_params *roam_req);
@@ -676,8 +677,9 @@ QDF_STATUS (*send_offload_11k_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_invoke_neighbor_report_params *params);
 
-QDF_STATUS (*send_roam_bss_load_config)(wmi_unified_t wmi_handle,
-					struct wmi_bss_load_config *params);
+QDF_STATUS (*send_roam_bss_load_config)(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_bss_load_config *params);
 
 QDF_STATUS (*send_disconnect_roam_params)(wmi_unified_t wmi_handle,
 			struct wlan_roam_disconnect_params *req);
