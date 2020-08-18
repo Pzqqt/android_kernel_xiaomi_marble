@@ -6260,6 +6260,11 @@ wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 	return errno;
 }
 
+const struct nla_policy get_logger_set_policy[
+			QCA_WLAN_VENDOR_ATTR_LOGGER_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_LOGGER_SUPPORTED] = {.type = NLA_U32},
+};
+
 /**
  * __wlan_hdd_cfg80211_get_logger_supp_feature() - Get the wifi logger features
  * @wiphy:   pointer to wireless wiphy structure.
@@ -15201,7 +15206,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = wlan_hdd_cfg80211_get_logger_supp_feature,
-		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
+		vendor_command_policy(get_logger_set_policy,
+				      QCA_WLAN_VENDOR_ATTR_LOGGER_MAX)
 	},
 
 	FEATURE_TRIGGER_SCAN_VENDOR_COMMANDS
