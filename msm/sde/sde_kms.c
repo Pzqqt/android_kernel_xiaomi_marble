@@ -205,13 +205,10 @@ static int _sde_kms_dump_clks_state(struct sde_kms *sde_kms)
 
 static bool _sde_kms_skip_vblank_op(struct sde_kms *sde_kms)
 {
-	struct sde_vm_ops *vm_ops = NULL;
+	struct sde_vm_ops *vm_ops = sde_vm_get_ops(sde_kms);
 
-	if (!sde_kms->vm)
-		return false;
-
-	vm_ops = &sde_kms->vm->vm_ops;
-	if (!vm_ops->vm_owns_hw(sde_kms))
+	if (vm_ops && vm_ops->vm_owns_hw
+				&& !vm_ops->vm_owns_hw(sde_kms))
 		return true;
 
 	return false;
@@ -227,21 +224,18 @@ static int sde_kms_enable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
 
 	sde_kms = to_sde_kms(kms);
 
-	if (sde_kms->vm)
-		mutex_lock(&sde_kms->vm->vm_res_lock);
+	sde_vm_lock(sde_kms);
 
 	if (_sde_kms_skip_vblank_op(sde_kms)) {
 		SDE_DEBUG("skipping vblank enable due to HW unavailablity\n");
-		mutex_unlock(&sde_kms->vm->vm_res_lock);
-		return 0;
+		goto done;
 	}
 
 	SDE_ATRACE_BEGIN("sde_kms_enable_vblank");
 	ret = sde_crtc_vblank(crtc, true);
 	SDE_ATRACE_END("sde_kms_enable_vblank");
-
-	if (sde_kms->vm)
-		mutex_unlock(&sde_kms->vm->vm_res_lock);
+done:
+	sde_vm_unlock(sde_kms);
 
 	return ret;
 }
@@ -255,21 +249,18 @@ static void sde_kms_disable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
 
 	sde_kms = to_sde_kms(kms);
 
-	if (sde_kms->vm)
-		mutex_lock(&sde_kms->vm->vm_res_lock);
+	sde_vm_lock(sde_kms);
 
 	if (_sde_kms_skip_vblank_op(sde_kms)) {
 		SDE_DEBUG("skipping vblank disable due to HW unavailablity\n");
-		mutex_unlock(&sde_kms->vm->vm_res_lock);
-		return;
+		goto done;
 	}
 
 	SDE_ATRACE_BEGIN("sde_kms_disable_vblank");
 	sde_crtc_vblank(crtc, false);
 	SDE_ATRACE_END("sde_kms_disable_vblank");
-
-	if (sde_kms->vm)
-		mutex_unlock(&sde_kms->vm->vm_res_lock);
+done:
+	sde_vm_unlock(sde_kms);
 }
 
 static void sde_kms_wait_for_frame_transfer_complete(struct msm_kms *kms,
@@ -962,10 +953,9 @@ int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 
 	ddev = sde_kms->dev;
 
-	if (!sde_kms->vm)
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (!vm_ops)
 		return -EINVAL;
-
-	vm_ops = &sde_kms->vm->vm_ops;
 
 	crtc = state->crtcs[0].ptr;
 
@@ -1007,6 +997,8 @@ int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
 	enum sde_crtc_vm_req vm_req;
 
 	ddev = sde_kms->dev;
+
+	pm_runtime_get_sync(ddev->dev);
 
 	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
 
@@ -1083,10 +1075,9 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 	 */
 	sde_kms_prepare_secure_transition(kms, state);
 
-	if (!sde_kms->vm)
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (!vm_ops)
 		goto end;
-
-	vm_ops = &sde_kms->vm->vm_ops;
 
 	if (vm_ops->vm_prepare_commit)
 		vm_ops->vm_prepare_commit(sde_kms, state);
@@ -1248,10 +1239,10 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 	enum sde_crtc_vm_req vm_req;
 	int rc = 0;
 
-	if (!sde_kms || !sde_kms->vm)
+	if (!sde_kms || !sde_vm_is_enabled(sde_kms))
 		return -EINVAL;
 
-	vm_ops = &sde_kms->vm->vm_ops;
+	vm_ops = sde_vm_get_ops(sde_kms);
 	ddev = sde_kms->dev;
 
 	crtc = state->crtcs[0].ptr;
@@ -1282,6 +1273,8 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 
 	if (vm_ops->vm_release)
 		rc = vm_ops->vm_release(sde_kms);
+
+	pm_runtime_put_sync(ddev->dev);
 
 	return rc;
 }
@@ -1328,10 +1321,10 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 	enum sde_crtc_vm_req vm_req;
 	int rc = 0;
 
-	if (!sde_kms || !sde_kms->vm)
+	if (!sde_kms || !sde_vm_is_enabled(sde_kms))
 		return -EINVAL;
 
-	vm_ops = &sde_kms->vm->vm_ops;
+	vm_ops = sde_vm_get_ops(sde_kms);
 
 	crtc = state->crtcs[0].ptr;
 	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
@@ -1423,15 +1416,12 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		}
 	}
 
-	if (sde_kms->vm) {
-		vm_ops = &sde_kms->vm->vm_ops;
-
-		if (vm_ops->vm_post_commit) {
-			rc = vm_ops->vm_post_commit(sde_kms, old_state);
-			if (rc)
-				SDE_ERROR("vm post commit failed, rc = %d\n",
-					  rc);
-		}
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (vm_ops && vm_ops->vm_post_commit) {
+		rc = vm_ops->vm_post_commit(sde_kms, old_state);
+		if (rc)
+			SDE_ERROR("vm post commit failed, rc = %d\n",
+				  rc);
 	}
 
 	pm_runtime_put_sync(sde_kms->dev->dev);
@@ -2116,6 +2106,7 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 {
 	struct drm_device *dev;
 	struct msm_drm_private *priv;
+	struct sde_vm_ops *vm_ops;
 	int i;
 
 	if (!sde_kms || !pdev)
@@ -2135,8 +2126,9 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 		of_genpd_del_provider(pdev->dev.of_node);
 	}
 
-	if (sde_kms->vm && sde_kms->vm->vm_ops.vm_deinit)
-		sde_kms->vm->vm_ops.vm_deinit(sde_kms, &sde_kms->vm->vm_ops);
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (vm_ops && vm_ops->vm_deinit)
+		vm_ops->vm_deinit(sde_kms, vm_ops);
 
 	if (sde_kms->hw_intr)
 		sde_hw_intr_destroy(sde_kms->hw_intr);
@@ -2423,10 +2415,9 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	sde_kms = to_sde_kms(kms);
 	dev = sde_kms->dev;
 
-	if (!sde_kms->vm)
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (!vm_ops)
 		return 0;
-
-	vm_ops = &sde_kms->vm->vm_ops;
 
 	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
 		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
@@ -2491,14 +2482,15 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		return -EINVAL;
 	}
 
-	mutex_lock(&sde_kms->vm->vm_res_lock);
+	sde_vm_lock(sde_kms);
+
 	if (vm_ops->vm_request_valid)
 		rc = vm_ops->vm_request_valid(sde_kms, old_vm_req, new_vm_req);
 	if (rc)
 		SDE_ERROR(
 		"failed to complete vm transition request. old_state = %d, new_state = %d, hw_ownership: %d\n",
 		old_vm_req, new_vm_req, vm_ops->vm_owns_hw(sde_kms));
-	mutex_unlock(&sde_kms->vm->vm_res_lock);
+	sde_vm_unlock(sde_kms);
 
 	return rc;
 }
@@ -4283,6 +4275,7 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 	struct msm_drm_private *priv;
 	struct sde_splash_display *handoff_display;
 	struct dsi_display *display;
+	struct sde_vm_ops *vm_ops;
 	int ret, i;
 
 	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev_private) {
@@ -4290,7 +4283,8 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 		return -EINVAL;
 	}
 
-	if (!sde_kms->vm->vm_ops.vm_owns_hw(sde_kms)) {
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (vm_ops && vm_ops->vm_owns_hw(sde_kms)) {
 		SDE_DEBUG(
 		   "skipping sde res init as device assign is not completed\n");
 		return 0;
