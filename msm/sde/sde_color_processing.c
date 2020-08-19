@@ -4132,7 +4132,7 @@ int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
 	return 0;
 }
 
-void sde_cp_mode_switch_prop_dirty(struct drm_crtc *crtc_drm)
+void sde_cp_crtc_res_change(struct drm_crtc *crtc_drm)
 {
 	struct sde_cp_node *prop_node = NULL, *n = NULL;
 	struct sde_crtc *crtc;
