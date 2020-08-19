@@ -1226,7 +1226,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_OFDMA_MAX_USERS = 455,
 	/* Max users per-PPDU for MU-MIMO, 16 LSBs for DL and 16 MSBs for UL */
 	OL_ATH_PARAM_MUMIMO_MAX_USERS = 456,
-
+	/* ACS pre-CAC only channel selection support */
+	OL_ATH_PARAM_ACS_PRECAC_SUPPORT = 457,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3162,6 +3163,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OFDMA_MAX_USERS, GET_PARAM, 0},
 	{"get_mumimo_usr",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MUMIMO_MAX_USERS, GET_PARAM, 0},
+	{"acs_pcaconly",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_PRECAC_SUPPORT, SET_PARAM, 1},
+	{"g_acs_pcaconly",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_PRECAC_SUPPORT, GET_PARAM, 0},
 };
 #endif
 #endif
