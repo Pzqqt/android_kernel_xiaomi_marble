@@ -5081,11 +5081,8 @@ static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
 	(void)substream;
 
 	qos_client_active_cnt++;
-	if (qos_client_active_cnt == 1) {
-		if (pm_qos_request_active(&substream->latency_pm_qos_req))
-			pm_qos_remove_request(&substream->latency_pm_qos_req);
+	if (qos_client_active_cnt == 1)
 		msm_audio_update_qos_request(MSM_LL_QOS_VALUE);
-	}
 
 	return 0;
 }
