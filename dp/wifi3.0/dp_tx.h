@@ -23,6 +23,8 @@
 #include "dp_types.h"
 
 
+#define DP_INVALID_VDEV_ID 0xFF
+
 #define DP_TX_MAX_NUM_FRAGS 6
 
 #define DP_TX_DESC_FLAG_SIMPLE		0x1
@@ -35,6 +37,7 @@
 #define DP_TX_DESC_FLAG_ME		0x80
 #define DP_TX_DESC_FLAG_TDLS_FRAME	0x100
 #define DP_TX_DESC_FLAG_ALLOCATED	0x200
+#define DP_TX_DESC_FLAG_MESH_MODE	0x400
 
 #define DP_TX_EXT_DESC_FLAG_METADATA_VALID 0x1
 

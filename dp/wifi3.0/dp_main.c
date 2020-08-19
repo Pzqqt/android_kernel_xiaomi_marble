@@ -7108,7 +7108,8 @@ static bool dp_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
 }
 
 #ifdef MESH_MODE_SUPPORT
-void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
+static
+void dp_vdev_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 
@@ -7124,7 +7125,8 @@ void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
  *
  * Return: void
  */
-void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
+static
+void dp_vdev_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 
@@ -8569,11 +8571,11 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 #ifdef MESH_MODE_SUPPORT
 	case CDP_MESH_RX_FILTER:
-		dp_peer_set_mesh_rx_filter((struct cdp_vdev *)vdev,
+		dp_vdev_set_mesh_rx_filter((struct cdp_vdev *)vdev,
 					   val.cdp_vdev_param_mesh_rx_filter);
 		break;
 	case CDP_MESH_MODE:
-		dp_peer_set_mesh_mode((struct cdp_vdev *)vdev,
+		dp_vdev_set_mesh_mode((struct cdp_vdev *)vdev,
 				      val.cdp_vdev_param_mesh_mode);
 		break;
 #endif

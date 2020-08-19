@@ -431,7 +431,7 @@ struct dp_tx_ext_desc_pool_s {
  * @nbuf: Buffer Address
  * @msdu_ext_desc: MSDU extension descriptor
  * @id: Descriptor ID
- * @vdev: vdev over which the packet was transmitted
+ * @vdev_id: vdev_id of vdev over which the packet was transmitted
  * @pdev: Handle to pdev
  * @pool_id: Pool ID - used when releasing the descriptor
  * @flags: Flags to track the state of descriptor and special frame handling
@@ -453,14 +453,14 @@ struct dp_tx_desc_s {
 	uint16_t flags;
 	uint32_t id;
 	qdf_dma_addr_t dma_addr;
-	struct dp_vdev *vdev;
+	uint8_t vdev_id;
+	uint8_t tx_status;
+	uint16_t peer_id;
 	struct dp_pdev *pdev;
 	uint8_t tx_encap_type;
 	uint8_t frm_type;
 	uint8_t pkt_offset;
 	uint8_t  pool_id;
-	uint16_t peer_id;
-	uint16_t tx_status;
 	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
 	void *me_buffer;
 	void *tso_desc;

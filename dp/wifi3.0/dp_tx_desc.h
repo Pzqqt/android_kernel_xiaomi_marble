@@ -317,7 +317,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	enum netif_action_type act = WLAN_WAKE_ALL_NETIF_QUEUE;
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	tx_desc->vdev = NULL;
+	tx_desc->vdev_id = DP_INVALID_VDEV_ID;
 	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 	dp_tx_put_desc_flow_pool(pool, tx_desc);
@@ -477,7 +477,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	tx_desc->vdev = NULL;
+	tx_desc->vdev_id = DP_INVALID_VDEV_ID;
 	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 	dp_tx_put_desc_flow_pool(pool, tx_desc);
@@ -658,7 +658,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		uint8_t desc_pool_id)
 {
 	struct dp_tx_desc_pool_s *pool = NULL;
-	tx_desc->vdev = NULL;
+	tx_desc->vdev_id = DP_INVALID_VDEV_ID;
 	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 
