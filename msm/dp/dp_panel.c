@@ -2692,8 +2692,8 @@ static void dp_panel_config_ctrl(struct dp_panel *dp_panel)
 	tbd = panel->link->get_test_bits_depth(panel->link,
 			dp_panel->pinfo.bpp);
 
-	if (tbd == DP_TEST_BIT_DEPTH_UNKNOWN)
-		tbd = DP_TEST_BIT_DEPTH_8;
+	if (tbd == DP_TEST_BIT_DEPTH_UNKNOWN || dp_panel->dsc_en)
+		tbd = (DP_TEST_BIT_DEPTH_8 >> DP_TEST_BIT_DEPTH_SHIFT);
 
 	config |= tbd << 8;
 
