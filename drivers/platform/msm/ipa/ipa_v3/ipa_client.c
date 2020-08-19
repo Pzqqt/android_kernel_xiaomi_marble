@@ -270,7 +270,8 @@ static void ipa3_start_gsi_debug_monitor(u32 clnt_hdl)
 
 	/* start uC gsi dbg stats monitor */
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5 &&
-		ipa3_ctx->ipa_hw_type != IPA_HW_v4_7) {
+		ipa3_ctx->ipa_hw_type != IPA_HW_v4_7 &&
+		ipa3_ctx->ipa_hw_type != IPA_HW_v4_11) {
 		switch (client_type) {
 		case IPA_CLIENT_MHI_PRIME_TETH_PROD:
 			gsi_info = &ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_MHIP];
