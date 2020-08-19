@@ -517,6 +517,13 @@ lim_encrypt_auth_frame(struct mac_context *mac, uint8_t keyId, uint8_t *pKey,
 			SIR_MAC_AUTH_FRAME_INFO_LEN + SIR_MAC_CHALLENGE_ID_LEN;
 	keyLength += 3;
 
+	/*
+	 * Make sure that IV is non-zero, because few IOT APs fails to decrypt
+	 * auth sequence 3 encrypted frames if initialization vector value is 0
+	 */
+	while (!(*(uint32_t *)seed))
+		qdf_get_random_bytes(seed, SIR_MAC_WEP_IV_LENGTH);
+
 	/* Bytes 3-7 of seed is key */
 	qdf_mem_copy((uint8_t *) &seed[3], pKey, keyLength - 3);
 
