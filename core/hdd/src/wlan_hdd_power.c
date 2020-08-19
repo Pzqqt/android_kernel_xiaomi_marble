@@ -1056,11 +1056,11 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 	qdf_spin_lock_irqsave(&hdd_ctx->pm_qos_lock);
 
 	if (!hdd_ctx->runtime_pm_prevented &&
-	    curr_val != PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE) {
+	    curr_val != wlan_hdd_get_pm_qos_cpu_latency()) {
 		hif_pm_runtime_get_noresume(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = true;
 	} else if (hdd_ctx->runtime_pm_prevented &&
-		   curr_val == PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE) {
+		   curr_val == wlan_hdd_get_pm_qos_cpu_latency()) {
 		hif_pm_runtime_put(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = false;
 	}

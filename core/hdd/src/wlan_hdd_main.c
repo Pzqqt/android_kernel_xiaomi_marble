@@ -9479,7 +9479,7 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 	qdf_cpumask_copy(&hdd_ctx->qos_cpu_mask, pm_qos_cpu_mask);
 
 	if (qdf_cpumask_empty(pm_qos_cpu_mask)) {
-		latency = PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE;
+		latency = wlan_hdd_get_pm_qos_cpu_latency();
 		qdf_for_each_possible_cpu(cpu) {
 			dev_pm_qos_update_request(
 				&hdd_ctx->pm_qos_req[cpu],
@@ -9494,7 +9494,7 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 		qdf_for_each_cpu_not(cpu, &hdd_ctx->qos_cpu_mask) {
 			dev_pm_qos_update_request(
 				&hdd_ctx->pm_qos_req[cpu],
-				PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
+				wlan_hdd_get_pm_qos_cpu_latency());
 		}
 		/* Set latency to 1 for CPUs included in mask */
 		qdf_for_each_cpu(cpu, &hdd_ctx->qos_cpu_mask) {
@@ -9521,7 +9521,7 @@ static inline void hdd_pm_qos_add_request(struct hdd_context *hdd_ctx)
 
 		dev_pm_qos_add_request(cpu_dev, &hdd_ctx->pm_qos_req[cpu],
 				       DEV_PM_QOS_RESUME_LATENCY,
-				       PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
+				       wlan_hdd_get_pm_qos_cpu_latency());
 		hdd_debug("Set qos_cpu_mask %*pb for affine_cores",
 			 cpumask_pr_args(&hdd_ctx->qos_cpu_mask));
 	}

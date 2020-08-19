@@ -112,7 +112,7 @@
 #include "qdf_periodic_work.h"
 #endif
 
-#ifdef CLD_PM_QOS
+#if defined(CLD_PM_QOS) || defined(FEATURE_RUNTIME_PM)
 #include <linux/pm_qos.h>
 #endif
 
@@ -4709,6 +4709,25 @@ static inline void hdd_beacon_latency_event_cb(uint32_t latency_level)
 {
 }
 #endif
+
+#if defined(CLD_PM_QOS) || defined(FEATURE_RUNTIME_PM)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
+/**
+ * wlan_hdd_get_pm_qos_cpu_latency() - get PM QOS CPU latency
+ *
+ * Return: PM QOS CPU latency value
+ */
+static inline unsigned long wlan_hdd_get_pm_qos_cpu_latency(void)
+{
+	return PM_QOS_CPU_LATENCY_DEFAULT_VALUE;
+}
+#else
+static inline unsigned long wlan_hdd_get_pm_qos_cpu_latency(void)
+{
+	return PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE;
+}
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0) */
+#endif /* defined(CLD_PM_QOS) || defined(FEATURE_RUNTIME_PM) */
 
 /**
  * hdd_netdev_feature_update - Update the netdev features
