@@ -623,6 +623,7 @@ static int validate_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 				cfg->queue_select, cfg->op);
 		return -EINVAL;
 	}
+
 	return 0;
 }
 
@@ -684,6 +685,8 @@ static int write_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 		}
 	}
 
+	SDE_EVT32(cfg->feature, cfg->dma_type, cfg->dma_buf, cfg->op,
+			cfg->queue_select, cfg->ctl->idx);
 	return 0;
 }
 
@@ -1171,6 +1174,7 @@ static int last_cmd_v1(struct sde_hw_ctl *ctl, enum sde_reg_dma_queue q,
 	kick_off.op = REG_DMA_WRITE;
 	kick_off.dma_type = REG_DMA_TYPE_DB;
 	kick_off.dma_buf = last_cmd_buf_db[ctl->idx];
+	kick_off.feature = REG_DMA_FEATURES_MAX;
 	rc = kick_off_v1(&kick_off);
 	if (rc) {
 		DRM_ERROR("kick off last cmd failed\n");
@@ -1181,7 +1185,8 @@ static int last_cmd_v1(struct sde_hw_ctl *ctl, enum sde_reg_dma_queue q,
 	memset(&hw, 0, sizeof(hw));
 	SET_UP_REG_DMA_REG(hw, reg_dma, kick_off.dma_type);
 
-	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY, mode);
+	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY, mode, ctl->idx, kick_off.queue_select,
+			kick_off.dma_type, kick_off.op);
 	if (mode == REG_DMA_WAIT4_COMP) {
 		rc = readl_poll_timeout(hw.base_off + hw.blk_off +
 			reg_dma_intr_status_offset, val,
@@ -1262,16 +1267,18 @@ static int last_cmd_sb_v2(struct sde_hw_ctl *ctl, enum sde_reg_dma_queue q,
 	}
 
 	kick_off.ctl = ctl;
-	kick_off.queue_select = q;
 	kick_off.trigger_mode = WRITE_IMMEDIATE;
 	kick_off.last_command = 1;
 	kick_off.op = REG_DMA_WRITE;
 	kick_off.dma_type = REG_DMA_TYPE_SB;
 	kick_off.queue_select = DMA_CTL_QUEUE1;
 	kick_off.dma_buf = last_cmd_buf_sb[ctl->idx];
+	kick_off.feature = REG_DMA_FEATURES_MAX;
 	rc = kick_off_v1(&kick_off);
 	if (rc)
 		DRM_ERROR("kick off last cmd failed\n");
 
+	SDE_EVT32(ctl->idx, kick_off.queue_select, kick_off.dma_type,
+			kick_off.op);
 	return rc;
 }
