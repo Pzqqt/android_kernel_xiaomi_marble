@@ -375,14 +375,13 @@ QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
 /**
  * wmi_unified_register_event() - WMI event handler
  * registration function for converged components
- *
  * @wmi_handle:   handle to WMI.
  * @event_id:     WMI event ID
  * @handler_func: Event handler call back function
  *
- *  @return 0  on success and -ve on failure.
+ * Return: QDF_STATUS
  */
-int
+QDF_STATUS
 wmi_unified_register_event(wmi_unified_t wmi_handle,
 				   uint32_t event_id,
 				   wmi_unified_event_handler handler_func);
@@ -390,30 +389,30 @@ wmi_unified_register_event(wmi_unified_t wmi_handle,
 /**
  * wmi_unified_register_event_handler() - WMI event handler
  * registration function
- *
  * @wmi_handle:   handle to WMI.
  * @event_id:     WMI event ID
  * @handler_func: Event handler call back function
  * @rx_ctx: rx event processing context
  *
- *  @return 0  on success and -ve on failure.
+ * Return: QDF_STATUS
  */
-int
+QDF_STATUS
 wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 				   wmi_conv_event_id event_id,
 				   wmi_unified_event_handler handler_func,
 				   uint8_t rx_ctx);
 
 /**
- * WMI event handler unregister function for converged componets
+ * wmi_unified_unregister_event() - WMI event handler unregister function
+ * for converged componets
+ * @wmi_handle:    handle to WMI.
+ * @event_id:      WMI event ID
  *
- *  @param wmi_handle      : handle to WMI.
- *  @param event_id        : WMI event ID
- *  @return 0  on success and -ve on failure.
+ * Return: QDF_STATUS
  */
-int
+QDF_STATUS
 wmi_unified_unregister_event(wmi_unified_t wmi_handle,
-					 uint32_t event_id);
+			     uint32_t event_id);
 
 /**
  * wmi_unified_register_raw_event_handler() - WMI event handler
@@ -425,24 +424,25 @@ wmi_unified_unregister_event(wmi_unified_t wmi_handle,
  *
  * Register event handler to get struct wmi_raw_event_buffer as arg
  *
- * @return: 0 on success and -ve on failure.
+ * Return: QDF_STATUS
  */
-int
+QDF_STATUS
 wmi_unified_register_raw_event_handler(wmi_unified_t wmi_handle,
 				       wmi_conv_event_id event_id,
 				       wmi_unified_event_handler handler_func,
 				       enum wmi_rx_exec_ctx rx_ctx);
 
 /**
- * WMI event handler unregister function
+ * wmi_unified_unregister_event_handler() - WMI event handler unregister
+ * function
+ * wmi_handle:  handle to WMI.
+ * event_id:    WMI event ID
  *
- *  @param wmi_handle      : handle to WMI.
- *  @param event_id        : WMI event ID
- *  @return 0  on success and -ve on failure.
+ * Return: QDF_STATUS
  */
-int
+QDF_STATUS
 wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
-					 wmi_conv_event_id event_id);
+				     wmi_conv_event_id event_id);
 
 /**
  * wmi_unified_connect_htc_service() -  WMI API to get connect to HTC service

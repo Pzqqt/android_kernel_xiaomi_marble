@@ -2033,9 +2033,10 @@ wmi_register_event_handler_with_ctx(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-int wmi_unified_register_event(wmi_unified_t wmi_handle,
-			       uint32_t event_id,
-			       wmi_unified_event_handler handler_func)
+QDF_STATUS
+wmi_unified_register_event(wmi_unified_t wmi_handle,
+			   uint32_t event_id,
+			   wmi_unified_event_handler handler_func)
 {
 	return wmi_register_event_handler_with_ctx(wmi_handle, event_id,
 						   handler_func,
@@ -2043,10 +2044,11 @@ int wmi_unified_register_event(wmi_unified_t wmi_handle,
 						   WMI_RX_PROCESSED_BUFF);
 }
 
-int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
-				       wmi_conv_event_id event_id,
-				       wmi_unified_event_handler handler_func,
-				       uint8_t rx_ctx)
+QDF_STATUS
+wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
+				   wmi_conv_event_id event_id,
+				   wmi_unified_event_handler handler_func,
+				   uint8_t rx_ctx)
 {
 	return wmi_register_event_handler_with_ctx(wmi_handle, event_id,
 						   handler_func, rx_ctx,
@@ -2055,7 +2057,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 
 qdf_export_symbol(wmi_unified_register_event_handler);
 
-int
+QDF_STATUS
 wmi_unified_register_raw_event_handler(wmi_unified_t wmi_handle,
 				       wmi_conv_event_id event_id,
 				       wmi_unified_event_handler handler_func,
@@ -2068,15 +2070,8 @@ wmi_unified_register_raw_event_handler(wmi_unified_t wmi_handle,
 
 qdf_export_symbol(wmi_unified_register_raw_event_handler);
 
-/**
- * wmi_unified_unregister_event() - unregister wmi event handler
- * @wmi_handle: handle to wmi
- * @event_id: wmi event id
- *
- * Return: 0 on success
- */
-int wmi_unified_unregister_event(wmi_unified_t wmi_handle,
-					 uint32_t event_id)
+QDF_STATUS wmi_unified_unregister_event(wmi_unified_t wmi_handle,
+					uint32_t event_id)
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
@@ -2105,18 +2100,11 @@ int wmi_unified_unregister_event(wmi_unified_t wmi_handle,
 	wmi_handle->event_id[idx] =
 		wmi_handle->event_id[soc->max_event_idx];
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wmi_unified_unregister_event_handler() - unregister wmi event handler
- * @wmi_handle: handle to wmi
- * @event_id: wmi event id
- *
- * Return: 0 on success
- */
-int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
-					 wmi_conv_event_id event_id)
+QDF_STATUS wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
+						wmi_conv_event_id event_id)
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
@@ -2151,7 +2139,7 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 	wmi_handle->event_id[idx] =
 		wmi_handle->event_id[soc->max_event_idx];
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(wmi_unified_unregister_event_handler);
 
