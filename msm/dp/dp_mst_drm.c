@@ -625,7 +625,7 @@ static void dp_mst_sim_handle_hpd_irq(void *dp_display,
 	}
 }
 
-static enum drm_connector_status dp_mst_sim_detect_port(
+static enum drm_connector_status dp_mst_detect_port(
 			struct drm_connector *connector,
 			struct drm_dp_mst_topology_mgr *mgr,
 			struct drm_dp_mst_port *port)
@@ -637,7 +637,7 @@ static enum drm_connector_status dp_mst_sim_detect_port(
 	if (mst->mst_session_state)
 		status = drm_dp_mst_detect_port(connector, mgr, port);
 
-	DP_MST_DEBUG("mst sim port status: %d, session state: %d\n",
+	DP_MST_DEBUG("mst port status: %d, session state: %d\n",
 		status, mst->mst_session_state);
 	return status;
 }
@@ -701,7 +701,7 @@ static const struct dp_drm_mst_fw_helper_ops drm_dp_mst_fw_helper_ops = {
 	.update_payload_part1      = drm_dp_update_payload_part1,
 	.check_act_status          = drm_dp_check_act_status,
 	.update_payload_part2      = drm_dp_update_payload_part2,
-	.detect_port               = drm_dp_mst_detect_port,
+	.detect_port               = dp_mst_detect_port,
 	.get_edid                  = drm_dp_mst_get_edid,
 	.topology_mgr_set_mst      = drm_dp_mst_topology_mgr_set_mst,
 	.get_vcpi_info             = _dp_mst_get_vcpi_info,
@@ -718,7 +718,7 @@ static const struct dp_drm_mst_fw_helper_ops drm_dp_sim_mst_fw_helper_ops = {
 	.update_payload_part1      = dp_mst_sim_update_payload_part1,
 	.check_act_status          = dp_mst_sim_no_action,
 	.update_payload_part2      = dp_mst_sim_update_payload_part2,
-	.detect_port               = dp_mst_sim_detect_port,
+	.detect_port               = dp_mst_detect_port,
 	.get_edid                  = dp_mst_sim_get_edid,
 	.topology_mgr_set_mst      = dp_mst_sim_topology_mgr_set_mst,
 	.get_vcpi_info             = _dp_mst_get_vcpi_info,
