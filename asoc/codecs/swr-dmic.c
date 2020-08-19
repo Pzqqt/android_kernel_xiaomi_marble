@@ -67,7 +67,6 @@ struct swr_dmic_priv {
 	struct device_node *wcd_handle;
 	bool is_wcd_supply;
 	int is_en_supply;
-	int port_type;
 	u8 tx_master_port_map[SWR_DMIC_MAX_PORTS];
 	struct notifier_block nblock;
 };
@@ -141,7 +140,6 @@ static int swr_dmic_tx_master_port_get(struct snd_kcontrol *kcontrol,
 		dev_dbg(component->dev, "%s: invalid port string\n", __func__);
 		return ret;
 	}
-	swr_dmic->port_type = slave_port_idx;
 
 	ucontrol->value.integer.value[0] =
 			swr_dmic_get_master_port_val(
@@ -168,7 +166,6 @@ static int swr_dmic_tx_master_port_put(struct snd_kcontrol *kcontrol,
 		dev_dbg(component->dev, "%s: invalid port string\n", __func__);
 		return ret;
 	}
-	swr_dmic->port_type = slave_port_idx;
 
 	swr_dmic->tx_master_port_map[slave_port_idx] =
 		swr_master_channel_map[ucontrol->value.enumerated.item[0]];
@@ -188,9 +185,9 @@ static int swr_dmic_port_enable(struct snd_soc_dapm_widget *w,
 	struct swr_dmic_priv *swr_dmic =
 			snd_soc_component_get_drvdata(component);
 
-	u8 ch_mask = 0x01; // only DpnChannelEN1 register is available
+	u8 ch_mask = 0x01; /* only DpnChannelEN1 register is available */
 	u8 num_port = 1;
-	u8 port_id = swr_dmic->port_type;
+	u8 port_id = w->shift;
 	u8 port_type = swr_dmic->tx_master_port_map[port_id];
 
 	switch (event) {
@@ -217,17 +214,17 @@ static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 			snd_soc_component_get_drvdata(component);
 
 	u8 num_ch = 1;
-	u8 ch_mask = 0x01; // only DpnChannelEN1 register is available
+	u8 ch_mask = 0x01; /* only DpnChannelEN1 register is available */
 	u32 ch_rate = SWR_CLK_RATE_4P8MHZ;
 	u8 num_port = 1;
 	u8 port_type = 0;
-	u8 port_id = swr_dmic->port_type;
+	u8 port_id = w->shift;
 
 	/*
 	 * Port 1 is high quality / 2.4 or 3.072 Mbps
 	 * Port 2 is listen low power / 0.6 or 0.768 Mbps
 	 */
-	if(swr_dmic->port_type == SWR_DMIC_HIFI_PORT)
+	if(port_id == SWR_DMIC_HIFI_PORT)
 		ch_rate = SWR_CLK_RATE_2P4MHZ;
 	else
 		ch_rate = SWR_CLK_RATE_0P6MHZ;
@@ -279,22 +276,26 @@ static const struct snd_kcontrol_new va_dmic_switch[] = {
 };
 
 static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
-	SND_SOC_DAPM_MIXER_E("SWR_DMIC_MIXER", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_MIXER_E("SWR_DMIC_MIXER", SND_SOC_NOPM,
+			SWR_DMIC_HIFI_PORT, 0,
 			dmic_switch, ARRAY_SIZE(dmic_switch), dmic_swr_ctrl,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_MIXER_E("SWR_DMIC_VA_MIXER", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_MIXER_E("SWR_DMIC_VA_MIXER", SND_SOC_NOPM,
+			SWR_DMIC_LP_PORT, 0,
 			va_dmic_switch, ARRAY_SIZE(va_dmic_switch), dmic_swr_ctrl,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_INPUT("SWR_DMIC"),
 	SND_SOC_DAPM_INPUT("VA_SWR_DMIC"),
 
-	SND_SOC_DAPM_OUT_DRV_E("SMIC_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
+	SND_SOC_DAPM_OUT_DRV_E("SMIC_PORT_EN", SND_SOC_NOPM,
+				SWR_DMIC_HIFI_PORT, 0, NULL, 0,
 				swr_dmic_port_enable,
 				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
-	SND_SOC_DAPM_OUT_DRV_E("SMIC_VA_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
+	SND_SOC_DAPM_OUT_DRV_E("SMIC_VA_PORT_EN", SND_SOC_NOPM,
+				SWR_DMIC_LP_PORT, 0, NULL, 0,
 				swr_dmic_port_enable,
 				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 
