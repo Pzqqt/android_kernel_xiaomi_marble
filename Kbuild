@@ -1061,6 +1061,19 @@ UMAC_MGMT_TXRX_OBJS := $(UMAC_MGMT_TXRX_DIR)/core/src/wlan_mgmt_txrx_main.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_utils_api.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_tgt_api.o
 
+###### UMAC INTERFACE_MGR ########
+UMAC_INTERFACE_MGR_COMP_DIR :=	components/cmn_services/interface_mgr
+UMAC_INTERFACE_MGR_CMN_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/interface_mgr
+
+UMAC_INTERFACE_MGR_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/interface_mgr/inc \
+			 -I$(WLAN_ROOT)/components/cmn_services/interface_mgr/inc
+
+UMAC_INTERFACE_MGR_OBJS := $(UMAC_INTERFACE_MGR_CMN_DIR)/src/wlan_if_mgr_main.o \
+			  $(UMAC_INTERFACE_MGR_CMN_DIR)/src/wlan_if_mgr_core.o \
+			  $(UMAC_INTERFACE_MGR_COMP_DIR)/src/wlan_if_mgr_sta.o \
+			  $(UMAC_INTERFACE_MGR_COMP_DIR)/src/wlan_if_mgr_sap.o \
+			  $(UMAC_INTERFACE_MGR_COMP_DIR)/src/wlan_if_mgr_roam.o
+
 ########## POWER MANAGEMENT OFFLOADS (PMO) ##########
 PMO_DIR :=	components/pmo
 PMO_INC :=	-I$(WLAN_ROOT)/$(PMO_DIR)/core/inc \
@@ -2367,7 +2380,9 @@ INCS +=		$(WLAN_CFR_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
 INCS +=		$(UMAC_DBR_INC)
 INCS +=		$(UMAC_CRYPTO_INC)
-
+ifeq ($(CONFIG_INTERFACE_MGR), y)
+INCS +=		$(UMAC_INTERFACE_MGR_INC)
+endif
 INCS +=		$(COEX_OS_IF_INC)
 INCS +=		$(COEX_TGT_INC)
 INCS +=		$(COEX_DISPATCHER_INC)
@@ -2503,6 +2518,10 @@ ifeq ($(CONFIG_LITHIUM), y)
 OBJS +=		$(DP_OBJS)
 endif
 
+ifeq ($(CONFIG_INTERFACE_MGR), y)
+OBJS += 	$(UMAC_INTERFACE_MGR_OBJS)
+endif
+
 ifeq ($(CONFIG_WLAN_FEATURE_DP_RX_THREADS), y)
 OBJS += $(TXRX3.0_OBJS)
 endif
@@ -2575,6 +2594,7 @@ cppflags-$(CONFIG_WLAN_FW_OFFLOAD) += -DWLAN_FW_OFFLOAD
 cppflags-$(CONFIG_WLAN_FEATURE_ELNA) += -DWLAN_FEATURE_ELNA
 cppflags-$(CONFIG_FEATURE_COEX) += -DFEATURE_COEX
 cppflags-$(CONFIG_CM_ROAM_OFFLOAD) += -DROAM_OFFLOAD_V1
+cppflags-$(CONFIG_INTERFAC_MGR) += -DWLAN_FEATURE_INTERFACE_MGR
 
 cppflags-$(CONFIG_PLD_IPCI_ICNSS_FLAG) += -DCONFIG_PLD_IPCI_ICNSS
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
