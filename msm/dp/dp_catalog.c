@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -1462,6 +1462,7 @@ static void dp_catalog_panel_dsc_cfg(struct dp_catalog_panel *panel)
 	reg = dp_read(MMSS_DP_DSC_DTO);
 	if (panel->dsc.dto_en) {
 		reg |= BIT(0);
+		reg |= BIT(3);
 		reg |= (panel->dsc.dto_n << 8);
 		reg |= (panel->dsc.dto_d << 16);
 	}
