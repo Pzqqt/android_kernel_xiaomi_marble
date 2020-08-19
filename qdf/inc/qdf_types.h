@@ -1031,6 +1031,22 @@ struct qdf_ipv6_addr {
 QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr);
 
 /**
+ * qdf_uint32_array_parse() - parse the given string as uint32 array
+ * @in_str: the input string to parse
+ * @out_array: the output uint32 array, populated on success
+ * @array_size: size of the array
+ * @out_size: size of the populated array
+ *
+ * This API is called to convert string (each value separated by
+ * a comma) into an uint32 array
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS qdf_uint32_array_parse(const char *in_str, uint32_t *out_array,
+				  qdf_size_t array_size, qdf_size_t *out_size);
+
+/**
  * qdf_uint16_array_parse() - parse the given string as uint16 array
  * @in_str: the input string to parse
  * @out_array: the output uint16 array, populated on success
