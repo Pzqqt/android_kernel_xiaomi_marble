@@ -46,6 +46,7 @@ send_vdev_config_ratemask_cmd_tlv(struct wmi_unified *wmi_handle,
 	cmd->mask_lower32 = param->lower32;
 	cmd->mask_higher32 = param->higher32;
 	cmd->mask_lower32_2 = param->lower32_2;
+	cmd->mask_higher32_2 = param->higher32_2;
 
 	wmi_mtrace(WMI_VDEV_RATEMASK_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
