@@ -253,11 +253,12 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
  * return: no of converted packets
  */
 uint16_t
-dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
+dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			    qdf_nbuf_t nbuf,
 			    uint8_t newmac[][QDF_MAC_ADDR_SIZE],
 			    uint8_t new_mac_cnt)
 {
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev;
 	qdf_ether_header_t *eh;
 	uint8_t *data;
@@ -280,31 +281,15 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
 	qdf_dma_addr_t paddr_mcbuf = 0;
 	uint8_t empty_entry_mac[QDF_MAC_ADDR_SIZE] = {0};
 	QDF_STATUS status;
-	struct dp_vdev *vdev =
-		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
-						   vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
 
-	if (!vdev) {
-		qdf_nbuf_free(nbuf);
-		return 1;
-	}
-
-	pdev = vdev->pdev;
-
-	if (!pdev) {
-		qdf_nbuf_free(nbuf);
-		return 1;
-	}
-
-	vdev = dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
-						  vdev_id);
 	if (!vdev)
-		return 1;
+		goto free_return;
 
 	pdev = vdev->pdev;
 
 	if (!pdev)
-		return 1;
+		goto free_return;
 
 	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 
@@ -421,7 +406,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
 	}
 
 	if (!seg_info_head) {
-		goto free_return;
+		goto unmap_free_return;
 	}
 
 	msdu_info.u.sg_info.curr_seg = seg_info_head;
@@ -445,6 +430,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
 
 	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
 	qdf_nbuf_free(nbuf);
+	dp_vdev_unref_delete(soc, vdev);
 	return new_mac_cnt;
 
 fail_map:
@@ -459,8 +445,11 @@ fail_buf_alloc:
 fail_seg_alloc:
 	dp_tx_me_mem_free(pdev, seg_info_head);
 
-free_return:
+unmap_free_return:
 	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+free_return:
+	if (vdev)
+		dp_vdev_unref_delete(soc, vdev);
 	qdf_nbuf_free(nbuf);
 	return 1;
 }
