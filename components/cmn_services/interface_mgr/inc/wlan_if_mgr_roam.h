@@ -28,6 +28,19 @@
 #include "wlan_if_mgr_roam.h"
 
 /**
+ * struct change_roam_state_arg - Contains roam state arguments
+ * @requestor: Driver disabled roaming requestor
+ * @curr_vdev_id: Pointer to current vdev objmgr
+ *
+ * This structure is used to pass the roam state change information to the
+ * callback
+ */
+struct change_roam_state_arg {
+	enum wlan_cm_rso_control_requestor requestor;
+	uint8_t curr_vdev_id;
+};
+
+/**
  * if_mgr_enable_roaming() - interface manager enable roaming
  * @vdev: vdev object
  * @pdev: pdev object
@@ -58,5 +71,39 @@ QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_objmgr_pdev *pdev,
 				  enum wlan_cm_rso_control_requestor requestor);
+
+/**
+ * if_mgr_enable_roaming_on_connected_sta() - interface manager disable roaming
+ * on connected STA
+ * @vdev: vdev object
+ * @pdev: pdev object
+ *
+ * Loops through connected vdevs and disables roaming if it is STA
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_objmgr_pdev *pdev);
+
+/**
+ * if_mgr_enable_roaming_after_p2p_disconnect() - interface manager enable
+ * roaming after p2p disconnect
+ * @vdev: vdev object
+ * @pdev: pdev object
+ * @requestor: RSO disable requestor
+ *
+ * Disables roaming on p2p vdevs if the state is disconnected
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_enable_roaming_after_p2p_disconnect(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_objmgr_pdev *pdev,
+				enum wlan_cm_rso_control_requestor requestor);
 
 #endif
