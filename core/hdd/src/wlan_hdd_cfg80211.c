@@ -20500,8 +20500,16 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 				       struct cfg80211_connect_params *req)
 {
 	int status;
-	uint32_t ch_freq, sap_cnt, sta_cnt;
+	uint32_t ch_freq;
 	const u8 *bssid = NULL;
+	/*
+	 * Following code will be cleaned up once the interface manager
+	 * module is enabled
+	 */
+#ifndef WLAN_FEATURE_INTERFACE_MGR
+	uint32_t sap_cnt, sta_cnt;
+#endif
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
 	const u8 *bssid_hint = req->bssid_hint;
 #else
@@ -20556,6 +20564,14 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	hdd_dump_connect_req(adapter, ndev, req);
 
 	/*
+	 * Following code will be cleaned up once the interface manager
+	 * module is enabled
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	ucfg_if_mgr_deliver_event(adapter->vdev, WLAN_IF_MGR_EV_CONNECT_START,
+				  NULL);
+#else
+	/*
 	 * Disable NAN Discovery if incoming connection is P2P or if a STA
 	 * connection already exists and if this is a case of STA+STA
 	 * or SAP+STA concurrency
@@ -20579,7 +20595,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (!ucfg_nan_is_sta_nan_ndi_4_port_allowed(hdd_ctx->psoc))
 		ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc,
 							   false);
-
+#endif
 	/*
 	 * In STA + STA roaming scenario, connection to same ssid but different
 	 * bssid is allowed on both vdevs. So there could be a race where the
