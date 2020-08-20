@@ -254,13 +254,7 @@ void sde_plane_set_sid(struct drm_plane *plane, u32 vm)
 	sde_hw_set_sspp_sid(sde_kms->hw_sid, psde->pipe, vm);
 }
 
-/**
- * _sde_plane_set_qos_lut - set danger, safe and creq LUT of the given plane
- * @plane:		Pointer to drm plane
- * @crtc:		Pointer to drm crtc to find refresh rate on mode
- * @fb:			Pointer to framebuffer associated with the given plane
- */
-static void _sde_plane_set_qos_lut(struct drm_plane *plane,
+void _sde_plane_set_qos_lut(struct drm_plane *plane,
 		struct drm_crtc *crtc,
 		struct drm_framebuffer *fb)
 {

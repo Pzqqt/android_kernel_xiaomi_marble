@@ -3213,6 +3213,7 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	struct drm_encoder *encoder;
 	struct drm_device *dev;
 	struct sde_kms *sde_kms;
+	struct drm_plane *plane;
 	struct sde_splash_display *splash_display;
 	bool cont_splash_enabled = false, apply_cp_prop = false;
 	size_t i;
@@ -3271,6 +3272,15 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 
 	_sde_crtc_blend_setup(crtc, old_state, true);
 	_sde_crtc_dest_scaler_setup(crtc);
+
+	if (old_state->mode_changed) {
+		sde_core_perf_crtc_update_uidle(crtc, true);
+		drm_atomic_crtc_for_each_plane(plane, crtc) {
+			if (plane->state && plane->state->fb)
+				_sde_plane_set_qos_lut(plane, crtc,
+					plane->state->fb);
+		}
+	}
 
 	/*
 	 * Since CP properties use AXI buffer to program the
