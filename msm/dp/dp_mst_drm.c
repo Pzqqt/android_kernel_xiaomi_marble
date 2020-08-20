@@ -2221,7 +2221,8 @@ static void dp_mst_display_hpd_irq(void *dp_display,
 	bool handled;
 
 	if (info->mst_hpd_sim) {
-		if (info->mst_sim_add_con || info->mst_sim_remove_con) {
+		if (mst->simulator.mst_state && (info->mst_sim_add_con ||
+				info->mst_sim_remove_con)) {
 			dp_mst_sim_handle_hpd_irq(dp_display, info);
 
 			/*
