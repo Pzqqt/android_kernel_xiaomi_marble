@@ -269,6 +269,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_DCS_ID:                DCS operations
  * @WLAN_IOT_SIM_ID:            IOT Simulation feature
  * @WLAN_MLME_CM_ID             Connection Manager reference ID
+ * @WLAN_IF_MGR_ID:             Interface manager reference ID
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -353,6 +354,7 @@ typedef enum {
 	WLAN_DCS_ID           = 75,
 	WLAN_IOT_SIM_ID       = 76,
 	WLAN_MLME_CM_ID       = 77,
+	WLAN_IF_MGR_ID        = 78,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -443,7 +445,8 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_PKT_CAPTURE_ID",
 					"WLAN_DCS_ID",
 					"WLAN_IOT_SIM_ID",
-					"WLAN_MLME_CM_ID"};
+					"WLAN_MLME_CM_ID",
+					"WLAN_IF_MGR_ID"};
 
 	if (id >= WLAN_REF_ID_MAX)
 		return "Unknown";

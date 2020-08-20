@@ -52,6 +52,13 @@ QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 		break;
 	case WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE:
 		status = if_mgr_ap_stop_bss_complete(vdev, event_data);
+		break;
+	case WLAN_IF_MGR_EV_DISCONNECT_START:
+		status = if_mgr_disconnect_start(vdev, event_data);
+		break;
+	case WLAN_IF_MGR_EV_DISCONNECT_COMPLETE:
+		status = if_mgr_disconnect_complete(vdev, event_data);
+		break;
 	default:
 		status = QDF_STATUS_E_INVAL;
 		ifmgr_err("Invalid event");

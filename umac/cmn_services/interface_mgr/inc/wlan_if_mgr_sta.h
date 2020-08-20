@@ -49,4 +49,33 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct if_mgr_event_data *event_data);
 
+/**
+ * if_mgr_disconnect_start() - Disconnect start event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the disconnect start event for interface manager
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
+				   void *event_data);
+
+/**
+ * if_mgr_disconnect_complete() - Disconnect complete event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * This function handles the disconnect complete event for interface
+ * manager
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+				      void *event_data);
+
 #endif
