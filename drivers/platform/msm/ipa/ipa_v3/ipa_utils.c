@@ -188,8 +188,10 @@
 #define IPA_v4_9_DST_GROUP_MAX		(4)
 
 #define IPA_v4_11_GROUP_UL_DL		(0)
-#define IPA_v4_11_SRC_GROUP_MAX		(1)
-#define IPA_v4_11_DST_GROUP_MAX		(1)
+#define IPA_v4_11_GROUP_NOT_USE		(1)
+#define IPA_v4_11_GROUP_DRB_IP		(2)
+#define IPA_v4_11_SRC_GROUP_MAX		(3)
+#define IPA_v4_11_DST_GROUP_MAX		(3)
 
 #define IPA_GROUP_MAX IPA_v3_0_GROUP_MAX
 
@@ -8068,6 +8070,11 @@ static void ipa3_write_rsrc_grp_type_reg(int group_index,
 					ipahal_write_reg_n_fields(
 						IPA_DST_RSRC_GRP_01_RSRC_TYPE_n,
 						n, val);
+					break;
+				case IPA_v4_11_GROUP_DRB_IP:
+					ipahal_write_reg_n_fields(
+							IPA_DST_RSRC_GRP_23_RSRC_TYPE_n,
+							n, val);
 					break;
 				default:
 					IPAERR(
