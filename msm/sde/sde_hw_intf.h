@@ -206,6 +206,11 @@ struct sde_hw_intf_ops {
 	 * Enable processing of 2 pixels per clock
 	 */
 	void (*enable_wide_bus)(struct sde_hw_intf *intf, bool enable);
+
+	/**
+	 * Get the INTF interrupt status
+	 */
+	u32 (*get_intr_status)(struct sde_hw_intf *intf);
 };
 
 struct sde_hw_intf {

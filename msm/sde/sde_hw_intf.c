@@ -531,6 +531,14 @@ static u32 sde_hw_intf_get_underrun_line_count(struct sde_hw_intf *intf)
 		0xebadebad;
 }
 
+static u32 sde_hw_intf_get_intr_status(struct sde_hw_intf *intf)
+{
+	if (!intf)
+		return -EINVAL;
+
+	return SDE_REG_READ(&intf->hw, INTF_INTR_STATUS);
+}
+
 static int sde_hw_intf_setup_te_config(struct sde_hw_intf *intf,
 		struct sde_hw_tear_check *te)
 {
@@ -783,6 +791,7 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 	ops->collect_misr = sde_hw_intf_collect_misr;
 	ops->get_line_count = sde_hw_intf_get_line_count;
 	ops->get_underrun_line_count = sde_hw_intf_get_underrun_line_count;
+	ops->get_intr_status = sde_hw_intf_get_intr_status;
 	ops->avr_setup = sde_hw_intf_avr_setup;
 	ops->avr_trigger = sde_hw_intf_avr_trigger;
 	ops->avr_ctrl = sde_hw_intf_avr_ctrl;

@@ -1198,6 +1198,7 @@ static u32 sde_encoder_phys_vid_get_underrun_line_count(
 		struct sde_encoder_phys *phys_enc)
 {
 	u32 underrun_linecount = 0xebadebad;
+	u32 intf_intr_status = 0xebadebad;
 	struct intf_status intf_status = {0};
 
 	if (!phys_enc)
@@ -1215,8 +1216,13 @@ static u32 sde_encoder_phys_vid_get_underrun_line_count(
 		  phys_enc->hw_intf->ops.get_underrun_line_count(
 			phys_enc->hw_intf);
 
+	if (phys_enc->hw_intf->ops.get_intr_status)
+		intf_intr_status = phys_enc->hw_intf->ops.get_intr_status(
+				phys_enc->hw_intf);
+
 	SDE_EVT32(DRMID(phys_enc->parent), underrun_linecount,
-		intf_status.frame_count, intf_status.line_count);
+		intf_status.frame_count, intf_status.line_count,
+		intf_intr_status);
 
 	return underrun_linecount;
 }
