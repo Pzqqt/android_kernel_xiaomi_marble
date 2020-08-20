@@ -805,11 +805,15 @@ static void gsi_handle_irq(void)
 		if (gsi_ctx->gsi_isr_cache_index == GSI_ISR_CACHE_MAX)
 			gsi_ctx->gsi_isr_cache_index = 0;
 
-		if (type & GSI_EE_n_CNTXT_TYPE_IRQ_CH_CTRL_BMSK)
+		if (type & GSI_EE_n_CNTXT_TYPE_IRQ_CH_CTRL_BMSK) {
 			gsi_handle_ch_ctrl(ee);
+			break;
+		}
 
-		if (type & GSI_EE_n_CNTXT_TYPE_IRQ_EV_CTRL_BMSK)
+		if (type & GSI_EE_n_CNTXT_TYPE_IRQ_EV_CTRL_BMSK) {
 			gsi_handle_ev_ctrl(ee);
+			break;
+		}
 
 		if (type & GSI_EE_n_CNTXT_TYPE_IRQ_GLOB_EE_BMSK)
 			gsi_handle_glob_ee(ee);
