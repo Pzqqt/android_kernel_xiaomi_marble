@@ -115,6 +115,8 @@
 /* Maximum number of retries */
 #define MAX_RETRY_Q_COUNT 20
 
+#define DP_PEER_TX_TID_INIT_DONE_BIT 0
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 
 /* stats counter */
@@ -489,8 +491,11 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
-		if (tx_tid->init_done)
+
+		if (qdf_atomic_test_and_set_bit(DP_PEER_TX_TID_INIT_DONE_BIT,
+						&tx_tid->tid_flags))
 			continue;
+
 		tx_tid->tid = tid;
 		qdf_nbuf_queue_init(&tx_tid->defer_msdu_q);
 		qdf_nbuf_queue_init(&tx_tid->msdu_comp_q);
@@ -510,6 +515,8 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 			for (i = 0; i < tid; i++) {
 				tx_tid = &peer->tx_capture.tx_tid[i];
 				qdf_mem_free(tx_tid->xretry_ppdu);
+				qdf_atomic_clear_bit(DP_PEER_TX_TID_INIT_DONE_BIT,
+							&tx_tid->tid_flags);
 			}
 			QDF_ASSERT(0);
 			return;
@@ -518,7 +525,6 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 		/* spinlock create */
 		qdf_spinlock_create(&tx_tid->tid_lock);
 		qdf_spinlock_create(&tx_tid->tasklet_tid_lock);
-		tx_tid->init_done = 1;
 	}
 
 	peer->tx_capture.is_tid_initialized = 1;
@@ -572,6 +578,11 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
+
+		if (!qdf_atomic_test_and_clear_bit(DP_PEER_TX_TID_INIT_DONE_BIT,
+						&tx_tid->tid_flags))
+			continue;
+
 		xretry_ppdu = tx_tid->xretry_ppdu;
 		xretry_user = &xretry_ppdu->user[0];
 
