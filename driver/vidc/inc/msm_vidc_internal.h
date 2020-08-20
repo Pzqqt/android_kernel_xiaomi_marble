@@ -169,6 +169,7 @@ enum msm_vidc_inst_capability_type {
 	INST_CAP_NONE = 0,
 	FRAME_WIDTH,
 	FRAME_HEIGHT,
+	PIX_FMTS,
 	MBPF,
 	MBPS,
 	FRAME_RATE,
@@ -223,7 +224,7 @@ struct msm_vidc_inst_cap {
 	enum msm_vidc_inst_capability_type cap;
 	s32 min;
 	s32 max;
-	u32 step_or_menu;
+	u32 step_or_mask;
 	s32 value;
 	enum msm_vidc_inst_capability_flags flags;
 	u32 v4l2_id;

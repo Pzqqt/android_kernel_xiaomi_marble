@@ -21,7 +21,7 @@ struct msm_platform_inst_capability {
 	enum msm_vidc_codec_type codec;
 	s32 min;
 	s32 max;
-	u32 step_or_menu;
+	u32 step_or_mask;
 	s32 value;
 	enum msm_vidc_inst_capability_flags flags;
 	u32 v4l2_id;

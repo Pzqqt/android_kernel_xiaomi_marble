@@ -82,9 +82,23 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 };
 
 static struct msm_platform_inst_capability instance_data_waipio[] = {
-	/* {type, domains, codecs, min, max, step_or_menu, value} */
+	/* {type, domains, codecs, min, max, step_or_mask, value} */
 	{FRAME_WIDTH, ENC|DEC, CODECS_ALL, 128, 8192, 1, 1920},
 	{FRAME_HEIGHT, ENC|DEC, CODECS_ALL, 128, 8192, 1, 1080},
+	{PIX_FMTS, ENC, CODECS_ALL,
+		MSM_VIDC_FMT_NV12,
+		MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12_UBWC |
+		MSM_VIDC_FMT_NV12_P010_UBWC | MSM_VIDC_FMT_NV12_TP10_UBWC |
+		MSM_VIDC_FMT_RGBA8888_UBWC | MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS,
+		MSM_VIDC_FMT_NV12_UBWC},
+	{PIX_FMTS, DEC, CODECS_ALL,
+		MSM_VIDC_FMT_NV12,
+		MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12_UBWC |
+		MSM_VIDC_FMT_NV12_P010_UBWC | MSM_VIDC_FMT_NV12_TP10_UBWC |
+		MSM_VIDC_FMT_RGBA8888_UBWC | MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS,
+		MSM_VIDC_FMT_NV12_UBWC},
 	/* (8192 * 4320) / 256 */
 	{MBPF, ENC|DEC, CODECS_ALL, 64, 138240, 1, 138240},
 	/* ((1920 * 1088) / 256) * 960 fps */

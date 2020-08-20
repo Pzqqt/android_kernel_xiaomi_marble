@@ -26,6 +26,145 @@ void print_vidc_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *b)
 {
 }
 
+enum msm_vidc_codec_type get_vidc_codec_from_v4l2(u32 v4l2_codec)
+{
+	enum msm_vidc_codec_type codec = 0;
+
+	switch (v4l2_codec) {
+	case V4L2_PIX_FMT_H264:
+		codec = MSM_VIDC_H264;
+		break;
+	case V4L2_PIX_FMT_HEVC:
+		codec = MSM_VIDC_HEVC;
+		break;
+	case V4L2_PIX_FMT_VP9:
+		codec = MSM_VIDC_VP9;
+		break;
+	case V4L2_PIX_FMT_MPEG2:
+		codec = MSM_VIDC_MPEG2;
+		break;
+	default:
+		d_vpr_e("%s: vidc codec not found for %#x\n", __func__, v4l2_codec);
+		break;
+	}
+	return codec;
+}
+
+u32 get_v4l2_codec_from_vidc(enum msm_vidc_codec_type codec)
+{
+	u32 v4l2_codec = 0;
+
+	switch (codec) {
+	case MSM_VIDC_H264:
+		v4l2_codec = V4L2_PIX_FMT_H264;
+		break;
+	case MSM_VIDC_HEVC:
+		v4l2_codec = V4L2_PIX_FMT_HEVC;
+		break;
+	case MSM_VIDC_VP9:
+		v4l2_codec = V4L2_PIX_FMT_VP9;
+		break;
+	case MSM_VIDC_MPEG2:
+		v4l2_codec = V4L2_PIX_FMT_MPEG2;
+		break;
+	default:
+		d_vpr_e("%s: v4l2 codec not found for %#x\n", __func__, codec);
+		break;
+	}
+	return v4l2_codec;
+}
+
+enum msm_vidc_colorformat_type get_vidc_colorformat_from_v4l2(u32 v4l2_colorformat)
+{
+	enum msm_vidc_colorformat_type colorformat = 0;
+
+	switch (v4l2_colorformat) {
+	case V4L2_PIX_FMT_NV12:
+		colorformat = MSM_VIDC_FMT_NV12;
+		break;
+	case V4L2_PIX_FMT_NV21:
+		colorformat = MSM_VIDC_FMT_NV21;
+		break;
+	case V4L2_PIX_FMT_NV12_UBWC:
+		colorformat = MSM_VIDC_FMT_NV12_UBWC;
+		break;
+	case V4L2_PIX_FMT_NV12_TP10_UBWC:
+		colorformat = MSM_VIDC_FMT_NV12_TP10_UBWC;
+		break;
+	case V4L2_PIX_FMT_RGBA8888_UBWC:
+		colorformat = MSM_VIDC_FMT_RGBA8888_UBWC;
+		break;
+	case V4L2_PIX_FMT_NV12_P010_UBWC:
+		colorformat = MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+		break;
+	case V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
+		colorformat = MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+		break;
+	default:
+		d_vpr_e("%s: vidc format not found for %#x\n", __func__, v4l2_colorformat);
+		break;
+	}
+	return colorformat;
+}
+
+u32 get_v4l2_colorformat_from_vidc(enum msm_vidc_colorformat_type colorformat)
+{
+	u32 v4l2_colorformat = 0;
+
+	switch (colorformat) {
+	case MSM_VIDC_FMT_NV12:
+		v4l2_colorformat = V4L2_PIX_FMT_NV12;
+		break;
+	case MSM_VIDC_FMT_NV21:
+		v4l2_colorformat = V4L2_PIX_FMT_NV21;
+		break;
+	case MSM_VIDC_FMT_NV12_UBWC:
+		v4l2_colorformat = V4L2_PIX_FMT_NV12_UBWC;
+		break;
+	case MSM_VIDC_FMT_NV12_TP10_UBWC:
+		v4l2_colorformat = V4L2_PIX_FMT_NV12_TP10_UBWC;
+		break;
+	case MSM_VIDC_FMT_RGBA8888_UBWC:
+		v4l2_colorformat = V4L2_PIX_FMT_RGBA8888_UBWC;
+		break;
+	case MSM_VIDC_FMT_NV12_P010_UBWC:
+		v4l2_colorformat = V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+		break;
+	case MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
+		v4l2_colorformat = V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+		break;
+	default:
+		d_vpr_e("%s: v4l2 format not found for %#x\n", __func__, colorformat);
+		break;
+	}
+	return v4l2_colorformat;
+}
+
+u32 get_media_colorformat_from_v4l2(u32 v4l2_fmt)
+{
+	switch (v4l2_fmt) {
+	case V4L2_PIX_FMT_NV12:
+		return COLOR_FMT_NV12;
+	case V4L2_PIX_FMT_NV21:
+		return COLOR_FMT_NV21;
+	case V4L2_PIX_FMT_NV12_512:
+		return COLOR_FMT_NV12_512;
+	case V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
+		return COLOR_FMT_P010;
+	case V4L2_PIX_FMT_NV12_UBWC:
+		return COLOR_FMT_NV12_UBWC;
+	case V4L2_PIX_FMT_NV12_TP10_UBWC:
+		return COLOR_FMT_NV12_BPP10_UBWC;
+	case V4L2_PIX_FMT_RGBA8888_UBWC:
+		return COLOR_FMT_RGBA8888_UBWC;
+	default:
+		d_vpr_e(
+			"Invalid v4l2 color fmt FMT : %x, Set default(NV12)",
+			v4l2_fmt);
+		return COLOR_FMT_NV12;
+	}
+}
+
 int msm_vidc_get_port_from_v4l2_type(u32 type)
 {
 	int port;
@@ -225,31 +364,6 @@ int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 	}
 
 	return rc;
-}
-
-u32 msm_vidc_convert_color_fmt(u32 v4l2_fmt)
-{
-	switch (v4l2_fmt) {
-	case V4L2_PIX_FMT_NV12:
-		return COLOR_FMT_NV12;
-	case V4L2_PIX_FMT_NV21:
-		return COLOR_FMT_NV21;
-	case V4L2_PIX_FMT_NV12_512:
-		return COLOR_FMT_NV12_512;
-	case V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
-		return COLOR_FMT_P010;
-	case V4L2_PIX_FMT_NV12_UBWC:
-		return COLOR_FMT_NV12_UBWC;
-	case V4L2_PIX_FMT_NV12_TP10_UBWC:
-		return COLOR_FMT_NV12_BPP10_UBWC;
-	case V4L2_PIX_FMT_RGBA8888_UBWC:
-		return COLOR_FMT_RGBA8888_UBWC;
-	default:
-		d_vpr_e(
-			"Invalid v4l2 color fmt FMT : %x, Set default(NV12)",
-			v4l2_fmt);
-		return COLOR_FMT_NV12;
-	}
 }
 
 int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
@@ -609,7 +723,7 @@ static void update_inst_capability(struct msm_platform_inst_capability *in,
 		capability->cap[in->cap].cap = in->cap;
 		capability->cap[in->cap].min = in->min;
 		capability->cap[in->cap].max = in->max;
-		capability->cap[in->cap].step_or_menu = in->step_or_menu;
+		capability->cap[in->cap].step_or_mask = in->step_or_mask;
 		capability->cap[in->cap].value = in->value;
 		capability->cap[in->cap].flags = in->flags;
 		capability->cap[in->cap].v4l2_id = in->v4l2_id;
@@ -657,6 +771,8 @@ static int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
 	dec_valid_codecs = core->capabilities[DEC_CODECS].value;
 	count_bits = dec_valid_codecs;
 	COUNT_BITS(count_bits, codecs_count);
+
+	core->codecs_count = codecs_count;
 
 	if (!core->inst_caps) {
 		core->inst_caps = kcalloc(codecs_count,

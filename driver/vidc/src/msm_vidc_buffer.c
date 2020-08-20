@@ -148,7 +148,7 @@ u32 msm_vidc_decoder_output_size(struct msm_vidc_inst *inst)
 	struct v4l2_format *f;
 
 	f = &inst->fmts[OUTPUT_PORT];
-	format = msm_vidc_convert_color_fmt(f->fmt.pix.pixelformat);
+	format = get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat);
 	return VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
 			f->fmt.pix.height);
 }
@@ -169,7 +169,7 @@ u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 	struct v4l2_format *f;
 
 	f = &inst->fmts[INPUT_PORT];
-	format = msm_vidc_convert_color_fmt(f->fmt.pix.pixelformat);
+	format = get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat);
 	return VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
 			f->fmt.pix.height);
 }

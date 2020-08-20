@@ -76,6 +76,7 @@ struct msm_vidc_core {
 	u32                                    spur_count;
 	u32                                    reg_count;
 	bool                                   power_enabled;
+	u32                                    codecs_count;
 	struct msm_vidc_core_capability       *capabilities;
 	struct msm_vidc_inst_capability       *inst_caps;
 	struct msm_vidc_mem_addr               sfr;

@@ -25,61 +25,63 @@ bool valid_v4l2_buffer(struct v4l2_buffer *b,
 {
 	return true;
 }
-/*
-static int get_poll_flags(struct msm_vidc_inst *inst)
+
+static int get_poll_flags(struct msm_vidc_inst *inst, u32 port)
 {
-	int rc = 0;
-	struct vb2_queue *outq = &inst->bufq[PORT_INPUT].vb2_bufq;
-	struct vb2_queue *capq = &inst->bufq[PORT_OUTPUT].vb2_bufq;
-	struct vb2_buffer *out_vb = NULL;
-	struct vb2_buffer *cap_vb = NULL;
+	int poll = 0;
+	struct vb2_queue *q = NULL;
+	struct vb2_buffer *vb = NULL;
 	unsigned long flags = 0;
 
-	if (v4l2_event_pending(&inst->event_handler))
-		rc |= POLLPRI;
+	if (!inst || port >= MAX_PORT) {
+		d_vpr_e("%s: invalid params, inst %pK, port %d\n",
+			__func__, inst, port);
+		return poll;
+	}
+	q = &inst->vb2q[port];
 
-	spin_lock_irqsave(&capq->done_lock, flags);
-	if (!list_empty(&capq->done_list))
-		cap_vb = list_first_entry(&capq->done_list, struct vb2_buffer,
-								done_entry);
-	if (cap_vb && (cap_vb->state == VB2_BUF_STATE_DONE
-				|| cap_vb->state == VB2_BUF_STATE_ERROR))
-		rc |= POLLIN | POLLRDNORM;
-	spin_unlock_irqrestore(&capq->done_lock, flags);
+	spin_lock_irqsave(&q->done_lock, flags);
+	if (!list_empty(&q->done_list))
+		vb = list_first_entry(&q->done_list, struct vb2_buffer,
+							  done_entry);
+	if (vb && (vb->state == VB2_BUF_STATE_DONE ||
+			   vb->state == VB2_BUF_STATE_ERROR)) {
+		if (port == OUTPUT_PORT || port == OUTPUT_META_PORT)
+			poll |= POLLIN | POLLRDNORM;
+		else if (port == INPUT_PORT || port == INPUT_META_PORT)
+			poll |= POLLOUT | POLLWRNORM;
+	}
+	spin_unlock_irqrestore(&q->done_lock, flags);
 
-	spin_lock_irqsave(&outq->done_lock, flags);
-	if (!list_empty(&outq->done_list))
-		out_vb = list_first_entry(&outq->done_list, struct vb2_buffer,
-								done_entry);
-	if (out_vb && (out_vb->state == VB2_BUF_STATE_DONE
-				|| out_vb->state == VB2_BUF_STATE_ERROR))
-		rc |= POLLOUT | POLLWRNORM;
-	spin_unlock_irqrestore(&outq->done_lock, flags);
-
-	return rc;
+	return poll;
 }
-*/
 
 int msm_vidc_poll(void *instance, struct file *filp,
 		struct poll_table_struct *wait)
 {
-/*
+	int poll = 0;
 	struct msm_vidc_inst *inst = instance;
-	struct vb2_queue *outq = NULL;
-	struct vb2_queue *capq = NULL;
 
-	if (!inst)
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
-
-	outq = &inst->bufq[PORT_INPUT].vb2_bufq;
-	capq = &inst->bufq[PORT_OUTPUT].vb2_bufq;
+	}
 
 	poll_wait(filp, &inst->event_handler.wait, wait);
-	poll_wait(filp, &capq->done_wq, wait);
-	poll_wait(filp, &outq->done_wq, wait);
-	return get_poll_flags(inst);
-*/
-	return 0;
+	poll_wait(filp, &inst->vb2q[INPUT_META_PORT].done_wq, wait);
+	poll_wait(filp, &inst->vb2q[OUTPUT_META_PORT].done_wq, wait);
+	poll_wait(filp, &inst->vb2q[INPUT_PORT].done_wq, wait);
+	poll_wait(filp, &inst->vb2q[OUTPUT_PORT].done_wq, wait);
+
+	if (v4l2_event_pending(&inst->event_handler))
+		poll |= POLLPRI;
+
+	poll |= get_poll_flags(inst, INPUT_META_PORT);
+	poll |= get_poll_flags(inst, OUTPUT_META_PORT);
+	poll |= get_poll_flags(inst, INPUT_PORT);
+	poll |= get_poll_flags(inst, OUTPUT_PORT);
+
+	return poll;
 }
 EXPORT_SYMBOL(msm_vidc_poll);
 
@@ -87,14 +89,16 @@ int msm_vidc_querycap(void *instance, struct v4l2_capability *cap)
 {
 	struct msm_vidc_inst *inst = instance;
 
-	if (!inst || !cap)
+	if (!inst || !cap) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	strlcpy(cap->driver, MSM_VIDC_DRV_NAME, sizeof(cap->driver));
 	cap->bus_info[0] = 0;
 	cap->version = MSM_VIDC_VERSION;
-	cap->device_caps = V4L2_CAP_VIDEO_CAPTURE_MPLANE |
-		V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+	cap->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_META_CAPTURE |
+		V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_META_OUTPUT |
 		V4L2_CAP_STREAMING;
 	cap->capabilities = cap->device_caps | V4L2_CAP_DEVICE_CAPS;
 
@@ -115,13 +119,16 @@ int msm_vidc_enum_fmt(void *instance, struct v4l2_fmtdesc *f)
 {
 	struct msm_vidc_inst *inst = instance;
 
-	if (!inst || !f)
+	if (!inst || !f) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	if (inst->domain == MSM_VIDC_DECODER)
-		return -EINVAL;//msm_vdec_enum_fmt(instance, f);
-	else if (inst->domain == MSM_VIDC_ENCODER)
-		return -EINVAL;//msm_venc_enum_fmt(instance, f);
+		return msm_vdec_enum_fmt(inst, f);
+	if (inst->domain == MSM_VIDC_ENCODER)
+		return msm_venc_enum_fmt(inst, f);
+
 	return -EINVAL;
 }
 EXPORT_SYMBOL(msm_vidc_enum_fmt);
@@ -200,8 +207,10 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
 
-	if (!inst || !f)
+	if (!inst || !f) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	if (f->type == INPUT_PLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
@@ -225,7 +234,7 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 	if (inst->domain == MSM_VIDC_DECODER)
 		rc = msm_vdec_s_fmt(inst, f);
 	if (inst->domain == MSM_VIDC_ENCODER)
-		rc = 0;//msm_venc_s_fmt(instance, f);
+		rc = msm_venc_s_fmt(inst, f);
 
 	return rc;
 }
@@ -236,13 +245,15 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
 
-	if (!inst || !f)
+	if (!inst || !f) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	if (inst->domain == MSM_VIDC_DECODER)
 		rc = msm_vdec_g_fmt(inst, f);
 	if (inst->domain == MSM_VIDC_ENCODER)
-		rc = 0;//msm_venc_g_fmt(instance, f);
+		rc = msm_venc_g_fmt(inst, f);
 
 	return rc;
 }
@@ -265,9 +276,10 @@ int msm_vidc_g_ctrl(void *instance, struct v4l2_control *control)
 	struct v4l2_ctrl *ctrl = NULL;
 	int rc = 0;
 
-	if (!inst || !control)
+	if (!inst || !control) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
-
+	}
 	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, control->id);
 	if (ctrl) {
 		rc = msm_vidc_get_control(inst, ctrl);
@@ -285,8 +297,10 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 	struct msm_vidc_inst *inst = instance;
 	int port;
 
-	if (!inst || !b)
+	if (!inst || !b) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	mutex_lock(&inst->lock);
 
@@ -347,8 +361,10 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 	enum msm_vidc_inst_state new_state = 0;
 	int port;
 
-	if (!inst)
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	mutex_lock(&inst->lock);
 
@@ -425,8 +441,10 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 	enum msm_vidc_inst_state new_state = 0;
 	int port;
 
-	if (!inst)
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
 
 	mutex_lock(&inst->lock);
 
@@ -524,10 +542,11 @@ int msm_vidc_subscribe_event(void *instance,
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
-	if (!inst || !sub)
+	if (!inst || !sub) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
-
-	s_vpr_e(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
+	}
+	s_vpr_h(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
 	rc = v4l2_event_subscribe(&inst->event_handler,
 		sub, MAX_EVENTS, NULL);
 	return rc;
@@ -540,10 +559,11 @@ int msm_vidc_unsubscribe_event(void *instance,
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
-	if (!inst || !sub)
+	if (!inst || !sub) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
-
-	s_vpr_e(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
+	}
+	s_vpr_h(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
 	rc = v4l2_event_unsubscribe(&inst->event_handler, sub);
 	return rc;
 }
@@ -554,9 +574,10 @@ int msm_vidc_dqevent(void *instance, struct v4l2_event *event)
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
-	if (!inst || !event)
+	if (!inst || !event) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
-
+	}
 	rc = v4l2_event_dequeue(&inst->event_handler, event, false);
 	return rc;
 }

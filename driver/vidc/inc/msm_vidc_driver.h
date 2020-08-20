@@ -66,6 +66,11 @@ static inline bool is_thumbnail_session(struct msm_vidc_inst *inst)
 	return false; // TODO: fix it
 }
 
+u32 get_v4l2_codec_from_vidc(enum msm_vidc_codec_type codec);
+enum msm_vidc_codec_type get_vidc_codec_from_v4l2(u32 v4l2_codec);
+u32 get_v4l2_colorformat_from_vidc(enum msm_vidc_colorformat_type colorformat);
+enum msm_vidc_colorformat_type get_vidc_colorformat_from_v4l2(u32 colorformat);
+u32 get_media_colorformat_from_v4l2(u32 v4l2_fmt);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 		enum msm_vidc_inst_state state);
 int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
@@ -87,7 +92,6 @@ void msm_vidc_fw_unload_handler(struct work_struct *work);
 void msm_vidc_batch_handler(struct work_struct *work);
 int msm_vidc_setup_event_queue(struct msm_vidc_inst *inst);
 int msm_vidc_vb2_queue_init(struct msm_vidc_inst *inst);
-u32 msm_vidc_convert_color_fmt(u32 v4l2_fmt);
 int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl);
 int msm_vidc_get_port_from_v4l2_type(u32 type);
 u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
