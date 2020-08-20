@@ -22,16 +22,63 @@
 #define _WLAN_IF_MGR_AP_H_
 
 /**
- * wlan_process_start_bss_start() - Start BSS event handler
- *
- * Interface manager connect start bss event handler
- *
+ * if_mgr_ap_start_bss() - Start BSS event handler
  * @vdev: vdev object
  * @event_data: Interface mgr event data
  *
+ * Interface manager start bss event handler
+ *
+ * Context: It should run in thread context
+ *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_process_ap_start_bss(struct wlan_objmgr_vdev *vdev,
-				     struct if_mgr_event_data *event_data);
+QDF_STATUS
+if_mgr_ap_start_bss(struct wlan_objmgr_vdev *vdev,
+		    struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_start_bss_complete() - Start BSS complete event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * Interface manager start bss complete event handler
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+if_mgr_ap_start_bss_complete(struct wlan_objmgr_vdev *vdev,
+			     struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_stop_bss() - Stop BSS event handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * Interface manager stop bss event handler
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+if_mgr_ap_stop_bss(struct wlan_objmgr_vdev *vdev,
+		   struct if_mgr_event_data *event_data);
+
+/**
+ * if_mgr_ap_stop_bss_complete() - Stop BSS event complete handler
+ * @vdev: vdev object
+ * @event_data: Interface mgr event data
+ *
+ * Interface manager stop bss complete event handler
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+if_mgr_ap_stop_bss_complete(struct wlan_objmgr_vdev *vdev,
+			    struct if_mgr_event_data *event_data);
 
 #endif

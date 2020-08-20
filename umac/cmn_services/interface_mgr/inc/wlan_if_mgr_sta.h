@@ -22,29 +22,31 @@
 #define _WLAN_IF_MGR_STA_H_
 
 /**
- * wlan_process_connect_start() - connect start event handler
- *
- * Interface manager connect start event handler
- *
+ * if_mgr_connect_start() - connect start event handler
  * @vdev: vdev object
  * @event_data: Interface mgr event data
  *
+ * Interface manager connect start event handler
+ *
+ * Context: It should run in thread context
+ *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_process_connect_start(struct wlan_objmgr_vdev *vdev,
-				      struct if_mgr_event_data *event_data);
+QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
+				struct if_mgr_event_data *event_data);
 
 /**
- * wlan_process_connect_complete() - connect complete event handler
- *
- * Interface manager connect complete event handler
- *
+ * if_mgr_connect_complete() - connect complete event handler
  * @vdev: vdev object
  * @event_data: Interface manager complete event data
  *
+ * Interface manager connect complete event handler
+ *
+ * Context: It should run in thread context
+ *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_process_connect_complete(struct wlan_objmgr_vdev *vdev,
-					 struct if_mgr_event_data *event_data);
+QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
+				   struct if_mgr_event_data *event_data);
 
 #endif

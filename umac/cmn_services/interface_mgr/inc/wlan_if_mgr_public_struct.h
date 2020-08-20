@@ -30,15 +30,15 @@
 
 /**
  * enum wlan_if_mgr_evt: interface manager events
- * @WLAN_IF_MGR_EV_CONNECT_START:
- * @WLAN_IF_MGR_EV_CONNECT_COMPLETE:
- * @WLAN_IF_MGR_EV_DISCONNECT_START:
- * @WLAN_IF_MGR_EV_DISCONNECT_COMPLETE:
- * @WLAN_IF_MGR_EV_VALIDATE_CANDIDATE:
- * @WLAN_IF_MGR_EV_AP_START_BSS:
- * @WLAN_IF_MGR_EV_AP_START_COMPLETE:
- * @WLAN_IF_MGR_EV_AP_STOP_BSS:
- * @WLAN_IF_MGR_EV_AP_STOP_COMPLETE:
+ * @WLAN_IF_MGR_EV_CONNECT_START:Event to handle connect start request
+ * @WLAN_IF_MGR_EV_CONNECT_COMPLETE:Event to handle connect start complete
+ * @WLAN_IF_MGR_EV_DISCONNECT_START:Event to handle disconnect start request
+ * @WLAN_IF_MGR_EV_DISCONNECT_COMPLETE:Event to handle disconnect start complete
+ * @WLAN_IF_MGR_EV_VALIDATE_CANDIDATE:Event to validate candidate
+ * @WLAN_IF_MGR_EV_AP_START_BSS:Event to handle start bss request
+ * @WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE:Event to handle start bss complete
+ * @WLAN_IF_MGR_EV_AP_STOP_BSS:Event to handle stop bss request
+ * @WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE:Event to stop bss complete
  */
 enum wlan_if_mgr_evt {
 	WLAN_IF_MGR_EV_CONNECT_START = 0,
@@ -47,15 +47,16 @@ enum wlan_if_mgr_evt {
 	WLAN_IF_MGR_EV_DISCONNECT_COMPLETE = 3,
 	WLAN_IF_MGR_EV_VALIDATE_CANDIDATE = 4,
 	WLAN_IF_MGR_EV_AP_START_BSS = 5,
-	WLAN_IF_MGR_EV_AP_START_COMPLETE = 6,
+	WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE = 6,
 	WLAN_IF_MGR_EV_AP_STOP_BSS = 7,
-	WLAN_IF_MGR_EV_AP_STOP_COMPLETE = 8,
+	WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE = 8,
 	WLAN_IF_MGR_EV_MAX = 9,
 };
 
 /**
  * struct if_mgr_event_data - interface manager event data
- * @status: status
+ * @status: qdf status used to indicate if connect,disconnect,
+ *	    start bss,stop bss event is success/failure.
  */
 struct if_mgr_event_data {
 	QDF_STATUS status;

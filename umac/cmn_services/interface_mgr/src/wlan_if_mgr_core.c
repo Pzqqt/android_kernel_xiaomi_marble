@@ -21,12 +21,14 @@
 #include "wlan_if_mgr_api.h"
 #include "wlan_if_mgr_sta.h"
 #include "wlan_if_mgr_ap.h"
+#include "wlan_if_mgr_main.h"
 
 QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
 				struct if_mgr_event_data *event_data)
 {
 	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc)
@@ -34,20 +36,27 @@ QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 
 	switch (event) {
 	case WLAN_IF_MGR_EV_CONNECT_START:
-		wlan_process_connect_start(vdev, event_data);
+		status = if_mgr_connect_start(vdev, event_data);
 		break;
-
 	case WLAN_IF_MGR_EV_CONNECT_COMPLETE:
-		wlan_process_connect_complete(vdev, event_data);
+		status = if_mgr_connect_complete(vdev, event_data);
 		break;
-
 	case WLAN_IF_MGR_EV_AP_START_BSS:
-		wlan_process_ap_start_bss(vdev, event_data);
+		status = if_mgr_ap_start_bss(vdev, event_data);
 		break;
-
+	case WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE:
+		status = if_mgr_ap_start_bss_complete(vdev, event_data);
+		break;
+	case WLAN_IF_MGR_EV_AP_STOP_BSS:
+		status = if_mgr_ap_stop_bss(vdev, event_data);
+		break;
+	case WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE:
+		status = if_mgr_ap_stop_bss_complete(vdev, event_data);
 	default:
+		status = QDF_STATUS_E_INVAL;
+		ifmgr_err("Invalid event");
 		break;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
