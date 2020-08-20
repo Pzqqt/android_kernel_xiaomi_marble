@@ -2676,12 +2676,14 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
 		} else {
 			vdev =
-			dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id);
+			dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id,
+					      DP_MOD_ID_TX_CAPTURE);
 			if (vdev) {
 				qdf_mem_copy(wh_min->i_addr2,
 					     vdev->mac_addr.raw,
 					     QDF_MAC_ADDR_SIZE);
-				dp_vdev_unref_delete(pdev->soc, vdev);
+				dp_vdev_unref_delete(pdev->soc, vdev,
+						     DP_MOD_ID_TX_CAPTURE);
 			}
 		}
 		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf, sizeof(*wh_min));
@@ -2792,12 +2794,14 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 			uint8_t vdev_id;
 
 			vdev_id = ppdu_desc->vdev_id;
-			vdev = dp_vdev_get_ref_by_id(pdev->soc, vdev_id);
+			vdev = dp_vdev_get_ref_by_id(pdev->soc, vdev_id,
+						     DP_MOD_ID_TX_CAPTURE);
 			if (vdev) {
 				qdf_mem_copy(&ppdu_desc->user[usr_id].mac_addr,
 					     vdev->mac_addr.raw,
 					     QDF_MAC_ADDR_SIZE);
-				dp_vdev_unref_delete(pdev->soc, vdev);
+				dp_vdev_unref_delete(pdev->soc, vdev,
+						     DP_MOD_ID_TX_CAPTURE);
 			}
 		}
 

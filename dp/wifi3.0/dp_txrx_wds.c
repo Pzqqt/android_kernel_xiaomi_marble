@@ -233,7 +233,8 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_peer *peer;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_MISC);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("vdev is NULL for vdev_id %d"), vdev_id);
@@ -251,7 +252,7 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		dp_peer_unref_delete(peer, DP_MOD_ID_AST);
 	}
 
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_MISC);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -695,11 +696,12 @@ void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	struct dp_vdev *vdev =
-		dp_vdev_get_ref_by_id((struct dp_soc *)soc, vdev_id);
+		dp_vdev_get_ref_by_id((struct dp_soc *)soc, vdev_id,
+				      DP_MOD_ID_TX_MULTIPASS);
 
 	if (vdev && vdev->multipass_en) {
 		dp_peer_multipass_list_add(soc, peer_mac, vdev_id, vlan_id);
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TX_MULTIPASS);
 	}
 }
 
@@ -716,7 +718,8 @@ QDF_STATUS dp_set_vlan_groupkey(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 				uint16_t vlan_id, uint16_t group_key)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_TX_MULTIPASS);
 	QDF_STATUS status;
 
 	if (!vdev || !vdev->multipass_en) {
@@ -750,7 +753,7 @@ QDF_STATUS dp_set_vlan_groupkey(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	status = QDF_STATUS_SUCCESS;
 fail:
 	if (vdev)
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TX_MULTIPASS);
 	return status;
 }
 
