@@ -123,6 +123,7 @@ enum scan_source {
  * @scan_id: scan identifier used across host layers which is generated at WMI
  * @source: scan request originator (NL/Vendor scan)
  * @dev: net device (same as what is in scan_request)
+ * @scan_start_timestamp: scan start time
  *
  * Scan request linked list element
  */
@@ -132,6 +133,7 @@ struct scan_req {
 	uint32_t scan_id;
 	uint8_t source;
 	struct net_device *dev;
+	qdf_time_t scan_start_timestamp;
 };
 
 /**
