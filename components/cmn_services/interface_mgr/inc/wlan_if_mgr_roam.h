@@ -29,14 +29,34 @@
 
 /**
  * if_mgr_enable_roaming() - interface manager enable roaming
- *
- * Interface manager emable roaming
- *
  * @vdev: vdev object
  * @pdev: pdev object
+ * @requestor: RSO disable requestor
+ *
+ * Interface manager api to enable roaming for all other active vdev id's
+ *
+ * Context: It should run in thread context
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_vdev *vdev,
-				 struct wlan_objmgr_pdev *pdev);
+				 struct wlan_objmgr_pdev *pdev,
+				 enum wlan_cm_rso_control_requestor requestor);
+
+/**
+ * if_mgr_disable_roaming() - interface manager disable roaming
+ * @vdev: vdev object
+ * @pdev: pdev object
+ * @requestor: RSO disable requestor
+ *
+ * Interface manager api to disable roaming for all other active vdev id's
+ *
+ * Context: It should run in thread context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_objmgr_pdev *pdev,
+				  enum wlan_cm_rso_control_requestor requestor);
+
 #endif
