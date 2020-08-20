@@ -43,22 +43,6 @@
 #include <wlan_objmgr_global_obj.h>
 
 /**
- * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
- * @ch_list: pointer to the channel list.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
-						struct channel_power *ch_list,
-						uint8_t *num_chan)
-{
-	/*
-	 * Update the channel list with channel information with power.
-	 */
-	return reg_get_channel_list_with_power(pdev, ch_list, num_chan);
-}
-
-/**
  * wlan_reg_read_default_country() - Read the default country for the regdomain
  * @country: pointer to the country code.
  *

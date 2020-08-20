@@ -1092,46 +1092,6 @@ struct wlan_lmac_if_reg_tx_ops *reg_get_psoc_tx_ops(
 	return &tx_ops->reg_ops;
 }
 
-QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
-					   struct channel_power *ch_list,
-					   uint8_t *num_chan)
-{
-	int i, count;
-	struct regulatory_channel *reg_channels;
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-
-	if (!num_chan || !ch_list) {
-		reg_err("chan_list or num_ch is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev priv obj is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* set the current channel list */
-	reg_channels = pdev_priv_obj->cur_chan_list;
-
-	for (i = 0, count = 0; i < NUM_CHANNELS; i++) {
-		if (reg_channels[i].state &&
-		    reg_channels[i].chan_flags != REGULATORY_CHAN_DISABLED) {
-			ch_list[count].chan_num =
-				reg_channels[i].chan_num;
-			ch_list[count].center_freq =
-				reg_channels[i].center_freq;
-			ch_list[count++].tx_power =
-				reg_channels[i].tx_power;
-		}
-	}
-
-	*num_chan = count;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef CONFIG_CHAN_NUM_API
 enum channel_enum reg_get_chan_enum(uint8_t chan_num)
 {
@@ -3205,6 +3165,7 @@ QDF_STATUS reg_get_channel_list_with_power_for_freq(struct wlan_objmgr_pdev
 		    !(reg_channels[i].chan_flags & REGULATORY_CHAN_DISABLED)) {
 			ch_list[count].center_freq =
 				reg_channels[i].center_freq;
+			ch_list[count].chan_num = reg_channels[i].chan_num;
 			ch_list[count++].tx_power =
 				reg_channels[i].tx_power;
 		}

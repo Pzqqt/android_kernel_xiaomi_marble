@@ -131,18 +131,6 @@ extern const struct chan_map channel_map_jp[];
 extern const struct chan_map channel_map_china[];
 extern const struct chan_map channel_map_global[];
 
-/**
- * reg_get_channel_list_with_power() - Provides the channel list with power
- * @pdev: Pointer to pdev
- * @ch_list: Pointer to the channel list.
- * @num_chan: Pointer to save number of channels
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
-					   struct channel_power *ch_list,
-					   uint8_t *num_chan);
-
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * reg_get_chan_enum() - Get channel enum for given channel number

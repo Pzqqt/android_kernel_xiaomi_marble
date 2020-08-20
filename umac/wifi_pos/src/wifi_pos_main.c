@@ -501,8 +501,8 @@ static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 	ch_info = (struct channel_power *)chan_list->chan_info;
-	status = wlan_reg_get_channel_list_with_power(pdev, ch_info,
-						      &num_channels);
+	status = wlan_reg_get_channel_list_with_power_for_freq(pdev, ch_info,
+							       &num_channels);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wifi_pos_err("Failed to get valid channel list");
