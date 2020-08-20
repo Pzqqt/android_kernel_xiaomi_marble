@@ -467,6 +467,8 @@ static const u32 hdd_sta_akm_suites[] = {
 	WLAN_AKM_SUITE_FT_EAP_SHA_384,
 	RSN_AUTH_KEY_MGMT_CCKM,
 	RSN_AUTH_KEY_MGMT_OSEN,
+	WAPI_PSK_AKM_SUITE,
+	WAPI_CERT_AKM_SUITE,
 };
 
 /*akm suits supported by AP*/
