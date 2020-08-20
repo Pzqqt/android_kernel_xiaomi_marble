@@ -322,36 +322,6 @@
 
 /*
  * <ini>
- * gFirstScanBucketThreshold - Set first scan bucket
- * threshold
- * @Min: -50
- * @Max: -30
- * @Default: -30
- *
- * This ini will configure the first scan bucket
- * threshold to the mentioned value and all the AP's which
- * have RSSI under this threshold will fall under this
- * bucket. This configuration item used to tweak and
- * test the input for internal algorithm.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD CFG_INI_INT( \
-	"gFirstScanBucketThreshold", \
-	-50, \
-	-30, \
-	-30, \
-	CFG_VALUE_OR_DEFAULT, \
-	"Set first scan bucket")
-
-/*
- * <ini>
  * gtraffic_threshold - Dense traffic threshold
  * @Min: 0
  * @Max: 0xffffffff
@@ -2799,7 +2769,6 @@
 	CFG(CFG_LFR_EARLY_STOP_SCAN_ENABLE) \
 	CFG(CFG_LFR_EARLY_STOP_SCAN_MIN_THRESHOLD) \
 	CFG(CFG_LFR_EARLY_STOP_SCAN_MAX_THRESHOLD) \
-	CFG(CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD) \
 	CFG(CFG_LFR_ROAM_DENSE_TRAFFIC_THRESHOLD) \
 	CFG(CFG_LFR_ROAM_DENSE_RSSI_THRE_OFFSET) \
 	CFG(CFG_LFR_ROAM_DENSE_MIN_APS) \

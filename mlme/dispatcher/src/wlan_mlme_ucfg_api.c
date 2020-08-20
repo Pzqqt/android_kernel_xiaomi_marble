@@ -793,23 +793,6 @@ ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 #endif
 
 QDF_STATUS
-ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
-					  uint8_t *val)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		*val = cfg_default(CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	*val = mlme_obj->cfg.lfr.first_scan_bucket_threshold;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
 ucfg_mlme_is_mawc_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;

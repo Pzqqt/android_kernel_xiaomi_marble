@@ -1627,8 +1627,6 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_MIN_THRESHOLD);
 	lfr->early_stop_scan_max_threshold =
 		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_MAX_THRESHOLD);
-	lfr->first_scan_bucket_threshold =
-		cfg_get(psoc, CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD);
 	lfr->roam_dense_traffic_threshold =
 		cfg_get(psoc, CFG_LFR_ROAM_DENSE_TRAFFIC_THRESHOLD);
 	lfr->roam_dense_rssi_thre_offset =
