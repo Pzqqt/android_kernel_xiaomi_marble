@@ -36,7 +36,6 @@
  * @pdev_component_obj_detach:         Detach DFS object from PDEV.
  * @pdev_get_comp_private_obj:         Get DFS object from PDEV.
  * @dfs_start_rcsa:                    Send RCSA to RootAP.
- * @mlme_mark_dfs:                     Calls dfs_action function.
  * @mlme_start_csa:                    Sends CSA.
  * @mlme_proc_cac:                     Process the CAC completion event.
  * @mlme_deliver_event_up_after_cac:   Send a CAC timeout, VAP up event to user
@@ -69,7 +68,7 @@
  *                                     Channel Switch Announcement.
  * @mlme_postnol_chan_switch:          Channel change post NOL using Channel
  *                                     Switch Announcement.
- * @mlme_mark_dfs_for_freq:            Mark DFS channel frequency as radar.
+ * @mlme_mark_dfs:                     Mark DFS channel frequency as radar.
  * @mlme_get_extchan_for_freq:         Get the extension channel.
  * @mlme_find_dot11_chan_for_freq:     Find a channel pointer.
  * @mlme_get_dfs_channels_for_freq:    Get DFS channels from current channel
@@ -91,20 +90,11 @@ struct dfs_to_mlme {
 			void *comp_priv_obj);
 	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev,
 			bool *wait_for_csa);
-#ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_mark_dfs)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint16_t freq,
-			uint8_t vhtop_ch_freq_seg2,
+			uint16_t vhtop_ch_freq_seg2,
 			uint64_t flags);
-#endif
-#ifdef CONFIG_CHAN_FREQ_API
-	QDF_STATUS (*mlme_mark_dfs_for_freq)(struct wlan_objmgr_pdev *pdev,
-					     uint8_t ieee,
-					     uint16_t freq,
-					     uint16_t ic_mhz_freq_seg2,
-					     uint64_t flags);
-#endif
 #ifdef CONFIG_CHAN_NUM_API
 	QDF_STATUS (*mlme_start_csa)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee_chan, uint16_t freq,

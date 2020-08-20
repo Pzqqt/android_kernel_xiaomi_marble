@@ -1306,11 +1306,11 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 		dfs_second_segment_radar_disable(dfs);
 	}
 
-	dfs_mlme_mark_dfs_for_freq(dfs->dfs_pdev_obj,
-				   dfs->dfs_curchan->dfs_ch_ieee,
-				   dfs->dfs_curchan->dfs_ch_freq,
-				   dfs->dfs_curchan->dfs_ch_mhz_freq_seg2,
-				   dfs->dfs_curchan->dfs_ch_flags);
+	dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
+			  dfs->dfs_curchan->dfs_ch_ieee,
+			  dfs->dfs_curchan->dfs_ch_freq,
+			  dfs->dfs_curchan->dfs_ch_mhz_freq_seg2,
+			  dfs->dfs_curchan->dfs_ch_flags);
 
 exit:
 	return status;

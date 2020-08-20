@@ -41,11 +41,10 @@ void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
 #endif
 
 #ifndef QCA_MCL_DFS_SUPPORT
-#ifdef CONFIG_CHAN_NUM_API
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint16_t freq,
-		uint8_t vhtop_ch_freq_seg2,
+		uint16_t vhtop_ch_freq_seg2,
 		uint64_t flags)
 {
 	if (global_dfs_to_mlme.mlme_mark_dfs)
@@ -55,22 +54,6 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 				vhtop_ch_freq_seg2,
 				flags);
 }
-#endif
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_mlme_mark_dfs_for_freq(struct wlan_objmgr_pdev *pdev,
-				uint8_t ieee,
-				uint16_t freq,
-				uint16_t vhtop_ch_freq_seg2,
-				uint64_t flags)
-{
-	if (global_dfs_to_mlme.mlme_mark_dfs_for_freq)
-	global_dfs_to_mlme.mlme_mark_dfs_for_freq(pdev,
-						  ieee,
-						  freq,
-						  vhtop_ch_freq_seg2,
-						  flags);
-}
-#endif
 #else /* Else of ndef MCL_DFS_SUPPORT */
 static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 		void *object,
@@ -89,11 +72,10 @@ static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 		    vdev_id);
 }
 
-#ifdef CONFIG_CHAN_NUM_API
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint16_t freq,
-		uint8_t vhtop_ch_freq_seg2,
+		uint16_t vhtop_ch_freq_seg2,
 		uint64_t flags)
 {
 	struct wlan_objmgr_vdev *vdev;
@@ -110,30 +92,6 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
 	}
 }
-#endif
-
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_mlme_mark_dfs_for_freq(struct wlan_objmgr_pdev *pdev,
-				uint8_t ieee,
-				uint16_t freq,
-				uint16_t vhtop_ch_freq_seg2,
-				uint64_t flags)
-{
-	struct wlan_objmgr_vdev *vdev;
-
-	if (!pdev) {
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
-		return;
-	}
-
-	vdev = wlan_pdev_peek_active_first_vdev(pdev, WLAN_DFS_ID);
-
-	if (vdev) {
-		dfs_send_radar_ind(pdev, vdev, NULL);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
-	}
-}
-#endif
 #endif
 
 #ifndef QCA_MCL_DFS_SUPPORT

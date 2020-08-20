@@ -140,11 +140,11 @@ void dfs_process_cac_completion(struct wlan_dfs *dfs)
 	 * switch to a new channel. Check the channel to decide how to act.
 	 */
 	if (WLAN_IS_CHAN_RADAR(dfs->dfs_curchan)) {
-		dfs_mlme_mark_dfs_for_freq(dfs->dfs_pdev_obj,
-					   dfs_curchan->dfs_ch_ieee,
-					   dfs_curchan->dfs_ch_freq,
-					   dfs_curchan->dfs_ch_mhz_freq_seg2,
-					   dfs_curchan->dfs_ch_flags);
+		dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
+				  dfs_curchan->dfs_ch_ieee,
+				  dfs_curchan->dfs_ch_freq,
+				  dfs_curchan->dfs_ch_mhz_freq_seg2,
+				  dfs_curchan->dfs_ch_flags);
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "CAC timer on chan %u (%u MHz) stopped due to radar",
 			  dfs_curchan->dfs_ch_ieee,

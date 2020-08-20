@@ -109,7 +109,6 @@ register_dfs_callbacks_for_freq(struct dfs_to_mlme *mlme_callback)
 	if (!mlme_callback)
 		return;
 
-	mlme_callback->mlme_mark_dfs_for_freq = mlme_dfs_mark_dfs_for_freq;
 	mlme_callback->mlme_find_dot11_chan_for_freq =
 		mlme_dfs_find_dot11_chan_for_freq;
 	mlme_callback->mlme_get_dfs_channels_for_freq =
@@ -168,6 +167,8 @@ void register_dfs_callbacks(void)
 		mlme_acquire_radar_mode_switch_lock;
 	tmp_dfs_to_mlme->mlme_release_radar_mode_switch_lock =
 		mlme_release_radar_mode_switch_lock;
+	tmp_dfs_to_mlme->mlme_mark_dfs =
+		mlme_dfs_mark_dfs;
 	/*
 	 * Register precac auto channel switch feature related callbacks
 	 */

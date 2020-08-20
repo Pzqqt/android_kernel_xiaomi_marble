@@ -46,29 +46,12 @@ void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
  * @vhtop_ch_freq_seg2: VHT80 Cfreq2.
  * @flags: channel flags.
  */
-#ifdef CONFIG_CHAN_NUM_API
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint16_t freq,
-			uint8_t vhtop_ch_freq_seg2,
+			uint16_t vhtop_ch_freq_seg2,
 			uint64_t flags);
-#endif
 
-/**
- * dfs_mlme_mark_dfs_for_freq() - Mark the channel in the channel list.
- * @pdev: Pointer to DFS pdev object.
- * @ieee: Channel number.
- * @freq: Channel frequency.
- * @vhtop_ch_freq_seg2_mhz: VHT80 Cfreq2 in Mhz.
- * @flags: channel flags.
- */
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_mlme_mark_dfs_for_freq(struct wlan_objmgr_pdev *pdev,
-				uint8_t ieee,
-				uint16_t freq,
-				uint16_t vhtop_ch_freq_mhz_seg2,
-				uint64_t flags);
-#endif
 /**
  * dfs_mlme_start_csa() - Sends CSA in ieeeChan
  * @pdev: Pointer to DFS pdev object.
