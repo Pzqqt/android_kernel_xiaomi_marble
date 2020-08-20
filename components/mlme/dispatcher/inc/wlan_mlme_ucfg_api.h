@@ -1131,17 +1131,6 @@ ucfg_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
 #endif
 
 /**
- * ucfg_mlme_get_first_scan_bucket_threshold() - Get first scan bucket thre
- * @psoc: pointer to psoc object
- * @val:  first scan bucket threshold
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
-					  uint8_t *val);
-
-/**
  * ucfg_mlme_is_mawc_enabled() - MAWC enabled or not
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller
