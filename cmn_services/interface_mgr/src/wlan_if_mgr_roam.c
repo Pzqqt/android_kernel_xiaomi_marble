@@ -22,9 +22,20 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_if_mgr_roam.h"
+#include "wlan_cm_roam_api.h"
+#include "wlan_if_mgr_main.h"
+#include "wlan_p2p_ucfg_api.h"
 
 QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_vdev *vdev,
-				struct wlan_objmgr_pdev *pdev)
+				 struct wlan_objmgr_pdev *pdev,
+				 enum wlan_cm_rso_control_requestor requestor)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_objmgr_pdev *pdev,
+				  enum wlan_cm_rso_control_requestor requestor)
 {
 	return QDF_STATUS_SUCCESS;
 }
