@@ -226,7 +226,11 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 		if (!LIM_IS_AP_ROLE(pe_session))
 			return;
 		if (pe_session->ch_width == CH_WIDTH_160MHZ) {
-			send_bcon_ind = false;
+			if (wlan_reg_get_bonded_channel_state(
+					mac->pdev, chan_freq,
+					pe_session->ch_width, 0) !=
+					CHANNEL_STATE_DFS)
+				send_bcon_ind = true;
 		} else if (pe_session->ch_width == CH_WIDTH_80P80MHZ) {
 			if ((wlan_reg_get_channel_state_for_freq(
 					mac->pdev, chan_freq) !=
