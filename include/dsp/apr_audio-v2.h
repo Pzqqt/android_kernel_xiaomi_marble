@@ -10,6 +10,9 @@
 #include <ipc/apr.h>
 #include <audio/linux/msm_audio.h>
 
+/* number of threshold levels in speaker protection module */
+#define MAX_CPS_LEVELS 3
+
 /* size of header needed for passing data out of band */
 #define APR_CMD_OB_HDR_SZ  12
 
@@ -2364,6 +2367,28 @@ int16_t        excursionf[AFE_SPKR_PROT_EXCURSIONF_LEN];
  */
 } __packed;
 
+struct lpass_swr_spkr_dep_cfg_t {
+	uint32_t vbatt_pkd_reg_addr;
+	uint32_t temp_pkd_reg_addr;
+	uint32_t value_normal_thrsd[MAX_CPS_LEVELS];
+	uint32_t value_low1_thrsd[MAX_CPS_LEVELS];
+	uint32_t value_low2_thrsd[MAX_CPS_LEVELS];
+} __packed;
+
+struct lpass_swr_hw_reg_cfg_t {
+	uint32_t lpass_wr_cmd_reg_phy_addr;
+	uint32_t lpass_rd_cmd_reg_phy_addr;
+	uint32_t lpass_rd_fifo_reg_phy_addr;
+	uint32_t vbatt_lower1_threshold;
+	uint32_t vbatt_lower2_threshold;
+	uint32_t num_spkr;
+} __packed;
+
+struct afe_cps_hw_intf_cfg {
+	uint32_t lpass_hw_intf_cfg_mode;
+	struct lpass_swr_hw_reg_cfg_t hw_reg_cfg;
+	struct lpass_swr_spkr_dep_cfg_t *spkr_dep_cfg;
+} __packed;
 
 #define AFE_SERVICE_CMD_REGISTER_RT_PORT_DRIVER	0x000100E0
 
@@ -5467,6 +5492,7 @@ struct afe_param_id_lpass_core_shared_clk_cfg {
 #define ADM_CMD_COPP_OPEN_TOPOLOGY_ID_DTS_HPX		0x10015002
 #define ADM_CMD_COPP_OPEN_TOPOLOGY_ID_AUDIOSPHERE	0x10028000
 #define VPM_TX_DM_FLUENCE_EF_COPP_TOPOLOGY		0x10000005
+#define AUDIO_RX_MONO_VOIP_COPP_TOPOLOGY		0x11000101
 
 /* Memory map regions command payload used by the
  * #ASM_CMD_SHARED_MEM_MAP_REGIONS ,#ADM_CMD_SHARED_MEM_MAP_REGIONS
@@ -10807,6 +10833,7 @@ struct cmd_set_topologies {
 #define AFE_PARAM_ID_FBSP_MODE_RX_CFG 0x0001021D
 #define AFE_PARAM_ID_FBSP_PTONE_RAMP_CFG 0x00010260
 #define AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING 0x000102BC
+#define AFE_PARAM_ID_CPS_LPASS_HW_INTF_CFG 0x000102EF
 
 struct asm_fbsp_mode_rx_cfg {
 	uint32_t minor_version;
@@ -11717,6 +11744,10 @@ struct avcs_fwk_ver_info {
 #define LSM_SESSION_CMD_SET_PARAMS			(0x00012A83)
 #define LSM_SESSION_CMD_SET_PARAMS_V2			(0x00012A8F)
 #define LSM_SESSION_CMD_SET_PARAMS_V3			(0x00012A92)
+#define LSM_SESSION_CMD_GET_PARAMS_V2			(0x00012A90)
+#define LSM_SESSION_CMDRSP_GET_PARAMS_V2		(0x00012A91)
+#define LSM_SESSION_CMD_GET_PARAMS_V3			(0x00012A93)
+#define LSM_SESSION_CMDRSP_GET_PARAMS_V3		(0x00012A94)
 #define LSM_SESSION_CMD_REGISTER_SOUND_MODEL		(0x00012A84)
 #define LSM_SESSION_CMD_DEREGISTER_SOUND_MODEL		(0x00012A85)
 #define LSM_SESSION_CMD_START				(0x00012A86)

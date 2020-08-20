@@ -19,6 +19,7 @@
 #include <dsp/q6common.h>
 #include <ipc/apr.h>
 #include "adsp_err.h"
+#include <soc/qcom/secure_buffer.h>
 
 #define TIMEOUT_MS 1000
 
@@ -106,6 +107,8 @@ struct adm_ctl {
 	int ffecns_port_id;
 	int native_mode;
 	uint32_t copp_token;
+	int tx_port_id;
+	bool hyp_assigned;
 };
 
 static struct adm_ctl			this_adm;
@@ -2311,6 +2314,9 @@ static void send_adm_cal_type(int cal_index, int path, int port_id,
 {
 	struct cal_block_data		*cal_block = NULL;
 	int ret;
+	int dest_perms[2] = {PERM_READ | PERM_WRITE, PERM_READ | PERM_WRITE};
+	int source_vm[1] = {VMID_HLOS};
+	int dest_vm[2] = {VMID_LPASS, VMID_ADSP_HEAP};
 
 	pr_debug("%s: cal index %d\n", __func__, cal_index);
 
@@ -2326,6 +2332,28 @@ static void send_adm_cal_type(int cal_index, int path, int port_id,
 	if (cal_block == NULL)
 		goto unlock;
 
+	if (cal_block->cma_mem) {
+		if (cal_block->cal_data.paddr == 0 ||
+		    cal_block->map_data.map_size <= 0) {
+			pr_err("%s: No address to map!\n", __func__);
+			ret = -EINVAL;
+			goto unlock;
+		}
+		ret = hyp_assign_phys(cal_block->cal_data.paddr,
+				      cal_block->map_data.map_size,
+				      source_vm, 1, dest_vm, dest_perms, 2);
+		if (ret < 0) {
+			pr_err("%s: hyp_assign_phys failed result = %d addr = 0x%pK size = %d\n",
+				__func__, ret, cal_block->cal_data.paddr,
+				cal_block->map_data.map_size);
+			ret = -EINVAL;
+			goto unlock;
+		}
+		this_adm.tx_port_id = port_id;
+		this_adm.hyp_assigned = true;
+		pr_debug("%s: hyp_assign_phys success in tx_port_id 0x%x\n",
+			 __func__, this_adm.tx_port_id);
+	}
 	ret = adm_remap_and_send_cal_block(cal_index, port_id, copp_idx,
 		cal_block, perf_mode, app_type, acdb_id, sample_rate);
 
@@ -3114,7 +3142,8 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	}
 
 	if (topology == VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY ||
-	    topology == VPM_TX_VOICE_FLUENCE_SM_COPP_TOPOLOGY)
+	    topology == VPM_TX_VOICE_FLUENCE_SM_COPP_TOPOLOGY ||
+	    topology == AUDIO_RX_MONO_VOIP_COPP_TOPOLOGY)
 		channel_mode = 1;
 
 	/*
@@ -3849,6 +3878,12 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 
 	int ret = 0, port_idx;
 	int copp_id = RESET_COPP_ID;
+	bool result = false;
+	int dest_perms[1] = {PERM_READ | PERM_WRITE | PERM_EXEC};
+	int source_vm[2] = {VMID_LPASS, VMID_ADSP_HEAP};
+	int dest_vm[1] = {VMID_HLOS};
+	struct cal_block_data *cal_block = NULL;
+	int cal_index = ADM_AUDPROC_PERSISTENT_CAL;
 
 	pr_debug("%s: port_id=0x%x perf_mode: %d copp_idx: %d\n", __func__,
 		 port_id, perf_mode, copp_idx);
@@ -3948,6 +3983,49 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 		ret = apr_send_pkt(this_adm.apr, (uint32_t *)&close);
 		if (ret < 0) {
 			pr_err("%s: ADM close failed %d\n", __func__, ret);
+			if (this_adm.tx_port_id == port_id) {
+				mutex_lock(&this_adm.cal_data[cal_index]->lock);
+				cal_block = cal_utils_get_only_cal_block(
+						this_adm.cal_data[cal_index]);
+				if (cal_block != NULL) {
+					result = true;
+					pr_debug("%s: cma_alloc %d\n",
+						 __func__, cal_block->cma_mem);
+				}
+				if (result) {
+					pr_debug("%s: use hyp assigned %d, use buffer %d\n",
+						 __func__, this_adm.hyp_assigned,
+						cal_block->buffer_number);
+					if(cal_block->cma_mem &&
+					   this_adm.hyp_assigned) {
+						if (cal_block->cal_data.paddr == 0 ||
+						    cal_block->map_data.map_size <= 0) {
+							pr_err("%s: No address to map!\n",
+								__func__);
+							ret = -EINVAL;
+							goto fail;
+						}
+						ret = hyp_assign_phys(
+							cal_block->cal_data.paddr,
+							cal_block->map_data.map_size,
+							source_vm, 2, dest_vm,
+							dest_perms, 1);
+						if (ret < 0) {
+							pr_err("%s: hyp_assign_phys failed result = %d addr = 0x%pK size = %d\n",
+								__func__, ret,
+								cal_block->cal_data.paddr,
+								cal_block->map_data.map_size);
+							goto fail;
+						} else {
+							pr_debug("%s: hyp_assign_phys success\n",
+								 __func__);
+							this_adm.hyp_assigned = false;
+						}
+					}
+					ret = -EINVAL;
+				}
+				goto fail;
+			}
 			return -EINVAL;
 		}
 
@@ -3976,10 +4054,55 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 		rtac_remove_adm_device(port_id, copp_id);
 	}
 
+	if (this_adm.tx_port_id == port_id) {
+		mutex_lock(&this_adm.cal_data[cal_index]->lock);
+		cal_block = cal_utils_get_only_cal_block(
+				this_adm.cal_data[cal_index]);
+		if (cal_block != NULL) {
+			result = true;
+			pr_debug("%s: cma_alloc %d\n",
+				 __func__, cal_block->cma_mem);
+		}
+
+		if (result) {
+			pr_debug("%s: use hyp assigned %d, use buffer %d\n",
+				  __func__, this_adm.hyp_assigned,
+				  cal_block->buffer_number);
+			if(cal_block->cma_mem && this_adm.hyp_assigned) {
+				if (cal_block->cal_data.paddr == 0 ||
+				    cal_block->map_data.map_size <= 0) {
+					pr_err("%s: No address to map!\n",
+						__func__);
+					ret = -EINVAL;
+					goto fail;
+				}
+				ret = hyp_assign_phys(cal_block->cal_data.paddr,
+						cal_block->map_data.map_size,
+						source_vm, 2, dest_vm,
+						dest_perms, 1);
+				if (ret < 0) {
+					pr_err("%s: hyp_assign_phys failed result = %d addr = 0x%pK size = %d\n",
+						__func__, ret, cal_block->cal_data.paddr,
+						cal_block->map_data.map_size);
+					ret = -EINVAL;
+					goto fail;
+				} else {
+					pr_debug("%s: hyp_assign_phys success\n",
+						 __func__);
+					this_adm.hyp_assigned = false;
+				}
+			}
+		}
+		goto fail;
+	}
+
 	if (port_id == this_adm.ffecns_port_id)
 		this_adm.ffecns_port_id = -1;
 
 	return 0;
+fail:
+	mutex_unlock(&this_adm.cal_data[cal_index]->lock);
+	return ret;
 }
 EXPORT_SYMBOL(adm_close);
 
@@ -5536,6 +5659,8 @@ int __init adm_init(void)
 
 	this_adm.ec_ref_rx = -1;
 	this_adm.ffecns_port_id = -1;
+	this_adm.tx_port_id = -1;
+	this_adm.hyp_assigned = false;
 	init_waitqueue_head(&this_adm.matrix_map_wait);
 	init_waitqueue_head(&this_adm.adm_wait);
 

@@ -69,5 +69,10 @@ extern int msm_cdc_init_supplies_v2(struct device *dev,
 int msm_cdc_init_wcd_supply(struct device_node *np, const char *name,
 			    struct cdc_wcd_supply *cdc_supply);
 int msm_cdc_enable_wcd_supply(struct cdc_wcd_supply *cdc_supply, bool enable);
+extern int msm_cdc_set_supply_min_voltage(struct device *dev,
+				struct regulator_bulk_data *supplies,
+				struct cdc_regulator *cdc_vreg,
+				int num_supplies, char *supply_name,
+				int vval_min, bool override_min_vol);
 
 #endif

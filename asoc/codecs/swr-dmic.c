@@ -33,6 +33,8 @@
 #define NUM_ATTEMPTS 5
 #define SWRS_SCP_CONTROL    0x44
 
+#define MAX_NAME_LEN 40
+
 static int swr_master_channel_map[] = {
 	ZERO,
 	SWRM_TX1_CH1,
@@ -94,6 +96,9 @@ const char *aif_name_list[] = {
 static int swr_dmic_reset(struct swr_device *pdev);
 static int swr_dmic_up(struct swr_device *pdev);
 static int swr_dmic_down(struct swr_device *pdev);
+static int swr_dmic_event_notify(struct notifier_block *block,
+				unsigned long val,
+				void *data);
 
 static inline int swr_dmic_tx_get_slave_port_type_idx(const char *wname,
 				      unsigned int *port_idx)
@@ -269,23 +274,41 @@ static const struct snd_kcontrol_new dmic_switch[] = {
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
 };
 
+static const struct snd_kcontrol_new va_dmic_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
 static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER_E("SWR_DMIC_MIXER", SND_SOC_NOPM, 0, 0,
 			dmic_switch, ARRAY_SIZE(dmic_switch), dmic_swr_ctrl,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
+	SND_SOC_DAPM_MIXER_E("SWR_DMIC_VA_MIXER", SND_SOC_NOPM, 0, 0,
+			va_dmic_switch, ARRAY_SIZE(va_dmic_switch), dmic_swr_ctrl,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
 	SND_SOC_DAPM_INPUT("SWR_DMIC"),
+	SND_SOC_DAPM_INPUT("VA_SWR_DMIC"),
 
 	SND_SOC_DAPM_OUT_DRV_E("SMIC_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
 				swr_dmic_port_enable,
 				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
+
+	SND_SOC_DAPM_OUT_DRV_E("SMIC_VA_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
+				swr_dmic_port_enable,
+				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
+
 	SND_SOC_DAPM_OUTPUT("SWR_DMIC_OUTPUT"),
+	SND_SOC_DAPM_OUTPUT("SWR_DMIC_VA_OUTPUT"),
 };
 
 static const struct snd_soc_dapm_route swr_dmic_audio_map[] = {
 	{"SWR_DMIC_MIXER", "Switch", "SWR_DMIC"},
 	{"SMIC_PORT_EN", NULL, "SWR_DMIC_MIXER"},
 	{"SWR_DMIC_OUTPUT", NULL, "SMIC_PORT_EN"},
+	{"SWR_DMIC_VA_MIXER", "Switch", "VA_SWR_DMIC"},
+	{"SMIC_VA_PORT_EN", NULL, "SWR_DMIC_VA_MIXER"},
+	{"SWR_DMIC_VA_OUTPUT", NULL, "SMIC_VA_PORT_EN"},
 };
 
 static int swr_dmic_codec_probe(struct snd_soc_component *component)
@@ -294,35 +317,44 @@ static int swr_dmic_codec_probe(struct snd_soc_component *component)
 			snd_soc_component_get_drvdata(component);
 	struct snd_soc_dapm_context *dapm =
 			snd_soc_component_get_dapm(component);
-	char w_name[100];
+	char w_name[MAX_NAME_LEN];
 
 	if (!swr_dmic)
 		return -EINVAL;
 
 	swr_dmic->component = component;
-	snd_soc_dapm_ignore_suspend(dapm,
-				swr_dmic->dai_driver->capture.stream_name);
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SWR_DMIC", 100);
+	if (!component->name_prefix) {
+		dev_err(component->dev, "%s: component prefix is NULL\n", __func__);
+		return -EPROBE_DEFER;
+	}
+
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " ", sizeof(w_name));
+	strlcat(w_name, swr_dmic->dai_driver->capture.stream_name,
+				sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SMIC_SUPPLY", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SWR_DMIC", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SMIC_PORT_EN", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SMIC_PORT_EN", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SWR_DMIC_OUTPUT", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SWR_DMIC_OUTPUT", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	snd_soc_dapm_sync(dapm);
+
+	swr_dmic->nblock.notifier_call = swr_dmic_event_notify;
+	wcd938x_swr_dmic_register_notifier(swr_dmic->supply_component,
+					&swr_dmic->nblock, true);
 
 	return 0;
 }
@@ -472,6 +504,8 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		ret = enable_wcd_codec_supply(swr_dmic, true);
 		if (ret) {
 			ret = -EPROBE_DEFER;
+			swr_dmic->is_wcd_supply = false;
+			swr_dmic->wcd_handle = NULL;
 			goto err;
 		}
 		++swr_dmic->is_en_supply;
@@ -516,10 +550,16 @@ static int swr_dmic_probe(struct swr_device *pdev)
 			"%s get devnum %d for dev addr %llx failed\n",
 			__func__, swr_devnum, pdev->addr);
 		ret = -EPROBE_DEFER;
-		goto dev_err;
+
+		if (swr_dmic->is_en_supply == 1) {
+			enable_wcd_codec_supply(swr_dmic, false);
+			--swr_dmic->is_en_supply;
+		}
+		swr_dmic->is_wcd_supply = false;
+		swr_dmic->wcd_handle = NULL;
+		goto err;
 	}
 	pdev->dev_num = swr_devnum;
-
 
 	swr_dmic->driver = devm_kzalloc(&pdev->dev,
 			sizeof(struct snd_soc_component_driver), GFP_KERNEL);
@@ -585,10 +625,6 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	strlcpy(prefix_name, swr_dmic_name_prefix_of,
 			strlen(swr_dmic_name_prefix_of) + 1);
 	component->name_prefix = prefix_name;
-
-	swr_dmic->nblock.notifier_call = swr_dmic_event_notify;
-	wcd938x_swr_dmic_register_notifier(swr_dmic->supply_component,
-					&swr_dmic->nblock, true);
 
 	return 0;
 

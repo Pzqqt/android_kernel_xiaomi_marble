@@ -18,6 +18,9 @@ endif
 ifeq ($(CONFIG_ARCH_LAHAINA), y)
 include $(srctree)/techpack/audio/config/lahainaauto.conf
 endif
+ifeq ($(CONFIG_ARCH_HOLI), y)
+include $(srctree)/techpack/audio/config/holiauto.conf
+endif
 endif
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
@@ -50,6 +53,10 @@ endif
 ifeq ($(CONFIG_ARCH_LAHAINA), y)
 LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/lahainaautoconf.h
+endif
+ifeq ($(CONFIG_ARCH_HOLI), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/holiautoconf.h
 endif
 
 obj-y += soc/

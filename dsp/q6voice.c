@@ -23,6 +23,7 @@
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
 #include <dsp/voice_mhi.h>
+#include <soc/qcom/secure_buffer.h>
 
 #define TIMEOUT_MS 300
 
@@ -56,6 +57,7 @@ struct cvd_version_table cvd_version_table_mapping[CVD_INT_VERSION_MAX] = {
 
 static struct common_data common;
 static bool module_initialized;
+static bool hyp_assigned;
 
 static int voice_send_enable_vocproc_cmd(struct voice_data *v);
 static int voice_send_netid_timing_cmd(struct voice_data *v);
@@ -1249,6 +1251,9 @@ static int voice_unmap_cal_block(struct voice_data *v, int cal_index)
 {
 	int result = 0;
 	struct cal_block_data *cal_block;
+	int dest_perms[1] = {PERM_READ | PERM_WRITE | PERM_EXEC};
+	int source_vm[2] = {VMID_LPASS, VMID_ADSP_HEAP};
+	int dest_vm[1] = {VMID_HLOS};
 
 	if (common.cal_data[cal_index] == NULL) {
 		pr_err("%s: Cal type is NULL, index %d!\n",
@@ -1281,6 +1286,27 @@ static int voice_unmap_cal_block(struct voice_data *v, int cal_index)
 		pr_err("%s: Voice_send_mvm_unmap_memory_physical_cmd failed for session 0x%x, err %d!\n",
 			__func__, v->session_id, result);
 
+	pr_debug("%s: use hyp assigned %d\n",__func__, hyp_assigned);
+	if (cal_block->cma_mem && hyp_assigned) {
+		if (cal_block->cal_data.paddr == 0 ||
+		    cal_block->map_data.map_size <= 0) {
+			pr_err("%s: No address to map!\n", __func__);
+			result = -EINVAL;
+			goto unlock;
+		}
+		result = hyp_assign_phys(cal_block->cal_data.paddr,
+					 cal_block->map_data.map_size,
+					 source_vm, 2, dest_vm, dest_perms, 1);
+		if (result < 0) {
+			pr_err("%s: hyp_assign_phys failed result = %d addr = 0x%pK size = %d\n",
+				__func__, result, cal_block->cal_data.paddr,
+				cal_block->map_data.map_size);
+			result = -EINVAL;
+			goto unlock;
+		}
+		hyp_assigned = false;
+		pr_debug("%s: hyp_assign_phys success\n", __func__);
+	}
 	cal_block->map_data.q6map_handle = 0;
 unlock:
 	mutex_unlock(&common.cal_data[cal_index]->lock);
@@ -1290,12 +1316,16 @@ done:
 
 static int voice_destroy_mvm_cvs_session(struct voice_data *v)
 {
-	int ret = 0;
+	int ret = 0, result = 0;
 	struct mvm_detach_stream_cmd detach_stream;
 	struct apr_hdr mvm_destroy;
 	struct apr_hdr cvs_destroy;
 	void *apr_mvm, *apr_cvs;
 	u16 mvm_handle, cvs_handle;
+	struct cal_block_data *cal_block;
+	int dest_perms[1] = {PERM_READ | PERM_WRITE | PERM_EXEC};
+	int source_vm[2] = {VMID_LPASS, VMID_ADSP_HEAP};
+	int dest_vm[1] = {VMID_HLOS};
 
 	if (v == NULL) {
 		pr_err("%s: v is NULL\n", __func__);
@@ -1306,7 +1336,44 @@ static int voice_destroy_mvm_cvs_session(struct voice_data *v)
 
 	if (!apr_mvm || !apr_cvs) {
 		pr_err("%s: apr_mvm or apr_cvs is NULL\n", __func__);
-		return -EINVAL;
+		ret = -EINVAL;
+
+		pr_debug("%s: use hyp assigned %d\n",__func__, hyp_assigned);
+		if (hyp_assigned) {
+			mutex_lock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
+			cal_block = cal_utils_get_only_cal_block(
+					common.cal_data[CVP_VOCPROC_CAL]);
+			if (cal_block == NULL) {
+				pr_err("%s: Cal block NULL, CVP_VOCPROC_CAL!\n",
+					__func__);
+				mutex_unlock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
+				goto fail;
+			}
+			if (cal_block->cma_mem) {
+				if (cal_block->cal_data.paddr == 0 ||
+				    cal_block->map_data.map_size <= 0) {
+					pr_err("%s: No address to map!\n", __func__);
+					mutex_unlock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
+					goto fail;
+				}
+				result = hyp_assign_phys(
+						cal_block->cal_data.paddr,
+						cal_block->map_data.map_size,
+						source_vm, 2, dest_vm, dest_perms, 1);
+				if (result < 0) {
+					pr_err("%s: hyp_assign_phys failed result = %d addr = 0x%pK size = %d\n",
+						__func__, result,
+						cal_block->cal_data.paddr,
+						cal_block->map_data.map_size);
+					mutex_unlock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
+					goto fail;
+				}
+				hyp_assigned = false;
+				pr_debug("%s: hyp_assign_phys success\n", __func__);
+				mutex_unlock(&common.cal_data[CVP_VOCPROC_CAL]->lock);
+			}
+		}
+		goto fail;
 	}
 	mvm_handle = voice_get_mvm_handle(v);
 	cvs_handle = voice_get_cvs_handle(v);
@@ -2689,7 +2756,9 @@ static int voice_get_cal(struct cal_block_data **cal_block,
 			 int col_data_idx, int session_id)
 {
 	int ret = 0;
-
+	int dest_perms[2] = {PERM_READ | PERM_WRITE, PERM_READ | PERM_WRITE};
+	int source_vm[1] = {VMID_HLOS};
+	int dest_vm[2] = {VMID_LPASS, VMID_ADSP_HEAP};
 	*cal_block = cal_utils_get_only_cal_block(
 		common.cal_data[cal_block_idx]);
 	if (*cal_block == NULL) {
@@ -2698,6 +2767,28 @@ static int voice_get_cal(struct cal_block_data **cal_block,
 
 		ret = -ENODEV;
 		goto done;
+	}
+
+	if ((*cal_block)->cma_mem) {
+		if ((*cal_block)->cal_data.paddr == 0 ||
+		    (*cal_block)->map_data.map_size <= 0) {
+			pr_err("%s: No address to map!\n", __func__);
+
+			ret = -EINVAL;
+			goto done;
+		}
+		ret = hyp_assign_phys((*cal_block)->cal_data.paddr,
+				      (*cal_block)->map_data.map_size,
+				      source_vm, 1, dest_vm, dest_perms, 2);
+		if (ret < 0) {
+			pr_err("%s: hyp_assign_phys failed ret = %d addr = 0x%pK size = %d\n",
+				__func__, ret, (*cal_block)->cal_data.paddr,
+				(*cal_block)->map_data.map_size);
+			ret = -EINVAL;
+			goto done;
+		}
+		hyp_assigned = true;
+		pr_debug("%s: hyp_assign_phys success\n", __func__);
 	}
 	ret = remap_cal_data(*cal_block, session_id);
 	if (ret < 0) {
@@ -3279,6 +3370,11 @@ static int voice_send_cvp_deregister_cal_cmd(struct voice_data *v)
 {
 	struct cvp_deregister_cal_data_cmd cvp_dereg_cal_cmd;
 	int ret = 0;
+	int cal_index = CVP_VOCPROC_CAL;
+	struct cal_block_data *cal_block;
+	int dest_perms[1] = {PERM_READ | PERM_WRITE | PERM_EXEC};
+	int source_vm[2] = {VMID_LPASS, VMID_ADSP_HEAP};
+	int dest_vm[1] = {VMID_HLOS};
 
 	memset(&cvp_dereg_cal_cmd, 0, sizeof(cvp_dereg_cal_cmd));
 
@@ -3325,15 +3421,50 @@ static int voice_send_cvp_deregister_cal_cmd(struct voice_data *v)
 		pr_err("%s: Command timeout\n", __func__);
 		goto done;
 	}
+
+	mutex_lock(&common.cal_data[cal_index]->lock);
+	cal_block = cal_utils_get_only_cal_block(
+			common.cal_data[cal_index]);
+	if (cal_block == NULL) {
+		pr_err("%s: Cal block is NULL, index %d!\n",
+			__func__, cal_index);
+		ret = -EINVAL;
+		goto unlock;
+	}
+	pr_debug("%s: use hyp assigned %d\n",__func__, hyp_assigned);
+	if (cal_block->cma_mem && hyp_assigned) {
+		if (cal_block->cal_data.paddr == 0 ||
+		    cal_block->map_data.map_size <= 0) {
+			pr_err("%s: No address to map!\n", __func__);
+			ret = -EINVAL;
+			goto unlock;
+		}
+		ret = hyp_assign_phys(cal_block->cal_data.paddr,
+				      cal_block->map_data.map_size,
+				      source_vm, 2, dest_vm, dest_perms, 1);
+		if (ret < 0) {
+			pr_err("%s: hyp_assign_phys failed result = %d addr = 0x%pK size = %d\n",
+				__func__, ret, cal_block->cal_data.paddr,
+				cal_block->map_data.map_size);
+			ret = -EINVAL;
+			goto unlock;
+		} else {
+			hyp_assigned = false;
+			pr_debug("%s: hyp_assign_phys success\n", __func__);
+		}
+	}
+
 	if (v->async_err > 0) {
 		pr_err("%s: DSP returned error[%s]\n",
 				__func__, adsp_err_get_err_str(
 				v->async_err));
 		ret = adsp_err_get_lnx_err_code(
 				v->async_err);
-		goto done;
+		goto unlock;
 	}
 
+unlock:
+	mutex_unlock(&common.cal_data[cal_index]->lock);
 done:
 	return ret;
 }
@@ -7204,6 +7335,16 @@ int voc_enable_device(uint32_t session_id)
 			goto done;
 		}
 		v->voc_state = VOC_RUN;
+
+		if (v->lch_mode == 0) {
+			pr_debug("%s: dev_mute = %d, ramp_duration = %d ms\n",
+				__func__, v->dev_rx.dev_mute,
+				 v->dev_rx.dev_mute_ramp_duration_ms);
+			ret = voice_send_device_mute_cmd(v,
+					VSS_IVOLUME_DIRECTION_RX,
+					v->dev_rx.dev_mute,
+					v->dev_rx.dev_mute_ramp_duration_ms);
+		}
 	} else {
 		pr_debug("%s: called in voc state=%d, No_OP\n",
 			 __func__, v->voc_state);
@@ -10161,8 +10302,10 @@ int __init voice_init(void)
 	if (voice_init_cal_data())
 		pr_err("%s: Could not init cal data!\n", __func__);
 
-	if (rc == 0)
+	if (rc == 0) {
 		module_initialized = true;
+		hyp_assigned = false;
+	}
 
 	pr_debug("%s: rc=%d\n", __func__, rc);
 	return rc;

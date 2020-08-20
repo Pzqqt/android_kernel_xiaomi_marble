@@ -1894,6 +1894,17 @@ struct lsm_params_info_v2_32 {
 	u32 model_id;
 };
 
+struct lsm_params_get_info_32 {
+	u32 module_id;
+	u16 instance_id;
+	u16 reserved;
+	u32 param_id;
+	u32 param_size;
+	uint32_t param_type;
+	__u16 stage_idx;
+	u8 payload[0];
+} __packed;
+
 struct snd_lsm_module_params_32 {
 	compat_uptr_t params;
 	u32 num_params;
@@ -1911,6 +1922,8 @@ enum {
 		_IOW('U', 0x0F, struct snd_lsm_event_status_v3_32),
 	SNDRV_LSM_SET_MODULE_PARAMS_V2_32 =
 		_IOW('U', 0x13, struct snd_lsm_module_params_32),
+	SNDRV_LSM_GET_MODULE_PARAMS_32 =
+		_IOWR('U', 0x14, struct lsm_params_get_info_32),
 };
 
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
@@ -2300,6 +2313,95 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		kfree(params32);
 		break;
 	}
+	case SNDRV_LSM_GET_MODULE_PARAMS_32: {
+		struct lsm_params_get_info_32 p_info_32, *param_info_rsp = NULL;
+		struct lsm_params_get_info *p_info = NULL;
+
+		memset(&p_info_32, 0 , sizeof(p_info_32));
+		if (!prtd->lsm_client->use_topology) {
+			dev_err(rtd->dev,
+				"%s: %s: not supported if not using topology\n",
+				__func__, "GET_MODULE_PARAMS_32");
+			err = -EINVAL;
+			goto done;
+		}
+
+		if (copy_from_user(&p_info_32, arg, sizeof(p_info_32))) {
+			dev_err(rtd->dev,
+				"%s: %s: copy_from_user failed, size = %zd\n",
+				__func__, "GET_MODULE_PARAMS_32",
+				sizeof(p_info_32));
+			err = -EFAULT;
+			goto done;
+		}
+		size = sizeof(p_info_32);
+		p_info = kzalloc(size, GFP_KERNEL);
+
+		if (!p_info) {
+			err = -ENOMEM;
+			goto done;
+		}
+
+		p_info->module_id = p_info_32.module_id;
+		p_info->param_id = p_info_32.param_id;
+		p_info->param_size = p_info_32.param_size;
+		p_info->param_type = p_info_32.param_type;
+		p_info->instance_id = p_info_32.instance_id;
+		p_info->stage_idx = p_info_32.stage_idx;
+
+		prtd->lsm_client->get_param_payload = kzalloc(p_info_32.param_size,
+							      GFP_KERNEL);
+		if (!prtd->lsm_client->get_param_payload) {
+			err = -ENOMEM;
+			kfree(p_info);
+			goto done;
+		}
+		prtd->lsm_client->param_size = p_info_32.param_size;
+
+		err = q6lsm_get_one_param(prtd->lsm_client, p_info,
+					  LSM_GET_CUSTOM_PARAMS);
+		if (err) {
+			dev_err(rtd->dev,
+				"%s: Failed to get custom param, err=%d\n",
+				__func__, err);
+			kfree(p_info);
+			kfree(prtd->lsm_client->get_param_payload);
+			goto done;
+		}
+
+		size = sizeof(p_info_32) + p_info_32.param_size;
+		param_info_rsp = kzalloc(size, GFP_KERNEL);
+
+		if (!param_info_rsp) {
+			err = -ENOMEM;
+			kfree(p_info);
+			kfree(prtd->lsm_client->get_param_payload);
+			goto done;
+		}
+
+		if (!access_ok(arg, size)) {
+			dev_err(rtd->dev,
+				"%s: Failed to verify write, size = %d\n",
+				__func__, size);
+			err = -EFAULT;
+			goto free;
+		}
+
+		memcpy(param_info_rsp, &p_info_32, sizeof(p_info_32));
+		memcpy(param_info_rsp->payload, prtd->lsm_client->get_param_payload,
+			p_info_32.param_size);
+
+		if (copy_to_user(arg, param_info_rsp, size)) {
+			dev_err(rtd->dev, "%s: Failed to copy payload to user, size = %d\n",
+				__func__, size);
+			err = -EFAULT;
+		}
+free:
+		kfree(p_info);
+		kfree(param_info_rsp);
+		kfree(prtd->lsm_client->get_param_payload);
+		break;
+	}
 	case SNDRV_LSM_REG_SND_MODEL_V2:
 	case SNDRV_LSM_SET_PARAMS:
 	case SNDRV_LSM_SET_MODULE_PARAMS:
@@ -2522,6 +2624,81 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 		break;
 	}
 
+	case SNDRV_LSM_GET_MODULE_PARAMS: {
+		struct lsm_params_get_info temp_p_info, *p_info = NULL;
+
+		memset(&temp_p_info, 0, sizeof(temp_p_info));
+		if (!prtd->lsm_client->use_topology) {
+			dev_err(rtd->dev,
+				"%s: %s: not supported if not using topology\n",
+				__func__, "GET_MODULE_PARAMS_32");
+			err = -EINVAL;
+			goto done;
+		}
+
+		if (copy_from_user(&temp_p_info, arg, sizeof(temp_p_info))) {
+			dev_err(rtd->dev,
+				"%s: %s: copy_from_user failed, size = %zd\n",
+				__func__, "GET_MODULE_PARAMS_32",
+				sizeof(temp_p_info));
+			err = -EFAULT;
+			goto done;
+		}
+		size = sizeof(temp_p_info) +  temp_p_info.param_size;
+		p_info = kzalloc(size, GFP_KERNEL);
+
+		if (!p_info) {
+			err = -ENOMEM;
+			goto done;
+		}
+
+		p_info->module_id = temp_p_info.module_id;
+		p_info->param_id = temp_p_info.param_id;
+		p_info->param_size = temp_p_info.param_size;
+		p_info->param_type = temp_p_info.param_type;
+		p_info->instance_id = temp_p_info.instance_id;
+		p_info->stage_idx = temp_p_info.stage_idx;
+
+		prtd->lsm_client->get_param_payload = kzalloc(temp_p_info.param_size,
+							      GFP_KERNEL);
+		if (!prtd->lsm_client->get_param_payload) {
+			err = -ENOMEM;
+			kfree(p_info);
+			goto done;
+		}
+
+		prtd->lsm_client->param_size =  p_info->param_size;
+		err = q6lsm_get_one_param(prtd->lsm_client, p_info,
+					  LSM_GET_CUSTOM_PARAMS);
+		if (err) {
+			dev_err(rtd->dev,
+				"%s: Failed to get custom param, err=%d\n",
+				__func__, err);
+			goto free;
+		}
+
+		if (!access_ok(arg, size)) {
+			dev_err(rtd->dev,
+				"%s: Failed to verify write, size = %d\n",
+				__func__, size);
+			err = -EFAULT;
+			goto free;
+		}
+
+		memcpy(p_info->payload, prtd->lsm_client->get_param_payload,
+			temp_p_info.param_size);
+
+		if (copy_to_user(arg, p_info, sizeof(struct lsm_params_get_info) +
+				 p_info->param_size)) {
+			dev_err(rtd->dev, "%s: Failed to copy payload to user, size = %d\n",
+				__func__, size);
+			err = -EFAULT;
+		}
+free:
+		kfree(p_info);
+		kfree(prtd->lsm_client->get_param_payload);
+		break;
+	}
 	case SNDRV_LSM_EVENT_STATUS:
 	case SNDRV_LSM_GENERIC_DET_EVENT: {
 		struct snd_lsm_event_status *user = NULL;

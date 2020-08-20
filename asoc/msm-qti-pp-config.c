@@ -174,7 +174,7 @@ static int msm_qti_pp_put_dtmf_module_enable
 	struct audio_client *ac = NULL;
 	struct param_hdr_v3 param_hdr;
 	int ret = 0;
-	u32 flag = ucontrol->value.integer.value[0];
+	u32 flag = (bool)ucontrol->value.integer.value[0];
 
 	fe_id = ((struct soc_multi_mixer_control *)
 			kcontrol->private_value)->shift;
@@ -443,7 +443,7 @@ int msm_qti_pp_send_chmix_cfg_cmd(int port_id, int copp_idx,
 	int16_t *update_params_value16 = 0;
 	uint32_t param_size = msm_qti_pp_get_chmix_param_size(ip_channel_cnt,
 				op_channel_cnt);
-	struct param_hdr_v3 *param_hdr;
+	struct param_hdr_v1 *param_hdr;
 
 	/* constant payload data size represents module_id, param_id,
 	 * param size, reserved field.
@@ -459,9 +459,8 @@ int msm_qti_pp_send_chmix_cfg_cmd(int port_id, int copp_idx,
 
 	param_ptr = params_value;
 
-	param_hdr = (struct param_hdr_v3 *) param_ptr;
+	param_hdr = (struct param_hdr_v1 *) param_ptr;
 	param_hdr->module_id = MTMX_MODULE_ID_DEFAULT_CHMIXER;
-	param_hdr->instance_id = INSTANCE_ID_0;
 	param_hdr->param_id = DEFAULT_CHMIXER_PARAM_ID_COEFF;
 	param_hdr->param_size = param_size;
 

@@ -36,6 +36,8 @@
 #define ROULEUR_HPHL_CROSS_CONN_THRESHOLD 350
 #define ROULEUR_HPHR_CROSS_CONN_THRESHOLD 350
 
+#define IMPED_NUM_RETRY 5
+
 static struct wcd_mbhc_register
 	wcd_mbhc_registers[WCD_MBHC_REG_FUNC_MAX] = {
 	WCD_MBHC_REGISTER("WCD_MBHC_L_DET_EN",
@@ -515,6 +517,35 @@ z_right:
 	*zr = zdet;
 }
 
+static void rouleur_mbhc_impedance_fn(struct snd_soc_component *component,
+				      int32_t *z1L, int32_t *z1R,
+				      int32_t *zl, int32_t *zr)
+{
+	int i;
+	for (i = 0; i < IMPED_NUM_RETRY; i++) {
+		/* Start of left ch impedance calculation */
+		rouleur_mbhc_zdet_start(component, z1L, NULL);
+		if ((*z1L == ROULEUR_ZDET_FLOATING_IMPEDANCE) ||
+		    (*z1L > ROULEUR_ZDET_VAL_100K))
+			*zl = ROULEUR_ZDET_FLOATING_IMPEDANCE;
+		else
+			*zl = *z1L/1000;
+
+		/* Start of right ch impedance calculation */
+		rouleur_mbhc_zdet_start(component, NULL, z1R);
+		if ((*z1R == ROULEUR_ZDET_FLOATING_IMPEDANCE) ||
+		    (*z1R > ROULEUR_ZDET_VAL_100K))
+			*zr = ROULEUR_ZDET_FLOATING_IMPEDANCE;
+		else
+			*zr = *z1R/1000;
+	}
+
+	dev_dbg(component->dev, "%s: impedance on HPH_L = %d(ohms)\n",
+		__func__, *zl);
+	dev_dbg(component->dev, "%s: impedance on HPH_R = %d(ohms)\n",
+		__func__, *zr);
+}
+
 static void rouleur_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 					  uint32_t *zr)
 {
@@ -564,27 +595,11 @@ static void rouleur_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 	/* 1ms delay needed after disable surge protection */
 	usleep_range(1000, 1010);
 
-	/* Start of left ch impedance calculation */
-	rouleur_mbhc_zdet_start(component, &z1L, NULL);
-	if ((z1L == ROULEUR_ZDET_FLOATING_IMPEDANCE) ||
-		(z1L > ROULEUR_ZDET_VAL_100K))
-		*zl = ROULEUR_ZDET_FLOATING_IMPEDANCE;
-	else
-		*zl = z1L/1000;
-
-	dev_dbg(component->dev, "%s: impedance on HPH_L = %d(ohms)\n",
-		__func__, *zl);
-
-	/* Start of right ch impedance calculation */
-	rouleur_mbhc_zdet_start(component, NULL, &z1R);
-	if ((z1R == ROULEUR_ZDET_FLOATING_IMPEDANCE) ||
-		(z1R > ROULEUR_ZDET_VAL_100K))
-		*zr = ROULEUR_ZDET_FLOATING_IMPEDANCE;
-	else
-		*zr = z1R/1000;
-
-	dev_dbg(component->dev, "%s: impedance on HPH_R = %d(ohms)\n",
-		__func__, *zr);
+	/*
+	 * Call impedance detection routine multiple times
+	 * in order to avoid wrong impedance values.
+	 */
+	rouleur_mbhc_impedance_fn(component, &z1L, &z1R, zl, zr);
 
 	/* Mono/stereo detection */
 	if ((*zl == ROULEUR_ZDET_FLOATING_IMPEDANCE) &&

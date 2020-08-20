@@ -438,6 +438,9 @@ int afe_pseudo_port_start_nowait(u16 port_id);
 int afe_pseudo_port_stop_nowait(u16 port_id);
 int afe_set_lpass_clock(u16 port_id, struct afe_clk_cfg *cfg);
 int afe_set_lpass_clock_v2(u16 port_id, struct afe_clk_set *cfg);
+int afe_send_cps_config(int src_port,
+			struct afe_cps_hw_intf_cfg *cps_config,
+			int param_size);
 int afe_set_lpass_clk_cfg(int index, struct afe_clk_set *cfg);
 int afe_set_digital_codec_core_clock(u16 port_id,
 			struct afe_digital_clk_cfg *cfg);

@@ -10,12 +10,14 @@
 #define WCD937X_MAX_SLAVE_CH_TYPES 10
 #define ZERO 0
 
-struct swr_slave_ch_map {
+#define WCD937X_DRV_NAME "wcd937x_codec"
+
+struct wcd937x_swr_slave_ch_map {
 	u8 ch_type;
 	u8 index;
 };
 
-static const struct swr_slave_ch_map swr_slv_tx_ch_idx[] = {
+static const struct wcd937x_swr_slave_ch_map wcd937x_swr_slv_tx_ch_idx[] = {
 	{ADC1, 0},
 	{ADC2, 1},
 	{ADC3, 2},
@@ -28,7 +30,7 @@ static const struct swr_slave_ch_map swr_slv_tx_ch_idx[] = {
 	{DMIC5, 9},
 };
 
-static int swr_master_ch_map[] = {
+static int wcd937x_swr_master_ch_map[] = {
 	ZERO,
 	SWRM_TX1_CH1,
 	SWRM_TX1_CH2,
@@ -54,14 +56,14 @@ static inline int wcd937x_slave_get_master_ch_val(int ch)
 	int i;
 
 	for (i = 0; i < WCD937X_MAX_SLAVE_CH_TYPES; i++)
-		if (ch == swr_master_ch_map[i])
+		if (ch == wcd937x_swr_master_ch_map[i])
 			return i;
 	return 0;
 }
 
 static inline int wcd937x_slave_get_master_ch(int idx)
 {
-	return swr_master_ch_map[idx];
+	return wcd937x_swr_master_ch_map[idx];
 }
 
 static inline int wcd937x_slave_get_slave_ch_val(int ch)
@@ -69,8 +71,8 @@ static inline int wcd937x_slave_get_slave_ch_val(int ch)
 	int i;
 
 	for (i = 0; i < WCD937X_MAX_SLAVE_CH_TYPES; i++)
-		if (ch == swr_slv_tx_ch_idx[i].ch_type)
-			return swr_slv_tx_ch_idx[i].index;
+		if (ch == wcd937x_swr_slv_tx_ch_idx[i].ch_type)
+			return wcd937x_swr_slv_tx_ch_idx[i].index;
 
 	return -EINVAL;
 }
