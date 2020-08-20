@@ -482,7 +482,9 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 						tso_info->curr_seg = next_seg;
 						ol_free_remaining_tso_segs(vdev,
 							&msdu_info, true);
-						if (segments)
+						if (segments ==
+						    (msdu_info.tso_info.num_segs
+						     - 1))
 							qdf_nbuf_tx_free(
 							msdu,
 							QDF_NBUF_PKT_ERROR);
@@ -515,7 +517,9 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				if (qdf_nbuf_is_tso(msdu)) {
 					ol_free_remaining_tso_segs(vdev,
 							&msdu_info, true);
-					qdf_nbuf_tx_free(msdu,
+					if (segments ==
+					    (msdu_info.tso_info.num_segs - 1))
+						qdf_nbuf_tx_free(msdu,
 							 QDF_NBUF_PKT_ERROR);
 				}
 				TXRX_STATS_MSDU_LIST_INCR(
