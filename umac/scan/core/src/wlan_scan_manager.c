@@ -638,14 +638,24 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	 * 2.if DBS is supported and SAP is not on 2g,
 	 * do not reset active dwell time for 2g.
 	 */
+
+	/*
+	 * For SAP, the dwell time cannot exceed 32 ms as it can't go
+	 * offchannel more than 32 ms. For Go, since we
+	 * advertise NOA, GO can have regular dwell time which is 40 ms.
+	 */
 	if ((ap_present && sap_peer_count) ||
 	    (go_present && go_peer_count)) {
-		if (policy_mgr_is_hw_dbs_capable(psoc) &&
-		    policy_mgr_is_sap_go_on_2g(psoc)) {
-			req->scan_req.dwell_time_active_2g =
-				QDF_MIN(req->scan_req.dwell_time_active,
-					(SCAN_CTS_DURATION_MS_MAX -
-					SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME));
+		if ((policy_mgr_is_hw_dbs_capable(psoc) &&
+		     policy_mgr_is_sap_go_on_2g(psoc)) ||
+		     !policy_mgr_is_hw_dbs_capable(psoc)) {
+			if (ap_present)
+				req->scan_req.dwell_time_active_2g =
+					QDF_MIN(req->scan_req.dwell_time_active,
+						(SCAN_CTS_DURATION_MS_MAX -
+						SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME));
+			else
+				req->scan_req.dwell_time_active_2g = 0;
 		}
 		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
 	}
