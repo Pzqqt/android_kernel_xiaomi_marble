@@ -608,6 +608,14 @@ static QDF_STATUS target_if_vdev_mgr_stop_send(
 
 	vdev_rsp->expire_time = STOP_RESPONSE_TIMER;
 	target_if_vdev_mgr_rsp_timer_start(psoc, vdev_rsp, STOP_RESPONSE_BIT);
+	/*
+	 * START wakelock is acquired before sending the start command and
+	 * released after sending up command to fw. This is to prevent the
+	 * system to go into suspend state during the connection.
+	 * In auth/assoc failure scenario UP command is not sent
+	 * so release the START wakelock here.
+	 */
+	target_if_wake_lock_timeout_release(psoc, START_WAKELOCK);
 	target_if_wake_lock_timeout_acquire(psoc, STOP_WAKELOCK);
 
 	status = wmi_unified_vdev_stop_send(wmi_handle, param->vdev_id);
@@ -649,7 +657,7 @@ static QDF_STATUS target_if_vdev_mgr_down_send(
 	}
 
 	status = wmi_unified_vdev_down_send(wmi_handle, param->vdev_id);
-	target_if_wake_lock_timeout_release(psoc, START_WAKELOCK);
+	target_if_wake_lock_timeout_release(psoc, STOP_WAKELOCK);
 
 	return status;
 }
