@@ -6873,7 +6873,7 @@ static void hdd_dump_func_call_map(void)
 	hdd_info("Function call map dump start");
 	qdf_get_func_call_map(cc_buf);
 	qdf_trace_hex_dump(QDF_MODULE_ID_HDD,
-		QDF_TRACE_LEVEL_INFO, cc_buf, QDF_FUNCTION_CALL_MAP_BUF_LEN);
+		QDF_TRACE_LEVEL_DEBUG, cc_buf, QDF_FUNCTION_CALL_MAP_BUF_LEN);
 	hdd_info("Function call map dump end");
 	qdf_mem_free(cc_buf);
 }
