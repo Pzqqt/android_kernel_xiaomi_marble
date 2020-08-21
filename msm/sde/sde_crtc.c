@@ -1583,8 +1583,14 @@ static void _sde_crtc_swap_mixers_for_right_partial_update(
 	 *   reprogram to be driven by PP1 instead.
 	 * To support both cases, we prefer to support the mixer swap solution.
 	 */
-	if (!encoder_in_dsc_merge)
+	if (!encoder_in_dsc_merge) {
+		if (sde_crtc->mixers_swapped) {
+			swap(sde_crtc->mixers[0], sde_crtc->mixers[1]);
+			sde_crtc->mixers_swapped = false;
+			SDE_EVT32(SDE_EVTLOG_FUNC_CASE1);
+		}
 		return;
+	}
 
 	is_right_only = sde_kms_rect_is_null(&cstate->lm_roi[0]) &&
 			!sde_kms_rect_is_null(&cstate->lm_roi[1]);
