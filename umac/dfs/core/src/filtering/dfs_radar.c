@@ -41,9 +41,6 @@ void dfs_get_radars(struct wlan_dfs *dfs)
 	if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_OL) {
 		/* For Partial offload */
 		dfs_get_po_radars(dfs);
-	} else {
-		/* For Direct Attach (DA) */
-		dfs_get_da_radars(dfs);
 	}
 }
 

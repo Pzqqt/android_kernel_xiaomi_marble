@@ -1763,7 +1763,7 @@ int dfs_get_random_bin5_dur(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  * @dl: Pointer to dfs_delayline structure.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_print_delayline(struct wlan_dfs *dfs,
 		struct dfs_delayline *dl);
 #else
@@ -1809,7 +1809,7 @@ uint32_t dfs_round(int32_t val);
  * dfs_reset_alldelaylines() - Reset alldelaylines.
  * @dfs: Pointer to wlan_dfs structure.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_reset_alldelaylines(struct wlan_dfs *dfs);
 #else
 static inline void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
@@ -1833,7 +1833,7 @@ void dfs_reset_filter_delaylines(struct dfs_filtertype *dft);
  * dfs_reset_radarq() - Reset radar queue.
  * @dfs: Pointer to wlan_dfs structure.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_reset_radarq(struct wlan_dfs *dfs);
 #else
 static inline void dfs_reset_radarq(struct wlan_dfs *dfs)
@@ -1915,7 +1915,7 @@ int dfs_staggered_check(struct wlan_dfs *dfs,
  *
  * Return: Returns pri_margin.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_get_pri_margin(struct wlan_dfs *dfs,
 		int is_extchan_detect,
 		int is_fixed_pattern);
@@ -1985,7 +1985,7 @@ void dfs_reset_arq(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  * @ignore_dfs: if 1 then radar detection is disabled..
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_is_radar_enabled(struct wlan_dfs *dfs,
 			  int *ignore_dfs);
 #else
@@ -2029,7 +2029,7 @@ void dfs_reset(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  * @no_cac: If no_cac is 0, it cancels the CAC.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_radar_enable(struct wlan_dfs *dfs,
 		int no_cac, uint32_t opmode);
 #else
@@ -2049,7 +2049,7 @@ static inline void dfs_radar_enable(struct wlan_dfs *dfs,
  * @r_rs_tstamp: Timestamp.
  * @r_fulltsf: TSF64.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_process_phyerr(struct wlan_dfs *dfs,
 		void *buf,
 		uint16_t datalen,
@@ -2093,7 +2093,7 @@ static inline void dfs_process_phyerr_filter_offload(
  * dfs_get_radars() - Based on the chipset, calls init radar table functions.
  * @dfs: Pointer to wlan_dfs structure.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_get_radars(struct wlan_dfs *dfs);
 #else
 static inline void dfs_get_radars(struct wlan_dfs *dfs)
@@ -2278,24 +2278,6 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 		struct wlan_dfs_radar_tab_info *radar_info);
 
 /**
- * dfs_get_radars_for_ar5212() - Initialize radar table for AR5212 chipsets.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_get_radars_for_ar5212(struct wlan_dfs *dfs);
-
-/**
- * dfs_get_radars_for_ar5416() - Initialize radar table for AR5416 chipsets.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs);
-
-/**
- * dfs_get_radars_for_ar9300() - Initialize radar table for AR9300 chipsets.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs);
-
-/**
  * dfs_print_filters() - Print the filters.
  * @dfs: Pointer to wlan_dfs structure.
  */
@@ -2311,7 +2293,7 @@ void dfs_clear_stats(struct wlan_dfs *dfs);
  * dfs_radar_disable() - Disables the radar.
  * @dfs: Pointer to wlan_dfs structure.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_radar_disable(struct wlan_dfs *dfs);
 #else
 static inline int dfs_radar_disable(struct wlan_dfs *dfs)
@@ -2410,7 +2392,7 @@ void dfs_phyerr_param_copy(struct wlan_dfs_phyerr_param *dst,
  * @dfs: Pointer to wlan_dfs structure.
  * @param: Pointer to wlan_dfs_phyerr_param structure.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_get_thresholds(struct wlan_dfs *dfs,
 		struct wlan_dfs_phyerr_param *param);
 #else
@@ -2427,7 +2409,7 @@ static inline int dfs_get_thresholds(struct wlan_dfs *dfs,
  * @threshtype: DFS ioctl param type.
  * @value: Threshold value.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_set_thresholds(struct wlan_dfs *dfs,
 		const uint32_t threshtype,
 		const uint32_t value);
@@ -2449,7 +2431,7 @@ static inline int dfs_set_thresholds(struct wlan_dfs *dfs,
  *
  * Return: returns true if overlap found, else returns false.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 bool dfs_check_intersect_excl(int low_freq, int high_freq, int chan_freq);
 #else
 static inline bool dfs_check_intersect_excl(int low_freq, int high_freq,
@@ -2469,7 +2451,7 @@ static inline bool dfs_check_intersect_excl(int low_freq, int high_freq,
  *
  * Return: returns 1 if overlap found, else returns 0.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_check_etsi_overlap(int center_freq, int chan_width,
 			   int en302_502_freq_low, int en302_502_freq_high);
 #else
@@ -2489,7 +2471,7 @@ static inline int dfs_check_etsi_overlap(int center_freq, int chan_width,
  *
  * Return: returns true if overlap found, else returns false.
  */
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs);
 #else
 static inline bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)

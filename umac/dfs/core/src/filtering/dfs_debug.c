@@ -20,7 +20,7 @@
 #include "../dfs.h"
 #include "wlan_dfs_lmac_api.h"
 
-#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_print_delayline(struct wlan_dfs *dfs, struct dfs_delayline *dl)
 {
 	int i = 0, index;

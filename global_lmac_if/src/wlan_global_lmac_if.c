@@ -180,7 +180,7 @@ QDF_STATUS wlan_global_lmac_if_open(struct wlan_objmgr_psoc *psoc)
 
 	dev_type = psoc->soc_nif.phy_type;
 
-	if (dev_type == WLAN_DEV_DA || dev_type == WLAN_DEV_OL) {
+	if (dev_type == WLAN_DEV_OL) {
 		wlan_global_lmac_if_tx_ops_register[dev_type]
 					(tx_ops);
 	} else {
