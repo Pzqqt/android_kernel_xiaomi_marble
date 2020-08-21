@@ -407,6 +407,7 @@ static QDF_STATUS csr_roam_start_roaming_timer(struct mac_context *mac,
 static QDF_STATUS csr_roam_stop_roaming_timer(struct mac_context *mac,
 					      uint32_t sessionId);
 static void csr_roam_roaming_timer_handler(void *pv);
+static void csr_roam_join_failure_retry_connect_handler(void *pv);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void csr_roam_roaming_offload_timer_action(struct mac_context *mac_ctx,
 		uint32_t interval, uint8_t session_id, uint8_t action);
@@ -9156,6 +9157,8 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	bool retry_same_bss = false;
 	bool attempt_next_bss = true;
 	enum csr_akm_type auth_type = eCSR_AUTH_TYPE_NONE;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	uint16_t retry_interval;
 
 	if (!pSmeJoinRsp) {
 		sme_err("Sme Join Response is NULL");
@@ -9167,6 +9170,11 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 		sme_err("session %d not found", pSmeJoinRsp->vdev_id);
 		return;
 	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(mac->psoc);
+
+	if (!mlme_obj)
+		retry_interval = 0;
 
 	prev_connect_info = &session_ptr->prev_assoc_ap_info;
 	/* The head of the active list is the request we sent */
@@ -9297,6 +9305,18 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 							    &max_retry_count);
 	}
 
+	if (pSmeJoinRsp->messageType == eWNI_SME_JOIN_RSP &&
+	    pSmeJoinRsp->status_code == eSIR_SME_JOIN_TIMEOUT_RESULT_CODE &&
+	    pCommand && pCommand->u.roamCmd.hBSSList) {
+		struct scan_result_list *bss_list =
+		   (struct scan_result_list *)pCommand->u.roamCmd.hBSSList;
+
+		if (csr_ll_count(&bss_list->List) == 1) {
+			retry_same_bss = true;
+			sme_err("retry_same_bss is set");
+		}
+	}
+
 	if (attempt_next_bss && retry_same_bss &&
 	    pCommand && pCommand->u.roamCmd.pRoamBssEntry) {
 		struct tag_csrscan_result *scan_result;
@@ -9338,9 +9358,19 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 						   QDF_STATUS_E_FAILURE);
 	}
 
+	retry_interval = mlme_obj->cfg.gen.join_failure_retry_interval;
+
 	if (pCommand && attempt_next_bss) {
-		csr_roam(mac, pCommand, use_same_bss);
-		return;
+		if (retry_interval && use_same_bss) {
+			qdf_mc_timer_stop(&session_ptr->join_retry_timer);
+			session_ptr->roamingTimerInfo.vdev_id = pSmeJoinRsp->vdev_id;
+			qdf_mc_timer_start(&session_ptr->join_retry_timer, retry_interval);
+			sme_err("Retry sending join req,after timer expiry : %d ms", retry_interval);
+			return;
+		} else {
+			csr_roam(mac, pCommand, use_same_bss);
+			return;
+		}
 	}
 
 	/*
@@ -12508,6 +12538,31 @@ void csr_roam_roaming_offload_timeout_handler(void *timer_data)
 
 rel:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
+
+void csr_roam_join_failure_retry_connect_handler(void *pv)
+{
+	struct csr_timer_info *info = pv;
+	struct mac_context *mac = info->mac;
+	uint32_t vdev_id = info->vdev_id;
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
+	tListElem *pEntry = NULL;
+	tSmeCmd *pCommand = NULL;
+
+	if (!pSession) {
+		sme_err("  session %d not found ", vdev_id);
+		return;
+	}
+
+	pEntry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
+
+	if (pEntry)
+		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
+
+	if (pCommand) {
+		sme_err("Join failure timer expired,send join req");
+		csr_roam(mac, pCommand, true);
+	}
 }
 
 QDF_STATUS csr_roam_start_roaming_timer(struct mac_context *mac,
@@ -16447,6 +16502,15 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 		return status;
 	}
 
+	status = qdf_mc_timer_init(&session->join_retry_timer,
+				   QDF_TIMER_TYPE_SW,
+				   csr_roam_join_failure_retry_connect_handler,
+				   &session->roamingTimerInfo);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("timer init failed for join failure timer");
+		return status;
+	}
+
 	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
 	session->ht_config.ht_rx_ldpc = ht_cap_info->adv_coding_cap;
 	session->ht_config.ht_tx_stbc = ht_cap_info->tx_stbc;
@@ -16519,6 +16583,7 @@ void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id)
 					     &pSession->prev_assoc_ap_info);
 		qdf_mc_timer_destroy(&pSession->hTimerRoaming);
 		qdf_mc_timer_destroy(&pSession->roaming_offload_timer);
+		qdf_mc_timer_destroy(&pSession->join_retry_timer);
 		csr_init_session(mac, vdev_id);
 	}
 }

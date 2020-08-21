@@ -626,6 +626,7 @@ struct csr_roam_session {
 	bool discon_in_progress;
 	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
+	qdf_mc_timer_t join_retry_timer;
 };
 
 struct csr_roamstruct {
