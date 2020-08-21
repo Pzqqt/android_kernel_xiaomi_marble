@@ -43,6 +43,13 @@
 #define CFG_VHT_TX_MCS_MAP_STAMAX    0xFFFF
 #define CFG_VHT_TX_MCS_MAP_STADEF    0xFFFE
 
+#define STA_DOT11_MODE_INDX       0
+#define P2P_DEV_DOT11_MODE_INDX   4
+#define NAN_DISC_DOT11_MODE_INDX  8
+#define OCB_DOT11_MODE_INDX       12
+#define TDLS_DOT11_MODE_INDX      16
+#define NDI_DOT11_MODE_INDX       20
+
 /* Roam debugging related macro defines */
 #define MAX_ROAM_DEBUG_BUF_SIZE    250
 #define MAX_ROAM_EVENTS_SUPPORTED  5
@@ -196,12 +203,28 @@ enum mlme_dot11_mode {
 };
 
 /**
+ * enum mlme_vdev_dot11_mode - Dot11 mode of the vdev
+ * MLME_VDEV_DOT11_MODE_AUTO: vdev uses mlme_dot11_mode
+ * MLME_VDEV_DOT11_MODE_11N: vdev supports 11N mode
+ * MLME_VDEV_DOT11_MODE_11AC: vdev supports 11AC mode
+ * MLME_VDEV_DOT11_MODE_11AX: vdev supports 11AX mode
+ */
+enum mlme_vdev_dot11_mode {
+	MLME_VDEV_DOT11_MODE_AUTO,
+	MLME_VDEV_DOT11_MODE_11N,
+	MLME_VDEV_DOT11_MODE_11AC,
+	MLME_VDEV_DOT11_MODE_11AX,
+};
+
+/**
  * struct wlan_mlme_dot11_mode - dot11 mode
  *
  * @dot11_mode: dot11 mode supported
+ * @vdev_type_dot11_mode: dot11 mode supported by different vdev types
  */
 struct wlan_mlme_dot11_mode {
 	enum mlme_dot11_mode dot11_mode;
+	uint32_t vdev_type_dot11_mode;
 };
 
 /**

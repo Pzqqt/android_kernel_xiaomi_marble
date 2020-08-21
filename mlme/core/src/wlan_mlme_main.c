@@ -2232,9 +2232,11 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 }
 
 static void
-mlme_init_dot11_mode_cfg(struct wlan_mlme_dot11_mode *dot11_mode)
+mlme_init_dot11_mode_cfg(struct wlan_objmgr_psoc *psoc,
+			 struct wlan_mlme_dot11_mode *dot11_mode)
 {
 	dot11_mode->dot11_mode = cfg_default(CFG_DOT11_MODE);
+	dot11_mode->vdev_type_dot11_mode = cfg_get(psoc, CFG_VDEV_DOT11_MODE);
 }
 
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
@@ -2274,7 +2276,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_roam_scoring_cfg(psoc, &mlme_cfg->roam_scoring);
-	mlme_init_dot11_mode_cfg(&mlme_cfg->dot11_mode);
+	mlme_init_dot11_mode_cfg(psoc, &mlme_cfg->dot11_mode);
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
 	mlme_init_acs_cfg(psoc, &mlme_cfg->acs);
 	mlme_init_power_cfg(psoc, &mlme_cfg->power);
