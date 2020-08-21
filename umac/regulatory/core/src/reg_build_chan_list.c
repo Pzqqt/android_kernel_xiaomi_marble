@@ -253,6 +253,27 @@ static void reg_modify_chan_list_for_indoor_channels(
 	}
 }
 
+#ifdef CONFIG_BAND_6GHZ
+static void reg_modify_chan_list_for_band_6G(
+					struct regulatory_channel *chan_list)
+{
+	enum channel_enum chan_enum;
+
+	reg_debug("disabling 6G");
+	for (chan_enum = MIN_6GHZ_CHANNEL;
+	     chan_enum <= MAX_6GHZ_CHANNEL; chan_enum++) {
+		chan_list[chan_enum].chan_flags |=
+			REGULATORY_CHAN_DISABLED;
+		chan_list[chan_enum].state = CHANNEL_STATE_DISABLE;
+	}
+}
+#else
+static inline void reg_modify_chan_list_for_band_6G(
+					struct regulatory_channel *chan_list)
+{
+}
+#endif
+
 /**
  * reg_modify_chan_list_for_band() - Based on the input band bitmap, either
  * disable 2GHz, 5GHz, or 6GHz channels.
@@ -287,15 +308,9 @@ static void reg_modify_chan_list_for_band(struct regulatory_channel *chan_list,
 		}
 	}
 
-	if (!(band_bitmap & BIT(REG_BAND_6G))) {
-		reg_debug("disabling 6G");
-		for (chan_enum = MIN_6GHZ_CHANNEL;
-		     chan_enum <= MAX_6GHZ_CHANNEL; chan_enum++) {
-			chan_list[chan_enum].chan_flags |=
-				REGULATORY_CHAN_DISABLED;
-			chan_list[chan_enum].state = CHANNEL_STATE_DISABLE;
-		}
-	}
+	if (!(band_bitmap & BIT(REG_BAND_6G)))
+		reg_modify_chan_list_for_band_6G(chan_list);
+
 }
 
 /**
