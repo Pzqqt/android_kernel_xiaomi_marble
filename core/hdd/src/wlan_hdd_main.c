@@ -193,6 +193,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_cm_roam_ucfg_api.h"
 #include <cdp_txrx_ctrl.h>
+#include "qdf_lock.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -3424,6 +3425,7 @@ static void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
 	if (is_ssr)
 		return;
 
+	qdf_wake_lock_check_for_leaks();
 	qdf_delayed_work_check_for_leaks();
 	qdf_mc_timer_check_for_leaks();
 	qdf_nbuf_map_check_for_leaks();
@@ -16132,6 +16134,7 @@ static QDF_STATUS hdd_qdf_init(void)
 	qdf_mem_init();
 	qdf_delayed_work_feature_init();
 	qdf_periodic_work_feature_init();
+	qdf_wake_lock_feature_init();
 	qdf_mc_timer_manager_init();
 	qdf_event_list_init();
 
@@ -16165,6 +16168,7 @@ talloc_deinit:
 event_deinit:
 	qdf_event_list_destroy();
 	qdf_mc_timer_manager_exit();
+	qdf_wake_lock_feature_deinit();
 	qdf_periodic_work_feature_deinit();
 	qdf_delayed_work_feature_deinit();
 	qdf_mem_exit();
@@ -16189,6 +16193,7 @@ static void hdd_qdf_deinit(void)
 	qdf_talloc_feature_deinit();
 	qdf_event_list_destroy();
 	qdf_mc_timer_manager_exit();
+	qdf_wake_lock_feature_deinit();
 	qdf_periodic_work_feature_deinit();
 	qdf_delayed_work_feature_deinit();
 	qdf_mem_exit();
