@@ -6409,6 +6409,8 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
 			static_cache_read_work.work);
 	struct drm_crtc *crtc;
+	struct msm_kms *kms;
+	struct msm_drm_private *priv = NULL;
 	struct sde_crtc_mixer *mixer;
 	struct sde_hw_ctl *ctl;
 
@@ -6416,18 +6418,28 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 		return;
 
 	crtc = &sde_crtc->base;
+	priv = crtc->dev->dev_private;
+	kms = priv->kms;
 	mixer = sde_crtc->mixers;
 	if (!mixer)
 		return;
 
 	ctl = mixer->hw_ctl;
 
+	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_ENTRY);
+
 	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE ||
 			!ctl->ops.trigger_flush)
 		return;
 
 	sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_READ, false);
+
+	/* flush with previous commit flush bits & wait till frame done */
 	ctl->ops.trigger_flush(ctl);
+	if (kms->funcs->wait_for_crtc_commit_done)
+		kms->funcs->wait_for_crtc_commit_done(kms, crtc);
+
+	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_EXIT);
 }
 
 void sde_crtc_static_cache_read_kickoff(struct drm_crtc *crtc)
