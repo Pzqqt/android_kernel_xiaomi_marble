@@ -3535,6 +3535,14 @@ fail:
 	return ret;
 }
 
+static void sde_kms_init_rot_sid_hw(struct sde_kms *sde_kms)
+{
+	if (!sde_kms || !sde_kms->hw_sid || sde_in_trusted_vm(sde_kms))
+		return;
+
+	sde_hw_set_rotator_sid(sde_kms->hw_sid);
+}
+
 static void sde_kms_init_shared_hw(struct sde_kms *sde_kms)
 {
 	if (!sde_kms || !sde_kms->hw_mdp || !sde_kms->catalog)
@@ -3543,9 +3551,6 @@ static void sde_kms_init_shared_hw(struct sde_kms *sde_kms)
 	if (sde_kms->hw_mdp->ops.reset_ubwc)
 		sde_kms->hw_mdp->ops.reset_ubwc(sde_kms->hw_mdp,
 						sde_kms->catalog);
-
-	if (sde_kms->sid)
-		sde_hw_set_rotator_sid(sde_kms->hw_sid);
 }
 
 static void _sde_kms_set_lutdma_vbif_remap(struct sde_kms *sde_kms)
@@ -3694,6 +3699,12 @@ static void sde_kms_handle_power_event(u32 event_type, void *usr)
 	if (event_type == SDE_POWER_EVENT_POST_ENABLE) {
 		sde_irq_update(msm_kms, true);
 		sde_kms->first_kickoff = true;
+
+		/**
+		 * Rotator sid needs to be programmed since uefi doesn't
+		 * configure it during continuous splash
+		 */
+		sde_kms_init_rot_sid_hw(sde_kms);
 		if (sde_kms->splash_data.num_splash_displays ||
 				sde_in_trusted_vm(sde_kms))
 			return;
