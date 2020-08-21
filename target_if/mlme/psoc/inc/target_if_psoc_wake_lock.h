@@ -106,13 +106,12 @@ QDF_STATUS target_if_wake_lock_timeout_release(struct wlan_objmgr_psoc *psoc,
  * target_if_vdev_start_link_handler() - check for SAP mode and DFS freq
 						to handle link up/down
  * @vdev: pointer to vdev
- * @cfreq1 : center freq1
- * @cfreq2 : center freq2
+ * @is_dfs : is dfs freq
  *
  * Return: None
  */
 void target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
-				       uint32_t cfreq1, uint32_t cfreq2);
+				       uint32_t is_dfs);
 
 /**
  * target_if_vdev_stop_link_handler() - check for SAP mode to handle link
@@ -147,7 +146,7 @@ static inline QDF_STATUS target_if_wake_lock_timeout_release(
 
 static inline void
 target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
-				  uint32_t cfreq1, uint32_t cfreq2)
+				  uint32_t is_dfs)
 {
 }
 

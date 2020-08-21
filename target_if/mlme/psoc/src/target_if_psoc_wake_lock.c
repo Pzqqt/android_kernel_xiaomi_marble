@@ -192,15 +192,21 @@ target_if_vote_for_link_up(struct wlan_objmgr_psoc *psoc,
 }
 
 void target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
-				       uint32_t cfreq1, uint32_t cfreq2)
+				       uint32_t is_dfs)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct psoc_mlme_wakelock *psoc_wakelock;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
+	struct wlan_channel *des_channel;
+	uint32_t ch_freq;
+	enum phy_ch_width ch_width;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
+	des_channel = wlan_vdev_mlme_get_des_chan(vdev);
+	ch_freq = des_channel->ch_freq;
+	ch_width = des_channel->ch_width;
 
 	if (!pdev) {
 		mlme_err("pdev is NULL");
@@ -216,10 +222,9 @@ void target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
 
 	psoc_wakelock = rx_ops->psoc_get_wakelock_info(psoc);
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
-		if ((wlan_reg_chan_has_dfs_attribute_for_freq(pdev,
-							      cfreq1)) ||
-		    (wlan_reg_chan_has_dfs_attribute_for_freq(pdev,
-							      cfreq2)))
+		if (is_dfs ||
+		    (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev,
+			ch_freq, ch_width) == CHANNEL_STATE_DFS))
 			target_if_vote_for_link_up(psoc, psoc_wakelock);
 		else
 			target_if_vote_for_link_down(psoc, psoc_wakelock);

@@ -481,8 +481,7 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 							  START_RESPONSE_BIT);
 	} else {
 		target_if_vdev_start_link_handler(vdev,
-						  param->channel.cfreq1,
-						  param->channel.cfreq2);
+						  param->channel.dfs_set);
 	}
 	return status;
 }
