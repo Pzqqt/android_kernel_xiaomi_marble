@@ -25,6 +25,8 @@
 #include "wlan_if_mgr_main.h"
 #include "nan_ucfg_api.h"
 #include "wlan_policy_mgr_api.h"
+#include "wlan_p2p_ucfg_api.h"
+#include "wlan_tdls_ucfg_api.h"
 
 QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 				struct if_mgr_event_data *event_data)
@@ -72,6 +74,60 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct if_mgr_event_data *event_data)
 {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status = event_data->status;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		/*
+		 * Due to audio share glitch with P2P clients caused by roam
+		 * scan on concurrent interface, disable roaming if
+		 * "p2p_disable_roam" ini is enabled. Donot re-enable roaming
+		 * again on other STA interface if p2p client connection is
+		 * active on any vdev.
+		 */
+		if (ucfg_p2p_is_roam_config_disabled(psoc) &&
+		    wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_CLIENT_MODE) {
+			ifmgr_debug("p2p client active, keep roam disabled");
+		} else {
+			policy_mgr_set_pcl_for_connected_vdev(psoc,
+							      vdev->vdev_objmgr.
+							      vdev_id, false);
+			/*
+			 * Enable roaming on other STA iface except this one.
+			 * Firmware doesn't support connection on one STA iface
+			 * while roaming on other STA iface.
+			 */
+			if_mgr_enable_roaming(vdev, pdev, RSO_CONNECT_START);
+		}
+	} else {
+		/* notify connect failure on final failure */
+		ucfg_tdls_notify_connect_failure(psoc);
+
+		/*
+		 * Enable roaming on other STA iface except this one.
+		 * Firmware doesn't support connection on one STA iface
+		 * while roaming on other STA iface.
+		 */
+		if_mgr_enable_roaming(vdev, pdev, RSO_CONNECT_START);
+	}
+
+	status = policy_mgr_check_n_start_opportunistic_timer(psoc);
+	if (status) {
+		ifmgr_err("Failed to start dbs opportunistic timer");
+		return status;
+	}
+
+	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
