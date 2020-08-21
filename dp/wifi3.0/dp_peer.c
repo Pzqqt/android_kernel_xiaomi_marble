@@ -1665,6 +1665,9 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	unsigned index;
 	struct dp_peer *peer;
 
+	if (!soc->peer_hash.bins)
+		return NULL;
+
 	if (mac_addr_is_aligned) {
 		mac_addr = (union dp_align_mac_addr *) peer_mac_addr;
 	} else {
