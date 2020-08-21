@@ -233,6 +233,54 @@ QDF_STATUS qdf_mutex_release(qdf_mutex_t *lock)
 }
 qdf_export_symbol(qdf_mutex_release);
 
+#ifdef WLAN_WAKE_LOCK_DEBUG
+#include "qdf_tracker.h"
+
+#define qdf_wake_lock_tracker_bits 2 /* 4 buckets */
+static qdf_tracker_declare(qdf_wake_lock_tracker, qdf_wake_lock_tracker_bits,
+			   "wake lock leaks", "wake lock create",
+			   "wake lock destroy");
+
+void qdf_wake_lock_feature_init(void)
+{
+	qdf_tracker_init(&qdf_wake_lock_tracker);
+}
+
+void qdf_wake_lock_feature_deinit(void)
+{
+	qdf_tracker_deinit(&qdf_wake_lock_tracker);
+}
+
+void qdf_wake_lock_check_for_leaks(void)
+{
+	qdf_tracker_check_for_leaks(&qdf_wake_lock_tracker);
+}
+
+static inline QDF_STATUS qdf_wake_lock_dbg_track(qdf_wake_lock_t *lock,
+						 const char *func,
+						 uint32_t line)
+{
+	return qdf_tracker_track(&qdf_wake_lock_tracker, lock, func, line);
+}
+
+static inline void qdf_wake_lock_dbg_untrack(qdf_wake_lock_t *lock,
+					     const char *func, uint32_t line)
+{
+	qdf_tracker_untrack(&qdf_wake_lock_tracker, lock, func, line);
+}
+#else
+static inline QDF_STATUS qdf_wake_lock_dbg_track(qdf_wake_lock_t *lock,
+						 const char *func,
+						 uint32_t line)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void qdf_wake_lock_dbg_untrack(qdf_wake_lock_t *lock,
+					     const char *func, uint32_t line)
+{ }
+#endif /* WLAN_WAKE_LOCK_DEBUG */
+
 /**
  * qdf_wake_lock_name() - This function returns the name of the wakelock
  * @lock: Pointer to the wakelock
@@ -256,19 +304,17 @@ const char *qdf_wake_lock_name(qdf_wake_lock_t *lock)
 #endif
 qdf_export_symbol(qdf_wake_lock_name);
 
-/**
- * qdf_wake_lock_create() - initializes a wake lock
- * @lock: The wake lock to initialize
- * @name: Name of wake lock
- *
- * Return:
- * QDF status success: if wake lock is initialized
- * QDF status failure: if wake lock was not initialized
- */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 110)) || \
 	defined(WAKEUP_SOURCE_DEV)
-QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name)
+QDF_STATUS __qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name,
+				  const char *func, uint32_t line)
 {
+	QDF_STATUS status;
+
+	status = qdf_wake_lock_dbg_track(lock, func, line);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
 	qdf_mem_zero(lock, sizeof(*lock));
 	lock->priv = wakeup_source_register(lock->lock.dev, name);
 	if (!(lock->priv)) {
@@ -281,19 +327,28 @@ QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name)
 	return QDF_STATUS_SUCCESS;
 }
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
-QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name)
+QDF_STATUS __qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name,
+				  const char *func, uint32_t line)
 {
+	QDF_STATUS status;
+
+	status = qdf_wake_lock_dbg_track(lock, func, line);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
 	wakeup_source_init(&(lock->lock), name);
 	lock->priv = &(lock->lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
-QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name)
+QDF_STATUS __qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name,
+				  const char *func, uint32_t line)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-qdf_export_symbol(qdf_wake_lock_create);
+qdf_export_symbol(__qdf_wake_lock_create);
 
 /**
  * qdf_wake_lock_acquire() - acquires a wake lock
@@ -381,34 +436,28 @@ QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason)
 #endif
 qdf_export_symbol(qdf_wake_lock_release);
 
-/**
- * qdf_wake_lock_destroy() - destroys a wake lock
- * @lock: The wake lock to destroy
- *
- * Return:
- * QDF status success: if wake lock is acquired
- * QDF status failure: if wake lock was not acquired
- */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 110)) || \
 	defined(WAKEUP_SOURCE_DEV)
-QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
+void __qdf_wake_lock_destroy(qdf_wake_lock_t *lock,
+			     const char *func, uint32_t line)
 {
 	wakeup_source_unregister(lock->priv);
-	return QDF_STATUS_SUCCESS;
+	qdf_wake_lock_dbg_untrack(lock, func, line);
 }
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
-QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
+void __qdf_wake_lock_destroy(qdf_wake_lock_t *lock,
+			     const char *func, uint32_t line)
 {
 	wakeup_source_trash(&(lock->lock));
-	return QDF_STATUS_SUCCESS;
+	qdf_wake_lock_dbg_untrack(lock, func, line);
 }
 #else
-QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
+void __qdf_wake_lock_destroy(qdf_wake_lock_t *lock,
+			     const char *func, uint32_t line)
 {
-	return QDF_STATUS_SUCCESS;
 }
 #endif
-qdf_export_symbol(qdf_wake_lock_destroy);
+qdf_export_symbol(__qdf_wake_lock_destroy);
 
 /**
  * qdf_pm_system_wakeup() - wakeup system

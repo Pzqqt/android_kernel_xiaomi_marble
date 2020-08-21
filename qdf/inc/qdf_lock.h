@@ -487,7 +487,55 @@ static inline int qdf_semaphore_acquire_intr(qdf_semaphore_t *m)
 	return __qdf_semaphore_acquire_intr(m);
 }
 
-QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name);
+#ifdef WLAN_WAKE_LOCK_DEBUG
+/**
+ * qdf_wake_lock_check_for_leaks() - assert no wake lock leaks
+ *
+ * Return: None
+ */
+void qdf_wake_lock_check_for_leaks(void);
+
+/**
+ * qdf_wake_lock_feature_init() - global init logic for wake lock
+ *
+ * Return: None
+ */
+void qdf_wake_lock_feature_init(void);
+
+/**
+ * qdf_wake_lock_feature_deinit() - global de-init logic for wake lock
+ *
+ * Return: None
+ */
+void qdf_wake_lock_feature_deinit(void);
+#else
+static inline void qdf_wake_lock_check_for_leaks(void) { }
+static inline void qdf_wake_lock_feature_init(void) { }
+static inline void qdf_wake_lock_feature_deinit(void) { }
+#endif /* WLAN_WAKE_LOCK_DEBUG */
+
+/**
+ * __qdf_wake_lock_create() - initialize a wake lock
+ * @lock: The wake lock to initialize
+ * @name: Name of wake lock
+ * @func: caller function
+ * @line: caller line
+ * Return:
+ * QDF status success: if wake lock is initialized
+ * QDF status failure: if wake lock was not initialized
+ */
+QDF_STATUS __qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name,
+				  const char *func, uint32_t line);
+
+/**
+ * qdf_wake_lock_create() - initialized a wakeup source lock
+ * @lock: the wakeup source lock to initialize
+ * @name: the name of wakeup source lock
+ *
+ * Return: QDF_STATUS
+ */
+#define qdf_wake_lock_create(lock, name) \
+	__qdf_wake_lock_create(lock, name, __func__, __LINE__)
 
 QDF_STATUS qdf_wake_lock_acquire(qdf_wake_lock_t *lock, uint32_t reason);
 
@@ -497,7 +545,25 @@ QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock,
 
 QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason);
 
-QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock);
+/**
+ * __qdf_wake_lock_destroy() - destroy a wake lock
+ * @lock: The wake lock to destroy
+ * @func: caller function
+ * @line: caller line
+ *
+ * Return: None
+ */
+void __qdf_wake_lock_destroy(qdf_wake_lock_t *lock,
+			     const char *func, uint32_t line);
+
+/**
+ * qdf_wake_lock_destroy() - deinitialize a wakeup source lock
+ * @lock: the wakeup source lock to de-initialize
+ *
+ * Return: None
+ */
+#define qdf_wake_lock_destroy(lock) \
+	__qdf_wake_lock_destroy(lock, __func__, __LINE__)
 
 void qdf_pm_system_wakeup(void);
 
