@@ -785,7 +785,6 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 {
 	ops->setup_timing_gen = sde_hw_intf_setup_timing_engine;
 	ops->setup_prg_fetch  = sde_hw_intf_setup_prg_fetch;
-	ops->get_status = sde_hw_intf_get_status;
 	ops->enable_timing = sde_hw_intf_enable_timing_engine;
 	ops->setup_misr = sde_hw_intf_setup_misr;
 	ops->collect_misr = sde_hw_intf_collect_misr;
@@ -797,6 +796,11 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 	ops->avr_ctrl = sde_hw_intf_avr_ctrl;
 	ops->enable_compressed_input = sde_hw_intf_enable_compressed_input;
 	ops->enable_wide_bus = sde_hw_intf_enable_wide_bus;
+
+	if (cap & BIT(SDE_INTF_STATUS))
+		ops->get_status = sde_hw_intf_v1_get_status;
+	else
+		ops->get_status = sde_hw_intf_get_status;
 
 	if (cap & BIT(SDE_INTF_INPUT_CTRL))
 		ops->bind_pingpong_blk = sde_hw_intf_bind_pingpong_blk;
@@ -811,7 +815,6 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 		ops->get_autorefresh = sde_hw_intf_get_autorefresh_config;
 		ops->poll_timeout_wr_ptr = sde_hw_intf_poll_timeout_wr_ptr;
 		ops->vsync_sel = sde_hw_intf_vsync_sel;
-		ops->get_status = sde_hw_intf_v1_get_status;
 		ops->check_and_reset_tearcheck =
 			sde_hw_intf_v1_check_and_reset_tearcheck;
 	}
