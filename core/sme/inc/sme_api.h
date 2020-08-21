@@ -2153,7 +2153,17 @@ QDF_STATUS sme_create_mon_session(mac_handle_t mac_handle, uint8_t *bssid,
  */
 QDF_STATUS sme_delete_mon_session(mac_handle_t mac_handle, uint8_t vdev_id);
 
-void sme_set_vdev_ies_per_band(mac_handle_t mac_handle, uint8_t vdev_id);
+/**
+ * sme_set_vdev_ies_per_band() - sends the per band IEs to vdev
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev_id for which IE is targeted
+ * @device_mode: vdev mode
+ *
+ * Return: None
+ */
+void sme_set_vdev_ies_per_band(mac_handle_t mac_handle, uint8_t vdev_id,
+			       enum QDF_OPMODE device_mode);
+
 void sme_set_pdev_ht_vht_ies(mac_handle_t mac_handle, bool enable2x2);
 
 /**

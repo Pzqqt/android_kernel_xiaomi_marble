@@ -4295,7 +4295,7 @@ static void lim_set_pdev_vht_ie(struct mac_context *mac_ctx, uint8_t pdev_id,
  * Return: None
  */
 static void lim_process_set_vdev_ies_per_band(struct mac_context *mac_ctx,
-						uint32_t *msg_buf)
+					      uint32_t *msg_buf)
 {
 	struct sir_set_vdev_ies_per_band *p_msg =
 				(struct sir_set_vdev_ies_per_band *)msg_buf;
@@ -4308,8 +4308,9 @@ static void lim_process_set_vdev_ies_per_band(struct mac_context *mac_ctx,
 	pe_debug("rcvd set vdev ie per band req vdev_id = %d",
 		p_msg->vdev_id);
 	/* intentionally using NULL here so that self capabilty are sent */
-	if (lim_send_ies_per_band(mac_ctx, NULL, p_msg->vdev_id) !=
-			QDF_STATUS_SUCCESS)
+	if (lim_send_ies_per_band(mac_ctx, NULL, p_msg->vdev_id,
+				  p_msg->dot11_mode, p_msg->device_mode) !=
+	    QDF_STATUS_SUCCESS)
 		pe_err("Unable to send HT/VHT Cap to FW");
 }
 

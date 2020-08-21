@@ -5682,54 +5682,29 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * lim_send_ies_per_band() - gets ht and vht capability and send to firmware via
- * wma
- * @mac_ctx: global mac context
- * @session: pe session. This can be NULL. In that case self cap will be sent
- * @vdev_id: vdev for which IE is targeted
- *
- * This funciton gets ht and vht capability and send to firmware via wma
- *
- * Return: status of operation
- */
 QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
-				 struct pe_session *session,
-				 uint8_t vdev_id)
+				 struct pe_session *session, uint8_t vdev_id,
+				 enum csr_cfgdot11mode dot11_mode,
+				 enum QDF_OPMODE device_mode)
 {
-	struct wlan_objmgr_vdev *vdev;
-	enum QDF_OPMODE device_mode;
 	QDF_STATUS status_ht = QDF_STATUS_SUCCESS;
 	QDF_STATUS status_vht = QDF_STATUS_SUCCESS;
 	QDF_STATUS status_he = QDF_STATUS_SUCCESS;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-			mac_ctx->psoc, vdev_id,
-			WLAN_LEGACY_MAC_ID);
-	if (!vdev) {
-		pe_err("vdev is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	device_mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
 	/*
 	 * Note: Do not use Dot11f VHT structure, since 1 byte present flag in
 	 * it is causing weird padding errors. Instead use Sir Mac VHT struct
 	 * to send IE to wma.
 	 */
-	if (is_dot11mode_support_ht_cap(
-				mac_ctx->roam.configParam.uCfgDot11Mode))
+	if (is_dot11mode_support_ht_cap(dot11_mode))
 		status_ht = lim_send_ht_caps_ie(mac_ctx, session,
 						device_mode, vdev_id);
 
-	if (is_dot11mode_support_vht_cap(
-				mac_ctx->roam.configParam.uCfgDot11Mode))
+	if (is_dot11mode_support_vht_cap(dot11_mode))
 		status_vht = lim_send_vht_caps_ie(mac_ctx, session,
 						  device_mode, vdev_id);
 
-	if (is_dot11mode_support_he_cap(
-				mac_ctx->roam.configParam.uCfgDot11Mode)) {
+	if (is_dot11mode_support_he_cap(dot11_mode)) {
 		status_he = lim_send_he_caps_ie(mac_ctx, session,
 						device_mode, vdev_id);
 

@@ -5610,7 +5610,8 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 		hdd_err("unable to get vht_enable2x2");
 	sme_set_pdev_ht_vht_ies(mac_handle, bval);
 
-	sme_set_vdev_ies_per_band(mac_handle, adapter->vdev_id);
+	sme_set_vdev_ies_per_band(mac_handle, adapter->vdev_id,
+				  adapter->device_mode);
 
 	hdd_roam_profile_init(adapter);
 	hdd_register_wext(adapter->dev);
@@ -5717,7 +5718,8 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 		hdd_err("unable to get vht_enable2x2");
 	sme_set_pdev_ht_vht_ies(mac_handle, bval);
 
-	sme_set_vdev_ies_per_band(mac_handle, adapter->vdev_id);
+	sme_set_vdev_ies_per_band(mac_handle, adapter->vdev_id,
+				  adapter->device_mode);
 
 	hdd_roam_profile_init(adapter);
 	hdd_register_wext(adapter->dev);

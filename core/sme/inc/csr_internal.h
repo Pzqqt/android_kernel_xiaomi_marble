@@ -751,6 +751,26 @@ struct csr_roamstruct {
 	((eCSR_DOT11_MODE_11ac == phy_mode) || \
 	 (eCSR_DOT11_MODE_11ac_ONLY == phy_mode))
 
+#define CSR_IS_DOT11_MODE_11N(dot11mode) \
+	((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11N) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11N_ONLY) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC_ONLY) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
+
+#define CSR_IS_DOT11_MODE_11AC(dot11mode) \
+	((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC_ONLY) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
+
+#define CSR_IS_DOT11_MODE_11AX(dot11mode) \
+	((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
 /*
  * this function returns true if the NIC is operating exclusively in
  * the 2.4 GHz band, meaning. it is NOT operating in the 5.0 GHz band.
@@ -810,6 +830,22 @@ struct csr_roamstruct {
 #else
 #define CSR_GET_SUBNET_STATUS(roam_reason) (0)
 #endif
+
+/**
+ * csr_get_vdev_dot11_mode() - get the supported dot11mode by vdev
+ * @mac_ctx:  pointer to global mac structure
+ * @device_mode: vdev mode
+ * @curr_dot11_mode: Current dot11 mode
+ *
+ * The function return the min of supported dot11 mode and vdev type dot11mode
+ * for given vdev type.
+ *
+ * Return:csr_cfgdot11mode
+ */
+enum csr_cfgdot11mode
+csr_get_vdev_dot11_mode(struct mac_context *mac,
+			enum QDF_OPMODE device_mode,
+			enum csr_cfgdot11mode curr_dot11_mode);
 
 QDF_STATUS csr_get_channel_and_power_list(struct mac_context *mac);
 

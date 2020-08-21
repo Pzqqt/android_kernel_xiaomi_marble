@@ -3361,6 +3361,8 @@ struct sir_set_vdev_ies_per_band {
 	uint16_t msg_type;
 	uint16_t len;
 	uint32_t vdev_id;
+	uint16_t dot11_mode;
+	enum QDF_OPMODE device_mode;
 };
 
 /**
