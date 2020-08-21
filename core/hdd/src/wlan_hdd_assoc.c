@@ -2826,6 +2826,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	uint32_t conn_info_freq;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_vdev *vdev;
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	struct if_mgr_event_data *connect_complete;
+#endif
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2870,10 +2873,14 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_conn_set_connection_state(adapter,
 						   eConnectionState_Associated);
 		}
-
 		/*
-		 * Due to audio share glitch with P2P clients due
-		 * to roam scan on concurrent interface, disable
+		 * Following code will be cleaned once the interface manager
+		 * module is enabled.
+		 */
+#ifndef WLAN_FEATURE_INTERFACE_MGR
+		/*
+		 * Due to audio share glitch with P2P clients caused
+		 * by roam scan on concurrent interface, disable
 		 * roaming if "p2p_disable_roam" ini is enabled.
 		 * Donot re-enable roaming again on other STA interface
 		 * if p2p client connection is active on any vdev.
@@ -2897,7 +2904,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			 */
 			wlan_hdd_enable_roaming(adapter, RSO_CONNECT_START);
 		}
-
+#endif
 		/* Save the connection info from CSR... */
 		hdd_conn_save_connect_info(adapter, roam_info,
 					   eCSR_BSS_TYPE_INFRASTRUCTURE);
@@ -3353,11 +3360,28 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_ftm_time_sync_sta_state_notify(
 					adapter, FTM_TIME_SYNC_STA_CONNECTED);
 		}
+		/*
+		 * Following code will be cleaned once the interface manager
+		 * module is enabled.
+		 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+		connect_complete = qdf_mem_malloc(sizeof(*connect_complete));
+		if (!connect_complete)
+			return QDF_STATUS_E_NOMEM;
 
+		qdf_mem_zero(connect_complete, sizeof(*connect_complete));
+
+		connect_complete->status = QDF_STATUS_SUCCESS;
+		ucfg_if_mgr_deliver_event(adapter->vdev,
+					  WLAN_IF_MGR_EV_CONNECT_COMPLETE,
+					  connect_complete);
+		qdf_mem_free(connect_complete);
+#else
 		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->psoc);
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
 			hdd_ctx->psoc);
+#endif
 	} else {
 		bool connect_timeout = false;
 		if (roam_info && roam_info->is_fils_connection &&
@@ -3513,22 +3537,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					   timeout_reason);
 		}
 
-		if (roam_status == eCSR_ROAM_ASSOCIATION_FAILURE ||
-		    roam_status == eCSR_ROAM_CANCELLED) {
-			/* notify connect faiilure on final failure */
-			ucfg_tdls_notify_connect_failure(hdd_ctx->psoc);
-			/* do we need to change the HW mode on final failure */
-			policy_mgr_check_n_start_opportunistic_timer(
-								hdd_ctx->psoc);
-
-			/*
-			 * Enable roaming on other STA iface except this one.
-			 * Firmware dosent support connection on one STA iface
-			 * while roaming on other STA iface
-			 */
-			wlan_hdd_enable_roaming(adapter, RSO_CONNECT_START);
-		}
-
 		/*
 		 * Set connection state to eConnectionState_NotConnected only
 		 * when CSR has completed operation - with a
@@ -3568,7 +3576,44 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		    hddDisconInProgress)
 			complete(&adapter->disconnect_comp_var);
 
+		if (roam_status == eCSR_ROAM_ASSOCIATION_FAILURE ||
+		    roam_status == eCSR_ROAM_CANCELLED) {
+			/*
+			 * Following code will be cleaned once the interface
+			 * manager module is enabled.
+			 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+			connect_complete =
+				qdf_mem_malloc(sizeof(*connect_complete));
+			if (!connect_complete)
+				return QDF_STATUS_E_NOMEM;
+
+			qdf_mem_zero(connect_complete,
+				     sizeof(*connect_complete));
+
+			connect_complete->status = QDF_STATUS_E_FAILURE;
+			ucfg_if_mgr_deliver_event(adapter->vdev,
+					WLAN_IF_MGR_EV_CONNECT_COMPLETE,
+					connect_complete);
+			qdf_mem_free(connect_complete);
+		}
+#else
+			/* notify connect failure on final failure */
+			ucfg_tdls_notify_connect_failure(hdd_ctx->psoc);
+			/* do we need to change the HW mode on final failure */
+			policy_mgr_check_n_start_opportunistic_timer(
+								hdd_ctx->psoc);
+
+			/*
+			 * Enable roaming on other STA iface except this one.
+			 * Firmware dosent support connection on one STA iface
+			 * while roaming on other STA iface
+			 */
+			wlan_hdd_enable_roaming(adapter, RSO_CONNECT_START);
+		}
+
 		policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
+#endif
 	}
 
 	hdd_periodic_sta_stats_start(adapter);
