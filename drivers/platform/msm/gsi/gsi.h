@@ -2233,6 +2233,15 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 */
 int gsi_query_aqc_msi_addr(unsigned long chan_hdl, u32 *addr);
 
+/**
+* gsi_dump_ch_info - channel information.
+*
+* @chan_id: channel id
+*
+* @Return void
+*/
+void gsi_dump_ch_info(unsigned long chan_hdl);
+
 /*
  * Here is a typical sequence of calls
  *

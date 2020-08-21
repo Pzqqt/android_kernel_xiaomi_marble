@@ -182,76 +182,7 @@ static ssize_t gsi_dump_ch(struct file *file,
 		return -EINVAL;
 	}
 
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_0,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX0  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_1,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX1  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_2,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX2  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_3,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX3  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_4,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX4  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_5,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX5  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_6,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX6  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_7,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d CTX7  0x%x\n", arg1, val);
-	if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_8,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d CTX8  0x%x\n", arg1, val);
-	}
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_RE_FETCH_READ_PTR,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d REFRP 0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d REFWP 0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_QOS,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d QOS   0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_0,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d SCR0  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_1,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d SCR1  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_2,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d SCR2  0x%x\n", arg1, val);
-	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_3,
-		gsi_ctx->per.ee, arg1);
-	TERR("CH%2d SCR3  0x%x\n", arg1, val);
-	if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_4,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d SCR4  0x%x\n", arg1, val);
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_5,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d SCR5  0x%x\n", arg1, val);
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_6,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d SCR6  0x%x\n", arg1, val);
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_7,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d SCR7  0x%x\n", arg1, val);
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_8,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d SCR8  0x%x\n", arg1, val);
-		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_9,
-			gsi_ctx->per.ee, arg1);
-		TERR("CH%2d SCR9  0x%x\n", arg1, val);
-	}
+	gsi_dump_ch_info(arg1);
 
 	if (arg2) {
 		ctx = &gsi_ctx->chan[arg1];
