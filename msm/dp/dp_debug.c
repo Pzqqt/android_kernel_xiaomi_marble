@@ -2445,6 +2445,7 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 	dp_debug->dp_mst_connector_list.con_id = -1;
 	dp_debug->dp_mst_connector_list.conn = NULL;
 	dp_debug->dp_mst_connector_list.debug_en = false;
+	mutex_init(&dp_debug->dp_mst_connector_list.lock);
 
 	dp_debug->max_pclk_khz = debug->parser->max_pclk_khz;
 
@@ -2478,6 +2479,7 @@ void dp_debug_put(struct dp_debug *dp_debug)
 
 	dp_debug_deinit(dp_debug);
 
+	mutex_destroy(&dp_debug->dp_mst_connector_list.lock);
 	mutex_destroy(&debug->lock);
 
 	if (debug->edid)
