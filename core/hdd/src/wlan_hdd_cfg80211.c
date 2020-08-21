@@ -9527,7 +9527,7 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		params->wake_intvl_us = params->wake_intvl_mantis;
 	}
 
-	hdd_debug("twt: dialod_id %d, vdev %d, wake intvl_us %d, mantis %d",
+	hdd_debug("twt: dialog_id %d, vdev %d, wake intvl_us %d, mantis %d",
 		  params->dialog_id, params->vdev_id, params->wake_intvl_us,
 		  params->wake_intvl_mantis);
 	hdd_debug("twt: wake dura %d, sp_offset %d, cmd %d",
@@ -10075,8 +10075,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 						hdd_ctx->psoc, 0);
 				hdd_send_twt_enable_cmd(hdd_ctx);
 			}
-			ret_val = qdf_status_to_os_return(
-					wma_twt_process_add_dialog(&params));
+			ret_val = qdf_status_to_os_return(sme_test_config_twt_setup(&params));
 			if (ret_val)
 				goto send_err;
 		}
@@ -10100,8 +10099,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		params.vdev_id = adapter->vdev_id;
 		params.dialog_id = 0;
 		hdd_debug("twt_terminate: vdev_id %d", params.vdev_id);
-		ret_val = qdf_status_to_os_return(
-				wma_twt_process_del_dialog(&params));
+		ret_val = qdf_status_to_os_return(sme_test_config_twt_terminate(&params));
 		if (ret_val)
 			goto send_err;
 	}

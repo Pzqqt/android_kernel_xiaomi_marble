@@ -101,6 +101,7 @@
 #include "init_cmd_api.h"
 #include "nan_ucfg_api.h"
 #include "wma_coex.h"
+#include "wma_twt.h"
 #include "target_if_vdev_mgr_rx_ops.h"
 #include "wlan_tdls_cfg_api.h"
 #include "wlan_policy_mgr_i.h"
@@ -8991,6 +8992,22 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 #endif
 	case WMA_ROAM_SCAN_CH_REQ:
 		wma_get_roam_scan_ch(wma_handle->wmi_handle, msg->bodyval);
+		break;
+	case WMA_TWT_ADD_DIALOG_REQUEST:
+		wma_twt_process_add_dialog(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_TWT_DEL_DIALOG_REQUEST:
+		wma_twt_process_del_dialog(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_TWT_PAUSE_DIALOG_REQUEST:
+		wma_twt_process_pause_dialog(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_TWT_RESUME_DIALOG_REQUEST:
+		wma_twt_process_resume_dialog(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	default:
 		wma_debug("Unhandled WMA message of type %d", msg->type);

@@ -2060,6 +2060,121 @@ static QDF_STATUS sme_process_antenna_mode_resp(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * sme_process_twt_add_dialog_event() - Process twt add dialog event
+ * response from firmware
+ * @mac: Global MAC pointer
+ * @add_dialog_event: pointer to event buf containing twt response parameters
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_add_dialog_event(struct mac_context *mac,
+				 struct twt_add_dialog_complete_event *add_dialog_event)
+{
+	twt_add_dialog_cb callback;
+	void *context;
+
+	callback = mac->sme.twt_add_dialog_cb;
+	context = mac->sme.twt_add_dialog_context;
+	mac->sme.twt_add_dialog_cb = NULL;
+	if (callback)
+		callback(context, add_dialog_event);
+}
+
+/**
+ * sme_process_twt_del_dialog_event() - Process twt del dialog event
+ * response from firmware
+ * @mac: Global MAC pointer
+ * @param: pointer to wmi_twt_del_dialog_complete_event_param buffer
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_del_dialog_event(struct mac_context *mac,
+				 struct wmi_twt_del_dialog_complete_event_param *param)
+{
+	twt_del_dialog_cb callback;
+	void *context;
+
+	callback = mac->sme.twt_del_dialog_cb;
+	context = mac->sme.twt_del_dialog_context;
+	mac->sme.twt_del_dialog_cb = NULL;
+	if (callback)
+		callback(context, param);
+}
+
+/**
+ * sme_process_twt_pause_dialog_event() - Process twt pause dialog event
+ * response from firmware
+ * @mac: Global MAC pointer
+ * @param: pointer to wmi_twt_pause_dialog_complete_event_param buffer
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_pause_dialog_event(struct mac_context *mac,
+				   struct wmi_twt_pause_dialog_complete_event_param *param)
+{
+	twt_pause_dialog_cb callback;
+	void *context;
+
+	callback = mac->sme.twt_pause_dialog_cb;
+	context = mac->sme.twt_pause_dialog_context;
+	mac->sme.twt_pause_dialog_cb = NULL;
+	if (callback)
+		callback(context, param);
+}
+
+/**
+ * sme_process_twt_resume_dialog_event() - Process twt resume dialog event
+ * response from firmware
+ * @mac: Global MAC pointer
+ * @param: pointer to wmi_twt_resume_dialog_complete_event_param buffer
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_resume_dialog_event(struct mac_context *mac,
+				    struct wmi_twt_resume_dialog_complete_event_param *param)
+{
+	twt_resume_dialog_cb callback;
+	void *context;
+
+	callback = mac->sme.twt_resume_dialog_cb;
+	context = mac->sme.twt_resume_dialog_context;
+	mac->sme.twt_resume_dialog_cb = NULL;
+	if (callback)
+		callback(context, param);
+}
+#else
+
+static void
+sme_process_twt_add_dialog_event(struct mac_context *mac,
+				 struct twt_add_dialog_complete_event *add_dialog_event)
+{
+}
+
+static void
+sme_process_twt_del_dialog_event(struct mac_context *mac,
+				 struct wmi_twt_del_dialog_complete_event_param *param)
+{
+}
+
+static void
+sme_process_twt_pause_dialog_event(struct mac_context *mac,
+				   struct wmi_twt_pause_dialog_complete_event_param *param)
+{
+}
+
+static void
+sme_process_twt_resume_dialog_event(struct mac_context *mac,
+				    struct wmi_twt_resume_dialog_complete_event_param *param)
+{
+}
+#endif
+
 QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2362,6 +2477,22 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		break;
 	case eWNI_SME_MONITOR_MODE_VDEV_UP:
 		status = sme_process_monitor_mode_vdev_up_evt(pMsg->bodyval);
+		break;
+	case eWNI_SME_TWT_ADD_DIALOG_EVENT:
+		sme_process_twt_add_dialog_event(mac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
+	case eWNI_SME_TWT_DEL_DIALOG_EVENT:
+		sme_process_twt_del_dialog_event(mac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
+	case eWNI_SME_TWT_PAUSE_DIALOG_EVENT:
+		sme_process_twt_pause_dialog_event(mac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
+	case eWNI_SME_TWT_RESUME_DIALOG_EVENT:
+		sme_process_twt_resume_dialog_event(mac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
 		break;
 	default:
 
@@ -14347,6 +14478,54 @@ QDF_STATUS sme_deregister_tx_queue_cb(mac_handle_t mac_handle)
 
 #ifdef WLAN_SUPPORT_TWT
 
+QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params)
+{
+	t_wma_handle *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_twt_process_add_dialog(wma_handle, params);
+}
+
+QDF_STATUS
+sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
+{
+	t_wma_handle *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_twt_process_del_dialog(wma_handle, params);
+}
+
+QDF_STATUS sme_init_twt_complete_cb(mac_handle_t mac_handle)
+{
+	QDF_STATUS status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.twt_add_dialog_cb = NULL;
+		mac->sme.twt_del_dialog_cb = NULL;
+		mac->sme.twt_pause_dialog_cb = NULL;
+		mac->sme.twt_resume_dialog_cb = NULL;
+		sme_release_global_lock(&mac->sme);
+
+		sme_debug("TWT: callbacks Initialized");
+	}
+
+	return status;
+}
+
 QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
 					       twt_enable_cb twt_enable_cb)
 {
@@ -14395,8 +14574,10 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			      void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct scheduler_msg twt_msg = {0};
 	QDF_STATUS status;
 	void *wma_handle;
+	struct wmi_twt_del_dialog_param *cmd_params;
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -14405,21 +14586,43 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.twt_add_dialog_cb = twt_add_dialog_cb;
-		mac->sme.twt_context = context;
-		sme_release_global_lock(&mac->sme);
-	}
+	/*bodyptr should be freeable*/
+	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
+	if (!cmd_params)
+		return QDF_STATUS_E_NOMEM;
 
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("failed to register add dlg callback");
+	qdf_mem_copy(cmd_params, twt_params, sizeof(*cmd_params));
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("failed to register add dialog callback");
+		qdf_mem_free(cmd_params);
 		return status;
 	}
 
-	status = wma_twt_process_add_dialog(twt_params);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("failed to call wma_start_oem_data_cmd.");
+	if (mac->sme.twt_add_dialog_cb) {
+		sme_release_global_lock(&mac->sme);
+		qdf_mem_free(cmd_params);
+		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
+		return QDF_STATUS_E_BUSY;
+	}
+
+	/* Serialize the req through MC thread */
+	mac->sme.twt_add_dialog_cb = twt_add_dialog_cb;
+	mac->sme.twt_add_dialog_context = context;
+	twt_msg.bodyptr = cmd_params;
+	twt_msg.type = WMA_TWT_ADD_DIALOG_REQUEST;
+	sme_release_global_lock(&mac->sme);
+
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &twt_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Post twt add dialog msg fail"));
+		qdf_mem_free(cmd_params);
+	}
 
 	SME_EXIT();
 	return status;
@@ -14431,8 +14634,10 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct scheduler_msg twt_msg = {0};
 	QDF_STATUS status;
 	void *wma_handle;
+	struct wmi_twt_add_dialog_param *cmd_params;
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -14441,21 +14646,43 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.twt_del_dialog_cb = del_dialog_cb;
-		mac->sme.twt_context = context;
-		sme_release_global_lock(&mac->sme);
-	}
+	/*bodyptr should be freeable*/
+	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
+	if (!cmd_params)
+		return QDF_STATUS_E_NOMEM;
 
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("failed to register del dlg callback");
+	qdf_mem_copy(cmd_params, twt_params, sizeof(*cmd_params));
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("failed to register del dialog callback");
+		qdf_mem_free(cmd_params);
 		return status;
 	}
 
-	status = wma_twt_process_del_dialog(twt_params);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("failed to call wma_twt_process_del_dialog");
+	if (mac->sme.twt_del_dialog_cb) {
+		sme_release_global_lock(&mac->sme);
+		qdf_mem_free(cmd_params);
+		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
+		return QDF_STATUS_E_BUSY;
+	}
+
+	/* Serialize the req through MC thread */
+	mac->sme.twt_del_dialog_cb = del_dialog_cb;
+	mac->sme.twt_del_dialog_context = context;
+	twt_msg.bodyptr = cmd_params;
+	twt_msg.type = WMA_TWT_DEL_DIALOG_REQUEST;
+	sme_release_global_lock(&mac->sme);
+
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &twt_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Post twt del dialog msg fail"));
+		qdf_mem_free(cmd_params);
+	}
 
 	SME_EXIT();
 	return status;
@@ -14468,6 +14695,8 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 		     void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct wmi_twt_pause_dialog_cmd_param *cmd_params;
+	struct scheduler_msg twt_msg = {0};
 	QDF_STATUS status;
 	void *wma_handle;
 
@@ -14478,19 +14707,43 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/*bodyptr should be freeable*/
+	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
+	if (!cmd_params)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_copy(cmd_params, twt_params, sizeof(*cmd_params));
+
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("failed to register pause dialog callback");
+		qdf_mem_free(cmd_params);
 		return status;
 	}
 
+	if (mac->sme.twt_pause_dialog_cb) {
+		sme_release_global_lock(&mac->sme);
+		qdf_mem_free(cmd_params);
+		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
+		return QDF_STATUS_E_BUSY;
+	}
+
+	/* Serialize the req through MC thread */
 	mac->sme.twt_pause_dialog_cb = pause_dialog_cb;
-	mac->sme.twt_context = context;
+	mac->sme.twt_pause_dialog_context = context;
+	twt_msg.bodyptr = cmd_params;
+	twt_msg.type = WMA_TWT_PAUSE_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
 
-	status = wma_twt_process_pause_dialog(twt_params);
-	if (QDF_IS_STATUS_ERROR(status))
-		sme_err("failed to call wma_twt_process_pause_dialog");
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &twt_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Post twt pause dialog msg fail"));
+		qdf_mem_free(cmd_params);
+	}
 
 	SME_EXIT();
 	return status;
@@ -14503,6 +14756,8 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 		      void *context)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct wmi_twt_resume_dialog_cmd_param *cmd_params;
+	struct scheduler_msg twt_msg = {0};
 	QDF_STATUS status;
 	void *wma_handle;
 
@@ -14513,24 +14768,47 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/*bodyptr should be freeable*/
+	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
+	if (!cmd_params)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_copy(cmd_params, twt_params, sizeof(*cmd_params));
+
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("failed to register resume dialog callback");
+		qdf_mem_free(cmd_params);
 		return status;
 	}
 
+	if (mac->sme.twt_resume_dialog_cb) {
+		sme_release_global_lock(&mac->sme);
+		qdf_mem_free(cmd_params);
+		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
+		return QDF_STATUS_E_BUSY;
+	}
+
+	/* Serialize the req through MC thread */
 	mac->sme.twt_resume_dialog_cb = resume_dialog_cb;
-	mac->sme.twt_context = context;
+	mac->sme.twt_resume_dialog_context = context;
+	twt_msg.bodyptr = cmd_params;
+	twt_msg.type = WMA_TWT_RESUME_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
 
-	status = wma_twt_process_resume_dialog(twt_params);
-	if (QDF_IS_STATUS_ERROR(status))
-		sme_err("failed to call wma_twt_process_resume_dialog");
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &twt_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Post twt resume dialog msg fail"));
+		qdf_mem_free(cmd_params);
+	}
 
 	SME_EXIT();
 	return status;
 }
-
 #endif
 
 QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,

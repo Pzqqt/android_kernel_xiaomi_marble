@@ -39,6 +39,7 @@
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
 
+struct twt_add_dialog_complete_event;
 struct wmi_twt_add_dialog_complete_event_param;
 struct wmi_twt_enable_complete_event_param;
 /*--------------------------------------------------------------------------
@@ -163,12 +164,10 @@ typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
  * typedef twt_add_dialog_cb - TWT add dialog callback signature.
  * @context: Opaque context that the client can use to associate the
  *           callback with the request.
- * @params: TWT add dialog complete event fixed parameters.
- * @params: TWT add dialog complete event additional parameters.
+ * @add_dialog_event: pointer to event buf containing twt response parameters
  */
 typedef void (*twt_add_dialog_cb)(void *context,
-				  struct wmi_twt_add_dialog_complete_event_param *params,
-				  struct wmi_twt_add_dialog_additional_params *additional_params);
+				  struct twt_add_dialog_complete_event *add_dialog_event);
 
 /**
  * typedef twt_del_dialog_cb - TWT delete dialog callback signature.
@@ -411,7 +410,10 @@ struct sme_context {
 	twt_del_dialog_cb twt_del_dialog_cb;
 	twt_pause_dialog_cb twt_pause_dialog_cb;
 	twt_resume_dialog_cb twt_resume_dialog_cb;
-	void *twt_context;
+	void *twt_add_dialog_context;
+	void *twt_del_dialog_context;
+	void *twt_pause_dialog_context;
+	void *twt_resume_dialog_context;
 #endif
 #ifdef FEATURE_WLAN_APF
 	apf_get_offload_cb apf_get_offload_cb;

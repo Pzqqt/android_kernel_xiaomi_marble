@@ -156,6 +156,7 @@ struct sme_config_params {
 #endif /* FEATURE_WLAN_TDLS */
 
 struct wmi_twt_add_dialog_param;
+struct wmi_twt_del_dialog_param;
 
 /* Thermal Mitigation*/
 typedef struct {
@@ -3615,6 +3616,37 @@ uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 			enum tx_rate_info *mcs_rate_flags);
 
 #ifdef WLAN_SUPPORT_TWT
+
+/**
+ * sme_test_config_twt_terminate() - send TWT del dialog wmi command
+ * to firmware
+ * @params: TWT del dialog parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
+QDF_STATUS
+sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params);
+
+/**
+ * sme_test_config_twt_setup() - send TWT add dialog wmi command
+ * to firmware
+ * @params: TWT add dialog parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
+QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params);
+
+/**
+ * sme_init_twt_complete_cb() - Initialize TWT callbacks
+ * @mac_handle: MAC handle
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
+QDF_STATUS sme_init_twt_complete_cb(mac_handle_t mac_handle);
+
 /**
  * sme_register_twt_enable_complete_cb() - TWT enable registrar
  * @mac_handle: MAC handle
@@ -3714,6 +3746,19 @@ QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle);
  * Return: QDF Status
  */
 QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle);
+#else
+
+static inline
+QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 /**

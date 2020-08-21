@@ -64,19 +64,6 @@ struct twt_resume_dialog_comp_ev_priv {
 };
 
 /**
- * struct twt_add_dialog_complete_event - TWT add dialog complete event
- * @params: Fixed parameters for TWT add dialog complete event
- * @additional_params: additional parameters for TWT add dialog complete event
- *
- * Holds the fixed and additional parameters from add dialog
- * complete event
- */
-struct twt_add_dialog_complete_event {
-	struct wmi_twt_add_dialog_complete_event_param params;
-	struct wmi_twt_add_dialog_additional_params additional_params;
-};
-
-/**
  * struct twt_add_dialog_comp_ev_priv - private struct for twt add dialog
  * @add_dialog_comp_ev_buf: buffer from TWT add dialog complete_event
  *
@@ -652,10 +639,9 @@ wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
-static
-QDF_STATUS hdd_twt_setup_pack_resp_nlmsg(
-	 struct sk_buff *reply_skb,
-	 struct twt_add_dialog_complete_event *event)
+static QDF_STATUS
+hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
+			      struct twt_add_dialog_complete_event *event)
 {
 	uint64_t sp_offset_tsf;
 	enum qca_wlan_vendor_twt_status vendor_status;
@@ -669,7 +655,7 @@ QDF_STATUS hdd_twt_setup_pack_resp_nlmsg(
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
 		       event->params.dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+		hdd_err("TWT: Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -769,10 +755,17 @@ QDF_STATUS hdd_twt_setup_pack_resp_nlmsg(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * hdd_twt_add_dialog_comp_cb() - HDD callback for twt add dialog
+ * complete event
+ * @hdd_ctx: HDD Context
+ * @add_dialog_event: Pointer to Add dialog complete event structure
+ *
+ * Return: None
+ */
 static void
 hdd_twt_add_dialog_comp_cb(void *context,
-			   struct wmi_twt_add_dialog_complete_event_param *params,
-			   struct wmi_twt_add_dialog_additional_params *additional_params)
+			   struct twt_add_dialog_complete_event *add_dialog_event)
 {
 	struct osif_request *request;
 	struct twt_add_dialog_comp_ev_priv *priv;
@@ -787,18 +780,16 @@ hdd_twt_add_dialog_comp_cb(void *context,
 
 	priv = osif_request_priv(request);
 
-	qdf_mem_copy(&priv->add_dialog_comp_ev_buf.params, params,
-		     sizeof(*params));
-	qdf_mem_copy(&priv->add_dialog_comp_ev_buf.additional_params,
-		     additional_params,
-		     sizeof(*additional_params));
+	qdf_mem_copy(&priv->add_dialog_comp_ev_buf, add_dialog_event,
+		     sizeof(*add_dialog_event));
 	osif_request_complete(request);
 	osif_request_put(request);
 
 	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id %d peer mac_addr "
-		  QDF_MAC_ADDR_FMT, params->dialog_id,
-		  params->status, params->vdev_id,
-		  QDF_MAC_ADDR_REF(params->peer_macaddr));
+		  QDF_MAC_ADDR_FMT, add_dialog_event->params.dialog_id,
+		  add_dialog_event->params.status,
+		  add_dialog_event->params.vdev_id,
+		  QDF_MAC_ADDR_REF(add_dialog_event->params.peer_macaddr));
 
 	hdd_exit();
 }
@@ -871,7 +862,7 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 
 	status = hdd_twt_setup_pack_resp_nlmsg(reply_skb,
 					       add_dialog_comp_ev_params);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to pack nl add dialog response");
 		ret = qdf_status_to_os_return(status);
 		goto err;
@@ -978,7 +969,8 @@ static uint32_t hdd_get_twt_event_len(void)
  * @reply_skb: skb to store the response
  * @params: Pointer to del dialog complete event buffer
  *
- * Return: QDF_STATUS
+ * Return: QDF_STATUS_SUCCESS on Success, QDF_STATUS_E_FAILURE
+ * on failure
  */
 static QDF_STATUS
 hdd_twt_terminate_pack_resp_nlmsg(struct sk_buff *reply_skb,
@@ -1044,7 +1036,7 @@ hdd_twt_del_dialog_comp_cb(void *context,
  * @hdd_ctx: HDD Context
  * @twt_params: Pointer to del dialog cmd params structure
  *
- * Return: QDF_STATUS
+ * Return: 0 on success, negative value on failure
  */
 static
 int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
@@ -1255,8 +1247,7 @@ hdd_twt_pause_pack_resp_nlmsg(struct sk_buff *reply_skb,
  * @hdd_ctx: HDD Context
  * @twt_params: Pointer to pause dialog cmd params structure
  *
- * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
- * on failure
+ * Return: 0 on success, negative value on failure
  */
 static
 int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
@@ -1876,6 +1867,8 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 
 	hdd_ctx->twt_state = TWT_INIT;
+
+	sme_init_twt_complete_cb(hdd_ctx->mac_handle);
 	status = sme_register_twt_enable_complete_cb(hdd_ctx->mac_handle,
 						     hdd_twt_enable_comp_cb);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
