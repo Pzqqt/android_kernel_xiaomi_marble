@@ -158,6 +158,14 @@ void convert_to_drm_mode(const struct dp_display_mode *dp_mode,
 int dp_connector_update_pps(struct drm_connector *connector,
 		char *pps_cmd, void *display);
 
+/**
+ * dp_connector_install_properties - install drm properties
+ * @display: Pointer to private display structure
+ * @conn: Pointer to connector
+ */
+int dp_connector_install_properties(void *display,
+		struct drm_connector *conn);
+
 #else
 static inline int dp_connector_config_hdr(struct drm_connector *connector,
 		void *display, struct sde_connector_state *c_state)
@@ -238,6 +246,12 @@ static inline void dp_drm_bridge_deinit(void *display)
 static inline void convert_to_drm_mode(const struct dp_display_mode *dp_mode,
 				struct drm_display_mode *drm_mode)
 {
+}
+
+static int dp_connector_install_properties(void *display,
+		struct drm_connector *conn)
+{
+	return 0;
 }
 #endif /* CONFIG_DRM_MSM_DP */
 

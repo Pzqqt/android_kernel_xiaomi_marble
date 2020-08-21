@@ -351,6 +351,14 @@ struct sde_connector_ops {
 	 */
 	int (*prepare_commit)(void *display,
 		struct msm_display_conn_params *params);
+
+	/**
+	 * install_properties - install connector properties
+	 * @display: Pointer to private display structure
+	 * @conn: Pointer to drm connector structure
+	 * Returns: Zero on success
+	 */
+	int (*install_properties)(void *display, struct drm_connector *conn);
 };
 
 /**

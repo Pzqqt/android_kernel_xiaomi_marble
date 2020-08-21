@@ -1747,6 +1747,7 @@ dp_mst_add_connector(struct drm_dp_mst_topology_mgr *mgr,
 		.config_hdr = dp_mst_connector_config_hdr,
 		.pre_destroy = dp_mst_connector_pre_destroy,
 		.update_pps = dp_connector_update_pps,
+		.install_properties = dp_connector_install_properties,
 	};
 	struct dp_mst_private *dp_mst;
 	struct drm_device *dev;
