@@ -57,8 +57,7 @@ HOST_CMN_CONVG_HAL_INC := $(DEPTH)/cmn_dev/hal/inc
 HOST_CMN_CONVG_HAL_WIFI_INC := $(DEPTH)/cmn_dev/hal/wifi3.0
 
 INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
-        -I$(obj)/$(DEPTH)/direct_attach/umac/include \
-        -I$(obj)/$(DEPTH)/direct_attach/umac/if_lmac -I$(obj)/$(DEPTH)/umac/crypto \
+        -I$(obj)/$(DEPTH)/umac/crypto \
         -I$(obj)/$(DEPTH)/umac/scan -I$(obj)/$(DEPTH)/umac/resmgr \
         -I$(obj)/$(DEPTH)/umac/pm -I$(obj)/$(DEPTH)/umac/txrx \
         -I$(obj)/$(DEPTH)/umac/acs -I$(obj)/$(DEPTH)/umac/txbf \
@@ -67,14 +66,11 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/umac/rpt_placement \
         -I$(obj)/$(DEPTH)/umac/wifipos \
         -I$(obj)/$(DEPTH)/umac/wds -I$(obj)/$(DEPTH)/umac/ique \
-        -I$(obj)/$(DEPTH)/direct_attach/hal -I$(obj)/$(DEPTH)/direct_attach/lmac/ath_dev \
-        -I$(obj)/$(DEPTH)/direct_attach/hal/$(OS) \
         -I$(obj)/$(DEPTH)/umac/vi_dbg \
         -I$(obj)/$(DEPTH)/umac/smart_antenna \
         -I$(obj)/$(DEPTH)/umac/smart_ant \
         -I$(obj)/$(DEPTH)/umac/ald \
         -I$(obj)/$(DEPTH)/lmac/ath_pktlog \
-        -I$(obj)/$(DEPTH)/direct_attach/lmac/ratectrl \
         -I$(obj)/$(DEPTH)/os/linux/mem/ \
         -I$(obj)/$(DEPTH)/umac/base \
         -I$(obj)/$(DEPTH)/qca_ol \
@@ -171,11 +167,6 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
 
-SPECTRAL_DA_OBJS := $(DEPTH)/direct_attach/lmac/spectral/spectral.o \
-                    $(DEPTH)/direct_attach/lmac/spectral/spectral_netlink.o \
-                    $(DEPTH)/direct_attach/lmac/spectral/spectral_cmds.o \
-                    $(DEPTH)/direct_attach/lmac/spectral/spectral_process_data.o \
-                    $(DEPTH)/direct_attach/lmac/spectral/spectral_phyerr.o
 #End of legacy spectral defines
 
 ifeq ($(QCA_AIRTIME_FAIRNESS), 1)
@@ -223,18 +214,8 @@ SPECTRAL_CMN_OBJS +=  core/spectral_offload.o \
                       $(DEPTH)/cmn_dev/os_if/linux/spectral/src/wlan_cfg80211_spectral.o \
                       $(DEPTH)/cmn_dev/os_if/linux/spectral/src/os_if_spectral_netlink.o
 
-ifeq ($(strip ${DA_SUPPORT}),1)
-SPECTRAL_CMN_OBJS +=  $(DEPTH)/component_dev/direct_attach/spectral/core/spectral_direct_attach.o
-endif
-
-ifeq ($(strip ${DA_SUPPORT}),1)
-qca_spectral-objs +=  ${SPECTRAL_CMN_OBJS} \
-                      ${SPECTRAL_TIF_OBJS} \
-                      ${SPECTRAL_DA_OBJS}
-else
 qca_spectral-objs +=  ${SPECTRAL_CMN_OBJS} \
                       ${SPECTRAL_TIF_OBJS}
-endif
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 all: qca_spectral.ko

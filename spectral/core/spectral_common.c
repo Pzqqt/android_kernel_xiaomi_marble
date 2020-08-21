@@ -21,9 +21,6 @@
 #include "spectral_ol_api_i.h"
 #include <qdf_mem.h>
 #include <qdf_types.h>
-#ifdef DA_SUPPORT
-#include "spectral_da_api_i.h"
-#endif
 #include <wlan_spectral_public_structs.h>
 #include <wlan_cfg80211_spectral.h>
 #include <cfg_ucfg_api.h>
@@ -495,26 +492,6 @@ spectral_ctx_deinit(struct spectral_context *sc)
 	}
 }
 
-#ifdef DA_SUPPORT
-/**
- * wlan_spectral_init_da() - init context of DA devices
- *
- * init context of DA device
- *
- * Return: void
- */
-static void
-wlan_spectral_init_da(struct spectral_context *sc)
-{
-	spectral_ctx_init_da(sc);
-}
-#else
-static void
-wlan_spectral_init_da(struct spectral_context *sc)
-{
-}
-#endif
-
 QDF_STATUS
 wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
@@ -540,8 +517,6 @@ wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	sc->psoc_obj = psoc;
 	if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_OL)
 		spectral_ctx_init_ol(sc);
-	else if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_DA)
-		wlan_spectral_init_da(sc);
 	wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_SPECTRAL,
 					      (void *)sc, QDF_STATUS_SUCCESS);
 
