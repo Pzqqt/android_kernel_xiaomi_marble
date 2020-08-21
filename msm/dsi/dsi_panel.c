@@ -33,7 +33,7 @@
 #define MAX_PANEL_JITTER		10
 #define DEFAULT_PANEL_PREFILL_LINES	25
 #define HIGH_REFRESH_RATE_THRESHOLD_TIME_US	500
-#define MIN_PREFILL_LINES      35
+#define MIN_PREFILL_LINES      40
 
 static void dsi_dce_prepare_pps_header(char *buf, u32 pps_delay_ms)
 {
