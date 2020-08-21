@@ -2044,6 +2044,87 @@ error:
 	return rc;
 }
 
+int dsi_panel_get_io_resources(struct dsi_panel *panel,
+		struct msm_io_res *io_res)
+{
+	struct list_head temp_head;
+	struct msm_io_mem_entry *io_mem, *pos, *tmp;
+	struct list_head *mem_list = &io_res->mem;
+	int i, rc = 0, address_count, pin_count;
+	u32 *pins = NULL, *address = NULL;
+	u32 base, size;
+	struct dsi_parser_utils *utils = &panel->utils;
+
+	INIT_LIST_HEAD(&temp_head);
+
+	address_count = utils->count_u32_elems(utils->data,
+				"qcom,dsi-panel-gpio-address");
+	if (address_count != 2) {
+		DSI_DEBUG("panel gpio address not defined\n");
+		return 0;
+	}
+
+	address =  kzalloc(sizeof(u32) * address_count, GFP_KERNEL);
+	if (!address)
+		return -ENOMEM;
+
+	rc = utils->read_u32_array(utils->data, "qcom,dsi-panel-gpio-address",
+				address, address_count);
+	if (rc) {
+		DSI_ERR("panel gpio address not defined correctly\n");
+		goto end;
+	}
+	base = address[0];
+	size = address[1];
+
+	pin_count = utils->count_u32_elems(utils->data,
+				"qcom,dsi-panel-gpio-pins");
+	if (pin_count < 0) {
+		DSI_ERR("panel gpio pins not defined\n");
+		rc = pin_count;
+		goto end;
+	}
+
+	pins =  kzalloc(sizeof(u32) * pin_count, GFP_KERNEL);
+	if (!pins) {
+		rc = -ENOMEM;
+		goto end;
+	}
+
+	rc = utils->read_u32_array(utils->data, "qcom,dsi-panel-gpio-pins",
+				pins, pin_count);
+	if (rc) {
+		DSI_ERR("panel gpio pins not defined correctly\n");
+		goto end;
+	}
+
+	for (i = 0; i < pin_count; i++) {
+		io_mem = kzalloc(sizeof(*io_mem), GFP_KERNEL);
+		if (!io_mem) {
+			rc = -ENOMEM;
+			goto parse_fail;
+		}
+
+		io_mem->base = base + (pins[i] * size);
+		io_mem->size = size;
+
+		list_add(&io_mem->list, &temp_head);
+	}
+
+	list_splice(&temp_head, mem_list);
+	goto end;
+
+parse_fail:
+	list_for_each_entry_safe(pos, tmp, &temp_head, list) {
+		list_del(&pos->list);
+		kzfree(pos);
+	}
+end:
+	kzfree(pins);
+	kzfree(address);
+	return rc;
+}
+
 static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 {
 	int rc = 0;

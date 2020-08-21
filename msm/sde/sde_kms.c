@@ -4122,6 +4122,12 @@ int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 		return rc;
 	}
 
+	rc = msm_dss_get_pmic_io_mem(pdev, &io_res->mem);
+	if (rc) {
+		SDE_ERROR("failed to get io mem for pmic, rc:%d\n", rc);
+		return rc;
+	}
+
 	rc = msm_dss_get_io_irq(pdev, &io_res->irq, HH_IRQ_LABEL_SDE);
 	if (rc) {
 		SDE_ERROR("failed to get io irq for KMS");
