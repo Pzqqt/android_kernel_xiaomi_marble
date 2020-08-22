@@ -35,11 +35,11 @@
 #include "wlan_osif_request_manager.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 
-#define TWT_SETUP_COMPLETE_TIMEOUT 1000
-#define TWT_DISABLE_COMPLETE_TIMEOUT 1000
-#define TWT_TERMINATE_COMPLETE_TIMEOUT 1000
-#define TWT_PAUSE_COMPLETE_TIMEOUT 1000
-#define TWT_RESUME_COMPLETE_TIMEOUT 1000
+#define TWT_SETUP_COMPLETE_TIMEOUT 4000
+#define TWT_DISABLE_COMPLETE_TIMEOUT 4000
+#define TWT_TERMINATE_COMPLETE_TIMEOUT 4000
+#define TWT_PAUSE_COMPLETE_TIMEOUT 4000
+#define TWT_RESUME_COMPLETE_TIMEOUT 4000
 
 /**
  * struct twt_pause_dialog_comp_ev_priv - private struct for twt pause dialog
