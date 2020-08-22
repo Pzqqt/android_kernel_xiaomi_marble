@@ -1992,6 +1992,14 @@ static ssize_t ipa_debugfs_print_tethering_stats(struct file *file,
 		return -ENOMEM;
 
 	mutex_lock(&ipa3_ctx->lock);
+
+	res = ipa_get_teth_stats();
+	if (res) {
+		mutex_unlock(&ipa3_ctx->lock);
+		kfree(out);
+		return res;
+	}
+
 	for (i = 0; i < IPA_CLIENT_MAX; i++) {
 		int ep_idx = ipa3_get_ep_mapping(i);
 
@@ -2008,7 +2016,7 @@ static ssize_t ipa_debugfs_print_tethering_stats(struct file *file,
 			(1 << ep_idx)))
 			continue;
 
-		res = ipa_get_teth_stats();
+		res = ipa_query_teth_stats(i, out, false);
 		if (res) {
 			mutex_unlock(&ipa3_ctx->lock);
 			kfree(out);
