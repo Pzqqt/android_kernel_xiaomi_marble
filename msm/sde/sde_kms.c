@@ -998,8 +998,6 @@ int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
 
 	ddev = sde_kms->dev;
 
-	pm_runtime_get_sync(ddev->dev);
-
 	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
 
 	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
@@ -1262,8 +1260,6 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
 		sde_encoder_irq_control(encoder, false);
 
-	sde_irq_update(&sde_kms->base, false);
-
 	list_for_each_entry(plane, &ddev->mode_config.plane_list, head)
 		sde_plane_set_sid(plane, 0);
 
@@ -1273,8 +1269,6 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 
 	if (vm_ops->vm_release)
 		rc = vm_ops->vm_release(sde_kms);
-
-	pm_runtime_put_sync(ddev->dev);
 
 	return rc;
 }
@@ -4304,7 +4298,7 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 	}
 
 	vm_ops = sde_vm_get_ops(sde_kms);
-	if (vm_ops && vm_ops->vm_owns_hw(sde_kms)) {
+	if (vm_ops && !vm_ops->vm_owns_hw(sde_kms)) {
 		SDE_DEBUG(
 		   "skipping sde res init as device assign is not completed\n");
 		return 0;
@@ -4339,6 +4333,12 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 		SDE_ERROR("error in setting handoff configs\n");
 		goto error;
 	}
+
+	/**
+	 * fill-in vote for the continuous splash hanodff path, which will be
+	 * removed on the successful first commit.
+	 */
+	pm_runtime_get_sync(sde_kms->dev->dev);
 
 	return 0;
 
