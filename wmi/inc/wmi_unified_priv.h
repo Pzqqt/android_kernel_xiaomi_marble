@@ -668,11 +668,18 @@ QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(wmi_unified_t wmi_handle,
 				   uint32_t *chan_list,
 				   uint8_t list_type, uint32_t vdev_id);
 
+#ifdef ROAM_OFFLOAD_V1
+QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_rssi_change_params *params);
+
+#else
 QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(wmi_unified_t wmi_handle,
 					uint32_t vdev_id,
 					int32_t rssi_change_thresh,
 					uint32_t bcn_rssi_weight,
 					uint32_t hirssi_delay_btw_scans);
+#endif
 
 QDF_STATUS (*send_per_roam_config_cmd)(wmi_unified_t wmi_handle,
 		struct wlan_per_roam_config_req *req_buf);
