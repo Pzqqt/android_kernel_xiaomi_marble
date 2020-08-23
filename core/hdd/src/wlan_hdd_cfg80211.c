@@ -22052,8 +22052,7 @@ static int __wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 	status = wlan_hdd_flush_pmksa_cache(adapter);
 	if (status == QDF_STATUS_E_NOSUPPORT) {
 		errno = -EOPNOTSUPP;
-	}
-	else if (QDF_IS_STATUS_ERROR(status)) {
+	} else if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Cannot flush PMKIDCache");
 		errno = -EINVAL;
 	}

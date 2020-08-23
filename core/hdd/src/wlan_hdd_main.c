@@ -9382,18 +9382,6 @@ static inline void hdd_pm_qos_update_cpu_mask(cpumask_t *mask,
 	}
 }
 
-#ifdef FEATURE_RUNTIME_PM
-static inline bool hdd_is_dynamic_runtime_pm_enabled(struct hdd_context *hdd_ctx)
-{
-	return hdd_ctx->config->runtime_pm == hdd_runtime_pm_dynamic;
-}
-#else
-static inline bool hdd_is_dynamic_runtime_pm_enabled(struct hdd_context *hdd_ctx)
-{
-	return true;
-}
-#endif
-
 #ifdef MSM_PLATFORM
 #define COPY_CPU_MASK(a, b) cpumask_copy(a, b)
 #define DUMP_CPU_AFFINE() hdd_info("Set cpu_mask %*pb for affine_cores", \
@@ -9419,8 +9407,7 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 
 	cpumask_copy(&hdd_ctx->qos_cpu_mask, pm_qos_cpu_mask);
 
-	if (cpumask_empty(pm_qos_cpu_mask) &&
-	    hdd_is_dynamic_runtime_pm_enabled(hdd_ctx))
+	if (cpumask_empty(pm_qos_cpu_mask))
 		latency = PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE;
 	else
 		latency = HDD_PM_QOS_HIGH_TPUT_LATENCY_US;
@@ -9475,8 +9462,7 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 {
 	COPY_CPU_MASK(&hdd_ctx->pm_qos_req.cpus_affine, pm_qos_cpu_mask);
 
-	if (cpumask_empty(pm_qos_cpu_mask) &&
-	    hdd_is_dynamic_runtime_pm_enabled(hdd_ctx))
+	if (cpumask_empty(pm_qos_cpu_mask))
 		pm_qos_update_request(&hdd_ctx->pm_qos_req,
 				      PM_QOS_DEFAULT_VALUE);
 	else
