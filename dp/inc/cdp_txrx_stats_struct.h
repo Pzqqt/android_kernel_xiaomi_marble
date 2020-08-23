@@ -1178,6 +1178,8 @@ struct cdp_rx_stats {
  * @ucast: total unicast packets transmitted
  * @fail_seg_alloc: Segment allocation failure
  * @clone_fail: NBUF clone failure
+ * @igmp_rcvd: igmp pkts received for conversion to ucast pkts
+ * @igmp_ucast_converted: unicast pkts sent as part of VoW IGMP improvements
  * @dropped_pkt: Total scatter gather packets
  * @desc_na: Desc Not Available
  * @exc_desc_na: Exception desc Not Available
@@ -1224,6 +1226,12 @@ struct cdp_tx_ingress_stats {
 		uint32_t fail_seg_alloc;
 		uint32_t clone_fail;
 	} mcast_en;
+
+	/* IGMP Multicast Enhancement packets info */
+	struct {
+		uint32_t igmp_rcvd;
+		uint32_t igmp_ucast_converted;
+	} igmp_mcast_en;
 
 	/* Packets dropped on the Tx side */
 	struct {

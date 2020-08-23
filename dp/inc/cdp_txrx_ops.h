@@ -769,7 +769,8 @@ struct cdp_me_ops {
 
 	uint16_t (*tx_me_convert_ucast)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					qdf_nbuf_t wbuf, u_int8_t newmac[][6],
-					uint8_t newmaccnt, uint8_t tid);
+					uint8_t newmaccnt, uint8_t tid,
+					bool is_igmp);
 };
 
 struct cdp_mon_ops {

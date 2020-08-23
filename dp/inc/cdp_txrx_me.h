@@ -65,7 +65,7 @@ cdp_tx_me_free_descriptor(ol_txrx_soc_handle soc, uint8_t pdev_id)
 static inline uint16_t
 cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			qdf_nbuf_t wbuf, u_int8_t newmac[][6],
-			uint8_t newmaccnt, uint8_t tid)
+			uint8_t newmaccnt, uint8_t tid, bool is_igmp)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -79,7 +79,7 @@ cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		return 0;
 
 	return soc->ops->me_ops->tx_me_convert_ucast
-			(soc, vdev_id, wbuf, newmac, newmaccnt, tid);
+			(soc, vdev_id, wbuf, newmac, newmaccnt, tid, is_igmp);
 }
 
 #endif

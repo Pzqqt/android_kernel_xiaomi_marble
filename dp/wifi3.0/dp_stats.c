@@ -6182,6 +6182,11 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		       pdev->stats.tx_i.mcast_en.dropped_send_fail);
 	DP_PRINT_STATS("	Unicast sent = %d",
 		       pdev->stats.tx_i.mcast_en.ucast);
+	DP_PRINT_STATS("IGMP Mcast Enhancement:");
+	DP_PRINT_STATS("	IGMP packets received = %d",
+		       pdev->stats.tx_i.igmp_mcast_en.igmp_rcvd);
+	DP_PRINT_STATS("	Converted to uncast = %d",
+		       pdev->stats.tx_i.igmp_mcast_en.igmp_ucast_converted);
 	DP_PRINT_STATS("Raw:");
 	DP_PRINT_STATS("	Packets = %d",
 		       pdev->stats.tx_i.raw.raw_pkt.num);

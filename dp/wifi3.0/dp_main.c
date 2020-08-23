@@ -8820,6 +8820,30 @@ static void dp_txrx_update_vdev_me_stats(struct dp_vdev *vdev,
 		     host_stats->mcast_en.clone_fail);
 }
 
+/* dp_txrx_update_vdev_igmp_me_stats(): Update vdev IGMP ME stats sent from CDP
+ * @vdev: DP vdev handle
+ * @buf: buffer containing specific stats structure
+ *
+ * Returns: void
+ */
+static void dp_txrx_update_vdev_igmp_me_stats(struct dp_vdev *vdev,
+					      void *buf)
+{
+	struct cdp_tx_ingress_stats *host_stats = NULL;
+
+	if (!buf) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid host stats buf");
+		return;
+	}
+	host_stats = (struct cdp_tx_ingress_stats *)buf;
+
+	DP_STATS_INC(vdev, tx_i.igmp_mcast_en.igmp_rcvd,
+		     host_stats->igmp_mcast_en.igmp_rcvd);
+	DP_STATS_INC(vdev, tx_i.igmp_mcast_en.igmp_ucast_converted,
+		     host_stats->igmp_mcast_en.igmp_ucast_converted);
+}
+
 /* dp_txrx_update_vdev_host_stats(): Update stats sent through CDP
  * @soc: DP soc handle
  * @vdev_id: id of DP vdev handle
@@ -8848,6 +8872,7 @@ static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc_hdl,
 		break;
 	case DP_VDEV_STATS_TX_ME:
 		dp_txrx_update_vdev_me_stats(vdev, buf);
+		dp_txrx_update_vdev_igmp_me_stats(vdev, buf);
 		break;
 	default:
 		qdf_info("Invalid stats_id %d", stats_id);

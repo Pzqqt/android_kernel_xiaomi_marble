@@ -683,6 +683,8 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 	DP_STATS_AGGR(tgtobj, srcobj,
 		      tx_i.mcast_en.dropped_send_fail);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.mcast_en.ucast);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.igmp_mcast_en.igmp_rcvd);
+	DP_STATS_AGGR(tgtobj, srcobj, tx_i.igmp_mcast_en.igmp_ucast_converted);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.dma_error);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.ring_full);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.enqueue_fail);
@@ -1194,7 +1196,8 @@ void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 uint16_t dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
 				     qdf_nbuf_t nbuf,
 				     uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-				     uint8_t new_mac_cnt, uint8_t tid);
+				     uint8_t new_mac_cnt, uint8_t tid,
+				     bool is_igmp);
 void dp_tx_me_alloc_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
 
 void dp_tx_me_free_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
