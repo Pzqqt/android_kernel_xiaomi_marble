@@ -3687,24 +3687,61 @@ struct packet_power_info_params {
 };
 
 /**
- * WMI_GPIO_CONFIG_CMDID
+ * enum gpio_pull_type - GPIO PULL TYPE
+ * @WMI_HOST_GPIO_PULL_NONE: set gpio pull type to none
+ * @WMI_HOST_GPIO_PULL_UP: set gpio to pull up
+ * @WMI_HOST_GPIO_PULL_DOWN: set gpio to pull down
+ * @WMI_HOST_GPIO_PULL_MAX: invalid pull type
  */
-enum {
-	WMI_HOST_GPIO_PULL_NONE,
-	WMI_HOST_GPIO_PULL_UP,
-	WMI_HOST_GPIO_PULL_DOWN,
+enum gpio_pull_type {
+	WMI_HOST_GPIO_PULL_NONE = 0,
+	WMI_HOST_GPIO_PULL_UP = 1,
+	WMI_HOST_GPIO_PULL_DOWN = 2,
+	WMI_HOST_GPIO_PULL_MAX,
 };
 
 /**
- * WMI_GPIO_INTTYPE
+ * enum gpio_interrupt_mode - GPIO INTERRUPT MODE
+ * @WMI_HOST_GPIO_INTMODE_DISABLE: disable interrupt mode
+ * @WMI_HOST_GPIO_INTMODE_RISING_EDGE: interrupt with rising edge trigger
+ * @WMI_HOST_GPIO_INTMODE_FALLING_EDGE: interrupt with falling edge trigger
+ * @WMI_HOST_GPIO_INTMODE_BOTH_EDGE: interrupt with both edge trigger
+ * @WMI_HOST_GPIO_INTMODE_LEVEL_LOW: interrupt with gpio level low trigger
+ * @WMI_HOST_GPIO_INTMODE_LEVEL_HIGH: interrupt with gpio level high trigger
+ * @WMI_HOST_GPIO_INTMODE_MAX: invalid interrupt mode
  */
-enum {
-	WMI_HOST_GPIO_INTTYPE_DISABLE,
-	WMI_HOST_GPIO_INTTYPE_RISING_EDGE,
-	WMI_HOST_GPIO_INTTYPE_FALLING_EDGE,
-	WMI_HOST_GPIO_INTTYPE_BOTH_EDGE,
-	WMI_HOST_GPIO_INTTYPE_LEVEL_LOW,
-	WMI_HOST_GPIO_INTTYPE_LEVEL_HIGH
+enum gpio_interrupt_mode {
+	WMI_HOST_GPIO_INTMODE_DISABLE = 0,
+	WMI_HOST_GPIO_INTMODE_RISING_EDGE = 1,
+	WMI_HOST_GPIO_INTMODE_FALLING_EDGE = 2,
+	WMI_HOST_GPIO_INTMODE_BOTH_EDGE = 3,
+	WMI_HOST_GPIO_INTMODE_LEVEL_LOW = 4,
+	WMI_HOST_GPIO_INTMODE_LEVEL_HIGH = 5,
+	WMI_HOST_GPIO_INTMODE_MAX,
+};
+
+/**
+ * enum qca_gpio_direction - GPIO Direction
+ * @WLAN_GPIO_INPUT: set gpio as input mode
+ * @WLAN_GPIO_OUTPUT: set gpio as output mode
+ * @WLAN_GPIO_VALUE_MAX: invalid gpio direction
+ */
+enum gpio_direction {
+	WMI_HOST_GPIO_INPUT = 0,
+	WMI_HOST_GPIO_OUTPUT = 1,
+	WMI_HOST_GPIO_DIR_MAX,
+};
+
+/**
+ * enum qca_gpio_value - GPIO Value
+ * @WLAN_GPIO_LEVEL_LOW: set gpio output level low
+ * @WLAN_GPIO_LEVEL_HIGH: set gpio output level high
+ * @WLAN_GPIO_LEVEL_MAX: invalid gpio value
+ */
+enum gpio_value {
+	WMI_HOST_GPIO_LEVEL_LOW = 0,
+	WMI_HOST_GPIO_LEVEL_HIGH = 1,
+	WMI_HOST_GPIO_LEVEL_MAX,
 };
 
 /**
@@ -3717,26 +3754,26 @@ typedef struct {
 
 /**
  * struct gpio_config_params - GPIO config params
- * @gpio_num: GPIO number to config
- * @input: input/output
- * @pull_type: pull type
- * @intr_mode: int mode
+ * @pin_num: GPIO number to config
+ * @pin_dir: gpio direction, 1-input/0-output
+ * @pin_pull_type: pull type define in gpio_pull_type
+ * @pin_intr_mode: interrupt mode define in gpio_interrupt_mode
  */
 struct gpio_config_params {
-	uint32_t gpio_num;
-	uint32_t input;
-	uint32_t pull_type;
-	uint32_t intr_mode;
+	uint32_t pin_num;
+	enum gpio_direction pin_dir;
+	enum gpio_pull_type pin_pull_type;
+	enum gpio_interrupt_mode pin_intr_mode;
 };
 
 /**
  * struct gpio_output_params - GPIO output params
- * @gpio_num: GPIO number to configure
- * @set: set/reset
+ * @pin_num: GPIO number to configure
+ * @pinset: 1 mean gpio output high level, 0 mean gpio output low level
  */
 struct gpio_output_params {
-	uint32_t gpio_num;
-	uint32_t set;
+	uint32_t pin_num;
+	enum gpio_value pin_set;
 };
 
 /* flags bit 0: to configure wlan priority bitmap */

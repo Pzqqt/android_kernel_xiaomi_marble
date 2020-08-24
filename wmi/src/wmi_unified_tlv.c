@@ -15145,6 +15145,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_vdev_attach_tlv(wmi_handle);
 	wmi_cfr_attach_tlv(wmi_handle);
 	wmi_cp_stats_attach_tlv(wmi_handle);
+	wmi_gpio_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

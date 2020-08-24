@@ -1455,11 +1455,13 @@ QDF_STATUS (*send_nf_dbr_dbm_info_get_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_packet_power_info_get_cmd)(wmi_unified_t wmi_handle,
 		      struct packet_power_info_params *param);
 
+#ifdef WLAN_FEATURE_GPIO_CFG
 QDF_STATUS (*send_gpio_config_cmd)(wmi_unified_t wmi_handle,
 		      struct gpio_config_params *param);
 
 QDF_STATUS (*send_gpio_output_cmd)(wmi_unified_t wmi_handle,
 		      struct gpio_output_params *param);
+#endif
 
 QDF_STATUS (*send_rtt_meas_req_test_cmd)(wmi_unified_t wmi_handle,
 		      struct rtt_meas_req_test_params *param);
@@ -2894,6 +2896,21 @@ static inline void wmi_bcn_attach_tlv(wmi_unified_t wmi_handle)
 void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle);
 #else
 static inline void wmi_fwol_attach_tlv(wmi_unified_t wmi_handle)
+{
+}
+#endif
+
+/**
+ * wmi_gpio_attach_tlv() - attach gpio tlv handlers
+ * @wmi_handle: wmi handle
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_GPIO_CFG
+void wmi_gpio_attach_tlv(wmi_unified_t wmi_handle);
+#else
+static inline void
+wmi_gpio_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif
