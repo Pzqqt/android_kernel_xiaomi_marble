@@ -5240,6 +5240,32 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 	return qdf_status_to_os_return(status);
 }
 
+/**
+ * hdd_check_wait_for_hw_mode_completion - Check hw mode in progress
+ * @hdd_ctx: hdd context
+ *
+ * Check and wait for hw mode response if any hw mode change is
+ * in progress. Vdev delete will purge the serialization queue
+ * for the vdev. It will cause issues when the fw event coming
+ * up later and no active hw mode change req ser command in queue.
+ *
+ * Return void
+ */
+static void hdd_check_wait_for_hw_mode_completion(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	if (!wlan_hdd_validate_context(hdd_ctx) &&
+	    policy_mgr_is_hw_mode_change_in_progress(
+		hdd_ctx->psoc)) {
+		status = policy_mgr_wait_for_connection_update(
+			hdd_ctx->psoc);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_nofl_debug("qdf wait for hw mode event failed!!");
+		}
+	}
+}
+
 int hdd_vdev_destroy(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
@@ -5270,6 +5296,8 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	    !policy_mgr_get_connection_count(hdd_ctx->psoc))
 		policy_mgr_check_and_stop_opportunistic_timer(hdd_ctx->psoc,
 							      adapter->vdev_id);
+	/* Check and wait for hw mode response */
+	hdd_check_wait_for_hw_mode_completion(hdd_ctx);
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
