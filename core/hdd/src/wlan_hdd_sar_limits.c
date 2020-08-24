@@ -322,6 +322,7 @@ const struct nla_policy
 wlan_hdd_sar_limits_policy[SAR_LIMITS_MAX + 1] = {
 	[SAR_LIMITS_SAR_ENABLE] = {.type = NLA_U32},
 	[SAR_LIMITS_NUM_SPECS] = {.type = NLA_U32},
+	[SAR_LIMITS_SPEC] = {.type = NLA_NESTED},
 	[SAR_LIMITS_SPEC_BAND] = {.type = NLA_U32},
 	[SAR_LIMITS_SPEC_CHAIN] = {.type = NLA_U32},
 	[SAR_LIMITS_SPEC_MODULATION] = {.type = NLA_U32},
