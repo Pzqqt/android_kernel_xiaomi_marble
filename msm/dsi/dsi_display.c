@@ -4878,12 +4878,13 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 			(DSI_MODE_FLAG_DFPS | DSI_MODE_FLAG_VRR)) {
 		display_for_each_ctrl(i, display) {
 			ctrl = &display->ctrl[i];
-			ctrl->ctrl->hw.ops.set_timing_db(&ctrl->ctrl->hw,
-					true);
-			dsi_phy_dynamic_refresh_clear(ctrl->phy);
 
 			if (!ctrl->ctrl || (ctrl != mctrl))
 				continue;
+
+			ctrl->ctrl->hw.ops.set_timing_db(&ctrl->ctrl->hw,
+					true);
+			dsi_phy_dynamic_refresh_clear(ctrl->phy);
 
 			if ((ctrl->ctrl->version >= DSI_CTRL_VERSION_2_5) &&
 					(dyn_clk_caps->maintain_const_fps)) {
