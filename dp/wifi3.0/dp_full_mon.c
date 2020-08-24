@@ -497,7 +497,10 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, struct dp_pdev *pdev, uint32_t mac_id,
 			if (drop_mpdu) {
 				dp_rx_mon_buffer_free(rx_desc);
 				msdu = NULL;
-				desc_info->msdu_count--;
+				/*
+				 * Dont rely on msdu_cnt in case of rxdma error
+				 * Dont decrement msdu_cnt
+				 */
 				goto next_msdu;
 			}
 
