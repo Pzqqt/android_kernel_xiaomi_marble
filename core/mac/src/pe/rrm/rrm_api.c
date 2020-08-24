@@ -941,7 +941,7 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 
 	if (beacon_xmit_ind->measurement_idx >=
 	    QDF_ARRAY_SIZE(mac_ctx->rrm.rrmPEContext.pCurrentReq)) {
-		pe_err("Received measurement_idx is out of range: %u - %lu",
+		pe_err("Received measurement_idx is out of range: %u - %zu",
 		       beacon_xmit_ind->measurement_idx,
 		       QDF_ARRAY_SIZE(mac_ctx->rrm.rrmPEContext.pCurrentReq));
 		return QDF_STATUS_E_FAILURE;
