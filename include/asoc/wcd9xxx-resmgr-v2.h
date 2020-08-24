@@ -5,7 +5,7 @@
 #ifndef __WCD9XXX_COMMON_V2_H__
 #define __WCD9XXX_COMMON_V2_H__
 
-#include <audio/audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
+#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include "core.h"
 
 enum wcd_clock_type {

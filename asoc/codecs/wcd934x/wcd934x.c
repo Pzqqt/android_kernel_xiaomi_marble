@@ -41,9 +41,8 @@
 #include <asoc/wcd9xxx-common-v2.h>
 #include <asoc/wcd9xxx-resmgr-v2.h>
 #include <asoc/wcdcal-hwdep.h>
+#include <ipc/gpr-lite.h>
 #include "wcd934x-dsd.h"
-
-#define DRV_NAME "tavil_codec"
 
 #define WCD934X_RATES_MASK (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			    SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
@@ -8116,16 +8115,16 @@ static const struct snd_soc_dapm_widget tavil_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AMIC4"),
 	SND_SOC_DAPM_INPUT("AMIC5"),
 
-	SND_SOC_DAPM_MICBIAS_E("MIC BIAS1", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("MIC BIAS1", SND_SOC_NOPM, 0, 0,
 		tavil_codec_enable_micbias, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MICBIAS_E("MIC BIAS2", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("MIC BIAS2", SND_SOC_NOPM, 0, 0,
 		tavil_codec_enable_micbias, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MICBIAS_E("MIC BIAS3", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("MIC BIAS3", SND_SOC_NOPM, 0, 0,
 		tavil_codec_enable_micbias, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MICBIAS_E("MIC BIAS4", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY("MIC BIAS4", SND_SOC_NOPM, 0, 0,
 		tavil_codec_enable_micbias, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -8137,16 +8136,16 @@ static const struct snd_soc_dapm_widget tavil_dapm_widgets[] = {
 		0, 0, tavil_codec_reset_hph_registers,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_MICBIAS_E(DAPM_MICBIAS1_STANDALONE, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS1_STANDALONE, SND_SOC_NOPM, 0, 0,
 		tavil_codec_force_enable_micbias,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MICBIAS_E(DAPM_MICBIAS2_STANDALONE, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS2_STANDALONE, SND_SOC_NOPM, 0, 0,
 		tavil_codec_force_enable_micbias,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MICBIAS_E(DAPM_MICBIAS3_STANDALONE, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS3_STANDALONE, SND_SOC_NOPM, 0, 0,
 		tavil_codec_force_enable_micbias,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MICBIAS_E(DAPM_MICBIAS4_STANDALONE, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY(DAPM_MICBIAS4_STANDALONE, SND_SOC_NOPM, 0, 0,
 		tavil_codec_force_enable_micbias,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -9485,7 +9484,7 @@ int tavil_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 
 	tavil = snd_soc_component_get_drvdata(component);
 	card = component->card;
-	tavil->entry = snd_info_create_subdir(codec_root->module,
+	tavil->entry = snd_info_create_module_entry(codec_root->module,
 					      "tavil", codec_root);
 	if (!tavil->entry) {
 		dev_dbg(component->dev, "%s: failed to create wcd934x entry\n",
@@ -10356,7 +10355,7 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 
 	component = (struct snd_soc_component *)(wcd9xxx->ssr_priv);
 	if (!component->card) {
-		dev_err(codec->dev, "%s: sound card is not enumerated.\n",
+		dev_err(component->dev, "%s: sound card is not enumerated.\n",
 			__func__);
 		return -EINVAL;
 	}
@@ -10665,7 +10664,7 @@ static void tavil_soc_codec_remove(struct snd_soc_component *component)
 }
 
 static const struct snd_soc_component_driver soc_codec_dev_tavil = {
-	.name = DRV_NAME,
+	.name = WCD934X_DRV_NAME,
 	.probe = tavil_soc_codec_probe,
 	.remove = tavil_soc_codec_remove,
 	.controls = tavil_snd_controls,
@@ -11286,7 +11285,7 @@ static int tavil_probe(struct platform_device *pdev)
 	}
 
 	if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_I2C) {
-		if (apr_get_subsys_state() == APR_SUBSYS_DOWN) {
+		if (gpr_get_modem_state() == GPR_SUBSYS_DOWN) {
 			dev_dbg(&pdev->dev, "%s: dsp down\n", __func__);
 			devm_kfree(&pdev->dev, tavil);
 			return -EPROBE_DEFER;

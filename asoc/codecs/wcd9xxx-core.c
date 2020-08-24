@@ -63,13 +63,16 @@ static struct regmap_config wcd9xxx_base_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 8,
 	.can_multi_write = true,
+	.use_single_read = true,
+	.use_single_write = true,
 };
 
 static struct regmap_config wcd9xxx_i2c_base_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 8,
 	.can_multi_write = false,
-	.use_single_rw = true,
+	.use_single_read = true,
+	.use_single_write = true,
 };
 
 static u8 wcd9xxx_pgd_la;
