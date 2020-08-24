@@ -813,6 +813,8 @@ struct dp_soc_stats {
 
 	/* SOC level TX stats */
 	struct {
+		/* Total packets transmitted */
+		struct cdp_pkt_info egress;
 		/* packets dropped on tx because of no peer */
 		struct cdp_pkt_info tx_invalid_peer;
 		/* descriptors in each tcl ring */
@@ -835,6 +837,8 @@ struct dp_soc_stats {
 
 	/* SOC level RX stats */
 	struct {
+		/* Total rx packets count */
+		struct cdp_pkt_info ingress;
 		/* Rx errors */
 		/* Total Packets in Rx Error ring */
 		uint32_t err_ring_pkts;
@@ -1120,6 +1124,113 @@ struct dp_last_op_info {
 	/* last link desc buf info through REO reinject ring */
 	struct hal_buf_info reo_reinject_link_desc;
 };
+
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+
+/**
+ * struct dp_swlm_tcl_data - params for tcl register write coalescing
+ *			     descision making
+ * @nbuf: TX packet
+ * @tid: tid for transmitting the current packet
+ *
+ * This structure contains the information required by the software
+ * latency manager to decide on whether to coalesc the current TCL
+ * register write or not.
+ */
+struct dp_swlm_tcl_data {
+	qdf_nbuf_t nbuf;
+	uint8_t tid;
+};
+
+/**
+ * union swlm_data - SWLM query data
+ * @tcl_data: data for TCL query in SWLM
+ */
+union swlm_data {
+	struct dp_swlm_tcl_data *tcl_data;
+};
+
+/**
+ * struct dp_swlm_ops - SWLM ops
+ * @tcl_should_coalesc: Should the current TCL register write be coalesced
+ *			or not
+ */
+struct dp_swlm_ops {
+	int (*tcl_should_coalesc)(struct dp_soc *soc,
+				  struct dp_swlm_tcl_data *tcl_data);
+};
+
+/**
+ * struct dp_swlm_stats - Stats for Software Latency manager.
+ * @tcl.timer_flush_success: Num TCL HP writes success from timer context
+ * @tcl.timer_flush_fail: Num TCL HP writes failure from timer context
+ * @tcl.tid_fail: Num TCL register write coalescing skips, since the pkt
+ *		 was being transmitted on a TID above coalescing threshold
+ * @tcl.sp_frames: Num TCL register write coalescing skips, since the pkt
+ *		  being transmitted was a special frame
+ * @tcl.bytes_thresh_reached: Num TCL HP writes flush after the coalescing
+ *			     bytes threshold was reached
+ * @tcl.time_thresh_reached: Num TCL HP writes flush after the coalescing
+ *			    session time expired
+ * @tcl.tput_criteria_fail: Num TCL HP writes coalescing fails, since the
+ *			   throughput did not meet session threshold
+ */
+struct dp_swlm_stats {
+	struct {
+		uint32_t timer_flush_success;
+		uint32_t timer_flush_fail;
+		uint32_t tid_fail;
+		uint32_t sp_frames;
+		uint32_t bytes_thresh_reached;
+		uint32_t time_thresh_reached;
+		uint32_t tput_criteria_fail;
+	} tcl;
+};
+
+/**
+ * struct dp_swlm_params: Parameters for different modules in the
+ *			  Software latency manager.
+ * @tcl.flush_timer: Timer for flushing the coalesced TCL HP writes
+ * @tcl.rx_traffic_thresh: Threshold for RX traffic, to begin TCL register
+ *			   write coalescing
+ * @tcl.tx_traffic_thresh: Threshold for TX traffic, to begin TCL register
+ *			   write coalescing
+ * @tcl.sampling_time: Sampling time to test the throughput threshold
+ * @tcl.sampling_session_tx_bytes: Num bytes transmitted in the sampling time
+ * @tcl.bytes_flush_thresh: Bytes threshold to flush the TCL HP register write
+ * @tcl.time_flush_thresh: Time threshold to flush the TCL HP register write
+ * @tcl.tx_thresh_multiplier: Multiplier to deduce the bytes threshold after
+ *			      which the TCL HP register is written, thereby
+ *			      ending the coalescing.
+ */
+struct dp_swlm_params {
+	struct {
+		qdf_timer_t flush_timer;
+		uint32_t rx_traffic_thresh;
+		uint32_t tx_traffic_thresh;
+		uint32_t sampling_time;
+		uint32_t sampling_session_tx_bytes;
+		uint32_t bytes_flush_thresh;
+		uint32_t time_flush_thresh;
+		uint32_t tx_thresh_multiplier;
+	} tcl;
+};
+
+/**
+ * struct dp_swlm - Software latency manager context
+ * @ops: SWLM ops pointers
+ * @is_enabled: SWLM enabled/disabled
+ * @stats: SWLM stats
+ * @params: SWLM SRNG params
+ * @tcl_flush_timer: flush timer for TCL register writes
+ */
+struct dp_swlm {
+	struct dp_swlm_ops *ops;
+	uint8_t is_enabled;
+	struct dp_swlm_stats stats;
+	struct dp_swlm_params params;
+};
+#endif
 
 /* SOC level structure for data path */
 struct dp_soc {
@@ -1528,6 +1639,10 @@ struct dp_soc {
 	qdf_spinlock_t inactive_vdev_list_lock;
 	/* lock to protect vdev_id_map table*/
 	qdf_spinlock_t vdev_map_lock;
+
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+	struct dp_swlm swlm;
+#endif
 };
 
 #ifdef IPA_OFFLOAD

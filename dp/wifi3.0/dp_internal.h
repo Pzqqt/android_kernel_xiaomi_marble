@@ -386,6 +386,11 @@ while (0)
 #define DP_TX_HIST_STATS_PER_PDEV()
 #endif /* DISABLE_DP_STATS */
 
+#define FRAME_MASK_IPV4_ARP   1
+#define FRAME_MASK_IPV4_DHCP  2
+#define FRAME_MASK_IPV4_EAPOL 4
+#define FRAME_MASK_IPV6_DHCP  8
+
 #ifdef QCA_SUPPORT_PEER_ISOLATION
 #define dp_get_peer_isolation(_peer) ((_peer)->isolation)
 
@@ -2393,4 +2398,29 @@ dp_pdev_htt_stats_dbgfs_deinit(struct dp_pdev *pdev)
 {
 }
 #endif /* HTT_STATS_DEBUGFS_SUPPORT */
+
+#ifndef WLAN_DP_FEATURE_SW_LATENCY_MGR
+/**
+ * dp_soc_swlm_attach() - attach the software latency manager resources
+ * @soc: Datapath global soc handle
+ *
+ * Returns: QDF_STATUS
+ */
+static inline QDF_STATUS dp_soc_swlm_attach(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_soc_swlm_detach() - detach the software latency manager resources
+ * @soc: Datapath global soc handle
+ *
+ * Returns: QDF_STATUS
+ */
+static inline QDF_STATUS dp_soc_swlm_detach(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* !WLAN_DP_FEATURE_SW_LATENCY_MGR */
+
 #endif /* #ifndef _DP_INTERNAL_H_ */

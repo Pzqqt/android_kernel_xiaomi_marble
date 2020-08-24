@@ -1130,6 +1130,25 @@ static void dp_tx_raw_prepare_unset(struct dp_soc *soc,
 #define dp_vdev_peer_stats_update_protocol_cnt_tx(vdev_hdl, skb)
 #endif
 
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+/**
+ * dp_tx_update_stats() - Update soc level tx stats
+ * @soc: DP soc handle
+ * @nbuf: packet being transmitted
+ *
+ * Returns: none
+ */
+static inline void dp_tx_update_stats(struct dp_soc *soc,
+				      qdf_nbuf_t nbuf)
+{
+	DP_STATS_INC_PKT(soc, tx.egress, 1, qdf_nbuf_len(nbuf));
+}
+#else
+static inline void dp_tx_update_stats(struct dp_soc *soc,
+				      qdf_nbuf_t nbuf)
+{
+}
+#endif
 /**
  * dp_tx_hw_enqueue() - Enqueue to TCL HW for transmit
  * @soc: DP Soc Handle
@@ -1273,6 +1292,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	dp_vdev_peer_stats_update_protocol_cnt_tx(vdev, tx_desc->nbuf);
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
+	dp_tx_update_stats(soc, tx_desc->nbuf);
 	status = QDF_STATUS_SUCCESS;
 
 ring_access_fail:

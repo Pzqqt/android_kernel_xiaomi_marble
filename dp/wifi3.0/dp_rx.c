@@ -2060,6 +2060,26 @@ dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
 }
 #endif
 
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+/**
+ * dp_rx_update_stats() - Update soc level rx packet count
+ * @soc: DP soc handle
+ * @nbuf: nbuf received
+ *
+ * Returns: none
+ */
+static inline void dp_rx_update_stats(struct dp_soc *soc,
+				      qdf_nbuf_t nbuf)
+{
+	DP_STATS_INC_PKT(soc, rx.ingress, 1,
+			 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+}
+#else
+static inline void dp_rx_update_stats(struct dp_soc *soc,
+				      qdf_nbuf_t nbuf)
+{
+}
+#endif
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -2692,6 +2712,7 @@ done:
 
 		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf, &rx_ol_pkt_cnt);
 
+		dp_rx_update_stats(soc, nbuf);
 		DP_RX_LIST_APPEND(deliver_list_head,
 				  deliver_list_tail,
 				  nbuf);

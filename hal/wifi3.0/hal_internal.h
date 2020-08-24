@@ -209,6 +209,7 @@ enum hal_srng_dir {
 #define hal_srng_lock_t qdf_spinlock_t
 #define SRNG_LOCK_INIT(_lock) qdf_spinlock_create(_lock)
 #define SRNG_LOCK(_lock) qdf_spin_lock_bh(_lock)
+#define SRNG_TRY_LOCK(_lock) qdf_spin_trylock_bh(_lock)
 #define SRNG_UNLOCK(_lock) qdf_spin_unlock_bh(_lock)
 #define SRNG_LOCK_DESTROY(_lock) qdf_spinlock_destroy(_lock)
 

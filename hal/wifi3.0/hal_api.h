@@ -985,6 +985,30 @@ hal_srng_access_start_unlocked(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
+ * hal_srng_try_access_start - Try to start (locked) ring access
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
+ *
+ * Return: 0 on success; error on failure
+ */
+static inline int hal_srng_try_access_start(hal_soc_handle_t hal_soc_hdl,
+					    hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+
+	if (qdf_unlikely(!hal_ring_hdl)) {
+		qdf_print("Error: Invalid hal_ring\n");
+		return -EINVAL;
+	}
+
+	if (!SRNG_TRY_LOCK(&(srng->lock)))
+		return -EINVAL;
+
+	return hal_srng_access_start_unlocked(hal_soc_hdl, hal_ring_hdl);
+}
+
+/**
  * hal_srng_access_start - Start (locked) ring access
  *
  * @hal_soc: Opaque HAL SOC handle

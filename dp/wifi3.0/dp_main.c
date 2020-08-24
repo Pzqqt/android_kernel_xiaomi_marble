@@ -4590,6 +4590,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
+	dp_soc_swlm_detach(soc);
 	dp_soc_tx_desc_sw_pools_free(soc);
 	dp_soc_srng_free(soc);
 	dp_hw_link_desc_ring_free(soc);
@@ -11570,6 +11571,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		goto fail5;
 	}
 
+	dp_soc_swlm_attach(soc);
 	dp_soc_set_interrupt_mode(soc);
 	dp_soc_set_def_pdev(soc);
 

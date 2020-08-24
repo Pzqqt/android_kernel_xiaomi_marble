@@ -167,11 +167,6 @@ struct dp_rx_desc {
 	(((_cookie) & RX_DESC_COOKIE_INDEX_MASK) >>	\
 			RX_DESC_COOKIE_INDEX_SHIFT)
 
-#define FRAME_MASK_IPV4_ARP   1
-#define FRAME_MASK_IPV4_DHCP  2
-#define FRAME_MASK_IPV4_EAPOL 4
-#define FRAME_MASK_IPV6_DHCP  8
-
 #define dp_rx_add_to_free_desc_list(head, tail, new) \
 	__dp_rx_add_to_free_desc_list(head, tail, new, __func__)
 
