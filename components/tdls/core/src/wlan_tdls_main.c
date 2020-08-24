@@ -1583,7 +1583,7 @@ static void tdls_set_current_mode(struct tdls_soc_priv_obj *tdls_soc,
 	if (vdev) {
 		tdls_debug("set mode in tdls vdev ");
 		tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
-		if (!tdls_vdev)
+		if (tdls_vdev)
 			tdls_set_mode_in_vdev(tdls_vdev, tdls_soc,
 					      tdls_mode, source);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
@@ -1596,7 +1596,7 @@ static void tdls_set_current_mode(struct tdls_soc_priv_obj *tdls_soc,
 	if (vdev) {
 		tdls_debug("set mode in tdls vdev ");
 		tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
-		if (!tdls_vdev)
+		if (tdls_vdev)
 			tdls_set_mode_in_vdev(tdls_vdev, tdls_soc,
 					      tdls_mode, source);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
@@ -1694,9 +1694,6 @@ void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
 
 	device_mode = wlan_vdev_mlme_get_opmode(vdev);
 
-	if (device_mode != QDF_STA_MODE &&
-	    device_mode != QDF_P2P_CLIENT_MODE)
-		return;
 	tdls_soc = (struct tdls_soc_priv_obj *) arg;
 	tdls_post_scan_done_msg(tdls_soc);
 }
