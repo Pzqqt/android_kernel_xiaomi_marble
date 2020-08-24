@@ -903,6 +903,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		case TARGET_TYPE_QCA6018:
 		case TARGET_TYPE_QCA5018:
 		case TARGET_TYPE_QCN9000:
+		case TARGET_TYPE_QCN9100:
 #ifdef QCA_WIFI_QCA6390
 		case TARGET_TYPE_QCA6390:
 #endif

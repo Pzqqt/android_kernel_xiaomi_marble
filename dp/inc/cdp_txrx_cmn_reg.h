@@ -115,6 +115,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case QCA5018_DEVICE_ID:
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
+	case QCN9100_DEVICE_ID:
 	case QCA6390_DEVICE_ID:
 	case QCA6490_DEVICE_ID:
 	case QCA6750_DEVICE_ID:
