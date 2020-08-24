@@ -22,7 +22,7 @@
 #include "wmi_unified_smart_ant_param.h"
 #include "wmi_unified_smart_ant_api.h"
 
-#ifdef UNIFIED_SMARTANTENNA
+#ifdef WMI_SMART_ANT_SUPPORT
 /**
  *  send_smart_ant_enable_cmd_tlv() - WMI smart ant enable function
  *
