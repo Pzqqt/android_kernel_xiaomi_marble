@@ -257,6 +257,18 @@ end:
 	return ret;
 }
 
+static void hif_ahb_get_soc_info_pld(struct hif_pci_softc *sc,
+				     struct device *dev)
+{
+	struct pld_soc_info info;
+	int ret = 0;
+
+	ret = pld_get_soc_info(dev, &info);
+	sc->mem = info.v_addr;
+	sc->ce_sc.ol_sc.mem    = info.v_addr;
+	sc->ce_sc.ol_sc.mem_pa = info.p_addr;
+}
+
 int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 {
 	int ret = 0;
@@ -490,6 +502,7 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
+		    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 			hif_ahb_clk_enable_disable(&pdev->dev, 0);
 
@@ -553,18 +566,46 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = pfrm_platform_get_resource(&pdev->dev,
-					    (struct qdf_pfm_hndl *)pdev,
-					    &vmres,
-					    IORESOURCE_MEM, 0);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		HIF_INFO("%s: Failed to get IORESOURCE_MEM\n", __func__);
-		return status;
-	}
-	memres = (struct resource *)vmres;
-	if (!memres) {
-		HIF_INFO("%s: Failed to get IORESOURCE_MEM\n", __func__);
-		return QDF_STATUS_E_IO;
+	if (target_type == TARGET_TYPE_QCN9100) {
+		hif_ahb_get_soc_info_pld(sc, dev);
+	} else {
+		status = pfrm_platform_get_resource(&pdev->dev,
+						    (struct qdf_pfm_hndl *)pdev,
+						    &vmres,
+						    IORESOURCE_MEM, 0);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
+				 __func__);
+			return status;
+		}
+		memres = (struct resource *)vmres;
+		if (!memres) {
+			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
+				 __func__);
+			return QDF_STATUS_E_IO;
+		}
+
+		/* Arrange for access to Target SoC registers. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
+		status = pfrm_devm_ioremap_resource(
+					dev,
+					(struct qdf_vbus_resource *)memres,
+					&mem);
+#else
+		status = pfrm_devm_request_and_ioremap(
+					dev,
+					(struct qdf_vbus_resource *)memres,
+					&mem);
+#endif
+		if (QDF_IS_STATUS_ERROR(status)) {
+			HIF_INFO("ath: ioremap error\n");
+			ret = PTR_ERR(mem);
+			goto err_cleanup1;
+		}
+
+		sc->mem = mem;
+		ol_sc->mem = mem;
+		ol_sc->mem_pa = memres->start;
 	}
 
 	ret = pfrm_dma_set_mask(dev, 32);
@@ -581,30 +622,9 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 #endif
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
-				__func__, ret);
+			  __func__, ret);
 		return QDF_STATUS_E_IO;
 	}
-
-	/* Arrange for access to Target SoC registers. */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
-	status = pfrm_devm_ioremap_resource(dev,
-					    (struct qdf_vbus_resource *)memres,
-					    &mem);
-#else
-	status = pfrm_devm_request_and_ioremap(
-					dev,
-					(struct qdf_vbus_resource *)memres,
-					&mem);
-#endif
-	if (QDF_IS_STATUS_ERROR(status)) {
-		HIF_INFO("ath: ioremap error\n");
-		status = QDF_STATUS_E_IO;
-		goto err_cleanup1;
-	}
-
-	sc->mem = mem;
-	ol_sc->mem = mem;
-	ol_sc->mem_pa = memres->start;
 
 	tgt_info = hif_get_target_info_handle((struct hif_opaque_softc *)ol_sc);
 
@@ -629,6 +649,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA5018) &&
+			(tgt_info->target_type != TARGET_TYPE_QCN9100) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			HIF_INFO("error in enabling soc\n");
@@ -647,6 +668,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 err_target_sync:
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		HIF_INFO("Error: Disabling target\n");

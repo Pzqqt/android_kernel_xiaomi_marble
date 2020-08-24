@@ -66,6 +66,9 @@ extern "C" {
 #define TARGET_TYPE_QCA5018   29
 #endif
 
+#ifndef TARGET_TYPE_QCN9100
+#define TARGET_TYPE_QCN9100   30
+#endif
 
 #ifdef __cplusplus
 }
