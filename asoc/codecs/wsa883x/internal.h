@@ -60,15 +60,6 @@ enum {
 	SWR_VISENSE_PORT,
 };
 
-enum {
-	BOLERO_WSA_EVT_TX_CH_HOLD_CLEAR = 1,
-	BOLERO_WSA_EVT_PA_OFF_PRE_SSR,
-	BOLERO_WSA_EVT_SSR_DOWN,
-	BOLERO_WSA_EVT_SSR_UP,
-	BOLERO_WSA_EVT_PA_ON_POST_FSCLK,
-	BOLERO_WSA_EVT_PA_ON_POST_FSCLK_ADIE_LB,
-};
-
 struct wsa_ctrl_platform_data {
 	void *handle;
 	int (*update_wsa_event)(void *handle, u16 event, u32 data);
