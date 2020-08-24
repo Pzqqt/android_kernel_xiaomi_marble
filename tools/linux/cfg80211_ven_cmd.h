@@ -1497,6 +1497,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_rrmslwin",        IEEE80211_PARAM_RRM_SLWINDOW, GET_PARAM, 0},
 	{"rrmdbg",              IEEE80211_PARAM_RRM_DEBUG, SET_PARAM, 1},
 	{"get_rrmdbg",          IEEE80211_PARAM_RRM_DEBUG, GET_PARAM, 0},
+	{"rrm_filter",          IEEE80211_PARAM_RRM_FILTER, SET_PARAM, 1},
 	{"wnm_bss",             IEEE80211_PARAM_WNM_BSS_CAP, SET_PARAM, 1},
 	{"get_wnm_bss",         IEEE80211_PARAM_WNM_BSS_CAP, GET_PARAM, 0},
 	{"wnm",                 IEEE80211_PARAM_WNM_CAP, SET_PARAM, 1},
@@ -1509,6 +1510,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_wnm_sleep",       IEEE80211_PARAM_WNM_SLEEP_CAP, GET_PARAM, 0},
 	{"wnm_fms",             IEEE80211_PARAM_WNM_FMS_CAP, SET_PARAM, 1},
 	{"get_wnm_fms",         IEEE80211_PARAM_WNM_FMS_CAP, GET_PARAM, 0},
+	{"wnm_filter",          IEEE80211_PARAM_WNM_FILTER, SET_PARAM, 1},
 #if WLAN_SUPPORT_GREEN_AP
 	{"ant_ps_on",           IEEE80211_IOCTL_GREEN_AP_PS_ENABLE, SET_PARAM, 1},
 	{"get_ant_ps_on",       IEEE80211_IOCTL_GREEN_AP_PS_ENABLE, GET_PARAM, 0},
