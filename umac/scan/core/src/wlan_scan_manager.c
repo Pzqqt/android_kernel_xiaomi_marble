@@ -1049,11 +1049,7 @@ static void scm_update_rnr_info(struct wlan_objmgr_psoc *psoc,
 		freq = chan_list->chan[i].freq;
 
 		chan = scm_get_chan_meta(psoc, freq);
-		if (!chan) {
-			scm_debug("Failed to get meta, freq %d", freq);
-			continue;
-		}
-		if (qdf_list_empty(&chan->rnr_list))
+		if (!chan || qdf_list_empty(&chan->rnr_list))
 			continue;
 
 		qdf_list_peek_front(&chan->rnr_list, &cur_node);
