@@ -157,4 +157,18 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req);
 
+/**
+ * cm_hw_mode_change_resp() - HW mode change response
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cm_id: connection ID which gave the hw mode change request
+ * @status: status of the HW mode change.
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef WLAN_POLICY_MGR_ENABLE
+void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			    wlan_cm_id cm_id, QDF_STATUS status);
+
+#endif
 #endif /* __WLAN_CM_MAIN_API_H__ */

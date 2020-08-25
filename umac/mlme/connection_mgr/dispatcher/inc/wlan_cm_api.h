@@ -98,6 +98,29 @@ QDF_STATUS wlan_cm_bss_peer_delete_rsp(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_discon_rsp cm_discon_rsp);
 
+/**
+ * wlan_cm_hw_mode_change_resp() - HW mode change response
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cm_id: connection ID which gave the hw mode change request
+ * @status: status of the HW mode change.
+ *
+ * Return: void
+ */
+#ifdef WLAN_POLICY_MGR_ENABLE
+void wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+				 wlan_cm_id cm_id, QDF_STATUS status);
+#endif /* ifdef POLICY_MGR_ENABLE */
+
+#else
+
+#ifdef WLAN_POLICY_MGR_ENABLE
+static inline void
+wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			    uint32_t cm_id, QDF_STATUS status)
+{
+}
+#endif /* ifdef POLICY_MGR_ENABLE */
+
 #endif
 #endif /* __WLAN_CM_UCFG_API_H */
-

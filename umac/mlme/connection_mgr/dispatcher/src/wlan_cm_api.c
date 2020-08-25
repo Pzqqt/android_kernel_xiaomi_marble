@@ -65,3 +65,11 @@ QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_POLICY_MGR_ENABLE
+void wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+				 wlan_cm_id cm_id, QDF_STATUS status)
+{
+	cm_hw_mode_change_resp(pdev, vdev_id, cm_id, status);
+}
+#endif /* ifdef POLICY_MGR_ENABLE */

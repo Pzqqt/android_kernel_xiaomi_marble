@@ -27,7 +27,109 @@
 #endif
 #include <wlan_serialization_api.h>
 
+static QDF_STATUS
+cm_ser_connect_cb(struct wlan_serialization_command *cmd,
+		  enum wlan_serialization_cb_reason reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!cmd) {
+		mlme_err("cmd is NULL, reason: %d", reason);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev = cmd->vdev;
+
+	switch (reason) {
+	case WLAN_SER_CB_ACTIVATE_CMD:
+		/* Post event to move CM SM to join active */
+		break;
+
+	case WLAN_SER_CB_CANCEL_CMD:
+		/* command removed from pending list. */
+		break;
+
+	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
+		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
+		QDF_ASSERT(0);
+		break;
+
+	case WLAN_SER_CB_RELEASE_MEM_CMD:
+		/* command completed. Release reference of vdev */
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		break;
+
+	default:
+		QDF_ASSERT(0);
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
+}
+
+#define CONNECT_TIMEOUT       30000
+
+static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
+				     struct cnx_mgr *cm_ctx,
+				     struct cm_connect_req *cm_req)
+{
+	struct wlan_serialization_command cmd = {0, };
+	enum wlan_serialization_status ser_cmd_status;
+	QDF_STATUS status;
+
+	status = wlan_objmgr_vdev_try_get_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("unable to get reference");
+		return status;
+	}
+
+	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	cmd.cmd_id = cm_req->cm_id;
+	cmd.cmd_cb = cm_ser_connect_cb;
+	cmd.source = WLAN_UMAC_COMP_MLME;
+	cmd.is_high_priority = false;
+	cmd.cmd_timeout_duration = CONNECT_TIMEOUT;
+	cmd.vdev = cm_ctx->vdev;
+
+	ser_cmd_status = wlan_serialization_request(&cmd);
+	switch (ser_cmd_status) {
+	case WLAN_SER_CMD_PENDING:
+		/* command moved to pending list.Do nothing */
+		break;
+	case WLAN_SER_CMD_ACTIVE:
+		/* command moved to active list. Do nothing */
+		break;
+	default:
+		mlme_err("ser cmd status %d", ser_cmd_status);
+		wlan_objmgr_vdev_release_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_POLICY_MGR_ENABLE
+
+void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			    wlan_cm_id cm_id, QDF_STATUS status)
+{
+	mlme_debug("vdev %d cm id %d Continue connect after HW mode change, status %d",
+		   vdev_id, cm_id, status);
+}
+
+static QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
+					      qdf_list_t *scan_list,
+					      uint8_t vdev_id,
+					      wlan_cm_id connect_id)
+{
+	return policy_mgr_change_hw_mode_sta_connect(psoc, scan_list, vdev_id,
+						     connect_id);
+}
+
 static void
 cm_get_pcl_chan_weigtage_for_sta(struct wlan_objmgr_pdev *pdev,
 				 struct pcl_freq_weight_list *pcl_lst)
@@ -70,6 +172,15 @@ static void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 		qdf_mem_free(pcl_lst);
 }
 #else
+
+static QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
+					      qdf_list_t *scan_list,
+					      uint8_t vdev_id,
+					      uint8_t connect_id)
+{
+	return QDF_STATUS_E_ALREADY;
+}
+
 static inline
 void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
@@ -190,103 +301,25 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS
-cm_ser_connect_cb(struct wlan_serialization_command *cmd,
-		  enum wlan_serialization_cb_reason reason)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_objmgr_vdev *vdev;
-
-	if (!cmd) {
-		mlme_err("cmd is NULL, reason: %d", reason);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	vdev = cmd->vdev;
-
-	switch (reason) {
-	case WLAN_SER_CB_ACTIVATE_CMD:
-		/* Post event to move CM SM to join active */
-		break;
-
-	case WLAN_SER_CB_CANCEL_CMD:
-		/* command removed from pending list. */
-		break;
-
-	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
-		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
-		QDF_ASSERT(0);
-		break;
-
-	case WLAN_SER_CB_RELEASE_MEM_CMD:
-		/* command completed. Release reference of vdev */
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
-		break;
-
-	default:
-		QDF_ASSERT(0);
-		status = QDF_STATUS_E_INVAL;
-		break;
-	}
-
-	return status;
-}
-
-#define CONNECT_TIMEOUT       30000
-
-static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
-				     struct cnx_mgr *cm_ctx,
-				     struct cm_connect_req *cm_req)
-{
-	struct wlan_serialization_command cmd = {0, };
-	enum wlan_serialization_status ser_cmd_status;
-	QDF_STATUS status;
-
-	status = wlan_objmgr_vdev_try_get_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("unable to get reference");
-		return status;
-	}
-
-	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
-	cmd.cmd_id = cm_req->cm_id;
-	cmd.cmd_cb = cm_ser_connect_cb;
-	cmd.source = WLAN_UMAC_COMP_MLME;
-	cmd.is_high_priority = false;
-	cmd.cmd_timeout_duration = CONNECT_TIMEOUT;
-	cmd.vdev = cm_ctx->vdev;
-
-	ser_cmd_status = wlan_serialization_request(&cmd);
-	switch (ser_cmd_status) {
-	case WLAN_SER_CMD_PENDING:
-		/* command moved to pending list.Do nothing */
-		break;
-	case WLAN_SER_CMD_ACTIVE:
-		/* command moved to active list. Do nothing */
-		break;
-	default:
-		mlme_err("ser cmd status %d", ser_cmd_status);
-		wlan_objmgr_vdev_release_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
-
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 			    struct cm_connect_req *cm_req)
 {
 	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
 	enum wlan_cm_connect_fail_reason reason = CM_GENERIC_FAILURE;
 	QDF_STATUS status;
+	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 
 	/* Interface event */
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev) {
-		mlme_err("Failed to find pdev from vdev %d",
-			 wlan_vdev_get_id(cm_ctx->vdev));
+		mlme_err("Failed to find pdev from vdev %d", vdev_id);
+		goto connect_err;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("Failed to find psoc from vdev %d", vdev_id);
 		goto connect_err;
 	}
 
@@ -296,7 +329,17 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 		goto connect_err;
 	}
 
-	/*  Do HW mode change */
+	status = cm_check_for_hw_mode_change(psoc, cm_req->candidate_list,
+					     vdev_id, cm_req->cm_id);
+	if (QDF_IS_STATUS_ERROR(status) && status != QDF_STATUS_E_ALREADY) {
+		reason = CM_HW_MODE_FAILURE;
+		mlme_err("Vdev %d Failed to set HW mode change", vdev_id);
+		goto connect_err;
+	} else if (QDF_IS_STATUS_SUCCESS(status)) {
+		mlme_debug("Vdev %d Connect will continue after HW mode change",
+			   vdev_id);
+		return QDF_STATUS_SUCCESS;
+	}
 
 	status = cm_ser_connect_req(pdev, cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
