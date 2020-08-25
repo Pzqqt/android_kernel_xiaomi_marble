@@ -8068,7 +8068,7 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!hdd_is_wlm_latency_manager_supported(hdd_ctx))
-		return -EINVAL;
+		return -ENOTSUPP;
 
 	latency_level = nla_get_u16(attr);
 	switch (latency_level) {
