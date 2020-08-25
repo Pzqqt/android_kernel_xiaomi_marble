@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
 #include <linux/debugfs.h>

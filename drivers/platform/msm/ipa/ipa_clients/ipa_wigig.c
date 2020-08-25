@@ -3,12 +3,12 @@
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
-#include "ipa_wigig.h"
+#include <linux/ipa_wigig.h>
 #include <linux/debugfs.h>
 #include <linux/string.h>
 #include "ipa_common_i.h"
 #include "ipa_pm.h"
-#include "ipa_fmwk.h"
+#include <linux/ipa_fmwk.h>
 
 #define OFFLOAD_DRV_NAME "ipa_wigig"
 #define IPA_WIGIG_DBG(fmt, args...) \

@@ -17,8 +17,8 @@
 #include <linux/notifier.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
-#include "ipa.h"
-#include "ipa_usb.h"
+#include <linux/ipa.h>
+#include <linux/ipa_usb.h>
 #include <linux/iommu.h>
 #include <linux/platform_device.h>
 #include <linux/firmware.h>
@@ -34,7 +34,7 @@
 #include <linux/mailbox_client.h>
 #include <linux/mailbox/qmp.h>
 #include <linux/rmnet_ipa_fd_ioctl.h>
-#include "ipa_fmwk.h"
+#include <linux/ipa_fmwk.h>
 #include "ipa_uc_holb_monitor.h"
 
 #define IPA_DEV_NAME_MAX_LEN 15
@@ -62,6 +62,7 @@
 #define IPA_UC_FINISH_MAX 6
 #define IPA_UC_WAIT_MIN_SLEEP 1000
 #define IPA_UC_WAII_MAX_SLEEP 1200
+#define IPA_HOLB_TMR_VAL_4_5 31
 /*
  * The transport descriptor size was changed to GSI_CHAN_RE_SIZE_16B, but
  * IPA users still use sps_iovec size as FIFO element size.
@@ -2968,6 +2969,8 @@ int ipa_get_quota_stats(struct ipa_quota_stats_all *out);
 int ipa_reset_quota_stats(enum ipa_client_type client);
 
 int ipa_reset_all_quota_stats(void);
+
+int ipa_drop_stats_init(void);
 
 int ipa_init_drop_stats(u32 pipe_bitmask);
 

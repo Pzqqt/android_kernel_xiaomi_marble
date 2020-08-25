@@ -7,7 +7,7 @@
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/device.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_i.h"
 #include "ipa_ut_framework.h"
 #include "ipa_ut_suite_list.h"

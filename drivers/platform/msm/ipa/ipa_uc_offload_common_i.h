@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#include "ipa_mhi.h"
+#include <linux/ipa_mhi.h>
 #include <linux/ipa_qmi_service_v01.h>
 
 #ifndef _IPA_UC_OFFLOAD_COMMON_I_H_

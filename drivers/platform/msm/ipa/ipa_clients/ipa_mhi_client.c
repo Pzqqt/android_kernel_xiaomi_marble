@@ -8,14 +8,14 @@
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
-#include "ipa.h"
-#include "msm_gsi.h"
-#include "ipa_mhi.h"
+#include <linux/ipa.h>
+#include <linux/msm_gsi.h>
+#include <linux/ipa_mhi.h>
 #include "gsi.h"
 #include "ipa_common_i.h"
 #include "ipa_pm.h"
 #include "ipa_i.h"
-#include "ipa_fmwk.h"
+#include <linux/ipa_fmwk.h>
 
 #define IPA_MHI_DRV_NAME "ipa_mhi_client"
 
@@ -1496,8 +1496,8 @@ static int ipa_mhi_resume_channels(bool LPTransitionRejected,
 	for (i = 0; i < max_channels; i++) {
 		if (!channels[i].valid)
 			continue;
-		if (channels[i].state !=
-		    IPA_HW_MHI_CHANNEL_STATE_SUSPEND)
+		if (channels[i].state != IPA_HW_MHI_CHANNEL_STATE_SUSPEND &&
+		    !channels[i].stop_in_proc)
 			continue;
 		channel = &channels[i];
 		IPA_MHI_DBG("resuming channel %d\n", channel->id);

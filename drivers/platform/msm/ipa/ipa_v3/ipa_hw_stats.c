@@ -1521,6 +1521,27 @@ int ipa_set_flt_rt_stats(int index, struct ipa_flt_rt_stats stats)
 	return __ipa_set_flt_rt_stats(index, stats);
 }
 
+int ipa_drop_stats_init(void)
+{
+	u32 pipe_bitmask = 0;
+
+	/* If HOLB Monitoring is enabled, enable drop stats for USB and WLAN. */
+	if (ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor)
+		pipe_bitmask |= IPA_CLIENT_BIT_32(IPA_CLIENT_USB_CONS) |
+			IPA_CLIENT_BIT_32(IPA_CLIENT_WLAN2_CONS);
+
+	/* Always enable drop stats for USB DPL Pipe. */
+	pipe_bitmask |= IPA_CLIENT_BIT_32(IPA_CLIENT_USB_DPL_CONS);
+
+	/* Currently we have option to enable drop stats using debugfs.
+	 * To enable drop stats for a different pipe, first user needs
+	 * to query drop stats to get the current stats and enable.
+	 * TODO: to support dynamically caching drop stats.
+	 */
+
+	return ipa_init_drop_stats(pipe_bitmask);
+}
+
 int ipa_init_drop_stats(u32 pipe_bitmask)
 {
 	struct ipahal_stats_init_pyld *pyld;
@@ -1971,6 +1992,14 @@ static ssize_t ipa_debugfs_print_tethering_stats(struct file *file,
 		return -ENOMEM;
 
 	mutex_lock(&ipa3_ctx->lock);
+
+	res = ipa_get_teth_stats();
+	if (res) {
+		mutex_unlock(&ipa3_ctx->lock);
+		kfree(out);
+		return res;
+	}
+
 	for (i = 0; i < IPA_CLIENT_MAX; i++) {
 		int ep_idx = ipa3_get_ep_mapping(i);
 
@@ -1987,7 +2016,7 @@ static ssize_t ipa_debugfs_print_tethering_stats(struct file *file,
 			(1 << ep_idx)))
 			continue;
 
-		res = ipa_get_teth_stats();
+		res = ipa_query_teth_stats(i, out, false);
 		if (res) {
 			mutex_unlock(&ipa3_ctx->lock);
 			kfree(out);

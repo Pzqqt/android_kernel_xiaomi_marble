@@ -7,7 +7,7 @@
 #define _IPA_RM_DEPENDENCY_GRAPH_H_
 
 #include <linux/list.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_rm_resource.h"
 
 struct ipa_rm_dep_graph {

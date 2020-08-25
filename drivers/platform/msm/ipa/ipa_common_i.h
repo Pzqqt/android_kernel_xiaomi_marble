@@ -5,14 +5,14 @@
 
 #ifndef _IPA_COMMON_I_H_
 #define _IPA_COMMON_I_H_
-#include "ipa_mhi.h"
+#include <linux/ipa_mhi.h>
 #include <linux/ipa_qmi_service_v01.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
-#include "ipa.h"
-#include "ipa_uc_offload.h"
-#include "ipa_wdi3.h"
-#include "ipa_wigig.h"
+#include <linux/ipa.h>
+#include <linux/ipa_uc_offload.h>
+#include <linux/ipa_wdi3.h>
+#include <linux/ipa_wigig.h>
 #include <linux/ratelimit.h>
 #include "gsi.h"
 

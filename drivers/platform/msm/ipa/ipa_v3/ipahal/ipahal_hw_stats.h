@@ -6,7 +6,7 @@
 #ifndef _IPAHAL_HW_STATS_H_
 #define _IPAHAL_HW_STATS_H_
 
-#include "ipa.h"
+#include <linux/ipa.h>
 
 #define IPAHAL_MAX_PIPES 32
 #define IPAHAL_MAX_RULE_ID_32 (1024 / 32) /* 10 bits of rule id */

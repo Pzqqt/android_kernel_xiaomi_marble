@@ -7,7 +7,7 @@
 #define _IPA_RM_RESOURCE_H_
 
 #include <linux/list.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_rm_peers_list.h"
 
 /**

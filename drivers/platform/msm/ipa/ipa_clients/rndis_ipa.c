@@ -17,7 +17,7 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/sched.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <linux/random.h>
 #include <linux/workqueue.h>
 #include "rndis_ipa.h"
@@ -79,6 +79,16 @@ static void *ipa_rndis_logbuf;
 #define RNDIS_IPA_ERROR(fmt, args...) \
 	do { \
 		pr_err(DRV_NAME "@%s@%d@ctx:%s: "\
+			fmt, __func__, __LINE__, current->comm, ## args);\
+		if (ipa_rndis_logbuf) { \
+			IPA_RNDIS_IPC_LOGGING(ipa_rndis_logbuf, \
+				DRV_NAME " %s:%d " fmt, ## args); \
+		} \
+	} while (0)
+
+#define RNDIS_IPA_ERROR_RL(fmt, args...) \
+	do { \
+		pr_err_ratelimited_ipa(DRV_NAME "@%s@%d@ctx:%s: "\
 			fmt, __func__, __LINE__, current->comm, ## args);\
 		if (ipa_rndis_logbuf) { \
 			IPA_RNDIS_IPC_LOGGING(ipa_rndis_logbuf, \
@@ -589,7 +599,7 @@ int rndis_ipa_init(struct ipa_usb_init_params *params)
 
 	if (ipa_is_vlan_mode(IPA_VLAN_IF_RNDIS,
 		&rndis_ipa_ctx->is_vlan_mode)) {
-		RNDIS_IPA_ERROR("couldn't acquire vlan mode, is ipa ready?\n");
+		RNDIS_IPA_ERROR_RL("couldn't acquire vlan mode, is ipa ready?\n");
 		goto fail_get_vlan_mode;
 	}
 
@@ -735,13 +745,13 @@ int rndis_ipa_pipe_connect_notify(
 	spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
 
 	if (usb_to_ipa_hdl >= IPA_CLIENT_MAX) {
-		RNDIS_IPA_ERROR
+		RNDIS_IPA_ERROR_RL
 			("usb_to_ipa_hdl(%d) - not valid ipa handle\n",
 			usb_to_ipa_hdl);
 		return -EINVAL;
 	}
 	if (ipa_to_usb_hdl >= IPA_CLIENT_MAX) {
-		RNDIS_IPA_ERROR
+		RNDIS_IPA_ERROR_RL
 			("ipa_to_usb_hdl(%d) - not valid ipa handle\n",
 			ipa_to_usb_hdl);
 		return -EINVAL;
@@ -779,7 +789,7 @@ int rndis_ipa_pipe_connect_notify(
 
 	netif_carrier_on(rndis_ipa_ctx->net);
 	if (!netif_carrier_ok(rndis_ipa_ctx->net)) {
-		RNDIS_IPA_ERROR("netif_carrier_ok error\n");
+		RNDIS_IPA_ERROR_RL("netif_carrier_ok error\n");
 		result = -EBUSY;
 		goto fail;
 	}
@@ -810,7 +820,7 @@ int rndis_ipa_pipe_connect_notify(
 					  RNDIS_IPA_CONNECT);
 	if (next_state == RNDIS_IPA_INVALID) {
 		spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
-		RNDIS_IPA_ERROR("use init()/disconnect() before connect()\n");
+		RNDIS_IPA_ERROR_RL("use init()/disconnect() before connect()\n");
 		return -EPERM;
 	}
 	rndis_ipa_ctx->state = next_state;
@@ -863,7 +873,7 @@ static int rndis_ipa_open(struct net_device *net)
 	next_state = rndis_ipa_next_state(rndis_ipa_ctx->state, RNDIS_IPA_OPEN);
 	if (next_state == RNDIS_IPA_INVALID) {
 		spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
-		RNDIS_IPA_ERROR("can't bring driver up before initialize\n");
+		RNDIS_IPA_ERROR_RL("can't bring driver up before initialize\n");
 		return -EPERM;
 	}
 
@@ -929,7 +939,7 @@ static netdev_tx_t rndis_ipa_start_xmit(struct sk_buff *skb,
 		atomic_read(&rndis_ipa_ctx->outstanding_pkts));
 
 	if (unlikely(netif_queue_stopped(net))) {
-		RNDIS_IPA_ERROR("interface queue is stopped\n");
+		RNDIS_IPA_ERROR_RL("interface queue is stopped\n");
 		goto out;
 	}
 
@@ -937,7 +947,7 @@ static netdev_tx_t rndis_ipa_start_xmit(struct sk_buff *skb,
 		rndis_ipa_dump_skb(skb);
 
 	if (unlikely(rndis_ipa_ctx->state != RNDIS_IPA_CONNECTED_AND_UP)) {
-		RNDIS_IPA_ERROR("Missing pipe connected and/or iface up\n");
+		RNDIS_IPA_ERROR_RL("Missing pipe connected and/or iface up\n");
 		return NETDEV_TX_BUSY;
 	}
 
@@ -982,8 +992,10 @@ static netdev_tx_t rndis_ipa_start_xmit(struct sk_buff *skb,
 fail_tx_packet:
 	rndis_ipa_xmit_error(skb);
 out:
-	ipa_pm_deferred_deactivate(rndis_ipa_ctx->pm_hdl);
+	if (atomic_read(&rndis_ipa_ctx->outstanding_pkts) == 0)
+		ipa_pm_deferred_deactivate(rndis_ipa_ctx->pm_hdl);
 fail_pm_activate:
+
 	RNDIS_IPA_DEBUG
 		("packet Tx done - %s\n",
 		(status == NETDEV_TX_OK) ? "OK" : "FAIL");
@@ -1027,7 +1039,7 @@ static void rndis_ipa_tx_complete_notify(
 		atomic_read(&rndis_ipa_ctx->outstanding_pkts));
 
 	if (unlikely((evt != IPA_WRITE_DONE))) {
-		RNDIS_IPA_ERROR("unsupported event on TX call-back\n");
+		RNDIS_IPA_ERROR_RL("unsupported event on TX call-back\n");
 		return;
 	}
 
@@ -1054,6 +1066,10 @@ static void rndis_ipa_tx_complete_notify(
 		netif_wake_queue(rndis_ipa_ctx->net);
 		RNDIS_IPA_DEBUG("send queue was awaken\n");
 	}
+
+	/*Release resource only when outstanding packets are zero*/
+	if (atomic_read(&rndis_ipa_ctx->outstanding_pkts) == 0)
+		ipa_pm_deferred_deactivate(rndis_ipa_ctx->pm_hdl);
 
 out:
 	dev_kfree_skb_any(skb);
@@ -1130,7 +1146,7 @@ static void rndis_ipa_packet_receive_notify(
 	}
 
 	if (evt != IPA_RECEIVE)	{
-		RNDIS_IPA_ERROR("a none IPA_RECEIVE event in driver RX\n");
+		RNDIS_IPA_ERROR_RL("a none IPA_RECEIVE event in driver RX\n");
 		return;
 	}
 
@@ -1236,7 +1252,7 @@ int rndis_ipa_pipe_disconnect_notify(void *private)
 		RNDIS_IPA_DISCONNECT);
 	if (next_state == RNDIS_IPA_INVALID) {
 		spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
-		RNDIS_IPA_ERROR("can't disconnect before connect\n");
+		RNDIS_IPA_ERROR_RL("can't disconnect before connect\n");
 		return -EPERM;
 	}
 	spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
@@ -1290,7 +1306,7 @@ int rndis_ipa_pipe_disconnect_notify(void *private)
 					  RNDIS_IPA_DISCONNECT);
 	if (next_state == RNDIS_IPA_INVALID) {
 		spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
-		RNDIS_IPA_ERROR("can't disconnect before connect\n");
+		RNDIS_IPA_ERROR_RL("can't disconnect before connect\n");
 		return -EPERM;
 	}
 	rndis_ipa_ctx->state = next_state;
@@ -1351,7 +1367,7 @@ void rndis_ipa_cleanup(void *private)
 		RNDIS_IPA_CLEANUP);
 	if (next_state == RNDIS_IPA_INVALID) {
 		spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
-		RNDIS_IPA_ERROR("use disconnect()before clean()\n");
+		RNDIS_IPA_ERROR_RL("use disconnect()before clean()\n");
 		return;
 	}
 	spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
@@ -1383,7 +1399,7 @@ void rndis_ipa_cleanup(void *private)
 					  RNDIS_IPA_CLEANUP);
 	if (next_state == RNDIS_IPA_INVALID) {
 		spin_unlock_irqrestore(&rndis_ipa_ctx->state_lock, flags);
-		RNDIS_IPA_ERROR("use disconnect()before clean()\n");
+		RNDIS_IPA_ERROR_RL("use disconnect()before clean()\n");
 		return;
 	}
 	rndis_ipa_ctx->state = next_state;
@@ -1460,7 +1476,7 @@ static void rndis_ipa_xmit_error_aftercare_wq(struct work_struct *work)
 		xmit_error_delayed_work);
 
 	if (unlikely(rndis_ipa_ctx->state != RNDIS_IPA_CONNECTED_AND_UP)) {
-		RNDIS_IPA_ERROR
+		RNDIS_IPA_ERROR_RL
 			("error aftercare handling in bad state (%d)",
 			rndis_ipa_ctx->state);
 		return;
@@ -1758,7 +1774,7 @@ static void rndis_ipa_pm_cb(void *p, enum ipa_pm_cb_event event)
 	RNDIS_IPA_LOG_ENTRY();
 
 	if (event != IPA_PM_CLIENT_ACTIVATED) {
-		RNDIS_IPA_ERROR("unexpected event %d\n", event);
+		RNDIS_IPA_ERROR_RL("unexpected event %d\n", event);
 		WARN_ON(1);
 		return;
 	}
@@ -1823,7 +1839,7 @@ static struct sk_buff *rndis_encapsulate_skb(struct sk_buff *skb,
 		struct sk_buff *new_skb = skb_copy_expand(skb,
 			sizeof(rndis_template_hdr), 0, GFP_ATOMIC);
 		if (!new_skb) {
-			RNDIS_IPA_ERROR("no memory for skb expand\n");
+			RNDIS_IPA_ERROR_RL("no memory for skb expand\n");
 			return skb;
 		}
 		RNDIS_IPA_DEBUG("skb expanded. old %pK new %pK\n",
@@ -2059,7 +2075,7 @@ static enum rndis_ipa_state rndis_ipa_next_state(
 			next_state = RNDIS_IPA_UP;
 		break;
 	default:
-		RNDIS_IPA_ERROR("State is not supported\n");
+		RNDIS_IPA_ERROR_RL("State is not supported\n");
 		break;
 	}
 

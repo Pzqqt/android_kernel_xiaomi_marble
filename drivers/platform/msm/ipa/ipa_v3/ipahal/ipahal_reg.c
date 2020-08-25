@@ -4,7 +4,7 @@
  */
 
 #include <linux/init.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <linux/kernel.h>
 #include <linux/msm_ipa.h>
 #include "ipahal_i.h"
@@ -3559,7 +3559,7 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 		ipareg_construct_endp_init_mode_n_v4_5, ipareg_parse_dummy,
 		0x00000820, 0x70, 0, 10, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_DEAGGR_n] = {
-		ipareg_construct_endp_init_deaggr_n,
+		ipareg_construct_endp_init_deaggr_n_v4_5,
 		ipareg_parse_dummy,
 		0x00000834, 0x70, 0, 10, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_RSRC_GRP_n] = {

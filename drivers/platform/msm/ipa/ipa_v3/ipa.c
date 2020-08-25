@@ -22,7 +22,7 @@
 #include <linux/interconnect.h>
 #include <linux/netdevice.h>
 #include <linux/delay.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/time.h>
 #include <linux/hashtable.h>
 #include <linux/jhash.h>
@@ -6391,6 +6391,12 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		IPADBG(":ntn init ok\n");
 
 	result = ipa_hw_stats_init();
+	if (result)
+		IPAERR("fail to init stats %d\n", result);
+	else
+		IPADBG(":stats init ok\n");
+
+	result = ipa_drop_stats_init();
 	if (result)
 		IPAERR("fail to init stats %d\n", result);
 	else

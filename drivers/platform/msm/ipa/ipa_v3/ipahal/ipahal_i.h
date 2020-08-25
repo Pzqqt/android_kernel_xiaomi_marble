@@ -6,7 +6,7 @@
 #ifndef _IPAHAL_I_H_
 #define _IPAHAL_I_H_
 
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_common_i.h"
 
 #define IPAHAL_DRV_NAME "ipahal"

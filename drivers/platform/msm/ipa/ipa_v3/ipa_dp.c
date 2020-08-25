@@ -9,7 +9,7 @@
 #include <linux/dmapool.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <net/sock.h>
 #include "gsi.h"
 #include "ipa_i.h"
@@ -21,7 +21,7 @@
 #define IPA_WAN_AGGR_PKT_CNT 1
 #define IPA_WAN_NAPI_MAX_FRAMES (NAPI_WEIGHT / IPA_WAN_AGGR_PKT_CNT)
 #define IPA_WAN_PAGE_ORDER 3
-#define IPA_LAN_AGGR_PKT_CNT 5
+#define IPA_LAN_AGGR_PKT_CNT 1
 #define IPA_LAN_NAPI_MAX_FRAMES (NAPI_WEIGHT / IPA_LAN_AGGR_PKT_CNT)
 #define IPA_LAST_DESC_CNT 0xFFFF
 #define POLLING_INACTIVITY_RX 40

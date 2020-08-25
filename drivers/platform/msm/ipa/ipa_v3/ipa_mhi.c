@@ -8,9 +8,9 @@
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
-#include "ipa.h"
-#include "msm_gsi.h"
-#include "ipa_mhi.h"
+#include <linux/ipa.h>
+#include <linux/msm_gsi.h>
+#include <linux/ipa_mhi.h>
 #include "gsi.h"
 #include "ipa_common_i.h"
 #include "ipa_i.h"

@@ -8,7 +8,7 @@
 #include <linux/io.h>
 #include <linux/ratelimit.h>
 #include <linux/interconnect.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/elf.h>
 #include "ipa_i.h"
 #include "ipahal.h"
@@ -188,8 +188,10 @@
 #define IPA_v4_9_DST_GROUP_MAX		(4)
 
 #define IPA_v4_11_GROUP_UL_DL		(0)
-#define IPA_v4_11_SRC_GROUP_MAX		(1)
-#define IPA_v4_11_DST_GROUP_MAX		(1)
+#define IPA_v4_11_GROUP_NOT_USE		(1)
+#define IPA_v4_11_GROUP_DRB_IP		(2)
+#define IPA_v4_11_SRC_GROUP_MAX		(3)
+#define IPA_v4_11_DST_GROUP_MAX		(3)
 
 #define IPA_GROUP_MAX IPA_v3_0_GROUP_MAX
 
@@ -8069,6 +8071,11 @@ static void ipa3_write_rsrc_grp_type_reg(int group_index,
 						IPA_DST_RSRC_GRP_01_RSRC_TYPE_n,
 						n, val);
 					break;
+				case IPA_v4_11_GROUP_DRB_IP:
+					ipahal_write_reg_n_fields(
+							IPA_DST_RSRC_GRP_23_RSRC_TYPE_n,
+							n, val);
+					break;
 				default:
 					IPAERR(
 					" Invalid destination resource group,index #%d\n",
@@ -8340,7 +8347,8 @@ static int __ipa3_stop_gsi_channel(u32 clnt_hdl)
 
 	/* stop uC gsi dbg stats monitor */
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5 &&
-		ipa3_ctx->ipa_hw_type != IPA_HW_v4_7) {
+		ipa3_ctx->ipa_hw_type != IPA_HW_v4_7 &&
+		ipa3_ctx->ipa_hw_type != IPA_HW_v4_11) {
 		switch (client_type) {
 		case IPA_CLIENT_MHI_PRIME_TETH_PROD:
 			gsi_info = &ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_MHIP];
@@ -8415,7 +8423,7 @@ static int __ipa3_stop_gsi_channel(u32 clnt_hdl)
 	}
 
 	IPAERR("Failed  to stop GSI channel with retries\n");
-	return -EFAULT;
+	return res;
 }
 
 /**

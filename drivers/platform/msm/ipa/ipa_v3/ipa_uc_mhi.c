@@ -3,7 +3,7 @@
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_i.h"
 
 /* MHI uC interface definitions */

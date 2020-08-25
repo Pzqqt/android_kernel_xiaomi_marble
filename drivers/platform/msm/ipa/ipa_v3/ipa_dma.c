@@ -10,8 +10,8 @@
 #include <linux/kernel.h>
 #include <linux/msm_ipa.h>
 #include <linux/mutex.h>
-#include "ipa.h"
-#include "msm_gsi.h"
+#include <linux/ipa.h>
+#include <linux/msm_gsi.h>
 #include <linux/dmapool.h>
 #include "ipa_i.h"
 #include "gsi.h"

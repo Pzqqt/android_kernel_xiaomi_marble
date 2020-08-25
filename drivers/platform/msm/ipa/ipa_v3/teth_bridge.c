@@ -15,7 +15,7 @@
 #include <linux/mutex.h>
 #include <linux/skbuff.h>
 #include <linux/types.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <linux/netdevice.h>
 #include "ipa_i.h"
 
