@@ -991,6 +991,23 @@ policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 				      uint32_t request_id);
 
 /**
+ * policy_mgr_change_hw_mode_sta_connect() - Change HW mode for STA connect
+ * @psoc: psoc object
+ * @scan_list: candidates for conenction
+ * @vdev_id: vdev id for STA/CLI
+ * @connect_id: connect id of the conenct request
+ *
+ * When a new connection is about to come up, change hw mode for STA/CLI
+ * based upon the scan results and hw type.
+ *
+ * Return: status ifset HW mode is fail or already taken care of.
+ */
+QDF_STATUS
+policy_mgr_change_hw_mode_sta_connect(struct wlan_objmgr_psoc *psoc,
+				      qdf_list_t *scan_list, uint8_t vdev_id,
+				      uint32_t connect_id);
+
+/**
  * policy_mgr_is_dbs_allowed_for_concurrency() - If dbs is allowed for current
  * concurreny
  * @new_conn_mode: new connection mode
