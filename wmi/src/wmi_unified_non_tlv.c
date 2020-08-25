@@ -3102,6 +3102,7 @@ static QDF_STATUS send_phyerr_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WMI_SMART_ANT_SUPPORT
 /**
  *  send_smart_ant_enable_cmd_non_tlv() - WMI smart ant enable function
  *
@@ -3435,6 +3436,44 @@ static QDF_STATUS send_smart_ant_enable_tx_feedback_cmd_non_tlv(
 	} else
 		return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * send_set_ant_switch_tbl_cmd_non_tlv() - send ant switch tbl cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold ant switch tbl param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_ant_switch_tbl_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct ant_switch_tbl_params *param)
+{
+	uint8_t len;
+	wmi_buf_t buf;
+	wmi_pdev_set_ant_switch_tbl_cmd *cmd;
+
+	len = sizeof(wmi_pdev_set_ant_switch_tbl_cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_pdev_set_ant_switch_tbl_cmd *)wmi_buf_data(buf);
+	cmd->antCtrlCommon1 = param->ant_ctrl_common1;
+	cmd->antCtrlCommon2 = param->ant_ctrl_common2;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+		WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID)) {
+		WMI_LOGE("Failed to send WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+#endif
 
 /**
  * send_vdev_spectral_configure_cmd_non_tlv() - send VDEV spectral configure
@@ -4775,41 +4814,6 @@ send_wmm_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMI_LOGE("Failed to send WMI_PDEV_SET_WMM_PARAMS_CMDID");
 		wmi_buf_free(buf);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * send_set_ant_switch_tbl_cmd_non_tlv() - send ant switch tbl cmd to fw
- * @wmi_handle: wmi handle
- * @param: pointer to hold ant switch tbl param
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS
-send_set_ant_switch_tbl_cmd_non_tlv(wmi_unified_t wmi_handle,
-				struct ant_switch_tbl_params *param)
-{
-	uint8_t len;
-	wmi_buf_t buf;
-	wmi_pdev_set_ant_switch_tbl_cmd *cmd;
-
-	len = sizeof(wmi_pdev_set_ant_switch_tbl_cmd);
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	cmd = (wmi_pdev_set_ant_switch_tbl_cmd *)wmi_buf_data(buf);
-	cmd->antCtrlCommon1 = param->ant_ctrl_common1;
-	cmd->antCtrlCommon2 = param->ant_ctrl_common2;
-
-	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-		WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID)) {
-		WMI_LOGE("Failed to send WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID");
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -10271,7 +10275,18 @@ struct wmi_ops non_tlv_ops =  {
 	.send_set_ht_ie_cmd = send_set_ht_ie_cmd_non_tlv,
 	.send_set_vht_ie_cmd = send_set_vht_ie_cmd_non_tlv,
 	.send_wmm_update_cmd = send_wmm_update_cmd_non_tlv,
+#ifdef WMI_SMART_ANT_SUPPORT
 	.send_set_ant_switch_tbl_cmd = send_set_ant_switch_tbl_cmd_non_tlv,
+	.send_smart_ant_enable_cmd = send_smart_ant_enable_cmd_non_tlv,
+	.send_smart_ant_set_rx_ant_cmd = send_smart_ant_set_rx_ant_cmd_non_tlv,
+	.send_smart_ant_set_tx_ant_cmd = send_smart_ant_set_tx_ant_cmd_non_tlv,
+	.send_smart_ant_set_training_info_cmd =
+			send_smart_ant_set_training_info_cmd_non_tlv,
+	.send_smart_ant_set_node_config_cmd =
+			send_smart_ant_set_node_config_cmd_non_tlv,
+	.send_smart_ant_enable_tx_feedback_cmd =
+			send_smart_ant_enable_tx_feedback_cmd_non_tlv,
+#endif
 	.send_set_ratepwr_table_cmd = send_set_ratepwr_table_cmd_non_tlv,
 	.send_get_ratepwr_table_cmd = send_get_ratepwr_table_cmd_non_tlv,
 	.send_set_ctl_table_cmd = send_set_ctl_table_cmd_non_tlv,
@@ -10292,15 +10307,6 @@ struct wmi_ops non_tlv_ops =  {
 				send_peer_update_wds_entry_cmd_non_tlv,
 	.send_phyerr_enable_cmd = send_phyerr_enable_cmd_non_tlv,
 	.send_phyerr_disable_cmd = send_phyerr_disable_cmd_non_tlv,
-	.send_smart_ant_enable_cmd = send_smart_ant_enable_cmd_non_tlv,
-	.send_smart_ant_set_rx_ant_cmd = send_smart_ant_set_rx_ant_cmd_non_tlv,
-	.send_smart_ant_set_tx_ant_cmd = send_smart_ant_set_tx_ant_cmd_non_tlv,
-	.send_smart_ant_set_training_info_cmd =
-			send_smart_ant_set_training_info_cmd_non_tlv,
-	.send_smart_ant_set_node_config_cmd =
-			send_smart_ant_set_node_config_cmd_non_tlv,
-	.send_smart_ant_enable_tx_feedback_cmd =
-			send_smart_ant_enable_tx_feedback_cmd_non_tlv,
 	.send_vdev_spectral_configure_cmd =
 			send_vdev_spectral_configure_cmd_non_tlv,
 	.send_vdev_spectral_enable_cmd =
