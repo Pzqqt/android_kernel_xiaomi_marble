@@ -189,6 +189,23 @@ static QDF_STATUS mlme_stop_pending_start(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
+static void wlan_vdev_start_fw_send(struct wlan_objmgr_pdev *pdev,
+				    void *object,
+				    void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	unsigned long *send_array = (unsigned long *)arg;
+
+	if (wlan_util_map_index_is_set(send_array, wlan_vdev_get_id(vdev)) ==
+					false)
+		return;
+
+	mlme_vdev_start_fw_cmd_send(pdev, vdev, 0);
+
+	 /* Reset the flag */
+	wlan_util_change_map_index(send_array, wlan_vdev_get_id(vdev), 0);
+}
+
 static QDF_STATUS mlme_stop_pending_restart(struct wlan_objmgr_pdev *pdev,
 					    struct wlan_objmgr_vdev *vdev)
 {
@@ -227,7 +244,18 @@ static QDF_STATUS mlme_stop_pending_restart(struct wlan_objmgr_pdev *pdev,
 					 WLAN_PDEV_OP_RESTART_INPROGRESS);
 			wlan_pdev_mlme_op_clear(pdev,
 						WLAN_PDEV_OP_MBSSID_RESTART);
+
+			if (wlan_util_map_is_any_index_set(
+			    pdev_mlme->start_send_vdev_arr,
+			    sizeof(pdev_mlme->start_send_vdev_arr))) {
+				wlan_objmgr_pdev_iterate_obj_list(
+					 pdev, WLAN_VDEV_OP,
+					 wlan_vdev_start_fw_send,
+					 pdev_mlme->start_send_vdev_arr, 0,
+					 WLAN_MLME_NB_ID);
+			}
 		}
+
 	}
 	qdf_spin_unlock_bh(&pdev_mlme->vdev_restart_lock);
 
@@ -247,23 +275,6 @@ static void wlan_vdev_restart_fw_send(struct wlan_objmgr_pdev *pdev,
 
 	mlme_vdev_start_fw_cmd_send(pdev, vdev, 1);
 	/* Reset the flag */
-	wlan_util_change_map_index(send_array, wlan_vdev_get_id(vdev), 0);
-}
-
-static void wlan_vdev_start_fw_send(struct wlan_objmgr_pdev *pdev,
-				    void *object,
-				    void *arg)
-{
-	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
-	unsigned long *send_array = (unsigned long *)arg;
-
-	if (wlan_util_map_index_is_set(send_array, wlan_vdev_get_id(vdev)) ==
-					false)
-		return;
-
-	mlme_vdev_start_fw_cmd_send(pdev, vdev, 0);
-
-	 /* Reset the flag */
 	wlan_util_change_map_index(send_array, wlan_vdev_get_id(vdev), 0);
 }
 
