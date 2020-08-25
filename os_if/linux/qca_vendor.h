@@ -264,9 +264,11 @@
  * @QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_STATUS: Get the current
  *     status of spectral scan. The status values are specified
  *     by enum qca_wlan_vendor_attr_spectral_scan_status.
- * @QCA_NL80211_VENDOR_SUBCMD_HTT_STATS: Request the firmware
- *     DP stats for a particualr stats type for response evnet
- *     it carries the stats data sent from the FW
+ * @QCA_NL80211_VENDOR_SUBCMD_PEER_FLUSH_PENDING: Sub-command to flush
+ *     peer pending packets. Specify the peer MAC address in
+ *     QCA_WLAN_VENDOR_ATTR_PEER_ADDR and the access category of the packets
+ *     in QCA_WLAN_VENDOR_ATTR_AC. The attributes are listed
+ *     in enum qca_wlan_vendor_attr_flush_pending.
  * @QCA_NL80211_VENDOR_SUBCMD_GET_RROP_INFO: Get vendor specific Representative
  *     RF Operating Parameter (RROP) information. The attributes for this
  *     information are defined in enum qca_wlan_vendor_attr_rrop_info. This is
@@ -435,6 +437,16 @@
  *	the host driver. The band configurations obtained are referred through
  *	QCA_WLAN_VENDOR_ATTR_SETBAND_MASK.
  *
+ * @QCA_NL80211_VENDOR_SUBCMD_WIFI_FW_STATS: This vendor subcommand is used by
+ *	the driver to send opaque data from the firmware to userspace. The
+ *	driver sends an event to userspace whenever such data is received from
+ *	the firmware.
+ *
+ *	QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA is used as the attribute to
+ *	send this opaque data for this event.
+ *
+ *	The format of the opaque data is specific to the particular firmware
+ *	version and there is no guarantee of the format remaining same.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -634,7 +646,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_DIAG_STATS = 159,
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_CAP_INFO = 160,
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_STATUS = 161,
-	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS = 162,
+	QCA_NL80211_VENDOR_SUBCMD_PEER_FLUSH_PENDING = 162,
 	QCA_NL80211_VENDOR_SUBCMD_GET_RROP_INFO = 163,
 	QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS = 164,
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO = 165,
@@ -662,6 +674,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_CONFIG_TSPEC = 190,
 	QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT = 191,
 	QCA_NL80211_VENDOR_SUBCMD_GETBAND = 192,
+	QCA_NL80211_VENDOR_SUBCMD_WIFI_FW_STATS = 195,
 };
 
 enum qca_wlan_vendor_tos {
@@ -1182,7 +1195,6 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_PWR_SAVE_FAIL_DETECTED_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX,
-	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT_INDEX,
@@ -1193,6 +1205,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_OEM_DATA_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_REQUEST_SAR_LIMITS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_WIFI_FW_STATS_INDEX,
 };
 
 /**
