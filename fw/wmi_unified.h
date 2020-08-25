@@ -1074,6 +1074,8 @@ typedef enum {
     WMI_QBOOST_CFG_CMDID,
     /* Simulation Test command  */
     WMI_SIMULATION_TEST_CMDID,
+    /* WFA test config command */
+    WMI_WFA_CONFIG_CMDID,
 
     /** TDLS Configuration */
     /** enable/disable TDLS */
@@ -31677,6 +31679,75 @@ typedef struct {
  *       of the frame.
  */
 } wmi_simulation_test_cmd_fixed_param;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_rsnxe */
+    A_UINT32 tlv_header;
+    /* rsnxe_param
+     * Override RSNXE Used bit in FT reassoc request.
+     *   Possible values from host are:
+     *   0  use default value based on capability
+     *   1  override with 1
+     *   2  override with 0
+     */
+    A_UINT32 rsnxe_param;
+} wmi_wfa_config_rsnxe;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_csa */
+    A_UINT32 tlv_header;
+    /* ignore_csa
+     * Ignore CSA from AP and keep STA in current channel and don't deauth AP.
+     *   Possible values from host are:
+     *   0  default behavior
+     *   1  ignore CSA
+     */
+    A_UINT32 ignore_csa;
+} wmi_wfa_config_csa;
+
+typedef enum {
+    WMI_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_REQ          = 0x00000001,
+    WMI_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_RSP          = 0x00000002,
+    WMI_WFA_CONFIG_OCV_FRMTYPE_FT_REASSOC_REQ       = 0x00000004,
+    WMI_WFA_CONFIG_OCV_FRMTYPE_FILS_REASSOC_REQ     = 0x00000008,
+} WMI_WFA_CONFIG_OCV_FRMTYPE;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_ocv */
+    A_UINT32 tlv_header;
+    /* frame_types
+     * Override OCI channel number in specified frames.
+     * Possible frame types from host are enum WMI_WFA_CONFIG_OCV_FRMTYPE.
+     */
+    A_UINT32 frame_types;
+    /* Frequency value in mhz to override in specified frame type */
+    A_UINT32 chan_freq;
+} wmi_wfa_config_ocv;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_saquery */
+    A_UINT32 tlv_header;
+    /* remain_connect_on_saquery_timeout
+     * Don't send deauth on SA Query response timeout.
+     *   Possible values from host are:
+     *   0  default behavior
+     *   1  don't send deauth on SA Query response timeout
+     */
+    A_UINT32 remain_connect_on_saquery_timeout;
+} wmi_wfa_config_saquery;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wfa_config_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** VDEV identifier */
+    A_UINT32 vdev_id;
+    /* The below TLV arrays follow this structure:
+     * wmi_wfa_config_rsnxe   wfa_config_rsnxe[];   (0 or 1 elements)
+     * wmi_wfa_config_csa     wfa_config_csa[];     (0 or 1 elements)
+     * wmi_wfa_config_ocv     wfa_config_ocv[];     (0 or 1 elements)
+     * wmi_wfa_config_saquery wfa_config_saquery[]; (0 or 1 elements)
+     */
+} wmi_wfa_config_cmd_fixed_param;
 
 #define WMI_TWT_SESSION_FLAG_FLOW_ID_GET(_var) WMI_GET_BITS(_var, 0, 16)
 #define WMI_TWT_SESSION_FLAG_FLOW_ID_SET(_var, _val) WMI_SET_BITS(_var, 0, 16, _val)
