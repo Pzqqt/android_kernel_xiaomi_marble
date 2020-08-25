@@ -1262,7 +1262,7 @@ static struct CE_attr host_ce_config_wlan_qca6490[] = {
 	/* target->host HTT + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
 	/* target->host WMI */
-	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  4096, 32, NULL,},
+	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  4096, 64, NULL,},
 	/* host->target WMI */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
