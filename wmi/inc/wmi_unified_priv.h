@@ -2939,33 +2939,6 @@ static inline void wmi_ext_dbg_msg_put(struct wmi_ext_dbg_msg *msg)
 	qdf_mem_free(msg);
 }
 
-#else
-
-static inline QDF_STATUS wmi_ext_dbg_msg_cmd_record(struct wmi_unified
-						    *wmi_handle,
-						    uint8_t *buf, uint32_t len)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wmi_ext_dbg_msg_event_record(struct wmi_unified
-						      *wmi_handle,
-						      uint8_t *buf,
-						      uint32_t len)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 #endif /*WMI_EXT_DBG */
 
 #ifdef WLAN_CFR_ENABLE
