@@ -175,5 +175,6 @@ typedef struct {
     A_UINT32 mac_addr47to32;
 } htt_mac_addr;
 
+#define HTT_STATS_MAX_CHAINS 8
 
 #endif /* _HTT_COMMON_H_ */

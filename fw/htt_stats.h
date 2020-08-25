@@ -384,6 +384,15 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_DLPAGER_STATS = 36,
 
+    /* HTT_DBG_EXT_PHY_COUNTERS_AND_PHY_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_phy_counters_and_phy_stats_t
+     */
+    HTT_DBG_EXT_PHY_COUNTERS_AND_PHY_STATS = 37,
+
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -529,6 +538,9 @@ typedef enum {
     HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
     HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG        = 119, /* htt_pktlog_and_htt_ring_stats_tlv */
     HTT_STATS_DLPAGER_STATS_TAG                    = 120, /* htt_dlpager_stats_tlv */
+    HTT_STATS_PHY_COUNTERS_TAG                     = 121, /* htt_phy_counters_tlv */
+    HTT_STATS_PHY_STATS_TAG                        = 122, /* htt_phy_stats_tlv */
+
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -5281,5 +5293,95 @@ typedef struct {
     htt_dl_pager_stats_tlv dl_pager_stats;
 } htt_dlpager_stats_t;
 
+/*======= PHY STATS ====================*/
+/*
+ * STATS TYPE : HTT_DBG_EXT_PHY_COUNTERS_AND_PHY_STATS
+ * TLV_TAGS:
+ *    - HTT_STATS_PHY_COUNTERS_TAG
+ *    - HTT_STATS_PHY_STATS_TAG
+ */
+
+#define HTT_MAX_RX_PKT_CNT 8
+#define HTT_MAX_RX_PKT_CRC_PASS_CNT 8
+#define HTT_MAX_PER_BLK_ERR_CNT 20
+#define HTT_MAX_RX_OTA_ERR_CNT 14
+
+typedef struct {
+    /* number of RXTD OFDMA OTA error counts except power surge and drop */
+    A_UINT32 rx_ofdma_timing_err_cnt;
+    /* rx_cck_fail_cnt:
+     * number of cck error counts due to rx reception failure because of
+     * timing error in cck
+     */
+    A_UINT32 rx_cck_fail_cnt;
+    /* number of times tx abort initiated by mac */
+    A_UINT32 mactx_abort_cnt;
+    /* number of times rx abort initiated by mac */
+    A_UINT32 macrx_abort_cnt;
+    /* number of times tx abort initiated by phy */
+    A_UINT32 phytx_abort_cnt;
+    /* number of times rx abort initiated by phy */
+    A_UINT32 phyrx_abort_cnt;
+    /* number of rx defered count initiated by phy */
+    A_UINT32 phyrx_defer_abort_cnt;
+    /* number of sizing events generated at LSTF */
+    A_UINT32 rx_gain_adj_lstf_event_cnt; /* a.k.a sizing1 */
+    /* number of sizing events generated at non-legacy LTF */
+    A_UINT32 rx_gain_adj_non_legacy_cnt; /* a.k.a sizing2 */
+    /* rx_pkt_cnt -
+     * Received EOP (end-of-packet) count per packet type;
+     * [0] = 11a; [1] = 11b; [2] = 11n; [3] = 11ac; [4] = 11ax; [5] = GF
+     * [6-7]=RSVD
+     */
+    A_UINT32 rx_pkt_cnt[HTT_MAX_RX_PKT_CNT];
+    /* rx_pkt_crc_pass_cnt -
+     * Received EOP (end-of-packet) count per packet type;
+     * [0] = 11a; [1] = 11b; [2] = 11n; [3] = 11ac; [4] = 11ax; [5] = GF
+     * [6-7]=RSVD
+     */
+    A_UINT32 rx_pkt_crc_pass_cnt[HTT_MAX_RX_PKT_CRC_PASS_CNT];
+    /* per_blk_err_cnt -
+     * Error count per error source;
+     * [0] = unknown; [1] = LSIG; [2] = HTSIG; [3] = VHTSIG; [4] = HESIG;
+     * [5] = RXTD_OTA; [6] = RXTD_FATAL; [7] = DEMF; [8] = ROBE;
+     * [9] = PMI; [10] = TXFD; [11] = TXTD; [12] = PHYRF
+     * [13-19]=RSVD
+     */
+    A_UINT32 per_blk_err_cnt[HTT_MAX_PER_BLK_ERR_CNT];
+    /* rx_ota_err_cnt -
+     * RXTD OTA (over-the-air) error count per error reason;
+     * [0] = voting fail; [1] = weak det fail; [2] = strong sig fail;
+     * [3] = cck fail; [4] = power surge; [5] = power drop;
+     * [6] = btcf timing timeout error; [7] = btcf packet detect error;
+     * [8] = coarse timing timeout error
+     * [9-13]=RSVD
+     */
+    A_UINT32 rx_ota_err_cnt[HTT_MAX_RX_OTA_ERR_CNT];
+} htt_phy_counters_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* per chain hw noise floor values in dBm */
+    A_INT32  nf_chain[HTT_STATS_MAX_CHAINS];
+    /* number of false radars detected */
+    A_UINT32 false_radar_cnt;
+    /* number of channel switches happened due to radar detection */
+    A_UINT32 radar_cs_cnt;
+    /* ani_level -
+     * ANI level (noise interference) corresponds to the channel
+     * the desense levels range from -5 to 15 in dB units,
+     * higher values indicating more noise interference.
+     */
+    A_INT32 ani_level;
+} htt_phy_stats_tlv;
+
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_phy_counters_tlv phy_counters;
+    htt_phy_stats_tlv phy_stats;
+} htt_phy_counters_and_phy_stats_t;
 
 #endif /* __HTT_STATS_H__ */

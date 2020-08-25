@@ -25,8 +25,8 @@
 
 #include <htt.h>
 #include <htt_stats.h>
+#include <htt_common.h> /* HTT_STATS_MAX_CHAINS */
 
-#define HTT_STATS_MAX_CHAINS 8
 #define HTT_STATS_NUM_SUPPORTED_BW_SMART_ANTENNA 4 /* 20, 40, 80, 160 MHz */
 
 #define HTT_BA_64_BIT_MAP_SIZE_DWORDS 2
