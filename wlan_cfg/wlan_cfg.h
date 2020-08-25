@@ -297,6 +297,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool is_rx_buff_pool_enabled;
 	uint32_t rx_pending_high_threshold;
 	uint32_t rx_pending_low_threshold;
+	bool is_poll_mode_enabled;
 };
 
 /**
@@ -1420,3 +1421,13 @@ wlan_cfg_set_peer_ext_stats(struct wlan_cfg_dp_soc_ctxt *cfg,
  */
 bool
 wlan_cfg_is_peer_ext_stats_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_is_poll_mode_enabled() - Check if poll mode is enabled
+ *
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: bool
+ */
+
+bool wlan_cfg_is_poll_mode_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);

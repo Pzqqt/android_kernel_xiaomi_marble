@@ -1994,11 +1994,27 @@ static void dp_interrupt_timer(void *arg)
 	struct dp_pdev *pdev = soc->pdev_list[0];
 	enum timer_yield_status yield = DP_TIMER_NO_YIELD;
 	uint32_t work_done  = 0, total_work_done = 0;
-	int budget = 0xffff;
+	int budget = 0xffff, i;
 	uint32_t remaining_quota = budget;
 	uint64_t start_time;
 	uint32_t lmac_id;
 	uint8_t dp_intr_id;
+
+	/*
+	 * this logic makes all data path interfacing rings (UMAC/LMAC)
+	 * and Monitor rings polling mode when NSS offload is disabled
+	 */
+	if (wlan_cfg_is_poll_mode_enabled(soc->wlan_cfg_ctx) &&
+	    !wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {
+		if (qdf_atomic_read(&soc->cmn_init_done)) {
+			for (i = 0; i < wlan_cfg_get_num_contexts(
+						soc->wlan_cfg_ctx); i++)
+				dp_service_srngs(&soc->intr_ctx[i], 0xffff);
+
+			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+		}
+		return;
+	}
 
 	if (!qdf_atomic_read(&soc->cmn_init_done))
 		return;
@@ -2182,7 +2198,7 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(struct cdp_soc_t *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
-	if (hif_is_polled_mode_enabled(soc->hif_handle))
+	if (wlan_cfg_is_poll_mode_enabled(soc->wlan_cfg_ctx))
 		return dp_soc_attach_poll(txrx_soc);
 	else
 		return dp_soc_interrupt_attach(txrx_soc);
