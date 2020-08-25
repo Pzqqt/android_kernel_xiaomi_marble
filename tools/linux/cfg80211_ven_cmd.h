@@ -779,6 +779,7 @@ enum {
 	IEEE80211_PARAM_MBSS_TXVDEV                = 710,
 	IEEE80211_PARAM_IGMP_ME      = 711, /* Set IGMP Mcast enhancement option: 0 disable, 1 enable */
 	IEEE80211_PARAM_HLOS_TID_OVERRIDE          = 712,   /* enable/disable hlos tid override support per vap */
+	IEEE80211_PARAM_6G_HE_OP_MIN_RATE          = 713,  /* set HE sta minimum rate for its Tx PPDU in a bss */
 };
 
 enum {
@@ -1239,6 +1240,10 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_MBSS_AUTOMODE = 458,
 	/* RNR selective addition */
 	OL_ATH_PARAM_RNR_SELECTIVE_ADD = 459,
+	/* RNR Unsolicited Probe Response Active Field */
+	OL_ATH_PARAM_RNR_UNSOLICITED_PROBE_RESP_ACTIVE = 460,
+	/* RNR Member of ESS with 2.4G/5G co-located AP */
+	OL_ATH_PARAM_RNR_MEMBER_OF_ESS_24G_5G_CO_LOCATED = 461,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -2219,6 +2224,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_igmpmcasten",       IEEE80211_PARAM_IGMP_ME, GET_PARAM, 0},
 	{"hlos_tidoverride ",     IEEE80211_PARAM_HLOS_TID_OVERRIDE, SET_PARAM, 1},
 	{"g_hlos_tidoverride ",     IEEE80211_PARAM_HLOS_TID_OVERRIDE, GET_PARAM, 0},
+	{"he_6g_min_rate",      IEEE80211_PARAM_6G_HE_OP_MIN_RATE, SET_PARAM, 1},
+	{"g_he_6g_min_rate",    IEEE80211_PARAM_6G_HE_OP_MIN_RATE, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
@@ -3194,6 +3201,14 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"g_selective_rnr_nontx",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_SELECTIVE_ADD,
 		GET_PARAM, 0},
+	{"rnr_unsolicited_prb_resp_en",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_UNSOLICITED_PROBE_RESP_ACTIVE, SET_PARAM, 1},
+	{"g_rnr_unsolicited_prb_resp_en",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_UNSOLICITED_PROBE_RESP_ACTIVE, GET_PARAM, 0},
+	{"rnr_member_ess_colocated_en",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_MEMBER_OF_ESS_24G_5G_CO_LOCATED, SET_PARAM, 1},
+	{"g_rnr_member_ess_colocated_en",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_MEMBER_OF_ESS_24G_5G_CO_LOCATED, GET_PARAM, 0},
 };
 #endif
 #endif
