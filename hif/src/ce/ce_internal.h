@@ -573,6 +573,7 @@ struct hif_ce_desc_event {
 	int index;
 	enum hif_ce_event_type type;
 	uint64_t time;
+	int cpu_id;
 #ifdef HELIUMPLUS
 	union ce_desc descriptor;
 #else

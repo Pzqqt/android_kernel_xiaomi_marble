@@ -210,6 +210,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 
 	event->type = type;
 	event->time = qdf_get_log_timestamp();
+	event->cpu_id = qdf_get_cpu();
 
 	if (descriptor)
 		qdf_mem_copy(&event->descriptor, descriptor,

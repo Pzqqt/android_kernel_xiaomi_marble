@@ -328,6 +328,7 @@ enum hif_event_type {
 	HIF_EVENT_BH_SCHED,
 	HIF_EVENT_SRNG_ACCESS_START,
 	HIF_EVENT_SRNG_ACCESS_END,
+	/* Do check hif_hist_skip_event_record when adding new events */
 };
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
@@ -359,6 +360,16 @@ struct hif_event_record {
 };
 
 /**
+ * struct hif_event_misc - history related misc info
+ * @last_irq_index: last irq event index in history
+ * @last_irq_ts: last irq timestamp
+ */
+struct hif_event_misc {
+	int32_t last_irq_index;
+	uint64_t last_irq_ts;
+};
+
+/**
  * struct hif_event_history - history for one interrupt group
  * @index: index to store new event
  * @event: event entry
@@ -368,6 +379,7 @@ struct hif_event_record {
  */
 struct hif_event_history {
 	qdf_atomic_t index;
+	struct hif_event_misc misc;
 	struct hif_event_record event[HIF_EVENT_HIST_MAX];
 };
 

@@ -43,6 +43,89 @@ int hif_get_next_record_index(qdf_atomic_t *table_index,
 	return record_index & (array_size - 1);
 }
 
+/**
+ * hif_hist_is_prev_record() - Check if index is the immediate
+ *  previous record wrt curr_index
+ * @curr_index: curr index in the event history
+ * @index: index to be checked
+ * @hist_size: history size
+ *
+ * Return: true if index is immediately behind curr_index else false
+ */
+static inline
+bool hif_hist_is_prev_record(int32_t curr_index, int32_t index,
+			     uint32_t hist_size)
+{
+	return (((index + 1) & (hist_size - 1)) == curr_index) ?
+			true : false;
+}
+
+/**
+ * hif_hist_skip_event_record() - Check if current event needs to be
+ *  recorded or not
+ * @hist_ev: HIF event history
+ * @event: DP event entry
+ *
+ * Return: true if current event needs to be skipped else false
+ */
+static bool
+hif_hist_skip_event_record(struct hif_event_history *hist_ev,
+			   struct hif_event_record *event)
+{
+	struct hif_event_record *rec;
+	struct hif_event_record *last_irq_rec;
+	int32_t index;
+
+	index = qdf_atomic_read(&hist_ev->index);
+	if (index < 0)
+		return false;
+
+	index &= (HIF_EVENT_HIST_MAX - 1);
+	rec = &hist_ev->event[index];
+
+	switch (event->type) {
+	case HIF_EVENT_IRQ_TRIGGER:
+		/*
+		 * The prev record check is to prevent skipping the IRQ event
+		 * record in case where BH got re-scheduled due to force_break
+		 * but there are no entries to be reaped in the rings.
+		 */
+		if (rec->type == HIF_EVENT_BH_SCHED &&
+		    hif_hist_is_prev_record(index,
+					    hist_ev->misc.last_irq_index,
+					    HIF_EVENT_HIST_MAX)) {
+			last_irq_rec =
+				&hist_ev->event[hist_ev->misc.last_irq_index];
+			last_irq_rec->timestamp = qdf_get_log_timestamp();
+			last_irq_rec->cpu_id = qdf_get_cpu();
+			last_irq_rec->hp++;
+			last_irq_rec->tp = last_irq_rec->timestamp -
+						hist_ev->misc.last_irq_ts;
+			return true;
+		}
+		break;
+	case HIF_EVENT_BH_SCHED:
+		if (rec->type == HIF_EVENT_BH_SCHED) {
+			rec->timestamp = qdf_get_log_timestamp();
+			rec->cpu_id = qdf_get_cpu();
+			return true;
+		}
+		break;
+	case HIF_EVENT_SRNG_ACCESS_START:
+		if (event->hp == event->tp)
+			return true;
+		break;
+	case HIF_EVENT_SRNG_ACCESS_END:
+		if (rec->type != HIF_EVENT_SRNG_ACCESS_START)
+			return true;
+		break;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 			   struct hif_event_record *event, uint8_t intr_grp_id)
 {
@@ -63,10 +146,18 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 	if (qdf_unlikely(!hist_ev))
 		return;
 
+	if (hif_hist_skip_event_record(hist_ev, event))
+		return;
+
 	record_index = hif_get_next_record_index(
 			&hist_ev->index, HIF_EVENT_HIST_MAX);
 
 	record = &hist_ev->event[record_index];
+
+	if (event->type == HIF_EVENT_IRQ_TRIGGER) {
+		hist_ev->misc.last_irq_index = record_index;
+		hist_ev->misc.last_irq_ts = qdf_get_log_timestamp();
+	}
 
 	record->hal_ring_id = event->hal_ring_id;
 	record->hp = event->hp;
