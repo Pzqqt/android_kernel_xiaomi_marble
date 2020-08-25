@@ -5057,6 +5057,25 @@ static int _dsi_display_dev_deinit(struct dsi_display *display)
 }
 
 /**
+ * dsi_display_cont_splash_res_disable() - Disable resource votes added in probe
+ * @dsi_display:    Pointer to dsi display
+ * Returns:     Zero on success
+ */
+int dsi_display_cont_splash_res_disable(void *dsi_display)
+{
+	struct dsi_display *display = dsi_display;
+	int rc = 0;
+
+	/* Remove the panel vote that was added during dsi display probe */
+	rc = dsi_pwr_enable_regulator(&display->panel->power_info, false);
+	if (rc)
+		DSI_ERR("[%s] failed to disable vregs, rc=%d\n",
+				display->panel->name, rc);
+
+	return rc;
+}
+
+/**
  * dsi_display_cont_splash_config() - Initialize resources for continuous splash
  * @dsi_display:    Pointer to dsi display
  * Returns:     Zero on success
@@ -5101,24 +5120,12 @@ int dsi_display_cont_splash_config(void *dsi_display)
 		goto clk_manager_update;
 	}
 
-	/* Vote on panel regulator will be removed during suspend path */
-	rc = dsi_pwr_enable_regulator(&display->panel->power_info, true);
-	if (rc) {
-		DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
-				display->panel->name, rc);
-		goto clks_disabled;
-	}
-
 	mutex_unlock(&display->display_lock);
 
 	/* Set the current brightness level */
 	dsi_panel_bl_handoff(display->panel);
 
 	return rc;
-
-clks_disabled:
-	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-			DSI_ALL_CLKS, DSI_CLK_OFF);
 
 clk_manager_update:
 	dsi_display_ctrl_isr_configure(display, false);
@@ -5461,17 +5468,6 @@ static int dsi_display_bind(struct device *dev,
 		}
 	}
 
-	/* Remove the panel vote that was added during dsi display probe */
-	if (display->panel) {
-		rc = dsi_pwr_enable_regulator(&display->panel->power_info,
-								false);
-		if (rc) {
-			DSI_ERR("[%s] failed to disable vregs, rc=%d\n",
-					display->panel->name, rc);
-			goto error_host_deinit;
-		}
-	}
-
 	/* register te irq handler */
 	dsi_display_register_te_irq(display);
 
@@ -5581,11 +5577,13 @@ static int dsi_display_init(struct dsi_display *display)
 
 	/*
 	 * Vote on panel regulator is added to make sure panel regulators
-	 * are ON until dsi bind is completed for cont-splash enabled usecase.
-	 * This panel regulator vote will be removed after bind is done.
+	 * are ON for cont-splash enabled usecase.
+	 * This panel regulator vote will be removed only in:
+	 *	1) device suspend when cont-splash is enabled.
+	 *	2) cont_splash_res_disable() when cont-splash is disabled.
 	 * For GKI, adding this vote will make sure that sync_state
-	 * kernel driver doesn't disable the panel regulators before
-	 * splash_config() function adds vote for these regulators.
+	 * kernel driver doesn't disable the panel regulators after
+	 * dsi probe is complete.
 	 */
 	if (display->panel) {
 		rc = dsi_pwr_enable_regulator(&display->panel->power_info,

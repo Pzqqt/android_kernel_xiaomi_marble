@@ -737,6 +737,14 @@ enum dsi_pixel_format dsi_display_get_dst_format(
  * Return: Zero on Success
  */
 int dsi_display_cont_splash_config(void *display);
+
+/**
+ * dsi_display_cont_splash_res_disable() - Disable resource votes added in probe
+ * @display:    Pointer to dsi display
+ * Returns:     Zero on success
+ */
+int dsi_display_cont_splash_res_disable(void *display);
+
 /*
  * dsi_display_get_panel_vfp - get panel vsync
  * @display: Pointer to private display structure
