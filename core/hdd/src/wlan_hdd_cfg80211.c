@@ -8846,6 +8846,8 @@ static int hdd_get_nss_config(struct hdd_adapter *adapter,
 		}
 	}
 
+	hdd_debug("nss %d", nss);
+
 	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_NSS, nss)) {
 		hdd_err("nla_put failure");
 		return -EINVAL;
@@ -9001,6 +9003,8 @@ static int hdd_get_configuration(struct hdd_adapter *adapter,
 		if (!attr)
 			continue;
 
+		hdd_debug("Get wifi configuration %d", id);
+
 		cb = config_getters[i].cb;
 		errno = cb(adapter, skb, attr);
 		if (errno)
@@ -9045,6 +9049,8 @@ static int hdd_set_independent_configuration(struct hdd_adapter *adapter,
 		attr = tb[id];
 		if (!attr)
 			continue;
+
+		hdd_debug("Set wifi configuration %d", id);
 
 		cb = independent_setters[i].cb;
 		ret = cb(adapter, attr);
