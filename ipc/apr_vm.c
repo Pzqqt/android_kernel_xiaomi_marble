@@ -31,6 +31,7 @@
 #include <ipc/apr_tal.h>
 #include <ipc/aprv2_vm.h>
 #include <linux/habmm.h>
+#include <uapi/linux/sched/types.h>
 
 #define APR_PKT_IPC_LOG_PAGE_CNT 2
 #define APR_VM_CB_THREAD_NAME "apr_vm_cb_thread"
@@ -587,6 +588,9 @@ static int apr_vm_cb_thread(void *data)
 	unsigned long delay = jiffies + (HZ / 2);
 	int status = 0;
 	int ret = 0;
+	struct sched_param param = {.sched_priority = 1};
+
+	sched_setscheduler(current, SCHED_FIFO, &param);
 
 	while (1) {
 		do {
