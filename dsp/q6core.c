@@ -738,6 +738,44 @@ int q6core_get_avcs_api_version_per_service(uint32_t service_id)
 EXPORT_SYMBOL(q6core_get_avcs_api_version_per_service);
 
 /**
+ * q6core_get_avcs_avs_build_version_info - Get AVS build version information
+ *
+ * @build_major_version - pointer to build major version
+ * @build_minor_version - pointer to build minor version
+ * @build_branch_version - pointer to build branch version
+ *
+ * Returns 0 on success and error on failure
+ */
+int q6core_get_avcs_avs_build_version_info(
+	uint32_t *build_major_version, uint32_t *build_minor_version,
+					uint32_t *build_branch_version)
+{
+
+	struct avcs_fwk_ver_info *cached_ver_info = NULL;
+	int ret = 0;
+
+	if (!build_major_version || !build_minor_version ||
+		!build_branch_version)
+		return -EINVAL;
+
+	ret = q6core_get_avcs_fwk_version();
+	if (ret < 0)
+		return ret;
+
+	cached_ver_info = q6core_lcl.q6core_avcs_ver_info.ver_info;
+
+	*build_major_version =
+			cached_ver_info->avcs_fwk_version.build_major_version;
+	*build_minor_version =
+			cached_ver_info->avcs_fwk_version.build_minor_version;
+	*build_branch_version =
+			cached_ver_info->avcs_fwk_version.build_branch_version;
+
+	return ret;
+}
+EXPORT_SYMBOL(q6core_get_avcs_avs_build_version_info);
+
+/**
  * core_set_license -
  *       command to set license for module
  *

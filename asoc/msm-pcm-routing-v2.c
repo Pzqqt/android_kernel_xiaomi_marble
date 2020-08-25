@@ -32126,6 +32126,50 @@ static const struct snd_kcontrol_new
 	},
 };
 
+static int msm_routing_put_mclk_src_cfg(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	u16 port_id = 0;
+	int32_t mclk_src_id = 0;
+	uint32_t mclk_freq = 0;
+	int be_idx, ret = -EINVAL;
+
+	be_idx = ucontrol->value.integer.value[0];
+	mclk_src_id = ucontrol->value.integer.value[1];
+	mclk_freq = ucontrol->value.integer.value[2];
+
+	if (be_idx < 0 && be_idx >= MSM_BACKEND_DAI_MAX) {
+		pr_err("%s: Invalid be id %d\n", __func__, be_idx);
+		return -EINVAL;
+	}
+
+	if (mclk_src_id < MCLK_SRC_INT && mclk_src_id >= MCLK_SRC_MAX) {
+		pr_err("%s: Invalid MCLK src %d\n", __func__, mclk_src_id);
+		return -EINVAL;
+	}
+
+	if (msm_bedais[be_idx].active) {
+		pr_err("%s:BE is active %d, cannot set mclk clock src\n",
+			__func__, be_idx);
+		return -EINVAL;
+	}
+
+	port_id = msm_bedais[be_idx].port_id;
+	pr_debug("%s: be idx %d mclk_src id %d mclk_freq %d port id 0x%x\n",
+		  __func__, be_idx, mclk_src_id, mclk_freq, port_id);
+	ret = afe_set_mclk_src_cfg(port_id, mclk_src_id, mclk_freq);
+	if (ret < 0)
+		pr_err("%s: failed to set mclk src cfg\n", __func__);
+
+	return ret;
+
+}
+
+static const struct snd_kcontrol_new mclk_src_controls[] = {
+	SOC_SINGLE_MULTI_EXT("MCLK_SRC CFG", SND_SOC_NOPM, 0, 24576000, 0, 3,
+					NULL, msm_routing_put_mclk_src_cfg),
+};
+
 static int msm_routing_stereo_channel_reverse_control_get(
 			struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
@@ -32418,6 +32462,8 @@ static int msm_routing_probe(struct snd_soc_component *component)
 	snd_soc_add_component_controls(component, pll_clk_drift_controls,
 				      ARRAY_SIZE(pll_clk_drift_controls));
 
+	snd_soc_add_component_controls(component, mclk_src_controls,
+				      ARRAY_SIZE(mclk_src_controls));
 	return 0;
 }
 
