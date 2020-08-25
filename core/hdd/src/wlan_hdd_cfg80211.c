@@ -24264,6 +24264,8 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 	uint8_t connected_band, nss, i;
 	int bit_rate = -1;
 	uint8_t rate_index;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	uint8_t vdev_id;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam() ||
 	    QDF_GLOBAL_MONITOR_MODE == hdd_get_conparam()) {
@@ -24274,6 +24276,12 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		return errno;
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	vdev_id = adapter->vdev_id;
 
 	connected_band = hdd_conn_get_connected_band(&adapter->session.station);
 
@@ -24331,8 +24339,24 @@ configure_fw:
 	errno = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_FIXED_RATE,
 				    bit_rate, VDEV_CMD);
 
-	if (errno)
+	if (errno) {
 		hdd_err_rl("Failed to set firmware, errno %d", errno);
+		return errno;
+	}
+
+	if (mask->control[band].gi & HDD_AUTO_RATE_SGI)
+		errno = sme_set_auto_rate_he_sgi(hdd_ctx->mac_handle,
+						 adapter->vdev_id,
+						 mask->control[band].gi);
+	else
+		errno = sme_update_ht_config(hdd_ctx->mac_handle,
+					     adapter->vdev_id,
+					     WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
+					     mask->control[band].gi);
+
+	if (errno)
+		hdd_err("cfg set failed, value %d status %d",
+			mask->control[band].gi, errno);
 
 	return errno;
 }
