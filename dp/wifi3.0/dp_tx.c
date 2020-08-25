@@ -3750,17 +3750,24 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
 	struct hal_tx_completion_status ts;
-	struct dp_peer *peer;
+	struct dp_peer *peer = NULL;
+	uint16_t peer_id = DP_INVALID_PEER;
 	qdf_nbuf_t netbuf;
 
 	desc = comp_head;
 
 	while (desc) {
+		if (peer_id != desc->peer_id) {
+			if (peer)
+				dp_peer_unref_delete(peer,
+						     DP_MOD_ID_TX_COMP);
+			peer_id = desc->peer_id;
+			peer = dp_peer_get_ref_by_id(soc, peer_id,
+						     DP_MOD_ID_TX_COMP);
+		}
 		if (qdf_likely(desc->flags & DP_TX_DESC_FLAG_SIMPLE)) {
 			struct dp_pdev *pdev = desc->pdev;
 
-			peer = dp_peer_get_ref_by_id(soc, desc->peer_id,
-						     DP_MOD_ID_TX_COMP);
 			if (qdf_likely(peer)) {
 				/*
 				 * Increment peer statistics
@@ -3771,9 +3778,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 
 				if (desc->tx_status !=
 						HAL_TX_TQM_RR_FRAME_ACKED)
-					peer->stats.tx.tx_failed++;
-
-				dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
+					DP_STATS_INC(peer, tx.tx_failed, 1);
 			}
 
 			qdf_assert(pdev);
@@ -3794,8 +3799,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 			continue;
 		}
 		hal_tx_comp_get_status(&desc->comp, &ts, soc->hal_soc);
-		peer = dp_peer_get_ref_by_id(soc, ts.peer_id,
-					     DP_MOD_ID_TX_COMP);
+
 		dp_tx_comp_process_tx_status(soc, desc, &ts, peer, ring_id);
 
 		netbuf = desc->nbuf;
@@ -3807,14 +3811,13 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 
 		dp_tx_comp_process_desc(soc, desc, &ts, peer);
 
-		if (peer)
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
-
 		next = desc->next;
 
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
+	if (peer)
+		dp_peer_unref_delete(peer, DP_MOD_ID_TX_COMP);
 }
 
 /**
@@ -4099,18 +4102,17 @@ more_data:
 			dp_tx_process_htt_completion(tx_desc,
 					htt_tx_status, ring_id);
 		} else {
+			tx_desc->peer_id =
+				hal_tx_comp_get_peer_id(tx_comp_hal_desc);
+			tx_desc->tx_status =
+				hal_tx_comp_get_tx_status(tx_comp_hal_desc);
 			/*
 			 * If the fast completion mode is enabled extended
 			 * metadata from descriptor is not copied
 			 */
 			if (qdf_likely(tx_desc->flags &
-						DP_TX_DESC_FLAG_SIMPLE)) {
-				tx_desc->peer_id =
-					hal_tx_comp_get_peer_id(tx_comp_hal_desc);
-				tx_desc->tx_status =
-					hal_tx_comp_get_tx_status(tx_comp_hal_desc);
+						DP_TX_DESC_FLAG_SIMPLE))
 				goto add_to_pool;
-			}
 
 			/*
 			 * If the descriptor is already freed in vdev_detach,
