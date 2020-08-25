@@ -116,6 +116,29 @@ coalescing_fail:
 	return 1;
 }
 
+QDF_STATUS dp_print_swlm_stats(struct dp_soc *soc)
+{
+	struct dp_swlm *swlm = &soc->swlm;
+
+	dp_info("TCL Coalescing stats:");
+	dp_info("Num coalesce success: %d", swlm->stats.tcl.coalesce_success);
+	dp_info("Num coalesce fail: %d", swlm->stats.tcl.coalesce_fail);
+	dp_info("Timer flush success: %d", swlm->stats.tcl.timer_flush_success);
+	dp_info("Timer flush fail: %d", swlm->stats.tcl.timer_flush_fail);
+	dp_info("Coalesce fail (TID): %d", swlm->stats.tcl.tid_fail);
+	dp_info("Coalesce fail (special frame): %d", swlm->stats.tcl.sp_frames);
+	dp_info("Coalesce fail (Low latency connection): %d",
+		swlm->stats.tcl.ll_connection);
+	dp_info("Coalesce fail (bytes thresh crossed): %d",
+		swlm->stats.tcl.bytes_thresh_reached);
+	dp_info("Coalesce fail (time thresh crossed): %d",
+		swlm->stats.tcl.time_thresh_reached);
+	dp_info("Coalesce fail (TPUT sampling fail): %d",
+		swlm->stats.tcl.tput_criteria_fail);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static struct dp_swlm_ops dp_latency_mgr_ops = {
 	.tcl_wr_coalesce_check = dp_swlm_can_tcl_wr_coalesce,
 };

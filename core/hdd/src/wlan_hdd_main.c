@@ -9378,6 +9378,9 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 			cdp_display_stats(soc,
 					  CDP_DUMP_TX_FLOW_POOL_INFO,
 					  QDF_STATS_VERBOSITY_LEVEL_LOW);
+			cdp_display_stats(soc,
+					  CDP_DP_SWLM_STATS,
+					  QDF_STATS_VERBOSITY_LEVEL_LOW);
 			wlan_hdd_display_netif_queue_history
 				(hdd_ctx, QDF_STATS_VERBOSITY_LEVEL_LOW);
 			qdf_dp_trace_dump_stats();

@@ -163,6 +163,14 @@ QDF_STATUS dp_soc_swlm_attach(struct dp_soc *soc);
  */
 QDF_STATUS dp_soc_swlm_detach(struct dp_soc *soc);
 
+/**
+ * dp_print_swlm_stats() - Print the SWLM stats
+ * @soc: Datapath soc handle
+ *
+ * Returns: QDF_STATUS
+ */
+QDF_STATUS dp_print_swlm_stats(struct dp_soc *soc);
+
 #endif /* WLAN_DP_FEATURE_SW_LATENCY_MGR */
 
 #endif
