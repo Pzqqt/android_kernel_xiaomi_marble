@@ -1877,7 +1877,7 @@ target_if_consume_spectral_report_gen3(
 
 	spectral_mode = target_if_get_spectral_mode(detector_id,
 						    &spectral->rparams);
-	if (spectral_mode == SPECTRAL_SCAN_MODE_INVALID) {
+	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err_rl("No valid Spectral mode for detector id %u",
 				detector_id);
 		goto fail;
