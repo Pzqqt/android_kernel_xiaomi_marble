@@ -1051,6 +1051,12 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x0E, 0x06);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x01, 0x01);
 		if (test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
 			snd_soc_component_update_bits(component,
 				WSA883X_PA_FSM_CTL, 0x01, 0x01);
@@ -1059,6 +1065,12 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		if (!test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
 			wcd_disable_irq(&wsa883x->irq_info,
 					WSA883X_IRQ_INT_PDM_WD);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x01, 0x00);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x0E, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PDM_WD_CTL,
