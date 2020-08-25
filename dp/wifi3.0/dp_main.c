@@ -77,6 +77,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #include <pktlog_ac.h>
 #endif
 #endif
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+#include <dp_swlm.h>
+#endif
 
 #ifdef WLAN_FEATURE_STATS_EXT
 #define INIT_RX_HW_STATS_LOCK(_soc) \
@@ -5030,6 +5033,13 @@ static void dp_rx_dump_fisa_table(struct dp_soc *soc)
 }
 #endif /* !WLAN_SUPPORT_RX_FISA */
 
+#ifndef WLAN_DP_FEATURE_SW_LATENCY_MGR
+static inline QDF_STATUS dp_print_swlm_stats(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* !WLAN_DP_FEATURE_SW_LATENCY_MGR */
+
 /*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
  * @cdp_soc: Opaque Datapath SOC handle
@@ -9520,6 +9530,10 @@ static QDF_STATUS dp_txrx_dump_stats(struct cdp_soc_t *psoc, uint16_t value,
 
 	case CDP_DP_RX_FISA_STATS:
 		dp_rx_dump_fisa_stats(soc);
+		break;
+
+	case CDP_DP_SWLM_STATS:
+		dp_print_swlm_stats(soc);
 		break;
 
 	default:
