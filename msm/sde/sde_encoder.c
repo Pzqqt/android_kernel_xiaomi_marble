@@ -3413,12 +3413,14 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 	struct sde_kms *sde_kms = NULL;
 	struct sde_crtc_misr_info crtc_misr_info = {false, 0};
 	bool is_regdma_blocking = false, is_vid_mode = false;
+	struct sde_crtc *sde_crtc;
 
 	if (!sde_enc) {
 		SDE_ERROR("invalid encoder\n");
 		return;
 	}
 
+	sde_crtc = to_sde_crtc(sde_enc->crtc);
 	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_VIDEO_MODE))
 		is_vid_mode = true;
 
@@ -3486,9 +3488,12 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 				sde_enc->misr_frame_count);
 
 	sde_crtc_get_misr_info(sde_enc->crtc, &crtc_misr_info);
-	if (crtc_misr_info.misr_enable)
+	if (crtc_misr_info.misr_enable && sde_crtc &&
+				sde_crtc->misr_reconfigure) {
 		sde_crtc_misr_setup(sde_enc->crtc, true,
 				crtc_misr_info.misr_frame_count);
+		sde_crtc->misr_reconfigure = false;
+	}
 
 	_sde_encoder_trigger_start(sde_enc->cur_master);
 

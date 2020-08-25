@@ -5711,9 +5711,6 @@ void sde_crtc_misr_setup(struct drm_crtc *crtc, bool enable, u32 frame_count)
 	}
 	sde_crtc = to_sde_crtc(crtc);
 
-	if (!sde_crtc->misr_reconfigure)
-		return;
-
 	sde_crtc->misr_enable_sui = enable;
 	sde_crtc->misr_frame_count = frame_count;
 	for (i = 0; i < sde_crtc->num_mixers; ++i) {
@@ -5723,7 +5720,6 @@ void sde_crtc_misr_setup(struct drm_crtc *crtc, bool enable, u32 frame_count)
 
 		m->hw_lm->ops.setup_misr(m->hw_lm, enable, frame_count);
 	}
-	sde_crtc->misr_reconfigure = false;
 }
 
 void sde_crtc_get_misr_info(struct drm_crtc *crtc,
