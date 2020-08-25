@@ -755,6 +755,8 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 
 	if (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ)
 		usecase = 1;
+	else if (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ)
+		usecase = 2;
 
 	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
@@ -1366,11 +1368,14 @@ static void swrm_get_device_frame_shape(struct swr_mstr_ctrl *swrm,
 
 	if ((swrm->master_id == MASTER_ID_TX) &&
 		((swrm->bus_clk == SWR_CLK_RATE_9P6MHZ) ||
+		 (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ) ||
 		 (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ))) {
 		dev_num = swrm_get_device_id(swrm, port_req->dev_num);
 		port_id = port_req->slave_port_id;
 		if (swrm->bus_clk == SWR_CLK_RATE_9P6MHZ)
 			pp_dev = swrdev_frame_params_9p6MHz[dev_num].pp;
+		else if (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ)
+			pp_dev = swrdev_frame_params_0p6MHz[dev_num].pp;
 		else
 			pp_dev = swrdev_frame_params_4p8MHz[dev_num].pp;
 		pp_port = &pp_dev[port_id];
