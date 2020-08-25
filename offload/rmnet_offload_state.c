@@ -46,16 +46,14 @@ DATARMNETa9f2b2f677;DATARMNET8633ae8f1e=&DATARMNET87b015f76f->
 DATARMNET8633ae8f1e;DATARMNET8633ae8f1e->priority=DATARMNET1f03ff7987;
 DATARMNET8633ae8f1e->dl_hdr_handler_v2=DATARMNET95e1703026;DATARMNET8633ae8f1e->
 dl_trl_handler_v2=DATARMNETc9dd320f49;if(rmnet_map_dl_ind_register(
-DATARMNETf0d9de7e2f,DATARMNET8633ae8f1e)){DATARMNETd4230b6bfe();
-DATARMNETb14e52a504=DATARMNET8e1c5c09f8;pr_warn(
+DATARMNETf0d9de7e2f,DATARMNET8633ae8f1e)){DATARMNETb14e52a504=
+DATARMNET8e1c5c09f8;pr_warn(
 "\x25\x73\x28\x29\x3a\x20\x44\x4c\x20\x43\x42\x20\x72\x65\x67\x69\x73\x74\x72\x61\x74\x61\x74\x69\x6f\x6e\x20\x66\x61\x69\x6c\x65\x64" "\n"
-,__func__);}else{DATARMNET87b015f76f->DATARMNETc2832b8f85=true;}}else{
-DATARMNETd4230b6bfe();DATARMNETb14e52a504=DATARMNET8e1c5c09f8;pr_warn(
-"\x25\x73\x28\x29\x3a\x20\x44\x4c\x20\x6e\x6f\x74\x20\x65\x6e\x61\x62\x6c\x65\x64" "\n"
-,__func__);}return DATARMNETb14e52a504;}static int DATARMNET9f53d54812(struct 
-rmnet_port*DATARMNETf0d9de7e2f){int DATARMNETb14e52a504;DATARMNETe05748b000=
-kzalloc(sizeof(*DATARMNETe05748b000),GFP_KERNEL);if(!DATARMNETe05748b000){pr_err
-(
+,__func__);}else{DATARMNET87b015f76f->DATARMNETc2832b8f85=true;}}
+DATARMNETd4230b6bfe();return DATARMNETb14e52a504;}static int DATARMNET9f53d54812
+(struct rmnet_port*DATARMNETf0d9de7e2f){int DATARMNETb14e52a504;
+DATARMNETe05748b000=kzalloc(sizeof(*DATARMNETe05748b000),GFP_KERNEL);if(!
+DATARMNETe05748b000){pr_err(
 "\x25\x73\x28\x29\x3a\x20\x52\x65\x73\x6f\x75\x72\x63\x65\x20\x61\x6c\x6c\x6f\x63\x61\x74\x69\x6f\x6e\x20\x66\x61\x69\x6c\x65\x64" "\n"
 ,__func__);return DATARMNETb881657565;}DATARMNETe05748b000->DATARMNET403589239f=
 DATARMNETf0d9de7e2f;DATARMNETb14e52a504=DATARMNETdbcaf01255();if(
@@ -73,10 +71,10 @@ rmnet_port*DATARMNETf0d9de7e2f;struct rmnet_priv*DATARMNETe823dcf978;int
 DATARMNETb14e52a504;(void)DATARMNET272c159b3c;if(!DATARMNET00dcb79bc4||strncmp(
 DATARMNET00dcb79bc4->name,"\x72\x6d\x6e\x65\x74\x5f\x64\x61\x74\x61",
 (0xd27+224-0xdfd)))goto DATARMNETaabe3a05f8;switch(DATARMNET4abd997295){case 
-NETDEV_REGISTER:if(DATARMNETe05748b000||DATARMNET19eb0de3b2()){
-DATARMNETe05748b000->DATARMNETcb2b3ae8e4++;goto DATARMNETaabe3a05f8;}
-DATARMNETe823dcf978=netdev_priv(DATARMNET00dcb79bc4);DATARMNETf0d9de7e2f=
-rmnet_get_port(DATARMNETe823dcf978->real_dev);if(!DATARMNETf0d9de7e2f){pr_err(
+NETDEV_REGISTER:if(DATARMNETe05748b000){DATARMNETe05748b000->DATARMNETcb2b3ae8e4
+++;goto DATARMNETaabe3a05f8;}DATARMNETe823dcf978=netdev_priv(DATARMNET00dcb79bc4
+);DATARMNETf0d9de7e2f=rmnet_get_port(DATARMNETe823dcf978->real_dev);if(!
+DATARMNETf0d9de7e2f){pr_err(
 "\x25\x73\x28\x29\x3a\x20\x49\x6e\x76\x61\x6c\x69\x64\x20\x72\x6d\x6e\x65\x74\x20\x63\x6f\x6e\x66\x69\x67\x75\x72\x61\x74\x69\x6f\x6e\x20\x6f\x6e\x20\x25\x73" "\n"
 ,__func__,DATARMNET00dcb79bc4->name);goto DATARMNETaabe3a05f8;}pr_info(
 "\x25\x73\x28\x29\x3a\x20\x49\x6e\x69\x74\x69\x61\x6c\x69\x7a\x69\x6e\x67\x20\x6f\x6e\x20\x64\x65\x76\x69\x63\x65\x20\x25\x73" "\n"
@@ -84,8 +82,8 @@ rmnet_get_port(DATARMNETe823dcf978->real_dev);if(!DATARMNETf0d9de7e2f){pr_err(
 DATARMNETf0d9de7e2f);if(DATARMNETb14e52a504==DATARMNETb881657565){pr_err(
 "\x25\x73\x28\x29\x3a\x20\x49\x6e\x69\x74\x69\x61\x6c\x69\x7a\x61\x74\x69\x6f\x6e\x20\x66\x61\x69\x6c\x65\x64" "\n"
 ,__func__);goto DATARMNETaabe3a05f8;}break;case NETDEV_UNREGISTER:if(!
-DATARMNETe05748b000||!DATARMNET19eb0de3b2())goto DATARMNETaabe3a05f8;if(--
-DATARMNETe05748b000->DATARMNETcb2b3ae8e4)goto DATARMNETaabe3a05f8;pr_info(
+DATARMNETe05748b000)goto DATARMNETaabe3a05f8;if(--DATARMNETe05748b000->
+DATARMNETcb2b3ae8e4)goto DATARMNETaabe3a05f8;pr_info(
 "\x25\x73\x28\x29\x3a\x20\x55\x6e\x69\x6e\x69\x74\x69\x61\x6c\x69\x7a\x69\x6e\x67\x20\x6f\x6e\x20\x64\x65\x76\x69\x63\x65\x20\x25\x73" "\n"
 ,__func__,DATARMNET00dcb79bc4->name);DATARMNET345f805b34();break;}
 DATARMNETaabe3a05f8:return NOTIFY_DONE;}static struct notifier_block 
