@@ -907,6 +907,116 @@ policy_mgr_get_next_action(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+static bool
+policy_mgr_is_hw_mode_change_required(struct wlan_objmgr_psoc *psoc,
+				      uint32_t ch_freq, uint8_t vdev_id)
+{
+	if (policy_mgr_is_hw_dbs_required_for_band(psoc, HW_MODE_MAC_BAND_2G)) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))
+			return true;
+	} else {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq) &&
+		    policy_mgr_is_any_mode_active_on_band_along_with_session
+			(psoc, vdev_id, POLICY_MGR_BAND_5))
+			return true;
+
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq) &&
+		    policy_mgr_is_any_mode_active_on_band_along_with_session
+			(psoc, vdev_id, POLICY_MGR_BAND_24))
+			return true;
+	}
+
+	return false;
+}
+
+static uint32_t
+policy_mgr_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
+				    qdf_list_t *scan_list, uint8_t vdev_id)
+{
+
+	struct scan_cache_node *scan_node = NULL;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	uint32_t ch_freq = 0;
+	struct scan_cache_entry *entry;
+
+	if (!scan_list || !qdf_list_size(scan_list)) {
+		policy_mgr_debug("Scan list is NULL or No BSSIDs present");
+		goto end;
+	}
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+		policy_mgr_debug("Driver isn't DBS capable");
+		goto end;
+	}
+
+	if (!policy_mgr_is_dbs_allowed_for_concurrency(psoc, QDF_STA_MODE)) {
+		policy_mgr_debug("DBS not allowed for concurrency combo");
+		goto end;
+	}
+
+	if (!policy_mgr_is_hw_dbs_2x2_capable(psoc) &&
+	    !policy_mgr_is_hw_dbs_required_for_band(psoc,
+						    HW_MODE_MAC_BAND_2G) &&
+	    !policy_mgr_get_connection_count(psoc)) {
+		policy_mgr_debug("1x1 DBS with no existing connection, HW mode change not required");
+		goto end;
+	}
+
+	qdf_list_peek_front(scan_list, &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(scan_list, cur_node, &next_node);
+
+		scan_node = qdf_container_of(cur_node, struct scan_cache_node,
+					     node);
+		entry = scan_node->entry;
+		ch_freq = entry->channel.chan_freq;
+
+		if (policy_mgr_is_hw_mode_change_required(psoc, ch_freq,
+							  vdev_id)) {
+			policy_mgr_debug("Scan list has BSS of freq %d hw mode required",
+					 ch_freq);
+			break;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+end:
+	return ch_freq;
+}
+
+QDF_STATUS
+policy_mgr_change_hw_mode_sta_connect(struct wlan_objmgr_psoc *psoc,
+				      qdf_list_t *scan_list, uint8_t vdev_id,
+				      uint32_t connect_id)
+{
+	QDF_STATUS status;
+	uint32_t ch_freq;
+
+	ch_freq = policy_mgr_check_for_hw_mode_change(psoc, scan_list, vdev_id);
+
+	if (!ch_freq)
+		return QDF_STATUS_E_ALREADY;
+
+	status = policy_mgr_current_connections_update(psoc, vdev_id, ch_freq,
+			POLICY_MGR_UPDATE_REASON_STA_CONNECT, connect_id);
+
+	/*
+	 * If status is success then the callback of policy mgr hw mode change
+	 * would be called.
+	 * If status is no support then the DUT is already in required HW mode.
+	 */
+
+	if (status == QDF_STATUS_E_FAILURE)
+		policy_mgr_err("Hw mode change failed");
+	else if (status == QDF_STATUS_E_NOSUPPORT)
+		status = QDF_STATUS_E_ALREADY;
+
+	return status;
+}
+
 QDF_STATUS
 policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 				      uint32_t session_id, uint32_t ch_freq,
