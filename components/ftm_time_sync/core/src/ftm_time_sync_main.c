@@ -401,7 +401,7 @@ ssize_t ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf)
 		q_master = vdev_priv->ftm_ts_priv.time_pair[iter].qtime_master;
 		q_slave = vdev_priv->ftm_ts_priv.time_pair[iter].qtime_slave;
 
-		size += qdf_scnprintf(buf + size, PAGE_SIZE,
+		size += qdf_scnprintf(buf + size, PAGE_SIZE - size,
 				      "%s %llu %s %llu %s %lld\n",
 				      "Qtime_master", q_master, "Qtime_slave",
 				      q_slave, "Offset", q_slave > q_master ?
