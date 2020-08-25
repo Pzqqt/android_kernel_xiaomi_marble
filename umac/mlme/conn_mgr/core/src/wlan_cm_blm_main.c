@@ -17,7 +17,7 @@
 /**
  * DOC: Implement APIs related to the Blacklist manager
  */
-
+#if 0
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_scan_utils_api.h>
@@ -124,4 +124,4 @@ wlan_blacklist_action_on_bssid(struct wlan_objmgr_pdev *pdev,
 
 	return CM_BLM_NO_ACTION;
 }
-
+#endif
