@@ -2765,14 +2765,12 @@ static void lim_process_switch_channel_join_req(
 		&session_entry->lim_join_req->addIEScan.length,
 		session_entry->lim_join_req->addIEScan.addIEdata);
 
-	if (session_entry->opmode == QDF_P2P_CLIENT_MODE) {
-		/* Activate Join Periodic Probe Req timer */
-		if (tx_timer_activate
-			(&mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer)
-			!= TX_SUCCESS) {
-			pe_err("Periodic JoinReq timer activate failed");
-			goto error;
-		}
+	/* Activate Join Periodic Probe Req timer */
+	if (tx_timer_activate
+		(&mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer)
+		!= TX_SUCCESS) {
+		pe_err("Periodic JoinReq timer activate failed");
+		goto error;
 	}
 
 	return;

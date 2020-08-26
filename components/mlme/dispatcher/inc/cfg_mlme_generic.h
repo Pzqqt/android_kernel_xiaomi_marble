@@ -781,28 +781,6 @@
 	0, \
 	"WiFi Location Service(WLS) is 6Ghz capable or not")
 
-/*
- * <ini>
- * join_failure_retry_interval - Set join failure retry interval (in ms)
- *
- * @Min: 0
- * @Max: 3000
- * @Default: 50
- *
- * This ini to set the join failure retry interval in ms
- *
- * Related: None.
-
- * Supported Feature: General
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_JOIN_FAILURE_RETRY_INTERVAL CFG_INI_UINT("join_failure_retry_interval", \
-				0, 3000, 50, CFG_VALUE_OR_DEFAULT, \
-				"Set join failure retry time in ms")
-
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -835,6 +813,5 @@
 	CFG(CFG_ENABLE_RING_BUFFER) \
 	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \
 	CFG(CFG_SAE_CONNECION_RETRIES) \
-	CFG(CFG_JOIN_FAILURE_RETRY_INTERVAL) \
 	CFG(CFG_WLS_6GHZ_CAPABLE)
 #endif /* __CFG_MLME_GENERIC_H */
