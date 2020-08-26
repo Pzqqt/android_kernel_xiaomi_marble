@@ -154,12 +154,12 @@ static void
 target_if_fwol_register_elna_event_handler(struct wlan_objmgr_psoc *psoc,
 					   void *arg)
 {
-	int rc;
+	QDF_STATUS rc;
 
 	rc = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
 					wmi_get_elna_bypass_event_id,
 					target_if_fwol_get_elna_bypass_resp);
-	if (rc)
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_debug("Failed to register get eLNA bypass event cb");
 }
 
@@ -167,12 +167,12 @@ static void
 target_if_fwol_unregister_elna_event_handler(struct wlan_objmgr_psoc *psoc,
 					     void *arg)
 {
-	int rc;
+	QDF_STATUS rc;
 
 	rc = wmi_unified_unregister_event_handler(
 					    get_wmi_unified_hdl_from_psoc(psoc),
 					    wmi_get_elna_bypass_event_id);
-	if (rc)
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_debug("Failed to unregister get eLNA bypass event cb");
 }
 

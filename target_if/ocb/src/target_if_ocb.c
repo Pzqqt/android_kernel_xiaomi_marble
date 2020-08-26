@@ -574,13 +574,13 @@ exit:
 QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 						void *arg)
 {
-	int rc;
+	QDF_STATUS rc;
 
 	/* Initialize the members in WMA used by wma_ocb */
 	rc = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_set_config_resp_event_id,
 			target_if_ocb_set_config_resp);
-	if (rc) {
+	if (QDF_IS_STATUS_ERROR(rc)) {
 		target_if_err("Failed to register OCB config resp event cb");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -589,7 +589,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_get_tsf_timer_resp_event_id,
 			target_if_ocb_get_tsf_timer_resp);
-	if (rc) {
+	if (QDF_IS_STATUS_ERROR(rc)) {
 		target_if_err("Failed to register OCB TSF resp event cb");
 		goto unreg_set_config;
 	}
@@ -598,7 +598,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_get_stats_resp_event_id,
 			target_if_dcc_get_stats_resp);
-	if (rc) {
+	if (QDF_IS_STATUS_ERROR(rc)) {
 		target_if_err("Failed to register DCC get stats resp event cb");
 		goto unreg_tsf_timer;
 	}
@@ -607,7 +607,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_update_ndl_resp_event_id,
 			target_if_dcc_update_ndl_resp);
-	if (rc) {
+	if (QDF_IS_STATUS_ERROR(rc)) {
 		target_if_err("Failed to register NDL update event cb");
 		goto unreg_get_stats;
 	}
@@ -615,7 +615,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 	rc = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_stats_event_id,
 			target_if_dcc_stats_resp);
-	if (rc) {
+	if (QDF_IS_STATUS_ERROR(rc)) {
 		target_if_err("Failed to register DCC stats event cb");
 		goto unreg_ndl;
 	}
@@ -645,35 +645,40 @@ QDF_STATUS
 target_if_ocb_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 				       void *arg)
 {
-	int rc;
+	QDF_STATUS rc;
 
 	rc = wmi_unified_unregister_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_stats_event_id);
-	if (rc)
+
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_err("Failed to unregister DCC stats event cb");
 
 	rc = wmi_unified_unregister_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_update_ndl_resp_event_id);
-	if (rc)
+
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_err("Failed to unregister NDL update event cb");
 
 	rc = wmi_unified_unregister_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_get_stats_resp_event_id);
-	if (rc)
+
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_err("Failed to unregister DCC get stats resp cb");
 
 	rc = wmi_unified_unregister_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_get_tsf_timer_resp_event_id);
-	if (rc)
+
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_err("Failed to unregister OCB TSF resp event cb");
 
 	rc = wmi_unified_unregister_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_set_config_resp_event_id);
-	if (rc)
+
+	if (QDF_IS_STATUS_ERROR(rc))
 		target_if_err("Failed to unregister OCB config resp event cb");
 
 	return QDF_STATUS_SUCCESS;

@@ -84,7 +84,7 @@ QDF_STATUS
 target_if_interop_issues_ap_register_event_handler(
 						struct wlan_objmgr_psoc *psoc)
 {
-	int ret_val;
+	QDF_STATUS ret_val;
 	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
@@ -102,10 +102,10 @@ target_if_interop_issues_ap_register_event_handler(
 				wmi_pdev_interop_issues_ap_event_id,
 				target_if_interop_issues_ap_event_handler,
 				WMI_RX_WORK_CTX);
-	if (ret_val)
+	if (QDF_IS_STATUS_ERROR(ret_val))
 		target_if_err("Failed to register event cb");
 
-	return qdf_status_from_os_return(ret_val);
+	return ret_val;
 }
 
 /**

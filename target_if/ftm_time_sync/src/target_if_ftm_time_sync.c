@@ -168,7 +168,7 @@ target_if_ftm_time_sync_master_slave_offset(struct wlan_objmgr_psoc *psoc)
 			wmi_wlan_time_sync_q_master_slave_offset_eventid,
 			target_if_time_sync_master_slave_offset_event_handler,
 			WMI_RX_SERIALIZER_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("Ftm time_sync offset event register failed");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -180,7 +180,7 @@ QDF_STATUS
 target_if_ftm_time_sync_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	wmi_unified_t wmi_handle;
-	int ret, status = 0;
+	QDF_STATUS ret, status = QDF_STATUS_SUCCESS;
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
@@ -191,7 +191,7 @@ target_if_ftm_time_sync_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 	ret = wmi_unified_unregister_event(
 				wmi_handle,
 				wmi_wlan_time_sync_ftm_start_stop_event_id);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("failed to unregister time sync start/stop evt");
 		status = ret;
 	}
@@ -199,12 +199,12 @@ target_if_ftm_time_sync_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 	ret = wmi_unified_unregister_event(
 			wmi_handle,
 			wmi_wlan_time_sync_q_master_slave_offset_eventid);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("failed to unregister time sync offset evt");
 		status = ret;
 	}
 
-	if (status)
+	if (QDF_IS_STATUS_ERROR(status))
 		return QDF_STATUS_E_FAILURE;
 	else
 		return QDF_STATUS_SUCCESS;

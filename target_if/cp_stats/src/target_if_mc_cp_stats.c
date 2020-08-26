@@ -269,7 +269,7 @@ target_if_twt_session_params_unregister_evt_hdlr(struct wlan_objmgr_psoc *psoc)
 static QDF_STATUS
 target_if_twt_session_params_register_evt_hdlr(struct wlan_objmgr_psoc *psoc)
 {
-	int ret_val;
+	QDF_STATUS ret_val;
 	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
@@ -289,10 +289,10 @@ target_if_twt_session_params_register_evt_hdlr(struct wlan_objmgr_psoc *psoc)
 			target_if_twt_session_params_event_handler,
 			WMI_RX_WORK_CTX);
 
-	if (ret_val)
+	if (QDF_IS_STATUS_ERROR(ret_val))
 		target_if_err("Failed to register twt session stats event cb");
 
-	return qdf_status_from_os_return(ret_val);
+	return ret_val;
 }
 #else
 static QDF_STATUS
@@ -1076,7 +1076,7 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 static QDF_STATUS
 target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
-	int ret_val;
+	QDF_STATUS ret_val;
 	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
@@ -1095,17 +1095,17 @@ target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 			wmi_update_stats_event_id,
 			target_if_mc_cp_stats_stats_event_handler,
 			WMI_RX_WORK_CTX);
-	if (ret_val)
+	if (QDF_IS_STATUS_ERROR(ret_val))
 		cp_stats_err("Failed to register stats event cb");
 
 	ret_val = wmi_unified_register_event_handler(wmi_handle,
 			    wmi_peer_stats_info_event_id,
 			    target_if_mc_cp_stats_peer_stats_info_event_handler,
 			    WMI_RX_WORK_CTX);
-	if (ret_val)
+	if (QDF_IS_STATUS_ERROR(ret_val))
 		cp_stats_err("Failed to register peer stats info event cb");
 
-	return qdf_status_from_os_return(ret_val);
+	return ret_val;
 }
 
 static QDF_STATUS

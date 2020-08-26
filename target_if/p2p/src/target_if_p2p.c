@@ -111,7 +111,7 @@ static int target_p2p_lo_event_handler(ol_scn_t scn, uint8_t *data,
 QDF_STATUS target_if_p2p_register_lo_event_handler(
 	struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	int status;
+	QDF_STATUS status;
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 
 	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
@@ -127,13 +127,16 @@ QDF_STATUS target_if_p2p_register_lo_event_handler(
 
 	target_if_debug("wmi register lo event handle, status:%d", status);
 
-	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+	else
+		return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS target_if_p2p_unregister_lo_event_handler(
 	struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	int status;
+	QDF_STATUS status;
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 
 	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
@@ -148,7 +151,10 @@ QDF_STATUS target_if_p2p_unregister_lo_event_handler(
 
 	target_if_debug("wmi unregister lo event handle, status:%d", status);
 
-	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+	else
+		return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS target_if_p2p_lo_start(struct wlan_objmgr_psoc *psoc,
@@ -282,7 +288,7 @@ QDF_STATUS target_if_p2p_register_noa_event_handler(
 QDF_STATUS target_if_p2p_unregister_noa_event_handler(
 	struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	int status;
+	QDF_STATUS status;
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 
 	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
@@ -298,7 +304,10 @@ QDF_STATUS target_if_p2p_unregister_noa_event_handler(
 	target_if_debug("wmi unregister noa event handle, status:%d",
 		status);
 
-	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+	else
+		return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS target_if_p2p_set_ps(struct wlan_objmgr_psoc *psoc,
