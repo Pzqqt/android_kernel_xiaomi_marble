@@ -683,16 +683,16 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->match_security_func &&
 	    !filter->match_security_func(filter->match_security_func_arg,
 					 db_entry)) {
-		scm_debug("%pM : Ignore as custom security match failed",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as custom security match failed",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (filter->ccx_validate_bss &&
 	    !filter->ccx_validate_bss(filter->ccx_validate_bss_arg,
 				      db_entry, 0)) {
-		scm_debug("%pM : Ignore as CCX validateion failed",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as CCX validateion failed",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 

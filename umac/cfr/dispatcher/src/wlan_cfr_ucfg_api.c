@@ -971,12 +971,12 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 			glbl_cfg->data_subtype_filter);
 		cfr_err("TX Addr: " QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(glbl_cfg->tx_addr));
-		cfr_err("TX Addr Mask: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(glbl_cfg->tx_addr_mask));
+		cfr_err("TX Addr Mask: " QDF_FULL_MAC_FMT,
+			QDF_FULL_MAC_REF(glbl_cfg->tx_addr_mask));
 		cfr_err("RX Addr: " QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(glbl_cfg->rx_addr));
-		cfr_err("RX Addr Mask: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(glbl_cfg->rx_addr_mask));
+		cfr_err("RX Addr Mask: " QDF_FULL_MAC_FMT,
+			QDF_FULL_MAC_REF(glbl_cfg->rx_addr_mask));
 	}
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
