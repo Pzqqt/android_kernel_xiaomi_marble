@@ -3445,7 +3445,6 @@ error:
  * send_roam_scan_offload_rssi_change_cmd_tlv() - set roam offload RSSI th
  * @wmi_handle: wmi handle
  * @rssi_change_thresh: RSSI Change threshold
- * @bcn_rssi_weight: beacon RSSI weight
  * @vdev_id: vdev id
  *
  * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
@@ -3456,7 +3455,6 @@ static QDF_STATUS
 send_roam_scan_offload_rssi_change_cmd_tlv(wmi_unified_t wmi_handle,
 					   uint32_t vdev_id,
 					   int32_t rssi_change_thresh,
-					   uint32_t bcn_rssi_weight,
 					   uint32_t hirssi_delay_btw_scans)
 {
 	wmi_buf_t buf = NULL;
@@ -3481,7 +3479,6 @@ send_roam_scan_offload_rssi_change_cmd_tlv(wmi_unified_t wmi_handle,
 	/* fill in rssi change threshold (hysteresis) values */
 	rssi_change_fp->vdev_id = vdev_id;
 	rssi_change_fp->roam_scan_rssi_change_thresh = rssi_change_thresh;
-	rssi_change_fp->bcn_rssi_weight = bcn_rssi_weight;
 	rssi_change_fp->hirssi_delay_btw_scans = hirssi_delay_btw_scans;
 
 	wmi_mtrace(WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD, NO_SESSION, 0);
@@ -3490,9 +3487,8 @@ send_roam_scan_offload_rssi_change_cmd_tlv(wmi_unified_t wmi_handle,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
 
-	wmi_nofl_debug("roam_scan_rssi_change_thresh %d bcn_rssi_weight %d hirssi_delay_btw_scans %d",
-		       rssi_change_thresh, bcn_rssi_weight,
-		       hirssi_delay_btw_scans);
+	wmi_nofl_debug("roam_scan_rssi_change_thresh %d hirssi_delay_btw_scans %d",
+		       rssi_change_thresh, hirssi_delay_btw_scans);
 
 	return QDF_STATUS_SUCCESS;
 error:

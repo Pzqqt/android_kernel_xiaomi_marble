@@ -44,7 +44,6 @@ static const char *lfr_get_config_item_string(uint8_t reason)
 	CASE_RETURN_STRING(REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED);
 	CASE_RETURN_STRING(REASON_ROAM_BMISS_FIRST_BCNT_CHANGED);
 	CASE_RETURN_STRING(REASON_ROAM_BMISS_FINAL_BCNT_CHANGED);
-	CASE_RETURN_STRING(REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED);
 	default:
 		return "unknown";
 	}
@@ -212,15 +211,6 @@ QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 			old_value = cfg_params->nRoamBmissFinalBcnt;
 			cfg_params->nRoamBmissFinalBcnt = value;
 			pNeighborRoamInfo->currentRoamBmissFinalBcnt = value;
-			break;
-		case REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED:
-			old_value = cfg_params->nRoamBeaconRssiWeight;
-			cfg_params->nRoamBeaconRssiWeight = value;
-			pNeighborRoamInfo->currentRoamBeaconRssiWeight = value;
-			src_cfg.uint_value = value;
-			wlan_cm_roam_cfg_set_value(mac_ctx->psoc, session_id,
-						   BEACON_RSSI_WEIGHT,
-						   &src_cfg);
 			break;
 		default:
 			sme_debug("Unknown update cfg reason");
@@ -821,8 +811,6 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 		ngbr_roam_info->cfgParams.nRoamBmissFirstBcnt;
 	ngbr_roam_info->currentRoamBmissFinalBcnt =
 		ngbr_roam_info->cfgParams.nRoamBmissFinalBcnt;
-	ngbr_roam_info->currentRoamBeaconRssiWeight =
-		ngbr_roam_info->cfgParams.nRoamBeaconRssiWeight;
 
 	/*
 	 * Update RSSI change params to vdev
@@ -830,10 +818,6 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 	src_cfg.uint_value = mac->mlme_cfg->lfr.roam_rescan_rssi_diff;
 	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
 				   RSSI_CHANGE_THRESHOLD, &src_cfg);
-
-	src_cfg.uint_value = mac->mlme_cfg->lfr.roam_beacon_rssi_weight;
-	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
-				   BEACON_RSSI_WEIGHT, &src_cfg);
 
 	src_cfg.uint_value = mac->mlme_cfg->lfr.roam_scan_hi_rssi_delay;
 	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
@@ -1078,9 +1062,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 	pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt =
 		mac->mlme_cfg->lfr.roam_bmiss_final_bcnt;
 
-	pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight =
-		mac->mlme_cfg->lfr.roam_beacon_rssi_weight;
-
 	pNeighborRoamInfo->cfgParams.neighborScanPeriod =
 		mac->mlme_cfg->lfr.neighbor_scan_timer_period;
 	pNeighborRoamInfo->cfgParams.neighbor_scan_min_period =
@@ -1154,8 +1135,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 		pNeighborRoamInfo->cfgParams.nRoamBmissFirstBcnt;
 	pNeighborRoamInfo->currentRoamBmissFinalBcnt =
 		pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt;
-	pNeighborRoamInfo->currentRoamBeaconRssiWeight =
-		pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight;
 	qdf_mem_zero(&pNeighborRoamInfo->prevConnProfile,
 		    sizeof(tCsrRoamConnectedProfile));
 

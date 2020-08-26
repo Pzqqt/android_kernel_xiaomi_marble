@@ -1668,30 +1668,6 @@
 
 /*
  * <ini>
- * gRoamBeaconRssiWeight - Set beacon miss weight
- * @Min: 5
- * @Max: 16
- * @Default: 14
- *
- * This ini controls how many beacons' RSSI values will be used to calculate
- * the average value of RSSI.
- *
- * Related: None
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_LFR_ROAM_BEACON_RSSI_WEIGHT CFG_INI_UINT( \
-	"gRoamBeaconRssiWeight", \
-	0, \
-	16, \
-	14, \
-	CFG_VALUE_OR_DEFAULT, \
-	"Beacon miss weight")
-
-/*
- * <ini>
  * gAllowDFSChannelRoam - Allow dfs channel in roam
  * @Min: 0
  * @Max: 2
@@ -2936,7 +2912,6 @@
 	CFG(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) \
 	CFG(CFG_LFR_ROAM_BMISS_FIRST_BCNT) \
 	CFG(CFG_LFR_ROAM_BMISS_FINAL_BCNT) \
-	CFG(CFG_LFR_ROAM_BEACON_RSSI_WEIGHT) \
 	CFG(CFG_LFR_ROAMING_DFS_CHANNEL) \
 	CFG(CFG_LFR_ROAM_SCAN_HI_RSSI_MAXCOUNT) \
 	CFG(CFG_LFR_ROAM_SCAN_HI_RSSI_DELTA) \

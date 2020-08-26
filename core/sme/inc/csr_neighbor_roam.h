@@ -58,7 +58,6 @@ typedef struct sCsrNeighborRoamCfgParams {
 	uint8_t nRoamRescanRssiDiff;
 	uint8_t nRoamBmissFirstBcnt;
 	uint8_t nRoamBmissFinalBcnt;
-	uint8_t nRoamBeaconRssiWeight;
 	uint8_t delay_before_vdev_stop;
 	uint32_t hi_rssi_scan_max_count;
 	uint32_t hi_rssi_scan_rssi_delta;
@@ -153,7 +152,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	tCsrHandoffRequest handoffReqInfo;
 	uint8_t currentRoamBmissFirstBcnt;
 	uint8_t currentRoamBmissFinalBcnt;
-	uint8_t currentRoamBeaconRssiWeight;
 	uint8_t last_sent_cmd;
 	struct scan_result_list *scan_res_lfr2_roam_ap;
 	bool roam_control_enable;

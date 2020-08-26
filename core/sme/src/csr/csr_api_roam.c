@@ -17690,8 +17690,6 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		roam_info->cfgParams.nRoamBmissFirstBcnt;
 	req_buf->RoamBmissFinalBcnt =
 		roam_info->cfgParams.nRoamBmissFinalBcnt;
-	req_buf->RoamBeaconRssiWeight =
-		roam_info->cfgParams.nRoamBeaconRssiWeight;
 	csr_copy_mawc_config(mac_ctx, &req_buf->mawc_roam_params);
 
 	req_buf->min_rssi_params[DEAUTH_MIN_RSSI] =

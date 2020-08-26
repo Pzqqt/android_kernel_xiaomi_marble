@@ -769,7 +769,6 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
  * wma_roam_scan_offload_rssi_change() - set roam offload RSSI change threshold
  * @wma_handle: wma handle
  * @rssi_change_thresh: RSSI Change threshold
- * @bcn_rssi_weight: beacon RSSI weight
  * @vdev_id: vdev id
  *
  * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
@@ -779,7 +778,6 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 static QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 					     uint32_t vdev_id,
 					     int32_t rssi_change_thresh,
-					     uint32_t bcn_rssi_weight,
 					     uint32_t hirssi_delay_btw_scans)
 {
 	if (!wma_is_vdev_valid(vdev_id)) {
@@ -790,7 +788,7 @@ static QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 	return wmi_unified_roam_scan_offload_rssi_change_cmd(
 				wma_handle->wmi_handle,
 				vdev_id, rssi_change_thresh,
-				bcn_rssi_weight, hirssi_delay_btw_scans);
+				hirssi_delay_btw_scans);
 }
 
 /**
@@ -2018,7 +2016,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		qdf_status = wma_roam_scan_offload_rssi_change(wma_handle,
 					roam_req->sessionId,
 					roam_req->RoamRescanRssiDiff,
-					roam_req->RoamBeaconRssiWeight,
 					roam_req->hi_rssi_scan_delay);
 
 		if (qdf_status != QDF_STATUS_SUCCESS)
@@ -2308,7 +2305,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		qdf_status = wma_roam_scan_offload_rssi_change(wma_handle,
 				    roam_req->sessionId,
 				    roam_req->RoamRescanRssiDiff,
-				    roam_req->RoamBeaconRssiWeight,
 				    roam_req->hi_rssi_scan_delay);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;

@@ -1721,8 +1721,6 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_ROAM_BMISS_FIRST_BCNT);
 	lfr->roam_bmiss_final_bcnt =
 		cfg_get(psoc, CFG_LFR_ROAM_BMISS_FINAL_BCNT);
-	lfr->roam_beacon_rssi_weight =
-		cfg_get(psoc, CFG_LFR_ROAM_BEACON_RSSI_WEIGHT);
 	lfr->roaming_dfs_channel =
 		cfg_get(psoc, CFG_LFR_ROAMING_DFS_CHANNEL);
 	lfr->roam_scan_hi_rssi_maxcount =

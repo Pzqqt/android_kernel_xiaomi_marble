@@ -1737,7 +1737,6 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t empty_scan_refresh_period;
 	uint8_t roam_bmiss_first_bcnt;
 	uint8_t roam_bmiss_final_bcnt;
-	uint32_t roam_beacon_rssi_weight;
 	enum roaming_dfs_channel_type roaming_dfs_channel;
 	uint32_t roam_scan_hi_rssi_maxcount;
 	uint32_t roam_scan_hi_rssi_delta;
