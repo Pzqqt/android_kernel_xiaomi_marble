@@ -439,6 +439,28 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	return true;
 }
 
+u32 dsi_drm_get_dfps_maxfps(void *display)
+{
+	u32 dfps_maxfps = 0;
+	struct dsi_display *dsi_display = display;
+
+	/*
+	 * The time of SDE transmitting one frame active data
+	 * will not be changed, if frame rate is adjusted with
+	 * VFP method.
+	 * So only return max fps of DFPS for UIDLE update, if DFPS
+	 * is enabled with VFP.
+	 */
+	if (dsi_display && dsi_display->panel &&
+		dsi_display->panel->panel_mode == DSI_OP_VIDEO_MODE &&
+		dsi_display->panel->dfps_caps.type ==
+					DSI_DFPS_IMMEDIATE_VFP)
+		dfps_maxfps =
+			dsi_display->panel->dfps_caps.max_refresh_rate;
+
+	return dfps_maxfps;
+}
+
 u64 dsi_drm_find_bit_clk_rate(void *display,
 			      const struct drm_display_mode *drm_mode)
 {
@@ -492,6 +514,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	mode_info->jitter_numer = dsi_mode.priv_info->panel_jitter_numer;
 	mode_info->jitter_denom = dsi_mode.priv_info->panel_jitter_denom;
 	mode_info->clk_rate = dsi_drm_find_bit_clk_rate(display, drm_mode);
+	mode_info->dfps_maxfps = dsi_drm_get_dfps_maxfps(display);
 	mode_info->mdp_transfer_time_us =
 		dsi_mode.priv_info->mdp_transfer_time_us;
 

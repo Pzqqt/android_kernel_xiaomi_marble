@@ -675,6 +675,7 @@ struct msm_display_topology {
  * @jitter_numer:	display panel jitter numerator configuration
  * @jitter_denom:	display panel jitter denominator configuration
  * @clk_rate:	     DSI bit clock per lane in HZ.
+ * @dfps_maxfps:     max FPS of dynamic FPS
  * @topology:        supported topology for the mode
  * @comp_info:       compression info supported
  * @roi_caps:        panel roi capabilities
@@ -689,6 +690,7 @@ struct msm_mode_info {
 	uint32_t jitter_numer;
 	uint32_t jitter_denom;
 	uint64_t clk_rate;
+	uint32_t dfps_maxfps;
 	struct msm_display_topology topology;
 	struct msm_compression_info comp_info;
 	struct msm_roi_caps roi_caps;

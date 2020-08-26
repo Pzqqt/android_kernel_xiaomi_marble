@@ -2375,6 +2375,24 @@ u32 sde_crtc_get_fps_mode(struct drm_crtc *crtc)
 	return 0;
 }
 
+u32 sde_crtc_get_dfps_maxfps(struct drm_crtc *crtc)
+{
+	struct drm_encoder *encoder;
+
+	if (!crtc || !crtc->dev) {
+		SDE_ERROR("invalid crtc\n");
+		return 0;
+	}
+
+	drm_for_each_encoder_mask(encoder, crtc->dev,
+			crtc->state->encoder_mask) {
+		if (!sde_encoder_in_cont_splash(encoder))
+			return sde_encoder_get_dfps_maxfps(encoder);
+	}
+
+	return 0;
+}
+
 static void sde_crtc_vblank_cb(void *data)
 {
 	struct drm_crtc *crtc = (struct drm_crtc *)data;
