@@ -434,11 +434,11 @@ __ut_mac(const char *str, const char *display_str, QDF_STATUS exp_status,
 		return 0;
 
 	if (qdf_mem_cmp(&value, exp_value, sizeof(value))) {
-		qdf_nofl_alert("FAIL: qdf_mac_parse(%s) -> " QDF_MAC_ADDR_STR
-			       "; expected " QDF_MAC_ADDR_STR,
+		qdf_nofl_alert("FAIL: qdf_mac_parse(%s) -> " QDF_FULL_MAC_FMT
+			       "; expected " QDF_FULL_MAC_FMT,
 			       display_str,
-			       QDF_MAC_ADDR_ARRAY(value.bytes),
-			       QDF_MAC_ADDR_ARRAY(exp_value->bytes));
+			       QDF_FULL_MAC_REF(value.bytes),
+			       QDF_FULL_MAC_REF(exp_value->bytes));
 		return 1;
 	}
 
