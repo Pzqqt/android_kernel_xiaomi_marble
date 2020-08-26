@@ -821,6 +821,23 @@ QDF_STATUS qdf_int64_parse(const char *int_str, int64_t *out_int);
 QDF_STATUS qdf_uint64_parse(const char *int_str, uint64_t *out_int);
 
 #define QDF_MAC_ADDR_SIZE 6
+
+/**
+ * If the feature CONFIG_WLAN_TRACE_HIDE_MAC_ADDRESS is enabled,
+ * then the requirement is to hide 2nd, 3rd and 4th octet of the
+ * MAC address in the kernel logs and driver logs.
+ * But other management interfaces like ioctl, debugfs, sysfs,
+ * wext, unit test code or non-production simulator sw (iot_sim)
+ * should continue to log the full mac address.
+ *
+ * Developers must use QDF_FULL_MAC_FMT instead of "%pM",
+ * as this macro helps avoid accidentally breaking the feature
+ * CONFIG_WLAN_TRACE_HIDE_MAC_ADDRESS if enabled and code auditing
+ * becomes easy.
+ */
+#define QDF_FULL_MAC_FMT "%pM"
+#define QDF_FULL_MAC_REF(a) (a)
+
 #define QDF_MAC_ADDR_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 #define QDF_MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 
