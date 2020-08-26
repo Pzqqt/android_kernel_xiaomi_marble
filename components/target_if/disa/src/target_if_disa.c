@@ -78,7 +78,7 @@ target_if_disa_register_ev_handlers(struct wlan_objmgr_psoc *psoc)
 	status = wmi_unified_register_event(wmi_handle,
 				wmi_vdev_encrypt_decrypt_data_rsp_event_id,
 				target_if_encrypt_decrypt_event_handler);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("Failed to register Scan match event cb");
 		return QDF_STATUS_E_FAILURE;
 	}

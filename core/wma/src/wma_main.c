@@ -3980,7 +3980,6 @@ QDF_STATUS wma_start(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
-	int status;
 	struct wmi_unified *wmi_handle;
 	struct mac_context *mac = NULL;
 
@@ -4007,44 +4006,44 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						    wmi_roam_event_id,
 						    wma_roam_event_callback,
 						    WMA_RX_SERIALIZER_CTX);
-	if (0 != status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register Roam callback");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						    wmi_wow_wakeup_host_event_id,
 						    wma_wow_wakeup_host_event,
 						    WMA_RX_TASKLET_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register wow wakeup host event handler");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
 	if (wma_d0_wow_is_supported()) {
-		status = wmi_unified_register_event_handler(
+		qdf_status = wmi_unified_register_event_handler(
 				wmi_handle,
 				wmi_d0_wow_disable_ack_event_id,
 				wma_d0_wow_disable_ack_event,
 				WMA_RX_TASKLET_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			wma_err("Failed to register d0wow disable ack event handler");
 			qdf_status = QDF_STATUS_E_FAILURE;
 			goto end;
 		}
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 				wmi_pdev_resume_event_id,
 				wma_pdev_resume_event_handler,
 				WMA_RX_TASKLET_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register PDEV resume event handler");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -4052,18 +4051,18 @@ QDF_STATUS wma_start(void)
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
 	defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 	wma_debug("MCC TX Pause Event Handler register");
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 					wmi_tx_pause_event_id,
 					wma_mcc_vdev_tx_pause_evt_handler,
 					WMA_RX_TASKLET_CTX);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 	wma_debug("Registering SAR2 response handler");
-	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						wmi_wlan_sar2_result_event_id,
 						wma_sar_rsp_evt_handler,
 						WMA_RX_SERIALIZER_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register sar response event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -4071,28 +4070,28 @@ QDF_STATUS wma_start(void)
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	wma_debug("Registering auto shutdown handler");
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						wmi_host_auto_shutdown_event_id,
 						wma_auto_shutdown_event_handler,
 						WMA_RX_SERIALIZER_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register WMI Auto shutdown event handler");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 #endif /* FEATURE_WLAN_AUTO_SHUTDOWN */
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						wmi_thermal_mgmt_event_id,
 						wma_thermal_mgmt_evt_handler,
 						WMA_RX_SERIALIZER_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register thermal mitigation event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
-	status = wma_ocb_register_callbacks(wma_handle);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	qdf_status = wma_ocb_register_callbacks(wma_handle);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register OCB callbacks");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -4110,7 +4109,7 @@ QDF_STATUS wma_start(void)
 #endif /* QCA_WIFI_FTM */
 
 	qdf_status = wma_tx_attach(wma_handle);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register tx management");
 		goto end;
 	}
@@ -4136,84 +4135,84 @@ QDF_STATUS wma_start(void)
 			QDF_TIMER_TYPE_SW,
 			wma_log_completion_timeout,
 			wma_handle);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to initialize log completion timeout");
 		goto end;
 	}
 
-	status = wma_fips_register_event_handlers(wma_handle);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	qdf_status = wma_fips_register_event_handlers(wma_handle);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register FIPS event handler");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
-	status = wma_sar_register_event_handlers(wma_handle);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	qdf_status = wma_sar_register_event_handlers(wma_handle);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register SAR event handlers");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
 	/* Initialize the get temperature event handler */
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 					wmi_pdev_temperature_event_id,
 					wma_pdev_temperature_evt_handler,
 					WMA_RX_SERIALIZER_CTX);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register get_temperature event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						wmi_vdev_tsf_report_event_id,
 						wma_vdev_tsf_handler,
 						WMA_RX_SERIALIZER_CTX);
-	if (0 != status) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register tsf callback");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
 	/* Initialize the wma_pdev_set_hw_mode_resp_evt_handler event handler */
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 			wmi_pdev_set_hw_mode_rsp_event_id,
 			wma_pdev_set_hw_mode_resp_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register set hw mode resp event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
 	/* Initialize the WMI_SOC_HW_MODE_TRANSITION_EVENTID event handler */
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 			wmi_pdev_hw_mode_transition_event_id,
 			wma_pdev_hw_mode_transition_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register hw mode transition event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
 	/* Initialize the set dual mac configuration event handler */
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 			wmi_pdev_set_mac_config_resp_event_id,
 			wma_pdev_set_dual_mode_config_resp_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register hw mode transition event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
+	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 			wmi_coex_bt_activity_event_id,
 			wma_wlan_bt_activity_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to register coex bt activity event handler");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;

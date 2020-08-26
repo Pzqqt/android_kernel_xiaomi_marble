@@ -178,14 +178,14 @@ target_if_register_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
 	if (ucfg_pkt_capture_get_mode(psoc) &&
 	    wmi_service_enabled(wmi_handle,
 				wmi_service_packet_capture_support)) {
-		uint8_t status;
+		QDF_STATUS status;
 
 		status = wmi_unified_register_event_handler(
 				wmi_handle,
 				wmi_mgmt_offload_data_event_id,
 				target_if_mgmt_offload_data_event_handler,
 				WMI_RX_WORK_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			pkt_capture_err("Failed to register MGMT offload handler");
 			return QDF_STATUS_E_FAILURE;
 		}
