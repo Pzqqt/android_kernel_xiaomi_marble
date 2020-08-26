@@ -531,6 +531,14 @@ bool target_is_tgt_type_adrastea(uint32_t target_type);
 bool target_is_tgt_type_qcn9000(uint32_t target_type);
 
 /**
+ * target_is_tgt_type_qcn9100() - Check if the target type is QCN9100 (Spruce)
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is QCN9100, else false.
+ */
+bool target_is_tgt_type_qcn9100(uint32_t target_type);
+
+/**
  * target_psoc_set_wlan_init_status() - set info wlan_init_status
  * @psoc_info:          pointer to structure target_psoc_info
  * @wlan_init_status:   FW init status

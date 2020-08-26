@@ -365,6 +365,7 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return cfr_wifi2_0_init_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000) ||
+		   (target_type == TARGET_TYPE_QCN9100) ||
 		   (target_type == TARGET_TYPE_QCA5018)) {
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
 		return cfr_enh_init_pdev(psoc, pdev);
@@ -393,6 +394,7 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		return cfr_wifi2_0_deinit_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000) ||
+		   (target_type == TARGET_TYPE_QCN9100) ||
 		   (target_type == TARGET_TYPE_QCA5018)) {
 		return cfr_enh_deinit_pdev(psoc, pdev);
 	} else

@@ -978,8 +978,14 @@ bool dfs_is_true_160mhz_supported(struct wlan_dfs *dfs)
 	}
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 	tgt_tx_ops = &tx_ops->target_tx_ops;
-	if (tgt_tx_ops->tgt_is_tgt_type_qcn9000)
-		return tgt_tx_ops->tgt_is_tgt_type_qcn9000(target_type);
+	if (tgt_tx_ops->tgt_is_tgt_type_qcn9000 &&
+	    tgt_tx_ops->tgt_is_tgt_type_qcn9000(target_type))
+		return true;
+
+	if (tgt_tx_ops->tgt_is_tgt_type_qcn9100 &&
+	    tgt_tx_ops->tgt_is_tgt_type_qcn9100(target_type))
+		return true;
+
 	return false;
 }
 

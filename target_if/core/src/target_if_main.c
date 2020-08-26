@@ -408,6 +408,9 @@ static void target_if_target_tx_ops_register(
 	target_tx_ops->tgt_is_tgt_type_qcn9000 =
 		target_is_tgt_type_qcn9000;
 
+	target_tx_ops->tgt_is_tgt_type_qcn9100 =
+		target_is_tgt_type_qcn9100;
+
 	target_tx_ops->tgt_get_tgt_type =
 		lmac_get_tgt_type;
 
@@ -678,6 +681,11 @@ bool target_is_tgt_type_adrastea(uint32_t target_type)
 bool target_is_tgt_type_qcn9000(uint32_t target_type)
 {
 	return target_type == TARGET_TYPE_QCN9000;
+}
+
+bool target_is_tgt_type_qcn9100(uint32_t target_type)
+{
+	return target_type == TARGET_TYPE_QCN9100;
 }
 
 QDF_STATUS
