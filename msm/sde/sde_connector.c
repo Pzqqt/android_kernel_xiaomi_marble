@@ -2204,6 +2204,10 @@ static int sde_connector_fill_modes(struct drm_connector *connector,
 	mode_count = drm_helper_probe_single_connector_modes(connector,
 			max_width, max_height);
 
+	if (sde_conn->ops.set_allowed_mode_switch)
+		sde_conn->ops.set_allowed_mode_switch(connector,
+				sde_conn->display);
+
 	rc = sde_connector_set_blob_data(connector,
 				connector->state,
 				CONNECTOR_PROP_MODE_INFO);
@@ -2553,6 +2557,9 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 		sde_kms_info_add_keyint(info, "mdp_transfer_time_us",
 			mode_info.mdp_transfer_time_us);
+
+		sde_kms_info_add_keyint(info, "allowed_mode_switch",
+			mode_info.allowed_mode_switches);
 
 		if (!mode_info.roi_caps.num_roi)
 			continue;
