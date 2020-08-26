@@ -57,21 +57,4 @@ dp_rx_mon_is_rxdma_error(struct hal_rx_mon_desc_info *desc_info)
 	}
 	return QDF_STATUS_E_FAILURE;
 }
-
-/*
- * dp_mon_reap_status - monitor status ring ppdu status
- *
- * dp_mon_status_no_dma - DMA not done for status ring entry
- * dp_mon_status_match - status and dest ppdu id mathes
- * dp_mon_status_lag - status ppdu id is lagging
- * dp_mon_status_lead - status ppdu id is leading
- * dp_mon_status_replenish - status ring entry is NULL
- */
-enum dp_mon_reap_status {
-	dp_mon_status_no_dma,
-	dp_mon_status_match,
-	dp_mon_status_lag,
-	dp_mon_status_lead,
-	dp_mon_status_replenish
-};
 #endif /* _DP_FULL_MON_H_ */
