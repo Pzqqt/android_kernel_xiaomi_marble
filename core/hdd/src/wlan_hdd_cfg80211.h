@@ -306,6 +306,14 @@ extern const struct nla_policy
 wlan_hdd_wifi_test_config_policy[
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1];
 
+#define RSNXE_DEFAULT 0
+#define RSNXE_OVERRIDE_1 1
+#define RSNXE_OVERRIDE_2 2
+#define CSA_DEFAULT 0
+#define CSA_IGNORE 1
+#define SA_QUERY_TIMEOUT_DEFAULT 0
+#define SA_QUERY_TIMEOUT_IGNORE 1
+
 #define FEATURE_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION                    \
 {                                                                        \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,                         \

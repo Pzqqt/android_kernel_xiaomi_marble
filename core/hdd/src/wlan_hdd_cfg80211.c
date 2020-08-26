@@ -163,6 +163,7 @@
 #include "wlan_if_mgr_ucfg_api.h"
 #include "wlan_if_mgr_public_struct.h"
 #endif
+#include "wlan_wfa_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -6856,6 +6857,12 @@ qca_wlan_vendor_attr_he_omi_tx_policy [QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DATA_DISABLE] = {.type = NLA_U8 },
 };
 
+static const struct nla_policy
+wlan_oci_override_policy [QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_FRAME_TYPE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_FREQUENCY] = {.type = NLA_U32 },
+};
+
 const struct nla_policy
 wlan_hdd_wifi_test_config_policy[
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1] = {
@@ -6923,6 +6930,14 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX] = {
 			.type = NLA_FLAG},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FT_REASSOCREQ_RSNXE_USED] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_IGNORE_CSA] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_OCI_OVERRIDE] = {
+			.type = NLA_NESTED},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_IGNORE_SA_QUERY_TIMEOUT] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -9493,6 +9508,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
 	uint32_t cmd_id;
+	struct set_wfatest_params wfa_param = {0};
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -9972,6 +9988,129 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 					    hdd_sta_ctx->conn_info.bssid.bytes,
 					    1, false);
 	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FT_REASSOCREQ_RSNXE_USED;
+	if (tb[cmd_id]) {
+		wfa_param.vdev_id = adapter->vdev_id;
+		wfa_param.value = nla_get_u8(tb[cmd_id]);
+
+		if (wfa_param.value < RSNXE_DEFAULT ||
+		    wfa_param.value > RSNXE_OVERRIDE_2) {
+			hdd_debug("Invalid RSNXE override %d", wfa_param.value);
+			goto send_err;
+		}
+		wfa_param.cmd = WFA_CONFIG_RXNE;
+		hdd_info("send wfa test config RXNE used %d", wfa_param.value);
+
+		ret_val = ucfg_send_wfatest_cmd(adapter->vdev, &wfa_param);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_IGNORE_CSA;
+	if (tb[cmd_id]) {
+		wfa_param.vdev_id = adapter->vdev_id;
+		wfa_param.value = nla_get_u8(tb[cmd_id]);
+
+		if (wfa_param.value != CSA_DEFAULT &&
+		    wfa_param.value != CSA_IGNORE) {
+			hdd_debug("Invalid CSA config %d", wfa_param.value);
+			goto send_err;
+		}
+		wfa_param.cmd = WFA_CONFIG_CSA;
+		hdd_info("send wfa test config CSA used %d", wfa_param.value);
+
+		ret_val = ucfg_send_wfatest_cmd(adapter->vdev, &wfa_param);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_OCI_OVERRIDE;
+	if (tb[cmd_id]) {
+		struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_MAX + 1];
+
+		wfa_param.vdev_id = adapter->vdev_id;
+		wfa_param.cmd = WFA_CONFIG_OCV;
+		if (wlan_cfg80211_nla_parse_nested(
+				tb2, QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_MAX,
+				tb[cmd_id], wlan_oci_override_policy)) {
+			hdd_debug("Failed to parse OCI override");
+			goto send_err;
+		}
+
+		if (!(tb2[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_FRAME_TYPE] &&
+		      tb2[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_FREQUENCY])) {
+			hdd_debug("Invalid ATTR FRAME_TYPE/FREQUENCY");
+			goto send_err;
+		}
+
+		wfa_param.ocv_param = qdf_mem_malloc(
+				sizeof(struct ocv_wfatest_params));
+		if (!wfa_param.ocv_param) {
+			hdd_err("Failed to alloc memory for ocv param");
+			goto send_err;
+		}
+
+		cmd_id = QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_FRAME_TYPE;
+		switch (nla_get_u8(tb2[cmd_id])) {
+		case QCA_WLAN_VENDOR_OCI_OVERRIDE_FRAME_SA_QUERY_REQ:
+			wfa_param.ocv_param->frame_type =
+				WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_REQ;
+			break;
+
+		case QCA_WLAN_VENDOR_OCI_OVERRIDE_FRAME_SA_QUERY_RESP:
+			wfa_param.ocv_param->frame_type =
+				WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_RSP;
+			break;
+
+		case QCA_WLAN_VENDOR_OCI_OVERRIDE_FRAME_FT_REASSOC_REQ:
+			wfa_param.ocv_param->frame_type =
+				WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FT_REASSOC_REQ;
+			break;
+
+		case QCA_WLAN_VENDOR_OCI_OVERRIDE_FRAME_FILS_REASSOC_REQ:
+			wfa_param.ocv_param->frame_type =
+			WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FILS_REASSOC_REQ;
+			break;
+
+		default:
+			hdd_debug("Invalid frame type for ocv test config %d",
+				  nla_get_u8(tb2[cmd_id]));
+			qdf_mem_free(wfa_param.ocv_param);
+				goto send_err;
+		}
+
+		cmd_id = QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_FREQUENCY;
+		wfa_param.ocv_param->freq = nla_get_u32(tb2[cmd_id]);
+
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(wfa_param.ocv_param->freq) &&
+		    !WLAN_REG_IS_5GHZ_CH_FREQ(wfa_param.ocv_param->freq) &&
+		    !WLAN_REG_IS_6GHZ_CHAN_FREQ(wfa_param.ocv_param->freq)) {
+			hdd_debug("Invalid Freq %d", wfa_param.ocv_param->freq);
+			qdf_mem_free(wfa_param.ocv_param);
+			goto send_err;
+		}
+
+		hdd_info("send wfa test config OCV frame type %d freq %d",
+			 wfa_param.ocv_param->frame_type,
+			 wfa_param.ocv_param->freq);
+		ret_val = ucfg_send_wfatest_cmd(adapter->vdev, &wfa_param);
+		qdf_mem_free(wfa_param.ocv_param);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_IGNORE_SA_QUERY_TIMEOUT;
+	if (tb[cmd_id]) {
+		wfa_param.vdev_id = adapter->vdev_id;
+		wfa_param.value = nla_get_u8(tb[cmd_id]);
+
+		if (wfa_param.value != SA_QUERY_TIMEOUT_DEFAULT &&
+		    wfa_param.value != SA_QUERY_TIMEOUT_IGNORE) {
+			hdd_debug("Invalid SA query timeout config %d",
+				  wfa_param.value);
+			goto send_err;
+		}
+		wfa_param.cmd = WFA_CONFIG_SA_QUERY;
+		hdd_info("send wfa test config SAquery %d", wfa_param.value);
+
+		ret_val = ucfg_send_wfatest_cmd(adapter->vdev, &wfa_param);
+	}
+
 	if (update_sme_cfg)
 		sme_update_config(mac_handle, sme_config);
 

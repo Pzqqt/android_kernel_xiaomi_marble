@@ -1259,6 +1259,19 @@ endif
 
 MLME_OBJS += $(CM_ROAM_OBJS)
 
+####### WFA_CONFIG ########
+
+WFA_DIR := components/umac/mlme/wfa_config
+WFA_TGT_IF_DIR := components/target_if/wfa_config
+
+WFA_INC := -I$(WLAN_ROOT)/$(WFA_DIR)/dispatcher/inc \
+		-I$(WLAN_ROOT)/$(WFA_TGT_IF_DIR)/inc
+
+MLME_INC += $(WFA_INC)
+
+MLME_OBJS += $(WFA_TGT_IF_DIR)/src/target_if_wfa_testcmd.o \
+		$(WFA_DIR)/dispatcher/src/wlan_wfa_tgt_if_tx_api.o
+
 ####### BLACKLIST_MGR ########
 
 BLM_DIR := components/blacklist_mgr
