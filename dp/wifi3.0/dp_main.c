@@ -6397,8 +6397,6 @@ free_vdev:
 	/* delete this peer from the list */
 	qdf_spin_unlock_bh(&soc->inactive_vdev_list_lock);
 
-	dp_info("deleting vdev object %pK (%pM)",
-		vdev, vdev->mac_addr.raw);
 	dp_info("deleting vdev object %pK ("QDF_MAC_ADDR_FMT")",
 		vdev, QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 	wlan_minidump_remove(vdev);
