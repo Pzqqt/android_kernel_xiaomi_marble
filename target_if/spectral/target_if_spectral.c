@@ -5165,6 +5165,7 @@ target_if_spectral_wmi_unified_register_event_handler(
 {
 	wmi_unified_t wmi_handle;
 	struct target_if_psoc_spectral *psoc_spectral;
+	QDF_STATUS ret;
 
 	if (!psoc) {
 		spectral_err("psoc is null");
@@ -5183,8 +5184,10 @@ target_if_spectral_wmi_unified_register_event_handler(
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
-	return psoc_spectral->wmi_ops.wmi_unified_register_event_handler(
+	ret = psoc_spectral->wmi_ops.wmi_unified_register_event_handler(
 			wmi_handle, event_id, handler_func, rx_ctx);
+
+	return qdf_status_to_os_return(ret);
 }
 
 /**
@@ -5204,6 +5207,7 @@ target_if_spectral_wmi_unified_unregister_event_handler(
 {
 	wmi_unified_t wmi_handle;
 	struct target_if_psoc_spectral *psoc_spectral;
+	QDF_STATUS ret;
 
 	if (!psoc) {
 		spectral_err("psoc is null");
@@ -5222,8 +5226,10 @@ target_if_spectral_wmi_unified_unregister_event_handler(
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
-	return psoc_spectral->wmi_ops.wmi_unified_unregister_event_handler(
+	ret = psoc_spectral->wmi_ops.wmi_unified_unregister_event_handler(
 					wmi_handle, event_id);
+
+	return qdf_status_to_os_return(ret);
 }
 
 /**
@@ -5370,6 +5376,7 @@ target_if_spectral_wmi_unified_register_event_handler(
 				uint8_t rx_ctx)
 {
 	wmi_unified_t wmi_handle;
+	QDF_STATUS ret;
 
 	if (!psoc) {
 		spectral_err("psoc is null");
@@ -5382,8 +5389,10 @@ target_if_spectral_wmi_unified_register_event_handler(
 		return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
 	}
 
-	return wmi_unified_register_event_handler(wmi_handle, event_id,
-						  handler_func, rx_ctx);
+	ret = wmi_unified_register_event_handler(wmi_handle, event_id,
+						 handler_func, rx_ctx);
+
+	return qdf_status_to_os_return(ret);
 }
 
 /**
@@ -5402,6 +5411,7 @@ target_if_spectral_wmi_unified_unregister_event_handler(
 				wmi_conv_event_id event_id)
 {
 	wmi_unified_t wmi_handle;
+	QDF_STATUS ret;
 
 	if (!psoc) {
 		spectral_err("psoc is null");
@@ -5414,7 +5424,9 @@ target_if_spectral_wmi_unified_unregister_event_handler(
 		return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
 	}
 
-	return wmi_unified_unregister_event_handler(wmi_handle, event_id);
+	ret = wmi_unified_unregister_event_handler(wmi_handle, event_id);
+
+	return qdf_status_to_os_return(ret);
 }
 
 /**

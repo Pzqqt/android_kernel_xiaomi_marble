@@ -852,13 +852,14 @@ struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_extract_pdev_sscan_fft_bin_index)(
 			wmi_unified_t wmi_handle, uint8_t *evt_buf,
 			struct spectral_fft_bin_markers_160_165mhz *param);
-	int (*wmi_unified_register_event_handler)(
+	QDF_STATUS (*wmi_unified_register_event_handler)(
 				wmi_unified_t wmi_handle,
 				wmi_conv_event_id event_id,
 				wmi_unified_event_handler handler_func,
 				uint8_t rx_ctx);
-	int (*wmi_unified_unregister_event_handler)(wmi_unified_t wmi_handle,
-						    wmi_conv_event_id event_id);
+	QDF_STATUS (*wmi_unified_unregister_event_handler)(
+				wmi_unified_t wmi_handle,
+				wmi_conv_event_id event_id);
 };
 
 /**
