@@ -20,7 +20,7 @@
 
 #ifndef _WLAN_CM_BLM_H_
 #define _WLAN_CM_BLM_H_
-
+#if 0
 #include <wlan_scan_utils_api.h>
 
 /*
@@ -87,5 +87,5 @@ enum cm_blm_exc_mac_mode wlan_cm_get_exc_mac_addr_list(
  * Return: Congfigured bad ap timeout value
  */
 qdf_time_t wlan_cm_get_bad_ap_timeout(struct wlan_objmgr_vdev *vdev);
-
+#endif
 #endif
