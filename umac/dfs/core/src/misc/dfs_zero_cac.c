@@ -2993,6 +2993,7 @@ dfs_is_precac_completed_count_non_zero(struct wlan_dfs *dfs)
 	return false;
 }
 
+#ifdef ATH_SUPPORT_ZERO_CAC_DFS
 enum precac_status_for_chan
 dfs_precac_status_for_channel(struct wlan_dfs *dfs,
 			      struct dfs_channel *deschan)
@@ -3005,6 +3006,7 @@ dfs_precac_status_for_channel(struct wlan_dfs *dfs,
 
 	return DFS_PRECAC_REQUIRED_CHAN;
 }
+#endif
 
 void dfs_print_precaclists(struct wlan_dfs *dfs)
 {
