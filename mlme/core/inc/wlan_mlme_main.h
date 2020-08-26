@@ -29,6 +29,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 #include "wlan_cm_roam_public_struct.h"
+#include "wlan_wfa_config_public_struct.h"
 
 #define mlme_legacy_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
@@ -40,10 +41,12 @@
  * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
  * @rso_tx_ops: Roam Tx ops to send roam offload commands to firmware
+ * @wfa_testcmd: WFA config tx ops to send to FW
  */
 struct wlan_mlme_psoc_ext_obj {
 	struct wlan_mlme_cfg cfg;
 	struct wlan_cm_roam_tx_ops rso_tx_ops;
+	struct wlan_mlme_wfa_cmd wfa_testcmd;
 };
 
 /**
@@ -163,7 +166,7 @@ struct wlan_mlme_roam {
  * @bigtk_vdev_support: BIGTK feature support for this vdev (SAP)
  * @sae_auth_retry: SAE auth retry information
  * @roam_reason_better_ap: roam due to better AP found
- * @better_ap_hb_failure_rssi: heartbeat failure AP RSSI
+ * @hb_failure_rssi: heartbeat failure AP RSSI
  * @fils_con_info: Pointer to fils connection info from csr roam profile
  * @opr_rate_set: operational rates set
  * @ext_opr_rate_set: extended operational rates set
