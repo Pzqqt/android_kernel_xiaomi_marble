@@ -98,8 +98,8 @@ wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 		nla_memcpy(&params.ta_mask[0],
 			   tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_TA_MASK],
 			   QDF_MAC_ADDR_SIZE);
-		hdd_debug("ta_mask " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(&params.ta_mask[0]));
+		hdd_debug("ta_mask " QDF_FULL_MAC_FMT,
+			  QDF_FULL_MAC_REF(&params.ta_mask[0]));
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_RA]) {
@@ -114,8 +114,8 @@ wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 		nla_memcpy(&params.ra_mask[0],
 			   tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_RA_MASK],
 			   QDF_MAC_ADDR_SIZE);
-		hdd_debug("ra_mask " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(&params.ra_mask[0]));
+		hdd_debug("ra_mask " QDF_FULL_MAC_FMT,
+			  QDF_FULL_MAC_REF(&params.ra_mask[0]));
 	}
 
 	if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)&params.ta) ||

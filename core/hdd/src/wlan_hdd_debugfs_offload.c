@@ -99,8 +99,8 @@ wlan_hdd_mc_addr_list_info_debugfs(struct hdd_context *hdd_ctx,
 		}
 
 		ret = scnprintf(buf + length, buf_avail_len - length,
-				QDF_MAC_ADDR_STR "\n",
-				QDF_MAC_ADDR_ARRAY(mc_addr_list.mc_addr[i].bytes));
+				QDF_FULL_MAC_FMT "\n",
+				QDF_FULL_MAC_REF(mc_addr_list.mc_addr[i].bytes));
 		if (ret <= 0)
 			return length;
 		length += ret;

@@ -9530,8 +9530,8 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		  params->flag_flow_type,
 		  params->flag_protection);
 	hdd_debug("twt: peer mac_addr "
-		  QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(params->peer_macaddr));
+		  QDF_MAC_ADDR_FMT,
+		  QDF_MAC_ADDR_REF(params->peer_macaddr));
 
 	return 0;
 }
@@ -18128,8 +18128,8 @@ wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 	wrqu.data.pointer = metrics_notification;
 	wrqu.data.length = scnprintf(metrics_notification,
 				     sizeof(metrics_notification),
-				     "QCOM: LFR_PREAUTH_INIT " QDF_MAC_ADDR_STR,
-				     QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+				     "QCOM: LFR_PREAUTH_INIT " QDF_FULL_MAC_FMT,
+				     QDF_FULL_MAC_REF(roam_info->bssid.bytes));
 
 	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
@@ -18169,8 +18169,8 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 	memset(metrics_notification, 0, sizeof(metrics_notification));
 
 	scnprintf(metrics_notification, sizeof(metrics_notification),
-		  "QCOM: LFR_PREAUTH_STATUS " QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+		  "QCOM: LFR_PREAUTH_STATUS " QDF_FULL_MAC_FMT,
+		  QDF_FULL_MAC_REF(roam_info->bssid.bytes));
 
 	if (1 == preauth_status)
 		strlcat(metrics_notification, " true",
@@ -18221,8 +18221,8 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 	wrqu.data.length = scnprintf(metrics_notification,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_HANDOVER "
-				     QDF_MAC_ADDR_STR,
-				     QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+				     QDF_FULL_MAC_FMT,
+				     QDF_FULL_MAC_REF(roam_info->bssid.bytes));
 
 	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);

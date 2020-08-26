@@ -1891,7 +1891,7 @@ __hdd_cfg80211_get_sta_info_cmd(struct wiphy *wiphy,
 
 	nla_memcpy(mac_addr.bytes, tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC],
 		   QDF_MAC_ADDR_SIZE);
-	hdd_debug("STA " QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
+	hdd_debug("STA " QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr.bytes));
 
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:

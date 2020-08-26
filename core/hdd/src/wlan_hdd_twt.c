@@ -745,9 +745,9 @@ hdd_twt_add_dialog_comp_cb(void *context,
 	osif_request_put(request);
 
 	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id %d peer mac_addr"
-		  QDF_MAC_ADDR_STR, params->dialog_id,
+		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
-		  QDF_MAC_ADDR_ARRAY(params->peer_macaddr));
+		  QDF_MAC_ADDR_REF(params->peer_macaddr));
 
 	hdd_exit();
 }

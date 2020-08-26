@@ -355,7 +355,7 @@ static ssize_t wlan_hdd_connect_info(struct hdd_adapter *adapter, uint8_t *buf,
 	}
 	ret_val = scnprintf(buf + length, buf_avail_len - length,
 			    "ssid = %s\n"
-			    "bssid = " QDF_MAC_ADDR_STR "\n"
+			    "bssid = " QDF_FULL_MAC_FMT "\n"
 			    "connect_time = %s\n"
 			    "auth_time = %s\n"
 			    "freq = %u\n"
@@ -366,7 +366,7 @@ static ssize_t wlan_hdd_connect_info(struct hdd_adapter *adapter, uint8_t *buf,
 			    "last_auth_type = %s\n"
 			    "dot11mode = %s\n",
 			    conn_info->last_ssid.SSID.ssId,
-			    QDF_MAC_ADDR_ARRAY(conn_info->bssid.bytes),
+			    QDF_FULL_MAC_REF(conn_info->bssid.bytes),
 			    conn_info->connect_time,
 			    conn_info->auth_time,
 			    conn_info->chan_freq,

@@ -56,13 +56,8 @@ static ssize_t __show_sta_info(struct net_device *net_dev, char *buf)
 			continue;
 		}
 		ret_val += scnprintf(buf + ret_val, PAGE_SIZE - ret_val,
-				     QDF_MAC_ADDR_STR " ecsa=%d\n",
-				     sta->sta_mac.bytes[0],
-				     sta->sta_mac.bytes[1],
-				     sta->sta_mac.bytes[2],
-				     sta->sta_mac.bytes[3],
-				     sta->sta_mac.bytes[4],
-				     sta->sta_mac.bytes[5],
+				     QDF_FULL_MAC_FMT " ecsa=%d\n",
+				     QDF_FULL_MAC_REF(sta->sta_mac.bytes),
 				     sta->ecsa_capable);
 
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta, true,
