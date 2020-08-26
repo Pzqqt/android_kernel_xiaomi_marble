@@ -362,7 +362,6 @@ wmi_unified_roam_scan_offload_rssi_change_cmd(
  * wmi_unified_roam_scan_offload_rssi_change_cmd() - set roam offload RSSI th
  * @wmi_handle: wmi handle
  * @rssi_change_thresh: RSSI Change threshold
- * @bcn_rssi_weight: beacon RSSI weight
  * @vdev_id: vdev id
  *
  * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
@@ -373,7 +372,6 @@ QDF_STATUS
 wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
 					      uint32_t vdev_id,
 					      int32_t rssi_change_thresh,
-					      uint32_t bcn_rssi_weight,
 					      uint32_t hirssi_delay_btw_scans);
 
 /**

@@ -302,13 +302,12 @@ QDF_STATUS
 wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
 					      uint32_t vdev_id,
 					      int32_t rssi_change_thresh,
-					      uint32_t bcn_rssi_weight,
 					      uint32_t hirssi_delay_btw_scans)
 {
 	if (wmi_handle->ops->send_roam_scan_offload_rssi_change_cmd)
 		return wmi_handle->ops->send_roam_scan_offload_rssi_change_cmd(
 				wmi_handle, vdev_id, rssi_change_thresh,
-				bcn_rssi_weight, hirssi_delay_btw_scans);
+				hirssi_delay_btw_scans);
 
 	return QDF_STATUS_E_FAILURE;
 }
