@@ -197,8 +197,8 @@ iot_sim_add_peer(struct iot_sim_context *isc, struct qdf_mac_addr *mac)
 					   (struct iot_sim_rule_per_peer));
 		if (!peer_rule) {
 			iot_sim_err("Memory alloc failed for peer: "
-				    QDF_MAC_ADDR_STR,
-				    QDF_MAC_ADDR_ARRAY(mac->bytes));
+				    QDF_FULL_MAC_FMT,
+				    QDF_FULL_MAC_REF(mac->bytes));
 			goto rel_lock;
 		}
 
@@ -207,8 +207,8 @@ iot_sim_add_peer(struct iot_sim_context *isc, struct qdf_mac_addr *mac)
 					      &peer_rule->node);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			iot_sim_err("peer_list enqueue failed for peer "
-				    QDF_MAC_ADDR_STR,
-				    QDF_MAC_ADDR_ARRAY(mac->bytes));
+				    QDF_FULL_MAC_FMT,
+				    QDF_FULL_MAC_REF(mac->bytes));
 			qdf_mem_free(peer_rule);
 			peer_rule = NULL;
 		}
@@ -827,8 +827,8 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 	if (qdf_is_macaddr_zero(mac))
 		iot_sim_info("Rule deletion for all peers");
 	else
-		iot_sim_info("Rule deletion for " QDF_MAC_ADDR_STR,
-			     QDF_MAC_ADDR_ARRAY(mac->bytes));
+		iot_sim_info("Rule deletion for " QDF_FULL_MAC_FMT,
+			     QDF_FULL_MAC_REF(mac->bytes));
 
 	iot_sim_debug("oper:%s seq: %hu %s:%hu/%hu",
 		      iot_sim_oper_to_str(oper), seq,
@@ -1072,8 +1072,8 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 		if (qdf_is_macaddr_zero(mac))
 			iot_sim_info("Rule addition for all peers");
 		else
-			iot_sim_info("Rule addition for " QDF_MAC_ADDR_STR,
-				     QDF_MAC_ADDR_ARRAY(mac->bytes));
+			iot_sim_info("Rule addition for " QDF_FULL_MAC_FMT,
+				     QDF_FULL_MAC_REF(mac->bytes));
 
 		iot_sim_info("oper:%s seq: %hu %s:%hu/%hu delay:%hu",
 			     iot_sim_oper_to_str(oper), seq,
@@ -1289,8 +1289,8 @@ iot_sim_parse_user_input_delay(struct iot_sim_context *isc,
 	if (argv[5])
 		status = qdf_mac_parse(argv[5], addr);
 
-	iot_sim_err("delay rule mac address " QDF_MAC_ADDR_STR,
-		    QDF_MAC_ADDR_ARRAY(addr->bytes));
+	iot_sim_err("delay rule mac address " QDF_FULL_MAC_FMT,
+		    QDF_FULL_MAC_REF(addr->bytes));
 
 	return status;
 err:
@@ -1479,8 +1479,8 @@ iot_sim_parse_user_input_drop(struct iot_sim_context *isc,
 	if (argv[5])
 		status = qdf_mac_parse(argv[5], addr);
 
-	iot_sim_err("drop rule mac address " QDF_MAC_ADDR_STR,
-		    QDF_MAC_ADDR_ARRAY(addr->bytes));
+	iot_sim_err("drop rule mac address " QDF_FULL_MAC_FMT,
+		    QDF_FULL_MAC_REF(addr->bytes));
 
 	return status;
 err:
