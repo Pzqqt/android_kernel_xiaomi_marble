@@ -15680,7 +15680,8 @@ static void wlan_hdd_cfg80211_set_wiphy_scan_flags(struct wiphy *wiphy)
 }
 #endif
 
-#if defined(CFG80211_BIGTK_CONFIGURATION_SUPPORT)
+#if defined(CFG80211_BIGTK_CONFIGURATION_SUPPORT) || \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
 static void wlan_hdd_cfg80211_set_bigtk_flags(struct wiphy *wiphy)
 {
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_BEACON_PROTECTION);
@@ -17834,7 +17835,8 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	return errno;
 }
 
-#if defined (CFG80211_BIGTK_CONFIGURATION_SUPPORT)
+#if defined (CFG80211_BIGTK_CONFIGURATION_SUPPORT) || \
+	    (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
 static int _wlan_hdd_cfg80211_set_default_beacon_key(struct wiphy *wiphy,
 						     struct net_device *ndev,
 						     u8 key_index)
@@ -24458,7 +24460,8 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.mgmt_tx = wlan_hdd_mgmt_tx,
 	.mgmt_tx_cancel_wait = wlan_hdd_cfg80211_mgmt_tx_cancel_wait,
 	.set_default_mgmt_key = wlan_hdd_set_default_mgmt_key,
-#if defined (CFG80211_BIGTK_CONFIGURATION_SUPPORT)
+#if defined (CFG80211_BIGTK_CONFIGURATION_SUPPORT) || \
+	    (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
 	.set_default_beacon_key = wlan_hdd_cfg80211_set_default_beacon_key,
 #endif
 	.set_txq_params = wlan_hdd_set_txq_params,
