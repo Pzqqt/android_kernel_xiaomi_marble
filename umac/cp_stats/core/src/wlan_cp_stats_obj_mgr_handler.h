@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,11 +34,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 
-#ifdef QCA_SUPPORT_CP_STATS_DA
-#include "wlan_cp_stats_da_api.h"
-#else
 #include "wlan_cp_stats_defs.h"
-#endif
 
 /**
  * wlan_cp_stats_psoc_obj_create_handler() - psoc create notification handler
@@ -128,19 +124,6 @@ QDF_STATUS wlan_cp_stats_peer_obj_create_handler(
 QDF_STATUS wlan_cp_stats_peer_obj_destroy_handler(
 		struct wlan_objmgr_peer *peer, void *data);
 
-#ifndef QCA_SUPPORT_CP_STATS_DA
-static inline
-QDF_STATUS wlan_cp_stats_ctx_init_da(struct cp_stats_context *csc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS wlan_cp_stats_ctx_deinit_da(struct cp_stats_context *csc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_OBJ_MGR_HANDLER_H__ */

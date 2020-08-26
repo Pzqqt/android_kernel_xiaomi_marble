@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,9 +56,6 @@ wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 		cp_stats_err("Failed to init cp stats ctx, bad device type");
 		status = QDF_STATUS_E_INVAL;
 		goto wlan_cp_stats_psoc_obj_create_handler_return;
-	} else if (WLAN_DEV_DA == dev_type) {
-		csc->cp_stats_ctx_init = wlan_cp_stats_ctx_init_da;
-		csc->cp_stats_ctx_deinit = wlan_cp_stats_ctx_deinit_da;
 	} else if (WLAN_DEV_OL == dev_type) {
 		csc->cp_stats_ctx_init = wlan_cp_stats_ctx_init_ol;
 		csc->cp_stats_ctx_deinit = wlan_cp_stats_ctx_deinit_ol;
