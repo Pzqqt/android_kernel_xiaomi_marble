@@ -380,6 +380,11 @@ UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_req);
 UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_all_req);
 UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_all_resp);
+UCFG_VDEV_CP_STATS_SET_FUNCS(prob_req_drops);
+UCFG_VDEV_CP_STATS_SET_FUNCS(oob_probe_req_count);
+UCFG_VDEV_CP_STATS_SET_FUNCS(wc_probe_req_drops);
+UCFG_VDEV_CP_STATS_SET_FUNCS(fils_frames_sent);
+UCFG_VDEV_CP_STATS_SET_FUNCS(fils_frames_sent_fail);
 
 #define UCFG_VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
