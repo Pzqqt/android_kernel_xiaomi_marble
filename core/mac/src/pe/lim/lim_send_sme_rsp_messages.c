@@ -2067,30 +2067,31 @@ lim_handle_bss_color_change_ie(struct mac_context *mac_ctx,
 
 	/* handle bss color change IE */
 	if (LIM_IS_AP_ROLE(session) &&
-			session->he_op.bss_col_disabled) {
+	    session->he_op.bss_col_disabled &&
+	    session->he_bss_color_change.new_color) {
+		pe_debug("countdown: %d, new_color: %d",
+			 session->he_bss_color_change.countdown,
+			 session->he_bss_color_change.new_color);
 		if (session->he_bss_color_change.countdown > 0) {
 			session->he_bss_color_change.countdown--;
 		} else {
 			session->bss_color_changing = 0;
 			qdf_mem_zero(&beacon_params, sizeof(beacon_params));
-			if (session->he_bss_color_change.new_color != 0) {
-				session->he_op.bss_col_disabled = 0;
-				session->he_op.bss_color =
-					session->he_bss_color_change.new_color;
-				beacon_params.paramChangeBitmap |=
-					PARAM_BSS_COLOR_CHANGED;
-				beacon_params.bss_color_disabled = 0;
-				beacon_params.bss_color =
-					session->he_op.bss_color;
-				lim_send_beacon_params(mac_ctx,
-						       &beacon_params,
-						       session);
-				lim_send_obss_color_collision_cfg(mac_ctx,
-						session,
-						OBSS_COLOR_COLLISION_DETECTION);
-			}
+			session->he_op.bss_col_disabled = 0;
+			session->he_op.bss_color =
+				session->he_bss_color_change.new_color;
+			session->he_bss_color_change.new_color = 0;
+			beacon_params.paramChangeBitmap |=
+				PARAM_BSS_COLOR_CHANGED;
+			beacon_params.bss_color_disabled = 0;
+			beacon_params.bss_color = session->he_op.bss_color;
+			lim_send_beacon_params(mac_ctx,
+					       &beacon_params,
+					       session);
+			lim_send_obss_color_collision_cfg(
+				mac_ctx, session,
+				OBSS_COLOR_COLLISION_DETECTION);
 		}
-
 		lim_send_bss_color_change_ie_update(mac_ctx, session);
 	}
 }
