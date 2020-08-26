@@ -1132,6 +1132,7 @@ struct dp_last_op_info {
  *			     descision making
  * @nbuf: TX packet
  * @tid: tid for transmitting the current packet
+ * @num_ll_connections: Number of low latency connections on this vdev
  *
  * This structure contains the information required by the software
  * latency manager to decide on whether to coalesc the current TCL
@@ -1140,6 +1141,7 @@ struct dp_last_op_info {
 struct dp_swlm_tcl_data {
 	qdf_nbuf_t nbuf;
 	uint8_t tid;
+	uint8_t num_ll_connections;
 };
 
 /**
@@ -1168,12 +1170,16 @@ struct dp_swlm_ops {
  *		 was being transmitted on a TID above coalescing threshold
  * @tcl.sp_frames: Num TCL register write coalescing skips, since the pkt
  *		  being transmitted was a special frame
+ * @tcl.ll_connection: Num TCL register write coalescing skips, since the
+ *		       vdev has low latency connections
  * @tcl.bytes_thresh_reached: Num TCL HP writes flush after the coalescing
  *			     bytes threshold was reached
  * @tcl.time_thresh_reached: Num TCL HP writes flush after the coalescing
  *			    session time expired
  * @tcl.tput_criteria_fail: Num TCL HP writes coalescing fails, since the
  *			   throughput did not meet session threshold
+ * @tcl.coalesc_success: Num of TCL HP writes coalesced successfully.
+ * @tcl.coalesc_fail: Num of TCL HP writes coalesces failed
  */
 struct dp_swlm_stats {
 	struct {
@@ -1181,9 +1187,12 @@ struct dp_swlm_stats {
 		uint32_t timer_flush_fail;
 		uint32_t tid_fail;
 		uint32_t sp_frames;
+		uint32_t ll_connection;
 		uint32_t bytes_thresh_reached;
 		uint32_t time_thresh_reached;
 		uint32_t tput_criteria_fail;
+		uint32_t coalesc_success;
+		uint32_t coalesc_fail;
 	} tcl;
 };
 
@@ -1202,6 +1211,8 @@ struct dp_swlm_stats {
  * @tcl.tx_thresh_multiplier: Multiplier to deduce the bytes threshold after
  *			      which the TCL HP register is written, thereby
  *			      ending the coalescing.
+ * @tcl.coalesc_end_time: End timestamp for current coalescing session
+ * @tcl.bytes_coalesced: Num bytes coalesced in the current session
  */
 struct dp_swlm_params {
 	struct {
@@ -1213,6 +1224,8 @@ struct dp_swlm_params {
 		uint32_t bytes_flush_thresh;
 		uint32_t time_flush_thresh;
 		uint32_t tx_thresh_multiplier;
+		uint64_t coalesc_end_time;
+		uint32_t bytes_coalesced;
 	} tcl;
 };
 

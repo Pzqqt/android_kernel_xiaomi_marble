@@ -41,6 +41,9 @@
 #include "dp_txrx_me.h"
 #endif
 #include "dp_hist.h"
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+#include <dp_swlm.h>
+#endif
 
 /* Flag to skip CCE classify when mesh or tid override enabled */
 #define DP_TX_SKIP_CCE_CLASSIFY \
@@ -429,7 +432,6 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
 
 	hal_tx_ext_desc_set_tcp_seq(ext_desc, tso_seg->tso_flags.tcp_seq_num);
 	hal_tx_ext_desc_set_ip_id(ext_desc, tso_seg->tso_flags.ip_id);
-
 
 	for (num_frag = 0; num_frag < tso_seg->num_frags; num_frag++) {
 		uint32_t lo = 0;
@@ -1143,11 +1145,90 @@ static inline void dp_tx_update_stats(struct dp_soc *soc,
 {
 	DP_STATS_INC_PKT(soc, tx.egress, 1, qdf_nbuf_len(nbuf));
 }
+
+/**
+ * dp_tx_attempt_coalescing() - Check and attempt TCL register write coalescing
+ * @soc: Datapath soc handle
+ * @tx_desc: tx packet descriptor
+ * @tid: TID for pkt transmission
+ *
+ * Returns: 1, if coalescing is to be done
+ *	    0, if coalescing is not to be done
+ */
+static inline int
+dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
+			 struct dp_tx_desc_s *tx_desc,
+			 uint8_t tid)
+{
+	struct dp_swlm *swlm = &soc->swlm;
+	union swlm_data swlm_query_data;
+	struct dp_swlm_tcl_data tcl_data;
+	QDF_STATUS status;
+	int ret;
+
+	if (qdf_unlikely(!swlm->is_enabled))
+		return 0;
+
+	tcl_data.nbuf = tx_desc->nbuf;
+	tcl_data.tid = tid;
+	tcl_data.num_ll_connections = vdev->num_latency_critical_conn;
+	swlm_query_data.tcl_data = &tcl_data;
+
+	status = dp_swlm_tcl_pre_check(soc, &tcl_data);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dp_swlm_tcl_reset_session_data(soc);
+		return 0;
+	}
+
+	ret = dp_swlm_query_policy(soc, TCL_DATA, swlm_query_data);
+	if (ret) {
+		DP_STATS_INC(swlm, tcl.coalesc_success, 1);
+	} else {
+		DP_STATS_INC(swlm, tcl.coalesc_fail, 1);
+	}
+
+	return ret;
+}
+
+/**
+ * dp_tx_ring_access_end() - HAL ring access end for data transmission
+ * @soc: Datapath soc handle
+ * @hal_ring_hdl: HAL ring handle
+ * @coalesc: Coalesc the current write or not
+ *
+ * Returns: none
+ */
+static inline void
+dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
+		      int coalesc)
+{
+	if (coalesc)
+		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
+	else
+		dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
+}
+
 #else
 static inline void dp_tx_update_stats(struct dp_soc *soc,
 				      qdf_nbuf_t nbuf)
 {
 }
+
+static inline int
+dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
+			 struct dp_tx_desc_s *tx_desc,
+			 uint8_t tid)
+{
+	return 0;
+}
+
+static inline void
+dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
+		      int coalesc)
+{
+	dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
+}
+
 #endif
 /**
  * dp_tx_hw_enqueue() - Enqueue to TCL HW for transmit
@@ -1174,6 +1255,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	uint8_t type;
 	void *hal_tx_desc;
 	uint32_t *hal_tx_desc_cached;
+	int coalesc = 0;
 
 	/*
 	 * Setting it initialization statically here to avoid
@@ -1291,6 +1373,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	tx_desc->flags |= DP_TX_DESC_FLAG_QUEUED_TX;
 	dp_vdev_peer_stats_update_protocol_cnt_tx(vdev, tx_desc->nbuf);
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
+	coalesc = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
 	dp_tx_update_stats(soc, tx_desc->nbuf);
 	status = QDF_STATUS_SUCCESS;
@@ -1298,7 +1381,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 ring_access_fail:
 	if (hif_pm_runtime_get(soc->hif_handle,
 			       RTPM_ID_DW_TX_HW_ENQUEUE) == 0) {
-		dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
+		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesc);
 		hif_pm_runtime_put(soc->hif_handle,
 				   RTPM_ID_DW_TX_HW_ENQUEUE);
 	} else {
