@@ -1146,7 +1146,6 @@ QDF_STATUS wmi_unified_pdev_utf_cmd_send(wmi_unified_t wmi_handle,
 					 struct pdev_utf_params *param,
 					 uint8_t mac_id);
 
-#ifdef FEATURE_FW_LOG_PARSING
 /**
  * wmi_unified_dbglog_cmd_send() - set debug log level
  * @wmi_handle: handle to WMI.
@@ -1156,14 +1155,6 @@ QDF_STATUS wmi_unified_pdev_utf_cmd_send(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_unified_dbglog_cmd_send(wmi_unified_t wmi_handle,
 				       struct dbglog_params *param);
-#else
-static inline QDF_STATUS
-wmi_unified_dbglog_cmd_send(wmi_unified_t wmi_handle,
-			    struct dbglog_params *param)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  *  wmi_mgmt_unified_cmd_send() - management cmd over wmi layer

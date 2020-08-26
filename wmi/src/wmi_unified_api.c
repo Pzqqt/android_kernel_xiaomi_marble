@@ -376,7 +376,6 @@ QDF_STATUS wmi_crash_inject(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef FEATURE_FW_LOG_PARSING
 QDF_STATUS
 wmi_unified_dbglog_cmd_send(wmi_unified_t wmi_handle,
 			    struct dbglog_params *dbglog_param)
@@ -388,7 +387,6 @@ wmi_unified_dbglog_cmd_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 qdf_export_symbol(wmi_unified_dbglog_cmd_send);
-#endif
 
 QDF_STATUS
 wmi_unified_vdev_set_param_send(wmi_unified_t wmi_handle,
