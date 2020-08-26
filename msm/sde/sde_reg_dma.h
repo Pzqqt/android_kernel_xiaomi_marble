@@ -293,6 +293,7 @@ struct sde_reg_dma_setup_ops_cfg {
  * @trigger_mode: reg dma ops trigger mode
  * @queue_select: queue on which reg dma buffer will be submitted
  * @dma_type: DB or SB LUT DMA block selection
+ * @feature: feature the provided kickoff buffer belongs to
  * @last_command: last command for this vsync
  */
 struct sde_reg_dma_kickoff_cfg {
@@ -303,6 +304,7 @@ struct sde_reg_dma_kickoff_cfg {
 	enum sde_reg_dma_trigger_mode trigger_mode;
 	enum sde_reg_dma_queue queue_select;
 	enum sde_reg_dma_type dma_type;
+	enum sde_reg_dma_features feature;
 	u32 last_command;
 };
 
