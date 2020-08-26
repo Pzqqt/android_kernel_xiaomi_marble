@@ -695,7 +695,6 @@ QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(
 QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(wmi_unified_t wmi_handle,
 					uint32_t vdev_id,
 					int32_t rssi_change_thresh,
-					uint32_t bcn_rssi_weight,
 					uint32_t hirssi_delay_btw_scans);
 QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(wmi_unified_t wmi_handle,
 				   uint8_t chan_count,
