@@ -1667,6 +1667,10 @@ TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_fisa_rx.o
 TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_rx_fst.o
 endif
 
+ifeq ($(CONFIG_DP_SWLM), y)
+TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_swlm.o
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
@@ -3597,6 +3601,8 @@ cppflags-$(CONFIG_BAND_6GHZ) += -DCONFIG_BAND_6GHZ
 cppflags-$(CONFIG_6G_SCAN_CHAN_SORT_ALGO) += -DFEATURE_6G_SCAN_CHAN_SORT_ALGO
 
 cppflags-$(CONFIG_RX_FISA) += -DWLAN_SUPPORT_RX_FISA
+
+cppflags-$(CONFIG_DP_SWLM) += -DWLAN_DP_FEATURE_SW_LATENCY_MGR
 
 cppflags-$(CONFIG_RX_DEFRAG_DO_NOT_REINJECT) += -DRX_DEFRAG_DO_NOT_REINJECT
 
