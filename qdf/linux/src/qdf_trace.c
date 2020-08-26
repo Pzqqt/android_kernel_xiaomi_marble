@@ -3196,6 +3196,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_6GHZ] = {"6GHZ"},
 	[QDF_MODULE_ID_IOT_SIM] = {"IOT_SIM"},
 	[QDF_MODULE_ID_MSCS] = {"MSCS"},
+	[QDF_MODULE_ID_GPIO] = {"GPIO_CFG"},
 };
 qdf_export_symbol(g_qdf_category_name);
 
@@ -3666,6 +3667,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_6GHZ] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_IOT_SIM] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_MSCS] = QDF_TRACE_LEVEL_INFO,
+		[QDF_MODULE_ID_GPIO] = QDF_TRACE_LEVEL_NONE,
 	};
 
 	for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
