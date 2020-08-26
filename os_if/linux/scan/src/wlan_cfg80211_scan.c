@@ -86,8 +86,8 @@ static void wlan_fill_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
 	*randomize = true;
 	memcpy(addr, mac_addr, QDF_MAC_ADDR_SIZE);
 	memcpy(mask, mac_addr_mask, QDF_MAC_ADDR_SIZE);
-	osif_debug("Random mac addr: "QDF_MAC_ADDR_FMT" and Random mac mask: "QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_REF(addr), QDF_MAC_ADDR_ARRAY(mask));
+	osif_debug("Random mac addr: "QDF_MAC_ADDR_FMT" and Random mac mask: "QDF_FULL_MAC_FMT,
+		   QDF_MAC_ADDR_REF(addr), QDF_FULL_MAC_REF(mask));
 }
 
 /**
