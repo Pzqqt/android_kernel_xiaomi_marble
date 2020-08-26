@@ -8085,6 +8085,183 @@ QDF_STATUS send_fw_test_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static uint16_t wfa_config_param_len(enum wfa_test_cmds config)
+{
+	uint16_t len = 0;
+
+	if (config == WFA_CONFIG_RXNE)
+		len += WMI_TLV_HDR_SIZE + sizeof(wmi_wfa_config_rsnxe);
+	else
+		len += WMI_TLV_HDR_SIZE;
+
+	if (config == WFA_CONFIG_CSA)
+		len += WMI_TLV_HDR_SIZE + sizeof(wmi_wfa_config_csa);
+	else
+		len += WMI_TLV_HDR_SIZE;
+
+	if (config == WFA_CONFIG_OCV)
+		len += WMI_TLV_HDR_SIZE + sizeof(wmi_wfa_config_ocv);
+	else
+		len += WMI_TLV_HDR_SIZE;
+
+	if (config == WFA_CONFIG_SA_QUERY)
+		len += WMI_TLV_HDR_SIZE + sizeof(wmi_wfa_config_saquery);
+	else
+		len += WMI_TLV_HDR_SIZE;
+
+	return len;
+}
+
+/**
+ * wmi_fill_ocv_frame_type() - Fill host ocv frm type into WMI ocv frm type.
+ * @host_frmtype: Host defined OCV frame type
+ * @ocv_frmtype: Pointer to hold WMI OCV frame type
+ *
+ * This function converts and fills host defined OCV frame type into WMI OCV
+ * frame type.
+ *
+ * Return: CDF STATUS
+ */
+static QDF_STATUS
+wmi_fill_ocv_frame_type(uint32_t host_frmtype, uint32_t *ocv_frmtype)
+{
+	switch (host_frmtype) {
+	case WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_REQ:
+		*ocv_frmtype = WMI_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_REQ;
+		break;
+
+	case WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_RSP:
+		*ocv_frmtype = WMI_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_RSP;
+		break;
+
+	case WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FT_REASSOC_REQ:
+		*ocv_frmtype = WMI_WFA_CONFIG_OCV_FRMTYPE_FT_REASSOC_REQ;
+		break;
+
+	case WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FILS_REASSOC_REQ:
+		*ocv_frmtype = WMI_WFA_CONFIG_OCV_FRMTYPE_FILS_REASSOC_REQ;
+		break;
+
+	default:
+		WMI_LOGE("%s: invalid command type cmd %d",
+			 __func__, host_frmtype);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_wfa_test_cmd_tlv() - send wfa test command to fw.
+ * @wmi_handle: wmi handle
+ * @wmi_wfatest: wfa test command
+ *
+ * This function sends wfa test command to fw.
+ *
+ * Return: CDF STATUS
+ */
+static
+QDF_STATUS send_wfa_test_cmd_tlv(wmi_unified_t wmi_handle,
+				 struct set_wfatest_params *wmi_wfatest)
+{
+	wmi_wfa_config_cmd_fixed_param *cmd;
+	wmi_wfa_config_rsnxe *rxne;
+	wmi_wfa_config_csa *csa;
+	wmi_wfa_config_ocv *ocv;
+	wmi_wfa_config_saquery *saquery;
+	wmi_buf_t wmi_buf;
+	uint16_t len = sizeof(*cmd);
+	uint8_t *buf_ptr;
+
+	len += wfa_config_param_len(wmi_wfatest->cmd);
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_wfa_config_cmd_fixed_param *)wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_wfa_config_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+					 wmi_wfa_config_cmd_fixed_param));
+
+	cmd->vdev_id = wmi_wfatest->vdev_id;
+	buf_ptr = (uint8_t *)(cmd + 1);
+
+	if (wmi_wfatest->cmd == WFA_CONFIG_RXNE) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       sizeof(wmi_wfa_config_rsnxe));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_wfa_config_rsnxe,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_wfa_config_rsnxe));
+		rxne = (wmi_wfa_config_rsnxe *)buf_ptr;
+		rxne->rsnxe_param = wmi_wfatest->value;
+		buf_ptr += sizeof(wmi_wfa_config_rsnxe);
+	} else {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	if (wmi_wfatest->cmd == WFA_CONFIG_CSA) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       sizeof(wmi_wfa_config_csa));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_wfa_config_csa,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_wfa_config_csa));
+		csa = (wmi_wfa_config_csa *)buf_ptr;
+		csa->ignore_csa = wmi_wfatest->value;
+		buf_ptr += sizeof(wmi_wfa_config_csa);
+	} else {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	if (wmi_wfatest->cmd == WFA_CONFIG_OCV) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       sizeof(wmi_wfa_config_ocv));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_wfa_config_ocv,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_wfa_config_ocv));
+		ocv = (wmi_wfa_config_ocv *)buf_ptr;
+
+		if (wmi_fill_ocv_frame_type(wmi_wfatest->ocv_param->frame_type,
+					    &ocv->frame_types))
+			goto error;
+
+		ocv->chan_freq = wmi_wfatest->ocv_param->freq;
+		buf_ptr += sizeof(wmi_wfa_config_ocv);
+	} else {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	if (wmi_wfatest->cmd == WFA_CONFIG_SA_QUERY) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       sizeof(wmi_wfa_config_saquery));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_wfa_config_saquery,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_wfa_config_saquery));
+
+		saquery = (wmi_wfa_config_saquery *)buf_ptr;
+		saquery->remain_connect_on_saquery_timeout = wmi_wfatest->value;
+	} else {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+	}
+
+	wmi_mtrace(WMI_WFA_CONFIG_CMDID, wmi_wfatest->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_WFA_CONFIG_CMDID)) {
+		WMI_LOGP("%s: failed to send wfa test command", __func__);
+		goto error;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+error:
+	wmi_buf_free(wmi_buf);
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * send_unit_test_cmd_tlv() - send unit test command to fw.
  * @wmi_handle: wmi handle
@@ -13917,6 +14094,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_profile_ctx = extract_profile_ctx_tlv,
 	.extract_profile_data = extract_profile_data_tlv,
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,
+	.send_wfa_test_cmd = send_wfa_test_cmd_tlv,
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	.extract_service_ready_ext = extract_service_ready_ext_tlv,
 	.extract_service_ready_ext2 = extract_service_ready_ext2_tlv,

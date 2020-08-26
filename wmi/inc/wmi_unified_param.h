@@ -2784,6 +2784,58 @@ struct set_fwtest_params {
 	uint32_t value;
 };
 
+/**
+ * enum wfa_test_cmds - WFA test config command
+ * @WFA_CONFIG_RXNE: configure an override for the RSNXE Used
+ * @WFA_CONFIG_CSA: configure the driver to ignore CSA
+ * @WFA_CONFIG_OCV: configure OCI
+ * @WFA_CONFIG_SA_QUERY: configure driver/firmware to ignore SAquery timeout
+ */
+enum wfa_test_cmds {
+	WFA_CONFIG_RXNE,
+	WFA_CONFIG_CSA,
+	WFA_CONFIG_OCV,
+	WFA_CONFIG_SA_QUERY,
+};
+
+/**
+ * enum wmi_host_wfa_config_ocv_frmtype - OCI override frame type
+ * @WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_REQ: SA Query Request frame
+ * @WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_RSP: SA Query Response frame
+ * @WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FT_REASSOC_REQ: FT Reassociation Req frm
+ * @WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FILS_REASSOC_REQ: FILS Reassoc Req frm
+ */
+enum wmi_host_wfa_config_ocv_frmtype {
+	WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_REQ          = 0x00000001,
+	WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_SAQUERY_RSP          = 0x00000002,
+	WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FT_REASSOC_REQ       = 0x00000004,
+	WMI_HOST_WFA_CONFIG_OCV_FRMTYPE_FILS_REASSOC_REQ     = 0x00000008,
+};
+
+/**
+ * struct ocv_wfatest_params - ocv WFA test params
+ * @frame_type: frame type req for OCV config
+ * @freq: frequency to set
+ */
+struct ocv_wfatest_params {
+	uint8_t frame_type;
+	uint32_t freq;
+};
+
+/**
+ * struct set_wfatest_params - WFA test params
+ * @vdev_id: vdev id
+ * @value: wfa test config value
+ * @cmd: WFA test command
+ * @ocv_param: pointer to ocv params
+ */
+struct set_wfatest_params {
+	uint8_t vdev_id;
+	uint32_t value;
+	enum wfa_test_cmds cmd;
+	struct ocv_wfatest_params *ocv_param;
+};
+
 /*
  * msduq_update_params - MSDUQ update param structure
  * @tid_num: TID number

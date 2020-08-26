@@ -3176,6 +3176,18 @@ QDF_STATUS wmi_unified_fw_test_cmd(wmi_unified_t wmi_handle,
 				   struct set_fwtest_params *wmi_fwtest);
 
 /**
+ * wmi_unified_wfa_test_cmd() - send wfa test command to fw.
+ * @handle: wmi handle
+ * @wmi_fwtest: wfa test param
+ *
+ * This function send wfa test command to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_wfa_test_cmd(wmi_unified_t wmi_handle,
+				    struct set_wfatest_params *wmi_wfatest);
+
+/**
  * wmi_unified_peer_rx_reorder_queue_setup_send() - send rx reorder queue
  *      setup command to fw
  * @wmi_handle: wmi handle

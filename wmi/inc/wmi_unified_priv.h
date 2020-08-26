@@ -1866,6 +1866,8 @@ QDF_STATUS (*send_adfs_ch_cfg_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
 			       struct set_fwtest_params *wmi_fwtest);
 
+QDF_STATUS (*send_wfa_test_cmd)(wmi_unified_t wmi_handle,
+				struct set_wfatest_params *wmi_wfatest);
 #ifdef WLAN_FEATURE_ACTION_OUI
 QDF_STATUS (*send_action_oui_cmd)(wmi_unified_t wmi_handle,
 				  struct action_oui_request *req);

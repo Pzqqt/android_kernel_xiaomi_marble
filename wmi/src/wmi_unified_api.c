@@ -1006,6 +1006,16 @@ QDF_STATUS wmi_unified_fw_test_cmd(wmi_unified_t wmi_handle,
 
 }
 
+QDF_STATUS wmi_unified_wfa_test_cmd(wmi_unified_t wmi_handle,
+				    struct set_wfatest_params *wmi_wfatest)
+{
+	if (wmi_handle->ops->send_wfa_test_cmd)
+		return wmi_handle->ops->send_wfa_test_cmd(wmi_handle,
+							  wmi_wfatest);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_unit_test_cmd(wmi_unified_t wmi_handle,
 				     struct wmi_unit_test_cmd *wmi_utest)
 {
