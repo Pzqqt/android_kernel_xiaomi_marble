@@ -1212,7 +1212,6 @@ struct wlan_mlme_ratemask {
  * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
  * @sae_connect_retries: sae connect retry bitmask
  * @wls_6ghz_capable: wifi location service(WLS) is 6ghz capable
- * @join_failure_retry_interval: Join failure retry interval
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1255,7 +1254,6 @@ struct wlan_mlme_generic {
 	bool dual_sta_roam_fw_support;
 	uint32_t sae_connect_retries;
 	bool wls_6ghz_capable;
-	uint16_t join_failure_retry_interval;
 };
 
 /*
