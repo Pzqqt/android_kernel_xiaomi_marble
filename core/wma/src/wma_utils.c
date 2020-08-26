@@ -4177,7 +4177,7 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 		return;
 	}
 
-	wma_remove_peer(wma, bss_peer.bytes, vdev_id);
+	wma_remove_peer(wma, bss_peer.bytes, vdev_id, false);
 }
 
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,

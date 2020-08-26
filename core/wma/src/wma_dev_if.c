@@ -520,7 +520,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 		  QDF_MAC_ADDR_REF(del_vdev_req->self_mac_addr));
 
 	qdf_status = wma_remove_peer(wma_handle, del_vdev_req->self_mac_addr,
-				     vdev_id);
+				     vdev_id, false);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("wma_remove_peer is failed");
 		goto error;
@@ -1480,11 +1480,12 @@ bool wma_objmgr_peer_exist(tp_wma_handle wma,
  * @wma: wma handle
  * @mac_addr: peer mac address, to be removed
  * @vdev_id: vdev id
+ * @no_fw_peer_delete: If true dont send peer delete to firmware
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
-			   uint8_t vdev_id)
+			   uint8_t vdev_id, bool no_fw_peer_delete)
 {
 #define PEER_ALL_TID_BITMASK 0xffffffff
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
@@ -1496,7 +1497,6 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
 	uint32_t bitmap = 1 << CDP_PEER_DELETE_NO_SPECIAL;
 	bool peer_unmap_conf_support_enabled;
 	uint8_t peer_vdev_id;
-	bool roam_synch_in_progress = false;
 
 	if (!wma->interfaces[vdev_id].peer_count) {
 		wma_err("Can't remove peer with peer_addr "QDF_MAC_ADDR_FMT" vdevid %d peer_count %d",
@@ -1530,10 +1530,8 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
 
 	cdp_peer_teardown(soc, vdev_id, peer_addr);
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
-		roam_synch_in_progress = true;
+	if (no_fw_peer_delete)
 		goto peer_detach;
-	}
 
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);
@@ -1564,7 +1562,7 @@ peer_detach:
 		wma->interfaces[vdev_id].peer_count);
 	/* Copy peer mac to find and delete objmgr peer */
 	qdf_mem_copy(peer_mac, peer_addr, QDF_MAC_ADDR_SIZE);
-	if (roam_synch_in_progress &&
+	if (no_fw_peer_delete &&
 	    is_cdp_peer_detach_force_delete_supported(soc)) {
 		if (!peer_unmap_conf_support_enabled) {
 			wma_debug("LFR3: trigger force delete for peer "QDF_MAC_ADDR_FMT,
@@ -1576,7 +1574,7 @@ peer_detach:
 					     bitmap);
 		}
 	} else {
-		if (roam_synch_in_progress)
+		if (no_fw_peer_delete)
 			wma_debug("LFR3: Delete the peer "QDF_MAC_ADDR_FMT,
 				  QDF_MAC_ADDR_REF(peer_addr));
 
@@ -1861,7 +1859,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, uint32_t vdev_id,
 		mac_addr = bssid.bytes;
 	}
 
-	qdf_status = wma_remove_peer(wma, mac_addr, vdev_id);
+	qdf_status = wma_remove_peer(wma, mac_addr, vdev_id, false);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("wma_remove_peer failed vdev_id:%d", vdev_id);
@@ -2088,13 +2086,11 @@ QDF_STATUS
 __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	bool peer_exist = false;
 	struct wma_txrx_node *iface;
 	int status = QDF_STATUS_SUCCESS;
 	struct qdf_mac_addr bssid;
 	uint32_t vdev_stop_type;
 	struct del_bss_resp *vdev_stop_resp;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!wma) {
 		wma_err("wma is null");
@@ -2141,42 +2137,11 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 	}
 
 	if (vdev_stop_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
-		peer_exist = cdp_find_peer_exist(soc, OL_TXRX_PDEV_ID,
-						 bssid.bytes);
-		if (!peer_exist) {
-			wma_err("Failed to find peer "QDF_MAC_ADDR_FMT,
-				QDF_MAC_ADDR_REF(bssid.bytes));
-			status = QDF_STATUS_E_FAILURE;
+		status = wma_remove_peer(wma, bssid.bytes,
+					 resp_event->vdev_id, true);
+		if (QDF_IS_STATUS_ERROR(status))
 			goto free_params;
-		}
 
-		if (!iface->peer_count) {
-			wma_err("Can't remove peer with peer_addr "QDF_MAC_ADDR_FMT" vdevid %d peer_count %d",
-				QDF_MAC_ADDR_REF(bssid.bytes),
-				resp_event->vdev_id,
-				 iface->peer_count);
-			goto free_params;
-		}
-
-		wma_debug("peer_addr "QDF_MAC_ADDR_FMT" to vdev_id %d, peer_count - %d",
-			  QDF_MAC_ADDR_REF(bssid.bytes),
-			 resp_event->vdev_id, iface->peer_count);
-		if (cdp_cfg_get_peer_unmap_conf_support(soc))
-			cdp_peer_delete_sync(soc, resp_event->vdev_id,
-					     bssid.bytes,
-					     wma_peer_unmap_conf_cb,
-					     1 << CDP_PEER_DELETE_NO_SPECIAL);
-		else
-			cdp_peer_delete(soc, resp_event->vdev_id,
-					bssid.bytes,
-					1 << CDP_PEER_DELETE_NO_SPECIAL);
-		wma_remove_objmgr_peer(wma, iface->vdev,
-				       bssid.bytes);
-		iface->peer_count--;
-
-		wma_info("Removed peer "QDF_MAC_ADDR_FMT" vdev_id %d, peer_count %d",
-			 QDF_MAC_ADDR_REF(bssid.bytes),
-			 resp_event->vdev_id, iface->peer_count);
 		vdev_stop_resp->status = status;
 		vdev_stop_resp->vdev_id = resp_event->vdev_id;
 		wma_send_vdev_down_req(wma, vdev_stop_resp);
@@ -3600,7 +3565,8 @@ QDF_STATUS wma_add_bss_lfr2_vdev_start(struct wlan_objmgr_vdev *vdev,
 
 peer_cleanup:
 	if (peer_exist)
-		wma_remove_peer(wma, mlme_obj->mgmt.generic.bssid, vdev_id);
+		wma_remove_peer(wma, mlme_obj->mgmt.generic.bssid, vdev_id,
+				false);
 
 send_fail_resp:
 	wma_send_add_bss_resp(wma, vdev_id, QDF_STATUS_E_FAILURE);
@@ -3739,7 +3705,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 
 peer_cleanup:
 	if (peer_exist)
-		wma_remove_peer(wma, add_bss->bssId, vdev_id);
+		wma_remove_peer(wma, add_bss->bssId, vdev_id, false);
 send_resp:
 	wma_send_add_bss_resp(wma, vdev_id, status);
 
@@ -3785,7 +3751,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	if (cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
 					add_sta->staMac)) {
-		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
+		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
+				false);
 		wma_err("Peer already exists, Deleted peer with peer_addr "QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(add_sta->staMac));
 	}
@@ -3819,7 +3786,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		wma_err("Failed to find peer handle using peer mac "QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(add_sta->staMac));
 		add_sta->status = QDF_STATUS_E_FAILURE;
-		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
+		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
+				false);
 		goto send_rsp;
 	}
 
@@ -3875,7 +3843,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 			wma_remove_req(wma, add_sta->smesessionId,
 				       WMA_PEER_ASSOC_CNF_START);
 			wma_remove_peer(wma, add_sta->staMac,
-					add_sta->smesessionId);
+					add_sta->smesessionId, false);
 			peer_assoc_cnf = false;
 			goto send_rsp;
 		}
@@ -3886,7 +3854,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	ret = wma_send_peer_assoc(wma, add_sta->nwType, add_sta);
 	if (ret) {
 		add_sta->status = QDF_STATUS_E_FAILURE;
-		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
+		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
+				false);
 		goto send_rsp;
 	}
 
@@ -3902,7 +3871,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 				QDF_MAC_ADDR_REF(add_sta->staMac));
 			add_sta->status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, add_sta->staMac,
-					add_sta->smesessionId);
+					add_sta->smesessionId, false);
 			goto send_rsp;
 		}
 	}
@@ -4007,7 +3976,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 				wma_remove_req(wma, add_sta->smesessionId,
 					       WMA_PEER_ASSOC_CNF_START);
 				wma_remove_peer(wma, add_sta->staMac,
-						add_sta->smesessionId);
+						add_sta->smesessionId, false);
 				peer_assoc_cnf = false;
 				goto send_rsp;
 			}
@@ -4024,7 +3993,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		if (ret) {
 			add_sta->status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, add_sta->staMac,
-					add_sta->smesessionId);
+					add_sta->smesessionId, false);
 			cdp_peer_add_last_real_peer(soc, pdev_id,
 						    add_sta->smesessionId);
 			wma_remove_req(wma, add_sta->smesessionId,
@@ -4188,7 +4157,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 				wma_remove_req(wma, params->smesessionId,
 					       WMA_PEER_ASSOC_CNF_START);
 				wma_remove_peer(wma, params->bssId,
-						params->smesessionId);
+						params->smesessionId, false);
 				peer_assoc_cnf = false;
 				goto out;
 			}
@@ -4211,7 +4180,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		if (ret) {
 			status = QDF_STATUS_E_FAILURE;
 			wma_remove_peer(wma, params->bssId,
-					params->smesessionId);
+					params->smesessionId, false);
 			goto out;
 		}
 
@@ -4340,7 +4309,7 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 	QDF_STATUS qdf_status;
 
 	qdf_status = wma_remove_peer(wma, del_sta->staMac,
-				     del_sta->smesessionId);
+				     del_sta->smesessionId, false);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("wma_remove_peer failed");
 		del_sta->status = QDF_STATUS_E_FAILURE;
@@ -4840,7 +4809,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 	return;
 
 detach_peer:
-	wma_remove_peer(wma, bssid.bytes, vdev_id);
+	wma_remove_peer(wma, bssid.bytes, vdev_id, roam_synch_in_progress);
 	if (roam_synch_in_progress)
 		return;
 

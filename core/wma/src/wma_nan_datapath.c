@@ -90,7 +90,8 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		wma_err("Failed to find peer handle using peer mac "QDF_MAC_ADDR_FMT,
 			 QDF_MAC_ADDR_REF(add_sta->staMac));
 		add_sta->status = QDF_STATUS_E_FAILURE;
-		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
+		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
+				false);
 		goto send_rsp;
 	}
 
@@ -119,7 +120,7 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 					tpDeleteStaParams del_sta)
 {
 	wma_remove_peer(wma, del_sta->staMac,
-			del_sta->smesessionId);
+			del_sta->smesessionId, false);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
 	if (del_sta->respReqd) {

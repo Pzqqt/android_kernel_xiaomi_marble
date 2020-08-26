@@ -3524,7 +3524,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			 peer_state->vdev_id);
 		qdf_status = wma_remove_peer(wma_handle,
 					     peer_state->peer_macaddr,
-					     peer_state->vdev_id);
+					     peer_state->vdev_id, false);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			wma_err("wma_remove_peer failed");
 			ret = -EINVAL;
