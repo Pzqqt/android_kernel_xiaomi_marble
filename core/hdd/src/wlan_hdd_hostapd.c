@@ -4344,27 +4344,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	qdf_copy_macaddr(&update_ie.bssid, &adapter->mac_addr);
 	update_ie.vdev_id = adapter->vdev_id;
 
-	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		update_ie.ieBufferlength = total_ielen;
-		update_ie.pAdditionIEBuffer = genie;
-		update_ie.append = false;
-		update_ie.notify = true;
-		if (sme_update_add_ie(mac_handle,
-				      &update_ie,
-				      eUPDATE_IE_PROBE_BCN) ==
-		    QDF_STATUS_E_FAILURE) {
-			hdd_err("Could not pass on Add Ie probe beacon data");
-			ret = -EINVAL;
-			goto done;
-		}
-		wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_PROBE_BCN);
-	} else {
-		wlansap_update_sap_config_add_ie(config,
-						 genie,
-						 total_ielen,
-						 eUPDATE_IE_PROBE_BCN);
-	}
-
 	/* Added for Probe Response IE */
 	proberesp_ies = qdf_mem_malloc(beacon->proberesp_ies_len +
 				      MAX_GENIE_LEN);
@@ -4422,6 +4401,27 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 						 beacon->assocresp_ies,
 						 beacon->assocresp_ies_len,
 						 eUPDATE_IE_ASSOC_RESP);
+	}
+
+	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+		update_ie.ieBufferlength = total_ielen;
+		update_ie.pAdditionIEBuffer = genie;
+		update_ie.append = false;
+		update_ie.notify = true;
+		if (sme_update_add_ie(mac_handle,
+				      &update_ie,
+				      eUPDATE_IE_PROBE_BCN) ==
+		    QDF_STATUS_E_FAILURE) {
+			hdd_err("Could not pass on Add Ie probe beacon data");
+			ret = -EINVAL;
+			goto done;
+		}
+		wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_PROBE_BCN);
+	} else {
+		wlansap_update_sap_config_add_ie(config,
+						 genie,
+						 total_ielen,
+						 eUPDATE_IE_PROBE_BCN);
 	}
 
 done:
