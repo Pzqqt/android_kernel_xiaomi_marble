@@ -346,7 +346,7 @@ inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(
 
 QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 {
-	int ret;
+	QDF_STATUS ret;
 
 	if (!psoc || !GET_WMI_HDL_FROM_PSOC(psoc)) {
 		target_if_err("psoc or psoc->tgt_if_handle is null");
@@ -367,7 +367,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 			wmi_oem_cap_event_id,
 			wifi_pos_oem_cap_ev_handler,
 			WMI_RX_WORK_CTX);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -377,7 +377,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 			wmi_oem_meas_report_event_id,
 			wifi_pos_oem_meas_rpt_ev_handler,
 			WMI_RX_WORK_CTX);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -387,7 +387,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 			wmi_oem_report_event_id,
 			wifi_pos_oem_err_rpt_ev_handler,
 			WMI_RX_WORK_CTX);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
