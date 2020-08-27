@@ -713,7 +713,7 @@ static int target_if_vdev_mgr_multi_vdev_restart_resp_handler(
 QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 				struct wlan_objmgr_psoc *psoc)
 {
-	int retval = 0;
+	QDF_STATUS retval = QDF_STATUS_SUCCESS;
 	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
@@ -732,7 +732,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 				wmi_vdev_stopped_event_id,
 				target_if_vdev_mgr_stop_response_handler,
 				VDEV_RSP_RX_CTX);
-	if (retval)
+	if (QDF_IS_STATUS_ERROR(retval))
 		mlme_err("failed to register for stop response");
 
 	retval = wmi_unified_register_event_handler(
@@ -740,7 +740,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 				wmi_vdev_delete_resp_event_id,
 				target_if_vdev_mgr_delete_response_handler,
 				VDEV_RSP_RX_CTX);
-	if (retval)
+	if (QDF_IS_STATUS_ERROR(retval))
 		mlme_err("failed to register for delete response");
 
 	retval = wmi_unified_register_event_handler(
@@ -748,7 +748,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 				wmi_vdev_start_resp_event_id,
 				target_if_vdev_mgr_start_response_handler,
 				VDEV_RSP_RX_CTX);
-	if (retval)
+	if (QDF_IS_STATUS_ERROR(retval))
 		mlme_err("failed to register for start response");
 
 	retval = wmi_unified_register_event_handler(
@@ -756,7 +756,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 			wmi_peer_delete_all_response_event_id,
 			target_if_vdev_mgr_peer_delete_all_response_handler,
 			VDEV_RSP_RX_CTX);
-	if (retval)
+	if (QDF_IS_STATUS_ERROR(retval))
 		mlme_err("failed to register for peer delete all response");
 
 	retval = wmi_unified_register_event_handler(
@@ -764,10 +764,10 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 			wmi_pdev_multi_vdev_restart_response_event_id,
 			target_if_vdev_mgr_multi_vdev_restart_resp_handler,
 			VDEV_RSP_RX_CTX);
-	if (retval)
+	if (QDF_IS_STATUS_ERROR(retval))
 		mlme_err("failed to register for multivdev restart response");
 
-	return qdf_status_from_os_return(retval);
+	return retval;
 }
 
 QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
