@@ -496,6 +496,12 @@ htt_htc_pkt_alloc(struct htt_soc *soc)
 
 	if (!pkt)
 		pkt = qdf_mem_malloc(sizeof(*pkt));
+
+	if (!pkt)
+		return NULL;
+
+	htc_packet_set_magic_cookie(&(pkt->u.pkt.htc_pkt), 0);
+
 	return &pkt->u.pkt; /* not actually a dereference */
 }
 
@@ -510,6 +516,7 @@ htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 		(struct dp_htt_htc_pkt_union *)pkt;
 
 	HTT_TX_MUTEX_ACQUIRE(&soc->htt_tx_mutex);
+	htc_packet_set_magic_cookie(&(u_pkt->u.pkt.htc_pkt), 0);
 	u_pkt->u.next = soc->htt_htc_pkt_freelist;
 	soc->htt_htc_pkt_freelist = u_pkt;
 	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
@@ -633,6 +640,11 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 
 	while (pkt) {
 		next = pkt->u.next;
+		if (htc_packet_get_magic_cookie(&(pkt->u.pkt.htc_pkt)) !=
+		    HTC_PACKET_MAGIC_COOKIE) {
+			pkt = next;
+			continue;
+		}
 		netbuf = (qdf_nbuf_t) (pkt->u.pkt.htc_pkt.pNetBufContext);
 		qdf_nbuf_unmap(soc->osdev, netbuf, QDF_DMA_TO_DEVICE);
 
