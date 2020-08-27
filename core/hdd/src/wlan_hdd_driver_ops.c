@@ -1856,7 +1856,7 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 
 	switch (event_data->uevent) {
 	case PLD_FW_DOWN:
-		hdd_info("Received firmware down indication");
+		hdd_debug("Received firmware down indication");
 
 		cds_set_target_ready(false);
 		cds_set_recovery_in_progress(true);
