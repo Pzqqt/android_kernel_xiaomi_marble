@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,8 +97,8 @@ QDF_STATUS target_if_green_ap_register_egap_event_handler(
 {
 	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
 	struct wlan_green_ap_egap_params *egap_params;
-	int ret;
-	void *wmi_hdl;
+	QDF_STATUS ret;
+	wmi_unified_t wmi_hdl;
 
 	if (!pdev) {
 		green_ap_err("pdev is null");
@@ -124,7 +124,7 @@ QDF_STATUS target_if_green_ap_register_egap_event_handler(
 			wmi_ap_ps_egap_info_event_id,
 			target_if_green_ap_egap_status_info_event,
 			WMI_RX_UMAC_CTX);
-	if (ret < 0) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		green_ap_err("Failed to register Enhance Green AP event");
 		egap_params->fw_egap_support = false;
 	} else {
