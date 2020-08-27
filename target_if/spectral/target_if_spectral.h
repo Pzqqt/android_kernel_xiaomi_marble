@@ -882,6 +882,18 @@ struct spectral_param_properties {
 };
 
 /**
+ * struct target_if_finite_spectral_scan_params - Parameters related to finite
+ * Spectral scan
+ * @finite_spectral_scan: Indicates the Spectrl scan is finite/infinite
+ * @num_reports_expected: Number of Spectral reports expected from target for a
+ * finite Spectral scan
+ */
+struct target_if_finite_spectral_scan_params {
+	bool finite_spectral_scan;
+	uint32_t num_reports_expected;
+};
+
+/**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
  * @spectral_ops: Target if internal Spectral low level operations table
@@ -975,6 +987,7 @@ struct spectral_param_properties {
  * compared with the current tstamp to check descrepancy
  * @rparams: Parameters related to Spectral report structure
  * @param_min_max: Spectral parameter's minimum and maximum values
+ * @finite_scan: Parameters for finite Spectral scan
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1090,6 +1103,8 @@ struct target_if_spectral {
 	uint32_t prev_tstamp;
 	struct spectral_report_params rparams;
 	struct spectral_param_min_max param_min_max;
+	struct target_if_finite_spectral_scan_params
+					finite_scan[SPECTRAL_SCAN_MODE_MAX];
 };
 
 /**
@@ -2274,6 +2289,38 @@ target_if_consume_spectral_report_gen3(
  * Return: QDF_STATUS of operation
  */
 QDF_STATUS target_if_spectral_fw_hang(struct target_if_spectral *spectral);
+
+/**
+ * target_if_spectral_finite_scan_update() - Update scan count for finite scan
+ * and stop Spectral scan when required
+ * @spectral: Pointer to Spectral target_if internal private data
+ * @smode: Spectral scan mode
+ *
+ * This API decrements the number of Spectral reports expected from target for
+ * a finite Spectral scan. When expected number of reports are received from
+ * target Spectral scan is stopped.
+ *
+ * Return: QDF_STATUS on success
+ */
+QDF_STATUS
+target_if_spectral_finite_scan_update(struct target_if_spectral *spectral,
+				      enum spectral_scan_mode smode);
+
+/**
+ * target_if_spectral_is_finite_scan() - Check Spectral scan is finite/infinite
+ * @spectral: Pointer to Spectral target_if internal private data
+ * @smode: Spectral scan mode
+ *
+ * API to check whether Spectral scan is finite/infinite for the give mode.
+ * A non zero scan count indicates that scan is finite. Scan count of 0
+ * indicates an infinite Spectral scan.
+ *
+ * Return: QDF_STATUS on success
+ */
+QDF_STATUS
+target_if_spectral_is_finite_scan(struct target_if_spectral *spectral,
+				  enum spectral_scan_mode smode,
+				  bool *finite_spectral_scan);
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

@@ -3613,6 +3613,115 @@ target_if_get_spectral_config(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * target_if_spectral_get_num_detectors() - Get number of Spectral detectors
+ * @spectral: Pointer to target if Spectral object
+ * @ch_width: channel width
+ * @num_detectors: Pointer to the variable to store number of Spectral detectors
+ *
+ * API to get number of Spectral detectors used for scan in the given channel
+ * width.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_INVAL on failure
+ */
+static QDF_STATUS
+target_if_spectral_get_num_detectors(struct target_if_spectral *spectral,
+				     enum phy_ch_width ch_width,
+				     uint32_t *num_detectors)
+{
+	if (!spectral) {
+		spectral_err("target if spectral object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (ch_width >= CH_WIDTH_INVALID) {
+		spectral_err("Invalid channel width %d", ch_width);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!num_detectors) {
+		spectral_err("Invalid argument, number of detectors");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		*num_detectors = spectral->capability.num_detectors_20mhz;
+		break;
+
+	case CH_WIDTH_40MHZ:
+		*num_detectors = spectral->capability.num_detectors_40mhz;
+		break;
+
+	case CH_WIDTH_80MHZ:
+		*num_detectors = spectral->capability.num_detectors_80mhz;
+		break;
+
+	case CH_WIDTH_160MHZ:
+		*num_detectors = spectral->capability.num_detectors_160mhz;
+		break;
+
+	case CH_WIDTH_80P80MHZ:
+		*num_detectors = spectral->capability.num_detectors_80p80mhz;
+		break;
+
+	default:
+		spectral_err("Unsupported channel width %d", ch_width);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_spectral_finite_scan_init() - Initializations required for finite
+ * Spectral scan
+ * @spectral: Pointer to target of Spctral object
+ * @smode: Spectral scan mode
+ *
+ * This routine initializes the finite Spectral scan. Finite Spectral scan is
+ * triggered by configuring a non zero scan count.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS
+target_if_spectral_finite_scan_init(struct target_if_spectral *spectral,
+				    enum spectral_scan_mode smode)
+{
+	struct target_if_finite_spectral_scan_params *finite_scan;
+	enum phy_ch_width ch_width;
+	uint32_t num_detectors;
+	QDF_STATUS status;
+	uint16_t sscan_count;
+
+	if (!spectral) {
+		spectral_err("target if spectral object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ch_width = spectral->ch_width[smode];
+	status = target_if_spectral_get_num_detectors(spectral, ch_width,
+						      &num_detectors);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		spectral_err("Failed to get number of detectors");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	finite_scan = &spectral->finite_scan[smode];
+	sscan_count =  spectral->params[smode].ss_count;
+
+	finite_scan->finite_spectral_scan =  true;
+	finite_scan->num_reports_expected = num_detectors * sscan_count;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * target_if_spectral_scan_enable_params() - Enable use of desired Spectral
  *                                           parameters
  * @spectral: Pointer to Spectral target_if internal private data
@@ -3922,6 +4031,15 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	if (!p_sops->is_spectral_active(spectral, smode)) {
 		p_sops->configure_spectral(spectral, spectral_params, smode);
 		spectral->rparams.marker[smode].is_valid = false;
+
+		if (spectral->params[smode].ss_count) {
+			status = target_if_spectral_finite_scan_init(spectral,
+								     smode);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				spectral_err("Failed to init finite scan");
+				return 1;
+			}
+		}
 		p_sops->start_spectral_scan(spectral, smode, err);
 		spectral->timestamp_war.timestamp_war_offset[smode] = 0;
 		spectral->timestamp_war.last_fft_timestamp[smode] = 0;
@@ -5633,3 +5751,72 @@ target_if_spectral_send_intf_found_msg(struct wlan_objmgr_pdev *pdev,
 	}
 }
 qdf_export_symbol(target_if_spectral_send_intf_found_msg);
+
+QDF_STATUS
+target_if_spectral_is_finite_scan(struct target_if_spectral *spectral,
+				  enum spectral_scan_mode smode,
+				  bool *finite_spectral_scan)
+{
+	struct target_if_finite_spectral_scan_params *finite_scan;
+
+	if (!spectral) {
+		spectral_err_rl("target if spectral object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("invalid spectral mode %d", smode);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!finite_spectral_scan) {
+		spectral_err_rl("Invalid pointer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	finite_scan = &spectral->finite_scan[smode];
+	*finite_spectral_scan = finite_scan->finite_spectral_scan;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+target_if_spectral_finite_scan_update(struct target_if_spectral *spectral,
+				      enum spectral_scan_mode smode)
+{
+	struct target_if_finite_spectral_scan_params *finite_scan;
+
+	if (!spectral) {
+		spectral_err_rl("target if spectral object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	finite_scan = &spectral->finite_scan[smode];
+
+	if (!finite_scan->num_reports_expected) {
+		spectral_err_rl("Error, No reports expected");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	finite_scan->num_reports_expected--;
+	if (!finite_scan->num_reports_expected) {
+		QDF_STATUS status;
+		enum spectral_cp_error_code err;
+
+		/* received expected number of reports from target, stop scan */
+		status = target_if_stop_spectral_scan(spectral->pdev_obj, smode,
+						      &err);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			spectral_err_rl("Failed to stop finite Spectral scan");
+			return QDF_STATUS_E_FAILURE;
+		}
+		finite_scan->finite_spectral_scan =  false;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

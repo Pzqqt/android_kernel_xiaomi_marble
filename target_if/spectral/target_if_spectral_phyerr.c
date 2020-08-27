@@ -1858,6 +1858,7 @@ target_if_consume_spectral_report_gen3(
 	QDF_STATUS ret;
 	enum spectral_scan_mode spectral_mode = SPECTRAL_SCAN_MODE_INVALID;
 	uint8_t *temp;
+	bool finite_scan = false;
 
 	/* Process Spectral scan summary report */
 	if (target_if_verify_sig_and_tag_gen3(
@@ -1881,6 +1882,26 @@ target_if_consume_spectral_report_gen3(
 		spectral_err_rl("No valid Spectral mode for detector id %u",
 				detector_id);
 		goto fail;
+	}
+
+	/* Drop the sample if Spectral is not active for the current mode */
+	if (!p_sops->is_spectral_active(spectral, spectral_mode))
+		return -EINVAL;
+
+	ret = target_if_spectral_is_finite_scan(spectral, spectral_mode,
+						&finite_scan);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to check scan is finite");
+		goto fail;
+	}
+
+	if (finite_scan) {
+		ret = target_if_spectral_finite_scan_update(spectral,
+							    spectral_mode);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to update scan count");
+			goto fail;
+		}
 	}
 
 	target_if_consume_sscan_summary_report_gen3(data, &sscan_report_fields,
