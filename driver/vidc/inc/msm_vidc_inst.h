@@ -99,7 +99,12 @@ struct msm_vidc_inst {
 	struct msm_vidc_buffers            buffers;
 	struct msm_vidc_maps               maps;
 	struct msm_vidc_allocations        allocations;
-	struct msm_vidc_port_settings      port_settings[MAX_PORT];
+	bool                               subscribed_input_psc;
+	bool                               subscribed_output_psc;
+	bool                               subscribed_input_prop;
+	bool                               subscribed_output_prop;
+	struct msm_vidc_subscription_params       vidc_subcr[MAX_PORT];
+	struct msm_vidc_subscription_params       hfi_subcr[MAX_PORT];
 	struct msm_vidc_decode_batch       decode_batch;
 	struct msm_vidc_decode_vpp_delay   decode_vpp_delay;
 	struct msm_vidc_session_idle       session_idle;

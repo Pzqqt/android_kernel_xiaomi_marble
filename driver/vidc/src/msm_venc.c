@@ -179,7 +179,7 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 				inst->buffers.output.actual_count;
 		inst->buffers.output_meta.size = fmt->fmt.meta.buffersize;
 		s_vpr_h(inst->sid,
-			"%s: input meta: size %d min_count %d extra_count %d\n",
+			"%s: output meta: size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
 			inst->buffers.output_meta.min_count,
 			inst->buffers.output_meta.extra_count);
@@ -204,11 +204,10 @@ int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(f->type);
-	if (port < 0) {
-		d_vpr_e("%s: invalid format type %d\n", __func__, f->type);
+	port = msm_vidc_get_port_from_v4l2_type(inst, f->type, __func__);
+	if (port < 0)
 		return -EINVAL;
-	}
+
 	memcpy(f, &inst->fmts[port], sizeof(struct v4l2_format));
 
 	return rc;
@@ -217,9 +216,9 @@ int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 {
 	int rc = 0;
-	enum msm_vidc_codec_type codec;
-	enum msm_vidc_colorformat_type colorformat;
 	struct msm_vidc_core *core;
+	u32 array[32] = {0};
+	u32 i = 0, idx = 0;
 
 	if (!inst || !inst->core || !inst->capabilities || !f) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -227,24 +226,38 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	}
 	core = inst->core;
 
-	if (f->index >=
-		sizeof(inst->capabilities->cap[PIX_FMTS].step_or_mask) * 8) {
-		d_vpr_e("%s: invalid index %d\n", __func__, f->index);
-		return -EINVAL;
-	}
-	memset(f->reserved, 0, sizeof(f->reserved));
-
 	if (f->type == OUTPUT_PLANE) {
-		codec = core->capabilities[DEC_CODECS].value & f->index;
-		f->pixelformat = get_v4l2_codec_from_vidc(codec);
+		u32 codecs = core->capabilities[DEC_CODECS].value;
+
+		while (codecs) {
+			if (idx > 31)
+				break;
+			if (codecs & BIT(i)) {
+				array[idx] = codecs & BIT(i);
+				idx++;
+			}
+			i++;
+			codecs >>= 1;
+		}
+		f->pixelformat = get_v4l2_codec_from_vidc(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		f->flags = V4L2_FMT_FLAG_COMPRESSED;
 		strlcpy(f->description, "codec", sizeof(f->description));
 	} else if (f->type == INPUT_PLANE) {
-		colorformat = f->index &
-			inst->capabilities->cap[PIX_FMTS].step_or_mask;
-		f->pixelformat = get_v4l2_colorformat_from_vidc(colorformat);
+		u32 formats = inst->capabilities->cap[PIX_FMTS].step_or_mask;
+
+		while (formats) {
+			if (idx > 31)
+				break;
+			if (formats & BIT(i)) {
+				array[idx] = formats & BIT(i);
+				idx++;
+			}
+			i++;
+			formats >>= 1;
+		}
+		f->pixelformat = get_v4l2_colorformat_from_vidc(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		strlcpy(f->description, "colorformat", sizeof(f->description));
@@ -256,7 +269,10 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			return -EINVAL;
 		}
 	}
+	memset(f->reserved, 0, sizeof(f->reserved));
 
+	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x\n",
+		__func__, f->index, f->description, f->pixelformat, f->flags);
 	return rc;
 }
 

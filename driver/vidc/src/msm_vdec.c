@@ -14,6 +14,7 @@
 #include "msm_vidc_platform.h"
 #include "msm_vidc_debug.h"
 #include "venus_hfi.h"
+#include "hfi_packet.h"
 
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 codec)
 {
@@ -136,15 +137,153 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 	return 0;
 }
 */
+
+static int msm_vdec_port_settings_subscription(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	u32 payload[32] = {0};
+	u32 i;
+	u32 subscribe_psc[] = {
+		HFI_PROP_ALIGN_RESOLUTION,
+		HFI_PROP_CROP_RESOLUTION,
+		HFI_PROP_CROP_COORDINATE_TOP_LEFT,
+		HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
+		HFI_PROP_CABAC_SESSION,
+		HFI_PROP_CODED_FRAMES,
+		HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
+		HFI_PROP_PIC_ORDER_CNT_TYPE,
+		HFI_PROP_SIGNAL_COLOR_INFO,
+	};
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
+	for (i = 0; i < ARRAY_SIZE(subscribe_psc); i++)
+		payload[i + 1] = subscribe_psc[i];
+
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			inst->session_id,
+			core->header_id++);
+	if (rc)
+		return rc;
+
+	rc = hfi_create_packet(inst->packet,  inst->packet_size,
+			HFI_CMD_SUBSCRIBE_MODE,
+			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+			HFI_HOST_FLAGS_INTR_REQUIRED),
+			HFI_PAYLOAD_U32_ARRAY,
+			get_hfi_port(inst, port),
+			core->packet_id++,
+			&payload[0],
+			(ARRAY_SIZE(subscribe_psc) + 1) * sizeof(u32));
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+static int msm_vdec_property_subscription(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	u32 payload[32] = {0};
+	u32 i;
+	u32 subscribe_properties[] = {
+		HFI_PROP_TAG_NOT_PROPAGATED_TO_OUTPUT,
+	};
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_PROPERTY;
+	for (i = 0; i < ARRAY_SIZE(subscribe_properties); i++)
+		payload[i + 1] = subscribe_properties[i];
+
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			inst->session_id,
+			core->header_id++);
+	if (rc)
+		return rc;
+
+	rc = hfi_create_packet(inst->packet,  inst->packet_size,
+			HFI_CMD_SUBSCRIBE_MODE,
+			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+			HFI_HOST_FLAGS_INTR_REQUIRED),
+			HFI_PAYLOAD_U32_ARRAY,
+			get_hfi_port(inst, port),
+			core->packet_id++,
+			&payload[0],
+			(ARRAY_SIZE(subscribe_properties) + 1) * sizeof(u32));
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+static int msm_vdec_metadata_delivery(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	u32 payload[32] = {0};
+	u32 i;
+	u32 metadata_delivery[] = {
+		HFI_PROP_BUFFER_TAG,
+	};
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_METADATA;
+	for (i = 0; i < ARRAY_SIZE(metadata_delivery); i++)
+		payload[i + 1] = metadata_delivery[i];
+
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			inst->session_id,
+			core->header_id++);
+	if (rc)
+		return rc;
+
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+			HFI_CMD_DELIVERY_MODE,
+			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+			HFI_HOST_FLAGS_INTR_REQUIRED),
+			HFI_PAYLOAD_U32_ARRAY,
+			get_hfi_port(inst, port),
+			core->packet_id++,
+			&payload[0],
+			(ARRAY_SIZE(metadata_delivery) + 1) * sizeof(u32));
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
 int msm_vdec_stop_input(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	d_vpr_h("%s()\n", __func__);
 
 	return rc;
 }
@@ -154,11 +293,11 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	d_vpr_h("%s()\n", __func__);
 	core = inst->core;
 
 	//rc = msm_vidc_check_session_supported(inst);
@@ -199,11 +338,23 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = venus_hfi_start_input(inst);
+	rc = msm_vdec_port_settings_subscription(inst, INPUT_PORT);
 	if (rc)
 		goto error;
 
-	rc = msm_vidc_change_inst_state(inst, MSM_VIDC_START_INPUT);
+	rc = msm_vdec_property_subscription(inst, INPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = msm_vdec_metadata_delivery(inst, INPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = venus_hfi_start(inst, INPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = msm_vidc_change_inst_state(inst, MSM_VIDC_START_INPUT, __func__);
 	if (rc)
 		goto error;
 
@@ -238,6 +389,23 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
+	rc = msm_vdec_port_settings_subscription(inst, OUTPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = msm_vdec_metadata_delivery(inst, OUTPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = venus_hfi_start(inst, OUTPUT_PORT);
+	if (rc)
+		goto error;
+
+	d_vpr_h("%s: done\n", __func__);
+	return 0;
+
+error:
+	msm_vdec_stop_output(inst);
 	return rc;
 }
 
@@ -394,7 +562,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 				inst->buffers.output.actual_count;
 		inst->buffers.output_meta.size = fmt->fmt.meta.buffersize;
 		s_vpr_h(inst->sid,
-			"%s: input meta: size %d min_count %d extra_count %d\n",
+			"%s: output meta: size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
 			inst->buffers.output_meta.min_count,
 			inst->buffers.output_meta.extra_count);
@@ -419,11 +587,10 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(f->type);
-	if (port < 0) {
-		d_vpr_e("%s: invalid format type %d\n", __func__, f->type);
+	port = msm_vidc_get_port_from_v4l2_type(inst, f->type, __func__);
+	if (port < 0)
 		return -EINVAL;
-	}
+
 	memcpy(f, &inst->fmts[port], sizeof(struct v4l2_format));
 
 	return rc;
@@ -432,9 +599,9 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 {
 	int rc = 0;
-	enum msm_vidc_codec_type codec;
-	enum msm_vidc_colorformat_type colorformat;
 	struct msm_vidc_core *core;
+	u32 array[32] = {0};
+	u32 i = 0, idx = 0;
 
 	if (!inst || !inst->core || !inst->capabilities || !f) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -442,24 +609,38 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	}
 	core = inst->core;
 
-	if (f->index >=
-		sizeof(inst->capabilities->cap[PIX_FMTS].step_or_mask) * 8) {
-		d_vpr_e("%s: invalid index %d\n", __func__, f->index);
-		return -EINVAL;
-	}
-	memset(f->reserved, 0, sizeof(f->reserved));
-
 	if (f->type == INPUT_PLANE) {
-		codec = core->capabilities[DEC_CODECS].value & f->index;
-		f->pixelformat = get_v4l2_codec_from_vidc(codec);
+		u32 codecs = core->capabilities[DEC_CODECS].value;
+
+		while (codecs) {
+			if (idx > 31)
+				break;
+			if (codecs & BIT(i)) {
+				array[idx] = codecs & BIT(i);
+				idx++;
+			}
+			i++;
+			codecs >>= 1;
+		}
+		f->pixelformat = get_v4l2_codec_from_vidc(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		f->flags = V4L2_FMT_FLAG_COMPRESSED;
 		strlcpy(f->description, "codec", sizeof(f->description));
 	} else if (f->type == OUTPUT_PLANE) {
-		colorformat = f->index &
-			inst->capabilities->cap[PIX_FMTS].step_or_mask;
-		f->pixelformat = get_v4l2_colorformat_from_vidc(colorformat);
+		u32 formats = inst->capabilities->cap[PIX_FMTS].step_or_mask;
+
+		while (formats) {
+			if (idx > 31)
+				break;
+			if (formats & BIT(i)) {
+				array[idx] = formats & BIT(i);
+				idx++;
+			}
+			i++;
+			formats >>= 1;
+		}
+		f->pixelformat = get_v4l2_colorformat_from_vidc(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		strlcpy(f->description, "colorformat", sizeof(f->description));
@@ -471,7 +652,10 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			return -EINVAL;
 		}
 	}
+	memset(f->reserved, 0, sizeof(f->reserved));
 
+	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x\n",
+		__func__, f->index, f->description, f->pixelformat, f->flags);
 	return rc;
 }
 

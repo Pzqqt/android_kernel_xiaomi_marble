@@ -61,11 +61,6 @@ static const char * const * msm_vidc_get_qmenu_type(
 		return mpeg_video_rate_control;
 	case V4L2_CID_MPEG_VIDEO_HEVC_SIZE_OF_LENGTH_FIELD:
 		return mpeg_video_stream_format;
-	/*
-	 * TODO(AS)
-	 * case V4L2_CID_MPEG_VIDC_VIDEO_ROI_TYPE:
-	 *	return roi_map_type;
-	 */
 	default:
 		s_vpr_e(inst->sid, "%s: No available qmenu for ctrl %#x",
 			__func__, control_id);
@@ -76,15 +71,22 @@ static const char * const * msm_vidc_get_qmenu_type(
 static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 {
 	switch (control_id) {
+	case V4L2_CID_MPEG_VIDC_VIDEO_DECODE_ORDER:
+		return "Decode Order";
+	case V4L2_CID_MPEG_VIDC_VIDEO_SYNC_FRAME_DECODE:
+		return "Sync Frame Decode";
+	case V4L2_CID_MPEG_VIDC_VIDEO_SECURE:
+		return "Secure Mode";
+	case V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_MODE:
+		return "Low Latency Mode";
+	case V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_HINT:
+		return "Low Latency Hint";
+	case V4L2_CID_MPEG_VIDC_VIDEO_BUFFER_SIZE_LIMIT:
+		return "Buffer Size Limit";
 	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
 		return "Video Bitrate Control";
 	case V4L2_CID_MPEG_VIDEO_HEVC_SIZE_OF_LENGTH_FIELD:
 		return "NAL Format";
-	/*
-	 * TODO(AS)
-	 * case V4L2_CID_MPEG_VIDC_VIDEO_ROI_TYPE:
-	 *	return "ROI Type";
-	 */
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x",
 			__func__, control_id);
@@ -109,6 +111,11 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	core = inst->core;
 	capability = inst->capabilities;
 
+	if (core->v4l2_ctrl_ops) {
+		s_vpr_e(inst->sid, "%s: no control ops\n", __func__);
+		return -EINVAL;
+	}
+
 	for (idx = 0; idx < INST_CAP_MAX; idx++) {
 		if (capability->cap[idx].v4l2_id)
 			num_ctrls++;
@@ -131,17 +138,36 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 		return rc;
 	}
 
+	if (core->v4l2_ctrl_ops) {
+		s_vpr_e(inst->sid, "%s: no control ops\n", __func__);
+		return -EINVAL;
+	}
+
 	for (idx = 0; idx < INST_CAP_MAX; idx++) {
 		struct v4l2_ctrl *ctrl;
 
+		if (!capability->cap[idx].v4l2_id)
+			continue;
+
 		if (ctrl_idx >= num_ctrls) {
 			s_vpr_e(inst->sid,
-				"invalid ctrl_idx, max allowed %d\n",
+				"%s: invalid ctrl %#x, max allowed %d\n",
+				__func__, capability->cap[idx].v4l2_id,
 				num_ctrls);
 			return -EINVAL;
 		}
-		if (!capability->cap[idx].v4l2_id)
-			continue;
+		s_vpr_h(inst->sid,
+			"%s: cap idx %d, value %d min %d max %d step_or_mask %#x flags %#x v4l2_id %#x hfi_id %#x\n",
+			__func__, idx,
+			capability->cap[idx].value,
+			capability->cap[idx].min,
+			capability->cap[idx].max,
+			capability->cap[idx].step_or_mask,
+			capability->cap[idx].flags,
+			capability->cap[idx].v4l2_id,
+			capability->cap[idx].hfi_id);
+
+		memset(&ctrl_cfg, 0, sizeof(struct v4l2_ctrl_config));
 
 		if (is_priv_ctrl(capability->cap[idx].v4l2_id)) {
 			/* add private control */
@@ -150,20 +176,24 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			ctrl_cfg.id = capability->cap[idx].v4l2_id;
 			ctrl_cfg.max = capability->cap[idx].max;
 			ctrl_cfg.min = capability->cap[idx].min;
-			ctrl_cfg.menu_skip_mask =
-				~(capability->cap[idx].step_or_mask);
 			ctrl_cfg.ops = core->v4l2_ctrl_ops;
-			ctrl_cfg.step = capability->cap[idx].step_or_mask;
 			ctrl_cfg.type = (capability->cap[idx].flags &
 					CAP_FLAG_MENU) ?
 					V4L2_CTRL_TYPE_MENU :
 					V4L2_CTRL_TYPE_INTEGER;
-			ctrl_cfg.qmenu = msm_vidc_get_qmenu_type(inst,
+			if (ctrl_cfg.type == V4L2_CTRL_TYPE_MENU) {
+				ctrl_cfg.menu_skip_mask =
+					~(capability->cap[idx].step_or_mask);
+				ctrl_cfg.qmenu = msm_vidc_get_qmenu_type(inst,
 					capability->cap[idx].v4l2_id);
+			} else {
+				ctrl_cfg.step =
+					capability->cap[idx].step_or_mask;
+			}
 			ctrl_cfg.name = msm_vidc_get_priv_ctrl_name(inst->sid,
 					capability->cap[idx].v4l2_id);
-			if (!ctrl_cfg.name || !ctrl_cfg.ops) {
-				s_vpr_e(inst->sid, "%s: invalid control, %d\n",
+			if (!ctrl_cfg.name) {
+				s_vpr_e(inst->sid, "%s: invalid control, %#x\n",
 					__func__, ctrl_cfg.id);
 				return -EINVAL;
 			}
@@ -189,8 +219,8 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			}
 		}
 		if (!ctrl) {
-			s_vpr_e(inst->sid, "%s: invalid ctrl %s\n", __func__,
-				ctrl->name);
+			s_vpr_e(inst->sid, "%s: invalid ctrl %#x\n", __func__,
+				capability->cap[idx].v4l2_id);
 			return -EINVAL;
 		}
 

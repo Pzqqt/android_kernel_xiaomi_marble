@@ -2543,24 +2543,24 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 		return rc;
 }
 
-int venus_hfi_start_input(struct msm_vidc_inst *inst)
+int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 port;
-
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
 
-	port = is_decode_session(inst) ? HFI_PORT_BITSTREAM : HFI_PORT_RAW;
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_START,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
 				HFI_HOST_FLAGS_INTR_REQUIRED),
-				port,
+				get_hfi_port(inst, port),
 				inst->session_id,
 				HFI_PAYLOAD_NONE,
 				NULL,
@@ -2575,90 +2575,25 @@ int venus_hfi_start_input(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-int venus_hfi_stop_input(struct msm_vidc_inst *inst)
+int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 port;
-
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
 
-	port = is_decode_session(inst) ? HFI_PORT_BITSTREAM : HFI_PORT_RAW;
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_STOP,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
 				HFI_HOST_FLAGS_INTR_REQUIRED |
 				HFI_HOST_FLAGS_NON_DISCARDABLE),
-				port,
-				inst->session_id,
-				HFI_PAYLOAD_NONE,
-				NULL,
-				0);
-	if (rc)
-		return rc;
-
-	rc = __iface_cmdq_write(inst->core, inst->packet);
-	if (rc)
-		return rc;
-
-	return rc;
-}
-
-int venus_hfi_start_output(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-	u32 port;
-
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
-
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	port = is_decode_session(inst) ? HFI_PORT_RAW : HFI_PORT_BITSTREAM;
-	rc = hfi_packet_session_command(inst,
-				HFI_CMD_START,
-				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-				HFI_HOST_FLAGS_INTR_REQUIRED),
-				port,
-				inst->session_id,
-				HFI_PAYLOAD_NONE,
-				NULL,
-				0);
-	if (rc)
-		return rc;
-
-	rc = __iface_cmdq_write(inst->core, inst->packet);
-	if (rc)
-		return rc;
-
-	return rc;
-}
-
-int venus_hfi_stop_output(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-	u32 port;
-
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
-
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	port = is_decode_session(inst) ? HFI_PORT_RAW : HFI_PORT_BITSTREAM;
-	rc = hfi_packet_session_command(inst,
-				HFI_CMD_STOP,
-				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-				HFI_HOST_FLAGS_INTR_REQUIRED |
-				HFI_HOST_FLAGS_NON_DISCARDABLE),
-				port,
+				get_hfi_port(inst, port),
 				inst->session_id,
 				HFI_PAYLOAD_NONE,
 				NULL,
@@ -2697,15 +2632,15 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 		return rc;
 
 	rc = hfi_create_packet(inst->packet,
-				inst->packet_size,
-				HFI_CMD_BUFFER,
-				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-				HFI_HOST_FLAGS_INTR_REQUIRED),
-				HFI_PAYLOAD_STRUCTURE,
-				get_hfi_port(inst, buffer->type),
-				core->packet_id++,
-				&hfi_buffer,
-				sizeof(hfi_buffer));
+			inst->packet_size,
+			HFI_CMD_BUFFER,
+			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+			HFI_HOST_FLAGS_INTR_REQUIRED),
+			HFI_PAYLOAD_STRUCTURE,
+			get_hfi_port_from_buffer_type(inst, buffer->type),
+			core->packet_id++,
+			&hfi_buffer,
+			sizeof(hfi_buffer));
 	if (rc)
 		return rc;
 
@@ -2714,14 +2649,14 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 		if (rc)
 			return rc;
 		rc = hfi_create_packet(inst->packet,
-				inst->packet_size,
-				HFI_CMD_BUFFER,
-				HFI_HOST_FLAGS_NONE,
-				HFI_PAYLOAD_STRUCTURE,
-				get_hfi_port(inst, metabuf->type),
-				core->packet_id++,
-				&hfi_buffer,
-				sizeof(hfi_buffer));
+			inst->packet_size,
+			HFI_CMD_BUFFER,
+			HFI_HOST_FLAGS_NONE,
+			HFI_PAYLOAD_STRUCTURE,
+			get_hfi_port_from_buffer_type(inst, metabuf->type),
+			core->packet_id++,
+			&hfi_buffer,
+			sizeof(hfi_buffer));
 		if (rc)
 			return rc;
 	}
@@ -2765,15 +2700,15 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 		return rc;
 
 	rc = hfi_create_packet(inst->packet,
-				inst->packet_size,
-				HFI_CMD_BUFFER,
-				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-				HFI_HOST_FLAGS_INTR_REQUIRED),
-				HFI_PAYLOAD_STRUCTURE,
-				get_hfi_port(inst, buffer->type),
-				core->packet_id++,
-				&hfi_buffer,
-				sizeof(hfi_buffer));
+			inst->packet_size,
+			HFI_CMD_BUFFER,
+			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+			HFI_HOST_FLAGS_INTR_REQUIRED),
+			HFI_PAYLOAD_STRUCTURE,
+			get_hfi_port_from_buffer_type(inst, buffer->type),
+			core->packet_id++,
+			&hfi_buffer,
+			sizeof(hfi_buffer));
 	if (rc)
 		return rc;
 

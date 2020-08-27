@@ -237,6 +237,9 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 	if (inst->domain == MSM_VIDC_ENCODER)
 		rc = msm_venc_s_fmt(inst, f);
 
+	if (rc)
+		s_vpr_e(inst->sid, "%s: s_fmt(%d) failed %d\n",
+			__func__, f->type, rc);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_s_fmt);
@@ -287,7 +290,12 @@ int msm_vidc_g_ctrl(void *instance, struct v4l2_control *control)
 		if (!rc)
 			control->value = ctrl->val;
 	}
-
+	if (rc)
+		s_vpr_e(inst->sid, "%s: failed for control id %#x\n",
+			__func__, control->id);
+	else
+		s_vpr_h(inst->sid, "%s: control id %#x, value %d\n",
+			__func__, control->id, control->value);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_g_ctrl);
@@ -324,11 +332,10 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 		}
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(b->type);
-	if (port < 0) {
-		d_vpr_e("%s: invalid queue type %d\n", __func__, b->type);
+	port = msm_vidc_get_port_from_v4l2_type(inst, b->type, __func__);
+	if (port < 0)
 		return -EINVAL;
-	}
+
 	rc = vb2_reqbufs(&inst->vb2q[port], b);
 	if (rc) {
 		s_vpr_e(inst->sid, "%s: vb2_reqbufs(%d) failed, %d\n",
@@ -390,9 +397,8 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		}
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(type);
+	port = msm_vidc_get_port_from_v4l2_type(inst, type, __func__);
 	if (port < 0) {
-		d_vpr_e("%s: invalid buf type %d\n", __func__, type);
 		rc = -EINVAL;
 		goto unlock;
 	}
@@ -410,7 +416,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		} else if (inst->state == MSM_VIDC_START_OUTPUT) {
 			new_state = MSM_VIDC_START;
 		}
-		rc = msm_vidc_change_inst_state(inst, new_state);
+		rc = msm_vidc_change_inst_state(inst, new_state, __func__);
 		if (rc)
 			goto unlock;
 	} else if (type == OUTPUT_PLANE) {
@@ -424,7 +430,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 			else
 				new_state = MSM_VIDC_DRAIN;
 		}
-		rc = msm_vidc_change_inst_state(inst, new_state);
+		rc = msm_vidc_change_inst_state(inst, new_state, __func__);
 		if (rc)
 			goto unlock;
 	}
@@ -469,9 +475,8 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		}
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(type);
+	port = msm_vidc_get_port_from_v4l2_type(inst, type, __func__);
 	if (port < 0) {
-		d_vpr_e("%s: invalid buf type %d\n", __func__, type);
 		rc = -EINVAL;
 		goto unlock;
 	}
@@ -498,7 +503,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 			new_state = MSM_VIDC_START_OUTPUT;
 			/* discard pending port settings change if any */
 		}
-		rc = msm_vidc_change_inst_state(inst, new_state);
+		rc = msm_vidc_change_inst_state(inst, new_state, __func__);
 		if (rc)
 			goto unlock;
 	} else if (type == OUTPUT_PLANE) {
@@ -514,7 +519,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		} else if (inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG) {
 			new_state = MSM_VIDC_DRAIN_START_INPUT;
 		}
-		rc = msm_vidc_change_inst_state(inst, new_state);
+		rc = msm_vidc_change_inst_state(inst, new_state, __func__);
 		if (rc)
 			goto unlock;
 	}
@@ -533,6 +538,29 @@ EXPORT_SYMBOL(msm_vidc_cmd);
 
 int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 {
+	struct msm_vidc_inst *inst = instance;
+	struct msm_vidc_inst_capability *capability;
+
+	if (!inst || !fsize) {
+		d_vpr_e("%s: invalid params: %pK %pK\n",
+				__func__, inst, fsize);
+		return -EINVAL;
+	}
+	if (!inst->capabilities) {
+		s_vpr_e(inst->sid, "capabilities not available\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
+	fsize->stepwise.min_width = capability->cap[FRAME_WIDTH].min;
+	fsize->stepwise.max_width = capability->cap[FRAME_WIDTH].max;
+	fsize->stepwise.step_width =
+		capability->cap[FRAME_WIDTH].step_or_mask;
+	fsize->stepwise.min_height = capability->cap[FRAME_HEIGHT].min;
+	fsize->stepwise.max_height = capability->cap[FRAME_HEIGHT].max;
+	fsize->stepwise.step_height =
+		capability->cap[FRAME_HEIGHT].step_or_mask;
+
 	return 0;
 }
 EXPORT_SYMBOL(msm_vidc_enum_framesizes);
@@ -550,6 +578,9 @@ int msm_vidc_subscribe_event(void *instance,
 	s_vpr_h(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
 	rc = v4l2_event_subscribe(&inst->event_handler,
 		sub, MAX_EVENTS, NULL);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: fialed, type %d id %d\n",
+			__func__, sub->type, sub->id);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_subscribe_event);
@@ -566,6 +597,9 @@ int msm_vidc_unsubscribe_event(void *instance,
 	}
 	s_vpr_h(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
 	rc = v4l2_event_unsubscribe(&inst->event_handler, sub);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: fialed, type %d id %d\n",
+			 __func__, sub->type, sub->id);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_unsubscribe_event);
@@ -580,6 +614,8 @@ int msm_vidc_dqevent(void *instance, struct v4l2_event *event)
 		return -EINVAL;
 	}
 	rc = v4l2_event_dequeue(&inst->event_handler, event, false);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: fialed\n", __func__);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_dqevent);
@@ -708,6 +744,14 @@ EXPORT_SYMBOL(msm_vidc_open);
 
 int msm_vidc_close(void *instance)
 {
+	struct msm_vidc_inst *inst = instance;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	s_vpr_h(inst->sid, "%s()\n", __func__);
+
 	return 0;
 }
 EXPORT_SYMBOL(msm_vidc_close);

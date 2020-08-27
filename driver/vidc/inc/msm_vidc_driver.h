@@ -72,7 +72,7 @@ u32 get_v4l2_colorformat_from_vidc(enum msm_vidc_colorformat_type colorformat);
 enum msm_vidc_colorformat_type get_vidc_colorformat_from_v4l2(u32 colorformat);
 u32 get_media_colorformat_from_v4l2(u32 v4l2_fmt);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
-		enum msm_vidc_inst_state state);
+	enum msm_vidc_inst_state state, const char *func);
 int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type);
 int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
@@ -94,15 +94,16 @@ void msm_vidc_batch_handler(struct work_struct *work);
 int msm_vidc_setup_event_queue(struct msm_vidc_inst *inst);
 int msm_vidc_vb2_queue_init(struct msm_vidc_inst *inst);
 int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl);
-int msm_vidc_get_port_from_v4l2_type(u32 type);
+int msm_vidc_get_port_from_v4l2_type(struct msm_vidc_inst *inst, u32 type,
+	const char *func);
 u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
-	enum msm_vidc_buffer_type buffer_type);
+	enum msm_vidc_buffer_type buffer_type, const char *func);
 struct msm_vidc_buffer_info *msm_vidc_get_buffer_info(struct msm_vidc_inst *inst,
-	enum msm_vidc_buffer_type buffer_type);
+	enum msm_vidc_buffer_type buffer_type, const char *func);
 struct msm_vidc_map_info *msm_vidc_get_map_info(struct msm_vidc_inst *inst,
-	enum msm_vidc_buffer_type buffer_type);
+	enum msm_vidc_buffer_type buffer_type, const char *func);
 struct msm_vidc_alloc_info *msm_vidc_get_alloc_info(struct msm_vidc_inst *inst,
-	enum msm_vidc_buffer_type buffer_type);
+	enum msm_vidc_buffer_type buffer_type, const char *func);
 struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
 		u32 session_id);
 void put_inst(struct msm_vidc_inst *inst);
@@ -110,6 +111,5 @@ void core_lock(struct msm_vidc_core *core, const char *function);
 void core_unlock(struct msm_vidc_core *core, const char *function);
 void inst_lock(struct msm_vidc_inst *inst, const char *function);
 void inst_unlock(struct msm_vidc_inst *inst, const char *function);
-
 #endif // _MSM_VIDC_DRIVER_H_
 

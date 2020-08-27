@@ -174,6 +174,14 @@ enum msm_vidc_inst_capability_type {
 	FRAME_WIDTH,
 	FRAME_HEIGHT,
 	PIX_FMTS,
+	MIN_BUFFERS_INPUT,
+	MIN_BUFFERS_OUTPUT,
+	DECODE_ORDER,
+	THUMBNAIL_MODE,
+	SECURE_MODE,
+	LOWLATENCY_MODE,
+	LOWLATENCY_HINT,
+	BUF_SIZE_LIMIT,
 	MBPF,
 	MBPS,
 	FRAME_RATE,
@@ -413,13 +421,41 @@ struct msm_vidc_session_idle {
 	u64                    last_activity_time_ns;
 };
 
-struct msm_vidc_port_settings {
-	u32                    aligned_width;
-	u32                    aligned_height;
-	u32                    crop_width;
-	u32                    crop_height;
+struct msm_vidc_color_info {
+	u32 colorspace;
+	u32 ycbcr_enc;
+	u32 xfer_func;
+	u32 quantization;
+};
+
+struct msm_vidc_crop {
+	u32 x;
+	u32 y;
+	u32 width;
+	u32 height;
+};
+
+struct msm_vidc_properties {
+	u32                    frame_rate;
+	u32                    operating_rate;
+	u32                    bit_rate;
+	u32                    profile;
+	u32                    level;
+	u32                    entropy_mode;
+	u32                    rc_type;
+};
+
+struct msm_vidc_subscription_params {
+	u32                    align_width;
+	u32                    align_height;
+	struct msm_vidc_crop   crop;
+	struct msm_vidc_color_info   color_info;
+	u32                    bit_depth;
+	u32                    cabac;
+	u32                    interlace;
 	u32                    min_count;
-	u32                    poc;
+	u32                    pic_order_cnt;
+	u32                    profile;
 };
 
 struct msm_vidc_decode_vpp_delay {
@@ -501,23 +537,6 @@ struct msm_vidc_buffer_info {
 	u32                    extra_count;
 	u32                    actual_count;
 	u32                    size;
-};
-
-struct msm_vidc_crop {
-	u32 x;
-	u32 y;
-	u32 width;
-	u32 height;
-};
-
-struct msm_vidc_properties {
-	u32                    frame_rate;
-	u32                    operating_rate;
-	u32                    bit_rate;
-	u32                    profile;
-	u32                    level;
-	u32                    entropy_mode;
-	u32                    rc_type;
 };
 
 struct msm_vidc_ssr {

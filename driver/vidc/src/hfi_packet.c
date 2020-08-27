@@ -11,6 +11,49 @@
 #include "msm_vidc_platform.h"
 
 u32 get_hfi_port(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	u32 hfi_port = HFI_PORT_NONE;
+
+	if (is_decode_session(inst)) {
+		switch(port) {
+		case INPUT_PORT:
+		case INPUT_META_PORT:
+			hfi_port = HFI_PORT_BITSTREAM;
+			break;
+		case OUTPUT_PORT:
+		case OUTPUT_META_PORT:
+			hfi_port = HFI_PORT_RAW;
+			break;
+		default:
+			s_vpr_e(inst->sid, "%s: invalid port type %d\n",
+				__func__, port);
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (port) {
+		case INPUT_PORT:
+		case INPUT_META_PORT:
+			hfi_port = HFI_PORT_RAW;
+			break;
+		case OUTPUT_PORT:
+		case OUTPUT_META_PORT:
+			hfi_port = HFI_PORT_BITSTREAM;
+			break;
+		default:
+			s_vpr_e(inst->sid, "%s: invalid port type %d\n",
+				__func__, port);
+			break;
+		}
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid domain %#x\n",
+			__func__, inst->domain);
+	}
+
+	return hfi_port;
+}
+
+u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type)
 {
 	u32 hfi_port = HFI_PORT_NONE;

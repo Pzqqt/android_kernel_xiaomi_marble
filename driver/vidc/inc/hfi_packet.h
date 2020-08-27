@@ -14,6 +14,8 @@
 #include "hfi_definition.h"
 
 u32 get_hfi_port(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port);
+u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type);
 u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
 	enum msm_vidc_buffer_type buffer_type);

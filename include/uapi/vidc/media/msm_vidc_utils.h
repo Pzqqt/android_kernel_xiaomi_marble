@@ -27,6 +27,32 @@
 /* vendor controls start */
 #define V4L2_CID_MPEG_MSM_VIDC_BASE             (V4L2_CTRL_CLASS_MPEG | 0x2000)
 
+#define V4L2_CID_MPEG_VIDC_VIDEO_DECODE_ORDER                                 \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x1)
+#define V4L2_CID_MPEG_VIDC_VIDEO_SYNC_FRAME_DECODE                            \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x2)
+#define V4L2_CID_MPEG_VIDC_VIDEO_SECURE                                       \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x3)
+#define V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_MODE                              \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x4)
+#define V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_HINT                              \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x5)
+#define V4L2_CID_MPEG_VIDC_VIDEO_BUFFER_SIZE_LIMIT                            \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x6)
+
+#define V4L2_CID_MPEG_VIDC_VIDEO_DECODE_ORDER                                 \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x1)
+#define V4L2_CID_MPEG_VIDC_VIDEO_SYNC_FRAME_DECODE                            \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x2)
+#define V4L2_CID_MPEG_VIDC_VIDEO_SECURE                                       \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x3)
+#define V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_MODE                              \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x4)
+#define V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_HINT                              \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x5)
+#define V4L2_CID_MPEG_VIDC_VIDEO_BUFFER_SIZE_LIMIT                            \
+		(V4L2_CID_MPEG_MSM_VIDC_BASE + 0x6)
+
 /* vendor controls end */
 
 #endif

@@ -46,11 +46,10 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(q->type);
-	if (port < 0) {
-		d_vpr_e("%s: invalid queue type %d\n", __func__, q->type);
+	port = msm_vidc_get_port_from_v4l2_type(inst, q->type, __func__);
+	if (port < 0)
 		return -EINVAL;
-	}
+
 	if (port == INPUT_PORT || port == INPUT_META_PORT) {
 		if (inst->state == MSM_VIDC_START_INPUT) {
 			d_vpr_e("%s: input invalid state %d\n",
