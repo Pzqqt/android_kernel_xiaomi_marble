@@ -186,6 +186,8 @@ struct wlan_roam_triggers {
  *                   absolute RSSI threshold. Zero means no absolute minimum
  *                   RSSI is required. units are the offset from the noise
  *                   floor in dB
+ * @bg_rssi_threshold: Value of rssi threshold to trigger roaming
+ *                     after background scan.
  */
 struct ap_profile {
 	uint32_t flags;
@@ -196,6 +198,7 @@ struct ap_profile {
 	uint32_t rsn_mcastcipherset;
 	uint32_t rsn_mcastmgmtcipherset;
 	uint32_t rssi_abs_thresh;
+	uint8_t bg_rssi_threshold;
 };
 
 /**

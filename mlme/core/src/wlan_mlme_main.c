@@ -1696,6 +1696,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 	lfr->roam_preauth_retry_count =
 		cfg_get(psoc, CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT);
 	lfr->roam_rssi_diff = cfg_get(psoc, CFG_LFR_ROAM_RSSI_DIFF);
+	lfr->bg_rssi_threshold = cfg_get(psoc, CFG_LFR_ROAM_BG_RSSI_TH);
 	lfr->roam_scan_offload_enabled =
 		cfg_get(psoc, CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED);
 	lfr->neighbor_scan_timer_period =

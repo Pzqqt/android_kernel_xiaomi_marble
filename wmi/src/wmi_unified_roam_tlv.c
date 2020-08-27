@@ -2967,6 +2967,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_ap_profile));
 	profile->flags = ap_profile->profile.flags;
 	profile->rssi_threshold = ap_profile->profile.rssi_threshold;
+	profile->bg_rssi_threshold = ap_profile->profile.bg_rssi_threshold;
 	profile->ssid.ssid_len = ap_profile->profile.ssid.length;
 	qdf_mem_copy(profile->ssid.ssid, ap_profile->profile.ssid.ssid,
 		     profile->ssid.ssid_len);
@@ -2977,8 +2978,9 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 				ap_profile->profile.rsn_mcastmgmtcipherset;
 	profile->rssi_abs_thresh = ap_profile->profile.rssi_abs_thresh;
 
-	WMI_LOGD("AP PROFILE: flags %x rssi_thres:%d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
+	WMI_LOGD("AP PROFILE: flags %x rssi_thres:%d bg_rssi_thres:%d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
 		 profile->flags, profile->rssi_threshold,
+		 profile->bg_rssi_threshold,
 		 profile->ssid.ssid_len, ap_profile->profile.ssid.ssid,
 		 profile->rsn_authmode, profile->rsn_ucastcipherset,
 		 profile->rsn_mcastcipherset, profile->rsn_mcastmgmtcipherset,

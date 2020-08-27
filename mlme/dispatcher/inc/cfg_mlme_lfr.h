@@ -1252,6 +1252,34 @@
 
 /*
  * <ini>
+ * bg_rssi_threshold - To set RSSI Threshold for BG scan roaming
+ * @Min: 0
+ * @Max: 100
+ * @Default: 5
+ *
+ * This INI is used to set the value of rssi threshold to trigger roaming
+ * after background scan. To trigger roam after bg scan, value of rssi of
+ * candidate AP should be higher by this threshold than the rssi of the
+ * currrently associated AP.
+ *
+ * Related: RoamRssiDiff
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_BG_RSSI_TH CFG_INI_UINT( \
+	"bg_rssi_threshold", \
+	0, \
+	100, \
+	5, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Enable roam based on rssi after BG scan")
+
+/*
+ * <ini>
  * gWESModeEnabled - Enable WES mode
  * @Min: 0
  * @Max: 1
@@ -2893,6 +2921,7 @@
 	CFG(CFG_LFR_MAWC_FEATURE_ENABLED) \
 	CFG(CFG_LFR_FAST_TRANSITION_ENABLED) \
 	CFG(CFG_LFR_ROAM_RSSI_DIFF) \
+	CFG(CFG_LFR_ROAM_BG_RSSI_TH) \
 	CFG(CFG_LFR_ENABLE_WES_MODE) \
 	CFG(CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED) \
 	CFG(CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST) \
