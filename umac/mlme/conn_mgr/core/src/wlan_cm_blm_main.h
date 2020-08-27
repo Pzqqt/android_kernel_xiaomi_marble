@@ -20,7 +20,6 @@
 
 #ifndef _WLAN_CM_BLM_MAIN_H_
 #define _WLAN_CM_BLM_MAIN_H_
-#if 0
 #include <wlan_scan_public_structs.h>
 
 /**
@@ -34,5 +33,4 @@ struct blm_entry_iter_obj {
 	struct wlan_objmgr_vdev *sta_vdev;
 	bool match;
 };
-#endif
 #endif
