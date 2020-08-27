@@ -944,3 +944,23 @@ void msm_vidc_fw_unload_handler(struct work_struct *work)
 void msm_vidc_batch_handler(struct work_struct *work)
 {
 }
+
+void core_lock(struct msm_vidc_core *core, const char *function)
+{
+	mutex_lock(&core->lock);
+}
+
+void core_unlock(struct msm_vidc_core *core, const char *function)
+{
+	mutex_unlock(&core->lock);
+}
+
+void inst_lock(struct msm_vidc_inst *inst, const char *function)
+{
+	mutex_lock(&inst->lock);
+}
+
+void inst_unlock(struct msm_vidc_inst *inst, const char *function)
+{
+	mutex_unlock(&inst->lock);
+}
