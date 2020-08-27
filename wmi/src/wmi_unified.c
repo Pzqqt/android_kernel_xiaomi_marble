@@ -2395,6 +2395,35 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	wmi_process_control_rx(wmi_handle, evt_buf);
 }
 
+#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+/**
+ * wmi_control_diag_rx() - process diag fw events callbacks
+ * @ctx: handle to wmi
+ * @htc_packet: pointer to htc packet
+ *
+ * Return: none
+ */
+static void wmi_control_diag_rx(void *ctx, HTC_PACKET *htc_packet)
+{
+	struct wmi_soc *soc = (struct wmi_soc *)ctx;
+	struct wmi_unified *wmi_handle;
+	wmi_buf_t evt_buf;
+
+	evt_buf = (wmi_buf_t)htc_packet->pPktContext;
+
+	wmi_handle = soc->wmi_pdev[0];
+	if (!wmi_handle) {
+		WMI_LOGE
+		("unable to get wmi_handle for diag event end point id:%d\n",
+		 htc_packet->Endpoint);
+		qdf_nbuf_free(evt_buf);
+		return;
+	}
+
+	wmi_process_control_rx(wmi_handle, evt_buf);
+}
+#endif
+
 #ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
 QDF_STATUS wmi_unified_cmd_send_over_qmi(struct wmi_unified *wmi_handle,
 					 wmi_buf_t buf, uint32_t buflen,
@@ -3191,6 +3220,56 @@ wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
+/**
+ * wmi_diag_connect_pdev_htc_service()
+ * WMI DIAG API to get connect to HTC service
+ *
+ * @wmi_handle: handle to WMI.
+ * @htc_handle: handle to HTC
+ *
+ * @Return: QDF_STATUS
+ */
+QDF_STATUS wmi_diag_connect_pdev_htc_service(struct wmi_unified *wmi_handle,
+					     HTC_HANDLE htc_handle)
+{
+	QDF_STATUS status;
+	struct htc_service_connect_resp response;
+	struct htc_service_connect_req connect;
+
+	OS_MEMZERO(&connect, sizeof(connect));
+	OS_MEMZERO(&response, sizeof(response));
+
+	/* meta data is unused for now */
+	connect.pMetaData = NULL;
+	connect.MetaDataLength = 0;
+	connect.EpCallbacks.pContext = wmi_handle->soc;
+	connect.EpCallbacks.EpTxCompleteMultiple = NULL;
+	connect.EpCallbacks.EpRecv = wmi_control_diag_rx /* wmi diag rx */;
+	connect.EpCallbacks.EpRecvRefill = NULL;
+	connect.EpCallbacks.EpSendFull = NULL;
+	connect.EpCallbacks.EpTxComplete = NULL;
+	connect.EpCallbacks.ep_log_pkt = wmi_htc_log_pkt;
+
+	/* connect to wmi diag service */
+	connect.service_id = WMI_CONTROL_DIAG_SVC;
+	status = htc_connect_service(htc_handle, &connect, &response);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("Failed to connect to WMI DIAG service status:%d\n",
+			 status);
+		return status;
+	}
+
+	if (wmi_handle->soc->is_async_ep)
+		htc_set_async_ep(htc_handle, response.Endpoint, true);
+
+	wmi_handle->soc->wmi_diag_endpoint_id = response.Endpoint;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wmi_get_host_credits() -  WMI API to get updated host_credits
