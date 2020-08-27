@@ -17663,6 +17663,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->RoamRescanRssiDiff =
 		roam_info->cfgParams.nRoamRescanRssiDiff;
 	req_buf->RoamRssiDiff = roam_info->cfgParams.roam_rssi_diff;
+	req_buf->bg_rssi_threshold = roam_info->cfgParams.bg_rssi_threshold;
 	req_buf->rssi_abs_thresh =
 		mac_ctx->mlme_cfg->lfr.roam_rssi_abs_threshold;
 	req_buf->reason = reason;
@@ -19945,6 +19946,8 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 	/* Group management cipher suite */
 
 	profile->rssi_threshold = roam_info->cfgParams.roam_rssi_diff;
+	profile->bg_rssi_threshold =
+			roam_info->cfgParams.bg_rssi_threshold;
 	/*
 	 * rssi_diff which is updated via framework is equivalent to the
 	 * INI RoamRssiDiff parameter and hence should be updated.

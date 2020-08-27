@@ -7002,6 +7002,9 @@ sme_restore_default_roaming_params(struct mac_context *mac,
 			mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold;
 	roam_info->cfgParams.roam_rssi_diff =
 			mac->mlme_cfg->lfr.roam_rssi_diff;
+	roam_info->cfgParams.bg_rssi_threshold =
+			mac->mlme_cfg->lfr.bg_rssi_threshold;
+
 	roam_info->cfgParams.maxChannelScanTime =
 			mac->mlme_cfg->lfr.neighbor_scan_max_chan_time;
 	roam_info->cfgParams.roam_scan_home_away_time =

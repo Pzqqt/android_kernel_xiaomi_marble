@@ -1065,6 +1065,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 		profile->rsn_mcastcipherset = WMI_CIPHER_NONE;
 		profile->rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
 		profile->rssi_threshold = WMA_ROAM_RSSI_DIFF_DEFAULT;
+		profile->bg_rssi_threshold = WMA_ROAM_RSSI_DIFF_DEFAULT;
 
 		return;
 	}
@@ -1100,6 +1101,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 			roam_req->ConnectedNetwork.gp_mgmt_cipher_suite);
 
 	profile->rssi_threshold = roam_req->RoamRssiDiff;
+	profile->bg_rssi_threshold = roam_req->bg_rssi_threshold;
 	if (roam_req->rssi_abs_thresh)
 		profile->rssi_abs_thresh = roam_req->rssi_abs_thresh;
 #ifdef WLAN_FEATURE_11W

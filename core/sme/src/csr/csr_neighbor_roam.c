@@ -1140,6 +1140,8 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 		mac->mlme_cfg->lfr.roam_scan_hi_rssi_ub;
 	pNeighborRoamInfo->cfgParams.roam_rssi_diff =
 		mac->mlme_cfg->lfr.roam_rssi_diff;
+	pNeighborRoamInfo->cfgParams.bg_rssi_threshold =
+		mac->mlme_cfg->lfr.bg_rssi_threshold;
 
 	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
 	pNeighborRoamInfo->currentNeighborLookupThreshold =
