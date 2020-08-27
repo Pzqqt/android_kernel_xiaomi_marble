@@ -146,7 +146,7 @@ QDF_STATUS target_if_ftm_cmd_send(struct wlan_objmgr_pdev *pdev,
 
 QDF_STATUS target_if_ftm_attach(struct wlan_objmgr_psoc *psoc)
 {
-	int ret;
+	QDF_STATUS ret;
 	wmi_unified_t handle;
 
 	if (!psoc) {
@@ -163,7 +163,7 @@ QDF_STATUS target_if_ftm_attach(struct wlan_objmgr_psoc *psoc)
 			wmi_pdev_utf_event_id,
 			target_if_ftm_process_utf_event,
 			WMI_RX_UMAC_CTX);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		ftm_err("wmi event registration failed, ret: %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
