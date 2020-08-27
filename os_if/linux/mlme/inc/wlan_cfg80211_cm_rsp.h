@@ -24,4 +24,22 @@
 #ifndef __WLAN_CFG80211_CM_RSP_H
 #define __WLAN_CFG80211_CM_RSP_H
 
+#include "wlan_objmgr_vdev_obj.h"
+#include "wlan_cm_public_struct.h"
+
+/**
+ * osif_disconnect_handler() - Indicate disconnnect to userspace
+ * @vdev: vdev pointer
+ * @rsp: Disconnect response from connection manager
+ *
+ * This function indicates disconnect to the kernel which thus indicates
+ * to the userspace.
+ *
+ * Context: Any context
+ * Return: QDF_STATUS_SUCCESS on successful indication to kernel,
+ * else QDF_STATUS with failure reason
+ */
+QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_discon_rsp *rsp);
+
 #endif /* __WLAN_CFG80211_CM_RSP_H */

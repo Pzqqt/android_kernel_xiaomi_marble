@@ -27,6 +27,7 @@
 #include <wlan_scan_public_structs.h>
 #include "wlan_crypto_global_def.h"
 
+#define CM_ID_INVALID 0xFFFFFFFF
 typedef uint32_t wlan_cm_id;
 
 /**
@@ -109,6 +110,8 @@ struct wlan_fils_con_info {
  * @CM_INTERNAL_DISCONNECT: Internal disconnect initiated by Connection manager
  * on receiving the back to back commands
  * @CM_ROAM_DISCONNECT: Disconnect req due to HO failure
+ * @CM_SOURCE_MAX: max value of connection manager source
+ * @CM_SOURCE_INVALID: Invalid connection manager req source
  */
 enum wlan_cm_source {
 	CM_OSIF_CONNECT_REQ,
@@ -118,6 +121,8 @@ enum wlan_cm_source {
 	CM_SB_DISCONNECT,
 	CM_INTERNAL_DISCONNECT,
 	CM_ROAM_DISCONNECT,
+	CM_SOURCE_MAX,
+	CM_SOURCE_INVALID = CM_SOURCE_MAX,
 };
 
 /**

@@ -31,4 +31,33 @@
  * Return: QDF_STATUS
  */
 QDF_STATUS osif_cm_register_cb(void);
+
+/**
+ * osif_cm_reset_id_and_src_no_lock() - Function to resets last
+ * connection manager command id and source in osif
+ * @osif_priv: Pointer to vdev osif priv
+ *
+ * This function resets the last connection manager command id
+ * and source.
+ *
+ * Context: Any context. This function should be called by holding
+ * cmd id spinlock
+ * Return: None
+ */
+
+void osif_cm_reset_id_and_src_no_lock(struct vdev_osif_priv *osif_priv);
+
+/**
+ * osif_cm_reset_id_and_src() - Function to resets last
+ * connection manager command id and source in osif
+ * @vdev: vdev pointer
+ *
+ * This function resets the last connection manager command id
+ * and source.
+ *
+ * Context: Any context. Takes and release cmd id spinlock
+ * Return: None
+ */
+QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev);
+
 #endif /* __WLAN_CFG80211_CM_UTIL_H */

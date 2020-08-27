@@ -25,6 +25,7 @@
 #include "wlan_cm_ucfg_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include <wlan_cfg80211.h>
+#include "wlan_cfg80211_cm_util.h"
 
 static void wlan_osif_free_wep_key_params(
 				struct wlan_cm_connect_req *connect_req)
@@ -319,6 +320,10 @@ int wlan_osif_cfg80211_connect(struct net_device *dev,
 
 	osif_dump_connect_req(dev, vdev_id, req);
 
+	status = osif_cm_reset_id_and_src(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
 	connect_req = qdf_mem_malloc(sizeof(*connect_req));
 	if (!connect_req)
 		return -ENOMEM;
@@ -398,13 +403,17 @@ int wlan_osif_cfg80211_disconnect(struct net_device *dev,
 	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	QDF_STATUS status;
 
-	req = qdf_mem_malloc(sizeof(*req));
-	if (!req)
-		return -ENOMEM;
-
 	/* print reason in string */
 	osif_info("%s(vdevid-%d): Received Disconnect reason:%d",
 		  dev->name, vdev_id, reason);
+
+	status = osif_cm_reset_id_and_src(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return -ENOMEM;
 
 	req->vdev_id = vdev_id;
 	req->source = CM_OSIF_DISCONNECT;

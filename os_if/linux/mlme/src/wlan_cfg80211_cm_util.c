@@ -24,6 +24,28 @@
 #include "wlan_cfg80211_cm_util.h"
 #include "wlan_osif_priv.h"
 #include "wlan_cfg80211.h"
+#include "wlan_cfg80211_cm_rsp.h"
+
+void osif_cm_reset_id_and_src_no_lock(struct vdev_osif_priv *osif_priv)
+{
+	osif_priv->last_cmd_info.last_id = CM_ID_INVALID;
+	osif_priv->last_cmd_info.last_source = CM_SOURCE_INVALID;
+}
+
+QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+
+	if (!osif_priv) {
+		osif_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_spinlock_acquire(&osif_priv->last_cmd_info.cmd_id_lock);
+	osif_cm_reset_id_and_src_no_lock(osif_priv);
+	qdf_spinlock_release(&osif_priv->last_cmd_info.cmd_id_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * osif_cm_connect_complete_cb() - Connect complete callback
@@ -85,16 +107,17 @@ osif_cm_update_id_and_src_cb(struct wlan_objmgr_vdev *vdev,
 /**
  * osif_cm_disconnect_complete_cb() - Disconnect done callback
  * @vdev: vdev pointer
- * @cm_disconnect_rsp: Disconnect response
+ * @disconnect_rsp: Disconnect response
  *
+ * Context: Any context
  * Return: QDF_STATUS
  */
 
 static QDF_STATUS
 osif_cm_disconnect_complete_cb(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_discon_rsp *cm_disconnect_rsp)
+			       struct wlan_cm_discon_rsp *rsp)
 {
-	return QDF_STATUS_SUCCESS;
+	return osif_disconnect_handler(vdev, rsp);
 }
 
 /**

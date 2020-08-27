@@ -20,3 +20,109 @@
  * This file maintains definitaions of disconnect response
  * fucntions.
  */
+
+#include <wlan_cfg80211.h>
+#include <linux/wireless.h>
+#include "wlan_cfg80211_cm_rsp.h"
+#include "wlan_osif_priv.h"
+#include "wlan_cfg80211_cm_util.h"
+
+/**
+ * osif_validate_disconnect_and_reset_src_id() - Validate disconnection
+ * and resets source and id
+ * @osif_priv: Pointer to vdev osif priv
+ * @rsp: Disconnect response from connectin manager
+ *
+ * This function validates disconnect response and if the disconnect
+ * response is valid, resets the source and id of the command
+ *
+ * Context: Any context. Takes and releases cmd id spinlock.
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS
+osif_validate_disconnect_and_reset_src_id(struct vdev_osif_priv *osif_priv,
+					  struct wlan_cm_discon_rsp *rsp)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	/* Always drop internal disconnect */
+	qdf_spinlock_acquire(&osif_priv->last_cmd_info.cmd_id_lock);
+	if (rsp->req.req.source == CM_INTERNAL_DISCONNECT) {
+		osif_debug("ignore internal disconnect");
+		status = QDF_STATUS_E_INVAL;
+		goto rel_lock;
+	}
+
+	/*
+	 * Send to kernel only if last osif cmd type is disconnect and
+	 * cookie match else drop. If cookie match reset the cookie
+	 * and source
+	 */
+	if (rsp->req.cm_id != osif_priv->last_cmd_info.last_id ||
+	    rsp->req.req.source != osif_priv->last_cmd_info.last_source) {
+		osif_debug("Ignore as cm_id(%d)/src(%d) didn't match stored cm_id(%d)/src(%d)",
+			   rsp->req.cm_id, rsp->req.req.source,
+			   osif_priv->last_cmd_info.last_id,
+			   osif_priv->last_cmd_info.last_source);
+		status = QDF_STATUS_E_INVAL;
+		goto rel_lock;
+	}
+
+	osif_cm_reset_id_and_src_no_lock(osif_priv);
+rel_lock:
+	qdf_spinlock_release(&osif_priv->last_cmd_info.cmd_id_lock);
+
+	return status;
+}
+
+#if defined(CFG80211_DISCONNECTED_V2) || \
+(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
+static void
+osif_cm_indicate_disconnect(struct net_device *dev,
+			    enum ieee80211_reasoncode reason,
+			    bool locally_generated, const u8 *ie,
+			    size_t ie_len, gfp_t gfp)
+{
+	cfg80211_disconnected(dev, reason, ie, ie_len, locally_generated, gfp);
+}
+#else
+static void
+osif_cm_indicate_disconnect(struct net_device *dev,
+			    enum ieee80211_reasoncode reason,
+			    bool locally_generated, const u8 *ie,
+			    size_t ie_len, gfp_t gfp)
+{
+	cfg80211_disconnected(dev, reason, ie, ie_len, gfp);
+}
+#endif
+
+QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_discon_rsp *rsp)
+{
+	enum ieee80211_reasoncode ieee80211_reason = rsp->req.req.reason_code;
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	bool locally_generated = true;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	osif_info("%s(vdevid-%d): Disconnected, bssid: " QDF_MAC_ADDR_FMT " cm_id %d source %d reason_code %d locally_generated %d",
+		  osif_priv->wdev->netdev->name,
+		  rsp->req.req.vdev_id,
+		  QDF_MAC_ADDR_REF(rsp->req.req.bssid.bytes),
+		  rsp->req.cm_id, rsp->req.req.source,
+		  rsp->req.req.reason_code,
+		  locally_generated);
+
+	status = osif_validate_disconnect_and_reset_src_id(osif_priv, rsp);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	if (rsp->req.req.source == CM_PEER_DISCONNECT)
+		locally_generated = false;
+
+	osif_cm_indicate_disconnect(osif_priv->wdev->netdev, ieee80211_reason,
+				    locally_generated, rsp->ap_discon_ie.ptr,
+				    rsp->ap_discon_ie.len, GFP_KERNEL);
+
+	return status;
+}
