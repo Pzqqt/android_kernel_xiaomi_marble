@@ -129,6 +129,17 @@ wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason);
  */
 void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi);
 
+/**
+ * wlan_cm_roam_neighbor_proceed_with_handoff_req() - invoke host handover to
+ * new AP
+ * @vdev_id: vdev id
+ *
+ * This function gets called to invoke host handover to new AP
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_neighbor_proceed_with_handoff_req(uint8_t vdev_id);
 #else
 static inline QDF_STATUS
 wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,

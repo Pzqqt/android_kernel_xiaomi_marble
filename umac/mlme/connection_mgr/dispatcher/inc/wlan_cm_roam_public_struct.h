@@ -1207,6 +1207,7 @@ struct set_pcl_req {
  * @send_roam_start_req: TX ops function pointer to send roam start related
  * commands
  * @send_roam_abort: send roam abort
+ * @send_roam_disable_config: send roam disable config
  */
 struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
@@ -1230,6 +1231,8 @@ struct wlan_cm_roam_tx_ops {
 				struct wlan_per_roam_config_req *req);
 	QDF_STATUS (*send_roam_triggers)(struct wlan_objmgr_vdev *vdev,
 					 struct wlan_roam_triggers *req);
+	QDF_STATUS (*send_roam_disable_config)(struct wlan_objmgr_vdev *vdev,
+				struct roam_disable_cfg *req);
 #endif
 };
 

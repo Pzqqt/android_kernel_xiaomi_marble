@@ -89,7 +89,7 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		 uint8_t reason);
 
 /**
- * wlan_cm_rso_fill_rssi_change_params  - Fill roam scan rssi change parameters
+ * cm_roam_fill_rssi_change_params() - Fill roam scan rssi change parameters
  * @psoc: PSOC pointer
  * @vdev_id: vdev_id
  * @params: RSSI change parameters
@@ -100,4 +100,16 @@ QDF_STATUS
 cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				struct wlan_roam_rssi_change_params *params);
 #endif
+
+/**
+ * cm_roam_send_disable_config() - Send roam module enable/disable cfg to fw
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @cfg: roaming enable/disable cfg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
+			    uint8_t vdev_id, uint8_t cfg);
 #endif

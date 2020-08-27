@@ -2930,4 +2930,24 @@ bool
 wlan_mlme_check_chan_param_has_dfs(struct wlan_objmgr_pdev *pdev,
 				   struct ch_params *ch_params,
 				   uint32_t chan_freq);
+
+/**
+ * wlan_mlme_set_usr_disabled_roaming() - Set user config for roaming disable
+ * @psoc: pointer to psoc object
+ * @val: user config for roaming disable
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_set_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * wlan_mlme_get_usr_disabled_roaming() - Get user config for roaming disable
+ * @psoc: pointer to psoc object
+ * @val: user config for roaming disable
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool *val);
 #endif /* _WLAN_MLME_API_H_ */

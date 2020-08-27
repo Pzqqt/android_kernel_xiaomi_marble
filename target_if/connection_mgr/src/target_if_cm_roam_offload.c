@@ -1199,6 +1199,51 @@ target_if_cm_roam_per_config(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
+ * target_if_cm_roam_send_disable_config() - Send roam disable config related
+ * commands to wmi
+ * @vdev: vdev object
+ * @req: roam disable config parameters
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_disable_config(struct wlan_objmgr_vdev *vdev,
+				      struct roam_disable_cfg *req)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	wmi_unified_t wmi_handle;
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		target_if_err("Failed to get vdev mlme obj!");
+		goto end;
+	}
+
+	if (vdev_mlme->mgmt.generic.type != WMI_VDEV_TYPE_STA ||
+	    vdev_mlme->mgmt.generic.subtype != 0) {
+		target_if_err("This isn't a STA: %d", req->vdev_id);
+		goto end;
+	}
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		goto end;
+
+	status = target_if_vdev_set_param(
+				wmi_handle,
+				req->vdev_id,
+				WMI_VDEV_PARAM_ROAM_11KV_CTRL,
+				req->cfg);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("Failed to set WMI_VDEV_PARAM_ROAM_11KV_CTRL");
+
+end:
+	return status;
+}
+
+/**
  * target_if_cm_roam_register_rso_req_ops() - Register rso req tx ops fucntions
  * @tx_ops: tx ops
  *
@@ -1216,6 +1261,8 @@ target_if_cm_roam_register_rso_req_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 	tx_ops->send_roam_abort = target_if_cm_roam_abort;
 	tx_ops->send_roam_per_config = target_if_cm_roam_per_config;
 	tx_ops->send_roam_triggers = target_if_cm_roam_triggers;
+	tx_ops->send_roam_disable_config =
+					target_if_cm_roam_send_disable_config;
 }
 #else
 static void
