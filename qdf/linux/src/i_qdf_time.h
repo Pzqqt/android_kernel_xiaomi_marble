@@ -300,7 +300,7 @@ static inline uint64_t __qdf_get_log_timestamp(void)
 {
 	struct timespec64 ts;
 
-	ktime_get_real_ts64(&ts);
+	ktime_get_ts64(&ts);
 
 	return ((uint64_t)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
