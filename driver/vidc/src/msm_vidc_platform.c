@@ -12,7 +12,7 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_v4l2.h"
 #include "msm_vidc_vb2.h"
-
+#include "msm_vidc_control.h"
 
 static struct v4l2_file_operations msm_v4l2_file_operations = {
 	.owner                          = THIS_MODULE,
@@ -47,7 +47,7 @@ static struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
 };
 
 static struct v4l2_ctrl_ops msm_v4l2_ctrl_ops = {
-	//.s_ctrl                         = msm_vidc_s_ctrl,
+	.s_ctrl                         = msm_v4l2_op_s_ctrl,
 };
 
 static struct vb2_ops msm_vb2_ops = {

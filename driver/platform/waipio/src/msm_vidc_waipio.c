@@ -10,6 +10,8 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_core.h"
+#include "msm_vidc_control.h"
+#include "hfi_property.h"
 
 #define DDR_TYPE_LPDDR4 0x6
 #define DDR_TYPE_LPDDR4X 0x7
@@ -82,7 +84,14 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 };
 
 static struct msm_platform_inst_capability instance_data_waipio[] = {
-	/* {type, domains, codecs, min, max, step_or_mask, value} */
+	/* {cap, domain, codec,
+	 *      min, max, step_or_mask, value,
+	 *      v4l2_id, hfi_id,
+	 *      flags,
+	 *      parents,
+	 *      children,
+	 *      adjust, set}
+	 */
 	{FRAME_WIDTH, ENC|DEC, CODECS_ALL, 128, 8192, 1, 1920},
 	{FRAME_HEIGHT, ENC|DEC, CODECS_ALL, 128, 8192, 1, 1080},
 	{PIX_FMTS, ENC, CODECS_ALL,
@@ -104,8 +113,45 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	/* ((1920 * 1088) / 256) * 960 fps */
 	{MBPS, ENC|DEC, CODECS_ALL, 64, 7833600, 1, 7833600},
 	{FRAME_RATE, ENC|DEC, CODECS_ALL, 1, 960, 1, 30},
-	{BIT_RATE, ENC|DEC, CODECS_ALL, 1, 220000000, 1, 20000000},
-	{BIT_RATE, ENC, HEVC, 1, 160000000, 1, 20000000},
+	{BIT_RATE, ENC|DEC, CODECS_ALL,
+		1, 220000000, 1, 20000000,
+		V4L2_CID_MPEG_VIDEO_BITRATE, HFI_PROP_TOTAL_BITRATE,
+		CAP_FLAG_DYNAMIC_ALLOWED,
+		/* TO DO parents */ {0},
+		{LAYER_BITRATE, SLICE_BYTE}},
+
+	{BIT_RATE, ENC, HEVC,
+		1, 160000000, 1, 20000000,
+		V4L2_CID_MPEG_VIDEO_BITRATE, HFI_PROP_TOTAL_BITRATE,
+		CAP_FLAG_DYNAMIC_ALLOWED,
+		/* TO DO parents */{0},
+		{LAYER_BITRATE, SLICE_BYTE}},
+
+	{ENTROPY_MODE, ENC, H264,
+		V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC,
+		V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC,
+		V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC |
+		V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC,
+		V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC,
+		V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE, HFI_PROP_CABAC_SESSION,
+		CAP_FLAG_MENU,
+		{PROFILE},
+		{BIT_RATE}},
+
+	{PROFILE, ENC|DEC, H264,
+		V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE,
+		V4L2_MPEG_VIDEO_H264_PROFILE_HIGH_10,
+		V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE |
+		V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE |
+		V4L2_MPEG_VIDEO_H264_PROFILE_MAIN |
+		V4L2_MPEG_VIDEO_H264_PROFILE_HIGH |
+		V4L2_MPEG_VIDEO_H264_PROFILE_HIGH_10,
+		V4L2_MPEG_VIDEO_H264_PROFILE_HIGH,
+		V4L2_CID_MPEG_VIDEO_H264_PROFILE, HFI_PROP_PROFILE,
+		CAP_FLAG_ROOT | CAP_FLAG_MENU,
+		{0},
+		{ENTROPY_MODE}},
+
 	{CABAC_BITRATE, ENC, H264, 1, 160000000, 1, 20000000},
 	{SCALE_X, ENC, CODECS_ALL, 8192, 65536, 1, 8192},
 	{SCALE_Y, ENC, CODECS_ALL, 8192, 65536, 1, 8192},

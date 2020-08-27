@@ -664,6 +664,38 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst, u32 codec)
+{
+	int rc = 0;
+	int i;
+	struct msm_vidc_core *core;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	for (i = 0; i < core->codecs_count; i++) {
+		if (core->inst_caps[i].domain == inst->domain &&
+			core->inst_caps[i].codec == get_vidc_codec_from_v4l2(
+				codec)) {
+			s_vpr_h(inst->sid,
+				"%s: copied capabilities with %#x caps\n",
+				__func__, codec);
+			memcpy(inst->capabilities, &core->inst_caps[i],
+				sizeof(struct msm_vidc_inst_capability));
+		}
+	}
+	if (!inst->capabilities) {
+		s_vpr_e(inst->sid, "%s: capabilities not found\n", __func__);
+		return -EINVAL;
+	}
+
+	return rc;
+}
+
 static int msm_vidc_init_core_caps(struct msm_vidc_core *core)
 {
 	int rc = 0;

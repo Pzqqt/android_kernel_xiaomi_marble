@@ -89,6 +89,9 @@ struct msm_vidc_inst {
 	struct v4l2_fh                     event_handler;
 	struct v4l2_ctrl                 **ctrls;
 	u32                                num_ctrls;
+	struct msm_vidc_inst_cap_entry     child_ctrls;
+	struct msm_vidc_inst_cap_entry     fw_ctrls;
+	bool                               request;
 	struct vb2_queue                   vb2q[MAX_PORT];
 	struct msm_vidc_crop               crop;
 	struct msm_vidc_properties         prop;

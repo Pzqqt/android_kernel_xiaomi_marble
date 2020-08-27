@@ -2563,7 +2563,6 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
-	u32 num_packets = 0, offset = 0;
 
 	d_vpr_h("%s(): inst %p\n", __func__, inst);
 	if (!inst || !inst->core || !inst->packet) {
@@ -2576,10 +2575,13 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	if (rc)
 		return rc;
 
-	offset = sizeof(struct hfi_header);
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			   inst->session_id, core->header_id++);
+	if (rc)
+		return rc;
+
 	rc = hfi_create_packet(inst->packet,
 				inst->packet_size,
-				&offset,
 				HFI_CMD_BUFFER,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
 				HFI_HOST_FLAGS_INTR_REQUIRED),
@@ -2590,7 +2592,6 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 				sizeof(hfi_buffer));
 	if (rc)
 		return rc;
-	num_packets++;
 
 	if (metabuf) {
 		rc = get_hfi_buffer(inst, metabuf, &hfi_buffer);
@@ -2598,7 +2599,6 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 			return rc;
 		rc = hfi_create_packet(inst->packet,
 				inst->packet_size,
-				&offset,
 				HFI_CMD_BUFFER,
 				HFI_HOST_FLAGS_NONE,
 				HFI_PAYLOAD_STRUCTURE,
@@ -2608,15 +2608,7 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 				sizeof(hfi_buffer));
 		if (rc)
 			return rc;
-		num_packets++;
 	}
-
-	rc = hfi_create_header(inst->packet, inst->session_id,
-			   core->header_id++,
-			   num_packets,
-			   offset);
-	if (rc)
-		return rc;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
@@ -2631,7 +2623,6 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
-	u32 num_packets = 0, offset = 0;
 
 	d_vpr_h("%s(): inst %p\n", __func__, inst);
 	if (!inst || !buffer) {
@@ -2652,10 +2643,13 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	/* add pending release flag */
 	hfi_buffer.flags |= HFI_BUF_HOST_FLAG_RELEASE;
 
-	offset = sizeof(struct hfi_header);
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			   inst->session_id, core->header_id++);
+	if (rc)
+		return rc;
+
 	rc = hfi_create_packet(inst->packet,
 				inst->packet_size,
-				&offset,
 				HFI_CMD_BUFFER,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
 				HFI_HOST_FLAGS_INTR_REQUIRED),
@@ -2664,14 +2658,6 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 				core->packet_id++,
 				&hfi_buffer,
 				sizeof(hfi_buffer));
-	if (rc)
-		return rc;
-	num_packets++;
-
-	rc = hfi_create_header(inst->packet, inst->session_id,
-			   core->header_id++,
-			   num_packets,
-			   offset);
 	if (rc)
 		return rc;
 

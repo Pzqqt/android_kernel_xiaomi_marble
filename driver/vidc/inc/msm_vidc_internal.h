@@ -64,6 +64,10 @@
 #define NUM_MBS_PER_FRAME(__height, __width) \
 	((ALIGN(__height, 16) / 16) * (ALIGN(__width, 16) / 16))
 
+#define IS_PRIV_CTRL(idx) ( \
+	(V4L2_CTRL_ID2WHICH(idx) == V4L2_CTRL_CLASS_MPEG) && \
+	V4L2_CTRL_DRIVER_PRIV(idx))
+
 /*
  * Convert Q16 number into Integer and Fractional part upto 2 places.
  * Ex : 105752 / 65536 = 1.61; 1.61 in Q16 = 105752;
@@ -174,6 +178,9 @@ enum msm_vidc_inst_capability_type {
 	MBPS,
 	FRAME_RATE,
 	BIT_RATE,
+	BITRATE_MODE,
+	LAYER_BITRATE,
+	ENTROPY_MODE,
 	CABAC_BITRATE,
 	LTR_COUNT,
 	LCU_SIZE,
@@ -215,6 +222,7 @@ enum msm_vidc_inst_capability_type {
 };
 
 enum msm_vidc_inst_capability_flags {
+	CAP_FLAG_NONE                    = 0,
 	CAP_FLAG_ROOT                    = BIT(0),
 	CAP_FLAG_DYNAMIC_ALLOWED         = BIT(1),
 	CAP_FLAG_MENU                    = BIT(2),
@@ -226,13 +234,16 @@ struct msm_vidc_inst_cap {
 	s32 max;
 	u32 step_or_mask;
 	s32 value;
-	enum msm_vidc_inst_capability_flags flags;
 	u32 v4l2_id;
 	u32 hfi_id;
-	u8 parents[MAX_CAP_PARENTS];
-	u8 children[MAX_CAP_CHILDREN];
-	void (*adjust)(void *inst, s32 new_value);
-	int (*set)(void *inst, struct v4l2_ctrl *ctrl);
+	enum msm_vidc_inst_capability_flags flags;
+	enum msm_vidc_inst_capability_type parents[MAX_CAP_PARENTS];
+	enum msm_vidc_inst_capability_type children[MAX_CAP_CHILDREN];
+	int (*adjust)(void *inst,
+		enum msm_vidc_inst_capability_type cap_id,
+		struct v4l2_ctrl *ctrl);
+	int (*set)(void *inst,
+		enum msm_vidc_inst_capability_type cap_id);
 };
 
 struct msm_vidc_inst_capability {
@@ -244,6 +255,11 @@ struct msm_vidc_inst_capability {
 struct msm_vidc_core_capability {
 	enum msm_vidc_core_capability_type type;
 	u32 value;
+};
+
+struct msm_vidc_inst_cap_entry {
+	struct list_head list;
+	enum msm_vidc_inst_capability_type cap_id;
 };
 
 enum efuse_purpose {

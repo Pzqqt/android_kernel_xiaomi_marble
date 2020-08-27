@@ -13,6 +13,7 @@
 #include "msm_vidc_vb2.h"
 #include "msm_vidc_v4l2.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_control.h"
 
 #define MSM_VIDC_DRV_NAME "msm_vidc_driver"
 /* kernel/msm-4.19 */
@@ -266,7 +267,7 @@ int msm_vidc_s_ctrl(void *instance, struct v4l2_control *control)
 	if (!inst || !control)
 		return -EINVAL;
 
-	return 0;//msm_comm_s_ctrl(instance, control);
+	return v4l2_s_ctrl(NULL, &inst->ctrl_handler, control);
 }
 EXPORT_SYMBOL(msm_vidc_s_ctrl);
 
@@ -621,6 +622,14 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	}
 	inst->core = core;
 
+	inst->capabilities = kzalloc(
+		sizeof(struct msm_vidc_inst_capability), GFP_KERNEL);
+	if (!inst->capabilities) {
+		s_vpr_e(inst->sid,
+			"%s: inst capability allocation failed\n", __func__);
+		return NULL;
+	}
+
 	rc = msm_vidc_add_session(inst);
 	if (rc) {
 		d_vpr_e("%s: failed to get session id\n", __func__);
@@ -653,8 +662,11 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->maps.scratch_2.list);
 	INIT_LIST_HEAD(&inst->maps.persist.list);
 	INIT_LIST_HEAD(&inst->maps.persist_1.list);
+	INIT_LIST_HEAD(&inst->child_ctrls.list);
+	INIT_LIST_HEAD(&inst->fw_ctrls.list);
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
+	inst->request = false;
 	//inst->debugfs_root =
 	//	msm_vidc_debugfs_init_inst(inst, core->debugfs_root);
 
@@ -662,17 +674,14 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		rc = msm_vdec_inst_init(inst);
 		if (rc)
 			goto error;
-		rc = msm_vdec_ctrl_init(inst);
-		if (rc)
-			goto error;
 	} else if (is_encode_session(inst)) {
 		rc = msm_venc_inst_init(inst);
 		if (rc)
 			goto error;
-		rc = msm_venc_ctrl_init(inst);
-		if (rc)
-			goto error;
 	}
+	rc = msm_vidc_ctrl_init(inst);
+	if (rc)
+		goto error;
 
 	rc = msm_vidc_vb2_queue_init(inst);
 	if (rc)

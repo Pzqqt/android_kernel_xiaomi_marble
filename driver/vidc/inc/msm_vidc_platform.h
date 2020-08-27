@@ -9,6 +9,7 @@
 #include <linux/platform_device.h>
 
 #include "msm_vidc_internal.h"
+#include <media/v4l2-ctrls.h>
 
 struct msm_platform_core_capability {
 	enum msm_vidc_core_capability_type type;
@@ -23,13 +24,16 @@ struct msm_platform_inst_capability {
 	s32 max;
 	u32 step_or_mask;
 	s32 value;
-	enum msm_vidc_inst_capability_flags flags;
 	u32 v4l2_id;
 	u32 hfi_id;
-	u8 parents[MAX_CAP_PARENTS];
-	u8 children[MAX_CAP_CHILDREN];
-	void (*adjust)(void *inst, s32 new_value);
-	int (*set)(void *inst, struct v4l2_ctrl *ctrl);
+	enum msm_vidc_inst_capability_flags flags;
+	enum msm_vidc_inst_capability_type parents[MAX_CAP_PARENTS];
+	enum msm_vidc_inst_capability_type children[MAX_CAP_CHILDREN];
+	int (*adjust)(void *inst,
+		enum msm_vidc_inst_capability_type cap_id,
+		struct v4l2_ctrl *ctrl);
+	int (*set)(void *inst,
+		enum msm_vidc_inst_capability_type cap_id);
 };
 
 struct msm_vidc_csc_coeff {

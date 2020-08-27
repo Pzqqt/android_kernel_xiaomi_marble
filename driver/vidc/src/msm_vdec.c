@@ -18,30 +18,10 @@
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 codec)
 {
 	int rc = 0;
-	int i;
-	struct msm_vidc_core *core;
 
 	d_vpr_h("%s()\n", __func__);
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-	core = inst->core;
 
-	inst->capabilities = NULL;
-	for (i = 0; i < core->codecs_count; i++) {
-		if (core->inst_caps[i].domain == MSM_VIDC_DECODER &&
-		    core->inst_caps[i].codec == get_vidc_codec_from_v4l2(
-				inst->fmts[INPUT_PORT].fmt.pix.pixelformat)) {
-			s_vpr_h(inst->sid, "%s: changed capabilities to %#x caps\n",
-				__func__, inst->fmts[INPUT_PORT].fmt.pix.pixelformat);
-			inst->capabilities = &core->inst_caps[i];
-		}
-	}
-	if (!inst->capabilities) {
-		s_vpr_e(inst->sid, "%s: capabilities not found\n", __func__);
-		return -EINVAL;
-	}
+	rc = msm_vidc_get_inst_capability(inst, codec);
 	return rc;
 }
 
@@ -498,7 +478,6 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	int i;
 	struct msm_vidc_core *core;
 	struct v4l2_format *f;
 
@@ -574,35 +553,9 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	inst->prop.frame_rate = DEFAULT_FPS << 16;
 	inst->prop.operating_rate = DEFAULT_FPS << 16;
 
-	inst->capabilities = NULL;
-	for (i = 0; i < core->codecs_count; i++) {
-		if (core->inst_caps[i].domain == MSM_VIDC_DECODER &&
-		    core->inst_caps[i].codec == get_vidc_codec_from_v4l2(
-				inst->fmts[INPUT_PORT].fmt.pix.pixelformat)) {
-			s_vpr_h(inst->sid, "%s: assigned capabilities with %#x caps\n",
-				__func__, inst->fmts[INPUT_PORT].fmt.pix.pixelformat);
-			inst->capabilities = &core->inst_caps[i];
-		}
-	}
-	if (!inst->capabilities) {
-		s_vpr_e(inst->sid, "%s: capabilities not found\n", __func__);
-		return -EINVAL;
-	}
+	rc = msm_vdec_codec_change(inst,
+			inst->fmts[INPUT_PORT].fmt.pix.pixelformat);
 
 	return rc;
 }
 
-int msm_vdec_ctrl_init(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-	struct msm_vidc_core *core;
-
-	d_vpr_h("%s()\n", __func__);
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-	core = inst->core;
-
-	return rc;
-}

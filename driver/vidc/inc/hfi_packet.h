@@ -20,9 +20,9 @@ u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
 u32 get_hfi_codec(struct msm_vidc_inst *inst);
 int get_hfi_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer, struct hfi_buffer *buf);
-int hfi_create_header(u8 *pkt, u32 session_id,
-	u32 header_id, u32 num_packets, u32 total_size);
-int hfi_create_packet(u8 *packet, u32 packet_size, u32 *offset,
+int hfi_create_header(u8 *packet, u32 packet_size,
+	u32 session_id, u32 header_id);
+int hfi_create_packet(u8 *packet, u32 packet_size,
 	u32 pkt_type, u32 pkt_flags, u32 payload_type, u32 port,
 	u32 packet_id, void *payload, u32 payload_size);
 int hfi_create_buffer(u8 *packet, u32 packet_size, u32 *offset,
