@@ -668,7 +668,7 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst, u32 codec)
+int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	int i;
@@ -683,11 +683,10 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst, u32 codec)
 
 	for (i = 0; i < core->codecs_count; i++) {
 		if (core->inst_caps[i].domain == inst->domain &&
-			core->inst_caps[i].codec == get_vidc_codec_from_v4l2(
-				codec)) {
+			core->inst_caps[i].codec == inst->codec) {
 			s_vpr_h(inst->sid,
-				"%s: copied capabilities with %#x caps\n",
-				__func__, codec);
+				"%s: copied capabilities with %#x codec\n",
+				__func__, inst->codec);
 			memcpy(inst->capabilities, &core->inst_caps[i],
 				sizeof(struct msm_vidc_inst_capability));
 		}

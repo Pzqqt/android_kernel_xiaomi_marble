@@ -17,5 +17,17 @@ enum msm_vidc_ctrl_list_type {
 
 int msm_vidc_ctrl_init(struct msm_vidc_inst *inst);
 int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_properties(struct msm_vidc_inst *inst);
+int msm_vidc_set_u32(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_s32(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_array(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_fw_list(struct msm_vidc_inst *inst);
+int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_capability_type cap_id, u32 *value);
 
 #endif

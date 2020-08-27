@@ -22,7 +22,8 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 codec)
 
 	d_vpr_h("%s()\n", __func__);
 
-	rc = msm_vidc_get_inst_capability(inst, codec);
+	inst->codec = get_vidc_codec_from_v4l2(codec);
+	rc = msm_vidc_get_inst_capability(inst);
 	return rc;
 }
 

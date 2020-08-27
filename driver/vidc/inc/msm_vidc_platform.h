@@ -30,7 +30,6 @@ struct msm_platform_inst_capability {
 	enum msm_vidc_inst_capability_type parents[MAX_CAP_PARENTS];
 	enum msm_vidc_inst_capability_type children[MAX_CAP_CHILDREN];
 	int (*adjust)(void *inst,
-		enum msm_vidc_inst_capability_type cap_id,
 		struct v4l2_ctrl *ctrl);
 	int (*set)(void *inst,
 		enum msm_vidc_inst_capability_type cap_id);

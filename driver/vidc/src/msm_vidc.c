@@ -699,8 +699,8 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->maps.scratch_2.list);
 	INIT_LIST_HEAD(&inst->maps.persist.list);
 	INIT_LIST_HEAD(&inst->maps.persist_1.list);
-	INIT_LIST_HEAD(&inst->child_ctrls.list);
-	INIT_LIST_HEAD(&inst->fw_ctrls.list);
+	INIT_LIST_HEAD(&inst->children.list);
+	INIT_LIST_HEAD(&inst->firmware.list);
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
 	inst->request = false;

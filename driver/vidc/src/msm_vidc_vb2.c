@@ -110,6 +110,23 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 			return -EINVAL;
 	}
 
+	/*
+	if (inst->state == MSM_VIDC_START_INPUT ||
+		inst->state == MSM_VIDC_START_OUTPUT) {
+		rc = msm_vidc_adjust_properties(inst);
+		if (rc)
+			return -EINVAL;
+	}
+
+	if ((inst->state == MSM_VIDC_START_INPUT) ||
+		(inst->state == MSM_VIDC_START &&
+		q->type == INPUT_PLANE)) {
+		rc = msm_vidc_set_fw_list(inst);
+		if (rc)
+			return -EINVAL;
+	}
+	*/
+
 	if (q->type == INPUT_PLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_start_input(inst);

@@ -171,6 +171,7 @@ enum msm_vidc_core_capability_type {
 
 enum msm_vidc_inst_capability_type {
 	INST_CAP_NONE = 0,
+	CODEC,
 	FRAME_WIDTH,
 	FRAME_HEIGHT,
 	PIX_FMTS,
@@ -190,6 +191,7 @@ enum msm_vidc_inst_capability_type {
 	LAYER_BITRATE,
 	ENTROPY_MODE,
 	CABAC_BITRATE,
+	VBV_DELAY,
 	LTR_COUNT,
 	LCU_SIZE,
 	POWER_SAVE_MBPS,
@@ -248,7 +250,6 @@ struct msm_vidc_inst_cap {
 	enum msm_vidc_inst_capability_type parents[MAX_CAP_PARENTS];
 	enum msm_vidc_inst_capability_type children[MAX_CAP_CHILDREN];
 	int (*adjust)(void *inst,
-		enum msm_vidc_inst_capability_type cap_id,
 		struct v4l2_ctrl *ctrl);
 	int (*set)(void *inst,
 		enum msm_vidc_inst_capability_type cap_id);
@@ -266,6 +267,7 @@ struct msm_vidc_core_capability {
 };
 
 struct msm_vidc_inst_cap_entry {
+	/* list of struct msm_vidc_inst_cap_entry */
 	struct list_head list;
 	enum msm_vidc_inst_capability_type cap_id;
 };
