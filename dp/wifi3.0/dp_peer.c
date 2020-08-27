@@ -1591,6 +1591,9 @@ static void
 dp_peer_clean_wds_entries(struct dp_soc *soc, struct dp_peer *peer,
 			  uint32_t free_wds_count)
 {
+	qdf_spin_lock_bh(&soc->ast_lock);
+	dp_peer_delete_ast_entries(soc, peer);
+	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #endif
 

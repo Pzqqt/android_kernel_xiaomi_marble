@@ -5450,30 +5450,6 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_AST
-/*
- * dp_peer_delete_ast_entries(): Delete all AST entries for a peer
- * @soc - datapath soc handle
- * @peer - datapath peer handle
- *
- * Delete the AST entries belonging to a peer
- */
-static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
-					      struct dp_peer *peer)
-{
-	struct dp_ast_entry *ast_entry, *temp_ast_entry;
-
-	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
-		dp_peer_del_ast(soc, ast_entry);
-
-	peer->self_ast_entry = NULL;
-}
-#else
-static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
-					      struct dp_peer *peer)
-{
-}
-#endif
 #if ATH_SUPPORT_WRAP
 static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 						uint8_t *peer_mac_addr)

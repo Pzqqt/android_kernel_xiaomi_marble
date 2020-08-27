@@ -753,4 +753,29 @@ struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
 struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
 						struct dp_vdev *vdev,
 						enum dp_mod_id mod_id);
+
+#ifdef FEATURE_AST
+/*
+ * dp_peer_delete_ast_entries(): Delete all AST entries for a peer
+ * @soc - datapath soc handle
+ * @peer - datapath peer handle
+ *
+ * Delete the AST entries belonging to a peer
+ */
+static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
+					      struct dp_peer *peer)
+{
+	struct dp_ast_entry *ast_entry, *temp_ast_entry;
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
+		dp_peer_del_ast(soc, ast_entry);
+
+	peer->self_ast_entry = NULL;
+}
+#else
+static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
+					      struct dp_peer *peer)
+{
+}
+#endif
 #endif /* _DP_PEER_H_ */
