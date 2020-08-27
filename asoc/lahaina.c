@@ -7735,7 +7735,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	card = rtd->card->snd_card;
 
-	if (strnstr(rtd->card->name, "shima", 5) != NULL)
+	if (strnstr(rtd->card->name, "shima", strlen(rtd->card->name)) != NULL)
 		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map_shima),
 				sm_port_map_shima);
 	else
