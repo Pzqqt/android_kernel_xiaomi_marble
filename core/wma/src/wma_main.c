@@ -3468,6 +3468,18 @@ QDF_STATUS wma_pre_start(void)
 		goto end;
 	}
 
+	/* Open endpoint for wmi diag path */
+	qdf_status = wmi_diag_connect_pdev_htc_service(wma_handle->wmi_handle,
+						       htc_handle);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		wma_err("wmi_diag_connect_pdev_htc_service");
+		if (!cds_is_fw_down())
+			QDF_BUG(0);
+
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto end;
+	}
+
 	wma_debug("WMA --> wmi_unified_connect_htc_service - success");
 
 end:
