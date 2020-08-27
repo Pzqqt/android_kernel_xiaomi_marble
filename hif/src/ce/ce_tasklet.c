@@ -184,6 +184,7 @@ hif_ce_latency_stats(struct hif_softc *hif_ctx)
 {
 	uint8_t i, j;
 	uint32_t index, start_index;
+	uint64_t secs, usecs;
 	static const char * const buck_str[] = {"0 - 0.5", "0.5 - 1", "1  -  2",
 					       "2  -  5", "5  - 10", "  >  10"};
 	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(hif_ctx);
@@ -193,19 +194,24 @@ hif_ce_latency_stats(struct hif_softc *hif_ctx)
 	for (i = 0; i < CE_COUNT_MAX; i++) {
 		hif_nofl_err("\n\t\tCE Ring %d Tasklet Execution Bucket", i);
 		for (j = 0; j < CE_BUCKET_MAX; j++) {
-			hif_nofl_err("\t Bucket %sms :%llu\t last update:%llu",
+			qdf_log_timestamp_to_secs(
+				       stats->ce_tasklet_exec_last_update[i][j],
+				       &secs, &usecs);
+			hif_nofl_err("\t Bucket %sms :%llu\t last update:% 8lld.%06lld",
 				     buck_str[j],
 				     stats->ce_tasklet_exec_bucket[i][j],
-				     stats->ce_tasklet_exec_last_update[i][j]);
+				     secs, usecs);
 		}
 
 		hif_nofl_err("\n\t\tCE Ring %d Tasklet Scheduled Bucket", i);
 		for (j = 0; j < CE_BUCKET_MAX; j++) {
-			hif_nofl_err("\t Bucket %sms :%llu\t last update :%lld",
+			qdf_log_timestamp_to_secs(
+				      stats->ce_tasklet_sched_last_update[i][j],
+				      &secs, &usecs);
+			hif_nofl_err("\t Bucket %sms :%llu\t last update :% 8lld.%06lld",
 				     buck_str[j],
 				     stats->ce_tasklet_sched_bucket[i][j],
-				     stats->
-					   ce_tasklet_sched_last_update[i][j]);
+				     secs, usecs);
 		}
 
 		hif_nofl_err("\n\t\t CE RING %d Last %d time records",
@@ -214,11 +220,14 @@ hif_ce_latency_stats(struct hif_softc *hif_ctx)
 		start_index = stats->record_index[i];
 
 		for (j = 0; j < HIF_REQUESTED_EVENTS; j++) {
-			hif_nofl_err("\t Execuiton time:  %luus Total Scheduled time: %luus",
+			hif_nofl_err("\tExecution time: %lluus Total Scheduled time: %lluus",
 				     stats->tasklet_exec_time_record[i][index],
 				     stats->
 					   tasklet_sched_time_record[i][index]);
-			index = (index - 1) % HIF_REQUESTED_EVENTS;
+			if (index)
+				index = (index - 1) % HIF_REQUESTED_EVENTS;
+			else
+				index = HIF_REQUESTED_EVENTS - 1;
 			if (index == start_index)
 				break;
 		}
