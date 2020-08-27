@@ -3134,9 +3134,9 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NO_BACKHAUL_RADIO, SET_PARAM, 1},
 	{"g_nobckhlradio",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NO_BACKHAUL_RADIO, GET_PARAM, 0},
-	{"enable_additional_triplets",
+	{"set_triplets_bw",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS, SET_PARAM, 1},
-	{"g_enable_additional_triplets",
+	{"get_triplets_bw",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS, GET_PARAM, 0},
 #ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
 	{"setpostNOLfreq",
