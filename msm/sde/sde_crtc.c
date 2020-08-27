@@ -2721,7 +2721,7 @@ static int _sde_crtc_set_dest_scaler(struct sde_crtc *sde_crtc,
 
 static int _sde_crtc_check_dest_scaler_lm(struct drm_crtc *crtc,
 	struct drm_display_mode *mode, struct sde_hw_ds_cfg *cfg, u32 hdisplay,
-	u32 prev_lm_width, u32 prev_lm_height)
+	struct sde_hw_ds_cfg *prev_cfg)
 {
 	if (cfg->lm_width > hdisplay || cfg->lm_height > mode->vdisplay
 		|| !cfg->lm_width || !cfg->lm_height) {
@@ -2733,22 +2733,18 @@ static int _sde_crtc_check_dest_scaler_lm(struct drm_crtc *crtc,
 		return -E2BIG;
 	}
 
-	if (!prev_lm_width && !prev_lm_height) {
-		prev_lm_width = cfg->lm_width;
-		prev_lm_height = cfg->lm_height;
-	} else {
-		if (cfg->lm_width != prev_lm_width ||
-			cfg->lm_height != prev_lm_height) {
-			SDE_ERROR("crtc%d:lm left[%d,%d]right[%d %d]\n",
+	if (prev_cfg && (cfg->lm_width != prev_cfg->lm_width ||
+			cfg->lm_height != prev_cfg->lm_height)) {
+		SDE_ERROR("crtc%d: uneven lm split [%d,%d], [%d %d]\n",
 				crtc->base.id, cfg->lm_width,
-				cfg->lm_height, prev_lm_width,
-				prev_lm_height);
-			SDE_EVT32(DRMID(crtc), cfg->lm_width,
-				cfg->lm_height, prev_lm_width,
-				prev_lm_height, SDE_EVTLOG_ERROR);
-			return -EINVAL;
-		}
+				cfg->lm_height, prev_cfg->lm_width,
+				prev_cfg->lm_height);
+		SDE_EVT32(DRMID(crtc), cfg->lm_width, cfg->lm_height,
+				prev_cfg->lm_width, prev_cfg->lm_height,
+				SDE_EVTLOG_ERROR);
+		return -EINVAL;
 	}
+
 	return 0;
 }
 
@@ -2808,15 +2804,15 @@ static int _sde_crtc_check_dest_scaler_cfg(struct drm_crtc *crtc,
 static int _sde_crtc_check_dest_scaler_validate_ds(struct drm_crtc *crtc,
 	struct sde_crtc *sde_crtc, struct sde_crtc_state *cstate,
 	struct drm_display_mode *mode, struct sde_hw_ds *hw_ds,
-	struct sde_hw_ds_cfg *cfg, u32 hdisplay, u32 *num_ds_enable,
-	u32 prev_lm_width, u32 prev_lm_height, u32 max_in_width,
-	u32 max_out_width)
+	u32 hdisplay, u32 *num_ds_enable, u32 max_in_width, u32 max_out_width)
 {
 	int i, ret;
 	u32 lm_idx;
+	struct sde_hw_ds_cfg *cfg, *prev_cfg;
 
 	for (i = 0; i < cstate->num_ds; i++) {
 		cfg = &cstate->ds_cfg[i];
+		prev_cfg = (i > 0) ? &cstate->ds_cfg[i - 1] : NULL;
 		lm_idx = cfg->idx;
 
 		/**
@@ -2848,7 +2844,7 @@ static int _sde_crtc_check_dest_scaler_validate_ds(struct drm_crtc *crtc,
 
 		/* Check LM width and height */
 		ret = _sde_crtc_check_dest_scaler_lm(crtc, mode, cfg, hdisplay,
-				prev_lm_width, prev_lm_height);
+				prev_cfg);
 		if (ret)
 			return ret;
 
@@ -2871,9 +2867,9 @@ static int _sde_crtc_check_dest_scaler_validate_ds(struct drm_crtc *crtc,
 }
 
 static void _sde_crtc_check_dest_scaler_data_disable(struct drm_crtc *crtc,
-	struct sde_crtc_state *cstate, struct sde_hw_ds_cfg *cfg,
-	u32 num_ds_enable)
+	struct sde_crtc_state *cstate, u32 num_ds_enable)
 {
+	struct sde_hw_ds_cfg *cfg;
 	int i;
 
 	SDE_DEBUG("dest scaler status : %d -> %d\n",
@@ -2914,11 +2910,9 @@ static int _sde_crtc_check_dest_scaler_data(struct drm_crtc *crtc,
 	struct drm_display_mode *mode;
 	struct sde_kms *kms;
 	struct sde_hw_ds *hw_ds = NULL;
-	struct sde_hw_ds_cfg *cfg = NULL;
 	u32 ret = 0;
 	u32 num_ds_enable = 0, hdisplay = 0;
 	u32 max_in_width = 0, max_out_width = 0;
-	u32 prev_lm_width = 0, prev_lm_height = 0;
 
 	if (!crtc || !state)
 		return -EINVAL;
@@ -2984,15 +2978,13 @@ static int _sde_crtc_check_dest_scaler_data(struct drm_crtc *crtc,
 
 	/* Validate the DS data */
 	ret = _sde_crtc_check_dest_scaler_validate_ds(crtc, sde_crtc, cstate,
-			mode, hw_ds, cfg, hdisplay, &num_ds_enable,
-			prev_lm_width, prev_lm_height,
+			mode, hw_ds, hdisplay, &num_ds_enable,
 			max_in_width, max_out_width);
 	if (ret)
 		goto err;
 
 disable:
-	_sde_crtc_check_dest_scaler_data_disable(crtc, cstate, cfg,
-			num_ds_enable);
+	_sde_crtc_check_dest_scaler_data_disable(crtc, cstate, num_ds_enable);
 	return 0;
 
 err:
