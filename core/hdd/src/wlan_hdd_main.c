@@ -4071,6 +4071,7 @@ release_lock:
 		hdd_ctx->target_hw_name = NULL;
 	}
 
+	cds_shutdown_notifier_purge();
 	hdd_check_for_leaks(hdd_ctx, reinit);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
