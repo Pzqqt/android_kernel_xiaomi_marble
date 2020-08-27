@@ -245,6 +245,29 @@ cm_roam_mawc_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				psoc, &params->rssi_stationary_low_adjust);
 }
 
+QDF_STATUS
+cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
+			    uint8_t vdev_id, uint8_t cfg)
+{
+	struct roam_disable_cfg *req;
+	QDF_STATUS status;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return QDF_STATUS_E_NOMEM;
+
+	req->vdev_id = vdev_id;
+	req->cfg = cfg;
+
+	status = wlan_cm_tgt_send_roam_disable_config(psoc, vdev_id, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send roam disable config");
+
+	qdf_mem_free(req);
+
+	return status;
+}
+
 /**
  * cm_roam_init_req() - roam init request handling
  * @psoc: psoc pointer
@@ -568,7 +591,7 @@ cm_roam_fill_per_roam_request(struct wlan_objmgr_psoc *psoc,
 static QDF_STATUS
 cm_roam_offload_per_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
-	struct wlan_per_roam_config_req *req = NULL;
+	struct wlan_per_roam_config_req *req;
 	QDF_STATUS status;
 
 	req = qdf_mem_malloc(sizeof(*req));
@@ -672,6 +695,9 @@ cm_roam_switch_to_rso_stop(struct wlan_objmgr_pdev *pdev,
 	 * nothing to do here
 	 */
 	default:
+		/* For LFR2 BTM request, need handoff even roam disabled */
+		if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
+			wlan_cm_roam_neighbor_proceed_with_handoff_req(vdev_id);
 		return QDF_STATUS_SUCCESS;
 	}
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_RSO_STOPPED);
@@ -768,7 +794,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	enum roam_offload_state cur_state;
 	uint8_t temp_vdev_id, roam_enabled_vdev_id;
 	uint32_t roaming_bitmap;
-	bool dual_sta_roam_active;
+	bool dual_sta_roam_active, usr_disabled_roaming;
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
@@ -850,6 +876,18 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 
 	/* Set PCL before sending RSO start */
 	policy_mgr_set_pcl_for_existing_combo(psoc, PM_STA_MODE, vdev_id);
+
+	wlan_mlme_get_usr_disabled_roaming(psoc, &usr_disabled_roaming);
+	if (usr_disabled_roaming) {
+		status =
+		cm_roam_send_disable_config(
+			psoc, vdev_id,
+			WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING);
+
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			mlme_err("ROAM: fast roaming disable failed. status %d",
+				 status);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -35,6 +35,8 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	bool lfr_enabled;
 	enum roam_offload_state state;
+	uint32_t set_val = 0;
+	enum roam_offload_state  cur_state;
 
 	/*
 	 * If the ini "FastRoamEnabled" is disabled, don't allow the
@@ -49,6 +51,19 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 
 		return  QDF_STATUS_E_FAILURE;
 	}
+
+	cur_state = mlme_get_roam_state(psoc, vdev_id);
+	if (cur_state == WLAN_ROAM_INIT) {
+		if (!is_fast_roam_enabled)
+			set_val =
+			WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING;
+
+		status = cm_roam_send_disable_config(psoc, vdev_id, set_val);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			mlme_err("ROAM: update fast roaming failed, status: %d",
+				 status);
+	}
+	wlan_mlme_set_usr_disabled_roaming(psoc, !is_fast_roam_enabled);
 
 	/*
 	 * Supplicant_disabled_roaming flag is the global flag to control

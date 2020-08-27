@@ -358,6 +358,36 @@ QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
 
 	return status;
 }
-
 #endif
+
+QDF_STATUS wlan_cm_tgt_send_roam_disable_config(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id,
+						struct roam_disable_cfg *req)
+{
+	QDF_STATUS status;
+	struct wlan_cm_roam_tx_ops roam_tx_ops;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	roam_tx_ops = GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev);
+	if (!roam_tx_ops.send_roam_disable_config) {
+		mlme_err("CM_RSO: vdev %d send_roam_disable_config is NULL",
+			 vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = roam_tx_ops.send_roam_disable_config(vdev, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("CM_RSO: vdev %d fail to send roam disable config",
+			   vdev_id);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return status;
+}
 #endif

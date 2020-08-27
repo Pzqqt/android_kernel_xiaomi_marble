@@ -20044,6 +20044,20 @@ wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason)
 
 	return status;
 }
+
+QDF_STATUS
+wlan_cm_roam_neighbor_proceed_with_handoff_req(uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return csr_neighbor_roam_proceed_with_handoff_req(mac_ctx, vdev_id);
+}
 #endif
 
 QDF_STATUS

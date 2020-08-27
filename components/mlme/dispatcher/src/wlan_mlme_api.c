@@ -4476,3 +4476,31 @@ wlan_mlme_check_chan_param_has_dfs(struct wlan_objmgr_pdev *pdev,
 
 	return is_dfs;
 }
+
+QDF_STATUS
+wlan_mlme_set_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj->cfg.sta.usr_disabled_roaming = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	*val = mlme_obj->cfg.sta.usr_disabled_roaming;
+
+	return QDF_STATUS_SUCCESS;
+}

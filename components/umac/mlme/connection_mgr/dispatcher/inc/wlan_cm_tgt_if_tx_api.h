@@ -112,6 +112,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_abort_req(struct wlan_objmgr_psoc *psoc,
  * wlan_cm_tgt_send_roam_per_config()  - Send roam per config command to FW
  * @psoc:    psoc pointer
  * @vdev_id: vdev id
+ * @req: per roam config parameter
  *
  * Return: QDF_STATUS
  */
@@ -131,5 +132,18 @@ QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
 					  uint8_t vdev_id,
 					  struct wlan_roam_triggers *req);
 #endif
+
+/**
+ * wlan_cm_tgt_send_roam_disable_config()  - Send roam disable config command
+ * to FW
+ * @psoc:    psoc pointer
+ * @vdev_id: vdev id
+ * @req: roam disable config parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_disable_config(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id,
+						struct roam_disable_cfg *req);
 #endif
 #endif /* CM_TGT_IF_TX_API_H__ */
