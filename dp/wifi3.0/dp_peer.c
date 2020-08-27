@@ -2939,8 +2939,6 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 			tid_delete_mask);
 	}
 #endif
-	for (tid = 0; tid < DP_MAX_TIDS; tid++)
-		qdf_spinlock_destroy(&peer->rx_tid[tid].tid_lock);
 }
 
 #ifdef FEATURE_PERPKT_INFO

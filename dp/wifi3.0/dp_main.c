@@ -5593,9 +5593,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		dp_set_peer_isolation(peer, false);
 
-		for (i = 0; i < DP_MAX_TIDS; i++)
-			qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
-
 		dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
@@ -6422,6 +6419,7 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 	struct cdp_peer_cookie peer_cookie;
 	struct dp_peer *tmp_peer;
 	bool found = false;
+	int tid;
 
 	if (mod_id > DP_MOD_ID_RX)
 		QDF_ASSERT(qdf_atomic_dec_return(&peer->mod_refs[mod_id]) >= 0);
@@ -6486,6 +6484,9 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 		qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 		DP_AST_ASSERT(TAILQ_EMPTY(&peer->ast_entry_list));
 		dp_peer_update_state(soc, peer, DP_PEER_STATE_FREED);
+
+		for (tid = 0; tid < DP_MAX_TIDS; tid++)
+			qdf_spinlock_destroy(&peer->rx_tid[tid].tid_lock);
 
 		qdf_mem_free(peer);
 
