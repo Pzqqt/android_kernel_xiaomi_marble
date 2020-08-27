@@ -1416,6 +1416,7 @@ struct sde_perf_cfg {
  * @has_3d_merge_reset Supports 3D merge reset
  * @has_decimation     Supports decimation
  * @has_trusted_vm_support	     Supported HW sharing with trusted VM
+ * @rc_lm_flush_override        Support Rounded Corner using layer mixer flush
  * @has_mixer_combined_alpha     Mixer has single register for FG & BG alpha
  * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
  * @inline_disable_const_clr     Disable constant color during inline rotate
@@ -1494,6 +1495,7 @@ struct sde_mdss_cfg {
 	bool has_base_layer;
 	bool has_demura;
 	bool has_trusted_vm_support;
+	bool rc_lm_flush_override;
 	u32 demura_supported[SSPP_MAX][2];
 	u32 qseed_sw_lib_rev;
 	u32 qseed_hw_version;

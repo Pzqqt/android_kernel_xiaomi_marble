@@ -4751,6 +4751,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
+		sde_cfg->rc_lm_flush_override = true;
 	} else if (IS_SHIMA_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_wb_ubwc = true;
