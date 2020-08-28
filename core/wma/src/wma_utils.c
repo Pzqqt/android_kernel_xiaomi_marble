@@ -3887,7 +3887,6 @@ void wma_update_roam_offload_flag(void *handle,
 
 	wma_set_roam_offload_flag(wma, params->vdev_id, params->enable);
 }
-#endif
 
 void wma_set_roam_disable_cfg(void *handle, struct roam_disable_cfg *params)
 {
@@ -3913,6 +3912,7 @@ void wma_set_roam_disable_cfg(void *handle, struct roam_disable_cfg *params)
 	if (QDF_IS_STATUS_ERROR(status))
 		wma_err("Failed to set WMI_VDEV_PARAM_ROAM_11KV_CTRL");
 }
+#endif
 
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {

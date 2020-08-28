@@ -4692,7 +4692,13 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 	triggers.trigger_bitmap =
 	    wlan_hdd_convert_control_roam_trigger_bitmap(roam_trigger_bitmap);
 
+#ifdef ROAM_OFFLOAD_V1
+	status = ucfg_cm_rso_set_roam_trigger(hdd_ctx->pdev, vdev_id,
+					      &triggers);
+#else
+	/* temp change, This will be removed with ROAM_OFFLOAD_V1 enabled */
 	status = sme_set_roam_triggers(hdd_ctx->mac_handle, &triggers);
+#endif
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set roam control trigger bitmap");
 

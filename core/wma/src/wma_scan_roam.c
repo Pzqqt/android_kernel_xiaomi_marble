@@ -224,7 +224,8 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	return qdf_status;
 }
 
-QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
+#ifndef ROAM_OFFLOAD_V1
+static QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
 		struct roam_offload_scan_req *roam_req)
 {
 	struct wlan_roam_mawc_params *params;
@@ -261,6 +262,7 @@ QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
 
 	return status;
 }
+#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
 #ifndef ROAM_OFFLOAD_V1
@@ -472,7 +474,7 @@ static void wma_roam_scan_offload_set_params(
  *
  * Return: QDF status
  */
-QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
+static QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
 				      scan_cmd_fp,
 				      struct roam_offload_scan_req *roam_req,
@@ -535,7 +537,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	return status;
 }
 
-QDF_STATUS
+static QDF_STATUS
 wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 				  struct roam_offload_scan_req *roam_req)
 {
@@ -716,7 +718,7 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
  *
  * Return: QDF status
  */
-QDF_STATUS
+static QDF_STATUS
 wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 				  struct roam_offload_scan_req *roam_req)
 {
@@ -755,7 +757,7 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
  *
  * Return: QDF status
  */
-QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
+static QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 					     uint32_t vdev_id,
 					     int32_t rssi_change_thresh,
 					     uint32_t bcn_rssi_weight,
@@ -771,21 +773,6 @@ QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 				vdev_id, rssi_change_thresh,
 				bcn_rssi_weight, hirssi_delay_btw_scans);
 }
-#else
-QDF_STATUS
-wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-QDF_STATUS
-wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
 
 /**
  * wma_roam_scan_offload_chan_list() - set roam offload channel list
@@ -799,7 +786,7 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
  *
  * Return: QDF status
  */
-QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
+static QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t chan_count,
 					   uint32_t *chan_freq_list,
 					   uint8_t list_type, uint32_t vdev_id)
@@ -849,6 +836,7 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 
 	return status;
 }
+#endif
 
 /**
  * e_csr_auth_type_to_rsn_authmode() - map csr auth type to rsn authmode
@@ -973,6 +961,7 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr)
 	}
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wma_convert_gp_mgmt_cipher_to_target_cipher_type() - map csr ani group mgmt
  * enc type to RSN cipher
@@ -1032,6 +1021,7 @@ uint32_t wma_roam_scan_get_cckm_mode(struct roam_offload_scan_req *roam_req,
 	return WMI_AUTH_CCKM;
 }
 #endif
+
 /**
  * wma_roam_scan_fill_ap_profile() - fill ap_profile
  * @roam_req: roam offload scan request
@@ -1098,7 +1088,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 		profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
 #endif
 }
-
+#endif
 /**
  * wma_process_set_pdev_ie_req() - process the pdev set IE req
  * @wma: Pointer to wma handle
@@ -1223,6 +1213,8 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 		wmi_buf_free(buf);
 }
 
+#ifndef ROAM_OFFLOAD_V1
+
 /**
  * wma_roam_scan_scan_params() - fill roam scan params
  * @wma_handle: wma handle
@@ -1235,7 +1227,7 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
  *
  * Return: none
  */
-void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
+static void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 				    struct mac_context *mac,
 				    struct roam_offload_scan_req *roam_req,
 				    wmi_start_scan_cmd_fixed_param *
@@ -1566,6 +1558,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	qdf_mem_free(params);
 	return status;
 }
+#endif
 
 /**
  * wma_roam_scan_bmiss_cnt() - set bmiss count to fw
@@ -1607,6 +1600,8 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
+
 /**
  * wma_roam_scan_offload_command() - set roam offload command
  * @wma_handle: wma handle
@@ -1617,7 +1612,7 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
  *
  * Return: QDF status
  */
-QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
+static QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id)
 {
 	if (!wma_is_vdev_valid(vdev_id)) {
@@ -1752,8 +1747,10 @@ QDF_STATUS wma_send_offload_11k_params(WMA_HANDLE handle,
 
 	return status;
 }
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wma_send_disconnect_roam_params() - Send the disconnect roam parameters
  * to wmi
@@ -1839,6 +1836,7 @@ wma_send_idle_roam_params(tp_wma_handle wma_handle,
 	if (QDF_IS_STATUS_ERROR(status))
 		wma_err("failed to send idle roam parameters");
 }
+#endif
 
 void
 wma_send_roam_preauth_status(tp_wma_handle wma_handle,
@@ -1858,6 +1856,7 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 }
 
 #else
+#ifndef ROAM_OFFLOAD_V1
 static inline void
 wma_send_disconnect_roam_params(tp_wma_handle wma_handle,
 				struct roam_offload_scan_req *roam_req)
@@ -1868,7 +1867,9 @@ wma_send_idle_roam_params(tp_wma_handle wma_handle,
 			  struct roam_offload_scan_req *roam_req)
 {}
 #endif
+#endif
 
+#ifndef ROAM_OFFLOAD_V1
 /* wma_set_vdev_roam_reason_vsie: set vdev param
  *WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE
  *
@@ -2313,7 +2314,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	return qdf_status;
 }
 
-#ifndef ROAM_OFFLOAD_V1
 void wma_update_per_roam_config(WMA_HANDLE handle,
 				struct wlan_per_roam_config_req *req_buf)
 {
@@ -6602,6 +6602,7 @@ int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma,
 				 struct wlan_roam_triggers *triggers)
 {
@@ -6610,7 +6611,7 @@ QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma,
 
 	return wmi_unified_set_roam_triggers(wma->wmi_handle, triggers);
 }
-
+#endif
 #ifdef WLAN_FEATURE_FIPS
 void wma_register_pmkid_req_event_handler(tp_wma_handle wma_handle)
 {
@@ -6710,9 +6711,11 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 }
 #endif /* WLAN_FEATURE_FIPS */
 #else
+#ifndef ROAM_OFFLOAD_V1
 inline QDF_STATUS
 wma_set_roam_triggers(tp_wma_handle wma, struct wlan_roam_triggers *triggers)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+#endif
 #endif

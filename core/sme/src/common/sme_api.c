@@ -16119,24 +16119,7 @@ void sme_chan_to_freq_list(
 			wlan_reg_chan_to_freq(pdev, (uint32_t)chan_list[count]);
 }
 
-#ifdef ROAM_OFFLOAD_V1
-static inline
-QDF_STATUS sme_rso_init_deinit(struct mac_context *mac,
-			       struct wlan_roam_triggers *triggers)
-{
-	QDF_STATUS status;
-
-	if (!triggers->trigger_bitmap)
-		status = wlan_cm_rso_init_deinit(mac->pdev, triggers->vdev_id,
-						 false);
-	else
-		status = wlan_cm_rso_init_deinit(mac->pdev, triggers->vdev_id,
-						 true);
-
-	return status;
-}
-#else
-
+#ifndef ROAM_OFFLOAD_V1
 static QDF_STATUS sme_enable_roaming(struct mac_context *mac, uint32_t vdev_id,
 				     bool enable)
 {
@@ -16181,7 +16164,6 @@ QDF_STATUS sme_rso_init_deinit(struct mac_context *mac,
 
 	return status;
 }
-#endif
 
 QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 				 struct wlan_roam_triggers *triggers)
@@ -16225,6 +16207,7 @@ QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 
 	return status;
 }
+#endif
 
 QDF_STATUS
 sme_send_vendor_btm_params(mac_handle_t mac_handle, uint8_t vdev_id)

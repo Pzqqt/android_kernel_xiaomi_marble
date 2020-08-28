@@ -4096,6 +4096,7 @@ void sme_chan_to_freq_list(
 			const uint8_t *chan_list,
 			uint32_t chan_list_len);
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * sme_set_roam_triggers() - Send roam trigger bitmap to WMA
  * @mac_handle: Opaque handle to the MAC context
@@ -4110,6 +4111,7 @@ void sme_chan_to_freq_list(
  */
 QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 				 struct wlan_roam_triggers *triggers);
+#endif
 
 /**
  * sme_set_roam_config_enable() - Cache roam config status in SME

@@ -364,93 +364,14 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					struct roam_offload_scan_req *roam_req);
 #endif
 
-#ifndef ROAM_OFFLOAD_V1
-QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
-				      wmi_start_scan_cmd_fixed_param *
-				      scan_cmd_fp,
-				      struct roam_offload_scan_req *roam_req,
-				      uint32_t mode, uint32_t vdev_id);
-#else
-static inline QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
-				      wmi_start_scan_cmd_fixed_param *
-				      scan_cmd_fp,
-				      struct roam_offload_scan_req *roam_req,
-				      uint32_t mode, uint32_t vdev_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
-/**
- * wma_roam_scan_mawc_params() - send roam scan mode request to fw
- * @wma_handle: wma handle
- * @roam_req: roam request param
- *
- * Fill the MAWC roaming parameters and send
- * WMI_ROAM_CONFIGURE_MAWC_CMDID TLV to firmware.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
-		struct roam_offload_scan_req *roam_req);
-
-/**
- * wma_roam_scan_offload_rssi_threshold() - set scan offload rssi threashold
- * @wma_handle: wma handle
- * @roam_req:   Roaming request buffer
- *
- * Send WMI_ROAM_SCAN_RSSI_THRESHOLD TLV to firmware
- *
- * Return: QDF status
- */
-QDF_STATUS
-wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req);
-
-QDF_STATUS
-wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req);
-
-#ifndef ROAM_OFFLOAD_V1
-QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
-					     uint32_t vdev_id,
-					     int32_t rssi_change_thresh,
-					     uint32_t bcn_rssi_weight,
-					     uint32_t hirssi_delay_btw_scans);
-#else
-static inline
-QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
-					     uint32_t vdev_id,
-					     int32_t rssi_change_thresh,
-					     uint32_t bcn_rssi_weight,
-					     uint32_t hirssi_delay_btw_scans)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
-
-QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
-					   uint8_t chan_count,
-					   uint32_t *chan_freq_list,
-					   uint8_t list_type, uint32_t vdev_id);
-
 A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr);
 
 A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 
-void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
-				    struct mac_context *mac,
-				    struct roam_offload_scan_req *roam_req,
-				    wmi_start_scan_cmd_fixed_param *
-				    scan_params);
-
 QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 				   A_INT32 first_bcnt,
 				   A_UINT32 final_bcnt, uint32_t vdev_id);
-
-QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
-					 uint32_t command, uint32_t vdev_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts);

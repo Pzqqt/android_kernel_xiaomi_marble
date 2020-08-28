@@ -199,15 +199,21 @@ target_if_cm_roam_reason_vsie(wmi_unified_t wmi_handle,
 }
 
 /* target_if_cm_roam_triggers(): send roam triggers to WMI
- * @wmi_handle: handle to WMI
+ * @vdev: vdev
  * @req: roam triggers parameters
  *
  * Return: QDF status
  */
 static QDF_STATUS
-target_if_cm_roam_triggers(wmi_unified_t wmi_handle,
+target_if_cm_roam_triggers(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_roam_triggers *req)
 {
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
 	if (!target_if_is_vdev_valid(req->vdev_id))
 		return QDF_STATUS_E_INVAL;
 
@@ -322,7 +328,7 @@ target_if_cm_roam_reason_vsie(wmi_unified_t wmi_handle,
 }
 
 static QDF_STATUS
-target_if_cm_roam_triggers(wmi_unified_t wmi_handle,
+target_if_cm_roam_triggers(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_roam_triggers *req)
 {
 	return QDF_STATUS_E_NOSUPPORT;
@@ -870,7 +876,7 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 
 	target_if_cm_roam_reason_vsie(wmi_handle, &req->reason_vsie_enable);
 
-	target_if_cm_roam_triggers(wmi_handle, &req->roam_triggers);
+	target_if_cm_roam_triggers(vdev, &req->roam_triggers);
 
 	/* Opportunistic scan runs on a timer, value set by
 	 * empty_scan_refresh_period. Age out the entries after 3 such
@@ -1055,7 +1061,7 @@ target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 	if (mode == WMI_ROAM_SCAN_MODE_NONE) {
 		req->roam_triggers.vdev_id = vdev_id;
 		req->roam_triggers.trigger_bitmap = 0;
-		target_if_cm_roam_triggers(wmi_handle, &req->roam_triggers);
+		target_if_cm_roam_triggers(vdev, &req->roam_triggers);
 	}
 end:
 	return status;
@@ -1140,7 +1146,7 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 		target_if_cm_roam_idle_params(
 				wmi_handle, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				&req->idle_params);
-		target_if_cm_roam_triggers(wmi_handle, &req->roam_triggers);
+		target_if_cm_roam_triggers(vdev, &req->roam_triggers);
 	}
 end:
 	return status;
@@ -1209,6 +1215,7 @@ target_if_cm_roam_register_rso_req_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 	tx_ops->send_roam_update_config = target_if_cm_roam_send_update_config;
 	tx_ops->send_roam_abort = target_if_cm_roam_abort;
 	tx_ops->send_roam_per_config = target_if_cm_roam_per_config;
+	tx_ops->send_roam_triggers = target_if_cm_roam_triggers;
 }
 #else
 static void

@@ -162,16 +162,17 @@ char
 *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor);
 
 /**
- * ucfg_cm_rso_init_deinit() - Init or Deinit roaming module at firmware
+ * wlan_cm_rso_set_roam_trigger() - Send roam trigger bitmap firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
- * @enable: true: Send RSO init and RSO enable
- *          false: Send RSO stop
+ * @triggers: Carries pointer of the object containing vdev id and
+ *  roam_trigger_bitmap.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev,
-				   uint8_t vdev_id, bool enable);
+QDF_STATUS
+wlan_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			     struct wlan_roam_triggers *trigger_data);
 
 /**
  * wlan_cm_disable_rso() - Disable roam scan offload to firmware

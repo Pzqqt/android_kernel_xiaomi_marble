@@ -625,7 +625,12 @@ static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 	triggers.vdev_id = vdev_id;
 	triggers.trigger_bitmap = wlan_mlme_get_roaming_triggers(mac_ctx->psoc);
 	sme_debug("Reset roam trigger bitmap to 0x%x", triggers.trigger_bitmap);
+#ifdef ROAM_OFFLOAD_V1
+	wlan_cm_rso_set_roam_trigger(mac_ctx->pdev, vdev_id, &triggers);
+#else
+	/* temp change, This will be removed with ROAM_OFFLOAD_V1 enabled */
 	sme_set_roam_triggers(MAC_HANDLE(mac_ctx), &triggers);
+#endif
 	sme_roam_control_restore_default_config(MAC_HANDLE(mac_ctx),
 						vdev_id);
 }

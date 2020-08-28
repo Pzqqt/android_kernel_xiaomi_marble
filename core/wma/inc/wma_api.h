@@ -827,7 +827,6 @@ int wma_wlm_stats_rsp(void *wma_ctx, uint8_t *event, uint32_t len);
  */
 void wma_update_roam_offload_flag(void *handle,
 				  struct roam_init_params *params);
-#endif
 /**
  * wma_set_roam_disable_cfg() - Set roam module disable cfg to fw
  * @wma: wma handle
@@ -836,6 +835,7 @@ void wma_update_roam_offload_flag(void *handle,
  * Return: none
  */
 void wma_set_roam_disable_cfg(void *handle, struct roam_disable_cfg *params);
+#endif
 
 /**
  * wma_self_peer_create() - create self peer in objmgr

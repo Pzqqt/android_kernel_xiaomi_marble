@@ -4672,15 +4672,15 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	case eWNI_SME_SESSION_UPDATE_PARAM:
 		__lim_process_sme_session_update(mac, msg_buf);
 		break;
-	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
-		__lim_process_roam_scan_offload_req(mac, msg_buf);
-		bufConsumed = false;
-		break;
 	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
 		lim_send_roam_set_pcl(mac, (struct set_pcl_req *)msg_buf);
 		bufConsumed = false;
 		break;
 #ifndef ROAM_OFFLOAD_V1
+	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
+		__lim_process_roam_scan_offload_req(mac, msg_buf);
+		bufConsumed = false;
+		break;
 	case eWNI_SME_ROAM_INIT_PARAM:
 		lim_send_roam_offload_init(mac, msg_buf);
 		bufConsumed = false;

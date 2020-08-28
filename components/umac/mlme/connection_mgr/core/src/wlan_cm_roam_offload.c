@@ -259,6 +259,33 @@ cm_roam_init_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, bool enable)
 	return wlan_cm_tgt_send_roam_offload_init(psoc, vdev_id, enable);
 }
 
+QDF_STATUS cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id,
+				   struct wlan_roam_triggers *trigger)
+{
+	QDF_STATUS status;
+	uint8_t reason = REASON_SUPPLICANT_DE_INIT_ROAMING;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_set_roam_trigger_bitmap(psoc, trigger->vdev_id,
+				     trigger->trigger_bitmap);
+
+	if (trigger->trigger_bitmap)
+		reason = REASON_SUPPLICANT_INIT_ROAMING;
+
+	status = cm_roam_state_change(pdev, vdev_id,
+			trigger->trigger_bitmap ? WLAN_ROAM_RSO_ENABLED :
+			WLAN_ROAM_DEINIT,
+			reason);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	return wlan_cm_tgt_send_roam_triggers(psoc, vdev_id, trigger);
+}
+
 static void cm_roam_set_roam_reason_better_ap(struct wlan_objmgr_psoc *psoc,
 					      uint8_t vdev_id, bool set)
 {

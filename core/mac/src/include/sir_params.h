@@ -348,7 +348,9 @@ struct sir_cfg_action_frm_tb_ppdu {
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 136) is unused */
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 137) is unused */
 
+#ifndef ROAM_OFFLOAD_V1
 #define SIR_HAL_ROAM_SCAN_OFFLOAD_REQ      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 138)
+#endif
 #define SIR_HAL_ROAM_PRE_AUTH_STATUS_IND   (SIR_HAL_ITC_MSG_TYPES_BEGIN + 139)
 
 #define SIR_HAL_TRAFFIC_STATS_IND          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 141)
@@ -593,8 +595,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #ifndef ROAM_OFFLOAD_V1
 #define SIR_HAL_INIT_ROAM_OFFLOAD_PARAM     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 380)
-#endif
 #define SIR_HAL_INIT_ROAM_DISABLE_CFG       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 381)
+#endif
 
 /*
  * Unused SIR_HAL_ITC_MSG_TYPES_BEGIN + 382 to

@@ -8473,10 +8473,12 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 				(tpSirRcvFltMcAddrList) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+#ifndef ROAM_OFFLOAD_V1
+	/* this is temp will be removed once ROAM_OFFLOAD_V1 is enabled */
 	case WMA_ROAM_SCAN_OFFLOAD_REQ:
 		wma_process_roaming_config(wma_handle, msg->bodyptr);
 		break;
-
+#endif
 	case WMA_ROAM_PRE_AUTH_STATUS:
 		wma_send_roam_preauth_status(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
@@ -8954,20 +8956,21 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif
+#ifndef ROAM_OFFLOAD_V1
+	/* This code will be removed once ROAM_OFFLOAD_V1 is enabled */
 	case WMA_SET_ROAM_TRIGGERS:
 		wma_set_roam_triggers(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-#ifndef ROAM_OFFLOAD_V1
 	case WMA_ROAM_INIT_PARAM:
 		wma_update_roam_offload_flag(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-#endif
 	case WMA_ROAM_DISABLE_CFG:
 		wma_set_roam_disable_cfg(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+#endif
 	case WMA_ROAM_SCAN_CH_REQ:
 		wma_get_roam_scan_ch(wma_handle->wmi_handle, msg->bodyval);
 		break;

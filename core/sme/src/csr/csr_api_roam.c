@@ -18016,6 +18016,7 @@ QDF_STATUS csr_invoke_neighbor_report_request(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /*
  * csr_roam_send_rso_cmd() - API to send RSO command to PE
  * @mac_ctx: Pointer to global MAC structure
@@ -18046,7 +18047,6 @@ csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
 	return status;
 }
 
-#ifndef ROAM_OFFLOAD_V1
 /**
  * csr_append_assoc_ies() - Append specific IE to assoc IE's buffer
  * @mac_ctx: Pointer to global mac context
@@ -18555,6 +18555,7 @@ csr_is_adaptive_11r_roam_supported(struct mac_context *mac_ctx,
 }
 #endif
 
+#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS
 csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 {
@@ -18609,7 +18610,6 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 	return status;
 }
 
-#ifndef ROAM_OFFLOAD_V1
 static QDF_STATUS
 csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 			uint8_t reason)
@@ -22537,7 +22537,6 @@ csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 
 	return status;
 }
-#endif
 
 QDF_STATUS csr_send_roam_disable_cfg_msg(struct mac_context *mac,
 					 uint32_t vdev_id, uint8_t cfg)
@@ -22564,6 +22563,7 @@ QDF_STATUS csr_send_roam_disable_cfg_msg(struct mac_context *mac,
 
 	return status;
 }
+#endif
 
 QDF_STATUS
 csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
