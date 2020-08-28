@@ -14048,6 +14048,8 @@ typedef struct {
 #define WMI_AP_PROFILE_FLAG_CRYPTO 0x2
 /** looking for a PMF enabled AP */
 #define WMI_AP_PROFILE_FLAG_PMF    0x4
+/** If this flag is set roam to SAE_H2E (Hash to Element) enabled APs only */
+#define WMI_AP_PROFILE_FLAG_SAE_H2E 0x8
 
 /* the value used in wmi_roam_cnd_scoring_param->disable_bitmap */
 #define WLAN_ROAM_SCORING_RSSI_DISABLE                  0x00000001
@@ -14298,6 +14300,12 @@ typedef struct {
      * Only used if oce_ap_subnet_id_weightage_pcnt != 0.
      */
     A_UINT32 oce_ap_subnet_id_weightage_pcnt;
+    /*
+     * Give weightage to SAE-PK (Simulataneous Authentication of Equals -
+     * Public Key) enabled network APs.
+     * Only used if sae_pk_ap_weightage_pcnt != 0.
+     */
+    A_UINT32 sae_pk_ap_weightage_pcnt;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -28869,6 +28877,7 @@ typedef enum {
     WMI_ROAM_CND_OCE_WAN_SCORING          = 0x00000400, /* FW considers OCE WAN metrics scoring */
     WMI_ROAM_CND_OCE_AP_TX_PWR_SCORING    = 0x00000800, /* FW considers OCE AP Tx power scoring */
     WMI_ROAM_CND_OCE_AP_SUBNET_ID_SCORING = 0x00001000, /* FW considers OCE AP subnet id scoring */
+    WMI_ROAM_CND_SAE_PK_AP_SCORING        = 0x00002000, /* FW considers SAE-PK enabled AP scoring */
 } WMI_ROAM_CND_SCORING_PARAMS;
 
 typedef struct {
