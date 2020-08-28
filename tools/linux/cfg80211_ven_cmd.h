@@ -1479,6 +1479,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_apchanrpt",         IEEE80211_PARAM_AP_CHAN_RPT, GET_PARAM, 0},
 	{"mgmt_rate",           IEEE80211_PARAM_MGMT_RATE, SET_PARAM, 1},
 	{"g_mgmt_rate",         IEEE80211_PARAM_MGMT_RATE, GET_PARAM, 0},
+	{"rtscts_rate",         IEEE80211_PARAM_RTSCTS_RATE, SET_PARAM, 1},
+	{"g_rtscts_rate",       IEEE80211_PARAM_RTSCTS_RATE, GET_PARAM, 0},
 	{"rrm",                 IEEE80211_PARAM_RRM_CAP, SET_PARAM, 1},
 	{"get_rrm",             IEEE80211_PARAM_RRM_CAP, GET_PARAM, 0},
 	{"rrmstats",            IEEE80211_PARAM_RRM_STATS, SET_PARAM, 1},
