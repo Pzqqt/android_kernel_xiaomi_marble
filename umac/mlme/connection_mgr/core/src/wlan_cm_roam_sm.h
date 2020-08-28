@@ -59,8 +59,7 @@ void cm_state_roaming_exit(void *ctx);
 bool cm_state_roaming_event(void *ctx, uint16_t event, uint16_t data_len,
 			    void *data);
 
-#ifdef WLAN_FEATURE_HOST_ROAM
-#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+#if defined(WLAN_FEATURE_HOST_ROAM) && defined(WLAN_FEATURE_PREAUTH_ENABLE)
 /**
  * cm_subst_preauth_entry() - Entry API for preauth sub-state for
  * connection mgr
@@ -97,7 +96,7 @@ void cm_subst_preauth_exit(void *ctx);
  */
 bool cm_subst_preauth_event(void *ctx, uint16_t event,
 			    uint16_t data_len, void *data);
-#else /* WLAN_FEATURE_PREAUTH_ENABLE  && WLAN_FEATURE_HOST_ROAM */
+#else
 
 static inline void cm_subst_preauth_entry(void *ctx) {}
 
@@ -108,8 +107,9 @@ static inline bool cm_subst_preauth_event(void *ctx, uint16_t event,
 {
 	return true;
 }
-#endif /* WLAN_FEATURE_PREAUTH_ENABLE */
+#endif /* WLAN_FEATURE_HOST_ROAM && WLAN_FEATURE_PREAUTH_ENABLE */
 
+#ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * cm_subst_reassoc_entry() - Entry API for reassoc sub-state for
  * connection mgr
@@ -146,6 +146,17 @@ void cm_subst_reassoc_exit(void *ctx);
  */
 bool cm_subst_reassoc_event(void *ctx, uint16_t event, uint16_t data_len,
 			    void *data);
+#else
+
+static inline void cm_subst_reassoc_entry(void *ctx) {}
+static inline void cm_subst_reassoc_exit(void *ctx) {}
+static inline
+bool cm_subst_reassoc_event(void *ctx, uint16_t event, uint16_t data_len,
+			    void *data)
+{
+	return true;
+}
+
 #endif /* WLAN_FEATURE_HOST_ROAM */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -223,6 +234,30 @@ void cm_subst_roam_sync_exit(void *ctx);
  */
 bool cm_subst_roam_sync_event(void *ctx, uint16_t event, uint16_t data_len,
 			      void *data);
+#else
+
+static inline void cm_subst_roam_start_entry(void *ctx) {}
+
+static inline void cm_subst_roam_start_exit(void *ctx) {}
+
+static inline
+bool cm_subst_roam_start_event(void *ctx, uint16_t event, uint16_t data_len,
+			       void *data)
+{
+	return true;
+}
+
+static inline void cm_subst_roam_sync_entry(void *ctx) {}
+
+static inline void cm_subst_roam_sync_exit(void *ctx) {}
+
+static inline
+bool cm_subst_roam_sync_event(void *ctx, uint16_t event, uint16_t data_len,
+			      void *data)
+{
+	return true;
+}
+
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #endif /* __WLAN_CM_ROAM_SM_H__ */

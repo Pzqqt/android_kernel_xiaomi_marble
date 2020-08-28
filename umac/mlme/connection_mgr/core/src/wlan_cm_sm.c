@@ -626,7 +626,6 @@ struct wlan_sm_state_info cm_sm_info[] = {
 		cm_subst_join_active_exit,
 		cm_subst_join_active_event
 	},
-#ifdef WLAN_FEATURE_HOST_ROAM
 	{
 		(uint8_t)WLAN_CM_SS_PREAUTH,
 		(uint8_t)WLAN_CM_S_ROAMING,
@@ -647,8 +646,6 @@ struct wlan_sm_state_info cm_sm_info[] = {
 		cm_subst_reassoc_exit,
 		cm_subst_reassoc_event
 	},
-#endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	{
 		(uint8_t)WLAN_CM_SS_ROAM_STARTED,
 		(uint8_t)WLAN_CM_S_ROAMING,
@@ -669,7 +666,6 @@ struct wlan_sm_state_info cm_sm_info[] = {
 		cm_subst_roam_sync_exit,
 		cm_subst_roam_sync_event
 	},
-#endif
 	{
 		(uint8_t)WLAN_CM_SS_MAX,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
