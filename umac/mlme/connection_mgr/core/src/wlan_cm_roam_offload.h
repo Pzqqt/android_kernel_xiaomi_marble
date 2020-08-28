@@ -64,6 +64,19 @@ QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 				uint8_t reason);
 
 /**
+ * cm_rso_set_roam_trigger() - Send roam trigger bitmap firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @triggers: Carries pointer of the object containing vdev id and
+ *  roam_trigger_bitmap.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id,
+				   struct wlan_roam_triggers *trigger);
+
+/**
  * cm_roam_stop_req() - roam stop request handling
  * @psoc: psoc pointer
  * @vdev_id: vdev id

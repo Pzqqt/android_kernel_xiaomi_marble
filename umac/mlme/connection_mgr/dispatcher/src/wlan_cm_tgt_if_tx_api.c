@@ -174,7 +174,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
 
 	status = roam_tx_ops.send_roam_offload_init_req(vdev, &init_msg);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("CM_RSO: vdev%d fail to send rso init", vdev_id);
+		mlme_err("CM_RSO: vdev%d fail to send rso init", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
@@ -204,7 +204,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_start_req(struct wlan_objmgr_psoc *psoc,
 
 	status = roam_tx_ops.send_roam_start_req(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("CM_RSO: vdev %d fail to send roam start", vdev_id);
+		mlme_err("CM_RSO: vdev %d fail to send roam start", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
@@ -234,7 +234,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_stop_req(struct wlan_objmgr_psoc *psoc,
 
 	status = roam_tx_ops.send_roam_stop_offload(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("CM_RSO: vdev %d fail to send roam stop", vdev_id);
+		mlme_err("CM_RSO: vdev %d fail to send roam stop", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
@@ -264,7 +264,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_update_req(struct wlan_objmgr_psoc *psoc,
 
 	status = roam_tx_ops.send_roam_update_config(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("CM_RSO: vdev %d fail to send roam update", vdev_id);
+		mlme_err("CM_RSO: vdev %d fail to send roam update", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
@@ -292,7 +292,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_abort_req(struct wlan_objmgr_psoc *psoc,
 
 	status = roam_tx_ops.send_roam_abort(vdev, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("CM_RSO: vdev %d fail to send roam abort", vdev_id);
+		mlme_err("CM_RSO: vdev %d fail to send roam abort", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
@@ -322,7 +322,37 @@ QDF_STATUS wlan_cm_tgt_send_roam_per_config(struct wlan_objmgr_psoc *psoc,
 
 	status = roam_tx_ops.send_roam_per_config(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("CM_RSO: vdev %d fail to send per config", vdev_id);
+		mlme_err("CM_RSO: vdev %d fail to send per config", vdev_id);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return status;
+}
+
+QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id,
+					  struct wlan_roam_triggers *req)
+{
+	QDF_STATUS status;
+	struct wlan_cm_roam_tx_ops roam_tx_ops;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	roam_tx_ops = GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev);
+	if (!roam_tx_ops.send_roam_triggers) {
+		mlme_err("CM_RSO: vdev %d send_roam_triggers is NULL",
+			 vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = roam_tx_ops.send_roam_triggers(vdev, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("CM_RSO: vdev %d fail to send roamtrigger", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 

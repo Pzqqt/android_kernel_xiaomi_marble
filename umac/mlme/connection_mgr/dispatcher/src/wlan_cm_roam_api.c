@@ -98,23 +98,17 @@ char *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor)
 }
 
 QDF_STATUS
-wlan_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			bool enable)
+wlan_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			     struct wlan_roam_triggers *trigger)
 {
-	uint8_t reason = REASON_SUPPLICANT_DE_INIT_ROAMING;
 	QDF_STATUS status;
 
 	status = cm_roam_acquire_lock();
 	if (QDF_IS_STATUS_ERROR(status))
 		return QDF_STATUS_E_FAILURE;
 
-	if (enable)
-		reason = REASON_SUPPLICANT_INIT_ROAMING;
+	status = cm_rso_set_roam_trigger(pdev, vdev_id, trigger);
 
-	status = cm_roam_state_change(
-			pdev, vdev_id,
-			enable ? WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_DEINIT,
-			reason);
 	cm_roam_release_lock();
 
 	return status;

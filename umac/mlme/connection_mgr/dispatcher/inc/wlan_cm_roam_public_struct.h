@@ -1228,6 +1228,8 @@ struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_roam_per_config)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_per_roam_config_req *req);
+	QDF_STATUS (*send_roam_triggers)(struct wlan_objmgr_vdev *vdev,
+					 struct wlan_roam_triggers *req);
 #endif
 };
 

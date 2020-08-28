@@ -55,19 +55,19 @@ QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
 
 /**
- * ucfg_cm_rso_init_deinit() - Init or Deinit roaming module at firmware
+ * ucfg_cm_rso_set_roam_trigger() - Send roam trigger bitmap firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
- * @enable: true: Send RSO init and RSO enable
- *          false: Send RSO stop
+ * @trigger: Carries pointer of the object containing vdev id and
+ *  roam_trigger_bitmap.
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-ucfg_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			bool enable)
+ucfg_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			     struct wlan_roam_triggers *trigger)
 {
-	return wlan_cm_rso_init_deinit(pdev, vdev_id, enable);
+	return wlan_cm_rso_set_roam_trigger(pdev, vdev_id, trigger);
 }
 
 /**
