@@ -709,7 +709,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					rx_info->rs_keyix);
 	}
 
-	rx_info->rs_rssi = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
+	rx_info->rs_rssi = peer->stats.rx.rssi;
 
 	soc = vdev->pdev->soc;
 	primary_chan_num = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
