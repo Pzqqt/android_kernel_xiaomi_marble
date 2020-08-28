@@ -42,11 +42,13 @@
 #include "dp_debug.h"
 
 #define DP_MST_DEBUG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
-#define DP_MST_INFO_LOG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
+#define DP_MST_INFO(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
 
 #define MAX_DP_MST_DRM_ENCODERS		2
 #define MAX_DP_MST_DRM_BRIDGES		2
 #define HPD_STRING_SIZE			30
+#define DP_MST_CONN_ID(bridge) ((bridge)->connector ? \
+		(bridge)->connector->base.id : 0)
 
 struct dp_drm_mst_fw_helper_ops {
 	int (*calc_pbn_mode)(struct dp_display_mode *dp_mode);
@@ -182,7 +184,7 @@ static void dp_mst_hotplug(struct drm_dp_mst_topology_mgr *mgr)
 
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
 
-	DP_MST_INFO_LOG("mst hot plug event\n");
+	DP_MST_INFO("mst hot plug event\n");
 }
 
 static struct drm_private_state *dp_mst_duplicate_bridge_state(
@@ -760,7 +762,6 @@ static bool dp_mst_bridge_mode_fixup(struct drm_bridge *drm_bridge,
 	struct dp_mst_bridge_state *bridge_state;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
 	if (!drm_bridge || !mode || !adjusted_mode) {
 		DP_ERR("Invalid params\n");
@@ -769,6 +770,7 @@ static bool dp_mst_bridge_mode_fixup(struct drm_bridge *drm_bridge,
 	}
 
 	bridge = to_dp_mst_bridge(drm_bridge);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(bridge));
 
 	crtc_state = container_of(mode, struct drm_crtc_state, mode);
 	bridge_state = dp_mst_get_bridge_atomic_state(crtc_state->state,
@@ -803,20 +805,22 @@ static int _dp_mst_compute_config(struct drm_atomic_state *state,
 	struct sde_connector *c_conn = to_sde_connector(connector);
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	pbn = mst->mst_fw_cbs->calc_pbn_mode(mode);
 
 	slots = mst->mst_fw_cbs->atomic_find_vcpi_slots(state,
 			&mst->mst_mgr, c_conn->mst_port, pbn);
 	if (slots < 0) {
-		DP_ERR("mst: failed to find vcpi slots. pbn:%d, slots:%d\n",
-				pbn, slots);
+		DP_ERR("conn:%d failed to find vcpi slots. pbn:%d, slots:%d\n",
+				connector->base.id, pbn, slots);
 		return slots;
 	}
 
-	DP_MST_DEBUG("exit\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	DP_MST_DEBUG("conn:%d pbn:%d slots:%d\n", connector->base.id, pbn,
+			slots);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, pbn,
+			slots);
 
 	return slots;
 }
@@ -850,8 +854,8 @@ static void _dp_mst_update_timeslots(struct dp_mst_private *mst,
 				dp_bridge->id, start_slot, num_slots, pbn,
 				dp_bridge->vcpi);
 
-		DP_INFO("bridge:%d vcpi:%d start_slot:%d num_slots:%d, pbn:%d\n",
-			dp_bridge->id, dp_bridge->vcpi,
+		DP_INFO("conn:%d vcpi:%d start_slot:%d num_slots:%d, pbn:%d\n",
+			DP_MST_CONN_ID(dp_bridge), dp_bridge->vcpi,
 			start_slot, num_slots, pbn);
 	}
 }
@@ -889,7 +893,7 @@ static void _dp_mst_bridge_pre_enable_part1(struct dp_mst_bridge *dp_bridge)
 	int pbn, slots;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(dp_bridge));
 
 	/* skip mst specific disable operations during suspend */
 	if (mst->state == PM_SUSPEND) {
@@ -904,8 +908,8 @@ static void _dp_mst_bridge_pre_enable_part1(struct dp_mst_bridge *dp_bridge)
 
 	slots = mst->mst_fw_cbs->find_vcpi_slots(&mst->mst_mgr, pbn);
 
-	DP_INFO("bridge:%d, pbn:%d, slots:%d\n", dp_bridge->id,
-			dp_bridge->pbn, dp_bridge->num_slots);
+	DP_INFO("conn:%d pbn:%d, slots:%d\n", DP_MST_CONN_ID(dp_bridge),
+			dp_bridge->pbn,	dp_bridge->num_slots);
 
 	ret = mst->mst_fw_cbs->allocate_vcpi(&mst->mst_mgr,
 				       port, pbn, slots);
@@ -929,7 +933,7 @@ static void _dp_mst_bridge_pre_enable_part2(struct dp_mst_bridge *dp_bridge)
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(dp_bridge));
 
 	/* skip mst specific disable operations during suspend */
 	if (mst->state == PM_SUSPEND)
@@ -952,7 +956,7 @@ static void _dp_mst_bridge_pre_disable_part1(struct dp_mst_bridge *dp_bridge)
 	struct drm_dp_mst_port *port = c_conn->mst_port;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(dp_bridge));
 
 	/* skip mst specific disable operations during suspend */
 	if (mst->state == PM_SUSPEND) {
@@ -979,7 +983,7 @@ static void _dp_mst_bridge_pre_disable_part2(struct dp_mst_bridge *dp_bridge)
 	struct drm_dp_mst_port *port = c_conn->mst_port;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY,  DP_MST_CONN_ID(dp_bridge));
 
 	/* skip mst specific disable operations during suspend */
 	if (mst->state == PM_SUSPEND) {
@@ -1019,7 +1023,6 @@ static void dp_mst_bridge_pre_enable(struct drm_bridge *drm_bridge)
 	}
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
 	bridge = to_dp_mst_bridge(drm_bridge);
 	dp = bridge->display;
@@ -1029,6 +1032,7 @@ static void dp_mst_bridge_pre_enable(struct drm_bridge *drm_bridge)
 		return;
 	}
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(bridge));
 	mst = dp->dp_mst_prv_info;
 
 	mutex_lock(&mst->mst_lock);
@@ -1060,15 +1064,16 @@ static void dp_mst_bridge_pre_enable(struct drm_bridge *drm_bridge)
 		_dp_mst_bridge_pre_enable_part2(bridge);
 	}
 
-	DP_MST_INFO_LOG("mode: id(%d) mode(%s), refresh(%d)\n",
+	DP_MST_INFO("mode: id(%d) mode(%s), refresh(%d)\n",
 			bridge->id, bridge->drm_mode.name,
 			bridge->drm_mode.vrefresh);
-	DP_MST_INFO_LOG("dsc: id(%d) dsc(%d)\n", bridge->id,
+	DP_MST_INFO("dsc: id(%d) dsc(%d)\n", bridge->id,
 			bridge->dp_mode.timing.comp_info.comp_ratio);
-	DP_MST_INFO_LOG("channel: id(%d) vcpi(%d) start(%d) tot(%d)\n",
+	DP_MST_INFO("channel: id(%d) vcpi(%d) start(%d) tot(%d)\n",
 			bridge->id, bridge->vcpi, bridge->start_slot,
 			bridge->num_slots);
 end:
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, DP_MST_CONN_ID(bridge));
 	mutex_unlock(&mst->mst_lock);
 }
 
@@ -1090,7 +1095,7 @@ static void dp_mst_bridge_enable(struct drm_bridge *drm_bridge)
 	}
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(bridge));
 
 	dp = bridge->display;
 
@@ -1101,7 +1106,7 @@ static void dp_mst_bridge_enable(struct drm_bridge *drm_bridge)
 		return;
 	}
 
-	DP_MST_INFO_LOG("mst bridge [%d] post enable complete\n",
+	DP_MST_INFO("mst bridge [%d] post enable complete\n",
 			bridge->id);
 }
 
@@ -1118,7 +1123,6 @@ static void dp_mst_bridge_disable(struct drm_bridge *drm_bridge)
 	}
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
 	bridge = to_dp_mst_bridge(drm_bridge);
 	if (!bridge->connector) {
@@ -1126,6 +1130,7 @@ static void dp_mst_bridge_disable(struct drm_bridge *drm_bridge)
 		return;
 	}
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(bridge));
 	dp = bridge->display;
 
 	mst = dp->dp_mst_prv_info;
@@ -1143,8 +1148,8 @@ static void dp_mst_bridge_disable(struct drm_bridge *drm_bridge)
 
 	_dp_mst_bridge_pre_disable_part2(bridge);
 
-	DP_MST_INFO_LOG("mst bridge [%d] disable complete\n", bridge->id);
-
+	DP_MST_INFO("mst bridge [%d] disable complete\n", bridge->id);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, DP_MST_CONN_ID(bridge));
 	mutex_unlock(&mst->mst_lock);
 }
 
@@ -1167,26 +1172,28 @@ static void dp_mst_bridge_post_disable(struct drm_bridge *drm_bridge)
 	}
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(bridge));
 
 	dp = bridge->display;
 	mst = dp->dp_mst_prv_info;
 
 	rc = dp->disable(dp, bridge->dp_panel);
 	if (rc)
-		DP_INFO("[%d] DP display disable failed, rc=%d\n",
+		DP_MST_INFO("[%d] DP display disable failed, rc=%d\n",
 		       bridge->id, rc);
 
 	rc = dp->unprepare(dp, bridge->dp_panel);
 	if (rc)
-		DP_INFO("[%d] DP display unprepare failed, rc=%d\n",
+		DP_MST_INFO("[%d] DP display unprepare failed, rc=%d\n",
 		       bridge->id, rc);
 
 	bridge->connector = NULL;
 	bridge->dp_panel =  NULL;
 
-	DP_MST_INFO_LOG("mst bridge [%d] post disable complete\n",
-			bridge->id);
+	DP_MST_INFO("mst bridge [%d] conn:%d post disable complete\n",
+			bridge->id, DP_MST_CONN_ID(bridge));
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, DP_MST_CONN_ID(bridge));
+
 }
 
 static void dp_mst_bridge_mode_set(struct drm_bridge *drm_bridge,
@@ -1198,7 +1205,6 @@ static void dp_mst_bridge_mode_set(struct drm_bridge *drm_bridge,
 	struct dp_display *dp;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
 	if (!drm_bridge || !mode || !adjusted_mode) {
 		DP_ERR("Invalid params\n");
@@ -1210,6 +1216,7 @@ static void dp_mst_bridge_mode_set(struct drm_bridge *drm_bridge,
 	dp_bridge_state = to_dp_mst_bridge_state(bridge);
 	bridge->connector = dp_bridge_state->connector;
 	bridge->dp_panel = dp_bridge_state->dp_panel;
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, DP_MST_CONN_ID(bridge));
 
 	dp = bridge->display;
 
@@ -1218,7 +1225,8 @@ static void dp_mst_bridge_mode_set(struct drm_bridge *drm_bridge,
 	dp->convert_to_dp_mode(dp, bridge->dp_panel, adjusted_mode,
 			&bridge->dp_mode);
 
-	DP_MST_DEBUG("mst bridge [%d] mode set complete\n", bridge->id);
+	DP_MST_INFO("mst bridge [%d] mode set complete %s\n", bridge->id,
+			mode->name);
 }
 
 /* DP MST Bridge APIs */
@@ -1250,14 +1258,14 @@ int dp_mst_drm_bridge_init(void *data, struct drm_encoder *encoder)
 
 	if (!mst || !mst->mst_initialized) {
 		if (dp_mst_enc_cache.cnt >= MAX_DP_MST_DRM_BRIDGES) {
-			DP_INFO("exceeding max bridge cnt %d\n",
+			DP_MST_INFO("exceeding max bridge cnt %d\n",
 					dp_mst_enc_cache.cnt);
 			return 0;
 		}
 
 		dp_mst_enc_cache.mst_enc[dp_mst_enc_cache.cnt] = encoder;
 		dp_mst_enc_cache.cnt++;
-		DP_INFO("mst not initialized. cache encoder information\n");
+		DP_MST_INFO("mst not initialized. cache encoder information\n");
 		return 0;
 	}
 
@@ -1360,11 +1368,8 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 		status = mst_conn.state;
 	}
 
-	DP_MST_DEBUG("mst connector:%d detect, status:%d\n",
-			connector->base.id, status);
-
-	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	DP_MST_INFO("conn:%d status:%d\n", connector->base.id, status);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, status);
 
 	return status;
 }
@@ -1379,7 +1384,7 @@ static int dp_mst_connector_get_modes(struct drm_connector *connector,
 	int rc = 0;
 
 	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	edid = mst->mst_fw_cbs->get_edid(connector, &mst->mst_mgr,
 			c_conn->mst_port);
@@ -1391,7 +1396,7 @@ static int dp_mst_connector_get_modes(struct drm_connector *connector,
 	DP_MST_DEBUG("mst connector get modes. id: %d\n", connector->base.id);
 
 	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 
 	return rc;
 }
@@ -1447,7 +1452,9 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 			&mst->mst_mgr, required_pbn);
 
 	if (required_pbn > available_pbn || required_slots > available_slots) {
-		DP_DEBUG("mode:%s not supported\n", mode->name);
+		DP_DEBUG("mode:%s not supported. pbn %d vs %d slots %d vs %d\n",
+				mode->name, required_pbn, available_pbn,
+				required_slots, available_slots);
 		return MODE_BAD;
 	}
 
@@ -1462,7 +1469,7 @@ int dp_mst_connector_get_info(struct drm_connector *connector,
 	enum drm_connector_status status = connector_status_unknown;
 
 	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	rc = dp_connector_get_info(connector, info, display);
 
@@ -1475,11 +1482,11 @@ int dp_mst_connector_get_info(struct drm_connector *connector,
 			info->is_connected = false;
 	}
 
-	DP_MST_DEBUG("mst connector:%d get info:%d, rc:%d\n",
+	DP_MST_INFO("mst connector:%d status:%d, rc:%d\n",
 			connector->base.id, status, rc);
 
 	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 
 	return rc;
 }
@@ -1493,7 +1500,7 @@ int dp_mst_connector_get_mode_info(struct drm_connector *connector,
 	int rc;
 
 	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	rc = dp_connector_get_mode_info(connector, drm_mode, mode_info,
 			display, avail_res);
@@ -1502,7 +1509,7 @@ int dp_mst_connector_get_mode_info(struct drm_connector *connector,
 			connector->base.id, rc);
 
 	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 
 	return rc;
 }
@@ -1576,7 +1583,7 @@ static int dp_mst_connector_atomic_check(struct drm_connector *connector,
 	struct dp_display_mode dp_mode;
 
 	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	if (!state)
 		return rc;
@@ -1691,6 +1698,7 @@ mode_set:
 end:
 	DP_MST_DEBUG("mst connector:%d atomic check ret %d\n",
 			connector->base.id, rc);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, rc);
 	return rc;
 }
 
@@ -1700,7 +1708,7 @@ static int dp_mst_connector_config_hdr(struct drm_connector *connector,
 	int rc;
 
 	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	rc = dp_connector_config_hdr(connector, display, c_state);
 
@@ -1708,7 +1716,7 @@ static int dp_mst_connector_config_hdr(struct drm_connector *connector,
 			connector->base.id, rc);
 
 	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, rc);
 
 	return rc;
 }
@@ -1718,15 +1726,16 @@ static void dp_mst_connector_pre_destroy(struct drm_connector *connector,
 {
 	struct dp_display *dp_display = display;
 	struct sde_connector *c_conn = to_sde_connector(connector);
+	u32 conn_id = connector->base.id;
 
 	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, conn_id);
 
 	drm_dp_mst_put_port_malloc(c_conn->mst_port);
 
 	dp_display->mst_connector_uninstall(dp_display, connector);
 	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, conn_id);
 }
 
 /* DRM MST callbacks */
@@ -1809,7 +1818,8 @@ dp_mst_add_connector(struct drm_dp_mst_topology_mgr *mgr,
 	/* unlock connector and make it accessible */
 	drm_modeset_unlock_all(dev);
 
-	DP_MST_INFO_LOG("add mst connector id:%d\n", connector->base.id);
+	DP_MST_INFO("add mst connector id:%d\n", connector->base.id);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	return connector;
 }
@@ -1821,18 +1831,18 @@ static void dp_mst_register_connector(struct drm_connector *connector)
 
 	connector->status = connector->funcs->detect(connector, false);
 
-	DP_MST_INFO_LOG("register mst connector id:%d\n",
-			connector->base.id);
+	DP_MST_INFO("register mst connector id:%d\n", connector->base.id);
 	drm_connector_register(connector);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 }
 
 static void dp_mst_destroy_connector(struct drm_dp_mst_topology_mgr *mgr,
 					   struct drm_connector *connector)
 {
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
-	DP_MST_INFO_LOG("destroy mst connector id:%d\n", connector->base.id);
+	DP_MST_INFO("destroy mst connector id:%d\n", connector->base.id);
 
 	drm_connector_unregister(connector);
 	drm_connector_put(connector);
@@ -2023,6 +2033,7 @@ dp_mst_add_fixed_connector(struct drm_dp_mst_topology_mgr *mgr,
 	drm_modeset_unlock_all(dev);
 
 	DP_MST_DEBUG("add mst connector:%d\n", connector->base.id);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 
 	return connector;
 }
@@ -2047,6 +2058,7 @@ static void dp_mst_register_fixed_connector(struct drm_connector *connector)
 	}
 
 	dp_mst_register_connector(connector);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 }
 
 static void dp_mst_destroy_fixed_connector(struct drm_dp_mst_topology_mgr *mgr,
@@ -2056,7 +2068,7 @@ static void dp_mst_destroy_fixed_connector(struct drm_dp_mst_topology_mgr *mgr,
 	int i;
 
 	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
 	dp_mst = container_of(mgr, struct dp_mst_private, mst_mgr);
 
@@ -2124,6 +2136,7 @@ dp_mst_drm_fixed_connector_init(struct dp_display *dp_display,
 			dev->mode_config.tile_property, 0);
 
 	DP_MST_DEBUG("add mst fixed connector:%d\n", connector->base.id);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 
 	return connector;
 }
@@ -2146,7 +2159,8 @@ static void dp_mst_hpd_event_notify(struct dp_mst_private *mst, bool hpd_status)
 
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
 
-	DP_MST_INFO_LOG("%s finished. hpd_status:%d\n", __func__, hpd_status);
+	DP_MST_INFO("%s finished. hpd_status:%d\n", __func__, hpd_status);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, hpd_status);
 }
 
 /* DP Driver Callback OPs */
@@ -2158,6 +2172,7 @@ static int dp_mst_display_set_mgr_state(void *dp_display, bool state,
 	struct dp_display *dp = dp_display;
 	struct dp_mst_private *mst = dp->dp_mst_prv_info;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, state);
 	/*
 	 * on hpd high, set_mgr_state is called before hotplug event is sent
 	 * to usermode and mst_session_state should be updated here.
@@ -2181,10 +2196,11 @@ static int dp_mst_display_set_mgr_state(void *dp_display, bool state,
 	if (rc < 0) {
 		DP_ERR("failed to set topology mgr state to %d. rc %d\n",
 				state, rc);
-		return rc;
 	}
 
-	return 0;
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, rc);
+
+	return rc;
 }
 
 static void dp_mst_display_hpd(void *dp_display, bool hpd_status)
@@ -2273,8 +2289,9 @@ static void dp_mst_set_state(void *dp_display, enum dp_drv_state mst_state)
 		return;
 	}
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, mst_state);
 	mst->state = mst_state;
-	DP_MST_INFO_LOG("mst power state:%d\n", mst_state);
+	DP_MST_INFO("mst power state:%d\n", mst_state);
 }
 
 /* DP MST APIs */
@@ -2366,7 +2383,7 @@ int dp_mst_init(struct dp_display *dp_display)
 	if (!dp_display->mst_get_fixed_topology_port(dp_display, 0, NULL))
 		dp_mst.mst_mgr.cbs = &dp_mst_fixed_drm_cbs;
 
-	DP_MST_INFO_LOG("dp drm mst topology manager init completed\n");
+	DP_MST_INFO("dp drm mst topology manager init completed\n");
 
 	return ret;
 
@@ -2397,6 +2414,6 @@ void dp_mst_deinit(struct dp_display *dp_display)
 
 	mutex_destroy(&mst->mst_lock);
 
-	DP_MST_INFO_LOG("dp drm mst topology manager deinit completed\n");
+	DP_MST_INFO("dp drm mst topology manager deinit completed\n");
 }
 
