@@ -347,10 +347,10 @@ enum {
 	IEEE80211_PARAM_VAP_TX_ENCAP_TYPE       = 343,
 	IEEE80211_PARAM_VAP_RX_DECAP_TYPE       = 344,
 #endif /* ATH_PERF_PWR_OFFLOAD */
-#if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
+#if HOST_SW_TSO_SG_ENABLE
 	IEEE80211_PARAM_TSO_STATS               = 345, /* Get TSO Stats */
 	IEEE80211_PARAM_TSO_STATS_RESET         = 346, /* Reset TSO Stats */
-#endif /* HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE */
+#endif /* HOST_SW_TSO_SG_ENABLE */
 #if RX_CHECKSUM_OFFLOAD
 	IEEE80211_PARAM_RX_CKSUM_ERR_STATS      = 349, /* Get RX CKSUM Err Stats */
 	IEEE80211_PARAM_RX_CKSUM_ERR_RESET      = 350, /* Reset RX CKSUM Err Stats */
@@ -1677,7 +1677,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"decap_type",          IEEE80211_PARAM_VAP_RX_DECAP_TYPE, SET_PARAM, 1},
 	{"get_decap_type",      IEEE80211_PARAM_VAP_RX_DECAP_TYPE, GET_PARAM, 0},
 #endif
-#if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
+#if HOST_SW_TSO_SG_ENABLE
 	{"get_tso_stats",       IEEE80211_PARAM_TSO_STATS, GET_PARAM, 0},
 	{"rst_tso_stats",       IEEE80211_PARAM_TSO_STATS_RESET, GET_PARAM, 0},
 #endif
