@@ -4124,6 +4124,7 @@ wlan_mlme_get_dfs_chan_ageout_time(struct wlan_objmgr_psoc *psoc,
 #define AUTH_INDEX 0
 #define MAX_RETRIES 2
 #define MAX_ROAM_AUTH_RETRIES 1
+#define MAX_AUTH_RETRIES 3
 
 QDF_STATUS
 wlan_mlme_get_sae_assoc_retry_count(struct wlan_objmgr_psoc *psoc,
@@ -4164,7 +4165,7 @@ wlan_mlme_get_sae_auth_retry_count(struct wlan_objmgr_psoc *psoc,
 		QDF_GET_BITS(mlme_obj->cfg.gen.sae_connect_retries,
 			     AUTH_INDEX * NUM_RETRY_BITS, NUM_RETRY_BITS);
 
-	*retry_count = QDF_MIN(MAX_RETRIES, *retry_count);
+	*retry_count = QDF_MIN(MAX_AUTH_RETRIES, *retry_count);
 
 	return QDF_STATUS_SUCCESS;
 }
