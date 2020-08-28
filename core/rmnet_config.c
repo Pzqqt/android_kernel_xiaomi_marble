@@ -388,6 +388,7 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 	struct rmnet_endpoint *ep;
 	struct rmnet_port *port;
 	u16 mux_id;
+	int rc = 0;
 
 	real_dev = __dev_get_by_index(dev_net(dev),
 				      nla_get_u32(tb[IFLA_LINK]));
@@ -422,7 +423,7 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 		struct tcmsg *tcm;
 
 		tcm = nla_data(qos);
-		qmi_rmnet_change_link(dev, port, tcm, nla_len(qos));
+		rc = qmi_rmnet_change_link(dev, port, tcm, nla_len(qos));
 	}
 
 	if (data[IFLA_RMNET_UL_AGG_PARAMS]) {
@@ -435,7 +436,7 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 					       agg_params->agg_time);
 	}
 
-	return 0;
+	return rc;
 }
 
 static size_t rmnet_get_size(const struct net_device *dev)

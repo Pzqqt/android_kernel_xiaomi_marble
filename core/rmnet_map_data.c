@@ -1627,38 +1627,41 @@ void rmnet_map_tx_aggregate_exit(struct rmnet_port *port)
 	spin_unlock_irqrestore(&port->agg_lock, flags);
 }
 
-void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb)
+void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush)
 {
+	struct rmnet_aggregation_state *state;
 	struct rmnet_port *port;
 	struct sk_buff *agg_skb;
 	unsigned long flags;
-	unsigned int i;
+
+	if (unlikely(ch >= RMNET_MAX_AGG_STATE))
+		ch = RMNET_DEFAULT_AGG_STATE;
 
 	port = rmnet_get_port(qmap_skb->dev);
+	state = &port->agg_state[ch];
 
-	if (port && (port->data_format & RMNET_EGRESS_FORMAT_AGGREGATION))
+	if (!flush)
 		goto send;
 
-	for (i = RMNET_DEFAULT_AGG_STATE; i < RMNET_MAX_AGG_STATE; i++) {
-		struct rmnet_aggregation_state *state = &port->agg_state[i];
+	if (!(port->data_format & RMNET_EGRESS_FORMAT_AGGREGATION))
+		goto send;
 
-		spin_lock_irqsave(&port->agg_lock, flags);
-		if (state->agg_skb) {
-			agg_skb = state->agg_skb;
-			state->agg_skb = NULL;
-			state->agg_count = 0;
-			memset(&state->agg_time, 0, sizeof(state->agg_time));
-			state->agg_state = 0;
-			spin_unlock_irqrestore(&port->agg_lock, flags);
-			hrtimer_cancel(&state->hrtimer);
-			state->send_agg_skb(agg_skb);
-		} else {
-			spin_unlock_irqrestore(&port->agg_lock, flags);
-		}
+	spin_lock_irqsave(&port->agg_lock, flags);
+	if (state->agg_skb) {
+		agg_skb = state->agg_skb;
+		state->agg_skb = NULL;
+		state->agg_count = 0;
+		memset(&state->agg_time, 0, sizeof(state->agg_time));
+		state->agg_state = 0;
+		spin_unlock_irqrestore(&port->agg_lock, flags);
+		hrtimer_cancel(&state->hrtimer);
+		state->send_agg_skb(agg_skb);
+	} else {
+		spin_unlock_irqrestore(&port->agg_lock, flags);
 	}
 
 send:
-	dev_queue_xmit(qmap_skb);
+	state->send_agg_skb(qmap_skb);
 }
 EXPORT_SYMBOL(rmnet_map_tx_qmap_cmd);
 

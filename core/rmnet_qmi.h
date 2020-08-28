@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,7 +18,7 @@
 #include <linux/skbuff.h>
 #define CONFIG_QTI_QMI_RMNET 1
 
-void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb);
+void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush);
 
 #ifdef CONFIG_QTI_QMI_RMNET
 void *rmnet_get_qmi_pt(void *port);

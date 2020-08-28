@@ -292,6 +292,7 @@ int rmnet_map_dl_ind_register(struct rmnet_port *port,
 int rmnet_map_dl_ind_deregister(struct rmnet_port *port,
 				struct rmnet_map_dl_ind *dl_ind);
 void rmnet_map_cmd_exit(struct rmnet_port *port);
+void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush);
 void rmnet_map_send_agg_skb(struct rmnet_aggregation_state *state,
 			    unsigned long flags);
 int rmnet_map_add_tso_header(struct sk_buff *skb, struct rmnet_port *port,

@@ -88,7 +88,7 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 		if (rmnet_perf_tether_egress) {
 			rmnet_perf_tether_egress(skb);
 		}
-		low_latency = qmi_rmnet_flow_is_low_latency(dev, ip_type, mark);
+		low_latency = qmi_rmnet_flow_is_low_latency(dev, skb);
 		rmnet_egress_handler(skb, low_latency);
 		qmi_rmnet_burst_fc_check(dev, ip_type, mark, len);
 		qmi_rmnet_work_maybe_restart(rmnet_get_rmnet_port(dev));
