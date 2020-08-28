@@ -351,10 +351,6 @@ enum {
 	IEEE80211_PARAM_TSO_STATS               = 345, /* Get TSO Stats */
 	IEEE80211_PARAM_TSO_STATS_RESET         = 346, /* Reset TSO Stats */
 #endif /* HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE */
-#if HOST_SW_LRO_ENABLE
-	IEEE80211_PARAM_LRO_STATS               = 347, /* Get LRO Stats */
-	IEEE80211_PARAM_LRO_STATS_RESET         = 348, /* Reset LRO Stats */
-#endif /* HOST_SW_LRO_ENABLE */
 #if RX_CHECKSUM_OFFLOAD
 	IEEE80211_PARAM_RX_CKSUM_ERR_STATS      = 349, /* Get RX CKSUM Err Stats */
 	IEEE80211_PARAM_RX_CKSUM_ERR_RESET      = 350, /* Reset RX CKSUM Err Stats */
@@ -1684,10 +1680,6 @@ struct vendor_commands vap_vendor_cmds[] = {
 #if (HOST_SW_TSO_ENABLE || HOST_SW_TSO_SG_ENABLE)
 	{"get_tso_stats",       IEEE80211_PARAM_TSO_STATS, GET_PARAM, 0},
 	{"rst_tso_stats",       IEEE80211_PARAM_TSO_STATS_RESET, GET_PARAM, 0},
-#endif
-#if HOST_SW_LRO_ENABLE
-	{"get_lro_stats",       IEEE80211_PARAM_LRO_STATS, GET_PARAM, 0},
-	{"rst_lro_stats",       IEEE80211_PARAM_LRO_STATS_RESET, GET_PARAM, 0},
 #endif
 #if RX_CHECKSUM_OFFLOAD
 	{"get_csum_stats",      IEEE80211_PARAM_RX_CKSUM_ERR_STATS, GET_PARAM, 0},
