@@ -723,12 +723,13 @@
  * sae_connect_retries - Bit mask to retry Auth and full connection on assoc
  * timeout to same AP and auth retries during roaming
  * @Min: 0x0
- * @Max: 0x52
+ * @Max: 0x53
  * @Default: 0x49
  *
  * This ini is used to set max auth retry in auth phase of roaming and initial
- * connection and max connection retry in case of assoc timeout. MAX Auth and
- * connection retries are capped to 2 and roam Auth retry is capped to 1.
+ * connection and max connection retry in case of assoc timeout. MAX Auth
+ * retries are capped to 3, connection retries are capped to 2 and roam Auth
+ * retry is capped to 1.
  * Default is 0x49 i.e. 1 retry each.
  *
  * Bits       Retry Type
@@ -757,7 +758,7 @@
  * </ini>
  */
 #define CFG_SAE_CONNECION_RETRIES CFG_INI_UINT("sae_connect_retries", \
-				0, 0x52, 0x49, CFG_VALUE_OR_DEFAULT, \
+				0, 0x53, 0x49, CFG_VALUE_OR_DEFAULT, \
 				"Bit mask to retry Auth and full connection on assoc timeout to same AP for SAE connection")
 
 /*
