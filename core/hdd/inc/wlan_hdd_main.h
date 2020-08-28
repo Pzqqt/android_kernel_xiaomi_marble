@@ -76,6 +76,7 @@
 #include <wlan_hdd_lro.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <cdp_txrx_peer_ops.h>
+#include <cdp_txrx_misc.h>
 #include "wlan_hdd_nan_datapath.h"
 #if defined(CONFIG_HL_SUPPORT)
 #include "wlan_tgt_def_config_hl.h"
@@ -2687,22 +2688,32 @@ bool hdd_is_any_adapter_connected(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_add_latency_critical_client() - Add latency critical client
- * @hdd_ctx: Global HDD context
+ * @adapter: adapter handle (Should not be NULL)
  * @phymode: the phymode of the connected adapter
  *
- * This function adds to the latency critical count if the present
- * connection is also a latency critical one.
+ * This function checks if the present connection is latency critical
+ * and adds to the latency critical clients count and informs the
+ * datapath about this connection being latency critical.
  *
  * Returns: None
  */
 static inline void
-hdd_add_latency_critical_client(struct hdd_context *hdd_ctx,
+hdd_add_latency_critical_client(struct hdd_adapter *adapter,
 				enum qca_wlan_802_11_mode phymode)
 {
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
+
 	switch (phymode) {
 	case QCA_WLAN_802_11_MODE_11A:
 	case QCA_WLAN_802_11_MODE_11G:
-		qdf_atomic_inc(&hdd_ctx->num_latency_critical_clients);
+		if (adapter->device_mode == QDF_STA_MODE)
+			qdf_atomic_inc(&hdd_ctx->num_latency_critical_clients);
+
+		hdd_info("Adding latency critical connection for vdev %d",
+			 adapter->vdev_id);
+		cdp_vdev_inform_ll_conn(cds_get_context(QDF_MODULE_ID_SOC),
+					adapter->vdev_id,
+					CDP_VDEV_LL_CONN_ADD);
 		break;
 	default:
 		break;
@@ -2711,22 +2722,32 @@ hdd_add_latency_critical_client(struct hdd_context *hdd_ctx,
 
 /**
  * hdd_del_latency_critical_client() - Add tlatency critical client
- * @hdd_ctx: Global HDD context
+ * @adapter: adapter handle (Should not be NULL)
  * @phymode: the phymode of the connected adapter
  *
- * This function removes from the latency critical count if the present
- * connection is also a latency critical one.
+ * This function checks if the present connection was latency critical
+ * and removes from the latency critical clients count and informs the
+ * datapath about the removed connection being latency critical.
  *
  * Returns: None
  */
 static inline void
-hdd_del_latency_critical_client(struct hdd_context *hdd_ctx,
+hdd_del_latency_critical_client(struct hdd_adapter *adapter,
 				enum qca_wlan_802_11_mode phymode)
 {
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
+
 	switch (phymode) {
 	case QCA_WLAN_802_11_MODE_11A:
 	case QCA_WLAN_802_11_MODE_11G:
-		qdf_atomic_dec(&hdd_ctx->num_latency_critical_clients);
+		if (adapter->device_mode == QDF_STA_MODE)
+			qdf_atomic_dec(&hdd_ctx->num_latency_critical_clients);
+
+		hdd_info("Removing latency critical connection for vdev %d",
+			 adapter->vdev_id);
+		cdp_vdev_inform_ll_conn(cds_get_context(QDF_MODULE_ID_SOC),
+					adapter->vdev_id,
+					CDP_VDEV_LL_CONN_DEL);
 		break;
 	default:
 		break;

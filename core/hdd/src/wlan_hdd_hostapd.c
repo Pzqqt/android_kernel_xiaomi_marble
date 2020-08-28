@@ -1397,17 +1397,7 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
 	return maxrate;
 }
 
-/**
- * hdd_convert_dot11mode_from_phymode() - get dot11 mode from phymode
- * @phymode: phymode of sta associated to SAP
- *
- * The function is to convert the phymode to corresponding dot11 mode
- *
- * Return: dot11mode.
- */
-
-
-static int hdd_convert_dot11mode_from_phymode(int phymode)
+enum qca_wlan_802_11_mode hdd_convert_dot11mode_from_phymode(int phymode)
 {
 
 	switch (phymode) {
@@ -2289,7 +2279,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						ap_ctx->privacy,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
-						event->wmmEnabled);
+						event);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
@@ -2301,7 +2291,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						ap_ctx->privacy,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
-						event->wmmEnabled);
+						event);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
 					QDF_MAC_ADDR_FMT, qdf_status,
@@ -2526,6 +2516,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						NULL,
 						adapter->device_mode);
 		}
+
 		/*stop timer in sap/p2p_go */
 		if (ap_ctx->ap_active == false) {
 			hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);

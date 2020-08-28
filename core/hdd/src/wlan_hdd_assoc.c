@@ -1595,7 +1595,7 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 
 		hdd_add_latency_critical_client(
-			hdd_ctx,
+			adapter,
 			hdd_convert_cfgdot11mode_to_80211mode(
 				sta_ctx->conn_info.dot11mode));
 		/* start timer in sta/p2p_cli */
@@ -1638,7 +1638,7 @@ static void hdd_send_association_event(struct net_device *dev,
 					  adapter->vdev);
 
 		hdd_del_latency_critical_client(
-			hdd_ctx,
+			adapter,
 			hdd_convert_cfgdot11mode_to_80211mode(
 				sta_ctx->conn_info.dot11mode));
 		/* stop timer in sta/p2p_cli */

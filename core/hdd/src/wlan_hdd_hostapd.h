@@ -279,6 +279,16 @@ hdd_check_and_disconnect_sta_on_invalid_channel(struct hdd_context *hdd_ctx,
 						tSirMacReasonCodes reason);
 
 /**
+ * hdd_convert_dot11mode_from_phymode() - get dot11 mode from phymode
+ * @phymode: phymode of sta associated to SAP
+ *
+ * The function is to convert the phymode to corresponding dot11 mode
+ *
+ * Return: dot11mode.
+ */
+enum qca_wlan_802_11_mode hdd_convert_dot11mode_from_phymode(int phymode);
+
+/**
  * hdd_stop_sap_due_to_invalid_channel() - to stop sap in case of invalid chnl
  * @work: pointer to work structure
  *

@@ -128,15 +128,16 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
  * @auth_required: is additional authentication required?
  * @privacy_required: should 802.11 privacy bit be set?
  * @sta_mac: station MAC address
- * @wmm_enabled: is WMM enabled for this STA?
+ * @event: STA assoc complete event (Can be NULL)
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
-QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
-				   bool auth_required,
-				   bool privacy_required,
-				   struct qdf_mac_addr *sta_mac,
-				   bool wmm_enabled);
+QDF_STATUS
+hdd_softap_register_sta(struct hdd_adapter *adapter,
+			bool auth_required,
+			bool privacy_required,
+			struct qdf_mac_addr *sta_mac,
+			tSap_StationAssocReassocCompleteEvent *event);
 
 /**
  * hdd_softap_register_bc_sta() - Register the SoftAP broadcast STA
