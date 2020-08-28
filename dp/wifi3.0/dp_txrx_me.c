@@ -268,6 +268,7 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
  * @newmac: Table of the clients to which packets have to be sent
  * @new_mac_cnt: No of clients
  * @tid: desired tid
+ * @is_igmp: flag to indicate if packet is igmp
  *
  * return: no of converted packets
  */
@@ -275,7 +276,8 @@ uint16_t
 dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			    qdf_nbuf_t nbuf,
 			    uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-			    uint8_t new_mac_cnt, uint8_t tid)
+			    uint8_t new_mac_cnt, uint8_t tid,
+			    bool is_igmp)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev;
@@ -442,7 +444,13 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		msdu_info.tid = tid;
 	}
 
-	DP_STATS_INC(vdev, tx_i.mcast_en.ucast, new_mac_cnt);
+	if (is_igmp) {
+		DP_STATS_INC(vdev, tx_i.igmp_mcast_en.igmp_ucast_converted,
+			     new_mac_cnt);
+	} else {
+		DP_STATS_INC(vdev, tx_i.mcast_en.ucast, new_mac_cnt);
+	}
+
 	dp_tx_send_msdu_multiple(vdev, nbuf, &msdu_info);
 
 	while (seg_info_head->next) {
