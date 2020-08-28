@@ -148,6 +148,9 @@
 #define QDF_NBUF_TX_PKT_STATE_MAX            10
 #define QDF_NBUF_TX_PKT_LI_DP                11
 
+/* nbuf allocations only come from one domain */
+#define QDF_DEBUG_NBUF_DOMAIN		     0
+
 /* qdf_nbuf allocate and map max retry threshold when failed */
 #define QDF_NBUF_ALLOC_MAP_RETRY_THRESHOLD      20
 
@@ -408,7 +411,7 @@ struct qdf_radiotap_vendor_ns {
 } __attribute__((__packed__));
 
 /**
- * strcut qdf_radiotap_vendor_ns_ath - Combined QTI Vendor NS
+ * struct qdf_radiotap_vendor_ns_ath - Combined QTI Vendor NS
  * including the Radiotap specified Vendor Namespace header and
  * QTI specific Vendor Namespace data
  * @lsig: L_SIG_A (or L_SIG)
@@ -424,6 +427,8 @@ struct qdf_radiotap_vendor_ns_ath {
 	uint32_t lsig_b;
 	uint32_t ppdu_start_timestamp;
 } __attribute__((__packed__));
+
+#define QDF_MEM_FUNC_NAME_SIZE 48
 
 /* Masks for HE SIG known fields in mon_rx_status structure */
 #define QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0	0x00000001
@@ -653,6 +658,37 @@ enum cb_ftype {
  * @qdf_nbuf_t - Platform indepedent packet abstraction
  */
 typedef __qdf_nbuf_t qdf_nbuf_t;
+
+/**
+ * struct qdf_nbuf_track_t - Network buffer track structure
+ *
+ * @p_next: Pointer to next
+ * @net_buf: Pointer to network buffer
+ * @func_name: Function name
+ * @line_num: Line number
+ * @size: Size
+ * @map_func_name: nbuf mapping function name
+ * @map_line_num: mapping function line number
+ * @unmap_func_name: nbuf unmapping function name
+ * @unmap_line_num: mapping function line number
+ * @is_nbuf_mapped: indicate mapped/unmapped nbuf
+ * @time: mapping function timestamp
+ */
+struct qdf_nbuf_track_t {
+	struct qdf_nbuf_track_t *p_next;
+	qdf_nbuf_t net_buf;
+	char func_name[QDF_MEM_FUNC_NAME_SIZE];
+	uint32_t line_num;
+	size_t size;
+	char map_func_name[QDF_MEM_FUNC_NAME_SIZE];
+	uint32_t map_line_num;
+	char unmap_func_name[QDF_MEM_FUNC_NAME_SIZE];
+	uint32_t unmap_line_num;
+	bool is_nbuf_mapped;
+	qdf_time_t time;
+};
+
+typedef struct qdf_nbuf_track_t QDF_NBUF_TRACK;
 
 /**
  * typedef qdf_nbuf_queue_head_t - Platform indepedent nbuf queue head
@@ -1454,6 +1490,9 @@ static inline qdf_nbuf_t qdf_nbuf_next(qdf_nbuf_t buf)
 }
 
 #ifdef NBUF_MEMORY_DEBUG
+
+#define QDF_NET_BUF_TRACK_MAX_SIZE    (1024)
+
 void qdf_net_buf_debug_init(void);
 void qdf_net_buf_debug_exit(void);
 void qdf_net_buf_debug_clean(void);
@@ -3906,6 +3945,39 @@ static inline void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf,
 {
 }
 #endif /* NBUF_FRAG_MEMORY_DEBUG */
+
+#ifdef MEMORY_DEBUG
+/**
+ * qdf_nbuf_acquire_track_lock - acquire the nbuf spinlock at the
+ * specified index
+ * @index: index to get the lock
+ * @irq_flag: lock flag for using nbuf lock
+ *
+ * Return: none
+ */
+void qdf_nbuf_acquire_track_lock(uint32_t index,
+				 unsigned long irq_flag);
+
+/**
+ * qdf_nbuf_release_track_lock - release the nbuf spinlock at the
+ * specified index
+ * @index: index of the lock to be released
+ * @irq_flag: lock flag for using nbuf lock
+ *
+ * Return: none
+ */
+void qdf_nbuf_release_track_lock(uint32_t index,
+				 unsigned long irq_flag);
+
+/**
+ * qdf_nbuf_get_track_tbl - get the QDF_NBUF_TRACK entry from the track
+ * table at the specified index
+ * @index: index to get the table entry
+ *
+ * Return: the QDF_NBUF_TRACK entry at the specified index in the table
+ */
+QDF_NBUF_TRACK *qdf_nbuf_get_track_tbl(uint32_t index);
+#endif /* MEMORY_DEBUG */
 
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_api_w.h>

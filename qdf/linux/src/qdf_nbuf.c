@@ -2109,37 +2109,8 @@ bool __qdf_nbuf_is_bcast_pkt(qdf_nbuf_t nbuf)
 qdf_export_symbol(__qdf_nbuf_is_bcast_pkt);
 
 #ifdef NBUF_MEMORY_DEBUG
-#define QDF_NET_BUF_TRACK_MAX_SIZE    (1024)
-
-/**
- * struct qdf_nbuf_track_t - Network buffer track structure
- *
- * @p_next: Pointer to next
- * @net_buf: Pointer to network buffer
- * @func_name: Function name
- * @line_num: Line number
- * @size: Size
- * @map_func_name: nbuf mapping function name
- * @map_line_num: mapping function line number
- * @unmap_func_name: nbuf unmapping function name
- * @unmap_line_num: mapping function line number
- * @is_nbuf_mapped: indicate mapped/unmapped nbuf
- */
-struct qdf_nbuf_track_t {
-	struct qdf_nbuf_track_t *p_next;
-	qdf_nbuf_t net_buf;
-	char func_name[QDF_MEM_FUNC_NAME_SIZE];
-	uint32_t line_num;
-	size_t size;
-	char map_func_name[QDF_MEM_FUNC_NAME_SIZE];
-	uint32_t map_line_num;
-	char unmap_func_name[QDF_MEM_FUNC_NAME_SIZE];
-	uint32_t unmap_line_num;
-	bool is_nbuf_mapped;
-};
 
 static spinlock_t g_qdf_net_buf_track_lock[QDF_NET_BUF_TRACK_MAX_SIZE];
-typedef struct qdf_nbuf_track_t QDF_NBUF_TRACK;
 
 static QDF_NBUF_TRACK *gp_qdf_net_buf_track_tbl[QDF_NET_BUF_TRACK_MAX_SIZE];
 static struct kmem_cache *nbuf_tracking_cache;
@@ -2551,6 +2522,7 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			p_node->map_func_name[0] = '\0';
 			p_node->unmap_func_name[0] = '\0';
 			p_node->size = size;
+			p_node->time = qdf_get_log_timestamp();
 			qdf_mem_skb_inc(size);
 			p_node->p_next = gp_qdf_net_buf_track_tbl[i];
 			gp_qdf_net_buf_track_tbl[i] = p_node;
@@ -4826,3 +4798,24 @@ void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
 
 qdf_export_symbol(qdf_net_buf_debug_release_frag);
 #endif /* NBUF_FRAG_MEMORY_DEBUG */
+
+#ifdef MEMORY_DEBUG
+void qdf_nbuf_acquire_track_lock(uint32_t index,
+				 unsigned long irq_flag)
+{
+	spin_lock_irqsave(&g_qdf_net_buf_track_lock[index],
+			  irq_flag);
+}
+
+void qdf_nbuf_release_track_lock(uint32_t index,
+				 unsigned long irq_flag)
+{
+	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[index],
+			       irq_flag);
+}
+
+QDF_NBUF_TRACK *qdf_nbuf_get_track_tbl(uint32_t index)
+{
+	return gp_qdf_net_buf_track_tbl[index];
+}
+#endif /* MEMORY_DEBUG */

@@ -73,6 +73,7 @@ static struct __qdf_mem_stat {
 enum list_type {
 	LIST_TYPE_MEM = 0,
 	LIST_TYPE_DMA = 1,
+	LIST_TYPE_NBUF = 2,
 	LIST_TYPE_MAX,
 };
 
@@ -100,6 +101,13 @@ static struct major_alloc_priv dma_priv = {
 	/* List type set to DMA */
 	LIST_TYPE_DMA,
 	/* initial threshold to list APIs which allocates dma >= 50 times */
+	50
+};
+
+static struct major_alloc_priv nbuf_priv = {
+	/* List type set to NBUF */
+	LIST_TYPE_NBUF,
+	/* initial threshold to list APIs which allocates nbuf >= 50 times */
 	50
 };
 
@@ -699,6 +707,181 @@ static ssize_t qdf_major_alloc_set_threshold(struct file *file,
 	return buf_size;
 }
 
+/**
+ * qdf_print_major_nbuf_allocs() - output agnostic nbuf print logic
+ * @threshold: the threshold value set by uset to list top allocations
+ * @print: the print adapter function
+ * @print_priv: the private data to be consumed by @print
+ * @mem_print: pointer to function which prints the memory allocation data
+ *
+ * Return: None
+ */
+static void
+qdf_print_major_nbuf_allocs(uint32_t threshold,
+			    qdf_abstract_print print,
+			    void *print_priv,
+			    void (*mem_print)(struct __qdf_mem_info *,
+					      qdf_abstract_print,
+					      void *, uint32_t))
+{
+	uint32_t nbuf_iter;
+	unsigned long irq_flag = 0;
+	QDF_NBUF_TRACK *p_node;
+	QDF_NBUF_TRACK *p_prev;
+	struct __qdf_mem_info table[QDF_MEM_STAT_TABLE_SIZE];
+	struct qdf_mem_header meta;
+	bool is_full;
+
+	qdf_mem_zero(table, sizeof(table));
+	qdf_mem_debug_print_header(print, print_priv, threshold);
+
+	if (is_initial_mem_debug_disabled)
+		return;
+
+	qdf_rl_info("major nbuf print with threshold %u", threshold);
+
+	for (nbuf_iter = 0; nbuf_iter < QDF_NET_BUF_TRACK_MAX_SIZE;
+	     nbuf_iter++) {
+		qdf_nbuf_acquire_track_lock(nbuf_iter, irq_flag);
+		p_node = qdf_nbuf_get_track_tbl(nbuf_iter);
+		while (p_node) {
+			meta.line = p_node->line_num;
+			meta.size = p_node->size;
+			meta.caller = NULL;
+			meta.time = p_node->time;
+			qdf_str_lcopy(meta.func, p_node->func_name,
+				      QDF_MEM_FUNC_NAME_SIZE);
+
+			is_full = qdf_mem_meta_table_insert(table, &meta);
+
+			if (is_full) {
+				(*mem_print)(table, print,
+					     print_priv, threshold);
+				qdf_mem_zero(table, sizeof(table));
+			}
+
+			p_prev = p_node;
+			p_node = p_node->p_next;
+		}
+		qdf_nbuf_release_track_lock(nbuf_iter, irq_flag);
+	}
+
+	(*mem_print)(table, print, print_priv, threshold);
+
+	qdf_rl_info("major nbuf print end");
+}
+
+/**
+ * qdf_major_nbuf_alloc_show() - print sequential callback
+ * @seq: seq_file handle
+ * @v: current iterator
+ *
+ * Return: 0 - success
+ */
+static int qdf_major_nbuf_alloc_show(struct seq_file *seq, void *v)
+{
+	struct major_alloc_priv *priv = (struct major_alloc_priv *)seq->private;
+
+	if (!priv) {
+		qdf_err("priv is null");
+		return -EINVAL;
+	}
+
+	qdf_print_major_nbuf_allocs(priv->threshold,
+				    seq_printf_printer,
+				    seq,
+				    qdf_print_major_alloc);
+
+	return 0;
+}
+
+/**
+ * qdf_nbuf_seq_start() - sequential callback to start
+ * @seq: seq_file handle
+ * @pos: The start position of the sequence
+ *
+ * Return: iterator pointer, or NULL if iteration is complete
+ */
+static void *qdf_nbuf_seq_start(struct seq_file *seq, loff_t *pos)
+{
+	enum qdf_debug_domain domain = *pos;
+
+	if (domain > QDF_DEBUG_NBUF_DOMAIN)
+		return NULL;
+
+	return pos;
+}
+
+/**
+ * qdf_nbuf_seq_next() - next sequential callback
+ * @seq: seq_file handle
+ * @v: the current iterator
+ * @pos: the current position
+ *
+ * Get the next node and release previous node.
+ *
+ * Return: iterator pointer, or NULL if iteration is complete
+ */
+static void *qdf_nbuf_seq_next(struct seq_file *seq, void *v, loff_t *pos)
+{
+	++*pos;
+
+	return qdf_nbuf_seq_start(seq, pos);
+}
+
+/**
+ * qdf_nbuf_seq_stop() - stop sequential callback
+ * @seq: seq_file handle
+ * @v: current iterator
+ *
+ * Return: None
+ */
+static void qdf_nbuf_seq_stop(struct seq_file *seq, void *v) { }
+
+/* sequential file operation table created to track major skb allocs */
+static const struct seq_operations qdf_major_nbuf_allocs_seq_ops = {
+	.start = qdf_nbuf_seq_start,
+	.next = qdf_nbuf_seq_next,
+	.stop = qdf_nbuf_seq_stop,
+	.show = qdf_major_nbuf_alloc_show,
+};
+
+static int qdf_major_nbuf_allocs_open(struct inode *inode, struct file *file)
+{
+	void *private = inode->i_private;
+	struct seq_file *seq;
+	int rc;
+
+	rc = seq_open(file, &qdf_major_nbuf_allocs_seq_ops);
+	if (rc == 0) {
+		seq = file->private_data;
+		seq->private = private;
+	}
+	return rc;
+}
+
+static ssize_t qdf_major_nbuf_alloc_set_threshold(struct file *file,
+						  const char __user *user_buf,
+						  size_t count,
+						  loff_t *pos)
+{
+	char buf[32];
+	ssize_t buf_size;
+	uint32_t threshold;
+	struct seq_file *seq = file->private_data;
+	struct major_alloc_priv *priv = (struct major_alloc_priv *)seq->private;
+
+	buf_size = min(count, (sizeof(buf) - 1));
+	if (buf_size <= 0)
+		return 0;
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
+	buf[buf_size] = '\0';
+	if (!kstrtou32(buf, 10, &threshold))
+		priv->threshold = threshold;
+	return buf_size;
+}
+
 /* file operation table for listing major allocs */
 static const struct file_operations fops_qdf_major_allocs = {
 	.owner = THIS_MODULE,
@@ -716,6 +899,16 @@ static const struct file_operations fops_qdf_mem_debugfs = {
 	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = seq_release,
+};
+
+/* file operation table for listing major allocs */
+static const struct file_operations fops_qdf_nbuf_major_allocs = {
+	.owner = THIS_MODULE,
+	.open = qdf_major_nbuf_allocs_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = seq_release,
+	.write = qdf_major_nbuf_alloc_set_threshold,
 };
 
 static QDF_STATUS qdf_mem_debug_debugfs_init(void)
@@ -743,6 +936,12 @@ static QDF_STATUS qdf_mem_debug_debugfs_init(void)
 			    qdf_mem_debugfs_root,
 			    &dma_priv,
 			    &fops_qdf_major_allocs);
+
+	debugfs_create_file("major_nbuf_allocs",
+			    0600,
+			    qdf_mem_debugfs_root,
+			    &nbuf_priv,
+			    &fops_qdf_nbuf_major_allocs);
 
 	return QDF_STATUS_SUCCESS;
 }
