@@ -26,6 +26,7 @@
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_scan_public_structs.h>
 #include "wlan_crypto_global_def.h"
+#include "qdf_status.h"
 
 #define CM_ID_INVALID 0xFFFFFFFF
 typedef uint32_t wlan_cm_id;
@@ -101,7 +102,7 @@ struct wlan_fils_con_info {
 
 /**
  * enum wlan_cm_source - connection manager req source
- * @CM_OSIF_CONNECT_REQ: Connect req initiated by OSIF or north bound
+ * @CM_OSIF_CONNECT: Connect req initiated by OSIF or north bound
  * @CM_ROAMING: Roaming request
  * @CM_OSIF_DISCONNECT: Disconnect req initiated by OSIF or north bound
  * @CM_PEER_DISCONNECT: Disconnect req initiated by peer sending deauth/disassoc
@@ -114,7 +115,7 @@ struct wlan_fils_con_info {
  * @CM_SOURCE_INVALID: Invalid connection manager req source
  */
 enum wlan_cm_source {
-	CM_OSIF_CONNECT_REQ,
+	CM_OSIF_CONNECT,
 	CM_ROAMING,
 	CM_OSIF_DISCONNECT,
 	CM_PEER_DISCONNECT,
@@ -251,6 +252,7 @@ enum wlan_cm_connect_fail_reason {
  * @src_mac: src mac
  * @hlp_data: hlp data
  * @hlp_data_len: hlp data length
+ * @fils_seq_num: FILS sequence number
  */
 struct fils_connect_rsp_params {
 	uint8_t *fils_pmk;
@@ -266,6 +268,7 @@ struct fils_connect_rsp_params {
 	struct qdf_mac_addr src_mac;
 	uint8_t hlp_data[CM_FILS_MAX_HLP_DATA_LEN];
 	uint16_t hlp_data_len;
+	uint16_t fils_seq_num;
 };
 #endif
 
@@ -283,7 +286,7 @@ struct wlan_connect_rsp_ies {
 	struct element_info assoc_rsp;
 	struct element_info ric_resp_ie;
 #ifdef WLAN_FEATURE_FILS_SK
-	struct fils_connect_rsp_params fils_ie;
+	struct fils_connect_rsp_params *fils_ie;
 #endif
 };
 
@@ -297,15 +300,25 @@ struct wlan_connect_rsp_ies {
  * @reason_code: protocol reason code of the connect failure
  * @aid: aid
  * @connect_ies: connect related IE required by osif to send to kernel
+ * @is_fils_connection: is fils connection
+ * @bssid: BSSID of the ap
+ * @ssid: SSID of the connection
+ * @freq: Channel frequency
  */
 struct wlan_cm_connect_rsp {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
-	uint8_t connect_status;
+	QDF_STATUS connect_status;
 	enum wlan_cm_connect_fail_reason reason;
 	uint8_t reason_code;
 	uint8_t aid;
 	struct wlan_connect_rsp_ies connect_ies;
+#ifdef WLAN_FEATURE_FILS_SK
+	bool is_fils_connection;
+#endif
+	struct qdf_mac_addr bssid;
+	struct wlan_ssid ssid;
+	qdf_freq_t freq;
 };
 
 

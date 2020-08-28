@@ -42,4 +42,18 @@
 QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_discon_rsp *rsp);
 
+/**
+ * osif_connect_handler() - API to send connect response to kernel
+ * @vdev: vdev pointer
+ * @rsp: Connection manager connect response
+ *
+ * The API is used to send connection response to kernel
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_rsp *rsp);
+
 #endif /* __WLAN_CFG80211_CM_RSP_H */

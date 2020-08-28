@@ -58,6 +58,9 @@
 #define osif_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_OS_IF, params)
 
+#define osif_enter_dev(dev) \
+	QDF_TRACE_ENTER(QDF_MODULE_ID_OS_IF, "enter(%s)", (dev)->name)
+
 /* For kernel version >= 5.2, driver needs to provide policy */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
 #define vendor_command_policy(__policy, __maxattr) \

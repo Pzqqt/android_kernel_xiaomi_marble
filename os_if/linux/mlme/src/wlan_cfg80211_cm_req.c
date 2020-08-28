@@ -329,7 +329,7 @@ int wlan_osif_cfg80211_connect(struct net_device *dev,
 		return -ENOMEM;
 
 	connect_req->vdev_id = vdev_id;
-	connect_req->source = CM_OSIF_CONNECT_REQ;
+	connect_req->source = CM_OSIF_CONNECT;
 	if (req->bssid)
 		qdf_mem_copy(connect_req->bssid.bytes, req->bssid,
 			     QDF_MAC_ADDR_SIZE);

@@ -50,15 +50,15 @@ QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev)
 /**
  * osif_cm_connect_complete_cb() - Connect complete callback
  * @vdev: vdev pointer
- * @cm_conn_rsp: connect response
+ * @rsp: connect response
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
 osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_connect_rsp *cm_conn_rsp)
+			    struct wlan_cm_connect_rsp *rsp)
 {
-	return QDF_STATUS_SUCCESS;
+	return osif_connect_handler(vdev, rsp);
 }
 
 /**
