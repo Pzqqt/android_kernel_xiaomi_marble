@@ -309,6 +309,7 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 	struct iot_sim_rule_per_peer *peer_rule;
 	struct ieee80211_frame *wh = (struct ieee80211_frame *)buf;
 	struct qdf_mac_addr *mac_addr;
+	bool deauth_disassoc = false;
 
 	isc = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_IOT_SIM_COMP);
 	if (!isc) {
@@ -334,6 +335,10 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 		  subtype == IEEE80211_FC0_SUBTYPE_REASSOC_RESP))
 	/* Assoc/Reassoc response frame */
 		fixed_param_len = 6;
+	else if (type == IEEE80211_FC0_TYPE_MGT &&
+		 (subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
+		  subtype == IEEE80211_FC0_SUBTYPE_DISASSOC))
+		deauth_disassoc = true;
 	else if (type == IEEE80211_FC0_TYPE_MGT &&
 		 subtype == IEEE80211_FC0_SUBTYPE_ACTION) {
 	/* Action frame */
@@ -400,8 +405,13 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 							     param);
 		}
 
-		if (status == QDF_STATUS_E_NOSUPPORT)
-			goto norule;
+		if (status == QDF_STATUS_E_NOSUPPORT) {
+			if (deauth_disassoc && piot_sim_rule->drop) {
+				status = QDF_STATUS_E_NULL_VALUE;
+				iot_sim_debug("iot_sim: frame to be dropped");
+			} else
+				goto norule;
+		}
 	} else {
 		status = iot_sim_apply_delay_drop_rule(piot_sim_rule,
 						       nbuf, rx_param);

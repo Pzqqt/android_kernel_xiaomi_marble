@@ -76,15 +76,23 @@
 #define N_FRAME_SUBTYPE 0xF
 #define MAX_SEQ 0x4
 #define MAX_PEER_COUNT 0x2
-#define MAX_ACTION 0x3
+#define MAX_ACTION 0x1B
 #define RX_STATUS_SIZE 0x96
 #define IOT_SIM_DEBUGFS_FILE_NUM 3
 #define FRAME_TYPE_IS_BEACON(type, subtype) ((type) == 0 && (subtype) == 8)
 #define FRAME_TYPE_IS_ACTION(type, subtype) ((type) == 0 && (subtype) == 13)
 
 enum iot_sim_action_cat_type {
+	CAT_SPECTRUM,
+	CAT_QOS,
+	CAT_DLS,
 	CAT_BA,
+	CAT_RADIO,
+	CAT_FAST_BSS_TRNST,
+	CAT_HT,
 	CAT_SA_QUERY,
+	CAT_WNM,
+	CAT_VHT,
 	IOT_SIM_MAX_CAT,
 };
 

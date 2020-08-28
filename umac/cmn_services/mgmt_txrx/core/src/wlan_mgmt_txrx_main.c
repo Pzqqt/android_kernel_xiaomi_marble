@@ -183,7 +183,7 @@ QDF_STATUS iot_sim_mgmt_tx_update(struct wlan_objmgr_psoc *psoc,
 				  qdf_nbuf_t buf)
 {
 	struct wlan_lmac_if_rx_ops *rx_ops;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
 	if (!rx_ops) {
@@ -196,11 +196,13 @@ QDF_STATUS iot_sim_mgmt_tx_update(struct wlan_objmgr_psoc *psoc,
 								    NULL,
 								    true,
 								    NULL);
-		if (QDF_IS_STATUS_ERROR(status))
-			mgmt_txrx_err("iot_sim_cmd_handler returned failure");
+		if (status == QDF_STATUS_E_NULL_VALUE)
+			mgmt_txrx_err("iot_sim frame drop");
+		else
+			status = QDF_STATUS_SUCCESS;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 #else
 QDF_STATUS iot_sim_mgmt_tx_update(struct wlan_objmgr_psoc *psoc,

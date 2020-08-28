@@ -518,6 +518,38 @@ iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat_type,
 			return QDF_STATUS_E_FAULT;
 		}
 		break;
+	case IEEE80211_ACTION_CAT_RADIO:
+		*cat_type = CAT_RADIO;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_FAST_BSS_TRNST:
+		*cat_type = CAT_FAST_BSS_TRNST;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_SPECTRUM:
+		*cat_type = CAT_SPECTRUM;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_QOS:
+		*cat_type = CAT_QOS;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_DLS:
+		*cat_type = CAT_DLS;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_HT:
+		*cat_type = CAT_HT;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_WNM:
+		*cat_type = CAT_WNM;
+		*act_type = action;
+		break;
+	case IEEE80211_ACTION_CAT_VHT:
+		*cat_type = CAT_VHT;
+		*act_type = action;
+		break;
 	default:
 		return QDF_STATUS_E_FAULT;
 	}
