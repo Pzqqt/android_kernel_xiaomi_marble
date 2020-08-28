@@ -2164,11 +2164,8 @@ static int dp_mst_display_set_mgr_state(void *dp_display, bool state,
 	 * on hpd_low, set_mgr_state is called after hotplug event is sent and
 	 * the session_state was already updated prior to that.
 	 */
-	if (state) {
-		mutex_lock(&mst->mst_lock);
+	if (state)
 		mst->mst_session_state = state;
-		mutex_unlock(&mst->mst_lock);
-	}
 
 	if (info && !info->mst_protocol) {
 		if (state) {
@@ -2202,11 +2199,8 @@ static void dp_mst_display_hpd(void *dp_display, bool hpd_status)
 	 * session state should be unset here for the connection status to be
 	 * updated accordingly.
 	 */
-	if (!hpd_status) {
-		mutex_lock(&mst->mst_lock);
+	if (!hpd_status)
 		mst->mst_session_state = hpd_status;
-		mutex_unlock(&mst->mst_lock);
-	}
 
 	dp_mst_hpd_event_notify(mst, hpd_status);
 }
