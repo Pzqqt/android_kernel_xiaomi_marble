@@ -8833,6 +8833,16 @@ static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
 	}
 }
 
+#ifdef WLAN_DUMP_LOG_BUF_CNT
+void hdd_dump_log_buffer(void)
+{
+	int i;
+
+	for (i = 0; i <= MGMT_EVENT_LOG; i++)
+		hdd_ioctl_log_buffer(i, WLAN_DUMP_LOG_BUF_CNT);
+}
+#endif
+
 #ifdef CONFIG_DP_TRACE
 void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count)
 {
