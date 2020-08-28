@@ -82,6 +82,17 @@ enum vdev_peer_protocol_tx_rx {
 	CDP_VDEV_PEER_PROTOCOL_IS_RX
 };
 
+/**
+ * enum vdev_ll_conn_actions - Actions to informvdev about
+ *			       low latency connection.
+ * @CDP_VDEV_LL_CONN_ADD: Add Low latency connection
+ * @CDP_VDEV_LL_CONN_DEL: Delete Low latency connection
+ */
+enum vdev_ll_conn_actions {
+	CDP_VDEV_LL_CONN_ADD,
+	CDP_VDEV_LL_CONN_DEL
+};
+
 /******************************************************************************
  *
  * Control Interface (A Interface)
@@ -1153,6 +1164,9 @@ struct ol_if_ops {
  * @pdev_reset_driver_del_ack: reset driver delayed ack enabled flag
  * @vdev_set_driver_del_ack_enable: set driver delayed ack enabled flag
  *
+ * @vdev_inform_ll_conn: inform DP to add/delete a latency critical connection
+ *			 for this particular vdev.
+ *
  * Function pointers for miscellaneous soc/pdev/vdev related operations.
  */
 struct cdp_misc_ops {
@@ -1234,6 +1248,9 @@ struct cdp_misc_ops {
 					     struct cdp_txrx_ext_stats *req);
 	QDF_STATUS (*request_rx_hw_stats)(struct cdp_soc_t *soc_hdl,
 					  uint8_t vdev_id);
+	QDF_STATUS (*vdev_inform_ll_conn)(struct cdp_soc_t *soc_hdl,
+					  uint8_t vdev_id,
+					  enum vdev_ll_conn_actions action);
 };
 
 /**

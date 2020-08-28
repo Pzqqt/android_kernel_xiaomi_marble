@@ -794,4 +794,29 @@ cdp_request_rx_hw_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * cdp_vdev_inform_ll_conn() - Inform DP about the low latency connection
+ * @soc: soc handle
+ * @vdev_id: vdev id
+ * @action: Action to be performed (Add/Delete)
+ *
+ * Returns: QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_vdev_inform_ll_conn(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			enum vdev_ll_conn_actions action)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->misc_ops->vdev_inform_ll_conn)
+		return soc->ops->misc_ops->vdev_inform_ll_conn(soc, vdev_id,
+							       action);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* _CDP_TXRX_MISC_H_ */

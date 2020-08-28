@@ -2387,6 +2387,7 @@ struct dp_vdev {
 	 */
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
+	uint8_t num_latency_critical_conn;
 };
 
 

@@ -9801,6 +9801,46 @@ dp_vdev_set_dp_ext_handle(ol_txrx_soc_handle soc_hdl, uint8_t vdev_id,
 }
 
 /**
+ * dp_vdev_inform_ll_conn() - Inform vdev to add/delete a latency critical
+ *			      connection for this vdev
+ * @soc_hdl: CDP soc handle
+ * @vdev_id: vdev ID
+ * @action: Add/Delete action
+ *
+ * Returns: QDF_STATUS.
+ */
+static QDF_STATUS
+dp_vdev_inform_ll_conn(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		       enum vdev_ll_conn_actions action)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
+
+	if (!vdev) {
+		dp_err("LL connection action for invalid vdev %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	switch (action) {
+	case CDP_VDEV_LL_CONN_ADD:
+		vdev->num_latency_critical_conn++;
+		break;
+
+	case CDP_VDEV_LL_CONN_DEL:
+		vdev->num_latency_critical_conn--;
+		break;
+
+	default:
+		dp_err("LL connection action invalid %d", action);
+		break;
+	}
+
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * dp_soc_get_dp_txrx_handle() - get context for external-dp from dp soc
  * @soc_handle: datapath soc handle
  *
@@ -11168,6 +11208,7 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.txrx_ext_stats_request = dp_txrx_ext_stats_request,
 	.request_rx_hw_stats = dp_request_rx_hw_stats,
 #endif /* WLAN_FEATURE_STATS_EXT */
+	.vdev_inform_ll_conn = dp_vdev_inform_ll_conn,
 };
 #endif
 
