@@ -864,8 +864,8 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 				channel_stats->tx_time) ||
 			    nla_put_u32(
 				vendor_event,
-				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_TX_TIME,
-				channel_stats->tx_time)) {
+				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_RX_TIME,
+				channel_stats->rx_time)) {
 				hdd_err("nla_put failed");
 				return -EINVAL;
 			}
