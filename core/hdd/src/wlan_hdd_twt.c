@@ -412,7 +412,17 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(qdf_status);
 }
 
-static uint32_t hdd_get_twt_setup_event_len(void)
+/**
+ * hdd_get_twt_setup_event_len() - Calculates the length of twt
+ * setup nl response
+ * @additional_params_present: if true, then length required for
+ * fixed and additional parameters is returned. if false,
+ * then length required for fixed parameters is returned.
+ *
+ * Return: Length of twt setup nl response
+ */
+static
+uint32_t hdd_get_twt_setup_event_len(bool additional_params_present)
 {
 	uint32_t len = 0;
 
@@ -421,6 +431,10 @@ static uint32_t hdd_get_twt_setup_event_len(void)
 	len += nla_total_size(sizeof(u8));
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS */
 	len += nla_total_size(sizeof(u8));
+
+	if (!additional_params_present)
+		return len;
+
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE */
 	len += nla_total_size(sizeof(u8));
 	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE*/
@@ -572,11 +586,11 @@ int wmi_twt_del_status_to_vendor_twt_status(enum WMI_HOST_DEL_TWT_STATUS status)
  * WMI_HOST_ADD_TWT_STATUS to qca_wlan_vendor_twt_status
  * @status: WMI_HOST_ADD_TWT_STATUS value from firmare
  *
- * Return: qca_wlan_vendor_twt_status values for valid
- * WMI_HOST_ADD_TWT_STATUS and -EINVAL for invalid value
+ * Return: qca_wlan_vendor_twt_status values corresponding
+ * to WMI_HOST_ADD_TWT_STATUS.
  */
-static
-int wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
+static enum qca_wlan_vendor_twt_status
+wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
 {
 	switch (status) {
 	case WMI_HOST_ADD_TWT_STATUS_OK:
@@ -600,17 +614,35 @@ int wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
 	case WMI_HOST_ADD_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	default:
-		return -EINVAL;
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
 }
 
+/**
+ * hdd_twt_setup_pack_resp_nlmsg() - pack nlmsg response for setup
+ * @reply_skb: pointer to the response skb structure
+ * @event: twt event buffer with firmware response
+ *
+ * Pack the nl response with parameters and additional parameters
+ * received from firmware.
+ * Firmware sends additional parameters only for 2 conditions
+ * 1) TWT Negotiation is accepted by AP - Firmware sends
+ * QCA_WLAN_VENDOR_TWT_STATUS_OK with appropriate response type
+ * in additional parameters
+ * 2) AP has proposed Alternate values - In this case firmware sends
+ * QCA_WLAN_VENDOR_TWT_STATUS_DENIED with appropriate response type
+ * in additional parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
 static
 QDF_STATUS hdd_twt_setup_pack_resp_nlmsg(
 	 struct sk_buff *reply_skb,
 	 struct twt_add_dialog_complete_event *event)
 {
 	uint64_t sp_offset_tsf;
-	int vendor_status;
+	enum qca_wlan_vendor_twt_status vendor_status;
 	int response_type;
 
 	hdd_enter();
@@ -626,26 +658,29 @@ QDF_STATUS hdd_twt_setup_pack_resp_nlmsg(
 	}
 
 	vendor_status = wmi_twt_add_status_to_vendor_twt_status(event->params.status);
-	if (vendor_status == -EINVAL)
-		return QDF_STATUS_E_FAILURE;
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
 		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_SET");
+		hdd_err("TWT: Failed to put setup status");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (event->params.num_additional_twt_params == 0)
+		return QDF_STATUS_SUCCESS;
+
 	response_type = wmi_twt_add_cmd_to_vendor_twt_resp_type(event->additional_params.twt_cmd);
-	if (response_type == -EINVAL)
+	if (response_type == -EINVAL) {
+		hdd_err("TWT: Invalid response type from firmware");
 		return QDF_STATUS_E_FAILURE;
+	}
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE,
 		       response_type)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_SET");
+		hdd_err("TWT: Failed to put setup response type");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE,
 		       event->additional_params.announce)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_SET");
+		hdd_err("TWT: Failed to put setup flow type");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -744,7 +779,7 @@ hdd_twt_add_dialog_comp_cb(void *context,
 	osif_request_complete(request);
 	osif_request_put(request);
 
-	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id %d peer mac_addr"
+	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
@@ -757,7 +792,7 @@ hdd_twt_add_dialog_comp_cb(void *context,
  * @hdd_ctx: HDD Context
  * @twt_params: Pointer to Add dialog cmd params structure
  *
- * Return: QDF_STATUS
+ * Return: 0 for Success and negative value for failure
  */
 static
 int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
@@ -772,6 +807,7 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 	};
 	struct osif_request *request;
 	struct sk_buff *reply_skb = NULL;
+	bool additional_params_present = false;
 	void *cookie;
 	QDF_STATUS status;
 	int skb_len;
@@ -804,8 +840,10 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 
 	priv = osif_request_priv(request);
 	add_dialog_comp_ev_params = &priv->add_dialog_comp_ev_buf;
+	if (add_dialog_comp_ev_params->params.num_additional_twt_params != 0)
+		additional_params_present = true;
 
-	skb_len = hdd_get_twt_setup_event_len();
+	skb_len = hdd_get_twt_setup_event_len(additional_params_present);
 
 	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
 							skb_len);
