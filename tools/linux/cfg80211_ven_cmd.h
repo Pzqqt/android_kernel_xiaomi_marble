@@ -777,6 +777,7 @@ enum {
 	IEEE80211_PARAM_TX_VAP                     = 708, /* Current Tx Vap */
 	IEEE80211_PARAM_FILS_IS_ENABLE            = 709, /* Fils enable frames*/
 	IEEE80211_PARAM_MBSS_TXVDEV                = 710,
+	IEEE80211_PARAM_IGMP_ME      = 711, /* Set IGMP Mcast enhancement option: 0 disable, 1 enable */
 };
 
 enum {
@@ -2211,6 +2212,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"rxtimeout",           35839, SET_PARAM, 1},
 	{"oce_version_override ",     IEEE80211_PARAM_OCE_VERSION_OVERRIDE, SET_PARAM, 1},
 	{"g_oce_version_override ",   IEEE80211_PARAM_OCE_VERSION_OVERRIDE, GET_PARAM, 0},
+	{"igmpmcasten",         IEEE80211_PARAM_IGMP_ME, SET_PARAM, 1},
+	{"g_igmpmcasten",       IEEE80211_PARAM_IGMP_ME, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
