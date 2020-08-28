@@ -3775,8 +3775,14 @@ out:
 static inline
 void hdd_set_qmi_stats_enabled(struct hdd_context *hdd_ctx)
 {
-	wmi_set_qmi_stats(get_wmi_unified_hdl_from_psoc(hdd_ctx->psoc),
-			  hdd_ctx->config->is_qmi_stats_enabled);
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(hdd_ctx->psoc);
+
+	if (!wmi_handle) {
+		hdd_err("could not get wmi handle");
+		return;
+	}
+
+	wmi_set_qmi_stats(wmi_handle, hdd_ctx->config->is_qmi_stats_enabled);
 }
 #else
 static inline
