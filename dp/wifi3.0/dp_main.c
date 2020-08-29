@@ -68,6 +68,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
+#ifdef WLAN_SUPPORT_MSCS
+#include "dp_mscs.h"
+#endif
 #ifdef ATH_SUPPORT_IQUE
 #include "dp_txrx_me.h"
 #endif
@@ -10962,6 +10965,12 @@ static struct cdp_cfr_ops dp_ops_cfr = {
 };
 #endif
 
+#ifdef WLAN_SUPPORT_MSCS
+static struct cdp_mscs_ops dp_ops_mscs = {
+	.mscs_peer_lookup_n_get_priority = dp_mscs_peer_lookup_n_get_priority,
+};
+#endif
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * dp_runtime_suspend() - ensure DP is ready to runtime suspend
@@ -11613,6 +11622,9 @@ static struct cdp_ops dp_txrx_ops = {
 #endif
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 	.cfr_ops = &dp_ops_cfr,
+#endif
+#ifdef WLAN_SUPPORT_MSCS
+	.mscs_ops = &dp_ops_mscs,
 #endif
 };
 

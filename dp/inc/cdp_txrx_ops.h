@@ -1693,6 +1693,18 @@ struct cdp_cfr_ops {
 };
 #endif
 
+#ifdef WLAN_SUPPORT_MSCS
+/**
+ * struct cdp_mscs_ops - data path ops for MSCS
+ * @mscs_peer_lookup_n_get_priority:
+ */
+struct cdp_mscs_ops {
+	int (*mscs_peer_lookup_n_get_priority)(struct cdp_soc_t *soc,
+			      uint8_t *peer_mac,
+				  qdf_nbuf_t nbuf);
+};
+#endif
+
 struct cdp_ops {
 	struct cdp_cmn_ops          *cmn_drv_ops;
 	struct cdp_ctrl_ops         *ctrl_ops;
@@ -1727,6 +1739,9 @@ struct cdp_ops {
 #endif
 #if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
 	struct cdp_cfr_ops          *cfr_ops;
+#endif
+#ifdef WLAN_SUPPORT_MSCS
+	struct cdp_mscs_ops         *mscs_ops;
 #endif
 
 };
