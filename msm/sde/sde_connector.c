@@ -2707,6 +2707,12 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 				sizeof(dsi_display->panel->hdr_props),
 				CONNECTOR_PROP_HDR_INFO);
 		}
+
+		mutex_lock(&c_conn->base.dev->mode_config.mutex);
+		sde_connector_fill_modes(&c_conn->base,
+						dev->mode_config.max_width,
+						dev->mode_config.max_height);
+		mutex_unlock(&c_conn->base.dev->mode_config.mutex);
 	}
 
 	msm_property_install_volatile_range(
