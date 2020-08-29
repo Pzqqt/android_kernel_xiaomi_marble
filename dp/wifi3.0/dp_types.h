@@ -193,6 +193,7 @@ enum dp_mod_id {
 	DP_MOD_ID_TX_EXCEPTION,
 	DP_MOD_ID_TDLS,
 	DP_MOD_ID_MISC,
+	DP_MOD_ID_MSCS,
 	DP_MOD_ID_MAX,
 };
 
