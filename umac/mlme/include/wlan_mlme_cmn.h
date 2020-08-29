@@ -39,8 +39,8 @@
  * @vdev: vdev pointer
  * @rsp: connect response
  *
- * @mlme_cm_update_conn_id_and_src_cb: Callback to update connect id and
- *                                     source of the connect request
+ * @mlme_cm_update_id_and_src_cb: Callback to update connect id and
+ *                                source of the connect request
  * @vdev: vdev pointer
  * @Source: Source of the connect req
  * @cm_id: connection manager id
@@ -53,16 +53,21 @@
  * @vdev: vdev pointer
  */
 struct mlme_cm_ops {
-	void (*mlme_cm_connect_complete_cb)(struct wlan_objmgr_vdev *vdev,
-					    struct wlan_cm_connect_rsp *rsp);
-	void (*mlme_cm_failed_candidate_cb)(struct wlan_objmgr_vdev *vdev,
-					    struct wlan_cm_connect_rsp *rsp);
-	void (*mlme_cm_update_conn_id_and_src_cb)(struct wlan_objmgr_vdev *vdev,
-						  enum wlan_cm_source source,
-						  uint64_t cm_id);
-	void (*mlme_cm_disconnect_complete_cb)(struct wlan_objmgr_vdev *vdev,
-					       struct wlan_cm_discon_rsp *rsp);
-	void (*mlme_cm_disconnect_start_cb)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*mlme_cm_connect_complete_cb)(
+					struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_connect_rsp *rsp);
+	QDF_STATUS (*mlme_cm_failed_candidate_cb)(
+					struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_connect_rsp *rsp);
+	QDF_STATUS (*mlme_cm_update_id_and_src_cb)(
+					struct wlan_objmgr_vdev *vdev,
+					enum wlan_cm_source source,
+					wlan_cm_id cm_id);
+	QDF_STATUS (*mlme_cm_disconnect_complete_cb)(
+					struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_discon_rsp *rsp);
+	QDF_STATUS (*mlme_cm_disconnect_start_cb)(
+					struct wlan_objmgr_vdev *vdev);
 };
 #endif
 

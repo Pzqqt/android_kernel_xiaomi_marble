@@ -75,6 +75,50 @@ static QDF_STATUS wlan_objmgr_vdev_object_status(
 	return status;
 }
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * wlan_vdev_mlme_create_cmd_id_lock() - Function to create connection
+ * manager command id lock
+ * @osif_priv: Pointer to osif private data structure of vdev
+ *
+ * Context: Any context.
+ * Return: None
+ */
+
+static void
+wlan_vdev_mlme_create_cmd_id_lock(struct vdev_osif_priv *osif_priv)
+{
+	qdf_spinlock_create(&osif_priv->last_cmd_info.cmd_id_lock);
+}
+
+/**
+ * wlan_vdev_mlme_destroy_cmd_id_lock() - Function to destroy connection
+ * manager command id lock
+ * @osif_priv: Pointer to osif private data structure of vdev
+ *
+ * Context: Any context.
+ * Return: None
+ */
+static void
+wlan_vdev_mlme_destroy_cmd_id_lock(struct vdev_osif_priv *osif_priv)
+{
+	qdf_spinlock_destroy(&osif_priv->last_cmd_info.cmd_id_lock);
+}
+
+#else
+
+static inline void
+wlan_vdev_mlme_create_cmd_id_lock(struct vdev_osif_priv *osif_priv)
+{
+}
+
+static inline void
+wlan_vdev_mlme_destroy_cmd_id_lock(struct vdev_osif_priv *osif_priv)
+{
+}
+
+#endif
+
 static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_pdev *pdev;
@@ -96,6 +140,10 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 		obj_mgr_err("psoc is NULL in pdev");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE ||
+	    vdev->vdev_mlme.vdev_opmode == QDF_P2P_CLIENT_MODE)
+		wlan_vdev_mlme_destroy_cmd_id_lock(wlan_vdev_get_ospriv(vdev));
 
 	/* Detach VDEV from PDEV VDEV's list */
 	if (wlan_objmgr_pdev_vdev_detach(pdev, vdev) ==
@@ -213,6 +261,11 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	vdev->vdev_objmgr.c_flags = params->flags;
 	/* store os-specific pointer */
 	vdev->vdev_nif.osdev = wlan_objmgr_vdev_get_osif_priv(vdev);
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE ||
+	    vdev->vdev_mlme.vdev_opmode == QDF_P2P_CLIENT_MODE)
+		wlan_vdev_mlme_create_cmd_id_lock(vdev->vdev_nif.osdev);
+
 	/* peer count to 0 */
 	vdev->vdev_objmgr.wlan_peer_count = 0;
 	qdf_atomic_init(&vdev->vdev_objmgr.ref_cnt);

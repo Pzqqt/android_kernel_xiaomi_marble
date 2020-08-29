@@ -22,18 +22,21 @@
  */
 #include <include/wlan_mlme_cmn.h>
 #include "wlan_cfg80211_cm_util.h"
+#include "wlan_osif_priv.h"
+#include "wlan_cfg80211.h"
 
 /**
  * osif_cm_connect_complete_cb() - Connect complete callback
  * @vdev: vdev pointer
  * @cm_conn_rsp: connect response
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static void
+static QDF_STATUS
 osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_cm_connect_rsp *cm_conn_rsp)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -41,27 +44,42 @@ osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
  * @vdev: vdev pointer
  * @cm_conn_rsp: connect response
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static void
+static QDF_STATUS
 osif_cm_failed_candidate_cb(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_cm_connect_rsp *cm_conn_rsp)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
- * osif_cm_update_conn_id_and_src_cb() - Callback to update connect id and
- * source of the connect request
+ * osif_cm_update_id_and_src_cb() - Callback to update id and
+ * source of the connect/disconnect request
  * @vdev: vdev pointer
  * @Source: Source of the connect req
- * @conn_id: Connect id
+ * @id: Connect/disconnect id
  *
- * Return: None
+ * Context: Any context. Takes and releases cmd id spinlock
+ * Return: QDF_STATUS
  */
-static void
-osif_cm_update_conn_id_and_src_cb(struct wlan_objmgr_vdev *vdev,
-				  enum wlan_cm_source source, uint64_t conn_id)
+static QDF_STATUS
+osif_cm_update_id_and_src_cb(struct wlan_objmgr_vdev *vdev,
+			     enum wlan_cm_source source, wlan_cm_id cm_id)
 {
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+
+	if (!osif_priv) {
+		osif_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spinlock_acquire(&osif_priv->last_cmd_info.cmd_id_lock);
+	osif_priv->last_cmd_info.last_id = cm_id;
+	osif_priv->last_cmd_info.last_source = source;
+	qdf_spinlock_release(&osif_priv->last_cmd_info.cmd_id_lock);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -69,13 +87,14 @@ osif_cm_update_conn_id_and_src_cb(struct wlan_objmgr_vdev *vdev,
  * @vdev: vdev pointer
  * @cm_disconnect_rsp: Disconnect response
  *
- * Return: None
+ * Return: QDF_STATUS
  */
 
-static void
+static QDF_STATUS
 osif_cm_disconnect_complete_cb(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_discon_rsp *cm_disconnect_rsp)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -85,17 +104,18 @@ osif_cm_disconnect_complete_cb(struct wlan_objmgr_vdev *vdev,
  * This callback indicates os_if that disconnection is started
  * so that os_if can stop all the activity on this connection
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static void
+static QDF_STATUS
 osif_cm_disconnect_start_cb(struct wlan_objmgr_vdev *vdev)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_connect_complete_cb = osif_cm_connect_complete_cb,
 	.mlme_cm_failed_candidate_cb = osif_cm_failed_candidate_cb,
-	.mlme_cm_update_conn_id_and_src_cb = osif_cm_update_conn_id_and_src_cb,
+	.mlme_cm_update_id_and_src_cb = osif_cm_update_id_and_src_cb,
 	.mlme_cm_disconnect_complete_cb = osif_cm_disconnect_complete_cb,
 	.mlme_cm_disconnect_start_cb = osif_cm_disconnect_start_cb,
 };

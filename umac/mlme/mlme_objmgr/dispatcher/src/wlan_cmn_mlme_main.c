@@ -359,52 +359,62 @@ QDF_STATUS mlme_cm_vdev_down_req(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_connect_rsp *rsp)
 {
-	if (glbl_cm_ops && glbl_cm_ops->mlme_cm_connect_complete_cb)
-		glbl_cm_ops->mlme_cm_connect_complete_cb(vdev, rsp);
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	return QDF_STATUS_SUCCESS;
+	if (glbl_cm_ops && glbl_cm_ops->mlme_cm_connect_complete_cb)
+		ret = glbl_cm_ops->mlme_cm_connect_complete_cb(vdev, rsp);
+
+	return ret;
 }
 
 QDF_STATUS
 mlme_cm_osif_failed_candidate_ind(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_connect_rsp *rsp)
 {
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
 	if (glbl_cm_ops &&
 	    glbl_cm_ops->mlme_cm_failed_candidate_cb)
-		glbl_cm_ops->mlme_cm_failed_candidate_cb(vdev, rsp);
+		ret = glbl_cm_ops->mlme_cm_failed_candidate_cb(vdev, rsp);
 
-	return QDF_STATUS_SUCCESS;
+	return ret;
 }
 
 QDF_STATUS mlme_cm_osif_update_id_and_src(struct wlan_objmgr_vdev *vdev,
 					  enum wlan_cm_source source,
 					  wlan_cm_id cm_id)
 {
-	if (glbl_cm_ops &&
-	    glbl_cm_ops->mlme_cm_update_conn_id_and_src_cb)
-		glbl_cm_ops->mlme_cm_update_conn_id_and_src_cb(vdev, source,
-							       cm_id);
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	return QDF_STATUS_SUCCESS;
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_update_id_and_src_cb)
+		ret = glbl_cm_ops->mlme_cm_update_id_and_src_cb(vdev, source,
+								cm_id);
+
+	return ret;
 }
 
 QDF_STATUS mlme_cm_osif_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 					    struct wlan_cm_discon_rsp *rsp)
 {
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
 	if (glbl_cm_ops &&
 	    glbl_cm_ops->mlme_cm_disconnect_complete_cb)
-		glbl_cm_ops->mlme_cm_disconnect_complete_cb(vdev, rsp);
+		ret = glbl_cm_ops->mlme_cm_disconnect_complete_cb(vdev, rsp);
 
-	return QDF_STATUS_SUCCESS;
+	return ret;
 }
 
 QDF_STATUS mlme_cm_osif_disconnect_start_ind(struct wlan_objmgr_vdev *vdev)
 {
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
 	if (glbl_cm_ops &&
 	    glbl_cm_ops->mlme_cm_disconnect_start_cb)
-		glbl_cm_ops->mlme_cm_disconnect_start_cb(vdev);
+		ret = glbl_cm_ops->mlme_cm_disconnect_start_cb(vdev);
 
-	return QDF_STATUS_SUCCESS;
+	return ret;
 }
 
 void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb osif_cm_ops)
