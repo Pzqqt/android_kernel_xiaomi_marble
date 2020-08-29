@@ -410,6 +410,30 @@ dp_soc_iterate_peer_lock_safe(struct dp_soc *soc,
 	}
 }
 
+#ifdef DP_PEER_STATE_DEBUG
+#define DP_PEER_STATE_ASSERT(_peer, _new_state, _condition) \
+	do {  \
+		if (!(_condition)) { \
+			dp_alert("Invalid state shift from %u to %u peer " \
+				 QDF_MAC_ADDR_FMT, \
+				 (_peer)->peer_state, (_new_state), \
+				 QDF_MAC_ADDR_REF((_peer)->mac_addr.raw)); \
+			QDF_ASSERT(0); \
+		} \
+	} while (0)
+
+#else
+#define DP_PEER_STATE_ASSERT(_peer, _new_state, _condition) \
+	do {  \
+		if (!(_condition)) { \
+			dp_alert("Invalid state shift from %u to %u peer ", \
+				 QDF_MAC_ADDR_FMT, \
+				 (_peer)->peer_state, (_new_state), \
+				 QDF_MAC_ADDR_REF((_peer)->mac_addr.raw)); \
+		} \
+	} while (0)
+#endif
+
 /**
  * dp_peer_update_state() - update dp peer state
  *
@@ -428,42 +452,47 @@ dp_peer_update_state(struct dp_soc *soc,
 
 	switch (state) {
 	case DP_PEER_STATE_INIT:
-		QDF_ASSERT
-			((peer_state != DP_PEER_STATE_ACTIVE) ||
+		DP_PEER_STATE_ASSERT
+			(peer, state, (peer_state != DP_PEER_STATE_ACTIVE) ||
 			 (peer_state != DP_PEER_STATE_LOGICAL_DELETE));
 		break;
 
 	case DP_PEER_STATE_ACTIVE:
-		QDF_ASSERT(peer_state == DP_PEER_STATE_INIT);
+		DP_PEER_STATE_ASSERT(peer, state,
+				     (peer_state == DP_PEER_STATE_INIT));
 		break;
 
 	case DP_PEER_STATE_LOGICAL_DELETE:
-		QDF_ASSERT((peer_state == DP_PEER_STATE_ACTIVE) ||
-			   (peer_state == DP_PEER_STATE_INIT));
+		DP_PEER_STATE_ASSERT(peer, state,
+				     (peer_state == DP_PEER_STATE_ACTIVE) ||
+				     (peer_state == DP_PEER_STATE_INIT));
 		break;
 
 	case DP_PEER_STATE_INACTIVE:
-		QDF_ASSERT(peer_state == DP_PEER_STATE_LOGICAL_DELETE);
+		DP_PEER_STATE_ASSERT
+			(peer, state,
+			 (peer_state == DP_PEER_STATE_LOGICAL_DELETE));
 		break;
 
 	case DP_PEER_STATE_FREED:
 		if (peer->sta_self_peer)
-			QDF_ASSERT(peer_state ==
-					DP_PEER_STATE_INIT);
+			DP_PEER_STATE_ASSERT
+			(peer, state, (peer_state == DP_PEER_STATE_INIT));
 		else
-			QDF_ASSERT((peer_state ==
-					DP_PEER_STATE_INACTIVE) ||
-				   (peer_state ==
-					DP_PEER_STATE_LOGICAL_DELETE));
+			DP_PEER_STATE_ASSERT
+				(peer, state,
+				 (peer_state == DP_PEER_STATE_INACTIVE) ||
+				 (peer_state == DP_PEER_STATE_LOGICAL_DELETE));
 		break;
 
 	default:
-		QDF_ASSERT(0);
-		break;
+		dp_alert("Invalid peer state %u for peer "QDF_MAC_ADDR_FMT,
+			 state, QDF_MAC_ADDR_REF(peer->mac_addr.raw));
+		return;
 	}
-	qdf_info("Updating peer state from %u to %u mac "QDF_MAC_ADDR_FMT"\n",
-		 peer_state, state,
-		 QDF_MAC_ADDR_REF(peer->mac_addr.raw));
+	dp_info("Updating peer state from %u to %u mac "QDF_MAC_ADDR_FMT"\n",
+		peer_state, state,
+		QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 	peer->peer_state = state;
 }
 
