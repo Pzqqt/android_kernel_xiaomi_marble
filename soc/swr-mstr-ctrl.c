@@ -1759,6 +1759,7 @@ static int swrm_connect_port(struct swr_master *master,
 	mutex_lock(&swrm->mlock);
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
+		swr_port_response(master, portinfo->tid);
 		mutex_unlock(&swrm->devlock);
 		mutex_unlock(&swrm->mlock);
 		return -EINVAL;
@@ -1827,6 +1828,7 @@ static int swrm_connect_port(struct swr_master *master,
 
 port_fail:
 mem_fail:
+	swr_port_response(master, portinfo->tid);
 	/* cleanup  port reqs in error condition */
 	swrm_cleanup_disabled_port_reqs(master);
 	mutex_unlock(&swrm->mlock);
@@ -1863,8 +1865,7 @@ static int swrm_disconnect_port(struct swr_master *master,
 			dev_err(&master->dev,
 				"%s: mstr portid for slv port %d not found\n",
 				__func__, portinfo->port_id[i]);
-			mutex_unlock(&swrm->mlock);
-			return -EINVAL;
+			goto err;
 		}
 		mport = &(swrm->mport_cfg[mstr_port_id]);
 		/* get port req */
@@ -1874,8 +1875,7 @@ static int swrm_disconnect_port(struct swr_master *master,
 		if (!port_req) {
 			dev_err(&master->dev, "%s:port not enabled : port %d\n",
 					 __func__, portinfo->port_id[i]);
-			mutex_unlock(&swrm->mlock);
-			return -EINVAL;
+			goto err;
 		}
 		port_req->req_ch &= ~portinfo->ch_en[i];
 		mport->req_ch &= ~mstr_ch_mask;
@@ -1892,6 +1892,11 @@ static int swrm_disconnect_port(struct swr_master *master,
 	mutex_unlock(&swrm->mlock);
 
 	return 0;
+
+err:
+	swr_port_response(master, portinfo->tid);
+	mutex_unlock(&swrm->mlock);
+	return -EINVAL;
 }
 
 static int swrm_find_alert_slave(struct swr_mstr_ctrl *swrm,
