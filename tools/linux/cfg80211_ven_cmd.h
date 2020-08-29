@@ -1236,6 +1236,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ACS_PRECAC_SUPPORT = 457,
 	/* MBSSID AUTO MODE TX VDEV derivation */
 	OL_ATH_PARAM_MBSS_AUTOMODE = 458,
+	/* RNR selective addition */
+	OL_ATH_PARAM_RNR_SELECTIVE_ADD = 459,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3183,6 +3185,12 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MBSS_AUTOMODE, SET_PARAM, 1},
 	{"g_mbss_auto",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MBSS_AUTOMODE, GET_PARAM, 0},
+	{"selective_rnr_nontx",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_SELECTIVE_ADD,
+		SET_PARAM, 1},
+	{"g_selective_rnr_nontx",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_SELECTIVE_ADD,
+		GET_PARAM, 0},
 };
 #endif
 #endif
