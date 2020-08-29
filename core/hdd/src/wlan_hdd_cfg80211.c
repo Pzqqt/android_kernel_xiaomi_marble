@@ -20255,6 +20255,7 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 	struct hdd_context *hdd_ctx;
 	unsigned long rc;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	QDF_STATUS status;
 
 	if (adapter->device_mode != QDF_STA_MODE)
 		return;
@@ -20265,18 +20266,16 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 	if (sta_ctx->conn_info.conn_state != eConnectionState_Associated)
 		return;
 
-	sme_stop_roaming(mac_handle, adapter->vdev_id,
-			 REASON_DRIVER_DISABLED,
-			 RSO_INVALID_REQUESTOR);
 	/*
 	 * If firmware has already started roaming process, driver
 	 * needs to wait for processing of this disconnect request.
 	 *
 	 */
 	INIT_COMPLETION(adapter->roaming_comp_var);
-	if (hdd_is_roaming_in_progress(hdd_ctx) ||
-	    sme_neighbor_middle_of_roaming(mac_handle,
-					   adapter->vdev_id)) {
+	status = sme_abort_roaming(mac_handle, adapter->vdev_id);
+	if (QDF_STATUS_E_BUSY == status) {
+		hdd_warn("roaming on-going, wait for %d ms before postingg RSO stop cmd",
+			 WLAN_WAIT_TIME_STOP_ROAM);
 		rc = wait_for_completion_timeout(&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));
 		if (!rc) {
@@ -20285,10 +20284,13 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 				adapter->vdev_id);
 		}
 
+		sme_stop_roaming(mac_handle, adapter->vdev_id,
+				 REASON_DRIVER_DISABLED, RSO_INVALID_REQUESTOR);
+
 		if (adapter->roam_ho_fail) {
 			INIT_COMPLETION(adapter->disconnect_comp_var);
-			hdd_conn_set_connection_state(adapter,
-					eConnectionState_Disconnecting);
+			hdd_conn_set_connection_state(
+				adapter, eConnectionState_Disconnecting);
 		}
 	}
 }

@@ -996,6 +996,24 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 			     enum wlan_cm_rso_control_requestor requestor);
 
 /**
+ * sme_abort_roaming() - Try to stop RSO if conditions allowable
+ * This function checks if the current roaming state machine allows RSO stop
+ * cmd to be issued, and stops roaming if allowed, otherwise, indicate to
+ * the caller that a wait is required.
+ *
+ * @mac_handle - The handle returned by mac_open
+ * @session_id - Session identifier
+ *
+ * Returns:
+ * QDF_STATUS_E_BUSY if roam_synch is in progress and upper layer has to wait
+ *                   before RSO stop cmd can be issued;
+ * QDF_STATUS_SUCCESS if roam_synch is not outstanding. RSO stop cmd will be
+ *                    issued with the global SME lock held in this case, and
+ *                    uppler layer doesn't have to do any wait.
+ */
+QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t session_id);
+
+/**
  * sme_set_pcl_for_first_connected_vdev  - Set the vdev pcl for the connected
  * STA vdev
  * @mac_handle: Pointer to opaque mac handle
