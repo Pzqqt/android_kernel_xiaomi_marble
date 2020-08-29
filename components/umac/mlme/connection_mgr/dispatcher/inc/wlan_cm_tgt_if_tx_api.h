@@ -25,9 +25,6 @@
 
 #include "wlan_cm_roam_public_struct.h"
 
-#define GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev) \
-	(wlan_vdev_mlme_get_ext_hdl(vdev)->cm_roam.tx_ops)
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_cm_roam_send_set_vdev_pcl()  - Send vdev set pcl command to firmware
