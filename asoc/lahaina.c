@@ -884,8 +884,8 @@ static int dmic_4_5_gpio_cnt;
 
 static void *def_wcd_mbhc_cal(void);
 
-static int msm_aux_codec_init(struct snd_soc_pcm_runtime*);
-static int msm_int_audrx_init(struct snd_soc_pcm_runtime*);
+static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime*);
+static int msm_int_wsa_init(struct snd_soc_pcm_runtime*);
 
 /*
  * Need to report LINEIN
@@ -6929,7 +6929,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx0),
-		.init = &msm_int_audrx_init,
+		.init = &msm_int_wsa_init,
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
@@ -6983,7 +6983,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx0),
-		.init = &msm_aux_codec_init,
+		.init = &msm_rx_tx_codec_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
@@ -6999,7 +6999,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
-		.init = &msm_int_audrx_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -7624,7 +7623,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	return card;
 }
 
-static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
+static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 {
 	u8 spkleft_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
 	u8 spkright_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
@@ -7637,16 +7636,10 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	unsigned int ch_mask[WSA883X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
 	struct snd_soc_component *component = NULL;
 	struct snd_soc_dapm_context *dapm = NULL;
-	struct snd_card *card = NULL;
-	struct snd_info_entry *entry = NULL;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
-	int ret = 0;
 	int wsa_active_devs = 0;
 
-	if (codec_reg_done) {
-		return 0;
-	}
         if (pdata->wsa_max_devs > 0) {
 		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
 		if (component) {
@@ -7683,6 +7676,23 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
 							component);
 	}
+
+	return 0;
+}
+
+static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_component *component = NULL;
+	struct snd_soc_dapm_context *dapm = NULL;
+	int ret = 0;
+	int codec_variant = -1;
+	struct snd_info_entry *entry;
+	struct snd_card *card = NULL;
+	struct msm_asoc_mach_data *pdata;
+
+	pdata = snd_soc_card_get_drvdata(rtd->card);
+	if(!pdata)
+		return -EINVAL;
 
 	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
 	if (!component) {
@@ -7748,35 +7758,17 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		if (!entry) {
 			pr_debug("%s: Cannot create codecs module entry\n",
 				 __func__);
-			ret = 0;
-			goto err;
+			return 0;
 		}
 		pdata->codec_root = entry;
 	}
 	bolero_info_create_codec_entry(pdata->codec_root, component);
 	bolero_register_wake_irq(component, false);
-	codec_reg_done = true;
 
-err:
-	return ret;
-}
-
-static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_component *component = NULL;
-	struct snd_soc_dapm_context *dapm = NULL;
-	int ret = 0;
-	int codec_variant = -1;
-	struct snd_info_entry *entry;
-	struct snd_card *card = NULL;
-	struct msm_asoc_mach_data *pdata;
-
-	pdata = snd_soc_card_get_drvdata(rtd->card);
-	if(!pdata)
-		return -EINVAL;
-
-	if (pdata->wcd_disabled)
+	if (pdata->wcd_disabled) {
+		codec_reg_done = true;
 		return 0;
+	}
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
 		pr_err("%s component is NULL\n", __func__);
@@ -7795,16 +7787,6 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
 	snd_soc_dapm_sync(dapm);
 
-	if (!pdata->codec_root) {
-		entry = msm_snd_info_create_subdir(card->module, "codecs",
-						 card->proc_root);
-		if (!entry) {
-			dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",
-				 __func__);
-			 return 0;
-		}
-		pdata->codec_root = entry;
-	}
 	wcd938x_info_create_codec_entry(pdata->codec_root, component);
 
 	codec_variant = wcd938x_get_codec_variant(component);
@@ -7824,6 +7806,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 	}
 
+	codec_reg_done = true;
 	return 0;
 }
 
