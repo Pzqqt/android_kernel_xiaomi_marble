@@ -1626,8 +1626,6 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_rc_retries",      IEEE80211_PARAM_RC_NUM_RETRIES, GET_PARAM, 0},
 	{"get_acs_state",       IEEE80211_PARAM_GET_ACS, GET_PARAM, 0},
 	{"get_cac_state",       IEEE80211_PARAM_GET_CAC, GET_PARAM, 0},
-	{"ext_ifu_acs",         IEEE80211_PARAM_EXT_IFACEUP_ACS, SET_PARAM, 1},
-	{"get_ext_ifu_acs",     IEEE80211_PARAM_EXT_IFACEUP_ACS, GET_PARAM, 0},
 	{"set_onetxchain",      IEEE80211_PARAM_ONETXCHAIN, SET_PARAM, 1},
 	{"scanchevent",         IEEE80211_PARAM_SCAN_CHAN_EVENT, SET_PARAM, 1},
 	{"get_scanchevent",     IEEE80211_PARAM_SCAN_CHAN_EVENT, GET_PARAM, 0},
