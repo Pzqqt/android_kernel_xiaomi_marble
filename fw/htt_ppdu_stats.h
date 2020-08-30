@@ -584,6 +584,13 @@ typedef enum HTT_PPDU_STATS_SPATIAL_REUSE HTT_PPDU_STATS_SPATIAL_REUSE;
             ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_COMMON_TRIG_COOKIE_M    0x0000ffff
+#define HTT_PPDU_STATS_COMMON_TRIG_COOKIE_S    0
+
+#define HTT_PPDU_STATS_COMMON_TRIG_COOKIE_GET(_val) \
+        (((_val) & HTT_PPDU_STATS_COMMON_TRIG_COOKIE_M) >> \
+         HTT_PPDU_STATS_COMMON_TRIG_COOKIE_S)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -733,6 +740,16 @@ typedef struct {
                      aborted_obss_rssi:  8,
                      psr_tx:             1,
                      reserved2:         15;
+        };
+    };
+
+    /* Note: This is for tracking a UL OFDMA packet */
+    union {
+        A_UINT32 trig_cookie_info;
+        struct {
+            A_UINT32 trig_cookie: 16,
+                     trig_cookie_rsvd: 15,
+                     trig_cookie_valid: 1;
         };
     };
 } htt_ppdu_stats_common_tlv;
@@ -1485,26 +1502,15 @@ typedef struct {
         };
     };
 
-    /* Note: This is for tracking a UL OFDMA packet */
-    union {
-        A_UINT32 trig_cookie_info;
-        struct {
-            A_UINT32 trig_cookie: 16,
-                     trig_cookie_rsvd: 15,
-                     trig_cookie_valid: 1;
-        };
-    };
+    /*
+     * This is an unused word that can be safely renamed / used
+     * by any future feature.
+     */
+    A_UINT32 reserved4;
 } htt_ppdu_stats_user_rate_tlv;
-
-#define HTT_PPDU_STATS_USR_RATE_COOKIE_M    0x0000ffff
-#define HTT_PPDU_STATS_USR_RATE_COOKIE_S    0
 
 #define HTT_PPDU_STATS_USR_RATE_VALID_M     0x80000000
 #define HTT_PPDU_STATS_USR_RATE_VALID_S     31
-
-#define HTT_PPDU_STATS_USR_RATE_COOKIE_GET(_val) \
-        (((_val) & HTT_PPDU_STATS_USR_RATE_COOKIE_M) >> \
-         HTT_PPDU_STATS_USR_RATE_COOKIE_S)
 
 #define HTT_PPDU_STATS_USR_RATE_VALID_GET(_val) \
         (((_val) & HTT_PPDU_STATS_USR_RATE_VALID_M) >> \
