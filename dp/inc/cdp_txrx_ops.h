@@ -1166,6 +1166,8 @@ struct ol_if_ops {
  *
  * @vdev_inform_ll_conn: inform DP to add/delete a latency critical connection
  *			 for this particular vdev.
+ * @set_swlm_enable: Enable or Disable Software Latency Manager.
+ * @is_swlm_enabled: Check if Software latency manager is enabled or not.
  *
  * Function pointers for miscellaneous soc/pdev/vdev related operations.
  */
@@ -1251,6 +1253,9 @@ struct cdp_misc_ops {
 	QDF_STATUS (*vdev_inform_ll_conn)(struct cdp_soc_t *soc_hdl,
 					  uint8_t vdev_id,
 					  enum vdev_ll_conn_actions action);
+	QDF_STATUS (*set_swlm_enable)(struct cdp_soc_t *soc_hdl,
+				      uint8_t val);
+	uint8_t (*is_swlm_enabled)(struct cdp_soc_t *soc_hdl);
 };
 
 /**

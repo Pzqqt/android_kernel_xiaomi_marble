@@ -9855,6 +9855,43 @@ dp_vdev_inform_ll_conn(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+/**
+ * dp_soc_set_swlm_enable() - Enable/Disable SWLM if initialized.
+ * @soc_hdl: CDP Soc handle
+ * @value: Enable/Disable value
+ *
+ * Returns: QDF_STATUS
+ */
+static QDF_STATUS dp_soc_set_swlm_enable(struct cdp_soc_t *soc_hdl,
+					 uint8_t value)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+
+	if (!soc->swlm.is_init) {
+		dp_err("SWLM is not initialized");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc->swlm.is_enabled = !!value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_soc_is_swlm_enabled() - Check if SWLM is enabled.
+ * @soc_hdl: CDP Soc handle
+ *
+ * Returns: QDF_STATUS
+ */
+static uint8_t dp_soc_is_swlm_enabled(struct cdp_soc_t *soc_hdl)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+
+	return soc->swlm.is_enabled;
+}
+#endif
+
 /**
  * dp_soc_get_dp_txrx_handle() - get context for external-dp from dp soc
  * @soc_handle: datapath soc handle
@@ -11224,6 +11261,10 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.request_rx_hw_stats = dp_request_rx_hw_stats,
 #endif /* WLAN_FEATURE_STATS_EXT */
 	.vdev_inform_ll_conn = dp_vdev_inform_ll_conn,
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+	.set_swlm_enable = dp_soc_set_swlm_enable,
+	.is_swlm_enabled = dp_soc_is_swlm_enabled,
+#endif
 };
 #endif
 
