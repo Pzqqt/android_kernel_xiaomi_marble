@@ -1934,7 +1934,7 @@ static void ipa3_wq_handle_rx(struct work_struct *work)
 
 	sys = container_of(work, struct ipa3_sys_context, work);
 
-	if (sys->napi_obj) {
+	if (ipa_net_initialized && sys->napi_obj) {
 		ipa_pm_activate_sync(sys->pm_hdl);
 		napi_schedule(sys->napi_obj);
 	} else if (IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
@@ -4563,7 +4563,7 @@ static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 		tx_pkt->xmit_done = true;
 		atomic_inc(&tx_pkt->sys->xmit_eot_cnt);
 
-		if (ipa3_ctx->tx_napi_enable) {
+		if (ipa_net_initialized && ipa3_ctx->tx_napi_enable) {
 		    if(!atomic_cmpxchg(&tx_pkt->sys->in_napi_context, 0, 1))
 			napi_schedule(&tx_pkt->sys->napi_tx);
 		}
@@ -4589,7 +4589,7 @@ void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 	 * or after NAPI poll
 	 */
 	clk_off = ipa_pm_activate(sys->pm_hdl);
-	if (!clk_off && sys->napi_obj)
+	if (!clk_off && ipa_net_initialized && sys->napi_obj)
 		napi_schedule(sys->napi_obj);
 	else if (!clk_off &&
 		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
