@@ -366,6 +366,9 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dl_modes.o
 endif
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_policy_mgr.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dp_aggregation.o
+ifeq ($(CONFIG_DP_SWLM), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_swlm.o
+endif
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
