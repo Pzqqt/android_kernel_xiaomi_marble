@@ -19,9 +19,6 @@
 
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 
-#include <dp_types.h>
-#include <dp_internal.h>
-
 #define DP_SWLM_TCL_TPUT_PASS_THRESH 3
 
 #define DP_SWLM_TCL_RX_TRAFFIC_THRESH 50

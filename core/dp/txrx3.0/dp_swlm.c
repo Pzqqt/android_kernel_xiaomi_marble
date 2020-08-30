@@ -16,6 +16,9 @@
 
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 
+#include <dp_types.h>
+#include <dp_internal.h>
+#include <wlan_cfg.h>
 #include "dp_swlm.h"
 
 /**
@@ -210,8 +213,17 @@ static inline QDF_STATUS dp_soc_swlm_tcl_detach(struct dp_soc *soc)
 
 QDF_STATUS dp_soc_swlm_attach(struct dp_soc *soc)
 {
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
 	struct dp_swlm *swlm = &soc->swlm;
 	QDF_STATUS ret;
+
+	/* Check if it is enabled in the INI */
+	if (!wlan_cfg_is_swlm_enabled(cfg)) {
+		dp_err("SWLM feature is disabled");
+		swlm->is_init = false;
+		swlm->is_enabled = false;
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	swlm->ops = &dp_latency_mgr_ops;
 
@@ -219,6 +231,7 @@ QDF_STATUS dp_soc_swlm_attach(struct dp_soc *soc)
 	if (QDF_IS_STATUS_ERROR(ret))
 		goto swlm_tcl_setup_fail;
 
+	swlm->is_init = true;
 	swlm->is_enabled = true;
 
 	return QDF_STATUS_SUCCESS;
