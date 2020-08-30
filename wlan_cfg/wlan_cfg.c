@@ -620,6 +620,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			cfg_get(psoc, CFG_DP_RX_PENDING_LO_THRESHOLD);
 	wlan_cfg_ctx->is_poll_mode_enabled =
 			cfg_get(psoc, CFG_DP_POLL_MODE_ENABLE);
+	wlan_cfg_ctx->is_swlm_enabled = cfg_get(psoc, CFG_DP_SWLM_ENABLE);
 	return wlan_cfg_ctx;
 }
 
@@ -1424,3 +1425,15 @@ bool wlan_cfg_is_rx_buffer_pool_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return false;
 }
 #endif /* WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL */
+
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+bool wlan_cfg_is_swlm_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return (bool)(cfg->is_swlm_enabled);
+}
+#else
+bool wlan_cfg_is_swlm_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return false;
+}
+#endif

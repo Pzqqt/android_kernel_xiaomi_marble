@@ -189,6 +189,7 @@ struct wlan_srng_cfg {
  *                           pool support
  * @rx_pending_high_threshold: threshold of starting pkt drop
  * @rx_pending_low_threshold: threshold of stopping pkt drop
+ * @is_swlm_enabled: flag to enable/disable SWLM
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -298,6 +299,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t rx_pending_high_threshold;
 	uint32_t rx_pending_low_threshold;
 	bool is_poll_mode_enabled;
+	uint8_t is_swlm_enabled;
 };
 
 /**
@@ -1382,7 +1384,6 @@ bool wlan_cfg_is_rx_fisa_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: true if enabled, false otherwise.
  */
 bool wlan_cfg_is_rx_buffer_pool_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
-#endif
 
 void wlan_cfg_set_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg,
 					bool val);
@@ -1431,3 +1432,13 @@ wlan_cfg_is_peer_ext_stats_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 
 bool wlan_cfg_is_poll_mode_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_is_swlm_enabled() - Get SWLMenabled flag
+ * @cfg: soc configuration context
+ *
+ * Return: true if enabled, false otherwise.
+ */
+bool wlan_cfg_is_swlm_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+#endif

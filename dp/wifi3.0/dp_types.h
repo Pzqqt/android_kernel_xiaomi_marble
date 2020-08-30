@@ -1233,13 +1233,15 @@ struct dp_swlm_params {
  * struct dp_swlm - Software latency manager context
  * @ops: SWLM ops pointers
  * @is_enabled: SWLM enabled/disabled
+ * @is_init: SWLM module initialized
  * @stats: SWLM stats
  * @params: SWLM SRNG params
  * @tcl_flush_timer: flush timer for TCL register writes
  */
 struct dp_swlm {
 	struct dp_swlm_ops *ops;
-	uint8_t is_enabled;
+	uint8_t is_enabled:1,
+		is_init:1;
 	struct dp_swlm_stats stats;
 	struct dp_swlm_params params;
 };
