@@ -576,24 +576,20 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 
 	   maxMeasurementDuration = 2^(nonOperatingChanMax - 4) * BeaconInterval
 	 */
-	if (mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax) {
-		maxDuration =
+	maxDuration =
 		mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax - 4;
-		sign = (maxDuration < 0) ? 1 : 0;
-		maxDuration = (1L << ABS(maxDuration));
-		if (!sign)
-			maxMeasduration =
-			maxDuration * pe_session->beaconParams.beaconInterval;
-		else
-			maxMeasduration =
-			pe_session->beaconParams.beaconInterval / maxDuration;
-	} else {
+	sign = (maxDuration < 0) ? 1 : 0;
+	maxDuration = (1L << ABS(maxDuration));
+	if (!sign)
 		maxMeasduration =
-			pBeaconReq->measurement_request.Beacon.meas_duration;
-		maxDuration =
-		mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax;
-		sign = 0;
-	}
+			maxDuration * pe_session->beaconParams.beaconInterval;
+	else
+		maxMeasduration =
+			pe_session->beaconParams.beaconInterval / maxDuration;
+
+	if( pBeaconReq->measurement_request.Beacon.meas_mode ==
+	   eSIR_PASSIVE_SCAN)
+		maxMeasduration += 10;
 
 	measDuration = pBeaconReq->measurement_request.Beacon.meas_duration;
 
@@ -615,14 +611,14 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 		return eRRM_REFUSED;
 	}
 
-	if (pBeaconReq->durationMandatory) {
-		if (maxDuration && maxMeasduration < measDuration) {
-			pe_err("RX: [802.11 BCN_RPT] Dropping the req");
+	if (maxMeasduration < measDuration) {
+		if (pBeaconReq->durationMandatory) {
+			pe_nofl_err("RX: [802.11 BCN_RPT] Dropping the req: duration mandatory & maxduration > measduration");
 			return eRRM_REFUSED;
-		}
-	} else if (maxDuration) {
-		measDuration = QDF_MIN(maxMeasduration, measDuration);
+		} else
+			measDuration = maxMeasduration;
 	}
+
 	pe_debug("measurement duration %d", measDuration);
 
 	/* Cache the data required for sending report. */
