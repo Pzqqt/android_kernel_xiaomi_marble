@@ -357,6 +357,24 @@ uint16_t reg_dmn_get_chanwidth_from_opclass(uint8_t *country, uint8_t channel,
 	return 0;
 }
 
+uint16_t reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
+						 uint8_t channel,
+						 uint8_t opclass)
+{
+	uint16_t ret;
+	uint8_t global_country[REG_ALPHA2_LEN + 1];
+
+	ret = reg_dmn_get_chanwidth_from_opclass(country, channel, opclass);
+
+	if (!ret) {
+		global_country[2] = OP_CLASS_GLOBAL;
+		ret = reg_dmn_get_chanwidth_from_opclass(global_country,
+							 channel, opclass);
+	}
+
+	return ret;
+}
+
 uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 					  uint8_t offset)
 {

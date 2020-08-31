@@ -757,6 +757,20 @@ void wlan_reg_dmn_print_channels_in_opclass(uint8_t *country,
 uint16_t wlan_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
 						 uint8_t channel,
 						 uint8_t opclass);
+
+/**
+ * wlan_reg_dmn_get_chanwidth_from_opclass_auto() - get channel width from
+ * operating class. If opclass not found then search in global opclass.
+ * @country: country alpha2
+ * @channel: channel number
+ * @opclass: operating class
+ *
+ * Return: int
+ */
+uint16_t wlan_reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
+						      uint8_t channel,
+						      uint8_t opclass);
+
 /**
  * wlan_reg_dmn_set_curr_opclasses() - set operating class
  * @num_classes: number of classes

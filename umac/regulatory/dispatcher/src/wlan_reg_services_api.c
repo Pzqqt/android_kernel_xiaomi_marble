@@ -316,6 +316,14 @@ uint16_t wlan_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
 						  opclass);
 }
 
+uint16_t wlan_reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
+						      uint8_t channel,
+						      uint8_t opclass)
+{
+	return reg_dmn_get_chanwidth_from_opclass_auto(country, channel,
+						       opclass);
+}
+
 uint16_t wlan_reg_dmn_set_curr_opclasses(uint8_t num_classes,
 					 uint8_t *class)
 {

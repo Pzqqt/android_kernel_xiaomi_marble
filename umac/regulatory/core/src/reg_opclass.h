@@ -426,6 +426,20 @@ reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
 {
 	return 0;
 }
-
 #endif
+
+/**
+ * reg_dmn_get_chanwidth_from_opclass_auto()- Get channel width for the
+ * given channel and opclass. If not found then search it in the global
+ * op class.
+ * @country - Country
+ * @channel - Channel for which channel spacing is required
+ * @opclass - Opclass to search from.
+ *
+ * Return: valid channel spacing if found. If not found then
+ * return 0.
+ */
+uint16_t reg_dmn_get_chanwidth_from_opclass_auto(uint8_t *country,
+						 uint8_t channel,
+						 uint8_t opclass);
 #endif
