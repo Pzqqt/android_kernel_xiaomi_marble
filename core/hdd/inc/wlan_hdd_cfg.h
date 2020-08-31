@@ -257,6 +257,10 @@ struct hdd_config {
 	uint32_t periodic_stats_timer_duration;
 #endif /* WLAN_FEATURE_PERIODIC_STA_STATS */
 	uint8_t nb_commands_interval;
+
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+	uint32_t sta_stats_cache_expiry_time;
+#endif
 };
 
 /**

@@ -1536,6 +1536,64 @@ struct dhcp_server {
 #define CFG_WLAN_STA_PERIODIC_STATS
 #endif /* WLAN_FEATURE_PERIODIC_STA_STATS */
 
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+/*
+ * <ini>
+ * club_get_sta_in_ll_stats_req - Flag used to club ll_stats and get_station
+ *                                requests in the driver
+ *
+ * @Min: 0
+ * @Max: 1
+ * Default: 1
+ *
+ * This ini param is used to enable/disable the feature for clubbing ll stats
+ * and get station requests.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_CLUB_LL_STA_AND_GET_STATION  CFG_INI_BOOL( \
+			"club_get_sta_in_ll_stats_req", \
+			1, \
+			"Club ll_stats and get station requests")
+
+/*
+ * <ini>
+ * sta_stats_cache_expiry_time - Expiry time for cached station stats
+ *
+ * @Min: 0
+ * @Max: 5000
+ * Default: 200
+ *
+ * This ini is used as duration in milliseconds for which cached station stats
+ * are valid. Driver sends the cached information as response, if it gets the
+ * get_station request with in this duration. Otherwise driver sends new
+ * request to the firmware to get the updated stats.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_STA_STATS_CACHE_EXPIRY  CFG_INI_UINT( \
+			"sta_stats_cache_expiry_time", \
+			0, \
+			5000, \
+			200, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Station stats cache expiry")
+
+#define CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ \
+	 CFG(CFG_CLUB_LL_STA_AND_GET_STATION) \
+	 CFG(CFG_STA_STATS_CACHE_EXPIRY)
+#else
+#define CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ
+#endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
+
 /**
  * enum host_log_level - Debug verbose level imposed by user
  * @HOST_LOG_LEVEL_NONE: no trace will be logged.
@@ -1652,6 +1710,7 @@ enum host_log_level {
 	CFG_ENABLE_QMI_STATS_ALL \
 	CFG_VC_MODE_BITMAP_ALL \
 	CFG_WLAN_AUTO_SHUTDOWN_ALL \
+	CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ \
 	CFG_WLAN_LOGGING_SUPPORT_ALL \
 	CFG_WLAN_STA_PERIODIC_STATS \
 	CFG(CFG_ACTION_OUI_CCKM_1X1) \

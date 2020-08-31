@@ -34,8 +34,12 @@
 
 #define DATA_RATE_11AC_MCS_MASK    0x03
 
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
 /* LL stats get request time out value */
+#define WLAN_WAIT_TIME_LL_STATS 2000
+#else
 #define WLAN_WAIT_TIME_LL_STATS 800
+#endif
 
 #define WLAN_HDD_TGT_NOISE_FLOOR_DBM     (-96)
 

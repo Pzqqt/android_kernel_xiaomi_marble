@@ -701,6 +701,11 @@ struct hdd_stats {
 	struct hdd_eapol_stats_s hdd_eapol_stats;
 	struct hdd_dhcp_stats_s hdd_dhcp_stats;
 	struct pmf_bcn_protect_stats bcn_protect_stats;
+
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+	uint32_t sta_stats_cached_timestamp;
+	bool is_ll_stats_req_in_progress;
+#endif
 };
 
 /**
@@ -2072,6 +2077,9 @@ struct hdd_context {
 	qdf_workqueue_t *adapter_ops_wq;
 	struct hdd_adapter_ops_history adapter_ops_history;
 	bool ll_stats_per_chan_rx_tx_time;
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+	bool is_get_station_clubbed_in_ll_stats_req;
+#endif
 #ifdef FEATURE_WPSS_THERMAL_MITIGATION
 	bool multi_client_thermal_mitigation;
 #endif

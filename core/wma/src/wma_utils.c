@@ -2341,27 +2341,27 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				wmi_iface_link_stats_event_id,
 				wma_unified_link_iface_stats_event_handler,
-				WMA_RX_SERIALIZER_CTX);
+				WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				wmi_peer_link_stats_event_id,
 				wma_unified_link_peer_stats_event_handler,
-				WMA_RX_SERIALIZER_CTX);
+				WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				wmi_radio_link_stats_link,
 				wma_unified_link_radio_stats_event_handler,
-				WMA_RX_SERIALIZER_CTX);
+				WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			wmi_radio_tx_power_level_stats_event_id,
 			wma_unified_radio_tx_power_level_stats_event_handler,
-			WMA_RX_SERIALIZER_CTX);
+			WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_peer_sta_ps_statechg_event_id,
 					   wma_peer_ps_evt_handler,
-					   WMA_RX_SERIALIZER_CTX);
+					   WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_report_stats_event_id,
 					   wma_ll_stats_evt_handler,
-					   WMA_RX_SERIALIZER_CTX);
+					   WMA_RX_WORK_CTX);
 
 }
 
@@ -2440,6 +2440,30 @@ QDF_STATUS wma_process_ll_stats_set_req(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+static QDF_STATUS
+wma_send_ll_stats_get_cmd(tp_wma_handle wma_handle,
+			  struct ll_stats_get_params *cmd)
+{
+	if (!(cfg_get(wma_handle->psoc, CFG_CLUB_LL_STA_AND_GET_STATION) &&
+	      wmi_service_enabled(wma_handle->wmi_handle,
+				  wmi_service_get_station_in_ll_stats_req)))
+		return wmi_unified_process_ll_stats_get_cmd(
+						wma_handle->wmi_handle, cmd);
+
+	return wmi_process_unified_ll_stats_get_sta_cmd(
+						wma_handle->wmi_handle, cmd);
+}
+#else
+static QDF_STATUS
+wma_send_ll_stats_get_cmd(tp_wma_handle wma_handle,
+			  struct ll_stats_get_params *cmd)
+{
+	return wmi_unified_process_ll_stats_get_cmd(wma_handle->wmi_handle,
+						    cmd);
+}
+#endif
+
 QDF_STATUS wma_process_ll_stats_get_req(tp_wma_handle wma,
 				 const tpSirLLStatsGetReq getReq)
 {
@@ -2473,7 +2497,7 @@ QDF_STATUS wma_process_ll_stats_get_req(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_copy(cmd.peer_macaddr.bytes, addr, QDF_MAC_ADDR_SIZE);
-	ret = wmi_unified_process_ll_stats_get_cmd(wma->wmi_handle, &cmd);
+	ret = wma_send_ll_stats_get_cmd(wma, &cmd);
 	if (ret) {
 		wma_err("Failed to send get link stats request");
 		return QDF_STATUS_E_FAILURE;

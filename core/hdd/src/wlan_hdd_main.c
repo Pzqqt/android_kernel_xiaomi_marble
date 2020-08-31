@@ -1596,6 +1596,52 @@ static inline void hdd_update_roam_offload(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+static void
+hdd_club_ll_stats_in_get_sta_cfg_update(struct hdd_config *config,
+					struct wlan_objmgr_psoc *psoc)
+{
+	config->sta_stats_cache_expiry_time =
+			cfg_get(psoc, CFG_STA_STATS_CACHE_EXPIRY);
+}
+
+static void
+hdd_update_feature_cfg_club_get_sta_in_ll_stats_req(
+					struct hdd_context *hdd_ctx,
+					struct wma_tgt_services *cfg)
+{
+	hdd_ctx->is_get_station_clubbed_in_ll_stats_req =
+				cfg->is_get_station_clubbed_in_ll_stats_req &&
+				cfg_get(hdd_ctx->psoc,
+					CFG_CLUB_LL_STA_AND_GET_STATION);
+}
+
+static void
+hdd_init_get_sta_in_ll_stats_config(struct hdd_adapter *adapter)
+{
+	adapter->hdd_stats.is_ll_stats_req_in_progress = false;
+	adapter->hdd_stats.sta_stats_cached_timestamp = 0;
+}
+#else
+static void
+hdd_club_ll_stats_in_get_sta_cfg_update(struct hdd_config *config,
+					struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static void
+hdd_update_feature_cfg_club_get_sta_in_ll_stats_req(
+					struct hdd_context *hdd_ctx,
+					struct wma_tgt_services *cfg)
+{
+}
+
+static void
+hdd_init_get_sta_in_ll_stats_config(struct hdd_adapter *adapter)
+{
+}
+#endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
+
 static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
@@ -1672,6 +1718,8 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	hdd_ctx->roam_ch_from_fw_supported = cfg->is_roam_scan_ch_to_host;
 	hdd_ctx->ll_stats_per_chan_rx_tx_time =
 					cfg->ll_stats_per_chan_rx_tx_time;
+
+	hdd_update_feature_cfg_club_get_sta_in_ll_stats_req(hdd_ctx, cfg);
 }
 
 /**
@@ -5135,6 +5183,8 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	spin_lock_init(&adapter->pause_map_lock);
 	adapter->start_time = qdf_system_ticks();
 	adapter->last_time = adapter->start_time;
+
+	hdd_init_get_sta_in_ll_stats_config(adapter);
 
 	return adapter;
 
@@ -11997,6 +12047,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_dp_cfg_update(psoc, hdd_ctx);
 	hdd_sar_cfg_update(config, psoc);
 	hdd_init_qmi_stats(config, psoc);
+	hdd_club_ll_stats_in_get_sta_cfg_update(config, psoc);
 }
 
 struct hdd_context *hdd_context_create(struct device *dev)

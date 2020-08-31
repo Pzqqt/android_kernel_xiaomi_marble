@@ -2822,6 +2822,23 @@ static inline void wma_trace_init(void)
 }
 #endif
 
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+static void wma_get_service_cap_club_get_sta_in_ll_stats_req(
+					struct wmi_unified *wmi_handle,
+					struct wma_tgt_services *cfg)
+{
+	cfg->is_get_station_clubbed_in_ll_stats_req =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_get_station_in_ll_stats_req);
+}
+#else
+static void wma_get_service_cap_club_get_sta_in_ll_stats_req(
+					struct wmi_unified *wmi_handle,
+					struct wma_tgt_services *cfg)
+{
+}
+#endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -4647,6 +4664,8 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 	cfg->ll_stats_per_chan_rx_tx_time =
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_ll_stats_per_chan_rx_tx_time);
+
+	wma_get_service_cap_club_get_sta_in_ll_stats_req(wmi_handle, cfg);
 }
 
 /**
