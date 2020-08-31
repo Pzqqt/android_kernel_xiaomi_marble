@@ -790,13 +790,69 @@ static void blm_fill_reject_list(qdf_list_t *reject_db_list,
 }
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void blm_update_reject_ap_list_to_fw(struct wlan_objmgr_psoc *psoc)
+{
+	struct blm_config *cfg;
+	struct wlan_objmgr_pdev *pdev;
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+
+	blm_psoc_obj = blm_get_psoc_obj(psoc);
+	if (!blm_psoc_obj) {
+		blm_err("BLM psoc obj NULL");
+		return;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, blm_psoc_obj->pdev_id,
+					  WLAN_MLME_CM_ID);
+	if (!pdev) {
+		blm_err("pdev obj NULL");
+		return;
+	}
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	if (!blm_ctx) {
+		blm_err("BLM pdev obj NULL");
+		goto end;
+	}
+
+	cfg = &blm_psoc_obj->blm_cfg;
+	blm_send_reject_ap_list_to_fw(pdev, &blm_ctx->reject_ap_list, cfg);
+
+end:
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_CM_ID);
+}
+
+static void blm_store_pdevid_in_blm_psocpriv(struct wlan_objmgr_pdev *pdev)
+{
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_psoc_obj) {
+		blm_err("BLM psoc obj NULL");
+		return;
+	}
+
+	blm_psoc_obj->pdev_id = pdev->pdev_objmgr.wlan_pdev_id;
+}
+
 void
 blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      qdf_list_t *reject_db_list,
 			      struct blm_config *cfg)
 {
 	QDF_STATUS status;
+	bool is_blm_suspended;
 	struct reject_ap_params reject_params = {0};
+
+	ucfg_blm_psoc_get_suspended(wlan_pdev_get_psoc(pdev),
+				    &is_blm_suspended);
+	if (is_blm_suspended) {
+		blm_store_pdevid_in_blm_psocpriv(pdev);
+		blm_debug("Failed to send reject AP list to FW as BLM is suspended");
+		return;
+	}
 
 	reject_params.bssid_list =
 			qdf_mem_malloc(sizeof(*reject_params.bssid_list) *
