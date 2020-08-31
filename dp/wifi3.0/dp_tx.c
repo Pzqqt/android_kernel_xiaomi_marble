@@ -1036,7 +1036,15 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
 			curr_nbuf = qdf_nbuf_next(curr_nbuf), i++) {
-
+		/*
+		 * Number of nbuf's must not exceed the size of the frags
+		 * array in seg_info.
+		 */
+		if (i >= DP_TX_MAX_NUM_FRAGS) {
+			dp_err_rl("nbuf cnt exceeds the max number of segs");
+			DP_STATS_INC(vdev, tx_i.raw.num_frags_overflow_err, 1);
+			goto error;
+		}
 		if (QDF_STATUS_SUCCESS !=
 			qdf_nbuf_map_nbytes_single(vdev->osdev,
 						   curr_nbuf,
@@ -1045,10 +1053,10 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"%s dma map error ", __func__);
 			DP_STATS_INC(vdev, tx_i.raw.dma_map_error, 1);
-			mapped_buf_num = i;
 			goto error;
 		}
-
+		/* Update the count of mapped nbuf's */
+		mapped_buf_num++;
 		paddr = qdf_nbuf_get_frag_paddr(curr_nbuf, 0);
 		seg_info->frags[i].paddr_lo = paddr;
 		seg_info->frags[i].paddr_hi = ((uint64_t)paddr >> 32);

@@ -1161,6 +1161,7 @@ struct cdp_rx_stats {
  * @bcast: Number of broadcast packets
  * @raw_pkt: Total Raw packets
  * @dma_map_error: DMA map error
+ * @num_frags_overflow_err: msdu's nbuf count exceeds num of segemnts
  * @num_seg: No of segments in TSO packets
  * @tso_pkt:total no of TSO packets
  * @non_tso_pkts: non - TSO packets
@@ -1206,6 +1207,7 @@ struct cdp_tx_ingress_stats {
 		struct cdp_pkt_info raw_pkt;
 		uint32_t dma_map_error;
 		uint32_t invalid_raw_pkt_datatype;
+		uint32_t num_frags_overflow_err;
 	} raw;
 
 	/* Scatter Gather packet info */
