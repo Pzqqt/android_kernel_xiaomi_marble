@@ -524,9 +524,9 @@ struct cdp_cmn_ops {
 	QDF_STATUS (*txrx_peer_flush_rate_stats)(struct cdp_soc_t *soc,
 						 uint8_t pdev_id,
 						 void *buf);
-	void* (*txrx_peer_get_wlan_stats_ctx)(struct cdp_soc_t *soc,
-					      uint8_t vdev_id,
-					      uint8_t *mac_addr);
+	void* (*txrx_peer_get_rdkstats_ctx)(struct cdp_soc_t *soc,
+					    uint8_t vdev_id,
+					    uint8_t *mac_addr);
 
 	QDF_STATUS (*txrx_flush_rate_stats_request)(struct cdp_soc_t *soc,
 						    uint8_t pdev_id);

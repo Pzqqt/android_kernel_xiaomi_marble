@@ -1450,7 +1450,7 @@ struct dp_soc {
 	/* rdk rate statistics context at soc level*/
 	struct cdp_soc_rate_stats_ctx *rate_stats_ctx;
 	/* rdk rate statistics control flag */
-	bool wlanstats_enabled;
+	bool rdkstats_enabled;
 
 	/* 8021p PCP-TID map values */
 	uint8_t pcp_tid_map[PCP_TID_MAP_MAX];
@@ -2562,7 +2562,7 @@ struct dp_peer {
 	uint8_t peer_based_pktlog_filter;
 
 	/* rdk statistics context */
-	struct cdp_peer_rate_stats_ctx *wlanstats_ctx;
+	struct cdp_peer_rate_stats_ctx *rdkstats_ctx;
 	/* average sojourn time */
 	qdf_ewma_tx_lag avg_sojourn_msdu[CDP_DATA_TID_MAX];
 

@@ -2483,13 +2483,13 @@ cdp_peer_flush_rate_stats(ol_txrx_soc_handle soc, uint8_t pdev_id,
 }
 
 /**
- * cdp_peer_get_wlanstats_ctx() - get wlanstats context
+ * cdp_peer_get_rdkstats_ctx() - get RDK stats context
  * @soc: opaque soc handle
  * @vdev_id: id of vdev handle
  * @mac: peer mac address
  */
 static inline void
-*cdp_peer_get_wlanstats_ctx(ol_txrx_soc_handle soc, uint8_t vdev_id,
+*cdp_peer_get_rdkstats_ctx(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			  uint8_t *mac_addr)
 {
 	if (!soc || !soc->ops) {
@@ -2500,10 +2500,10 @@ static inline void
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
-	    !soc->ops->cmn_drv_ops->txrx_peer_get_wlan_stats_ctx)
+	    !soc->ops->cmn_drv_ops->txrx_peer_get_rdkstats_ctx)
 		return NULL;
 
-	return soc->ops->cmn_drv_ops->txrx_peer_get_wlan_stats_ctx(soc,
+	return soc->ops->cmn_drv_ops->txrx_peer_get_rdkstats_ctx(soc,
 								   vdev_id,
 								   mac_addr);
 }

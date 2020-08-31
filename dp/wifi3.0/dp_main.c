@@ -5826,12 +5826,12 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			     (void *)&peer_cookie,
 			     peer->peer_id, WDI_NO_VAL, pdev->pdev_id);
 #endif
-	if (soc->wlanstats_enabled) {
+	if (soc->rdkstats_enabled) {
 		if (!peer_cookie.ctx) {
 			pdev->next_peer_cookie--;
 			qdf_err("Failed to initialize peer rate stats");
 		} else {
-			peer->wlanstats_ctx = (struct cdp_peer_rate_stats_ctx *)
+			peer->rdkstats_ctx = (struct cdp_peer_rate_stats_ctx *)
 						peer_cookie.ctx;
 		}
 	}
@@ -6578,7 +6578,7 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 			     QDF_MAC_ADDR_SIZE);
 		peer_cookie.ctx = NULL;
 		peer_cookie.ctx = (struct cdp_stats_cookie *)
-					peer->wlanstats_ctx;
+					peer->rdkstats_ctx;
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 		dp_wdi_event_handler(WDI_EVENT_PEER_DESTROY,
 				     soc,
@@ -6587,7 +6587,7 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 				     WDI_NO_VAL,
 				     pdev->pdev_id);
 #endif
-		peer->wlanstats_ctx = NULL;
+		peer->rdkstats_ctx = NULL;
 		wlan_minidump_remove(peer);
 
 		qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
@@ -8725,7 +8725,7 @@ dp_set_psoc_param(struct cdp_soc_t *cdp_soc,
 
 	switch (param) {
 	case CDP_ENABLE_RATE_STATS:
-		soc->wlanstats_enabled = val.cdp_psoc_param_en_rate_stats;
+		soc->rdkstats_enabled = val.cdp_psoc_param_en_rate_stats;
 		break;
 	case CDP_SET_NSS_CFG:
 		wlan_cfg_set_dp_soc_nss_cfg(wlan_cfg_ctx,
@@ -10178,7 +10178,7 @@ dp_peer_flush_rate_stats_req(struct dp_soc *soc, struct dp_peer *peer,
 
 	dp_wdi_event_handler(
 		WDI_EVENT_FLUSH_RATE_STATS_REQ,
-		soc, peer->wlanstats_ctx,
+		soc, peer->rdkstats_ctx,
 		peer->peer_id,
 		WDI_NO_VAL, peer->vdev->pdev->pdev_id);
 }
@@ -10214,13 +10214,13 @@ dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 }
 #endif
 
-static void *dp_peer_get_wlan_stats_ctx(struct cdp_soc_t *soc_hdl,
-					uint8_t vdev_id,
-					uint8_t *mac_addr)
+static void *dp_peer_get_rdkstats_ctx(struct cdp_soc_t *soc_hdl,
+				      uint8_t vdev_id,
+				      uint8_t *mac_addr)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_peer *peer;
-	void *wlanstats_ctx = NULL;
+	void *rdkstats_ctx = NULL;
 
 	if (mac_addr) {
 		peer = dp_peer_find_hash_find(soc, mac_addr,
@@ -10229,12 +10229,12 @@ static void *dp_peer_get_wlan_stats_ctx(struct cdp_soc_t *soc_hdl,
 		if (!peer)
 			return NULL;
 
-		wlanstats_ctx = peer->wlanstats_ctx;
+		rdkstats_ctx = peer->rdkstats_ctx;
 
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	}
 
-	return wlanstats_ctx;
+	return rdkstats_ctx;
 }
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
@@ -10550,7 +10550,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_rate_stats_ctx = dp_soc_get_rate_stats_ctx,
 	.txrx_peer_flush_rate_stats = dp_peer_flush_rate_stats,
 	.txrx_flush_rate_stats_request = dp_flush_rate_stats_req,
-	.txrx_peer_get_wlan_stats_ctx = dp_peer_get_wlan_stats_ctx,
+	.txrx_peer_get_rdkstats_ctx = dp_peer_get_rdkstats_ctx,
 
 	.set_pdev_pcp_tid_map = dp_set_pdev_pcp_tid_map_wifi3,
 	.set_vdev_pcp_tid_map = dp_set_vdev_pcp_tid_map_wifi3,

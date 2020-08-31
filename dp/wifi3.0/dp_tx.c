@@ -3489,7 +3489,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 	sojourn_stats = (struct cdp_tx_sojourn_stats *)
 		qdf_nbuf_data(pdev->sojourn_buf);
 
-	sojourn_stats->cookie = (void *)peer->wlanstats_ctx;
+	sojourn_stats->cookie = (void *)peer->rdkstats_ctx;
 
 	delta_ms = qdf_ktime_to_ms(qdf_ktime_get()) -
 				txdesc_ts;
@@ -3723,7 +3723,7 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 	dp_tx_update_peer_ext_stats(peer, tx_desc, ts->tid, ring_id);
 
 #ifdef QCA_SUPPORT_RDK_STATS
-	if (soc->wlanstats_enabled)
+	if (soc->rdkstats_enabled)
 		dp_tx_sojourn_stats_process(vdev->pdev, peer, ts->tid,
 					    tx_desc->timestamp,
 					    ts->ppdu_id);
