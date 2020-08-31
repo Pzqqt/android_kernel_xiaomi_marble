@@ -36,7 +36,11 @@
 
 /* Type declarations */
 
+#ifdef LOG_LINE_NUMBER
 #define FL(x)    "%s: %d: " x, __func__, __LINE__
+#else
+#define FL(x)    "%s: " x, __func__
+#endif
 
 #define QDF_TRACE_BUFFER_SIZE (512)
 
