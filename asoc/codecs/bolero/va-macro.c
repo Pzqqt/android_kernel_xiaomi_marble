@@ -4,6 +4,7 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
@@ -143,7 +144,6 @@ struct va_macro_priv {
 	struct hpf_work va_hpf_work[VA_MACRO_NUM_DECIMATORS];
 	struct va_mute_work va_mute_dwork[VA_MACRO_NUM_DECIMATORS];
 	unsigned long active_ch_mask[VA_MACRO_MAX_DAIS];
-	unsigned long active_ch_cnt[VA_MACRO_MAX_DAIS];
 	u16 dmic_clk_div;
 	u16 va_mclk_users;
 	int swr_clk_users;
@@ -1051,13 +1051,10 @@ static int va_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
-	if (enable) {
+	if (enable)
 		set_bit(dec_id, &va_priv->active_ch_mask[dai_id]);
-		va_priv->active_ch_cnt[dai_id]++;
-	} else {
+	else
 		clear_bit(dec_id, &va_priv->active_ch_mask[dai_id]);
-		va_priv->active_ch_cnt[dai_id]--;
-	}
 
 	snd_soc_dapm_mixer_update_power(widget->dapm, kcontrol, enable, update);
 
@@ -1552,7 +1549,7 @@ static int va_macro_get_channel_map(struct snd_soc_dai *dai,
 	case VA_MACRO_AIF2_CAP:
 	case VA_MACRO_AIF3_CAP:
 		*tx_slot = va_priv->active_ch_mask[dai->id];
-		*tx_num = va_priv->active_ch_cnt[dai->id];
+		*tx_num = hweight_long(va_priv->active_ch_mask[dai->id]);
 		break;
 	default:
 		dev_err(va_dev, "%s: Invalid AIF\n", __func__);

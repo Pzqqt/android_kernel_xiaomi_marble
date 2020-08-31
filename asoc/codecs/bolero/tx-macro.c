@@ -4,6 +4,7 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
@@ -162,7 +163,6 @@ struct tx_macro_priv {
 	u32 version;
 	u32 is_used_tx_swr_gpio;
 	unsigned long active_ch_mask[TX_MACRO_MAX_DAIS];
-	unsigned long active_ch_cnt[TX_MACRO_MAX_DAIS];
 	char __iomem *tx_io_base;
 	struct platform_device *pdev_child_devices
 			[TX_MACRO_CHILD_DEVICES_MAX];
@@ -663,13 +663,11 @@ static int tx_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
 		return -EINVAL;
 
-	if (enable) {
+	if (enable)
 		set_bit(dec_id, &tx_priv->active_ch_mask[dai_id]);
-		tx_priv->active_ch_cnt[dai_id]++;
-	} else {
-		tx_priv->active_ch_cnt[dai_id]--;
+	else
 		clear_bit(dec_id, &tx_priv->active_ch_mask[dai_id]);
-	}
+
 	snd_soc_dapm_mixer_update_power(widget->dapm, kcontrol, enable, update);
 
 	return 0;
@@ -1245,7 +1243,7 @@ static int tx_macro_get_channel_map(struct snd_soc_dai *dai,
 	case TX_MACRO_AIF2_CAP:
 	case TX_MACRO_AIF3_CAP:
 		*tx_slot = tx_priv->active_ch_mask[dai->id];
-		*tx_num = tx_priv->active_ch_cnt[dai->id];
+		*tx_num = hweight_long(tx_priv->active_ch_mask[dai->id]);
 		break;
 	default:
 		dev_err(tx_dev, "%s: Invalid AIF\n", __func__);

@@ -6,6 +6,7 @@
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
+#include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/pm_runtime.h>
 #include <sound/soc.h>
@@ -436,7 +437,6 @@ struct rx_macro_priv {
 	struct device_node *rx_swr_gpio_p;
 	struct snd_soc_component *component;
 	unsigned long active_ch_mask[RX_MACRO_MAX_DAIS];
-	unsigned long active_ch_cnt[RX_MACRO_MAX_DAIS];
 	u16 bit_width[RX_MACRO_MAX_DAIS];
 	char __iomem *rx_io_base;
 	char __iomem *rx_mclk_mode_muxsel;
@@ -1133,7 +1133,7 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 		if ((ch_mask & 0x10) || (ch_mask & 0x20))
 			ch_mask = 0x1;
 		*rx_slot = ch_mask;
-		*rx_num = rx_priv->active_ch_cnt[dai->id];
+		*rx_num = hweight_long(ch_mask);
 		dev_dbg(rx_priv->dev,
 			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d active_mask: 0x%x\n",
 			__func__, dai->id, *rx_slot, *rx_num, rx_priv->active_ch_mask[dai->id]);
@@ -2110,11 +2110,7 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 
 	switch (rx_port_value) {
 	case 0:
-		if (rx_priv->active_ch_cnt[aif_rst]) {
-			clear_bit(widget->shift,
-				&rx_priv->active_ch_mask[aif_rst]);
-			rx_priv->active_ch_cnt[aif_rst]--;
-		}
+		clear_bit(widget->shift, &rx_priv->active_ch_mask[aif_rst]);
 		break;
 	case 1:
 	case 2:
@@ -2122,7 +2118,6 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 	case 4:
 		set_bit(widget->shift,
 			&rx_priv->active_ch_mask[rx_port_value]);
-		rx_priv->active_ch_cnt[rx_port_value]++;
 		break;
 	default:
 		dev_err(component->dev,
