@@ -1303,6 +1303,14 @@ QDF_STATUS
 ucfg_mlme_is_roam_prefer_5ghz(struct wlan_objmgr_psoc *psoc, bool *val);
 
 /**
+ * ucfg_mlme_is_roam_intra_band() - Get the preference to roam within band
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if vdev should roam within band, false otherwise
+ */
+bool ucfg_mlme_is_roam_intra_band(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_mlme_set_roam_intra_band() - Set roam intra modes
  * @psoc: pointer to psoc object
  * @val:  roam intra modes or not

@@ -29,6 +29,9 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
+#include "wlan_mlme_api.h"
+#include "wlan_cm_roam_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #define POLICY_MGR_MAX_CON_STRING_LEN   100
 
@@ -1391,10 +1394,157 @@ void policy_mgr_set_pcl_for_existing_combo(struct wlan_objmgr_psoc *psoc,
 
 	/* Send PCL only if policy_mgr_pdev_get_pcl returned success */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = pm_ctx->sme_cbacks.sme_set_pcl(&pcl, vdev_id, false);
+		status = policy_mgr_set_pcl(psoc, &pcl, vdev_id, false);
 		if (QDF_IS_STATUS_ERROR(status))
-			policy_mgr_err("Send set PCL to SME failed");
+			policy_mgr_err("Send set PCL to policy mgr failed");
 	}
+}
+
+void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id, bool clear_pcl)
+{
+	struct policy_mgr_pcl_list msg = { {0} };
+	uint8_t roam_enabled_vdev_id;
+
+	/*
+	 * Get the vdev id of the STA on which roaming is already
+	 * initialized and set the vdev PCL for that STA vdev if dual
+	 * STA roaming feature is enabled.
+	 */
+	roam_enabled_vdev_id = policy_mgr_get_roam_enabled_sta_session_id(psoc,
+								       vdev_id);
+
+	if (wlan_mlme_get_dual_sta_roaming_enabled(psoc) &&
+	    roam_enabled_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		if (clear_pcl) {
+			/*
+			 * Here the PCL level should be at vdev level already
+			 * as this is invoked from disconnect handler. Clear the
+			 * vdev pcl for the existing connected STA vdev and this
+			 * is followed by set PDEV pcl.
+			 */
+			policy_mgr_set_pcl(psoc, &msg,
+					   roam_enabled_vdev_id, true);
+			wlan_cm_roam_activate_pcl_per_vdev(psoc,
+							   roam_enabled_vdev_id,
+							   false);
+		} else {
+			wlan_cm_roam_activate_pcl_per_vdev(psoc,
+							   roam_enabled_vdev_id,
+							   true);
+		}
+		policy_mgr_set_pcl_for_existing_combo(psoc, PM_STA_MODE,
+						      roam_enabled_vdev_id);
+	}
+}
+
+/**
+ * policy_mgr_get_connected_roaming_vdev_band_mask() - get connected vdev
+ * band mask
+ * @psoc: PSOC object
+ * @vdev_id: Vdev id
+ *
+ * Return: reg wifi band mask
+ */
+static uint32_t
+policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id)
+{
+	uint32_t band_mask = REG_BAND_MASK_ALL;
+	struct wlan_objmgr_vdev *vdev;
+	bool dual_sta_roam_active;
+	struct wlan_channel *chan;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("vdev is NULL");
+		return 0;
+	}
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+	if (!chan) {
+		policy_mgr_err("no active channel");
+		return 0;
+	}
+
+	/*
+	 * If PCL command is PDEV level, only one sta is active.
+	 * So fill the band mask if intra band roaming is enabled
+	 */
+	if (!wlan_cm_roam_is_pcl_per_vdev_active(psoc, vdev_id)) {
+		if (ucfg_mlme_is_roam_intra_band(psoc))
+			band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
+
+		return band_mask;
+	}
+
+	dual_sta_roam_active = wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+	if (dual_sta_roam_active)
+		band_mask = BIT(wlan_reg_freq_to_band(chan->ch_freq));
+
+	return band_mask;
+}
+
+QDF_STATUS policy_mgr_set_pcl(struct wlan_objmgr_psoc *psoc,
+			      struct policy_mgr_pcl_list *msg,
+			      uint8_t vdev_id,
+			      bool clear_vdev_pcl)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct scheduler_msg message = {0};
+	struct set_pcl_req *req_msg;
+	uint32_t i;
+
+	if (!msg) {
+		policy_mgr_err("msg is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!MLME_IS_ROAM_INITIALIZED(psoc, vdev_id)) {
+		policy_mgr_debug("Roam is not initialized on vdev:%d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	req_msg = qdf_mem_malloc(sizeof(*req_msg));
+	if (!req_msg)
+		return QDF_STATUS_E_NOMEM;
+
+	req_msg->band_mask =
+		policy_mgr_get_connected_roaming_vdev_band_mask(psoc, vdev_id);
+	policy_mgr_debug("Connected STA band mask%d", req_msg->band_mask);
+
+	for (i = 0; i < msg->pcl_len; i++) {
+		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
+		req_msg->chan_weights.weight_list[i] =  msg->weight_list[i];
+	}
+
+	req_msg->chan_weights.pcl_len = msg->pcl_len;
+	req_msg->clear_vdev_pcl = clear_vdev_pcl;
+
+	/*
+	 * Set vdev value as WLAN_UMAC_VDEV_ID_MAX, if PDEV level
+	 * PCL command needs to be sent.
+	 */
+	if (!wlan_cm_roam_is_pcl_per_vdev_active(psoc, vdev_id))
+		vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+
+	req_msg->vdev_id = vdev_id;
+
+	/* Serialize the req through MC thread */
+	message.bodyptr = req_msg;
+	message.type    = SIR_HAL_SET_PCL_TO_FW;
+	status = scheduler_post_message(QDF_MODULE_ID_POLICY_MGR,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("scheduler_post_msg failed!(err=%d)", status);
+		qdf_mem_free(req_msg);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
 }
 
 static uint32_t pm_get_vdev_id_of_first_conn_idx(struct wlan_objmgr_psoc *psoc)

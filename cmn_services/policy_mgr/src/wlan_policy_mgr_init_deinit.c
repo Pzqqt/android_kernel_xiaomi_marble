@@ -672,8 +672,6 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
 		sme_cbacks->sme_nss_update_request;
 	pm_ctx->sme_cbacks.sme_pdev_set_hw_mode =
 		sme_cbacks->sme_pdev_set_hw_mode;
-	pm_ctx->sme_cbacks.sme_set_pcl =
-		sme_cbacks->sme_set_pcl;
 	pm_ctx->sme_cbacks.sme_soc_set_dual_mac_config =
 		sme_cbacks->sme_soc_set_dual_mac_config;
 	pm_ctx->sme_cbacks.sme_change_mcc_beacon_interval =
