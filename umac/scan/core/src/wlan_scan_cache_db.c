@@ -1003,7 +1003,7 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 					scan_entry->channel.chan_freq)) {
 			scm_nofl_debug("Drop frame for invalid freq %d: "QDF_MAC_ADDR_FMT" Seq Num: %d RSSI %d",
 				       scan_entry->channel.chan_freq,
-				       scan_entry->bssid.bytes,
+				       QDF_MAC_ADDR_REF(scan_entry->bssid.bytes),
 				       scan_entry->seq_num,
 				       scan_entry->rssi_raw);
 			util_scan_free_cache_entry(scan_entry);
