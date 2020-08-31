@@ -2141,7 +2141,7 @@ done:
 static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_tx_seg_info_s *seg_info, struct dp_tx_msdu_info_s *msdu_info)
 {
-	uint32_t cur_frag, nr_frags;
+	uint32_t cur_frag, nr_frags, i;
 	qdf_dma_addr_t paddr;
 	struct dp_tx_sg_info_s *sg_info;
 
@@ -2150,7 +2150,8 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	if (QDF_STATUS_SUCCESS !=
 		qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
-					   QDF_DMA_TO_DEVICE, nbuf->len)) {
+					   QDF_DMA_TO_DEVICE,
+					   qdf_nbuf_headlen(nbuf))) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"dma map error");
 		DP_STATS_INC(vdev, tx_i.sg.dma_map_error, 1);
@@ -2171,8 +2172,7 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"frag dma map error");
 			DP_STATS_INC(vdev, tx_i.sg.dma_map_error, 1);
-			qdf_nbuf_free(nbuf);
-			return NULL;
+			goto map_err;
 		}
 
 		paddr = qdf_nbuf_get_tx_frag_paddr(nbuf);
@@ -2193,6 +2193,24 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	msdu_info->num_seg = 1;
 
 	return nbuf;
+map_err:
+	/* restore paddr into nbuf before calling unmap */
+	qdf_nbuf_mapped_paddr_set(nbuf,
+				  (qdf_dma_addr_t)(seg_info->frags[0].paddr_lo |
+				  ((uint64_t)
+				  seg_info->frags[0].paddr_hi) << 32));
+	qdf_nbuf_unmap_nbytes_single(vdev->osdev, nbuf,
+				     QDF_DMA_TO_DEVICE,
+				     seg_info->frags[0].len);
+	for (i = 1; i <= cur_frag; i++) {
+		qdf_mem_unmap_page(vdev->osdev, (qdf_dma_addr_t)
+				   (seg_info->frags[i].paddr_lo | ((uint64_t)
+				   seg_info->frags[i].paddr_hi) << 32),
+				   seg_info->frags[i].len,
+				   QDF_DMA_TO_DEVICE);
+	}
+	qdf_nbuf_free(nbuf);
+	return NULL;
 }
 
 /**
