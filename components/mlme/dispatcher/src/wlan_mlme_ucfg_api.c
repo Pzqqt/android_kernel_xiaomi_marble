@@ -1013,6 +1013,17 @@ ucfg_mlme_is_roam_prefer_5ghz(struct wlan_objmgr_psoc *psoc, bool *val)
 	return QDF_STATUS_SUCCESS;
 }
 
+bool ucfg_mlme_is_roam_intra_band(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return true;
+
+	return mlme_obj->cfg.lfr.roam_intra_band;
+}
+
 QDF_STATUS
 ucfg_mlme_set_roam_intra_band(struct wlan_objmgr_psoc *psoc, bool val)
 {

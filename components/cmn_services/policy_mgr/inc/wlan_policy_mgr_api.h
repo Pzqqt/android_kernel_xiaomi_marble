@@ -606,6 +606,40 @@ static inline void policy_mgr_change_sap_channel_with_csa(
 void policy_mgr_set_pcl_for_existing_combo(struct wlan_objmgr_psoc *psoc,
 					   enum policy_mgr_con_mode mode,
 					   uint8_t vdev_id);
+
+/**
+ * policy_mgr_set_pcl_for_connected_vdev() - Set the PCL for connected vdevs
+ * @psoc: PSOC object information
+ * @vdev_id: Vdev Id
+ * @clear_pcl: option to clear the PCL first before setting the new one
+ *
+ * This API will set the preferred channel list for other connected vdevs aside
+ * from the calling function's vdev
+ *
+ * Context: Any kernel thread
+ * Return: None
+ */
+void policy_mgr_set_pcl_for_connected_vdev(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id, bool clear_pcl);
+
+/**
+ * policy_mgr_set_pcl() - Set preferred channel list in the FW
+ * @psoc: PSOC object information
+ * @msg: message containing preferred channel list information
+ * @vdev_id: Vdev Id
+ * @clear_vdev_pcl: clear PCL flag
+ *
+ * Sends the set pcl command and PCL info to FW
+ *
+ * Context: Any kernel thread
+ * Return: QDF_STATUS_SUCCESS on successful posting, fail status in any other
+ *	   case
+ */
+QDF_STATUS policy_mgr_set_pcl(struct wlan_objmgr_psoc *psoc,
+			      struct policy_mgr_pcl_list *msg,
+			      uint8_t vdev_id,
+			      bool clear_vdev_pcl);
+
 /**
  * policy_mgr_incr_active_session() - increments the number of active sessions
  * @psoc: PSOC object information
@@ -1367,7 +1401,6 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  * @sme_soc_set_dual_mac_config: Set the dual MAC scan & FW
  *                             config
  * @sme_pdev_set_hw_mode: Set the new HW mode to FW
- * @sme_set_pcl: Set new PCL to FW
  * @sme_nss_update_request: Update NSS value to FW
  * @sme_change_mcc_beacon_interval: Set MCC beacon interval to FW
  * @sme_rso_start_cb: Enable roaming offload callback
@@ -1379,8 +1412,6 @@ struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_soc_set_dual_mac_config)(
 		struct policy_mgr_dual_mac_config msg);
 	QDF_STATUS (*sme_pdev_set_hw_mode)(struct policy_mgr_hw_mode msg);
-	QDF_STATUS (*sme_set_pcl)(struct policy_mgr_pcl_list *msg,
-				  uint8_t vdev_id, bool clear_vdev_pcl);
 	QDF_STATUS (*sme_nss_update_request)(uint32_t vdev_id,
 		uint8_t new_nss, uint8_t ch_width,
 		policy_mgr_nss_update_cback cback,

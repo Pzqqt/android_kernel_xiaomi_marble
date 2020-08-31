@@ -2037,8 +2037,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	    QDF_STA_MODE == adapter->device_mode) {
 		sme_enable_roaming_on_connected_sta(mac_handle,
 						    adapter->vdev_id);
-		sme_clear_and_set_pcl_for_connected_vdev(mac_handle,
-							 adapter->vdev_id);
+		policy_mgr_set_pcl_for_connected_vdev(hdd_ctx->psoc,
+						      adapter->vdev_id, true);
 	}
 #endif
 
@@ -2893,9 +2893,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			 * On successful association. set the vdev PCL for the
 			 * already existing STA which was connected first
 			 */
-			sme_set_pcl_for_first_connected_vdev(
-					hdd_ctx->mac_handle,
-					adapter->vdev_id);
+			policy_mgr_set_pcl_for_connected_vdev(hdd_ctx->psoc,
+							      adapter->vdev_id,
+							      false);
 
 			/*
 			 * Enable roaming on other STA iface except this one.
