@@ -615,6 +615,108 @@ tgt_mc_cp_stats_extract_peer_stats_info_ext(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+#ifdef WLAN_FEATURE_MEDIUM_ASSESS
+static void
+tgt_mc_cp_stats_extract_congestion_stats(struct wlan_objmgr_psoc *psoc,
+					 struct stats_event *ev)
+{
+	QDF_STATUS status;
+	struct request_info last_req = {0};
+	struct wlan_objmgr_pdev *pdev;
+	struct pdev_mc_cp_stats *pdev_mc_stats, *fw_pdev_stats;
+	struct pdev_cp_stats *pdev_cp_stats_priv;
+	uint32_t rx_clear_count_delta, cycle_count_delta;
+	uint8_t congestion = 0;
+	bool is_congested = false;
+
+	if (!ev->pdev_stats) {
+		cp_stats_debug("no pdev_stats");
+		return;
+	}
+
+	status = ucfg_mc_cp_stats_get_pending_req(psoc,
+						  TYPE_CONGESTION_STATS,
+						  &last_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		return;
+	}
+
+	/* Check if stats for the specific pdev is present */
+	if (last_req.pdev_id >= ev->num_pdev_stats) {
+		cp_stats_err("no stat for pdev %d ", last_req.pdev_id);
+		return;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, last_req.pdev_id,
+					  WLAN_CP_STATS_ID);
+	if (!pdev) {
+		cp_stats_err("pdev is null");
+		return;
+	}
+
+	pdev_cp_stats_priv = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (!pdev_cp_stats_priv) {
+		cp_stats_err("pdev_cp_stats_priv is null");
+		goto out;
+	}
+
+	wlan_cp_stats_pdev_obj_lock(pdev_cp_stats_priv);
+	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
+	fw_pdev_stats = &ev->pdev_stats[last_req.pdev_id];
+	/*
+	 * Skip calculating deltas and congestion for the first received event
+	 * since enabled
+	 */
+	if (pdev_mc_stats->cycle_count || pdev_mc_stats->rx_clear_count) {
+		if (fw_pdev_stats->rx_clear_count >=
+		    pdev_mc_stats->rx_clear_count) {
+			rx_clear_count_delta = fw_pdev_stats->rx_clear_count -
+					       pdev_mc_stats->rx_clear_count;
+		} else {
+			/* Wrap around case */
+			rx_clear_count_delta = U32_MAX -
+					       pdev_mc_stats->rx_clear_count;
+			rx_clear_count_delta += fw_pdev_stats->rx_clear_count;
+		}
+		if (fw_pdev_stats->cycle_count >= pdev_mc_stats->cycle_count) {
+			cycle_count_delta = fw_pdev_stats->cycle_count -
+					    pdev_mc_stats->cycle_count;
+		} else {
+			/* Wrap around case */
+			cycle_count_delta = U32_MAX -
+					    pdev_mc_stats->cycle_count;
+			cycle_count_delta += fw_pdev_stats->cycle_count;
+		}
+		if (cycle_count_delta)
+			pdev_mc_stats->congestion = rx_clear_count_delta * 100 /
+						    cycle_count_delta;
+		else
+			cp_stats_err("cycle_count not increased %d",
+				     fw_pdev_stats->cycle_count);
+	}
+	pdev_mc_stats->rx_clear_count = fw_pdev_stats->rx_clear_count;
+	pdev_mc_stats->cycle_count = fw_pdev_stats->cycle_count;
+	if (pdev_mc_stats->congestion >= pdev_mc_stats->congestion_threshold) {
+		is_congested = true;
+		congestion = pdev_mc_stats->congestion;
+	}
+	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
+
+	if (last_req.u.congestion_notif_cb && is_congested)
+		last_req.u.congestion_notif_cb(congestion);
+
+out:
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_CP_STATS_ID);
+}
+#else
+static void
+tgt_mc_cp_stats_extract_congestion_stats(struct wlan_objmgr_psoc *psoc,
+					 struct stats_event *ev)
+{
+}
+#endif
+
 static void tgt_mc_cp_stats_extract_cca_stats(struct wlan_objmgr_psoc *psoc,
 						  struct stats_event *ev)
 {
@@ -995,6 +1097,9 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 
 	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_PEER_STATS_INFO_EXT))
 		tgt_mc_cp_stats_extract_peer_stats_info_ext(psoc, ev);
+
+	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_CONGESTION_STATS))
+		tgt_mc_cp_stats_extract_congestion_stats(psoc, ev);
 
 	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 

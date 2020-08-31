@@ -340,6 +340,22 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 	ev->peer_stats_info_ext = NULL;
 }
 
+#ifdef WLAN_FEATURE_MEDIUM_ASSESS
+static void
+target_if_cp_stats_extract_congestion(struct pdev_mc_cp_stats *pdev_stats,
+				      wmi_host_pdev_stats *fw_pdev_stats)
+{
+	pdev_stats->rx_clear_count = fw_pdev_stats->rx_clear_count;
+	pdev_stats->cycle_count = fw_pdev_stats->cycle_count;
+}
+#else
+static void
+target_if_cp_stats_extract_congestion(struct pdev_mc_cp_stats *pdev_stats,
+				      wmi_host_pdev_stats *fw_pdev_stats)
+{
+}
+#endif
+
 static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 					struct wmi_unified *wmi_hdl,
 					wmi_host_stats_event *stats_param,
@@ -370,6 +386,8 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 			return status;
 		}
 		ev->pdev_stats[i].max_pwr = pdev_stats.chan_tx_pwr;
+		target_if_cp_stats_extract_congestion(&ev->pdev_stats[i],
+						      &pdev_stats);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -1119,6 +1137,7 @@ static uint32_t get_stats_id(enum stats_req_type type)
 	default:
 		break;
 	case TYPE_CONNECTION_TX_POWER:
+	case TYPE_CONGESTION_STATS:
 		return WMI_REQUEST_PDEV_STAT;
 	case TYPE_PEER_STATS:
 		return WMI_REQUEST_PEER_STAT | WMI_REQUEST_PEER_EXTD_STAT;

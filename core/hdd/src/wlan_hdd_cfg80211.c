@@ -159,6 +159,7 @@
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_hdd_twt.h"
 #include "wlan_hdd_gpio.h"
+#include "wlan_hdd_medium_assess.h"
 
 #ifdef WLAN_FEATURE_INTERFACE_MGR
 #include "wlan_if_mgr_ucfg_api.h"
@@ -1652,6 +1653,7 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 	},
 
 	BCN_RECV_FEATURE_VENDOR_EVENTS
+	FEATURE_MEDIUM_ASSESS_VENDOR_EVENTS
 	[QCA_NL80211_VENDOR_SUBCMD_ROAM_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_ROAM,
@@ -15692,6 +15694,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_BTC_CHAIN_MODE_COMMANDS
 	FEATURE_WMM_COMMANDS
 	FEATURE_GPIO_CFG_VENDOR_COMMANDS
+	FEATURE_MEDIUM_ASSESS_VENDOR_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)

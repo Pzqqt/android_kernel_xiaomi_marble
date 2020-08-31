@@ -56,6 +56,7 @@
  * @TYPE_PEER_STATS: peer stats was requested
  * @TYPE_MIB_STATS: MIB stats was requested
  * @TYPE_PEER_STATS_INFO_EXT: peer stats info ext was requested
+ * @TYPE_CONGESTION_STATS: congestion stats was requested
  */
 enum stats_req_type {
 	TYPE_CONNECTION_TX_POWER = 0,
@@ -63,6 +64,7 @@ enum stats_req_type {
 	TYPE_PEER_STATS,
 	TYPE_MIB_STATS,
 	TYPE_PEER_STATS_INFO_EXT,
+	TYPE_CONGESTION_STATS,
 	TYPE_MAX,
 };
 
@@ -174,7 +176,8 @@ struct stats_event;
  * struct request_info: details of each request
  * @cookie: identifier for os_if request
  * @u: unified data type for callback to process tx power/peer rssi/
- *     station stats/mib stats request when response comes.
+ *     station stats/mib stats/peer stats request when response comes and
+ *     notification callback when congestion is detected.
  * @vdev_id: vdev_id of request
  * @pdev_id: pdev_id of request
  * @peer_mac_addr: peer mac address
@@ -190,6 +193,7 @@ struct request_info {
 					 void *cookie);
 		void (*get_peer_stats_cb)(struct stats_event *ev,
 					  void *cookie);
+		void (*congestion_notif_cb)(uint8_t congestion);
 	} u;
 	uint32_t vdev_id;
 	uint32_t pdev_id;
@@ -232,10 +236,20 @@ struct psoc_mc_cp_stats {
 
 /**
  * struct pdev_mc_cp_stats: pdev specific stats
- * @max_pwr: max tx power for vdev
+ * @max_pwr: max tx power for pdev
+ * @congestion: percentage of congestion = (busy_time / total_time) * 100
+ * @congestion_threshold: threshold for congestion precentage of pdev
+ * @rx_clear_count: accumulative rx clear count (busy time) of pdev
+ * @cycle_count: accumulative cycle count (total time) of pdev
  */
 struct pdev_mc_cp_stats {
 	int32_t max_pwr;
+#ifdef WLAN_FEATURE_MEDIUM_ASSESS
+	uint8_t congestion;
+	uint8_t congestion_threshold;
+	uint32_t rx_clear_count;
+	uint32_t cycle_count;
+#endif
 };
 
 /**
