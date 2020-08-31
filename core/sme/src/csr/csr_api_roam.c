@@ -8432,24 +8432,11 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		goto error;
 	}
 
-	/* Try to connect to any BSS */
-	if (!pProfile) {
-		/*
-		 * Dual STA roaming is supported only for DBS mode.
-		 * So if dual sta roaming is enabled, fill the channels
-		 * allowed for 2nd STA connection based on the 1st STA
-		 * connected band.
-		 */
-		wlan_cm_dual_sta_roam_update_connect_channels(mac->psoc,
-							      filter);
-		csr_set_open_mode_in_scan_filter(filter);
-	} else {
-		/* Here is the profile we need to connect to */
-		status = csr_roam_get_scan_filter_from_profile(mac, pProfile,
-							       filter, false,
-							       sessionId);
-		opmode = pProfile->csrPersona;
-	}
+	/* Here is the profile we need to connect to */
+	status = csr_roam_get_scan_filter_from_profile(mac, pProfile,
+						       filter, false,
+						       sessionId);
+	opmode = pProfile->csrPersona;
 	roamId = GET_NEXT_ROAM_ID(&mac->roam);
 	if (pRoamId)
 		*pRoamId = roamId;
@@ -10950,8 +10937,10 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 		 * 2nd STA, with the channels other than the 1st connected
 		 * STA, as dual sta roaming is supported only on one band.
 		 */
-		wlan_cm_dual_sta_roam_update_connect_channels(mac_ctx->psoc,
-							      filter);
+		if (profile->csrPersona == QDF_STA_MODE)
+			wlan_cm_dual_sta_roam_update_connect_channels(
+							mac_ctx->psoc,
+							filter);
 	}
 
 	status = csr_fill_crypto_params(mac_ctx, profile, filter, vdev_id);
