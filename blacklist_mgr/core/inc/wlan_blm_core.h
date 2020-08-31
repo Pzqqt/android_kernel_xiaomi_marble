@@ -192,10 +192,25 @@ void
 blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      qdf_list_t *reject_db_list,
 			      struct blm_config *cfg);
+
+/**
+ * blm_update_reject_ap_list_to_fw() - Send the blacklist BSSIDs to FW
+ * @psoc: psoc object
+ *
+ * This API will send the blacklist BSSIDs to FW.
+ *
+ * Return: None
+ */
+void blm_update_reject_ap_list_to_fw(struct wlan_objmgr_psoc *psoc);
 #else
 static inline void blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 						 qdf_list_t *reject_db_list,
 						 struct blm_config *cfg)
+{
+}
+
+static inline void
+blm_update_reject_ap_list_to_fw(struct wlan_objmgr_psoc *psoc)
 {
 }
 #endif

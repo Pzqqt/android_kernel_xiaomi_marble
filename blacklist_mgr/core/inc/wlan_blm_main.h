@@ -75,9 +75,13 @@ struct blm_config {
 
 /**
  * struct blm_psoc_priv_obj - Psoc priv structure of the blacklist manager.
+ * @pdev_id: pdev id
+ * @is_suspended: is black list manager state suspended
  * @blm_cfg: These are the config ini params that the user can configure.
  */
 struct blm_psoc_priv_obj {
+	uint8_t pdev_id;
+	bool is_suspended;
 	struct blm_config blm_cfg;
 };
 

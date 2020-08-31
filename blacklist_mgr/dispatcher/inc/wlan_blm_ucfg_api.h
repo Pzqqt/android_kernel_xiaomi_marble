@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,28 @@ QDF_STATUS ucfg_blm_init(void);
  * Return: QDF_STATUS_SUCCESS - in case of success else return error
  */
 QDF_STATUS ucfg_blm_deinit(void);
+
+/**
+ * ucfg_blm_psoc_set_suspended() - API to set blacklist mgr state suspended
+ * @psoc: pointer to psoc object
+ * @state: state to be set
+ *
+ * This function sets blacklist mgr state to suspended
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success else return error
+ */
+QDF_STATUS ucfg_blm_psoc_set_suspended(struct wlan_objmgr_psoc *psoc,
+				       bool state);
+
+/**
+ * ucfg_blm_psoc_get_suspended() - API to get blacklist mgr state suspended
+ * @psoc: pointer to psoc object
+ * @state: pointer to get suspend state of blacklist manager
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success else return error
+ */
+QDF_STATUS ucfg_blm_psoc_get_suspended(struct wlan_objmgr_psoc *psoc,
+				       bool *state);
 
 /**
  * ucfg_blm_psoc_open() - API to initialize the cfg when psoc is initialized.

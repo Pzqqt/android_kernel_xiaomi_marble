@@ -22,6 +22,7 @@
 #include <wlan_blm_ucfg_api.h>
 #include <wlan_blm_core.h>
 #include <wlan_blm_api.h>
+#include "wlan_pmo_obj_mgmt_api.h"
 
 QDF_STATUS ucfg_blm_init(void)
 {
@@ -106,13 +107,83 @@ QDF_STATUS ucfg_blm_deinit(void)
 	return status;
 }
 
+QDF_STATUS ucfg_blm_psoc_set_suspended(struct wlan_objmgr_psoc *psoc,
+				       bool state)
+{
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+
+	blm_psoc_obj = blm_get_psoc_obj(psoc);
+
+	if (!blm_psoc_obj) {
+		blm_err("BLM psoc obj NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	blm_psoc_obj->is_suspended = state;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_blm_psoc_get_suspended(struct wlan_objmgr_psoc *psoc,
+				       bool *state)
+{
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+
+	blm_psoc_obj = blm_get_psoc_obj(psoc);
+
+	if (!blm_psoc_obj) {
+		blm_err("BLM psoc obj NULL");
+		*state = true;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*state = blm_psoc_obj->is_suspended;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+ucfg_blm_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	ucfg_blm_psoc_set_suspended(psoc, true);
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+ucfg_blm_resume_handler(struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	ucfg_blm_psoc_set_suspended(psoc, false);
+	blm_update_reject_ap_list_to_fw(psoc);
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+ucfg_blm_register_pmo_handler(void)
+{
+	pmo_register_suspend_handler(WLAN_UMAC_COMP_BLACKLIST_MGR,
+				     ucfg_blm_suspend_handler, NULL);
+	pmo_register_resume_handler(WLAN_UMAC_COMP_BLACKLIST_MGR,
+				    ucfg_blm_resume_handler, NULL);
+}
+
+static inline void
+ucfg_blm_unregister_pmo_handler(void)
+{
+	pmo_unregister_suspend_handler(WLAN_UMAC_COMP_BLACKLIST_MGR,
+				       ucfg_blm_suspend_handler);
+	pmo_unregister_resume_handler(WLAN_UMAC_COMP_BLACKLIST_MGR,
+				      ucfg_blm_resume_handler);
+}
+
 QDF_STATUS ucfg_blm_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_blm_register_pmo_handler();
 	return blm_cfg_psoc_open(psoc);
 }
 
 QDF_STATUS ucfg_blm_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_blm_unregister_pmo_handler();
 	return QDF_STATUS_SUCCESS;
 }
 
