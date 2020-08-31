@@ -664,8 +664,8 @@ static void dp_peer_multipass_list_add(struct dp_soc *soc, uint8_t *peer_mac,
 	 */
 	if (peer->vlan_id) {
 		dp_debug("peer already added to vdev multipass list"
-			 "MAC: "QDF_MAC_ADDR_STR" vlan: %d ",
-			 QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw), peer->vlan_id);
+			 "MAC: "QDF_MAC_ADDR_FMT" vlan: %d ",
+			 QDF_MAC_ADDR_REF(peer->mac_addr.raw), peer->vlan_id);
 		dp_peer_unref_delete(peer, DP_MOD_ID_TX_MULTIPASS);
 		return;
 	}

@@ -374,8 +374,8 @@ wlan_peer_update_tx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_warn("peer rate stats ctx is NULL, return");
-			qdf_warn("peer_mac:  " QDF_MAC_ADDR_STR,
-				 QDF_MAC_ADDR_ARRAY(ppdu_user->mac_addr));
+			qdf_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
 			continue;
 		}
@@ -448,8 +448,8 @@ wlan_peer_update_rx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_warn("peer rate stats ctx is NULL, return");
-			qdf_warn("peer_mac:  " QDF_MAC_ADDR_STR,
-				 QDF_MAC_ADDR_ARRAY(ppdu_user->mac_addr));
+			qdf_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
 			continue;
 		}
@@ -531,8 +531,8 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_warn("peer rate stats ctx is NULL, return");
-			qdf_warn("peer_mac:  " QDF_MAC_ADDR_STR,
-				 QDF_MAC_ADDR_ARRAY(cdp_rx_ppdu->mac_addr));
+			qdf_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(cdp_rx_ppdu->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
 			continue;
 		}
@@ -658,8 +658,8 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_debug("peer rate stats ctx is NULL, investigate");
-			qdf_debug("peer_mac: " QDF_MAC_ADDR_STR,
-				 QDF_MAC_ADDR_ARRAY(ppdu_user->mac_addr));
+			qdf_debug("peer_mac: " QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
 			continue;
 		}
