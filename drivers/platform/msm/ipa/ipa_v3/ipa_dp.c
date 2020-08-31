@@ -4120,9 +4120,10 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 			 * Dont enable ipa_status for APQ, since MDM IPA
 			 * has IPA >= 4.5 with DPLv3.
 			 */
-			if (ipa3_ctx->platform_type == IPA_PLAT_TYPE_APQ &&
-				ipa3_is_mhip_offload_enabled())
-				sys->ep->status.status_en = false;
+			if ((ipa3_ctx->platform_type == IPA_PLAT_TYPE_APQ &&
+				ipa3_is_mhip_offload_enabled()) ||
+				(ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5))
+					sys->ep->status.status_en = false;
 			else
 				sys->ep->status.status_en = true;
 			sys->policy = IPA_POLICY_INTR_POLL_MODE;
