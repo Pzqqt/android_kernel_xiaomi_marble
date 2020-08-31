@@ -163,6 +163,43 @@ QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					 int *dbm);
 
+#ifdef WLAN_FEATURE_MEDIUM_ASSESS
+/**
+ * ucfg_mc_cp_stats_reset_congestion_counter() - API to reset congestion
+ * counter
+ * @vdev: pointer to vdev object
+ *
+ * Return: status of operation
+ */
+QDF_STATUS
+ucfg_mc_cp_stats_reset_congestion_counter(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_mc_cp_stats_set_congestion_threshold() - API to configure congestion
+ * threshold
+ * @vdev: pointer to vdev object
+ * @threshold: congestion threshold
+ *
+ * Return: status of operation
+ */
+QDF_STATUS
+ucfg_mc_cp_stats_set_congestion_threshold(struct wlan_objmgr_vdev *vdev,
+					  uint8_t threshold);
+#else
+static inline QDF_STATUS
+ucfg_mc_cp_stats_reset_congestion_counter(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_mc_cp_stats_set_congestion_threshold(struct wlan_objmgr_vdev *vdev,
+					  uint8_t threshold)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * ucfg_mc_cp_stats_is_req_pending() - API to tell if given request is pending
  * @psoc: pointer to psoc object
