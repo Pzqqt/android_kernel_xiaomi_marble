@@ -20,7 +20,7 @@
 #include "target_type.h"
 #include "wcss_version.h"
 #include "qdf_module.h"
-#include "hal_9100_rx.h"
+#include "hal_qcn9100_rx.h"
 #include "hal_api_mon.h"
 #include "hal_flow.h"
 #include "rx_flow_search_entry.h"
@@ -116,8 +116,7 @@
 		 (UMAC_WINDOW_ADDRESS_9100 << 12) | \
 		 WINDOW_ENABLE_BIT)
 
-#include <hal_9100_tx.h>
-#include <hal_9100_rx.h>
+#include <hal_qcn9100_tx.h>
 #include <hal_generic_api.h>
 #include <hal_wbm.h>
 
