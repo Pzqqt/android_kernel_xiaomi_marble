@@ -332,7 +332,7 @@ static bool lim_chk_ssid(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			 struct pe_session *session, tpSirAssocReq assoc_req,
 			 uint8_t sub_type)
 {
-	if (lim_cmp_ssid(&assoc_req->ssId, session) != true)
+	if (!lim_cmp_ssid(&assoc_req->ssId, session))
 		return true;
 
 	pe_err("%s Req with ssid wrong(Rcvd: %.*s self: %.*s) from "
