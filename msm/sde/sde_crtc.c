@@ -4193,6 +4193,7 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	}
 
 	_sde_crtc_reset(crtc);
+	sde_cp_crtc_disable(crtc);
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 }
@@ -4267,7 +4268,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	}
 
 	sde_crtc->enabled = true;
-
+	sde_cp_crtc_enable(crtc);
 	/* update color processing on resume */
 	event.type = DRM_EVENT_CRTC_POWER;
 	event.length = sizeof(u32);

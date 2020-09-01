@@ -288,6 +288,7 @@ struct sde_crtc_misr_info {
  * @target_bpp      : target bpp used to calculate compression ratio
  * @static_cache_read_work: delayed worker to transition cache state to read
  * @cache_state     : Current static image cache state
+ * @dspp_blob_info  : blob containing dspp hw capability information
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -374,6 +375,8 @@ struct sde_crtc {
 
 	struct kthread_delayed_work static_cache_read_work;
 	enum sde_crtc_cache_state cache_state;
+
+	struct drm_property_blob *dspp_blob_info;
 };
 
 enum sde_crtc_dirty_flags {
