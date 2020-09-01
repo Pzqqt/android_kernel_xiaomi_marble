@@ -24124,10 +24124,8 @@ static int __wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		struct hdd_station_ctx *sta_ctx;
 
-		if (!hdd_adapter_is_connected_sta(adapter)) {
-			hdd_err("STA not connected");
+		if (!hdd_adapter_is_connected_sta(adapter))
 			return -EINVAL;
-		}
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if (sta_ctx->conn_info.dot11mode < eCSR_CFG_DOT11_MODE_11N)
@@ -24139,10 +24137,8 @@ static int __wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
 
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
-		if (!test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-			hdd_err("SAP not started");
+		if (!test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
 			return -EINVAL;
-		}
 
 		switch (ap_ctx->sap_config.SapHw_mode) {
 		case eCSR_DOT11_MODE_11n:
@@ -24158,7 +24154,6 @@ static int __wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
 			break;
 		}
 	} else {
-		hdd_err("Invalid device mode");
 		return -EINVAL;
 	}
 
