@@ -256,10 +256,10 @@ static int target_if_dfs_radar_detection_event_handler(
  * for full offload.
  * @psoc: Pointer to psoc object.
  *
- * Return: 0 on successful registration.
+ * Return: QDF_STATUS_SUCCESS on successful registration.
  */
 #if defined(QCA_SUPPORT_AGILE_DFS)
-static int target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
+static QDF_STATUS target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
 {
 	return wmi_unified_register_event(
 			get_wmi_unified_hdl_from_psoc(psoc),
@@ -267,9 +267,9 @@ static int target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
 			target_if_dfs_ocac_complete_event_handler);
 }
 #else
-static int target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
+static QDF_STATUS target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -277,7 +277,7 @@ static int target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS target_if_dfs_reg_offload_events(
 		struct wlan_objmgr_psoc *psoc)
 {
-	int ret1, ret2, ret3;
+	QDF_STATUS ret1, ret2, ret3;
 
 	ret1 = wmi_unified_register_event(
 			get_wmi_unified_hdl_from_psoc(psoc),
@@ -294,7 +294,8 @@ QDF_STATUS target_if_dfs_reg_offload_events(
 	ret3 = target_if_dfs_reg_ocac_event(psoc);
 	target_if_debug("wmi_vdev_ocac_complete_event_id ret=%d", ret3);
 
-	if (ret1 || ret2 || ret3)
+	if (QDF_IS_STATUS_ERROR(ret1) || QDF_IS_STATUS_ERROR(ret2) ||
+	    QDF_IS_STATUS_ERROR(ret3))
 		return QDF_STATUS_E_FAILURE;
 	else
 		return QDF_STATUS_SUCCESS;

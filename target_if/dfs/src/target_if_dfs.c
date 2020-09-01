@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -172,7 +172,7 @@ static int target_if_radar_event_handler(
 static QDF_STATUS target_if_reg_phyerr_events_dfs2(
 				struct wlan_objmgr_psoc *psoc)
 {
-	int ret;
+	QDF_STATUS ret;
 	wmi_unified_t wmi_handle;
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
@@ -184,7 +184,7 @@ static QDF_STATUS target_if_reg_phyerr_events_dfs2(
 	ret = wmi_unified_register_event(wmi_handle,
 					 wmi_dfs_radar_event_id,
 					 target_if_radar_event_handler);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("failed to register wmi_dfs_radar_event_id");
 		return QDF_STATUS_E_FAILURE;
 	}
