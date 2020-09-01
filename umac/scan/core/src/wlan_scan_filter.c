@@ -590,6 +590,41 @@ static inline bool scm_is_fils_config_match(struct scan_filter *filter,
 }
 #endif
 
+static bool scm_check_dot11mode(struct scan_cache_entry *db_entry,
+				struct scan_filter *filter)
+{
+	switch (filter->dot11mode) {
+	case ALLOW_ALL:
+		break;
+	case ALLOW_11N_ONLY:
+		if (!util_scan_entry_htcap(db_entry)) {
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode(HT only) didn't match",
+				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
+			return false;
+		}
+		break;
+	case ALLOW_11AC_ONLY:
+		if (!util_scan_entry_vhtcap(db_entry)) {
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode(VHT only) didn't match",
+				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
+			return false;
+		}
+		break;
+	case ALLOW_11AX_ONLY:
+		if (!util_scan_entry_hecap(db_entry)) {
+			scm_debug(QDF_MAC_ADDR_FMT ": Ignore as dot11mode(HE only) didn't match",
+				  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
+			return false;
+		}
+		break;
+	default:
+		scm_debug("Invalid dot11mode filter passed %d",
+			  filter->dot11mode);
+	}
+
+	return true;
+}
+
 bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		      struct scan_cache_entry *db_entry,
 		      struct scan_filter *filter,
@@ -602,6 +637,9 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
 	if (!def_param)
+		return false;
+
+	if (filter->dot11mode && !scm_check_dot11mode(db_entry, filter))
 		return false;
 
 	if (filter->age_threshold && filter->age_threshold <

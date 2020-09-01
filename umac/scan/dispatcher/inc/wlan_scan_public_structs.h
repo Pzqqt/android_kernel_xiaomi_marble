@@ -474,6 +474,20 @@ struct filter_arg;
 typedef struct filter_arg *bss_filter_arg_t;
 
 /**
+ * enum dot11_mode_filter - Filter APs according to dot11mode
+ * @ALLOW_ALL: ignore check
+ * @ALLOW_11N_ONLY: allow only 11n AP
+ * @ALLOW_11AC_ONLY: allow only 11ac AP
+ * @ALLOW_11AX_ONLY: allow only 11ax AP
+ */
+enum dot11_mode_filter {
+	ALLOW_ALL,
+	ALLOW_11N_ONLY,
+	ALLOW_11AC_ONLY,
+	ALLOW_11AX_ONLY,
+};
+
+/**
  * struct scan_filter: scan filter
  * @enable_adaptive_11r:    flag to check if adaptive 11r ini is enabled
  * @rrm_measurement_filter: For measurement reports.if set, only SSID, BSSID
@@ -487,8 +501,7 @@ typedef struct filter_arg *bss_filter_arg_t;
  * @num_of_ssid: number of ssid
  * @num_of_channels: number of  channels
  * @pmf_cap: Pmf capability
- * @dot11_mode: operating modes 0 mean any
- *              11a , 11g, 11n , 11ac , 11b etc
+ * @dot11mode: Filter APs based upon dot11mode
  * @band: to get specific band 2.4G, 5G or 4.9 G
  * @rssi_threshold: AP having RSSI greater than
  *                  rssi threasholed (ignored if set 0)
@@ -519,7 +532,7 @@ struct scan_filter {
 	uint8_t num_of_ssid;
 	uint16_t num_of_channels;
 	enum wlan_pmf_cap pmf_cap;
-	enum wlan_phymode dot11_mode;
+	enum dot11_mode_filter dot11mode;
 	enum wlan_band band;
 	uint8_t rssi_threshold;
 	uint32_t mobility_domain;
