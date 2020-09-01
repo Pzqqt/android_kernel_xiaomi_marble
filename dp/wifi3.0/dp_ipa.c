@@ -167,16 +167,16 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	uint32_t tx_buffer_cnt = soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt;
 	qdf_nbuf_t nbuf;
+	uint32_t buf_len;
 
 	for (index = 0; index < tx_buffer_cnt; index++) {
 		nbuf = (qdf_nbuf_t)
 			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[index];
 		if (!nbuf)
 			continue;
+		buf_len = qdf_nbuf_get_data_len(nbuf);
 		ret = __dp_ipa_handle_buf_smmu_mapping(
-				soc, nbuf,
-				skb_end_pointer(nbuf) - nbuf->data,
-				true);
+				soc, nbuf, buf_len, true);
 	}
 	return ret;
 }
@@ -295,18 +295,17 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 	qdf_nbuf_t nbuf;
 	struct dp_ipa_resources *ipa_res;
 	bool is_ipa_ready = qdf_ipa_is_ready();
+	uint32_t buf_len;
 
 	for (idx = 0; idx < soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		nbuf = (qdf_nbuf_t)
 			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx];
 		if (!nbuf)
 			continue;
-
+		buf_len = qdf_nbuf_get_data_len(nbuf);
 		if (qdf_mem_smmu_s1_enabled(soc->osdev) && is_ipa_ready)
 			__dp_ipa_handle_buf_smmu_mapping(
-					soc, nbuf,
-					skb_end_pointer(nbuf) - nbuf->data,
-					false);
+					soc, nbuf, buf_len, false);
 
 		qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_BIDIRECTIONAL);
 		qdf_nbuf_free(nbuf);
