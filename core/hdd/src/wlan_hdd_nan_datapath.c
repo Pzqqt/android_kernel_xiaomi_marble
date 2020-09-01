@@ -926,8 +926,10 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 		hdd_bus_bw_compute_timer_start(hdd_ctx);
 		sta_ctx->conn_info.conn_state = eConnectionState_NdiConnected;
 		hdd_wmm_connect(adapter, roam_info, eCSR_BSS_TYPE_NDI);
-		wlan_hdd_netif_queue_control(adapter,
-				WLAN_WAKE_ALL_NETIF_QUEUE, WLAN_CONTROL_PATH);
+		wlan_hdd_netif_queue_control(
+					adapter,
+					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
+					WLAN_CONTROL_PATH);
 	}
 	qdf_mem_free(roam_info);
 	return 0;
@@ -946,7 +948,8 @@ void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
 	hdd_conn_set_connection_state(adapter,
 		eConnectionState_NdiDisconnected);
 	hdd_debug("Stop netif tx queues.");
-	wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 	hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);
 	hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
