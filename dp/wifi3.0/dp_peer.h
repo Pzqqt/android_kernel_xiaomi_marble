@@ -426,7 +426,7 @@ dp_soc_iterate_peer_lock_safe(struct dp_soc *soc,
 #define DP_PEER_STATE_ASSERT(_peer, _new_state, _condition) \
 	do {  \
 		if (!(_condition)) { \
-			dp_alert("Invalid state shift from %u to %u peer ", \
+			dp_alert("Invalid state shift from %u to %u peer " \
 				 QDF_MAC_ADDR_FMT, \
 				 (_peer)->peer_state, (_new_state), \
 				 QDF_MAC_ADDR_REF((_peer)->mac_addr.raw)); \
