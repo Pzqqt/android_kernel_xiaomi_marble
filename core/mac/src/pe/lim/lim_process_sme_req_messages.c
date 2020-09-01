@@ -3694,9 +3694,6 @@ static void __lim_process_sme_session_update(struct mac_context *mac_ctx,
 	case SIR_PARAM_SSID_HIDDEN:
 		lim_handle_update_ssid_hidden(mac_ctx, session, msg->param_val);
 		break;
-	case SIR_PARAM_IGNORE_ASSOC_DISALLOWED:
-		session->ignore_assoc_disallowed = msg->param_val;
-		break;
 	default:
 		pe_err("Unknown session param");
 		break;

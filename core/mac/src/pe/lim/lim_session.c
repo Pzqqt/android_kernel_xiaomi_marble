@@ -618,7 +618,6 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	lim_update_tdls_set_state_for_fw(session_ptr, true);
 	session_ptr->fWaitForProbeRsp = 0;
 	session_ptr->fIgnoreCapsChange = 0;
-	session_ptr->ignore_assoc_disallowed = mac->ignore_assoc_disallowed;
 	session_ptr->is_session_obss_color_collision_det_enabled =
 		mac->mlme_cfg->obss_ht40.obss_color_collision_offload_enabled;
 

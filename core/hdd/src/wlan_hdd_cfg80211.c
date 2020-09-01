@@ -8089,10 +8089,8 @@ static int hdd_config_ignore_assoc_disallowed(struct hdd_adapter *adapter,
 	    (ignore_assoc_disallowed > QCA_IGNORE_ASSOC_DISALLOWED_ENABLE))
 		return -EINVAL;
 
-	sme_update_session_param(hdd_ctx->mac_handle,
-				 adapter->vdev_id,
-				 SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
-				 ignore_assoc_disallowed);
+	sme_set_check_assoc_disallowed(hdd_ctx->mac_handle,
+				       !ignore_assoc_disallowed);
 
 	return 0;
 }

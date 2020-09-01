@@ -2250,6 +2250,16 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(mac_handle_t mac_handle,
 QDF_STATUS sme_set_default_scan_ie(mac_handle_t mac_handle, uint16_t session_id,
 				uint8_t *ie_data, uint16_t ie_len);
 /**
+ * sme_set_check_assoc_disallowed() - API to update assoc disallowed
+ * @mac_handle: Opaque handle to the global MAC context
+ * @check_assoc_disallowed: assoc disallowed check value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_check_assoc_disallowed(mac_handle_t mac_handle,
+					  bool check_assoc_disallowed);
+
+/**
  * sme_update_session_param() - API to update PE session param
  * @mac_handle: Opaque handle to the global MAC context
  * @session_id: Session ID

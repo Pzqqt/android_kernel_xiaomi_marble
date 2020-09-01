@@ -2143,38 +2143,6 @@ static void csr_update_bss_with_fils_data(struct mac_context *mac_ctx,
 { }
 #endif
 
-/**
- * csr_is_assoc_disallowed() - Find if assoc disallowed
- * bit is set in AP's beacon or probe response
- * @mac_ctx: mac context
- * @scan_entry: scan entry
- *
- * Return: True if assoc disallowed is set else false
- */
-static bool csr_is_assoc_disallowed(struct mac_context *mac_ctx,
-				    struct scan_cache_entry *scan_entry)
-{
-	int ret;
-	tDot11fIEMBO_IE mbo_ie = {0};
-	uint8_t *mbo_oce;
-
-	mbo_oce = util_scan_entry_mbo_oce(scan_entry);
-
-	if (!mbo_oce)
-		return false;
-
-	ret = dot11f_unpack_ie_MBO_IE(mac_ctx, mbo_oce + SIR_MBO_ELEM_OFFSET,
-				      *(mbo_oce + 1) - SIR_MAC_MBO_OUI_SIZE,
-				      &mbo_ie, false);
-
-	if (DOT11F_FAILED(ret)) {
-		sme_err("unpack failed ret: 0x%x", ret);
-		return false;
-	}
-
-	return mbo_ie.assoc_disallowed.present;
-}
-
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_fill_single_pmk_ap_cap_from_scan_entry() - WAP3_SPMK VSIE from scan
@@ -2287,8 +2255,6 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 			  MGMT_SUBTYPE_PROBE_RESP);
 	bss_desc->seq_ctrl = hdr->seqControl;
 	bss_desc->tsf_delta = scan_entry->tsf_delta;
-	bss_desc->assoc_disallowed = csr_is_assoc_disallowed(mac_ctx,
-							     scan_entry);
 	bss_desc->adaptive_11r_ap = scan_entry->adaptive_11r_ap;
 
 	bss_desc->mbo_oce_enabled_ap =
@@ -2356,42 +2322,6 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
 	}
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * csr_remove_ap_with_assoc_disallowed() - Remove APs with assoc
- * disallowed bit set
- * @mac_ctx: mac context
- * @scan_list: candidate list for the connection
- *
- * Return: None
- */
-static void csr_remove_ap_with_assoc_disallowed(struct mac_context *mac_ctx,
-					     struct scan_result_list *scan_list)
-{
-	tListElem *cur_entry;
-	tListElem *next_entry;
-	struct tag_csrscan_result *scan_res;
-
-	if (!scan_list)
-		return;
-
-	cur_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
-	while (cur_entry) {
-		scan_res = GET_BASE_ADDR(cur_entry, struct tag_csrscan_result,
-					 Link);
-		next_entry = csr_ll_next(&scan_list->List, cur_entry,
-					 LL_ACCESS_NOLOCK);
-
-		if (!mac_ctx->ignore_assoc_disallowed &&
-		    scan_res->Result.BssDescriptor.assoc_disallowed) {
-			csr_ll_remove_entry(&scan_list->List, cur_entry,
-					    LL_ACCESS_NOLOCK);
-			csr_free_scan_result_entry(mac_ctx, scan_res);
-		}
-		cur_entry = next_entry;
-		next_entry = NULL;
-	}
 }
 
 static void csr_get_pcl_chan_weigtage_for_sta(struct mac_context *mac_ctx,
@@ -2488,9 +2418,6 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
 	else {
-		if (scoring_required)
-			csr_remove_ap_with_assoc_disallowed(mac_ctx, ret_list);
-
 		if (!csr_ll_count(&ret_list->List)) {
 			/* This mean that there is no match */
 			csr_ll_close(&ret_list->List);

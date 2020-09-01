@@ -522,7 +522,6 @@ struct pe_session {
 	uint16_t beacon_tx_rate;
 	uint8_t *access_policy_vendor_ie;
 	uint8_t access_policy;
-	bool ignore_assoc_disallowed;
 	bool send_p2p_conf_frame;
 	bool process_ho_fail;
 	/* Number of STAs that do not support ECSA capability */

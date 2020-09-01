@@ -3008,6 +3008,7 @@ lim_check_and_announce_join_success(struct mac_context *mac_ctx,
 	uint32_t *noa2_duration_from_beacon = NULL;
 	uint32_t noa;
 	uint32_t total_num_noa_desc = 0;
+	bool check_assoc_disallowed;
 
 	qdf_mem_copy(current_ssid.ssId,
 		     session_entry->ssId.ssId, session_entry->ssId.length);
@@ -3089,13 +3090,14 @@ lim_check_and_announce_join_success(struct mac_context *mac_ctx,
 		session_entry->defaultAuthFailureTimeout = 0;
 	}
 
+	wlan_cm_get_check_assoc_disallowed(mac_ctx->psoc,
+					   &check_assoc_disallowed);
 
 	/*
 	 * Check if MBO Association disallowed subattr is present and post
 	 * failure status to LIM if present
 	 */
-	if (!session_entry->ignore_assoc_disallowed &&
-			beacon_probe_rsp->assoc_disallowed) {
+	if (check_assoc_disallowed && beacon_probe_rsp->assoc_disallowed) {
 		pe_err("Connection fails due to assoc disallowed reason(%d):"QDF_MAC_ADDR_FMT" PESessionID %d",
 				beacon_probe_rsp->assoc_disallowed_reason,
 				QDF_MAC_ADDR_REF(session_entry->bssId),
