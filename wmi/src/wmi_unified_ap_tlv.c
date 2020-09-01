@@ -1465,11 +1465,13 @@ extract_nfcal_power_ev_param_tlv(wmi_unified_t wmi_handle,
 		ch_nfdbr++;
 		ch_nfdbm++;
 	}
+	param->num_nfdbr_dbm = (uint16_t)param_buf->num_nfdbr;
 
 	for (i = 0; i < param_buf->num_freqnum; i++) {
 		param->freqnum[i] = ch_freqnum->freqNum;
 		ch_freqnum++;
 	}
+	param->num_freq = (uint16_t)param_buf->num_freqnum;
 
 	param->pdev_id = wmi_handle->ops->
 		convert_pdev_id_target_to_host(wmi_handle,
