@@ -581,7 +581,14 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 	if (pld_nbuf_pre_alloc_free(skb))
 		return;
 
-	qdf_frag_count_dec(qdf_nbuf_get_nr_frags(skb));
+	/**
+	 * Decrement global frag counter only when last user of nbuf
+	 * does free so as to avoid decrementing count on every free
+	 * expect the last one in case where nbuf has multiple users
+	 */
+	if (qdf_nbuf_get_users(skb) == 1)
+		qdf_frag_count_dec(qdf_nbuf_get_nr_frags(skb));
+
 	qdf_nbuf_count_dec(skb);
 	qdf_mem_skb_dec(skb->truesize);
 	if (nbuf_free_cb)
@@ -4781,6 +4788,15 @@ void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
 	qdf_frag_t p_frag;
 
 	if (qdf_unlikely(!buf))
+		return;
+
+	/**
+	 * Decrement refcount for frag debug nodes only when last user
+	 * of nbuf calls this API so as to avoid decrementing refcount
+	 * on every call expect the last one in case where nbuf has multiple
+	 * users
+	 */
+	if (qdf_nbuf_get_users(buf) > 1)
 		return;
 
 	/* Take care to update the refcount in the debug entries for frags */
