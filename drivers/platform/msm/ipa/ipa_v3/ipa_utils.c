@@ -9055,6 +9055,13 @@ static int __ipa3_stop_gsi_channel(u32 clnt_hdl)
 		if (res)
 			IPAERR("Delete HOLB monitor failed for ch %d\n",
 					ep->gsi_chan_hdl);
+		/* Set HOLB back if it was set previously.
+		 * There is a possibility that uC will reset as part of HOLB
+		 * monitoring.
+		 */
+		 if (ep->holb.en) {
+		 	ipa3_cfg_ep_holb(clnt_hdl, &ep->holb);
+		 }
 	}
 	memset(&mem, 0, sizeof(mem));
 
