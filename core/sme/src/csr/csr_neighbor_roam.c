@@ -1325,7 +1325,6 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	struct csr_roam_profile *profile = NULL;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	uint8_t i = 0;
-	uint8_t roam_now = 0;
 	uint8_t roamable_ap_count = 0;
 	struct scan_filter *scan_filter;
 	tScanResultHandle       scan_result;
@@ -1403,10 +1402,9 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 							&scan_result);
 		roamable_ap_count = csr_ll_count(
 					&roam_ctrl_info->roamableAPList);
-		sme_debug("roam_now=%d, roamable_ap_count=%d",
-			roam_now, roamable_ap_count);
+		sme_debug("roamable_ap_count=%d", roamable_ap_count);
 	}
-	if (roam_now && roamable_ap_count) {
+	if (roamable_ap_count) {
 		csr_neighbor_roam_trigger_handoff(mac_ctx, session_id);
 	} else {
 		status = csr_scan_for_ssid(mac_ctx, session_id, profile,
