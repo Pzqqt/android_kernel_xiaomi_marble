@@ -3809,6 +3809,19 @@ static inline uint32_t qdf_nbuf_get_mark(qdf_nbuf_t nbuf)
 	return __qdf_nbuf_get_mark(nbuf);
 }
 
+/**
+ * qdf_nbuf_get_data_len() - Return the size of the nbuf from
+ * data pointer to end pointer
+ * @nbuf: qdf_nbuf_t
+ *
+ * Return: size of network buffer from data pointer to end
+ * pointer
+ */
+static inline qdf_size_t qdf_nbuf_get_data_len(qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_get_data_len(nbuf);
+}
+
 #ifdef NBUF_FRAG_MEMORY_DEBUG
 
 #define qdf_nbuf_move_frag_page_offset(f, i, o) \

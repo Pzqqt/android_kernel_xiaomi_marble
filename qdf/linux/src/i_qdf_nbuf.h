@@ -2465,6 +2465,18 @@ static inline uint32_t __qdf_nbuf_get_mark(__qdf_nbuf_t buf)
 	return buf->mark;
 }
 
+/**
+ * __qdf_nbuf_get_data_len() - Return the size of the nbuf from
+ * the data pointer to the end pointer
+ * @nbuf: qdf_nbuf_t
+ *
+ * Return: size of skb from data pointer to end pointer
+ */
+static inline qdf_size_t __qdf_nbuf_get_data_len(__qdf_nbuf_t nbuf)
+{
+	return (skb_end_pointer(nbuf) - nbuf->data);
+}
+
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_w.h>
 #else
