@@ -4003,6 +4003,30 @@ static QDF_STATUS send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf = NULL;
 	QDF_STATUS status;
 	uint32_t len = 0;
+	uint8_t action;
+
+	switch (thermal_info->thermal_action) {
+	case THERMAL_MGMT_ACTION_DEFAULT:
+		action = WMI_THERMAL_MGMT_ACTION_DEFAULT;
+		break;
+
+	case THERMAL_MGMT_ACTION_HALT_TRAFFIC:
+		action = WMI_THERMAL_MGMT_ACTION_HALT_TRAFFIC;
+		break;
+
+	case THERMAL_MGMT_ACTION_NOTIFY_HOST:
+		action = WMI_THERMAL_MGMT_ACTION_NOTIFY_HOST;
+		break;
+
+	case THERMAL_MGMT_ACTION_CHAINSCALING:
+		action = WMI_THERMAL_MGMT_ACTION_CHAINSCALING;
+		break;
+
+	default:
+		WMI_LOGE("invalid thermal_action code %d",
+			 thermal_info->thermal_action);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	len = sizeof(*cmd);
 
@@ -4020,9 +4044,11 @@ static QDF_STATUS send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->lower_thresh_degreeC = thermal_info->min_temp;
 	cmd->upper_thresh_degreeC = thermal_info->max_temp;
 	cmd->enable = thermal_info->thermal_enable;
+	cmd->action = action;
 
-	WMI_LOGE("TM Sending thermal mgmt cmd: low temp %d, upper temp %d, enabled %d",
-		cmd->lower_thresh_degreeC, cmd->upper_thresh_degreeC, cmd->enable);
+	WMI_LOGD("TM Sending thermal mgmt cmd: low temp %d, upper temp %d, enabled %d action %d",
+		 cmd->lower_thresh_degreeC, cmd->upper_thresh_degreeC,
+		 cmd->enable, cmd->action);
 
 	wmi_mtrace(WMI_THERMAL_MGMT_CMDID, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
