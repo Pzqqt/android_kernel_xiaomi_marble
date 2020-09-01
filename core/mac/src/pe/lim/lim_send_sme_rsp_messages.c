@@ -1680,7 +1680,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 					 csa_params->new_op_class, true);
 			} else {
 				chan_space =
-				wlan_reg_dmn_get_chanwidth_from_opclass(
+				wlan_reg_dmn_get_chanwidth_from_opclass_auto(
 						country_code,
 						csa_params->channel,
 						csa_params->new_op_class);
@@ -1753,7 +1753,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
 			chan_space =
-				wlan_reg_dmn_get_chanwidth_from_opclass(
+				wlan_reg_dmn_get_chanwidth_from_opclass_auto(
 						country_code,
 						csa_params->channel,
 						csa_params->new_op_class);
