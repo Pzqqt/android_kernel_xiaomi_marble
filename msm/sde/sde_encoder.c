@@ -3196,10 +3196,13 @@ int sde_encoder_idle_request(struct drm_encoder *drm_enc)
  * drm_enc: Pointer to drm encoder structure
  * phys: Pointer to physical encoder structure
  * extra_flush: Additional bit mask to include in flush trigger
+ * config_changed: if true new config is applied, avoid increment of retire
+ *	count if false
  */
 static inline void _sde_encoder_trigger_flush(struct drm_encoder *drm_enc,
 		struct sde_encoder_phys *phys,
-		struct sde_ctl_flush_cfg *extra_flush)
+		struct sde_ctl_flush_cfg *extra_flush,
+		bool config_changed)
 {
 	struct sde_hw_ctl *ctl;
 	unsigned long lock_flags;
@@ -3238,7 +3241,7 @@ static inline void _sde_encoder_trigger_flush(struct drm_encoder *drm_enc,
 	/* update pending counts and trigger kickoff ctl flush atomically */
 	spin_lock_irqsave(&sde_enc->enc_spinlock, lock_flags);
 
-	if (phys->ops.is_master && phys->ops.is_master(phys))
+	if (phys->ops.is_master && phys->ops.is_master(phys) && config_changed)
 		atomic_inc(&phys->pending_retire_fence_cnt);
 
 	pend_ret_fence_cnt = atomic_read(&phys->pending_retire_fence_cnt);
@@ -3402,8 +3405,11 @@ void sde_encoder_helper_hw_reset(struct sde_encoder_phys *phys_enc)
  *	use cases that require visibility into multiple physical encoders at
  *	a time.
  * sde_enc: Pointer to virtual encoder structure
+ * config_changed: if true new config is applied. Avoid regdma_flush and
+ *	incrementing the retire count if false.
  */
-static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
+static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc,
+		bool config_changed)
 {
 	struct sde_hw_ctl *ctl;
 	uint32_t i;
@@ -3445,9 +3451,10 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 
 		if (!phys->ops.needs_single_flush ||
 				!phys->ops.needs_single_flush(phys)) {
-			if (ctl->ops.reg_dma_flush)
+			if (config_changed && ctl->ops.reg_dma_flush)
 				ctl->ops.reg_dma_flush(ctl, is_regdma_blocking);
-			_sde_encoder_trigger_flush(&sde_enc->base, phys, 0x0);
+			_sde_encoder_trigger_flush(&sde_enc->base, phys, 0x0,
+					config_changed);
 		} else if (ctl->ops.get_pending_flush) {
 			ctl->ops.get_pending_flush(ctl, &pending_flush);
 		}
@@ -3456,10 +3463,11 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 	/* for split flush, combine pending flush masks and send to master */
 	if (pending_flush.pending_flush_mask && sde_enc->cur_master) {
 		ctl = sde_enc->cur_master->hw_ctl;
-		if (ctl->ops.reg_dma_flush)
+		if (config_changed && ctl->ops.reg_dma_flush)
 			ctl->ops.reg_dma_flush(ctl, is_regdma_blocking);
 		_sde_encoder_trigger_flush(&sde_enc->base, sde_enc->cur_master,
-						&pending_flush);
+						&pending_flush,
+						config_changed);
 	}
 
 	/* update pending_kickoff_cnt AFTER flush but before trigger start */
@@ -4052,7 +4060,8 @@ static int _sde_encoder_reset_ctl_hw(struct drm_encoder *drm_enc)
 	return rc;
 }
 
-void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error)
+void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error,
+		bool config_changed)
 {
 	struct sde_encoder_virt *sde_enc;
 	struct sde_encoder_phys *phys;
@@ -4072,7 +4081,7 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error)
 		_sde_encoder_reset_ctl_hw(drm_enc);
 
 	/* All phys encs are ready to go, trigger the kickoff */
-	_sde_encoder_kickoff_phys(sde_enc);
+	_sde_encoder_kickoff_phys(sde_enc, config_changed);
 
 	/* allow phys encs to handle any post-kickoff business */
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
