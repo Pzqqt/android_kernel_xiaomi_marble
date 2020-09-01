@@ -151,6 +151,9 @@ fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_THERMAL_APPS_PRIORITY);
 	thermal_temp->priority_wpps =
 				cfg_get(psoc, CFG_THERMAL_WPPS_PRIOITY);
+	thermal_temp->thermal_action =
+				cfg_get(psoc, CFG_THERMAL_MGMT_ACTION);
+
 }
 
 QDF_STATUS fwol_init_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,

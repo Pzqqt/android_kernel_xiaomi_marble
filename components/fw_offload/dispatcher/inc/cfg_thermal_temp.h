@@ -400,6 +400,36 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"Thermal mitigation priority for WPPS")
 
+/* <ini>
+ * gThermalMgmtAction - Configure the thermal management action
+ *
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini will control the thermal throttle action to be performed by target
+ * when the thermal temperature increase/decrease to threshold.
+ * The valid thermal mgmt action INI value is defined as
+ * enum thermal_mgmt_action_code.
+ * 0 - THERMAL_MGMT_ACTION_DEFAULT: target default throttle behaviour
+ * 1 - THERMAL_MGMT_ACTION_HALT_TRAFFIC: Halt tx traffic
+ * 2 - THERMAL_MGMT_ACTION_NOTIFY_HOST: Notify host
+ * 3 - THERMAL_MGMT_ACTION_CHAINSCALING: Tx Chain scaling
+ *
+ * Usage: External
+ *
+ * Supported features: Thermal Mitigation
+ *
+ * </ini>
+ */
+#define CFG_THERMAL_MGMT_ACTION CFG_INI_UINT( \
+				"gThermalMgmtAction", \
+				0, \
+				3, \
+				0, \
+				CFG_VALUE_OR_DEFAULT, \
+				"Thermal management action")
+
 #define CFG_THERMAL_TEMP_ALL \
 	CFG(CFG_THERMAL_TEMP_MIN_LEVEL0) \
 	CFG(CFG_THERMAL_TEMP_MAX_LEVEL0) \
@@ -419,7 +449,7 @@
 	CFG(CFG_THROTTLE_DUTY_CYCLE_LEVEL5) \
 	CFG(CFG_THERMAL_SAMPLING_TIME) \
 	CFG(CFG_THERMAL_APPS_PRIORITY) \
-	CFG(CFG_THERMAL_WPPS_PRIOITY)
-
+	CFG(CFG_THERMAL_WPPS_PRIOITY) \
+	CFG(CFG_THERMAL_MGMT_ACTION)
 #endif
 

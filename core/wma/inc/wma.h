@@ -1146,11 +1146,13 @@ struct wma_set_key_params {
  * @minTemp: minimum temprature
  * @maxTemp: maximum temprature
  * @thermalEnable: thermal enable
+ * @thermal_action: thermal action
  */
 typedef struct {
 	uint16_t minTemp;
 	uint16_t maxTemp;
 	uint8_t thermalEnable;
+	enum thermal_mgmt_action_code thermal_action;
 } t_thermal_cmd_params, *tp_thermal_cmd_params;
 
 /**

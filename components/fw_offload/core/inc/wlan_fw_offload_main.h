@@ -112,6 +112,7 @@ struct wlan_fwol_coex_config {
  * @mon_id: Monitor client id either the wpps or apps
  * @priority_apps: Priority of the apps mitigation to consider by fw
  * @priority_wpps: Priority of the wpps mitigation to consider by fw
+ * @thermal_action: thermal action as defined enum thermal_mgmt_action_code
  */
 struct wlan_fwol_thermal_temp {
 	bool     thermal_mitigation_enable;
@@ -123,6 +124,7 @@ struct wlan_fwol_thermal_temp {
 	uint8_t mon_id;
 	uint8_t priority_apps;
 	uint8_t priority_wpps;
+	enum thermal_mgmt_action_code thermal_action;
 };
 
 /**

@@ -1701,7 +1701,7 @@ static QDF_STATUS wma_update_thermal_mitigation_to_fw(tp_wma_handle wma,
  */
 static QDF_STATUS wma_update_thermal_cfg_to_fw(tp_wma_handle wma)
 {
-	t_thermal_cmd_params thermal_params;
+	t_thermal_cmd_params thermal_params = {0};
 
 	/* Get the temperature thresholds to set in firmware */
 	thermal_params.minTemp =
@@ -1712,10 +1712,11 @@ static QDF_STATUS wma_update_thermal_cfg_to_fw(tp_wma_handle wma)
 		maxTempThreshold;
 	thermal_params.thermalEnable =
 		wma->thermal_mgmt_info.thermalMgmtEnabled;
+	thermal_params.thermal_action = wma->thermal_mgmt_info.thermal_action;
 
-	wma_debug("TM sending to fw: min_temp %d max_temp %d enable %d",
-		 thermal_params.minTemp, thermal_params.maxTemp,
-		 thermal_params.thermalEnable);
+	wma_debug("TM sending to fw: min_temp %d max_temp %d enable %d act %d",
+		  thermal_params.minTemp, thermal_params.maxTemp,
+		  thermal_params.thermalEnable, thermal_params.thermal_action);
 
 	return wma_set_thermal_mgmt(wma, thermal_params);
 }
@@ -1744,8 +1745,10 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wma_debug("TM enable %d period %d", pThermalParams->thermalMgmtEnabled,
-		 pThermalParams->throttlePeriod);
+	wma_debug("TM enable %d period %d action %d",
+		  pThermalParams->thermalMgmtEnabled,
+		  pThermalParams->throttlePeriod,
+		  pThermalParams->thermal_action);
 
 	wma_nofl_debug("Throttle Duty Cycle Level in percentage:\n"
 		 "0 %d\n"
@@ -1776,7 +1779,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 	wma->thermal_mgmt_info.thermalLevels[3].maxTempThreshold =
 		pThermalParams->thermalLevels[3].maxTempThreshold;
 	wma->thermal_mgmt_info.thermalCurrLevel = WLAN_WMA_THERMAL_LEVEL_0;
-
+	wma->thermal_mgmt_info.thermal_action = pThermalParams->thermal_action;
 	wma_nofl_debug("TM level min max:\n"
 		 "0 %d   %d\n"
 		 "1 %d   %d\n"
@@ -1914,6 +1917,7 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 	mgmt_thermal_info.min_temp = thermal_info.minTemp;
 	mgmt_thermal_info.max_temp = thermal_info.maxTemp;
 	mgmt_thermal_info.thermal_enable = thermal_info.thermalEnable;
+	mgmt_thermal_info.thermal_action = thermal_info.thermal_action;
 
 	return wmi_unified_set_thermal_mgmt_cmd(wma_handle->wmi_handle,
 						&mgmt_thermal_info);
@@ -1970,7 +1974,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	tp_wma_handle wma;
 	wmi_thermal_mgmt_event_fixed_param *tm_event;
 	uint8_t thermal_level;
-	t_thermal_cmd_params thermal_params;
+	t_thermal_cmd_params thermal_params = {0};
 	WMI_THERMAL_MGMT_EVENTID_param_tlvs *param_buf;
 
 	if (!event || !handle) {
@@ -2035,6 +2039,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 		maxTempThreshold;
 	thermal_params.thermalEnable =
 		wma->thermal_mgmt_info.thermalMgmtEnabled;
+	thermal_params.thermal_action = wma->thermal_mgmt_info.thermal_action;
 
 	if (QDF_STATUS_SUCCESS != wma_set_thermal_mgmt(wma, thermal_params)) {
 		wma_err("Could not send thermal mgmt command to the firmware!");
