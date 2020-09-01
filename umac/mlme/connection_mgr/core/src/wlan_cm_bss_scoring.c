@@ -733,6 +733,56 @@ cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
 	return score;
 }
 
+static bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
+				struct scan_cache_entry *entry)
+{
+	uint8_t reason;
+	uint8_t *mbo_oce;
+	bool check_assoc_disallowed;
+
+	mbo_oce = util_scan_entry_mbo_oce(entry);
+
+	check_assoc_disallowed =
+	   mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed;
+
+	if (check_assoc_disallowed &&
+	    wlan_parse_oce_assoc_disallowed_ie(mbo_oce, &reason)) {
+		mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, assoc disallowed set in MBO/OCE IE reason %d",
+				QDF_MAC_ADDR_REF(entry->bssid.bytes),
+				entry->channel.chan_freq,
+				entry->rssi_raw, reason);
+		return false;
+	}
+
+	return true;
+}
+
+void wlan_cm_set_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
+					bool value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed = value;
+}
+
+void wlan_cm_get_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
+					bool *value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj) {
+		*value = false;
+		return;
+	}
+
+	*value = mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed;
+}
+
 #else
 static bool
 cm_get_pcl_weight_of_channel(uint32_t chan_freq,
@@ -768,6 +818,12 @@ cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
 				     int8_t *ap_tx_pwr_dbm)
 {
 	return 0;
+}
+
+static inline bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
+				       struct scan_cache_entry *entry)
+{
+	return true;
 }
 #endif
 
@@ -1018,30 +1074,6 @@ static void cm_list_insert_sorted(qdf_list_t *scan_list,
 
 	if (!cur_node)
 		qdf_list_insert_back(scan_list, &scan_entry->node);
-}
-
-static bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
-				struct scan_cache_entry *entry)
-{
-	uint8_t reason;
-	uint8_t *mbo_oce;
-	bool check_assoc_disallowed;
-
-	mbo_oce = util_scan_entry_mbo_oce(entry);
-
-	check_assoc_disallowed =
-	   mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed;
-
-	if (check_assoc_disallowed &&
-	    wlan_parse_oce_assoc_disallowed_ie(mbo_oce, &reason)) {
-		mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, assoc disallowed set in MBO/OCE IE reason %d",
-				QDF_MAC_ADDR_REF(entry->bssid.bytes),
-				entry->channel.chan_freq,
-				entry->rssi_raw, reason);
-		return false;
-	}
-
-	return true;
 }
 
 void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
@@ -1316,17 +1348,5 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_SCORING_BAND_WEIGHT_PER_IDX));
 	score_cfg->is_bssid_hint_priority =
 			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
-	score_cfg->check_assoc_disallowed = false;
-}
-
-void wlan_cm_set_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
-					bool value)
-{
-	struct psoc_mlme_obj *mlme_psoc_obj;
-
-	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
-	if (!mlme_psoc_obj)
-		return;
-
-	mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed = value;
+	score_cfg->check_assoc_disallowed = true;
 }

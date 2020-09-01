@@ -200,6 +200,7 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			       struct scoring_cfg *score_cfg);
 
+#ifdef CONN_MGR_ADV_FEATURE
 /**
  * wlan_cm_set_check_assoc_disallowed() - Set check assoc disallowed param
  * @psoc: pointer to psoc object
@@ -209,4 +210,15 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_cm_set_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
 					bool value);
+
+/**
+ * wlan_cm_get_check_assoc_disallowed() - get check assoc disallowed param
+ * @psoc: pointer to psoc object
+ * @value: value to be filled
+ *
+ * Return: void
+ */
+void wlan_cm_get_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
+					bool *value);
+#endif
 #endif
