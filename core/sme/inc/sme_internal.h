@@ -405,14 +405,12 @@ struct sme_context {
 #endif /* FEATURE_FW_STATE */
 	tx_queue_cb tx_queue_cb;
 #ifdef WLAN_SUPPORT_TWT
-	union {
-		twt_enable_cb twt_enable_cb;
-		twt_disable_cb twt_disable_cb;
-		twt_add_dialog_cb twt_add_dialog_cb;
-		twt_del_dialog_cb twt_del_dialog_cb;
-		twt_pause_dialog_cb twt_pause_dialog_cb;
-		twt_resume_dialog_cb twt_resume_dialog_cb;
-	};
+	twt_enable_cb twt_enable_cb;
+	twt_disable_cb twt_disable_cb;
+	twt_add_dialog_cb twt_add_dialog_cb;
+	twt_del_dialog_cb twt_del_dialog_cb;
+	twt_pause_dialog_cb twt_pause_dialog_cb;
+	twt_resume_dialog_cb twt_resume_dialog_cb;
 	void *twt_context;
 #endif
 #ifdef FEATURE_WLAN_APF
