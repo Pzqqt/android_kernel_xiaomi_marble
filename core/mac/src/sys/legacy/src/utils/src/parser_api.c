@@ -4438,13 +4438,11 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 			     sizeof(tDot11fIEqcn_ie));
 
 	if (pBeacon->he_cap.present) {
-		pe_debug("11AX: HE cap IE present");
 		qdf_mem_copy(&pBeaconStruct->he_cap,
 			     &pBeacon->he_cap,
 			     sizeof(tDot11fIEhe_cap));
 	}
 	if (pBeacon->he_op.present) {
-		pe_debug("11AX: HE operation IE present");
 		qdf_mem_copy(&pBeaconStruct->he_op,
 			     &pBeacon->he_op,
 			     sizeof(tDot11fIEhe_op));
