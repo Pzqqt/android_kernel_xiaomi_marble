@@ -534,45 +534,33 @@ static QDF_STATUS wmi_ext_dbg_msg_write(void *priv, const char *buf,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
-static struct qdf_debugfs_fops wmi_ext_dbgfs_ops[WMI_MAX_RADIOS];
+static struct qdf_debugfs_fops wmi_ext_dbgfs_ops = {
+	.show		= wmi_ext_dbg_msg_show,
+	.write		= wmi_ext_dbg_msg_write,
+	.priv		= NULL,
+};
 
 /**
  * wmi_ext_debugfs_init() - init debugfs items for extended wmi dump.
  *
  * @wmi_handle: wmi handler
- * @pdev_idx: pdev index
  *
  * Return: QDF_STATUS_SUCCESS if debugfs is initialized else
  * QDF_STATUS_E_FAILURE
  */
-static QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle,
-				     uint32_t pdev_idx)
+static QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle)
 {
 	qdf_dentry_t dentry;
-	char buf[32];
 
-	/* To maintain backward compatibility, naming convention for PDEV 0
-	 * dentry is kept same as before. For more than 1 PDEV, dentry
-	 * names will be appended with PDEVx.
-	 */
-	if (wmi_handle->soc->soc_idx == 0 && pdev_idx == 0) {
-		dentry  = qdf_debugfs_create_dir(WMI_EXT_DBG_DIR, NULL);
-	} else {
-		snprintf(buf, sizeof(buf), "WMI_EXT_DBG_SOC%u_PDEV%u",
-			 wmi_handle->soc->soc_idx, pdev_idx);
-		dentry  = qdf_debugfs_create_dir(buf, NULL);
-	}
-
+	dentry  = qdf_debugfs_create_dir(WMI_EXT_DBG_DIR, NULL);
 	if (!dentry) {
 		WMI_LOGE("error while creating extended wmi debugfs dir");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wmi_ext_dbgfs_ops[pdev_idx].show = wmi_ext_dbg_msg_show;
-	wmi_ext_dbgfs_ops[pdev_idx].write = wmi_ext_dbg_msg_write;
-	wmi_ext_dbgfs_ops[pdev_idx].priv = wmi_handle;
+	wmi_ext_dbgfs_ops.priv = wmi_handle;
 	if (!qdf_debugfs_create_file(WMI_EXT_DBG_FILE, WMI_EXT_DBG_FILE_PERM,
-				     dentry, &wmi_ext_dbgfs_ops[pdev_idx])) {
+				     dentry, &wmi_ext_dbgfs_ops)) {
 		qdf_debugfs_remove_dir(dentry);
 		WMI_LOGE("error while creating extended wmi debugfs file");
 		return QDF_STATUS_E_FAILURE;
@@ -602,34 +590,6 @@ static QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
 	wmi_ext_dbg_msg_queue_deinit(wmi_handle);
 	qdf_debugfs_remove_dir_recursive(wmi_handle->wmi_ext_dbg_dentry);
 
-	return QDF_STATUS_SUCCESS;
-}
-
-#else
-
-static inline QDF_STATUS wmi_ext_dbg_msg_cmd_record(struct wmi_unified
-						    *wmi_handle,
-						    uint8_t *buf, uint32_t len)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wmi_ext_dbg_msg_event_record(struct wmi_unified
-						      *wmi_handle,
-						      uint8_t *buf,
-						      uint32_t len)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle,
-					    uint32_t pdev_idx)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
-{
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2692,10 +2652,6 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		wmi_handle->target_type = soc->target_type;
 		wmi_handle->wmi_max_cmds = soc->wmi_max_cmds;
 
-		if (wmi_ext_dbgfs_init(wmi_handle, pdev_idx) !=
-		    QDF_STATUS_SUCCESS)
-			WMI_LOGE("failed to initialize wmi extended debugfs");
-
 		soc->wmi_pdev[pdev_idx] = wmi_handle;
 	} else
 		wmi_handle = soc->wmi_pdev[pdev_idx];
@@ -2843,7 +2799,7 @@ void *wmi_unified_attach(void *scn_handle,
 
 	soc->ops = wmi_handle->ops;
 	soc->wmi_pdev[0] = wmi_handle;
-	if (wmi_ext_dbgfs_init(wmi_handle, 0) != QDF_STATUS_SUCCESS)
+	if (wmi_ext_dbgfs_init(wmi_handle) != QDF_STATUS_SUCCESS)
 		WMI_LOGE("failed to initialize wmi extended debugfs");
 
 	wmi_wbuff_register(wmi_handle);
@@ -2876,6 +2832,8 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 	wmi_wbuff_deregister(wmi_handle);
 
+	wmi_ext_dbgfs_deinit(wmi_handle);
+
 	soc = wmi_handle->soc;
 	for (i = 0; i < WMI_MAX_RADIOS; i++) {
 		if (soc->wmi_pdev[i]) {
@@ -2900,9 +2858,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 					soc->wmi_pdev[i]->events_logs_list);
 
 			qdf_spinlock_destroy(&soc->wmi_pdev[i]->eventq_lock);
-
-			wmi_ext_dbgfs_deinit(soc->wmi_pdev[i]);
-
 			qdf_mem_free(soc->wmi_pdev[i]);
 		}
 	}
