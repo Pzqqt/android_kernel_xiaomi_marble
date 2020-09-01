@@ -200,6 +200,8 @@
 #define WLAN_SOC_F_TESTMODE_ENABLE     0x01000000
 	/* Dynamic HW mode swithch enable */
 #define WLAN_SOC_F_DYNAMIC_HW_MODE     0x02000000
+	/* Broadcast TWT support enable */
+#define WLAN_SOC_F_BCAST_TWT           0x04000000
 
 /* PSOC op flags */
 
