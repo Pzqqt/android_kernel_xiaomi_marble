@@ -1747,11 +1747,9 @@ void hdd_regulatory_deinit(struct hdd_context *hdd_ctx)
 
 void hdd_update_regdb_offload_config(struct hdd_context *hdd_ctx)
 {
-	QDF_STATUS status;
 	bool ignore_fw_reg_offload_ind = false;
 
-	status = ucfg_mlme_get_ignore_fw_reg_offload_ind(
-						hdd_ctx->psoc,
+	ucfg_mlme_get_ignore_fw_reg_offload_ind(hdd_ctx->psoc,
 						&ignore_fw_reg_offload_ind);
 	if (!ignore_fw_reg_offload_ind) {
 		hdd_debug("regdb offload is based on firmware capability");

@@ -4841,6 +4841,10 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	 */
 	memset(&dot11_wpa_ie, 0, sizeof(tDot11fIEWPA));
 	memset(&dot11_rsn_ie, 0, sizeof(tDot11fIERSN));
+	if (encrypt_type)
+		*encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
+	if (mc_encrypt_type)
+		*mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 
 	/* Type check */
 	if (gen_ie[0] == DOT11F_EID_RSN) {

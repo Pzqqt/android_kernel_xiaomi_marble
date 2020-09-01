@@ -21481,7 +21481,6 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	struct hdd_hostapd_state *hapd_state;
 	uint8_t *mac;
-	mac_handle_t mac_handle;
 	struct hdd_station_info *sta_info;
 
 	hdd_enter();
@@ -21505,7 +21504,6 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	}
 
 	mac = (uint8_t *) param->peerMacAddr.bytes;
-	mac_handle = hdd_ctx->mac_handle;
 
 	if (QDF_SAP_MODE != adapter->device_mode &&
 	    QDF_P2P_GO_MODE != adapter->device_mode)

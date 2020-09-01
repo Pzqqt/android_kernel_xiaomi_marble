@@ -13336,7 +13336,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	int ret;
 	mac_handle_t mac_handle;
-	struct hdd_config *cfg;
 	bool b_cts2self, is_imps_enabled;
 
 	hdd_enter();
@@ -13351,7 +13350,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	if (ret)
 		hdd_warn("Error initializing mws-coex");
 
-	cfg = hdd_ctx->config;
 	/* FW capabilities received, Set the Dot11 mode */
 	mac_handle = hdd_ctx->mac_handle;
 	sme_setdef_dot11mode(mac_handle);
@@ -16294,10 +16292,6 @@ static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 				    enum QDF_GLOBAL_MODE curr_mode)
 {
-	int driver_status;
-
-	driver_status = hdd_ctx->driver_status;
-
 	switch (curr_mode) {
 	case QDF_GLOBAL_MISSION_MODE:
 	case QDF_GLOBAL_MONITOR_MODE:
