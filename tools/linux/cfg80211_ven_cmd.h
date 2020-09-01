@@ -780,6 +780,8 @@ enum {
 	IEEE80211_PARAM_IGMP_ME      = 711, /* Set IGMP Mcast enhancement option: 0 disable, 1 enable */
 	IEEE80211_PARAM_HLOS_TID_OVERRIDE          = 712,   /* enable/disable hlos tid override support per vap */
 	IEEE80211_PARAM_6G_HE_OP_MIN_RATE          = 713,  /* set HE sta minimum rate for its Tx PPDU in a bss */
+	IEEE80211_PARAM_6G_SECURITY_COMP           = 714, /* 6G Security Compliance on/off */
+	IEEE80211_PARAM_6G_KEYMGMT_MASK            = 715, /* 6G Key Mgmt Mask Config */
 };
 
 enum {
@@ -2228,6 +2230,10 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_hlos_tidoverride ",     IEEE80211_PARAM_HLOS_TID_OVERRIDE, GET_PARAM, 0},
 	{"he_6g_min_rate",      IEEE80211_PARAM_6G_HE_OP_MIN_RATE, SET_PARAM, 1},
 	{"g_he_6g_min_rate",    IEEE80211_PARAM_6G_HE_OP_MIN_RATE, GET_PARAM, 0},
+	{"en_6g_sec_comp",      IEEE80211_PARAM_6G_SECURITY_COMP, SET_PARAM, 1},
+	{"g_en_6g_sec_comp",    IEEE80211_PARAM_6G_SECURITY_COMP, GET_PARAM, 0},
+	{"keymgmt_mask_6g",     IEEE80211_PARAM_6G_KEYMGMT_MASK, SET_PARAM, 1},
+	{"g_keymgmt_mask_6g",   IEEE80211_PARAM_6G_KEYMGMT_MASK, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
