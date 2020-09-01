@@ -988,7 +988,8 @@ dp_tx_me_alloc_buf(struct dp_pdev *pdev)
 }
 
 /*
- * dp_tx_me_free_buf() - Free me descriptor and add it to pool
+ * dp_tx_me_free_buf() - Unmap the buffer holding the dest
+ * address, free me descriptor and add it to the free-pool
  * @pdev: DP_PDEV handle for datapath
  * @buf : Allocated ME BUF
  *
@@ -997,6 +998,20 @@ dp_tx_me_alloc_buf(struct dp_pdev *pdev)
 static inline void
 dp_tx_me_free_buf(struct dp_pdev *pdev, struct dp_tx_me_buf_t *buf)
 {
+	/*
+	 * If the buf containing mac address was mapped,
+	 * it must be unmapped before freeing the me_buf.
+	 * The "paddr_macbuf" member in the me_buf structure
+	 * holds the mapped physical address and it must be
+	 * set to 0 after unmapping.
+	 */
+	if (buf->paddr_macbuf) {
+		qdf_mem_unmap_nbytes_single(pdev->soc->osdev,
+					    buf->paddr_macbuf,
+					    QDF_DMA_TO_DEVICE,
+					    QDF_MAC_ADDR_SIZE);
+		buf->paddr_macbuf = 0;
+	}
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 	buf->next = pdev->me_buf.freelist;
 	pdev->me_buf.freelist = buf;

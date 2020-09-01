@@ -2781,12 +2781,14 @@ struct dp_invalid_peer_msg {
  * dp_tx_me_buf_t: ME buffer
  * next: pointer to next buffer
  * data: Destination Mac address
+ * paddr_macbuf: physical address for dest_mac
  */
 struct dp_tx_me_buf_t {
 	/* Note: ME buf pool initialization logic expects next pointer to
 	 * be the first element. Dont add anything before next */
 	struct dp_tx_me_buf_t *next;
 	uint8_t data[QDF_MAC_ADDR_SIZE];
+	qdf_dma_addr_t paddr_macbuf;
 };
 
 #if defined(WLAN_SUPPORT_RX_FLOW_TAG) || defined(WLAN_SUPPORT_RX_FISA)
