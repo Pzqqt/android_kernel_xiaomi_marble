@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,8 @@
 #include "qdf_module.h"
 #include "qdf_list.h"
 #include "dp_htt_logger.h"
+#include "dp_types.h"
+#include "dp_internal.h"
 
 #define HTT_DBG_FILE_PERM           (QDF_FILE_USR_READ | QDF_FILE_USR_WRITE | \
 					 QDF_FILE_GRP_READ | \
@@ -1092,3 +1094,159 @@ void htt_interface_logging_deinit(struct htt_logger *htt_logger_handle)
 	htt_log_lock_free(htt_logger_handle);
 	qdf_mem_free(htt_logger_handle);
 }
+
+#ifdef HTT_STATS_DEBUGFS_SUPPORT
+void htt_stats_msg_receive(void *data, A_INT32 len);
+
+/* File permission for HTT stats debugfs entry */
+#define PDEV_HTT_STATS_DBGFS_FILE_PERM   (QDF_FILE_USR_READ | \
+					  QDF_FILE_GRP_READ | QDF_FILE_OTH_READ)
+
+/* Delay in ms to get the HTT stats for debugfs entry */
+#define PDEV_HTT_STATS_DBGFS_WAIT_TIME  2000
+
+/* Char array size of parent directory of debugfs HTT stats */
+#define PDEV_HTT_STATS_DBGFS_DIR_SIZE 19
+
+/* Char array size of debugfs file for HTT stats */
+#define PDEV_HTT_STATS_DBGFS_FILE_SIZE 7
+
+/* dp_pdev_htt_stats_dbgfs_show() - Function to display HTT stats
+ * @file: qdf debugfs file handler
+ * @arg: pointer to HTT stats debugfs private object
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS
+dp_pdev_htt_stats_dbgfs_show(qdf_debugfs_file_t file, void *arg)
+{
+	struct pdev_htt_stats_dbgfs_priv *priv = arg;
+	struct dp_pdev *pdev = NULL;
+	uint32_t config_param0 = 0;
+	uint32_t config_param1 = 0;
+	uint32_t config_param2 = 0;
+	uint32_t config_param3 = 0;
+	int cookie_val = 0;
+	uint8_t mac_id = 0;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	pdev = priv->pdev;
+	pdev->dbgfs_cfg->m = file;
+
+	qdf_mutex_acquire(&pdev->dbgfs_cfg->lock);
+
+	dp_h2t_ext_stats_msg_send(pdev, priv->stats_id, config_param0,
+				  config_param1, config_param2, config_param3,
+				  cookie_val, DBG_STATS_COOKIE_HTT_DBGFS,
+				  mac_id);
+	ret = qdf_wait_single_event(&pdev->dbgfs_cfg->htt_stats_dbgfs_event,
+				    PDEV_HTT_STATS_DBGFS_WAIT_TIME);
+	if (ret == QDF_STATUS_E_TIMEOUT)
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Event timeout: Failed to get response from FW");
+
+	qdf_mutex_release(&pdev->dbgfs_cfg->lock);
+	return ret;
+}
+
+/* dp_pdev_dbgfs_init() - Init debugfs of HTT stats to create
+ * debugfs directories and entries
+ * @pdev: DP pdev handle
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS dp_pdev_dbgfs_init(struct dp_pdev *pdev)
+{
+	char dir_name[PDEV_HTT_STATS_DBGFS_DIR_SIZE] = {0};
+	char file_name[PDEV_HTT_STATS_DBGFS_FILE_SIZE] = {0};
+	int idx;
+
+	qdf_snprintf(dir_name, sizeof(dir_name), "dp_wifistats_wifi%d",
+		     pdev->pdev_id);
+
+	pdev->dbgfs_cfg->debugfs_entry[0] = qdf_debugfs_create_dir(dir_name,
+								   NULL);
+	if (!pdev->dbgfs_cfg->debugfs_entry[0]) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Failed to create debugfs directory for HTT stats");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (idx = 1; idx < PDEV_HTT_STATS_DBGFS_SIZE - 1; idx++) {
+		qdf_snprintf(file_name, sizeof(file_name), "cmd%d", idx);
+		pdev->dbgfs_cfg->priv[idx - 1].pdev = pdev;
+		pdev->dbgfs_cfg->priv[idx - 1].stats_id = idx;
+		pdev->dbgfs_cfg->pdev_htt_stats_dbgfs_ops[idx - 1].show =
+						dp_pdev_htt_stats_dbgfs_show;
+		pdev->dbgfs_cfg->pdev_htt_stats_dbgfs_ops[idx - 1].write = NULL;
+		pdev->dbgfs_cfg->pdev_htt_stats_dbgfs_ops[idx - 1].priv =
+						&pdev->dbgfs_cfg->priv[idx - 1];
+
+		pdev->dbgfs_cfg->debugfs_entry[idx] =
+			qdf_debugfs_create_file_simplified(
+			   file_name, PDEV_HTT_STATS_DBGFS_FILE_PERM,
+			   pdev->dbgfs_cfg->debugfs_entry[0],
+			   &pdev->dbgfs_cfg->pdev_htt_stats_dbgfs_ops[idx - 1]);
+
+		if (!pdev->dbgfs_cfg->debugfs_entry[idx]) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "Failed to create htt stats dbgfs file for %d", idx);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/* dp_pdev_htt_stats_dbgfs_init() - Function to allocate memory and initialize
+ * debugfs for HTT stats
+ * @pdev: dp pdev handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_pdev_htt_stats_dbgfs_init(struct dp_pdev *pdev)
+{
+	pdev->dbgfs_cfg =
+		qdf_mem_malloc(sizeof(struct pdev_htt_stats_dbgfs_cfg));
+	if (!pdev->dbgfs_cfg) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Memory allocation failed for pdev htt stats dbgfs cfg", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mutex_create(&pdev->dbgfs_cfg->lock);
+	qdf_event_create(&pdev->dbgfs_cfg->htt_stats_dbgfs_event);
+	pdev->dbgfs_cfg->htt_stats_dbgfs_msg_process = htt_stats_msg_receive;
+
+	if (dp_pdev_dbgfs_init(pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Failed to initialize for pdev htt stats dbgfs", __func__);
+		dp_pdev_htt_stats_dbgfs_deinit(pdev);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/* dp_pdev_htt_stats_dbgfs_deinit() - Function to free memory and remove
+ * debugfs directory and entries for HTT stats
+ * @pdev: dp pdev handle
+ *
+ * Return: none
+ */
+void dp_pdev_htt_stats_dbgfs_deinit(struct dp_pdev *pdev)
+{
+	if (pdev->dbgfs_cfg) {
+		qdf_mutex_destroy(&pdev->dbgfs_cfg->lock);
+		qdf_event_destroy(&pdev->dbgfs_cfg->htt_stats_dbgfs_event);
+		pdev->dbgfs_cfg->htt_stats_dbgfs_msg_process = NULL;
+
+		if (pdev->dbgfs_cfg->debugfs_entry[0]) {
+			qdf_debugfs_remove_dir_recursive(
+					    pdev->dbgfs_cfg->debugfs_entry[0]);
+			pdev->dbgfs_cfg->debugfs_entry[0] = NULL;
+		}
+		qdf_mem_free(pdev->dbgfs_cfg);
+		pdev->dbgfs_cfg = NULL;
+	}
+}
+#endif /* HTT_STATS_DEBUGFS_SUPPORT */
