@@ -2565,11 +2565,6 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->addBssStaContext = NULL;
 	}
 
-	if (vdev->staKeyParams) {
-		qdf_mem_free(vdev->staKeyParams);
-		vdev->staKeyParams = NULL;
-	}
-
 	if (vdev->psnr_req) {
 		qdf_mem_free(vdev->psnr_req);
 		vdev->psnr_req = NULL;

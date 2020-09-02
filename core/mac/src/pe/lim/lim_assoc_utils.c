@@ -3752,8 +3752,6 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	if (QDF_P2P_CLIENT_MODE == pe_session->opmode)
 		pAddBssParams->staContext.p2pCapableSta = 1;
 
-	pAddBssParams->extSetStaKeyParamValid = 0;
-
 #ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {
 		pAddBssParams->rmfEnabled = 1;
@@ -4065,7 +4063,6 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 
 	pAddBssParams->staContext.smesessionId = pe_session->smeSessionId;
 	pAddBssParams->staContext.sessionId = pe_session->peSessionId;
-	pAddBssParams->extSetStaKeyParamValid = 0;
 
 #ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {

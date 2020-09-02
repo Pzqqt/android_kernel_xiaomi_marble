@@ -3445,20 +3445,6 @@ static QDF_STATUS wma_update_iface_params(tp_wma_handle wma,
 	if (!iface->addBssStaContext)
 		return QDF_STATUS_E_RESOURCES;
 	*iface->addBssStaContext = add_bss->staContext;
-	if (iface->staKeyParams) {
-		qdf_mem_free(iface->staKeyParams);
-		iface->staKeyParams = NULL;
-	}
-	if (add_bss->extSetStaKeyParamValid) {
-		iface->staKeyParams =
-			qdf_mem_malloc(sizeof(tSetStaKeyParams));
-		if (!iface->staKeyParams) {
-			qdf_mem_free(iface->addBssStaContext);
-			iface->addBssStaContext = NULL;
-			return QDF_STATUS_E_RESOURCES;
-		}
-		*iface->staKeyParams = add_bss->extSetStaKeyParam;
-	}
 	/* Save parameters later needed by WMA_ADD_STA_REQ */
 	iface->rmfEnabled = add_bss->rmfEnabled;
 	if (add_bss->rmfEnabled)

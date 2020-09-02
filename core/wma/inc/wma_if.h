@@ -333,8 +333,6 @@ typedef struct sLimMlmSetKeysReq {
  * @staContext: sta context
  * @updateBss: update the existing BSS entry, if this flag is set
  * @maxTxPower: max power to be used after applying the power constraint
- * @extSetStaKeyParamValid: Ext Bss Config Msg if set
- * @extSetStaKeyParam: SetStaKeyParams for ext bss msg
  * @bSpectrumMgtEnabled: Spectrum Management Capability, 1:Enabled, 0:Disabled.
  * @vhtCapable: VHT capablity
  * @ch_width: VHT tx channel width
@@ -357,9 +355,6 @@ struct bss_params {
 	 */
 	uint8_t updateBss;
 	int8_t maxTxPower;
-
-	uint8_t extSetStaKeyParamValid;
-	tSetStaKeyParams extSetStaKeyParam;
 	uint8_t vhtCapable;
 	enum phy_ch_width ch_width;
 	uint8_t nonRoamReassoc;

@@ -94,6 +94,25 @@ void sme_get_rici_es(mac_handle_t mac_handle, uint32_t sessionId,
  */
 QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id);
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * sme_ft_key_ready_for_install() - API to check ft key ready for install
+ * @mac_handle: MAC handle
+ * @session_id: vdev identifier
+ *
+ * It is only applicable for LFR2.0 enabled
+ *
+ * Return: true when ft key is ready otherwise false
+ */
+bool sme_ft_key_ready_for_install(mac_handle_t mac_handle, uint32_t session_id);
+#else
+static inline bool
+sme_ft_key_ready_for_install(mac_handle_t mac_handle, uint32_t session_id)
+{
+	return false;
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_reset_key() -Reset key information

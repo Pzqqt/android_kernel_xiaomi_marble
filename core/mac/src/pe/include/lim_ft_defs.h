@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,15 +88,6 @@ typedef struct sSirFTUpdateKeyInfo {
 	tSirKeyMaterial keyMaterial;
 } tSirFTUpdateKeyInfo, *tpSirFTUpdateKeyInfo;
 
-/*--------------------------------------------------------------------------
-   FT Pre Auth Rsp Key SME<->PE
-   ------------------------------------------------------------------------*/
-typedef struct sSirFTPreAuthKeyInfo {
-	uint8_t extSetStaKeyParamValid; /* Ext Bss Config Msg if set */
-	/* SetStaKeyParams for ext bss msg */
-	tLimMlmSetKeysReq extSetStaKeyParam;
-} tSirFTPreAuthKeyInfo, *tpSirFTPreAuthKeyInfo;
-
 /*-------------------------------------------------------------------------
    Global FT Information
    ------------------------------------------------------------------------*/
@@ -105,7 +96,6 @@ typedef struct sFTPEContext {
 	QDF_STATUS ftPreAuthStatus;
 	uint16_t saved_auth_rsp_length;
 	uint8_t saved_auth_rsp[MAX_FTIE_SIZE];
-	tSirFTPreAuthKeyInfo PreAuthKeyInfo;
 	/* Items created for the new FT, session */
 	void *pAddBssReq;       /* Save add bss req */
 	void *pAddStaReq;       /*Save add sta req  */

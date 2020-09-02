@@ -243,8 +243,6 @@ QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
 	switch (session->ftSmeContext.FTState) {
 	case eFT_SET_KEY_WAIT:
 		if (sme_get_ft_pre_auth_state(mac_handle, session_id) == true) {
-			sme_set_ft_pre_auth_state(mac_handle, session_id,
-						  false);
 			session->ftSmeContext.FTState = eFT_START_READY;
 			sme_debug("state changed to %d status %d",
 				  session->ftSmeContext.FTState, status);
@@ -260,6 +258,34 @@ QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+bool sme_ft_key_ready_for_install(mac_handle_t mac_handle, uint32_t session_id)
+{
+	QDF_STATUS status;
+	bool ret = false;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
+
+	if (!session) {
+		sme_err("csr session is NULL");
+		return false;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (!(QDF_IS_STATUS_SUCCESS(status)))
+		return false;
+
+	if (sme_get_ft_pre_auth_state(mac_handle, session_id) &&
+	    session->ftSmeContext.FTState == eFT_START_READY) {
+		ret = true;
+		sme_set_ft_pre_auth_state(mac_handle, session_id, false);
+	}
+	sme_release_global_lock(&mac->sme);
+
+	return ret;
+}
+#endif
 
 /*
  * HDD Interface to SME. SME now sends the Auth 2 and RIC IEs up to the

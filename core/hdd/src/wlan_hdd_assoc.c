@@ -4310,6 +4310,43 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
 }
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * wlan_hdd_ft_set_key_delay() - hdd set key delayed for FT mode
+ * @mac_handle: mac handler
+ * @adapter: pointer to adapter context
+ *
+ * Return: void
+ */
+static void
+wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
+{
+	int errno = 0;
+	uint32_t session_id = adapter->vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return;
+
+	if (sme_ft_key_ready_for_install(mac_handle, session_id)) {
+		errno = wlan_cfg80211_crypto_add_key(
+				vdev,
+				WLAN_CRYPTO_KEY_TYPE_UNICAST,
+				0);
+	}
+	hdd_objmgr_put_vdev(vdev);
+
+	if (errno)
+		hdd_err("ft set key failed");
+}
+#else
+static void
+wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
+{
+}
+#endif
+
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
  * @context: pointer to adapter context
@@ -4447,6 +4484,8 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 			/* Clear saved connection information in HDD */
 			hdd_conn_remove_connect_info(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter));
+		} else {
+			wlan_hdd_ft_set_key_delay(hdd_ctx->mac_handle, adapter);
 		}
 		qdf_ret_status =
 			hdd_association_completion_handler(adapter, roam_info,

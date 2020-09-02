@@ -17412,7 +17412,7 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 
 	/* The supplicant may attempt to set the PTK once
 	 * pre-authentication is done. Save the key in the
-	 * UMAC and include it in the ADD BSS request
+	 * UMAC and install it after association
 	 */
 	status = sme_check_ft_status(mac_handle, adapter->vdev_id);
 	if (status == QDF_STATUS_SUCCESS) {
