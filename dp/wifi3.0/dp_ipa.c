@@ -893,7 +893,7 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	/* Call HAL API to remap REO rings to REO2IPA ring */
 	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
 	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 1) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 2) |
+	      HAL_REO_REMAP_IX0(REO_REMAP_SW1, 2) |
 	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 3) |
 	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 4) |
 	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
