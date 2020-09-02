@@ -17,6 +17,7 @@
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6common.h>
 #include <dsp/q6core.h>
+#include <linux/ratelimit.h>
 #include <dsp/msm-audio-event-notify.h>
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
@@ -9222,6 +9223,7 @@ int afe_set_lpass_clk_cfg(int index, struct afe_clk_set *cfg)
 {
 	struct param_hdr_v3 param_hdr;
 	int ret = 0;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (!cfg) {
 		pr_err("%s: clock cfg is NULL\n", __func__);
@@ -9260,7 +9262,8 @@ int afe_set_lpass_clk_cfg(int index, struct afe_clk_set *cfg)
 	ret = q6afe_svc_pack_and_set_param_in_band(index, param_hdr,
 						   (u8 *) cfg);
 	if (ret < 0) {
-		pr_err_ratelimited("%s: AFE clk cfg failed with ret %d\n",
+		if (__ratelimit(&rtl))
+			pr_err_ratelimited("%s: AFE clk cfg failed with ret %d\n",
 				__func__, ret);
 		trace_printk("%s: AFE clk cfg failed with ret %d\n",
 		       __func__, ret);
