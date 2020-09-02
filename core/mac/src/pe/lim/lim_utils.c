@@ -8672,6 +8672,7 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 	enum reg_wifi_band band;
 	uint8_t band_mask;
 	struct ch_params ch_params = {0};
+	qdf_freq_t sec_chan_freq = 0;
 
 	band = wlan_reg_freq_to_band(session->curr_op_freq);
 	band_mask = 1 << band;
@@ -8687,8 +8688,15 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 					   session->ch_center_freq_seg1,
 					   band_mask);
 
+	if (band == (REG_BAND_2G) && (ch_params.ch_width == CH_WIDTH_40MHZ)) {
+		if (ch_params.mhz_freq_seg0 ==  session->curr_op_freq + 10)
+			sec_chan_freq = session->curr_op_freq + 20;
+		if (ch_params.mhz_freq_seg0 ==  session->curr_op_freq - 10)
+			sec_chan_freq = session->curr_op_freq - 20;
+	}
+
 	wlan_reg_set_channel_params_for_freq(mac->pdev, session->curr_op_freq,
-					     0, &ch_params);
+					     sec_chan_freq, &ch_params);
 
 	pe_debug("vdev id %d freq %d seg0 %d seg1 %d ch_width %d cac_duration_ms %d beacon_interval %d hidden_ssid: %d dtimPeriod %d slot_time %d bcn tx rate %d mhz seg0 %d mhz seg1 %d",
 		 session->vdev_id, session->curr_op_freq,
