@@ -170,6 +170,10 @@ struct ol_ath_radiostats {
 	uint32_t    rx_last_msdu_unset_cnt;
 	uint32_t    rx_data_bytes;
 	uint32_t    tx_retries;
+	uint32_t    created_vap;
+	uint32_t    active_vap;
+	uint32_t    rnr_count;
+	uint32_t    soc_status_6ghz;
 };
 
 /* Enumeration of PDEV Configuration parameter */
