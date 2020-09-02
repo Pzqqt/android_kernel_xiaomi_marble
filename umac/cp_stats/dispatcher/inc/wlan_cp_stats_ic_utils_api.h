@@ -279,6 +279,8 @@ VDEV_CP_STATS_SET_FUNCS(oob_probe_req_count);
 VDEV_CP_STATS_SET_FUNCS(wc_probe_req_drops);
 VDEV_CP_STATS_SET_FUNCS(fils_frames_sent);
 VDEV_CP_STATS_SET_FUNCS(fils_frames_sent_fail);
+VDEV_CP_STATS_SET_FUNCS(tx_offload_prb_resp_succ_cnt);
+VDEV_CP_STATS_SET_FUNCS(tx_offload_prb_resp_fail_cnt);
 
 #define VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
