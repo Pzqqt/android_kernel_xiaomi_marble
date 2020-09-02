@@ -38,6 +38,14 @@ static struct port_params tx_wcd_4p8MHz[SWR_MSTR_PORT_LEN] = {
 	{3,  2,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX4 */
 };
 
+/* AMIC 0.6 MHz clock, single channel */
+static struct port_params tx_wcd_0p6MHz[SWR_MSTR_PORT_LEN] = {
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX1 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX2 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX3 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX4 */
+};
+
 /* 4 Channel configuration */
 /* SWR DMIC0 */
 static struct port_params tx_bottom_mic_9p6MHz[SWR_MSTR_PORT_LEN] = {
@@ -88,6 +96,31 @@ static struct port_params tx_top_mic_4p8MHz[SWR_MSTR_PORT_LEN] = {
 	{3,  2,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX2 */
 };
 
+/* 1 Channel configuration */
+/* SWR DMIC0 */
+static struct port_params tx_bottom_mic_0p6MHz[SWR_MSTR_PORT_LEN] = {
+	{3,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX1 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX2 */
+};
+
+/* SWR DMIC1 */
+static struct port_params tx_receiver_mic_0p6MHz[SWR_MSTR_PORT_LEN] = {
+	{3,  2,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX1 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX2 */
+};
+
+/* SWR DMIC2 */
+static struct port_params tx_back_mic_0p6MHz[SWR_MSTR_PORT_LEN] = {
+	{3,  2,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX1 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX2 */
+};
+
+/* SWR DMIC3 */
+static struct port_params tx_top_mic_0p6MHz[SWR_MSTR_PORT_LEN] = {
+	{3,  3,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX1 */
+	{1,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0x00, 0x00}, /* TX2 */
+};
+
 struct swr_dev_frame_config {
 	struct port_params *pp;
 };
@@ -108,6 +141,15 @@ static struct swr_dev_frame_config swrdev_frame_params_4p8MHz[] = {
 	{tx_back_mic_4p8MHz},
 	{tx_receiver_mic_4p8MHz},
 	{tx_bottom_mic_4p8MHz},
+};
+
+static struct swr_dev_frame_config swrdev_frame_params_0p6MHz[] = {
+	{tx_dummy},
+	{tx_wcd_0p6MHz},
+	{tx_top_mic_0p6MHz},
+	{tx_back_mic_0p6MHz},
+	{tx_receiver_mic_0p6MHz},
+	{tx_bottom_mic_0p6MHz},
 };
 
 #endif /* _LAHAINA_PORT_CONFIG */
