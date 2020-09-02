@@ -5309,7 +5309,7 @@ static int __wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
 				int idx, u8 *mac,
 				struct station_info *sinfo)
 {
-	hdd_debug("%s: idx %d", __func__, idx);
+	hdd_debug("idx: %d", idx);
 	if (idx != 0)
 		return -ENOENT;
 	qdf_mem_copy(mac, dev->dev_addr, QDF_MAC_ADDR_SIZE);

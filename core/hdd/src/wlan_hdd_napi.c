@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -359,13 +359,13 @@ int hdd_napi_apply_throughput_policy(struct hdd_context *hddctx,
 	struct qca_napi_data *napid = hdd_napi_get_all();
 	int enabled;
 
-	NAPI_DEBUG("-->%s(tx=%lld, rx=%lld)", __func__, tx_packets, rx_packets);
+	NAPI_DEBUG("-->(tx=%lld, rx=%lld)", tx_packets, rx_packets);
 
 	if (unlikely(napi_tput_policy_delay < 0))
 		napi_tput_policy_delay = 0;
 	if (napi_tput_policy_delay > 0) {
-		NAPI_DEBUG("%s: delaying policy; delay-count=%d",
-			  __func__, napi_tput_policy_delay);
+		NAPI_DEBUG("delaying policy; delay-count=%d",
+			   napi_tput_policy_delay);
 		napi_tput_policy_delay--;
 
 		/* make sure the next timer call calls us */
@@ -481,7 +481,7 @@ int hdd_display_napi_stats(void)
 
 	napid = hdd_napi_get_all();
 	if (!napid) {
-		hdd_err("%s unable to retrieve napi structure", __func__);
+		hdd_err("unable to retrieve napi structure");
 		return -EFAULT;
 	}
 	hdd_nofl_info("[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr  max_time napi-buckets(%d)",
@@ -540,7 +540,7 @@ int hdd_clear_napi_stats(void)
 
 	napid = hdd_napi_get_all();
 	if (!napid) {
-		hdd_err("%s unable to retrieve napi structure", __func__);
+		hdd_err("unable to retrieve napi structure");
 		return -EFAULT;
 	}
 

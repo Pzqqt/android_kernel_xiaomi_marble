@@ -418,7 +418,7 @@ int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 	tp_wma_handle wma = (tp_wma_handle)handle;
 
 	if (!event) {
-		wma_err("%s: received null event from target", __func__);
+		wma_err("received null event from target");
 		return -EINVAL;
 	}
 
@@ -426,7 +426,7 @@ int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 
 	roam_vdev_disc_ev = param_buf->fixed_param;
 	if (!roam_vdev_disc_ev) {
-		wma_err("%s: roam cap event is NULL", __func__);
+		wma_err("roam cap event is NULL");
 		return -EINVAL;
 	}
 	if (roam_vdev_disc_ev->vdev_id >= wma->max_bssid) {
@@ -4042,8 +4042,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 							   &roam_info->btm_rsp,
 							   i);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			wma_err("%s:Roam btm rsp stats extract fail vdev %d",
-				__func__, vdev_id);
+			wma_err("Roam btm rsp stats extract fail vdev %d",
+				vdev_id);
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
@@ -4053,8 +4053,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 				wma->wmi_handle, event,
 				&roam_info->roam_init_info, i);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			wma_err("%s:Initial roam stats extract fail vdev %d",
-				__func__, vdev_id);
+			wma_err("Initial roam stats extract fail vdev %d",
+				vdev_id);
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
@@ -6616,7 +6616,7 @@ QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma,
 void wma_register_pmkid_req_event_handler(tp_wma_handle wma_handle)
 {
 	if (!wma_handle) {
-		wma_err("%s: pmkid req wma_handle is NULL", __func__);
+		wma_err("pmkid req wma_handle is NULL");
 		return;
 	}
 
@@ -6639,39 +6639,38 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 	QDF_STATUS status;
 
 	if (!event) {
-		wma_err("%s: received null event from target", __func__);
+		wma_err("received null event from target");
 		return -EINVAL;
 	}
 
 	param_buf = (WMI_ROAM_PMKID_REQUEST_EVENTID_param_tlvs *)event;
 	if (!param_buf) {
-		wma_err("%s: received null buf from target", __func__);
+		wma_err("received null buf from target");
 		return -EINVAL;
 	}
 
 	roam_pmkid_req_ev = param_buf->fixed_param;
 	if (!roam_pmkid_req_ev) {
-		wma_err("%s: received null event data from target", __func__);
+		wma_err("received null event data from target");
 		return -EINVAL;
 	}
 
 	if (roam_pmkid_req_ev->vdev_id >= wma->max_bssid) {
-		wma_err("%s: received invalid vdev_id %d",
-			 __func__, roam_pmkid_req_ev->vdev_id);
+		wma_err("received invalid vdev_id %d", roam_pmkid_req_ev->vdev_id);
 		return -EINVAL;
 	}
 
 	num_entries = param_buf->num_pmkid_request;
 	if (num_entries > MAX_RSSI_AVOID_BSSID_LIST) {
-		wma_err("%s: num bssid entries:%d exceeds maximum value",
-			 __func__, num_entries);
+		wma_err("num bssid entries:%d exceeds maximum value",
+			num_entries);
 		return -EINVAL;
 	}
 
 	src_list = param_buf->pmkid_request;
 	if (len < (sizeof(*roam_pmkid_req_ev) +
 		(num_entries * sizeof(*src_list)))) {
-		wma_err("%s: Invalid length:%d", __func__, len);
+		wma_err("Invalid length: %d", len);
 		return -EINVAL;
 	}
 
@@ -6687,7 +6686,7 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 		if (qdf_is_macaddr_zero(roam_bsslist) ||
 		    qdf_is_macaddr_broadcast(roam_bsslist) ||
 		    qdf_is_macaddr_group(roam_bsslist)) {
-			wma_err("%s: Invalid bssid", __func__);
+			wma_err("Invalid bssid");
 			qdf_mem_free(dst_list);
 			return -EINVAL;
 		}
@@ -6701,7 +6700,7 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 	status = wma->csr_roam_pmkid_req_cb(roam_pmkid_req_ev->vdev_id,
 					    dst_list);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		wma_err("%s: Pmkid request failed", __func__);
+		wma_err("Pmkid request failed");
 		qdf_mem_free(dst_list);
 		return -EINVAL;
 	}

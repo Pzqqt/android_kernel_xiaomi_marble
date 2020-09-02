@@ -862,7 +862,7 @@ QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg)
 
 	if (!QDF_IS_STATUS_SUCCESS(
 	    cds_shutdown_notifier_register(pe_shutdown_notifier_cb, mac))) {
-		pe_err("%s: Shutdown notifier register failed", __func__);
+		pe_err("Shutdown notifier register failed");
 	}
 
 	pe_hang_event_notifier.priv_data = mac;

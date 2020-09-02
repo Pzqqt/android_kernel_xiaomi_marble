@@ -817,7 +817,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 	pe_session =
 		pe_find_session_by_session_id(mac, pAggrQosRspMsg->sessionId);
 	if (!pe_session) {
-		pe_err("Cant find session entry for %s", __func__);
+		pe_err("Cant find session entry");
 		if (pAggrQosRspMsg) {
 			qdf_mem_free(pAggrQosRspMsg);
 		}

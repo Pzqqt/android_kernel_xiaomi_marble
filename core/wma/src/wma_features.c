@@ -567,7 +567,7 @@ enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 	}
 
 	if (chan_width >= CH_WIDTH_INVALID) {
-		wma_err_rl("%s : Invalid channel width", __func__);
+		wma_err_rl("Invalid channel width");
 		return WLAN_PHYMODE_AUTO;
 	}
 
@@ -4119,7 +4119,7 @@ QDF_STATUS wma_set_sw_retry_threshold_per_ac(WMA_HANDLE handle,
 	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 
 	if (!wma_handle) {
-		wma_err("%s: WMA context is invalid!", __func__);
+		wma_err("WMA context is invalid!");
 		return QDF_STATUS_E_INVAL;
 	}
 

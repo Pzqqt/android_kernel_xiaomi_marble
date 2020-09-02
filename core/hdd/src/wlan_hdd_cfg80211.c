@@ -14376,8 +14376,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 						  WLAN_NUD_STATS_LEN);
 	if (!skb) {
-		hdd_err("%s: cfg80211_vendor_cmd_alloc_reply_skb failed",
-			__func__);
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		err = -ENOMEM;
 		goto exit;
 	}
@@ -19653,8 +19652,8 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 
 		/* Sanity check on eLen */
 		if (eLen > remLen) {
-			hdd_err("%s: Invalid IE length[%d] for IE[0x%X]",
-				__func__, eLen, elementId);
+			hdd_err("Invalid IE length[%d] for IE[0x%X]",
+				eLen, elementId);
 			QDF_ASSERT(0);
 			return -EINVAL;
 		}
@@ -19688,8 +19687,8 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					assoc_add_ie->length;
 			} else if (0 == memcmp(&genie[0], "\x00\x50\xf2", 3)) {
 				if (eLen > (WLAN_MAX_IE_LEN - 2)) {
-					hdd_err("%s: Invalid WPA IE length[%d]",
-						__func__, eLen);
+					hdd_err("Invalid WPA IE length[%d]",
+						eLen);
 					QDF_ASSERT(0);
 					return -EINVAL;
 				}
@@ -19826,8 +19825,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 			break;
 		case DOT11F_EID_RSN:
 			if  (eLen  > DOT11F_IE_RSN_MAX_LEN) {
-				hdd_err("%s: Invalid WPA RSN IE length[%d]",
-						__func__, eLen);
+				hdd_err("Invalid WPA RSN IE length[%d]", eLen);
 				return -EINVAL;
 			}
 			memset(security_ie, 0, WLAN_MAX_IE_LEN);
@@ -22260,8 +22258,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 		       ftie->ie_len);
 		hdd_err("Should be Re-assoc Req IEs");
 	}
-	hdd_debug("%s called with Ie of length = %zu", __func__,
-	       ftie->ie_len);
+	hdd_debug("called with Ie of length = %zu", ftie->ie_len);
 
 	/* Pass the received FT IEs to SME */
 	mac_handle = hdd_ctx->mac_handle;

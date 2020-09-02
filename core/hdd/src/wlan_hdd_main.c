@@ -958,7 +958,7 @@ static int __hdd_netdev_notifier_call(struct net_device *net_dev,
 	}
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
-		hdd_debug("%s: Driver module is closed", __func__);
+		hdd_debug("Driver module is closed");
 		return NOTIFY_DONE;
 	}
 
@@ -3094,7 +3094,7 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 
 	if (!hdd_ctx->config) {
 		/* Do nothing if hdd_ctx is invalid */
-		hdd_err("%s: Warning: hdd_ctx->cfg_ini is NULL", __func__);
+		hdd_err("Warning: hdd_ctx->cfg_ini is NULL");
 		return;
 	}
 
@@ -4744,7 +4744,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		return;
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
-		hdd_debug("%s: Driver module is closed", __func__);
+		hdd_debug("Driver module is closed");
 		return;
 	}
 

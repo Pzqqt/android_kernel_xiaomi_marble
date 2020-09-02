@@ -1062,12 +1062,12 @@ stop_wmi:
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx)
-		cds_err("%s: Failed to get hif_handle!", __func__);
+		cds_err("Failed to get hif_handle!");
 
 	wma_wmi_stop();
 
 	if (hif_ctx) {
-		cds_err("%s: Disable the isr & reset the soc!", __func__);
+		cds_err("Disable the isr & reset the soc!");
 		hif_disable_isr(hif_ctx);
 		hif_reset_soc(hif_ctx);
 	}
@@ -2634,7 +2634,7 @@ bool cds_is_5_mhz_enabled(void)
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
-		cds_err("%s: cds context is invalid", __func__);
+		cds_err("cds context is invalid");
 		return false;
 	}
 
@@ -2656,7 +2656,7 @@ bool cds_is_10_mhz_enabled(void)
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
-		cds_err("%s: cds context is invalid", __func__);
+		cds_err("cds context is invalid");
 		return false;
 	}
 
@@ -2678,7 +2678,7 @@ bool cds_is_sub_20_mhz_enabled(void)
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
-		cds_err("%s: cds context is invalid", __func__);
+		cds_err("cds context is invalid");
 		return false;
 	}
 
@@ -2699,7 +2699,7 @@ bool cds_is_self_recovery_enabled(void)
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
-		cds_err("%s: cds context is invalid", __func__);
+		cds_err("cds context is invalid");
 		return false;
 	}
 

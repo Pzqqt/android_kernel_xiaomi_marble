@@ -5999,7 +5999,7 @@ static void csr_get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 	}
 
 	if (!ev->peer_stats) {
-		sme_debug("%s no peer stats\n", __func__);
+		sme_debug("no peer stats");
 		goto disconnect_stats_complete;
 	}
 
@@ -6007,7 +6007,7 @@ static void csr_get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 	mac->peer_txrate = ev->peer_stats->tx_rate;
 	mac->peer_rxrate = ev->peer_stats->rx_rate;
 	if (!ev->peer_extended_stats) {
-		sme_debug("%s no peer extended stats\n", __func__);
+		sme_debug("no peer extended stats");
 		goto disconnect_stats_complete;
 	}
 	mac->rx_mc_bc_cnt = ev->peer_extended_stats->rx_mc_bc_cnt;
@@ -17041,7 +17041,7 @@ csr_process_roam_pmkid_req_callback(struct mac_context *mac_ctx,
 						0, eCSR_ROAM_FIPS_PMK_REQUEST,
 						eCSR_ROAM_RESULT_NONE);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			sme_err("%s: Trigger pmkid fallback failed", __func__);
+			sme_err("Trigger pmkid fallback failed");
 			qdf_mem_free(roam_info);
 			return status;
 		}
@@ -17060,14 +17060,14 @@ csr_roam_pmkid_req_callback(uint8_t vdev_id,
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
-		sme_err("%s: NULL mac ptr", __func__);
+		sme_err("NULL mac ptr");
 		QDF_ASSERT(0);
 		return -EINVAL;
 	}
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("%s: Locking failed, bailing out", __func__);
+		sme_err("Locking failed, bailing out");
 		return status;
 	}
 

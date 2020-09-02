@@ -2252,7 +2252,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	cdp_vdev_register(soc, adapter->vdev_id, (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
 	if (!txrx_ops.tx.tx) {
-		hdd_err("%s vdev register fail", __func__);
+		hdd_err("vdev register fail");
 		return QDF_STATUS_E_FAILURE;
 	}
 

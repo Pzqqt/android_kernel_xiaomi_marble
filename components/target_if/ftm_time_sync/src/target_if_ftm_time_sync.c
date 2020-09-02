@@ -63,7 +63,7 @@ target_if_time_sync_ftm_start_stop_event_handler(ol_scn_t scn_handle,
 	wmi_unified_t wmi_handle;
 
 	if (!data) {
-		target_if_err("%s: invalid pointer", __func__);
+		target_if_err("Invalid pointer");
 		return -EINVAL;
 	}
 
@@ -124,7 +124,7 @@ target_if_time_sync_master_slave_offset_event_handler(ol_scn_t scn_handle,
 	wmi_unified_t wmi_handle;
 
 	if (!data) {
-		target_if_err("%s: invalid pointer", __func__);
+		target_if_err("Invalid pointer");
 		return -EINVAL;
 	}
 
