@@ -1579,8 +1579,9 @@ struct cdp_ipa_ops {
 				bool is_rm_enabled, uint32_t *tx_pipe_handle,
 				uint32_t *rx_pipe_handle);
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
-	QDF_STATUS (*ipa_cleanup)(uint32_t tx_pipe_handle,
-		uint32_t rx_pipe_handle);
+	QDF_STATUS (*ipa_cleanup)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+				  uint32_t tx_pipe_handle,
+				  uint32_t rx_pipe_handle);
 	QDF_STATUS (*ipa_setup_iface)(char *ifname, uint8_t *mac_addr,
 		qdf_ipa_client_type_t prod_client,
 		qdf_ipa_client_type_t cons_client,
