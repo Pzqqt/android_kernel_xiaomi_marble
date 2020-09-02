@@ -3305,6 +3305,9 @@ cppflags-$(CONFIG_DYNAMIC_DEBUG) += -DFEATURE_MULTICAST_HOST_FW_MSGS
 
 cppflags-$(CONFIG_ENABLE_SMMU_S1_TRANSLATION) += -DENABLE_SMMU_S1_TRANSLATION
 
+#Flag to enable/disable Line number logging
+cppflags-$(CONFIG_LOG_LINE_NUMBER) += -DLOG_LINE_NUMBER
+
 #Flag to enable/disable MTRACE feature
 cppflags-$(CONFIG_ENABLE_MTRACE_LOG) += -DENABLE_MTRACE_LOG
 
