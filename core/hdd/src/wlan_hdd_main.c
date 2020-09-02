@@ -17546,15 +17546,9 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 
 		return QDF_STATUS_E_ABORTED;
 	}
-	/*
-	 * sme_neighbor_middle_of_roaming is for LFR2
-	 * hdd_is_roaming_in_progress is for LFR3
-	 */
-	if (((QDF_STA_MODE == adapter->device_mode) &&
-	     sme_neighbor_middle_of_roaming(
-		     mac_handle,
-		     adapter->vdev_id)) ||
-		     hdd_is_roaming_in_progress(hdd_ctx)) {
+
+	if ((QDF_STA_MODE == adapter->device_mode) &&
+	     sme_roaming_in_progress(mac_handle, adapter->vdev_id)) {
 		hdd_debug("%pK(%d) mode %d Reassociation in progress",
 			  WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 			  adapter->vdev_id, adapter->device_mode);

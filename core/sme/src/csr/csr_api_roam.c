@@ -19887,11 +19887,6 @@ csr_cm_fill_rso_sae_single_pmk_info(struct mac_context *mac_ctx,
 	struct wlan_mlme_sae_single_pmk single_pmk;
 	struct wlan_objmgr_vdev *vdev;
 
-	if (!mac_ctx || !req_buf) {
-		sme_debug("Invalid session or req buff");
-		return false;
-	}
-
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {

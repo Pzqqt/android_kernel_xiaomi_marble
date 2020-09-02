@@ -1817,6 +1817,7 @@ wmi_get_rso_buf_len(struct wlan_roam_scan_offload_params *roam_req)
 
 		if (!roam_req->is_rso_stop)
 			wmi_debug("vdev[%d]: %s roam offload: %d",
+				  roam_req->vdev_id,
 				  roam_req->is_rso_stop ? "RSO stop cmd." : "",
 				  roam_req->roam_offload_enabled);
 

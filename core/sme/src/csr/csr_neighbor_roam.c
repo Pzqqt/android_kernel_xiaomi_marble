@@ -1279,6 +1279,30 @@ bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId)
 	return val;
 }
 
+#ifdef ROAM_OFFLOAD_V1
+bool
+wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id)
+{
+	struct csr_roam_session *session;
+	struct mac_context *mac_ctx;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return false;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session) {
+		sme_err("session is null %d", vdev_id);
+		return false;
+	}
+
+	return csr_neighbor_middle_of_roaming(mac_ctx, vdev_id);
+}
+#endif
+
 /**
  * csr_neighbor_roam_process_handoff_req - Processes handoff request
  *

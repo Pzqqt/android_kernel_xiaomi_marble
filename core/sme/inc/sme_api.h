@@ -1011,7 +1011,17 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
  *                    issued with the global SME lock held in this case, and
  *                    uppler layer doesn't have to do any wait.
  */
-QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t session_id);
+QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t vdev_id);
+
+
+/**
+ * sme_roaming_in_progress() - check if roaming is in progress
+ * @mac_handle - The handle returned by mac_open
+ * @vdev_id: vdev id
+ *
+ * Return: true or false
+ */
+bool sme_roaming_in_progress(mac_handle_t mac_handle, uint8_t vdev_id);
 
 /**
  * sme_set_pcl_for_first_connected_vdev  - Set the vdev pcl for the connected

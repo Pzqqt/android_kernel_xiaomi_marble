@@ -6395,6 +6395,34 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t vdev_id,
 	return wlan_cm_enable_rso(mac->pdev, vdev_id, requestor, reason);
 }
 
+QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session) {
+		sme_err("ROAM: incorrect vdev ID %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_cm_abort_rso(mac->pdev, vdev_id);
+}
+
+bool sme_roaming_in_progress(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session) {
+		sme_err("ROAM: incorrect vdev ID %d", vdev_id);
+		return false;
+	}
+
+	return wlan_cm_roaming_in_progress(mac->pdev, vdev_id);
+}
+
 #else
 /**
  * sme_stop_roaming() - Stop roaming for a given sessionId
@@ -6439,7 +6467,7 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	return status;
 }
 
-QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t session_id)
+QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status;
@@ -6450,8 +6478,8 @@ QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t session_id)
 		return status;
 	}
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc, session_id) ||
-	    sme_neighbor_middle_of_roaming(mac_handle, session_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc, vdev_id) ||
+	    sme_neighbor_middle_of_roaming(mac_handle, vdev_id)) {
 		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_BUSY;
 	}
@@ -6459,7 +6487,7 @@ QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t session_id)
 	/* RSO stop cmd will be issued with global SME lock held to avoid
 	 * any racing conditions with wma/csr layer
 	 */
-	sme_stop_roaming(mac_handle, session_id, REASON_DRIVER_DISABLED,
+	sme_stop_roaming(mac_handle, vdev_id, REASON_DRIVER_DISABLED,
 			 RSO_INVALID_REQUESTOR);
 
 	sme_release_global_lock(&mac_ctx->sme);
@@ -6500,6 +6528,30 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 
 	return status;
 }
+
+bool sme_roaming_in_progress(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire global SME lock!");
+		return false;
+	}
+
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc, vdev_id) ||
+	    MLME_IS_ROAMING_IN_PROG(mac_ctx->psoc, vdev_id) ||
+	    mlme_is_roam_invoke_in_progress(mac_ctx->psoc, vdev_id) ||
+	    sme_neighbor_middle_of_roaming(mac_handle, vdev_id)) {
+		sme_release_global_lock(&mac_ctx->sme);
+		return true;
+	}
+
+	sme_release_global_lock(&mac_ctx->sme);
+	return false;
+}
+
 #endif
 
 void sme_set_pcl_for_first_connected_vdev(mac_handle_t mac_handle,
