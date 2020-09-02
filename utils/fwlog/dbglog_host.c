@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4466,7 +4466,7 @@ int dbglog_parser_type_init(wmi_unified_t wmi_handle, int type)
 
 int dbglog_init(wmi_unified_t wmi_handle)
 {
-	int res = 0;
+	QDF_STATUS res;
 
 	OS_MEMSET(mod_print, 0, sizeof(mod_print));
 
@@ -4497,23 +4497,23 @@ int dbglog_init(wmi_unified_t wmi_handle)
 						   wmi_dbg_msg_event_id,
 						   dbglog_parse_debug_logs,
 						   WMA_RX_WORK_CTX);
-	if (res != 0)
-		return res;
+	if (QDF_IS_STATUS_ERROR(res))
+		return A_ERROR;
 
 	/* Register handler for FW diag events */
 	res = wmi_unified_register_event_handler(wmi_handle,
 						 wmi_diag_container_event_id,
 						 fw_diag_data_event_handler,
 						 WMA_RX_WORK_CTX);
-	if (res != 0)
-		return res;
+	if (QDF_IS_STATUS_ERROR(res))
+		return A_ERROR;
 
 	/* Register handler for new FW diag  Event, LOG, MSG combined */
 	res = wmi_unified_register_event_handler(wmi_handle, wmi_diag_event_id,
 						 diag_fw_handler,
 						 WMA_RX_WORK_CTX);
-	if (res != 0)
-		return res;
+	if (QDF_IS_STATUS_ERROR(res))
+		return A_ERROR;
 
 #ifdef WLAN_OPEN_SOURCE
 	/* Initialize the fw debug log queue */
@@ -4524,12 +4524,12 @@ int dbglog_init(wmi_unified_t wmi_handle)
 	dbglog_debugfs_init(wmi_handle);
 #endif /* WLAN_OPEN_SOURCE */
 
-	return res;
+	return A_OK;
 }
 
 int dbglog_deinit(wmi_unified_t wmi_handle)
 {
-	int res = 0;
+	QDF_STATUS res;
 
 #ifdef WLAN_OPEN_SOURCE
 	/* DeInitialize the fw debug log queue */
@@ -4543,8 +4543,8 @@ int dbglog_deinit(wmi_unified_t wmi_handle)
 	res =
 		wmi_unified_unregister_event_handler(wmi_handle,
 						     wmi_dbg_msg_event_id);
-	if (res != 0)
-		return res;
+	if (QDF_IS_STATUS_ERROR(res))
+		return A_ERROR;
 
-	return res;
+	return A_OK;
 }
