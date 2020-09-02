@@ -80,7 +80,7 @@ ucfg_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
  * Return:  QDF_STATUS
  */
 static inline
-QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			       enum wlan_cm_rso_control_requestor requestor,
 			       uint8_t reason)
 {
@@ -97,11 +97,43 @@ QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
  * Return:  QDF_STATUS
  */
 static inline
-QDF_STATUS ucfg_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+QDF_STATUS ucfg_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			      enum wlan_cm_rso_control_requestor requestor,
 			      uint8_t reason)
 {
 	return wlan_cm_enable_rso(pdev, vdev_id, requestor, reason);
 }
+
+/**
+ * ucfg_cm_abort_rso() - Enable roam scan offload to firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Returns:
+ * QDF_STATUS_E_BUSY if roam_synch is in progress and upper layer has to wait
+ *                   before RSO stop cmd can be issued;
+ * QDF_STATUS_SUCCESS if roam_synch is not outstanding. RSO stop cmd will be
+ *                    issued with the global SME lock held in this case, and
+ *                    uppler layer doesn't have to do any wait.
+ */
+static inline
+QDF_STATUS ucfg_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	return wlan_cm_abort_rso(pdev, vdev_id);
+}
+
+/**
+ * ucfg_cm_roaming_in_progress() - check if roaming is in progress
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: true or false
+ */
+static inline bool
+ucfg_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	return wlan_cm_roaming_in_progress(pdev, vdev_id);
+}
+
 #endif
 #endif

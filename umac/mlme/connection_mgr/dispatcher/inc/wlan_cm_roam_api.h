@@ -150,6 +150,17 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 #endif
 
 /**
+ * wlan_cm_neighbor_roam_in_progress() -Check if STA is in the middle of
+ * roaming states
+ * @psoc: psoc
+ * @vdev_id: vdev id
+ *
+ * Return: True or False
+ */
+bool wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id);
+
+/**
  * cm_roam_acquire_lock() - Wrapper for sme_acquire_global_lock.
  *
  * Return: QDF_STATUS
@@ -194,7 +205,7 @@ wlan_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
  *
  * Return:  QDF_STATUS
  */
-QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			       enum wlan_cm_rso_control_requestor requestor,
 			       uint8_t reason);
 
@@ -207,9 +218,33 @@ QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
  *
  * Return:  QDF_STATUS
  */
-QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			      enum wlan_cm_rso_control_requestor requestor,
 			      uint8_t reason);
+
+/**
+ * wlan_cm_abort_rso() - Enable roam scan offload to firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Returns:
+ * QDF_STATUS_E_BUSY if roam_synch is in progress and upper layer has to wait
+ *                   before RSO stop cmd can be issued;
+ * QDF_STATUS_SUCCESS if roam_synch is not outstanding. RSO stop cmd will be
+ *                    issued with the global SME lock held in this case, and
+ *                    uppler layer doesn't have to do any wait.
+ */
+QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_cm_roaming_in_progress() - check if roaming is in progress
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: true or false
+ */
+bool
+wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 
 /**
  * wlan_cm_roam_state_change() - Post roam state change to roam state machine
