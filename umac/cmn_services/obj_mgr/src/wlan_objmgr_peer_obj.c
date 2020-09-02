@@ -74,6 +74,7 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t *macaddr;
 	uint8_t vdev_id;
+	bool peer_free_notify = true;
 
 	if (!peer) {
 		obj_mgr_err("PEER is NULL");
@@ -89,6 +90,10 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 				QDF_MAC_ADDR_REF(macaddr));
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* Notify peer free only for non self peer*/
+	if (peer == wlan_vdev_get_selfpeer(vdev))
+		peer_free_notify = false;
 
 	vdev_id = wlan_vdev_get_id(vdev);
 
@@ -131,7 +136,9 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 	qdf_spinlock_destroy(&peer->peer_lock);
 	qdf_mem_free(peer);
 
-	wlan_objmgr_vdev_peer_freed_notify(vdev);
+	if (peer_free_notify)
+		wlan_objmgr_vdev_peer_freed_notify(vdev);
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);
 
 	return QDF_STATUS_SUCCESS;
