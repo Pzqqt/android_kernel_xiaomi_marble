@@ -2087,7 +2087,7 @@ static void rouleur_evaluate_soc(struct work_struct *work)
 		return;
 	}
 
-	if (soc_val < pdata->soc_threshold_val) {
+	if (soc_val < SOC_THRESHOLD_LEVEL) {
 		dev_dbg(rouleur->dev,
 			"%s battery SoC less than threshold soc_val = %d\n",
 			__func__, soc_val);
@@ -2224,6 +2224,14 @@ static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 	}
 	rouleur->low_soc = false;
 	rouleur->dev_up = true;
+	/* Register notifier to change gain based on state of charge */
+	INIT_WORK(&rouleur->soc_eval_work, rouleur_evaluate_soc);
+	rouleur->psy_nb.notifier_call = rouleur_battery_supply_cb;
+	if (power_supply_reg_notifier(&rouleur->psy_nb) < 0)
+		dev_dbg(rouleur->dev,
+			"%s: could not register pwr supply notifier\n",
+			__func__);
+	queue_work(system_freezable_wq, &rouleur->soc_eval_work);
 done:
 	return ret;
 }
@@ -2463,16 +2471,6 @@ struct rouleur_pdata *rouleur_populate_dt_data(struct device *dev)
 	else
 		pdata->foundry_id_reg = reg;
 
-	if (of_property_read_u32(dev->of_node, "qcom,soc-threshold-voltage"
-	    , &reg)) {
-		dev_dbg(dev, "%s: Looking up %s property in node %s failed\n",
-			__func__, "qcom,soc-threshold-voltage",
-			dev->of_node->full_name);
-		pdata->soc_threshold_val = SOC_THRESHOLD_LEVEL;
-	} else {
-		pdata->soc_threshold_val = reg;
-	}
-
 	/* Parse power supplies */
 	msm_cdc_get_power_supplies(dev, &pdata->regulator,
 				   &pdata->num_supplies);
@@ -2690,14 +2688,6 @@ static int rouleur_bind(struct device *dev)
 		goto err_irq;
 	}
 
-	/* Register notifier to change gain based on state of charge */
-	INIT_WORK(&rouleur->soc_eval_work, rouleur_evaluate_soc);
-	rouleur->psy_nb.notifier_call = rouleur_battery_supply_cb;
-	if (power_supply_reg_notifier(&rouleur->psy_nb) < 0)
-		dev_dbg(rouleur->dev,
-			"%s: could not register pwr supply notifier\n",
-			__func__);
-	queue_work(system_freezable_wq, &rouleur->soc_eval_work);
 	return ret;
 err_irq:
 	wcd_irq_exit(&rouleur->irq_info, rouleur->virq);
