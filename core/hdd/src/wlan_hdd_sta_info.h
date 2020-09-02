@@ -161,6 +161,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
 /**
  * struct hdd_station_info - Per station structure kept in HDD for
  *                                     multiple station support for SoftAP
+ * @sta_node: The sta_info node for the station info list maintained in adapter
  * @in_use: Is the station entry in use?
  * @sta_id: Station ID reported back from HAL (through SAP).
  *           Broadcast uses station ID zero by default.
@@ -220,7 +221,6 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * @tx_retry_exhaust_fw: the number of frames retried but finally failed from
  *                    firmware to remote station
  * @rx_fcs_count: the number of frames received with fcs error
- * @sta_info: The sta_info node for the station info list maintained in adapter
  * @assoc_req_ies: Assoc request IEs of the peer station
  * @ref_cnt: Reference count to synchronize sta_info access
  * @ref_cnt_dbgid: Reference count to debug sta_info synchronization issues
@@ -229,6 +229,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * @peer_rssi_per_chain: Average value of RSSI (dbm) per chain
  */
 struct hdd_station_info {
+	qdf_list_node_t sta_node;
 	bool in_use;
 	uint8_t sta_id;
 	eStationType sta_type;
@@ -281,7 +282,6 @@ struct hdd_station_info {
 	uint32_t tx_retry_fw;
 	uint32_t tx_retry_exhaust_fw;
 	uint32_t rx_fcs_count;
-	qdf_list_node_t sta_node;
 	struct wlan_ies assoc_req_ies;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_cnt_dbgid[STA_INFO_ID_MAX];
@@ -464,8 +464,8 @@ hdd_get_next_sta_info_no_lock(struct hdd_sta_info_obj *sta_info_container,
 #define __hdd_take_ref_and_fetch_next_sta_info_safe(sta_info_container, \
 						    sta_info, next_sta_info, \
 						    sta_info_dbgid) \
-	sta_info = next_sta_info, \
 	qdf_spin_lock_bh(&sta_info_container.sta_obj_lock), \
+	sta_info = next_sta_info, \
 	hdd_get_next_sta_info_no_lock(&sta_info_container, sta_info, \
 				      &next_sta_info), \
 	(next_sta_info) ? hdd_take_sta_info_ref(&sta_info_container, \
