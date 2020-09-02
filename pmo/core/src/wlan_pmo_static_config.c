@@ -416,8 +416,8 @@ pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
 
 	for (i = 0; i < PMO_SUPPORTED_ACTION_CATE_ELE_LIST; i++) {
 		if (i < ALLOWED_ACTION_FRAME_MAP_WORDS)
-			pmo_debug("%s: %d action Wakeup pattern 0x%x in fw",
-				__func__, i, cmd.action_category_map[i]);
+			pmo_debug("%d action Wakeup pattern 0x%x in fw",
+				  i, cmd.action_category_map[i]);
 		else
 			cmd.action_category_map[i] = 0;
 	}

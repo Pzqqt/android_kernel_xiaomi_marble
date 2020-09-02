@@ -2753,8 +2753,7 @@ uint32_t policy_mgr_search_and_check_for_session_conc(
 	status = policy_mgr_get_channel_from_scan_result(
 			psoc, roam_profile, &ch_freq, session_id);
 	if (QDF_STATUS_SUCCESS != status || ch_freq == 0) {
-		policy_mgr_err("%s error %d %d",
-			__func__, status, ch_freq);
+		policy_mgr_err("status: %d ch_freq: %d", status, ch_freq);
 		return 0;
 	}
 
@@ -3794,8 +3793,8 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 		WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_SET(*scan_config, 0);
 		break;
 	case ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN:
-		policy_mgr_debug("%s: dual_mac_disable_ini:%d ", __func__,
-				dual_mac_disable_ini);
+		policy_mgr_debug("dual_mac_disable_ini:%d ",
+				 dual_mac_disable_ini);
 		WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(*scan_config, 0);
 		break;
 	default:

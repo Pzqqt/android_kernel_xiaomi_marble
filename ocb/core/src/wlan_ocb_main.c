@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -211,7 +211,7 @@ static QDF_STATUS ocb_tsf_timer(struct ocb_rx_event *evt)
 	ocb_debug("TSF timer low=%d, high=%d",
 		  tsf_timer->timer_low, tsf_timer->timer_high);
 	if (cbs && cbs->ocb_get_tsf_timer_callback) {
-		ocb_debug("%s: send TSF timer.", __func__);
+		ocb_debug("send TSF timer");
 		cbs->ocb_get_tsf_timer_callback(cbs->ocb_get_tsf_timer_context,
 						tsf_timer);
 		status = QDF_STATUS_SUCCESS;
@@ -249,7 +249,7 @@ static QDF_STATUS ocb_dcc_stats_response(struct ocb_rx_event *evt)
 	cbs = wlan_ocb_get_callbacks(pdev);
 	dcc_stats = &event->rsp.dcc_stats;
 	if (cbs && cbs->ocb_dcc_get_stats_callback) {
-		ocb_debug("%s: send DCC stats", __func__);
+		ocb_debug("send DCC stats");
 		cbs->ocb_dcc_get_stats_callback(cbs->ocb_dcc_get_stats_context,
 						dcc_stats);
 		status = QDF_STATUS_SUCCESS;
@@ -286,7 +286,7 @@ static QDF_STATUS ocb_ndl_response(struct ocb_rx_event *evt)
 	cbs = wlan_ocb_get_callbacks(pdev);
 	ndl = &event->rsp.ndl;
 	if (cbs && cbs->ocb_dcc_update_ndl_callback) {
-		ocb_debug("%s: NDL update response", __func__);
+		ocb_debug("NDL update response");
 		cbs->ocb_dcc_update_ndl_callback(
 				cbs->ocb_dcc_update_ndl_context, ndl);
 		status = QDF_STATUS_SUCCESS;
@@ -324,7 +324,7 @@ static QDF_STATUS ocb_dcc_indication(struct ocb_rx_event *evt)
 	cbs = wlan_ocb_get_callbacks(pdev);
 	dcc_stats = &event->rsp.dcc_stats;
 	if (cbs && cbs->ocb_dcc_stats_event_callback) {
-		ocb_debug("%s: DCC stats indication", __func__);
+		ocb_debug("DCC stats indication");
 		cbs->ocb_dcc_stats_event_callback(
 				cbs->ocb_dcc_stats_event_context, dcc_stats);
 		status = QDF_STATUS_SUCCESS;
