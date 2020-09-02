@@ -330,25 +330,19 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(wmi_unified_t wmi_handle,
 					     uint32_t command,
 					     uint32_t vdev_id);
 
+#ifdef ROAM_OFFLOAD_V1
 /**
- * wmi_unified_roam_scan_offload_chan_list_cmd() - set roam offload channel list
+ * wmi_unified_roam_scan_offload_chan_list_cmd  - Roam scan offload channel
+ * list command
  * @wmi_handle: wmi handle
- * @chan_count: channel count
- * @chan_list: channel list
- * @list_type: list type
- * @vdev_id: vdev id
+ * @rso_ch_info: roam scan offload channel info
  *
- * Set roam offload channel list.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ * Return: QDF_STATUS
  */
 QDF_STATUS
 wmi_unified_roam_scan_offload_chan_list_cmd(wmi_unified_t wmi_handle,
-					    uint8_t chan_count,
-					    uint32_t *chan_list,
-					    uint8_t list_type,
-					    uint32_t vdev_id);
-#ifdef ROAM_OFFLOAD_V1
+			struct wlan_roam_scan_channel_list *rso_ch_info);
+
 /**
  * wmi_unified_roam_scan_offload_rssi_change_cmd() - set roam offload RSSI
  * threshold
@@ -381,6 +375,25 @@ wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
 					      int32_t rssi_change_thresh,
 					      uint32_t bcn_rssi_weight,
 					      uint32_t hirssi_delay_btw_scans);
+
+/**
+ * wmi_unified_roam_scan_offload_chan_list_cmd() - set roam offload channel list
+ * @wmi_handle: wmi handle
+ * @chan_count: channel count
+ * @chan_list: channel list
+ * @list_type: list type
+ * @vdev_id: vdev id
+ *
+ * Set roam offload channel list.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_roam_scan_offload_chan_list_cmd(wmi_unified_t wmi_handle,
+					    uint8_t chan_count,
+					    uint32_t *chan_list,
+					    uint8_t list_type,
+					    uint32_t vdev_id);
 #endif
 
 /**

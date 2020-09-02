@@ -1579,7 +1579,6 @@ struct fw_scan_channels {
  * @rssi_threshold_offset_5g:       Lookup threshold offset for 5G band
  * @early_stop_scan_min_threshold:  Set early stop scan min
  * @early_stop_scan_max_threshold:  Set early stop scan max
- * @first_scan_bucket_threshold:    Set first scan bucket
  * @roam_dense_traffic_threshold:   Dense traffic threshold
  * @roam_dense_rssi_thre_offset:    Sets dense roam RSSI threshold diff
  * @roam_dense_min_aps:             Sets minimum number of AP for dense roam
@@ -1691,7 +1690,6 @@ struct wlan_mlme_lfr_cfg {
 	uint8_t rssi_threshold_offset_5g;
 	uint8_t early_stop_scan_min_threshold;
 	uint8_t early_stop_scan_max_threshold;
-	uint8_t first_scan_bucket_threshold;
 	uint32_t roam_dense_traffic_threshold;
 	uint32_t roam_dense_rssi_thre_offset;
 	uint32_t roam_dense_min_aps;

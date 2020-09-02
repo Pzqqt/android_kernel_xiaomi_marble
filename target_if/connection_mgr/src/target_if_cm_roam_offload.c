@@ -846,6 +846,22 @@ static QDF_STATUS target_if_cm_roam_scan_rssi_change_cmd(
 }
 
 /**
+ * target_if_cm_roam_offload_chan_list  - Send WMI_ROAM_CHAN_LIST command to
+ * firmware
+ * @wmi_handle: Pointer to wmi handle
+ * @rso_chan_info: RSO channel list info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS target_if_cm_roam_offload_chan_list(
+		wmi_unified_t wmi_handle,
+		struct wlan_roam_scan_channel_list *rso_chan_info)
+{
+	return wmi_unified_roam_scan_offload_chan_list_cmd(wmi_handle,
+							   rso_chan_info);
+}
+
+/**
  * target_if_cm_roam_send_start() - Send roam start related commands
  * to wmi
  * @vdev: vdev object
@@ -912,6 +928,14 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 							&req->profile_params);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto end;
+
+	status = target_if_cm_roam_offload_chan_list(wmi_handle,
+						     &req->rso_chan_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Send channel list command failed",
+			      req->rso_chan_info.vdev_id);
+		goto end;
+	}
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_mawc_support)) {
 		status = target_if_cm_roam_scan_mawc_params(wmi_handle,
@@ -1041,6 +1065,14 @@ target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 			mode = WMI_ROAM_SCAN_MODE_NONE;
 	}
 
+	status = target_if_cm_roam_scan_offload_mode(wmi_handle,
+						     &req->rso_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Send RSO mode cmd failed",
+			      req->rso_config.vdev_id);
+		goto end;
+	}
+
 	/*
 	 * After sending the roam scan mode because of a disconnect,
 	 * clear the scan bitmap client as well by sending
@@ -1112,6 +1144,14 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 		goto end;
 	}
 
+	status = target_if_cm_roam_scan_offload_mode(wmi_handle,
+						     &req->rso_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Send RSO mode cmd failed",
+			      req->rso_config.vdev_id);
+		goto end;
+	}
+
 	status = target_if_cm_roam_scan_filter(wmi_handle,
 					       ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					       &req->scan_filter_params);
@@ -1149,6 +1189,15 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 							&req->profile_params);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto end;
+
+	status = target_if_cm_roam_offload_chan_list(wmi_handle,
+						     &req->rso_chan_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Send channel list command failed",
+			      req->rso_chan_info.vdev_id);
+		goto end;
+	}
+
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
 		target_if_err("psoc handle is NULL");
