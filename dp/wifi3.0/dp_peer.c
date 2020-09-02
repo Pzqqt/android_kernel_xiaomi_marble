@@ -1187,11 +1187,17 @@ void dp_peer_unlink_ast_entry(struct dp_soc *soc,
 			      struct dp_ast_entry *ast_entry,
 			      struct dp_peer *peer)
 {
-	if (!peer)
+	if (!peer) {
+		dp_err_rl("NULL peer");
 		return;
+	}
 
-	if (ast_entry->peer_id == HTT_INVALID_PEER)
+	if (ast_entry->peer_id == HTT_INVALID_PEER) {
+		dp_err_rl("Invalid peer id in AST entry mac addr:"QDF_MAC_ADDR_FMT" type:%d",
+			  QDF_MAC_ADDR_REF(ast_entry->mac_addr.raw),
+			  ast_entry->type);
 		return;
+	}
 	/*
 	 * NOTE: Ensure that call to this API is done
 	 * after soc->ast_lock is taken
@@ -1228,11 +1234,17 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
 	struct dp_peer *peer = NULL;
 
-	if (!ast_entry)
+	if (!ast_entry) {
+		dp_err_rl("NULL AST entry");
 		return;
+	}
 
-	if (ast_entry->delete_in_progress)
+	if (ast_entry->delete_in_progress) {
+		dp_err_rl("AST entry deletion in progress mac addr:"QDF_MAC_ADDR_FMT" type:%d",
+			  QDF_MAC_ADDR_REF(ast_entry->mac_addr.raw),
+			  ast_entry->type);
 		return;
+	}
 
 	ast_entry->delete_in_progress = true;
 
@@ -1591,8 +1603,20 @@ static void
 dp_peer_clean_wds_entries(struct dp_soc *soc, struct dp_peer *peer,
 			  uint32_t free_wds_count)
 {
+	struct dp_ast_entry *ast_entry, *temp_ast_entry;
+
 	qdf_spin_lock_bh(&soc->ast_lock);
-	dp_peer_delete_ast_entries(soc, peer);
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry) {
+		dp_peer_unlink_ast_entry(soc, ast_entry, peer);
+
+		if (ast_entry->is_mapped)
+			soc->ast_table[ast_entry->ast_idx] = NULL;
+
+		dp_peer_free_ast_entry(soc, ast_entry);
+	}
+
+	peer->self_ast_entry = NULL;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #endif
