@@ -1482,7 +1482,7 @@ dp_rx_err_ring_record_entry(struct dp_soc *soc, uint64_t paddr,
 	struct dp_buf_info_record *record;
 	uint32_t idx;
 
-	if (qdf_unlikely(soc->rx_err_ring_history))
+	if (qdf_unlikely(!soc->rx_err_ring_history))
 		return;
 
 	idx = dp_history_get_next_index(&soc->rx_err_ring_history->index,
