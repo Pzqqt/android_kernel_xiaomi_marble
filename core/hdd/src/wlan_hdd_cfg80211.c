@@ -4168,6 +4168,7 @@ const struct nla_policy wlan_hdd_set_roam_param_policy[
 	[PARAM_ROAM_ENABLE] = {	.type = NLA_S32},
 	[PARAM_NUM_BSSID] = {.type = NLA_U32},
 	[PARAM_RSSI_MODIFIER] = {.type = NLA_U32},
+	[PARAM_BSSID_PARAMS] = {.type = NLA_NESTED},
 	[PARAMS_NUM_BSSID] = {.type = NLA_U32},
 	[PARAM_ROAM_BSSID] = VENDOR_NLA_POLICY_MAC_ADDR,
 	[PARAM_SET_BSSID] = VENDOR_NLA_POLICY_MAC_ADDR,
