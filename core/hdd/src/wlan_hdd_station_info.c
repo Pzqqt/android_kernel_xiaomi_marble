@@ -1662,69 +1662,6 @@ fail:
 }
 
 /**
- * hdd_get_station_info_ex() - send STA info to userspace, for STA mode only
- * @hdd_ctx: pointer to hdd context
- * @adapter: pointer to adapter
- * @mac_addr: self mac address
- *
- * Return: 0 if success else error status
- */
-static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
-				   struct hdd_adapter *adapter,
-				   struct qdf_mac_addr mac_addr)
-{
-	struct sk_buff *skb = NULL;
-	uint32_t nl_buf_len;
-	struct hdd_station_ctx *hdd_sta_ctx;
-	struct hdd_station_info stainfo;
-
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_sta_ctx) {
-		hdd_err_rl("Invalid hdd_sta_ctx");
-		return -EINVAL;
-	}
-
-	if (!qdf_is_macaddr_equal(&mac_addr, &adapter->mac_addr)) {
-		hdd_err_rl("Invalid MAC address");
-		return -EINVAL;
-	}
-
-	qdf_mem_copy(&stainfo.sta_mac, &mac_addr, sizeof(stainfo.sta_mac));
-
-	if (hdd_get_peer_stats(adapter, &stainfo)) {
-		hdd_err_rl("hdd_get_peer_stats fail");
-		return -EINVAL;
-	}
-
-	nl_buf_len = NLMSG_HDRLEN;
-	nl_buf_len += nla_attr_size(QDF_MAC_ADDR_SIZE) +
-		      hdd_add_peer_stats_get_len(&stainfo);
-
-	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
-	if (!skb) {
-		hdd_err_rl("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		return -ENOMEM;
-	}
-
-	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC,
-		    QDF_MAC_ADDR_SIZE, mac_addr.bytes)) {
-		hdd_err_rl("Failed to put MAC address");
-		goto fail;
-	}
-
-	if (hdd_add_peer_stats(skb, &stainfo)) {
-		hdd_err_rl("hdd_add_peer_stats fail");
-		goto fail;
-	}
-
-	return cfg80211_vendor_cmd_reply(skb);
-fail:
-	if (skb)
-		kfree_skb(skb);
-	return -EINVAL;
-}
-
-/**
  * hdd_get_connected_station_info_ex() - get connected peer's info
  * @hdd_ctx: hdd context
  * @adapter: hostapd interface
@@ -1917,23 +1854,23 @@ __hdd_cfg80211_get_sta_info_cmd(struct wiphy *wiphy,
 		goto out;
 	}
 
-	if (!tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC]) {
-		hdd_err_rl("MAC address is not present");
-		status = -EINVAL;
-		goto out;
-	}
-
-	nla_memcpy(mac_addr.bytes, tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC],
-		   QDF_MAC_ADDR_SIZE);
-	hdd_debug("STA " QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr.bytes));
-
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-		status = hdd_get_station_info_ex(hdd_ctx, adapter, mac_addr);
 		break;
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
+		if (!tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC]) {
+			hdd_err_rl("MAC address is not present");
+			status = -EINVAL;
+			goto out;
+		}
+
+		nla_memcpy(mac_addr.bytes,
+			   tb[QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAC],
+			   QDF_MAC_ADDR_SIZE);
+		hdd_debug("STA " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(mac_addr.bytes));
 		status = hdd_get_station_remote_ex(hdd_ctx, adapter, mac_addr);
 		break;
 	default:
