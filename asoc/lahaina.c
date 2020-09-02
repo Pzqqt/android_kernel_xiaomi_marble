@@ -5020,14 +5020,12 @@ static int msm_snd_cdc_dma_startup(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static int send_cps_config(struct snd_soc_pcm_runtime *rtd,
+static void set_cps_config(struct snd_soc_pcm_runtime *rtd,
 				u32 num_ch, u32 ch_mask)
 {
 	int i = 0;
-	int ret = 0;
 	int val = 0;
 	u8 dev_num = 0;
-	int param_size = 0;
 	int ch_configured = 0;
 	char wsa_cdc_name[DEV_NAME_STR_LEN];
 	struct snd_soc_component *component = NULL;
@@ -5037,29 +5035,29 @@ static int send_cps_config(struct snd_soc_pcm_runtime *rtd,
 
 	if (!pdata) {
 		pr_err("%s: pdata is NULL\n", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	if (!num_ch) {
 		pr_err("%s: channel count is 0\n", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	if (!pdata->get_wsa_dev_num) {
 		pr_err("%s: get_wsa_dev_num is NULL\n", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	if (!pdata->cps_config.spkr_dep_cfg) {
 		pr_err("%s: spkr_dep_cfg is NULL\n", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	if (!pdata->cps_config.hw_reg_cfg.lpass_wr_cmd_reg_phy_addr ||
 	   !pdata->cps_config.hw_reg_cfg.lpass_rd_cmd_reg_phy_addr ||
 	   !pdata->cps_config.hw_reg_cfg.lpass_rd_fifo_reg_phy_addr) {
 		pr_err("%s: cps static configuration is not set\n", __func__);
-		return -EINVAL;
+		return;
 	}
 
 	pdata->cps_config.lpass_hw_intf_cfg_mode = 1;
@@ -5077,14 +5075,14 @@ static int send_cps_config(struct snd_soc_pcm_runtime *rtd,
 		if (!component) {
 			pr_err("%s: %s component is NULL\n", __func__,
 				wsa_cdc_name);
-			return -EINVAL;
+			return;
 		}
 
 		dev_num = pdata->get_wsa_dev_num(component);
 		if (dev_num < 0 || dev_num > SWR_MAX_SLAVE_DEVICES) {
 			pr_err("%s: invalid slave dev num : %d\n", __func__,
 				dev_num);
-			return -EINVAL;
+			return;
 		}
 
 		/* Clear stale dev num info */
@@ -5106,18 +5104,8 @@ static int send_cps_config(struct snd_soc_pcm_runtime *rtd,
 		ch_configured++;
 	}
 
-	param_size = sizeof(struct afe_cps_hw_intf_cfg) -
-			sizeof(pdata->cps_config.spkr_dep_cfg) +
-			(sizeof(struct lpass_swr_spkr_dep_cfg_t)
-				* pdata->cps_config.hw_reg_cfg.num_spkr);
-
-	ret = afe_send_cps_config(msm_get_port_id(dai_link->id),
-					&pdata->cps_config, param_size);
-	if (ret) {
-		pr_err("%s: afe_send_cps_cfg failed\n", __func__);
-	}
-
-	return ret;
+	afe_set_cps_config(msm_get_port_id(dai_link->id),
+					&pdata->cps_config, ch_mask);
 }
 
 static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
@@ -5170,7 +5158,7 @@ static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 
 			if (dai_link->id == MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0 ||
 			    dai_link->id == MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1) {
-				send_cps_config(rtd, user_set_rx_ch,
+				set_cps_config(rtd, user_set_rx_ch,
 						rx_ch_cdc_dma);
 			}
 		}
