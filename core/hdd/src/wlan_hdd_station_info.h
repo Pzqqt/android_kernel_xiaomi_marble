@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,7 @@ extern const struct nla_policy hdd_get_station_policy[
 			QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX + 1];
 
 /**
- * wlan_hdd_cfg80211_get_station_cmd() - Handle get station vendor cmd
+ * hdd_cfg80211_get_station_cmd() - Handle get station vendor cmd
  * @wiphy: corestack handler
  * @wdev: wireless device
  * @data: data
@@ -50,14 +50,14 @@ extern const struct nla_policy hdd_get_sta_policy[
 			QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX + 1];
 
 /**
- * wlan_hdd_cfg80211_get_sta_info_cmd() - Handle get sta info vendor cmd
+ * hdd_cfg80211_get_sta_info_cmd() - Handle get sta info vendor cmd
  * @wiphy: corestack handler
  * @wdev: wireless device
  * @data: data
  * @data_len: data length
  *
  * Handles QCA_NL80211_VENDOR_SUBCMD_GET_STA_INFO.
- * Validate cmd attributes and send the station info to upper layers.
+ * Validate cmd attributes and send the sta info to upper layers.
  *
  * Return: Success(0) or reason code for failure
  */

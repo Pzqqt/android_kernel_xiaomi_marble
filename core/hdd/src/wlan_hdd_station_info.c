@@ -58,6 +58,19 @@
 #define STATION_MAX \
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX
 
+#define STA_INFO_INVALID \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_INVALID
+#define STA_INFO_BIP_MIC_ERROR_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BIP_MIC_ERROR_COUNT
+#define STA_INFO_BIP_REPLAY_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BIP_REPLAY_COUNT
+#define STA_INFO_BEACON_MIC_ERROR_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_MIC_ERROR_COUNT
+#define STA_INFO_BEACON_REPLAY_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_REPLAY_COUNT
+#define STA_INFO_MAX \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX
+
 /* define short names for get station info attributes */
 #define LINK_INFO_STANDARD_NL80211_ATTR \
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR
@@ -126,7 +139,6 @@
  * feature, if it is 0 it indicates FW doesn't support this feature
  */
 #define HDD_STATION_INFO_RX_MC_BC_COUNT (1 << 31)
-
 
 const struct nla_policy
 hdd_get_station_policy[STATION_MAX + 1] = {
@@ -1594,6 +1606,55 @@ hdd_add_peer_stats_get_len(struct hdd_station_info *stainfo)
 }
 
 /**
+ * hdd_get_pmf_bcn_protect_stats_len() - get pmf bcn protect counters len
+ * @adapter: adapter holding valid bcn protect counters
+ *
+ * This function calculates the data length for valid pmf bcn counters.
+ *
+ * Return: total data length used in hdd_add_peer_stats()
+ */
+static uint32_t
+hdd_get_pmf_bcn_protect_stats_len(struct hdd_adapter *adapter)
+{
+	if (!adapter->hdd_stats.bcn_protect_stats.pmf_bcn_stats_valid)
+		return 0;
+
+	/* 4 pmf becon protect counters each of 32 bit */
+	return nla_attr_size(sizeof(uint32_t) * 4);
+}
+
+/**
+ * hdd_add_pmf_bcn_protect_stats() - add pmf bcn protect counters in resp
+ * @skb: pointer to response skb buffer
+ * @adapter: adapter holding valid bcn protect counters
+ *
+ * This function adds the pmf bcn stats in response.
+ *
+ * Return: 0 on success
+ */
+static int hdd_add_pmf_bcn_protect_stats(struct sk_buff *skb,
+					 struct hdd_adapter *adapter)
+{
+	if (!adapter->hdd_stats.bcn_protect_stats.pmf_bcn_stats_valid)
+		return 0;
+
+	adapter->hdd_stats.bcn_protect_stats.pmf_bcn_stats_valid = 0;
+	if (nla_put_u32(skb, STA_INFO_BIP_MIC_ERROR_COUNT,
+			adapter->hdd_stats.bcn_protect_stats.igtk_mic_fail_cnt) ||
+	    nla_put_u32(skb, STA_INFO_BIP_REPLAY_COUNT,
+			adapter->hdd_stats.bcn_protect_stats.igtk_replay_cnt) ||
+	    nla_put_u32(skb, STA_INFO_BEACON_MIC_ERROR_COUNT,
+			adapter->hdd_stats.bcn_protect_stats.bcn_mic_fail_cnt) ||
+	    nla_put_u32(skb, STA_INFO_BEACON_REPLAY_COUNT,
+			adapter->hdd_stats.bcn_protect_stats.bcn_replay_cnt)) {
+		hdd_err("put fail");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
  * hdd_add_peer_stats - add peer statistics information
  * @skb: pointer to response skb buffer
  * @stainfo: station information
@@ -1808,6 +1869,49 @@ static int hdd_get_station_remote_ex(struct hdd_context *hdd_ctx,
 }
 
 /**
+ * hdd_get_station_info_ex() - send STA info to userspace, for STA mode only
+ * @hdd_ctx: pointer to hdd context
+ * @adapter: pointer to adapter
+ *
+ * Return: 0 if success else error status
+ */
+static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
+				   struct hdd_adapter *adapter)
+{
+	struct sk_buff *skb;
+	uint32_t nl_buf_len;
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (wlan_hdd_get_station_stats(adapter)) {
+		hdd_err_rl("wlan_hdd_get_station_stats fail");
+		return -EINVAL;
+	}
+
+	nl_buf_len = hdd_get_pmf_bcn_protect_stats_len(adapter);
+	if (!nl_buf_len) {
+		hdd_err_rl("Failed to get bcn pmf stats");
+		return -EINVAL;
+	}
+	nl_buf_len += NLMSG_HDRLEN;
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+	if (!skb) {
+		hdd_err_rl("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	if (hdd_add_pmf_bcn_protect_stats(skb, adapter)) {
+		hdd_err_rl("hdd_add_pmf_bcn_protect_stats fail");
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+
+	return cfg80211_vendor_cmd_reply(skb);
+}
+
+/**
  * __hdd_cfg80211_get_sta_info_cmd() - Handle get sta info vendor cmd
  * @wiphy: pointer to wireless phy
  * @wdev: wireless device
@@ -1857,6 +1961,7 @@ __hdd_cfg80211_get_sta_info_cmd(struct wiphy *wiphy,
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
+		status = hdd_get_station_info_ex(hdd_ctx, adapter);
 		break;
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:

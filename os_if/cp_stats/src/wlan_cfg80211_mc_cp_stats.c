@@ -495,6 +495,7 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	qdf_mem_copy(priv->vdev_chain_rssi, ev->vdev_chain_rssi, rssi_size);
 	qdf_mem_copy(priv->vdev_summary_stats, ev->vdev_summary_stats,
 		     summary_size);
+	priv->bcn_protect_stats = ev->bcn_protect_stats;
 
 station_stats_cb_fail:
 	osif_request_complete(request);
@@ -585,6 +586,7 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	if (priv->peer_adv_stats)
 		out->peer_adv_stats = priv->peer_adv_stats;
 	priv->peer_adv_stats = NULL;
+	out->bcn_protect_stats = priv->bcn_protect_stats;
 	osif_request_put(request);
 
 	osif_debug("Exit");

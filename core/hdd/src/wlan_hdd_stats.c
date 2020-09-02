@@ -4866,15 +4866,12 @@ void hdd_wlan_fill_per_chain_rssi_stats(struct station_info *sinfo,
 		sinfo->filled |= HDD_INFO_SIGNAL_AVG;
 	}
 }
-
 #else
-
 static inline
 void hdd_wlan_fill_per_chain_rssi_stats(struct station_info *sinfo,
 					struct hdd_adapter *adapter)
 {
 }
-
 #endif
 
 #if defined(CFG80211_RX_FCS_ERROR_REPORTING_SUPPORT)
@@ -6229,6 +6226,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	qdf_mem_copy(adapter->hdd_stats.per_chain_rssi_stats.rssi,
 		     stats->vdev_chain_rssi[0].chain_rssi,
 		     sizeof(stats->vdev_chain_rssi[0].chain_rssi));
+	adapter->hdd_stats.bcn_protect_stats = stats->bcn_protect_stats;
 	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 
 out:

@@ -700,6 +700,7 @@ struct hdd_stats {
 #endif
 	struct hdd_eapol_stats_s hdd_eapol_stats;
 	struct hdd_dhcp_stats_s hdd_dhcp_stats;
+	struct pmf_bcn_protect_stats bcn_protect_stats;
 };
 
 /**

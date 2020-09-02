@@ -271,17 +271,35 @@ struct summary_stats {
 };
 
 /**
+ * struct pmf_bcn_protect_stats - pmf bcn protect stats param
+ * @pmf_bcn_stats_valid: bcn protect stats received from fw are valid or not
+ * @igtk_mic_fail_cnt: MIC failure count of management packets using IGTK
+ * @igtk_replay_cnt: Replay detection count of management packets using IGTK
+ * @bcn_mic_fail_cnt: MIC failure count of beacon packets using BIGTK
+ * @bcn_replay_cnt: Replay detection count of beacon packets using BIGTK
+ */
+struct pmf_bcn_protect_stats {
+	bool pmf_bcn_stats_valid;
+	uint32_t igtk_mic_fail_cnt;
+	uint32_t igtk_replay_cnt;
+	uint32_t bcn_mic_fail_cnt;
+	uint32_t bcn_replay_cnt;
+};
+
+/**
  * struct vdev_mc_cp_stats - vdev specific stats
  * @cca: cca stats
  * @tx_rate_flags: tx rate flags (enum tx_rate_info)
  * @chain_rssi: chain rssi
  * @vdev_summary_stats: vdev's summary stats
+ * @pmf_bcn_stats: pmf beacon protect stats
  */
 struct vdev_mc_cp_stats {
 	struct cca_stats cca;
 	uint32_t tx_rate_flags;
 	int8_t chain_rssi[MAX_NUM_CHAINS];
 	struct summary_stats vdev_summary_stats;
+	struct pmf_bcn_protect_stats pmf_bcn_stats;
 };
 
 /**
@@ -560,6 +578,7 @@ struct peer_stats_info_ext_event {
  *              MSB indicates if this feature is supported by FW or not.
  * @num_peer_stats_info_ext: number of peer extended stats info
  * @peer_stats_info_ext: peer extended stats info
+ * @pmf_bcn_protect_stats: pmf bcn protect stats
  */
 struct stats_event {
 	uint32_t num_pdev_stats;
@@ -585,6 +604,7 @@ struct stats_event {
 	uint32_t last_event;
 	uint32_t num_peer_stats_info_ext;
 	struct peer_stats_info_ext_event *peer_stats_info_ext;
+	struct pmf_bcn_protect_stats bcn_protect_stats;
 };
 
 /**
