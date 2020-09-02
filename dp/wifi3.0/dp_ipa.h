@@ -248,6 +248,17 @@ bool dp_ipa_is_mdm_platform(void);
 
 qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc, qdf_nbuf_t nbuf);
 
+/**
+ * dp_ipa_tx_buf_smmu_mapping() Create SMMU mappings for IPA
+ * allocated TX buffers
+ * @soc_hdl - handle to the soc
+ * @pdev_id - pdev id number, to get the handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_ipa_tx_buf_smmu_mapping(
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+
 #else
 static inline int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
@@ -277,6 +288,12 @@ static inline qdf_nbuf_t dp_ipa_handle_rx_reo_reinject(struct dp_soc *soc,
 						       qdf_nbuf_t nbuf)
 {
 	return nbuf;
+}
+
+static inline QDF_STATUS dp_ipa_tx_buf_smmu_mapping(
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 #endif
