@@ -389,9 +389,12 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_6GHZ: 6Ghz specific feature ID
  * @QDF_MODULE_ID_IOT_SIM: IOT Simulation for rogue AP module ID
  * @QDF_MODULE_ID_IFMGR: Interface Manager feature ID
+ * @QDF_MODULE_ID_MSCS: MSCS feature ID
  * @QDF_MODULE_ID_GPIO: GPIO configuration module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
+ *
+ * New module ID needs to be added in qdf trace along with this enum.
  */
 typedef enum {
 	QDF_MODULE_ID_MIN       = 0,
