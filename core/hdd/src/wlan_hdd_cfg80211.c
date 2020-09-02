@@ -13360,7 +13360,7 @@ const struct nla_policy
 qca_wlan_vendor_set_nud_stats_policy[STATS_SET_MAX + 1] = {
 	[STATS_SET_START] = {.type = NLA_FLAG },
 	[STATS_GW_IPV4] = {.type = NLA_U32 },
-	[STATS_SET_DATA_PKT_INFO] = {.type = NLA_U32 },
+	[STATS_SET_DATA_PKT_INFO] = {.type = NLA_NESTED },
 };
 
 /* define short names for the global vendor params */
