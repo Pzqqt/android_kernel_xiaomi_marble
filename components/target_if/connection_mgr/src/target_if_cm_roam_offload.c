@@ -388,6 +388,7 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 		req->rssi_thresh &= 0x000000ff;
 		req->hi_rssi_scan_rssi_ub -= NOISE_FLOOR_DBM_DEFAULT;
 		req->bg_scan_bad_rssi_thresh -= NOISE_FLOOR_DBM_DEFAULT;
+		req->roam_data_rssi_threshold -= NOISE_FLOOR_DBM_DEFAULT;
 		req->good_rssi_threshold -= NOISE_FLOOR_DBM_DEFAULT;
 		req->good_rssi_threshold &= 0x000000ff;
 	}
@@ -466,6 +467,10 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 			req->bg_scan_bad_rssi_thresh,
 			req->bg_scan_client_bitmap,
 			req->roam_bad_rssi_thresh_offset_2g);
+	target_if_debug("Roam data rssi triggers:0x%x, threshold:%d, rx time:%d",
+			req->roam_data_rssi_threshold_triggers,
+			req->roam_data_rssi_threshold,
+			req->rx_data_inactivity_time);
 
 	status = wmi_unified_roam_scan_offload_rssi_thresh_cmd(wmi_handle, req);
 	if (QDF_IS_STATUS_ERROR(status)) {

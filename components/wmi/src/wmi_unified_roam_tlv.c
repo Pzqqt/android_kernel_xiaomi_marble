@@ -179,6 +179,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 	wmi_roam_earlystop_rssi_thres_param *early_stop_thresholds = NULL;
 	wmi_roam_dense_thres_param *dense_thresholds = NULL;
 	wmi_roam_bg_scan_roaming_param *bg_scan_params = NULL;
+	wmi_roam_data_rssi_roaming_param *data_rssi_param = NULL;
 
 	len = sizeof(wmi_roam_scan_rssi_threshold_fixed_param);
 	len += WMI_TLV_HDR_SIZE; /* TLV for ext_thresholds*/
@@ -189,6 +190,8 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 	len += sizeof(wmi_roam_dense_thres_param);
 	len += WMI_TLV_HDR_SIZE; /* TLV for BG Scan*/
 	len += sizeof(wmi_roam_bg_scan_roaming_param);
+	len += WMI_TLV_HDR_SIZE; /* TLV for data RSSI*/
+	len += sizeof(wmi_roam_data_rssi_roaming_param);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -289,6 +292,26 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_roam_bg_scan_roaming_param));
 
+	buf_ptr += sizeof(wmi_roam_bg_scan_roaming_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_roam_data_rssi_roaming_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	data_rssi_param = (wmi_roam_data_rssi_roaming_param *)buf_ptr;
+	data_rssi_param->flags =
+		roam_req->roam_data_rssi_threshold_triggers;
+	data_rssi_param->roam_data_rssi_thres =
+		roam_req->roam_data_rssi_threshold;
+	data_rssi_param->rx_inactivity_ms =
+		roam_req->rx_data_inactivity_time;
+	WMITLV_SET_HDR(&data_rssi_param->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_roam_data_rssi_roaming_param));
+	WMI_LOGD("Data rssi threshold: %d, triggers: 0x%x, rx time: %d",
+		 data_rssi_param->roam_data_rssi_thres,
+		 data_rssi_param->flags,
+		 data_rssi_param->rx_inactivity_ms);
+
 	wmi_mtrace(WMI_ROAM_SCAN_RSSI_THRESHOLD, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_RSSI_THRESHOLD);
@@ -383,6 +406,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 	wmi_roam_earlystop_rssi_thres_param *early_stop_thresholds = NULL;
 	wmi_roam_dense_thres_param *dense_thresholds = NULL;
 	wmi_roam_bg_scan_roaming_param *bg_scan_params = NULL;
+	wmi_roam_data_rssi_roaming_param *data_rssi_param = NULL;
 
 	len = sizeof(wmi_roam_scan_rssi_threshold_fixed_param);
 	len += WMI_TLV_HDR_SIZE; /* TLV for ext_thresholds*/
@@ -488,6 +512,22 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 		       WMITLV_TAG_STRUC_wmi_roam_bg_scan_roaming_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_roam_bg_scan_roaming_param));
+
+	buf_ptr += sizeof(wmi_roam_bg_scan_roaming_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_roam_data_rssi_roaming_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	data_rssi_param = (wmi_roam_data_rssi_roaming_param *)buf_ptr;
+	data_rssi_param->flags =
+		roam_req->roam_data_rssi_threshold_triggers;
+	data_rssi_param->roam_data_rssi_thres =
+		roam_req->roam_data_rssi_threshold;
+	data_rssi_param->rx_inactivity_ms =
+			roam_req->rx_data_inactivity_time;
+	WMITLV_SET_HDR(&data_rssi_param->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_roam_data_rssi_roaming_param));
 
 	wmi_mtrace(WMI_ROAM_SCAN_RSSI_THRESHOLD, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,

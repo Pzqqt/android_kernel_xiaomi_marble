@@ -586,13 +586,19 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.traffic_threshold =
 			roam_params->traffic_threshold;
 	params.initial_dense_status = roam_params->initial_dense_status;
-	if (db2dbm_enabled)
+	if (db2dbm_enabled) {
 		params.bg_scan_bad_rssi_thresh =
 					   roam_params->bg_scan_bad_rssi_thresh;
-	else
-		params.bg_scan_bad_rssi_thresh =
-					  roam_params->bg_scan_bad_rssi_thresh -
-					  WMA_NOISE_FLOOR_DBM_DEFAULT;
+		params.roam_data_rssi_threshold =
+					roam_params->roam_data_rssi_threshold;
+	} else {
+		params.roam_data_rssi_threshold =
+				roam_params->roam_data_rssi_threshold -
+				WMA_NOISE_FLOOR_DBM_DEFAULT;
+		params.roam_data_rssi_threshold =
+					roam_params->roam_data_rssi_threshold -
+					WMA_NOISE_FLOOR_DBM_DEFAULT;
+	}
 
 	params.bg_scan_client_bitmap = roam_params->bg_scan_client_bitmap;
 	params.roam_bad_rssi_thresh_offset_2g =
@@ -706,6 +712,10 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		  roam_params->bg_scan_bad_rssi_thresh,
 		  roam_params->bg_scan_client_bitmap,
 		  roam_params->roam_bad_rssi_thresh_offset_2g);
+	wma_debug("Roam data rssi triggers:0x%x, threshold:%d, rx time:%d",
+		  roam_params->roam_data_rssi_threshold_triggers,
+		  roam_params->roam_data_rssi_threshold,
+		  roam_params->rx_data_inactivity_time);
 	return status;
 }
 
