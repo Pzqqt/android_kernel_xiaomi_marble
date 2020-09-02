@@ -806,9 +806,9 @@ static QDF_STATUS wlan_scan_request_dequeue(
  *
  * Return: none
  */
-static void wlan_cfg80211_scan_done(struct net_device *netdev,
-				    struct cfg80211_scan_request *req,
-				    bool aborted)
+void wlan_cfg80211_scan_done(struct net_device *netdev,
+			     struct cfg80211_scan_request *req,
+			     bool aborted)
 {
 	struct cfg80211_scan_info info = {
 		.aborted = aborted
@@ -828,9 +828,9 @@ static void wlan_cfg80211_scan_done(struct net_device *netdev,
  *
  * Return: none
  */
-static void wlan_cfg80211_scan_done(struct net_device *netdev,
-				    struct cfg80211_scan_request *req,
-				    bool aborted)
+void wlan_cfg80211_scan_done(struct net_device *netdev,
+			     struct cfg80211_scan_request *req,
+			     bool aborted)
 {
 	if (netdev->flags & IFF_UP)
 		cfg80211_scan_done(req, aborted);

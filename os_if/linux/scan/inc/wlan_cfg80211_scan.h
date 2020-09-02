@@ -429,4 +429,17 @@ void wlan_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
+/**
+ * wlan_cfg80211_scan_done() - Scan completed callback to cfg80211
+ * @netdev: Net device
+ * @req : Scan request
+ * @aborted : true scan aborted false scan success
+ *
+ * This function notifies scan done to cfg80211
+ *
+ * Return: none
+ */
+void wlan_cfg80211_scan_done(struct net_device *netdev,
+			     struct cfg80211_scan_request *req,
+			     bool aborted);
 #endif
