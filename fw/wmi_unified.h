@@ -19217,6 +19217,13 @@ enum {
      * lower_thresh_degreeC.
      */
     WMI_THERMAL_MGMT_ACTION_NOTIFY_HOST = 2,
+    /* CHAIN SCALING -
+     * The target will switch tx chain mask from multi chains to single chain
+     * if the temperature rises above upper_thresh_degreeC.
+     * The target will switch tx chainmask back to multi chains if the
+     * temperature drops below upper_thresh_degreeC.
+     */
+    WMI_THERMAL_MGMT_ACTION_CHAINSCALING = 3,
 };
 
 typedef struct {
