@@ -51,7 +51,7 @@ void ol_txrx_vdev_pause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	/* TO DO: log the queue pause */
 	/* acquire the mutex lock, since we'll be modifying the queues */
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	vdev->ll_pause.paused_reason |= reason;
@@ -59,7 +59,7 @@ void ol_txrx_vdev_pause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	vdev->ll_pause.is_q_paused = true;
 	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 }
 
 void ol_txrx_vdev_unpause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
@@ -75,7 +75,7 @@ void ol_txrx_vdev_unpause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	/* TO DO: log the queue unpause */
 	/* acquire the mutex lock, since we'll be modifying the queues */
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	if (vdev->ll_pause.paused_reason & reason) {
@@ -91,7 +91,7 @@ void ol_txrx_vdev_unpause(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	} else {
 		qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 	}
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 }
 
 void ol_txrx_vdev_flush(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)

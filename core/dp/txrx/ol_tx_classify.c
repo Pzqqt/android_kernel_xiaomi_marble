@@ -431,7 +431,7 @@ ol_tx_classify(
 	A_UINT8 tid;
 	u_int8_t peer_id;
 
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 	dest_addr = ol_tx_dest_addr_find(pdev, tx_nbuf);
 	if (unlikely(!dest_addr)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX,
@@ -570,7 +570,7 @@ ol_tx_classify(
 				       QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 			return NULL; /* error */
 		}
-		TX_SCHED_DEBUG_PRINT("Peer found\n");
+		TX_SCHED_DEBUG_PRINT("Peer found");
 		if (!peer->qos_capable) {
 			tid = OL_TX_NON_QOS_TID;
 		} else if ((peer->security[
@@ -644,7 +644,7 @@ ol_tx_classify(
 	/* Update Tx Queue info */
 	tx_desc->txq = txq;
 
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 	return txq;
 }
 
@@ -661,7 +661,7 @@ ol_tx_classify_mgmt(
 	A_UINT8 *dest_addr;
 	union ol_txrx_align_mac_addr_t local_mac_addr_aligned, *mac_addr;
 
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 	dest_addr = ol_tx_dest_addr_find(pdev, tx_nbuf);
 	if (unlikely(!dest_addr)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX,
@@ -759,7 +759,7 @@ ol_tx_classify_mgmt(
 	/* Update Tx Queue info */
 	tx_desc->txq = txq;
 
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 	return txq;
 }
 

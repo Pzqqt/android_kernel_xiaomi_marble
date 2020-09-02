@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -193,7 +193,7 @@ ol_tx_sched_select_batch_rr(
 	u_int16_t frames, used_credits = 0, tx_limit, tx_limit_flag = 0;
 	int bytes;
 
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 
 	if (TAILQ_EMPTY(&scheduler->tx_active_tids_list))
 		return used_credits;
@@ -238,7 +238,7 @@ ol_tx_sched_select_batch_rr(
 	}
 	sctx->frms += frames;
 
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 	return used_credits;
 }
 
@@ -1289,7 +1289,7 @@ ol_tx_sched_discard_select(
 	notify_ctx.info.ext_tid = cat;
 	ol_tx_sched_notify(pdev, &notify_ctx);
 
-	TX_SCHED_DEBUG_PRINT("%s Tx Drop : %d\n", __func__, frms);
+	TX_SCHED_DEBUG_PRINT("Tx Drop : %d", frms);
 	return frms;
 }
 
@@ -1362,7 +1362,7 @@ ol_tx_sched_dispatch(
 	u_int16_t msdu_id;
 	int num_msdus = 0;
 
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 	while (sctx->frms) {
 		tx_desc = TAILQ_FIRST(&sctx->head);
 		if (!tx_desc) {
@@ -1438,7 +1438,7 @@ ol_tx_sched_dispatch(
 	/*Send Batch Of Frames*/
 	if (head_msdu)
 		ol_tx_send_batch(pdev, head_msdu, num_msdus);
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 }
 
 #ifdef QCA_TX_PADDING_CREDIT_SUPPORT
@@ -1490,7 +1490,7 @@ ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 	struct ol_tx_sched_ctx sctx;
 	u_int32_t credit;
 
-	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Enter");
 	qdf_spin_lock_bh(&pdev->tx_queue_spinlock);
 	if (pdev->tx_sched.tx_sched_status != ol_tx_scheduler_idle) {
 		qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
@@ -1550,7 +1550,7 @@ ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 
 	pdev->tx_sched.tx_sched_status = ol_tx_scheduler_idle;
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
-	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
+	TX_SCHED_DEBUG_PRINT("Leave");
 }
 
 void *
