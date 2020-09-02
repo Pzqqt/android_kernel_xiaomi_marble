@@ -3220,7 +3220,8 @@ void sde_kms_display_early_wakeup(struct drm_device *dev,
 		else
 			drm_enc = conn->encoder;
 
-		sde_encoder_early_wakeup(drm_enc);
+		if (drm_enc)
+			sde_encoder_early_wakeup(drm_enc);
 	}
 
 	drm_connector_list_iter_end(&conn_iter);
