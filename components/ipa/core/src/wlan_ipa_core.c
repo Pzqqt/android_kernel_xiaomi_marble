@@ -3637,6 +3637,7 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 
 	if (true == ipa_ctx->uc_loaded) {
 		status = cdp_ipa_cleanup(ipa_ctx->dp_soc,
+					 ipa_ctx->dp_pdev_id,
 					 ipa_ctx->tx_pipe_handle,
 					 ipa_ctx->rx_pipe_handle);
 		if (status)

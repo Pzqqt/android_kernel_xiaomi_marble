@@ -261,8 +261,9 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 			     bool is_rm_enabled, uint32_t *tx_pipe_handle,
 			     uint32_t *rx_pipe_handle);
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
-QDF_STATUS ol_txrx_ipa_cleanup(uint32_t tx_pipe_handle,
-		uint32_t rx_pipe_handle);
+QDF_STATUS ol_txrx_ipa_cleanup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
+			       uint32_t tx_pipe_handle,
+			       uint32_t rx_pipe_handle);
 QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 		qdf_ipa_client_type_t prod_client,
 		qdf_ipa_client_type_t cons_client,
