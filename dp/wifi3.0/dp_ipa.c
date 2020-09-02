@@ -699,7 +699,7 @@ QDF_STATUS dp_ipa_get_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	struct dp_ipa_resources *ipa_res;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -756,7 +756,7 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	uint32_t rx_ready_doorbell_dmaaddr;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -802,7 +802,7 @@ QDF_STATUS dp_ipa_op_response(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -830,7 +830,7 @@ QDF_STATUS dp_ipa_register_op_cb(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -883,7 +883,7 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	uint32_t ix2;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -935,7 +935,7 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	uint32_t ix3;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1213,7 +1213,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	int ret;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1408,7 +1408,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	int ret;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1694,7 +1694,7 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	QDF_STATUS result;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1729,7 +1729,7 @@ QDF_STATUS dp_ipa_disable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	QDF_STATUS result;
 
 	if (!pdev) {
-		dp_err("%s invalid instance", __func__);
+		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 

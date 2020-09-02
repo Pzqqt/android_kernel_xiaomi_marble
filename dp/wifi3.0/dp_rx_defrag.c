@@ -774,7 +774,7 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 	while (next) {
 		pktlen += (qdf_nbuf_len(next) - hdrlen);
 		prev = next;
-		dp_debug("%s pktlen %u", __func__,
+		dp_debug("pktlen %u",
 			 (uint32_t)(qdf_nbuf_len(next) - hdrlen));
 		next = qdf_nbuf_next(next);
 	}
@@ -1033,7 +1033,7 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc, struct dp_peer *peer, int tid,
 						rx_desc_info))
 		fc = hal_rx_get_frame_ctrl_field(rx_desc_info);
 
-	dp_debug("%s: frame control type: 0x%x", __func__, fc);
+	dp_debug("Frame control type: 0x%x", fc);
 
 	switch (((fc & 0xff00) >> 8) & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:

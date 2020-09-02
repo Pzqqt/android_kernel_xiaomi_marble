@@ -946,7 +946,7 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 	else
 		HTT_SRING_SETUP_PDEV_ID_SET(*msg_word, mac_id);
 
-	dp_info("%s: mac_id %d", __func__, mac_id);
+	dp_info("mac_id %d", mac_id);
 	HTT_SRING_SETUP_RING_TYPE_SET(*msg_word, htt_ring_type);
 	/* TODO: Discuss with FW on changing this to unique ID and using
 	 * htt_ring_type to send the type of ring
@@ -971,10 +971,9 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 	HTT_SRING_SETUP_ENTRY_SIZE_SET(*msg_word, ring_entry_size);
 	HTT_SRING_SETUP_RING_SIZE_SET(*msg_word,
 		(ring_entry_size * srng_params.num_entries));
-	dp_info("%s: entry_size %d", __func__, ring_entry_size);
-	dp_info("%s: num_entries %d", __func__, srng_params.num_entries);
-	dp_info("%s: ring_size %d", __func__,
-		(ring_entry_size * srng_params.num_entries));
+	dp_info("entry_size %d", ring_entry_size);
+	dp_info("num_entries %d", srng_params.num_entries);
+	dp_info("ring_size %d", (ring_entry_size * srng_params.num_entries));
 	if (htt_ring_type == HTT_SW_TO_HW_RING)
 		HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_SET(
 						*msg_word, 1);

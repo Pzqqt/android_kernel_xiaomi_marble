@@ -2659,8 +2659,7 @@ void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	} else if (reo_status->rx_queue_status.header.status !=
 		HAL_REO_CMD_SUCCESS) {
 		/* Should not happen normally. Just print error for now */
-		dp_info_rl("%s: Rx tid HW desc deletion failed(%d): tid %d",
-			   __func__,
+		dp_info_rl("Rx tid HW desc deletion failed(%d): tid %d",
 			   reo_status->rx_queue_status.header.status,
 			   freedesc->rx_tid.tid);
 	}
@@ -2767,8 +2766,8 @@ void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			 * In case of MCL path add the desc back to the free
 			 * desc list and defer deletion.
 			 */
-			dp_info_rl("%s: fail to send REO cmd to flush cache: tid %d",
-				   __func__, rx_tid->tid);
+			dp_info_rl("fail to send REO cmd to flush cache: tid %d",
+				   rx_tid->tid);
 			dp_reo_desc_clean_up(soc, desc, &reo_status);
 			DP_STATS_INC(soc, rx.err.reo_cmd_send_fail, 1);
 			break;
@@ -3129,11 +3128,11 @@ int dp_addba_resp_tx_completion_wifi3(struct cdp_soc_t *cdp_soc,
 	if (dp_rx_tid_update_wifi3(peer, tid,
 				   rx_tid->ba_win_size,
 				   rx_tid->startseqnum)) {
-		dp_err("%s: failed update REO SSN", __func__);
+		dp_err("Failed update REO SSN");
 	}
 
-	dp_info("%s: tid %u window_size %u start_seq_num %u",
-		__func__, tid, rx_tid->ba_win_size,
+	dp_info("tid %u window_size %u start_seq_num %u",
+		tid, rx_tid->ba_win_size,
 		rx_tid->startseqnum);
 
 	/* First Session */
@@ -4169,8 +4168,8 @@ bool dp_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
 		peer = dp_peer_find_hash_find(soc, peer_addr, 0, i,
 					      DP_MOD_ID_CDP);
 		if (peer) {
-			dp_err("%s: Duplicate peer "QDF_MAC_ADDR_FMT" already exist on vdev %d",
-			       __func__, QDF_MAC_ADDR_REF(peer_addr), i);
+			dp_err("Duplicate peer "QDF_MAC_ADDR_FMT" already exist on vdev %d",
+			       QDF_MAC_ADDR_REF(peer_addr), i);
 			dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 			return true;
 		}

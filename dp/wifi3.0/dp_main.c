@@ -6363,7 +6363,7 @@ dp_record_mscs_params(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
 				      DP_MOD_ID_CDP);
 
 	if (!peer) {
-		dp_err("%s: Peer is NULL!\n", __func__);
+		dp_err("Peer is NULL!");
 		goto fail;
 	}
 	if (!active) {
@@ -9561,7 +9561,7 @@ QDF_STATUS dp_txrx_clear_dump_stats(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!soc) {
-		dp_err("%s: soc is NULL", __func__);
+		dp_err("soc is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
