@@ -2329,7 +2329,7 @@ send_roam_scan_offload_mode_cmd_tlv(
 
 	/* Ensure there is no additional IEs */
 	scan_cmd_fp->ie_len = 0;
-	buf += sizeof(wmi_start_scan_cmd_fixed_param);
+	buf_ptr += sizeof(wmi_start_scan_cmd_fixed_param);
 
 	status = wmi_fill_rso_tlvs(wmi_handle, buf_ptr, rso_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3118,6 +3118,74 @@ error:
 	return status;
 }
 
+#ifdef ROAM_OFFLOAD_V1
+/**
+ * send_roam_scan_offload_chan_list_cmd_tlv() - set roam offload channel list
+ * @wmi_handle: wmi handle
+ *
+ * Set roam offload channel list.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_roam_scan_offload_chan_list_cmd_tlv(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_scan_channel_list *rso_ch_info)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len, list_tlv_len;
+	int i;
+	uint8_t *buf_ptr;
+	wmi_roam_chan_list_fixed_param *chan_list_fp;
+	uint32_t *roam_chan_list_array;
+	uint8_t chan_count = rso_ch_info->chan_count;
+	uint32_t *chan_list = rso_ch_info->chan_freq_list;
+
+	/* Channel list is a table of 2 TLV's */
+	list_tlv_len = WMI_TLV_HDR_SIZE + chan_count * sizeof(uint32_t);
+	len = sizeof(wmi_roam_chan_list_fixed_param) + list_tlv_len;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	chan_list_fp = (wmi_roam_chan_list_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&chan_list_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_chan_list_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_chan_list_fixed_param));
+	chan_list_fp->vdev_id = rso_ch_info->vdev_id;
+	chan_list_fp->num_chan = chan_count;
+	if (rso_ch_info->chan_cache_type == WMI_CHANNEL_LIST_STATIC)
+		/* external app is controlling channel list */
+		chan_list_fp->chan_list_type =
+			WMI_ROAM_SCAN_CHAN_LIST_TYPE_STATIC;
+	else
+		/* umac supplied occupied channel list in LFR */
+		chan_list_fp->chan_list_type =
+			WMI_ROAM_SCAN_CHAN_LIST_TYPE_DYNAMIC;
+
+	buf_ptr += sizeof(wmi_roam_chan_list_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       (chan_list_fp->num_chan * sizeof(uint32_t)));
+	roam_chan_list_array = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; ((i < chan_list_fp->num_chan) &&
+		     (i < WMI_ROAM_MAX_CHANNELS)); i++)
+		roam_chan_list_array[i] = chan_list[i];
+
+	wmi_mtrace(WMI_ROAM_CHAN_LIST, NO_SESSION, 0);
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_CHAN_LIST);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto error;
+
+	return QDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return status;
+}
+#else
 /**
  * send_roam_scan_offload_chan_list_cmd_tlv() - set roam offload channel list
  * @wmi_handle: wmi handle
@@ -3189,6 +3257,7 @@ error:
 
 	return status;
 }
+#endif
 
 #ifdef ROAM_OFFLOAD_V1
 /**

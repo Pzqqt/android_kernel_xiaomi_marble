@@ -1808,7 +1808,6 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 	return status;
 }
 
-#ifndef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_check_band_freq_match() - check if passed band and ch freq match
@@ -1888,7 +1887,6 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
 
 	return false;
 }
-#endif
 #endif
 
 #ifdef FEATURE_WLAN_ESE
@@ -19878,6 +19876,359 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->trig_score_delta[BTM_ROAM_TRIGGER];
 }
 
+/**
+ * csr_cm_populate_roam_chan_list() - Populate roam channel list
+ * parameters
+ * @mac_ctx: global mac ctx
+ * @dst: Destination roam channel buf to populate the roam chan list
+ * @src: Source channel list
+ *
+ * Return: QDF_STATUS enumeration
+ */
+static QDF_STATUS
+csr_cm_populate_roam_chan_list(struct mac_context *mac_ctx,
+			       struct wlan_roam_scan_channel_list *dst,
+			       tCsrChannelInfo *src)
+{
+	enum band_info band;
+	uint32_t band_cap;
+	uint8_t i = 0;
+	uint8_t num_channels = 0;
+	uint32_t *freq_lst = src->freq_list;
+
+	/*
+	 * The INI channels need to be filtered with respect to the current band
+	 * that is supported.
+	 */
+	band_cap = mac_ctx->mlme_cfg->gen.band_capability;
+	if (!band_cap) {
+		sme_err("Invalid band_cap(%d), roam scan offload req aborted",
+			band_cap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	band = wlan_reg_band_bitmap_to_band_info(band_cap);
+	num_channels = dst->chan_count;
+	for (i = 0; i < src->numOfChannels; i++) {
+		if (csr_is_channel_present_in_list(dst->chan_freq_list,
+						   num_channels, *freq_lst)) {
+			freq_lst++;
+			continue;
+		}
+		if (is_dfs_unsafe_extra_band_chan(mac_ctx, *freq_lst, band)) {
+			freq_lst++;
+			continue;
+		}
+		dst->chan_freq_list[num_channels++] = *freq_lst;
+		freq_lst++;
+	}
+	dst->chan_count = num_channels;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef FEATURE_WLAN_ESE
+static void csr_cm_fetch_ch_lst_from_received_list(
+			struct mac_context *mac_ctx,
+			tpCsrNeighborRoamControlInfo roam_info,
+			tCsrChannelInfo *curr_ch_lst_info,
+			struct wlan_roam_scan_channel_list *rso_chan_info)
+{
+	uint8_t i = 0;
+	uint8_t num_channels = 0;
+	uint32_t *freq_lst = NULL;
+	enum band_info band = BAND_ALL;
+
+	if (curr_ch_lst_info->numOfChannels == 0)
+		return;
+
+	freq_lst = curr_ch_lst_info->freq_list;
+	for (i = 0; i < curr_ch_lst_info->numOfChannels; i++) {
+		if (is_dfs_unsafe_extra_band_chan(mac_ctx, *freq_lst, band)) {
+			freq_lst++;
+			continue;
+		}
+		rso_chan_info->chan_freq_list[num_channels++] = *freq_lst;
+		freq_lst++;
+	}
+	rso_chan_info->chan_count = num_channels;
+	rso_chan_info->chan_cache_type = CHANNEL_LIST_DYNAMIC;
+}
+#else
+static void csr_cm_fetch_ch_lst_from_received_list(
+			struct mac_context *mac_ctx,
+			tpCsrNeighborRoamControlInfo roam_info,
+			tCsrChannelInfo *curr_ch_lst_info,
+			struct wlan_roam_scan_channel_list *rso_chan_info)
+{}
+#endif
+
+static void csr_cm_fetch_ch_lst_from_occupied_lst(
+			struct mac_context *mac_ctx,
+			tpCsrNeighborRoamControlInfo roam_info,
+			struct wlan_roam_scan_channel_list *rso_chan_info,
+			uint8_t vdev_id, uint8_t reason)
+{
+	uint8_t i = 0;
+	uint8_t num_channels = 0;
+	uint32_t op_freq;
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	uint32_t *ch_lst;
+	enum band_info band = BAND_ALL;
+
+	if (!session) {
+		sme_err("session NULL for vdev:%d", vdev_id);
+		return;
+	}
+
+	ch_lst = mac_ctx->scan.occupiedChannels[vdev_id].channel_freq_list;
+	op_freq = session->connectedProfile.op_freq;
+
+	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(op_freq))
+			band = BAND_5G;
+		else if (WLAN_REG_IS_24GHZ_CH_FREQ(op_freq))
+			band = BAND_2G;
+		else
+			band = BAND_UNKNOWN;
+	}
+
+	for (i = 0; i < mac_ctx->scan.occupiedChannels[vdev_id].numChannels;
+	     i++) {
+		if (is_dfs_unsafe_extra_band_chan(mac_ctx, *ch_lst, band)) {
+			ch_lst++;
+			continue;
+		}
+		rso_chan_info->chan_freq_list[num_channels++] = *ch_lst;
+		ch_lst++;
+	}
+	rso_chan_info->chan_count = num_channels;
+	rso_chan_info->chan_cache_type = CHANNEL_LIST_DYNAMIC;
+}
+
+/**
+ * csr_cm_add_ch_lst_from_roam_scan_list() - channel from roam scan chan list
+ * parameters
+ * @mac_ctx: Global mac ctx
+ * @rso_chan_info: RSO channel info
+ * @roam_info: roam info struct
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS csr_cm_add_ch_lst_from_roam_scan_list(
+			struct mac_context *mac_ctx,
+			struct wlan_roam_scan_channel_list *rso_chan_info,
+			tpCsrNeighborRoamControlInfo roam_info)
+{
+	QDF_STATUS status;
+	tCsrChannelInfo *pref_chan_info = &roam_info->cfgParams.pref_chan_info;
+
+	if (!pref_chan_info->numOfChannels)
+		return QDF_STATUS_SUCCESS;
+
+	status = csr_cm_populate_roam_chan_list(mac_ctx,
+					     rso_chan_info,
+					     pref_chan_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to copy channels to roam list");
+		return status;
+	}
+	sme_dump_freq_list(pref_chan_info);
+	rso_chan_info->chan_cache_type = CHANNEL_LIST_DYNAMIC;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * csr_cm_fetch_valid_ch_lst() - fetch channel list from valid channel list and
+ * update rso req msg
+ * parameters
+ * @mac_ctx: global mac ctx
+ * @rso_chan_buf: out param, roam offload scan request channel info buffer
+ * @vdev_id: Vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+csr_cm_fetch_valid_ch_lst(struct mac_context *mac_ctx,
+			  struct wlan_roam_scan_channel_list *rso_chan_info,
+			  uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	uint32_t host_channels = 0;
+	uint32_t *ch_freq_list = NULL;
+	uint8_t i = 0, num_channels = 0;
+	enum band_info band = BAND_ALL;
+	uint32_t op_freq;
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (!session) {
+		sme_err("session NULL for vdev:%d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	op_freq = session->connectedProfile.op_freq;
+	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(op_freq))
+			band = BAND_5G;
+		else if (WLAN_REG_IS_24GHZ_CH_FREQ(op_freq))
+			band = BAND_2G;
+		else
+			band = BAND_UNKNOWN;
+	}
+	host_channels = sizeof(mac_ctx->roam.valid_ch_freq_list);
+	status = csr_get_cfg_valid_channels(mac_ctx,
+					    mac_ctx->roam.valid_ch_freq_list,
+					    &host_channels);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to get the valid channel list");
+		return status;
+	}
+
+	ch_freq_list = mac_ctx->roam.valid_ch_freq_list;
+	mac_ctx->roam.numValidChannels = host_channels;
+
+	for (i = 0; i < mac_ctx->roam.numValidChannels; i++) {
+		if (is_dfs_unsafe_extra_band_chan(mac_ctx, *ch_freq_list,
+						  band)) {
+			ch_freq_list++;
+			continue;
+		}
+		rso_chan_info->chan_freq_list[num_channels++] =	*ch_freq_list;
+		ch_freq_list++;
+	}
+	rso_chan_info->chan_count = num_channels;
+	rso_chan_info->chan_cache_type = CHANNEL_LIST_DYNAMIC;
+
+	return status;
+}
+
+/**
+ * csr_cm_fetch_ch_lst_from_ini() - fetch channel list from ini and update req msg
+ * parameters
+ * @mac_ctx:      global mac ctx
+ * @roam_info:    roam info struct
+ * @rso_chan_info:
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS csr_cm_fetch_ch_lst_from_ini(
+			struct mac_context *mac_ctx,
+			tpCsrNeighborRoamControlInfo roam_info,
+			struct wlan_roam_scan_channel_list *rso_chan_info)
+{
+	QDF_STATUS status;
+	tCsrChannelInfo *specific_chan_info;
+
+	specific_chan_info = &roam_info->cfgParams.specific_chan_info;
+
+	status = csr_cm_populate_roam_chan_list(mac_ctx, rso_chan_info,
+						specific_chan_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to copy channels to roam list");
+		return status;
+	}
+	rso_chan_info->chan_cache_type = CHANNEL_LIST_STATIC;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
+			     struct wlan_roam_scan_channel_list *rso_chan_info,
+			     uint8_t vdev_id, uint8_t reason)
+{
+	tpCsrNeighborRoamControlInfo roam_info =
+			&mac_ctx->roam.neighborRoamInfo[vdev_id];
+	tCsrChannelInfo *specific_chan_info =
+			&roam_info->cfgParams.specific_chan_info;
+	tpCsrChannelInfo curr_ch_lst_info =
+		&roam_info->roamChannelInfo.currentChannelListInfo;
+	QDF_STATUS status;
+	bool ese_neighbor_list_recvd = false;
+	uint8_t ch_cache_str[128] = {0};
+	uint8_t i, j;
+
+#ifdef FEATURE_WLAN_ESE
+	/*
+	 * this flag will be true if connection is ESE and no neighbor
+	 * list received or if the connection is not ESE
+	 */
+	ese_neighbor_list_recvd = ((roam_info->isESEAssoc)
+		&& (roam_info->roamChannelInfo.IAPPNeighborListReceived
+		    == false)) || (!roam_info->isESEAssoc);
+#endif /* FEATURE_WLAN_ESE */
+
+	rso_chan_info->vdev_id = vdev_id;
+	if (ese_neighbor_list_recvd ||
+	    curr_ch_lst_info->numOfChannels == 0) {
+		/*
+		 * Retrieve the Channel Cache either from ini or from
+		 * the occupied channels list along with preferred
+		 * channel list configured by the client.
+		 * Give Preference to INI Channels
+		 */
+		if (specific_chan_info->numOfChannels) {
+			status = csr_cm_fetch_ch_lst_from_ini(mac_ctx,
+							      roam_info,
+							      rso_chan_info);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				sme_err("Fetch channel list from ini failed");
+				return;
+			}
+		} else if (reason == REASON_FLUSH_CHANNEL_LIST) {
+			rso_chan_info->chan_cache_type = CHANNEL_LIST_STATIC;
+			rso_chan_info->chan_count = 0;
+		} else {
+			csr_cm_fetch_ch_lst_from_occupied_lst(mac_ctx,
+							      roam_info,
+							      rso_chan_info,
+							      vdev_id, reason);
+			/* Add the preferred channel list configured by
+			 * client to the roam channel list along with
+			 * occupied channel list.
+			 */
+			csr_cm_add_ch_lst_from_roam_scan_list(mac_ctx,
+							      rso_chan_info,
+							      roam_info);
+		}
+	} else {
+		/*
+		 * If ESE is enabled, and a neighbor Report is received,
+		 * then Ignore the INI Channels or the Occupied Channel
+		 * List. Consider the channels in the neighbor list sent
+		 * by the ESE AP
+		 */
+		csr_cm_fetch_ch_lst_from_received_list(mac_ctx, roam_info,
+						       curr_ch_lst_info,
+						       rso_chan_info);
+	}
+
+	if (!rso_chan_info->chan_count &&
+	    reason != REASON_FLUSH_CHANNEL_LIST) {
+		/* Maintain the Valid Channels List */
+		status = csr_cm_fetch_valid_ch_lst(mac_ctx, rso_chan_info,
+						   vdev_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("Fetch channel list fail");
+			return;
+		}
+	}
+
+	for (i = 0, j = 0; i < rso_chan_info->chan_count; i++) {
+		if (j < sizeof(ch_cache_str))
+			j += snprintf(ch_cache_str + j,
+				      sizeof(ch_cache_str) - j, " %d",
+				      rso_chan_info->chan_freq_list[i]);
+		else
+			break;
+	}
+
+	sme_debug("ChnlCacheType:%d, No of Chnls:%d,Channels: %s",
+		  rso_chan_info->chan_cache_type,
+		  rso_chan_info->chan_count, ch_cache_str);
+}
+
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static bool
 csr_cm_fill_rso_sae_single_pmk_info(struct mac_context *mac_ctx,
@@ -20430,6 +20781,8 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
 					    &req->profile_params);
 
+	csr_cm_fill_rso_channel_list(mac_ctx, &req->rso_chan_info, vdev_id,
+				     reason);
 	csr_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_START,
 				reason, &req->scan_filter_params);
 
@@ -20537,6 +20890,8 @@ wlan_cm_roam_fill_update_config_req(struct wlan_objmgr_psoc *psoc,
 
 	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
 					    &req->profile_params);
+	csr_cm_fill_rso_channel_list(mac_ctx, &req->rso_chan_info, vdev_id,
+				     reason);
 
 	return QDF_STATUS_SUCCESS;
 }

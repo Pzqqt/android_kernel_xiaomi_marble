@@ -1005,6 +1005,22 @@ struct wlan_roam_scan_period_params {
 	uint32_t roam_scan_period_after_inactivity;
 	uint32_t full_scan_period;
 };
+
+#define ROAM_MAX_CHANNELS 80
+/**
+ * wlan_roam_scan_channel_list  - Roam Scan channel list related
+ * parameters
+ * @vdev_id: Vdev id
+ * @chan_count: Channel count
+ * @chan_freq_list: Frequency list pointer
+ * @chan_cache_type: Static or dynamic channel cache
+ */
+struct wlan_roam_scan_channel_list {
+	uint32_t vdev_id;
+	uint8_t chan_count;
+	uint32_t chan_freq_list[ROAM_MAX_CHANNELS];
+	uint8_t chan_cache_type;
+};
 #endif
 
 /**
@@ -1034,6 +1050,7 @@ struct wlan_roam_rssi_change_params {
  * @scan_period_params: roam scan period parameters
  * @rssi_change_params: Roam offload RSSI change parameters
  * @profile_params: ap profile parameters
+ * @rso_chan_info: Roam scan channel list parameters
  * @mawc_params: mawc parameters
  * @scan_filter_params: roam scan filter parameters
  * @btm_config: btm configuration
@@ -1051,6 +1068,7 @@ struct wlan_roam_start_config {
 	struct wlan_roam_scan_offload_params rso_config;
 	struct wlan_roam_rssi_change_params rssi_change_params;
 	struct ap_profile_params profile_params;
+	struct wlan_roam_scan_channel_list rso_chan_info;
 	struct wlan_roam_mawc_params mawc_params;
 	struct wlan_roam_scan_filter_params scan_filter_params;
 	struct wlan_roam_btm_config btm_config;
@@ -1097,6 +1115,7 @@ struct wlan_roam_stop_config {
  * @rssi_change_params: roam scan rssi change parameters
  * @rso_config: roam scan mode configurations
  * @profile_params: ap profile parameters
+ * @rso_chan_info: Roam scan channel list parameters
  * @rssi_params: roam scan rssi threshold parameters
  * @disconnect_params: disconnect params
  * @idle_params: idle params
@@ -1109,6 +1128,7 @@ struct wlan_roam_update_config {
 	struct wlan_roam_rssi_change_params rssi_change_params;
 	struct wlan_roam_scan_offload_params rso_config;
 	struct ap_profile_params profile_params;
+	struct wlan_roam_scan_channel_list rso_chan_info;
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
 	struct wlan_roam_disconnect_params disconnect_params;
 	struct wlan_roam_idle_params idle_params;
