@@ -10223,6 +10223,45 @@ static QDF_STATUS extract_bcn_stats_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_vdev_prb_fils_stats_tlv() - extract vdev probe and fils
+ * stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param index: Index into vdev stats
+ * @param vdev_prb_fd_stats: Pointer to hold vdev probe and fils stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_vdev_prb_fils_stats_tlv(wmi_unified_t wmi_handle,
+				void *evt_buf, uint32_t index,
+				struct wmi_host_vdev_prb_fils_stats *vdev_stats)
+{
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_extd_stats *ev;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
+
+	if (param_buf->vdev_extd_stats) {
+		ev = (wmi_vdev_extd_stats *)(param_buf->vdev_extd_stats +
+					     index);
+		vdev_stats->vdev_id = ev->vdev_id;
+		vdev_stats->fd_succ_cnt = ev->fd_succ_cnt;
+		vdev_stats->fd_fail_cnt = ev->fd_fail_cnt;
+		vdev_stats->unsolicited_prb_succ_cnt =
+			ev->unsolicited_prb_succ_cnt;
+		vdev_stats->unsolicited_prb_fail_cnt =
+			ev->unsolicited_prb_fail_cnt;
+		WMI_LOGD("vdev: %d, fd_s: %d, fd_f: %d, prb_s: %d, prb_f: %d",
+			 ev->vdev_id, ev->fd_succ_cnt, ev->fd_fail_cnt,
+			 ev->unsolicited_prb_succ_cnt,
+			 ev->unsolicited_prb_fail_cnt);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_bcnflt_stats_tlv() - extract bcn fault stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -13900,6 +13939,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_bcn_stats = extract_bcn_stats_tlv,
 	.extract_bcnflt_stats = extract_bcnflt_stats_tlv,
 	.extract_chan_stats = extract_chan_stats_tlv,
+	.extract_vdev_prb_fils_stats = extract_vdev_prb_fils_stats_tlv,
 	.extract_profile_ctx = extract_profile_ctx_tlv,
 	.extract_profile_data = extract_profile_data_tlv,
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,

@@ -2302,6 +2302,18 @@ QDF_STATUS wmi_extract_vdev_nac_rssi_stats(
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_vdev_prb_fils_stats(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		uint32_t index,
+		struct wmi_host_vdev_prb_fils_stats *vdev_prb_fils_stats)
+{
+	if (wmi_handle->ops->extract_vdev_prb_fils_stats)
+		return wmi_handle->ops->extract_vdev_prb_fils_stats(wmi_handle,
+				evt_buf, index, vdev_prb_fils_stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_send_power_dbg_cmd(wmi_unified_t wmi_handle,
 					  struct wmi_power_dbg_params *param)
 {

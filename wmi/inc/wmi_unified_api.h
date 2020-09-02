@@ -3119,6 +3119,21 @@ QDF_STATUS wmi_extract_vdev_nac_rssi_stats(
 		struct wmi_host_vdev_nac_rssi_event *vdev_nac_rssi_stats);
 
 /**
+ * wmi_extract_vdev_prb_fils_stats() - extract probe and fils vdev
+ * stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @index: Index into extended vdev stats
+ * @vdev_prb_fils_stats: Pointer to hold probe and fils vdev stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_vdev_prb_fils_stats(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		uint32_t index,
+		struct wmi_host_vdev_prb_fils_stats *vdev_prb_fils_stats);
+
+/**
  * wmi_extract_peer_retry_stats() - extract peer retry stats from event
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer

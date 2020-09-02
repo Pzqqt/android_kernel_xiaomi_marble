@@ -85,6 +85,7 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_per_chain_rssi_stats *rssi_event;
 	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
 	uint64_t min_data_len;
+	uint32_t i;
 
 	qdf_mem_zero(stats_param, sizeof(*stats_param));
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
@@ -100,50 +101,55 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	switch (ev->stats_id) {
-	case WMI_REQUEST_PEER_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_STAT;
-		break;
+	for (i = 1; i <= WMI_REQUEST_VDEV_EXTD_STAT; i = i << 1) {
+		switch (ev->stats_id & i) {
+		case WMI_REQUEST_PEER_STAT:
+			stats_param->stats_id |= WMI_HOST_REQUEST_PEER_STAT;
+			break;
 
-	case WMI_REQUEST_AP_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_AP_STAT;
-		break;
+		case WMI_REQUEST_AP_STAT:
+			stats_param->stats_id |= WMI_HOST_REQUEST_AP_STAT;
+			break;
 
-	case WMI_REQUEST_PDEV_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_PDEV_STAT;
-		break;
+		case WMI_REQUEST_PDEV_STAT:
+			stats_param->stats_id |= WMI_HOST_REQUEST_PDEV_STAT;
+			break;
 
-	case WMI_REQUEST_VDEV_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_STAT;
-		break;
+		case WMI_REQUEST_VDEV_STAT:
+			stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_STAT;
+			break;
 
-	case WMI_REQUEST_BCNFLT_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_BCNFLT_STAT;
-		break;
+		case WMI_REQUEST_BCNFLT_STAT:
+			stats_param->stats_id |= WMI_HOST_REQUEST_BCNFLT_STAT;
+			break;
 
-	case WMI_REQUEST_VDEV_RATE_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_RATE_STAT;
-		break;
+		case WMI_REQUEST_VDEV_RATE_STAT:
+			stats_param->stats_id |=
+				WMI_HOST_REQUEST_VDEV_RATE_STAT;
+			break;
 
-	case WMI_REQUEST_BCN_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_BCN_STAT;
-		break;
-	case WMI_REQUEST_PEER_EXTD_STAT:
-		stats_param->stats_id |= WMI_REQUEST_PEER_EXTD_STAT;
-		break;
+		case WMI_REQUEST_BCN_STAT:
+			stats_param->stats_id |= WMI_HOST_REQUEST_BCN_STAT;
+			break;
+		case WMI_REQUEST_PEER_EXTD_STAT:
+			stats_param->stats_id |= WMI_REQUEST_PEER_EXTD_STAT;
+			break;
 
-	case WMI_REQUEST_PEER_EXTD2_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_ADV_STATS;
-		break;
+		case WMI_REQUEST_PEER_EXTD2_STAT:
+			stats_param->stats_id |=
+				WMI_HOST_REQUEST_PEER_ADV_STATS;
+			break;
 
-	case WMI_REQUEST_PMF_BCN_PROTECT_STAT:
-		stats_param->stats_id |= WMI_HOST_REQUEST_PMF_BCN_PROTECT_STAT;
-		break;
+		case WMI_REQUEST_PMF_BCN_PROTECT_STAT:
+			stats_param->stats_id |=
+				WMI_HOST_REQUEST_PMF_BCN_PROTECT_STAT;
+			break;
 
-	default:
-		stats_param->stats_id = 0;
-		break;
-
+		case WMI_REQUEST_VDEV_EXTD_STAT:
+			stats_param->stats_id |=
+				WMI_HOST_REQUEST_VDEV_PRB_FILS_STAT;
+			break;
+		}
 	}
 
 	/* ev->num_*_stats may cause uint32_t overflow, so use uint64_t
@@ -203,11 +209,14 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 	stats_param->num_rssi_stats = rssi_event->num_per_chain_rssi_stats;
 
-	/* if peer_adv_stats is not populated */
-	if (!param_buf->num_peer_extd2_stats)
-		return QDF_STATUS_SUCCESS;
+	if (param_buf->vdev_extd_stats)
+		stats_param->num_vdev_extd_stats =
+			param_buf->num_vdev_extd_stats;
 
-	stats_param->num_peer_adv_stats = param_buf->num_peer_extd2_stats;
+	/* if peer_adv_stats is not populated */
+	if (param_buf->num_peer_extd2_stats)
+		stats_param->num_peer_adv_stats =
+			param_buf->num_peer_extd2_stats;
 
 	return QDF_STATUS_SUCCESS;
 }
