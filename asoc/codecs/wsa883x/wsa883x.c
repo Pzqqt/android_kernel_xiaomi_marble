@@ -121,6 +121,7 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_DRE_CTL_1, 0x3E, 0x20},
 	{WSA883X_CKWD_CTL_1, 0x1F, 0x1B},
 	{WSA883X_GMAMP_SUP1, 0x60, 0x60},
+	{WSA883X_OVERRIDE2, 0x02, 0x02},
 };
 
 static int wsa883x_handle_post_irq(void *data);
