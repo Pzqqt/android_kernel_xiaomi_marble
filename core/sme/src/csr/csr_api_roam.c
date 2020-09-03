@@ -20349,19 +20349,22 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 			struct mac_context *mac,
 			struct csr_roam_session *session,
 			struct wlan_roam_scan_offload_params *rso_config,
-			uint8_t command)
+			uint8_t command, uint32_t *mode)
 {
 	struct wlan_objmgr_vdev *vdev;
 	tSirMacCapabilityInfo self_caps;
 	tSirMacQosInfoStation sta_qos_info;
+	enum csr_akm_type akm;
+	eCsrEncryptionType encr;
 	uint16_t *final_caps_val;
 	uint8_t *qos_cfg_val, temp_val;
 	uint32_t pmkid_modes = mac->mlme_cfg->sta.pmkid_modes;
 	uint32_t val = 0;
+	uint16_t vdev_id = session->vdev_id;
 	qdf_size_t val_len;
 	QDF_STATUS status;
 	tpCsrNeighborRoamControlInfo roam_info =
-		&mac->roam.neighborRoamInfo[session->vdev_id];
+		&mac->roam.neighborRoamInfo[vdev_id];
 
 	rso_config->roam_offload_enabled =
 		mac->mlme_cfg->lfr.lfr3_roaming_offload;
@@ -20369,10 +20372,10 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 		return QDF_STATUS_SUCCESS;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-						    session->vdev_id,
+						    vdev_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
-		sme_err("Vdev:%d is NULL", session->vdev_id);
+		sme_err("Vdev:%d is NULL", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -20395,6 +20398,9 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 		mac->mlme_cfg->btm.rct_validity_timer;
 	rso_config->rso_lfr3_params.disable_self_roam =
 		!mac->mlme_cfg->lfr.enable_self_bss_roam;
+	if (!roam_info->roam_control_enable &&
+	    mac->mlme_cfg->lfr.roam_force_rssi_trigger)
+		*mode |= WMI_ROAM_SCAN_MODE_RSSI_CHANGE;
 
 	/* Fill LFR3 specific self capabilities for roam scan mode TLV */
 	self_caps.ess = 1;
@@ -20497,7 +20503,7 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 	/* Check whether to send psk_pmk or sae_single pmk info */
 	if (!csr_cm_fill_rso_sae_single_pmk_info(mac,
 						 &rso_config->rso_11i_info,
-						 session->vdev_id)) {
+						 vdev_id)) {
 		rso_config->rso_11i_info.is_sae_same_pmk = false;
 		qdf_mem_copy(rso_config->rso_11i_info.psk_pmk, session->psk_pmk,
 			     sizeof(rso_config->rso_11i_info.psk_pmk));
@@ -20516,8 +20522,10 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 				       session);
 	csr_cm_update_rso_ese_info(mac, rso_config, roam_info, session);
 
-	/* TODO: Fill auth mode */
-	rso_config->akm = WMI_AUTH_OPEN;
+	akm = mac->roam.roamSession[vdev_id].connectedProfile.AuthType;
+	encr =
+	mac->roam.roamSession[vdev_id].connectedProfile.EncryptionType;
+	rso_config->akm = e_csr_auth_type_to_rsn_authmode(akm, encr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -20527,11 +20535,136 @@ csr_cm_roam_scan_offload_fill_lfr3_config(
 			struct mac_context *mac,
 			struct csr_roam_session *session,
 			struct wlan_roam_scan_offload_params *rso_config,
-			uint8_t command)
+			uint8_t command, uint32_t *mode)
 {
+	if (mac->mlme_cfg->lfr.roam_force_rssi_trigger)
+		*mode |= WMI_ROAM_SCAN_MODE_RSSI_CHANGE;
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+static void
+csr_cm_roam_scan_offload_fill_scan_params(
+		struct mac_context *mac,
+		struct csr_roam_session *session,
+		struct wlan_roam_scan_offload_params *rso_mode_cfg,
+		struct wlan_roam_scan_channel_list *rso_chan_info,
+		uint8_t command)
+{
+	struct wlan_roam_scan_params *scan_params =
+			&rso_mode_cfg->rso_scan_params;
+	tpCsrNeighborRoamControlInfo roam_info =
+		&mac->roam.neighborRoamInfo[session->vdev_id];
+	uint8_t channels_per_burst = 0;
+	uint16_t roam_scan_home_away_time;
+	eSirDFSRoamScanMode allow_dfs_ch_roam;
+
+	qdf_mem_zero(scan_params, sizeof(*scan_params));
+	if (command == ROAM_SCAN_OFFLOAD_STOP)
+		return;
+
+	/* Parameters updated after association is complete */
+	wlan_scan_cfg_get_passive_dwelltime(mac->psoc,
+					    &scan_params->dwell_time_passive);
+	/*
+	 * Here is the formula,
+	 * T(HomeAway) = N * T(dwell) + (N+1) * T(cs)
+	 * where N is number of channels scanned in single burst
+	 */
+	scan_params->dwell_time_active =
+		roam_info->cfgParams.maxChannelScanTime;
+
+	roam_scan_home_away_time =
+		roam_info->cfgParams.roam_scan_home_away_time;
+	if (roam_scan_home_away_time <
+	    (scan_params->dwell_time_active +
+	     (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME))) {
+		sme_debug("Disable Home away time(%d) as it is less than (2*RF switching time + channel max time)(%d)",
+			  roam_scan_home_away_time,
+			  (scan_params->dwell_time_active +
+			   (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME)));
+		roam_scan_home_away_time = 0;
+	}
+
+	if (roam_scan_home_away_time < (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME)) {
+		/* clearly we can't follow home away time.
+		 * Make it a split scan.
+		 */
+		scan_params->burst_duration = 0;
+	} else {
+		channels_per_burst =
+		  (roam_scan_home_away_time - ROAM_SCAN_CHANNEL_SWITCH_TIME) /
+		  (scan_params->dwell_time_active + ROAM_SCAN_CHANNEL_SWITCH_TIME);
+
+		if (channels_per_burst < 1) {
+			/* dwell time and home away time conflicts */
+			/* we will override dwell time */
+			scan_params->dwell_time_active =
+				roam_scan_home_away_time -
+				(2 * ROAM_SCAN_CHANNEL_SWITCH_TIME);
+			scan_params->burst_duration =
+				scan_params->dwell_time_active;
+		} else {
+			scan_params->burst_duration =
+				channels_per_burst *
+				scan_params->dwell_time_active;
+		}
+	}
+
+	allow_dfs_ch_roam =
+		(eSirDFSRoamScanMode)mac->mlme_cfg->lfr.roaming_dfs_channel;
+	/* Roaming on DFS channels is supported and it is not
+	 * app channel list. It is ok to override homeAwayTime
+	 * to accommodate DFS dwell time in burst
+	 * duration.
+	 */
+	if (allow_dfs_ch_roam == SIR_ROAMING_DFS_CHANNEL_ENABLED_NORMAL &&
+	    roam_scan_home_away_time > 0  &&
+	    rso_chan_info->chan_cache_type != CHANNEL_LIST_STATIC)
+		scan_params->burst_duration =
+			QDF_MAX(scan_params->burst_duration,
+				scan_params->dwell_time_passive);
+
+	scan_params->min_rest_time =
+		roam_info->cfgParams.neighbor_scan_min_period;
+	scan_params->max_rest_time = roam_info->cfgParams.neighborScanPeriod;
+	scan_params->repeat_probe_time =
+		(roam_info->cfgParams.roam_scan_n_probes > 0) ?
+			QDF_MAX(scan_params->dwell_time_active /
+				roam_info->cfgParams.roam_scan_n_probes, 1) : 0;
+	scan_params->probe_spacing_time = 0;
+	scan_params->probe_delay = 0;
+	/* 30 seconds for full scan cycle */
+	scan_params->max_scan_time = ROAM_SCAN_HW_DEF_SCAN_MAX_DURATION;
+	scan_params->idle_time = scan_params->min_rest_time;
+	scan_params->n_probes = roam_info->cfgParams.roam_scan_n_probes;
+
+	if (allow_dfs_ch_roam == SIR_ROAMING_DFS_CHANNEL_DISABLED) {
+		scan_params->scan_ctrl_flags |= WMI_SCAN_BYPASS_DFS_CHN;
+	} else {
+		/* Roaming scan on DFS channel is allowed.
+		 * No need to change any flags for default
+		 * allowDFSChannelRoam = 1.
+		 * Special case where static channel list is given by\
+		 * application that contains DFS channels.
+		 * Assume that the application has knowledge of matching
+		 * APs being active and that probe request transmission
+		 * is permitted on those channel.
+		 * Force active scans on those channels.
+		 */
+
+		if (allow_dfs_ch_roam ==
+		    SIR_ROAMING_DFS_CHANNEL_ENABLED_ACTIVE &&
+		    rso_chan_info->chan_cache_type == CHANNEL_LIST_STATIC &&
+		    rso_chan_info->chan_count)
+			scan_params->scan_ctrl_flags |=
+				WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS;
+	}
+
+	scan_params->rso_adaptive_dwell_mode =
+		mac->mlme_cfg->lfr.adaptive_roamscan_dwell_mode;
+}
 
 /**
  * csr_cm_roam_scan_offload_fill_rso_configs  - Fill Roam scan offload related
@@ -20544,50 +20677,53 @@ static void csr_cm_roam_scan_offload_fill_rso_configs(
 			struct mac_context *mac,
 			struct csr_roam_session *session,
 			struct wlan_roam_scan_offload_params *rso_mode_cfg,
+			struct wlan_roam_scan_channel_list *rso_chan_info,
 			uint8_t command, uint16_t reason)
 {
 	uint8_t vdev_id = session->vdev_id;
 	tpCsrNeighborRoamControlInfo roam_info =
 			&mac->roam.neighborRoamInfo[vdev_id];
 	uint32_t mode = 0;
-	bool force_rssi_trigger;
 
 	qdf_mem_zero(rso_mode_cfg, sizeof(*rso_mode_cfg));
 
 	rso_mode_cfg->vdev_id = session->vdev_id;
 	rso_mode_cfg->is_rso_stop = (command == ROAM_SCAN_OFFLOAD_STOP);
+	rso_mode_cfg->roaming_scan_policy =
+		mac->mlme_cfg->lfr.roaming_scan_policy;
 
 	/* Fill ROAM SCAN mode TLV parameters */
 	if (roam_info->cfgParams.emptyScanRefreshPeriod)
 		mode |= WMI_ROAM_SCAN_MODE_PERIODIC;
 
-	/* TODO move this inside LFR3 specific handling*/
-	force_rssi_trigger = true;
-	if (force_rssi_trigger)
-		mode |= WMI_ROAM_SCAN_MODE_RSSI_CHANGE;
-
-	rso_mode_cfg->rso_mode_info.roam_scan_mode = mode;
 	rso_mode_cfg->rso_mode_info.min_delay_btw_scans =
 			mac->mlme_cfg->lfr.min_delay_btw_roam_scans;
 	rso_mode_cfg->rso_mode_info.min_delay_roam_trigger_bitmask =
 			mac->mlme_cfg->lfr.roam_trigger_reason_bitmask;
 
-	if (reason == REASON_ROAM_STOP_ALL ||
-	    reason == REASON_DISCONNECTED ||
-	    reason == REASON_ROAM_SYNCH_FAILED) {
-		mode = WMI_ROAM_SCAN_MODE_NONE;
-	} else {
-		if (csr_is_roam_offload_enabled(mac))
-			mode = WMI_ROAM_SCAN_MODE_NONE |
-				WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
-		else
+	if (command == ROAM_SCAN_OFFLOAD_STOP) {
+		if (reason == REASON_ROAM_STOP_ALL ||
+		    reason == REASON_DISCONNECTED ||
+		    reason == REASON_ROAM_SYNCH_FAILED) {
 			mode = WMI_ROAM_SCAN_MODE_NONE;
+		} else {
+			if (csr_is_roam_offload_enabled(mac))
+				mode = WMI_ROAM_SCAN_MODE_NONE |
+					WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
+			else
+				mode = WMI_ROAM_SCAN_MODE_NONE;
+		}
 	}
 
+	rso_mode_cfg->rso_mode_info.roam_scan_mode = mode;
 	if (command == ROAM_SCAN_OFFLOAD_STOP)
 		return;
 
 	csr_cm_roam_scan_offload_fill_lfr3_config(mac, session, rso_mode_cfg,
+						  command, &mode);
+	rso_mode_cfg->rso_mode_info.roam_scan_mode = mode;
+	csr_cm_roam_scan_offload_fill_scan_params(mac, session, rso_mode_cfg,
+						  rso_chan_info,
 						  command);
 	csr_cm_update_driver_assoc_ies(mac, session, rso_mode_cfg);
 	cm_roam_scan_offload_add_fils_params(mac->psoc, rso_mode_cfg,
@@ -20810,6 +20946,7 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	csr_cm_roam_scan_offload_fill_rso_configs(mac_ctx, session,
 						  &req->rso_config,
+						  &req->rso_chan_info,
 						  ROAM_SCAN_OFFLOAD_START,
 						  reason);
 
@@ -20868,7 +21005,8 @@ wlan_cm_roam_fill_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	csr_cm_roam_scan_offload_fill_rso_configs(mac_ctx, session,
 						  &req->rso_config,
-						  ROAM_SCAN_OFFLOAD_STOP,
+						  NULL,
+						  ROAM_SCAN_OFFLOAD_START,
 						  reason);
 
 	return status;
@@ -20905,15 +21043,17 @@ wlan_cm_roam_fill_update_config_req(struct wlan_objmgr_psoc *psoc,
 	csr_cm_roam_scan_offload_scan_period(mac_ctx, vdev_id,
 					     &req->scan_period_params);
 
+	csr_cm_fill_rso_channel_list(mac_ctx, &req->rso_chan_info, vdev_id,
+				     reason);
+
 	csr_cm_roam_scan_offload_fill_rso_configs(mac_ctx, session,
 						  &req->rso_config,
+						  &req->rso_chan_info,
 						  ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 						  reason);
 
 	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
 					    &req->profile_params);
-	csr_cm_fill_rso_channel_list(mac_ctx, &req->rso_chan_info, vdev_id,
-				     reason);
 
 	return QDF_STATUS_SUCCESS;
 }
