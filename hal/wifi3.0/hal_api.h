@@ -271,7 +271,7 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 
 	if (!TARGET_ACCESS_ALLOWED(HIF_GET_SOFTC(
 					hal_soc->hif_handle))) {
-		hal_err_rl("%s: target access is not allowed", __func__);
+		hal_err_rl("target access is not allowed");
 		return;
 	}
 
@@ -331,7 +331,7 @@ static inline void hal_write32_mb_confirm(struct hal_soc *hal_soc,
 
 	if (!TARGET_ACCESS_ALLOWED(HIF_GET_SOFTC(
 					hal_soc->hif_handle))) {
-		hal_err_rl("%s: target access is not allowed", __func__);
+		hal_err_rl("target access is not allowed");
 		return;
 	}
 
@@ -491,7 +491,7 @@ uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 
 	if (!TARGET_ACCESS_ALLOWED(HIF_GET_SOFTC(
 					hal_soc->hif_handle))) {
-		hal_err_rl("%s: target access is not allowed", __func__);
+		hal_err_rl("target access is not allowed");
 		return 0;
 	}
 

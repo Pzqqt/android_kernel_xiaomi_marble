@@ -539,8 +539,7 @@ inline int hal_reo_cmd_flush_cache(hal_ring_handle_t hal_ring_hdl,
 	if (cp->block_use_after_flush) {
 		index = hal_find_zero_bit(hal_soc->reo_res_bitmap);
 		if (index > 3) {
-			qdf_print("%s, No blocking resource available!",
-				  __func__);
+			qdf_print("No blocking resource available!");
 			hal_srng_access_end(hal_soc, hal_ring_hdl);
 			return -EBUSY;
 		}
@@ -624,8 +623,7 @@ inline int hal_reo_cmd_unblock_cache(hal_ring_handle_t hal_ring_hdl,
 		index = hal_find_one_bit(hal_soc->reo_res_bitmap);
 		if (index > 3) {
 			hal_srng_access_end(hal_soc, hal_ring_hdl);
-			qdf_print("%s: No blocking resource to unblock!",
-				  __func__);
+			qdf_print("No blocking resource to unblock!");
 			return -EBUSY;
 		}
 	}
