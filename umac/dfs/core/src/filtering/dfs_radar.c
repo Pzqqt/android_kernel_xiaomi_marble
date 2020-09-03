@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2011, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -409,10 +409,9 @@ int dfs_set_thresholds(struct wlan_dfs *dfs, const uint32_t threshtype,
 	chanindex = dfs->dfs_curchan_radindex;
 	if ((chanindex < 0) || (chanindex >= DFS_NUM_RADAR_STATES)) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS1,
-				"%s: chanindex = %d, DFS_NUM_RADAR_STATES=%d\n",
-				__func__,
-				chanindex,
-				DFS_NUM_RADAR_STATES);
+			  "chanindex = %d, DFS_NUM_RADAR_STATES=%d",
+			  chanindex,
+			  DFS_NUM_RADAR_STATES);
 		return 0;
 	}
 

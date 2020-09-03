@@ -250,9 +250,7 @@ static bool dfs_is_real_radar(struct wlan_dfs *dfs,
 	if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS2) {
 		dfs_print_delayline(dfs, &rf->rf_dl);
 
-		/* print pulse line */
-		dfs_debug(dfs, WLAN_DEBUG_DFS2,
-			"%s: Pulse Line\n", __func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS2, "Pulse Line");
 		for (i = 0; i < pl->pl_numelems; i++) {
 			index =  (pl->pl_firstelem + i) &
 				DFS_MAX_PULSE_BUFFER_MASK;
@@ -280,9 +278,9 @@ static bool dfs_is_real_radar(struct wlan_dfs *dfs,
 	}
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS2,
-			"%s: target_ts=%llu, dl_seq_num_start=%d, dl_seq_num_second=%d, dl_seq_num_stop=%d\n",
-			__func__, target_ts, dl->dl_seq_num_start,
-			dl->dl_seq_num_second, dl->dl_seq_num_stop);
+		  "target_ts=%llu, dl_seq_num_start=%d, dl_seq_num_second=%d, dl_seq_num_stop=%d",
+		  target_ts, dl->dl_seq_num_start,
+		  dl->dl_seq_num_second, dl->dl_seq_num_stop);
 
 	current_index = start_index;
 	while (pl->pl_elems[current_index].p_seq_num < dl->dl_seq_num_stop) {
@@ -357,8 +355,9 @@ static bool dfs_is_real_radar(struct wlan_dfs *dfs,
 			  rf->rf_threshold);
 		return 0;
 	}
-	dfs_debug(dfs, WLAN_DEBUG_DFS_FALSE_DET, "%s : dl->dl_min_sidx: %d , dl->dl_max_sidx :%d",
-		  __func__, dl->dl_min_sidx, dl->dl_max_sidx);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_FALSE_DET,
+		  "dl->dl_min_sidx: %d, dl->dl_max_sidx: %d",
+		  dl->dl_min_sidx, dl->dl_max_sidx);
 
 	dfs->dfs_freq_offset = DFS_SIDX_TO_FREQ_OFFSET((dl->dl_min_sidx +
 							dl->dl_max_sidx) / 2);

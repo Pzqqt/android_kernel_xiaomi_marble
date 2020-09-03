@@ -925,8 +925,7 @@ void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 	if (!event) {
 		WLAN_DFSEVENTQ_UNLOCK(dfs);
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"%s: No more space left for queuing DFS Phyerror events",
-			__func__);
+			"No more space left for queuing DFS Phyerror events");
 		return;
 	}
 	STAILQ_REMOVE_HEAD(&(dfs->dfs_eventq), re_list);
@@ -969,11 +968,10 @@ void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 	} else {
 		if (dfs->dfs_extchan_radindex == -1)
 			dfs_debug(dfs, WLAN_DEBUG_DFS1,
-				"%s phyerr on ext channel", __func__);
+				 "phyerr on ext channel");
 		event->re_chanindex = (uint8_t) dfs->dfs_extchan_radindex;
 		dfs_debug(dfs, WLAN_DEBUG_DFS1,
-			"%s:New extension channel event is added to queue",
-			 __func__);
+			"New extension channel event is added to queue");
 	}
 
 	WLAN_DFSQ_LOCK(dfs);

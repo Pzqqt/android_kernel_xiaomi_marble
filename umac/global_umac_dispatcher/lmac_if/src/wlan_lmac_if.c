@@ -711,7 +711,7 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_txrx_rx_ops;
 
 	if (!rx_ops) {
-		qdf_print("%s: lmac if rx ops pointer is NULL", __func__);
+		qdf_print("lmac if rx ops pointer is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 

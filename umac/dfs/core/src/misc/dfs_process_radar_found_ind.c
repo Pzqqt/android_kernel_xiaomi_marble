@@ -1261,8 +1261,7 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 	 */
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		  "%s: %d Radar found on dfs detector:%d",
-		  __func__, __LINE__, radar_found->detector_id);
+		  "Radar found on dfs detector: %d", radar_found->detector_id);
 	dfs_mark_precac_nol_for_freq(dfs,
 				     dfs->is_radar_found_on_secondary_seg,
 				     radar_found->detector_id,

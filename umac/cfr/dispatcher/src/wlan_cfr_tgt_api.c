@@ -69,8 +69,7 @@ void tgt_cfr_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
 		return;
 
 	cfr_sc->is_cfr_capable = !!value;
-	cfr_debug("CFR:%s FW support advert=%d\n", __func__,
-		    cfr_sc->is_cfr_capable);
+	cfr_debug("CFR: FW support advert=%d", cfr_sc->is_cfr_capable);
 }
 
 static inline struct wlan_lmac_if_cfr_tx_ops *
