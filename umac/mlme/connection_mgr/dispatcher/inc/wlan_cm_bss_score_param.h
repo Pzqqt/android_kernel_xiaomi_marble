@@ -39,6 +39,7 @@
  * @oce_wan_weightage: OCE WAN metrics weightage
  * @oce_ap_tx_pwr_weightage: OCE AP tx power weigtage
  * @oce_subnet_id_weightage: OCE subnet id weigtage
+ * @sae_pk_ap_weightage: SAE-PK AP weigtage
  */
 struct weight_cfg {
 	uint8_t rssi_weightage;
@@ -54,6 +55,7 @@ struct weight_cfg {
 	uint8_t oce_wan_weightage;
 	uint8_t oce_ap_tx_pwr_weightage;
 	uint8_t oce_subnet_id_weightage;
+	uint8_t sae_pk_ap_weightage;
 };
 
 /**

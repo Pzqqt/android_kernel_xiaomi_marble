@@ -1615,6 +1615,20 @@ util_scan_entry_mbo_oce(struct scan_cache_entry *scan_entry)
 }
 
 /**
+ * util_scan_entry_rsnxe() - function to read RSNXE ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read RSNXE ie
+ *
+ * Return: RSNXE ie
+ */
+static inline uint8_t *
+util_scan_entry_rsnxe(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.rsnxe;
+}
+
+/**
  * util_scan_scm_chan_to_band() - function to tell band for channel number
  * @chan: Channel number
  *

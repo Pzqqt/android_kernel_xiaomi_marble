@@ -82,6 +82,7 @@
 #define CM_OCE_WAN_WEIGHTAGE 2
 #define CM_OCE_AP_TX_POWER_WEIGHTAGE 5
 #define CM_OCE_SUBNET_ID_WEIGHTAGE 3
+#define CM_SAE_PK_AP_WEIGHTAGE 3
 #define CM_BEST_CANDIDATE_MAX_WEIGHT 200
 #define CM_MAX_PCT_SCORE 100
 #define CM_MAX_INDEX_PER_INI 4
@@ -116,7 +117,7 @@ static bool cm_is_better_bss(struct scan_cache_entry *bss1,
  * @bucket_size: bucket size of the window
  * @bss_rssi: Input rssi for which value need to be calculated
  *
- * Return : rssi pct to use for the given rssi
+ * Return: rssi pct to use for the given rssi
  */
 static inline
 int8_t cm_get_rssi_pcnt_for_slot(int32_t high_rssi_threshold,
@@ -151,7 +152,7 @@ int8_t cm_get_rssi_pcnt_for_slot(int32_t high_rssi_threshold,
  * @rssi: rssi of the AP
  * @rssi_weightage: rssi_weightage out of total weightage
  *
- * Return : rssi score
+ * Return: rssi score
  */
 static int32_t cm_calculate_rssi_score(struct rssi_config_score *score_param,
 				       int32_t rssi, uint8_t rssi_weightage)
@@ -211,7 +212,7 @@ static int32_t cm_calculate_rssi_score(struct rssi_config_score *score_param,
  * @rssi_ref2: rssi ref two
  * @bucket_size: bucket size of the window
  *
- * Return : true if both fall in same window
+ * Return: true if both fall in same window
  */
 static inline bool cm_rssi_is_same_bucket(int8_t rssi_top_thresh,
 					  int8_t rssi_ref1, int8_t rssi_ref2,
@@ -236,7 +237,7 @@ static inline bool cm_rssi_is_same_bucket(int8_t rssi_top_thresh,
  * If rssi is greater than good threshold return 100, if less than bad return 0,
  * if between good and bad, return prorated rssi score for the index.
  *
- * Return : rssi prorated score
+ * Return: rssi prorated score
  */
 static int8_t cm_roam_calculate_prorated_pcnt_by_rssi(
 	struct rssi_config_score *score_param,
@@ -280,7 +281,7 @@ static int8_t cm_roam_calculate_prorated_pcnt_by_rssi(
  * @phy_config: psoc phy configs
  * @prorated_pct: prorated % to return dependent on RSSI
  *
- * Return : bw score
+ * Return: bw score
  */
 static int32_t cm_calculate_bandwidth_score(struct scan_cache_entry *entry,
 					    struct scoring_cfg *score_config,
@@ -338,7 +339,7 @@ static int32_t cm_calculate_bandwidth_score(struct scan_cache_entry *entry,
  * @weightage: weigtage for the param
  * @score: per slot score
  *
- * Return : score for the index
+ * Return: score for the index
  */
 static int32_t cm_get_score_for_index(uint8_t index,
 				      uint8_t weightage,
@@ -366,7 +367,7 @@ static int32_t cm_get_score_for_index(uint8_t index,
  * cm_get_congestion_pct() - Calculate congestion pct from esp/qbss load
  * @entry: bss information
  *
- * Return : congestion pct
+ * Return: congestion pct
  */
 static int32_t cm_get_congestion_pct(struct scan_cache_entry *entry)
 {
@@ -404,7 +405,7 @@ static int32_t cm_get_congestion_pct(struct scan_cache_entry *entry)
  * @score_params: bss score params
  * @congestion_pct: congestion pct
  *
- * Return : congestion score
+ * Return: congestion score
  */
 static int32_t cm_calculate_congestion_score(struct scan_cache_entry *entry,
 					     struct scoring_cfg *score_params,
@@ -465,7 +466,7 @@ static int32_t cm_calculate_congestion_score(struct scan_cache_entry *entry,
  * @ap_nss: ap nss
  * @prorated_pct: prorated % to return dependent on RSSI
  *
- * Return : nss score
+ * Return: nss score
  */
 static int32_t cm_calculate_nss_score(struct wlan_objmgr_psoc *psoc,
 				      struct scoring_cfg *score_config,
@@ -561,7 +562,7 @@ cm_get_pcl_weight_of_channel(uint32_t chan_freq,
  * @pcl_chan_weight: pcl weight of BSS channel
  * @pcl_weightage: PCL _weightage out of total weightage
  *
- * Return : pcl score
+ * Return: pcl score
  */
 static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
 				      uint8_t pcl_weightage)
@@ -588,7 +589,7 @@ static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
  * @entry: bss information
  * @score_params: bss score params
  *
- * Return : oce wan score
+ * Return: oce wan score
  */
 static int32_t cm_calculate_oce_wan_score(
 	struct scan_cache_entry *entry,
@@ -636,7 +637,7 @@ static int32_t cm_calculate_oce_wan_score(
  * @score_params: bss score params
  * @oce_subnet_id_present: check if subnet id subelement is present in OCE IE
  *
- * Return : oce subnet id score
+ * Return: oce subnet id score
  */
 static uint32_t
 cm_calculate_oce_subnet_id_weightage(struct scan_cache_entry *entry,
@@ -658,12 +659,42 @@ cm_calculate_oce_subnet_id_weightage(struct scan_cache_entry *entry,
 }
 
 /**
+ * cm_calculate_sae_pk_ap_weightage() - Calculate SAE-PK AP weightage
+ * @entry: bss entry
+ * @score_params: bss score params
+ * @sae_pk_cap_present: sae_pk cap presetn in RSNXE capability field
+ *
+ * Return: SAE-PK AP weightage score
+ */
+static uint32_t
+cm_calculate_sae_pk_ap_weightage(struct scan_cache_entry *entry,
+				 struct scoring_cfg *score_params,
+				 bool *sae_pk_cap_present)
+{
+	uint8_t *rsnxe_ie, *rsnxe_cap, cap_len;
+
+	rsnxe_ie = util_scan_entry_rsnxe(entry);
+
+	rsnxe_cap = wlan_parse_rsnxe_ie(rsnxe_ie, &cap_len);
+
+	if (!rsnxe_cap)
+		return 0;
+
+	*sae_pk_cap_present = *rsnxe_cap & WLAN_RSNX_CAPA_SAE_PK;
+	if (*sae_pk_cap_present)
+		return score_params->weight_config.sae_pk_ap_weightage *
+			CM_MAX_PCT_SCORE;
+
+	return 0;
+}
+
+/**
  * cm_calculate_oce_ap_tx_pwr_weightage() - Calculate oce ap tx pwr weightage
  * @entry: bss entry
  * @score_params: bss score params
  * @ap_tx_pwr_dbm: pointer to hold ap tx power
  *
- * Return : oce ap tx power score
+ * Return: oce ap tx power score
  */
 static uint32_t
 cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
@@ -813,6 +844,14 @@ cm_calculate_oce_subnet_id_weightage(struct scan_cache_entry *entry,
 }
 
 static uint32_t
+cm_calculate_sae_pk_ap_weightage(struct scan_cache_entry *entry,
+				 struct scoring_cfg *score_params,
+				 bool *sae_pk_cap_present)
+{
+	return 0;
+}
+
+static uint32_t
 cm_calculate_oce_ap_tx_pwr_weightage(struct scan_cache_entry *entry,
 				     struct scoring_cfg *score_params,
 				     int8_t *ap_tx_pwr_dbm)
@@ -832,7 +871,7 @@ static inline bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
  * freq: Operating frequency of the AP
  * @score_config: Score configuration
  *
- * Return : Band score for AP.
+ * Return: Band score for AP.
  */
 static int
 cm_get_band_score(uint32_t freq, struct scoring_cfg *score_config)
@@ -876,7 +915,9 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	int32_t oce_wan_score = 0;
 	uint8_t oce_ap_tx_pwr_score = 0;
 	uint8_t oce_subnet_id_score = 0;
+	uint32_t sae_pk_score = 0;
 	bool oce_subnet_id_present = 0;
+	bool sae_pk_cap_present = 0;
 	int8_t ap_tx_pwr_dbm = 0;
 	uint8_t prorated_pcnt;
 	bool is_vht = false;
@@ -1018,6 +1059,10 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 						&oce_subnet_id_present);
 	score += oce_subnet_id_score;
 
+	sae_pk_score = cm_calculate_sae_pk_ap_weightage(entry, score_config,
+							&sae_pk_cap_present);
+	score += sae_pk_score;
+
 	sta_nss = cm_get_sta_nss(psoc, entry->channel.chan_freq,
 				 phy_config->vdev_nss_24g,
 				 phy_config->vdev_nss_5g);
@@ -1031,7 +1076,7 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 					   prorated_pcnt, sta_nss);
 	score += nss_score;
 
-	mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d HT %d VHT %d HE %d su bfer %d phy %d  air time frac %d qbss %d cong_pct %d NSS %d ap_tx_pwr_dbm %d oce_subnet_id_present %d prorated_pcnt %d",
+	mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d HT %d VHT %d HE %d su bfer %d phy %d  air time frac %d qbss %d cong_pct %d NSS %d ap_tx_pwr_dbm %d oce_subnet_id_present %d sae_pk_cap_present %d prorated_pcnt %d",
 			QDF_MAC_ADDR_REF(entry->bssid.bytes),
 			entry->channel.chan_freq,
 			entry->rssi_raw, util_scan_entry_htcap(entry) ? 1 : 0,
@@ -1039,13 +1084,15 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 			util_scan_entry_hecap(entry) ? 1 : 0, ap_su_beam_former,
 			entry->phy_mode, entry->air_time_fraction,
 			entry->qbss_chan_load, congestion_pct, entry->nss,
-			ap_tx_pwr_dbm, oce_subnet_id_present, prorated_pcnt);
+			ap_tx_pwr_dbm, oce_subnet_id_present,
+			sae_pk_cap_present, prorated_pcnt);
 
-	mlme_nofl_debug("Scores: rssi %d pcl %d ht %d vht %d he %d bfee %d bw %d band %d congestion %d nss %d oce wan %d oce ap tx pwr %d subnet %d TOTAL %d",
+	mlme_nofl_debug("Scores: rssi %d pcl %d ht %d vht %d he %d bfee %d bw %d band %d congestion %d nss %d oce wan %d oce ap tx pwr %d subnet %d sae_pk %d TOTAL %d",
 			rssi_score, pcl_score, ht_score,
 			vht_score, he_score, beamformee_score, bandwidth_score,
 			band_score, congestion_score, nss_score, oce_wan_score,
-			oce_ap_tx_pwr_score, oce_subnet_id_score, score);
+			oce_ap_tx_pwr_score, oce_subnet_id_score,
+			sae_pk_score, score);
 
 	entry->bss_score = score;
 
@@ -1240,6 +1287,8 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_OCE_AP_TX_PWR_WEIGHTAGE);
 	score_cfg->weight_config.oce_subnet_id_weightage =
 				cfg_get(psoc, CFG_OCE_SUBNET_ID_WEIGHTAGE);
+	score_cfg->weight_config.sae_pk_ap_weightage =
+				cfg_get(psoc, CFG_SAE_PK_AP_WEIGHTAGE);
 
 	total_weight =  score_cfg->weight_config.rssi_weightage +
 			score_cfg->weight_config.ht_caps_weightage +
@@ -1253,7 +1302,8 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			score_cfg->weight_config.channel_congestion_weightage +
 			score_cfg->weight_config.oce_wan_weightage +
 			score_cfg->weight_config.oce_ap_tx_pwr_weightage +
-			score_cfg->weight_config.oce_subnet_id_weightage;
+			score_cfg->weight_config.oce_subnet_id_weightage +
+			score_cfg->weight_config.sae_pk_ap_weightage;
 
 	/*
 	 * If configured weights are greater than max weight,
@@ -1285,6 +1335,8 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 						CM_OCE_AP_TX_POWER_WEIGHTAGE;
 		score_cfg->weight_config.oce_subnet_id_weightage =
 						CM_OCE_SUBNET_ID_WEIGHTAGE;
+		score_cfg->weight_config.sae_pk_ap_weightage =
+						CM_SAE_PK_AP_WEIGHTAGE;
 	}
 
 	score_cfg->rssi_score.best_rssi_threshold =
