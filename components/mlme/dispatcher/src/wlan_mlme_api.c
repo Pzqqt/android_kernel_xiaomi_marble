@@ -3699,7 +3699,7 @@ void wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 				     struct mlme_pmk_info *sae_single_pmk)
 {
 	struct mlme_legacy_priv *mlme_priv;
-	uint32_t keymgmt;
+	int32_t keymgmt;
 	bool is_sae_connection = false;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
@@ -3709,6 +3709,10 @@ void wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 	}
 
 	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0) {
+		mlme_legacy_err("Invalid mgmt cipher");
+		return;
+	}
 
 	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE))
 		is_sae_connection = true;

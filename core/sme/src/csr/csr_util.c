@@ -2846,6 +2846,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	uint8_t ie_len = 0;
 	tDot11fBeaconIEs *local_ap_ie = ap_ie;
 	uint16_t rsn_cap = 0, self_rsn_cap;
+	int32_t rsn_val;
 	struct wlan_crypto_pmksa pmksa, *pmksa_peer;
 	struct csr_roam_session *session = &mac->roam.roamSession[sessionId];
 
@@ -2867,8 +2868,14 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 		return ie_len;
 	}
 
-	self_rsn_cap = (uint16_t)wlan_crypto_get_param(vdev,
-						   WLAN_CRYPTO_PARAM_RSN_CAP);
+	rsn_val = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (rsn_val < 0) {
+		sme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return ie_len;
+	}
+	self_rsn_cap = (uint16_t)rsn_val;
+
 	/* If AP is capable then use self capability else set PMF as 0 */
 	if (rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED &&
 	    pProfile->MFPCapable) {

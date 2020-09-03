@@ -123,7 +123,7 @@ QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 				 uint8_t *mic_hdr_len)
 {
 	struct wlan_objmgr_peer *peer;
-	uint32_t key_cipher;
+	int32_t key_cipher;
 
 	if (!psoc || !mic_len || !mic_hdr_len || !peer_mac) {
 		mlme_legacy_debug("psoc/mic_len/mic_hdr_len/peer_mac null");
@@ -141,7 +141,13 @@ QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 	key_cipher =
 		wlan_crypto_get_peer_param(peer,
 					   WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+
+	if (key_cipher < 0) {
+		mlme_legacy_err("Invalid mgmt cipher");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (key_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM) ||
 	    key_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM_256)) {

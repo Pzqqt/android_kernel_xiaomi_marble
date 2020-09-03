@@ -3318,7 +3318,7 @@ sap_restart:
 uint32_t hdd_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
-	uint32_t keymgmt;
+	int32_t keymgmt;
 	struct hdd_adapter *ap_adapter;
 	struct hdd_ap_ctx *ap_ctx;
 	struct sap_context *sap_context;
@@ -3376,6 +3376,12 @@ uint32_t hdd_get_ap_6ghz_capable(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 		capable |= CONN_6GHZ_FLAG_ACS_OR_USR_ALLOWED;
 
 	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0) {
+		hdd_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+		return 0;
+	}
+
 	if (!keymgmt || (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_NONE |
 		       1 << WLAN_CRYPTO_KEY_MGMT_SAE |
 		       1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B |

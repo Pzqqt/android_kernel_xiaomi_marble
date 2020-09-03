@@ -7249,7 +7249,7 @@ static void csr_update_tx_pwr_to_fw(struct mac_context *mac_ctx,
 static void csr_update_rsn_intersect_to_fw(struct wlan_objmgr_psoc *psoc,
 					   uint8_t vdev_id)
 {
-	uint32_t rsn_val = 0;
+	int32_t rsn_val;
 	struct wlan_objmgr_vdev *vdev;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
@@ -7261,7 +7261,13 @@ static void csr_update_rsn_intersect_to_fw(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rsn_val = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	if (rsn_val < 0) {
+		sme_err("Invalid mgmt cipher");
+		return;
+	}
 
 	if (wma_cli_set2_command(vdev_id, WMI_VDEV_PARAM_RSN_CAPABILITY,
 				 rsn_val, 0, VDEV_CMD))
@@ -14107,7 +14113,7 @@ void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
 			      uint8_t vdev_id, tPmkidCacheInfo *pmk_cache)
 {
 	struct wlan_objmgr_vdev *vdev;
-	uint32_t keymgmt;
+	int32_t keymgmt;
 	struct mlme_pmk_info pmk_info;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
@@ -14118,6 +14124,12 @@ void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
 	}
 
 	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0) {
+		sme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+
 	if (!(keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE))) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return;
@@ -17442,9 +17454,8 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 	tAniEdType group_mgmt_cipher;
 
 	struct wlan_objmgr_vdev *vdev;
-	uint16_t rsn_caps;
+	int32_t rsn_caps, keymgmt;
 	bool peer_rmf_capable = false;
-	uint32_t keymgmt;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
 			session_id,
@@ -17456,6 +17467,12 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 
 	rsn_caps = (uint16_t)wlan_crypto_get_param(vdev,
 						   WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (rsn_caps < 0) {
+		sme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+
 	if (wlan_crypto_vdev_has_mgmtcipher(vdev,
 					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC) |
 					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256) |
@@ -17467,6 +17484,11 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 	network_cfg->mfp_enabled = peer_rmf_capable;
 
 	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+	if (keymgmt < 0) {
+		sme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
 
 	if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) {
 		group_mgmt_cipher = eSIR_ED_AES_128_CMAC;
@@ -17516,6 +17538,7 @@ csr_rso_command_fill_rsn_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
 			      uint16_t *rsn_caps,
 			      tCsrRoamConnectedProfile *profile)
 {
+	int32_t ret_val;
 	struct wlan_objmgr_vdev *vdev;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
@@ -17525,7 +17548,14 @@ csr_rso_command_fill_rsn_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
 		return;
 	}
 
-	*rsn_caps = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	ret_val = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (ret_val < 0) {
+		sme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+
+	*rsn_caps = ret_val;
 	csr_fill_pmf_caps(rsn_caps, profile);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
@@ -22841,7 +22871,7 @@ csr_check_and_set_sae_single_pmk_cap(struct mac_context *mac_ctx,
 	struct wlan_objmgr_vdev *vdev;
 	struct mlme_pmk_info *pmk_info;
 	tPmkidCacheInfo *pmkid_cache;
-	uint32_t keymgmt;
+	int32_t keymgmt;
 	bool val, lookup_success;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
@@ -22852,6 +22882,11 @@ csr_check_and_set_sae_single_pmk_cap(struct mac_context *mac_ctx,
 	}
 
 	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0) {
+		mlme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
 
 	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE)) {
 		val = csr_is_sae_single_pmk_vsie_ap(session->pConnectBssDesc);

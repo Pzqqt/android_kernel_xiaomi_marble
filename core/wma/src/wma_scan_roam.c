@@ -2788,7 +2788,7 @@ static void wma_update_roamed_peer_unicast_cipher(tp_wma_handle wma,
 static void wma_get_peer_uc_cipher(tp_wma_handle wma, uint8_t *peer_mac,
 				   uint32_t *uc_cipher, uint32_t *cipher_cap)
 {
-	uint32_t cipher, cap;
+	int32_t cipher, cap;
 	struct wlan_objmgr_peer *peer;
 
 	if (!peer_mac) {
@@ -2808,6 +2808,11 @@ static void wma_get_peer_uc_cipher(tp_wma_handle wma, uint8_t *peer_mac,
 					    WLAN_CRYPTO_PARAM_UCAST_CIPHER);
 	cap = wlan_crypto_get_peer_param(peer, WLAN_CRYPTO_PARAM_CIPHER_CAP);
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+
+	if (cipher < 0 || cap < 0) {
+		wma_err("Invalid mgmt cipher");
+		return;
+	}
 
 	if (uc_cipher)
 		*uc_cipher = cipher;

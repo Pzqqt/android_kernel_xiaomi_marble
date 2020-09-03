@@ -1135,7 +1135,7 @@ bool
 lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 {
 	struct wlan_objmgr_vdev *vdev;
-	uint16_t rsn_caps;
+	int32_t rsn_caps;
 	bool peer_rmf_capable = false;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
@@ -1145,8 +1145,12 @@ lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 		pe_err("Invalid vdev");
 		return false;
 	}
-	rsn_caps = (uint16_t)wlan_crypto_get_param(vdev,
-						   WLAN_CRYPTO_PARAM_RSN_CAP);
+	rsn_caps = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (rsn_caps < 0) {
+		pe_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return false;
+	}
 	if (wlan_crypto_vdev_has_mgmtcipher(
 				vdev,
 				(1 << WLAN_CRYPTO_CIPHER_AES_GMAC) |
