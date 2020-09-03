@@ -541,17 +541,17 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 }
 #endif
 
-int
+QDF_STATUS
 target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 {
 	/* Register completion handler here */
 	wmi_unified_t wmi_hdl;
-	int ret = 0;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_hdl) {
 		cfr_err("Unable to get wmi handle");
-		return -EINVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	ret = wmi_unified_register_event_handler(wmi_hdl,
@@ -568,17 +568,17 @@ target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 	return ret;
 }
 
-int
+QDF_STATUS
 target_if_unregister_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 {
 	/* Unregister completion handler here */
 	wmi_unified_t wmi_hdl;
-	int status = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_hdl) {
 		cfr_err("Unable to get wmi handle");
-		return -EINVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	status = wmi_unified_unregister_event(wmi_hdl,
@@ -679,29 +679,29 @@ target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
 }
 #endif
 
-int cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
 			 struct wlan_objmgr_pdev *pdev)
 {
-	int status;
+	QDF_STATUS status;
 	struct pdev_cfr *pdev_cfrobj;
 
 	pdev_cfrobj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 							    WLAN_UMAC_COMP_CFR);
 	if (!pdev_cfrobj)
-		return -EINVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 
 #if DIRECT_BUF_RX_ENABLE
 	status = target_if_register_to_dbr(pdev);
 	if (QDF_STATUS_SUCCESS != status) {
 		cfr_err("Failed to register with dbr");
-		return -EINVAL;
+		return QDF_STATUS_E_FAILURE;
 	}
 #endif
 
 	status = target_if_register_tx_completion_event_handler(psoc);
 	if (QDF_STATUS_SUCCESS != status) {
 		cfr_err("Failed to register with tx event handler");
-		return -EINVAL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pdev_cfrobj->cfr_max_sta_count = MAX_CFR_ENABLED_CLIENTS;
@@ -711,10 +711,10 @@ int cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-int cfr_8074v2_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS cfr_8074v2_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 			   struct wlan_objmgr_pdev *pdev)
 {
-	int status;
+	QDF_STATUS status;
 
 	status = target_if_unregister_to_dbr(pdev);
 	if (QDF_STATUS_SUCCESS != status) {

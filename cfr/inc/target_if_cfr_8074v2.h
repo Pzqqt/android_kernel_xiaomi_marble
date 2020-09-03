@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,7 @@
  *
  * Return: Registration status for necessary handlers
  */
-int cfr_8074v2_init_pdev(
+QDF_STATUS cfr_8074v2_init_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev);
 
@@ -47,7 +47,7 @@ int cfr_8074v2_init_pdev(
  *
  * Return: De-registration status for necessary handlers
  */
-int cfr_8074v2_deinit_pdev(
+QDF_STATUS cfr_8074v2_deinit_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev);
 
@@ -67,7 +67,7 @@ target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev);
  *
  * Return: Status
  */
-int
+QDF_STATUS
 target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
 
 /**
@@ -77,7 +77,7 @@ target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
  *
  * Return: Status
  */
-int
+QDF_STATUS
 target_if_unregister_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
 #endif
 
