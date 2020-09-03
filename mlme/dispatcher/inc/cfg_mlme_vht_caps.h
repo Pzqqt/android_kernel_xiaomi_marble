@@ -594,7 +594,7 @@
  */
 #define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE CFG_INI_BOOL( \
 			"enable_subfee_vendor_vhtie", \
-			0, \
+			1, \
 			"Enable subfee in vendor vht ie")
 
 #define CFG_VHT_CAPS_ALL \
