@@ -4276,7 +4276,7 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 		qdf_nbuf_free(pdev->sojourn_buf);
 
 	dp_pdev_flush_pending_vdevs(pdev);
-	dp_tx_pdev_detach(pdev);
+	dp_tx_desc_flush(pdev, NULL, true);
 	dp_pktlogmod_exit(pdev);
 	dp_neighbour_peers_detach(pdev);
 

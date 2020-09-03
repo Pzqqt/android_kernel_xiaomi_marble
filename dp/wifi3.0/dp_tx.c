@@ -4549,21 +4549,6 @@ QDF_STATUS dp_tx_pdev_init(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_tx_pdev_detach() - detach pdev from dp tx
- * @pdev: physical device instance
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
-{
-	/* flush TX outstanding data per pdev */
-	dp_tx_desc_flush(pdev, NULL, true);
-	dp_tx_me_exit(pdev);
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /* Pools will be allocated dynamically */
 static QDF_STATUS dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
