@@ -18713,6 +18713,8 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		weight_config->oce_ap_tx_pwr_weightage;
 	req_score_params->oce_subnet_id_weightage =
 		weight_config->oce_subnet_id_weightage;
+	req_score_params->sae_pk_ap_weightage =
+		weight_config->sae_pk_ap_weightage;
 
 	req_score_params->bw_index_score =
 		score_config->bandwidth_weight_per_index;
