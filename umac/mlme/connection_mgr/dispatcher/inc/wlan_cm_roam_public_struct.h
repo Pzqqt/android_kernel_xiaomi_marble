@@ -693,6 +693,7 @@ struct wlan_roam_fils_params {
  * @n_probes: Max number of probes to be sent
  * @scan_ctrl_flags: Scan control flags
  * @scan_ctrl_flags_ext: Scan control flags extended
+ * @rso_adaptive_dwell_mode: Adaptive dwell mode
  * @num_chan: number of channels
  * @num_bssid: number of bssids in tlv bssid_list[]
  * @ie_len: number of bytes in ie data. In the TLV ie_data[]
@@ -716,6 +717,7 @@ struct wlan_roam_scan_params {
 	uint32_t n_probes;
 	uint32_t scan_ctrl_flags;
 	uint32_t scan_ctrl_flags_ext;
+	enum scan_dwelltime_adaptive_mode rso_adaptive_dwell_mode;
 	uint32_t num_chan;
 	uint32_t num_bssid;
 	uint32_t ie_len;
@@ -853,12 +855,20 @@ struct wlan_rso_ese_params {
 };
 #endif
 
+#define ROAM_SCAN_DWELL_TIME_ACTIVE_DEFAULT   (100)
+#define ROAM_SCAN_DWELL_TIME_PASSIVE_DEFAULT  (110)
+#define ROAM_SCAN_MIN_REST_TIME_DEFAULT       (50)
+#define ROAM_SCAN_MAX_REST_TIME_DEFAULT       (500)
+#define ROAM_SCAN_HW_DEF_SCAN_MAX_DURATION    30000 /* 30 secs */
+#define ROAM_SCAN_CHANNEL_SWITCH_TIME         (4)
+
 /**
  * struct roam_offload_scan_params - structure containing roaming offload scan
  * parameters to be filled over WMI_ROAM_SCAN_MODE command.
  * @vdev_id: vdev id
  * @is_rso_stop: flag to tell whether roam req is valid or NULL
  * @rso_mode_info: Roam scan mode related parameters
+ * @rso_scan_params: Roam scan offload scan start params
  * @scan_params: Roaming scan related parameters
  * @assoc_ie_length: Assoc IE length
  * @assoc_ie: Assoc IE buffer
@@ -878,6 +888,7 @@ struct wlan_roam_scan_offload_params {
 	/* Parameters common for LFR-3.0 and LFR-2.0 */
 	bool roaming_scan_policy;
 	struct wlan_roam_scan_mode_params rso_mode_info;
+	struct wlan_roam_scan_params rso_scan_params;
 	uint32_t assoc_ie_length;
 	uint8_t  assoc_ie[MAX_ASSOC_IE_LENGTH];
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

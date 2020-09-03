@@ -1946,6 +1946,10 @@ static uint8_t *wmi_add_fils_tlv(wmi_unified_t wmi_handle,
 		     erp_info->realm_len);
 
 	buf_ptr += sizeof(*fils_tlv);
+	wmi_debug("RSO_CONFIG: ERP: usrname_len:%d next_erp_seq_num:%d rRk_len:%d rIk_len:%d realm_len:%d",
+		  erp_info->username_length, erp_info->next_erp_seq_num,
+		  erp_info->rRk_length, erp_info->rIk_length,
+		  erp_info->realm_len);
 	return buf_ptr;
 }
 #else
@@ -2045,6 +2049,17 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 			src_lfr3_params->rct_validity_timer;
 	roam_offload_params->roam_to_current_bss_disable =
 			src_lfr3_params->disable_self_roam;
+	wmi_debug("RSO_CFG: prefer_5g:%d rssi_cat_gap:%d select_5g_margin:%d ho_delay:%d max_sw_retry:%d no_ack_timeout:%d",
+		  roam_offload_params->prefer_5g,
+		  roam_offload_params->rssi_cat_gap,
+		  roam_offload_params->select_5g_margin,
+		  roam_offload_params->handoff_delay_for_rx,
+		  roam_offload_params->max_mlme_sw_retries,
+		  roam_offload_params->no_ack_timeout);
+	wmi_debug("RSO_CFG: reassoc_fail_timeout:%d rct_validity_time:%d disable_self_roam:%d",
+		  roam_offload_params->reassoc_failure_timeout,
+		  roam_offload_params->roam_candidate_validity_time,
+		  roam_offload_params->roam_to_current_bss_disable);
 
 	/* Fill the capabilities */
 	roam_offload_params->capability = src_lfr3_caps->capability;
@@ -2059,6 +2074,15 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 	qdf_mem_copy((uint8_t *)roam_offload_params->mcsset,
 		     (uint8_t *)src_lfr3_caps->mcsset,
 		     ROAM_OFFLOAD_NUM_MCS_SET);
+	wmi_debug("RSO_CFG: capability:0x%x ht_caps:0x%x ampdu_param:0%x ht_ext_cap:0x%x ht_txbf:0x%x asel_cap:0x%x qos_caps:0x%x qos_en:%d wmm_caps:0x%x",
+		  roam_offload_params->capability,
+		  roam_offload_params->ht_caps_info,
+		  roam_offload_params->ampdu_param,
+		  roam_offload_params->ht_ext_cap,
+		  roam_offload_params->ht_txbf, roam_offload_params->asel_cap,
+		  roam_offload_params->qos_caps,
+		  roam_offload_params->qos_enabled,
+		  roam_offload_params->wmm_caps);
 
 	buf += sizeof(wmi_roam_offload_tlv_param);
 	/*
@@ -2141,25 +2165,10 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC, 0);
 			buf += WMI_TLV_HDR_SIZE;
 
-			wmi_debug("vdev[%d] 11r TLV psk_msk_len = %d psk_msk_ext:%d",
+			wmi_debug("RSO_CFG: vdev[%d] 11r TLV psk_msk_len = %d psk_msk_ext:%d",
 				  roam_req->vdev_id,
 				  roam_offload_11r->psk_msk_len,
 				  roam_offload_11r->psk_msk_ext_len);
-			if (roam_offload_11r->psk_msk_len)
-				QDF_TRACE_HEX_DUMP(
-					QDF_MODULE_ID_WMI,
-					QDF_TRACE_LEVEL_DEBUG,
-					roam_offload_11r->psk_msk,
-					WLAN_MAX_PMK_DUMP_BYTES);
-
-			if (roam_offload_11r->psk_msk_ext_len)
-				QDF_TRACE_HEX_DUMP(
-					QDF_MODULE_ID_WMI,
-					QDF_TRACE_LEVEL_DEBUG,
-					roam_offload_11r->psk_msk_ext +
-					(roam_offload_11r->psk_msk_ext_len -
-					 WLAN_MAX_PMK_DUMP_BYTES),
-					WLAN_MAX_PMK_DUMP_BYTES);
 		} else {
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC,
 				       sizeof(wmi_roam_11i_offload_tlv_param));
@@ -2222,7 +2231,7 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC, 0);
 			buf += WMI_TLV_HDR_SIZE;
 
-			wmi_info("LFR3: vdev:%d pmk_len = %d pmksa caching:%d OKC:%d sae_same_pmk:%d key_mgmt_offload:%d",
+			wmi_info("RSO_CFG: vdev:%d pmk_len = %d pmksa caching:%d OKC:%d sae_same_pmk:%d key_mgmt_offload:%d",
 				 roam_req->vdev_id, roam_offload_11i->pmk_len,
 				 src_11i_info->fw_pmksa_cache,
 				 src_11i_info->fw_okc,
@@ -2260,7 +2269,8 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 		       roundup(assoc_ies->buf_len, sizeof(uint32_t)));
 	buf += WMI_TLV_HDR_SIZE;
 
-	if (assoc_ies->buf_len != 0)
+	wmi_debug("RSO_CFG: assoc_ies len:%d", assoc_ies->buf_len);
+	if (assoc_ies->buf_len)
 		qdf_mem_copy(buf, roam_req->assoc_ie, assoc_ies->buf_len);
 
 	buf += qdf_roundup(assoc_ies->buf_len, sizeof(uint32_t));
@@ -2282,6 +2292,67 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf_ptr,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+static QDF_STATUS
+wmi_fill_rso_start_scan_tlv(struct wlan_roam_scan_offload_params *rso_req,
+			    wmi_start_scan_cmd_fixed_param *scan_tlv)
+{
+	struct wlan_roam_scan_params *src_scan_params;
+
+	src_scan_params = &rso_req->rso_scan_params;
+
+	qdf_mem_zero(scan_tlv, sizeof(*scan_tlv));
+	scan_tlv->scan_ctrl_flags = WMI_SCAN_ADD_CCK_RATES |
+				    WMI_SCAN_ADD_OFDM_RATES |
+				    WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+	if (rso_req->is_rso_stop) {
+		scan_tlv->dwell_time_active =
+			ROAM_SCAN_DWELL_TIME_ACTIVE_DEFAULT;
+		scan_tlv->dwell_time_passive =
+			ROAM_SCAN_DWELL_TIME_PASSIVE_DEFAULT;
+		scan_tlv->min_rest_time = ROAM_SCAN_MIN_REST_TIME_DEFAULT;
+		scan_tlv->max_rest_time = ROAM_SCAN_MAX_REST_TIME_DEFAULT;
+		scan_tlv->repeat_probe_time = 0;
+		scan_tlv->probe_spacing_time = 0;
+		scan_tlv->probe_delay = 0;
+		scan_tlv->max_scan_time = ROAM_SCAN_HW_DEF_SCAN_MAX_DURATION;
+		scan_tlv->idle_time = src_scan_params->min_rest_time;
+		scan_tlv->burst_duration = 0;
+
+		return QDF_STATUS_SUCCESS;
+	}
+
+	scan_tlv->dwell_time_active = src_scan_params->dwell_time_active;
+	scan_tlv->dwell_time_passive = src_scan_params->dwell_time_passive;
+	scan_tlv->burst_duration = src_scan_params->burst_duration;
+	scan_tlv->min_rest_time = src_scan_params->min_rest_time;
+	scan_tlv->max_rest_time = src_scan_params->max_rest_time;
+	scan_tlv->repeat_probe_time = src_scan_params->repeat_probe_time;
+	scan_tlv->probe_spacing_time = src_scan_params->probe_spacing_time;
+	scan_tlv->probe_delay = src_scan_params->probe_delay;
+	scan_tlv->max_scan_time = ROAM_SCAN_HW_DEF_SCAN_MAX_DURATION;
+	scan_tlv->idle_time = src_scan_params->idle_time;
+	scan_tlv->n_probes = src_scan_params->n_probes;
+	scan_tlv->scan_ctrl_flags |= src_scan_params->scan_ctrl_flags;
+
+	WMI_SCAN_SET_DWELL_MODE(scan_tlv->scan_ctrl_flags,
+				src_scan_params->rso_adaptive_dwell_mode);
+
+	/* Configure roaming scan behavior (DBS/Non-DBS scan) */
+	if (rso_req->roaming_scan_policy)
+		scan_tlv->scan_ctrl_flags_ext |=
+			WMI_SCAN_DBS_POLICY_FORCE_NONDBS;
+	else
+		scan_tlv->scan_ctrl_flags_ext |=
+			WMI_SCAN_DBS_POLICY_DEFAULT;
+
+	wmi_debug("RSO_CFG: dwell time: active %d passive %d, minrest %d max rest %d repeat probe time %d probe_spacing:%d",
+		  scan_tlv->dwell_time_active, scan_tlv->dwell_time_passive,
+		  scan_tlv->min_rest_time, scan_tlv->max_rest_time,
+		  scan_tlv->repeat_probe_time, scan_tlv->probe_spacing_time);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * send_roam_scan_offload_mode_cmd_tlv() - send roam scan mode request to fw
@@ -2359,13 +2430,7 @@ send_roam_scan_offload_mode_cmd_tlv(
 		WMITLV_GET_STRUCT_TLVLEN(wmi_start_scan_cmd_fixed_param));
 
 	scan_cmd_fp = (wmi_start_scan_cmd_fixed_param *)buf_ptr;
-	/* Configure roaming scan behavior (DBS/Non-DBS scan) */
-	if (rso_req->roaming_scan_policy)
-		scan_cmd_fp->scan_ctrl_flags_ext |=
-			WMI_SCAN_DBS_POLICY_FORCE_NONDBS;
-	else
-		scan_cmd_fp->scan_ctrl_flags_ext |=
-			WMI_SCAN_DBS_POLICY_DEFAULT;
+	wmi_fill_rso_start_scan_tlv(rso_req, scan_cmd_fp);
 
 	/* Ensure there is no additional IEs */
 	scan_cmd_fp->ie_len = 0;
