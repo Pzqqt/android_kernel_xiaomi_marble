@@ -273,7 +273,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	core = inst->core;
 	capability = inst->capabilities;
 
-	if (core->v4l2_ctrl_ops) {
+	if (!core->v4l2_ctrl_ops) {
 		s_vpr_e(inst->sid, "%s: no control ops\n", __func__);
 		return -EINVAL;
 	}
@@ -298,11 +298,6 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 		s_vpr_e(inst->sid, "control handler init failed, %d\n",
 				inst->ctrl_handler.error);
 		return rc;
-	}
-
-	if (!core->v4l2_ctrl_ops) {
-		s_vpr_e(inst->sid, "%s: no control ops\n", __func__);
-		return -EINVAL;
 	}
 
 	for (idx = 0; idx < INST_CAP_MAX; idx++) {

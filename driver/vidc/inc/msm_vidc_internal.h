@@ -115,7 +115,7 @@ enum msm_vidc_buffer_type {
 };
 
 enum msm_vidc_buffer_attributes {
-	MSM_VIDC_ATTR_DEFERRED_SUBMISSION       = BIT(0),
+	MSM_VIDC_ATTR_DEFERRED                  = BIT(0),
 	MSM_VIDC_ATTR_READ_ONLY                 = BIT(1),
 	MSM_VIDC_ATTR_PENDING_RELEASE           = BIT(2),
 	MSM_VIDC_ATTR_QUEUED                    = BIT(3),
@@ -487,7 +487,7 @@ struct msm_vidc_power {
 
 struct msm_vidc_alloc {
 	struct list_head            list;
-	enum msm_vidc_buffer_type   buffer_type;
+	enum msm_vidc_buffer_type   type;
 	enum msm_vidc_buffer_region region;
 	u32                         size;
 	u8                          cached:1;
@@ -497,14 +497,14 @@ struct msm_vidc_alloc {
 	void                       *kvaddr;
 };
 
-struct msm_vidc_alloc_info {
+struct msm_vidc_allocations {
 	struct list_head            list; // list of "struct msm_vidc_alloc"
 };
 
 struct msm_vidc_map {
 	struct list_head            list;
 	bool                        valid;
-	enum msm_vidc_buffer_type   buffer_type;
+	enum msm_vidc_buffer_type   type;
 	enum msm_vidc_buffer_region region;
 	struct dma_buf             *dmabuf;
 	u32                         refcount;
@@ -513,7 +513,7 @@ struct msm_vidc_map {
 	struct dma_buf_attachment  *attach;
 };
 
-struct msm_vidc_map_info {
+struct msm_vidc_mappings {
 	struct list_head            list; // list of "struct msm_vidc_map"
 };
 
@@ -533,7 +533,7 @@ struct msm_vidc_buffer {
 	enum msm_vidc_buffer_attributes    attr;
 };
 
-struct msm_vidc_buffer_info {
+struct msm_vidc_buffers {
 	struct list_head       list; // list of "struct msm_vidc_buffer"
 	u32                    min_count;
 	u32                    extra_count;

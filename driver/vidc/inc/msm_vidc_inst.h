@@ -25,36 +25,36 @@ struct msm_vidc_session_ops {
 	int (*extra_count)(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type type);
 };
 
-struct msm_vidc_allocations {
-	struct msm_vidc_alloc_info        scratch;
-	struct msm_vidc_alloc_info        scratch_1;
-	struct msm_vidc_alloc_info        scratch_2;
-	struct msm_vidc_alloc_info        persist;
-	struct msm_vidc_alloc_info        persist_1;
+struct msm_vidc_allocations_info {
+	struct msm_vidc_allocations     scratch;
+	struct msm_vidc_allocations     scratch_1;
+	struct msm_vidc_allocations     scratch_2;
+	struct msm_vidc_allocations     persist;
+	struct msm_vidc_allocations     persist_1;
 };
 
-struct msm_vidc_maps {
-	struct msm_vidc_map_info        input;
-	struct msm_vidc_map_info        output;
-	struct msm_vidc_map_info        input_meta;
-	struct msm_vidc_map_info        output_meta;
-	struct msm_vidc_map_info        scratch;
-	struct msm_vidc_map_info        scratch_1;
-	struct msm_vidc_map_info        scratch_2;
-	struct msm_vidc_map_info        persist;
-	struct msm_vidc_map_info        persist_1;
+struct msm_vidc_mappings_info {
+	struct msm_vidc_mappings        input;
+	struct msm_vidc_mappings        output;
+	struct msm_vidc_mappings        input_meta;
+	struct msm_vidc_mappings        output_meta;
+	struct msm_vidc_mappings        scratch;
+	struct msm_vidc_mappings        scratch_1;
+	struct msm_vidc_mappings        scratch_2;
+	struct msm_vidc_mappings        persist;
+	struct msm_vidc_mappings        persist_1;
 };
 
-struct msm_vidc_buffers {
-	struct msm_vidc_buffer_info        input;
-	struct msm_vidc_buffer_info        output;
-	struct msm_vidc_buffer_info        input_meta;
-	struct msm_vidc_buffer_info        output_meta;
-	struct msm_vidc_buffer_info        scratch;
-	struct msm_vidc_buffer_info        scratch_1;
-	struct msm_vidc_buffer_info        scratch_2;
-	struct msm_vidc_buffer_info        persist;
-	struct msm_vidc_buffer_info        persist_1;
+struct msm_vidc_buffers_info {
+	struct msm_vidc_buffers        input;
+	struct msm_vidc_buffers        output;
+	struct msm_vidc_buffers        input_meta;
+	struct msm_vidc_buffers        output_meta;
+	struct msm_vidc_buffers        scratch;
+	struct msm_vidc_buffers        scratch_1;
+	struct msm_vidc_buffers        scratch_2;
+	struct msm_vidc_buffers        persist;
+	struct msm_vidc_buffers        persist_1;
 };
 
 enum msm_vidc_inst_state {
@@ -96,9 +96,9 @@ struct msm_vidc_inst {
 	struct msm_vidc_crop               crop;
 	struct msm_vidc_properties         prop;
 	struct msm_vidc_power              power;
-	struct msm_vidc_buffers            buffers;
-	struct msm_vidc_maps               maps;
-	struct msm_vidc_allocations        allocations;
+	struct msm_vidc_buffers_info       buffers;
+	struct msm_vidc_mappings_info      mappings;
+	struct msm_vidc_allocations_info   allocations;
 	bool                               subscribed_input_psc;
 	bool                               subscribed_output_psc;
 	bool                               subscribed_input_prop;

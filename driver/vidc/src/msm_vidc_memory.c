@@ -248,8 +248,7 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 
 	d_vpr_h(
 		"%s: dmabuf = %pK, size = %d, kvaddr = %pK, buffer_type = %#x\n",
-		__func__, mem->dmabuf, mem->size,
-		mem->kvaddr, mem->buffer_type);
+		__func__, mem->dmabuf, mem->size, mem->kvaddr, mem->type);
 	return 0;
 
 error:
@@ -268,8 +267,7 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 
 	d_vpr_h(
 		"%s: dmabuf = %pK, size = %d, kvaddr = %pK, buffer_type = %#x\n",
-		__func__, mem->dmabuf, mem->size,
-		mem->kvaddr, mem->buffer_type);
+		__func__, mem->dmabuf, mem->size, mem->kvaddr, mem->type);
 
 	if (mem->kvaddr) {
 		dma_buf_vunmap(mem->dmabuf, mem->kvaddr);

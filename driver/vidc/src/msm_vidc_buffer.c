@@ -139,18 +139,23 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 {
-	return ALIGN(15 * 1024 * 1024, SZ_4K);
+	u32 size = ALIGN(15 * 1024 * 1024, SZ_4K);
+	size = 4; // TODO
+	return size;
 }
 
 u32 msm_vidc_decoder_output_size(struct msm_vidc_inst *inst)
 {
+	u32 size;
 	u32 format;
 	struct v4l2_format *f;
 
 	f = &inst->fmts[OUTPUT_PORT];
-	format = get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat);
-	return VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
+	format = v4l2_colorformat_to_media(f->fmt.pix.pixelformat);
+	size = VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
 			f->fmt.pix.height);
+	size = 4; // TODO
+	return size;
 }
 
 u32 msm_vidc_decoder_input_meta_size(struct msm_vidc_inst *inst)
@@ -165,18 +170,23 @@ u32 msm_vidc_decoder_output_meta_size(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 {
+	u32 size;
 	u32 format;
 	struct v4l2_format *f;
 
 	f = &inst->fmts[INPUT_PORT];
-	format = get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat);
-	return VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
+	format = v4l2_colorformat_to_media(f->fmt.pix.pixelformat);
+	size = VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
 			f->fmt.pix.height);
+	size = 4; // TODO
+	return size;
 }
 
 u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 {
-	return ALIGN(15 * 1024 * 1024, SZ_4K);
+	u32 size = ALIGN(15 * 1024 * 1024, SZ_4K);
+	size = 4; // TODO
+	return size;
 }
 
 u32 msm_vidc_encoder_input_meta_size(struct msm_vidc_inst *inst)

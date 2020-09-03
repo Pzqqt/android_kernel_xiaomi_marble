@@ -319,7 +319,8 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 			s_vpr_e(inst->sid,
 				"%s: reqbufs(%d) not allowed in %d state\n",
 				__func__, b->type, inst->state);
-			return -EINVAL;
+			rc = -EINVAL;
+			goto unlock;
 		}
 	} else if (b->type == OUTPUT_PLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
@@ -328,13 +329,16 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 			s_vpr_e(inst->sid,
 				"%s: reqbufs(%d) not allowed in %d state\n",
 				__func__, b->type, inst->state);
-			return -EINVAL;
+			rc = -EINVAL;
+			goto unlock;
 		}
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(inst, b->type, __func__);
-	if (port < 0)
-		return -EINVAL;
+	port = v4l2_type_to_driver_port(inst, b->type, __func__);
+	if (port < 0) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	rc = vb2_reqbufs(&inst->vb2q[port], b);
 	if (rc) {
@@ -352,13 +356,85 @@ EXPORT_SYMBOL(msm_vidc_reqbufs);
 int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 		struct v4l2_buffer *b)
 {
-	return 0;
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+	struct vb2_queue *q;
+
+	if (!inst || !inst->core || !b || !valid_v4l2_buffer(b, inst)) {
+		d_vpr_e("%s: invalid params %pK %pK\n", __func__, inst, b);
+		return -EINVAL;
+	}
+
+	mutex_lock(&inst->lock);
+
+	if (inst->state == MSM_VIDC_ERROR) {
+		s_vpr_e(inst->sid, "%s: error state\n", __func__);
+		rc = -EINVAL;
+		goto unlock;
+	}
+	if (b->type == INPUT_PLANE) {
+		q = &inst->vb2q[INPUT_PORT];
+	} else if (b->type == OUTPUT_PLANE) {
+		q = &inst->vb2q[OUTPUT_PORT];
+	} else if (b->type == INPUT_META_PLANE) {
+		q = &inst->vb2q[INPUT_META_PORT];
+	} else if (b->type == OUTPUT_META_PLANE) {
+		q = &inst->vb2q[OUTPUT_META_PORT];
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+			__func__, b->type);
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	rc = vb2_qbuf(q, mdev, b);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: failed with %d\n", __func__, rc);
+
+unlock:
+	mutex_unlock(&inst->lock);
+	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_qbuf);
 
 int msm_vidc_dqbuf(void *instance, struct v4l2_buffer *b)
 {
-	return 0;
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+	struct vb2_queue *q;
+
+	if (!inst || !b || !valid_v4l2_buffer(b, inst)) {
+		d_vpr_e("%s: invalid params %pK %pK\n", __func__, inst, b);
+		return -EINVAL;
+	}
+
+	mutex_lock(&inst->lock);
+	if (b->type == INPUT_PLANE) {
+		q = &inst->vb2q[INPUT_PORT];
+	} else if (b->type == OUTPUT_PLANE) {
+		q = &inst->vb2q[OUTPUT_PORT];
+	} else if (b->type == INPUT_META_PLANE) {
+		q = &inst->vb2q[INPUT_META_PORT];
+	} else if (b->type == OUTPUT_META_PLANE) {
+		q = &inst->vb2q[OUTPUT_META_PORT];
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+			__func__, b->type);
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	rc = vb2_dqbuf(q, b, true);
+	if (rc == -EAGAIN) {
+		goto unlock;
+	} else if (rc) {
+		s_vpr_e(inst->sid, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
+	}
+
+unlock:
+	mutex_unlock(&inst->lock);
+	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_dqbuf);
 
@@ -397,7 +473,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		}
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(inst, type, __func__);
+	port = v4l2_type_to_driver_port(inst, type, __func__);
 	if (port < 0) {
 		rc = -EINVAL;
 		goto unlock;
@@ -475,7 +551,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		}
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(inst, type, __func__);
+	port = v4l2_type_to_driver_port(inst, type, __func__);
 	if (port < 0) {
 		rc = -EINVAL;
 		goto unlock;
@@ -676,6 +752,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	s_vpr_i(inst->sid, "Opening video instance: %d\n", session_type);
 
 	kref_init(&inst->kref);
+	mutex_init(&inst->lock);
 	INIT_LIST_HEAD(&inst->buffers.input.list);
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.output.list);
@@ -690,15 +767,15 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->allocations.scratch_2.list);
 	INIT_LIST_HEAD(&inst->allocations.persist.list);
 	INIT_LIST_HEAD(&inst->allocations.persist_1.list);
-	INIT_LIST_HEAD(&inst->maps.input.list);
-	INIT_LIST_HEAD(&inst->maps.input_meta.list);
-	INIT_LIST_HEAD(&inst->maps.output.list);
-	INIT_LIST_HEAD(&inst->maps.output_meta.list);
-	INIT_LIST_HEAD(&inst->maps.scratch.list);
-	INIT_LIST_HEAD(&inst->maps.scratch_1.list);
-	INIT_LIST_HEAD(&inst->maps.scratch_2.list);
-	INIT_LIST_HEAD(&inst->maps.persist.list);
-	INIT_LIST_HEAD(&inst->maps.persist_1.list);
+	INIT_LIST_HEAD(&inst->mappings.input.list);
+	INIT_LIST_HEAD(&inst->mappings.input_meta.list);
+	INIT_LIST_HEAD(&inst->mappings.output.list);
+	INIT_LIST_HEAD(&inst->mappings.output_meta.list);
+	INIT_LIST_HEAD(&inst->mappings.scratch.list);
+	INIT_LIST_HEAD(&inst->mappings.scratch_1.list);
+	INIT_LIST_HEAD(&inst->mappings.scratch_2.list);
+	INIT_LIST_HEAD(&inst->mappings.persist.list);
+	INIT_LIST_HEAD(&inst->mappings.persist_1.list);
 	INIT_LIST_HEAD(&inst->children.list);
 	INIT_LIST_HEAD(&inst->firmware.list);
 	inst->domain = session_type;

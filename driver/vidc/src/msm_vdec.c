@@ -22,7 +22,7 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 codec)
 
 	d_vpr_h("%s()\n", __func__);
 
-	inst->codec = get_vidc_codec_from_v4l2(codec);
+	inst->codec = v4l2_codec_to_driver(codec);
 	rc = msm_vidc_get_inst_capability(inst);
 	return rc;
 }
@@ -45,7 +45,6 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -65,6 +64,17 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 			inst, MSM_VIDC_BUF_SCRATCH_1);
 	inst->buffers.persist_1.min_count = call_session_op(core, min_count,
 			inst, MSM_VIDC_BUF_PERSIST_1);
+
+	s_vpr_h(inst->sid, "internal buffer: min     size\n");
+        s_vpr_h(inst->sid, "scratch  buffer: %d      %d\n",
+		inst->buffers.scratch.min_count,
+		inst->buffers.scratch.size);
+	s_vpr_h(inst->sid, "scratch1 buffer: %d      %d\n",
+		inst->buffers.scratch_1.min_count,
+		inst->buffers.scratch_1.size);
+	s_vpr_h(inst->sid, "persist1 buffer: %d      %d\n",
+		inst->buffers.persist_1.min_count,
+		inst->buffers.persist_1.size);
 
 	return rc;
 }
@@ -298,8 +308,8 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s()\n", __func__);
 	core = inst->core;
+	s_vpr_h(inst->sid, "%s()\n", __func__);
 
 	//rc = msm_vidc_check_session_supported(inst);
 	if (rc)
@@ -330,24 +340,30 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	//msm_vidc_scale_power(inst);
 
 	rc = msm_vdec_set_input_properties(inst);
+	rc = 0; // TODO
 	if (rc)
 		goto error;
 	rc = msm_vdec_create_input_internal_buffers(inst);
+	rc = 0; // TODO
 	if (rc)
 		goto error;
 	rc = msm_vdec_queue_input_internal_buffers(inst);
+	rc = 0; // TODO
 	if (rc)
 		goto error;
 
 	rc = msm_vdec_port_settings_subscription(inst, INPUT_PORT);
+	rc = 0; // TODO
 	if (rc)
 		goto error;
 
 	rc = msm_vdec_property_subscription(inst, INPUT_PORT);
+	rc = 0; // TODO
 	if (rc)
 		goto error;
 
 	rc = msm_vdec_metadata_delivery(inst, INPUT_PORT);
+	rc = 0; // TODO
 	if (rc)
 		goto error;
 
@@ -355,14 +371,11 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vidc_change_inst_state(inst, MSM_VIDC_START_INPUT, __func__);
-	if (rc)
-		goto error;
-
-	d_vpr_h("%s: done\n", __func__);
+	s_vpr_h(inst->sid, "%s: done\n", __func__);
 	return 0;
 
 error:
+	s_vpr_e(inst->sid, "%s: failed\n", __func__);
 	msm_vdec_stop_input(inst);
 	return rc;
 }
@@ -407,6 +420,32 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 
 error:
 	msm_vdec_stop_output(inst);
+	return rc;
+}
+
+static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
+	struct vb2_buffer *vb2)
+{
+	int rc = 0;
+
+	if (!inst || !vb2) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	d_vpr_h("%s()\n", __func__);
+
+	return rc;
+}
+
+int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
+{
+	int rc = 0;
+
+	if (inst->decode_batch.enable)
+		rc = msm_vdec_qbuf_batch(inst, vb2);
+	else
+		rc = msm_vidc_queue_buffer(inst, vb2);
+
 	return rc;
 }
 
@@ -515,10 +554,10 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt->type = OUTPUT_PLANE;
 		fmt->fmt.pix.pixelformat = f->fmt.pix.pixelformat;
 		fmt->fmt.pix.width = VENUS_Y_STRIDE(
-			get_media_colorformat_from_v4l2(fmt->fmt.pix.pixelformat),
+			v4l2_colorformat_to_media(fmt->fmt.pix.pixelformat),
 			f->fmt.pix.width);
 		fmt->fmt.pix.height = VENUS_Y_SCANLINES(
-			get_media_colorformat_from_v4l2(fmt->fmt.pix.pixelformat),
+			v4l2_colorformat_to_media(fmt->fmt.pix.pixelformat),
 			f->fmt.pix.height);
 		fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
 		fmt->fmt.pix.sizeimage = call_session_op(core, buffer_size,
@@ -588,7 +627,7 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(inst, f->type, __func__);
+	port = v4l2_type_to_driver_port(inst, f->type, __func__);
 	if (port < 0)
 		return -EINVAL;
 
@@ -623,7 +662,7 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			i++;
 			codecs >>= 1;
 		}
-		f->pixelformat = get_v4l2_codec_from_vidc(array[f->index]);
+		f->pixelformat = v4l2_codec_from_driver(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		f->flags = V4L2_FMT_FLAG_COMPRESSED;
@@ -641,7 +680,7 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			i++;
 			formats >>= 1;
 		}
-		f->pixelformat = get_v4l2_colorformat_from_vidc(array[f->index]);
+		f->pixelformat = v4l2_colorformat_from_driver(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		strlcpy(f->description, "colorformat", sizeof(f->description));
@@ -710,9 +749,9 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	f->type = OUTPUT_PLANE;
 	f->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12_UBWC;
 	f->fmt.pix.width = VENUS_Y_STRIDE(
-		get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat), DEFAULT_WIDTH);
+		v4l2_colorformat_to_media(f->fmt.pix.pixelformat), DEFAULT_WIDTH);
 	f->fmt.pix.height = VENUS_Y_SCANLINES(
-		get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat), DEFAULT_HEIGHT);
+		v4l2_colorformat_to_media(f->fmt.pix.pixelformat), DEFAULT_HEIGHT);
 	f->fmt.pix.bytesperline = f->fmt.pix.width;
 	f->fmt.pix.sizeimage = call_session_op(core, buffer_size,
 			inst, MSM_VIDC_BUF_OUTPUT);

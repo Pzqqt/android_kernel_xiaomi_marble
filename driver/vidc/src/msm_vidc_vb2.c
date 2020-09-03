@@ -46,7 +46,7 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(inst, q->type, __func__);
+	port = v4l2_type_to_driver_port(inst, q->type, __func__);
 	if (port < 0)
 		return -EINVAL;
 
@@ -69,8 +69,11 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		inst->buffers.input.extra_count)
 		*num_buffers = inst->buffers.input.min_count +
 			inst->buffers.input.extra_count;
-	sizes[0] = inst->fmts[port].fmt.pix.sizeimage;
 	inst->buffers.input.actual_count = *num_buffers;
+	if (port == INPUT_PORT || port == OUTPUT_PORT)
+		sizes[0] = inst->fmts[port].fmt.pix.sizeimage;
+	else if (port == INPUT_META_PORT || port == OUTPUT_META_PORT)
+		sizes[0] = inst->fmts[port].fmt.meta.buffersize;
 
 	s_vpr_h(inst->sid,
 		"queue_setup: type %d num_buffers %d sizes[0] %d\n",
@@ -151,6 +154,27 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 
 void msm_vidc_buf_queue(struct vb2_buffer *vb2)
 {
+	int rc = 0;
+	struct msm_vidc_inst *inst;
+
+	inst = vb2_get_drv_priv(vb2->vb2_queue);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	if (is_decode_session(inst))
+		rc = msm_vdec_qbuf(inst, vb2);
+	else if (is_encode_session(inst))
+		rc = msm_vdec_qbuf(inst, vb2);
+	else
+		rc = -EINVAL;
+
+	if (rc) {
+		print_vb2_buffer("failed vb2-qbuf", inst, vb2);
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		vb2_buffer_done(vb2, VB2_BUF_STATE_ERROR);
+	}
 }
 
 void msm_vidc_buf_cleanup(struct vb2_buffer *vb)

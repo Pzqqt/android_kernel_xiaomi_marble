@@ -20,7 +20,7 @@ static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 codec)
 
 	d_vpr_h("%s()\n", __func__);
 
-	inst->codec = get_vidc_codec_from_v4l2(codec);
+	inst->codec = v4l2_codec_to_driver(codec);
 	rc = msm_vidc_get_inst_capability(inst);
 	return rc;
 }
@@ -52,10 +52,10 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt->type = INPUT_PLANE;
 		fmt->fmt.pix.pixelformat = f->fmt.pix.pixelformat;
 		fmt->fmt.pix.width = VENUS_Y_STRIDE(
-			get_media_colorformat_from_v4l2(fmt->fmt.pix.pixelformat),
+			v4l2_colorformat_to_media(fmt->fmt.pix.pixelformat),
 			f->fmt.pix.width);
 		fmt->fmt.pix.height = VENUS_Y_SCANLINES(
-			get_media_colorformat_from_v4l2(fmt->fmt.pix.pixelformat),
+			v4l2_colorformat_to_media(fmt->fmt.pix.pixelformat),
 			f->fmt.pix.height);
 		fmt->fmt.pix.bytesperline = fmt->fmt.pix.width;
 		fmt->fmt.pix.sizeimage = call_session_op(core, buffer_size,
@@ -205,7 +205,7 @@ int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		return -EINVAL;
 	}
 
-	port = msm_vidc_get_port_from_v4l2_type(inst, f->type, __func__);
+	port = v4l2_type_to_driver_port(inst, f->type, __func__);
 	if (port < 0)
 		return -EINVAL;
 
@@ -240,7 +240,7 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			i++;
 			codecs >>= 1;
 		}
-		f->pixelformat = get_v4l2_codec_from_vidc(array[f->index]);
+		f->pixelformat = v4l2_codec_from_driver(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		f->flags = V4L2_FMT_FLAG_COMPRESSED;
@@ -258,7 +258,7 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			i++;
 			formats >>= 1;
 		}
-		f->pixelformat = get_v4l2_colorformat_from_vidc(array[f->index]);
+		f->pixelformat = v4l2_colorformat_from_driver(array[f->index]);
 		if (!f->pixelformat)
 			return -EINVAL;
 		strlcpy(f->description, "colorformat", sizeof(f->description));
@@ -325,9 +325,9 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	f->type = INPUT_PLANE;
 	f->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12_UBWC;
 	f->fmt.pix.width = VENUS_Y_STRIDE(
-		get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat), DEFAULT_WIDTH);
+		v4l2_colorformat_to_media(f->fmt.pix.pixelformat), DEFAULT_WIDTH);
 	f->fmt.pix.height = VENUS_Y_SCANLINES(
-		get_media_colorformat_from_v4l2(f->fmt.pix.pixelformat), DEFAULT_HEIGHT);
+		v4l2_colorformat_to_media(f->fmt.pix.pixelformat), DEFAULT_HEIGHT);
 	f->fmt.pix.bytesperline = f->fmt.pix.width;
 	f->fmt.pix.sizeimage = call_session_op(core, buffer_size,
 			inst, MSM_VIDC_BUF_INPUT);

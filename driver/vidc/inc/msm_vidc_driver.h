@@ -66,11 +66,17 @@ static inline bool is_thumbnail_session(struct msm_vidc_inst *inst)
 	return false; // TODO: fix it
 }
 
-u32 get_v4l2_codec_from_vidc(enum msm_vidc_codec_type codec);
-enum msm_vidc_codec_type get_vidc_codec_from_v4l2(u32 v4l2_codec);
-u32 get_v4l2_colorformat_from_vidc(enum msm_vidc_colorformat_type colorformat);
-enum msm_vidc_colorformat_type get_vidc_colorformat_from_v4l2(u32 colorformat);
-u32 get_media_colorformat_from_v4l2(u32 v4l2_fmt);
+void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
+		struct msm_vidc_buffer *vbuf);
+void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
+		struct vb2_buffer *vb2);
+enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec);
+u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec);
+u32 v4l2_colorformat_to_media(u32 v4l2_fmt);
+enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 colorformat);
+u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat);
+int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
+	const char *func);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_state state, const char *func);
 int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
@@ -94,16 +100,26 @@ void msm_vidc_batch_handler(struct work_struct *work);
 int msm_vidc_setup_event_queue(struct msm_vidc_inst *inst);
 int msm_vidc_vb2_queue_init(struct msm_vidc_inst *inst);
 int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl);
-int msm_vidc_get_port_from_v4l2_type(struct msm_vidc_inst *inst, u32 type,
-	const char *func);
 u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type, const char *func);
-struct msm_vidc_buffer_info *msm_vidc_get_buffer_info(struct msm_vidc_inst *inst,
+struct msm_vidc_buffers *msm_vidc_get_buffers(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type, const char *func);
-struct msm_vidc_map_info *msm_vidc_get_map_info(struct msm_vidc_inst *inst,
+struct msm_vidc_mappings *msm_vidc_get_mappings(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type, const char *func);
-struct msm_vidc_alloc_info *msm_vidc_get_alloc_info(struct msm_vidc_inst *inst,
-	enum msm_vidc_buffer_type buffer_type, const char *func);
+struct msm_vidc_allocations *msm_vidc_get_allocations(
+	struct msm_vidc_inst *inst, enum msm_vidc_buffer_type buffer_type,
+	const char *func);
+struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
+	struct vb2_buffer *vb2);
+int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf);
+int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf);
+int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf);
+int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
+struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *vbuf);
 struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
 		u32 session_id);
 void put_inst(struct msm_vidc_inst *inst);

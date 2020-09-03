@@ -144,7 +144,7 @@ static void __dump_packet(u8 *packet)
 static void __fatal_error(struct msm_vidc_core *core, bool fatal)
 {
 	return;
-	fatal &= core->platform->data.core_data[DEBUG_TIMEOUT].value;
+	fatal &= core->platform->data.core_data[HW_RESPONSE_TIMEOUT].value;
 	MSM_VIDC_ERROR(fatal);
 }
 
@@ -2082,7 +2082,7 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	q_size = SHARED_QSIZE - ALIGNED_SFR_SIZE - ALIGNED_QDSS_SIZE;
 
 	memset(&alloc, 0, sizeof(alloc));
-	alloc.buffer_type = MSM_VIDC_BUF_QUEUE;
+	alloc.type       = MSM_VIDC_BUF_QUEUE;
 	alloc.region     = MSM_VIDC_NON_SECURE;
 	alloc.size       = q_size;
 	alloc.cached     = false;
@@ -2095,7 +2095,7 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	}
 
 	memset(&map, 0, sizeof(map));
-	map.buffer_type  = alloc.buffer_type;
+	map.type         = alloc.type;
 	map.region       = alloc.region;
 	map.dmabuf       = alloc.dmabuf;
 	rc = msm_vidc_memory_map(core, &map);
@@ -2155,7 +2155,7 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 
 	/* sfr buffer */
 	memset(&alloc, 0, sizeof(alloc));
-	alloc.buffer_type = MSM_VIDC_BUF_QUEUE;
+	alloc.type       = MSM_VIDC_BUF_QUEUE;
 	alloc.region     = MSM_VIDC_NON_SECURE;
 	alloc.size       = ALIGNED_SFR_SIZE;
 	alloc.cached     = false;
@@ -2167,7 +2167,7 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 		goto fail_alloc_queue;
 	}
 	memset(&map, 0, sizeof(map));
-	map.buffer_type  = alloc.buffer_type;
+	map.type         = alloc.type;
 	map.region       = alloc.region;
 	map.dmabuf       = alloc.dmabuf;
 	rc = msm_vidc_memory_map(core, &map);
