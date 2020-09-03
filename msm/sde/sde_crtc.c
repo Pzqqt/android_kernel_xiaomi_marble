@@ -3542,7 +3542,8 @@ static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc,
 	if (!idle_time ||
 		!sde_encoder_check_curr_mode(sde_crtc->mixers[0].encoder,
 						MSM_DISPLAY_VIDEO_MODE) ||
-			(crtc->index >= ARRAY_SIZE(priv->event_thread)))
+			(crtc->index >= ARRAY_SIZE(priv->event_thread)) ||
+			(sde_crtc->cache_state > CACHE_STATE_NORMAL))
 		return;
 
 	/* schedule the idle notify delayed work */
