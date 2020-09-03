@@ -398,15 +398,45 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
 {
-	struct cnx_mgr *cm_ctx = NULL;
-	struct cm_connect_req *cm_req = NULL;
+	struct cnx_mgr *cm_ctx;
+	struct cm_req *cm_req;
+	struct cm_connect_req *connect_req;
+	QDF_STATUS status;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+
+	if (!cm_ctx) {
+		mlme_err("cm ctx NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* This would be freed as part of list removal from req list */
+	cm_req = qdf_mem_malloc(sizeof(*cm_req));
+	if (!cm_req)
+		return QDF_STATUS_E_NOMEM;
 
 	/*
 	 * Get WAPI/WPA/RSN IE and refill crypto params of req.
-	 * Prepare cm_connect_req cm_req, get cm id and inform it to OSIF.
-	 * store connect req to the cm ctx req_list
 	 */
 
-	return cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_REQ,
-				   sizeof(*cm_req), cm_req);
+	connect_req = &cm_req->connect_req;
+	connect_req->cm_id = cm_get_cm_id(cm_ctx, req->source);
+	cm_req->cm_id = connect_req->cm_id;
+	connect_req->req = *req;
+
+	status = cm_add_req_to_list(cm_ctx, cm_req);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(cm_req);
+		return status;
+	}
+
+	mlme_cm_osif_update_id_and_src(vdev, req->source, cm_req->cm_id);
+
+	status = cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_REQ,
+				     sizeof(*connect_req), connect_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		cm_delete_req_from_list(cm_ctx, cm_req->cm_id);
+
+	return status;
 }

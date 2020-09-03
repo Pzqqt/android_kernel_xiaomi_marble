@@ -100,7 +100,7 @@ struct wlan_fils_con_info {
 
 /**
  * enum wlan_cm_source - connection manager req source
- * @CM_OSIF_CONENCT_REQ: Connect req initiated by OSIF or north bound
+ * @CM_OSIF_CONNECT_REQ: Connect req initiated by OSIF or north bound
  * @CM_ROAMING: Roaming request
  * @CM_OSIF_DISCONNECT: Disconnect req initiated by OSIF or north bound
  * @CM_PEER_DISCONNECT: Disconnect req initiated by peer sending deauth/disassoc
@@ -111,7 +111,7 @@ struct wlan_fils_con_info {
  * @CM_ROAM_DISCONNECT: Disconnect req due to HO failure
  */
 enum wlan_cm_source {
-	CM_OSIF_CONENCT_REQ,
+	CM_OSIF_CONNECT_REQ,
 	CM_ROAMING,
 	CM_OSIF_DISCONNECT,
 	CM_PEER_DISCONNECT,

@@ -24,8 +24,10 @@
 #define __WLAN_CM_MAIN_API_H__
 
 #include "wlan_cm_main.h"
+#include <include/wlan_mlme_cmn.h>
 
 /*************** CONNECT APIs ****************/
+
 /**
  * cm_connect_start() - This API will be called to initiate the connect
  * process
@@ -112,6 +114,21 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req);
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+/**
+ * cm_hw_mode_change_resp() - HW mode change response
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cm_id: connection ID which gave the hw mode change request
+ * @status: status of the HW mode change.
+ *
+ * Return: QDF_STATUS
+ */
+void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			    wlan_cm_id cm_id, QDF_STATUS status);
+
+#endif
+
 /*************** DISCONNECT APIs ****************/
 
 /**
@@ -157,18 +174,72 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req);
 
+/*************** UTIL APIs ****************/
+
 /**
- * cm_hw_mode_change_resp() - HW mode change response
- * @pdev: pdev pointer
- * @vdev_id: vdev id
- * @cm_id: connection ID which gave the hw mode change request
- * @status: status of the HW mode change.
+ * cm_get_cm_id() - Get unique cm id for connect/disconnect request
+ * @cm_ctx: connection manager context
+ * @source: source of the request (can be connect or disconnect request)
+ *
+ * Return: cm id
+ */
+wlan_cm_id cm_get_cm_id(struct cnx_mgr *cm_ctx, enum wlan_cm_source source);
+
+/**
+ * cm_get_cm_ctx() - Get connection manager context from vdev
+ * @vdev: vdev object pointer
+ *
+ * Return: pointer to connection manager context
+ */
+struct cnx_mgr *cm_get_cm_ctx(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_check_cmid_match_list_head() - check if list head command matches the
+ * given cm_id
+ * @cm_ctx: connection manager context
+ * @cm_id: cm id of connect/disconnect req
+ *
+ * Check if front req command matches the given
+ * cm_id, this can be used to check if the latest (head) is same we are
+ * trying to processing
+ *
+ * Return: true if match else false
+ */
+bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_delete_req_from_list() - Delete the request matching cm id
+ * @cm_ctx: connection manager context
+ * @cm_id: cm id of connect/disconnect req
+ *
+ * Context: Can be called from any context.
  *
  * Return: QDF_STATUS
  */
-#ifdef WLAN_POLICY_MGR_ENABLE
-void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			    wlan_cm_id cm_id, QDF_STATUS status);
+QDF_STATUS cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 
-#endif
+/**
+ * cm_add_req_to_list() - Add the request to request list in cm ctx
+ * @cm_ctx: connection manager context
+ * @cm_req: cm request
+ *
+ * Context: Can be called from any context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_add_req_to_list(struct cnx_mgr *cm_ctx, struct cm_req *cm_req);
+
+/**
+ * cm_get_req_by_cm_id() - Get cm req matching the cm id
+ * @cm_ctx: connection manager context
+ * @cm_id: cm id of connect/disconnect req
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM (ie holding the SM lock) to avoid use after free. also returned req
+ * should only be used till SM lock is hold.
+ *
+ * Return: cm req from the req list whose cm id matches the argument
+ */
+struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
 #endif /* __WLAN_CM_MAIN_API_H__ */

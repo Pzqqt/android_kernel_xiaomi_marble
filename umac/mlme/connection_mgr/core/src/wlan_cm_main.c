@@ -21,6 +21,48 @@
 #include "wlan_cm_main.h"
 #include "wlan_cm_sm.h"
 
+#ifdef WLAN_CM_USE_SPINLOCK
+/**
+ * cm_req_lock_create - Create CM req SM mutex/spinlock
+ * @cm_ctx:  connection manager ctx
+ *
+ * Creates CM SM mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+cm_req_lock_create(struct cnx_mgr *cm_ctx)
+{
+	qdf_spinlock_create(&cm_ctx->cm_req_lock);
+}
+
+/**
+ * cm_req_lock_destroy - Destroy CM SM mutex/spinlock
+ * @cm_ctx:  connection manager ctx
+ *
+ * Destroy CM SM mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+cm_req_lock_destroy(struct cnx_mgr *cm_ctx)
+{
+	qdf_spinlock_destroy(&cm_ctx->cm_req_lock);
+}
+#else
+static inline void
+cm_req_lock_create(struct cnx_mgr *cm_ctx)
+{
+	qdf_mutex_create(&cm_ctx->cm_req_lock);
+}
+
+static inline void
+cm_req_lock_destroy(struct cnx_mgr *cm_ctx)
+{
+	qdf_mutex_destroy(&cm_ctx->cm_req_lock);
+}
+#endif /* WLAN_CM_USE_SPINLOCK */
+
 QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
@@ -43,6 +85,7 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
 	}
 	qdf_list_create(&vdev_mlme->cnx_mgr_ctx->req_list, CM_MAX_REQ);
+	cm_req_lock_create(vdev_mlme->cnx_mgr_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -55,6 +98,7 @@ QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
 
+	cm_req_lock_destroy(vdev_mlme->cnx_mgr_ctx);
 	qdf_list_destroy(&vdev_mlme->cnx_mgr_ctx->req_list);
 	cm_sm_destroy(vdev_mlme->cnx_mgr_ctx);
 	qdf_mem_free(vdev_mlme->cnx_mgr_ctx);

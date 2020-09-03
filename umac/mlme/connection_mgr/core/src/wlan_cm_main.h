@@ -124,14 +124,12 @@ struct cm_disconnect_req {
 /**
  * struct cm_req - connect manager req
  * @node: connection manager req node
- * @source: req source
  * @cm_id: cm id
  * @connect_req: connect req
  * @disconnect_req: disconnect req
  */
 struct cm_req {
 	qdf_list_node_t node;
-	enum wlan_cm_source source;
 	wlan_cm_id cm_id;
 	union {
 		struct cm_connect_req connect_req;
@@ -160,21 +158,29 @@ struct connect_ies {
  * @vdev: vdev back pointer
  * @sm: state machine
  * @req_list: connect/disconnect req list
+ * @cm_req_lock: lock to manupulate/read the cm req list
  * @disconnect_count: disconnect count
  * @connect_count: connect count
  * @force_rsne_override: if QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE is set by
  * framework
  * @req_ie: request ies for connect/disconnect set by osif/user separately from
  * connect req
+ * @global_cmd_id: global cmd id for getting cm id for connect/disconnect req
  */
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
 	struct cm_state_sm sm;
 	qdf_list_t req_list;
+#ifdef WLAN_CM_USE_SPINLOCK
+	qdf_spinlock_t cm_req_lock;
+#else
+	qdf_mutex_t cm_req_lock;
+#endif
 	uint8_t disconnect_count;
 	uint8_t connect_count;
 	bool force_rsne_override;
 	struct connect_ies req_ie;
+	qdf_atomic_t global_cmd_id;
 };
 
 /**
