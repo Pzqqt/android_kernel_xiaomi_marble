@@ -20,6 +20,7 @@
 #include "../../core/iot_sim_cmn_api_i.h"
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 
 #define IEEE80211_FRAME_BODY_OFFSET 0x18
 #define IEEE80211_TSF_LEN       (8)
@@ -215,9 +216,13 @@ iot_sim_apply_content_change_rule(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 iot_sim_apply_delay_drop_rule(struct iot_sim_rule *piot_sim_rule,
 			      qdf_nbuf_t nbuf,
-			      struct mgmt_rx_event_params *param)
+			      struct mgmt_rx_event_params *param,
+			      struct iot_sim_context *isc,
+			      struct qdf_mac_addr *mac_addr)
 {
 	struct mgmt_rx_event_params *rx_param;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(isc->pdev_obj);
+	struct wlan_objmgr_peer **peer = &piot_sim_rule->peer;
 
 	if (!piot_sim_rule->drop &&
 	    !piot_sim_rule->delay_dur)
@@ -237,6 +242,12 @@ iot_sim_apply_delay_drop_rule(struct iot_sim_rule *piot_sim_rule,
 						   dwork)) {
 				piot_sim_rule->nbuf_list[1] = nbuf;
 				return QDF_STATUS_SUCCESS;
+			}
+
+			if (*peer) {
+				wlan_objmgr_peer_release_ref(*peer,
+							     WLAN_IOT_SIM_ID);
+				*peer = NULL;
 			}
 
 			qdf_nbuf_free(piot_sim_rule->nbuf_list[0]);
@@ -259,6 +270,9 @@ iot_sim_apply_delay_drop_rule(struct iot_sim_rule *piot_sim_rule,
 			return QDF_STATUS_E_NOSUPPORT;
 		}
 
+		*peer = wlan_objmgr_get_peer(psoc, param->pdev_id,
+					     (uint8_t *)mac_addr,
+					     WLAN_IOT_SIM_ID);
 		qdf_mem_copy(rx_param->rx_params,
 			     param->rx_params, RX_STATUS_SIZE);
 		piot_sim_rule->rx_param = rx_param;
@@ -268,6 +282,11 @@ iot_sim_apply_delay_drop_rule(struct iot_sim_rule *piot_sim_rule,
 			iot_sim_err("delayed_work_start failed");
 			qdf_mem_free(rx_param->rx_params);
 			qdf_mem_free(rx_param);
+			if (*peer) {
+				wlan_objmgr_peer_release_ref(*peer,
+							     WLAN_IOT_SIM_ID);
+				*peer = NULL;
+			}
 			return QDF_STATUS_E_NOSUPPORT;
 		}
 
@@ -414,7 +433,8 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 		}
 	} else {
 		status = iot_sim_apply_delay_drop_rule(piot_sim_rule,
-						       nbuf, rx_param);
+						       nbuf, rx_param,
+						       isc, mac_addr);
 		if (QDF_IS_STATUS_SUCCESS(status))
 			status = QDF_STATUS_E_NULL_VALUE;
 		else

@@ -123,6 +123,7 @@ struct iot_sim_rule {
 	uint16_t delay_dur;
 	uint8_t rule_bitmap;
 	qdf_nbuf_t nbuf_list[2];
+	struct wlan_objmgr_peer *peer;
 	qdf_nbuf_t sec_buf;
 	struct qdf_delayed_work *dwork;
 	struct mgmt_rx_event_params *rx_param;
