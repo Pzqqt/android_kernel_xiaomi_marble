@@ -1076,10 +1076,8 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	}
 
 	err = wlan_hdd_validate_context(hdd_ctx);
-	if (err) {
-		hdd_err("Invalid hdd context: %d", err);
+	if (err)
 		return err;
-	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
@@ -1208,10 +1206,8 @@ int wlan_hdd_bus_suspend_noirq(void)
 	}
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno) {
-		hdd_err("Invalid HDD context: errno %d", errno);
+	if (errno)
 		return errno;
-	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
@@ -1292,10 +1288,8 @@ int wlan_hdd_bus_resume(void)
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status) {
-		hdd_err("Invalid hdd context");
+	if (status)
 		return status;
-	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
@@ -1388,10 +1382,8 @@ int wlan_hdd_bus_resume_noirq(void)
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status) {
-		hdd_err("Invalid HDD context: %d", status);
+	if (status)
 		return status;
-	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx)

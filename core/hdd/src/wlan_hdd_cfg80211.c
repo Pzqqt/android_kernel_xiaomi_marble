@@ -23780,10 +23780,8 @@ static void wlan_hdd_chan_info_cb(struct scan_chan_info *info)
 	uint8_t idx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (wlan_hdd_validate_context(hdd_ctx) != 0) {
-		hdd_err("hdd_ctx is invalid");
+	if (wlan_hdd_validate_context(hdd_ctx) != 0)
 		return;
-	}
 
 	if (!hdd_ctx->chan_info) {
 		hdd_err("chan_info is NULL");
@@ -23965,10 +23963,9 @@ static int __wlan_hdd_cfg80211_set_chainmask(struct wiphy *wiphy,
 	enum hdd_chain_mode chains;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		hdd_err_rl("Invalid Hdd Context");
+	if (ret)
 		return -EINVAL;
-	}
+
 	if (hdd_ctx->num_rf_chains != HDD_ANTENNA_MODE_2X2 ||
 	    !ucfg_mlme_is_chain_mask_supported(hdd_ctx->psoc)) {
 		hdd_info_rl("Chainmask can't be configured, num of rf chain %d",
@@ -24022,10 +24019,9 @@ static int __wlan_hdd_cfg80211_get_chainmask(struct wiphy *wiphy,
 	int ret;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		hdd_err_rl("Invalid Hdd Context");
+	if (ret)
 		return -EINVAL;
-	}
+
 	*tx_mask = wma_cli_get_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK,
 				       PDEV_CMD);
 	*rx_mask = wma_cli_get_command(0, WMI_PDEV_PARAM_RX_CHAIN_MASK,

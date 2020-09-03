@@ -1010,11 +1010,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	}
 
 	hdd_ctx = adapter->hdd_ctx;
-	if (wlan_hdd_validate_context(hdd_ctx)) {
-		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD_DATA,
-				   "Invalid HDD context");
+	if (wlan_hdd_validate_context(hdd_ctx))
 		goto drop_pkt;
-	}
 
 	wlan_hdd_classify_pkt(skb);
 	if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) == QDF_NBUF_CB_PACKET_TYPE_ARP) {

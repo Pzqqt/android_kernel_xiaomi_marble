@@ -1078,10 +1078,8 @@ static void __wlan_hdd_sap_pre_cac_failure(struct hdd_adapter *adapter)
 	hdd_enter();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (wlan_hdd_validate_context(hdd_ctx)) {
-		hdd_err("HDD context is null");
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	}
 
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	hdd_stop_adapter(hdd_ctx, adapter);

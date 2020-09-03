@@ -978,10 +978,8 @@ static void oem_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
 
 	ret = wlan_hdd_validate_context(p_hdd_ctx);
-	if (ret) {
-		hdd_err("hdd ctx validate fails");
+	if (ret)
 		return;
-	}
 
 	/*
 	 * audit note: it is ok to pass a NULL policy here since only
