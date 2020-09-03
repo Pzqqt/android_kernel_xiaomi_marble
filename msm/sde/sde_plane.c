@@ -2716,14 +2716,16 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 		struct sde_plane_state *pstate, bool is_tp10)
 {
 	struct sde_sc_cfg *sc_cfg = psde->catalog->sc_cfg;
+	bool prev_rd_en;
 
 	if (!psde->pipe_hw->ops.setup_sys_cache ||
 			!(psde->perf_features & BIT(SDE_PERF_SSPP_SYS_CACHE)))
 		return;
 
+	prev_rd_en = pstate->sc_cfg.rd_en;
+
 	SDE_DEBUG("features:0x%x rotation:0x%x\n",
 		psde->features, pstate->rotation);
-
 
 	pstate->sc_cfg.rd_en = false;
 	pstate->sc_cfg.rd_scid = 0x0;
@@ -2759,6 +2761,9 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
 		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
 	}
+
+	if (!pstate->sc_cfg.rd_en && !prev_rd_en)
+		return;
 
 	SDE_EVT32(DRMID(&psde->base), pstate->sc_cfg.rd_scid,
 			pstate->sc_cfg.rd_en, pstate->sc_cfg.rd_noallocate);
