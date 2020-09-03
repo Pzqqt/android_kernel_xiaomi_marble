@@ -176,6 +176,7 @@ void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
 		     false);
 }
 
+qdf_export_symbol(qdf_debugfs_hexdump);
 #else
 
 void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
@@ -203,12 +204,15 @@ void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
 	}
 }
 
+qdf_export_symbol(qdf_debugfs_hexdump);
 #endif
 
 bool qdf_debugfs_overflow(qdf_debugfs_file_t file)
 {
 	return seq_has_overflowed(file);
 }
+
+qdf_export_symbol(qdf_debugfs_overflow);
 
 void qdf_debugfs_write(qdf_debugfs_file_t file, const uint8_t *buf,
 		       qdf_size_t len)
