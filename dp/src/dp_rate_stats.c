@@ -368,9 +368,9 @@ wlan_peer_update_tx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		ppdu_user = &cdp_tx_ppdu->user[user_idx];
 
 		STATS_CTX_LOCK_ACQUIRE(&soc_stats_ctx->tx_ctx_lock);
-		stats_ctx = cdp_peer_get_wlanstats_ctx(soc_stats_ctx->soc,
-						       cdp_tx_ppdu->vdev_id,
-						       ppdu_user->mac_addr);
+		stats_ctx = cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						      cdp_tx_ppdu->vdev_id,
+						      ppdu_user->mac_addr);
 
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_warn("peer rate stats ctx is NULL, return");
@@ -442,9 +442,9 @@ wlan_peer_update_rx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		ppdu_user = &cdp_rx_ppdu->user[user_idx];
 
 		STATS_CTX_LOCK_ACQUIRE(&soc_stats_ctx->rx_ctx_lock);
-		stats_ctx = cdp_peer_get_wlanstats_ctx(soc_stats_ctx->soc,
-						       ppdu_user->vdev_id,
-						       ppdu_user->mac_addr);
+		stats_ctx = cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						      ppdu_user->vdev_id,
+						      ppdu_user->mac_addr);
 
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_warn("peer rate stats ctx is NULL, return");
@@ -519,14 +519,14 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 			ppdu_user = &cdp_rx_ppdu->user[user_idx];
 
 			stats_ctx =
-			cdp_peer_get_wlanstats_ctx(soc_stats_ctx->soc,
-						   ppdu_user->vdev_id,
-						   ppdu_user->mac_addr);
+			cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						  ppdu_user->vdev_id,
+						  ppdu_user->mac_addr);
 		} else {
 			stats_ctx =
-			cdp_peer_get_wlanstats_ctx(soc_stats_ctx->soc,
-						   cdp_rx_ppdu->vdev_id,
-						   cdp_rx_ppdu->mac_addr);
+			cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						  cdp_rx_ppdu->vdev_id,
+						  cdp_rx_ppdu->mac_addr);
 		}
 
 		if (qdf_unlikely(!stats_ctx)) {
@@ -646,9 +646,9 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		ppdu_user = &cdp_tx_ppdu->user[user_idx];
 
 		STATS_CTX_LOCK_ACQUIRE(&soc_stats_ctx->tx_ctx_lock);
-		stats_ctx = cdp_peer_get_wlanstats_ctx(soc_stats_ctx->soc,
-						       cdp_tx_ppdu->vdev_id,
-						       ppdu_user->mac_addr);
+		stats_ctx = cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						      cdp_tx_ppdu->vdev_id,
+						      ppdu_user->mac_addr);
 
 		if (qdf_unlikely(!ppdu_user->tx_ratekbps || !ppdu_user->rix ||
 				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
