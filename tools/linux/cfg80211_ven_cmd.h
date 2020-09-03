@@ -1946,7 +1946,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"set_qosacn_conf",     IEEE80211_PARAM_QOS_ACTION_FRAME_CONFIG, SET_PARAM, 1},
 	{"get_qosacn_conf",     IEEE80211_PARAM_QOS_ACTION_FRAME_CONFIG, GET_PARAM, 0},
 	{"he_ltf",              IEEE80211_PARAM_HE_LTF, SET_PARAM, 1},
-	{"get_he_ltf",          IEEE80211_PARAM_HE_LTF, SET_PARAM, 1},
+	{"get_he_ltf",          IEEE80211_PARAM_HE_LTF, GET_PARAM, 0},
 	{"dfs_notify",          IEEE80211_PARAM_DFS_INFO_NOTIFY_APP, SET_PARAM, 1},
 	{"g_dfs_notify",        IEEE80211_PARAM_DFS_INFO_NOTIFY_APP, GET_PARAM, 0},
 	{"nssol_inspect",       IEEE80211_PARAM_NSSOL_VAP_INSPECT_MODE, SET_PARAM, 1},
