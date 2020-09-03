@@ -9455,16 +9455,35 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 	int cpu;
 	unsigned int latency;
 
-	cpumask_copy(&hdd_ctx->qos_cpu_mask, pm_qos_cpu_mask);
+	qdf_cpumask_copy(&hdd_ctx->qos_cpu_mask, pm_qos_cpu_mask);
 
-	if (cpumask_empty(pm_qos_cpu_mask))
+	if (qdf_cpumask_empty(pm_qos_cpu_mask)) {
 		latency = PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE;
-	else
+		qdf_for_each_possible_cpu(cpu) {
+			dev_pm_qos_update_request(
+				&hdd_ctx->pm_qos_req[cpu],
+				latency);
+		}
+		hdd_debug("Empty mask %*pb: Set latency %u",
+			  qdf_cpumask_pr_args(&hdd_ctx->qos_cpu_mask),
+			  latency);
+	} else {
 		latency = HDD_PM_QOS_HIGH_TPUT_LATENCY_US;
-
-	for_each_cpu(cpu, &hdd_ctx->qos_cpu_mask) {
-		dev_pm_qos_update_request(&hdd_ctx->pm_qos_req[cpu],
-					  latency);
+		/* Set latency to default for CPUs not included in mask */
+		qdf_for_each_cpu_not(cpu, &hdd_ctx->qos_cpu_mask) {
+			dev_pm_qos_update_request(
+				&hdd_ctx->pm_qos_req[cpu],
+				PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
+		}
+		/* Set latency to 1 for CPUs included in mask */
+		qdf_for_each_cpu(cpu, &hdd_ctx->qos_cpu_mask) {
+			dev_pm_qos_update_request(
+				&hdd_ctx->pm_qos_req[cpu],
+				latency);
+		}
+		hdd_debug("For qos_cpu_mask %*pb set latency %u",
+			  qdf_cpumask_pr_args(&hdd_ctx->qos_cpu_mask),
+			  latency);
 	}
 }
 
