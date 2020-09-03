@@ -1162,7 +1162,7 @@ CONFIG_RX_HASH_DEBUG := y
 CONFIG_CM_ENABLE := n
 
 #Flag to enable roam offload compilation of connection manager module
-CONFIG_CM_ROAM_OFFLOAD := n
+CONFIG_CM_ROAM_OFFLOAD := y
 
 #Flag to enable interface manager
 CONFIG_INTERFACE_MGR := n
