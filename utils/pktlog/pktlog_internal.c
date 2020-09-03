@@ -86,7 +86,7 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 #endif
 
 	if (!plarg) {
-		qdf_nofl_info("Invalid parg in %s", __func__);
+		qdf_info("Invalid parg");
 		return;
 	}
 
@@ -102,7 +102,7 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 	flags = plarg->flags;
 
 	if (!log_buf) {
-		qdf_nofl_info("Invalid log_buf in %s", __func__);
+		qdf_info("Invalid log_buf");
 		return;
 	}
 

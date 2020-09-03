@@ -177,7 +177,7 @@ wdi_pktlog_subscribe(uint8_t pdev_id, int32_t log_state)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (pdev_id < 0) {
-		qdf_print("Invalid pdev in %s", __func__);
+		qdf_print("Invalid pdev");
 		return A_ERROR;
 	}
 
@@ -229,7 +229,7 @@ wdi_pktlog_subscribe(uint8_t pdev_id, int32_t log_state)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (pdev_id < 0) {
-		qdf_print("Invalid pdev in %s", __func__);
+		qdf_print("Invalid pdev");
 		return A_ERROR;
 	}
 
@@ -636,28 +636,28 @@ int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	int error;
 
 	if (!scn) {
-		qdf_print("%s: Invalid scn context", __func__);
+		qdf_print("Invalid scn context");
 		ASSERT(0);
 		return -EINVAL;
 	}
 
 	pl_dev = get_pktlog_handle();
 	if (!pl_dev) {
-		qdf_print("%s: Invalid pktlog context", __func__);
+		qdf_print("Invalid pktlog context");
 		ASSERT(0);
 		return -EINVAL;
 	}
 
 	pdev_id = WMI_PDEV_ID_SOC;
 	if (pdev_id < 0) {
-		qdf_print("%s: Invalid txrx context", __func__);
+		qdf_print("Invalid txrx context");
 		ASSERT(0);
 		return -EINVAL;
 	}
 
 	pl_info = pl_dev->pl_info;
 	if (!pl_info) {
-		qdf_print("%s: Invalid pl_info context", __func__);
+		qdf_print("Invalid pl_info context");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -674,7 +674,7 @@ int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	if (is_iwpriv_command == 0 && log_state == 0 &&
 	    pl_dev->vendor_cmd_send == false) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: pktlog operation not in progress", __func__);
+		qdf_print("pktlog operation not in progress");
 		return 0;
 	}
 
@@ -685,16 +685,14 @@ int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 			if (error != 0) {
 				pl_info->curr_pkt_state =
 					PKTLOG_OPR_NOT_IN_PROGRESS;
-				qdf_print("%s: pktlog buff alloc failed",
-					  __func__);
+				qdf_print("pktlog buff alloc failed");
 				return -ENOMEM;
 			}
 
 			if (!pl_info->buf) {
 				pl_info->curr_pkt_state =
 					PKTLOG_OPR_NOT_IN_PROGRESS;
-				qdf_print("%s: pktlog buf alloc failed",
-					  __func__);
+				qdf_print("pktlog buf alloc failed");
 				ASSERT(0);
 				return -ENOMEM;
 			}
@@ -724,21 +722,20 @@ int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 			if (error) {
 				pl_info->curr_pkt_state =
 						PKTLOG_OPR_NOT_IN_PROGRESS;
-				qdf_print("Unable to subscribe to the WDI %s",
-					  __func__);
+				qdf_print("Unable to subscribe to the WDI");
 				return -EINVAL;
 			}
 		} else {
 			pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-			qdf_print("Unable to subscribe %d to the WDI %s",
-				  log_state, __func__);
+			qdf_print("Unable to subscribe %d to the WDI",
+				  log_state);
 			return -EINVAL;
 		}
 		/* WMI command to enable pktlog on the firmware */
 		if (pktlog_enable_tgt(scn, log_state, ini_triggered,
 				user_triggered)) {
 			pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-			qdf_print("Device cannot be enabled, %s", __func__);
+			qdf_print("Device cannot be enabled");
 			return -EINVAL;
 		}
 		pl_dev->is_pktlog_cb_subscribed = true;
@@ -768,14 +765,14 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
 	pl_info = pl_dev->pl_info;
 
 	if (!pl_info) {
-		qdf_print("%s: invalid pl_info handle", __func__);
+		qdf_print("Invalid pl_info handle");
 		return -EINVAL;
 	}
 
@@ -798,24 +795,24 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
 	pl_info = pl_dev->pl_info;
 
 	if (!pl_info) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
 	if (pdev_id < 0) {
-		qdf_print("%s: invalid pdev", __func__);
+		qdf_print("Invalid pdev");
 		return -EINVAL;
 	}
 
 	if (pl_info->curr_pkt_state < PKTLOG_OPR_NOT_IN_PROGRESS) {
-		qdf_print("%s: pktlog is not configured", __func__);
+		qdf_print("pktlog is not configured");
 		return -EBUSY;
 	}
 
@@ -825,25 +822,23 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	max_allowed_buff_size = (buff_size ? buff_size : ONE_MEGABYTE);
 
 	if (size < ONE_MEGABYTE || size > max_allowed_buff_size) {
-		qdf_print("%s: Cannot Set Pktlog Buffer size of %d bytes.Min required is %d MB and Max allowed is %d MB.",
-			  __func__, size, (ONE_MEGABYTE / ONE_MEGABYTE),
+		qdf_print("Cannot Set Pktlog Buffer size of %d bytes.Min required is %d MB and Max allowed is %d MB",
+			  size, (ONE_MEGABYTE / ONE_MEGABYTE),
 			  (max_allowed_buff_size / ONE_MEGABYTE));
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Invalid requested buff size", __func__);
+		qdf_print("Invalid requested buff size");
 		return -EINVAL;
 	}
 
 	if (size == pl_info->buf_size) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Pktlog Buff Size is already of same size.",
-			  __func__);
+		qdf_print("Pktlog Buff Size is already of same size");
 		return 0;
 	}
 
 	if (pl_info->log_state) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Logging should be disabled before changing"
-			  "buffer size.", __func__);
+		qdf_print("Logging should be disabled before changing buffer size");
 		return -EINVAL;
 	}
 
@@ -863,7 +858,7 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	}
 
 	if (size != 0) {
-		qdf_print("%s: New Pktlog Buff Size is %d", __func__, size);
+		qdf_print("New Pktlog Buff Size is %d", size);
 		pl_info->buf_size = size;
 	}
 	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
@@ -880,14 +875,14 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
 	pl_info = pl_dev->pl_info;
 
 	if (!pl_info) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
@@ -907,14 +902,14 @@ int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
 	pl_info = pl_dev->pl_info;
 
 	if (!pl_info) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return -EINVAL;
 	}
 
@@ -931,8 +926,7 @@ int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
 
 	if (pl_info->log_state) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Logging should be disabled before clearing "
-			  "pktlog buffer.", __func__);
+		qdf_print("Logging should be disabled before clearing pktlog buffer");
 		return -EINVAL;
 	}
 
@@ -945,14 +939,14 @@ int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
 			pl_info->buf->rd_offset = -1;
 		} else {
 			pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-			qdf_print("%s: pktlog buffer size is not proper. "
-				  "Existing Buf size %d", __func__,
+			qdf_print("pktlog buffer size is not proper. "
+				  "Existing Buf size %d",
 				  pl_info->buf_size);
 			return -EFAULT;
 		}
 	} else {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: pktlog buff is NULL", __func__);
+		qdf_print("pktlog buff is NULL");
 		return -EFAULT;
 	}
 
@@ -972,7 +966,7 @@ void pktlog_process_fw_msg(uint8_t pdev_id, uint32_t *buff, uint32_t len)
 	struct ol_fw_data pl_fw_data;
 
 	if (pdev_id == OL_TXRX_INVALID_PDEV_ID) {
-		qdf_print("%s: txrx pdev_id is invalid", __func__);
+		qdf_print("txrx pdev_id is invalid");
 		return;
 	}
 	pl_hdr = buff;
@@ -1032,8 +1026,8 @@ static void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 
 	/* check for sanity of the packet, have seen corrupted pkts */
 	if (pktlog_nbuf_check_sanity(pktlog_t2h_msg)) {
-		qdf_print("%s: packet 0x%pK corrupted? Leaking...",
-			  __func__, pktlog_t2h_msg);
+		qdf_print("packet 0x%pK corrupted? Leaking...",
+			  pktlog_t2h_msg);
 		/* do not free; may crash! */
 		QDF_ASSERT(0);
 		return;
@@ -1065,7 +1059,7 @@ static void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
  */
 static void pktlog_tx_resume_handler(void *context)
 {
-	qdf_print("%s: Not expected", __func__);
+	qdf_print("Not expected");
 	qdf_assert(0);
 }
 
@@ -1078,7 +1072,7 @@ static void pktlog_tx_resume_handler(void *context)
  */
 static void pktlog_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
-	qdf_print("%s: Not expected", __func__);
+	qdf_print("Not expected");
 	qdf_assert(0);
 }
 

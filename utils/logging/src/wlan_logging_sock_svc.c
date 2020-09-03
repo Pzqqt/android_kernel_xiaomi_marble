@@ -585,8 +585,8 @@ static int pktlog_send_per_pkt_stats_to_user(void)
 		skb_new = dev_alloc_skb(MAX_SKBMSG_LENGTH);
 		if (!skb_new) {
 			if (!rate_limit) {
-				qdf_nofl_err("%s: dev_alloc_skb() failed for msg size[%d] drop count = %u",
-					     __func__, MAX_SKBMSG_LENGTH,
+				qdf_err("dev_alloc_skb() failed for msg size[%d] drop count = %u",
+					MAX_SKBMSG_LENGTH,
 					gwlan_logging.drop_count);
 			}
 			rate_limit = 1;
@@ -603,15 +603,13 @@ static int pktlog_send_per_pkt_stats_to_user(void)
 
 		ret = pkt_stats_fill_headers(pstats_msg->skb);
 		if (ret < 0) {
-			qdf_nofl_err("%s failed to fill headers %d",
-				     __func__, ret);
+			qdf_err("Failed to fill headers %d", ret);
 			free_old_skb = true;
 			goto err;
 		}
 		ret = nl_srv_bcast_diag(pstats_msg->skb);
 		if (ret < 0) {
-			qdf_nofl_info("%s: Send Failed %d drop_count = %u",
-				      __func__, ret,
+			qdf_info("Send Failed %d drop_count = %u", ret,
 				++gwlan_logging.pkt_stat_drop_cnt);
 		} else {
 			ret = 0;
@@ -662,9 +660,9 @@ static int send_filled_buffers_to_user(void)
 		skb = dev_alloc_skb(MAX_LOGMSG_LENGTH);
 		if (!skb) {
 			if (!rate_limit) {
-				qdf_nofl_err("%s: dev_alloc_skb() failed for msg size[%d] drop count = %u",
-					     __func__, MAX_LOGMSG_LENGTH,
-					     gwlan_logging.drop_count);
+				qdf_err("dev_alloc_skb() failed for msg size[%d] drop count = %u",
+					MAX_LOGMSG_LENGTH,
+					gwlan_logging.drop_count);
 			}
 			rate_limit = 1;
 			ret = -ENOMEM;
@@ -690,10 +688,9 @@ static int send_filled_buffers_to_user(void)
 			list_add_tail(&plog_msg->node,
 				      &gwlan_logging.free_list);
 			spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
-			qdf_nofl_err("%s: drop_count = %u", __func__,
-				     ++gwlan_logging.drop_count);
-			qdf_nofl_err("%s: nlmsg_put() failed for msg size[%d]",
-				     __func__, tot_msg_len);
+			qdf_err("drop_count = %u", ++gwlan_logging.drop_count);
+			qdf_err("nlmsg_put() failed for msg size[%d]",
+				tot_msg_len);
 			dev_kfree_skb(skb);
 			skb = NULL;
 			ret = -EINVAL;
@@ -712,8 +709,8 @@ static int send_filled_buffers_to_user(void)
 		ret = nl_srv_bcast_host_logs(skb);
 		/* print every 64th drop count */
 		if (ret < 0 && (!(gwlan_logging.drop_count % 0x40))) {
-			qdf_nofl_err("%s: Send Failed %d drop_count = %u",
-				     __func__, ret, ++gwlan_logging.drop_count);
+			qdf_err("Send Failed %d drop_count = %u",
+				ret, ++gwlan_logging.drop_count);
 		}
 	}
 
@@ -821,8 +818,7 @@ static int wlan_logging_thread(void *Arg)
 						  || gwlan_logging.exit));
 
 		if (ret_wait_status == -ERESTARTSYS) {
-			qdf_nofl_err("%s: wait_event_interruptible returned -ERESTARTSYS",
-				     __func__);
+			qdf_err("wait_event_interruptible returned -ERESTARTSYS");
 			break;
 		}
 
@@ -1078,8 +1074,7 @@ int wlan_logging_sock_init_svc(void)
 	gwlan_logging.buffer_length = MAX_LOGMSG_LENGTH;
 
 	if (allocate_log_msg_buffer() != QDF_STATUS_SUCCESS) {
-		qdf_nofl_err("%s: Could not allocate memory for log_msg",
-			     __func__);
+		qdf_err("Could not allocate memory for log_msg");
 		return -ENOMEM;
 	}
 
@@ -1101,8 +1096,7 @@ int wlan_logging_sock_init_svc(void)
 	pkt_stats_size = sizeof(struct pkt_stats_msg);
 	gpkt_stats_buffers = vmalloc(MAX_PKTSTATS_BUFF * pkt_stats_size);
 	if (!gpkt_stats_buffers) {
-		qdf_nofl_err("%s: Could not allocate memory for Pkt stats",
-			     __func__);
+		qdf_err("Could not allocate memory for Pkt stats");
 		goto err1;
 	}
 	qdf_mem_zero(gpkt_stats_buffers,
@@ -1118,8 +1112,7 @@ int wlan_logging_sock_init_svc(void)
 	for (i = 0; i < MAX_PKTSTATS_BUFF; i++) {
 		gpkt_stats_buffers[i].skb = dev_alloc_skb(MAX_PKTSTATS_LENGTH);
 		if (!gpkt_stats_buffers[i].skb) {
-			qdf_nofl_err("%s: Memory alloc failed for skb",
-				     __func__);
+			qdf_err("Memory alloc failed for skb");
 			/* free previously allocated skb and return */
 			for (j = 0; j < i ; j++)
 				dev_kfree_skb(gpkt_stats_buffers[j].skb);
@@ -1146,8 +1139,7 @@ int wlan_logging_sock_init_svc(void)
 	gwlan_logging.thread = kthread_create(wlan_logging_thread, NULL,
 					      "wlan_logging_thread");
 	if (IS_ERR(gwlan_logging.thread)) {
-		qdf_nofl_err("%s: Could not Create LogMsg Thread Controller",
-			     __func__);
+		qdf_err("Could not Create LogMsg Thread Controller");
 		goto err3;
 	}
 	wake_up_process(gwlan_logging.thread);
@@ -1278,8 +1270,7 @@ void wlan_flush_host_logs_for_fatal(void)
 	unsigned long flags;
 
 	if (gwlan_logging.flush_timer_period == 0)
-		qdf_nofl_info("%s:flush all host logs Setting HOST_LOG_POST_MAS",
-			      __func__);
+		qdf_info("Flush all host logs Setting HOST_LOG_POST_MAS");
 	spin_lock_irqsave(&gwlan_logging.spin_lock, flags);
 	wlan_queue_logmsg_for_app();
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
@@ -1326,8 +1317,8 @@ static int wlan_get_pkt_stats_free_node(void)
 		if (
 			cds_is_multicast_logging() &&
 			(!(gwlan_logging.pkt_stat_drop_cnt % 0x40))) {
-			qdf_nofl_err("%s: drop_count = %u",
-				     __func__, gwlan_logging.pkt_stat_drop_cnt);
+			qdf_err("drop_count = %u",
+				gwlan_logging.pkt_stat_drop_cnt);
 		}
 		list_del_init(gwlan_logging.pkt_stat_filled_list.next);
 		ret = 1;
@@ -1362,7 +1353,7 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 	pktlog_hdr = (struct ath_pktlog_hdr *)pl_hdr;
 
 	if (!pktlog_hdr) {
-		qdf_nofl_err("%s : Invalid pkt_stats_header", __func__);
+		qdf_err("Invalid pkt_stats_header");
 		return;
 	}
 
@@ -1472,7 +1463,7 @@ static void send_packetdump(ol_txrx_soc_handle soc,
 	struct packet_dump pd_hdr = {0};
 
 	if (!netbuf) {
-		qdf_nofl_err("%s: Invalid netbuf.", __func__);
+		qdf_err("Invalid netbuf");
 		return;
 	}
 

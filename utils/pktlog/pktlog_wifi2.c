@@ -205,12 +205,12 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	uint32_t len;
 
 	if (!txrx_pdev) {
-		qdf_nofl_info("Invalid pdev in %s", __func__);
+		qdf_info("Invalid pdev");
 		return A_ERROR;
 	}
 
 	if (!pl_dev) {
-		qdf_nofl_err("Invalid pktlog handle in %s", __func__);
+		qdf_err("Invalid pktlog handle");
 		qdf_assert(pl_dev);
 		return A_ERROR;
 	}
@@ -231,7 +231,7 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -318,12 +318,12 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	uint32_t len;
 
 	if (!txrx_pdev) {
-		qdf_print("Invalid pdev in %s", __func__);
+		qdf_print("Invalid pdev");
 		return A_ERROR;
 	}
 
 	if (!pl_dev) {
-		qdf_nofl_err("Invalid pktlog handle in %s", __func__);
+		qdf_err("Invalid pktlog handle");
 		qdf_assert(pl_dev);
 		return A_ERROR;
 	}
@@ -342,7 +342,7 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -506,7 +506,7 @@ A_STATUS process_rx_info_remote(void *pdev, void *data)
 	qdf_nbuf_t msdu;
 
 	if (!pdev || !r_data || !pl_dev) {
-		qdf_print("%s: Invalid handle", __func__);
+		qdf_print("Invalid handle");
 		return A_ERROR;
 	}
 
@@ -568,13 +568,13 @@ A_STATUS process_rx_info(void *pdev, void *data)
 	uint32_t len;
 
 	if (!pdev) {
-		qdf_nofl_info("Invalid pdev in %s", __func__);
+		qdf_info("Invalid pdev");
 		return A_ERROR;
 	}
 
 	pl_dev = ((struct ol_txrx_pdev_t *)pdev)->pl_dev;
 	if (!pl_dev) {
-		qdf_nofl_info("Invalid pl_dev in %s", __func__);
+		qdf_info("Invalid pl_dev");
 		return A_ERROR;
 	}
 
@@ -592,7 +592,7 @@ A_STATUS process_rx_info(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -645,13 +645,13 @@ A_STATUS process_rx_info(void *pdev, void *data)
 	uint32_t len;
 
 	if (!pdev) {
-		qdf_nofl_info("Invalid pdev in %s", __func__);
+		qdf_info("Invalid pdev");
 		return A_ERROR;
 	}
 
 	pl_dev = ((struct ol_txrx_pdev_t *)pdev)->pl_dev;
 	if (!pl_dev) {
-		qdf_nofl_info("Invalid pl_dev in %s", __func__);
+		qdf_info("Invalid pl_dev");
 		return A_ERROR;
 	}
 
@@ -667,7 +667,7 @@ A_STATUS process_rx_info(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -723,7 +723,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	uint32_t *pl_tgt_hdr;
 
 	if (!pdev || !data || !pl_dev) {
-		qdf_print("%s: Invalid handle", __func__);
+		qdf_print("Invalid handle");
 		return A_ERROR;
 	}
 
@@ -741,7 +741,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -805,7 +805,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	uint32_t *pl_tgt_hdr;
 
 	if (!pdev || !data || !pl_dev) {
-		qdf_print("%s: Invalid handle", __func__);
+		qdf_print("Invalid handle");
 		return A_ERROR;
 	}
 
@@ -821,7 +821,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -876,7 +876,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 	uint32_t len;
 
 	if (!pdev || !data || !pl_dev) {
-		qdf_print("%s: Invalid handle", __func__);
+		qdf_print("Invalid handle");
 		return A_ERROR;
 	}
 
@@ -894,7 +894,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -955,7 +955,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 	uint32_t len;
 
 	if (!pdev || !data || !pl_dev) {
-		qdf_print("%s: Invalid handle", __func__);
+		qdf_print("Invalid handle");
 		return A_ERROR;
 	}
 
@@ -971,7 +971,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -1036,15 +1036,15 @@ A_STATUS process_sw_event(void *pdev, void *data)
 	uint32_t *pl_tgt_hdr;
 
 	if (!pdev) {
-		qdf_print("Invalid pdev in %s", __func__);
+		qdf_print("Invalid pdev");
 		return A_ERROR;
 	}
 	if (!data) {
-		qdf_print("Invalid data in %s", __func__);
+		qdf_print("Invalid data");
 		return A_ERROR;
 	}
 	if (!pl_dev) {
-		qdf_print("Invalid pl_dev in %s", __func__);
+		qdf_print("Invalid pl_dev");
 		return A_ERROR;
 	}
 
@@ -1062,7 +1062,7 @@ A_STATUS process_sw_event(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}
@@ -1125,15 +1125,15 @@ A_STATUS process_sw_event(void *pdev, void *data)
 	uint32_t *pl_tgt_hdr;
 
 	if (!pdev) {
-		qdf_print("Invalid pdev in %s", __func__);
+		qdf_print("Invalid pdev");
 		return A_ERROR;
 	}
 	if (!data) {
-		qdf_print("Invalid data in %s", __func__);
+		qdf_print("Invalid data");
 		return A_ERROR;
 	}
 	if (!pl_dev) {
-		qdf_print("Invalid pl_dev in %s", __func__);
+		qdf_print("Invalid pl_dev");
 		return A_ERROR;
 	}
 
@@ -1149,7 +1149,7 @@ A_STATUS process_sw_event(void *pdev, void *data)
 		       (ATH_PKTLOG_HDR_SIZE_OFFSET + 1)) ||
 		len < (sizeof(uint32_t) *
 		       (ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET + 1))) {
-		qdf_print("Invalid msdu len in %s", __func__);
+		qdf_print("Invalid msdu len");
 		qdf_assert(0);
 		return A_ERROR;
 	}

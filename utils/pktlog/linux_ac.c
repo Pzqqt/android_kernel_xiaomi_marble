@@ -109,8 +109,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_nofl_info(PKTLOG_TAG
-			      "%s: pdev_txrx_handle->pl_dev is null", __func__);
+		qdf_info(PKTLOG_TAG "pdev_txrx_handle->pl_dev is null");
 		return -EINVAL;
 	}
 
@@ -162,12 +161,12 @@ void pktlog_release_buf(struct hif_opaque_softc *scn)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return;
 	}
 
 	if (!pl_dev->pl_info) {
-		qdf_print("%s: invalid pl_dev handle", __func__);
+		qdf_print("Invalid pl_dev handle");
 		return;
 	}
 
@@ -207,7 +206,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 
 	if (!scn) {
 		mutex_unlock(&proc_mutex);
-		qdf_nofl_info("%s: Invalid scn context", __func__);
+		qdf_info("Invalid scn context");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -216,7 +215,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 
 	if (!pl_dev) {
 		mutex_unlock(&proc_mutex);
-		qdf_nofl_info("%s: Invalid pktlog context", __func__);
+		qdf_info("Invalid pktlog context");
 		ASSERT(0);
 		return -ENODEV;
 	}
@@ -270,7 +269,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 
 	if (!scn) {
 		mutex_unlock(&proc_mutex);
-		qdf_nofl_info("%s: Invalid scn context", __func__);
+		qdf_info("Invalid scn context");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -279,7 +278,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 
 	if (!pl_dev) {
 		mutex_unlock(&proc_mutex);
-		qdf_nofl_info("%s: Invalid pktlog handle", __func__);
+		qdf_info("Invalid pktlog handle");
 		ASSERT(0);
 		return -ENODEV;
 	}
@@ -458,16 +457,15 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 			&pl_info_lnx->info);
 
 	if (!proc_entry) {
-		qdf_nofl_info(PKTLOG_TAG "%s: create_proc_entry failed for %s",
-			      __func__, proc_name);
+		qdf_info(PKTLOG_TAG "create_proc_entry failed for %s", proc_name);
 		goto attach_fail1;
 	}
 
 	pl_info_lnx->proc_entry = proc_entry;
 
 	if (pktlog_sysctl_register(scn)) {
-		qdf_nofl_info(PKTLOG_TAG "%s: sysctl register failed for %s",
-			      __func__, proc_name);
+		qdf_nofl_info(PKTLOG_TAG "sysctl register failed for %s",
+			      proc_name);
 		goto attach_fail2;
 	}
 
@@ -488,7 +486,7 @@ static void pktlog_sysctl_unregister(struct pktlog_dev_t *pl_dev)
 	struct ath_pktlog_info_lnx *pl_info_lnx;
 
 	if (!pl_dev) {
-		qdf_nofl_info("%s: Invalid pktlog context", __func__);
+		qdf_info("Invalid pktlog context");
 		ASSERT(0);
 		return;
 	}
@@ -508,14 +506,14 @@ static void pktlog_detach(struct hif_opaque_softc *scn)
 	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_nofl_info("%s: Invalid pktlog context", __func__);
+		qdf_info("Invalid pktlog context");
 		ASSERT(0);
 		return;
 	}
 
 	pl_info = pl_dev->pl_info;
 	if (!pl_info) {
-		qdf_print("%s: Invalid pktlog handle", __func__);
+		qdf_print("Invalid pktlog handle");
 		ASSERT(0);
 		return;
 	}
@@ -550,7 +548,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 	PKTLOG_MOD_INC_USE_COUNT;
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
-		qdf_print("%s: Invalid scn context", __func__);
+		qdf_print("Invalid scn context");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -558,7 +556,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: Invalid pktlog handle", __func__);
+		qdf_print("Invalid pktlog handle");
 		ASSERT(0);
 		return -ENODEV;
 	}
@@ -566,7 +564,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 	pl_info = pl_dev->pl_info;
 
 	if (!pl_info) {
-		qdf_nofl_err("%s: pl_info NULL", __func__);
+		qdf_err("pl_info NULL");
 		return -EINVAL;
 	}
 
@@ -576,15 +574,15 @@ static int __pktlog_open(struct inode *i, struct file *f)
 
 	if (!pl_info_lnx->sysctl_header) {
 		mutex_unlock(&pl_info->pktlog_mutex);
-		qdf_print("%s: pktlog sysctl is unergistered.", __func__);
+		qdf_print("pktlog sysctl is unergistered");
 		ASSERT(0);
 		return -EINVAL;
 	}
 
 	if (pl_info->curr_pkt_state != PKTLOG_OPR_NOT_IN_PROGRESS) {
 		mutex_unlock(&pl_info->pktlog_mutex);
-		qdf_print("%s: plinfo state (%d) != PKTLOG_OPR_NOT_IN_PROGRESS",
-			  __func__, pl_info->curr_pkt_state);
+		qdf_print("plinfo state (%d) != PKTLOG_OPR_NOT_IN_PROGRESS",
+			  pl_info->curr_pkt_state);
 		return -EBUSY;
 	}
 
@@ -636,7 +634,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	PKTLOG_MOD_DEC_USE_COUNT;
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
-		qdf_print("%s: Invalid scn context", __func__);
+		qdf_print("Invalid scn context");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -644,7 +642,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
-		qdf_print("%s: Invalid pktlog handle", __func__);
+		qdf_print("Invalid pktlog handle");
 		ASSERT(0);
 		return -ENODEV;
 	}
@@ -652,7 +650,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	pl_info = pl_dev->pl_info;
 
 	if (!pl_info) {
-		qdf_print("%s: Invalid pktlog info", __func__);
+		qdf_print("Invalid pktlog info");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -664,7 +662,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	if (!pl_info_lnx->sysctl_header) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
 		mutex_unlock(&pl_info->pktlog_mutex);
-		qdf_print("%s: pktlog sysctl is unergistered.", __func__);
+		qdf_print("pktlog sysctl is unergistered");
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -682,8 +680,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
 	mutex_unlock(&pl_info->pktlog_mutex);
 	if (ret != 0)
-		qdf_print("%s: pktlog cannot be enabled. ret value %d",
-			  __func__, ret);
+		qdf_print("pktlog cannot be enabled. ret value %d", ret);
 
 	return ret;
 }
@@ -1045,7 +1042,7 @@ int pktlogmod_init(void *context)
 	g_pktlog_pde = proc_mkdir(PKTLOG_PROC_DIR, NULL);
 
 	if (!g_pktlog_pde) {
-		qdf_nofl_info(PKTLOG_TAG "%s: proc_mkdir failed", __func__);
+		qdf_info(PKTLOG_TAG "proc_mkdir failed");
 		return -EPERM;
 	}
 
