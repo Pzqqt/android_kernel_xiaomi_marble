@@ -30,84 +30,84 @@
 #ifdef FEATURE_CM_ENABLE
 
 /**
- * mlme_cm_ops: connection manager callbacks
- * @mlme_cm_connect_complete_cb:       Connect done callback
+ * mlme_cm_ops: connection manager osif callbacks
+ * @mlme_cm_connect_complete_cb: Connect done callback
  * @vdev: vdev pointer
- * @cm_conn_rsp: connect response
+ * @rsp: connect response
  *
- * @mlme_cm_failed_candidate_cb:       Callback to indicate failed candidate
+ * @mlme_cm_failed_candidate_cb: Callback to indicate failed candidate
  * @vdev: vdev pointer
- * @cm_conn_rsp: connect response
+ * @rsp: connect response
  *
  * @mlme_cm_update_conn_id_and_src_cb: Callback to update connect id and
  *                                     source of the connect request
  * @vdev: vdev pointer
  * @Source: Source of the connect req
- * @conn_id: Connect id
+ * @cm_id: connection manager id
  *
- * @mlme_cm_disconnect_complete_cb:    Disconnect done callback
+ * @mlme_cm_disconnect_complete_cb: Disconnect done callback
  * @vdev: vdev pointer
- * @cm_disconnect_rsp: Disconnect response
+ * @rsp: Disconnect response
  *
- * @mlme_cm_disconnect_start_cb:       Disconnect start callback
+ * @mlme_cm_disconnect_start_cb: Disconnect start callback
  * @vdev: vdev pointer
  */
 struct mlme_cm_ops {
-	void (*mlme_cm_connect_complete_cb)(
-				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *cm_conn_rsp);
-	void (*mlme_cm_failed_candidate_cb)(
-				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *cm_conn_rsp);
-	void (*mlme_cm_update_conn_id_and_src_cb)(
-						struct wlan_objmgr_vdev *vdev,
-						enum wlan_cm_source source,
-						uint64_t conn_id);
-	void (*mlme_cm_disconnect_complete_cb)(
-				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_discon_rsp *cm_disconn_rsp);
+	void (*mlme_cm_connect_complete_cb)(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_cm_connect_rsp *rsp);
+	void (*mlme_cm_failed_candidate_cb)(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_cm_connect_rsp *rsp);
+	void (*mlme_cm_update_conn_id_and_src_cb)(struct wlan_objmgr_vdev *vdev,
+						  enum wlan_cm_source source,
+						  uint64_t cm_id);
+	void (*mlme_cm_disconnect_complete_cb)(struct wlan_objmgr_vdev *vdev,
+					       struct wlan_cm_discon_rsp *rsp);
 	void (*mlme_cm_disconnect_start_cb)(struct wlan_objmgr_vdev *vdev);
 };
 #endif
 
 /**
  * struct vdev_mlme_ext_ops - VDEV MLME legacy callbacks structure
- * @mlme_psoc_ext_hdl_create:        callback to invoke creation of legacy
- *                                   psoc object
- * @mlme_psoc_ext_hdl_destroy:       callback to invoke destroy of legacy
- *                                   psoc object
- * @mlme_pdev_ext_hdl_create:        callback to invoke creation of legacy
- *                                   pdev object
- * @mlme_pdev_ext_hdl_destroy:       callback to invoke destroy of legacy
- *                                   pdev object
- * @mlme_vdev_ext_hdl_create:        callback to invoke creation of legacy
- *                                   vdev object
- * @mlme_vdev_ext_hdl_post_create:   callback to invoke post creation actions
- *                                   of legacy vdev object
- * @mlme_vdev_ext_hdl_destroy:       callback to invoke destroy of legacy
- *                                   vdev object
- * @mlme_vdev_start_fw_send:         callback to invoke vdev start command
- * @mlme_vdev_stop_fw_send:          callback to invoke vdev stop command
- * @mlme_vdev_down_fw_send:          callback to invoke vdev down command
- * @mlme_multivdev_restart_fw_send:  callback to invoke multivdev restart
- *                                   command
- * @mlme_vdev_enqueue_exp_cmd:       callback to enqueue exception command
- *                                   required by serialization
- * @mlme_multi_vdev_restart_resp:    callback to process multivdev restart
- *				     response
- * @mlme_cm_ext_connect_start: Callback to start connect request
- * @mlme_cm_ext_connect_active: Callback to indicate connect active
- * @mlme_cm_ext_bss_peer_create_req: Callback to bss peer create request
- * @mlme_cm_ext_connect_req: Callback for connect request to LIM
- * @mlme_cm_ext_connect_complete: Callback to indicate connect complete
- * @mlme_cm_ext_disconnect_start : Callback to start disconnect request
- * @mlme_cm_ext_disconnect_active: Callback to indicate disconnect active
- * @mlme_cm_ext_bss_peer_delete_req: Callback to bss peer delete request
- * @mlme_cm_ext_disconnect_complete: Callback to indicate disconnect
- *                                        complete
- * @mlme_cm_ext_osif_connect: Callback to indicate connect complete
- * @mlme_cm_ext_osif_disconnect: Callback to indicate disconnect complete
- * @mlme_cm_ext_vdev_down: Callback to send vdev down to FW
+ * @mlme_psoc_ext_hdl_create:               callback to invoke creation of
+ *                                          legacy psoc object
+ * @mlme_psoc_ext_hdl_destroy:              callback to invoke destroy of legacy
+ *                                          psoc object
+ * @mlme_pdev_ext_hdl_create:               callback to invoke creation of
+ *                                          legacy pdev object
+ * @mlme_pdev_ext_hdl_destroy:              callback to invoke destroy of legacy
+ *                                          pdev object
+ * @mlme_vdev_ext_hdl_create:               callback to invoke creation of
+ *                                          legacy vdev object
+ * @mlme_vdev_ext_hdl_post_create:          callback to invoke post creation
+ *                                          actions of legacy vdev object
+ * @mlme_vdev_ext_hdl_destroy:              callback to invoke destroy of legacy
+ *                                          vdev object
+ * @mlme_vdev_start_fw_send:                callback to invoke vdev start
+ *                                          command
+ * @mlme_vdev_stop_fw_send:                 callback to invoke vdev stop command
+ * @mlme_vdev_down_fw_send:                 callback to invoke vdev down command
+ * @mlme_multivdev_restart_fw_send:         callback to invoke multivdev restart
+ *                                          command
+ * @mlme_vdev_enqueue_exp_cmd:              callback to enqueue exception
+ *                                          command
+ *                                          required by serialization
+ * @mlme_multi_vdev_restart_resp:           callback to process multivdev
+ *                                          restart response
+ * @mlme_cm_ext_connect_start_ind_cb:       callback to indicate connect start
+ * @mlme_cm_ext_connect_active_ind_cb:      callback to indicate connect active
+ * @mlme_cm_ext_bss_peer_create_req_cb:     callback to bss peer create request
+ * @mlme_cm_ext_connect_req_cb:             callback for connect request to
+ *                                          VDEV/PEER SM
+ * @mlme_cm_ext_connect_complete_ind_cb:    callback to indicate connect
+ *                                          complete
+ * @mlme_cm_ext_disconnect_start_ind_cb :   callback to indicate disconnect
+ *                                          start
+ * @mlme_cm_ext_disconnect_req_cb:          callback to disconnect req to
+ *                                          VDEV/PEER SM
+ * @mlme_cm_ext_bss_peer_delete_req_cb:     callback to bss peer delete request
+ * @mlme_cm_ext_disconnect_complete_ind_cb: callback to indicate disconnect
+ *                                          complete
+ * @mlme_cm_ext_vdev_down_req_cb:           callback to send vdev down to FW
  */
 struct mlme_ext_ops {
 	QDF_STATUS (*mlme_psoc_ext_hdl_create)(
@@ -140,39 +140,32 @@ struct mlme_ext_ops {
 				struct wlan_objmgr_psoc *psoc,
 				struct multi_vdev_restart_resp *resp);
 #ifdef FEATURE_CM_ENABLE
-	QDF_STATUS (*mlme_cm_ext_connect_start)(
+	QDF_STATUS (*mlme_cm_ext_connect_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_req *cm_conn_req);
-	QDF_STATUS (*mlme_cm_ext_connect_active)(
+				struct wlan_cm_connect_req *req);
+	QDF_STATUS (*mlme_cm_ext_connect_active_ind_cb)(
 			struct wlan_objmgr_vdev *vdev,
-			struct wlan_cm_vdev_connect_req *vdev_connect_req);
-	QDF_STATUS (*mlme_cm_ext_bss_peer_create_req)(
+			struct wlan_cm_vdev_connect_req *req);
+	QDF_STATUS (*mlme_cm_ext_bss_peer_create_req_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct qdf_mac_addr *peer_mac);
-	QDF_STATUS (*mlme_cm_ext_connect_req)(
-			struct wlan_objmgr_vdev *vdev,
-			struct wlan_cm_vdev_connect_req *vdev_connect_req);
-	QDF_STATUS (*mlme_cm_ext_connect_complete)(
+	QDF_STATUS (*mlme_cm_ext_connect_req_cb)(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_vdev_connect_req *req);
+	QDF_STATUS (*mlme_cm_ext_connect_complete_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *connect_rsp);
-	QDF_STATUS (*mlme_cm_ext_disconnect_start)(
+				struct wlan_cm_connect_rsp *rsp);
+	QDF_STATUS (*mlme_cm_ext_disconnect_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_disconnect_req *cm_conn_req);
-	QDF_STATUS (*mlme_cm_ext_disconnect_active)
+				struct wlan_cm_disconnect_req *req);
+	QDF_STATUS (*mlme_cm_ext_disconnect_req_cb)
 			(struct wlan_objmgr_vdev *vdev,
-			struct wlan_cm_vdev_discon_req *vdev_disconnect_req);
-	QDF_STATUS (*mlme_cm_ext_bss_peer_delete_req)(
+			struct wlan_cm_vdev_discon_req *req);
+	QDF_STATUS (*mlme_cm_ext_bss_peer_delete_req_cb)(
 			struct wlan_objmgr_vdev *vdev);
-	QDF_STATUS (*mlme_cm_ext_disconnect_complete)(
+	QDF_STATUS (*mlme_cm_ext_disconnect_complete_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_discon_rsp *cm_disconnect_rsp);
-	QDF_STATUS (*mlme_cm_ext_osif_connect)(
-				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *cm_connect_rsp);
-	QDF_STATUS (*mlme_cm_ext_osif_disconnect)(
-				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_discon_rsp *cm_disconnect_rsp);
-	QDF_STATUS (*mlme_cm_ext_vdev_down)(
+				struct wlan_cm_discon_rsp *rsp);
+	QDF_STATUS (*mlme_cm_ext_vdev_down_req_cb)(
 				struct wlan_objmgr_vdev *vdev);
 #endif
 };
@@ -375,181 +368,162 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
 
 #ifdef FEATURE_CM_ENABLE
 /**
- * mlme_cm_ops_ext_connect_start - Connection manager connect start
- * handler
- * @vdev:  VDEV object
+ * mlme_cm_connect_start_ind() - Connection manager ext Connect start indication
+ * @vdev: VDEV object
  * @req: Connection manager connect request
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_connect_start(struct wlan_objmgr_vdev *vdev,
-					 struct wlan_cm_connect_req *req);
+QDF_STATUS mlme_cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_cm_connect_req *req);
 
 /**
- * mlme_cm_ops_ext_connect_active - Connection manager indicate connect
- * active handler
- * @vdev:  VDEV object
+ * mlme_cm_connect_active_ind() - Connection manager ext Connect active
+ * indication
+ * @vdev: VDEV object
  * @req: Vdev connect request
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_connect_active(struct wlan_objmgr_vdev *vdev,
-					  struct wlan_cm_vdev_connect_req *req);
+QDF_STATUS mlme_cm_connect_active_ind(struct wlan_objmgr_vdev *vdev,
+				      struct wlan_cm_vdev_connect_req *req);
 
 /**
- * mlme_cm_ops_ext_bss_peer_create_req - Connection manager bss peer
- * create request handler
- * @vdev:  VDEV object
+ * mlme_cm_bss_peer_create_req() - Connection manager ext bss peer create
+ * request
+ * @vdev: VDEV object
  * @peer_mac: Peer mac address
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-					       struct qdf_mac_addr *peer_mac);
+QDF_STATUS mlme_cm_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
+				       struct qdf_mac_addr *peer_mac);
 
 /**
- * mlme_cm_ops_ext_connect_req - Connection manager connect request handler
- * @vdev:  VDEV object
+ * mlme_cm_connect_req() - Connection manager ext connect request to start vdev
+ * and peer assoc state machine
+ * @vdev: VDEV object
  * @req: Vdev connect request
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_connect_req(struct wlan_objmgr_vdev *vdev,
-				       struct wlan_cm_vdev_connect_req *req);
+QDF_STATUS mlme_cm_connect_req(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_vdev_connect_req *req);
 
 /**
- * mlme_cm_ops_ext_connect_complete - Connection manager connect complete
- * handler
- * @vdev:  VDEV object
+ * mlme_cm_connect_complete_ind() - Connection manager ext connect complete
+ * indication
+ * @vdev: VDEV object
  * @rsp: Connection manager connect response
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_connect_complete(struct wlan_objmgr_vdev *vdev,
-					    struct wlan_cm_connect_rsp *rsp);
+QDF_STATUS mlme_cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_connect_rsp *rsp);
 
 /**
- * mlme_cm_ops_ext_disconnect_start - Connection manager disconnect start
- * handler
- * @vdev:  VDEV object
+ * mlme_cm_disconnect_start_ind() - Connection manager ext disconnect start
+ * indication
+ * @vdev: VDEV object
  * @req: Connection manager disconnect request
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_disconnect_start(struct wlan_objmgr_vdev *vdev,
-					    struct wlan_cm_disconnect_req *req);
+QDF_STATUS mlme_cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_disconnect_req *req);
 
 /**
- * mlme_cm_ops_ext_disconnect_active - Connection manager disconnect
- * active handler
- * @vdev:  VDEV object
+ * mlme_cm_disconnect_req() - Connection manager ext disconnect
+ * req to vdev and peer sm
+ * @vdev: VDEV object
  * @req: vdev disconnect request
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS
-mlme_cm_ops_ext_disconnect_active(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS mlme_cm_disconnect_req(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_vdev_discon_req *req);
 
 /**
- * mlme_cm_ops_ext_bss_peer_delete_req - Connection manager bss peer delete
- * request handler
- * @vdev:  VDEV object
+ * mlme_cm_bss_peer_delete_req() - Connection manager ext bss peer delete
+ * request
+ * @vdev: VDEV object
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-mlme_cm_ops_ext_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev);
+mlme_cm_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev);
 
 /**
- * mlme_cm_ops_ext_disconnect_complete - Connection manager disconnect
- * complete handler
- * @vdev:  VDEV object
+ * mlme_cm_disconnect_complete_ind() - Connection manager ext disconnect
+ * complete indication
+ * @vdev: VDEV object
  * @rsp: Connection manager disconnect response
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ops_ext_disconnect_complete(struct wlan_objmgr_vdev *vdev,
-					       struct wlan_cm_discon_rsp *rsp);
-
-/**
- * mlme_cm_ops_ext_osif_connect - Connection manager osif connect handler
- * @vdev:  VDEV object
- * @rsp: Connection manager connect response
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS mlme_cm_ops_ext_osif_connect(struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_connect_rsp *rsp);
-
-/**
- * mlme_cm_ops_ext_osif_disconnect - Connection manager osif disconnect
- * handler
- * @vdev:  VDEV object
- * @rsp: Connection manager disconnect response
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS mlme_cm_ops_ext_osif_disconnect(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS mlme_cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 					   struct wlan_cm_discon_rsp *rsp);
 
 /**
- * mlme_cm_ops_ext_osif_disconnect - Function to send vdev down to FW
- * @vdev:  VDEV object
+ * mlme_cm_vdev_down() - Connection manager ext req to send vdev down to FW
+ * @vdev: VDEV object
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ext_vdev_down(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS mlme_cm_vdev_down_req(struct wlan_objmgr_vdev *vdev);
 
 /**
- * mlme_cm_connect_complete() - Connect response
+ * mlme_cm_osif_connect_complete() - Connect complete resp to osif
+ * @vdev: vdev pointer
+ * @rsp: Connect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
+					 struct wlan_cm_connect_rsp *rsp);
+
+/**
+ * mlme_cm_osif_failed_candidate_ind() - Failed Candidate indication to osif
+ * @vdev: vdev pointer
+ * @rsp: Connect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_cm_osif_failed_candidate_ind(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_connect_rsp *rsp);
+
+/**
+ * mlme_cm_osif_update_id_and_src() - Update connection id and source to osif
+ * @vdev: vdev pointer
+ * @source: source of request
+ * @cm_id: connection manager id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_osif_update_id_and_src(struct wlan_objmgr_vdev *vdev,
+					  enum wlan_cm_source source,
+					  wlan_cm_id cm_id);
+
+/**
+ * mlme_cm_osif_disconnect_complete() - Disconnect complete osif response
  * @vdev: vdev pointer
  * @cm_conn_rsp: Connect response
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void mlme_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
-			      struct wlan_cm_connect_rsp *cm_conn_rsp);
+QDF_STATUS
+mlme_cm_osif_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_discon_rsp *rsp);
 
 /**
- * mlme_cm_failed_candidate() - Failed Candidate indication
+ * mlme_cm_osif_disconnect_start_ind() - osif Disconnect start indication
  * @vdev: vdev pointer
  * @cm_conn_rsp: Connect response
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void mlme_cm_failed_candidate(struct wlan_objmgr_vdev *vdev,
-			      struct wlan_cm_connect_rsp *cm_conn_rsp);
-
-/**
- * mlme_cm_update_conn_id_and_src() - Update connection id and source
- * @vdev: vdev pointer
- * @cm_conn_rsp: Connect response
- *
- * Return: None
- */
-void mlme_cm_update_conn_id_and_src(struct wlan_objmgr_vdev *vdev,
-				    enum wlan_cm_source source,
-				    uint64_t cm_id);
-
-/**
- * mlme_cm_disconnect_complete() - Disconnect response
- * @vdev: vdev pointer
- * @cm_conn_rsp: Connect response
- *
- * Return: None
- */
-void mlme_cm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
-				 struct wlan_cm_discon_rsp *cm_disconn_rsp);
-
-/**
- * mlme_cm_disconnect_start() - Disconnect start
- * @vdev: vdev pointer
- * @cm_conn_rsp: Connect response
- *
- * Return: None
- */
-void mlme_cm_disconnect_start(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS mlme_cm_osif_disconnect_start_ind(struct wlan_objmgr_vdev *vdev);
 
 /**
  * typedef osif_cm_get_global_ops_cb() - Callback to get connection manager
