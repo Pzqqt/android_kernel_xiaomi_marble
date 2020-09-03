@@ -13810,6 +13810,7 @@ typedef struct {
      * wmi_roam_earlystop_rssi_thres_param earlystop_param;
      * wmi_roam_dense_thres_param dense_param;
      * wmi_roam_bg_scan_roaming_param bg_scan_param;
+     * wmi_roam_data_rssi_roaming_param data_rssi_param;
      */
 } wmi_roam_scan_rssi_threshold_fixed_param;
 
@@ -14427,6 +14428,34 @@ typedef struct {
     /* flags for background roaming */
     A_UINT32 flags;
 } wmi_roam_bg_scan_roaming_param;
+
+/*
+ * If there's rx activity during rx_inactivity_ms and avg of data_rssi
+ * is better than roam_data_rssi_thres, then suppress low rssi roaming.
+ */
+#define WMI_ROAM_DATA_RSSI_FLAG_LOW_RSSI   0x00000001
+/*
+ * If there's no rx activity during rx_inactivity_ms or avg of data_rssi
+ * is better than roam_data_rssi_thres, then suppress this background roaming.
+ */
+#define WMI_ROAM_DATA_RSSI_FLAG_BACKGROUND 0x00000002
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param */
+    A_UINT32 tlv_header;
+    /* flags for when consider data_rssi,
+     * valid values are OR operation of WMI_ROAM_DATA_RSSI_FLAG_ .
+     * value 0 to disable the feature.
+     */
+    A_UINT32 flags;
+    /**
+     * RSSI threshold in dBm above which roaming scan will be supressed
+     * during some roaming trigger.
+     */
+    A_INT32 roam_data_rssi_thres;
+    /** rx inactivity time, in unit of milliseconds. */
+    A_UINT32 rx_inactivity_ms;
+} wmi_roam_data_rssi_roaming_param;
 
 /** Beacon filter wmi command info */
 
