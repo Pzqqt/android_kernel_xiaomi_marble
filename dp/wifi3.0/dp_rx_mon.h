@@ -632,6 +632,24 @@ uint8_t *dp_rx_mon_get_buffer_data(struct dp_rx_desc *rx_desc)
 {
 	return rx_desc->rx_buf_start;
 }
+
+/**
+ * dp_rx_mon_get_nbuf_80211_hdr() - Get 80211 hdr from nbuf
+ * @nbuf: qdf_nbuf_t
+ *
+ * This function must be called after moving radiotap header.
+ *
+ * Return: Ptr pointing to 80211 header or NULL.
+ */
+static inline
+qdf_frag_t dp_rx_mon_get_nbuf_80211_hdr(qdf_nbuf_t nbuf)
+{
+	/* Return NULL if nr_frag is Zero */
+	if (!qdf_nbuf_get_nr_frags(nbuf))
+		return NULL;
+
+	return qdf_nbuf_get_frag_addr(nbuf, 0);
+}
 #else
 
 #define DP_RX_MON_GET_NBUF_FROM_DESC(rx_desc) \
@@ -754,6 +772,12 @@ uint8_t *dp_rx_mon_get_buffer_data(struct dp_rx_desc *rx_desc)
 	if (qdf_likely(msdu))
 		data = qdf_nbuf_data(msdu);
 	return data;
+}
+
+static inline
+qdf_frag_t dp_rx_mon_get_nbuf_80211_hdr(qdf_nbuf_t nbuf)
+{
+	return qdf_nbuf_data(nbuf);
 }
 #endif
 

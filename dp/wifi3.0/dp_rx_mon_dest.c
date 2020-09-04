@@ -1221,12 +1221,20 @@ static inline QDF_STATUS dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
 {
 	uint32_t *nbuf_data;
 	struct ieee80211_frame *wh;
+	qdf_frag_t addr;
 
 	if (!nbuf)
 		return QDF_STATUS_E_INVAL;
 
+	/* Get addr pointing to80211 header */
+	addr = dp_rx_mon_get_nbuf_80211_hdr(nbuf);
+	if (qdf_unlikely(!addr)) {
+		qdf_nbuf_free(nbuf);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/*check if this is not a mgmt packet*/
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
+	wh = (struct ieee80211_frame *)addr;
 	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
 	     IEEE80211_FC0_TYPE_MGT) &&
 	     ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
