@@ -255,6 +255,29 @@ out2:
 }
 
 /**
+ * dp_rx_fst_check_cmem_support() - Check if FW can allocate FSE in CMEM,
+ * allocate FSE in DDR if FW doesn't support CMEM allocation
+ * @soc: DP SoC handle
+ *
+ * Return: None
+ */
+static void dp_rx_fst_check_cmem_support(struct dp_soc *soc)
+{
+	struct dp_rx_fst *fst = soc->rx_fst;
+
+	/* FW doesn't support CMEM FSE, keep it in DDR */
+	if (!soc->fst_in_cmem)
+		return;
+
+	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
+	fst->hal_rx_fst = NULL;
+	fst->hal_rx_fst_base_paddr = 0;
+
+	dp_rx_fst_cmem_init(fst);
+	fst->flow_deletion_supported = true;
+}
+
+/**
  * dp_rx_flow_send_fst_fw_setup() - Program FST parameters in FW/HW post-attach
  * @soc: SoC handle
  * @pdev: Pdev handle
@@ -268,6 +291,9 @@ QDF_STATUS dp_rx_flow_send_fst_fw_setup(struct dp_soc *soc,
 	struct dp_rx_fst *fst = soc->rx_fst;
 	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
 	QDF_STATUS status;
+
+	/* check if FW has support to place FST in CMEM */
+	dp_rx_fst_check_cmem_support(soc);
 
 	/* mac_id = 0 is used to configure both macs with same FT */
 	fisa_hw_fst_setup_cmd.pdev_id = 0;
@@ -299,7 +325,11 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 	dp_fst = soc->rx_fst;
 	if (qdf_likely(dp_fst)) {
 		qdf_timer_sync_cancel(&dp_fst->fse_cache_flush_timer);
-		hal_rx_fst_detach(dp_fst->hal_rx_fst, soc->osdev);
+		if (soc->fst_in_cmem)
+			dp_rx_fst_cmem_deinit(dp_fst);
+		else
+			hal_rx_fst_detach(dp_fst->hal_rx_fst, soc->osdev);
+
 		qdf_mem_free(dp_fst->base);
 		qdf_spinlock_destroy(&dp_fst->dp_rx_fst_lock);
 		qdf_mem_free(dp_fst);
