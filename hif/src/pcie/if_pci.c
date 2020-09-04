@@ -2320,6 +2320,8 @@ int hif_pci_bus_suspend(struct hif_softc *scn)
 	/* Stop the HIF Sleep Timer */
 	hif_cancel_deferred_target_sleep(scn);
 
+	scn->bus_suspended = true;
+
 	return 0;
 }
 
@@ -2370,6 +2372,8 @@ static int __hif_check_link_status(struct hif_softc *scn)
 int hif_pci_bus_resume(struct hif_softc *scn)
 {
 	int errno;
+
+	scn->bus_suspended = false;
 
 	errno = __hif_check_link_status(scn);
 	if (errno)

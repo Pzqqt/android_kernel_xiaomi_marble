@@ -311,11 +311,20 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 
 int hif_ipci_bus_suspend(struct hif_softc *scn)
 {
-	return hif_apps_enable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
+	int ret;
+
+	ret = hif_apps_enable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
+
+	if (!ret)
+		scn->bus_suspended = true;
+
+	return ret;
 }
 
 int hif_ipci_bus_resume(struct hif_softc *scn)
 {
+	scn->bus_suspended = false;
+
 	return hif_apps_disable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
 }
 

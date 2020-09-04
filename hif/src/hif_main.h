@@ -257,6 +257,8 @@ struct hif_softc {
 #endif
 	uint32_t irq_unlazy_disable;
 	/* Should the unlzay support for interrupt delivery be disabled */
+	/* Flag to indicate whether bus is suspended */
+	bool bus_suspended;
 };
 
 static inline

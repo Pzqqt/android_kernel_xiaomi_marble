@@ -862,6 +862,23 @@ static inline void hif_check_and_trigger_ut_resume(struct hif_softc *scn)
 #endif
 
 /**
+ * hif_check_and_trigger_sys_resume() - Check for bus suspend and
+ *  trigger system resume
+ * @scn: hif context
+ * @irq: irq number
+ *
+ * Return: None
+ */
+static inline void
+hif_check_and_trigger_sys_resume(struct hif_softc *scn, int irq)
+{
+	if (scn->bus_suspended && scn->linkstate_vote) {
+		hif_info_rl("interrupt rcvd:%d trigger sys resume", irq);
+		qdf_pm_system_wakeup();
+	}
+}
+
+/**
  * hif_ext_group_interrupt_handler() - handler for related interrupts
  * @irq: irq number of the interrupt
  * @context: the associated hif_exec_group context
@@ -895,6 +912,9 @@ irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context)
 		 * in reality APSS didn't really suspend.
 		 */
 		hif_check_and_trigger_ut_resume(scn);
+
+		hif_check_and_trigger_sys_resume(scn, irq);
+
 		qdf_atomic_inc(&scn->active_grp_tasklet_cnt);
 
 		hif_ext_group->sched_ops->schedule(hif_ext_group);
