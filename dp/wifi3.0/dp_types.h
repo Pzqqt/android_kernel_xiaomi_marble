@@ -1655,6 +1655,9 @@ struct dp_soc {
 	/* lock to protect vdev_id_map table*/
 	qdf_spinlock_t vdev_map_lock;
 
+	/* Flow Search Table is in CMEM */
+	bool fst_in_cmem;
+
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 	struct dp_swlm swlm;
 #endif
@@ -2890,6 +2893,9 @@ struct dp_fisa_rx_sw_ft {
 	uint32_t cur_aggr_gso_size;
 	struct udphdr *head_skb_udp_hdr;
 	uint16_t frags_cumulative_len;
+	/* CMEM parameters */
+	uint32_t cmem_offset;
+	uint32_t metadata;
 };
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_fisa_rx_sw_ft)
@@ -2932,6 +2938,16 @@ struct dp_rx_fst {
 	struct fse_cache_flush_history cache_fl_rec[MAX_FSE_CACHE_FL_HST];
 	/* FISA DP stats */
 	struct dp_fisa_stats stats;
+
+	/* CMEM params */
+	qdf_work_t fst_update_work;
+	qdf_workqueue_t *fst_update_wq;
+	qdf_list_t fst_update_list;
+	uint32_t meta_counter;
+	uint32_t cmem_ba;
+	qdf_spinlock_t dp_rx_sw_ft_lock[MAX_REO_DEST_RINGS];
+	qdf_event_t cmem_resp_event;
+	bool flow_deletion_supported;
 };
 
 #endif /* WLAN_SUPPORT_RX_FISA */
