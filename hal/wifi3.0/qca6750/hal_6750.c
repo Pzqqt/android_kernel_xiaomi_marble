@@ -1323,6 +1323,7 @@ uint16_t hal_rx_get_rx_sequence_6750(uint8_t *buf)
 
 #define UMAC_WINDOW_REMAP_RANGE 0x14
 #define CE_WINDOW_REMAP_RANGE 0x37
+#define CMEM_WINDOW_REMAP_RANGE 0x2
 
 /**
  * hal_get_window_address_6750(): Function to get hp/tp address
@@ -1334,33 +1335,33 @@ uint16_t hal_rx_get_rx_sequence_6750(uint8_t *buf)
 static inline qdf_iomem_t hal_get_window_address_6750(struct hal_soc *hal_soc,
 						      qdf_iomem_t addr)
 {
-	qdf_iomem_t new_addr;
 	uint32_t offset;
 	uint32_t window;
+	uint8_t scale;
 
 	offset = addr - hal_soc->dev_base_addr;
 	window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
 
-	/*
-	 * If offset lies within UMAC register range, use 2nd window
-	 */
-	if (window == UMAC_WINDOW_REMAP_RANGE) {
-		new_addr = (hal_soc->dev_base_addr + WINDOW_START +
-			(offset & WINDOW_RANGE_MASK));
-	/*
-	 * If offset lies within CE register range, use 3rd window
-	 */
-	} else if (window == CE_WINDOW_REMAP_RANGE) {
-		new_addr = (hal_soc->dev_base_addr + (2 * WINDOW_START) +
-			(offset & WINDOW_RANGE_MASK));
-	} else {
+	/* UMAC: 2nd window, CE: 3rd window, CMEM: 4th window */
+	switch (window) {
+	case UMAC_WINDOW_REMAP_RANGE:
+		scale = 1;
+		break;
+	case CE_WINDOW_REMAP_RANGE:
+		scale = 2;
+		break;
+	case CMEM_WINDOW_REMAP_RANGE:
+		scale = 3;
+		break;
+	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ERROR: Accessing Wrong register\n", __func__);
 		qdf_assert_always(0);
 		return 0;
 	}
 
-	return new_addr;
+	return hal_soc->dev_base_addr + (scale * WINDOW_START) +
+		(offset & WINDOW_RANGE_MASK);
 }
 
 /**
