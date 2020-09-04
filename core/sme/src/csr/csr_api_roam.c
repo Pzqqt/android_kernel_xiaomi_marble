@@ -20753,6 +20753,11 @@ csr_cm_roam_offload_11k_params(struct mac_context *mac_ctx,
 	csr_update_11k_offload_params(mac_ctx, session, params, enabled);
 }
 
+/*
+ * Below wlan_cm_roam_* and all csr_cm_roam_* APIs will move to component once
+ * conenction manager is converged.
+ */
+
 QDF_STATUS
 wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			    struct wlan_roam_start_config *req, uint8_t reason)
@@ -20941,6 +20946,20 @@ wlan_cm_roam_neighbor_proceed_with_handoff_req(uint8_t vdev_id)
 
 	return csr_neighbor_roam_proceed_with_handoff_req(mac_ctx, vdev_id);
 }
+
+bool wlan_cm_is_sta_connected(uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return false;
+	}
+
+	return CSR_IS_ROAM_JOINED(mac_ctx, vdev_id);
+}
+
 #endif
 
 QDF_STATUS
