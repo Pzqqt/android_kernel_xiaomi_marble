@@ -79,6 +79,29 @@ hal_rx_flow_setup_fse(hal_soc_handle_t hal_soc_hdl,
 		      struct hal_rx_flow *flow);
 
 /**
+ * hal_rx_flow_setup_cmem_fse() - Setup a flow search entry in HW CMEM FST
+ * @hal_soc_hdl: HAL SOC handle
+ * @cmem_ba: CMEM base address
+ * @table_offset: offset into the table where the flow is to be setup
+ * @flow: Flow Parameters
+ *
+ * Return: Success/Failure
+ */
+uint32_t
+hal_rx_flow_setup_cmem_fse(hal_soc_handle_t hal_soc_hdl, uint32_t cmem_ba,
+			   uint32_t table_offset, struct hal_rx_flow *flow);
+
+/**
+ * hal_rx_flow_get_cmem_fse_timestamp() - Get timestamp field from CMEM FSE
+ * @hal_soc_hdl: HAL SOC handle
+ * @fse_offset: CMEM FSE offset
+ *
+ * Return: Timestamp
+ */
+uint32_t hal_rx_flow_get_cmem_fse_timestamp(hal_soc_handle_t hal_soc_hdl,
+					    uint32_t fse_offset);
+
+/**
  * hal_rx_flow_delete_entry() - Delete a flow from the Rx Flow Search Table
  * @fst: Pointer to the Rx Flow Search Table
  * @hal_rx_fse: Pointer to the Rx Flow that is to be deleted from the FST
@@ -174,4 +197,15 @@ uint32_t
 hal_flow_toeplitz_hash(void *hal_fst, struct hal_rx_flow *flow);
 
 void hal_rx_dump_fse_table(struct hal_rx_fst *fst);
+
+/**
+ * hal_rx_dump_cmem_fse() - Dump flow search table entry which is in CMEM
+ * @hal_soc_hdl: HAL SOC handle
+ * @fse_offset: Offset in to the CMEM where FSE is located
+ * @index: FSE index
+ *
+ * Return: None
+ */
+void hal_rx_dump_cmem_fse(hal_soc_handle_t hal_soc_hdl, uint32_t fse_offset,
+			  int index);
 #endif /* HAL_RX_FLOW_H */

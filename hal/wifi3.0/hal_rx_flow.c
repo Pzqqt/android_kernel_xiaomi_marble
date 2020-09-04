@@ -18,7 +18,82 @@
 #include "dp_types.h"
 #include "hal_rx_flow.h"
 
+/**
+ * hal_rx_flow_get_cmem_fse() - Get FSE from CMEM
+ * @hal_soc_hdl: HAL SOC handle
+ * @fse_offset: CMEM FSE offset
+ * @fse: referece where FSE will be copied
+ * @len: length of FSE
+ *
+ * Return: If read is succesfull or not
+ */
+static void
+hal_rx_flow_get_cmem_fse(hal_soc_handle_t hal_soc_hdl, uint32_t fse_offset,
+			 uint32_t *fse, qdf_size_t len)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_flow_get_cmem_fse) {
+		return hal_soc->ops->hal_rx_flow_get_cmem_fse(
+						hal_soc, fse_offset, fse, len);
+	}
+}
+
 #if defined(WLAN_SUPPORT_RX_FISA)
+static inline void hal_rx_dump_fse(struct rx_flow_search_entry *fse, int index)
+{
+		dp_info("index %d:"
+		" src_ip_127_96 0x%x"
+		" src_ip_95_640 0x%x"
+		" src_ip_63_32 0x%x"
+		" src_ip_31_0 0x%x"
+		" dest_ip_127_96 0x%x"
+		" dest_ip_95_64 0x%x"
+		" dest_ip_63_32 0x%x"
+		" dest_ip_31_0 0x%x"
+		" src_port 0x%x"
+		" dest_port 0x%x"
+		" l4_protocol 0x%x"
+		" valid 0x%x"
+		" reo_destination_indication 0x%x"
+		" msdu_drop 0x%x"
+		" reo_destination_handler 0x%x"
+		" metadata 0x%x"
+		" aggregation_count0x%x"
+		" lro_eligible 0x%x"
+		" msdu_count 0x%x"
+		" msdu_byte_count 0x%x"
+		" timestamp 0x%x"
+		" cumulative_l4_checksum 0x%x"
+		" cumulative_ip_length 0x%x"
+		" tcp_sequence_number 0x%x",
+		index,
+		fse->src_ip_127_96,
+		fse->src_ip_95_64,
+		fse->src_ip_63_32,
+		fse->src_ip_31_0,
+		fse->dest_ip_127_96,
+		fse->dest_ip_95_64,
+		fse->dest_ip_63_32,
+		fse->dest_ip_31_0,
+		fse->src_port,
+		fse->dest_port,
+		fse->l4_protocol,
+		fse->valid,
+		fse->reo_destination_indication,
+		fse->msdu_drop,
+		fse->reo_destination_handler,
+		fse->metadata,
+		fse->aggregation_count,
+		fse->lro_eligible,
+		fse->msdu_count,
+		fse->msdu_byte_count,
+		fse->timestamp,
+		fse->cumulative_l4_checksum,
+		fse->cumulative_ip_length,
+		fse->tcp_sequence_number);
+}
+
 void hal_rx_dump_fse_table(struct hal_rx_fst *fst)
 {
 	int i = 0;
@@ -27,62 +102,31 @@ void hal_rx_dump_fse_table(struct hal_rx_fst *fst)
 
 	dp_info("Number flow table entries %d", fst->add_flow_count);
 	for (i = 0; i < fst->max_entries; i++) {
-		if (fse[i].valid) {
-			dp_info("index %d:"
-			" src_ip_127_96 0x%x"
-			" src_ip_95_640 0x%x"
-			" src_ip_63_32 0x%x"
-			" src_ip_31_0 0x%x"
-			" dest_ip_127_96 0x%x"
-			" dest_ip_95_64 0x%x"
-			" dest_ip_63_32 0x%x"
-			" dest_ip_31_0 0x%x"
-			" src_port 0x%x"
-			" dest_port 0x%x"
-			" l4_protocol 0x%x"
-			" valid 0x%x"
-			" reo_destination_indication 0x%x"
-			" msdu_drop 0x%x"
-			" reo_destination_handler 0x%x"
-			" metadata 0x%x"
-			" aggregation_count0x%x"
-			" lro_eligible 0x%x"
-			" msdu_count 0x%x"
-			" msdu_byte_count 0x%x"
-			" timestamp 0x%x"
-			" cumulative_l4_checksum 0x%x"
-			" cumulative_ip_length 0x%x"
-			" tcp_sequence_number 0x%x",
-			i,
-			fse[i].src_ip_127_96,
-			fse[i].src_ip_95_64,
-			fse[i].src_ip_63_32,
-			fse[i].src_ip_31_0,
-			fse[i].dest_ip_127_96,
-			fse[i].dest_ip_95_64,
-			fse[i].dest_ip_63_32,
-			fse[i].dest_ip_31_0,
-			fse[i].src_port,
-			fse[i].dest_port,
-			fse[i].l4_protocol,
-			fse[i].valid,
-			fse[i].reo_destination_indication,
-			fse[i].msdu_drop,
-			fse[i].reo_destination_handler,
-			fse[i].metadata,
-			fse[i].aggregation_count,
-			fse[i].lro_eligible,
-			fse[i].msdu_count,
-			fse[i].msdu_byte_count,
-			fse[i].timestamp,
-			fse[i].cumulative_l4_checksum,
-			fse[i].cumulative_ip_length,
-			fse[i].tcp_sequence_number);
-		}
+		if (fse[i].valid)
+			hal_rx_dump_fse(&fse[i], i);
 	}
+}
+
+void hal_rx_dump_cmem_fse(hal_soc_handle_t hal_soc_hdl, uint32_t fse_offset,
+			  int index)
+{
+	struct rx_flow_search_entry fse = {0};
+
+	if (!fse_offset)
+		return;
+
+	hal_rx_flow_get_cmem_fse(hal_soc_hdl, fse_offset, (uint32_t *)&fse,
+				 sizeof(struct rx_flow_search_entry));
+	if (fse.valid)
+		hal_rx_dump_fse(&fse, index);
 }
 #else
 void hal_rx_dump_fse_table(struct hal_rx_fst *fst)
+{
+}
+
+void hal_rx_dump_cmem_fse(hal_soc_handle_t hal_soc_hdl, uint32_t fse_offset,
+			  int index)
 {
 }
 #endif
@@ -111,6 +155,52 @@ hal_rx_flow_setup_fse(hal_soc_handle_t hal_soc_hdl,
 	return NULL;
 }
 qdf_export_symbol(hal_rx_flow_setup_fse);
+
+/**
+ * hal_rx_flow_setup_cmem_fse() - Setup a flow search entry in HW CMEM FST
+ * @hal_soc_hdl: HAL SOC handle
+ * @cmem_ba: CMEM base address
+ * @table_offset: offset into the table where the flow is to be setup
+ * @flow: Flow Parameters
+ *
+ * Return: Success/Failure
+ */
+uint32_t
+hal_rx_flow_setup_cmem_fse(hal_soc_handle_t hal_soc_hdl, uint32_t cmem_ba,
+			   uint32_t table_offset, struct hal_rx_flow *flow)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_flow_setup_cmem_fse) {
+		return hal_soc->ops->hal_rx_flow_setup_cmem_fse(
+						hal_soc, cmem_ba,
+						table_offset, (uint8_t *)flow);
+	}
+
+	return 0;
+}
+qdf_export_symbol(hal_rx_flow_setup_cmem_fse);
+
+/**
+ * hal_rx_flow_get_cmem_fse_timestamp() - Get timestamp field from CMEM FSE
+ * @hal_soc_hdl: HAL SOC handle
+ * @fse_offset: CMEM FSE offset
+ *
+ * Return: Timestamp
+ */
+uint32_t hal_rx_flow_get_cmem_fse_timestamp(hal_soc_handle_t hal_soc_hdl,
+					    uint32_t fse_offset)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_flow_get_cmem_fse_ts) {
+		return hal_soc->ops->hal_rx_flow_get_cmem_fse_ts(hal_soc,
+								 fse_offset);
+	}
+
+	return 0;
+}
+qdf_export_symbol(hal_rx_flow_get_cmem_fse_timestamp);
 
 /**
  * hal_rx_flow_delete_entry() - Delete a flow from the Rx Flow Search Table

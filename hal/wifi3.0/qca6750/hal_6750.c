@@ -1607,6 +1607,139 @@ hal_rx_flow_setup_fse_6750(uint8_t *rx_fst, uint32_t table_offset,
 	return fse;
 }
 
+/*
+ * hal_rx_flow_setup_cmem_fse_6750() - Setup a flow search entry in HW CMEM FST
+ * @hal_soc: hal_soc reference
+ * @cmem_ba: CMEM base address
+ * @table_offset: offset into the table where the flow is to be setup
+ * @flow: Flow Parameters
+ *
+ * Return: Success/Failure
+ */
+static uint32_t
+hal_rx_flow_setup_cmem_fse_6750(struct hal_soc *hal_soc, uint32_t cmem_ba,
+				uint32_t table_offset, uint8_t *rx_flow)
+{
+	struct hal_rx_flow *flow = (struct hal_rx_flow *)rx_flow;
+	uint32_t fse_offset;
+	uint32_t value;
+
+	fse_offset = cmem_ba + (table_offset * HAL_RX_FST_ENTRY_SIZE);
+
+	/* Reset the Valid bit */
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_9,
+							VALID), 0);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96,
+				(flow->tuple_info.src_ip_127_96));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_0,
+							SRC_IP_127_96), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_1, SRC_IP_95_64,
+				(flow->tuple_info.src_ip_95_64));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_1,
+							SRC_IP_95_64), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_2, SRC_IP_63_32,
+				(flow->tuple_info.src_ip_63_32));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_2,
+							SRC_IP_63_32), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_3, SRC_IP_31_0,
+				(flow->tuple_info.src_ip_31_0));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_3,
+							SRC_IP_31_0), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_4, DEST_IP_127_96,
+				(flow->tuple_info.dest_ip_127_96));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_4,
+							DEST_IP_127_96), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_5, DEST_IP_95_64,
+				(flow->tuple_info.dest_ip_95_64));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_5,
+							DEST_IP_95_64), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_6, DEST_IP_63_32,
+				(flow->tuple_info.dest_ip_63_32));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_6,
+							DEST_IP_63_32), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_7, DEST_IP_31_0,
+				(flow->tuple_info.dest_ip_31_0));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_7,
+							DEST_IP_31_0), value);
+
+	value = 0 | HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_8, DEST_PORT,
+				(flow->tuple_info.dest_port));
+	value |= HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_8, SRC_PORT,
+				(flow->tuple_info.src_port));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_8,
+							SRC_PORT), value);
+
+	value  = HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_10, METADATA,
+				(flow->fse_metadata));
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_10,
+							METADATA), value);
+
+	/* Reset all the other fields in FSE */
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_11,
+							MSDU_COUNT), 0);
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_12,
+							MSDU_BYTE_COUNT), 0);
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_13,
+							TIMESTAMP), 0);
+
+	value = 0 | HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9, L4_PROTOCOL,
+				   flow->tuple_info.l4_protocol);
+	value |= HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9, REO_DESTINATION_HANDLER,
+				flow->reo_destination_handler);
+	value |= HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9,
+				REO_DESTINATION_INDICATION,
+				flow->reo_destination_indication);
+	value |= HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9, VALID, 1);
+	HAL_CMEM_WRITE(hal_soc, fse_offset + HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_9,
+							L4_PROTOCOL), value);
+
+	return fse_offset;
+}
+
+/**
+ * hal_rx_flow_get_cmem_fse_ts_6750() - Get timestamp field from CMEM FSE
+ * @hal_soc: hal_soc reference
+ * @fse_offset: CMEM FSE offset
+ *
+ * Return: Timestamp
+ */
+static uint32_t hal_rx_flow_get_cmem_fse_ts_6750(struct hal_soc *hal_soc,
+						 uint32_t fse_offset)
+{
+	return HAL_CMEM_READ(hal_soc, fse_offset +
+			     HAL_OFFSET(RX_FLOW_SEARCH_ENTRY_13, TIMESTAMP));
+}
+
+/**
+ * hal_rx_flow_get_cmem_fse_6750() - Get FSE from CMEM
+ * @hal_soc: hal_soc reference
+ * @fse_offset: CMEM FSE offset
+ * @fse: referece where FSE will be copied
+ * @len: length of FSE
+ *
+ * Return: If read is succesfull or not
+ */
+static void
+hal_rx_flow_get_cmem_fse_6750(struct hal_soc *hal_soc, uint32_t fse_offset,
+			      uint32_t *fse, qdf_size_t len)
+{
+	int i;
+
+	if (len != HAL_RX_FST_ENTRY_SIZE)
+		return;
+
+	for (i = 0; i < NUM_OF_DWORDS_RX_FLOW_SEARCH_ENTRY; i++)
+		fse[i] = HAL_CMEM_READ(hal_soc, fse_offset + i * 4);
+}
+
 static
 void hal_compute_reo_remap_ix2_ix3_6750(uint32_t *ring, uint32_t num_rings,
 					uint32_t *remap1, uint32_t *remap2)
@@ -1770,7 +1903,12 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	hal_rx_mpdu_start_offset_get_generic,
 	hal_rx_mpdu_end_offset_get_generic,
 	hal_rx_flow_setup_fse_6750,
-	hal_compute_reo_remap_ix2_ix3_6750
+	hal_compute_reo_remap_ix2_ix3_6750,
+
+	/* CMEM FSE */
+	hal_rx_flow_setup_cmem_fse_6750,
+	hal_rx_flow_get_cmem_fse_ts_6750,
+	hal_rx_flow_get_cmem_fse_6750,
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {
