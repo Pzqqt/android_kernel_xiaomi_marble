@@ -558,10 +558,11 @@ dp_rx_fisa_aggr_tcp(struct dp_rx_fst *fisa_hdl,
 static int get_transport_payload_offset(struct dp_rx_fst *fisa_hdl,
 					uint8_t *rx_tlv_hdr)
 {
+	uint32_t eth_hdr_len = HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr);
 	uint32_t ip_hdr_len = HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
 
 	/* ETHERNET_HDR_LEN + ip_hdr_len + UDP/TCP; */
-	return (ETHERNET_HDR_LEN + ip_hdr_len + sizeof(struct udphdr));
+	return (eth_hdr_len + ip_hdr_len + sizeof(struct udphdr));
 }
 
 /**
