@@ -24,6 +24,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_blm_ucfg_api.h"
 #include "hdd_dp_cfg.h"
+#include <cdp_txrx_misc.h>
 
 void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 			      struct qdf_mac_addr gw_mac_addr)
@@ -317,6 +318,7 @@ static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	eConnectionState conn_state;
 	int status;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_enter();
 
@@ -339,6 +341,16 @@ static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 	if (adapter->nud_tracking.curr_state != NUD_FAILED) {
 		hdd_debug("Not in NUD_FAILED state");
 		return;
+	}
+
+	if (soc && cdp_cfg_get(soc, cfg_dp_enable_data_stall)) {
+		hdd_dp_err("Data stall due to NUD failure");
+		cdp_post_data_stall_event
+			(soc,
+			 DATA_STALL_LOG_INDICATOR_HOST_DRIVER,
+			 DATA_STALL_LOG_NUD_FAILURE,
+			 OL_TXRX_PDEV_ID, 0XFF,
+			 DATA_STALL_LOG_RECOVERY_TRIGGER_PDR);
 	}
 
 	if (adapter->device_mode == QDF_STA_MODE &&

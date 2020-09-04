@@ -14351,6 +14351,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 
 	/* send NUD failure event only when ARP tracking is enabled. */
 	if (cdp_cfg_get(soc, cfg_dp_enable_data_stall) &&
+	    !hdd_ctx->config->enable_nud_tracking &&
 	    (pkt_type_bitmap & CONNECTIVITY_CHECK_SET_ARP)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Data stall due to NUD failure");
