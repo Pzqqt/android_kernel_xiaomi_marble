@@ -214,17 +214,13 @@ static bool wlan_objmgr_del_obj_match(union wlan_objmgr_del_obj *obj,
 {
 	switch (obj_type) {
 	case WLAN_PSOC_OP:
-		if (del_obj->obj_psoc == obj->obj_psoc)
-			return true;
+		return (del_obj->obj_psoc == obj->obj_psoc);
 	case WLAN_PDEV_OP:
-		if (del_obj->obj_pdev == obj->obj_pdev)
-			return true;
+		return (del_obj->obj_pdev == obj->obj_pdev);
 	case WLAN_VDEV_OP:
-		if (del_obj->obj_vdev == obj->obj_vdev)
-			return true;
+		return (del_obj->obj_vdev == obj->obj_vdev);
 	case WLAN_PEER_OP:
-		if (del_obj->obj_peer == obj->obj_peer)
-			return true;
+		return (del_obj->obj_peer == obj->obj_peer);
 	default:
 		return false;
 	}

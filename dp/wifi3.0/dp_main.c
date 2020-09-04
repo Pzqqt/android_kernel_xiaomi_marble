@@ -8752,6 +8752,7 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 	case CDP_ENABLE_MCAST_EN:
 		val->cdp_vdev_param_mcast_en = vdev->mcast_enhancement_en;
+		break;
 	case CDP_ENABLE_HLOS_TID_OVERRIDE:
 		val->cdp_vdev_param_hlos_tid_override =
 			    dp_vdev_get_hlos_tid_override((struct cdp_vdev *)vdev);

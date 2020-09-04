@@ -504,7 +504,8 @@ static bool scm_is_security_match(struct scan_filter *filter,
 			match = scm_check_open(filter, db_entry, security);
 			if (match)
 				break;
-		/* If not OPEN, then check WEP match so fall through */
+		/* If not OPEN, then check WEP match */
+		/* fallthrough */
 		case WLAN_CRYPTO_AUTH_SHARED:
 			match = scm_check_wep(filter, db_entry, security);
 			break;
