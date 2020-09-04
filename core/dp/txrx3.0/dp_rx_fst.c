@@ -25,6 +25,7 @@
 #include "dp_internal.h"
 
 #ifdef WLAN_SUPPORT_RX_FISA
+void dp_fisa_rx_fst_update_work(void *arg);
 
 void dp_rx_dump_fisa_table(struct dp_soc *soc)
 {
@@ -94,6 +95,54 @@ static void dp_fisa_fse_cache_flush_timer(void *arg)
 		 * Not big impact cache entry gets updated later
 		 */
 	}
+}
+
+/**
+ * dp_rx_fst_cmem_deinit() - De-initialize CMEM parameters
+ * @fst: Pointer to DP FST
+ *
+ * Return: None
+ */
+static void dp_rx_fst_cmem_deinit(struct dp_rx_fst *fst)
+{
+	int i;
+
+	qdf_cancel_work(&fst->fst_update_work);
+	qdf_flush_work(&fst->fst_update_work);
+	qdf_flush_workqueue(0, fst->fst_update_wq);
+
+	qdf_destroy_workqueue(0, fst->fst_update_wq);
+	qdf_list_destroy(&fst->fst_update_list);
+	qdf_event_destroy(&fst->cmem_resp_event);
+
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
+		qdf_spinlock_destroy(&fst->dp_rx_sw_ft_lock[i]);
+}
+
+/**
+ * dp_rx_fst_cmem_init() - Initialize CMEM parameters
+ * @fst: Pointer to DP FST
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
+{
+	int i;
+
+	fst->fst_update_wq =
+		qdf_alloc_high_prior_ordered_workqueue("dp_rx_fst_update_wq");
+	if (!fst->fst_update_wq)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_create_work(0, &fst->fst_update_work,
+			dp_fisa_rx_fst_update_work, fst);
+	qdf_list_create(&fst->fst_update_list, 128);
+	qdf_event_create(&fst->cmem_resp_event);
+
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
+		qdf_spinlock_create(&fst->dp_rx_sw_ft_lock[i]);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

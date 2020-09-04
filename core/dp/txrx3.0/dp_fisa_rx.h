@@ -38,6 +38,17 @@
 #define FISA_FLOW_MAX_CUMULATIVE_IP_LEN \
 	(FISA_MAX_SINGLE_CUMULATIVE_IP_LEN * FISA_FLOW_MAX_AGGR_COUNT)
 
+struct dp_fisa_rx_fst_update_elem {
+	/* Do not add new entries here */
+	qdf_list_node_t node;
+	struct cdp_rx_flow_tuple_info flow_tuple_info;
+	struct dp_vdev *vdev;
+	uint32_t flow_idx;
+	bool is_tcp_flow;
+	bool is_udp_flow;
+	u8 reo_id;
+};
+
 /**
  * dp_rx_dump_fisa_stats() - Dump fisa stats
  * @soc: core txrx main context
