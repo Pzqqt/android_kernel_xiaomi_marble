@@ -917,24 +917,23 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 /* set audio task affinity to core 1 & 2 */
 static const unsigned int audio_core_list[] = {1, 2};
 static cpumask_t audio_cpu_map = CPU_MASK_NONE;
-static struct dev_pm_qos_request *msm_audio_req = NULL;
-static unsigned int qos_client_active_cnt = 0;
+static struct dev_pm_qos_request *msm_audio_req;
+static unsigned int qos_client_active_cnt;
 
-static void msm_audio_add_qos_request()
+static void msm_audio_add_qos_request(void)
 {
 	int i;
 	int cpu = 0;
 
-	msm_audio_req = kzalloc(sizeof(struct dev_pm_qos_request) * NR_CPUS,
-				 GFP_KERNEL);
-	if (!msm_audio_req) {
-		pr_err("%s failed to alloc mem for qos req.\n", __func__);
+	msm_audio_req = kcalloc(num_possible_cpus(),
+		sizeof(struct dev_pm_qos_request), GFP_KERNEL);
+	if (!msm_audio_req)
 		return;
-	}
 
 	for (i = 0; i < ARRAY_SIZE(audio_core_list); i++) {
-		if (audio_core_list[i] >= NR_CPUS)
-			pr_err("%s incorrect cpu id: %d specified.\n", __func__, audio_core_list[i]);
+		if (audio_core_list[i] >= num_possible_cpus())
+			pr_err("%s incorrect cpu id: %d specified.\n",
+				__func__, audio_core_list[i]);
 		else
 			cpumask_set_cpu(audio_core_list[i], &audio_cpu_map);
 	}
@@ -948,7 +947,7 @@ static void msm_audio_add_qos_request()
 	}
 }
 
-static void msm_audio_remove_qos_request()
+static void msm_audio_remove_qos_request(void)
 {
 	int cpu = 0;
 
@@ -956,7 +955,8 @@ static void msm_audio_remove_qos_request()
 		for_each_cpu(cpu, &audio_cpu_map) {
 			dev_pm_qos_remove_request(
 				&msm_audio_req[cpu]);
-			pr_debug("%s remove cpu affinity of core %d.\n", __func__, cpu);
+			pr_debug("%s remove cpu affinity of core %d.\n",
+				__func__, cpu);
 		}
 		kfree(msm_audio_req);
 	}
@@ -970,7 +970,8 @@ static void msm_audio_update_qos_request(u32 latency)
 		for_each_cpu(cpu, &audio_cpu_map) {
 			dev_pm_qos_update_request(
 				&msm_audio_req[cpu], latency);
-			pr_debug("%s update latency of core %d to %ul.\n", __func__, cpu, latency);
+			pr_debug("%s update latency of core %d to %ul.\n",
+				__func__, cpu, latency);
 		}
 	}
 }
