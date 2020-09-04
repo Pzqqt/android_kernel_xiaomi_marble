@@ -3542,7 +3542,8 @@ static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc,
 	if (!idle_time ||
 		!sde_encoder_check_curr_mode(sde_crtc->mixers[0].encoder,
 						MSM_DISPLAY_VIDEO_MODE) ||
-			(crtc->index >= ARRAY_SIZE(priv->event_thread)))
+			(crtc->index >= ARRAY_SIZE(priv->event_thread)) ||
+			(sde_crtc->cache_state > CACHE_STATE_NORMAL))
 		return;
 
 	/* schedule the idle notify delayed work */
@@ -3654,7 +3655,7 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 			continue;
 
 		if (sde_encoder_get_intf_mode(encoder) == INTF_MODE_VIDEO)
-			sde_encoder_kickoff(encoder, false);
+			sde_encoder_kickoff(encoder, false, true);
 	}
 
 	/* panic the device if VBIF is not in good state */
@@ -3760,7 +3761,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		if (encoder->crtc != crtc)
 			continue;
 
-		sde_encoder_kickoff(encoder, false);
+		sde_encoder_kickoff(encoder, false, true);
 	}
 
 	/* store the event after frame trigger */
@@ -6398,35 +6399,34 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
 			static_cache_read_work.work);
 	struct drm_crtc *crtc;
-	struct msm_kms *kms;
-	struct msm_drm_private *priv = NULL;
-	struct sde_crtc_mixer *mixer;
-	struct sde_hw_ctl *ctl;
+	struct drm_encoder *enc, *drm_enc = NULL;
 
 	if (!sde_crtc)
 		return;
 
 	crtc = &sde_crtc->base;
-	priv = crtc->dev->dev_private;
-	kms = priv->kms;
-	mixer = sde_crtc->mixers;
-	if (!mixer)
+
+	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE)
 		return;
 
-	ctl = mixer->hw_ctl;
+	drm_for_each_encoder_mask(enc, crtc->dev, crtc->state->encoder_mask) {
+		drm_enc = enc;
+		if (sde_encoder_in_clone_mode(drm_enc))
+			return;
+	}
+
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
+		return;
+	}
 
 	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_ENTRY);
 
-	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE ||
-			!ctl->ops.trigger_flush)
-		return;
-
 	sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_READ, false);
 
-	/* flush with previous commit flush bits & wait till frame done */
-	ctl->ops.trigger_flush(ctl);
-	if (kms->funcs->wait_for_crtc_commit_done)
-		kms->funcs->wait_for_crtc_commit_done(kms, crtc);
+	/* kickoff encoder with previous configuration and wait for VBLANK */
+	sde_encoder_kickoff(drm_enc, false, false);
+	sde_encoder_wait_for_event(drm_enc, MSM_ENC_VBLANK);
 
 	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_EXIT);
 }
