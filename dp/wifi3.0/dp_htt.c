@@ -4769,6 +4769,23 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				  peer_id, win_sz, tid, status);
 			break;
 		}
+	case HTT_T2H_MSG_TYPE_FSE_CMEM_BASE_SEND:
+		{
+			uint16_t num_entries;
+			uint32_t cmem_ba_lo;
+			uint32_t cmem_ba_hi;
+
+			num_entries = HTT_CMEM_BASE_SEND_NUM_ENTRIES_GET(*msg_word);
+			cmem_ba_lo = *(msg_word + 1);
+			cmem_ba_hi = *(msg_word + 2);
+
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				  FL("CMEM FSE num_entries %u CMEM BA LO %x HI %x"),
+				  num_entries, cmem_ba_lo, cmem_ba_hi);
+
+			dp_rx_fst_update_cmem_params(soc->dp_soc, num_entries,
+						     cmem_ba_lo, cmem_ba_hi);
+		}
 	default:
 		break;
 	};

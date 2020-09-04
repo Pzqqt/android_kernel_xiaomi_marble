@@ -2290,6 +2290,24 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 
 #if defined(WLAN_SUPPORT_RX_FISA)
 void dp_rx_dump_fisa_table(struct dp_soc *soc);
+
+/*
+ * dp_rx_fst_update_cmem_params() - Update CMEM FST params
+ * @soc:		DP SoC context
+ * @num_entries:	Number of flow search entries
+ * @cmem_ba_lo:		CMEM base address low
+ * @cmem_ba_hi:		CMEM base address high
+ *
+ * Return: None
+ */
+void dp_rx_fst_update_cmem_params(struct dp_soc *soc, uint16_t num_entries,
+				  uint32_t cmem_ba_lo, uint32_t cmem_ba_hi);
+#else
+static inline void
+dp_rx_fst_update_cmem_params(struct dp_soc *soc, uint16_t num_entries,
+			     uint32_t cmem_ba_lo, uint32_t cmem_ba_hi)
+{
+}
 #endif /* WLAN_SUPPORT_RX_FISA */
 
 #ifdef MAX_ALLOC_PAGE_SIZE
