@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012, 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_IO_UTIL_H__
@@ -11,6 +11,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/i2c.h>
 #include <linux/types.h>
+#include <linux/soc/qcom/msm_mmrm.h>
 
 #ifdef DEBUG
 #define DEV_DBG(fmt, args...)   pr_err(fmt, ##args)
@@ -62,7 +63,22 @@ struct dss_gpio {
 enum dss_clk_type {
 	DSS_CLK_AHB, /* no set rate. rate controlled through rpm */
 	DSS_CLK_PCLK,
+	DSS_CLK_MMRM, /* set rate called through mmrm driver */
 	DSS_CLK_OTHER,
+};
+
+struct dss_clk_mmrm_cb {
+	void *phandle;
+	struct dss_clk *clk;
+};
+
+struct dss_clk_mmrm {
+	unsigned int clk_id;
+	unsigned int flags;
+	struct mmrm_client *mmrm_client;
+	struct dss_clk_mmrm_cb *mmrm_cb_data;
+	unsigned long mmrm_requested_clk;
+	wait_queue_head_t mmrm_cb_wq;
 };
 
 struct dss_clk {
@@ -71,6 +87,7 @@ struct dss_clk {
 	enum dss_clk_type type;
 	unsigned long rate;
 	unsigned long max_rate;
+	struct dss_clk_mmrm mmrm;
 };
 
 struct dss_module_power {
@@ -101,6 +118,10 @@ int msm_dss_get_vreg(struct device *dev, struct dss_vreg *in_vreg,
 int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg,	int enable);
 
 int msm_dss_get_clk(struct device *dev, struct dss_clk *clk_arry, int num_clk);
+int msm_dss_mmrm_register(struct device *dev, struct dss_module_power *mp,
+	int (*cb_fnc)(struct mmrm_client_notifier_data *data), void *phandle,
+	bool *mmrm_enable);
+void msm_dss_mmrm_deregister(struct device *dev, struct dss_module_power *mp);
 void msm_dss_put_clk(struct dss_clk *clk_arry, int num_clk);
 int msm_dss_clk_set_rate(struct dss_clk *clk_arry, int num_clk);
 int msm_dss_single_clk_set_rate(struct dss_clk *clk);

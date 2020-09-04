@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d]: " fmt, __func__, __LINE__
@@ -23,6 +23,11 @@
 
 #define KBPS2BPS(x) ((x) * 1000ULL)
 
+/* wait for at most 2 vsync for lowest refresh rate (1hz) */
+#define SDE_MMRM_CB_TIMEOUT_MS		2000
+#define SDE_MMRM_CB_TIMEOUT_JIFFIES  msecs_to_jiffies( \
+		SDE_MMRM_CB_TIMEOUT_MS)
+
 static const char *data_bus_name[SDE_POWER_HANDLE_DBUS_ID_MAX] = {
 	[SDE_POWER_HANDLE_DBUS_ID_MNOC] = "qcom,sde-data-bus",
 	[SDE_POWER_HANDLE_DBUS_ID_LLCC] = "qcom,sde-llcc-bus",
@@ -37,17 +42,21 @@ const char *sde_power_handle_get_dbus_name(u32 bus_id)
 	return NULL;
 }
 
-static void sde_power_event_trigger_locked(struct sde_power_handle *phandle,
+static int sde_power_event_trigger_locked(struct sde_power_handle *phandle,
 		u32 event_type)
 {
 	struct sde_power_event *event;
+	int ret = -EPERM;
 
 	phandle->last_event_handled = event_type;
 	list_for_each_entry(event, &phandle->event_list, list) {
 		if (event->event_type & event_type) {
 			event->cb_fnc(event_type, event->usr);
+			ret = 0;
 		}
 	}
+
+	return ret;
 }
 
 static inline void sde_power_rsc_client_init(struct sde_power_handle *phandle)
@@ -229,6 +238,7 @@ static int sde_power_parse_dt_clock(struct platform_device *pdev,
 	u32 i = 0, rc = 0;
 	const char *clock_name;
 	u32 clock_rate = 0;
+	u32 clock_mmrm = 0;
 	u32 clock_max_rate = 0;
 	int num_clk = 0;
 
@@ -268,6 +278,17 @@ static int sde_power_parse_dt_clock(struct platform_device *pdev,
 			mp->clk_config[i].type = DSS_CLK_AHB;
 		else
 			mp->clk_config[i].type = DSS_CLK_PCLK;
+
+		clock_mmrm = 0;
+		of_property_read_u32_index(pdev->dev.of_node, "clock-mmrm",
+							i, &clock_mmrm);
+		if (clock_mmrm) {
+			mp->clk_config[i].type = DSS_CLK_MMRM;
+			mp->clk_config[i].mmrm.clk_id = clock_mmrm;
+		}
+		pr_debug("clk[%d]:%d mmrm:%d rate:%d name:%s dev:%s\n",
+			i, clock_mmrm, clock_rate, clock_name,
+			pdev->name ? pdev->name : "<unknown>");
 
 		clock_max_rate = 0;
 		of_property_read_u32_index(pdev->dev.of_node, "clock-max-rate",
@@ -547,6 +568,90 @@ static int sde_power_reg_bus_update(struct sde_power_reg_bus_handle *reg_bus,
 	return rc;
 }
 
+int sde_power_mmrm_set_clk_limit(struct dss_clk *clk,
+	struct sde_power_handle *phandle, unsigned long requested_clk)
+{
+	int ret;
+
+	clk->mmrm.mmrm_requested_clk = requested_clk;
+
+	SDE_EVT32_VERBOSE(SDE_EVTLOG_FUNC_ENTRY,
+		clk->mmrm.mmrm_requested_clk);
+	ret = sde_power_event_trigger_locked(phandle,
+		SDE_POWER_EVENT_MMRM_CALLBACK);
+	if (ret) {
+		/* no crtc's present, we cannot process the cb */
+		pr_err("error cannot process mmrm cb\n");
+		goto exit;
+	}
+
+	SDE_EVT32_VERBOSE(SDE_EVTLOG_FUNC_CASE1,
+		clk->mmrm.mmrm_requested_clk);
+	/* wait for the request to reduce the clk */
+	ret = wait_event_timeout(clk->mmrm.mmrm_cb_wq,
+		clk->mmrm.mmrm_requested_clk == 0,
+		SDE_MMRM_CB_TIMEOUT_JIFFIES);
+	if (!ret) {
+		/* requested clk was not reduced, fail cb */
+		ret = -EPERM;
+		/* Clear the request */
+		clk->mmrm.mmrm_requested_clk = 0;
+		pr_err("error cannot process mmrm cb clk request\n");
+	} else {
+		ret = 0; // Succeed, clk was reduced
+	}
+
+exit:
+	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT, ret);
+	return ret;
+}
+
+int sde_power_mmrm_callback(
+	struct mmrm_client_notifier_data *notifier_data)
+{
+	struct dss_clk_mmrm_cb *mmrm_cb_data =
+		(struct dss_clk_mmrm_cb *)notifier_data->pvt_data;
+	struct sde_power_handle *phandle =
+		(struct sde_power_handle *)mmrm_cb_data->phandle;
+	struct dss_clk *clk = mmrm_cb_data->clk;
+	int ret = -EPERM;
+
+	if (notifier_data->cb_type == MMRM_CLIENT_RESOURCE_VALUE_CHANGE) {
+		unsigned long requested_clk =
+			notifier_data->cb_data.val_chng.new_val;
+
+		ret = sde_power_mmrm_set_clk_limit(clk, phandle, requested_clk);
+		if (ret)
+			pr_err("mmrm callback error reducing clk:%lu ret:%d\n",
+				requested_clk, ret);
+	}
+
+	return ret;
+}
+
+u64 sde_power_mmrm_get_requested_clk(struct sde_power_handle *phandle,
+	char *clock_name)
+{
+	struct dss_module_power *mp;
+	u64 rate = -EINVAL;
+	int i;
+
+	if (!phandle) {
+		pr_err("invalid input power handle\n");
+		return -EINVAL;
+	}
+	mp = &phandle->mp;
+
+	for (i = 0; i < mp->num_clk; i++) {
+		if (!strcmp(mp->clk_config[i].clk_name, clock_name)) {
+			rate = mp->clk_config[i].mmrm.mmrm_requested_clk;
+			break;
+		}
+	}
+
+	return rate;
+}
+
 int sde_power_resource_init(struct platform_device *pdev,
 	struct sde_power_handle *phandle)
 {
@@ -560,6 +665,9 @@ int sde_power_resource_init(struct platform_device *pdev,
 	}
 	mp = &phandle->mp;
 	phandle->dev = &pdev->dev;
+
+	/* event init must happen before mmrm register */
+	INIT_LIST_HEAD(&phandle->event_list);
 
 	rc = sde_power_parse_dt_clock(pdev, mp);
 	if (rc) {
@@ -586,6 +694,14 @@ int sde_power_resource_init(struct platform_device *pdev,
 		goto clkget_err;
 	}
 
+	rc = msm_dss_mmrm_register(&pdev->dev, mp,
+		sde_power_mmrm_callback, (void *)phandle,
+		&phandle->mmrm_enable);
+	if (rc) {
+		pr_err("mmrm register failed rc=%d\n", rc);
+		goto clkmmrm_err;
+	}
+
 	rc = msm_dss_clk_set_rate(mp->clk_config, mp->num_clk);
 	if (rc) {
 		pr_err("clock set rate failed rc=%d\n", rc);
@@ -598,8 +714,6 @@ int sde_power_resource_init(struct platform_device *pdev,
 		goto bus_err;
 	}
 
-	INIT_LIST_HEAD(&phandle->event_list);
-
 	phandle->rsc_client = NULL;
 	phandle->rsc_client_init = false;
 
@@ -610,6 +724,8 @@ int sde_power_resource_init(struct platform_device *pdev,
 bus_err:
 	sde_power_bus_unregister(phandle);
 clkset_err:
+	msm_dss_mmrm_deregister(&pdev->dev, mp);
+clkmmrm_err:
 	msm_dss_put_clk(mp->clk_config, mp->num_clk);
 clkget_err:
 	msm_dss_get_vreg(&pdev->dev, mp->vreg_config, mp->num_vreg, 0);
@@ -649,6 +765,8 @@ void sde_power_resource_deinit(struct platform_device *pdev,
 	mutex_unlock(&phandle->phandle_lock);
 
 	sde_power_bus_unregister(phandle);
+
+	msm_dss_mmrm_deregister(&pdev->dev, mp);
 
 	msm_dss_put_clk(mp->clk_config, mp->num_clk);
 
@@ -803,7 +921,7 @@ vreg_err:
 }
 
 int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
-	u64 rate)
+	u64 rate, u32 flags)
 {
 	int i, rc = -EINVAL;
 	struct dss_module_power *mp;
@@ -813,8 +931,18 @@ int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 		return -EINVAL;
 	}
 
+	/*
+	 * Return early if mmrm is disabled and the flags to reserve the mmrm
+	 * mmrm clock are set.
+	 */
+	if (flags && !phandle->mmrm_enable) {
+		pr_debug("mmrm disabled, return early for reserve flags\n");
+		return 0;
+	}
+
 	mutex_lock(&phandle->phandle_lock);
-	if (phandle->last_event_handled & SDE_POWER_EVENT_POST_DISABLE) {
+	if (phandle->last_event_handled & SDE_POWER_EVENT_POST_DISABLE &&
+	    !flags) {
 		pr_debug("invalid power state %u\n",
 				phandle->last_event_handled);
 		SDE_EVT32(phandle->last_event_handled, SDE_EVTLOG_ERROR);
@@ -831,7 +959,13 @@ int sde_power_clk_set_rate(struct sde_power_handle *phandle, char *clock_name,
 				rate = mp->clk_config[i].max_rate;
 
 			mp->clk_config[i].rate = rate;
+			mp->clk_config[i].mmrm.flags = flags;
+			pr_debug("set rate clk:%s rate:%lu flags:0x%x\n",
+				clock_name, rate, flags);
+
+			SDE_ATRACE_BEGIN("sde_clk_set_rate");
 			rc = msm_dss_single_clk_set_rate(&mp->clk_config[i]);
+			SDE_ATRACE_END("sde_clk_set_rate");
 			break;
 		}
 	}

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_DRM_H_
@@ -691,6 +691,7 @@ struct drm_msm_display_hint {
 #define DRM_EVENT_LTM_HIST 0X80000008
 #define DRM_EVENT_LTM_WB_PB 0X80000009
 #define DRM_EVENT_LTM_OFF 0X8000000A
+#define DRM_EVENT_MMRM_CB 0X8000000B
 
 /* display hint flags*/
 #define DRM_MSM_DISPLAY_EARLY_WAKEUP_HINT         0x01

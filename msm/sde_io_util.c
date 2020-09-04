@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2015, 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2017-2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -532,6 +532,98 @@ error:
 } /* msm_dss_get_clk */
 EXPORT_SYMBOL(msm_dss_get_clk);
 
+int msm_dss_mmrm_register(struct device *dev, struct dss_module_power *mp,
+	int (*cb_fnc)(struct mmrm_client_notifier_data *data), void *phandle,
+	bool *mmrm_enable)
+{
+	int i, rc = 0;
+	struct dss_clk *clk_array = mp->clk_config;
+	int num_clk = mp->num_clk;
+	*mmrm_enable = false;
+
+	for (i = 0; i < num_clk; i++) {
+		struct mmrm_client_desc desc;
+		char *name = (char *)desc.client_info.desc.name;
+		struct dss_clk_mmrm_cb *mmrm_cb_data;
+
+		if (clk_array[i].type != DSS_CLK_MMRM)
+			continue;
+
+		desc.client_type = MMRM_CLIENT_CLOCK;
+		desc.client_info.desc.client_domain =
+			MMRM_CLIENT_DOMAIN_DISPLAY;
+		desc.client_info.desc.client_id =
+			clk_array[i].mmrm.clk_id;
+		strlcpy(name, clk_array[i].clk_name,
+			sizeof(desc.client_info.desc.name));
+		desc.client_info.desc.clk = clk_array[i].clk;
+		desc.priority = MMRM_CLIENT_PRIOR_LOW;
+
+		/* init callback wait queue */
+		init_waitqueue_head(&clk_array[i].mmrm.mmrm_cb_wq);
+
+		/* register the callback */
+		mmrm_cb_data = kzalloc(sizeof(*mmrm_cb_data), GFP_KERNEL);
+		if (!mmrm_cb_data)
+			return -ENOMEM;
+
+		mmrm_cb_data->phandle = phandle;
+		mmrm_cb_data->clk = &clk_array[i];
+		clk_array[i].mmrm.mmrm_cb_data = mmrm_cb_data;
+
+		desc.pvt_data = (void *)mmrm_cb_data;
+		desc.notifier_callback_fn = cb_fnc;
+
+		clk_array[i].mmrm.mmrm_client = mmrm_client_register(&desc);
+		if (!clk_array[i].mmrm.mmrm_client) {
+			DEV_ERR("mmrm register error\n");
+			DEV_ERR("clk[%d] type:%d id:%d name:%s\n",
+				i, desc.client_type,
+				desc.client_info.desc.client_id,
+				desc.client_info.desc.name);
+
+			rc = -EINVAL;
+		} else {
+			*mmrm_enable = true;
+			DEV_DBG("mmrm register id:%d name=%s prio:%d\n",
+				desc.client_info.desc.client_id,
+				desc.client_info.desc.name,
+				desc.priority);
+		}
+	}
+
+	return rc;
+} /* msm_dss_mmrm_register */
+EXPORT_SYMBOL(msm_dss_mmrm_register);
+
+void msm_dss_mmrm_deregister(struct device *dev,
+	struct dss_module_power *mp)
+{
+	int i, ret;
+	struct dss_clk *clk_array = mp->clk_config;
+	int num_clk = mp->num_clk;
+
+	for (i = 0; i < num_clk; i++) {
+		if (clk_array[i].type != DSS_CLK_MMRM)
+			continue;
+
+		ret = mmrm_client_deregister(
+			clk_array[i].mmrm.mmrm_client);
+		if (ret) {
+			DEV_DBG("fail mmrm deregister ret:%d clk:%s\n",
+				ret, clk_array[i].clk_name);
+			continue;
+		}
+
+		kfree(clk_array[i].mmrm.mmrm_cb_data);
+
+		DEV_DBG("msm dss mmrm deregister clk[%d] name=%s\n",
+			i, clk_array[i].clk_name);
+
+	}
+} /* msm_dss_mmrm_deregister */
+EXPORT_SYMBOL(msm_dss_mmrm_deregister);
+
 int msm_dss_single_clk_set_rate(struct dss_clk *clk)
 {
 	int rc = 0;
@@ -545,13 +637,50 @@ int msm_dss_single_clk_set_rate(struct dss_clk *clk)
 			__builtin_return_address(0), __func__,
 			clk->clk_name);
 
-	if (clk->type != DSS_CLK_AHB) {
+	/* When MMRM enabled, avoid setting the rate for the branch clock,
+	 * MMRM is always expecting the vote from the SRC clock only
+	 */
+	if (!strcmp(clk->clk_name, "branch_clk"))
+		return 0;
+
+	if (clk->type != DSS_CLK_AHB &&
+	    clk->type != DSS_CLK_MMRM &&
+	    !clk->mmrm.flags) {
 		rc = clk_set_rate(clk->clk, clk->rate);
 		if (rc)
 			DEV_ERR("%pS->%s: %s failed. rc=%d\n",
 					__builtin_return_address(0),
 					__func__,
 					clk->clk_name, rc);
+	} else if (clk->type == DSS_CLK_MMRM) {
+		struct mmrm_client_data client_data;
+
+		memset(&client_data, 0, sizeof(client_data));
+		client_data.num_hw_blocks = 1;
+		client_data.flags = clk->mmrm.flags;
+
+		rc = mmrm_client_set_value(
+			clk->mmrm.mmrm_client,
+			&client_data,
+			clk->rate);
+		if (rc) {
+			DEV_ERR("%pS->%s: %s mmrm setval fail rc:%d\n",
+				__builtin_return_address(0),
+				__func__,
+				clk->clk_name, rc);
+		} else if (clk->mmrm.mmrm_requested_clk &&
+			(clk->rate <= clk->mmrm.mmrm_requested_clk)) {
+
+			/* notify any pending clk request from mmrm cb,
+			 * new clk must be less or equal than callback
+			 * request, set requested clock to zero to
+			 * succeed mmrm callback
+			 */
+			clk->mmrm.mmrm_requested_clk = 0;
+
+			/* notify callback */
+			wake_up_all(&clk->mmrm.mmrm_cb_wq);
+		}
 	}
 
 	return rc;

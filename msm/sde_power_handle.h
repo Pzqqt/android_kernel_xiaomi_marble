@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_POWER_HANDLE_H_
@@ -31,6 +31,10 @@
 
 /* event will be triggered after power handler enable */
 #define SDE_POWER_EVENT_POST_ENABLE	0x8
+
+/* event will be triggered during MMRM callback */
+#define SDE_POWER_EVENT_MMRM_CALLBACK	0x10
+
 #define DATA_BUS_PATH_MAX	0x2
 
 /*
@@ -153,6 +157,7 @@ struct sde_power_event {
  * @event_list: current power handle event list
  * @rsc_client: sde rsc client pointer
  * @rsc_client_init: boolean to control rsc client create
+ * @mmrm_enable: boolean to indicate if mmrm is enabled
  */
 struct sde_power_handle {
 	struct dss_module_power mp;
@@ -165,6 +170,7 @@ struct sde_power_handle {
 	u32 last_event_handled;
 	struct sde_rsc_client *rsc_client;
 	bool rsc_client_init;
+	bool mmrm_enable;
 };
 
 /**
@@ -223,11 +229,45 @@ int sde_power_data_bus_state_update(struct sde_power_handle *phandle,
  * @pdata:  power handle containing the resources
  * @clock_name: clock name which needs rate update.
  * @rate:       Requested rate.
+ * @flags:      Flags to be set for this clk
  *
  * Return: error code.
  */
 int sde_power_clk_set_rate(struct sde_power_handle *pdata, char *clock_name,
-	u64 rate);
+	u64 rate, u32 flags);
+
+/**
+ * sde_power_mmrm_set_clk_limit() - sets a limit for mdp core clk
+ * @clk: pointer to the mdp core clk
+ * @phandle: power handle containing the resources
+ * @requested_clk: limit requested for the core clk
+ *
+ * This function must be called in a thread different than the
+ * commit-thread, otherwise it will always fail, since this function
+ * sends a notification to user-space to reduce the clk, and then it
+ * waits for the next commit after this call to reduce the clk rate.
+ * Hence, if the commit-thread is blocked (by this function waiting)
+ * or if user-space does not send another commit to reduce the clk,
+ * this function will timeout after some time and fail.
+ *
+ * Return: 0 upon succeeding setting the clk to a value lower or
+ *  equal than the 'requested_clk', otherwise it returns an
+ *  error code.
+ */
+int sde_power_mmrm_set_clk_limit(struct dss_clk *clk,
+	struct sde_power_handle *phandle, unsigned long requested_clk);
+
+/**
+ * sde_power_mmrm_get_requested_clk() - get clk rate requested by mmrm
+ * @pdata:  power handle containing the resources
+ * @clock_name: clock name to get the rate requested by mmrm driver
+ *   to decrease
+ *
+ * Return: clock rate requested by mmrm driver, if 0,
+ *   then no active request by mmrm driver
+ */
+u64 sde_power_mmrm_get_requested_clk(struct sde_power_handle *pdata,
+	char *clock_name);
 
 /**
  * sde_power_clk_get_rate() - get the clock rate

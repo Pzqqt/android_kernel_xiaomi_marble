@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -195,9 +195,11 @@ int sde_core_perf_crtc_check(struct drm_crtc *crtc,
 	u64 bw_sum_of_intfs = 0;
 	enum sde_crtc_client_type curr_client_type;
 	struct sde_crtc_state *sde_cstate;
+	struct msm_drm_private *priv;
 	struct drm_crtc *tmp_crtc;
 	struct sde_kms *kms;
-	int i;
+	u64 current_clk_rate, new_clk_rate;
+	int i, ret;
 
 	if (!crtc || !state) {
 		SDE_ERROR("invalid crtc\n");
@@ -211,9 +213,27 @@ int sde_core_perf_crtc_check(struct drm_crtc *crtc,
 	}
 
 	sde_cstate = to_sde_crtc_state(state);
+	priv = kms->dev->dev_private;
 
 	/* obtain new values */
 	_sde_core_perf_calc_crtc(kms, crtc, state, &sde_cstate->new_perf);
+
+	/* reserve core clk */
+	current_clk_rate = kms->perf.core_clk_rate;
+	new_clk_rate = sde_cstate->new_perf.core_clk_rate;
+	if (new_clk_rate > current_clk_rate) {
+		new_clk_rate = clk_round_rate(kms->perf.core_clk,
+			new_clk_rate);
+		ret = sde_power_clk_set_rate(&priv->phandle,
+			kms->perf.clk_name, new_clk_rate,
+			MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY);
+		if (ret) {
+			SDE_ERROR("cannot reserve core clk rate:%llu\n",
+				new_clk_rate);
+
+			return -E2BIG;
+		}
+	}
 
 	for (i = SDE_POWER_HANDLE_DBUS_ID_MNOC;
 			i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
@@ -997,7 +1017,7 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
 		SDE_EVT32(kms->dev, stop_req, clk_rate, params_changed,
 			old->core_clk_rate, new->core_clk_rate);
 		ret = sde_power_clk_set_rate(&priv->phandle,
-				kms->perf.clk_name, clk_rate);
+				kms->perf.clk_name, clk_rate, 0);
 		if (ret) {
 			SDE_ERROR("failed to set %s clock rate %llu\n",
 					kms->perf.clk_name, clk_rate);
@@ -1105,7 +1125,7 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 				(u64) cfg->max_bw_high * 1000;
 
 		ret = sde_power_clk_set_rate(perf->phandle,
-				perf->clk_name, perf->max_core_clk_rate);
+			perf->clk_name, perf->max_core_clk_rate, 0);
 		if (ret) {
 			SDE_ERROR("failed to set %s clock rate %llu\n",
 					perf->clk_name,
@@ -1159,6 +1179,83 @@ static ssize_t _sde_core_perf_mode_read(struct file *file,
 	return len;
 }
 
+static ssize_t _sde_core_perf_mmrm_write(struct file *file,
+		    const char __user *user_buf, size_t count, loff_t *ppos)
+{
+	struct sde_core_perf *perf = file->private_data;
+	struct dss_module_power *mp = &perf->phandle->mp;
+	char buf[20];
+	int i, ret = 0;
+	unsigned long requested_clk;
+	struct dss_clk *clk = NULL;
+
+	if (!perf || !mp)
+		return -ENODEV;
+
+	if (count >= sizeof(buf))
+		return -EFAULT;
+
+	if (copy_from_user(buf, user_buf, count))
+		return -EFAULT;
+
+	buf[count] = 0;	/* end of string */
+
+	if (kstrtoul(buf, 0, &requested_clk))
+		return -EFAULT;
+
+	for (i = 0; i < mp->num_clk; i++) {
+		if (!strcmp(mp->clk_config[i].clk_name, perf->clk_name)) {
+			clk = &mp->clk_config[i];
+			break;
+		}
+	}
+	if (!clk) {
+		SDE_ERROR("Cannot find the clk %s\n", perf->clk_name);
+		goto exit;
+	}
+
+	requested_clk = clk_round_rate(clk->clk, requested_clk);
+	DRM_INFO("requesting limit rate:%lu for clk:%s\n",
+		requested_clk, clk->clk_name);
+
+	ret = sde_power_mmrm_set_clk_limit(clk,
+		perf->phandle, requested_clk);
+	if (ret)
+		SDE_ERROR("Failed to set %s clock rate %llu\n",
+			clk->clk_name, requested_clk);
+
+exit:
+	return count;
+}
+
+static ssize_t _sde_core_perf_mmrm_read(struct file *file,
+			char __user *buff, size_t count, loff_t *ppos)
+{
+	struct sde_core_perf *perf = file->private_data;
+	int len = 0;
+	char buf[128] = {'\0'};
+
+	if (!perf)
+		return -ENODEV;
+
+	if (*ppos)
+		return 0;	/* the end */
+
+	len = snprintf(buf, sizeof(buf),
+			"mmrm clk_limit:%lu clk:%s\n",
+			sde_power_mmrm_get_requested_clk(perf->phandle,
+			perf->clk_name), perf->clk_name);
+	if (len < 0 || len >= sizeof(buf))
+		return 0;
+
+	if ((count < sizeof(buf)) || copy_to_user(buff, buf, len))
+		return -EFAULT;
+
+	*ppos += len;   /* increase offset */
+
+	return len;
+}
+
 static const struct file_operations sde_core_perf_threshold_high_fops = {
 	.open = simple_open,
 	.read = _sde_core_perf_threshold_high_read,
@@ -1169,6 +1266,12 @@ static const struct file_operations sde_core_perf_mode_fops = {
 	.open = simple_open,
 	.read = _sde_core_perf_mode_read,
 	.write = _sde_core_perf_mode_write,
+};
+
+static const struct file_operations sde_core_perf_mmrm_fops = {
+	.open = simple_open,
+	.read = _sde_core_perf_mmrm_read,
+	.write = _sde_core_perf_mmrm_write,
 };
 
 static void sde_core_perf_debugfs_destroy(struct sde_core_perf *perf)
@@ -1214,6 +1317,8 @@ int sde_core_perf_debugfs_init(struct sde_core_perf *perf,
 			(u32 *)&catalog->perf.min_dram_ib);
 	debugfs_create_file("perf_mode", 0600, perf->debugfs_root,
 			(u32 *)perf, &sde_core_perf_mode_fops);
+	debugfs_create_file("mmrm_clk_cb", 0600, perf->debugfs_root,
+			(u32 *)perf, &sde_core_perf_mmrm_fops);
 	debugfs_create_u32("bw_vote_mode", 0600, perf->debugfs_root,
 			&perf->bw_vote_mode);
 	debugfs_create_bool("bw_vote_mode_updated", 0600, perf->debugfs_root,

@@ -62,6 +62,8 @@ static int sde_crtc_power_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *ad_irq);
 static int sde_crtc_idle_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *idle_irq);
+static int sde_crtc_mmrm_interrupt_handler(struct drm_crtc *crtc_drm,
+	bool en, struct sde_irq_callback *idle_irq);
 static int sde_crtc_pm_event_handler(struct drm_crtc *crtc, bool en,
 		struct sde_irq_callback *noirq);
 
@@ -74,6 +76,7 @@ static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_LTM_HIST, sde_cp_ltm_hist_interrupt},
 	{DRM_EVENT_LTM_WB_PB, sde_cp_ltm_wb_pb_interrupt},
 	{DRM_EVENT_LTM_OFF, sde_cp_ltm_off_event_handler},
+	{DRM_EVENT_MMRM_CB, sde_crtc_mmrm_interrupt_handler},
 };
 
 /* default input fence timeout, in ms */
@@ -4087,6 +4090,38 @@ static void sde_crtc_post_ipc(struct drm_crtc *crtc)
 	sde_cp_crtc_post_ipc(crtc);
 }
 
+static void sde_crtc_mmrm_cb_notification(struct drm_crtc *crtc)
+{
+	struct msm_drm_private *priv;
+	unsigned long requested_clk;
+	struct sde_kms *kms = NULL;
+	struct drm_event event;
+
+	if (!crtc->dev->dev_private) {
+		pr_err("invalid crtc priv\n");
+		return;
+	}
+	priv = crtc->dev->dev_private;
+	kms = to_sde_kms(priv->kms);
+	if (!kms) {
+		SDE_ERROR("invalid parameters\n");
+		return;
+	}
+
+	requested_clk = sde_power_mmrm_get_requested_clk(&priv->phandle,
+			kms->perf.clk_name);
+
+	/* notify user space the reduced clk rate */
+	event.type = DRM_EVENT_MMRM_CB;
+	event.length = sizeof(unsigned long);
+	msm_mode_object_event_notify(&crtc->base, crtc->dev,
+			&event, (u8 *)&requested_clk);
+
+	SDE_EVT32(DRMID(crtc), requested_clk);
+	SDE_DEBUG("crtc[%d]: MMRM cb notified clk:%d\n",
+		crtc->base.id, requested_clk);
+}
+
 static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 {
 	struct drm_crtc *crtc = arg;
@@ -4160,6 +4195,10 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		power_on = 0;
 		msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 				(u8 *)&power_on);
+		break;
+	case SDE_POWER_EVENT_MMRM_CALLBACK:
+		sde_crtc_mmrm_cb_notification(crtc);
+
 		break;
 	default:
 		SDE_DEBUG("event:%d not handled\n", event_type);
@@ -4427,7 +4466,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	sde_crtc->power_event = sde_power_handle_register_event(
 		&priv->phandle,
 		SDE_POWER_EVENT_POST_ENABLE | SDE_POWER_EVENT_POST_DISABLE |
-		SDE_POWER_EVENT_PRE_DISABLE,
+		SDE_POWER_EVENT_PRE_DISABLE | SDE_POWER_EVENT_MMRM_CALLBACK,
 		sde_crtc_handle_power_event, crtc, sde_crtc->name);
 
 	/* Enable ESD thread */
@@ -7033,6 +7072,12 @@ static int sde_crtc_pm_event_handler(struct drm_crtc *crtc, bool en,
 }
 
 static int sde_crtc_idle_interrupt_handler(struct drm_crtc *crtc_drm,
+	bool en, struct sde_irq_callback *irq)
+{
+	return 0;
+}
+
+static int sde_crtc_mmrm_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *irq)
 {
 	return 0;
