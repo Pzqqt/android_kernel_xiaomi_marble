@@ -16,17 +16,16 @@
 
 #define DRV_NAME "lpass-cdc-clk-rsc"
 #define LPASS_CDC_CLK_NAME_LENGTH 30
-#define NPL_CLK_OFFSET (TX_NPL_CLK - TX_CORE_CLK)
 
 static char clk_src_name[MAX_CLK][LPASS_CDC_CLK_NAME_LENGTH] = {
 	"tx_core_clk",
 	"rx_core_clk",
 	"wsa_core_clk",
 	"va_core_clk",
-	"tx_npl_clk",
-	"rx_npl_clk",
-	"wsa_npl_clk",
-	"va_npl_clk",
+	"wsa2_core_clk",
+	"rx_tx_core_clk",
+	"wsa_tx_core_clk",
+	"wsa2_tx_core_clk",
 };
 
 struct lpass_cdc_clk_rsc {
@@ -86,10 +85,14 @@ static char __iomem *lpass_cdc_clk_rsc_get_clk_muxsel(struct lpass_cdc_clk_rsc *
 	case RX_CORE_CLK:
 		return priv->rx_clk_muxsel;
 	case WSA_CORE_CLK:
+	case WSA2_CORE_CLK:
 		return priv->wsa_clk_muxsel;
 	case VA_CORE_CLK:
 		return priv->va_clk_muxsel;
 	case TX_CORE_CLK:
+	case RX_TX_CORE_CLK:
+	case WSA_TX_CORE_CLK:
+	case WSA2_TX_CORE_CLK:
 	default:
 		dev_err_ratelimited(priv->dev, "%s: Invalid case\n", __func__);
 		break;
@@ -109,7 +112,7 @@ int lpass_cdc_rsc_clk_reset(struct device *dev, int clk_id)
 		return -EINVAL;
 	}
 
-	if (clk_id < 0 || clk_id >= MAX_CLK - NPL_CLK_OFFSET) {
+	if (clk_id < 0 || clk_id >= MAX_CLK) {
 		pr_err("%s: Invalid clk_id: %d\n",
 			__func__, clk_id);
 		return -EINVAL;
@@ -128,7 +131,6 @@ int lpass_cdc_rsc_clk_reset(struct device *dev, int clk_id)
 	}
 	mutex_lock(&priv->rsc_clk_lock);
 	while (__clk_is_enabled(priv->clk[clk_id])) {
-		clk_disable_unprepare(priv->clk[clk_id + NPL_CLK_OFFSET]);
 		clk_disable_unprepare(priv->clk[clk_id]);
 		count++;
 	}
@@ -138,7 +140,6 @@ int lpass_cdc_rsc_clk_reset(struct device *dev, int clk_id)
 	trace_printk("%s: clock reset after ssr, count %d\n", __func__, count);
 	while (count--) {
 		clk_prepare_enable(priv->clk[clk_id]);
-		clk_prepare_enable(priv->clk[clk_id + NPL_CLK_OFFSET]);
 	}
 	mutex_unlock(&priv->rsc_clk_lock);
 	return 0;
@@ -168,17 +169,11 @@ void lpass_cdc_clk_rsc_enable_all_clocks(struct device *dev, bool enable)
 		return;
 	}
 	mutex_lock(&priv->rsc_clk_lock);
-	for (i = 0; i < MAX_CLK - NPL_CLK_OFFSET; i++) {
+	for (i = 0; i < MAX_CLK; i++) {
 		if (enable) {
 			if (priv->clk[i])
 				clk_prepare_enable(priv->clk[i]);
-			if (priv->clk[i + NPL_CLK_OFFSET])
-				clk_prepare_enable(
-					priv->clk[i + NPL_CLK_OFFSET]);
 		} else {
-			if (priv->clk[i + NPL_CLK_OFFSET])
-				clk_disable_unprepare(
-					priv->clk[i + NPL_CLK_OFFSET]);
 			if (priv->clk[i])
 				clk_disable_unprepare(priv->clk[i]);
 		}
@@ -203,16 +198,6 @@ static int lpass_cdc_clk_rsc_mux0_clk_request(struct lpass_cdc_clk_rsc *priv,
 							__func__, clk_id);
 				goto done;
 			}
-			if (priv->clk[clk_id + NPL_CLK_OFFSET]) {
-				ret = clk_prepare_enable(
-					priv->clk[clk_id + NPL_CLK_OFFSET]);
-				if (ret < 0) {
-					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
-						__func__,
-						clk_id + NPL_CLK_OFFSET);
-					goto err;
-				}
-			}
 		}
 		priv->clk_cnt[clk_id]++;
 	} else {
@@ -223,17 +208,9 @@ static int lpass_cdc_clk_rsc_mux0_clk_request(struct lpass_cdc_clk_rsc *priv,
 			goto done;
 		}
 		priv->clk_cnt[clk_id]--;
-		if (priv->clk_cnt[clk_id] == 0) {
-			if (priv->clk[clk_id + NPL_CLK_OFFSET])
-				clk_disable_unprepare(
-					priv->clk[clk_id + NPL_CLK_OFFSET]);
+		if (priv->clk_cnt[clk_id] == 0)
 			clk_disable_unprepare(priv->clk[clk_id]);
-		}
 	}
-	return ret;
-
-err:
-	clk_disable_unprepare(priv->clk[clk_id]);
 done:
 	return ret;
 }
@@ -255,13 +232,11 @@ static int lpass_cdc_clk_rsc_mux1_clk_request(struct lpass_cdc_clk_rsc *priv,
 
 	if (enable) {
 		if (priv->clk_cnt[clk_id] == 0) {
-			if (clk_id != VA_CORE_CLK) {
-				ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
-								default_clk_id,
-								true);
-				if (ret < 0)
-					goto done;
-			}
+			ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
+							default_clk_id,
+							true);
+			if (ret < 0)
+				goto done;
 
 			ret = clk_prepare_enable(priv->clk[clk_id]);
 			if (ret < 0) {
@@ -269,34 +244,14 @@ static int lpass_cdc_clk_rsc_mux1_clk_request(struct lpass_cdc_clk_rsc *priv,
 					__func__, clk_id);
 				goto err_clk;
 			}
-			if (priv->clk[clk_id + NPL_CLK_OFFSET]) {
-				ret = clk_prepare_enable(
-					priv->clk[clk_id + NPL_CLK_OFFSET]);
-				if (ret < 0) {
-					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
-						__func__,
-						clk_id + NPL_CLK_OFFSET);
-					goto err_npl_clk;
-				}
+			if (priv->dev_up_gfmux) {
+				iowrite32(0x1, clk_muxsel);
+				muxsel = ioread32(clk_muxsel);
+				trace_printk("%s: muxsel value after enable: %d\n",
+						__func__, muxsel);
 			}
-
-			/*
-			 * Temp SW workaround to address a glitch issue of
-			 * VA GFMux instance responsible for switching from
-			 * TX MCLK to VA MCLK. This configuration would be taken
-			 * care in DSP itself
-			 */
-			if (clk_id != VA_CORE_CLK) {
-				if (priv->dev_up_gfmux) {
-					iowrite32(0x1, clk_muxsel);
-					muxsel = ioread32(clk_muxsel);
-					trace_printk("%s: muxsel value after enable: %d\n",
-							__func__, muxsel);
-				}
-				lpass_cdc_clk_rsc_mux0_clk_request(priv,
-							default_clk_id,
-							false);
-			}
+			lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id,
+							   false);
 		}
 		priv->clk_cnt[clk_id]++;
 	} else {
@@ -308,46 +263,24 @@ static int lpass_cdc_clk_rsc_mux1_clk_request(struct lpass_cdc_clk_rsc *priv,
 		}
 		priv->clk_cnt[clk_id]--;
 		if (priv->clk_cnt[clk_id] == 0) {
-			if (clk_id != VA_CORE_CLK) {
-				ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
+			ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
 						default_clk_id, true);
-
-				if (!ret) {
-					/*
-					 * Temp SW workaround to address a glitch issue
-					 * of VA GFMux instance responsible for
-					 * switching from TX MCLK to VA MCLK.
-					 * This configuration would be taken
-					 * care in DSP itself.
-					 */
-					if (priv->dev_up_gfmux) {
-						iowrite32(0x0, clk_muxsel);
-						muxsel = ioread32(clk_muxsel);
-						trace_printk("%s: muxsel value after disable: %d\n",
-								__func__, muxsel);
-					}
-				}
+			if (!ret && priv->dev_up_gfmux) {
+				iowrite32(0x0, clk_muxsel);
+				muxsel = ioread32(clk_muxsel);
+				trace_printk("%s: muxsel value after disable: %d\n",
+						__func__, muxsel);
 			}
-			if (priv->clk[clk_id + NPL_CLK_OFFSET])
-				clk_disable_unprepare(
-					priv->clk[clk_id + NPL_CLK_OFFSET]);
 			clk_disable_unprepare(priv->clk[clk_id]);
-
-			if (clk_id != VA_CORE_CLK) {
-				if (!ret)
-					lpass_cdc_clk_rsc_mux0_clk_request(priv,
-						default_clk_id, false);
-			}
+			if (!ret)
+				lpass_cdc_clk_rsc_mux0_clk_request(priv,
+							default_clk_id, false);
 		}
 	}
 	return ret;
 
-err_npl_clk:
-	clk_disable_unprepare(priv->clk[clk_id]);
-
 err_clk:
-	if (clk_id != VA_CORE_CLK)
-		lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id, false);
+	lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id, false);
 done:
 	return ret;
 }
@@ -556,12 +489,10 @@ int lpass_cdc_clk_rsc_request_clock(struct device *dev,
 		mux_switch = true;
 
 	if (mux_switch) {
-		if (clk_id_req != VA_CORE_CLK) {
-			ret = lpass_cdc_clk_rsc_mux1_clk_request(priv, clk_id_req,
+		ret = lpass_cdc_clk_rsc_mux1_clk_request(priv, clk_id_req,
 							enable);
-			if (ret < 0)
-				goto err;
-		}
+		if (ret < 0)
+			goto err;
 	} else {
 		ret = lpass_cdc_clk_rsc_mux0_clk_request(priv, clk_id_req, enable);
 		if (ret < 0)
@@ -664,6 +595,7 @@ static int lpass_cdc_clk_rsc_probe(struct platform_device *pdev)
 				priv->clk[i] = clk;
 				dev_dbg(&pdev->dev, "%s: clk get success for clk name %s\n",
 						__func__, clk_src_name[i]);
+				break;
 			}
 		}
 	}
