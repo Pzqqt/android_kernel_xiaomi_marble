@@ -961,6 +961,40 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * reg_populate_49g_band_channels() - For all the valid 4.9GHz regdb channels
+ * in the master channel list, find the regulatory rules and call
+ * reg_fill_channel_info() to populate master channel list with txpower,
+ * antennagain, BW info, etc.
+ * @reg_rule_5g: Pointer to regulatory rule.
+ * @num_5g_reg_rules: Number of regulatory rules.
+ * @min_bw_5g: Minimum regulatory bandwidth.
+ * @mas_chan_list: Pointer to the master channel list.
+ */
+#ifdef CONFIG_49GHZ_CHAN
+static void
+reg_populate_49g_band_channels(struct cur_reg_rule *reg_rule_5g,
+			       uint32_t num_5g_reg_rules,
+			       uint16_t min_bw_5g,
+			       struct regulatory_channel *mas_chan_list)
+{
+	reg_populate_band_channels(MIN_49GHZ_CHANNEL,
+				   MAX_49GHZ_CHANNEL,
+				   reg_rule_5g,
+				   num_5g_reg_rules,
+				   min_bw_5g,
+				   mas_chan_list);
+}
+#else
+static void
+reg_populate_49g_band_channels(struct cur_reg_rule *reg_rule_5g,
+			       uint32_t num_5g_reg_rules,
+			       uint16_t min_bw_5g,
+			       struct regulatory_channel *mas_chan_list)
+{
+}
+#endif /* CONFIG_49GHZ_CHAN */
+
+/**
  * reg_populate_6g_band_channels() - For all the valid 6GHz regdb channels
  * in the master channel list, find the regulatory rules and call
  * reg_fill_channel_info() to populate master channel list with txpower,
@@ -1225,10 +1259,10 @@ QDF_STATUS reg_process_master_chan_list(
 		reg_populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
 					   reg_rule_5g, num_5g_reg_rules,
 					   min_bw_5g, mas_chan_list);
-		reg_populate_band_channels(MIN_49GHZ_CHANNEL,
-					   MAX_49GHZ_CHANNEL,
-					   reg_rule_5g, num_5g_reg_rules,
-					   min_bw_5g, mas_chan_list);
+		reg_populate_49g_band_channels(reg_rule_5g,
+					       num_5g_reg_rules,
+					       min_bw_5g,
+					       mas_chan_list);
 		reg_populate_6g_band_channels(reg_rule_5g,
 					      num_5g_reg_rules,
 					      min_bw_5g,

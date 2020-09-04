@@ -191,7 +191,7 @@ const struct chan_map channel_map_us[NUM_CHANNELS] = {
 	[CHAN_ENUM_2467] = {2467, 12, 20, 40},
 	[CHAN_ENUM_2472] = {2472, 13, 20, 40},
 	[CHAN_ENUM_2484] = {2484, 14, 20, 20},
-
+#ifdef CONFIG_49GHZ_CHAN
 	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
@@ -234,7 +234,7 @@ const struct chan_map channel_map_us[NUM_CHANNELS] = {
 	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
-
+#endif /* CONFIG_49GHZ_CHAN */
 	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
 	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
 	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
@@ -361,7 +361,7 @@ const struct chan_map channel_map_eu[NUM_CHANNELS] = {
 	[CHAN_ENUM_2467] = {2467, 12, 20, 40},
 	[CHAN_ENUM_2472] = {2472, 13, 20, 40},
 	[CHAN_ENUM_2484] = {2484, 14, 20, 20},
-
+#ifdef CONFIG_49GHZ_CHAN
 	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
@@ -404,7 +404,7 @@ const struct chan_map channel_map_eu[NUM_CHANNELS] = {
 	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
-
+#endif /* CONFIG_49GHZ_CHAN */
 	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
 	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
 	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
@@ -531,7 +531,7 @@ const struct chan_map channel_map_jp[NUM_CHANNELS] = {
 	[CHAN_ENUM_2467] = {2467, 12, 20, 40},
 	[CHAN_ENUM_2472] = {2472, 13, 20, 40},
 	[CHAN_ENUM_2484] = {2484, 14, 20, 20},
-
+#ifdef CONFIG_49GHZ_CHAN
 	[CHAN_ENUM_4912] = {4912, 182, 5, 5},
 	[CHAN_ENUM_4915] = {4915, 183, 10, 10},
 	[CHAN_ENUM_4917] = {4917, 183, 5, 5},
@@ -574,7 +574,7 @@ const struct chan_map channel_map_jp[NUM_CHANNELS] = {
 	[CHAN_ENUM_5057] = {5057, 11, 5, 5},
 	[CHAN_ENUM_5060] = {5060, 12, 20, 20},
 	[CHAN_ENUM_5080] = {5080, 16, 20, 20},
-
+#endif /* CONFIG_49GHZ_CHAN */
 	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
 	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
 	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
@@ -701,7 +701,7 @@ const struct chan_map channel_map_global[NUM_CHANNELS] = {
 	[CHAN_ENUM_2467] = {2467, 12, 20, 40},
 	[CHAN_ENUM_2472] = {2472, 13, 20, 40},
 	[CHAN_ENUM_2484] = {2484, 14, 20, 20},
-
+#ifdef CONFIG_49GHZ_CHAN
 	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
@@ -744,7 +744,7 @@ const struct chan_map channel_map_global[NUM_CHANNELS] = {
 	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
-
+#endif /* CONFIG_49GHZ_CHAN */
 	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
 	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
 	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
@@ -871,7 +871,7 @@ const struct chan_map channel_map_china[NUM_CHANNELS] = {
 	[CHAN_ENUM_2467] = {2467, 12, 20, 40},
 	[CHAN_ENUM_2472] = {2472, 13, 20, 40},
 	[CHAN_ENUM_2484] = {2484, 14, 20, 20},
-
+#ifdef CONFIG_49GHZ_CHAN
 	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
@@ -914,7 +914,7 @@ const struct chan_map channel_map_china[NUM_CHANNELS] = {
 	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
 	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
-
+#endif /* CONFIG_49GHZ_CHAN */
 	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
 	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
 	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
@@ -2724,7 +2724,7 @@ reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 		}
 	}
 	if (BAND_5G_PRESENT(band_mask)) {
-		for (i = MIN_49GHZ_CHANNEL; i <= MAX_5GHZ_CHANNEL; i++) {
+		for (i = BAND_5GHZ_START_CHANNEL; i <= MAX_5GHZ_CHANNEL; i++) {
 			if ((cur_chan_list[i].state != CHANNEL_STATE_DISABLE) &&
 			    !(cur_chan_list[i].chan_flags &
 			      REGULATORY_CHAN_DISABLED)) {
@@ -2795,7 +2795,7 @@ qdf_freq_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 		}
 
 		if (BAND_5G_PRESENT(band_mask)) {
-			min_chan = MIN_49GHZ_CHANNEL;
+			min_chan = BAND_5GHZ_START_CHANNEL;
 			max_chan = MAX_5GHZ_CHANNEL;
 
 			return reg_compute_chan_to_freq(pdev, chan_num,
@@ -2808,10 +2808,12 @@ qdf_freq_t reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
+#ifdef CONFIG_49GHZ_CHAN
 bool reg_is_49ghz_freq(qdf_freq_t freq)
 {
 	return REG_IS_49GHZ_FREQ(freq);
 }
+#endif /* CONFIG_49GHZ_CHAN */
 
 qdf_freq_t reg_ch_num(uint32_t ch_enum)
 {

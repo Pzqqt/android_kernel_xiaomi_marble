@@ -872,10 +872,12 @@ qdf_freq_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_reg_chan_band_to_freq);
 
+#ifdef CONFIG_49GHZ_CHAN
 bool wlan_reg_is_49ghz_freq(qdf_freq_t freq)
 {
 	return reg_is_49ghz_freq(freq);
 }
+#endif /* CONFIG_49GHZ_CHAN */
 
 uint8_t wlan_reg_ch_num(uint32_t ch_enum)
 {
