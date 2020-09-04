@@ -5097,15 +5097,6 @@ dfs_process_radar_ind_on_agile_chan(struct wlan_dfs *dfs,
 	bool is_radar_source_agile =
 		(radar_found->detector_id == dfs_get_agile_detector_id(dfs));
 
-	if ((!dfs_is_agile_precac_enabled(dfs) &&
-	     !dfs_is_agile_rcac_enabled(dfs)) ||
-	     !dfs->dfs_agile_precac_freq_mhz) {
-		dfs_err(dfs, WLAN_DEBUG_DFS,
-			"radar on Agile detector when ADFS is not running");
-		status = QDF_STATUS_E_FAILURE;
-		goto exit;
-	}
-
 	dfs_compute_radar_found_cfreq(dfs, radar_found, &freq_center);
 	radarfound_freq = freq_center + radar_found->freq_offset;
 	if (is_radar_source_agile)
