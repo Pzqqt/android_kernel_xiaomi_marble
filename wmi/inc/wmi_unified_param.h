@@ -5309,6 +5309,7 @@ typedef enum {
 	wmi_service_ll_stats_per_chan_rx_tx_time,
 	wmi_service_thermal_multi_client_support,
 	wmi_service_mbss_param_in_vdev_start_support,
+	wmi_service_fse_cmem_alloc_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

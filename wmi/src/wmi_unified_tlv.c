@@ -14852,6 +14852,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_THERMAL_MULTI_CLIENT_SUPPORT;
 	wmi_service[wmi_service_mbss_param_in_vdev_start_support] =
 			WMI_SERVICE_MBSS_PARAM_IN_VDEV_START_SUPPORT;
+	wmi_service[wmi_service_fse_cmem_alloc_support] =
+			WMI_SERVICE_FSE_CMEM_ALLOC_SUPPORT;
 }
 
 /**
