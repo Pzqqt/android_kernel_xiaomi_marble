@@ -2122,7 +2122,7 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
-
+		/* fallthrough */
 	case eUPDATE_IE_ASSOC_RESP:
 		if (config->pAssocRespIEsBuffer) {
 			qdf_mem_free(config->pAssocRespIEsBuffer);
@@ -2131,7 +2131,7 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
-
+		/* fallthrough */
 	case eUPDATE_IE_PROBE_BCN:
 		if (config->pProbeRespBcnIEsBuffer) {
 			qdf_mem_free(config->pProbeRespBcnIEsBuffer);
@@ -2140,7 +2140,7 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
-
+		/* fallthrough */
 	default:
 		if (eUPDATE_IE_ALL != updateType)
 			sap_err("Invalid buffer type %d", updateType);

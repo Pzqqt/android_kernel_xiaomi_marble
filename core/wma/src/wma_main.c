@@ -800,7 +800,7 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 						     adapter_1_quota,
 						     adapter_2_chan_number);
 	}
-
+		break;
 	default:
 		wma_err("Invalid wma config command id:%d", privcmd->param_id);
 		ret = -EINVAL;

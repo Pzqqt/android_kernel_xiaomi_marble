@@ -6204,8 +6204,8 @@ QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
-		/* Fall through for success case */
-
+		/* for success case */
+		/* fallthrough */
 	default:
 		csr_roam_state_change(mac, eCSR_ROAMING_STATE_JOINING,
 				sessionId);
@@ -19207,6 +19207,7 @@ csr_roam_switch_to_roam_start(struct mac_context *mac, uint8_t vdev_id,
 					    WLAN_ROAMING_IN_PROG);
 			break;
 		}
+		/* fallthrough */
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:
@@ -19256,8 +19257,9 @@ csr_roam_switch_to_roam_sync(struct mac_context *mac, uint8_t vdev_id,
 
 		/*
 		 * transition to WLAN_ROAM_SYNCH_IN_PROG not allowed otherwise
-		 * if we're already RSO stopped, fall through to return failure
+		 * if we're already RSO stopped, return failure
 		 */
+		/* fallthrough */
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:

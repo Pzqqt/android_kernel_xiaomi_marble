@@ -1392,9 +1392,10 @@ QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 	case P2P_CLIENT_DISCONNECTED_STATE:
 		p2p_debug("No scan before 4-way handshake");
 		/*
-		 * Fall thru since no scan before 4-way handshake and
+		 * since no scan before 4-way handshake and
 		 * won't enter state P2P_CLIENT_CONNECTING_STATE_2:
 		 */
+		/* fallthrough */
 	case P2P_CLIENT_CONNECTING_STATE_2:
 		p2p_soc_obj->connection_status =
 				P2P_CLIENT_COMPLETED_STATE;

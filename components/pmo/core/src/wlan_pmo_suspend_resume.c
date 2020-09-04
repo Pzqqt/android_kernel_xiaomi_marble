@@ -758,7 +758,8 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	default:
 		pmo_err("Invalid interface pause setting: %d",
 			 wow_params->interface_pause);
-		/* intentional fall-through to default */
+		/* intentional to default */
+		/* fallthrough */
 	case PMO_WOW_INTERFACE_PAUSE_DEFAULT:
 		param.can_suspend_link =
 			htc_can_suspend_link(

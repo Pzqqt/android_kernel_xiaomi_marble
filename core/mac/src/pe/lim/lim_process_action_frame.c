@@ -1742,6 +1742,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				pe_debug("p2p session active drop BTM frame");
 				break;
 			}
+			/* fallthrough */
 		case WNM_NOTIF_REQUEST:
 		case WNM_NOTIF_RESPONSE:
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
@@ -1884,7 +1885,8 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					pub_action->Oui[2], pub_action->Oui[3]);
 				break;
 			}
-			/* Fall through to send the frame to supplicant */
+			/* send the frame to supplicant */
+			/* fallthrough */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
@@ -2080,7 +2082,7 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 					vendor_specific->Oui[3]);
 				break;
 			}
-			/* Fall through to send the frame to supplicant */
+			/* fallthrough */
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
 		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
 		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:

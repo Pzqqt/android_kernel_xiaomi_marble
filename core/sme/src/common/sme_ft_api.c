@@ -249,6 +249,7 @@ QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
 			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_SUCCESS;
 		}
+		/* fallthrough */
 	default:
 		sme_debug("Unhandled state:%d", session->ftSmeContext.FTState);
 		status = QDF_STATUS_E_FAILURE;

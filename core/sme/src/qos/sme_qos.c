@@ -4800,7 +4800,7 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(struct mac_context *mac,
 					  __func__, __LINE__);
 				break;
 			}
-
+			/* fallthrough */
 		case SME_QOS_CLOSED:
 		case SME_QOS_INIT:
 		default:
@@ -6796,8 +6796,9 @@ static QDF_STATUS sme_qos_add_ts_failure_fnp(struct mac_context *mac, tListElem
 		break;
 	case SME_QOS_REASON_MODIFY:
 		flow_info->reason = SME_QOS_REASON_REQ_SUCCESS;
+		/* fallthrough */
 	case SME_QOS_REASON_REQ_SUCCESS:
-	/* fallthrough */
+		/* fallthrough */
 	default:
 		inform_hdd = false;
 		break;

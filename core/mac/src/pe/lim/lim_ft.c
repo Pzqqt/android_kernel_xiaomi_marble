@@ -433,6 +433,7 @@ static uint8_t lim_calculate_dot11_mode(struct mac_context *mac_ctx,
 			return MLME_DOT11_MODE_11AC;
 		else if (bcn->HTCaps.present)
 			return MLME_DOT11_MODE_11N;
+		/* fallthrough */
 	case MLME_DOT11_MODE_11AC:
 	case MLME_DOT11_MODE_11AC_ONLY:
 		if ((bcn->VHTCaps.present ||
@@ -443,10 +444,12 @@ static uint8_t lim_calculate_dot11_mode(struct mac_context *mac_ctx,
 			return MLME_DOT11_MODE_11AC;
 		else if (bcn->HTCaps.present)
 			return MLME_DOT11_MODE_11N;
+		/* fallthrough */
 	case MLME_DOT11_MODE_11N:
 	case MLME_DOT11_MODE_11N_ONLY:
 		if (bcn->HTCaps.present)
 			return MLME_DOT11_MODE_11N;
+		/* fallthrough */
 	default:
 			return new_dot11_mode;
 	}

@@ -1467,8 +1467,8 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 		 * record
 		 */
 		hdd_wmm_free_context(qos_context);
-
-		/* fall through and start packets flowing */
+		/* start packets flowing */
+		/* fallthrough */
 	case SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP:
 		/* no ACM in effect, no need to setup U-APSD */
 	case SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY:
