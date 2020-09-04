@@ -731,9 +731,12 @@ QDF_STATUS dp_ipa_get_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 			soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_paddr,
 			soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size);
 
-	if (!qdf_mem_get_dma_addr(soc->osdev,
+	if (!qdf_mem_get_dma_addr(soc->osdev, &ipa_res->tx_ring.mem_info) ||
+	    !qdf_mem_get_dma_addr(soc->osdev,
 				  &ipa_res->tx_comp_ring.mem_info) ||
-	    !qdf_mem_get_dma_addr(soc->osdev, &ipa_res->rx_rdy_ring.mem_info))
+	    !qdf_mem_get_dma_addr(soc->osdev, &ipa_res->rx_rdy_ring.mem_info) ||
+	    !qdf_mem_get_dma_addr(soc->osdev,
+				  &ipa_res->rx_refill_ring.mem_info))
 		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
