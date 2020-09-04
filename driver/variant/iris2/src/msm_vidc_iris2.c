@@ -184,9 +184,10 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 	__write_register(core, QTBL_ADDR_IRIS2,
 			(u32)core->iface_q_table.align_device_addr);
 	__write_register(core, QTBL_INFO_IRIS2, 0x01);
-	if (core->sfr.align_device_addr)
+	/* TODO: darshana, remove below comment later with FW support*/
+	/*if (core->sfr.align_device_addr)
 		__write_register(core, SFR_ADDR_IRIS2,
-				(u32)core->sfr.align_device_addr);
+				(u32)core->sfr.align_device_addr);*/
 	/* update queues vaddr for debug purpose */
 	__write_register(core, CPU_CS_VCICMDARG0_IRIS2,
 		(u32)core->iface_q_table.align_virtual_addr);

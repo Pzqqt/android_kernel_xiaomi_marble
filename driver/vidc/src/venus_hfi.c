@@ -927,7 +927,7 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *header)
 		struct hfi_header *hdr =
 			(struct hfi_header *) header;
 
-		if (!validate_packet((u8 *)pkt, core->response_packet,
+		if (validate_packet((u8 *)pkt, core->response_packet,
 				core->packet_size, __func__))
 			return;
 

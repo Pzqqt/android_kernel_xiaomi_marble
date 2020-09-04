@@ -54,6 +54,7 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 	u32 core_resp_pkt_size, const char *func)
 {
 	u8 *response_limit;
+	u32 response_pkt_size = 0;
 
 	if (!response_pkt || !core_resp_pkt || !core_resp_pkt_size) {
 		d_vpr_e("%s: invalid params\n", func);
@@ -68,7 +69,13 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 		return -EINVAL;
 	}
 
-	if (response_pkt + *(u32 *)response_pkt > response_limit) {
+	response_pkt_size = *(u32 *)response_pkt;
+	if (!response_pkt_size) {
+		d_vpr_e("%s: response packet size cannot be zero\n", func);
+		return -EINVAL;
+	}
+
+	if (response_pkt + response_pkt_size > response_limit) {
 		d_vpr_e("%s: invalid packet size %d\n",
 			func, *(u32 *)response_pkt);
 		return -EINVAL;
@@ -241,7 +248,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
-	buffer = (struct hfi_buffer *)(pkt + sizeof(struct hfi_packet));
+	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
 	buf_type = buffer->type;
 	if (!is_valid_hfi_buffer_type(inst, buf_type, __func__)) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
@@ -383,10 +390,10 @@ static int handle_system_response(struct msm_vidc_core *core,
 	struct hfi_packet *pkt;
 	int i;
 
-	pkt = (struct hfi_packet *)(hdr + sizeof(struct hfi_header));
+	pkt = (struct hfi_packet *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	for (i = 0; i < hdr->num_packets; i++) {
-		if (!validate_packet((u8 *)pkt, core->response_packet,
+		if (validate_packet((u8 *)pkt, core->response_packet,
 				core->packet_size, __func__))
 			return -EINVAL;
 		if (pkt->type == HFI_CMD_INIT) {
@@ -420,10 +427,10 @@ static int handle_session_response(struct msm_vidc_core *core,
 		goto exit;
 	}
 
-	pkt = (struct hfi_packet *)(hdr + sizeof(struct hfi_header));
+	pkt = (struct hfi_packet *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	for (i = 0; i < hdr->num_packets; i++) {
-		if (!validate_packet((u8 *)pkt, core->response_packet,
+		if (validate_packet((u8 *)pkt, core->response_packet,
 				core->packet_size, __func__))
 			goto exit;
 		if (pkt->type < HFI_CMD_END && pkt->type > HFI_CMD_BEGIN) {
@@ -456,7 +463,7 @@ int handle_response(struct msm_vidc_core *core, void *response)
 	}
 
 	hdr = (struct hfi_header *)response;
-	if (!validate_packet((u8 *)hdr, core->response_packet,
+	if (validate_packet((u8 *)hdr, core->response_packet,
 			core->packet_size, __func__))
 		return -EINVAL;
 
