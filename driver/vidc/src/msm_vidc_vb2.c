@@ -107,8 +107,8 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	}
 	s_vpr_h(inst->sid, "Streamon: %d\n", q->type);
 
-	if (!inst->session_created) {
-		rc = msm_vidc_session_open(inst);
+	if (!inst->codec_set) {
+		rc = msm_vidc_session_set_codec(inst);
 		if (rc)
 			return -EINVAL;
 	}

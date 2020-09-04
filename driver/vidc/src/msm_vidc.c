@@ -810,6 +810,9 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 
 	//msm_power_setup(inst);
 	// send cmd to firmware here
+	rc = msm_vidc_session_open(inst);
+	if (rc)
+		goto error;
 
 	return inst;
 
@@ -821,6 +824,7 @@ EXPORT_SYMBOL(msm_vidc_open);
 
 int msm_vidc_close(void *instance)
 {
+	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
 
 	if (!inst) {
@@ -828,7 +832,8 @@ int msm_vidc_close(void *instance)
 		return -EINVAL;
 	}
 	s_vpr_h(inst->sid, "%s()\n", __func__);
+	rc = msm_vidc_session_close(inst);
 
-	return 0;
+	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_close);

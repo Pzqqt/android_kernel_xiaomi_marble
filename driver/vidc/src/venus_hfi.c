@@ -569,7 +569,6 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	d_vpr_e("skip writing packet\n");
 	return 0;
 
-
 	packet_size_in_words = (*(u32 *)packet) >> 2;
 	if (!packet_size_in_words || packet_size_in_words >
 		qinfo->q_array.mem_size>>2) {
@@ -2463,9 +2462,6 @@ int venus_hfi_suspend(struct msm_vidc_core *core)
 int venus_hfi_session_open(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	u32 codec;
-
-	d_vpr_h("%s(): inst %p %p\n", __func__, inst);
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2493,6 +2489,19 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
 		goto error;
+error:
+	return rc;
+}
+
+int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	u32 codec;
+
+	if (!inst || !inst->packet) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	codec = get_hfi_codec(inst);
 	rc = hfi_packet_session_property(inst,
@@ -2509,7 +2518,7 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	inst->session_created = true;
+	inst->codec_set = true;
 error:
 	return rc;
 }
@@ -2517,8 +2526,6 @@ error:
 int venus_hfi_session_close(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
 
 	if (!inst || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2540,7 +2547,7 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 
 	kfree(inst->packet);
 
-		return rc;
+	return rc;
 }
 
 int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)

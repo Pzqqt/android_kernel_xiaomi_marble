@@ -111,7 +111,7 @@ struct msm_vidc_inst {
 	struct list_head                   input_ts;
 	struct list_head                   enc_input_crs;
 	struct list_head                   decode_bitrate_data;
-	bool                               session_created;
+	bool                               codec_set;
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
 	struct msm_vidc_inst_capability   *capabilities;

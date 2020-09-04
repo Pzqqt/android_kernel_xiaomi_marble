@@ -1051,11 +1051,52 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 	}
 
 	rc = venus_hfi_session_open(inst);
+
+	return rc;
+}
+
+int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_set_codec(inst);
+
+	return rc;
+}
+
+int msm_vidc_session_close(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_close(inst);
 	if (rc)
 		return rc;
 
-	inst->session_created = true;
-	return 0;
+	core = inst->core;
+	rc = wait_for_completion_timeout(
+			&inst->completions[SIGNAL_CMD_CLOSE],
+			msecs_to_jiffies(
+			core->platform->data.core_data[HW_RESPONSE_TIMEOUT].value));
+	if (!rc) {
+		s_vpr_e(inst->sid, "%s: session close timed out\n", __func__);
+		//msm_comm_kill_session(inst);
+		rc = -EIO;
+	} else {
+		rc = 0;
+	}
+
+	return rc;
 }
 
 int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
