@@ -1172,7 +1172,6 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 			    uint8_t reason)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
-	struct wlan_objmgr_vdev *vdev;
 	enum roam_offload_state cur_state = mlme_get_roam_state(psoc, vdev_id);
 
 	switch (cur_state) {
@@ -1183,9 +1182,7 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 * deauth roam trigger to stop data path queues
 		 */
 	case WLAN_ROAMING_IN_PROG:
-		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
-							    WLAN_MLME_NB_ID);
-		if (!wlan_vdev_is_up(vdev)) {
+		if (!wlan_cm_is_sta_connected(vdev_id)) {
 			mlme_err("ROAM: STA not in connected state");
 			return QDF_STATUS_E_FAILURE;
 		}

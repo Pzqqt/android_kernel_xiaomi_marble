@@ -140,6 +140,15 @@ void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi);
  */
 QDF_STATUS
 wlan_cm_roam_neighbor_proceed_with_handoff_req(uint8_t vdev_id);
+
+/**
+ * wlan_cm_is_sta_connected() - check if STA is connected
+ * @vdev_id: vdev id
+ *
+ * Return: bool
+ */
+bool wlan_cm_is_sta_connected(uint8_t vdev_id);
+
 #else
 static inline QDF_STATUS
 wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
