@@ -2583,6 +2583,7 @@ static int swrm_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct clk *lpass_core_hw_vote = NULL;
 	struct clk *lpass_core_audio = NULL;
+	u32 is_wcd937x = 0;
 
 	/* Allocate soundwire master driver structure */
 	swrm = devm_kzalloc(&pdev->dev, sizeof(struct swr_mstr_ctrl),
@@ -2615,6 +2616,14 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: failed to get master id\n", __func__);
 		goto err_pdata_fail;
 	}
+	/* update the physical device address if wcd937x. */
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,is_wcd937x",
+				&is_wcd937x);
+	if (ret)
+		dev_dbg(&pdev->dev, "%s: failed to get wcd info\n", __func__);
+	else if (is_wcd937x)
+		swrm_phy_dev[1] = 0xa01170223;
+
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,dynamic-port-map-supported",
 				&swrm->dynamic_port_map_supported);
 	if (ret) {
