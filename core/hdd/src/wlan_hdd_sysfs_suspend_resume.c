@@ -36,10 +36,8 @@ static ssize_t __hdd_sysfs_suspend_store(
 	char *sptr, *token;
 	int ret, pause_setting, resume_setting;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -135,10 +133,8 @@ static ssize_t __hdd_sysfs_resume_store(
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

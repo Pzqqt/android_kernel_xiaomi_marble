@@ -41,10 +41,8 @@ static ssize_t __hdd_sysfs_modify_acl_store(
 	int ret, i;
 	QDF_STATUS qdf_status;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

@@ -72,10 +72,8 @@ __hdd_sysfs_gtx_bw_mask_store(struct net_device *net_dev,
 	uint32_t value;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -143,10 +141,8 @@ __hdd_sysfs_gtx_bw_mask_show(struct net_device *net_dev, char *buf)
 	struct hdd_context *hdd_ctx;
 	int ret, value;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

@@ -43,10 +43,8 @@ static ssize_t __hdd_sysfs_unit_test_target_store(
 	int module_id, args_num, ret, i;
 	QDF_STATUS status;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

@@ -2253,10 +2253,8 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 
 	hdd_enter_dev(dev);
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("Invalid adapter!!!");
+	if (hdd_validate_adapter(adapter))
 		return -ENODEV;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

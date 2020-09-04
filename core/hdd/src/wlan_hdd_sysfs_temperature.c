@@ -34,10 +34,8 @@ __hdd_sysfs_temperature_show(struct net_device *net_dev, char *buf)
 	int value;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
