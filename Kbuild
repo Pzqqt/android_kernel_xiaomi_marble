@@ -3665,6 +3665,10 @@ endif
 
 ccflags-$(CONFIG_GET_DRIVER_MODE) += -DFEATURE_GET_DRIVER_MODE
 
+ifeq ($(CONFIG_FEATURE_IPA_PIPE_CHANGE_WDI1), y)
+cppflags-y += -DFEATURE_IPA_PIPE_CHANGE_WDI1
+endif
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
