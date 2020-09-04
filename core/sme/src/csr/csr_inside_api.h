@@ -432,6 +432,16 @@ QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
 					    uint8_t vdev_id);
 
 /*
+ * csr_update_scan_filter_dot11mode() - update dot11mode for scan filter
+ * @mac_ctx: csr auth type
+ * @filter: scan filter
+ *
+ * Return void
+ */
+void csr_update_scan_filter_dot11mode(struct mac_context *mac_ctx,
+				      struct scan_filter *filter);
+
+/*
  * csr_set_open_mode_in_scan_filter() - set open mode in scan filter
  * @filter: scan filter
  *

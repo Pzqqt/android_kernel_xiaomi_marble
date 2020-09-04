@@ -5375,8 +5375,6 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 	struct wlan_objmgr_vdev *vdev;
 	enum policy_mgr_con_mode mode;
 	QDF_STATUS qdf_status;
-	eCsrPhyMode self_phymode = mac_ctx->roam.configParam.phyMode;
-	tDot11fBeaconIEs *bcn_ies;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
 						    vdev_id,
@@ -5399,29 +5397,6 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		 * sessions exempted
 		 */
 		result = &scan_result->Result;
-		bcn_ies = result->pvIes;
-		/*
-		 * If phymode is configured to DOT11 Only profile.
-		 * Don't connect to profile which is less than them.
-		 */
-		if (bcn_ies && ((self_phymode == eCSR_DOT11_MODE_11n_ONLY &&
-		   !bcn_ies->HTCaps.present) ||
-		   (self_phymode == eCSR_DOT11_MODE_11ac_ONLY &&
-		   !bcn_ies->VHTCaps.present) ||
-		   (self_phymode == eCSR_DOT11_MODE_11ax_ONLY &&
-		   !bcn_ies->he_cap.present))) {
-			sme_info("self_phymode %d mismatch HT %d VHT %d HE %d",
-				self_phymode, bcn_ies->HTCaps.present,
-				bcn_ies->VHTCaps.present,
-				bcn_ies->he_cap.present);
-			*roam_state = eCsrStopRoamingDueToConcurrency;
-			status = true;
-			*roam_bss_entry = csr_ll_next(&bss_list->List,
-						      *roam_bss_entry,
-						      LL_ACCESS_LOCK);
-			continue;
-		}
-
 		/*
 		 * Ignore the BSS if any other vdev is already connected
 		 * to it.
@@ -10875,6 +10850,19 @@ static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
 	return csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
 }
 
+void csr_update_scan_filter_dot11mode(struct mac_context *mac_ctx,
+				      struct scan_filter *filter)
+{
+	eCsrPhyMode phymode = mac_ctx->roam.configParam.phyMode;
+
+	if (phymode == eCSR_DOT11_MODE_11n_ONLY)
+		filter->dot11mode = ALLOW_11N_ONLY;
+	else if (phymode == eCSR_DOT11_MODE_11ac_ONLY)
+		filter->dot11mode = ALLOW_11AC_ONLY;
+	else if (phymode == eCSR_DOT11_MODE_11ax_ONLY)
+		filter->dot11mode = ALLOW_11AX_ONLY;
+}
+
 QDF_STATUS
 csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				      struct csr_roam_profile *profile,
@@ -10964,6 +10952,7 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 	csr_update_fils_scan_filter(filter, profile);
 
 	csr_update_adaptive_11r_scan_filter(mac_ctx, filter);
+	csr_update_scan_filter_dot11mode(mac_ctx, filter);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -427,6 +427,7 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	csr_update_pmf_cap_from_connected_profile(profile, filter);
 
 	csr_update_adaptive_11r_scan_filter(mac, filter);
+	csr_update_scan_filter_dot11mode(mac, filter);
 
 	return QDF_STATUS_SUCCESS;
 }
