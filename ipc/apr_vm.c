@@ -1074,6 +1074,13 @@ static void apr_reset_deregister(struct work_struct *work)
 	kfree(apr_reset);
 }
 
+void apr_register_adsp_state_cb(void *adsp_cb, void *client_handle)
+{
+	q6.state_notify_cb = adsp_cb;
+	q6.client_handle = client_handle;
+}
+EXPORT_SYMBOL(apr_register_adsp_state_cb);
+
 /**
  * apr_start_rx_rt - Clients call to vote for thread
  * priority upgrade whenever needed.
