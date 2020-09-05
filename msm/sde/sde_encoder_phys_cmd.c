@@ -704,6 +704,8 @@ static bool _sde_encoder_phys_cmd_is_scheduler_idle(
 	struct sde_encoder_phys_cmd *cmd_enc =
 			to_sde_encoder_phys_cmd(phys_enc);
 	struct sde_hw_ctl *ctl = phys_enc->hw_ctl;
+	enum frame_trigger_mode_type frame_trigger_mode =
+			phys_enc->frame_trigger_mode;
 
 	if (sde_encoder_phys_cmd_is_master(phys_enc))
 		wr_ptr_wait_success = cmd_enc->wr_ptr_wait_success;
@@ -713,11 +715,12 @@ static bool _sde_encoder_phys_cmd_is_scheduler_idle(
 	 * due to irq latency with POSTED start
 	 */
 	if (wr_ptr_wait_success &&
-	    (phys_enc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START) &&
-	    ctl->ops.get_scheduler_status &&
-	    (ctl->ops.get_scheduler_status(ctl) & BIT(0)) &&
-	    atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0) &&
-	    phys_enc->parent_ops.handle_frame_done) {
+		(frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START) &&
+		ctl->ops.get_scheduler_status &&
+		phys_enc->parent_ops.handle_frame_done &&
+		atomic_read(&phys_enc->pending_kickoff_cnt) > 0 &&
+		(ctl->ops.get_scheduler_status(ctl) & BIT(0)) &&
+		atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0)) {
 
 		spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
 		phys_enc->parent_ops.handle_frame_done(
