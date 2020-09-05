@@ -528,6 +528,34 @@ out:
 }
 
 /**
+ * hdd_send_ps_config_to_fw() - Check user pwr save config set/reset PS
+ * @adapter: pointer to hdd adapter
+ *
+ * This function checks the power save configuration saved in MAC context
+ * and sends power save config to FW.
+ *
+ * Return: None
+ */
+static void hdd_send_ps_config_to_fw(struct hdd_adapter *adapter)
+{
+	struct mac_context *mac_ctx;
+	struct hdd_context *hdd_ctx;
+
+	if (hdd_validate_adapter(adapter))
+		return;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_ctx  = MAC_CONTEXT(hdd_ctx->mac_handle);
+
+	if (mac_ctx->usr_cfg_ps_enable)
+		sme_ps_enable_disable(hdd_ctx->mac_handle, adapter->vdev_id,
+				      SME_PS_ENABLE);
+	else
+		sme_ps_enable_disable(hdd_ctx->mac_handle, adapter->vdev_id,
+				      SME_PS_DISABLE);
+}
+
+/**
  * __hdd_ipv6_notifier_work_queue() - IPv6 notification work function
  * @adapter: adapter whose IP address changed
  *
@@ -556,6 +584,7 @@ static void __hdd_ipv6_notifier_work_queue(struct hdd_adapter *adapter)
 
 	hdd_enable_ns_offload(adapter, pmo_ipv6_change_notify);
 
+	hdd_send_ps_config_to_fw(adapter);
 exit:
 	hdd_exit();
 }
@@ -920,6 +949,7 @@ static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
 		sme_send_hlp_ie_info(hdd_ctx->mac_handle, adapter->vdev_id,
 				     roam_profile, ifa->ifa_local);
+	hdd_send_ps_config_to_fw(adapter);
 exit:
 	hdd_exit();
 }

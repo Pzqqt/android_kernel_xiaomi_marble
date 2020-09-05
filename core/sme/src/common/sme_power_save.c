@@ -391,8 +391,6 @@ QDF_STATUS sme_ps_enable_disable(mac_handle_t mac_handle, uint32_t session_id,
 		 * In non associated state driver wont handle the power save
 		 * But kernel expects return status success even
 		 * in the disconnected state.
-		 * TODO: If driver to remember the ps state to further use
-		 * after connection.
 		 */
 		if (!csr_is_conn_state_connected_infra(mac_ctx, session_id))
 			status = QDF_STATUS_SUCCESS;
