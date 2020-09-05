@@ -818,6 +818,10 @@ QDF_STATUS (*send_process_ll_stats_set_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_process_ll_stats_get_cmd)(wmi_unified_t wmi_handle,
 				const struct ll_stats_get_params *get_req);
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+QDF_STATUS (*send_unified_ll_stats_get_sta_cmd)(wmi_unified_t wmi_handle,
+				const struct ll_stats_get_params *get_req);
+#endif
 #endif
 
 QDF_STATUS (*send_congestion_cmd)(wmi_unified_t wmi_handle,

@@ -5216,13 +5216,79 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
 					  WMI_REQUEST_LINK_STATS_CMDID);
 	if (ret) {
-		wmi_err("Failed to send get link stats request");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+/**
+ * send_unified_ll_stats_get_sta_cmd_tlv() - unified link layer stats and get
+ *                                           station request
+ * @wmi_handle: wmi handle
+ * @get_req: ll stats get request command params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_unified_ll_stats_get_sta_cmd_tlv(
+				wmi_unified_t wmi_handle,
+				const struct ll_stats_get_params *get_req)
+{
+	wmi_request_unified_ll_get_sta_cmd_fixed_param *unified_cmd;
+	int32_t len;
+	wmi_buf_t buf;
+	void *buf_ptr;
+	int ret;
+
+	len = sizeof(*unified_cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = wmi_buf_data(buf);
+
+	unified_cmd = buf_ptr;
+	WMITLV_SET_HDR(
+		&unified_cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_request_unified_ll_get_sta_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			(wmi_request_unified_ll_get_sta_cmd_fixed_param));
+
+	unified_cmd->link_stats_type = get_req->param_id_mask;
+	unified_cmd->get_sta_stats_id = (WMI_REQUEST_AP_STAT |
+					 WMI_REQUEST_PEER_STAT |
+					 WMI_REQUEST_VDEV_STAT |
+					 WMI_REQUEST_PDEV_STAT |
+					 WMI_REQUEST_PEER_EXTD2_STAT |
+					 WMI_REQUEST_RSSI_PER_CHAIN_STAT);
+	unified_cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
+							WMI_HOST_PDEV_ID_SOC);
+
+	unified_cmd->vdev_id = get_req->vdev_id;
+	unified_cmd->request_id = get_req->req_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(get_req->peer_macaddr.bytes,
+				   &unified_cmd->peer_macaddr);
+
+	wmi_debug("UNIFIED_LINK_STATS_GET_STA - Get Request Params Request ID: %u Stats Type: %0x Vdev ID: %d Peer MAC Addr: "
+		  QDF_MAC_ADDR_FMT,
+		  get_req->req_id, get_req->param_id_mask, get_req->vdev_id,
+		  QDF_MAC_ADDR_REF(get_req->peer_macaddr.bytes));
+
+	wmi_mtrace(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID, get_req->vdev_id, 0);
+	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
+					  WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
+	if (ret) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
@@ -13983,6 +14049,10 @@ struct wmi_ops tlv_ops =  {
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,
 	.send_process_ll_stats_get_cmd = send_process_ll_stats_get_cmd_tlv,
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+	.send_unified_ll_stats_get_sta_cmd =
+					send_unified_ll_stats_get_sta_cmd_tlv,
+#endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS*/
 	.send_congestion_cmd = send_congestion_cmd_tlv,
 	.send_snr_request_cmd = send_snr_request_cmd_tlv,
@@ -14659,6 +14729,25 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_CTRL_PATH_STATS_EVENTID;
 }
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+static void wmi_populate_service_get_sta_in_ll_stats_req(uint32_t *wmi_service)
+{
+	wmi_service[wmi_service_get_station_in_ll_stats_req] =
+				WMI_SERVICE_UNIFIED_LL_GET_STA_CMD_SUPPORT;
+}
+
+#else
+static void wmi_populate_service_get_sta_in_ll_stats_req(uint32_t *wmi_service)
+{
+}
+#endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
+#else
+static void wmi_populate_service_get_sta_in_ll_stats_req(uint32_t *wmi_service)
+{
+}
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
+
 /**
  * populate_tlv_service() - populates wmi services
  *
@@ -14985,6 +15074,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_MBSS_PARAM_IN_VDEV_START_SUPPORT;
 	wmi_service[wmi_service_fse_cmem_alloc_support] =
 			WMI_SERVICE_FSE_CMEM_ALLOC_SUPPORT;
+
+	wmi_populate_service_get_sta_in_ll_stats_req(wmi_service);
 }
 
 /**

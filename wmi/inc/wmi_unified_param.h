@@ -5364,6 +5364,9 @@ typedef enum {
 	wmi_service_thermal_multi_client_support,
 	wmi_service_mbss_param_in_vdev_start_support,
 	wmi_service_fse_cmem_alloc_support,
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+	wmi_service_get_station_in_ll_stats_req,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

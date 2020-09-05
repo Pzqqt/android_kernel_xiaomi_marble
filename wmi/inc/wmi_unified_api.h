@@ -1445,6 +1445,20 @@ QDF_STATUS wmi_unified_process_ll_stats_set_cmd(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_unified_process_ll_stats_get_cmd(wmi_unified_t wmi_handle,
 				 const struct ll_stats_get_params *get_req);
+
+#ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
+/**
+ * wmi_process_unified_ll_stats_get_sta_cmd() - unified link layer stats and
+ *                                              get station request
+ * @wmi_handle: wmi handle
+ * @get_req: unified ll stats and get station request command params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_process_unified_ll_stats_get_sta_cmd(
+				wmi_unified_t wmi_handle,
+				const struct ll_stats_get_params *get_req);
+#endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
