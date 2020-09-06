@@ -32,7 +32,8 @@
 #include <linux/uaccess.h>
 #include "qdf_lock.h"
 #include "qdf_debugfs.h"
-
+#include "dp_rx.h"
+#include "dp_rx_mon.h"
 #include "dp_tx_capture.h"
 
 #define NUM_BITS_DWORD 32
@@ -5947,11 +5948,20 @@ dp_bar_send_ack_frm_to_stack(struct dp_soc *soc,
 	uint16_t bar_ctl;
 	uint32_t user_id;
 	uint8_t tid;
+	qdf_frag_t addr;
 
 	if (!nbuf)
 		return QDF_STATUS_E_INVAL;
 
-	wh = (struct ieee80211_ctlframe_addr2 *)qdf_nbuf_data(nbuf);
+	/* Get addr pointing to 80211 header */
+	addr = dp_rx_mon_get_nbuf_80211_hdr(nbuf);
+	if (qdf_unlikely(!addr)) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Unable to get 80211 header address", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wh = (struct ieee80211_ctlframe_addr2 *)addr;
 
 	if (wh->i_fc[0] != (IEEE80211_FC0_VERSION_0 |
 	     IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR)) {
@@ -5997,9 +6007,17 @@ static void dp_gen_noack_frame(struct hal_rx_ppdu_info *ppdu_info,
 	struct ieee80211_frame *wh;
 	uint16_t duration;
 	struct dp_vdev *vdev = NULL;
-	char *ndpa_buf = qdf_nbuf_data(mon_mpdu);
 	uint8_t token = 0;
 	uint8_t *frm;
+	char *ndpa_buf = NULL;
+
+	/* Get addr pointing to 80211 header */
+	ndpa_buf = dp_rx_mon_get_nbuf_80211_hdr(mon_mpdu);
+	if (qdf_unlikely(!ndpa_buf)) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Unable to get 80211 header address", __func__);
+		return;
+	}
 
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(mpdu_nbuf);
 
