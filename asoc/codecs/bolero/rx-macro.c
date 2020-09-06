@@ -388,6 +388,7 @@ enum {
 	RX_MACRO_AIF3_PB,
 	RX_MACRO_AIF4_PB,
 	RX_MACRO_AIF_ECHO,
+	RX_MACRO_AIF5_PB,
 	RX_MACRO_AIF6_PB,
 	RX_MACRO_MAX_DAIS,
 };
@@ -716,6 +717,20 @@ static struct snd_soc_dai_driver rx_macro_dai[] = {
 			.rate_min = 8000,
 			.channels_min = 1,
 			.channels_max = 3,
+		},
+		.ops = &rx_macro_dai_ops,
+	},
+	{
+		.name = "rx_macro_rx5",
+		.id = RX_MACRO_AIF5_PB,
+		.playback = {
+			.stream_name = "RX_MACRO_AIF5 Playback",
+			.rates = RX_MACRO_RATES | RX_MACRO_FRAC_RATES,
+			.formats = RX_MACRO_FORMATS,
+			.rate_max = 384000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
 		},
 		.ops = &rx_macro_dai_ops,
 	},
@@ -1138,6 +1153,13 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d active_mask: 0x%x\n",
 			__func__, dai->id, *rx_slot, *rx_num, rx_priv->active_ch_mask[dai->id]);
 		break;
+	case RX_MACRO_AIF5_PB:
+		*rx_slot = 0x1;
+		*rx_num = 0x01;
+		dev_dbg(rx_priv->dev,
+			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d\n",
+			__func__, dai->id, *rx_slot, *rx_num);
+		break;
 	case RX_MACRO_AIF6_PB:
 		*rx_slot = 0x1;
 		*rx_num = 0x01;
@@ -1410,11 +1432,7 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 			}
 		}
 		break;
-	case BOLERO_MACRO_EVT_SSR_UP:
-		trace_printk("%s, enter SSR up\n", __func__);
-		rx_priv->dev_up = true;
-		/* reset swr after ssr/pdr */
-		rx_priv->reset_swr = true;
+	case BOLERO_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable RX_CORE_CLK to reset GFMUX reg */
 		ret = bolero_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,
@@ -1427,6 +1445,12 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,
 						RX_CORE_CLK, false);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		trace_printk("%s, enter SSR up\n", __func__);
+		rx_priv->dev_up = true;
+		/* reset swr after ssr/pdr */
+		rx_priv->reset_swr = true;
 
 		if (rx_priv->swr_ctrl_data)
 			swrm_wcd_notify(
@@ -1709,13 +1733,6 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
 		__func__, event, comp + 1, rx_priv->comp_enabled[comp]);
 
-	if (!rx_priv->comp_enabled[comp])
-		return 0;
-
-	comp_ctl0_reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
-					(comp * RX_MACRO_COMP_OFFSET);
-	rx_path_cfg0_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG0 +
-					(comp * RX_MACRO_RX_PATH_OFFSET);
 	rx_path_cfg3_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG3 +
 					(comp * RX_MACRO_RX_PATH_OFFSET);
 	rx0_path_ctl_reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL +
@@ -1731,6 +1748,19 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 	else
 		val = 0x00;
 
+	if (SND_SOC_DAPM_EVENT_ON(event))
+		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
+					0x03, val);
+	if (SND_SOC_DAPM_EVENT_OFF(event))
+		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
+					0x03, 0x03);
+	if (!rx_priv->comp_enabled[comp])
+		return 0;
+
+	comp_ctl0_reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
+					(comp * RX_MACRO_COMP_OFFSET);
+	rx_path_cfg0_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG0 +
+					(comp * RX_MACRO_RX_PATH_OFFSET);
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		/* Enable Compander Clock */
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
@@ -1741,8 +1771,6 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 					0x02, 0x00);
 		snd_soc_component_update_bits(component, rx_path_cfg0_reg,
 					0x02, 0x02);
-		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
-					0x03, val);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
@@ -1754,8 +1782,6 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 					0x01, 0x00);
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
 					0x04, 0x00);
-		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
-					0x03, 0x03);
 	}
 
 	return 0;
@@ -1930,7 +1956,12 @@ static int rx_macro_config_classh(struct snd_soc_component *component,
 				0x40, 0x40);
 		break;
 	case INTERP_HPHR:
-		snd_soc_component_update_bits(component,
+		if (rx_priv->is_ear_mode_on)
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_CLSH_HPH_V_PA,
+				0x3F, 0x39);
+		else
+			snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_CLSH_HPH_V_PA,
 				0x3F, 0x1C);
 		snd_soc_component_update_bits(component,
@@ -2983,21 +3014,24 @@ static int rx_macro_set_iir_gain(struct snd_soc_dapm_widget *w,
 }
 
 static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
-	SOC_SINGLE_SX_TLV("RX_RX0 Digital Volume",
+	SOC_SINGLE_S8_TLV("RX_RX0 Digital Volume",
 			  BOLERO_CDC_RX_RX0_RX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX1 Digital Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX1 Digital Volume",
 			  BOLERO_CDC_RX_RX1_RX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX2 Digital Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX2 Digital Volume",
 			  BOLERO_CDC_RX_RX2_RX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX0 Mix Digital Volume",
-		BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX1 Mix Digital Volume",
-		BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX2 Mix Digital Volume",
-		BOLERO_CDC_RX_RX2_RX_VOL_MIX_CTL, 0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX0 Mix Digital Volume",
+			  BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL,
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX1 Mix Digital Volume",
+			  BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL,
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX2 Mix Digital Volume",
+			  BOLERO_CDC_RX_RX2_RX_VOL_MIX_CTL,
+			  -84, 40, digital_gain),
 
 	SOC_SINGLE_EXT("RX_COMP1 Switch", SND_SOC_NOPM, RX_MACRO_COMP1, 1, 0,
 		rx_macro_get_compander, rx_macro_set_compander),
@@ -3026,29 +3060,29 @@ static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
 			rx_macro_aux_hpf_mode_get,
 			rx_macro_aux_hpf_mode_put),
 
-	SOC_SINGLE_SX_TLV("IIR0 INP0 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP0 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR0 INP1 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP1 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR0 INP2 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP2 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR0 INP3 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP3 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP0 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP0 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP1 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP1 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP2 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP2 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP3 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP3 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL, -84, 40,
 		digital_gain),
 
 	SOC_SINGLE_EXT("IIR0 Enable Band1", IIR0, BAND1, 1, 0,
@@ -3172,6 +3206,9 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 		SND_SOC_NOPM, 0, 0),
 
 	SND_SOC_DAPM_AIF_OUT("RX AIF_ECHO", "RX_AIF_ECHO Capture", 0,
+		SND_SOC_NOPM, 0, 0),
+
+	SND_SOC_DAPM_AIF_IN("RX AIF5 PB", "RX_MACRO_AIF5 Playback", 0,
 		SND_SOC_NOPM, 0, 0),
 
 	SND_SOC_DAPM_AIF_IN("RX AIF6 PB", "RX_MACRO_AIF6 Playback", 0,
@@ -3844,6 +3881,7 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF4 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF5 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF6 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL_OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR_OUT");
@@ -4010,6 +4048,12 @@ static int rx_macro_probe(struct platform_device *pdev)
 	u32 default_clk_id = 0;
 	u32 is_used_rx_swr_gpio = 1;
 	const char *is_used_rx_swr_gpio_dt = "qcom,is-used-swr-gpio";
+
+	if (!bolero_is_va_macro_registered(&pdev->dev)) {
+		dev_err(&pdev->dev,
+			"%s: va-macro not registered yet, defer\n", __func__);
+		return -EPROBE_DEFER;
+	}
 
 	rx_priv = devm_kzalloc(&pdev->dev, sizeof(struct rx_macro_priv),
 			    GFP_KERNEL);

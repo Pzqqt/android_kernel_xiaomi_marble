@@ -1083,6 +1083,9 @@ static int wsa881x_spkr_pa_event(struct snd_soc_dapm_widget *w,
 					      0x80, 0x00);
 		if (wsa881x->visense_enable) {
 			wsa881x_visense_adc_ctrl(component, DISABLE);
+			snd_soc_component_update_bits(component,
+						WSA881X_ADC_EN_SEL_IBAIS,
+						0x07, 0x00);
 			wsa881x_visense_txfe_ctrl(component, DISABLE,
 						0x00, 0x01, 0x01);
 		}
@@ -1614,8 +1617,6 @@ static int wsa881x_swr_down(struct swr_device *pdev)
 	else
 		wsa881x->state = WSA881X_DEV_DOWN;
 
-	if (delayed_work_pending(&wsa881x->ocp_ctl_work))
-		cancel_delayed_work_sync(&wsa881x->ocp_ctl_work);
 	return ret;
 }
 

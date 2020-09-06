@@ -59,10 +59,12 @@
 
 #define WCD9XXX_MBHC_DEF_RLOADS     5
 #define WCD9XXX_MBHC_DEF_BUTTONS    8
+#define ROULEUR_MBHC_DEF_BUTTONS    5
 #define CODEC_EXT_CLK_RATE          9600000
 #define ADSP_STATE_READY_TIMEOUT_MS 3000
 #define DEV_NAME_STR_LEN            32
 #define WCD_MBHC_HS_V_MAX           1600
+#define ROULEUR_MBHC_HS_V_MAX       1700
 
 #define TDM_CHANNEL_MAX		8
 #define DEV_NAME_STR_LEN	32
@@ -555,6 +557,7 @@ static int dmic_0_1_gpio_cnt;
 static int dmic_2_3_gpio_cnt;
 
 static void *def_wcd_mbhc_cal(void);
+static void *def_rouleur_mbhc_cal(void);
 
 /*
  * Need to report LINEIN
@@ -4259,6 +4262,9 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dapm_context *dapm;
 	struct snd_card *card;
 	struct snd_info_entry *entry;
+	struct platform_device *pdev = NULL;
+	int i = 0;
+	char *data = NULL;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 
@@ -4305,8 +4311,38 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
-		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
-				    sm_port_map);
+	for (i = 0; i < rtd->card->num_aux_devs; i++)
+	{
+		if (msm_aux_dev[i].name != NULL ) {
+			if (strstr(msm_aux_dev[i].name, "wsa"))
+				continue;
+		}
+
+		if (msm_aux_dev[i].codec_of_node) {
+			pdev = of_find_device_by_node(
+					msm_aux_dev[i].codec_of_node);
+
+			if (pdev)
+				data = (char*) of_device_get_match_data(
+								&pdev->dev);
+			if (data != NULL) {
+				if (!strncmp(data, "wcd937x",
+						sizeof("wcd937x"))) {
+					bolero_set_port_map(component,
+						ARRAY_SIZE(sm_port_map),
+						sm_port_map);
+					break;
+				} else if (!strncmp( data, "rouleur",
+							sizeof("rouleur"))) {
+					bolero_set_port_map(component,
+						ARRAY_SIZE(sm_port_map_rouleur),
+						sm_port_map_rouleur);
+					break;
+				}
+			}
+		}
+	}
+
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
 		entry = snd_info_create_subdir(card->module, "codecs",
@@ -4352,6 +4388,34 @@ static void *def_wcd_mbhc_cal(void)
 	btn_high[5] = 500;
 	btn_high[6] = 500;
 	btn_high[7] = 500;
+
+	return wcd_mbhc_cal;
+}
+
+static void *def_rouleur_mbhc_cal(void)
+{
+	void *wcd_mbhc_cal;
+	struct wcd_mbhc_btn_detect_cfg *btn_cfg;
+	u16 *btn_high;
+
+	wcd_mbhc_cal = kzalloc(WCD_MBHC_CAL_SIZE(ROULEUR_MBHC_DEF_BUTTONS,
+				WCD9XXX_MBHC_DEF_RLOADS), GFP_KERNEL);
+	if (!wcd_mbhc_cal)
+		return NULL;
+
+	WCD_MBHC_CAL_PLUG_TYPE_PTR(wcd_mbhc_cal)->v_hs_max =
+						ROULEUR_MBHC_HS_V_MAX;
+	WCD_MBHC_CAL_BTN_DET_PTR(wcd_mbhc_cal)->num_btn =
+						ROULEUR_MBHC_DEF_BUTTONS;
+	btn_cfg = WCD_MBHC_CAL_BTN_DET_PTR(wcd_mbhc_cal);
+	btn_high = ((void *)&btn_cfg->_v_btn_low) +
+		(sizeof(btn_cfg->_v_btn_low[0]) * btn_cfg->num_btn);
+
+	btn_high[0] = 75;
+	btn_high[1] = 150;
+	btn_high[2] = 237;
+	btn_high[3] = 500;
+	btn_high[4] = 500;
 
 	return wcd_mbhc_cal;
 }
@@ -4985,6 +5049,22 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 	},
+	{/* hw:x,39 */
+		.name = MSM_DAILINK_NAME(Compress3),
+		.stream_name = "Compress3",
+		.cpu_dai_name = "MultiMedia10",
+		.platform_name = "msm-compress-dsp",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			 SND_SOC_DPCM_TRIGGER_POST},
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		/* this dainlink has playback support */
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA10,
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
@@ -5074,6 +5154,33 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
+	},
+	/* Proxy Tx BACK END DAI Link */
+	{
+		.name = LPASS_BE_PROXY_TX,
+		.stream_name = "Proxy Capture",
+		.cpu_dai_name = "msm-dai-q6-dev.8195",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_PROXY_TX,
+		.ignore_suspend = 1,
+	},
+	/* Proxy Rx BACK END DAI Link */
+	{
+		.name = LPASS_BE_PROXY_RX,
+		.stream_name = "Proxy Playback",
+		.cpu_dai_name = "msm-dai-q6-dev.8194",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_PROXY_RX,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
 	},
 	{
 		.name = LPASS_BE_USB_AUDIO_RX,
@@ -6115,16 +6222,21 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	}
 
 mbhc_cfg_cal:
-	mbhc_calibration = def_wcd_mbhc_cal();
-	if (!mbhc_calibration)
-		return -ENOMEM;
-	wcd_mbhc_cfg.calibration = mbhc_calibration;
         if (data != NULL) {
-                if (!strncmp(data, "wcd937x", sizeof("wcd937x")))
-                        ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
-                else if (!strncmp( data, "rouleur", sizeof("rouleur")))
-                        ret = rouleur_mbhc_hs_detect(component, &wcd_mbhc_cfg);
-        }
+		if (!strncmp(data, "wcd937x", sizeof("wcd937x"))) {
+			mbhc_calibration = def_wcd_mbhc_cal();
+			if (!mbhc_calibration)
+				return -ENOMEM;
+			wcd_mbhc_cfg.calibration = mbhc_calibration;
+			ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+		} else if (!strncmp( data, "rouleur", sizeof("rouleur"))) {
+			mbhc_calibration = def_rouleur_mbhc_cal();
+			if (!mbhc_calibration)
+				return -ENOMEM;
+			wcd_mbhc_cfg.calibration = mbhc_calibration;
+			ret = rouleur_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+		}
+	}
 
 	if (ret) {
 		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
@@ -6714,8 +6826,14 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	}
 	buf = nvmem_cell_read(cell, &len);
 	nvmem_cell_put(cell);
-	if (IS_ERR_OR_NULL(buf) || len <= 0 || len > sizeof(32)) {
+	if (IS_ERR_OR_NULL(buf)) {
 		dev_dbg(&pdev->dev, "%s: FAILED to read nvmem cell \n", __func__);
+		goto ret;
+	}
+	if (len <= 0 || len > sizeof(u32)) {
+		dev_dbg(&pdev->dev, "%s: nvmem cell length out of range: %d\n",
+			__func__, len);
+		kfree(buf);
 		goto ret;
 	}
 	memcpy(&adsp_var_idx, buf, len);

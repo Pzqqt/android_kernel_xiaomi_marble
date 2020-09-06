@@ -80,10 +80,12 @@ static void wcd_program_hs_vref(struct wcd_mbhc *mbhc)
 	struct snd_soc_component *component = mbhc->component;
 	u32 reg_val;
 
-	plug_type_cfg = WCD_MBHC_CAL_PLUG_TYPE_PTR(mbhc->mbhc_cfg->calibration);
+	plug_type_cfg = WCD_MBHC_CAL_PLUG_TYPE_PTR(
+				mbhc->mbhc_cfg->calibration);
 	reg_val = ((plug_type_cfg->v_hs_max - HS_VREF_MIN_VAL) / 100);
 
-	dev_dbg(component->dev, "%s: reg_val  = %x\n", __func__, reg_val);
+	dev_dbg(component->dev, "%s: reg_val  = %x\n",
+		__func__, reg_val);
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HS_VREF, reg_val);
 }
 
@@ -1619,6 +1621,8 @@ static int wcd_mbhc_set_keycode(struct wcd_mbhc *mbhc)
 static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 					   unsigned long mode, void *ptr)
 {
+	unsigned int l_det_en = 0;
+	unsigned int detection_type = 0;
 	struct wcd_mbhc *mbhc = container_of(nb, struct wcd_mbhc, fsa_nb);
 
 	if (!mbhc)
@@ -1631,6 +1635,23 @@ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 			mbhc->mbhc_cb->clk_setup(mbhc->component, true);
 		/* insertion detected, enable L_DET_EN */
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
+	} else {
+		WCD_MBHC_REG_READ(WCD_MBHC_MECH_DETECTION_TYPE, detection_type);
+		WCD_MBHC_REG_READ(WCD_MBHC_L_DET_EN, l_det_en);
+		/* If both l_det_en and detection type are set, it means device was
+		 * unplugged during SSR and detection interrupt was not handled.
+		 * So trigger device disconnect */
+		if (detection_type && l_det_en) {
+			/* Set the detection type appropriately */
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MECH_DETECTION_TYPE,
+						 !detection_type);
+			/* Set current plug type to the state before SSR */
+			mbhc->current_plug = mbhc->plug_before_ssr;
+
+			wcd_mbhc_swch_irq_handler(mbhc);
+			mbhc->mbhc_cb->lock_sleep(mbhc, false);
+			mbhc->plug_before_ssr = MBHC_PLUG_TYPE_NONE;
+		}
 	}
 	return 0;
 }
@@ -1838,6 +1859,8 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 	mbhc->hph_type = WCD_MBHC_HPH_NONE;
 	mbhc->wcd_mbhc_regs = wcd_mbhc_regs;
 	mbhc->swap_thr = GND_MIC_SWAP_THRESHOLD;
+	mbhc->hphl_cross_conn_thr = HPHL_CROSS_CONN_THRESHOLD;
+	mbhc->hphr_cross_conn_thr = HPHR_CROSS_CONN_THRESHOLD;
 
 	if (mbhc->intr_ids == NULL) {
 		pr_err("%s: Interrupt mapping not provided\n", __func__);

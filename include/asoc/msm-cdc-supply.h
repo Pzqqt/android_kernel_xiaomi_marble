@@ -15,6 +15,7 @@ struct cdc_regulator {
 	int max_uV;
 	int optimum_uA;
 	bool ondemand;
+	bool lpm_supported;
 	struct regulator *regulator;
 };
 
@@ -51,6 +52,11 @@ extern int msm_cdc_enable_static_supplies(struct device *dev,
 					  struct regulator_bulk_data *supplies,
 					  struct cdc_regulator *cdc_vreg,
 					  int num_supplies);
+extern int msm_cdc_set_supplies_lpm_mode(struct device *dev,
+					 struct regulator_bulk_data *supplies,
+					 struct cdc_regulator *cdc_vreg,
+					 int num_supplies,
+					 bool flag);
 extern int msm_cdc_init_supplies(struct device *dev,
 				 struct regulator_bulk_data **supplies,
 				 struct cdc_regulator *cdc_vreg,

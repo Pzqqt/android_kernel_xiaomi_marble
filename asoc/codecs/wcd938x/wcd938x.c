@@ -72,6 +72,11 @@ enum {
 	HPH_COMP_DELAY,
 	HPH_PA_DELAY,
 	AMIC2_BCS_ENABLE,
+	WCD_SUPPLIES_LPM_MODE,
+	WCD_ADC1_MODE,
+	WCD_ADC2_MODE,
+	WCD_ADC3_MODE,
+	WCD_ADC4_MODE,
 };
 
 enum {
@@ -1540,13 +1545,17 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
-			if (test_bit(WCD_ADC1, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC1, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC1_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC1]];
-			if (test_bit(WCD_ADC2, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC2, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC2_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC2]];
-			if (test_bit(WCD_ADC3, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC3, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC3_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC3]];
-			if (test_bit(WCD_ADC4, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC4, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC4_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC4]];
 
 			if (mode != 0) {
@@ -1593,6 +1602,14 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 
 		if (strnstr(w->name, "ADC", sizeof("ADC")))
 			wcd938x_set_swr_clk_rate(component, rate, bank);
+		if (strnstr(w->name, "ADC1", sizeof("ADC1")))
+			clear_bit(WCD_ADC1_MODE, &wcd938x->status_mask);
+		else if (strnstr(w->name, "ADC2", sizeof("ADC2")))
+			clear_bit(WCD_ADC2_MODE, &wcd938x->status_mask);
+		else if (strnstr(w->name, "ADC3", sizeof("ADC3")))
+			clear_bit(WCD_ADC3_MODE, &wcd938x->status_mask);
+		else if (strnstr(w->name, "ADC4", sizeof("ADC4")))
+			clear_bit(WCD_ADC4_MODE, &wcd938x->status_mask);
 		break;
 	};
 
@@ -1631,57 +1648,6 @@ static int wcd938x_get_adc_mode(int val)
 		break;
 	}
 	return ret;
-}
-
-static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
-				    struct snd_kcontrol *kcontrol,
-				    int event){
-	struct snd_soc_component *component =
-					snd_soc_dapm_to_component(w->dapm);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int clk_rate = 0, ret = 0;
-
-	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
-		w->name, event);
-
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
-		set_bit(w->shift, &wcd938x->status_mask);
-		clk_rate = wcd938x_get_clk_rate(wcd938x->tx_mode[w->shift]);
-		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
-				 wcd938x->tx_swr_dev->dev_num,
-				 true);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
-				wcd938x->tx_swr_dev->dev_num,
-				false);
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
-		clear_bit(w->shift, &wcd938x->status_mask);
-		break;
-	};
-
-	return ret;
-}
-
-void wcd938x_disable_bcs_before_slow_insert(struct snd_soc_component *component,
-					    bool bcs_disable)
-{
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-
-	if (wcd938x->update_wcd_event) {
-		if (bcs_disable)
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
-		else
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
-	}
 }
 
 int wcd938x_tx_channel_config(struct snd_soc_component *component,
@@ -1724,14 +1690,14 @@ int wcd938x_tx_channel_config(struct snd_soc_component *component,
 	return ret;
 }
 
-static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
-			      struct snd_kcontrol *kcontrol, int event)
-{
+static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
+				    struct snd_kcontrol *kcontrol,
+				    int event){
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
-	int mode;
-	int ret = 0;
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+	int clk_rate = 0, ret = 0;
+	int mode;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1739,9 +1705,14 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_REQ_CTL, 0x02, 0x02);
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_REQ_CTL, 0x01, 0x00);
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
+		set_bit(w->shift, &wcd938x->status_mask);
+		clk_rate = wcd938x_get_clk_rate(wcd938x->tx_mode[w->shift]);
+		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
+				 wcd938x->tx_swr_dev->dev_num,
+				 true);
 		ret = wcd938x_tx_channel_config(component, w->shift, 1);
 		mode = wcd938x_get_adc_mode(wcd938x->tx_mode[w->shift]);
 		if (mode < 0) {
@@ -1817,6 +1788,51 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 		default:
 			break;
 		}
+		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
+				wcd938x->tx_swr_dev->dev_num,
+				false);
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
+		clear_bit(w->shift, &wcd938x->status_mask);
+		break;
+	};
+
+	return ret;
+}
+
+void wcd938x_disable_bcs_before_slow_insert(struct snd_soc_component *component,
+					    bool bcs_disable)
+{
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	if (wcd938x->update_wcd_event) {
+		if (bcs_disable)
+			wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
+		else
+			wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
+	}
+}
+
+static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
+			      struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component =
+					snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
+
+	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
+		w->name, event);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_REQ_CTL, 0x02, 0x02);
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_REQ_CTL, 0x01, 0x00);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x00);
 		break;
@@ -1991,15 +2007,16 @@ static int wcd938x_get_logical_addr(struct swr_device *swr_dev)
 	int num_retry = NUM_ATTEMPTS;
 
 	do {
+		/* retry after 1ms */
+		usleep_range(1000, 1010);
 		ret = swr_get_logical_dev_num(swr_dev, swr_dev->addr, &devnum);
-		if (ret) {
-			dev_err(&swr_dev->dev,
-				"%s get devnum %d for dev addr %lx failed\n",
-				__func__, devnum, swr_dev->addr);
-			/* retry after 1ms */
-			usleep_range(1000, 1010);
-		}
 	} while (ret && --num_retry);
+
+	if (ret)
+		dev_err(&swr_dev->dev,
+			"%s get devnum %d for dev addr %llx failed\n",
+			__func__, devnum, swr_dev->addr);
+
 	swr_dev->dev_num = devnum;
 	return 0;
 }
@@ -2014,6 +2031,27 @@ static bool get_usbc_hs_status(struct snd_soc_component *component,
 	}
 	return false;
 }
+
+int wcd938x_swr_dmic_register_notifier(struct snd_soc_component *component,
+					struct notifier_block *nblock,
+					bool enable)
+{
+	struct wcd938x_priv *wcd938x_priv;
+	if(NULL == component) {
+		pr_err("%s: wcd938x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	wcd938x_priv = snd_soc_component_get_drvdata(component);
+	wcd938x_priv->notify_swr_dmic = enable;
+	if (enable)
+		return blocking_notifier_chain_register(&wcd938x_priv->notifier,
+							nblock);
+	else
+		return blocking_notifier_chain_unregister(
+				&wcd938x_priv->notifier, nblock);
+}
+EXPORT_SYMBOL(wcd938x_swr_dmic_register_notifier);
 
 static int wcd938x_event_notify(struct notifier_block *block,
 				unsigned long val,
@@ -2030,21 +2068,25 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		if (test_bit(WCD_ADC1, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH2, 0x40, 0x00);
+			set_bit(WCD_ADC1_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC1, &wcd938x->status_mask);
 		}
 		if (test_bit(WCD_ADC2, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH2, 0x20, 0x00);
+			set_bit(WCD_ADC2_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC2, &wcd938x->status_mask);
 		}
 		if (test_bit(WCD_ADC3, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH4, 0x40, 0x00);
+			set_bit(WCD_ADC3_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC3, &wcd938x->status_mask);
 		}
 		if (test_bit(WCD_ADC4, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH4, 0x20, 0x00);
+			set_bit(WCD_ADC4_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC4, &wcd938x->status_mask);
 		}
 		break;
@@ -2058,7 +2100,13 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd938x->dev_up = false;
+		if(wcd938x->notify_swr_dmic)
+			blocking_notifier_call_chain(&wcd938x->notifier,
+						     WCD938X_EVT_SSR_DOWN,
+						     NULL);
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = true;
+		wcd938x->mbhc->wcd_mbhc.plug_before_ssr =
+					wcd938x->mbhc->wcd_mbhc.current_plug;
 		mbhc = &wcd938x->mbhc->wcd_mbhc;
 		wcd938x->usbc_hs_status = get_usbc_hs_status(component,
 						mbhc->mbhc_cfg);
@@ -2089,6 +2137,10 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		}
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = false;
 		wcd938x->dev_up = true;
+		if(wcd938x->notify_swr_dmic)
+			blocking_notifier_call_chain(&wcd938x->notifier,
+						     WCD938X_EVT_SSR_UP,
+						     NULL);
 		break;
 	case BOLERO_WCD_EVT_CLK_NOTIFY:
 		snd_soc_component_update_bits(component,
@@ -2272,6 +2324,9 @@ static int wcd938x_enable_micbias(struct wcd938x_priv *wcd938x,
 		return -EINVAL;
 	};
 
+	pr_debug("%s: req: %d micb_num: %d  micb_ref: %d pullup_ref: %d\n",
+		__func__, req, micb_num, wcd938x->micb_ref[micb_index],
+		wcd938x->pullup_ref[micb_index]);
 	mutex_lock(&wcd938x->micb_lock);
 
 	switch (req) {
@@ -2336,6 +2391,8 @@ int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
 					int event, int micb_num)
 {
 	struct wcd938x_priv *wcd938x_priv = NULL;
+	int ret = 0;
+	int micb_index = micb_num - 1;
 
 	if(NULL == component) {
 		pr_err("%s: wcd938x component is NULL\n", __func__);
@@ -2352,6 +2409,15 @@ int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
 
 	wcd938x_priv = snd_soc_component_get_drvdata(component);
 
+	if (!wcd938x_priv->dev_up) {
+		if ((wcd938x_priv->pullup_ref[micb_index] > 0) &&
+			(event == SND_SOC_DAPM_POST_PMD)) {
+			wcd938x_priv->pullup_ref[micb_index]--;
+			ret = -ENODEV;
+			goto done;
+		}
+	}
+
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		wcd938x_wakeup(wcd938x_priv, true);
@@ -2365,7 +2431,8 @@ int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
 		break;
 	}
 
-	return 0;
+done:
+	return ret;
 }
 EXPORT_SYMBOL(wcd938x_codec_force_enable_micbias_v2);
 
@@ -3050,9 +3117,17 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AMIC5"),
 	SND_SOC_DAPM_INPUT("AMIC6"),
 	SND_SOC_DAPM_INPUT("AMIC7"),
+
 	SND_SOC_DAPM_INPUT("IN1_HPHL"),
 	SND_SOC_DAPM_INPUT("IN2_HPHR"),
 	SND_SOC_DAPM_INPUT("IN3_AUX"),
+	/*
+	 * These dummy widgets are null connected to WCD938x dapm input and
+	 * output widgets which are not actual path endpoints. This ensures
+	 * dapm doesnt set these dapm input and output widgets as endpoints.
+	 */
+	SND_SOC_DAPM_INPUT("WCD_TX_DUMMY"),
+	SND_SOC_DAPM_OUTPUT("WCD_RX_DUMMY"),
 
 	/*tx widgets*/
 	SND_SOC_DAPM_ADC_E("ADC1", NULL, SND_SOC_NOPM, 0, 0,
@@ -3289,6 +3364,7 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 
 static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 
+	{"WCD_TX_DUMMY", NULL, "WCD_TX_OUTPUT"},
 	{"WCD_TX_OUTPUT", NULL, "ADC1_MIXER"},
 	{"ADC1_MIXER", "Switch", "ADC1 REQ"},
 	{"ADC1 REQ", NULL, "ADC1"},
@@ -3343,6 +3419,7 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"WCD_TX_OUTPUT", NULL, "DMIC8_MIXER"},
 	{"DMIC8_MIXER", "Switch", "DMIC8"},
 
+	{"IN1_HPHL", NULL, "WCD_RX_DUMMY"},
 	{"IN1_HPHL", NULL, "VDD_BUCK"},
 	{"IN1_HPHL", NULL, "CLS_H_PORT"},
 	{"RX1", NULL, "IN1_HPHL"},
@@ -3351,6 +3428,7 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"HPHL PGA", NULL, "HPHL_RDAC"},
 	{"HPHL", NULL, "HPHL PGA"},
 
+	{"IN2_HPHR", NULL, "WCD_RX_DUMMY"},
 	{"IN2_HPHR", NULL, "VDD_BUCK"},
 	{"IN2_HPHR", NULL, "CLS_H_PORT"},
 	{"RX2", NULL, "IN2_HPHR"},
@@ -3359,6 +3437,7 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"HPHR PGA", NULL, "HPHR_RDAC"},
 	{"HPHR", NULL, "HPHR PGA"},
 
+	{"IN3_AUX", NULL, "WCD_RX_DUMMY"},
 	{"IN3_AUX", NULL, "VDD_BUCK"},
 	{"IN3_AUX", NULL, "CLS_H_PORT"},
 	{"RX3", NULL, "IN3_AUX"},
@@ -3634,6 +3713,8 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 		goto err_hwdep;
 	}
 
+	snd_soc_dapm_ignore_suspend(dapm, "WCD938X_AIF Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD938X_AIF Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC2");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC3");
@@ -3649,6 +3730,8 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_TX_DUMMY");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_RX_DUMMY");
 	snd_soc_dapm_sync(dapm);
 
 	wcd_cls_h_init(&wcd938x->clsh_info);
@@ -3688,7 +3771,6 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 			return ret;
 		}
 	}
-	wcd938x->dev_up = true;
 	return ret;
 
 err_hwdep:
@@ -3713,6 +3795,26 @@ static void wcd938x_soc_codec_remove(struct snd_soc_component *component)
 						false);
 }
 
+static int wcd938x_soc_codec_suspend(struct snd_soc_component *component)
+{
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	if (!wcd938x)
+		return 0;
+	wcd938x->dapm_bias_off = true;
+	return 0;
+}
+
+static int wcd938x_soc_codec_resume(struct snd_soc_component *component)
+{
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	if (!wcd938x)
+		return 0;
+	wcd938x->dapm_bias_off = false;
+	return 0;
+}
+
 static struct snd_soc_component_driver soc_codec_dev_wcd938x = {
 	.name = WCD938X_DRV_NAME,
 	.probe = wcd938x_soc_codec_probe,
@@ -3723,6 +3825,8 @@ static struct snd_soc_component_driver soc_codec_dev_wcd938x = {
 	.num_dapm_widgets = ARRAY_SIZE(wcd938x_dapm_widgets),
 	.dapm_routes = wcd938x_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(wcd938x_audio_map),
+	.suspend =  wcd938x_soc_codec_suspend,
+	.resume = wcd938x_soc_codec_resume,
 };
 
 static int wcd938x_reset(struct device *dev)
@@ -4026,6 +4130,7 @@ static int wcd938x_bind(struct device *dev)
 				__func__);
 		goto err_irq;
 	}
+	wcd938x->dev_up = true;
 
 	return ret;
 err_irq:
@@ -4242,19 +4347,51 @@ static int wcd938x_suspend(struct device *dev)
 		}
 		clear_bit(ALLOW_BUCK_DISABLE, &wcd938x->status_mask);
 	}
+	if (wcd938x->dapm_bias_off) {
+		msm_cdc_set_supplies_lpm_mode(wcd938x->dev,
+					      wcd938x->supplies,
+					      pdata->regulator,
+					      pdata->num_supplies,
+					      true);
+		set_bit(WCD_SUPPLIES_LPM_MODE, &wcd938x->status_mask);
+	}
 	return 0;
 }
 
 static int wcd938x_resume(struct device *dev)
 {
+	struct wcd938x_priv *wcd938x = NULL;
+	struct wcd938x_pdata *pdata = NULL;
+
+	if (!dev)
+		return -ENODEV;
+
+	wcd938x = dev_get_drvdata(dev);
+	if (!wcd938x)
+		return -EINVAL;
+
+	pdata = dev_get_platdata(wcd938x->dev);
+
+	if (!pdata) {
+		dev_err(dev, "%s: pdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (test_bit(WCD_SUPPLIES_LPM_MODE, &wcd938x->status_mask)) {
+		msm_cdc_set_supplies_lpm_mode(wcd938x->dev,
+					      wcd938x->supplies,
+					      pdata->regulator,
+					      pdata->num_supplies,
+					      false);
+		clear_bit(WCD_SUPPLIES_LPM_MODE, &wcd938x->status_mask);
+	}
+
 	return 0;
 }
 
 static const struct dev_pm_ops wcd938x_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(
-		wcd938x_suspend,
-		wcd938x_resume
-	)
+	.suspend_late = wcd938x_suspend,
+	.resume_early = wcd938x_resume,
 };
 #endif
 

@@ -2,7 +2,6 @@
 #define __VOICE_PARAMS_H__
 
 #include <linux/types.h>
-#include <sound/asound.h>
 
 enum voice_lch_mode {
 	VOICE_LCH_START = 1,

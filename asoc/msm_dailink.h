@@ -5,7 +5,6 @@
 
 #include <sound/soc.h>
 
-
 SND_SOC_DAILINK_DEFS(usb_audio_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_DUMMY()),
@@ -15,7 +14,6 @@ SND_SOC_DAILINK_DEFS(usb_audio_tx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_DUMMY()),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
-
 
 SND_SOC_DAILINK_DEFS(slimbus_7_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
@@ -93,6 +91,12 @@ SND_SOC_DAILINK_DEFS(rx_dma_rx2,
 SND_SOC_DAILINK_DEFS(rx_dma_rx3,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("bolero_codec", "rx_macro_rx4"),
+			   COMP_CODEC("wcd938x_codec", "wcd938x_cdc")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
+
+SND_SOC_DAILINK_DEFS(rx_dma_rx5,
+	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("bolero_codec", "rx_macro_rx5"),
 			   COMP_CODEC("wcd938x_codec", "wcd938x_cdc")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 

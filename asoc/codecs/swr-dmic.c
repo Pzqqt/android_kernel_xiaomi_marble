@@ -30,6 +30,9 @@
 #include "wcd938x/wcd938x.h"
 #include "swr-dmic.h"
 
+#define NUM_ATTEMPTS 5
+#define SWRS_SCP_CONTROL    0x44
+
 static int swr_master_channel_map[] = {
 	ZERO,
 	SWRM_TX1_CH1,
@@ -64,6 +67,7 @@ struct swr_dmic_priv {
 	int is_en_supply;
 	int port_type;
 	u8 tx_master_port_map[SWR_DMIC_MAX_PORTS];
+	struct notifier_block nblock;
 };
 
 const char *codec_name_list[] = {
@@ -243,38 +247,6 @@ static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
-static int swr_dmic_enable_supply(struct snd_soc_dapm_widget *w,
-			       struct snd_kcontrol *kcontrol,
-			       int event)
-{
-	struct snd_soc_component *component =
-			snd_soc_dapm_to_component(w->dapm);
-	struct swr_dmic_priv *swr_dmic =
-			snd_soc_component_get_drvdata(component);
-	int ret = 0;
-
-	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
-		w->name, event);
-
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		ret = swr_dmic_up(swr_dmic->swr_slave);
-		break;
-	case SND_SOC_DAPM_POST_PMU:
-		ret = swr_dmic_reset(swr_dmic->swr_slave);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		ret = swr_dmic_down(swr_dmic->swr_slave);
-		break;
-	}
-
-	if (ret)
-		dev_dbg(component->dev, "%s wname: %s event: %d ret : %d\n",
-			__func__, w->name, event, ret);
-
-	return ret;
-}
-
 static const char * const tx_master_port_text[] = {
 	"ZERO", "SWRM_TX1_CH1", "SWRM_TX1_CH2", "SWRM_TX1_CH3", "SWRM_TX1_CH4",
 	"SWRM_TX2_CH1", "SWRM_TX2_CH2", "SWRM_TX2_CH3", "SWRM_TX2_CH4",
@@ -304,10 +276,6 @@ static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
 
 	SND_SOC_DAPM_INPUT("SWR_DMIC"),
 
-	SND_SOC_DAPM_SUPPLY_S("SMIC_SUPPLY", 1, SND_SOC_NOPM, 0, 0,
-				swr_dmic_enable_supply,
-				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-				SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_OUT_DRV_E("SMIC_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
 				swr_dmic_port_enable,
 				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
@@ -315,7 +283,6 @@ static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
 };
 
 static const struct snd_soc_dapm_route swr_dmic_audio_map[] = {
-	{"SWR_DMIC", NULL, "SMIC_SUPPLY"},
 	{"SWR_DMIC_MIXER", "Switch", "SWR_DMIC"},
 	{"SMIC_PORT_EN", NULL, "SWR_DMIC_MIXER"},
 	{"SWR_DMIC_OUTPUT", NULL, "SMIC_PORT_EN"},
@@ -325,11 +292,38 @@ static int swr_dmic_codec_probe(struct snd_soc_component *component)
 {
 	struct swr_dmic_priv *swr_dmic =
 			snd_soc_component_get_drvdata(component);
+	struct snd_soc_dapm_context *dapm =
+			snd_soc_component_get_dapm(component);
+	char w_name[100];
 
 	if (!swr_dmic)
 		return -EINVAL;
 
 	swr_dmic->component = component;
+	snd_soc_dapm_ignore_suspend(dapm,
+				swr_dmic->dai_driver->capture.stream_name);
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SWR_DMIC", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SMIC_SUPPLY", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SMIC_PORT_EN", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SWR_DMIC_OUTPUT", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	snd_soc_dapm_sync(dapm);
+
 	return 0;
 }
 
@@ -364,6 +358,8 @@ static int enable_wcd_codec_supply(struct swr_dmic_priv *swr_dmic, bool enable)
 		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
 	}
+	dev_dbg(component->dev, "%s: supply %d micbias: %d enable: %d\n",
+		__func__, swr_dmic->is_en_supply, micb_num, enable);
 
 	if (enable)
 		rc = wcd938x_codec_force_enable_micbias_v2(component,
@@ -412,6 +408,29 @@ static struct snd_soc_dai_driver swr_dmic_dai[] = {
 	},
 };
 
+static int swr_dmic_event_notify(struct notifier_block *block,
+				unsigned long val,
+				void *data)
+{
+	u16 event = (val & 0xffff);
+	int ret = 0;
+	struct swr_dmic_priv *swr_dmic = container_of(block,
+					struct swr_dmic_priv,
+					nblock);
+	switch (event) {
+	case WCD938X_EVT_SSR_DOWN:
+		ret = swr_dmic_down(swr_dmic->swr_slave);
+		break;
+	case WCD938X_EVT_SSR_UP:
+		ret = swr_dmic_up(swr_dmic->swr_slave);
+		if (!ret)
+			ret = swr_dmic_reset(swr_dmic->swr_slave);
+		break;
+	}
+
+	return ret;
+}
+
 static int swr_dmic_probe(struct swr_device *pdev)
 {
 	int ret = 0;
@@ -423,6 +442,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	const char *swr_dmic_name_prefix_of = NULL;
 	const char *swr_dmic_codec_name_of = NULL;
 	struct snd_soc_component *component = NULL;
+	int num_retry = NUM_ATTEMPTS;
 
 	swr_dmic = devm_kzalloc(&pdev->dev, sizeof(struct swr_dmic_priv),
 			    GFP_KERNEL);
@@ -485,13 +505,18 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	 * as per HW requirement.
 	 */
 	usleep_range(5000, 5010);
-	ret = swr_get_logical_dev_num(pdev, pdev->addr, &swr_devnum);
+	do {
+		/* Add delay for soundwire enumeration */
+		usleep_range(100, 110);
+		ret = swr_get_logical_dev_num(pdev, pdev->addr, &swr_devnum);
+	} while (ret && --num_retry);
+
 	if (ret) {
-		dev_dbg(&pdev->dev,
-			"%s get devnum %d for dev addr %lx failed\n",
+		dev_info(&pdev->dev,
+			"%s get devnum %d for dev addr %llx failed\n",
 			__func__, swr_devnum, pdev->addr);
 		ret = -EPROBE_DEFER;
-		goto err;
+		goto dev_err;
 	}
 	pdev->dev_num = swr_devnum;
 
@@ -561,10 +586,9 @@ static int swr_dmic_probe(struct swr_device *pdev)
 			strlen(swr_dmic_name_prefix_of) + 1);
 	component->name_prefix = prefix_name;
 
-	if (swr_dmic->is_en_supply == 1) {
-		enable_wcd_codec_supply(swr_dmic, false);
-		--swr_dmic->is_en_supply;
-	}
+	swr_dmic->nblock.notifier_call = swr_dmic_event_notify;
+	wcd938x_swr_dmic_register_notifier(swr_dmic->supply_component,
+					&swr_dmic->nblock, true);
 
 	return 0;
 
@@ -589,7 +613,10 @@ static int swr_dmic_remove(struct swr_device *pdev)
 		dev_err(&pdev->dev, "%s: swr_dmic is NULL\n", __func__);
 		return -EINVAL;
 	}
-
+	if (swr_dmic->is_en_supply == 1) {
+		enable_wcd_codec_supply(swr_dmic, false);
+		--swr_dmic->is_en_supply;
+	}
 	snd_soc_unregister_component(&pdev->dev);
 	swr_set_dev_data(pdev, NULL);
 	return 0;
@@ -624,6 +651,8 @@ static int swr_dmic_down(struct swr_device *pdev)
 		return -EINVAL;
 	}
 
+	dev_dbg(&pdev->dev, "%s: is_en_supply: %d\n",
+		__func__, swr_dmic->is_en_supply);
 	--swr_dmic->is_en_supply;
 	if (swr_dmic->is_en_supply < 0) {
 		dev_warn(&pdev->dev, "%s: mismatch in supply count %d\n",
@@ -641,7 +670,7 @@ done:
 static int swr_dmic_reset(struct swr_device *pdev)
 {
 	struct swr_dmic_priv *swr_dmic;
-	u8 retry = 5;
+	u8 retry = NUM_ATTEMPTS;
 	u8 devnum = 0;
 
 	swr_dmic = swr_get_dev_data(pdev);
@@ -706,7 +735,6 @@ static struct swr_driver swr_dmic_driver = {
 	.probe = swr_dmic_probe,
 	.remove = swr_dmic_remove,
 	.id_table = swr_dmic_id,
-	.device_down = swr_dmic_down,
 };
 
 static int __init swr_dmic_init(void)

@@ -176,6 +176,7 @@ struct tx_macro_priv {
 	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
+	int amic_sample_rate;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -411,6 +412,9 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 		else
 			tx_priv->hs_slow_insert_complete = false;
 		break;
+	default:
+		pr_debug("%s Invalid Event\n", __func__);
+		break;
 	}
 	return 0;
 }
@@ -497,6 +501,29 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 				hpf_cut_off_freq << 5);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x02);
+		/* Add delay between toggle hpf gate based on sample rate */
+		switch(tx_priv->amic_sample_rate) {
+		case 8000:
+			usleep_range(125, 130);
+			break;
+		case 16000:
+			usleep_range(62, 65);
+			break;
+		case 32000:
+			usleep_range(31, 32);
+			break;
+		case 48000:
+			usleep_range(20, 21);
+			break;
+		case 96000:
+			usleep_range(10, 11);
+			break;
+		case 192000:
+			usleep_range(5, 6);
+			break;
+		default:
+			usleep_range(125, 130);
+		}
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x01);
 	} else {
@@ -930,6 +957,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 dec_cfg_reg = 0;
 	u16 hpf_gate_reg = 0;
 	u16 tx_gain_ctl_reg = 0;
+	u16 tx_fs_reg = 0;
 	u8 hpf_cut_off_freq = 0;
 	u16 adc_mux_reg = 0;
 	int hpf_delay = TX_MACRO_DMIC_HPF_DELAY_MS;
@@ -955,6 +983,11 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				TX_MACRO_TX_PATH_OFFSET * decimator;
 	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+	tx_fs_reg = BOLERO_CDC_TX0_TX_PATH_CTL +
+				TX_MACRO_TX_PATH_OFFSET * decimator;
+
+	tx_priv->amic_sample_rate = (snd_soc_component_read32(component,
+				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -2360,18 +2393,18 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
-	SOC_SINGLE_SX_TLV("TX_DEC0 Volume",
+	SOC_SINGLE_S8_TLV("TX_DEC0 Volume",
 			  BOLERO_CDC_TX0_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC1 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC1 Volume",
 			  BOLERO_CDC_TX1_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC2 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC2 Volume",
 			  BOLERO_CDC_TX2_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC3 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC3 Volume",
 			  BOLERO_CDC_TX3_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 
 	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2396,18 +2429,18 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls_v3[] = {
-	SOC_SINGLE_SX_TLV("TX_DEC4 Volume",
+	SOC_SINGLE_S8_TLV("TX_DEC4 Volume",
 			  BOLERO_CDC_TX4_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC5 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC5 Volume",
 			  BOLERO_CDC_TX5_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC6 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC6 Volume",
 			  BOLERO_CDC_TX6_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC7 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC7 Volume",
 			  BOLERO_CDC_TX7_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 
 	SOC_ENUM_EXT("DEC4 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2423,30 +2456,30 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_v3[] = {
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
-	SOC_SINGLE_SX_TLV("TX_DEC0 Volume",
+	SOC_SINGLE_S8_TLV("TX_DEC0 Volume",
 			  BOLERO_CDC_TX0_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC1 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC1 Volume",
 			  BOLERO_CDC_TX1_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC2 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC2 Volume",
 			  BOLERO_CDC_TX2_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC3 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC3 Volume",
 			  BOLERO_CDC_TX3_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC4 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC4 Volume",
 			  BOLERO_CDC_TX4_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC5 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC5 Volume",
 			  BOLERO_CDC_TX5_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC6 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC6 Volume",
 			  BOLERO_CDC_TX6_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC7 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC7 Volume",
 			  BOLERO_CDC_TX7_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 
 	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2718,36 +2751,6 @@ static int tx_macro_clk_div_get(struct snd_soc_component *component)
 		return -EINVAL;
 
 	return tx_priv->dmic_clk_div;
-}
-
-static int tx_macro_clk_switch(struct snd_soc_component *component, int clk_src)
-{
-	struct device *tx_dev = NULL;
-	struct tx_macro_priv *tx_priv = NULL;
-	int ret = 0;
-
-	if (!component)
-		return -EINVAL;
-
-	tx_dev = bolero_get_device_ptr(component->dev, TX_MACRO);
-	if (!tx_dev) {
-		dev_err(component->dev,
-			"%s: null device for macro!\n", __func__);
-		return -EINVAL;
-	}
-	tx_priv = dev_get_drvdata(tx_dev);
-	if (!tx_priv) {
-		dev_err(component->dev,
-			"%s: priv is null for macro!\n", __func__);
-		return -EINVAL;
-	}
-	if (tx_priv->swr_ctrl_data) {
-		ret = swrm_wcd_notify(
-			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_REQ_CLK_SWITCH, &clk_src);
-	}
-
-	return ret;
 }
 
 static int tx_macro_core_vote(void *handle, bool enable)
@@ -3231,7 +3234,6 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->reg_wake_irq = tx_macro_reg_wake_irq;
 	ops->set_port_map = tx_macro_set_port_map;
 	ops->clk_div_get = tx_macro_clk_div_get;
-	ops->clk_switch = tx_macro_clk_switch;
 	ops->reg_evt_listener = tx_macro_register_event_listener;
 	ops->clk_enable = __tx_macro_mclk_enable;
 }
@@ -3246,6 +3248,12 @@ static int tx_macro_probe(struct platform_device *pdev)
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
 	u32 is_used_tx_swr_gpio = 1;
 	const char *is_used_tx_swr_gpio_dt = "qcom,is-used-swr-gpio";
+
+	if (!bolero_is_va_macro_registered(&pdev->dev)) {
+		dev_err(&pdev->dev,
+			"%s: va-macro not registered yet, defer\n", __func__);
+		return -EPROBE_DEFER;
+	}
 
 	tx_priv = devm_kzalloc(&pdev->dev, sizeof(struct tx_macro_priv),
 			    GFP_KERNEL);

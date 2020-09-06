@@ -598,7 +598,7 @@ struct adm_cmd_device_open_v8 {
  * In all other use cases this should be set to 0xffff
  */
 
-	u16                  reserved;
+	u16 compressed_data_type;
 } __packed;
 
 /*
@@ -1356,6 +1356,7 @@ struct adm_cmd_connect_afe_port_v5 {
 #define RT_PROXY_PORT_001_RX	0x2000
 #define RT_PROXY_PORT_001_TX	0x2001
 #define AFE_LOOPBACK_TX	0x6001
+#define HDMI_RX_MS			0x6002
 #define DISPLAY_PORT_RX	0x6020
 
 #define AFE_LANE_MASK_INVALID 0
@@ -1562,6 +1563,8 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_RX      0x4012
 /* SLIMbus Tx port on channel 9. */
 #define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_TX      0x4013
+/*AFE Rx port for audio over hdmi*/
+#define AFE_PORT_ID_HDMI_MS					0x6002
 /* AFE Rx port for audio over Display port */
 #define AFE_PORT_ID_HDMI_OVER_DP_RX              0x6020
 /*USB AFE port */
@@ -2554,6 +2557,7 @@ struct afe_port_data_cmd_rt_proxy_port_read_v2 {
 #define AFE_GENERIC_COMPRESSED           0x8
 #define AFE_LINEAR_PCM_DATA_PACKED_16BIT 0X6
 #define AFE_DSD_DOP_W_MARKER_DATA        0x9
+#define AFE_DSD_DATA                     0xA
 
 /* This param id is used to configure I2S interface */
 #define AFE_PARAM_ID_I2S_CONFIG	0x0001020D
@@ -4139,6 +4143,16 @@ struct afe_id_aptx_adaptive_enc_init
 #define AFE_MODULE_ID_DEPACKETIZER_COP        0x00013233
 #define AFE_MODULE_ID_DEPACKETIZER_COP_V1     0x000132E9
 
+/* Macros for dynamic loading of modules by AVCS */
+
+#define AVS_MODULE_ID_PACKETIZER_COP        0x0001322A
+
+#define AVS_MODULE_ID_PACKETIZER_COP_V1     0x000132E8
+
+#define AVS_MODULE_ID_DEPACKETIZER_COP      0x00013233
+
+#define AVS_MODULE_ID_DEPACKETIZER_COP_V1   0x000132E9
+
 /*
  * Depacketizer type parameter for the #AVS_MODULE_ID_DECODER module.
  * This parameter cannot be set runtime.
@@ -4734,6 +4748,56 @@ struct afe_enc_config {
 	union afe_enc_config_data data;
 };
 
+/*
+ * Enable TTP generator in AFE.
+ */
+#define AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_STATE         0x000132EF
+/*
+ * Configure TTP generator params in AFE.
+ */
+#define AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_CFG           0x000132F0
+#define MAX_TTP_OFFSET_PAIRS  4
+struct afe_ttp_gen_enable_t {
+	uint16_t enable;
+	uint16_t reserved;
+} __packed;
+
+struct afe_ttp_ssrc_offset_pair_t {
+	uint32_t ssrc;
+	uint32_t offset;
+} __packed;
+
+struct afe_ttp_gen_cfg_t {
+	uint32_t ttp_offset_default;
+	/*
+	 * TTP offset uses for all other cases
+	 * where no valid SSRC is received.
+	 */
+	uint32_t settling_time;
+	/*
+	 * If settling_mode==0x00: time in [us]
+	 * after first received packet until
+	 * packets are no longer dropped.
+	 */
+	uint16_t settling_mode;
+	/*
+	 * 0x00(Drop), 0x01(Settle)
+	 */
+	uint16_t num_ssrc_offsets;
+	/*
+	 * Number of SSRC/TTPOFFSET pairs to follow
+	 */
+	struct afe_ttp_ssrc_offset_pair_t ssrc_ttp_offset[MAX_TTP_OFFSET_PAIRS];
+	/*
+	 * Array of ssrc/offset pairs
+	 */
+} __packed;
+
+struct afe_ttp_config {
+	struct afe_ttp_gen_enable_t ttp_gen_enable;
+	struct afe_ttp_gen_cfg_t ttp_gen_cfg;
+};
+
 union afe_dec_config_data {
 	struct asm_sbc_dec_cfg_t sbc_config;
 	struct asm_aac_dec_cfg_v2_t aac_config;
@@ -4876,6 +4940,9 @@ struct avs_dec_congestion_buffer_param_t {
 /* Payload of the AFE_PARAM_ID_ISLAND_CONFIG parameter used by
  * AFE_MODULE_AUDIO_DEV_INTERFACE.
  */
+
+#define AFE_PARAM_ID_POWER_MODE_CONFIG		0x0002002c
+#define AFE_API_VERSION_POWER_MODE_CONFIG		0x1
 struct afe_param_id_island_cfg_t {
 	uint32_t	island_cfg_minor_version;
 	/* Tracks the configuration of this parameter.
@@ -4883,6 +4950,19 @@ struct afe_param_id_island_cfg_t {
 	 */
 
 	uint32_t	island_enable;
+	/* Specifies whether island mode should be enabled or disabled for the
+	 * use-case being setup.
+	 * Supported values: 0 - Disable, 1 - Enable
+	 */
+} __packed;
+
+struct afe_param_id_power_mode_cfg_t {
+	uint32_t	power_mode_cfg_minor_version;
+	/* Tracks the configuration of this parameter
+         * Supported values: #AFE_API_VERSION_POWER_MODE_CONFIG
+	 */
+
+	uint32_t	power_mode_enable;
 	/* Specifies whether island mode should be enabled or disabled for the
 	 * use-case being setup.
 	 * Supported values: 0 - Disable, 1 - Enable
@@ -5380,6 +5460,7 @@ struct afe_param_id_lpass_core_shared_clk_cfg {
 #define COMPRESSED_PASSTHROUGH_NONE_TOPOLOGY            0x00010774
 #define VPM_TX_SM_ECNS_V2_COPP_TOPOLOGY			0x00010F89
 #define VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY		0x10000003
+#define VPM_TX_VOICE_FLUENCE_SM_COPP_TOPOLOGY		0x10000004
 #define VPM_TX_DM_FLUENCE_COPP_TOPOLOGY			0x00010F72
 #define VPM_TX_QMIC_FLUENCE_COPP_TOPOLOGY		0x00010F75
 #define VPM_TX_DM_RFECNS_COPP_TOPOLOGY			0x00010F86
@@ -8887,6 +8968,13 @@ struct asm_data_cmd_remove_silence {
 /* Shift value for the IEC 61937 to 61937 pass-through capture. */
 #define ASM_SHIFT_IEC_61937_PASS_THROUGH_FLAG           0
 
+/* Bitmask for the DSD pass-through capture. */
+#define ASM_BIT_MASK_COMPRESSED_FORMAT_FLAG             (0x00000003UL)
+
+/* Shift value for the DSD pass-through capture. */
+#define ASM_SHIFT_DSD_COMPRESSED_FORMAT_FLAG            0
+
+#define ASM_DSD_FORMAT_FLAG                             2
 struct asm_stream_cmd_open_read_compressed {
 	struct apr_hdr hdr;
 	u32                    mode_flags;
@@ -8898,6 +8986,12 @@ struct asm_stream_cmd_open_read_compressed {
  * - Use #ASM_BIT_MASK_IEC_61937_PASS_THROUGH_FLAG to set the bitmask
  *   and #ASM_SHIFT_IEC_61937_PASS_THROUGH_FLAG to set the shift value
  *   for this bit.
+ * Supported values for bit 1: (DSD native pass-through mode)
+ * 0 -- non DSD operation
+ * 1 -- Pass-through transfer of the DSD format stream
+ * To set this bit, use #ASM_BIT_MASK_DSD_PASS_THROUGH_FLAG and
+ * use #ASM_SHIFT_DSD_PASS_THROUGH_FLAG to set the shift value for
+ * this bit
  * Supported values for bit 4:
  * - 0 -- Return data buffer contains all encoded frames only; it does
  *      not contain frame metadata.
@@ -8914,6 +9008,9 @@ struct asm_stream_cmd_open_read_compressed {
  * Supported values: should be greater than 0 for IEC to RAW compressed
  *                   unpack mode.
  *                   Value is don't care for IEC 61937 pass-through mode.
+ * @values
+ * - >0 -- For IEC 61937-to-RAW Compressed Unpack mode
+ * - 1  -- For IEC 61937 or DSD Pass-through mode
  */
 
 } __packed;
@@ -12101,6 +12198,35 @@ struct afe_clk_cfg {
 #define AFE_PARAM_ID_LPAIF_CLK_CONFIG	0x00010238
 #define AFE_MODULE_CLOCK_SET		0x0001028F
 #define AFE_PARAM_ID_CLOCK_SET		0x00010290
+
+struct afe_set_clk_drift {
+	/*
+	 * Clock ID
+	 *	@values
+	 *	- 0x100 to 0x10E
+	 *	- 0x200 to 0x20C
+	 *	- 0x500 to 0x505
+	 */
+	uint32_t clk_id;
+
+	/*
+	 * Clock drift  (in PPB) to be set.
+	 *	@values
+	 *	- need to get values from DSP team
+	 */
+	int32_t clk_drift;
+
+	/*
+	 * Clock rest.
+	 *	@values
+	 *	- 1 -- Reset PLL with the original frequency
+	 *	- 0 -- Adjust the clock with the clk drift value
+	 */
+	uint32_t clk_reset;
+} __packed;
+
+/* This param id is used to adjust audio interface PLL*/
+#define AFE_PARAM_ID_CLOCK_ADJUST       0x000102C6
 
 enum afe_lpass_digital_clk_src {
 	Q6AFE_LPASS_DIGITAL_ROOT_INVALID,

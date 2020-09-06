@@ -298,8 +298,7 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 				"%s: va_mclk_users is non-zero still, audio SSR fail!!\n",
 				__func__);
 		break;
-	case BOLERO_MACRO_EVT_SSR_UP:
-		trace_printk("%s, enter SSR up\n", __func__);
+	case BOLERO_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
 		ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
@@ -312,6 +311,9 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, false);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		trace_printk("%s, enter SSR up\n", __func__);
 		/* reset swr after ssr/pdr */
 		va_priv->reset_swr = true;
 		if (va_priv->swr_ctrl_data)
@@ -378,7 +380,6 @@ static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
-	int clk_src = 0;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -391,30 +392,12 @@ static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		if (va_priv->swr_ctrl_data) {
-			clk_src = CLK_SRC_VA_RCG;
-			ret = swrm_wcd_notify(
-				va_priv->swr_ctrl_data[0].va_swr_pdev,
-				SWR_REQ_CLK_SWITCH, &clk_src);
-			if (ret)
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
-		}
 		msm_cdc_pinctrl_set_wakeup_capable(
 				va_priv->va_swr_gpio_p, false);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		msm_cdc_pinctrl_set_wakeup_capable(
 				va_priv->va_swr_gpio_p, true);
-		if (va_priv->swr_ctrl_data) {
-			clk_src = CLK_SRC_TX_RCG;
-			ret = swrm_wcd_notify(
-				va_priv->swr_ctrl_data[0].va_swr_pdev,
-				SWR_REQ_CLK_SWITCH, &clk_src);
-			if (ret)
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
-		}
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -452,10 +435,6 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					"%s: lpass audio hw enable failed\n",
 					__func__);
 		}
-		if (!ret)
-			if (bolero_tx_clk_switch(component, CLK_SRC_VA_RCG))
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
 		if (va_priv->lpi_enable) {
 			bolero_register_event_listener(component, true);
 			va_priv->register_event_listener = true;
@@ -466,8 +445,6 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			va_priv->register_event_listener = false;
 			bolero_register_event_listener(component, false);
 		}
-		if (bolero_tx_clk_switch(component, CLK_SRC_TX_RCG))
-			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
 			digital_cdc_rsc_mgr_hw_vote_disable(
 				va_priv->lpass_audio_hw_vote);
@@ -507,7 +484,6 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
-	int clk_src = 0;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -528,27 +504,10 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			ret = bolero_tx_mclk_enable(component, 1);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (va_priv->lpi_enable) {
-			if (va_priv->version == BOLERO_VERSION_2_1) {
-				if (va_priv->swr_ctrl_data) {
-					clk_src = CLK_SRC_TX_RCG;
-					ret = swrm_wcd_notify(
-					va_priv->swr_ctrl_data[0].va_swr_pdev,
-					SWR_REQ_CLK_SWITCH, &clk_src);
-					if (ret)
-						dev_dbg(va_dev,
-					"%s: clock switch failed\n",
-						__func__);
-				}
-			} else if (bolero_tx_clk_switch(component,
-					CLK_SRC_TX_RCG)) {
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
-			}
+		if (va_priv->lpi_enable)
 			va_macro_mclk_enable(va_priv, 0, true);
-		} else {
+		else
 			bolero_tx_mclk_enable(component, 0);
-		}
 
 		if (va_priv->tx_clk_status > 0) {
 			bolero_clk_rsc_request_clock(va_priv->dev,
@@ -2533,30 +2492,30 @@ static const struct soc_enum dec_mode_mux_enum =
 			    dec_mode_mux_text);
 
 static const struct snd_kcontrol_new va_macro_snd_controls[] = {
-	SOC_SINGLE_SX_TLV("VA_DEC0 Volume",
+	SOC_SINGLE_S8_TLV("VA_DEC0 Volume",
 			  BOLERO_CDC_VA_TX0_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC1 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC1 Volume",
 			  BOLERO_CDC_VA_TX1_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC2 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC2 Volume",
 			  BOLERO_CDC_VA_TX2_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC3 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC3 Volume",
 			  BOLERO_CDC_VA_TX3_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC4 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC4 Volume",
 			  BOLERO_CDC_VA_TX4_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC5 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC5 Volume",
 			  BOLERO_CDC_VA_TX5_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC6 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC6 Volume",
 			  BOLERO_CDC_VA_TX6_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC7 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC7 Volume",
 			  BOLERO_CDC_VA_TX7_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
 		va_macro_lpi_get, va_macro_lpi_put),
 
@@ -2574,23 +2533,23 @@ static const struct snd_kcontrol_new va_macro_snd_controls[] = {
 };
 
 static const struct snd_kcontrol_new va_macro_snd_controls_common[] = {
-	SOC_SINGLE_SX_TLV("VA_DEC0 Volume",
+	SOC_SINGLE_S8_TLV("VA_DEC0 Volume",
 			  BOLERO_CDC_VA_TX0_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC1 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC1 Volume",
 			  BOLERO_CDC_VA_TX1_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
 		va_macro_lpi_get, va_macro_lpi_put),
 };
 
 static const struct snd_kcontrol_new va_macro_snd_controls_v3[] = {
-	SOC_SINGLE_SX_TLV("VA_DEC2 Volume",
+	SOC_SINGLE_S8_TLV("VA_DEC2 Volume",
 			  BOLERO_CDC_VA_TX2_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("VA_DEC3 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("VA_DEC3 Volume",
 			  BOLERO_CDC_VA_TX3_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 };
 
 static int va_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,

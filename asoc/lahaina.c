@@ -384,9 +384,6 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 	{
 		.name = LPASS_BE_RT_PROXY_PCM_TX,
 		.stream_name = LPASS_BE_RT_PROXY_PCM_TX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -398,9 +395,6 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 	{
 		.name = LPASS_BE_RT_PROXY_PCM_RX,
 		.stream_name = LPASS_BE_RT_PROXY_PCM_RX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -412,9 +406,6 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 	{
 		.name = LPASS_BE_USB_AUDIO_RX,
 		.stream_name = LPASS_BE_USB_AUDIO_RX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -426,9 +417,6 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 	{
 		.name = LPASS_BE_USB_AUDIO_TX,
 		.stream_name = LPASS_BE_USB_AUDIO_TX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -442,9 +430,6 @@ static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
 	{
 		.name = LPASS_BE_SLIMBUS_7_RX,
 		.stream_name = LPASS_BE_SLIMBUS_7_RX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -458,9 +443,6 @@ static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
 	{
 		.name = LPASS_BE_SLIMBUS_7_TX,
 		.stream_name = LPASS_BE_SLIMBUS_7_TX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -476,9 +458,6 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 	{
 		.name = LPASS_BE_DISPLAY_PORT_RX,
 		.stream_name = LPASS_BE_DISPLAY_PORT_RX,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -486,22 +465,6 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 		.ignore_suspend = 1,
 		SND_SOC_DAILINK_REG(display_port),
 	},
-#if 0
-	/* DISP PORT 1 BACK END DAI Link */
-	{
-		.name = LPASS_BE_DISPLAY_PORT1,
-		.stream_name = LPASS_BE_DISPLAY_PORT1,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
-		.playback_only = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
-			SND_SOC_DPCM_TRIGGER_POST},
-		.ignore_pmdown_time = 1,
-		.ignore_suspend = 1,
-		SND_SOC_DAILINK_REG(display_port1),
-	},
-#endif
 };
 #endif
 
@@ -510,9 +473,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_0,
 		.stream_name = LPASS_BE_WSA_CDC_DMA_RX_0,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -525,9 +485,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
 		.stream_name = LPASS_BE_WSA_CDC_DMA_RX_1,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -539,9 +496,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_1,
 		.stream_name = LPASS_BE_WSA_CDC_DMA_TX_1,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -556,9 +510,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_0,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_0,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -571,9 +522,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_1,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -581,13 +529,11 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
+		.init = &msm_int_audrx_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_2,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -599,9 +545,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_3,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_3,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -611,11 +554,19 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		SND_SOC_DAILINK_REG(rx_dma_rx3),
 	},
 	{
+		.name = LPASS_BE_RX_CDC_DMA_RX_5,
+		.stream_name = LPASS_BE_RX_CDC_DMA_RX_5,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
+		SND_SOC_DAILINK_REG(rx_dma_rx5),
+	},
+	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_6,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_6,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -628,9 +579,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_3,
 		.stream_name = LPASS_BE_TX_CDC_DMA_TX_3,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -641,9 +589,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_4,
 		.stream_name = LPASS_BE_TX_CDC_DMA_TX_4,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -657,9 +602,6 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_0,
 		.stream_name = LPASS_BE_VA_CDC_DMA_TX_0,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -670,9 +612,6 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_1,
 		.stream_name = LPASS_BE_VA_CDC_DMA_TX_1,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -683,9 +622,6 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_2,
 		.stream_name = LPASS_BE_VA_CDC_DMA_TX_2,
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-#endif /* CONFIG_AUDIO_QGKI */
 		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
@@ -855,6 +791,45 @@ static const struct of_device_id lahaina_asoc_machine_of_match[]  = {
 	{},
 };
 
+static int msm_snd_card_late_probe(struct snd_soc_card *card)
+{
+	struct snd_soc_component *component = NULL;
+	const char *be_dl_name = LPASS_BE_RX_CDC_DMA_RX_0;
+	struct snd_soc_pcm_runtime *rtd;
+	int ret = 0;
+	void *mbhc_calibration;
+
+	rtd = snd_soc_get_pcm_runtime(card, be_dl_name);
+	if (!rtd) {
+		dev_err(card->dev,
+			"%s: snd_soc_get_pcm_runtime for %s failed!\n",
+			__func__, be_dl_name);
+		return -EINVAL;
+	}
+
+	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	mbhc_calibration = def_wcd_mbhc_cal();
+	if (!mbhc_calibration)
+		return -ENOMEM;
+	wcd_mbhc_cfg.calibration = mbhc_calibration;
+	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	if (ret) {
+		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
+			__func__, ret);
+		goto err_hs_detect;
+	}
+	return 0;
+
+err_hs_detect:
+	kfree(mbhc_calibration);
+	return ret;
+}
+
 static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 {
 	struct snd_soc_card *card = NULL;
@@ -934,6 +909,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	if (card) {
 		card->dai_link = dailink;
 		card->num_links = total_links;
+		card->late_probe = msm_snd_card_late_probe;
 	}
 
 	return card;
@@ -957,6 +933,10 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
+
+	if (codec_reg_done) {
+		return 0;
+	}
 
     if (pdata->wsa_max_devs > 0) {
         component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
@@ -1064,8 +1044,6 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_component *component = NULL;
 	struct snd_soc_dapm_context *dapm = NULL;
-	int ret = 0;
-	void *mbhc_calibration;
 	struct snd_info_entry *entry;
 	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
@@ -1095,8 +1073,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		if (!entry) {
 			dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",
 				 __func__);
-			ret = 0;
-			goto mbhc_cfg_cal;
+			 return 0;
 		}
 		pdata->codec_root = entry;
 	}
@@ -1121,23 +1098,8 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	}
 #endif
 
-mbhc_cfg_cal:
-	mbhc_calibration = def_wcd_mbhc_cal();
-	if (!mbhc_calibration)
-		return -ENOMEM;
-	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
-	if (ret) {
-		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
-			__func__, ret);
-		goto err_hs_detect;
-	}
 	msm_common_dai_link_init(rtd);
 	return 0;
-
-err_hs_detect:
-	kfree(mbhc_calibration);
-	return ret;
 }
 
 static int lahaina_ssr_enable(struct device *dev, void *data)
