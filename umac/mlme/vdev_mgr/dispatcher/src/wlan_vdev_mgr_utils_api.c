@@ -289,6 +289,9 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_TX_MGMT_RATE:
 		mlme_mgmt->rate_info.tx_mgmt_rate = mlme_cfg.value;
 		break;
+	case WLAN_MLME_CFG_TX_RTSCTS_RATE:
+		mlme_mgmt->rate_info.rtscts_tx_rate = mlme_cfg.value;
+		break;
 	case WLAN_MLME_CFG_TX_CHAINMASK:
 		mlme_mgmt->chainmask_info.tx_chainmask = mlme_cfg.value;
 		break;
@@ -532,6 +535,9 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_TX_MGMT_RATE:
 		*value = mlme_mgmt->rate_info.tx_mgmt_rate;
+		break;
+	case WLAN_MLME_CFG_TX_RTSCTS_RATE:
+		*value = mlme_mgmt->rate_info.rtscts_tx_rate;
 		break;
 	case WLAN_MLME_CFG_TX_CHAINMASK:
 		*value = mlme_mgmt->chainmask_info.tx_chainmask;

@@ -294,6 +294,7 @@ struct vdev_mlme_rate_info {
 #ifdef WLAN_BCN_RATECODE_ENABLE
 	uint32_t bcn_tx_rate_code;
 #endif
+	uint32_t rtscts_tx_rate;
 	uint8_t  type;
 	uint32_t lower32;
 	uint32_t higher32;
