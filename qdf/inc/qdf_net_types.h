@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,6 +61,7 @@ typedef __in6_addr_t in6_addr_t;
 #define QDF_ETH_TYPE_IPV4              0x0800  /* IPV4 */
 #define QDF_ETH_TYPE_IPV6              0x86dd  /* IPV6 */
 #define QDF_ETH_TYPE_8021Q             0x8100  /* 802.1Q vlan protocol */
+#define QDF_ETH_TYPE_8021AD            0x88a8  /* 802.1AD vlan protocol */
 #define QDF_IEEE80211_4ADDR_HDR_LEN     30
 #define QDF_IEEE80211_3ADDR_HDR_LEN     24
 #define QDF_IEEE80211_FC0_SUBTYPE_QOS   0x80
