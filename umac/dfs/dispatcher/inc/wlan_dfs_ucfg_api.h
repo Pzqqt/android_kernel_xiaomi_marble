@@ -256,6 +256,8 @@ struct dfs_to_mlme {
 			(struct wlan_objmgr_pdev *pdev,
 			 uint16_t freq,
 			 enum WLAN_DFS_EVENTS event);
+	bool (*mlme_is_inter_band_chan_switch_allowed)
+			(struct wlan_objmgr_pdev *pdev);
 	void (*mlme_acquire_radar_mode_switch_lock)
 			(struct wlan_objmgr_pdev *pdev);
 	void (*mlme_release_radar_mode_switch_lock)

@@ -444,6 +444,15 @@ void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
 bool dfs_mlme_is_opmode_sta(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * dfs_mlme_is_inter_band_chan_switch_allowed() - Check if inter-band channel
+ * switch is allowed.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: true if inter-band channel switch is allowed.
+ */
+bool dfs_mlme_is_inter_band_chan_switch_allowed(struct wlan_objmgr_pdev *pdev);
+
+/**
  * dfs_mlme_acquire_radar_mode_switch_lock() - Acquire lock for radar processing
  * over mode switch handling.
  * @pdev: Pointer to DFS pdev object.

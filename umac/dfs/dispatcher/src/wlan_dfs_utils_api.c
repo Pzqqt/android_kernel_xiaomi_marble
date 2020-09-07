@@ -773,10 +773,10 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 {
 	struct dfs_channel *tmp_chan_list = NULL;
 	struct wlan_dfs *dfs;
-	bool is_curchan_6g;
 	bool is_curchan_5g;
 	bool is_curchan_24g;
 	bool is_curchan_49g;
+	bool is_inter_band_switch_allowed;
 	uint8_t chan_num;
 	uint16_t center_freq;
 	uint16_t flagext;
@@ -796,10 +796,11 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 
 	chan_num = dfs->dfs_curchan->dfs_ch_ieee;
 	center_freq = dfs->dfs_curchan->dfs_ch_freq;
-	is_curchan_6g = WLAN_REG_IS_6GHZ_CHAN_FREQ(center_freq);
 	is_curchan_5g = WLAN_REG_IS_5GHZ_CH_FREQ(center_freq);
 	is_curchan_24g = WLAN_REG_IS_24GHZ_CH_FREQ(center_freq);
 	is_curchan_49g = WLAN_REG_IS_49GHZ_FREQ(center_freq);
+	is_inter_band_switch_allowed =
+		dfs_mlme_is_inter_band_chan_switch_allowed(dfs->dfs_pdev_obj);
 
 	for (i = 0; i < *num_chan; i++) {
 		chan_num = tmp_chan_list[i].dfs_ch_ieee;
@@ -809,13 +810,19 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 		if (!dfs_mlme_check_allowed_prim_chanlist(pdev, center_freq))
 			continue;
 
-		if (((is_curchan_5g) || is_curchan_6g) &&
-		    (WLAN_REG_IS_5GHZ_CH_FREQ(center_freq) ||
-		     WLAN_REG_IS_6GHZ_CHAN_FREQ(center_freq))) {
-			chan_list[j].dfs_ch_ieee = chan_num;
-			chan_list[j].dfs_ch_freq = center_freq;
-			chan_list[j].dfs_ch_flagext = flagext;
-			j++;
+		if (is_curchan_5g) {
+			/*
+			 * Always add 5G channels.
+			 * If inter band is allowed, add 6G also.
+			 */
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(center_freq) ||
+			    (is_inter_band_switch_allowed &&
+			     WLAN_REG_IS_6GHZ_CHAN_FREQ(center_freq))) {
+				chan_list[j].dfs_ch_ieee = chan_num;
+				chan_list[j].dfs_ch_freq = center_freq;
+				chan_list[j].dfs_ch_flagext = flagext;
+				j++;
+			}
 		} else if ((is_curchan_24g) &&
 				WLAN_REG_IS_24GHZ_CH_FREQ(center_freq)) {
 			chan_list[j].dfs_ch_ieee = chan_num;

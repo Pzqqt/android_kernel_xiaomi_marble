@@ -161,6 +161,8 @@ void register_dfs_callbacks(void)
 		mlme_dfs_bringdown_vaps;
 	tmp_dfs_to_mlme->mlme_dfs_deliver_event =
 		mlme_dfs_deliver_event;
+	tmp_dfs_to_mlme->mlme_is_inter_band_chan_switch_allowed =
+		mlme_is_inter_band_chan_switch_allowed;
 
 	tmp_dfs_to_mlme->mlme_acquire_radar_mode_switch_lock =
 		mlme_acquire_radar_mode_switch_lock;

@@ -536,6 +536,14 @@ void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
 }
 #endif
 
+bool dfs_mlme_is_inter_band_chan_switch_allowed(struct wlan_objmgr_pdev *pdev)
+{
+	if (!global_dfs_to_mlme.mlme_is_inter_band_chan_switch_allowed)
+		return false;
+
+	return global_dfs_to_mlme.mlme_is_inter_band_chan_switch_allowed(pdev);
+}
+
 bool dfs_mlme_is_opmode_sta(struct wlan_objmgr_pdev *pdev)
 {
 	if (!global_dfs_to_mlme.mlme_is_opmode_sta)
