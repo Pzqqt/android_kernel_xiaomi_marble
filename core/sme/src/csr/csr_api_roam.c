@@ -14697,8 +14697,7 @@ csr_check_vendor_ap_3_present(struct mac_context *mac_ctx, uint8_t *ie,
 static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 {
 
-	if ((IS_FEATURE_SUPPORTED_BY_FW(DOT11AX) ||
-	    mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled) && ie &&
+	if (mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled && ie &&
 	    (ie->qcn_ie.present || ie->he_cap.twt_responder)) {
 		sme_debug("TWT is supported, hence disable UAPSD; twt req supp: %d,twt respon supp: %d, QCN_IE: %d",
 			  mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled,
