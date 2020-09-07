@@ -3896,14 +3896,14 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			hdd_err("Failed to Open legacy components; status: %d",
 				status);
 			ret = qdf_status_to_os_return(status);
-			goto cds_free;
+			goto ipa_component_free;
 		}
 
 		ret = hdd_update_config(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to update configuration; errno: %d",
 				ret);
-			goto cds_free;
+			goto ipa_component_free;
 		}
 
 		status = wbuff_module_init();
@@ -4069,6 +4069,9 @@ psoc_close:
 	hdd_component_psoc_close(hdd_ctx->psoc);
 	wlan_global_lmac_if_close(hdd_ctx->psoc);
 	cds_deinit_ini_config();
+
+ipa_component_free:
+	ucfg_ipa_component_config_free();
 
 cds_free:
 	ol_cds_free();
