@@ -404,7 +404,7 @@ static int adsp_loader_probe(struct platform_device *pdev)
 					  &adsp_fuse_not_supported);
 		if (ret) {
 			dev_dbg(&pdev->dev,
-				"%s: adsp_fuse_not_supported prop not found",
+				"%s: adsp_fuse_not_supported prop not found %d\n",
 				__func__, ret);
 			goto wqueue;
 		}

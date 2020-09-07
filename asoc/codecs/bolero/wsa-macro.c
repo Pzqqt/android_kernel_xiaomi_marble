@@ -843,6 +843,7 @@ static int wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 	uint16_t j = 0, reg = 0, mix_reg = 0, dsm_reg = 0;
 	u16 int_mux_cfg0 = 0, int_mux_cfg1 = 0;
 	u8 int_mux_cfg0_val = 0, int_mux_cfg1_val = 0;
+	bool adie_lb = false;
 
 	if (mute)
 		return 0;
@@ -879,7 +880,7 @@ static int wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 			}
 		}
 	}
-	bolero_wsa_pa_on(wsa_dev);
+	bolero_wsa_pa_on(wsa_dev, adie_lb);
 		break;
 	default:
 		break;
@@ -1470,6 +1471,7 @@ static int wsa_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 	u16 reg = 0;
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
+	bool adie_lb = false;
 
 	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
@@ -1480,9 +1482,10 @@ static int wsa_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (wsa_macro_adie_lb(component, w->shift)) {
+			adie_lb = true;
 			snd_soc_component_update_bits(component,
 						reg, 0x20, 0x20);
-			bolero_wsa_pa_on(wsa_dev);
+			bolero_wsa_pa_on(wsa_dev, adie_lb);
 		}
 		break;
 	default:
@@ -2561,10 +2564,10 @@ static const struct snd_soc_dapm_widget wsa_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX_E("WSA_RX1 MIX INP", SND_SOC_NOPM,
 		0, 0, &rx1_mix_mux, wsa_macro_enable_mix_path,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("WSA_RX INT0 MIX", SND_SOC_NOPM,
+	SND_SOC_DAPM_PGA_E("WSA_RX INT0 MIX", SND_SOC_NOPM,
 			0, 0, NULL, 0, wsa_macro_enable_main_path,
 			SND_SOC_DAPM_PRE_PMU),
-	SND_SOC_DAPM_MIXER_E("WSA_RX INT1 MIX", SND_SOC_NOPM,
+	SND_SOC_DAPM_PGA_E("WSA_RX INT1 MIX", SND_SOC_NOPM,
 			1, 0, NULL, 0, wsa_macro_enable_main_path,
 			SND_SOC_DAPM_PRE_PMU),
 	SND_SOC_DAPM_MIXER("WSA_RX INT0 SEC MIX", SND_SOC_NOPM, 0, 0, NULL, 0),

@@ -25,6 +25,12 @@ static const struct of_device_id pm2250_id_table[] = {
 };
 MODULE_DEVICE_TABLE(of, pm2250_id_table);
 
+/**
+ * pm2250_spmi_write: Function to write to PMIC register
+ * @device: node for rouleur device
+ * @reg: PMIC register to write value
+ * @value: Value to be written to PMIC register
+ */
 int pm2250_spmi_write(struct device *dev, int reg, int value)
 {
 	int rc;
@@ -46,6 +52,34 @@ int pm2250_spmi_write(struct device *dev, int reg, int value)
 	return rc;
 }
 EXPORT_SYMBOL(pm2250_spmi_write);
+
+/**
+ * pm2250_spmi_read: Function to read PMIC register
+ * @device: node for rouleur device
+ * @reg: PMIC register to read value
+ * @value: Pointer to value of reg to be read
+ */
+int pm2250_spmi_read(struct device *dev, int reg, int *value)
+{
+	int rc;
+	struct pm2250_spmi *spmi_dd;
+
+	if (!of_device_is_compatible(dev->of_node, "qcom,pm2250-spmi")) {
+		pr_err("%s: Device node is invalid\n", __func__);
+		return -EINVAL;
+	}
+
+	spmi_dd = dev_get_drvdata(dev);
+	if (!spmi_dd)
+		return -EINVAL;
+
+	rc = regmap_read(spmi_dd->regmap, reg, value);
+	if (rc)
+		dev_err(dev, "%s: Read from PMIC register failed\n", __func__);
+
+	return rc;
+}
+EXPORT_SYMBOL(pm2250_spmi_read);
 
 static int pm2250_spmi_probe(struct platform_device *pdev)
 {

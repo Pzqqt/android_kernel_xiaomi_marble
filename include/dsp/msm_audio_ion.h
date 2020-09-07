@@ -34,6 +34,10 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 			unsigned long *ionflag, size_t bufsz,
 			dma_addr_t *paddr, size_t *pa_len, void **vaddr);
 int msm_audio_ion_free(struct dma_buf *dma_buf);
+int msm_audio_ion_import_cma(struct dma_buf **dma_buf, int fd,
+			     unsigned long *ionflag, size_t bufsz,
+			     dma_addr_t *paddr, size_t *pa_len, void **vaddr);
+int msm_audio_ion_free_cma(struct dma_buf *dma_buf);
 int msm_audio_ion_mmap(struct audio_buffer *abuff, struct vm_area_struct *vma);
 int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op);
 

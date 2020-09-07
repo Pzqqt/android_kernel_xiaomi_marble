@@ -5,6 +5,7 @@
 
 #include <sound/soc.h>
 
+
 SND_SOC_DAILINK_DEFS(usb_audio_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_DUMMY()),

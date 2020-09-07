@@ -78,6 +78,11 @@ static const struct snd_kcontrol_new name##_mux = \
 #define RX_MACRO_EC_MIX_TX1_MASK 0x0f
 #define RX_MACRO_EC_MIX_TX2_MASK 0x0f
 
+#define RX_MACRO_GAIN_MAX_VAL 0x28
+#define RX_MACRO_GAIN_VAL_UNITY 0x0
+/* Define macros to increase PA Gain by half */
+#define RX_MACRO_MOD_GAIN (RX_MACRO_GAIN_VAL_UNITY + 6)
+
 #define COMP_MAX_COEFF 25
 
 struct wcd_imped_val {
@@ -454,6 +459,8 @@ struct rx_macro_priv {
 	struct rx_macro_bcl_pmic_params bcl_pmic_params;
 	u16 clk_id;
 	u16 default_clk_id;
+	int8_t rx0_gain_val;
+	int8_t rx1_gain_val;
 };
 
 static struct snd_soc_dai_driver rx_macro_dai[];
@@ -1459,6 +1466,56 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case BOLERO_MACRO_EVT_CLK_RESET:
 		bolero_rsc_clk_reset(rx_dev, RX_CORE_CLK);
+		break;
+	case BOLERO_MACRO_EVT_RX_PA_GAIN_UPDATE:
+		rx_priv->rx0_gain_val = snd_soc_component_read32(component,
+					BOLERO_CDC_RX_RX0_RX_VOL_CTL);
+		rx_priv->rx1_gain_val = snd_soc_component_read32(component,
+					BOLERO_CDC_RX_RX1_RX_VOL_CTL);
+		if (data) {
+			/* Reduce gain by half only if its greater than -6DB */
+			if ((rx_priv->rx0_gain_val >= RX_MACRO_GAIN_VAL_UNITY)
+			&& (rx_priv->rx0_gain_val <= RX_MACRO_GAIN_MAX_VAL))
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xFF,
+					(rx_priv->rx0_gain_val -
+					 RX_MACRO_MOD_GAIN));
+			if ((rx_priv->rx1_gain_val >= RX_MACRO_GAIN_VAL_UNITY)
+			&& (rx_priv->rx1_gain_val <= RX_MACRO_GAIN_MAX_VAL))
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xFF,
+					(rx_priv->rx1_gain_val -
+					 RX_MACRO_MOD_GAIN));
+		}
+		else {
+			/* Reset gain value to default */
+			if ((rx_priv->rx0_gain_val >=
+			    (RX_MACRO_GAIN_VAL_UNITY - RX_MACRO_MOD_GAIN)) &&
+			    (rx_priv->rx0_gain_val <= (RX_MACRO_GAIN_MAX_VAL -
+			    RX_MACRO_MOD_GAIN)))
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xFF,
+					(rx_priv->rx0_gain_val +
+					 RX_MACRO_MOD_GAIN));
+			if ((rx_priv->rx1_gain_val >=
+			    (RX_MACRO_GAIN_VAL_UNITY - RX_MACRO_MOD_GAIN)) &&
+			    (rx_priv->rx1_gain_val <= (RX_MACRO_GAIN_MAX_VAL -
+			    RX_MACRO_MOD_GAIN)))
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xFF,
+					(rx_priv->rx1_gain_val +
+					 RX_MACRO_MOD_GAIN));
+		}
+		break;
+	case BOLERO_MACRO_EVT_HPHL_HD2_ENABLE:
+		/* Enable hd2 config for hphl*/
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX0_RX_PATH_CFG0, 0x04, data);
+		break;
+	case BOLERO_MACRO_EVT_HPHR_HD2_ENABLE:
+		/* Enable hd2 config for hphr*/
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX1_RX_PATH_CFG0, 0x04, data);
 		break;
 	}
 done:
@@ -3877,6 +3934,8 @@ static int rx_macro_init(struct snd_soc_component *component)
 		return ret;
 	}
 	rx_priv->dev_up = true;
+	rx_priv->rx0_gain_val = 0;
+	rx_priv->rx1_gain_val = 0;
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF1 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
@@ -4106,6 +4165,8 @@ static int rx_macro_probe(struct platform_device *pdev)
 			__func__);
 		return -EPROBE_DEFER;
 	}
+	msm_cdc_pinctrl_set_wakeup_capable(
+				rx_priv->rx_swr_gpio_p, false);
 
 	rx_io_base = devm_ioremap(&pdev->dev, rx_base_addr,
 				  RX_MACRO_MAX_OFFSET);

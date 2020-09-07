@@ -456,47 +456,32 @@ static int swr_haptics_device_down(struct swr_device *sdev)
 static int swr_haptics_suspend(struct device *dev)
 {
 	struct swr_haptics_dev *swr_hap;
-	int rc;
+	int rc = 0;
 
 	swr_hap = swr_get_dev_data(to_swr_device(dev));
 	if (!swr_hap) {
 		dev_err(dev, "%s: no data for swr_hap\n", __func__);
 		return -ENODEV;
 	}
+	trace_printk("%s: suspended\n", __func__);
 
-	/* Put SWR slave into reset */
-	rc = regulator_disable(swr_hap->vdd);
-	if (rc < 0) {
-		dev_err(swr_hap->dev, "%s: disable swr-slave failed, rc=%d\n",
-				__func__, rc);
-		return rc;
-	}
-
-	return 0;
+	return rc;
 }
 
 static int swr_haptics_resume(struct device *dev)
 {
 	struct swr_haptics_dev *swr_hap;
-	int rc;
+	int rc = 0;
 
 	swr_hap = swr_get_dev_data(to_swr_device(dev));
 	if (!swr_hap) {
 		dev_err(dev, "%s: no data for swr_hap\n", __func__);
 		return -ENODEV;
 	}
+	trace_printk("%s: resumed\n", __func__);
 
-	/* Take SWR slave out of reset */
-	rc = regulator_enable(swr_hap->vdd);
-	if (rc < 0) {
-		dev_err(swr_hap->dev, "%s: enable swr-slave failed, rc=%d\n",
-				__func__, rc);
-		return rc;
-	}
-
-	return 0;
+	return rc;
 }
-
 
 static const struct of_device_id swr_haptics_match_table[] = {
 	{ .compatible = "qcom,swr-haptics", },

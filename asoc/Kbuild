@@ -138,6 +138,11 @@ ifdef CONFIG_SND_SOC_LAHAINA
 	MACHINE_OBJS += lahaina.o
 endif
 
+# for HOLI sound card driver
+ifdef CONFIG_SND_SOC_HOLI
+	MACHINE_OBJS += holi.o
+endif
+
 ifdef CONFIG_SND_SOC_LITO
 	MACHINE_OBJS += kona.o
 endif
@@ -217,6 +222,9 @@ obj-$(CONFIG_SND_SOC_KONA) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_LAHAINA) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_HOLI) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_LITO) += machine_dlkm.o

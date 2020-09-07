@@ -232,6 +232,27 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 				priv->component,
 				BOLERO_MACRO_EVT_BCS_CLK_OFF, data);
 		break;
+	case WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE:
+		/* Update PA Gain only for bolero version 2.1 */
+		if (priv->version == BOLERO_VERSION_2_1)
+			if (priv->macro_params[RX_MACRO].event_handler)
+				priv->macro_params[RX_MACRO].event_handler(
+					priv->component,
+					BOLERO_MACRO_EVT_RX_PA_GAIN_UPDATE,
+					data);
+		break;
+	case WCD_BOLERO_EVT_HPHL_HD2_ENABLE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
+				BOLERO_MACRO_EVT_HPHL_HD2_ENABLE, data);
+		break;
+	case WCD_BOLERO_EVT_HPHR_HD2_ENABLE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
+				BOLERO_MACRO_EVT_HPHR_HD2_ENABLE, data);
+		break;
 	default:
 		dev_err(priv->dev, "%s: Invalid event %d trigger from wcd\n",
 			__func__, event);
@@ -755,7 +776,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
 
-void bolero_wsa_pa_on(struct device *dev)
+void bolero_wsa_pa_on(struct device *dev, bool adie_lb)
 {
 	struct bolero_priv *priv;
 
@@ -773,8 +794,12 @@ void bolero_wsa_pa_on(struct device *dev)
 		dev_err(dev, "%s: priv is null\n", __func__);
 		return;
 	}
-
-	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_PA_ON_POST_FSCLK);
+	if (adie_lb)
+		bolero_cdc_notifier_call(priv,
+			BOLERO_WCD_EVT_PA_ON_POST_FSCLK_ADIE_LB);
+	else
+		bolero_cdc_notifier_call(priv,
+			BOLERO_WCD_EVT_PA_ON_POST_FSCLK);
 }
 EXPORT_SYMBOL(bolero_wsa_pa_on);
 

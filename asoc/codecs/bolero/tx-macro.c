@@ -177,6 +177,8 @@ struct tx_macro_priv {
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
 	int amic_sample_rate;
+	bool lpi_enable;
+	bool register_event_listener;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -235,11 +237,11 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 		}
 		bolero_clk_rsc_fs_gen_request(tx_priv->dev,
 					true);
+		regcache_mark_dirty(regmap);
+		regcache_sync_region(regmap,
+				TX_START_OFFSET,
+				TX_MAX_OFFSET);
 		if (tx_priv->tx_mclk_users == 0) {
-			regcache_mark_dirty(regmap);
-			regcache_sync_region(regmap,
-					TX_START_OFFSET,
-					TX_MAX_OFFSET);
 			/* 9.6MHz MCLK, set value 0x00 if other frequency */
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK, 0x01, 0x01);
@@ -328,6 +330,45 @@ static int tx_macro_tx_swr_clk_event(struct snd_soc_dapm_widget *w,
 		--tx_priv->tx_swr_clk_cnt;
 
 	return 0;
+}
+
+static int tx_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(tx_dev, "%s: event = %d, lpi_enable = %d\n",
+		__func__, event, tx_priv->lpi_enable);
+
+	if (!tx_priv->lpi_enable)
+		return ret;
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		if (tx_priv->lpi_enable) {
+			bolero_register_event_listener(component, true);
+			tx_priv->register_event_listener = true;
+		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		if (tx_priv->register_event_listener) {
+			tx_priv->register_event_listener = false;
+			bolero_register_event_listener(component, false);
+		}
+		break;
+	default:
+		dev_err(tx_priv->dev,
+			"%s: invalid DAPM event %d\n", __func__, event);
+		ret = -EINVAL;
+	}
+	return ret;
 }
 
 static int tx_macro_mclk_event(struct snd_soc_dapm_widget *w,
@@ -780,6 +821,38 @@ static int tx_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
 		return ret;
 
 	tx_priv->dec_mode[path] = value;
+
+	return 0;
+}
+
+static int tx_macro_lpi_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = tx_priv->lpi_enable;
+
+	return 0;
+}
+
+static int tx_macro_lpi_put(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	tx_priv->lpi_enable = ucontrol->value.integer.value[0];
 
 	return 0;
 }
@@ -1675,6 +1748,10 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_common[] = {
 
 	SND_SOC_DAPM_SUPPLY_S("TX_MCLK", 0, SND_SOC_NOPM, 0, 0,
 	tx_macro_mclk_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("TX_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+			      tx_macro_swr_pwr_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_v2[] = {
@@ -2144,6 +2221,19 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX SMIC MUX5", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX6", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX7", NULL, "TX_SWR_CLK"},
+
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
+	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
 };
 
 static const struct snd_soc_dapm_route tx_audio_map[] = {
@@ -2405,6 +2495,9 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
 	SOC_SINGLE_S8_TLV("TX_DEC3 Volume",
 			  BOLERO_CDC_TX3_TX_VOL_CTL,
 			  -84, 40, digital_gain),
+
+	SOC_SINGLE_EXT("TX LPI Enable", 0, 0, 1, 0,
+		tx_macro_lpi_get, tx_macro_lpi_put),
 
 	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2937,6 +3030,8 @@ static int tx_macro_init(struct snd_soc_component *component)
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
+	tx_priv->lpi_enable = false;
+	tx_priv->register_event_listener = false;
 	tx_priv->version = bolero_get_version(tx_dev);
 	if (tx_priv->version >= BOLERO_VERSION_2_0) {
 		ret = snd_soc_dapm_new_controls(dapm,

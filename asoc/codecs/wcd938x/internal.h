@@ -69,6 +69,7 @@ struct wcd938x_priv {
 
 	u32 hph_mode;
 	u32 tx_mode[TX_ADC_MAX];
+	s32 adc_count;
 	bool comp1_enable;
 	bool comp2_enable;
 	bool ldoh;

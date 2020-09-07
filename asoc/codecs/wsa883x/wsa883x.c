@@ -37,7 +37,7 @@
 #define TEMP_INVALID	0xFFFF
 #define WSA883X_TEMP_RETRY 3
 
-#define MAX_NAME_LEN	30
+#define MAX_NAME_LEN	40
 #define WSA883X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
 			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
@@ -99,7 +99,6 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_CDC_SPK_DSM_R7, 0xFF, 0x3F},
 	{WSA883X_DRE_CTL_0, 0xF0, 0x90},
 	{WSA883X_DRE_IDLE_DET_CTL, 0x10, 0x00},
-	{WSA883X_PDM_WD_CTL, 0x01, 0x01},
 	{WSA883X_CURRENT_LIMIT, 0x78, 0x20},
 	{WSA883X_DRE_CTL_0, 0x07, 0x02},
 	{WSA883X_VAGC_TIME, 0x0F, 0x0F},
@@ -119,6 +118,7 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_ADC_7, 0x04, 0x04},
 	{WSA883X_ADC_7, 0x02, 0x02},
 	{WSA883X_CKWD_CTL_0, 0x60, 0x00},
+	{WSA883X_DRE_CTL_1, 0x3E, 0x20},
 	{WSA883X_CKWD_CTL_1, 0x1F, 0x1B},
 	{WSA883X_GMAMP_SUP1, 0x60, 0x60},
 };
@@ -134,6 +134,7 @@ enum {
 enum {
 	SPKR_STATUS = 0,
 	WSA_SUPPLIES_LPM_MODE,
+	SPKR_ADIE_LB,
 };
 
 enum {
@@ -799,6 +800,30 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 }
 EXPORT_SYMBOL(wsa883x_codec_info_create_codec_entry);
 
+/*
+ * wsa883x_codec_get_dev_num - returns swr device number
+ * @component: Codec instance
+ *
+ * Return: swr device number on success or negative error
+ * code on failure.
+ */
+int wsa883x_codec_get_dev_num(struct snd_soc_component *component)
+{
+	struct wsa883x_priv *wsa883x;
+
+	if (!component)
+		return -EINVAL;
+
+	wsa883x = snd_soc_component_get_drvdata(component);
+	if (!wsa883x) {
+		pr_err("%s: wsa883x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	return wsa883x->swr_slave->dev_num;
+}
+EXPORT_SYMBOL(wsa883x_codec_get_dev_num);
+
 static int wsa883x_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -962,6 +987,7 @@ static int wsa883x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					&port_type[0]);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		set_bit(SPKR_STATUS, &wsa883x->status_mask);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		wsa883x_set_port(component, SWR_DAC_PORT,
@@ -1015,19 +1041,31 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		swr_slvdev_datapath_control(wsa883x->swr_slave,
 					    wsa883x->swr_slave->dev_num,
 					    true);
-		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
+		/* Added delay as per HW sequence */
+		usleep_range(250, 300);
+		snd_soc_component_update_bits(component, WSA883X_DRE_CTL_1,
+						0x01, 0x01);
+		/* Added delay as per HW sequence */
+		usleep_range(250, 300);
 		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
-		set_bit(SPKR_STATUS, &wsa883x->status_mask);
+		if (test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
+			snd_soc_component_update_bits(component,
+				WSA883X_PA_FSM_CTL, 0x01, 0x01);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		if (!test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
+			wcd_disable_irq(&wsa883x->irq_info,
+					WSA883X_IRQ_INT_PDM_WD);
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
-		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
+		snd_soc_component_update_bits(component, WSA883X_PDM_WD_CTL,
+				0x01, 0x00);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		clear_bit(SPKR_STATUS, &wsa883x->status_mask);
+		clear_bit(SPKR_ADIE_LB, &wsa883x->status_mask);
 		break;
 	}
 	return 0;
@@ -1212,6 +1250,7 @@ static int wsa883x_get_temperature(struct snd_soc_component *component,
 
 static int wsa883x_codec_probe(struct snd_soc_component *component)
 {
+	char w_name[MAX_NAME_LEN];
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
 	struct swr_device *dev;
 	int variant = 0, version = 0;
@@ -1220,6 +1259,10 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 
 	if (!wsa883x)
 		return -EINVAL;
+
+	if (!component->name_prefix)
+		return -EINVAL;
+
 	snd_soc_component_init_regmap(component, wsa883x->regmap);
 
 	dev = wsa883x->swr_slave;
@@ -1236,8 +1279,28 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 	wsa883x_codec_init(component);
 	wsa883x->global_pa_cnt = 0;
 
-	snd_soc_dapm_ignore_suspend(dapm,
-		wsa883x->dai_driver->playback.stream_name);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " ", sizeof(w_name));
+	strlcat(w_name, wsa883x->dai_driver->playback.stream_name,
+				sizeof(w_name));
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " IN", sizeof(w_name));
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SWR DAC_PORT", sizeof(w_name));
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SPKR", sizeof(w_name));
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
 	snd_soc_dapm_sync(dapm);
 
 	return 0;
@@ -1375,10 +1438,27 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 		break;
 
 	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
-		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
+		if (test_bit(SPKR_STATUS, &wsa883x->status_mask)) {
+			snd_soc_component_update_bits(wsa883x->component,
+						WSA883X_PDM_WD_CTL,
+						0x01, 0x01);
 			snd_soc_component_update_bits(wsa883x->component,
 						WSA883X_PA_FSM_CTL,
 						0x01, 0x01);
+			wcd_enable_irq(&wsa883x->irq_info,
+					WSA883X_IRQ_INT_PDM_WD);
+			/* Added delay as per HW sequence */
+			usleep_range(3000, 3100);
+			snd_soc_component_update_bits(wsa883x->component,
+						WSA883X_DRE_CTL_1,
+						0x01, 0x00);
+			/* Added delay as per HW sequence */
+			usleep_range(5000, 5050);
+		}
+		break;
+	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK_ADIE_LB:
+		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
+			set_bit(SPKR_ADIE_LB, &wsa883x->status_mask);
 		break;
 	default:
 		dev_dbg(wsa883x->dev, "%s: unknown event %d\n",
