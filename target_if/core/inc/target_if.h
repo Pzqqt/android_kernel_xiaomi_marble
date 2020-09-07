@@ -185,6 +185,7 @@ struct target_version_info {
  * @hw_mode_caps: HW mode caps of preferred mode
  * @mem_chunks: allocated memory blocks for FW
  * @scan_radio_caps: scan radio capabilities
+ * @device_mode: Global Device mode
  */
 struct tgt_info {
 	struct host_fw_ver version;
@@ -215,6 +216,7 @@ struct tgt_info {
 	uint8_t pdev_id_to_phy_id_map[WLAN_UMAC_MAX_PDEVS];
 	bool is_pdevid_to_phyid_map;
 	struct wlan_psoc_host_scan_radio_caps *scan_radio_caps;
+	uint32_t device_mode;
 };
 
 /**
@@ -2513,4 +2515,38 @@ static inline void target_psoc_get_mu_max_users(
 	mu_caps->mumimo_ul = service_ext2_param->max_users_ul_mumimo;
 }
 
+/**
+ * target_psoc_set_device_mode() - set global device_mode
+ * @psoc_info: pointer to structure target_psoc_info
+ * @device_mode: device mode mission monitor/ftm etc
+ *
+ * API to set global device mode
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_device_mode
+		(struct target_psoc_info *psoc_info, uint32_t device_mode)
+{
+	if (!psoc_info)
+		return;
+
+	psoc_info->info.device_mode = device_mode;
+}
+
+/**
+ * target_psoc_get_device_mode() - get info device_mode
+ * @psoc_info: pointer to structure target_psoc_info
+ *
+ * API to get device_mode
+ *
+ * Return: enum QDF_GLOBAL_MODE
+ */
+static inline enum QDF_GLOBAL_MODE target_psoc_get_device_mode
+		(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return QDF_GLOBAL_MAX_MODE;
+
+	return psoc_info->info.device_mode;
+}
 #endif
