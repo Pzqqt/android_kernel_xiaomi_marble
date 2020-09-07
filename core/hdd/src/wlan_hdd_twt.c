@@ -115,6 +115,22 @@ wlan_hdd_wifi_twt_config_policy[
 			.type = NLA_NESTED},
 };
 
+QDF_STATUS
+hdd_twt_setup_req_type_to_cmd(u8 req_type, enum WMI_HOST_TWT_COMMAND *twt_cmd)
+{
+	if (req_type == QCA_WLAN_VENDOR_TWT_SETUP_REQUEST) {
+		*twt_cmd = WMI_HOST_TWT_COMMAND_REQUEST_TWT;
+	} else if (req_type == QCA_WLAN_VENDOR_TWT_SETUP_SUGGEST) {
+		*twt_cmd = WMI_HOST_TWT_COMMAND_SUGGEST_TWT;
+	} else if (req_type == QCA_WLAN_VENDOR_TWT_SETUP_DEMAND) {
+		*twt_cmd = WMI_HOST_TWT_COMMAND_DEMAND_TWT;
+	} else {
+		hdd_err_rl("Invalid TWT_SETUP_REQ_TYPE %d", req_type);
+		return QDF_STATUS_E_INVAL;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * hdd_twt_get_params_resp_len() - Calculates the length
  * of twt get_params nl response

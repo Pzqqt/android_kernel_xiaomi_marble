@@ -9430,6 +9430,7 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 {
 	uint32_t wake_intvl_exp, result;
 	int cmd_id;
+	QDF_STATUS qdf_status;
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
 	if (tb[cmd_id]) {
@@ -9460,7 +9461,10 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		hdd_err_rl("TWT_SETUP_REQ_TYPE is must");
 		return -EINVAL;
 	}
-	params->twt_cmd = nla_get_u8(tb[cmd_id]);
+	qdf_status = hdd_twt_setup_req_type_to_cmd(nla_get_u8(tb[cmd_id]),
+						   &params->twt_cmd);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return qdf_status_to_os_return(qdf_status);
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
 	params->flag_trigger = nla_get_flag(tb[cmd_id]);

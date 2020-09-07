@@ -155,6 +155,16 @@ void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx);
 			      QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX)       \
 },
 
+/**
+ * hdd_twt_setup_req_type_to_cmd() - Converts twt setup request type to twt cmd
+ * @req_type: twt setup request type
+ * @twt_cmd: pointer to store twt command
+ *
+ * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
+ */
+QDF_STATUS
+hdd_twt_setup_req_type_to_cmd(u8 req_type, enum WMI_HOST_TWT_COMMAND *twt_cmd);
+
 #else
 static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 					  struct wma_tgt_cfg *cfg)
@@ -178,6 +188,12 @@ static inline void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 {
 }
 
+enum WMI_HOST_TWT_COMMAND;
+static inline QDF_STATUS
+hdd_twt_setup_req_type_to_cmd(u8 req_type, enum WMI_HOST_TWT_COMMAND *twt_cmd)
+{
+	return QDF_STATUS_E_INVAL;
+}
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT
 
 #endif
