@@ -1767,12 +1767,12 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	 * Currently, we can have only 6 MSDUs per-MPDU, if the current
 	 * packet sequence has more than 6 MSDUs for some reason, we will
 	 * have to use the next MSDU link descriptor and chain them together
-	 * before reinjection
+	 * before reinjection.
+	 * ring_desc is validated in dp_rx_err_process.
 	 */
 	if ((fragno == 0) && (status == QDF_STATUS_SUCCESS) &&
 			(rx_reorder_array_elem->head == frag)) {
 
-		qdf_assert_always(ring_desc);
 		status = dp_rx_defrag_save_info_from_ring_desc(ring_desc,
 					rx_desc, peer, tid);
 
@@ -1786,8 +1786,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		(*rx_bfs)++;
 
 		/* Return the non-head link desc */
-		if (ring_desc &&
-		    dp_rx_link_desc_return(soc, ring_desc,
+		if (dp_rx_link_desc_return(soc, ring_desc,
 					   HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
 		    QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
