@@ -572,7 +572,7 @@ static int dsi_panel_update_pwm_backlight(struct dsi_panel *panel,
 		return 0;
 	}
 
-	if (!bl->pwm_enabled) {
+	if (bl_lvl != 0 && !bl->pwm_enabled) {
 		rc = pwm_enable(bl->pwm_bl);
 		if (rc) {
 			DSI_ERR("[%s] failed to enable pwm, rc=\n", panel->name,
