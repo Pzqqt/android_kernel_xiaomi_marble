@@ -164,7 +164,7 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 	bool create)
 {
 	uint32_t index;
-	QDF_STATUS ret;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	uint32_t tx_buffer_cnt = soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt;
 	qdf_nbuf_t nbuf;
 
