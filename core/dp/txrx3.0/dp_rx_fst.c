@@ -24,6 +24,9 @@
 #include "dp_htt.h"
 #include "dp_internal.h"
 
+/* Timeout in milliseconds to wait for CMEM FST HTT response */
+#define DP_RX_FST_CMEM_RESP_TIMEOUT 2000
+
 #ifdef WLAN_SUPPORT_RX_FISA
 void dp_fisa_rx_fst_update_work(void *arg);
 
@@ -308,6 +311,15 @@ QDF_STATUS dp_rx_flow_send_fst_fw_setup(struct dp_soc *soc,
 
 	status  = dp_htt_rx_flow_fst_setup(pdev, &fisa_hw_fst_setup_cmd);
 
+	if (!soc->fst_in_cmem)
+		return status;
+
+	status = qdf_wait_single_event(&fst->cmem_resp_event,
+				       DP_RX_FST_CMEM_RESP_TIMEOUT);
+
+	dp_err("FST params after CMEM update FT size %d, hash_mask 0x%x",
+	       fst->max_entries, fst->hash_mask);
+
 	return status;
 }
 
@@ -338,6 +350,28 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		  "Rx FST detached\n");
 }
+
+/*
+ * dp_rx_fst_update_cmem_params() - Update CMEM FST params
+ * @soc:		DP SoC context
+ * @num_entries:	Number of flow search entries
+ * @cmem_ba_lo:		CMEM base address low
+ * @cmem_ba_hi:		CMEM base address high
+ *
+ * Return: None
+ */
+void dp_rx_fst_update_cmem_params(struct dp_soc *soc, uint16_t num_entries,
+				  uint32_t cmem_ba_lo, uint32_t cmem_ba_hi)
+{
+	struct dp_rx_fst *fst = soc->rx_fst;
+
+	fst->max_entries = num_entries;
+	fst->hash_mask = fst->max_entries - 1;
+	fst->cmem_ba = cmem_ba_lo;
+
+	qdf_event_set(&fst->cmem_resp_event);
+}
+
 #else /* WLAN_SUPPORT_RX_FISA */
 
 #endif /* !WLAN_SUPPORT_RX_FISA */
