@@ -113,6 +113,14 @@ void dp_rx_skip_fisa(struct cdp_soc_t *cdp_soc, uint32_t value)
  */
 void dp_set_fisa_disallowed_for_vdev(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 				     uint8_t rx_ctx_id, uint8_t val);
+
+/**
+ * dp_fisa_rx_fst_update_work() - Work functions for FST updates
+ * @arg: argument passed to the work function
+ *
+ * Return: None
+ */
+void dp_fisa_rx_fst_update_work(void *arg);
 #else
 static QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 {

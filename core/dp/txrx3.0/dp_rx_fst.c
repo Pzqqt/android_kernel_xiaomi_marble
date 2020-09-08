@@ -23,6 +23,7 @@
 #include "hal_rx_flow.h"
 #include "dp_htt.h"
 #include "dp_internal.h"
+#include "hif.h"
 
 /* Timeout in milliseconds to wait for CMEM FST HTT response */
 #define DP_RX_FST_CMEM_RESP_TIMEOUT 2000
@@ -32,7 +33,31 @@ void dp_fisa_rx_fst_update_work(void *arg);
 
 void dp_rx_dump_fisa_table(struct dp_soc *soc)
 {
-	hal_rx_dump_fse_table(soc->rx_fst->hal_rx_fst);
+	hal_soc_handle_t hal_soc_hdl = soc->hal_soc;
+	struct dp_rx_fst *fst = soc->rx_fst;
+	struct dp_fisa_rx_sw_ft *sw_ft_entry;
+	int i;
+
+	if (!soc->fst_in_cmem)
+		return hal_rx_dump_fse_table(soc->rx_fst->hal_rx_fst);
+
+	sw_ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
+
+	if (hif_force_wake_request(((struct hal_soc *)hal_soc_hdl)->hif_handle)) {
+		dp_err("Wake up request failed");
+		qdf_check_state_before_panic();
+		return;
+	}
+
+	for (i = 0; i < fst->max_entries; i++)
+		hal_rx_dump_cmem_fse(hal_soc_hdl,
+				     sw_ft_entry[i].cmem_offset, i);
+
+	if (hif_force_wake_release(((struct hal_soc *)hal_soc_hdl)->hif_handle)) {
+		dp_err("Wake up release failed");
+		qdf_check_state_before_panic();
+		return;
+	}
 }
 
 /**
