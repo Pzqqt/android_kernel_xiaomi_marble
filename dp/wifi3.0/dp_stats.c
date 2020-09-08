@@ -4401,7 +4401,7 @@ QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
 	struct cdp_interface_peer_qos_stats qos_stats_intf;
 
 	if (ppdu_user->peer_id == HTT_INVALID_PEER) {
-		qdf_err("Invalid peer id");
+		dp_err("Invalid peer id");
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_zero(&qos_stats_intf, sizeof(qos_stats_intf));
