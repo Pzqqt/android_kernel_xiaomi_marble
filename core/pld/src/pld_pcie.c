@@ -352,6 +352,50 @@ static int pld_pcie_runtime_resume(struct pci_dev *pdev)
 	return -ENODEV;
 }
 #endif
+
+#ifdef FEATURE_GET_DRIVER_MODE
+/**
+ * pld_pcie_get_mode() - Get current WLAN driver mode
+ *
+ * This function is to get current driver mode
+ *
+ * Return: mission mode or ftm mode
+ */
+static
+enum cnss_driver_mode pld_pcie_get_mode(void)
+{
+	struct pld_context *pld_ctx =  pld_get_global_context();
+	enum cnss_driver_mode cnss_mode = CNSS_MISSION;
+
+	if (!pld_ctx)
+		return cnss_mode;
+
+	switch (pld_ctx->mode) {
+	case QDF_GLOBAL_MISSION_MODE:
+		cnss_mode = CNSS_MISSION;
+		break;
+	case QDF_GLOBAL_WALTEST_MODE:
+		cnss_mode = CNSS_WALTEST;
+		break;
+	case QDF_GLOBAL_FTM_MODE:
+		cnss_mode = CNSS_FTM;
+		break;
+	case QDF_GLOBAL_COLDBOOT_CALIB_MODE:
+		cnss_mode = CNSS_CALIBRATION;
+		break;
+	case QDF_GLOBAL_EPPING_MODE:
+		cnss_mode = CNSS_EPPING;
+		break;
+	case QDF_GLOBAL_QVIT_MODE:
+		cnss_mode = CNSS_QVIT;
+		break;
+	default:
+		cnss_mode = CNSS_MISSION;
+		break;
+	}
+	return cnss_mode;
+}
+#endif
 #endif
 
 #ifdef CONFIG_PM
@@ -592,6 +636,9 @@ struct cnss_wlan_driver pld_pcie_ops = {
 #endif
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_ops = &runtime_pm_ops,
+#endif
+#ifdef FEATURE_GET_DRIVER_MODE
+	.get_driver_mode  = pld_pcie_get_mode,
 #endif
 };
 

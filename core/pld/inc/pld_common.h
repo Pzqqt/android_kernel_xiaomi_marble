@@ -435,6 +435,15 @@ struct pld_driver_ops {
 int pld_init(void);
 void pld_deinit(void);
 
+/**
+ * pld_set_mode() - set driver mode in PLD module
+ * @mode: driver mode
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_set_mode(u8 mode);
+
 int pld_register_driver(struct pld_driver_ops *ops);
 void pld_unregister_driver(void);
 

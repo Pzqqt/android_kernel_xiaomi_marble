@@ -16614,6 +16614,11 @@ int hdd_driver_load(void)
 		goto param_destroy;
 	}
 
+	/* driver mode pass to cnss2 platform driver*/
+	errno = pld_set_mode(con_mode);
+	if (errno)
+		hdd_err("Failed to set mode in PLD; errno:%d", errno);
+
 	hdd_driver_mode_change_register();
 
 	osif_driver_sync_register(driver_sync);

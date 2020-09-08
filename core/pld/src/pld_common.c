@@ -117,6 +117,15 @@ void pld_deinit(void)
 	pld_ctx = NULL;
 }
 
+int pld_set_mode(u8 mode)
+{
+	if (!pld_ctx)
+		return -ENOMEM;
+
+	pld_ctx->mode = mode;
+	return 0;
+}
+
 /**
  * pld_get_global_context() - Get global context of PLD
  *
