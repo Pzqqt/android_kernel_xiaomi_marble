@@ -1162,9 +1162,17 @@ QDF_STATUS dp_pdev_dbgfs_init(struct dp_pdev *pdev)
 	char dir_name[PDEV_HTT_STATS_DBGFS_DIR_SIZE] = {0};
 	char file_name[PDEV_HTT_STATS_DBGFS_FILE_SIZE] = {0};
 	int idx;
+	char *net_dev_name = NULL;
 
-	qdf_snprintf(dir_name, sizeof(dir_name), "dp_wifistats_wifi%d",
-		     pdev->pdev_id);
+	if (pdev->soc->cdp_soc.ol_ops->get_device_name) {
+		net_dev_name = pdev->soc->cdp_soc.ol_ops->get_device_name(
+					pdev->soc->ctrl_psoc, pdev->pdev_id);
+	}
+
+	if (net_dev_name == NULL)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_snprintf(dir_name, sizeof(dir_name), "dp_wifistats_%s", net_dev_name);
 
 	pdev->dbgfs_cfg->debugfs_entry[0] = qdf_debugfs_create_dir(dir_name,
 								   NULL);
