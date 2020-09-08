@@ -26,7 +26,10 @@
  */
 #define MON_BUF_MIN_ENTRIES 64
 
-/* The maxinum buffer length allocated for radio tap */
+/*
+ * The maximum headroom reserved for monitor destination buffer to
+ * accomodate radiotap header and protocol flow tag
+ */
 #ifdef DP_RX_MON_MEM_FRAG
 /*
  *----------------------------------
@@ -37,10 +40,13 @@
  * actual offset, data gets written to actual offset after updating
  * radiotap HDR.
  */
-#define MAX_MONITOR_HEADER (256)
+#define DP_RX_MON_MAX_MONITOR_HEADER (256)
 #else
-#define MAX_MONITOR_HEADER (512)
+#define DP_RX_MON_MAX_MONITOR_HEADER (512)
 #endif
+
+/* The maximum buffer length allocated for radiotap for monitor status buffer */
+#define MAX_MONITOR_HEADER (512)
 
 /* l2 header pad byte in case of Raw frame is Zero and 2 in non raw */
 #define DP_RX_MON_RAW_L2_HDR_PAD_BYTE (0)
@@ -412,8 +418,8 @@ QDF_STATUS dp_rx_mon_alloc_parent_buffer(qdf_nbuf_t *head_msdu)
 	 * |     64 B            |  Length(128 B) |
 	 * --------------------------------------
 	 */
-	*head_msdu = qdf_nbuf_alloc_no_recycler(MAX_MONITOR_HEADER,
-						MAX_MONITOR_HEADER, 4);
+	*head_msdu = qdf_nbuf_alloc_no_recycler(DP_RX_MON_MAX_MONITOR_HEADER,
+						DP_RX_MON_MAX_MONITOR_HEADER, 4);
 
 	if (!(*head_msdu))
 		return QDF_STATUS_E_FAILURE;
