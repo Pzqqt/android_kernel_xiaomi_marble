@@ -435,6 +435,28 @@ dp_soc_iterate_peer_lock_safe(struct dp_soc *soc,
 #endif
 
 /**
+ * dp_peer_state_cmp() - compare dp peer state
+ *
+ * @peer	: DP peer
+ * @state	: state
+ *
+ * Return: true if state matches with peer state
+ *	   false if it does not match
+ */
+static inline bool
+dp_peer_state_cmp(struct dp_peer *peer,
+		  enum dp_peer_state state)
+{
+	bool is_status_equal = false;
+
+	qdf_spin_lock_bh(&peer->peer_state_lock);
+	is_status_equal = (peer->peer_state == state);
+	qdf_spin_unlock_bh(&peer->peer_state_lock);
+
+	return is_status_equal;
+}
+
+/**
  * dp_peer_update_state() - update dp peer state
  *
  * @soc		: core DP soc context
@@ -448,7 +470,10 @@ dp_peer_update_state(struct dp_soc *soc,
 		     struct dp_peer *peer,
 		     enum dp_peer_state state)
 {
-	uint8_t peer_state = peer->peer_state;
+	uint8_t peer_state;
+
+	qdf_spin_lock_bh(&peer->peer_state_lock);
+	peer_state = peer->peer_state;
 
 	switch (state) {
 	case DP_PEER_STATE_INIT:
@@ -488,12 +513,14 @@ dp_peer_update_state(struct dp_soc *soc,
 	default:
 		dp_alert("Invalid peer state %u for peer "QDF_MAC_ADDR_FMT,
 			 state, QDF_MAC_ADDR_REF(peer->mac_addr.raw));
+		qdf_spin_unlock_bh(&peer->peer_state_lock);
 		return;
 	}
 	dp_info("Updating peer state from %u to %u mac "QDF_MAC_ADDR_FMT"\n",
 		peer_state, state,
 		QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 	peer->peer_state = state;
+	qdf_spin_unlock_bh(&peer->peer_state_lock);
 }
 
 void dp_print_ast_stats(struct dp_soc *soc);

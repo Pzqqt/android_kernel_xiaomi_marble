@@ -5589,43 +5589,35 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	return QDF_STATUS_SUCCESS;
 }
 
-#if ATH_SUPPORT_WRAP
 static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 						uint8_t *peer_mac_addr)
 {
 	struct dp_peer *peer;
+	struct dp_soc *soc = vdev->pdev->soc;
 
-	peer = dp_peer_find_hash_find(vdev->pdev->soc, peer_mac_addr,
-				      0, vdev->vdev_id,
-				      DP_MOD_ID_CONFIG);
-	if (!peer)
-		return NULL;
+	qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
+	TAILQ_FOREACH(peer, &soc->inactive_peer_list,
+		      inactive_list_elem) {
 
-	if (peer->bss_peer)
-		return peer;
+		/* reuse bss peer only when vdev matches*/
+		if (peer->bss_peer && (peer->vdev == vdev) &&
+		    qdf_mem_cmp(peer_mac_addr, peer->mac_addr.raw,
+				QDF_MAC_ADDR_SIZE) == 0) {
+			/* increment ref count for cdp_peer_create*/
+			if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) ==
+						QDF_STATUS_SUCCESS) {
+				TAILQ_REMOVE(&soc->inactive_peer_list, peer,
+					     inactive_list_elem);
+				qdf_spin_unlock_bh
+					(&soc->inactive_peer_list_lock);
+				return peer;
+			}
+		}
+	}
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
+	qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 	return NULL;
 }
-#else
-static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
-						uint8_t *peer_mac_addr)
-{
-	struct dp_peer *peer;
-
-	peer = dp_peer_find_hash_find(vdev->pdev->soc, peer_mac_addr,
-				      0, vdev->vdev_id,
-				      DP_MOD_ID_CONFIG);
-	if (!peer)
-		return NULL;
-
-	if (peer->bss_peer && (peer->vdev->vdev_id == vdev->vdev_id))
-		return peer;
-
-	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
-	return NULL;
-}
-#endif
 
 #ifdef FEATURE_AST
 static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
@@ -5699,8 +5691,14 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	peer = dp_peer_can_reuse(vdev, peer_mac_addr);
 
 	if (peer) {
+		dp_peer_vdev_list_add(soc, vdev, peer);
+
+		dp_peer_find_hash_add(soc, peer);
 		qdf_atomic_init(&peer->is_default_route_set);
 		dp_peer_cleanup(vdev, peer);
+
+		for (i = 0; i < DP_MAX_TIDS; i++)
+			qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		dp_peer_delete_ast_entries(soc, peer);
@@ -5871,6 +5869,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_set_peer_isolation(peer, false);
 
+	qdf_spinlock_create(&peer->peer_state_lock);
 	dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
@@ -6557,7 +6556,7 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 	struct cdp_peer_cookie peer_cookie;
 	struct dp_peer *tmp_peer;
 	bool found = false;
-	int tid;
+	int tid = 0;
 
 	if (mod_id > DP_MOD_ID_RX)
 		QDF_ASSERT(qdf_atomic_dec_return(&peer->mod_refs[mod_id]) >= 0);
@@ -6623,9 +6622,12 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 		DP_AST_ASSERT(TAILQ_EMPTY(&peer->ast_entry_list));
 		dp_peer_update_state(soc, peer, DP_PEER_STATE_FREED);
 
+		/* cleanup the peer data */
+		dp_peer_cleanup(vdev, peer);
 		for (tid = 0; tid < DP_MAX_TIDS; tid++)
 			qdf_spinlock_destroy(&peer->rx_tid[tid].tid_lock);
 
+		qdf_spinlock_destroy(&peer->peer_state_lock);
 		qdf_mem_free(peer);
 
 		/*
@@ -6703,6 +6705,11 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 	dp_peer_find_hash_remove(soc, peer);
 
 	dp_peer_vdev_list_remove(soc, vdev, peer);
+
+	qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
+	TAILQ_INSERT_TAIL(&soc->inactive_peer_list, peer,
+			  inactive_list_elem);
+	qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 
 	/*
 	 * Remove the reference added during peer_attach.
@@ -10063,9 +10070,6 @@ dp_peer_teardown_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			  "%s: Invalid peer\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	if (peer->peer_state == DP_PEER_STATE_INIT)
-		dp_peer_cleanup(peer->vdev, peer);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	dp_peer_delete_ast_entries(soc, peer);

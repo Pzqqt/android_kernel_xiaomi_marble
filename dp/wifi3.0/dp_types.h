@@ -177,29 +177,29 @@ enum dp_peer_state {
  * enum for modules ids of
  */
 enum dp_mod_id {
-	DP_MOD_ID_TX_COMP,
-	DP_MOD_ID_RX,
-	DP_MOD_ID_HTT_COMP,
-	DP_MOD_ID_RX_ERR,
-	DP_MOD_ID_TX_PPDU_STATS,
-	DP_MOD_ID_RX_PPDU_STATS,
-	DP_MOD_ID_CDP,
-	DP_MOD_ID_GENERIC_STATS,
-	DP_MOD_ID_TX_MULTIPASS,
-	DP_MOD_ID_TX_CAPTURE,
-	DP_MOD_ID_NSS_OFFLOAD,
-	DP_MOD_ID_CONFIG,
-	DP_MOD_ID_HTT,
-	DP_MOD_ID_IPA,
-	DP_MOD_ID_AST,
-	DP_MOD_ID_MCAST2UCAST,
-	DP_MOD_ID_CHILD,
-	DP_MOD_ID_MESH,
-	DP_MOD_ID_TX_EXCEPTION,
-	DP_MOD_ID_TDLS,
-	DP_MOD_ID_MISC,
-	DP_MOD_ID_MSCS,
-	DP_MOD_ID_MAX,
+	DP_MOD_ID_TX_COMP = 0,
+	DP_MOD_ID_RX = 1,
+	DP_MOD_ID_HTT_COMP = 2,
+	DP_MOD_ID_RX_ERR = 3,
+	DP_MOD_ID_TX_PPDU_STATS = 4,
+	DP_MOD_ID_RX_PPDU_STATS = 5,
+	DP_MOD_ID_CDP = 6,
+	DP_MOD_ID_GENERIC_STATS = 7,
+	DP_MOD_ID_TX_MULTIPASS = 8,
+	DP_MOD_ID_TX_CAPTURE = 9,
+	DP_MOD_ID_NSS_OFFLOAD = 10,
+	DP_MOD_ID_CONFIG = 11,
+	DP_MOD_ID_HTT = 12,
+	DP_MOD_ID_IPA = 13,
+	DP_MOD_ID_AST = 14,
+	DP_MOD_ID_MCAST2UCAST = 15,
+	DP_MOD_ID_CHILD = 16,
+	DP_MOD_ID_MESH = 17,
+	DP_MOD_ID_TX_EXCEPTION = 18,
+	DP_MOD_ID_TDLS = 19,
+	DP_MOD_ID_MISC = 20,
+	DP_MOD_ID_MSCS = 21,
+	DP_MOD_ID_MAX = 22,
 };
 
 #define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
@@ -2291,9 +2291,6 @@ struct dp_vdev {
 	/* Rx Decapsulation type for this VAP */
 	enum htt_cmn_pkt_type rx_decap_type;
 
-	/* BSS peer */
-	struct dp_peer *vap_bss_peer;
-
 	/* WDS enabled */
 	bool wds_enabled;
 
@@ -2736,6 +2733,7 @@ struct dp_peer {
 	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
 
 	uint8_t peer_state;
+	qdf_spinlock_t peer_state_lock;
 #ifdef WLAN_SUPPORT_MSCS
 	struct dp_peer_mscs_parameter mscs_ipv4_parameter, mscs_ipv6_parameter;
 	bool mscs_active;

@@ -890,7 +890,7 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	if (peer->peer_state != DP_PEER_STATE_ACTIVE) {
+	if (!dp_peer_state_cmp(peer, DP_PEER_STATE_ACTIVE)) {
 		if ((type != CDP_TXRX_AST_TYPE_STATIC) &&
 		    (type != CDP_TXRX_AST_TYPE_SELF)) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
@@ -1319,7 +1319,7 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	 *  3) We did not get the HTT map for create event
 	 */
 	if (ast_entry->delete_in_progress ||
-	    (peer->peer_state != DP_PEER_STATE_ACTIVE) ||
+	    !dp_peer_state_cmp(peer, DP_PEER_STATE_ACTIVE) ||
 	    !ast_entry->is_mapped)
 		return ret;
 
@@ -1983,7 +1983,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 		 * if peer is in logical delete CP triggered delete before map
 		 * is received ignore this event
 		 */
-		if (peer->peer_state == DP_PEER_STATE_LOGICAL_DELETE) {
+		if (dp_peer_state_cmp(peer, DP_PEER_STATE_LOGICAL_DELETE)) {
 			dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 			dp_alert("Peer %pK["QDF_MAC_ADDR_FMT"] logical delete state vid %d",
 				 peer, QDF_MAC_ADDR_REF(peer_mac_addr),
@@ -2171,13 +2171,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	}
 
 	vdev = peer->vdev;
-	/* cleanup the peer data */
-	dp_peer_cleanup(vdev, peer);
 	DP_UPDATE_STATS(vdev, peer);
-
-	qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
-	TAILQ_INSERT_TAIL(&soc->inactive_peer_list, peer, inactive_list_elem);
-	qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 
 	dp_peer_update_state(soc, peer, DP_PEER_STATE_INACTIVE);
 	dp_peer_unref_delete(peer, DP_MOD_ID_HTT);
