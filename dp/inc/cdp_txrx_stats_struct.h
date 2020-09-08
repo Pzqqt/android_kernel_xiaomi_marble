@@ -1969,6 +1969,7 @@ struct cdp_peer_hmwds_ast_add_status {
 
 enum cdp_soc_param_t {
 	DP_SOC_PARAM_MSDU_EXCEPTION_DESC,
+	DP_SOC_PARAM_CMEM_FSE_SUPPORT,
 	DP_SOC_PARAM_MAX,
 };
 

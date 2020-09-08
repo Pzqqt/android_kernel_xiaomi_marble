@@ -10338,6 +10338,10 @@ static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
 		dp_info("num_msdu exception_desc %u",
 			value);
 		break;
+	case DP_SOC_PARAM_CMEM_FSE_SUPPORT:
+		soc->fst_in_cmem = !!value;
+		dp_info("FW supports CMEM FSE %u", value);
+		break;
 	default:
 		dp_info("not handled param %d ", param);
 		break;
