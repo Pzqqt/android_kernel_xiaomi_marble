@@ -4463,7 +4463,7 @@ int q6asm_open_shared_io(struct audio_client *ac,
 
 	rc = apr_send_pkt(ac->apr, (uint32_t *) open);
 	if (rc < 0) {
-		pr_err("%s: Open failed op[0x%x]rc[%d]\n",
+		pr_err_ratelimited("%s: Open failed op[0x%x]rc[%d]\n",
 		       __func__, open->hdr.opcode, rc);
 		goto done;
 	}
@@ -10398,7 +10398,7 @@ static int __q6asm_cmd(struct audio_client *ac, int cmd, uint32_t stream_id)
 			hdr.opcode);
 	rc = apr_send_pkt(ac->apr, (uint32_t *) &hdr);
 	if (rc < 0) {
-		pr_err("%s: Commmand 0x%x failed %d\n",
+		pr_err_ratelimited("%s: Commmand 0x%x failed %d\n",
 				__func__, hdr.opcode, rc);
 		rc = -EINVAL;
 		goto fail_cmd;
