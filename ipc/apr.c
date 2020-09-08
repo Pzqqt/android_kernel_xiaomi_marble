@@ -432,6 +432,8 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 		if (rc == -ECONNRESET) {
 			pr_err_ratelimited("%s: Received reset error from tal\n",
 					__func__);
+			if (svc->dest_id == APR_DEST_QDSP6)
+				apr_set_q6_state(APR_SUBSYS_DOWN);
 			rc = -ENETRESET;
 		}
 		if (rc == -EAGAIN || rc == -ETIMEDOUT) {

@@ -23,7 +23,6 @@
 #include <linux/ipc_logging.h>
 #include <linux/of_platform.h>
 #include <soc/qcom/subsystem_restart.h>
-#include <soc/qcom/scm.h>
 #include <soc/snd_event.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/audio_notifier.h>
@@ -31,6 +30,7 @@
 #include <ipc/apr_tal.h>
 #include <ipc/aprv2_vm.h>
 #include <linux/habmm.h>
+#include <uapi/linux/sched/types.h>
 
 #define APR_PKT_IPC_LOG_PAGE_CNT 2
 #define APR_VM_CB_THREAD_NAME "apr_vm_cb_thread"
@@ -581,10 +581,15 @@ static int apr_vm_cb_process_evt(char *buf, int len)
 static int apr_vm_cb_thread(void *data)
 {
 	uint32_t apr_rx_buf_len;
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 	struct aprv2_vm_ack_rx_pkt_available_t apr_ack;
+#endif
 	unsigned long delay = jiffies + (HZ / 2);
 	int status = 0;
 	int ret = 0;
+	struct sched_param param = {.sched_priority = 1};
+
+	sched_setscheduler(current, SCHED_FIFO, &param);
 
 	while (1) {
 		do {
@@ -604,11 +609,15 @@ static int apr_vm_cb_thread(void *data)
 
 		status = apr_vm_cb_process_evt(apr_rx_buf, apr_rx_buf_len);
 
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 		apr_ack.status = status;
 		ret = habmm_socket_send(hab_handle_rx,
 				(void *)&apr_ack,
 				sizeof(apr_ack),
 				0);
+#else
+		ret = status;
+#endif
 		if (ret) {
 			pr_err("%s: habmm_socket_send failed %d\n",
 					__func__, ret);
@@ -827,8 +836,10 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 		(struct aprv2_vm_cmd_async_send_t *)(apr_tx_buf +
 			sizeof(uint32_t));
 	uint32_t apr_send_len;
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 	struct aprv2_vm_cmd_async_send_rsp_t apr_rsp;
 	uint32_t apr_rsp_len;
+#endif
 	int ret = 0;
 
 	if (!handle || !buf) {
@@ -894,6 +905,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 				__func__, ret);
 		goto done;
 	}
+#ifdef APRV2_VM_BE_ASYNC_SEND_RSP
 	/* wait for response */
 	apr_rsp_len = sizeof(apr_rsp);
 	ret = apr_vm_nb_receive(hab_handle_tx,
@@ -912,6 +924,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 		ret = -ECOMM;
 		goto done;
 	}
+#endif
 
 	/* upon successful send, return packet size */
 	ret = hdr->pkt_size;
@@ -1060,6 +1073,13 @@ static void apr_reset_deregister(struct work_struct *work)
 	apr_deregister(handle);
 	kfree(apr_reset);
 }
+
+void apr_register_adsp_state_cb(void *adsp_cb, void *client_handle)
+{
+	q6.state_notify_cb = adsp_cb;
+	q6.client_handle = client_handle;
+}
+EXPORT_SYMBOL(apr_register_adsp_state_cb);
 
 /**
  * apr_start_rx_rt - Clients call to vote for thread

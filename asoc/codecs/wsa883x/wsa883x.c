@@ -97,11 +97,13 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_CDC_SPK_DSM_R5, 0xFF, 0x8B},
 	{WSA883X_CDC_SPK_DSM_R6, 0xFF, 0x9B},
 	{WSA883X_CDC_SPK_DSM_R7, 0xFF, 0x3F},
+	{WSA883X_VBAT_SNS, 0x60, 0x20},
 	{WSA883X_DRE_CTL_0, 0xF0, 0x90},
 	{WSA883X_DRE_IDLE_DET_CTL, 0x10, 0x00},
-	{WSA883X_CURRENT_LIMIT, 0x78, 0x20},
+	{WSA883X_CURRENT_LIMIT, 0x78, 0x40},
 	{WSA883X_DRE_CTL_0, 0x07, 0x02},
 	{WSA883X_VAGC_TIME, 0x0F, 0x0F},
+	{WSA883X_VAGC_ATTN_LVL_1_2, 0x70, 0x10},
 	{WSA883X_VAGC_ATTN_LVL_3, 0x07, 0x02},
 	{WSA883X_VAGC_CTL, 0x01, 0x01},
 	{WSA883X_TAGC_CTL, 0x0E, 0x0A},
@@ -121,7 +123,6 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_DRE_CTL_1, 0x3E, 0x20},
 	{WSA883X_CKWD_CTL_1, 0x1F, 0x1B},
 	{WSA883X_GMAMP_SUP1, 0x60, 0x60},
-	{WSA883X_OVERRIDE2, 0x02, 0x02},
 };
 
 static int wsa883x_handle_post_irq(void *data);
@@ -1052,6 +1053,12 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x0E, 0x06);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x01, 0x01);
 		if (test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
 			snd_soc_component_update_bits(component,
 				WSA883X_PA_FSM_CTL, 0x01, 0x01);
@@ -1060,6 +1067,12 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		if (!test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
 			wcd_disable_irq(&wsa883x->irq_info,
 					WSA883X_IRQ_INT_PDM_WD);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x01, 0x00);
+		snd_soc_component_update_bits(component,
+				WSA883X_VBAT_ADC_FLT_CTL,
+				0x0E, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PDM_WD_CTL,

@@ -50,6 +50,9 @@
 #define AFE_API_VERSION_V6		6
 /* for Speaker Protection V4 */
 #define AFE_API_VERSION_V9		9
+/* for external mclk dynamic switch */
+#define AFE_API_VERSION_V8		8
+
 
 typedef int (*routing_cb)(int port);
 
@@ -319,6 +322,24 @@ struct vad_config {
 	u32 pre_roll;
 };
 
+enum afe_mclk_src_id {
+	MCLK_SRC_INT = 0x00,
+	MCLK_SRC_EXT_0 = 0x01,
+	MCLK_SRC_MAX,
+};
+
+enum afe_mclk_freq {
+	MCLK_FREQ_MIN = 0,
+	MCLK_FREQ_11P2896_MHZ = MCLK_FREQ_MIN,
+	MCLK_FREQ_12P288_MHZ,
+	MCLK_FREQ_16P384_MHZ,
+	MCLK_FREQ_22P5792_MHZ,
+	MCLK_FREQ_24P576_MHZ,
+	MCLK_FREQ_MAX,
+};
+
+#define Q6AFE_EXT_MCLK_FREQ_DEFAULT 0
+
 struct afe_audio_buffer {
 	dma_addr_t phys;
 	void       *data;
@@ -438,9 +459,9 @@ int afe_pseudo_port_start_nowait(u16 port_id);
 int afe_pseudo_port_stop_nowait(u16 port_id);
 int afe_set_lpass_clock(u16 port_id, struct afe_clk_cfg *cfg);
 int afe_set_lpass_clock_v2(u16 port_id, struct afe_clk_set *cfg);
-int afe_send_cps_config(int src_port,
+void afe_set_cps_config(int src_port,
 			struct afe_cps_hw_intf_cfg *cps_config,
-			int param_size);
+			u32 ch_mask);
 int afe_set_lpass_clk_cfg(int index, struct afe_clk_set *cfg);
 int afe_set_digital_codec_core_clock(u16 port_id,
 			struct afe_digital_clk_cfg *cfg);
@@ -515,6 +536,19 @@ enum {
 	AFE_LPASS_CORE_HW_DCODEC_BLOCK,
 	AFE_LPASS_CORE_HW_VOTE_MAX
 };
+int afe_set_mclk_src_cfg(u16 port_id, uint32_t mclk_src_id, uint32_t mclk_freq);
+
+typedef int (*afe_enable_mclk_and_get_info_cb_func) (void *private_data,
+			uint32_t enable, uint32_t mclk_freq,
+			struct afe_param_id_clock_set_v2_t *dyn_mclk_cfg);
+
+int afe_register_ext_mclk_cb(afe_enable_mclk_and_get_info_cb_func fn1,
+				void *private_data);
+void afe_unregister_ext_mclk_cb(void);
+
+#define AFE_LPASS_CORE_HW_BLOCK_ID_NONE                        0
+#define AFE_LPASS_CORE_HW_BLOCK_ID_AVTIMER                     2
+#define AFE_LPASS_CORE_HW_MACRO_BLOCK                          3
 
 /* Handles audio-video timer (avtimer) and BTSC vote requests from clients.
  */

@@ -719,9 +719,6 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 					0x10, 0x10);
 		usleep_range(100, 110);
 		set_bit(HPH_PA_DELAY, &wcd937x->status_mask);
-		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
-					    wcd937x->rx_swr_dev->dev_num,
-					    true);
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_PDM_WD_CTL1, 0x17, 0x13);
 		break;
@@ -1214,7 +1211,9 @@ static int wcd937x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 			dmic_clk_reg, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
 			dmic_clk_reg, 0x70, 0x20);
-		wcd937x_tx_connect_port(component, DMIC0 + (w->shift), true);
+		ret = swr_slvdev_datapath_control(wcd937x->tx_swr_dev,
+		    wcd937x->tx_swr_dev->dev_num,
+		    true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd937x_tx_connect_port(component, DMIC0 + (w->shift), false);
@@ -1330,9 +1329,17 @@ static int wcd937x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		ret = swr_slvdev_datapath_control(wcd937x->tx_swr_dev,
-		    wcd937x->tx_swr_dev->dev_num,
-		    true);
+		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
+			/* Enable BCS for Headset mic */
+			if (w->shift == 1 && !(snd_soc_component_read32(component,
+				WCD937X_TX_NEW_TX_CH2_SEL) & 0x80)) {
+				wcd937x_tx_connect_port(component, MBHC, true);
+				set_bit(AMIC2_BCS_ENABLE, &wcd937x->status_mask);
+			}
+			wcd937x_tx_connect_port(component, ADC1 + (w->shift), true);
+		} else {
+			wcd937x_tx_connect_port(component, DMIC0 + (w->shift), true);
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		ret = swr_slvdev_datapath_control(wcd937x->tx_swr_dev,
@@ -1352,6 +1359,7 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 			snd_soc_dapm_to_component(w->dapm);
 	struct wcd937x_priv *wcd937x =
 			snd_soc_component_get_drvdata(component);
+	int ret = 0;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1367,13 +1375,9 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 				WCD937X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
-		/* Enable BCS for Headset mic */
-		if (w->shift == 1 && !(snd_soc_component_read32(component,
-				WCD937X_TX_NEW_TX_CH2_SEL) & 0x80)) {
-			wcd937x_tx_connect_port(component, MBHC, true);
-			set_bit(AMIC2_BCS_ENABLE, &wcd937x->status_mask);
-		}
-		wcd937x_tx_connect_port(component, ADC1 + (w->shift), true);
+		ret = swr_slvdev_datapath_control(wcd937x->tx_swr_dev,
+		    wcd937x->tx_swr_dev->dev_num,
+		    true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd937x_tx_connect_port(component, ADC1 + (w->shift), false);
@@ -1387,7 +1391,7 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		break;
 	};
 
-	return 0;
+	return ret;
 }
 
 static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
@@ -2263,7 +2267,7 @@ static const struct snd_soc_dapm_widget wcd937x_dapm_widgets[] = {
 				adc1_switch, ARRAY_SIZE(adc1_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("ADC2_MIXER", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_MIXER_E("ADC2_MIXER", SND_SOC_NOPM, 1, 0,
 				adc2_switch, ARRAY_SIZE(adc2_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
@@ -2414,27 +2418,27 @@ static const struct snd_soc_dapm_widget wcd9375_dapm_widgets[] = {
 				0, dmic1_switch, ARRAY_SIZE(dmic1_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("DMIC2_MIXER", SND_SOC_NOPM, 0,
+	SND_SOC_DAPM_MIXER_E("DMIC2_MIXER", SND_SOC_NOPM, 1,
 				0, dmic2_switch, ARRAY_SIZE(dmic2_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("DMIC3_MIXER", SND_SOC_NOPM, 0,
+	SND_SOC_DAPM_MIXER_E("DMIC3_MIXER", SND_SOC_NOPM, 2,
 				0, dmic3_switch, ARRAY_SIZE(dmic3_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("DMIC4_MIXER", SND_SOC_NOPM, 0,
+	SND_SOC_DAPM_MIXER_E("DMIC4_MIXER", SND_SOC_NOPM, 3,
 				0, dmic4_switch, ARRAY_SIZE(dmic4_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("DMIC5_MIXER", SND_SOC_NOPM, 0,
+	SND_SOC_DAPM_MIXER_E("DMIC5_MIXER", SND_SOC_NOPM, 4,
 				0, dmic5_switch, ARRAY_SIZE(dmic5_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("DMIC6_MIXER", SND_SOC_NOPM, 0,
+	SND_SOC_DAPM_MIXER_E("DMIC6_MIXER", SND_SOC_NOPM, 5,
 				0, dmic6_switch, ARRAY_SIZE(dmic6_switch),
 				wcd937x_tx_swr_ctrl, SND_SOC_DAPM_PRE_PMU |
 				SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("ADC3_MIXER", SND_SOC_NOPM, 0, 0, adc3_switch,
+	SND_SOC_DAPM_MIXER_E("ADC3_MIXER", SND_SOC_NOPM, 2, 0, adc3_switch,
 				ARRAY_SIZE(adc3_switch), wcd937x_tx_swr_ctrl,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 

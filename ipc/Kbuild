@@ -14,6 +14,18 @@ ifeq ($(KERNEL_BUILD), 1)
 	AUDIO_ROOT := $(KDIR)/techpack/audio
 endif
 
+ifeq ($(CONFIG_SND_SOC_AUTO), y)
+	ifdef CONFIG_SND_SOC_SA8155
+		include $(AUDIO_ROOT)/config/sa8155auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sa8155autoconf.h
+	endif
+	ifdef CONFIG_SND_SOC_SA6155
+		include $(AUDIO_ROOT)/config/sa6155auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sa6155autoconf.h
+	endif
+else
 ifeq ($(KERNEL_BUILD), 0)
         ifeq ($(CONFIG_ARCH_SM6150), y)
 		ifdef CONFIG_SND_SOC_SA6155
@@ -72,11 +84,12 @@ ifeq ($(KERNEL_BUILD), 0)
 			INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
 		endif
 	endif
-	ifeq ($(CONFIG_QTI_GVM), y)
+	ifeq ($(CONFIG_QTI_QUIN_GVM), y)
 		include $(AUDIO_ROOT)/config/gvmauto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/gvmautoconf.h
 	endif
+endif
 endif
 
 # As per target team, build is done as follows:

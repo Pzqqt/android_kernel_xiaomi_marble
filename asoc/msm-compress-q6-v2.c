@@ -3092,9 +3092,9 @@ static int msm_compr_pointer(struct snd_compr_stream *cstream,
 		pr_err_ratelimited("%s Got RESET EVENTS notification, return error\n",
 				   __func__);
 		if (cstream->direction == SND_COMPRESS_PLAYBACK)
-			runtime->total_bytes_transferred = tstamp.copied_total;
+			runtime->total_bytes_transferred = prtd->copied_total;
 		else
-			runtime->total_bytes_available = tstamp.copied_total;
+			runtime->total_bytes_available = prtd->received_total;
 		tstamp.pcm_io_frames = 0;
 		memcpy(arg, &tstamp, sizeof(struct snd_compr_tstamp));
 		spin_unlock_irqrestore(&prtd->lock, flags);
