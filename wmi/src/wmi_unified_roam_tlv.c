@@ -4023,6 +4023,18 @@ send_offload_11k_cmd_tlv(wmi_unified_t wmi_handle,
 			     neighbor_report_offload->ssid.ssid_len);
 	}
 
+	wmi_debug("RSO_CFG: 11k_bitmask:%u time_offset:%u low_rssi_offset:%u bmiss_count_trigger:%u per_threshold_offset%u",
+		  params->offload_11k_bitmask,
+		  params->neighbor_report_params.time_offset,
+		  params->neighbor_report_params.low_rssi_offset,
+		  params->neighbor_report_params.bmiss_count_trigger,
+		  params->neighbor_report_params.per_threshold_offset);
+	wmi_debug("RSO_CFG: neighbor_report_cache_timeout:%u max_neighbor_report_req_cap:%u SSID:%.*s",
+		  params->neighbor_report_params.neighbor_report_cache_timeout,
+		  params->neighbor_report_params.max_neighbor_report_req_cap,
+		  params->neighbor_report_params.ssid.length,
+		  params->neighbor_report_params.ssid.ssid);
+
 	wmi_mtrace(WMI_11K_OFFLOAD_REPORT_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_11K_OFFLOAD_REPORT_CMDID);
