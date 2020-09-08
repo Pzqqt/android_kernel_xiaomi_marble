@@ -39,6 +39,10 @@ struct qdf_dev;
 #define __qdf_cpumask_pr_args(maskp) cpumask_pr_args(maskp)
 #define __qdf_for_each_possible_cpu(cpu) for_each_possible_cpu(cpu)
 #define __qdf_for_each_online_cpu(cpu) for_each_online_cpu(cpu)
+#define __qdf_for_each_cpu(cpu, maskp) \
+for_each_cpu(cpu, maskp)
+#define __qdf_for_each_cpu_not(cpu, maskp) \
+for_each_cpu_not(cpu, maskp)
 
 /**
  * __qdf_dev_alloc_mem() - allocate memory

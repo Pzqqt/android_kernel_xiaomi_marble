@@ -31,6 +31,9 @@
 #define qdf_cpumask_pr_args(maskp) __qdf_cpumask_pr_args(maskp)
 #define qdf_for_each_possible_cpu(cpu) __qdf_for_each_possible_cpu(cpu)
 #define qdf_for_each_online_cpu(cpu) __qdf_for_each_online_cpu(cpu)
+#define qdf_for_each_cpu(cpu, maskp) __qdf_for_each_cpu(cpu, maskp)
+#define qdf_for_each_cpu_not(cpu, maskp) \
+__qdf_for_each_cpu_not(cpu, maskp)
 
 #ifdef ENHANCED_OS_ABSTRACTION
 /**
