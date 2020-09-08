@@ -2269,7 +2269,7 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 		       roundup(assoc_ies->buf_len, sizeof(uint32_t)));
 	buf += WMI_TLV_HDR_SIZE;
 
-	wmi_debug("RSO_CFG: assoc_ies len:%d", assoc_ies->buf_len);
+	wmi_debug("RSO_CFG: akm:%d assoc_ies len:%d", akm, assoc_ies->buf_len);
 	if (assoc_ies->buf_len)
 		qdf_mem_copy(buf, roam_req->assoc_ie, assoc_ies->buf_len);
 
@@ -2300,8 +2300,6 @@ wmi_fill_rso_start_scan_tlv(struct wlan_roam_scan_offload_params *rso_req,
 	struct wlan_roam_scan_params *src_scan_params;
 
 	src_scan_params = &rso_req->rso_scan_params;
-
-	qdf_mem_zero(scan_tlv, sizeof(*scan_tlv));
 	scan_tlv->scan_ctrl_flags = WMI_SCAN_ADD_CCK_RATES |
 				    WMI_SCAN_ADD_OFDM_RATES |
 				    WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
@@ -2350,6 +2348,10 @@ wmi_fill_rso_start_scan_tlv(struct wlan_roam_scan_offload_params *rso_req,
 		  scan_tlv->dwell_time_active, scan_tlv->dwell_time_passive,
 		  scan_tlv->min_rest_time, scan_tlv->max_rest_time,
 		  scan_tlv->repeat_probe_time, scan_tlv->probe_spacing_time);
+	wmi_debug("RSO_CFG: ctrl_flags:0x%x probe_delay:%d max_scan_time:%d idle_time:%d n_probes:%d",
+		  scan_tlv->scan_ctrl_flags_ext, scan_tlv->probe_delay,
+		  scan_tlv->max_scan_time, scan_tlv->idle_time,
+		  scan_tlv->n_probes);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2409,8 +2411,11 @@ send_roam_scan_offload_mode_cmd_tlv(
 		WMI_SEC_TO_MSEC(src_rso_mode_info->min_delay_btw_scans);
 	roam_scan_mode_fp->roam_scan_mode = src_rso_mode_info->roam_scan_mode;
 	roam_scan_mode_fp->vdev_id = rso_req->vdev_id;
-	wmi_debug("vdev_id:%d roam scan mode: %d", rso_req->vdev_id,
-		  src_rso_mode_info->roam_scan_mode);
+	wmi_debug("vdev_id:%d roam scan mode:0x%x min_delay_bitmap:0x%x min_delay_btw_scans:%d",
+		  rso_req->vdev_id,
+		  roam_scan_mode_fp->roam_scan_mode,
+		  roam_scan_mode_fp->min_delay_roam_trigger_reason_bitmask,
+		  roam_scan_mode_fp->min_delay_btw_scans);
 	/*
 	 * For supplicant disabled roaming, all other roam triggers are disabled
 	 * so send only roam scan mode Fixed param in the command
@@ -2428,7 +2433,6 @@ send_roam_scan_offload_mode_cmd_tlv(
 		buf_ptr,
 		WMITLV_TAG_STRUC_wmi_start_scan_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(wmi_start_scan_cmd_fixed_param));
-
 	scan_cmd_fp = (wmi_start_scan_cmd_fixed_param *)buf_ptr;
 	wmi_fill_rso_start_scan_tlv(rso_req, scan_cmd_fp);
 
@@ -2443,7 +2447,7 @@ send_roam_scan_offload_mode_cmd_tlv(
 	}
 
 send_roam_scan_mode_cmd:
-	wmi_mtrace(WMI_ROAM_SCAN_MODE, NO_SESSION, 0);
+	wmi_mtrace(WMI_ROAM_SCAN_MODE, rso_req->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_MODE);
 	if (QDF_IS_STATUS_ERROR(status))
