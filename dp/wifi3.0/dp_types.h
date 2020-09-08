@@ -2817,6 +2817,7 @@ struct dp_rx_fst {
 struct dp_fisa_stats {
 	/* flow index invalid from RX HW TLV */
 	uint32_t invalid_flow_index;
+	uint32_t reo_mismatch;
 };
 
 enum fisa_aggr_ret {
