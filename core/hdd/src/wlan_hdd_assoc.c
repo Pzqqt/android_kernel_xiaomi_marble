@@ -1828,6 +1828,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	struct wlan_ies disconnect_ies = {0};
 	bool from_ap = false;
 	uint32_t reason_code = 0;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!dev) {
 		hdd_err("net_dev is released return");
@@ -1957,6 +1958,15 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 	sme_ft_reset(mac_handle, adapter->vdev_id);
 	sme_reset_key(mac_handle, adapter->vdev_id);
+
+	if (adapter->device_mode == QDF_STA_MODE) {
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (vdev) {
+			wlan_crypto_free_vdev_key(vdev);
+			hdd_objmgr_put_vdev(vdev);
+		}
+	}
+
 	hdd_remove_beacon_filter(adapter);
 
 	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
