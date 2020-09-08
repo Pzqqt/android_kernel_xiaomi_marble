@@ -204,6 +204,22 @@ static void wlan_crypto_free_key(struct wlan_crypto_comp_priv *crypto_priv)
 
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+void wlan_crypto_free_vdev_key(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+
+	crypto_debug("free key for vdev %d", wlan_vdev_get_id(vdev));
+	crypto_priv = wlan_get_vdev_crypto_obj(vdev);
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return;
+	}
+
+	wlan_crypto_free_key(crypto_priv);
+}
+#endif
+
 static QDF_STATUS wlan_crypto_vdev_obj_destroy_handler(
 						struct wlan_objmgr_vdev *vdev,
 						void *arg){
