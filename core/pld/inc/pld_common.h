@@ -685,6 +685,15 @@ int pld_force_wake_request(struct device *dev);
  *         Non zero failure code for errors
  */
 int pld_force_wake_request_sync(struct device *dev, int timeout_us);
+
+/**
+ * pld_exit_power_save() - Send EXIT_POWER_SAVE QMI to FW
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_exit_power_save(struct device *dev);
 int pld_is_device_awake(struct device *dev);
 int pld_force_wake_release(struct device *dev);
 int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
