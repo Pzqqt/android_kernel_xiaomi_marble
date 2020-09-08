@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,7 @@ QDF_STATUS pmo_core_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 
 	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_NOSUPPORT;
-		pmo_vdev_put_ref(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 		goto exit_with_status;
 	}
 
@@ -55,7 +55,7 @@ QDF_STATUS pmo_core_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	req.enable = true;
 	status = pmo_tgt_conf_hw_filter(pmo_vdev_get_psoc(vdev), &req);
 
-	pmo_vdev_put_ref(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 
 exit_with_status:
 	pmo_exit();
@@ -78,7 +78,7 @@ QDF_STATUS pmo_core_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 
 	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_NOSUPPORT;
-		pmo_vdev_put_ref(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 		goto exit_with_status;
 	}
 
@@ -92,7 +92,7 @@ QDF_STATUS pmo_core_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	req.enable = false;
 	status = pmo_tgt_conf_hw_filter(pmo_vdev_get_psoc(vdev), &req);
 
-	pmo_vdev_put_ref(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 
 exit_with_status:
 	pmo_exit();
