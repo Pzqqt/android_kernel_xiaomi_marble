@@ -282,7 +282,7 @@ QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
 	/* Register default wow patterns with firmware */
 	pmo_register_wow_default_patterns(vdev);
 
-	pmo_vdev_put_ref(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 
 	/*
 	 * The above APIs should return a status but don't.

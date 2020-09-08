@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,6 @@
 #define pmo_peer_put_ref(peer) wlan_objmgr_peer_release_ref(peer, WLAN_PMO_ID)
 
 #define pmo_vdev_get_ref(vdev) wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID)
-#define pmo_vdev_put_ref(vdev) wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID)
 
 #define pmo_pdev_get_ref(pdev) wlan_objmgr_pdev_try_get_ref(pdev, WLAN_PMO_ID)
 #define pmo_pdev_put_ref(pdev) wlan_objmgr_pdev_release_ref(pdev, WLAN_PMO_ID)
@@ -119,21 +118,6 @@ pmo_vdev_get_id(struct wlan_objmgr_vdev *vdev)
  */
 
 /* Tree Navigation: psoc */
-
-static inline struct wlan_objmgr_vdev *
-pmo_psoc_get_vdev(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
-{
-	struct wlan_objmgr_vdev *vdev;
-
-	if (vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS)
-		return NULL;
-
-	wlan_psoc_obj_lock(psoc);
-	vdev = psoc->soc_objmgr.wlan_vdev_list[vdev_id];
-	wlan_psoc_obj_unlock(psoc);
-
-	return vdev;
-}
 
 static inline struct pmo_psoc_priv_obj *
 pmo_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
