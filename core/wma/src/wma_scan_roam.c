@@ -689,8 +689,9 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.rssi_thresh_offset_5g =
 		roam_req->rssi_thresh_offset_5g;
 
-	wma_debug("good_rssi_threshold %d, early_stop_thresholds en=%d, min=%d, max=%d roam_scan_rssi_thresh=%d, roam_rssi_thresh_diff=%d",
-		  params.good_rssi_threshold, roam_req->early_stop_scan_enable,
+	wma_debug("db2dbm enabled:%d, good_rssi_threshold:%d, early_stop_thresholds en:%d, min:%d, max:%d, roam_scan_rssi_thresh:%d, roam_rssi_thresh_diff:%d",
+		  db2dbm_enabled, params.good_rssi_threshold,
+		  roam_req->early_stop_scan_enable,
 		  params.roam_earlystop_thres_min,
 		  params.roam_earlystop_thres_max, rssi_thresh,
 		  rssi_thresh_diff);
@@ -702,12 +703,20 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		return status;
 	}
 
-	wma_debug("hirssi max cnt %d, delta %d, hirssi upper bound %d dense rssi thresh offset %d, dense min aps cnt %d, traffic_threshold %d dense_status=%d",
-		  hirssi_scan_max_count, hirssi_scan_delta, hirssi_upper_bound,
+	wma_debug("hirssi max cnt:%d, delta:%d, hirssi upper bound:%d, dense rssi thresh offset:%d, dense min aps cnt:%d, traffic_threshold:%d, dense_status:%d",
+		  hirssi_scan_max_count, hirssi_scan_delta,
+		  params.hi_rssi_scan_rssi_ub,
 		  roam_params->dense_rssi_thresh_offset,
 		  roam_params->dense_min_aps_cnt,
 		  roam_params->traffic_threshold,
 		  roam_params->initial_dense_status);
+	wma_debug("raise rssi threshold 5g:%d, drop rssi threshold 5g:%d, penalty threshold 5g:%d, boost threshold 5g:%d",
+		  params.raise_rssi_thresh_5g, roam_params->drop_rssi_thresh_5g,
+		  params.penalty_threshold_5g, params.boost_threshold_5g);
+	wma_debug("raise factor 5g:%d, drop factor 5g:%d, max raise rssi 5g:%d, max drop rssi 5g:%d, rssi threshold offset 5g:%d",
+		  params.raise_factor_5g, params.raise_factor_5g,
+		  params.max_raise_rssi_5g, params.max_drop_rssi_5g,
+		  params.rssi_thresh_offset_5g);
 	wma_debug("BG Scan Bad RSSI:%d, bitmap:0x%x Offset for 2G to 5G Roam:%d",
 		  roam_params->bg_scan_bad_rssi_thresh,
 		  roam_params->bg_scan_client_bitmap,
@@ -1522,6 +1531,10 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	qdf_mem_copy(params->bssid_avoid_list, roam_params->bssid_avoid_list,
 			MAX_BSSID_AVOID_LIST * sizeof(struct qdf_mac_addr));
 
+	wma_debug("op_bitmap:0x%x num_rssi_rejection_ap:%d delta_rssi:%d",
+		  params->op_bitmap, params->num_rssi_rejection_ap,
+		  params->delta_rssi);
+
 	for (i = 0; i < num_ssid_white_list; i++) {
 		qdf_mem_copy(params->ssid_allowed_list[i].ssid,
 				roam_params->ssid_allowed_list[i].ssId,
@@ -1664,9 +1677,12 @@ wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 	params->btm_candidate_min_score =
 			roam_req->btm_trig_min_candidate_score;
 
-	wma_debug("vdev %u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%d",
-		 params->vdev_id, params->btm_offload_config,
-		 params->btm_query_bitmask, params->btm_candidate_min_score);
+	wma_debug("vdev_id:%u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%u",
+		  params->vdev_id, params->btm_offload_config,
+		  params->btm_query_bitmask, params->btm_candidate_min_score);
+	wma_debug("btm_solicited_timeout:%u btm_max_attempt_cnt:%u btm_sticky_time:%u disassoc_timer_threshold:%u",
+		  params->btm_solicited_timeout, params->btm_max_attempt_cnt,
+		  params->btm_sticky_time, params->disassoc_timer_threshold);
 
 	status = wmi_unified_send_btm_config(wma_handle->wmi_handle, params);
 	qdf_mem_free(params);
@@ -1705,10 +1721,10 @@ void wma_send_roam_bss_load_config(WMA_HANDLE handle,
 		params->rssi_threshold_24ghz &= 0x000000ff;
 	}
 
-	wma_debug("Bss load trig params vdev %u threshold %u sample_time: %u 5Ghz RSSI threshold:%d 2.4G rssi threshold:%d",
-		 params->vdev_id, params->bss_load_threshold,
-		 params->bss_load_sample_time, params->rssi_threshold_5ghz,
-		 params->rssi_threshold_24ghz);
+	wma_debug("Bss load trig params vdev_id:%u threshold:%u sample_time:%u 5Ghz RSSI threshold:%d 2.4G rssi threshold:%d",
+		  params->vdev_id, params->bss_load_threshold,
+		  params->bss_load_sample_time, params->rssi_threshold_5ghz,
+		  params->rssi_threshold_24ghz);
 
 	status = wmi_unified_send_bss_load_config(wma_handle->wmi_handle,
 						  params);

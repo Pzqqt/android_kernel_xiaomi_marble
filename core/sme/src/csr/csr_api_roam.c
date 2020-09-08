@@ -17838,6 +17838,7 @@ static void check_allowed_ssid_list(struct roam_offload_scan_req *req_buffer,
 		roam_params->num_ssid_allowed_list++;
 	}
 }
+#endif
 
 /**
  * csr_add_rssi_reject_ap_list() - add rssi reject AP list to the
@@ -17880,7 +17881,6 @@ csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
 
 	qdf_mem_free(reject_list);
 }
-#endif
 
 /**
  * csr_update_11k_offload_params - Update 11K offload params
@@ -20766,6 +20766,14 @@ csr_cm_roam_scan_filter(struct mac_context *mac_ctx, uint8_t vdev_id,
 	scan_filter_params->reason = reason;
 	params = &scan_filter_params->filter_params;
 	roam_params = &mac_ctx->roam.configParam.roam_params;
+	/*
+	 * If rssi disallow bssid list have any member
+	 * fill it and send it to firmware so that firmware does not
+	 * try to roam to these BSS until RSSI OR time condition are
+	 * matched.
+	 */
+	csr_add_rssi_reject_ap_list(mac_ctx, roam_params);
+
 	if (command != ROAM_SCAN_OFFLOAD_STOP) {
 		switch (reason) {
 		case REASON_ROAM_SET_BLACKLIST_BSSID:
@@ -20803,7 +20811,9 @@ csr_cm_roam_scan_filter(struct mac_context *mac_ctx, uint8_t vdev_id,
 		 * across connections.
 		 */
 		op_bitmap = 0x2 | 0x4;
-		num_ssid_white_list = roam_params->num_ssid_allowed_list;
+		if (reason == REASON_ROAM_SET_SSID_ALLOWED)
+			num_ssid_white_list =
+					roam_params->num_ssid_allowed_list;
 		num_bssid_preferred_list = roam_params->num_bssid_favored;
 	}
 
@@ -20816,8 +20826,11 @@ csr_cm_roam_scan_filter(struct mac_context *mac_ctx, uint8_t vdev_id,
 	params->num_rssi_rejection_ap = num_rssi_rejection_ap;
 	params->delta_rssi =
 		wlan_blm_get_rssi_blacklist_threshold(mac_ctx->pdev);
-	qdf_mem_copy(params->bssid_avoid_list, roam_params->bssid_avoid_list,
-		     MAX_BSSID_AVOID_LIST * sizeof(struct qdf_mac_addr));
+	if (params->num_bssid_black_list)
+		qdf_mem_copy(params->bssid_avoid_list,
+			     roam_params->bssid_avoid_list,
+			     MAX_BSSID_AVOID_LIST *
+					sizeof(struct qdf_mac_addr));
 
 	for (i = 0; i < num_ssid_white_list; i++) {
 		qdf_mem_copy(params->ssid_allowed_list[i].ssid,
@@ -20833,14 +20846,18 @@ csr_cm_roam_scan_filter(struct mac_context *mac_ctx, uint8_t vdev_id,
 	for (i = 0; i < params->num_bssid_black_list; i++)
 		sme_debug("Blacklist bssid[%d]:" QDF_MAC_ADDR_FMT, i,
 			  QDF_MAC_ADDR_REF(params->bssid_avoid_list[i].bytes));
-	qdf_mem_copy(params->bssid_favored, roam_params->bssid_favored,
-		     MAX_BSSID_FAVORED * sizeof(struct qdf_mac_addr));
-	qdf_mem_copy(params->bssid_favored_factor,
-		     roam_params->bssid_favored_factor, MAX_BSSID_FAVORED);
-	qdf_mem_copy(params->rssi_rejection_ap,
-		     roam_params->rssi_reject_bssid_list,
-		     MAX_RSSI_AVOID_BSSID_LIST *
-			sizeof(struct reject_ap_config_params));
+	if (params->num_bssid_preferred_list) {
+		qdf_mem_copy(params->bssid_favored, roam_params->bssid_favored,
+			     MAX_BSSID_FAVORED * sizeof(struct qdf_mac_addr));
+		qdf_mem_copy(params->bssid_favored_factor,
+			     roam_params->bssid_favored_factor,
+			     MAX_BSSID_FAVORED);
+	}
+	if (params->num_rssi_rejection_ap)
+		qdf_mem_copy(params->rssi_rejection_ap,
+			     roam_params->rssi_reject_bssid_list,
+			     MAX_RSSI_AVOID_BSSID_LIST *
+			     sizeof(struct reject_ap_config_params));
 
 	for (i = 0; i < params->num_bssid_preferred_list; i++)
 		sme_debug("Preferred Bssid[%d]:"QDF_MAC_ADDR_FMT" score: %d", i,
@@ -21009,7 +21026,8 @@ wlan_cm_roam_fill_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	 * Disable offload_11k_params for current vdev
 	 */
 	req->roam_11k_params.vdev_id = vdev_id;
-
+	csr_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_STOP,
+				reason, &req->scan_filter_params);
 	csr_cm_roam_scan_offload_fill_rso_configs(mac_ctx, session,
 						  &req->rso_config,
 						  NULL,

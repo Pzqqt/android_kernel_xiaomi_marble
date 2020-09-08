@@ -450,12 +450,13 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 		}
 	}
 
-	target_if_debug("good_rssi_threshold %d, early_stop_thresholds en=%d, min=%d, max=%d roam_scan_rssi_thresh=%d, roam_rssi_thresh_diff=%d",
-			req->good_rssi_threshold, req->early_stop_scan_enable,
+	target_if_debug("RSO_CFG: db2dbm enabled:%d, good_rssi_threshold:%d, early_stop_thresholds en:%d, min:%d, max:%d, roam_scan_rssi_thresh:%d, roam_rssi_thresh_diff:%d",
+			db2dbm_enabled, req->good_rssi_threshold,
+			req->early_stop_scan_enable,
 			req->roam_earlystop_thres_min,
 			req->roam_earlystop_thres_max, req->rssi_thresh,
 			req->rssi_thresh_diff);
-	target_if_debug("hirssi max cnt %d, delta %d, hirssi upper bound %d dense rssi thresh offset %d, dense min aps cnt %d, traffic_threshold %d dense_status=%d",
+	target_if_debug("RSO_CFG: hirssi max cnt:%d, delta:%d, hirssi upper bound:%d, dense rssi thresh offset:%d, dense min aps cnt:%d, traffic_threshold:%d, dense_status:%d",
 			req->hi_rssi_scan_max_count,
 			req->hi_rssi_scan_rssi_delta,
 			req->hi_rssi_scan_rssi_ub,
@@ -463,11 +464,22 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 			req->dense_min_aps_cnt,
 			req->traffic_threshold,
 			req->initial_dense_status);
-	target_if_debug("BG Scan Bad RSSI:%d, bitmap:0x%x Offset for 2G to 5G Roam:%d",
+	target_if_debug("RSO_CFG: raise rssi threshold 5g:%d, drop rssi threshold 5g:%d, penalty threshold 5g:%d, boost threshold 5g:%d",
+			req->raise_rssi_thresh_5g,
+			req->drop_rssi_thresh_5g,
+			req->penalty_threshold_5g,
+			req->boost_threshold_5g);
+	target_if_debug("RSO_CFG: raise factor 5g:%d, drop factor 5g:%d, max raise rssi 5g:%d, max drop rssi 5g:%d, rssi threshold offset 5g:%d",
+			req->raise_factor_5g,
+			req->raise_factor_5g,
+			req->max_raise_rssi_5g,
+			req->max_drop_rssi_5g,
+			req->rssi_thresh_offset_5g);
+	target_if_debug("RSO_CFG: BG Scan Bad RSSI:%d, bitmap:0x%x Offset for 2G to 5G Roam:%d",
 			req->bg_scan_bad_rssi_thresh,
 			req->bg_scan_client_bitmap,
 			req->roam_bad_rssi_thresh_offset_2g);
-	target_if_debug("Roam data rssi triggers:0x%x, threshold:%d, rx time:%d",
+	target_if_debug("RSO_CFG: Roam data rssi triggers:0x%x, threshold:%d, rx time:%d",
 			req->roam_data_rssi_threshold_triggers,
 			req->roam_data_rssi_threshold,
 			req->rx_data_inactivity_time);
@@ -684,6 +696,10 @@ target_if_cm_roam_scan_filter(wmi_unified_t wmi_handle, uint8_t command,
 		}
 	}
 
+	target_if_debug("RSO_CFG: op_bitmap:0x%x num_rssi_rejection_ap:%d delta_rssi:%d",
+			req->filter_params.op_bitmap,
+			req->filter_params.num_rssi_rejection_ap,
+			req->filter_params.delta_rssi);
 	status = wmi_unified_roam_scan_filter_cmd(wmi_handle,
 						  &req->filter_params);
 	return status;
@@ -702,9 +718,12 @@ static QDF_STATUS
 target_if_cm_roam_scan_btm_offload(wmi_unified_t wmi_handle,
 				   struct wlan_roam_btm_config *req)
 {
-	target_if_debug("vdev %u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%d",
+	target_if_debug("RSO_CFG: vdev_id:%u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%u",
 			req->vdev_id, req->btm_offload_config,
 			req->btm_query_bitmask, req->btm_candidate_min_score);
+	target_if_debug("RSO_CFG: btm_solicited_timeout:%u btm_max_attempt_cnt:%u btm_sticky_time:%u disassoc_timer_threshold:%u",
+			req->btm_solicited_timeout, req->btm_max_attempt_cnt,
+			req->btm_sticky_time, req->disassoc_timer_threshold);
 
 	return wmi_unified_send_btm_config(wmi_handle, req);
 }
@@ -771,7 +790,7 @@ target_if_cm_roam_bss_load_config(wmi_unified_t wmi_handle,
 		req->rssi_threshold_24ghz &= 0x000000ff;
 	}
 
-	target_if_debug("Bss load trig params vdev %u threshold %u sample_time: %u 5Ghz RSSI threshold:%d 2.4G rssi threshold:%d",
+	target_if_debug("RSO_CFG: bss load trig params vdev_id:%u threshold:%u sample_time:%u 5Ghz RSSI threshold:%d 2.4G rssi threshold:%d",
 			req->vdev_id, req->bss_load_threshold,
 			req->bss_load_sample_time, req->rssi_threshold_5ghz,
 			req->rssi_threshold_24ghz);
@@ -948,9 +967,9 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 		if (QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Sending roaming MAWC params failed");
 			goto end;
-		} else {
-			target_if_debug("MAWC roaming not supported by firmware");
 		}
+	} else {
+		target_if_debug("MAWC roaming not supported by firmware");
 	}
 
 	status = target_if_cm_roam_scan_offload_mode(wmi_handle,
