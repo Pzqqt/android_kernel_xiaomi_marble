@@ -95,7 +95,8 @@ static int sde_rotator_bus_scale_set_quota(struct sde_rot_bus_data_type *bus,
 
 	for (i = 0; i < bus->data_paths_cnt; i++) {
 		if (bus->data_bus_hdl[i]) {
-			ret = icc_set_bw(bus->data_bus_hdl[i], ab, ab);
+			ret = icc_set_bw(bus->data_bus_hdl[i], Bps_to_icc(ab),
+				Bps_to_icc(ab));
 			if (ret)
 				goto err;
 		}
@@ -108,7 +109,8 @@ static int sde_rotator_bus_scale_set_quota(struct sde_rot_bus_data_type *bus,
 err:
 	ab = div_u64(bus->curr_quota_val, bus->data_paths_cnt);
 	for (j = 0; j < i; j++)
-		icc_set_bw(bus->data_bus_hdl[j], ab, ab);
+		icc_set_bw(bus->data_bus_hdl[j], Bps_to_icc(ab),
+			Bps_to_icc(ab));
 	ATRACE_END("msm_bus_scale_req_rot");
 	pr_err("failed to set data bus quota %llu\n", quota);
 
