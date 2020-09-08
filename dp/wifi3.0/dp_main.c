@@ -4346,6 +4346,11 @@ static void dp_pdev_post_attach(struct cdp_pdev *txrx_pdev)
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 
 	dp_tx_capture_debugfs_init(pdev);
+
+	if (dp_pdev_htt_stats_dbgfs_init(pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Failed to initialize pdev HTT stats debugfs");
+	}
 }
 
 /*
@@ -13286,12 +13291,6 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 		goto fail9;
 	}
 
-	if (dp_pdev_htt_stats_dbgfs_init(pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to initialize pdev HTT stats debugfs");
-		goto fail10;
-	}
-
 	/* initialize sw rx descriptors */
 	dp_rx_pdev_desc_pool_init(pdev);
 	/* initialize sw monitor rx descriptors */
@@ -13310,8 +13309,6 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 		qdf_skb_mem_stats_read());
 
 	return QDF_STATUS_SUCCESS;
-fail10:
-	dp_rx_fst_detach(soc, pdev);
 fail9:
 	dp_ipa_uc_detach(soc, pdev);
 fail8:
