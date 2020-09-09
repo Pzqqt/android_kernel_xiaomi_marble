@@ -199,6 +199,7 @@ void dsi_ctrl_hw_cmn_soft_reset(struct dsi_ctrl_hw *ctrl)
 	DSI_W32(ctrl, DSI_CTRL, reg_ctrl);
 	wmb(); /* make sure DSI controller is enabled again */
 	DSI_CTRL_HW_DBG(ctrl, "ctrl soft reset done\n");
+	SDE_EVT32(ctrl->index);
 }
 
 /**
