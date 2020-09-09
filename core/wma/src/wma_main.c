@@ -7180,7 +7180,7 @@ static void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
  * Return: None
  *
  */
-#ifdef REMOVE_PKT_LOG
+#if !defined(FEATURE_PKTLOG) || defined(REMOVE_PKT_LOG)
 static void wma_set_wifi_start_packet_stats(void *wma_handle,
 					struct sir_wifi_start_log *start_log)
 {

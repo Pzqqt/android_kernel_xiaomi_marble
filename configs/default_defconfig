@@ -552,12 +552,13 @@ endif
 # builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
 # config.
 ifneq ($(TARGET_BUILD_VARIANT),user)
-	ifeq ($(CONFIG_LITHIUM), y)
-		CONFIG_FEATURE_PKTLOG := n
-	else
-		CONFIG_FEATURE_PKTLOG := y
-	endif
+	CONFIG_FEATURE_PKTLOG := y
 	CONFIG_WLAN_DEBUG_CRASH_INJECT := y
+endif
+
+#Disable pktlog feature for lithium based target
+ifeq ($(CONFIG_LITHIUM), y)
+	CONFIG_FEATURE_PKTLOG := n
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
