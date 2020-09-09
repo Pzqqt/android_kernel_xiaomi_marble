@@ -6235,7 +6235,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa_save_gsi_ver();
 
 	if (ipahal_init(ipa3_ctx->ipa_hw_type, ipa3_ctx->mmio,
-		ipa3_ctx->pdev)) {
+		ipa3_ctx->ipa_cfg_offset, ipa3_ctx->pdev)) {
 		IPAERR("fail to init ipahal\n");
 		result = -EFAULT;
 		goto fail_ipahal;
@@ -7044,6 +7044,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 
 	ipa3_ctx->ipa_wrapper_base = resource_p->ipa_mem_base;
 	ipa3_ctx->ipa_wrapper_size = resource_p->ipa_mem_size;
+	ipa3_ctx->ipa_cfg_offset = resource_p->ipa_cfg_offset;
 	ipa3_ctx->ipa_hw_type = resource_p->ipa_hw_type;
 	ipa3_ctx->ipa_config_is_mhi = resource_p->ipa_mhi_dynamic_config;
 	ipa3_ctx->hw_type_index = ipa3_get_hw_type_index();
@@ -7201,7 +7202,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		goto fail_mem_ctrl;
 	}
 	result = ipa3_controller_static_bind(ipa3_ctx->ctrl,
-			ipa3_ctx->ipa_hw_type);
+			ipa3_ctx->ipa_hw_type, ipa3_ctx->ipa_cfg_offset);
 	if (result) {
 		IPAERR("fail to static bind IPA ctrl\n");
 		result = -EFAULT;
@@ -8128,7 +8129,18 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		IPADBG("uC IPA FW name = %s\n", ipa_drv_res->uc_fw_file_name);
 	else
 		IPADBG("uC IPA FW file not defined. Using default one\n");
+
 	/* Get IPA wrapper address */
+	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-cfg-offset",
+		&ipa_drv_res->ipa_cfg_offset);
+	if (!result) {
+		IPADBG(": Read offset of IPA_CFG from IPA_WRAPPER_BASE = 0x%x\n",
+			ipa_drv_res->ipa_cfg_offset);
+	} else {
+		ipa_drv_res->ipa_cfg_offset = 0;
+		IPADBG("IPA_CFG_OFFSET not defined. Using default one\n");
+	}
+
 	resource = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 			"ipa-base");
 	if (!resource) {

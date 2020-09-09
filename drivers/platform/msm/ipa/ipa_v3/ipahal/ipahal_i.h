@@ -79,6 +79,7 @@
 struct ipahal_context {
 	enum ipa_hw_type hw_type;
 	void __iomem *base;
+    u32 ipa_cfg_offset;
 	struct dentry *dent;
 	struct device *ipa_pdev;
 	struct ipa_mem_buffer empty_fltrt_tbl;

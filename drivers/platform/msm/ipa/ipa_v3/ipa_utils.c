@@ -7431,7 +7431,7 @@ int ipa3_init_mem_partition(enum ipa_hw_type type)
  *  struct initialization - hard decision... time.vs.mem
  */
 int ipa3_controller_static_bind(struct ipa3_controller *ctrl,
-		enum ipa_hw_type hw_type)
+		enum ipa_hw_type hw_type, u32 ipa_cfg_offset)
 {
 	if (hw_type >= IPA_HW_v4_0) {
 		ctrl->ipa_clk_rate_turbo = IPA_V4_0_CLK_RATE_TURBO;
@@ -7466,7 +7466,8 @@ int ipa3_controller_static_bind(struct ipa3_controller *ctrl,
 		IPA_V3_0_BW_THRESHOLD_NOMINAL_MBPS;
 	ctrl->clock_scaling_bw_threshold_turbo =
 		IPA_V3_0_BW_THRESHOLD_TURBO_MBPS;
-	ctrl->ipa_reg_base_ofst = ipahal_get_reg_base();
+	ctrl->ipa_reg_base_ofst = ipa_cfg_offset == 0 ?
+						ipahal_get_reg_base() : ipa_cfg_offset;
 	ctrl->ipa_init_sram = _ipa_init_sram_v3;
 	ctrl->ipa_sram_read_settings = _ipa_sram_settings_read_v3_0;
 	ctrl->ipa_init_hdr = _ipa_init_hdr_v3_0;

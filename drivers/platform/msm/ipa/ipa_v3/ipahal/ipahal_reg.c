@@ -4757,7 +4757,10 @@ u32 ipahal_get_reg_nk_offset(enum ipahal_reg_name reg, u32 n, u32 k)
 
 u32 ipahal_get_reg_base(void)
 {
-	return 0x00040000;
+	if (ipahal_ctx->ipa_cfg_offset == 0)
+		return 0x00040000;
+	else
+		return ipahal_ctx->ipa_cfg_offset;
 }
 
 

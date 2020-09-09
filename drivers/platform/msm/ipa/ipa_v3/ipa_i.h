@@ -1844,6 +1844,7 @@ struct ipa3_app_clock_vote {
  * @mmio: iomem
  * @ipa_wrapper_base: IPA wrapper base address
  * @ipa_wrapper_size: size of the memory pointed to by ipa_wrapper_base
+ * @ipa_cfg_offset: offset from IPA_WRAPPER_BASE to IPA registers
  * @hdr_tbl: IPA header table
  * @hdr_proc_ctx_tbl: IPA processing context table
  * @rt_tbl_set: list of routing tables each of which is a list of rules
@@ -1948,6 +1949,7 @@ struct ipa3_context {
 	void __iomem *mmio;
 	u32 ipa_wrapper_base;
 	u32 ipa_wrapper_size;
+	u32 ipa_cfg_offset;
 	struct ipa3_hdr_tbl hdr_tbl;
 	struct ipa3_hdr_proc_ctx_tbl hdr_proc_ctx_tbl;
 	struct ipa3_rt_tbl_set rt_tbl_set[IPA_IP_MAX];
@@ -2131,6 +2133,7 @@ struct ipa3_plat_drv_res {
 	u32 ipa_mem_size;
 	u32 transport_mem_base;
 	u32 transport_mem_size;
+	u32 ipa_cfg_offset;
 	u32 emulator_intcntrlr_mem_base;
 	u32 emulator_intcntrlr_mem_size;
 	u32 emulator_irq;
@@ -2813,7 +2816,7 @@ void ipa3_dump_buff_internal(void *base, dma_addr_t phy_base, u32 size);
 #endif
 int ipa3_init_mem_partition(enum ipa_hw_type ipa_hw_type);
 int ipa3_controller_static_bind(struct ipa3_controller *controller,
-		enum ipa_hw_type ipa_hw_type);
+		enum ipa_hw_type ipa_hw_type, u32 ipa_cfg_offset);
 int ipa3_cfg_route(struct ipahal_reg_route *route);
 int ipa3_send_cmd_timeout(u16 num_desc, struct ipa3_desc *descr, u32 timeout);
 int ipa3_send_cmd(u16 num_desc, struct ipa3_desc *descr);

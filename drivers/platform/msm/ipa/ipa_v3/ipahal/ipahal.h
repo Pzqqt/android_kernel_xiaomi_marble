@@ -694,7 +694,7 @@ int ipahal_cp_proc_ctx_to_hw_buff(enum ipa_hdr_proc_type type,
 int ipahal_get_proc_ctx_needed_len(enum ipa_hdr_proc_type type);
 
 int ipahal_init(enum ipa_hw_type ipa_hw_type, void __iomem *base,
-	struct device *ipa_pdev);
+    u32 ipa_cfg_offset, struct device *ipa_pdev);
 void ipahal_destroy(void);
 void ipahal_free_dma_mem(struct ipa_mem_buffer *mem);
 
