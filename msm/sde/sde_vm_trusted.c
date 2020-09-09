@@ -244,7 +244,8 @@ static int _sde_vm_release(struct sde_kms *kms)
 	}
 
 	rc = hh_rm_mem_notify(sde_vm->base.io_mem_handle,
-			HH_RM_MEM_NOTIFY_OWNER,	HH_MEM_NOTIFIER_TAG_DISPLAY, 0);
+			HH_RM_MEM_NOTIFY_OWNER_RELEASED,
+			HH_MEM_NOTIFIER_TAG_DISPLAY, 0);
 	if (rc) {
 		SDE_ERROR("hyp mem notify on release failed, rc = %d\n", rc);
 		goto end;

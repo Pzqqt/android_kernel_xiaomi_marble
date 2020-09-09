@@ -134,7 +134,7 @@ static int _sde_vm_lend_notify_registers(struct sde_vm *vm,
 
 	vmid_desc = sde_vm_populate_vmid(trusted_vmid);
 
-	rc = hh_rm_mem_notify(mem_handle, HH_RM_MEM_NOTIFY_RECIPIENT,
+	rc = hh_rm_mem_notify(mem_handle, HH_RM_MEM_NOTIFY_RECIPIENT_SHARED,
 				  HH_MEM_NOTIFIER_TAG_DISPLAY, vmid_desc);
 	if (rc) {
 		SDE_ERROR("hyp mem notify failed, rc = %d\n", rc);
