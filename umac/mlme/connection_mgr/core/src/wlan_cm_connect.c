@@ -26,6 +26,7 @@
 #include "wlan_policy_mgr_api.h"
 #endif
 #include <wlan_serialization_api.h>
+#include "wlan_crypto_global_api.h"
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
 #endif
@@ -376,17 +377,16 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
-#ifdef WLAN_FEATURE_11W
 static inline void
 cm_set_pmf_caps(struct cm_connect_req *cm_req, struct scan_filter *filter)
 {
-	filter->pmf_cap = cm_req->req.crypto.pmf_cap;
+	if (cm_req->req.crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
+		filter->pmf_cap = WLAN_PMF_REQUIRED;
+	else if (cm_req->req.crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+	else
+		filter->pmf_cap = WLAN_PMF_DISABLED;
 }
-#else
-static inline void
-cm_set_pmf_caps(struct cm_connect_req *cm_req, struct scan_filter *filter)
-{}
-#endif
 
 static void cm_connect_prepare_scan_fliter(struct cnx_mgr *cm_ctx,
 					   struct cm_connect_req *cm_req,
@@ -972,6 +972,110 @@ post_err:
 	return qdf_status;
 }
 
+static void
+cm_copy_crypto_prarams(struct wlan_cm_connect_crypto_info *dst_params,
+		       struct wlan_crypto_params  *src_params)
+{
+	dst_params->akm_suites = src_params->key_mgmt;
+	dst_params->auth_type = src_params->authmodeset;
+	dst_params->ciphers_pairwise = src_params->ucastcipherset;
+	dst_params->group_cipher = src_params->mcastcipherset;
+	dst_params->mgmt_ciphers = src_params->mgmtcipherset;
+	dst_params->rsn_caps = src_params->rsn_caps;
+}
+
+static void
+cm_set_crypto_params_from_ie(struct wlan_cm_connect_req *req)
+{
+	struct wlan_crypto_params crypto_params;
+	QDF_STATUS status;
+
+	if (!req->assoc_ie.ptr)
+		return;
+
+	status = wlan_get_crypto_params_from_rsn_ie(&crypto_params,
+						    req->assoc_ie.ptr,
+						    req->assoc_ie.len);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		cm_copy_crypto_prarams(&req->crypto, &crypto_params);
+		return;
+	}
+
+	status = wlan_get_crypto_params_from_wpa_ie(&crypto_params,
+						    req->assoc_ie.ptr,
+						    req->assoc_ie.len);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		cm_copy_crypto_prarams(&req->crypto, &crypto_params);
+		return;
+	}
+
+	status = wlan_get_crypto_params_from_wapi_ie(&crypto_params,
+						     req->assoc_ie.ptr,
+						     req->assoc_ie.len);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		cm_copy_crypto_prarams(&req->crypto, &crypto_params);
+}
+
+static QDF_STATUS
+cm_allocate_and_copy_assoc_wep_ie(struct wlan_cm_connect_req *target,
+				  struct wlan_cm_connect_req *source)
+{
+	if (source->assoc_ie.ptr) {
+		target->assoc_ie.ptr = qdf_mem_malloc(source->assoc_ie.len);
+		if (!target->assoc_ie.ptr)
+			return QDF_STATUS_E_NOMEM;
+
+		target->assoc_ie.len = source->assoc_ie.len;
+		qdf_mem_copy(target->assoc_ie.ptr, source->assoc_ie.ptr,
+			     source->assoc_ie.len);
+	}
+
+	if (source->crypto.wep_keys.key) {
+		target->crypto.wep_keys.key =
+			qdf_mem_malloc(source->crypto.wep_keys.key_len);
+		if (!target->crypto.wep_keys.key)
+			goto wep_key_alloc_fail;
+
+		target->crypto.wep_keys.key_len =
+				source->crypto.wep_keys.key_len;
+		qdf_mem_copy(target->crypto.wep_keys.key,
+			     source->crypto.wep_keys.key,
+			     source->crypto.wep_keys.key_len);
+	}
+
+	if (source->crypto.wep_keys.seq) {
+		target->crypto.wep_keys.seq =
+			qdf_mem_malloc(source->crypto.wep_keys.seq_len);
+		if (!target->crypto.wep_keys.seq)
+			goto wep_seq_alloc_fail;
+
+		target->crypto.wep_keys.seq_len =
+					source->crypto.wep_keys.seq_len;
+		qdf_mem_copy(target->crypto.wep_keys.seq,
+			     source->crypto.wep_keys.seq,
+			     source->crypto.wep_keys.seq_len);
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+wep_seq_alloc_fail:
+	if (target->crypto.wep_keys.key) {
+		qdf_mem_zero(target->crypto.wep_keys.key,
+			     target->crypto.wep_keys.key_len);
+		qdf_mem_free(target->crypto.wep_keys.key);
+		target->crypto.wep_keys.key = NULL;
+	}
+
+wep_key_alloc_fail:
+	if (target->assoc_ie.ptr) {
+		qdf_mem_zero(target->assoc_ie.ptr, target->assoc_ie.len);
+		qdf_mem_free(target->assoc_ie.ptr);
+		target->assoc_ie.ptr = NULL;
+	}
+
+	return QDF_STATUS_E_NOMEM;
+}
+
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
 {
@@ -987,6 +1091,8 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev), cm_ctx->vdev);
+
 	/*
 	 * This would be freed as part of removal from cm req list if adding
 	 * to list is success after posting WLAN_CM_SM_EV_CONNECT_REQ.
@@ -995,19 +1101,24 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 	if (!cm_req)
 		return QDF_STATUS_E_NOMEM;
 
-	/*
-	 * Get WAPI/WPA/RSN IE and refill crypto params of req.
-	 */
-
 	connect_req = &cm_req->connect_req;
 	connect_req->req = *req;
+
+	status = cm_allocate_and_copy_assoc_wep_ie(&connect_req->req, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(cm_req);
+		return status;
+	}
+	cm_set_crypto_params_from_ie(&connect_req->req);
 
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_CONNECT_REQ,
 				     sizeof(*connect_req), connect_req);
 
 	/* free the req if connect is not handled */
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cm_free_connect_req_mem(connect_req);
 		qdf_mem_free(cm_req);
+	}
 
 	return status;
 }

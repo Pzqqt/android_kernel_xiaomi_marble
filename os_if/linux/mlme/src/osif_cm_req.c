@@ -30,10 +30,14 @@
 static void osif_cm_free_wep_key_params(struct wlan_cm_connect_req *connect_req)
 {
 	if (connect_req->crypto.wep_keys.key) {
+		qdf_mem_zero(connect_req->crypto.wep_keys.key,
+			     connect_req->crypto.wep_keys.key_len);
 		qdf_mem_free(connect_req->crypto.wep_keys.key);
 		connect_req->crypto.wep_keys.key = NULL;
 	}
 	if (connect_req->crypto.wep_keys.seq) {
+		qdf_mem_zero(connect_req->crypto.wep_keys.seq,
+			     connect_req->crypto.wep_keys.seq_len);
 		qdf_mem_free(connect_req->crypto.wep_keys.seq);
 		connect_req->crypto.wep_keys.seq = NULL;
 	}
@@ -63,8 +67,7 @@ static QDF_STATUS osif_cm_set_wep_key_params(
 		connect_req->crypto.wep_keys.seq =
 			qdf_mem_malloc(connect_req->crypto.wep_keys.seq_len);
 		if (!connect_req->crypto.wep_keys.seq) {
-			qdf_mem_free(connect_req->crypto.wep_keys.key);
-			connect_req->crypto.wep_keys.key = NULL;
+			osif_cm_free_wep_key_params(connect_req);
 			return QDF_STATUS_E_NOMEM;
 		}
 		qdf_mem_copy(connect_req->crypto.wep_keys.seq,

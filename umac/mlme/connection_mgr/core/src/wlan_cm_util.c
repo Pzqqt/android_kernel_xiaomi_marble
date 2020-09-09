@@ -223,6 +223,33 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+void cm_free_connect_req_mem(struct cm_connect_req *connect_req)
+{
+	if (connect_req->candidate_list)
+		wlan_scan_purge_results(connect_req->candidate_list);
+
+	if (connect_req->req.assoc_ie.ptr) {
+		qdf_mem_zero(connect_req->req.assoc_ie.ptr,
+			     connect_req->req.assoc_ie.len);
+		qdf_mem_free(connect_req->req.assoc_ie.ptr);
+		connect_req->req.assoc_ie.ptr = NULL;
+	}
+
+	if (connect_req->req.crypto.wep_keys.key) {
+		qdf_mem_zero(connect_req->req.crypto.wep_keys.key,
+			     connect_req->req.crypto.wep_keys.key_len);
+		qdf_mem_free(connect_req->req.crypto.wep_keys.key);
+		connect_req->req.crypto.wep_keys.key = NULL;
+	}
+
+	if (connect_req->req.crypto.wep_keys.seq) {
+		qdf_mem_zero(connect_req->req.crypto.wep_keys.seq,
+			     connect_req->req.crypto.wep_keys.seq_len);
+		qdf_mem_free(connect_req->req.crypto.wep_keys.seq);
+		connect_req->req.crypto.wep_keys.seq = NULL;
+	}
+}
+
 QDF_STATUS
 cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
@@ -253,7 +280,7 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	qdf_list_remove_node(&cm_ctx->req_list, &cm_req->node);
 	if (prefix == CONNECT_REQ_PREFIX) {
 		cm_ctx->connect_count--;
-		wlan_scan_purge_results(cm_req->connect_req.candidate_list);
+		cm_free_connect_req_mem(&cm_req->connect_req);
 	} else {
 		cm_ctx->disconnect_count--;
 	}
@@ -299,4 +326,26 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
 		wlan_serialization_cancel_request(&cmd_info);
 	}
+}
+
+void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
+			 struct wlan_objmgr_vdev *vdev)
+{
+	struct scan_cancel_request *req;
+	QDF_STATUS status;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return;
+
+	req->vdev = vdev;
+	req->cancel_req.scan_id = INVAL_SCAN_ID;
+	req->cancel_req.vdev_id = wlan_vdev_get_id(vdev);
+	req->cancel_req.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	req->cancel_req.req_type = WLAN_SCAN_CANCEL_VDEV_ALL;
+
+	status = wlan_scan_cancel(req);
+	/* In success/failure case wlan_scan_cancel free the req memory */
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("Cancel scan request failed");
 }

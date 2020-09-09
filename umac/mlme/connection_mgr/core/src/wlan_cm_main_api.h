@@ -333,6 +333,15 @@ bool cm_check_scanid_match_list_head(struct cnx_mgr *cm_ctx,
 				     wlan_scan_id *scan_id);
 
 /**
+ * cm_free_connect_req_mem() - free connect req internal memory, to be called
+ * before cm_req is freed
+ * @connect_req: connect req
+ *
+ * Return: void
+ */
+void cm_free_connect_req_mem(struct cm_connect_req *connect_req);
+
+/**
  * cm_delete_req_from_list() - Delete the request matching cm id
  * @cm_ctx: connection manager context
  * @cm_id: cm id of connect/disconnect req
@@ -379,5 +388,15 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
  * Return: cm req from the req list whose cm id matches the argument
  */
 struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_vdev_scan_cancel() - cancel all scans for vdev
+ * @pdev: pdev pointer
+ * @vdev: vdev for which scan to be canceled
+ *
+ * Return: void
+ */
+void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
+			 struct wlan_objmgr_vdev *vdev);
 
 #endif /* __WLAN_CM_MAIN_API_H__ */

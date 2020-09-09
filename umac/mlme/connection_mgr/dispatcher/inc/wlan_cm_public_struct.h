@@ -57,7 +57,7 @@ struct wlan_cm_wep_key_params {
  * @akm_suites: AKM suites bitmask
  * @wep_keys: static WEP keys, if not NULL points to an array of
  *	MAX_WEP_KEYS WEP keys
- * @pmf_cap: Pmf capability
+ * @rsn_caps: rsn caps
  * @mgmt_ciphers: mgmt cipher bitmask
  */
 struct wlan_cm_connect_crypto_info {
@@ -67,7 +67,7 @@ struct wlan_cm_connect_crypto_info {
 	uint32_t ciphers_pairwise;
 	uint32_t akm_suites;
 	struct wlan_cm_wep_key_params wep_keys;
-	enum wlan_pmf_cap pmf_cap;
+	uint16_t rsn_caps;
 	uint32_t mgmt_ciphers;
 };
 
