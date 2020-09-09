@@ -523,6 +523,7 @@ csr_roam_issue_disassociate(struct mac_context *mac, uint32_t sessionId,
 	struct qdf_mac_addr bssId = QDF_MAC_ADDR_BCAST_INIT;
 	uint16_t reasonCode;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	tpCsrNeighborRoamControlInfo p_nbr_roam_info;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -541,13 +542,14 @@ csr_roam_issue_disassociate(struct mac_context *mac, uint32_t sessionId,
 	} else {
 		reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
 	}
-	if ((csr_roam_is_handoff_in_progress(mac, sessionId)) &&
-	    (NewSubstate != eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF)) {
-		tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-			&mac->roam.neighborRoamInfo[sessionId];
-		qdf_copy_macaddr(&bssId,
-			      pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.
-			      bssid);
+
+	p_nbr_roam_info = &mac->roam.neighborRoamInfo[sessionId];
+	if (csr_roam_is_handoff_in_progress(mac, sessionId) &&
+	    NewSubstate != eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF &&
+	    p_nbr_roam_info->csrNeighborRoamProfile.BSSIDs.numOfBSSIDs) {
+		qdf_copy_macaddr(
+			&bssId,
+			p_nbr_roam_info->csrNeighborRoamProfile.BSSIDs.bssid);
 	} else if (pSession->pConnectBssDesc) {
 		qdf_mem_copy(&bssId.bytes, pSession->pConnectBssDesc->bssId,
 			     sizeof(struct qdf_mac_addr));
