@@ -505,7 +505,7 @@
  * roam_data_rssi_threshold_triggers - triggers of data rssi threshold for roam
  * @Min: 0
  * @Max: 0xffff
- * @Default: 0
+ * @Default: 0x3
  *
  * If the DUT is connected to an AP with weak signal, during latest
  * rx_data_inactivity_time, if there is no activity or avg of data_rssi is
