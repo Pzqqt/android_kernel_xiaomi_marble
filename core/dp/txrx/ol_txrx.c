@@ -5163,10 +5163,16 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	ol_txrx_pdev_handle pdev =
-		ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
+	ol_txrx_pdev_handle pdev;
 	union ol_txrx_peer_update_param_t param;
 	struct privacy_exemption privacy_filter;
+
+	if (!soc) {
+		ol_txrx_err("Soc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 
 	if (!pdev) {
 		ol_txrx_err("Pdev is NULL");
@@ -5208,12 +5214,18 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 static QDF_STATUS ol_txrx_register_ocb_peer(uint8_t *mac_addr)
 {
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	ol_txrx_pdev_handle pdev =
-		ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
+	ol_txrx_pdev_handle pdev;
 	ol_txrx_peer_handle peer;
 
-	if (!pdev || !soc) {
-		ol_txrx_err("Unable to find pdev or soc!");
+	if (!soc) {
+		ol_txrx_err("Unable to find soc!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
+
+	if (!pdev) {
+		ol_txrx_err("Unable to find pdev!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
