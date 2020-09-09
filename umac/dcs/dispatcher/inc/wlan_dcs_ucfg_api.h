@@ -23,6 +23,7 @@
 
 #include <qdf_status.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_dcs_public_structs.h>
 
 /**
  * @brief List of DCS capabilities that can be set or unset
@@ -47,6 +48,7 @@ typedef void (*dcs_callback)(
 		uint8_t interference_type,
 		void *arg);
 
+#ifdef DCS_INTERFERENCE_DETECTION
 /**
  * ucfg_dcs_register_cb() - API to register dcs callback
  * @psoc: pointer to psoc object
@@ -61,6 +63,21 @@ void ucfg_dcs_register_cb(
 		struct wlan_objmgr_psoc *psoc,
 		dcs_callback cbk,
 		void *arg);
+
+/**
+ * ucfg_dcs_register_user_cb() - API to register dcs user callback
+ * @psoc: pointer to psoc object
+ * @pdev_id: pdev id
+ * @vdev_id: vdev id
+ * @cb: dcs user callback to be registered
+ *
+ * Return: None
+ */
+void ucfg_dcs_register_user_cb(struct wlan_objmgr_psoc *psoc,
+			 uint8_t pdev_id, uint8_t vdev_id,
+			 void (*cb)(uint8_t vdev_id,
+				    struct wlan_host_dcs_im_user_stats *stats,
+				    int status));
 
 /**
  * ucfg_wlan_dcs_cmd(): API to send dcs command
@@ -115,7 +132,7 @@ void ucfg_config_dcs_disable(struct wlan_objmgr_psoc *psoc,
  *
  * Return: WLANIM/CWIM enable status
  */
-uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
+uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id);
 
 /**
  * ucfg_dcs_clear() - API to clear dcs related information
@@ -142,4 +159,86 @@ void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
  */
 void ucfg_config_dcs_event_data(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
 				bool dcs_algorithm_process);
+
+/*
+ * ucfg_dcs_reset_user_stats() - API to reset dcs user stats
+ * @psoc: pointer to psoc object
+ * @pdev_id: pdev id
+ *
+ * Return: None
+ */
+void ucfg_dcs_reset_user_stats(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id);
+
+/**
+ * ucfg_dcs_set_user_request() - API to set dcs user stats request counter
+ * @psoc: pointer to psoc object
+ * @pdev_id: pdev id
+ * @user_request_count: user stats request counter
+ *
+ * Return: None
+ */
+void ucfg_dcs_set_user_request(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			       uint32_t user_request_count);
+#else
+static inline void
+ucfg_dcs_register_cb(struct wlan_objmgr_psoc *psoc, dcs_callback cbk, void *arg)
+{
+}
+
+static inline void
+ucfg_dcs_register_user_cb(struct wlan_objmgr_psoc *psoc,
+			  uint8_t pdev_id, uint8_t vdev_id,
+			  void (*cb)(uint8_t vdev_id,
+				     struct wlan_host_dcs_im_user_stats *stats,
+				     int status))
+{
+}
+
+static inline QDF_STATUS
+ucfg_wlan_dcs_cmd(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+		  bool is_host_pdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+ucfg_config_dcs_enable(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+		       uint8_t interference_type)
+{
+}
+
+static inline void
+ucfg_config_dcs_disable(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+			uint8_t interference_type)
+{
+}
+
+static inline uint8_t
+ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
+{
+	return 0;
+}
+
+static inline void
+ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
+{
+}
+
+static inline void
+ucfg_config_dcs_event_data(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+			   bool dcs_algorithm_process)
+{
+}
+
+static inline void
+ucfg_dcs_reset_user_stats(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
+{
+}
+
+static inline void
+ucfg_dcs_set_user_request(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			  uint32_t user_request_count)
+{
+}
+#endif
 #endif /* _WLAN_DCS_UCFG_API_H_ */

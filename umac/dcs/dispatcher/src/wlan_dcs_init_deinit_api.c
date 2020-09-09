@@ -36,11 +36,15 @@ wlan_dcs_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 	struct dcs_psoc_priv_obj *dcs_psoc_obj;
+	uint8_t loop;
 
 	dcs_psoc_obj = qdf_mem_malloc(sizeof(*dcs_psoc_obj));
 
 	if (!dcs_psoc_obj)
 		return QDF_STATUS_E_NOMEM;
+
+	for (loop = 0; loop < WLAN_DCS_MAX_PDEVS; loop++)
+		qdf_spinlock_create(&dcs_psoc_obj->dcs_pdev_priv[loop].lock);
 
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
 						       WLAN_UMAC_COMP_DCS,
@@ -82,9 +86,11 @@ wlan_dcs_psoc_obj_destroy_notification(struct wlan_objmgr_psoc *psoc,
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 						       WLAN_UMAC_COMP_DCS,
 						       dcs_psoc_obj);
-	for (loop = 0; loop < WLAN_DCS_MAX_PDEVS; loop++)
+	for (loop = 0; loop < WLAN_DCS_MAX_PDEVS; loop++) {
 		qdf_timer_free(&dcs_psoc_obj->dcs_pdev_priv[loop].
 							dcs_disable_timer);
+		qdf_spinlock_destroy(&dcs_psoc_obj->dcs_pdev_priv[loop].lock);
+	}
 	qdf_mem_free(dcs_psoc_obj);
 
 	return status;

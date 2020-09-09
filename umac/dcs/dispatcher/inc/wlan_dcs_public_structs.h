@@ -83,4 +83,22 @@ struct wlan_host_dcs_im_tgt_stats {
 	uint32_t reg_rxclr_ext80_cnt;
 };
 
+/**
+ * struct wlan_host_dcs_im_user_stats - DCS IM stats requested by userspace
+ * @max_rssi: max rssi of the bss traffic
+ * @min_rssi: min rssi of the bss traffic
+ * @cycle_count: cycle count
+ * @rxclr_count: rx clear count
+ * @rx_frame_count: rx frame count
+ * @my_bss_rx_cycle_count: BSS rx cycle count
+ */
+struct wlan_host_dcs_im_user_stats {
+	uint32_t max_rssi;
+	uint32_t min_rssi;
+	uint32_t cycle_count;
+	uint32_t rxclr_count;
+	uint32_t rx_frame_count;
+	uint32_t my_bss_rx_cycle_count;
+};
+
 #endif

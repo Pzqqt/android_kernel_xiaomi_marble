@@ -243,6 +243,7 @@ wlan_dcs_wlan_interference_process(
 	uint32_t cycle_count_delta = 0;
 	uint32_t tx_frame_delta = 0;
 	uint32_t rx_frame_delta = 0;
+	uint32_t my_bss_rx_delta = 0;
 	uint32_t reg_total_cu = 0;
 	uint32_t reg_tx_cu = 0;
 	uint32_t reg_rx_cu = 0;
@@ -314,16 +315,47 @@ wlan_dcs_wlan_interference_process(
 	cycle_count_delta = curr_stats->mib_stats.reg_cycle_cnt -
 				prev_stats->mib_stats.reg_cycle_cnt;
 
+	my_bss_rx_delta = curr_stats->my_bss_rx_cycle_count -
+				prev_stats->my_bss_rx_cycle_count;
+
 	if (unlikely(dcs_host_params.dcs_debug >= DCS_DEBUG_VERBOSE))
-		dcs_debug("rxclr_delta: %u, rxclr_ext_delta: %u, tx_frame_delta: %u, rx_frame_delta: %u, cycle_count_delta: %u",
-			  rxclr_delta, rxclr_ext_delta,
-			  tx_frame_delta, rx_frame_delta, cycle_count_delta);
+		dcs_debug("rxclr_delta: %u, rxclr_ext_delta: %u, tx_frame_delta: %u, rx_frame_delta: %u, cycle_count_delta: %u, my_bss_rx_delta: %u",
+			  rxclr_delta, rxclr_ext_delta, tx_frame_delta,
+			  rx_frame_delta, cycle_count_delta, my_bss_rx_delta);
 
 	if (0 == (cycle_count_delta >> 8)) {
 		if (unlikely(dcs_host_params.dcs_debug >= DCS_DEBUG_VERBOSE))
 			dcs_debug("cycle count NULL --Investigate--");
 		goto copy_stats;
 	}
+
+	/* Update user stats */
+	wlan_dcs_pdev_obj_lock(dcs_pdev_priv);
+	if (dcs_pdev_priv->dcs_host_params.user_request_count) {
+		struct wlan_host_dcs_im_user_stats *p_user_stats =
+					     &p_dcs_im_stats->user_dcs_im_stats;
+
+		p_user_stats->cycle_count += cycle_count_delta;
+		p_user_stats->rxclr_count += rxclr_delta;
+		p_user_stats->rx_frame_count += rx_frame_delta;
+		p_user_stats->my_bss_rx_cycle_count += my_bss_rx_delta;
+		if (0 == p_user_stats->max_rssi &&
+		    0 == p_user_stats->min_rssi) {
+			p_user_stats->max_rssi = curr_stats->last_ack_rssi;
+			p_user_stats->min_rssi = curr_stats->last_ack_rssi;
+		} else {
+			if (curr_stats->last_ack_rssi > p_user_stats->max_rssi)
+				p_user_stats->max_rssi =
+						      curr_stats->last_ack_rssi;
+			if (curr_stats->last_ack_rssi < p_user_stats->min_rssi)
+				p_user_stats->min_rssi =
+						      curr_stats->last_ack_rssi;
+		}
+		dcs_pdev_priv->dcs_host_params.user_request_count--;
+		if (0 == dcs_pdev_priv->dcs_host_params.user_request_count)
+			dcs_pdev_priv->dcs_host_params.notify_user = 1;
+	}
+	wlan_dcs_pdev_obj_unlock(dcs_pdev_priv);
 
 	/*
 	 * For below scenario, will ignore dcs event data and won't do
@@ -672,6 +704,13 @@ wlan_dcs_process(struct wlan_objmgr_psoc *psoc, struct dcs_stats_event *event)
 				wlan_dcs_wlan_interference_process(
 							&event->wlan_stat,
 							dcs_pdev_priv);
+		if (dcs_pdev_priv->user_cb &&
+		    dcs_pdev_priv->dcs_host_params.notify_user) {
+			dcs_pdev_priv->dcs_host_params.notify_user = 0;
+			dcs_pdev_priv->user_cb(dcs_pdev_priv->requestor_vdev_id,
+				 &dcs_pdev_priv->dcs_im_stats.user_dcs_im_stats,
+				 0);
+		}
 		if (start_dcs_cbk_handler)
 			wlan_dcs_frequency_control(psoc,
 						   dcs_pdev_priv,
