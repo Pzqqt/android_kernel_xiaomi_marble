@@ -22921,23 +22921,28 @@ csr_check_and_set_sae_single_pmk_cap(struct mac_context *mac_ctx,
 		 */
 		lookup_success = csr_lookup_pmkid_using_bssid(mac_ctx, session,
 							      pmkid_cache);
-		qdf_mem_free(pmkid_cache);
 		if (lookup_success) {
 			wlan_crypto_selective_clear_sae_single_pmk_entries(vdev,
 					&session->connectedProfile.bssid);
 
 			pmk_info = qdf_mem_malloc(sizeof(*pmk_info));
-			if (!pmk_info)
+			if (!pmk_info) {
+				qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+				qdf_mem_free(pmkid_cache);
 				goto end;
+			}
 
-			qdf_mem_copy(pmk_info->pmk, session->psk_pmk,
+			qdf_mem_copy(pmk_info->pmk, pmkid_cache->pmk,
 				     session->pmk_len);
-			pmk_info->pmk_len = session->pmk_len;
+			pmk_info->pmk_len = pmkid_cache->pmk_len;
 			wlan_mlme_update_sae_single_pmk(vdev, pmk_info);
 
 			qdf_mem_zero(pmk_info, sizeof(*pmk_info));
 			qdf_mem_free(pmk_info);
 		}
+
+		qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+		qdf_mem_free(pmkid_cache);
 	}
 
 end:
@@ -23262,9 +23267,21 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	 * All other authentications - Host supplicant performs EAPOL
 	 *      with AP after this point and sends new keys to the driver.
 	 *      Driver starts wait_for_key timer for that purpose.
+	 * Allow csr_lookup_pmkid_using_bssid() if akm is SAE/OWE since
+	 * SAE/OWE roaming uses hybrid model and eapol is offloaded to
+	 * supplicant unlike in WPA2 – 802.1x case, after 8 way handshake
+	 * the __wlan_hdd_cfg80211_keymgmt_set_key ->sme_roam_set_psk_pmk()
+	 * will get called after roam synch complete to update the
+	 * session->psk_pmk, but in SAE/OWE roaming this sequence is not
+	 * present and set_pmksa will come before roam synch indication &
+	 * eapol. So the session->psk_pmk will be stale in PMKSA cached
+	 * SAE/OWE roaming case.
 	 */
-	if (roam_synch_data->authStatus == CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
-		sme_debug("LFR3:Don't start waitforkey timer");
+	if (roam_synch_data->authStatus == CSR_ROAM_AUTH_STATUS_AUTHENTICATED ||
+	    session->pCurRoamProfile->negotiatedAuthType ==
+	    eCSR_AUTH_TYPE_SAE ||
+	    session->pCurRoamProfile->negotiatedAuthType ==
+	    eCSR_AUTH_TYPE_OWE) {
 		csr_roam_substate_change(mac_ctx,
 				eCSR_ROAM_SUBSTATE_NONE, session_id);
 		/*
@@ -23287,8 +23304,9 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 
 		qdf_copy_macaddr(&pmkid_cache->BSSID,
 				 &session->connectedProfile.bssid);
-		sme_debug("Trying to find PMKID for " QDF_MAC_ADDR_FMT,
-			  QDF_MAC_ADDR_REF(pmkid_cache->BSSID.bytes));
+		sme_debug("Trying to find PMKID for " QDF_MAC_ADDR_FMT " AKM Type:%d",
+			  QDF_MAC_ADDR_REF(pmkid_cache->BSSID.bytes),
+			  session->pCurRoamProfile->negotiatedAuthType);
 		if (csr_lookup_pmkid_using_bssid(mac_ctx, session,
 						 pmkid_cache)) {
 			session->pmk_len = pmkid_cache->pmk_len;
