@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -744,7 +744,7 @@ static QDF_STATUS extract_ocb_dcc_stats_tlv(wmi_unified_t wmi_handle,
 	if (fix_param->num_channels > ((WMI_SVC_MSG_MAX_SIZE -
 	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel)) ||
 	    fix_param->num_channels > param_tlvs->num_stats_per_channel_list) {
-		WMI_LOGW("%s: too many channels:%d actual:%d", __func__,
+		wmi_warn("Too many channels:%d actual:%d",
 			 fix_param->num_channels,
 			 param_tlvs->num_stats_per_channel_list);
 		*resp = NULL;

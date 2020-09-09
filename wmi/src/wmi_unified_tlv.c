@@ -1264,7 +1264,7 @@ static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 
 	param_id = convert_host_peer_param_id_to_target_id_tlv(param->param_id);
 	if (param_id == WMI_UNAVAILABLE_PARAM) {
-		WMI_LOGW("%s: Unavailable param %d", __func__, param->param_id);
+		wmi_err("Unavailable param %d", param->param_id);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
@@ -1650,8 +1650,7 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 
 	pdev_param = convert_host_pdev_param_tlv(param->param_id);
 	if (pdev_param == WMI_UNAVAILABLE_PARAM) {
-		WMI_LOGW("%s: Unavailable param %d",
-				__func__, param->param_id);
+		wmi_err("Unavailable param %d", param->param_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -2087,8 +2086,7 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 
 	vdev_param = convert_host_vdev_param_tlv(param->param_id);
 	if (vdev_param == WMI_UNAVAILABLE_PARAM) {
-		WMI_LOGW("%s:Vdev param %d not available", __func__,
-				param->param_id);
+		wmi_err("Vdev param %d not available", param->param_id);
 		return QDF_STATUS_E_INVAL;
 
 	}
