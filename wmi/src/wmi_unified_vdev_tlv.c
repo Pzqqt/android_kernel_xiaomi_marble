@@ -389,7 +389,7 @@ void wmi_vdev_attach_tlv(struct wmi_unified *wmi_handle)
 	struct wmi_ops *wmi_ops;
 
 	if (!wmi_handle) {
-		WMI_LOGP("%s: null wmi handle", __func__);
+		wmi_err("null wmi handle");
 		return;
 	}
 

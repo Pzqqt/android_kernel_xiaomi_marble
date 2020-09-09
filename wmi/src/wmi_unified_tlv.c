@@ -916,7 +916,7 @@ static QDF_STATUS send_vdev_stop_cmd_tlv(wmi_unified_t wmi,
 	cmd->vdev_id = vdev_id;
 	wmi_mtrace(WMI_VDEV_STOP_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_STOP_CMDID)) {
-		WMI_LOGP("%s: Failed to send vdev stop command", __func__);
+		wmi_err("Failed to send vdev stop command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -949,7 +949,7 @@ static QDF_STATUS send_vdev_down_cmd_tlv(wmi_unified_t wmi, uint8_t vdev_id)
 	cmd->vdev_id = vdev_id;
 	wmi_mtrace(WMI_VDEV_DOWN_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_DOWN_CMDID)) {
-		WMI_LOGP("%s: Failed to send vdev down", __func__);
+		wmi_err("Failed to send vdev down");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1095,7 +1095,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 					   WMI_VDEV_START_REQUEST_CMDID);
 	}
 	if (ret) {
-		WMI_LOGP("%s: Failed to send vdev start command", __func__);
+		wmi_err("Failed to send vdev start command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	 }
@@ -1136,7 +1136,7 @@ static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 		 param->peer_tid_bitmap);
 	wmi_mtrace(WMI_PEER_FLUSH_TIDS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_FLUSH_TIDS_CMDID)) {
-		WMI_LOGP("%s: Failed to send flush tid command", __func__);
+		wmi_err("Failed to send flush tid command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1175,7 +1175,7 @@ static QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 		 __func__, QDF_MAC_ADDR_REF(peer_addr), vdev_id);
 	wmi_mtrace(WMI_PEER_DELETE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_DELETE_CMDID)) {
-		WMI_LOGP("%s: Failed to send peer delete command", __func__);
+		wmi_err("Failed to send peer delete command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1214,7 +1214,7 @@ static QDF_STATUS send_peer_delete_all_cmd_tlv(
 	wmi_mtrace(WMI_VDEV_DELETE_ALL_PEER_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len,
 				 WMI_VDEV_DELETE_ALL_PEER_CMDID)) {
-		WMI_LOGP("%s: Failed to send peer del all command", __func__);
+		wmi_err("Failed to send peer del all command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1336,7 +1336,7 @@ static QDF_STATUS send_vdev_up_cmd_tlv(wmi_unified_t wmi,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(bssid, &cmd->vdev_bssid);
 	wmi_mtrace(WMI_VDEV_UP_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_UP_CMDID)) {
-		WMI_LOGP("%s: Failed to send vdev up command", __func__);
+		wmi_err("Failed to send vdev up command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1375,7 +1375,7 @@ static QDF_STATUS send_peer_create_cmd_tlv(wmi_unified_t wmi,
 
 	wmi_mtrace(WMI_PEER_CREATE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_CREATE_CMDID)) {
-		WMI_LOGP("%s: failed to send WMI_PEER_CREATE_CMDID", __func__);
+		wmi_err("Failed to send WMI_PEER_CREATE_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1424,8 +1424,7 @@ QDF_STATUS send_peer_rx_reorder_queue_setup_cmd_tlv(wmi_unified_t wmi,
 	wmi_mtrace(WMI_PEER_REORDER_QUEUE_SETUP_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len,
 			WMI_PEER_REORDER_QUEUE_SETUP_CMDID)) {
-		WMI_LOGP("%s: fail to send WMI_PEER_REORDER_QUEUE_SETUP_CMDID",
-			__func__);
+		wmi_err("Fail to send WMI_PEER_REORDER_QUEUE_SETUP_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1470,8 +1469,7 @@ QDF_STATUS send_peer_rx_reorder_queue_remove_cmd_tlv(wmi_unified_t wmi,
 	wmi_mtrace(WMI_PEER_REORDER_QUEUE_REMOVE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len,
 			WMI_PEER_REORDER_QUEUE_REMOVE_CMDID)) {
-		WMI_LOGP("%s: fail to send WMI_PEER_REORDER_QUEUE_REMOVE_CMDID",
-			__func__);
+		wmi_err("Fail to send WMI_PEER_REORDER_QUEUE_REMOVE_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2700,8 +2698,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PEER_ASSOC_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGP("%s: Failed to send peer assoc command ret = %d",
-			 __func__, ret);
+		wmi_err("Failed to send peer assoc command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -5460,8 +5457,7 @@ static QDF_STATUS send_csa_offload_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_CSA_OFFLOAD_ENABLE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_CSA_OFFLOAD_ENABLE_CMDID)) {
-		WMI_LOGP("%s: Failed to send CSA offload enable command",
-			 __func__);
+		wmi_err("Failed to send CSA offload enable command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6111,8 +6107,7 @@ static QDF_STATUS send_regdomain_info_to_fw_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_PDEV_SET_REGDOMAIN_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_SET_REGDOMAIN_CMDID)) {
-		WMI_LOGP("%s: Failed to send pdev set regdomain command",
-			 __func__);
+		wmi_err("Failed to send pdev set regdomain command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6510,7 +6505,7 @@ static QDF_STATUS send_simulation_test_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, wmi_buf_len);
 	if (!buf) {
-		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -8117,7 +8112,7 @@ QDF_STATUS send_fw_test_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_FWTEST_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_FWTEST_CMDID)) {
-		WMI_LOGP("%s: failed to send fw test command", __func__);
+		wmi_err("Failed to send fw test command");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8176,7 +8171,7 @@ static QDF_STATUS send_unit_test_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_UNIT_TEST_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_UNIT_TEST_CMDID)) {
-		WMI_LOGP("%s: failed to send unit test command", __func__);
+		wmi_err("Failed to send unit test command");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -13660,7 +13655,7 @@ static QDF_STATUS send_wlan_ts_ftm_trigger_cmd_tlv(wmi_unified_t wmi,
 
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf) {
-		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd = (wmi_audio_sync_trigger_cmd_fixed_param *)wmi_buf_data(buf);
@@ -13688,7 +13683,7 @@ static QDF_STATUS send_wlan_ts_qtime_cmd_tlv(wmi_unified_t wmi,
 
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf) {
-		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd = (wmi_audio_sync_qtimer_cmd_fixed_param *)wmi_buf_data(buf);
@@ -13700,7 +13695,7 @@ static QDF_STATUS send_wlan_ts_qtime_cmd_tlv(wmi_unified_t wmi,
 	cmd->qtimer_l32 = (uint32_t)(lpass_ts & 0xffffffffLL);
 
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_AUDIO_SYNC_QTIMER_CMDID)) {
-		WMI_LOGP("%s: Failed to send audio qtime command", __func__);
+		wmi_err("Failed to send audio qtime command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}

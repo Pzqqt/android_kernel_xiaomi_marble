@@ -460,8 +460,7 @@ static QDF_STATUS wmi_get_buf_extscan_change_monitor_cmd
 
 	*buf = wmi_buf_alloc(wmi_handle, len);
 	if (!*buf) {
-		WMI_LOGP("%s: failed to allocate memory for change monitor cmd",
-			 __func__);
+		wmi_err("Failed to allocate memory for change monitor cmd");
 		return QDF_STATUS_E_FAILURE;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(*buf);
@@ -721,8 +720,7 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 	/* Allocate the memory */
 	*buf = wmi_buf_alloc(wmi_handle, len);
 	if (!*buf) {
-		WMI_LOGP("%s: failed to allocate memory for start extscan cmd",
-			__func__);
+		wmi_err("Failed to allocate memory for start extscan cmd");
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(*buf);
@@ -1011,7 +1009,7 @@ static QDF_STATUS send_extscan_start_hotlist_monitor_cmd_tlv
 		len += min_entries * sizeof(wmi_extscan_hotlist_entry);
 		buf = wmi_buf_alloc(wmi_handle, len);
 		if (!buf) {
-			WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+			wmi_err("wmi_buf_alloc failed");
 			return QDF_STATUS_E_FAILURE;
 		}
 		buf_ptr = (uint8_t *) wmi_buf_data(buf);

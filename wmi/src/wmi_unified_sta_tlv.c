@@ -454,8 +454,7 @@ static QDF_STATUS send_nat_keepalive_en_cmd_tlv(wmi_unified_t wmi_handle, uint8_
 	wmi_mtrace(WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMDID)) {
-		WMI_LOGP("%s: Failed to send NAT keepalive enable command",
-			 __func__);
+		wmi_err("Failed to send NAT keepalive enable command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -619,7 +618,7 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_TDLS_SET_OFFCHAN_MODE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 		WMI_TDLS_SET_OFFCHAN_MODE_CMDID)) {
-		WMI_LOGP(FL("failed to send tdls off chan command"));
+		wmi_err("failed to send tdls off chan command");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -710,7 +709,7 @@ send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_TDLS_SET_STATE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_TDLS_SET_STATE_CMDID)) {
-		WMI_LOGP("%s: failed to send tdls set state command", __func__);
+		wmi_err("Failed to send tdls set state command");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1583,7 +1582,7 @@ static QDF_STATUS send_del_ts_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	wmi_mtrace(WMI_VDEV_WMM_DELTS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_WMM_DELTS_CMDID)) {
-		WMI_LOGP("%s: Failed to send vdev DELTS command", __func__);
+		wmi_err("Failed to send vdev DELTS command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1644,8 +1643,7 @@ static QDF_STATUS send_aggr_qos_cmd_tlv(wmi_unified_t wmi_handle,
 			wmi_mtrace(WMI_VDEV_WMM_ADDTS_CMDID, cmd->vdev_id, 0);
 			if (wmi_unified_cmd_send(wmi_handle, buf, len,
 						 WMI_VDEV_WMM_ADDTS_CMDID)) {
-				WMI_LOGP("%s: Failed to send vdev ADDTS command",
-					 __func__);
+				wmi_err("Failed to send vdev ADDTS command");
 				aggr_qos_rsp_msg->status[i] =
 							QDF_STATUS_E_FAILURE;
 				wmi_buf_free(buf);
@@ -1692,7 +1690,7 @@ static QDF_STATUS send_add_ts_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_VDEV_WMM_ADDTS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_WMM_ADDTS_CMDID)) {
-		WMI_LOGP("%s: Failed to send vdev ADDTS command", __func__);
+		wmi_err("Failed to send vdev ADDTS command");
 		msg->status = QDF_STATUS_E_FAILURE;
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -2373,7 +2371,7 @@ static QDF_STATUS send_peer_unmap_conf_cmd_tlv(wmi_unified_t wmi,
 	buf = wmi_buf_alloc(wmi, len);
 
 	if (!buf) {
-		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 

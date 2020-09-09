@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,8 +61,8 @@ static QDF_STATUS send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGP("%s: Failed to send enable/disable MCC"
-			 " adaptive scheduler command", __func__);
+		wmi_err("Failed to send enable/disable MCC"
+			" adaptive scheduler command");
 		wmi_buf_free(buf);
 	}
 
