@@ -3717,6 +3717,10 @@ void wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE))
 		is_sae_connection = true;
 
+	mlme_legacy_debug("SAE_SPMK: single_pmk_ap:%d, is_sae_connection:%d, pmk_len:%d",
+			  mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap,
+			  is_sae_connection, sae_single_pmk->pmk_len);
+
 	if (mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap &&
 	    is_sae_connection)
 		mlme_priv->mlme_roam.sae_single_pmk.pmk_info = *sae_single_pmk;
