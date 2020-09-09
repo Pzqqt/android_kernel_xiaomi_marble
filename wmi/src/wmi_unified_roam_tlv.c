@@ -528,6 +528,10 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 		       WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_roam_data_rssi_roaming_param));
+	wmi_debug("Data rssi threshold: %d, triggers: 0x%x, rx time: %d",
+		  data_rssi_param->roam_data_rssi_thres,
+		  data_rssi_param->flags,
+		  data_rssi_param->rx_inactivity_ms);
 
 	wmi_mtrace(WMI_ROAM_SCAN_RSSI_THRESHOLD, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
