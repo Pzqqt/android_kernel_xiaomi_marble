@@ -48,6 +48,9 @@ int wlan_hdd_cfg80211_set_btc_chain_mode(struct wiphy *wiphy,
 					 struct wireless_dev *wdev,
 					 const void *data, int data_len);
 
+extern const struct nla_policy
+btc_chain_mode_policy[QCA_VENDOR_ATTR_BTC_CHAIN_MODE_MAX + 1];
+
 #define FEATURE_BTC_CHAIN_MODE_COMMANDS					\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
