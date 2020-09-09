@@ -238,4 +238,24 @@ static inline qdf_list_t *wlan_scan_get_result(struct wlan_objmgr_pdev *pdev,
 	return scm_get_scan_result(pdev, filter);
 }
 
+/**
+ * wlan_scan_start() - Public API to start a scan
+ * @req: start scan req params
+ *
+ * The Public API to start a scan. Post a msg to target_if queue
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wlan_scan_start(struct scan_start_request *req);
+
+/**
+ * wlan_scan_cancel() - Public API to stop a scan
+ * @req: stop scan request params
+ *
+ * The Public API to stop a scan. Post a msg to target_if queue
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wlan_scan_cancel(struct scan_cancel_request *req);
+
 #endif

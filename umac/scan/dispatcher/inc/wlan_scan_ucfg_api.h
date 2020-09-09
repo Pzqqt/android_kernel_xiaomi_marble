@@ -171,15 +171,17 @@ ucfg_scan_get_pno_match(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS ucfg_scm_scan_free_scan_request_mem(struct scan_start_request *req);
 
 /**
- * ucfg_scan_start() - Public API to start a scan
+ * ucfg_scan_start() - ucfg Public API to start a scan
  * @req: start scan req params
  *
- * The Public API to start a scan. Post a msg to target_if queue
+ * The ucfg public API to start a scan. Post a msg to target_if queue
  *
- * Return: 0 for success or error code.
+ * Return: QDF_STATUS
  */
-QDF_STATUS
-ucfg_scan_start(struct scan_start_request *req);
+static inline QDF_STATUS ucfg_scan_start(struct scan_start_request *req)
+{
+	return wlan_scan_start(req);
+}
 
 /**
  * ucfg_scan_set_psoc_enable() - Public API to enable scans for psoc
@@ -309,16 +311,19 @@ ucfg_scan_config_hidden_ssid_for_bssid(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_DFS_CHAN_HIDDEN_SSID */
+
 /**
- * ucfg_scan_cancel() - Public API to stop a scan
+ * ucfg_scan_cancel() - ucfg Public API to cancel the scan
  * @req: stop scan request params
  *
- * The Public API to stop a scan. Post a msg to target_if queue
+ * The ucfg public API to stop a scan. Post a msg to target_if queue
  *
- * Return: 0 for success or error code.
+ * Return: QDF_STATUS.
  */
-QDF_STATUS
-ucfg_scan_cancel(struct scan_cancel_request *req);
+static inline QDF_STATUS ucfg_scan_cancel(struct scan_cancel_request *req)
+{
+	return wlan_scan_cancel(req);
+}
 
 /**
  * ucfg_scan_cancel_sync() - Public API to stop a scan and wait

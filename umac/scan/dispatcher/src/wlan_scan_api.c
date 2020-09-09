@@ -22,6 +22,7 @@
 
 #include "cfg_ucfg_api.h"
 #include "wlan_scan_api.h"
+#include "../../core/src/wlan_scan_manager.h"
 
 void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *dwell_time)
@@ -274,4 +275,88 @@ qdf_time_t wlan_scan_get_aging_time(struct wlan_objmgr_psoc *psoc)
 		return cfg_default(CFG_SCAN_AGING_TIME) * 1000;
 
 	return scan_obj->scan_def.scan_cache_aging_time;
+}
+
+QDF_STATUS wlan_scan_start(struct scan_start_request *req)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	if (!req || !req->vdev) {
+		scm_err("req or vdev within req is NULL");
+		if (req)
+			scm_scan_free_scan_request_mem(req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!scm_is_scan_allowed(req->vdev)) {
+		scm_err_rl("scan disabled, rejecting the scan req");
+		scm_scan_free_scan_request_mem(req);
+		return QDF_STATUS_E_AGAIN;
+	}
+
+	/*
+	 * Try to get vdev reference. Return if reference could
+	 * not be taken. Reference will be released once scan
+	 * request handling completes along with free of @req.
+	 */
+	status = wlan_objmgr_vdev_try_get_ref(req->vdev, WLAN_SCAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_info("unable to get reference");
+		scm_scan_free_scan_request_mem(req);
+		return status;
+	}
+
+	msg.bodyptr = req;
+	msg.callback = scm_scan_start_req;
+	msg.flush_callback = scm_scan_start_flush_callback;
+
+	status = scheduler_post_message(QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_SCAN,
+					QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+		scm_scan_free_scan_request_mem(req);
+	}
+
+	return status;
+}
+
+QDF_STATUS wlan_scan_cancel(struct scan_cancel_request *req)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	if (!req || !req->vdev) {
+		scm_err("req or vdev within req is NULL");
+		if (req)
+			qdf_mem_free(req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(req->vdev, WLAN_SCAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_info("Failed to get vdev ref; status:%d", status);
+		goto req_free;
+	}
+
+	msg.bodyptr = req;
+	msg.callback = scm_scan_cancel_req;
+	msg.flush_callback = scm_scan_cancel_flush_callback;
+
+	status = scheduler_post_message(QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_SCAN,
+					QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto vdev_put;
+
+	return QDF_STATUS_SUCCESS;
+
+vdev_put:
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+
+req_free:
+	qdf_mem_free(req);
+
+	return status;
 }
