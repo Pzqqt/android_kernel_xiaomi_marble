@@ -411,6 +411,10 @@ ifeq ($(CONFIG_WLAN_CFR_ENABLE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cfr.o
 endif
 
+ifeq ($(CONFIG_FEATURE_GPIO_CFG),y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_gpio.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -854,7 +858,8 @@ OS_IF_INC += -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/spectral/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/crypto/inc \
-            -I$(WLAN_COMMON_INC)/os_if/linux/mlme/inc
+            -I$(WLAN_COMMON_INC)/os_if/linux/mlme/inc \
+            -I$(WLAN_COMMON_INC)/os_if/linux/gpio/inc
 
 OS_IF_OBJ += $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
 	     $(OS_IF_DIR)/linux/crypto/src/wlan_nl_to_crypto_params.o
@@ -951,6 +956,24 @@ WLAN_CFR_OBJS := $(WLAN_CFR_CORE_DIR)/cfr_common.o \
 		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr.o \
 		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_enh.o \
 		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_6490.o
+endif
+############# GPIO_CFG ############
+UMAC_GPIO_DIR := gpio
+UMAC_GPIO_DISP_INC_DIR := $(UMAC_GPIO_DIR)/dispatcher/inc
+UMAC_GPIO_CORE_INC_DIR := $(UMAC_GPIO_DIR)/core/inc
+UMAC_GPIO_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_GPIO_DIR)/core/src
+UMAC_GPIO_DISP_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_GPIO_DIR)/dispatcher/src
+UMAC_TARGET_GPIO_INC := -I$(WLAN_COMMON_INC)/target_if/gpio
+
+UMAC_GPIO_INC := -I$(WLAN_COMMON_INC)/$(UMAC_GPIO_DISP_INC_DIR) \
+			-I$(WLAN_COMMON_INC)/$(UMAC_GPIO_CORE_INC_DIR) \
+			-I$(WLAN_COMMON_INC)/$(UMAC_TARGET_GPIO_INC)
+ifeq ($(CONFIG_FEATURE_GPIO_CFG),y)
+UMAC_GPIO_OBJS := $(UMAC_GPIO_DISP_DIR)/wlan_gpio_tgt_api.o \
+		$(UMAC_GPIO_DISP_DIR)/wlan_gpio_ucfg_api.o \
+		$(UMAC_GPIO_CORE_DIR)/wlan_gpio_api.o \
+		$(WLAN_COMMON_ROOT)/os_if/linux/gpio/src/wlan_cfg80211_gpio.o \
+		$(WLAN_COMMON_ROOT)/target_if/gpio/target_if_gpio.o
 endif
 ############# UMAC_GREEN_AP ############
 UMAC_GREEN_AP_DIR := umac/green_ap
@@ -1600,6 +1623,11 @@ endif
 ifeq ($(CONFIG_CP_STATS), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_cp_stats_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_cp_stats_tlv.o
+endif
+
+ifeq ($(CONFIG_FEATURE_GPIO_CFG), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_gpio_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_gpio_tlv.o
 endif
 
 ########### FWLOG ###########
@@ -2398,6 +2426,8 @@ INCS +=		$(UMAC_COMMON_INC)
 INCS +=		$(UMAC_SPECTRAL_INC)
 INCS +=		$(WLAN_CFR_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
+INCS +=		$(UMAC_GPIO_INC)
+INCS +=		$(UMAC_TARGET_GPIO_INC)
 INCS +=		$(UMAC_DBR_INC)
 INCS +=		$(UMAC_CRYPTO_INC)
 ifeq ($(CONFIG_INTERFACE_MGR), y)
@@ -2525,7 +2555,7 @@ OBJS +=		$(WCFG_OBJS)
 OBJS +=		$(UMAC_SPECTRAL_OBJS)
 OBJS +=		$(UMAC_DBR_OBJS)
 OBJS +=		$(WLAN_CFR_OBJS)
-
+OBJS +=		$(UMAC_GPIO_OBJS)
 ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
 OBJS +=		$(UMAC_GREEN_AP_OBJS)
 endif
@@ -2622,6 +2652,7 @@ cppflags-$(CONFIG_HOST_WAKEUP_OVER_QMI) += -DHOST_WAKEUP_OVER_QMI
 cppflags-$(CONFIG_PLD_IPCI_ICNSS_FLAG) += -DCONFIG_PLD_IPCI_ICNSS
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
 cppflags-$(CONFIG_WLAN_RESIDENT_DRIVER) += -DFEATURE_WLAN_RESIDENT_DRIVER
+cppflags-$(CONFIG_FEATURE_GPIO_CFG) += -DWLAN_FEATURE_GPIO_CFG
 
 ifeq ($(CONFIG_IPCIE_FW_SIM), y)
 cppflags-y += -DCONFIG_PLD_IPCIE_FW_SIM

@@ -376,6 +376,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_FTM_TIME_SYNC] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CFR] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_IFMGR] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_GPIO] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
