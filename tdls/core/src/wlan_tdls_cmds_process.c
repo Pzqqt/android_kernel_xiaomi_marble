@@ -709,10 +709,16 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 			return -EAGAIN;
 		}
 	}
-
+	/*
+	 * In case another tdls request comes while tdls setup is already
+	 * ongoing with one peer. Reject only when status code is 0. If status
+	 * code is non-zero, it means supplicant already rejected it and
+	 * the same should be notified to peer.
+	 */
 	if (TDLS_IS_SETUP_ACTION(tdls_validate->action_code)) {
-		if (tdls_is_progress(tdls_vdev,
-			tdls_validate->peer_mac, true)) {
+		if (tdls_is_progress(tdls_vdev, tdls_validate->peer_mac,
+				     true) &&
+				     tdls_validate->status_code == 0) {
 			tdls_err("setup is ongoing. action %d declined for "
 				 QDF_MAC_ADDR_FMT,
 				 tdls_validate->action_code,
