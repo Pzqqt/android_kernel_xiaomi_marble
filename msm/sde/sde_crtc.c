@@ -5381,7 +5381,8 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			ARRAY_SIZE(e_secure_level), 0,
 			CRTC_PROP_SECURITY_LEVEL);
 
-	msm_property_install_enum(&sde_crtc->property_info, "cache_state",
+	if (catalog->syscache_supported)
+		msm_property_install_enum(&sde_crtc->property_info, "cache_state",
 			0x0, 0, e_cache_state,
 			ARRAY_SIZE(e_cache_state), 0,
 			CRTC_PROP_CACHE_STATE);
@@ -6351,9 +6352,21 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
 {
 	struct drm_plane *plane;
 	struct sde_crtc *sde_crtc;
+	struct sde_kms *sde_kms;
 
 	if (!crtc || !crtc->dev)
 		return;
+
+	sde_kms = _sde_crtc_get_kms(crtc);
+	if (!sde_kms || !sde_kms->catalog) {
+		SDE_ERROR("invalid params\n");
+		return;
+	}
+
+	if (!sde_kms->catalog->syscache_supported) {
+		SDE_DEBUG("syscache not supported\n");
+		return;
+	}
 
 	sde_crtc = to_sde_crtc(crtc);
 	if (sde_crtc->cache_state == state)
