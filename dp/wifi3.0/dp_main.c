@@ -7272,17 +7272,15 @@ void dp_vdev_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 #endif
 
 /*
- * dp_peer_set_hlos_tid_override() - to set hlos tid override
+ * dp_vdev_set_hlos_tid_override() - to set hlos tid override
  * @vdev_hdl: virtual device object
  * @val: value to be set
  *
  * Return: void
  */
 static
-void dp_vdev_set_hlos_tid_override(struct cdp_vdev *vdev_hdl, uint32_t val)
+void dp_vdev_set_hlos_tid_override(struct dp_vdev *vdev, uint32_t val)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
-
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		FL("val %d"), val);
 	if (val)
@@ -7294,7 +7292,7 @@ void dp_vdev_set_hlos_tid_override(struct cdp_vdev *vdev_hdl, uint32_t val)
 }
 
 /*
- * dp_peer_get_hlos_tid_override() - to get hlos tid override flag
+ * dp_vdev_get_hlos_tid_override() - to get hlos tid override flag
  * @vdev_hdl: virtual device object
  * @val: value to be set
  *
@@ -8772,12 +8770,8 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 	case CDP_ENABLE_HLOS_TID_OVERRIDE:
 		dp_info("vdev_id %d enable hlod tid override %d", vdev_id,
 			val.cdp_vdev_param_hlos_tid_override);
-		if (vdev->opmode == wlan_op_mode_ap)
-			dp_vdev_set_hlos_tid_override((struct cdp_vdev *)vdev,
-				   val.cdp_vdev_param_hlos_tid_override);
-		else
-			dp_vdev_set_hlos_tid_override((struct cdp_vdev *)vdev,
-				   false);
+		dp_vdev_set_hlos_tid_override(vdev,
+				val.cdp_vdev_param_hlos_tid_override);
 		break;
 	default:
 		break;
