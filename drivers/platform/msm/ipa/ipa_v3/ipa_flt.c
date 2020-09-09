@@ -10,6 +10,7 @@
 #define IPA_FLT_STATUS_OF_ADD_FAILED		(-1)
 #define IPA_FLT_STATUS_OF_DEL_FAILED		(-1)
 #define IPA_FLT_STATUS_OF_MDFY_FAILED		(-1)
+#define IPA_FLT_MAX_IMM_CMD_CHAIN_LENGTH	(10)
 
 #define IPA_FLT_GET_RULE_TYPE(__entry) \
 	( \
@@ -476,11 +477,11 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 {
 	struct ipahal_fltrt_alloc_imgs_params alloc_params;
 	int rc = 0;
-	struct ipa3_desc *desc;
+	struct ipa3_desc *desc, *desc_to_send;
 	struct ipahal_imm_cmd_register_write reg_write_cmd = {0};
 	struct ipahal_imm_cmd_dma_shared_mem mem_cmd = {0};
 	struct ipahal_imm_cmd_pyld **cmd_pyld;
-	int num_cmd = 0;
+	int num_cmd = 0, remaining_num_cmd = 0, num_cmd_to_send = 0;
 	int i;
 	int hdr_idx;
 	u32 lcl_hash_hdr, lcl_nhash_hdr;
@@ -773,10 +774,25 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 		++num_cmd;
 	}
 
-	if (ipa3_send_cmd(num_cmd, desc)) {
-		IPAERR("fail to send immediate command\n");
-		rc = -EFAULT;
-		goto fail_imm_cmd_construct;
+	remaining_num_cmd = num_cmd;
+	desc_to_send = desc;
+
+	/*
+	 * Avoid sending longs chain that may surpass number of TLVs available
+	 * for the system pipe.
+	 */
+	while (remaining_num_cmd > 0) {
+		num_cmd_to_send =
+			remaining_num_cmd > IPA_FLT_MAX_IMM_CMD_CHAIN_LENGTH ?
+			IPA_FLT_MAX_IMM_CMD_CHAIN_LENGTH : remaining_num_cmd;
+		remaining_num_cmd -= num_cmd_to_send;
+
+		if (ipa3_send_cmd(num_cmd_to_send, desc_to_send)) {
+			IPAERR("fail to send immediate command batch\n");
+			rc = -EFAULT;
+			goto fail_imm_cmd_construct;
+		}
+		desc_to_send += num_cmd_to_send;
 	}
 
 	IPADBG_LOW("Hashable HEAD\n");
