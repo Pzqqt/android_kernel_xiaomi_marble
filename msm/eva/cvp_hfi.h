@@ -200,11 +200,7 @@ struct cvp_hal_session {
 };
 
 struct msm_cvp_fw {
-#ifdef CVP_MDT_ENABLED
 	int cookie;
-#else
-	void *cookie;
-#endif
 };
 
 int cvp_hfi_process_msg_packet(u32 device_id,

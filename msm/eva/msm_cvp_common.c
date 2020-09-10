@@ -631,9 +631,6 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 	unsigned long flags = 0;
 	enum cvp_core_state cur_state;
 
-#ifndef CVP_MDT_ENABLED
-	subsystem_crashed("evass");
-#endif
 	if (!response) {
 		dprintk(CVP_ERR,
 			"Failed to get valid response for sys error\n");

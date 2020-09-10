@@ -283,8 +283,8 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 	dbuf = ion_alloc(size, heap_mask, ion_flags);
 	if (IS_ERR_OR_NULL(dbuf)) {
 		dprintk(CVP_ERR,
-		"Failed to allocate shared memory = %x bytes, %llx, %x\n",
-		size, heap_mask, ion_flags);
+		"Failed to allocate shared memory = %x bytes, %llx, %x %x\n",
+		size, heap_mask, ion_flags, PTR_ERR(dbuf));
 		rc = -ENOMEM;
 		goto fail_shared_mem_alloc;
 	}

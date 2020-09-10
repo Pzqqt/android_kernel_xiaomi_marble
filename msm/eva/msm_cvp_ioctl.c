@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/compat.h>
 #include "cvp_private.h"
 #include "cvp_hfi_api.h"
 

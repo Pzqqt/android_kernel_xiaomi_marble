@@ -1,15 +1,14 @@
-# SPDX-License-Identifier: GPL-2.0-only
+KBUILD_OPTIONS+= EVA_ROOT=$(KERNEL_SRC)/$(M)
 
-# auto-detect subdirs
-ifneq ($(CONFIG_ARCH_QTI_VM), y)
-ifeq ($(CONFIG_ARCH_LAHAINA), y)
-include $(srctree)/techpack/eva/config/waipioeva.conf
-LINUXINCLUDE    += -include $(srctree)/techpack/eva/config/waipioevaconf.h
-endif
-endif
+all:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
 
-LINUXINCLUDE    += -I$(srctree)/techpack/eva/include \
-                   -I$(srctree)/techpack/eva/include/uapi \
-		   -I$(srctree)/techpack/eva/include/uapi/eva
+modules_install:
+	$(MAKE) M=$(M) -C $(KERNEL_SRC) modules_install
 
-obj-y +=msm/
+%:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) $@ $(KBUILD_OPTIONS)
+
+clean:
+	rm -f *.o *.ko *.mod.c *.mod.o *~ .*.cmd Module.symvers
+	rm -rf .tmp_versions

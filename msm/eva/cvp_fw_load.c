@@ -11,17 +11,12 @@
 #include "cvp_comm_def.h"
 #include "cvp_core_hfi.h"
 #include "cvp_hfi.h"
-#ifdef CVP_MDT_ENABLED
 #include <linux/of_address.h>
 #include <linux/firmware.h>
 #include <linux/soc/qcom/mdt_loader.h>
-#else
-#include <soc/qcom/subsystem_restart.h>
-#endif
 
 #define MAX_FIRMWARE_NAME_SIZE 128
 
-#ifdef CVP_MDT_ENABLED
 static int __load_fw_to_memory(struct platform_device *pdev,
 		const char *fw_name)
 {
@@ -123,14 +118,12 @@ exit:
 		release_firmware(firmware);
 	return rc;
 }
-#endif
 
 int load_cvp_fw_impl(struct iris_hfi_device *device)
 {
 	int rc = 0;
 
 	if (!device->resources.fw.cookie) {
-#ifdef CVP_MDT_ENABLED
 		device->resources.fw.cookie =
 			__load_fw_to_memory(device->res->pdev,
 			device->res->fw_name);
@@ -139,28 +132,13 @@ int load_cvp_fw_impl(struct iris_hfi_device *device)
 			device->resources.fw.cookie = 0;
 			rc = -ENOMEM;
 		}
-#else
-		device->resources.fw.cookie =
-			subsystem_get_with_fwname("evass",
-					device->res->fw_name);
-		if (IS_ERR_OR_NULL(device->resources.fw.cookie)) {
-			dprintk(CVP_ERR, "Failed to download firmware\n");
-			device->resources.fw.cookie = NULL;
-			rc = -ENOMEM;
-		}
-#endif
 	}
 	return rc;
 }
 
 int unload_cvp_fw_impl(struct iris_hfi_device *device)
 {
-#ifdef CVP_MDT_ENABLED
 	qcom_scm_pas_shutdown(device->resources.fw.cookie);
 	device->resources.fw.cookie = 0;
-#else
-	subsystem_put(device->resources.fw.cookie);
-	device->resources.fw.cookie = NULL;
-#endif
 	return 0;
 }
