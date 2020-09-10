@@ -1437,6 +1437,12 @@ static void dp_display_attention_work(struct work_struct *work)
 	mutex_lock(&dp->session_lock);
 	SDE_EVT32_EXTERNAL(dp->state);
 
+	if (dp_display_state_is(DP_STATE_ABORTED)) {
+		DP_INFO("Hpd off, not handling any attention\n");
+		mutex_unlock(&dp->session_lock);
+		goto exit;
+	}
+
 	if (dp->debug->mst_hpd_sim || !dp_display_state_is(DP_STATE_READY)) {
 		mutex_unlock(&dp->session_lock);
 		goto mst_attention;
@@ -1528,6 +1534,7 @@ cp_irq:
 
 mst_attention:
 	dp_display_mst_attention(dp);
+exit:
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 }
 
