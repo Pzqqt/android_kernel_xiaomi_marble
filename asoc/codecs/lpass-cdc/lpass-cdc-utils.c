@@ -15,6 +15,7 @@ const u16 macro_id_base_offset[MAX_MACRO] = {
 	RX_START_OFFSET,
 	WSA_START_OFFSET,
 	VA_START_OFFSET,
+	WSA2_START_OFFSET,
 };
 
 int lpass_cdc_get_macro_id(bool va_no_dec_flag, u16 reg)
@@ -28,13 +29,11 @@ int lpass_cdc_get_macro_id(bool va_no_dec_flag, u16 reg)
 	if (reg >= WSA_START_OFFSET
 		&& reg <= WSA_MAX_OFFSET)
 		return WSA_MACRO;
-	if (!va_no_dec_flag &&
-		(reg >= VA_START_OFFSET &&
-		reg <= VA_MAX_OFFSET))
-		return VA_MACRO;
-	if (va_no_dec_flag &&
-		(reg >= VA_START_OFFSET &&
-		reg <= VA_TOP_MAX_OFFSET))
+	if (reg >= WSA2_START_OFFSET
+		&& reg <= WSA2_MAX_OFFSET)
+		return WSA2_MACRO;
+	if (reg >= VA_START_OFFSET &&
+		reg <= VA_MAX_OFFSET)
 		return VA_MACRO;
 
 	return -EINVAL;

@@ -3863,30 +3863,8 @@ static void lpass_cdc_rx_macro_init_bcl_pmic_reg(struct snd_soc_component *compo
 
 	switch (rx_priv->bcl_pmic_params.id) {
 	case 0:
-		/* Enable ID0 to listen to respective PMIC group interrupts */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_RX_BCL_VBAT_DECODE_CTL1, 0x02, 0x02);
-		/* Update MC_SID0 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_RX_BCL_VBAT_DECODE_CFG1, 0x0F,
-			rx_priv->bcl_pmic_params.sid);
-		/* Update MC_PPID0 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_RX_BCL_VBAT_DECODE_CFG2, 0xFF,
-			rx_priv->bcl_pmic_params.ppid);
 		break;
 	case 1:
-		/* Enable ID1 to listen to respective PMIC group interrupts */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_RX_BCL_VBAT_DECODE_CTL1, 0x01, 0x01);
-		/* Update MC_SID1 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_RX_BCL_VBAT_DECODE_CFG3, 0x0F,
-			rx_priv->bcl_pmic_params.sid);
-		/* Update MC_PPID1 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_RX_BCL_VBAT_DECODE_CFG1, 0xFF,
-			rx_priv->bcl_pmic_params.ppid);
 		break;
 	default:
 		dev_err(rx_dev, "%s: PMIC ID is invalid %d\n",
