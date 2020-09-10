@@ -320,6 +320,31 @@ static inline bool lim_extract_adaptive_11r_cap(uint8_t *ie, uint16_t ie_len)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11AX
+static void lim_check_peer_ldpc_and_update(struct pe_session *session,
+				    tSirProbeRespBeacon *beacon_struct)
+{
+	if (session->he_capable &&
+	    WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq) &&
+	    beacon_struct->he_cap.present &&
+	    !beacon_struct->he_cap.ldpc_coding) {
+		session->he_capable = false;
+		pe_err("LDPC check failed for HE operation");
+		if (session->vhtCapability) {
+			session->dot11mode = MLME_DOT11_MODE_11AC;
+			pe_debug("Update dot11mode to 11ac");
+		} else {
+			session->dot11mode = MLME_DOT11_MODE_11N;
+			pe_debug("Update dot11mode to 11N");
+		}
+	}
+}
+#else
+static void lim_check_peer_ldpc_and_update(struct pe_session *session,
+					   tSirProbeRespBeacon *beacon_struct)
+{}
+#endif
+
 void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 			       uint16_t ie_len, uint8_t *qos_cap,
 			       uint8_t *uapsd, int8_t *local_constraint,
@@ -542,6 +567,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		}
 	}
 	lim_check_is_he_mcs_valid(session, beacon_struct);
+	lim_check_peer_ldpc_and_update(session, beacon_struct);
 	lim_extract_he_op(session, beacon_struct);
 	lim_update_he_bw_cap_mcs(session, beacon_struct);
 	/* Extract the UAPSD flag from WMM Parameter element */

@@ -6793,9 +6793,10 @@ static void lim_check_and_force_he_ldpc_cap(struct pe_session *session,
 					    tDot11fIEhe_cap *he_cap)
 {
 	if (!he_cap->ldpc_coding &&
+	    !WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq) &&
 	    (session->ch_width > CH_WIDTH_20MHZ ||
-	     lim_check_he_80_mcs11_supp(session, he_cap) ||
-	     lim_check_is_bss_greater_than_4_nss_supp(session, he_cap)))
+	    lim_check_he_80_mcs11_supp(session, he_cap) ||
+	    lim_check_is_bss_greater_than_4_nss_supp(session, he_cap)))
 		he_cap->ldpc_coding = 1;
 }
 
