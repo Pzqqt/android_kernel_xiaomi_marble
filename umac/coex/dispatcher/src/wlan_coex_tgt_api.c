@@ -77,8 +77,7 @@ tgt_send_coex_config(struct wlan_objmgr_vdev *vdev,
 	}
 
 	coex_ops = wlan_psoc_get_coex_txops(psoc);
-	QDF_ASSERT(coex_ops->coex_config_send);
-	if (coex_ops->coex_config_send)
+	if (coex_ops && coex_ops->coex_config_send)
 		return coex_ops->coex_config_send(pdev, param);
 
 	return QDF_STATUS_SUCCESS;
