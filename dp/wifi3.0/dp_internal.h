@@ -1746,8 +1746,9 @@ static inline QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
-				    struct cdp_rx_stats_ppdu_user *ppdu_user)
+static inline QDF_STATUS
+dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
+			 struct cdp_rx_stats_ppdu_user *ppdu_user)
 {
 	return QDF_STATUS_SUCCESS;
 }
