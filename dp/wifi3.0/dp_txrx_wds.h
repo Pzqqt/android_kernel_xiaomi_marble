@@ -82,6 +82,39 @@ void dp_hmwds_ast_add_notify(struct dp_peer *peer,
 			     QDF_STATUS err,
 			     bool is_peer_map);
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+/**
+ * dp_wds_ext_peer_learn() - function to send event to control
+ * path on receiving 1st 4-address frame from backhaul.
+ * @soc: DP soc
+ * @ta_peer: WDS repeater peer
+ *
+ * Return: void
+ */
+static inline void dp_wds_ext_peer_learn(struct dp_soc *soc,
+					 struct dp_peer *ta_peer)
+{
+	uint8_t wds_ext_src_mac[QDF_MAC_ADDR_SIZE];
+
+	if (ta_peer->vdev->wds_ext_enabled &&
+	    !qdf_atomic_test_and_set_bit(WDS_EXT_PEER_INIT_BIT,
+					 &ta_peer->wds_ext.init)) {
+		qdf_mem_copy(wds_ext_src_mac, &ta_peer->mac_addr.raw[0],
+			     QDF_MAC_ADDR_SIZE);
+		soc->cdp_soc.ol_ops->rx_wds_ext_peer_learn(
+						soc->ctrl_psoc,
+						ta_peer->peer_id,
+						ta_peer->vdev->vdev_id,
+						wds_ext_src_mac);
+	}
+}
+#else
+static inline void dp_wds_ext_peer_learn(struct dp_soc *soc,
+					 struct dp_peer *ta_peer)
+{
+}
+#endif
+
 /**
  * dp_rx_wds_add_or_update_ast() - Add or update the ast entry.
  *
@@ -138,6 +171,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			     (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
 			     QDF_MAC_ADDR_SIZE);
 
+		dp_wds_ext_peer_learn(soc, ta_peer);
 		ret = dp_peer_add_ast(soc,
 				      ta_peer,
 				      wds_src_mac,
@@ -254,10 +288,12 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 				 * learning is disable on STA vap
 				 */
 				if (soc->ast_override_support &&
-				    (ta_peer->vdev->opmode == wlan_op_mode_sta))
+				    (ta_peer->vdev->opmode == wlan_op_mode_sta)) {
 					dp_peer_del_ast(soc, ast);
-				else
+				} else {
+					dp_wds_ext_peer_learn(soc, ta_peer);
 					dp_peer_update_ast(soc, ta_peer, ast, flags);
+				}
 				qdf_spin_unlock_bh(&soc->ast_lock);
 				return;
 			}
