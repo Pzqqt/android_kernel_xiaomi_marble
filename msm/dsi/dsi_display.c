@@ -4931,10 +4931,8 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 	}
 
 	SDE_EVT32(mode->dsi_mode_flags, mode->panel_mode);
-	if (mode->dsi_mode_flags & DSI_MODE_FLAG_POMS) {
-		display->config.panel_mode = mode->panel_mode;
-		display->panel->panel_mode = mode->panel_mode;
-	}
+
+	display->panel->panel_mode = mode->panel_mode;
 	rc = dsi_panel_get_host_cfg_for_mode(display->panel,
 					     mode,
 					     &display->config);
