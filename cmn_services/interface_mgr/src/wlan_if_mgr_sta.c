@@ -132,7 +132,7 @@ QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
-					 void *event_data)
+				   struct if_mgr_event_data *event_data)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -151,7 +151,7 @@ QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev,
-					    void *event_data)
+				      struct if_mgr_event_data *event_data)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;

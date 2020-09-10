@@ -31,7 +31,7 @@
 /**
  * struct change_roam_state_arg - Contains roam state arguments
  * @requestor: Driver disabled roaming requestor
- * @curr_vdev_id: Pointer to current vdev objmgr
+ * @curr_vdev_id: virtual device ID
  *
  * This structure is used to pass the roam state change information to the
  * callback
@@ -58,7 +58,7 @@ struct bssid_search_arg {
  * if_mgr_enable_roaming() - interface manager enable roaming
  * @vdev: vdev object
  * @pdev: pdev object
- * @requestor: RSO disable requestor
+ * @requestor: RSO enable requestor
  *
  * Interface manager api to enable roaming for all other active vdev id's
  *
@@ -107,7 +107,7 @@ if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
  * roaming after p2p disconnect
  * @vdev: vdev object
  * @pdev: pdev object
- * @requestor: RSO disable requestor
+ * @requestor: RSO enable requestor
  *
  * Disables roaming on p2p vdevs if the state is disconnected
  *
