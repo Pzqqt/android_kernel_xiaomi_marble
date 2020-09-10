@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-ifeq ($(CONFIG_ARCH_LAHAINA), y)
+#MSMs - GKI
+ifeq ($(filter $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_HOLI), y),y)
 LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa.h
 ifeq ($(CONFIG_QGKI),y)
 include $(srctree)/techpack/dataipa/config/dataipa_QGKI.conf
@@ -13,16 +14,14 @@ include $(srctree)/techpack/dataipa/config/dataipa_GKI.conf
 endif
 endif
 
-ifeq ($(CONFIG_ARCH_HOLI), y)
+
+#MDMs
+ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
 LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa.h
-ifeq ($(CONFIG_QGKI),y)
 include $(srctree)/techpack/dataipa/config/dataipa_QGKI.conf
-ifeq ($(CONFIG_LOCALVERSION), "-qgki-debug")
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
 include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
-endif
-else
-include $(srctree)/techpack/dataipa/config/dataipa_GKI.conf
 endif
 endif
 
