@@ -78,6 +78,11 @@
 #include <ol_defines.h>
 #include "wlan_pkt_capture_ucfg_api.h"
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+#include "wlan_if_mgr_api.h"
+#include "wlan_if_mgr_public_struct.h"
+#endif
+
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -1881,6 +1886,11 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	hdd_send_association_event(dev, roam_info);
 
 	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifndef WLAN_FEATURE_INTERFACE_MGR
+	/*
 	 * Due to audio share glitch with P2P clients due
 	 * to roam scan on concurrent interface, disable
 	 * roaming if "p2p_disable_roam" ini is enabled.
@@ -1892,6 +1902,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		hdd_debug("P2P client disconnected, enable roam");
 		wlan_hdd_enable_roaming(adapter, RSO_CONNECT_START);
 	}
+#endif
 
 	/* indicate disconnected event to nl80211 */
 	/*
@@ -1985,7 +1996,14 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	}
 	wlan_hdd_clear_link_layer_stats(adapter);
 
+	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifndef WLAN_FEATURE_INTERFACE_MGR
 	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
+#endif
+
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
 	/*
@@ -2007,6 +2025,14 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	hdd_print_bss_info(sta_ctx);
 
+	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	ucfg_if_mgr_deliver_event(adapter->vdev,
+				  WLAN_IF_MGR_EV_DISCONNECT_COMPLETE, NULL);
+#else
 	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc) &&
 	    QDF_STA_MODE == adapter->device_mode) {
 		sme_enable_roaming_on_connected_sta(mac_handle,
@@ -2014,6 +2040,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		sme_clear_and_set_pcl_for_connected_vdev(mac_handle,
 							 adapter->vdev_id);
 	}
+#endif
 
 	return status;
 }

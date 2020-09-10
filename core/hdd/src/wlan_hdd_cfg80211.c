@@ -162,6 +162,11 @@
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+#include "wlan_if_mgr_api.h"
+#include "wlan_if_mgr_public_struct.h"
+#endif
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -20265,6 +20270,14 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 	if (sta_ctx->conn_info.conn_state != eConnectionState_Associated)
 		return;
 
+	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	ucfg_if_mgr_deliver_event(adapter->vdev,
+				  WLAN_IF_MGR_EV_DISCONNECT_START, NULL);
+#endif
 	/*
 	 * If firmware has already started roaming process, driver
 	 * needs to wait for processing of this disconnect request.

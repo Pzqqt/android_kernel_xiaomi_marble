@@ -21,6 +21,8 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_if_mgr_public_struct.h"
 #include "wlan_if_mgr_sta.h"
+#include "wlan_if_mgr_roam.h"
+#include "wlan_if_mgr_main.h"
 #include "nan_ucfg_api.h"
 #include "wlan_policy_mgr_api.h"
 
@@ -70,5 +72,57 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct if_mgr_event_data *event_data)
 {
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
+					 void *event_data)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	/* Leaving as stub to fill in later */
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+					    void *event_data)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	status = if_mgr_enable_roaming_after_p2p_disconnect(vdev, pdev,
+							RSO_INVALID_REQUESTOR);
+	if (status) {
+		ifmgr_err("Failed to enable roaming after p2p disconnect");
+		return status;
+	}
+
+	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
+
+	status = if_mgr_enable_roaming_on_connected_sta(vdev, pdev);
+	if (status) {
+		ifmgr_err("Failed to enable roaming on connected sta");
+		return status;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
