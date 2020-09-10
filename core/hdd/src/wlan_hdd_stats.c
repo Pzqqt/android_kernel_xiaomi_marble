@@ -6484,6 +6484,11 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 		return -EPERM;
 	}
 
+	if (!adapter->hdd_ctx->is_therm_cmd_supp) {
+		hdd_err("WMI_SERVICE_THERM_THROT or gThermalMitigationEnable is disable");
+		return -EINVAL;
+	}
+
 	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");

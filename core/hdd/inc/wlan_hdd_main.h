@@ -1751,6 +1751,7 @@ struct hdd_adapter_ops_history {
  * @qos_cpu_mask: voted cpu core mask
  * @adapter_ops_wq: High priority workqueue for handling adapter operations
  * @multi_client_thermal_mitigation: Multi client thermal mitigation by fw
+ * @is_therm_cmd_supp: get temperature command enable or disable
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -1759,6 +1760,7 @@ struct hdd_context {
 	struct wiphy *wiphy;
 	qdf_spinlock_t hdd_adapter_lock;
 	qdf_list_t hdd_adapters; /* List of adapters */
+	bool is_therm_cmd_supp;
 
 	/** Pointer for firmware image data */
 	const struct firmware *fw;

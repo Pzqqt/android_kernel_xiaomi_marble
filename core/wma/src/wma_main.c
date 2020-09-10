@@ -4572,6 +4572,10 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 	/* Adaptive early-rx */
 	cfg->early_rx = wmi_service_enabled(wmi_handle,
 					       wmi_service_early_rx);
+
+	cfg->is_fw_therm_throt_supp = wmi_service_enabled(wmi_handle,
+							  wmi_service_tt);
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
 	if (wmi_service_enabled(wmi_handle, wmi_service_nlo)) {

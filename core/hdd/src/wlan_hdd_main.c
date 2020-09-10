@@ -1722,6 +1722,10 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 					cfg->ll_stats_per_chan_rx_tx_time;
 
 	hdd_update_feature_cfg_club_get_sta_in_ll_stats_req(hdd_ctx, cfg);
+	hdd_ctx->is_therm_cmd_supp =
+				cfg->is_fw_therm_throt_supp &&
+				cfg_get(hdd_ctx->psoc,
+					CFG_THERMAL_MITIGATION_ENABLE);
 }
 
 /**
