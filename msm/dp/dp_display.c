@@ -1238,6 +1238,12 @@ end:
 static int dp_display_stream_pre_disable(struct dp_display_private *dp,
 			struct dp_panel *dp_panel)
 {
+	if (!dp->active_stream_cnt) {
+		DP_WARN("streams already disabled cnt=%d\n",
+				dp->active_stream_cnt);
+		return 0;
+	}
+
 	dp->ctrl->stream_pre_off(dp->ctrl, dp_panel);
 
 	return 0;
@@ -1247,7 +1253,7 @@ static void dp_display_stream_disable(struct dp_display_private *dp,
 			struct dp_panel *dp_panel)
 {
 	if (!dp->active_stream_cnt) {
-		DP_ERR("invalid active_stream_cnt (%d)\n",
+		DP_WARN("streams already disabled cnt=%d\n",
 				dp->active_stream_cnt);
 		return;
 	}
