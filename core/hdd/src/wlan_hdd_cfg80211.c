@@ -21367,9 +21367,6 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS)
-		return QDF_STATUS_E_INVAL;
-
 	qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
 
 	if (!qdf_is_macaddr_broadcast(&param->peerMacAddr))
