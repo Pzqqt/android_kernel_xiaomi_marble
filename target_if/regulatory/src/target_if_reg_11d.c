@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -35,8 +35,8 @@ bool tgt_if_regulatory_is_11d_offloaded(struct wlan_objmgr_psoc *psoc)
 	if (!wmi_handle)
 		return false;
 
-	if (reg_rx_ops->reg_ignore_fw_reg_offload_ind &&
-		reg_rx_ops->reg_ignore_fw_reg_offload_ind(psoc)) {
+	if (reg_rx_ops && reg_rx_ops->reg_ignore_fw_reg_offload_ind &&
+	    reg_rx_ops->reg_ignore_fw_reg_offload_ind(psoc)) {
 		target_if_debug("Ignore fw reg 11d offload indication");
 		return 0;
 	}
@@ -71,7 +71,7 @@ static int tgt_reg_11d_new_cc_handler(ol_scn_t handle, uint8_t *event_buf,
 
 	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
 
-	if (!reg_rx_ops->reg_11d_new_cc_handler) {
+	if (!reg_rx_ops || !reg_rx_ops->reg_11d_new_cc_handler) {
 		target_if_err("reg_11d_new_cc_handler is NULL");
 		return -EINVAL;
 	}
