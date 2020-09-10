@@ -1351,6 +1351,11 @@ static int msm_ioctl_register_event(struct drm_device *dev, void *data,
 	 * calls add to client list and return.
 	 */
 	count = msm_event_client_count(dev, req_event, false);
+	/* Add current client to list */
+	spin_lock_irqsave(&dev->event_lock, flag);
+	list_add_tail(&client->base.link, &priv->client_event_list);
+	spin_unlock_irqrestore(&dev->event_lock, flag);
+
 	if (count)
 		return 0;
 
@@ -1363,11 +1368,6 @@ static int msm_ioctl_register_event(struct drm_device *dev, void *data,
 		list_del(&client->base.link);
 		spin_unlock_irqrestore(&dev->event_lock, flag);
 		kfree(client);
-	} else {
-		/* Add current client to list */
-		spin_lock_irqsave(&dev->event_lock, flag);
-		list_add_tail(&client->base.link, &priv->client_event_list);
-		spin_unlock_irqrestore(&dev->event_lock, flag);
 	}
 	return ret;
 }
