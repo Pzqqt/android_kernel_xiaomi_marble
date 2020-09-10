@@ -2806,6 +2806,28 @@ wma_register_pkt_capture_callbacks(tp_wma_handle wma_handle)
 }
 #endif
 
+#ifdef TRACE_RECORD
+static void wma_trace_dump(void *mac_ctx, tp_qdf_trace_record record,
+			   uint16_t rec_index)
+{
+	/*
+	 * This is dummy handler registered to qdf_trace as wma module wants to
+	 * insert trace records in qdf trace global record table but qdf_trace
+	 * does not allow to insert the trace records in the global record
+	 * table if a module is not registered with the qdf trace.
+	 */
+}
+
+static void wma_trace_init(void)
+{
+	qdf_trace_register(QDF_MODULE_ID_WMA, &wma_trace_dump);
+}
+#else
+static inline void wma_trace_init(void)
+{
+}
+#endif
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -3363,6 +3385,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_register_md_events(wma_handle);
 	wma_register_wlm_stats_events(wma_handle);
 	wma_register_mws_coex_events(wma_handle);
+	wma_trace_init();
 	return QDF_STATUS_SUCCESS;
 
 err_dbglog_init:
