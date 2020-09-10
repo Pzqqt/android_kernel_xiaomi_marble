@@ -17314,9 +17314,26 @@ typedef struct {
 
 /* WMI_GPIO_CONFIG_CMDID */
 enum {
-    WMI_GPIO_PULL_NONE,
-    WMI_GPIO_PULL_UP,
-    WMI_GPIO_PULL_DOWN,
+    WMI_GPIO_PULL_NONE,   /** Do not specify a pull. */
+    WMI_GPIO_PULL_UP,     /** Pull the GPIO up. */
+    WMI_GPIO_PULL_DOWN,   /** Pull the GPIO down. */
+    WMI_GPIO_PULL_KEEPER, /** Designate as a keeper. */
+};
+
+enum wmi_gpio_drive_strength {
+    WMI_GPIO_2MA,  /** Specify a 2 mA drive. */
+    WMI_GPIO_4MA,  /** Specify a 4 mA drive. */
+    WMI_GPIO_6MA,  /** Specify a 6 mA drive. */
+    WMI_GPIO_8MA,  /** Specify an 8 mA drive. */
+    WMI_GPIO_10MA, /** Specify a 10 mA drive. */
+    WMI_GPIO_12MA, /** Specify a 12 mA drive. */
+    WMI_GPIO_14MA, /** Specify a 14 mA drive. */
+    WMI_GPIO_16MA, /** Specify a 16 mA drive. */
+};
+
+enum wmi_tlmm_gpio_config {
+  WMI_TLMM_GPIO_DISABLE, /** Use the internal inactive configuration. */
+  WMI_TLMM_GPIO_ENABLE,  /** Use the configuration passed as parameter. */
 };
 
 enum {
@@ -17341,6 +17358,17 @@ typedef struct {
      *     0x4 - use the pin as GPIO (rather than UART)
      */
     A_UINT32 mux_config_val;
+    /*
+     * The drive strength to use in the configuration of a GPIO.
+     * Refer to the wmi_gpio_drive_strength enum.
+     */
+    A_UINT32 drive;
+    /*
+     * Use the internal inactive configuration or configuration passed
+     * as parameter.
+     * Refer to the wmi_tlmm_gpio_config enum.
+     */
+    A_UINT32 init_enable;
 } wmi_gpio_config_cmd_fixed_param;
 
 /* WMI_GPIO_OUTPUT_CMDID */
