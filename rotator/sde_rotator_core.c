@@ -578,7 +578,7 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 
 			sid_info = (uint32_t *) shm.vaddr;
 			mem_addr = shm.paddr;
-			mem_size = shm.size;
+			mem_size = sizeof(uint32_t);
 		} else {
 			sid_info = kzalloc(sizeof(uint32_t), GFP_KERNEL);
 			if (!sid_info)
