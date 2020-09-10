@@ -72,7 +72,7 @@ static QDF_STATUS send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
 	noa_discriptor->interval = noa->interval;
 	noa_discriptor->start_time = 0;
 
-	WMI_LOGI("SET P2P GO NOA:vdev_id:%d count:%d duration:%d interval:%d",
+	wmi_debug("SET P2P GO NOA:vdev_id:%d count:%d duration:%d interval:%d",
 		 cmd->vdev_id, noa->count, noa_discriptor->duration,
 		 noa->interval);
 	wmi_mtrace(WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID, cmd->vdev_id, 0);
@@ -119,7 +119,7 @@ static QDF_STATUS send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
 		WMI_UNIFIED_OPPPS_ATTR_ENABLED_SET(cmd);
 
 	WMI_UNIFIED_OPPPS_ATTR_CTWIN_SET(cmd, oppps->ctwindow);
-	WMI_LOGI("SET P2P GO OPPPS:vdev_id:%d ctwindow:%d",
+	wmi_debug("SET P2P GO OPPPS:vdev_id:%d ctwindow:%d",
 		 cmd->vdev_id, oppps->ctwindow);
 	wmi_mtrace(WMI_P2P_SET_OPPPS_PARAM_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),

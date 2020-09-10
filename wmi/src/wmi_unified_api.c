@@ -1592,7 +1592,7 @@ bool wmi_service_enabled(wmi_unified_t wmi_handle, uint32_t service_id)
 				wmi_handle->services[service_id]);
 		}
 	} else {
-		WMI_LOGI("Service %d not supported", service_id);
+		wmi_info("Service %d not supported", service_id);
 	}
 
 	return false;

@@ -2009,8 +2009,7 @@ wmi_register_event_handler_with_ctx(wmi_unified_t wmi_handle,
 	evt_id = wmi_handle->wmi_events[event_id];
 
 	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
-		WMI_LOGI("event handler already registered 0x%x",
-			 evt_id);
+		wmi_info("event handler already registered 0x%x", evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
@@ -2088,7 +2087,7 @@ QDF_STATUS wmi_unified_unregister_event(wmi_unified_t wmi_handle,
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
 	if (idx == -1) {
-		WMI_LOGI("event handler is not registered: evt id 0x%x",
+		wmi_warn("event handler is not registered: evt id 0x%x",
 			 evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2119,15 +2118,14 @@ QDF_STATUS wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
-		WMI_LOGI("Event id %d is unavailable",
-			 event_id);
+		wmi_err("Event id %d is unavailable", event_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
 	if (idx == -1) {
-		WMI_LOGI("event handler is not registered: evt id 0x%x",
+		wmi_err("event handler is not registered: evt id 0x%x",
 			 evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}

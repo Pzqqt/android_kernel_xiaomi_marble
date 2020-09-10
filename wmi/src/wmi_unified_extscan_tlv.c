@@ -737,8 +737,7 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 	cmd->configuration_flags = 0;
 	if (pstart->configuration_flags & WMI_EXTSCAN_LP_EXTENDED_BATCHING)
 		cmd->configuration_flags |= WMI_EXTSCAN_EXTENDED_BATCHING_EN;
-	WMI_LOGI("%s: configuration_flags: 0x%x", __func__,
-			cmd->configuration_flags);
+	wmi_debug("configuration_flags: 0x%x", cmd->configuration_flags);
 #ifdef FEATURE_WLAN_EXTSCAN
 	cmd->min_rest_time = WMI_EXTSCAN_REST_TIME;
 	cmd->max_rest_time = WMI_EXTSCAN_REST_TIME;
@@ -844,10 +843,10 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 			dest_blist->configuration_flags =
 				WMI_EXTSCAN_BUCKET_CACHE_RESULTS;
 
-		WMI_LOGI("%s: ntfy_extscan_events:%u cfg_flags:%u fwd_flags:%u",
-			__func__, dest_blist->notify_extscan_events,
-			dest_blist->configuration_flags,
-			dest_blist->forwarding_flags);
+		wmi_debug("ntfy_extscan_events:%u cfg_flags:%u fwd_flags:%u",
+			  dest_blist->notify_extscan_events,
+			  dest_blist->configuration_flags,
+			  dest_blist->forwarding_flags);
 
 		dest_blist->min_dwell_time_active =
 				   src_bucket->min_dwell_time_active;
