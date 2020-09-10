@@ -1920,16 +1920,13 @@ static int iw_get_channel_list(struct net_device *dev,
 {
 	uint32_t num_channels = 0;
 	uint8_t i = 0;
-	uint8_t band_start_channel = MIN_24GHZ_CHANNEL;
-	uint8_t band_end_channel = MAX_5GHZ_CHANNEL;
 	struct hdd_adapter *hostapd_adapter = (netdev_priv(dev));
 	struct channel_list_info *channel_list =
-					(struct channel_list_info *) extra;
-	bool enable_dfs_scan = true;
-	enum band_info cur_band = BAND_ALL;
+		(struct channel_list_info *)extra;
+	struct regulatory_channel *cur_chan_list = NULL;
 	struct hdd_context *hdd_ctx;
 	int ret;
-	bool is_dfs_mode_enabled = false;
+	QDF_STATUS status;
 
 	hdd_enter_dev(dev);
 
@@ -1942,55 +1939,29 @@ static int iw_get_channel_list(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (QDF_STATUS_SUCCESS != ucfg_reg_get_band(hdd_ctx->pdev, &cur_band)) {
-		hdd_err_rl("not able get the current frequency band");
+	cur_chan_list = qdf_mem_malloc(sizeof(*cur_chan_list) * NUM_CHANNELS);
+	if (!cur_chan_list) {
+		hdd_err_rl("Failed to malloc");
+		return -ENOMEM;
+	}
+
+	status = ucfg_reg_get_current_chan_list(hdd_ctx->pdev, cur_chan_list);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err_rl("Failed to get the current channel list");
+		qdf_mem_free(cur_chan_list);
 		return -EIO;
 	}
 
-	if (BAND_2G == cur_band) {
-		band_start_channel = MIN_24GHZ_CHANNEL;
-		band_end_channel = MAX_24GHZ_CHANNEL;
-	} else if (BAND_5G == cur_band) {
-		band_start_channel = MIN_5GHZ_CHANNEL;
-		band_end_channel = MAX_5GHZ_CHANNEL;
-	}
-
-	if (cur_band != BAND_2G)
-		band_end_channel = MAX_5GHZ_CHANNEL;
-	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
-						&enable_dfs_scan);
-	if (hostapd_adapter->device_mode == QDF_STA_MODE &&
-	    enable_dfs_scan) {
-		is_dfs_mode_enabled = true;
-	} else if (hostapd_adapter->device_mode == QDF_SAP_MODE) {
-		if (QDF_STATUS_SUCCESS != ucfg_mlme_get_dfs_master_capability(
-				hdd_ctx->psoc, &is_dfs_mode_enabled)) {
-			hdd_err_rl("Fail to get dfs master mode capability");
-			return -EINVAL;
-		}
-	}
-
-	hdd_debug_rl("curBand = %d, StartChannel = %hu, EndChannel = %hu, is_dfs_mode_enabled = %d",
-		     cur_band, band_start_channel, band_end_channel,
-		     is_dfs_mode_enabled);
-
-	for (i = band_start_channel; i <= band_end_channel; i++) {
-		if ((CHANNEL_STATE_ENABLE ==
-		     wlan_reg_get_channel_state_for_freq(
-						hdd_ctx->pdev,
-						WLAN_REG_CH_TO_FREQ(i))) ||
-		    (is_dfs_mode_enabled && CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state_for_freq(
-						hdd_ctx->pdev,
-						WLAN_REG_CH_TO_FREQ(i)))) {
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		if (!(cur_chan_list[i].chan_flags & REGULATORY_CHAN_DISABLED)) {
 			channel_list->channels[num_channels] =
-						WLAN_REG_CH_NUM(i);
+				cur_chan_list[i].chan_num;
 			num_channels++;
 		}
 	}
 
+	qdf_mem_free(cur_chan_list);
 	hdd_debug_rl("number of channels %d", num_channels);
-
 	channel_list->num_channels = num_channels;
 	wrqu->data.length = num_channels + 1;
 	hdd_exit();
@@ -2031,10 +2002,12 @@ int iw_get_channel_list_with_cc(struct net_device *dev,
 		return -EINVAL;
 	}
 	len = scnprintf(buf, WE_MAX_STR_LEN, "%u ", channel_list.num_channels);
+
 	wlan_reg_get_cc_and_src(mac->psoc, ubuf);
-	/* Printing Country code in getChannelList */
-	for (i = 0; i < (ubuf_len - 1); i++)
+	/* Printing Country code in getChannelList(break at '\0') */
+	for (i = 0; i < (ubuf_len - 1) && ubuf[i] != 0; i++)
 		len += scnprintf(buf + len, WE_MAX_STR_LEN - len, "%c", ubuf[i]);
+
 	for (i = 0; i < channel_list.num_channels; i++)
 		len += scnprintf(buf + len, WE_MAX_STR_LEN - len, " %u",
 				 channel_list.channels[i]);
