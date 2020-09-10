@@ -25,6 +25,7 @@
 #include <osif_sync.h>
 #include <wlan_hdd_main.h>
 #include <wlan_hdd_object_manager.h>
+#include <wlan_dcs_ucfg_api.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <sme_api.h>
 #include <wma_api.h>
@@ -57,6 +58,9 @@
 #define MEDIUM_ASSESS_MAX \
 	QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_MAX
 
+#define DEFAULT_CCA_PERIOD 10	/* seconds */
+#define CCA_GET_RSSI_INTERVAL 1000	/* 1 second */
+
 #define REPORT_DISABLE 0
 #define REPORT_ENABLE 1
 
@@ -71,7 +75,147 @@ hdd_medium_assess_policy[MEDIUM_ASSESS_MAX + 1] = {
 	[CONGESTION_REPORT_INTERVAL] = {.type = NLA_U8},
 };
 
+/*
+ * get_cca_report_len() - Calculate length for CCA report
+ * to allocate skb buffer
+ *
+ * Return: skb buffer length
+ */
+static int get_cca_report_len(void)
+{
+	uint32_t data_len = NLMSG_HDRLEN;
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_TYPE */
+	data_len += nla_total_size(sizeof(uint8_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_TOTAL_CYCLE_COUNT */
+	data_len += nla_total_size(sizeof(uint32_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_IDLE_COUNT */
+	data_len += nla_total_size(sizeof(uint32_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_IBSS_RX_COUNT */
+	data_len += nla_total_size(sizeof(uint32_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_OBSS_RX_COUNT */
+	data_len += nla_total_size(sizeof(uint32_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_MAX_IBSS_RSSI */
+	data_len += nla_total_size(sizeof(uint32_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_MIN_IBSS_RSSI */
+	data_len += nla_total_size(sizeof(uint32_t));
+
+	return data_len;
+}
+
 /**
+ * hdd_cca_notification_cb() - cca notification callback function
+ * @vdev_id: vdev id
+ * @stats: dcs im stats
+ * @status: status of cca statistics
+ *
+ * Return: None
+ */
+static void hdd_cca_notification_cb(uint8_t vdev_id,
+				    struct wlan_host_dcs_im_user_stats *stats,
+				    int status)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter;
+	struct sk_buff *event;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("Failed to find adapter of vdev %d", vdev_id);
+		return;
+	}
+
+	event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, NULL,
+				  get_cca_report_len(),
+				  QCA_NL80211_VENDOR_SUBCMD_MEDIUM_ASSESS_INDEX,
+				  GFP_KERNEL);
+	if (!event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u8(event, MEDIUM_ASSESS_TYPE,
+		       QCA_WLAN_MEDIUM_ASSESS_CCA) ||
+	    nla_put_u32(event, TOTAL_CYCLE_COUNT, stats->cycle_count) ||
+	    nla_put_u32(event, IDLE_COUNT,
+			stats->cycle_count - stats->rxclr_count) ||
+	    nla_put_u32(event, IBSS_RX_COUNT, stats->my_bss_rx_cycle_count) ||
+	    nla_put_u32(event, OBSS_RX_COUNT,
+			stats->rx_frame_count - stats->my_bss_rx_cycle_count) ||
+	    nla_put_u32(event, MAX_IBSS_RSSI, stats->max_rssi) ||
+	    nla_put_u32(event, MIN_IBSS_RSSI, stats->min_rssi)) {
+		hdd_err("nla put failed");
+		kfree_skb(event);
+		return;
+	}
+
+	cfg80211_vendor_event(event, GFP_KERNEL);
+}
+
+/**
+ * hdd_medium_assess_cca() - clear channel assessment
+ * @hdd_ctx: pointer to HDD context
+ * @adapter: pointer to adapter
+ * @tb: list of attributes
+ *
+ * Return: success(0) or reason code for failure
+ */
+static int hdd_medium_assess_cca(struct hdd_context *hdd_ctx,
+				 struct hdd_adapter *adapter,
+				 struct nlattr **tb)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t cca_period = DEFAULT_CCA_PERIOD;
+	uint8_t pdev_id, dcs_enable;
+	int status = 0;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+
+	dcs_enable = ucfg_get_dcs_enable(hdd_ctx->psoc, pdev_id);
+	if (!(dcs_enable & CAP_DCS_WLANIM)) {
+		hdd_err_rl("DCS_WLANIM is not enabled");
+		status = -EINVAL;
+		goto out;
+	}
+
+	if (qdf_atomic_read(&adapter->session.ap.acs_in_progress)) {
+		hdd_err_rl("ACS is in progress");
+		status = -EBUSY;
+		goto out;
+	}
+
+	if (tb[PERIOD])
+		cca_period = nla_get_u32(tb[PERIOD]);
+	if (cca_period == 0)
+		cca_period = DEFAULT_CCA_PERIOD;
+
+	ucfg_dcs_reset_user_stats(hdd_ctx->psoc, pdev_id);
+	ucfg_dcs_register_user_cb(hdd_ctx->psoc, pdev_id, adapter->vdev_id,
+				  hdd_cca_notification_cb);
+	/* dcs is already enabled and dcs event is reported every second
+	 * set the user request counter to collect user stats
+	 */
+	ucfg_dcs_set_user_request(hdd_ctx->psoc, pdev_id, cca_period);
+
+out:
+	hdd_objmgr_put_vdev(vdev);
+	return status;
+}
+
+/*
  * get_congestion_report_len() - Calculate length for congestion report
  * to allocate skb buffer
  *
@@ -277,6 +421,7 @@ static int __hdd_cfg80211_medium_assess(struct wiphy *wiphy,
 
 	switch (type) {
 	case QCA_WLAN_MEDIUM_ASSESS_CCA:
+		status = hdd_medium_assess_cca(hdd_ctx, adapter, tb);
 		break;
 	case QCA_WLAN_MEDIUM_ASSESS_CONGESTION_REPORT:
 		status = hdd_medium_assess_congestion_report(hdd_ctx, adapter,
