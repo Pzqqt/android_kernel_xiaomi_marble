@@ -1138,6 +1138,7 @@ scm_update_channel_list(struct scan_start_request *req,
 	bool p2p_search = false;
 	bool skip_dfs_ch = true;
 	uint32_t first_freq;
+	enum QDF_OPMODE op_mode;
 
 	pdev = wlan_vdev_get_pdev(req->vdev);
 
@@ -1198,7 +1199,11 @@ scm_update_channel_list(struct scan_start_request *req,
 
 	req->scan_req.chan_list.num_chan = num_scan_channels;
 	/* Dont upadte the channel list for SAP mode */
-	if (wlan_vdev_mlme_get_opmode(req->vdev) != QDF_SAP_MODE) {
+	op_mode = wlan_vdev_mlme_get_opmode(req->vdev);
+	if (op_mode != QDF_SAP_MODE &&
+	    op_mode != QDF_P2P_DEVICE_MODE &&
+	    op_mode != QDF_P2P_CLIENT_MODE &&
+	    op_mode != QDF_P2P_GO_MODE) {
 		scm_update_6ghz_channel_list(req->vdev,
 					     &req->scan_req.chan_list,
 					     scan_obj);
