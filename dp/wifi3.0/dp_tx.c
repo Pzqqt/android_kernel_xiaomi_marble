@@ -1177,14 +1177,15 @@ dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 	status = dp_swlm_tcl_pre_check(soc, &tcl_data);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dp_swlm_tcl_reset_session_data(soc);
+		DP_STATS_INC(swlm, tcl.coalesce_fail, 1);
 		return 0;
 	}
 
 	ret = dp_swlm_query_policy(soc, TCL_DATA, swlm_query_data);
 	if (ret) {
-		DP_STATS_INC(swlm, tcl.coalesc_success, 1);
+		DP_STATS_INC(swlm, tcl.coalesce_success, 1);
 	} else {
-		DP_STATS_INC(swlm, tcl.coalesc_fail, 1);
+		DP_STATS_INC(swlm, tcl.coalesce_fail, 1);
 	}
 
 	return ret;
@@ -1194,15 +1195,15 @@ dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
  * dp_tx_ring_access_end() - HAL ring access end for data transmission
  * @soc: Datapath soc handle
  * @hal_ring_hdl: HAL ring handle
- * @coalesc: Coalesc the current write or not
+ * @coalesce: Coalesce the current write or not
  *
  * Returns: none
  */
 static inline void
 dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
-		      int coalesc)
+		      int coalesce)
 {
-	if (coalesc)
+	if (coalesce)
 		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 	else
 		dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
@@ -1224,7 +1225,7 @@ dp_tx_attempt_coalescing(struct dp_soc *soc, struct dp_vdev *vdev,
 
 static inline void
 dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
-		      int coalesc)
+		      int coalesce)
 {
 	dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
 }
@@ -1255,7 +1256,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	uint8_t type;
 	void *hal_tx_desc;
 	uint32_t *hal_tx_desc_cached;
-	int coalesc = 0;
+	int coalesce = 0;
 
 	/*
 	 * Setting it initialization statically here to avoid
@@ -1373,7 +1374,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	tx_desc->flags |= DP_TX_DESC_FLAG_QUEUED_TX;
 	dp_vdev_peer_stats_update_protocol_cnt_tx(vdev, tx_desc->nbuf);
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
-	coalesc = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid);
+	coalesce = dp_tx_attempt_coalescing(soc, vdev, tx_desc, tid);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
 	dp_tx_update_stats(soc, tx_desc->nbuf);
 	status = QDF_STATUS_SUCCESS;
@@ -1381,7 +1382,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 ring_access_fail:
 	if (hif_pm_runtime_get(soc->hif_handle,
 			       RTPM_ID_DW_TX_HW_ENQUEUE) == 0) {
-		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesc);
+		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
 		hif_pm_runtime_put(soc->hif_handle,
 				   RTPM_ID_DW_TX_HW_ENQUEUE);
 	} else {

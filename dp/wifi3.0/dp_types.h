@@ -1135,7 +1135,7 @@ struct dp_last_op_info {
  * @num_ll_connections: Number of low latency connections on this vdev
  *
  * This structure contains the information required by the software
- * latency manager to decide on whether to coalesc the current TCL
+ * latency manager to decide on whether to coalesce the current TCL
  * register write or not.
  */
 struct dp_swlm_tcl_data {
@@ -1154,12 +1154,12 @@ union swlm_data {
 
 /**
  * struct dp_swlm_ops - SWLM ops
- * @tcl_should_coalesc: Should the current TCL register write be coalesced
- *			or not
+ * @tcl_wr_coalesce_check: handler to check if the current TCL register
+ *			   write can be coalesced or not
  */
 struct dp_swlm_ops {
-	int (*tcl_should_coalesc)(struct dp_soc *soc,
-				  struct dp_swlm_tcl_data *tcl_data);
+	int (*tcl_wr_coalesce_check)(struct dp_soc *soc,
+				     struct dp_swlm_tcl_data *tcl_data);
 };
 
 /**
@@ -1178,8 +1178,8 @@ struct dp_swlm_ops {
  *			    session time expired
  * @tcl.tput_criteria_fail: Num TCL HP writes coalescing fails, since the
  *			   throughput did not meet session threshold
- * @tcl.coalesc_success: Num of TCL HP writes coalesced successfully.
- * @tcl.coalesc_fail: Num of TCL HP writes coalesces failed
+ * @tcl.coalesce_success: Num of TCL HP writes coalesced successfully.
+ * @tcl.coalesce_fail: Num of TCL HP writes coalesces failed
  */
 struct dp_swlm_stats {
 	struct {
@@ -1191,8 +1191,8 @@ struct dp_swlm_stats {
 		uint32_t bytes_thresh_reached;
 		uint32_t time_thresh_reached;
 		uint32_t tput_criteria_fail;
-		uint32_t coalesc_success;
-		uint32_t coalesc_fail;
+		uint32_t coalesce_success;
+		uint32_t coalesce_fail;
 	} tcl;
 };
 
@@ -1211,7 +1211,7 @@ struct dp_swlm_stats {
  * @tcl.tx_thresh_multiplier: Multiplier to deduce the bytes threshold after
  *			      which the TCL HP register is written, thereby
  *			      ending the coalescing.
- * @tcl.coalesc_end_time: End timestamp for current coalescing session
+ * @tcl.coalesce_end_time: End timestamp for current coalescing session
  * @tcl.bytes_coalesced: Num bytes coalesced in the current session
  */
 struct dp_swlm_params {
@@ -1224,7 +1224,7 @@ struct dp_swlm_params {
 		uint32_t bytes_flush_thresh;
 		uint32_t time_flush_thresh;
 		uint32_t tx_thresh_multiplier;
-		uint64_t coalesc_end_time;
+		uint64_t coalesce_end_time;
 		uint32_t bytes_coalesced;
 	} tcl;
 };
