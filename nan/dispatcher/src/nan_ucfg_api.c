@@ -1130,11 +1130,29 @@ ucfg_nan_is_vdev_creation_supp_by_host(struct nan_psoc_priv_obj *nan_obj)
 	return nan_obj->cfg_param.nan_separate_iface_support;
 }
 
+static void ucfg_nan_cleanup_all_ndps(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+	uint32_t ndi_count, vdev_id, i;
+
+	ndi_count = policy_mgr_mode_specific_connection_count(psoc, PM_NDI_MODE,
+							      NULL);
+	for (i = 0; i < ndi_count; i++) {
+		vdev_id = policy_mgr_mode_specific_vdev_id(psoc, PM_NDI_MODE);
+		status = ucfg_nan_disable_ndi(psoc, vdev_id);
+		if (status == QDF_STATUS_E_TIMEOUT)
+			policy_mgr_decr_session_set_pcl(psoc, QDF_NDI_MODE,
+							vdev_id);
+	}
+}
+
 QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
 				      uint8_t *data, uint32_t data_len)
 {
 	struct nan_disable_req *nan_req;
 	QDF_STATUS status;
+
+	ucfg_nan_cleanup_all_ndps(psoc);
 
 	nan_req = qdf_mem_malloc(sizeof(*nan_req) + data_len);
 	if (!nan_req)
