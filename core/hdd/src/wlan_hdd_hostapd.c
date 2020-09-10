@@ -94,6 +94,10 @@
 #include "wlan_hdd_sta_info.h"
 #include "ftm_time_sync_ucfg_api.h"
 #include <wlan_hdd_dcs.h>
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+#include "wlan_if_mgr_ucfg_api.h"
+#include "wlan_if_mgr_public_struct.h"
+#endif
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -5115,7 +5119,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	int32_t i;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
-	struct sme_config_params *sme_config;
+	struct sme_config_params *sme_config = NULL;
 	bool mfp_capable = false;
 	bool mfp_required = false;
 	uint16_t prev_rsn_length = 0;
@@ -5139,6 +5143,19 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,
 					    &go_force_11n_for_11ac);
 
+	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	status = ucfg_if_mgr_deliver_event(adapter->vdev,
+				      WLAN_IF_MGR_EV_AP_START_BSS,
+				      NULL);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("start bss failed!!");
+		return -EINVAL;
+	}
+#else
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->psoc)) {
 		status = policy_mgr_wait_for_connection_update(
 			hdd_ctx->psoc);
@@ -5147,7 +5164,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			return -EINVAL;
 		}
 	}
-
+	/* Disable Roaming on all adapters before starting bss */
+	wlan_hdd_disable_roaming(adapter, RSO_START_BSS);
+#endif
 	/*
 	 * For STA+SAP concurrency support from GUI, first STA connection gets
 	 * triggered and while it is in progress, SAP start also comes up.
@@ -5168,9 +5187,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_abort_ongoing_sta_connection(hdd_ctx);
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	/* Disable Roaming on all adapters before starting bss */
-	wlan_hdd_disable_roaming(adapter, RSO_START_BSS);
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
 	if (!sme_config) {
@@ -5803,6 +5819,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		policy_mgr_incr_active_session(hdd_ctx->psoc,
 					adapter->device_mode,
 					adapter->vdev_id);
+
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    true);
 	}
@@ -5822,7 +5839,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	goto free;
 
 error:
-
 	/* Revert the indoor to passive marking if START BSS fails */
 	if (indoor_chnl_marking && adapter->device_mode == QDF_SAP_MODE) {
 		hdd_update_indoor_channel(hdd_ctx, false);
@@ -5833,6 +5849,19 @@ error:
 	wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_ALL);
 
 free:
+	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	status = ucfg_if_mgr_deliver_event(adapter->vdev,
+				      WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE,
+				      NULL);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("start bss complete failed!!");
+		ret = -EINVAL;
+	}
+#else
 	/*
 	 * Due to audio share glitch with P2P GO due
 	 * to roam scan on concurrent interface, disable
@@ -5847,6 +5876,7 @@ free:
 		/* Enable Roaming after start bss in case of failure/success */
 		wlan_hdd_enable_roaming(adapter, RSO_START_BSS);
 	}
+#endif
 	qdf_mem_free(sme_config);
 	return ret;
 }
@@ -5996,7 +6026,19 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 						adapter->vdev_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
-
+		/*
+		 * Following code will be cleaned once the interface manager
+		 * module is enabled.
+		 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+		status = ucfg_if_mgr_deliver_event(adapter->vdev,
+				WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE,
+				NULL);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Stopping the BSS failed");
+			goto exit;
+		}
+#else
 		/*
 		 * Due to audio share glitch with P2P GO due
 		 * to roam scan on concurrent interface, disable
@@ -6009,7 +6051,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			hdd_debug("p2p go disconnected enable roam");
 			wlan_hdd_enable_roaming(adapter, RSO_START_BSS);
 		}
-
+#endif
 		if (adapter->session.ap.beacon) {
 			qdf_mem_free(adapter->session.ap.beacon);
 			adapter->session.ap.beacon = NULL;

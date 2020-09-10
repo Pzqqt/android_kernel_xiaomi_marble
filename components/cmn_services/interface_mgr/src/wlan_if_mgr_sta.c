@@ -24,8 +24,8 @@
 #include "nan_ucfg_api.h"
 #include "wlan_policy_mgr_api.h"
 
-QDF_STATUS wlan_process_connect_start(struct wlan_objmgr_vdev *vdev,
-				      struct if_mgr_event_data *event_data)
+QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
+				struct if_mgr_event_data *event_data)
 {
 	uint8_t sta_cnt, sap_cnt;
 	struct wlan_objmgr_psoc *psoc;
@@ -67,8 +67,8 @@ QDF_STATUS wlan_process_connect_start(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_process_connect_complete(struct wlan_objmgr_vdev *vdev,
-					 struct if_mgr_event_data *event_data)
+QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
+				   struct if_mgr_event_data *event_data)
 {
 	return QDF_STATUS_SUCCESS;
 }
