@@ -24330,7 +24330,7 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 
 	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].ht_mcs); i++) {
 		if (qdf_get_hweight8(mask->control[band].ht_mcs[i]) == 1) {
-			nss = i + 1;
+			nss = i;
 			rate_index = (ffs(mask->control[band].ht_mcs[i]) - 1);
 			bit_rate = hdd_assemble_rate_code(WMI_RATE_PREAMBLE_HT,
 							  nss, rate_index);
@@ -24340,7 +24340,7 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 
 	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
 		if (qdf_get_hweight16(mask->control[band].vht_mcs[i]) == 1) {
-			nss = i + 1;
+			nss = i;
 			rate_index = (ffs(mask->control[band].vht_mcs[i]) - 1);
 			bit_rate = hdd_assemble_rate_code(WMI_RATE_PREAMBLE_VHT,
 							  nss, rate_index);
