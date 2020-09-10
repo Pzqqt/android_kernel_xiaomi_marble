@@ -9871,9 +9871,15 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
 	}
 
-	hdd_display_periodic_stats(hdd_ctx, (total_pkts > 0) ? true : false);
-
-	hdd_periodic_sta_stats_display(hdd_ctx);
+	/* Roaming is a high priority job but gets processed in scheduler
+	 * thread, bypassing printing stats so that kworker exits quickly and
+	 * scheduler thread can utilize CPU.
+	 */
+	if (!hdd_is_roaming_in_progress(hdd_ctx)) {
+		hdd_display_periodic_stats(hdd_ctx,
+					   (total_pkts > 0) ? true : false);
+		hdd_periodic_sta_stats_display(hdd_ctx);
+	}
 }
 
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
