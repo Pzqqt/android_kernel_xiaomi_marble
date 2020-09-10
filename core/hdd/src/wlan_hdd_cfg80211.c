@@ -163,7 +163,7 @@
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
 
 #ifdef WLAN_FEATURE_INTERFACE_MGR
-#include "wlan_if_mgr_api.h"
+#include "wlan_if_mgr_ucfg_api.h"
 #include "wlan_if_mgr_public_struct.h"
 #endif
 

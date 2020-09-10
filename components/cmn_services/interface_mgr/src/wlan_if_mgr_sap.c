@@ -69,9 +69,10 @@ if_mgr_ap_start_bss_complete(struct wlan_objmgr_vdev *vdev,
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
+
 	/*
-	 * Due to audio share glitch with P2P GO due
-	 * to roam scan on concurrent interface, disable
+	 * Due to audio share glitch with P2P GO caused by
+	 * roam scan on concurrent interface, disable
 	 * roaming if "p2p_disable_roam" ini is enabled.
 	 * Donot re-enable roaming again on other STA interface
 	 * if p2p GO is active on any vdev.
@@ -107,9 +108,10 @@ if_mgr_ap_stop_bss_complete(struct wlan_objmgr_vdev *vdev,
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
+
 	/*
-	 * Due to audio share glitch with P2P GO due
-	 * to roam scan on concurrent interface, disable
+	 * Due to audio share glitch with P2P GO caused by
+	 * roam scan on concurrent interface, disable
 	 * roaming if "p2p_disable_roam" ini is enabled.
 	 * Re-enable roaming on other STA interface if p2p GO
 	 * is active on any vdev.
