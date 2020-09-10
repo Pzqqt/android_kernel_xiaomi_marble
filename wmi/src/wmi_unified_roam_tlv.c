@@ -1946,7 +1946,7 @@ static uint8_t *wmi_add_fils_tlv(wmi_unified_t wmi_handle,
 		     erp_info->realm_len);
 
 	buf_ptr += sizeof(*fils_tlv);
-	wmi_debug("RSO_CONFIG: ERP: usrname_len:%d next_erp_seq_num:%d rRk_len:%d rIk_len:%d realm_len:%d",
+	wmi_debug("RSO_CFG: ERP: usrname_len:%d next_erp_seq_num:%d rRk_len:%d rIk_len:%d realm_len:%d",
 		  erp_info->username_length, erp_info->next_erp_seq_num,
 		  erp_info->rRk_length, erp_info->rIk_length,
 		  erp_info->realm_len);
@@ -3282,6 +3282,9 @@ static QDF_STATUS send_roam_scan_offload_chan_list_cmd_tlv(
 		     (i < WMI_ROAM_MAX_CHANNELS)); i++)
 		roam_chan_list_array[i] = chan_list[i];
 
+	wmi_debug("RSO_CFG: vdev:%d num_chan:%d cache_type:%d",
+		  chan_list_fp->vdev_id, chan_list_fp->num_chan,
+		  rso_ch_info->chan_cache_type);
 	wmi_mtrace(WMI_ROAM_CHAN_LIST, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_CHAN_LIST);
@@ -3417,7 +3420,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_change_cmd_tlv(
 	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
 
-	wmi_nofl_debug("RSO_PARAM: rssi_change_thresh:%d bcn_rssi_weight:%d hirssi_delay_btw_scans:%d",
+	wmi_nofl_debug("RSO_CFG: rssi_change_thresh:%d bcn_rssi_weight:%d hirssi_delay_btw_scans:%d",
 		       rssi_change_fp->roam_scan_rssi_change_thresh,
 		       rssi_change_fp->bcn_rssi_weight,
 		       rssi_change_fp->hirssi_delay_btw_scans);
