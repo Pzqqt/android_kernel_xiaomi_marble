@@ -202,6 +202,9 @@
 #define WLAN_SOC_F_DYNAMIC_HW_MODE     0x02000000
 	/* Broadcast TWT support enable */
 #define WLAN_SOC_F_BCAST_TWT           0x04000000
+       /* WDS Extended support */
+#define WLAN_SOC_F_WDS_EXTENDED        0x08000000
+
 
 /* PSOC op flags */
 
