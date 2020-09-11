@@ -54,12 +54,24 @@ enum wlan_if_mgr_evt {
 };
 
 /**
+ * struct validate_bss_data - interface manager validate candidate data
+ * @peer_addr: MAC address of the BSS
+ * @chan_freq: Frequency of the potential BSS connection
+ */
+struct validate_bss_data {
+	struct qdf_mac_addr peer_addr;
+	uint32_t chan_freq;
+};
+
+/**
  * struct if_mgr_event_data - interface manager event data
  * @status: qdf status used to indicate if connect,disconnect,
  *	    start bss,stop bss event is success/failure.
+ * @validate_bss_info: struct to hold the validate candidate information
  */
 struct if_mgr_event_data {
 	QDF_STATUS status;
+	struct validate_bss_data validate_bss_info;
 };
 
 #endif

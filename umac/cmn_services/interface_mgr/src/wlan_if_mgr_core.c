@@ -22,6 +22,7 @@
 #include "wlan_if_mgr_sta.h"
 #include "wlan_if_mgr_ap.h"
 #include "wlan_if_mgr_main.h"
+#include "wlan_if_mgr_roam.h"
 
 QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
@@ -58,6 +59,9 @@ QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 		break;
 	case WLAN_IF_MGR_EV_DISCONNECT_COMPLETE:
 		status = if_mgr_disconnect_complete(vdev, event_data);
+		break;
+	case WLAN_IF_MGR_EV_VALIDATE_CANDIDATE:
+		status = if_mgr_validate_candidate(vdev, event_data);
 		break;
 	default:
 		status = QDF_STATUS_E_INVAL;
