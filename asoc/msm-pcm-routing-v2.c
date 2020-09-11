@@ -1136,7 +1136,7 @@ static bool is_mm_lsm_fe_id(int fe_id)
 {
 	bool rc = true;
 
-	if (fe_id > MSM_FRONTEND_DAI_MM_MAX_ID &&
+	if (fe_id >= MSM_FRONTEND_DAI_MM_MAX_ID &&
 		((fe_id < MSM_FRONTEND_DAI_LSM1) ||
 		 (fe_id > MSM_FRONTEND_DAI_LSM8))) {
 		rc = false;
@@ -1545,7 +1545,7 @@ void msm_pcm_routing_reg_psthr_stream(int fedai_id, int dspst_id,
 	int i, session_type, path_type, port_type;
 	u32 mode = 0;
 
-	if (fedai_id > MSM_FRONTEND_DAI_MM_MAX_ID) {
+	if (fedai_id >= MSM_FRONTEND_DAI_MM_MAX_ID) {
 		/* bad ID assigned in machine driver */
 		pr_err("%s: bad MM ID\n", __func__);
 		return;
@@ -2033,7 +2033,7 @@ int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 	int ret = 0;
 	uint32_t copp_token = 0;
 
-	if (fedai_id > MSM_FRONTEND_DAI_MM_MAX_ID) {
+	if (fedai_id >= MSM_FRONTEND_DAI_MM_MAX_ID) {
 		/* bad ID assigned in machine driver */
 		pr_err("%s: bad MM ID %d\n", __func__, fedai_id);
 		return -EINVAL;
@@ -32521,7 +32521,7 @@ int msm_routing_check_backend_enabled(int fedai_id)
 {
 	int i;
 
-	if (fedai_id > MSM_FRONTEND_DAI_MM_MAX_ID) {
+	if (fedai_id >= MSM_FRONTEND_DAI_MM_MAX_ID) {
 		/* bad ID assigned in machine driver */
 		pr_err("%s: bad MM ID\n", __func__);
 		return 0;
