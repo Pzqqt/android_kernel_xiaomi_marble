@@ -13724,10 +13724,14 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	 * observed otherwise.
 	 */
 
-	status = ipa_register_is_ipa_ready(hdd_ctx->pdev);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("ipa_register_is_ipa_ready failed");
-		goto out;
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		ipa_disable_register_cb();
+	} else {
+		status = ipa_register_is_ipa_ready(hdd_ctx->pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("ipa_register_is_ipa_ready failed");
+			goto out;
+		}
 	}
 
 	/*
@@ -13997,7 +14001,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		}
 		/* pdev close and destroy use tx rx ops so call this here */
 		wlan_global_lmac_if_close(hdd_ctx->psoc);
-		ucfg_ipa_component_config_free();
 	}
 
 	/*
@@ -14026,6 +14029,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		epping_close();
 	}
 
+	ucfg_ipa_component_config_free();
 	hdd_hif_close(hdd_ctx, hif_ctx);
 
 	ol_cds_free();
