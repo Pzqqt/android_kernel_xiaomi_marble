@@ -112,6 +112,8 @@ wlan_if_mgr_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 						       ifmgr_obj);
 	if (QDF_IS_STATUS_ERROR(status))
 		ifmgr_err("Failed to detach psoc interface mgr component");
+	else
+		ifmgr_debug("interface mgr object detach to psoc successful");
 
 	qdf_mem_free(ifmgr_obj);
 

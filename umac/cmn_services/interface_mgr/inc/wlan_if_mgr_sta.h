@@ -61,7 +61,7 @@ QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
-				   void *event_data);
+				   struct if_mgr_event_data *event_data);
 
 /**
  * if_mgr_disconnect_complete() - Disconnect complete event handler
@@ -76,6 +76,6 @@ QDF_STATUS if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev,
-				      void *event_data);
+				      struct if_mgr_event_data *event_data);
 
 #endif
