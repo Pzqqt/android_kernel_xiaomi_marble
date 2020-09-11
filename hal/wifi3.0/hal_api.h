@@ -533,6 +533,51 @@ uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 }
 #endif
 
+/* Max times allowed for register writing retry */
+#define HAL_REG_WRITE_RETRY_MAX		5
+/* Delay milliseconds for each time retry */
+#define HAL_REG_WRITE_RETRY_DELAY	1
+
+/**
+ * hal_write32_mb_confirm_retry() - write register with confirming and
+				    do retry/recovery if writing failed
+ * @hal_soc: hal soc handle
+ * @offset: offset address from the BAR
+ * @value: value to write
+ * @recovery: is recovery needed or not.
+ *
+ * Write the register value with confirming and read it back, if
+ * read back value is not as expected, do retry for writing, if
+ * retry hit max times allowed but still fail, check if recovery
+ * needed.
+ *
+ * Return: None
+ */
+static inline void hal_write32_mb_confirm_retry(struct hal_soc *hal_soc,
+						uint32_t offset,
+						uint32_t value,
+						bool recovery)
+{
+	uint8_t retry_cnt = 0;
+	uint32_t read_value;
+
+	while (retry_cnt <= HAL_REG_WRITE_RETRY_MAX) {
+		hal_write32_mb_confirm(hal_soc, offset, value);
+		read_value = hal_read32_mb(hal_soc, offset);
+		if (qdf_likely(read_value == value))
+			break;
+
+		/* write failed, do retry */
+		hal_warn("Retry reg offset 0x%x, value 0x%x, read value 0x%x",
+			 offset, value, read_value);
+		qdf_mdelay(HAL_REG_WRITE_RETRY_DELAY);
+		retry_cnt++;
+	}
+
+	if (retry_cnt > HAL_REG_WRITE_RETRY_MAX && recovery)
+		qdf_trigger_self_recovery(NULL, QDF_HAL_REG_WRITE_FAILURE);
+}
+
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
 /**
  * hal_dump_reg_write_srng_stats() - dump SRNG reg write stats
