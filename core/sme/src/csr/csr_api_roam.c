@@ -902,9 +902,9 @@ scan_list_sort_error:
 #ifdef QCA_WIFI_NAPIER_EMULATION
 #define SCAN_CHAN_LIST_5G_LEN 6
 #define SCAN_CHAN_LIST_2G_LEN 3
-static const uint8_t
+static const uint16_t
 csr_scan_chan_list_5g[SCAN_CHAN_LIST_5G_LEN] = { 5180, 5220, 5260, 5280, 5700, 5745 };
-static const uint8_t
+static const uint16_t
 csr_scan_chan_list_2g[SCAN_CHAN_LIST_2G_LEN] = { 2412, 2437, 2462 };
 static QDF_STATUS csr_emu_chan_req(uint32_t channel)
 {
