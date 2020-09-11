@@ -1039,12 +1039,19 @@ static int dsi_ctrl_enable_supplies(struct dsi_ctrl *dsi_ctrl, bool enable)
 	int rc = 0;
 
 	if (enable) {
+		rc = pm_runtime_get_sync(dsi_ctrl->drm_dev->dev);
+		if (rc < 0) {
+			DSI_CTRL_ERR(dsi_ctrl,
+				"Power resource enable failed, rc=%d\n", rc);
+			goto error;
+		}
+
 		if (!dsi_ctrl->current_state.host_initialized) {
 			rc = dsi_pwr_enable_regulator(
 				&dsi_ctrl->pwr_info.host_pwr, true);
 			if (rc) {
 				DSI_CTRL_ERR(dsi_ctrl, "failed to enable host power regs\n");
-				goto error;
+				goto error_get_sync;
 			}
 		}
 
@@ -1057,8 +1064,9 @@ static int dsi_ctrl_enable_supplies(struct dsi_ctrl *dsi_ctrl, bool enable)
 						&dsi_ctrl->pwr_info.host_pwr,
 						false
 						);
-			goto error;
+			goto error_get_sync;
 		}
+		return rc;
 	} else {
 		rc = dsi_pwr_enable_regulator(&dsi_ctrl->pwr_info.digital,
 					      false);
@@ -1076,7 +1084,11 @@ static int dsi_ctrl_enable_supplies(struct dsi_ctrl *dsi_ctrl, bool enable)
 				goto error;
 			}
 		}
+		pm_runtime_put_sync(dsi_ctrl->drm_dev->dev);
+		return rc;
 	}
+error_get_sync:
+	pm_runtime_put_sync(dsi_ctrl->drm_dev->dev);
 error:
 	return rc;
 }
