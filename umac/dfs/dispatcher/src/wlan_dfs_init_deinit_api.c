@@ -321,7 +321,9 @@ QDF_STATUS dfs_init(void)
 	}
 
 	status = qdf_print_set_category_verbose(qdf_get_pidx(),
-			QDF_MODULE_ID_DFS, QDF_TRACE_LEVEL_INFO, true);
+						QDF_MODULE_ID_DFS,
+						QDF_TRACE_LEVEL_DEBUG,
+						true);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,

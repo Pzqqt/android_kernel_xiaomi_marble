@@ -161,34 +161,34 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 {
 	int i;
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "#Phyerr=%d, #false detect=%d, #queued=%d",
-		 dfs->dfs_phyerr_count, dfs->dfs_phyerr_reject_count,
-		dfs->dfs_phyerr_queued_count);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "#Phyerr=%d, #false detect=%d, #queued=%d",
+		  dfs->dfs_phyerr_count, dfs->dfs_phyerr_reject_count,
+		  dfs->dfs_phyerr_queued_count);
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_phyerr_freq_min=%d, dfs_phyerr_freq_max=%d",
-		 dfs->dfs_phyerr_freq_min, dfs->dfs_phyerr_freq_max);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_phyerr_freq_min=%d, dfs_phyerr_freq_max=%d",
+		  dfs->dfs_phyerr_freq_min, dfs->dfs_phyerr_freq_max);
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-		"Total radar events detected=%d, entries in the radar queue follows:",
-		 dfs->dfs_event_log_count);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		  "Total radar events detected=%d, entries in the radar queue follows:",
+		  dfs->dfs_event_log_count);
 
 	for (i = 0; (i < DFS_EVENT_LOG_SIZE) && (i < dfs->dfs_event_log_count);
 			i++) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_diff=%d, delta_peak=%d, psidx_diff=%d",
-			dfs->radar_log[i].ts, dfs->radar_log[i].diff_ts,
-			dfs->radar_log[i].rssi, dfs->radar_log[i].dur,
-			dfs->radar_log[i].is_chirp, dfs->radar_log[i].seg_id,
-			dfs->radar_log[i].sidx,
-			(int)dfs->radar_log[i].freq_offset_khz/1000,
-			(int)abs(dfs->radar_log[i].freq_offset_khz)%1000,
-			dfs->radar_log[i].peak_mag,
-			dfs->radar_log[i].total_gain,
-			dfs->radar_log[i].mb_gain,
-			dfs->radar_log[i].relpwr_db,
-			dfs->radar_log[i].delta_diff,
-			dfs->radar_log[i].delta_peak,
-			dfs->radar_log[i].psidx_diff);
+			  "ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_diff=%d, delta_peak=%d, psidx_diff=%d",
+			  dfs->radar_log[i].ts, dfs->radar_log[i].diff_ts,
+			  dfs->radar_log[i].rssi, dfs->radar_log[i].dur,
+			  dfs->radar_log[i].is_chirp, dfs->radar_log[i].seg_id,
+			  dfs->radar_log[i].sidx,
+			  (int)dfs->radar_log[i].freq_offset_khz / 1000,
+			  (int)abs(dfs->radar_log[i].freq_offset_khz) % 1000,
+			  dfs->radar_log[i].peak_mag,
+			  dfs->radar_log[i].total_gain,
+			  dfs->radar_log[i].mb_gain,
+			  dfs->radar_log[i].relpwr_db,
+			  dfs->radar_log[i].delta_diff,
+			  dfs->radar_log[i].delta_peak,
+			  dfs->radar_log[i].psidx_diff);
 	}
 	dfs->dfs_event_log_count = 0;
 	dfs->dfs_phyerr_count = 0;
@@ -523,10 +523,10 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 	}
 
 	if (*found) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"Found on channel minDur = %d, filterId = %d",
-				ft->ft_mindur,
-				rf ?  rf->rf_pulseid : -1);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Found on channel minDur = %d, filterId = %d",
+			  ft->ft_mindur,
+			  rf ?  rf->rf_pulseid : -1);
 	}
 
 	return;
@@ -566,11 +566,11 @@ static void dfs_cal_average_radar_parameters(struct wlan_dfs *dfs)
 		dfs->dfs_average_duration = total_duration / count;
 		dfs->dfs_average_sidx = total_sidx / count;
 
-		dfs_info(dfs, WLAN_DEBUG_DFS2,
-			 "Avg.PRI =%u, Avg.duration =%u Avg.sidx =%u",
-			 dfs->dfs_average_pri,
-			 dfs->dfs_average_duration,
-			 dfs->dfs_average_sidx);
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+			  "Avg.PRI =%u, Avg.duration =%u Avg.sidx =%u",
+			  dfs->dfs_average_pri,
+			  dfs->dfs_average_duration,
+			  dfs->dfs_average_sidx);
 	}
 }
 #else

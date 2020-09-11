@@ -411,7 +411,7 @@ static void dfs_dump_phyerr_contents(const char *d, int len)
 
 		n += snprintf(buf + n, bufsize - n, "%02x ", d[i] & 0xff);
 		if (i % 16 == 15) {
-			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "%s", buf);
+			dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS, "%s", buf);
 			n = 0;
 			buf[0] = '\0';
 		}
@@ -419,7 +419,7 @@ static void dfs_dump_phyerr_contents(const char *d, int len)
 
 	/* Print the final line if we didn't print it above. */
 	if (n != 0)
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "%s", buf);
+		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS, "%s", buf);
 }
 
 /**

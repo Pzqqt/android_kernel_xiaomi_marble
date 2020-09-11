@@ -68,8 +68,8 @@ static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 	scheduler_post_message(QDF_MODULE_ID_DFS,
 			       QDF_MODULE_ID_SME,
 			       QDF_MODULE_ID_SME, &sme_msg);
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_RADAR_FOUND pdev%d posted",
-		    vdev_id);
+	dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_RADAR_FOUND pdev%d posted",
+		  vdev_id);
 }
 
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,

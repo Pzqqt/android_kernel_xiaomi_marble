@@ -454,9 +454,9 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_CN_DOMAIN:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"FCC domain -- Country China(156) override FCC radar pattern"
-				);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "FCC domain -- Country China(156) override FCC radar pattern"
+			  );
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		/*
 		 * China uses a radar pattern that is similar to ETSI but it
@@ -470,7 +470,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_ETSI_DOMAIN:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
 		if (dfs_is_en302_502_applicable(dfs)) {
@@ -488,8 +488,8 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_KR_DOMAIN:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"ETSI domain -- Korea(412)");
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "ETSI domain -- Korea(412)");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
 		/*
@@ -507,7 +507,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_MKKN_DOMAIN:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKKN domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKKN domain");
 		rinfo.dfsdomain = DFS_MKKN_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
@@ -515,7 +515,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT_MKKN;
 		break;
 	case DFS_MKK4_DOMAIN:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKK4 domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKK4 domain");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
@@ -523,7 +523,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	default:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "UNINIT domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "UNINIT domain");
 		dfs_handle_radar_tab_init_failure(&rinfo);
 		break;
 	}
@@ -592,7 +592,7 @@ static os_timer_func(dfs_no_res_from_fw_task)
 		return;
 	}
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "Host wait timer expired");
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "Host wait timer expired");
 
 	dfs->dfs_is_host_wait_running = 0;
 	dfs->dfs_no_res_from_fw = 1;
@@ -620,10 +620,10 @@ QDF_STATUS dfs_set_override_status_timeout(struct wlan_dfs *dfs,
 
 	dfs->dfs_status_timeout_override = status_timeout;
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-		 "Host wait status timeout is now %s : %d",
-		(status_timeout == -1) ? "default" : "overridden",
-		status_timeout);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		  "Host wait status timeout is now %s : %d",
+		  (status_timeout == -1) ? "default" : "overridden",
+		  status_timeout);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -702,9 +702,9 @@ static void dfs_action_on_spoof_success(struct wlan_dfs *dfs)
 	dfs->dfs_spoof_test_done = 1;
 	if (dfs->dfs_radar_found_chan.dfs_ch_freq ==
 			dfs->dfs_curchan->dfs_ch_freq) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "cac timer started for channel %d",
-			 dfs->dfs_curchan->dfs_ch_ieee);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "cac timer started for channel %d",
+			  dfs->dfs_curchan->dfs_ch_ieee);
 		dfs_start_cac_timer(dfs);
 	} else {
 		dfs_remove_spoof_channel_from_nol(dfs);
@@ -719,8 +719,8 @@ void dfs_action_on_fw_radar_status_check(struct wlan_dfs *dfs,
 	int error_flag = 0;
 
 	dfs_host_wait_timer_reset(dfs);
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "Host DFS status = %d",
-		 *status);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "Host DFS status = %d",
+		  *status);
 
 	dfs_pdev = dfs->dfs_pdev_obj;
 	if (!dfs_pdev) {
@@ -754,26 +754,26 @@ void dfs_action_on_fw_radar_status_check(struct wlan_dfs *dfs,
 				 * dfs_action would have been done at timer
 				 * expiry itself.
 				 */
-				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					 "DFS Action already taken");
+				dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					  "DFS Action already taken");
 			}
 		} else {
 			error_flag = 1;
 		}
 		break;
 	default:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "Status event mismatch:%d, Ignoring it",
-			 *status);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Status event mismatch:%d, Ignoring it",
+			  *status);
 	}
 
 	dfs->dfs_average_params_sent = 0;
 	qdf_mem_zero(&dfs->dfs_radar_found_chan, sizeof(struct dfs_channel));
 
 	if (error_flag == 1) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "Received imroper response %d. Discarding it",
-			 *status);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Received imroper response %d. Discarding it",
+			  *status);
 	}
 }
 
