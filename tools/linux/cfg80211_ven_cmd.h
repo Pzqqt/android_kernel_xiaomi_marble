@@ -783,6 +783,9 @@ enum {
 	IEEE80211_PARAM_HE_UL_MU_DATA_DIS_RX_SUPP  = 718,
 	IEEE80211_PARAM_HE_FULL_BW_UL_MUMIMO       = 719,
 	IEEE80211_PARAM_HE_DCM_MAX_CONSTELLATION_RX = 720,
+#if WLAN_OBJMGR_REF_ID_TRACE
+	IEEE80211_PARAM_VDEV_REF_LEAK_TEST          = 721,
+#endif
 };
 
 enum {
@@ -2243,6 +2246,9 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_he_full_bw_ulmumimo",     IEEE80211_PARAM_HE_FULL_BW_UL_MUMIMO, GET_PARAM, 0},
 	{"he_dcm_max_const_rx",         IEEE80211_PARAM_HE_DCM_MAX_CONSTELLATION_RX, SET_PARAM, 1},
 	{"g_he_dcm_max_const_rx",     IEEE80211_PARAM_HE_DCM_MAX_CONSTELLATION_RX, GET_PARAM, 0},
+#if WLAN_OBJMGR_REF_ID_TRACE
+	{"enable_ref_leak",         IEEE80211_PARAM_VDEV_REF_LEAK_TEST, SET_PARAM, 1},
+#endif
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
