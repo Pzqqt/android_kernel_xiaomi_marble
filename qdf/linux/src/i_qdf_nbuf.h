@@ -1886,7 +1886,15 @@ __qdf_nbuf_linearize(struct sk_buff *skb)
 static inline struct sk_buff *
 __qdf_nbuf_unshare(struct sk_buff *skb)
 {
-	return skb_unshare(skb, GFP_ATOMIC);
+	struct sk_buff *skb_new;
+
+	__qdf_frag_count_dec(__qdf_nbuf_get_nr_frags(skb));
+
+	skb_new = skb_unshare(skb, GFP_ATOMIC);
+	if (skb_new)
+		__qdf_frag_count_inc(__qdf_nbuf_get_nr_frags(skb_new));
+
+	return skb_new;
 }
 
 /**

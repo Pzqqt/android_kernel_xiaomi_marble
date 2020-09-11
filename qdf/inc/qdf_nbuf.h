@@ -1635,6 +1635,20 @@ qdf_nbuf_t
 qdf_nbuf_copy_expand_debug(qdf_nbuf_t buf, int headroom, int tailroom,
 			   const char *func, uint32_t line);
 
+/**
+ * qdf_nbuf_unshare() - make a copy of the shared nbuf
+ * @buf: Network buf instance
+ *
+ * Return: New nbuf which is a copy of the received nbuf if it is cloned,
+ *      else, return the original nbuf
+ */
+#define qdf_nbuf_unshare(d) \
+	qdf_nbuf_unshare_debug(d, __func__, __LINE__)
+
+qdf_nbuf_t
+qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name,
+		       uint32_t line_num);
+
 #else /* NBUF_MEMORY_DEBUG */
 
 static inline void qdf_net_buf_debug_init(void) {}
@@ -1766,6 +1780,10 @@ static inline qdf_nbuf_t qdf_nbuf_copy_expand(qdf_nbuf_t buf, int headroom,
 	return __qdf_nbuf_copy_expand(buf, headroom, tailroom);
 }
 
+static inline qdf_nbuf_t qdf_nbuf_unshare(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_unshare(buf);
+}
 #endif /* NBUF_MEMORY_DEBUG */
 
 /**
@@ -3448,36 +3466,6 @@ qdf_nbuf_linearize(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_linearize(buf);
 }
-
-#ifdef NBUF_MEMORY_DEBUG
-#define qdf_nbuf_unshare(d) \
-	qdf_nbuf_unshare_debug(d, __func__, __LINE__)
-
-static inline qdf_nbuf_t
-qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name, uint32_t line_num)
-{
-	qdf_nbuf_t unshared_buf;
-
-	unshared_buf = __qdf_nbuf_unshare(buf);
-
-	if (qdf_likely(buf != unshared_buf)) {
-		qdf_net_buf_debug_delete_node(buf);
-
-		if (unshared_buf)
-			qdf_net_buf_debug_add_node(unshared_buf, 0,
-						   func_name, line_num);
-	}
-
-	return unshared_buf;
-}
-
-#else
-static inline qdf_nbuf_t
-qdf_nbuf_unshare(qdf_nbuf_t buf)
-{
-	return __qdf_nbuf_unshare(buf);
-}
-#endif
 
 static inline bool
 qdf_nbuf_is_cloned(qdf_nbuf_t buf)

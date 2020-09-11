@@ -2911,6 +2911,58 @@ qdf_nbuf_copy_expand_debug(qdf_nbuf_t buf, int headroom, int tailroom,
 
 qdf_export_symbol(qdf_nbuf_copy_expand_debug);
 
+qdf_nbuf_t
+qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name,
+		       uint32_t line_num)
+{
+	qdf_nbuf_t unshared_buf;
+	qdf_frag_t p_frag;
+	uint32_t num_nr_frags;
+	uint32_t idx = 0;
+
+	if (is_initial_mem_debug_disabled)
+		return __qdf_nbuf_unshare(buf);
+
+	/* Take care to delete the debug entries for frags */
+	num_nr_frags = qdf_nbuf_get_nr_frags(buf);
+
+	while (idx < num_nr_frags) {
+		p_frag = qdf_nbuf_get_frag_addr(buf, idx);
+		if (qdf_likely(p_frag))
+			qdf_frag_debug_refcount_dec(p_frag, func_name,
+						    line_num);
+		idx++;
+	}
+
+	unshared_buf = __qdf_nbuf_unshare(buf);
+
+	if (qdf_likely(buf != unshared_buf)) {
+		qdf_net_buf_debug_delete_node(buf);
+
+		if (unshared_buf)
+			qdf_net_buf_debug_add_node(unshared_buf, 0,
+						   func_name, line_num);
+	}
+
+	if (unshared_buf) {
+		/* Take care to add the debug entries for frags */
+		num_nr_frags = qdf_nbuf_get_nr_frags(unshared_buf);
+
+		idx = 0;
+		while (idx < num_nr_frags) {
+			p_frag = qdf_nbuf_get_frag_addr(unshared_buf, idx);
+			if (qdf_likely(p_frag))
+				qdf_frag_debug_refcount_inc(p_frag, func_name,
+							    line_num);
+			idx++;
+		}
+	}
+
+	return unshared_buf;
+}
+
+qdf_export_symbol(qdf_nbuf_unshare_debug);
+
 #endif /* NBUF_MEMORY_DEBUG */
 
 #if defined(FEATURE_TSO)
