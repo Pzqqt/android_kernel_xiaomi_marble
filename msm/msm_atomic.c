@@ -658,7 +658,7 @@ static void msm_atomic_commit_dispatch(struct drm_device *dev,
 	struct msm_drm_private *priv = dev->dev_private;
 	struct drm_crtc *crtc = NULL;
 	struct drm_crtc_state *crtc_state = NULL;
-	int ret = -EINVAL, i = 0, j = 0;
+	int ret = -ECANCELED, i = 0, j = 0;
 	bool nonblock;
 
 	/* cache since work will kfree commit in non-blocking case */
@@ -679,6 +679,7 @@ static void msm_atomic_commit_dispatch(struct drm_device *dev,
 				} else {
 					DRM_ERROR(" Error for crtc_id: %d\n",
 						priv->disp_thread[j].crtc_id);
+					ret = -EINVAL;
 				}
 				break;
 			}
@@ -694,13 +695,17 @@ static void msm_atomic_commit_dispatch(struct drm_device *dev,
 	}
 
 	if (ret) {
+		if (ret == -EINVAL)
+			DRM_ERROR("failed to dispatch commit to any CRTC\n");
+		else
+			DRM_DEBUG_DRIVER_RATELIMITED("empty crtc state\n");
+
 		/**
 		 * this is not expected to happen, but at this point the state
 		 * has been swapped, but we couldn't dispatch to a crtc thread.
 		 * fallback now to a synchronous complete_commit to try and
 		 * ensure that SW and HW state don't get out of sync.
 		 */
-		DRM_ERROR("failed to dispatch commit to any CRTC\n");
 		complete_commit(commit);
 	} else if (!nonblock) {
 		kthread_flush_work(&commit->commit_work);
