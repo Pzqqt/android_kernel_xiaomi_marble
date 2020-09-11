@@ -131,7 +131,8 @@ static int _rsc_hw_seq_memory_init_v3(struct sde_rsc_priv *rsc)
 						0x00209ce7, rsc->debug_mode);
 
 	/* branch address */
-	if (rsc->hw_drv_ver >= SDE_RSC_HW_MAJOR_MINOR_STEP(2,0,5))
+	if (rsc->hw_drv_ver >= SDE_RSC_HW_MAJOR_MINOR_STEP(2, 0, 5) ||
+		rsc->hw_drv_ver == SDE_RSC_HW_MAJOR_MINOR_STEP(1, 9, 0))
 		br_offset = 0xf0;
 
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_CFG_BR_ADDR_0_DRV0 + br_offset,

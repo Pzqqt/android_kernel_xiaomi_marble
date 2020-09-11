@@ -42,9 +42,11 @@
 #define SDE_HW_VER_600	SDE_HW_VER(6, 0, 0) /* kona */
 #define SDE_HW_VER_610	SDE_HW_VER(6, 1, 0) /* sm7250 */
 #define SDE_HW_VER_630	SDE_HW_VER(6, 3, 0) /* bengal */
-#define SDE_HW_VER_700	SDE_HW_VER(7, 0, 0) /* lahaina */
+#define SDE_HW_VER_640	SDE_HW_VER(6, 4, 0) /* lagoon */
+#define SDE_HW_VER_650	SDE_HW_VER(6, 5, 0) /* scuba */
 #define SDE_HW_VER_660	SDE_HW_VER(6, 6, 0) /* holi */
 #define SDE_HW_VER_670	SDE_HW_VER(6, 7, 0) /* shima */
+#define SDE_HW_VER_700	SDE_HW_VER(7, 0, 0) /* lahaina */
 
 /* Avoid using below IS_XXX macros outside catalog, use feature bit instead */
 #define IS_SDE_MAJOR_SAME(rev1, rev2)   \
@@ -64,9 +66,11 @@
 #define IS_KONA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_600)
 #define IS_SAIPAN_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_610)
 #define IS_BENGAL_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_630)
-#define IS_LAHAINA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_700)
+#define IS_LAGOON_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_640)
+#define IS_SCUBA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_650)
 #define IS_HOLI_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_660)
 #define IS_SHIMA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_670)
+#define IS_LAHAINA_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_700)
 
 #define SDE_HW_BLK_NAME_LEN	16
 
