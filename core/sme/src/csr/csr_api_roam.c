@@ -75,6 +75,11 @@
 #include "wlan_psoc_mlme_api.h"
 #include "wlan_cm_roam_api.h"
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+#include "wlan_if_mgr_public_struct.h"
+#include "wlan_if_mgr_ucfg_api.h"
+#endif
+
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -5367,14 +5372,20 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		enum csr_join_state *roam_state,
 		struct scan_result_list *bss_list)
 {
-	uint32_t conc_freq = 0, chan_freq, temp_vdev_id;
+	uint32_t conc_freq = 0, chan_freq;
 	bool status = false;
 	struct tag_csrscan_result *scan_result = NULL;
 	tCsrScanResultInfo *result = NULL;
 	enum QDF_OPMODE op_mode;
 	struct wlan_objmgr_vdev *vdev;
-	enum policy_mgr_con_mode mode;
 	QDF_STATUS qdf_status;
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	struct if_mgr_event_data event_data;
+	struct validate_bss_data candidate_info;
+#else
+	uint32_t temp_vdev_id;
+	enum policy_mgr_con_mode mode;
+#endif
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
 						    vdev_id,
@@ -5397,6 +5408,31 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		 * sessions exempted
 		 */
 		result = &scan_result->Result;
+		chan_freq = result->BssDescriptor.chan_freq;
+
+	/*
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+		qdf_mem_copy(candidate_info.peer_addr.bytes,
+			result->BssDescriptor.bssId,
+			sizeof(tSirMacAddr));
+		candidate_info.chan_freq = result->BssDescriptor.chan_freq;
+		event_data.validate_bss_info = candidate_info;
+		qdf_status = ucfg_if_mgr_deliver_event(vdev,
+						WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
+						&event_data);
+
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			*roam_state = eCsrStopRoamingDueToConcurrency;
+			status = true;
+			*roam_bss_entry = csr_ll_next(&bss_list->List,
+						*roam_bss_entry,
+						LL_ACCESS_LOCK);
+			continue;
+		}
+#else
 		/*
 		 * Ignore the BSS if any other vdev is already connected
 		 * to it.
@@ -5417,7 +5453,6 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 			continue;
 		}
 
-		chan_freq = result->BssDescriptor.chan_freq;
 		mode = policy_mgr_convert_device_mode_to_qdf_type(op_mode);
 		/* If concurrency is not allowed select next bss */
 		if (!policy_mgr_is_concurrency_allowed(mac_ctx->psoc,
@@ -5451,6 +5486,7 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 						     LL_ACCESS_LOCK);
 			continue;
 		}
+#endif
 		if (policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc)
 			&& !csr_is_valid_mc_concurrent_session(mac_ctx,
 					vdev_id, &result->BssDescriptor)) {
