@@ -32,13 +32,13 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	param_buf = (WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid cfr capture buffer");
+		wmi_err("Invalid cfr capture buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	peer_tx_event_ev = param_buf->fixed_param;
 	if (!peer_tx_event_ev) {
-		WMI_LOGE("peer cfr capture buffer is null");
+		wmi_err("peer cfr capture buffer is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -144,7 +144,7 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -245,7 +245,7 @@ static QDF_STATUS send_peer_cfr_capture_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PEER_CFR_CAPTURE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_PEER_CFR_CAPTURE_CMDID");
+		wmi_err("Failed to send WMI_PEER_CFR_CAPTURE_CMDID");
 		wmi_buf_free(buf);
 	}
 

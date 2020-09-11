@@ -35,12 +35,12 @@ static QDF_STATUS extract_dcs_interference_type_tlv(
 
 	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid dcs interference event buffer");
+		wmi_err("Invalid dcs interference event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!param_buf->fixed_param) {
-		WMI_LOGE("Invalid fixed param");
+		wmi_err("Invalid fixed param");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -71,13 +71,13 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(
 
 	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid dcs interference event buffer");
+		wmi_err("Invalid dcs interference event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	ev = param_buf->wlan_stat;
 	if (!ev) {
-		WMI_LOGE("Invalid wlan stat");
+		wmi_err("Invalid wlan stat");
 		return QDF_STATUS_E_INVAL;
 	}
 

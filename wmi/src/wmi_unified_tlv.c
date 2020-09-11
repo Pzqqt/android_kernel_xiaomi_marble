@@ -579,7 +579,7 @@ static uint32_t convert_target_pdev_id_to_host_pdev_id(wmi_unified_t wmi_handle,
 	} else if (pdev_id == WMI_PDEV_ID_SOC) {
 		return WMI_HOST_PDEV_ID_SOC;
 	} else {
-		WMI_LOGE("Invalid pdev_id");
+		wmi_err("Invalid pdev_id");
 	}
 
 	return WMI_HOST_PDEV_ID_INVALID;
@@ -791,7 +791,7 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_VDEV_CREATE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_VDEV_CREATE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_VDEV_CREATE_CMDID");
+		wmi_err("Failed to send WMI_VDEV_CREATE_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -827,7 +827,7 @@ static QDF_STATUS send_vdev_delete_cmd_tlv(wmi_unified_t wmi_handle,
 				   sizeof(wmi_vdev_delete_cmd_fixed_param),
 				   WMI_VDEV_DELETE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_VDEV_DELETE_CMDID");
+		wmi_err("Failed to send WMI_VDEV_DELETE_CMDID");
 		wmi_buf_free(buf);
 	}
 	WMI_LOGD("%s:vdev id = %d", __func__, if_id);
@@ -883,7 +883,7 @@ send_vdev_nss_chain_params_cmd_tlv(wmi_unified_t wmi_handle,
 			sizeof(wmi_vdev_chainmask_config_cmd_fixed_param),
 			WMI_VDEV_CHAINMASK_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_VDEV_CHAINMASK_CONFIG_CMDID");
+		wmi_err("Failed to send WMI_VDEV_CHAINMASK_CONFIG_CMDID");
 		wmi_buf_free(buf);
 	}
 	WMI_LOGD("%s: vdev_id %d", __func__, vdev_id);
@@ -1292,7 +1292,7 @@ static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 				   sizeof(wmi_peer_set_param_cmd_fixed_param),
 				   WMI_PEER_SET_PARAM_CMDID);
 	if (err) {
-		WMI_LOGE("Failed to send set_param cmd");
+		wmi_err("Failed to send set_param cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1516,7 +1516,7 @@ static QDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID)) {
-		WMI_LOGE("Set Green AP PS param Failed val %d", value);
+		wmi_err("Set Green AP PS param Failed val %d", value);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1601,7 +1601,7 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 					   WMI_PDEV_UTF_CMDID);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMI_LOGE("Failed to send WMI_PDEV_UTF_CMDID command");
+			wmi_err("Failed to send WMI_PDEV_UTF_CMDID command");
 			wmi_buf_free(buf);
 			break;
 		}
@@ -1679,7 +1679,7 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PDEV_SET_PARAM_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_err("Failed to send set param command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 	return ret;
@@ -1726,8 +1726,7 @@ static QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_PDEV_SET_HW_MODE_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_SET_HW_MODE_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_PDEV_SET_HW_MODE_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_PDEV_SET_HW_MODE_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1780,7 +1779,7 @@ static QDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 				 WMI_PDEV_SUSPEND_CMDID);
 	if (ret) {
 		wmi_buf_free(wmibuf);
-		WMI_LOGE("Failed to send WMI_PDEV_SUSPEND_CMDID command");
+		wmi_err("Failed to send WMI_PDEV_SUSPEND_CMDID command");
 	}
 
 	return ret;
@@ -1815,7 +1814,7 @@ static QDF_STATUS send_resume_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, sizeof(*cmd),
 				   WMI_PDEV_RESUME_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_PDEV_RESUME_CMDID command");
+		wmi_err("Failed to send WMI_PDEV_RESUME_CMDID command");
 		wmi_buf_free(wmibuf);
 	}
 
@@ -1903,7 +1902,7 @@ static QDF_STATUS send_set_ap_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 	err = wmi_unified_cmd_send(wmi_handle, buf,
 				   sizeof(*cmd), WMI_AP_PS_PEER_PARAM_CMDID);
 	if (err) {
-		WMI_LOGE("Failed to send set_ap_ps_param cmd");
+		wmi_err("Failed to send set_ap_ps_param cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1942,7 +1941,7 @@ static QDF_STATUS send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_STA_POWERSAVE_PARAM_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_STA_POWERSAVE_PARAM_CMDID)) {
-		WMI_LOGE("Set Sta Ps param Failed vdevId %d Param %d val %d",
+		wmi_err("Set Sta Ps param Failed vdevId %d Param %d val %d",
 			 param->vdev_id, param->param_id, param->value);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -1982,8 +1981,7 @@ static QDF_STATUS send_crash_inject_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_FORCE_FW_HANG_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send set param command, ret = %d",
-			 __func__, ret);
+		wmi_err("Failed to send set param command, ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -2109,7 +2107,7 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_SET_PARAM_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_err("Failed to send set param command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -2169,7 +2167,7 @@ static QDF_STATUS send_peer_based_pktlog_cmd(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PDEV_PKTLOG_FILTER_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send peer based pktlog command to FW =%d"
+		wmi_err("Failed to send peer based pktlog command to FW =%d"
 			 , ret);
 		wmi_buf_free(buf);
 	}
@@ -2213,7 +2211,7 @@ static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_ENABLE_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send pktlog enable cmd to FW =%d", ret);
+		wmi_err("Failed to send pktlog enable cmd to FW =%d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -2249,7 +2247,7 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_DISABLE_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send pktlog disable cmd to FW =%d", ret);
+		wmi_err("Failed to send pktlog disable cmd to FW =%d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -2303,7 +2301,7 @@ static void send_time_stamp_sync_cmd_tlv(wmi_unified_t wmi_handle)
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_DBGLOG_TIME_STAMP_SYNC_CMDID);
 	if (status) {
-		WMI_LOGE("Failed to send WMI_DBGLOG_TIME_STAMP_SYNC_CMDID command");
+		wmi_err("Failed to send WMI_DBGLOG_TIME_STAMP_SYNC_CMDID command");
 		wmi_buf_free(buf);
 	}
 
@@ -2349,7 +2347,7 @@ static QDF_STATUS send_fd_tmpl_cmd_tlv(wmi_unified_t wmi_handle,
 				wmi_buf, wmi_buf_len, WMI_FD_TMPL_CMDID);
 
 	if (ret) {
-		WMI_LOGE("%s: Failed to send fd tmpl: %d", __func__, ret);
+		wmi_err("Failed to send fd tmpl: %d", ret);
 		wmi_buf_free(wmi_buf);
 		return ret;
 	}
@@ -2416,7 +2414,7 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   wmi_buf, wmi_buf_len, WMI_BCN_TMPL_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send bcn tmpl: %d", __func__, ret);
+		wmi_err("Failed to send bcn tmpl: %d", ret);
 		wmi_buf_free(wmi_buf);
 	}
 
@@ -2987,7 +2985,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 			(params->chan_list.num_chan * sizeof(uint32_t));
 
 	if (params->num_ssids > WLAN_SCAN_MAX_NUM_SSID) {
-		WMI_LOGE("Invalid value for num_ssids %d", params->num_ssids);
+		wmi_err("Invalid value for num_ssids %d", params->num_ssids);
 		goto error;
 	}
 
@@ -3083,7 +3081,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				   len, WMI_START_SCAN_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to start scan: %d", __func__, ret);
+		wmi_err("Failed to start scan: %d", ret);
 		wmi_buf_free(wmi_buf);
 	}
 	return ret;
@@ -3137,7 +3135,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	} else if (param->req_type == WLAN_SCAN_CANCEL_HOST_VDEV_ALL) {
 		cmd->req_type = WMI_SCN_STOP_HOST_VAP_ALL;
 	} else {
-		WMI_LOGE("%s: Invalid Command : ", __func__);
+		wmi_err("Invalid Scan cancel req type: %d", param->req_type);
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -3146,7 +3144,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				   len, WMI_STOP_SCAN_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send stop scan: %d", __func__, ret);
+		wmi_err("Failed to send stop scan: %d", ret);
 		wmi_buf_free(wmi_buf);
 	}
 
@@ -3323,7 +3321,7 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 			buf, len, WMI_SCAN_CHAN_LIST_CMDID);
 
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
-			WMI_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
+			wmi_err("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
 			wmi_buf_free(buf);
 			goto end;
 		}
@@ -3396,8 +3394,8 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 		mgmt_tx_dl_frm_len;
 
 	if (param->frm_len > mgmt_tx_dl_frm_len) {
-		WMI_LOGE("%s:mgmt frame len %u exceeds %u",
-			 __func__, param->frm_len, mgmt_tx_dl_frm_len);
+		wmi_err("mgmt frame len %u exceeds %u",
+			 param->frm_len, mgmt_tx_dl_frm_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3438,8 +3436,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	if (param->tx_params_valid) {
 		if (populate_tx_send_params(bufp, param->tx_param) !=
 		    QDF_STATUS_SUCCESS) {
-			WMI_LOGE("%s: Populate TX send params failed",
-				 __func__);
+			wmi_err("Populate TX send params failed");
 			goto free_buf;
 		}
 		cmd_len += sizeof(wmi_tx_send_params);
@@ -3448,7 +3445,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_MGMT_TX_SEND_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
 				      WMI_MGMT_TX_SEND_CMDID)) {
-		WMI_LOGE("%s: Failed to send mgmt Tx", __func__);
+		wmi_err("Failed to send mgmt Tx");
 		goto free_buf;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -3506,7 +3503,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	status = qdf_nbuf_map_single(qdf_ctx, param->tx_frame,
 				     QDF_DMA_TO_DEVICE);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: wmi buf map failed", __func__);
+		wmi_err("wmi buf map failed");
 		goto free_buf;
 	}
 
@@ -3527,8 +3524,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	if (param->tx_params_valid) {
 		status = populate_tx_send_params(bufp, param->tx_param);
 		if (status != QDF_STATUS_SUCCESS) {
-			WMI_LOGE("%s: Populate TX send params failed",
-				 __func__);
+			wmi_err("Populate TX send params failed");
 			goto unmap_tx_frame;
 		}
 		cmd_len += sizeof(wmi_tx_send_params);
@@ -3537,7 +3533,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_MGMT_TX_SEND_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
 				      WMI_MGMT_TX_SEND_CMDID)) {
-		WMI_LOGE("%s: Failed to send mgmt Tx", __func__);
+		wmi_err("Failed to send mgmt Tx");
 		goto unmap_tx_frame;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -3612,8 +3608,7 @@ static QDF_STATUS send_offchan_data_tx_cmd_tlv(wmi_unified_t wmi_handle,
 	if (param->tx_params_valid) {
 		status = populate_tx_send_params(bufp, param->tx_param);
 		if (status != QDF_STATUS_SUCCESS) {
-			WMI_LOGE("%s: Populate TX send params failed",
-				 __func__);
+			wmi_err("Populate TX send params failed");
 			goto err1;
 		}
 		cmd_len += sizeof(wmi_tx_send_params);
@@ -3622,7 +3617,7 @@ static QDF_STATUS send_offchan_data_tx_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_OFFCHAN_DATA_TX_SEND_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
 				WMI_OFFCHAN_DATA_TX_SEND_CMDID)) {
-		WMI_LOGE("%s: Failed to offchan data Tx", __func__);
+		wmi_err("Failed to offchan data Tx");
 		goto err1;
 	}
 
@@ -3664,7 +3659,7 @@ static QDF_STATUS send_modem_power_state_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				     WMI_MODEM_POWER_STATE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send notify cmd ret = %d", ret);
+		wmi_err("Failed to send notify cmd ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -3706,7 +3701,7 @@ static QDF_STATUS send_set_sta_ps_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_STA_POWERSAVE_MODE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_STA_POWERSAVE_MODE_CMDID)) {
-		WMI_LOGE("Set Sta Mode Ps Failed vdevId %d val %d",
+		wmi_err("Set Sta Mode Ps Failed vdevId %d val %d",
 			 vdev_id, val);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -3796,7 +3791,7 @@ static QDF_STATUS send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->forced_mode = WMI_SMPS_FORCED_MODE_DYNAMIC;
 		break;
 	default:
-		WMI_LOGE("%s:INVALID Mimo PS CONFIG", __func__);
+		wmi_err("INVALID MIMO PS CONFIG: %d", value);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3807,7 +3802,7 @@ static QDF_STATUS send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_STA_SMPS_FORCE_MODE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set Mimo PS ret = %d", ret);
+		wmi_err("Failed to send set Mimo PS ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -3852,7 +3847,7 @@ static QDF_STATUS send_set_smps_params_cmd_tlv(wmi_unified_t wmi_handle, uint8_t
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_STA_SMPS_PARAM_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set Mimo PS ret = %d", ret);
+		wmi_err("Failed to send set Mimo PS ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -3873,7 +3868,7 @@ static QDF_STATUS send_get_temperature_cmd_tlv(wmi_unified_t wmi_handle)
 	uint8_t *buf_ptr;
 
 	if (!wmi_handle) {
-		WMI_LOGE(FL("WMI is closed, can not issue cmd"));
+		wmi_err("WMI is closed, can not issue cmd");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3892,7 +3887,7 @@ static QDF_STATUS send_get_temperature_cmd_tlv(wmi_unified_t wmi_handle)
 	wmi_mtrace(WMI_PDEV_GET_TEMPERATURE_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_PDEV_GET_TEMPERATURE_CMDID)) {
-		WMI_LOGE(FL("failed to send get temperature command"));
+		wmi_err("Failed to send get temperature command");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3974,7 +3969,7 @@ static QDF_STATUS send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
 				   WMI_STA_UAPSD_AUTO_TRIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set uapsd param ret = %d", ret);
+		wmi_err("Failed to send set uapsd param ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -4018,8 +4013,8 @@ static QDF_STATUS send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 		break;
 
 	default:
-		WMI_LOGE("invalid thermal_action code %d",
-			 thermal_info->thermal_action);
+		wmi_err("Invalid thermal_action code %d",
+			thermal_info->thermal_action);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4041,7 +4036,7 @@ static QDF_STATUS send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->enable = thermal_info->thermal_enable;
 	cmd->action = action;
 
-	WMI_LOGD("TM Sending thermal mgmt cmd: low temp %d, upper temp %d, enabled %d action %d",
+	wmi_debug("TM Sending thermal mgmt cmd: low temp %d, upper temp %d, enabled %d action %d",
 		 cmd->lower_thresh_degreeC, cmd->upper_thresh_degreeC,
 		 cmd->enable, cmd->action);
 
@@ -4050,7 +4045,7 @@ static QDF_STATUS send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 				      WMI_THERMAL_MGMT_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wmi_buf_free(buf);
-		WMI_LOGE("%s:Failed to send thermal mgmt command", __func__);
+		wmi_err("Failed to send thermal mgmt command");
 	}
 
 	return status;
@@ -4135,7 +4130,7 @@ static QDF_STATUS send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
 		 sizeof(*cmd), WMI_LRO_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wmi_buf_free(buf);
-		WMI_LOGE("%s:Failed to send WMI_LRO_CONFIG_CMDID", __func__);
+		wmi_err("Failed to send WMI_LRO_CONFIG_CMDID");
 	}
 
 	return status;
@@ -4190,7 +4185,7 @@ static QDF_STATUS send_peer_rate_report_cmd_tlv(wmi_unified_t wmi_handle,
 		}
 	}
 
-	WMI_LOGE("%s enable %d backoff_time %d period %d", __func__,
+	wmi_err("enable %d backoff_time %d period %d",
 		 cmd->enable_rate_report,
 		 cmd->report_backoff_time, cmd->report_timer_period);
 
@@ -4199,8 +4194,7 @@ static QDF_STATUS send_peer_rate_report_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_PEER_SET_RATE_REPORT_CONDITION_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wmi_buf_free(buf);
-		WMI_LOGE("%s:Failed to send peer_set_report_cond command",
-			 __func__);
+		wmi_err("Failed to send peer_set_report_cond command");
 	}
 	return status;
 }
@@ -4267,7 +4261,7 @@ static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handl
 
 fail:
 	wmi_buf_free(buf);
-	WMI_LOGE("%s: Failed to set WMM Paremeters", __func__);
+	wmi_err("Failed to set WMM Parameters");
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -4300,8 +4294,8 @@ static QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 			tmpl_len_aligned;
 
 	if (wmi_buf_len > WMI_BEACON_TX_BUFFER_SIZE) {
-		WMI_LOGE(FL("wmi_buf_len: %d > %d. Can't send wmi cmd"),
-		wmi_buf_len, WMI_BEACON_TX_BUFFER_SIZE);
+		wmi_err("wmi_buf_len: %d > %d. Can't send wmi cmd",
+			wmi_buf_len, WMI_BEACON_TX_BUFFER_SIZE);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -4335,7 +4329,7 @@ static QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   wmi_buf, wmi_buf_len, WMI_PRB_TMPL_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to send PRB RSP tmpl: %d"), ret);
+		wmi_err("Failed to send PRB RSP tmpl: %d", ret);
 		wmi_buf_free(wmi_buf);
 	}
 
@@ -4479,7 +4473,7 @@ static QDF_STATUS send_p2p_go_set_beacon_ie_cmd_tlv(wmi_unified_t wmi_handle,
 	   should not exceed more than 251 bytes
 	 */
 	if (ie_len > 251) {
-		WMI_LOGE("%s : invalid p2p ie length %u", __func__, ie_len);
+		wmi_err("Invalid p2p ie length %u", ie_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -4515,7 +4509,7 @@ static QDF_STATUS send_p2p_go_set_beacon_ie_cmd_tlv(wmi_unified_t wmi_handle,
 				   wmi_buf, wmi_buf_len,
 				   WMI_P2P_GO_SET_BEACON_IE);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send bcn tmpl: %d", ret);
+		wmi_err("Failed to send bcn tmpl: %d", ret);
 		wmi_buf_free(wmi_buf);
 	}
 
@@ -4590,7 +4584,7 @@ static QDF_STATUS send_scan_probe_setoui_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_SCAN_PROB_REQ_OUI_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_SCAN_PROB_REQ_OUI_CMDID)) {
-		WMI_LOGE("%s: failed to send command", __func__);
+		wmi_err("Failed to send command WMI_SCAN_PROB_REQ_OUI_CMDID");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4635,7 +4629,7 @@ static QDF_STATUS send_ipa_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_IPA_OFFLOAD_ENABLE_DISABLE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 		WMI_IPA_OFFLOAD_ENABLE_DISABLE_CMDID)) {
-		WMI_LOGE("%s: failed to command", __func__);
+		wmi_err("Failed to send WMI_IPA_OFFLOAD_ENABLE_DISABLE_CMDID");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4696,7 +4690,7 @@ static QDF_STATUS send_pno_stop_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_i
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send nlo wmi cmd", __func__);
+		wmi_err("Failed to send nlo wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4845,7 +4839,7 @@ static QDF_STATUS send_nlo_mawc_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_NLO_CONFIGURE_MAWC_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("WMI_NLO_CONFIGURE_MAWC_CMDID failed, Error %d",
+		wmi_err("WMI_NLO_CONFIGURE_MAWC_CMDID failed, Error %d",
 			status);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -5061,7 +5055,7 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send nlo wmi cmd", __func__);
+		wmi_err("Failed to send nlo wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5119,7 +5113,7 @@ static QDF_STATUS send_process_ll_stats_clear_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_CLEAR_LINK_STATS_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send clear link stats req", __func__);
+		wmi_err("Failed to send clear link stats req");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5171,7 +5165,7 @@ static QDF_STATUS send_process_ll_stats_set_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_START_LINK_STATS_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send set link stats request", __func__);
+		wmi_err("Failed to send set link stats request");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5225,7 +5219,7 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
 					  WMI_REQUEST_LINK_STATS_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send get link stats request", __func__);
+		wmi_err("Failed to send get link stats request");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5269,8 +5263,7 @@ static QDF_STATUS send_congestion_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_STATS_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_REQUEST_STATS_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_REQUEST_STATS_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5304,7 +5297,7 @@ static QDF_STATUS send_snr_request_cmd_tlv(wmi_unified_t wmi_handle)
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_STATS_CMDID)) {
-		WMI_LOGE("Failed to send host stats request to fw");
+		wmi_err("Failed to send host stats request to fw");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5340,7 +5333,7 @@ static QDF_STATUS send_snr_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id)
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_STATS_CMDID)) {
-		WMI_LOGE("Failed to send host stats request to fw");
+		wmi_err("Failed to send host stats request to fw");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5376,7 +5369,7 @@ static QDF_STATUS send_link_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_STATS_CMDID)) {
-		WMI_LOGE("Failed to send WMI link  status request to fw");
+		wmi_err("Failed to send WMI link  status request to fw");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5417,7 +5410,7 @@ static QDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
 	err = wmi_unified_cmd_send(wmi_handle, buf,
 				   sizeof(*cmd), WMI_AP_PS_EGAP_PARAM_CMDID);
 	if (err) {
-		WMI_LOGE("Failed to send ap_ps_egap cmd");
+		wmi_err("Failed to send ap_ps_egap cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5495,7 +5488,7 @@ static QDF_STATUS send_oem_dma_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cfg),
 				WMI_OEM_DMA_RING_CFG_REQ_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL(":wmi cmd send failed"));
+		wmi_err("Failed to send WMI_OEM_DMA_RING_CFG_REQ_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -5542,7 +5535,7 @@ static QDF_STATUS send_start_11d_scan_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_11D_SCAN_START_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send start 11d scan wmi cmd", __func__);
+		wmi_err("Failed to send start 11d scan wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5587,7 +5580,7 @@ static QDF_STATUS send_stop_11d_scan_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_11D_SCAN_STOP_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send stop 11d scan wmi cmd", __func__);
+		wmi_err("Failed to send stop 11d scan wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5632,7 +5625,7 @@ static QDF_STATUS send_start_oem_data_cmd_tlv(wmi_unified_t wmi_handle,
 				    WMI_TLV_HDR_SIZE), WMI_OEM_REQ_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL(":wmi cmd send failed"));
+		wmi_err("Failed to send WMI_OEM_REQ_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -5769,8 +5762,8 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					   WMI_DFS_PHYERR_FILTER_DIS_CMDID);
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMI_LOGE("%s: Failed to send WMI_DFS_PHYERR_FILTER_DIS_CMDID ret=%d",
-				__func__, ret);
+			wmi_err("Failed to send WMI_DFS_PHYERR_FILTER_DIS_CMDID ret=%d",
+				ret);
 			wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 		}
@@ -5804,8 +5797,7 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 					   WMI_DFS_PHYERR_FILTER_ENA_CMDID);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMI_LOGE("%s: Failed to send DFS PHYERR CMD ret=%d",
-				__func__, ret);
+			wmi_err("Failed to send DFS PHYERR CMD ret=%d", ret);
 			wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 		}
@@ -5868,7 +5860,7 @@ static QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_mtrace(WMI_PDEV_PKTLOG_ENABLE_CMDID, NO_SESSION, 0);
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_ENABLE_CMDID)) {
-			WMI_LOGE("failed to send pktlog enable cmdid");
+			wmi_err("Failed to send pktlog enable cmdid");
 			goto wmi_send_failed;
 		}
 		break;
@@ -5891,7 +5883,7 @@ static QDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_mtrace(WMI_PDEV_PKTLOG_DISABLE_CMDID, NO_SESSION, 0);
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
-			WMI_LOGE("failed to send pktlog disable cmdid");
+			wmi_err("failed to send pktlog disable cmdid");
 			goto wmi_send_failed;
 		}
 		break;
@@ -5961,8 +5953,7 @@ static QDF_STATUS send_stats_ext_req_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_REQUEST_STATS_EXT_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send notify cmd ret = %d", __func__,
-			 ret);
+		wmi_err("Failed to send notify cmd ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -6004,7 +5995,7 @@ send_process_dhcpserver_offload_cmd_tlv(wmi_unified_t wmi_handle,
 				   sizeof(*cmd),
 				   WMI_SET_DHCP_SERVER_OFFLOAD_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send set_dhcp_server_offload cmd");
+		wmi_err("Failed to send set_dhcp_server_offload cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6052,8 +6043,7 @@ send_pdev_set_regdomain_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_PDEV_SET_REGDOMAIN_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_SET_REGDOMAIN_CMDID)) {
-		WMI_LOGE("%s: Failed to send pdev set regdomain command",
-			 __func__);
+		wmi_err("Failed to send pdev set regdomain command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6175,7 +6165,7 @@ static QDF_STATUS send_vdev_set_custom_aggr_size_cmd_tlv(
 	wmi_mtrace(WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID)) {
-		WMI_LOGE("Seting custom aggregation size failed");
+		wmi_err("Setting custom aggregation size failed");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6203,7 +6193,7 @@ static QDF_STATUS send_vdev_set_qdepth_thresh_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS ret;
 
 	if (param->num_of_msduq_updates > QDEPTH_THRESH_MAX_UPDATES) {
-		WMI_LOGE("%s: Invalid Update Count!", __func__);
+		wmi_err("Invalid Update Count!");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -6267,7 +6257,7 @@ static QDF_STATUS send_vdev_set_qdepth_thresh_cmd_tlv(wmi_unified_t wmi_handle,
 				WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE(" %s :WMI Failed", __func__);
+		wmi_err("Failed to send WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -6304,7 +6294,7 @@ send_set_vap_dscp_tid_map_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_VDEV_SET_DSCP_TID_MAP_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_SET_DSCP_TID_MAP_CMDID)) {
-			WMI_LOGE("Failed to set dscp cmd");
+			wmi_err("Failed to set dscp cmd");
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 	}
@@ -6341,7 +6331,7 @@ static QDF_STATUS send_vdev_set_fwtest_param_cmd_tlv(wmi_unified_t wmi_handle,
 
 	wmi_mtrace(WMI_FWTEST_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len, WMI_FWTEST_CMDID)) {
-		WMI_LOGE("Setting FW test param failed");
+		wmi_err("Setting FW test param failed");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6383,7 +6373,7 @@ static QDF_STATUS send_phyerr_disable_cmd_tlv(wmi_unified_t wmi_handle)
 			WMI_PDEV_DFS_DISABLE_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("Sending PDEV DFS disable cmd failed");
+		wmi_err("Sending PDEV DFS disable cmd failed");
 		wmi_buf_free(buf);
 	}
 
@@ -6422,7 +6412,7 @@ static QDF_STATUS send_phyerr_enable_cmd_tlv(wmi_unified_t wmi_handle)
 			WMI_PDEV_DFS_ENABLE_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("Sending PDEV DFS enable cmd failed");
+		wmi_err("Sending PDEV DFS enable cmd failed");
 		wmi_buf_free(buf);
 	}
 
@@ -6469,7 +6459,7 @@ send_periodic_chan_stats_config_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("Sending periodic chan stats config failed");
+		wmi_err("Sending periodic chan stats config failed");
 		wmi_buf_free(buf);
 	}
 
@@ -6535,7 +6525,7 @@ static QDF_STATUS send_simulation_test_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, wmi_buf_len,
 				 WMI_SIMULATION_TEST_CMDID)) {
-		WMI_LOGE("%s: Failed to send test simulation cmd", __func__);
+		wmi_err("Failed to send test simulation cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6602,7 +6592,7 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("Sending set quiet cmd failed");
+		wmi_err("Sending set quiet cmd failed");
 		wmi_buf_free(buf);
 	}
 
@@ -6689,7 +6679,7 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("Sending scan enable CMD failed");
+		wmi_err("Sending scan enable CMD failed");
 		wmi_buf_free(buf);
 	}
 
@@ -6709,17 +6699,17 @@ extract_pdev_sscan_fw_cmd_fixed_param_tlv(
 	wmi_pdev_sscan_fw_cmd_fixed_param *ev;
 
 	if (!wmi_handle) {
-		WMI_LOGE("WMI handle is null");
+		wmi_err("WMI handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!event) {
-		WMI_LOGE("WMI event is null");
+		wmi_err("WMI event is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!param) {
-		WMI_LOGE("Spectral startscan response params is null");
+		wmi_err("Spectral startscan response params is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -6861,7 +6851,7 @@ static QDF_STATUS send_thermal_mitigation_param_cmd_tlv(
 			WMI_THERM_THROT_SET_CONF_CMDID);
 	if (QDF_IS_STATUS_ERROR(error)) {
 		wmi_buf_free(buf);
-		WMI_LOGE("Failed to send WMI_THERM_THROT_SET_CONF_CMDID command");
+		wmi_err("Failed to send WMI_THERM_THROT_SET_CONF_CMDID command");
 	}
 
 	return error;
@@ -6908,7 +6898,7 @@ send_coex_config_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_COEX_CONFIG_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("Sending COEX CONFIG CMD failed");
+		wmi_err("Sending COEX CONFIG CMD failed");
 		wmi_buf_free(buf);
 	}
 
@@ -7295,7 +7285,7 @@ static QDF_STATUS send_cfg_action_frm_tb_ppdu_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PDEV_HE_TB_ACTION_FRM_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("HE TB action frame cmnd send fail, ret %d"), ret);
+		wmi_err("HE TB action frame cmnd send fail, ret %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -7407,7 +7397,7 @@ static QDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
-		WMI_LOGE("Invalid log supported event buffer");
+		wmi_err("Invalid log supported event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 	wmi_event = param_buf->fixed_param;
@@ -7415,7 +7405,7 @@ static QDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (num_of_diag_events_logs >
 	    param_buf->num_diag_events_logs_list) {
-		WMI_LOGE("message number of events %d is more than tlv hdr content %d",
+		wmi_err("message number of events %d is more than tlv hdr content %d",
 			 num_of_diag_events_logs,
 			 param_buf->num_diag_events_logs_list);
 		return QDF_STATUS_E_INVAL;
@@ -7423,8 +7413,8 @@ static QDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
 
 	evt_args = param_buf->diag_events_logs_list;
 	if (!evt_args) {
-		WMI_LOGE("%s: Event list is empty, num_of_diag_events_logs=%d",
-				__func__, num_of_diag_events_logs);
+		wmi_err("Event list is empty, num_of_diag_events_logs=%d",
+			num_of_diag_events_logs);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -7439,8 +7429,7 @@ static QDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (num_of_diag_events_logs >
 		(WMI_SVC_MSG_MAX_SIZE / sizeof(uint32_t))) {
-		WMI_LOGE("%s: excess num of logs:%d", __func__,
-			num_of_diag_events_logs);
+		wmi_err("excess num of logs: %d", num_of_diag_events_logs);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -7500,8 +7489,7 @@ static QDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_DIAG_EVENT_LOG_CONFIG_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, buf_len,
 				WMI_DIAG_EVENT_LOG_CONFIG_CMDID)) {
-		WMI_LOGE("%s: WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed",
-				__func__);
+		wmi_err("WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed");
 		wmi_buf_free(buf);
 		/* Not clearing events_logs_list, though wmi cmd failed.
 		 * Host can still have this list
@@ -7597,8 +7585,7 @@ static QDF_STATUS send_enable_specific_fw_logs_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_DIAG_EVENT_LOG_CONFIG_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_DIAG_EVENT_LOG_CONFIG_CMDID)) {
-		WMI_LOGE("%s: WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed",
-				__func__);
+		wmi_err("WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -7639,7 +7626,7 @@ static QDF_STATUS send_flush_logs_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
 			len,
 			WMI_DEBUG_MESG_FLUSH_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_DEBUG_MESG_FLUSH_CMDID");
+		wmi_err("Failed to send WMI_DEBUG_MESG_FLUSH_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -7830,7 +7817,7 @@ send_encrypt_decrypt_send_cmd_tlv(wmi_unified_t wmi_handle,
 				   wmi_buf, len,
 				   WMI_VDEV_ENCRYPT_DECRYPT_DATA_REQ_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send ENCRYPT DECRYPT cmd: %d", ret);
+		wmi_err("Failed to send ENCRYPT DECRYPT cmd: %d", ret);
 		wmi_buf_free(wmi_buf);
 	}
 
@@ -7956,7 +7943,7 @@ send_wlan_profile_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(wmi_wlan_profile_enable_profile_id_cmd_fixed_param);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID");
+		wmi_err("Failed to send WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -7975,7 +7962,7 @@ send_wlan_profile_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send PROFILE_ENABLE_PROFILE_ID_CMDID");
+		wmi_err("Failed to send PROFILE_ENABLE_PROFILE_ID_CMDID");
 		wmi_buf_free(buf);
 	}
 	return ret;
@@ -8001,7 +7988,7 @@ send_wlan_profile_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(wmi_wlan_profile_trigger_cmd_fixed_param);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_TRIGGER_CMDID");
+		wmi_err("Failed to send WMI_WLAN_PROFILE_TRIGGER_CMDID");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -8019,7 +8006,7 @@ send_wlan_profile_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_WLAN_PROFILE_TRIGGER_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_TRIGGER_CMDID");
+		wmi_err("Failed to send WMI_WLAN_PROFILE_TRIGGER_CMDID");
 		wmi_buf_free(buf);
 	}
 	return ret;
@@ -8045,7 +8032,7 @@ send_wlan_profile_hist_intvl_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("Failed to send WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID");
+		wmi_err("Failed to send WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -8066,7 +8053,7 @@ send_wlan_profile_hist_intvl_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send PROFILE_SET_HIST_INTVL_CMDID");
+		wmi_err("Failed to send PROFILE_SET_HIST_INTVL_CMDID");
 		wmi_buf_free(buf);
 	}
 	return ret;
@@ -8225,7 +8212,7 @@ static QDF_STATUS send_power_dbg_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_PDEV_WAL_POWER_DEBUG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("wmi_unified_cmd_send WMI_PDEV_WAL_POWER_DEBUG_CMDID returned Error %d",
+		wmi_err("wmi_unified_cmd_send WMI_PDEV_WAL_POWER_DEBUG_CMDID returned Error %d",
 			status);
 		goto error;
 	}
@@ -8277,8 +8264,8 @@ static QDF_STATUS send_dfs_phyerr_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d, pdev_id=%d",
-			__func__, ret, pdev_id);
+		wmi_err("Failed to send cmd to fw, ret=%d, pdev_id=%d",
+			ret, pdev_id);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8326,8 +8313,8 @@ static QDF_STATUS send_dfs_phyerr_offload_dis_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_DFS_PHYERR_OFFLOAD_DISABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d, pdev_id=%d",
-			__func__, ret, pdev_id);
+		wmi_err("Failed to send cmd to fw, ret=%d, pdev_id=%d",
+			ret, pdev_id);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8350,7 +8337,7 @@ QDF_STATUS send_adfs_ch_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -8379,8 +8366,7 @@ QDF_STATUS send_adfs_ch_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_VDEV_ADFS_CH_CFG_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d",
-			 __func__, ret);
+		wmi_err("Failed to send cmd to fw, ret=%d", ret);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8402,7 +8388,7 @@ QDF_STATUS send_adfs_ocac_abort_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -8422,8 +8408,7 @@ QDF_STATUS send_adfs_ocac_abort_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_VDEV_ADFS_OCAC_ABORT_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d",
-			 __func__, ret);
+		wmi_err("Failed to send cmd to fw, ret=%d", ret);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8445,12 +8430,12 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 	struct wmi_soc *soc = wmi_handle->soc;
 
 	if (!soc->wmi_service_bitmap) {
-		WMI_LOGE("WMI service bit map is not saved yet");
+		wmi_err("WMI service bit map is not saved yet");
 		return false;
 	}
 
 	if (!soc->wmi_ext_service_bitmap) {
-		WMI_LOGE("WMI service ext bit map is not saved yet");
+		wmi_err("WMI service ext bit map is not saved yet");
 		return false;
 	}
 
@@ -8464,7 +8449,7 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 				service_id);
 
 	if (service_id >= WMI_MAX_EXT_SERVICE) {
-		WMI_LOGE("Service id %d but WMI ext2 service bitmap is NULL",
+		wmi_err("Service id %d but WMI ext2 service bitmap is NULL",
 			 service_id);
 		return false;
 	}
@@ -8477,7 +8462,7 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 				service_id);
 
 	if (service_id >= WMI_MAX_SERVICE) {
-		WMI_LOGE("Service id %d but WMI ext service bitmap is NULL",
+		wmi_err("Service id %d but WMI ext service bitmap is NULL",
 			 service_id);
 		return false;
 	}
@@ -8571,7 +8556,7 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_INIT_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_INIT_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("wmi_unified_cmd_send WMI_INIT_CMDID returned Error %d",
+		wmi_err("wmi_unified_cmd_send WMI_INIT_CMDID returned Error %d",
 			ret);
 		wmi_buf_free(buf);
 	}
@@ -8619,7 +8604,7 @@ send_addba_send_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ADDBA_SEND_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_ADDBA_SEND_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d", __func__, ret);
+		wmi_err("Failed to send cmd to fw, ret=%d", ret);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8667,7 +8652,7 @@ send_delba_send_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_DELBA_SEND_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_DELBA_SEND_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d", __func__, ret);
+		wmi_err("Failed to send cmd to fw, ret=%d", ret);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8712,7 +8697,7 @@ send_addba_clearresponse_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle,
 				buf, len, WMI_ADDBA_CLEAR_RESP_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d", __func__, ret);
+		wmi_err("Failed to send cmd to fw, ret=%d", ret);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -8806,7 +8791,7 @@ QDF_STATUS send_obss_spatial_reuse_set_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -8860,7 +8845,7 @@ send_self_srg_bss_color_bitmap_set_cmd_tlv(
 			WMI_PDEV_SET_SRG_BSS_COLOR_BITMAP_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_SET_SRG_BSS_COLOR_BITMAP_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -8915,7 +8900,7 @@ send_self_srg_partial_bssid_bitmap_set_cmd_tlv(
 			WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -8969,7 +8954,7 @@ send_self_srg_obss_color_enable_bitmap_cmd_tlv(
 			WMI_PDEV_SET_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_SET_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -9023,7 +9008,7 @@ send_self_srg_obss_bssid_enable_bitmap_cmd_tlv(
 			WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -9077,7 +9062,7 @@ send_self_non_srg_obss_color_enable_bitmap_cmd_tlv(
 			WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -9131,7 +9116,7 @@ send_self_non_srg_obss_bssid_enable_bitmap_cmd_tlv(
 			WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -9174,7 +9159,7 @@ QDF_STATUS send_injector_config_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_PDEV_FRAME_INJECT_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(
+		wmi_err(
 		 "WMI_PDEV_FRAME_INJECT_CMDID send returned Error %d",
 		 ret);
 		wmi_buf_free(buf);
@@ -9229,7 +9214,7 @@ static QDF_STATUS extract_ctl_failsafe_check_ev_param_tlv(
 
 	param_buf = (WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid ctl_failsafe event buffer");
+		wmi_err("Invalid ctl_failsafe event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -9594,7 +9579,7 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf || !param_buf->hal_reg_capabilities) {
-		WMI_LOGE("%s: Invalid arguments", __func__);
+		wmi_err("Invalid arguments");
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_copy(cap, (((uint8_t *)param_buf->hal_reg_capabilities) +
@@ -9623,7 +9608,7 @@ static QDF_STATUS extract_hal_reg_cap_ext2_tlv(
 	WMI_HAL_REG_CAPABILITIES_EXT2 *reg_caps;
 
 	if (!evt_buf) {
-		WMI_LOGE("null evt_buf");
+		wmi_err("null evt_buf");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -9666,7 +9651,7 @@ static uint32_t extract_num_mem_reqs_tlv(wmi_unified_t wmi_handle,
 	}
 
 	if (ev->num_mem_reqs > param_buf->num_mem_reqs) {
-		WMI_LOGE("Invalid num_mem_reqs %d:%d",
+		wmi_err("Invalid num_mem_reqs %d:%d",
 			 ev->num_mem_reqs, param_buf->num_mem_reqs);
 		return 0;
 	}
@@ -9931,19 +9916,18 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 
 	param_tlvs = (WMI_MGMT_RX_EVENTID_param_tlvs *) evt_buf;
 	if (!param_tlvs) {
-		WMI_LOGE("Get NULL point message from FW");
+		wmi_err("Get NULL point message from FW");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	ev_hdr = param_tlvs->hdr;
 	if (!hdr) {
-		WMI_LOGE("Rx event is NULL");
+		wmi_err("Rx event is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(ev_hdr->status)) {
-		WMI_LOGE("%s: RX mgmt frame decrypt error, discard it",
-			 __func__);
+		wmi_err("RX mgmt frame decrypt error, discard it");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -9984,7 +9968,7 @@ static QDF_STATUS extract_vdev_roam_param_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_ROAM_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid roam event buffer");
+		wmi_err("Invalid roam event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -10346,7 +10330,7 @@ static QDF_STATUS extract_profile_ctx_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("%s: Invalid profile data event buf", __func__);
+		wmi_err("Invalid profile data event buf");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -10380,7 +10364,7 @@ static QDF_STATUS extract_profile_data_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("%s: Invalid profile data event buf", __func__);
+		wmi_err("Invalid profile data event buf");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -10421,7 +10405,7 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 	event->datalen = param_buf->num_data;
 
 	if (event->datalen < sizeof(struct wmi_host_utf_seg_header_info)) {
-		WMI_LOGE("%s: Invalid datalen: %d ", __func__, event->datalen);
+		wmi_err("Invalid datalen: %d", event->datalen);
 		return QDF_STATUS_E_INVAL;
 	}
 	seg_hdr = (struct wmi_host_utf_seg_header_info *)param_buf->data;
@@ -10972,7 +10956,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext2_tlv(
 	WMI_MAC_PHY_CAPABILITIES_EXT *mac_phy_caps;
 
 	if (!event) {
-		WMI_LOGE("null evt_buf");
+		wmi_err("null evt_buf");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -11062,7 +11046,7 @@ static QDF_STATUS validate_dbr_ring_caps_idx(uint8_t idx,
 		return QDF_STATUS_E_INVAL;
 	}
 	if (idx >= num_dma_ring_caps) {
-		WMI_LOGE("%s: Index %d exceeds range", __func__, idx);
+		wmi_err("Index %d exceeds range", idx);
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -11296,7 +11280,7 @@ send_pdev_get_pn_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11312,7 +11296,7 @@ send_pdev_get_pn_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->key_type = params->key_type;
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PEER_TX_PN_REQUEST_CMDID)) {
-		WMI_LOGE("%s:Failed to send WMI command\n", __func__);
+		wmi_err("Failed to send WMI command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -11397,7 +11381,7 @@ extract_encrypt_decrypt_resp_event_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("encrypt decrypt resp evt_buf is NULL");
+		wmi_err("encrypt decrypt resp evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -11409,7 +11393,7 @@ extract_encrypt_decrypt_resp_event_tlv(wmi_unified_t wmi_handle,
 	if ((data_event->data_length > param_buf->num_enc80211_frame) ||
 	    (data_event->data_length > WMI_SVC_MSG_MAX_SIZE -
 		 WMI_TLV_HDR_SIZE - sizeof(*data_event))) {
-		WMI_LOGE("FW msg data_len %d more than TLV hdr %d",
+		wmi_err("FW msg data_len %d more than TLV hdr %d",
 			 data_event->data_length,
 			 param_buf->num_enc80211_frame);
 		return QDF_STATUS_E_INVAL;
@@ -11551,7 +11535,7 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 
 	param_buf = (WMI_REG_CHAN_LIST_CC_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("invalid channel list event buf");
+		wmi_err("invalid channel list event buf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11647,7 +11631,7 @@ static QDF_STATUS extract_reg_11d_new_country_event_tlv(
 
 	param_buf = (WMI_11D_NEW_COUNTRY_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("invalid 11d country event buf");
+		wmi_err("invalid 11d country event buf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11674,22 +11658,22 @@ static QDF_STATUS extract_reg_ch_avoid_event_tlv(
 		(WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *) evt_buf;
 
 	if (!param_buf) {
-		WMI_LOGE("Invalid channel avoid event buffer");
+		wmi_err("Invalid channel avoid event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	afr_fixed_param = param_buf->fixed_param;
 	if (!afr_fixed_param) {
-		WMI_LOGE("Invalid channel avoid event fixed param buffer");
+		wmi_err("Invalid channel avoid event fixed param buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!ch_avoid_ind) {
-		WMI_LOGE("Invalid channel avoid indication buffer");
+		wmi_err("Invalid channel avoid indication buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 	if (param_buf->num_avd_freq_range < afr_fixed_param->num_freq_ranges) {
-		WMI_LOGE(FL("no.of freq ranges exceeded the limit"));
+		wmi_err("no.of freq ranges exceeded the limit");
 		return QDF_STATUS_E_INVAL;
 	}
 	num_freq_ranges = (afr_fixed_param->num_freq_ranges >
@@ -11736,7 +11720,7 @@ static QDF_STATUS extract_dfs_cac_complete_event_tlv(wmi_unified_t wmi_handle,
 
 	param_tlvs = (WMI_VDEV_DFS_CAC_COMPLETE_EVENTID_param_tlvs *) evt_buf;
 	if (!param_tlvs) {
-		WMI_LOGE("invalid cac complete event buf");
+		wmi_err("invalid cac complete event buf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11766,12 +11750,12 @@ extract_dfs_ocac_complete_event_tlv(wmi_unified_t wmi_handle,
 
 	param_tlvs = (WMI_VDEV_ADFS_OCAC_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_tlvs) {
-		WMI_LOGE("invalid ocac complete event buf");
+		wmi_err("invalid ocac complete event buf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!param_tlvs->fixed_param) {
-		WMI_LOGE("invalid param_tlvs->fixed_param");
+		wmi_err("invalid param_tlvs->fixed_param");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11813,7 +11797,7 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 
 	param_tlv = (WMI_PDEV_DFS_RADAR_DETECTION_EVENTID_param_tlvs *) evt_buf;
 	if (!param_tlv) {
-		WMI_LOGE("invalid radar detection event buf");
+		wmi_err("invalid radar detection event buf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11872,7 +11856,7 @@ static QDF_STATUS extract_wlan_radar_event_info_tlv(
 
 	param_tlv = (WMI_DFS_RADAR_EVENTID_param_tlvs *)evt_buf;
 	if (!param_tlv) {
-		WMI_LOGE("invalid wlan radar event buf");
+		wmi_err("invalid wlan radar event buf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11970,8 +11954,7 @@ static QDF_STATUS send_get_rcpi_cmd_tlv(wmi_unified_t wmi_handle,
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_RCPI_CMDID)) {
 
-		WMI_LOGE("%s: Failed to send WMI_REQUEST_RCPI_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_REQUEST_RCPI_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -11997,7 +11980,7 @@ extract_rcpi_response_event_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_UPDATE_RCPI_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE(FL("Invalid rcpi event"));
+		wmi_err("Invalid rcpi event");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12024,7 +12007,7 @@ extract_rcpi_response_event_tlv(wmi_unified_t wmi_handle,
 		break;
 
 	default:
-		WMI_LOGE(FL("Invalid rcpi measurement type from firmware"));
+		wmi_err("Invalid rcpi measurement type from firmware");
 		res->measurement_type = RCPI_MEASUREMENT_TYPE_INVALID;
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12139,7 +12122,7 @@ static QDF_STATUS send_set_country_cmd_tlv(wmi_unified_t wmi_handle,
 			buf, len, WMI_SET_CURRENT_COUNTRY_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		WMI_LOGE("Failed to send WMI_SET_CURRENT_COUNTRY_CMDID");
+		wmi_err("Failed to send WMI_SET_CURRENT_COUNTRY_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -12194,7 +12177,7 @@ static QDF_STATUS send_user_country_code_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_SET_INIT_COUNTRY_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to config wow wakeup event");
+		wmi_err("Failed to config wow wakeup event");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12242,7 +12225,7 @@ static QDF_STATUS send_obss_detection_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_SAP_OBSS_DETECTION_CFG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_SAP_OBSS_DETECTION_CFG_CMDID)) {
-		WMI_LOGE("Failed to send WMI_SAP_OBSS_DETECTION_CFG_CMDID");
+		wmi_err("Failed to send WMI_SAP_OBSS_DETECTION_CFG_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12266,13 +12249,13 @@ static QDF_STATUS extract_obss_detection_info_tlv(uint8_t *evt_buf,
 	wmi_sap_obss_detection_info_evt_fixed_param *fix_param;
 
 	if (!obss_detection) {
-		WMI_LOGE("%s: Invalid obss_detection event buffer", __func__);
+		wmi_err("Invalid obss_detection event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	param_buf = (WMI_SAP_OBSS_DETECTION_REPORT_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("%s: Invalid evt_buf", __func__);
+		wmi_err("Invalid evt_buf");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12293,7 +12276,7 @@ static QDF_STATUS extract_obss_detection_info_tlv(uint8_t *evt_buf,
 		obss_detection->reason = OBSS_OFFLOAD_DETECTION_ABSENT;
 		break;
 	default:
-		WMI_LOGE("%s: Invalid reason %d", __func__, fix_param->reason);
+		wmi_err("Invalid reason: %d", fix_param->reason);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12333,8 +12316,7 @@ send_roam_scan_stats_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD(FL("Roam Scan Stats Req vdev_id: %u"), cmd->vdev_id);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_ROAM_SCAN_STATS_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_REQUEST_ROAM_SCAN_STATS_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_REQUEST_ROAM_SCAN_STATS_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12360,7 +12342,7 @@ static QDF_STATUS send_roam_scan_ch_list_req_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -12375,7 +12357,7 @@ static QDF_STATUS send_roam_scan_ch_list_req_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send get roam scan channels request = %d",
+		wmi_err("Failed to send get roam scan channels request = %d",
 			 ret);
 		wmi_buf_free(buf);
 	}
@@ -12421,7 +12403,7 @@ extract_roam_scan_stats_res_evt_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	*vdev_id = 0xFF; /* Initialize to invalid vdev id */
 	param_buf = (WMI_ROAM_SCAN_STATS_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE(FL("Invalid roam scan stats event"));
+		wmi_err("Invalid roam scan stats event");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12609,7 +12591,7 @@ static QDF_STATUS extract_offload_bcn_tx_status_evt(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_OFFLOAD_BCN_TX_STATUS_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid offload bcn tx status event buffer");
+		wmi_err("Invalid offload bcn tx status event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12631,7 +12613,7 @@ static QDF_STATUS extract_green_ap_egap_status_info_tlv(
 
 	param_buf = (WMI_AP_PS_EGAP_INFO_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid EGAP Info status event buffer");
+		wmi_err("Invalid EGAP Info status event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12641,7 +12623,7 @@ static QDF_STATUS extract_green_ap_egap_status_info_tlv(
 				param_buf->chainmask_list;
 
 	if (!egap_info_event || !chainmask_event) {
-		WMI_LOGE("Invalid EGAP Info event or chainmask event");
+		wmi_err("Invalid EGAP Info event or chainmask event");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12806,7 +12788,7 @@ extract_esp_estimation_ev_param_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_ESP_ESTIMATE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid ESP Estimate Event buffer");
+		wmi_err("Invalid ESP Estimate Event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 	esp_event = param_buf->fixed_param;
@@ -12855,7 +12837,7 @@ static QDF_STATUS send_bss_color_change_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_BSS_COLOR_CHANGE_ENABLE_CMDID)) {
-		WMI_LOGE("Failed to send WMI_BSS_COLOR_CHANGE_ENABLE_CMDID");
+		wmi_err("Failed to send WMI_BSS_COLOR_CHANGE_ENABLE_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12912,8 +12894,7 @@ static QDF_STATUS send_obss_color_collision_cfg_cmd_tlv(
 		cmd->evt_type = WMI_BSS_COLOR_FREE_SLOT_AVAILABLE;
 		break;
 	default:
-		WMI_LOGE("%s: invalid event type: %d",
-			 __func__, cfg_param->evt_type);
+		wmi_err("Invalid event type: %d", cfg_param->evt_type);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12928,8 +12909,8 @@ static QDF_STATUS send_obss_color_collision_cfg_cmd_tlv(
 	wmi_mtrace(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID)) {
-		WMI_LOGE("%s: Sending OBSS color det cmd failed, vdev_id: %d",
-			 __func__, cfg_param->vdev_id);
+		wmi_err("Sending OBSS color det cmd failed, vdev_id: %d",
+			 cfg_param->vdev_id);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12952,14 +12933,14 @@ static QDF_STATUS extract_obss_color_collision_info_tlv(uint8_t *evt_buf,
 	wmi_obss_color_collision_evt_fixed_param *fix_param;
 
 	if (!info) {
-		WMI_LOGE("%s: Invalid obss color buffer", __func__);
+		wmi_err("Invalid obss color buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	param_buf = (WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID_param_tlvs *)
 		    evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("%s: Invalid evt_buf", __func__);
+		wmi_err("Invalid evt_buf");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -12984,8 +12965,8 @@ static QDF_STATUS extract_obss_color_collision_info_tlv(uint8_t *evt_buf,
 		info->evt_type = OBSS_COLOR_FREE_SLOT_AVAILABLE;
 		break;
 	default:
-		WMI_LOGE("%s: invalid event type: %d, vdev_id: %d",
-			 __func__, fix_param->evt_type, fix_param->vdev_id);
+		wmi_err("Invalid event type: %d, vdev_id: %d",
+			 fix_param->evt_type, fix_param->vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -13030,8 +13011,7 @@ send_vdev_fils_enable_cmd_send(struct wmi_unified *wmi_handle,
 	wmi_mtrace(WMI_ENABLE_FILS_CMDID, cmd->vdev_id, cmd->fd_period);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ENABLE_FILS_CMDID)) {
-		WMI_LOGE("%s: Sending FILS cmd failed, vdev_id: %d",
-			 __func__, param->vdev_id);
+		wmi_err("Sending FILS cmd failed, vdev_id: %d", param->vdev_id);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -13063,7 +13043,7 @@ static QDF_STATUS send_mws_coex_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -13078,7 +13058,7 @@ static QDF_STATUS send_mws_coex_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_GET_MWS_COEX_INFO_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_err("Failed to send set param command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 	return ret;
@@ -13103,7 +13083,7 @@ extract_oem_response_param_tlv(wmi_unified_t wmi_handle, void *resp_buf,
 		(WMI_OEM_RESPONSE_EVENTID_param_tlvs *)resp_buf;
 
 	if (!param_buf) {
-		WMI_LOGE("Invalid OEM response");
+		wmi_err("Invalid OEM response");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -13149,13 +13129,13 @@ extract_hw_mode_resp_event_status_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	param_buf = (WMI_PDEV_SET_HW_MODE_RESP_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid mode change event buffer");
+		wmi_err("Invalid mode change event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	fixed_param = param_buf->fixed_param;
 	if (!fixed_param) {
-		WMI_LOGE("Invalid fixed param");
+		wmi_err("Invalid fixed param");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -13204,7 +13184,7 @@ static QDF_STATUS send_ani_level_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_GET_CHANNEL_ANI_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("WMI_GET_CHANNEL_ANI_CMDID send error %d", ret);
+		wmi_err("WMI_GET_CHANNEL_ANI_CMDID send error %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -13464,7 +13444,7 @@ extract_roam_scan_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	status = extract_roam_scan_ap_stats_tlv(wmi_handle, evt_buf, dst->ap,
 						ap_idx, dst->num_ap);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Extract candidate stats for tlv[%d] failed", idx);
+		wmi_err("Extract candidate stats for tlv[%d] failed", idx);
 		return status;
 	}
 
@@ -13658,7 +13638,7 @@ static QDF_STATUS send_wlan_ts_ftm_trigger_cmd_tlv(wmi_unified_t wmi,
 	cmd->vdev_id = vdev_id;
 	cmd->agg_relation = burst_mode ? false : true;
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_AUDIO_SYNC_TRIGGER_CMDID)) {
-		WMI_LOGE("%s: failed to send audio sync trigger cmd", __func__);
+		wmi_err("Failed to send audio sync trigger cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -13705,13 +13685,13 @@ static QDF_STATUS extract_time_sync_ftm_start_stop_event_tlv(
 
 	param_buf = (WMI_VDEV_AUDIO_SYNC_START_STOP_EVENTID_param_tlvs *)buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid audio sync start stop event buffer");
+		wmi_err("Invalid audio sync start stop event buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	resp_event = param_buf->fixed_param;
 	if (!resp_event) {
-		WMI_LOGE("Invalid audio sync start stop fixed param buffer");
+		wmi_err("Invalid audio sync start stop fixed param buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -13741,13 +13721,13 @@ extract_time_sync_ftm_offset_event_tlv(wmi_unified_t wmi, void *buf,
 	param_buf =
 	(WMI_VDEV_AUDIO_SYNC_Q_MASTER_SLAVE_OFFSET_EVENTID_param_tlvs *)buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid timesync ftm offset event buffer");
+		wmi_err("Invalid timesync ftm offset event buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	resp_event = param_buf->fixed_param;
 	if (!resp_event) {
-		WMI_LOGE("Invalid timesync ftm offset fixed param buffer");
+		wmi_err("Invalid timesync ftm offset fixed param buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -13755,7 +13735,7 @@ extract_time_sync_ftm_offset_event_tlv(wmi_unified_t wmi, void *buf,
 	param->num_qtime = param_buf->num_audio_sync_q_master_slave_times;
 	q_pair = param_buf->audio_sync_q_master_slave_times;
 	if (!q_pair) {
-		WMI_LOGE("Invalid q_master_slave_times buffer");
+		wmi_err("Invalid q_master_slave_times buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 

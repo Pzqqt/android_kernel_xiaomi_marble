@@ -42,7 +42,7 @@ static QDF_STATUS send_reset_passpoint_network_list_cmd_tlv
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		wmi_err("Failed allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -57,8 +57,7 @@ static QDF_STATUS send_reset_passpoint_network_list_cmd_tlv
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PASSPOINT_LIST_CONFIG_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send reset passpoint network list wmi cmd",
-			 __func__);
+		wmi_err("Failed to send reset passpoint network list wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -90,7 +89,7 @@ static QDF_STATUS send_set_passpoint_network_list_cmd_tlv
 	for (i = 0; i < req->num_networks; i++) {
 		buf = wmi_buf_alloc(wmi_handle, len);
 		if (!buf) {
-			WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+			wmi_err("Failed allocate wmi buffer");
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -124,8 +123,7 @@ static QDF_STATUS send_set_passpoint_network_list_cmd_tlv
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					   WMI_PASSPOINT_LIST_CONFIG_CMDID);
 		if (ret) {
-			WMI_LOGE("%s: Failed to send set passpoint network list wmi cmd",
-				 __func__);
+			wmi_err("Failed to send set passpoint network list wmi cmd");
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -173,7 +171,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		wmi_err("Failed allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -270,7 +268,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send nlo wmi cmd", __func__);
+		wmi_err("Failed to send nlo wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -301,7 +299,7 @@ static QDF_STATUS send_extscan_get_capabilities_cmd_tlv(wmi_unified_t wmi_handle
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -316,7 +314,7 @@ static QDF_STATUS send_extscan_get_capabilities_cmd_tlv(wmi_unified_t wmi_handle
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_GET_CAPABILITIES_CMDID)) {
-		WMI_LOGE("%s: failed to  command", __func__);
+		wmi_err("Failed to send extscan get capabilities cmd");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -343,7 +341,7 @@ static QDF_STATUS send_extscan_get_cached_results_cmd_tlv(wmi_unified_t wmi_hand
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -360,7 +358,7 @@ static QDF_STATUS send_extscan_get_cached_results_cmd_tlv(wmi_unified_t wmi_hand
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_GET_CACHED_RESULTS_CMDID)) {
-		WMI_LOGE("%s: failed to  command", __func__);
+		wmi_err("failed to  command", __func__);
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -393,7 +391,7 @@ static QDF_STATUS send_extscan_stop_change_monitor_cmd_tlv
 	len += change_list * sizeof(wmi_extscan_wlan_change_bssid_param);
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -420,7 +418,7 @@ static QDF_STATUS send_extscan_stop_change_monitor_cmd_tlv
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 			 WMI_EXTSCAN_CONFIGURE_WLAN_CHANGE_MONITOR_CMDID)) {
-		WMI_LOGE("%s: failed to  command", __func__);
+		wmi_err("Failed to send extscan change monitor cmd");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -452,7 +450,7 @@ static QDF_STATUS wmi_get_buf_extscan_change_monitor_cmd
 	struct ap_threshold_params *src_ap = psigchange->ap;
 
 	if (!numap || (numap > WMI_WLAN_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS)) {
-		WMI_LOGE("%s: Invalid number of bssid's", __func__);
+		wmi_err("Invalid number of bssid's");
 		return QDF_STATUS_E_INVAL;
 	}
 	len += WMI_TLV_HDR_SIZE;
@@ -534,17 +532,16 @@ static QDF_STATUS send_extscan_start_change_monitor_cmd_tlv
 			     psigchange, &buf,
 			     &len);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: Failed to get buffer for change monitor cmd",
-			 __func__);
+		wmi_err("Failed to get buffer for change monitor cmd");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (!buf) {
-		WMI_LOGE("%s: Failed to get buffer", __func__);
+		wmi_err("Failed to get buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 		 WMI_EXTSCAN_CONFIGURE_WLAN_CHANGE_MONITOR_CMDID)) {
-		WMI_LOGE("%s: failed to send command", __func__);
+		wmi_err("Failed to send command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -578,7 +575,7 @@ static QDF_STATUS send_extscan_stop_hotlist_monitor_cmd_tlv
 
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -603,7 +600,7 @@ static QDF_STATUS send_extscan_stop_hotlist_monitor_cmd_tlv
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
-		WMI_LOGE("%s: failed to  command", __func__);
+		wmi_err("Failed to send extscan cfg hotlist cmd");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -630,7 +627,7 @@ static QDF_STATUS send_stop_extscan_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -645,7 +642,7 @@ static QDF_STATUS send_stop_extscan_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_STOP_CMDID)) {
-		WMI_LOGE("%s: failed to  command", __func__);
+		wmi_err("Failed to send extscan stop cmd");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -915,17 +912,16 @@ static QDF_STATUS send_start_extscan_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_status = wmi_get_buf_extscan_start_cmd(wmi_handle,
 			     pstart, &buf, &len);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: Failed to get buffer for ext scan cmd", __func__);
+		wmi_err("Failed to get buffer for ext scan cmd");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (!buf) {
-		WMI_LOGE("%s:Failed to get buffer for current extscan info",
-			__func__);
+		wmi_err("Failed to get buffer for current extscan info");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (wmi_unified_cmd_send(wmi_handle, buf,
 				 len, WMI_EXTSCAN_START_CMDID)) {
-		WMI_LOGE("%s: failed to send command", __func__);
+		wmi_err("Failed to send extscan start cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -996,7 +992,7 @@ static QDF_STATUS send_extscan_start_hotlist_monitor_cmd_tlv
 	 * to be non zero value
 	 */
 	if (!numap || (numap > WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS)) {
-		WMI_LOGE("Invalid number of APs: %d", numap);
+		wmi_err("Invalid number of APs: %d", numap);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1070,7 +1066,7 @@ static QDF_STATUS send_extscan_start_hotlist_monitor_cmd_tlv
 
 		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
-			WMI_LOGE("%s: failed to send command", __func__);
+			wmi_err("Failed to send extscan cfg hotlist monitor cmd");
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}

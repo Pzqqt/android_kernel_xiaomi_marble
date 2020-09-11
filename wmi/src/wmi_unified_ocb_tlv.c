@@ -61,7 +61,7 @@ static QDF_STATUS send_ocb_set_utc_time_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_OCB_SET_UTC_TIME_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to set OCB UTC time"));
+		wmi_err("Failed to set OCB UTC time");
 		wmi_buf_free(buf);
 	}
 
@@ -124,7 +124,7 @@ static QDF_STATUS send_ocb_start_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_OCB_START_TIMING_ADVERT_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to start OCB timing advert"));
+		wmi_err("Failed to start OCB timing advert");
 		wmi_buf_free(buf);
 	}
 
@@ -167,7 +167,7 @@ static QDF_STATUS send_ocb_stop_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_OCB_STOP_TIMING_ADVERT_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to stop OCB timing advert"));
+		wmi_err("Failed to stop OCB timing advert");
 		wmi_buf_free(buf);
 	}
 
@@ -211,7 +211,7 @@ static QDF_STATUS send_ocb_get_tsf_timer_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_OCB_GET_TSF_TIMER_CMDID);
 	/* If there is an error, set the completion event */
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to send WMI message: %d"), ret);
+		wmi_err("Failed to send WMI message: %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -239,7 +239,7 @@ static QDF_STATUS send_dcc_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
 	/* Validate the input */
 	if (get_stats_param->request_array_len !=
 	    get_stats_param->channel_count * sizeof(*channel_stats_array)) {
-		WMI_LOGE(FL("Invalid parameter"));
+		wmi_err("Invalid parameter");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -285,7 +285,7 @@ static QDF_STATUS send_dcc_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_DCC_GET_STATS_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to send WMI message: %d"), ret);
+		wmi_err("Failed to send WMI message: %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -335,7 +335,7 @@ static QDF_STATUS send_dcc_clear_stats_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_DCC_CLEAR_STATS_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL("Failed to send the WMI command"));
+		wmi_err("Failed to send the WMI command");
 		wmi_buf_free(buf);
 	}
 
@@ -365,7 +365,7 @@ static QDF_STATUS send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
 	/* validate the input */
 	if (update_ndl_param->dcc_ndl_chan_list_len !=
 	    update_ndl_param->channel_count * sizeof(*ndl_chan_array)) {
-		WMI_LOGE(FL("Invalid parameter"));
+		wmi_err("Invalid parameter");
 		return QDF_STATUS_E_INVAL;
 	}
 	active_state_count = 0;
@@ -375,7 +375,7 @@ static QDF_STATUS send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_NDL_NUM_ACTIVE_STATE_GET(&ndl_chan_array[i]);
 	if (update_ndl_param->dcc_ndl_active_state_list_len !=
 	    active_state_count * sizeof(*ndl_active_state_array)) {
-		WMI_LOGE(FL("Invalid parameter"));
+		wmi_err("Invalid parameter");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -440,7 +440,7 @@ static QDF_STATUS send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
 					  WMI_DCC_UPDATE_NDL_CMDID);
 	/* If there is an error, set the completion event */
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		WMI_LOGE(FL("Failed to send WMI message: %d"), qdf_status);
+		wmi_err("Failed to send WMI message: %d", qdf_status);
 		wmi_buf_free(buf);
 	}
 
@@ -479,7 +479,7 @@ static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 		if (!config->dcc_ndl_chan_list ||
 			config->dcc_ndl_chan_list_len !=
 			config->channel_count * sizeof(wmi_dcc_ndl_chan)) {
-			WMI_LOGE(FL("NDL channel is invalid. List len: %d"),
+			wmi_err("NDL channel is invalid. List len: %d",
 				 config->dcc_ndl_chan_list_len);
 			return QDF_STATUS_E_INVAL;
 		}
@@ -494,7 +494,7 @@ static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 				config->dcc_ndl_active_state_list_len !=
 				active_state_count *
 				sizeof(wmi_dcc_ndl_active_state_config)) {
-				WMI_LOGE(FL("NDL active state is invalid."));
+				wmi_err("NDL active state is invalid");
 				return QDF_STATUS_E_INVAL;
 			}
 		}
@@ -646,7 +646,7 @@ static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_OCB_SET_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to set OCB config");
+		wmi_err("Failed to set OCB config");
 		wmi_buf_free(buf);
 	}
 

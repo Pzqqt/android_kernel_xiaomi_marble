@@ -410,7 +410,7 @@ ssize_t debug_filtered_wmi_cmds_write(struct file *file,
 	}
 
 	if (wmi_add_to_record_list(wmi_handle, k, WMI_CMD)) {
-		WMI_LOGE("Add cmd %d to WMI_CMD list failed", k);
+		wmi_err("Add cmd %d to WMI_CMD list failed", k);
 		return 0;
 	}
 
@@ -447,7 +447,7 @@ ssize_t debug_filtered_wmi_evts_write(struct file *file,
 	}
 
 	if (wmi_add_to_record_list(wmi_handle, k, WMI_EVT)) {
-		WMI_LOGE("Add cmd %d to WMI_EVT list failed", k);
+		wmi_err("Add cmd %d to WMI_EVT list failed", k);
 		return 0;
 	}
 
@@ -479,7 +479,7 @@ ssize_t debug_wmi_filtered_command_log_write(struct file *file,
 
 	cmd_log_buf = wmi_handle->log_info.wmi_filtered_command_log;
 	if (wmi_reset_filtered_buffers(wmi_handle, cmd_log_buf))
-		WMI_LOGE("reset WMI CMD filtered_buffers failed");
+		wmi_err("reset WMI CMD filtered_buffers failed");
 	return count;
 }
 
@@ -508,6 +508,6 @@ ssize_t debug_wmi_filtered_event_log_write(struct file *file,
 
 	cmd_log_buf = wmi_handle->log_info.wmi_filtered_event_log;
 	if (wmi_reset_filtered_buffers(wmi_handle, cmd_log_buf))
-		WMI_LOGE("reset WMI EVT filtered_buffers failed");
+		wmi_err("reset WMI EVT filtered_buffers failed");
 	return count;
 }

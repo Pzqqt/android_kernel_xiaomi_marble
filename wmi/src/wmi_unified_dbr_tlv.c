@@ -40,7 +40,7 @@ static QDF_STATUS send_dbr_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE(FL("wmi_buf_alloc failed"));
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -79,7 +79,7 @@ static QDF_STATUS send_dbr_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_PDEV_DMA_RING_CFG_REQ_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE(FL(":wmi cmd send failed"));
+		wmi_err(":wmi cmd send failed");
 		wmi_buf_free(buf);
 	}
 
@@ -153,7 +153,7 @@ static QDF_STATUS extract_dbr_buf_release_entry_tlv(wmi_unified_t wmi_handle,
 	entry = &param_buf->entries[idx];
 
 	if (!entry) {
-		WMI_LOGE("%s: Entry is NULL", __func__);
+		wmi_err("Entry is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -179,7 +179,7 @@ static QDF_STATUS extract_dbr_buf_metadata_tlv(
 	entry = &param_buf->meta_data[idx];
 
 	if (!entry) {
-		WMI_LOGE("%s: Entry is NULL", __func__);
+		wmi_err("Entry is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 

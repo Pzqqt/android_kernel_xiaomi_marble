@@ -62,7 +62,7 @@ send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 					  WMI_REQUEST_STATS_CMDID);
 
 	if (ret) {
-		WMI_LOGE("Failed to send status request to fw =%d", ret);
+		wmi_err("Failed to send status request to fw =%d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -92,12 +92,12 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	ev = (wmi_stats_event_fixed_param *) param_buf->fixed_param;
 	rssi_event = param_buf->chain_stats;
 	if (!ev) {
-		WMI_LOGE("%s: event fixed param NULL", __func__);
+		wmi_err("event fixed param NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (param_buf->num_data > WMI_SVC_MSG_MAX_SIZE - sizeof(*ev)) {
-		WMI_LOGE("num_data : %u is invalid", param_buf->num_data);
+		wmi_err("num_data : %u is invalid", param_buf->num_data);
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -169,7 +169,7 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		(((uint64_t)ev->num_mib_extd_stats) *
 		 sizeof(wmi_mib_extd_stats));
 	if (param_buf->num_data != min_data_len) {
-		WMI_LOGE("data len: %u isn't same as calculated: %llu",
+		wmi_err("data len: %u isn't same as calculated: %llu",
 			 param_buf->num_data, min_data_len);
 		return QDF_STATUS_E_FAULT;
 	}
@@ -203,7 +203,7 @@ extract_all_stats_counts_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	if (rssi_event->num_per_chain_rssi_stats >=
 	    WMITLV_GET_TLVLEN(rssi_event->tlv_header)) {
-		WMI_LOGE("num_per_chain_rssi_stats:%u is out of bounds",
+		wmi_err("num_per_chain_rssi_stats:%u is out of bounds",
 			 rssi_event->num_per_chain_rssi_stats);
 		return QDF_STATUS_E_INVAL;
 	}

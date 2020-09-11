@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,6 +17,7 @@
  */
 
 #include "wmi_unified_action_oui_tlv.h"
+#include "wmi_unified_priv.h"
 
 bool wmi_get_action_oui_id(enum action_oui_id action_id,
 			   wmi_vendor_oui_action_id *id)
@@ -126,7 +127,7 @@ wmi_fill_oui_extensions_buffer(struct action_oui_extension *extension,
 
 	for (i = 0; i < (uint8_t)no_oui_extns; i++) {
 		if ((rem_var_buf_len - cmd_ext->buf_data_length) < 0) {
-			WMI_LOGE(FL("Invalid action oui command length"));
+			wmi_err("Invalid action oui command length");
 			return QDF_STATUS_E_INVAL;
 		}
 
@@ -197,7 +198,7 @@ send_action_oui_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS status;
 
 	if (!req) {
-		WMI_LOGE(FL("action oui is empty"));
+		wmi_err("action oui is empty");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -211,13 +212,13 @@ send_action_oui_cmd_tlv(wmi_unified_t wmi_handle,
 	    no_oui_extns > WMI_MAX_VENDOR_OUI_ACTION_SUPPORTED_PER_ACTION ||
 	    (total_no_oui_extns > WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID *
 	     WMI_MAX_VENDOR_OUI_ACTION_SUPPORTED_PER_ACTION)) {
-		WMI_LOGE(FL("Invalid number of action oui extensions"));
+		wmi_err("Invalid number of action oui extensions");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	valid = wmi_get_action_oui_id(req->action_id, &action_id);
 	if (!valid) {
-		WMI_LOGE(FL("Invalid action id"));
+		wmi_err("Invalid action id");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -242,7 +243,7 @@ send_action_oui_cmd_tlv(wmi_unified_t wmi_handle,
 
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
-		WMI_LOGE(FL("Failed to allocate wmi buffer"));
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -281,7 +282,7 @@ send_action_oui_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID)) {
-		WMI_LOGE(FL("WMI_PDEV_CONFIG_VENDOR_OUI_ACTION send fail"));
+		wmi_err("WMI_PDEV_CONFIG_VENDOR_OUI_ACTION send fail");
 		wmi_buf_free(wmi_buf);
 		wmi_buf = NULL;
 		return QDF_STATUS_E_FAILURE;

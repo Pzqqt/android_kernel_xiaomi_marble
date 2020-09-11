@@ -102,9 +102,9 @@ static QDF_STATUS send_set_mcc_channel_time_latency_cmd_tlv(
 	 */
 	if ((latency_chan1 > 0) &&
 	    (latency_chan1 < WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY)) {
-		WMI_LOGE("%s: Invalid time latency for Channel #1 = %dms "
+		wmi_err("Invalid time latency for Channel #1 = %dms "
 			 "Minimum is 30ms (or 0 to use default value by "
-			 "firmware)", __func__, latency_chan1);
+			 "firmware)", latency_chan1);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -136,8 +136,7 @@ static QDF_STATUS send_set_mcc_channel_time_latency_cmd_tlv(
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_RESMGR_SET_CHAN_LATENCY_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s: Failed to send MCC Channel Time Latency command",
-			 __func__);
+		wmi_err("Failed to send MCC Channel Time Latency command");
 		wmi_buf_free(buf);
 		QDF_ASSERT(0);
 	}
@@ -184,8 +183,8 @@ static QDF_STATUS send_set_mcc_channel_time_quota_cmd_tlv(
 	 */
 	if (quota_chan1 < WMI_MCC_MIN_CHANNEL_QUOTA ||
 	    quota_chan1 > WMI_MCC_MAX_CHANNEL_QUOTA) {
-		WMI_LOGE("%s: Invalid time quota for Channel #1=%dms. Minimum "
-			 "is 20ms & maximum is 80ms", __func__, quota_chan1);
+		wmi_err("Invalid time quota for Channel #1=%dms. Minimum "
+			 "is 20ms & maximum is 80ms", quota_chan1);
 		return QDF_STATUS_E_INVAL;
 	}
 	/* Set WMI CMD for channel time quota here */
@@ -223,7 +222,7 @@ static QDF_STATUS send_set_mcc_channel_time_quota_cmd_tlv(
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_RESMGR_SET_CHAN_TIME_QUOTA_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send MCC Channel Time Quota command");
+		wmi_err("Failed to send MCC Channel Time Quota command");
 		wmi_buf_free(buf);
 		QDF_ASSERT(0);
 	}

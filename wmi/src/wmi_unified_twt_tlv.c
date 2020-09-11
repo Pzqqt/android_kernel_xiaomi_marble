@@ -31,7 +31,7 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -67,7 +67,7 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 			WMI_TWT_ENABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_TWT_ENABLE_CMDID");
+		wmi_err("Failed to send WMI_TWT_ENABLE_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -84,7 +84,7 @@ static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -102,7 +102,7 @@ static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 			WMI_TWT_DISABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_TWT_DISABLE_CMDID");
+		wmi_err("Failed to send WMI_TWT_DISABLE_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -139,7 +139,7 @@ send_twt_add_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -167,7 +167,7 @@ send_twt_add_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_TWT_ADD_DIALOG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_TWT_ADD_DIALOG_CMDID");
+		wmi_err("Failed to send WMI_TWT_ADD_DIALOG_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -201,7 +201,7 @@ send_twt_del_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -220,7 +220,7 @@ send_twt_del_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_TWT_DEL_DIALOG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_TWT_DEL_DIALOG_CMDID");
+		wmi_err("Failed to send WMI_TWT_DEL_DIALOG_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -237,7 +237,7 @@ send_twt_pause_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -254,7 +254,7 @@ send_twt_pause_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_TWT_PAUSE_DIALOG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_TWT_PAUSE_DIALOG_CMDID");
+		wmi_err("Failed to send WMI_TWT_PAUSE_DIALOG_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -270,7 +270,7 @@ static QDF_STATUS send_twt_resume_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -289,7 +289,7 @@ static QDF_STATUS send_twt_resume_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 						WMI_TWT_RESUME_DIALOG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_TWT_RESUME_DIALOG_CMDID");
+		wmi_err("Failed to send WMI_TWT_RESUME_DIALOG_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -308,7 +308,7 @@ send_twt_btwt_invite_sta_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -342,7 +342,7 @@ send_twt_btwt_remove_sta_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
+		wmi_err("Failed to allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -375,7 +375,7 @@ static QDF_STATUS extract_twt_enable_comp_event_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_TWT_ENABLE_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -398,7 +398,7 @@ static QDF_STATUS extract_twt_disable_comp_event_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_TWT_DISABLE_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -432,7 +432,7 @@ static QDF_STATUS extract_twt_add_dialog_comp_event_tlv(
 
 	param_buf = (WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -472,7 +472,7 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 
 	param_buf = (WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -484,18 +484,18 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 	 */
 	if (ev->status != WMI_HOST_ADD_TWT_STATUS_OK &&
 	    ev->status != WMI_HOST_ADD_TWT_STATUS_DENIED) {
-		WMI_LOGE("Status of add dialog complete is not success");
+		wmi_err("Status of add dialog complete is not success");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (idx >= param_buf->num_twt_params) {
-		WMI_LOGE("Invalid idx %d while num_twt_params = %d",
+		wmi_err("Invalid idx %d while num_twt_params = %d",
 			 idx, param_buf->num_twt_params);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!param_buf->twt_params) {
-		WMI_LOGE("Unable to extract additional twt parameters");
+		wmi_err("Unable to extract additional twt parameters");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -504,7 +504,7 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 			sizeof(wmi_twt_add_dialog_additional_params)));
 
 	if (evt_buf_len != expected_len) {
-		WMI_LOGE("Got invalid len data from FW %d expected %d",
+		wmi_err("Got invalid len data from FW %d expected %d",
 			 evt_buf_len, expected_len);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -541,7 +541,7 @@ static QDF_STATUS extract_twt_del_dialog_comp_event_tlv(
 
 	param_buf = (WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -565,7 +565,7 @@ static QDF_STATUS extract_twt_pause_dialog_comp_event_tlv(
 
 	param_buf = (WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -590,7 +590,7 @@ static QDF_STATUS extract_twt_resume_dialog_comp_event_tlv(
 	param_buf =
 		(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -619,7 +619,7 @@ extract_twt_btwt_invite_sta_comp_event_tlv(
 	param_buf =
 		(WMI_TWT_BTWT_INVITE_STA_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -647,7 +647,7 @@ extract_twt_btwt_remove_sta_comp_event_tlv(
 	param_buf =
 		(WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -695,7 +695,7 @@ extract_twt_session_stats_event_tlv(wmi_unified_t wmi_handle,
 	param_buf =
 		(WMI_TWT_SESSION_STATS_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -729,12 +729,12 @@ extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
 	param_buf =
 		(WMI_TWT_SESSION_STATS_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("evt_buf is NULL");
+		wmi_err("evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (idx >= param_buf->num_twt_sessions) {
-		WMI_LOGE("wrong idx, idx=%d, num_sessions=%d",
+		wmi_err("wrong idx, idx=%d, num_sessions=%d",
 			 idx, param_buf->num_twt_sessions);
 		return QDF_STATUS_E_INVAL;
 	}

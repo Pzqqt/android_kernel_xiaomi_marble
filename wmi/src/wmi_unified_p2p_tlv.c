@@ -79,7 +79,7 @@ static QDF_STATUS send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID");
+		wmi_err("Failed to send WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -125,7 +125,7 @@ static QDF_STATUS send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_P2P_SET_OPPPS_PARAM_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_P2P_SET_OPPPS_PARAM_CMDID");
+		wmi_err("Failed to send WMI_P2P_SET_OPPPS_PARAM_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -155,12 +155,12 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 
 	param_tlvs = (WMI_P2P_NOA_EVENTID_param_tlvs *)evt_buf;
 	if (!param_tlvs) {
-		WMI_LOGE("%s: Invalid P2P NoA event buffer", __func__);
+		wmi_err("Invalid P2P NoA event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!param) {
-		WMI_LOGE("noa information param is null");
+		wmi_err("noa information param is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -170,7 +170,7 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 	wmi_noa_info = (wmi_p2p_noa_info *) (buf_ptr);
 
 	if (!WMI_UNIFIED_NOA_ATTR_IS_MODIFIED(wmi_noa_info)) {
-		WMI_LOGE("%s: noa attr is not modified", __func__);
+		wmi_err("noa attr is not modified");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -184,8 +184,7 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 	descriptors = WMI_UNIFIED_NOA_ATTR_NUM_DESC_GET(wmi_noa_info);
 	param->num_desc = (uint8_t)descriptors;
 	if (param->num_desc > WMI_P2P_MAX_NOA_DESCRIPTORS) {
-		WMI_LOGE("%s: invalid num desc:%d", __func__,
-			 param->num_desc);
+		wmi_err("Invalid num desc: %d", param->num_desc);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -223,14 +222,14 @@ send_set_mac_addr_rx_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	int ret;
 
 	if (!wmi_handle) {
-		WMI_LOGE("WMA context is invald!");
+		wmi_err("WMA context is invald!");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("Failed allocate wmi buffer");
+		wmi_err("Failed allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -256,7 +255,7 @@ send_set_mac_addr_rx_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send action frame random mac cmd");
+		wmi_err("Failed to send action frame random mac cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -275,12 +274,12 @@ static QDF_STATUS extract_mac_addr_rx_filter_evt_param_tlv(
 		(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID_param_tlvs *)
 		evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("Invalid action frame filter mac event");
+		wmi_err("Invalid action frame filter mac event");
 		return QDF_STATUS_E_INVAL;
 	}
 	event = param_buf->fixed_param;
 	if (!event) {
-		WMI_LOGE("Invalid fixed param");
+		wmi_err("Invalid fixed param");
 		return QDF_STATUS_E_INVAL;
 	}
 	param->vdev_id = event->vdev_id;
@@ -309,7 +308,7 @@ static QDF_STATUS send_p2p_lo_start_cmd_tlv(wmi_unified_t wmi_handle,
 	int probe_resp_len_aligned;
 
 	if (!param) {
-		WMI_LOGE("lo start param is null");
+		wmi_err("lo start param is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -368,8 +367,7 @@ static QDF_STATUS send_p2p_lo_start_cmd_tlv(wmi_unified_t wmi_handle,
 				      buf, len,
 				      WMI_P2P_LISTEN_OFFLOAD_START_CMDID);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: Failed to send p2p lo start: %d",
-			 __func__, status);
+		wmi_err("Failed to send p2p lo start: %d", status);
 		wmi_buf_free(buf);
 		return status;
 	}
@@ -416,8 +414,7 @@ static QDF_STATUS send_p2p_lo_stop_cmd_tlv(wmi_unified_t wmi_handle,
 				      buf, len,
 				      WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: Failed to send p2p lo stop: %d",
-			 __func__, status);
+		wmi_err("Failed to send p2p lo stop: %d", status);
 		wmi_buf_free(buf);
 		return status;
 	}
@@ -446,12 +443,12 @@ static QDF_STATUS extract_p2p_lo_stop_ev_param_tlv(
 	param_tlvs = (WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID_param_tlvs *)
 					evt_buf;
 	if (!param_tlvs) {
-		WMI_LOGE("%s: Invalid P2P lo stop event buffer", __func__);
+		wmi_err("Invalid P2P lo stop event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!param) {
-		WMI_LOGE("lo stop event param is null");
+		wmi_err("lo stop event param is null");
 		return QDF_STATUS_E_INVAL;
 	}
 

@@ -41,7 +41,7 @@ QDF_STATUS wmi_send_set_active_apf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	/* allocate command buffer */
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -58,7 +58,7 @@ QDF_STATUS wmi_send_set_active_apf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID:%d",
+		wmi_err("Failed to send WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID:%d",
 			 status);
 		wmi_buf_free(buf);
 		return status;
@@ -90,8 +90,7 @@ QDF_STATUS wmi_send_apf_enable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				 WMI_BPF_SET_VDEV_ENABLE_CMDID)) {
-		WMI_LOGE("%s: Failed to enable/disable APF interpreter",
-			 __func__);
+		wmi_err("Failed to enable/disable APF interpreter");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -148,7 +147,7 @@ wmi_send_apf_write_work_memory_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, wmi_buf_len,
 				 WMI_BPF_SET_VDEV_WORK_MEMORY_CMDID)) {
-		WMI_LOGE("%s: Failed to write APF work memory", __func__);
+		wmi_err("Failed to write APF work memory");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -183,7 +182,7 @@ wmi_send_apf_read_work_memory_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				 WMI_BPF_GET_VDEV_WORK_MEMORY_CMDID)) {
-		WMI_LOGE("%s: Failed to get APF work memory", __func__);
+		wmi_err("Failed to get APF work memory");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -202,7 +201,7 @@ wmi_extract_apf_read_memory_resp_event_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = evt_buf;
 	if (!param_buf) {
-		WMI_LOGE("encrypt decrypt resp evt_buf is NULL");
+		wmi_err("encrypt decrypt resp evt_buf is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -213,7 +212,7 @@ wmi_extract_apf_read_memory_resp_event_tlv(wmi_unified_t wmi_handle,
 	resp->more_data = data_event->fragment;
 
 	if (data_event->length > param_buf->num_data) {
-		WMI_LOGE("FW msg data_len %d more than TLV hdr %d",
+		wmi_err("FW msg data_len %d more than TLV hdr %d",
 			 data_event->length,
 			 param_buf->num_data);
 		return QDF_STATUS_E_INVAL;

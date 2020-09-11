@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +55,7 @@ static QDF_STATUS send_bcn_buf_ll_cmd_tlv(
 				   WMI_PDEV_SEND_BCN_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_PDEV_SEND_BCN_CMDID command");
+		wmi_err("Failed to send WMI_PDEV_SEND_BCN_CMDID command");
 		wmi_buf_free(wmi_buf);
 	}
 

@@ -43,7 +43,7 @@ send_set_elna_bypass_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -58,7 +58,7 @@ send_set_elna_bypass_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_SET_ELNA_BYPASS_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_err("Failed to send set param command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -85,7 +85,7 @@ send_get_elna_bypass_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -99,7 +99,7 @@ send_get_elna_bypass_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_GET_ELNA_BYPASS_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_err("Failed to send set param command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -126,7 +126,7 @@ extract_get_elna_bypass_resp_tlv(struct wmi_unified *wmi_handle, void *resp_buf,
 	param_buf = resp_buf;
 	evt = param_buf->fixed_param;
 	if (!evt) {
-		WMI_LOGE("Invalid get elna bypass event");
+		wmi_err("Invalid get elna bypass event");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -173,7 +173,7 @@ send_dscp_tid_map_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -190,7 +190,7 @@ send_dscp_tid_map_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_PDEV_SET_DSCP_TID_MAP_CMDID);
 	if (status) {
-		WMI_LOGE("Failed to send dscp_up_map_to_fw %d", status);
+		wmi_err("Failed to send dscp_up_map_to_fw %d", status);
 		wmi_buf_free(buf);
 	}
 

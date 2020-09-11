@@ -58,8 +58,8 @@ extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	/* Actual data may include some padding, so data_len <= num_data */
 	if (nan_rsp_event_hdr->data_len > event->num_data) {
-		WMI_LOGE("%s: Provided NAN event length(%d) exceeding actual length(%d)!",
-			 __func__, nan_rsp_event_hdr->data_len,
+		wmi_err("Provided NAN event length(%d) exceeding actual length(%d)!",
+			 nan_rsp_event_hdr->data_len,
 			 event->num_data);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -69,7 +69,7 @@ extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	if (nan_rsp_event_hdr->data_len < sizeof(nan_msg_header_t) ||
 	    nan_rsp_event_hdr->data_len > (WMI_SVC_MSG_MAX_SIZE -
 							    WMI_TLV_HDR_SIZE)) {
-		WMI_LOGE("%s: Invalid NAN event data length(%d)!",  __func__,
+		wmi_err("Invalid NAN event data length(%d)!",
 			 nan_rsp_event_hdr->data_len);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -85,7 +85,7 @@ extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	case NAN_MSG_ID_ENABLE_RSP:
 		nan_evt_info = event->event_info;
 		if (!nan_evt_info) {
-			WMI_LOGE(FL("Fail: NAN enable rsp event info Null"));
+			wmi_err("Fail: NAN enable rsp event info Null");
 			return QDF_STATUS_E_INVAL;
 		}
 		evt_params->evt_type = nan_event_id_enable_rsp;
@@ -153,7 +153,7 @@ static QDF_STATUS send_nan_disable_req_cmd_tlv(wmi_unified_t wmi_handle,
 	 */
 
 	if (!nan_msg) {
-		WMI_LOGE("%s:nan req is not valid", __func__);
+		wmi_err("nan req is not valid");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -162,15 +162,13 @@ static QDF_STATUS send_nan_disable_req_cmd_tlv(wmi_unified_t wmi_handle,
 	if (nan_data_len) {
 		nan_data_len_aligned = roundup(nan_data_len, sizeof(uint32_t));
 		if (nan_data_len_aligned < nan_data_len) {
-			WMI_LOGE("%s: Int overflow while rounding up data_len",
-				 __func__);
+			wmi_err("Int overflow while rounding up data_len");
 			return QDF_STATUS_E_FAILURE;
 		}
 
 		if (nan_data_len_aligned > WMI_SVC_MSG_MAX_SIZE
 							- WMI_TLV_HDR_SIZE) {
-			WMI_LOGE("%s: nan_data_len exceeding wmi_max_msg_size",
-				 __func__);
+			wmi_err("nan_data_len exceeding wmi_max_msg_size");
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -215,8 +213,7 @@ static QDF_STATUS send_nan_disable_req_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_NAN_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s Failed to send set param command ret = %d",
-			 __func__, ret);
+		wmi_err("Failed to send set param command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -253,21 +250,19 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 	 *    +-----------------------+------------------------------------+
 	 */
 	if (!nan_msg) {
-		WMI_LOGE("%s:nan req is not valid", __func__);
+		wmi_err("nan req is not valid");
 		return QDF_STATUS_E_FAILURE;
 	}
 	nan_data_len = nan_msg->request_data_len;
 	nan_data_len_aligned = roundup(nan_msg->request_data_len,
 				       sizeof(uint32_t));
 	if (nan_data_len_aligned < nan_msg->request_data_len) {
-		WMI_LOGE("%s: integer overflow while rounding up data_len",
-			 __func__);
+		wmi_err("integer overflow while rounding up data_len");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (nan_data_len_aligned > WMI_SVC_MSG_MAX_SIZE - WMI_TLV_HDR_SIZE) {
-		WMI_LOGE("%s: wmi_max_msg_size overflow for given datalen",
-			 __func__);
+		wmi_err("wmi_max_msg_size overflow for given datalen");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -305,8 +300,7 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_NAN_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_NAN_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("%s Failed to send NAN req command ret = %d",
-			 __func__, ret);
+		wmi_err("Failed to send NAN req command ret = %d", ret);
 		wmi_buf_free(buf);
 	}
 
@@ -347,7 +341,7 @@ static QDF_STATUS send_terminate_all_ndps_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_NDP_CMDID, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, wmi_buf, len, WMI_NDP_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send NDP Terminate cmd: %d", status);
+		wmi_err("Failed to send NDP Terminate cmd: %d", status);
 		wmi_buf_free(wmi_buf);
 	}
 
@@ -468,7 +462,7 @@ static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_NDP_INITIATOR_REQ_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("WMI_NDP_INITIATOR_REQ_CMDID failed, ret: %d", status);
+		wmi_err("WMI_NDP_INITIATOR_REQ_CMDID failed, ret: %d", status);
 		wmi_buf_free(buf);
 	}
 
@@ -590,7 +584,7 @@ static QDF_STATUS nan_ndp_responder_req_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_NDP_RESPONDER_REQ_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("WMI_NDP_RESPONDER_REQ_CMDID failed, ret: %d", status);
+		wmi_err("WMI_NDP_RESPONDER_REQ_CMDID failed, ret: %d", status);
 		wmi_buf_free(buf);
 	}
 	return status;
@@ -640,7 +634,7 @@ static QDF_STATUS nan_ndp_end_req_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_NDP_END_REQ_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("WMI_NDP_END_REQ_CMDID failed, ret: %d", status);
+		wmi_err("WMI_NDP_END_REQ_CMDID failed, ret: %d", status);
 		wmi_buf_free(buf);
 	}
 
@@ -662,7 +656,7 @@ extract_ndp_host_event_tlv(wmi_unified_t wmi_handle, uint8_t *data,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
 	if (!evt->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -686,7 +680,7 @@ static QDF_STATUS extract_ndp_initiator_rsp_tlv(wmi_unified_t wmi_handle,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
 	if (!rsp->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -733,20 +727,20 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		(wmi_ndp_indication_event_fixed_param *)event->fixed_param;
 
 	if (fixed_params->ndp_cfg_len > event->num_ndp_cfg) {
-		WMI_LOGE("FW message ndp cfg length %d larger than TLV hdr %d",
+		wmi_err("FW message ndp cfg length %d larger than TLV hdr %d",
 			 fixed_params->ndp_cfg_len, event->num_ndp_cfg);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (fixed_params->ndp_app_info_len > event->num_ndp_app_info) {
-		WMI_LOGE("FW message ndp app info length %d more than TLV hdr %d",
+		wmi_err("FW message ndp app info length %d more than TLV hdr %d",
 			 fixed_params->ndp_app_info_len,
 			 event->num_ndp_app_info);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (fixed_params->nan_scid_len > event->num_ndp_scid) {
-		WMI_LOGE("FW msg ndp scid info len %d more than TLV hdr %d",
+		wmi_err("FW msg ndp scid info len %d more than TLV hdr %d",
 			 fixed_params->nan_scid_len,
 			 event->num_ndp_scid);
 		return QDF_STATUS_E_INVAL;
@@ -754,8 +748,8 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 
 	if (fixed_params->ndp_cfg_len >
 		(WMI_SVC_MSG_MAX_SIZE - sizeof(*fixed_params))) {
-		WMI_LOGE("%s: excess wmi buffer: ndp_cfg_len %d",
-			 __func__, fixed_params->ndp_cfg_len);
+		wmi_err("excess wmi buffer: ndp_cfg_len %d",
+			fixed_params->ndp_cfg_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -764,16 +758,16 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 
 	if (fixed_params->ndp_app_info_len >
 		(WMI_SVC_MSG_MAX_SIZE - total_array_len)) {
-		WMI_LOGE("%s: excess wmi buffer: ndp_cfg_len %d",
-			 __func__, fixed_params->ndp_app_info_len);
+		wmi_err("excess wmi buffer: ndp_cfg_len %d",
+			fixed_params->ndp_app_info_len);
 		return QDF_STATUS_E_INVAL;
 	}
 	total_array_len += fixed_params->ndp_app_info_len;
 
 	if (fixed_params->nan_scid_len >
 		(WMI_SVC_MSG_MAX_SIZE - total_array_len)) {
-		WMI_LOGE("%s: excess wmi buffer: ndp_cfg_len %d",
-			 __func__, fixed_params->nan_scid_len);
+		wmi_err("excess wmi buffer: ndp_cfg_len %d",
+			fixed_params->nan_scid_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -782,7 +776,7 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
 	if (!rsp->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 	rsp->service_instance_id = fixed_params->service_instance_id;
@@ -867,13 +861,13 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->num_ndp_channels);
 
 	if (fixed_params->ndp_cfg_len > event->num_ndp_cfg) {
-		WMI_LOGE("FW message ndp cfg length %d larger than TLV hdr %d",
+		wmi_err("FW message ndp cfg length %d larger than TLV hdr %d",
 			 fixed_params->ndp_cfg_len, event->num_ndp_cfg);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (fixed_params->ndp_app_info_len > event->num_ndp_app_info) {
-		WMI_LOGE("FW message ndp app info length %d more than TLV hdr %d",
+		wmi_err("FW message ndp app info length %d more than TLV hdr %d",
 			 fixed_params->ndp_app_info_len,
 			 event->num_ndp_app_info);
 		return QDF_STATUS_E_INVAL;
@@ -884,8 +878,8 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 
 	if (fixed_params->ndp_cfg_len >
 			(WMI_SVC_MSG_MAX_SIZE - sizeof(*fixed_params))) {
-		WMI_LOGE("%s: excess wmi buffer: ndp_cfg_len %d",
-			 __func__, fixed_params->ndp_cfg_len);
+		wmi_err("excess wmi buffer: ndp_cfg_len %d",
+			fixed_params->ndp_cfg_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -894,14 +888,14 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 
 	if (fixed_params->ndp_app_info_len >
 		(WMI_SVC_MSG_MAX_SIZE - total_array_len)) {
-		WMI_LOGE("%s: excess wmi buffer: ndp_cfg_len %d",
-			 __func__, fixed_params->ndp_app_info_len);
+		wmi_err("excess wmi buffer: ndp_cfg_len %d",
+			fixed_params->ndp_app_info_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (fixed_params->num_ndp_channels > event->num_ndp_channel_list ||
 	    fixed_params->num_ndp_channels > event->num_nss_list) {
-		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch TLV len(%d) or NSS TLV len(%d)"),
+		wmi_err("NDP Ch count %d greater than NDP Ch TLV len(%d) or NSS TLV len(%d)",
 			 fixed_params->num_ndp_channels,
 			 event->num_ndp_channel_list,
 			 event->num_nss_list);
@@ -910,7 +904,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 
 	if (ndi_dbs &&
 	    fixed_params->num_ndp_channels > event->num_ndp_channel_info) {
-		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch info(%d)"),
+		wmi_err("NDP Ch count %d greater than NDP Ch info(%d)",
 			 fixed_params->num_ndp_channels,
 			 event->num_ndp_channel_info);
 		return QDF_STATUS_E_INVAL;
@@ -921,7 +915,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
 	if (!rsp->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 	rsp->ndp_instance_id = fixed_params->ndp_instance_id;
@@ -936,7 +930,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 		     rsp->ndp_info.ndp_app_info_len);
 
 	if (rsp->num_channels > NAN_CH_INFO_MAX_CHANNELS) {
-		WMI_LOGE(FL("too many channels"));
+		wmi_err("too many channels");
 		rsp->num_channels = NAN_CH_INFO_MAX_CHANNELS;
 	}
 
@@ -1000,7 +994,7 @@ static QDF_STATUS extract_ndp_responder_rsp_tlv(wmi_unified_t wmi_handle,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
 	if (!rsp->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 	rsp->transaction_id = fixed_params->transaction_id;
@@ -1033,7 +1027,7 @@ static QDF_STATUS extract_ndp_end_rsp_tlv(wmi_unified_t wmi_handle,
 	rsp->vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(
 			wmi_handle->soc->wmi_psoc, QDF_NDI_MODE, WLAN_NAN_ID);
 	if (!rsp->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 	rsp->transaction_id = fixed_params->transaction_id;
@@ -1055,7 +1049,7 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 	ind = event->ndp_end_indication_list;
 
 	if (event->num_ndp_end_indication_list == 0) {
-		WMI_LOGE("Error: Event ignored, 0 ndp instances");
+		wmi_err("Error: Event ignored, 0 ndp instances");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1064,7 +1058,7 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 
 	if (event->num_ndp_end_indication_list > ((UINT_MAX - sizeof(**rsp))/
 						sizeof((*rsp)->ndp_map[0]))) {
-		WMI_LOGE("num_ndp_end_ind_list %d too large",
+		wmi_err("num_ndp_end_ind_list %d too large",
 			 event->num_ndp_end_indication_list);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1116,7 +1110,7 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 
 	if (fixed_params->num_channels > event->num_ndl_channel_list ||
 	    fixed_params->num_channels > event->num_nss_list) {
-		WMI_LOGE(FL("Channel count %d greater than NDP Ch list TLV len(%d) or NSS list TLV len(%d)"),
+		wmi_err("Channel count %d greater than NDP Ch list TLV len(%d) or NSS list TLV len(%d)",
 			 fixed_params->num_channels,
 			 event->num_ndl_channel_list,
 			 event->num_nss_list);
@@ -1125,14 +1119,14 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 
 	if (ndi_dbs &&
 	    fixed_params->num_channels > event->num_ndp_channel_info) {
-		WMI_LOGE(FL("Channel count %d greater than NDP Ch info(%d)"),
+		wmi_err("Channel count %d greater than NDP Ch info(%d)",
 			 fixed_params->num_channels,
 			 event->num_ndp_channel_info);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (fixed_params->num_ndp_instances > event->num_ndp_instance_list) {
-		WMI_LOGE(FL("NDP Instance count %d greater than NDP Instancei TLV len %d"),
+		wmi_err("NDP Instance count %d greater than NDP Instancei TLV len %d",
 			 fixed_params->num_ndp_instances,
 			 event->num_ndp_instance_list);
 		return QDF_STATUS_E_INVAL;
@@ -1143,7 +1137,7 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
 	if (!ind->vdev) {
-		WMI_LOGE("vdev is null");
+		wmi_err("vdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1154,7 +1148,7 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 				   ind->peer_addr.bytes);
 
 	if (ind->num_ndp_instances > NDP_NUM_INSTANCE_ID) {
-		WMI_LOGE(FL("uint32 overflow"));
+		wmi_err("uint32 overflow");
 		wlan_objmgr_vdev_release_ref(ind->vdev, WLAN_NAN_ID);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1163,7 +1157,7 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 		     sizeof(uint32_t) * ind->num_ndp_instances);
 
 	if (ind->num_channels > NAN_CH_INFO_MAX_CHANNELS) {
-		WMI_LOGE(FL("too many channels"));
+		wmi_err("too many channels");
 		ind->num_channels = NAN_CH_INFO_MAX_CHANNELS;
 	}
 
