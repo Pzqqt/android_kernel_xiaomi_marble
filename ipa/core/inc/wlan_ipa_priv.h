@@ -640,6 +640,7 @@ struct wlan_ipa_priv {
 	uint32_t curr_cons_bw;
 
 	uint8_t activated_fw_pipe;
+	uint8_t num_sap_connected;
 	uint8_t sap_num_connected_sta;
 	uint8_t sta_connected;
 	uint32_t tx_pipe_handle;
