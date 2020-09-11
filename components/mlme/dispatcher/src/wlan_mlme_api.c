@@ -854,10 +854,11 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 		     HE_MAX_PPET_SIZE);
 
 	mlme_obj->cfg.he_caps.he_cap_orig = mlme_obj->cfg.he_caps.dot11_he_cap;
-	mlme_obj->cfg.he_caps.he_mcs_12_13_supp_2g =
-				wma_cfg->he_mcs_12_13_supp_2g;
-	mlme_obj->cfg.he_caps.he_mcs_12_13_supp_5g =
-				wma_cfg->he_mcs_12_13_supp_5g;
+	/* Take intersection of host and FW capabilities */
+	mlme_obj->cfg.he_caps.he_mcs_12_13_supp_2g &=
+						  wma_cfg->he_mcs_12_13_supp_2g;
+	mlme_obj->cfg.he_caps.he_mcs_12_13_supp_5g &=
+						  wma_cfg->he_mcs_12_13_supp_5g;
 
 	return status;
 }
