@@ -236,7 +236,7 @@ static inline int __bpp(enum msm_vidc_colorformat_type f)
 	case MSM_VIDC_FMT_NV12_UBWC:
 	case MSM_VIDC_FMT_RGBA8888_UBWC:
 		return 8;
-	case MSM_VIDC_FMT_NV12_P010_UBWC:
+	case MSM_VIDC_FMT_NV12_P010:
 	case MSM_VIDC_FMT_NV12_TP10_UBWC:
 		return 10;
 	default:

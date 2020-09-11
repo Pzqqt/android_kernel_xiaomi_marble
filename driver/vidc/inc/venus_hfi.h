@@ -35,7 +35,7 @@ struct vidc_buffer_addr_info {
 	u32 extradata_size;
 	u32 response_required;
 };
-
+#if 0
 struct hfi_resource_subcache_type {
 	u32 size;
 	u32 sc_id;
@@ -45,7 +45,10 @@ struct hfi_resource_syscache_info_type {
 	u32 num_entries;
 	struct hfi_resource_subcache_type rg_subcache_entries[1];
 };
-
+#endif
+int venus_hfi_session_property(struct msm_vidc_inst *inst,
+	u32 pkt_type, u32 flags, u32 port,
+	u32 payload_type, void *payload, u32 payload_size);
 int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer, struct msm_vidc_buffer *metabuf);
 int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
@@ -64,6 +67,10 @@ void venus_hfi_pm_work_handler(struct work_struct *work);
 void __write_register(struct msm_vidc_core *core,
 		u32 reg, u32 value);
 int __read_register(struct msm_vidc_core *core, u32 reg);
+int __iface_cmdq_write(struct msm_vidc_core *core,
+	void *pkt);
+int __iface_msgq_read(struct msm_vidc_core *core, void *pkt);
+int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt);
 void __disable_unprepare_clks(struct msm_vidc_core *core);
 int __disable_regulators(struct msm_vidc_core *core);
 int __unvote_buses(struct msm_vidc_core *core);

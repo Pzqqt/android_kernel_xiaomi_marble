@@ -642,7 +642,7 @@ int msm_vidc_set_u32(void *instance,
 	if (rc)
 		return -EINVAL;
 
-	rc = hfi_packet_session_property(inst,
+	rc = venus_hfi_session_property(inst,
 		inst->capabilities->cap[cap_id].hfi_id,
 		HFI_HOST_FLAGS_NONE, HFI_PORT_NONE,
 		HFI_PAYLOAD_U32_ENUM,
@@ -667,7 +667,7 @@ int msm_vidc_set_s32(void *instance,
 		return -EINVAL;
 	}
 
-	rc = hfi_packet_session_property(inst,
+	rc = venus_hfi_session_property(inst,
 		inst->capabilities->cap[cap_id].hfi_id,
 		HFI_HOST_FLAGS_NONE, HFI_PORT_NONE,
 		HFI_PAYLOAD_S32,

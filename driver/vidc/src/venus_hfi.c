@@ -144,7 +144,7 @@ static void __dump_packet(u8 *packet)
 static void __fatal_error(struct msm_vidc_core *core, bool fatal)
 {
 	return;
-	fatal &= core->platform->data.core_data[HW_RESPONSE_TIMEOUT].value;
+	fatal &= core->capabilities[HW_RESPONSE_TIMEOUT].value;
 	MSM_VIDC_ERROR(fatal);
 }
 
@@ -273,33 +273,50 @@ int __read_register(struct msm_vidc_core *core, u32 reg)
 
 static void __schedule_power_collapse_work(struct msm_vidc_core *core)
 {
-	return;
-	if (!core->platform->data.core_data[SW_PC].value)
+	if (!core || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return;
+	}
+	if (!core->capabilities[SW_PC].value) {
+		d_vpr_l("software power collapse not enabled\n");
+		return;
+	}
 
 	cancel_delayed_work(&core->pm_work);
 	if (!queue_delayed_work(core->pm_workq,
 			&core->pm_work, msecs_to_jiffies(
-			core->platform->data.core_data[SW_PC_DELAY].value))) {
-		d_vpr_l("PM work already scheduled\n");
+			core->capabilities[SW_PC_DELAY].value))) {
+		d_vpr_e("power collapse already scheduled\n");
+	} else {
+		d_vpr_l("power collapse scheduled for %d ms\n",
+			core->capabilities[SW_PC_DELAY].value);
 	}
 }
 
 static void __cancel_power_collapse_work(struct msm_vidc_core *core)
 {
-	return;
-	if (!core->platform->data.core_data[SW_PC].value)
+	if (!core || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+	if (!core->capabilities[SW_PC].value)
 		return;
 
 	cancel_delayed_work(&core->pm_work);
 }
 
-static int __acquire_regulator(struct regulator_info *rinfo,
-				struct msm_vidc_core *core)
+static int __acquire_regulator(struct msm_vidc_core *core,
+	struct regulator_info *rinfo)
 {
 	int rc = 0;
 
 	if (rinfo->has_hw_power_collapse) {
+		if (regulator_get_mode(rinfo->regulator) ==
+				REGULATOR_MODE_NORMAL) {
+			d_vpr_h("Skip acquire regulator %s\n", rinfo->name);
+			goto exit;
+		}
+
 		rc = regulator_set_mode(rinfo->regulator,
 				REGULATOR_MODE_NORMAL);
 		if (rc) {
@@ -308,27 +325,29 @@ static int __acquire_regulator(struct regulator_info *rinfo,
 			 * about it. We can't disable the regulator w/o
 			 * getting it back under s/w control
 			 */
-			d_vpr_e(
-				"Failed to acquire regulator control: %s\n",
+			d_vpr_e("Failed to acquire regulator control: %s\n",
 				rinfo->name);
+			goto exit;
 		} else {
 
-			d_vpr_h("Acquire regulator control from HW: %s\n",
+			d_vpr_h("Acquired regulator control from HW: %s\n",
 					rinfo->name);
 
 		}
+
+		if (!regulator_is_enabled(rinfo->regulator)) {
+			d_vpr_e("%s: Regulator is not enabled %s\n",
+				__func__, rinfo->name);
+			__fatal_error(core, true);
+		}
 	}
 
-	if (!regulator_is_enabled(rinfo->regulator)) {
-		d_vpr_e("Regulator is not enabled %s\n",
-			rinfo->name);
-		__fatal_error(core, true);
-	}
-
+exit:
 	return rc;
 }
 
-static int __hand_off_regulator(struct regulator_info *rinfo)
+static int __hand_off_regulator(struct msm_vidc_core *core,
+	struct regulator_info *rinfo)
 {
 	int rc = 0;
 
@@ -336,12 +355,18 @@ static int __hand_off_regulator(struct regulator_info *rinfo)
 		rc = regulator_set_mode(rinfo->regulator,
 				REGULATOR_MODE_FAST);
 		if (rc) {
-			d_vpr_e(
-				"Failed to hand off regulator control: %s\n",
+			d_vpr_e("Failed to hand off regulator control: %s\n",
 				rinfo->name);
+			return rc;
 		} else {
 			d_vpr_h("Hand off regulator control to HW: %s\n",
 					rinfo->name);
+		}
+
+		if (!regulator_is_enabled(rinfo->regulator)) {
+			d_vpr_e("%s: Regulator is not enabled %s\n",
+				__func__, rinfo->name);
+			__fatal_error(core, true);
 		}
 	}
 
@@ -354,7 +379,7 @@ static int __hand_off_regulators(struct msm_vidc_core *core)
 	int rc = 0, c = 0;
 
 	venus_hfi_for_each_regulator(core, rinfo) {
-		rc = __hand_off_regulator(rinfo);
+		rc = __hand_off_regulator(core, rinfo);
 		/*
 		 * If one regulator hand off failed, driver should take
 		 * the control for other regulators back.
@@ -367,7 +392,7 @@ static int __hand_off_regulators(struct msm_vidc_core *core)
 	return rc;
 err_reg_handoff_failed:
 	venus_hfi_for_each_regulator_reverse_continue(core, rinfo, c)
-		__acquire_regulator(rinfo, core);
+		__acquire_regulator(core, rinfo);
 
 	return rc;
 }
@@ -490,30 +515,29 @@ static int __set_clk_rate(struct msm_vidc_core *core,
 	int rc = 0;
 	struct clk *clk = cl->clk;
 
+	/* bail early if requested clk rate is not changed */
+	if (rate == cl->prev)
+		return 0;
+
 	rc = clk_set_rate(clk, rate);
 	if (rc) {
-		d_vpr_e(
-			"%s: Failed to set clock rate %llu %s: %d\n",
+		d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
 			__func__, rate, cl->name, rc);
 		return rc;
 	}
-
-	core->power.clk_freq = rate;
-
+	cl->prev = rate;
 	return rc;
 }
 
 static int __set_clocks(struct msm_vidc_core *core, u32 freq)
 {
-	struct clock_info *cl;
 	int rc = 0;
-
-	/* bail early if requested clk_freq is not changed */
-	if (freq == core->power.clk_freq)
-		return 0;
+	struct clock_info *cl;
 
 	venus_hfi_for_each_clock(core, cl) {
 		if (cl->has_scaling) {/* has_scaling */
+			d_vpr_h("Scaling clock %s to %u, prev %llu\n",
+				cl->name, freq, cl->prev);
 			rc = __set_clk_rate(core, cl, freq);
 			if (rc)
 				return rc;
@@ -526,15 +550,19 @@ static int __set_clocks(struct msm_vidc_core *core, u32 freq)
 static int __scale_clocks(struct msm_vidc_core *core)
 {
 	int rc = 0;
-	struct allowed_clock_rates_table *allowed_clks_tbl = NULL;
-	u32 rate = 0;
+	struct allowed_clock_rates_table *allowed_clks_tbl;
+	u32 freq = 0;
 
 	allowed_clks_tbl = core->dt->allowed_clks_tbl;
-	rate = core->power.clk_freq ? core->power.clk_freq :
+	freq = core->power.clk_freq ? core->power.clk_freq :
 		allowed_clks_tbl[0].clock_rate;
 
-	rc = __set_clocks(core, rate);
-	return rc;
+	rc = __set_clocks(core, freq);
+	if (rc)
+		return rc;
+
+	core->power.clk_freq = freq;
+	return 0;
 }
 
 static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
@@ -806,7 +834,7 @@ err_q_null:
 	return result;
 }
 
-static int __iface_cmdq_write(struct msm_vidc_core *core,
+int __iface_cmdq_write(struct msm_vidc_core *core,
 	void *pkt)
 {
 	bool needs_interrupt = false;
@@ -818,7 +846,7 @@ static int __iface_cmdq_write(struct msm_vidc_core *core,
 	return rc;
 }
 
-static int __iface_msgq_read(struct msm_vidc_core *core, void *pkt)
+int __iface_msgq_read(struct msm_vidc_core *core, void *pkt)
 {
 	u32 tx_req_is_set = 0;
 	int rc = 0;
@@ -856,7 +884,7 @@ read_error_null:
 	return rc;
 }
 
-static int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt)
+int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt)
 {
 	u32 tx_req_is_set = 0;
 	int rc = 0;
@@ -958,7 +986,6 @@ static int __sys_set_debug(struct msm_vidc_core *core, u32 debug)
 {
 	int rc = 0;
 
-	//rc = call_hfi_pkt_op(core, sys_debug_config, pkt, debug);
 	rc = hfi_packet_sys_debug_config(core, core->packet,
 			core->packet_size, debug);
 	if (rc) {
@@ -1052,7 +1079,7 @@ static int __power_collapse(struct msm_vidc_core *core, bool force)
 	if (rc)
 		goto skip_power_off;
 
-	//__flush_debug_queue(core, core->raw_packet);
+	__flush_debug_queue(core, core->packet);
 
 	rc = __suspend(core);
 	if (rc)
@@ -1062,6 +1089,7 @@ exit:
 	return rc;
 
 skip_power_off:
+	d_vpr_e("%s: skipped\n", __func__);
 	return -EAGAIN;
 }
 
@@ -1105,7 +1133,7 @@ static int __protect_cp_mem(struct msm_vidc_core *core)
 
 	return rc;
 }
-
+#if 0 // TODO
 static int __core_set_resource(struct msm_vidc_core *core,
 		struct vidc_resource_hdr *resource_hdr, void *resource_value)
 {
@@ -1156,7 +1184,7 @@ static int __core_release_resource(struct msm_vidc_core *core,
 err_create_pkt:
 	return rc;
 }
-
+#endif
 
 
 
@@ -1281,6 +1309,7 @@ void __disable_unprepare_clks(struct msm_vidc_core *core)
 				__func__, cl->name);
 
 		clk_disable_unprepare(cl->clk);
+		cl->prev = 0;
 
 		if (__clk_is_enabled(cl->clk))
 			d_vpr_e("%s: clock %s not disabled\n",
@@ -1367,6 +1396,7 @@ fail_clk_enable:
 		d_vpr_e("Clock: %s disable and unprepare\n",
 			cl->name);
 		clk_disable_unprepare(cl->clk);
+		cl->prev = 0;
 	}
 
 	return rc;
@@ -1592,7 +1622,7 @@ static int __disable_regulator(struct regulator_info *rinfo,
 	 * is unknown.
 	 */
 
-	rc = __acquire_regulator(rinfo, core);
+	rc = __acquire_regulator(core, rinfo);
 	if (rc) {
 		/*
 		 * This is somewhat fatal, but nothing we can do
@@ -1631,6 +1661,10 @@ disable_regulator_failed:
 static int __enable_hw_power_collapse(struct msm_vidc_core *core)
 {
 	int rc = 0;
+
+	// TODO: skip if hardwar power control feature is not present
+	d_vpr_e("%s: skip hand off regulators\n", __func__);
+	return 0;
 
 	rc = __hand_off_regulators(core);
 	if (rc)
@@ -1689,6 +1723,7 @@ int __disable_regulators(struct msm_vidc_core *core)
 
 static int __release_subcaches(struct msm_vidc_core *core)
 {
+#if 0 // TODO
 	struct subcache_info *sinfo;
 	int rc = 0;
 	u32 c = 0;
@@ -1727,7 +1762,7 @@ static int __release_subcaches(struct msm_vidc_core *core)
 	}
 
 	core->dt->sys_cache_res_set = false;
-
+#endif
 	return 0;
 }
 
@@ -1791,6 +1826,7 @@ err_activate_fail:
 
 static int __set_subcaches(struct msm_vidc_core *core)
 {
+#if 0 // TODO
 	int rc = 0;
 	u32 c = 0;
 	struct subcache_info *sinfo;
@@ -1845,7 +1881,7 @@ static int __set_subcaches(struct msm_vidc_core *core)
 
 err_fail_set_subacaches:
 	__disable_subcaches(core);
-
+#endif
 	return 0;
 }
 /*
@@ -2302,6 +2338,7 @@ void venus_hfi_work_handler(struct work_struct *work)
 
 	call_venus_op(core, clear_interrupt, core);
 	mutex_unlock(&core->lock);
+
 	num_responses = __response_handler(core);
 
 err_no_work:
@@ -2315,12 +2352,11 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	core = container_of(work, struct msm_vidc_core, device_work);
+	core = container_of(work, struct msm_vidc_core, pm_work.work);
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
-	d_vpr_e("%s(): core %pK\n", __func__, core);
 
 	/*
 	 * It is ok to check this variable outside the lock since
@@ -2361,6 +2397,36 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 	mutex_unlock(&core->lock);
 }
 
+static int __sys_init(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	rc =  hfi_packet_sys_init(core, core->packet, core->packet_size);
+	if (rc)
+		return rc;
+
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+static int __sys_image_version(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	rc = hfi_packet_image_version(core, core->packet, core->packet_size);
+	if (rc)
+		return rc;
+
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
 int venus_hfi_core_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -2399,22 +2465,8 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	if (rc)
 		goto error;
 
-	rc =  hfi_packet_sys_init(core, core->packet, core->packet_size);
-	if (rc)
-		goto error;
-
-	rc = __iface_cmdq_write(core, core->packet);
-	if (rc)
-		goto error;
-
-	rc = hfi_packet_image_version(core, core->packet, core->packet_size);
-	if (rc)
-		goto error;
-
-	rc = __iface_cmdq_write(core, core->packet);
-	if (rc)
-		goto error;
-
+	__sys_init(core);
+	__sys_image_version(core);
 	__sys_set_debug(core, (msm_vidc_debug & FW_LOGMASK) >> FW_LOGSHIFT);
 	__enable_subcaches(core);
 	__set_subcaches(core);
@@ -2474,6 +2526,7 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 		d_vpr_e("%s(): inst packet allocation failed\n", __func__);
 		return -ENOMEM;
 	}
+
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_OPEN,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
@@ -2504,7 +2557,7 @@ int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
 	}
 
 	codec = get_hfi_codec(inst);
-	rc = hfi_packet_session_property(inst,
+	rc = venus_hfi_session_property(inst,
 				HFI_PROP_CODEC,
 				HFI_HOST_FLAGS_NONE,
 				HFI_PORT_NONE,
@@ -2514,12 +2567,46 @@ int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
+error:
+	return rc;
+}
+
+int venus_hfi_session_property(struct msm_vidc_inst *inst,
+	u32 pkt_type, u32 flags, u32 port, u32 payload_type,
+	void *payload, u32 payload_size)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core || !inst->packet) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+				inst->session_id, core->header_id++);
+	if (rc)
+		goto err_prop;
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+				pkt_type,
+				flags,
+				payload_type,
+				port,
+				core->packet_id++,
+				payload,
+				payload_size);
+	if (rc)
+		goto err_prop;
+
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		goto error;
+		goto err_prop;
 
-	inst->codec_set = true;
-error:
+	return rc;
+
+err_prop:
+	d_vpr_e("%s: create packet failed\n", __func__);
 	return rc;
 }
 

@@ -46,8 +46,8 @@
 #define COLOR_RANGE_UNSPECIFIED (-1)
 
 #define V4L2_EVENT_VIDC_BASE  10
-#define INPUT_PLANE V4L2_BUF_TYPE_VIDEO_OUTPUT
-#define OUTPUT_PLANE V4L2_BUF_TYPE_VIDEO_CAPTURE
+#define INPUT_MPLANE V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE
+#define OUTPUT_MPLANE V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
 #define INPUT_META_PLANE V4L2_BUF_TYPE_META_OUTPUT
 #define OUTPUT_META_PLANE V4L2_BUF_TYPE_META_CAPTURE
 
@@ -92,26 +92,40 @@ enum msm_vidc_codec_type {
 };
 
 enum msm_vidc_colorformat_type {
-	MSM_VIDC_FMT_NV12              		= BIT(0),
-	MSM_VIDC_FMT_NV21           	   	= BIT(1),
-	MSM_VIDC_FMT_NV12_UBWC         		= BIT(2),
-	MSM_VIDC_FMT_NV12_P010_UBWC         = BIT(3),
-	MSM_VIDC_FMT_NV12_TP10_UBWC         = BIT(4),
-	MSM_VIDC_FMT_RGBA8888_UBWC          = BIT(5),
-	MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS = BIT(6),
+	MSM_VIDC_FMT_NONE = 0,
+	MSM_VIDC_FMT_NV12,
+	MSM_VIDC_FMT_NV21,
+	MSM_VIDC_FMT_NV12_UBWC,
+	MSM_VIDC_FMT_NV12_P010,
+	MSM_VIDC_FMT_NV12_TP10_UBWC,
+	MSM_VIDC_FMT_RGBA8888,
+	MSM_VIDC_FMT_RGBA8888_UBWC,
 };
 
 enum msm_vidc_buffer_type {
-	MSM_VIDC_BUF_QUEUE             = BIT(0),
-	MSM_VIDC_BUF_INPUT             = BIT(1),
-	MSM_VIDC_BUF_OUTPUT            = BIT(2),
-	MSM_VIDC_BUF_INPUT_META        = BIT(3),
-	MSM_VIDC_BUF_OUTPUT_META       = BIT(4),
-	MSM_VIDC_BUF_SCRATCH           = BIT(5),
-	MSM_VIDC_BUF_SCRATCH_1         = BIT(6),
-	MSM_VIDC_BUF_SCRATCH_2         = BIT(7),
-	MSM_VIDC_BUF_PERSIST           = BIT(8),
-	MSM_VIDC_BUF_PERSIST_1         = BIT(9),
+	MSM_VIDC_BUF_NONE = 0,
+	MSM_VIDC_BUF_INPUT,
+	MSM_VIDC_BUF_OUTPUT,
+	MSM_VIDC_BUF_INPUT_META,
+	MSM_VIDC_BUF_OUTPUT_META,
+	MSM_VIDC_BUF_QUEUE,
+	MSM_VIDC_BUF_SCRATCH,
+	MSM_VIDC_BUF_SCRATCH_1,
+	MSM_VIDC_BUF_SCRATCH_2,
+	MSM_VIDC_BUF_PERSIST,
+	MSM_VIDC_BUF_PERSIST_1,
+};
+
+/* always match with v4l2 flags V4L2_BUF_FLAG_* */
+enum msm_vidc_buffer_flags {
+	MSM_VIDC_BUF_FLAG_KEYFRAME         = 0x00000008,
+	MSM_VIDC_BUF_FLAG_PFRAME           = 0x00000010,
+	MSM_VIDC_BUF_FLAG_BFRAME           = 0x00000020,
+	MSM_VIDC_BUF_FLAG_ERROR            = 0x00000040,
+	MSM_VIDC_BUF_FLAG_LAST             = 0x00100000,
+	// TODO: remove below flags
+	MSM_VIDC_BUF_FLAG_CODECCONFIG      = 0x01000000,
+	MSM_VIDC_BUF_FLAG_SUBFRAME         = 0x02000000,
 };
 
 enum msm_vidc_buffer_attributes {
@@ -122,10 +136,11 @@ enum msm_vidc_buffer_attributes {
 };
 
 enum msm_vidc_buffer_region {
-	MSM_VIDC_NON_SECURE                = BIT(0),
-	MSM_VIDC_SECURE_PIXEL              = BIT(1),
-	MSM_VIDC_SECURE_NONPIXEL           = BIT(2),
-	MSM_VIDC_SECURE_BITSTREAM          = BIT(3),
+	MSM_VIDC_REGION_NONE = 0,
+	MSM_VIDC_NON_SECURE,
+	MSM_VIDC_SECURE_PIXEL,
+	MSM_VIDC_SECURE_NONPIXEL,
+	MSM_VIDC_SECURE_BITSTREAM,
 };
 
 enum msm_vidc_port_type {
@@ -134,6 +149,19 @@ enum msm_vidc_port_type {
 	INPUT_META_PORT,
 	OUTPUT_META_PORT,
 	MAX_PORT,
+};
+
+enum msm_vidc_stage_type {
+	MSM_VIDC_STAGE_NONE = 0,
+	MSM_VIDC_STAGE_1 = 1,
+	MSM_VIDC_STAGE_2 = 2,
+};
+
+enum msm_vidc_pipe_type {
+	MSM_VIDC_PIPE_NONE = 0,
+	MSM_VIDC_PIPE_1 = 1,
+	MSM_VIDC_PIPE_2 = 2,
+	MSM_VIDC_PIPE_4 = 4,
 };
 
 enum msm_vidc_core_capability_type {
@@ -149,6 +177,7 @@ enum msm_vidc_core_capability_type {
 	MAX_MBPS_HQ,
 	MAX_MBPF_B_FRAME,
 	MAX_MBPS_B_FRAME,
+	NUM_VPP_PIPE,
 	SW_PC,
 	SW_PC_DELAY,
 	FW_UNLOAD,

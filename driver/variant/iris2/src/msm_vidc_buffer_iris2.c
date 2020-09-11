@@ -8,6 +8,7 @@
 #include "msm_vidc_buffer.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
+#include "msm_vidc_platform.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
 
@@ -1001,27 +1002,36 @@ static u32 calculate_mpeg2d_persist1_size(void)
 	return QMATRIX_SIZE + MP2D_QPDUMP_SIZE;
 }
 
-/* encoder internal buffers */
+/* decoder internal buffers */
 u32 msm_vidc_decoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 {
+	struct msm_vidc_core *core;
 	u32 size = 0;
 	u32 width, height, num_vpp_pipes;
 	struct v4l2_format *f;
 	bool is_interlaced;
 	u32 vpp_delay;
 
-	d_vpr_h("%s()\n", __func__);
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return size;
 	}
+	core = inst->core;
 
-	num_vpp_pipes = 0;
-	vpp_delay = 0;
+	if (!core->capabilities) {
+		d_vpr_e("%s: invalid capabilities\n", __func__);
+		return size;
+	}
+
+	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
+	if (inst->decode_vpp_delay.enable)
+		vpp_delay = inst->decode_vpp_delay.size;
+	else
+		vpp_delay = DEFAULT_BSE_VPP_DELAY;
 	is_interlaced = false; //(inst->pic_struct == MSM_VIDC_PIC_STRUCT_MAYBE_INTERLACED);
 	f = &inst->fmts[INPUT_PORT];
-	width = f->fmt.pix.width;
-	height = f->fmt.pix.height;
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
 
 	if (inst->codec == MSM_VIDC_H264) {
 		size = calculate_h264d_scratch_size(inst, width, height,
@@ -1042,22 +1052,31 @@ u32 msm_vidc_decoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_decoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 {
+	struct msm_vidc_core *core;
 	u32 size = 0;
 	u32 width, height, out_min_count, num_vpp_pipes;
 	struct v4l2_format *f;
 	u32 vpp_delay;
 
-	d_vpr_h("%s()\n", __func__);
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return size;
 	}
+	core = inst->core;
 
-	num_vpp_pipes = 0;
-	vpp_delay = 0;
+	if (!core->capabilities) {
+		d_vpr_e("%s: invalid capabilities\n", __func__);
+		return size;
+	}
+
+	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
+	if (inst->decode_vpp_delay.enable)
+		vpp_delay = inst->decode_vpp_delay.size;
+	else
+		vpp_delay = DEFAULT_BSE_VPP_DELAY;
 	f = &inst->fmts[INPUT_PORT];
-	width = f->fmt.pix.width;
-	height = f->fmt.pix.height;
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
 	out_min_count = inst->buffers.output.min_count;
 	out_min_count = max(vpp_delay + 1, out_min_count);
 
@@ -1108,6 +1127,7 @@ u32 msm_vidc_decoder_persist_1_size_iris2(struct msm_vidc_inst *inst)
 /* encoder internal buffers */
 u32 msm_vidc_encoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 {
+	struct msm_vidc_core *core;
 	u32 size = 0;
 	u32 width, height, num_vpp_pipes;
 	struct v4l2_format *f;
@@ -1116,11 +1136,17 @@ u32 msm_vidc_encoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return size;
 	}
+	core = inst->core;
 
-	num_vpp_pipes = 4; //inst->core->platform_data->num_vpp_pipes;
+	if (!core->capabilities) {
+		d_vpr_e("%s: invalid capabilities\n", __func__);
+		return size;
+	}
+
+	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
 	f = &inst->fmts[OUTPUT_PORT];
-	width = f->fmt.pix.width;
-	height = f->fmt.pix.height;
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
 
 	if (inst->codec == MSM_VIDC_H264) {
 		size = calculate_h264e_scratch_size(inst, width, height,
@@ -1137,6 +1163,7 @@ u32 msm_vidc_encoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_encoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 {
+	struct msm_vidc_core *core;
 	u32 size = 0;
 	u32 width, height, num_ref, num_vpp_pipes;
 	bool is_tenbit = false;
@@ -1146,11 +1173,17 @@ u32 msm_vidc_encoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: Instance is null!", __func__);
 		return size;
 	}
+	core = inst->core;
 
-	num_vpp_pipes = 4; //inst->core->platform_data->num_vpp_pipes;
+	if (!core->capabilities) {
+		d_vpr_e("%s: invalid capabilities\n", __func__);
+		return size;
+	}
+
+	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
 	f = &inst->fmts[OUTPUT_PORT];
-	width = f->fmt.pix.width;
-	height = f->fmt.pix.height;
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
 	num_ref = 4; //msm_vidc_get_num_ref_frames(inst);
 	is_tenbit = false; //(inst->bit_depth == MSM_VIDC_BIT_DEPTH_10);
 
@@ -1177,8 +1210,8 @@ u32 msm_vidc_encoder_scratch_2_size_iris2(struct msm_vidc_inst *inst)
 	}
 
 	f = &inst->fmts[OUTPUT_PORT];
-	width = f->fmt.pix.width;
-	height = f->fmt.pix.height;
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
 	num_ref = 4; //msm_vidc_get_num_ref_frames(inst);
 	is_tenbit = false; //(inst->bit_depth == MSM_VIDC_BIT_DEPTH_10);
 

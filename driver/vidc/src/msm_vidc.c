@@ -98,8 +98,10 @@ int msm_vidc_querycap(void *instance, struct v4l2_capability *cap)
 	strlcpy(cap->driver, MSM_VIDC_DRV_NAME, sizeof(cap->driver));
 	cap->bus_info[0] = 0;
 	cap->version = MSM_VIDC_VERSION;
-	cap->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_META_CAPTURE |
-		V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_META_OUTPUT |
+	cap->device_caps = V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+		V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+		V4L2_CAP_META_CAPTURE |
+		V4L2_CAP_META_OUTPUT |
 		V4L2_CAP_STREAMING;
 	cap->capabilities = cap->device_caps | V4L2_CAP_DEVICE_CAPS;
 
@@ -213,7 +215,7 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 		return -EINVAL;
 	}
 
-	if (f->type == INPUT_PLANE) {
+	if (f->type == INPUT_MPLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
 		    inst->state != MSM_VIDC_START_OUTPUT) {
 			s_vpr_e(inst->sid,
@@ -221,7 +223,7 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 				__func__, f->type, inst->state);
 			return -EINVAL;
 		}
-	} else if (f->type == OUTPUT_PLANE) {
+	} else if (f->type == OUTPUT_MPLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
 		    inst->state != MSM_VIDC_START_INPUT &&
 		    inst->state != MSM_VIDC_DRAIN_START_INPUT) {
@@ -313,7 +315,7 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 
 	mutex_lock(&inst->lock);
 
-	if (b->type == INPUT_PLANE) {
+	if (b->type == INPUT_MPLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
 		    inst->state != MSM_VIDC_START_OUTPUT) {
 			s_vpr_e(inst->sid,
@@ -322,7 +324,7 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 			rc = -EINVAL;
 			goto unlock;
 		}
-	} else if (b->type == OUTPUT_PLANE) {
+	} else if (b->type == OUTPUT_MPLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
 		    inst->state != MSM_VIDC_START_INPUT &&
 		    inst->state != MSM_VIDC_DRAIN_START_INPUT) {
@@ -372,9 +374,9 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 		rc = -EINVAL;
 		goto unlock;
 	}
-	if (b->type == INPUT_PLANE) {
+	if (b->type == INPUT_MPLANE) {
 		q = &inst->vb2q[INPUT_PORT];
-	} else if (b->type == OUTPUT_PLANE) {
+	} else if (b->type == OUTPUT_MPLANE) {
 		q = &inst->vb2q[OUTPUT_PORT];
 	} else if (b->type == INPUT_META_PLANE) {
 		q = &inst->vb2q[INPUT_META_PORT];
@@ -409,9 +411,9 @@ int msm_vidc_dqbuf(void *instance, struct v4l2_buffer *b)
 	}
 
 	mutex_lock(&inst->lock);
-	if (b->type == INPUT_PLANE) {
+	if (b->type == INPUT_MPLANE) {
 		q = &inst->vb2q[INPUT_PORT];
-	} else if (b->type == OUTPUT_PLANE) {
+	} else if (b->type == OUTPUT_MPLANE) {
 		q = &inst->vb2q[OUTPUT_PORT];
 	} else if (b->type == INPUT_META_PLANE) {
 		q = &inst->vb2q[INPUT_META_PORT];
@@ -452,7 +454,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 
 	mutex_lock(&inst->lock);
 
-	if (type == INPUT_PLANE) {
+	if (type == INPUT_MPLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
 		    inst->state != MSM_VIDC_START_OUTPUT) {
 			s_vpr_e(inst->sid,
@@ -461,7 +463,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 			rc = -EINVAL;
 			goto unlock;
 		}
-	} else if (type == OUTPUT_PLANE) {
+	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state != MSM_VIDC_OPEN &&
 		    inst->state != MSM_VIDC_START_INPUT &&
 		    inst->state != MSM_VIDC_DRAIN_START_INPUT) {
@@ -486,7 +488,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		goto unlock;
 	}
 
-	if (type == INPUT_PLANE) {
+	if (type == INPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN) {
 			new_state = MSM_VIDC_START_INPUT;
 		} else if (inst->state == MSM_VIDC_START_OUTPUT) {
@@ -495,7 +497,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		rc = msm_vidc_change_inst_state(inst, new_state, __func__);
 		if (rc)
 			goto unlock;
-	} else if (type == OUTPUT_PLANE) {
+	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN) {
 			new_state = MSM_VIDC_START_OUTPUT;
 		} else if (inst->state == MSM_VIDC_START_INPUT) {
@@ -531,7 +533,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 
 	mutex_lock(&inst->lock);
 
-	if (type == INPUT_PLANE) {
+	if (type == INPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN ||
 		    inst->state == MSM_VIDC_START_OUTPUT) {
 			s_vpr_e(inst->sid,
@@ -540,7 +542,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 			rc = -EINVAL;
 			goto unlock;
 		}
-	} else if (type == OUTPUT_PLANE) {
+	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN ||
 		    inst->state == MSM_VIDC_START_INPUT) {
 			s_vpr_e(inst->sid,
@@ -564,7 +566,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		goto unlock;
 	}
 
-	if (type == INPUT_PLANE) {
+	if (type == INPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_START_INPUT) {
 			new_state = MSM_VIDC_OPEN;
 		} else if (inst->state == MSM_VIDC_START) {
@@ -582,7 +584,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		rc = msm_vidc_change_inst_state(inst, new_state, __func__);
 		if (rc)
 			goto unlock;
-	} else if (type == OUTPUT_PLANE) {
+	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_START_OUTPUT) {
 			new_state = MSM_VIDC_OPEN;
 		} else if (inst->state == MSM_VIDC_START ||
@@ -832,7 +834,8 @@ int msm_vidc_close(void *instance)
 		return -EINVAL;
 	}
 	s_vpr_h(inst->sid, "%s()\n", __func__);
-	rc = msm_vidc_session_close(inst);
+	msm_vidc_session_close(inst);
+	msm_vidc_remove_session(inst);
 
 	return rc;
 }

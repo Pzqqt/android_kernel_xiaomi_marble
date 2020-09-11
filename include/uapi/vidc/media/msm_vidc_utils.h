@@ -15,12 +15,11 @@
 /* NV12_512 8-bit Y/CbCr 4:2:0  */
 #define V4L2_PIX_FMT_NV12_512                   v4l2_fourcc('Q', '5', '1', '2')
 /* NV12 10-bit Y/CbCr 4:2:0 */
-#define V4L2_PIX_FMT_NV12_P010_UBWC             v4l2_fourcc('Q', '1', '2', 'B')
+#define V4L2_PIX_FMT_NV12_P010                  v4l2_fourcc('Q', 'P', '1', '0')
 /* UBWC 10-bit Y/CbCr 4:2:0 */
-#define V4L2_PIX_FMT_NV12_TP10_UBWC             v4l2_fourcc('Q', '1', '2', 'A')
+#define V4L2_PIX_FMT_NV12_TP10_UBWC             v4l2_fourcc('Q', 'T', 'P', '0')
 #define V4L2_PIX_FMT_RGBA8888_UBWC              v4l2_fourcc('Q', 'R', 'G', 'B')
 /* Y/CbCr 4:2:0 P10 Venus */
-#define V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS v4l2_fourcc('Q', 'P', '1', '0')
 #define V4L2_PIX_FMT_VIDC_META                  v4l2_fourcc('Q', 'M', 'E', 'T')
 /* vendor color format end */
 

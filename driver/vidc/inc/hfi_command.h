@@ -102,6 +102,11 @@ enum hfi_buffer_firmware_flags {
 	HFI_BUF_FW_FLAG_LAST           = BIT(0),
 	HFI_BUF_FW_FLAG_READONLY       = BIT(1),
 	HFI_BUF_FW_FLAG_CODEC_CONFIG   = BIT(2),
+	// TODO
+	HFI_BUF_FW_FLAG_SUBFRAME       = BIT(3),
+	HFI_BUF_FW_FLAG_KEYFRAME       = BIT(4),
+	HFI_BUF_FW_FLAG_CORRUPT        = BIT(28),
+	HFI_BUF_FW_FLAG_UNSUPPORTED    = BIT(29),
 };
 
 enum hfi_metapayload_header_flags {

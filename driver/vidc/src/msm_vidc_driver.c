@@ -57,21 +57,21 @@ void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
 
 	s_vpr_e(inst->sid,
 		"%s: %s: idx %2d fd %d off %d size %d filled %d\n",
-		str, vb2->type == INPUT_PLANE ? "INPUT" : "OUTPUT",
+		str, vb2->type == INPUT_MPLANE ? "INPUT" : "OUTPUT",
 		vb2->index, vb2->planes[0].m.fd,
 		vb2->planes[0].data_offset, vb2->planes[0].length,
 		vb2->planes[0].bytesused);
 }
 
-enum msm_vidc_buffer_type v4l2_type_to_driver(u32 type)
+enum msm_vidc_buffer_type v4l2_type_to_driver(u32 type, const char *func)
 {
 	enum msm_vidc_buffer_type buffer_type = 0;
 
 	switch (type) {
-	case INPUT_PLANE:
+	case INPUT_MPLANE:
 		buffer_type = MSM_VIDC_BUF_INPUT;
 		break;
-	case OUTPUT_PLANE:
+	case OUTPUT_MPLANE:
 		buffer_type = MSM_VIDC_BUF_OUTPUT;
 		break;
 	case INPUT_META_PLANE:
@@ -81,23 +81,23 @@ enum msm_vidc_buffer_type v4l2_type_to_driver(u32 type)
 		buffer_type = MSM_VIDC_BUF_OUTPUT_META;
 		break;
 	default:
-		d_vpr_e("%s: vidc buffer type not found for %#x\n",
-			__func__, type);
+		d_vpr_e("%s: invalid v4l2 buffer type %#x\n", func, type);
 		break;
 	}
 	return buffer_type;
 }
 
-u32 v4l2_type_from_driver(enum msm_vidc_buffer_type buffer_type)
+u32 v4l2_type_from_driver(enum msm_vidc_buffer_type buffer_type,
+	const char *func)
 {
 	u32 type = 0;
 
 	switch (buffer_type) {
 	case MSM_VIDC_BUF_INPUT:
-		type = INPUT_PLANE;
+		type = INPUT_MPLANE;
 		break;
 	case MSM_VIDC_BUF_OUTPUT:
-		type = OUTPUT_PLANE;
+		type = OUTPUT_MPLANE;
 		break;
 	case MSM_VIDC_BUF_INPUT_META:
 		type = INPUT_META_PLANE;
@@ -106,14 +106,14 @@ u32 v4l2_type_from_driver(enum msm_vidc_buffer_type buffer_type)
 		type = OUTPUT_META_PLANE;
 		break;
 	default:
-		d_vpr_e("%s: v4l2 type not found for %#x\n",
-			__func__, buffer_type);
+		d_vpr_e("%s: invalid driver buffer type %d\n",
+			func, buffer_type);
 		break;
 	}
-	return buffer_type;
+	return type;
 }
 
-enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec)
+enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec, const char *func)
 {
 	enum msm_vidc_codec_type codec = 0;
 
@@ -131,13 +131,13 @@ enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec)
 		codec = MSM_VIDC_MPEG2;
 		break;
 	default:
-		d_vpr_e("%s: vidc codec not found for %#x\n", __func__, v4l2_codec);
+		d_vpr_e("%s: invalid v4l2 codec %#x\n", func, v4l2_codec);
 		break;
 	}
 	return codec;
 }
 
-u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec)
+u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec, const char *func)
 {
 	u32 v4l2_codec = 0;
 
@@ -155,13 +155,14 @@ u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec)
 		v4l2_codec = V4L2_PIX_FMT_MPEG2;
 		break;
 	default:
-		d_vpr_e("%s: v4l2 codec not found for %#x\n", __func__, codec);
+		d_vpr_e("%s: invalid driver codec %#x\n", func, codec);
 		break;
 	}
 	return v4l2_codec;
 }
 
-enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 v4l2_colorformat)
+enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 v4l2_colorformat,
+	const char *func)
 {
 	enum msm_vidc_colorformat_type colorformat = 0;
 
@@ -181,20 +182,19 @@ enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 v4l2_colorformat)
 	case V4L2_PIX_FMT_RGBA8888_UBWC:
 		colorformat = MSM_VIDC_FMT_RGBA8888_UBWC;
 		break;
-	case V4L2_PIX_FMT_NV12_P010_UBWC:
-		colorformat = MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
-		break;
-	case V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
-		colorformat = MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+	case V4L2_PIX_FMT_NV12_P010:
+		colorformat = MSM_VIDC_FMT_NV12_P010;
 		break;
 	default:
-		d_vpr_e("%s: vidc format not found for %#x\n", __func__, v4l2_colorformat);
+		d_vpr_e("%s: invalid v4l2 color format %#x\n",
+			func, v4l2_colorformat);
 		break;
 	}
 	return colorformat;
 }
 
-u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat)
+u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
+	const char *func)
 {
 	u32 v4l2_colorformat = 0;
 
@@ -214,20 +214,18 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat)
 	case MSM_VIDC_FMT_RGBA8888_UBWC:
 		v4l2_colorformat = V4L2_PIX_FMT_RGBA8888_UBWC;
 		break;
-	case MSM_VIDC_FMT_NV12_P010_UBWC:
-		v4l2_colorformat = V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
-		break;
-	case MSM_VIDC_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
-		v4l2_colorformat = V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS;
+	case MSM_VIDC_FMT_NV12_P010:
+		v4l2_colorformat = V4L2_PIX_FMT_NV12_P010;
 		break;
 	default:
-		d_vpr_e("%s: v4l2 format not found for %#x\n", __func__, colorformat);
+		d_vpr_e("%s: invalid driver color format %#x\n",
+			func, colorformat);
 		break;
 	}
 	return v4l2_colorformat;
 }
 
-u32 v4l2_colorformat_to_media(u32 v4l2_fmt)
+u32 v4l2_colorformat_to_media(u32 v4l2_fmt, const char *func)
 {
 	switch (v4l2_fmt) {
 	case V4L2_PIX_FMT_NV12:
@@ -236,7 +234,7 @@ u32 v4l2_colorformat_to_media(u32 v4l2_fmt)
 		return COLOR_FMT_NV21;
 	case V4L2_PIX_FMT_NV12_512:
 		return COLOR_FMT_NV12_512;
-	case V4L2_PIX_FMT_SDE_Y_CBCR_H2V2_P010_VENUS:
+	case V4L2_PIX_FMT_NV12_P010:
 		return COLOR_FMT_P010;
 	case V4L2_PIX_FMT_NV12_UBWC:
 		return COLOR_FMT_NV12_UBWC;
@@ -245,9 +243,8 @@ u32 v4l2_colorformat_to_media(u32 v4l2_fmt)
 	case V4L2_PIX_FMT_RGBA8888_UBWC:
 		return COLOR_FMT_RGBA8888_UBWC;
 	default:
-		d_vpr_e(
-			"Invalid v4l2 color fmt FMT : %x, Set default(NV12)",
-			v4l2_fmt);
+		d_vpr_e("%s: invalid v4l2 color fmt: %#x, set default (NV12)",
+			func, v4l2_fmt);
 		return COLOR_FMT_NV12;
 	}
 }
@@ -257,16 +254,17 @@ int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 {
 	int port;
 
-	if (type == INPUT_PLANE) {
+	if (type == INPUT_MPLANE) {
 		port = INPUT_PORT;
 	} else if (type == INPUT_META_PLANE) {
 		port = INPUT_META_PORT;
-	} else if (type == OUTPUT_PLANE) {
+	} else if (type == OUTPUT_MPLANE) {
 		port = OUTPUT_PORT;
 	} else if (type == OUTPUT_META_PLANE) {
 		port = OUTPUT_META_PORT;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid type %d\n", func, type);
+		s_vpr_e(inst->sid, "%s: port not found for v4l2 type %d\n",
+			func, type);
 		port = -EINVAL;
 	}
 
@@ -317,7 +315,7 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 		region = MSM_VIDC_SECURE_NONPIXEL;
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 	}
 	return region;
@@ -347,7 +345,7 @@ struct msm_vidc_buffers *msm_vidc_get_buffers(
 	case MSM_VIDC_BUF_PERSIST_1:
 		return &inst->buffers.persist_1;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 		return NULL;
 	}
@@ -377,7 +375,7 @@ struct msm_vidc_mappings *msm_vidc_get_mappings(
 	case MSM_VIDC_BUF_PERSIST_1:
 		return &inst->mappings.persist_1;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 		return NULL;
 	}
@@ -399,7 +397,7 @@ struct msm_vidc_allocations *msm_vidc_get_allocations(
 	case MSM_VIDC_BUF_PERSIST_1:
 		return &inst->allocations.persist_1;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 		return NULL;
 	}
@@ -457,7 +455,8 @@ int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 	return rc;
 }
 
-static int vb2_buffer_to_driver(struct vb2_buffer *vb2, struct msm_vidc_buffer *buf)
+static int vb2_buffer_to_driver(struct vb2_buffer *vb2,
+	struct msm_vidc_buffer *buf)
 {
 	int rc = 0;
 
@@ -467,7 +466,7 @@ static int vb2_buffer_to_driver(struct vb2_buffer *vb2, struct msm_vidc_buffer *
 	}
 
 	buf->valid = true;
-	buf->type = v4l2_type_to_driver(vb2->type);
+	buf->type = v4l2_type_to_driver(vb2->type, __func__);
 	if (!buf->type)
 		return -EINVAL;
 	buf->index = vb2->index;
@@ -475,7 +474,7 @@ static int vb2_buffer_to_driver(struct vb2_buffer *vb2, struct msm_vidc_buffer *
 	buf->data_offset = vb2->planes[0].data_offset;
 	buf->data_size = vb2->planes[0].bytesused;
 	buf->buffer_size = vb2->planes[0].length;
-	buf->timestamp = vb2->timestamp;
+	buf->timestamp = do_div(vb2->timestamp, NSEC_PER_USEC);
 
 	return rc;
 }
@@ -618,7 +617,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 		return NULL;
 	}
 
-	buf_type = v4l2_type_to_driver(vb2->type);
+	buf_type = v4l2_type_to_driver(vb2->type, __func__);
 	if (!buf_type)
 		return NULL;
 
@@ -641,8 +640,8 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	}
 	if (found) {
 		/* only YUV buffers are allowed to repeat */
-		if ((is_decode_session(inst) && vb2->type != OUTPUT_PLANE) ||
-		    (is_encode_session(inst) && vb2->type != INPUT_PLANE)) {
+		if ((is_decode_session(inst) && vb2->type != OUTPUT_MPLANE) ||
+		    (is_encode_session(inst) && vb2->type != INPUT_MPLANE)) {
 			print_vidc_buffer(VIDC_ERR,
 				"existing buffer", inst, buf);
 			goto error;
@@ -655,7 +654,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 			goto error;
 		}
 		/* for encoder, treat the repeated buffer as new buffer */
-		if (is_encode_session(inst) && vb2->type == INPUT_PLANE)
+		if (is_encode_session(inst) && vb2->type == INPUT_MPLANE)
 			found = false;
 	} else {
 		buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
@@ -663,6 +662,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 			s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
 			goto error;
 		}
+		INIT_LIST_HEAD(&buf->list);
 		buf->dmabuf = dmabuf;
 	}
 	rc = vb2_buffer_to_driver(vb2, buf);
@@ -688,28 +688,30 @@ struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf)
 {
 	struct msm_vidc_buffer *mbuf;
-	struct msm_vidc_buffers *meta;
+	struct msm_vidc_buffers *buffers;
 	bool found = false;
 
 	if (!inst || !buf) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return NULL;
 	}
-
+	/*
+	 * do not call print_vidc_buffer() in this function to avoid recursion,
+	 * this function is called from print_vidc_buffer.
+	 */
 	if (buf->type == MSM_VIDC_BUF_INPUT) {
-		meta = &inst->buffers.input_meta;
+		buffers = &inst->buffers.input_meta;
 	} else if (buf->type == MSM_VIDC_BUF_OUTPUT) {
-		meta = &inst->buffers.output_meta;
+		buffers = &inst->buffers.output_meta;
 	} else {
 		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
 			__func__, buf->type);
 		return NULL;
 	}
-	list_for_each_entry(mbuf, &meta->list, list) {
+	list_for_each_entry(mbuf, &buffers->list, list) {
 		if (!mbuf->valid)
 			continue;
-		if (mbuf->type == buf->type &&
-		    mbuf->index == buf->index) {
+		if (mbuf->index == buf->index) {
 			found = true;
 			break;
 		}
@@ -724,6 +726,7 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
 	struct msm_vidc_buffer *buf;
+	struct msm_vidc_buffer *meta;
 	int port;
 
 	if (!inst || !vb2) {
@@ -737,8 +740,12 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 
 	/* meta buffer will be queued along with actual buffer */
 	if (buf->type == MSM_VIDC_BUF_INPUT_META ||
-	    buf->type == MSM_VIDC_BUF_OUTPUT_META)
+	    buf->type == MSM_VIDC_BUF_OUTPUT_META) {
+		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
+		s_vpr_l(inst->sid, "metabuf fd %3d daddr %#x deferred\n",
+			buf->fd, buf->device_addr);
 		return 0;
+	}
 
 	/* skip queuing if streamon not completed */
 	port = v4l2_type_to_driver_port(inst, vb2->type, __func__);
@@ -751,9 +758,17 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	}
 
 	print_vidc_buffer(VIDC_HIGH, "qbuf", inst, buf);
-	rc = venus_hfi_queue_buffer(inst, buf, get_meta_buffer(inst, buf));
+	meta = get_meta_buffer(inst, buf);
+	rc = venus_hfi_queue_buffer(inst, buf, meta);
 	if (rc)
 		return rc;
+
+	buf->attr &= ~MSM_VIDC_ATTR_DEFERRED;
+	buf->attr |= MSM_VIDC_ATTR_QUEUED;
+	if (meta) {
+		meta->attr &= ~MSM_VIDC_ATTR_DEFERRED;
+		meta->attr |= MSM_VIDC_ATTR_QUEUED;
+	}
 
 	return rc;
 }
@@ -839,8 +854,11 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 			return -ENOMEM;
 		list_add_tail(&map->list, &mappings->list);
 
-		s_vpr_e(inst->sid, "%s: created buffer_type %#x, size %d\n",
-			__func__, buffer_type, buffers->size);
+		buffer->device_addr = map->device_addr;
+		s_vpr_h(inst->sid,
+			"%s: created buffer_type %#x, size %d device_addr %#x\n",
+			__func__, buffer_type, buffers->size,
+			buffer->device_addr);
 	}
 
 	return 0;
@@ -930,6 +948,55 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 	return 0;
 }
 
+int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf)
+{
+	int type, port;
+	struct vb2_queue *q;
+	struct vb2_buffer *vb2;
+	struct vb2_v4l2_buffer *vbuf;
+	bool found;
+
+	if (!inst || !buf) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	type = v4l2_type_from_driver(buf->type, __func__);
+	if (!type)
+		return -EINVAL;
+	port = v4l2_type_to_driver_port(inst, type, __func__);
+	if (port < 0)
+		return -EINVAL;
+
+	q = &inst->vb2q[port];
+	if (!q->streaming) {
+		s_vpr_e(inst->sid, "%s: port %d is not streaming\n",
+			__func__, port);
+		return -EINVAL;
+	}
+
+	found = false;
+	list_for_each_entry(vb2, &q->queued_list, queued_entry) {
+		if (vb2->state != VB2_BUF_STATE_ACTIVE)
+			continue;
+		if (vb2->index == buf->index) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		print_vidc_buffer(VIDC_ERR, "vb2 not found for", inst, buf);
+		return -EINVAL;
+	}
+	vbuf = to_vb2_v4l2_buffer(vb2);
+	vbuf->flags = buf->flags;
+	vb2->timestamp = buf->timestamp * NSEC_PER_USEC;
+	vb2->planes[0].bytesused = buf->data_size;
+	vb2_buffer_done(vb2, VB2_BUF_STATE_DONE);
+
+	return 0;
+}
+
 int msm_vidc_setup_event_queue(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -969,7 +1036,7 @@ static int vb2q_init(struct msm_vidc_inst *inst,
 	core = inst->core;
 
 	q->type = type;
-	q->io_modes = VB2_MMAP | VB2_USERPTR;
+	q->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	q->ops = core->vb2_ops;
 	q->mem_ops = core->vb2_mem_ops;
@@ -989,11 +1056,11 @@ int msm_vidc_vb2_queue_init(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = vb2q_init(inst, &inst->vb2q[INPUT_PORT], INPUT_PLANE);
+	rc = vb2q_init(inst, &inst->vb2q[INPUT_PORT], INPUT_MPLANE);
 	if (rc)
 		return rc;
 
-	rc = vb2q_init(inst, &inst->vb2q[OUTPUT_PORT], OUTPUT_PLANE);
+	rc = vb2q_init(inst, &inst->vb2q[OUTPUT_PORT], OUTPUT_MPLANE);
 	if (rc)
 		return rc;
 
@@ -1041,6 +1108,35 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	return rc;
 }
 
+int msm_vidc_remove_session(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_inst *i, *temp;
+	struct msm_vidc_core *core;
+	u32 count = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	mutex_lock(&core->lock);
+	list_for_each_entry_safe(i, temp, &core->instances, list) {
+		if (i->session_id == inst->session_id) {
+			list_del_init(&i->list);
+			d_vpr_h("%s: removed session %d\n",
+				__func__, i->session_id);
+			inst->sid = 0;
+		}
+	}
+	list_for_each_entry(i, &core->instances, list)
+		count++;
+	d_vpr_h("%s: remaining sessions %d\n", __func__, count);
+	mutex_unlock(&core->lock);
+
+	return 0;
+}
+
 int msm_vidc_session_open(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -1064,9 +1160,15 @@ int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = venus_hfi_session_set_codec(inst);
+	if (inst->codec_set)
+		return 0;
 
-	return rc;
+	rc = venus_hfi_session_set_codec(inst);
+	if (rc)
+		return rc;
+
+	inst->codec_set = true;
+	return 0;
 }
 
 int msm_vidc_session_close(struct msm_vidc_inst *inst)
@@ -1087,7 +1189,7 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 	rc = wait_for_completion_timeout(
 			&inst->completions[SIGNAL_CMD_CLOSE],
 			msecs_to_jiffies(
-			core->platform->data.core_data[HW_RESPONSE_TIMEOUT].value));
+			core->capabilities[HW_RESPONSE_TIMEOUT].value));
 	if (!rc) {
 		s_vpr_e(inst->sid, "%s: session close timed out\n", __func__);
 		//msm_comm_kill_session(inst);
@@ -1350,9 +1452,9 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	mutex_unlock(&core->lock);
 	/*TODO: acquire lock or not */
 	d_vpr_h("%s(): waiting for sys init done, %d ms\n", __func__,
-		core->platform->data.core_data[HW_RESPONSE_TIMEOUT].value);
+		core->capabilities[HW_RESPONSE_TIMEOUT].value);
 	rc = wait_for_completion_timeout(&core->init_done, msecs_to_jiffies(
-			core->platform->data.core_data[HW_RESPONSE_TIMEOUT].value));
+			core->capabilities[HW_RESPONSE_TIMEOUT].value));
 	if (!rc) {
 		d_vpr_e("%s: system init timed out\n", __func__);
 		//msm_comm_kill_session(inst);

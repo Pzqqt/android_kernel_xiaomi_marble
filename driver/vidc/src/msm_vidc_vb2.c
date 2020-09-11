@@ -41,6 +41,7 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
+
 	if (inst->state == MSM_VIDC_START) {
 		d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
 		return -EINVAL;
@@ -50,28 +51,65 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 	if (port < 0)
 		return -EINVAL;
 
-	if (port == INPUT_PORT || port == INPUT_META_PORT) {
+	if (port == INPUT_PORT) {
 		if (inst->state == MSM_VIDC_START_INPUT) {
 			d_vpr_e("%s: input invalid state %d\n",
 				__func__, inst->state);
 			return -EINVAL;
 		}
-	} else if (port == OUTPUT_PORT || port == OUTPUT_META_PORT) {
+
+		*num_planes = 1;
+		if (*num_buffers < inst->buffers.input.min_count +
+			inst->buffers.input.extra_count)
+			*num_buffers = inst->buffers.input.min_count +
+				inst->buffers.input.extra_count;
+		inst->buffers.input.actual_count = *num_buffers;
+
+	} else if (port == INPUT_META_PORT) {
+		if (inst->state == MSM_VIDC_START_INPUT) {
+			d_vpr_e("%s: input_meta invalid state %d\n",
+				__func__, inst->state);
+			return -EINVAL;
+		}
+
+		*num_planes = 1;
+		if (*num_buffers < inst->buffers.input_meta.min_count +
+			inst->buffers.input_meta.extra_count)
+			*num_buffers = inst->buffers.input_meta.min_count +
+				inst->buffers.input_meta.extra_count;
+		inst->buffers.input_meta.actual_count = *num_buffers;
+
+	} else if (port == OUTPUT_PORT) {
 		if (inst->state == MSM_VIDC_START_OUTPUT) {
 			d_vpr_e("%s: output invalid state %d\n",
 				__func__, inst->state);
 			return -EINVAL;
 		}
+
+		*num_planes = 1;
+		if (*num_buffers < inst->buffers.output.min_count +
+			inst->buffers.output.extra_count)
+			*num_buffers = inst->buffers.output.min_count +
+				inst->buffers.output.extra_count;
+		inst->buffers.output.actual_count = *num_buffers;
+
+	} else if (port == OUTPUT_META_PORT) {
+		if (inst->state == MSM_VIDC_START_OUTPUT) {
+			d_vpr_e("%s: output_meta invalid state %d\n",
+				__func__, inst->state);
+			return -EINVAL;
+		}
+
+		*num_planes = 1;
+		if (*num_buffers < inst->buffers.output_meta.min_count +
+			inst->buffers.output_meta.extra_count)
+			*num_buffers = inst->buffers.output_meta.min_count +
+				inst->buffers.output_meta.extra_count;
+		inst->buffers.output_meta.actual_count = *num_buffers;
 	}
 
-	*num_planes = 1;
-	if (*num_buffers < inst->buffers.input.min_count +
-		inst->buffers.input.extra_count)
-		*num_buffers = inst->buffers.input.min_count +
-			inst->buffers.input.extra_count;
-	inst->buffers.input.actual_count = *num_buffers;
 	if (port == INPUT_PORT || port == OUTPUT_PORT)
-		sizes[0] = inst->fmts[port].fmt.pix.sizeimage;
+		sizes[0] = inst->fmts[port].fmt.pix_mp.plane_fmt[0].sizeimage;
 	else if (port == INPUT_META_PORT || port == OUTPUT_META_PORT)
 		sizes[0] = inst->fmts[port].fmt.meta.buffersize;
 
@@ -123,19 +161,19 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 
 	if ((inst->state == MSM_VIDC_START_INPUT) ||
 		(inst->state == MSM_VIDC_START &&
-		q->type == INPUT_PLANE)) {
+		q->type == INPUT_MPLANE)) {
 		rc = msm_vidc_set_fw_list(inst);
 		if (rc)
 			return -EINVAL;
 	}
 	*/
 
-	if (q->type == INPUT_PLANE) {
+	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_start_input(inst);
 		//else if (is_encode_session(inst))
 		//	rc = msm_venc_start_input(inst);
-	} else if (q->type == OUTPUT_PLANE) {
+	} else if (q->type == OUTPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_start_output(inst);
 		//else if (is_encode_session(inst))

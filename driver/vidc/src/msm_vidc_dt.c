@@ -304,6 +304,7 @@ static int msm_vidc_load_allowed_clocks_table(
 	int rc = 0;
 	struct platform_device *pdev = core->pdev;
 	struct msm_vidc_dt *dt = core->dt;
+	int i;
 
 	if (!of_find_property(pdev->dev.of_node,
 			"qcom,allowed-clock-rates", NULL)) {
@@ -324,15 +325,20 @@ static int msm_vidc_load_allowed_clocks_table(
 	sort(dt->allowed_clks_tbl, dt->allowed_clks_tbl_size,
 		 sizeof(*dt->allowed_clks_tbl), cmp, NULL);
 
+	d_vpr_h("Found allowed clock rates\n");
+	for (i = 0; i < dt->allowed_clks_tbl_size; i++)
+		d_vpr_h("    %d\n", dt->allowed_clks_tbl[i]);
+
 	return 0;
 }
 
 static int msm_vidc_load_bus_table(struct msm_vidc_core *core)
 {
+	int rc = 0;
 	struct platform_device *pdev = core->pdev;
 	struct msm_vidc_dt *dt = core->dt;
 	struct bus_set *buses = &dt->bus_set;
-	int c = 0, num_buses = 0, rc = 0;
+	int c = 0, num_buses = 0;
 	u32 *bus_ranges = NULL;
 
 	num_buses = of_property_count_strings(pdev->dev.of_node,
@@ -381,7 +387,8 @@ static int msm_vidc_load_bus_table(struct msm_vidc_core *core)
 		bus->range[0] = bus_ranges[c * 2];
 		bus->range[1] = bus_ranges[c * 2 + 1];
 
-		d_vpr_h("Found bus %s\n", bus->name);
+		d_vpr_h("Found bus %s, range [%d %d]\n", bus->name,
+			bus->range[0], bus->range[1]);
 	}
 
 exit:

@@ -154,6 +154,42 @@ u32 get_hfi_codec(struct msm_vidc_inst *inst)
 	}
 }
 
+u32 get_hfi_colorformat(struct msm_vidc_inst *inst,
+	enum msm_vidc_colorformat_type colorformat)
+{
+	u32 hfi_colorformat = HFI_COLOR_FMT_NV12_UBWC;
+
+	switch(colorformat) {
+	case MSM_VIDC_FMT_NV12:
+		hfi_colorformat = HFI_COLOR_FMT_NV12;
+		break;
+	case MSM_VIDC_FMT_NV12_UBWC:
+		hfi_colorformat = HFI_COLOR_FMT_NV12_UBWC;
+		break;
+	case MSM_VIDC_FMT_NV12_P010:
+		hfi_colorformat = HFI_COLOR_FMT_P010;
+		break;
+	case MSM_VIDC_FMT_NV12_TP10_UBWC:
+		hfi_colorformat = HFI_COLOR_FMT_TP10_UBWC;
+		break;
+	case MSM_VIDC_FMT_RGBA8888:
+		hfi_colorformat = HFI_COLOR_FMT_RGBA8888;
+		break;
+	case MSM_VIDC_FMT_RGBA8888_UBWC:
+		hfi_colorformat = HFI_COLOR_FMT_RGBA8888_UBWC;
+		break;
+	case MSM_VIDC_FMT_NV21:
+		hfi_colorformat = HFI_COLOR_FMT_NV21;
+		break;
+	default:
+		s_vpr_e(inst->sid, "%s: invalid colorformat %d\n",
+			__func__, colorformat);
+		break;
+	}
+
+	return hfi_colorformat;
+}
+
 int get_hfi_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer, struct hfi_buffer *buf)
 {
@@ -540,43 +576,6 @@ int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	return rc;
 
 err_cmd:
-	d_vpr_e("%s: create packet failed\n", __func__);
-	return rc;
-}
-
-int hfi_packet_session_property(struct msm_vidc_inst *inst,
-	u32 pkt_type, u32 flags, u32 port, u32 payload_type,
-	void *payload, u32 payload_size)
-{
-	int rc = 0;
-	struct msm_vidc_core *core;
-
-	if (!inst || !inst->core || !inst->packet) {
-		d_vpr_e("%s: Invalid params\n", __func__);
-		return -EINVAL;
-	}
-	core = inst->core;
-
-	rc = hfi_create_header(inst->packet, inst->packet_size,
-				   inst->session_id, core->header_id++);
-	if (rc)
-		goto err_prop;
-
-	rc = hfi_create_packet(inst->packet, inst->packet_size,
-				pkt_type,
-				flags,
-				payload_type,
-				port,
-				core->packet_id++,
-				payload,
-				payload_size);
-	if (rc)
-		goto err_prop;
-
-	d_vpr_h("Property packet 0x%x created\n", pkt_type);
-	return rc;
-
-err_prop:
 	d_vpr_e("%s: create packet failed\n", __func__);
 	return rc;
 }

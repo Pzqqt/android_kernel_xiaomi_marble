@@ -70,11 +70,16 @@ void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf);
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
 		struct vb2_buffer *vb2);
-enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec);
-u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec);
-u32 v4l2_colorformat_to_media(u32 v4l2_fmt);
-enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 colorformat);
-u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat);
+enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec,
+	const char *func);
+u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec,
+	const char *func);
+u32 v4l2_colorformat_to_media(u32 v4l2_fmt,
+	const char *func);
+enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 colorformat,
+	const char *func);
+u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
+	const char *func);
 int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
@@ -85,6 +90,9 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type);
 int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type);
+int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf);
+int msm_vidc_remove_session(struct msm_vidc_inst *inst);
 int msm_vidc_add_session(struct msm_vidc_inst *inst);
 int msm_vidc_session_open(struct msm_vidc_inst *inst);
 int msm_vidc_session_set_codec(struct msm_vidc_inst *inst);

@@ -95,6 +95,8 @@ struct msm_vidc_inst {
 	struct vb2_queue                   vb2q[MAX_PORT];
 	struct msm_vidc_crop               crop;
 	struct msm_vidc_properties         prop;
+	enum msm_vidc_stage_type           stage;
+	enum msm_vidc_pipe_type            pipe;
 	struct msm_vidc_power              power;
 	struct msm_vidc_buffers_info       buffers;
 	struct msm_vidc_mappings_info      mappings;

@@ -20,6 +20,8 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
 	enum msm_vidc_buffer_type buffer_type);
 u32 get_hfi_codec(struct msm_vidc_inst *inst);
+u32 get_hfi_colorformat(struct msm_vidc_inst *inst,
+	enum msm_vidc_colorformat_type colorformat);
 int get_hfi_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer, struct hfi_buffer *buf);
 int hfi_create_header(u8 *packet, u32 packet_size,
@@ -40,8 +42,5 @@ int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
 	u8 *pkt, u32 pkt_size, u32 debug_config);
 int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	u32 pkt_type, u32 flags, u32 port, u32 session_id,
-	u32 payload_type, void *payload, u32 payload_size);
-int hfi_packet_session_property(struct msm_vidc_inst *inst,
-	u32 pkt_type, u32 flags, u32 port,
 	u32 payload_type, void *payload, u32 payload_size);
 #endif // _HFI_PACKET_H_

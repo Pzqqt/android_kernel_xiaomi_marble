@@ -151,10 +151,9 @@ u32 msm_vidc_decoder_output_size(struct msm_vidc_inst *inst)
 	struct v4l2_format *f;
 
 	f = &inst->fmts[OUTPUT_PORT];
-	format = v4l2_colorformat_to_media(f->fmt.pix.pixelformat);
-	size = VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
-			f->fmt.pix.height);
-	size = 4; // TODO
+	format = v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__);
+	size = VENUS_BUFFER_SIZE(format, f->fmt.pix_mp.width,
+			f->fmt.pix_mp.height);
 	return size;
 }
 
@@ -175,10 +174,9 @@ u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 	struct v4l2_format *f;
 
 	f = &inst->fmts[INPUT_PORT];
-	format = v4l2_colorformat_to_media(f->fmt.pix.pixelformat);
-	size = VENUS_BUFFER_SIZE(format, f->fmt.pix.width,
-			f->fmt.pix.height);
-	size = 4; // TODO
+	format = v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__);
+	size = VENUS_BUFFER_SIZE(format, f->fmt.pix_mp.width,
+			f->fmt.pix_mp.height);
 	return size;
 }
 

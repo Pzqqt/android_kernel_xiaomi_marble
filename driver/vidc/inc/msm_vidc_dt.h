@@ -138,6 +138,7 @@ struct clock_info {
 	u32 count;
 	bool has_scaling;
 	bool has_mem_retention;
+	u64 prev;
 };
 
 struct clock_set {

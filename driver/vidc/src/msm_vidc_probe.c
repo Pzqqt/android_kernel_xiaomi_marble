@@ -118,8 +118,10 @@ static int msm_vidc_register_video_device(struct msm_vidc_core *core,
 	core->vdev[index].type = type;
 	core->vdev[index].vdev.v4l2_dev = &core->v4l2_dev;
 	core->vdev[index].vdev.device_caps =
-		V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_META_CAPTURE |
-		V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_META_OUTPUT |
+		V4L2_CAP_VIDEO_CAPTURE_MPLANE |
+		V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+		V4L2_CAP_META_CAPTURE |
+		V4L2_CAP_META_OUTPUT |
 		V4L2_CAP_STREAMING;
 	rc = video_register_device(&core->vdev[index].vdev,
 					VFL_TYPE_GRABBER, nr);
