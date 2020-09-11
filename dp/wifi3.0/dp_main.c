@@ -5729,6 +5729,8 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		dp_set_peer_isolation(peer, false);
 
+		dp_wds_ext_peer_init(peer);
+
 		dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
@@ -5775,6 +5777,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	}
 	dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
 	qdf_spinlock_create(&peer->peer_info_lock);
+	dp_wds_ext_peer_init(peer);
 
 	dp_peer_rx_bufq_resources_init(peer);
 
@@ -8773,6 +8776,11 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		dp_vdev_set_hlos_tid_override(vdev,
 				val.cdp_vdev_param_hlos_tid_override);
 		break;
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	case CDP_CFG_WDS_EXT:
+		vdev->wds_ext_enabled = val.cdp_vdev_param_wds_ext;
+		break;
+#endif
 	default:
 		break;
 	}
@@ -10721,6 +10729,10 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 #endif
 	.get_peer_mac_list = dp_get_peer_mac_list,
 	.tx_send_exc = dp_tx_send_exception,
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	.get_wds_ext_peer_id = dp_wds_ext_get_peer_id,
+	.set_wds_ext_peer_rx = dp_wds_ext_set_peer_rx,
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
@@ -12506,6 +12518,65 @@ uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 	return new_mac_cnt;
 }
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+uint16_t dp_wds_ext_get_peer_id(ol_txrx_soc_handle soc,
+				uint8_t vdev_id,
+				uint8_t *mac)
+{
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						       mac, 0, vdev_id,
+						       DP_MOD_ID_CDP);
+	uint16_t peer_id = HTT_INVALID_PEER;
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		return peer_id;
+	}
+
+	peer_id = peer->peer_id;
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+	return peer_id;
+}
+
+QDF_STATUS dp_wds_ext_set_peer_rx(ol_txrx_soc_handle soc,
+				  uint8_t vdev_id,
+				  uint8_t *mac,
+				  ol_txrx_rx_fp rx)
+{
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+						       mac, 0, vdev_id,
+						       DP_MOD_ID_CDP);
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		return status;
+	}
+
+	if (rx) {
+		if (peer->osif_rx) {
+		    status = QDF_STATUS_E_ALREADY;
+		} else {
+		    peer->osif_rx = rx;
+		    status = QDF_STATUS_SUCCESS;
+		}
+	} else {
+		if (peer->osif_rx) {
+		    peer->osif_rx = NULL;
+		    status = QDF_STATUS_SUCCESS;
+		} else {
+		    status = QDF_STATUS_E_ALREADY;
+		}
+	}
+
+	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+
+	return status;
+}
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
+
 /**
  * dp_pdev_srng_deinit() - de-initialize all pdev srng ring including
  *			   monitor rings
@@ -13279,7 +13350,6 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 	nss_cfg = wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx);
 	wlan_cfg_set_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx,
 					 (nss_cfg & (1 << pdev_id)));
-
 	pdev->target_pdev_id =
 		dp_calculate_target_pdev_id_from_host_pdev_id(soc, pdev_id);
 

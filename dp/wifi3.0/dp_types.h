@@ -2515,6 +2515,9 @@ struct dp_vdev {
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
 	uint8_t num_latency_critical_conn;
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	bool wds_ext_enabled;
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 };
 
 
@@ -2616,6 +2619,24 @@ struct dp_peer_mscs_parameter {
 	uint8_t classifier_mask;
 };
 #endif
+
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+#define WDS_EXT_PEER_INIT_BIT 0
+
+/**
+ * struct dp_wds_ext_peer - wds ext peer structure
+ * This is used when wds extended feature is enabled
+ * both compile time and run time. It is created
+ * when 1st 4 address frame is received from
+ * wds backhaul.
+ * @osif_vdev: Handle to the OS shim SW's virtual device
+ * @init: wds ext netdev state
+ */
+struct dp_wds_ext_peer {
+	ol_osif_vdev_handle osif_vdev;
+	unsigned long init;
+};
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 
 /* Peer structure for data path state */
 struct dp_peer {
@@ -2737,6 +2758,10 @@ struct dp_peer {
 #ifdef WLAN_SUPPORT_MSCS
 	struct dp_peer_mscs_parameter mscs_ipv4_parameter, mscs_ipv6_parameter;
 	bool mscs_active;
+#endif
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	struct dp_wds_ext_peer wds_ext;
+	ol_txrx_rx_fp osif_rx;
 #endif
 };
 

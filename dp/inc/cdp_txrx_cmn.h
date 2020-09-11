@@ -2666,4 +2666,43 @@ cdp_rx_get_pending(ol_txrx_soc_handle soc)
 
 	return soc->ol_ops->dp_rx_get_pending(soc);
 }
+
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+static inline uint16_t
+cdp_wds_ext_get_peer_id(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *mac)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->get_wds_ext_peer_id)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->get_wds_ext_peer_id
+			(soc, vdev_id, mac);
+}
+
+static inline QDF_STATUS
+cdp_wds_ext_set_peer_rx(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			uint8_t *mac, ol_txrx_rx_fp rx)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_wds_ext_peer_rx)
+		return QDF_STATUS_E_FAULT;
+
+	return soc->ops->cmn_drv_ops->set_wds_ext_peer_rx
+			(soc, vdev_id, mac, rx);
+}
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 #endif /* _CDP_TXRX_CMN_H_ */

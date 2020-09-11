@@ -625,6 +625,11 @@ struct ol_txrx_nbuf_classify {
 struct ol_osif_vdev_t;
 typedef struct ol_osif_vdev_t *ol_osif_vdev_handle;
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+struct ol_osif_peer_t;
+typedef struct ol_osif_peer_t *ol_osif_peer_handle;
+#endif
+
 /**
  * wlan_op_mode - Virtual device operation mode
  * @wlan_op_mode_unknown: Unknown mode
@@ -1162,6 +1167,7 @@ typedef union cdp_config_param_t {
 	uint32_t cdp_vdev_param_safe_mode;
 	uint32_t cdp_vdev_param_drop_unenc;
 	uint8_t cdp_vdev_param_hlos_tid_override;
+	bool cdp_vdev_param_wds_ext;
 
 	/* pdev params */
 	bool cdp_pdev_param_cptr_latcy;
@@ -1272,6 +1278,7 @@ enum cdp_pdev_bpr_param {
  * @CDP_DROP_UNENC: set drop unencrypted flag
  * @CDP_ENABLE_IGMP_MCAST_EN: enable/disable igmp multicast enhancement
  * @CDP_ENABLE_HLOS_TID_OVERRIDE: set hlos tid override flag
+ * @CDP_CFG_WDS_EXT: enable/disable wds ext feature
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1299,6 +1306,9 @@ enum cdp_vdev_param_type {
 	CDP_ENABLE_CSUM,
 	CDP_ENABLE_IGMP_MCAST_EN,
 	CDP_ENABLE_HLOS_TID_OVERRIDE,
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	CDP_CFG_WDS_EXT,
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 };
 
 /*

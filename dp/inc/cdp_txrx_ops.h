@@ -556,6 +556,15 @@ struct cdp_cmn_ops {
 		 (ol_txrx_soc_handle soc, uint8_t vdev_id,
 		  u_int8_t newmac[][QDF_MAC_ADDR_SIZE], uint16_t mac_cnt,
 		  bool limit);
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	uint16_t (*get_wds_ext_peer_id)(ol_txrx_soc_handle soc,
+					uint8_t vdev_id,
+					uint8_t *mac);
+	QDF_STATUS (*set_wds_ext_peer_rx)(ol_txrx_soc_handle soc,
+					  uint8_t vdev_id,
+					  uint8_t *mac,
+					  ol_txrx_rx_fp rx);
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 };
 
 struct cdp_ctrl_ops {
@@ -1130,6 +1139,11 @@ struct ol_if_ops {
 				   uint8_t vdev_id);
 	int (*dp_rx_get_pending)(ol_txrx_soc_handle soc);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	void (*rx_wds_ext_peer_learn)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+				      uint16_t peer_id, uint8_t vdev_id,
+				      uint8_t *peer_macaddr);
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 };
 
 #ifdef DP_PEER_EXTENDED_API

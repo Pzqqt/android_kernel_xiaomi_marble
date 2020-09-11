@@ -410,6 +410,17 @@ static inline void dp_set_peer_isolation(struct dp_peer *peer, bool val)
 }
 #endif /* QCA_SUPPORT_PEER_ISOLATION */
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+static inline void dp_wds_ext_peer_init(struct dp_peer *peer)
+{
+	peer->wds_ext.init = 0;
+}
+#else
+static inline void dp_wds_ext_peer_init(struct dp_peer *peer)
+{
+}
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
+
 /**
  * The lmac ID for a particular channel band is fixed.
  * 2.4GHz band uses lmac_id = 1
@@ -2423,5 +2434,39 @@ static inline QDF_STATUS dp_soc_swlm_detach(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* !WLAN_DP_FEATURE_SW_LATENCY_MGR */
+
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+/**
+ * dp_wds_ext_get_peer_id(): function to get peer id by mac
+ * This API is called from control path when wds extended
+ * device is created, hence it also updates wds extended
+ * peer state to up, which will be referred in rx processing.
+ * @soc: Datapath soc handle
+ * @vdev_id: vdev id
+ * @mac: Peer mac address
+ *
+ * return: valid peer id on success
+ *         HTT_INVALID_PEER on failure
+ */
+uint16_t dp_wds_ext_get_peer_id(ol_txrx_soc_handle soc,
+				uint8_t vdev_id,
+				uint8_t *mac);
+
+/**
+ * dp_wds_ext_set_peer_state(): function to set peer state
+ * @soc: Datapath soc handle
+ * @vdev_id: vdev id
+ * @mac: Peer mac address
+ * @rx: rx function pointer
+ *
+ * return: QDF_STATUS_SUCCESS on success
+ *         QDF_STATUS_E_INVAL if peer is not found
+ *         QDF_STATUS_E_ALREADY if rx is already set/unset
+ */
+QDF_STATUS dp_wds_ext_set_peer_rx(ol_txrx_soc_handle soc,
+				  uint8_t vdev_id,
+				  uint8_t *mac,
+				  ol_txrx_rx_fp rx);
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
 
 #endif /* #ifndef _DP_INTERNAL_H_ */
