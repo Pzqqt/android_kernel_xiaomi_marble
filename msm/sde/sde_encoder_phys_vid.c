@@ -830,8 +830,6 @@ skip_flush:
 	/* ctl_flush & timing engine enable will be triggered by framework */
 	if (phys_enc->enable_state == SDE_ENC_DISABLED)
 		phys_enc->enable_state = SDE_ENC_ENABLING;
-	if (phys_enc->enable_state == SDE_ENC_ENABLED)
-		phys_enc->enable_state = SDE_ENC_TIMING_ENGINE_RECONFIG;
 }
 
 static void sde_encoder_phys_vid_destroy(struct sde_encoder_phys *phys_enc)
@@ -1121,11 +1119,6 @@ static void sde_encoder_phys_vid_handle_post_kickoff(
 			spin_unlock_irqrestore(phys_enc->enc_spinlock,
 				lock_flags);
 		}
-		phys_enc->enable_state = SDE_ENC_ENABLED;
-	} else if (phys_enc->enable_state == SDE_ENC_TIMING_ENGINE_RECONFIG) {
-		/* add 2 vsync delay for timing engine change */
-		sde_encoder_phys_vid_single_vblank_wait(phys_enc);
-		sde_encoder_phys_vid_single_vblank_wait(phys_enc);
 		phys_enc->enable_state = SDE_ENC_ENABLED;
 	}
 
