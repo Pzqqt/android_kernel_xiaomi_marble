@@ -91,6 +91,7 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 
 	bus_ops->hif_config_irq_affinity =
 		&hif_pci_config_irq_affinity;
+	bus_ops->hif_config_irq_by_ceid = &hif_ce_msi_configure_irq_by_ceid;
 	return QDF_STATUS_SUCCESS;
 }
 

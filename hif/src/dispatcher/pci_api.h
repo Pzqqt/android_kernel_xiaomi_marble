@@ -67,4 +67,5 @@ const char *hif_pci_get_irq_name(int irq_no);
  * Return: None
  */
 void hif_pci_config_irq_affinity(struct hif_softc *scn);
+int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id);
 #endif /* _PCI_API_H_ */

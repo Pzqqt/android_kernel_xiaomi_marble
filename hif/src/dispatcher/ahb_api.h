@@ -47,6 +47,7 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 		struct platform_device *pdev,
 		const struct platform_device_id *id);
 int hif_ahb_configure_irq(struct hif_pci_softc *sc);
+int hif_ahb_configure_irq_by_ceid(struct hif_softc *sc, int ce_id);
 int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 			      struct hif_exec_context *hif_ext_grp);
 bool hif_ahb_needs_bmi(struct hif_softc *scn);

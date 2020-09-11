@@ -568,3 +568,8 @@ void hif_config_irq_affinity(struct hif_softc *hif_sc)
 {
 	hif_sc->bus_ops.hif_config_irq_affinity(hif_sc);
 }
+
+int hif_config_irq_by_ceid(struct hif_softc *hif_sc, int ce_id)
+{
+	return hif_sc->bus_ops.hif_config_irq_by_ceid(hif_sc, ce_id);
+}

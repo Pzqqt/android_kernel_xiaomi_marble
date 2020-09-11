@@ -221,6 +221,8 @@ struct HIF_CE_state {
 	struct CE_handle *ce_diag;
 	struct ce_stats stats;
 	struct ce_ops *ce_services;
+	struct service_to_pipe *tgt_svc_map;
+	int sz_tgt_svc_map;
 };
 
 /*

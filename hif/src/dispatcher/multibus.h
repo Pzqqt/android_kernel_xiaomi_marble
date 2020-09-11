@@ -86,6 +86,7 @@ struct hif_bus_ops {
 	int (*hif_addr_in_boundary)(struct hif_softc *scn, uint32_t offset);
 	bool (*hif_needs_bmi)(struct hif_softc *hif_sc);
 	void (*hif_config_irq_affinity)(struct hif_softc *hif_sc);
+	int (*hif_config_irq_by_ceid)(struct hif_softc *hif_sc, int ce_id);
 };
 
 #ifdef HIF_SNOC
@@ -254,4 +255,13 @@ static inline int hif_usb_get_context_size(void)
  * Return: None
  */
 void hif_config_irq_affinity(struct hif_softc *hif_sc);
+
+/**
+ * hif_config_irq_by_ceid() - register irq by CE id
+ * @hif_sc - hif context
+ * @ce_id - Copy Engine id for which the irq need to be configured
+ *
+ * Return: 0 on success, negative value on error.
+ */
+int hif_config_irq_by_ceid(struct hif_softc *hif_sc, int ce_id);
 #endif /* _MULTIBUS_H_ */

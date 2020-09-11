@@ -259,6 +259,7 @@ struct hif_softc {
 	/* Should the unlzay support for interrupt delivery be disabled */
 	/* Flag to indicate whether bus is suspended */
 	bool bus_suspended;
+	bool pktlog_init;
 };
 
 static inline
@@ -331,6 +332,8 @@ void hif_shutdown_device(struct hif_opaque_softc *hif_ctx);
 int hif_bus_configure(struct hif_softc *scn);
 void hif_cancel_deferred_target_sleep(struct hif_softc *scn);
 int hif_config_ce(struct hif_softc *scn);
+int hif_config_ce_pktlog(struct hif_opaque_softc *hif_ctx);
+int hif_config_ce_by_id(struct hif_softc *scn, int pipe_num);
 void hif_unconfig_ce(struct hif_softc *scn);
 void hif_ce_prepare_config(struct hif_softc *scn);
 QDF_STATUS hif_ce_open(struct hif_softc *scn);

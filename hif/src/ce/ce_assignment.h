@@ -1001,7 +1001,7 @@ static struct CE_attr host_ce_config_wlan_qca5018[] = {
 #ifdef REMOVE_PKT_LOG
 	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
 #else
-	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
+	{/*CE5*/ (CE_ATTR_FLAGS | CE_ATTR_INIT_ON_DEMAND), 0, 0, 2048,
 		512, NULL,},
 #endif
 	/* Target autonomous HIF_memcpy */
@@ -1057,7 +1057,7 @@ static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 #ifdef REMOVE_PKT_LOG
 	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
 #else
-	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
+	{/*CE5*/ (CE_ATTR_FLAGS | CE_ATTR_INIT_ON_DEMAND), 0, 0, 2048,
 		512, NULL,},
 #endif
 	/* Target autonomous HIF_memcpy */

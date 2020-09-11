@@ -437,6 +437,7 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 #define CE_ATTR_DISABLE_INTR         0x08 /* no interrupt on copy completion */
 #define CE_ATTR_ENABLE_POLL          0x10 /* poll for residue descriptors */
 #define CE_ATTR_DIAG                 0x20 /* Diag CE */
+#define CE_ATTR_INIT_ON_DEMAND       0x40 /* Initialized on demand */
 
 /**
  * struct CE_attr - Attributes of an instance of a Copy Engine

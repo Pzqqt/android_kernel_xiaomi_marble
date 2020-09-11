@@ -126,7 +126,6 @@ const char *hif_ahb_get_irq_name(int irq_no)
 void hif_ahb_disable_isr(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-
 	hif_exec_kill(&scn->osc);
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
@@ -268,41 +267,62 @@ static void hif_ahb_get_soc_info_pld(struct hif_pci_softc *sc,
 	sc->ce_sc.ol_sc.mem_pa = info.p_addr;
 }
 
+int hif_ahb_configure_irq_by_ceid(struct hif_softc *scn, int ce_id)
+{
+	int ret = 0;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct platform_device *pdev = (struct platform_device *)sc->pdev;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	int irq = 0;
+
+	if (ce_id >= CE_COUNT_MAX)
+		return -EINVAL;
+
+	ret = pfrm_get_irq(&pdev->dev, (struct qdf_pfm_hndl *)pdev,
+			   ic_irqname[HIF_IC_CE0_IRQ_OFFSET + ce_id],
+			   HIF_IC_CE0_IRQ_OFFSET + ce_id, &irq);
+	if (ret) {
+		dev_err(&pdev->dev, "get irq failed\n");
+		ret = -EFAULT;
+		goto end;
+	}
+
+	ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + ce_id] = irq;
+	ret = pfrm_request_irq(&pdev->dev, irq,
+			       hif_ahb_interrupt_handler,
+			       IRQF_TRIGGER_RISING,
+			       ic_irqname[HIF_IC_CE0_IRQ_OFFSET + ce_id],
+			       &hif_state->tasklets[ce_id]);
+	if (ret) {
+		dev_err(&pdev->dev, "ath_request_irq failed\n");
+		ret = -EFAULT;
+		goto end;
+	}
+	hif_ahb_irq_enable(scn, ce_id);
+
+end:
+	return ret;
+}
+
 int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 {
 	int ret = 0;
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
-	struct platform_device *pdev = (struct platform_device *)sc->pdev;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct CE_attr *host_ce_conf = hif_state->host_ce_config;
-	int irq = 0;
 	int i;
 
 	/* configure per CE interrupts */
 	for (i = 0; i < scn->ce_count; i++) {
 		if (host_ce_conf[i].flags & CE_ATTR_DISABLE_INTR)
 			continue;
-		ret = pfrm_get_irq(&pdev->dev, (struct qdf_pfm_hndl *)pdev,
-				   ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i],
-				   HIF_IC_CE0_IRQ_OFFSET + i, &irq);
-		if (ret) {
-			dev_err(&pdev->dev, "get irq failed\n");
-			ret = -EFAULT;
-			goto end;
-		}
 
-		ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i] = irq;
-		ret = pfrm_request_irq(&pdev->dev, irq,
-				       hif_ahb_interrupt_handler,
-				       IRQF_TRIGGER_RISING,
-				       ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i],
-				       &hif_state->tasklets[i]);
-		if (ret) {
-			dev_err(&pdev->dev, "ath_request_irq failed\n");
-			ret = -EFAULT;
+		if (host_ce_conf[i].flags & CE_ATTR_INIT_ON_DEMAND)
+			continue;
+
+		ret = hif_ahb_configure_irq_by_ceid(scn, i);
+		if (ret)
 			goto end;
-		}
-		hif_ahb_irq_enable(scn, i);
 	}
 
 end:
@@ -726,7 +746,8 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 				if (host_ce_conf[i].flags
 						& CE_ATTR_DISABLE_INTR)
 					continue;
-
+				if (!hif_state->tasklets[i].inited)
+					continue;
 				pfrm_free_irq(
 					scn->qdf_dev->dev,
 					ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i],

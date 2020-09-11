@@ -77,7 +77,6 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 }
 
 static struct tasklet_work tasklet_workers[CE_ID_MAX];
-static bool work_initialized;
 
 /**
  * init_tasklet_work() - init_tasklet_work
@@ -98,17 +97,13 @@ static void init_tasklet_work(struct work_struct *work,
  *
  * Return: N/A
  */
-void init_tasklet_workers(struct hif_opaque_softc *scn)
+void init_tasklet_worker_by_ceid(struct hif_opaque_softc *scn, int ce_id)
 {
-	uint32_t id;
 
-	for (id = 0; id < CE_ID_MAX; id++) {
-		tasklet_workers[id].id = id;
-		tasklet_workers[id].data = scn;
-		init_tasklet_work(&tasklet_workers[id].work,
-				  reschedule_ce_tasklet_work_handler);
-	}
-	work_initialized = true;
+	tasklet_workers[ce_id].id = ce_id;
+	tasklet_workers[ce_id].data = scn;
+	init_tasklet_work(&tasklet_workers[ce_id].work,
+			  reschedule_ce_tasklet_work_handler);
 }
 
 /**
@@ -123,8 +118,6 @@ void deinit_tasklet_workers(struct hif_opaque_softc *scn)
 
 	for (id = 0; id < CE_ID_MAX; id++)
 		cancel_work_sync(&tasklet_workers[id].work);
-
-	work_initialized = false;
 }
 
 /**
@@ -427,8 +420,6 @@ void ce_tasklet_kill(struct hif_softc *scn)
 {
 	int i;
 	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(scn);
-
-	work_initialized = false;
 
 	for (i = 0; i < CE_COUNT_MAX; i++) {
 		if (hif_ce_state->tasklets[i].inited) {
