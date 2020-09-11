@@ -2203,7 +2203,10 @@ qdf_nbuf_queue_append(qdf_nbuf_queue_t *dest, qdf_nbuf_queue_t *src)
 static inline void
 qdf_nbuf_queue_free(qdf_nbuf_queue_t *head)
 {
-	__qdf_nbuf_queue_free(head);
+	qdf_nbuf_t  buf = NULL;
+
+	while ((buf = qdf_nbuf_queue_remove(head)) != NULL)
+		qdf_nbuf_free(buf);
 }
 
 static inline qdf_nbuf_t

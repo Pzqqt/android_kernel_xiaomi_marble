@@ -1737,23 +1737,6 @@ struct sk_buff *__qdf_nbuf_queue_remove(__qdf_nbuf_queue_t *qhead)
 }
 
 /**
- * __qdf_nbuf_queue_free() - free a queue
- * @qhead: head of queue
- *
- * Return: QDF status
- */
-static inline QDF_STATUS
-__qdf_nbuf_queue_free(__qdf_nbuf_queue_t *qhead)
-{
-	__qdf_nbuf_t  buf = NULL;
-
-	while ((buf = __qdf_nbuf_queue_remove(qhead)) != NULL)
-		__qdf_nbuf_free(buf);
-	return QDF_STATUS_SUCCESS;
-}
-
-
-/**
  * __qdf_nbuf_queue_first() - returns the first skb in the queue
  * @qhead: head of queue
  *
