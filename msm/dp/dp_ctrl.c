@@ -1156,7 +1156,7 @@ static void dp_ctrl_fec_dsc_setup(struct dp_ctrl_private *ctrl)
 	rlen = drm_dp_dpcd_writeb(ctrl->aux->drm_aux, DP_DSC_ENABLE,
 			dsc_enable);
 	if (rlen < 1)
-		DP_DEBUG("failed to enable sink dsc\n");
+		DP_WARN("failed to enable sink dsc\n");
 }
 
 static int dp_ctrl_stream_on(struct dp_ctrl *dp_ctrl, struct dp_panel *panel)
