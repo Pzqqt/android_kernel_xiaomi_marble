@@ -523,6 +523,9 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 			sizeof(dsi_mode.priv_info->roi_caps));
 	}
 
+	mode_info->allowed_mode_switches =
+		dsi_mode.priv_info->allowed_mode_switch;
+
 	return 0;
 }
 
@@ -1083,4 +1086,100 @@ void dsi_drm_bridge_cleanup(struct dsi_bridge *bridge)
 		bridge->base.encoder->bridge = NULL;
 
 	kfree(bridge);
+}
+
+static bool is_valid_poms_switch(struct dsi_display_mode *mode_a,
+		struct dsi_display_mode *mode_b)
+{
+	/*
+	 * POMS cannot happen in conjunction with any other type of mode set.
+	 * Check to ensure FPS remains same between the modes and also
+	 * resolution.
+	 */
+	return((mode_a->timing.refresh_rate == mode_b->timing.refresh_rate) &&
+			(mode_a->timing.v_active == mode_b->timing.v_active) &&
+			(mode_a->timing.h_active == mode_b->timing.h_active));
+}
+
+void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
+		void *display)
+{
+	u32 mode_idx = 0, cmp_mode_idx = 0;
+	struct drm_display_mode *drm_mode, *cmp_drm_mode;
+	struct dsi_display_mode dsi_mode, *panel_dsi_mode, *cmp_panel_dsi_mode;
+	struct list_head *mode_list = &connector->modes;
+	struct dsi_display *disp = display;
+	struct dsi_panel *panel;
+	int mode_count, rc = 0;
+	struct dsi_display_mode_priv_info *dsi_mode_info, *cmp_dsi_mode_info;
+	bool allow_switch = false;
+
+	if (!disp || !disp->panel) {
+		DSI_ERR("invalid parameters");
+		return;
+	}
+
+	panel = disp->panel;
+	mode_count = panel->num_display_modes;
+
+	list_for_each_entry(drm_mode, &connector->modes, head) {
+
+		convert_to_dsi_mode(drm_mode, &dsi_mode);
+
+		rc = dsi_display_find_mode(display, &dsi_mode, &panel_dsi_mode);
+		if (rc)
+			return;
+
+		dsi_mode_info =  panel_dsi_mode->priv_info;
+		dsi_mode_info->allowed_mode_switch |= BIT(mode_idx);
+		if (mode_idx == mode_count - 1)
+			break;
+
+		mode_list = mode_list->next;
+		cmp_mode_idx = 1;
+		list_for_each_entry(cmp_drm_mode, mode_list, head) {
+			convert_to_dsi_mode(cmp_drm_mode, &dsi_mode);
+
+			rc = dsi_display_find_mode(display, &dsi_mode,
+					&cmp_panel_dsi_mode);
+			if (rc)
+				return;
+
+			cmp_dsi_mode_info = cmp_panel_dsi_mode->priv_info;
+			allow_switch = false;
+
+			/*
+			 * FPS switch among video modes, is only supported
+			 * if DFPS or dynamic clocks are specified.
+			 * Reject any mode switches between video mode timing
+			 * nodes if support for those features is not present.
+			 */
+			if (panel_dsi_mode->panel_mode ==
+					cmp_panel_dsi_mode->panel_mode) {
+				if (panel_dsi_mode->panel_mode ==
+						DSI_OP_CMD_MODE)
+					allow_switch = true;
+				else if (panel->dfps_caps.dfps_support ||
+					panel->dyn_clk_caps.dyn_clk_support)
+					allow_switch = true;
+			} else {
+				if (is_valid_poms_switch(panel_dsi_mode,
+						cmp_panel_dsi_mode))
+					allow_switch = true;
+			}
+
+			if (allow_switch) {
+				dsi_mode_info->allowed_mode_switch |=
+					BIT(mode_idx + cmp_mode_idx);
+				cmp_dsi_mode_info->allowed_mode_switch |=
+					BIT(mode_idx);
+			}
+
+			if ((mode_idx + cmp_mode_idx) >= mode_count - 1)
+				break;
+
+			cmp_mode_idx++;
+		}
+		mode_idx++;
+	}
 }

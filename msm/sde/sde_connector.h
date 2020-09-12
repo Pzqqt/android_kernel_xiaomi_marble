@@ -366,6 +366,14 @@ struct sde_connector_ops {
 	 * Returns: Zero on success
 	 */
 	int (*install_properties)(void *display, struct drm_connector *conn);
+
+	/**
+	 * set_allowed_mode_switch - set allowed_mode_switch flag
+	 * @connector: Pointer to drm connector structure
+	 * @display: Pointer to private display structure
+	 */
+	void (*set_allowed_mode_switch)(struct drm_connector *connector,
+			void *display);
 };
 
 /**

@@ -147,4 +147,12 @@ u64 dsi_drm_find_bit_clk_rate(void *display,
 int dsi_conn_prepare_commit(void *display,
 		struct msm_display_conn_params *params);
 
+/**
+ * dsi_set_allowed_mode_switch - set allowed mode switch bitmask
+ * @connector: Pointer to drm connector structure
+ * @display: Pointer to private display structure
+ */
+void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
+		void *display);
+
 #endif /* _DSI_DRM_H_ */

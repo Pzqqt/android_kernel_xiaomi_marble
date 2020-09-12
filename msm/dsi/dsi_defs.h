@@ -597,6 +597,7 @@ struct dsi_host_config {
  * @pclk_scale:           pclk scale factor, target bpp to source bpp
  * @roi_caps:		  Panel ROI capabilities
  * @widebus_support       48 bit wide data bus is supported by hw
+ * @allowed_mode_switch: BIT mask to mark allowed mode switches
  */
 struct dsi_display_mode_priv_info {
 	struct dsi_panel_cmd_set cmd_sets[DSI_CMD_SET_MAX];
@@ -620,6 +621,7 @@ struct dsi_display_mode_priv_info {
 	struct msm_ratio pclk_scale;
 	struct msm_roi_caps roi_caps;
 	bool widebus_support;
+	u32 allowed_mode_switch;
 };
 
 /**
