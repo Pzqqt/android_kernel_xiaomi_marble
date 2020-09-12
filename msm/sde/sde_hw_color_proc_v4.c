@@ -335,7 +335,11 @@ void sde_setup_dspp_ltm_hist_ctrlv1(struct sde_hw_dspp *ctx, void *cfg,
 	op_mode = SDE_REG_READ(&ctx->hw, offset);
 
 	if (!enable) {
-		op_mode &= ~BIT(0);
+		if (op_mode & BIT(1))
+			op_mode &= ~BIT(0);
+		else
+			op_mode = 0;
+
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->ltm.base + 0x4,
 			(op_mode & 0x1FFFFFF));
 		return;
