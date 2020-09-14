@@ -39,7 +39,6 @@ static QDF_STATUS send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS status;
 	uint32_t duration;
 
-	WMI_LOGD("%s: Enter", __func__);
 	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + sizeof(*noa_discriptor);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -84,7 +83,6 @@ static QDF_STATUS send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 end:
-	WMI_LOGD("%s: Exit", __func__);
 	return status;
 }
 
@@ -102,7 +100,6 @@ static QDF_STATUS send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	QDF_STATUS status;
 
-	WMI_LOGD("%s: Enter", __func__);
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
 		status = QDF_STATUS_E_FAILURE;
@@ -130,7 +127,6 @@ static QDF_STATUS send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 end:
-	WMI_LOGD("%s: Exit", __func__);
 	return status;
 }
 
@@ -188,8 +184,7 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMI_LOGD("%s:index %u, opps_ps %u, ct_window %u, num_descriptors = %u",
-		 __func__,
+	wmi_debug("index %u, opps_ps %u, ct_window %u, num_descriptors = %u",
 		 param->index, param->opps_ps, param->ct_window,
 		 param->num_desc);
 	for (i = 0; i < param->num_desc; i++) {
@@ -202,8 +197,8 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 			wmi_noa_info->noa_descriptors[i].interval;
 		param->noa_desc[i].start_time =
 			wmi_noa_info->noa_descriptors[i].start_time;
-		WMI_LOGD("%s:NoA descriptor[%d] type_count %u, duration %u, interval %u, start_time = %u",
-			__func__, i, param->noa_desc[i].type_count,
+		wmi_debug("NoA descriptor[%d] type_count %u, duration %u, interval %u, start_time = %u",
+			 i, param->noa_desc[i].type_count,
 			param->noa_desc[i].duration,
 			param->noa_desc[i].interval,
 			param->noa_desc[i].start_time);
@@ -249,7 +244,7 @@ send_set_mac_addr_rx_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->enable = 1;
 	else
 		cmd->enable = 0;
-	WMI_LOGD("set random mac rx vdev %d freq %d set %d "QDF_MAC_ADDR_FMT,
+	wmi_debug("set random mac rx vdev %d freq %d set %d "QDF_MAC_ADDR_FMT,
 		 param->vdev_id, param->freq, param->set,
 		 QDF_MAC_ADDR_REF(param->mac));
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -312,7 +307,7 @@ static QDF_STATUS send_p2p_lo_start_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMI_LOGD("%s: vdev_id:%d", __func__, param->vdev_id);
+	wmi_debug("vdev_id: %d", param->vdev_id);
 
 	device_types_len_aligned =
 		qdf_roundup(param->dev_types_len,
@@ -359,7 +354,7 @@ static QDF_STATUS send_p2p_lo_start_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(buf_ptr, param->probe_resp_tmplt,
 		     param->probe_resp_len);
 
-	WMI_LOGD("%s: Sending WMI_P2P_LO_START command, channel=%d, period=%d, interval=%d, count=%d", __func__,
+	wmi_debug("Sending WMI_P2P_LO_START command, channel=%d, period=%d, interval=%d, count=%d",
 		 cmd->channel, cmd->period, cmd->interval, cmd->count);
 
 	wmi_mtrace(WMI_P2P_LISTEN_OFFLOAD_START_CMDID, cmd->vdev_id, 0);
@@ -372,7 +367,7 @@ static QDF_STATUS send_p2p_lo_start_cmd_tlv(wmi_unified_t wmi_handle,
 		return status;
 	}
 
-	WMI_LOGD("%s: Successfully sent WMI_P2P_LO_START", __func__);
+	wmi_debug("Successfully sent WMI_P2P_LO_START");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -392,7 +387,7 @@ static QDF_STATUS send_p2p_lo_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	int32_t len;
 	QDF_STATUS status;
 
-	WMI_LOGD("%s: vdev_id:%d", __func__, vdev_id);
+	wmi_debug("vdev_id: %d", vdev_id);
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -407,7 +402,7 @@ static QDF_STATUS send_p2p_lo_stop_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->vdev_id = vdev_id;
 
-	WMI_LOGD("%s: Sending WMI_P2P_LO_STOP command", __func__);
+	wmi_debug("Sending WMI_P2P_LO_STOP command");
 
 	wmi_mtrace(WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle,
@@ -419,7 +414,7 @@ static QDF_STATUS send_p2p_lo_stop_cmd_tlv(wmi_unified_t wmi_handle,
 		return status;
 	}
 
-	WMI_LOGD("%s: Successfully sent WMI_P2P_LO_STOP", __func__);
+	wmi_debug("Successfully sent WMI_P2P_LO_STOP");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -455,7 +450,7 @@ static QDF_STATUS extract_p2p_lo_stop_ev_param_tlv(
 	lo_param = param_tlvs->fixed_param;
 	param->vdev_id = lo_param->vdev_id;
 	param->reason_code = lo_param->reason;
-	WMI_LOGD("%s: vdev_id:%d, reason:%d", __func__,
+	wmi_debug("vdev_id:%d, reason:%d",
 		 param->vdev_id, param->reason_code);
 
 	return QDF_STATUS_SUCCESS;

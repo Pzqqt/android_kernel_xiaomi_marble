@@ -65,11 +65,11 @@ static QDF_STATUS send_dbr_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->num_resp_per_event = cfg->num_resp_per_event;
 	cmd->event_timeout_ms = cfg->event_timeout_ms;
 
-	WMI_LOGD("%s: wmi_dma_ring_cfg_req_fixed_param pdev id %d mod id %d"
+	wmi_debug("wmi_dma_ring_cfg_req_fixed_param pdev id %d mod id %d"
 		  "base paddr lo %x base paddr hi %x head idx paddr lo %x"
 		  "head idx paddr hi %x tail idx paddr lo %x"
 		  "tail idx addr hi %x num elems %d buf size %d num resp %d"
-		  "event timeout %d", __func__, cmd->pdev_id,
+		  "event timeout %d", cmd->pdev_id,
 		  cmd->mod_id, cmd->base_paddr_lo, cmd->base_paddr_hi,
 		  cmd->head_idx_paddr_lo, cmd->head_idx_paddr_hi,
 		  cmd->tail_idx_paddr_lo, cmd->tail_idx_paddr_hi,
@@ -134,7 +134,7 @@ static QDF_STATUS extract_dbr_buf_release_fixed_tlv(wmi_unified_t wmi_handle,
 	param->mod_id = ev->mod_id;
 	param->num_buf_release_entry = ev->num_buf_release_entry;
 	param->num_meta_data_entry = ev->num_meta_data_entry;
-	WMI_LOGD("%s:pdev id %d mod id %d num buf release entry %d", __func__,
+	wmi_debug("pdev id %d mod id %d num buf release entry %d",
 		 param->pdev_id, param->mod_id, param->num_buf_release_entry);
 
 	return QDF_STATUS_SUCCESS;
@@ -157,7 +157,7 @@ static QDF_STATUS extract_dbr_buf_release_entry_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMI_LOGD("%s: paddr_lo[%d] = %x", __func__, idx, entry->paddr_lo);
+	wmi_debug("paddr_lo[%d] = %x", idx, entry->paddr_lo);
 
 	param->paddr_lo = entry->paddr_lo;
 	param->paddr_hi = entry->paddr_hi;

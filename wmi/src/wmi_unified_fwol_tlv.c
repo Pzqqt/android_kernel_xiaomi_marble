@@ -130,7 +130,7 @@ extract_get_elna_bypass_resp_tlv(struct wmi_unified *wmi_handle, void *resp_buf,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMI_LOGD("Get elna bypass %d from vdev %d", evt->en_dis, evt->vdev_id);
+	wmi_debug("Get elna bypass %d from vdev %d", evt->en_dis, evt->vdev_id);
 
 	resp->vdev_id = evt->vdev_id;
 	resp->en_dis = evt->en_dis;

@@ -35,7 +35,7 @@ QDF_STATUS wmi_send_set_active_apf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_bpf_set_vdev_active_mode_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 
-	WMI_LOGD("Sending WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID(%u, %d, %d)",
+	wmi_debug("Sending WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID(%u, %d, %d)",
 		 vdev_id, ucast_mode, mcast_bcast_mode);
 
 	/* allocate command buffer */

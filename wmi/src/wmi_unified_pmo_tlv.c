@@ -141,7 +141,7 @@ static QDF_STATUS send_add_wow_wakeup_event_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(&(cmd->event_bitmaps[0]), bitmap, sizeof(uint32_t) *
 		     WMI_WOW_MAX_EVENT_BM_LEN);
 
-	WMI_LOGD("Wakeup pattern 0x%x%x%x%x %s in fw", cmd->event_bitmaps[0],
+	wmi_debug("Wakeup pattern 0x%x%x%x%x %s in fw", cmd->event_bitmaps[0],
 		 cmd->event_bitmaps[1], cmd->event_bitmaps[2],
 		 cmd->event_bitmaps[3], enable ? "enabled" : "disabled");
 
@@ -240,15 +240,15 @@ static QDF_STATUS send_wow_patterns_to_fw_cmd_tlv(wmi_unified_t wmi_handle,
 	bitmap_pattern->bitmask_len = bitmap_pattern->pattern_len;
 	bitmap_pattern->pattern_id = ptrn_id;
 
-	WMI_LOGD("vdev: %d, ptrn id: %d, ptrn len: %d, ptrn offset: %d user %d",
+	wmi_debug("vdev: %d, ptrn id: %d, ptrn len: %d, ptrn offset: %d user %d",
 		 cmd->vdev_id, cmd->pattern_id, bitmap_pattern->pattern_len,
 		 bitmap_pattern->pattern_offset, user);
-	WMI_LOGD("Pattern : ");
+	wmi_debug("Pattern: ");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   &bitmap_pattern->patternbuf[0],
 			   bitmap_pattern->pattern_len);
 
-	WMI_LOGD("Mask : ");
+	wmi_debug("Mask: ");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   &bitmap_pattern->bitmaskbuf[0],
 			   bitmap_pattern->pattern_len);
@@ -323,8 +323,8 @@ static void fill_arp_offload_params_tlv(wmi_unified_t wmi_handle,
 			qdf_mem_copy(&arp_tuple->target_ipaddr,
 					offload_req->host_ipv4_addr,
 					WMI_IPV4_ADDR_LEN);
-			WMI_LOGD("ARPOffload IP4 address: %pI4",
-					offload_req->host_ipv4_addr);
+			wmi_debug("ARPOffload IP4 address: %pI4",
+				 offload_req->host_ipv4_addr);
 		}
 		*buf_ptr += sizeof(WMI_ARP_OFFLOAD_TUPLE);
 	}
@@ -375,7 +375,7 @@ static void fill_ns_offload_params_tlv(wmi_unified_t wmi_handle,
 				ns_tuple->flags |=
 					WMI_NSOFF_FLAGS_IS_IPV6_ANYCAST;
 			}
-			WMI_LOGD("Index %d NS solicitedIp %pI6, targetIp %pI6",
+			wmi_debug("Index %d NS solicitedIp %pI6, targetIp %pI6",
 				i, &ns_req->self_ipv6_addr[i],
 				&ns_req->target_ipv6_addr[i]);
 
@@ -444,7 +444,7 @@ static void fill_nsoffload_ext_tlv(wmi_unified_t wmi_handle,
 				ns_tuple->flags |=
 					WMI_NSOFF_FLAGS_IS_IPV6_ANYCAST;
 			}
-			WMI_LOGD("Index %d NS solicitedIp %pI6, targetIp %pI6",
+			wmi_debug("Index %d NS solicitedIp %pI6, targetIp %pI6",
 				i, &ns_req->self_ipv6_addr[i],
 				&ns_req->target_ipv6_addr[i]);
 
@@ -541,7 +541,7 @@ static QDF_STATUS send_enable_arp_ns_offload_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = vdev_id;
 	cmd->num_ns_ext_tuples = num_ns_ext_tuples;
 
-	WMI_LOGD("ARP NS Offload vdev_id: %d", cmd->vdev_id);
+	wmi_debug("ARP NS Offload vdev_id: %d", cmd->vdev_id);
 
 	buf_ptr += sizeof(WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param);
 	fill_ns_offload_params_tlv(wmi_handle, ns_offload_req, &buf_ptr);
@@ -596,7 +596,7 @@ static QDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(multicast_addr.bytes, &cmd->mcastbdcastaddr);
 
-	WMI_LOGD("Action:%d; vdev_id:%d; clearList:%d; MCBC MAC Addr: "QDF_MAC_ADDR_FMT,
+	wmi_debug("Action:%d; vdev_id:%d; clearList:%d; MCBC MAC Addr: "QDF_MAC_ADDR_FMT,
 		 cmd->action, vdev_id, clearList,
 		 QDF_MAC_ADDR_REF(multicast_addr.bytes));
 
@@ -719,7 +719,7 @@ static QDF_STATUS send_conf_hw_filter_cmd_tlv(wmi_unified_t wmi,
 	else
 		cmd->hw_filter_bitmap = req->mode_bitmap;
 
-	WMI_LOGD("Send %s hw filter mode: 0x%X for vdev id %d",
+	wmi_debug("Send %s hw filter mode: 0x%X for vdev id %d",
 		 req->enable ? "enable" : "disable", req->mode_bitmap,
 		 req->vdev_id);
 
@@ -781,8 +781,6 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	WMI_GTK_OFFLOAD_CMD_fixed_param *cmd;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	WMI_LOGD("%s Enter", __func__);
-
 	len = sizeof(*cmd);
 
 	if (params->is_fils_connection)
@@ -819,7 +817,8 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	if (params->is_fils_connection)
 		fill_fils_tlv_params(cmd, vdev_id, params);
 
-	WMI_LOGD("VDEVID: %d, GTK_FLAGS: x%x kek len %d", vdev_id, cmd->flags, params->kek_len);
+	wmi_debug("VDEVID: %d, GTK_FLAGS: x%x kek len %d",
+		 vdev_id, cmd->flags, params->kek_len);
 	/* send the wmi command */
 	wmi_mtrace(WMI_GTK_OFFLOAD_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -830,7 +829,6 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	}
 
 out:
-	WMI_LOGD("%s Exit", __func__);
 	return status;
 }
 
@@ -920,8 +918,8 @@ QDF_STATUS send_enable_enhance_multicast_offload_tlv(
 	cmd->vdev_id = vdev_id;
 	cmd->enable = ((action == 0) ? ENHANCED_MCAST_FILTER_DISABLED :
 			ENHANCED_MCAST_FILTER_ENABLED);
-	WMI_LOGD("%s: config enhance multicast offload action %d for vdev %d",
-		__func__, action, vdev_id);
+	wmi_debug("config enhance multicast offload action %d for vdev %d",
+		 action, vdev_id);
 	wmi_mtrace(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 			sizeof(*cmd), WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID);
@@ -1053,7 +1051,7 @@ static QDF_STATUS send_wow_sta_ra_filter_cmd_tlv(wmi_unified_t wmi_handle,
 
 	*((uint32_t *) buf_ptr) = rate_limit_interval;
 
-	WMI_LOGD("%s: send RA rate limit [%d] to fw vdev = %d", __func__,
+	wmi_debug("send RA rate limit [%d] to fw vdev = %d",
 		 rate_limit_interval, vdev_id);
 
 	wmi_mtrace(WMI_WOW_ADD_WAKE_PATTERN_CMDID, cmd->vdev_id, 0);
@@ -1597,8 +1595,7 @@ QDF_STATUS wmi_unified_cmd_send_chk(struct wmi_unified *wmi_handle,
 				    wmi_buf_t buf,
 				    uint32_t buflen, uint32_t cmd_id)
 {
-	WMI_LOGD("%s: Send WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID over QMI",
-		 __func__);
+	wmi_debug("Send WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID over QMI");
 	return wmi_unified_cmd_send_over_qmi(wmi_handle, buf,
 					     buflen, cmd_id);
 }
@@ -1727,8 +1724,8 @@ static QDF_STATUS send_wow_timer_pattern_cmd_tlv(wmi_unified_t wmi_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	*((uint32_t *) buf_ptr) = 0;
 
-	WMI_LOGD("%s: send wake timer pattern with time[%d] to fw vdev = %d",
-		__func__, time, vdev_id);
+	wmi_debug("send wake timer pattern with time[%d] to fw vdev = %d",
+		 time, vdev_id);
 
 	wmi_mtrace(WMI_WOW_ADD_WAKE_PATTERN_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -1775,8 +1772,8 @@ static QDF_STATUS send_enable_ext_wow_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->type = params->type;
 	cmd->wakeup_pin_num = params->wakeup_pin_num;
 
-	WMI_LOGD("%s: vdev_id %d type %d Wakeup_pin_num %x",
-		 __func__, cmd->vdev_id, cmd->type, cmd->wakeup_pin_num);
+	wmi_debug("vdev_id %d type %d Wakeup_pin_num %x",
+		 cmd->vdev_id, cmd->type, cmd->wakeup_pin_num);
 
 	wmi_mtrace(WMI_EXTWOW_ENABLE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -1844,14 +1841,14 @@ static QDF_STATUS send_set_app_type2_params_in_fw_cmd_tlv(wmi_unified_t wmi_hand
 	cmd->tcp_tx_timeout_val = appType2Params->tcp_tx_timeout_val;
 	cmd->tcp_rx_timeout_val = appType2Params->tcp_rx_timeout_val;
 
-	WMI_LOGD("%s: vdev_id %d gateway_mac "QDF_MAC_ADDR_FMT" "
+	wmi_debug("vdev_id %d gateway_mac "QDF_MAC_ADDR_FMT" "
 		 "rc4_key %.16s rc4_key_len %u "
 		 "ip_id %x ip_device_ip %x ip_server_ip %x "
 		 "tcp_src_port %u tcp_dst_port %u tcp_seq %u "
 		 "tcp_ack_seq %u keepalive_init %u keepalive_min %u "
 		 "keepalive_max %u keepalive_inc %u "
 		 "tcp_tx_timeout_val %u tcp_rx_timeout_val %u",
-		 __func__, cmd->vdev_id,
+		 cmd->vdev_id,
 		 QDF_MAC_ADDR_REF(appType2Params->gateway_mac.bytes),
 		 cmd->rc4_key, cmd->rc4_key_len,
 		 cmd->ip_id, cmd->ip_device_ip, cmd->ip_server_ip,
@@ -1910,10 +1907,10 @@ static QDF_STATUS send_app_type1_params_in_fw_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(cmd->passwd, app_type1_params->password, 16);
 	cmd->passwd_len = app_type1_params->pass_length;
 
-	WMI_LOGD("%s: vdev_id %d wakee_mac_addr "QDF_MAC_ADDR_FMT" "
+	wmi_debug("vdev_id %d wakee_mac_addr "QDF_MAC_ADDR_FMT" "
 		 "identification_id %.8s id_length %u "
 		 "password %.16s pass_length %u",
-		 __func__, cmd->vdev_id,
+		 cmd->vdev_id,
 		 QDF_MAC_ADDR_REF(app_type1_params->wakee_mac_addr.bytes),
 		 cmd->ident, cmd->ident_len, cmd->passwd, cmd->passwd_len);
 

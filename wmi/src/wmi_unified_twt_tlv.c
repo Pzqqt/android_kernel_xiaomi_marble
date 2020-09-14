@@ -705,7 +705,7 @@ extract_twt_session_stats_event_tlv(wmi_unified_t wmi_handle,
 							ev->pdev_id);
 	params->num_sessions = param_buf->num_twt_sessions;
 
-	WMI_LOGD("pdev_id=%d, num of TWT sessions=%d",
+	wmi_debug("pdev_id=%d, num of TWT sessions=%d",
 		 params->pdev_id, params->num_sessions);
 
 	return QDF_STATUS_SUCCESS;
@@ -760,12 +760,10 @@ extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
 	session->sp_offset_us = twt_session->sp_offset_us;
 	session->sp_tsf_us_lo = twt_session->sp_tsf_us_lo;
 	session->sp_tsf_us_hi = twt_session->sp_tsf_us_hi;
-	WMI_LOGD("type=%d,id=%d,bcast=%d,trig=%d",
+	wmi_debug("type=%d id=%d bcast=%d trig=%d announ=%d diagid=%d wake_dur=%ul wake_int=%ul offset=%ul",
 		 session->event_type, session->flow_id,
-		 session->bcast, session->trig);
-	WMI_LOGD("announ=%d,diagid=%d,wake_dur=%ul",
-		 session->announ, session->dialog_id, session->wake_dura_us);
-	WMI_LOGD("wake_int=%ul,offset=%ul",
+		 session->bcast, session->trig,
+		 session->announ, session->dialog_id, session->wake_dura_us,
 		 session->wake_intvl_us, session->sp_offset_us);
 
 	return QDF_STATUS_SUCCESS;

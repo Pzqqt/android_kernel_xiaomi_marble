@@ -1681,7 +1681,7 @@ static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 
 static inline void wmi_log_cmd_id(uint32_t cmd_id, uint32_t tag)
 {
-	WMI_LOGD("Send WMI command:%s command_id:%d htc_tag:%d",
+	wmi_debug("Send WMI command:%s command_id:%d htc_tag:%d",
 		 wmi_id_to_name(cmd_id), cmd_id, tag);
 }
 
@@ -3109,7 +3109,7 @@ static void wmi_htc_log_pkt(void *ctx, HTC_PACKET *htc_pkt)
 	cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf), WMI_CMD_HDR,
 			       COMMANDID);
 
-	WMI_LOGD("WMI command from HTC packet: %s, ID: %d\n",
+	wmi_debug("WMI command from HTC packet: %s, ID: %d",
 		 wmi_id_to_name(cmd_id), cmd_id);
 }
 #else

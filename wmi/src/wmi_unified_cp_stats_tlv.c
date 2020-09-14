@@ -54,8 +54,8 @@ send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
 
-	WMI_LOGD("STATS REQ STATS_ID:%d VDEV_ID:%d PDEV_ID:%d-->",
-				cmd->stats_id, cmd->vdev_id, cmd->pdev_id);
+	wmi_debug("STATS REQ STATS_ID:%d VDEV_ID:%d PDEV_ID:%d-->",
+		 cmd->stats_id, cmd->vdev_id, cmd->pdev_id);
 
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,

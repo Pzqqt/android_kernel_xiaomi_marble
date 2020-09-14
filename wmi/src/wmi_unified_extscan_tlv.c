@@ -101,13 +101,13 @@ static QDF_STATUS send_set_passpoint_network_list_cmd_tlv
 			WMITLV_GET_STRUCT_TLVLEN(
 			wmi_passpoint_config_cmd_fixed_param));
 		cmd->id = req->networks[i].id;
-		WMI_LOGD("%s: network id: %u", __func__, cmd->id);
+		wmi_debug("network id: %u", cmd->id);
 		qdf_mem_copy(cmd->realm, req->networks[i].realm,
 			strlen(req->networks[i].realm) + 1);
-		WMI_LOGD("%s: realm: %s", __func__, cmd->realm);
+		wmi_debug("realm: %s", cmd->realm);
 		for (j = 0; j < PASSPOINT_ROAMING_CONSORTIUM_ID_NUM; j++) {
 			bytes = (uint8_t *) &req->networks[i].roaming_consortium_ids[j];
-			WMI_LOGD("index: %d rcids: %02x %02x %02x %02x %02x %02x %02x %02x",
+			wmi_debug("index: %d rcids: %02x %02x %02x %02x %02x %02x %02x %02x",
 				j, bytes[0], bytes[1], bytes[2], bytes[3],
 				bytes[4], bytes[5], bytes[6], bytes[7]);
 
@@ -117,8 +117,8 @@ static QDF_STATUS send_set_passpoint_network_list_cmd_tlv
 		}
 		qdf_mem_copy(cmd->plmn, req->networks[i].plmn,
 				PASSPOINT_PLMN_ID_LEN);
-		WMI_LOGD("%s: plmn: %02x:%02x:%02x", __func__,
-			cmd->plmn[0], cmd->plmn[1], cmd->plmn[2]);
+		wmi_debug("plmn: %02x:%02x:%02x",
+			 cmd->plmn[0], cmd->plmn[1], cmd->plmn[2]);
 
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					   WMI_PASSPOINT_LIST_CONFIG_CMDID);
@@ -191,8 +191,8 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 	buf_ptr += sizeof(wmi_nlo_config_cmd_fixed_param);
 
 	cmd->no_of_ssids = QDF_MIN(req->num_networks, WMI_NLO_MAX_SSIDS);
-	WMI_LOGD("SSID count: %d flags: %d",
-		cmd->no_of_ssids, cmd->flags);
+	wmi_debug("SSID count: %d flags: %d",
+		 cmd->no_of_ssids, cmd->flags);
 
 	/* Fill nlo_config only when num_networks are non zero */
 	if (cmd->no_of_ssids) {
@@ -214,7 +214,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 			qdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
 				     req->networks[i].ssid.ssid,
 				     nlo_list[i].ssid.ssid.ssid_len);
-			WMI_LOGD("index: %d ssid: %.*s len: %d", i,
+			wmi_debug("index: %d ssid: %.*s len: %d", i,
 				 nlo_list[i].ssid.ssid.ssid_len,
 				 (char *) nlo_list[i].ssid.ssid.ssid,
 				 nlo_list[i].ssid.ssid.ssid_len);
@@ -223,15 +223,15 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 			nlo_list[i].bcast_nw_type.valid = true;
 			nlo_list[i].bcast_nw_type.bcast_nw_type =
 					req->networks[i].flags;
-			WMI_LOGD("PNO flags (%u)",
-				nlo_list[i].bcast_nw_type.bcast_nw_type);
+			wmi_debug("PNO flags: %u",
+				 nlo_list[i].bcast_nw_type.bcast_nw_type);
 
 			/* Copy auth bit field */
 			nlo_list[i].auth_type.valid = true;
 			nlo_list[i].auth_type.auth_type =
 					req->networks[i].auth_bit_field;
-			WMI_LOGD("Auth bit field (%u)",
-					nlo_list[i].auth_type.auth_type);
+			wmi_debug("Auth bit field: %u",
+				 nlo_list[i].auth_type.auth_type);
 		}
 
 		buf_ptr += cmd->no_of_ssids * sizeof(nlo_configured_parameters);
@@ -273,7 +273,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMI_LOGD("set ePNO list request sent successfully for vdev %d",
+	wmi_debug("set ePNO list request sent successfully for vdev %d",
 		 req->vdev_id);
 
 	return ret;
@@ -498,8 +498,7 @@ static QDF_STATUS wmi_get_buf_extscan_change_monitor_cmd
 		WMI_CHAR_ARRAY_TO_MAC_ADDR(src_ap->bssid.bytes,
 					   &dest_chglist->bssid);
 
-		WMI_LOGD("%s: min_rssi %d", __func__,
-			 dest_chglist->lower_rssi_limit);
+		wmi_debug("min_rssi: %d", dest_chglist->lower_rssi_limit);
 		dest_chglist++;
 		src_ap++;
 	}
@@ -711,8 +710,8 @@ QDF_STATUS wmi_get_buf_extscan_start_cmd(wmi_unified_t wmi_handle,
 		src_bucket++;
 	}
 
-	WMI_LOGD("%s: Total buckets: %d total #of channels is %d",
-		__func__, nbuckets, nchannels);
+	wmi_debug("Total buckets: %d total #of channels is %d",
+		 nbuckets, nchannels);
 	len += nchannels * sizeof(wmi_extscan_bucket_channel);
 	/* Allocate the memory */
 	*buf = wmi_buf_alloc(wmi_handle, len);
@@ -1026,10 +1025,10 @@ static QDF_STATUS send_extscan_start_hotlist_monitor_cmd_tlv
 		cmd->lost_ap_scan_count = params->lost_ap_sample_size;
 		cmd->first_entry_index = index;
 
-		WMI_LOGD("%s: vdev id:%d total_entries: %d num_entries: %d lost_ap_sample_size: %d",
-			__func__, cmd->vdev_id, cmd->total_entries,
-			cmd->num_entries_in_page,
-			cmd->lost_ap_scan_count);
+		wmi_debug("vdev id:%d total_entries: %d num_entries: %d lost_ap_sample_size: %d",
+			 cmd->vdev_id, cmd->total_entries,
+			 cmd->num_entries_in_page,
+			 cmd->lost_ap_scan_count);
 
 		buf_ptr += sizeof(*cmd);
 		WMITLV_SET_HDR(buf_ptr,
@@ -1051,12 +1050,11 @@ static QDF_STATUS send_extscan_start_hotlist_monitor_cmd_tlv
 			WMI_CHAR_ARRAY_TO_MAC_ADDR(src_ap->bssid.bytes,
 						   &dest_hotlist->bssid);
 
-			WMI_LOGD("%s:channel:%d min_rssi %d",
-				 __func__, dest_hotlist->channel,
+			wmi_debug("channel:%d min_rssi %d",
+				 dest_hotlist->channel,
 				 dest_hotlist->min_rssi);
-			WMI_LOGD
-				("%s: bssid mac_addr31to0: 0x%x, mac_addr47to32: 0x%x",
-				__func__, dest_hotlist->bssid.mac_addr31to0,
+			wmi_debug("bssid mac_addr31to0: 0x%x, mac_addr47to32: 0x%x",
+				dest_hotlist->bssid.mac_addr31to0,
 				dest_hotlist->bssid.mac_addr47to32);
 			dest_hotlist++;
 			src_ap++;

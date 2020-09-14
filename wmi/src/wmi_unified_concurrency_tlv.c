@@ -173,10 +173,8 @@ static QDF_STATUS send_set_mcc_channel_time_quota_cmd_tlv(
 	uint32_t chan1_freq = adapter_1_chan_freq;
 	uint32_t chan2_freq = adapter_2_chan_freq;
 
-	WMI_LOGD("%s: freq1:%dMHz, Quota1:%dms, "
-		 "freq2:%dMHz, Quota2:%dms", __func__,
-		 chan1_freq, quota_chan1, chan2_freq,
-		 quota_chan2);
+	wmi_debug("freq1:%dMHz, Quota1:%dms, freq2:%dMHz, Quota2:%dms",
+		 chan1_freq, quota_chan1, chan2_freq, quota_chan2);
 
 	/*
 	 * Perform sanity check on time quota values provided.
