@@ -32,6 +32,7 @@
 #include "qdf_trace.h"
 #include "qdf_module.h"
 #include "wifi_pos_utils_pub.h"
+#include "wlan_cmn.h"
 
 struct wlan_objmgr_psoc;
 struct wifi_pos_req_msg;
@@ -284,7 +285,8 @@ struct wifi_pos_psoc_priv_obj {
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,
 				    struct wifi_pos_req_msg *req);
 	wifi_pos_send_rsp_handler wifi_pos_send_rsp;
-	void (*wifi_pos_get_phy_mode)(uint8_t, uint32_t, uint32_t *);
+	void (*wifi_pos_get_phy_mode)(qdf_freq_t freq, uint32_t chan_width,
+				      enum wlan_phymode *phy_mode);
 	void (*wifi_pos_get_fw_phy_mode_for_freq)(uint32_t, uint32_t,
 						  uint32_t *);
 	void (*wifi_pos_send_action)(struct wlan_objmgr_psoc *psoc,

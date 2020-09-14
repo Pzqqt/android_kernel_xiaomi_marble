@@ -467,7 +467,7 @@ QDF_STATUS wifi_pos_register_get_fw_phy_mode_for_freq_cb(
  */
 QDF_STATUS wifi_pos_register_get_phy_mode_cb(
 			struct wlan_objmgr_psoc *psoc,
-			void (*handler)(uint8_t, uint32_t, uint32_t *));
+			void (*handler)(qdf_freq_t, uint32_t, uint32_t *));
 
 /**
  * wifi_pos_register_send_action: API to register callback to send

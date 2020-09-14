@@ -325,9 +325,10 @@ QDF_STATUS wifi_pos_init_cir_cfr_rings(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-QDF_STATUS wifi_pos_register_get_phy_mode_cb(
-				struct wlan_objmgr_psoc *psoc,
-				void (*handler)(uint8_t, uint32_t, uint32_t *))
+QDF_STATUS
+wifi_pos_register_get_phy_mode_cb(struct wlan_objmgr_psoc *psoc,
+				  void (*handler)(qdf_freq_t, uint32_t,
+						  uint32_t *))
 {
 	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc;
 
