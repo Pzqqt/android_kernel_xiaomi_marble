@@ -300,6 +300,18 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 #endif /* MEMORY_DEBUG */
 
 /**
+ * qdf_mem_multi_pages_zero() - zero out each page memory
+ * @pages: Multi page information storage
+ * @cacheable: Coherent memory or cacheable memory
+ *
+ * This function will zero out each page memory
+ *
+ * Return: None
+ */
+void qdf_mem_multi_pages_zero(struct qdf_mem_multi_page_t *pages,
+			      bool cacheable);
+
+/**
  * qdf_aligned_malloc() - allocates aligned QDF memory.
  * @size: Size to be allocated
  * @vaddr_unaligned: Unaligned virtual address.
