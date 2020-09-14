@@ -72,8 +72,8 @@ static QDF_STATUS send_set_gateway_params_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_ROAM_SUBNET_CHANGE_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send gw config parameter to fw, ret: %d",
-			 ret);
+		wmi_err("Failed to send gw config parameter to fw, ret: %d",
+			ret);
 		wmi_buf_free(buf);
 	}
 
@@ -138,7 +138,7 @@ static QDF_STATUS send_set_rssi_monitoring_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID");
+		wmi_err("Failed to send WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID");
 		wmi_buf_free(buf);
 	}
 
@@ -316,8 +316,8 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_RSSI_THRESHOLD);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("cmd WMI_ROAM_SCAN_RSSI_THRESHOLD returned Error %d",
-			 status);
+		wmi_err("cmd WMI_ROAM_SCAN_RSSI_THRESHOLD returned Error %d",
+			status);
 		wmi_buf_free(buf);
 	}
 
@@ -537,8 +537,8 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_RSSI_THRESHOLD);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("cmd WMI_ROAM_SCAN_RSSI_THRESHOLD returned Error %d",
-			 status);
+		wmi_err("cmd WMI_ROAM_SCAN_RSSI_THRESHOLD returned Error %d",
+			status);
 		wmi_buf_free(buf);
 	}
 
@@ -661,8 +661,8 @@ static QDF_STATUS send_roam_mawc_params_cmd_tlv(
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_CONFIGURE_MAWC_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("WMI_ROAM_CONFIGURE_MAWC_CMDID failed, Error %d",
-			 status);
+		wmi_err("WMI_ROAM_CONFIGURE_MAWC_CMDID failed, Error %d",
+			status);
 		wmi_buf_free(buf);
 		return status;
 	}
@@ -841,8 +841,8 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_FILTER_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("cmd WMI_ROAM_FILTER_CMDID returned Error %d",
-			 status);
+		wmi_err("cmd WMI_ROAM_FILTER_CMDID returned Error %d",
+			status);
 		wmi_buf_free(buf);
 	}
 
@@ -891,7 +891,7 @@ static QDF_STATUS send_plm_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_PLMREQ_STOP_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send plm stop wmi cmd", __func__);
+		wmi_err("Failed to send plm stop wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -976,7 +976,7 @@ static QDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_PLMREQ_START_CMDID);
 	if (ret) {
-		WMI_LOGE("%s: Failed to send plm start wmi cmd", __func__);
+		wmi_err("Failed to send plm start wmi cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1385,7 +1385,7 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		wmi_err("Failed to allocate wmi buffer");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1439,8 +1439,8 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Failed to send set roam triggers command ret = %d",
-			 ret);
+		wmi_err("Failed to send set roam triggers command ret = %d",
+			ret);
 		wmi_buf_free(buf);
 	}
 	return ret;
@@ -1505,7 +1505,7 @@ send_vdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_VDEV_SET_PCL_CMDID, params->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_SET_PCL_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_VDEV_SET_PCL_CMDID", __func__);
+		wmi_err("Failed to send WMI_VDEV_SET_PCL_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3549,8 +3549,7 @@ send_per_roam_config_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_PER_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("WMI_ROAM_PER_CONFIG_CMDID failed, Error %d",
-			 status);
+		wmi_err("WMI_ROAM_PER_CONFIG_CMDID failed, Error %d", status);
 		wmi_buf_free(buf);
 		return status;
 	}
@@ -3599,15 +3598,15 @@ static QDF_STATUS send_limit_off_chan_cmd_tlv(
 	cmd->max_offchan_time = limit_off_chan_param->max_offchan_time;
 	cmd->rest_time = limit_off_chan_param->rest_time;
 
-	WMI_LOGE("%s: vdev_id=%d, flags =%x, max_offchan_time=%d, rest_time=%d",
-		 __func__, cmd->vdev_id, cmd->flags, cmd->max_offchan_time,
+	wmi_debug("vdev_id=%d, flags =%x, max_offchan_time=%d, rest_time=%d",
+		 cmd->vdev_id, cmd->flags, cmd->max_offchan_time,
 		 cmd->rest_time);
 
 	wmi_mtrace(WMI_VDEV_LIMIT_OFFCHAN_CMDID, cmd->vdev_id, 0);
 	err = wmi_unified_cmd_send(wmi_handle, buf,
 				   len, WMI_VDEV_LIMIT_OFFCHAN_CMDID);
 	if (QDF_IS_STATUS_ERROR(err)) {
-		WMI_LOGE("Failed to send limit off chan cmd err=%d", err);
+		wmi_err("Failed to send limit off chan cmd err=%d", err);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3656,7 +3655,7 @@ static QDF_STATUS send_roam_scan_send_hlp_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_PDEV_UPDATE_FILS_HLP_PKT_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_UPDATE_FILS_HLP_PKT_CMDID)) {
-		WMI_LOGE(FL("Failed to send FILS HLP pkt cmd"));
+		wmi_err("Failed to send FILS HLP pkt cmd");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3707,8 +3706,7 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_BTM_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ROAM_BTM_CONFIG_CMDID)) {
-		WMI_LOGE("%s: failed to send WMI_ROAM_BTM_CONFIG_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_ROAM_BTM_CONFIG_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3760,8 +3758,7 @@ send_roam_bss_load_config_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_BSS_LOAD_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ROAM_BSS_LOAD_CONFIG_CMDID)) {
-		WMI_LOGE("%s: failed to send WMI_ROAM_BSS_LOAD_CONFIG_CMDID ",
-			 __func__);
+		wmi_err("Failed to send WMI_ROAM_BSS_LOAD_CONFIG_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3807,8 +3804,7 @@ send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_DEAUTH_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ROAM_DEAUTH_CONFIG_CMDID)) {
-		WMI_LOGE("%s: failed to send WMI_ROAM_DEAUTH_CONFIG_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_ROAM_DEAUTH_CONFIG_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3861,8 +3857,7 @@ send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_IDLE_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ROAM_IDLE_CONFIG_CMDID)) {
-		WMI_LOGE("%s: failed to send WMI_ROAM_IDLE_CONFIG_CMDID",
-			 __func__);
+		wmi_err("Failed to send WMI_ROAM_IDLE_CONFIG_CMDID");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4043,8 +4038,7 @@ send_offload_11k_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_11K_OFFLOAD_REPORT_CMDID);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: failed to send 11k offload command %d",
-			 __func__, status);
+		wmi_err("Failed to send 11k offload command %d", status);
 		wmi_buf_free(buf);
 	}
 
@@ -4091,8 +4085,8 @@ static QDF_STATUS send_invoke_neighbor_report_cmd_tlv(
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMI_LOGE("%s: failed to send invoke neighbor report command %d",
-			 __func__, status);
+		wmi_err("Failed to send invoke neighbor report command %d",
+			status);
 		wmi_buf_free(buf);
 	}
 

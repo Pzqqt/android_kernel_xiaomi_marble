@@ -3786,7 +3786,7 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 
 	iface = &wma_handle->interfaces[res.vdev_id];
 	if (!iface->rcpi_req) {
-		WMI_LOGE("rcpi_req buffer not available");
+		wmi_err("rcpi_req buffer not available");
 		return 0;
 	}
 
@@ -3802,7 +3802,7 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 	    (res.measurement_type != rcpi_req->measurement_type) ||
 	    (qdf_mem_cmp(res.mac_addr, &rcpi_req->mac_addr,
 			 QDF_MAC_ADDR_SIZE))) {
-		WMI_LOGE("invalid rcpi_response");
+		wmi_err("Invalid rcpi_response");
 		iface->rcpi_req = NULL;
 		qdf_mem_free(rcpi_req);
 		return 0;
@@ -4080,8 +4080,7 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 	/* Get interface for valid vdev_id */
 	iface = &wma_handle->interfaces[vdev_id];
 	if (!iface) {
-		WMI_LOGE(FL("Interface not available for vdev_id: %d"),
-			 vdev_id);
+		wmi_err("Interface not available for vdev_id: %d", vdev_id);
 		ret  = -EINVAL;
 		goto free_res;
 	}
@@ -4089,7 +4088,7 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 	roam_scan_stats_req = iface->roam_scan_stats_req;
 	iface->roam_scan_stats_req = NULL;
 	if (!roam_scan_stats_req) {
-		WMI_LOGE(FL("No pending request vdev_id: %d"), vdev_id);
+		wmi_err("No pending request vdev_id: %d", vdev_id);
 		ret  = -EINVAL;
 		goto free_res;
 	}
@@ -4097,7 +4096,7 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 	if (!QDF_IS_STATUS_SUCCESS(status) ||
 	    !roam_scan_stats_req->cb ||
 	    roam_scan_stats_req->vdev_id != vdev_id) {
-		WMI_LOGE(FL("roam_scan_stats buffer not available"));
+		wmi_err("roam_scan_stats buffer not available");
 		ret = -EINVAL;
 		goto free_roam_scan_stats_req;
 	}

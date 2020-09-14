@@ -805,7 +805,7 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 	}
 
 	if (timeperiod > cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD)) {
-		WMI_LOGE("Invalid period %d Max limit %d", timeperiod,
+		wmi_err("Invalid period %d Max limit %d", timeperiod,
 			 cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD));
 		return;
 	}

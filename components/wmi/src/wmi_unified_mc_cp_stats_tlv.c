@@ -40,7 +40,7 @@ extract_per_chain_rssi_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
 
 	if (!evt_buf) {
-		WMI_LOGE("evt_buf is null");
+		wmi_err("evt_buf is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -48,7 +48,7 @@ extract_per_chain_rssi_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	rssi_event = param_buf->chain_stats;
 
 	if (index >= rssi_event->num_per_chain_rssi_stats) {
-		WMI_LOGE("invalid index");
+		wmi_err("Invalid index: %u", index);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -297,7 +297,7 @@ send_request_peer_stats_info_cmd_tlv(wmi_unified_t wmi_handle,
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_REQUEST_PEER_STATS_INFO_CMDID);
 	if (ret) {
-		WMI_LOGE("Failed to send peer stats request to fw =%d", ret);
+		wmi_err("Failed to send peer stats request to fw =%d", ret);
 		wmi_buf_free(buf);
 	}
 
