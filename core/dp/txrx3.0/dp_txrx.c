@@ -509,7 +509,8 @@ void dp_prealloc_put_multi_pages(uint32_t desc_type,
 				dp_info("i %d: desc_type %d returned",
 					i, desc_type);
 				mp->in_use = false;
-				/* is page memory zero needed? */
+				qdf_mem_multi_pages_zero(&mp->pages,
+							 mp->cacheable);
 				break;
 			}
 		}
