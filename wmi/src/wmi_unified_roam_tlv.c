@@ -1075,8 +1075,7 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_SET_RIC_REQUEST_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ROAM_SET_RIC_REQUEST_CMDID)) {
-		WMI_LOGP("%s: Failed to send vdev Set RIC Req command",
-			 __func__);
+		wmi_err("Failed to send vdev Set RIC Req command");
 		if (is_add_ts)
 			((struct add_ts_param *)msg)->status =
 					    QDF_STATUS_E_FAILURE;
@@ -1121,8 +1120,7 @@ send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_SYNCH_COMPLETE, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_ROAM_SYNCH_COMPLETE)) {
-		WMI_LOGP("%s: failed to send roam synch confirmation",
-			 __func__);
+		wmi_err("Failed to send roam synch confirmation");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1236,7 +1234,7 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_ROAM_INVOKE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_ROAM_INVOKE_CMDID)) {
-		WMI_LOGP("%s: failed to send roam invoke command", __func__);
+		wmi_err("Failed to send roam invoke command");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
