@@ -1070,7 +1070,7 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 		tspec_param->surplus_bw_allowance = tspec_ie->surplusBw;
 		tspec_param->medium_time = 0;
 	}
-	WMI_LOGI("%s: Set RIC Req is_add_ts:%d", __func__, is_add_ts);
+	wmi_debug("Set RIC Req is_add_ts: %d", is_add_ts);
 
 	wmi_mtrace(WMI_ROAM_SET_RIC_REQUEST_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -2744,21 +2744,21 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				if (roam_req->fw_okc) {
 					WMI_SET_ROAM_OFFLOAD_OKC_ENABLED
 						(roam_offload_11i->flags);
-					WMI_LOGI("LFR3:OKC enabled");
+					wmi_info("LFR3:OKC enabled");
 				} else {
 					WMI_SET_ROAM_OFFLOAD_OKC_DISABLED
 						(roam_offload_11i->flags);
-					WMI_LOGI("LFR3:OKC disabled");
+					wmi_info("LFR3:OKC disabled");
 				}
 
 				if (roam_req->fw_pmksa_cache) {
 					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_ENABLED
 						(roam_offload_11i->flags);
-					WMI_LOGI("LFR3:PMKSA caching enabled");
+					wmi_info("LFR3:PMKSA caching enabled");
 				} else {
 					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_DISABLED
 						(roam_offload_11i->flags);
-					WMI_LOGI("LFR3:PMKSA caching disabled");
+					wmi_info("LFR3:PMKSA caching disabled");
 				}
 
 				wmi_fill_sae_single_pmk_param(roam_req,
@@ -3223,7 +3223,7 @@ send_roam_scan_offload_cmd_tlv(wmi_unified_t wmi_handle,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
 
-	WMI_LOGI("%s: WMI --> WMI_ROAM_SCAN_CMD", __func__);
+	wmi_info("WMI --> WMI_ROAM_SCAN_CMD");
 	return QDF_STATUS_SUCCESS;
 
 error:
