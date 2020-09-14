@@ -33,6 +33,257 @@
  * x = 3 for 160MHz
  */
 #define GET_BW_FROM_BW_ENUM(x) ((20) * (1 << x))
+#define FLUSH_OVERFLOW_CHECK (1 << 31)
+
+static void
+wlan_peer_flush_avg_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
+			       struct wlan_peer_rate_stats_ctx *stats_ctx)
+{
+	struct wlan_peer_rate_stats_intf buf;
+	struct wlan_peer_avg_rate_stats *avg_stats;
+
+	if (!soc_stats_ctx)
+		return;
+
+	avg_stats = &stats_ctx->avg;
+	buf.stats = (struct wlan_avg_rate_stats *)&avg_stats->stats;
+	buf.buf_len = sizeof(struct wlan_avg_rate_stats);
+	buf.stats_type = DP_PEER_AVG_RATE_STATS;
+	buf.cookie = stats_ctx->peer_cookie;
+	qdf_mem_copy(buf.peer_mac, stats_ctx->mac_addr, WLAN_MAC_ADDR_LEN);
+	cdp_peer_flush_rate_stats(soc_stats_ctx->soc, stats_ctx->pdev_id, &buf);
+
+	soc_stats_ctx->txs_cache_flush++;
+	dp_info("txs_cache_flush: %d", soc_stats_ctx->txs_cache_flush);
+
+	qdf_mem_zero(&avg_stats->stats, sizeof(avg_stats->stats));
+}
+
+static int
+wlan_peer_update_avg_tx_rate_stats_user(
+				struct wlan_avg_rate_stats *avg,
+				struct cdp_tx_completion_ppdu *ppdu,
+				struct cdp_tx_completion_ppdu_user *user)
+{
+	enum wlan_rate_ppdu_type type;
+	uint32_t flush;
+	uint32_t kbps;
+	uint16_t fc = qdf_cpu_to_le16(ppdu->frame_ctrl);
+	bool is_pm = fc & (QDF_IEEE80211_FC1_PM << 8); // shift by 8 to get FC1 field
+	bool is_data = (fc & QDF_IEEE80211_FC0_TYPE_MASK) ==
+			QDF_IEEE80211_FC0_TYPE_DATA &&
+			((fc & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+			 QDF_IEEE80211_FC0_SUBTYPE_DATA ||
+			(fc & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+			QDF_IEEE80211_FC0_SUBTYPE_QOS);
+
+	switch (user->ppdu_type) {
+	case WLAN_RATE_SU:
+		type = WLAN_RATE_SU;
+		break;
+	case WLAN_RATE_MU_MIMO:
+		type = WLAN_RATE_MU_MIMO;
+		break;
+	case WLAN_RATE_MU_OFDMA:
+		type = WLAN_RATE_MU_OFDMA;
+		break;
+	case WLAN_RATE_MU_OFDMA_MIMO:
+		type = WLAN_RATE_MU_OFDMA_MIMO;
+		break;
+	default:
+		dp_info("Invalid ppdu type");
+		return 0;
+	}
+
+	kbps = user->tx_ratekbps;
+	if (kbps == 0) {
+		dp_err("rate is invalid");
+		return 0;
+	}
+
+	if (!is_pm && is_data && !user->is_bss_peer) {
+		avg->tx[type].num_ppdu++;
+		avg->tx[type].sum_mbps += kbps / CDP_NUM_KB_IN_MB;
+	}
+
+	avg->tx[type].num_mpdu += user->mpdu_success;
+	avg->tx[type].num_retry += user->mpdu_failed;
+
+	if (user->ack_rssi_valid) {
+		avg->tx[type].num_snr++;
+		avg->tx[type].sum_snr += user->usr_ack_rssi;
+	}
+
+	flush = 0;
+	flush |= avg->tx[type].num_ppdu & FLUSH_OVERFLOW_CHECK;
+	flush |= avg->tx[type].sum_mbps & FLUSH_OVERFLOW_CHECK;
+	flush |= avg->tx[type].num_snr & FLUSH_OVERFLOW_CHECK;
+	flush |= avg->tx[type].sum_snr & FLUSH_OVERFLOW_CHECK;
+
+	return flush ? 1 : 0;
+}
+
+static void
+wlan_peer_update_avg_tx_rate_stats(
+				struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
+				struct cdp_tx_completion_ppdu *ppdu)
+{
+	struct wlan_peer_rate_stats_ctx *stats_ctx;
+	struct wlan_avg_rate_stats *avg;
+	struct cdp_tx_completion_ppdu_user *user;
+	int i;
+
+	for (i = 0; i < ppdu->num_users; i++) {
+		user = &ppdu->user[i];
+		STATS_CTX_LOCK_ACQUIRE(&soc_stats_ctx->tx_ctx_lock);
+		if (user->peer_id == CDP_INVALID_PEER) {
+			dp_warn("no valid peer \n");
+			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
+			continue;
+		}
+
+		stats_ctx = cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						      ppdu->vdev_id,
+						      user->mac_addr);
+		if (qdf_unlikely(!stats_ctx)) {
+			dp_warn("peer rate stats ctx is NULL, return");
+			dp_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(user->mac_addr));
+			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
+			continue;
+		}
+
+		avg = &stats_ctx->avg.stats;
+
+		RATE_STATS_LOCK_ACQUIRE(&stats_ctx->avg.lock);
+		if (wlan_peer_update_avg_tx_rate_stats_user(avg, ppdu, user))
+			wlan_peer_flush_avg_rate_stats(soc_stats_ctx,
+						       stats_ctx);
+		RATE_STATS_LOCK_RELEASE(&stats_ctx->avg.lock);
+		STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
+	}
+}
+
+static int
+wlan_peer_update_avg_rx_rate_stats_user(struct wlan_avg_rate_stats *avg,
+					struct cdp_rx_indication_ppdu *ppdu,
+					struct cdp_rx_stats_ppdu_user *user)
+{
+	enum wlan_rate_ppdu_type type;
+	uint32_t flush;
+	uint32_t kbps;
+	uint32_t nss;
+	uint32_t mcs;
+	uint16_t fc = qdf_cpu_to_le16(ppdu->frame_ctrl);
+	bool is_pm = fc & (QDF_IEEE80211_FC1_PM << 8); // shift by 8 to get FC1 field
+	bool is_data = (fc & QDF_IEEE80211_FC0_TYPE_MASK) ==
+			QDF_IEEE80211_FC0_TYPE_DATA &&
+			((fc & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+			 QDF_IEEE80211_FC0_SUBTYPE_DATA ||
+			(fc & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+			QDF_IEEE80211_FC0_SUBTYPE_QOS);
+
+	switch (ppdu->u.ppdu_type) {
+	case WLAN_RATE_SU:
+		type = WLAN_RATE_SU;
+		break;
+	case WLAN_RATE_MU_MIMO:
+		type = WLAN_RATE_MU_MIMO;
+		break;
+	case WLAN_RATE_MU_OFDMA:
+		type = WLAN_RATE_MU_OFDMA;
+		break;
+	case WLAN_RATE_MU_OFDMA_MIMO:
+		type = WLAN_RATE_MU_OFDMA_MIMO;
+		break;
+	default:
+		dp_info("Invalid ppdu type");
+		return 0;
+	}
+
+	mcs = ppdu->u.mcs;
+	nss = ppdu->u.nss; /* apparently ppdu->nss counts from 1 */
+
+	if (user->mu_ul_info_valid) {
+		/* apparently ppdu_type won't reflect ul ofdma properly
+		 * moreover, its possible to get 1 user ul ofdma
+		 * this is ambiguous, but it makes most sense to consider these
+		 * as SU because it can be used to avoid interference too.
+		 */
+		if (ppdu->num_users > 1)
+			type = WLAN_RATE_MU_OFDMA;
+
+		mcs = user->mcs;
+		nss = user->nss + 1; /* apparently user->nss counts from 0 */
+	}
+
+	kbps = user->rx_ratekbps;
+	if (kbps == 0) {
+		dp_err("rate is invalid");
+		return 0;
+	}
+
+	if (!is_pm && is_data && !user->is_bss_peer) {
+		avg->rx[type].num_ppdu++;
+		avg->rx[type].sum_mbps += kbps / CDP_NUM_KB_IN_MB;
+	}
+
+	avg->rx[type].num_snr++;
+	avg->rx[type].sum_snr += ppdu->rssi; /* Info not available per user */
+	avg->rx[type].num_mpdu += user->mpdu_cnt_fcs_ok;
+	avg->rx[type].num_retry += user->mpdu_cnt_fcs_err;
+
+	flush = 0;
+	flush |= avg->rx[type].num_ppdu & FLUSH_OVERFLOW_CHECK;
+	flush |= avg->rx[type].sum_mbps & FLUSH_OVERFLOW_CHECK;
+	flush |= avg->rx[type].num_snr & FLUSH_OVERFLOW_CHECK;
+	flush |= avg->rx[type].sum_snr & FLUSH_OVERFLOW_CHECK;
+
+	return flush ? 1 : 0;
+}
+
+static void
+wlan_peer_update_avg_rx_rate_stats(
+				struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
+				struct cdp_rx_indication_ppdu *ppdu)
+{
+	struct wlan_peer_rate_stats_ctx *stats_ctx;
+	struct wlan_avg_rate_stats *avg;
+	struct cdp_rx_stats_ppdu_user *user;
+	int i;
+
+	for (i = 0; i < ppdu->num_users; i++) {
+		user = &ppdu->user[i];
+
+		STATS_CTX_LOCK_ACQUIRE(&soc_stats_ctx->rx_ctx_lock);
+
+		if (user->peer_id == CDP_INVALID_PEER) {
+			dp_warn("no valid peer \n");
+			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
+			continue;
+		}
+
+		stats_ctx = cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
+						      ppdu->vdev_id,
+						      user->mac_addr);
+		if (qdf_unlikely(!stats_ctx)) {
+			dp_warn("peer rate stats ctx is NULL, return");
+			dp_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(user->mac_addr));
+			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
+			continue;
+		}
+
+		avg = &stats_ctx->avg.stats;
+
+		RATE_STATS_LOCK_ACQUIRE(&stats_ctx->avg.lock);
+		if (wlan_peer_update_avg_rx_rate_stats_user(avg, ppdu, user))
+			wlan_peer_flush_avg_rate_stats(soc_stats_ctx,
+						       stats_ctx);
+		RATE_STATS_LOCK_RELEASE(&stats_ctx->avg.lock);
+		STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
+	}
+}
 
 static void
 wlan_peer_read_ewma_avg_rssi(struct wlan_rx_rate_stats *rx_stats)
@@ -291,6 +542,10 @@ wlan_peer_flush_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		RATE_STATS_LOCK_ACQUIRE(&rx_stats->lock);
 		wlan_peer_flush_rx_rate_stats(soc_stats_ctx, stats_ctx);
 		RATE_STATS_LOCK_RELEASE(&rx_stats->lock);
+
+		RATE_STATS_LOCK_ACQUIRE(&stats_ctx->avg.lock);
+		wlan_peer_flush_avg_rate_stats(soc_stats_ctx, stats_ctx);
+		RATE_STATS_LOCK_RELEASE(&stats_ctx->avg.lock);
 	}
 
 	if (soc_stats_ctx->stats_ver == RDK_LINK_STATS ||
@@ -373,9 +628,9 @@ wlan_peer_update_tx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 						      ppdu_user->mac_addr);
 
 		if (qdf_unlikely(!stats_ctx)) {
-			qdf_warn("peer rate stats ctx is NULL, return");
-			qdf_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
-				 QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
+			dp_warn("peer rate stats ctx is NULL, return");
+			dp_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
 			continue;
 		}
@@ -447,9 +702,9 @@ wlan_peer_update_rx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 						      ppdu_user->mac_addr);
 
 		if (qdf_unlikely(!stats_ctx)) {
-			qdf_warn("peer rate stats ctx is NULL, return");
-			qdf_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
-				 QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
+			dp_warn("peer rate stats ctx is NULL, return");
+			dp_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
 			continue;
 		}
@@ -521,11 +776,21 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		if (cdp_rx_ppdu->u.ppdu_type != DP_PPDU_TYPE_SU) {
 			ppdu_user = &cdp_rx_ppdu->user[user_idx];
 
+			if (ppdu_user->peer_id == CDP_INVALID_PEER) {
+				dp_warn("no valid peer \n");
+				STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
+				continue;
+			}
 			stats_ctx =
 			cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
 						  ppdu_user->vdev_id,
 						  ppdu_user->mac_addr);
 		} else {
+			if (cdp_rx_ppdu->peer_id == CDP_INVALID_PEER) {
+				dp_warn("No valid peer \n");
+				STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
+				continue;
+			}
 			stats_ctx =
 			cdp_peer_get_rdkstats_ctx(soc_stats_ctx->soc,
 						  cdp_rx_ppdu->vdev_id,
@@ -533,9 +798,9 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		}
 
 		if (qdf_unlikely(!stats_ctx)) {
-			qdf_warn("peer rate stats ctx is NULL, return");
-			qdf_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
-				 QDF_MAC_ADDR_REF(cdp_rx_ppdu->mac_addr));
+			dp_warn("peer rate stats ctx is NULL, return");
+			dp_warn("peer_mac:  " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(cdp_rx_ppdu->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
 			continue;
 		}
@@ -655,9 +920,9 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		}
 
 		if (qdf_unlikely(!stats_ctx)) {
-			qdf_debug("peer rate stats ctx is NULL, investigate");
-			qdf_debug("peer_mac: " QDF_MAC_ADDR_FMT,
-				 QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
+			dp_warn("peer rate stats ctx is NULL, investigate");
+			dp_warn("peer_mac: " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(ppdu_user->mac_addr));
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
 			continue;
 		}
@@ -726,7 +991,7 @@ wlan_peer_update_sojourn_stats(struct wlan_soc_rate_stats_ctx  *soc_stats_ctx,
 	stats_ctx = (struct wlan_peer_rate_stats_ctx *)sojourn_stats->cookie;
 
 	if (qdf_unlikely(!stats_ctx)) {
-		qdf_warn("peer rate stats ctx is NULL, return");
+		dp_warn("peer rate stats ctx is NULL, return");
 		return;
 	}
 
@@ -772,6 +1037,7 @@ void wlan_peer_update_rate_stats(void *ctx,
 					qdf_nbuf_data(nbuf);
 		wlan_peer_update_tx_rate_stats(soc_stats_ctx, cdp_tx_ppdu);
 		wlan_peer_update_tx_link_stats(soc_stats_ctx, cdp_tx_ppdu);
+		wlan_peer_update_avg_tx_rate_stats(soc_stats_ctx, cdp_tx_ppdu);
 		qdf_nbuf_free(nbuf);
 		break;
 	case WDI_EVENT_RX_PPDU_DESC:
@@ -779,6 +1045,7 @@ void wlan_peer_update_rate_stats(void *ctx,
 					qdf_nbuf_data(nbuf);
 		wlan_peer_update_rx_rate_stats(soc_stats_ctx, cdp_rx_ppdu);
 		wlan_peer_update_rx_link_stats(soc_stats_ctx, cdp_rx_ppdu);
+		wlan_peer_update_avg_rx_rate_stats(soc_stats_ctx, cdp_rx_ppdu);
 		qdf_nbuf_free(nbuf);
 		break;
 	case WDI_EVENT_TX_SOJOURN_STAT:
@@ -790,7 +1057,7 @@ void wlan_peer_update_rate_stats(void *ctx,
 		wlan_peer_update_sojourn_stats(soc_stats_ctx, sojourn_stats);
 		break;
 	default:
-		qdf_err("Err, Invalid type");
+		dp_err("Err, Invalid type");
 	}
 }
 
@@ -822,6 +1089,7 @@ void wlan_peer_create_event_handler(void *ctx, enum WDI_EVENT event,
 		}
 		RATE_STATS_LOCK_CREATE(&stats->rate_stats->tx.lock);
 		RATE_STATS_LOCK_CREATE(&stats->rate_stats->rx.lock);
+		RATE_STATS_LOCK_CREATE(&stats->avg.lock);
 		for (idx = 0; idx < WLANSTATS_CACHE_SIZE; idx++) {
 			stats->rate_stats->tx.stats[idx].rix =
 							INVALID_CACHE_IDX;
@@ -854,6 +1122,7 @@ peer_create_fail2:
 	    soc_stats_ctx->stats_ver == RDK_ALL_STATS) {
 		RATE_STATS_LOCK_DESTROY(&stats->rate_stats->tx.lock);
 		RATE_STATS_LOCK_DESTROY(&stats->rate_stats->rx.lock);
+		RATE_STATS_LOCK_DESTROY(&stats->avg.lock);
 		qdf_mem_free(stats->rate_stats);
 		stats->rate_stats = NULL;
 	}
@@ -881,6 +1150,7 @@ void wlan_peer_destroy_event_handler(void *ctx, enum WDI_EVENT event,
 		if (stats->rate_stats) {
 			RATE_STATS_LOCK_DESTROY(&stats->rate_stats->tx.lock);
 			RATE_STATS_LOCK_DESTROY(&stats->rate_stats->rx.lock);
+			RATE_STATS_LOCK_DESTROY(&stats->avg.lock);
 			qdf_mem_free(stats->rate_stats);
 		}
 		if (stats->link_metrics) {

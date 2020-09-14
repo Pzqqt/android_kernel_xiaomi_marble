@@ -340,6 +340,97 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	return;
 }
 
+static void dp_peer_avg_rate_stats_print(uint8_t *peer_mac,
+					 uint64_t peer_cookie,
+					 void *buffer,
+					 uint32_t buffer_len)
+{
+	struct wlan_avg_rate_stats *stats = buffer;
+	enum wlan_rate_ppdu_type type;
+	static const char *type2str[] = {
+		"SU",
+		"MU-MIMO",
+		"MU-OFDMA",
+		"MU-MIMO-OFDMA",
+	};
+	uint32_t mpdu;
+	uint32_t psr;
+	uint32_t avg_mbps;
+	uint32_t avg_snr;
+
+	PRINT("peer %02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx",
+	       peer_mac[0],
+	       peer_mac[1],
+	       peer_mac[2],
+	       peer_mac[3],
+	       peer_mac[4],
+	       peer_mac[5]);
+
+	PRINT(" %20s %15s %15s %15s %15s %15s",
+	      "mode",
+	      "rate(mbps)",
+	      "total ppdu",
+	      "snr value",
+	      "snr count",
+	      "psr value");
+
+	PRINT("Avg tx stats: ");
+	for (type = 0; type < WLAN_RATE_MAX; type++) {
+		psr = 0;
+		avg_mbps = 0;
+		avg_snr = 0;
+
+		if (stats->tx[type].num_ppdu > 0)
+			avg_mbps = stats->tx[type].sum_mbps /
+					stats->tx[type].num_ppdu;
+
+		if (stats->tx[type].num_snr > 0)
+			avg_snr = stats->tx[type].sum_snr /
+					stats->tx[type].num_snr;
+
+		mpdu = stats->tx[type].num_mpdu +
+			stats->tx[type].num_retry;
+		if (mpdu > 0)
+			psr = (100 * stats->tx[type].num_mpdu) / mpdu;
+
+		PRINT(" %20s %15u %15u %15u %15u %15u",
+		      type2str[type],
+		      avg_mbps, stats->tx[type].num_ppdu,
+		      avg_snr, stats->tx[type].num_snr,
+		      psr);
+	}
+	PRINT("");
+
+	PRINT("Avg rx stats: ");
+	for (type = 0; type < WLAN_RATE_MAX; type++) {
+		psr = 0;
+		avg_mbps = 0;
+		avg_snr = 0;
+
+		if (stats->rx[type].num_ppdu > 0)
+			avg_mbps = stats->rx[type].sum_mbps /
+					stats->rx[type].num_ppdu;
+
+		if (stats->rx[type].num_snr > 0)
+			avg_snr = stats->rx[type].sum_snr /
+					stats->rx[type].num_snr;
+
+		mpdu = stats->rx[type].num_mpdu +
+			stats->rx[type].num_retry;
+		if (mpdu > 0)
+			psr = (100 * stats->rx[type].num_mpdu) / mpdu;
+
+		PRINT(" %20s %15u %15u %15u %15u %15u",
+		       type2str[type],
+		       avg_mbps, stats->rx[type].num_ppdu,
+		       avg_snr, stats->rx[type].num_snr,
+		       psr);
+	}
+	PRINT("");
+
+	PRINT("");
+}
+
 static void dp_peer_tx_link_stats_print(uint8_t *peer_mac,
 					uint64_t peer_cookie,
 					void *buffer,
@@ -442,10 +533,14 @@ static void dp_peer_stats_handler(uint32_t cache_type,
 {
 	switch (cache_type) {
 	case DP_PEER_RX_RATE_STATS:
+		if (getenv("SKIP_RX_RATE_STATS"))
+			break;
 		dp_peer_rx_rate_stats_print(peer_mac, peer_cookie,
 					    buffer, buffer_len);
 		break;
 	case DP_PEER_TX_RATE_STATS:
+		if (getenv("SKIP_TX_RATE_STATS"))
+			break;
 		dp_peer_tx_rate_stats_print(peer_mac, peer_cookie,
 					    buffer, buffer_len);
 		break;
@@ -456,6 +551,12 @@ static void dp_peer_stats_handler(uint32_t cache_type,
 	case DP_PEER_RX_LINK_STATS:
 		dp_peer_rx_link_stats_print(peer_mac, peer_cookie,
 					    buffer, buffer_len);
+		break;
+	case DP_PEER_AVG_RATE_STATS:
+		if (getenv("SKIP_AVG_RATE_STATS"))
+			break;
+		dp_peer_avg_rate_stats_print(peer_mac, peer_cookie,
+					     buffer, buffer_len);
 		break;
 	}
 }

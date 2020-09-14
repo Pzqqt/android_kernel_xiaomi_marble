@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,7 +77,7 @@ QDF_DECLARE_EWMA(rx_rssi, 1024, 8)
 (((_val) >> DP_PEER_STATS_BW_OFFSET) & DP_PEER_STATS_BW_MASK)
 
 /**
- * enum cdp_peer_rate_stats_cmd -
+ * enum wlan_peer_rate_stats_cmd -
  * used by app to get specific stats
  */
 enum wlan_peer_rate_stats_cmd {
@@ -86,6 +86,7 @@ enum wlan_peer_rate_stats_cmd {
 	DP_PEER_SOJOURN_STATS,
 	DP_PEER_RX_LINK_STATS,
 	DP_PEER_TX_LINK_STATS,
+	DP_PEER_AVG_RATE_STATS,
 };
 
 /** struct wlan_tx_rate_stats - Tx packet rate info
@@ -149,6 +150,46 @@ struct wlan_tx_sojourn_stats {
 };
 
 #define BW_USAGE_MAX_SIZE 4
+
+/**
+ * enum wlan_rate_ppdu_type -
+ * types of communication
+ */
+enum wlan_rate_ppdu_type {
+	WLAN_RATE_SU,
+	WLAN_RATE_MU_MIMO,
+	WLAN_RATE_MU_OFDMA,
+	WLAN_RATE_MU_OFDMA_MIMO,
+	WLAN_RATE_MAX,
+};
+
+/**
+ * struct wlan_rate_avg - avg rate stats
+ * @num_ppdu: number of ppdu
+ * @sum_mbps: cumulative rate in mbps
+ * @num_snr: number of times snr added
+ * @sum_snr: sum of snr
+ * @num_mpdu: number of mpdu
+ * @num_retry: num of retries
+ */
+struct wlan_rate_avg {
+	uint32_t num_ppdu;
+	uint32_t sum_mbps;
+	uint32_t num_snr;
+	uint32_t sum_snr;
+	uint64_t num_mpdu;
+	uint32_t num_retry;
+};
+
+/**
+ * struct wlan_avg_rate_stats - avg rate stats for tx and rx
+ * @tx: avg tx rate stats
+ * @rx: avg rx rate stats
+ */
+struct wlan_avg_rate_stats {
+	struct wlan_rate_avg tx[WLAN_RATE_MAX];
+	struct wlan_rate_avg rx[WLAN_RATE_MAX];
+};
 
 /**
  * struct wlan_peer_bw_stats - per link bw related stats

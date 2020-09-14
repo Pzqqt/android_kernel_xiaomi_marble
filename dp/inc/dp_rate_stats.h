@@ -91,6 +91,16 @@ struct wlan_peer_rx_rate_stats {
 };
 
 /**
+ * struct wlan_peer_avg_rate_stats - Peer avg rate statistics
+ * @stats: array containing avg rate stats
+ * @lock: lock protecting list
+ */
+struct wlan_peer_avg_rate_stats {
+	struct wlan_avg_rate_stats stats;
+	qdf_spinlock_t lock;
+};
+
+/**
  * struct wlan_peer_rx_link_stats - Peer Rx Link statistics
  * @stats: array containing rx rate stats
  * @lock: lock protecting list
@@ -134,6 +144,7 @@ struct wlan_peer_link_metrics {
  * struct wlan_peer_rate_stats_ctx - Peer statistics context
  * @rate_stats: Rate statistics (version 1 stats)
  * @link_metrics: Link Metrics (version 2 stats)
+ * @avg: Avg rate statistics
  * @mac_addr: peer MAC address
  * @peer_cookie: cookie for unique session of peer
  * @pdev_id: id of dp pdev
@@ -141,6 +152,7 @@ struct wlan_peer_link_metrics {
 struct wlan_peer_rate_stats_ctx {
 	struct wlan_peer_rate_stats *rate_stats;
 	struct wlan_peer_link_metrics *link_metrics;
+	struct wlan_peer_avg_rate_stats avg;
 	uint8_t mac_addr[WLAN_MAC_ADDR_LEN];
 	uint64_t peer_cookie;
 	uint8_t pdev_id;
