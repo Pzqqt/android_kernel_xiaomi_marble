@@ -6863,7 +6863,7 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	if (assoc_rsp->he_cap.present)
 		he_cap = &assoc_rsp->he_cap;
 	/* Use beacon HE caps if assoc resp doesn't have he caps */
-	else if (beacon->he_cap.present)
+	else if (beacon && beacon->he_cap.present)
 		he_cap = &beacon->he_cap;
 	else
 		return;
