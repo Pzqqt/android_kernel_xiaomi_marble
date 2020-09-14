@@ -38,23 +38,28 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
-		/* Post event disconnect active to CM SM */
+		status = cm_sm_deliver_event(vdev,
+					     WLAN_CM_SM_EV_DISCONNECT_ACTIVE,
+					     sizeof(wlan_cm_id), &cmd->cmd_id);
+		/*
+		 * Handle failure if posting fails, i.e. the SM state has
+		 * changes. Disconnect shoul dbe handled in JOIN_PENDING,
+		 * JOIN-SCAN state as well apart from DISCONNECTING.
+		 * Also no need to check for head list as diconnect needs to be
+		 * completed always once active.
+		 */
 		break;
-
 	case WLAN_SER_CB_CANCEL_CMD:
 		/* command removed from pending list. */
 		break;
-
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
 		QDF_ASSERT(0);
 		break;
-
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		/* command completed. Release reference of vdev */
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		break;
-
 	default:
 		QDF_ASSERT(0);
 		status = QDF_STATUS_E_INVAL;

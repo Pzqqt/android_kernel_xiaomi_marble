@@ -24,6 +24,7 @@
 #define __WLAN_CM_MAIN_API_H__
 
 #include "wlan_cm_main.h"
+#include "wlan_cm_sm.h"
 #include <include/wlan_mlme_cmn.h>
 
 /*************** CONNECT APIs ****************/
@@ -133,11 +134,27 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
  * @cm_id: connection ID which gave the hw mode change request
  * @status: status of the HW mode change.
  *
- * Return: QDF_STATUS
+ * Return: void
  */
 void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			    wlan_cm_id cm_id, QDF_STATUS status);
 
+/**
+ * cm_handle_hw_mode_change() - SM handling of hw mode change resp
+ * @cm_ctx: connection manager context
+ * @cm_id: Connection mgr ID assigned to this connect request.
+ * @event: HW mode success or failure event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_handle_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
+				    enum wlan_cm_sm_evt event);
+#else
+QDF_STATUS cm_handle_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
+				    enum wlan_cm_sm_evt event)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /*************** DISCONNECT APIs ****************/
@@ -227,7 +244,22 @@ struct cnx_mgr *cm_get_cm_ctx(struct wlan_objmgr_vdev *vdev);
  *
  * Return: true if match else false
  */
-bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+
+/**
+ * cm_check_scanid_match_list_head() - check if list head command matches the
+ * given scan_id
+ * @cm_ctx: connection manager context
+ * @scan_id: scan_id of connect req
+ *
+ * Check if front req command is connect command and matches the given
+ * scan_id, this can be used to check if the latest (head) is same we are
+ * trying to processing
+ *
+ * Return: true if match else false
+ */
+bool cm_check_scanid_match_list_head(struct cnx_mgr *cm_ctx,
+				     wlan_scan_id *scan_id);
 
 /**
  * cm_delete_req_from_list() - Delete the request matching cm id

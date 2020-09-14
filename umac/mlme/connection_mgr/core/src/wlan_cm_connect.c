@@ -44,23 +44,27 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
-		/* Post event to move CM SM to join active */
+		status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_CONNECT_ACTIVE,
+					     sizeof(wlan_cm_id), &cmd->cmd_id);
+		/*
+		 * Handle failure if posting fails, i.e. the SM state has
+		 * changed or head cm_id doesn't match the active cm_id.
+		 * connect active should be handled only in JOIN_PENDING. If
+		 * new command has been received connect activation should be
+		 * aborted from here with connect req cleanup.
+		 */
 		break;
-
 	case WLAN_SER_CB_CANCEL_CMD:
 		/* command removed from pending list. */
 		break;
-
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
 		QDF_ASSERT(0);
 		break;
-
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		/* command completed. Release reference of vdev */
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		break;
-
 	default:
 		QDF_ASSERT(0);
 		status = QDF_STATUS_E_INVAL;
@@ -112,13 +116,93 @@ static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
+			   struct cm_connect_req *req,
+			   enum wlan_cm_connect_fail_reason reason)
+{
+	struct wlan_cm_connect_rsp *resp;
+	QDF_STATUS status;
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		return QDF_STATUS_E_NOMEM;
+
+	/* fill resp from req */
+
+	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
+					  sizeof(*resp), resp);
+	qdf_mem_free(resp);
+
+	return status;
+}
+
 #ifdef WLAN_POLICY_MGR_ENABLE
+
+QDF_STATUS cm_handle_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
+				    enum wlan_cm_sm_evt event)
+{
+	struct cm_req *cm_req;
+	enum wlan_cm_connect_fail_reason reason = CM_GENERIC_FAILURE;
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status;
+
+	if (!cm_id)
+		return QDF_STATUS_E_FAILURE;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req)
+		return QDF_STATUS_E_INVAL;
+
+	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
+	if (!pdev) {
+		mlme_err("Failed to find pdev from vdev");
+		goto send_failure;
+	}
+
+	if (event == WLAN_CM_SM_EV_HW_MODE_SUCCESS) {
+		status = cm_ser_connect_req(pdev, cm_ctx, &cm_req->connect_req);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			reason = CM_SER_FAILURE;
+			goto send_failure;
+		}
+		return status;
+	}
+
+	/* Set reason HW mode fail for event WLAN_CM_SM_EV_HW_MODE_FAILURE */
+	reason = CM_HW_MODE_FAILURE;
+
+send_failure:
+	return cm_send_connect_start_fail(cm_ctx, &cm_req->connect_req, reason);
+}
 
 void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			    wlan_cm_id cm_id, QDF_STATUS status)
 {
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS qdf_status;
+	enum wlan_cm_sm_evt event = WLAN_CM_SM_EV_HW_MODE_SUCCESS;
+
 	mlme_debug("vdev %d cm id %d Continue connect after HW mode change, status %d",
 		   vdev_id, cm_id, status);
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev)
+		return;
+
+	if (QDF_IS_STATUS_ERROR(status))
+		event = WLAN_CM_SM_EV_HW_MODE_FAILURE;
+	qdf_status = cm_sm_deliver_event(vdev, event, sizeof(wlan_cm_id),
+					 &cm_id);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	/*
+	 * Handle failure if posting fails, i.e. the SM state has
+	 * changed or head cm_id doesn't match the active cm_id.
+	 * hw mode change resp should be handled only in JOIN_PENDING. If
+	 * new command has been received connect should be
+	 * aborted from here with connect req cleanup.
+	 */
 }
 
 static QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
@@ -234,25 +318,6 @@ static void cm_connect_prepare_scan_fliter(struct cnx_mgr *cm_ctx,
 	/* FOR WPS/OSEN set ignore auth */
 	/* SET mobility domain */
 	/* Fill fils info */
-}
-
-static QDF_STATUS
-cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
-			   struct cm_connect_req *cm_req,
-			   enum wlan_cm_connect_fail_reason reason)
-{
-	struct wlan_cm_connect_rsp *resp;
-	QDF_STATUS status;
-
-	resp = qdf_mem_malloc(sizeof(*resp));
-	if (!resp)
-		return QDF_STATUS_E_NOMEM;
-
-	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
-					  sizeof(*resp), resp);
-	qdf_mem_free(resp);
-
-	return status;
 }
 
 static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,

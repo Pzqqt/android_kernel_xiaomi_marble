@@ -370,8 +370,23 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_ACTIVE:
+		/* check if cm id is valid for the current req */
+		if (!cm_check_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_JOIN_ACTIVE);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
+		status = true;
+		break;
+	case WLAN_CM_SM_EV_HW_MODE_SUCCESS:
+	case WLAN_CM_SM_EV_HW_MODE_FAILURE:
+		/* check if cm id is valid for the current req */
+		if (!cm_check_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
+		cm_handle_hw_mode_change(cm_ctx, data, event);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_SCAN:
@@ -453,6 +468,11 @@ static bool cm_subst_scan_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_SCAN_SUCCESS:
 	case WLAN_CM_SM_EV_SCAN_FAILURE:
+		/* check if scan id is valid for the current req */
+		if (!cm_check_scanid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_JOIN_PENDING);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
@@ -697,6 +717,8 @@ static const char *cm_sm_event_names[] = {
 	"EV_SCAN",
 	"EV_SCAN_SUCCESS",
 	"EV_SCAN_FAILURE",
+	"EV_HW_MODE_SUCCESS",
+	"EV_HW_MODE_FAILURE",
 	"EV_CONNECT_START",
 	"EV_CONNECT_ACTIVE",
 	"EV_CONNECT_SUCCESS",

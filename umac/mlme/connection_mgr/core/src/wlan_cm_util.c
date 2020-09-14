@@ -102,11 +102,15 @@ static inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 }
 #endif /* WLAN_CM_USE_SPINLOCK */
 
-bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	qdf_list_node_t *cur_node = NULL;
 	struct cm_req *cm_req;
 	bool match = false;
+	wlan_cm_id head_cm_id = 0;
+
+	if (!cm_id)
+		return false;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
@@ -114,11 +118,50 @@ bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 		goto exit;
 
 	cm_req = qdf_container_of(cur_node, struct cm_req, node);
-	if (cm_req->cm_id == cm_id)
+	head_cm_id = cm_req->cm_id;
+	if (head_cm_id == *cm_id)
 		match = true;
 
 exit:
 	cm_req_lock_release(cm_ctx);
+	if (!match)
+		mlme_info("head_cm_id %d didn't match the given cm_id %d",
+			  head_cm_id, *cm_id);
+
+	return match;
+}
+
+bool cm_check_scanid_match_list_head(struct cnx_mgr *cm_ctx,
+				     wlan_scan_id *scan_id)
+{
+	qdf_list_node_t *cur_node = NULL;
+	struct cm_req *cm_req;
+	bool match = false;
+	wlan_cm_id head_scan_id = 0;
+	uint32_t prefix = 0;
+
+	if (!scan_id)
+		return false;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	if (!cur_node)
+		goto exit;
+
+	cm_req = qdf_container_of(cur_node, struct cm_req, node);
+	prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
+	/* Check only if head is connect req */
+	if (prefix != CONNECT_REQ_PREFIX)
+		goto exit;
+	head_scan_id = cm_req->connect_req.scan_id;
+	if (head_scan_id == *scan_id)
+		match = true;
+
+exit:
+	cm_req_lock_release(cm_ctx);
+	if (!match)
+		mlme_info("head_scan_id %d didn't match the given scan_id %d prefix %x",
+			  head_scan_id, *scan_id, prefix);
 
 	return match;
 }
