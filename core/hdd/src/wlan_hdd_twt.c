@@ -41,6 +41,9 @@
 #define TWT_PAUSE_COMPLETE_TIMEOUT 4000
 #define TWT_RESUME_COMPLETE_TIMEOUT 4000
 
+#define TWT_FLOW_TYPE_ANNOUNCED 0
+#define TWT_FLOW_TYPE_UNANNOUNCED 1
+
 /**
  * struct twt_pause_dialog_comp_ev_priv - private struct for twt pause dialog
  * @pause_dialog_comp_ev_buf: buffer from TWT pause dialog complete_event
@@ -86,6 +89,20 @@ struct twt_del_dialog_comp_ev_priv {
 };
 
 static const struct nla_policy
+qca_wlan_vendor_twt_add_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST] = {.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER] = {.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION] = {.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA] = {.type = NLA_U32 },
+};
+
+static const struct nla_policy
 qca_wlan_vendor_twt_resume_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_FLOW_ID] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_NEXT_TWT] = {.type = NLA_U8 },
@@ -102,7 +119,14 @@ wlan_hdd_wifi_twt_config_policy[
 			.type = NLA_NESTED},
 };
 
-QDF_STATUS
+/**
+ * hdd_twt_setup_req_type_to_cmd() - Converts twt setup request type to twt cmd
+ * @req_type: twt setup request type
+ * @twt_cmd: pointer to store twt command
+ *
+ * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
+ */
+static QDF_STATUS
 hdd_twt_setup_req_type_to_cmd(u8 req_type, enum WMI_HOST_TWT_COMMAND *twt_cmd)
 {
 	if (req_type == QCA_WLAN_VENDOR_TWT_SETUP_REQUEST) {
@@ -116,6 +140,230 @@ hdd_twt_setup_req_type_to_cmd(u8 req_type, enum WMI_HOST_TWT_COMMAND *twt_cmd)
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_twt_get_add_dialog_values() - Get TWT add dialog parameter
+ * values from QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS
+ * @tb: nl attributes
+ * @params: wmi twt add dialog parameters
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX
+ *
+ * Return: 0 or -EINVAL.
+ */
+static
+int hdd_twt_get_add_dialog_values(struct nlattr **tb,
+				  struct wmi_twt_add_dialog_param *params)
+{
+	uint32_t wake_intvl_exp, result;
+	int cmd_id;
+	QDF_STATUS qdf_status;
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (tb[cmd_id]) {
+		params->dialog_id = nla_get_u8(tb[cmd_id]);
+	} else {
+		params->dialog_id = 0;
+		hdd_debug("TWT_SETUP_FLOW_ID not specified. set to zero");
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_WAKE_INTVL_EXP is must");
+		return -EINVAL;
+	}
+	wake_intvl_exp = nla_get_u8(tb[cmd_id]);
+	if (wake_intvl_exp > TWT_SETUP_WAKE_INTVL_EXP_MAX) {
+		hdd_err_rl("Invalid wake_intvl_exp %u > %u",
+			   wake_intvl_exp,
+			   TWT_SETUP_WAKE_INTVL_EXP_MAX);
+		return -EINVAL;
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
+	params->flag_bcast = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_REQ_TYPE is must");
+		return -EINVAL;
+	}
+	qdf_status = hdd_twt_setup_req_type_to_cmd(nla_get_u8(tb[cmd_id]),
+						   &params->twt_cmd);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return qdf_status_to_os_return(qdf_status);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
+	params->flag_trigger = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_FLOW_TYPE is must");
+		return -EINVAL;
+	}
+	params->flag_flow_type = nla_get_u8(tb[cmd_id]);
+	if (params->flag_flow_type != TWT_FLOW_TYPE_ANNOUNCED &&
+	    params->flag_flow_type != TWT_FLOW_TYPE_UNANNOUNCED)
+		return -EINVAL;
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
+	params->flag_protection = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME;
+	if (tb[cmd_id])
+		params->sp_offset_us = nla_get_u32(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_WAKE_DURATION is must");
+		return -EINVAL;
+	}
+	params->wake_dura_us = TWT_WAKE_DURATION_MULTIPLICATION_FACTOR *
+			       nla_get_u32(tb[cmd_id]);
+	if (params->wake_dura_us > TWT_SETUP_WAKE_DURATION_MAX) {
+		hdd_err_rl("Invalid wake_dura_us %u",
+			   params->wake_dura_us);
+		return -EINVAL;
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("SETUP_WAKE_INTVL_MANTISSA is must");
+		return -EINVAL;
+	}
+	params->wake_intvl_mantis = nla_get_u32(tb[cmd_id]);
+	if (params->wake_intvl_mantis >
+	    TWT_SETUP_WAKE_INTVL_MANTISSA_MAX) {
+		hdd_err_rl("Invalid wake_intvl_mantis %u",
+			   params->wake_dura_us);
+		return -EINVAL;
+	}
+
+	if (wake_intvl_exp && params->wake_intvl_mantis) {
+		result = 2 << (wake_intvl_exp - 1);
+		if (result >
+		    (UINT_MAX / params->wake_intvl_mantis)) {
+			hdd_err_rl("Invalid exp %d mantissa %d",
+				   wake_intvl_exp,
+				   params->wake_intvl_mantis);
+			return -EINVAL;
+		}
+		params->wake_intvl_us =
+			params->wake_intvl_mantis * result;
+	} else {
+		params->wake_intvl_us = params->wake_intvl_mantis;
+	}
+
+	hdd_debug("twt: dialog_id %d, vdev %d, wake intvl_us %d, mantis %d",
+		  params->dialog_id, params->vdev_id, params->wake_intvl_us,
+		  params->wake_intvl_mantis);
+	hdd_debug("twt: wake dura %d, sp_offset %d, cmd %d",
+		  params->wake_dura_us, params->sp_offset_us,
+		  params->twt_cmd);
+	hdd_debug("twt: bcast %d, trigger %d, flow_type %d, prot %d",
+		  params->flag_bcast, params->flag_trigger,
+		  params->flag_flow_type,
+		  params->flag_protection);
+	hdd_debug("twt: peer mac_addr "
+		  QDF_MAC_ADDR_FMT,
+		  QDF_MAC_ADDR_REF(params->peer_macaddr));
+
+	return 0;
+}
+
+int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
+				      struct nlattr **tb)
+{
+	struct nlattr *twt_session;
+	int tmp, rc;
+	struct hdd_station_ctx *hdd_sta_ctx = NULL;
+	struct wmi_twt_add_dialog_param params = {0};
+	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	uint32_t congestion_timeout = 0;
+	int ret = 0;
+	int cmd_id;
+
+	if (adapter->device_mode != QDF_STA_MODE &&
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+		return -EOPNOTSUPP;
+	}
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
+			   adapter->vdev_id, adapter->device_mode,
+			   hdd_sta_ctx->conn_info.conn_state);
+		return -EINVAL;
+	}
+
+	qdf_mem_copy(params.peer_macaddr, hdd_sta_ctx->conn_info.bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	params.vdev_id = adapter->vdev_id;
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_TWT_SETUP;
+	nla_for_each_nested(twt_session, tb[cmd_id], tmp) {
+		rc = wlan_cfg80211_nla_parse(tb2,
+					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					     nla_data(twt_session),
+					     nla_len(twt_session),
+					     qca_wlan_vendor_twt_add_dialog_policy);
+		if (rc) {
+			hdd_err_rl("Invalid twt ATTR");
+			return -EINVAL;
+		}
+
+		ret = hdd_twt_get_add_dialog_values(tb2, &params);
+		if (ret)
+			return ret;
+
+		ucfg_mlme_get_twt_congestion_timeout(adapter->hdd_ctx->psoc,
+						     &congestion_timeout);
+		if (congestion_timeout) {
+			ret = qdf_status_to_os_return(
+				hdd_send_twt_disable_cmd(adapter->hdd_ctx));
+			if (ret) {
+				hdd_err("Failed to disable TWT");
+				return ret;
+			}
+			ucfg_mlme_set_twt_congestion_timeout(adapter->hdd_ctx->psoc, 0);
+			hdd_send_twt_enable_cmd(adapter->hdd_ctx);
+		}
+
+		ret = qdf_status_to_os_return(sme_test_config_twt_setup(&params));
+	}
+	return ret;
+}
+
+int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
+					  struct nlattr **tb)
+{
+	struct hdd_station_ctx *hdd_sta_ctx = NULL;
+	struct wmi_twt_del_dialog_param params = {0};
+	int ret_val;
+
+	if (adapter->device_mode != QDF_STA_MODE &&
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+		return -EOPNOTSUPP;
+	}
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
+			   adapter->vdev_id, adapter->device_mode,
+			   hdd_sta_ctx->conn_info.conn_state);
+		return -EINVAL;
+	}
+
+	qdf_mem_copy(params.peer_macaddr,
+		     hdd_sta_ctx->conn_info.bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	params.vdev_id = adapter->vdev_id;
+	params.dialog_id = 0;
+	hdd_debug("twt_terminate: vdev_id %d", params.vdev_id);
+
+	ret_val = qdf_status_to_os_return(sme_test_config_twt_terminate(&params));
+	return ret_val;
 }
 
 /**

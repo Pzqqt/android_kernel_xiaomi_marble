@@ -14485,7 +14485,7 @@ QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+			  "wma handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -14500,7 +14500,7 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+			  "wma handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 

@@ -875,16 +875,4 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
  */
 bool hdd_is_legacy_connection(struct hdd_adapter *adapter);
 
-/**
- * hdd_twt_get_add_dialog_values() - Get TWT add dialog parameter
- * values from QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS
- * @tb: nl attributes
- * @params: wmi twt add dialog parameters
- *
- * Handles QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX
- *
- * Return: 0 or -EINVAL.
- */
-int hdd_twt_get_add_dialog_values(struct nlattr **tb2,
-			       struct wmi_twt_add_dialog_param *params);
 #endif
