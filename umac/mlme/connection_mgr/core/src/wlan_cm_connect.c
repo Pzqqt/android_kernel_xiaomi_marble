@@ -62,7 +62,7 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 		QDF_ASSERT(0);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
-		/* command completed. Release reference of vdev */
+		cm_reset_active_cm_id(vdev, cmd->cmd_id);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		break;
 	default:
@@ -420,25 +420,187 @@ connect_err:
 	return cm_send_connect_start_fail(cm_ctx, cm_req, reason);
 }
 
-QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+static QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
+					struct scan_cache_entry *scan_entry)
 {
-	/*
-	 * get first valid candidate, create bss peer.
-	 * fill vdev crypto for the peer.
-	 * call vdev sm to start connect for the candidate.
-	 */
+	struct if_mgr_event_data event_data = {0};
+
+	event_data.validate_bss_info.chan_freq = scan_entry->channel.chan_freq;
+	qdf_copy_macaddr(&event_data.validate_bss_info.peer_addr,
+			 &scan_entry->bssid);
+
+	return if_mgr_deliver_event(cm_ctx->vdev,
+				    WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
+				    &event_data);
+}
+#else
+static inline
+QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
+				 struct scan_cache_entry *scan_entry)
+{
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * cm_get_valid_candidate() - This API will be called to get the next valid
+ * candidate
+ * @cm_ctx: connection manager context
+ * @cm_req: Connect request.
+ *
+ * This function return a valid candidate to try connection. It return failure
+ * if no valid candidate is present or all valid candidate are tried.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
+					 struct cm_req *cm_req)
+{
+	struct scan_cache_node *scan_node = NULL;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct scan_cache_node *cur_candidate;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (cm_req->connect_req.connect_attempts >=
+	    CM_MAX_CANDIDATE_TO_BE_TRIED) {
+		mlme_info("Max %d candidates tried for the conenction",
+			  cm_req->connect_req.connect_attempts);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cur_candidate = cm_req->connect_req.cur_candidate;
+	/*
+	 * Get next candidate if cur_candidate is not NULL, else get
+	 * the first candidate
+	 */
+	if (cur_candidate)
+		qdf_list_peek_next(cm_req->connect_req.candidate_list,
+				   &cur_candidate->node, &cur_node);
+	else
+		qdf_list_peek_front(cm_req->connect_req.candidate_list,
+				    &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(cm_req->connect_req.candidate_list,
+				   cur_node, &next_node);
+		scan_node = qdf_container_of(cur_node, struct scan_cache_node,
+					     node);
+		status = cm_validate_candidate(cm_ctx, scan_node->entry);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			cur_candidate = scan_node;
+			break;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	/*
+	 * If cur_node is NULL cur candidate was last to be tried so no more
+	 * candidates left for connect now.
+	 */
+	if (!cur_node) {
+		mlme_debug("No more candidates left");
+		cm_req->connect_req.cur_candidate = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cm_req->connect_req.connect_attempts++;
+	cm_req->connect_req.cur_candidate = cur_candidate;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
+			       struct cm_connect_req *req)
+{
+	QDF_STATUS status;
+	struct qdf_mac_addr *bssid;
+
+	bssid = &req->cur_candidate->entry->bssid;
+	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		struct wlan_cm_connect_rsp *resp;
+
+		/* In case of failure try with next candidate */
+		mlme_err("peer create request failed %d", status);
+		resp = qdf_mem_malloc(sizeof(*resp));
+		if (!resp)
+			return;
+
+		resp->connect_status = status;
+		resp->cm_id = req->cm_id;
+		resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+		resp->reason = CM_JOIN_FAILED;
+		cm_sm_deliver_event_sync(cm_ctx,
+				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
+				    sizeof(*resp), resp);
+		qdf_mem_free(resp);
+	}
 }
 
 QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 				 struct wlan_cm_connect_rsp *resp)
 {
+	QDF_STATUS status;
+	struct cm_req *cm_req;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
+	if (!cm_req) {
+		mlme_err("cm req NULL connect fail");
+		goto connect_err;
+	}
+
+	status = cm_get_valid_candidate(cm_ctx, cm_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto connect_err;
+
+	mlme_cm_osif_failed_candidate_ind(cm_ctx->vdev, resp);
+
+	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
+
+	return QDF_STATUS_SUCCESS;
+
+connect_err:
+	return cm_send_connect_start_fail(cm_ctx, &cm_req->connect_req,
+					  CM_JOIN_FAILED);
+}
+
+QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+{
+	struct cm_req *cm_req;
+	QDF_STATUS status;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req) {
+		mlme_err("cm req NULL connect fail");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cm_ctx->active_cm_id = *cm_id;
+
+	status = cm_get_valid_candidate(cm_ctx, cm_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto connect_err;
+
+	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
+
+	return QDF_STATUS_SUCCESS;
+
+connect_err:
+	return cm_send_connect_start_fail(cm_ctx,
+					  &cm_req->connect_req, CM_JOIN_FAILED);
+}
+
+QDF_STATUS
+cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+{
 	/*
-	 * get next valid candidate, if no candidate left, post
-	 * WLAN_CM_SM_EV_CONNECT_FAILURE to SM, inform osif about failure for
-	 * the candidate if its not last one. and initiate the connect for
-	 * next candidate.
+	 * fill vdev crypto for the peer.
+	 * call vdev sm to start connect for the candidate.
 	 */
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -475,6 +637,67 @@ QDF_STATUS cm_add_connect_req_to_list(struct cnx_mgr *cm_ctx,
 						      req->req.source);
 
 	return status;
+}
+
+QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
+				  QDF_STATUS status,
+				  struct qdf_mac_addr *peer_mac)
+{
+	struct cnx_mgr *cm_ctx;
+	QDF_STATUS qdf_status;
+	struct wlan_cm_connect_rsp *resp;
+	wlan_cm_id cm_id;
+	uint32_t prefix;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		mlme_err("cm ctx NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cm_id = cm_ctx->active_cm_id;
+	prefix = CM_ID_GET_PREFIX(cm_id);
+
+	if (prefix != CONNECT_REQ_PREFIX) {
+		mlme_err("Active req %x is not connect req", cm_id);
+		/* Delete peer if create was success */
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_status =
+			cm_sm_deliver_event(vdev,
+					    WLAN_CM_EV_BSS_CREATE_PEER_SUCCESS,
+					    sizeof(wlan_cm_id), &cm_id);
+		if (QDF_IS_STATUS_SUCCESS(qdf_status))
+			return qdf_status;
+		goto post_err;
+	}
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		goto post_err;
+
+	resp->connect_status = status;
+	resp->cm_id = cm_id;
+	resp->vdev_id = wlan_vdev_get_id(vdev);
+	resp->reason = CM_JOIN_FAILED;
+
+	/* In case of failure try with next candidate */
+	qdf_status =
+		cm_sm_deliver_event(vdev,
+				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
+				    sizeof(*resp), resp);
+	qdf_mem_free(resp);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
+
+post_err:
+	/*
+	 * handle post error i.e. STATE is not connect active, so
+	 * do cleanup of req.
+	 */
+	return qdf_status;
 }
 
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,

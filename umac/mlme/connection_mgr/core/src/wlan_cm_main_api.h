@@ -26,6 +26,15 @@
 #include "wlan_cm_main.h"
 #include "wlan_cm_sm.h"
 #include <include/wlan_mlme_cmn.h>
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+#include <wlan_if_mgr_api.h>
+#endif
+
+#define CONNECT_REQ_PREFIX          0x00C00000
+#define DISCONNECT_REQ_PREFIX       0x00D00000
+#define CM_ID_MASK                  0x0000FFFF
+
+#define CM_ID_GET_PREFIX(cm_id)     cm_id & 0xFFFF0000
 
 /*************** CONNECT APIs ****************/
 
@@ -91,6 +100,28 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
  * Return: QDF status
  */
 QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_resume_connect_after_peer_create() - Called after bss create rsp
+ * @cm_ctx: connection manager context
+ * @cm_id: Connection mgr ID assigned to this connect request.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+
+/**
+ * cm_bss_peer_create_rsp() - handle bss peer create response
+ * @vdev: vdev
+ * @status: bss peer create status
+ * @peer_mac: peer mac
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
+				  QDF_STATUS status,
+				  struct qdf_mac_addr *peer_mac);
 
 /**
  * cm_connect_complete() - This API would be called after connect complete
@@ -231,6 +262,16 @@ wlan_cm_id cm_get_cm_id(struct cnx_mgr *cm_ctx, enum wlan_cm_source source);
  * Return: pointer to connection manager context
  */
 struct cnx_mgr *cm_get_cm_ctx(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_reset_active_cm_id() - Reset active cm_id from cm context, if its same as
+ * passed cm_id
+ * @vdev: vdev object pointer
+ * @cm_id: cmid to match
+ *
+ * Return: void
+ */
+void cm_reset_active_cm_id(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id);
 
 /**
  * cm_check_cmid_match_list_head() - check if list head command matches the

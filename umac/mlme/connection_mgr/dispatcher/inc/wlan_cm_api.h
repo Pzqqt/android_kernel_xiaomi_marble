@@ -55,7 +55,7 @@ QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
-				       uint32_t status,
+				       QDF_STATUS status,
 				       struct qdf_mac_addr *peer_mac);
 
 /**

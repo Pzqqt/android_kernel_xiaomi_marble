@@ -551,6 +551,10 @@ static bool cm_subst_join_active_event(void *ctx, uint16_t event,
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
+	case WLAN_CM_EV_BSS_CREATE_PEER_SUCCESS:
+		cm_resume_connect_after_peer_create(cm_ctx, data);
+		status = true;
+		break;
 	default:
 		status = false;
 		break;
@@ -722,6 +726,7 @@ static const char *cm_sm_event_names[] = {
 	"EV_CONNECT_START",
 	"EV_CONNECT_ACTIVE",
 	"EV_CONNECT_SUCCESS",
+	"EV_BSS_CREATE_PEER_SUCCESS"
 	"EV_CONNECT_GET_NXT_CANDIDATE",
 	"EV_CONNECT_FAILURE",
 	"EV_DISCONNECT_REQ",

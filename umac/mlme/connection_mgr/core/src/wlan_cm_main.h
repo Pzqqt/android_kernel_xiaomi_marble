@@ -99,6 +99,7 @@ struct cm_state_sm {
  * @rsn_ie: rsn_ie in connect req
  * @candidate_list: candidate list
  * @cur_candidate: current candidate
+ * @connect_attempts: number of connect attempts tried
  */
 struct cm_connect_req {
 	wlan_cm_id cm_id;
@@ -109,6 +110,7 @@ struct cm_connect_req {
 	struct element_info rsn_ie;
 	qdf_list_t *candidate_list;
 	struct scan_cache_node *cur_candidate;
+	uint8_t connect_attempts;
 };
 
 /**
@@ -157,6 +159,7 @@ struct connect_ies {
  * struct cnx_mgr - connect manager req
  * @vdev: vdev back pointer
  * @sm: state machine
+ * @active_cm_id: cm_id of the active command, if any active command present
  * @req_list: connect/disconnect req list
  * @cm_req_lock: lock to manupulate/read the cm req list
  * @disconnect_count: disconnect count
@@ -170,6 +173,7 @@ struct connect_ies {
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
 	struct cm_state_sm sm;
+	wlan_cm_id active_cm_id;
 	qdf_list_t req_list;
 #ifdef WLAN_CM_USE_SPINLOCK
 	qdf_spinlock_t cm_req_lock;

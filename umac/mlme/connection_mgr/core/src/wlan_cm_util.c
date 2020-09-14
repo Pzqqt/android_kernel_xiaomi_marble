@@ -22,12 +22,6 @@
 #include "wlan_scan_api.h"
 #include "wlan_cm_public_struct.h"
 
-#define CONNECT_REQ_PREFIX          0x00C00000
-#define DISCONNECT_REQ_PREFIX       0x00D00000
-#define CM_ID_MASK                  0x0000FFFF
-
-#define CM_ID_GET_PREFIX(cm_id)     cm_id & 0xFFFF0000
-
 static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 	switch (source) {
 	case CM_OSIF_CONNECT:
@@ -61,6 +55,19 @@ struct cnx_mgr *cm_get_cm_ctx(struct wlan_objmgr_vdev *vdev)
 		return NULL;
 
 	return vdev_mlme->cnx_mgr_ctx;
+}
+
+void cm_reset_active_cm_id(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id)
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	/* Reset active cm id if cm id match */
+	if (cm_ctx->active_cm_id == cm_id)
+		cm_ctx->active_cm_id = CM_ID_INVALID;
 }
 
 

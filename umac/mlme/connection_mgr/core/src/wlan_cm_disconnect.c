@@ -57,7 +57,7 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 		QDF_ASSERT(0);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
-		/* command completed. Release reference of vdev */
+		cm_reset_active_cm_id(vdev, cmd->cmd_id);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		break;
 	default:
@@ -133,6 +133,16 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 
 QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
+	struct cm_req *cm_req;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req) {
+		mlme_err("cm req NULL connect fail");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cm_ctx->active_cm_id = *cm_id;
+
 	/*
 	 * call vdev sm to start disconnect.
 	 */
