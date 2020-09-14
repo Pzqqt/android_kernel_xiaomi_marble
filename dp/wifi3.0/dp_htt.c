@@ -3557,6 +3557,7 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		if (!peer)
 			continue;
 
+		ppdu_desc->user[i].is_bss_peer = peer->bss_peer;
 		/*
 		 * different frame like DATA, BAR or CTRL has different
 		 * tlv bitmap expected. Apart from ACK_BA_STATUS TLV, we

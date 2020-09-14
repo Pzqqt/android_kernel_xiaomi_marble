@@ -301,6 +301,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
+		rx_stats_peruser->is_bss_peer = peer->bss_peer;
 
 		rx_stats_peruser->first_data_seq_ctrl =
 			rx_user_status->first_data_seq_ctrl;
@@ -579,6 +580,8 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	DP_STATS_UPD(peer, rx.rnd_avg_rx_rate, ppdu_rx_rate);
 	ppdu->rx_ratekbps = ratekbps;
 	ppdu->rx_ratecode = ratecode;
+	if (ppdu->u.ppdu_type != HAL_RX_TYPE_SU)
+		ppdu_user->rx_ratekbps = ratekbps;
 
 	if (peer->vdev)
 		peer->vdev->stats.rx.last_rx_rate = ratekbps;

@@ -1654,6 +1654,7 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @sa_goodput: smart antenna tx feedback info goodput
  * @current_rate_per: Moving average per
  * @last_enq_seq: last equeue sequence number
+ * @is_bss_peer: is bss peer check
  * @mpdu_q: queue of mpdu in a ppdu
  * @mpdus: MPDU list based on enqueue sequence bitmap
  * @pending_retries: pending MPDUs (retries)
@@ -1750,6 +1751,8 @@ struct cdp_tx_completion_ppdu_user {
 	 */
 	uint32_t current_rate_per;
 	uint32_t last_enq_seq;
+
+	uint8_t is_bss_peer;
 
 	qdf_nbuf_queue_t mpdu_q;
 	qdf_nbuf_t *mpdus;
@@ -2054,6 +2057,7 @@ struct cdp_tx_completion_msdu {
  * @nss: NSS 1,2, ...8
  * @mcs: MCS index
  * @user_index: user ID in multi-user case
+ * @is_bss_peer - is bss peer check
  * @ast_index: ast index in multi-user case
  * @tid: TID number
  * @num_msdu: Number of MSDUs in PPDU
@@ -2074,7 +2078,8 @@ struct cdp_tx_completion_msdu {
  * @mpdu_cnt_fcs_ok: Number of MPDUs in PPDU with fcs ok
  * @mpdu_cnt_fcs_err: Number of MPDUs in PPDU with fcs err
  * @mpdu_fcs_ok_bitmap - MPDU with fcs ok bitmap
- * @retried - number of retries
+ * @retries - number of retries
+ * @rx_ratekpbs - rx rate in kbps
  */
 struct cdp_rx_stats_ppdu_user {
 	uint16_t peer_id;
@@ -2087,6 +2092,7 @@ struct cdp_rx_stats_ppdu_user {
 		 mcs:4;
 	/* user id */
 	uint8_t  user_index;
+	uint8_t is_bss_peer;
 	uint32_t ast_index;
 	uint32_t tid;
 	uint32_t num_msdu;
@@ -2110,6 +2116,7 @@ struct cdp_rx_stats_ppdu_user {
 	uint32_t mpdu_ok_byte_count;
 	uint32_t mpdu_err_byte_count;
 	uint32_t retries;
+	uint32_t rx_ratekbps;
 };
 
 /**
