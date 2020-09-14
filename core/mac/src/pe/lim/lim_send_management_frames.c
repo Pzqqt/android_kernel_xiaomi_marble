@@ -2082,7 +2082,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		pe_debug("Populate VHT IEs in Assoc Request");
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
 		vht_enabled = true;
-		if (pe_session->gLimOperatingMode.present) {
+		if (pe_session->gLimOperatingMode.present &&
+		    pe_session->ch_width == CH_WIDTH_20MHZ &&
+		    frm->VHTCaps.present) {
 			pe_debug("VHT OP mode IE in Assoc Req");
 			populate_dot11f_operating_mode(mac_ctx,
 					&frm->OperatingMode, pe_session);
