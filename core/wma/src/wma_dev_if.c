@@ -1177,6 +1177,11 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	}
 
 	mlme_psoc_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_psoc_obj) {
+		wma_err("Failed to get mlme_psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	ratemask_cfg = &mlme_psoc_obj->cfg.ratemask_cfg;
 
 	if (!mac_ctx) {
