@@ -93,6 +93,8 @@
 #include <target_if_dcs.h>
 #endif
 
+#include <target_if_gpio.h>
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -460,6 +462,19 @@ void target_if_ftm_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 }
 #endif
 
+#ifdef WLAN_FEATURE_GPIO_CFG
+static
+void target_if_gpio_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_gpio_register_tx_ops(tx_ops);
+}
+#else
+static
+void target_if_gpio_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -505,6 +520,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_vdev_mgr_tx_ops_register(tx_ops);
 
 	target_if_coex_tx_ops_register(tx_ops);
+
+	target_if_gpio_tx_ops_register(tx_ops);
 
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;

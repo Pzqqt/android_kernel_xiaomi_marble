@@ -85,6 +85,8 @@
 #include <wlan_if_mgr_main.h>
 #endif
 
+#include <wlan_gpio_api.h>
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -1006,6 +1008,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_if_mgr_init())
 		goto ifmgr_init_fail;
 
+	if (QDF_STATUS_SUCCESS != wlan_gpio_init())
+		goto gpio_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -1017,6 +1022,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	wlan_gpio_deinit();
+gpio_init_fail:
 	dispatcher_if_mgr_deinit();
 ifmgr_init_fail:
 	dispatcher_coex_deinit();
@@ -1075,6 +1082,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_STATUS status;
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_gpio_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_if_mgr_deinit());
 
