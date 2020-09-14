@@ -765,6 +765,7 @@ QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_status.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_nbuf_frag.o \
 	$(QDF_OBJ_DIR)/qdf_flex_mem.o \
 	$(QDF_OBJ_DIR)/qdf_parse.o \
 	$(QDF_OBJ_DIR)/qdf_platform.o \
