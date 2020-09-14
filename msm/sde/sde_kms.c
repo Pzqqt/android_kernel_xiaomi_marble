@@ -3823,6 +3823,7 @@ static void sde_kms_irq_affinity_notify(
 
 	mutex_lock(&priv->phandle.phandle_lock);
 
+	_sde_kms_remove_pm_qos_irq_request(sde_kms);
 	// save irq cpu mask
 	sde_kms->irq_cpu_mask = *mask;
 
