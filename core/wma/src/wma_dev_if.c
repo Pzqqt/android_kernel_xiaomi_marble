@@ -981,16 +981,7 @@ void wma_update_rate_flags_after_vdev_restart(tp_wma_handle wma,
 		else
 			*rate_flags |= TX_RATE_HE20;
 	} else if (IS_WLAN_PHYMODE_VHT(bss_phymode)) {
-		if (des_chan->ch_width == CH_WIDTH_80P80MHZ)
-			*rate_flags |= TX_RATE_VHT160;
-		if (des_chan->ch_width == CH_WIDTH_160MHZ)
-			*rate_flags |= TX_RATE_VHT160;
-		if (des_chan->ch_width == CH_WIDTH_80MHZ)
-			*rate_flags |= TX_RATE_VHT80;
-		else if (des_chan->ch_width)
-			*rate_flags |= TX_RATE_VHT40;
-		else
-			*rate_flags |= TX_RATE_VHT20;
+		*rate_flags |= wma_get_vht_rate_flags(des_chan->ch_width);
 	} else if (IS_WLAN_PHYMODE_HT(bss_phymode)) {
 		if (des_chan->ch_width)
 			*rate_flags |= TX_RATE_HT40;

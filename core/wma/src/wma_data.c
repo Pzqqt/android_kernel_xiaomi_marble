@@ -804,6 +804,25 @@ static bool wma_get_bss_he_capable(struct bss_params *add_bss)
 }
 #endif
 
+enum tx_rate_info wma_get_vht_rate_flags(enum phy_ch_width ch_width)
+{
+	enum tx_rate_info rate_flags = 0;
+
+	if (ch_width == CH_WIDTH_80P80MHZ)
+		rate_flags |= TX_RATE_VHT160 | TX_RATE_VHT80 | TX_RATE_VHT40 |
+				TX_RATE_VHT20;
+	if (ch_width == CH_WIDTH_160MHZ)
+		rate_flags |= TX_RATE_VHT160 | TX_RATE_VHT80 | TX_RATE_VHT40 |
+				TX_RATE_VHT20;
+	if (ch_width == CH_WIDTH_80MHZ)
+		rate_flags |= TX_RATE_VHT80 | TX_RATE_VHT40 | TX_RATE_VHT20;
+	else if (ch_width)
+		rate_flags |= TX_RATE_VHT40 | TX_RATE_VHT20;
+	else
+		rate_flags |= TX_RATE_VHT20;
+	return rate_flags;
+}
+
 void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 			    struct bss_params *add_bss)
 {
@@ -823,16 +842,7 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 	if (QDF_STATUS_SUCCESS !=
 		wma_set_bss_rate_flags_he(rate_flags, add_bss)) {
 		if (add_bss->vhtCapable) {
-			if (add_bss->ch_width == CH_WIDTH_80P80MHZ)
-				*rate_flags |= TX_RATE_VHT160;
-			if (add_bss->ch_width == CH_WIDTH_160MHZ)
-				*rate_flags |= TX_RATE_VHT160;
-			if (add_bss->ch_width == CH_WIDTH_80MHZ)
-				*rate_flags |= TX_RATE_VHT80;
-			else if (add_bss->ch_width)
-				*rate_flags |= TX_RATE_VHT40;
-			else
-				*rate_flags |= TX_RATE_VHT20;
+			*rate_flags = wma_get_vht_rate_flags(add_bss->ch_width);
 		}
 		/* avoid to conflict with htCapable flag */
 		else if (add_bss->htCapable) {
