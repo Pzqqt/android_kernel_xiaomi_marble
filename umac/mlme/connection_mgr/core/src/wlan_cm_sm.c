@@ -91,12 +91,19 @@ static bool cm_state_init_event(void *ctx, uint16_t event,
 {
 	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
+	QDF_STATUS qdf_status;
 
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
+		qdf_status = cm_add_connect_req_to_list(cm_ctx, data);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			/* if fail to add req return failure */
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTING);
-		cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_START,
-				    data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_START,
+					 data_len, data);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_FAILURE:
@@ -162,7 +169,7 @@ static bool cm_state_connecting_event(void *ctx, uint16_t event,
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_START:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_JOIN_PENDING);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	default:
@@ -216,6 +223,7 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 {
 	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
+	QDF_STATUS qdf_status;
 
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_SUCCESS:
@@ -223,9 +231,15 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_DISCONNECT_REQ:
+		qdf_status = cm_add_disconnect_req_to_list(cm_ctx, data);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			/* if fail to add req return failure */
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_DISCONNECTING);
-		cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_DISCONNECT_START,
-				    data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_DISCONNECT_START,
+					 data_len, data);
 		status = true;
 		break;
 	default:
@@ -291,7 +305,7 @@ static bool cm_state_disconnecting_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_DISCONNECT_DONE:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_INIT);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	default:
@@ -357,12 +371,12 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_CONNECT_ACTIVE:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_JOIN_ACTIVE);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_SCAN:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_SCAN);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_SCAN_FAILURE:
@@ -374,7 +388,7 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_CONNECT_FAILURE:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_INIT);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	default:
@@ -440,7 +454,7 @@ static bool cm_subst_scan_event(void *ctx, uint16_t event,
 	case WLAN_CM_SM_EV_SCAN_SUCCESS:
 	case WLAN_CM_SM_EV_SCAN_FAILURE:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_JOIN_PENDING);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	default:
@@ -505,7 +519,7 @@ static bool cm_subst_join_active_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_CONNECT_SUCCESS:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE:
@@ -514,7 +528,7 @@ static bool cm_subst_join_active_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_CONNECT_FAILURE:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_INIT);
-		cm_sm_deliver_event(cm_ctx, event, data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	default:
@@ -761,11 +775,10 @@ static void cm_sm_print_state(struct cnx_mgr *cm_ctx)
 			cm_sm_info[state].name, cm_sm_info[substate].name);
 }
 
-QDF_STATUS wlan_cm_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
-				  enum wlan_cm_sm_evt event,
-				  uint16_t data_len, void *data)
+QDF_STATUS cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
+			       enum wlan_cm_sm_evt event,
+			       uint16_t data_len, void *data)
 {
-	struct vdev_mlme_obj *vdev_mlme;
 	QDF_STATUS status;
 	enum wlan_cm_sm_state state_entry, state_exit;
 	enum wlan_cm_sm_state substate_entry, substate_exit;
@@ -777,12 +790,11 @@ QDF_STATUS wlan_cm_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme || !vdev_mlme->cnx_mgr_ctx) {
-		mlme_err("vdev mlme or cm ctx is NULL");
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		mlme_err("cm_ctx is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	cm_ctx = vdev_mlme->cnx_mgr_ctx;
 	cm_lock_acquire(cm_ctx);
 
 	/* store entry state and sub state for prints */
@@ -790,7 +802,7 @@ QDF_STATUS wlan_cm_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
 	substate_entry = cm_get_sub_state(cm_ctx);
 	cm_sm_print_state_event(cm_ctx, event);
 
-	status = cm_sm_deliver_event(cm_ctx, event, data_len, data);
+	status = cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 	/* Take exit state, exit substate for prints */
 	state_exit = cm_get_state(cm_ctx);
 	substate_exit = cm_get_sub_state(cm_ctx);

@@ -105,6 +105,17 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_rsp *resp);
 
 /**
+ * cm_add_connect_req_to_list() - add connect req to the connection manager
+ * req list
+ * @vdev: vdev on which connect is received
+ * @req: Connection req provided
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_add_connect_req_to_list(struct cnx_mgr *cm_ctx,
+				      struct cm_connect_req *req);
+
+/**
  * cm_connect_start_req() - Connect start req from the requester
  * @vdev: vdev on which connect is received
  * @req: Connection req provided
@@ -165,6 +176,17 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 				  struct wlan_cm_discon_rsp *resp);
 
 /**
+ * cm_add_disconnect_req_to_list() - add disconnect req to the connection
+ * manager req list
+ * @vdev: vdev on which connect is received
+ * @req: Disconnection req provided
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_add_disconnect_req_to_list(struct cnx_mgr *cm_ctx,
+					 struct cm_disconnect_req *req);
+
+/**
  * cm_disconnect_start_req() - Disconnect start req from the requester
  * @vdev: vdev on which connect is received
  * @req: disconnection req provided
@@ -219,15 +241,19 @@ bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 QDF_STATUS cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 
 /**
- * cm_add_req_to_list() - Add the request to request list in cm ctx
+ * cm_add_req_to_list_and_indicate_osif() - Add the request to request list in
+ * cm ctx and indicate same to osif
  * @cm_ctx: connection manager context
  * @cm_req: cm request
+ * @source: source of request
  *
  * Context: Can be called from any context.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_add_req_to_list(struct cnx_mgr *cm_ctx, struct cm_req *cm_req);
+QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
+						struct cm_req *cm_req,
+						enum wlan_cm_source source);
 
 /**
  * cm_get_req_by_cm_id() - Get cm req matching the cm id

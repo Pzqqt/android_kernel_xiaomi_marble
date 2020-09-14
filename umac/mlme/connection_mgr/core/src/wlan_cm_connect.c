@@ -248,8 +248,8 @@ cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
 	if (!resp)
 		return QDF_STATUS_E_NOMEM;
 
-	status = cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
-				     sizeof(*resp), resp);
+	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
+					  sizeof(*resp), resp);
 	qdf_mem_free(resp);
 
 	return status;
@@ -291,8 +291,10 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 		 * return failure
 		 */
 		if (!num_bss)
-			return cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_SCAN,
-						   sizeof(*cm_req), cm_req);
+			return cm_sm_deliver_event_sync(cm_ctx,
+							WLAN_CM_SM_EV_SCAN,
+							sizeof(*cm_req),
+							cm_req);
 
 		return QDF_STATUS_E_EMPTY;
 	}
@@ -395,6 +397,21 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS cm_add_connect_req_to_list(struct cnx_mgr *cm_ctx,
+				      struct cm_connect_req *req)
+{
+	QDF_STATUS status;
+	struct cm_req *cm_req;
+
+	cm_req = qdf_container_of(req, struct cm_req, connect_req);
+	req->cm_id = cm_get_cm_id(cm_ctx, req->req.source);
+	cm_req->cm_id = req->cm_id;
+	status = cm_add_req_to_list_and_indicate_osif(cm_ctx, cm_req,
+						      req->req.source);
+
+	return status;
+}
+
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
 {
@@ -410,7 +427,10 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* This would be freed as part of list removal from req list */
+	/*
+	 * This would be freed as part of removal from cm req list if adding
+	 * to list is success after posting WLAN_CM_SM_EV_CONNECT_REQ.
+	 */
 	cm_req = qdf_mem_malloc(sizeof(*cm_req));
 	if (!cm_req)
 		return QDF_STATUS_E_NOMEM;
@@ -420,23 +440,14 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 	 */
 
 	connect_req = &cm_req->connect_req;
-	connect_req->cm_id = cm_get_cm_id(cm_ctx, req->source);
-	cm_req->cm_id = connect_req->cm_id;
 	connect_req->req = *req;
 
-	status = cm_add_req_to_list(cm_ctx, cm_req);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(cm_req);
-		return status;
-	}
-
-	mlme_cm_osif_update_id_and_src(vdev, req->source, cm_req->cm_id);
-
-	status = cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_REQ,
+	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_CONNECT_REQ,
 				     sizeof(*connect_req), connect_req);
+
+	/* free the req if connect is not handled */
 	if (QDF_IS_STATUS_ERROR(status))
-		cm_delete_req_from_list(cm_ctx, cm_req->cm_id);
+		qdf_mem_free(cm_req);
 
 	return status;
 }

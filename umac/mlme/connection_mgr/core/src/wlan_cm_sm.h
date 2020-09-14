@@ -274,40 +274,52 @@ void cm_sm_state_update(struct cnx_mgr *cm_ctx,
 			enum wlan_cm_sm_state substate);
 
 /**
- * cm_sm_deliver_event() - Delivers event to connection manager SM
+ * cm_sm_deliver_event_sync() - Delivers event to connection manager SM while
+ * holding lock
  * @cm_ctx: cm ctx
  * @event: CM event
  * @data_len: data size
  * @data: event data
  *
- * API to dispatch event to VDEV MLME SM without lock
+ * API to dispatch event to VDEV MLME SM without lock, in case lock is already
+ * held.
+ *
+ * Context: Can be called from any context, This should be called in case
+ * SM lock is already taken. If lock is not taken use cm_sm_deliver_event API
+ * instead.
  *
  * Return: SUCCESS: on handling event
- *         FAILURE: on ignoring the event
+ *         FAILURE: If event not handled
  */
 static inline
-QDF_STATUS cm_sm_deliver_event(struct cnx_mgr *cm_ctx,
-			       enum wlan_cm_sm_evt event,
-			       uint16_t data_len, void *data)
+QDF_STATUS cm_sm_deliver_event_sync(struct cnx_mgr *cm_ctx,
+				    enum wlan_cm_sm_evt event,
+				    uint16_t data_len, void *data)
 {
 	return wlan_sm_dispatch(cm_ctx->sm.sm_hdl, event, data_len, data);
 }
 
 /**
- * wlan_cm_sm_deliver_evt() - Delivers event to CM SM
+ * cm_sm_deliver_event() - Delivers event to connection manager SM
  * @vdev: Object manager VDEV object
  * @event: CM event
  * @data_len: data size
  * @data: event data
  *
- * API to dispatch event to VDEV MLME SM with lock acquired
+ * API to dispatch event to VDEV MLME SM with lock. To be used while paosting
+ * events from API called from publick API. i.e. indication/response/request
+ * from any other moudle or NB/SB.
+ *
+ * Context: Can be called from any context, This should be called in case
+ * SM lock is not taken, the API will take the lock before posting to SM.
+ * If lock is already taken use cm_sm_deliver_event_sync API instead.
  *
  * Return: SUCCESS: on handling event
- *         FAILURE: on ignoring the event
+ *         FAILURE: If event not handled
  */
-QDF_STATUS wlan_cm_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
-				  enum wlan_cm_sm_evt event,
-				  uint16_t data_len, void *data);
+QDF_STATUS  cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
+				enum wlan_cm_sm_evt event,
+				uint16_t data_len, void *data);
 
 #endif /* FEATURE_CM_ENABLE */
 #endif /* __WLAN_CM_SM_H__ */

@@ -147,7 +147,9 @@ struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	return NULL;
 }
 
-QDF_STATUS cm_add_req_to_list(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
+QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
+						struct cm_req *cm_req,
+						enum wlan_cm_source source)
 {
 	uint32_t prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
 
@@ -164,6 +166,8 @@ QDF_STATUS cm_add_req_to_list(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 	else
 		cm_ctx->disconnect_count++;
 	cm_req_lock_release(cm_ctx);
+
+	mlme_cm_osif_update_id_and_src(cm_ctx->vdev, source, cm_req->cm_id);
 
 	return QDF_STATUS_SUCCESS;
 }
