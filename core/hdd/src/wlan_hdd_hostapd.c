@@ -4932,9 +4932,8 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
-					     cache_chann->
-						channel_info[i].channel_num);
+		freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+						    cache_chann->channel_info[i].channel_num);
 		if (!freq)
 			continue;
 		wiphy_channel = wlan_hdd_get_wiphy_channel(wiphy, freq);

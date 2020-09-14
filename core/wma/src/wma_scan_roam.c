@@ -2903,7 +2903,8 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 		bss_phymode =
 			wma_fw_to_host_phymode(WMI_GET_CHANNEL_MODE(chan));
 	else
-		wma_get_phy_mode_cb(channel, iface->chan_width, &bss_phymode);
+		wma_get_phy_mode_cb(iface->ch_freq,
+				    iface->chan_width, &bss_phymode);
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 	/* Update vdev mlme channel info after roaming */

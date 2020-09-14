@@ -2751,12 +2751,11 @@ void wma_get_fw_phy_mode_for_freq_cb(uint32_t freq, uint32_t chan_width,
 	*phy_mode = wma_host_to_fw_phymode(host_phy_mode);
 }
 
-void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
+void wma_get_phy_mode_cb(qdf_freq_t freq, uint32_t chan_width,
 			 enum wlan_phymode *phy_mode)
 {
 	uint32_t dot11_mode;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
-	uint32_t freq;
 
 	if (!mac) {
 		wma_err("MAC context is NULL");
@@ -2764,7 +2763,6 @@ void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
 		return;
 	}
 
-	freq = wlan_reg_chan_to_freq(mac->pdev, chan);
 	dot11_mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 	*phy_mode = wma_chan_phy_mode(freq, chan_width, dot11_mode);
 }

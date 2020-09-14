@@ -1199,7 +1199,7 @@ hdd_parse_channellist(struct hdd_context *hdd_ctx,
 			return -EINVAL;
 		}
 		channel_freq_list[j] =
-			wlan_reg_chan_to_freq(hdd_ctx->pdev, temp_int);
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, temp_int);
 
 		hdd_debug("Channel %d added to preferred channel list",
 			  channel_freq_list[j]);

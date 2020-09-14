@@ -2141,9 +2141,8 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		bss_desc_ptr->chan_freq = parsed_frm_ptr->chan_freq;
 	} else if (parsed_frm_ptr->HTInfo.present) {
 		bss_desc_ptr->chan_freq =
-			wlan_reg_chan_to_freq(mac->pdev,
-					      parsed_frm_ptr->HTInfo.
-					      primaryChannel);
+			wlan_reg_legacy_chan_to_freq(mac->pdev,
+						     parsed_frm_ptr->HTInfo.primaryChannel);
 	} else {
 		/*
 		 * If DS Params or HTIE is not present in the probe resp or

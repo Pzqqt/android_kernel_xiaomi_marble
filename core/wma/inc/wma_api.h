@@ -152,13 +152,13 @@ void wma_get_fw_phy_mode_for_freq_cb(uint32_t freq, uint32_t chan_width,
 				     uint32_t  *phy_mode);
 /**
  * wma_get_phy_mode_cb() - Callback to get current PHY Mode.
- * @chan: channel number
+ * @freq: channel frequency
  * @chan_width: maximum channel width possible
  * @phy_mode: PHY Mode
  *
  * Return: None
  */
-void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
+void wma_get_phy_mode_cb(qdf_freq_t freq, uint32_t chan_width,
 			 enum wlan_phymode  *phy_mode);
 
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
