@@ -165,6 +165,8 @@ struct wlan_mlme_roam {
  * @roam_reason_better_ap: roam due to better AP found
  * @better_ap_hb_failure_rssi: heartbeat failure AP RSSI
  * @fils_con_info: Pointer to fils connection info from csr roam profile
+ * @opr_rate_set: operational rates set
+ * @ext_opr_rate_set: extended operational rates set
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -190,10 +192,21 @@ struct mlme_legacy_priv {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct wlan_fils_connection_info *fils_con_info;
 #endif
+	struct mlme_cfg_str opr_rate_set;
+	struct mlme_cfg_str ext_opr_rate_set;
 };
 
+
 /**
- * wma_get_peer_mic_len() - get mic hdr len and mic length for peer
+ * mlme_init_rate_config() - initialize rate configuration of vdev
+ * @vdev_mlme: pointer to vdev mlme object
+ *
+ * Return: Success or Failure status
+ */
+QDF_STATUS mlme_init_rate_config(struct vdev_mlme_obj *vdev_mlme);
+
+/**
+ * mlme_get_peer_mic_len() - get mic hdr len and mic length for peer
  * @psoc: psoc
  * @pdev_id: pdev id for the peer
  * @peer_mac: peer mac

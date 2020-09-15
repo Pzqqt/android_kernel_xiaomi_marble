@@ -2950,4 +2950,48 @@ wlan_mlme_set_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool val);
  */
 QDF_STATUS
 wlan_mlme_get_usr_disabled_roaming(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * mlme_get_opr_rate() - get operational rate
+ * @vdev: vdev pointer
+ * @dst: pointer to get operational rate
+ * @len: length of operational rate
+ *
+ * Return: QDF_SUCCESS if success
+ */
+QDF_STATUS mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+			     qdf_size_t *len);
+
+/**
+ * mlme_set_opr_rate() - set operational rate
+ * @vdev: vdev pointer
+ * @src: pointer to set operational rate
+ * @len: length of operational rate
+ *
+ * Return: QDF_SUCCESS if success
+ */
+QDF_STATUS mlme_set_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
+			     qdf_size_t len);
+
+/**
+ * mlme_get_ext_opr_rate() - get extended operational rate
+ * @vdev: vdev pointer
+ * @dst: pointer to get extended operational rate
+ * @len: length of extended operational rate
+ *
+ * Return: QDF_SUCCESS if success
+ */
+QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
+				 qdf_size_t *len);
+
+/**
+ * mlme_set_ext_opr_rate() - set extended operational rate
+ * @vdev: vdev pointer
+ * @src: pointer to set extended operational rate
+ * @len: length of extended operational rate
+ *
+ * Return: QDF_SUCCESS if success
+ */
+QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
+				 qdf_size_t len);
 #endif /* _WLAN_MLME_API_H_ */

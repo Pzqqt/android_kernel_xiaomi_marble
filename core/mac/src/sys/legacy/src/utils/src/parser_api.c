@@ -620,10 +620,13 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 			pe_err("no session context exists while populating Operational Rate Set");
 		}
 	} else if (HIGHEST_24GHZ_CHANNEL_NUM >= nChannelNum) {
-		nRates = mac->mlme_cfg->rates.ext_opr_rate_set.len;
-		nsir_status = wlan_mlme_get_cfg_str(
-			rates,
-			&mac->mlme_cfg->rates.ext_opr_rate_set, &nRates);
+		if (!pe_session) {
+			pe_err("null pe_session");
+			return QDF_STATUS_E_INVAL;
+		}
+		nRates = WLAN_SUPPORTED_RATES_IE_MAX_LEN;
+		nsir_status = mlme_get_ext_opr_rate(pe_session->vdev, rates,
+						    &nRates);
 		if (QDF_IS_STATUS_ERROR(nsir_status)) {
 			nRates = 0;
 			pe_err("Failed to retrieve nItem from CFG status: %d",

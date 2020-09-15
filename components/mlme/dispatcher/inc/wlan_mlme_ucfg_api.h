@@ -2723,26 +2723,32 @@ ucfg_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value)
 }
 
 /**
- * ucfg_mlme_get_opr_rate_set() - Get operational rate set
- * @psoc: pointer to psoc object
+ * ucfg_mlme_get_opr_rate() - Get operational rate set
+ * @psoc: pointer to vdev object
  * @buf: buffer to get rates set
  * @len: length of the buffer
  * Return: QDF Status
  */
-QDF_STATUS
-ucfg_mlme_get_opr_rate_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
-			   qdf_size_t *len);
+static inline QDF_STATUS
+ucfg_mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *buf,
+		       qdf_size_t *len)
+{
+	return mlme_get_opr_rate(vdev, buf, len);
+}
 
 /**
- * ucfg_mlme_get_ext_opr_rate_set() - Get operational rate set
- * @psoc: pointer to psoc object
+ * ucfg_mlme_get_ext_opr_rate() - Get extended operational rate set
+ * @psoc: pointer to vdev object
  * @buf: buffer to get rates set
  * @len: length of the buffer
  * Return: QDF Status
  */
-QDF_STATUS
-ucfg_mlme_get_ext_opr_rate_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
-			       qdf_size_t *len);
+static inline QDF_STATUS
+ucfg_mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *buf,
+			   qdf_size_t *len)
+{
+	return mlme_get_ext_opr_rate(vdev, buf, len);
+}
 
 /**
  * ucfg_mlme_get_supported_mcs_set() - Get Supported MCS set

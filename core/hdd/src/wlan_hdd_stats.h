@@ -493,7 +493,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx);
 /**
  * hdd_report_max_rate() - Fill the max rate stats in the station info structure
  * to be sent to the userspace.
- *
+ * @adapter: pointer to adapter
  * @mac_handle: The mac handle
  * @rate: The station_info tx/rx rate to be filled
  * @signal: signal from station_info
@@ -504,7 +504,8 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx);
  *
  * Return: True if fill is successful
  */
-bool hdd_report_max_rate(mac_handle_t mac_handle,
+bool hdd_report_max_rate(struct hdd_adapter *adapter,
+			 mac_handle_t mac_handle,
 			 struct rate_info *rate,
 			 int8_t signal,
 			 enum tx_rate_info rate_flags,

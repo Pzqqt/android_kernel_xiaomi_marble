@@ -4672,7 +4672,8 @@ static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
 static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 				 struct csr_roam_profile *pProfile,
 				 struct bss_description *bss_desc,
-				 tDot11fBeaconIEs *pIes)
+				 tDot11fBeaconIEs *pIes,
+				 uint32_t session_id)
 {
 	int i;
 	uint8_t *pDstRate;
@@ -4686,6 +4687,7 @@ static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 	qdf_size_t ExtendedOperationalRatesLength = 0;
 	uint8_t MCSRateIdxSet[SIZE_OF_SUPPORTED_MCS_SET];
 	qdf_size_t MCSRateLength = 0;
+	struct wlan_objmgr_vdev *vdev;
 
 	QDF_ASSERT(pIes);
 	if (pIes) {
@@ -4757,12 +4759,19 @@ static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 			}
 		}
 		/* Set the operational rate set CFG variables... */
-		wlan_mlme_set_cfg_str(OperationalRates,
-				      &mac->mlme_cfg->rates.opr_rate_set,
-				      OperationalRatesLength);
-		wlan_mlme_set_cfg_str(ExtendedOperationalRates,
-				      &mac->mlme_cfg->rates.ext_opr_rate_set,
-				      ExtendedOperationalRatesLength);
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(
+						mac->pdev, session_id,
+						WLAN_LEGACY_SME_ID);
+		if (vdev) {
+			mlme_set_opr_rate(vdev, OperationalRates,
+					  OperationalRatesLength);
+			mlme_set_ext_opr_rate(vdev, ExtendedOperationalRates,
+					      ExtendedOperationalRatesLength);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		} else {
+			sme_err("null vdev");
+		}
+
 		wlan_mlme_set_cfg_str(MCSRateIdxSet,
 				      &mac->mlme_cfg->rates.current_mcs_set,
 				      MCSRateLength);
@@ -4772,7 +4781,8 @@ static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 }
 
 static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
-					      struct csr_roam_profile *pProfile)
+					      struct csr_roam_profile *pProfile,
+					      uint32_t session_id)
 {
 	tSirMacRateSetIE DefaultSupportedRates11a = { WLAN_ELEMID_RATES,
 						      {8,
@@ -4800,6 +4810,7 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 				[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
 	qdf_size_t ExtendedOperationalRatesLength = 0;
 	uint32_t bss_op_ch_freq = 0;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (pProfile->ChannelInfo.freq_list)
 		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
@@ -4854,12 +4865,18 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 	}
 
 	/* Set the operational rate set CFG variables... */
-	wlan_mlme_set_cfg_str(OperationalRates,
-			      &mac->mlme_cfg->rates.opr_rate_set,
-			      OperationalRatesLength);
-	wlan_mlme_set_cfg_str(ExtendedOperationalRates,
-			      &mac->mlme_cfg->rates.ext_opr_rate_set,
-			      ExtendedOperationalRatesLength);
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev,
+						    session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (vdev) {
+		mlme_set_opr_rate(vdev, OperationalRates,
+				  OperationalRatesLength);
+		mlme_set_ext_opr_rate(vdev, ExtendedOperationalRates,
+				      ExtendedOperationalRatesLength);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	} else {
+		sme_err("null vdev");
+	}
 }
 
 static void csr_roam_ccm_cfg_set_callback(struct mac_context *mac,
@@ -4956,9 +4973,9 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	/* Fixed Rate */
 	if (bss_desc)
 		csr_set_cfg_rate_set(mac, (eCsrPhyMode) pProfile->phyMode,
-				     pProfile, bss_desc, pIes);
+				     pProfile, bss_desc, pIes, sessionId);
 	else
-		csr_set_cfg_rate_set_from_profile(mac, pProfile);
+		csr_set_cfg_rate_set_from_profile(mac, pProfile, sessionId);
 
 	mac->mlme_cfg->timeouts.join_failure_timeout =
 		pBssConfig->uJoinTimeOut;

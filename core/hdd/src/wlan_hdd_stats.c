@@ -4551,7 +4551,8 @@ static void wlan_hdd_fill_os_rate_info(enum tx_rate_info rate_flags,
 		os_rate->flags |= RATE_INFO_FLAGS_SHORT_GI;
 }
 
-bool hdd_report_max_rate(mac_handle_t mac_handle,
+bool hdd_report_max_rate(struct hdd_adapter *adapter,
+			 mac_handle_t mac_handle,
 			 struct rate_info *rate,
 			 int8_t signal,
 			 enum tx_rate_info rate_flags,
@@ -4580,6 +4581,7 @@ bool hdd_report_max_rate(mac_handle_t mac_handle,
 	int link_speed_rssi_mid = 0;
 	int link_speed_rssi_low = 0;
 	uint32_t link_speed_rssi_report = 0;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -4622,10 +4624,17 @@ bool hdd_report_max_rate(mac_handle_t mac_handle,
 
 	max_rate = 0;
 
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
+		hdd_err("failed to get vdev");
+		return false;
+	}
+
 	/* Get Basic Rate Set */
-	if (0 != ucfg_mlme_get_opr_rate_set(hdd_ctx->psoc,
-					    operational_rates, &or_leng)) {
+	if (0 != ucfg_mlme_get_opr_rate(vdev, operational_rates,
+					&or_leng)) {
 		hdd_err("cfg get returned failure");
+		hdd_objmgr_put_vdev(vdev);
 		/*To keep GUI happy */
 		return false;
 	}
@@ -4647,13 +4656,15 @@ bool hdd_report_max_rate(mac_handle_t mac_handle,
 	}
 
 	/* Get Extended Rate Set */
-	if (0 != ucfg_mlme_get_ext_opr_rate_set(hdd_ctx->psoc,
-						extended_rates,
-						&er_leng)) {
+	if (0 != ucfg_mlme_get_ext_opr_rate(vdev, extended_rates,
+					    &er_leng)) {
 		hdd_err("cfg get returned failure");
+		hdd_objmgr_put_vdev(vdev);
 		/*To keep GUI happy */
 		return false;
 	}
+
+	hdd_objmgr_put_vdev(vdev);
 
 	for (i = 0; i < er_leng; i++) {
 		for (j = 0; j < ARRAY_SIZE(supported_data_rate); j++) {
@@ -5099,14 +5110,16 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 
 		hdd_check_and_update_nss(hdd_ctx, &tx_nss_max, &rx_nss_max);
 
-		tx_rate_calc = hdd_report_max_rate(mac_handle, &sinfo->txrate,
+		tx_rate_calc = hdd_report_max_rate(adapter, mac_handle,
+						   &sinfo->txrate,
 						   sinfo->signal,
 						   tx_rate_flags,
 						   tx_mcs_index,
 						   my_tx_rate,
 						   tx_nss_max);
 
-		rx_rate_calc = hdd_report_max_rate(mac_handle, &sinfo->rxrate,
+		rx_rate_calc = hdd_report_max_rate(adapter, mac_handle,
+						   &sinfo->rxrate,
 						   sinfo->signal,
 						   rx_rate_flags,
 						   rx_mcs_index,
