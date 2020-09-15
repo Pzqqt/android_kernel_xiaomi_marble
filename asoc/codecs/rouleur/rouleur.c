@@ -27,6 +27,7 @@
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include <asoc/msm-cdc-supply.h>
 #include <linux/power_supply.h>
+#include "asoc/bolero-slave-internal.h"
 
 #define DRV_NAME "rouleur_codec"
 
@@ -646,7 +647,7 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		/* Enable HD2 Config for HPHR if foundry id is SEC */
 		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_HPHR_HD2_ENABLE,
+						SLV_BOLERO_EVT_HPHR_HD2_ENABLE,
 						0x04);
 		snd_soc_component_update_bits(component,
 			ROULEUR_DIG_SWR_PDM_WD_CTL1,
@@ -664,7 +665,7 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX2 << 0x10));
 		wcd_enable_irq(&rouleur->irq_info,
 				ROULEUR_IRQ_HPHR_PDM_WD_INT);
@@ -674,7 +675,7 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				ROULEUR_IRQ_HPHR_PDM_WD_INT);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX2 << 0x10 | 0x1));
 		blocking_notifier_call_chain(&rouleur->mbhc->notifier,
 					     WCD_EVENT_PRE_HPHR_PA_OFF,
@@ -694,7 +695,7 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 
 		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_HPHR_HD2_ENABLE,
+						SLV_BOLERO_EVT_HPHR_HD2_ENABLE,
 						0x00);
 		blocking_notifier_call_chain(&rouleur->mbhc->notifier,
 					     WCD_EVENT_POST_HPHR_PA_OFF,
@@ -728,7 +729,7 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		usleep_range(200, 210);
 		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						SLV_BOLERO_EVT_HPHL_HD2_ENABLE,
 						0x04);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
@@ -746,7 +747,7 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
 		wcd_enable_irq(&rouleur->irq_info,
 				ROULEUR_IRQ_HPHL_PDM_WD_INT);
@@ -756,7 +757,7 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				ROULEUR_IRQ_HPHL_PDM_WD_INT);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10 | 0x1));
 		blocking_notifier_call_chain(&rouleur->mbhc->notifier,
 					     WCD_EVENT_PRE_HPHL_PA_OFF,
@@ -775,7 +776,7 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 
 		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						SLV_BOLERO_EVT_HPHL_HD2_ENABLE,
 						0x00);
 		blocking_notifier_call_chain(&rouleur->mbhc->notifier,
 					     WCD_EVENT_POST_HPHL_PA_OFF,
@@ -819,7 +820,7 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 				0x40, 0x00);
 		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						SLV_BOLERO_EVT_HPHL_HD2_ENABLE,
 						0x04);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
@@ -832,7 +833,7 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 				0x0F, 0x04);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
 		wcd_enable_irq(&rouleur->irq_info,
 				ROULEUR_IRQ_HPHL_PDM_WD_INT);
@@ -842,14 +843,14 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 				ROULEUR_IRQ_HPHL_PDM_WD_INT);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10 | 0x1));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		usleep_range(5000, 5100);
 		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						SLV_BOLERO_EVT_HPHL_HD2_ENABLE,
 						0x00);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
@@ -897,7 +898,7 @@ static int rouleur_codec_enable_lo_pa(struct snd_soc_dapm_widget *w,
 				0x0F, 0x04);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
 		wcd_enable_irq(&rouleur->irq_info,
 				ROULEUR_IRQ_HPHL_PDM_WD_INT);
@@ -907,7 +908,7 @@ static int rouleur_codec_enable_lo_pa(struct snd_soc_dapm_widget *w,
 					ROULEUR_IRQ_HPHL_PDM_WD_INT);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_RX_MUTE,
+						SLV_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10 | 0x1));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1371,10 +1372,10 @@ void rouleur_disable_bcs_before_slow_insert(struct snd_soc_component *component,
 	if (rouleur->update_wcd_event) {
 		if (bcs_disable)
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
+						SLV_BOLERO_EVT_BCS_CLK_OFF, 0);
 		else
 			rouleur->update_wcd_event(rouleur->handle,
-						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
+						SLV_BOLERO_EVT_BCS_CLK_OFF, 1);
 	}
 }
 
@@ -1420,7 +1421,7 @@ static int rouleur_event_notify(struct notifier_block *block,
 	struct wcd_mbhc *mbhc;
 
 	switch (event) {
-	case BOLERO_WCD_EVT_PA_OFF_PRE_SSR:
+	case BOLERO_SLV_EVT_PA_OFF_PRE_SSR:
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_HPHPA_CNP_CTL_2,
 					0xC0, 0x00);
@@ -1437,7 +1438,7 @@ static int rouleur_event_notify(struct notifier_block *block,
 				ROULEUR_ANA_COMBOPA_CTL,
 				0x80, 0x00);
 		break;
-	case BOLERO_WCD_EVT_SSR_DOWN:
+	case BOLERO_SLV_EVT_SSR_DOWN:
 		rouleur->dev_up = false;
 		rouleur->mbhc->wcd_mbhc.deinit_in_progress = true;
 		mbhc = &rouleur->mbhc->wcd_mbhc;
@@ -1446,7 +1447,7 @@ static int rouleur_event_notify(struct notifier_block *block,
 		rouleur_mbhc_ssr_down(rouleur->mbhc, component);
 		rouleur_reset(rouleur->dev, 0x01);
 		break;
-	case BOLERO_WCD_EVT_SSR_UP:
+	case BOLERO_SLV_EVT_SSR_UP:
 		rouleur_reset(rouleur->dev, 0x00);
 		/* allow reset to take effect */
 		usleep_range(10000, 10010);
@@ -2094,7 +2095,7 @@ static void rouleur_evaluate_soc(struct work_struct *work)
 		/* Reduce PA Gain by 6DB for low SoC */
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
-					WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE,
+					SLV_BOLERO_EVT_RX_PA_GAIN_UPDATE,
 					true);
 		rouleur->low_soc = true;
 		ret = msm_cdc_set_supply_min_voltage(rouleur->dev,
@@ -2113,7 +2114,7 @@ static void rouleur_evaluate_soc(struct work_struct *work)
 			/* Reset PA Gain to default for normal SoC */
 			if (rouleur->update_wcd_event)
 				rouleur->update_wcd_event(rouleur->handle,
-					WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE,
+					SLV_BOLERO_EVT_RX_PA_GAIN_UPDATE,
 					false);
 			ret = msm_cdc_set_supply_min_voltage(rouleur->dev,
 						rouleur->supplies,
