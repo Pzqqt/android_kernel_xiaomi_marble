@@ -8224,8 +8224,7 @@ wmi_fill_ocv_frame_type(uint32_t host_frmtype, uint32_t *ocv_frmtype)
 		break;
 
 	default:
-		WMI_LOGE("%s: invalid command type cmd %d",
-			 __func__, host_frmtype);
+		wmi_err("Invalid command type cmd %d", host_frmtype);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -8332,7 +8331,7 @@ QDF_STATUS send_wfa_test_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mtrace(WMI_WFA_CONFIG_CMDID, wmi_wfatest->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_WFA_CONFIG_CMDID)) {
-		WMI_LOGP("%s: failed to send wfa test command", __func__);
+		wmi_err("Failed to send wfa test command");
 		goto error;
 	}
 

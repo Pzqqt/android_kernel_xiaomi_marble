@@ -165,7 +165,7 @@ send_gpio_config_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_GPIO_CONFIG_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Sending GPIO config cmd failed");
+		wmi_err("Sending GPIO config cmd failed");
 		wmi_buf_free(buf);
 	}
 
@@ -214,7 +214,7 @@ send_gpio_output_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_GPIO_OUTPUT_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMI_LOGE("Sending GPIO output cmd failed");
+		wmi_err("Sending GPIO output cmd failed");
 		wmi_buf_free(buf);
 	}
 

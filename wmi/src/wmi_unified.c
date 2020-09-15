@@ -3341,7 +3341,7 @@ QDF_STATUS wmi_diag_connect_pdev_htc_service(struct wmi_unified *wmi_handle,
 	status = htc_connect_service(htc_handle, &connect, &response);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to connect to WMI DIAG service status:%d\n",
+		wmi_err("Failed to connect to WMI DIAG service status:%d",
 			 status);
 		return status;
 	}
