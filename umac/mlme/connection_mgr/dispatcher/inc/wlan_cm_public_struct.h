@@ -154,9 +154,13 @@ enum wlan_cm_source {
  * for production.
  * @dot11mode_filter: dot11mode filter used to restrict connection to
  * 11n/11ac/11ax.
- * @ht_caps: ht capability
+ * @sae_pwe: SAE mechanism for PWE derivation
+ *           0 = hunting-and-pecking loop only
+ *           1 = hash-to-element only
+ *           2 = both hunting-and-pecking loop and hash-to-element enabled
+ * @ht_caps: ht capability information bit mask
  * @ht_caps_mask: mask of valid ht caps
- * @vht_caps: vht capability
+ * @vht_caps: vht capability information bit mask
  * @vht_caps_mask: mask of valid vht caps
  * @fils_info: Fills related connect info
  */
@@ -173,6 +177,7 @@ struct wlan_cm_connect_req {
 	struct element_info scan_ie;
 	bool force_rsne_override;
 	enum dot11_mode_filter dot11mode_filter;
+	uint8_t sae_pwe;
 	uint16_t ht_caps;
 	uint16_t ht_caps_mask;
 	uint32_t vht_caps;

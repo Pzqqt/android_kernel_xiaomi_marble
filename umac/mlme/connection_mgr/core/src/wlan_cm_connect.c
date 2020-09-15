@@ -730,7 +730,6 @@ static void cm_update_security_filter(struct scan_filter *filter,
 	filter->mgmtcipherset = req->crypto.mgmt_ciphers;
 	cm_set_pmf_caps(req, filter);
 }
-
 static inline void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 				       struct wlan_cm_connect_resp *resp)
 {}
@@ -740,8 +739,12 @@ static inline void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
 					   struct cnx_mgr *cm_ctx,
 					   struct cm_connect_req *cm_req,
-					   struct scan_filter *filter)
+					   struct scan_filter *filter,
+					   bool security_valid_for_6ghz)
 {
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
 	if (!qdf_is_macaddr_zero(&cm_req->req.bssid)) {
 		filter->num_of_bssid = 1;
 		qdf_copy_macaddr(&filter->bssid_list[0], &cm_req->req.bssid);
@@ -757,6 +760,10 @@ static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
 		filter->chan_freq_list[0] = cm_req->req.chan_freq;
 	}
 
+	/* Security is not valid for 6Ghz so ignore 6Ghz APs */
+	if (!security_valid_for_6ghz)
+		filter->ignore_6ghz_channel = true;
+
 	cm_update_security_filter(filter, &cm_req->req);
 	cm_update_advance_filter(pdev, cm_ctx, filter, cm_req);
 }
@@ -770,12 +777,35 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	enum QDF_OPMODE op_mode;
 	qdf_list_t *candidate_list;
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	bool security_valid_for_6ghz;
+	const uint8_t *rsnxe;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
 		return QDF_STATUS_E_NOMEM;
 
-	cm_connect_prepare_scan_filter(pdev, cm_ctx, cm_req, filter);
+	rsnxe = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
+					 cm_req->req.assoc_ie.ptr,
+					 cm_req->req.assoc_ie.len);
+	security_valid_for_6ghz =
+		wlan_cm_6ghz_allowed_for_akm(wlan_pdev_get_psoc(pdev),
+					     cm_req->req.crypto.akm_suites,
+					     cm_req->req.crypto.rsn_caps,
+					     rsnxe, cm_req->req.sae_pwe);
+
+	/*
+	 * Ignore connect req if the freq is provided and its 6Ghz and
+	 * security is not valid for 6Ghz
+	 */
+	if (cm_req->req.chan_freq && !security_valid_for_6ghz &&
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(cm_req->req.chan_freq)) {
+		mlme_info(CM_PREFIX_FMT "6ghz freq given and 6Ghz not allowed for the security in connect req",
+			  CM_PREFIX_REF(vdev_id, cm_req->cm_id),
+			  cm_req->req.chan_freq);
+		return QDF_STATUS_E_INVAL;
+	}
+	cm_connect_prepare_scan_filter(pdev, cm_ctx, cm_req, filter,
+				       security_valid_for_6ghz);
 
 	candidate_list = wlan_scan_get_result(pdev, filter);
 	if (candidate_list) {

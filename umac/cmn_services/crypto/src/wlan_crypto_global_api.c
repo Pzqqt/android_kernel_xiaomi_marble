@@ -4353,11 +4353,11 @@ wlan_crypto_reset_prarams(struct wlan_crypto_params *params)
 	params->rsn_caps = 0;
 }
 
-uint8_t *
-wlan_crypto_parse_rsnxe_ie(uint8_t *rsnxe_ie, uint8_t *cap_len)
+const uint8_t *
+wlan_crypto_parse_rsnxe_ie(const uint8_t *rsnxe_ie, uint8_t *cap_len)
 {
 	uint8_t len;
-	uint8_t *ie;
+	const uint8_t *ie;
 
 	if (!rsnxe_ie)
 		return NULL;

@@ -229,6 +229,11 @@ enum wlan_crypto_key_type {
 				(_c == WLAN_CRYPTO_CIPHER_WEP_40) || \
 				(_c == WLAN_CRYPTO_CIPHER_WEP_104))
 
+#define DEFAULT_KEYMGMT_6G_MASK 0xFFFFFFFF
+
+/* AKM wlan_crypto_key_mgmt 0-8, 12-15 and 24 are not allowed. */
+#define ALLOWED_KEYMGMT_6G_MASK 0xFEFF0E00
+
 /*
  * enum fils_erp_cryptosuite: this enum defines the cryptosuites used
  * to calculate auth tag and auth tag length as defined by RFC 6696 5.3.1

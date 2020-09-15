@@ -348,6 +348,7 @@ osif_cm_fill_connect_params(struct wlan_cm_connect_req *req,
 	}
 	req->dot11mode_filter = params->dot11mode_filter;
 	req->force_rsne_override = params->force_rsne_override;
+	req->sae_pwe = params->sae_pwe;
 }
 
 static void osif_cm_free_connect_req(struct wlan_cm_connect_req *connect_req)

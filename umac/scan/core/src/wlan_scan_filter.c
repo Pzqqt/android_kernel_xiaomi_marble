@@ -648,6 +648,10 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->dot11mode && !scm_check_dot11mode(db_entry, filter))
 		return false;
 
+	if (filter->ignore_6ghz_channel &&
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(db_entry->channel.chan_freq))
+		return false;
+
 	if (filter->age_threshold && filter->age_threshold <
 					util_scan_entry_age(db_entry))
 		return false;

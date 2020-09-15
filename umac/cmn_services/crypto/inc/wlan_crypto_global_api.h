@@ -721,8 +721,8 @@ bool wlan_crypto_check_wpa_match(struct wlan_objmgr_psoc *psoc,
  *
  * Return: pointer to RSNXE capability or NULL
  */
-uint8_t *
-wlan_crypto_parse_rsnxe_ie(uint8_t *rsnxe_ie, uint8_t *cap_len);
+const uint8_t *
+wlan_crypto_parse_rsnxe_ie(const uint8_t *rsnxe_ie, uint8_t *cap_len);
 
 /**
  * wlan_get_crypto_params_from_wapi_ie - Function to get crypto params

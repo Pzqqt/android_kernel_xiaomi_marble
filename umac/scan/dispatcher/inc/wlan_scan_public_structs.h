@@ -500,6 +500,7 @@ enum dot11_mode_filter {
  * @ignore_auth_enc_type: Ignore enc type if
  *                        this is set (For WPS/OSEN connection)
  * @ignore_nol_chan: Ignore entry with channel in the NOL list
+ * @ignore_6ghz_channel: ignore 6Ghz channels
  * @age_threshold: If set return entry which are newer than the age_threshold
  * @num_of_bssid: number of bssid passed
  * @num_of_ssid: number of ssid
@@ -530,7 +531,8 @@ struct scan_filter {
 		rrm_measurement_filter:1,
 		ignore_pmf_cap:1,
 		ignore_auth_enc_type:1,
-		ignore_nol_chan:1;
+		ignore_nol_chan:1,
+		ignore_6ghz_channel:1;
 	qdf_time_t age_threshold;
 	uint8_t num_of_bssid;
 	uint8_t num_of_ssid;

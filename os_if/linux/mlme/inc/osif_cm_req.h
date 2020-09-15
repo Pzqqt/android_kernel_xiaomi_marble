@@ -40,11 +40,16 @@
  * for production.
  * @dot11mode_filter: dot11mode filter used to restrict connection to
  * 11n/11ac/11ax.
+ * @sae_pwe: SAE mechanism for PWE derivation
+ *           0 = hunting-and-pecking loop only
+ *           1 = hash-to-element only
+ *           2 = both hunting-and-pecking loop and hash-to-element enabled
  */
 struct osif_connect_params {
 	struct element_info scan_ie;
 	bool force_rsne_override;
 	enum dot11_mode_filter dot11mode_filter;
+	uint8_t sae_pwe;
 };
 
 /**

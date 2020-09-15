@@ -699,7 +699,9 @@ cm_calculate_sae_pk_ap_weightage(struct scan_cache_entry *entry,
 				 struct scoring_cfg *score_params,
 				 bool *sae_pk_cap_present)
 {
-	uint8_t *rsnxe_ie, *rsnxe_cap, cap_len;
+	const uint8_t *rsnxe_ie;
+	const uint8_t *rsnxe_cap;
+	uint8_t cap_len;
 
 	rsnxe_ie = util_scan_entry_rsnxe(entry);
 
@@ -1291,6 +1293,27 @@ cm_calculate_etp_score(struct wlan_objmgr_psoc *psoc,
 				  entry->rssi_raw,
 				  phy_config);
 }
+
+#ifdef CONFIG_BAND_6GHZ
+static bool cm_check_h2e_support(const uint8_t *rsnxe, uint8_t sae_pwe)
+{
+	const uint8_t *rsnxe_cap;
+	uint8_t cap_len;
+
+	rsnxe_cap = wlan_crypto_parse_rsnxe_ie(rsnxe, &cap_len);
+	if (!rsnxe_cap) {
+		mlme_debug("RSNXE caps not present");
+		return false;
+	}
+
+	if (*rsnxe_cap & WLAN_CRYPTO_RSNX_CAP_SAE_H2E)
+		return true;
+
+	mlme_debug("RSNXE caps %x dont have H2E support", *rsnxe_cap);
+
+	return false;
+}
+#endif
 #else
 static bool
 cm_get_pcl_weight_of_channel(uint32_t chan_freq,
@@ -1349,6 +1372,19 @@ cm_calculate_etp_score(struct wlan_objmgr_psoc *psoc,
 {
 	return 0;
 }
+
+#ifdef CONFIG_BAND_6GHZ
+static bool cm_check_h2e_support(const uint8_t *rsnxe, uint8_t sae_pwe)
+{
+	/* limiting to H2E usage only */
+	if (sae_pwe == 1)
+		return true;
+
+	mlme_debug("sae_pwe %d is not H2E", sae_pwe);
+
+	return false;
+}
+#endif
 #endif
 
 /**
@@ -1730,6 +1766,127 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
+#ifdef CONFIG_BAND_6GHZ
+bool wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
+				  uint32_t key_mgmt, uint16_t rsn_caps,
+				  const uint8_t *rsnxe, uint8_t sae_pwe)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+	struct scoring_cfg *config;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return false;
+
+	config = &mlme_psoc_obj->psoc_cfg.score_config;
+	/*
+	 * if check_6ghz_security is not set check if key_mgmt_mask_6ghz is set
+	 * if key_mgmt_mask_6ghz is set check if AKM matches the user configured
+	 * 6Ghz security
+	 */
+	if (!config->check_6ghz_security) {
+		if (!config->key_mgmt_mask_6ghz)
+			return true;
+		/* Check if AKM is allowed as per user 6Ghz allowed AKM mask */
+		if ((config->key_mgmt_mask_6ghz & key_mgmt) != key_mgmt) {
+			mlme_debug("user configured mask %x didnt match AKM %x",
+				   config->key_mgmt_mask_6ghz , key_mgmt);
+			return false;
+		}
+
+		return true;
+	}
+
+	/* Check if the AKM is allowed as per the 6Ghz allowed AKM mask */
+	if ((key_mgmt & ALLOWED_KEYMGMT_6G_MASK) != key_mgmt)
+		return false;
+
+	/* if check_6ghz_security is set validate all checks for 6Ghz */
+	if (!(rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED))
+		return false;
+
+	/* for SAE we need to check H2E support */
+	if (!(QDF_HAS_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_SAE) ||
+	    QDF_HAS_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_FT_SAE)))
+		return true;
+
+	return cm_check_h2e_support(rsnxe, sae_pwe);
+}
+
+void wlan_cm_set_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
+				     bool value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security = value;
+}
+
+void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
+				       bool value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security =
+					cfg_get(psoc ,CFG_CHECK_6GHZ_SECURITY);
+}
+
+bool wlan_cm_get_check_6ghz_security(struct wlan_objmgr_psoc *psoc)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return false;
+
+	return mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security;
+}
+
+void wlan_cm_set_6ghz_key_mgmt_mask(struct wlan_objmgr_psoc *psoc,
+				     uint32_t value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_psoc_obj->psoc_cfg.score_config.key_mgmt_mask_6ghz = value;
+}
+
+uint32_t wlan_cm_get_6ghz_key_mgmt_mask(struct wlan_objmgr_psoc *psoc)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return DEFAULT_KEYMGMT_6G_MASK;
+
+	return mlme_psoc_obj->psoc_cfg.score_config.key_mgmt_mask_6ghz;
+}
+
+static void cm_fill_6ghz_params(struct wlan_objmgr_psoc *psoc,
+				struct scoring_cfg *score_cfg)
+{
+	/* Allow all security in 6Ghz by default */
+	score_cfg->check_6ghz_security = cfg_get(psoc, CFG_CHECK_6GHZ_SECURITY);
+	score_cfg->key_mgmt_mask_6ghz =
+				cfg_get(psoc, CFG_6GHZ_ALLOWED_AKM_MASK);
+}
+#else
+static inline void cm_fill_6ghz_params(struct wlan_objmgr_psoc *psoc,
+				       struct scoring_cfg *score_cfg)
+{
+}
+#endif
+
 static uint32_t
 cm_limit_max_per_index_score(uint32_t per_index_score)
 {
@@ -1892,4 +2049,5 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 	score_cfg->vendor_roam_score_algorithm =
 			cfg_get(psoc, CFG_VENDOR_ROAM_SCORE_ALGORITHM);
 	score_cfg->check_assoc_disallowed = true;
+	cm_fill_6ghz_params(psoc, score_cfg);
 }
