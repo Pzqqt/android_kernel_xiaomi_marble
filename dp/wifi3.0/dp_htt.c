@@ -4286,7 +4286,7 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 	u_int8_t pdev_id;
 	u_int8_t target_pdev_id;
 	bool free_buf;
-	qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
+
 	target_pdev_id = HTT_T2H_PPDU_STATS_PDEV_ID_GET(*msg_word);
 	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc->dp_soc,
 							 target_pdev_id);
