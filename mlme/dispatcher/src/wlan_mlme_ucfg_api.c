@@ -1627,48 +1627,6 @@ ucfg_mlme_get_nol_across_regdmn(struct wlan_objmgr_psoc *psoc, bool *value)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-ucfg_mlme_get_valid_channel_freq_list(struct wlan_objmgr_psoc *psoc,
-				      uint32_t *channel_list,
-				      uint32_t *channel_list_num)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-	qdf_size_t valid_channel_list_num = 0;
-	uint8_t tmp_channel_list[CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t i;
-	struct wlan_objmgr_pdev *pdev = NULL;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
-				      tmp_channel_list,
-				      CFG_VALID_CHANNEL_LIST_LEN,
-				      &valid_channel_list_num);
-		*channel_list_num = (uint8_t)valid_channel_list_num;
-		mlme_legacy_err("Failed to get MLME Obj");
-		pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_MLME_NB_ID);
-		if (!pdev) {
-			mlme_legacy_err("null pdev");
-			return QDF_STATUS_E_INVAL;
-		}
-
-		for (i = 0; i < valid_channel_list_num; i++) {
-			channel_list[i] =
-				wlan_reg_chan_to_freq(pdev, tmp_channel_list[i]);
-		}
-
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_NB_ID);
-
-		return QDF_STATUS_E_INVAL;
-	}
-
-	*channel_list_num = (uint32_t)mlme_obj->cfg.reg.valid_channel_list_num;
-	for (i = 0; i < *channel_list_num; i++)
-		channel_list[i] = mlme_obj->cfg.reg.valid_channel_freq_list[i];
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 QDF_STATUS
 ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
