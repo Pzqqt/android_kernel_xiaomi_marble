@@ -148,12 +148,6 @@ enum {
 	IEEE80211_PARAM_DROPUNENC_EAPOL    = 106,
 
 	/*
-	 * Headline block removal
-	 */
-	IEEE80211_PARAM_HBR_TIMER    = 107,
-	IEEE80211_PARAM_HBR_STATE    = 108,
-
-	/*
 	 * Unassociated power consumpion improve
 	 */
 	IEEE80211_PARAM_SLEEP_PRE_SCAN    = 109,
@@ -1386,9 +1380,6 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_htweptkip",       IEEE80211_PARAM_WEP_TKIP_HT, GET_PARAM, 0},
 	{"powersave",           IEEE80211_PARAM_NETWORK_SLEEP, SET_PARAM, 1},
 	{"get_powersave",       IEEE80211_PARAM_NETWORK_SLEEP, GET_PARAM, 0},
-	{"hbrtimer",            IEEE80211_PARAM_HBR_TIMER, SET_PARAM, 1},
-	{"get_hbrtimer",        IEEE80211_PARAM_HBR_TIMER, GET_PARAM, 0},
-	{"get_hbrstate",        IEEE80211_PARAM_HBR_STATE, GET_PARAM, 0},
 	{"chextoffset",         IEEE80211_PARAM_CHEXTOFFSET, SET_PARAM, 1},
 	{"chscaninit",          IEEE80211_PARAM_CHSCANINIT, SET_PARAM, 1},
 	{"get_chscaninit",      IEEE80211_PARAM_CHSCANINIT, GET_PARAM, 0},
