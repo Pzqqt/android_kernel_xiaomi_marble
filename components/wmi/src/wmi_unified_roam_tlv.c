@@ -142,7 +142,7 @@ static QDF_STATUS send_set_rssi_monitoring_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 	}
 
-	WMI_LOGD("Sent WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID to FW");
+	wmi_debug("Sent WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID to FW");
 
 	return ret;
 }
@@ -307,7 +307,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 		       WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_roam_data_rssi_roaming_param));
-	WMI_LOGD("Data rssi threshold: %d, triggers: 0x%x, rx time: %d",
+	wmi_debug("Data rssi threshold: %d, triggers: 0x%x, rx time: %d",
 		 data_rssi_param->roam_data_rssi_thres,
 		 data_rssi_param->flags,
 		 data_rssi_param->rx_inactivity_ms);
@@ -650,7 +650,7 @@ static QDF_STATUS send_roam_mawc_params_cmd_tlv(
 		params->rssi_stationary_high_adjust;
 	wmi_roam_mawc_params->rssi_stationary_low_adjust =
 		params->rssi_stationary_low_adjust;
-	WMI_LOGD(FL("MAWC roam en=%d, vdev=%d, tr=%d, ap=%d, high=%d, low=%d"),
+	wmi_debug("MAWC roam en=%d, vdev=%d, tr=%d, ap=%d, high=%d, low=%d",
 		wmi_roam_mawc_params->enable, wmi_roam_mawc_params->vdev_id,
 		wmi_roam_mawc_params->traffic_load_threshold,
 		wmi_roam_mawc_params->best_ap_rssi_threshold,
@@ -885,7 +885,7 @@ static QDF_STATUS send_plm_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = plm->vdev_id;
 
 	cmd->meas_token = plm->meas_token;
-	WMI_LOGD("vdev %d meas token %d", cmd->vdev_id, cmd->meas_token);
+	wmi_debug("vdev %d meas token %d", cmd->vdev_id, cmd->meas_token);
 
 	wmi_mtrace(WMI_VDEV_PLMREQ_STOP_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -950,14 +950,10 @@ static QDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += sizeof(wmi_vdev_plmreq_start_cmd_fixed_param);
 
-	WMI_LOGD("vdev : %d measu token : %d", cmd->vdev_id, cmd->meas_token);
-	WMI_LOGD("dialog_token: %d", cmd->dialog_token);
-	WMI_LOGD("number_bursts: %d", cmd->number_bursts);
-	WMI_LOGD("burst_interval: %d", cmd->burst_interval);
-	WMI_LOGD("off_duration: %d", cmd->off_duration);
-	WMI_LOGD("burst_cycle: %d", cmd->burst_cycle);
-	WMI_LOGD("tx_power: %d", cmd->tx_power);
-	WMI_LOGD("Number of channels : %d", cmd->num_chans);
+	wmi_debug("vdev: %d measu token: %d dialog_token: %d number_bursts: %d burst_interval: %d off_duration: %d burst_cycle: %d tx_power: %d Number of channels: %d",
+		 cmd->vdev_id, cmd->meas_token, cmd->dialog_token,
+		 cmd->number_bursts, cmd->burst_interval, cmd->off_duration,
+		 cmd->burst_cycle, cmd->tx_power, cmd->num_chans);
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
 		       (cmd->num_chans * sizeof(uint32_t)));
@@ -967,7 +963,7 @@ static QDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
 		channel_list = (uint32_t *)buf_ptr;
 		for (count = 0; count < cmd->num_chans; count++) {
 			channel_list[count] = plm->plm_ch_freq_list[count];
-			WMI_LOGD("Ch[%d]: %d MHz", count, channel_list[count]);
+			wmi_debug("Ch[%d]: %d MHz", count, channel_list[count]);
 		}
 		buf_ptr += cmd->num_chans * sizeof(uint32_t);
 	}
@@ -1400,10 +1396,10 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = triggers->vdev_id;
 	cmd->trigger_reason_bitmask =
 	   convert_control_roam_trigger_reason_bitmap(triggers->trigger_bitmap);
-	WMI_LOGD("Received trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
+	wmi_debug("Received trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
 		 triggers->trigger_bitmap, cmd->trigger_reason_bitmask);
 	cmd->trigger_reason_bitmask |= get_internal_mandatory_roam_triggers();
-	WMI_LOGD("vdev id: %d final trigger_bitmap: 0x%x",
+	wmi_debug("vdev id: %d final trigger_bitmap: 0x%x",
 		 cmd->vdev_id, cmd->trigger_reason_bitmask);
 
 	buf_ptr += sizeof(wmi_roam_enable_disable_trigger_reason_fixed_param);
@@ -1534,7 +1530,7 @@ extract_roam_btm_response_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	if (!param_buf || !param_buf->roam_btm_response_info ||
 	    !param_buf->num_roam_btm_response_info ||
 	    idx >= param_buf->num_roam_btm_response_info) {
-		WMI_LOGD("%s: Empty btm response param buf", __func__);
+		wmi_debug("Empty btm response param buf");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -1570,7 +1566,7 @@ extract_roam_initial_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	if (!param_buf || !param_buf->roam_initial_info ||
 	    !param_buf->num_roam_initial_info ||
 	    idx >= param_buf->num_roam_initial_info) {
-		WMI_LOGD("%s: Empty roam_initial_info param buf", __func__);
+		wmi_debug("Empty roam_initial_info param buf");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2539,7 +2535,7 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		}
 	} else {
 		if (roam_req->is_roam_req_valid)
-			WMI_LOGD("%s : roam offload = %d", __func__,
+			wmi_debug("roam offload = %d",
 				 roam_req->roam_offload_enabled);
 
 		len += (4 * WMI_TLV_HDR_SIZE);
@@ -2726,7 +2722,7 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 					       WMITLV_GET_STRUCT_TLVLEN(0));
 				buf_ptr += WMI_TLV_HDR_SIZE;
-				WMI_LOGD("psk_msk_len = %d psk_msk_ext:%d",
+				wmi_debug("psk_msk_len = %d psk_msk_ext:%d",
 					 roam_offload_11r->psk_msk_len,
 					 roam_offload_11r->psk_msk_ext_len);
 				if (roam_offload_11r->psk_msk_len)
@@ -2797,7 +2793,7 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 					       0);
 				buf_ptr += WMI_TLV_HDR_SIZE;
-				WMI_LOGD("pmk_len:%d pmk_ext_len:%d",
+				wmi_debug("pmk_len:%d pmk_ext_len:%d",
 					 roam_offload_11i->pmk_len,
 					 roam_offload_11i->pmk_ext_len);
 			}
@@ -2978,7 +2974,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 				ap_profile->profile.rsn_mcastmgmtcipherset;
 	profile->rssi_abs_thresh = ap_profile->profile.rssi_abs_thresh;
 
-	WMI_LOGD("AP PROFILE: flags %x rssi_thres:%d bg_rssi_thres:%d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
+	wmi_debug("AP PROFILE: flags:%x rssi_thres:%d bg_rssi_thres:%d ssid:%.*s authmode:%d uc cipher:%d mc cipher:%d mc mgmt cipher:%d rssi abs thresh:%d",
 		 profile->flags, profile->rssi_threshold,
 		 profile->bg_rssi_threshold,
 		 profile->ssid.ssid_len, ap_profile->profile.ssid.ssid,
@@ -3017,7 +3013,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	score_param->sae_pk_ap_weightage_pcnt =
 				ap_profile->param.sae_pk_ap_weightage;
 
-	WMI_LOGD("Score params weightage: disable_bitmap %x rssi %d ht %d vht %d he %d BW %d band %d NSS %d ESP %d BF %d PCL %d OCE WAN %d APTX %d roam score algo %d subnet id %d sae-pk %d",
+	wmi_debug("Score params weightage: disable_bitmap %x rssi %d ht %d vht %d he %d BW %d band %d NSS %d ESP %d BF %d PCL %d OCE WAN %d APTX %d roam score algo %d subnet id %d sae-pk %d",
 		 score_param->disable_bitmap, score_param->rssi_weightage_pcnt,
 		 score_param->ht_weightage_pcnt,
 		 score_param->vht_weightage_pcnt,
@@ -3061,12 +3057,12 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	score_param->rssi_scoring.rssi_pref_5g_rssi_thresh =
 		(-1) * ap_profile->param.rssi_scoring.rssi_pref_5g_rssi_thresh;
 
-	WMI_LOGD("Rssi scoring threshold: best RSSI %d good RSSI %d bad RSSI %d prefer 5g threshold %d",
+	wmi_debug("Rssi scoring threshold: best RSSI %d good RSSI %d bad RSSI %d prefer 5g threshold %d",
 		 score_param->rssi_scoring.best_rssi_threshold,
 		 score_param->rssi_scoring.good_rssi_threshold,
 		 score_param->rssi_scoring.bad_rssi_threshold,
 		 score_param->rssi_scoring.rssi_pref_5g_rssi_thresh);
-	WMI_LOGD("Good RSSI score for each slot %d bad RSSI score for each slot %d good bucket %d bad bucket %d",
+	wmi_debug("Good RSSI score for each slot %d bad RSSI score for each slot %d good bucket %d bad bucket %d",
 		 score_param->rssi_scoring.good_rssi_pcnt,
 		 score_param->rssi_scoring.bad_rssi_pcnt,
 		 score_param->rssi_scoring.good_bucket_size,
@@ -3083,7 +3079,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	score_param->esp_qbss_scoring.score_pcnt15_to_12 =
 			ap_profile->param.esp_qbss_scoring.score_pcnt15_to_12;
 
-	WMI_LOGD("ESP QBSS index weight: slots %d weight 0to3 %x weight 4to7 %x weight 8to11 %x weight 12to15 %x",
+	wmi_debug("ESP QBSS index weight: slots %d weight 0to3 %x weight 4to7 %x weight 8to11 %x weight 12to15 %x",
 		 score_param->esp_qbss_scoring.num_slot,
 		 score_param->esp_qbss_scoring.score_pcnt3_to_0,
 		 score_param->esp_qbss_scoring.score_pcnt7_to_4,
@@ -3101,7 +3097,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	score_param->oce_wan_scoring.score_pcnt15_to_12 =
 			ap_profile->param.oce_wan_scoring.score_pcnt15_to_12;
 
-	WMI_LOGD("OCE WAN index weight: slots %d weight 0to3 %x weight 4to7 %x weight 8to11 %x weight 12to15 %x",
+	wmi_debug("OCE WAN index weight: slots %d weight 0to3 %x weight 4to7 %x weight 8to11 %x weight 12to15 %x",
 		 score_param->oce_wan_scoring.num_slot,
 		 score_param->oce_wan_scoring.score_pcnt3_to_0,
 		 score_param->oce_wan_scoring.score_pcnt7_to_4,
@@ -3113,7 +3109,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 				ap_profile->param.roam_trigger_bitmap;
 	score_param->candidate_min_roam_score_delta =
 				ap_profile->param.cand_min_roam_score_delta;
-	WMI_LOGD("Roam score delta:%d Roam_trigger_bitmap:%x cand min score delta = %d",
+	wmi_debug("Roam score delta:%d Roam_trigger_bitmap:%x cand min score delta = %d",
 		 score_param->roam_score_delta_pcnt,
 		 score_param->roam_score_delta_mask,
 		 score_param->candidate_min_roam_score_delta);
@@ -3553,7 +3549,7 @@ send_per_roam_config_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 		return status;
 	}
-	WMI_LOGD(FL("per roam enable=%d, vdev=%d"),
+	wmi_debug("per roam enable=%d, vdev=%d",
 		 req_buf->per_config.enable, req_buf->vdev_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -3650,7 +3646,7 @@ static QDF_STATUS send_roam_scan_send_hlp_cmd_tlv(wmi_unified_t wmi_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	qdf_mem_copy(buf_ptr, params->hlp_ie, params->hlp_ie_len);
 
-	WMI_LOGD(FL("send FILS HLP pkt vdev %d len %d"),
+	wmi_debug("send FILS HLP pkt vdev %d len %d",
 		 hlp_params->vdev_id, hlp_params->size);
 	wmi_mtrace(WMI_PDEV_UPDATE_FILS_HLP_PKT_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -3798,8 +3794,8 @@ send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
 
 	cmd->vdev_id = req->vdev_id;
 	cmd->enable = req->enable;
-	WMI_LOGD("%s: Send WMI_ROAM_DEAUTH_CONFIG vdev_id:%d enable:%d",
-		 __func__, cmd->vdev_id, cmd->enable);
+	wmi_debug("Send WMI_ROAM_DEAUTH_CONFIG vdev_id:%d enable:%d",
+		 cmd->vdev_id, cmd->enable);
 
 	wmi_mtrace(WMI_ROAM_DEAUTH_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -3848,10 +3844,9 @@ send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
 	cmd->min_rssi = idle_roam_params->conn_ap_min_rssi;
 	cmd->idle_time = idle_roam_params->inactive_time;
 	cmd->data_packet_count = idle_roam_params->data_pkt_count;
-	WMI_LOGD("%s: Send WMI_ROAM_IDLE_CONFIG_CMDID vdev_id:%d enable:%d",
-		 __func__, cmd->vdev_id, cmd->enable);
-	WMI_LOGD("%s: band:%d rssi_delta:%d min_rssi:%d idle_time:%d data_pkt:%d",
-		 __func__, cmd->band, cmd->rssi_delta, cmd->min_rssi,
+	wmi_debug("Send WMI_ROAM_IDLE_CONFIG_CMDID vdev_id:%d enable:%d band:%d rssi_delta:%d min_rssi:%d idle_time:%d data_pkt:%d",
+		 cmd->vdev_id, cmd->enable,
+		 cmd->band, cmd->rssi_delta, cmd->min_rssi,
 		 cmd->idle_time, cmd->data_packet_count);
 
 	wmi_mtrace(WMI_ROAM_IDLE_CONFIG_CMDID, cmd->vdev_id, 0);
@@ -3906,9 +3901,8 @@ send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	qdf_mem_copy(buf_ptr, params->pmkid, PMKID_LEN);
-	WMI_LOGD("%s: vdev_id:%d status:%d bssid:"QDF_MAC_ADDR_FMT,
-		 __func__, cmd->vdev_id,
-		 cmd->preauth_status,
+	wmi_debug("vdev_id:%d status:%d bssid:"QDF_MAC_ADDR_FMT,
+		 cmd->vdev_id, cmd->preauth_status,
 		 QDF_MAC_ADDR_REF(params->bssid.bytes));
 
 	wmi_mtrace(WMI_ROAM_PREAUTH_STATUS_CMDID, cmd->vdev_id, 0);
