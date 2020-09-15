@@ -994,6 +994,7 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 	pr_debug("state switch successfully complete: %d\n", state);
 	SDE_ATRACE_INT("rsc_state", state);
 	rsc->current_state = state;
+	rsc->update_tcs_content = true;
 	SDE_EVT32(caller_client->id, caller_client->current_state,
 			state, rsc->current_state, SDE_EVTLOG_FUNC_EXIT);
 
@@ -1067,6 +1068,11 @@ int sde_rsc_client_trigger_vote(struct sde_rsc_client *caller_client,
 
 	mutex_lock(&rsc->client_lock);
 
+	if (!delta_vote && !rsc->update_tcs_content &&
+			((rsc->current_state == SDE_RSC_CMD_STATE) ||
+			(rsc->current_state == SDE_RSC_VID_STATE)))
+		goto end;
+
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX && delta_vote; i++) {
 		if (rsc->bw_config.new_ab_vote[i] > rsc->bw_config.ab_vote[i] ||
 		    rsc->bw_config.new_ib_vote[i] > rsc->bw_config.ib_vote[i])
@@ -1078,7 +1084,7 @@ int sde_rsc_client_trigger_vote(struct sde_rsc_client *caller_client,
 
 	rc = sde_rsc_resource_enable(rsc);
 	if (rc < 0)
-		goto clk_enable_fail;
+		goto end;
 
 	if (delta_vote) {
 		if (rsc->hw_ops.tcs_wait) {
@@ -1087,7 +1093,7 @@ int sde_rsc_client_trigger_vote(struct sde_rsc_client *caller_client,
 				pr_err("tcs is still busy; can't send command\n");
 				if (rsc->hw_ops.tcs_use_ok)
 					rsc->hw_ops.tcs_use_ok(rsc);
-				goto end;
+				goto tcs_wait_failed;
 			}
 		}
 
@@ -1106,9 +1112,11 @@ int sde_rsc_client_trigger_vote(struct sde_rsc_client *caller_client,
 	else if (rsc->hw_ops.tcs_use_ok)
 		rsc->hw_ops.tcs_use_ok(rsc);
 
-end:
+	rsc->update_tcs_content = false;
+
+tcs_wait_failed:
 	sde_rsc_resource_disable(rsc);
-clk_enable_fail:
+end:
 	mutex_unlock(&rsc->client_lock);
 
 	return rc;

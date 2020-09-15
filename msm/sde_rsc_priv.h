@@ -168,6 +168,8 @@ struct sde_rsc_bw_config {
  * current_state:	current rsc state (video/command), solver
  *                      override/enabled.
  * vsync_source:	Interface index to provide the vsync ticks
+ * update_tcs_content:	WAKE & SLEEP / AMC TCS content needs update with same BW
+ *			vote if RSC state updates.
  * debug_mode:		enables the logging for each register read/write
  * debugfs_root:	debugfs file system root node
  *
@@ -210,8 +212,9 @@ struct sde_rsc_priv {
 
 	struct sde_rsc_timer_config timer_config;
 	struct sde_rsc_cmd_config cmd_config;
-	u32	current_state;
-	u32	vsync_source;
+	u32 current_state;
+	u32 vsync_source;
+	bool update_tcs_content;
 
 	u32 debug_mode;
 	struct dentry *debugfs_root;
