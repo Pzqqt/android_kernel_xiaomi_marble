@@ -1088,34 +1088,6 @@ ucfg_mlme_is_ese_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
 #endif /* FEATURE_WLAN_ESE */
 
 QDF_STATUS
-ucfg_mlme_get_opr_rate_set(struct wlan_objmgr_psoc *psoc,
-			   uint8_t *buf, qdf_size_t *len)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return QDF_STATUS_E_INVAL;
-
-	return wlan_mlme_get_cfg_str(buf, &mlme_obj->cfg.rates.opr_rate_set,
-				     len);
-}
-
-QDF_STATUS
-ucfg_mlme_get_ext_opr_rate_set(struct wlan_objmgr_psoc *psoc,
-			       uint8_t *buf, qdf_size_t *len)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return QDF_STATUS_E_INVAL;
-
-	return wlan_mlme_get_cfg_str(buf, &mlme_obj->cfg.rates.ext_opr_rate_set,
-				     len);
-}
-
-QDF_STATUS
 ucfg_mlme_get_supported_mcs_set(struct wlan_objmgr_psoc *psoc,
 				uint8_t *buf, qdf_size_t *len)
 {

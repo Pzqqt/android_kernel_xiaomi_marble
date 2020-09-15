@@ -118,6 +118,24 @@ uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 	return &mlme_priv->sta_dynamic_oce_value;
 }
 
+QDF_STATUS mlme_init_rate_config(struct vdev_mlme_obj *vdev_mlme)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	mlme_priv->opr_rate_set.len = 0;
+	mlme_priv->ext_opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	mlme_priv->ext_opr_rate_set.len = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 				 uint8_t *peer_mac, uint8_t *mic_len,
 				 uint8_t *mic_hdr_len)
@@ -887,10 +905,6 @@ static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 			      rates->supported_11a.data,
 			      sizeof(rates->supported_11a.data),
 			      &rates->supported_11a.len);
-	rates->opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
-	rates->opr_rate_set.len = 0;
-	rates->ext_opr_rate_set.max_len = CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN;
-	rates->ext_opr_rate_set.len = 0;
 	rates->supported_mcs_set.max_len = CFG_SUPPORTED_MCS_SET_LEN;
 	qdf_uint8_array_parse(cfg_default(CFG_SUPPORTED_MCS_SET),
 			      rates->supported_mcs_set.data,

@@ -1071,6 +1071,7 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	mlme_init_rate_config(vdev_mlme);
 	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
 
 	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),

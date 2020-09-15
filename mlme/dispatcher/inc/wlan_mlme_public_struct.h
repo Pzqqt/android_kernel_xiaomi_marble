@@ -1009,8 +1009,6 @@ struct mlme_tgt_caps {
  * @disable_high_ht_mcs_2x2: disable high mcs for 2x2 info
  * @supported_11b: supported 11B rates
  * @supported_11a: supported 11A rates
- * @opr_rate_set: operational rates set
- * @ext_opr_rate_set: extended operational rates set
  * @supported_mcs_set: supported MCS set
  * @basic_mcs_set: basic MCS set
  * @current_mcs_set: current MCS set
@@ -1024,8 +1022,6 @@ struct wlan_mlme_rates {
 	uint8_t disable_high_ht_mcs_2x2;
 	struct mlme_cfg_str supported_11b;
 	struct mlme_cfg_str supported_11a;
-	struct mlme_cfg_str opr_rate_set;
-	struct mlme_cfg_str ext_opr_rate_set;
 	struct mlme_cfg_str supported_mcs_set;
 	struct mlme_cfg_str basic_mcs_set;
 	struct mlme_cfg_str current_mcs_set;
