@@ -946,6 +946,29 @@ u32 dsi_ctrl_hw_cmn_get_cmd_read_data(struct dsi_ctrl_hw *ctrl,
 }
 
 /**
+ * poll_dma_status() - API to poll DMA status
+ * @ctrl:          Pointer to the controller host hardware.
+ *
+ * Return: DMA status.
+ */
+u32 dsi_ctrl_hw_cmn_poll_dma_status(struct dsi_ctrl_hw *ctrl)
+{
+	int rc = 0;
+	u32 status;
+	u32 const delay_us = 10;
+	u32 const timeout_us = 5000;
+
+	rc = readl_poll_timeout_atomic(ctrl->base + DSI_INT_CTRL, status,
+				      ((status & DSI_CMD_MODE_DMA_DONE) > 0), delay_us, timeout_us);
+	if (rc) {
+		DSI_CTRL_HW_DBG(ctrl, "CMD_MODE_DMA_DONE failed\n");
+		status = 0;
+	}
+
+	return status;
+}
+
+/**
  * get_interrupt_status() - returns the interrupt status
  * @ctrl:          Pointer to the controller host hardware.
  *
