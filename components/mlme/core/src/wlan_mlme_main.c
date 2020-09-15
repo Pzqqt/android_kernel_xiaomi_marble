@@ -2229,11 +2229,6 @@ static void mlme_init_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
-	qdf_size_t valid_channel_list_num = 0;
-	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t i;
-	struct wlan_objmgr_pdev *pdev = NULL;
-
 	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
 	reg->etsi_srd_chan_in_master_mode =
 			cfg_get(psoc, CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
@@ -2252,24 +2247,6 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 						CFG_IGNORE_FW_REG_OFFLOAD_IND);
 	reg->retain_nol_across_regdmn_update =
 		cfg_get(psoc, CFG_RETAIN_NOL_ACROSS_REG_DOMAIN);
-
-	qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
-			      channel_list,
-			      CFG_VALID_CHANNEL_LIST_LEN,
-			      &valid_channel_list_num);
-	reg->valid_channel_list_num = (uint8_t)valid_channel_list_num;
-
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_MLME_NB_ID);
-	if (!pdev) {
-		mlme_legacy_err("null pdev");
-		return;
-	}
-
-	for (i = 0; i < valid_channel_list_num; i++)
-		reg->valid_channel_freq_list[i] =
-			wlan_reg_chan_to_freq(pdev, channel_list[i]);
-
-	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_NB_ID);
 
 	mlme_init_acs_avoid_freq_list(psoc, reg);
 }

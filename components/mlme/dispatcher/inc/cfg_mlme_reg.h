@@ -23,8 +23,6 @@
 #ifndef CFG_MLME_REG_H__
 #define CFG_MLME_REG_H__
 
-#define VALID_CHANNEL_LIST_DEFAULT "36, 40, 44, 48, 52, 56, 60, 64, 1, 6, 11, 34, 38, 42, 46, 2, 3, 4,  5, 7, 8, 9, 10, 12, 13, 14, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 151, 153, 155, 157, 159, 161, 50, 54, 58, 62, 240, 242, 244, 246, 248, 250, 252"
-
 /*
  * <ini>
  * gSelfGenFrmPwr - self-generated frame power in tx chain mask
@@ -243,22 +241,6 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"set the 11d scan interval in FW")
 
- /*
-  * valid_chan_list - Configure valid channel list
-  * @Default: VALID_CHANNEL_LIST_DEFAULT
-  *
-  * This ini is used to configure valid channel list
-  *
-  * Usage: Internal
-  *
-  */
-#define CFG_VALID_CHANNEL_LIST CFG_STRING( \
-		 "valid_chan_list", \
-		 0, \
-		 CFG_VALID_CHANNEL_LIST_STRING_LEN, \
-		 VALID_CHANNEL_LIST_DEFAULT, \
-		 "valid channel list")
-
 /*
  * <ini>
  * ignore_fw_reg_offload_ind - If set, Ignore the FW offload indication
@@ -337,7 +319,6 @@
 	CFG(CFG_RESTART_BEACONING_ON_CH_AVOID) \
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \
 	CFG(CFG_SCAN_11D_INTERVAL) \
-	CFG(CFG_VALID_CHANNEL_LIST) \
 	CFG(CFG_IGNORE_FW_REG_OFFLOAD_IND) \
 	CFG(CFG_RETAIN_NOL_ACROSS_REG_DOMAIN) \
 	CFG_SAP_AVOID_ACS_FREQ_LIST_ALL
