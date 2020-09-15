@@ -1862,7 +1862,8 @@ static QDF_STATUS policy_mgr_get_sbs_channels(
 		/* Get list of valid sbs channels for the current
 		 * connected channel
 		 */
-		for (j = 0; j < available_5g_channels_len; j++) {
+		for (j = 0; (j < available_5g_channels_len) &&
+		     (j < NUM_CHANNELS); j++) {
 			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
 			    cur_5g_ch_freq, available_5g_ch_freqs[j])) {
 				ch_freq_list[num_channels++] =
