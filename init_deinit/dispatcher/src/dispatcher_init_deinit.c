@@ -81,6 +81,10 @@
 #include <wlan_dcs_init_deinit_api.h>
 #endif
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+#include <wlan_if_mgr_main.h>
+#endif
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -862,6 +866,28 @@ static QDF_STATUS fd_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* WLAN_SUPPORT_FILS */
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+static QDF_STATUS dispatcher_if_mgr_init(void)
+{
+	return wlan_if_mgr_init();
+}
+
+static QDF_STATUS dispatcher_if_mgr_deinit(void)
+{
+	return wlan_if_mgr_deinit();
+}
+#else
+static QDF_STATUS dispatcher_if_mgr_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_if_mgr_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef FEATURE_COEX
 static QDF_STATUS dispatcher_coex_init(void)
 {
@@ -977,6 +1003,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_coex_init())
 		goto coex_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_if_mgr_init())
+		goto ifmgr_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -988,6 +1017,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_if_mgr_deinit();
+ifmgr_init_fail:
 	dispatcher_coex_deinit();
 coex_init_fail:
 	dispatcher_deinit_cfr();
@@ -1044,6 +1075,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_STATUS status;
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_if_mgr_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_coex_deinit());
 

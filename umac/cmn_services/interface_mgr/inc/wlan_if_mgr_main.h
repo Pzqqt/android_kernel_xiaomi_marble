@@ -74,6 +74,20 @@ struct wlan_if_mgr_obj {
 
 };
 
+/*
+ * wlan_if_mgr_init() - Interface manager module initialization API
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_if_mgr_init(void);
+
+/**
+ * wlan_if_mgr_deinit() - interface manager module deinitialization API
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_if_mgr_deinit(void);
+
 /**
  * wlan_if_mgr_psoc_created_notification() - interface mgr psoc create handler
  * @psoc: psoc object
