@@ -108,7 +108,6 @@ struct rouleur_pdata {
 	int num_supplies;
 	int reset_reg;
 	int foundry_id_reg;
-	u32 soc_threshold_val;
 };
 
 struct wcd_ctrl_platform_data {
