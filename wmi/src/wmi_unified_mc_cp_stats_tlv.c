@@ -93,7 +93,7 @@ static QDF_STATUS extract_peer_adv_stats_tlv(wmi_unified_t wmi_handle,
 
 	adv_stats = param_buf->peer_extd2_stats;
 	if (!adv_stats) {
-		WMI_LOGD("%s: no peer_adv stats in event buffer", __func__);
+		wmi_debug("no peer_adv stats in event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -288,7 +288,7 @@ send_request_peer_stats_info_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac_addr, &cmd->peer_macaddr);
 	cmd->reset_after_request = param->reset_after_request;
 
-	WMI_LOGD("PEER STATS REQ VDEV_ID:%d PEER:"QDF_MAC_ADDR_FMT" TYPE:%d RESET:%d",
+	wmi_debug("PEER STATS REQ VDEV_ID:%d PEER:"QDF_MAC_ADDR_FMT" TYPE:%d RESET:%d",
 		 cmd->vdev_id, QDF_MAC_ADDR_REF(param->peer_mac_addr),
 		 cmd->request_type,
 		 cmd->reset_after_request);
@@ -341,29 +341,26 @@ static void dump_peer_stats_info(wmi_peer_stats_info *stats)
 	int i;
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&stats->peer_macaddr, mac);
-	WMI_LOGD("mac "QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac));
-	WMI_LOGD("tx_bytes %d %d tx_packets %d %d",
+	wmi_debug("mac "QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac));
+	wmi_debug("tx_bytes %d %d tx_packets %d %d tx_retries %d tx_failed %d",
 		 stats->tx_bytes.low_32,
 		 stats->tx_bytes.high_32,
 		 stats->tx_packets.low_32,
-		 stats->tx_packets.high_32);
-	WMI_LOGD("rx_bytes %d %d rx_packets %d %d",
+		 stats->tx_packets.high_32,
+		 stats->tx_retries, stats->tx_failed);
+	wmi_debug("rx_bytes %d %d rx_packets %d %d",
 		 stats->rx_bytes.low_32,
 		 stats->rx_bytes.high_32,
 		 stats->rx_packets.low_32,
 		 stats->rx_packets.high_32);
-	WMI_LOGD("tx_retries %d tx_failed %d",
-		 stats->tx_retries, stats->tx_failed);
-	WMI_LOGD("tx_rate_code %x rx_rate_code %x",
+	wmi_debug("tx_rate_code %x rx_rate_code %x tx_rate %x rx_rate %x peer_rssi %d tx_succeed %d",
 		 stats->last_tx_rate_code,
-		 stats->last_rx_rate_code);
-	WMI_LOGD("tx_rate %x rx_rate %x",
+		 stats->last_rx_rate_code,
 		 stats->last_tx_bitrate_kbps,
-		 stats->last_rx_bitrate_kbps);
-	WMI_LOGD("peer_rssi %d", stats->peer_rssi);
-	WMI_LOGD("tx_succeed %d", stats->tx_succeed);
+		 stats->last_rx_bitrate_kbps,
+		 stats->peer_rssi, stats->tx_succeed);
 	for (i = 0; i < WMI_MAX_CHAINS; i++)
-		WMI_LOGD("chain%d_rssi %d", i, stats->peer_rssi_per_chain[i]);
+		wmi_debug("chain%d_rssi %d", i, stats->peer_rssi_per_chain[i]);
 }
 
 /**
