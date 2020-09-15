@@ -5775,6 +5775,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			 QDF_MAC_ADDR_SIZE)) {
 		ast_type = CDP_TXRX_AST_TYPE_SELF;
 	}
+	qdf_spinlock_create(&peer->peer_state_lock);
 	dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
 	qdf_spinlock_create(&peer->peer_info_lock);
 	dp_wds_ext_peer_init(peer);
@@ -5872,7 +5873,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_set_peer_isolation(peer, false);
 
-	qdf_spinlock_create(&peer->peer_state_lock);
 	dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
