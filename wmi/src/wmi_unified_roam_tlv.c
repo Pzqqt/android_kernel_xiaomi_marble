@@ -1828,7 +1828,6 @@ static bool wmi_is_ft_akm(int akm,
 
 		break;
 	default:
-		wmi_debug("Unknown akm:%d", akm);
 		return false;
 	}
 
@@ -2095,9 +2094,8 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 	 * authentication type, the other mode TLV's are nullified
 	 * and only headers are filled.
 	 */
-	if (akm != WMI_AUTH_NONE &&
-	    (wmi_is_ft_akm(akm, roam_req) ||
-	     roam_req->rso_ese_info.is_ese_assoc)) {
+	if ((akm != WMI_AUTH_OPEN || roam_req->rso_ese_info.is_ese_assoc ||
+	     wmi_is_ft_akm(akm, roam_req)) && akm != WMI_AUTH_NONE) {
 		if (roam_req->rso_ese_info.is_ese_assoc) {
 			/* Fill the length of 11i, 11r TLV as 0 */
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC, 0);
