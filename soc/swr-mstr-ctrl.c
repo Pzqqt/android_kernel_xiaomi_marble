@@ -752,6 +752,9 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 	if (swrm->mport_cfg[SWRM_DSD_PARAMS_PORT].port_en &&
 				(swrm->master_id == MASTER_ID_RX))
 		usecase = 1;
+	else if ((swrm->master_id == MASTER_ID_RX) &&
+		(swrm->bus_clk == SWR_CLK_RATE_11P2896MHZ))
+		usecase = 2;
 
 	if (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ)
 		usecase = 1;
