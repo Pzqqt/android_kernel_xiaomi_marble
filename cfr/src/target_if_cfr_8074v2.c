@@ -417,44 +417,32 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 							    WLAN_UMAC_COMP_CFR);
 	if (!pdev_cfrobj) {
 		cfr_err("pdev object for CFR is NULL");
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -EINVAL;
+		status = -EINVAL;
+		goto done;
 	}
 
-	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
+	if (tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) {
 		cfr_debug("CFR capture failed as peer is in powersave : %s",
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
-
-		prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
-		rx_ops->cfr_rx_ops.cfr_info_send(pdev, &header_error,
-						 sizeof(struct csi_cfr_header),
-						 NULL, 0, &end_magic, 4);
-
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -EINVAL;
+		status = -EINVAL;
+		goto relay_failure;
 	}
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_STATUS_MASK) == 0) {
 		cfr_debug("CFR capture failed for peer : %s",
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -EINVAL;
+		status = -EINVAL;
+		pdev_cfrobj->tx_peer_status_cfr_fail++;
+		goto relay_failure;
 	}
 
 	if (tx_evt_param.status & CFR_TX_EVT_STATUS_MASK) {
 		cfr_debug("TX packet returned status %d for peer: %s",
 			  tx_evt_param.status & CFR_TX_EVT_STATUS_MASK,
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -EINVAL;
+		status = -EINVAL;
+		pdev_cfrobj->tx_evt_status_cfr_fail++;
+		goto relay_failure;
 	}
 
 	buf_addr_temp = (tx_evt_param.correlation_info_2 & 0x0f);
@@ -464,10 +452,9 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 					&cookie, 0)) {
 		cfr_debug("Cookie lookup failure for addr: 0x%pK status: 0x%x",
 			  (void *)((uintptr_t)buf_addr), tx_evt_param.status);
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -EINVAL;
+		status = -EINVAL;
+		pdev_cfrobj->tx_dbr_cookie_lookup_fail++;
+		goto done;
 	}
 
 	cfr_debug("buffer address: 0x%pK cookie: %u",
@@ -527,17 +514,24 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 			  (void *)((uintptr_t)buf_addr), cookie);
 	} else {
 		cfr_err("Correlation returned invalid status!!");
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -EINVAL;
+		status = -EINVAL;
+		goto done;
 	}
 
+	status = 0;
+	goto done;
+
+relay_failure:
+	prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
+	rx_ops->cfr_rx_ops.cfr_info_send(pdev, &header_error,
+					 sizeof(struct csi_cfr_header),
+					 NULL, 0, &end_magic, 4);
+done:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+	return status;
 
-	return 0;
 }
 #else
 static int
