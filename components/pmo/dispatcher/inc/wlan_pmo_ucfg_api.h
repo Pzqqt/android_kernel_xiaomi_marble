@@ -217,6 +217,16 @@ enum powersave_mode
 ucfg_pmo_get_power_save_mode(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_pmo_get_default_power_save_mode() - Get default power save mode
+ * from ini config
+ * @psoc: pointer to psoc object
+ *
+ * Return: power save mode
+ */
+enum powersave_mode
+ucfg_pmo_get_default_power_save_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_pmo_set_power_save_mode() - Set power save mode
  * @psoc: pointer to psoc object
  * @val:  power save mode
@@ -1728,6 +1738,12 @@ static inline enum powersave_mode
 ucfg_pmo_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
+}
+
+static inline enum powersave_mode
+ucfg_pmo_get_default_power_save_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return PMO_PS_ADVANCED_POWER_SAVE_DISABLE;
 }
 
 static inline void

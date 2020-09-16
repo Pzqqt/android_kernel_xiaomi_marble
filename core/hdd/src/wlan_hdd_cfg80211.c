@@ -7755,6 +7755,11 @@ static int hdd_config_power(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t power;
 
+	if (!ucfg_pmo_get_default_power_save_mode(hdd_ctx->psoc)) {
+		hdd_err_rl("OPM power save is disabled in ini");
+		return -EINVAL;
+	}
+
 	power = nla_get_u8(attr);
 
 	return hdd_set_power_config(hdd_ctx, adapter, power);

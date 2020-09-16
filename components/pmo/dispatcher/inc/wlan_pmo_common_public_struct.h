@@ -333,6 +333,7 @@ struct pmo_psoc_cfg {
 	uint8_t sta_max_li_mod_dtim;
 	enum pmo_wow_enable_type wow_enable;
 	enum powersave_mode power_save_mode;
+	enum powersave_mode default_power_save_mode;
 #ifdef FEATURE_RUNTIME_PM
 	uint32_t runtime_pm_delay;
 #endif
