@@ -56,6 +56,21 @@ QDF_STATUS ucfg_wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 	return wlan_cm_start_disconnect(vdev, req);
 }
 
+/**
+ * ucfg_cm_reason_code_to_str() - return string conversion of reason code
+ * @reason: reason code.
+ *
+ * This utility function helps log string conversion of reason code.
+ *
+ * Return: string conversion of reason code, if match found;
+ *         "Unknown" otherwise.
+ */
+static inline
+const char *ucfg_cm_reason_code_to_str(enum wlan_reason_code reason)
+{
+	return wlan_cm_reason_code_to_str(reason);
+}
+
 #endif
 #endif /* __WLAN_CM_UCFG_API_H */
 

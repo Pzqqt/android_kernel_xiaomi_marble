@@ -403,9 +403,9 @@ int wlan_osif_cfg80211_disconnect(struct net_device *dev,
 	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	QDF_STATUS status;
 
-	/* print reason in string */
-	osif_info("%s(vdevid-%d): Received Disconnect reason:%d",
-		  dev->name, vdev_id, reason);
+	osif_info("%s(vdevid-%d): Received Disconnect reason:%d %s",
+		  dev->name, vdev_id, reason,
+		  ucfg_cm_reason_code_to_str(reason));
 
 	status = osif_cm_reset_id_and_src(vdev);
 	if (QDF_IS_STATUS_ERROR(status))

@@ -99,6 +99,17 @@ QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_discon_rsp cm_discon_rsp);
 
 /**
+ * wlan_cm_reason_code_to_str() - return string conversion of reason code
+ * @reason: reason code.
+ *
+ * This utility function helps log string conversion of reason code.
+ *
+ * Return: string conversion of reason code, if match found;
+ *         "Unknown" otherwise.
+ */
+const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason);
+
+/**
  * wlan_cm_hw_mode_change_resp() - HW mode change response
  * @pdev: pdev pointer
  * @vdev_id: vdev id

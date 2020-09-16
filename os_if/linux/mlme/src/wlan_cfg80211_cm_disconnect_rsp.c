@@ -97,21 +97,47 @@ osif_cm_indicate_disconnect(struct net_device *dev,
 }
 #endif
 
+static enum ieee80211_reasoncode
+osif_cm_get_disconnect_reason(struct vdev_osif_priv *osif_priv, uint16_t reason)
+{
+	enum ieee80211_reasoncode ieee80211_reason = WLAN_REASON_UNSPECIFIED;
+
+	osif_priv->cm_info.last_disconnect_reason =
+					osif_cm_mac_to_qca_reason(reason);
+	if (reason < REASON_PROP_START)
+		ieee80211_reason = reason;
+	/*
+	 * Applications expect reason code as 0 for beacon miss failure
+	 * due to backward compatibility. So send ieee80211_reason as 0.
+	 */
+	if (reason == REASON_BEACON_MISSED)
+		ieee80211_reason = 0;
+
+	return ieee80211_reason;
+}
+
 QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_discon_rsp *rsp)
 {
-	enum ieee80211_reasoncode ieee80211_reason = rsp->req.req.reason_code;
+	enum ieee80211_reasoncode ieee80211_reason;
 	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
 	bool locally_generated = true;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	osif_info("%s(vdevid-%d): Disconnected, bssid: " QDF_MAC_ADDR_FMT " cm_id %d source %d reason_code %d locally_generated %d",
-		  osif_priv->wdev->netdev->name,
-		  rsp->req.req.vdev_id,
-		  QDF_MAC_ADDR_REF(rsp->req.req.bssid.bytes),
-		  rsp->req.cm_id, rsp->req.req.source,
-		  rsp->req.req.reason_code,
-		  locally_generated);
+	ieee80211_reason =
+		osif_cm_get_disconnect_reason(osif_priv,
+					      rsp->req.req.reason_code);
+
+	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " %sdisconnect " QDF_MAC_ADDR_FMT " cm_id %d source %d reason:%u %s vendor:%u %s",
+		       osif_priv->wdev->netdev->name,
+		       rsp->req.req.vdev_id,
+		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
+		       locally_generated ? "locally-generated " : "",
+		       QDF_MAC_ADDR_REF(rsp->req.req.bssid.bytes),
+		       rsp->req.cm_id, rsp->req.req.source, ieee80211_reason,
+		       ucfg_cm_reason_code_to_str(rsp->req.req.reason_code),
+		       osif_priv->cm_info.last_disconnect_reason,
+		       osif_cm_qca_reason_to_str(osif_priv->cm_info.last_disconnect_reason));
 
 	status = osif_validate_disconnect_and_reset_src_id(osif_priv, rsp);
 	if (QDF_IS_STATUS_ERROR(status))

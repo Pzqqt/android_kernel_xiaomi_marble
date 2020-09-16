@@ -188,7 +188,7 @@ struct wlan_cm_vdev_connect_req {
 struct wlan_cm_disconnect_req {
 	uint8_t vdev_id;
 	enum wlan_cm_source source;
-	uint16_t reason_code;
+	enum wlan_reason_code reason_code;
 	struct qdf_mac_addr bssid;
 };
 

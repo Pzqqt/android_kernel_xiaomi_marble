@@ -52,8 +52,23 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
  * Context: Any context.
  * Return: QDF_STATUS
  */
-
 QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_rsp *rsp);
+
+/**
+ * osif_failed_candidate_handler() - API to indicate individual candidate
+ * connect failure resp
+ * @vdev: vdev pointer
+ * @rsp: Connection manager connect response for the candidate
+ *
+ * The API is is used indicate individual candidate connect failure resp for
+ * for tried all but last tried candidate. The last candidate will be sent in
+ * osif_connect_handler.
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
+					 struct wlan_cm_connect_rsp *rsp);
 
 #endif /* __WLAN_CFG80211_CM_RSP_H */

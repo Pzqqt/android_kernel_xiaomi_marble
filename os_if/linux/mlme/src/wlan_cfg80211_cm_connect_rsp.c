@@ -434,19 +434,34 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 	struct vdev_osif_priv *osif_priv  = wlan_vdev_get_ospriv(vdev);
 	QDF_STATUS status;
 
-	osif_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" is %s cm_id %d cm_reason %d reason_code %d",
-		  osif_priv->wdev->netdev->name, rsp->vdev_id,
-		  QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
-		  QDF_MAC_ADDR_REF(rsp->bssid.bytes),
-		  rsp->ssid.length, rsp->ssid.ssid,
-		  rsp->connect_status ? "FAILURE" : "SUCCESS", rsp->cm_id,
-		  rsp->reason, rsp->reason_code);
+	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" is %s cm_id %d cm_reason %d reason_code %d",
+		       osif_priv->wdev->netdev->name, rsp->vdev_id,
+		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
+		       QDF_MAC_ADDR_REF(rsp->bssid.bytes),
+		       rsp->ssid.length, rsp->ssid.ssid,
+		       rsp->connect_status ? "FAILURE" : "SUCCESS", rsp->cm_id,
+		       rsp->reason, rsp->reason_code);
 
 	status = osif_validate_connect_and_reset_src_id(osif_priv, rsp->cm_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	osif_indcate_connect_results(vdev, osif_priv, rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_cm_connect_rsp *rsp)
+{
+	struct vdev_osif_priv *osif_priv  = wlan_vdev_get_ospriv(vdev);
+
+	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" FAILED cm_id %d cm_reason %d reason_code %d",
+		       osif_priv->wdev->netdev->name, rsp->vdev_id,
+		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
+		       QDF_MAC_ADDR_REF(rsp->bssid.bytes),
+		       rsp->ssid.length, rsp->ssid.ssid, rsp->cm_id,
+		       rsp->reason, rsp->reason_code);
 
 	return QDF_STATUS_SUCCESS;
 }

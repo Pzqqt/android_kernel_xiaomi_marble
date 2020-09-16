@@ -26,6 +26,103 @@
 #include "wlan_cfg80211.h"
 #include "wlan_cfg80211_cm_rsp.h"
 
+const char *
+osif_cm_qca_reason_to_str(enum qca_disconnect_reason_codes reason)
+{
+	switch (reason) {
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_INTERNAL_ROAM_FAILURE);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_EXTERNAL_ROAM_FAILURE);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_GATEWAY_REACHABILITY_FAILURE);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_UNSUPPORTED_CHANNEL_CSA);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_OPER_CHANNEL_DISABLED_INDOOR);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_OPER_CHANNEL_USER_DISABLED);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_DEVICE_RECOVERY);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_KEY_TIMEOUT);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_OPER_CHANNEL_BAND_CHANGE);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_IFACE_DOWN);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_PEER_XRETRY_FAIL);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_PEER_INACTIVITY);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_SA_QUERY_TIMEOUT);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_BEACON_MISS_FAILURE);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_CHANNEL_SWITCH_FAILURE);
+	CASE_RETURN_STRING(QCA_DISCONNECT_REASON_USER_TRIGGERED);
+	case QCA_DISCONNECT_REASON_UNSPECIFIED:
+		return "";
+	default:
+		return "Unknown";
+	}
+}
+
+enum qca_disconnect_reason_codes
+osif_cm_mac_to_qca_reason(enum wlan_reason_code internal_reason)
+{
+	enum qca_disconnect_reason_codes reason =
+					QCA_DISCONNECT_REASON_UNSPECIFIED;
+
+	if (internal_reason < REASON_PROP_START)
+		return reason;
+
+	switch (internal_reason) {
+	case REASON_HOST_TRIGGERED_ROAM_FAILURE:
+		reason = QCA_DISCONNECT_REASON_INTERNAL_ROAM_FAILURE;
+		break;
+	case REASON_FW_TRIGGERED_ROAM_FAILURE:
+		reason = QCA_DISCONNECT_REASON_EXTERNAL_ROAM_FAILURE;
+		break;
+	case REASON_GATEWAY_REACHABILITY_FAILURE:
+		reason =
+		QCA_DISCONNECT_REASON_GATEWAY_REACHABILITY_FAILURE;
+		break;
+	case REASON_UNSUPPORTED_CHANNEL_CSA:
+		reason = QCA_DISCONNECT_REASON_UNSUPPORTED_CHANNEL_CSA;
+		break;
+	case REASON_OPER_CHANNEL_DISABLED_INDOOR:
+		reason =
+		QCA_DISCONNECT_REASON_OPER_CHANNEL_DISABLED_INDOOR;
+		break;
+	case REASON_OPER_CHANNEL_USER_DISABLED:
+		reason =
+		QCA_DISCONNECT_REASON_OPER_CHANNEL_USER_DISABLED;
+		break;
+	case REASON_DEVICE_RECOVERY:
+		reason = QCA_DISCONNECT_REASON_DEVICE_RECOVERY;
+		break;
+	case REASON_KEY_TIMEOUT:
+		reason = QCA_DISCONNECT_REASON_KEY_TIMEOUT;
+		break;
+	case REASON_OPER_CHANNEL_BAND_CHANGE:
+		reason = QCA_DISCONNECT_REASON_OPER_CHANNEL_BAND_CHANGE;
+		break;
+	case REASON_IFACE_DOWN:
+		reason = QCA_DISCONNECT_REASON_IFACE_DOWN;
+		break;
+	case REASON_PEER_XRETRY_FAIL:
+		reason = QCA_DISCONNECT_REASON_PEER_XRETRY_FAIL;
+		break;
+	case REASON_PEER_INACTIVITY:
+		reason = QCA_DISCONNECT_REASON_PEER_INACTIVITY;
+		break;
+	case REASON_SA_QUERY_TIMEOUT:
+		reason = QCA_DISCONNECT_REASON_SA_QUERY_TIMEOUT;
+		break;
+	case REASON_CHANNEL_SWITCH_FAILED:
+		reason = QCA_DISCONNECT_REASON_CHANNEL_SWITCH_FAILURE;
+		break;
+	case REASON_BEACON_MISSED:
+		reason = QCA_DISCONNECT_REASON_BEACON_MISS_FAILURE;
+		break;
+	case REASON_USER_TRIGGERED_ROAM_FAILURE:
+		reason = QCA_DISCONNECT_REASON_USER_TRIGGERED;
+		break;
+	default:
+		osif_debug("No QCA reason code for mac reason: %u",
+			   internal_reason);
+		/* Unspecified reason by default */
+	}
+
+	return reason;
+}
+
 void osif_cm_reset_id_and_src_no_lock(struct vdev_osif_priv *osif_priv)
 {
 	osif_priv->cm_info.last_id = CM_ID_INVALID;
@@ -64,15 +161,15 @@ osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
 /**
  * osif_cm_failed_candidate_cb() - Callback to indicate failed candidate
  * @vdev: vdev pointer
- * @cm_conn_rsp: connect response
+ * @rsp: connect response
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
 osif_cm_failed_candidate_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_connect_rsp *cm_conn_rsp)
+			    struct wlan_cm_connect_rsp *rsp)
 {
-	return QDF_STATUS_SUCCESS;
+	return osif_failed_candidate_handler(vdev, rsp);
 }
 
 /**

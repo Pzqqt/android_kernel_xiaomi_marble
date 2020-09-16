@@ -24,6 +24,33 @@
 #ifndef __WLAN_CFG80211_CM_UTIL_H
 #define __WLAN_CFG80211_CM_UTIL_H
 
+#include <qca_vendor.h>
+#include "wlan_cm_ucfg_api.h"
+
+/**
+ * osif_cm_qca_reason_to_str() - return string conversion of qca reason code
+ * @reason: enum qca_disconnect_reason_codes
+ *
+ * This utility function helps log string conversion of qca reason code.
+ *
+ * Return: string conversion of reason code, if match found;
+ *         "Unknown" otherwise.
+ */
+const char *
+osif_cm_qca_reason_to_str(enum qca_disconnect_reason_codes reason);
+
+/**
+ * osif_cm_mac_to_qca_reason() - Convert to qca internal disconnect reason
+ * @internal_reason: Mac reason code of type @wlan_reason_code
+ *
+ * Check if it is internal reason code and convert it to the
+ * enum qca_disconnect_reason_codes.
+ *
+ * Return: Reason code of type enum qca_disconnect_reason_codes
+ */
+enum qca_disconnect_reason_codes
+osif_cm_mac_to_qca_reason(enum wlan_reason_code internal_reason);
+
 /**
  * osif_cm_register_cb() - API to register connection manager
  * callbacks.

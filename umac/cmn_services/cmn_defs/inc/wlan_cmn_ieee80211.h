@@ -438,6 +438,229 @@ enum extn_element_ie {
 	WLAN_EXTN_ELEMID_ESP         = 11,
 };
 
+/**
+ * enum wlan_reason_code - wlan reason codes Reason codes
+ * (IEEE Std 802.11-2016, 9.4.1.7, Table 9-45)
+ * @REASON_UNSPEC_FAILURE: Unspecified reason
+ * @REASON_PREV_AUTH_NOT_VALID: Previous authentication no longer valid
+ * @REASON_DEAUTH_NETWORK_LEAVING: Deauthenticated because sending station
+ * is leaving (or has left) IBSS or ESS
+ * @REASON_DISASSOC_DUE_TO_INACTIVITY: Disassociated due to inactivity
+ * @REASON_DISASSOC_AP_BUSY: Disassociated because AP is unable
+ * to handle all currently associated STAs
+ * @REASON_CLASS2_FRAME_FROM_NON_AUTH_STA: Class 2 frame received from
+ * nonauthenticated station
+ * @REASON_CLASS3_FRAME_FROM_NON_ASSOC_STA: Class 3 frame received from
+ * nonassociated station
+ * @REASON_DISASSOC_NETWORK_LEAVING: Disassociated because sending station
+ * is leaving (or has left) BSS
+ * @REASON_STA_NOT_AUTHENTICATED: Station requesting (re)association
+ * is not authenticated with responding station
+ * @REASON_BAD_PWR_CAPABILITY: Disassociated because the
+ * information in the Power Capability element is unacceptable
+ * @REASON_BAD_SUPPORTED_CHANNELS: Disassociated because the
+ * information in the Supported Channels element is unacceptable
+ * @REASON_DISASSOC_BSS_TRANSITION: Disassociated due to BSS transition
+ * management
+ * @REASON_INVALID_IE: Invalid element, i.e., an element defined in this
+ * standard for which the content does not meet the specifications in Clause 9
+ * @REASON_MIC_FAILURE: Message integrity code (MIC) failure
+ * @REASON_4WAY_HANDSHAKE_TIMEOUT: 4-Way Handshake timeout
+ * @REASON_GROUP_KEY_UPDATE_TIMEOUT: Group Key Handshake timeout
+ * @REASON_IN_4WAY_DIFFERS: Information element in 4-Way Handshake
+ * different from (Re)Association Request/Probe Response/Beacon frame
+ * @REASON_INVALID_GROUP_CIPHER: Invalid group cipher
+ * @REASON_INVALID_PAIRWISE_CIPHER: Invalid pairwise cipher
+ * @REASON_INVALID_AKMP: Invalid AKMP
+ * @REASON_UNSUPPORTED_RSNE_VER: Unsupported RSNE version
+ * @REASON_INVALID_RSNE_CAPABILITIES: Invalid RSNE capabilities
+ * @REASON_1X_AUTH_FAILURE: IEEE 802.1X authentication failed
+ * @REASON_CIPHER_SUITE_REJECTED: Cipher suite rejected because of the
+ * security policy
+ * @REASON_TDLS_PEER_UNREACHABLE: TDLS direct-link teardown due to TDLS
+ * peer STA unreachable via the TDLS direct link
+ * @REASON_TDLS_UNSPEC: TDLS direct-link teardown for unspecified
+ * reason
+ * @REASON_DISASSOC_SSP_REQUESTED: Disassociated because session terminated
+ * by SSP request
+ * @REASON_NO_SSP_ROAMING_AGREEMENT: Disassociated because of lack of SSP
+ * roaming agreement
+ * REASON_BAD_CIPHER_OR_AKM: Requested service rejected because of SSP
+ * cipher suite or AKM requirement
+ * @REASON_LOCATION_NOT_AUTHORIZED: Requested service not authorized in
+ * this location
+ * @REASON_SERVICE_CHANGE_PRECLUDES_TS: TS deleted because QoS AP
+ * lacks sufficient bandwidth for this QoS STA due to a change in BSS service
+ * characteristics or operational mode (e.g., an HT BSS change from 40 MHz
+ * channel to 20 MHz channel)
+ * @REASON_QOS_UNSPECIFIED: Disassociated for unspecified, QoS-related
+ * reason
+ * @REASON_NO_BANDWIDTH: Disassociated because QoS AP lacks sufficient
+ * bandwidth for this QoS STA
+ * @REASON_XS_UNACKED_FRAMES: Disassociated because excessive number of
+ * frames need to be acknowledged, but are not acknowledged due to AP
+ * transmissions and/or poor channel conditions
+ * @REASON_EXCEEDED_TXOP: Disassociated because STA is transmitting outside
+ * the limits of its TXOPs
+ * @REASON_STA_LEAVING: Requested from peer STA as the STA is leaving the
+ * BSS (or resetting)
+ * @REASON_END_TS_BA_DLS: Requesting STA is no longer using the stream
+ * or session
+ * @REASON_UNKNOWN_TS_BA: Requesting STA received frames using a
+ * mechanism for which setup has not been completed
+ * @REASON_TIMEDOUT:  Requested from peer STA due to timeout
+ * @REASON_PEERKEY_MISMATCH: Peer STA does not support the requested
+ * cipher suite
+ * @REASON_AUTHORIZED_ACCESS_LIMIT_REACHED: Disassociated because
+ * authorized access limit reached
+ * @REASON_EXTERNAL_SERVICE_REQUIREMENTS: Disassociated due to external
+ * service requirements
+ * @REASON_INVALID_FT_ACTION_FRAME_COUNT: Invalid FT Action frame count
+ * @REASON_INVALID_PMKID: Invalid pairwise master key identifier (PMKID)
+ * @REASON_INVALID_MDE: Invalid MDE
+ * @REASON_INVALID_FTE: Invalid FTE
+ * @REASON_MESH_PEERING_CANCELLED: Mesh peering canceled for unknown
+ * reasons
+ * @REASON_MESH_MAX_PEERS: The mesh STA has reached the supported maximum
+ * number of peer mesh STAs
+ * @REASON_MESH_CONFIG_POLICY_VIOLATION: The received information violates
+ * the Mesh Configuration policy configured in the mesh STA profile
+ * @REASON_MESH_CLOSE_RCVD: The mesh STA has received a Mesh Peering Close
+ * frame requesting to close the mesh peering
+ * @REASON_MESH_MAX_RETRIES: The mesh STA has resent dot11MeshMaxRetries
+ * Mesh Peering Open frames, without receiving a Mesh Peering Confirm frame
+ * @REASON_MESH_CONFIRM_TIMEOUT: The confirmTimer for the mesh peering
+ * instance times out.
+ * @REASON_MESH_INVALID_GTK: The mesh STA fails to unwrap the GTK or
+ * the values in the wrapped contents do not match
+ * @REASON_MESH_INCONSISTENT_PARAMS: The mesh STA receives inconsistent
+ * information about the mesh parameters between mesh peering Management frames
+ * @REASON_MESH_INVALID_SECURITY_CAP: The mesh STA fails the authenticated
+ * mesh peering exchange because due to failure in selecting either the pairwise
+ * ciphersuite or group ciphersuite
+ * @REASON_MESH_PATH_ERROR_NO_PROXY_INFO: The mesh STA does not have proxy
+ * information for this external destination.
+ * @REASON_MESH_PATH_ERROR_NO_FORWARDING_INFO: The mesh STA does not have
+ * forwarding information for this destination.
+ * @REASON_MESH_PATH_ERROR_DEST_UNREACHABLE: The mesh STA determines that
+ * the link to the next hop of an active path in its forwarding information is
+ * no longer usable.
+ * @REASON_MAC_ADDRESS_ALREADY_EXISTS_IN_MBSS: The Deauthentication frame
+ * was sent because the MAC address of the STA already exists in the mesh BSS
+ * @REASON_MESH_CHANNEL_SWITCH_REGULATORY_REQ: The mesh STA performs
+ * channel switch to meet regulatory requirements.
+ * @REASON_MESH_CHANNEL_SWITCH_UNSPECIFIED: The mesh STA performs channel
+ * switching with unspecified reason.
+ * @REASON_POOR_RSSI_CONDITIONS: Disassociated due to poor RSSI conditions
+ *
+ *
+ * Internal reason codes: Add any internal reason code just after
+ * REASON_PROP_START and decrease the value of REASON_PROP_START
+ * accordingly.
+ *
+ * @REASON_PROP_START: Start of prop reason code
+ * @REASON_HOST_TRIGGERED_ROAM_FAILURE: Reason host triggered roam failed
+ * @REASON_FW_TRIGGERED_ROAM_FAILURE: Firmware triggered roam failed
+ * @REASON_GATEWAY_REACHABILITY_FAILURE: Due to NUD failure
+ * @REASON_UNSUPPORTED_CHANNEL_CSA: due to unsuppoerted channel in CSA
+ * @REASON_OPER_CHANNEL_DISABLED_INDOOR: as channel is disabled in indoor
+ * @REASON_OPER_CHANNEL_USER_DISABLED: due to channel disabled by user
+ * @REASON_DEVICE_RECOVERY: due to SSR
+ * @REASON_KEY_TIMEOUT: due to key Timeout
+ * @REASON_OPER_CHANNEL_BAND_CHANGE: due to change in BAND
+ * @REASON_IFACE_DOWN: as interface is going down
+ * @REASON_PEER_XRETRY_FAIL: due to sta kickout with reason no ACK
+ * @REASON_PEER_INACTIVITY: due to sta kickout with reason inactivity
+ * @REASON_SA_QUERY_TIMEOUT: due to sta kickout due to SA query timeout
+ * @REASON_CHANNEL_SWITCH_FAILED: as channel switch failed
+ * @REASON_BEACON_MISSED: due to beacon miss
+ * @REASON_USER_TRIGGERED_ROAM_FAILURE: Reason user triggered roam failed
+ */
+enum wlan_reason_code {
+	REASON_UNSPEC_FAILURE = 1,
+	REASON_PREV_AUTH_NOT_VALID = 2,
+	REASON_DEAUTH_NETWORK_LEAVING = 3,
+	REASON_DISASSOC_DUE_TO_INACTIVITY = 4,
+	REASON_DISASSOC_AP_BUSY = 5,
+	REASON_CLASS2_FRAME_FROM_NON_AUTH_STA = 6,
+	REASON_CLASS3_FRAME_FROM_NON_ASSOC_STA = 7,
+	REASON_DISASSOC_NETWORK_LEAVING = 8,
+	REASON_STA_NOT_AUTHENTICATED = 9,
+	REASON_BAD_PWR_CAPABILITY = 10,
+	REASON_BAD_SUPPORTED_CHANNELS = 11,
+	REASON_DISASSOC_BSS_TRANSITION = 12,
+	REASON_INVALID_IE = 13,
+	REASON_MIC_FAILURE = 14,
+	REASON_4WAY_HANDSHAKE_TIMEOUT = 15,
+	REASON_GROUP_KEY_UPDATE_TIMEOUT = 16,
+	REASON_IN_4WAY_DIFFERS = 17,
+	REASON_INVALID_GROUP_CIPHER = 18,
+	REASON_INVALID_PAIRWISE_CIPHER = 19,
+	REASON_INVALID_AKMP = 20,
+	REASON_UNSUPPORTED_RSNE_VER = 21,
+	REASON_INVALID_RSNE_CAPABILITIES = 22,
+	REASON_1X_AUTH_FAILURE = 23,
+	REASON_CIPHER_SUITE_REJECTED = 24,
+	REASON_TDLS_PEER_UNREACHABLE = 25,
+	REASON_TDLS_UNSPEC = 26,
+	REASON_DISASSOC_SSP_REQUESTED = 27,
+	REASON_NO_SSP_ROAMING_AGREEMENT = 28,
+	REASON_BAD_CIPHER_OR_AKM = 29,
+	REASON_LOCATION_NOT_AUTHORIZED = 30,
+	REASON_SERVICE_CHANGE_PRECLUDES_TS = 31,
+	REASON_QOS_UNSPECIFIED = 32,
+	REASON_NO_BANDWIDTH = 33,
+	REASON_XS_UNACKED_FRAMES = 34,
+	REASON_EXCEEDED_TXOP = 35,
+	REASON_STA_LEAVING = 36,
+	REASON_END_TS_BA_DLS = 37,
+	REASON_UNKNOWN_TS_BA = 38,
+	REASON_TIMEDOUT = 39,
+	REASON_PEERKEY_MISMATCH = 45,
+	REASON_AUTHORIZED_ACCESS_LIMIT_REACHED = 46,
+	REASON_EXTERNAL_SERVICE_REQUIREMENTS = 47,
+	REASON_INVALID_FT_ACTION_FRAME_COUNT = 48,
+	REASON_INVALID_PMKID = 49,
+	REASON_INVALID_MDE = 50,
+	REASON_INVALID_FTE = 51,
+	REASON_MESH_PEERING_CANCELLED = 52,
+	REASON_MESH_MAX_PEERS = 53,
+	REASON_MESH_CONFIG_POLICY_VIOLATION = 54,
+	REASON_MESH_CLOSE_RCVD = 55,
+	REASON_MESH_MAX_RETRIES = 56,
+	REASON_MESH_CONFIRM_TIMEOUT = 57,
+	REASON_MESH_INVALID_GTK = 58,
+	REASON_MESH_INCONSISTENT_PARAMS = 59,
+	REASON_MESH_INVALID_SECURITY_CAP = 60,
+	REASON_MESH_PATH_ERROR_NO_PROXY_INFO = 61,
+	REASON_MESH_PATH_ERROR_NO_FORWARDING_INFO = 62,
+	REASON_MESH_PATH_ERROR_DEST_UNREACHABLE = 63,
+	REASON_MAC_ADDRESS_ALREADY_EXISTS_IN_MBSS = 64,
+	REASON_MESH_CHANNEL_SWITCH_REGULATORY_REQ = 65,
+	REASON_MESH_CHANNEL_SWITCH_UNSPECIFIED = 66,
+	REASON_POOR_RSSI_CONDITIONS = 71,
+	/* 72–65535 reserved */
+
+	/* Internal reason codes */
+	REASON_PROP_START = 65519,
+	REASON_HOST_TRIGGERED_ROAM_FAILURE  = 65519,
+	REASON_FW_TRIGGERED_ROAM_FAILURE = 65520,
+	REASON_GATEWAY_REACHABILITY_FAILURE = 65521,
+	REASON_UNSUPPORTED_CHANNEL_CSA = 65522,
+	REASON_OPER_CHANNEL_DISABLED_INDOOR = 65523,
+	REASON_OPER_CHANNEL_USER_DISABLED = 65524,
+	REASON_DEVICE_RECOVERY = 65525,
+	REASON_KEY_TIMEOUT = 65526,
+	REASON_OPER_CHANNEL_BAND_CHANGE = 65527,
+	REASON_IFACE_DOWN = 65528,
+	REASON_PEER_XRETRY_FAIL = 65529,
+	REASON_PEER_INACTIVITY = 65530,
+	REASON_SA_QUERY_TIMEOUT = 65531,
+	REASON_CHANNEL_SWITCH_FAILED = 65532,
+	REASON_BEACON_MISSED = 65533,
+	REASON_USER_TRIGGERED_ROAM_FAILURE = 65534,
+};
+
 #define WLAN_OUI_SIZE 4
 #define WLAN_MAX_CIPHER 6
 #define WLAN_RSN_SELECTOR_LEN 4
