@@ -45,10 +45,8 @@ wlan_hdd_btc_chain_mode_handler(struct wlan_objmgr_vdev *vdev)
 	}
 
 	vdev_id = wlan_vdev_get_id(vdev);
-	if (wlan_hdd_validate_vdev_id(vdev_id)) {
-		hdd_err("Invalid vdev id: %d", vdev_id);
+	if (wlan_hdd_validate_vdev_id(vdev_id))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {

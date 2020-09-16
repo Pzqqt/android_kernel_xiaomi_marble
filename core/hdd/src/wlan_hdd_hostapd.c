@@ -5944,10 +5944,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		goto exit;
 	}
 
-	if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
-		hdd_err("vdev is invalid. Hence return");
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		goto exit;
-	}
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_STOP_AP,

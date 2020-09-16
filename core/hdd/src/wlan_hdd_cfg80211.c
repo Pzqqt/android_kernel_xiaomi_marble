@@ -22341,10 +22341,8 @@ __wlan_hdd_cfg80211_update_owe_info(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
-		hdd_err("invalid vdev id: %d", adapter->vdev_id);
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
-	}
 
 	hdd_debug("owe_status %d", owe_info->status);
 
