@@ -82,7 +82,7 @@ static int __wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 	}
 
 	if (!wlan_hdd_nan_is_supported(hdd_ctx)) {
-		hdd_debug("NAN is not supported");
+		hdd_debug_rl("NAN is not supported");
 		return -EPERM;
 	}
 
