@@ -8719,6 +8719,13 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 		 session->beacon_tx_rate,
 		 ch_params.mhz_freq_seg0,
 		 ch_params.mhz_freq_seg1);
+	/* Invalid channel width means no suitable channel bonding in current
+	 * regdomain for requested channel frequency. Abort vdev start.
+	 */
+	if (ch_params.ch_width == CH_WIDTH_INVALID) {
+		pe_debug("abort vdev start invalid chan parameters");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	des_chan = mlme_obj->vdev->vdev_mlme.des_chan;
 	des_chan->ch_freq = session->curr_op_freq;
