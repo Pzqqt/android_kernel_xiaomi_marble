@@ -3026,12 +3026,16 @@ void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
 				bool is_mon_dest_desc)
 {
 	rx_desc_pool->rx_mon_dest_frag_enable = is_mon_dest_desc;
+	if (is_mon_dest_desc)
+		dp_alert("Feature DP_RX_MON_MEM_FRAG for mon_dest is enabled");
 }
 #else
 void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
 				bool is_mon_dest_desc)
 {
 	rx_desc_pool->rx_mon_dest_frag_enable = false;
+	if (is_mon_dest_desc)
+		dp_alert("Feature DP_RX_MON_MEM_FRAG for mon_dest is disabled");
 }
 #endif
 
