@@ -10214,10 +10214,8 @@ static void hdd_adapter_param_update_work(void *arg)
 				     WLAN_HDD_ADAPTER_OPS_WORK_SCHED,
 				     WLAN_INVALID_VDEV_ID);
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err("netdev features update request for invalid adapter");
+	if (hdd_validate_adapter(adapter))
 		return;
-	}
 
 	errno = osif_vdev_sync_op_start(adapter->dev, &vdev_sync);
 	if (errno)

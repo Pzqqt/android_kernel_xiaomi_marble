@@ -36,10 +36,8 @@ __wlan_hdd_sysfs_dcm_store(struct net_device *net_dev, char const *buf,
 	char *sptr, *token;
 	int value, ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -101,10 +99,8 @@ __wlan_hdd_sysfs_dcm_show(struct net_device *net_dev, char *buf)
 	struct hdd_context *hdd_ctx;
 	int ret, value;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

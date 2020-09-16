@@ -45,10 +45,8 @@ __hdd_sysfs_mt_bl_config_store(struct net_device *net_dev,
 	uint32_t bl_time_t, bl_packet_gap, bl_n, bl_num_meas;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -142,10 +140,8 @@ __hdd_sysfs_mt_bl_start_store(struct net_device *net_dev,
 	QDF_STATUS status;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -229,10 +225,8 @@ __hdd_sysfs_mt_config_store(struct net_device *net_dev,
 	uint32_t val_32[HDD_SYSFS_MT_CONFIG_UINT32_ARGS];
 	int i, ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -325,10 +319,8 @@ __hdd_sysfs_mt_start_store(struct net_device *net_dev,
 	uint32_t value;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

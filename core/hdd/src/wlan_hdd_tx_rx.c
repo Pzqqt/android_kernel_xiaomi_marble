@@ -2078,10 +2078,8 @@ QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
 	}
 
 	hdd_adapter = (struct hdd_adapter *)adapter;
-	if (hdd_validate_adapter(hdd_adapter)) {
-		hdd_err_rl("adapter validate failed");
+	if (hdd_validate_adapter(hdd_adapter))
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	vdev_id = hdd_adapter->vdev_id;
 	head_ptr = nbuf_list;

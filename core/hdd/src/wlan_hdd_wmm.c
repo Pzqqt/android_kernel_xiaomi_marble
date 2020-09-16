@@ -2440,10 +2440,8 @@ bool hdd_wmm_is_acm_allowed(uint8_t vdev_id)
 	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err("Invalid adapter");
+	if (hdd_validate_adapter(adapter))
 		return false;
-	}
 
 	wmm_ac_status = adapter->hdd_wmm_status.ac_status;
 

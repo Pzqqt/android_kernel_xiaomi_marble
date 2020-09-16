@@ -39,10 +39,8 @@ __wlan_hdd_store_reassoc_sysfs(struct net_device *net_dev, char const *buf,
 	tSirMacAddr bssid;
 	int ret;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err_rl("adapter validate fail");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
