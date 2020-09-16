@@ -147,20 +147,22 @@ static void check_userspace_service_state(struct snd_soc_pcm_runtime *rtd,
 
 static int get_intf_index(const char *stream_name)
 {
-	if (strnstr(stream_name, "PRIMARY", strlen("PRIMARY")))
+	if (strnstr(stream_name, "PRIMARY", strlen(stream_name)))
 		return PRI_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "SECONDARY", strlen("SECONDARY")))
+	else if (strnstr(stream_name, "SECONDARY", strlen(stream_name)))
 		return SEC_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "TERTIARY", strlen("TERTIARY")))
+	else if (strnstr(stream_name, "TERTIARY", strlen(stream_name)))
 		return TER_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "QUATERNARY", strlen("QUATERNARY")))
+	else if (strnstr(stream_name, "QUATERNARY", strlen(stream_name)))
 		return QUAT_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "QUINARY", strlen("QUINARY")))
+	else if (strnstr(stream_name, "QUINARY", strlen(stream_name)))
 		return QUIN_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "SENARY", strlen("SENARY")))
+	else if (strnstr(stream_name, "SENARY", strlen(stream_name)))
 		return SEN_MI2S_TDM_AUXPCM;
-	else
+	else {
+		pr_err("%s: stream name %s does not match\n", __func__, stream_name);
 		return -EINVAL;
+	}
 }
 
 int msm_common_snd_startup(struct snd_pcm_substream *substream)
