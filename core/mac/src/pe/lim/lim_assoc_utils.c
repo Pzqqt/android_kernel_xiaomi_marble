@@ -2103,6 +2103,7 @@ static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
 static void lim_update_he_mcs_12_13(tpAddStaParams add_sta_params,
 				    tpDphHashNode sta_ds)
 {
+	pe_debug("he_mcs_12_13_map %0x", sta_ds->he_mcs_12_13_map);
 	if (sta_ds->he_mcs_12_13_map)
 		add_sta_params->he_mcs_12_13_map = sta_ds->he_mcs_12_13_map;
 }
@@ -3701,6 +3702,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 						 pBeaconStruct,
 						 pAssocRsp);
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
+			lim_update_he_mcs_12_13(&pAddBssParams->staContext,
+						sta);
 			lim_update_he_6gop_assoc_resp(pAddBssParams,
 						      &pAssocRsp->he_op,
 						      pe_session);

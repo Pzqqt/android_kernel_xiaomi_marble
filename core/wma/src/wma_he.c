@@ -1293,7 +1293,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 		}
 	}
 
-	wma_debug("Sending TX/RX MCS set to FW: <=80: %x, 80+80: %x, 160: %x",
+	wma_debug("Sending TX/RX MCS set to FW: <=80: %x, 160: %x, 80+80: %x",
 		  peer->peer_he_rx_mcs_set[0], peer->peer_he_rx_mcs_set[1],
 		  peer->peer_he_rx_mcs_set[2]);
 
