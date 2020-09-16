@@ -4443,6 +4443,17 @@ enum qca_wlan_vendor_attr_config {
 	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_NUM_RX_CHAINS = 74,
 
+	/* 8-bit unsigned value to configure ANI setting type.
+	 * See &enum qca_wlan_ani_setting for possible values.
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_SETTING = 75,
+	/* 32-bit signed value to configure ANI level. This is used when
+	 * ANI settings type is &QCA_WLAN_ANI_SETTING_FIXED.
+	 * The set and get of ANI level with &QCA_WLAN_ANI_SETTING_AUTO
+	 * is invalid, the driver will return a failure.
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_LEVEL = 76,
+
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =
@@ -5528,6 +5539,16 @@ enum qca_wlan_vendor_attr_loc_capa_flags {
 	QCA_WLAN_VENDOR_ATTR_LOC_CAPA_FLAG_ASAP = 1 << 2,
 	QCA_WLAN_VENDOR_ATTR_LOC_CAPA_FLAG_AOA = 1 << 3,
 	QCA_WLAN_VENDOR_ATTR_LOC_CAPA_FLAG_AOA_IN_FTM = 1 << 4,
+};
+
+/**
+ * enum qca_wlan_ani_setting - ANI setting type
+ * @QCA_WLAN_ANI_SETTING_AUTO: Automatically determine ANI level
+ * @QCA_WLAN_ANI_SETTING_FIXED: Fix ANI level to the dBm parameter
+ */
+enum qca_wlan_ani_setting {
+	QCA_WLAN_ANI_SETTING_AUTO = 0,
+	QCA_WLAN_ANI_SETTING_FIXED = 1,
 };
 
 /**
