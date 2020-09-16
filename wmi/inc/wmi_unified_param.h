@@ -1038,6 +1038,7 @@ typedef struct {
  * @peer_he_rx_mcs_set: Peer HE RX MCS MAP
  * @peer_he_tx_mcs_set: Peer HE TX MCS MAP
  * @peer_ppet: Peer HE PPET info
+ * @peer_bss_max_idle_option: Peer BSS Max Idle option update
  */
 struct peer_assoc_params {
 	uint32_t vdev_id;
@@ -1100,6 +1101,7 @@ struct peer_assoc_params {
 	uint32_t peer_he_tx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 	struct wmi_host_ppe_threshold peer_ppet;
 	u_int8_t peer_bsscolor_rept_info;
+	uint32_t peer_bss_max_idle_option;
 };
 
 /**

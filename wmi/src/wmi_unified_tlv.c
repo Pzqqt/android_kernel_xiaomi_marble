@@ -2581,6 +2581,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->peer_mpdu_density = param->peer_mpdu_density;
 	cmd->peer_vht_caps = param->peer_vht_caps;
 	cmd->peer_phymode = param->peer_phymode;
+	cmd->bss_max_idle_option = param->peer_bss_max_idle_option;
 
 	/* Update 11ax capabilities */
 	cmd->peer_he_cap_info =
