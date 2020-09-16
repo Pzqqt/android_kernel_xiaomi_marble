@@ -10886,7 +10886,8 @@ csr_issue_set_context_req_helper(struct mac_context *mac_ctx,
 	 * For open mode authentication, send dummy install key response to
 	 * send OBSS scan and QOS event.
 	 */
-	if (profile->negotiatedUCEncryptionType == eCSR_ENCRYPT_TYPE_NONE) {
+	if (profile &&
+	    profile->negotiatedUCEncryptionType == eCSR_ENCRYPT_TYPE_NONE) {
 		if (unicast)
 			return QDF_STATUS_SUCCESS;
 
