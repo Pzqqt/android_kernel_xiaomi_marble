@@ -396,9 +396,10 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"Mapping failure Error:%d", status);
 			DP_STATS_INC(vdev, tx_i.mcast_en.dropped_map_error, 1);
+			mc_uc_buf->paddr_macbuf = 0;
 			goto fail_map;
 		}
-
+		mc_uc_buf->paddr_macbuf = paddr_mcbuf;
 		seg_info_new->frags[0].vaddr =  (uint8_t *)mc_uc_buf;
 		seg_info_new->frags[0].paddr_lo = (uint32_t) paddr_mcbuf;
 		seg_info_new->frags[0].paddr_hi =
