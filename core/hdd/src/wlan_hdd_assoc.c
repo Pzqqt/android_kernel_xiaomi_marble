@@ -4496,6 +4496,12 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		} else {
 			wlan_hdd_ft_set_key_delay(hdd_ctx->mac_handle, adapter);
 		}
+		if (sta_ctx->ft_carrier_on) {
+			sta_ctx->hdd_reassoc_scenario = false;
+			hdd_debug("hdd_reassoc_scenario set to: %d session: %d",
+				  sta_ctx->hdd_reassoc_scenario,
+				  adapter->vdev_id);
+		}
 		qdf_ret_status =
 			hdd_association_completion_handler(adapter, roam_info,
 							   roam_id, roam_status,
