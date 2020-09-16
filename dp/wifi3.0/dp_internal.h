@@ -751,6 +751,28 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 
 }
 
+/**
+ * dp_is_wds_extended(): Check if wds ext is enabled
+ * @vdev: DP VDEV handle
+ *
+ * return: true if enabled, false if not
+ */
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+static bool dp_is_wds_extended(struct dp_peer *peer)
+{
+	if (qdf_atomic_test_bit(WDS_EXT_PEER_INIT_BIT,
+				&peer->wds_ext.init))
+		return true;
+
+	return false;
+}
+#else
+static bool dp_is_wds_extended(struct dp_peer *peer)
+{
+	return false;
+}
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
+
 static inline void dp_update_vdev_stats(struct dp_soc *soc,
 					struct dp_peer *srcobj,
 					void *arg)
@@ -758,6 +780,9 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 	struct cdp_vdev_stats *tgtobj = (struct cdp_vdev_stats *)arg;
 	uint8_t i;
 	uint8_t pream_type;
+
+	if (qdf_unlikely(dp_is_wds_extended(srcobj)))
+		return;
 
 	for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
 		for (i = 0; i < MAX_MCS; i++) {
