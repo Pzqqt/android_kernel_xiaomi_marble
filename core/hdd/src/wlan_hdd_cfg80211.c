@@ -4691,7 +4691,7 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 	 * de-initialize roaming structures in fw on the roaming enabled
 	 * vdev.
 	 */
-	if (hdd_ctx->roaming_in_progress) {
+	if (hdd_is_roaming_in_progress(hdd_ctx)) {
 		hdd_err("Reject set roam trigger as roaming is in progress");
 		return QDF_STATUS_E_FAILURE;
 	}

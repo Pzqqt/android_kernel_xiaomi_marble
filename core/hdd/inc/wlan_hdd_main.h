@@ -1954,7 +1954,6 @@ struct hdd_context {
 	uint16_t wmi_max_len;
 	struct suspend_resume_stats suspend_resume_stats;
 	struct hdd_runtime_pm_context runtime_context;
-	bool roaming_in_progress;
 	struct scan_chan_info *chan_info;
 	struct mutex chan_info_lock;
 	/* bit map to set/reset TDLS by different sources */
