@@ -1607,8 +1607,7 @@ static void _sde_encoder_rc_restart_delayed(struct sde_encoder_virt *sde_enc,
 static void _sde_encoder_rc_cancel_delayed(struct sde_encoder_virt *sde_enc,
 	u32 sw_event)
 {
-	if (kthread_cancel_delayed_work_sync(
-			&sde_enc->delayed_off_work))
+	if (kthread_cancel_delayed_work_sync(&sde_enc->delayed_off_work))
 		SDE_DEBUG_ENC(sde_enc, "sw_event:%d, work cancelled\n",
 				sw_event);
 }
@@ -2695,8 +2694,7 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 			!(msm_is_mode_seamless_vrr(cur_mode)
 			|| msm_is_mode_seamless_dms(cur_mode)
 			|| msm_is_mode_seamless_dyn_clk(cur_mode)))
-		kthread_init_delayed_work(&sde_enc->delayed_off_work,
-			sde_encoder_off_work);
+		kthread_cancel_delayed_work_sync(&sde_enc->delayed_off_work);
 
 	ret = sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_KICKOFF);
 	if (ret) {
@@ -2856,6 +2854,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	 */
 	sde_enc->crtc = NULL;
 	memset(&sde_enc->mode_info, 0, sizeof(sde_enc->mode_info));
+	kthread_cancel_delayed_work_sync(&sde_enc->delayed_off_work);
 
 	SDE_DEBUG_ENC(sde_enc, "encoder disabled\n");
 
