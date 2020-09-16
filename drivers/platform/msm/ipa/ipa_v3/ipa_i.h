@@ -2773,6 +2773,8 @@ bool ipa3_get_modem_cfg_emb_pipe_flt(void);
 
 u8 ipa3_get_qmb_master_sel(enum ipa_client_type client);
 
+u8 ipa3_get_tx_instance(enum ipa_client_type client);
+
 bool ipa3_get_lan_rx_napi(void);
 
 bool ipa3_get_qmap_pipe_enable(void);
