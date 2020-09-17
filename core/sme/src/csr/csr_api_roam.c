@@ -21103,7 +21103,7 @@ wlan_cm_roam_fill_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	csr_cm_roam_scan_offload_fill_rso_configs(mac_ctx, session,
 						  &req->rso_config,
 						  NULL,
-						  ROAM_SCAN_OFFLOAD_START,
+						  ROAM_SCAN_OFFLOAD_STOP,
 						  reason);
 
 	return status;
