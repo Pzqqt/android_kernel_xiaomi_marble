@@ -114,7 +114,9 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 
 		/* Dont allow roaming on 2G when 5G_ONLY configured */
 		if ((band_capability == BIT(REG_BAND_5G) ||
-		     pcl_req->band_mask == BIT(REG_BAND_5G)) &&
+		     band_capability == BIT(REG_BAND_6G) ||
+		     pcl_req->band_mask == BIT(REG_BAND_5G) ||
+		     pcl_req->band_mask == BIT(REG_BAND_6G)) &&
 		     WLAN_REG_IS_24GHZ_CH_FREQ(weights->saved_chan_list[i]))
 			weights->weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;
@@ -131,7 +133,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	mlme_debug("LFR3: vdev[%d] Dump Vdev PCL weights", pcl_req->vdev_id);
+	mlme_debug("RSO_CFG: vdev[%d] Dump Vdev PCL weights", pcl_req->vdev_id);
 	policy_mgr_dump_channel_list(weights->saved_num_chan,
 				     weights->saved_chan_list,
 				     weights->weighed_valid_list);
