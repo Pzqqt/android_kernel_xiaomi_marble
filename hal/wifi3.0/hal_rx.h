@@ -40,13 +40,15 @@
 #define RX_MONITOR_BUFFER_SIZE  2048
 #endif
 
-/* MONITOR STATUS BUFFER SIZE = 1536 data bytes, buffer allocation of 2k bytes
- * including skb shared info and buffer alignment.
+/* MONITOR STATUS BUFFER SIZE = 1408 data bytes, buffer allocation of 2k bytes
+ * including buffer reservation, buffer alignment and skb shared info size.
  */
 #define RX_MON_STATUS_BASE_BUF_SIZE    2048
 #define RX_MON_STATUS_BUF_ALIGN  128
+#define RX_MON_STATUS_BUF_RESERVATION  128
 #define RX_MON_STATUS_BUF_SIZE  (RX_MON_STATUS_BASE_BUF_SIZE - \
-				 RX_MON_STATUS_BUF_ALIGN - QDF_SHINFO_SIZE)
+				 (RX_MON_STATUS_BUF_RESERVATION + \
+				  RX_MON_STATUS_BUF_ALIGN + QDF_SHINFO_SIZE))
 
 /* HAL_RX_NON_QOS_TID = NON_QOS_TID which is 16 */
 #define HAL_RX_NON_QOS_TID 16
