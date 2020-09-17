@@ -18,6 +18,7 @@
  * DOC: contains core interface manager function definitions
  */
 #include "wlan_if_mgr_main.h"
+#include "wlan_objmgr_global_obj.h"
 
 QDF_STATUS wlan_if_mgr_init(void)
 {
