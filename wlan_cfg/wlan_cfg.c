@@ -621,6 +621,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_cfg_ctx->is_poll_mode_enabled =
 			cfg_get(psoc, CFG_DP_POLL_MODE_ENABLE);
 	wlan_cfg_ctx->is_swlm_enabled = cfg_get(psoc, CFG_DP_SWLM_ENABLE);
+	wlan_cfg_ctx->fst_in_cmem = cfg_get(psoc, CFG_DP_RX_FST_IN_CMEM);
 	wlan_cfg_ctx->tx_per_pkt_vdev_id_check =
 			cfg_get(psoc, CFG_DP_TX_PER_PKT_VDEV_ID_CHECK);
 
@@ -1428,6 +1429,11 @@ bool
 wlan_cfg_is_peer_ext_stats_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->pext_stats_enabled;
+}
+
+bool wlan_cfg_is_fst_in_cmem_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->fst_in_cmem;
 }
 
 #ifdef WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL

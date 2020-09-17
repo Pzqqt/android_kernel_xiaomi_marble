@@ -10339,7 +10339,8 @@ static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
 			value);
 		break;
 	case DP_SOC_PARAM_CMEM_FSE_SUPPORT:
-		soc->fst_in_cmem = !!value;
+		if (wlan_cfg_is_fst_in_cmem_enabled(soc->wlan_cfg_ctx))
+			soc->fst_in_cmem = !!value;
 		dp_info("FW supports CMEM FSE %u", value);
 		break;
 	default:

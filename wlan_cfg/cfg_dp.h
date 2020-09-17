@@ -973,6 +973,9 @@
 		CFG_INI_BOOL("dp_poll_mode_enable", false, \
 		"Enable/Disable Polling mode for data path")
 
+#define CFG_DP_RX_FST_IN_CMEM \
+	CFG_INI_BOOL("dp_rx_fst_in_cmem", false, \
+		     "Enable/Disable flow search table in CMEM")
 /*
  * <ini>
  * gEnableSWLM - Control DP Software latency manager
@@ -1077,5 +1080,6 @@
 		CFG(CFG_DP_LEGACY_MODE_CSUM_DISABLE) \
 		CFG(CFG_DP_POLL_MODE_ENABLE) \
 		CFG(CFG_DP_SWLM_ENABLE) \
-		CFG(CFG_DP_TX_PER_PKT_VDEV_ID_CHECK)
+		CFG(CFG_DP_TX_PER_PKT_VDEV_ID_CHECK) \
+		CFG(CFG_DP_RX_FST_IN_CMEM)
 #endif /* _CFG_DP_H_ */
