@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/iopoll.h>
 
@@ -61,6 +61,9 @@
 #define INTF_MISR_CTRL                  0x180
 #define INTF_MISR_SIGNATURE             0x184
 
+#define INTF_WD_TIMER_0_CTL             0x230
+#define INTF_WD_TIMER_0_CTL2            0x234
+#define INTF_WD_TIMER_0_LOAD_VALUE      0x238
 #define INTF_MUX                        0x25C
 #define INTF_UNDERRUN_COUNT             0x268
 #define INTF_STATUS                     0x26C
@@ -394,6 +397,29 @@ static void sde_hw_intf_setup_prg_fetch(
 	}
 
 	SDE_REG_WRITE(c, INTF_CONFIG, fetch_enable);
+}
+
+static void sde_hw_intf_setup_vsync_source(struct sde_hw_intf *intf,
+		u32 frame_rate)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 reg;
+
+	if (!intf)
+		return;
+
+	c = &intf->hw;
+
+	SDE_REG_WRITE(c, INTF_WD_TIMER_0_LOAD_VALUE, CALCULATE_WD_LOAD_VALUE(frame_rate));
+
+	SDE_REG_WRITE(c, INTF_WD_TIMER_0_CTL, BIT(0)); /* clear timer */
+	reg = SDE_REG_READ(c, INTF_WD_TIMER_0_CTL2);
+	reg |= BIT(8); /* enable heartbeat timer */
+	reg |= BIT(0); /* enable WD timer */
+	SDE_REG_WRITE(c, INTF_WD_TIMER_0_CTL2, reg);
+
+	/* make sure that timers are enabled/disabled for vsync state */
+	wmb();
 }
 
 static void sde_hw_intf_bind_pingpong_blk(
@@ -804,6 +830,9 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 
 	if (cap & BIT(SDE_INTF_INPUT_CTRL))
 		ops->bind_pingpong_blk = sde_hw_intf_bind_pingpong_blk;
+
+	if (cap & BIT(SDE_INTF_WD_TIMER))
+		ops->setup_vsync_source = sde_hw_intf_setup_vsync_source;
 
 	if (cap & BIT(SDE_INTF_TE)) {
 		ops->setup_tearcheck = sde_hw_intf_setup_te_config;

@@ -1083,8 +1083,7 @@ static int _sde_encoder_update_roi(struct drm_encoder *drm_enc)
 	return 0;
 }
 
-void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc,
-			u32 vsync_source, bool is_dummy)
+void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc, u32 vsync_source)
 {
 	struct sde_vsync_source_cfg vsync_cfg = { 0 };
 	struct sde_kms *sde_kms;
@@ -1123,14 +1122,13 @@ void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc,
 		vsync_cfg.pp_count = sde_enc->num_phys_encs;
 		vsync_cfg.frame_rate = sde_enc->mode_info.frame_rate;
 		vsync_cfg.vsync_source = vsync_source;
-		vsync_cfg.is_dummy = is_dummy;
 
 		hw_mdptop->ops.setup_vsync_source(hw_mdptop, &vsync_cfg);
 	}
 }
 
 static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
-			struct msm_display_info *disp_info, bool is_dummy)
+			struct msm_display_info *disp_info)
 {
 	struct sde_encoder_phys *phys;
 	int i;
@@ -1148,24 +1146,19 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 	}
 
 	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_CMD_MODE)) {
-		if (is_dummy)
-			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_0 -
-					sde_enc->te_source;
-		else if (disp_info->is_te_using_watchdog_timer)
-			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_4 +
-					sde_enc->te_source;
+		if (disp_info->is_te_using_watchdog_timer)
+			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_4 + sde_enc->te_source;
 		else
 			vsync_source = sde_enc->te_source;
 
-		SDE_EVT32(DRMID(&sde_enc->base), vsync_source, is_dummy,
+		SDE_EVT32(DRMID(&sde_enc->base), vsync_source,
 				disp_info->is_te_using_watchdog_timer);
 
 		for (i = 0; i < sde_enc->num_phys_encs; i++) {
 			phys = sde_enc->phys_encs[i];
 
 			if (phys && phys->ops.setup_vsync_source)
-				phys->ops.setup_vsync_source(phys,
-					vsync_source, is_dummy);
+				phys->ops.setup_vsync_source(phys, vsync_source);
 		}
 	}
 }
@@ -1189,7 +1182,7 @@ int sde_encoder_helper_switch_vsync(struct drm_encoder *drm_enc,
 
 	memcpy(&disp_info, &sde_enc->disp_info, sizeof(disp_info));
 	disp_info.is_te_using_watchdog_timer = watchdog_te;
-	_sde_encoder_update_vsync_source(sde_enc, &disp_info, false);
+	_sde_encoder_update_vsync_source(sde_enc, &disp_info);
 
 	sde_encoder_control_te(drm_enc, true);
 
@@ -2567,7 +2560,7 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 				sde_enc->cur_master->hw_ctl,
 				&sde_enc->cur_master->intf_cfg_v1);
 
-	_sde_encoder_update_vsync_source(sde_enc, &sde_enc->disp_info, false);
+	_sde_encoder_update_vsync_source(sde_enc, &sde_enc->disp_info);
 	sde_encoder_control_te(drm_enc, true);
 
 	memset(&sde_enc->prv_conn_roi, 0, sizeof(sde_enc->prv_conn_roi));

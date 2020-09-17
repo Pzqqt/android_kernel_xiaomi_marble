@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_TOP_H
@@ -79,15 +79,12 @@ struct sde_danger_safe_status {
  * @frame_rate: Display frame rate
  * @ppnumber: ping pong index array
  * @vsync_source: vsync source selection
- * @is_dummy: a dummy source of vsync selection. It must not be selected for
- *           any case other than sde rsc idle request.
  */
 struct sde_vsync_source_cfg {
 	u32 pp_count;
 	u32 frame_rate;
 	u32 ppnumber[PINGPONG_MAX];
 	u32 vsync_source;
-	bool is_dummy;
 };
 
 /**
