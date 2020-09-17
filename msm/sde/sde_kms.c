@@ -1165,10 +1165,12 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 
 	vm_ops = sde_vm_get_ops(sde_kms);
 	if (!vm_ops)
-		goto end;
+		goto end_vm;
 
 	if (vm_ops->vm_prepare_commit)
 		vm_ops->vm_prepare_commit(sde_kms, state);
+
+end_vm:
 	_sde_kms_drm_check_dpms(state, DRM_PANEL_EARLY_EVENT_BLANK);
 end:
 	SDE_ATRACE_END("prepare_commit");
