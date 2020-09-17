@@ -2469,6 +2469,13 @@ QDF_STATUS (*send_cp_stats_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_cp_stats_more_pending)(wmi_unified_t wmi_handle,
 					    void *evt_buf,
 					    uint32_t *more_flag);
+
+QDF_STATUS (*send_vdev_tsf_tstamp_action_cmd)(wmi_unified_t wmi,
+					      uint8_t vdev_id);
+
+QDF_STATUS (*extract_vdev_tsf_report_event)(wmi_unified_t wmi_handle,
+					    void *evt_buf,
+					    struct wmi_host_tsf_event *param);
 };
 
 /* Forward declartion for psoc*/

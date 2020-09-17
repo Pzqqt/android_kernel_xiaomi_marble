@@ -14014,6 +14014,71 @@ extract_time_sync_ftm_offset_event_tlv(wmi_unified_t wmi, void *buf,
 }
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
+/**
+ * send_vdev_tsf_tstamp_action_cmd_tlv() - send vdev tsf action command
+ * @wmi: wmi handle
+ * @vdev_id: vdev id
+ *
+ * TSF_TSTAMP_READ_VALUE is the only operation supported
+ * Return: QDF_STATUS_SUCCESS for success or erro code
+ */
+static QDF_STATUS
+send_vdev_tsf_tstamp_action_cmd_tlv(wmi_unified_t wmi, uint8_t vdev_id)
+{
+	wmi_vdev_tsf_tstamp_action_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_vdev_tsf_tstamp_action_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_tsf_tstamp_action_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_tsf_tstamp_action_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->tsf_action = TSF_TSTAMP_READ_VALUE;
+	wmi_mtrace(WMI_VDEV_TSF_TSTAMP_ACTION_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi, buf, len,
+				 WMI_VDEV_TSF_TSTAMP_ACTION_CMDID)) {
+		wmi_err("%s: Failed to send WMI_VDEV_TSF_TSTAMP_ACTION_CMDID",
+			__func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_vdev_tsf_report_event_tlv() - extract vdev tsf report from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @wmi_host_tsf_event param: Pointer to struct to hold event info
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+static QDF_STATUS
+extract_vdev_tsf_report_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				  struct wmi_host_tsf_event *param)
+{
+	WMI_VDEV_TSF_REPORT_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_tsf_report_event_fixed_param *evt;
+
+	param_buf = (WMI_VDEV_TSF_REPORT_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid tsf report event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	evt = param_buf->fixed_param;
+	param->tsf = ((uint64_t)(evt->tsf_high) << 32) | evt->tsf_low;
+	param->vdev_id = evt->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -14368,6 +14433,8 @@ struct wmi_ops tlv_ops =  {
 	.send_cp_stats_cmd = send_cp_stats_cmd_tlv,
 	.extract_cp_stats_more_pending =
 				extract_cp_stats_more_pending_tlv,
+	.send_vdev_tsf_tstamp_action_cmd = send_vdev_tsf_tstamp_action_cmd_tlv,
+	.extract_vdev_tsf_report_event = extract_vdev_tsf_report_event_tlv,
 };
 
 /**

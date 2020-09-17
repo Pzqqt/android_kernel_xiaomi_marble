@@ -4611,6 +4611,16 @@ struct ftm_time_sync_offset {
 };
 #endif
 
+/**
+ * struct wmi_host_tsf_event_- Get tsf event info
+ * @vdev_id: vdev id
+ * @tsf: tsf
+ */
+struct wmi_host_tsf_event {
+	uint32_t vdev_id;
+	uint64_t tsf;
+};
+
 #define WMI_EVENT_ID_INVALID 0
 /**
  * Host based ENUM IDs for events to abstract target enums for event_id
