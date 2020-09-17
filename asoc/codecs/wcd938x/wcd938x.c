@@ -1883,9 +1883,12 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 		default:
 			break;
 		}
-		if (wcd938x->adc_count == 0)
+		if (wcd938x->adc_count == 0) {
 			snd_soc_component_update_bits(component,
 					WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x00);
+			snd_soc_component_update_bits(component,
+					WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
+		}
 		break;
 	};
 	return ret;
