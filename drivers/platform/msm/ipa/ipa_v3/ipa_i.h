@@ -2764,7 +2764,7 @@ int ipa3_ctx_get_type(enum ipa_type_mode type);
 bool ipa3_ctx_get_flag(enum ipa_flag flag);
 u32 ipa3_ctx_get_num_pipes(void);
 
-void ipa3_proxy_clk_vote(void);
+void ipa3_proxy_clk_vote(bool is_ssr);
 void ipa3_proxy_clk_unvote(void);
 
 bool ipa3_is_client_handle_valid(u32 clnt_hdl);

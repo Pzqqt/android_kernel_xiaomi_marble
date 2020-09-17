@@ -6350,7 +6350,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 			atomic_read(&ipa3_ctx->ipa3_active_clients.cnt));
 	/* move proxy vote for modem on ipa3_post_init */
 	if (ipa3_ctx->ipa_hw_type != IPA_HW_v4_0)
-		ipa3_proxy_clk_vote();
+		ipa3_proxy_clk_vote(false);
 
 	/* The following will retrieve and save the gsi fw version */
 	ipa_save_gsi_ver();
@@ -6785,7 +6785,7 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		IPADBG("Loading IPA uC via PIL\n");
 
 		/* Unvoting will happen when uC loaded event received. */
-		ipa3_proxy_clk_vote();
+		ipa3_proxy_clk_vote(false);
 
 		if (ipa3_ctx->uc_fw_file_name)
 			result = ipa3_pil_load_ipa_fws(

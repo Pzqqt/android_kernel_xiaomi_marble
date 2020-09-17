@@ -8201,10 +8201,16 @@ void ipa3_proxy_clk_unvote(void)
  *
  * Return value: none
  */
-void ipa3_proxy_clk_vote(void)
+void ipa3_proxy_clk_vote(bool is_ssr)
 {
 	if (ipa3_ctx == NULL)
 		return;
+
+	/* Avoid duplicate votes in case we are in SSR even before uC is loaded. */
+	if (is_ssr && !ipa3_uc_loaded_check()) {
+		IPADBG("Dup proxy vote. Ignore as uC is not yet loaded\n");
+		return;
+	}
 	mutex_lock(&ipa3_ctx->q6_proxy_clk_vote_mutex);
 	if (!ipa3_ctx->q6_proxy_clk_vote_valid ||
 		(ipa3_ctx->q6_proxy_clk_vote_cnt > 0)) {
