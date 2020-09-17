@@ -21,6 +21,7 @@
  */
 
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_psoc_mlme_api.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_reg_services_api.h"
@@ -32,16 +33,22 @@ static inline
 struct wlan_cm_roam_tx_ops *wlan_cm_roam_get_tx_ops_from_vdev(
 				struct wlan_objmgr_vdev *vdev)
 {
-	struct mlme_legacy_priv *mlme_priv;
+	struct wlan_mlme_psoc_ext_obj *psoc_ext_priv;
 	struct wlan_cm_roam_tx_ops *tx_ops;
+	struct wlan_objmgr_psoc *psoc;
 
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_legacy_err("vdev legacy private object is NULL");
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_legacy_err("psoc object is NULL");
+		return NULL;
+	}
+	psoc_ext_priv = wlan_psoc_mlme_get_ext_hdl(psoc);
+	if (!psoc_ext_priv) {
+		mlme_legacy_err("psoc legacy private object is NULL");
 		return NULL;
 	}
 
-	tx_ops = &mlme_priv->cm_roam.tx_ops;
+	tx_ops = &psoc_ext_priv->rso_tx_ops;
 
 	return tx_ops;
 }
