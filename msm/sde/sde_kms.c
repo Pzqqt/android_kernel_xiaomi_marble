@@ -4399,6 +4399,14 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	}
 
 	/*
+	 * set the disable_immediate flag when driver supports the precise vsync
+	 * timestamp as the DRM hooks for vblank timestamp/counters would be set
+	 * based on the feature
+	 */
+	if (sde_kms->catalog->has_precise_vsync_ts)
+		dev->vblank_disable_immediate = true;
+
+	/*
 	 * _sde_kms_drm_obj_init should create the DRM related objects
 	 * i.e. CRTCs, planes, encoders, connectors and so forth
 	 */

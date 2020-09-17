@@ -279,6 +279,7 @@ struct sde_encoder_irq {
  * @vblank_cached_refcount:	Reference count of vblank cached request
  * @wbirq_refcount:	Reference count of wb irq request
  * @vsync_cnt:		Vsync count for the physical encoder
+ * @last_vsync_timestamp:	store last vsync timestamp
  * @underrun_cnt:	Underrun count for the physical encoder
  * @pending_kickoff_cnt:	Atomic counter tracking the number of kickoffs
  *				vs. the number of done/vblank irqs. Should hover
@@ -329,6 +330,7 @@ struct sde_encoder_phys {
 	atomic_t vblank_cached_refcount;
 	atomic_t wbirq_refcount;
 	atomic_t vsync_cnt;
+	ktime_t last_vsync_timestamp;
 	atomic_t underrun_cnt;
 	atomic_t pending_kickoff_cnt;
 	atomic_t pending_retire_fence_cnt;

@@ -3133,6 +3133,7 @@ static void sde_encoder_vblank_callback(struct drm_encoder *drm_enc,
 {
 	struct sde_encoder_virt *sde_enc = NULL;
 	unsigned long lock_flags;
+	ktime_t ts = 0;
 
 	if (!drm_enc || !phy_enc)
 		return;
@@ -3140,16 +3141,26 @@ static void sde_encoder_vblank_callback(struct drm_encoder *drm_enc,
 	SDE_ATRACE_BEGIN("encoder_vblank_callback");
 	sde_enc = to_sde_encoder_virt(drm_enc);
 
+	/*
+	 * calculate accurate vsync timestamp when available
+	 * set current time otherwise
+	 */
+	if (phy_enc->sde_kms && phy_enc->sde_kms->catalog->has_precise_vsync_ts)
+		ts = sde_encoder_calc_last_vsync_timestamp(drm_enc);
+	if (!ts)
+		ts = ktime_get();
+
 	spin_lock_irqsave(&sde_enc->enc_spinlock, lock_flags);
+	phy_enc->last_vsync_timestamp = ts;
+	atomic_inc(&phy_enc->vsync_cnt);
 	if (sde_enc->crtc_vblank_cb)
-		sde_enc->crtc_vblank_cb(sde_enc->crtc_vblank_cb_data);
+		sde_enc->crtc_vblank_cb(sde_enc->crtc_vblank_cb_data, ts);
 	spin_unlock_irqrestore(&sde_enc->enc_spinlock, lock_flags);
 
 	if (phy_enc->sde_kms &&
 			phy_enc->sde_kms->catalog->uidle_cfg.debugfs_perf)
 		sde_encoder_perf_uidle_status(phy_enc->sde_kms, sde_enc->crtc);
 
-	atomic_inc(&phy_enc->vsync_cnt);
 	SDE_ATRACE_END("encoder_vblank_callback");
 }
 
@@ -3178,7 +3189,7 @@ static void sde_encoder_underrun_callback(struct drm_encoder *drm_enc,
 }
 
 void sde_encoder_register_vblank_callback(struct drm_encoder *drm_enc,
-		void (*vbl_cb)(void *), void *vbl_data)
+		void (*vbl_cb)(void *, ktime_t), void *vbl_data)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	unsigned long lock_flags;
@@ -5207,6 +5218,43 @@ enum sde_intf_mode sde_encoder_get_intf_mode(struct drm_encoder *encoder)
 	}
 
 	return INTF_MODE_NONE;
+}
+
+u32 sde_encoder_get_frame_count(struct drm_encoder *encoder)
+{
+	struct sde_encoder_virt *sde_enc = NULL;
+	struct sde_encoder_phys *phys;
+
+	if (!encoder) {
+		SDE_ERROR("invalid encoder\n");
+		return 0;
+	}
+	sde_enc = to_sde_encoder_virt(encoder);
+
+	phys = sde_enc->cur_master;
+
+	return phys ? atomic_read(&phys->vsync_cnt) : 0;
+}
+
+bool sde_encoder_get_vblank_timestamp(struct drm_encoder *encoder,
+		ktime_t *tvblank)
+{
+	struct sde_encoder_virt *sde_enc = NULL;
+	struct sde_encoder_phys *phys;
+
+	if (!encoder) {
+		SDE_ERROR("invalid encoder\n");
+		return false;
+	}
+	sde_enc = to_sde_encoder_virt(encoder);
+
+	phys = sde_enc->cur_master;
+	if (!phys)
+		return false;
+
+	*tvblank = phys->last_vsync_timestamp;
+
+	return *tvblank ? true : false;
 }
 
 static void _sde_encoder_cache_hw_res_cont_splash(

@@ -1511,6 +1511,7 @@ struct sde_perf_cfg {
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @has_fp16      indicates if FP16 format is supported on SSPP pipes
+ * @has_precise_vsync_ts  indicates if HW has vsyc timestamp logging capability
  * @mdss_hw_block_size  Max offset of MDSS_HW block (0 offset), used for debug
  * @inline_rot_formats formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
@@ -1592,6 +1593,7 @@ struct sde_mdss_cfg {
 	bool has_cursor;
 	bool has_vig_p010;
 	bool has_fp16;
+	bool has_precise_vsync_ts;
 	u32 mdss_hw_block_size;
 	u32 mdss_count;
 	struct sde_mdss_base_cfg mdss[MAX_BLOCKS];

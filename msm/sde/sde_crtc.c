@@ -2499,23 +2499,23 @@ u32 sde_crtc_get_dfps_maxfps(struct drm_crtc *crtc)
 	return 0;
 }
 
-static void sde_crtc_vblank_cb(void *data)
+static void sde_crtc_vblank_cb(void *data, ktime_t ts)
 {
 	struct drm_crtc *crtc = (struct drm_crtc *)data;
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 
 	/* keep statistics on vblank callback - with auto reset via debugfs */
 	if (ktime_compare(sde_crtc->vblank_cb_time, ktime_set(0, 0)) == 0)
-		sde_crtc->vblank_cb_time = ktime_get();
+		sde_crtc->vblank_cb_time = ts;
 	else
 		sde_crtc->vblank_cb_count++;
 
-	sde_crtc->vblank_last_cb_time = ktime_get();
+	sde_crtc->vblank_last_cb_time = ts;
 	sysfs_notify_dirent(sde_crtc->vsync_event_sf);
 
 	drm_crtc_handle_vblank(crtc);
-	DRM_DEBUG_VBL("crtc%d\n", crtc->base.id);
-	SDE_EVT32_VERBOSE(DRMID(crtc));
+	DRM_DEBUG_VBL("crtc%d, ts:%llu\n", crtc->base.id, ktime_to_us(ts));
+	SDE_EVT32_VERBOSE(DRMID(crtc), ktime_to_us(ts));
 }
 
 static void _sde_crtc_retire_event(struct drm_connector *connector,
@@ -4400,6 +4400,8 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	if (!sde_crtc->enabled) {
 		/* cache the encoder mask now for vblank work */
 		sde_crtc->cached_encoder_mask = crtc->state->encoder_mask;
+		/* max possible vsync_cnt(atomic_t) soft counter */
+		drm_crtc_set_max_vblank_count(crtc, INT_MAX);
 		drm_crtc_vblank_on(crtc);
 	}
 
@@ -5267,6 +5269,47 @@ int sde_crtc_vblank(struct drm_crtc *crtc, bool en)
 				sde_crtc->name, ret);
 
 	return 0;
+}
+
+static u32 sde_crtc_get_vblank_counter(struct drm_crtc *crtc)
+{
+	struct drm_encoder *encoder;
+	struct sde_crtc *sde_crtc;
+
+	if (!crtc)
+		return 0;
+
+	sde_crtc = to_sde_crtc(crtc);
+
+	drm_for_each_encoder_mask(encoder, crtc->dev, sde_crtc->cached_encoder_mask) {
+		if (sde_encoder_in_clone_mode(encoder))
+			continue;
+
+		return sde_encoder_get_frame_count(encoder);
+	}
+
+	return 0;
+}
+
+static bool sde_crtc_get_vblank_timestamp(struct drm_crtc *crtc, int *max_error,
+				ktime_t *tvblank, bool in_vblank_irq)
+{
+	struct drm_encoder *encoder;
+	struct sde_crtc *sde_crtc;
+
+	if (!crtc)
+		return false;
+
+	sde_crtc = to_sde_crtc(crtc);
+
+	drm_for_each_encoder_mask(encoder, crtc->dev, sde_crtc->cached_encoder_mask) {
+		if (sde_encoder_in_clone_mode(encoder))
+			continue;
+
+		return sde_encoder_get_vblank_timestamp(encoder, tvblank);
+	}
+
+	return false;
 }
 
 static void sde_crtc_install_dest_scale_properties(struct sde_crtc *sde_crtc,
@@ -6519,6 +6562,23 @@ static const struct drm_crtc_funcs sde_crtc_funcs = {
 	.early_unregister = sde_crtc_early_unregister,
 };
 
+static const struct drm_crtc_funcs sde_crtc_funcs_v1 = {
+	.set_config = drm_atomic_helper_set_config,
+	.destroy = sde_crtc_destroy,
+	.enable_vblank = sde_crtc_enable_vblank,
+	.disable_vblank = sde_crtc_disable_vblank,
+	.page_flip = drm_atomic_helper_page_flip,
+	.atomic_set_property = sde_crtc_atomic_set_property,
+	.atomic_get_property = sde_crtc_atomic_get_property,
+	.reset = sde_crtc_reset,
+	.atomic_duplicate_state = sde_crtc_duplicate_state,
+	.atomic_destroy_state = sde_crtc_destroy_state,
+	.late_register = sde_crtc_late_register,
+	.early_unregister = sde_crtc_early_unregister,
+	.get_vblank_timestamp = sde_crtc_get_vblank_timestamp,
+	.get_vblank_counter = sde_crtc_get_vblank_counter,
+};
+
 static const struct drm_crtc_helper_funcs sde_crtc_helper_funcs = {
 	.mode_fixup = sde_crtc_mode_fixup,
 	.disable = sde_crtc_disable,
@@ -6794,6 +6854,7 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 	struct sde_crtc *sde_crtc = NULL;
 	struct msm_drm_private *priv = NULL;
 	struct sde_kms *kms = NULL;
+	const struct drm_crtc_funcs *crtc_funcs;
 	int i, rc;
 
 	priv = dev->dev_private;
@@ -6833,9 +6894,8 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 				sde_crtc_frame_event_work);
 	}
 
-	drm_crtc_init_with_planes(dev, crtc, plane, NULL, &sde_crtc_funcs,
-				NULL);
-
+	crtc_funcs = kms->catalog->has_precise_vsync_ts ? &sde_crtc_funcs_v1 : &sde_crtc_funcs;
+	drm_crtc_init_with_planes(dev, crtc, plane, NULL, crtc_funcs, NULL);
 	drm_crtc_helper_add(crtc, &sde_crtc_helper_funcs);
 
 	/* save user friendly CRTC name for later */

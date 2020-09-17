@@ -220,7 +220,7 @@ struct sde_encoder_virt {
 	bool intfs_swapped;
 	bool qdss_status;
 
-	void (*crtc_vblank_cb)(void *data);
+	void (*crtc_vblank_cb)(void *data, ktime_t ts);
 	void *crtc_vblank_cb_data;
 
 	struct dentry *debugfs_root;
@@ -290,7 +290,7 @@ void sde_encoder_early_wakeup(struct drm_encoder *drm_enc);
  * @data:	user data provided to callback
  */
 void sde_encoder_register_vblank_callback(struct drm_encoder *encoder,
-		void (*cb)(void *), void *data);
+		void (*cb)(void *, ktime_t), void *data);
 
 /**
  * sde_encoder_register_frame_event_callback - provide callback to encoder that
@@ -385,6 +385,20 @@ u32 sde_encoder_get_fps(struct drm_encoder *encoder);
  * @encoder: Pointer to drm encoder object
  */
 enum sde_intf_mode sde_encoder_get_intf_mode(struct drm_encoder *encoder);
+
+/*
+ * sde_encoder_get_frame_count - get hardware frame count of the given encoder
+ * @encoder: Pointer to drm encoder object
+ */
+u32 sde_encoder_get_frame_count(struct drm_encoder *encoder);
+
+/*
+ * sde_encoder_get_vblank_timestamp - get the last vsync timestamp
+ * @encoder: Pointer to drm encoder object
+ * @tvblank: vblank timestamp
+ */
+bool sde_encoder_get_vblank_timestamp(struct drm_encoder *encoder,
+		ktime_t *tvblank);
 
 /**
  * sde_encoder_control_te - control enabling/disabling VSYNC_IN_EN
