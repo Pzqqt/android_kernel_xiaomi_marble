@@ -1513,7 +1513,8 @@ QDF_STATUS policy_mgr_set_pcl(struct wlan_objmgr_psoc *psoc,
 
 	req_msg->band_mask =
 		policy_mgr_get_connected_roaming_vdev_band_mask(psoc, vdev_id);
-	policy_mgr_debug("Connected STA band mask%d", req_msg->band_mask);
+	policy_mgr_debug("RSO_CFG: vdev:%d Connected STA band_mask:%d",
+			 vdev_id, req_msg->band_mask);
 
 	for (i = 0; i < msg->pcl_len; i++) {
 		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
