@@ -1057,7 +1057,7 @@ void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 
 	mode = hif_get_conparam(hif_sc);
 	if (mode == QDF_GLOBAL_FTM_MODE) {
-		HIF_INFO("%s: Enable power gating for FTM mode", __func__);
+		hif_info("Enable power gating for FTM mode");
 		hif_enable_power_gating(pci_ctx);
 		return;
 	}
@@ -1857,7 +1857,7 @@ static int hif_enable_pci_nopld(struct hif_pci_softc *sc,
 		goto err_iomap;
 	}
 
-	HIF_INFO("*****BAR is %pK\n", (void *)mem);
+	hif_info("*****BAR is %pK", (void *)mem);
 
 	sc->mem = mem;
 
@@ -1870,8 +1870,7 @@ static int hif_enable_pci_nopld(struct hif_pci_softc *sc,
 		(device_id == RUMIM2M_DEVICE_ID_NODE5)) {
 		mem = mem + 0x0c000000;
 		sc->mem = mem;
-		HIF_INFO("%s: Changing PCI mem base to %pK\n",
-			__func__, sc->mem);
+		hif_info("Changing PCI mem base to %pK", sc->mem);
 	}
 
 	sc->mem_len = pci_resource_len(pdev, BAR_NUM);
@@ -2211,7 +2210,7 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 		sc->hif_pci_deinit(sc);
 		scn->mem = NULL;
 	}
-	HIF_INFO("%s: X", __func__);
+	hif_info("X");
 }
 
 #ifdef FEATURE_RUNTIME_PM
@@ -2264,7 +2263,7 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	int errno;
 
-	HIF_INFO("wlan: %s pcie power collapse", flag ? "disable" : "enable");
+	hif_info("wlan: %s pcie power collapse", flag ? "disable" : "enable");
 	hif_runtime_prevent_linkdown(scn, flag);
 
 	errno = pld_wlan_pm_control(scn->qdf_dev->dev, flag);
@@ -2274,7 +2273,7 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #else
 void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
-	HIF_INFO("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
+	hif_info("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
 	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif
@@ -3442,7 +3441,7 @@ err_enable_pci:
 	if (probe_again && (probe_again <= ATH_PCI_PROBE_RETRY_MAX)) {
 		int delay_time;
 
-		HIF_INFO("%s: pci reprobe", __func__);
+		hif_info("pci reprobe");
 		/* 10, 40, 90, 100, 100, ... */
 		delay_time = max(100, 10 * (probe_again * probe_again));
 		qdf_mdelay(delay_time);
@@ -3582,7 +3581,7 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	 * without entering low power state.
 	 */
 	if (!pld_is_device_awake(scn->qdf_dev->dev))
-		HIF_INFO("%s: state-change event races, ignore", __func__);
+		hif_info("state-change event races, ignore");
 
 	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
 	hif_write32_mb(scn,
@@ -3651,7 +3650,7 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	 * without entering low power state.
 	 */
 	if (!pld_is_device_awake(scn->qdf_dev->dev))
-		HIF_INFO("%s: state-change event races, ignore", __func__);
+		hif_info("state-change event races, ignore");
 
 	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
 

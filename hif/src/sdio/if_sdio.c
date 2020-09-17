@@ -273,7 +273,7 @@ int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 		hif_err("Get fw indication failed");
 		return 1;
 	}
-	HIF_INFO("%s: fw indication is 0x%x def 0x%x.\n", __func__,
+	hif_info("fw indication is 0x%x def 0x%x",
 		fw_indication, FW_IND_HELPER);
 	if (fw_indication & FW_IND_HELPER)
 		ret = 0;

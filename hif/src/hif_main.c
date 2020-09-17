@@ -123,7 +123,7 @@ void hif_vote_link_down(struct hif_opaque_softc *hif_ctx)
 
 	QDF_BUG(scn);
 	scn->linkstate_vote--;
-	HIF_INFO("Down_linkstate_vote %d", scn->linkstate_vote);
+	hif_info("Down_linkstate_vote %d", scn->linkstate_vote);
 	if (scn->linkstate_vote == 0)
 		hif_bus_prevent_linkdown(scn, false);
 }
@@ -145,7 +145,7 @@ void hif_vote_link_up(struct hif_opaque_softc *hif_ctx)
 
 	QDF_BUG(scn);
 	scn->linkstate_vote++;
-	HIF_INFO("Up_linkstate_vote %d", scn->linkstate_vote);
+	hif_info("Up_linkstate_vote %d", scn->linkstate_vote);
 	if (scn->linkstate_vote == 1)
 		hif_bus_prevent_linkdown(scn, true);
 }
@@ -1104,56 +1104,56 @@ int hif_get_device_type(uint32_t device_id,
 	case AR9887_DEVICE_ID:
 		*hif_type = HIF_TYPE_AR9888;
 		*target_type = TARGET_TYPE_AR9888;
-		HIF_INFO(" *********** AR9887 **************");
+		hif_info(" *********** AR9887 **************");
 		break;
 
 	case QCA9984_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA9984;
 		*target_type = TARGET_TYPE_QCA9984;
-		HIF_INFO(" *********** QCA9984 *************");
+		hif_info(" *********** QCA9984 *************");
 		break;
 
 	case QCA9888_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA9888;
 		*target_type = TARGET_TYPE_QCA9888;
-		HIF_INFO(" *********** QCA9888 *************");
+		hif_info(" *********** QCA9888 *************");
 		break;
 
 	case AR900B_DEVICE_ID:
 		*hif_type = HIF_TYPE_AR900B;
 		*target_type = TARGET_TYPE_AR900B;
-		HIF_INFO(" *********** AR900B *************");
+		hif_info(" *********** AR900B *************");
 		break;
 
 	case IPQ4019_DEVICE_ID:
 		*hif_type = HIF_TYPE_IPQ4019;
 		*target_type = TARGET_TYPE_IPQ4019;
-		HIF_INFO(" *********** IPQ4019  *************");
+		hif_info(" *********** IPQ4019  *************");
 		break;
 
 	case QCA8074_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA8074;
 		*target_type = TARGET_TYPE_QCA8074;
-		HIF_INFO(" *********** QCA8074  *************\n");
+		hif_info(" *********** QCA8074  *************");
 		break;
 
 	case QCA6290_EMULATION_DEVICE_ID:
 	case QCA6290_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA6290;
 		*target_type = TARGET_TYPE_QCA6290;
-		HIF_INFO(" *********** QCA6290EMU *************\n");
+		hif_info(" *********** QCA6290EMU *************");
 		break;
 
 	case QCN9000_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCN9000;
 		*target_type = TARGET_TYPE_QCN9000;
-		HIF_INFO(" *********** QCN9000 *************\n");
+		hif_info(" *********** QCN9000 *************");
 		break;
 
 	case QCN9100_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCN9100;
 		*target_type = TARGET_TYPE_QCN9100;
-		HIF_INFO(" *********** QCN9100 *************\n");
+		hif_info(" *********** QCN9100 *************");
 		break;
 
 	case QCN7605_DEVICE_ID:
@@ -1163,34 +1163,34 @@ int hif_get_device_type(uint32_t device_id,
 	case QCN7605_COMPOSITE_V2:
 		*hif_type = HIF_TYPE_QCN7605;
 		*target_type = TARGET_TYPE_QCN7605;
-		HIF_INFO(" *********** QCN7605 *************\n");
+		hif_info(" *********** QCN7605 *************");
 		break;
 
 	case QCA6390_DEVICE_ID:
 	case QCA6390_EMULATION_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA6390;
 		*target_type = TARGET_TYPE_QCA6390;
-		HIF_INFO(" *********** QCA6390 *************\n");
+		hif_info(" *********** QCA6390 *************");
 		break;
 
 	case QCA6490_DEVICE_ID:
 	case QCA6490_EMULATION_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA6490;
 		*target_type = TARGET_TYPE_QCA6490;
-		HIF_INFO(" *********** QCA6490 *************\n");
+		hif_info(" *********** QCA6490 *************");
 		break;
 
 	case QCA6750_DEVICE_ID:
 	case QCA6750_EMULATION_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA6750;
 		*target_type = TARGET_TYPE_QCA6750;
-		HIF_INFO(" *********** QCA6750 *************\n");
+		hif_info(" *********** QCA6750 *************");
 		break;
 
 	case QCA8074V2_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA8074V2;
 		*target_type = TARGET_TYPE_QCA8074V2;
-		HIF_INFO(" *********** QCA8074V2 *************\n");
+		hif_info(" *********** QCA8074V2 *************");
 		break;
 
 	case QCA6018_DEVICE_ID:
@@ -1202,13 +1202,13 @@ int hif_get_device_type(uint32_t device_id,
 	case RUMIM2M_DEVICE_ID_NODE5:
 		*hif_type = HIF_TYPE_QCA6018;
 		*target_type = TARGET_TYPE_QCA6018;
-		HIF_INFO(" *********** QCA6018 *************\n");
+		hif_info(" *********** QCA6018 *************");
 		break;
 
 	case QCA5018_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA5018;
 		*target_type = TARGET_TYPE_QCA5018;
-		HIF_INFO(" *********** qca5018 *************\n");
+		hif_info(" *********** qca5018 *************");
 		break;
 
 	default:
@@ -1691,7 +1691,7 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 	struct hif_softc *scn = context;
 	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(scn);
 
-	HIF_INFO("wake interrupt received on irq %d", irq);
+	hif_info("wake interrupt received on irq %d", irq);
 
 	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx)) {
 		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);

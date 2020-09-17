@@ -151,7 +151,7 @@ int hif_ipci_bus_configure(struct hif_softc *hif_sc)
 
 	hif_sc->wake_irq = hif_ce_msi_map_ce_to_irq(hif_sc, wake_ce_id);
 
-	HIF_INFO("expecting wake from ce %d, irq %d",
+	hif_info("expecting wake from ce %d, irq %d",
 		 wake_ce_id, hif_sc->wake_irq);
 
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
@@ -284,7 +284,7 @@ void hif_ipci_disable_bus(struct hif_softc *scn)
 		}
 		scn->mem = NULL;
 	}
-	HIF_INFO("%s: X", __func__);
+	hif_info("X");
 }
 
 #if defined(CONFIG_PCI_MSM)
@@ -292,7 +292,7 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	int errno;
 
-	HIF_INFO("wlan: %s pcie power collapse", flag ? "disable" : "enable");
+	hif_info("wlan: %s pcie power collapse", flag ? "disable" : "enable");
 	hif_runtime_prevent_linkdown(scn, flag);
 
 	errno = pld_wlan_pm_control(scn->qdf_dev->dev, flag);
@@ -302,7 +302,7 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #else
 void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
-	HIF_INFO("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
+	hif_info("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
 	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif

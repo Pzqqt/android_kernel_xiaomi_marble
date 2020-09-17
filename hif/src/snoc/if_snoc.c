@@ -181,7 +181,7 @@ int hif_snoc_bus_configure(struct hif_softc *scn)
 
 	scn->wake_irq = pld_get_irq(scn->qdf_dev->dev, wake_ce_id);
 
-	HIF_INFO(FL("expecting wake from ce %d, irq %d"),
+	hif_info("expecting wake from ce %d, irq %d",
 		 wake_ce_id, scn->wake_irq);
 
 	return 0;

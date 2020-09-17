@@ -352,7 +352,7 @@ QDF_STATUS hif_sdio_probe(struct hif_softc *ol_sc,
 			scn->ramdump_base ? "ok" : "null",
 			scn->ramdump_size);
 	} else {
-		HIF_INFO("%s: ramdump base %pK size %lu", __func__,
+		hif_info("ramdump base %pK size %lu",
 			 scn->ramdump_base, scn->ramdump_size);
 	}
 
@@ -577,8 +577,8 @@ static QDF_STATUS hif_device_inserted(struct hif_softc *ol_sc,
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct hif_sdio_dev *device = NULL;
 
-	HIF_INFO("%s: F%X, VID: 0x%X, DevID: 0x%X, block size: 0x%X/0x%X\n",
-		 __func__, func->num, func->vendor, id->device,
+	hif_info("F%X, VID: 0x%X, DevID: 0x%X, block size: 0x%X/0x%X",
+		 func->num, func->vendor, id->device,
 		 func->max_blksize, func->cur_blksize);
 
 	/* dma_mask should be populated here. Use the parent device's setting */
@@ -596,7 +596,7 @@ static QDF_STATUS hif_device_inserted(struct hif_softc *ol_sc,
 			hif_sdio_set_drvdata(ol_sc, func, hifdevice);
 
 			if (device->is_suspend) {
-				HIF_INFO("%s: Resume from suspend", __func__);
+				hif_info("Resume from suspend");
 				ret = reinit_sdio(device);
 			}
 			break;
@@ -797,7 +797,7 @@ int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev)
 		/* setting power_config before hif_configure_device to
 		 * skip sdio r/w when suspending with cut power
 		 */
-		HIF_INFO("%s: Power cut", __func__);
+		hif_info("Power cut");
 		config = HIF_DEVICE_POWER_CUT;
 		device->power_config = config;
 
@@ -816,7 +816,7 @@ int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev)
 	}
 
 	if (pm_flag & MMC_PM_WAKE_SDIO_IRQ) {
-		HIF_INFO("%s: WOW mode ", __func__);
+		hif_info("WOW mode");
 		config = HIF_DEVICE_POWER_DOWN;
 		hif_configure_device(ol_sc, device,
 				     HIF_DEVICE_POWER_STATE_CHANGE,
@@ -831,7 +831,7 @@ int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev)
 		device->device_state = HIF_DEVICE_STATE_WOW;
 		return 0;
 	} else {
-		HIF_INFO("%s: deep sleep enter", __func__);
+		hif_info("deep sleep enter");
 		msleep(100);
 		hif_mask_interrupt(device);
 		device->device_state = HIF_DEVICE_STATE_DEEPSLEEP;
@@ -967,7 +967,7 @@ static struct hif_sdio_dev *add_hif_device(struct hif_softc *ol_sc,
 	hifdevice->power_config = HIF_DEVICE_POWER_UP;
 	hifdevice->device_state = HIF_DEVICE_STATE_ON;
 	ret = hif_sdio_set_drvdata(ol_sc, func, hifdevice);
-	HIF_INFO("status %d", ret);
+	hif_info("status %d", ret);
 
 	return hifdevice;
 }

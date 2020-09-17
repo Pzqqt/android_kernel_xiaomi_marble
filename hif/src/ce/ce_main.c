@@ -1851,7 +1851,7 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (ce_srng_based(scn)) {
-		HIF_INFO("%s, srng rings do not support fastpath", __func__);
+		hif_warn("srng rings do not support fastpath");
 		return;
 	}
 	HIF_DBG("%s, Enabling fastpath mode", __func__);

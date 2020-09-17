@@ -204,8 +204,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 
 	sc = HIF_GET_USB_SOFTC(scn);
 
-	HIF_INFO("%s hif_softc %pK usbdev %pK interface %pK\n",
-		__func__,
+	hif_debug("hif_softc %pK usbdev %pK interface %pK",
 		scn,
 		usbdev,
 		interface);

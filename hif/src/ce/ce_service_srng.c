@@ -807,7 +807,7 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn,
 	struct hal_srng_params ring_params = {0};
 	bool status_ring_timer_thresh_work_arround = true;
 
-	HIF_INFO("%s: ce_id %d", __func__, ce_id);
+	hif_debug("ce_id: %d", ce_id);
 
 	ring_params.ring_base_paddr = dest_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = dest_ring->base_addr_owner_space;
@@ -868,7 +868,7 @@ static void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 {
 	struct hal_srng_params ring_params = {0};
 
-	HIF_INFO("%s: ce_id %d", __func__, ce_id);
+	hif_debug("ce_id: %d", ce_id);
 
 	ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
 

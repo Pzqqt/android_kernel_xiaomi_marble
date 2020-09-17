@@ -470,7 +470,7 @@ int hif_drain_tasklets(struct hif_softc *scn)
 
 			return -EFAULT;
 		}
-		HIF_INFO("%s: Waiting for CE to finish access", __func__);
+		hif_info("Waiting for CE to finish access");
 		msleep(10);
 	}
 	return 0;

@@ -374,14 +374,13 @@ void hif_pm_runtime_start(struct hif_softc *scn)
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
 
 	if (!scn->hif_config.enable_runtime_pm) {
-		HIF_INFO("%s: RUNTIME PM is disabled in ini\n", __func__);
+		hif_info("RUNTIME PM is disabled in ini");
 		return;
 	}
 
 	if (mode == QDF_GLOBAL_FTM_MODE || QDF_IS_EPPING_ENABLED(mode) ||
 	    mode == QDF_GLOBAL_MONITOR_MODE) {
-		HIF_INFO("%s: RUNTIME PM is disabled for FTM/EPPING mode\n",
-			 __func__);
+		hif_info("RUNTIME PM is disabled for FTM/EPPING mode");
 		return;
 	}
 
@@ -389,7 +388,7 @@ void hif_pm_runtime_start(struct hif_softc *scn)
 		       hif_pm_runtime_lock_timeout_fn,
 		       scn, QDF_TIMER_TYPE_WAKE_APPS);
 
-	HIF_INFO("%s: Enabling RUNTIME PM, Delay: %d ms", __func__,
+	hif_info("Enabling RUNTIME PM, Delay: %d ms",
 		 scn->hif_config.runtime_pm_delay);
 
 	qdf_atomic_set(&rpm_ctx->pm_state, HIF_PM_RUNTIME_STATE_ON);
@@ -581,7 +580,7 @@ int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
 	pm_state = qdf_atomic_read(&rpm_ctx->pm_state);
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
-		HIF_INFO("Runtime PM resume is requested by %ps",
+		hif_info("Runtime PM resume is requested by %ps",
 			 (void *)_RET_IP_);
 
 	rpm_ctx->pm_stats.request_resume++;
@@ -1051,7 +1050,7 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 	pm_state = qdf_atomic_read(&rpm_ctx->pm_state);
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
-		HIF_INFO("Runtime PM resume is requested by %ps",
+		hif_info("Runtime PM resume is requested by %ps",
 			 (void *)_RET_IP_);
 
 	rpm_ctx->pm_stats.request_resume++;
@@ -1532,7 +1531,7 @@ int hif_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name)
 {
 	struct hif_pm_runtime_lock *context;
 
-	HIF_INFO("Initializing Runtime PM wakelock %s", name);
+	hif_info("Initializing Runtime PM wakelock %s", name);
 
 	context = qdf_mem_malloc(sizeof(*context));
 	if (!context)
@@ -1562,7 +1561,7 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 		return;
 	}
 
-	HIF_INFO("Deinitializing Runtime PM wakelock %s", context->name);
+	hif_info("Deinitializing Runtime PM wakelock %s", context->name);
 
 	/*
 	 * Ensure to delete the context list entry and reduce the usage count

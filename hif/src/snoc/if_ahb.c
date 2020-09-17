@@ -489,8 +489,7 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 				(struct qdf_pfm_hndl *)pdev, &vmres,
 				IORESOURCE_MEM, 0);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
-				 __func__);
+			hif_info("Failed to get IORESOURCE_MEM");
 			return;
 		}
 		memres = (struct resource *)vmres;
@@ -573,14 +572,12 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 						    &vmres,
 						    IORESOURCE_MEM, 0);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
-				 __func__);
+			hif_err("Failed to get IORESOURCE_MEM");
 			return status;
 		}
 		memres = (struct resource *)vmres;
 		if (!memres) {
-			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
-				 __func__);
+			hif_err("Failed to get IORESOURCE_MEM");
 			return QDF_STATUS_E_IO;
 		}
 
@@ -597,7 +594,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 					&mem);
 #endif
 		if (QDF_IS_STATUS_ERROR(status)) {
-			HIF_INFO("ath: ioremap error\n");
+			hif_err("ath: ioremap error");
 			ret = PTR_ERR(mem);
 			goto err_cleanup1;
 		}
@@ -609,7 +606,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	ret = pfrm_dma_set_mask(dev, 32);
 	if (ret) {
-		HIF_INFO("ath: 32-bit DMA not available\n");
+		hif_err("ath: 32-bit DMA not available");
 		status = QDF_STATUS_E_IO;
 		goto err_cleanup1;
 	}
@@ -638,7 +635,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 		sc->mem_ce = ioremap_nocache(HOST_CE_ADDRESS, HOST_CE_SIZE);
 		if (IS_ERR(sc->mem_ce)) {
-			HIF_INFO("CE: ioremap failed\n");
+			hif_err("CE: ioremap failed");
 			return QDF_STATUS_E_IO;
 		}
 		ol_sc->mem_ce = sc->mem_ce;
@@ -650,7 +647,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 			(tgt_info->target_type != TARGET_TYPE_QCN9100) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
-			HIF_INFO("error in enabling soc\n");
+			hif_err("error in enabling soc");
 			return QDF_STATUS_E_IO;
 		}
 
@@ -669,7 +666,7 @@ err_target_sync:
 	    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
-		HIF_INFO("Error: Disabling target\n");
+		hif_err("Disabling target");
 		hif_ahb_disable_bus(ol_sc);
 	}
 err_cleanup1:

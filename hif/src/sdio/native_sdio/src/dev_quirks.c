@@ -266,8 +266,7 @@ void hif_sdio_quirk_write_cccr(struct hif_softc *ol_sc, struct sdio_func *func)
 				(unsigned int)writecccr1value,
 				err);
 		else
-			HIF_INFO("%s Write CCCR 0x%02X to 0x%02X OK\n",
-				 __func__,
+			hif_info("%s Write CCCR 0x%02X to 0x%02X OK",
 				 (unsigned int)writecccr1,
 				 writecccr1value);
 	}
@@ -281,8 +280,7 @@ void hif_sdio_quirk_write_cccr(struct hif_softc *ol_sc, struct sdio_func *func)
 				(unsigned int)writecccr2value,
 				err);
 		else
-			HIF_INFO("%s Write CCCR 0x%02X to 0x%02X OK\n",
-				 __func__,
+			hif_info("%s Write CCCR 0x%02X to 0x%02X OK",
 				 (unsigned int)writecccr2,
 				 (unsigned int)writecccr2value);
 	}
@@ -295,8 +293,7 @@ void hif_sdio_quirk_write_cccr(struct hif_softc *ol_sc, struct sdio_func *func)
 				(unsigned int)writecccr3value,
 				err);
 		else
-			HIF_INFO("%s Write CCCR 0x%02X to 0x%02X OK\n",
-				 __func__,
+			hif_info("%s Write CCCR 0x%02X to 0x%02X OK",
 				 (unsigned int)writecccr3,
 				 (unsigned int)writecccr3value);
 	}
@@ -309,8 +306,7 @@ void hif_sdio_quirk_write_cccr(struct hif_softc *ol_sc, struct sdio_func *func)
 				(unsigned int)writecccr4value,
 				err);
 		else
-			HIF_INFO("%s Write CCCR 0x%02X to 0x%02X OK\n",
-				 __func__,
+			hif_info("%s Write CCCR 0x%02X to 0x%02X OK",
 				 (unsigned int)writecccr4,
 				 (unsigned int)writecccr4value);
 	}
@@ -357,7 +353,7 @@ int hif_sdio_quirk_mod_strength(struct hif_softc *ol_sc, struct sdio_func *func)
 			hif_err("write 0x%x 0x%x error:%d", addr, value, ret);
 			break;
 		}
-		HIF_INFO("%s: addr 0x%x val 0x%x", __func__, addr, value);
+		hif_info("addr 0x%x val 0x%x", addr, value);
 
 		addr = WINDOW_WRITE_ADDR_ADDRESS;
 		value = 0x50F8;
@@ -366,7 +362,7 @@ int hif_sdio_quirk_mod_strength(struct hif_softc *ol_sc, struct sdio_func *func)
 			hif_err("write 0x%x 0x%x error:%d", addr, value, ret);
 			break;
 		}
-		HIF_INFO("%s: addr 0x%x val 0x%x\n", __func__, addr, value);
+		hif_info("addr 0x%x val 0x%x", addr, value);
 		break;
 	}
 
@@ -422,13 +418,12 @@ QDF_STATUS hif_sdio_set_bus_speed(struct hif_softc *ol_sc,
 	if (clock > device->host->f_max)
 		clock = device->host->f_max;
 
-	HIF_INFO("%s: Clock setting: (%d,%d)\n", __func__,
+	hif_info("Clock setting: (%d,%d)",
 		 func->card->cis.max_dtr, device->host->f_max);
 
 	/* Limit clock if specified */
 	if (mmcclock > 0) {
-		HIF_INFO("%s: Limit clock from %d to %d\n",
-			 __func__, clock, clock_set);
+		hif_info("Limit clock from %d to %d", clock, clock_set);
 		device->host->ios.clock = clock_set;
 		device->host->ops->set_ios(device->host,
 				&device->host->ios);
@@ -501,7 +496,7 @@ QDF_STATUS hif_sdio_set_bus_width(struct hif_softc *ol_sc,
 	status = qdf_status_from_os_return(ret);
 
 out:
-	HIF_INFO("%s: Bus with : %d\n",  __func__, mmcbuswidth);
+	hif_debug("Bus width: %d", mmcbuswidth);
 #endif
 	return status;
 }
@@ -584,7 +579,7 @@ void hif_un_mask_interrupt(struct hif_sdio_dev *device)
 	 * instead of interrupt mode.
 	 */
 	if (brokenirq) {
-		HIF_INFO("%s: Using broken IRQ mode", __func__);
+		hif_info("Using broken IRQ mode");
 		device->func->card->host->caps &= ~MMC_CAP_SDIO_IRQ;
 	}
 	/* Register the IRQ Handler */

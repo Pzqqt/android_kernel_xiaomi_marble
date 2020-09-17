@@ -235,8 +235,7 @@ uint8_t pipeid
 uint8_t hif_dev_map_adma_chan_to_pipe(struct hif_sdio_device *pdev,
 				      uint8_t chan, bool upload)
 {
-	HIF_INFO("%s: chan: %u, %s", __func__, chan,
-		 upload ? "Upload" : "Download");
+	hif_info("chan: %u, %s", chan, upload ? "Upload" : "Download");
 
 	if (chan == 0) /* chan 0 is mapped to HTT */
 		return upload ? 1 : 0;
@@ -523,7 +522,7 @@ int hif_dev_register_channels(struct hif_sdio_dev *dev, struct sdio_func *func)
 			hif_err("Channel registration failed");
 		} else {
 			dev->al_chan[chan]->priv = (void *)dev;
-			HIF_INFO("%s: chan %s : id : %u", __func__,
+			hif_info("chan %s : id : %u",
 				 chan_data[chan]->name,
 				 dev->al_chan[chan]->channel_id);
 		}
@@ -598,7 +597,7 @@ hif_read_write(struct hif_sdio_dev *dev,
 	/*sdio r/w action is not needed when suspend, so just return */
 	if ((dev->is_suspend) &&
 	    (dev->power_config == HIF_DEVICE_POWER_CUT)) {
-		HIF_INFO("%s: skip in suspend", __func__);
+		hif_info("skip in suspend");
 		return QDF_STATUS_SUCCESS;
 	}
 

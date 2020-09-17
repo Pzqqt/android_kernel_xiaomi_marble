@@ -789,27 +789,27 @@ void hif_dump_info(struct hif_opaque_softc *scn)
 			i, pipe->urb_cnt,
 			pipe->usb_pipe_handle);
 		if (usb_pipeisoc(pipe->usb_pipe_handle))
-			HIF_INFO("Pipe Type ISOC");
+			hif_info("Pipe Type ISOC");
 		else if (usb_pipebulk(pipe->usb_pipe_handle))
-			HIF_INFO("Pipe Type BULK");
+			hif_info("Pipe Type BULK");
 		else if (usb_pipeint(pipe->usb_pipe_handle))
-			HIF_INFO("Pipe Type INT");
+			hif_info("Pipe Type INT");
 		else if (usb_pipecontrol(pipe->usb_pipe_handle))
-			HIF_INFO("Pipe Type control");
+			hif_info("Pipe Type control");
 	}
 
 	for (i = 0; i < iface_desc->desc.bNumEndpoints; i++) {
 		ep_desc = &iface_desc->endpoint[i].desc;
 		if (ep_desc) {
-			HIF_INFO(
-				"ep_desc : %pK Index : %d: DescType : %d Addr : %d Maxp : %d Atrrib : %d",
+			hif_info(
+				"ep_desc: %pK Index: %d: DescType: %d Addr: %d Maxp: %d Atrrib: %d",
 				ep_desc, i, ep_desc->bDescriptorType,
 				ep_desc->bEndpointAddress,
 				ep_desc->wMaxPacketSize,
 				ep_desc->bmAttributes);
 			if ((ep_desc) && (usb_endpoint_type(ep_desc) ==
 						USB_ENDPOINT_XFER_ISOC)) {
-				HIF_INFO("ISOC EP Detected");
+				hif_info("ISOC EP Detected");
 			}
 		}
 	}
@@ -912,7 +912,7 @@ void hif_send_complete_check(struct hif_opaque_softc *scn,
 
 void hif_suspend_wow(struct hif_opaque_softc *scn)
 {
-	HIF_INFO("HIFsuspendwow - TODO");
+	hif_info("HIFsuspendwow - TODO");
 }
 
 /**
