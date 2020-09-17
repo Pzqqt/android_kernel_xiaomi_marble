@@ -1168,14 +1168,6 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 		goto end;
 	}
 
-	status = target_if_cm_roam_scan_offload_mode(wmi_handle,
-						     &req->rso_config);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("vdev:%d Send RSO mode cmd failed",
-			      req->rso_config.vdev_id);
-		goto end;
-	}
-
 	status = target_if_cm_roam_scan_filter(wmi_handle,
 					       ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					       &req->scan_filter_params);
@@ -1228,7 +1220,16 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 	vdev_id = wlan_vdev_get_id(vdev);
-	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+
+	if (MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+		status = target_if_cm_roam_scan_offload_mode(wmi_handle,
+							     &req->rso_config);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("vdev:%d Send RSO mode cmd failed",
+				      req->rso_config.vdev_id);
+			goto end;
+		}
+
 		target_if_cm_roam_disconnect_params(
 				wmi_handle, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				&req->disconnect_params);
