@@ -698,7 +698,7 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 	struct hif_softc *scn;
 
 	if (!hif_ce_state) {
-		HIF_WARN("%s: hif_ce_state = NULL", __func__);
+		hif_warn("hif_ce_state = NULL");
 		return QDF_STATUS_SUCCESS;
 	}
 

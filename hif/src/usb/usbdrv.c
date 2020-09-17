@@ -464,7 +464,7 @@ static void usb_hif_flush_pending_transfers(struct HIF_USB_PIPE *pipe)
 	while (1) {
 		urb_context = usb_hif_dequeue_pending_transfer(pipe);
 		if (!urb_context) {
-			HIF_WARN("urb_context is NULL");
+			hif_warn("urb_context is NULL");
 			break;
 		}
 		HIF_TRACE("  pending urb ctxt: 0x%pK", urb_context);

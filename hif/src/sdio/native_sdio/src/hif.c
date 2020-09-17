@@ -465,7 +465,7 @@ hif_configure_device(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 		break;
 
 	case HIF_DEVICE_GET_PENDING_EVENTS_FUNC:
-		HIF_WARN("%s: opcode %d",  __func__, opcode);
+		hif_warn("opcode %d", opcode);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	case HIF_DEVICE_GET_IRQ_PROC_MODE:
@@ -473,7 +473,7 @@ hif_configure_device(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 			HIF_DEVICE_IRQ_SYNC_ONLY;
 		break;
 	case HIF_DEVICE_GET_RECV_EVENT_MASK_UNMASK_FUNC:
-		HIF_WARN("%s: opcode %d", __func__, opcode);
+		hif_warn("opcode %d", opcode);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	case HIF_CONFIGURE_QUERY_SCATTER_REQUEST_SUPPORT:
@@ -498,7 +498,7 @@ hif_configure_device(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 					   config);
 		break;
 	case HIF_DEVICE_GET_IRQ_YIELD_PARAMS:
-		HIF_WARN("%s: opcode %d", __func__, opcode);
+		hif_warn("opcode %d", opcode);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	case HIF_DEVICE_SET_HTC_CONTEXT:

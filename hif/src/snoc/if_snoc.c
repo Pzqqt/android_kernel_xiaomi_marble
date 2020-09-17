@@ -279,8 +279,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 
 	ret = qdf_device_init_wakeup(ol_sc->qdf_dev, true);
 	if (ret == -EEXIST)
-		HIF_WARN("%s: device_init_wakeup already done",
-				__func__);
+		hif_warn("device_init_wakeup already done");
 	else if (ret) {
 		hif_err("device_init_wakeup: err= %d", ret);
 		return qdf_status_from_os_return(ret);

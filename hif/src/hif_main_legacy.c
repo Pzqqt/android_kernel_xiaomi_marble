@@ -71,7 +71,7 @@ QDF_STATUS hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 	}
 
 	if (!scn->fastpath_mode_on) {
-		HIF_WARN("%s: Fastpath mode disabled", __func__);
+		hif_warn("Fastpath mode disabled");
 		return QDF_STATUS_E_FAILURE;
 	}
 

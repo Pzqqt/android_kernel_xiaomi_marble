@@ -709,7 +709,7 @@ static struct hif_exec_context *hif_exec_napi_create(uint32_t scale)
 #else
 static struct hif_exec_context *hif_exec_napi_create(uint32_t scale)
 {
-	HIF_WARN("%s: FEATURE_NAPI not defined, making tasklet", __func__);
+	hif_warn("FEATURE_NAPI not defined, making tasklet");
 	return hif_exec_tasklet_create();
 }
 #endif

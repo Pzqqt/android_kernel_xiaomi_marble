@@ -199,8 +199,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		napii->irq   = pld_get_irq(hif->qdf_dev->dev, i);
 
 		if (napii->irq < 0)
-			HIF_WARN("%s: bad IRQ value for CE %d: %d",
-				 __func__, i, napii->irq);
+			hif_warn("bad IRQ value for CE %d: %d", i, napii->irq);
 
 		init_dummy_netdev(&(napii->netdev));
 
@@ -233,7 +232,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 
 	/* no ces registered with the napi */
 	if (!ce_srng_based(hif) && napid->ce_map == 0) {
-		HIF_WARN("%s: no napis created for copy engines", __func__);
+		hif_warn("no napis created for copy engines");
 		rc = -EFAULT;
 		goto napii_free;
 	}
