@@ -90,6 +90,7 @@ struct txrx_pdev_cfg_t {
 #endif
 	struct wlan_ipa_uc_rsc_t ipa_uc_rsc;
 	bool ip_tcp_udp_checksum_offload;
+	bool p2p_ip_tcp_udp_checksum_offload;
 	bool enable_rxthread;
 	bool ce_classify_enabled;
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)

@@ -200,6 +200,8 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 	cfg_ctx->enable_rxthread = cfg_param->enable_rxthread;
 	cfg_ctx->ip_tcp_udp_checksum_offload =
 		cfg_param->ip_tcp_udp_checksum_offload;
+	cfg_ctx->p2p_ip_tcp_udp_checksum_offload =
+		cfg_param->p2p_ip_tcp_udp_checksum_offload;
 	cfg_ctx->ce_classify_enabled = cfg_param->ce_classify_enabled;
 	cfg_ctx->gro_enable = cfg_param->gro_enable;
 	cfg_ctx->tso_enable = cfg_param->tso_enable;
