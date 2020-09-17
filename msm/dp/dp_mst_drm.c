@@ -322,7 +322,7 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 	mutex_unlock(&mstb->mgr->lock);
 
 	/* use fixed pbn for simulator ports */
-	port->available_pbn = 2520;
+	port->full_pbn = 2520;
 
 	if (!port->input) {
 		port->connector = (*mstb->mgr->cbs->add_connector)
@@ -1440,7 +1440,7 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	struct sde_connector *c_conn;
 	struct drm_dp_mst_port *mst_port;
 	struct dp_display_mode dp_mode;
-	uint16_t available_pbn, required_pbn;
+	uint16_t full_pbn, required_pbn;
 	int available_slots, required_slots;
 	struct dp_mst_bridge_state *dp_bridge_state;
 	int i, slots_in_use = 0, active_enc_cnt = 0;
@@ -1466,7 +1466,7 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	}
 
 	if (active_enc_cnt < DP_STREAM_MAX) {
-		available_pbn = mst_port->available_pbn;
+		full_pbn = mst_port->full_pbn;
 		available_slots = tot_slots - slots_in_use;
 	} else {
 		DP_DEBUG("all mst streams are active\n");
@@ -1480,9 +1480,9 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	required_slots = mst->mst_fw_cbs->find_vcpi_slots(
 			&mst->mst_mgr, required_pbn);
 
-	if (required_pbn > available_pbn || required_slots > available_slots) {
+	if (required_pbn > full_pbn || required_slots > available_slots) {
 		DP_DEBUG("mode:%s not supported. pbn %d vs %d slots %d vs %d\n",
-				mode->name, required_pbn, available_pbn,
+				mode->name, required_pbn, full_pbn,
 				required_slots, available_slots);
 		return MODE_BAD;
 	}
