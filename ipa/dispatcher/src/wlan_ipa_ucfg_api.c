@@ -29,6 +29,11 @@ bool ucfg_ipa_is_present(void)
 	return ipa_is_hw_support();
 }
 
+bool ucfg_ipa_is_ready(void)
+{
+	return ipa_is_ready();
+}
+
 bool ucfg_ipa_is_enabled(void)
 {
 	return ipa_config_is_enabled();
