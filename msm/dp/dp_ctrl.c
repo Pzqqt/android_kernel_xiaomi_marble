@@ -972,29 +972,24 @@ static void dp_ctrl_send_phy_test_pattern(struct dp_ctrl_private *ctrl)
 
 	switch (pattern_sent) {
 	case MR_LINK_TRAINING1:
-		if (pattern_requested ==
-				DP_TEST_PHY_PATTERN_D10_2_NO_SCRAMBLING)
+		if (pattern_requested == DP_PHY_TEST_PATTERN_D10_2)
 			success = true;
 		break;
 	case MR_LINK_SYMBOL_ERM:
-		if ((pattern_requested ==
-				DP_TEST_PHY_PATTERN_SYMBOL_ERR_MEASUREMENT_CNT)
-			|| (pattern_requested ==
-				DP_TEST_PHY_PATTERN_CP2520_PATTERN_1))
+		if ((pattern_requested == DP_PHY_TEST_PATTERN_ERROR_COUNT)
+			|| (pattern_requested == DP_PHY_TEST_PATTERN_CP2520))
 			success = true;
 		break;
 	case MR_LINK_PRBS7:
-		if (pattern_requested == DP_TEST_PHY_PATTERN_PRBS7)
+		if (pattern_requested == DP_PHY_TEST_PATTERN_PRBS7)
 			success = true;
 		break;
 	case MR_LINK_CUSTOM80:
-		if (pattern_requested ==
-				DP_TEST_PHY_PATTERN_80_BIT_CUSTOM_PATTERN)
+		if (pattern_requested == DP_PHY_TEST_PATTERN_80BIT_CUSTOM)
 			success = true;
 		break;
 	case MR_LINK_TRAINING4:
-		if (pattern_requested ==
-				DP_TEST_PHY_PATTERN_CP2520_PATTERN_3)
+		if (pattern_requested == DP_PHY_TEST_PATTERN_CP2520_3)
 			success = true;
 		break;
 	default:

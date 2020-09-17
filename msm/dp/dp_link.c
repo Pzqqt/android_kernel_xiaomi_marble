@@ -665,13 +665,13 @@ exit:
 static bool dp_link_is_phy_test_pattern_supported(u32 phy_test_pattern_sel)
 {
 	switch (phy_test_pattern_sel) {
-	case DP_TEST_PHY_PATTERN_NONE:
-	case DP_TEST_PHY_PATTERN_D10_2_NO_SCRAMBLING:
-	case DP_TEST_PHY_PATTERN_SYMBOL_ERR_MEASUREMENT_CNT:
-	case DP_TEST_PHY_PATTERN_PRBS7:
-	case DP_TEST_PHY_PATTERN_80_BIT_CUSTOM_PATTERN:
-	case DP_TEST_PHY_PATTERN_CP2520_PATTERN_1:
-	case DP_TEST_PHY_PATTERN_CP2520_PATTERN_3:
+	case DP_PHY_TEST_PATTERN_NONE:
+	case DP_PHY_TEST_PATTERN_D10_2:
+	case DP_PHY_TEST_PATTERN_ERROR_COUNT:
+	case DP_PHY_TEST_PATTERN_PRBS7:
+	case DP_PHY_TEST_PATTERN_80BIT_CUSTOM:
+	case DP_PHY_TEST_PATTERN_CP2520:
+	case DP_PHY_TEST_PATTERN_CP2520_3:
 		return true;
 	default:
 		return false;
@@ -693,7 +693,7 @@ static int dp_link_parse_phy_test_params(struct dp_link_private *link)
 	int const param_len = 0x1;
 	int ret = 0;
 
-	rlen = drm_dp_dpcd_read(link->aux->drm_aux, DP_TEST_PHY_PATTERN,
+	rlen = drm_dp_dpcd_read(link->aux->drm_aux, DP_PHY_TEST_PATTERN,
 			&bp, param_len);
 	if (rlen < param_len) {
 		DP_ERR("failed to read phy link pattern\n");

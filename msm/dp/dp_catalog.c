@@ -10,6 +10,7 @@
 #include "dp_catalog.h"
 #include "dp_reg.h"
 #include "dp_debug.h"
+#include "dp_link.h"
 
 #define DP_GET_MSB(x)	(x >> 8)
 #define DP_GET_LSB(x)	(x & 0xff)
@@ -1835,10 +1836,10 @@ static void dp_catalog_ctrl_send_phy_pattern(struct dp_catalog_ctrl *ctrl,
 	dp_write(DP_STATE_CTRL, 0x0);
 
 	switch (pattern) {
-	case DP_TEST_PHY_PATTERN_D10_2_NO_SCRAMBLING:
+	case DP_PHY_TEST_PATTERN_D10_2:
 		dp_write(DP_STATE_CTRL, 0x1);
 		break;
-	case DP_TEST_PHY_PATTERN_SYMBOL_ERR_MEASUREMENT_CNT:
+	case DP_PHY_TEST_PATTERN_ERROR_COUNT:
 		value &= ~(1 << 16);
 		dp_write(DP_HBR2_COMPLIANCE_SCRAMBLER_RESET, value);
 		value |= 0xFC;
@@ -1846,10 +1847,10 @@ static void dp_catalog_ctrl_send_phy_pattern(struct dp_catalog_ctrl *ctrl,
 		dp_write(DP_MAINLINK_LEVELS, 0x2);
 		dp_write(DP_STATE_CTRL, 0x10);
 		break;
-	case DP_TEST_PHY_PATTERN_PRBS7:
+	case DP_PHY_TEST_PATTERN_PRBS7:
 		dp_write(DP_STATE_CTRL, 0x20);
 		break;
-	case DP_TEST_PHY_PATTERN_80_BIT_CUSTOM_PATTERN:
+	case DP_PHY_TEST_PATTERN_80BIT_CUSTOM:
 		dp_write(DP_STATE_CTRL, 0x40);
 		/* 00111110000011111000001111100000 */
 		dp_write(DP_TEST_80BIT_CUSTOM_PATTERN_REG0, 0x3E0F83E0);
@@ -1858,7 +1859,7 @@ static void dp_catalog_ctrl_send_phy_pattern(struct dp_catalog_ctrl *ctrl,
 		/* 1111100000111110 */
 		dp_write(DP_TEST_80BIT_CUSTOM_PATTERN_REG2, 0x0000F83E);
 		break;
-	case DP_TEST_PHY_PATTERN_CP2520_PATTERN_1:
+	case DP_PHY_TEST_PATTERN_CP2520:
 		value = dp_read(DP_MAINLINK_CTRL);
 		value &= ~BIT(4);
 		dp_write(DP_MAINLINK_CTRL, value);
@@ -1874,7 +1875,7 @@ static void dp_catalog_ctrl_send_phy_pattern(struct dp_catalog_ctrl *ctrl,
 		value |= BIT(0);
 		dp_write(DP_MAINLINK_CTRL, value);
 		break;
-	case DP_TEST_PHY_PATTERN_CP2520_PATTERN_3:
+	case DP_PHY_TEST_PATTERN_CP2520_3:
 		dp_write(DP_MAINLINK_CTRL, 0x01);
 		dp_write(DP_STATE_CTRL, 0x8);
 		break;
