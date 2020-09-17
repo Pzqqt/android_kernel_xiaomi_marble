@@ -79,6 +79,12 @@ int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 		"Release count = %llu",
 		pdev_cfrobj->dbr_evt_cnt, pdev_cfrobj->tx_evt_cnt,
 		pdev_cfrobj->release_cnt);
+	cfr_err("tx_peer_status_cfr_fail = %llu",
+		pdev_cfrobj->tx_peer_status_cfr_fail = 0);
+	cfr_err("tx_evt_status_cfr_fail = %llu",
+		pdev_cfrobj->tx_evt_status_cfr_fail);
+	cfr_err("tx_dbr_cookie_lookup_fail = %llu",
+		pdev_cfrobj->tx_dbr_cookie_lookup_fail);
 
 	pdev_cfrobj->dbr_evt_cnt = 0;
 	pdev_cfrobj->tx_evt_cnt  = 0;
