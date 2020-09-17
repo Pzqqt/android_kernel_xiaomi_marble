@@ -78,7 +78,7 @@ static int dsi_panel_vreg_get(struct dsi_panel *panel)
 	for (i = 0; i < panel->power_info.count; i++) {
 		vreg = devm_regulator_get(panel->parent,
 					  panel->power_info.vregs[i].vreg_name);
-		rc = PTR_RET(vreg);
+		rc = PTR_ERR_OR_ZERO(vreg);
 		if (rc) {
 			DSI_ERR("failed to get %s regulator\n",
 			       panel->power_info.vregs[i].vreg_name);

@@ -147,7 +147,7 @@ int sde_rot_config_vreg(struct device *dev, struct sde_vreg *in_vreg,
 			curr_vreg = &in_vreg[i];
 			curr_vreg->vreg = regulator_get(dev,
 				curr_vreg->vreg_name);
-			rc = PTR_RET(curr_vreg->vreg);
+			rc = PTR_ERR_OR_ZERO(curr_vreg->vreg);
 			if (rc) {
 				DEV_ERR("%pS->%s: %s get failed. rc=%d\n",
 					 __builtin_return_address(0), __func__,
@@ -220,7 +220,7 @@ int sde_rot_enable_vreg(struct sde_vreg *in_vreg, int num_vreg, int enable)
 
 	if (enable) {
 		for (i = 0; i < num_vreg; i++) {
-			rc = PTR_RET(in_vreg[i].vreg);
+			rc = PTR_ERR_OR_ZERO(in_vreg[i].vreg);
 			if (rc) {
 				DEV_ERR("%pS->%s: %s regulator error. rc=%d\n",
 					__builtin_return_address(0), __func__,
@@ -313,7 +313,7 @@ int sde_rot_get_clk(struct device *dev, struct sde_clk *clk_arry, int num_clk)
 
 	for (i = 0; i < num_clk; i++) {
 		clk_arry[i].clk = clk_get(dev, clk_arry[i].clk_name);
-		rc = PTR_RET(clk_arry[i].clk);
+		rc = PTR_ERR_OR_ZERO(clk_arry[i].clk);
 		if (rc) {
 			DEV_ERR("%pS->%s: '%s' get failed. rc=%d\n",
 				__builtin_return_address(0), __func__,

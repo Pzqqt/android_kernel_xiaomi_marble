@@ -208,7 +208,7 @@ static int dsi_phy_supplies_init(struct platform_device *pdev,
 	regs = &phy->pwr_info.digital;
 	for (i = 0; i < regs->count; i++) {
 		vreg = devm_regulator_get(&pdev->dev, regs->vregs[i].vreg_name);
-		rc = PTR_RET(vreg);
+		rc = PTR_ERR_OR_ZERO(vreg);
 		if (rc) {
 			DSI_PHY_ERR(phy, "failed to get %s regulator\n",
 			       regs->vregs[i].vreg_name);
@@ -220,7 +220,7 @@ static int dsi_phy_supplies_init(struct platform_device *pdev,
 	regs = &phy->pwr_info.phy_pwr;
 	for (i = 0; i < regs->count; i++) {
 		vreg = devm_regulator_get(&pdev->dev, regs->vregs[i].vreg_name);
-		rc = PTR_RET(vreg);
+		rc = PTR_ERR_OR_ZERO(vreg);
 		if (rc) {
 			DSI_PHY_ERR(phy, "failed to get %s regulator\n",
 			       regs->vregs[i].vreg_name);
