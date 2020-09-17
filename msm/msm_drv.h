@@ -47,6 +47,7 @@
 #include <drm/sde_drm.h>
 #include <drm/drm_gem.h>
 #include <drm/drm_dsc.h>
+#include <drm/drm_bridge.h>
 
 #include "sde_power_handle.h"
 

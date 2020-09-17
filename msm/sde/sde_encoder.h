@@ -20,6 +20,7 @@
 #define __SDE_ENCODER_H__
 
 #include <drm/drm_crtc.h>
+#include <drm/drm_bridge.h>
 #include <linux/sde_rsc.h>
 
 #include "msm_prop.h"
