@@ -101,6 +101,7 @@ enum rc_merge_mode {
 	RC_MERGE_SINGLE_PIPE = 0x0,
 	RC_MERGE_DUAL_PIPE   = 0x1
 };
+
 struct rc_config_table {
 	enum rc_param_a param_a;
 	enum rc_param_b param_b;
@@ -111,6 +112,14 @@ struct rc_config_table {
 
 static struct rc_config_table config_table[] =  {
 	/* RC_PARAM_A0 configurations */
+	{
+		.param_a = RC_PARAM_A0,
+		.param_b = RC_PARAM_B0,
+		.param_c = RC_PARAM_C5,
+		.merge_mode = RC_MERGE_SINGLE_PIPE,
+		.merge_mode_en = RC_MERGE_SINGLE_PIPE,
+
+	},
 	{
 		.param_a = RC_PARAM_A0,
 		.param_b = RC_PARAM_B1B2,
@@ -133,6 +142,14 @@ static struct rc_config_table config_table[] =  {
 		.param_c = RC_PARAM_C1,
 		.merge_mode = RC_MERGE_SINGLE_PIPE,
 		.merge_mode_en = RC_MERGE_SINGLE_PIPE,
+
+	},
+	{
+		.param_a = RC_PARAM_A0,
+		.param_b = RC_PARAM_B0,
+		.param_c = RC_PARAM_C5,
+		.merge_mode = RC_MERGE_DUAL_PIPE,
+		.merge_mode_en = RC_MERGE_DUAL_PIPE,
 
 	},
 	{
@@ -162,6 +179,14 @@ static struct rc_config_table config_table[] =  {
 	/* RC_PARAM_A1 configurations */
 	{
 		.param_a = RC_PARAM_A1,
+		.param_b = RC_PARAM_B0,
+		.param_c = RC_PARAM_C5,
+		.merge_mode = RC_MERGE_SINGLE_PIPE,
+		.merge_mode_en = RC_MERGE_SINGLE_PIPE,
+
+	},
+	{
+		.param_a = RC_PARAM_A1,
 		.param_b = RC_PARAM_B1B2,
 		.param_c = RC_PARAM_C5,
 		.merge_mode = RC_MERGE_SINGLE_PIPE,
@@ -182,6 +207,14 @@ static struct rc_config_table config_table[] =  {
 		.param_c = RC_PARAM_C2,
 		.merge_mode = RC_MERGE_SINGLE_PIPE,
 		.merge_mode_en = RC_MERGE_SINGLE_PIPE,
+
+	},
+	{
+		.param_a = RC_PARAM_A1,
+		.param_b = RC_PARAM_B0,
+		.param_c = RC_PARAM_C5,
+		.merge_mode = RC_MERGE_DUAL_PIPE,
+		.merge_mode_en = RC_MERGE_DUAL_PIPE,
 
 	},
 	{
@@ -385,7 +418,6 @@ static int _sde_hw_rc_get_param_rb(
 static int _sde_hw_rc_program_enable_bits(
 		struct sde_hw_dspp *hw_dspp,
 		struct drm_msm_rc_mask_cfg *rc_mask_cfg,
-		enum rc_param_r param_r,
 		enum rc_param_a param_a,
 		enum rc_param_b param_b,
 		int merge_mode,
@@ -393,6 +425,8 @@ static int _sde_hw_rc_program_enable_bits(
 {
 	int rc = 0;
 	u32 val = 0, param_c = 0, rc_merge_mode = 0, ystart = 0;
+	u64 flags = 0;
+	bool r1_enable = false, r2_enable = false;
 
 	if (!hw_dspp || !rc_mask_cfg || !rc_roi) {
 		SDE_ERROR("invalid arguments\n");
@@ -406,32 +440,30 @@ static int _sde_hw_rc_program_enable_bits(
 		return rc;
 	}
 
-	if (param_r & RC_PARAM_R1) {
+	flags = rc_mask_cfg->flags;
+	r1_enable = ((flags & SDE_HW_RC_DISABLE_R1) == SDE_HW_RC_DISABLE_R1) ?
+			false : true;
+	r2_enable = ((flags & SDE_HW_RC_DISABLE_R2) == SDE_HW_RC_DISABLE_R2) ?
+			false : true;
+
+	if (r1_enable) {
 		val |= BIT(0);
 		SDE_DEBUG("enable R1\n");
+	} else {
+		SDE_DEBUG("disable R1\n");
 	}
 
-	if (param_r & RC_PARAM_R2) {
+	if (r2_enable) {
 		val |= BIT(4);
 		SDE_DEBUG("enable R2\n");
+	} else {
+		SDE_DEBUG("disable R2\n");
 	}
 
-	/*corner case for partial update*/
-	if (param_r == RC_PARAM_R0) {
+	/*corner case for partial update in R2 region*/
+	if (!r1_enable && r2_enable) {
 		ystart = rc_roi->y;
 		SDE_DEBUG("set partial update ystart:%u\n", ystart);
-	}
-
-	if ((rc_mask_cfg->flags & SDE_HW_RC_DISABLE_R1)
-			== SDE_HW_RC_DISABLE_R1) {
-		val &= ~BIT(0);
-		SDE_DEBUG("override disable R1\n");
-	}
-
-	if ((rc_mask_cfg->flags & SDE_HW_RC_DISABLE_R2)
-			== SDE_HW_RC_DISABLE_R2) {
-		val &= ~BIT(4);
-		SDE_DEBUG("override disable R2\n");
 	}
 
 	val |= param_c;
@@ -468,7 +500,7 @@ static int _sde_hw_rc_program_roi(
 
 	param_a = rc_mask_cfg->cfg_param_03;
 	rc = _sde_hw_rc_program_enable_bits(hw_dspp, rc_mask_cfg,
-			param_r, param_a, param_b, merge_mode, rc_roi);
+			param_a, param_b, merge_mode, rc_roi);
 	if (rc) {
 		SDE_ERROR("failed to program enable bits, rc:%d\n", rc);
 		return rc;
@@ -825,7 +857,7 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 
 	param_a = rc_mask_cfg->cfg_param_03;
 	rc = _sde_hw_rc_program_enable_bits(hw_dspp, rc_mask_cfg,
-			param_r, param_a, param_b, merge_mode, &rc_roi);
+			param_a, param_b, merge_mode, &rc_roi);
 	if (rc) {
 		SDE_ERROR("failed to program enable bits, rc:%d\n", rc);
 		return rc;
@@ -876,9 +908,10 @@ int sde_hw_rc_setup_mask(struct sde_hw_dspp *hw_dspp, void *cfg)
 	roi_programmed = RC_STATE(hw_dspp).roi_programmed;
 
 	if (!roi_programmed) {
-		SDE_DEBUG("no previously programmed partial update rois\n");
+		SDE_DEBUG("full frame update\n");
 		memset(&merged_roi, 0, sizeof(struct sde_rect));
 	} else {
+		SDE_DEBUG("partial frame update\n");
 		sde_kms_rect_merge_rectangles(last_roi_list, &merged_roi);
 	}
 
