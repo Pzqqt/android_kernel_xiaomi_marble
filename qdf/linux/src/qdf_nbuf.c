@@ -3253,7 +3253,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	if (unlikely(dma_mapping_error(osdev->dev,
 					tso_frag_paddr))) {
 		qdf_err("DMA mapping error!");
-		qdf_assert(0);
+		qdf_assert_always(0);
 		return 0;
 	}
 	TSO_DEBUG("%s[%d] skb frag len %d tso frag len %d\n", __func__,
@@ -3302,6 +3302,8 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 				tso_cmn_info.tcp_seq_num += tso_frag_len;
 				curr_seg->seg.tso_frags[i].paddr =
 					tso_frag_paddr;
+
+				qdf_assert_always(curr_seg->seg.tso_frags[i].paddr);
 			}
 
 			TSO_DEBUG("%s[%d] frag %d frag len %d total_len %u vaddr %pK\n",
@@ -3386,7 +3388,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 			if (unlikely(dma_mapping_error(osdev->dev,
 							tso_frag_paddr))) {
 				qdf_err("DMA mapping error!");
-				qdf_assert(0);
+				qdf_assert_always(0);
 				return 0;
 			}
 		}
