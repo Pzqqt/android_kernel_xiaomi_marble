@@ -698,6 +698,9 @@ void qdf_frag_debug_update_addr(qdf_frag_t p_fragp, qdf_frag_t n_fragp,
 	uint32_t prev_index, new_index;
 	QDF_FRAG_TRACK *p_node;
 
+	if (is_initial_mem_debug_disabled)
+		return;
+
 	prev_index = qdf_frag_debug_hash(p_fragp);
 
 	new_index = qdf_frag_debug_hash(n_fragp);
