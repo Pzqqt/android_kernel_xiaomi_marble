@@ -31,27 +31,27 @@
 #include "wlan_objmgr_vdev_obj.h"
 
 /**
- * wlan_osif_cfg80211_connect() - Connect start request
+ * osif_cm_connect() - Connect start request
  * @dev: net dev
  * @vdev: vdev pointer
  * @req: connect req
  *
  * Return: int
  */
-int wlan_osif_cfg80211_connect(struct net_device *dev,
-			       struct wlan_objmgr_vdev *vdev,
-			       struct cfg80211_connect_params *req);
+int osif_cm_connect(struct net_device *dev,
+		    struct wlan_objmgr_vdev *vdev,
+		    struct cfg80211_connect_params *req);
 
 /**
- * wlan_osif_cfg80211_disconnect() - Disconnect start request
+ * osif_cm_disconnect() - Disconnect start request
  * @dev: net dev
  * @vdev: vdev pointer
  * @reason: disconnect reason
  *
  * Return: int
  */
-int wlan_osif_cfg80211_disconnect(struct net_device *dev,
-				  struct wlan_objmgr_vdev *vdev,
-				  uint16_t reason);
+int osif_cm_disconnect(struct net_device *dev,
+		       struct wlan_objmgr_vdev *vdev,
+		       uint16_t reason);
 #endif
 #endif /* __WLAN_CFG80211_CM_REQ_H */

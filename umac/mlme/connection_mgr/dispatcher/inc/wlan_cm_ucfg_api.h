@@ -28,30 +28,30 @@
 #include <wlan_cm_api.h>
 
 /**
- * ucfg_wlan_cm_start_connect() - connect start request
+ * ucfg_cm_start_connect() - connect start request
  * @vdev: vdev pointer
  * @req: connect req
  *
  * Return: QDF_STATUS
  */
 static inline
-QDF_STATUS ucfg_wlan_cm_start_connect(struct wlan_objmgr_vdev *vdev,
-				      struct wlan_cm_connect_req *req)
+QDF_STATUS ucfg_cm_start_connect(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_connect_req *req)
 {
 	return wlan_cm_start_connect(vdev, req);
 }
 
 
 /**
- * ucfg_wlan_cm_start_disconnect() - disconnect start request
+ * ucfg_cm_start_disconnect() - disconnect start request
  * @vdev: vdev pointer
  * @req: disconnect req
  *
  * Return: QDF_STATUS
  */
 static inline
-QDF_STATUS ucfg_wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
-					 struct wlan_cm_disconnect_req *req)
+QDF_STATUS ucfg_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_disconnect_req *req)
 {
 	return wlan_cm_start_disconnect(vdev, req);
 }
