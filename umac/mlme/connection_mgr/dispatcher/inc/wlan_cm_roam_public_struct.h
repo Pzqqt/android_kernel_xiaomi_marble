@@ -1323,7 +1323,6 @@ struct wlan_cm_rso_configs {
 /**
  * struct wlan_cm_roam  - Connection manager roam configs, state and roam
  * data related structure
- * @tx_ops: Roam Tx ops to send roam offload commands to firmware
  * @pcl_vdev_cmd_active:  Flag to check if vdev level pcl command needs to be
  * sent or PDEV level PCL command needs to be sent
  * @control_param: vendor configured roam control param
@@ -1331,7 +1330,6 @@ struct wlan_cm_rso_configs {
  * legacy tpCsrNeighborRoamControlInfo structure.
  */
 struct wlan_cm_roam {
-	struct wlan_cm_roam_tx_ops tx_ops;
 	bool pcl_vdev_cmd_active;
 	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
 	struct wlan_cm_rso_configs vdev_rso_config;

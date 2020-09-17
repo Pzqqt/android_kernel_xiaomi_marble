@@ -39,9 +39,11 @@
 /**
  * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
+ * @rso_tx_ops: Roam Tx ops to send roam offload commands to firmware
  */
 struct wlan_mlme_psoc_ext_obj {
 	struct wlan_mlme_cfg cfg;
+	struct wlan_cm_roam_tx_ops rso_tx_ops;
 };
 
 /**
