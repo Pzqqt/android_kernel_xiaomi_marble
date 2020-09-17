@@ -150,8 +150,7 @@ int hif_ahb_dump_registers(struct hif_softc *hif_ctx)
 
 	status = hif_dump_ce_registers(scn);
 	if (status)
-		HIF_ERROR("%s: Dump CE Registers Failed status %d", __func__,
-							status);
+		hif_err("Dump CE Registers Failed status %d", status);
 
 	return 0;
 }
@@ -561,8 +560,8 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	ret = hif_get_device_type(id->driver_data, revision_id,
 			&hif_type, &target_type);
 	if (ret < 0) {
-		HIF_ERROR("%s: invalid device  ret %d id %d revision_id %d",
-			__func__, ret, (int)id->driver_data, revision_id);
+		hif_err("Invalid device ret %d id %d revision_id %d",
+			ret, (int)id->driver_data, revision_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -621,8 +620,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	ret = pfrm_dma_set_coherent_mask(dev, 32);
 #endif
 	if (ret) {
-		HIF_ERROR("%s: failed to set dma mask error = %d",
-			  __func__, ret);
+		hif_err("Failed to set dma mask error = %d", ret);
 		return QDF_STATUS_E_IO;
 	}
 
@@ -890,7 +888,7 @@ bool hif_ahb_needs_bmi(struct hif_softc *scn)
 void hif_ahb_display_stats(struct hif_softc *scn)
 {
 	if (!scn) {
-		HIF_ERROR("%s, hif_scn null", __func__);
+		hif_err("hif_scn null");
 		return;
 	}
 	hif_display_ce_stats(scn);
@@ -901,7 +899,7 @@ void hif_ahb_clear_stats(struct hif_softc *scn)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	if (!hif_state) {
-		HIF_ERROR("%s, hif_state null", __func__);
+		hif_err("hif_state null");
 		return;
 	}
 	hif_clear_ce_stats(hif_state);

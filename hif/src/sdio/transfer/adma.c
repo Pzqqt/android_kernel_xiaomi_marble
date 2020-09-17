@@ -136,8 +136,7 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev, uint16_t svc,
 		break;
 
 	default:
-		HIF_ERROR("%s: Err : Invalid service (%d)",
-			  __func__, svc);
+		hif_err("Invalid service: %d", svc);
 		status = QDF_STATUS_E_INVAL;
 		break;
 	}
@@ -347,7 +346,7 @@ QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (!device) {
-		HIF_ERROR("%s: HIF device is NULL", __func__);
+		hif_err("HIF device is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -389,7 +388,7 @@ static qdf_nbuf_t hif_sdio_get_nbuf(struct hif_sdio_dev *dev, uint16_t buf_len)
 		elem = qdf_container_of(node, struct rx_q_entry, entry);
 		nbuf = elem->nbuf;
 	} else {
-		HIF_ERROR("%s: no rx q elements", __func__);
+		hif_err("no rx q elements");
 	}
 
 	if (q->count <= HIF_RX_Q_ALLOC_THRESHOLD &&
@@ -436,7 +435,7 @@ void hif_sdio_rx_q_alloc(void *ctx)
 	for (; rx_q_count < dev->rx_q.max_size; rx_q_count++) {
 		rx_q_elem = qdf_mem_malloc(sizeof(struct rx_q_entry));
 		if (!rx_q_elem) {
-			HIF_ERROR("%s: failed to alloc rx q elem", __func__);
+			hif_err("Failed to alloc rx q elem");
 			break;
 		}
 
@@ -444,7 +443,7 @@ void hif_sdio_rx_q_alloc(void *ctx)
 		rx_q_elem->nbuf = qdf_nbuf_alloc(NULL, HIF_SDIO_RX_BUFFER_SIZE,
 						 0, 4, false);
 		if (!rx_q_elem->nbuf) {
-			HIF_ERROR("%s: failed to alloc nbuf for rx", __func__);
+			hif_err("Failed to alloc nbuf for rx");
 			qdf_mem_free(rx_q_elem);
 			break;
 		}
@@ -500,7 +499,7 @@ int hif_dev_register_channels(struct hif_sdio_dev *dev, struct sdio_func *func)
 
 	dev->al_client = pld_sdio_get_sdio_al_client_handle(func);
 	if (ret || !dev->al_client) {
-		HIF_ERROR("%s: Failed to get get sdio al handle", __func__);
+		hif_err("Failed to get get sdio al handle");
 		return ret;
 	}
 
@@ -521,7 +520,7 @@ int hif_dev_register_channels(struct hif_sdio_dev *dev, struct sdio_func *func)
 						  chan_data[chan]);
 		if (!dev->al_chan[chan] || IS_ERR(dev->al_chan[chan])) {
 			ret = -EINVAL;
-			HIF_ERROR("%s: Channel registration failed", __func__);
+			hif_err("Channel registration failed");
 		} else {
 			dev->al_chan[chan]->priv = (void *)dev;
 			HIF_INFO("%s: chan %s : id : %u", __func__,
@@ -548,7 +547,7 @@ void hif_dev_unregister_channels(struct hif_sdio_dev *dev,
 	unsigned int chan;
 
 	if (!dev) {
-		HIF_ERROR("%s: hif_sdio_dev is null", __func__);
+		hif_err("hif_sdio_dev is null");
 		return;
 	}
 
@@ -586,14 +585,13 @@ hif_read_write(struct hif_sdio_dev *dev,
 	unsigned char *buffer = (unsigned char *)cbuffer;
 
 	if (!dev || !sdio_al_ch_handle) {
-		HIF_ERROR("%s: device = %pK, addr = %lu", __func__,
-			  dev, sdio_al_ch_handle);
+		hif_err("Device = %pK, addr = %lu", dev, sdio_al_ch_handle);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!(request & HIF_ASYNCHRONOUS) &&
 	    !(request & HIF_SYNCHRONOUS)) {
-		HIF_ERROR("%s: Invalid request mode", __func__);
+		hif_err("Invalid request mode: %d", request);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -608,7 +606,7 @@ hif_read_write(struct hif_sdio_dev *dev,
 
 	bus_req = hif_allocate_bus_request(dev);
 	if (!bus_req) {
-		HIF_ERROR("%s: Bus alloc failed", __func__);
+		hif_err("Bus alloc failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -629,7 +627,7 @@ hif_read_write(struct hif_sdio_dev *dev,
 					     1); /* higher priority */
 		if (ret) {
 			status = QDF_STATUS_E_FAILURE;
-			HIF_ERROR("%s: SYNC REQ failed ret=%d", __func__, ret);
+			hif_err("SYNC REQ failed ret: %d", ret);
 		} else {
 			status = QDF_STATUS_SUCCESS;
 		}
@@ -655,8 +653,8 @@ hif_read_write(struct hif_sdio_dev *dev,
 						   (void *)bus_req);
 		if (ret) {
 			status = QDF_STATUS_E_FAILURE;
-			HIF_ERROR("%s: ASYNC REQ fail ret=%d for len=%d ch=%d",
-				  __func__, ret, length, ch->channel_id);
+			hif_err("ASYNC REQ fail ret: %d for len: %d ch: %d",
+				ret, length, ch->channel_id);
 			hif_free_bus_request(dev, bus_req);
 		} else {
 			status = QDF_STATUS_E_PENDING;
@@ -681,7 +679,7 @@ void ul_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 	struct hif_sdio_dev *dev;
 
 	if (!ch_handle || !result) {
-		HIF_ERROR("%s: Invalid args", __func__);
+		hif_err("Invalid args");
 		qdf_assert_always(0);
 		return;
 	}
@@ -690,8 +688,7 @@ void ul_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 
 	if (result->xfer_status) {
 		req->status = QDF_STATUS_E_FAILURE;
-		HIF_ERROR("%s: ASYNC Tx failed status=%d", __func__,
-			  result->xfer_status);
+		hif_err("ASYNC Tx failed status: %d", result->xfer_status);
 	} else {
 		req->status = QDF_STATUS_SUCCESS;
 	}
@@ -722,7 +719,7 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 	qdf_nbuf_t nbuf;
 
 	if (!ch_handle || !len) {
-		HIF_ERROR("%s: Invalid args %u", __func__, len);
+		hif_err("Invalid args %u", len);
 		qdf_assert_always(0);
 		return;
 	}
@@ -731,7 +728,7 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 	chan = ch_handle->channel_id;
 
 	if (chan > HIF_SDIO_MAX_AL_CHANNELS) {
-		HIF_ERROR("%s: Invalid Ch ID %d", __func__, chan);
+		hif_err("Invalid Ch ID %d", chan);
 		return;
 	}
 
@@ -743,7 +740,7 @@ void dl_data_avail_cb(struct sdio_al_channel_handle *ch_handle,
 	nbuf = qdf_nbuf_alloc(NULL, len, 0, 4, false);
 
 	if (!nbuf) {
-		HIF_ERROR("%s: Unable to alloc netbuf %u bytes", __func__, len);
+		hif_err("Unable to alloc netbuf %u bytes", len);
 		return;
 	}
 
@@ -776,22 +773,20 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 	QDF_STATUS (*rx_completion)(void *, qdf_nbuf_t, uint8_t);
 
 	if (!bus_req) {
-		HIF_ERROR("%s: Bus Req NULL!!!", __func__);
+		hif_err("Bus Req NULL!!!");
 		qdf_assert_always(0);
 		return;
 	}
 
 	if (!ch_handle || !result) {
-		HIF_ERROR("%s: Invalid args %pK %pK", __func__,
-			  ch_handle, result);
+		hif_err("Invalid args %pK %pK", ch_handle, result);
 		qdf_assert_always(0);
 		return;
 	}
 
 	dev = (struct hif_sdio_dev *)ch_handle->priv;
 	if (result->xfer_status) {
-		HIF_ERROR("%s: ASYNC Rx failed %d", __func__,
-			  result->xfer_status);
+		hif_err("ASYNC Rx failed %d", result->xfer_status);
 		qdf_nbuf_free((qdf_nbuf_t)bus_req->context);
 		hif_free_bus_request(dev, bus_req);
 		return;
@@ -811,9 +806,8 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 
 		if (HTC_GET_FIELD(buf, HTC_FRAME_HDR, ENDPOINTID) >=
 		    ENDPOINT_MAX) {
-			HIF_ERROR("%s: invalid endpoint id: %u", __func__,
-				  HTC_GET_FIELD(buf, HTC_FRAME_HDR,
-						ENDPOINTID));
+			hif_err("Invalid endpoint id: %u",
+				HTC_GET_FIELD(buf, HTC_FRAME_HDR, ENDPOINTID));
 			break;
 		}
 
@@ -821,26 +815,25 @@ void dl_xfer_cb(struct sdio_al_channel_handle *ch_handle,
 		payload_len = HTC_GET_FIELD(buf, HTC_FRAME_HDR, PAYLOADLEN);
 		payload_len = qdf_le16_to_cpu(payload_len);
 		if (!payload_len) {
-			HIF_ERROR("%s:Invalid Payload len %d bytes", __func__,
-				  payload_len);
+			hif_err("Invalid Payload len %d bytes", payload_len);
 			break;
 		}
 		if (payload_len > g_dbg_payload_len) {
 			g_dbg_payload_len = payload_len;
-			HIF_ERROR("Max Rx HTC Payload = %d", g_dbg_payload_len);
+			hif_err("Max Rx HTC Payload = %d", g_dbg_payload_len);
 		}
 
 		nbuf = hif_sdio_get_nbuf(dev, payload_len + HTC_HEADER_LEN);
 		if (!nbuf) {
-			HIF_ERROR("%s: failed to alloc rx buffer", __func__);
+			hif_err("Failed to alloc rx buffer");
 			break;
 		}
 
 		/* Check if payload fits in skb */
 		if (qdf_nbuf_tailroom(nbuf) < payload_len + HTC_HEADER_LEN) {
-			HIF_ERROR("%s: Payload + HTC_HDR %d > skb tailroom %d",
-				  __func__, (payload_len + 8),
-				  qdf_nbuf_tailroom(nbuf));
+			hif_err("Payload + HTC_HDR %d > skb tailroom %d",
+				(payload_len + 8),
+				qdf_nbuf_tailroom(nbuf));
 			qdf_nbuf_free(nbuf);
 			break;
 		}

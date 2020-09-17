@@ -122,8 +122,7 @@ out:
 
 	if (copy_to_user(buf, read_buffer, count)) {
 		qdf_mem_free(read_buffer);
-		HIF_ERROR("%s: copy_to_user error in /proc/%s",
-			__func__, PROCFS_NAME);
+		hif_err("copy_to_user error in /proc/%s", PROCFS_NAME);
 		return -EFAULT;
 	}
 	qdf_mem_free(read_buffer);
@@ -153,8 +152,7 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 
 	if (copy_from_user(write_buffer, buf, count)) {
 		qdf_mem_free(write_buffer);
-		HIF_ERROR("%s: copy_to_user error in /proc/%s",
-			__func__, PROCFS_NAME);
+		hif_err("copy_to_user error in /proc/%s", PROCFS_NAME);
 		return -EFAULT;
 	}
 
@@ -229,8 +227,7 @@ int athdiag_procfs_init(void *scn)
 	proc_dir = proc_mkdir(PROCFS_DIR, NULL);
 	if (!proc_dir) {
 		remove_proc_entry(PROCFS_DIR, NULL);
-		HIF_ERROR("%s: Error: Could not initialize /proc/%s",
-			__func__, PROCFS_DIR);
+		hif_err("Could not initialize /proc/%s", PROCFS_DIR);
 		return -ENOMEM;
 	}
 
@@ -238,8 +235,7 @@ int athdiag_procfs_init(void *scn)
 				     &athdiag_fops, (void *)scn);
 	if (!proc_file) {
 		remove_proc_entry(PROCFS_NAME, proc_dir);
-		HIF_ERROR("%s: Could not initialize /proc/%s",
-			__func__, PROCFS_NAME);
+		hif_err("Could not initialize /proc/%s", PROCFS_NAME);
 		return -ENOMEM;
 	}
 

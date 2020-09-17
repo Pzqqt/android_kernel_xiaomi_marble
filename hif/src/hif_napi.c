@@ -66,7 +66,7 @@ enum napi_decision_vector {
  */
 static int hif_rxthread_napi_poll(struct napi_struct *napi, int budget)
 {
-	HIF_ERROR("This napi_poll should not be polled as we don't schedule it");
+	hif_err("This napi_poll should not be polled as we don't schedule it");
 	QDF_ASSERT(0);
 	return 0;
 }
@@ -156,7 +156,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 
 		rc = hif_napi_cpu_init(hif_ctx);
 		if (rc != 0 && rc != -EALREADY) {
-			HIF_ERROR("NAPI_initialization failed,. %d", rc);
+			hif_err("NAPI_initialization failed(rc=%d)", rc);
 			rc = napid->ce_map;
 			goto hnc_err;
 		} else
@@ -267,7 +267,7 @@ void hif_napi_rx_offld_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 	struct qca_napi_info *napii;
 
 	if (!scn) {
-		HIF_ERROR("%s: hif_state NULL!", __func__);
+		hif_err("hif_state NULL!");
 		QDF_ASSERT(0);
 		return;
 	}
@@ -293,7 +293,7 @@ void hif_napi_rx_offld_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
 	struct qca_napi_info *napii;
 
 	if (!scn) {
-		HIF_ERROR("%s: hif_state NULL!", __func__);
+		hif_err("hif_state NULL!");
 		QDF_ASSERT(0);
 		return;
 	}
@@ -342,15 +342,13 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 	NAPI_DEBUG("-->(id=%d, force=%d)", id, force);
 
 	if (0 == (hif->napi_data.state & HIF_NAPI_INITED)) {
-		HIF_ERROR("%s: NAPI not initialized or entry %d not created",
-			  __func__, id);
+		hif_err("NAPI not initialized or entry %d not created", id);
 		rc = -EINVAL;
 	} else if (0 == (hif->napi_data.ce_map & (0x01 << ce))) {
-		HIF_ERROR("%s: NAPI instance %d (pipe %d) not created",
-			  __func__, id, ce);
+		hif_err("NAPI instance %d (pipe %d) not created", id, ce);
 		if (hif->napi_data.napis[ce])
-			HIF_ERROR("%s: memory allocated but ce_map not set %d (pipe %d)",
-				  __func__, id, ce);
+			hif_err("memory allocated but ce_map not set %d (pipe %d)",
+				id, ce);
 		rc = -EINVAL;
 	} else {
 		struct qca_napi_data *napid;
@@ -360,8 +358,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 		napii = napid->napis[ce];
 		if (!napii) {
 			if (napid->ce_map & (0x01 << ce))
-				HIF_ERROR("%s: napii & ce_map out of sync(ce %d)",
-					  __func__, ce);
+				hif_err("napii & ce_map out of sync(ce %d)", ce);
 			return -EINVAL;
 		}
 
@@ -373,8 +370,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 					 __func__, id);
 				NAPI_DEBUG("NAPI %d force disabled", id);
 			} else {
-				HIF_ERROR("%s: Cannot destroy active NAPI %d",
-					  __func__, id);
+				hif_err("Cannot destroy active NAPI %d", id);
 				rc = -EPERM;
 			}
 		}
@@ -642,8 +638,8 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		break;
 	}
 	default: {
-		HIF_ERROR("%s: unknown event: %d (data=0x%0lx)",
-			  __func__, event, (unsigned long) data);
+		hif_err("Unknown event: %d (data=0x%0lx)",
+			event, (unsigned long) data);
 		break;
 	} /* default */
 	}; /* switch */
@@ -780,8 +776,7 @@ bool hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
 
 	napii = scn->napi_data.napis[ce_id];
 	if (qdf_unlikely(!napii)) {
-		HIF_ERROR("%s, scheduling unallocated napi (ce:%d)",
-			      __func__, ce_id);
+		hif_err("scheduling unallocated napi (ce:%d)", ce_id);
 		qdf_atomic_dec(&scn->active_tasklet_cnt);
 		return false;
 	}
@@ -840,8 +835,7 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 			irq_modify_status(napi_info->irq, 0, IRQ_NO_BALANCING);
 
 			if (rc)
-				HIF_ERROR("error setting irq affinity hint: %d",
-					  rc);
+				hif_err("Setting irq affinity hint: %d", rc);
 			else
 				napi_info->stats[cpu].cpu_corrected++;
 		}
@@ -902,7 +896,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	struct CE_state *ce_state = NULL;
 
 	if (unlikely(!hif)) {
-		HIF_ERROR("%s: hif context is NULL", __func__);
+		hif_err("hif context is NULL");
 		QDF_ASSERT(0);
 		goto out;
 	}
@@ -936,10 +930,10 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 				(QCA_NAPI_BUDGET / QCA_NAPI_NUM_BUCKETS);
 		if (bucket >= QCA_NAPI_NUM_BUCKETS) {
 			bucket = QCA_NAPI_NUM_BUCKETS - 1;
-			HIF_ERROR("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)"
-					" normalized %d, napi budget %d",
-					bucket, QCA_NAPI_NUM_BUCKETS,
-					normalized, QCA_NAPI_BUDGET);
+			hif_err("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)"
+				" normalized %d, napi budget %d",
+				bucket, QCA_NAPI_NUM_BUCKETS,
+				normalized, QCA_NAPI_BUDGET);
 		}
 		napi_info->stats[cpu].napi_budget_uses[bucket]++;
 	} else {

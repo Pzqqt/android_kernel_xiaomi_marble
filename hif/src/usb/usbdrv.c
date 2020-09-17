@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -161,7 +161,7 @@ static QDF_STATUS usb_hif_alloc_pipe_resources
 		if (!urb_context->urb) {
 			status = QDF_STATUS_E_NOMEM;
 			qdf_mem_free(urb_context);
-			HIF_ERROR("urb_context->urb is null");
+			hif_err("urb_context->urb is null");
 			break;
 		}
 
@@ -193,7 +193,7 @@ static void usb_hif_free_pipe_resources(struct HIF_USB_PIPE *pipe)
 
 	if (!pipe->device) {
 		/* nothing allocated for this pipe */
-		HIF_ERROR("pipe->device is null");
+		hif_err("pipe->device is null");
 		return;
 	}
 
@@ -203,10 +203,10 @@ static void usb_hif_free_pipe_resources(struct HIF_USB_PIPE *pipe)
 			 pipe->urb_cnt);
 
 	if (pipe->urb_alloc != pipe->urb_cnt) {
-		HIF_ERROR("athusb: urb leak! lpipe:%d hpipe:0x%X urbs:%d avail:%d",
-				 pipe->logical_pipe_num,
-				 pipe->usb_pipe_handle, pipe->urb_alloc,
-				 pipe->urb_cnt);
+		hif_err("athusb: urb leak! lpipe:%d hpipe:0x%X urbs:%d avail:%d",
+			 pipe->logical_pipe_num,
+			 pipe->usb_pipe_handle, pipe->urb_alloc,
+			 pipe->urb_cnt);
 	}
 
 	while (true) {
@@ -570,8 +570,7 @@ static void usb_hif_usb_recv_prestart_complete
 				status = A_ECANCELED;
 				break;
 			default:
-				HIF_ERROR("%s recv pipe: %d (ep:0x%2.2X), failed:%d",
-					__func__,
+				hif_err("recv pipe: %d (ep:0x%2.2X), status: %d",
 					pipe->logical_pipe_num,
 					pipe->ep_address,
 					urb->status);
@@ -655,8 +654,7 @@ static void usb_hif_usb_recv_complete(struct urb *urb)
 				status = A_ECANCELED;
 				break;
 			default:
-				HIF_ERROR("%s recv pipe: %d (ep:0x%2.2X), failed:%d",
-					__func__,
+				hif_err("recv pipe: %d (ep:0x%2.2X), status: %d",
 					pipe->logical_pipe_num,
 					pipe->ep_address,
 					urb->status);
@@ -699,11 +697,10 @@ static void usb_hif_usb_recv_complete(struct urb *urb)
 						HIF_USB_RX_BUFFER_SIZE);
 		}
 	} else {
-		HIF_ERROR("%s:  pipe: %d, fail to post URB: status(%d) suspend (%d)",
-				__func__,
-				pipe->logical_pipe_num,
-				urb->status,
-				sc->suspend_state);
+		hif_err("pipe: %d, fail to post URB: status: %d suspend: %d",
+			pipe->logical_pipe_num,
+			urb->status,
+			sc->suspend_state);
 	}
 
 	HIF_DBG("-%s", __func__);
@@ -753,8 +750,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 				status = A_ECANCELED;
 				break;
 			default:
-				HIF_ERROR("%s recv pipe: %d (ep:0x%2.2X), failed:%d",
-					__func__,
+				hif_err("recv pipe: %d (ep:0x%2.2X), status: %d",
 					pipe->logical_pipe_num,
 					pipe->ep_address,
 					urb->status);
@@ -786,7 +782,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 				/* Hack into HTC header for bundle processing */
 				HtcHdr = (HTC_FRAME_HDR *) netdata;
 				if (HtcHdr->EndpointID >= ENDPOINT_MAX) {
-					HIF_ERROR("athusb: Rx: invalid EndpointID=%d",
+					hif_err("athusb: Rx: invalid EndpointID=%d",
 						HtcHdr->EndpointID);
 					break;
 				}
@@ -795,7 +791,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 				payloadLen = qdf_le16_to_cpu(payloadLen);
 
 				if (payloadLen > HIF_USB_RX_BUFFER_SIZE) {
-					HIF_ERROR("athusb: payloadLen too long %u",
+					hif_err("athusb: payloadLen too long %u",
 						payloadLen);
 					break;
 				}
@@ -803,7 +799,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 			}
 
 			if (netlen < frame_len) {
-				HIF_ERROR("athusb: subframe length %d not fitted into bundle packet length %d"
+				hif_err("athusb: subframe length %d not fitted into bundle packet length %d"
 					, netlen, frame_len);
 				break;
 			}
@@ -812,7 +808,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 			new_skb =
 				qdf_nbuf_alloc(NULL, frame_len, 0, 4, false);
 			if (!new_skb) {
-				HIF_ERROR("athusb: allocate skb (len=%u) failed"
+				hif_err("athusb: allocate skb (len=%u) failed"
 						, frame_len);
 				break;
 			}
@@ -837,7 +833,7 @@ static void usb_hif_usb_recv_bundle_complete(struct urb *urb)
 	} while (false);
 
 	if (!urb_context->buf)
-		HIF_ERROR("athusb: buffer in urb_context is NULL");
+		hif_err("athusb: buffer in urb_context is NULL");
 
 	/* reset urb_context->buf ==> seems not necessary */
 	usb_hif_free_urb_to_pipe(urb_context->pipe, urb_context);
@@ -906,7 +902,7 @@ static void usb_hif_post_recv_prestart_transfers(struct HIF_USB_PIPE *recv_pipe,
 		usb_status = usb_submit_urb(urb, GFP_ATOMIC);
 
 		if (usb_status) {
-			HIF_ERROR("athusb : usb bulk recv failed %d",
+			hif_err("athusb : usb bulk recv failed %d",
 				usb_status);
 			usb_hif_remove_pending_transfer(urb_context);
 			usb_hif_cleanup_recv_urb(urb_context);
@@ -970,7 +966,7 @@ static void usb_hif_post_recv_transfers(struct HIF_USB_PIPE *recv_pipe,
 		usb_status = usb_submit_urb(urb, GFP_ATOMIC);
 
 		if (usb_status) {
-			HIF_ERROR("athusb : usb bulk recv failed %d",
+			hif_err("athusb : usb bulk recv failed %d",
 				usb_status);
 			usb_hif_remove_pending_transfer(urb_context);
 			usb_hif_cleanup_recv_urb(urb_context);
@@ -1033,7 +1029,7 @@ static void usb_hif_post_recv_bundle_transfers(struct HIF_USB_PIPE *recv_pipe,
 		usb_status = usb_submit_urb(urb, GFP_ATOMIC);
 
 		if (usb_status) {
-			HIF_ERROR("athusb : usb bulk recv failed %d",
+			hif_err("athusb : usb bulk recv failed %d",
 				usb_status);
 			usb_hif_remove_pending_transfer(urb_context);
 			usb_hif_free_urb_to_pipe(urb_context->pipe,
@@ -1162,7 +1158,7 @@ QDF_STATUS usb_hif_submit_ctrl_out(struct HIF_DEVICE_USB *device,
 					size, 2 * HZ);
 
 		if (result < 0) {
-			HIF_ERROR("%s failed,result = %d", __func__, result);
+			hif_err("usb_control_msg failed, (result=%d)", result);
 			ret = QDF_STATUS_E_FAILURE;
 		}
 
@@ -1214,7 +1210,7 @@ QDF_STATUS usb_hif_submit_ctrl_in(struct HIF_DEVICE_USB *device,
 					size, 2 * HZ);
 
 		if (result < 0) {
-			HIF_ERROR("%s failed, result = %d", __func__, result);
+			hif_err("usb_control_msg failed, (result=%d)", result);
 			ret = QDF_STATUS_E_FAILURE;
 			break;
 		}

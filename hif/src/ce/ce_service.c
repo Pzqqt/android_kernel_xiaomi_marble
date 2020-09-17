@@ -501,7 +501,7 @@ qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,  qdf_nbuf_t msdu,
 		if (deltacount < 2) {
 			if (sendhead)
 				return msdu;
-			HIF_ERROR("%s: Out of descriptors", __func__);
+			hif_err("Out of descriptors");
 			src_ring->write_index = write_index;
 			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 					write_index);
@@ -625,9 +625,8 @@ QDF_STATUS ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
 
 	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index,
 					sw_index-1) < 1)) {
-		/* ol_tx_stats_inc_ring_error(sc->scn->pdev_txrx_handle, 1); */
-		HIF_ERROR("%s: ce send fail %d %d %d", __func__, nentries_mask,
-			  write_index, sw_index);
+		hif_err("ce send fail %d %d %d", nentries_mask,
+		       write_index, sw_index);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -1090,9 +1089,8 @@ more_watermarks:
 			goto more_completions;
 		} else {
 			if (!ce_srng_based(scn)) {
-				HIF_ERROR(
-					"%s:Potential infinite loop detected during Rx processing nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
-					__func__,
+				hif_err(
+					"Potential infinite loop detected during Rx processing nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
 					CE_state->dest_ring->nentries_mask,
 					CE_state->dest_ring->sw_index,
 					CE_DEST_RING_READ_IDX_GET(scn,
@@ -1109,9 +1107,8 @@ more_watermarks:
 			goto more_completions;
 		} else {
 			if (!ce_srng_based(scn)) {
-				HIF_ERROR(
-					"%s:Potential infinite loop detected during send completion nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
-					__func__,
+				hif_err(
+					"Potential infinite loop detected during send completion nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
 					CE_state->src_ring->nentries_mask,
 					CE_state->src_ring->sw_index,
 					CE_SRC_RING_READ_IDX_GET(scn,
@@ -1144,7 +1141,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 		return CE_state->receive_count;
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
-		HIF_ERROR("[premature rc=0]");
+		hif_err("[premature rc=0]");
 		return 0; /* no work done */
 	}
 
@@ -1164,7 +1161,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	if (Q_TARGET_ACCESS_END(scn) < 0)
-		HIF_ERROR("<--[premature rc=%d]", CE_state->receive_count);
+		hif_err("<--[premature rc=%d]", CE_state->receive_count);
 	return CE_state->receive_count;
 }
 qdf_export_symbol(ce_per_engine_service);
@@ -1286,13 +1283,13 @@ ce_send_cb_register(struct CE_handle *copyeng,
 	struct HIF_CE_state *hif_state;
 
 	if (!CE_state) {
-		HIF_ERROR("%s: Error CE state = NULL", __func__);
+		hif_err("Error CE state = NULL");
 		return;
 	}
 	scn = CE_state->scn;
 	hif_state = HIF_GET_CE_STATE(scn);
 	if (!hif_state) {
-		HIF_ERROR("%s: Error HIF state = NULL", __func__);
+		hif_err("Error HIF state = NULL");
 		return;
 	}
 	CE_state->send_context = ce_send_context;
@@ -1324,13 +1321,13 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 	struct HIF_CE_state *hif_state;
 
 	if (!CE_state) {
-		HIF_ERROR("%s: ERROR CE state = NULL", __func__);
+		hif_err("ERROR CE state = NULL");
 		return;
 	}
 	scn = CE_state->scn;
 	hif_state = HIF_GET_CE_STATE(scn);
 	if (!hif_state) {
-		HIF_ERROR("%s: Error HIF state = NULL", __func__);
+		hif_err("Error HIF state = NULL");
 		return;
 	}
 	CE_state->recv_context = CE_recv_context;

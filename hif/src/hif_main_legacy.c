@@ -65,7 +65,7 @@ QDF_STATUS hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 	int i;
 
 	if (!scn) {
-		HIF_ERROR("%s: scn is NULL", __func__);
+		hif_err("scn is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}

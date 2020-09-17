@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -163,7 +163,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 
 	ce_diag = hif_state->ce_diag;
 	if (!ce_diag) {
-		HIF_ERROR("%s: DIAG CE not present", __func__);
+		hif_err("DIAG CE not present");
 		return QDF_STATUS_E_INVAL;
 	}
 	/* not supporting diag ce on srng based systems, therefore we know this
@@ -306,7 +306,7 @@ done:
 	if (status == QDF_STATUS_SUCCESS)
 		qdf_mem_copy(data, data_buf, orig_nbytes);
 	else
-		HIF_ERROR("%s failure (0x%x)", __func__, address);
+		hif_err("Failure (0x%x)", address);
 
 	if (data_buf)
 		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
@@ -368,7 +368,7 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 
 	ce_diag = hif_state->ce_diag;
 	if (!ce_diag) {
-		HIF_ERROR("%s: DIAG CE not present", __func__);
+		hif_err("DIAG CE not present");
 		return QDF_STATUS_E_INVAL;
 	}
 	/* not supporting diag ce on srng based systems, therefore we know this
@@ -495,8 +495,7 @@ done:
 	}
 
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s failure (0x%llx)", __func__,
-			(uint64_t)ce_phy_addr);
+		hif_err("Failure (0x%llx)", (uint64_t)ce_phy_addr);
 	}
 
 	return status;

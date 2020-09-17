@@ -62,14 +62,14 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 	struct HIF_CE_state *hif_ce_state;
 
 	if (!scn) {
-		HIF_ERROR("%s: tasklet scn is null", __func__);
+		hif_err("tasklet scn is null");
 		return;
 	}
 
 	hif_ce_state = HIF_GET_CE_STATE(scn);
 
 	if (scn->hif_init_done == false) {
-		HIF_ERROR("%s: wlan driver is unloaded", __func__);
+		hif_err("wlan driver is unloaded");
 		return;
 	}
 	if (hif_ce_state->tasklets[ce_work->id].inited)
@@ -362,8 +362,8 @@ static void ce_tasklet(unsigned long data)
 				 HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
 
 	if (qdf_atomic_read(&scn->link_suspended)) {
-		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
-				__func__, tasklet_entry->ce_id);
+		hif_err("ce %d tasklet fired after link suspend",
+			tasklet_entry->ce_id);
 		QDF_BUG(0);
 	}
 
@@ -465,8 +465,8 @@ int hif_drain_tasklets(struct hif_softc *scn)
 
 	while ((tasklet_cnt = qdf_atomic_read(&scn->active_tasklet_cnt))) {
 		if (++ce_drain_wait_cnt > HIF_CE_DRAIN_WAIT_CNT) {
-			HIF_ERROR("%s: CE still not done with access: %d",
-				  __func__, tasklet_cnt);
+			hif_err("CE still not done with access: %d",
+				tasklet_cnt);
 
 			return -EFAULT;
 		}
@@ -496,7 +496,7 @@ static bool hif_interrupt_is_ut_resume(struct hif_softc *scn, int ce_id)
 	/* ensure passed ce_id matches wake ce_id */
 	errno = hif_get_wake_ce_id(scn, &wake_ce_id);
 	if (errno) {
-		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
+		hif_err("Failed to get wake CE Id: %d", errno);
 		return false;
 	}
 
@@ -626,13 +626,13 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
 	if (tasklet_entry->ce_id != ce_id) {
-		HIF_ERROR("%s: ce_id (expect %d, received %d) does not match",
-			  __func__, tasklet_entry->ce_id, ce_id);
+		hif_err("ce_id (expect %d, received %d) does not match",
+			tasklet_entry->ce_id, ce_id);
 		return IRQ_NONE;
 	}
 	if (unlikely(ce_id >= CE_COUNT_MAX)) {
-		HIF_ERROR("%s: ce_id=%d > CE_COUNT_MAX=%d",
-			  __func__, tasklet_entry->ce_id, CE_COUNT_MAX);
+		hif_err("ce_id=%d > CE_COUNT_MAX=%d",
+			tasklet_entry->ce_id, CE_COUNT_MAX);
 		return IRQ_NONE;
 	}
 
@@ -708,8 +708,7 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 	ret = hif_napi_event(GET_HIF_OPAQUE_HDL(scn),
 			     NAPI_EVT_INT_STATE, (void *)0);
 	if (ret != 0)
-		HIF_ERROR("%s: napi_event INT_STATE returned %d",
-			  __func__, ret);
+		hif_err("napi_event INT_STATE returned %d", ret);
 	/* this is not fatal, continue */
 
 	/* filter mask to free only for ce's with irq registered */
@@ -719,9 +718,9 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 			ret = pld_ce_free_irq(scn->qdf_dev->dev, id,
 					&hif_ce_state->tasklets[id]);
 			if (ret < 0)
-				HIF_ERROR(
-					"%s: pld_unregister_irq error - ce_id = %d, ret = %d",
-					__func__, id, ret);
+				hif_err(
+					"pld_unregister_irq error - ce_id = %d, ret = %d",
+					id, ret);
 		}
 		ce_disable_polling(scn->ce_id_to_state[id]);
 	}
@@ -757,9 +756,9 @@ QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 				irqflags, ce_name[id],
 				&hif_ce_state->tasklets[id]);
 			if (ret) {
-				HIF_ERROR(
-					"%s: cannot register CE %d irq handler, ret = %d",
-					__func__, id, ret);
+				hif_err(
+					"cannot register CE %d irq handler, ret = %d",
+					id, ret);
 				ce_unregister_irq(hif_ce_state, done_mask);
 				return QDF_STATUS_E_FAULT;
 			}

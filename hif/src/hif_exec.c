@@ -809,7 +809,7 @@ QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 	int i, status;
 
 	if (scn->ext_grp_irq_configured) {
-		HIF_ERROR("%s Called after ext grp irq configured\n", __func__);
+		hif_err("Called after ext grp irq configured");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -823,7 +823,7 @@ QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 			status = hif_grp_irq_configure(scn, hif_ext_group);
 		}
 		if (status != 0) {
-			HIF_ERROR("%s: failed for group %d", __func__, i);
+			hif_err("Failed for group %d", i);
 			hif_ext_group->irq_enabled = false;
 		}
 	}
@@ -964,17 +964,17 @@ QDF_STATUS hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	struct hif_exec_context *hif_ext_group;
 
 	if (scn->ext_grp_irq_configured) {
-		HIF_ERROR("%s Called after ext grp irq configured\n", __func__);
+		hif_err("Called after ext grp irq configured");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (hif_state->hif_num_extgroup >= HIF_MAX_GROUP) {
-		HIF_ERROR("%s Max groups reached\n", __func__);
+		hif_err("Max groups: %d reached", hif_state->hif_num_extgroup);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (numirq >= HIF_MAX_GRP_IRQ) {
-		HIF_ERROR("%s invalid numirq\n", __func__);
+		hif_err("Invalid numirq: %d", numirq);
 		return QDF_STATUS_E_FAILURE;
 	}
 

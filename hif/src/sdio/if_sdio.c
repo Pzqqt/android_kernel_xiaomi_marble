@@ -138,7 +138,7 @@ void hif_get_target_revision(struct hif_softc *ol_sc)
 	rv = hif_diag_read_access(hif_hdl,
 			(CHIP_ID_ADDRESS | RTC_SOC_BASE_ADDRESS), &chip_id);
 	if (rv != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s[%d]: get chip id fail\n", __func__, __LINE__);
+		hif_err("get chip id fail");
 	} else {
 		ol_sc_local->target_info.target_revision =
 			CHIP_ID_REVISION_GET(chip_id);
@@ -162,7 +162,7 @@ QDF_STATUS hif_sdio_enable_bus(struct hif_softc *ol_sc, struct device *dev,
 	const struct sdio_device_id *id = (const struct sdio_device_id *)bid;
 
 	if (hif_sdio_device_inserted(ol_sc, dev, id)) {
-		HIF_ERROR("wlan: %s hif_sdio_device_inserted failed", __func__);
+		hif_err("hif_sdio_device_inserted failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -270,7 +270,7 @@ int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 
 	if (hif_diag_read_access(hif_ctx, FW_INDICATOR_ADDRESS,
 				 &fw_indication) != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s Get fw indication failed\n", __func__);
+		hif_err("Get fw indication failed");
 		return 1;
 	}
 	HIF_INFO("%s: fw indication is 0x%x def 0x%x.\n", __func__,

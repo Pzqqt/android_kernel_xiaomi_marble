@@ -256,8 +256,7 @@ void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (!scn) {
-		HIF_ERROR("%s: error: scn or scn->hif_sc is NULL!",
-		       __func__);
+		hif_err("scn or scn->hif_sc is NULL!");
 		return;
 	}
 
@@ -646,16 +645,13 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 	int bus_context_size = hif_bus_get_context_size(bus_type);
 
 	if (bus_context_size == 0) {
-		HIF_ERROR("%s: context size 0 not allowed", __func__);
+		hif_err("context size 0 not allowed");
 		return NULL;
 	}
 
 	scn = (struct hif_softc *)qdf_mem_malloc(bus_context_size);
-	if (!scn) {
-		HIF_ERROR("%s: cannot alloc memory for HIF context of size:%d",
-						__func__, bus_context_size);
+	if (!scn)
 		return GET_HIF_OPAQUE_HDL(scn);
-	}
 
 	scn->qdf_dev = qdf_ctx;
 	scn->hif_con_param = mode;
@@ -672,8 +668,8 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 	hif_set_event_hist_mask(GET_HIF_OPAQUE_HDL(scn));
 	status = hif_bus_open(scn, bus_type);
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: hif_bus_open error = %d, bus_type = %d",
-				  __func__, status, bus_type);
+		hif_err("hif_bus_open error = %d, bus_type = %d",
+			status, bus_type);
 		qdf_mem_free(scn);
 		scn = NULL;
 	}
@@ -710,7 +706,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (!scn) {
-		HIF_ERROR("%s: hif_opaque_softc is NULL", __func__);
+		hif_err("hif_opaque_softc is NULL");
 		return;
 	}
 
@@ -861,25 +857,24 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (!scn) {
-		HIF_ERROR("%s: hif_ctx = NULL", __func__);
+		hif_err("hif_ctx = NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	status = hif_enable_bus(scn, dev, bdev, bid, type);
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: hif_enable_bus error = %d",
-				  __func__, status);
+		hif_err("hif_enable_bus error = %d", status);
 		return status;
 	}
 
 	status = hif_hal_attach(scn);
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: hal attach failed", __func__);
+		hif_err("hal attach failed");
 		goto disable_bus;
 	}
 
 	if (hif_bus_configure(scn)) {
-		HIF_ERROR("%s: Target probe failed.", __func__);
+		hif_err("Target probe failed");
 		status = QDF_STATUS_E_FAILURE;
 		goto hal_detach;
 	}
@@ -974,7 +969,7 @@ static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
 		return;
 
 	if (hif_dump_registers(scn))
-		HIF_ERROR("Failed to dump bus registers!");
+		hif_err("Failed to dump bus registers!");
 }
 
 /**
@@ -1006,7 +1001,7 @@ void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 	}
 
 	if (hif_is_load_or_unload_in_progress(scn)) {
-		HIF_ERROR("%s: Load/unload is in progress, ignore!", __func__);
+		hif_err("Load/unload is in progress, ignore!");
 		return;
 	}
 
@@ -1099,8 +1094,8 @@ int hif_get_device_type(uint32_t device_id,
 			break;
 
 		default:
-			HIF_ERROR("%s: error - dev_id = 0x%x, rev_id = 0x%x",
-				   __func__, device_id, revision_id);
+			hif_err("dev_id = 0x%x, rev_id = 0x%x",
+				device_id, revision_id);
 			ret = -ENODEV;
 			goto end;
 		}
@@ -1217,14 +1212,13 @@ int hif_get_device_type(uint32_t device_id,
 		break;
 
 	default:
-		HIF_ERROR("%s: Unsupported device ID = 0x%x!",
-			  __func__, device_id);
+		hif_err("Unsupported device ID = 0x%x!", device_id);
 		ret = -ENODEV;
 		break;
 	}
 
 	if (*target_type == TARGET_TYPE_UNKNOWN) {
-		HIF_ERROR("%s: Unsupported target_type!", __func__);
+		hif_err("Unsupported target_type!");
 		ret = -ENODEV;
 	}
 end:
@@ -1287,7 +1281,7 @@ void hif_offld_flush_cb_register(struct hif_opaque_softc *scn,
 	if (hif_napi_enabled(scn, -1))
 		hif_napi_rx_offld_flush_cb_register(scn, offld_flush_handler);
 	else
-		HIF_ERROR("NAPI not enabled\n");
+		hif_err("NAPI not enabled");
 }
 qdf_export_symbol(hif_offld_flush_cb_register);
 
@@ -1296,7 +1290,7 @@ void hif_offld_flush_cb_deregister(struct hif_opaque_softc *scn)
 	if (hif_napi_enabled(scn, -1))
 		hif_napi_rx_offld_flush_cb_deregister(scn);
 	else
-		HIF_ERROR("NAPI not enabled\n");
+		hif_err("NAPI not enabled");
 }
 qdf_export_symbol(hif_offld_flush_cb_deregister);
 

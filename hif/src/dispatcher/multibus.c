@@ -82,7 +82,7 @@ static QDF_STATUS hif_verify_basic_ops(struct hif_softc *hif_sc)
 
 	for (i = 0; i < NUM_OPS; i++) {
 		if (!ops_array[i]) {
-			HIF_ERROR("%s: function %d is null", __func__, i);
+			hif_err("ops_array[%d] is null", i);
 			status = QDF_STATUS_E_NOSUPPORT;
 		}
 	}
@@ -153,7 +153,7 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 	}
 
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: %d not supported", __func__, bus_type);
+		hif_err("bus_type: %d not supported", bus_type);
 		return status;
 	}
 

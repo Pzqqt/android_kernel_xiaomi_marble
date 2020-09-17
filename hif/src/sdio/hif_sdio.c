@@ -60,7 +60,7 @@ QDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx)
 	HIF_ENTER();
 	ret = hif_sdio_bus_configure(hif_sc);
 	if (ret) {
-		HIF_ERROR("%s: hif_sdio_bus_configure failed", __func__);
+		hif_err("hif_sdio_bus_configure failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 

@@ -619,8 +619,7 @@ static void __hif_runtime_pm_set_state(struct hif_softc *scn,
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
 
 	if (!rpm_ctx) {
-		HIF_ERROR("%s: HIF_CTX not initialized",
-			  __func__);
+		hif_err("HIF_CTX not initialized");
 		return;
 	}
 
@@ -748,7 +747,7 @@ int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (!hif_can_suspend_link(hif_ctx)) {
-		HIF_ERROR("Runtime PM not supported for link up suspend");
+		hif_err("Runtime PM not supported for link up suspend");
 		return -EINVAL;
 	}
 
@@ -811,7 +810,7 @@ int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 
 	errno = hif_bus_suspend(hif_ctx);
 	if (errno) {
-		HIF_ERROR("%s: failed bus suspend: %d", __func__, errno);
+		hif_err("Failed bus suspend: %d", errno);
 		return errno;
 	}
 
@@ -819,7 +818,7 @@ int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 
 	errno = hif_bus_suspend_noirq(hif_ctx);
 	if (errno) {
-		HIF_ERROR("%s: failed bus suspend noirq: %d", __func__, errno);
+		hif_err("Failed bus suspend noirq: %d", errno);
 		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
 		goto bus_resume;
 	}
@@ -878,7 +877,7 @@ int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
 	errno = hif_bus_resume(hif_ctx);
 	if (errno)
-		HIF_ERROR("%s: failed runtime resume: %d", __func__, errno);
+		hif_err("Failed runtime resume: %d", errno);
 
 	return errno;
 }
@@ -1209,8 +1208,7 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
 	char *error = NULL;
 
 	if (!scn) {
-		HIF_ERROR("%s: Could not do runtime put, scn is null",
-			  __func__);
+		hif_err("Could not do runtime put, scn is null");
 		return -EFAULT;
 	}
 
@@ -1560,7 +1558,7 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 	struct hif_pm_runtime_lock *context = data;
 
 	if (!context) {
-		HIF_ERROR("Runtime PM wakelock context is NULL");
+		hif_err("Runtime PM wakelock context is NULL");
 		return;
 	}
 

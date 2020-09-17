@@ -931,8 +931,7 @@ static void ce_prepare_shadow_register_v2_cfg_srng(struct hif_softc *scn,
 		int *num_shadow_registers_configured)
 {
 	if (!scn->hal_soc) {
-		HIF_ERROR("%s: hal not initialized: not initializing shadow config",
-			  __func__);
+		hif_err("hal not initialized: not initializing shadow config");
 		return;
 	}
 
@@ -940,8 +939,7 @@ static void ce_prepare_shadow_register_v2_cfg_srng(struct hif_softc *scn,
 			      num_shadow_registers_configured);
 
 	if (*num_shadow_registers_configured != 0) {
-		HIF_ERROR("%s: hal shadow register configuration allready constructed",
-			  __func__);
+		hif_err("hal shadow register configuration allready constructed");
 
 		/* return with original configuration*/
 		return;

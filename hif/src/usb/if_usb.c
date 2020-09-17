@@ -82,7 +82,7 @@ hif_usb_procfs_init(struct hif_softc *scn)
 	HIF_ENTER();
 
 	if (athdiag_procfs_init(scn) != 0) {
-		HIF_ERROR("athdiag_procfs_init failed");
+		hif_err("athdiag_procfs_init failed");
 		ret = A_ERROR;
 	}
 
@@ -142,7 +142,7 @@ static int hif_usb_disable_lpm(struct usb_device *udev)
 	HIF_ENTER();
 
 	if (!udev || !udev->bus) {
-		HIF_ERROR("Invalid input parameters");
+		hif_err("Invalid input parameters");
 		goto exit;
 	}
 
@@ -198,7 +198,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	u32 target_type;
 
 	if (!scn) {
-		HIF_ERROR("%s: hif_ctx is NULL", __func__);
+		hif_err("hif_ctx is NULL");
 		goto err_usb;
 	}
 
@@ -213,8 +213,8 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	vendor_id = qdf_le16_to_cpu(usbdev->descriptor.idVendor);
 	product_id = qdf_le16_to_cpu(usbdev->descriptor.idProduct);
 
-	HIF_ERROR("%s: con_mode = 0x%x, vendor_id = 0x%x product_id = 0x%x",
-		__func__, hif_get_conparam(scn), vendor_id, product_id);
+	hif_err("con_mode = 0x%x, vendor_id = 0x%x product_id = 0x%x",
+		hif_get_conparam(scn), vendor_id, product_id);
 
 	sc->pdev = (void *)usbdev;
 	sc->dev = &usbdev->dev;
@@ -234,7 +234,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 		if ((usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
 				     USB_REQ_SET_CONFIGURATION, 0, 1, 0,
 				     NULL, 0, HZ)) < 0) {
-			HIF_ERROR("%s[%d]", __func__, __LINE__);
+			hif_err("usb_control_msg failed");
 			goto err_usb;
 		}
 		usb_set_interface(usbdev, 0, 0);
@@ -253,7 +253,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 
 	sc->interface = interface;
 	if (hif_usb_device_init(sc) != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("ath: %s: hif_usb_device_init failed", __func__);
+		hif_err("hif_usb_device_init failed");
 		goto err_reset;
 	}
 
@@ -480,8 +480,7 @@ void hif_usb_reg_tbl_attach(struct hif_softc *scn)
 					RTC_SOC_BASE_ADDRESS),
 					&chip_id);
 		if (rv != QDF_STATUS_SUCCESS) {
-			HIF_ERROR("%s: get chip id val (%d)", __func__,
-				rv);
+			hif_err("get chip id val: %d", rv);
 		}
 		tgt_info->target_revision =
 				CHIP_ID_REVISION_GET(chip_id);
@@ -632,7 +631,7 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 	reg = (uint32_t *) (data + 4);
 	if (sc->fw_ram_dumping == 0) {
 		sc->fw_ram_dumping = 1;
-		HIF_ERROR("Firmware %s dump:\n", fw_ram_seg_name[i]);
+		hif_info("Firmware %s dump:", fw_ram_seg_name[i]);
 		sc->ramdump[i] =
 			qdf_mem_malloc(sizeof(struct fw_ramdump) +
 					fw_ram_reg_size[i]);
@@ -641,9 +640,8 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 
 		(sc->ramdump[i])->mem = (uint8_t *) (sc->ramdump[i] + 1);
 		fw_ram_seg_addr[i] = (sc->ramdump[i])->mem;
-		HIF_ERROR("FW %s start addr = %#08x\n",
-			fw_ram_seg_name[i], *reg);
-		HIF_ERROR("Memory addr for %s = %pK\n",
+		hif_info("FW %s start addr = %#08x Memory addr for %s = %pK",
+			fw_ram_seg_name[i], *reg,
 			fw_ram_seg_name[i],
 			(sc->ramdump[i])->mem);
 		(sc->ramdump[i])->start_addr = *reg;
@@ -655,13 +653,13 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 	if (sc->ramdump[i]->length <= fw_ram_reg_size[i]) {
 		qdf_mem_copy(ram_ptr, (uint8_t *) reg, len - 8);
 	} else {
-		HIF_ERROR("memory copy overlap\n");
+		hif_err("memory copy overlap");
 		QDF_BUG(0);
 	}
 
 	if (pattern == FW_RAMDUMP_END_PATTERN) {
-		HIF_ERROR("%s memory size = %d\n", fw_ram_seg_name[i],
-				(sc->ramdump[i])->length);
+		hif_err("%s memory size = %d", fw_ram_seg_name[i],
+			(sc->ramdump[i])->length);
 		if (i == (FW_RAM_SEG_CNT - 1))
 			QDF_BUG(0);
 
@@ -707,8 +705,8 @@ void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 	pattern = *((uint32_t *) data);
 
 	if (pattern == FW_ASSERT_PATTERN) {
-		HIF_ERROR("Firmware crash detected...\n");
-		HIF_ERROR("target_type: %d.target_version %d. target_revision%d.",
+		hif_err("Firmware crash detected...");
+		hif_err("target_type: %d target_version: %d target_revision: %d",
 			tgt_info->target_type,
 			tgt_info->target_version,
 			tgt_info->target_revision);

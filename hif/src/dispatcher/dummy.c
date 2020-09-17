@@ -357,8 +357,7 @@ int hif_dummy_bus_reset_resume(struct hif_softc *hif_ctx)
 
 int hif_dummy_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 {
-	HIF_ERROR("%s: hif_map_ce_to_irq is not implemented on this platform",
-		  __func__);
+	hif_err("hif_map_ce_to_irq is not implemented on this platform");
 	QDF_BUG(0);
 	return -(1);
 }

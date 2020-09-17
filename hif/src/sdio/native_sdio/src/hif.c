@@ -348,10 +348,9 @@ QDF_STATUS hif_sdio_probe(struct hif_softc *ol_sc,
 		pld_hif_sdio_get_virt_ramdump_mem(&func->dev,
 						  &scn->ramdump_size);
 	if (!scn->ramdump_base || !scn->ramdump_size) {
-		HIF_ERROR("%s: Failed ramdump res alloc - base:%s, len:%lu",
-			  __func__,
-			  scn->ramdump_base ? "ok" : "null",
-			  scn->ramdump_size);
+		hf_err("Failed ramdump res alloc - base:%s, len:%lu",
+			scn->ramdump_base ? "ok" : "null",
+			scn->ramdump_size);
 	} else {
 		HIF_INFO("%s: ramdump base %pK size %lu", __func__,
 			 scn->ramdump_base, scn->ramdump_size);
@@ -507,16 +506,16 @@ hif_configure_device(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 		break;
 	case HIF_DEVICE_GET_HTC_CONTEXT:
 		if (!config) {
-			HIF_ERROR("%s: htc context is NULL", __func__);
+			hif_err("htc context is NULL");
 			return QDF_STATUS_E_FAILURE;
 		}
 		*(void **)config = device->htc_context;
 		break;
 	case HIF_BMI_DONE:
-		HIF_ERROR("%s: BMI_DONE", __func__);
+		hif_debug("BMI_DONE");
 		break;
 	default:
-		HIF_ERROR("%s: Unsupported  opcode: %d", __func__, opcode);
+		hif_err("Unsupported opcode: %d", opcode);
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -618,7 +617,7 @@ static QDF_STATUS hif_device_inserted(struct hif_softc *ol_sc,
 			}
 		}
 		if (i == MAX_HIF_DEVICES) {
-			HIF_ERROR("%s: No more slots", __func__);
+			hif_err("No more slots");
 			goto del_hif_dev;
 		}
 
@@ -812,7 +811,7 @@ int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev)
 	}
 
 	if (sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER)) {
-		HIF_ERROR("%s: set pm_flags failed", __func__);
+		hif_err("set pm_flags failed");
 		return -EINVAL;
 	}
 
@@ -825,7 +824,7 @@ int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev)
 				     sizeof(config));
 
 		if (sdio_set_host_pm_flags(func, MMC_PM_WAKE_SDIO_IRQ)) {
-			HIF_ERROR("%s: set pm_flags failed", __func__);
+			hif_err("set pm_flags failed");
 			return -EINVAL;
 		}
 		hif_mask_interrupt(device);
@@ -851,7 +850,7 @@ int hif_device_resume(struct hif_softc *ol_sc, struct device *dev)
 
 	device = get_hif_device(ol_sc, func);
 	if (!device) {
-		HIF_ERROR("%s: hif object is null", __func__);
+		hif_err("hif object is null");
 		return -EINVAL;
 	}
 
@@ -1021,8 +1020,7 @@ int func0_cmd52_write_byte(struct mmc_card *card,
 	status = mmc_wait_for_cmd(card->host, &io_cmd, 0);
 
 	if (status)
-		HIF_ERROR("%s: mmc_wait_for_cmd returned %d",
-			  __func__, status);
+		hif_err("mmc_wait_for_cmd returned %d", status);
 
 	return status;
 }
@@ -1047,8 +1045,7 @@ int func0_cmd52_read_byte(struct mmc_card *card,
 		*byte = io_cmd.resp[0] & 0xFF;
 
 	if (err)
-		HIF_ERROR("%s: mmc_wait_for_cmd returned %d",
-			  __func__, err);
+		hif_err("mmc_wait_for_cmd returned %d", err);
 
 	return err;
 }
@@ -1059,11 +1056,9 @@ void hif_dump_cccr(struct hif_sdio_dev *hif_device)
 	uint8_t cccr_val;
 	uint32_t err;
 
-	HIF_ERROR("%s: Enter", __func__);
-
 	if (!hif_device || !hif_device->func ||
 				!hif_device->func->card) {
-		HIF_ERROR("%s: incorrect input", __func__);
+		hif_err("Incorrect input");
 		return;
 	}
 
@@ -1071,13 +1066,11 @@ void hif_dump_cccr(struct hif_sdio_dev *hif_device)
 		err = func0_cmd52_read_byte(hif_device->func->card,
 						i, &cccr_val);
 		if (err)
-			HIF_ERROR("%s:Reading CCCR 0x%02X failed: %d",
-				  __func__, i, (unsigned int)err);
+			hif_err("Reading CCCR 0x%02X failed: %d",
+				i, (unsigned int)err);
 		else
-			HIF_ERROR("%X(%X) ", i, (unsigned int)cccr_val);
+			hif_err("%X(%X) ", i, (unsigned int)cccr_val);
 	}
-
-	HIF_ERROR("%s: Exit", __func__);
 }
 
 QDF_STATUS hif_sdio_device_inserted(struct hif_softc *ol_sc,
@@ -1087,9 +1080,9 @@ QDF_STATUS hif_sdio_device_inserted(struct hif_softc *ol_sc,
 	struct sdio_func *func = dev_to_sdio_func(dev);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	HIF_ERROR("%s: Enter", __func__);
+	hif_debug("Enter");
 	status = hif_device_inserted(ol_sc, func, id);
-	HIF_ERROR("%s: Exit: status:%d", __func__, status);
+	hif_debug("Exit: status: %d", status);
 
 	return status;
 }

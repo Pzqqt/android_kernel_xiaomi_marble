@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  *
  *
@@ -94,7 +94,7 @@ static inline uint32_t hif_get_send_buffer_flags(struct hif_sdio_device *pdev)
 	if (pdev)
 		return (uint32_t)HIF_WR_ASYNC_BLOCK_INC;
 
-	HIF_ERROR("%s: hif obj is null. Not populating xfer flags", __func__);
+	hif_err("hif obj is null. Not populating xfer flags");
 
 	return 0;
 }

@@ -83,8 +83,8 @@ static void usb_hif_usb_transmit_complete(struct urb *urb)
 	usb_hif_remove_pending_transfer(urb_context);
 
 	if (urb->status != 0) {
-		HIF_ERROR("%s:  pipe: %d, failed:%d",
-			  __func__, pipe->logical_pipe_num, urb->status);
+		hif_err("pipe: %d, failed: %d", pipe->logical_pipe_num,
+			urb->status);
 	}
 
 	buf = urb_context->buf;
@@ -160,8 +160,7 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 		}
 	} else {
 		/* Extra fragments overflow */
-		HIF_ERROR("%s Extra fragments count overflow : %d\n",
-			  __func__, frag_count);
+		hif_err("Extra fragments count overflow : %d", frag_count);
 		status = QDF_STATUS_E_RESOURCES;
 		goto err;
 	}
@@ -210,8 +209,8 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 		/* TODO : note, it is possible to run out of urbs if 2
 		 * endpoints map to the same pipe ID
 		 */
-		HIF_ERROR("%s pipe:%d no urbs left. URB Cnt : %d",
-			__func__, pipe_id, pipe->urb_cnt);
+		hif_err("pipe: %d no urbs left. URB Cnt: %d",
+			pipe_id, pipe->urb_cnt);
 		status = QDF_STATUS_E_RESOURCES;
 		goto err;
 	}
@@ -245,8 +244,7 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 		else
 			qdf_nbuf_pull_head(buf, head_data_len);
 		urb_context->buf = NULL;
-		HIF_ERROR("athusb : usb bulk transmit failed %d",
-				usb_status);
+		hif_err("athusb: usb bulk transmit failed %d", usb_status);
 		usb_hif_remove_pending_transfer(urb_context);
 		usb_hif_cleanup_transmit_urb(urb_context);
 		status = QDF_STATUS_E_FAILURE;
@@ -256,7 +254,7 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 err:
 	if (!QDF_IS_STATUS_SUCCESS(status) &&
 				(status != QDF_STATUS_E_RESOURCES)) {
-		HIF_ERROR("athusb send failed %d", status);
+		hif_err("athusb send failed %d", status);
 	}
 
 	HIF_DBG("-%s pipe : %d", __func__, pipe_id);
@@ -388,8 +386,7 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 		device->udev = dev;
 		device->interface = interface;
 
-		HIF_ERROR("%s device %pK device->udev %pK device->interface %pK",
-			__func__,
+		hif_err("device %pK device->udev %pK device->interface %pK",
 			device,
 			device->udev,
 			device->interface);
@@ -422,7 +419,7 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 		device->rx_ctrl_pipe_supported = 1;
 
 	if (status != QDF_STATUS_SUCCESS)
-		HIF_ERROR("%s: abnormal condition", __func__);
+		hif_err("abnormal condition (status=%d)", status);
 
 	HIF_TRACE("+%s", __func__);
 	return status;
@@ -788,7 +785,7 @@ void hif_dump_info(struct hif_opaque_softc *scn)
 
 	for (i = 0; i < HIF_USB_PIPE_MAX; i++) {
 		pipe = &device->pipes[i];
-		HIF_ERROR("PipeIndex : %d URB Cnt : %d PipeHandle : %x",
+		hif_err("PipeIndex: %d URB Cnt: %d PipeHandle: %x",
 			i, pipe->urb_cnt,
 			pipe->usb_pipe_handle);
 		if (usb_pipeisoc(pipe->usb_pipe_handle))
