@@ -139,8 +139,9 @@ struct dp_pdev_tx_capture {
 	struct cdp_tx_completion_ppdu *dummy_ppdu_desc;
 	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
 	qdf_atomic_t tx_cap_usr_mode;
-
 	struct tx_cap_debug_log_info log_info;
+	struct dp_tx_cap_nbuf_list *last_nbuf_ppdu_list;
+	uint32_t last_nbuf_ppdu_list_arr_sz;
 };
 
 /* Tx TID */
