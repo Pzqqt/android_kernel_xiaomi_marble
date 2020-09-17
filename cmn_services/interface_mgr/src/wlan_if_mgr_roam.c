@@ -192,12 +192,27 @@ static void if_mgr_get_vdev_id_from_bssid(struct wlan_objmgr_pdev *pdev,
 {
 	struct bssid_search_arg *bssid_arg = arg;
 	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
-	struct wlan_objmgr_vdev_objmgr *objmgr = &vdev->vdev_objmgr;
-	struct wlan_objmgr_peer *peer = objmgr->bss_peer;
+	struct wlan_objmgr_peer *peer;
+
+	if (!(wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE ||
+	      wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_CLIENT_MODE))
+		return;
+
+	/* Need to check the connection manager state when that becomes
+	 * available
+	 */
+	if (wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_UP)
+		return;
+
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_IF_MGR_ID);
+	if (!peer)
+		return;
 
 	if (WLAN_ADDR_EQ(bssid_arg->peer_addr.bytes,
-			 wlan_peer_get_macaddr(peer)))
+			 wlan_peer_get_macaddr(peer)) == QDF_STATUS_SUCCESS)
 		bssid_arg->vdev_id = wlan_vdev_get_id(vdev);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_IF_MGR_ID);
 }
 
 QDF_STATUS if_mgr_validate_candidate(struct wlan_objmgr_vdev *vdev,
