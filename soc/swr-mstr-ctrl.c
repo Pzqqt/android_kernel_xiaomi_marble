@@ -755,6 +755,8 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 
 	if (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ)
 		usecase = 1;
+	else if (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ)
+		usecase = 2;
 
 	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
@@ -1366,11 +1368,14 @@ static void swrm_get_device_frame_shape(struct swr_mstr_ctrl *swrm,
 
 	if ((swrm->master_id == MASTER_ID_TX) &&
 		((swrm->bus_clk == SWR_CLK_RATE_9P6MHZ) ||
+		 (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ) ||
 		 (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ))) {
 		dev_num = swrm_get_device_id(swrm, port_req->dev_num);
 		port_id = port_req->slave_port_id;
 		if (swrm->bus_clk == SWR_CLK_RATE_9P6MHZ)
 			pp_dev = swrdev_frame_params_9p6MHz[dev_num].pp;
+		else if (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ)
+			pp_dev = swrdev_frame_params_0p6MHz[dev_num].pp;
 		else
 			pp_dev = swrdev_frame_params_4p8MHz[dev_num].pp;
 		pp_port = &pp_dev[port_id];
@@ -1759,6 +1764,7 @@ static int swrm_connect_port(struct swr_master *master,
 	mutex_lock(&swrm->mlock);
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
+		swr_port_response(master, portinfo->tid);
 		mutex_unlock(&swrm->devlock);
 		mutex_unlock(&swrm->mlock);
 		return -EINVAL;
@@ -1827,6 +1833,7 @@ static int swrm_connect_port(struct swr_master *master,
 
 port_fail:
 mem_fail:
+	swr_port_response(master, portinfo->tid);
 	/* cleanup  port reqs in error condition */
 	swrm_cleanup_disabled_port_reqs(master);
 	mutex_unlock(&swrm->mlock);
@@ -1863,8 +1870,7 @@ static int swrm_disconnect_port(struct swr_master *master,
 			dev_err(&master->dev,
 				"%s: mstr portid for slv port %d not found\n",
 				__func__, portinfo->port_id[i]);
-			mutex_unlock(&swrm->mlock);
-			return -EINVAL;
+			goto err;
 		}
 		mport = &(swrm->mport_cfg[mstr_port_id]);
 		/* get port req */
@@ -1874,8 +1880,7 @@ static int swrm_disconnect_port(struct swr_master *master,
 		if (!port_req) {
 			dev_err(&master->dev, "%s:port not enabled : port %d\n",
 					 __func__, portinfo->port_id[i]);
-			mutex_unlock(&swrm->mlock);
-			return -EINVAL;
+			goto err;
 		}
 		port_req->req_ch &= ~portinfo->ch_en[i];
 		mport->req_ch &= ~mstr_ch_mask;
@@ -1892,6 +1897,11 @@ static int swrm_disconnect_port(struct swr_master *master,
 	mutex_unlock(&swrm->mlock);
 
 	return 0;
+
+err:
+	swr_port_response(master, portinfo->tid);
+	mutex_unlock(&swrm->mlock);
+	return -EINVAL;
 }
 
 static int swrm_find_alert_slave(struct swr_mstr_ctrl *swrm,
@@ -2165,11 +2175,11 @@ handle_irq:
 		case SWRM_INTERRUPT_STATUS_CLK_STOP_FINISHED:
 			break;
 		case SWRM_INTERRUPT_STATUS_EXT_CLK_STOP_WAKEUP:
-			if (swrm->state == SWR_MSTR_UP)
+			if (swrm->state == SWR_MSTR_UP) {
 				dev_dbg(swrm->dev,
 					"%s:SWR Master is already up\n",
 					__func__);
-			else
+			} else {
 				dev_err_ratelimited(swrm->dev,
 					"%s: SWR wokeup during clock stop\n",
 					__func__);
@@ -2179,6 +2189,7 @@ handle_irq:
 			 * interrupts, if any.
 			 */
 			swrm_enable_slave_irq(swrm);
+			}
 			break;
 		default:
 			dev_err_ratelimited(swrm->dev,
@@ -2482,8 +2493,6 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x02;
 
-	reg[len] = SWRM_COMP_CFG;
-	value[len++] = 0x03;
 
 	reg[len] = SWRM_INTERRUPT_CLEAR;
 	value[len++] = 0xFFFFFFFF;
@@ -2495,6 +2504,8 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	reg[len] = SWRM_CPU1_INTERRUPT_EN;
 	value[len++] = swrm->intr_mask;
+	reg[len] = SWRM_COMP_CFG;
+	value[len++] = 0x03;
 
 	swr_master_bulk_write(swrm, reg, value, len);
 
@@ -2674,6 +2685,8 @@ static int swrm_probe(struct platform_device *pdev)
 				SWRM_NUM_AUTO_ENUM_SLAVES);
 			ret = -EINVAL;
 			goto err_pdata_fail;
+		} else {
+			swrm->master.num_dev = swrm->num_dev;
 		}
 	}
 
@@ -3225,14 +3238,16 @@ static int swrm_runtime_suspend(struct device *dev)
 		}
 
 	}
-	if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false))
-		dev_dbg(dev, "%s:lpass audio hw enable failed\n",
-			__func__);
 
 	/* Retain  SSR state until resume */
 	if (current_state != SWR_MSTR_SSR)
 		swrm->state = SWR_MSTR_DOWN;
 exit:
+	if (swrm->state != SWR_MSTR_UP) {
+		if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false))
+			dev_dbg(dev, "%s:lpass audio hw enable failed\n",
+			__func__);
+	}
 	if (!hw_core_err)
 		swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
 	mutex_unlock(&swrm->reslock);
