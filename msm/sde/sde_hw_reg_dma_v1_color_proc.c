@@ -404,11 +404,6 @@ static int reg_dmav1_get_dspp_blk(struct sde_hw_cp_cfg *hw_cfg,
 		return -EINVAL;
 	}
 
-	if (hw_cfg->dspp == NULL) {
-		DRM_ERROR("Invalid sde_hw_dspp structure provided in hw_cfg\n");
-		return -EINVAL;
-	}
-
 	if (blk == NULL) {
 		DRM_ERROR("Invalid payload provided\n");
 		return -EINVAL;

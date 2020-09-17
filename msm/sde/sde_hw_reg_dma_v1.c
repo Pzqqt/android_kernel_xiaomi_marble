@@ -570,7 +570,7 @@ static int validate_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 		return -EOPNOTSUPP;
 	}
 
-	if (cfg->ctl->idx < CTL_0 && cfg->ctl->idx >= CTL_MAX) {
+	if (cfg->ctl->idx < CTL_0 || cfg->ctl->idx >= CTL_MAX) {
 		DRM_ERROR("invalid ctl idx %d\n", cfg->ctl->idx);
 		return -EINVAL;
 	}

@@ -2533,9 +2533,9 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		 */
 		priv_info->dsc.config.dsc_version_major = (data >> 4) & 0x0F;
 		priv_info->dsc.config.dsc_version_minor = data & 0x0F;
-		if ((priv_info->dsc.config.dsc_version_major != 0x1) &&
+		if ((priv_info->dsc.config.dsc_version_major != 0x1) ||
 				((priv_info->dsc.config.dsc_version_minor
-				  != 0x1) ||
+				  != 0x1) &&
 				 (priv_info->dsc.config.dsc_version_minor
 				  != 0x2))) {
 			DSI_ERR("%s:unsupported major:%d minor:%d version\n",
