@@ -1473,14 +1473,12 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 
 	QDF_BUG(pipeid < CE_COUNT_MAX);
 
-	HIF_INFO_LO("+%s pipeid %d\n", __func__, pipeid);
+	hif_debug("pipeid: %d", pipeid);
 
 	pipe_info = &hif_state->pipe_info[pipeid];
 
 	qdf_mem_copy(&pipe_info->pipe_callbacks,
 			callbacks, sizeof(pipe_info->pipe_callbacks));
-
-	HIF_INFO_LO("-%s\n", __func__);
 }
 qdf_export_symbol(hif_update_pipe_callback);
 
