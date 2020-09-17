@@ -876,11 +876,7 @@ static int sde_rotator_base_create_debugfs(
 		struct sde_rot_data_type *mdata,
 		struct dentry *debugfs_root)
 {
-	if (!debugfs_create_u32("iommu_ref_cnt", 0444,
-			debugfs_root, &mdata->iommu_ref_cnt)) {
-		SDEROT_WARN("failed to create debugfs iommu ref cnt\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("iommu_ref_cnt", 0444, debugfs_root, &mdata->iommu_ref_cnt);
 
 	mdata->clk_always_on = false;
 	if (!debugfs_create_bool("clk_always_on", 0644,
@@ -903,23 +899,11 @@ static int sde_rotator_core_create_debugfs(
 {
 	int ret;
 
-	if (!debugfs_create_u32("hwacquire_timeout", 0400,
-			debugfs_root, &mgr->hwacquire_timeout)) {
-		SDEROT_WARN("failed to create debugfs hw acquire timeout\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("hwacquire_timeout", 0400, debugfs_root, &mgr->hwacquire_timeout);
 
-	if (!debugfs_create_u32("ppc_numer", 0644,
-			debugfs_root, &mgr->pixel_per_clk.numer)) {
-		SDEROT_WARN("failed to create debugfs ppc numerator\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("ppc_numer", 0644, debugfs_root, &mgr->pixel_per_clk.numer);
 
-	if (!debugfs_create_u32("ppc_denom", 0600,
-			debugfs_root, &mgr->pixel_per_clk.denom)) {
-		SDEROT_WARN("failed to create debugfs ppc denominator\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("ppc_denom", 0600, debugfs_root, &mgr->pixel_per_clk.denom);
 
 	if (!debugfs_create_u64("enable_bw_vote", 0644,
 			debugfs_root, &mgr->enable_bw_vote)) {
@@ -1296,40 +1280,15 @@ struct dentry *sde_rotator_create_debugfs(
 		return NULL;
 	}
 
-	if (!debugfs_create_u32("fence_timeout", 0400,
-			debugfs_root, &rot_dev->fence_timeout)) {
-		SDEROT_ERR("fail create fence_timeout\n");
-		debugfs_remove_recursive(debugfs_root);
-		return NULL;
-	}
+	debugfs_create_u32("fence_timeout", 0400, debugfs_root, &rot_dev->fence_timeout);
 
-	if (!debugfs_create_u32("open_timeout", 0400,
-			debugfs_root, &rot_dev->open_timeout)) {
-		SDEROT_ERR("fail create open_timeout\n");
-		debugfs_remove_recursive(debugfs_root);
-		return NULL;
-	}
+	debugfs_create_u32("open_timeout", 0400, debugfs_root, &rot_dev->open_timeout);
 
-	if (!debugfs_create_u32("disable_syscache", 0400,
-			debugfs_root, &rot_dev->disable_syscache)) {
-		SDEROT_ERR("fail create disable_syscache\n");
-		debugfs_remove_recursive(debugfs_root);
-		return NULL;
-	}
+	debugfs_create_u32("disable_syscache", 0400, debugfs_root, &rot_dev->disable_syscache);
 
-	if (!debugfs_create_u32("streamoff_timeout", 0400,
-			debugfs_root, &rot_dev->streamoff_timeout)) {
-		SDEROT_ERR("fail create streamoff_timeout\n");
-		debugfs_remove_recursive(debugfs_root);
-		return NULL;
-	}
+	debugfs_create_u32("streamoff_timeout", 0400, debugfs_root, &rot_dev->streamoff_timeout);
 
-	if (!debugfs_create_u32("early_submit", 0400,
-			debugfs_root, &rot_dev->early_submit)) {
-		SDEROT_ERR("fail create early_submit\n");
-		debugfs_remove_recursive(debugfs_root);
-		return NULL;
-	}
+	debugfs_create_u32("early_submit", 0400, debugfs_root, &rot_dev->early_submit);
 
 	if (sde_rotator_base_create_debugfs(rot_dev->mdata, debugfs_root)) {
 		SDEROT_ERR("fail create base debugfs\n");

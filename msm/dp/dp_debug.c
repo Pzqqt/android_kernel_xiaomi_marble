@@ -1975,32 +1975,11 @@ static int dp_debug_init_link(struct dp_debug_private *debug,
 		return rc;
 	}
 
-	file = debugfs_create_u32("max_lclk_khz", 0644, dir,
-			&debug->parser->max_lclk_khz);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_lclk_khz failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		return rc;
-	}
+	debugfs_create_u32("max_lclk_khz", 0644, dir, &debug->parser->max_lclk_khz);
 
-	file = debugfs_create_u32("lane_count", 0644, dir,
-			&debug->panel->lane_count);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs lane_count failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		return rc;
-	}
+	debugfs_create_u32("lane_count", 0644, dir, &debug->panel->lane_count);
 
-	file = debugfs_create_u32("link_bw_code", 0644, dir,
-			&debug->panel->link_bw_code);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs link_bw_code failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		return rc;
-	}
+	debugfs_create_u32("link_bw_code", 0644, dir, &debug->panel->link_bw_code);
 
 	return rc;
 }
@@ -2294,14 +2273,8 @@ static int dp_debug_init_configs(struct dp_debug_private *debug,
 	debug->dp_debug.connect_notification_delay_ms =
 		DEFAULT_CONNECT_NOTIFICATION_DELAY_MS;
 
-	file = debugfs_create_u32("disconnect_delay_ms", 0644, dir,
-		&debug->dp_debug.disconnect_delay_ms);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs disconnect_delay_ms failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		return rc;
-	}
+	debugfs_create_u32("disconnect_delay_ms", 0644, dir, &debug->dp_debug.disconnect_delay_ms);
+
 	debug->dp_debug.disconnect_delay_ms = DEFAULT_DISCONNECT_DELAY_MS;
 
 	return rc;

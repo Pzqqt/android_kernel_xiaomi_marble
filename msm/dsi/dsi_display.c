@@ -1933,14 +1933,7 @@ static int dsi_display_debugfs_init(struct dsi_display *display)
 
 		snprintf(name, ARRAY_SIZE(name),
 				"%s_regulator_min_datarate_bps", phy->name);
-		dump_file = debugfs_create_u32(name, 0600, dir,
-				&phy->regulator_min_datarate_bps);
-		if (IS_ERR_OR_NULL(dump_file)) {
-			rc = PTR_ERR(dump_file);
-			DSI_ERR("[%s] debugfs create %s failed, rc=%d\n",
-			       display->name, name, rc);
-			goto error_remove_dir;
-		}
+		debugfs_create_u32(name, 0600, dir, &phy->regulator_min_datarate_bps);
 	}
 
 	if (!debugfs_create_bool("ulps_feature_enable", 0600, dir,
@@ -1964,12 +1957,7 @@ static int dsi_display_debugfs_init(struct dsi_display *display)
 		goto error_remove_dir;
 	}
 
-	if (!debugfs_create_u32("clk_gating_config", 0600, dir,
-			&display->clk_gating_config)) {
-		DSI_ERR("[%s] debugfs create clk gating config failed\n",
-		       display->name);
-		goto error_remove_dir;
-	}
+	debugfs_create_u32("clk_gating_config", 0600, dir, &display->clk_gating_config);
 
 	display->root = dir;
 	dsi_parser_dbg_init(display->parser, dir);

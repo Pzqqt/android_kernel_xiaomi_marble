@@ -1769,11 +1769,7 @@ static int sde_encoder_phys_wb_init_debugfs(
 	if (!phys_enc || !wb_enc->hw_wb || !debugfs_root)
 		return -EINVAL;
 
-	if (!debugfs_create_u32("wbdone_timeout", 0600,
-			debugfs_root, &wb_enc->wbdone_timeout)) {
-		SDE_ERROR("failed to create debugfs/wbdone_timeout\n");
-		return -ENOMEM;
-	}
+	debugfs_create_u32("wbdone_timeout", 0600, debugfs_root, &wb_enc->wbdone_timeout);
 
 	return 0;
 }

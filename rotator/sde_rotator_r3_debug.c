@@ -38,35 +38,15 @@ int sde_rotator_r3_create_debugfs(struct sde_rot_mgr *mgr,
 		return -EINVAL;
 	}
 
-	if (!debugfs_create_u32("koff_timeout", 0644,
-			debugfs_root, &hw_data->koff_timeout)) {
-		SDEROT_ERR("fail create koff_timeout\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("koff_timeout", 0644, debugfs_root, &hw_data->koff_timeout);
 
-	if (!debugfs_create_u32("vid_trigger", 0644,
-			debugfs_root, &hw_data->vid_trigger)) {
-		SDEROT_ERR("fail create vid_trigger\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("vid_trigger", 0644, debugfs_root, &hw_data->vid_trigger);
 
-	if (!debugfs_create_u32("cmd_trigger", 0644,
-			debugfs_root, &hw_data->cmd_trigger)) {
-		SDEROT_ERR("fail create cmd_trigger\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("cmd_trigger", 0644, debugfs_root, &hw_data->cmd_trigger);
 
-	if (!debugfs_create_u32("sbuf_headroom", 0644,
-			debugfs_root, &hw_data->sbuf_headroom)) {
-		SDEROT_ERR("fail create sbuf_headroom\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("sbuf_headroom", 0644, debugfs_root, &hw_data->sbuf_headroom);
 
-	if (!debugfs_create_u32("solid_fill", 0644,
-			debugfs_root, &hw_data->solid_fill)) {
-		SDEROT_ERR("fail create solid_fill\n");
-		return -EINVAL;
-	}
+	debugfs_create_u32("solid_fill", 0644, debugfs_root, &hw_data->solid_fill);
 
 	return 0;
 }
