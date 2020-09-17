@@ -662,7 +662,7 @@ QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 	do {
 		/* Enable high speed */
 		if (card->host->caps & MMC_CAP_SD_HIGHSPEED) {
-			HIF_INFO_HI("%s: Set high speed mode", __func__);
+			hif_debug("Set high speed mode");
 			err = func0_cmd52_read_byte(card, SDIO_CCCR_SPEED,
 						    &cmd52_resp);
 			if (err) {
