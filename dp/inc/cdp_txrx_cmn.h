@@ -2688,7 +2688,8 @@ cdp_wds_ext_get_peer_id(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *mac)
 
 static inline QDF_STATUS
 cdp_wds_ext_set_peer_rx(ol_txrx_soc_handle soc, uint8_t vdev_id,
-			uint8_t *mac, ol_txrx_rx_fp rx)
+			uint8_t *mac, ol_txrx_rx_fp rx,
+			ol_osif_peer_handle osif_peer)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -2702,7 +2703,7 @@ cdp_wds_ext_set_peer_rx(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		return QDF_STATUS_E_FAULT;
 
 	return soc->ops->cmn_drv_ops->set_wds_ext_peer_rx
-			(soc, vdev_id, mac, rx);
+			(soc, vdev_id, mac, rx, osif_peer);
 }
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 #endif /* _CDP_TXRX_CMN_H_ */

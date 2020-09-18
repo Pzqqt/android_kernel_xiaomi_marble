@@ -2636,7 +2636,7 @@ struct dp_peer_mscs_parameter {
  * @init: wds ext netdev state
  */
 struct dp_wds_ext_peer {
-	ol_osif_vdev_handle osif_vdev;
+	ol_osif_peer_handle osif_peer;
 	unsigned long init;
 };
 #endif /* QCA_SUPPORT_WDS_EXTENDED */

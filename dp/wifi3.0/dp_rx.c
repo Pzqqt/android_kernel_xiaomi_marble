@@ -1340,6 +1340,89 @@ static inline int dp_rx_drop_nbuf_list(struct dp_pdev *pdev,
 	return num_dropped;
 }
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+/**
+ * dp_rx_wds_ext() - Make different lists for 4-address and 3-address frames
+ * @nbuf_head: skb list head
+ * @vdev: vdev
+ * @peer: peer
+ * @peer_id: peer id of new received frame
+ * @vdev_id: vdev_id of new received frame
+ *
+ * Return: true if peer_ids are different.
+ */
+static inline bool
+dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
+		    struct dp_vdev *vdev,
+		    struct dp_peer *peer,
+		    uint16_t peer_id,
+		    uint8_t vdev_id)
+{
+	if (nbuf_head && peer && (peer->peer_id != peer_id))
+		return true;
+
+	return false;
+}
+
+/**
+ * dp_rx_deliver_to_stack_ext() - Deliver to netdev per sta
+ * @soc: core txrx main context
+ * @vdev: vdev
+ * @peer: peer
+ * @nbuf_head: skb list head
+ *
+ * Return: true if packet is delivered to netdev per STA.
+ */
+static inline bool
+dp_rx_deliver_to_stack_ext(struct dp_soc *soc, struct dp_vdev *vdev,
+			   struct dp_peer *peer, qdf_nbuf_t nbuf_head)
+{
+	/*
+	 * When extended WDS is disabled, frames are sent to AP netdevice.
+	 */
+	if (qdf_likely(!vdev->wds_ext_enabled))
+		return false;
+
+	/*
+	 * There can be 2 cases:
+	 * 1. Send frame to parent netdev if its not for netdev per STA
+	 * 2. If frame is meant for netdev per STA:
+	 *    a. Send frame to appropriate netdev using registered fp.
+	 *    b. If fp is NULL, drop the frames.
+	 */
+	if (!peer->wds_ext.init)
+		return false;
+
+	if (peer->osif_rx)
+		peer->osif_rx(peer->wds_ext.osif_peer, nbuf_head);
+	else
+		dp_rx_drop_nbuf_list(vdev->pdev, nbuf_head);
+
+	return true;
+}
+
+#else
+static inline bool
+dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
+		    struct dp_vdev *vdev,
+		    struct dp_peer *peer,
+		    uint16_t peer_id,
+		    uint8_t vdev_id)
+{
+	if (nbuf_head && vdev && (vdev->vdev_id != vdev_id))
+		return true;
+
+	return false;
+}
+
+static inline bool
+dp_rx_deliver_to_stack_ext(struct dp_soc *soc, struct dp_vdev *vdev,
+			   struct dp_peer *peer, qdf_nbuf_t nbuf_head)
+{
+	return false;
+}
+#endif
+
 #ifdef PEER_CACHE_RX_PKTS
 /**
  * dp_rx_flush_rx_cached() - flush cached rx frames
@@ -1488,6 +1571,10 @@ static void dp_rx_check_delivery_to_stack(struct dp_soc *soc,
 					  struct dp_peer *peer,
 					  qdf_nbuf_t nbuf_head)
 {
+	if (qdf_unlikely(dp_rx_deliver_to_stack_ext(soc, vdev,
+						    peer, nbuf_head)))
+		return;
+
 	/* Function pointer initialized only when FISA is enabled */
 	if (vdev->osif_fisa_rx)
 		/* on failure send it via regular path */
@@ -2444,8 +2531,10 @@ done:
 
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
 		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
+		peer_id =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
 
-		if (deliver_list_head && vdev && (vdev->vdev_id != vdev_id)) {
+		if (dp_rx_is_list_ready(deliver_list_head, vdev, peer,
+					peer_id, vdev_id)) {
 			dp_rx_deliver_to_stack(soc, vdev, peer,
 					       deliver_list_head,
 					       deliver_list_tail);
@@ -2456,8 +2545,6 @@ done:
 		/* Get TID from struct cb->tid_val, save to tid */
 		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
 			tid = qdf_nbuf_get_tid_val(nbuf);
-
-		peer_id =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
 
 		if (qdf_unlikely(!peer)) {
 			peer = dp_peer_get_ref_by_id(soc, peer_id,
