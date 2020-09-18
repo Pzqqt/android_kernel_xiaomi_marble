@@ -614,7 +614,7 @@ static int audio_pkt_platform_driver_probe(struct platform_device *pdev)
 			      PTR_ERR(audpkt_dev->dev));
 		goto err_device;
 	}
-	strlcpy(audpkt_dev->dev_name, CHANNEL_NAME, 20);
+	strlcpy(audpkt_dev->dev_name, AUDPKT_DRIVER_NAME, 20);
 	strlcpy(audpkt_dev->ch_name, CHANNEL_NAME, 20);
 	dev_set_name(audpkt_dev->dev, audpkt_dev->dev_name);
 
