@@ -6223,6 +6223,7 @@ static void dsi_display_drm_ext_adjust_timing(
 
 static enum drm_mode_status dsi_display_drm_ext_bridge_mode_valid(
 		struct drm_bridge *bridge,
+		const struct drm_display_info *info,
 		const struct drm_display_mode *mode)
 {
 	struct dsi_display_ext_bridge *ext_bridge;
@@ -6234,7 +6235,7 @@ static enum drm_mode_status dsi_display_drm_ext_bridge_mode_valid(
 
 	tmp = *mode;
 	dsi_display_drm_ext_adjust_timing(ext_bridge->display, &tmp);
-	return ext_bridge->orig_funcs->mode_valid(bridge, &tmp);
+	return ext_bridge->orig_funcs->mode_valid(bridge, info, &tmp);
 }
 
 static bool dsi_display_drm_ext_bridge_mode_fixup(
