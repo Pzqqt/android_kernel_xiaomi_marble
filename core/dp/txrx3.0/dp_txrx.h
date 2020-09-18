@@ -50,16 +50,21 @@ struct dp_txrx_handle {
 /**
  * dp_rx_napi_gro_flush() - do gro flush
  * @napi: napi used to do gro flush
+ * @flush_code: flush_code differentiating low_tput_flush and normal_flush
  *
  * if there is RX GRO_NORMAL packets pending in napi
  * rx_list, flush them manually right after napi_gro_flush.
  *
  * return: none
  */
-static inline void dp_rx_napi_gro_flush(struct napi_struct *napi)
+static inline void dp_rx_napi_gro_flush(struct napi_struct *napi,
+					enum dp_rx_gro_flush_code flush_code)
 {
 	if (napi->poll) {
-		napi_gro_flush(napi, false);
+		/* Skipping GRO flush in low TPUT */
+		if (flush_code != DP_RX_GRO_LOW_TPUT_FLUSH)
+			napi_gro_flush(napi, false);
+
 		if (napi->rx_count) {
 			netif_receive_skb_list(&napi->rx_list);
 			qdf_init_list_head(&napi->rx_list);
@@ -68,7 +73,7 @@ static inline void dp_rx_napi_gro_flush(struct napi_struct *napi)
 	}
 }
 #else
-#define dp_rx_napi_gro_flush(_napi) napi_gro_flush((_napi), false)
+#define dp_rx_napi_gro_flush(_napi, flush_code) napi_gro_flush((_napi), false)
 #endif
 
 #ifdef FEATURE_WLAN_DP_RX_THREADS
@@ -257,11 +262,13 @@ ret:
  * dp_rx_gro_flush_ind() - Flush GRO packets for a given RX CTX Id
  * @soc: ol_txrx_soc_handle object
  * @rx_ctx_id: Context Id (Thread for which GRO packets need to be flushed)
+ * @flush_code: flush_code differentiating normal_flush from low_tput_flush
  *
  * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
  */
 static inline
-QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id)
+QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id,
+			       enum dp_rx_gro_flush_code flush_code)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -278,7 +285,8 @@ QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id)
 		goto ret;
 	}
 
-	qdf_status = dp_rx_tm_gro_flush_ind(&dp_ext_hdl->rx_tm_hdl, rx_ctx_id);
+	qdf_status = dp_rx_tm_gro_flush_ind(&dp_ext_hdl->rx_tm_hdl, rx_ctx_id,
+					    flush_code);
 ret:
 	return qdf_status;
 }
@@ -409,7 +417,8 @@ QDF_STATUS dp_rx_enqueue_pkt(ol_txrx_soc_handle soc, qdf_nbuf_t nbuf_list)
 }
 
 static inline
-QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id)
+QDF_STATUS dp_rx_gro_flush_ind(ol_txrx_soc_handle soc, int rx_ctx_id,
+			       enum dp_rx_gro_flush_code flush_code)
 {
 	return QDF_STATUS_SUCCESS;
 }

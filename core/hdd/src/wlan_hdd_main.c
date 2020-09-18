@@ -9595,16 +9595,8 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 }
 #endif /* CLD_PM_QOS */
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
-static inline void hdd_low_tput_gro_flush_skip_check(
-			struct hdd_context *hdd_ctx,
-			enum pld_bus_width_type next_vote_level)
-{
-}
-#else
 /**
  * hdd_low_tput_gro_flush_skip_check() - check GRO flush skip condition
- *
  * @hdd_ctx: handle to hdd context
  * @next_vote_level: next bus bandwidth level
  *
@@ -9628,7 +9620,6 @@ static inline void hdd_low_tput_gro_flush_skip_check(
 		qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 0);
 	}
 }
-#endif
 
 /**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth

@@ -1666,7 +1666,8 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 		if (HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(gro_ret)) {
 			adapter->hdd_stats.tx_rx_stats.
 					rx_gro_low_tput_flush++;
-			dp_rx_napi_gro_flush(napi_to_use);
+			dp_rx_napi_gro_flush(napi_to_use,
+					     DP_RX_GRO_NORMAL_FLUSH);
 		}
 		if (!rx_aggregation)
 			hdd_ctx->dp_agg_param.gro_force_flush[rx_ctx_id] = 1;
@@ -1712,7 +1713,8 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	if (hdd_get_current_throughput_level(hdd_ctx) == PLD_BUS_WIDTH_IDLE) {
 		if (HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(gro_ret)) {
 			adapter->hdd_stats.tx_rx_stats.rx_gro_low_tput_flush++;
-			dp_rx_napi_gro_flush(napi_to_use);
+			dp_rx_napi_gro_flush(napi_to_use,
+					     DP_RX_GRO_NORMAL_FLUSH);
 		}
 	}
 	local_bh_enable();
@@ -1821,7 +1823,8 @@ static void hdd_rxthread_napi_gro_flush(void *data)
 	 * As we are breaking context in Rxthread mode, there is rx_thread NAPI
 	 * corresponds each hif_napi.
 	 */
-	dp_rx_napi_gro_flush(&qca_napii->rx_thread_napi);
+	dp_rx_napi_gro_flush(&qca_napii->rx_thread_napi,
+			     DP_RX_GRO_NORMAL_FLUSH);
 	local_bh_enable();
 }
 
@@ -2050,6 +2053,7 @@ static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 QDF_STATUS hdd_rx_thread_gro_flush_ind_cbk(void *adapter, int rx_ctx_id)
 {
 	struct hdd_adapter *hdd_adapter = adapter;
+	enum dp_rx_gro_flush_code gro_flush_code = DP_RX_GRO_NORMAL_FLUSH;
 
 	if (qdf_unlikely((!hdd_adapter) || (!hdd_adapter->hdd_ctx))) {
 		hdd_err("Null params being passed");
@@ -2058,11 +2062,11 @@ QDF_STATUS hdd_rx_thread_gro_flush_ind_cbk(void *adapter, int rx_ctx_id)
 
 	if (hdd_is_low_tput_gro_enable(hdd_adapter->hdd_ctx)) {
 		hdd_adapter->hdd_stats.tx_rx_stats.rx_gro_flush_skip++;
-		return QDF_STATUS_SUCCESS;
+		gro_flush_code = DP_RX_GRO_LOW_TPUT_FLUSH;
 	}
 
 	return dp_rx_gro_flush_ind(cds_get_context(QDF_MODULE_ID_SOC),
-				   rx_ctx_id);
+				   rx_ctx_id, gro_flush_code);
 }
 
 QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
