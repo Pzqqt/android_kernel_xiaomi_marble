@@ -21,6 +21,8 @@
 #include "msm_mmu.h"
 #include "msm_kms.h"
 
+#include <drm/drm_drv.h>
+
 #include <linux/dma-buf.h>
 #include <linux/ion.h>
 #include <linux/msm_ion.h>

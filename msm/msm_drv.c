@@ -41,6 +41,10 @@
 #include <linux/kthread.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_vblank.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"

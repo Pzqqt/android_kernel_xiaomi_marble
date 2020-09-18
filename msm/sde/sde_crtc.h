@@ -22,6 +22,7 @@
 #include <linux/kthread.h>
 #include <linux/of_fdt.h>
 #include <drm/drm_crtc.h>
+#include <drm/drm_vblank.h>
 #include "msm_prop.h"
 #include "sde_fence.h"
 #include "sde_kms.h"

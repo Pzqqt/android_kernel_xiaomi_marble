@@ -12,7 +12,6 @@
 #include <linux/of_device.h>
 #include <linux/i2c.h>
 #include <linux/list.h>
-#include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>
 #include <linux/hdcp_qseecom.h>

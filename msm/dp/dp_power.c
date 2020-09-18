@@ -5,7 +5,6 @@
 
 #include <linux/clk.h>
 #include <linux/pm_runtime.h>
-#include <drm/drmP.h>
 #include "dp_power.h"
 #include "dp_catalog.h"
 #include "dp_debug.h"

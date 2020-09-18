@@ -14,10 +14,11 @@
 #include <linux/slab.h>
 #include <linux/mutex.h>
 #include <linux/of_platform.h>
+#include <linux/delay.h>
+#include <linux/uaccess.h>
 #include <linux/module.h>
 
 #include <soc/qcom/rpmh.h>
-#include <drm/drmP.h>
 #include <drm/drm_irq.h>
 #include "sde_rsc_priv.h"
 #include "sde_dbg.h"

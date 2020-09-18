@@ -7,7 +7,6 @@
 #define _DSI_DRM_H_
 
 #include <linux/types.h>
-#include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 
 #include "msm_drv.h"

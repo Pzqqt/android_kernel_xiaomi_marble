@@ -19,6 +19,7 @@
 #define __MSM_MMU_H__
 
 #include <linux/iommu.h>
+#include <linux/dma-mapping.h>
 
 struct msm_mmu;
 

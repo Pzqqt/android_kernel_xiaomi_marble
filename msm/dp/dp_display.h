@@ -7,7 +7,6 @@
 #define _DP_DISPLAY_H_
 
 #include <linux/list.h>
-#include <drm/drmP.h>
 #include <drm/sde_drm.h>
 
 #include "dp_panel.h"

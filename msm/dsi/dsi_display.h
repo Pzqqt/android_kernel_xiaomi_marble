@@ -11,7 +11,6 @@
 #include <linux/debugfs.h>
 #include <linux/of_device.h>
 #include <linux/firmware.h>
-#include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_bridge.h>
 

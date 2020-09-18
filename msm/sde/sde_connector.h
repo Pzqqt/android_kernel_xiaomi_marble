@@ -7,7 +7,6 @@
 #define _SDE_CONNECTOR_H_
 
 #include <drm/msm_drm_pp.h>
-#include <drm/drmP.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_panel.h>
 
