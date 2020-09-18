@@ -33,6 +33,23 @@
 QDF_STATUS osif_cm_register_cb(void);
 
 /**
+ * osif_cm_osif_priv_init() - API to init osif priv data for connection manager
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_cm_osif_priv_init(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * osif_cm_osif_priv_deinit() - API to deinit osif priv data for connection
+ * manager
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev);
+
+/**
  * osif_cm_reset_id_and_src_no_lock() - Function to resets last
  * connection manager command id and source in osif
  * @osif_priv: Pointer to vdev osif priv

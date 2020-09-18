@@ -47,7 +47,7 @@ osif_validate_disconnect_and_reset_src_id(struct vdev_osif_priv *osif_priv,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* Always drop internal disconnect */
-	qdf_spinlock_acquire(&osif_priv->last_cmd_info.cmd_id_lock);
+	qdf_spinlock_acquire(&osif_priv->cm_info.cmd_id_lock);
 	if (rsp->req.req.source == CM_INTERNAL_DISCONNECT) {
 		osif_debug("ignore internal disconnect");
 		status = QDF_STATUS_E_INVAL;
@@ -59,19 +59,19 @@ osif_validate_disconnect_and_reset_src_id(struct vdev_osif_priv *osif_priv,
 	 * cookie match else drop. If cookie match reset the cookie
 	 * and source
 	 */
-	if (rsp->req.cm_id != osif_priv->last_cmd_info.last_id ||
-	    rsp->req.req.source != osif_priv->last_cmd_info.last_source) {
+	if (rsp->req.cm_id != osif_priv->cm_info.last_id ||
+	    rsp->req.req.source != osif_priv->cm_info.last_source) {
 		osif_debug("Ignore as cm_id(%d)/src(%d) didn't match stored cm_id(%d)/src(%d)",
 			   rsp->req.cm_id, rsp->req.req.source,
-			   osif_priv->last_cmd_info.last_id,
-			   osif_priv->last_cmd_info.last_source);
+			   osif_priv->cm_info.last_id,
+			   osif_priv->cm_info.last_source);
 		status = QDF_STATUS_E_INVAL;
 		goto rel_lock;
 	}
 
 	osif_cm_reset_id_and_src_no_lock(osif_priv);
 rel_lock:
-	qdf_spinlock_release(&osif_priv->last_cmd_info.cmd_id_lock);
+	qdf_spinlock_release(&osif_priv->cm_info.cmd_id_lock);
 
 	return status;
 }

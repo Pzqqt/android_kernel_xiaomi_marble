@@ -22,6 +22,7 @@
 
 #include "qdf_net_if.h"
 #include "wlan_cm_public_struct.h"
+#include <qca_vendor.h>
 
 struct osif_scan_pdev;
 struct osif_tdls_vdev;
@@ -40,19 +41,22 @@ struct pdev_osif_priv {
 	struct qdf_net_if *nif;
 };
 
-/**
- * struct osif_cm_command_info - osif connection manager command info
- * @last_source: Last command request source
- * @last_id: Cookie from connection manager
- * @cmd_id_lock: lock to update and read last command source
- * @legacy: legacy data structure. Big data etc for MCC
- */
 #ifdef FEATURE_CM_ENABLE
-struct osif_cm_command_info {
+/**
+ * struct osif_cm_info - osif connection manager info
+ * @last_source: Last command request source
+ * @last_id: Last command from connection manager
+ * @cmd_id_lock: lock to update and read last command source
+ * @last_disconnect_reason: last disconnect reason to be indicated in get
+ * station
+ * @ext_priv: legacy data pointer.
+ */
+struct osif_cm_info {
 	enum wlan_cm_source last_source;
 	wlan_cm_id last_id;
 	struct qdf_spinlock cmd_id_lock;
-	void *legacy;
+	enum qca_disconnect_reason_codes last_disconnect_reason;
+	void *ext_priv;
 };
 #endif
 
@@ -60,14 +64,15 @@ struct osif_cm_command_info {
  * struct vdev_osif_priv - OS private structure of vdev
  * @wdev:             wireless device handle
  * @legacy_osif_priv: legacy osif private handle
- * @connect_info:  osif connection manager command info
+ * @osif_tdls: osif tdls info
+ * @cm_info:  osif connection manager info
  */
 struct vdev_osif_priv {
 	struct wireless_dev *wdev;
 	void *legacy_osif_priv;
 	struct osif_tdls_vdev *osif_tdls;
 #ifdef FEATURE_CM_ENABLE
-	struct osif_cm_command_info last_cmd_info;
+	struct osif_cm_info cm_info;
 #endif
 };
 

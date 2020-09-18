@@ -28,8 +28,8 @@
 
 void osif_cm_reset_id_and_src_no_lock(struct vdev_osif_priv *osif_priv)
 {
-	osif_priv->last_cmd_info.last_id = CM_ID_INVALID;
-	osif_priv->last_cmd_info.last_source = CM_SOURCE_INVALID;
+	osif_priv->cm_info.last_id = CM_ID_INVALID;
+	osif_priv->cm_info.last_source = CM_SOURCE_INVALID;
 }
 
 QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev)
@@ -40,9 +40,9 @@ QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev)
 		osif_err("Invalid vdev osif priv");
 		return QDF_STATUS_E_INVAL;
 	}
-	qdf_spinlock_acquire(&osif_priv->last_cmd_info.cmd_id_lock);
+	qdf_spinlock_acquire(&osif_priv->cm_info.cmd_id_lock);
 	osif_cm_reset_id_and_src_no_lock(osif_priv);
-	qdf_spinlock_release(&osif_priv->last_cmd_info.cmd_id_lock);
+	qdf_spinlock_release(&osif_priv->cm_info.cmd_id_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -96,10 +96,10 @@ osif_cm_update_id_and_src_cb(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	qdf_spinlock_acquire(&osif_priv->last_cmd_info.cmd_id_lock);
-	osif_priv->last_cmd_info.last_id = cm_id;
-	osif_priv->last_cmd_info.last_source = source;
-	qdf_spinlock_release(&osif_priv->last_cmd_info.cmd_id_lock);
+	qdf_spinlock_acquire(&osif_priv->cm_info.cmd_id_lock);
+	osif_priv->cm_info.last_id = cm_id;
+	osif_priv->cm_info.last_source = source;
+	qdf_spinlock_release(&osif_priv->cm_info.cmd_id_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -160,3 +160,38 @@ QDF_STATUS osif_cm_register_cb(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS osif_cm_osif_priv_init(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	enum QDF_OPMODE mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (mode != QDF_STA_MODE && mode != QDF_P2P_CLIENT_MODE)
+		return QDF_STATUS_SUCCESS;
+
+	if (!osif_priv) {
+		osif_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spinlock_create(&osif_priv->cm_info.cmd_id_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	enum QDF_OPMODE mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (mode != QDF_STA_MODE && mode != QDF_P2P_CLIENT_MODE)
+		return QDF_STATUS_SUCCESS;
+
+	if (!osif_priv) {
+		osif_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spinlock_destroy(&osif_priv->cm_info.cmd_id_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
