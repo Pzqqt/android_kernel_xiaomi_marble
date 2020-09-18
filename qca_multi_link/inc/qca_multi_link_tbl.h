@@ -29,6 +29,19 @@
 #include <net/cfg80211.h>
 #include <br_private.h>
 
+/**
+ * qca_multi_link_entry_type - bridge entry type
+ * @QCA_MULTI_LINK_ENTRY_USER_ADDED: Entry added by user
+ * @QCA_MULTI_LINK_ENTRY_LOCAL: Local permanent bridge entry
+ * @QCA_MULTI_LINK_ENTRY_STATIC: Permanent non-ARP type entry
+ */
+typedef enum qca_multi_link_entry_type {
+	QCA_MULTI_LINK_ENTRY_NONE = 0,
+	QCA_MULTI_LINK_ENTRY_USER_ADDED,
+	QCA_MULTI_LINK_ENTRY_LOCAL,
+	QCA_MULTI_LINK_ENTRY_STATIC,
+} qca_multi_link_entry_type_t;
+
 typedef struct qca_multi_link_tbl_entry {
 	struct wireless_dev *qal_fdb_ieee80211_ptr;
 	struct net_device *qal_fdb_dev;
@@ -57,6 +70,17 @@ int qca_multi_link_tbl_get_eth_entries(struct net_device *net_dev,
  * Return: struct net_device
  */
 struct net_device *qca_multi_link_tbl_find_sta_or_ap(struct net_device *net_dev, uint8_t dev_type);
+
+/**
+ *
+ * qca_multi_link_tbl_add_or_refresh_entry() - Add or refresh a bridge entry
+ *
+ * To be called from the code with a valid netdevice
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qca_multi_link_tbl_add_or_refresh_entry(struct net_device *net_dev, uint8_t *addr,
+							qca_multi_link_entry_type_t entry_type);
 
 /**
  *
