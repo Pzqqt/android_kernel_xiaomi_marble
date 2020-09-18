@@ -5780,7 +5780,9 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, display);
 
 	/* initialize display in firmware callback */
-	if (!boot_disp->boot_disp_en && IS_ENABLED(CONFIG_DSI_PARSER)) {
+	if (!boot_disp->boot_disp_en &&
+			IS_ENABLED(CONFIG_DSI_PARSER) &&
+			!display->trusted_vm_env) {
 		firm_req = !request_firmware_nowait(
 			THIS_MODULE, 1, "dsi_prop",
 			&pdev->dev, GFP_KERNEL, display,
