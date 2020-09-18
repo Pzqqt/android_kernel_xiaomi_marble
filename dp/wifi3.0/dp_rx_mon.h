@@ -289,12 +289,15 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
  *
  * @total_len: pointer to remaining data length.
  * @frag_len: pointer to data length in this fragment.
-*/
+ * @l2_hdr_pad: l2 header padding
+ */
 static inline void dp_mon_adjust_frag_len(uint32_t *total_len,
-					  uint32_t *frag_len)
+					  uint32_t *frag_len,
+					  uint16_t l2_hdr_pad)
 {
 	if (*total_len >= (RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
-		*frag_len = RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN;
+		*frag_len = RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN -
+					l2_hdr_pad;
 		*total_len -= *frag_len;
 	} else {
 		*frag_len = *total_len;
@@ -702,22 +705,6 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 			    qdf_frag_t rx_desc_tlv,
 			    bool *is_frag_non_raw_p, void *data)
 {
-	if (msdu_info->msdu_flags & HAL_MSDU_F_MSDU_CONTINUATION) {
-		if (!*(is_frag_p)) {
-			*total_frag_len_p = msdu_info->msdu_len;
-			*is_frag_p = true;
-		}
-		dp_mon_adjust_frag_len(total_frag_len_p, frag_len_p);
-	} else {
-		if (*is_frag_p) {
-			dp_mon_adjust_frag_len(
-				total_frag_len_p, frag_len_p);
-		} else {
-			*frag_len_p = msdu_info->msdu_len;
-		}
-		*is_frag_p = false;
-	}
-
 	/*
 	 * HW structures call this L3 header padding
 	 * -- even though this is actually the offset
@@ -726,6 +713,23 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 	 */
 	*l2_hdr_offset_p =
 	hal_rx_msdu_end_l3_hdr_padding_get(dp_soc->hal_soc, data);
+
+	if (msdu_info->msdu_flags & HAL_MSDU_F_MSDU_CONTINUATION) {
+		if (!*(is_frag_p)) {
+			*total_frag_len_p = msdu_info->msdu_len;
+			*is_frag_p = true;
+		}
+		dp_mon_adjust_frag_len(total_frag_len_p, frag_len_p,
+				       *l2_hdr_offset_p);
+	} else {
+		if (*is_frag_p) {
+			dp_mon_adjust_frag_len(total_frag_len_p, frag_len_p,
+					       *l2_hdr_offset_p);
+		} else {
+			*frag_len_p = msdu_info->msdu_len;
+		}
+		*is_frag_p = false;
+	}
 }
 
 static inline void dp_rx_mon_buffer_set_pktlen(qdf_nbuf_t msdu, uint32_t size)
