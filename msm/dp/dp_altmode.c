@@ -137,7 +137,7 @@ static int dp_altmode_notify(void *priv, void *data, size_t len)
 			altmode->dp_altmode.base.hpd_high,
 			altmode->dp_altmode.base.hpd_irq);
 	DP_DEBUG("connected=%d\n", altmode->connected);
-	SDE_EVT32_VERBOSE(dp_data, port_index, orientation, pin, hpd_state,
+	SDE_EVT32_EXTERNAL(dp_data, port_index, orientation, pin, hpd_state,
 			altmode->dp_altmode.base.multi_func,
 			altmode->dp_altmode.base.hpd_high,
 			altmode->dp_altmode.base.hpd_irq, altmode->connected);
