@@ -1165,7 +1165,7 @@ CONFIG_CM_ENABLE := n
 CONFIG_CM_ROAM_OFFLOAD := y
 
 #Flag to enable interface manager
-CONFIG_INTERFACE_MGR := n
+CONFIG_INTERFACE_MGR := y
 
 #Enable VDEV OPS wakelock feature
 CONFIG_FEATURE_VDEV_OPS_WAKELOCK := y
