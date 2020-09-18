@@ -1990,19 +1990,25 @@ int iw_get_channel_list_with_cc(struct net_device *dev,
 		hdd_err_rl("GetChannelList Failed!!!");
 		return -EINVAL;
 	}
-	buf = extra;
+
 	/*
-	 * Maximum channels = WNI_CFG_VALID_CHANNEL_LIST_LEN.
-	 * Maximum buffer needed = 5 * number of channels.
+	 * Maximum buffer needed =
+	 * [4: 3 digits of num_chn + 1 space] +
+	 * [REG_ALPHA2_LEN: REG_ALPHA2_LEN digits] +
+	 * [4 * num_chn: (1 space + 3 digits of chn[i]) * num_chn] +
+	 * [1: Terminator].
+	 *
 	 * Check if sufficient buffer is available and then
 	 * proceed to fill the buffer.
 	 */
-	if (WE_MAX_STR_LEN < (5 * CFG_VALID_CHANNEL_LIST_LEN)) {
+	if (WE_MAX_STR_LEN <
+	    (4 + REG_ALPHA2_LEN + 4 * channel_list.num_channels + 1)) {
 		hdd_err_rl("Insufficient Buffer to populate channel list");
 		return -EINVAL;
 	}
-	len = scnprintf(buf, WE_MAX_STR_LEN, "%u ", channel_list.num_channels);
 
+	buf = extra;
+	len = scnprintf(buf, WE_MAX_STR_LEN, "%u ", channel_list.num_channels);
 	wlan_reg_get_cc_and_src(mac->psoc, ubuf);
 	/* Printing Country code in getChannelList(break at '\0') */
 	for (i = 0; i < (ubuf_len - 1) && ubuf[i] != 0; i++)
