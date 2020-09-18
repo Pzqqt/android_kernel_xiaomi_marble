@@ -1086,7 +1086,7 @@ int sde_rsc_client_trigger_vote(struct sde_rsc_client *caller_client,
 			sde_power_data_bus_set_quota(&rsc->phandle,
 				i, rsc->bw_config.ab_vote[i],
 				rsc->bw_config.ib_vote[i]);
-		rpmh_flush(rsc->rpmh_dev);
+		rpmh_write_sleep_and_wake(rsc->rpmh_dev);
 	}
 
 	if (rsc->hw_ops.bwi_status &&
