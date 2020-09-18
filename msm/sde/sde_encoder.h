@@ -545,6 +545,25 @@ void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable);
  */
 void sde_encoder_irq_control(struct drm_encoder *drm_enc, bool enable);
 
+/*
+ * sde_encoder_get_dfps_maxfps - get dynamic FPS max frame rate of
+				the given encoder
+ * @encoder: Pointer to drm encoder object
+ */
+static inline u32 sde_encoder_get_dfps_maxfps(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
+		return 0;
+	}
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+
+	return sde_enc->mode_info.dfps_maxfps;
+}
+
 /**
  * sde_encoder_get_kms - retrieve the kms from encoder
  * @drm_enc:    Pointer to drm encoder structure

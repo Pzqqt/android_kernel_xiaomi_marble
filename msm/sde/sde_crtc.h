@@ -653,6 +653,12 @@ enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc,
 u32 sde_crtc_get_fps_mode(struct drm_crtc *crtc);
 
 /**
+ * sde_crtc_get_dfps_maxfps - get DFPS max fps of the given crtc
+ * @crtc: Pointert to crtc
+ */
+u32 sde_crtc_get_dfps_maxfps(struct drm_crtc *crtc);
+
+/**
  * sde_crtc_get_client_type - check the crtc type- rt, rsc_rt, etc.
  * @crtc: Pointer to crtc
  */
