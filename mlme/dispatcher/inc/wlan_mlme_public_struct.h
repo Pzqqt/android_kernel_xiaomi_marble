@@ -1024,7 +1024,6 @@ struct wlan_mlme_he_caps {
 	uint32_t he_sta_obsspd;
 	uint16_t he_mcs_12_13_supp_2g;
 	uint16_t he_mcs_12_13_supp_5g;
-	bool enable_6g_sec_check;
 };
 #endif
 
