@@ -2379,8 +2379,8 @@ static int afe_spk_prot_prepare(int src_port, int dst_port, int param_id,
 					       q6audio_get_port_index(src_port),
 					       param_info, (u8 *) prot_config);
 	if (ret)
-		pr_err("%s: port = 0x%x param = 0x%x failed %d\n", __func__,
-		       src_port, param_id, ret);
+		pr_err_ratelimited("%s: port = 0x%x param = 0x%x failed %d\n",
+					__func__, src_port, param_id, ret);
 
 fail_cmd:
 	pr_debug("%s: config.pdata.param_id 0x%x status %d 0x%x\n", __func__,
@@ -2994,7 +2994,7 @@ static int afe_send_hw_delay(u16 port_id, u32 rate)
 					       q6audio_get_port_index(port_id),
 					       param_info, (u8 *) &hw_delay);
 	if (ret)
-		pr_err("%s: AFE hw delay for port 0x%x failed %d\n",
+		pr_err_ratelimited("%s: AFE hw delay for port 0x%x failed %d\n",
 		       __func__, port_id, ret);
 
 fail_cmd:
@@ -3079,7 +3079,7 @@ static int afe_get_cal_topology_id(u16 port_id, u32 *topology_id,
 	cal_block = afe_find_cal_topo_id_by_port(
 		this_afe.cal_data[cal_type_index], port_id);
 	if (cal_block == NULL) {
-		pr_err("%s: cal_type %d not initialized for this port %d\n",
+		pr_err_ratelimited("%s: cal_type %d not initialized for this port %d\n",
 			__func__, cal_type_index, port_id);
 		ret = -EINVAL;
 		goto unlock;
@@ -3596,7 +3596,7 @@ static int send_afe_cal_type(int cal_index, int port_id)
 				this_afe.cal_data[cal_index]);
 
 	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
-		pr_err("%s cal_block not found!!\n", __func__);
+		pr_err_ratelimited("%s cal_block not found!!\n", __func__);
 		ret = -EINVAL;
 		goto unlock;
 	}
@@ -5860,7 +5860,7 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 					       q6audio_get_port_index(port_id),
 					       param_hdr, (u8 *) &port_cfg);
 	if (ret) {
-		pr_err("%s: AFE enable for port 0x%x failed %d\n",
+		pr_err_ratelimited("%s: AFE enable for port 0x%x failed %d\n",
 			__func__, port_id, ret);
 		goto fail_cmd;
 	}

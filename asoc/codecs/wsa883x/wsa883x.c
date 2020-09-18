@@ -29,6 +29,7 @@
 #include <asoc/msm-cdc-supply.h>
 #include "wsa883x.h"
 #include "internal.h"
+#include "asoc/bolero-slave-internal.h"
 
 #define T1_TEMP -10
 #define T2_TEMP 150
@@ -1436,7 +1437,7 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 		return -EINVAL;
 
 	switch (event) {
-	case BOLERO_WSA_EVT_PA_OFF_PRE_SSR:
+	case BOLERO_SLV_EVT_PA_OFF_PRE_SSR:
 		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
 			snd_soc_component_update_bits(wsa883x->component,
 						WSA883X_PA_FSM_CTL,
@@ -1444,14 +1445,14 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 		wsa883x_swr_down(wsa883x);
 		break;
 
-	case BOLERO_WSA_EVT_SSR_UP:
+	case BOLERO_SLV_EVT_SSR_UP:
 		wsa883x_swr_up(wsa883x);
 		/* Add delay to allow enumerate */
 		usleep_range(20000, 20010);
 		wsa883x_swr_reset(wsa883x);
 		break;
 
-	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
+	case BOLERO_SLV_EVT_PA_ON_POST_FSCLK:
 		if (test_bit(SPKR_STATUS, &wsa883x->status_mask)) {
 			snd_soc_component_update_bits(wsa883x->component,
 						WSA883X_PDM_WD_CTL,
@@ -1470,7 +1471,7 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 			usleep_range(5000, 5050);
 		}
 		break;
-	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK_ADIE_LB:
+	case BOLERO_SLV_EVT_PA_ON_POST_FSCLK_ADIE_LB:
 		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
 			set_bit(SPKR_ADIE_LB, &wsa883x->status_mask);
 		break;

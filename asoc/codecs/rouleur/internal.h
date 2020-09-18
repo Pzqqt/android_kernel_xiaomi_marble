@@ -108,7 +108,6 @@ struct rouleur_pdata {
 	int num_supplies;
 	int reset_reg;
 	int foundry_id_reg;
-	u32 soc_threshold_val;
 };
 
 struct wcd_ctrl_platform_data {
@@ -123,24 +122,6 @@ enum {
 	WCD_RX1,
 	WCD_RX2,
 	WCD_RX3
-};
-
-enum {
-	BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR = 1,
-	BOLERO_WCD_EVT_PA_OFF_PRE_SSR,
-	BOLERO_WCD_EVT_SSR_DOWN,
-	BOLERO_WCD_EVT_SSR_UP,
-};
-
-enum {
-	WCD_BOLERO_EVT_RX_MUTE = 1,	/* for RX mute/unmute */
-	WCD_BOLERO_EVT_IMPED_TRUE,	/* for imped true */
-	WCD_BOLERO_EVT_IMPED_FALSE,	/* for imped false */
-	WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
-	WCD_BOLERO_EVT_BCS_CLK_OFF,
-	WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE, /* To reduce PA gain for low SoC */
-	WCD_BOLERO_EVT_HPHL_HD2_ENABLE, /* to enable hd2 config for hphl */
-	WCD_BOLERO_EVT_HPHR_HD2_ENABLE, /* to enable hd2 config for hphr */
 };
 
 enum {
