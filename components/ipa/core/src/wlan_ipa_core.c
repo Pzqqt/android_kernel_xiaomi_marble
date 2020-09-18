@@ -1525,8 +1525,11 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 				}
 
 				ipa_err("Obsolete iface %u found, device_mode %u, will remove it.",
-					i,
-					iface_context->device_mode);
+					i, iface_context->device_mode);
+				wlan_ipa_cleanup_iface(iface_context);
+			} else if (iface_context->session_id == session_id) {
+				ipa_err("Obsolete iface %u found, net_dev %pK, will remove it.",
+					i, iface_context->dev);
 				wlan_ipa_cleanup_iface(iface_context);
 			}
 		}
