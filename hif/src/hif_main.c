@@ -989,14 +989,12 @@ void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 		return;
 
 	if (scn->bus_type == QDF_BUS_TYPE_SNOC) {
-		HIF_INFO_MED("%s: RAM dump disabled for bustype %d",
-				__func__, scn->bus_type);
+		hif_warn("RAM dump disabled for bustype %d", scn->bus_type);
 		return;
 	}
 
 	if (TARGET_STATUS_RESET == scn->target_status) {
-		HIF_INFO_MED("%s: Target is already asserted, ignore!",
-			    __func__);
+		hif_warn("Target is already asserted, ignore!");
 		return;
 	}
 
@@ -1011,7 +1009,7 @@ void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 	if (ol_copy_ramdump(hif_ctx))
 		goto out;
 
-	HIF_INFO_MED("%s: RAM dump collecting completed!", __func__);
+	hif_info("RAM dump collecting completed!");
 
 out:
 	return;
@@ -1019,8 +1017,7 @@ out:
 #else
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 {
-	HIF_INFO_MED("%s: Collecting target RAM dump disabled",
-		__func__);
+	hif_debug("Collecting target RAM dump disabled");
 }
 #endif /* TARGET_RAMDUMP_AFTER_KERNEL_PANIC */
 

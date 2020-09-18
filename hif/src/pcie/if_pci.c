@@ -583,7 +583,7 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 	if (!mem)
 		return;
 
-	HIF_INFO_MED("%s: Target Warm Reset", __func__);
+	hif_debug("Target Warm Reset");
 
 	/*
 	 * NB: If we try to write SOC_GLOBAL_RESET_ADDRESS without first
@@ -604,12 +604,12 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 		hif_read32_mb(sc, mem +
 			     (SOC_CORE_BASE_ADDRESS |
 			      PCIE_INTR_CAUSE_ADDRESS));
-	HIF_INFO_MED("%s: Host Intr Cause reg 0x%x : value : 0x%x", __func__,
-		    (SOC_CORE_BASE_ADDRESS | PCIE_INTR_CAUSE_ADDRESS), val);
+	hif_debug("Host Intr Cause reg 0x%x: value : 0x%x",
+		  (SOC_CORE_BASE_ADDRESS | PCIE_INTR_CAUSE_ADDRESS), val);
 	/* Target CPU Intr Cause */
 	val = hif_read32_mb(sc, mem +
 			    (SOC_CORE_BASE_ADDRESS | CPU_INTR_ADDRESS));
-	HIF_INFO_MED("%s: Target CPU Intr Cause 0x%x", __func__, val);
+	hif_debug("Target CPU Intr Cause 0x%x", val);
 
 	val =
 		hif_read32_mb(sc, mem +
@@ -634,7 +634,7 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS +
 			      SOC_LF_TIMER_CONTROL0_ADDRESS));
-	HIF_INFO_MED("%s: addr 0x%x :  0x%x", __func__,
+	hif_debug("addr 0x%x : 0x%x",
 	       (RTC_SOC_BASE_ADDRESS + SOC_LF_TIMER_CONTROL0_ADDRESS), val);
 	val &= ~SOC_LF_TIMER_CONTROL0_ENABLE_MASK;
 	hif_write32_mb(sc, mem +
@@ -669,8 +669,7 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 	/* Read Target CPU Intr Cause */
 	val = hif_read32_mb(sc, mem +
 			    (SOC_CORE_BASE_ADDRESS | CPU_INTR_ADDRESS));
-	HIF_INFO_MED("%s: Target CPU Intr Cause after CE reset 0x%x",
-		    __func__, val);
+	hif_debug("Target CPU Intr Cause after CE reset 0x%x", val);
 
 	/* CPU warm RESET */
 	val =
@@ -684,11 +683,10 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS |
 			      SOC_RESET_CONTROL_ADDRESS));
-	HIF_INFO_MED("%s: RESET_CONTROL after cpu warm reset 0x%x",
-		    __func__, val);
+	hif_debug("RESET_CONTROL after cpu warm reset 0x%x", val);
 
 	qdf_mdelay(100);
-	HIF_INFO_MED("%s: Target Warm reset complete", __func__);
+	hif_debug("Target Warm reset complete");
 
 }
 
@@ -707,7 +705,7 @@ int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 	if (Q_TARGET_ACCESS_END(scn) < 0)
 		return ATH_ISR_SCHED;
 
-	HIF_INFO_MED("%s: FW_INDICATOR register is 0x%x", __func__, val);
+	hif_debug("FW_INDICATOR register is 0x%x", val);
 
 	if (val & FW_IND_HELPER)
 		return 0;
@@ -735,12 +733,12 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 	/* Check PCIe local register for bar/memory access */
 	val = hif_read32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 			   RTC_STATE_ADDRESS);
-	HIF_INFO_MED("%s: RTC_STATE_ADDRESS is %08x", __func__, val);
+	hif_debug("RTC_STATE_ADDRESS is %08x", val);
 
 	/* Try to wake up taget if it sleeps */
 	hif_write32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 		PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
-	HIF_INFO_MED("%s: PCIE_SOC_WAKE_ADDRESS is %08x", __func__,
+	hif_debug("PCIE_SOC_WAKE_ADDRESS is %08x",
 		hif_read32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 		PCIE_SOC_WAKE_ADDRESS));
 
@@ -768,7 +766,7 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 	val =
 		hif_read32_mb(sc, sc->mem + RTC_SOC_BASE_ADDRESS +
 			     SOC_POWER_REG_OFFSET);
-	HIF_INFO_MED("%s: Power register is %08x", __func__, val);
+	hif_debug("Power register is %08x", val);
 
 	return 0;
 }
@@ -810,13 +808,13 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 	hif_write32_mb(sc, mem + GPIO_BASE_ADDRESS +
 		      WLAN_DEBUG_CONTROL_OFFSET, val);
 
-	HIF_INFO_MED("%s: Debug: inputsel: %x dbgctrl: %x", __func__,
+	hif_debug("Debug: inputsel: %x dbgctrl: %x",
 	       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 			    WLAN_DEBUG_INPUT_SEL_OFFSET),
 	       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 			    WLAN_DEBUG_CONTROL_OFFSET));
 
-	HIF_INFO_MED("%s: Debug CE", __func__);
+	hif_debug("Debug CE");
 	/* Loop CE debug output */
 	/* AMBA_DEBUG_BUS_SEL = 0xc */
 	val = hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
@@ -835,11 +833,11 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 		hif_write32_mb(sc, mem + CE_WRAPPER_BASE_ADDRESS +
 			      CE_WRAPPER_DEBUG_OFFSET, val);
 
-		HIF_INFO_MED("%s: ce wrapper: %d amdbg: %x cewdbg: %x",
-			    __func__, wrapper_idx[i],
-			    hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
+		hif_debug("ce wrapper: %d amdbg: %x cewdbg: %x",
+			  wrapper_idx[i],
+			  hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 				AMBA_DEBUG_BUS_OFFSET),
-			    hif_read32_mb(sc, mem + CE_WRAPPER_BASE_ADDRESS +
+			  hif_read32_mb(sc, mem + CE_WRAPPER_BASE_ADDRESS +
 				CE_WRAPPER_DEBUG_OFFSET));
 
 		if (wrapper_idx[i] <= 7) {
@@ -861,10 +859,10 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 						    + WLAN_DEBUG_OUT_OFFSET);
 				val = WLAN_DEBUG_OUT_DATA_GET(val);
 
-				HIF_INFO_MED("%s: module%d: cedbg: %x out: %x",
-					    __func__, j,
-					    hif_read32_mb(sc, mem + ce_base +
-						    CE_DEBUG_OFFSET), val);
+				hif_debug("module%d: cedbg: %x out: %x",
+					  j,
+					  hif_read32_mb(sc, mem + ce_base +
+						CE_DEBUG_OFFSET), val);
 			}
 		} else {
 			/* read (@gpio_athr_wlan_reg) WLAN_DEBUG_OUT_DATA */
@@ -873,11 +871,11 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 					     WLAN_DEBUG_OUT_OFFSET);
 			val = WLAN_DEBUG_OUT_DATA_GET(val);
 
-			HIF_INFO_MED("%s: out: %x", __func__, val);
+			hif_debug("out: %x", val);
 		}
 	}
 
-	HIF_INFO_MED("%s: Debug PCIe:", __func__);
+	hif_debug("Debug PCIe:");
 	/* Loop PCIe debug output */
 	/* Write AMBA_DEBUG_BUS_SEL = 0x1c */
 	val = hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
@@ -903,11 +901,11 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 				     WLAN_DEBUG_OUT_OFFSET);
 		val = WLAN_DEBUG_OUT_DATA_GET(val);
 
-		HIF_INFO_MED("%s: amdbg: %x out: %x %x", __func__,
-		       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
-				    WLAN_DEBUG_OUT_OFFSET), val,
-		       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
-				    WLAN_DEBUG_OUT_OFFSET));
+		hif_debug("amdbg: %x out: %x %x",
+			  hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
+				WLAN_DEBUG_OUT_OFFSET), val,
+			  hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
+				WLAN_DEBUG_OUT_OFFSET));
 	}
 
 	Q_TARGET_ACCESS_END(scn);
@@ -1727,7 +1725,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 		if (status)
 			goto unconfig_ce;
 
-		HIF_INFO_MED("%s: hif_set_hia done", __func__);
+		hif_debug("hif_set_hia done");
 
 	}
 
@@ -1737,8 +1735,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCN9100) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA6018)) &&
 	    (hif_sc->bus_type == QDF_BUS_TYPE_PCI))
-		HIF_INFO_MED("%s: Skip irq config for PCI based 8074 target",
-						__func__);
+		hif_debug("Skip irq config for PCI based 8074 target");
 	else {
 		status = hif_configure_irq(hif_sc);
 		if (status < 0)
@@ -1970,8 +1967,7 @@ static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 			/* AR6320v1 doesn't support checking of BAR0
 			 * configuration, takes one sec to wait BAR0 ready
 			 */
-			HIF_INFO_MED("%s: AR6320v1 waits two sec for BAR0",
-				    __func__);
+			hif_debug("AR6320v1 waits two sec for BAR0");
 		}
 	}
 #endif
