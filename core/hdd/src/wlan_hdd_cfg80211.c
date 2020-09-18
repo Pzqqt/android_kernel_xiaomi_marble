@@ -6940,6 +6940,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 		.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_NUM_TX_CHAINS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_NUM_RX_CHAINS] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_SETTING] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_LEVEL] = {.type = NLA_S32 },
 
 };
 
@@ -7651,6 +7653,70 @@ static int hdd_config_vdev_chains(struct hdd_adapter *adapter,
 	if (hdd_ctx->dynamic_nss_chains_support)
 		return hdd_set_dynamic_antenna_mode(adapter, rx_chains,
 						    tx_chains);
+	return 0;
+}
+
+static int hdd_config_ani(struct hdd_adapter *adapter,
+			  struct nlattr *tb[])
+{
+	int errno;
+	uint8_t ani_setting_type;
+	int32_t ani_level = 0, enable_ani;
+	struct nlattr *ani_setting_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_SETTING];
+	struct nlattr *ani_level_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_LEVEL];
+
+	if (!ani_setting_attr)
+		return 0;
+
+	ani_setting_type = nla_get_u8(ani_setting_attr);
+	if (ani_setting_type != QCA_WLAN_ANI_SETTING_AUTO &&
+	    ani_setting_type != QCA_WLAN_ANI_SETTING_FIXED) {
+		hdd_err("invalid ani_setting_type %d", ani_setting_type);
+		return -EINVAL;
+	}
+
+	if (ani_setting_type == QCA_WLAN_ANI_SETTING_AUTO &&
+	    ani_level_attr) {
+		hdd_err("Not support to set ani level in QCA_WLAN_ANI_SETTING_AUTO");
+		return -EINVAL;
+	}
+
+	if (ani_setting_type == QCA_WLAN_ANI_SETTING_FIXED) {
+		if (!ani_level_attr) {
+			hdd_err("invalid ani_level_attr");
+			return -EINVAL;
+		}
+		ani_level = nla_get_s32(ani_level_attr);
+	}
+	hdd_debug("ani_setting_type %u, ani_level %d",
+		  ani_setting_type, ani_level);
+
+	/* ANI (Adaptive noise immunity) */
+	if (ani_setting_type == QCA_WLAN_ANI_SETTING_AUTO)
+		enable_ani = 1;
+	else
+		enable_ani = 0;
+
+	errno = wma_cli_set_command(adapter->vdev_id,
+				    WMI_PDEV_PARAM_ANI_ENABLE,
+				    enable_ani, PDEV_CMD);
+	if (errno) {
+		hdd_err("Failed to set ani enable, errno %d", errno);
+		return errno;
+	}
+
+	if (ani_setting_type == QCA_WLAN_ANI_SETTING_FIXED) {
+		errno = wma_cli_set_command(adapter->vdev_id,
+					    WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
+					    ani_level, PDEV_CMD);
+		if (errno) {
+			hdd_err("Failed to set ani level, errno %d", errno);
+			return errno;
+		}
+	}
+
 	return 0;
 }
 
@@ -9352,6 +9418,7 @@ static const interdependent_setter_fn interdependent_setters[] = {
 	wlan_hdd_cfg80211_wifi_set_rx_blocksize,
 	hdd_config_msdu_aggregation,
 	hdd_config_vdev_chains,
+	hdd_config_ani,
 };
 
 /**
