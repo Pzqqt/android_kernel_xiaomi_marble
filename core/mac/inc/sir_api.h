@@ -3565,6 +3565,7 @@ struct wifi_channel_stats {
  * @on_time_lpi_scan: msecs the radio is awake due to LPI scan
  * @total_num_tx_power_levels: @tx_time_per_power_level record count
  * @tx_time_per_power_level:  tx time (in milliseconds) per TPC level (0.5 dBm)
+ * @more_channels: If more channels are there and will come in next event
  * @num_channels: @channels record count
  * @channels: per-channel statistics
  */
@@ -3583,6 +3584,7 @@ struct wifi_radio_stats {
 	uint32_t on_time_lpi_scan;
 	uint32_t total_num_tx_power_levels;
 	uint32_t *tx_time_per_power_level;
+	uint32_t more_channels;
 	uint32_t num_channels;
 	struct wifi_channel_stats *channels;
 };

@@ -1984,6 +1984,42 @@ post_stats:
 	return 0;
 }
 
+static int wma_copy_chan_stats(uint32_t num_chan,
+			       struct wifi_channel_stats *channels,
+			       struct wifi_radio_stats *rs_results)
+{
+	uint32_t num_chan_in_prev_event = rs_results->num_channels;
+	struct wifi_channel_stats *channels_in_prev_event =
+							rs_results->channels;
+	if (!rs_results->channels) {
+		/* It means this is the first event for this radio */
+		rs_results->num_channels = num_chan;
+		rs_results->channels = channels;
+		return 0;
+	}
+
+	rs_results->num_channels += num_chan;
+	rs_results->channels = qdf_mem_malloc(rs_results->num_channels *
+					      sizeof(*channels));
+	if (!rs_results->channels) {
+		qdf_mem_free(channels);
+		qdf_mem_free(channels_in_prev_event);
+		return -ENOMEM;
+	}
+
+	/* copy the previous event's information */
+	qdf_mem_copy(rs_results->channels, channels_in_prev_event,
+		     num_chan_in_prev_event * sizeof(*channels_in_prev_event));
+
+	/* copy the current event's information */
+	qdf_mem_copy(rs_results->channels + num_chan_in_prev_event, channels,
+		     num_chan * sizeof(*channels));
+
+	qdf_mem_free(channels);
+	qdf_mem_free(channels_in_prev_event);
+	return 0;
+}
+
 /**
  * wma_unified_link_radio_stats_event_handler() - radio link stats event handler
  * @handle:          wma handle
@@ -2004,10 +2040,13 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	tSirLLStatsResults *link_stats_results;
 	uint8_t *results, *t_radio_stats, *t_channel_stats;
 	uint32_t next_chan_offset, count;
+	uint32_t num_chan_in_this_event = 0;
 	size_t radio_stats_size, chan_stats_size;
 	size_t link_stats_results_size;
-	struct wifi_radio_stats *rs_results;
+	struct wifi_radio_stats *rs_results = NULL;
 	struct wifi_channel_stats *chn_results;
+	struct wifi_channel_stats *channels_in_this_event;
+	int32_t status;
 
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -2064,9 +2103,8 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		wma_err("Invalid param_tlvs for Radio Stats");
 		return -EINVAL;
 	}
-	if (radio_stats->num_channels >
-		(NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS) ||
-		radio_stats->num_channels > param_tlvs->num_channel_stats) {
+	if (radio_stats->num_channels > NUM_CHANNELS ||
+	    radio_stats->num_channels > param_tlvs->num_channel_stats) {
 		wma_err("Too many channels %d", radio_stats->num_channels);
 		return -EINVAL;
 	}
@@ -2109,47 +2147,60 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	wma_debug("Radio stats Fixed Param: req_id: %u num_radio: %u more_radio_events: %u",
-		 fixed_param->request_id, fixed_param->num_radio,
-		 fixed_param->more_radio_events);
+	wma_debug("Radio stats Fixed Param: req_id: %u num_radio: %u more_radio_events: %u more_channels %u",
+		  fixed_param->request_id, fixed_param->num_radio,
+		  fixed_param->more_radio_events, fixed_param->more_channels);
 
 	results = (uint8_t *) link_stats_results->results;
 	t_radio_stats = (uint8_t *) radio_stats;
 	t_channel_stats = (uint8_t *) channel_stats;
 
 	rs_results = (struct wifi_radio_stats *) &results[0] + radio_stats->radio_id;
-	rs_results->radio = radio_stats->radio_id;
-	rs_results->on_time = radio_stats->on_time;
-	rs_results->tx_time = radio_stats->tx_time;
-	rs_results->rx_time = radio_stats->rx_time;
-	rs_results->on_time_scan = radio_stats->on_time_scan;
-	rs_results->on_time_nbd = radio_stats->on_time_nbd;
-	rs_results->on_time_gscan = radio_stats->on_time_gscan;
-	rs_results->on_time_roam_scan = radio_stats->on_time_roam_scan;
-	rs_results->on_time_pno_scan = radio_stats->on_time_pno_scan;
-	rs_results->on_time_hs20 = radio_stats->on_time_hs20;
+
+	/*
+	 * If more channels is true, means this is the second event for the
+	 * same radio so no need to process radio stats again as the second
+	 * event will only contain remaining channel stats.
+	 */
+	if (!rs_results->more_channels) {
+		rs_results->radio = radio_stats->radio_id;
+		rs_results->on_time = radio_stats->on_time;
+		rs_results->tx_time = radio_stats->tx_time;
+		rs_results->rx_time = radio_stats->rx_time;
+		rs_results->on_time_scan = radio_stats->on_time_scan;
+		rs_results->on_time_nbd = radio_stats->on_time_nbd;
+		rs_results->on_time_gscan = radio_stats->on_time_gscan;
+		rs_results->on_time_roam_scan = radio_stats->on_time_roam_scan;
+		rs_results->on_time_pno_scan = radio_stats->on_time_pno_scan;
+		rs_results->on_time_hs20 = radio_stats->on_time_hs20;
+		rs_results->on_time_host_scan = radio_stats->on_time_host_scan;
+		rs_results->on_time_lpi_scan = radio_stats->on_time_lpi_scan;
+		if (rs_results->channels) {
+			qdf_mem_free(rs_results->channels);
+			rs_results->channels = NULL;
+		}
+	}
+
 	rs_results->total_num_tx_power_levels = 0;
 	if (rs_results->tx_time_per_power_level) {
 		qdf_mem_free(rs_results->tx_time_per_power_level);
 		rs_results->tx_time_per_power_level = NULL;
 	}
-	if (rs_results->channels) {
-		qdf_mem_free(rs_results->channels);
-		rs_results->channels = NULL;
-	}
-	rs_results->num_channels = radio_stats->num_channels;
-	rs_results->on_time_host_scan = radio_stats->on_time_host_scan;
-	rs_results->on_time_lpi_scan = radio_stats->on_time_lpi_scan;
-	if (rs_results->num_channels) {
-		rs_results->channels = qdf_mem_malloc(
+
+	rs_results->more_channels = fixed_param->more_channels;
+	num_chan_in_this_event = radio_stats->num_channels;
+
+	if (num_chan_in_this_event) {
+		channels_in_this_event = qdf_mem_malloc(
 					radio_stats->num_channels *
 					chan_stats_size);
-		if (!rs_results->channels) {
+		if (!channels_in_this_event) {
 			wma_unified_radio_tx_mem_free(handle);
 			return -ENOMEM;
 		}
 
-		chn_results = (struct wifi_channel_stats *) &rs_results->channels[0];
+		chn_results =
+			(struct wifi_channel_stats *)&channels_in_this_event[0];
 		next_chan_offset = WMI_TLV_HDR_SIZE;
 		wma_debug("Channel Stats Info");
 		for (count = 0; count < radio_stats->num_channels; count++) {
@@ -2178,6 +2229,14 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 			chn_results++;
 			next_chan_offset += sizeof(*channel_stats);
 		}
+
+		status = wma_copy_chan_stats(num_chan_in_this_event,
+					     channels_in_this_event,
+					     rs_results);
+		if (status) {
+			wma_unified_radio_tx_mem_free(handle);
+			return status;
+		}
 	}
 
 link_radio_stats_cb:
@@ -2196,7 +2255,8 @@ link_radio_stats_cb:
 	 */
 	link_stats_results->moreResultToFollow = fixed_param->more_radio_events;
 
-	if (link_stats_results->moreResultToFollow) {
+	if ((rs_results && rs_results->more_channels) ||
+	    link_stats_results->moreResultToFollow) {
 		/* More results coming, don't post yet */
 		return 0;
 	}
