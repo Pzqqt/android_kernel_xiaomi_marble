@@ -942,6 +942,17 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
 				QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
 						FL("\n****Wifi Rptr Loop Detected****\n"));
 			}
+		} else {
+			if (!qca_ml_entry.qal_fdb_is_local
+				&& (qca_ml_entry.qal_fdb_ieee80211_ptr->iftype == NL80211_IFTYPE_STATION)) {
+				/* This condition allows any source on RootAP or behind to be re-learnt
+				 * on Primary Station to overwrite a learning on secondary station.
+				 * This kind of schenario can happen when secondary station vap
+				 * comes up first and RootAP side devices are learnt on
+				 * secondary station and the primary station vap comes up.
+				 */
+				return QCA_MULTI_LINK_PKT_ALLOW;
+			}
 		}
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
