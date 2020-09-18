@@ -1231,7 +1231,7 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	uint32_t target_type = tgt_info->target_type;
 
-	HIF_TRACE("%s: E", __func__);
+	hif_info("E");
 
 	if ((target_type == TARGET_TYPE_AR900B) ||
 			target_type == TARGET_TYPE_QCA9984 ||
@@ -1408,7 +1408,7 @@ static int hif_set_hia(struct hif_softc *scn)
 	static struct CE_pipe_config *target_ce_config;
 	struct service_to_pipe *target_service_to_ce_map;
 
-	HIF_TRACE("%s: E", __func__);
+	hif_info("E");
 
 	hif_get_target_ce_config(scn,
 				 &target_ce_config, &target_ce_config_sz,
@@ -1994,7 +1994,7 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 	uint32_t target_type = scn->target_info.target_type;
 
-	HIF_TRACE("%s: E", __func__);
+	hif_info("E");
 
 	/* do notn support MSI or MSI IRQ failed */
 	tasklet_init(&sc->intr_tq, wlan_tasklet, (unsigned long)sc);
@@ -3114,7 +3114,7 @@ int hif_configure_irq(struct hif_softc *scn)
 	int ret = 0;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	HIF_TRACE("%s: E", __func__);
+	hif_info("E");
 
 	if (hif_is_polled_mode_enabled(GET_HIF_OPAQUE_HDL(scn))) {
 		scn->request_irq_done = false;
@@ -3207,7 +3207,7 @@ static void hif_target_sync(struct hif_softc *scn)
 		int retry_count = 0;
 		uint32_t target_type = scn->target_info.target_type;
 fw_retry:
-		HIF_TRACE("%s: Loop checking FW signal", __func__);
+		hif_info("Loop checking FW signal");
 		while (1) {
 			fw_ind = hif_read32_mb(scn, scn->mem +
 					FW_INDICATOR_ADDRESS);
@@ -3231,12 +3231,10 @@ fw_retry:
 				wait_limit = 500;
 				goto fw_retry;
 			}
-			HIF_TRACE("%s: FW signal timed out",
-					__func__);
+			hif_info("FW signal timed out");
 			qdf_assert_always(0);
 		} else {
-			HIF_TRACE("%s: Got FW signal, retries = %x",
-					__func__, 500-wait_limit);
+			hif_info("Got FW signal, retries = %x", 500-wait_limit);
 		}
 	}
 	hif_write32_mb(scn, scn->mem + PCIE_LOCAL_BASE_ADDRESS +
@@ -3351,8 +3349,8 @@ QDF_STATUS hif_pci_enable_bus(struct hif_softc *ol_sc,
 	/* Following print is used by various tools to identify
 	 * WLAN SOC (e.g. crash dump analysis and reporting tool).
 	 */
-	HIF_TRACE("%s: con_mode = 0x%x, WLAN_SOC_device_id = 0x%x",
-		  __func__, hif_get_conparam(ol_sc), id->device);
+	hif_info("con_mode = 0x%x, WLAN_SOC_device_id = 0x%x",
+		 hif_get_conparam(ol_sc), id->device);
 
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
@@ -3367,7 +3365,7 @@ again:
 		hif_err("hif_enable_pci error = %d", ret);
 		goto err_enable_pci;
 	}
-	HIF_TRACE("%s: hif_enable_pci done", __func__);
+	hif_info("hif_enable_pci done");
 
 	/* Temporary FIX: disable ASPM on peregrine.
 	 * Will be removed after the OTP is programmed
@@ -3383,8 +3381,8 @@ again:
 		hif_err("Invalid device id/revision_id");
 		goto err_tgtstate;
 	}
-	HIF_TRACE("%s: hif_type = 0x%x, target_type = 0x%x",
-		  __func__, hif_type, target_type);
+	hif_info("hif_type = 0x%x, target_type = 0x%x",
+		hif_type, target_type);
 
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
@@ -3400,7 +3398,7 @@ again:
 		ol_sc->irq_unlazy_disable = 1;
 
 	if (ce_srng_based(ol_sc)) {
-		HIF_TRACE("%s:Skip tgt_wake up for srng devices\n", __func__);
+		hif_info("Skip tgt_wake up for srng devices");
 	} else {
 		ret = hif_pci_probe_tgt_wakeup(sc);
 		if (ret < 0) {
@@ -3409,7 +3407,7 @@ again:
 				probe_again++;
 			goto err_tgtstate;
 		}
-		HIF_TRACE("%s: hif_pci_probe_tgt_wakeup done", __func__);
+		hif_info("hif_pci_probe_tgt_wakeup done");
 	}
 
 	if (!ol_sc->mem_pa) {
@@ -3533,9 +3531,9 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 		return 0;
 	}
 
-	HIF_TRACE("Refusing to read memory at 0x%x - 0x%x (max 0x%zx)\n",
-		  offset, (uint32_t)(offset + sizeof(unsigned int)),
-		  sc->mem_len);
+	hif_info("Refusing to read memory at 0x%x - 0x%x (max 0x%zx)",
+		offset, (uint32_t)(offset + sizeof(unsigned int)),
+		sc->mem_len);
 
 	return -EINVAL;
 }

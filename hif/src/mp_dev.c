@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,7 +132,7 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 	chain0 = chain_mask & 1;
 	chain1 = chain_mask & 2;
 
-	HIF_TRACE("%s: E", __func__);
+	hif_info("E");
 	bw = get_target_reg_bits(scn, scn->mem, BB_chaninfo_ctrl,
 				 CHANINFO_CTRL_CHANINFOMEM_BW_MASK);
 
@@ -246,7 +246,7 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 			}
 		}
 	}
-	HIF_TRACE("%s: X", __func__);
+	hif_info("X");
 }
 
 void priv_dump_agc(struct hif_softc *scn)
@@ -269,7 +269,7 @@ void priv_dump_agc(struct hif_softc *scn)
 	set_target_reg_bits(scn, scn->mem, BB_chaninfo_ctrl,
 			    CHANINFOMEM_S2_READ_MASK, 0);
 
-	HIF_TRACE("%s: AGC history buffer dump: E", __func__);
+	hif_info("AGC history buffer dump: E");
 	if (chain0) {
 		for (i = 0; i < len; i++) {
 			hif_write32_mb(scn, scn->mem +
@@ -294,7 +294,7 @@ void priv_dump_agc(struct hif_softc *scn)
 				qdf_debug("\n");
 		}
 	}
-	HIF_TRACE("%s: AGC history buffer dump X", __func__);
+	hif_info("AGC history buffer dump X");
 	/* restore original value */
 	hif_write32_mb(scn, scn->mem + BB_gains_min_offsets,
 		       g_priv_dump_ctx.gain_min_offsets_orig);
@@ -307,7 +307,7 @@ void priv_dump_bbwatchdog(struct hif_softc *scn)
 {
 	uint32_t val;
 
-	HIF_TRACE("%s: BB watchdog dump E", __func__);
+	hif_info("BB watchdog dump E");
 	val = hif_read32_mb(scn, scn->mem + BB_watchdog_status);
 	qdf_debug("0x%x\t", val);
 	val = hif_read32_mb(scn, scn->mem + BB_watchdog_ctrl_1);
@@ -316,5 +316,5 @@ void priv_dump_bbwatchdog(struct hif_softc *scn)
 	qdf_debug("0x%x\t", val);
 	val = hif_read32_mb(scn, scn->mem + BB_watchdog_status_B);
 	qdf_debug("0x%x", val);
-	HIF_TRACE("%s: BB watchdog dump X", __func__);
+	hif_info("BB watchdog dump X");
 }

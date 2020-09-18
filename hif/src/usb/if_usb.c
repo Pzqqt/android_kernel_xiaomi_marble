@@ -153,17 +153,15 @@ static int hif_usb_disable_lpm(struct usb_device *udev)
 			if (!ret) {
 				udev->usb2_hw_lpm_enabled = false;
 				udev->usb2_hw_lpm_capable = false;
-				HIF_TRACE("%s: LPM is disabled", __func__);
+				hif_info("LPM is disabled");
 			} else {
-				HIF_TRACE("%s: Fail to disable LPM",
-						__func__);
+				hif_info("Fail to disable LPM");
 			}
 		} else {
-			HIF_TRACE("%s: hcd doesn't support LPM",
-						__func__);
+			hif_info("hcd doesn't support LPM");
 		}
 	} else {
-		HIF_TRACE("%s: LPM isn't enabled", __func__);
+		hif_info("LPM isn't enabled");
 	}
 exit:
 	HIF_EXIT();
@@ -302,7 +300,7 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 	struct usb_device *udev = interface_to_usbdev(interface);
 	struct hif_target_info *tgt_info = &hif_ctx->target_info;
 
-	HIF_TRACE("%s: trying to remove hif_usb!", __func__);
+	hif_info("trying to remove hif_usb!");
 
 	/* disable lpm to avoid following cold reset will
 	 * cause xHCI U1/U2 timeout
@@ -328,7 +326,7 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 
 	hif_usb_device_deinit(sc);
 
-	HIF_TRACE("%s hif_usb removed !!!!!!", __func__);
+	hif_info("hif_usb removed !!!!!!");
 }
 
 /**

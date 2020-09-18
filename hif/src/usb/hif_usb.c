@@ -347,7 +347,7 @@ void hif_usb_device_deinit(struct hif_usb_softc *sc)
 {
 	struct HIF_DEVICE_USB *device = &sc->hif_hdl;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 
 	usb_hif_cleanup_pipe_resources(device);
 
@@ -357,7 +357,7 @@ void hif_usb_device_deinit(struct hif_usb_softc *sc)
 	if (device->diag_resp_buffer)
 		qdf_mem_free(device->diag_resp_buffer);
 
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 }
 
 /**
@@ -375,7 +375,7 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct HIF_USB_PIPE *pipe;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 
 	do {
 
@@ -421,7 +421,7 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 	if (status != QDF_STATUS_SUCCESS)
 		hif_err("abnormal condition (status=%d)", status);
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 	return status;
 }
 
@@ -436,7 +436,7 @@ QDF_STATUS hif_start(struct hif_opaque_softc *scn)
 	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
 	int i;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 	usb_hif_prestart_recv_pipes(device);
 
 	/* set the TX resource avail threshold for each TX pipe */
@@ -445,7 +445,7 @@ QDF_STATUS hif_start(struct hif_opaque_softc *scn)
 		    device->pipes[i].urb_alloc / 2;
 	}
 
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -459,11 +459,11 @@ void hif_usb_stop_device(struct hif_softc *hif_sc)
 {
 	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(hif_sc);
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 
 	usb_hif_flush_all(device);
 
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 }
 
 /**
@@ -844,7 +844,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 
 	if ((address & 0x3) || ((uintptr_t)data & 0x3))
 		return QDF_STATUS_E_IO;
@@ -860,7 +860,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn,
 		data += sizeof(uint32_t);
 
 	}
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 	return status;
 }
 qdf_export_symbol(hif_diag_read_mem);
@@ -880,7 +880,7 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 	if ((address & 0x3) || ((uintptr_t)data & 0x3))
 		return QDF_STATUS_E_IO;
 
@@ -895,7 +895,7 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn,
 		data += sizeof(uint32_t);
 
 	}
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 	return status;
 }
 

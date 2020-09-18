@@ -197,7 +197,7 @@ static void usb_hif_free_pipe_resources(struct HIF_USB_PIPE *pipe)
 		return;
 	}
 
-	HIF_TRACE("athusb: free resources lpipe:%d hpipe:0x%X urbs:%d avail:%d",
+	hif_info("athusb: free resources lpipe:%d hpipe:0x%X urbs:%d avail:%d",
 			 pipe->logical_pipe_num,
 			 pipe->usb_pipe_handle, pipe->urb_alloc,
 			 pipe->urb_cnt);
@@ -459,7 +459,7 @@ static void usb_hif_flush_pending_transfers(struct HIF_USB_PIPE *pipe)
 {
 	struct HIF_URB_CONTEXT *urb_context;
 
-	HIF_TRACE("+%s pipe : %d", __func__, pipe->logical_pipe_num);
+	hif_info("+ pipe: %d", pipe->logical_pipe_num);
 
 	while (1) {
 		urb_context = usb_hif_dequeue_pending_transfer(pipe);
@@ -467,16 +467,16 @@ static void usb_hif_flush_pending_transfers(struct HIF_USB_PIPE *pipe)
 			hif_warn("urb_context is NULL");
 			break;
 		}
-		HIF_TRACE("  pending urb ctxt: 0x%pK", urb_context);
+		hif_info("pending urb ctxt: 0x%pK", urb_context);
 		if (urb_context->urb) {
-			HIF_TRACE("  killing urb: 0x%pK", urb_context->urb);
+			hif_info("killing urb: 0x%pK", urb_context->urb);
 			/* killing the URB will cause the completion routines to
 			 * run
 			 */
 			usb_kill_urb(urb_context->urb);
 		}
 	}
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 }
 
 /**
@@ -490,7 +490,7 @@ void usb_hif_flush_all(struct HIF_DEVICE_USB *device)
 	int i;
 	struct HIF_USB_PIPE *pipe;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 
 	for (i = 0; i < HIF_USB_PIPE_MAX; i++) {
 		if (device->pipes[i].device) {
@@ -501,7 +501,7 @@ void usb_hif_flush_all(struct HIF_DEVICE_USB *device)
 		}
 	}
 
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 }
 
 /**
@@ -865,7 +865,7 @@ static void usb_hif_post_recv_prestart_transfers(struct HIF_USB_PIPE *recv_pipe,
 	struct urb *urb;
 	int i, usb_status, buffer_length = HIF_USB_RX_BUFFER_SIZE;
 
-	HIF_TRACE("+%s", __func__);
+	hif_info("+");
 
 	qdf_spin_lock_irqsave(&recv_pipe->device->rx_prestart_lock);
 	for (i = 0; i < prestart_urb; i++) {
@@ -912,7 +912,7 @@ static void usb_hif_post_recv_prestart_transfers(struct HIF_USB_PIPE *recv_pipe,
 	}
 	qdf_spin_unlock_irqrestore(&recv_pipe->device->rx_prestart_lock);
 
-	HIF_TRACE("-%s", __func__);
+	hif_info("-");
 }
 
 /**
@@ -1084,7 +1084,7 @@ void usb_hif_start_recv_pipes(struct HIF_DEVICE_USB *device)
 	pipe = &device->pipes[HIF_RX_DATA_PIPE];
 	pipe->urb_cnt_thresh = pipe->urb_alloc / 2;
 
-	HIF_TRACE("Post URBs to RX_DATA_PIPE: %d is_bundle %d",
+	hif_info("Post URBs to RX_DATA_PIPE: %d is_bundle %d",
 		  device->pipes[HIF_RX_DATA_PIPE].urb_cnt,
 		  device->is_bundle_enabled);
 	if (device->is_bundle_enabled) {
@@ -1098,7 +1098,7 @@ void usb_hif_start_recv_pipes(struct HIF_DEVICE_USB *device)
 	HIF_DBG("athusb bulk recv len %d", buf_len);
 
 	if (!hif_usb_disable_rxdata2) {
-		HIF_TRACE("Post URBs to RX_DATA2_PIPE: %d",
+		hif_info("Post URBs to RX_DATA2_PIPE: %d",
 			device->pipes[HIF_RX_DATA2_PIPE].urb_cnt);
 
 		pipe = &device->pipes[HIF_RX_DATA2_PIPE];
@@ -1107,8 +1107,8 @@ void usb_hif_start_recv_pipes(struct HIF_DEVICE_USB *device)
 	}
 
 	if (device->rx_ctrl_pipe_supported) {
-		HIF_TRACE("Post URBs to RX_CONTROL_PIPE: %d",
-			  device->pipes[HIF_RX_CTRL_PIPE].urb_cnt);
+		hif_info("Post URBs to RX_CONTROL_PIPE: %d",
+			 device->pipes[HIF_RX_CTRL_PIPE].urb_cnt);
 
 		pipe = &device->pipes[HIF_RX_CTRL_PIPE];
 		pipe->urb_cnt_thresh = pipe->urb_alloc / 2;

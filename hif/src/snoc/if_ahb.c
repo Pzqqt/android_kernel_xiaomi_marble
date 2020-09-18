@@ -452,11 +452,10 @@ int hif_target_sync_ahb(struct hif_softc *scn)
 			qdf_mdelay(10);
 		}
 		if (wait_limit < 0) {
-			HIF_TRACE("%s: FW signal timed out", __func__);
+			hif_info("FW signal timed out");
 			return -EIO;
 		}
-		HIF_TRACE("%s: Got FW signal, retries = %x", __func__,
-							500-wait_limit);
+		hif_info("Got FW signal, retries = %x", 500-wait_limit);
 	}
 
 	return 0;
@@ -656,8 +655,8 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 			goto err_target_sync;
 		}
 	}
-	HIF_TRACE("%s: X - hif_type = 0x%x, target_type = 0x%x",
-			__func__, hif_type, target_type);
+	hif_info("X - hif_type = 0x%x, target_type = 0x%x",
+		hif_type, target_type);
 
 	return QDF_STATUS_SUCCESS;
 err_target_sync:

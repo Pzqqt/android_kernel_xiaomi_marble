@@ -3501,11 +3501,11 @@ static void hif_post_static_buf_to_target(struct hif_softc *scn)
 	target_va = qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
 				FW_SHARED_MEM, &target_pa);
 	if (!target_va) {
-		HIF_TRACE("Memory allocation failed could not post target buf");
+		hif_err("Memory allocation failed could not post target buf");
 		return;
 	}
 	hif_write32_mb(scn, scn->mem + BYPASS_QMI_TEMP_REGISTER, target_pa);
-	HIF_TRACE("target va %pK target pa %pa", target_va, &target_pa);
+	hif_info("target va %pK target pa %pa", target_va, &target_pa);
 }
 #endif
 
@@ -3640,7 +3640,7 @@ int hif_config_ce(struct hif_softc *scn)
 err:
 	/* Failure, so clean up */
 	hif_unconfig_ce(scn);
-	HIF_TRACE("%s: X, ret = %d", __func__, rv);
+	hif_info("X, ret = %d", rv);
 	return QDF_STATUS_SUCCESS != QDF_STATUS_E_FAILURE;
 }
 

@@ -557,7 +557,7 @@ int hif_configure_irq(struct hif_softc *scn)
 {
 	int ret = 0;
 
-	HIF_TRACE("%s: E", __func__);
+	hif_info("E");
 
 	if (hif_is_polled_mode_enabled(GET_HIF_OPAQUE_HDL(scn))) {
 		scn->request_irq_done = false;
@@ -673,7 +673,7 @@ QDF_STATUS hif_ipci_enable_bus(struct hif_softc *ol_sc,
 	tgt_info = hif_get_target_info_handle(hif_hdl);
 	hif_ipci_init_deinit_ops_attach(sc, device_id);
 	sc->hif_ipci_get_soc_info(sc, dev);
-	HIF_TRACE("%s: hif_enable_pci done", __func__);
+	hif_debug("hif_enable_pci done");
 
 	ret = hif_get_device_type(device_id, revision_id,
 				  &hif_type, &target_type);
@@ -681,8 +681,8 @@ QDF_STATUS hif_ipci_enable_bus(struct hif_softc *ol_sc,
 		hif_err("Invalid device id/revision_id");
 		return QDF_STATUS_E_ABORTED;
 	}
-	HIF_TRACE("%s: hif_type = 0x%x, target_type = 0x%x",
-		  __func__, hif_type, target_type);
+	hif_debug("hif_type = 0x%x, target_type = 0x%x",
+		 hif_type, target_type);
 
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
