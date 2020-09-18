@@ -105,12 +105,12 @@ int gpr_send_pkt(struct gpr_device *adev, struct gpr_pkt *pkt)
 
 	gpr = dev_get_drvdata(adev->dev.parent);
 
-	if ((adev->domain_id == GPR_IDS_DOMAIN_ID_ADSP_V) &&
+	if ((adev->domain_id == GPR_DOMAIN_ADSP) &&
 	    (gpr_get_q6_state() != GPR_SUBSYS_LOADED)) {
 		dev_err(gpr->dev,"%s: domain_id[%d], Still Dsp is not Up\n",
 			__func__, adev->domain_id);
 		return -ENETRESET;
-		} else if ((adev->domain_id == GPR_IDS_DOMAIN_ID_MODEM_V) &&
+		} else if ((adev->domain_id == GPR_DOMAIN_MODEM) &&
 		   (gpr_get_modem_state() == GPR_SUBSYS_DOWN)) {
 		dev_err(gpr->dev, "%s: domain_id[%d], Still Modem is not Up\n",
 			__func__, adev->domain_id );
@@ -502,15 +502,15 @@ static int gpr_probe(struct rpmsg_device *rpdev)
 		ret = 0;
 	}
 
-	of_register_gpr_devices(dev);
-
-	INIT_WORK(&gpr_priv->notifier_reg_work, gpr_notifier_register);
-
 	ret = of_property_read_u32(dev->of_node, "reg", &gpr_priv->dest_domain_id);
 	if (ret) {
 		dev_err(dev, "GPR Domain ID not specified in DT\n");
 		return ret;
 	}
+
+	of_register_gpr_devices(dev);
+
+	INIT_WORK(&gpr_priv->notifier_reg_work, gpr_notifier_register);
 
 	if (GPR_DOMAIN_ADSP == gpr_priv->dest_domain_id ||
 		GPR_DOMAIN_MODEM == gpr_priv->dest_domain_id) {
