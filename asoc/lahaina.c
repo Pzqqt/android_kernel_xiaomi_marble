@@ -424,6 +424,15 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(usb_audio_tx),
 	},
+	{
+		.name = LPASS_BE_WSA_CDC_DMA_TX_0,
+		.stream_name = LPASS_BE_WSA_CDC_DMA_TX_0,
+		.capture_only = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		SND_SOC_DAILINK_REG(vi_feedback),
+	},
 };
 
 static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
@@ -631,6 +640,54 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_mi2s_dai_links[] = {
+	{
+		.name = LPASS_BE_QUAT_MI2S_RX,
+		.stream_name = LPASS_BE_QUAT_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(quat_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_QUAT_MI2S_TX,
+		.stream_name = LPASS_BE_QUAT_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(quat_mi2s_tx),
+	},
+};
+
+static struct snd_soc_dai_link msm_tdm_dai_links[] = {
+	{
+		.name = LPASS_BE_PRI_TDM_RX_0,
+		.stream_name = LPASS_BE_PRI_TDM_RX_0,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(pri_tdm_rx_0),
+	},
+	{
+		.name = LPASS_BE_PRI_TDM_TX_0,
+		.stream_name = LPASS_BE_PRI_TDM_TX_0,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(pri_tdm_tx_0),
+	},
+};
+
 static struct snd_soc_dai_link msm_lahaina_dai_links[
 			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links) +
@@ -639,7 +696,10 @@ static struct snd_soc_dai_link msm_lahaina_dai_links[
 			ARRAY_SIZE(ext_disp_be_dai_link) +
 #endif
 			ARRAY_SIZE(msm_common_be_dai_links) +
-			ARRAY_SIZE(msm_wcn_be_dai_links)];
+			ARRAY_SIZE(msm_wcn_be_dai_links) +
+			ARRAY_SIZE(msm_mi2s_dai_links) +
+			ARRAY_SIZE(msm_tdm_dai_links)];
+
 
 static int msm_populate_dai_link_component_of_node(
 					struct snd_soc_card *card)
@@ -870,6 +930,23 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_be_dai_links));
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
+		rc = of_property_read_u32(dev->of_node,
+				"qcom,mi2s-audio-intf", &val);
+		if (!rc && val) {
+			memcpy(msm_lahaina_dai_links + total_links,
+					msm_mi2s_dai_links,
+					sizeof(msm_mi2s_dai_links));
+			total_links += ARRAY_SIZE(msm_mi2s_dai_links);
+		}
+
+		rc = of_property_read_u32(dev->of_node,
+				"qcom,tdm-audio-intf", &val);
+		if (!rc && val) {
+			memcpy(msm_lahaina_dai_links + total_links,
+					msm_tdm_dai_links,
+					sizeof(msm_tdm_dai_links));
+			total_links += ARRAY_SIZE(msm_tdm_dai_links);
+		}
 
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		rc = of_property_read_u32(dev->of_node,
