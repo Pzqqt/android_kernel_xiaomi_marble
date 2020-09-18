@@ -195,6 +195,7 @@
 #include "wlan_cm_roam_ucfg_api.h"
 #include <cdp_txrx_ctrl.h>
 #include "qdf_lock.h"
+#include "wlan_hdd_thermal.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -15034,6 +15035,7 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	wlan_hdd_register_cp_stats_cb(hdd_ctx);
 	hdd_dcs_register_cb(hdd_ctx);
 
+	hdd_thermal_register_callbacks(hdd_ctx);
 	/* print error and not block the startup process */
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("set lost link info callback failed");
@@ -15122,7 +15124,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	ret = hdd_deregister_data_stall_detect_cb();
 	if (ret)
 		hdd_err("Failed to de-register data stall detect event callback");
-
+	hdd_thermal_unregister_callbacks(hdd_ctx);
 	sme_deregister_oem_data_rsp_callback(mac_handle);
 
 	hdd_exit();
@@ -16284,10 +16286,12 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	ucfg_interop_issues_ap_psoc_enable(psoc);
 	policy_mgr_psoc_enable(psoc);
 	ucfg_tdls_psoc_enable(psoc);
+	ucfg_fwol_psoc_enable(psoc);
 }
 
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_fwol_psoc_disable(psoc);
 	ucfg_tdls_psoc_disable(psoc);
 	policy_mgr_psoc_disable(psoc);
 	ucfg_interop_issues_ap_psoc_disable(psoc);

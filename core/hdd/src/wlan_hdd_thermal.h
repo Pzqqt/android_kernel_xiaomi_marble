@@ -100,6 +100,12 @@ extern const struct nla_policy
 			      QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_MAX) \
 },
 
+#define FEATURE_THERMAL_VENDOR_EVENTS                               \
+[QCA_NL80211_VENDOR_SUBCMD_THERMAL_INDEX] = {                       \
+	.vendor_id = QCA_NL80211_VENDOR_ID,                         \
+	.subcmd = QCA_NL80211_VENDOR_SUBCMD_THERMAL_EVENT,          \
+},
+
 /**
  * hdd_thermal_mitigation_register() - Register for platform specific thermal
  *                                     mitigation support
@@ -161,8 +167,30 @@ hdd_thermal_fill_clientid_priority(uint8_t mon_id, uint8_t priority_apps,
 {
 }
 #endif
+
+/**
+ * hdd_thermal_register_callbacks() - register thermal event callback
+ *  to be called by fwol thermal layer
+ * @hdd_ctx: hdd context
+ *
+ * The callback will be invoked by fwol thermal layer when the target
+ * indicate thermal throttle level changed. Host will report the new
+ * level to upper layer by vendor command event.
+ *
+ * Return: none
+ */
+void hdd_thermal_register_callbacks(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_thermal_unregister_callbacks() - unregister thermal event callback
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+void hdd_thermal_unregister_callbacks(struct hdd_context *hdd_ctx);
 #else
 #define FEATURE_THERMAL_VENDOR_COMMANDS
+#define FEATURE_THERMAL_VENDOR_EVENTS
 
 static inline bool wlan_hdd_thermal_config_support(void)
 {
@@ -194,5 +222,14 @@ int wlan_hdd_pld_set_thermal_mitigation(struct device *dev,
 	return 0;
 }
 
+static inline void
+hdd_thermal_register_callbacks(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void
+hdd_thermal_unregister_callbacks(struct hdd_context *hdd_ctx)
+{
+}
 #endif /* FEATURE_THERMAL_VENDOR_COMMANDS */
 #endif /* __HDD_THERMAL_H */

@@ -1669,7 +1669,8 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 	[QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO,
-	}
+	},
+	FEATURE_THERMAL_VENDOR_EVENTS
 };
 
 /**

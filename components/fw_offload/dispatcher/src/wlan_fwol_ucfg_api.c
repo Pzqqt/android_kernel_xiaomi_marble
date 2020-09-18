@@ -34,15 +34,23 @@ QDF_STATUS ucfg_fwol_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		fwol_err("Failed to initialize FWOL CFG");
 
-	tgt_fwol_register_ev_handler(psoc);
-
 	return status;
 }
 
 void ucfg_fwol_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	/* Clear the FWOL CFG Structure */
+}
 
+QDF_STATUS ucfg_fwol_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	tgt_fwol_register_ev_handler(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void ucfg_fwol_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
 	tgt_fwol_unregister_ev_handler(psoc);
 }
 
@@ -159,6 +167,55 @@ void ucfg_fwol_deinit(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		fwol_err("unable to unregister psoc create handle");
 }
+
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+QDF_STATUS ucfg_fwol_thermal_register_callbacks(
+				struct wlan_objmgr_psoc *psoc,
+				struct fwol_thermal_callbacks *cb)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	fwol_obj->thermal_cbs = *cb;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_thermal_unregister_callbacks(
+				struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_zero(&fwol_obj->thermal_cbs, sizeof(fwol_obj->thermal_cbs));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_fwol_thermal_get_target_level(struct wlan_objmgr_psoc *psoc,
+				   enum thermal_throttle_level *level)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*level = fwol_obj->thermal_throttle.level;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS
 ucfg_fwol_get_coex_config_params(struct wlan_objmgr_psoc *psoc,

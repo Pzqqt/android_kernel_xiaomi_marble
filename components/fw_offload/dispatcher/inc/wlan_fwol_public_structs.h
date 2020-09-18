@@ -24,6 +24,7 @@
 #define _WLAN_FWOL_PUBLIC_STRUCTS_H_
 
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_thermal_public_struct.h"
 
 #ifdef WLAN_FEATURE_ELNA
 /**
@@ -71,6 +72,18 @@ struct wlan_fwol_callbacks {
 };
 
 /**
+ * struct thermal_throttle_info - thermal throttle info from Target
+ * @temperature: current temperature in c Degree
+ * @level: target thermal level info
+ * @pdev_id: pdev id
+ */
+struct thermal_throttle_info {
+	uint32_t temperature;
+	enum thermal_throttle_level level;
+	uint32_t pdev_id;
+};
+
+/**
  * struct wlan_fwol_tx_ops - structure of tx func pointers
  * @set_elna_bypass: set eLNA bypass
  * @get_elna_bypass: get eLNA bypass
@@ -99,13 +112,29 @@ struct wlan_fwol_tx_ops {
 /**
  * struct wlan_fwol_rx_ops - structure of rx func pointers
  * @get_elna_bypass_resp: get eLNA bypass response
+ * @notify_thermal_throttle_handler: thermal stats indication callback to fwol
+ *  core from target if layer
  */
 struct wlan_fwol_rx_ops {
 #ifdef WLAN_FEATURE_ELNA
 	QDF_STATUS (*get_elna_bypass_resp)(struct wlan_objmgr_psoc *psoc,
 					 struct get_elna_bypass_response *resp);
 #endif
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	QDF_STATUS (*notify_thermal_throttle_handler)(
+				struct wlan_objmgr_psoc *psoc,
+				struct thermal_throttle_info *info);
+#endif
 };
 
+/**
+ * struct fwol_thermal_callbacks - structure of rx callback to hdd layer
+ * @notify_thermal_throttle_handler: thermal throttle event callback
+ */
+struct fwol_thermal_callbacks {
+	QDF_STATUS (*notify_thermal_throttle_handler)(
+					struct wlan_objmgr_psoc *psoc,
+					struct thermal_throttle_info *info);
+};
 #endif /* _WLAN_FWOL_PUBLIC_STRUCTS_H_ */
 
