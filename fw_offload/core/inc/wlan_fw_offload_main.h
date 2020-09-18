@@ -267,17 +267,31 @@ struct wlan_fwol_cfg {
 };
 
 /**
+ * struct wlan_fwol_thermal_throttle_info - FW offload thermal throttle info
+ * @level: thermal throttle level
+ */
+struct wlan_fwol_thermal_throttle_info {
+	enum thermal_throttle_level level;
+};
+
+/**
  * struct wlan_fwol_psoc_obj - FW offload psoc priv object
  * @cfg:     cfg items
  * @cbs:     callback functions
  * @tx_ops: tx operations for target interface
  * @rx_ops: rx operations for target interface
+ * @thermal_throttle: cached target thermal stats information
+ * @thermal_cbs: thermal notification callbacks to hdd layer
  */
 struct wlan_fwol_psoc_obj {
 	struct wlan_fwol_cfg cfg;
 	struct wlan_fwol_callbacks cbs;
 	struct wlan_fwol_tx_ops tx_ops;
 	struct wlan_fwol_rx_ops rx_ops;
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	struct wlan_fwol_thermal_throttle_info thermal_throttle;
+	struct fwol_thermal_callbacks thermal_cbs;
+#endif
 };
 
 /**
