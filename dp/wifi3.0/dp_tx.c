@@ -794,6 +794,82 @@ static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 }
 #endif
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+/**
+ * dp_is_tx_extended() - Configure AST override from peer ast entry
+ *
+ * @vdev: DP vdev handle
+ * @tx_exc_metadata: Handle that holds exception path metadata
+ *
+ * Return: if this packet needs to exception to FW or not
+ *	   (false: exception to wlan FW, true: do not exception)
+ */
+static inline bool
+dp_is_tx_extended(struct dp_vdev *vdev, struct cdp_tx_exception_metadata
+		  *tx_exc_metadata)
+{
+	if (qdf_likely(!vdev->wds_ext_enabled))
+		return false;
+
+	if (tx_exc_metadata && !tx_exc_metadata->is_wds_extended)
+		return false;
+
+	return true;
+}
+
+/**
+ * dp_tx_wds_ext() - Configure AST override from peer ast entry
+ *
+ * @soc: DP soc handle
+ * @vdev: DP vdev handle
+ * @peer_id: peer_id of the peer for which packet is destined
+ * @msdu_info: MSDU info to be setup in MSDU descriptor and MSDU extension desc.
+ *
+ * Return: None
+ */
+static inline void
+dp_tx_wds_ext(struct dp_soc *soc, struct dp_vdev *vdev, uint16_t peer_id,
+	      struct dp_tx_msdu_info_s *msdu_info)
+{
+	struct dp_peer *peer = NULL;
+
+	msdu_info->search_type = vdev->search_type;
+	msdu_info->ast_idx = vdev->bss_ast_idx;
+	msdu_info->ast_hash = vdev->bss_ast_hash;
+
+	if (qdf_likely(!vdev->wds_ext_enabled))
+		return;
+
+	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX);
+
+	if (qdf_unlikely(!peer))
+		return;
+
+	msdu_info->search_type = HAL_TX_ADDR_INDEX_SEARCH;
+	msdu_info->ast_idx = peer->self_ast_entry->ast_idx;
+	msdu_info->ast_hash = peer->self_ast_entry->ast_hash_value;
+	dp_peer_unref_delete(peer, DP_MOD_ID_TX);
+	msdu_info->exception_fw = 0;
+}
+#else
+
+static inline bool
+dp_is_tx_extended(struct dp_vdev *vdev, struct cdp_tx_exception_metadata
+		  *tx_exc_metadata)
+{
+	return false;
+}
+
+static inline void
+dp_tx_wds_ext(struct dp_soc *soc, struct dp_vdev *vdev, uint16_t peer_id,
+	      struct dp_tx_msdu_info_s *msdu_info)
+{
+	msdu_info->search_type = vdev->search_type;
+	msdu_info->ast_idx = vdev->bss_ast_idx;
+	msdu_info->ast_hash = vdev->bss_ast_hash;
+}
+#endif
+
 /**
  * dp_tx_desc_prepare_single - Allocate and prepare Tx descriptor
  * @vdev: DP vdev handle
@@ -848,6 +924,9 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		if (!dp_tx_multipass_process(soc, vdev, nbuf, msdu_info))
 			goto failure;
 	}
+
+	if (qdf_unlikely(dp_is_tx_extended(vdev, tx_exc_metadata)))
+		return tx_desc;
 
 	/*
 	 * For special modes (vdev_type == ocb or mesh), data frames should be
@@ -1255,16 +1334,19 @@ dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
-static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
-				   struct dp_tx_desc_s *tx_desc, uint8_t tid,
-				   uint16_t fw_metadata, uint8_t ring_id,
-				   struct cdp_tx_exception_metadata
-					*tx_exc_metadata)
+static QDF_STATUS
+dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
+		 struct dp_tx_desc_s *tx_desc, uint16_t fw_metadata,
+		 struct cdp_tx_exception_metadata *tx_exc_metadata,
+		 struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint8_t type;
 	void *hal_tx_desc;
 	uint32_t *hal_tx_desc_cached;
 	int coalesce = 0;
+	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
+	uint8_t ring_id = tx_q->ring_id & DP_TX_QUEUE_MASK;
+	uint8_t tid = msdu_info->tid;
 
 	/*
 	 * Setting it initialization statically here to avoid
@@ -1314,16 +1396,16 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
 				vdev->lmac_id);
 	hal_tx_desc_set_search_type(soc->hal_soc, hal_tx_desc_cached,
-				    vdev->search_type);
+				    msdu_info->search_type);
 	hal_tx_desc_set_search_index(soc->hal_soc, hal_tx_desc_cached,
-				     vdev->bss_ast_idx);
+				     msdu_info->ast_idx);
 	hal_tx_desc_set_dscp_tid_table_id(soc->hal_soc, hal_tx_desc_cached,
 					  vdev->dscp_tid_map_id);
 
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
 			sec_type_map[sec_type]);
 	hal_tx_desc_set_cache_set_num(soc->hal_soc, hal_tx_desc_cached,
-				      (vdev->bss_ast_hash & 0xF));
+				      (msdu_info->ast_hash & 0xF));
 
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_length(hal_tx_desc_cached, tx_desc->length);
@@ -1955,8 +2037,8 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	/* Enqueue the Tx MSDU descriptor to HW for transmit */
-	status = dp_tx_hw_enqueue(soc, vdev, tx_desc, tid,
-			htt_tcl_metadata, tx_q->ring_id, tx_exc_metadata);
+	status = dp_tx_hw_enqueue(soc, vdev, tx_desc, htt_tcl_metadata,
+				  tx_exc_metadata, msdu_info);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2087,8 +2169,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		/*
 		 * Enqueue the Tx MSDU descriptor to HW for transmit
 		 */
-		status = dp_tx_hw_enqueue(soc, vdev, tx_desc, msdu_info->tid,
-			htt_tcl_metadata, tx_q->ring_id, NULL);
+		status = dp_tx_hw_enqueue(soc, vdev, tx_desc, htt_tcl_metadata,
+					  NULL, msdu_info);
 
 		if (status != QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2420,6 +2502,52 @@ static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 	return true;
 }
 
+#ifdef ATH_SUPPORT_IQUE
+/**
+ * dp_tx_mcast_enhance() - Multicast enhancement on TX
+ * @vdev: vdev handle
+ * @nbuf: skb
+ *
+ * Return: true on success,
+ *         false on failure
+ */
+static inline bool dp_tx_mcast_enhance(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	qdf_ether_header_t *eh;
+
+	/* Mcast to Ucast Conversion*/
+	if (qdf_likely(!vdev->mcast_enhancement_en))
+		return true;
+
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
+	if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
+	    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
+		dp_verbose_debug("Mcast frm for ME %pK", vdev);
+
+		DP_STATS_INC_PKT(vdev, tx_i.mcast_en.mcast_pkt, 1,
+				 qdf_nbuf_len(nbuf));
+		if (dp_tx_prepare_send_me(vdev, nbuf) ==
+				QDF_STATUS_SUCCESS) {
+			return false;
+		}
+
+		if (qdf_unlikely(vdev->igmp_mcast_enhanc_en > 0)) {
+			if (dp_tx_prepare_send_igmp_me(vdev, nbuf) ==
+					QDF_STATUS_SUCCESS) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+#else
+static inline bool dp_tx_mcast_enhance(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	return true;
+}
+#endif
+
 /**
  * dp_tx_per_pkt_vdev_id_check() - vdev id check for frame
  * @nbuf: qdf_nbuf_t
@@ -2489,6 +2617,7 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		goto fail;
 
 	msdu_info.tid = tx_exc_metadata->tid;
+	dp_tx_wds_ext(soc, vdev, tx_exc_metadata->peer_id, &msdu_info);
 
 	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 	dp_verbose_debug("skb "QDF_MAC_ADDR_FMT,
@@ -2511,31 +2640,45 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		goto fail;
 	}
 
-	/* TSO or SG */
-	if (qdf_unlikely(qdf_nbuf_is_tso(nbuf)) ||
-	    qdf_unlikely(qdf_nbuf_is_nonlinear(nbuf))) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "TSO and SG are not supported in exception path");
+	/*
+	 * Classify the frame and call corresponding
+	 * "prepare" function which extracts the segment (TSO)
+	 * and fragmentation information (for TSO , SG, ME, or Raw)
+	 * into MSDU_INFO structure which is later used to fill
+	 * SW and HW descriptors.
+	 */
+	if (qdf_nbuf_is_tso(nbuf)) {
+		dp_verbose_debug("TSO frame %pK", vdev);
+		DP_STATS_INC_PKT(vdev->pdev, tso_stats.num_tso_pkts, 1,
+				 qdf_nbuf_len(nbuf));
 
-		goto fail;
-	}
-
-	/* RAW */
-	if (qdf_unlikely(tx_exc_metadata->tx_encap_type == htt_cmn_pkt_type_raw)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Raw frame is not supported in exception path");
-		goto fail;
-	}
-
-
-	/* Mcast enhancement*/
-	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
-		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
-		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					  "Ignoring mcast_enhancement_en which is set and sending the mcast packet to the FW");
+		if (dp_tx_prepare_tso(vdev, nbuf, &msdu_info)) {
+			DP_STATS_INC_PKT(vdev->pdev, tso_stats.dropped_host, 1,
+					 qdf_nbuf_len(nbuf));
+			return nbuf;
 		}
+
+		goto send_multiple;
 	}
+
+	/* SG */
+	if (qdf_unlikely(qdf_nbuf_is_nonlinear(nbuf))) {
+		struct dp_tx_seg_info_s seg_info = {0};
+
+		nbuf = dp_tx_prepare_sg(vdev, nbuf, &seg_info, &msdu_info);
+		if (!nbuf)
+			return NULL;
+
+		dp_verbose_debug("non-TSO SG frame %pK", vdev);
+
+		DP_STATS_INC_PKT(vdev, tx_i.sg.sg_pkt, 1,
+				 qdf_nbuf_len(nbuf));
+
+		goto send_multiple;
+	}
+
+	if (qdf_unlikely(!dp_tx_mcast_enhance(vdev, nbuf)))
+		return NULL;
 
 	if (qdf_likely(tx_exc_metadata->is_tx_sniffer)) {
 		DP_STATS_INC_PKT(vdev, tx_i.sniffer_rcvd, 1,
@@ -2572,6 +2715,9 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_TX_EXCEPTION);
 	return nbuf;
+
+send_multiple:
+	nbuf = dp_tx_send_msdu_multiple(vdev, nbuf, &msdu_info);
 
 fail:
 	if (vdev)
@@ -2844,6 +2990,7 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	 * (TID override disabled)
 	 */
 	msdu_info.tid = HTT_TX_EXT_TID_INVALID;
+	dp_tx_wds_ext(soc, vdev, peer_id, &msdu_info);
 	DP_STATS_INC_PKT(vdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {
@@ -2915,32 +3062,8 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		goto send_multiple;
 	}
 
-#ifdef ATH_SUPPORT_IQUE
-	/* Mcast to Ucast Conversion*/
-	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
-		qdf_ether_header_t *eh = (qdf_ether_header_t *)
-					  qdf_nbuf_data(nbuf);
-		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
-		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
-			dp_verbose_debug("Mcast frm for ME %pK", vdev);
-
-			DP_STATS_INC_PKT(vdev,
-					tx_i.mcast_en.mcast_pkt, 1,
-					qdf_nbuf_len(nbuf));
-			if (dp_tx_prepare_send_me(vdev, nbuf) ==
-					QDF_STATUS_SUCCESS) {
-				return NULL;
-			}
-
-			if (qdf_unlikely(vdev->igmp_mcast_enhanc_en > 0)) {
-				if (dp_tx_prepare_send_igmp_me(vdev, nbuf) ==
-					QDF_STATUS_SUCCESS) {
-					return NULL;
-				}
-			}
-		}
-	}
-#endif
+	if (qdf_unlikely(!dp_tx_mcast_enhance(vdev, nbuf)))
+		return NULL;
 
 	/* RAW */
 	if (qdf_unlikely(vdev->tx_encap_type == htt_cmn_pkt_type_raw)) {

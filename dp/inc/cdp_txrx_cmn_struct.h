@@ -541,6 +541,9 @@ struct cdp_tx_exception_metadata {
 	enum cdp_sec_type sec_type;
 	uint8_t is_tx_sniffer;
 	uint16_t ppdu_cookie;
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	uint8_t is_wds_extended;
+#endif
 };
 
 typedef struct cdp_soc_t *ol_txrx_soc_handle;

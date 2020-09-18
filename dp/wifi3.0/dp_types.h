@@ -199,7 +199,8 @@ enum dp_mod_id {
 	DP_MOD_ID_TDLS = 19,
 	DP_MOD_ID_MISC = 20,
 	DP_MOD_ID_MSCS = 21,
-	DP_MOD_ID_MAX = 22,
+	DP_MOD_ID_TX = 22,
+	DP_MOD_ID_MAX = 23,
 };
 
 #define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
@@ -2300,6 +2301,10 @@ struct dp_vdev {
 	/* MEC enabled */
 	bool mec_enabled;
 
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+	bool wds_ext_enabled;
+#endif /* QCA_SUPPORT_WDS_EXTENDED */
+
 	/* WDS Aging timer period */
 	uint32_t wds_aging_timer_val;
 
@@ -2518,9 +2523,6 @@ struct dp_vdev {
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
 	uint8_t num_latency_critical_conn;
-#ifdef QCA_SUPPORT_WDS_EXTENDED
-	bool wds_ext_enabled;
-#endif /* QCA_SUPPORT_WDS_EXTENDED */
 };
 
 
