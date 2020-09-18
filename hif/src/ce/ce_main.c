@@ -1854,7 +1854,7 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 		hif_warn("srng rings do not support fastpath");
 		return;
 	}
-	HIF_DBG("%s, Enabling fastpath mode", __func__);
+	hif_debug("Enabling fastpath mode");
 	scn->fastpath_mode_on = true;
 }
 
@@ -1914,8 +1914,7 @@ void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 		return;
 
 	if (sc->fastpath_mode_on && ce_state->htt_tx_data) {
-		HIF_DBG("%s %d Fastpath mode ON, Cleaning up HTT Tx CE",
-			 __func__, __LINE__);
+		hif_debug("Fastpath mode ON, Cleaning up HTT Tx CE");
 		sw_index = src_ring->sw_index;
 		write_index = src_ring->sw_index;
 
@@ -2384,8 +2383,8 @@ static int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 		attr = hif_state->host_ce_config[pipe_num];
 		if (attr.src_nentries) {
 			/* pipe used to send to target */
-			HIF_DBG("%s: pipe_num:%d pipe_info:0x%pK",
-					 __func__, pipe_num, pipe_info);
+			hif_debug("pipe_num:%d pipe_info:0x%pK",
+				 pipe_num, pipe_info);
 			ce_send_cb_register(pipe_info->ce_hdl,
 					    hif_pci_ce_send_done, pipe_info,
 					    attr.flags & CE_ATTR_DISABLE_INTR);
@@ -2484,8 +2483,8 @@ static void hif_post_recv_buffers_failure(struct HIF_CE_pipe_info *pipe_info,
 	qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
 	error_cnt_tmp = ++(*error_cnt);
 	qdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);
-	HIF_DBG("%s: pipe_num %d, needed %d, err_cnt = %u, fail_type = %s",
-		  __func__, pipe_info->pipe_num, bufs_needed_tmp, error_cnt_tmp,
+	hif_debug("pipe_num: %d, needed: %d, err_cnt: %u, fail_type: %s",
+		  pipe_info->pipe_num, bufs_needed_tmp, error_cnt_tmp,
 		  failure_type_string);
 	hif_record_ce_desc_event(scn, ce_id, failure_type,
 				 NULL, nbuf, bufs_needed_tmp, 0);
@@ -3044,7 +3043,7 @@ static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 	low_paddr  = BITS0_TO_31(scn->paddr_rri_on_ddr);
 	high_paddr = BITS32_TO_35(scn->paddr_rri_on_ddr);
 
-	HIF_DBG("%s using srri and drri from DDR", __func__);
+	hif_debug("using srri and drri from DDR");
 
 	WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, low_paddr);
 	WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, high_paddr);
@@ -3620,17 +3619,17 @@ int hif_config_ce(struct hif_softc *scn)
 	}
 	scn->athdiag_procfs_inited = true;
 
-	HIF_DBG("%s: ce_init done", __func__);
+	hif_debug("ce_init done");
 
 	init_tasklet_workers(hif_hdl);
 
-	HIF_DBG("%s: X, ret = %d", __func__, rv);
+	hif_debug("X, ret = %d", rv);
 
 #ifdef ADRASTEA_SHADOW_REGISTERS
-	HIF_DBG("%s, Using Shadow Registers instead of CE Registers", __func__);
+	hif_debug("Using Shadow Registers instead of CE Registers");
 	for (i = 0; i < NUM_SHADOW_REGISTERS; i++) {
-		HIF_DBG("%s Shadow Register%d is mapped to address %x",
-			  __func__, i,
+		hif_debug("Shadow Register%d is mapped to address %x",
+			  i,
 			  (A_TARGET_READ(scn, (SHADOW_ADDRESS(i))) << 2));
 	}
 #endif
@@ -3945,9 +3944,9 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 		}
 	}
 	if (ul_updated == false)
-		HIF_DBG("ul pipe is NOT updated for service %d", svc_id);
+		hif_debug("ul pipe is NOT updated for service %d", svc_id);
 	if (dl_updated == false)
-		HIF_DBG("dl pipe is NOT updated for service %d", svc_id);
+		hif_debug("dl pipe is NOT updated for service %d", svc_id);
 
 	return status;
 }
@@ -4011,7 +4010,7 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 
 	for (i = 0; i < scn->ce_count; i++, ce_reg_address += CE_OFFSET) {
 		if (!scn->ce_id_to_state[i]) {
-			HIF_DBG("CE%d not used.", i);
+			hif_debug("CE%d not used", i);
 			continue;
 		}
 

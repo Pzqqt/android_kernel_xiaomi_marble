@@ -599,7 +599,7 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (test_bit(TASKLET_STATE_SCHED, &tasklet_entry->intr_tq.state)) {
-		HIF_DBG("tasklet scheduled, return");
+		hif_debug("tasklet scheduled, return");
 		qdf_atomic_dec(&scn->active_tasklet_cnt);
 		return false;
 	}

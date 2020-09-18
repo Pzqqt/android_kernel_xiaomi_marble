@@ -76,7 +76,7 @@ static void usb_hif_usb_transmit_complete(struct urb *urb)
 	struct HIF_USB_PIPE *pipe = urb_context->pipe;
 	struct hif_usb_send_context *send_context;
 
-	HIF_DBG("+%s: pipe: %d, stat:%d, len:%d", __func__,
+	hif_debug("+: pipe: %d, stat:%d, len:%d",
 		pipe->logical_pipe_num, urb->status, urb->actual_length);
 
 	/* this urb is not pending anymore */
@@ -102,7 +102,7 @@ static void usb_hif_usb_transmit_complete(struct urb *urb)
 	skb_queue_tail(&pipe->io_comp_queue, buf);
 	HIF_USB_SCHEDULE_WORK(pipe);
 
-	HIF_DBG("-%s", __func__);
+	hif_debug("-");
 }
 
 /**
@@ -134,8 +134,8 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 	uint32_t head_data_len, tmp_frag_count = 0;
 	unsigned char *data_ptr;
 
-	HIF_DBG("+%s pipe : %d, buf:0x%pK nbytes %u",
-		__func__, pipe_id, buf, nbytes);
+	hif_debug("+ pipe : %d, buf:0x%pK nbytes %u",
+		 pipe_id, buf, nbytes);
 
 	frag_count = qdf_nbuf_get_num_frags(buf);
 	if (frag_count == 1) {
@@ -231,10 +231,9 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 	if ((len % pipe->max_packet_size) == 0)
 		/* hit a max packet boundary on this pipe */
 
-	HIF_DBG
-	    ("athusb bulk send submit:%d, 0x%X (ep:0x%2.2X), %d bytes",
-	     pipe->logical_pipe_num, pipe->usb_pipe_handle,
-	     pipe->ep_address, nbytes);
+	hif_debug("athusb bulk send submit:%d, 0x%X (ep:0x%2.2X), %d bytes",
+		 pipe->logical_pipe_num, pipe->usb_pipe_handle,
+		 pipe->ep_address, nbytes);
 
 	usb_hif_enqueue_pending_transfer(pipe, urb_context);
 	usb_status = usb_submit_urb(urb, GFP_ATOMIC);
@@ -257,7 +256,7 @@ err:
 		hif_err("athusb send failed %d", status);
 	}
 
-	HIF_DBG("-%s pipe : %d", __func__, pipe_id);
+	hif_debug("- pipe: %d", pipe_id);
 
 	return status;
 }
@@ -936,8 +935,8 @@ void hif_usb_set_bundle_mode(struct hif_softc *scn,
 	device->rx_bundle_buf_len = device->rx_bundle_cnt *
 					HIF_USB_RX_BUNDLE_ONE_PKT_SIZE;
 
-	HIF_DBG("athusb bundle %s cnt %d", enabled ? "enabled" : "disabled",
-			rx_bundle_cnt);
+	hif_debug("athusb bundle %s cnt %d", enabled ? "enabled" : "disabled",
+		 rx_bundle_cnt);
 }
 
 /**

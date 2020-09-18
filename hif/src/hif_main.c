@@ -892,7 +892,7 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 
 	scn->hif_init_done = true;
 
-	HIF_DBG("%s: OK", __func__);
+	hif_debug("OK");
 
 	return QDF_STATUS_SUCCESS;
 
@@ -926,7 +926,7 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 
 	scn->notice_send = false;
 
-	HIF_DBG("%s: X", __func__);
+	hif_debug("X");
 }
 
 #ifdef CE_TASKLET_DEBUG_ENABLE

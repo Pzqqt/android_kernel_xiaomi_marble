@@ -60,7 +60,7 @@ hif_usb_diag_write_cold_reset(struct hif_softc *scn)
 	if (tgt_info->target_type == TARGET_TYPE_QCN7605)
 		return QDF_STATUS_SUCCESS;
 
-	HIF_DBG("%s: resetting SOC", __func__);
+	hif_debug("resetting SOC");
 
 	return hif_diag_write_access(hif_hdl,
 				(ROME_USB_SOC_RESET_CONTROL_COLD_RST_LSB |

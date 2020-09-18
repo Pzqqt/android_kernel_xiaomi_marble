@@ -2868,8 +2868,8 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		if (host_ce_conf[ce_id].flags & CE_ATTR_DISABLE_INTR)
 			continue;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
-		HIF_DBG("%s: (ce_id %d, msi_data %d, irq %d tasklet %pK)",
-			 __func__, ce_id, msi_data, irq,
+		hif_debug("(ce_id %d, msi_data %d, irq %d tasklet %pK)",
+			 ce_id, msi_data, irq,
 			 &ce_sc->tasklets[ce_id]);
 
 		/* implies the ce is also initialized */
