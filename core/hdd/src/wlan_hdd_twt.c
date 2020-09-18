@@ -1754,12 +1754,6 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	ucfg_mlme_set_twt_responder(hdd_ctx->psoc,
 				    QDF_MIN(services->twt_responder,
 					    enable_twt));
-
-	/*
-	 * Currently broadcast TWT is not supported
-	 */
-	ucfg_mlme_set_bcast_twt(hdd_ctx->psoc,
-				QDF_MIN(0, enable_twt));
 }
 
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
