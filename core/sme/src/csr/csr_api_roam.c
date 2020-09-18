@@ -8281,6 +8281,36 @@ void csr_set_open_mode_in_scan_filter(struct scan_filter *filter)
 	QDF_SET_PARAM(filter->authmodeset, WLAN_CRYPTO_AUTH_OPEN);
 }
 
+#ifdef CONFIG_BAND_6GHZ
+bool csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id,
+					 struct csr_roam_profile *profile)
+{
+	const uint8_t *rsnxe;
+	uint16_t rsn_caps;
+	uint32_t key_mgmt;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev not found for id %d", vdev_id);
+		return false;
+	}
+	key_mgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	rsn_caps = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	rsnxe = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
+					 profile->pAddIEAssoc,
+					 profile->nAddIEAssocLength);
+
+	return wlan_cm_6ghz_allowed_for_akm(psoc, key_mgmt, rsn_caps,
+					    rsnxe, 0);
+}
+#endif
+
 QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
 		uint32_t *pRoamId)
@@ -8377,6 +8407,12 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		qdf_mem_free(filter);
 		goto error;
 	}
+
+	if (opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE)
+		if (!csr_connect_security_valid_for_6ghz(mac->psoc, sessionId,
+							 pProfile))
+			filter->ignore_6ghz_channel = true;
+
 	status = csr_scan_get_result(mac, filter, &hBSSList,
 				     opmode == QDF_STA_MODE ? true : false);
 	qdf_mem_free(filter);
@@ -11108,7 +11144,6 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 	status = csr_fill_crypto_params(mac_ctx, profile, filter, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
-
 
 	if (profile->bWPSAssociation || profile->bOSENAssociation)
 		filter->ignore_auth_enc_type = true;

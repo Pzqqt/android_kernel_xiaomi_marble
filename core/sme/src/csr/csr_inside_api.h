@@ -672,6 +672,28 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 /* /////////////////////////////////////////Common Scan ends */
 
 /*
+ * csr_connect_security_valid_for_6ghz() - check if profile is vlid fro 6Ghz
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @profile: connect profile
+ *
+ * Return bool
+ */
+#ifdef CONFIG_BAND_6GHZ
+bool csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id,
+					 struct csr_roam_profile *profile);
+#else
+static inline bool
+csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    struct csr_roam_profile *profile)
+{
+	return true;
+}
+#endif
+
+/*
  * csr_roam_connect() -
  * To inititiate an association
  * pProfile - can be NULL to join to any open ones

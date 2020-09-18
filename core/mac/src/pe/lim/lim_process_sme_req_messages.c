@@ -477,85 +477,10 @@ void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
 	if (status != QDF_STATUS_SUCCESS)
 		pe_debug("Failed to strip HE op IE status: %d", status);
 }
-
-static bool lim_is_6g_allowed_sec(struct mac_context *mac,
-				  struct pe_session *session)
-{
-	struct wlan_objmgr_vdev *vdev;
-	uint32_t keymgmt;
-	uint16_t ie_len;
-	bool status = false;
-
-	if (!mac->mlme_cfg->he_caps.enable_6g_sec_check)
-		return true;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-						    session->vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		pe_err("Invalid vdev");
-		return false;
-	}
-	if (wlan_crypto_check_open_none(mac->psoc, session->vdev_id)) {
-		pe_err("open mode sec not allowed for 6G conn");
-		return false;
-	}
-
-	if (!session->limRmfEnabled) {
-		pe_err("rmf enabled is false");
-		return false;
-	}
-
-	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
-	if (!keymgmt ||
-	    (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_NONE |
-			1 << WLAN_CRYPTO_KEY_MGMT_SAE |
-			1 << WLAN_CRYPTO_KEY_MGMT_FT_SAE |
-			1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256 |
-			1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA384 |
-			1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256 |
-			1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384 |
-			1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B |
-			1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192 |
-			1 << WLAN_CRYPTO_KEY_MGMT_OWE)))
-		status = true;
-	else
-		pe_err("Invalid key_mgmt %0X for 6G connection, vdev %d",
-		       keymgmt, session->vdev_id);
-
-	if (!(keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE |
-			 1 << WLAN_CRYPTO_KEY_MGMT_FT_SAE)))
-		return status;
-
-	ie_len = lim_get_ielen_from_bss_description(
-			&session->lim_join_req->bssDescription);
-	if (!wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
-		(uint8_t *)session->lim_join_req->bssDescription.ieFields,
-		ie_len)) {
-		pe_err("RSNXE IE not present in beacon for 6G conn");
-		return false;
-	}
-
-	if (!wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
-				session->lim_join_req->addIEAssoc.addIEdata,
-				session->lim_join_req->addIEAssoc.length)) {
-		pe_err("RSNXE IE not present in assoc add IE data for 6G conn");
-		return false;
-	}
-
-	return status;
-}
-
 #else
 void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
 				   struct pe_session *session)
 {
-}
-
-static inline bool lim_is_6g_allowed_sec(struct mac_context *mac,
-					 struct pe_session *session)
-{
-	return false;
 }
 #endif
 
@@ -1872,8 +1797,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		session->encryptType = sme_join_req->UCEncryptionType;
 		if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
-			if (!lim_is_session_he_capable(session) ||
-			    !lim_is_6g_allowed_sec(mac_ctx, session)) {
+			if (!lim_is_session_he_capable(session)) {
 				pe_err("JOIN_REQ with invalid 6G security");
 				ret_code = eSIR_SME_INVALID_PARAMETERS;
 				goto end;

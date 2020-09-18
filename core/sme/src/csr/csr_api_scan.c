@@ -165,6 +165,9 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 			qdf_mem_free(filter);
 			break;
 		}
+		if (!csr_connect_security_valid_for_6ghz(mac_ctx->psoc,
+							 session_id, profile))
+			filter->ignore_6ghz_channel = true;
 		status = csr_scan_get_result(mac_ctx, filter, &hBSSList, true);
 		qdf_mem_free(filter);
 		if (!QDF_IS_STATUS_SUCCESS(status))
