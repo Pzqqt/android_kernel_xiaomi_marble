@@ -11,6 +11,7 @@
 #include "sde_connector.h"
 #include "dsi_drm.h"
 #include "sde_trace.h"
+#include "sde_dbg.h"
 
 #define to_dsi_bridge(x)     container_of((x), struct dsi_bridge, base)
 #define to_dsi_state(x)      container_of((x), struct dsi_connector_state, base)
@@ -411,16 +412,32 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 		if ((dsi_mode.panel_mode != cur_dsi_mode.panel_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
 			(crtc_state->enable ==
-				crtc_state->crtc->state->enable))
+				crtc_state->crtc->state->enable)) {
 			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_POMS;
+
+			SDE_EVT32(SDE_EVTLOG_FUNC_CASE1,
+				dsi_mode.timing.h_active,
+				dsi_mode.timing.v_active,
+				dsi_mode.timing.refresh_rate,
+				dsi_mode.pixel_clk_khz,
+				dsi_mode.panel_mode);
+		}
 		/* No DMS/VRR when drm pipeline is changing */
 		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)) &&
 			(!crtc_state->active_changed ||
-			 display->is_cont_splash_enabled))
+			 display->is_cont_splash_enabled)) {
 			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_DMS;
+
+			SDE_EVT32(SDE_EVTLOG_FUNC_CASE2,
+				dsi_mode.timing.h_active,
+				dsi_mode.timing.v_active,
+				dsi_mode.timing.refresh_rate,
+				dsi_mode.pixel_clk_khz,
+				dsi_mode.panel_mode);
+		}
 	}
 
 	/* Reject seamless transition when active changed */
