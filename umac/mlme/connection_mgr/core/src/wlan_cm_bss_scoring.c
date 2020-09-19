@@ -26,6 +26,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_cm_bss_score_param.h"
 #include "wlan_scan_api.h"
+#include "wlan_crypto_global_api.h"
 
 #define CM_20MHZ_BW_INDEX                  0
 #define CM_40MHZ_BW_INDEX                  1
@@ -675,12 +676,12 @@ cm_calculate_sae_pk_ap_weightage(struct scan_cache_entry *entry,
 
 	rsnxe_ie = util_scan_entry_rsnxe(entry);
 
-	rsnxe_cap = wlan_parse_rsnxe_ie(rsnxe_ie, &cap_len);
+	rsnxe_cap = wlan_crypto_parse_rsnxe_ie(rsnxe_ie, &cap_len);
 
 	if (!rsnxe_cap)
 		return 0;
 
-	*sae_pk_cap_present = *rsnxe_cap & WLAN_RSNX_CAPA_SAE_PK;
+	*sae_pk_cap_present = *rsnxe_cap & WLAN_CRYPTO_RSNX_CAP_SAE_PK;
 	if (*sae_pk_cap_present)
 		return score_params->weight_config.sae_pk_ap_weightage *
 			CM_MAX_PCT_SCORE;

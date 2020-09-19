@@ -713,6 +713,16 @@ bool wlan_crypto_check_wpa_match(struct wlan_objmgr_psoc *psoc,
 				 peer_crypto_params);
 
 /**
+ * wlan_crypto_parse_rsnxe_ie() - parse RSNXE IE
+ * @rsnxe_ie: RSNXE IE pointer
+ * @cap_len: pointer to hold len of ext capability
+ *
+ * Return: pointer to RSNXE capability or NULL
+ */
+uint8_t *
+wlan_crypto_parse_rsnxe_ie(uint8_t *rsnxe_ie, uint8_t *cap_len);
+
+/**
  * wlan_set_vdev_crypto_prarams_from_ie - Sets vdev crypto params from IE info
  * @vdev: vdev pointer
  * @ie_ptr: pointer to IE
