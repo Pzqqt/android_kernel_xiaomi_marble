@@ -1159,6 +1159,15 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 		goto end;
 	}
 
+	if (tx_complete != WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
+		lim_send_disassoc_mgmt_frame(mac_ctx,
+					     REASON_DISASSOC_DUE_TO_INACTIVITY,
+					     sta_ds->staAddr,
+					     session_entry, false);
+		lim_trigger_sta_deletion(mac_ctx, sta_ds, session_entry);
+		goto free_buffers;
+	}
+
 	lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
 	if (!lim_assoc_ind) {
 		pe_err("lim assoc ind is NULL");
@@ -1191,6 +1200,8 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	lim_sys_process_mmh_msg_api(mac_ctx, &msg);
 
 	qdf_mem_free(lim_assoc_ind);
+
+free_buffers:
 	if (assoc_req->assocReqFrame) {
 		qdf_mem_free(assoc_req->assocReqFrame);
 		assoc_req->assocReqFrame = NULL;
