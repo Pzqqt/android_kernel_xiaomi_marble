@@ -51,6 +51,8 @@ struct dp_tx_desc_s;
 #define PPDU_LOG_ENABLE_LIST 1
 #define PPDU_LOG_DISPLAY_LIST 2
 
+#define TX_CAPTURE_WORK_Q_TIMER_MS 10
+
 /* stats */
 enum CDP_PEER_MSDU_DESC {
 	PEER_MSDU_SUCC,
@@ -126,6 +128,7 @@ struct dp_pdev_tx_capture {
 	uint32_t ppdu_stats_defer_queue_depth;
 	uint32_t ppdu_stats_next_sched;
 	qdf_spinlock_t msdu_comp_q_list_lock;
+	qdf_timer_t work_q_timer;
 	uint32_t missed_ppdu_id;
 	uint32_t last_msdu_id;
 	uint16_t last_peer_id;

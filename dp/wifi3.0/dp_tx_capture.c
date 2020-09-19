@@ -1130,6 +1130,23 @@ void ppdu_desc_dbg_queue_deinit(struct tx_cap_debug_log_info *ptr_log_info)
 	qdf_spinlock_destroy(&ptr_log_info->dbg_log_lock);
 }
 
+/*
+ * dp_tx_capture_work_q_timer_handler()- timer to schedule tx capture
+ * work queue
+ * @arg: pdev Handle
+ *
+ * Return:
+ *
+ */
+static void dp_tx_capture_work_q_timer_handler(void *arg)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)arg;
+
+	if (pdev->tx_capture.ppdu_stats_queue_depth > 0)
+		qdf_queue_work(0, pdev->tx_capture.ppdu_stats_workqueue,
+			       &pdev->tx_capture.ppdu_stats_work);
+}
+
 /**
  * dp_tx_ppdu_stats_attach - Initialize Tx PPDU stats and enhanced capture
  * @pdev: DP PDEV
@@ -1162,6 +1179,12 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 	pdev->tx_capture.ppdu_stats_next_sched = 0;
 	pdev->tx_capture.ppdu_stats_defer_queue_depth = 0;
 	pdev->tx_capture.ppdu_dropped = 0;
+
+	qdf_timer_init(NULL, &pdev->tx_capture.work_q_timer,
+			dp_tx_capture_work_q_timer_handler,
+			(void *)pdev,
+			QDF_TIMER_TYPE_WAKE_APPS);
+
 	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
 		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
 			check_queue_empty(
@@ -1217,6 +1240,10 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 		return;
 
 	ptr_log_info = &pdev->tx_capture.log_info;
+
+	qdf_timer_sync_cancel(&pdev->tx_capture.work_q_timer);
+	qdf_timer_free(&pdev->tx_capture.work_q_timer);
+
 	qdf_flush_workqueue(0, pdev->tx_capture.ppdu_stats_workqueue);
 	qdf_destroy_workqueue(0, pdev->tx_capture.ppdu_stats_workqueue);
 
@@ -3719,6 +3746,7 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 	subtype = (ppdu_desc->frame_ctrl &
 		IEEE80211_FC0_SUBTYPE_MASK) >>
 		IEEE80211_FC0_SUBTYPE_SHIFT;
+
 	if (is_payload) {
 		wh = (struct ieee80211_frame *)qdf_nbuf_data(mgmt_ctl_nbuf);
 
@@ -5314,7 +5342,6 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 {
 	struct ppdu_info *s_ppdu_info = NULL;
 	struct ppdu_info *ppdu_info_next = NULL;
-	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
 	uint32_t time_delta = 0;
 	bool starved = 0;
@@ -5406,14 +5433,14 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 			break;
 	}
 
-	if ((pdev->tx_capture.ppdu_stats_queue_depth >
-	    DP_TX_PPDU_PROC_THRESHOLD) ||
-	    (pdev->tx_capture.ppdu_stats_next_sched <= now_ms)) {
+	if (pdev->tx_capture.ppdu_stats_queue_depth >
+		DP_TX_PPDU_PROC_THRESHOLD) {
 		qdf_queue_work(0, pdev->tx_capture.ppdu_stats_workqueue,
 			       &pdev->tx_capture.ppdu_stats_work);
-		pdev->tx_capture.ppdu_stats_next_sched =
-			now_ms + DP_TX_PPDU_PROC_TIMEOUT;
 	}
+
+	qdf_timer_mod(&pdev->tx_capture.work_q_timer,
+		      TX_CAPTURE_WORK_Q_TIMER_MS);
 }
 
 static void set_mpdu_info(
