@@ -1915,10 +1915,11 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	}
 
 	/*
-	 * if *wlan* recovery is disabled, crash here for debugging  for snoc
-	 * targets.
+	 * if *wlan* recovery is disabled, crash here for debugging  for
+	 * snoc/IPCI targets.
 	 */
-	if (qdf->bus_type == QDF_BUS_TYPE_SNOC && !ssr_ini_enabled) {
+	if ((qdf->bus_type == QDF_BUS_TYPE_SNOC ||
+	     qdf->bus_type == QDF_BUS_TYPE_IPCI) && !ssr_ini_enabled) {
 		QDF_DEBUG_PANIC("WLAN recovery is not enabled (via %s:%d)",
 				func, line);
 		return;
