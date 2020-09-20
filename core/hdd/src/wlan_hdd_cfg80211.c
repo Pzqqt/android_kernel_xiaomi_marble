@@ -4003,6 +4003,16 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					  QCA_WLAN_VENDOR_FEATURE_OCE_STA_CFON);
 
+	value = false;
+	status = ucfg_mlme_get_adaptive11r_enabled(hdd_ctx->psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get FT-Adaptive 11R info");
+	if (value) {
+		hdd_debug("FT-Adaptive 11R is Enabled");
+		wlan_hdd_cfg80211_set_feature(feature_flags,
+					  QCA_WLAN_VENDOR_FEATURE_ADAPTIVE_11R);
+	}
+
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
 	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &twt_res);
 
