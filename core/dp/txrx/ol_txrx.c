@@ -6183,8 +6183,9 @@ static struct cdp_ipa_ops ol_ops_ipa = {
 	.ipa_set_perf_level = ol_txrx_ipa_set_perf_level,
 #ifdef FEATURE_METERING
 	.ipa_uc_get_share_stats = ol_txrx_ipa_uc_get_share_stats,
-	.ipa_uc_set_quota = ol_txrx_ipa_uc_set_quota
+	.ipa_uc_set_quota = ol_txrx_ipa_uc_set_quota,
 #endif
+	.ipa_tx_buf_smmu_mapping = ol_txrx_ipa_tx_buf_smmu_mapping
 };
 #endif
 

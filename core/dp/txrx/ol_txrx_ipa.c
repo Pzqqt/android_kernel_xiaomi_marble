@@ -280,6 +280,63 @@ QDF_STATUS ol_txrx_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS __ol_txrx_ipa_tx_buf_smmu_mapping(
+	struct ol_txrx_soc_t  *soc,
+	struct ol_txrx_pdev_t *pdev,
+	bool create)
+{
+	uint32_t index;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+	struct htt_pdev_t *htt_pdev = pdev->htt_pdev;
+	uint32_t tx_buffer_cnt = htt_pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+
+	if (qdf_mem_smmu_s1_enabled(htt_pdev->osdev)) {
+		mem_map_table = qdf_mem_map_table_alloc(tx_buffer_cnt);
+		if (!mem_map_table) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				  "Failed to allocate memory");
+			return QDF_STATUS_E_FAILURE;
+		}
+		mem_info = mem_map_table;
+	}
+
+	for (index = 0; index < tx_buffer_cnt; index++) {
+		*mem_info = htt_pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[
+						index]->mem_info;
+		if (!mem_info)
+			continue;
+		ret = cds_smmu_map_unmap(true, 1, mem_info);
+		mem_info++;
+	}
+	if (qdf_mem_smmu_s1_enabled(htt_pdev->osdev))
+		qdf_mem_free(mem_map_table);
+
+	return ret;
+}
+
+QDF_STATUS ol_txrx_ipa_tx_buf_smmu_mapping(
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	QDF_STATUS ret;
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "invalid instance");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!qdf_mem_smmu_s1_enabled(pdev->htt_pdev->osdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "SMMU S1 disabled");
+		return QDF_STATUS_SUCCESS;
+	}
+	ret = __ol_txrx_ipa_tx_buf_smmu_mapping(soc, pdev, true);
+	return ret;
+}
+
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
