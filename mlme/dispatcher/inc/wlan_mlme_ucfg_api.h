@@ -1195,11 +1195,29 @@ ucfg_mlme_is_roam_scan_offload_enabled(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_set_tgt_adaptive_11r_cap(struct wlan_objmgr_psoc *psoc,
 				   bool val);
+/**
+ * ucfg_mlme_get_adaptive11r_enabled() - get adaptive 11R enabled status
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_adaptive11r_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool *value);
 #else
 static inline QDF_STATUS
 ucfg_mlme_set_tgt_adaptive_11r_cap(struct wlan_objmgr_psoc *psoc,
 				   bool val)
 {
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_adaptive11r_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool *value)
+{
+	*value = false;
 	return QDF_STATUS_SUCCESS;
 }
 #endif
