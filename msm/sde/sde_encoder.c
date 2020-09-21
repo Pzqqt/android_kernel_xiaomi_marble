@@ -146,6 +146,73 @@ void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable)
 	}
 }
 
+ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_encoder_phys *cur_master;
+	u64 vsync_counter, qtmr_counter, hw_diff, hw_diff_ns, frametime_ns;
+	ktime_t tvblank, cur_time;
+	struct intf_status intf_status = {0};
+	u32 fps;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	cur_master = sde_enc->cur_master;
+	fps = sde_encoder_get_fps(drm_enc);
+
+	if (!cur_master || !cur_master->hw_intf || !fps
+		|| !cur_master->hw_intf->ops.get_vsync_timestamp
+		|| (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE)
+			&& !sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_VIDEO_MODE)))
+		return 0;
+
+	/*
+	 * avoid calculation and rely on ktime_get, if programmable fetch is enabled
+	 * as the HW VSYNC timestamp will be updated at panel vsync and not at MDP VSYNC
+	 */
+	if (cur_master->hw_intf->ops.get_status) {
+		cur_master->hw_intf->ops.get_status(cur_master->hw_intf, &intf_status);
+		if (intf_status.is_prog_fetch_en)
+			return 0;
+	}
+
+	vsync_counter = cur_master->hw_intf->ops.get_vsync_timestamp(cur_master->hw_intf);
+	qtmr_counter = arch_timer_read_counter();
+	cur_time = ktime_get_ns();
+
+	/* check for counter rollover between the two timestamps [56 bits] */
+	if (qtmr_counter < vsync_counter) {
+		hw_diff = (0xffffffffffffff - vsync_counter) + qtmr_counter;
+		SDE_EVT32(DRMID(drm_enc), vsync_counter >> 32, vsync_counter,
+				qtmr_counter >> 32, qtmr_counter, hw_diff,
+				fps, SDE_EVTLOG_FUNC_CASE1);
+	} else {
+		hw_diff = qtmr_counter - vsync_counter;
+	}
+
+	hw_diff_ns = DIV_ROUND_UP(hw_diff * 1000 * 10, 192); /* 19.2 MHz clock */
+	frametime_ns = DIV_ROUND_UP(1000000000, fps);
+
+	/* avoid setting timestamp, if diff is more than one vsync */
+	if (ktime_compare(hw_diff_ns, frametime_ns) > 0) {
+		tvblank = 0;
+		SDE_EVT32(DRMID(drm_enc), vsync_counter >> 32, vsync_counter,
+				qtmr_counter >> 32, qtmr_counter, ktime_to_us(hw_diff_ns),
+				fps, SDE_EVTLOG_ERROR);
+	} else {
+		tvblank = ktime_sub_ns(cur_time, hw_diff_ns);
+	}
+
+	SDE_DEBUG_ENC(sde_enc,
+			"vsync:%llu, qtmr:%llu, diff_ns:%llu, ts:%llu, cur_ts:%llu, fps:%d\n",
+			vsync_counter, qtmr_counter, ktime_to_us(hw_diff_ns),
+			ktime_to_us(tvblank), ktime_to_us(cur_time), fps);
+
+	SDE_EVT32_VERBOSE(DRMID(drm_enc), hw_diff >> 32, hw_diff, ktime_to_us(hw_diff_ns),
+			ktime_to_us(tvblank), ktime_to_us(cur_time), fps, SDE_EVTLOG_FUNC_CASE2);
+
+	return tvblank;
+}
+
 static void _sde_encoder_pm_qos_add_request(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);

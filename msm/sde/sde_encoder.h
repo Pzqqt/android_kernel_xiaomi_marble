@@ -593,6 +593,14 @@ static inline u32 sde_encoder_get_dfps_maxfps(struct drm_encoder *drm_enc)
 void sde_encoder_virt_reset(struct drm_encoder *drm_enc);
 
 /**
+ * sde_encoder_calc_last_vsync_timestamp - read last HW vsync timestamp counter
+ *         and calculate the corresponding vsync ktime. Return ktime_get
+ *         when HW support is not available
+ * @drm_enc:    Pointer to drm encoder structure
+ */
+ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc);
+
+/**
  * sde_encoder_get_kms - retrieve the kms from encoder
  * @drm_enc:    Pointer to drm encoder structure
  */
