@@ -1951,11 +1951,25 @@ static int iw_get_channel_list(struct net_device *dev,
 	}
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (!(cur_chan_list[i].chan_flags & REGULATORY_CHAN_DISABLED)) {
-			channel_list->channels[num_channels] =
-				cur_chan_list[i].chan_num;
-			num_channels++;
-		}
+		/*
+		 * current channel list includes all channels. do not report
+		 * disabled channels
+		 */
+		if (cur_chan_list[i].chan_flags & REGULATORY_CHAN_DISABLED)
+			continue;
+
+		/*
+		 * do not include 6 GHz channels since they are ambiguous with
+		 * 2.4 GHz and 5 GHz channels. 6 GHz-aware applications should
+		 * not be using this interface, but instead should be using the
+		 * frequency-based interface
+		 */
+		if (wlan_reg_is_6ghz_chan_freq(cur_chan_list[i].center_freq))
+			continue;
+		channel_list->channels[num_channels] =
+						cur_chan_list[i].chan_num;
+		num_channels++;
+
 	}
 
 	qdf_mem_free(cur_chan_list);
