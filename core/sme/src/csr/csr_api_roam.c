@@ -20612,6 +20612,10 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 		     session->ftSmeContext.r0kh_id,
 		     session->ftSmeContext.r0kh_id_len);
 
+	qdf_mem_copy(rso_config->rso_11r_info.psk_pmk, session->psk_pmk,
+		     session->pmk_len);
+	rso_config->rso_11r_info.pmk_len = session->pmk_len;
+
 	csr_cm_update_rso_adaptive_11r(&rso_config->rso_11r_info,
 				       session);
 	csr_cm_update_rso_ese_info(mac, rso_config, roam_info, session);
