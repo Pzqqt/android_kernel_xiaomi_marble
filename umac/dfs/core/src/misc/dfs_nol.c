@@ -349,6 +349,14 @@ dfs_switch_to_postnol_chan_if_nol_expired(struct wlan_dfs *dfs)
 		else
 			return false;
 		break;
+	case CH_WIDTH_80P80MHZ:
+		if (is_curchan_11ac)
+			postnol_phymode = WLAN_PHYMODE_11AC_VHT80_80;
+		else if (is_curchan_11axa)
+			postnol_phymode = WLAN_PHYMODE_11AXA_HE80_80;
+		else
+			return false;
+		break;
 	default:
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			"Invalid postNOL mode set. Cannot switch to the chan");
