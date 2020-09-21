@@ -481,10 +481,10 @@ send_packet_power_info_get_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->preamble = param->preamble;
 	cmd->hw_rate = param->hw_rate;
 
-	WMI_LOGI("%s[%d] commandID %d, wmi_pdev_get_tpc_cmd=0x%x,"
-		"rate_flags: 0x%x, nss: %d, preamble: %d, hw_rate: %d",
-		__func__, __LINE__, WMI_PDEV_GET_TPC_CMDID, *((u_int32_t *)cmd),
-		cmd->rate_flags, cmd->nss, cmd->preamble, cmd->hw_rate);
+	wmi_info("commandID %d, wmi_pdev_get_tpc_cmd=0x%x,"
+		 "rate_flags: 0x%x, nss: %d, preamble: %d, hw_rate: %d",
+		 WMI_PDEV_GET_TPC_CMDID, *((u_int32_t *)cmd),
+		 cmd->rate_flags, cmd->nss, cmd->preamble, cmd->hw_rate);
 
 	wmi_mtrace(WMI_PDEV_GET_TPC_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, wmibuf, len,
@@ -1171,11 +1171,11 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	cmd->cac_duration_ms = param->cac_duration_ms;
 	cmd->num_vdevs = param->num_vdevs;
 
-	WMI_LOGI("%s:cmd->pdev_id: %d ,cmd->requestor_id: %d ,"
-		"cmd->disable_hw_ack: %d , cmd->cac_duration_ms:%d ,"
-		" cmd->num_vdevs: %d ",
-		__func__, cmd->pdev_id, cmd->requestor_id,
-		cmd->disable_hw_ack, cmd->cac_duration_ms, cmd->num_vdevs);
+	wmi_info("cmd->pdev_id: %d ,cmd->requestor_id: %d ,"
+		 "cmd->disable_hw_ack: %d , cmd->cac_duration_ms:%d ,"
+		 " cmd->num_vdevs: %d ",
+		 cmd->pdev_id, cmd->requestor_id,
+		 cmd->disable_hw_ack, cmd->cac_duration_ms, cmd->num_vdevs);
 	buf_ptr += sizeof(*cmd);
 
 	WMITLV_SET_HDR(buf_ptr,
@@ -1218,19 +1218,19 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
 
-	WMI_LOGI("%s:tchan_info->is_chan_passive: %d ,"
-		"tchan_info->dfs_set : %d ,tchan_info->allow_vht:%d ,"
-		"tchan_info->allow_ht: %d ,tchan_info->antennamax: %d ,"
-		"tchan_info->phy_mode: %d ,tchan_info->minpower: %d,"
-		"tchan_info->maxpower: %d ,tchan_info->maxregpower: %d ,"
-		"tchan_info->reg_class_id: %d ,"
-		"tchan_info->maxregpower : %d ", __func__,
-		tchan_info->is_chan_passive, tchan_info->dfs_set,
-		tchan_info->allow_vht, tchan_info->allow_ht,
-		tchan_info->antennamax, tchan_info->phy_mode,
-		tchan_info->minpower, tchan_info->maxpower,
-		tchan_info->maxregpower, tchan_info->reg_class_id,
-		tchan_info->maxregpower);
+	wmi_info("tchan_info->is_chan_passive: %d ,"
+		 "tchan_info->dfs_set : %d ,tchan_info->allow_vht:%d ,"
+		 "tchan_info->allow_ht: %d ,tchan_info->antennamax: %d ,"
+		 "tchan_info->phy_mode: %d ,tchan_info->minpower: %d,"
+		 "tchan_info->maxpower: %d ,tchan_info->maxregpower: %d ,"
+		 "tchan_info->reg_class_id: %d ,"
+		 "tchan_info->maxregpower : %d ",
+		 tchan_info->is_chan_passive, tchan_info->dfs_set,
+		 tchan_info->allow_vht, tchan_info->allow_ht,
+		 tchan_info->antennamax, tchan_info->phy_mode,
+		 tchan_info->minpower, tchan_info->maxpower,
+		 tchan_info->maxregpower, tchan_info->reg_class_id,
+		 tchan_info->maxregpower);
 
 	buf_ptr += sizeof(*chan_info);
 	WMITLV_SET_HDR(buf_ptr,
@@ -1712,10 +1712,10 @@ static QDF_STATUS set_rx_pkt_type_routing_tag_update_tlv(
 	cmd->dest_ring = param->dest_ring;
 	cmd->meta_data = param->meta_data;
 	cmd->dest_ring_handler = param->dest_ring_handler;
-	WMI_LOGI("Set RX PKT ROUTING TYPE TAG - opcode: %u", param->op_code);
-	WMI_LOGI("routing_bitmap: %u, dest_ring: %u",
+	wmi_info("Set RX PKT ROUTING TYPE TAG - opcode: %u", param->op_code);
+	wmi_info("routing_bitmap: %u, dest_ring: %u",
 		 param->routing_type_bitmap, param->dest_ring);
-	WMI_LOGI("dest_ring_handler: %u, meta_data: 0x%x",
+	wmi_info("dest_ring_handler: %u, meta_data: 0x%x",
 		 param->dest_ring_handler, param->meta_data);
 
 	wmi_mtrace(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID, cmd->pdev_id, 0);
@@ -1847,7 +1847,7 @@ send_vdev_fils_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->vdev_id;
 	cmd->fd_period = param->fd_period;
 	cmd->flags = param->send_prb_rsp_frame;
-	WMI_LOGI("Setting FD period to %d vdev id : %d",
+	wmi_info("Setting FD period to %d vdev id : %d",
 		 param->fd_period, param->vdev_id);
 
 	wmi_mtrace(WMI_ENABLE_FILS_CMDID, cmd->vdev_id, 0);

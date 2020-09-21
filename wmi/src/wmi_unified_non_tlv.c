@@ -7141,13 +7141,13 @@ static QDF_STATUS extract_host_mem_req_non_tlv(wmi_unified_t wmi_handle,
 			}
 		}
 
-		WMI_LOGI("idx %d req %d  num_units %d num_unit_info %d"
-				"unit size %d actual units %d",
-				idx, mem_reqs->req_id,
-				mem_reqs->num_units,
-				mem_reqs->num_unit_info,
-				mem_reqs->unit_size,
-				mem_reqs->tgt_num_units);
+		wmi_info("idx %d req %d  num_units %d num_unit_info %d"
+			 "unit size %d actual units %d",
+			 idx, mem_reqs->req_id,
+			 mem_reqs->num_units,
+			 mem_reqs->num_unit_info,
+			 mem_reqs->unit_size,
+			 mem_reqs->tgt_num_units);
 
 	}
 
@@ -9913,7 +9913,7 @@ static QDF_STATUS send_mvr_cmd(
 	cmd->disable_hw_ack = param->disable_hw_ack;
 	cmd->num_vdevs = param->num_vdevs;
 
-	WMI_LOGI("req_id:%d dis_hw_ack:%d num_vdevs:%d",
+	wmi_info("req_id:%d dis_hw_ack:%d num_vdevs:%d",
 		 cmd->requestor_id, cmd->disable_hw_ack, cmd->num_vdevs);
 
 	for (i = 0; i < param->num_vdevs; i++)
@@ -9947,13 +9947,13 @@ static QDF_STATUS send_mvr_cmd(
 	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
 
-	WMI_LOGI("is_chan_passive:%d dfs_set:%d allow_vht:%d allow_ht:%d",
+	wmi_info("is_chan_passive:%d dfs_set:%d allow_vht:%d allow_ht:%d",
 		 tchan_info->is_chan_passive, tchan_info->dfs_set,
 		 tchan_info->allow_vht, tchan_info->allow_ht);
-	WMI_LOGI("antennamax:%d phy_mode:%d minpower:%d maxpower:%d",
+	wmi_info("antennamax:%d phy_mode:%d minpower:%d maxpower:%d",
 		 tchan_info->antennamax, tchan_info->phy_mode,
 		 tchan_info->minpower, tchan_info->maxpower);
-	WMI_LOGI("maxregpower:%d reg_class_id:%d",
+	wmi_info("maxregpower:%d reg_class_id:%d",
 		 tchan_info->maxregpower, tchan_info->reg_class_id);
 
 	ret = wmi_unified_cmd_send(
@@ -10013,7 +10013,7 @@ static QDF_STATUS send_mvr_ext_cmd(
 	cmd->requestor_id = param->requestor_id;
 	cmd->disable_hw_ack = param->disable_hw_ack;
 
-	WMI_LOGI("req_id:%d dis_hw_ack:%d",
+	wmi_info("req_id:%d dis_hw_ack:%d",
 		 cmd->requestor_id, cmd->disable_hw_ack);
 
 	chan_info = &cmd->chan;
@@ -10044,13 +10044,13 @@ static QDF_STATUS send_mvr_ext_cmd(
 	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
 
-	WMI_LOGI("is_chan_passive:%d dfs_set:%d allow_vht:%d allow_ht:%d",
+	wmi_info("is_chan_passive:%d dfs_set:%d allow_vht:%d allow_ht:%d",
 		 tchan_info->is_chan_passive, tchan_info->dfs_set,
 		 tchan_info->allow_vht, tchan_info->allow_ht);
-	WMI_LOGI("antennamax:%d phy_mode:%d minpower:%d maxpower:%d",
+	wmi_info("antennamax:%d phy_mode:%d minpower:%d maxpower:%d",
 		 tchan_info->antennamax, tchan_info->phy_mode,
 		 tchan_info->minpower, tchan_info->maxpower);
-	WMI_LOGI("maxregpower:%d reg_class_id:%d",
+	wmi_info("maxregpower:%d reg_class_id:%d",
 		 tchan_info->maxregpower, tchan_info->reg_class_id);
 
 	/* To fill the Tag,Value pairs, move the buf accordingly */
