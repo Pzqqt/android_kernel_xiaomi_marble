@@ -494,8 +494,9 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 
 rel_ref:
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
-	wlan_mgmt_txrx_vdev_drain(iface->vdev,
-				  wma_mgmt_frame_fill_peer_cb, &i);
+	if (qdf_is_recovering())
+		wlan_mgmt_txrx_vdev_drain(iface->vdev,
+					  wma_mgmt_frame_fill_peer_cb, &i);
 	wma_debug("Releasing wma reference for vdev:%d", vdev_id);
 	wma_release_vdev_ref(iface);
 	return status;
