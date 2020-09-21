@@ -52,7 +52,7 @@ struct wlan_mlme_psoc_ext_obj {
  *                   originated from driver
  * @peer_discon_ies: Disconnect IEs received in deauth/disassoc frames
  *                       from peer
- * @discon_reason: Disconnect reason as per enum eSirMacReasonCodes
+ * @discon_reason: Disconnect reason as per enum wlan_reason_code
  * @from_ap: True if the disconnection is initiated from AP
  */
 struct wlan_disconnect_info {
