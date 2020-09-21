@@ -393,13 +393,23 @@ static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc,
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast = soc->ast_table[sa_idx];
 
+	if (!ast) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!ast->is_mapped) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/*
 	 * Ensure we are updating the right AST entry by
 	 * validating ast_idx.
 	 * There is a possibility we might arrive here without
 	 * AST MAP event , so this check is mandatory
 	 */
-	if (ast && ast->is_mapped && (ast->ast_idx == sa_idx)) {
+	if (ast->ast_idx == sa_idx) {
 		ast->is_active = is_active;
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return QDF_STATUS_SUCCESS;
