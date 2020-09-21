@@ -7191,6 +7191,8 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_SET(
 		resource_cfg->host_service_flags,
 		tgt_res_cfg->nan_separate_iface_support);
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_HOST_SUPPORT_MULTI_RADIO_EVTS_PER_RADIO_SET(
+		resource_cfg->host_service_flags, 1);
 
 }
 
