@@ -206,6 +206,9 @@ struct wlan_cm_vdev_discon_req {
 /*
  * enum wlan_cm_connect_fail_reason: connection manager connect fail reason
  * @CM_NO_CANDIDATE_FOUND: No candidate found
+ * @CM_ABORT_DUE_TO_NEW_REQ_RECVD: Aborted as new command is received and
+ * State machine is not able to handle as state has changed due to new command.
+ * @CM_PEER_CREATE_FAILED: peer create failed
  * @CM_JOIN_FAILED: Failed in joining state
  * (BSS peer creation or other handling)
  * @CM_JOIN_TIMEOUT: Did not receive beacon or probe response after unicast
@@ -216,10 +219,13 @@ struct wlan_cm_vdev_discon_req {
  * @CM_ASSOC_TIMEOUT: No Assoc resp from AP
  * @CM_HW_MODE_FAILURE: failed to change HW mode
  * @CM_SER_FAILURE: Failed to serialize command
+ * @CM_SER_TIMEOUT: Serialization cmd timeout
  * @CM_GENERIC_FAILURE: Generic failure apart from above
  */
 enum wlan_cm_connect_fail_reason {
 	CM_NO_CANDIDATE_FOUND,
+	CM_ABORT_DUE_TO_NEW_REQ_RECVD,
+	CM_PEER_CREATE_FAILED,
 	CM_JOIN_FAILED,
 	CM_JOIN_TIMEOUT,
 	CM_AUTH_FAILED,
@@ -228,6 +234,7 @@ enum wlan_cm_connect_fail_reason {
 	CM_ASSOC_TIMEOUT,
 	CM_HW_MODE_FAILURE,
 	CM_SER_FAILURE,
+	CM_SER_TIMEOUT,
 	CM_GENERIC_FAILURE,
 };
 
@@ -295,19 +302,22 @@ struct wlan_connect_rsp_ies {
  * OSIF
  * @vdev_id: vdev id
  * @cm_id: Connect manager id
+ * @bssid: BSSID of the ap
+ * @ssid: SSID of the connection
+ * @freq: Channel frequency
  * @connect_status: connect status success or failure
  * @reason: connect fail reason, valid only in case of failure
  * @reason_code: protocol reason code of the connect failure
  * @aid: aid
  * @connect_ies: connect related IE required by osif to send to kernel
  * @is_fils_connection: is fils connection
- * @bssid: BSSID of the ap
- * @ssid: SSID of the connection
- * @freq: Channel frequency
  */
 struct wlan_cm_connect_rsp {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
+	struct qdf_mac_addr bssid;
+	struct wlan_ssid ssid;
+	qdf_freq_t freq;
 	QDF_STATUS connect_status;
 	enum wlan_cm_connect_fail_reason reason;
 	uint8_t reason_code;
@@ -316,9 +326,6 @@ struct wlan_cm_connect_rsp {
 #ifdef WLAN_FEATURE_FILS_SK
 	bool is_fils_connection;
 #endif
-	struct qdf_mac_addr bssid;
-	struct wlan_ssid ssid;
-	qdf_freq_t freq;
 };
 
 

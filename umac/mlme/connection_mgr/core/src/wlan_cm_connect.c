@@ -26,6 +26,67 @@
 #include "wlan_policy_mgr_api.h"
 #endif
 #include <wlan_serialization_api.h>
+#ifdef CONN_MGR_ADV_FEATURE
+#include "wlan_blm_api.h"
+#endif
+
+/**
+ * cm_connect_handle_event_post_fail() - initiate connect failure if msg posting
+ * to SM fails
+ * @cm_ctx: connection manager context
+ * @cm_id: cm_id for connect req for which post fails
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM fails from external event e.g. peer create resp,
+ * HW mode change resp  serialization cb.
+ *
+ * Return: QDF_STATUS
+ */
+static void
+cm_connect_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+{
+	struct wlan_cm_connect_rsp *resp;
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		return;
+
+	resp->connect_status = QDF_STATUS_E_FAILURE;
+	resp->cm_id = cm_id;
+	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	resp->reason = CM_ABORT_DUE_TO_NEW_REQ_RECVD;
+
+	cm_connect_complete(cm_ctx, resp);
+	qdf_mem_free(resp);
+}
+
+static QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx,
+					 wlan_cm_id cm_id)
+{
+	struct wlan_cm_connect_rsp *resp;
+	QDF_STATUS status;
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		return QDF_STATUS_E_NOMEM;
+
+	resp->connect_status = QDF_STATUS_E_FAILURE;
+	resp->cm_id = cm_id;
+	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	resp->reason = CM_SER_TIMEOUT;
+	wlan_vdev_mlme_get_ssid(cm_ctx->vdev, resp->ssid.ssid,
+				&resp->ssid.length);
+
+	status = cm_sm_deliver_event(cm_ctx->vdev,
+				     WLAN_CM_SM_EV_CONNECT_FAILURE,
+				     sizeof(*resp), resp);
+	qdf_mem_free(resp);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		cm_connect_handle_event_post_fail(cm_ctx, cm_id);
+
+	return status;
+}
 
 static QDF_STATUS
 cm_ser_connect_cb(struct wlan_serialization_command *cmd,
@@ -33,6 +94,7 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev;
+	struct cnx_mgr *cm_ctx;
 
 	if (!cmd) {
 		mlme_err("cmd is NULL, reason: %d", reason);
@@ -46,6 +108,8 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 	case WLAN_SER_CB_ACTIVATE_CMD:
 		status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_CONNECT_ACTIVE,
 					     sizeof(wlan_cm_id), &cmd->cmd_id);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			break;
 		/*
 		 * Handle failure if posting fails, i.e. the SM state has
 		 * changed or head cm_id doesn't match the active cm_id.
@@ -53,6 +117,9 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 		 * new command has been received connect activation should be
 		 * aborted from here with connect req cleanup.
 		 */
+		cm_ctx = cm_get_cm_ctx(vdev);
+		if (cm_ctx)
+			cm_connect_handle_event_post_fail(cm_ctx, cmd->cmd_id);
 		break;
 	case WLAN_SER_CB_CANCEL_CMD:
 		/* command removed from pending list. */
@@ -60,6 +127,9 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
 		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
 		QDF_ASSERT(0);
+		cm_ctx = cm_get_cm_ctx(vdev);
+		if (cm_ctx)
+			cm_connect_cmd_timeout(cm_ctx, cmd->cmd_id);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		cm_reset_active_cm_id(vdev, cmd->cmd_id);
@@ -97,6 +167,7 @@ static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = CONNECT_TIMEOUT;
 	cmd.vdev = cm_ctx->vdev;
+	cmd.is_blocking = cm_ser_get_blocking_cmd();
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	switch (ser_cmd_status) {
@@ -116,6 +187,17 @@ static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * cm_send_connect_start_fail() - initiate conenct failure
+ * @cm_ctx: connection manager context
+ * @req: connect req for which connect failed
+ * @reason: failure reason
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM (ie holding the SM lock) to avoid use after free for req.
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS
 cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
 			   struct cm_connect_req *req,
@@ -128,7 +210,17 @@ cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
 	if (!resp)
 		return QDF_STATUS_E_NOMEM;
 
-	/* fill resp from req */
+	resp->connect_status = QDF_STATUS_E_FAILURE;
+	resp->cm_id = req->cm_id;
+	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	resp->reason = reason;
+	resp->ssid.length = req->req.ssid.length;
+	qdf_mem_copy(resp->ssid.ssid, req->req.ssid.ssid, resp->ssid.length);
+	if (req->cur_candidate) {
+		qdf_copy_macaddr(&resp->bssid,
+				 &req->cur_candidate->entry->bssid);
+		resp->freq = req->cur_candidate->entry->channel.chan_freq;
+	}
 
 	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
 					  sizeof(*resp), resp);
@@ -182,6 +274,7 @@ void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS qdf_status;
 	enum wlan_cm_sm_evt event = WLAN_CM_SM_EV_HW_MODE_SUCCESS;
+	struct cnx_mgr *cm_ctx;
 
 	mlme_debug("vdev %d cm id %d Continue connect after HW mode change, status %d",
 		   vdev_id, cm_id, status);
@@ -191,11 +284,18 @@ void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	if (!vdev)
 		return;
 
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		mlme_err("cm ctx NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
 	if (QDF_IS_STATUS_ERROR(status))
 		event = WLAN_CM_SM_EV_HW_MODE_FAILURE;
 	qdf_status = cm_sm_deliver_event(vdev, event, sizeof(wlan_cm_id),
 					 &cm_id);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
 	/*
 	 * Handle failure if posting fails, i.e. the SM state has
 	 * changed or head cm_id doesn't match the active cm_id.
@@ -203,6 +303,9 @@ void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	 * new command has been received connect should be
 	 * aborted from here with connect req cleanup.
 	 */
+	if (QDF_IS_STATUS_ERROR(status))
+		cm_connect_handle_event_post_fail(cm_ctx, cm_id);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
 static QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
@@ -434,10 +537,35 @@ static QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
 				    WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
 				    &event_data);
 }
+
+static QDF_STATUS
+cm_inform_if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
+				  QDF_STATUS connect_status)
+{
+	struct if_mgr_event_data *connect_complete;
+
+	connect_complete = qdf_mem_malloc(sizeof(*connect_complete));
+	if (!connect_complete)
+		return QDF_STATUS_E_NOMEM;
+
+	connect_complete->status = connect_status;
+	if_mgr_deliver_event(vdev, WLAN_IF_MGR_EV_CONNECT_COMPLETE,
+			     connect_complete);
+	qdf_mem_free(connect_complete);
+
+	return QDF_STATUS_SUCCESS;
+}
 #else
 static inline
 QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
 				 struct scan_cache_entry *scan_entry)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cm_inform_if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
+				  QDF_STATUS connect_status)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -512,6 +640,20 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+cm_fill_resp_for_bss_create_fail(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_connect_rsp *resp,
+				 wlan_cm_id cm_id,
+				 struct qdf_mac_addr *peer_mac)
+{
+	resp->connect_status = QDF_STATUS_E_FAILURE;
+	resp->cm_id = cm_id;
+	resp->vdev_id = wlan_vdev_get_id(vdev);
+	resp->reason = CM_PEER_CREATE_FAILED;
+	qdf_copy_macaddr(&resp->bssid, peer_mac);
+	wlan_vdev_mlme_get_ssid(vdev, resp->ssid.ssid, &resp->ssid.length);
+}
+
 static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 			       struct cm_connect_req *req)
 {
@@ -525,17 +667,16 @@ static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 
 		/* In case of failure try with next candidate */
 		mlme_err("peer create request failed %d", status);
+
 		resp = qdf_mem_malloc(sizeof(*resp));
 		if (!resp)
 			return;
 
-		resp->connect_status = status;
-		resp->cm_id = req->cm_id;
-		resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-		resp->reason = CM_JOIN_FAILED;
+		cm_fill_resp_for_bss_create_fail(cm_ctx->vdev, resp, req->cm_id,
+						 bssid);
 		cm_sm_deliver_event_sync(cm_ctx,
-				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
-				    sizeof(*resp), resp);
+				WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
+				sizeof(*resp), resp);
 		qdf_mem_free(resp);
 	}
 }
@@ -549,7 +690,7 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
 	if (!cm_req) {
 		mlme_err("cm req NULL connect fail");
-		goto connect_err;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	status = cm_get_valid_candidate(cm_ctx, cm_req);
@@ -563,22 +704,32 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 
 connect_err:
-	return cm_send_connect_start_fail(cm_ctx, &cm_req->connect_req,
-					  CM_JOIN_FAILED);
+	return cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
+					sizeof(*resp), resp);
+
+}
+
+bool cm_connect_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
+					  struct wlan_cm_connect_rsp *resp)
+{
+	return cm_check_cmid_match_list_head(cm_ctx, &resp->cm_id);
 }
 
 QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct cm_req *cm_req;
 	QDF_STATUS status;
+	struct wlan_cm_connect_req *req;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
 	if (!cm_req) {
-		mlme_err("cm req NULL connect fail");
+		mlme_err("cm req NULL for *cm_id %x", *cm_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	cm_ctx->active_cm_id = *cm_id;
+	req = &cm_req->connect_req.req;
+	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
 
 	status = cm_get_valid_candidate(cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -596,31 +747,91 @@ connect_err:
 QDF_STATUS
 cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
+	struct wlan_cm_vdev_connect_req req;
+	struct cm_req *cm_req;
+	QDF_STATUS status;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req) {
+		mlme_err("cm req NULL for *cm_id %x", *cm_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 	/*
 	 * fill vdev crypto for the peer.
-	 * call vdev sm to start connect for the candidate.
 	 */
 
-	return QDF_STATUS_SUCCESS;
+	req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	req.cm_id = *cm_id;
+	req.bss = cm_req->connect_req.cur_candidate;
+
+	status = mlme_cm_connect_req(cm_ctx->vdev, &req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("connect request failed for *cm_id %x", *cm_id);
+		status = cm_send_connect_start_fail(cm_ctx,
+						    &cm_req->connect_req,
+						    CM_JOIN_FAILED);
+	}
+
+	return status;
 }
 
-QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+#ifdef CONN_MGR_ADV_FEATURE
+static QDF_STATUS
+cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_rsp *resp)
 {
-	/*
-	 * get the connect req from connect list and post
-	 * WLAN_CM_SM_EV_CONNECT_FAILURE.
-	 */
+	struct wlan_objmgr_pdev *pdev;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("Failed to find pdev from vdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(resp->connect_status))
+		wlan_blm_update_bssid_connect_params(pdev, resp->bssid,
+						     BLM_AP_CONNECTED);
+
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS
+cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_rsp *resp)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_rsp *resp)
 {
 	/*
-	 * inform osif about success/failure, inform interface manager
-	 * update fils/wep key and inform legacy, update bcn filter and scan
-	 * entry mlme info, blm action and remove from serialization at the end.
+	 * If the entry is not present in the list, it must have been cleared
+	 * already.
 	 */
+	if (!cm_get_req_by_cm_id(cm_ctx, resp->cm_id))
+		return QDF_STATUS_SUCCESS;
+
+	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
+
+	if (cm_get_state(cm_ctx) == WLAN_CM_S_INIT ||
+	    cm_get_state(cm_ctx) == WLAN_CM_S_CONNECTED) {
+		cm_inform_if_mgr_connect_complete(cm_ctx->vdev,
+						  resp->connect_status);
+
+		cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
+
+		mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
+	}
+
+	/*
+	 * update fils/wep key and inform legacy, update bcn filter and scan
+	 * entry mlme info,, start OBSS scan for open mode.
+	 */
+
+	cm_remove_cmd(cm_ctx, resp->cm_id);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -639,13 +850,11 @@ QDF_STATUS cm_add_connect_req_to_list(struct cnx_mgr *cm_ctx,
 	return status;
 }
 
-QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
-				  QDF_STATUS status,
-				  struct qdf_mac_addr *peer_mac)
+QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_cm_connect_rsp *resp)
 {
 	struct cnx_mgr *cm_ctx;
 	QDF_STATUS qdf_status;
-	struct wlan_cm_connect_rsp *resp;
 	wlan_cm_id cm_id;
 	uint32_t prefix;
 
@@ -658,9 +867,69 @@ QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 	cm_id = cm_ctx->active_cm_id;
 	prefix = CM_ID_GET_PREFIX(cm_id);
 
+	if (prefix != CONNECT_REQ_PREFIX || cm_id != resp->cm_id) {
+		mlme_err("Active req %x is not connect req connect req cm_id %x",
+			 cm_id, resp->cm_id);
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto post_err;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(resp->connect_status)) {
+		qdf_status =
+			cm_sm_deliver_event(vdev,
+					    WLAN_CM_SM_EV_CONNECT_SUCCESS,
+					    sizeof(*resp), resp);
+		if (QDF_IS_STATUS_SUCCESS(qdf_status))
+			return qdf_status;
+		/*
+		 * failure mean that the new connect/disconnect is received so
+		 * cleanup.
+		 */
+		goto post_err;
+	}
+
+	/* In case of failure try with next candidate */
+	qdf_status =
+		cm_sm_deliver_event(vdev,
+				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
+				    sizeof(*resp), resp);
+
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
+
+post_err:
+	/*
+	 * If there is a event posting error it means the SM state is not in
+	 * JOIN ACTIVE (some new cmd has changed the state of SM), so just
+	 * complete the connect command.
+	 */
+	cm_connect_complete(cm_ctx, resp);
+
+	return qdf_status;
+}
+
+QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
+				  QDF_STATUS status,
+				  struct qdf_mac_addr *peer_mac)
+{
+	struct cnx_mgr *cm_ctx;
+	QDF_STATUS qdf_status;
+	wlan_cm_id cm_id;
+	uint32_t prefix;
+	struct wlan_cm_connect_rsp *resp;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		mlme_err("cm ctx NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cm_id = cm_ctx->active_cm_id;
+	prefix = CM_ID_GET_PREFIX(cm_id);
+
 	if (prefix != CONNECT_REQ_PREFIX) {
 		mlme_err("Active req %x is not connect req", cm_id);
-		/* Delete peer if create was success */
+		mlme_cm_bss_peer_delete_req(vdev);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -671,19 +940,20 @@ QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 					    sizeof(wlan_cm_id), &cm_id);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			return qdf_status;
+
+		mlme_cm_bss_peer_delete_req(vdev);
 		goto post_err;
 	}
 
-	resp = qdf_mem_malloc(sizeof(*resp));
-	if (!resp)
-		goto post_err;
-
-	resp->connect_status = status;
-	resp->cm_id = cm_id;
-	resp->vdev_id = wlan_vdev_get_id(vdev);
-	resp->reason = CM_JOIN_FAILED;
-
 	/* In case of failure try with next candidate */
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp) {
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto post_err;
+	}
+
+	cm_fill_resp_for_bss_create_fail(cm_ctx->vdev, resp, cm_id, peer_mac);
+
 	qdf_status =
 		cm_sm_deliver_event(vdev,
 				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
@@ -694,9 +964,11 @@ QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 
 post_err:
 	/*
-	 * handle post error i.e. STATE is not connect active, so
-	 * do cleanup of req.
+	 * If there is a event posting error it means the SM state is not in
+	 * JOIN ACTIVE (some new cmd has changed the state of SM), so just
+	 * complete the connect command.
 	 */
+	cm_connect_handle_event_post_fail(cm_ctx, cm_id);
 	return qdf_status;
 }
 

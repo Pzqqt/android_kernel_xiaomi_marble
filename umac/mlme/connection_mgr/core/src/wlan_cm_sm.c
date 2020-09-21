@@ -402,6 +402,11 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_FAILURE:
+		/* check if connect resp cm id is valid for the current req */
+		if (!cm_connect_resp_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_INIT);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
@@ -538,20 +543,40 @@ static bool cm_subst_join_active_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_SUCCESS:
+		/* check if connect resp cm id is valid for the current req */
+		if (!cm_connect_resp_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE:
+		/* check if connect resp cm id is valid for the current req */
+		if (!cm_connect_resp_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_try_next_candidate(cm_ctx, data);
 		status = true;
 		break;
 	case WLAN_CM_SM_EV_CONNECT_FAILURE:
+		/* check if connect resp cm id is valid for the current req */
+		if (!cm_connect_resp_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_INIT);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
 	case WLAN_CM_EV_BSS_CREATE_PEER_SUCCESS:
+		/* check if cm id is valid for the current req */
+		if (!cm_check_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
 		cm_resume_connect_after_peer_create(cm_ctx, data);
 		status = true;
 		break;

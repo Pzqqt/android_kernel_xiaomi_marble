@@ -71,6 +71,17 @@ QDF_STATUS cm_connect_scan_resp(struct cnx_mgr *cm_ctx, wlan_scan_id *scan_id,
 				QDF_STATUS status);
 
 /**
+ * cm_connect_resp_cmid_match_list_head() - Check if resp cmid is same as list
+ * head
+ * @cm_ctx: connection manager context
+ * @resp: connect resp
+ *
+ * Return: bool
+ */
+bool cm_connect_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
+					  struct wlan_cm_connect_rsp *resp);
+
+/**
  * cm_connect_active() - This API would be called after the connect
  * request gets activated in serialization.
  * @cm_ctx: connection manager context
@@ -93,15 +104,6 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 				 struct wlan_cm_connect_rsp *connect_resp);
 
 /**
- * cm_connect_cmd_timeout() - Called if active connect command timeout
- * @cm_ctx: connection manager context
- * @cm_id: Connection mgr ID assigned to this connect request.
- *
- * Return: QDF status
- */
-QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
-
-/**
  * cm_resume_connect_after_peer_create() - Called after bss create rsp
  * @cm_ctx: connection manager context
  * @cm_id: Connection mgr ID assigned to this connect request.
@@ -122,6 +124,16 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
 QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 				  QDF_STATUS status,
 				  struct qdf_mac_addr *peer_mac);
+
+/**
+ * cm_connect_rsp() - Connection manager connect response
+ * @vdev: vdev pointer
+ * @resp: Connect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_cm_connect_rsp *resp);
 
 /**
  * cm_connect_complete() - This API would be called after connect complete
@@ -247,6 +259,24 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 /*************** UTIL APIs ****************/
 
 /**
+ * cm_ser_get_blocking_cmd() - check if serialization command needs to be
+ * blocking
+ *
+ * Return: bool
+ */
+#ifdef CONN_MGR_ADV_FEATURE
+static inline bool cm_ser_get_blocking_cmd(void)
+{
+	return true;
+}
+#else
+static inline bool cm_ser_get_blocking_cmd(void)
+{
+	return false;
+}
+#endif
+
+/**
  * cm_get_cm_id() - Get unique cm id for connect/disconnect request
  * @cm_ctx: connection manager context
  * @source: source of the request (can be connect or disconnect request)
@@ -312,6 +342,15 @@ bool cm_check_scanid_match_list_head(struct cnx_mgr *cm_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_remove_cmd() - Remove cmd from req list and serialization
+ * @cm_ctx: connection manager context
+ * @cm_id: cm id of connect/disconnect req
+ *
+ * Return: void
+ */
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 
 /**
  * cm_add_req_to_list_and_indicate_osif() - Add the request to request list in

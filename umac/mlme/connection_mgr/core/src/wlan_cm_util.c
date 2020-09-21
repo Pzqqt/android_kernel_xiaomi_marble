@@ -21,6 +21,7 @@
 #include "wlan_cm_main_api.h"
 #include "wlan_scan_api.h"
 #include "wlan_cm_public_struct.h"
+#include "wlan_serialization_api.h"
 
 static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 	switch (source) {
@@ -261,4 +262,41 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	cm_req_lock_release(cm_ctx);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_serialization_queued_cmd_info cmd_info;
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+	QDF_STATUS status;
+
+	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
+	if (!psoc) {
+		mlme_err("Failed to find psoc from vdev");
+		return;
+	}
+
+	status = cm_delete_req_from_list(cm_ctx, cm_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	qdf_mem_zero(&cmd_info, sizeof(cmd_info));
+	cmd_info.cmd_id = cm_id;
+	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
+
+	if (prefix == CONNECT_REQ_PREFIX)
+		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	else
+		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
+
+	cmd_info.vdev = cm_ctx->vdev;
+
+	if (cm_id == cm_ctx->active_cm_id) {
+		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
+		wlan_serialization_remove_cmd(&cmd_info);
+	} else {
+		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
+		wlan_serialization_cancel_request(&cmd_info);
+	}
 }

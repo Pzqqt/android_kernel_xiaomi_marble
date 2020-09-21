@@ -43,9 +43,9 @@ QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS wlan_cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_rsp *cm_conn_rsp)
+			       struct wlan_cm_connect_rsp *resp)
 {
-	return QDF_STATUS_SUCCESS;
+	return cm_connect_rsp(vdev, resp);
 }
 
 QDF_STATUS wlan_cm_bss_peer_delete_ind(struct wlan_objmgr_vdev *vdev,
