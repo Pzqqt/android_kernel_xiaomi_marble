@@ -1759,10 +1759,9 @@ static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 
 	ndp_instance_array = qdf_mem_malloc(end_ind->num_ndp_ids *
 		sizeof(*ndp_instance_array));
-	if (!ndp_instance_array) {
-		osif_err("Failed to allocate ndp_instance_array");
+	if (!ndp_instance_array)
 		return;
-	}
+
 	for (i = 0; i < end_ind->num_ndp_ids; i++)
 		ndp_instance_array[i] = end_ind->ndp_map[i].ndp_instance_id;
 
@@ -2502,10 +2501,8 @@ static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
 	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
 
 	nan_req = qdf_mem_malloc(sizeof(*nan_req) +  buf_len);
-	if (!nan_req) {
-		osif_err("Request allocation failure");
+	if (!nan_req)
 		return -ENOMEM;
-	}
 
 	nan_req->psoc = psoc;
 	nan_req->params.request_data_len = buf_len;
@@ -2568,11 +2565,9 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
 
 	nan_req = qdf_mem_malloc(sizeof(*nan_req) + buf_len);
-
-	if (!nan_req) {
-		osif_err("Request allocation failure");
+	if (!nan_req)
 		return -ENOMEM;
-	}
+
 	nan_req->social_chan_2g_freq = chan_freq_2g;
 	if (chan_freq_5g)
 		nan_req->social_chan_5g_freq = chan_freq_5g;
