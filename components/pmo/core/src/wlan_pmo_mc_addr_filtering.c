@@ -430,7 +430,6 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 
 	op_mc_list_req = qdf_mem_malloc(sizeof(*op_mc_list_req));
 	if (!op_mc_list_req) {
-		pmo_err("op_mc_list_req is NULL");
 		status = QDF_STATUS_E_NOMEM;
 		goto exit_with_status;
 	}
@@ -526,7 +525,6 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 
 	op_mc_list_req = qdf_mem_malloc(sizeof(*op_mc_list_req));
 	if (!op_mc_list_req) {
-		pmo_err("out of memory");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}

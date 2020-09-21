@@ -254,10 +254,8 @@ pkt_capture_callback_ctx_create(struct pkt_capture_vdev_priv *vdev_priv)
 	struct pkt_capture_cb_context *cb_ctx;
 
 	cb_ctx = qdf_mem_malloc(sizeof(*cb_ctx));
-	if (!cb_ctx) {
-		pkt_capture_err("MON context create failed");
+	if (!cb_ctx)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	vdev_priv->cb_ctx = cb_ctx;
 
@@ -290,10 +288,8 @@ pkt_capture_mon_context_create(struct pkt_capture_vdev_priv *vdev_priv)
 	struct pkt_capture_mon_context *mon_context;
 
 	mon_context = qdf_mem_malloc(sizeof(*mon_context));
-	if (!mon_context) {
-		pkt_capture_err("MON context create failed");
+	if (!mon_context)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	vdev_priv->mon_ctx = mon_context;
 

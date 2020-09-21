@@ -254,8 +254,6 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 				action_req->tdls_mgmt.len);
 	if (!tdls_mgmt_req) {
 		status = QDF_STATUS_E_NOMEM;
-		tdls_err("mem alloc failed ");
-		QDF_ASSERT(0);
 		goto release_cmd;
 	}
 

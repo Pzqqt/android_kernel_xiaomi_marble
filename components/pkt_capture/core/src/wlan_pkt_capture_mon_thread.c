@@ -101,10 +101,9 @@ pkt_capture_alloc_mon_pkt_freeq(struct pkt_capture_mon_context *mon_ctx)
 
 	for (i = 0; i < MAX_MON_PKT_SIZE; i++) {
 		pkt = qdf_mem_malloc(sizeof(*pkt));
-		if (!pkt) {
-			pkt_capture_err("mon packet freeq allocation fail");
+		if (!pkt)
 			goto free;
-		}
+
 		spin_lock_bh(&mon_ctx->mon_pkt_freeq_lock);
 		list_add_tail(&pkt->list,
 			      &mon_ctx->mon_pkt_freeq);

@@ -47,10 +47,8 @@ QDF_STATUS ipa_config_mem_alloc(void)
 		return QDF_STATUS_SUCCESS;
 
 	ipa_cfg = qdf_mem_malloc(sizeof(*ipa_cfg));
-	if (!ipa_cfg) {
-		ipa_err("Failed to allocate memory for ipa config");
+	if (!ipa_cfg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	g_ipa_config = ipa_cfg;
 

@@ -38,7 +38,6 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 
 	request = qdf_mem_malloc(sizeof(*request));
 	if (!request) {
-		pmo_err("cannot allocate arp request");
 		status = QDF_STATUS_E_NOMEM;
 		goto exit_with_status;
 	}

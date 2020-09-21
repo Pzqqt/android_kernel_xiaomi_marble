@@ -94,10 +94,9 @@ static QDF_STATUS ocb_set_chan_info(void *dp_soc,
 
 		buf_size = sizeof(*ocb_channel_info) * config->channel_count;
 		ocb_set_chan.ocb_channel_info = qdf_mem_malloc(buf_size);
-		if (!ocb_set_chan.ocb_channel_info) {
-			ocb_err("Failed to allocate buffer for chan info");
+		if (!ocb_set_chan.ocb_channel_info)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		ocb_channel_info = ocb_set_chan.ocb_channel_info;
 		for (i = 0; i < config->channel_count; i++) {
 			ocb_channel_info[i].chan_freq =
@@ -516,10 +515,8 @@ QDF_STATUS ocb_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 
 	ocb_notice("ocb pdev created");
 	ocb_obj = qdf_mem_malloc(sizeof(*ocb_obj));
-	if (!ocb_obj) {
-		ocb_err("Failed to allocate memory for ocb pdev object");
+	if (!ocb_obj)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
 						       WLAN_UMAC_COMP_OCB,

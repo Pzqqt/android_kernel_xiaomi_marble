@@ -1083,10 +1083,8 @@ static QDF_STATUS p2p_roc_req_for_tx_action(
 	QDF_STATUS status;
 
 	roc_ctx = qdf_mem_malloc(sizeof(struct p2p_roc_context));
-	if (!roc_ctx) {
-		p2p_err("Failed to allocate p2p roc context");
+	if (!roc_ctx)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 	roc_ctx->p2p_soc_obj = p2p_soc_obj;
@@ -1834,10 +1832,8 @@ QDF_STATUS p2p_cleanup_tx_sync(
 
 	p2p_debug("p2p_soc_obj:%pK, vdev:%pK", p2p_soc_obj, vdev);
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		p2p_err("failed to allocate cleanup param");
+	if (!param)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	param->p2p_soc_obj = p2p_soc_obj;
 	if (vdev)

@@ -44,10 +44,8 @@ static QDF_STATUS policy_mgr_psoc_obj_create_cb(struct wlan_objmgr_psoc *psoc,
 
 	policy_mgr_ctx = qdf_mem_malloc(
 		sizeof(struct policy_mgr_psoc_priv_obj));
-	if (!policy_mgr_ctx) {
-		policy_mgr_err("memory allocation failed");
+	if (!policy_mgr_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	policy_mgr_ctx->psoc = psoc;
 	policy_mgr_ctx->old_hw_mode_index = POLICY_MGR_DEFAULT_HW_MODE_INDEX;
@@ -337,7 +335,6 @@ QDF_STATUS policy_mgr_psoc_open(struct wlan_objmgr_psoc *psoc)
 		sizeof(struct sta_ap_intf_check_work_ctx));
 	if (!pm_ctx->sta_ap_intf_check_work_info) {
 		qdf_mutex_destroy(&pm_ctx->qdf_conc_list_lock);
-		policy_mgr_err("Failed to alloc sta_ap_intf_check_work_info");
 		return QDF_STATUS_E_FAILURE;
 	}
 	pm_ctx->sta_ap_intf_check_work_info->psoc = psoc;

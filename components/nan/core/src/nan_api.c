@@ -39,10 +39,8 @@ static QDF_STATUS nan_psoc_obj_created_notification(
 
 	nan_debug("nan_psoc_create_notif called");
 	nan_obj = qdf_mem_malloc(sizeof(*nan_obj));
-	if (!nan_obj) {
-		nan_alert("malloc failed for nan prv obj");
+	if (!nan_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_spinlock_create(&nan_obj->lock);
 	status = wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_NAN,
@@ -113,10 +111,8 @@ static QDF_STATUS nan_vdev_obj_created_notification(
 	}
 
 	nan_obj = qdf_mem_malloc(sizeof(*nan_obj));
-	if (!nan_obj) {
-		nan_err("malloc failed for nan prv obj");
+	if (!nan_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_spinlock_create(&nan_obj->lock);
 	status = wlan_objmgr_vdev_component_obj_attach(vdev, WLAN_UMAC_COMP_NAN,
@@ -184,10 +180,8 @@ static QDF_STATUS nan_peer_obj_created_notification(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	nan_peer_obj = qdf_mem_malloc(sizeof(*nan_peer_obj));
-	if (!nan_peer_obj) {
-		nan_err("malloc failed for nan prv obj");
+	if (!nan_peer_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_spinlock_create(&nan_peer_obj->lock);
 	status = wlan_objmgr_peer_component_obj_attach(peer, WLAN_UMAC_COMP_NAN,

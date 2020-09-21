@@ -969,7 +969,6 @@ blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 
 	blm_entry = qdf_mem_malloc(sizeof(*blm_entry));
 	if (!blm_entry) {
-		blm_err("Memory allocation of node failed");
 		qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 		return QDF_STATUS_E_FAILURE;
 	}

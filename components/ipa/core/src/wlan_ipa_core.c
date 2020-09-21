@@ -158,10 +158,8 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 	}
 
 	msg = qdf_mem_malloc(sizeof(*msg));
-	if (!msg) {
-		ipa_err("op_msg allocation fails");
+	if (!msg)
 		return;
-	}
 
 	msg->op_code = WLAN_IPA_UC_OPCODE_UC_READY;
 
@@ -456,10 +454,8 @@ wlan_ipa_wdi_setup(struct wlan_ipa_priv *ipa_ctx,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	sys_in = qdf_mem_malloc(sizeof(*sys_in) * WLAN_IPA_MAX_IFACE);
-	if (!sys_in) {
-		ipa_err("sys_in allocation failed");
+	if (!sys_in)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++)
 		qdf_mem_copy(sys_in + i,
@@ -1884,11 +1880,8 @@ static QDF_STATUS wlan_ipa_send_msg(qdf_netdev_t net_dev,
 	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(qdf_ipa_wlan_msg_t);
 
 	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-
-	if (!msg) {
-		ipa_err("msg allocation failed");
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	QDF_IPA_SET_META_MSG_TYPE(&meta, type);
 	strlcpy(QDF_IPA_WLAN_MSG_NAME(msg), net_dev->name, IPA_RESOURCE_NAME_MAX);
@@ -2028,7 +2021,6 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			}
 
 			if (!pending_event) {
-				ipa_err("Pending event memory alloc fail");
 				qdf_mutex_release(&ipa_ctx->ipa_lock);
 				return QDF_STATUS_E_NOMEM;
 			}
@@ -2384,11 +2376,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			(sizeof(qdf_ipa_wlan_msg_ex_t) +
 				sizeof(qdf_ipa_wlan_hdr_attrib_val_t));
 		msg_ex = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-
-		if (!msg_ex) {
-			ipa_err("msg_ex allocation failed");
+		if (!msg_ex)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		strlcpy(msg_ex->name, net_dev->name,
 			IPA_RESOURCE_NAME_MAX);
 		msg_ex->num_of_attribs = 1;
@@ -2503,10 +2493,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(qdf_ipa_wlan_msg_t);
 	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-	if (!msg) {
-		ipa_err("msg allocation failed");
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	QDF_IPA_SET_META_MSG_TYPE(&meta, type);
 	strlcpy(QDF_IPA_WLAN_MSG_NAME(msg), net_dev->name,
@@ -2701,11 +2689,8 @@ wlan_ipa_alloc_tx_desc_free_list(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_ctx->tx_desc_pool = qdf_mem_malloc(sizeof(struct wlan_ipa_tx_desc) *
 					       max_desc_cnt);
-
-	if (!ipa_ctx->tx_desc_pool) {
-		ipa_err("Free Tx descriptor allocation failed");
+	if (!ipa_ctx->tx_desc_pool)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_list_create(&ipa_ctx->tx_desc_free_list, max_desc_cnt);
 
@@ -2836,10 +2821,8 @@ static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
 	/* WDI enable message to IPA */
 	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(*ipa_msg);
 	ipa_msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-	if (!ipa_msg) {
-		ipa_err("msg allocation failed");
+	if (!ipa_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (ctrl) {
 		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_ENABLE);
@@ -2994,10 +2977,8 @@ QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
 	/* Send SCC/MCC Switching event to IPA */
 	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(*msg);
 	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-	if (!msg) {
-		ipa_err("msg allocation failed");
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (mcc_mode) {
 		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_SWITCH_TO_MCC);
@@ -3682,10 +3663,8 @@ static QDF_STATUS wlan_ipa_uc_send_evt(qdf_netdev_t net_dev,
 
 	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(qdf_ipa_wlan_msg_t);
 	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-	if (!msg) {
-		ipa_err("msg allocation failed");
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	QDF_IPA_SET_META_MSG_TYPE(&meta, type);
 	qdf_str_lcopy(QDF_IPA_WLAN_MSG_NAME(msg), net_dev->name,
@@ -3793,10 +3772,8 @@ void wlan_ipa_fw_rejuvenate_send_msg(struct wlan_ipa_priv *ipa_ctx)
 
 	meta.msg_len = sizeof(*msg);
 	msg = qdf_mem_malloc(meta.msg_len);
-	if (!msg) {
-		ipa_debug("msg allocation failed");
+	if (!msg)
 		return;
-	}
 
 	QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_FWR_SSR_BEFORE_SHUTDOWN);
 	ipa_debug("ipa_send_msg(Evt:%d)",
