@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -260,6 +260,8 @@ typedef __qdf_ipa_wdi_conn_out_params_t qdf_ipa_wdi_conn_out_params_t;
 	__QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_DB_VA(pipe_out)
 #define QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(pipe_out)	\
 	__QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(pipe_out)
+#define QDF_IPA_WDI_CONN_OUT_PARAMS_IS_DB_DDR_MAPPED(pipe_out)	\
+	__QDF_IPA_WDI_CONN_OUT_PARAMS_IS_DB_DDR_MAPPED(pipe_out)
 
 /**
  * qdf_ipa_wdi_perf_profile_t - To set BandWidth profile

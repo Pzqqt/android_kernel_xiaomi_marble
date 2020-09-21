@@ -317,7 +317,8 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
 
 	ipa_res = &pdev->ipa_resource;
-	iounmap(ipa_res->tx_comp_doorbell_vaddr);
+	if (!ipa_res->is_db_ddr_mapped)
+		iounmap(ipa_res->tx_comp_doorbell_vaddr);
 
 	qdf_mem_free_sgtable(&ipa_res->tx_ring.sgtable);
 	qdf_mem_free_sgtable(&ipa_res->tx_comp_ring.sgtable);
@@ -763,7 +764,11 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
-	ipa_res->tx_comp_doorbell_vaddr =
+	if (ipa_res->is_db_ddr_mapped)
+		ipa_res->tx_comp_doorbell_vaddr =
+				phys_to_virt(ipa_res->tx_comp_doorbell_paddr);
+	else
+		ipa_res->tx_comp_doorbell_vaddr =
 				ioremap(ipa_res->tx_comp_doorbell_paddr, 4);
 
 	if (qdf_mem_smmu_s1_enabled(soc->osdev)) {
@@ -1310,6 +1315,9 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_DB_PA(&pipe_out);
 	ipa_res->rx_ready_doorbell_paddr =
 		QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out);
+
+	ipa_res->is_db_ddr_mapped =
+		QDF_IPA_WDI_CONN_OUT_PARAMS_IS_DB_DDR_MAPPED(&pipe_out);
 
 	soc->ipa_first_tx_db_access = true;
 

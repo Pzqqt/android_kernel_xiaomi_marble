@@ -222,6 +222,12 @@ typedef struct ipa_wdi_conn_out_params  __qdf_ipa_wdi_conn_out_params_t;
 	(((struct ipa_wdi_conn_out_params *)(pipe_out))->tx_uc_db_pa)
 #define __QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(pipe_out)	\
 	(((struct ipa_wdi_conn_out_params *)(pipe_out))->rx_uc_db_pa)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+#define __QDF_IPA_WDI_CONN_OUT_PARAMS_IS_DB_DDR_MAPPED(pipe_out)	\
+	(((struct ipa_wdi_conn_out_params *)(pipe_out))->is_ddr_mapped)
+#else
+#define __QDF_IPA_WDI_CONN_OUT_PARAMS_IS_DB_DDR_MAPPED(pipe_out) false
+#endif
 
 /**
  * __qdf_ipa_wdi_perf_profile_t - To set BandWidth profile

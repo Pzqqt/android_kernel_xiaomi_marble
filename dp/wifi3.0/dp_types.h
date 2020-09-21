@@ -1704,6 +1704,8 @@ struct dp_ipa_resources {
 	qdf_dma_addr_t tx_comp_doorbell_paddr;
 	uint32_t *tx_comp_doorbell_vaddr;
 	qdf_dma_addr_t rx_ready_doorbell_paddr;
+
+	bool is_db_ddr_mapped;
 };
 #endif
 
