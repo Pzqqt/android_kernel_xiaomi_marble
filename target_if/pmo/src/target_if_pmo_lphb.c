@@ -258,9 +258,7 @@ QDF_STATUS target_if_pmo_lphb_evt_handler(struct wlan_objmgr_psoc *psoc,
 
 	slphb_indication = (struct pmo_lphb_rsp *)qdf_mem_malloc(
 				sizeof(struct pmo_lphb_rsp));
-
 	if (!slphb_indication) {
-		target_if_err("Invalid LPHB indication buffer");
 		qdf_status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}

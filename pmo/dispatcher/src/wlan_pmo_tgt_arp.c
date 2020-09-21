@@ -42,14 +42,12 @@ QDF_STATUS pmo_tgt_enable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 
 	arp_offload_req = qdf_mem_malloc(sizeof(*arp_offload_req));
 	if (!arp_offload_req) {
-		pmo_err("unable to allocate arp_offload_req");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}
 
 	ns_offload_req = qdf_mem_malloc(sizeof(*ns_offload_req));
 	if (!ns_offload_req) {
-		pmo_err("unable to allocate ns_offload_req");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}
@@ -112,14 +110,12 @@ QDF_STATUS pmo_tgt_disable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 
 	arp_offload_req = qdf_mem_malloc(sizeof(*arp_offload_req));
 	if (!arp_offload_req) {
-		pmo_err("unable to allocate arp_offload_req");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}
 
 	ns_offload_req = qdf_mem_malloc(sizeof(*ns_offload_req));
 	if (!ns_offload_req) {
-		pmo_err("unable to allocate ns_offload_req");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}

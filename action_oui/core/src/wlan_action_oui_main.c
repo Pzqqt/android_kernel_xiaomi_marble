@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -133,7 +133,6 @@ action_oui_psoc_create_notification(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	psoc_priv = qdf_mem_malloc(sizeof(*psoc_priv));
 	if (!psoc_priv) {
-		action_oui_err("Failed to allocate psoc_priv");
 		status = QDF_STATUS_E_NOMEM;
 		goto exit;
 	}

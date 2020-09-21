@@ -277,7 +277,6 @@ QDF_STATUS pmo_core_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 
 	op_gtk_req = qdf_mem_malloc(sizeof(*op_gtk_req));
 	if (!op_gtk_req) {
-		pmo_err("op_gtk_req is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
 	}
@@ -313,7 +312,6 @@ QDF_STATUS pmo_core_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 
 	op_gtk_req = qdf_mem_malloc(sizeof(*op_gtk_req));
 	if (!op_gtk_req) {
-		pmo_err("op_gtk_req is NULL");
 		status = QDF_STATUS_E_NOMEM;
 		goto dec_ref;
 	}

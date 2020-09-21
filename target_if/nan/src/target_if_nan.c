@@ -285,10 +285,8 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	rsp = qdf_mem_malloc(sizeof(*rsp));
-	if (!rsp) {
-		target_if_err("malloc failed");
+	if (!rsp)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_initiator_rsp(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -335,10 +333,8 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	rsp = qdf_mem_malloc(sizeof(*rsp));
-	if (!rsp) {
-		target_if_err("malloc failed");
+	if (!rsp)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_ind(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -385,10 +381,8 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	rsp = qdf_mem_malloc(sizeof(*rsp));
-	if (!rsp) {
-		target_if_err("malloc failed");
+	if (!rsp)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_confirm(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -484,10 +478,8 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	rsp = qdf_mem_malloc(sizeof(*rsp));
-	if (!rsp) {
-		target_if_err("malloc failed");
+	if (!rsp)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_responder_rsp(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -583,10 +575,8 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	end_rsp = qdf_mem_malloc(sizeof(*end_rsp));
-	if (!end_rsp) {
-		target_if_err("malloc failed");
+	if (!end_rsp)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_end_rsp(wmi_handle, data, end_rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -684,10 +674,8 @@ static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	rsp = qdf_mem_malloc(sizeof(*rsp));
-	if (!rsp) {
-		target_if_err("malloc failed");
+	if (!rsp)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_sch_update(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -763,10 +751,8 @@ static int target_if_ndp_host_event_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	host_evt = qdf_mem_malloc(sizeof(*host_evt));
-	if (!host_evt) {
-		target_if_err("malloc failed");
+	if (!host_evt)
 		return -ENOMEM;
-	}
 
 	status = wmi_extract_ndp_host_event(wmi_handle, data, host_evt);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -947,10 +933,9 @@ int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len)
 	}
 
 	nan_rsp = qdf_mem_malloc(sizeof(*nan_rsp) + temp_evt_params.buf_len);
-	if (!nan_rsp) {
-		target_if_err("malloc failed");
+	if (!nan_rsp)
 		return -ENOMEM;
-	}
+
 	qdf_mem_copy(nan_rsp, &temp_evt_params, sizeof(*nan_rsp));
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_NAN_ID);

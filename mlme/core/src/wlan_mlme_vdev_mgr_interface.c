@@ -1066,10 +1066,8 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	vdev_mlme->ext_vdev_ptr =
 		qdf_mem_malloc(sizeof(struct mlme_legacy_priv));
-	if (!vdev_mlme->ext_vdev_ptr) {
-		mlme_legacy_err("failed to allocate meory for ext_vdev_ptr");
+	if (!vdev_mlme->ext_vdev_ptr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	mlme_init_rate_config(vdev_mlme);
 	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
@@ -1316,10 +1314,9 @@ QDF_STATUS psoc_mlme_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme)
 {
 	psoc_mlme->ext_psoc_ptr =
 		qdf_mem_malloc(sizeof(struct wlan_mlme_psoc_ext_obj));
-	if (!psoc_mlme->ext_psoc_ptr) {
-		mlme_legacy_err("Failed to allocate memory");
+	if (!psoc_mlme->ext_psoc_ptr)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	target_if_cm_roam_register_tx_ops(
 			&psoc_mlme->ext_psoc_ptr->rso_tx_ops);
 

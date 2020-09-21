@@ -188,10 +188,8 @@ tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 		   info->vdev_id, info->message_type, info->peer_reason,
 		   QDF_MAC_ADDR_REF(info->peermac.bytes));
 	notify = qdf_mem_malloc(sizeof(*notify));
-	if (!notify) {
-		tdls_err("mem allocate fail");
+	if (!notify)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	vdev_id = info->vdev_id;
 	notify->vdev =
@@ -278,10 +276,8 @@ QDF_STATUS tgt_tdls_mgmt_frame_process_rx_cb(
 	}
 
 	rx_mgmt_event = qdf_mem_malloc_atomic(sizeof(*rx_mgmt_event));
-	if (!rx_mgmt_event) {
-		tdls_debug_rl("Failed to allocate rx mgmt event");
+	if (!rx_mgmt_event)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	rx_mgmt = qdf_mem_malloc_atomic(sizeof(*rx_mgmt) +
 			mgmt_rx_params->buf_len);

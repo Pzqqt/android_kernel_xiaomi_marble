@@ -39,11 +39,9 @@ QDF_STATUS pmo_allocate_ctx(void)
 	/* allocate offload mgr ctx */
 	gp_pmo_ctx = (struct wlan_pmo_ctx *)qdf_mem_malloc(
 			sizeof(*gp_pmo_ctx));
-	if (!gp_pmo_ctx) {
-		pmo_err("unable to allocate pmo_ctx");
-		QDF_ASSERT(0);
+	if (!gp_pmo_ctx)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	qdf_spinlock_create(&gp_pmo_ctx->lock);
 
 	return QDF_STATUS_SUCCESS;

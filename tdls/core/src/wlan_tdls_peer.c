@@ -165,10 +165,8 @@ static struct tdls_peer *tdls_add_peer(struct tdls_vdev_priv_obj *vdev_obj,
 	uint8_t reg_bw_offset;
 
 	peer = qdf_mem_malloc(sizeof(*peer));
-	if (!peer) {
-		tdls_err("add tdls peer malloc memory failed!");
+	if (!peer)
 		return NULL;
-	}
 
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
 	if (!soc_obj) {

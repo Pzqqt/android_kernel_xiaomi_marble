@@ -117,10 +117,8 @@ static QDF_STATUS p2p_psoc_obj_create_notification(
 	}
 
 	p2p_soc_obj = qdf_mem_malloc(sizeof(*p2p_soc_obj));
-	if (!p2p_soc_obj) {
-		p2p_err("Failed to allocate p2p soc private object");
+	if (!p2p_soc_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	p2p_soc_obj->soc = soc;
 
@@ -217,10 +215,8 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 
 	p2p_vdev_obj =
 		qdf_mem_malloc(sizeof(*p2p_vdev_obj));
-	if (!p2p_vdev_obj) {
-		p2p_err("Failed to allocate p2p vdev object");
+	if (!p2p_vdev_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	p2p_vdev_obj->vdev = vdev;
 	p2p_vdev_obj->noa_status = true;
@@ -423,10 +419,8 @@ static QDF_STATUS p2p_send_noa_to_pe(struct p2p_noa_info *noa_info)
 	}
 
 	noa_attr = qdf_mem_malloc(sizeof(*noa_attr));
-	if (!noa_attr) {
-		p2p_err("Failed to allocate memory for tSirP2PNoaAttr");
+	if (!noa_attr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	noa_attr->index = noa_info->index;
 	noa_attr->opps_ps = noa_info->opps_ps;
@@ -826,10 +820,9 @@ QDF_STATUS p2p_psoc_start(struct wlan_objmgr_psoc *soc,
 	}
 
 	start_param = qdf_mem_malloc(sizeof(*start_param));
-	if (!start_param) {
-		p2p_err("Failed to allocate start params");
+	if (!start_param)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	start_param->rx_cb = req->rx_cb;
 	start_param->rx_cb_data = req->rx_cb_data;
 	start_param->event_cb = req->event_cb;
@@ -1263,7 +1256,6 @@ QDF_STATUS p2p_process_noa(struct p2p_noa_event *noa_event)
 		p2p_vdev_obj->noa_info =
 			qdf_mem_malloc(sizeof(struct p2p_noa_info));
 		if (!(p2p_vdev_obj->noa_info)) {
-			p2p_err("Failed to allocate p2p noa info");
 			status = QDF_STATUS_E_NOMEM;
 			goto fail;
 		}

@@ -497,7 +497,6 @@ action_oui_extension_store(struct action_oui_psoc_priv *psoc_priv,
 	ext_priv = qdf_mem_malloc(sizeof(*ext_priv));
 	if (!ext_priv) {
 		qdf_mutex_release(&oui_priv->extension_lock);
-		action_oui_err("Failed to allocate memory for action oui extension priv");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -698,7 +697,6 @@ QDF_STATUS action_oui_send(struct action_oui_psoc_priv *psoc_priv,
 	len = sizeof(*req) + no_oui_extensions * sizeof(*extension);
 	req = qdf_mem_malloc(len);
 	if (!req) {
-		action_oui_err("Failed to allocate memory for action_oui");
 		qdf_mutex_release(&oui_priv->extension_lock);
 		return QDF_STATUS_E_NOMEM;
 	}

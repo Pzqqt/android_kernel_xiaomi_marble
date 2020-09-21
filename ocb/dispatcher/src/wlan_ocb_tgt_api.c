@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,10 +67,8 @@ tgt_ocb_channel_config_status(struct wlan_objmgr_psoc *psoc,
 	struct ocb_rx_event *event;
 
 	event = qdf_mem_malloc(sizeof(*event));
-	if (!event) {
-		ocb_err("Memory malloc failed for channel config status");
+	if (!event)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_OCB_SB_ID);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
@@ -114,10 +112,8 @@ tgt_ocb_get_tsf_timer(struct wlan_objmgr_psoc *psoc,
 	struct ocb_rx_event *event;
 
 	event = qdf_mem_malloc(sizeof(*event));
-	if (!event) {
-		ocb_err("Memory malloc failed for tsf timer");
+	if (!event)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_OCB_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -172,10 +168,8 @@ tgt_ocb_dcc_ndl_update(struct wlan_objmgr_psoc *psoc,
 	struct ocb_rx_event *event;
 
 	event = qdf_mem_malloc(sizeof(*event));
-	if (!event) {
-		ocb_err("Memory malloc failed for ndl update response");
+	if (!event)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_OCB_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -234,10 +228,9 @@ tgt_ocb_dcc_stats_indicate(struct wlan_objmgr_psoc *psoc,
 	size = sizeof(*event) +
 		response->channel_stats_array_len;
 	buf = qdf_mem_malloc(size);
-	if (!buf) {
-		ocb_err("Memory malloc failed for dcc indication");
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	event = (struct ocb_rx_event *)buf;
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_OCB_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

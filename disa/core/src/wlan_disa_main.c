@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,11 +36,9 @@ QDF_STATUS disa_allocate_ctx(void)
 
 	/* allocate DISA ctx */
 	gp_disa_ctx = qdf_mem_malloc(sizeof(*gp_disa_ctx));
-	if (!gp_disa_ctx) {
-		disa_err("unable to allocate disa_ctx");
-		QDF_ASSERT(0);
+	if (!gp_disa_ctx)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	qdf_spinlock_create(&gp_disa_ctx->lock);
 
 	return QDF_STATUS_SUCCESS;

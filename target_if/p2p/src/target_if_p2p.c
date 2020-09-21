@@ -85,10 +85,8 @@ static int target_p2p_lo_event_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	event_info = qdf_mem_malloc(sizeof(*event_info));
-	if (!event_info) {
-		target_if_err("Failed to allocate p2p lo event");
+	if (!event_info)
 		return -ENOMEM;
-	}
 
 	if (wmi_extract_p2p_lo_stop_ev_param(wmi_handle, data,
 			event_info)) {
@@ -235,10 +233,8 @@ static int target_p2p_noa_event_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	event_info = qdf_mem_malloc(sizeof(*event_info));
-	if (!event_info) {
-		target_if_err("failed to allocate p2p noa information");
+	if (!event_info)
 		return -ENOMEM;
-	}
 
 	if (wmi_extract_p2p_noa_ev_param(wmi_handle, data,
 			event_info)) {

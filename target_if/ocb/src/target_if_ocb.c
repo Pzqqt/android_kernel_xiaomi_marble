@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -395,7 +395,6 @@ static int target_if_dcc_update_ndl_resp(ol_scn_t scn,
 	/* Allocate and populate the response */
 	resp = qdf_mem_malloc(sizeof(*resp));
 	if (!resp) {
-		target_if_err("Error allocating memory for the response.");
 		rc = -ENOMEM;
 		goto exit;
 	}

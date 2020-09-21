@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -123,7 +123,6 @@ int target_if_pmo_gtk_offload_status_event(void *scn_handle,
 
 	gtk_rsp_param = qdf_mem_malloc(sizeof(*gtk_rsp_param));
 	if (!gtk_rsp_param) {
-		target_if_err("memory allocation failed");
 		ret = -ENOMEM;
 		goto out;
 	}

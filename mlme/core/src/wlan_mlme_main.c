@@ -195,10 +195,8 @@ mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
 	}
 
 	peer_priv = qdf_mem_malloc(sizeof(*peer_priv));
-	if (!peer_priv) {
-		mlme_legacy_err(" peer_priv component object alloc failed");
+	if (!peer_priv)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = wlan_objmgr_peer_component_obj_attach(peer,
 						       WLAN_UMAC_COMP_MLME,
@@ -1337,7 +1335,6 @@ mlme_acs_parse_weight_list(struct wlan_objmgr_psoc *psoc,
 		return;
 
 	acs_weight = qdf_mem_malloc(ACS_WEIGHT_MAX_STR_LEN);
-
 	if (!acs_weight)
 		return;
 
