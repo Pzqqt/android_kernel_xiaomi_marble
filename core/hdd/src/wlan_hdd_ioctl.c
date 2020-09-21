@@ -476,10 +476,8 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 * If N = 19, then we need 10 bytes, hence (19 + 1)/2 = 10 bytes
 	 */
 	*buf = qdf_mem_malloc((*buf_len + 1) / 2);
-	if (!*buf) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!*buf)
 		return -ENOMEM;
-	}
 
 	/* the buffer received from the upper layer is character buffer,
 	 * we need to prepare the buffer taking 2 characters in to a U8 hex
@@ -904,7 +902,6 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	frame_len = payload_len + 24;
 	frame = qdf_mem_malloc(frame_len);
 	if (!frame) {
-		hdd_err("memory allocation failed");
 		ret = -ENOMEM;
 		goto exit;
 	}
@@ -2526,10 +2523,9 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 	 * If N = 19, then we need 10 bytes, hence (19 + 1) / 2 = 10 bytes
 	 */
 	*cckm_ie = qdf_mem_malloc((*cckm_ie_len + 1) / 2);
-	if (!*cckm_ie) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!*cckm_ie)
 		return -ENOMEM;
-	}
+
 	/*
 	 * the buffer received from the upper layer is character buffer,
 	 * we need to prepare the buffer taking 2 characters in to a U8 hex
@@ -3321,11 +3317,9 @@ void hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
 			return;
 		}
 		event = (uint8_t *)qdf_mem_malloc(len);
-		if (!event) {
-			hdd_err("Failed to alloc event response buf vdev_id: %d",
-				roam_ch->vdev_id);
+		if (!event)
 			return;
-		}
+
 		freq = (uint32_t *)event;
 		for (i = 0; i < roam_ch->num_channels &&
 		     i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
@@ -5543,10 +5537,9 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 
 
 		filter = qdf_mem_malloc(sizeof(*filter));
-		if (!filter) {
-			hdd_err("Could not allocate Memory");
+		if (!filter)
 			return -ENOMEM;
-		}
+
 		filter->action = action;
 		for (i = 0, j = 0; i < adapter->mc_addr_list.mc_cnt; i++) {
 			if (!memcmp(adapter->mc_addr_list.addr[i],
@@ -6290,16 +6283,14 @@ static int hdd_alloc_chan_cache(struct hdd_context *hdd_ctx, int num_chan)
 {
 	hdd_ctx->original_channels =
 			qdf_mem_malloc(sizeof(struct hdd_cache_channels));
-	if (!hdd_ctx->original_channels) {
-		hdd_err("QDF_MALLOC_ERR");
+	if (!hdd_ctx->original_channels)
 		return -ENOMEM;
-	}
+
 	hdd_ctx->original_channels->num_channels = num_chan;
 	hdd_ctx->original_channels->channel_info =
 					qdf_mem_malloc(num_chan *
 					sizeof(struct hdd_cache_channel_info));
 	if (!hdd_ctx->original_channels->channel_info) {
-		hdd_err("QDF_MALLOC_ERR");
 		hdd_ctx->original_channels->num_channels = 0;
 		qdf_mem_free(hdd_ctx->original_channels);
 		hdd_ctx->original_channels = NULL;
@@ -6779,7 +6770,6 @@ static int drv_cmd_get_ani_level(struct hdd_adapter *adapter,
 
 	extra = qdf_mem_malloc(user_size);
 	if (!extra) {
-		hdd_err("memory allocation failed");
 		ret = -ENOMEM;
 		goto parse_failed;
 	}
@@ -7126,7 +7116,6 @@ static int hdd_driver_command(struct hdd_adapter *adapter,
 	/* Allocate +1 for '\0' */
 	command = qdf_mem_malloc(priv_data->total_len + 1);
 	if (!command) {
-		hdd_err("failed to allocate memory");
 		ret = -ENOMEM;
 		goto exit;
 	}

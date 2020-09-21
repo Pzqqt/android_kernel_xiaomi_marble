@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,10 +125,8 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 
 		pmo_set_pkt_fltr_req =
 			qdf_mem_malloc(sizeof(*pmo_set_pkt_fltr_req));
-		if (!pmo_set_pkt_fltr_req) {
-			hdd_err("unable to allocate pmo_set_pkt_fltr_req");
+		if (!pmo_set_pkt_fltr_req)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		pmo_set_pkt_fltr_req->filter_id = request->filter_id;
 		if (request->num_params >= HDD_MAX_CMP_PER_PACKET_FILTER) {
@@ -230,10 +228,8 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 
 		pmo_clr_pkt_fltr_param = qdf_mem_malloc(
 					sizeof(*pmo_clr_pkt_fltr_param));
-		if (!pmo_clr_pkt_fltr_param) {
-			hdd_err("unable to allocate pmo_clr_pkt_fltr_param");
+		if (!pmo_clr_pkt_fltr_param)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		pmo_clr_pkt_fltr_param->filter_id = request->filter_id;
 		status = ucfg_pmo_clear_pkt_filter(hdd_ctx->psoc,

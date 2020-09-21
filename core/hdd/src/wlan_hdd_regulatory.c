@@ -1282,10 +1282,8 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 
 	regd = qdf_mem_malloc((reg_rules->num_of_reg_rules *
 				sizeof(*regd_rules) + sizeof(*regd)));
-	if (!regd) {
-		hdd_err("mem alloc failed for reg rules");
+	if (!regd)
 		return;
-	}
 
 	regd->n_reg_rules = reg_rules->num_of_reg_rules;
 	qdf_mem_copy(regd->alpha2, reg_rules->alpha2, REG_ALPHA2_LEN + 1);

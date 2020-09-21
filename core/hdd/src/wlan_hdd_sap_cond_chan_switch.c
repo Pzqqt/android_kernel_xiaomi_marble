@@ -278,10 +278,9 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	 */
 	pre_cac_adapter->session.ap.beacon = qdf_mem_malloc(
 			sizeof(*ap_adapter->session.ap.beacon));
-	if (!pre_cac_adapter->session.ap.beacon) {
-		hdd_err("failed to alloc mem for beacon");
+	if (!pre_cac_adapter->session.ap.beacon)
 		goto stop_close_pre_cac_adapter;
-	}
+
 	qdf_mem_copy(pre_cac_adapter->session.ap.beacon,
 		     ap_adapter->session.ap.beacon,
 		     sizeof(*pre_cac_adapter->session.ap.beacon));

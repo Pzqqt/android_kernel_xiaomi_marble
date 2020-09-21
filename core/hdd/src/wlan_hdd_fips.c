@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,10 +59,9 @@ static int hdd_fips_event_dup(struct wmi_host_fips_event_param *dest,
 	*dest = *src;
 	if  (dest->data_len) {
 		dest->data = qdf_mem_malloc(dest->data_len);
-		if (!dest->data) {
-			hdd_err("memory allocation failed");
+		if (!dest->data)
 			return -ENOMEM;
-		}
+
 		qdf_mem_copy(dest->data, src->data, src->data_len);
 	} else {
 		/* make sure we don't have a rogue pointer */

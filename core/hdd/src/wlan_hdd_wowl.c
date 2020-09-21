@@ -216,10 +216,8 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 
 		/* All is good. Store the pattern locally */
 		g_hdd_wowl_ptrns[empty_slot] = qdf_mem_malloc(len + 1);
-		if (!g_hdd_wowl_ptrns[empty_slot]) {
-			hdd_err("memory allocation failure");
+		if (!g_hdd_wowl_ptrns[empty_slot])
 			return false;
-		}
 
 		memcpy(g_hdd_wowl_ptrns[empty_slot], temp, len);
 		g_hdd_wowl_ptrns[empty_slot][len] = '\0';

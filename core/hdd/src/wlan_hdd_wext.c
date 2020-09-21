@@ -2934,10 +2934,8 @@ void *mem_alloc_copy_from_user_helper(const __user void *wrqu_data, size_t len)
 	}
 
 	ptr = qdf_mem_malloc(len + 1);
-	if (!ptr) {
-		hdd_err("unable to allocate memory");
+	if (!ptr)
 		return NULL;
-	}
 
 	if (copy_from_user(ptr, wrqu_data, len)) {
 		hdd_err("failed to copy data to user buffer");
@@ -5338,10 +5336,8 @@ static int __iw_setnone_getint(struct net_device *dev,
 		return ret;
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
+	if (!sme_config)
 		return -ENOMEM;
-	}
 
 	mac_handle = hdd_ctx->mac_handle;
 	switch (value[0]) {
@@ -5843,10 +5839,9 @@ static int hdd_set_fwtest(int argc, int cmd, int value)
 		return -EINVAL;
 	}
 	fw_test = qdf_mem_malloc(sizeof(*fw_test));
-	if (!fw_test) {
-		hdd_err("qdf_mem_malloc failed for fw_test");
+	if (!fw_test)
 		return -ENOMEM;
-	}
+
 	fw_test->arg = cmd;
 	fw_test->value = value;
 	if (QDF_STATUS_SUCCESS != sme_set_fw_test(fw_test)) {
@@ -6394,7 +6389,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {
-			hdd_err("Out of memory");
 			ret = -ENOMEM;
 			break;
 		}
@@ -8516,10 +8510,10 @@ static int __iw_set_pno(struct net_device *dev,
 	len = (wrqu->data.length + 1);
 	data = qdf_mem_malloc(len);
 	if (!data) {
-		hdd_err("fail to allocate memory %zu", len);
 		ret = -EINVAL;
 		goto exit;
 	}
+
 	qdf_mem_copy(data, extra, (len-1));
 	ptr = data;
 

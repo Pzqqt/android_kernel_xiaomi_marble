@@ -85,10 +85,8 @@ hdd_roam_scan_stats_cb(void *context, struct wmi_roam_scan_stats_res *res)
 		    sizeof(struct wmi_roam_scan_stats_params);
 
 	stats_res = qdf_mem_malloc(total_len);
-	if (!stats_res) {
-		hdd_err("No memory for response");
+	if (!stats_res)
 		goto end;
-	}
 
 	qdf_mem_copy(stats_res, res, total_len);
 	priv->roam_scan_stats_res = stats_res;
@@ -164,10 +162,8 @@ wmi_roam_scan_stats_res *hdd_get_roam_scan_stats(struct hdd_context *hdd_ctx,
 		    sizeof(struct wmi_roam_scan_stats_params);
 
 	stats_res = qdf_mem_malloc(total_len);
-	if (!stats_res) {
-		hdd_err("No memory for response");
+	if (!stats_res)
 		goto cleanup;
-	}
 
 	qdf_mem_copy(stats_res, res, total_len);
 

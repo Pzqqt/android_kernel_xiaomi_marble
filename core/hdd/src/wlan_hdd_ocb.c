@@ -1025,10 +1025,9 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 	}
 
 	utc = qdf_mem_malloc(sizeof(*utc));
-	if (!utc) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!utc)
 		return -ENOMEM;
-	}
+
 	utc->vdev_id = adapter->vdev_id;
 	qdf_mem_copy(utc->utc_time, nla_data(utc_attr), SIZE_UTC_TIME);
 	qdf_mem_copy(utc->time_error, nla_data(time_error_attr),
@@ -1121,10 +1120,9 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 	}
 
 	timing_advert = qdf_mem_malloc(sizeof(*timing_advert));
-	if (!timing_advert) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!timing_advert)
 		return -ENOMEM;
-	}
+
 	timing_advert->vdev_id = adapter->vdev_id;
 
 	/* Parse the netlink message */
@@ -1251,10 +1249,9 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	}
 
 	timing_advert = qdf_mem_malloc(sizeof(*timing_advert));
-	if (!timing_advert) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!timing_advert)
 		return -ENOMEM;
-	}
+
 	timing_advert->vdev_id = adapter->vdev_id;
 
 	/* Parse the netlink message */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,10 +61,8 @@ int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)
 	bool self_recovery;
 
 	cds_cfg = qdf_mem_malloc(sizeof(*cds_cfg));
-	if (!cds_cfg) {
-		hdd_err("failed to allocate cds config");
+	if (!cds_cfg)
 		return -ENOMEM;
-	}
 
 	status = ucfg_mlme_get_self_recovery(hdd_ctx->psoc, &self_recovery);
 	if (QDF_IS_STATUS_ERROR(status)) {

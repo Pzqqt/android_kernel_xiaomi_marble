@@ -1940,10 +1940,8 @@ static int iw_get_channel_list(struct net_device *dev,
 		return ret;
 
 	cur_chan_list = qdf_mem_malloc(sizeof(*cur_chan_list) * NUM_CHANNELS);
-	if (!cur_chan_list) {
-		hdd_err_rl("Failed to malloc");
+	if (!cur_chan_list)
 		return -ENOMEM;
-	}
 
 	status = ucfg_reg_get_current_chan_list(hdd_ctx->pdev, cur_chan_list);
 	if (status != QDF_STATUS_SUCCESS) {

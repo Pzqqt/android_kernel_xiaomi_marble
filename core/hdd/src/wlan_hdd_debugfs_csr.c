@@ -202,14 +202,11 @@ static int __wlan_hdd_open_debugfs_csr(struct hdd_adapter *adapter,
 	}
 
 	info = qdf_mem_malloc(sizeof(*info));
-	if (!info) {
-		hdd_err("Not enough memory for file private data");
+	if (!info)
 		return -ENOMEM;
-	}
 
 	info->data = qdf_mem_malloc(csr->buf_max_size);
 	if (!info->data) {
-		hdd_err("roam stats debugfs buffer allocation failed");
 		qdf_mem_free(info);
 		return -ENOMEM;
 	}

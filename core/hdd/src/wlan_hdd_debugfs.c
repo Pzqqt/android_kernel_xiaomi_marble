@@ -316,7 +316,6 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 		delPeriodicTxPtrnParams =
 			qdf_mem_malloc(sizeof(tSirDelPeriodicTxPtrn));
 		if (!delPeriodicTxPtrnParams) {
-			hdd_err("Memory allocation failed!");
 			qdf_mem_free(cmd);
 			return -ENOMEM;
 		}
@@ -379,7 +378,6 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 
 	addPeriodicTxPtrnParams = qdf_mem_malloc(sizeof(tSirAddPeriodicTxPtrn));
 	if (!addPeriodicTxPtrnParams) {
-		hdd_err("Memory allocation failed!");
 		qdf_mem_free(cmd);
 		return -ENOMEM;
 	}

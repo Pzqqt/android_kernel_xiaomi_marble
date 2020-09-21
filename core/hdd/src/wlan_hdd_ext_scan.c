@@ -1947,10 +1947,8 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	}
 
 	params = qdf_mem_malloc(sizeof(*params));
-	if (!params) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!params)
 		return -ENOMEM;
-	}
 
 	/* assume the worst until proven otherwise */
 	retval = -EINVAL;
@@ -2131,10 +2129,8 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	}
 
 	params = qdf_mem_malloc(sizeof(*params));
-	if (!params) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!params)
 		return -ENOMEM;
-	}
 
 	/* assume the worst until proven otherwise */
 	retval = -EINVAL;
@@ -3561,10 +3557,9 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 			(num_networks * sizeof(req_msg->networks[0]));
 
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return -ENOMEM;
-	}
+
 	req_msg->num_networks = num_networks;
 
 	/* Parse and fetch request Id */
@@ -3885,10 +3880,9 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg) +
 			(num_networks * sizeof(req_msg->networks[0])));
-	if (!req_msg) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return -ENOMEM;
-	}
+
 	req_msg->num_networks = num_networks;
 
 	/* Parse and fetch request Id */
@@ -3997,10 +3991,8 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	}
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return -ENOMEM;
-	}
 
 	/* Parse and fetch request Id */
 	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;

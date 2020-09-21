@@ -2336,10 +2336,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			uint32_t ies_len = event->ies_len;
 
 			sta_info = qdf_mem_malloc(sizeof(*sta_info));
-			if (!sta_info) {
-				hdd_err("Failed to allocate station info");
+			if (!sta_info)
 				return QDF_STATUS_E_FAILURE;
-			}
 
 			sta_info->assoc_req_ies = event->ies;
 			sta_info->assoc_req_ies_len = ies_len;
@@ -3890,11 +3888,9 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			sap_config->ch_params.center_freq_seg1 = channel_seg2;
 
 			sme_config = qdf_mem_malloc(sizeof(*sme_config));
-
-			if (!sme_config) {
-				hdd_err("Unable to allocate memory for smeconfig!");
+			if (!sme_config)
 				return -ENOMEM;
-			}
+
 			sme_get_config_param(mac_handle, sme_config);
 			switch (channel_type) {
 			case NL80211_CHAN_HT20:
@@ -4195,11 +4191,9 @@ wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *adapter,
 		proberesp_ies_len + assocresp_ies_len;
 
 	beacon = qdf_mem_malloc(size);
-
-	if (!beacon) {
-		hdd_err("Mem allocation for beacon failed");
+	if (!beacon)
 		return -ENOMEM;
-	}
+
 	if (dtim_period)
 		beacon->dtim_period = dtim_period;
 	else if (old)
@@ -4314,7 +4308,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	}
 
 	genie = qdf_mem_malloc(MAX_GENIE_LEN);
-
 	if (!genie)
 		return -ENOMEM;
 
@@ -4351,8 +4344,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	proberesp_ies = qdf_mem_malloc(beacon->proberesp_ies_len +
 				      MAX_GENIE_LEN);
 	if (!proberesp_ies) {
-		hdd_err("mem alloc failed for probe resp ies, size: %d",
-			beacon->proberesp_ies_len + MAX_GENIE_LEN);
 		ret = -EINVAL;
 		goto done;
 	}
@@ -5184,7 +5175,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
 	if (!sme_config) {
-		hdd_err("failed to allocate memory");
 		ret = -ENOMEM;
 		goto free;
 	}
@@ -6739,7 +6729,6 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			sta_inactivity_timer = qdf_mem_malloc(
 					sizeof(*sta_inactivity_timer));
 			if (!sta_inactivity_timer) {
-				hdd_err("Failed to allocate Memory");
 				status = QDF_STATUS_E_FAILURE;
 				goto err_start_bss;
 			}

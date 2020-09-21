@@ -706,10 +706,8 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 		goto send_sar_limits;
 
 	row = qdf_mem_malloc(sizeof(*row) * num_limit_rows);
-	if (!row) {
-		hdd_err("Failed to allocate memory for sar_limit_row_list");
+	if (!row)
 		goto fail;
-	}
 
 	sar_limit_cmd->num_limit_rows = num_limit_rows;
 	sar_limit_cmd->sar_limit_row_list = row;

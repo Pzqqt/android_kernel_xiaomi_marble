@@ -90,7 +90,6 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 			qdf_mem_malloc(sizeof(uint8_t) *
 				resp->data_len);
 		if (!context->response.data) {
-			hdd_err("memory allocation failed");
 			context->status = -ENOMEM;
 		} else {
 			qdf_mem_copy(context->response.data,
@@ -319,10 +318,8 @@ hdd_fill_encrypt_decrypt_params(struct disa_encrypt_decrypt_req_params
 			qdf_mem_malloc(sizeof(uint8_t) *
 				encrypt_decrypt_params->data_len);
 
-		if (!encrypt_decrypt_params->data) {
-			hdd_err("memory allocation failed");
+		if (!encrypt_decrypt_params->data)
 			return -ENOMEM;
-		}
 
 		qdf_mem_copy(encrypt_decrypt_params->data,
 			tmp + mac_hdr_len,

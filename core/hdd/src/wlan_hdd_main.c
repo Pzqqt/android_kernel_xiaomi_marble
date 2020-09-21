@@ -3533,10 +3533,9 @@ static int wlan_hdd_init_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
 		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
-	if (!hdd_ctx->hdd_txrx_hist) {
-		hdd_err("failed to alloc memory");
+	if (!hdd_ctx->hdd_txrx_hist)
 		return -ENOMEM;
-	}
+
 	return 0;
 }
 

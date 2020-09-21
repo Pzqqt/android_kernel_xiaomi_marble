@@ -15684,22 +15684,18 @@ wlan_hdd_iftype_data_alloc(struct hdd_context *hdd_ctx)
 	hdd_ctx->iftype_data_2g =
 			qdf_mem_malloc(sizeof(*hdd_ctx->iftype_data_2g));
 
-	if (!hdd_ctx->iftype_data_2g) {
-		hdd_err("mem alloc failed for 2g iftype data");
+	if (!hdd_ctx->iftype_data_2g)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	hdd_ctx->iftype_data_5g =
 			qdf_mem_malloc(sizeof(*hdd_ctx->iftype_data_5g));
-
 	if (!hdd_ctx->iftype_data_5g) {
-		hdd_err("mem alloc failed for 5g iftype data");
 		qdf_mem_free(hdd_ctx->iftype_data_2g);
 		hdd_ctx->iftype_data_2g = NULL;
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	if (QDF_IS_STATUS_ERROR(wlan_hdd_iftype_data_alloc_6ghz(hdd_ctx))) {
-		hdd_err("mem alloc failed for 6g iftype data");
 		qdf_mem_free(hdd_ctx->iftype_data_5g);
 		qdf_mem_free(hdd_ctx->iftype_data_2g);
 		hdd_ctx->iftype_data_2g = NULL;
@@ -15846,10 +15842,9 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 * stop modules. To avoid this,alloc in init domain in advance.
 	 */
 	hdd_ctx->channels_2ghz = qdf_mem_malloc(band_2_ghz_channels_size);
-	if (!hdd_ctx->channels_2ghz) {
-		hdd_err("Not enough memory to allocate channels");
+	if (!hdd_ctx->channels_2ghz)
 		return -ENOMEM;
-	}
+
 	hdd_ctx->channels_5ghz = qdf_mem_malloc(band_5_ghz_chanenls_size);
 	if (!hdd_ctx->channels_5ghz)
 		goto mem_fail_5g;
