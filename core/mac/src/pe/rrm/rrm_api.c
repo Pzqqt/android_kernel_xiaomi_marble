@@ -988,9 +988,7 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 		}
 
 		report = qdf_mem_malloc(MAX_BEACON_REPORTS * sizeof(*report));
-
 		if (!report) {
-			pe_err("RRM Report is NULL, allocation failed");
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}

@@ -245,10 +245,8 @@ void wma_get_rx_retry_cnt(struct mac_context *mac, uint8_t vdev_id,
 	QDF_STATUS status;
 
 	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
-	if (!peer_stats) {
-		wma_err("Failed to allocate memory for peer stats");
+	if (!peer_stats)
 		return;
-	}
 
 	status = cdp_host_get_peer_stats(cds_get_context(QDF_MODULE_ID_SOC),
 					 vdev_id, mac_addr, peer_stats);
@@ -2931,6 +2929,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 		qdf_mem_free(pTsmStatsMsg);
 		return QDF_STATUS_E_NOMEM;
 	}
+
 	qdf_copy_macaddr(&pTsmRspParams->bssid, &pStats->bssId);
 	pTsmRspParams->rc = QDF_STATUS_E_FAILURE;
 	pTsmRspParams->tsmStatsReq = pStats;

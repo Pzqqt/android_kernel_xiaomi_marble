@@ -212,7 +212,6 @@ struct sap_context *sap_create_ctx(void)
 	struct sap_context *sap_ctx;
 	QDF_STATUS status;
 
-	/* dynamically allocate the sap_ctx */
 	sap_ctx = qdf_mem_malloc(sizeof(*sap_ctx));
 	if (!sap_ctx)
 		return NULL;

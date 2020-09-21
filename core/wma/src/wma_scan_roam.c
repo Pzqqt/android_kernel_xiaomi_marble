@@ -3497,10 +3497,8 @@ int wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle,
 
 	resp = qdf_mem_malloc(sizeof(struct roam_scan_ch_resp) +
 		num_ch * sizeof(param_buf->channel_list[0]));
-	if (!resp) {
-		wma_err_rl("Failed to alloc resp message");
+	if (!resp)
 		return -EINVAL;
-	}
 
 	resp->chan_list = (uint32_t *)(resp + 1);
 	resp->vdev_id = vdev_id;
@@ -5752,7 +5750,6 @@ int wma_passpoint_match_event_handler(void *handle,
 	}
 
 	dest_match = qdf_mem_malloc(sizeof(*dest_match) + buf_len);
-
 	if (!dest_match)
 		return -EINVAL;
 

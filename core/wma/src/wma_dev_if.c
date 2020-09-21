@@ -536,6 +536,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 			qdf_status = QDF_STATUS_E_NOMEM;
 			goto error;
 		}
+
 		sta_self_wmi_rsp->self_sta_param = del_vdev_req;
 		msg = wma_fill_hold_req(wma_handle, vdev_id,
 					WMA_DELETE_STA_REQ,
@@ -1488,17 +1489,14 @@ QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
 		peer_unmap_conf_req = qdf_mem_malloc(sizeof(
 					struct send_peer_unmap_conf_params));
 
-		if (!peer_unmap_conf_req) {
-			wma_err("peer_unmap_conf_req memory alloc failed");
+		if (!peer_unmap_conf_req)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		peer_unmap_conf_req->vdev_id = vdev_id;
 		peer_unmap_conf_req->peer_id_cnt = peer_id_cnt;
 		peer_unmap_conf_req->peer_id_list =  qdf_mem_malloc(
 					sizeof(uint16_t) * peer_id_cnt);
 		if (!peer_unmap_conf_req->peer_id_list) {
-			wma_err("peer_id_list memory alloc failed");
 			qdf_mem_free(peer_unmap_conf_req);
 			peer_unmap_conf_req = NULL;
 			return QDF_STATUS_E_NOMEM;
@@ -2196,11 +2194,8 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 	}
 
 	vdev_stop_resp = qdf_mem_malloc(sizeof(*vdev_stop_resp));
-	if (!vdev_stop_resp) {
-		wma_err("Failed to alloc vdev_stop_resp for vdev id %d",
-			resp_event->vdev_id);
+	if (!vdev_stop_resp)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (vdev_stop_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
 		status = wma_remove_peer(wma, bssid.bytes,
@@ -3078,10 +3073,9 @@ void wma_hold_req_timer(void *data)
 			wma_trigger_recovery_assert_on_fw_timeout(
 			  SIR_HAL_PDEV_SET_HW_MODE,
 			  QDF_MAC_HW_MODE_CHANGE_TIMEOUT);
-		if (!params) {
-			wma_err("Failed to allocate memory for params");
+		if (!params)
 			goto timer_destroy;
-		}
+
 		params->status = SET_HW_MODE_STATUS_ECANCELED;
 		params->cfgd_hw_mode_index = 0;
 		params->num_vdev_mac_entries = 0;
@@ -3097,10 +3091,8 @@ void wma_hold_req_timer(void *data)
 			wma_trigger_recovery_assert_on_fw_timeout(
 				SIR_HAL_PDEV_DUAL_MAC_CFG_REQ,
 				QDF_MAC_HW_MODE_CONFIG_TIMEOUT);
-		if (!resp) {
-			wma_err("Failed to allocate memory for resp");
+		if (!resp)
 			goto timer_destroy;
-		}
 
 		resp->status = SET_HW_MODE_STATUS_ECANCELED;
 		wma_send_msg_high_priority(wma, SIR_HAL_PDEV_MAC_CFG_RESP,
@@ -3445,6 +3437,7 @@ static QDF_STATUS wma_update_iface_params(tp_wma_handle wma,
 	iface->addBssStaContext = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (!iface->addBssStaContext)
 		return QDF_STATUS_E_RESOURCES;
+
 	*iface->addBssStaContext = add_bss->staContext;
 	/* Save parameters later needed by WMA_ADD_STA_REQ */
 	iface->rmfEnabled = add_bss->rmfEnabled;
@@ -4003,7 +3996,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			  QDF_MAC_ADDR_REF(add_sta->staMac));
 
 		peer_state = qdf_mem_malloc(sizeof(*peer_state));
-	if (!peer_state) {
+		if (!peer_state) {
 			add_sta->status = QDF_STATUS_E_NOMEM;
 			goto send_rsp;
 		}
@@ -4690,10 +4683,9 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, uint8_t vdev_id)
 
 fail_del_bss_ho_fail:
 	vdev_stop_resp = qdf_mem_malloc(sizeof(*vdev_stop_resp));
-	if (!vdev_stop_resp) {
-		wma_err("Failed to alloc del bss resp ");
+	if (!vdev_stop_resp)
 		return;
-	}
+
 	vdev_stop_resp->vdev_id = vdev_id;
 	vdev_stop_resp->status = status;
 	wma_send_msg_high_priority(wma, WMA_DELETE_BSS_HO_FAIL_RSP,
@@ -4867,10 +4859,9 @@ detach_peer:
 
 out:
 	params = qdf_mem_malloc(sizeof(*params));
-	if (!params) {
-		wma_err("vdev id %d : failed to alloc del bss resp", vdev_id);
+	if (!params)
 		return;
-	}
+
 	params->vdev_id = vdev_id;
 	params->status = status;
 	wma_send_msg_high_priority(wma, WMA_DELETE_BSS_RSP, params, 0);

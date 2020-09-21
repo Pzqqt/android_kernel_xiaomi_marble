@@ -121,7 +121,6 @@ static QDF_STATUS lim_process_set_hw_mode(struct mac_context *mac, uint32_t *msg
 
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg) {
-		pe_debug("failed to allocate memory");
 		status = QDF_STATUS_E_NOMEM;
 		goto fail;
 	}
@@ -190,7 +189,6 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(struct mac_context *mac,
 
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg) {
-		pe_debug("failed to allocate memory");
 		status = QDF_STATUS_E_NOMEM;
 		goto fail;
 	}
@@ -256,7 +254,6 @@ static QDF_STATUS lim_process_set_antenna_mode_req(struct mac_context *mac,
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
 	if (!req_msg) {
-		pe_debug("failed to allocate memory");
 		status = QDF_STATUS_E_NOMEM;
 		goto fail;
 	}
@@ -5670,10 +5667,8 @@ static void lim_nss_update_rsp(struct mac_context *mac_ctx,
 	QDF_STATUS qdf_status;
 
 	nss_rsp = qdf_mem_malloc(sizeof(*nss_rsp));
-	if (!nss_rsp) {
-		pe_err("AllocateMemory failed for nss_rsp");
+	if (!nss_rsp)
 		return;
-	}
 
 	nss_rsp->vdev_id = vdev_id;
 	nss_rsp->status = status;

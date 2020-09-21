@@ -1445,6 +1445,7 @@ static QDF_STATUS sme_extended_change_channel_ind(struct mac_context *mac_ctx,
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return QDF_STATUS_E_NOMEM;
+
 	session_id = ext_chan_ind->session_id;
 	roam_info->target_chan_freq = ext_chan_ind->new_chan_freq;
 	roam_status = eCSR_ROAM_EXT_CHG_CHNL_IND;
@@ -9464,10 +9465,8 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(mac_handle_t mac_handle,
 
 	/* Prepare the request to send to SME. */
 	pSapDisableIntraFwd = qdf_mem_malloc(sizeof(tDisableIntraBssFwd));
-	if (!pSapDisableIntraFwd) {
-		sme_err("Memory Allocation Failure!!!");
+	if (!pSapDisableIntraFwd)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pSapDisableIntraFwd->sessionId = sessionId;
 	pSapDisableIntraFwd->disableintrabssfwd = disablefwd;
@@ -9985,6 +9984,7 @@ sme_ext_scan_get_capabilities(mac_handle_t mac_handle,
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
 	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -10021,6 +10021,7 @@ sme_ext_scan_start(mac_handle_t mac_handle,
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
 	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -10056,6 +10057,7 @@ QDF_STATUS sme_ext_scan_stop(mac_handle_t mac_handle,
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
 	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -10235,6 +10237,7 @@ sme_get_cached_results(mac_handle_t mac_handle,
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
 	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -10276,6 +10279,7 @@ QDF_STATUS sme_set_epno_list(mac_handle_t mac_handle,
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
+
 	qdf_mem_copy(req_msg, params, len);
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -10317,6 +10321,7 @@ QDF_STATUS sme_set_passpoint_list(mac_handle_t mac_handle,
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
+
 	qdf_mem_copy(req_msg, params, len);
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -10355,6 +10360,7 @@ QDF_STATUS sme_reset_passpoint_list(mac_handle_t mac_handle,
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
+
 	*req_msg = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -11951,7 +11957,6 @@ int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
 	}
 
 	cfg_msg = qdf_mem_malloc(sizeof(*cfg_msg));
-
 	if (!cfg_msg)
 		return -EIO;
 
@@ -16187,10 +16192,8 @@ sme_get_mws_coex_info(mac_handle_t mac_handle, uint32_t vdev_id,
 	struct sir_get_mws_coex_info *req;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		sme_err("Failed allocate memory for MWS coex info req");
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req->vdev_id = vdev_id;
 	req->cmd_id  = cmd_id;
@@ -16399,6 +16402,7 @@ QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 	roam_trigger_data = qdf_mem_malloc(sizeof(*roam_trigger_data));
 	if (!roam_trigger_data)
 		return QDF_STATUS_E_NOMEM;
+
 	*roam_trigger_data = *triggers;
 
 	status = sme_acquire_global_lock(&mac->sme);

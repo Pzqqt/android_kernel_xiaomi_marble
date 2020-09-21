@@ -2599,10 +2599,8 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		return;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
-	if (!filter) {
-		sme_err("filter is NULL");
+	if (!filter)
 		return;
-	}
 
 	status = csr_fill_filter_from_vdev_crypto(mac_ctx, filter, sessionId);
 	if (QDF_IS_STATUS_ERROR(status)) {

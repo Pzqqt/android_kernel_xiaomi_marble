@@ -1169,10 +1169,9 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	}
 
 	lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
-	if (!lim_assoc_ind) {
-		pe_err("lim assoc ind is NULL");
+	if (!lim_assoc_ind)
 		goto free_assoc_req;
-	}
+
 	if (!lim_fill_lim_assoc_ind_params(lim_assoc_ind, mac_ctx,
 					   sta_ds, session_entry)) {
 		pe_err("lim assoc ind fill error");
@@ -1180,10 +1179,9 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	}
 
 	sme_assoc_ind = qdf_mem_malloc(sizeof(struct assoc_ind));
-	if (!sme_assoc_ind) {
-		pe_err("sme assoc ind is NULL");
+	if (!sme_assoc_ind)
 		goto lim_assoc_ind;
-	}
+
 	sme_assoc_ind->messageType = eWNI_SME_ASSOC_IND_UPPER_LAYER;
 	lim_fill_sme_assoc_ind_params(
 				mac_ctx, lim_assoc_ind,
@@ -5523,10 +5521,8 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		lim_sae_auth_cleanup_retry(mac_ctx, vdev_id);
 
 	sae_retry->sae_auth.data = qdf_mem_malloc(frame_len);
-	if (!sae_retry->sae_auth.data) {
-		pe_err("failed to alloc memory for sae auth");
+	if (!sae_retry->sae_auth.data)
 		return;
-	}
 
 	pe_debug("SAE auth frame queued vdev_id %d seq_num %d",
 		 vdev_id, mac_ctx->mgmtSeqNum);

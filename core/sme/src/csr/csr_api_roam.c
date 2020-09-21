@@ -10026,10 +10026,9 @@ QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info) {
-		sme_err("malloc failed");
+	if (!roam_info)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	scan_handle_roam_ap =
 		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap;
 	if (!scan_handle_roam_ap) {
@@ -10470,7 +10469,6 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *msg_buf)
 
 		roam_info = qdf_mem_malloc(sizeof(*roam_info));
 		if (!roam_info) {
-			sme_err("roam_info not allocated");
 			if (pUpperLayerAssocCnf->ies)
 				qdf_mem_free(pUpperLayerAssocCnf->ies);
 			return;

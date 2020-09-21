@@ -1714,7 +1714,6 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		     &fixed_param->num_peers, peer_stats_size);
 	dp_stats = qdf_mem_malloc(sizeof(*dp_stats));
 	if (!dp_stats) {
-		wma_err("dp stats allocation failed");
 		qdf_mem_free(link_stats_results);
 		return -ENOMEM;
 	}
@@ -3618,10 +3617,8 @@ QDF_STATUS wma_get_roam_scan_ch(wmi_unified_t wmi_handle,
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return status;
 	roam_ch = qdf_mem_malloc(sizeof(struct roam_scan_ch_resp));
-	if (!roam_ch) {
-		wma_err("Failed to alloc resp");
+	if (!roam_ch)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	roam_ch->command_resp = 1;
 	roam_ch->num_channels = 0;
