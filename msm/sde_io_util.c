@@ -419,15 +419,15 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 			if (in_vreg[i].pre_off_sleep)
 				usleep_range(in_vreg[i].pre_off_sleep * 1000,
 					(in_vreg[i].pre_off_sleep * 1000) + 10);
-			regulator_set_load(in_vreg[i].vreg,
-				in_vreg[i].disable_load);
 			regulator_disable(in_vreg[i].vreg);
-			if (regulator_count_voltages(in_vreg[i].vreg) > 0)
-				regulator_set_voltage(in_vreg[i].vreg, 0,
-						in_vreg[i].max_voltage);
 			if (in_vreg[i].post_off_sleep)
 				usleep_range(in_vreg[i].post_off_sleep * 1000,
 				(in_vreg[i].post_off_sleep * 1000) + 10);
+			regulator_set_load(in_vreg[i].vreg,
+				in_vreg[i].disable_load);
+			if (regulator_count_voltages(in_vreg[i].vreg) > 0)
+				regulator_set_voltage(in_vreg[i].vreg, 0,
+						in_vreg[i].max_voltage);
 		}
 	}
 	return rc;
@@ -440,12 +440,12 @@ vreg_set_opt_mode_fail:
 		if (in_vreg[i].pre_off_sleep)
 			usleep_range(in_vreg[i].pre_off_sleep * 1000,
 				(in_vreg[i].pre_off_sleep * 1000) + 10);
-		regulator_set_load(in_vreg[i].vreg,
-			in_vreg[i].disable_load);
 		regulator_disable(in_vreg[i].vreg);
 		if (in_vreg[i].post_off_sleep)
 			usleep_range(in_vreg[i].post_off_sleep * 1000,
 				(in_vreg[i].post_off_sleep * 1000) + 10);
+		regulator_set_load(in_vreg[i].vreg,
+			in_vreg[i].disable_load);
 	}
 
 	return rc;

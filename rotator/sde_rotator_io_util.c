@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012, 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2015-2020, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
@@ -255,12 +255,12 @@ int sde_rot_enable_vreg(struct sde_vreg *in_vreg, int num_vreg, int enable)
 			if (in_vreg[i].pre_off_sleep)
 				usleep_range(in_vreg[i].pre_off_sleep * 1000,
 					in_vreg[i].pre_off_sleep * 1000);
-			regulator_set_load(in_vreg[i].vreg,
-				in_vreg[i].disable_load);
 			regulator_disable(in_vreg[i].vreg);
 			if (in_vreg[i].post_off_sleep)
 				usleep_range(in_vreg[i].post_off_sleep * 1000,
 					in_vreg[i].post_off_sleep * 1000);
+			regulator_set_load(in_vreg[i].vreg,
+				in_vreg[i].disable_load);
 		}
 	}
 	return rc;
@@ -273,12 +273,12 @@ vreg_set_opt_mode_fail:
 		if (in_vreg[i].pre_off_sleep)
 			usleep_range(in_vreg[i].pre_off_sleep * 1000,
 				in_vreg[i].pre_off_sleep * 1000);
-		regulator_set_load(in_vreg[i].vreg,
-			in_vreg[i].disable_load);
 		regulator_disable(in_vreg[i].vreg);
 		if (in_vreg[i].post_off_sleep)
 			usleep_range(in_vreg[i].post_off_sleep * 1000,
 				in_vreg[i].post_off_sleep * 1000);
+		regulator_set_load(in_vreg[i].vreg,
+			in_vreg[i].disable_load);
 	}
 
 	return rc;
