@@ -14140,7 +14140,6 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_ERROR(sme_acquire_global_lock(&mac->sme)))
 		return QDF_STATUS_E_FAILURE;
 
-	mlme_set_supplicant_disabled_roaming(mac->psoc, vdev_id, 0);
 	status = csr_fast_reassoc(mac_handle, profile, bssid, ch_freq, vdev_id,
 				  connected_bssid);
 
