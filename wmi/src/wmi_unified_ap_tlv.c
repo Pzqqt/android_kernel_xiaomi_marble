@@ -2496,13 +2496,13 @@ static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
 			 sizeof(wmi_pdev_rnr_bss_tbtt_info));
 		break;
 	default:
-		WMI_LOGP("%s: cmd_type: %d invalid", __func__, param->cmd_type);
+		wmi_err("cmd_type: %d invalid", param->cmd_type);
 		return QDF_STATUS_E_FAILURE;
 	}
 	tmp_bss = param->rnr_bss_tbtt;
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf) {
-		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = wmi_buf_data(buf);
@@ -2551,7 +2551,7 @@ static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
 		  "Cmd Type: %d, Pdev id: %d Vap count: %d", tbtt_sync_cmd->cmd_type,
 		  tbtt_sync_cmd->pdev_id, param->rnr_vap_count);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PDEV_TBTT_OFFSET_SYNC_CMDID)) {
-		WMI_LOGP("%s: Failed to send multisoc tbtt sync command", __func__);
+		wmi_err("Failed to send multisoc tbtt sync command");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
