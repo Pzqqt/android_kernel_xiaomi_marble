@@ -455,30 +455,6 @@
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"reduced beacon interval")
-/*
- * <ini>
- * gMaxLIModulatedDTIM - Set MaxLIModulate Dtim
- * @Min: 1
- * @Max: 10
- * @Default: 10
- *
- * This ini is used to set default MaxLIModulatedDTIM
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAX_LI_MODULATED_DTIM CFG_INI_UINT( \
-			"gMaxLIModulatedDTIM", \
-			1, \
-			10, \
-			10, \
-			CFG_VALUE_OR_DEFAULT, \
-			"Max modulated dtim")
 
 /*
  * <ini>

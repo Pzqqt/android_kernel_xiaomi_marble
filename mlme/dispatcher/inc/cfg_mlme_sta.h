@@ -457,6 +457,31 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Which keepalive method to use")
 
+/*
+ * <ini>
+ * gMaxLIModulatedDTIM - Set MaxLIModulate Dtim
+ * @Min: 1
+ * @Max: 10
+ * @Default: 5
+ *
+ * This ini is used to set default MaxLIModulatedDTIM
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAX_LI_MODULATED_DTIM CFG_INI_UINT( \
+			"gMaxLIModulatedDTIM", \
+			1, \
+			10, \
+			5, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Max modulated dtim")
+
 #define CFG_STA_ALL \
 	CFG(CFG_INFRA_STA_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_TGT_GTX_USR_CFG) \
