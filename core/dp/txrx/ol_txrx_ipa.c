@@ -659,10 +659,8 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	}
 
 	pipe_in = qdf_mem_malloc(sizeof(*pipe_in));
-	if (!pipe_in) {
-		ol_txrx_err("pipe_in allocation failed");
+	if (!pipe_in)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	ipa_res = &pdev->ipa_resource;
 	qdf_mem_zero(pipe_in, sizeof(*pipe_in));

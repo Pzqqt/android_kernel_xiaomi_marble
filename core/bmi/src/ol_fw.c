@@ -362,7 +362,6 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 
 		temp_eeprom = qdf_mem_malloc(fw_entry_size);
 		if (!temp_eeprom) {
-			BMI_ERR("%s: Memory allocation failed", __func__);
 			status = -ENOMEM;
 			goto release_fw;
 		}
@@ -594,10 +593,8 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 		return 0;
 	}
 	info = qdf_mem_malloc(sizeof(struct ramdump_info));
-	if (!info) {
-		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);
+	if (!info)
 		return -ENOMEM;
-	}
 
 	ol_get_ramdump_mem(qdf_dev->dev, info);
 

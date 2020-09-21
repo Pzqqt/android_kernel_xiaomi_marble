@@ -556,10 +556,8 @@ ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
 		round_pwr2_win_sz * sizeof(struct ol_rx_reorder_array_elem_t);
 
 	array_mem = qdf_mem_malloc(array_size);
-	if (!array_mem) {
-		ol_txrx_err("memory allocation failed");
+	if (!array_mem)
 		return;
-	}
 
 	if (rx_reorder->array != &rx_reorder->base) {
 		ol_txrx_info("delete array for tid %d", tid);

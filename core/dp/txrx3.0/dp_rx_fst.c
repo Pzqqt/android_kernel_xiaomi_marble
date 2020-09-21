@@ -212,11 +212,8 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	}
 
 	fst = qdf_mem_malloc(sizeof(struct dp_rx_fst));
-	if (!fst) {
-		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_ERROR,
-			  "RX FST allocation failed\n");
+	if (!fst)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	fst->max_skid_length = wlan_cfg_rx_fst_get_max_search(cfg);
 	fst->max_entries = wlan_cfg_get_rx_flow_search_table_size(cfg);
@@ -230,13 +227,8 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	fst->base = (uint8_t *)qdf_mem_malloc(DP_RX_GET_SW_FT_ENTRY_SIZE *
 					       fst->max_entries);
 
-	if (!fst->base) {
-		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_ERROR,
-			  "Rx fst->base allocation failed, #entries:%d\n",
-			  fst->max_entries);
-
+	if (!fst->base)
 		goto out2;
-	}
 
 	fst->hal_rx_fst = hal_rx_fst_attach(soc->osdev,
 					    &fst->hal_rx_fst_base_paddr,
