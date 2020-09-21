@@ -987,6 +987,7 @@ void dp_full_mon_detach(struct dp_pdev *pdev)
 	struct dp_soc *soc = pdev->soc;
 	struct dp_mon_mpdu *mpdu = NULL;
 	struct dp_mon_mpdu *temp_mpdu = NULL;
+	qdf_nbuf_t mon_skb, skb_next;
 
 	if (!soc->full_mon_mode) {
 		qdf_debug("Full monitor is not enabled");
@@ -1001,6 +1002,21 @@ void dp_full_mon_detach(struct dp_pdev *pdev)
 				   &pdev->mon_mpdu_q,
 				   mpdu_list_elem,
 				   temp_mpdu) {
+				   TAILQ_REMOVE(&pdev->mon_mpdu_q,
+						mpdu, mpdu_list_elem);
+			mon_skb = mpdu->head;
+			while (mon_skb) {
+				skb_next = qdf_nbuf_next(mon_skb);
+
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_DEBUG,
+					  "[%s][%d] mon_skb=%pK len %u",
+					  __func__, __LINE__,
+					  mon_skb, mon_skb->len);
+
+				qdf_nbuf_free(mon_skb);
+				mon_skb = skb_next;
+			}
 			qdf_mem_free(mpdu);
 		}
 	}
