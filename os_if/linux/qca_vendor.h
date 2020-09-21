@@ -289,6 +289,18 @@
  * @QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH: Set MSDU queue depth threshold
  *	per peer per TID. Attributes for this command are define in
  *	enum qca_wlan_set_qdepth_thresh_attr
+ * @QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD: Provides the thermal shutdown action
+ *	guide for WLAN driver. Request to suspend of driver and FW if the
+ *	temperature is higher than the suspend threshold; resume action is
+ *	requested to driver if the temperature is lower than the resume
+ *	threshold. In user poll mode, request temperature data by user. For test
+ *	purpose, getting thermal shutdown configuration parameters is needed.
+ *	Attributes for this interface are defined in
+ *	enum qca_wlan_vendor_attr_thermal_cmd.
+ * @QCA_NL80211_VENDOR_SUBCMD_THERMAL_EVENT: Thermal events reported from
+ *	driver. Thermal temperature and indication of resume completion are
+ *	reported as thermal events. The attributes for this command are defined
+ *	in enum qca_wlan_vendor_attr_thermal_event.
  * @QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION: Sub command to set WiFi
  *	test configuration. Attributes for this command are defined in
  *	enum qca_wlan_vendor_attr_wifi_test_config.
@@ -665,6 +677,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO = 165,
 	QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH = 166,
 	QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD = 167,
+	QCA_NL80211_VENDOR_SUBCMD_THERMAL_EVENT = 168,
 	/* Wi-Fi test configuration subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
 	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT = 171,
@@ -5053,34 +5066,33 @@ enum qca_wlan_vendor_thermal_level {
  */
 enum qca_wlan_vendor_attr_thermal_cmd {
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_INVALID = 0,
-	/*
-	 * The value of command, driver will implement different operations
+	/* The value of command, driver will implement different operations
 	 * according to this value. It uses values defined in
 	 * enum qca_wlan_vendor_attr_thermal_cmd_type.
 	 * u32 attribute.
 	 */
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_VALUE = 1,
-	/*
-	 * Userspace uses this attribute to configure thermal level to
-	 * driver/firmware. Used in request, u32 attribute, possible values
-	 * are defined in enum qca_wlan_vendor_thermal_level.
+	/* Userspace uses this attribute to configure thermal level to the
+	 * driver/firmware, or get thermal level from the driver/firmware.
+	 * Used in request or response, u32 attribute,
+	 * possible values are defined in enum qca_wlan_vendor_thermal_level.
 	 */
 	QCA_WLAN_VENDOR_ATTR_THERMAL_LEVEL = 2,
-	/*
-	 * Userspace uses this attribute to configure the time in which the
+	/* Userspace uses this attribute to configure the time in which the
 	 * driver/firmware should complete applying settings it received from
 	 * userspace with QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SET_LEVEL
-	 * command type. Used in request, u32 attribute, value is in milli
-	 * seconds. A value of zero indicates to apply the settings
+	 * command type. Used in request, u32 attribute, value is in
+	 * milliseconds. A value of zero indicates to apply the settings
 	 * immediately. The driver/firmware can delay applying the configured
 	 * thermal settings within the time specified in this attribute if
 	 * there is any critical ongoing operation.
 	 */
 	QCA_WLAN_VENDOR_ATTR_THERMAL_COMPLETION_WINDOW = 3,
+
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_MAX =
-		QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_AFTER_LAST - 1
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_AFTER_LAST - 1
 };
 
 /**
@@ -5101,6 +5113,9 @@ enum qca_wlan_vendor_attr_thermal_cmd {
  * resume action.
  * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SET_LEVEL: Configure thermal level to
  * the driver/firmware.
+ * @QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_LEVEL: Request to get the current
+ * thermal level from the driver/firmware. The driver should respond with a
+ * thermal level defined in enum qca_wlan_vendor_thermal_level.
  */
 enum qca_wlan_vendor_attr_thermal_cmd_type {
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_PARAMS,
@@ -5108,6 +5123,55 @@ enum qca_wlan_vendor_attr_thermal_cmd_type {
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SUSPEND,
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_RESUME,
 	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_SET_LEVEL,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_LEVEL,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_thermal_get_temperature - vendor subcmd attributes
+ * to get chip temperature by user.
+ * enum values are used for NL attributes for data used by
+ * QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_TEMPERATURE command for data used
+ * by QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD sub command.
+ */
+enum qca_wlan_vendor_attr_thermal_get_temperature {
+	QCA_WLAN_VENDOR_ATTR_THERMAL_GET_TEMPERATURE_INVALID = 0,
+	/* Temperature value (degree Celsius) from driver.
+	 * u32 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_GET_TEMPERATURE_DATA,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_GET_TEMPERATURE_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_GET_TEMPERATURE_MAX =
+	QCA_WLAN_VENDOR_ATTR_THERMAL_GET_TEMPERATURE_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_thermal_event - vendor subcmd attributes to
+ * report thermal events from driver to user space.
+ * enum values are used for NL attributes for data used by
+ * QCA_NL80211_VENDOR_SUBCMD_THERMAL_EVENT sub command.
+ */
+enum qca_wlan_vendor_attr_thermal_event {
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_INVALID = 0,
+	/* Temperature value (degree Celsius) from driver.
+	 * u32 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_TEMPERATURE,
+	/* Indication of resume completion from power save mode.
+	 * NLA_FLAG attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_RESUME_COMPLETE,
+	/* Thermal level from the driver.
+	 * u32 attribute. Possible values are defined in
+	 * enum qca_wlan_vendor_thermal_level.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_LEVEL = 3,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_MAX =
+	QCA_WLAN_VENDOR_ATTR_THERMAL_EVENT_AFTER_LAST - 1,
 };
 
 /**
