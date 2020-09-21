@@ -250,7 +250,7 @@ struct lim_sta_context {
 	enum ani_akm_type akm_type;	/* akm in rsn/wpa ie */
 	uint16_t listenInterval;
 	tSirMacCapabilityInfo capabilityInfo;
-	tSirMacReasonCodes disassocReason;
+	enum wlan_reason_code disassocReason;
 
 	tSirResultCodes resultCode;
 

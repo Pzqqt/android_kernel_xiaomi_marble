@@ -90,64 +90,6 @@ void lim_delete_dialogue_token_list(struct mac_context *mac)
 	mac->lim.pDialogueTokenTail = NULL;
 }
 
-char *lim_dot11_reason_str(uint16_t reasonCode)
-{
-	switch (reasonCode) {
-	case 0:
-		return " ";
-		CASE_RETURN_STRING(eSIR_MAC_UNSPEC_FAILURE_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_PREV_AUTH_NOT_VALID_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_DEAUTH_LEAVING_BSS_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_DISASSOC_DUE_TO_DISABILITY_REASON);
-		CASE_RETURN_STRING
-			(eSIR_MAC_CLASS2_FRAME_FROM_NON_AUTH_STA_REASON);
-		CASE_RETURN_STRING
-			(eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_DISASSOC_LEAVING_BSS_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_STA_NOT_PRE_AUTHENTICATED_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_PWR_CAPABILITY_BAD_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_SPRTD_CHANNELS_BAD_REASON);
-
-		CASE_RETURN_STRING(eSIR_MAC_INVALID_IE_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_MIC_FAILURE_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_4WAY_HANDSHAKE_TIMEOUT_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_GR_KEY_UPDATE_TIMEOUT_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_RSN_IE_MISMATCH_REASON);
-
-		CASE_RETURN_STRING(eSIR_MAC_INVALID_MC_CIPHER_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_INVALID_UC_CIPHER_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_INVALID_AKMP_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_UNSUPPORTED_RSN_IE_VER_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_INVALID_RSN_CAPABILITIES_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_1X_AUTH_FAILURE_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_CIPHER_SUITE_REJECTED_REASON);
-#ifdef FEATURE_WLAN_TDLS
-		CASE_RETURN_STRING(eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE);
-		CASE_RETURN_STRING(eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
-#endif
-		/* Reserved   27 - 30 */
-#ifdef WLAN_FEATURE_11W
-		CASE_RETURN_STRING
-			(eSIR_MAC_ROBUST_MGMT_FRAMES_POLICY_VIOLATION);
-#endif
-		CASE_RETURN_STRING(eSIR_MAC_QOS_UNSPECIFIED_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_QAP_NO_BANDWIDTH_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_XS_UNACKED_FRAMES_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_BAD_TXOP_USE_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_PEER_REJECT_MECHANISIM_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_MECHANISM_NOT_SETUP_REASON);
-
-		CASE_RETURN_STRING(eSIR_MAC_PEER_TIMEDOUT_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_CIPHER_NOT_SUPPORTED_REASON);
-		CASE_RETURN_STRING(eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON);
-	/* Reserved 47 - 65535 */
-	default:
-		return "Unknown";
-	}
-}
-
 char *lim_mlm_state_str(tLimMlmStates state)
 {
 	switch (state) {
@@ -1872,7 +1814,7 @@ static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 		   (pe_session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
 			pe_err("Invalid channel! Disconnect");
 			lim_tear_down_link_with_ap(mac, pe_session->peSessionId,
-					   eSIR_MAC_UNSUPPORTED_CHANNEL_CSA,
+					   REASON_UNSUPPORTED_CHANNEL_CSA,
 					   eLIM_LINK_MONITORING_DISASSOC);
 			return;
 		}
@@ -4571,7 +4513,7 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 			 (psession_entry->currentBssBeaconCnt == 0))) {
 			pe_nofl_info("HB fail vdev %d",psession_entry->vdev_id);
 			lim_send_deauth_mgmt_frame(mac_ctx,
-				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+				REASON_DISASSOC_DUE_TO_INACTIVITY,
 				psession_entry->bssId, psession_entry, false);
 
 			/*
@@ -4580,7 +4522,7 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 			 */
 			lim_tear_down_link_with_ap(mac_ctx,
 						psession_entry->peSessionId,
-						eSIR_MAC_BEACON_MISSED,
+						REASON_BEACON_MISSED,
 						eLIM_LINK_MONITORING_DISASSOC);
 			mac_ctx->lim.gLimProbeFailureAfterHBfailedCnt++;
 		} else {
@@ -4911,7 +4853,7 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 		pe_err("SA Query timed out,Deleting STA");
 		lim_print_mac_addr(mac, pSta->staAddr, LOGE);
 		lim_send_disassoc_mgmt_frame(mac,
-			eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+			REASON_DISASSOC_DUE_TO_INACTIVITY,
 			pSta->staAddr, pe_session, false);
 		lim_trigger_sta_deletion(mac, pSta, pe_session);
 		pSta->pmfSaQueryState = DPH_SA_QUERY_TIMED_OUT;

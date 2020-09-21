@@ -182,7 +182,7 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 				       QDF_MAC_ADDR_REF(
 						session->self_mac_addr));
 				lim_send_disassoc_mgmt_frame(mac_ctx,
-					eSIR_MAC_UNSPEC_FAILURE_REASON,
+					REASON_UNSPEC_FAILURE,
 					(uint8_t *) hdr->sa, session, false);
 				/*
 				 * Cleanup Rx path posts eWNI_SME_DISASSOC_RSP
@@ -192,7 +192,7 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 				sta_ds->mlmStaContext.cleanupTrigger =
 							eLIM_DUPLICATE_ENTRY;
 				sta_ds->mlmStaContext.disassocReason =
-				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
+				REASON_DISASSOC_DUE_TO_INACTIVITY;
 				lim_send_sme_disassoc_ind(mac_ctx, sta_ds,
 					session);
 				*dup_entry = true;
@@ -1171,7 +1171,7 @@ static bool lim_process_assoc_req_no_sta_ctx(struct mac_context *mac_ctx,
 		 * reason code.
 		 */
 		lim_send_deauth_mgmt_frame(mac_ctx,
-				eSIR_MAC_STA_NOT_PRE_AUTHENTICATED_REASON,
+				REASON_STA_NOT_AUTHENTICATED,
 				hdr->sa, session, false);
 
 		pe_warn("rcvd %s req, sessionid: %d, without pre-auth ctx"
@@ -1389,8 +1389,7 @@ static bool lim_chk_wmm(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 					QDF_STATUS_SUCCESS) {
 				pe_warn("AdmitControl: TSPEC rejected");
 				lim_send_assoc_rsp_mgmt_frame(
-					mac_ctx,
-					eSIR_MAC_QAP_NO_BANDWIDTH_REASON,
+					mac_ctx, REASON_NO_BANDWIDTH,
 					1, hdr->sa, sub_type, 0, session,
 					false);
 #ifdef WLAN_DEBUG
@@ -1402,7 +1401,7 @@ static bool lim_chk_wmm(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				!= QDF_STATUS_SUCCESS) {
 			pe_warn("AdmitControl: Sta rejected");
 			lim_send_assoc_rsp_mgmt_frame(
-				mac_ctx, eSIR_MAC_QAP_NO_BANDWIDTH_REASON, 1,
+				mac_ctx, REASON_NO_BANDWIDTH, 1,
 				hdr->sa, sub_type, 0, session, false);
 #ifdef WLAN_DEBUG
 			mac_ctx->lim.gLimNumAssocReqDropACRejectSta++;

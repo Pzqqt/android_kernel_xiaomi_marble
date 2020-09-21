@@ -249,10 +249,10 @@ eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 					   uint32_t sessionId,
 					   eCsrRoamDisconnectReason reason,
-					   tSirMacReasonCodes mac_reason);
+					   enum wlan_reason_code mac_reason);
 QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessionId,
 					eCsrRoamDisconnectReason reason,
-					tSirMacReasonCodes mac_reason);
+					enum wlan_reason_code mac_reason);
 /* pCommand may be NULL */
 void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t sessionId,
 				       tSmeCmd *pCommand,
@@ -819,13 +819,13 @@ QDF_STATUS csr_apply_channel_and_power_list(struct mac_context *mac);
  * @mac: pointer to mac context
  * @session_id: Session ID
  * @reason: CSR disconnect reason code as per @enum eCsrRoamDisconnectReason
- * @mac_reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ * @mac_reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * Return QDF_STATUS
  */
 QDF_STATUS csr_roam_disconnect(struct mac_context *mac, uint32_t session_id,
 			       eCsrRoamDisconnectReason reason,
-			       tSirMacReasonCodes mac_reason);
+			       enum wlan_reason_code mac_reason);
 
 /* This function is used to stop a BSS. It is similar of csr_roamIssueDisconnect
  * but this function doesn't have any logic other than blindly trying to stop

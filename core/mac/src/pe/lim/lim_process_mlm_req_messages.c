@@ -84,7 +84,7 @@ static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 		if (session->opmode == QDF_STA_MODE)
 			lim_restore_from_auth_state(mac_ctx,
 				eSIR_SME_AUTH_TIMEOUT_RESULT_CODE,
-				eSIR_MAC_UNSPEC_FAILURE_REASON, session);
+				REASON_UNSPEC_FAILURE, session);
 		break;
 	default:
 		/* SAE authentication is timed out in unexpected state */
@@ -1026,8 +1026,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 		goto end;
 	}
 
-	stads->mlmStaContext.disassocReason = (tSirMacReasonCodes)
-					       mlm_disassocreq->reasonCode;
+	stads->mlmStaContext.disassocReason = mlm_disassocreq->reasonCode;
 	stads->mlmStaContext.cleanupTrigger = mlm_disassocreq->disassocTrigger;
 
 	/*
@@ -1040,7 +1039,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 
 	/* Send Disassociate frame to peer entity */
 	if (send_disassoc_frame && (mlm_disassocreq->reasonCode !=
-		eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
+	    REASON_AUTHORIZED_ACCESS_LIMIT_REACHED)) {
 		if (mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq) {
 			pe_err("pMlmDisassocReq is not NULL, freeing");
 			qdf_mem_free(mac_ctx->lim.limDisassocDeauthCnfReq.
@@ -1414,7 +1413,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 		goto end;
 	} else if (sta_ds) {
 		/* sta_ds->mlmStaContext.rxPurgeReq     = 1; */
-		sta_ds->mlmStaContext.disassocReason = (tSirMacReasonCodes)
+		sta_ds->mlmStaContext.disassocReason =
 						mlm_deauth_req->reasonCode;
 		sta_ds->mlmStaContext.cleanupTrigger =
 						mlm_deauth_req->deauthTrigger;
@@ -1438,7 +1437,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 				continue;
 
 			sta_ds->mlmStaContext.disassocReason =
-				(tSirMacReasonCodes)mlm_deauth_req->reasonCode;
+					mlm_deauth_req->reasonCode;
 			sta_ds->mlmStaContext.cleanupTrigger =
 						mlm_deauth_req->deauthTrigger;
 			sta_ds->mlmStaContext.mlmState =
@@ -1781,7 +1780,7 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx)
 
 		lim_restore_from_auth_state(mac_ctx,
 				eSIR_SME_AUTH_TIMEOUT_RESULT_CODE,
-				eSIR_MAC_UNSPEC_FAILURE_REASON, session);
+				REASON_UNSPEC_FAILURE, session);
 		break;
 	default:
 		/*
@@ -1910,7 +1909,7 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 			session->curr_op_freq,
 			QDF_MAC_ADDR_REF(session->bssId));
 		lim_send_deauth_mgmt_frame(mac_ctx,
-					   eSIR_MAC_UNSPEC_FAILURE_REASON,
+					   REASON_UNSPEC_FAILURE,
 					   session->bssId, session, false);
 	}
 	if ((LIM_IS_AP_ROLE(session)) ||

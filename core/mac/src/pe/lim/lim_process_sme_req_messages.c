@@ -2467,7 +2467,7 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		/* Deauthentication is triggered by Link Monitoring */
 		pe_debug("** Lost link with AP **");
 		deauth_trigger = eLIM_LINK_MONITORING_DEAUTH;
-		reason_code = eSIR_MAC_UNSPEC_FAILURE_REASON;
+		reason_code = REASON_UNSPEC_FAILURE;
 	} else {
 		deauth_trigger = eLIM_HOST_DEAUTH;
 		reason_code = sme_deauth_req.reasonCode;
@@ -2526,7 +2526,7 @@ static void __lim_counter_measures(struct mac_context *mac, struct pe_session *p
 	tSirMacAddr mac_addr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 	if (LIM_IS_AP_ROLE(pe_session))
-		lim_send_disassoc_mgmt_frame(mac, eSIR_MAC_MIC_FAILURE_REASON,
+		lim_send_disassoc_mgmt_frame(mac, REASON_MIC_FAILURE,
 					     mac_addr, pe_session, false);
 };
 
@@ -2557,7 +2557,7 @@ void lim_delete_all_peers(struct pe_session *session)
 			__lim_counter_measures(mac_ctx, session);
 		else
 			lim_send_disassoc_mgmt_frame(mac_ctx,
-				eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+				REASON_DEAUTH_NETWORK_LEAVING,
 				bc_addr, session, false);
 	}
 

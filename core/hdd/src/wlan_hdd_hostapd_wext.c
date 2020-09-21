@@ -1824,7 +1824,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	hdd_debug("data " QDF_MAC_ADDR_FMT,
 		  QDF_MAC_ADDR_REF(peer_macaddr));
 	wlansap_populate_del_sta_params(peer_macaddr,
-					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+					REASON_DEAUTH_NETWORK_LEAVING,
 					SIR_MAC_MGMT_DISASSOC,
 					&del_sta_params);
 	hdd_softap_sta_disassoc(adapter, &del_sta_params);

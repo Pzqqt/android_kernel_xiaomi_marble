@@ -770,7 +770,7 @@ static void hdd_clear_sta(struct hdd_adapter *adapter,
 		return;
 
 	wlansap_populate_del_sta_params(sta_info->sta_mac.bytes,
-					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+					REASON_DEAUTH_NETWORK_LEAVING,
 					SIR_MAC_MGMT_DISASSOC,
 					&del_sta_params);
 
@@ -4769,7 +4769,7 @@ static int wlan_hdd_setup_driver_overrides(struct hdd_adapter *ap_adapter)
 
 void
 hdd_check_and_disconnect_sta_on_invalid_channel(struct hdd_context *hdd_ctx,
-						tSirMacReasonCodes reason)
+						enum wlan_reason_code reason)
 {
 	struct hdd_adapter *sta_adapter;
 	uint32_t sta_chan_freq;
@@ -5218,7 +5218,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (policy_mgr_is_force_scc(hdd_ctx->psoc))
 			hdd_check_and_disconnect_sta_on_invalid_channel(
 					hdd_ctx,
-					eSIR_MAC_OPER_CHANNEL_DISABLED_INDOOR);
+					REASON_OPER_CHANNEL_DISABLED_INDOOR);
 	}
 
 	beacon = adapter->session.ap.beacon;

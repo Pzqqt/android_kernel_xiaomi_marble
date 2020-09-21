@@ -1416,7 +1416,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 					&pe_session->dph.dphHashTable);
 	if (sta_ds)
 		qos_mode = sta_ds->qosMode;
-	tdls_link_type = (reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE)
+	tdls_link_type = (reason == REASON_TDLS_PEER_UNREACHABLE)
 				? TDLS_LINK_AP : TDLS_LINK_DIRECT;
 	nBytes = nPayload + (((IS_QOS_ENABLED(pe_session) &&
 			     (tdls_link_type == TDLS_LINK_AP)) ||
@@ -1464,7 +1464,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	pe_debug("Reason of TDLS Teardown: %d", reason);
 	header_offset = lim_prepare_tdls_frame_header(mac, pFrame,
 			LINK_IDEN_ADDR_OFFSET(teardown),
-			(reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE) ?
+			(reason == REASON_TDLS_PEER_UNREACHABLE) ?
 			TDLS_LINK_AP : TDLS_LINK_DIRECT,
 			(responder == true) ? TDLS_RESPONDER : TDLS_INITIATOR,
 			(ac == WIFI_AC_VI) ? TID_AC_VI : TID_AC_BK,
@@ -1512,7 +1512,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	pe_debug("[TDLS] action: %d (%s) -%s-> OTA peer="QDF_MAC_ADDR_FMT,
 		TDLS_TEARDOWN,
 		lim_trace_tdls_action_string(TDLS_TEARDOWN),
-		((reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE) ? "AP" :
+		((reason == REASON_TDLS_PEER_UNREACHABLE) ? "AP" :
 		    "DIRECT"),
 		QDF_MAC_ADDR_REF(peer_mac.bytes));
 
@@ -1526,7 +1526,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 						     TID_AC_VI,
 						     pFrame,
 						     smeSessionId,
-						     (reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE)
+						     (reason == REASON_TDLS_PEER_UNREACHABLE)
 						     ? true : false);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3043,7 +3043,7 @@ static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 			if (!lim_is_roam_synch_in_progress(p_mac->psoc,
 							   session_entry)) {
 				lim_send_deauth_mgmt_frame(p_mac,
-					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+					REASON_DEAUTH_NETWORK_LEAVING,
 					stads->staAddr, session_entry, false);
 			}
 			/* Delete TDLS peer */

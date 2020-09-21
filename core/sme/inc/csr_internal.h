@@ -285,8 +285,8 @@ struct roam_cmd {
 
 	bool fStopWds;
 	tSirMacAddr peerMac;
-	tSirMacReasonCodes reason;
-	tSirMacReasonCodes disconnect_reason;
+	enum wlan_reason_code reason;
+	enum wlan_reason_code disconnect_reason;
 };
 
 struct setkey_cmd {
@@ -617,7 +617,7 @@ struct csr_roam_session {
 	bool nss_forced_1x1;
 	bool disable_hi_rssi;
 	bool dhcp_done;
-	tSirMacReasonCodes disconnect_reason;
+	enum wlan_reason_code disconnect_reason;
 	uint8_t uapsd_mask;
 	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;

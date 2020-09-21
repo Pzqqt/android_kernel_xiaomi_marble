@@ -267,7 +267,7 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx);
  * hdd_check_and_disconnect_sta_on_invalid_channel() - Disconnect STA if it is
  * on invalid channel
  * @hdd_ctx: pointer to hdd context
- * @reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ * @reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * STA should be disconnected before starting the SAP if it is on indoor
  * channel.
@@ -276,7 +276,7 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx);
  */
 void
 hdd_check_and_disconnect_sta_on_invalid_channel(struct hdd_context *hdd_ctx,
-						tSirMacReasonCodes reason);
+						enum wlan_reason_code reason);
 
 /**
  * hdd_convert_dot11mode_from_phymode() - get dot11 mode from phymode

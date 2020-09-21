@@ -531,16 +531,16 @@ csr_roam_issue_disassociate(struct mac_context *mac, uint32_t sessionId,
 	}
 
 	if (fMICFailure) {
-		reasonCode = eSIR_MAC_MIC_FAILURE_REASON;
+		reasonCode = REASON_MIC_FAILURE;
 	} else if (NewSubstate == eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF) {
-		reasonCode = eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON;
+		reasonCode = REASON_AUTHORIZED_ACCESS_LIMIT_REACHED;
 	} else if (eCSR_ROAM_SUBSTATE_DISASSOC_STA_HAS_LEFT == NewSubstate) {
-		reasonCode = eSIR_MAC_DISASSOC_LEAVING_BSS_REASON;
+		reasonCode = REASON_DISASSOC_NETWORK_LEAVING;
 		NewSubstate = eCSR_ROAM_SUBSTATE_DISASSOC_FORCED;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "set to reason code eSIR_MAC_DISASSOC_LEAVING_BSS_REASON and set back NewSubstate");
 	} else {
-		reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
+		reasonCode = REASON_UNSPEC_FAILURE;
 	}
 
 	p_nbr_roam_info = &mac->roam.neighborRoamInfo[sessionId];
@@ -3906,8 +3906,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(struct mac_context *mac,
 		qdf_mem_copy(pCommand->u.roamCmd.peerMac,
 				p_del_sta_params->peerMacAddr.bytes,
 				sizeof(pCommand->u.roamCmd.peerMac));
-		pCommand->u.roamCmd.reason =
-			(tSirMacReasonCodes)p_del_sta_params->reason_code;
+		pCommand->u.roamCmd.reason = p_del_sta_params->reason_code;
 
 		csr_roam_issue_disconnect_stats(
 					mac, sessionId,
@@ -3953,8 +3952,7 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 		qdf_mem_copy(pCommand->u.roamCmd.peerMac,
 			     pDelStaParams->peerMacAddr.bytes,
 			     sizeof(tSirMacAddr));
-		pCommand->u.roamCmd.reason =
-			(tSirMacReasonCodes)pDelStaParams->reason_code;
+		pCommand->u.roamCmd.reason = pDelStaParams->reason_code;
 
 		csr_roam_issue_disconnect_stats(mac, sessionId,
 						pDelStaParams->peerMacAddr);
@@ -3990,7 +3988,7 @@ QDF_STATUS csr_roam_issue_deauth(struct mac_context *mac, uint32_t sessionId,
 
 	status =
 		csr_send_mb_deauth_req_msg(mac, sessionId, bssId.bytes,
-					   eSIR_MAC_DEAUTH_LEAVING_BSS_REASON);
+					   REASON_DEAUTH_NETWORK_LEAVING);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		csr_roam_link_down(mac, sessionId);
 	else {
@@ -8434,7 +8432,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 				 &pProfile->SSIDs))
 		csr_roam_issue_disassociate_cmd(mac, sessionId,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					eSIR_MAC_UNSPEC_FAILURE_REASON);
+					REASON_UNSPEC_FAILURE);
 	/*
 	 * If roamSession.connectState is disconnecting that mean
 	 * disconnect was received with scan for ssid in progress
@@ -8691,8 +8689,8 @@ QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 			NewSubstate = eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF;
 		} else
 		if ((eCsrForcedDisassoc == pCommand->u.roamCmd.roamReason)
-		    && (eSIR_MAC_DISASSOC_LEAVING_BSS_REASON ==
-			pCommand->u.roamCmd.reason)) {
+		    && (pCommand->u.roamCmd.reason ==
+			REASON_DISASSOC_NETWORK_LEAVING)) {
 			NewSubstate = eCSR_ROAM_SUBSTATE_DISASSOC_STA_HAS_LEFT;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 					 "set to substate eCSR_ROAM_SUBSTATE_DISASSOC_STA_HAS_LEFT");
@@ -8755,7 +8753,7 @@ QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 					uint32_t sessionId,
 					eCsrRoamDisconnectReason reason,
-					tSirMacReasonCodes mac_reason)
+					enum wlan_reason_code mac_reason)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeCmd *pCommand;
@@ -8799,7 +8797,7 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 		case eCSR_DISCONNECT_REASON_STA_HAS_LEFT:
 			pCommand->u.roamCmd.roamReason = eCsrForcedDisassoc;
 			pCommand->u.roamCmd.reason =
-				eSIR_MAC_DISASSOC_LEAVING_BSS_REASON;
+				REASON_DISASSOC_NETWORK_LEAVING;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				 "SME convert to internal reason code eCsrStaHasLeft");
 			break;
@@ -8847,7 +8845,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t session
 
 QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessionId,
 					eCsrRoamDisconnectReason reason,
-					tSirMacReasonCodes mac_reason)
+					enum wlan_reason_code mac_reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -8891,7 +8889,7 @@ csr_disable_roaming_offload(struct mac_context *mac_ctx, uint32_t session_id)
 
 QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 			       eCsrRoamDisconnectReason reason,
-			       tSirMacReasonCodes mac_reason)
+			       enum wlan_reason_code mac_reason)
 {
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -9752,7 +9750,7 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(struct mac_context *mac
 					return;
 				mlme_set_discon_reason_n_from_ap(mac->psoc,
 					pSmeJoinRsp->vdev_id, false,
-					eSIR_MAC_HOST_TRIGGERED_ROAM_FAILURE);
+					REASON_HOST_TRIGGERED_ROAM_FAILURE);
 				csr_roam_call_callback(mac,
 						       pSmeJoinRsp->vdev_id,
 						       roam_info, roam_id,
@@ -10127,7 +10125,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 
 POST_ROAM_FAILURE:
 	mlme_set_discon_reason_n_from_ap(mac->psoc, session_id, false,
-					 eSIR_MAC_HOST_TRIGGERED_ROAM_FAILURE);
+					 REASON_HOST_TRIGGERED_ROAM_FAILURE);
 	csr_post_roam_failure(mac, session_id, roam_info, NULL);
 	qdf_mem_free(roam_info);
 }
@@ -11922,20 +11920,20 @@ csr_roam_chk_lnk_deauth_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 					session, SCAN_ENTRY_CON_STATE_NONE);
 	/* Update the disconnect stats */
 	switch (pDeauthInd->reasonCode) {
-	case eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON:
+	case REASON_DISASSOC_DUE_TO_INACTIVITY:
 		session->disconnect_stats.disconnection_cnt++;
 		session->disconnect_stats.peer_kickout++;
 		break;
-	case eSIR_MAC_UNSPEC_FAILURE_REASON:
-	case eSIR_MAC_PREV_AUTH_NOT_VALID_REASON:
-	case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
-	case eSIR_MAC_CLASS2_FRAME_FROM_NON_AUTH_STA_REASON:
-	case eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON:
-	case eSIR_MAC_STA_NOT_PRE_AUTHENTICATED_REASON:
+	case REASON_UNSPEC_FAILURE:
+	case REASON_PREV_AUTH_NOT_VALID:
+	case REASON_DEAUTH_NETWORK_LEAVING:
+	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
+	case REASON_CLASS3_FRAME_FROM_NON_ASSOC_STA:
+	case REASON_STA_NOT_AUTHENTICATED:
 		session->disconnect_stats.disconnection_cnt++;
 		session->disconnect_stats.deauth_by_peer++;
 		break;
-	case eSIR_MAC_BEACON_MISSED:
+	case REASON_BEACON_MISSED:
 		session->disconnect_stats.disconnection_cnt++;
 		session->disconnect_stats.bmiss++;
 		break;
@@ -11989,7 +11987,7 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		sme_err("Channel switch failed");
 		csr_roam_disconnect_internal(mac_ctx, sessionId,
 					     eCSR_DISCONNECT_REASON_DEAUTH,
-					     eSIR_MAC_CHANNEL_SWITCH_FAILED);
+					     REASON_CHANNEL_SWITCH_FAILED);
 		return;
 	}
 	session->connectedProfile.op_freq = pSwitchChnInd->freq;
@@ -12251,7 +12249,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 			sme_warn("Calling csr_roam_disconnect_internal");
 			csr_roam_disconnect_internal(mac_ctx, sessionId,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					eSIR_MAC_UNSPEC_FAILURE_REASON);
+					REASON_UNSPEC_FAILURE);
 		} else {
 			sme_warn("Skipping the new scan as CSR is in state: %s and sub-state: %s",
 				mac_trace_getcsr_roam_state(
@@ -12431,8 +12429,8 @@ bool csr_roam_complete_roaming(struct mac_context *mac, uint32_t sessionId,
 			 * detinguish it. For missed beacon, LIM set reason to
 			 * be eSIR_BEACON_MISSED
 			 */
-			if (eSIR_MAC_BEACON_MISSED ==
-				pSession->roamingStatusCode) {
+			if (pSession->roamingStatusCode ==
+			    REASON_BEACON_MISSED) {
 				roamResult = eCSR_ROAM_RESULT_LOSTLINK;
 			} else if (eCsrLostlinkRoamingDisassoc ==
 				   pSession->roamingReason) {
@@ -12660,7 +12658,7 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 			if (QDF_IS_STATUS_SUCCESS(status)) {
 				csr_roam_disconnect(mac, vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					eSIR_MAC_KEY_TIMEOUT);
+					REASON_KEY_TIMEOUT);
 			}
 		} else {
 			sme_err("session not found");
@@ -15877,7 +15875,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 	}
 	pMsg->reasonCode = reasonCode;
 	pMsg->process_ho_fail = (pSession->disconnect_reason ==
-		eSIR_MAC_FW_TRIGGERED_ROAM_FAILURE) ? true : false;
+		REASON_FW_TRIGGERED_ROAM_FAILURE) ? true : false;
 
 	/* Update the disconnect stats */
 	pSession->disconnect_stats.disconnection_cnt++;
@@ -22098,7 +22096,7 @@ void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 			eCSR_REASON_ROAM_HO_FAIL);
 	csr_roam_disconnect(mac_ctx, sessionId,
 			eCSR_DISCONNECT_REASON_ROAM_HO_FAIL,
-			eSIR_MAC_FW_TRIGGERED_ROAM_FAILURE);
+			REASON_FW_TRIGGERED_ROAM_FAILURE);
 	if (mac_ctx->mlme_cfg->gen.fatal_event_trigger)
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_HOST_DRIVER,
@@ -23105,7 +23103,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		    mac_ctx->nud_fail_behaviour == DISCONNECT_AFTER_ROAM_FAIL)
 			csr_roam_disconnect(mac_ctx, session_id,
 				    eCSR_DISCONNECT_REASON_DEAUTH,
-				    eSIR_MAC_USER_TRIGGERED_ROAM_FAILURE);
+				    REASON_USER_TRIGGERED_ROAM_FAILURE);
 
 		vdev_roam_params->roam_invoke_in_progress = false;
 		goto end;
@@ -23123,7 +23121,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 						 roam_synch_data->chan_freq)) {
 			csr_roam_disconnect(mac_ctx, session_id,
 					    eCSR_DISCONNECT_REASON_DEAUTH,
-					    eSIR_MAC_OPER_CHANNEL_BAND_CHANGE);
+					    REASON_OPER_CHANNEL_BAND_CHANGE);
 			sme_debug("Roaming Failed for disabled channel or band");
 			vdev_roam_params->roam_invoke_in_progress = false;
 			goto end;

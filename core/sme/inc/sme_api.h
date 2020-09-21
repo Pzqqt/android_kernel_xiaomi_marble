@@ -574,13 +574,13 @@ QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
  * @mac_handle: Opaque handle to the global MAC context
  * @session: SME session identifier
  * @reason: Reason to disconnect
- * @mac_reason: Reason to disconnect as per enum eSirMacReasonCodes
+ * @mac_reason: Reason to disconnect as per enum wlan_reason_code
  *
  * Return: QDF Status success or failure
  */
 QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session,
 			       eCsrRoamDisconnectReason reason,
-			       tSirMacReasonCodes mac_reason);
+			       enum wlan_reason_code mac_reason);
 
 void sme_dhcp_done_ind(mac_handle_t mac_handle, uint8_t session_id);
 QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t sessionId);

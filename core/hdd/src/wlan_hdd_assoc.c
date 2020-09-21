@@ -448,7 +448,7 @@ void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx)
 			  sta_adapter->vdev_id);
 		status = wlan_hdd_disconnect(sta_adapter,
 					     eCSR_DISCONNECT_REASON_DEAUTH,
-					     eSIR_MAC_UNSPEC_FAILURE_REASON);
+					     REASON_UNSPEC_FAILURE);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("wlan_hdd_disconnect failed, status: %d",
 				status);
@@ -1925,8 +1925,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		 */
 		if (roam_info && eCSR_ROAM_LOSTLINK == roam_status) {
 			reason = roam_info->reasonCode;
-			if (reason ==
-			    eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON)
+			if (reason == REASON_STA_LEAVING)
 				pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n",
 					roam_info->rxRssi);
 		}
@@ -3028,7 +3027,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					mac_handle,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					eSIR_MAC_UNSPEC_FAILURE_REASON);
+					REASON_UNSPEC_FAILURE);
 			}
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -3090,7 +3089,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					mac_handle,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					eSIR_MAC_UNSPEC_FAILURE_REASON);
+					REASON_UNSPEC_FAILURE);
 				}
 				qdf_mem_free(reqRsnIe);
 				qdf_mem_free(rsp_rsn_ie);

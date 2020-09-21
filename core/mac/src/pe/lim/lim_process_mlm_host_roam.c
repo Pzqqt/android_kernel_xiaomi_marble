@@ -182,7 +182,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 					   &pe_session->dph.dphHashTable);
 		if (sta) {
 			sta->mlmStaContext.disassocReason =
-				eSIR_MAC_UNSPEC_FAILURE_REASON;
+				REASON_UNSPEC_FAILURE;
 			sta->mlmStaContext.cleanupTrigger =
 				eLIM_JOIN_FAILURE;
 			sta->mlmStaContext.resultCode = resultCode;

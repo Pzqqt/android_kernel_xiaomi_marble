@@ -137,7 +137,6 @@ bool lim_is_valid_frame(last_processed_msg *last_processed_frm,
 void lim_update_last_processed_frame(last_processed_msg *last_processed_frm,
 		uint8_t *pRxPacketInfo);
 
-char *lim_dot11_reason_str(uint16_t reasonCode);
 char *lim_mlm_state_str(tLimMlmStates state);
 char *lim_sme_state_str(tLimSmeStates state);
 char *lim_msg_str(uint32_t msgType);

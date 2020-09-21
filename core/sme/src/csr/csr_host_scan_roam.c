@@ -572,7 +572,7 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 					mac_ctx,
 					session_id,
 					eCSR_DISCONNECT_REASON_HANDOFF,
-					eSIR_MAC_UNSPEC_FAILURE_REASON))) {
+					REASON_UNSPEC_FAILURE))) {
 		sme_warn("csr_roamHandoffRequested: fail to issue disassoc");
 		qdf_mem_free(roam_info);
 		return;

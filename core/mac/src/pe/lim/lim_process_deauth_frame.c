@@ -168,8 +168,8 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
 		switch (reasonCode) {
-		case eSIR_MAC_UNSPEC_FAILURE_REASON:
-		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
+		case REASON_UNSPEC_FAILURE:
+		case REASON_DEAUTH_NETWORK_LEAVING:
 			/* Valid reasonCode in received Deauthentication frame */
 			break;
 
@@ -184,12 +184,12 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		}
 	} else if (LIM_IS_STA_ROLE(pe_session)) {
 		switch (reasonCode) {
-		case eSIR_MAC_UNSPEC_FAILURE_REASON:
-		case eSIR_MAC_PREV_AUTH_NOT_VALID_REASON:
-		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
-		case eSIR_MAC_CLASS2_FRAME_FROM_NON_AUTH_STA_REASON:
-		case eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON:
-		case eSIR_MAC_STA_NOT_PRE_AUTHENTICATED_REASON:
+		case REASON_UNSPEC_FAILURE:
+		case REASON_PREV_AUTH_NOT_VALID:
+		case REASON_DEAUTH_NETWORK_LEAVING:
+		case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
+		case REASON_CLASS3_FRAME_FROM_NON_ASSOC_STA:
+		case REASON_STA_NOT_AUTHENTICATED:
 			/* Valid reasonCode in received Deauth frame */
 			break;
 
@@ -308,9 +308,9 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			   frame_rssi);
 
 	if (mac->mlme_cfg->gen.fatal_event_trigger &&
-	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
-	    reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
-	    reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
+	    (reasonCode != REASON_UNSPEC_FAILURE &&
+	    reasonCode != REASON_DEAUTH_NETWORK_LEAVING &&
+	    reasonCode != REASON_DISASSOC_NETWORK_LEAVING)) {
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 			       WLAN_LOG_INDICATOR_HOST_DRIVER,
 			       WLAN_LOG_REASON_DISCONNECT,
@@ -513,7 +513,7 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 			 sta_ds->mlmStaContext.mlmState);
 		return;
 	}
-	sta_ds->mlmStaContext.disassocReason = (tSirMacReasonCodes) rc;
+	sta_ds->mlmStaContext.disassocReason = rc;
 	sta_ds->mlmStaContext.cleanupTrigger = eLIM_PEER_ENTITY_DEAUTH;
 	sta_ds->sta_deletion_in_progress = true;
 

@@ -585,7 +585,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
  * @adapter: Pointer to adapter
  * @locally_generated: True if the disconnection is internally generated.
  *                     False if the disconnection is received from peer.
- * @reason: Disconnect reason as per @enum eSirMacReasonCodes
+ * @reason: Disconnect reason as per @enum wlan_reason_code
  * @disconnect_ies: IEs received in Deauth/Disassoc from peer
  * @disconnect_ies_len: Length of @disconnect_ies
  *
@@ -597,7 +597,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 void
 wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 				      bool locally_generated,
-				      enum eSirMacReasonCodes reason,
+				      enum wlan_reason_code reason,
 				      uint8_t *disconnect_ies,
 				      uint16_t disconnect_ies_len);
 
@@ -677,27 +677,27 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
 /**
  * wlan_hdd_try_disconnect() - try disconnnect from previous connection
  * @adapter: Pointer to adapter
- * @reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ * @reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * This function is used to disconnect from previous connection
  *
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
-			    enum eSirMacReasonCodes reason);
+			    enum wlan_reason_code reason);
 
 /**
  * wlan_hdd_disconnect() - hdd disconnect api
  * @adapter: Pointer to adapter
  * @reason: CSR disconnect reason code as per @enum eCsrRoamDisconnectReason
- * @mac_reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ * @mac_reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * This function is used to issue a disconnect request to SME
  *
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
-			tSirMacReasonCodes mac_reason);
+			enum wlan_reason_code mac_reason);
 
 /**
  * wlan_hdd_get_adjacent_chan(): Gets next/previous channel

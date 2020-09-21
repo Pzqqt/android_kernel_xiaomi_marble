@@ -1427,7 +1427,7 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 					hdd_ctx->mac_handle,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					eSIR_MAC_UNSPEC_FAILURE_REASON);
+					REASON_UNSPEC_FAILURE);
 				roam_profile->phyMode = csr_phy_mode;
 			}
 			break;

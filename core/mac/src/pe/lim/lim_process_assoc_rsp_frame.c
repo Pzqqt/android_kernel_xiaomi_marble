@@ -881,7 +881,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 		/* Send advisory Disassociation frame to AP */
 		lim_send_disassoc_mgmt_frame(mac_ctx,
-			eSIR_MAC_UNSPEC_FAILURE_REASON,
+			REASON_UNSPEC_FAILURE,
 			hdr->sa, session_entry, false);
 		goto assocReject;
 	}
@@ -897,7 +897,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 		/* Send advisory Disassociation frame to AP */
 		lim_send_disassoc_mgmt_frame(mac_ctx,
-			eSIR_MAC_UNSPEC_FAILURE_REASON,
+			REASON_UNSPEC_FAILURE,
 			hdr->sa, session_entry, false);
 		goto assocReject;
 	}
@@ -954,7 +954,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 			/* Send advisory Disassociation frame to AP */
 			lim_send_disassoc_mgmt_frame(mac_ctx,
-				eSIR_MAC_UNSPEC_FAILURE_REASON, hdr->sa,
+				REASON_UNSPEC_FAILURE, hdr->sa,
 				session_entry, false);
 			goto assocReject;
 		}

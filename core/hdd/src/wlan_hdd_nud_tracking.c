@@ -281,7 +281,7 @@ hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 		  adapter->vdev_id);
 	/* Issue Disconnect */
 	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH,
-				     eSIR_MAC_GATEWAY_REACHABILITY_FAILURE);
+				     REASON_GATEWAY_REACHABILITY_FAILURE);
 	if (0 != status) {
 		hdd_err("wlan_hdd_disconnect failed, status: %d",
 			status);

@@ -3135,7 +3135,7 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 		}
 		if (LIM_IS_STA_ROLE(pe_session) &&
 		    (disassoc_req->reasonCode !=
-		    eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
+		     REASON_AUTHORIZED_ACCESS_LIMIT_REACHED)) {
 			pe_debug("FT Preauth Session (%pK %d) Clean up",
 				 pe_session, pe_session->peSessionId);
 

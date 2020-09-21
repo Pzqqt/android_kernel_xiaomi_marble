@@ -1272,7 +1272,7 @@ QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
 				    &session->dph.dphHashTable);
 	if (sta_ds) {
 		sta_ds->mlmStaContext.disassocReason =
-			eSIR_MAC_UNSPEC_FAILURE_REASON;
+			REASON_UNSPEC_FAILURE;
 		sta_ds->mlmStaContext.cleanupTrigger =
 			eLIM_JOIN_FAILURE;
 		sta_ds->mlmStaContext.resultCode = param->result_code;
@@ -2697,7 +2697,7 @@ static void lim_process_switch_channel_join_req(
 				QDF_MAC_ADDR_REF(
 				session_entry->pLimMlmJoinReq->bssDescription.bssId));
 
-				lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
+				lim_send_deauth_mgmt_frame(mac_ctx, REASON_UNSPEC_FAILURE,
 					session_entry->pLimMlmJoinReq->bssDescription.bssId,
 					session_entry, false);
 

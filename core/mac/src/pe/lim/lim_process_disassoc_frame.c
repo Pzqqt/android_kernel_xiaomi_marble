@@ -223,14 +223,14 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
 		switch (reasonCode) {
-		case eSIR_MAC_UNSPEC_FAILURE_REASON:
-		case eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON:
-		case eSIR_MAC_DISASSOC_LEAVING_BSS_REASON:
-		case eSIR_MAC_MIC_FAILURE_REASON:
-		case eSIR_MAC_4WAY_HANDSHAKE_TIMEOUT_REASON:
-		case eSIR_MAC_GR_KEY_UPDATE_TIMEOUT_REASON:
-		case eSIR_MAC_RSN_IE_MISMATCH_REASON:
-		case eSIR_MAC_1X_AUTH_FAILURE_REASON:
+		case REASON_UNSPEC_FAILURE:
+		case REASON_DISASSOC_DUE_TO_INACTIVITY:
+		case REASON_DISASSOC_NETWORK_LEAVING:
+		case REASON_MIC_FAILURE:
+		case REASON_4WAY_HANDSHAKE_TIMEOUT :
+		case REASON_GROUP_KEY_UPDATE_TIMEOUT:
+		case REASON_IN_4WAY_DIFFERS:
+		case REASON_1X_AUTH_FAILURE:
 			/* Valid reasonCode in received Disassociation frame */
 			break;
 
@@ -246,9 +246,9 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		   (pe_session->limSmeState != eLIM_SME_WT_ASSOC_STATE) &&
 		   (pe_session->limSmeState != eLIM_SME_WT_REASSOC_STATE))) {
 		switch (reasonCode) {
-		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
-		case eSIR_MAC_DISASSOC_LEAVING_BSS_REASON:
-		case eSIR_MAC_POOR_RSSI_CONDITIONS:
+		case REASON_DEAUTH_NETWORK_LEAVING:
+		case REASON_DISASSOC_NETWORK_LEAVING:
+		case REASON_POOR_RSSI_CONDITIONS:
 			/* Valid reasonCode in received Disassociation frame */
 			/* as long as we're not about to channel switch */
 			if (pe_session->gLimChannelSwitch.state !=
@@ -302,7 +302,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 	} /* if (sta->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
 
-	if (reasonCode == eSIR_MAC_POOR_RSSI_CONDITIONS) {
+	if (reasonCode == REASON_POOR_RSSI_CONDITIONS) {
 		struct sir_rssi_disallow_lst ap_info = {{0}};
 
 		ap_info.retry_delay = 0;
@@ -322,9 +322,9 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			     pe_session, pHdr->sa);
 
 	if (mac->mlme_cfg->gen.fatal_event_trigger &&
-	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
-	    reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
-	    reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
+	    (reasonCode != REASON_UNSPEC_FAILURE &&
+	    reasonCode != REASON_DEAUTH_NETWORK_LEAVING &&
+	    reasonCode != REASON_DISASSOC_NETWORK_LEAVING)) {
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 			       WLAN_LOG_INDICATOR_HOST_DRIVER,
 			       WLAN_LOG_REASON_DISCONNECT,
@@ -374,7 +374,7 @@ void lim_perform_disassoc(struct mac_context *mac_ctx, int32_t frame_rssi,
 		return;
 	}
 	sta_ds->mlmStaContext.cleanupTrigger = eLIM_PEER_ENTITY_DISASSOC;
-	sta_ds->mlmStaContext.disassocReason = (tSirMacReasonCodes) rc;
+	sta_ds->mlmStaContext.disassocReason = rc;
 
 	/* Issue Disassoc Indication to SME. */
 	qdf_mem_copy((uint8_t *) &mlmDisassocInd.peerMacAddr,

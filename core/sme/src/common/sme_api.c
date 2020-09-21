@@ -72,7 +72,7 @@
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
 static void sme_disconnect_connected_sessions(struct mac_context *mac,
-					      enum eSirMacReasonCodes reason);
+					      enum wlan_reason_code reason);
 
 static QDF_STATUS sme_handle_generic_change_country_code(struct mac_context *mac,
 						  void *msg_buf);
@@ -3020,7 +3020,7 @@ QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
 
 QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session_id,
 			       eCsrRoamDisconnectReason reason,
-			       tSirMacReasonCodes mac_reason)
+			       enum wlan_reason_code mac_reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -5448,7 +5448,7 @@ QDF_STATUS sme_update_channel_list(mac_handle_t mac_handle)
 		csr_apply_channel_power_info_wrapper(mac_ctx);
 		csr_scan_filter_results(mac_ctx);
 		sme_disconnect_connected_sessions(mac_ctx,
-					eSIR_MAC_OPER_CHANNEL_USER_DISABLED);
+					REASON_OPER_CHANNEL_USER_DISABLED);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 
@@ -5481,7 +5481,7 @@ static bool sme_search_in_base_ch_freq_lst(
  * sme_disconnect_connected_sessions() - Disconnect STA and P2P client session
  * if channel is not supported
  * @mac_ctx: mac global context
- * @reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ * @reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * If new country code does not support the channel on which STA/P2P client
  * is connetced, it sends the disconnect to the AP/P2P GO
@@ -5489,7 +5489,7 @@ static bool sme_search_in_base_ch_freq_lst(
  * Return: void
  */
 static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
-					      enum eSirMacReasonCodes reason)
+					      enum wlan_reason_code reason)
 {
 	uint8_t session_id, found = false;
 	uint32_t chan_freq;

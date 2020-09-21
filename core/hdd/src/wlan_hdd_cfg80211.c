@@ -19986,7 +19986,7 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 					struct hdd_adapter *adapter,
 					uint16_t reason,
-					tSirMacReasonCodes mac_reason)
+					enum wlan_reason_code mac_reason)
 {
 	eConnectionState prev_conn_state;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -20108,7 +20108,7 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 }
 
 int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
-			    enum eSirMacReasonCodes reason)
+			    enum wlan_reason_code reason)
 {
 	mac_handle_t mac_handle;
 
@@ -20419,8 +20419,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		return status;
 
 	/* Try disconnecting if already in connected state */
-	status = wlan_hdd_try_disconnect(adapter,
-					 eSIR_MAC_UNSPEC_FAILURE_REASON);
+	status = wlan_hdd_try_disconnect(adapter, REASON_UNSPEC_FAILURE);
 	if (0 > status) {
 		hdd_err("Failed to disconnect the existing connection");
 		return -EALREADY;
@@ -20581,7 +20580,7 @@ hdd_qca_reason_to_str(enum qca_disconnect_reason_codes reason)
 
 /**
  * wlan_hdd_sir_mac_to_qca_reason() - Convert to qca internal disconnect reason
- * @internal_reason: Mac reason code of type @enum eSirMacReasonCodes
+ * @internal_reason: Mac reason code of type @enum wlan_reason_code
  *
  * Check if it is internal reason code and convert it to the
  * enum qca_disconnect_reason_codes.
@@ -20589,60 +20588,60 @@ hdd_qca_reason_to_str(enum qca_disconnect_reason_codes reason)
  * Return: Reason code of type enum qca_disconnect_reason_codes
  */
 static enum qca_disconnect_reason_codes
-wlan_hdd_sir_mac_to_qca_reason(enum eSirMacReasonCodes internal_reason)
+wlan_hdd_sir_mac_to_qca_reason(enum wlan_reason_code internal_reason)
 {
 	enum qca_disconnect_reason_codes reason =
 					QCA_DISCONNECT_REASON_UNSPECIFIED;
 	switch (internal_reason) {
-	case eSIR_MAC_HOST_TRIGGERED_ROAM_FAILURE:
+	case REASON_HOST_TRIGGERED_ROAM_FAILURE:
 		reason = QCA_DISCONNECT_REASON_INTERNAL_ROAM_FAILURE;
 		break;
-	case eSIR_MAC_FW_TRIGGERED_ROAM_FAILURE:
+	case REASON_FW_TRIGGERED_ROAM_FAILURE:
 		reason = QCA_DISCONNECT_REASON_EXTERNAL_ROAM_FAILURE;
 		break;
-	case eSIR_MAC_GATEWAY_REACHABILITY_FAILURE:
+	case REASON_GATEWAY_REACHABILITY_FAILURE:
 		reason =
 		QCA_DISCONNECT_REASON_GATEWAY_REACHABILITY_FAILURE;
 		break;
-	case eSIR_MAC_UNSUPPORTED_CHANNEL_CSA:
+	case REASON_UNSUPPORTED_CHANNEL_CSA:
 		reason = QCA_DISCONNECT_REASON_UNSUPPORTED_CHANNEL_CSA;
 		break;
-	case eSIR_MAC_OPER_CHANNEL_DISABLED_INDOOR:
+	case REASON_OPER_CHANNEL_DISABLED_INDOOR:
 		reason =
 		QCA_DISCONNECT_REASON_OPER_CHANNEL_DISABLED_INDOOR;
 		break;
-	case eSIR_MAC_OPER_CHANNEL_USER_DISABLED:
+	case REASON_OPER_CHANNEL_USER_DISABLED:
 		reason =
 		QCA_DISCONNECT_REASON_OPER_CHANNEL_USER_DISABLED;
 		break;
-	case eSIR_MAC_DEVICE_RECOVERY:
+	case REASON_DEVICE_RECOVERY:
 		reason = QCA_DISCONNECT_REASON_DEVICE_RECOVERY;
 		break;
-	case eSIR_MAC_KEY_TIMEOUT:
+	case REASON_KEY_TIMEOUT:
 		reason = QCA_DISCONNECT_REASON_KEY_TIMEOUT;
 		break;
-	case eSIR_MAC_OPER_CHANNEL_BAND_CHANGE:
+	case REASON_OPER_CHANNEL_BAND_CHANGE:
 		reason = QCA_DISCONNECT_REASON_OPER_CHANNEL_BAND_CHANGE;
 		break;
-	case eSIR_MAC_IFACE_DOWN:
+	case REASON_IFACE_DOWN:
 		reason = QCA_DISCONNECT_REASON_IFACE_DOWN;
 		break;
-	case eSIR_MAC_PEER_XRETRY_FAIL:
+	case REASON_PEER_XRETRY_FAIL:
 		reason = QCA_DISCONNECT_REASON_PEER_XRETRY_FAIL;
 		break;
-	case eSIR_MAC_PEER_INACTIVITY:
+	case REASON_PEER_INACTIVITY:
 		reason = QCA_DISCONNECT_REASON_PEER_INACTIVITY;
 		break;
-	case eSIR_MAC_SA_QUERY_TIMEOUT:
+	case REASON_SA_QUERY_TIMEOUT:
 		reason = QCA_DISCONNECT_REASON_SA_QUERY_TIMEOUT;
 		break;
-	case eSIR_MAC_CHANNEL_SWITCH_FAILED:
+	case REASON_CHANNEL_SWITCH_FAILED:
 		reason = QCA_DISCONNECT_REASON_CHANNEL_SWITCH_FAILURE;
 		break;
-	case eSIR_MAC_BEACON_MISSED:
+	case REASON_BEACON_MISSED:
 		reason = QCA_DISCONNECT_REASON_BEACON_MISS_FAILURE;
 		break;
-	case eSIR_MAC_USER_TRIGGERED_ROAM_FAILURE:
+	case REASON_USER_TRIGGERED_ROAM_FAILURE:
 		reason = QCA_DISCONNECT_REASON_USER_TRIGGERED;
 		break;
 	default:
@@ -20657,7 +20656,7 @@ wlan_hdd_sir_mac_to_qca_reason(enum eSirMacReasonCodes internal_reason)
 /**
  * wlan_hdd_get_ieee80211_disconnect_reason() - Get ieee80211 disconnect reason
  * @adapter: pointer to adapter structure
- * @reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ * @reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * Reason codes that are greater than eSIR_MAC_REASON_PROP_START are internal
  * reason codes. Convert them to qca reason code format and cache in adapter
@@ -20668,7 +20667,7 @@ wlan_hdd_sir_mac_to_qca_reason(enum eSirMacReasonCodes internal_reason)
  */
 static enum ieee80211_reasoncode
 wlan_hdd_get_cfg80211_disconnect_reason(struct hdd_adapter *adapter,
-					enum eSirMacReasonCodes reason)
+					enum wlan_reason_code reason)
 {
 	enum ieee80211_reasoncode ieee80211_reason = WLAN_REASON_UNSPECIFIED;
 
@@ -20676,14 +20675,14 @@ wlan_hdd_get_cfg80211_disconnect_reason(struct hdd_adapter *adapter,
 	 * Convert and cache internal reason code in adapter. This can be
 	 * sent to userspace with a vendor event.
 	 */
-	if (reason >= eSIR_MAC_REASON_PROP_START) {
+	if (reason >= REASON_PROP_START) {
 		adapter->last_disconnect_reason =
 			wlan_hdd_sir_mac_to_qca_reason(reason);
 		/*
 		 * Applications expect reason code as 0 for beacon miss failure
 		 * due to backward compatibility. So send ieee80211_reason as 0.
 		 */
-		if (reason == eSIR_MAC_BEACON_MISSED)
+		if (reason == REASON_BEACON_MISSED)
 			ieee80211_reason = 0;
 	} else {
 		ieee80211_reason = (enum ieee80211_reasoncode)reason;
@@ -20699,7 +20698,7 @@ wlan_hdd_get_cfg80211_disconnect_reason(struct hdd_adapter *adapter,
 void
 wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 				      bool locally_generated,
-				      enum eSirMacReasonCodes reason,
+				      enum wlan_reason_code reason,
 				      uint8_t *disconnect_ies,
 				      uint16_t disconnect_ies_len)
 {
@@ -20721,7 +20720,7 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 void
 wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 				      bool locally_generated,
-				      enum eSirMacReasonCodes reason,
+				      enum wlan_reason_code reason,
 				      uint8_t *disconnect_ies,
 				      uint16_t disconnect_ies_len)
 {
@@ -20741,7 +20740,7 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 #endif
 
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
-			tSirMacReasonCodes mac_reason)
+			enum wlan_reason_code mac_reason)
 {
 	int ret;
 	mac_handle_t mac_handle;
@@ -21348,7 +21347,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 								     param)))
 			goto fn_end;
 	} else {
-		if (param->reason_code == eSIR_MAC_1X_AUTH_FAILURE_REASON)
+		if (param->reason_code == REASON_1X_AUTH_FAILURE)
 			hdd_softap_check_wait_for_tx_eap_pkt(
 					adapter, (struct qdf_mac_addr *)mac);
 
@@ -21462,7 +21461,7 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy, struct net_device *dev,
 				  const uint8_t *mac)
 {
-	uint16_t reason = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
+	uint16_t reason = REASON_DEAUTH_NETWORK_LEAVING;
 	uint8_t subtype = SIR_MAC_MGMT_DEAUTH >> 4;
 
 	return _wlan_hdd_cfg80211_del_station(wiphy, dev, mac, reason, subtype);
@@ -21471,7 +21470,7 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy, struct net_device *dev,
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy, struct net_device *dev,
 				  uint8_t *mac)
 {
-	uint16_t reason = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
+	uint16_t reason = REASON_DEAUTH_NETWORK_LEAVING;
 	uint8_t subtype = SIR_MAC_MGMT_DEAUTH >> 4;
 
 	return _wlan_hdd_cfg80211_del_station(wiphy, dev, mac, reason, subtype);

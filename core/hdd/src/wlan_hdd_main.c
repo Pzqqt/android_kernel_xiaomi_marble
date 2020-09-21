@@ -6974,7 +6974,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	struct sap_config *sap_config;
 	mac_handle_t mac_handle;
 	struct wlan_objmgr_vdev *vdev;
-	enum eSirMacReasonCodes reason = eSIR_MAC_IFACE_DOWN;
+	enum wlan_reason_code reason = REASON_IFACE_DOWN;
 
 	hdd_enter();
 
@@ -7017,7 +7017,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 
 			roam_profile = hdd_roam_profile(adapter);
 			if (cds_is_driver_recovering())
-				reason = eSIR_MAC_DEVICE_RECOVERY;
+				reason = REASON_DEVICE_RECOVERY;
 
 			/* For NDI do not use roam_profile */
 			if (adapter->device_mode == QDF_NDI_MODE) {
@@ -8277,7 +8277,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 				/* indicate disconnected event to nl80211 */
 				wlan_hdd_cfg80211_indicate_disconnect(
 					adapter, true,
-					eSIR_MAC_DEVICE_RECOVERY,
+					REASON_DEVICE_RECOVERY,
 					NULL, 0);
 			} else if (eConnectionState_Connecting == conn_state) {
 				/*

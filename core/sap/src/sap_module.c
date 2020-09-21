@@ -2358,7 +2358,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 			     QDF_MAC_ADDR_SIZE);
 
 	if (reason_code == 0)
-		params->reason_code = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
+		params->reason_code = REASON_DEAUTH_NETWORK_LEAVING;
 	else
 		params->reason_code = reason_code;
 

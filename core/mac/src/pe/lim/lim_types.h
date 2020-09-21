@@ -820,7 +820,7 @@ void lim_handle_heart_beat_failure(struct mac_context *, struct pe_session *);
  * lim_tear_down_link_with_ap() - Tear down link with AP
  * @mac: mac context
  * @session_id: PE session id
- * @reason_code: Disconnect reason code as per emun eSirMacReasonCodes
+ * @reason_code: Disconnect reason code as per emun wlan_reason_code
  * @trigger: Disconnect trigger as per enum eLimDisassocTrigger
  *
  * Function that triggers link tear down with AP upon HB failure
@@ -829,7 +829,7 @@ void lim_handle_heart_beat_failure(struct mac_context *, struct pe_session *);
  */
 void lim_tear_down_link_with_ap(struct mac_context *mac,
 				uint8_t session_id,
-				tSirMacReasonCodes reason_code,
+				enum wlan_reason_code reason_code,
 				enum eLimDisassocTrigger trigger);
 
 /* / Function that defers the messages received */

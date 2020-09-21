@@ -888,8 +888,7 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 		     QDF_MAC_ADDR_SIZE);
 	pSirSmeDeauthInd->reasonCode = sta->mlmStaContext.disassocReason;
 
-	if (eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON ==
-		sta->mlmStaContext.disassocReason)
+	if (sta->mlmStaContext.disassocReason == REASON_STA_LEAVING)
 		pSirSmeDeauthInd->rssi = sta->del_sta_ctx_rssi;
 
 	if (LIM_IS_STA_ROLE(pe_session))
@@ -1105,7 +1104,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 			 reasonCode, QDF_MAC_ADDR_REF(peerMacAddr));
 		pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
 		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
-		pSirSmeDeauthInd->reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
+		pSirSmeDeauthInd->reasonCode = REASON_UNSPEC_FAILURE;
 		pSirSmeDeauthInd->vdev_id = smesessionId;
 		pSirSmeDeauthInd->status_code = reasonCode;
 		qdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, pe_session->bssId,

@@ -541,7 +541,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			       "(associd: %d) sta mac" QDF_MAC_ADDR_FMT,
 			       associd, QDF_MAC_ADDR_REF(mac_hdr->sa));
 			lim_send_deauth_mgmt_frame(mac_ctx,
-				eSIR_MAC_UNSPEC_FAILURE_REASON,
+				REASON_UNSPEC_FAILURE,
 				(uint8_t *) mac_hdr->sa,
 				pe_session, false);
 			lim_trigger_sta_deletion(mac_ctx, sta_ds_ptr,
@@ -605,7 +605,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 				 QDF_MAC_ADDR_FMT, associd,
 				 QDF_MAC_ADDR_REF(sta_ds_ptr->staAddr));
 			lim_send_deauth_mgmt_frame(mac_ctx,
-				eSIR_MAC_UNSPEC_FAILURE_REASON,
+				REASON_UNSPEC_FAILURE,
 				(uint8_t *)auth_node->peerMacAddr,
 				pe_session, false);
 			lim_trigger_sta_deletion(mac_ctx, sta_ds_ptr,
@@ -943,7 +943,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 							 pe_session);
 				lim_restore_from_auth_state(mac_ctx,
 					eSIR_SME_INVALID_WEP_DEFAULT_KEY,
-					eSIR_MAC_UNSPEC_FAILURE_REASON,
+					REASON_UNSPEC_FAILURE,
 					pe_session);
 				return;
 			}
