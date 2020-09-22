@@ -23,6 +23,7 @@
 #include <qdf_event.h>
 #include <qdf_threads.h>
 #include <wlan_objmgr_vdev_obj.h>
+
 /* Maximum number of REO rings supported (for stats tracking) */
 #define DP_RX_TM_MAX_REO_RINGS 4
 
@@ -140,6 +141,18 @@ struct dp_rx_tm_handle {
 };
 
 /**
+ * enum dp_rx_gro_flush_code - enum differentiate different GRO flushes
+ * @DP_RX_GRO_NOT_FLUSH: not fush indication
+ * @DP_RX_GRO_NORMAL_FLUSH: Regular full flush
+ * @DP_RX_GRO_LOW_TPUT_FLUSH: Flush during low tput level
+ */
+enum dp_rx_gro_flush_code {
+	DP_RX_GRO_NOT_FLUSH,
+	DP_RX_GRO_NORMAL_FLUSH,
+	DP_RX_GRO_LOW_TPUT_FLUSH
+};
+
+/**
  * dp_rx_tm_init() - initialize DP Rx thread infrastructure
  * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread infrastructure
  * @num_dp_rx_threads: number of DP Rx threads to be initialized
@@ -171,11 +184,13 @@ QDF_STATUS dp_rx_tm_enqueue_pkt(struct dp_rx_tm_handle *rx_tm_hdl,
  * dp_rx_tm_gro_flush_ind() - flush GRO packets for a RX Context Id
  * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread infrastructure
  * @rx_ctx_id: RX Thread Contex Id for which GRO flush needs to be done
+ * @flush_code: flush code to differentiate low TPUT flush
  *
  * Return: QDF_STATUS_SUCCESS
  */
 QDF_STATUS dp_rx_tm_gro_flush_ind(struct dp_rx_tm_handle *rx_tm_handle,
-				  int rx_ctx_id);
+				  int rx_ctx_id,
+				  enum dp_rx_gro_flush_code flush_code);
 
 /**
  * dp_rx_tm_suspend() - suspend all threads in RXTI
