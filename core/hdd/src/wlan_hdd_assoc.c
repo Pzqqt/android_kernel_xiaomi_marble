@@ -2218,62 +2218,6 @@ hdd_rx_register_fisa_ops(struct ol_txrx_ops *txrx_ops)
 #endif
 
 /**
- * hdd_change_sta_state_authenticated()-
- * This function changes STA state to authenticated
- * @adapter:  pointer to the adapter structure.
- * @roaminfo: pointer to the RoamInfo structure.
- *
- * This is called from hdd_RoamSetKeyCompleteHandler
- * in context to eCSR_ROAM_SET_KEY_COMPLETE event from fw.
- * Also called for open authentication connection from
- * association_completion_handler
- *
- * Return: 0 on success and errno on failure
- */
-static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
-					      struct csr_roam_info *roaminfo)
-{
-	QDF_STATUS status;
-	uint8_t *mac_addr;
-	uint32_t timeout, auto_bmps_timer_val;
-	struct hdd_station_ctx *hddstactx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct wlan_objmgr_vdev *vdev;
-
-	ucfg_mlme_get_auto_bmps_timer_value(hdd_ctx->psoc,
-					    &auto_bmps_timer_val);
-	timeout = hddstactx->hdd_reassoc_scenario ?
-		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
-		(auto_bmps_timer_val * 1000);
-
-	mac_addr = hddstactx->conn_info.bssid.bytes;
-
-	hdd_debug("Changing Peer state to AUTHENTICATED for Sta = "
-		  QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr));
-
-	/* Change CDP Peer state to 'Authenticated' */
-	status = hdd_change_peer_state(adapter, mac_addr,
-				       OL_TXRX_PEER_STATE_AUTH);
-	hdd_conn_set_authenticated(adapter, true);
-
-	vdev = hdd_objmgr_get_vdev(adapter);
-	if (vdev) {
-		hdd_objmgr_set_peer_mlme_auth_state(vdev, true);
-		hdd_objmgr_put_vdev(vdev);
-	}
-
-	if ((adapter->device_mode == QDF_STA_MODE) ||
-	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-		sme_ps_enable_auto_ps_timer(hdd_ctx->mac_handle,
-					    adapter->vdev_id,
-					    timeout);
-	}
-
-	return qdf_status_to_os_return(status);
-}
-
-/**
  * hdd_roam_register_sta() - register station
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
@@ -2290,7 +2234,6 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	struct ol_txrx_desc_type txrx_desc = {0};
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wlan_objmgr_vdev *vdev;
 
 	if (!bss_desc)
 		return QDF_STATUS_E_FAILURE;
@@ -2360,13 +2303,18 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	if (!roam_info->fAuthRequired) {
 		/*
 		 * Connections that do not need Upper layer auth, transition
-		 * CDP peer state directly to 'Authenticated' state
+		 * TLSHIM directly to 'Authenticated' state
 		 */
-		hdd_change_sta_state_authenticated(adapter,
-						   roam_info);
+		qdf_status = hdd_conn_change_peer_state(
+						adapter, roam_info,
+						txrx_desc.peer_addr.bytes,
+						OL_TXRX_PEER_STATE_AUTH);
+
+		hdd_conn_set_authenticated(adapter, true);
+		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
 	} else {
 		hdd_debug("ULA auth Sta: " QDF_MAC_ADDR_FMT
-			  " Changing CDP Peer State to CONNECTED at Join time",
+			  " Changing TL state to CONNECTED at Join time",
 			  QDF_MAC_ADDR_REF(txrx_desc.peer_addr.bytes));
 
 		qdf_status = hdd_conn_change_peer_state(
@@ -2375,11 +2323,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 						OL_TXRX_PEER_STATE_CONN);
 
 		hdd_conn_set_authenticated(adapter, false);
-		vdev = hdd_objmgr_get_vdev(adapter);
-		if (vdev) {
-			hdd_objmgr_set_peer_mlme_auth_state(vdev, false);
-			hdd_objmgr_put_vdev(vdev);
-		}
+		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, false);
 	}
 	return qdf_status;
 }
@@ -2634,6 +2578,57 @@ done:
 }
 
 /**
+ * hdd_change_sta_state_authenticated()-
+ * This function changes STA state to authenticated
+ * @adapter:  pointer to the adapter structure.
+ * @roaminfo: pointer to the RoamInfo structure.
+ *
+ * This is called from hdd_RoamSetKeyCompleteHandler
+ * in context to eCSR_ROAM_SET_KEY_COMPLETE event from fw.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
+					      struct csr_roam_info *roaminfo)
+{
+	QDF_STATUS status;
+	uint8_t *mac_addr;
+	uint32_t timeout, auto_bmps_timer_val;
+	struct hdd_station_ctx *hddstactx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	ucfg_mlme_get_auto_bmps_timer_value(hdd_ctx->psoc,
+					    &auto_bmps_timer_val);
+	timeout = hddstactx->hdd_reassoc_scenario ?
+		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
+		(auto_bmps_timer_val * 1000);
+
+	mac_addr = hddstactx->conn_info.bssid.bytes;
+
+	hdd_debug("Changing Peer state to AUTHENTICATED for Sta = "
+		  QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr));
+
+	/* Connections that do not need Upper layer authentication,
+	 * transition TL to 'Authenticated' state after the keys are set
+	 */
+
+	status = hdd_change_peer_state(adapter, mac_addr,
+				       OL_TXRX_PEER_STATE_AUTH);
+	hdd_conn_set_authenticated(adapter, true);
+	hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
+
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
+		sme_ps_enable_auto_ps_timer(hdd_ctx->mac_handle,
+					    adapter->vdev_id,
+					    timeout);
+	}
+
+	return qdf_status_to_os_return(status);
+}
+
+/**
  * hdd_change_peer_state_after_set_key() - change the peer state on set key
  *                                         complete
  * @adapter: pointer to HDD adapter
@@ -2834,7 +2829,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle;
 	uint32_t conn_info_freq;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wlan_objmgr_vdev *vdev;
 #ifdef WLAN_FEATURE_INTERFACE_MGR
 	struct if_mgr_event_data *connect_complete;
 #endif
@@ -3324,17 +3318,22 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						roam_info->bssid.bytes,
 						OL_TXRX_PEER_STATE_CONN);
 				hdd_conn_set_authenticated(adapter, false);
-
-				vdev = hdd_objmgr_get_vdev(adapter);
-				if (vdev) {
-					hdd_objmgr_set_peer_mlme_auth_state(
-									vdev,
-									false);
-					hdd_objmgr_put_vdev(vdev);
-				}
+				hdd_objmgr_set_peer_mlme_auth_state(
+							adapter->vdev,
+							false);
 			} else {
-				hdd_change_sta_state_authenticated(adapter,
-								   roam_info);
+				hdd_debug("sta: " QDF_MAC_ADDR_FMT
+					  "Changing TL state to AUTHENTICATED",
+					  QDF_MAC_ADDR_REF(
+					  roam_info->bssid.bytes));
+				qdf_status =
+					hdd_change_peer_state(adapter,
+						roam_info->bssid.bytes,
+						OL_TXRX_PEER_STATE_AUTH);
+				hdd_conn_set_authenticated(adapter, true);
+				hdd_objmgr_set_peer_mlme_auth_state(
+							adapter->vdev,
+							true);
 			}
 
 			if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
