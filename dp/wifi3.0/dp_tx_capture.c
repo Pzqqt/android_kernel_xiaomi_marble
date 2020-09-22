@@ -147,7 +147,7 @@ static inline void check_queue_empty(qdf_nbuf_queue_t *qhead)
 	if (qdf_unlikely(!qdf_nbuf_is_queue_empty(qhead))) {
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_FATAL,
 			  "Queue is not empty len(%d) !!",
-			  qdf_nbuf_queue_len(q_head));
+			  qdf_nbuf_queue_len(qhead));
 		QDF_BUG(0);
 	}
 }
@@ -558,14 +558,15 @@ void dp_peer_tid_peer_id_update(struct dp_peer *peer, uint16_t peer_id)
 	int tid;
 	struct dp_tx_tid *tx_tid;
 
+	/*
+	 * For the newly created peer after tx monitor turned ON,
+	 * initialization check is already taken care in queue init
+	 */
 	dp_peer_tid_queue_init(peer);
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
 		tx_tid->peer_id = peer_id;
-		if (tx_tid->tid != tid) {
-			qdf_err("tx tid is corrupted for tid %d, peer_id %d", tid, peer_id);
-			tx_tid->tid = tid;
-		}
+		tx_tid->tid = tid;
 	}
 }
 
@@ -576,8 +577,25 @@ void dp_peer_tid_peer_id_update(struct dp_peer *peer, uint16_t peer_id)
  */
 void dp_peer_tid_queue_init(struct dp_peer *peer)
 {
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
 	int tid;
 	struct dp_tx_tid *tx_tid;
+
+	if (!peer)
+		return;
+
+	vdev = peer->vdev;
+	pdev = vdev->pdev;
+
+	/* only if tx capture is turned on we will initialize the tid */
+	if (qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode) ==
+	    CDP_TX_ENH_CAPTURE_DISABLED)
+		return;
+
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+		  QDF_TRACE_LEVEL_INFO_LOW,
+		  "peer(%p) id:%d init!!", peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
@@ -586,6 +604,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 						&tx_tid->tid_flags))
 			continue;
 
+		tx_tid->peer_id = peer->peer_id;
 		tx_tid->tid = tid;
 
 		check_queue_empty(&tx_tid->defer_msdu_q);
@@ -609,6 +628,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 			for (i = 0; i < tid; i++) {
 				tx_tid = &peer->tx_capture.tx_tid[i];
 				qdf_mem_free(tx_tid->xretry_ppdu);
+				tx_tid->xretry_ppdu = NULL;
 				qdf_atomic_clear_bit(DP_PEER_TX_TID_INIT_DONE_BIT,
 							&tx_tid->tid_flags);
 			}
@@ -669,6 +689,10 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 
 	if (!peer->tx_capture.is_tid_initialized)
 		return;
+
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+		  QDF_TRACE_LEVEL_INFO_LOW,
+		  "peer(%p) id:%d cleanup!!", peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		uint32_t len = 0;
@@ -731,6 +755,7 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 
 		TX_CAP_NBUF_QUEUE_FREE(&xretry_user->mpdu_q);
 		qdf_mem_free(xretry_ppdu);
+		tx_tid->xretry_ppdu = NULL;
 
 		tx_tid->max_ppdu_id = 0;
 	}
@@ -1669,7 +1694,16 @@ static void  dp_peer_free_msdu_q(struct dp_soc *soc,
 				 struct dp_peer *peer,
 				 void *arg)
 {
+	/* disable tx capture flag in peer */
+	peer->tx_cap_enabled = 0;
 	dp_peer_tid_queue_cleanup(peer);
+}
+
+static void  dp_peer_init_msdu_q(struct dp_soc *soc,
+				 struct dp_peer *peer,
+				 void *arg)
+{
+	dp_peer_tid_queue_init(peer);
 }
 
 /*
@@ -1753,6 +1787,9 @@ dp_enh_tx_capture_disable(struct dp_pdev *pdev)
 void
 dp_enh_tx_capture_enable(struct dp_pdev *pdev, uint8_t user_mode)
 {
+	dp_pdev_iterate_peer(pdev, dp_peer_init_msdu_q, NULL,
+			     DP_MOD_ID_TX_CAPTURE);
+
 	if (dp_soc_is_tx_capture_set_in_pdev(pdev->soc) == 1)
 		dp_soc_set_txrx_ring_map_single(pdev->soc);
 
@@ -4563,6 +4600,14 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				continue;
 			}
 
+			if (!peer->tx_capture.is_tid_initialized) {
+				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
+				user->skip = 1;
+				dp_peer_unref_delete(peer,
+						     DP_MOD_ID_TX_CAPTURE);
+				continue;
+			}
+
 			tx_tid = &peer->tx_capture.tx_tid[user->tid];
 			ppdu_id = ppdu_desc->ppdu_id;
 
@@ -5098,7 +5143,7 @@ free_nbuf_dec_ref:
 		 */
 		/* print ppdu_desc info for debugging purpose */
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_INFO_HIGH,
+			  QDF_TRACE_LEVEL_INFO_LOW,
 			  "%s: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%u b %u] dur[%u]",
 			  __func__, ppdu_desc->ppdu_id,
 			  ppdu_desc->user[0].peer_id,
@@ -5389,11 +5434,13 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		ppdu_desc->sched_cmdid = ppdu_info->sched_cmdid;
 
 		if (starved) {
-			qdf_err("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
-				ppdu_desc->frame_ctrl,
-				ppdu_desc->htt_frame_type,
-				ppdu_desc->tlv_bitmap,
-				ppdu_desc->user[0].completion_status);
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_INFO_MED,
+				  "ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
+				  ppdu_desc->frame_ctrl,
+				  ppdu_desc->htt_frame_type,
+				  ppdu_desc->tlv_bitmap,
+				  ppdu_desc->user[0].completion_status);
 			starved = 0;
 		}
 
