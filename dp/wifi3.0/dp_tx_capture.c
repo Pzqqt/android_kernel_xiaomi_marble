@@ -4595,14 +4595,14 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 						     user->peer_id,
 						     DP_MOD_ID_TX_CAPTURE);
 			if (!peer) {
-				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
 				user->skip = 1;
+				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
 				continue;
 			}
 
 			if (!peer->tx_capture.is_tid_initialized) {
-				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
 				user->skip = 1;
+				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
 				dp_peer_unref_delete(peer,
 						     DP_MOD_ID_TX_CAPTURE);
 				continue;
@@ -5083,9 +5083,9 @@ dequeue_msdu_again:
 						    qlen);
 
 			if (!qlen) {
+				user->skip = 1;
 				dp_ppdu_queue_free(nbuf_ppdu,
 						   usr_idx);
-				user->skip = 1;
 				goto free_nbuf_dec_ref;
 			}
 
