@@ -18,7 +18,6 @@
 #include "ipahal_fltrt.h"
 
 #define IPA_GSI_EVENT_RP_SIZE 8
-#define IPA_WAN_AGGR_PKT_CNT 1
 #define IPA_WAN_NAPI_MAX_FRAMES (NAPI_WEIGHT / IPA_WAN_AGGR_PKT_CNT)
 #define IPA_WAN_PAGE_ORDER 3
 #define IPA_LAN_AGGR_PKT_CNT 1
@@ -5280,7 +5279,7 @@ int ipa3_rx_poll(u32 clnt_hdl, int weight)
 	trace_ipa3_napi_poll_entry(ep->client);
 
 	wan_def_sys = ipa3_ctx->ep[ipa_ep_idx].sys;
-	remain_aggr_weight = weight / IPA_WAN_AGGR_PKT_CNT;
+	remain_aggr_weight = weight / ipa3_ctx->ipa_wan_aggr_pkt_cnt;
 	if (remain_aggr_weight > IPA_WAN_NAPI_MAX_FRAMES) {
 		IPAERR("NAPI weight is higher than expected\n");
 		IPAERR("expected %d got %d\n",
@@ -5313,7 +5312,7 @@ start_poll:
 			break;
 		}
 	}
-	cnt += weight - remain_aggr_weight * IPA_WAN_AGGR_PKT_CNT;
+	cnt += weight - remain_aggr_weight * ipa3_ctx->ipa_wan_aggr_pkt_cnt;
 	/* call repl_hdlr before napi_reschedule / napi_complete */
 	ep->sys->repl_hdlr(ep->sys);
 	/* When not able to replenish enough descriptors, keep in polling
