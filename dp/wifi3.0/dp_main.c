@@ -4346,8 +4346,6 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	if (pdev->filter)
 		dp_mon_filter_dealloc(pdev);
 
-	dp_pdev_htt_stats_dbgfs_deinit(pdev);
-
 	dp_pdev_srng_deinit(pdev);
 
 	dp_ipa_uc_detach(pdev->soc, pdev);
@@ -4447,6 +4445,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 
+	dp_pdev_htt_stats_dbgfs_deinit(pdev);
 	dp_rx_pdev_mon_desc_pool_free(pdev);
 	dp_rx_pdev_desc_pool_free(pdev);
 	dp_pdev_srng_free(pdev);
