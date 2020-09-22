@@ -2844,7 +2844,6 @@ static const struct v4l2_ioctl_ops sde_rotator_ioctl_ops = {
 	.vidioc_g_parm            = sde_rotator_g_parm,
 	.vidioc_s_parm            = sde_rotator_s_parm,
 	.vidioc_default           = sde_rotator_private_ioctl,
-	.vidioc_log_status        = v4l2_ctrl_log_status,
 	.vidioc_subscribe_event   = sde_rotator_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = sde_rotator_event_unsubscribe,
 };

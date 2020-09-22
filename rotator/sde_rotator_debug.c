@@ -50,6 +50,8 @@
 
 #define SDE_ROT_TEST_MASK(id, tp)	((id << 4) | (tp << 1) | BIT(0))
 
+#if defined(CONFIG_MSM_SDE_ROTATOR_EVTLOG_DEBUG) && \
+	defined(CONFIG_DEBUG_FS)
 static DEFINE_SPINLOCK(sde_rot_xlock);
 
 /*
@@ -1358,3 +1360,4 @@ void sde_rotator_destroy_debugfs(struct dentry *debugfs)
 {
 	debugfs_remove_recursive(debugfs);
 }
+#endif

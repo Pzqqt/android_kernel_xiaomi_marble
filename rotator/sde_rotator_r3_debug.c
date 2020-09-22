@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -16,6 +16,8 @@
 #include "sde_rotator_r3.h"
 #include "sde_rotator_r3_internal.h"
 
+#if defined(CONFIG_MSM_SDE_ROTATOR_EVTLOG_DEBUG) && \
+	defined(CONFIG_DEBUG_FS)
 /*
  * sde_rotator_r3_create_debugfs - Setup rotator r3 debugfs directory structure.
  * @rot_dev: Pointer to rotator device
@@ -68,3 +70,4 @@ int sde_rotator_r3_create_debugfs(struct sde_rot_mgr *mgr,
 
 	return 0;
 }
+#endif
