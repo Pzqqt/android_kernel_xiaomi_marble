@@ -259,7 +259,8 @@ static void _dce_vdc_pipe_cfg(struct sde_hw_vdc *hw_vdc,
 		struct sde_hw_pingpong *hw_pp,
 		struct msm_display_vdc_info *vdc,
 		enum sde_3d_blend_mode mode_3d,
-		bool disable_merge_3d, bool enable)
+		bool disable_merge_3d, bool enable,
+		bool is_video_mode)
 {
 
 	if (!vdc || !hw_vdc || !hw_pp) {
@@ -282,7 +283,7 @@ static void _dce_vdc_pipe_cfg(struct sde_hw_vdc *hw_vdc,
 	}
 
 	if (hw_vdc->ops.vdc_config)
-		hw_vdc->ops.vdc_config(hw_vdc, vdc);
+		hw_vdc->ops.vdc_config(hw_vdc, vdc, is_video_mode);
 
 	if (mode_3d && disable_merge_3d && hw_pp->ops.reset_3d_mode) {
 		SDE_DEBUG("disabling 3d mux\n");
@@ -553,6 +554,7 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 	int intf_ip_w, enc_ip_w;
 	const struct sde_rm_topology_def *def;
 	int num_intf, num_vdc, num_lm;
+	bool is_video_mode = false;
 	int i;
 	int ret = 0;
 
@@ -625,6 +627,8 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 	SDE_DEBUG_DCE(sde_enc, "pic_w: %d pic_h: %d\n",
 				roi->w, roi->h);
 
+	is_video_mode = sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_VIDEO_MODE);
+
 	for (i = 0; i < num_vdc; i++) {
 		bool active = !!((1 << i) & params->affected_displays);
 
@@ -649,7 +653,8 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 		}
 
 		_dce_vdc_pipe_cfg(hw_vdc[i], hw_pp[i],
-				vdc, mode_3d, disable_merge_3d, active);
+				vdc, mode_3d, disable_merge_3d,
+				active, is_video_mode);
 
 		memset(&cfg, 0, sizeof(cfg));
 		cfg.vdc[cfg.vdc_count++] = hw_vdc[i]->idx;
@@ -763,6 +768,7 @@ static void _dce_vdc_disable(struct sde_encoder_virt *sde_enc)
 	struct sde_hw_vdc *hw_vdc = NULL;
 	struct sde_hw_ctl *hw_ctl = NULL;
 	struct sde_hw_intf_cfg_v1 cfg;
+	bool is_video_mode = false;
 
 	if (!sde_enc || !sde_enc->phys_encs[0] ||
 			!sde_enc->phys_encs[0]->connector) {
@@ -776,6 +782,7 @@ static void _dce_vdc_disable(struct sde_encoder_virt *sde_enc)
 
 	memset(&cfg, 0, sizeof(cfg));
 
+	is_video_mode = sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_VIDEO_MODE);
 	/* Disable VDC for all the pp's present in this topology */
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
 		hw_pp = sde_enc->hw_pp[i];
@@ -783,7 +790,7 @@ static void _dce_vdc_disable(struct sde_encoder_virt *sde_enc)
 
 		_dce_vdc_pipe_cfg(hw_vdc, hw_pp, NULL,
 						BLEND_3D_NONE, false,
-						false);
+						false, is_video_mode);
 
 		if (hw_vdc) {
 			sde_enc->dirty_vdc_ids[i] = hw_vdc->idx;

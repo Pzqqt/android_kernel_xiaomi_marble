@@ -29,9 +29,10 @@ struct sde_hw_vdc_ops {
 	 * vdc_config - configures vdc encoder
 	 * @hw_vdc: Pointer to vdc context
 	 * @vdc: panel vdc parameters
+	 * @is_video_mode: current panel mode is video
 	 */
 	void (*vdc_config)(struct sde_hw_vdc *hw_vdc,
-					   struct msm_display_vdc_info *vdc);
+			struct msm_display_vdc_info *vdc, bool is_video_mode);
 
 	/**
 	 * bind_pingpong_blk - enable/disable the connection with pp

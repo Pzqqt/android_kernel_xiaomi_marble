@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s] " fmt, __func__
@@ -2434,7 +2434,7 @@ int sde_rm_reserve(
 
 	/* Check if this is just a page-flip */
 	if (!_sde_rm_is_display_in_cont_splash(sde_kms, enc) &&
-			!drm_atomic_crtc_needs_modeset(crtc_state))
+			!msm_atomic_needs_modeset(crtc_state))
 		return 0;
 
 	comp_info = kzalloc(sizeof(*comp_info), GFP_KERNEL);

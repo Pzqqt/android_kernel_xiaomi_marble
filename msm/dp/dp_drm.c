@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/drm_atomic_helper.h>
@@ -457,6 +457,7 @@ int dp_connector_get_info(struct drm_connector *connector,
 	info->num_of_h_tiles = 1;
 	info->h_tile_instance[0] = 0;
 	info->is_connected = display->is_sst_connected;
+	info->curr_panel_mode = MSM_DISPLAY_VIDEO_MODE;
 	info->capabilities = MSM_DISPLAY_CAP_VID_MODE | MSM_DISPLAY_CAP_EDID |
 		MSM_DISPLAY_CAP_HOT_PLUG;
 

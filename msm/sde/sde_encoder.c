@@ -867,7 +867,7 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 	int ret = 0;
 	struct drm_display_mode *adj_mode = &crtc_state->adjusted_mode;
 
-	if (sde_conn && drm_atomic_crtc_needs_modeset(crtc_state)) {
+	if (sde_conn && msm_atomic_needs_modeset(crtc_state)) {
 		struct msm_display_topology *topology = NULL;
 
 		ret = sde_connector_get_mode_info(&sde_conn->base,
@@ -2102,30 +2102,30 @@ static void sde_encoder_virt_mode_switch(struct drm_encoder *drm_enc,
 {
 	int i = 0;
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	bool poms_to_vid = msm_is_mode_seamless_poms_to_vid(adj_mode);
+	bool poms_to_cmd = msm_is_mode_seamless_poms_to_cmd(adj_mode);
 
-	if (intf_mode == INTF_MODE_CMD)
+	if (poms_to_vid)
 		sde_enc->disp_info.curr_panel_mode = MSM_DISPLAY_VIDEO_MODE;
-	else if (intf_mode == INTF_MODE_VIDEO)
+	else if (poms_to_cmd)
 		sde_enc->disp_info.curr_panel_mode = MSM_DISPLAY_CMD_MODE;
 
 	_sde_encoder_update_rsc_client(drm_enc, true);
 
-	if (intf_mode == INTF_MODE_CMD) {
+	if (intf_mode == INTF_MODE_CMD && poms_to_vid) {
 		for (i = 0; i < sde_enc->num_phys_encs; i++)
 			sde_enc->phys_encs[i] = sde_enc->phys_vid_encs[i];
 
 		SDE_DEBUG_ENC(sde_enc, "switch to video physical encoder\n");
-		SDE_EVT32(DRMID(&sde_enc->base), intf_mode,
-				adj_mode->base->flags, adj_mode->private_flags,
-				SDE_EVTLOG_FUNC_CASE1);
-	} else if (intf_mode == INTF_MODE_VIDEO) {
+		SDE_EVT32(DRMID(&sde_enc->base), intf_mode, poms_to_cmd, poms_to_vid,
+			SDE_EVTLOG_FUNC_CASE1);
+	} else if (intf_mode == INTF_MODE_VIDEO && poms_to_cmd) {
 		for (i = 0; i < sde_enc->num_phys_encs; i++)
 			sde_enc->phys_encs[i] = sde_enc->phys_cmd_encs[i];
 
 		SDE_DEBUG_ENC(sde_enc, "switch to command physical encoder\n");
-		SDE_EVT32(DRMID(&sde_enc->base), intf_mode,
-				adj_mode->base->flags, adj_mode->private_flags,
-				SDE_EVTLOG_FUNC_CASE2);
+		SDE_EVT32(DRMID(&sde_enc->base), intf_mode, poms_to_cmd, poms_to_vid,
+			SDE_EVTLOG_FUNC_CASE2);
 	}
 }
 
@@ -2218,19 +2218,6 @@ static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
 	}
 }
 
-static bool sde_encoder_detect_panel_mode_switch(
-		struct drm_display_mode *adj_mode, enum sde_intf_mode intf_mode)
-{
-	/* don't rely on POMS flag as it may not be set for power-on modeset */
-	if ((intf_mode == INTF_MODE_CMD &&
-	     adj_mode->flags & DRM_MODE_FLAG_VID_MODE_PANEL) ||
-	    (intf_mode == INTF_MODE_VIDEO &&
-	     adj_mode->flags & DRM_MODE_FLAG_CMD_MODE_PANEL))
-		return true;
-
-	return false;
-}
-
 static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
 		struct msm_display_mode *msm_mode, bool pre_modeset)
 {
@@ -2262,8 +2249,7 @@ static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
 			 * modeset to guarantee previous kickoff has finished.
 			 */
 			sde_encoder_dce_disable(sde_enc);
-		} else if (sde_encoder_detect_panel_mode_switch(msm_mode->base,
-					intf_mode)) {
+		} else if (msm_is_mode_seamless_poms(msm_mode)) {
 			_sde_encoder_modeset_helper_locked(drm_enc,
 					SDE_ENC_RC_EVENT_PRE_MODESET);
 			sde_encoder_virt_mode_switch(drm_enc, intf_mode,

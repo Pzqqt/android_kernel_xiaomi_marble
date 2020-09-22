@@ -59,11 +59,6 @@ static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 			!!(drm_mode->flags & DRM_MODE_FLAG_PHSYNC);
 	dsi_mode->timing.v_sync_polarity =
 			!!(drm_mode->flags & DRM_MODE_FLAG_PVSYNC);
-
-	if (drm_mode->flags & DRM_MODE_FLAG_VID_MODE_PANEL)
-		dsi_mode->panel_mode = DSI_OP_VIDEO_MODE;
-	if (drm_mode->flags & DRM_MODE_FLAG_CMD_MODE_PANEL)
-		dsi_mode->panel_mode = DSI_OP_CMD_MODE;
 }
 
 static void msm_parse_mode_priv_info(const struct msm_display_mode *msm_mode,
@@ -90,8 +85,10 @@ static void msm_parse_mode_priv_info(const struct msm_display_mode *msm_mode,
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_DMS;
 	if (msm_is_mode_seamless_vrr(msm_mode))
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_VRR;
-	if (msm_is_mode_seamless_poms(msm_mode))
-		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS;
+	if (msm_is_mode_seamless_poms_to_vid(msm_mode))
+		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS_TO_VID;
+	if (msm_is_mode_seamless_poms_to_cmd(msm_mode))
+		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS_TO_CMD;
 	if (msm_is_mode_seamless_dyn_clk(msm_mode))
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_DYN_CLK;
 }
@@ -99,7 +96,15 @@ static void msm_parse_mode_priv_info(const struct msm_display_mode *msm_mode,
 void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 				struct drm_display_mode *drm_mode)
 {
-	bool video_mode = (dsi_mode->panel_mode == DSI_OP_VIDEO_MODE);
+	char *panel_caps = "vid";
+
+	if ((dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE) &&
+		(dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE))
+		panel_caps = "vid_cmd";
+	else if (dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE)
+		panel_caps = "vid";
+	else if (dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE)
+		panel_caps = "cmd";
 
 	memset(drm_mode, 0, sizeof(*drm_mode));
 
@@ -126,16 +131,11 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 	if (dsi_mode->timing.v_sync_polarity)
 		drm_mode->flags |= DRM_MODE_FLAG_PVSYNC;
 
-	if (dsi_mode->panel_mode == DSI_OP_VIDEO_MODE)
-		drm_mode->flags |= DRM_MODE_FLAG_VID_MODE_PANEL;
-	if (dsi_mode->panel_mode == DSI_OP_CMD_MODE)
-		drm_mode->flags |= DRM_MODE_FLAG_CMD_MODE_PANEL;
-
 	/* set mode name */
 	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%dx%d%s",
 			drm_mode->hdisplay, drm_mode->vdisplay,
 			drm_mode->vrefresh, drm_mode->clock,
-			video_mode ? "vid" : "cmd");
+			panel_caps);
 }
 
 static void dsi_convert_to_msm_mode(const struct dsi_display_mode *dsi_mode,
@@ -154,8 +154,10 @@ static void dsi_convert_to_msm_mode(const struct dsi_display_mode *dsi_mode,
 		msm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_DMS;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_VRR)
 		msm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_VRR;
-	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_POMS)
-		msm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_POMS;
+	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_VID)
+		msm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_POMS_VID;
+	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_CMD)
+		msm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_POMS_CMD;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)
 		msm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_DYN_CLK;
 }
@@ -263,9 +265,11 @@ static void dsi_bridge_enable(struct drm_bridge *bridge)
 
 	if (display && display->drm_conn) {
 		sde_connector_helper_bridge_enable(display->drm_conn);
-		if (c_bridge->dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)
+		if (display->poms_pending) {
+			display->poms_pending = false;
 			sde_connector_schedule_status_work(display->drm_conn,
 				true);
+		}
 	}
 }
 
@@ -429,6 +433,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	/* propagate the private info to the adjusted_mode derived dsi mode */
 	dsi_mode.priv_info = panel_dsi_mode->priv_info;
 	dsi_mode.dsi_mode_flags = panel_dsi_mode->dsi_mode_flags;
+	dsi_mode.panel_mode_caps = panel_dsi_mode->panel_mode_caps;
 	dsi_mode.timing.dsc_enabled = dsi_mode.priv_info->dsc_enabled;
 	dsi_mode.timing.dsc = &dsi_mode.priv_info->dsc;
 
@@ -455,25 +460,12 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			return false;
 		}
 
-		/* No panel mode switch when drm pipeline is changing */
-		if ((dsi_mode.panel_mode != cur_dsi_mode.panel_mode) &&
-			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
-			(crtc_state->enable ==
-				crtc_state->crtc->state->enable)) {
-			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_POMS;
-
-			SDE_EVT32(SDE_EVTLOG_FUNC_CASE1,
-				dsi_mode.timing.h_active,
-				dsi_mode.timing.v_active,
-				dsi_mode.timing.refresh_rate,
-				dsi_mode.pixel_clk_khz,
-				dsi_mode.panel_mode);
-		}
 		/* No DMS/VRR when drm pipeline is changing */
 		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
-			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)) &&
+			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_VID)) &&
+			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_CMD)) &&
 			(!crtc_state->active_changed ||
 			 display->is_cont_splash_enabled)) {
 			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_DMS;
@@ -483,15 +475,16 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 				dsi_mode.timing.v_active,
 				dsi_mode.timing.refresh_rate,
 				dsi_mode.pixel_clk_khz,
-				dsi_mode.panel_mode);
+				dsi_mode.panel_mode_caps);
 		}
 	}
 
 	/* Reject seamless transition when active changed */
 	if (crtc_state->active_changed &&
-			((dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) ||
-			 (dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS) ||
-			 (dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK))) {
+		((dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) ||
+		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK) ||
+		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_VID) ||
+		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_CMD))) {
 		DSI_INFO("seamless upon active changed 0x%x %d\n",
 			dsi_mode.dsi_mode_flags, crtc_state->active_changed);
 		return false;
@@ -579,6 +572,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	mode_info->jitter_denom = dsi_mode->priv_info->panel_jitter_denom;
 	mode_info->dfps_maxfps = dsi_drm_get_dfps_maxfps(display);
 	mode_info->clk_rate = dsi_drm_find_bit_clk_rate(display, drm_mode);
+	mode_info->panel_mode_caps = dsi_mode->panel_mode_caps;
 	mode_info->mdp_transfer_time_us =
 		dsi_mode->priv_info->mdp_transfer_time_us;
 
@@ -1210,6 +1204,7 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 		void *display)
 {
 	u32 mode_idx = 0, cmp_mode_idx = 0;
+	u32 common_mode_caps = 0;
 	struct drm_display_mode *drm_mode, *cmp_drm_mode;
 	struct dsi_display_mode dsi_mode, *panel_dsi_mode, *cmp_panel_dsi_mode;
 	struct list_head *mode_list = &connector->modes;
@@ -1255,6 +1250,8 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 
 			cmp_dsi_mode_info = cmp_panel_dsi_mode->priv_info;
 			allow_switch = false;
+			common_mode_caps = (panel_dsi_mode->panel_mode_caps &
+					cmp_panel_dsi_mode->panel_mode_caps);
 
 			/*
 			 * FPS switch among video modes, is only supported
@@ -1262,14 +1259,12 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 			 * Reject any mode switches between video mode timing
 			 * nodes if support for those features is not present.
 			 */
-			if (panel_dsi_mode->panel_mode ==
-					cmp_panel_dsi_mode->panel_mode) {
-				if (panel_dsi_mode->panel_mode ==
-						DSI_OP_CMD_MODE)
-					allow_switch = true;
-				else if (panel->dfps_caps.dfps_support ||
-					panel->dyn_clk_caps.dyn_clk_support)
-					allow_switch = true;
+			if (common_mode_caps & DSI_OP_CMD_MODE) {
+				allow_switch = true;
+			} else if ((common_mode_caps & DSI_OP_VIDEO_MODE) &&
+				(panel->dfps_caps.dfps_support ||
+				panel->dyn_clk_caps.dyn_clk_support)) {
+				allow_switch = true;
 			} else {
 				if (is_valid_poms_switch(panel_dsi_mode,
 						cmp_panel_dsi_mode))

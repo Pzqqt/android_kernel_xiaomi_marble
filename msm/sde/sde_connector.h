@@ -459,6 +459,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @thermal_max_brightness: thermal max brightness cap
  * @status_work: work object to perform status checks
  * @esd_status_interval: variable to change ESD check interval in millisec
+ * @expected_panel_mode: expected panel mode by usespace
  * @panel_dead: Flag to indicate if panel has gone bad
  * @esd_status_check: Flag to indicate if ESD thread is scheduled or not
  * @bl_scale_dirty: Flag to indicate PP BL scale value(s) is changed
@@ -523,6 +524,7 @@ struct sde_connector {
 	u32 esd_status_interval;
 	bool panel_dead;
 	bool esd_status_check;
+	enum panel_op_mode expected_panel_mode;
 
 	bool bl_scale_dirty;
 	u32 bl_scale;

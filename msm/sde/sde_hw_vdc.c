@@ -108,7 +108,7 @@ static void sde_hw_vdc_disable(struct sde_hw_vdc *hw_vdc)
 }
 
 static void sde_hw_vdc_config(struct sde_hw_vdc *hw_vdc,
-	struct msm_display_vdc_info *vdc)
+	struct msm_display_vdc_info *vdc, bool is_video_mode)
 {
 	struct sde_hw_blk_reg_map *vdc_reg = &hw_vdc->hw;
 	u32 idx;
@@ -136,7 +136,7 @@ static void sde_hw_vdc_config(struct sde_hw_vdc *hw_vdc,
 	SDE_REG_WRITE(vdc_reg, ENC_ORIG_SLICE + idx, data);
 
 	data = 0;
-	if (vdc->panel_mode == VDC_VIDEO_MODE)
+	if (is_video_mode)
 		data |= BIT(9);
 	data |= ((vdc->num_of_active_ss - 1) << 12);
 	data |= vdc->initial_lines;
