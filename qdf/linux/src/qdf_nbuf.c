@@ -456,7 +456,7 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 	uint32_t lowmem_alloc_tries = 0;
 
 	if (align)
-		size = qdf_align(size, align);
+		size += (align - 1);
 
 realloc:
 	skb = dev_alloc_skb(size);
@@ -529,7 +529,7 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 	int flags = GFP_KERNEL;
 
 	if (align)
-		size = qdf_align(size, align);
+		size += (align - 1);
 
 	if (in_interrupt() || irqs_disabled() || in_atomic()) {
 		flags = GFP_ATOMIC;
@@ -600,7 +600,7 @@ __qdf_nbuf_t __qdf_nbuf_alloc_no_recycler(size_t size, int reserve, int align,
 	unsigned long offset;
 
 	if (align)
-		size = qdf_align(size, align);
+		size += (align - 1);
 
 	nbuf = alloc_skb(size, GFP_ATOMIC);
 	if (!nbuf)
