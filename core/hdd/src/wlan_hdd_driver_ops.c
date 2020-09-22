@@ -666,6 +666,12 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
+	/* if driver is unloading, there is no need to do SSR */
+	if (qdf_is_driver_unloading()) {
+		hdd_info("driver is unloading, avoid SSR");
+		return 0;
+	}
+
 	/* SSR transition is initiated at the beginning of soc shutdown */
 	errno = osif_psoc_sync_trans_resume(dev, &psoc_sync);
 	QDF_BUG(!errno);
@@ -901,6 +907,12 @@ static void hdd_soc_recovery_shutdown(struct device *dev)
 {
 	struct osif_psoc_sync *psoc_sync;
 	int errno;
+
+	/* if driver is unloading, there is no need to do SSR */
+	if (qdf_is_driver_unloading()) {
+		hdd_info("driver is unloading, avoid SSR");
+		return;
+	}
 
 	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
 	if (errno)
