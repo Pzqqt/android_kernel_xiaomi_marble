@@ -2551,8 +2551,9 @@ static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
 		return;
 
 	topology = sde_connector_get_topology_name(phys->connector);
-	if ((topology == SDE_RM_TOPOLOGY_PPSPLIT) &&
-			(phys->split_role == ENC_ROLE_SLAVE))
+	if ((topology == SDE_RM_TOPOLOGY_NONE) ||
+			((topology == SDE_RM_TOPOLOGY_PPSPLIT) &&
+			(phys->split_role == ENC_ROLE_SLAVE)))
 		return;
 
 	drm_enc = phys->parent;
