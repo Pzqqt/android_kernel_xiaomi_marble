@@ -59,6 +59,8 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 {
 	tpSirMacMgmtHdr mac_hdr;
 	tSchBeaconStruct *bcn_ptr;
+	uint8_t *frame;
+	uint16_t frame_len;
 
 	mac_ctx->lim.gLimNumBeaconsRcvd++;
 
@@ -67,6 +69,8 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	 * beacon counter
 	 */
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+	frame = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
 	pe_debug("Beacon (len %d): " QDF_MAC_ADDR_FMT " RSSI %d",
 		 WMA_GET_RX_MPDU_LEN(rx_pkt_info),
@@ -114,6 +118,15 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 	if (session->limMlmState ==
 			eLIM_MLM_WT_JOIN_BEACON_STATE) {
+		if (session->connected_akm == ANI_AKM_TYPE_OWE &&
+		    wlan_get_vendor_ie_ptr_from_oui(OWE_TRANSITION_OUI_TYPE,
+						    OWE_TRANSITION_OUI_SIZE,
+						    frame, frame_len)) {
+			pe_debug("Drop OWE rx beacon. Wait for probe for join success");
+			qdf_mem_free(bcn_ptr);
+			return;
+		}
+
 		if (session->beacon) {
 			qdf_mem_free(session->beacon);
 			session->beacon = NULL;
