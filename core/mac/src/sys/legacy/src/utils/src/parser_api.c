@@ -6096,24 +6096,8 @@ populate_dot11f_he_operation(struct mac_context *mac_ctx,
 	qdf_mem_copy(he_op, &session->he_op, sizeof(*he_op));
 
 	he_op->present = 1;
-	if (!session->he_6ghz_band) {
-		he_op->vht_oper_present = 1;
-		if (session->ch_width > CH_WIDTH_40MHZ) {
-			he_op->vht_oper.info.chan_width = 1;
-			he_op->vht_oper.info.center_freq_seg0 =
-				session->ch_center_freq_seg0;
-			if (session->ch_width == CH_WIDTH_80P80MHZ ||
-			    session->ch_width == CH_WIDTH_160MHZ)
-				he_op->vht_oper.info.center_freq_seg1 =
-					session->ch_center_freq_seg1;
-			else
-				he_op->vht_oper.info.center_freq_seg1 = 0;
-		} else {
-			he_op->vht_oper.info.chan_width = 0;
-			he_op->vht_oper.info.center_freq_seg0 = 0;
-			he_op->vht_oper.info.center_freq_seg1 = 0;
-		}
-	} else {
+	he_op->vht_oper_present = 0;
+	if (session->he_6ghz_band) {
 		he_op->oper_info_6g_present = 1;
 		he_op->oper_info_6g.info.ch_width = session->ch_width;
 		he_op->oper_info_6g.info.center_freq_seg0 =
