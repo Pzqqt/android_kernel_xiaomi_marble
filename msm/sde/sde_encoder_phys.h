@@ -52,16 +52,13 @@ enum sde_enc_split_role {
  * @SDE_ENC_ENABLED:	Encoder is enabled
  * @SDE_ENC_ERR_NEEDS_HW_RESET:	Encoder is enabled, but requires a hw_reset
  *				to recover from a previous error
- * @SDE_ENC_TIMING_ENGINE_RECONFIG: Encoder is enabled and timing engine
- *				parameters are updated
  */
 enum sde_enc_enable_state {
 	SDE_ENC_DISABLING,
 	SDE_ENC_DISABLED,
 	SDE_ENC_ENABLING,
 	SDE_ENC_ENABLED,
-	SDE_ENC_ERR_NEEDS_HW_RESET,
-	SDE_ENC_TIMING_ENGINE_RECONFIG,
+	SDE_ENC_ERR_NEEDS_HW_RESET
 };
 
 struct sde_encoder_phys;
