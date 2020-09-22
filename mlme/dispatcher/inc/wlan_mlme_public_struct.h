@@ -29,6 +29,9 @@
 #include <sir_api.h>
 #include "wlan_cm_roam_public_struct.h"
 
+#define OWE_TRANSITION_OUI_TYPE "\x50\x6f\x9a\x1c"
+#define OWE_TRANSITION_OUI_SIZE 4
+
 #define CFG_VALID_CHANNEL_LIST_LEN              100
 
 #define CFG_PMKID_MODES_OKC                        (0x1)
