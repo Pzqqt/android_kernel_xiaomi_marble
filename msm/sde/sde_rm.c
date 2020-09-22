@@ -1868,11 +1868,14 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 {
 	u32 lm_reg;
 	struct sde_rm_hw_iter iter_lm, iter_dsc;
+	struct sde_kms *sde_kms;
 
 	if (!rm || !ctl || !splash_display) {
 		SDE_ERROR("invalid input parameters\n");
 		return 0;
 	}
+
+	sde_kms = container_of(rm, struct sde_kms, rm);
 
 	sde_rm_init_hw_iter(&iter_lm, 0, SDE_HW_BLK_LM);
 	sde_rm_init_hw_iter(&iter_dsc, 0, SDE_HW_BLK_DSC);
@@ -1894,6 +1897,12 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 					&splash_display->pipes[
 					splash_display->pipe_cnt], 1)) {
 			splash_display->pipe_cnt++;
+		} else if (sde_kms->splash_data.type == SDE_VM_HANDOFF) {
+			/* Allow VM handoff without any pipes, as it is a
+			 * valid case to have NULL commit before the
+			 * transition.
+			 */
+			SDE_DEBUG("VM handoff with no pipes staged\n");
 		} else {
 			SDE_ERROR("no pipe detected on LM-%d\n",
 					iter_lm.blk->id - LM_0);
