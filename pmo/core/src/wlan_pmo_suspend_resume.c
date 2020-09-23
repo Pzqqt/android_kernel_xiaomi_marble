@@ -727,16 +727,19 @@ out:
  * @psoc: objmgr psoc handle
  * @psoc_ctx: pmo psoc private ctx
  * @wow_params: collection of wow enable override parameters
+ * @type: type of wow suspend
  *
  * Return: QDF status
  */
 static QDF_STATUS
 pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 			  struct pmo_psoc_priv_obj *psoc_ctx,
-			  struct pmo_wow_enable_params *wow_params)
+			  struct pmo_wow_enable_params *wow_params,
+			  enum qdf_suspend_type type)
 {
 	int host_credits, wmi_pending_cmds;
 	struct pmo_wow_cmd_params param = {0};
+	struct pmo_psoc_cfg *psoc_cfg = &psoc_ctx->psoc_cfg;
 	QDF_STATUS status;
 
 	pmo_enter();
@@ -805,6 +808,15 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		}
 	} else {
 		pmo_info("Prevent link down, non-drv wow is enabled");
+	}
+
+	if (type == QDF_SYSTEM_SUSPEND) {
+		pmo_info("system suspend wow");
+		if ((psoc_cfg) &&
+		    (psoc_cfg->is_mod_dtim_on_sys_suspend_enabled))
+			param.flags |= WMI_WOW_FLAG_SYSTEM_SUSPEND_WOW;
+	} else {
+		pmo_info("RTPM wow");
 	}
 
 	status = pmo_tgt_psoc_send_wow_enable_req(psoc, &param);
@@ -926,7 +938,9 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 
 	begin = qdf_get_log_timestamp_usecs();
 	if (wow_mode_selected)
-		status = pmo_core_enable_wow_in_fw(psoc, psoc_ctx, wow_params);
+		status = pmo_core_enable_wow_in_fw(psoc, psoc_ctx,
+						   wow_params,
+						   type);
 	else
 		status = pmo_core_psoc_suspend_target(psoc, 0);
 	end = qdf_get_log_timestamp_usecs();
