@@ -260,6 +260,10 @@ typedef struct _HTC_TARGET {
 	/* flag to enable packet send debug */
 	bool htc_pkt_dbg;
 
+#ifdef FEATURE_RUNTIME_PM
+	/* Runtime count for H2T msg with response */
+	qdf_atomic_t htc_runtime_cnt;
+#endif
 } HTC_TARGET;
 
 

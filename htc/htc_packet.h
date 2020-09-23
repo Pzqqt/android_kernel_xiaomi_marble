@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,6 +76,8 @@ struct htc_tx_packet_info {
 /* Tag packet for runtime put after sending */
 #define HTC_TX_PACKET_TAG_RUNTIME_PUT  (HTC_TX_PACKET_TAG_USER_DEFINED + 3)
 
+/*Tag packet for runtime put in response or cleanup */
+#define HTC_TX_PACKET_TAG_RTPM_PUT_RC  (HTC_TX_PACKET_TAG_USER_DEFINED + 4)
 
 #define HTC_TX_PACKET_FLAG_FIXUP_NETBUF (1 << 0)
 #define HTC_TX_PACKET_FLAG_HTC_HEADER_IN_NETBUF_DATA (1 << 1)
