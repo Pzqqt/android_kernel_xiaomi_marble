@@ -462,6 +462,24 @@ static void dp_rx_thread_gro_flush(struct dp_rx_thread *rx_thread,
 }
 
 /**
+ * dp_rx_should_flush() - Determines whether the RX thread should be flushed.
+ * @rx_thread: rx_thread to be processed
+ *
+ * Return: enum dp_rx_gro_flush_code
+ */
+static inline enum dp_rx_gro_flush_code
+dp_rx_should_flush(struct dp_rx_thread *rx_thread)
+{
+	enum dp_rx_gro_flush_code gro_flush_code;
+
+	gro_flush_code = qdf_atomic_read(&rx_thread->gro_flush_ind);
+	if (qdf_atomic_test_bit(RX_VDEV_DEL_EVENT, &rx_thread->event_flag))
+		gro_flush_code = DP_RX_GRO_NORMAL_FLUSH;
+
+	return gro_flush_code;
+}
+
+/**
  * dp_rx_thread_sub_loop() - rx thread subloop
  * @rx_thread - rx_thread to be processed
  * @shutdown - pointer to shutdown variable
@@ -493,11 +511,11 @@ static int dp_rx_thread_sub_loop(struct dp_rx_thread *rx_thread, bool *shutdown)
 
 		dp_rx_thread_process_nbufq(rx_thread);
 
-		gro_flush_code = qdf_atomic_read(&rx_thread->gro_flush_ind);
-
-		if (gro_flush_code ||
-		    qdf_atomic_test_bit(RX_VDEV_DEL_EVENT,
-					&rx_thread->event_flag)) {
+		gro_flush_code = dp_rx_should_flush(rx_thread);
+		/* Only flush when gro_flush_code is either
+		 * DP_RX_GRO_NORMAL_FLUSH or DP_RX_GRO_LOW_TPUT_FLUSH
+		 */
+		if (gro_flush_code != DP_RX_GRO_NOT_FLUSH) {
 			dp_rx_thread_gro_flush(rx_thread, gro_flush_code);
 			qdf_atomic_set(&rx_thread->gro_flush_ind, 0);
 		}

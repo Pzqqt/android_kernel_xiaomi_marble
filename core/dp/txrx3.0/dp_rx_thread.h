@@ -147,7 +147,7 @@ struct dp_rx_tm_handle {
  * @DP_RX_GRO_LOW_TPUT_FLUSH: Flush during low tput level
  */
 enum dp_rx_gro_flush_code {
-	DP_RX_GRO_NOT_FLUSH,
+	DP_RX_GRO_NOT_FLUSH = 0,
 	DP_RX_GRO_NORMAL_FLUSH,
 	DP_RX_GRO_LOW_TPUT_FLUSH
 };
