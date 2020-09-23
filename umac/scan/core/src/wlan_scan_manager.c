@@ -1229,6 +1229,7 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	struct chan_list *custom_chan_list;
 	struct wlan_objmgr_pdev *pdev;
 	uint8_t pdev_id;
+	enum QDF_OPMODE op_mode;
 
 	/* Ensure correct number of probes are sent on active channel */
 	if (!req->scan_req.repeat_probe_time)
@@ -1340,7 +1341,9 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	else if (!req->scan_req.chan_list.num_chan)
 		ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
 
-	if (scan_obj->scan_def.scan_mode_6g != SCAN_MODE_6G_NO_CHANNEL)
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (scan_obj->scan_def.scan_mode_6g != SCAN_MODE_6G_NO_CHANNEL &&
+	    op_mode == QDF_STA_MODE)
 		scm_add_rnr_info(pdev, req);
 	scm_update_channel_list(req, scan_obj);
 }
