@@ -1180,8 +1180,11 @@ static void _dp_panel_dsc_bw_overhead_calc(struct dp_panel *dp_panel,
 	int tot_num_hor_bytes, tot_num_dummy_bytes;
 	int dwidth_dsc_bytes, eoc_bytes;
 	u32 num_lanes;
+	struct dp_panel_private *panel;
 
-	num_lanes = dp_panel->link_info.num_lanes;
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+
+	num_lanes = panel->link->link_params.lane_count;
 	num_slices = dsc->slice_per_pkt;
 
 	eoc_bytes = dsc_byte_cnt % num_lanes;
@@ -1832,18 +1835,23 @@ end:
 static u32 dp_panel_get_supported_bpp(struct dp_panel *dp_panel,
 		u32 mode_edid_bpp, u32 mode_pclk_khz)
 {
-	struct drm_dp_link *link_info;
+	struct dp_link_params *link_params;
+	struct dp_panel_private *panel;
 	const u32 max_supported_bpp = 30;
 	u32 min_supported_bpp = 18;
 	u32 bpp = 0, data_rate_khz = 0;
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 
 	if (dp_panel->dsc_en)
 		min_supported_bpp = 24;
 
 	bpp = min_t(u32, mode_edid_bpp, max_supported_bpp);
 
-	link_info = &dp_panel->link_info;
-	data_rate_khz = link_info->num_lanes * link_info->rate * 8;
+	link_params = &panel->link->link_params;
+
+	data_rate_khz = link_params->lane_count *
+		drm_dp_bw_code_to_link_rate(link_params->bw_code) * 8;
 
 	for (; bpp > min_supported_bpp; bpp -= 6) {
 		if (dp_panel->dsc_en) {
@@ -2620,8 +2628,9 @@ cached:
 		dp_panel_setup_dhdr_vsif(panel);
 
 		input.mdp_clk = core_clk_rate;
-		input.lclk = dp_panel->link_info.rate;
-		input.nlanes = dp_panel->link_info.num_lanes;
+		input.lclk = drm_dp_bw_code_to_link_rate(
+				panel->link->link_params.bw_code);
+		input.nlanes = panel->link->link_params.lane_count;
 		input.pclk = dp_panel->pinfo.pixel_clk_khz;
 		input.h_active = dp_panel->pinfo.h_active;
 		input.mst_target_sc = dp_panel->mst_target_sc;

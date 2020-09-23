@@ -2596,12 +2596,9 @@ end:
 static int dp_display_validate_link_clock(struct dp_display_private *dp,
 		struct drm_display_mode *mode, struct dp_display_mode dp_mode)
 {
-	struct drm_dp_link *link_info;
 	u32 mode_rate_khz = 0, supported_rate_khz = 0, mode_bpp = 0;
 	bool dsc_en;
 	int rate;
-
-	link_info = &dp->panel->link_info;
 
 	dsc_en = (dp_mode.timing.comp_info.comp_ratio > 1) ? true : false;
 	mode_bpp = dsc_en ?
@@ -2610,7 +2607,7 @@ static int dp_display_validate_link_clock(struct dp_display_private *dp,
 
 	mode_rate_khz = mode->clock * mode_bpp;
 	rate = drm_dp_bw_code_to_link_rate(dp->link->link_params.bw_code);
-	supported_rate_khz = link_info->num_lanes * rate * 8;
+	supported_rate_khz = dp->link->link_params.lane_count * rate * 8;
 
 	if (mode_rate_khz > supported_rate_khz) {
 		DP_DEBUG("mode_rate: %d kHz, supported_rate: %d kHz\n",
