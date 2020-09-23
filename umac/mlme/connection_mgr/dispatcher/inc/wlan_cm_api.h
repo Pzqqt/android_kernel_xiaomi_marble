@@ -102,12 +102,12 @@ QDF_STATUS wlan_cm_bss_peer_delete_rsp(struct wlan_objmgr_vdev *vdev,
 /**
  * wlan_cm_disconnect_rsp() - Connection manager disconnect response
  * @vdev: vdev pointer
- * @cm_discon_rsp: disconnect response
+ * @resp: disconnect response
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_cm_discon_rsp cm_discon_rsp);
+				  struct wlan_cm_discon_rsp *resp);
 
 /**
  * wlan_cm_set_max_connect_attempts() - Set max connect attempts

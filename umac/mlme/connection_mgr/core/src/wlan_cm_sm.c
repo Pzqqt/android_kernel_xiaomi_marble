@@ -414,6 +414,10 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
+		cm_disconnect_active(cm_ctx, data);
+		status = true;
+		break;
 	default:
 		status = false;
 		break;
@@ -483,6 +487,10 @@ static bool cm_subst_scan_event(void *ctx, uint16_t event,
 		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_JOIN_PENDING);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
+		status = true;
+		break;
+	case WLAN_CM_SM_EV_DISCONNECT_ACTIVE:
+		cm_disconnect_active(cm_ctx, data);
 		status = true;
 		break;
 	default:

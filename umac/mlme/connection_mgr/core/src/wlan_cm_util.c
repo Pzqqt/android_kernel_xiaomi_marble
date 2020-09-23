@@ -432,6 +432,38 @@ void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 		   cm_ctx->max_connect_attempts, max_connect_attempts);
 }
 
+QDF_STATUS
+cm_fill_disconnect_resp_from_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
+				   struct wlan_cm_discon_rsp *resp)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req;
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+
+	if (prefix != DISCONNECT_REQ_PREFIX)
+		return QDF_STATUS_E_INVAL;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+
+		if (cm_req->cm_id == cm_id) {
+			resp->req.cm_id = cm_id;
+			resp->req.req = cm_req->discon_req.req;
+			cm_req_lock_release(cm_ctx);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 bool cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
 {
 	struct cnx_mgr *cm_ctx;

@@ -57,19 +57,19 @@ QDF_STATUS wlan_cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_cm_bss_peer_delete_ind(struct wlan_objmgr_vdev *vdev,
 				       struct qdf_mac_addr *peer_mac)
 {
-	return QDF_STATUS_SUCCESS;
+	return cm_bss_peer_delete_req(vdev, peer_mac);
 }
 
 QDF_STATUS wlan_cm_bss_peer_delete_rsp(struct wlan_objmgr_vdev *vdev,
 				       uint32_t status)
 {
-	return QDF_STATUS_SUCCESS;
+	return cm_vdev_down_req(vdev, status);
 }
 
 QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_cm_discon_rsp cm_discon_rsp)
+				  struct wlan_cm_discon_rsp *resp)
 {
-	return QDF_STATUS_SUCCESS;
+	return cm_disconnect_rsp(vdev, resp);
 }
 
 void wlan_cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,

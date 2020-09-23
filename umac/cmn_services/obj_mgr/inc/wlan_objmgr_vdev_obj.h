@@ -1473,4 +1473,18 @@ wlan_objmgr_vdev_trace_del_ref_list(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
+/**
+ * wlan_vdev_get_bss_peer_mac() - to get bss peer mac address
+ * @vdev: pointer to vdev
+ * @bss_peer_mac: pointer to bss_peer_mac_address
+ *
+ * This API is used to get mac address of peer.
+ *
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS wlan_vdev_get_bss_peer_mac(struct wlan_objmgr_vdev *vdev,
+				      struct qdf_mac_addr *bss_peer_mac);
+
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/
