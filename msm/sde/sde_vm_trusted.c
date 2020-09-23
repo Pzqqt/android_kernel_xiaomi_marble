@@ -61,7 +61,8 @@ static int __irq_cmp(const void *a, const void *b)
 	return  (l->label - r->label);
 }
 
-void sde_vm_irq_lend_notification_handler(void *req, enum hh_irq_label label)
+void sde_vm_irq_lend_notification_handler(void *req, unsigned long notif_type,
+		enum hh_irq_label label)
 {
 	struct sde_vm_trusted *sde_vm;
 	struct sde_kms *sde_kms;
@@ -214,6 +215,14 @@ static int _sde_vm_release_irq(struct sde_vm *vm)
 		if (rc) {
 			SDE_ERROR("failed to release IRQ label: %d rc = %d\n",
 				  entry->label, rc);
+			return rc;
+		}
+
+		rc = hh_irq_release_notify(entry->label);
+		if (rc) {
+			SDE_ERROR(
+				 "irq release notify failed,label: %d rc: %d\n",
+				 entry->label, rc);
 			return rc;
 		}
 
@@ -387,7 +396,7 @@ int sde_vm_trusted_init(struct sde_kms *kms)
 	}
 	sde_vm->base.mem_notification_cookie = cookie;
 
-	rc = hh_irq_wait_for_lend(HH_IRQ_LABEL_SDE, HH_PRIMARY_VM,
+	rc = hh_irq_wait_for_lend_v2(HH_IRQ_LABEL_SDE, HH_PRIMARY_VM,
 				  sde_vm_irq_lend_notification_handler,
 				  (void *)sde_vm);
 	if (rc) {

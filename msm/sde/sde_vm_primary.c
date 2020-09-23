@@ -25,7 +25,8 @@ static bool sde_vm_owns_hw(struct sde_kms *sde_kms)
 	return (owns_irq & owns_mem_io);
 }
 
-void sde_vm_irq_release_notification_handler(void *req, enum hh_irq_label label)
+void sde_vm_irq_release_notification_handler(void *req,
+		unsigned long notif_type, enum hh_irq_label label)
 {
 	struct sde_vm_primary *sde_vm;
 	int rc = 0;
@@ -169,12 +170,20 @@ static int _sde_vm_lend_irq(struct sde_vm *vm, struct msm_io_res *io_res)
 	for (i  = 0; i < irq_desc->n_irq; i++) {
 		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
 
-		rc = hh_irq_lend(entry->label, HH_TRUSTED_VM, entry->irq,
+		rc = hh_irq_lend_v2(entry->label, HH_TRUSTED_VM, entry->irq,
 				 sde_vm_irq_release_notification_handler,
 				 sde_vm);
 		if (rc) {
 			SDE_ERROR("irq lend failed for irq label: %d, rc=%d\n",
 				  entry->label, rc);
+			hh_irq_reclaim(entry->label);
+			return rc;
+		}
+
+		rc = hh_irq_lend_notify(entry->label);
+		if (rc) {
+			SDE_ERROR("irq lend notify failed, label: %d, rc=%d\n",
+				entry->label, rc);
 			hh_irq_reclaim(entry->label);
 			return rc;
 		}
