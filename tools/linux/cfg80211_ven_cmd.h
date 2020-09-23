@@ -780,6 +780,7 @@ enum {
 #if WLAN_OBJMGR_REF_ID_TRACE
 	IEEE80211_PARAM_VDEV_REF_LEAK_TEST          = 721,
 #endif
+	IEEE80211_PARAM_DISABLE_INACT_PROBING      = 722, /* Disable FW inactivity Probing behavior */
 };
 
 enum {
@@ -2240,6 +2241,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 #if WLAN_OBJMGR_REF_ID_TRACE
 	{"enable_ref_leak",         IEEE80211_PARAM_VDEV_REF_LEAK_TEST, SET_PARAM, 1},
 #endif
+	{"disable_fw_inact_probe",    IEEE80211_PARAM_DISABLE_INACT_PROBING, SET_PARAM, 1},
+	{"g_disable_fw_inact_probe",  IEEE80211_PARAM_DISABLE_INACT_PROBING, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
