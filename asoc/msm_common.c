@@ -77,7 +77,7 @@ static ssize_t aud_dev_sysfs_store(struct kobject *kobj,
 		pr_err("%s: invalid state %d \n", __func__, state);
 		goto done;
 	}
-	pr_info("%s: pcm_id %d state %d \n", __func__, pcm_id, state);
+	pr_debug("%s: pcm_id %d state %d \n", __func__, pcm_id, state);
 
 	pdata->aud_dev_state[pcm_id] = state;
 	if ( state == DEVICE_ENABLE && (pdata->dsp_sessions_closed != 0))
@@ -160,7 +160,7 @@ static int get_intf_index(const char *stream_name)
 	else if (strnstr(stream_name, "SENARY", strlen(stream_name)))
 		return SEN_MI2S_TDM_AUXPCM;
 	else {
-		pr_err("%s: stream name %s does not match\n", __func__, stream_name);
+		pr_debug("%s: stream name %s does not match\n", __func__, stream_name);
 		return -EINVAL;
 	}
 }
