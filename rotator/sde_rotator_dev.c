@@ -52,7 +52,7 @@
 #define SDE_ROTATOR_ADD_REQUEST		1
 #define SDE_ROTATOR_REMOVE_REQUEST		0
 
-
+#ifndef CONFIG_MSM_SDE_ROTATOR_INIT_ONLY
 static void sde_rotator_submit_handler(struct kthread_work *work);
 static void sde_rotator_retire_handler(struct kthread_work *work);
 #ifdef CONFIG_COMPAT
@@ -3373,6 +3373,7 @@ static struct v4l2_m2m_ops sde_rotator_m2m_ops = {
 	.job_abort	= sde_rotator_job_abort,
 	.job_ready	= sde_rotator_job_ready,
 };
+#endif
 
 /* Device tree match struct */
 static const struct of_device_id sde_rotator_dt_match[] = {
@@ -3383,6 +3384,7 @@ static const struct of_device_id sde_rotator_dt_match[] = {
 	{}
 };
 
+#ifndef CONFIG_MSM_SDE_ROTATOR_INIT_ONLY
 /*
  * sde_rotator_get_drv_data - rotator device driver data.
  * @dev: Pointer to device.
@@ -3579,6 +3581,36 @@ static struct platform_driver rotator_driver = {
 		.pm = &sde_rotator_pm_ops,
 	},
 };
+
+#else
+/*
+ * sde_rotator_probe - rotator device probe method.
+ * @pdev: Pointer to rotator platform device.
+ */
+static int sde_rotator_probe(struct platform_device *pdev)
+{
+	return 0;
+}
+
+/*
+ * sde_rotator_remove - rotator device remove method.
+ * @pdev: Pointer rotator platform device.
+ */
+static int sde_rotator_remove(struct platform_device *pdev)
+{
+	return 0;
+}
+
+/* SDE Rotator platform driver definition */
+static struct platform_driver rotator_driver = {
+	.probe = sde_rotator_probe,
+	.remove = sde_rotator_remove,
+	.driver = {
+		.name = SDE_ROTATOR_DRV_NAME,
+		.of_match_table = sde_rotator_dt_match,
+	},
+};
+#endif
 
 void  __init sde_rotator_register(void)
 {

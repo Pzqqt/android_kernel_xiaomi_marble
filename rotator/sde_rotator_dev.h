@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_ROTATOR_DEV_H__
@@ -215,7 +215,9 @@ struct sde_rotator_device {
 	struct device *dev;
 	struct v4l2_device v4l2_dev;
 	struct video_device *vdev;
+#ifndef CONFIG_MSM_SDE_ROTATOR_INIT_ONLY
 	struct v4l2_m2m_dev *m2m_dev;
+#endif
 	struct platform_device *pdev;
 	const void *drvdata;
 	u32 early_submit;
