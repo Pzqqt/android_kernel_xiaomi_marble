@@ -94,6 +94,7 @@
 #define WLAN_FILS_FT_MAX_LEN          48
 
 #define WLAN_MAX_PMK_DUMP_BYTES 6
+#define DEFAULT_ROAM_SCAN_SCHEME_BITMAP 0
 
 /**
  * enum roam_cfg_param  - Type values for roaming parameters used as index
@@ -1312,12 +1313,18 @@ enum roam_scan_freq_scheme {
  * @beacon_rssi_weight: Number of beacons to be used to calculate the average
  * rssi of the AP.
  * @hi_rssi_scan_delay: Roam scan delay in ms for High RSSI roam trigger.
+ * @roam_scan_scheme_bitmap: Bitmap of roam triggers for which partial channel
+ * map scan scheme needs to be enabled. Each bit in the bitmap corresponds to
+ * the bit position in the order provided by the enum roam_trigger_reason
+ * Ex: roam_scan_scheme_bitmap - 0x00110 will enable partial scan for below
+ * triggers:
+ * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
  */
 struct wlan_cm_rso_configs {
 	uint8_t rescan_rssi_delta;
 	uint8_t beacon_rssi_weight;
 	uint32_t hi_rssi_scan_delay;
-
+	uint32_t roam_scan_scheme_bitmap;
 };
 
 /**

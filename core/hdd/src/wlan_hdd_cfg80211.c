@@ -4543,6 +4543,7 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 	[QCA_ATTR_ROAM_CONTROL_CONNECTED_RSSI_THRESHOLD] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_USER_REASON] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME_TRIGGERS] = {.type = NLA_U32},
 };
 
 /**
@@ -4612,7 +4613,7 @@ wlan_hdd_convert_control_roam_trigger_bitmap(uint32_t trigger_reason_bitmap)
 	/* Enable the complete trigger bitmap when all bits are set in
 	 * the control config bitmap
 	 */
-	all_bitmap = (QCA_ROAM_TRIGGER_REASON_BSS_LOAD << 1) - 1;
+	all_bitmap = (QCA_ROAM_TRIGGER_REASON_EXTERNAL_SCAN << 1) - 1;
 	if (trigger_reason_bitmap == all_bitmap)
 		return BIT(ROAM_TRIGGER_REASON_MAX) - 1;
 
@@ -4640,7 +4641,72 @@ wlan_hdd_convert_control_roam_trigger_bitmap(uint32_t trigger_reason_bitmap)
 	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_BSS_LOAD)
 		drv_trigger_bitmap |= BIT(ROAM_TRIGGER_REASON_BSS_LOAD);
 
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_USER_TRIGGER)
+		drv_trigger_bitmap |= BIT(ROAM_TRIGGER_REASON_FORCED);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_DEAUTH)
+		drv_trigger_bitmap |= BIT(ROAM_TRIGGER_REASON_DEAUTH);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_IDLE)
+		drv_trigger_bitmap |= BIT(ROAM_TRIGGER_REASON_IDLE);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_TX_FAILURES)
+		drv_trigger_bitmap |= BIT(ROAM_TRIGGER_REASON_STA_KICKOUT);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_EXTERNAL_SCAN)
+		drv_trigger_bitmap |= BIT(ROAM_TRIGGER_REASON_BACKGROUND);
+
 	return drv_trigger_bitmap;
+}
+
+/**
+ * wlan_hdd_convert_control_roam_scan_scheme_bitmap()  - Convert the
+ * vendor specific roam scan scheme for roam triggers to internal roam trigger
+ * bitmap for partial scan.
+ * @trigger_reason_bitmap: Vendor specific roam trigger bitmap
+ *
+ * Return: Internal roam scan scheme bitmap
+ */
+static uint32_t
+wlan_hdd_convert_control_roam_scan_scheme_bitmap(uint32_t trigger_reason_bitmap)
+{
+	uint32_t drv_scan_scheme_bitmap = 0;
+
+	/*
+	 * Partial scan scheme override over default scan scheme only for
+	 * the PER, BMISS, Low RSSI, BTM, BSS_LOAD Triggers
+	 */
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_PER)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_PER);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_BEACON_MISS)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_BMISS);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_POOR_RSSI)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_LOW_RSSI);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_BTM)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_BTM);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_BSS_LOAD)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_BSS_LOAD);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_USER_TRIGGER)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_FORCED);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_DEAUTH)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_DEAUTH);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_IDLE)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_IDLE);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_TX_FAILURES)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_STA_KICKOUT);
+
+	if (trigger_reason_bitmap & QCA_ROAM_TRIGGER_REASON_EXTERNAL_SCAN)
+		drv_scan_scheme_bitmap |= BIT(ROAM_TRIGGER_REASON_BACKGROUND);
+
+	return drv_scan_scheme_bitmap;
 }
 
 /**
@@ -4693,6 +4759,16 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 	triggers.vdev_id = vdev_id;
 	triggers.trigger_bitmap =
 	    wlan_hdd_convert_control_roam_trigger_bitmap(roam_trigger_bitmap);
+
+	/*
+	 * roam trigger bitmap is > 0 - Roam triggers are set.
+	 * roam trigger bitmap is 0 - Disable roaming
+	 *
+	 * For both the above modes, reset the roam scan scheme bitmap to
+	 * 0.
+	 */
+	status = ucfg_cm_update_roam_scan_scheme_bitmap(hdd_ctx->psoc,
+							vdev_id, 0);
 
 #ifdef ROAM_OFFLOAD_V1
 	status = ucfg_cm_rso_set_roam_trigger(hdd_ctx->pdev, vdev_id,
@@ -4978,6 +5054,15 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 		}
 	}
 
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME_TRIGGERS];
+	if (attr) {
+		value = wlan_hdd_convert_control_roam_scan_scheme_bitmap(
+							nla_get_u32(attr));
+		status = ucfg_cm_update_roam_scan_scheme_bitmap(hdd_ctx->psoc,
+								vdev_id,
+								value);
+	}
+
 	/* Scoring and roam candidate selection criteria */
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_SELECTION_CRITERIA];
 	if (attr) {
@@ -5004,7 +5089,9 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 		param.user_roam_reason = nla_get_u32(attr);
 	 else
 		param.user_roam_reason = DISABLE_VENDOR_BTM_CONFIG;
+
 	wlan_cm_roam_set_vendor_btm_params(hdd_ctx->psoc, vdev_id, &param);
+	/* Sends RSO update */
 	sme_send_vendor_btm_params(hdd_ctx->mac_handle, vdev_id);
 
 	return qdf_status_to_os_return(status);
