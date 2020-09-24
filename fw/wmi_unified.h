@@ -4453,6 +4453,15 @@ typedef enum {
 #define WMI_SCAN_FLAG_EXT_6GHZ_EXTEND_MEASURE_TIME    0x00000400
 
 /**
+ * Currently passive scan has higher priority than beacon and
+ * beacon miss would happen irrespective of dwell time.
+ * Below flag ensures there would not be beacon miss if the dwell
+ * time is lesser than beacon interval - channel switch time combined. 
+ * For dwell time greater than beacon interval, bmiss is expected.
+ */
+#define WMI_SCAN_FLAG_EXT_PASSIVE_SCAN_START_TIME_ENHANCE   0x00000800
+
+/**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
  * wmi_hint_freq_short_ssid or wmi_hint_freq_bssid
  */
