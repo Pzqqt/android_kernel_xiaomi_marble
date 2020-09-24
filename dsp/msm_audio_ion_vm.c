@@ -562,12 +562,18 @@ int msm_audio_ion_alloc(struct dma_buf **dma_buf, size_t bufsz,
 		pr_err("%s: Invalid params\n", __func__);
 		return -EINVAL;
 	}
-
+	pr_debug("%s: audio heap is used\n", __func__);
 	if (msm_audio_ion_data.smmu_enabled == true) {
-		pr_debug("%s: system heap is used\n", __func__);
-		*dma_buf = ion_alloc(bufsz, ION_HEAP(ION_SYSTEM_HEAP_ID), 0);
+		*dma_buf = ion_alloc(bufsz, ION_HEAP(ION_AUDIO_HEAP_ID), 0);
+		if (IS_ERR_OR_NULL((void *)(*dma_buf))) {
+			if (IS_ERR((void *)(*dma_buf)))
+				err_ion_ptr = PTR_ERR((int *)(*dma_buf));
+			pr_debug("%s: ION alloc failed for audio heap err ptr=%ld, smmu_enabled=%d,"
+					"trying system heap..\n",
+					__func__, err_ion_ptr, msm_audio_ion_data.smmu_enabled);
+			*dma_buf = ion_alloc(bufsz, ION_HEAP(ION_SYSTEM_HEAP_ID), 0);
+		}
 	} else {
-		pr_debug("%s: audio heap is used\n", __func__);
 		*dma_buf = ion_alloc(bufsz, ION_HEAP(ION_AUDIO_HEAP_ID), 0);
 	}
 	if (IS_ERR_OR_NULL((void *)(*dma_buf))) {
