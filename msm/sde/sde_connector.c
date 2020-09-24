@@ -2392,14 +2392,15 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 	if (conn->panel_dead)
 		return;
 
+	SDE_EVT32(SDE_EVTLOG_ERROR);
+	sde_encoder_display_failure_notification(conn->encoder,
+		skip_pre_kickoff);
+
 	conn->panel_dead = true;
 	event.type = DRM_EVENT_PANEL_DEAD;
 	event.length = sizeof(bool);
 	msm_mode_object_event_notify(&conn->base.base,
 		conn->base.dev, &event, (u8 *)&conn->panel_dead);
-	sde_encoder_display_failure_notification(conn->encoder,
-		skip_pre_kickoff);
-	SDE_EVT32(SDE_EVTLOG_ERROR);
 	SDE_ERROR("esd check failed report PANEL_DEAD conn_id: %d enc_id: %d\n",
 			conn->base.base.id, conn->encoder->base.id);
 }
