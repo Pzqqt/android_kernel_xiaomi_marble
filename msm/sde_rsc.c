@@ -925,20 +925,33 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 	mutex_lock(&rsc->client_lock);
 	SDE_EVT32_VERBOSE(caller_client->id, caller_client->current_state,
 			state, rsc->current_state, SDE_EVTLOG_FUNC_ENTRY);
-	caller_client->crtc_id = crtc_id;
-	caller_client->current_state = state;
-
-	if ((rsc->current_state == state) && !config) {
-		pr_debug("no state change: %d\n", state);
-		goto end;
-	}
 
 	pr_debug("%pS: rsc state:%d request client:%s state:%d\n",
 		__builtin_return_address(0), rsc->current_state,
 		caller_client->name, state);
 
+	/**
+	 * This can only happen if splash is active or qsync is enabled.
+	 * In both cases timers need to be updated for when a transition to
+	 * solver occurs. Update timers now as config might not be available
+	 * at next switch. Updates for cmd/vid are handled when switching to
+	 * those states.
+	 */
+	if (config && (state == SDE_RSC_CLK_STATE) &&
+			(caller_client == rsc->primary_client))
+		sde_rsc_timer_calculate(rsc, config, state);
+
 	if ((state == SDE_RSC_VID_STATE) && (rsc->version >= SDE_RSC_REV_3))
 		state = SDE_RSC_CLK_STATE;
+
+	caller_client->crtc_id = crtc_id;
+	caller_client->current_state = state;
+
+	if ((rsc->current_state == state) && !config) {
+		SDE_EVT32(caller_client->id, caller_client->current_state,
+			state, rsc->current_state, SDE_EVTLOG_FUNC_CASE3);
+		goto end;
+	}
 
 	if (rsc->current_state == SDE_RSC_IDLE_STATE)
 		sde_rsc_resource_enable(rsc);
@@ -993,10 +1006,10 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 
 	pr_debug("state switch successfully complete: %d\n", state);
 	SDE_ATRACE_INT("rsc_state", state);
-	rsc->current_state = state;
-	rsc->update_tcs_content = true;
 	SDE_EVT32(caller_client->id, caller_client->current_state,
 			state, rsc->current_state, SDE_EVTLOG_FUNC_EXIT);
+	rsc->current_state = state;
+	rsc->update_tcs_content = true;
 
 clk_disable:
 	if (rsc->current_state == SDE_RSC_IDLE_STATE)
