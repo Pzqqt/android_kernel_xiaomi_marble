@@ -2974,6 +2974,7 @@ struct dp_rx_fst {
 	qdf_spinlock_t dp_rx_sw_ft_lock[MAX_REO_DEST_RINGS];
 	qdf_event_t cmem_resp_event;
 	bool flow_deletion_supported;
+	bool fst_in_cmem;
 };
 
 #endif /* WLAN_SUPPORT_RX_FISA */
