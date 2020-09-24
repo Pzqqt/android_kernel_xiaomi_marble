@@ -159,13 +159,26 @@ static void dp_swlm_tcl_flush_timer(void *arg)
 	hal_ring_handle_t hal_ring_hdl =
 				soc->tcl_data_ring[0].hal_srng;
 
-	if (hal_srng_try_access_start(soc->hal_soc, hal_ring_hdl) < 0) {
-		DP_STATS_INC(swlm, tcl.timer_flush_fail, 1);
-		return;
+	if (hal_srng_try_access_start(soc->hal_soc, hal_ring_hdl) < 0)
+		goto fail;
+
+	if (hif_pm_runtime_get(soc->hif_handle, RTPM_ID_DW_TX_HW_ENQUEUE)) {
+		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
+		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+		hal_srng_inc_flush_cnt(hal_ring_hdl);
+		goto fail;
 	}
 
 	DP_STATS_INC(swlm, tcl.timer_flush_success, 1);
 	hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
+	hif_pm_runtime_put(soc->hif_handle, RTPM_ID_DW_TX_HW_ENQUEUE);
+
+	return;
+
+fail:
+	DP_STATS_INC(swlm, tcl.timer_flush_fail, 1);
+
+	return;
 }
 
 /**
