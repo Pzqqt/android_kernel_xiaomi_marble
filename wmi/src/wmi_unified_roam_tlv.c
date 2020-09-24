@@ -1356,8 +1356,36 @@ convert_roam_trigger_scan_mode(enum roam_scan_freq_scheme scan_freq_scheme)
 }
 
 /**
- * send_set_roam_trigger_cmd_tlv() - send set roam triggers to fw
+ * wmi_fill_default_roam_trigger_parameters() - Fill the default parameters
+ * for wmi_configure_roam_trigger_parameters tlv.
+ * @roam_trigger_params: pointer to wmi_configure_roam_trigger_parameters tlv
+ * to be filled.
+ * @roam_trigger: Roam trigger reason
  *
+ * Return: None
+ */
+static void wmi_fill_default_roam_trigger_parameters(
+		wmi_configure_roam_trigger_parameters *roam_trigger_params,
+		uint32_t roam_trigger)
+{
+	WMITLV_SET_HDR(&roam_trigger_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_configure_roam_trigger_parameters,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_configure_roam_trigger_parameters));
+
+	roam_trigger_params->trigger_reason = roam_trigger;
+	roam_trigger_params->enable = 1;
+	roam_trigger_params->scan_mode = ROAM_TRIGGER_SCAN_MODE_PARTIAL;
+	roam_trigger_params->trigger_rssi_threshold =
+			ROAM_MAX_CFG_VALUE;
+	roam_trigger_params->cand_ap_min_rssi_threshold =
+			ROAM_MAX_CFG_VALUE;
+	roam_trigger_params->roam_score_delta_percentage =
+			ROAM_MAX_CFG_VALUE;
+	roam_trigger_params->reason_code = ROAM_MAX_CFG_VALUE;
+}
+
+/**
+ * send_set_roam_trigger_cmd_tlv() - send set roam triggers to fw
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
  * @trigger_bitmap: roam trigger bitmap to be enabled
@@ -1371,14 +1399,34 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_buf_t buf;
 	wmi_roam_enable_disable_trigger_reason_fixed_param *cmd;
-	uint16_t len = sizeof(*cmd);
+	uint32_t len = sizeof(*cmd);
 	int ret;
 	uint8_t *buf_ptr;
 	wmi_configure_roam_trigger_parameters
 					*roam_trigger_parameters;
+	uint32_t num_triggers_enabled = 0;
+	uint32_t roam_scan_scheme_bitmap = triggers->roam_scan_scheme_bitmap;
+	uint32_t total_tlv_len;
 
-	len += WMI_TLV_HDR_SIZE +
-		sizeof(wmi_configure_roam_trigger_parameters);
+	if (BIT(ROAM_TRIGGER_REASON_PER) & roam_scan_scheme_bitmap)
+		num_triggers_enabled++;
+
+	if (BIT(ROAM_TRIGGER_REASON_BMISS) & roam_scan_scheme_bitmap)
+		num_triggers_enabled++;
+
+	if (BIT(ROAM_TRIGGER_REASON_LOW_RSSI) & roam_scan_scheme_bitmap)
+		num_triggers_enabled++;
+
+	if (BIT(ROAM_TRIGGER_REASON_BTM) & roam_scan_scheme_bitmap)
+		num_triggers_enabled++;
+
+	if (BIT(ROAM_TRIGGER_REASON_BSS_LOAD) & roam_scan_scheme_bitmap)
+		num_triggers_enabled++;
+
+	total_tlv_len = sizeof(wmi_configure_roam_trigger_parameters) +
+			num_triggers_enabled *
+			sizeof(wmi_configure_roam_trigger_parameters);
+	len += WMI_TLV_HDR_SIZE + total_tlv_len;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -1392,45 +1440,90 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 					wmi_buf_data(buf);
 	WMITLV_SET_HDR(&cmd->tlv_header,
 	WMITLV_TAG_STRUC_wmi_roam_enable_disable_trigger_reason_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-		      (wmi_roam_enable_disable_trigger_reason_fixed_param));
+	WMITLV_GET_STRUCT_TLVLEN(wmi_roam_enable_disable_trigger_reason_fixed_param));
+
 	cmd->vdev_id = triggers->vdev_id;
 	cmd->trigger_reason_bitmask =
 	   convert_control_roam_trigger_reason_bitmap(triggers->trigger_bitmap);
-	wmi_debug("Received trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
-		 triggers->trigger_bitmap, cmd->trigger_reason_bitmask);
+	wmi_debug("RSO_CFG: Received trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
+		  triggers->trigger_bitmap, cmd->trigger_reason_bitmask);
 	cmd->trigger_reason_bitmask |= get_internal_mandatory_roam_triggers();
-	wmi_debug("vdev id: %d final trigger_bitmap: 0x%x",
-		 cmd->vdev_id, cmd->trigger_reason_bitmask);
+	wmi_debug("RSO_CFG: vdev id: %d final trigger_bitmap: 0x%x roam_scan_scheme:0x%x num_triggers_enabled:%d",
+		  cmd->vdev_id, cmd->trigger_reason_bitmask,
+		  roam_scan_scheme_bitmap, num_triggers_enabled);
 
 	buf_ptr += sizeof(wmi_roam_enable_disable_trigger_reason_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-		sizeof(wmi_configure_roam_trigger_parameters));
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, total_tlv_len);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	roam_trigger_parameters =
 		(wmi_configure_roam_trigger_parameters *)buf_ptr;
+
 	WMITLV_SET_HDR(&roam_trigger_parameters->tlv_header,
 		WMITLV_TAG_STRUC_wmi_configure_roam_trigger_parameters,
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_configure_roam_trigger_parameters));
-
 	roam_trigger_parameters->trigger_reason =
-				WMI_ROAM_TRIGGER_REASON_WTC_BTM;
+			WMI_ROAM_TRIGGER_REASON_WTC_BTM;
 	if (triggers->vendor_btm_param.user_roam_reason == 0)
 		roam_trigger_parameters->enable = 1;
-	roam_trigger_parameters->scan_mode =
-		convert_roam_trigger_scan_mode(triggers->vendor_btm_param.
-							scan_freq_scheme);
+	roam_trigger_parameters->scan_mode = convert_roam_trigger_scan_mode(
+				triggers->vendor_btm_param.scan_freq_scheme);
 	roam_trigger_parameters->trigger_rssi_threshold =
-			triggers->vendor_btm_param.connected_rssi_threshold;
+		triggers->vendor_btm_param.connected_rssi_threshold;
 	roam_trigger_parameters->cand_ap_min_rssi_threshold =
-			triggers->vendor_btm_param.candidate_rssi_threshold;
+		triggers->vendor_btm_param.candidate_rssi_threshold;
 	roam_trigger_parameters->roam_score_delta_percentage =
 			triggers->roam_score_delta;
 	roam_trigger_parameters->reason_code =
 			triggers->vendor_btm_param.user_roam_reason;
 
+	roam_trigger_parameters++;
+
+	if (num_triggers_enabled == 0)
+		goto send;
+
+	if (BIT(ROAM_TRIGGER_REASON_PER) & roam_scan_scheme_bitmap) {
+		wmi_fill_default_roam_trigger_parameters(
+				roam_trigger_parameters,
+				WMI_ROAM_TRIGGER_REASON_PER);
+
+		roam_trigger_parameters++;
+	}
+
+	if (BIT(ROAM_TRIGGER_REASON_BMISS) & roam_scan_scheme_bitmap) {
+		wmi_fill_default_roam_trigger_parameters(
+				roam_trigger_parameters,
+				WMI_ROAM_TRIGGER_REASON_BMISS);
+
+		roam_trigger_parameters++;
+	}
+
+	if (BIT(ROAM_TRIGGER_REASON_LOW_RSSI) & roam_scan_scheme_bitmap) {
+		wmi_fill_default_roam_trigger_parameters(
+				roam_trigger_parameters,
+				WMI_ROAM_TRIGGER_REASON_LOW_RSSI);
+
+		roam_trigger_parameters++;
+	}
+
+	if (BIT(ROAM_TRIGGER_REASON_BTM) & roam_scan_scheme_bitmap) {
+		wmi_fill_default_roam_trigger_parameters(
+				roam_trigger_parameters,
+				WMI_ROAM_TRIGGER_REASON_BTM);
+
+		roam_trigger_parameters++;
+	}
+
+	if (BIT(ROAM_TRIGGER_REASON_BSS_LOAD) & roam_scan_scheme_bitmap) {
+		wmi_fill_default_roam_trigger_parameters(
+				roam_trigger_parameters,
+				WMI_ROAM_TRIGGER_REASON_BSS_LOAD);
+
+		roam_trigger_parameters++;
+	}
+
+send:
 	wmi_mtrace(WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID,
 		   triggers->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,

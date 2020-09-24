@@ -95,6 +95,7 @@
 
 #define WLAN_MAX_PMK_DUMP_BYTES 6
 #define DEFAULT_ROAM_SCAN_SCHEME_BITMAP 0
+#define ROAM_MAX_CFG_VALUE 0xffffffff
 
 /**
  * enum roam_cfg_param  - Type values for roaming parameters used as index
@@ -163,12 +164,16 @@ struct wlan_cm_roam_vendor_btm_params {
  *		    defined @enum roam_control_trigger_reason
  * @roam_score_delta: Value of roam score delta
  * percentage to trigger roam
+ * @roam_scan_scheme_bitmap: Bitmap of roam triggers as defined in
+ * enum roam_trigger_reason, for which the roam scan scheme should
+ * be partial scan
  * @control_param: roam trigger param
  */
 struct wlan_roam_triggers {
 	uint32_t vdev_id;
 	uint32_t trigger_bitmap;
 	uint32_t roam_score_delta;
+	uint32_t roam_scan_scheme_bitmap;
 	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
 };
 

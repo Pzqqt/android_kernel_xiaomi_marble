@@ -1128,6 +1128,7 @@ target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 	if (mode == WMI_ROAM_SCAN_MODE_NONE) {
 		req->roam_triggers.vdev_id = vdev_id;
 		req->roam_triggers.trigger_bitmap = 0;
+		req->roam_triggers.roam_scan_scheme_bitmap = 0;
 		target_if_cm_roam_triggers(vdev, &req->roam_triggers);
 	}
 end:
