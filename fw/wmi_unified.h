@@ -26381,19 +26381,28 @@ typedef struct {
      */
 } wmi_therm_throt_config_request_fixed_param;
 
+typedef enum {
+    /* no throttling */
+    WMI_THERMAL_FULLPERF        = 0,
+    /* throttling tx to do thermal mitigation */
+    WMI_THERMAL_MITIGATION      = 1,
+    /* shut down the tx completely */
+    WMI_THERMAL_SHUTOFF         = 2,
+} WMI_THERMAL_THROT_LEVEL;
+
 /** FW response with the stats event id for every pdev and zones */
 typedef struct {
     /*  TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_therm_throt_stats_event_fixed_param */
     A_UINT32 tlv_header;
     A_UINT32 pdev_id;            /* stats for corresponding pdev*/
     A_UINT32 temp;               /* Temperature reading in celsius */
-    A_UINT32 level;              /* current thermal throttling level */
+    A_UINT32 level;              /* Current thermal throttling level -
+                                  * contains a WMI_THERMAL_THROT_LEVEL value. */
     A_UINT32 therm_throt_levels; /* number of levels in therm_throt_level_stats_info */
     /* This TLV is followed by another TLV of array of structs
      * wmi_therm_throt_level_stats_info therm_throt_level_stats_info[therm_throt_levels];
      */
 } wmi_therm_throt_stats_event_fixed_param;
-
 
 
 typedef struct {
