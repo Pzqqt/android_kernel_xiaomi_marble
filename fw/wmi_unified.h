@@ -4456,7 +4456,7 @@ typedef enum {
  * Currently passive scan has higher priority than beacon and
  * beacon miss would happen irrespective of dwell time.
  * Below flag ensures there would not be beacon miss if the dwell
- * time is lesser than beacon interval - channel switch time combined. 
+ * time is lesser than beacon interval - channel switch time combined.
  * For dwell time greater than beacon interval, bmiss is expected.
  */
 #define WMI_SCAN_FLAG_EXT_PASSIVE_SCAN_START_TIME_ENHANCE   0x00000800
@@ -28010,6 +28010,7 @@ typedef enum _WMI_PAUSE_TWT_STATUS_T {
     WMI_PAUSE_TWT_STATUS_NO_RESOURCE,         /* FW resource exhausted */
     WMI_PAUSE_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
     WMI_PAUSE_TWT_STATUS_UNKNOWN_ERROR,       /* pausing TWT dialog failed with an unknown reason */
+    WMI_PAUSE_TWT_STATUS_ALREADY_PAUSED,      /* The TWT dialog is already paused */
 } WMI_PAUSE_TWT_STATUS_T;
 
 typedef struct {
@@ -30520,9 +30521,9 @@ typedef struct {
      * A band value of 0x80 (-128) is invalid.
      */
     A_UINT32 chain_rssi[WMI_MAX_CHAINS];
-    /* Carrier frequency offset 
-       It is Difference between down conversion oscillator frequency at the receiver 
-       versus carrier frequency of the received signal. To convert to ppm, below 
+    /* Carrier frequency offset
+       It is Difference between down conversion oscillator frequency at the receiver
+       versus carrier frequency of the received signal. To convert to ppm, below
        equation needs to be used. Here, Fc is carrier frequency (primary 20 channel frequency) in Hz:
 
        PPM = cfo_measurement(13 bits)/((2^13)/(800e-9)/2/Fc*1e6)
