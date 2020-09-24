@@ -3086,16 +3086,6 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 			mutex_unlock(&dev->mode_config.mutex);
 			return -EINVAL;
 		}
-
-		if (connector->funcs->fill_modes) {
-			connector->funcs->fill_modes(connector,
-					dev->mode_config.max_width,
-					dev->mode_config.max_height);
-		} else {
-			SDE_ERROR("fill_modes api not defined\n");
-			mutex_unlock(&dev->mode_config.mutex);
-			return -EINVAL;
-		}
 		mutex_unlock(&dev->mode_config.mutex);
 
 		crtc->state->encoder_mask = (1 << drm_encoder_index(encoder));
