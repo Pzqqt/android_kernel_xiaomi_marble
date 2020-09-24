@@ -303,6 +303,9 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t is_swlm_enabled;
 	bool fst_in_cmem;
 	bool tx_per_pkt_vdev_id_check;
+	uint8_t radio0_rx_default_reo;
+	uint8_t radio1_rx_default_reo;
+	uint8_t radio2_rx_default_reo;
 };
 
 /**
@@ -1475,3 +1478,27 @@ bool wlan_cfg_is_fst_in_cmem_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 bool wlan_cfg_is_swlm_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 #endif
+
+/**
+ * wlan_cfg_radio0_default_reo_get -  Get Radio0 default REO
+ * @cfg: soc configuration context
+ *
+ * Return: .
+ */
+uint8_t wlan_cfg_radio0_default_reo_get(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_radio1_default_reo_get - Get Radio1 default REO
+ * @cfg: soc configuration context
+ *
+ * Return: .
+ */
+uint8_t wlan_cfg_radio1_default_reo_get(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_radio2_default_reo_get() - Get Radio2 default REO
+ * @cfg: soc configuration context
+ *
+ * Return: .
+ */
+uint8_t wlan_cfg_radio2_default_reo_get(struct wlan_cfg_dp_soc_ctxt *cfg);

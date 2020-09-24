@@ -367,6 +367,13 @@
 #define WLAN_CFG_NUM_REO_RINGS_MAP_MIN 0x1
 #define WLAN_CFG_NUM_REO_RINGS_MAP_MAX 0xF
 
+#define WLAN_CFG_RADIO_0_DEFAULT_REO 0x1
+#define WLAN_CFG_RADIO_1_DEFAULT_REO 0x2
+#define WLAN_CFG_RADIO_2_DEFAULT_REO 0x3
+
+#define WLAN_CFG_RADIO_DEFAULT_REO_MIN 0x1
+#define WLAN_CFG_RADIO_DEFAULT_REO_MAX 0x4
+
 /* DP INI Declerations */
 #define CFG_DP_HTT_PACKET_TYPE \
 		CFG_INI_UINT("dp_htt_packet_type", \
@@ -946,6 +953,27 @@
 		WLAN_CFG_NUM_REO_RINGS_MAP, \
 		CFG_VALUE_OR_DEFAULT, "REO Destination Rings Mapping")
 
+#define CFG_DP_RX_RADIO_0_DEFAULT_REO \
+		CFG_INI_UINT("dp_rx_radio0_default_reo", \
+		WLAN_CFG_RADIO_DEFAULT_REO_MIN, \
+		WLAN_CFG_RADIO_DEFAULT_REO_MAX, \
+		WLAN_CFG_RADIO_0_DEFAULT_REO, \
+		CFG_VALUE_OR_DEFAULT, "Radio0 to REO destination default mapping")
+
+#define CFG_DP_RX_RADIO_1_DEFAULT_REO \
+		CFG_INI_UINT("dp_rx_radio1_default_reo", \
+		WLAN_CFG_RADIO_DEFAULT_REO_MIN, \
+		WLAN_CFG_RADIO_DEFAULT_REO_MAX, \
+		WLAN_CFG_RADIO_1_DEFAULT_REO, \
+		CFG_VALUE_OR_DEFAULT, "Radio1 to REO destination default mapping")
+
+#define CFG_DP_RX_RADIO_2_DEFAULT_REO \
+		CFG_INI_UINT("dp_rx_radio2_default_reo", \
+		WLAN_CFG_RADIO_DEFAULT_REO_MIN, \
+		WLAN_CFG_RADIO_DEFAULT_REO_MAX, \
+		WLAN_CFG_RADIO_2_DEFAULT_REO, \
+		CFG_VALUE_OR_DEFAULT, "Radio2 to REO destination default mapping")
+
 #define CFG_DP_PEER_EXT_STATS \
 		CFG_INI_BOOL("peer_ext_stats", \
 		false, "Peer extended stats")
@@ -1086,5 +1114,8 @@
 		CFG(CFG_DP_POLL_MODE_ENABLE) \
 		CFG(CFG_DP_SWLM_ENABLE) \
 		CFG(CFG_DP_TX_PER_PKT_VDEV_ID_CHECK) \
-		CFG(CFG_DP_RX_FST_IN_CMEM)
+		CFG(CFG_DP_RX_FST_IN_CMEM) \
+		CFG(CFG_DP_RX_RADIO_0_DEFAULT_REO) \
+		CFG(CFG_DP_RX_RADIO_1_DEFAULT_REO) \
+		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO)
 #endif /* _CFG_DP_H_ */

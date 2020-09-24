@@ -13400,6 +13400,33 @@ static void dp_soc_cfg_attach(struct dp_soc *soc)
 	}
 }
 
+static inline  void dp_pdev_set_default_reo(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	switch (pdev->pdev_id) {
+	case 0:
+		pdev->reo_dest =
+			wlan_cfg_radio0_default_reo_get(soc->wlan_cfg_ctx);
+		break;
+
+	case 1:
+		pdev->reo_dest =
+			wlan_cfg_radio1_default_reo_get(soc->wlan_cfg_ctx);
+		break;
+
+	case 2:
+		pdev->reo_dest =
+			wlan_cfg_radio2_default_reo_get(soc->wlan_cfg_ctx);
+		break;
+
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid pdev_id %d for reo selection", pdev->pdev_id);
+		break;
+	}
+}
+
 static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 				      HTC_HANDLE htc_handle,
 				      qdf_device_t qdf_osdev,
@@ -13519,7 +13546,7 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 	dp_pcp_tid_map_setup(pdev);
 
 	/* set the reo destination during initialization */
-	pdev->reo_dest = pdev->pdev_id + 1;
+	dp_pdev_set_default_reo(pdev);
 
 	/*
 	 * initialize ppdu tlv list
