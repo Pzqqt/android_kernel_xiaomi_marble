@@ -581,7 +581,7 @@ dp_fisa_rx_get_hw_ft_timestamp(struct dp_rx_fst *fisa_hdl,
 	sw_ft_entry = &(((struct dp_fisa_rx_sw_ft *)
 				fisa_hdl->base)[hashed_flow_idx]);
 
-	if (fisa_hdl->soc_hdl->fst_in_cmem)
+	if (fisa_hdl->fst_in_cmem)
 		return hal_rx_flow_get_cmem_fse_timestamp(
 				hal_soc_hdl, sw_ft_entry->cmem_offset);
 
@@ -921,7 +921,7 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 	}
 
 	/* else new flow, add entry to FT */
-	if (fisa_hdl->soc_hdl->fst_in_cmem)
+	if (fisa_hdl->fst_in_cmem)
 		return dp_fisa_rx_queue_fst_update_work(fisa_hdl, flow_idx,
 							nbuf, vdev);
 

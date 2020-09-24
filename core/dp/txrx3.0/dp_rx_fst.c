@@ -38,7 +38,7 @@ void dp_rx_dump_fisa_table(struct dp_soc *soc)
 	struct dp_fisa_rx_sw_ft *sw_ft_entry;
 	int i;
 
-	if (!soc->fst_in_cmem)
+	if (!fst->fst_in_cmem)
 		return hal_rx_dump_fse_table(soc->rx_fst->hal_rx_fst);
 
 	sw_ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
@@ -159,8 +159,10 @@ static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
 
 	fst->fst_update_wq =
 		qdf_alloc_high_prior_ordered_workqueue("dp_rx_fst_update_wq");
-	if (!fst->fst_update_wq)
+	if (!fst->fst_update_wq) {
+		dp_err("failed to allocate fst update wq\n");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	qdf_create_work(0, &fst->fst_update_work,
 			dp_fisa_rx_fst_update_work, fst);
@@ -292,17 +294,21 @@ out2:
 static void dp_rx_fst_check_cmem_support(struct dp_soc *soc)
 {
 	struct dp_rx_fst *fst = soc->rx_fst;
+	QDF_STATUS status;
 
 	/* FW doesn't support CMEM FSE, keep it in DDR */
 	if (!soc->fst_in_cmem)
 		return;
 
+	status = dp_rx_fst_cmem_init(fst);
+	if (status != QDF_STATUS_SUCCESS)
+		return;
+
 	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
 	fst->hal_rx_fst = NULL;
 	fst->hal_rx_fst_base_paddr = 0;
-
-	dp_rx_fst_cmem_init(fst);
 	fst->flow_deletion_supported = true;
+	fst->fst_in_cmem = true;
 }
 
 /**
@@ -336,7 +342,7 @@ QDF_STATUS dp_rx_flow_send_fst_fw_setup(struct dp_soc *soc,
 
 	status  = dp_htt_rx_flow_fst_setup(pdev, &fisa_hw_fst_setup_cmd);
 
-	if (!soc->fst_in_cmem)
+	if (!fst->fst_in_cmem)
 		return status;
 
 	status = qdf_wait_single_event(&fst->cmem_resp_event,
@@ -362,7 +368,7 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 	dp_fst = soc->rx_fst;
 	if (qdf_likely(dp_fst)) {
 		qdf_timer_sync_cancel(&dp_fst->fse_cache_flush_timer);
-		if (soc->fst_in_cmem)
+		if (dp_fst->fst_in_cmem)
 			dp_rx_fst_cmem_deinit(dp_fst);
 		else
 			hal_rx_fst_detach(dp_fst->hal_rx_fst, soc->osdev);
