@@ -73,6 +73,8 @@
 #define DFS_165MHZ_SECOND_SEG_OFFSET_RIGHT 45 /* in MHz  */
 /*Primary segment id is 0 */
 #define PRIMARY_SEG 0
+/* Secondary segment id is 1 */
+#define SECONDARY_SEG 1
 
 /* Frequency offset indices */
 #define CENTER_CH 0

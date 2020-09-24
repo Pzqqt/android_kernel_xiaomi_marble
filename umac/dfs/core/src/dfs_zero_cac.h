@@ -1433,4 +1433,24 @@ dfs_precac_status_for_channel(struct wlan_dfs *dfs,
 }
 #endif
 
+#if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
+/**
+ * dfs_translate_radar_params_for_agile_chan() - Translate radar params from
+ * 160MHz synthesizer model to 80MHz synthesizer model for Agile channel.
+ * @dfs: Pointer to wlan_dfs dfs.
+ * @r_info: Radar found parameters received from FW that are converted to 80MHz
+ * syntesizer model(both input and output).
+ *
+ * Return: void.
+ */
+
+void dfs_translate_radar_params_for_agile_chan(struct wlan_dfs *dfs,
+					       struct radar_found_info *r_info);
+#else
+static inline void
+dfs_translate_radar_params_for_agile_chan(struct wlan_dfs *dfs,
+					  struct radar_found_info *r_info)
+{
+}
+#endif
 #endif /* _DFS_ZERO_CAC_H_ */

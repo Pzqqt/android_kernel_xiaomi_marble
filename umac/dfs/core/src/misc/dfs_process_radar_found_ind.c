@@ -1066,6 +1066,11 @@ void dfs_translate_radar_params(struct wlan_dfs *dfs,
 	if (!dfs_is_true_160mhz_supported(dfs))
 		return;
 
+	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs)) {
+		dfs_translate_radar_params_for_agile_chan(dfs, radar_found);
+		return;
+	}
+
 	/* Is the primary channel ( or primary 80 segment) to the right
 	 * of the center of 160/165Mhz channel.
 	 */
