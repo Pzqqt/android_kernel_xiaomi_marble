@@ -4949,11 +4949,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	/* short slot time */
 	mac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
 						pBssConfig->uShortSlotTime;
-	/* 11d */
-	if (pBssConfig->f11hSupport)
-		mac->mlme_cfg->gen.enabled_11d = pBssConfig->f11hSupport;
-	else
-		mac->mlme_cfg->gen.enabled_11d = pProfile->ieee80211d;
 
 	mac->mlme_cfg->power.local_power_constraint = pBssConfig->uPowerLimit;
 	/* CB */
