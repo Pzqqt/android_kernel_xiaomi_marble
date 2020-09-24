@@ -513,6 +513,31 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   uint8_t vdev_id,
 				   struct wlan_cm_roam_vendor_btm_params
 								*param);
+
+/**
+ * wlan_cm_update_roam_scan_scheme_bitmap() - Set roam scan scheme bitmap for
+ * each vdev
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ * @roam_scan_scheme_bitmap: bitmap of roam triggers for which partial roam
+ * scan needs to be enabled
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id,
+				       uint32_t roam_scan_scheme_bitmap);
+
+/**
+ * wlan_cm_get_roam_scan_scheme_bitmap() - Get roam scan scheme bitmap value
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ *
+ * Return: Roam scan scheme bitmap value
+ */
+uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
+					     uint8_t vdev_id);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -570,5 +595,20 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   uint8_t vdev_id,
 				   struct wlan_cm_roam_vendor_btm_params *param)
 {}
+
+static inline QDF_STATUS
+wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id,
+				       uint32_t roam_scan_scheme_bitmap)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
+					     uint8_t vdev_id)
+{
+	return 0;
+}
 #endif  /* FEATURE_ROAM_OFFLOAD */
 #endif  /* WLAN_CM_ROAM_API_H__ */

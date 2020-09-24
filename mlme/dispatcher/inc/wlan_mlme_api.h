@@ -3010,4 +3010,5 @@ QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
  */
 QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 				 qdf_size_t len);
+
 #endif /* _WLAN_MLME_API_H_ */
