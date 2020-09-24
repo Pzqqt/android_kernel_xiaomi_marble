@@ -239,6 +239,23 @@ static inline qdf_list_t *wlan_scan_get_result(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * wlan_scan_update_mlme_by_bssinfo() - The Public API to update mlme
+ * info in the scan entry
+ * @pdev: pdev object
+ * @bss_info: bssid info to find the matching scan entry
+ * @mlme_info: mlme info to be updated.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+wlan_scan_update_mlme_by_bssinfo(struct wlan_objmgr_pdev *pdev,
+				 struct bss_info *bss_info,
+				 struct mlme_info *mlme_info)
+{
+	return scm_scan_update_mlme_by_bssinfo(pdev, bss_info, mlme_info);
+}
+
+/**
  * wlan_scan_start() - Public API to start a scan
  * @req: start scan req params
  *
