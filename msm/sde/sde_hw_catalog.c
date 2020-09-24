@@ -4802,6 +4802,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->inline_disable_const_clr = true;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
+		sde_cfg->has_trusted_vm_support = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;
