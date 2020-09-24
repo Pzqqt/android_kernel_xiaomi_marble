@@ -3029,8 +3029,6 @@ add_rsn_caps:
 			WLAN_CRYPTO_ADDSHORT(frm, 1);
 			qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
 			frm += PMKID_LEN;
-		} else {
-			WLAN_CRYPTO_ADDSHORT(frm, 0);
 		}
 	}
 
