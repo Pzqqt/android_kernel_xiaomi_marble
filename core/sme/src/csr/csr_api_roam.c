@@ -16992,7 +16992,10 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->roam_triggers.trigger_bitmap =
 		mlme_get_roam_trigger_bitmap(mac_ctx->psoc, session->vdev_id);
 	req_buf->roam_triggers.roam_score_delta =
-			mac_ctx->mlme_cfg->roam_scoring.roam_score_delta;
+		mac_ctx->mlme_cfg->roam_scoring.roam_score_delta;
+	req_buf->roam_triggers.roam_scan_scheme_bitmap =
+		wlan_cm_get_roam_scan_scheme_bitmap(mac_ctx->psoc,
+						    session->vdev_id);
 
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
 	req_buf->pmkid_modes.fw_okc =

@@ -2192,6 +2192,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 			roam_triggers.vdev_id = roam_req->sessionId;
 			roam_triggers.trigger_bitmap = 0;
+			roam_triggers.roam_scan_scheme_bitmap = 0;
 			wma_set_roam_triggers(wma_handle, &roam_triggers);
 		}
 
