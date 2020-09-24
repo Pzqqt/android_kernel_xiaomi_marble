@@ -198,6 +198,57 @@ struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	return NULL;
 }
 
+QDF_STATUS
+cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
+					 wlan_cm_id cm_id,
+					 struct wlan_cm_connect_rsp *resp)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req;
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+	struct scan_cache_node *candidate;
+	struct wlan_cm_connect_req *req;
+
+	if (prefix != CONNECT_REQ_PREFIX)
+		return QDF_STATUS_E_INVAL;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+
+		if (cm_req->cm_id == cm_id) {
+			req = &cm_req->connect_req.req;
+			candidate = cm_req->connect_req.cur_candidate;
+			if (candidate)
+				qdf_copy_macaddr(&resp->bssid,
+						 &candidate->entry->bssid);
+			else if (!qdf_is_macaddr_zero(&req->bssid))
+				qdf_copy_macaddr(&resp->bssid,
+						 &req->bssid);
+			else
+				qdf_copy_macaddr(&resp->bssid,
+						 &req->bssid_hint);
+			if (candidate)
+				resp->freq =
+					candidate->entry->channel.chan_freq;
+			else
+				resp->freq = req->chan_freq;
+			qdf_mem_copy(&resp->ssid, &req->ssid,
+				     sizeof(resp->bssid));
+			cm_req_lock_release(cm_ctx);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 						struct cm_req *cm_req,
 						enum wlan_cm_source source)

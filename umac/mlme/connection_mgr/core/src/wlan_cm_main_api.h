@@ -104,6 +104,18 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 				 struct wlan_cm_connect_rsp *connect_resp);
 
 /**
+ * cm_peer_create_on_candidate_select_ind_resp() - Called to create peer
+ * if peer select inidication's resp was success
+ * @cm_ctx: connection manager context
+ * @cm_id: Connection mgr ID assigned to this connect request.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+cm_peer_create_on_candidate_select_ind_resp(struct cnx_mgr *cm_ctx,
+					    wlan_cm_id *cm_id);
+
+/**
  * cm_resume_connect_after_peer_create() - Called after bss create rsp
  * @cm_ctx: connection manager context
  * @cm_id: Connection mgr ID assigned to this connect request.
@@ -112,6 +124,17 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
  */
 QDF_STATUS
 cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+
+/**
+ * cm_candidate_select_ind_rsp() - Connection manager resp for candidate
+ * select indication
+ * @vdev: vdev pointer
+ * @status: Status
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
+				       QDF_STATUS status);
 
 /**
  * cm_bss_peer_create_rsp() - handle bss peer create response
@@ -351,6 +374,24 @@ void cm_free_connect_req_mem(struct cm_connect_req *connect_req);
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_fill_bss_info_in_connect_rsp_by_cm_id() - fill bss info for the cm id
+ * @cm_ctx: connection manager context
+ * @cm_id: cm id of connect/disconnect req
+ * @resp: resp to copy bss info like ssid/bssid and freq
+ *
+ * Fill the SSID form the connect req.
+ * Fill freq and bssid from current candidate if available (i.e the connection
+ * has tried to connect to a candidate), else get the bssid from req bssid or
+ * bssid hint which ever is present.
+ *
+ * Return: Success if entry was found else failure
+ */
+QDF_STATUS
+cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
+					 wlan_cm_id cm_id,
+					 struct wlan_cm_connect_rsp *resp);
 
 /**
  * cm_remove_cmd() - Remove cmd from req list and serialization

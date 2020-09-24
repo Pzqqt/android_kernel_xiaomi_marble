@@ -571,7 +571,16 @@ static bool cm_subst_join_active_event(void *ctx, uint16_t event,
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		status = true;
 		break;
-	case WLAN_CM_EV_BSS_CREATE_PEER_SUCCESS:
+	case WLAN_CM_SM_EV_CANDIDATE_SELECT_IND_SUCCESS:
+		/* check if cm id is valid for the current req */
+		if (!cm_check_cmid_match_list_head(cm_ctx, data)) {
+			status = false;
+			break;
+		}
+		cm_peer_create_on_candidate_select_ind_resp(cm_ctx, data);
+		status = true;
+		break;
+	case WLAN_CM_SM_EV_BSS_CREATE_PEER_SUCCESS:
 		/* check if cm id is valid for the current req */
 		if (!cm_check_cmid_match_list_head(cm_ctx, data)) {
 			status = false;
@@ -751,6 +760,7 @@ static const char *cm_sm_event_names[] = {
 	"EV_CONNECT_START",
 	"EV_CONNECT_ACTIVE",
 	"EV_CONNECT_SUCCESS",
+	"EV_MLME_CANDIDATE_SELECT_IND_SUCCESS",
 	"EV_BSS_CREATE_PEER_SUCCESS"
 	"EV_CONNECT_GET_NXT_CANDIDATE",
 	"EV_CONNECT_FAILURE",
