@@ -49,5 +49,42 @@ tgt_set_gpio_config_req(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 tgt_set_gpio_output_req(struct wlan_objmgr_psoc *psoc,
 			struct gpio_output_params *param);
+
+/**
+ * tgt_if_gpio_config() - API to send gpio config request
+ * @psoc: pointer to psoc object
+ * @gpio_num: gpio pin number
+ * @input: enable/disable the gpio pin
+ * @pull_type: gpio pull type
+ * @intr_mode: gpio interrupt mode
+ *
+ * Return: status of operation
+ */
+QDF_STATUS tgt_gpio_config(struct wlan_objmgr_psoc *psoc, uint32_t gpio_num,
+			   uint32_t input, uint32_t pull_type,
+			   uint32_t intr_mode);
+/**
+ * tgt_if_gpio_output() - API to send gpio output request
+ * @psoc: pointer to psoc object
+ * @gpio_num: gpio pin number
+ * @set: enable/disable the gpio pin
+ *
+ * Return: status of operation
+ */
+QDF_STATUS tgt_gpio_output(struct wlan_objmgr_psoc *psoc, uint32_t gpio_num,
+			   uint32_t set);
+#else
+static QDF_STATUS tgt_gpio_config(struct wlan_objmgr_psoc *psoc,
+				  uint32_t gpio_num, uint32_t input,
+				  uint32_t pull_type, uint32_t intr_mode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS tgt_gpio_output(struct wlan_objmgr_psoc *psoc,
+				  uint32_t gpio_num, uint32_t set)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_GPIO_CFG */
 #endif /* __WLAN_GPIO_TGT_API_H__ */

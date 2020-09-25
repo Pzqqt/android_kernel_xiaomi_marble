@@ -48,19 +48,5 @@ QDF_STATUS ucfg_set_gpio_config(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_set_gpio_output(struct wlan_objmgr_psoc *psoc,
 				struct gpio_output_params *param);
-#else
-static inline
-QDF_STATUS ucfg_set_gpio_config(struct wlan_objmgr_psoc *psoc,
-				struct gpio_config_params *param)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS ucfg_set_gpio_output(struct wlan_objmgr_psoc *psoc,
-				struct gpio_output_params *param)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif /* WLAN_FEATURE_GPIO_CFG */
 #endif /* __WLAN_GPIO_CFG_UCFG_API_H__ */
