@@ -3611,12 +3611,12 @@ static struct platform_driver rotator_driver = {
 };
 #endif
 
-void  __init sde_rotator_register(void)
+void sde_rotator_register(void)
 {
 	platform_driver_register(&rotator_driver);
 }
 
-void __exit sde_rotator_unregister(void)
+void sde_rotator_unregister(void)
 {
 	platform_driver_unregister(&rotator_driver);
 }

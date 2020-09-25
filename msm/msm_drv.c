@@ -860,6 +860,10 @@ static int msm_drm_component_init(struct device *dev)
 		goto fail;
 	}
 
+	/* Register rotator platform driver only after genpd init */
+	sde_rotator_register();
+	sde_rotator_smmu_driver_register();
+
 	ret = msm_drm_display_thread_create(param, priv, ddev, dev);
 	if (ret) {
 		dev_err(dev, "msm_drm_display_thread_create failed\n");
@@ -2198,8 +2202,6 @@ static int __init msm_drm_register(void)
 	msm_hdcp_register();
 	dp_display_register();
 	msm_smmu_driver_init();
-	sde_rotator_register();
-	sde_rotator_smmu_driver_register();
 	msm_dsi_register();
 	msm_edp_register();
 	msm_hdmi_register();
