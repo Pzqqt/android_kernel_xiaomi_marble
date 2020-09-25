@@ -1512,7 +1512,6 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 	struct cdp_peer_stats *peer_stats;
 	struct stats_event *stats;
 	QDF_STATUS status;
-	bool found = false;
 	int i, ret = 0;
 
 	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
@@ -1552,14 +1551,10 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 	stainfo->tx_retry_fw = stats->peer_stats_info_ext->tx_retries;
 	stainfo->tx_retry_exhaust_fw = stats->peer_stats_info_ext->tx_failed;
 
-	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
-
-	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->vdev,
-							    &ret);
-	if (ret || !stats || !stats->num_peer_adv_stats) {
-		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
-		hdd_err("Failed to get peer stats info");
-		return -EINVAL;
+	/* Optional, just print logs here */
+	if (!stats->num_peer_adv_stats) {
+		hdd_debug("Failed to get peer adv stats info");
+		stainfo->rx_fcs_count = 0;
 	}
 
 	for (i = 0; i < stats->num_peer_adv_stats; i++) {
@@ -1568,14 +1563,8 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 				 QDF_MAC_ADDR_SIZE)) {
 			stainfo->rx_fcs_count = stats->peer_adv_stats[i].
 								      fcs_count;
-			found = true;
 			break;
 		}
-	}
-
-	if (!found) {
-		hdd_err("Peer not found");
-		ret = -EINVAL;
 	}
 
 	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
@@ -1602,7 +1591,8 @@ hdd_add_peer_stats_get_len(struct hdd_station_info *stainfo)
 		nla_attr_size(sizeof(stainfo->tx_retry_exhaust)) +
 		nla_attr_size(sizeof(stainfo->tx_total_fw)) +
 		nla_attr_size(sizeof(stainfo->tx_retry_fw)) +
-		nla_attr_size(sizeof(stainfo->tx_retry_exhaust_fw)));
+		nla_attr_size(sizeof(stainfo->tx_retry_exhaust_fw)) +
+		nla_attr_size(sizeof(stainfo->rx_fcs_count)));
 }
 
 /**
@@ -1852,20 +1842,29 @@ static int hdd_get_station_remote_ex(struct hdd_context *hdd_ctx,
 				hdd_get_sta_info_by_mac(&adapter->sta_info_list,
 					       mac_addr.bytes,
 					       STA_INFO_HDD_GET_STATION_REMOTE);
+	int status;
 
 	/* For now, only connected STAs are supported */
 	if (!stainfo) {
-		hdd_err_rl("Failed to get peer STA");
+		hdd_err_rl("Failed to get peer STA " QDF_MAC_ADDR_FMT,
+			   QDF_MAC_ADDR_REF(mac_addr.bytes));
 		return -EINVAL;
 	}
 
 	is_associated = hdd_is_peer_associated(adapter, &mac_addr);
 	if (!is_associated) {
-		hdd_err_rl("Peer STA is not associated");
+		hdd_err_rl("Peer STA is not associated " QDF_MAC_ADDR_FMT,
+			   QDF_MAC_ADDR_REF(mac_addr.bytes));
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
+				     STA_INFO_HDD_GET_STATION_REMOTE);
 		return -EINVAL;
 	}
 
-	return hdd_get_connected_station_info_ex(hdd_ctx, adapter, stainfo);
+	status = hdd_get_connected_station_info_ex(hdd_ctx, adapter, stainfo);
+	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
+			     STA_INFO_HDD_GET_STATION_REMOTE);
+
+	return status;
 }
 
 /**

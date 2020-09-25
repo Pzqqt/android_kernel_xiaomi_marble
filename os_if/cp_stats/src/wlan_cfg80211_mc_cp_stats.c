@@ -756,8 +756,46 @@ static void get_peer_stats_cb(struct stats_event *ev, void *cookie)
 
 	qdf_mem_copy(priv->peer_stats_info_ext, ev->peer_stats_info_ext,
 		     peer_stats_info_size);
+	priv->num_peer_stats_info_ext = ev->num_peer_stats_info_ext;
 
 peer_stats_cb_fail:
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+/**
+ * get_station_adv_stats_cb() - get_station_adv_stats_cb callback function
+ * @ev: station stats buffer
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void get_station_adv_stats_cb(struct stats_event *ev, void *cookie)
+{
+	struct stats_event *priv;
+	struct osif_request *request;
+	uint32_t peer_adv_size;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	peer_adv_size = sizeof(*ev->peer_adv_stats) * ev->num_peer_adv_stats;
+
+	if (peer_adv_size) {
+		priv->peer_adv_stats = qdf_mem_malloc(peer_adv_size);
+		if (!priv->peer_adv_stats)
+			goto station_adv_stats_cb_fail;
+
+		qdf_mem_copy(priv->peer_adv_stats, ev->peer_adv_stats,
+			     peer_adv_size);
+	}
+	priv->num_peer_adv_stats = ev->num_peer_adv_stats;
+
+station_adv_stats_cb_fail:
 	osif_request_complete(request);
 	osif_request_put(request);
 }
@@ -827,6 +865,36 @@ wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
 	out->num_peer_stats_info_ext = priv->num_peer_stats_info_ext;
 	out->peer_stats_info_ext = priv->peer_stats_info_ext;
 	priv->peer_stats_info_ext = NULL;
+	osif_request_put(request);
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+	info.cookie = cookie;
+	info.u.get_peer_stats_cb = get_station_adv_stats_cb;
+	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
+						     &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send stats request status: %d", status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_peer_stats_fail;
+	}
+
+	*errno = osif_request_wait_for_response(request);
+	if (*errno) {
+		osif_err("wait failed or timed out ret: %d", *errno);
+		goto get_peer_stats_fail;
+	}
+
+	out->num_peer_adv_stats = priv->num_peer_adv_stats;
+	out->peer_adv_stats = priv->peer_adv_stats;
+	priv->peer_adv_stats = NULL;
 	osif_request_put(request);
 
 	osif_debug("Exit");
