@@ -846,6 +846,12 @@ void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		       uint16_t peer_id, uint8_t tid);
 
+#define DP_RX_HEAD_APPEND(head, elem) \
+	do {                                                            \
+		qdf_nbuf_set_next((elem), (head));			\
+		(head) = (elem);                                        \
+	} while (0)
+
 
 #define DP_RX_LIST_APPEND(head, tail, elem) \
 	do {                                                          \
