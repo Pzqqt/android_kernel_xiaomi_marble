@@ -87,7 +87,8 @@ msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 
 msm_drm-$(CONFIG_DRM_SDE_VM) += sde/sde_vm_common.o \
 	sde/sde_vm_primary.o \
-	sde/sde_vm_trusted.o
+	sde/sde_vm_trusted.o \
+	sde/sde_vm_msgq.o
 
 msm_drm-$(CONFIG_DRM_SDE_WB) += sde/sde_wb.o \
 	sde/sde_encoder_phys_wb.o

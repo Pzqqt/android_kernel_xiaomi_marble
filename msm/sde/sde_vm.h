@@ -12,6 +12,35 @@
 
 struct sde_kms;
 
+/* sde_vm_msg_type - msg_type for dispaly custom messages */
+enum sde_vm_msg_type {
+	SDE_VM_MSG_MAX,
+};
+
+/**
+ * sde_vm_msg_work - sde msgq work definition
+ * @work - base kthread work object
+ * @msg_buf - payload buffer
+ * @msg_size - payload buffer size
+ * @sde_vm - handle to vm structure
+ */
+struct sde_vm_msg_work {
+	struct kthread_work work;
+	void *msg_buf;
+	size_t msg_size;
+	struct sde_vm *sde_vm;
+};
+
+/**
+ * sde_vm_msg_header - header definition for custom messages. Must
+ *                     be placed at the beginning of each custom
+ *                     message definition.
+ * @msg_type - type of the message
+ */
+struct sde_vm_msg_header {
+	enum sde_vm_msg_type msg_type;
+};
+
 /**
  * sde_vm_irq_entry - VM irq specification
  * @label - VM_IRQ_LABEL assigned by Hyp RM
@@ -122,6 +151,21 @@ struct sde_vm_ops {
 	 * @sde_kms - handle to sde_kms
 	 */
 	int (*vm_acquire_fail_handler)(struct sde_kms *sde_kms);
+
+	/** vm_msg_recv_cb - sde kms callback hook for msgq data
+	 * @sde_vm - handle to sde_vm struct
+	 * @data - paylod data
+	 * @size - size of payload data
+	 */
+	void (*vm_msg_recv_cb)(struct sde_vm *sde_vm, void *data, size_t size);
+
+	/** vm_msg_send - hook to send custom data to VM
+	 * @sde_vm - handle to sde_vm struct
+	 * @msg - payload data
+	 * @msg_size - payload data size
+	 * @return - 0 on success, errorcode otherwise
+	 */
+	int (*vm_msg_send)(struct sde_vm *sde_vm, void *msg, size_t msg_size);
 };
 
 /**
@@ -132,6 +176,9 @@ struct sde_vm_ops {
  * @io_mem_handle - RM identifier for the IO range
  * @sde_kms - handle to sde_kms
  * @vm_ops - VM operation hooks for respective VM type
+ * @msgq_listener_thread - handle to msgq receiver thread
+ * @vm_work - kthread work obj for msgq
+ * @msgq_handle - handle to display msgq
  */
 struct sde_vm {
 	struct mutex vm_res_lock;
@@ -140,6 +187,9 @@ struct sde_vm {
 	int io_mem_handle;
 	struct sde_kms *sde_kms;
 	struct sde_vm_ops vm_ops;
+	struct task_struct *msgq_listener_thread;
+	struct sde_vm_msg_work vm_work;
+	void *msgq_handle;
 };
 
 /**

@@ -10,6 +10,7 @@
 #include "sde_kms.h"
 #include "sde_vm_common.h"
 #include "sde_crtc.h"
+#include "sde_vm_msgq.h"
 
 struct hh_notify_vmid_desc *sde_vm_populate_vmid(hh_vmid_t vmid)
 {
@@ -320,4 +321,12 @@ int sde_vm_request_valid(struct sde_kms *sde_kms,
 	SDE_EVT32(old_state, new_state, vm_ops->vm_owns_hw(sde_kms), rc);
 
 	return rc;
+}
+
+int sde_vm_msg_send(struct sde_vm *sde_vm, void *msg, size_t msg_size)
+{
+	if (!sde_vm)
+		return -EINVAL;
+
+	return sde_vm_msgq_send(sde_vm, msg, msg_size);
 }
