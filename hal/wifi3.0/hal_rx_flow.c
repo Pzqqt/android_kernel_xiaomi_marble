@@ -429,7 +429,7 @@ hal_rx_fst_attach(qdf_device_t qdf_dev,
 		return NULL;
 	}
 
-	qdf_mem_set(fst, 0, sizeof(struct hal_rx_fst));
+	qdf_mem_set(fst, sizeof(struct hal_rx_fst), 0);
 
 	fst->key = hash_key;
 	fst->max_skid_length = max_search;
@@ -456,8 +456,8 @@ hal_rx_fst_attach(qdf_device_t qdf_dev,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
 			   (void *)fst->key, HAL_FST_HASH_KEY_SIZE_BYTES);
 
-	qdf_mem_set((uint8_t *)fst->base_vaddr, 0,
-		    (fst->max_entries * HAL_RX_FST_ENTRY_SIZE));
+	qdf_mem_set((uint8_t *)fst->base_vaddr,
+		    (fst->max_entries * HAL_RX_FST_ENTRY_SIZE), 0);
 
 	hal_rx_fst_key_configure(fst);
 	hal_flow_toeplitz_create_cache(fst);
