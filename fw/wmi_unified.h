@@ -1357,6 +1357,10 @@ typedef enum {
     /** Spectral scan FW params to host */
     WMI_PDEV_SSCAN_FW_PARAM_EVENTID,
 
+    /** Spectral scan related event start/stop trigger to host  */
+    WMI_SSCAN_EVT_MESSAGE_EVENTID,
+
+
     /* PDEV specific events */
     /** TPC config for the current operating channel */
     WMI_PDEV_TPC_CONFIG_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PDEV),
@@ -6020,6 +6024,28 @@ typedef struct {
      */
     A_UINT32 mid_5mhz_bins;
 } wmi_pdev_sscan_fft_bin_index;
+
+typedef enum {
+    /** Enum to indicate bmsk of spectral scan stop evt on scan count max out */
+    WMI_SSCAN_EVT_BMSK_SCAN_STOP_SCOUNT = 0X00000001,
+
+
+    /** Add more event code bmsks above this */
+    WMI_SSCAN_EVT_BMSK_MAX = 0Xffffffff,
+} wmi_sscan_evt_message_code;
+
+/**
+ * The below structure is used to send the start/stop triggers
+ * for events related to spectral scan activity from
+ * FW to host
+ */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sscan_evt_message_fixed_param */
+    A_UINT32 pdev_id;
+
+    /** Refer Enum wmi_sscan_evt_message_code */
+    A_UINT32 sscan_evt_code;
+} wmi_sscan_evt_message_fixed_param;
 
 #define WMI_BEACON_CTRL_TX_DISABLE  0
 #define WMI_BEACON_CTRL_TX_ENABLE   1
