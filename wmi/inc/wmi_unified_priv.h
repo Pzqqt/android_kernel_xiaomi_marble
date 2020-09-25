@@ -1814,7 +1814,7 @@ QDF_STATUS (*extract_mib_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 #endif
 
 QDF_STATUS (*extract_thermal_stats)(wmi_unified_t wmi_handle, void *evt_buf,
-	uint32_t *temp, uint32_t *level, uint32_t *pdev_id);
+	uint32_t *temp, enum thermal_throttle_level *level, uint32_t *pdev_id);
 
 QDF_STATUS (*extract_thermal_level_stats)(wmi_unified_t wmi_handle,
 		void *evt_buf, uint8_t idx, uint32_t *levelcount,

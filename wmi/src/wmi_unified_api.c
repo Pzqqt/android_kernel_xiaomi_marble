@@ -2227,7 +2227,8 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
 }
 
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
-				     uint32_t *temp, uint32_t *level,
+				     uint32_t *temp,
+				     enum thermal_throttle_level *level,
 				     uint32_t *pdev_id)
 {
 	if (wmi_handle->ops->extract_thermal_stats)

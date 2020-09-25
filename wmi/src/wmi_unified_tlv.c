@@ -11376,18 +11376,39 @@ static QDF_STATUS extract_scan_radio_cap_service_ready_ext2_tlv(
 }
 
 /**
+ * wmi_tgt_thermal_level_to_host() - Convert target thermal level to host enum
+ * @level: target thermal level from WMI_THERM_THROT_STATS_EVENTID event
+ *
+ * Return: host thermal throt level
+ */
+static enum thermal_throttle_level
+wmi_tgt_thermal_level_to_host(uint32_t level)
+{
+	switch (level) {
+	case WMI_THERMAL_FULLPERF:
+		return THERMAL_FULLPERF;
+	case WMI_THERMAL_MITIGATION:
+		return THERMAL_MITIGATION;
+	case WMI_THERMAL_SHUTOFF:
+		return THERMAL_SHUTOFF;
+	default:
+		return THERMAL_UNKNOWN;
+	}
+}
+
+/**
  * extract_thermal_stats_tlv() - extract thermal stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: Pointer to event buffer
  * @param temp: Pointer to hold extracted temperature
- * @param level: Pointer to hold extracted level
+ * @param level: Pointer to hold extracted level in host enum
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS
 extract_thermal_stats_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf, uint32_t *temp,
-		uint32_t *level, uint32_t *pdev_id)
+		enum thermal_throttle_level *level, uint32_t *pdev_id)
 {
 	WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf;
 	wmi_therm_throt_stats_event_fixed_param *tt_stats_event;
@@ -11398,12 +11419,13 @@ extract_thermal_stats_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 
 	tt_stats_event = param_buf->fixed_param;
-
+	wmi_debug("thermal temperature %d level %d",
+		  tt_stats_event->temp, tt_stats_event->level);
 	*pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 						wmi_handle,
 						tt_stats_event->pdev_id);
 	*temp = tt_stats_event->temp;
-	*level = tt_stats_event->level;
+	*level = wmi_tgt_thermal_level_to_host(tt_stats_event->level);
 
 	return QDF_STATUS_SUCCESS;
 }

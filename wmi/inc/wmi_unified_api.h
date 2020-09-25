@@ -32,6 +32,7 @@
 #include "wlan_mgmt_txrx_utils_api.h"
 #include <wlan_dfs_public_struct.h>
 #include <wlan_crypto_global_def.h>
+#include "wlan_thermal_public_struct.h"
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include "wmi_unified_pmo_api.h"
 #endif
@@ -2947,13 +2948,14 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
  * @wmi_handle: wmi handle
  * @evt_buf: Pointer to event buffer
  * @temp: Pointer to hold extracted temperature
- * @level: Pointer to hold extracted level
+ * @level: Pointer to hold extracted level in host enum
  * @pdev_id: Pointer to hold extracted pdev_id
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
-				     uint32_t *temp, uint32_t *level,
+				     uint32_t *temp,
+				     enum thermal_throttle_level *level,
 				     uint32_t *pdev_id);
 
 /**
