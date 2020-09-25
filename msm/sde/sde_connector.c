@@ -188,15 +188,16 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 		return -EINVAL;
 
 	sde_kms = to_sde_kms(priv->kms);
-	if (sde_in_trusted_vm(sde_kms))
+	display = (struct dsi_display *) c_conn->display;
+	bl_config = &display->panel->bl_config;
+
+	if (bl_config->type != DSI_BACKLIGHT_DCS &&
+		sde_in_trusted_vm(sde_kms))
 		return 0;
 
 	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_RAW;
 	props.power = FB_BLANK_UNBLANK;
-
-	display = (struct dsi_display *) c_conn->display;
-	bl_config = &display->panel->bl_config;
 	props.max_brightness = bl_config->brightness_max_level;
 	props.brightness = bl_config->brightness_max_level;
 	snprintf(bl_node_name, BL_NODE_NAME_SIZE, "panel%u-backlight",
@@ -210,6 +211,14 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 		return -ENODEV;
 	}
 	c_conn->thermal_max_brightness = bl_config->brightness_max_level;
+
+	/**
+	 * In TVM, thermal cooling device is not enabled. Registering with dummy
+	 * thermal device will return a NULL leading to a failure. So skip it.
+	 */
+	if (sde_in_trusted_vm(sde_kms))
+		goto done;
+
 	c_conn->n.notifier_call = sde_backlight_cooling_cb;
 	c_conn->cdev = backlight_cdev_register(dev->dev, c_conn->bl_device,
 							&c_conn->n);
@@ -220,6 +229,8 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 		c_conn->bl_device = NULL;
 		return -ENODEV;
 	}
+
+done:
 	display_count++;
 
 	return 0;
