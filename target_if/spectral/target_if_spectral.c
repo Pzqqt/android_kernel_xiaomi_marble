@@ -4546,7 +4546,6 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 
 	spectral->send_single_packet = 0;
 	spectral->sc_spectral_scan = 0;
-	spectral->vdev_id[smode] = WLAN_INVALID_VDEV_ID;
 
 	qdf_spin_unlock(&spectral->spectral_lock);
 
