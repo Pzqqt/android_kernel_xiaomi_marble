@@ -1442,9 +1442,6 @@ struct policy_mgr_sme_cbacks {
  * @get_mode_for_non_connected_vdev: Get the mode for a non
  *                                 connected vdev
  * @hdd_get_device_mode: Get QDF_OPMODE type for session id (vdev id)
- * @hdd_wapi_security_sta_exist: Get whether wapi encription station existing
- * or not. Some hw doesn't support WAPI encryption concurrency with other
- * encryption type.
  * @hdd_is_chan_switch_in_progress: Check if in any adater channel switch is in
  * progress
  * @wlan_hdd_set_sap_csa_reason: Set the sap csa reason in cases like NAN.
@@ -1463,7 +1460,6 @@ struct policy_mgr_hdd_cbacks {
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id);
 	enum QDF_OPMODE (*hdd_get_device_mode)(uint32_t session_id);
-	bool (*hdd_wapi_security_sta_exist)(void);
 	bool (*hdd_is_chan_switch_in_progress)(void);
 	bool (*hdd_is_cac_in_progress)(void);
 	void (*wlan_hdd_set_sap_csa_reason)(struct wlan_objmgr_psoc *psoc,

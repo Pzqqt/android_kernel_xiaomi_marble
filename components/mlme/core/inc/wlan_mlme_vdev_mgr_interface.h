@@ -111,6 +111,21 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
  */
 bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * mlme_is_wapi_sta_active() - check sta with wapi security exists and is active
+ * @pdev: pdev pointer
+ *
+ * Return: true if sta with wapi security exists
+ */
+#ifdef FEATURE_WLAN_WAPI
+bool mlme_is_wapi_sta_active(struct wlan_objmgr_pdev *pdev);
+#else
+static inline bool mlme_is_wapi_sta_active(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+#endif
+
 QDF_STATUS mlme_set_bigtk_support(struct wlan_objmgr_vdev *vdev, bool val);
 
 bool mlme_get_bigtk_support(struct wlan_objmgr_vdev *vdev);

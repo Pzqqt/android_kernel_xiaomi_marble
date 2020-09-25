@@ -28,6 +28,7 @@
 #include <../../core/src/vdev_mgr_ops.h>
 #include "wlan_psoc_mlme_api.h"
 #include "target_if_cm_roam_offload.h"
+#include "wlan_crypto_global_api.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -743,6 +744,50 @@ bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
 
 	return mlme_priv->connection_fail;
 }
+
+#ifdef FEATURE_WLAN_WAPI
+static void mlme_is_sta_vdev_wapi(struct wlan_objmgr_pdev *pdev,
+			   void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	int32_t keymgmt;
+	bool *is_wapi_sta_exist = (bool *)arg;
+	QDF_STATUS status;
+
+	if (*is_wapi_sta_exist)
+		return;
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+		return;
+
+	status = wlan_vdev_is_up(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0)
+		return;
+
+	if (keymgmt & ((1 << WLAN_CRYPTO_KEY_MGMT_WAPI_PSK) |
+		       (1 << WLAN_CRYPTO_KEY_MGMT_WAPI_CERT))) {
+		*is_wapi_sta_exist = true;
+		mlme_debug("wapi exist for Vdev: %d",
+			   wlan_vdev_get_id(vdev));
+	}
+}
+
+bool mlme_is_wapi_sta_active(struct wlan_objmgr_pdev *pdev)
+{
+	bool is_wapi_sta_exist = false;
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev,
+					  WLAN_VDEV_OP,
+					  mlme_is_sta_vdev_wapi,
+					  &is_wapi_sta_exist, 0,
+					  WLAN_MLME_OBJMGR_ID);
+
+	return is_wapi_sta_exist;
+}
+#endif
 
 QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
 			       enum vdev_assoc_type assoc_type)

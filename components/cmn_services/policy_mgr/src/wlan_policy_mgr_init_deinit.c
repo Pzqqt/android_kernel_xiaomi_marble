@@ -715,8 +715,6 @@ QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_cbacks->get_mode_for_non_connected_vdev;
 	pm_ctx->hdd_cbacks.hdd_get_device_mode =
 		hdd_cbacks->hdd_get_device_mode;
-	pm_ctx->hdd_cbacks.hdd_wapi_security_sta_exist =
-		hdd_cbacks->hdd_wapi_security_sta_exist;
 	pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress =
 		hdd_cbacks->hdd_is_chan_switch_in_progress;
 	pm_ctx->hdd_cbacks.hdd_is_cac_in_progress =
