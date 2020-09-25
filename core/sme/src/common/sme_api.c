@@ -14535,7 +14535,7 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 	struct scheduler_msg twt_msg = {0};
 	QDF_STATUS status;
 	void *wma_handle;
-	struct wmi_twt_del_dialog_param *cmd_params;
+	struct wmi_twt_add_dialog_param *cmd_params;
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -14595,7 +14595,7 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 	struct scheduler_msg twt_msg = {0};
 	QDF_STATUS status;
 	void *wma_handle;
-	struct wmi_twt_add_dialog_param *cmd_params;
+	struct wmi_twt_del_dialog_param *cmd_params;
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
