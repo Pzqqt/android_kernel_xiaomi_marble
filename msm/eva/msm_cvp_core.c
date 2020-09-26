@@ -34,7 +34,7 @@ int msm_cvp_poll(void *instance, struct file *filp,
 EXPORT_SYMBOL(msm_cvp_poll);
 
 int msm_cvp_private(void *cvp_inst, unsigned int cmd,
-		struct cvp_kmd_arg *arg)
+		struct eva_kmd_arg *arg)
 {
 	int rc = 0;
 	struct msm_cvp_inst *inst = (struct msm_cvp_inst *)cvp_inst;

@@ -7,10 +7,10 @@
 #include "cvp_private.h"
 #include "cvp_hfi_api.h"
 
-static int _get_pkt_hdr_from_user(struct cvp_kmd_arg __user *up,
+static int _get_pkt_hdr_from_user(struct eva_kmd_arg __user *up,
 		struct cvp_hal_session_cmd_pkt *pkt_hdr)
 {
-	struct cvp_kmd_hfi_packet *u;
+	struct eva_kmd_hfi_packet *u;
 	struct cvp_hfi_msg_session_hdr *hdr;
 
 	hdr = (struct cvp_hfi_msg_session_hdr *)pkt_hdr;
@@ -41,10 +41,10 @@ set_default_pkt_hdr:
 	return 0;
 }
 
-static int _get_fence_pkt_hdr_from_user(struct cvp_kmd_arg __user *up,
+static int _get_fence_pkt_hdr_from_user(struct eva_kmd_arg __user *up,
 		struct cvp_hal_session_cmd_pkt *pkt_hdr)
 {
-	struct cvp_kmd_hfi_synx_packet __user *u;
+	struct eva_kmd_hfi_synx_packet __user *u;
 
 	u = &up->data.hfi_synx_pkt;
 
@@ -61,11 +61,11 @@ static int _get_fence_pkt_hdr_from_user(struct cvp_kmd_arg __user *up,
 }
 
 /* Size is in unit of u32 */
-static int _copy_pkt_from_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up,
+static int _copy_pkt_from_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up,
 		unsigned int size)
 {
-	struct cvp_kmd_hfi_packet *k, *u;
+	struct eva_kmd_hfi_packet *k, *u;
 	int i;
 
 	k = &kp->data.hfi_pkt;
@@ -78,8 +78,8 @@ static int _copy_pkt_from_user(struct cvp_kmd_arg *kp,
 }
 
 static int _copy_synx_data_from_user(
-	struct cvp_kmd_hfi_synx_packet *k,
-	struct cvp_kmd_hfi_synx_packet __user *u)
+	struct eva_kmd_hfi_synx_packet *k,
+	struct eva_kmd_hfi_synx_packet __user *u)
 {
 	int i;
 
@@ -93,8 +93,8 @@ static int _copy_synx_data_from_user(
 
 /* Size is in unit of u32 */
 static int _copy_fence_data_from_user_deprecate(
-	struct cvp_kmd_hfi_fence_packet *k,
-	struct cvp_kmd_hfi_fence_packet __user *u)
+	struct eva_kmd_hfi_fence_packet *k,
+	struct eva_kmd_hfi_fence_packet __user *u)
 {
 	int i;
 
@@ -111,11 +111,11 @@ static int _copy_fence_data_from_user_deprecate(
 	return 0;
 }
 
-static int _copy_fence_pkt_from_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up)
-{	struct cvp_kmd_hfi_synx_packet *k;
-	struct cvp_kmd_hfi_synx_packet __user *u;
-	struct cvp_kmd_hfi_fence_packet __user *u1;
+static int _copy_fence_pkt_from_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up)
+{	struct eva_kmd_hfi_synx_packet *k;
+	struct eva_kmd_hfi_synx_packet __user *u;
+	struct eva_kmd_hfi_fence_packet __user *u1;
 	int i;
 
 	k = &kp->data.hfi_synx_pkt;
@@ -133,11 +133,11 @@ static int _copy_fence_pkt_from_user(struct cvp_kmd_arg *kp,
 		return _copy_synx_data_from_user(k, u);
 	else
 		return _copy_fence_data_from_user_deprecate(
-				(struct cvp_kmd_hfi_fence_packet *)k, u1);
+				(struct eva_kmd_hfi_fence_packet *)k, u1);
 }
 
-static int _copy_frameid_from_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up)
+static int _copy_frameid_from_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up)
 {
 	if (get_user(kp->data.frame_id, &up->data.frame_id)) {
 		dprintk(CVP_ERR, "Failed to get frame id from user\n");
@@ -147,10 +147,10 @@ static int _copy_frameid_from_user(struct cvp_kmd_arg *kp,
 	return 0;
 }
 
-static int _copy_sysprop_from_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up)
+static int _copy_sysprop_from_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up)
 {
-	struct cvp_kmd_sys_properties *k, *u;
+	struct eva_kmd_sys_properties *k, *u;
 
 	k = &kp->data.sys_properties;
 	u = &up->data.sys_properties;
@@ -164,14 +164,14 @@ static int _copy_sysprop_from_user(struct cvp_kmd_arg *kp,
 	}
 
 	return _copy_pkt_from_user(kp, up,
-		(k->prop_num*((sizeof(struct cvp_kmd_sys_property)>>2)+1)));
+		(k->prop_num*((sizeof(struct eva_kmd_sys_property)>>2)+1)));
 }
 
-static int _copy_pkt_to_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up,
+static int _copy_pkt_to_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up,
 		unsigned int size)
 {
-	struct cvp_kmd_hfi_packet *k, *u;
+	struct eva_kmd_hfi_packet *k, *u;
 	int i;
 
 	k = &kp->data.hfi_pkt;
@@ -183,11 +183,11 @@ static int _copy_pkt_to_user(struct cvp_kmd_arg *kp,
 	return 0;
 }
 
-static int _copy_fence_pkt_to_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up)
+static int _copy_fence_pkt_to_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up)
 {
-	struct cvp_kmd_hfi_synx_packet *k;
-	struct cvp_kmd_hfi_synx_packet __user *u;
+	struct eva_kmd_hfi_synx_packet *k;
+	struct eva_kmd_hfi_synx_packet __user *u;
 	int i;
 
 	k = &kp->data.hfi_synx_pkt;
@@ -200,11 +200,11 @@ static int _copy_fence_pkt_to_user(struct cvp_kmd_arg *kp,
 	return 0;
 }
 
-static int _copy_sysprop_to_user(struct cvp_kmd_arg *kp,
-		struct cvp_kmd_arg __user *up)
+static int _copy_sysprop_to_user(struct eva_kmd_arg *kp,
+		struct eva_kmd_arg __user *up)
 {
-	struct cvp_kmd_sys_properties *k;
-	struct cvp_kmd_sys_properties __user *u;
+	struct eva_kmd_sys_properties *k;
+	struct eva_kmd_sys_properties __user *u;
 	int i;
 
 	k = &kp->data.sys_properties;
@@ -218,9 +218,9 @@ static int _copy_sysprop_to_user(struct cvp_kmd_arg *kp,
 
 }
 
-static void print_hfi_short(struct cvp_kmd_arg __user *up)
+static void print_hfi_short(struct eva_kmd_arg __user *up)
 {
-	struct cvp_kmd_hfi_packet *pkt;
+	struct eva_kmd_hfi_packet *pkt;
 	unsigned int words[5];
 
 	pkt = &up->data.hfi_pkt;
@@ -236,8 +236,8 @@ static void print_hfi_short(struct cvp_kmd_arg __user *up)
 }
 
 static int _copy_session_ctrl_to_user(
-	struct cvp_kmd_session_control *k,
-	struct cvp_kmd_session_control *u)
+	struct eva_kmd_session_control *k,
+	struct eva_kmd_session_control *u)
 {
 	int i;
 
@@ -250,8 +250,8 @@ static int _copy_session_ctrl_to_user(
 }
 
 static int _get_session_ctrl_from_user(
-	struct cvp_kmd_session_control *k,
-	struct cvp_kmd_session_control *u)
+	struct eva_kmd_session_control *k,
+	struct eva_kmd_session_control *u)
 {
 	int i;
 
@@ -265,8 +265,8 @@ static int _get_session_ctrl_from_user(
 }
 
 static int _get_session_info_from_user(
-	struct cvp_kmd_session_info *k,
-	struct cvp_kmd_session_info __user *u)
+	struct eva_kmd_session_info *k,
+	struct eva_kmd_session_info __user *u)
 {
 	int i;
 
@@ -279,13 +279,13 @@ static int _get_session_info_from_user(
 	return 0;
 }
 
-static int convert_from_user(struct cvp_kmd_arg *kp,
+static int convert_from_user(struct eva_kmd_arg *kp,
 		unsigned long arg,
 		struct msm_cvp_inst *inst)
 {
 	int rc = 0;
 	int i;
-	struct cvp_kmd_arg __user *up = (struct cvp_kmd_arg *)arg;
+	struct eva_kmd_arg __user *up = (struct eva_kmd_arg *)arg;
 	struct cvp_hal_session_cmd_pkt pkt_hdr;
 	int pkt_idx;
 
@@ -304,10 +304,10 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 		return -EFAULT;
 
 	switch (kp->type) {
-	case CVP_KMD_GET_SESSION_INFO:
+	case EVA_KMD_GET_SESSION_INFO:
 	{
-		struct cvp_kmd_session_info *k;
-		struct cvp_kmd_session_info __user *u;
+		struct eva_kmd_session_info *k;
+		struct eva_kmd_session_info __user *u;
 
 		k = &kp->data.session;
 		u = &up->data.session;
@@ -318,9 +318,9 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 
 		break;
 	}
-	case CVP_KMD_REGISTER_BUFFER:
+	case EVA_KMD_REGISTER_BUFFER:
 	{
-		struct cvp_kmd_buffer *k, *u;
+		struct eva_kmd_buffer *k, *u;
 
 		k = &kp->data.regbuf;
 		u = &up->data.regbuf;
@@ -337,9 +337,9 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 				return -EFAULT;
 		break;
 	}
-	case CVP_KMD_UNREGISTER_BUFFER:
+	case EVA_KMD_UNREGISTER_BUFFER:
 	{
-		struct cvp_kmd_buffer *k, *u;
+		struct eva_kmd_buffer *k, *u;
 
 		k = &kp->data.unregbuf;
 		u = &up->data.unregbuf;
@@ -356,7 +356,7 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 				return -EFAULT;
 		break;
 	}
-	case CVP_KMD_SEND_CMD_PKT:
+	case EVA_KMD_SEND_CMD_PKT:
 	{
 		if (_get_pkt_hdr_from_user(up, &pkt_hdr)) {
 			dprintk(CVP_ERR, "Invalid syscall: %x, %x, %x\n",
@@ -367,7 +367,7 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 		rc = _copy_pkt_from_user(kp, up, (pkt_hdr.size >> 2));
 		break;
 	}
-	case CVP_KMD_SEND_FENCE_CMD_PKT:
+	case EVA_KMD_SEND_FENCE_CMD_PKT:
 	{
 		if (_get_fence_pkt_hdr_from_user(up, &pkt_hdr)) {
 			dprintk(CVP_ERR, "Invalid syscall: %x, %x, %x\n",
@@ -389,11 +389,11 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 		rc = _copy_fence_pkt_from_user(kp, up);
 		break;
 	}
-	case CVP_KMD_RECEIVE_MSG_PKT:
+	case EVA_KMD_RECEIVE_MSG_PKT:
 		break;
-	case CVP_KMD_SESSION_CONTROL:
+	case EVA_KMD_SESSION_CONTROL:
 	{
-		struct cvp_kmd_session_control *k, *u;
+		struct eva_kmd_session_control *k, *u;
 
 		k = &kp->data.session_ctrl;
 		u = &up->data.session_ctrl;
@@ -401,7 +401,7 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 		rc = _get_session_ctrl_from_user(k, u);
 		break;
 	}
-	case CVP_KMD_GET_SYS_PROPERTY:
+	case EVA_KMD_GET_SYS_PROPERTY:
 	{
 		if (_copy_sysprop_from_user(kp, up)) {
 			dprintk(CVP_ERR, "Failed to get sysprop from user\n");
@@ -409,7 +409,7 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 		}
 		break;
 	}
-	case CVP_KMD_SET_SYS_PROPERTY:
+	case EVA_KMD_SET_SYS_PROPERTY:
 	{
 		if (_copy_sysprop_from_user(kp, up)) {
 			dprintk(CVP_ERR, "Failed to set sysprop from user\n");
@@ -417,10 +417,10 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 		}
 		break;
 	}
-	case CVP_KMD_FLUSH_ALL:
-	case CVP_KMD_UPDATE_POWER:
+	case EVA_KMD_FLUSH_ALL:
+	case EVA_KMD_UPDATE_POWER:
 		break;
-	case CVP_KMD_FLUSH_FRAME:
+	case EVA_KMD_FLUSH_FRAME:
 	{
 		if (_copy_frameid_from_user(kp, up))
 			return -EFAULT;
@@ -437,8 +437,8 @@ static int convert_from_user(struct cvp_kmd_arg *kp,
 }
 
 static int _put_user_session_info(
-		struct cvp_kmd_session_info *k,
-		struct cvp_kmd_session_info __user *u)
+		struct eva_kmd_session_info *k,
+		struct eva_kmd_session_info __user *u)
 {
 	int i;
 
@@ -452,11 +452,11 @@ static int _put_user_session_info(
 	return 0;
 }
 
-static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
+static int convert_to_user(struct eva_kmd_arg *kp, unsigned long arg)
 {
 	int rc = 0;
 	int i, size;
-	struct cvp_kmd_arg __user *up = (struct cvp_kmd_arg *)arg;
+	struct eva_kmd_arg __user *up = (struct eva_kmd_arg *)arg;
 	struct cvp_hal_session_cmd_pkt pkt_hdr;
 
 	if (!kp || !up) {
@@ -468,9 +468,9 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 		return -EFAULT;
 
 	switch (kp->type) {
-	case CVP_KMD_RECEIVE_MSG_PKT:
+	case EVA_KMD_RECEIVE_MSG_PKT:
 	{
-		struct cvp_kmd_hfi_packet *k, *u;
+		struct eva_kmd_hfi_packet *k, *u;
 		struct cvp_hfi_msg_session_hdr *hdr;
 
 		k = &kp->data.hfi_pkt;
@@ -482,10 +482,10 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 				return -EFAULT;
 		break;
 	}
-	case CVP_KMD_GET_SESSION_INFO:
+	case EVA_KMD_GET_SESSION_INFO:
 	{
-		struct cvp_kmd_session_info *k;
-		struct cvp_kmd_session_info __user *u;
+		struct eva_kmd_session_info *k;
+		struct eva_kmd_session_info __user *u;
 
 		k = &kp->data.session;
 		u = &up->data.session;
@@ -496,9 +496,9 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 
 		break;
 	}
-	case CVP_KMD_REGISTER_BUFFER:
+	case EVA_KMD_REGISTER_BUFFER:
 	{
-		struct cvp_kmd_buffer *k, *u;
+		struct eva_kmd_buffer *k, *u;
 
 		k = &kp->data.regbuf;
 		u = &up->data.regbuf;
@@ -515,9 +515,9 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 				return -EFAULT;
 		break;
 	}
-	case CVP_KMD_UNREGISTER_BUFFER:
+	case EVA_KMD_UNREGISTER_BUFFER:
 	{
-		struct cvp_kmd_buffer *k, *u;
+		struct eva_kmd_buffer *k, *u;
 
 		k = &kp->data.unregbuf;
 		u = &up->data.unregbuf;
@@ -534,7 +534,7 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 				return -EFAULT;
 		break;
 	}
-	case CVP_KMD_SEND_CMD_PKT:
+	case EVA_KMD_SEND_CMD_PKT:
 	{
 		if (_get_pkt_hdr_from_user(up, &pkt_hdr))
 			return -EFAULT;
@@ -544,7 +544,7 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 		rc = _copy_pkt_to_user(kp, up, (pkt_hdr.size >> 2));
 		break;
 	}
-	case CVP_KMD_SEND_FENCE_CMD_PKT:
+	case EVA_KMD_SEND_FENCE_CMD_PKT:
 	{
 		if (_get_fence_pkt_hdr_from_user(up, &pkt_hdr))
 			return -EFAULT;
@@ -555,16 +555,16 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 		rc = _copy_fence_pkt_to_user(kp, up);
 		break;
 	}
-	case CVP_KMD_SESSION_CONTROL:
+	case EVA_KMD_SESSION_CONTROL:
 	{
-		struct cvp_kmd_session_control *k, *u;
+		struct eva_kmd_session_control *k, *u;
 
 		k = &kp->data.session_ctrl;
 		u = &up->data.session_ctrl;
 		rc = _copy_session_ctrl_to_user(k, u);
 		break;
 	}
-	case CVP_KMD_GET_SYS_PROPERTY:
+	case EVA_KMD_GET_SYS_PROPERTY:
 	{
 		if (_copy_sysprop_to_user(kp, up)) {
 			dprintk(CVP_ERR, "Fail to copy sysprop to user\n");
@@ -572,10 +572,10 @@ static int convert_to_user(struct cvp_kmd_arg *kp, unsigned long arg)
 		}
 		break;
 	}
-	case CVP_KMD_FLUSH_ALL:
-	case CVP_KMD_FLUSH_FRAME:
-	case CVP_KMD_SET_SYS_PROPERTY:
-	case CVP_KMD_UPDATE_POWER:
+	case EVA_KMD_FLUSH_ALL:
+	case EVA_KMD_FLUSH_FRAME:
+	case EVA_KMD_SET_SYS_PROPERTY:
+	case EVA_KMD_UPDATE_POWER:
 		break;
 	default:
 		dprintk(CVP_ERR, "%s: unknown cmd type 0x%x\n",
@@ -591,7 +591,7 @@ static long cvp_ioctl(struct msm_cvp_inst *inst,
 	unsigned int cmd, unsigned long arg)
 {
 	int rc;
-	struct cvp_kmd_arg *karg;
+	struct eva_kmd_arg *karg;
 
 	if (!inst) {
 		dprintk(CVP_ERR, "%s: invalid params\n", __func__);

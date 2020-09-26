@@ -35,6 +35,6 @@ int msm_cvp_suspend(int core_id);
 int msm_cvp_poll(void *instance, struct file *filp,
 		struct poll_table_struct *pt);
 int msm_cvp_private(void *cvp_inst, unsigned int cmd,
-		struct cvp_kmd_arg *arg);
+		struct eva_kmd_arg *arg);
 
 #endif

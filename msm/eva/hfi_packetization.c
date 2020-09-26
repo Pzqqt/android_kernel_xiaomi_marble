@@ -340,9 +340,9 @@ int cvp_create_pkt_cmd_session_release_buffers(
 }
 
 int cvp_create_pkt_cmd_session_send(
-		struct cvp_kmd_hfi_packet *out_pkt,
+		struct eva_kmd_hfi_packet *out_pkt,
 		struct cvp_hal_session *session,
-		struct cvp_kmd_hfi_packet *in_pkt)
+		struct eva_kmd_hfi_packet *in_pkt)
 {
 	int def_idx;
 	struct cvp_hal_session_cmd_pkt *ptr =
