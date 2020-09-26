@@ -1988,6 +1988,10 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 				if (reap_status == DP_MON_STATUS_NO_DMA)
 					continue;
 				else if (reap_status == DP_MON_STATUS_REPLENISH) {
+					qdf_nbuf_unmap_nbytes_single(
+							soc->osdev, status_nbuf,
+							QDF_DMA_FROM_DEVICE,
+							rx_desc_pool->buf_size);
 					qdf_nbuf_free(status_nbuf);
 					goto buf_replenish;
 				}
