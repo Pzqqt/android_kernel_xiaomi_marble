@@ -41,6 +41,11 @@
 	pr_err("[drm:%s][msm-dp-err][%-4d]"fmt, __func__,   \
 		       current->pid, ##__VA_ARGS__)
 
+#define DEFAULT_DISCONNECT_DELAY_MS 0
+#define MAX_DISCONNECT_DELAY_MS 10000
+#define DEFAULT_CONNECT_NOTIFICATION_DELAY_MS 150
+#define MAX_CONNECT_NOTIFICATION_DELAY_MS 5000
+
 /**
  * struct dp_debug
  * @debug_en: specifies whether debug mode enabled
@@ -63,6 +68,10 @@
  * @mst_sim_remove_con: specifies whether sim connector is to be removed
  * @mst_sim_remove_con_id: specifies id of sim connector to be removed
  * @mst_port_cnt: number of mst ports to be added during hpd
+ * @connect_notification_delay_ms: time (in ms) to wait for any attention
+ *              messages before sending the connect notification uevent
+ * @disconnect_delay_ms: time (in ms) to wait before turning off the mainlink
+ *              in response to HPD low of cable disconnect event
  */
 struct dp_debug {
 	bool debug_en;
@@ -85,6 +94,9 @@ struct dp_debug {
 	bool mst_sim_remove_con;
 	int mst_sim_remove_con_id;
 	u32 mst_port_cnt;
+	unsigned long connect_notification_delay_ms;
+	u32 disconnect_delay_ms;
+
 	struct dp_mst_connector mst_connector_cache;
 	u8 *(*get_edid)(struct dp_debug *dp_debug);
 	void (*abort)(struct dp_debug *dp_debug);
