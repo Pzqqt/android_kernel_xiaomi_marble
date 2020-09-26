@@ -1109,6 +1109,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param,
     WMITLV_TAG_STRUC_wmi_request_unified_ll_get_sta_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_sscan_evt_message_fixed_param,
+    WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_send_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_compl_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1559,6 +1561,7 @@ typedef enum {
     OP(WMI_AUDIO_AGGR_GET_SCHED_METHOD_CMDID) \
     OP(WMI_WFA_CONFIG_CMDID) \
     OP(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID) \
+    OP(WMI_QOS_NULL_FRAME_TX_SEND_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1816,6 +1819,7 @@ typedef enum {
     OP(WMI_VDEV_DISCONNECT_EVENTID) \
     OP(WMI_TWT_SESSION_STATS_EVENTID) \
     OP(WMI_SSCAN_EVT_MESSAGE_EVENTID) \
+    OP(WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2661,6 +2665,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_SEND_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tx_send_params, wmi_tx_send_params, tx_send_params, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_OFFCHAN_DATA_TX_SEND_CMDID);
+
+/* QoS null tx send cmd */
+#define WMITLV_TABLE_WMI_QOS_NULL_FRAME_TX_SEND_CMDID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_send_cmd_fixed_param, wmi_qos_null_frame_tx_send_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tx_send_params, wmi_tx_send_params, tx_send_params, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_QOS_NULL_FRAME_TX_SEND_CMDID);
 
 /** PDEV send FILS Discovery frame cmd */
 #define WMITLV_TABLE_WMI_PDEV_SEND_FD_CMDID(id,op,buf,len) \
@@ -4702,6 +4714,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ack_rssi, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mgmt_hdr, mgmt_hdr, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID);
+
+/* QoS null frame TX completion event */
+#define WMITLV_TABLE_WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_compl_event_fixed_param, wmi_qos_null_frame_tx_compl_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID);
 
 /* VDEV Start response Event */
 #define WMITLV_TABLE_WMI_VDEV_START_RESP_EVENTID(id,op,buf,len)                                                         \

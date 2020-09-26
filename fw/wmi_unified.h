@@ -660,6 +660,8 @@ typedef enum {
     WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID,
     /** set FILS Discovery frame template for FW to generate FD frames */
     WMI_FD_TMPL_CMDID,
+    /** Transmit QoS null Frame over wmi interface */
+    WMI_QOS_NULL_FRAME_TX_SEND_CMDID,
 
     /** commands to directly control ba negotiation directly from host. only used in test mode */
 
@@ -1637,6 +1639,10 @@ typedef enum {
     /** software beacon alert event to Host requesting host to Queue a beacon for transmission.
      *   Used only in host beacon mode. */
     WMI_HOST_SWBA_V2_EVENTID,
+
+    /** Event for QoS null frame TX completion  */
+    WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID,
+
 
     /* ADDBA Related WMI Events*/
     /** Indication the completion of the prior
@@ -5535,6 +5541,22 @@ typedef struct {
 } wmi_offchan_data_tx_send_cmd_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_send_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 desc_id;  /* echoed in tx_compl_event */
+    A_UINT32 paddr_lo; /* paddr_lo and padd_hi will hold the address of remote/host buffer, which is physical address of frame */
+    A_UINT32 paddr_hi;
+    A_UINT32 frame_len; /* Actual length of frame in bytes*/
+    A_UINT32 buf_len;  /** Buffer length in bytes, length of data DMA'ed to FW from host */
+
+/* This fixed_param TLV is followed by the TLVs listed below:
+ * 1.  ARRAY_BYTE TLV: First buf_len (expected to be 64) bytes of frame
+ *     A_UINT8 bufp[];
+ * 2.  wmi_tx_send_params tx_send_params;
+ */
+} wmi_qos_null_frame_tx_send_cmd_fixed_param;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_echo_event_fixed_param */
     A_UINT32 value;
 } wmi_echo_event_fixed_param;
@@ -7484,6 +7506,27 @@ typedef struct {
      */
     A_UINT32    ppdu_id;
 } wmi_offchan_data_tx_compl_event_fixed_param;
+
+typedef struct {
+    A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_compl_event_fixed_param */
+    A_UINT32    desc_id; /* echoed from tx_send_cmd */
+    A_UINT32    status;  /* same status as WMI_MGMT_TX_COMP_STATUS_TYPE */
+    /** pdev_id for identifying the MAC that transmitted the QoS NULL frame
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32    pdev_id;
+    /* ppdu_id
+     * Hardware PPDU ID for tracking the completion stats
+     * A ppdu_id value of 0x0 is invalid, and should be ignored.
+     */
+    A_UINT32    ppdu_id;
+    /* ack_rssi
+     * TX mgmt ack RSSI report to host.
+     * Only valid when status == COMPLETE_OK and the ACK_RSSI report is enabled
+     * ack_rssi is reported in dBm.
+     */
+    A_INT32    ack_rssi;
+} wmi_qos_null_frame_tx_compl_event_fixed_param;
 
 typedef struct {
     A_UINT32    tlv_header;
@@ -27165,6 +27208,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_SCHED_METHOD_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_GET_SCHED_METHOD_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
+        WMI_RETURN_STRING(WMI_QOS_NULL_FRAME_TX_SEND_CMDID);
     }
 
     return "Invalid WMI cmd";
