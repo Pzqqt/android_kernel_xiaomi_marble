@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2017, 2020 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,7 +57,8 @@ typedef enum {
 /* WMI_CONTROL_SVC_WMAC1,2: WMI service for MACs 1 and 2 (where applicable) */
 #define WMI_CONTROL_SVC_WMAC1  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,5)
 #define WMI_CONTROL_SVC_WMAC2  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,6)
-#define WMI_MAX_SERVICES  7
+#define WMI_CONTROL_DIAG_SVC   MAKE_SERVICE_ID(WMI_SERVICE_GROUP,7)
+#define WMI_MAX_SERVICES  8
 
 #define NMI_CONTROL_SVC   MAKE_SERVICE_ID(NMI_SERVICE_GROUP,0)
 #define NMI_DATA_SVC      MAKE_SERVICE_ID(NMI_SERVICE_GROUP,1)
