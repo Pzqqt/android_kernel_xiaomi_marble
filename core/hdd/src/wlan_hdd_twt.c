@@ -44,6 +44,12 @@
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
 
+#define TWT_SETUP_WAKE_INTVL_MANTISSA_MAX       0xFFFF
+#define TWT_SETUP_WAKE_DURATION_MAX             0xFFFF
+#define TWT_SETUP_WAKE_INTVL_EXP_MAX            31
+#define TWT_WAKE_DURATION_MULTIPLICATION_FACTOR 256
+#define TWT_MAX_NEXT_TWT_SIZE                   3
+
 /**
  * struct twt_pause_dialog_comp_ev_priv - private struct for twt pause dialog
  * @pause_dialog_comp_ev_buf: buffer from TWT pause dialog complete_event
@@ -1843,6 +1849,8 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 		hdd_err_rl("TWT_RESUME NEXT_TWT_SIZE is must");
 		return -EINVAL;
 	}
+	if (params.next_twt_size > TWT_MAX_NEXT_TWT_SIZE)
+		return -EINVAL;
 
 	hdd_debug("twt_resume: vdev_id %d dialog_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
