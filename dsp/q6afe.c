@@ -236,6 +236,7 @@ struct afe_ctl {
 	int dev_acdb_id[AFE_MAX_PORTS];
 	routing_cb rt_cb;
 	struct audio_uevent_data *uevent_data;
+	uint32_t afe_port_start_failed[AFE_MAX_PORTS];
 	/* cal info for AFE */
 	struct afe_fw_info *fw_data;
 	u32 island_mode[AFE_MAX_PORTS];
@@ -5643,13 +5644,13 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		/* One time call: only for first time */
 		afe_send_custom_topology();
 		/*
-		 * Deregister existing afe topology before
-		 * sending a new one for VA use cases only
+		 * Deregister existing afe topology before sending a new
+		 * one if the previous afe port start failed for this port
 		 */
-		if (port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_0 ||
-		    port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_1 ||
-		    port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_2)
+		if (this_afe.afe_port_start_failed[port_index] == true) {
 			afe_port_topology_deregister(port_id);
+			this_afe.afe_port_start_failed[port_index] = false;
+		}
 		afe_send_port_topology_id(port_id);
 		afe_send_cal(port_id);
 		afe_send_hw_delay(port_id, rate);
@@ -5966,6 +5967,8 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	ret = afe_send_cmd_port_start(port_id);
 
 fail_cmd:
+	if (ret)
+		this_afe.afe_port_start_failed[port_index] = true;
 	mutex_unlock(&this_afe.afe_cmd_lock);
 	return ret;
 }
@@ -11164,6 +11167,7 @@ int __init afe_init(void)
 		this_afe.power_mode[i] = 0;
 		this_afe.vad_cfg[i].is_enable = 0;
 		this_afe.vad_cfg[i].pre_roll = 0;
+		this_afe.afe_port_start_failed[i] = false;
 		init_waitqueue_head(&this_afe.wait[i]);
 	}
 	init_waitqueue_head(&this_afe.wait_wakeup);
