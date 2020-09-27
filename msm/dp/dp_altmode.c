@@ -158,6 +158,7 @@ static int dp_altmode_notify(void *priv, void *data, size_t len)
 	if (!altmode->connected) {
 		altmode->connected = true;
 		altmode->dp_altmode.base.alt_mode_cfg_done = true;
+		altmode->forced_disconnect = false;
 
 		switch (orientation) {
 		case 0:
