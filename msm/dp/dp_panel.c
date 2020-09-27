@@ -2334,32 +2334,6 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	return rc;
 }
 
-static u32 dp_panel_get_min_req_link_rate(struct dp_panel *dp_panel)
-{
-	const u32 encoding_factx10 = 8;
-	u32 min_link_rate_khz = 0, lane_cnt;
-	struct dp_panel_info *pinfo;
-
-	if (!dp_panel) {
-		DP_ERR("invalid input\n");
-		goto end;
-	}
-
-	lane_cnt = dp_panel->link_info.num_lanes;
-	pinfo = &dp_panel->pinfo;
-
-	/* num_lanes * lane_count * 8 >= pclk * bpp * 10 */
-	min_link_rate_khz = pinfo->pixel_clk_khz /
-				(lane_cnt * encoding_factx10);
-	min_link_rate_khz *= pinfo->bpp;
-
-	DP_DEBUG("min lclk req=%d khz for pclk=%d khz, lanes=%d, bpp=%d\n",
-		min_link_rate_khz, pinfo->pixel_clk_khz, lane_cnt,
-		pinfo->bpp);
-end:
-	return min_link_rate_khz;
-}
-
 static bool dp_panel_hdr_supported(struct dp_panel *dp_panel)
 {
 	struct dp_panel_private *panel;
@@ -3041,7 +3015,6 @@ struct dp_panel *dp_panel_get(struct dp_panel_in *in)
 	dp_panel->deinit = dp_panel_deinit_panel_info;
 	dp_panel->hw_cfg = dp_panel_hw_cfg;
 	dp_panel->read_sink_caps = dp_panel_read_sink_caps;
-	dp_panel->get_min_req_link_rate = dp_panel_get_min_req_link_rate;
 	dp_panel->get_mode_bpp = dp_panel_get_mode_bpp;
 	dp_panel->get_modes = dp_panel_get_modes;
 	dp_panel->handle_sink_request = dp_panel_handle_sink_request;
