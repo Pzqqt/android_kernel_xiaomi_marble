@@ -104,8 +104,15 @@ void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev,
 				wlan_ipa_send_to_nw cb)
 {
 	return ipa_reg_send_to_nw_cb(pdev, cb);
-
 }
+
+#ifdef IPA_LAN_RX_NAPI_SUPPORT
+void ucfg_ipa_reg_rps_enable_cb(struct wlan_objmgr_pdev *pdev,
+				wlan_ipa_rps_enable cb)
+{
+	return ipa_reg_rps_enable_cb(pdev, cb);
+}
+#endif
 
 void ucfg_ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode)
 {
