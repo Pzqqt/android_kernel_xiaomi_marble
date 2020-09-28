@@ -358,7 +358,7 @@ failure:
 	session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
 	mlm_join_cnf.resultCode = eSIR_SME_PEER_CREATE_FAILED;
 	mlm_join_cnf.sessionId = session_entry->peSessionId;
-	mlm_join_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	mlm_join_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	lim_post_sme_message(mac, LIM_MLM_JOIN_CNF, (uint32_t *) &mlm_join_cnf);
 }
 
@@ -464,7 +464,7 @@ error:
 		session->pLimMlmJoinReq = NULL;
 	mlmjoin_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
 	mlmjoin_cnf.sessionId = sessionid;
-	mlmjoin_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	mlmjoin_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
 		(uint32_t *)&mlmjoin_cnf);
 
@@ -689,8 +689,7 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 		pe_debug("Already have pre-auth context with peer: "
 		    QDF_MAC_ADDR_FMT,
 		    QDF_MAC_ADDR_REF(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr));
-		mlm_auth_cnf.resultCode = (tSirResultCodes)
-						eSIR_MAC_SUCCESS_STATUS;
+		mlm_auth_cnf.resultCode = (tSirResultCodes)STATUS_SUCCESS;
 		goto end;
 	} else {
 		num_preauth_ctx = mac_ctx->mlme_cfg->lfr.max_num_pre_auth;
@@ -871,7 +870,7 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 			QDF_MAC_ADDR_REF(mlm_assoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session_entry->limMlmState);
 		mlm_assoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
-		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlm_assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		goto end;
 	}
 
@@ -1556,7 +1555,7 @@ void lim_process_join_failure_timeout(struct mac_context *mac_ctx)
 			QDF_MAC_ADDR_REF(session->bssId));
 
 		mlm_join_cnf.resultCode = eSIR_SME_JOIN_TIMEOUT_RESULT_CODE;
-		mlm_join_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlm_join_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		session->limMlmState = eLIM_MLM_IDLE_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 				 session->peSessionId, session->limMlmState));
@@ -1953,7 +1952,7 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 		}
 
 		mlm_assoc_cnf.resultCode = eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE;
-		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlm_assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		/* Update PE session Id */
 		mlm_assoc_cnf.sessionId = session->peSessionId;
 		if (msg_type == LIM_ASSOC) {
@@ -1980,6 +1979,6 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 				 session->peSessionId, session->limMlmState));
 		lim_restore_pre_reassoc_state(mac_ctx,
 				eSIR_SME_REASSOC_TIMEOUT_RESULT_CODE,
-				eSIR_MAC_UNSPEC_FAILURE_STATUS, session);
+				STATUS_UNSPECIFIED_FAILURE, session);
 	}
 }

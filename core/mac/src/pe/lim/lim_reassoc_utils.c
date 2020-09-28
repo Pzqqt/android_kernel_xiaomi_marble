@@ -129,7 +129,7 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 			mlmReassocCnf.resultCode =
 					eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode =
-					eSIR_MAC_UNSPEC_FAILURE_STATUS;
+					STATUS_UNSPECIFIED_FAILURE;
 			lim_delete_dph_hash_entry(mac, pe_session->bssId,
 				DPH_STA_HASH_INDEX_PEER, pe_session);
 			goto error;
@@ -198,7 +198,7 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode =
-				eSIR_MAC_UNSPEC_FAILURE_STATUS;
+				STATUS_UNSPECIFIED_FAILURE;
 			qdf_mem_free(assocRsp);
 			mac->lim.gLimAssocResponseData = NULL;
 			qdf_mem_free(beacon_struct);
@@ -321,7 +321,7 @@ void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode =
-				eSIR_MAC_UNSPEC_FAILURE_STATUS;
+				STATUS_UNSPECIFIED_FAILURE;
 			qdf_mem_free(assocRsp);
 			mac->lim.gLimAssocResponseData = NULL;
 			qdf_mem_free(pBeaconStruct);

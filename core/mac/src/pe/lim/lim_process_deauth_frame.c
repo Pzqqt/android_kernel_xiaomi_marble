@@ -557,7 +557,7 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 		 */
 		lim_post_reassoc_failure(mac_ctx,
 				eSIR_SME_FT_REASSOC_TIMEOUT_FAILURE,
-				eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				STATUS_UNSPECIFIED_FAILURE,
 				pe_session);
 		return;
 	}

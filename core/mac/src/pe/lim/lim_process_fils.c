@@ -1834,7 +1834,7 @@ bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 
 verify_fils_params_fails:
 	assoc_cnf->resultCode = eSIR_SME_ASSOC_REFUSED;
-	assoc_cnf->protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	assoc_cnf->protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	return false;
 }
 

@@ -4690,14 +4690,14 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 	/* 'tDot11WMMAddTSResponse' to a 'tSirMacAddtsRspInfo'... */
 	if (ACTION_CATEGORY_QOS == *pFrame) {
 		pAddTs->dialogToken = addts.DialogToken.token;
-		pAddTs->status = (enum mac_status_code)addts.Status.status;
+		pAddTs->status = (enum wlan_status_code)addts.Status.status;
 
 		if (addts.TSDelay.present) {
 			convert_ts_delay(mac, &pAddTs->delay, &addts.TSDelay);
 		}
 		/* TS Delay is present iff status indicates its presence */
-		if (eSIR_MAC_TS_NOT_CREATED_STATUS == pAddTs->status
-		    && !addts.TSDelay.present) {
+		if (pAddTs->status == STATUS_TS_NOT_CREATED &&
+		    !addts.TSDelay.present) {
 			pe_warn("Missing TSDelay IE");
 		}
 
@@ -4779,7 +4779,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 	} else {
 		pAddTs->dialogToken = wmmaddts.DialogToken.token;
 		pAddTs->status =
-			(enum mac_status_code)wmmaddts.StatusCode.statusCode;
+			(enum wlan_status_code)wmmaddts.StatusCode.statusCode;
 
 		if (wmmaddts.WMMTSPEC.present) {
 			pAddTs->wmeTspecPresent = 1;

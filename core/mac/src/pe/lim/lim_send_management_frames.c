@@ -1408,7 +1408,7 @@ lim_send_assoc_rsp_mgmt_frame(
 						    &frm.he_6ghz_band_cap);
 		}
 #ifdef WLAN_FEATURE_11W
-		if (eSIR_MAC_TRY_AGAIN_LATER == status_code) {
+		if (status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 			max_retries =
 			mac_ctx->mlme_cfg->gen.pmf_sa_query_max_retries;
 			retry_int =
@@ -2758,8 +2758,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	case SIR_MAC_AUTH_FRAME_2:
 		if ((auth_frame->authAlgoNumber == eSIR_OPEN_SYSTEM) ||
 		    ((auth_frame->authAlgoNumber == eSIR_SHARED_KEY) &&
-			(auth_frame->authStatusCode !=
-			 eSIR_MAC_SUCCESS_STATUS))) {
+			(auth_frame->authStatusCode != STATUS_SUCCESS))) {
 			/*
 			 * Allocate buffer for Authenticaton frame of size
 			 * equal to management frame header length plus
@@ -5115,7 +5114,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
 	if (mac_ctx->reject_addba_req) {
-		frm.Status.status = eSIR_MAC_REQ_DECLINED_STATUS;
+		frm.Status.status = STATUS_REQUEST_DECLINED;
 		pe_err("refused addba req");
 	}
 	frm.addba_param_set.tid = tid;

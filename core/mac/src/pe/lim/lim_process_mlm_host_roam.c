@@ -92,7 +92,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 			QDF_MAC_ADDR_REF(reassoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
 		reassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
-		reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		reassoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		goto end;
 	}
 
@@ -118,7 +118,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 		 * Return Reassoc confirm with not authenticated
 		 */
 		reassoc_cnf.resultCode = eSIR_SME_STA_NOT_AUTHENTICATED;
-		reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		reassoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 
 		goto end;
 	}
@@ -141,7 +141,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 				      sizeof(struct pe_session), session);
 	return;
 end:
-	reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	reassoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	/* Update PE sessio Id */
 	reassoc_cnf.sessionId = reassoc_req->sessionId;
 	/* Free up buffer allocated for reassocReq */
@@ -420,7 +420,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		/* Return Reassoc confirm with */
 		/* Resources Unavailable */
 		mlmReassocCnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
-		mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlmReassocCnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		goto end;
 	}
 
@@ -520,7 +520,7 @@ end:
 		}
 
 	mlmReassocCnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
-	mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	mlmReassocCnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	/* Update PE session Id */
 	if (pe_session)
 		mlmReassocCnf.sessionId = pe_session->peSessionId;

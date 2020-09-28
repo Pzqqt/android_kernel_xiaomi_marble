@@ -1254,7 +1254,7 @@ void lim_send_sme_addts_rsp(struct mac_context *mac,
 
 	rsp->messageType = eWNI_SME_ADDTS_RSP;
 	rsp->rc = status;
-	rsp->rsp.status = (enum mac_status_code)status;
+	rsp->rsp.status = (enum wlan_status_code)status;
 	rsp->rsp.tspec = tspec;
 	rsp->sessionId = smesessionId;
 

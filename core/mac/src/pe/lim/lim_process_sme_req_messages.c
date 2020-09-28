@@ -1639,7 +1639,7 @@ end:
 	pe_debug("Send failure status on vdev_id: %d with ret_code: %d",
 		vdev_id, ret_code);
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, ret_code,
-		eSIR_MAC_UNSPEC_FAILURE_STATUS, session, vdev_id);
+		STATUS_UNSPECIFIED_FAILURE, session, vdev_id);
 }
 
 uint8_t lim_get_max_tx_power(struct mac_context *mac,
@@ -1726,7 +1726,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		if (session_entry)
 			lim_handle_sme_join_result(mac_ctx,
 					eSIR_SME_INVALID_PARAMETERS,
-					eSIR_MAC_UNSPEC_FAILURE_STATUS,
+					STATUS_UNSPECIFIED_FAILURE,
 					session_entry);
 		goto end;
 	}
@@ -1954,7 +1954,7 @@ end:
 	 * (note session_entry may be NULL, but that's OK)
 	 */
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_REASSOC_RSP,
-				      ret_code, eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				      ret_code, STATUS_UNSPECIFIED_FAILURE,
 				      session_entry, vdev_id);
 }
 
@@ -2880,8 +2880,8 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 		 * denied STA we need to remove this HAL entry.
 		 * So to do that set updateContext to 1
 		 */
-		enum mac_status_code mac_status_code =
-					eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		enum wlan_status_code mac_status_code =
+					STATUS_UNSPECIFIED_FAILURE;
 
 		if (!sta_ds->mlmStaContext.updateContext)
 			sta_ds->mlmStaContext.updateContext = 1;
@@ -2890,9 +2890,9 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 			 assoc_cnf.mac_status_code);
 		if (assoc_cnf.mac_status_code)
 			mac_status_code = assoc_cnf.mac_status_code;
-		if (assoc_cnf.mac_status_code == eSIR_MAC_INVALID_PMKID ||
+		if (assoc_cnf.mac_status_code == STATUS_INVALID_PMKID ||
 		    assoc_cnf.mac_status_code ==
-			eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS)
+			STATUS_NOT_SUPPORTED_AUTH_ALG)
 			add_pre_auth_context = false;
 
 		lim_reject_association(mac_ctx, sta_ds->staAddr,

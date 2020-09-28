@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -504,7 +504,7 @@ void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 		/* Return Reassoc confirm with */
 		/* Resources Unavailable */
 		mlmReassocCnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
-		mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlmReassocCnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		goto end;
 	}
 
@@ -523,7 +523,7 @@ end:
 		pTmpMlmReassocReq = NULL;
 	}
 	mlmReassocCnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
-	mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	mlmReassocCnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	/* Update PE sessio Id */
 	mlmReassocCnf.sessionId = pe_session->peSessionId;
 

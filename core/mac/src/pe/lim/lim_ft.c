@@ -787,10 +787,10 @@ lim_ft_send_aggr_qos_rsp(struct mac_context *mac, uint8_t rspReqd,
 		if ((1 << i) & aggrQosRsp->tspecIdx) {
 			if (QDF_IS_STATUS_SUCCESS(aggrQosRsp->status[i]))
 				rsp->aggrInfo.aggrRsp[i].status =
-					eSIR_MAC_SUCCESS_STATUS;
+					STATUS_SUCCESS;
 			else
 				rsp->aggrInfo.aggrRsp[i].status =
-					eSIR_MAC_UNSPEC_FAILURE_STATUS;
+					STATUS_UNSPECIFIED_FAILURE;
 			rsp->aggrInfo.aggrRsp[i].tspec = aggrQosRsp->tspec[i];
 		}
 	}

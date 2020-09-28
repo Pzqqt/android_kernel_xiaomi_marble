@@ -524,8 +524,7 @@ void lim_process_mlm_auth_cnf(struct mac_context *mac_ctx, uint32_t *msg)
 
 	if ((auth_type == eSIR_AUTO_SWITCH) &&
 		(auth_cnf->authType == eSIR_SHARED_KEY) &&
-		((eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS ==
-			auth_cnf->protStatusCode) ||
+		((auth_cnf->protStatusCode == STATUS_NOT_SUPPORTED_AUTH_ALG) ||
 		(auth_cnf->resultCode == eSIR_SME_AUTH_TIMEOUT_RESULT_CODE))) {
 		/*
 		 * When shared authentication fails with reason
@@ -1467,7 +1466,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 			mlm_assoc_cnf.resultCode =
 				eSIR_SME_JOIN_DEAUTH_FROM_AP_DURING_ADD_STA;
 			mlm_assoc_cnf.protStatusCode =
-					   eSIR_MAC_UNSPEC_FAILURE_STATUS;
+					   STATUS_UNSPECIFIED_FAILURE;
 			goto end;
 		}
 	}
@@ -1536,7 +1535,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 		else
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
-		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlm_assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	}
 end:
 	if (msg->bodyptr) {
@@ -1862,7 +1861,7 @@ void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 				sta_ds->mlmStaContext.subType, true,
 				sta_ds->mlmStaContext.authType, sta_ds->assocId,
 				true,
-				eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				STATUS_UNSPECIFIED_FAILURE,
 				session_entry);
 		}
 		return;
@@ -1961,7 +1960,7 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				       sta->mlmStaContext.subType,
 				       true, sta->mlmStaContext.authType,
 				       sta->assocId, true,
-				       eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				       STATUS_UNSPECIFIED_FAILURE,
 				       pe_session);
 		goto end;
 	}
@@ -2161,7 +2160,7 @@ joinFailure:
 
 		/* Send Join response to Host */
 		lim_handle_sme_join_result(mac_ctx, eSIR_SME_REFUSED,
-			eSIR_MAC_UNSPEC_FAILURE_STATUS, session_entry);
+			STATUS_UNSPECIFIED_FAILURE, session_entry);
 	}
 
 }
@@ -2244,7 +2243,7 @@ static void lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	} else {
 		pe_err("SessionId: %d ADD_BSS failed!",
 			session_entry->peSessionId);
-		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		mlm_assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		/* Return Assoc confirm to SME with failure */
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 				session_entry->limMlmState)
@@ -2627,7 +2626,7 @@ end:
 		mlmReassocCnf.sessionId = 0;
 	}
 
-	mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	mlmReassocCnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	/* Update PE sessio Id */
 	mlmReassocCnf.sessionId = pe_session->peSessionId;
 
@@ -2717,7 +2716,7 @@ static void lim_process_switch_channel_join_req(
 		session_entry->limMlmState = eLIM_MLM_JOINED_STATE;
 		join_cnf.sessionId = session_entry->peSessionId;
 		join_cnf.resultCode = eSIR_SME_SUCCESS;
-		join_cnf.protStatusCode = eSIR_MAC_SUCCESS_STATUS;
+		join_cnf.protStatusCode = STATUS_SUCCESS;
 		lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
 				     (uint32_t *)&join_cnf);
 		return;
@@ -2789,7 +2788,7 @@ error:
 		join_cnf.sessionId = 0;
 	}
 	join_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
-	join_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	join_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF, (uint32_t *)&join_cnf);
 }
 

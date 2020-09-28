@@ -2876,7 +2876,7 @@ sme_qos_ese_save_tspec_response(struct mac_context *mac, uint8_t sessionId,
 	pAddtsRsp->rc = QDF_STATUS_SUCCESS;
 	pAddtsRsp->sessionId = sessionId;
 	pAddtsRsp->rsp.dialogToken = 0;
-	pAddtsRsp->rsp.status = eSIR_MAC_SUCCESS_STATUS;
+	pAddtsRsp->rsp.status = STATUS_SUCCESS;
 	pAddtsRsp->rsp.wmeTspecPresent = pTspec->present;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Copy Tspec to local data structure ac=%d, tspecIdx=%d",

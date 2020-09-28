@@ -94,11 +94,11 @@ static void lim_process_sae_msg_sta(struct mac_context *mac,
 		if (sae_msg->sae_status == IEEE80211_STATUS_SUCCESS)
 			lim_restore_from_auth_state(mac,
 						    eSIR_SME_SUCCESS,
-						    eSIR_MAC_SUCCESS_STATUS,
+						    STATUS_SUCCESS,
 						    session);
 		else
 			lim_restore_from_auth_state(mac, eSIR_SME_AUTH_REFUSED,
-				eSIR_MAC_UNSPEC_FAILURE_STATUS, session);
+				STATUS_UNSPECIFIED_FAILURE, session);
 		break;
 	default:
 		/* SAE msg is received in unexpected state */

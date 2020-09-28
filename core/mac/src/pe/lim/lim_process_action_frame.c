@@ -545,7 +545,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 		SIR_MAC_ACCESSPOLICY_HCCA) ||
 		(addts.tspec.tsinfo.traffic.accessPolicy ==
 			SIR_MAC_ACCESSPOLICY_BOTH)) &&
-		(addts.status == eSIR_MAC_SUCCESS_STATUS)) {
+		(addts.status == STATUS_SUCCESS)) {
 		/* add the classifier - this should always succeed */
 		if (addts.numTclas > 1) {
 			/* currently no support for multiple tclas elements */
@@ -565,7 +565,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 	/* deactivate the response timer */
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_ADDTS_RSP_TIMER);
 
-	if (addts.status != eSIR_MAC_SUCCESS_STATUS) {
+	if (addts.status != STATUS_SUCCESS) {
 		pe_debug("Recv AddTsRsp: tsid: %d UP: %d status: %d",
 			addts.tspec.tsinfo.traffic.tsid,
 			addts.tspec.tsinfo.traffic.userPrio, addts.status);

@@ -538,7 +538,7 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
 
 	if (session_entry->limRmfEnabled &&
 	    session_entry->pmf_retry_timer_info.retried &&
-	    assoc_rsp->status_code == eSIR_MAC_TRY_AGAIN_LATER) {
+	    assoc_rsp->status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 		pe_debug("Already retry in progress");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -548,7 +548,8 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
 	 * again later with timeout interval and Assoc comeback type
 	 */
 	if (!session_entry->limRmfEnabled || assoc_rsp->status_code !=
-	    eSIR_MAC_TRY_AGAIN_LATER || !assoc_rsp->TimeoutInterval.present ||
+	    STATUS_ASSOC_REJECTED_TEMPORARILY ||
+	    !assoc_rsp->TimeoutInterval.present ||
 	    assoc_rsp->TimeoutInterval.timeoutType !=
 	    SIR_MAC_TI_TYPE_ASSOC_COMEBACK ||
 	    session_entry->pmf_retry_timer_info.retried)
@@ -815,8 +816,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	}
 	lim_copy_u16((uint8_t *) &mac_capab, caps);
 
-	if (eSIR_MAC_XS_FRAME_LOSS_POOR_CHANNEL_RSSI_STATUS ==
-	   assoc_rsp->status_code &&
+	if (assoc_rsp->status_code == STATUS_DENIED_POOR_CHANNEL_CONDITIONS &&
 	    assoc_rsp->rssi_assoc_rej.present) {
 		struct sir_rssi_disallow_lst ap_info = {{0}};
 
@@ -853,7 +853,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	else
 		lim_stop_reassoc_retry_timer(mac_ctx);
 
-	if (assoc_rsp->status_code != eSIR_MAC_SUCCESS_STATUS) {
+	if (assoc_rsp->status_code != STATUS_SUCCESS) {
 		/*
 		 *Re/Association response was received
 		 * either with failure code.
@@ -878,7 +878,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		pe_err("received Re/AssocRsp frame with invalid aid: %X",
 			assoc_rsp->aid);
 		assoc_cnf.resultCode = eSIR_SME_INVALID_ASSOC_RSP_RXED;
-		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		/* Send advisory Disassociation frame to AP */
 		lim_send_disassoc_mgmt_frame(mac_ctx,
 			REASON_UNSPEC_FAILURE,
@@ -894,7 +894,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 						assoc_rsp, &assoc_cnf)) {
 		pe_err("FILS params doesnot match");
 		assoc_cnf.resultCode = eSIR_SME_INVALID_ASSOC_RSP_RXED;
-		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 		/* Send advisory Disassociation frame to AP */
 		lim_send_disassoc_mgmt_frame(mac_ctx,
 			REASON_UNSPEC_FAILURE,
@@ -950,7 +950,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			assoc_cnf.resultCode =
 				eSIR_SME_INVALID_ASSOC_RSP_RXED;
 			assoc_cnf.protStatusCode =
-				eSIR_MAC_UNSPEC_FAILURE_STATUS;
+				STATUS_UNSPECIFIED_FAILURE;
 
 			/* Send advisory Disassociation frame to AP */
 			lim_send_disassoc_mgmt_frame(mac_ctx,
@@ -1132,7 +1132,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	} else {
 		pe_err("could not update the bss entry");
 		assoc_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
-		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		assoc_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	}
 
 assocReject:

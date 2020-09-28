@@ -9300,7 +9300,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	 * bss fail and supplicant issues connect request back to the same
 	 * AP.
 	 */
-	if (reason_code == eSIR_MAC_INVALID_PMKID) {
+	if (reason_code == STATUS_INVALID_PMKID) {
 		pmksa = qdf_mem_malloc(sizeof(*pmksa));
 		if (!pmksa)
 			return;
@@ -11520,7 +11520,7 @@ static bool csr_is_sae_peer_allowed(struct mac_context *mac_ctx,
 				    struct csr_roam_session *session,
 				    tSirMacAddr peer_mac_addr,
 				    tDot11fIERSN *rsn_ie,
-				    enum mac_status_code *mac_status_code)
+				    enum wlan_status_code *mac_status_code)
 {
 	bool is_allowed = false;
 
@@ -11530,7 +11530,7 @@ static bool csr_is_sae_peer_allowed(struct mac_context *mac_ctx,
 
 	/* Allow the peer with valid PMKID */
 	if (!rsn_ie->pmkid_count) {
-		*mac_status_code = eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS;
+		*mac_status_code = STATUS_NOT_SUPPORTED_AUTH_ALG;
 		sme_debug("No PMKID present in RSNIE; Tried to use SAE AKM after non-SAE authentication");
 	} else if (csr_is_pmkid_found_for_peer(mac_ctx, session, peer_mac_addr,
 					       &rsn_ie->pmkid[0][0],
@@ -11538,7 +11538,7 @@ static bool csr_is_sae_peer_allowed(struct mac_context *mac_ctx,
 		sme_debug("Valid PMKID found for SAE peer");
 		is_allowed = true;
 	} else {
-		*mac_status_code = eSIR_MAC_INVALID_PMKID;
+		*mac_status_code = STATUS_INVALID_PMKID;
 		sme_debug("No valid PMKID found for SAE peer");
 	}
 
@@ -11656,7 +11656,7 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	struct assoc_ind *pAssocInd;
-	enum mac_status_code mac_status_code = eSIR_MAC_SUCCESS_STATUS;
+	enum wlan_status_code mac_status_code = STATUS_SUCCESS;
 	enum csr_akm_type csr_akm_type;
 
 	sme_debug("Receive WNI_SME_ASSOC_IND from SME");
@@ -16111,7 +16111,7 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
 				  struct assoc_ind *pAssocInd,
 				  QDF_STATUS Halstatus,
-				  enum mac_status_code mac_status_code)
+				  enum wlan_status_code mac_status_code)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct assoc_cnf *pMsg;

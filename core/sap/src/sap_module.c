@@ -275,7 +275,7 @@ static void wlansap_owe_cleanup(struct sap_context *sap_ctx)
 			qdf_mem_free(owe_assoc_ind);
 			assoc_ind->owe_ie = NULL;
 			assoc_ind->owe_ie_len = 0;
-			assoc_ind->owe_status = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+			assoc_ind->owe_status = STATUS_UNSPECIFIED_FAILURE;
 			status = sme_update_owe_info(mac, assoc_ind);
 			qdf_mem_free(assoc_ind);
 		} else {

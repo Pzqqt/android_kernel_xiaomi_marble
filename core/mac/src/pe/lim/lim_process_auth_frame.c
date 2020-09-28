@@ -151,7 +151,7 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		auth_frame->authTransactionSeqNumber =
 			rx_auth_frm_body->authTransactionSeqNumber + 1;
 		auth_frame->authStatusCode =
-			eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS;
+			STATUS_NOT_SUPPORTED_AUTH_ALG;
 
 		lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -198,7 +198,7 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
 			auth_frame->authStatusCode =
-				eSIR_MAC_UNSPEC_FAILURE_STATUS;
+				STATUS_UNSPECIFIED_FAILURE;
 
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -223,7 +223,8 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 				rx_auth_frm_body->authAlgoNumber;
 			auth_frame->authTransactionSeqNumber =
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
-			auth_frame->authStatusCode = eSIR_MAC_TRY_AGAIN_LATER;
+			auth_frame->authStatusCode =
+				STATUS_ASSOC_REJECTED_TEMPORARILY;
 			lim_send_auth_mgmt_frame(mac_ctx,
 						 auth_frame,
 						 mac_hdr->sa,
@@ -245,7 +246,7 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		auth_frame->authAlgoNumber = rx_auth_frm_body->authAlgoNumber;
 		auth_frame->authTransactionSeqNumber =
 			rx_auth_frm_body->authTransactionSeqNumber + 1;
-		auth_frame->authStatusCode = eSIR_MAC_SUCCESS_STATUS;
+		auth_frame->authStatusCode = STATUS_SUCCESS;
 		auth_frame->type = WLAN_ELEMID_CHALLENGE;
 		auth_frame->length = SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH;
 		qdf_mem_copy(auth_frame->challengeText,
@@ -293,7 +294,7 @@ static void lim_process_auth_open_system_algo(struct mac_context *mac_ctx,
 	auth_frame->authAlgoNumber = rx_auth_frm_body->authAlgoNumber;
 	auth_frame->authTransactionSeqNumber =
 			rx_auth_frm_body->authTransactionSeqNumber + 1;
-	auth_frame->authStatusCode = eSIR_MAC_SUCCESS_STATUS;
+	auth_frame->authStatusCode = STATUS_SUCCESS;
 	lim_send_auth_mgmt_frame(mac_ctx, auth_frame, mac_hdr->sa,
 					LIM_NO_WEP_IN_FC,
 					pe_session);
@@ -625,7 +626,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 		auth_frame->authTransactionSeqNumber =
 			rx_auth_frm_body->authTransactionSeqNumber + 1;
 		auth_frame->authStatusCode =
-			eSIR_MAC_UNSPEC_FAILURE_STATUS;
+			STATUS_UNSPECIFIED_FAILURE;
 
 		lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -650,7 +651,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
 			auth_frame->authStatusCode =
-				eSIR_MAC_WME_INVALID_PARAMS_STATUS;
+				STATUS_UNSPECIFIED_FAILURE;
 
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -686,7 +687,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
 			auth_frame->authStatusCode =
-				eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS;
+				STATUS_NOT_SUPPORTED_AUTH_ALG;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
 				pe_session);
@@ -707,7 +708,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 		auth_frame->authTransactionSeqNumber =
 			rx_auth_frm_body->authTransactionSeqNumber + 1;
 		auth_frame->authStatusCode =
-			eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS;
+			STATUS_NOT_SUPPORTED_AUTH_ALG;
 
 		lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa,
@@ -742,8 +743,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		 */
 		if (LIM_IS_STA_ROLE(pe_session) &&
 		    (pe_session->limSmeState == eLIM_SME_WT_REASSOC_STATE) &&
-		    (rx_auth_frm_body->authStatusCode ==
-				eSIR_MAC_SUCCESS_STATUS) &&
+		    (rx_auth_frm_body->authStatusCode == STATUS_SUCCESS) &&
 		    (pe_session->ftPEContext.pFTPreAuthReq) &&
 		    (!qdf_mem_cmp(
 			pe_session->ftPEContext.pFTPreAuthReq->preAuthbssId,
@@ -789,7 +789,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 	}
 
 	if (rx_auth_frm_body->authStatusCode ==
-			eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS) {
+			STATUS_NOT_SUPPORTED_AUTH_ALG) {
 		/*
 		 * Interoperability workaround: Linksys WAP4400N is returning
 		 * wrong authType in OpenAuth response in case of
@@ -830,7 +830,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		}
 	}
 
-	if (rx_auth_frm_body->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
+	if (rx_auth_frm_body->authStatusCode != STATUS_SUCCESS) {
 		/*
 		 * Authentication failure.
 		 * Return Auth confirm with received failure code to SME
@@ -901,7 +901,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
 			auth_frame->authStatusCode =
-				eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS;
+				STATUS_NOT_SUPPORTED_AUTH_ALG;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 					mac_hdr->sa, LIM_NO_WEP_IN_FC,
 					pe_session);
@@ -935,7 +935,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
 
 				auth_frame->authStatusCode =
-					eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+					STATUS_CHALLENGE_FAIL;
 
 				lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 							 mac_hdr->sa,
@@ -956,7 +956,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 				rx_auth_frm_body->authTransactionSeqNumber
 				+ 1));
 		((tpSirMacAuthFrameBody)plainbody)->authStatusCode =
-			eSIR_MAC_SUCCESS_STATUS;
+			STATUS_SUCCESS;
 		((tpSirMacAuthFrameBody)plainbody)->type =
 			WLAN_ELEMID_CHALLENGE;
 		((tpSirMacAuthFrameBody)plainbody)->length =
@@ -1007,7 +1007,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 		auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
 		auth_frame->authTransactionSeqNumber = SIR_MAC_AUTH_FRAME_4;
 		auth_frame->authStatusCode =
-			eSIR_MAC_AUTH_FRAME_OUT_OF_SEQ_STATUS;
+			STATUS_UNKNOWN_AUTH_TRANSACTION;
 		lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 			mac_hdr->sa, LIM_NO_WEP_IN_FC,
 			pe_session);
@@ -1029,7 +1029,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+				STATUS_CHALLENGE_FAIL;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 					mac_hdr->sa,
 					LIM_NO_WEP_IN_FC,
@@ -1051,7 +1051,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_AUTH_FRAME_OUT_OF_SEQ_STATUS;
+				STATUS_UNKNOWN_AUTH_TRANSACTION;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
 				pe_session);
@@ -1071,7 +1071,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_AUTH_RSP_TIMEOUT_STATUS;
+				STATUS_AUTH_TIMEOUT;
 
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -1081,7 +1081,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			return;
 		}
 		if (rx_auth_frm_body->authStatusCode !=
-				eSIR_MAC_SUCCESS_STATUS) {
+				STATUS_SUCCESS) {
 			/*
 			 * Received Authenetication Frame 3 with status code
 			 * other than success. Wait until Auth response timeout
@@ -1117,7 +1117,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_SUCCESS_STATUS;
+				STATUS_SUCCESS;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
 				pe_session);
@@ -1136,7 +1136,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+				STATUS_CHALLENGE_FAIL;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
 				pe_session);
@@ -1207,7 +1207,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (rx_auth_frm_body->authStatusCode == eSIR_MAC_SUCCESS_STATUS) {
+	if (rx_auth_frm_body->authStatusCode == STATUS_SUCCESS) {
 		/*
 		 * Authentication Success, Inform SME of same.
 		 */
@@ -1398,7 +1398,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+				STATUS_CHALLENGE_FAIL;
 			/* Log error */
 			pe_err("rx Auth frm with wep bit set role: %d "QDF_MAC_ADDR_FMT,
 				GET_LIM_SYSTEM_ROLE(pe_session),
@@ -1443,7 +1443,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+				STATUS_CHALLENGE_FAIL;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
 				pe_session);
@@ -1470,7 +1470,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_AUTH_FRAME_OUT_OF_SEQ_STATUS;
+				STATUS_UNKNOWN_AUTH_TRANSACTION;
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
 				pe_session);
@@ -1498,7 +1498,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
 			auth_frame->authStatusCode =
-				eSIR_MAC_AUTH_FRAME_OUT_OF_SEQ_STATUS;
+				STATUS_UNKNOWN_AUTH_TRANSACTION;
 
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -1531,7 +1531,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				auth_frame->authTransactionSeqNumber =
 							SIR_MAC_AUTH_FRAME_4;
 				auth_frame->authStatusCode =
-					eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+					STATUS_CHALLENGE_FAIL;
 				lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 						mac_hdr->sa, LIM_NO_WEP_IN_FC,
 						pe_session);
@@ -1553,8 +1553,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
 			auth_frame->authTransactionSeqNumber =
 				SIR_MAC_AUTH_FRAME_4;
-			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+			auth_frame->authStatusCode = STATUS_CHALLENGE_FAIL;
 
 			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -1836,10 +1835,10 @@ QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac, uint8_t *p
 		       (uint32_t) mac->lim.gLimNumPreAuthContexts);
 	switch (pRxAuthFrameBody->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_2:
-		if (pRxAuthFrameBody->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
+		if (pRxAuthFrameBody->authStatusCode != STATUS_SUCCESS) {
 			pe_err("Auth status code received is %d",
 				(uint32_t) pRxAuthFrameBody->authStatusCode);
-			if (eSIR_MAC_MAX_ASSOC_STA_REACHED_STATUS ==
+			if (STATUS_AP_UNABLE_TO_HANDLE_NEW_STA ==
 			    pRxAuthFrameBody->authStatusCode)
 				ret_status = QDF_STATUS_E_NOSPC;
 		} else {
