@@ -151,7 +151,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	if (vdev_mgr_is_opmode_sap_or_p2p_go(op_mode) &&
-	    vdev_mgr_is_49G_5G_6G_chan_freq(des_chan->ch_freq))
+	    vdev_mgr_is_49G_5G_6G_chan_freq(des_chan->ch_freq)) {
 		tgt_dfs_set_current_channel_for_freq(pdev, des_chan->ch_freq,
 						     des_chan->ch_flags,
 						     des_chan->ch_flagext,
@@ -161,6 +161,10 @@ static QDF_STATUS vdev_mgr_start_param_update(
 						     des_chan->ch_cfreq1,
 						     des_chan->ch_cfreq2,
 						     &is_dfs_chan_updated);
+		if (des_chan->ch_cfreq2)
+			param->channel.dfs_set_cfreq2 =
+				utils_is_dfs_cfreq2_ch(pdev);
+	}
 
 	/* The Agile state machine should be stopped only once for the channel
 	 * change. If  the same channel is being sent to the FW then do
@@ -189,7 +193,6 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->channel.quarter_rate = mlme_obj->mgmt.rate_info.quarter_rate;
 	param->channel.dfs_set = wlan_reg_is_dfs_for_freq(pdev,
 							  des_chan->ch_freq);
-	param->channel.dfs_set_cfreq2 = utils_is_dfs_cfreq2_ch(pdev);
 	param->channel.is_chan_passive =
 		utils_is_dfs_chan_for_freq(pdev, param->channel.mhz);
 	param->channel.allow_ht = mlme_obj->proto.ht_info.allow_ht;
