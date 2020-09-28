@@ -239,6 +239,7 @@ struct scan_cache_node {
  * @ucastcipherset: unicast cipher set
  * @mcastcipherset: multicast cipher set
  * @mgmtcipherset: mgmt cipher set
+ * @rsn_caps: rsn caps of scan entry
  */
 struct security_info {
 	uint32_t authmodeset;
@@ -246,6 +247,7 @@ struct security_info {
 	uint32_t ucastcipherset;
 	uint32_t mcastcipherset;
 	uint32_t mgmtcipherset;
+	uint16_t rsn_caps;
 };
 
 /**

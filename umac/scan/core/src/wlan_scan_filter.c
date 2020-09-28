@@ -207,6 +207,7 @@ static bool scm_chk_crypto_params(struct scan_filter *filter,
 	security->ucastcipherset =
 		ap_crypto->ucastcipherset & filter->ucastcipherset;
 	security->key_mgmt = ap_crypto->key_mgmt & filter->key_mgmt;
+	security->rsn_caps = ap_crypto->rsn_caps;
 
 	return true;
 }
@@ -374,6 +375,7 @@ static bool scm_check_wapi(struct scan_filter *filter,
 	security->ucastcipherset =
 		ap_crypto->ucastcipherset & filter->ucastcipherset;
 	security->key_mgmt = ap_crypto->key_mgmt & filter->key_mgmt;
+	security->rsn_caps = ap_crypto->rsn_caps;
 	qdf_mem_free(ap_crypto);
 
 	return true;
@@ -410,6 +412,7 @@ static bool scm_match_any_security(struct scan_filter *filter,
 		security->mcastcipherset = ap_crypto->mcastcipherset;
 		security->ucastcipherset = ap_crypto->ucastcipherset;
 		security->key_mgmt = ap_crypto->key_mgmt;
+		security->rsn_caps = ap_crypto->rsn_caps;
 		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_RSNA);
 		match = true;
 		goto free;
@@ -426,6 +429,7 @@ static bool scm_match_any_security(struct scan_filter *filter,
 		security->mcastcipherset = ap_crypto->mcastcipherset;
 		security->ucastcipherset = ap_crypto->ucastcipherset;
 		security->key_mgmt = ap_crypto->key_mgmt;
+		security->rsn_caps = ap_crypto->rsn_caps;
 		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_WPA);
 		match = true;
 		goto free;
@@ -443,6 +447,7 @@ static bool scm_match_any_security(struct scan_filter *filter,
 		security->mcastcipherset = ap_crypto->mcastcipherset;
 		security->ucastcipherset = ap_crypto->ucastcipherset;
 		security->key_mgmt = ap_crypto->key_mgmt;
+		security->rsn_caps = ap_crypto->rsn_caps;
 		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_WAPI);
 		match = true;
 		goto free;
