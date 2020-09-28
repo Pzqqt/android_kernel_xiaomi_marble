@@ -186,6 +186,8 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->sta_mod_dtim = cfg_get(psoc, CFG_PMO_ENABLE_MODULATED_DTIM);
 	psoc_cfg->enable_mc_list = cfg_get(psoc, CFG_PMO_MC_ADDR_LIST_ENABLE);
 	psoc_cfg->power_save_mode = cfg_get(psoc, CFG_PMO_POWERSAVE_MODE);
+	psoc_cfg->is_mod_dtim_on_sys_suspend_enabled =
+			cfg_get(psoc, CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND);
 	psoc_cfg->default_power_save_mode = psoc_cfg->power_save_mode;
 	psoc_cfg->max_ps_poll = cfg_get(psoc, CFG_PMO_MAX_PS_POLL);
 
