@@ -20337,7 +20337,8 @@ csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
 		  rso_chan_info->chan_count, ch_cache_str);
 }
 
-#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef WLAN_SAE_SINGLE_PMK
 static bool
 csr_cm_fill_rso_sae_single_pmk_info(struct mac_context *mac_ctx,
 				    struct wlan_rso_11i_params *rso_11i_info,
@@ -20383,7 +20384,8 @@ csr_cm_fill_rso_sae_single_pmk_info(struct mac_context *mac_ctx,
 {
 	return false;
 }
-#endif /* WLAN_SAE_SINGLE_PMK && WLAN_FEATURE_ROAM_OFFLOAD */
+#endif
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define RSN_CAPS_SHIFT 16

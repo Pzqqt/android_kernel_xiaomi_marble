@@ -343,8 +343,8 @@ static void wma_handle_disconnect_reason(tp_wma_handle wma_handle,
 		     (void *)del_sta_ctx, 0);
 }
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #ifndef ROAM_OFFLOAD_V1
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_roam_scan_offload_set_params() - Set roam scan offload params
  * @wma_handle: pointer to wma context
@@ -408,8 +408,16 @@ static void wma_roam_scan_offload_set_params(
 		 params->roam_offload_params.roam_preauth_no_ack_timeout,
 		 params->is_sae_same_pmk);
 }
+#else
+static inline void
+wma_roam_scan_offload_set_params(tp_wma_handle wma_handle,
+				 struct roam_offload_scan_params *params,
+				 struct roam_offload_scan_req *roam_req)
+{}
+#endif
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 					   uint32_t len)
 {
@@ -452,12 +460,6 @@ int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 
 	return 0;
 }
-#else
-static inline void
-wma_roam_scan_offload_set_params(tp_wma_handle wma_handle,
-				 struct roam_offload_scan_params *params,
-				 struct roam_offload_scan_req *roam_req)
-{}
 #endif
 
 #ifndef ROAM_OFFLOAD_V1
