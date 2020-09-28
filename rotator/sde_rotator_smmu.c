@@ -671,12 +671,12 @@ static struct platform_driver sde_smmu_driver = {
 	},
 };
 
-void __init sde_rotator_smmu_driver_register(void)
+void sde_rotator_smmu_driver_register(void)
 {
 	platform_driver_register(&sde_smmu_driver);
 }
 
-void __exit sde_rotator_smmu_driver_unregister(void)
+void sde_rotator_smmu_driver_unregister(void)
 {
 	platform_driver_unregister(&sde_smmu_driver);
 }

@@ -1294,25 +1294,25 @@ static inline void __exit sde_wb_unregister(void)
 #endif /* CONFIG_DRM_SDE_WB */
 
 #if IS_ENABLED(CONFIG_MSM_SDE_ROTATOR)
-void  __init sde_rotator_register(void);
-void __exit sde_rotator_unregister(void);
+void sde_rotator_register(void);
+void sde_rotator_unregister(void);
 #else
-static inline void __init sde_rotator_register(void)
+static inline void sde_rotator_register(void)
 {
 }
-static inline void __exit sde_rotator_unregister(void)
+static inline void sde_rotator_unregister(void)
 {
 }
 #endif /* CONFIG_MSM_SDE_ROTATOR */
 
 #if IS_ENABLED(CONFIG_MSM_SDE_ROTATOR)
-void __init sde_rotator_smmu_driver_register(void);
-void __exit sde_rotator_smmu_driver_unregister(void);
+void sde_rotator_smmu_driver_register(void);
+void sde_rotator_smmu_driver_unregister(void);
 #else
-static inline void __init sde_rotator_smmu_driver_register(void)
+static inline void sde_rotator_smmu_driver_register(void)
 {
 }
-static inline void __exit sde_rotator_smmu_driver_unregister(void)
+static inline void sde_rotator_smmu_driver_unregister(void)
 {
 }
 #endif /* CONFIG_MSM_SDE_ROTATOR */

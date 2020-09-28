@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -148,7 +148,7 @@ static void sde_rot_fence_release(struct dma_fence *fence)
 		list_del(&f->fence_list);
 	spin_unlock_irqrestore(fence->lock, flags);
 	sde_rotator_put_timeline(to_sde_rot_timeline(fence));
-	kfree_rcu(f, base.rcu);
+	kfree(f);
 }
 
 static void sde_rot_fence_value_str(struct dma_fence *fence, char *str,

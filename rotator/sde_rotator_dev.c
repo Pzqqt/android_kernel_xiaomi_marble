@@ -52,7 +52,7 @@
 #define SDE_ROTATOR_ADD_REQUEST		1
 #define SDE_ROTATOR_REMOVE_REQUEST		0
 
-
+#ifndef CONFIG_MSM_SDE_ROTATOR_INIT_ONLY
 static void sde_rotator_submit_handler(struct kthread_work *work);
 static void sde_rotator_retire_handler(struct kthread_work *work);
 #ifdef CONFIG_COMPAT
@@ -2844,7 +2844,6 @@ static const struct v4l2_ioctl_ops sde_rotator_ioctl_ops = {
 	.vidioc_g_parm            = sde_rotator_g_parm,
 	.vidioc_s_parm            = sde_rotator_s_parm,
 	.vidioc_default           = sde_rotator_private_ioctl,
-	.vidioc_log_status        = v4l2_ctrl_log_status,
 	.vidioc_subscribe_event   = sde_rotator_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = sde_rotator_event_unsubscribe,
 };
@@ -3373,6 +3372,7 @@ static struct v4l2_m2m_ops sde_rotator_m2m_ops = {
 	.job_abort	= sde_rotator_job_abort,
 	.job_ready	= sde_rotator_job_ready,
 };
+#endif
 
 /* Device tree match struct */
 static const struct of_device_id sde_rotator_dt_match[] = {
@@ -3383,6 +3383,7 @@ static const struct of_device_id sde_rotator_dt_match[] = {
 	{}
 };
 
+#ifndef CONFIG_MSM_SDE_ROTATOR_INIT_ONLY
 /*
  * sde_rotator_get_drv_data - rotator device driver data.
  * @dev: Pointer to device.
@@ -3580,12 +3581,42 @@ static struct platform_driver rotator_driver = {
 	},
 };
 
-void  __init sde_rotator_register(void)
+#else
+/*
+ * sde_rotator_probe - rotator device probe method.
+ * @pdev: Pointer to rotator platform device.
+ */
+static int sde_rotator_probe(struct platform_device *pdev)
+{
+	return 0;
+}
+
+/*
+ * sde_rotator_remove - rotator device remove method.
+ * @pdev: Pointer rotator platform device.
+ */
+static int sde_rotator_remove(struct platform_device *pdev)
+{
+	return 0;
+}
+
+/* SDE Rotator platform driver definition */
+static struct platform_driver rotator_driver = {
+	.probe = sde_rotator_probe,
+	.remove = sde_rotator_remove,
+	.driver = {
+		.name = SDE_ROTATOR_DRV_NAME,
+		.of_match_table = sde_rotator_dt_match,
+	},
+};
+#endif
+
+void sde_rotator_register(void)
 {
 	platform_driver_register(&rotator_driver);
 }
 
-void __exit sde_rotator_unregister(void)
+void sde_rotator_unregister(void)
 {
 	platform_driver_unregister(&rotator_driver);
 }
