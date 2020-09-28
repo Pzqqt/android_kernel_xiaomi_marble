@@ -461,7 +461,6 @@ static int hdd_init_qdf_ctx(struct device *dev, void *bdev,
 	if (cds_smmu_mem_map_setup(qdf_dev, ucfg_ipa_is_ready()) !=
 		QDF_STATUS_SUCCESS) {
 		hdd_err("cds_smmu_mem_map_setup() failed");
-		return -EFAULT;
 	}
 
 	return 0;
