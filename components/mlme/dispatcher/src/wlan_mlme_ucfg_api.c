@@ -1366,6 +1366,37 @@ ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+ucfg_mlme_get_latency_level(struct wlan_objmgr_psoc *psoc, uint8_t *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.wlm_config.latency_level;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_latency_host_flags(struct wlan_objmgr_psoc *psoc,
+				 uint8_t latency_level, uint32_t *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.wlm_config.latency_host_flags[latency_level];
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef MWS_COEX
 QDF_STATUS
 ucfg_mlme_get_mws_coex_4g_quick_tdm(struct wlan_objmgr_psoc *psoc,

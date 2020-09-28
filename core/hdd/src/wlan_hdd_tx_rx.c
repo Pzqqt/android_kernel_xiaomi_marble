@@ -2085,6 +2085,10 @@ QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
 	if (hdd_validate_adapter(hdd_adapter))
 		return QDF_STATUS_E_FAILURE;
 
+	if (hdd_adapter->runtime_disable_rx_thread &&
+	    hdd_adapter->rx_stack)
+		return hdd_adapter->rx_stack(adapter, nbuf_list);
+
 	vdev_id = hdd_adapter->vdev_id;
 	head_ptr = nbuf_list;
 	while (head_ptr) {
@@ -2255,8 +2259,9 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	/* Account for GRO/LRO ineligible packets, mostly UDP */
 	hdd_ctx->no_rx_offload_pkt_cnt++;
 
-	if (qdf_likely(hdd_ctx->enable_dp_rx_threads ||
-		       hdd_ctx->enable_rxthread)) {
+	if (qdf_likely((hdd_ctx->enable_dp_rx_threads ||
+		        hdd_ctx->enable_rxthread) &&
+		        !adapter->runtime_disable_rx_thread)) {
 		local_bh_disable();
 		netif_status = netif_receive_skb(skb);
 		local_bh_enable();
@@ -2312,8 +2317,9 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	/* Account for GRO/LRO ineligible packets, mostly UDP */
 	hdd_ctx->no_rx_offload_pkt_cnt++;
 
-	if (qdf_likely(hdd_ctx->enable_dp_rx_threads ||
-		       hdd_ctx->enable_rxthread)) {
+	if (qdf_likely((hdd_ctx->enable_dp_rx_threads ||
+		        hdd_ctx->enable_rxthread) &&
+		        !adapter->runtime_disable_rx_thread)) {
 		local_bh_disable();
 		netif_status = netif_receive_skb(skb);
 		local_bh_enable();

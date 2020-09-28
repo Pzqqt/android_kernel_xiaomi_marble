@@ -1297,6 +1297,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx_stack = hdd_softap_rx_packet_cbk;
 		txrx_ops.rx.rx_flush = hdd_rx_flush_packet_cbk;
 		txrx_ops.rx.rx_gro_flush = hdd_rx_thread_gro_flush_ind_cbk;
+		adapter->rx_stack = hdd_softap_rx_packet_cbk;
 	} else {
 		txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
 		txrx_ops.rx.rx_stack = NULL;

@@ -9738,7 +9738,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	cpumask_clear(&pm_qos_cpu_mask);
 
-	if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold)
+	if (hdd_ctx->high_bus_bw_request)
+		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
+	else if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold)
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
 	else if (total_pkts > hdd_ctx->config->bus_bw_high_threshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;

@@ -8165,12 +8165,53 @@ void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
 }
 #endif
 
+/**
+ * hdd_set_wlm_host_latency_level() - set latency flags based on latency flags
+ * @hdd_ctx: hdd context
+ * @adapter: adapter context
+ * @latency_host_flags: host latency flags
+ *
+ * Return: none
+ */
+static void hdd_set_wlm_host_latency_level(struct hdd_context *hdd_ctx,
+					   struct hdd_adapter *adapter,
+					   uint32_t latency_host_flags)
+{
+	ol_txrx_soc_handle soc_hdl = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!soc_hdl) {
+		hdd_err("txrx soc handle NULL");
+		return;
+	}
+
+	if (latency_host_flags & WLM_HOST_PM_QOS_FLAG)
+		hdd_ctx->pm_qos_request_flags |= (1 << adapter->vdev_id);
+	else
+		hdd_ctx->pm_qos_request_flags &= ~(1 << adapter->vdev_id);
+
+	if (hdd_ctx->pm_qos_request_flags)
+		wlan_hdd_set_pm_qos_request(hdd_ctx, true);
+	else
+		wlan_hdd_set_pm_qos_request(hdd_ctx, false);
+
+	if (latency_host_flags & WLM_HOST_HBB_FLAG)
+		hdd_ctx->high_bus_bw_request |= (1 << adapter->vdev_id);
+	else
+		hdd_ctx->high_bus_bw_request &= ~(1 << adapter->vdev_id);
+
+	if (latency_host_flags & WLM_HOST_RX_THREAD_FLAG)
+		adapter->runtime_disable_rx_thread = true;
+	else
+		adapter->runtime_disable_rx_thread = false;
+}
+
 static int hdd_config_latency_level(struct hdd_adapter *adapter,
 				    const struct nlattr *attr)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint16_t latency_level;
 	QDF_STATUS status;
+	uint32_t latency_host_flags = 0;
 
 	if (!hdd_is_wlm_latency_manager_supported(hdd_ctx))
 		return -ENOTSUPP;
@@ -8194,6 +8235,16 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	 * 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
 	 */
 	adapter->latency_level = latency_level - 1;
+
+	status = ucfg_mlme_get_latency_host_flags(hdd_ctx->psoc,
+						  adapter->latency_level,
+						  &latency_host_flags);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to get latency host flags");
+	else
+		hdd_set_wlm_host_latency_level(hdd_ctx, adapter,
+					       latency_host_flags);
+
 	status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
 					   adapter->vdev_id,
 					   adapter->latency_level);

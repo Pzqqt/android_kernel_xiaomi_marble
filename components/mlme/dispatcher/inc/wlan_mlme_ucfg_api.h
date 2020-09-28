@@ -3618,6 +3618,29 @@ QDF_STATUS
 ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
+ * ucfg_mlme_get_latency_level() - Get the latency level
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *         latency values are defined in WMI_WLM_LATENCY_LEVEL
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_latency_level(struct wlan_objmgr_psoc *psoc, uint8_t *value);
+
+/**
+ * ucfg_mlme_get_latency_host_flags() - Get host flags for latency level
+ * @psoc: pointer to psoc object
+ * @latency_level: latency level
+ * @value: Value that needs to be get from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_latency_host_flags(struct wlan_objmgr_psoc *psoc,
+				 uint8_t latency_level, uint32_t *value);
+
+/**
  * ucfg_mlme_get_dtim_selection_diversity() - get dtim selection diversity
  * bitmap
  * @psoc: pointer to psoc object

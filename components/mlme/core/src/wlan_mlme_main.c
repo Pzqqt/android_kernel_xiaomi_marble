@@ -2164,6 +2164,14 @@ static void mlme_init_fe_wlm_in_cfg(struct wlan_objmgr_psoc *psoc,
 	wlm_config->latency_flags[1] = cfg_get(psoc, CFG_LATENCY_FLAGS_MOD);
 	wlm_config->latency_flags[2] = cfg_get(psoc, CFG_LATENCY_FLAGS_LOW);
 	wlm_config->latency_flags[3] = cfg_get(psoc, CFG_LATENCY_FLAGS_ULTLOW);
+	wlm_config->latency_host_flags[0] =
+		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_NORMAL);
+	wlm_config->latency_host_flags[1] =
+		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_MOD);
+	wlm_config->latency_host_flags[2] =
+		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_LOW);
+	wlm_config->latency_host_flags[3] =
+		cfg_get(psoc, CFG_LATENCY_HOST_FLAGS_ULTLOW);
 }
 
 /**

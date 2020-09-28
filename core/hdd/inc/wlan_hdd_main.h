@@ -1424,6 +1424,8 @@ struct hdd_adapter {
 	uint8_t gro_disallowed[DP_MAX_RX_THREADS];
 	uint8_t gro_flushed[DP_MAX_RX_THREADS];
 	bool handle_feature_update;
+	bool runtime_disable_rx_thread;
+	ol_txrx_rx_fp rx_stack;
 
 	qdf_work_t netdev_features_update_work;
 };
@@ -2068,6 +2070,8 @@ struct hdd_context {
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 	uint8_t dutycycle_off_percent;
 #endif
+	uint8_t pm_qos_request_flags;
+	uint8_t high_bus_bw_request;
 	qdf_work_t country_change_work;
 	struct {
 		qdf_atomic_t rx_aggregation;
