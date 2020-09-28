@@ -4842,7 +4842,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			 uint8_t mcs_index,
 			 uint16_t fw_rate, uint8_t nss)
 {
-	uint8_t i, j, rssidx;
+	uint8_t i, j, rssidx = 0;
 	uint16_t max_rate = 0;
 	uint32_t vht_mcs_map;
 	bool is_vht20_mcs9 = false;
@@ -4878,12 +4878,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 				       &link_speed_rssi_low,
 				       &link_speed_rssi_report);
 
-	/* we do not want to necessarily report the current speed */
-	if (ucfg_mlme_stats_is_link_speed_report_max(hdd_ctx->psoc)) {
-		/* report the max possible speed */
-		rssidx = 0;
-	} else if (ucfg_mlme_stats_is_link_speed_report_max_scaled(
-				hdd_ctx->psoc)) {
+	if (ucfg_mlme_stats_is_link_speed_report_max_scaled(hdd_ctx->psoc)) {
 		/* report the max possible speed with RSSI scaling */
 		if (signal >= link_speed_rssi_high) {
 			/* report the max possible speed */
@@ -4898,14 +4893,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			/* report actual speed */
 			rssidx = 3;
 		}
-	} else {
-		/* unknown, treat as eHDD_LINK_SPEED_REPORT_MAX */
-		hdd_err("Invalid value for reportMaxLinkSpeed: %u",
-			link_speed_rssi_report);
-		rssidx = 0;
 	}
-
-	max_rate = 0;
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev) {
@@ -5091,8 +5079,9 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	if ((max_rate < fw_rate) || (0 == max_rate)) {
 		max_rate = fw_rate;
 	}
-	hdd_debug("rate_flags 0x%x, max_rate %d mcs %d nss %d",
-		  rate_flags, max_rate, max_mcs_idx, nss);
+	hdd_debug("RLMS %u, rate_flags 0x%x, max_rate %d mcs %d nss %d",
+		  link_speed_rssi_report, rate_flags,
+		  max_rate, max_mcs_idx, nss);
 	wlan_hdd_fill_os_rate_info(rate_flags, max_rate, rate,
 				   max_mcs_idx, nss, 0, 0);
 
@@ -5185,32 +5174,20 @@ static void hdd_fill_fcs_and_mpdu_count(struct hdd_adapter *adapter,
 }
 #endif
 
-/**
- * hdd_check_and_update_nss() - Check and update NSS as per DBS capability
- * @hdd_ctx: HDD Context pointer
- * @tx_nss: pointer to variable storing the tx_nss
- * @rx_nss: pointer to variable storing the rx_nss
- *
- * The parameters include the NSS obtained from the FW or static NSS. This NSS
- * could be invalid in the case the current HW mode is DBS where the connection
- * are 1x1. Rectify these NSS values as per the current HW mode.
- *
- * Return: none
- */
-static void hdd_check_and_update_nss(struct hdd_context *hdd_ctx,
-				     uint8_t *tx_nss, uint8_t *rx_nss)
+void hdd_check_and_update_nss(struct hdd_context *hdd_ctx,
+			      uint8_t *tx_nss, uint8_t *rx_nss)
 {
-	if ((*tx_nss > 1) &&
+	if (tx_nss && (*tx_nss > 1) &&
 	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
 	    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
 		hdd_debug("Hw mode is DBS, Reduce tx nss(%d) to 1", *tx_nss);
 		(*tx_nss)--;
 	}
 
-	if ((*rx_nss > 1) &&
+	if (rx_nss && (*rx_nss > 1) &&
 	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
 	    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
-		hdd_debug("Hw mode is DBS, Reduce tx nss(%d) to 1", *rx_nss);
+		hdd_debug("Hw mode is DBS, Reduce rx nss(%d) to 1", *rx_nss);
 		(*rx_nss)--;
 	}
 }
