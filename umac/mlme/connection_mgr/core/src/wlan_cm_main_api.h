@@ -504,6 +504,18 @@ cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id,
 					 struct wlan_cm_connect_rsp *resp);
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+bool cm_is_cm_id_current_candidate_single_pmk(struct cnx_mgr *cm_ctx,
+					      wlan_cm_id cm_id);
+#else
+static inline
+bool cm_is_cm_id_current_candidate_single_pmk(struct cnx_mgr *cm_ctx,
+					      wlan_cm_id cm_id)
+{
+	return false;
+}
+#endif
+
 /**
  * cm_flush_pending_request() - Flush all pending requests matching flush prefix
  * @cm_ctx: connection manager context

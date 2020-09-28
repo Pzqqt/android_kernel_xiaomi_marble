@@ -401,6 +401,30 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+static inline void cm_delete_pmksa_for_bssid(struct cnx_mgr *cm_ctx,
+					     struct qdf_mac_addr *bssid)
+{
+	struct wlan_crypto_pmksa pmksa = {0};
+
+	qdf_copy_macaddr(&pmksa.bssid, bssid);
+	wlan_crypto_set_del_pmksa(cm_ctx->vdev, &pmksa, false);
+}
+
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+static inline
+void cm_delete_pmksa_for_single_pmk_bssid(struct cnx_mgr *cm_ctx,
+					  struct qdf_mac_addr *bssid)
+{
+	cm_delete_pmksa_for_bssid(cm_ctx, bssid);
+}
+#else
+static inline
+void cm_delete_pmksa_for_single_pmk_bssid(struct cnx_mgr *cm_ctx,
+					  struct qdf_mac_addr *bssid)
+{
+}
+#endif
+
 static inline void
 cm_set_pmf_caps(struct cm_connect_req *cm_req, struct scan_filter *filter)
 {
@@ -708,27 +732,28 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 {
 	struct scan_cache_node *scan_node = NULL;
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
-	struct scan_cache_node *cur_candidate;
+	struct scan_cache_node *new_candidate = NULL, *prev_candidate;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 
+	prev_candidate = cm_req->connect_req.cur_candidate;
 	if (cm_req->connect_req.connect_attempts >=
 	    cm_ctx->max_connect_attempts) {
 		mlme_info(CM_PREFIX_FMT "%d attempts tried, max %d",
 			  CM_PREFIX_REF(vdev_id, cm_req->cm_id),
 			  cm_req->connect_req.connect_attempts,
 			  cm_ctx->max_connect_attempts);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto flush_single_pmk;
 	}
 
-	cur_candidate = cm_req->connect_req.cur_candidate;
 	/*
-	 * Get next candidate if cur_candidate is not NULL, else get
+	 * Get next candidate if prev_candidate is not NULL, else get
 	 * the first candidate
 	 */
-	if (cur_candidate)
+	if (prev_candidate)
 		qdf_list_peek_next(cm_req->connect_req.candidate_list,
-				   &cur_candidate->node, &cur_node);
+				   &prev_candidate->node, &cur_node);
 	else
 		qdf_list_peek_front(cm_req->connect_req.candidate_list,
 				    &cur_node);
@@ -740,7 +765,7 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 					     node);
 		status = cm_validate_candidate(cm_ctx, scan_node->entry);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			cur_candidate = scan_node;
+			new_candidate = scan_node;
 			break;
 		}
 
@@ -756,13 +781,23 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 		mlme_debug(CM_PREFIX_FMT "No more candidates left",
 			   CM_PREFIX_REF(vdev_id, cm_req->cm_id));
 		cm_req->connect_req.cur_candidate = NULL;
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto flush_single_pmk;
 	}
 
 	cm_req->connect_req.connect_attempts++;
-	cm_req->connect_req.cur_candidate = cur_candidate;
+	cm_req->connect_req.cur_candidate = new_candidate;
 
-	return QDF_STATUS_SUCCESS;
+flush_single_pmk:
+	/*
+	 * If connection fails with Single PMK bssid (prev candidate),
+	 * clear the pmk entry.
+	 */
+	if (prev_candidate && util_scan_entry_single_pmk(prev_candidate->entry))
+		cm_delete_pmksa_for_single_pmk_bssid(cm_ctx,
+						&prev_candidate->entry->bssid);
+
+	return status;
 }
 
 static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
@@ -1115,6 +1150,13 @@ QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (QDF_IS_STATUS_SUCCESS(resp->connect_status)) {
+		/*
+		 * On successful connection to sae single pmk AP,
+		 * clear all the single pmk AP.
+		 */
+		if (cm_is_cm_id_current_candidate_single_pmk(cm_ctx, cm_id))
+			wlan_crypto_selective_clear_sae_single_pmk_entries(vdev,
+								&resp->bssid);
 		qdf_status =
 			cm_sm_deliver_event(vdev,
 					    WLAN_CM_SM_EV_CONNECT_SUCCESS,
@@ -1128,6 +1170,15 @@ QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
 		goto post_err;
 	}
 
+	/*
+	 * Delete the PMKID of the BSSID for which the assoc reject is
+	 * received from the AP due to invalid PMKID reason.
+	 * This will avoid the driver trying to connect to same AP with
+	 * the same stale PMKID. when connection is tried again with this AP.
+	 */
+	if (resp->reason_code == STATUS_INVALID_PMKID)
+		cm_delete_pmksa_for_bssid(cm_ctx, &resp->bssid);
+
 	/* In case of failure try with next candidate */
 	qdf_status =
 		cm_sm_deliver_event(vdev,
@@ -1136,7 +1187,12 @@ QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
 
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		return qdf_status;
-
+	/*
+	 * If connection fails with Single PMK bssid, clear this pmk
+	 * entry in case of post failure.
+	 */
+	if (cm_is_cm_id_current_candidate_single_pmk(cm_ctx, cm_id))
+		cm_delete_pmksa_for_single_pmk_bssid(cm_ctx, &resp->bssid);
 post_err:
 	/*
 	 * If there is a event posting error it means the SM state is not in
