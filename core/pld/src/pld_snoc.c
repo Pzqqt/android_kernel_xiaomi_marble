@@ -35,6 +35,45 @@
 
 #ifdef CONFIG_PLD_SNOC_ICNSS
 /**
+ * pld_snoc_idle_restart_cb() - Perform idle restart
+ * @pdev: platform device
+ *
+ * This function will be called if there is an idle restart request
+ *
+ * Return: int
+ **/
+static int pld_snoc_idle_restart_cb(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->idle_restart)
+		return pld_context->ops->idle_restart(dev, PLD_BUS_TYPE_SNOC);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_snoc_idle_shutdown_cb() - Perform idle shutdown
+ * @pdev: PCIE device
+ * @id: PCIE device ID
+ *
+ * This function will be called if there is an idle shutdown request
+ *
+ * Return: int
+ */
+static int pld_snoc_idle_shutdown_cb(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->shutdown)
+		return pld_context->ops->idle_shutdown(dev, PLD_BUS_TYPE_SNOC);
+
+	return -ENODEV;
+}
+
+/**
  * pld_snoc_probe() - Probe function for platform driver
  * @dev: device
  *
@@ -357,6 +396,8 @@ struct icnss_driver_ops pld_snoc_ops = {
 	.suspend_noirq = pld_snoc_suspend_noirq,
 	.resume_noirq = pld_snoc_resume_noirq,
 	.uevent = pld_snoc_uevent,
+	.idle_restart  = pld_snoc_idle_restart_cb,
+	.idle_shutdown = pld_snoc_idle_shutdown_cb,
 };
 
 /**
