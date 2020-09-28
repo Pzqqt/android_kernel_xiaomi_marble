@@ -177,8 +177,14 @@ endif
 
 $(shell mkdir -p $(TARGET_FW_PATH); \
 	ln -sf $(TARGET_MAC_BIN_PATH)/wlan_mac.bin $(TARGET_FW_PATH)/wlan_mac.bin)
+ifeq ($(TARGET_BOARD_AUTO),true)
+$(shell ln -sf $(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
+$(warning "generate soft link because TARGET_BOARD_AUTO true")
+else
 ifneq ($(GENERIC_ODM_IMAGE),true)
 $(shell ln -sf $(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
+$(warning "generate soft link because GRNERIC_ODM_IMAGE not true")
+endif
 endif
 endif # Multi-ko check
 endif # DLKM check
