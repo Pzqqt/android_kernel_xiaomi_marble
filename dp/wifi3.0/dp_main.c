@@ -7775,6 +7775,22 @@ void dp_print_napi_stats(struct dp_soc *soc)
 	hif_print_napi_stats(soc->hif_handle);
 }
 
+#ifdef QCA_PEER_EXT_STATS
+/**
+ * dp_txrx_host_peer_ext_stats_clr: Reinitialize the txrx peer ext stats
+ *
+ */
+static inline void dp_txrx_host_peer_ext_stats_clr(struct dp_peer *peer)
+{
+	if (peer->pext_stats)
+		qdf_mem_zero(peer->pext_stats, sizeof(*peer->pext_stats));
+}
+#else
+static inline void dp_txrx_host_peer_ext_stats_clr(struct dp_peer *peer)
+{
+}
+#endif
+
 /**
  * dp_txrx_host_peer_stats_clr): Reinitialize the txrx peer stats
  * @soc: Datapath soc
@@ -7795,7 +7811,10 @@ dp_txrx_host_peer_stats_clr(struct dp_soc *soc,
 		rx_tid = &peer->rx_tid[tid];
 		DP_STATS_CLR(rx_tid);
 	}
+
 	DP_STATS_CLR(peer);
+
+	dp_txrx_host_peer_ext_stats_clr(peer);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, peer->vdev->pdev->soc,

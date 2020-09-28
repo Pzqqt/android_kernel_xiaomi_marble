@@ -5524,8 +5524,8 @@ dp_accumulate_delay_tid_stats(struct dp_soc *soc,
  *
  * Return: void
  */
-void dp_peer_print_delay_stats(struct dp_pdev *pdev,
-			       struct dp_peer *peer)
+void dp_peer_print_tx_delay_stats(struct dp_pdev *pdev,
+				  struct dp_peer *peer)
 {
 	struct cdp_peer_ext_stats *pext_stats;
 	struct dp_soc *soc = NULL;
@@ -5558,18 +5558,54 @@ void dp_peer_print_delay_stats(struct dp_pdev *pdev,
 					      &hist_stats, tid,
 					      CDP_HIST_TYPE_HW_COMP_DELAY);
 		dp_print_hist_stats(&hist_stats, CDP_HIST_TYPE_HW_COMP_DELAY);
-		qdf_mem_zero(&hist_stats, sizeof(*(&hist_stats)));
+	}
+}
 
+/*
+ * dp_peer_print_rx_delay_stats(): Print peer delay stats
+ * @soc: DP SoC handle
+ * @peer: DP peer handle
+ *
+ * Return: void
+ */
+void dp_peer_print_rx_delay_stats(struct dp_pdev *pdev,
+				  struct dp_peer *peer)
+{
+	struct cdp_peer_ext_stats *pext_stats;
+	struct dp_soc *soc = NULL;
+	struct cdp_hist_stats hist_stats;
+	uint8_t tid;
+
+	if (!pdev || !pdev->soc)
+		return;
+
+	soc = pdev->soc;
+	if (!wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx))
+		return;
+
+	pext_stats = peer->pext_stats;
+	if (!pext_stats)
+		return;
+
+	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
+		DP_PRINT_STATS("----TID: %d----", tid);
 		DP_PRINT_STATS("Rx Reap2stack Deliver Delay:");
+		qdf_mem_zero(&hist_stats, sizeof(*(&hist_stats)));
 		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
 					      &hist_stats, tid,
 					      CDP_HIST_TYPE_REAP_STACK);
 		dp_print_hist_stats(&hist_stats, CDP_HIST_TYPE_REAP_STACK);
 	}
 }
+
 #else
-static inline void dp_peer_print_delay_stats(struct dp_pdev *pdev,
-					     struct dp_peer *peer)
+static inline void dp_peer_print_tx_delay_stats(struct dp_pdev *pdev,
+						struct dp_peer *peer)
+{
+}
+
+static inline void dp_peer_print_rx_delay_stats(struct dp_pdev *pdev,
+						struct dp_peer *peer)
 {
 }
 #endif
@@ -5715,6 +5751,7 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.tx.tx_data_rate);
 
 	dp_print_jitter_stats(peer, pdev);
+	dp_peer_print_tx_delay_stats(pdev, peer);
 
 	DP_PRINT_STATS("Node Rx Stats:");
 	DP_PRINT_STATS("Packets Sent To Stack = %d",
@@ -5833,7 +5870,7 @@ void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("Multipass Rx Packet Drop = %d",
 		       peer->stats.rx.multipass_rx_pkt_drop);
 
-	dp_peer_print_delay_stats(pdev, peer);
+	dp_peer_print_rx_delay_stats(pdev, peer);
 }
 
 void dp_print_per_ring_stats(struct dp_soc *soc)
