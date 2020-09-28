@@ -397,6 +397,7 @@ struct wmi_twt_pause_dialog_cmd_param {
  *                          request/response frame
  * WMI_HOST_PAUSE_TWT_STATUS_UNKNOWN_ERROR: pausing TWT dialog failed with an
  *                          unknown reason
+ * WMI_HOST_PAUSE_TWT_STATUS_ALREADY_PAUSED: TWT dialog already in paused state
  */
 enum WMI_HOST_PAUSE_TWT_STATUS {
 	WMI_HOST_PAUSE_TWT_STATUS_OK,
@@ -406,6 +407,7 @@ enum WMI_HOST_PAUSE_TWT_STATUS {
 	WMI_HOST_PAUSE_TWT_STATUS_NO_RESOURCE,
 	WMI_HOST_PAUSE_TWT_STATUS_NO_ACK,
 	WMI_HOST_PAUSE_TWT_STATUS_UNKNOWN_ERROR,
+	WMI_HOST_PAUSE_TWT_STATUS_ALREADY_PAUSED,
 };
 
 /** struct wmi_twt_pause_dialog_complete_event_param -
