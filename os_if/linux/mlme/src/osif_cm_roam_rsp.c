@@ -15,7 +15,7 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_roam_rsp.c
+ * DOC: osif_cm_roam_rsp.c
  *
  * This file maintains definitaions of roam response apis.
  */

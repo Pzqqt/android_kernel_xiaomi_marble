@@ -15,7 +15,7 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_disconnect_rsp.c
+ * DOC: osif_cm_disconnect_rsp.c
  *
  * This file maintains definitaions of disconnect response
  * fucntions.
@@ -23,9 +23,9 @@
 
 #include <wlan_cfg80211.h>
 #include <linux/wireless.h>
-#include "wlan_cfg80211_cm_rsp.h"
+#include "osif_cm_rsp.h"
 #include "wlan_osif_priv.h"
-#include "wlan_cfg80211_cm_util.h"
+#include "osif_cm_util.h"
 
 /**
  * osif_validate_disconnect_and_reset_src_id() - Validate disconnection

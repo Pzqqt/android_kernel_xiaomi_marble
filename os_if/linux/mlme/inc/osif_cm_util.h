@@ -15,14 +15,14 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_util.h
+ * DOC: osif_cm_util.h
  *
  * This header file maintains declarations of connect, disconnect, roam
  * common apis.
  */
 
-#ifndef __WLAN_CFG80211_CM_UTIL_H
-#define __WLAN_CFG80211_CM_UTIL_H
+#ifndef __OSIF_CM_UTIL_H
+#define __OSIF_CM_UTIL_H
 
 #include <qca_vendor.h>
 #include "wlan_cm_ucfg_api.h"
@@ -104,4 +104,4 @@ void osif_cm_reset_id_and_src_no_lock(struct vdev_osif_priv *osif_priv);
  */
 QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev);
 
-#endif /* __WLAN_CFG80211_CM_UTIL_H */
+#endif /* __OSIF_CM_UTIL_H */

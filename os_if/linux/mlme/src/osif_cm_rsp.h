@@ -15,14 +15,14 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_rsp.h
+ * DOC: osif_cm_rsp.h
  *
  * This header file maintains declarations of connect, disconnect, roam
  * response apis.
  */
 
-#ifndef __WLAN_CFG80211_CM_RSP_H
-#define __WLAN_CFG80211_CM_RSP_H
+#ifndef __OSIF_CM_RSP_H
+#define __OSIF_CM_RSP_H
 
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_cm_public_struct.h"
@@ -71,4 +71,4 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
 					 struct wlan_cm_connect_rsp *rsp);
 
-#endif /* __WLAN_CFG80211_CM_RSP_H */
+#endif /* __OSIF_CM_RSP_H */

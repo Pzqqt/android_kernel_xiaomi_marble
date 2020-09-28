@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_req.c
+ * DOC: osif_cm_req.c
  *
  * This file maintains definitaions of connect, disconnect, roam
  * request apis.
  */
 
-#include "wlan_cfg80211_cm_req.h"
+#include "osif_cm_req.h"
 #include "wlan_cm_ucfg_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include <wlan_cfg80211.h>
-#include "wlan_cfg80211_cm_util.h"
+#include "osif_cm_util.h"
 
 static void osif_cm_free_wep_key_params(struct wlan_cm_connect_req *connect_req)
 {

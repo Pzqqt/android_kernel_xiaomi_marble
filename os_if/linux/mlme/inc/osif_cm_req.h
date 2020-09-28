@@ -15,14 +15,14 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_req.h
+ * DOC: osif_cm_req.h
  *
  * This header file maintains declarations of connect, disconnect, roam
  * request apis.
  */
 
-#ifndef __WLAN_CFG80211_CM_REQ_H
-#define __WLAN_CFG80211_CM_REQ_H
+#ifndef __OSIF_CM_REQ_H
+#define __OSIF_CM_REQ_H
 
 #ifdef FEATURE_CM_ENABLE
 #include "qdf_status.h"
@@ -54,4 +54,4 @@ int osif_cm_disconnect(struct net_device *dev,
 		       struct wlan_objmgr_vdev *vdev,
 		       uint16_t reason);
 #endif
-#endif /* __WLAN_CFG80211_CM_REQ_H */
+#endif /* __OSIF_CM_REQ_H */

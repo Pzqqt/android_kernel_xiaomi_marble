@@ -15,16 +15,16 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_util.c
+ * DOC: osif_cm_util.c
  *
  * This file maintains definitaions of connect, disconnect, roam
  * common apis.
  */
 #include <include/wlan_mlme_cmn.h>
-#include "wlan_cfg80211_cm_util.h"
+#include "osif_cm_util.h"
 #include "wlan_osif_priv.h"
 #include "wlan_cfg80211.h"
-#include "wlan_cfg80211_cm_rsp.h"
+#include "osif_cm_rsp.h"
 
 const char *
 osif_cm_qca_reason_to_str(enum qca_disconnect_reason_codes reason)

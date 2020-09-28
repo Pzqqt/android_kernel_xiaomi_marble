@@ -15,7 +15,7 @@
  */
 
 /**
- * DOC: wlan_cfg80211_cm_connect_rsp.c
+ * DOC: osif_cm_connect_rsp.c
  *
  * This file maintains definitaions of connect response apis.
  */
@@ -24,8 +24,8 @@
 #include <linux/nl80211.h>
 #include <net/cfg80211.h>
 #include "wlan_osif_priv.h"
-#include "wlan_cfg80211_cm_rsp.h"
-#include "wlan_cfg80211_cm_util.h"
+#include "osif_cm_rsp.h"
+#include "osif_cm_util.h"
 #include "wlan_cfg80211.h"
 #include "wlan_cfg80211_scan.h"
 
