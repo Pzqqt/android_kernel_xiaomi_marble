@@ -584,6 +584,13 @@ struct wlan_ipa_tx_desc {
 typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 typedef void (*wlan_ipa_send_to_nw)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 
+/**
+ * typedef wlan_ipa_rps_enable - Enable/disable RPS for adapter using vdev id
+ * @vdev_id: vdev_id of adapter
+ * @enable: Set true to enable RPS
+ */
+typedef void (*wlan_ipa_rps_enable)(uint8_t vdev_id, bool enable);
+
 /* IPA private context structure definition */
 struct wlan_ipa_priv {
 	struct wlan_objmgr_pdev *pdev;
@@ -690,6 +697,11 @@ struct wlan_ipa_priv {
 	wlan_ipa_softap_xmit softap_xmit;
 	wlan_ipa_send_to_nw send_to_nw;
 	ipa_uc_offload_control_req ipa_tx_op;
+
+#ifdef IPA_LAN_RX_NAPI_SUPPORT
+	/*Callback to enable RPS for STA in STA+SAP scenario*/
+	wlan_ipa_rps_enable rps_enable;
+#endif
 
 	qdf_event_t ipa_resource_comp;
 

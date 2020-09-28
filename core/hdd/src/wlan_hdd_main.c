@@ -4047,7 +4047,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 				 hdd_softap_ipa_start_xmit);
 	ucfg_ipa_reg_send_to_nw_cb(hdd_ctx->pdev,
 				   hdd_ipa_send_nbuf_to_network);
-
+	ucfg_ipa_reg_rps_enable_cb(hdd_ctx->pdev,
+				   hdd_adapter_set_rps);
 	hdd_exit();
 
 	return 0;

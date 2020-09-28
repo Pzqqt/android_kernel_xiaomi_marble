@@ -177,6 +177,24 @@ void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev,
 				wlan_ipa_send_to_nw cb);
 
 /**
+ * ucfg_ipa_reg_rps_enable_cb() - Register cb to enable RPS
+ * @pdev: pdev obj
+ * @cb: callback
+ *
+ * Return: None
+ */
+#ifdef IPA_LAN_RX_NAPI_SUPPORT
+void ucfg_ipa_reg_rps_enable_cb(struct wlan_objmgr_pdev *pdev,
+				wlan_ipa_rps_enable cb);
+#else
+static inline
+void ucfg_ipa_reg_rps_enable_cb(struct wlan_objmgr_pdev *pdev,
+				wlan_ipa_rps_enable cb)
+{
+}
+#endif
+
+/**
  * ucfg_ipa_set_mcc_mode() - Set MCC mode
  * @pdev: pdev obj
  * @mcc_mode: 0=MCC/1=SCC
@@ -491,6 +509,12 @@ void ucfg_ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev,
 static inline
 void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev,
 				wlan_ipa_send_to_nw cb)
+{
+}
+
+static inline
+void ucfg_ipa_reg_rps_enable_cb(struct wlan_objmgr_pdev *pdev,
+				wlan_ipa_rps_enable cb)
 {
 }
 
