@@ -221,6 +221,34 @@
 
 /*
  * <ini>
+ * enable_mod_dtim_on_system_suspend - enable modulated DTIM
+ * on system suspend display off case
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set modulated DTIM configuration:
+ * Current values of enable_mod_dtim_on_system_suspend:
+ * 0 -> Modulated DTIM will be enabled for every wow entry
+ *      (RTPM wow + System suspend wow)
+ * 1 -> Enable modulated  DTIM only for System suspend wow.
+ *      For RTPM wow, the device will stay in DTIM 1 (non-modulated DTIM)
+ *
+ * Related: None
+ *
+ * Supported Feature: Modulated DTIM
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND CFG_INI_BOOL( \
+	"enable_mod_dtim_on_system_suspend", \
+	0, \
+	"Modulated DTIM on System suspend wow")
+
+/*
+ * <ini>
  * gMaxPsPoll - Max powersave poll
  * @Min: 0
  * @Max: 255
@@ -391,6 +419,7 @@
 	CFG(CFG_PMO_ACTIVE_MODE) \
 	CFG(CFG_PMO_PWR_FAILURE) \
 	CFG(CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT) \
-	CFG(CFG_RA_RATE_LIMIT_INTERVAL)
+	CFG(CFG_RA_RATE_LIMIT_INTERVAL) \
+	CFG(CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */
