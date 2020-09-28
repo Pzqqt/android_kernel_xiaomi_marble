@@ -2212,11 +2212,13 @@ struct wlan_mlme_btm {
  * @latency_enable: Flag to check if latency is enabled
  * @latency_level: WLM latency level
  * @latency_flags: WLM latency flags setting
+ * @latency_host_flags: WLM latency host flags setting
  */
 struct wlan_mlme_fe_wlm {
 	bool latency_enable;
 	uint8_t latency_level;
 	uint32_t latency_flags[MLME_NUM_WLM_LATENCY_LEVEL];
+	uint32_t latency_host_flags[MLME_NUM_WLM_LATENCY_LEVEL];
 };
 
 /**
