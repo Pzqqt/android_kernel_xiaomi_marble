@@ -9615,17 +9615,16 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 }
 #endif /* CLD_PM_QOS */
 
-#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+#if defined(CLD_PM_QOS)
 #if defined(CLD_DEV_PM_QOS)
-void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
+void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
+				 bool pm_qos_request)
 {
 	cpumask_t pm_qos_cpu_mask;
 
 	cpumask_clear(&pm_qos_cpu_mask);
-
-	if (latency_level ==
-	    QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW) {
-		hdd_ctx->llm_enabled = true;
+	if (pm_qos_request) {
+		hdd_ctx->pm_qos_request = true;
 		if (!hdd_ctx->hbw_requested) {
 			hdd_pm_qos_update_cpu_mask(&pm_qos_cpu_mask, true);
 			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
@@ -9637,15 +9636,15 @@ void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
 			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
 			hdd_ctx->hbw_requested = false;
 		}
-		hdd_ctx->llm_enabled = false;
+		hdd_ctx->pm_qos_request = false;
 	}
 }
 #else
-void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
+void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
+				 bool pm_qos_request)
 {
-	if (latency_level ==
-	    QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW) {
-		hdd_ctx->llm_enabled = true;
+	if (pm_qos_request) {
+		hdd_ctx->pm_qos_request = true;
 		if (!hdd_ctx->hbw_requested) {
 			cpumask_setall(&hdd_ctx->pm_qos_req.cpus_affine);
 			pm_qos_update_request(&hdd_ctx->pm_qos_req,
@@ -9659,7 +9658,7 @@ void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
 					      PM_QOS_DEFAULT_VALUE);
 			hdd_ctx->hbw_requested = false;
 		}
-		hdd_ctx->llm_enabled = false;
+		hdd_ctx->pm_qos_request = false;
 	}
 }
 #endif
@@ -9780,7 +9779,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 		if ((next_vote_level == PLD_BUS_WIDTH_LOW) ||
 		    (next_vote_level == PLD_BUS_WIDTH_IDLE)) {
-			if (hdd_ctx->hbw_requested && !hdd_ctx->llm_enabled) {
+			if (hdd_ctx->hbw_requested &&
+			    !hdd_ctx->pm_qos_request) {
 				PLD_REMOVE_PM_QOS(hdd_ctx->parent_dev);
 				hdd_ctx->hbw_requested = false;
 			}
@@ -9964,7 +9964,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		if (next_vote_level < PLD_BUS_WIDTH_MEDIUM)
 			cpumask_clear(&pm_qos_cpu_mask);
 
-		if (!hdd_ctx->llm_enabled)
+		if (!hdd_ctx->pm_qos_request)
 			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
 	}
 
@@ -18364,7 +18364,12 @@ void hdd_beacon_latency_event_cb(uint32_t latency_level)
 		hdd_err_rl("Invalid HDD_CTX");
 		return;
 	}
-	wlan_hdd_set_wlm_mode(hdd_ctx, latency_level);
+
+	if (latency_level ==
+		QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW)
+		wlan_hdd_set_pm_qos_request(hdd_ctx, true);
+	else
+		wlan_hdd_set_pm_qos_request(hdd_ctx, false);
 }
 #endif
 

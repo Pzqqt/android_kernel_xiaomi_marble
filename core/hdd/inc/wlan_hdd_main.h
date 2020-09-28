@@ -1941,7 +1941,7 @@ struct hdd_context {
 	int radio_index;
 	qdf_work_t sap_pre_cac_work;
 	bool hbw_requested;
-	bool llm_enabled;
+	bool pm_qos_request;
 	enum RX_OFFLOAD ol_enable;
 #ifdef WLAN_FEATURE_NAN
 	bool nan_datapath_enabled;
@@ -4716,22 +4716,21 @@ static inline void hdd_beacon_latency_event_cb(uint32_t latency_level)
  */
 void hdd_netdev_update_features(struct hdd_adapter *adapter);
 
-#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+#if defined(CLD_PM_QOS)
 /**
- * wlan_hdd_set_wlm_mode() - Function to set pm_qos config in wlm mode
+ * wlan_hdd_set_pm_qos_request() - Function to set pm_qos config in wlm mode
  * @hdd_ctx: HDD context
- * @latency level: latency value received
+ * @pm_qos_request: pm_qos_request flag
  *
  * Return: None
  */
-void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx,
-			   uint16_t latency_level);
+void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
+				 bool pm_qos_request);
 #else
 static inline
-void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx,
-			   uint16_t latency_level)
+void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
+				 bool pm_qos_request)
 {
 }
 #endif
-
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
