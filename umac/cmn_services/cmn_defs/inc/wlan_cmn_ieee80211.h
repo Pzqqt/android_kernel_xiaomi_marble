@@ -661,6 +661,140 @@ enum wlan_reason_code {
 	REASON_USER_TRIGGERED_ROAM_FAILURE = 65534,
 };
 
+/**
+ * enum wlan_status_code - wlan status codes
+ * (IEEE Std 802.11-2016, 9.4.1.9, Table 9-46)
+ * @STATUS_SUCCESS: Success full
+ * @STATUS_UNSPECIFIED_FAILURE: Unspecified failure.
+ * @STATUS_TDLS_WAKEUP_REJECT: TDLS wakeup schedule rejected but alternative
+ * schedule provided.
+ * @STATUS_SECURITY_DISABLED: Security disabled.
+ * @STATUS_UNACCEPTABLE_LIFETIME: Unacceptable lifetime.
+ * @STATUS_NOT_IN_SAME_BSS: Not in same BSS.
+ * @STATUS_CAPS_UNSUPPORTED: Cannot support all requested capabilities in the
+ * Capability Information field.
+ * @STATUS_REASSOC_NO_ASSOC: Reassociation denied due to inability to confirm
+ * that association exists.
+ * @STATUS_ASSOC_DENIED_UNSPEC: Association denied due to reason outside the
+ * scope of this standard.
+ * @STATUS_NOT_SUPPORTED_AUTH_ALG: Responding STA does not support the specified
+ * authentication algorithm.
+ * @STATUS_UNKNOWN_AUTH_TRANSACTION: Received an Authentication frame with
+ * authentication transaction sequence number out of expected sequence.
+ * @STATUS_CHALLENGE_FAIL: Authentication rejected because of challenge failure.
+ * @STATUS_AUTH_TIMEOUT: Authentication rejected due to timeout waiting for next
+ * frame in sequence.
+ * @STATUS_AP_UNABLE_TO_HANDLE_NEW_STA: Association denied because AP is unable
+ * to handle additional associated STAs.
+ * @STATUS_ASSOC_DENIED_RATES: Association denied due to requesting STA not
+ * supporting all of the data rates in the BSSBasicRateSet parameter,
+ * the Basic HT-MCS Set field of the HT Operation parameter, or the Basic
+ * VHT-MCS and NSS Set field in the VHT Operation parameter.
+ * @STATUS_ASSOC_DENIED_NOSHORT: Association denied due to requesting
+ * STA not supporting the short preamble option.
+ * @STATUS_SPEC_MGMT_REQUIRED: Association request rejected because Spectrum
+ * Management capability is required.
+ * @STATUS_PWR_CAPABILITY_NOT_VALID: Association request rejected because the
+ * information in the Power Capability element is unacceptable.
+ * @STATUS_SUPPORTED_CHANNEL_NOT_VALID: Association request rejected because
+ * the information in the Supported Channels element is unacceptable.
+ * @STATUS_ASSOC_DENIED_NO_SHORT_SLOT_TIME: Association denied due to requesting
+ * STA not supporting the Short Slot Time option.
+ * @STATUS_ASSOC_DENIED_NO_HT: Association denied because the requesting STA
+ * does not support HT features.
+ * @STATUS_R0KH_UNREACHABLE: R0KH unreachable.
+ * @STATUS_ASSOC_DENIED_NO_PCO: Association denied because the requesting STA
+ * does not support the phased coexistence operation (PCO) transition time
+ * required by the AP.
+ * @STATUS_ASSOC_REJECTED_TEMPORARILY: Association request rejected temporarily,
+ * try again later.
+ * @STATUS_ROBUST_MGMT_FRAME_POLICY_VIOLATION: Robust management frame policy
+ * violation.
+ * @STATUS_UNSPECIFIED_QOS_FAILURE: Unspecified, QoS-related failure.
+ * @STATUS_DENIED_INSUFFICIENT_BANDWIDTH: Association denied because QoS AP or
+ * PCP has insufficient bandwidth to handle another QoS STA.
+ * @STATUS_DENIED_POOR_CHANNEL_CONDITIONS: Association denied due to excessive
+ * frame loss rates and/or poor conditions on current operating channel.
+ * @STATUS_DENIED_QOS_NOT_SUPPORTED: Association (with QoS BSS) denied because
+ * the requesting STA does not support the QoS facility.
+ * @STATUS_REQUEST_DECLINED: The request has been declined.
+ * @STATUS_INVALID_PARAMETERS: The request has not been successful as one
+ * or more parameters have invalid values.
+ * @STATUS_REJECTED_WITH_SUGGESTED_CHANGES: The allocation or TS has not been
+ * created because the request cannot be honored; however, a suggested TSPEC/DMG
+ * TSPEC is provided so that the initiating STA can attempt to set another
+ * allocation or TS with the suggested changes to the TSPEC/DMG TSPEC
+ * @STATUS_INVALID_IE: Invalid element, i.e., an element defined in this
+ * standard for which the content does not meet the specifications in Clause 9.
+ * @STATUS_GROUP_CIPHER_NOT_VALID: Invalid group cipher.
+ * @STATUS_PAIRWISE_CIPHER_NOT_VALID: Invalid pairwise cipher.
+ * @STATUS_AKMP_NOT_VALID: Invalid AKMP.
+ * @STATUS_UNSUPPORTED_RSN_IE_VERSION: Unsupported RSNE version.
+ * @STATUS_INVALID_RSN_IE_CAPAB: Invalid RSNE capabilities.
+ * @STATUS_CIPHER_REJECTED_PER_POLICY: Cipher suite rejected because of security
+ * policy.
+ * @STATUS_TS_NOT_CREATED: The TS or allocation has not been created; however,
+ * the HC or PCP might be capable of creating a TS or allocation, in response to
+ * a request, after the time indicated in the TS Delay element.
+ * @STATUS_DIRECT_LINK_NOT_ALLOWED: Direct link is not allowed in the BSS by
+ * policy.
+ * @STATUS_DEST_STA_NOT_PRESENT: The Destination STA is not present within this
+ * BSS.
+ * @STATUS_DEST_STA_NOT_QOS_STA: The Destination STA is not a QoS STA.
+ * @STATUS_ASSOC_DENIED_LISTEN_INT_TOO_LARGE: Association denied because the
+ * listen interval is too large.
+ * @STATUS_INVALID_FT_ACTION_FRAME_COUNT: Invalid FT Action frame count.
+ * @STATUS_INVALID_PMKID: Invalid pairwise master key identifier (PMKID).
+ */
+enum wlan_status_code {
+	STATUS_SUCCESS = 0,
+	STATUS_UNSPECIFIED_FAILURE = 1,
+	STATUS_TDLS_WAKEUP_REJECT = 3,
+	STATUS_SECURITY_DISABLED = 5,
+	STATUS_UNACCEPTABLE_LIFETIME = 6,
+	STATUS_NOT_IN_SAME_BSS = 7,
+	STATUS_CAPS_UNSUPPORTED = 10,
+	STATUS_REASSOC_NO_ASSOC = 11,
+	STATUS_ASSOC_DENIED_UNSPEC = 12,
+	STATUS_NOT_SUPPORTED_AUTH_ALG = 13,
+	STATUS_UNKNOWN_AUTH_TRANSACTION = 14,
+	STATUS_CHALLENGE_FAIL = 15,
+	STATUS_AUTH_TIMEOUT = 16,
+	STATUS_AP_UNABLE_TO_HANDLE_NEW_STA = 17,
+	STATUS_ASSOC_DENIED_RATES = 18,
+	STATUS_ASSOC_DENIED_NOSHORT = 19,
+	STATUS_SPEC_MGMT_REQUIRED = 22,
+	STATUS_PWR_CAPABILITY_NOT_VALID = 23,
+	STATUS_SUPPORTED_CHANNEL_NOT_VALID = 24,
+	STATUS_ASSOC_DENIED_NO_SHORT_SLOT_TIME = 25,
+	STATUS_ASSOC_DENIED_NO_HT = 27,
+	STATUS_R0KH_UNREACHABLE = 28,
+	STATUS_ASSOC_DENIED_NO_PCO = 29,
+	STATUS_ASSOC_REJECTED_TEMPORARILY = 30,
+	STATUS_ROBUST_MGMT_FRAME_POLICY_VIOLATION = 31,
+	STATUS_UNSPECIFIED_QOS_FAILURE = 32,
+	STATUS_DENIED_INSUFFICIENT_BANDWIDTH = 33,
+	STATUS_DENIED_POOR_CHANNEL_CONDITIONS = 34,
+	STATUS_DENIED_QOS_NOT_SUPPORTED = 35,
+	STATUS_REQUEST_DECLINED = 37,
+	STATUS_INVALID_PARAMETERS = 38,
+	STATUS_REJECTED_WITH_SUGGESTED_CHANGES = 39,
+	STATUS_INVALID_IE = 40,
+	STATUS_GROUP_CIPHER_NOT_VALID = 41,
+	STATUS_PAIRWISE_CIPHER_NOT_VALID = 42,
+	STATUS_AKMP_NOT_VALID = 43,
+	STATUS_UNSUPPORTED_RSN_IE_VERSION = 44,
+	STATUS_INVALID_RSN_IE_CAPAB = 45,
+	STATUS_CIPHER_REJECTED_PER_POLICY = 46,
+	STATUS_TS_NOT_CREATED = 47,
+	STATUS_DIRECT_LINK_NOT_ALLOWED = 48,
+	STATUS_DEST_STA_NOT_PRESENT = 49,
+	STATUS_DEST_STA_NOT_QOS_STA = 50,
+	STATUS_ASSOC_DENIED_LISTEN_INT_TOO_LARGE = 51,
+	STATUS_INVALID_FT_ACTION_FRAME_COUNT = 52,
+	STATUS_INVALID_PMKID = 53,
+};
+
 #define WLAN_OUI_SIZE 4
 #define WLAN_MAX_CIPHER 6
 #define WLAN_RSN_SELECTOR_LEN 4
