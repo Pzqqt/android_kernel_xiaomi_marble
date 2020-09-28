@@ -247,14 +247,14 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		csr_saved_scan_cmd_free_fields(mac, session);
 	}
 	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
-		sme_info("Continue channel switch for STA on vdev %d",
-			 session_id);
+		sme_debug("Continue channel switch for STA on vdev %d",
+			  session_id);
 		csr_sta_continue_csa(mac, session_id);
 	}
 
 	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_SAP) {
-		sme_info("Continue channel switch for SAP on vdev %d",
-			 session_id);
+		sme_debug("Continue channel switch for SAP on vdev %d",
+			  session_id);
 		csr_csa_restart(mac, session_id);
 	}
 	if (reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM)
@@ -263,7 +263,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 	if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT) {
 		QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-		sme_info("Continue connect on vdev %d", session_id);
+		sme_debug("Continue connect on vdev %d", session_id);
 		if (param->status == SET_HW_MODE_STATUS_OK ||
 		    param->status == SET_HW_MODE_STATUS_ALREADY)
 			status = QDF_STATUS_SUCCESS;
@@ -5174,8 +5174,8 @@ uint32_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
 
 		chan_freq = csr_get_beaconing_concurrent_channel(mac,
 							       vdev_id_to_skip);
-		sme_info("Other Concurrent Chan_freq: %d skipped vdev_id %d",
-			 chan_freq, vdev_id_to_skip);
+		sme_debug("Other Concurrent Chan_freq: %d skipped vdev_id %d",
+			  chan_freq, vdev_id_to_skip);
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -6045,8 +6045,8 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 	if (!mac->mlme_cfg->lfr.lfr_enabled ||
 	    (neighbor_roam_info->neighborRoamState !=
 	     eCSR_NEIGHBOR_ROAM_STATE_CONNECTED)) {
-		sme_info("Fast roam is disabled or not connected(%d)",
-			 neighbor_roam_info->neighborRoamState);
+		sme_debug("Fast roam is disabled or not connected(%d)",
+			  neighbor_roam_info->neighborRoamState);
 		return QDF_STATUS_E_PERM;
 	}
 
@@ -6061,7 +6061,7 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 			sme_err("Failed to acquire SME lock");
 		}
 	} else {
-		sme_info("LFR3 not enabled");
+		sme_debug("LFR3 not enabled");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -8195,13 +8195,13 @@ void sme_get_command_q_status(mac_handle_t mac_handle)
 
 	mac = MAC_CONTEXT(mac_handle);
 
-	sme_info("smeCmdPendingList has %d commands",
-		 wlan_serialization_get_pending_list_count(mac->psoc, false));
+	sme_debug("smeCmdPendingList has %d commands",
+		  wlan_serialization_get_pending_list_count(mac->psoc, false));
 	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(mac->psoc,
 								 false);
 	if (cmd)
-		sme_info("Active commaned is %d cmd id %d source %d",
-			 cmd->cmd_type, cmd->cmd_id, cmd->source);
+		sme_debug("Active commaned is %d cmd id %d source %d",
+			  cmd->cmd_type, cmd->cmd_id, cmd->source);
 	if (!cmd || cmd->source != WLAN_UMAC_COMP_MLME)
 		return;
 
@@ -11525,8 +11525,8 @@ void sme_update_he_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
 		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, mcs_map, 2);
 		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, mcs_map, 2);
 	}
-	sme_info("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
-			rx_mcs_map, tx_mcs_map);
+	sme_debug("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
+		  rx_mcs_map, tx_mcs_map);
 	if (cfg_in_range(CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map))
 		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80 =
 		rx_mcs_map;
@@ -11552,7 +11552,7 @@ int sme_update_he_mcs(mac_handle_t mac_handle, uint8_t session_id,
 	}
 	if ((he_mcs & 0x3) == HE_MCS_DISABLE) {
 		sme_err("Invalid HE MCS 0x%0x, can't disable 0-7 for 1ss",
-				he_mcs);
+			he_mcs);
 		return -EINVAL;
 	}
 	mcs_val = he_mcs & 0x3;
@@ -11606,7 +11606,7 @@ int sme_update_he_mcs(mac_handle_t mac_handle, uint8_t session_id,
 		sme_err("Invalid HE MCS 0x%0x", he_mcs);
 		return -EINVAL;
 	}
-	sme_info("new HE MCS 0x%0x", mcs_map);
+	sme_debug("new HE MCS 0x%0x", mcs_map);
 	csr_update_session_he_cap(mac_ctx, csr_session);
 
 	return 0;
@@ -11749,7 +11749,7 @@ sme_validate_session_for_cap_update(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sme_info("STA is not connected, Session_id: %d", session_id);
+		sme_debug("STA is not connected, Session_id: %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -11798,9 +11798,9 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 	omi_data.omi_in_vht = 0x1;
 	omi_data.omi_in_he = 0x1;
 
-	sme_info("OMI: BW %d TxNSTS %d RxNSS %d ULMU %d, OMI_VHT %d, OMI_HE %d",
-		 omi_data.ch_bw, omi_data.tx_nsts, omi_data.rx_nss,
-		 omi_data.ul_mu_dis, omi_data.omi_in_vht, omi_data.omi_in_he);
+	sme_debug("OMI: BW %d TxNSTS %d RxNSS %d ULMU %d, OMI_VHT %d, OMI_HE %d",
+		  omi_data.ch_bw, omi_data.tx_nsts, omi_data.rx_nss,
+		  omi_data.ul_mu_dis, omi_data.omi_in_vht, omi_data.omi_in_he);
 	qdf_mem_copy(&param_val, &omi_data, sizeof(omi_data));
 	sme_debug("param val %08X, bssid:"QDF_MAC_ADDR_FMT, param_val,
 		  QDF_MAC_ADDR_REF(session->connectedProfile.bssid.bytes));
@@ -11848,10 +11848,10 @@ int sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
 		case QCA_WLAN_VENDOR_ATTR_HE_OMI_CH_BW:
 			if (cfg_val >
 			    session->connectedProfile.vht_channel_width) {
-				sme_info("OMI BW %d is > connected BW %d",
-					 cfg_val,
-					 session->connectedProfile.
-					 vht_channel_width);
+				sme_debug
+				  ("OMI BW %d is > connected BW %d",
+				   cfg_val,
+				   session->connectedProfile.vht_channel_width);
 				mac_ctx->he_om_ctrl_cfg_bw_set = false;
 				return 0;
 			}
@@ -11905,8 +11905,8 @@ int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
 	struct sir_cfg_action_frm_tb_ppdu *cfg_msg;
 
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sme_info("STA not in connected state Session_id: %d",
-			 session_id);
+		sme_debug("STA not in connected state Session_id: %d",
+			  session_id);
 		return -EINVAL;
 	}
 

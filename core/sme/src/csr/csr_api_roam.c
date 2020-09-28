@@ -5080,7 +5080,7 @@ csr_check_for_allowed_ssid(struct mac_context *mac,
 		mac->roam.configParam.roam_params.num_ssid_allowed_list;
 
 	if (!roamed_bss_ies) {
-		sme_info(" Roamed BSS IEs NULL");
+		sme_debug(" Roamed BSS IEs NULL");
 		return false;
 	}
 
@@ -5453,10 +5453,10 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 				(struct qdf_mac_addr *)
 				&result->BssDescriptor.bssId, &temp_vdev_id);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			sme_info("vdev_id %d already connected to "QDF_MAC_ADDR_FMT". select next bss for vdev_id %d",
-				 temp_vdev_id,
-				 QDF_MAC_ADDR_REF(result->BssDescriptor.bssId),
-				 vdev_id);
+			sme_debug("vdev_id %d already connected to "QDF_MAC_ADDR_FMT". select next bss for vdev_id %d",
+				  temp_vdev_id,
+				  QDF_MAC_ADDR_REF(result->BssDescriptor.bssId),
+				  vdev_id);
 			*roam_state = eCsrStopRoamingDueToConcurrency;
 			status = true;
 			*roam_bss_entry = csr_ll_next(&bss_list->List,
