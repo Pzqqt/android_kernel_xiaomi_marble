@@ -15833,6 +15833,11 @@ enum {
     WMI_WOW_FLAG_DO_HTC_WAKEUP              = 0x00000008,
     /* Enable L1SS sleep for PCIE DRV case */
     WMI_WOW_FLAG_ENABLE_DRV_PCIE_L1SS_SLEEP = 0x00000010,
+    /*
+     * To differentiate system suspend Vs RTPM BIT set -
+     * Sytem Suspend WOW, BIT Reset- RTPM (DRV)
+     */
+    WMI_WOW_FLAG_SYSTEM_SUSPEND_WOW         = 0x00000020,
 };
 
 typedef struct {
