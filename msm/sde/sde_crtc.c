@@ -2279,7 +2279,7 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 	}
 }
 
-static void sde_crtc_frame_event_cb(void *data, u32 event)
+static void sde_crtc_frame_event_cb(void *data, u32 event, ktime_t ts)
 {
 	struct drm_crtc *crtc = (struct drm_crtc *)data;
 	struct sde_crtc *sde_crtc;
@@ -2349,9 +2349,9 @@ static void sde_crtc_frame_event_cb(void *data, u32 event)
 	}
 
 	fevent->event = event;
+	fevent->ts = ts;
 	fevent->crtc = crtc;
 	fevent->connector = cb_data->connector;
-	fevent->ts = ktime_get();
 	kthread_queue_work(&priv->event_thread[crtc_id].worker, &fevent->work);
 }
 

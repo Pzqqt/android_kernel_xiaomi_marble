@@ -3225,7 +3225,7 @@ void sde_encoder_register_vblank_callback(struct drm_encoder *drm_enc,
 }
 
 void sde_encoder_register_frame_event_callback(struct drm_encoder *drm_enc,
-			void (*frame_event_cb)(void *, u32 event),
+			void (*frame_event_cb)(void *, u32 event, ktime_t ts),
 			struct drm_crtc *crtc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
@@ -3252,14 +3252,16 @@ static void sde_encoder_frame_done_callback(
 		struct sde_encoder_phys *ready_phys, u32 event)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	struct sde_kms *sde_kms = sde_encoder_get_kms(&sde_enc->base);
 	unsigned int i;
 	bool trigger = true;
 	bool is_cmd_mode = false;
 	enum sde_rm_topology_name topology = SDE_RM_TOPOLOGY_NONE;
+	ktime_t ts = 0;
 
-	if (!drm_enc || !sde_enc->cur_master) {
-		SDE_ERROR("invalid param: drm_enc %pK, cur_master %pK\n",
-				drm_enc, drm_enc ? sde_enc->cur_master : 0);
+	if (!sde_kms || !sde_enc->cur_master) {
+		SDE_ERROR("invalid param: sde_kms %pK, cur_master %pK\n",
+				sde_kms, sde_enc->cur_master);
 		return;
 	}
 
@@ -3267,6 +3269,19 @@ static void sde_encoder_frame_done_callback(
 				sde_enc->cur_master->connector;
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;
+
+	/* get precise vsync timestamp for retire fence, if precise vsync timestamp is enabled */
+	if (sde_kms->catalog->has_precise_vsync_ts
+	    && (event & SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE)
+	    && (!(event & (SDE_ENCODER_FRAME_EVENT_ERROR | SDE_ENCODER_FRAME_EVENT_PANEL_DEAD))))
+		ts = sde_encoder_calc_last_vsync_timestamp(drm_enc);
+
+	/*
+	 * get current ktime for other events and when precise timestamp is not
+	 * available for retire-fence
+	 */
+	if (!ts)
+		ts = ktime_get();
 
 	if (event & (SDE_ENCODER_FRAME_EVENT_DONE
 			| SDE_ENCODER_FRAME_EVENT_ERROR
@@ -3301,15 +3316,13 @@ static void sde_encoder_frame_done_callback(
 		if (trigger) {
 			if (sde_enc->crtc_frame_event_cb)
 				sde_enc->crtc_frame_event_cb(
-					&sde_enc->crtc_frame_event_cb_data,
-					event);
+					&sde_enc->crtc_frame_event_cb_data, event, ts);
 			for (i = 0; i < sde_enc->num_phys_encs; i++)
 				atomic_add_unless(&sde_enc->frame_done_cnt[i],
 						-1, 0);
 		}
 	} else if (sde_enc->crtc_frame_event_cb) {
-		sde_enc->crtc_frame_event_cb(
-				&sde_enc->crtc_frame_event_cb_data, event);
+		sde_enc->crtc_frame_event_cb(&sde_enc->crtc_frame_event_cb_data, event, ts);
 	}
 }
 

@@ -226,7 +226,7 @@ struct sde_encoder_virt {
 	struct dentry *debugfs_root;
 	struct mutex enc_lock;
 	atomic_t frame_done_cnt[MAX_PHYS_ENCODERS_PER_VIRTUAL];
-	void (*crtc_frame_event_cb)(void *data, u32 event);
+	void (*crtc_frame_event_cb)(void *data, u32 event, ktime_t ts);
 	struct sde_kms_frame_event_cb_data crtc_frame_event_cb_data;
 
 	struct sde_rsc_client *rsc_client;
@@ -300,7 +300,7 @@ void sde_encoder_register_vblank_callback(struct drm_encoder *encoder,
  * @crtc:	pointer to drm_crtc object interested in frame events
  */
 void sde_encoder_register_frame_event_callback(struct drm_encoder *encoder,
-		void (*cb)(void *, u32), struct drm_crtc *crtc);
+		void (*cb)(void *, u32, ktime_t), struct drm_crtc *crtc);
 
 /**
  * sde_encoder_get_rsc_client - gets the rsc client state for primary
