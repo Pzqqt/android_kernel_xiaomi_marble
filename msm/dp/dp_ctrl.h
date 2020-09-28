@@ -12,6 +12,7 @@
 #include "dp_parser.h"
 #include "dp_power.h"
 #include "dp_catalog.h"
+#include "dp_debug.h"
 
 struct dp_ctrl {
 	int (*init)(struct dp_ctrl *dp_ctrl, bool flip, bool reset);
@@ -30,6 +31,7 @@ struct dp_ctrl {
 	void (*set_mst_channel_info)(struct dp_ctrl *dp_ctrl,
 			enum dp_stream_id strm,
 			u32 ch_start_slot, u32 ch_tot_slots);
+	void (*set_sim_mode)(struct dp_ctrl *dp_ctrl, bool en);
 };
 
 struct dp_ctrl_in {
