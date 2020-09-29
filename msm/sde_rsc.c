@@ -1082,8 +1082,7 @@ int sde_rsc_client_trigger_vote(struct sde_rsc_client *caller_client,
 	mutex_lock(&rsc->client_lock);
 
 	if (!delta_vote && !rsc->update_tcs_content &&
-			((rsc->current_state == SDE_RSC_CMD_STATE) ||
-			(rsc->current_state == SDE_RSC_VID_STATE)))
+			(rsc->current_state == SDE_RSC_CLK_STATE))
 		goto end;
 
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX && delta_vote; i++) {
