@@ -1094,7 +1094,12 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 		 * This is 3rd skb for flow.
 		 * After head skb, 2nd skb in fraglist
 		 */
-		qdf_nbuf_set_next(fisa_flow->last_skb, nbuf);
+		if (fisa_flow->last_skb) {
+			qdf_nbuf_set_next(fisa_flow->last_skb, nbuf);
+		} else {
+			qdf_nbuf_free(nbuf);
+			return FISA_AGGR_DONE;
+		}
 	} else {
 		/* 1st skb after head skb
 		 * implement qdf wrapper set_ext_list
