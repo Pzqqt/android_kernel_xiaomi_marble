@@ -3506,8 +3506,8 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 	const struct bonded_channel_freq *bonded_chan_ptr2 = NULL;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	enum channel_enum chan_enum;
-	uint16_t max_bw;
+	enum channel_enum chan_enum, sec_5g_chan_enum;
+	uint16_t max_bw, bw_80, sec_5g_freq_max_bw = 0;
 
 	if (!ch_params) {
 		reg_err("ch_params is NULL");
@@ -3534,10 +3534,28 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 	}
 
 	max_bw = pdev_priv_obj->cur_chan_list[chan_enum].max_bw;
+	bw_80 = reg_get_bw_value(CH_WIDTH_80MHZ);
+
+	if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+		sec_5g_chan_enum =
+			reg_get_chan_enum_for_freq(ch_params->mhz_freq_seg1 -
+					NEAREST_20MHZ_CHAN_FREQ_OFFSET);
+		if (sec_5g_chan_enum == INVALID_CHANNEL) {
+			reg_err("secondary channel freq is not valid");
+			return;
+		}
+
+		sec_5g_freq_max_bw =
+			pdev_priv_obj->cur_chan_list[sec_5g_chan_enum].max_bw;
+	}
 
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
-		if (max_bw < reg_get_bw_value(ch_params->ch_width))
+		if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+			if ((max_bw < bw_80) || (sec_5g_freq_max_bw < bw_80))
+				goto update_bw;
+		} else if (max_bw < reg_get_bw_value(ch_params->ch_width)) {
 			goto update_bw;
+		}
 
 		bonded_chan_ptr = NULL;
 		bonded_chan_ptr2 = NULL;
