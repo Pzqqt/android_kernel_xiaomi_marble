@@ -625,7 +625,7 @@ QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 	struct osif_request *request = NULL;
 	static const struct osif_request_params params = {
 		.priv_size = 0,
-		.timeout_ms = 1000,
+		.timeout_ms = 4000,
 	};
 	int err;
 
