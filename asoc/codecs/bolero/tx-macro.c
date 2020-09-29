@@ -180,6 +180,7 @@ struct tx_macro_priv {
 	bool lpi_enable;
 	bool register_event_listener;
 	u16 current_clk_id;
+	int disable_afe_wakeup_event_listener;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -2645,17 +2646,19 @@ static int tx_macro_register_event_listener(struct snd_soc_component *component,
 	if (tx_priv->swr_ctrl_data &&
 		(!tx_priv->tx_swr_clk_cnt || !tx_priv->va_swr_clk_cnt)) {
 		if (enable) {
-			ret = swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_REGISTER_WAKEUP, NULL);
+			if (!tx_priv->disable_afe_wakeup_event_listener)
+				ret = swrm_wcd_notify(
+					tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+					SWR_REGISTER_WAKEUP, NULL);
 			msm_cdc_pinctrl_set_wakeup_capable(
 					tx_priv->tx_swr_gpio_p, false);
 		} else {
 			msm_cdc_pinctrl_set_wakeup_capable(
 					tx_priv->tx_swr_gpio_p, true);
-			ret = swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEREGISTER_WAKEUP, NULL);
+			if (!tx_priv->disable_afe_wakeup_event_listener)
+				ret = swrm_wcd_notify(
+					tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+					SWR_DEREGISTER_WAKEUP, NULL);
 		}
 	}
 
@@ -3411,6 +3414,9 @@ static int tx_macro_probe(struct platform_device *pdev)
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
 	u32 is_used_tx_swr_gpio = 1;
 	const char *is_used_tx_swr_gpio_dt = "qcom,is-used-swr-gpio";
+	u32 disable_afe_wakeup_event_listener = 0;
+	const char *disable_afe_wakeup_event_listener_dt =
+			"qcom,disable-afe-wakeup-event-listener";
 
 	if (!bolero_is_va_macro_registered(&pdev->dev)) {
 		dev_err(&pdev->dev,
@@ -3477,6 +3483,19 @@ static int tx_macro_probe(struct platform_device *pdev)
 		sample_rate, tx_priv) == TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
 	}
+
+	if (of_find_property(pdev->dev.of_node,
+			     disable_afe_wakeup_event_listener_dt, NULL)) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   disable_afe_wakeup_event_listener_dt,
+					   &disable_afe_wakeup_event_listener);
+		if (ret)
+			dev_dbg(&pdev->dev, "%s: error reading %s in dt\n",
+				__func__, disable_afe_wakeup_event_listener_dt);
+	}
+	tx_priv->disable_afe_wakeup_event_listener =
+			disable_afe_wakeup_event_listener;
+
 	if (is_used_tx_swr_gpio) {
 		tx_priv->reset_swr = true;
 		INIT_WORK(&tx_priv->tx_macro_add_child_devices_work,
