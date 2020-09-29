@@ -308,13 +308,17 @@ static inline bool cm_ser_get_blocking_cmd(void)
  */
 wlan_cm_id cm_get_cm_id(struct cnx_mgr *cm_ctx, enum wlan_cm_source source);
 
+struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
+				 const char *func, uint32_t line);
+
 /**
  * cm_get_cm_ctx() - Get connection manager context from vdev
  * @vdev: vdev object pointer
  *
  * Return: pointer to connection manager context
  */
-struct cnx_mgr *cm_get_cm_ctx(struct wlan_objmgr_vdev *vdev);
+#define cm_get_cm_ctx(vdev) \
+	cm_get_cm_ctx_fl(vdev, __func__, __LINE__)
 
 /**
  * cm_reset_active_cm_id() - Reset active cm_id from cm context, if its same as
@@ -417,6 +421,9 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 						struct cm_req *cm_req,
 						enum wlan_cm_source source);
 
+struct cm_req *cm_get_req_by_cm_id_fl(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
+				      const char *func, uint32_t line);
+
 /**
  * cm_get_req_by_cm_id() - Get cm req matching the cm id
  * @cm_ctx: connection manager context
@@ -428,7 +435,8 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
  *
  * Return: cm req from the req list whose cm id matches the argument
  */
-struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+#define cm_get_req_by_cm_id(cm_ctx, cm_id) \
+	cm_get_req_by_cm_id_fl(cm_ctx, cm_id, __func__, __LINE__)
 
 /**
  * cm_vdev_scan_cancel() - cancel all scans for vdev
@@ -439,5 +447,57 @@ struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
  */
 void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
 			 struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_set_max_connect_attempts() - Set max connect attempts
+ * @vdev: vdev pointer
+ * @max_connect_attempts: max connect attempts to be set.
+ *
+ * Set max connect attempts. Max value is limited to CM_MAX_CONNECT_ATTEMPTS.
+ *
+ * Return: void
+ */
+void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
+				 uint8_t max_connect_attempts);
+
+/**
+ * cm_is_vdev_connecting() - check if vdev is in conneting state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_is_vdev_connected() - check if vdev is in conneted state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_is_vdev_disconnecting() - check if vdev is in disconneting state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_disconnecting(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_is_vdev_disconnected() - check if vdev is disconnected/init state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_is_vdev_roaming() - check if vdev is in roaming state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev);
 
 #endif /* __WLAN_CM_MAIN_API_H__ */

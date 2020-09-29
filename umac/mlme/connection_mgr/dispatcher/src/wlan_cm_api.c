@@ -72,6 +72,37 @@ QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+void wlan_cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
+				      uint8_t max_connect_attempts)
+{
+	cm_set_max_connect_attempts(vdev, max_connect_attempts);
+}
+
+bool wlan_cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool wlan_cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool wlan_cm_is_vdev_disconnecting(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool wlan_cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool wlan_cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
 const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason)
 {
 	if (reason > REASON_PROP_START)

@@ -111,10 +111,8 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 	vdev = cmd->vdev;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx) {
-		mlme_err("cm_ctx is NULL, reason: %d", reason);
+	if (!cm_ctx)
 		return QDF_STATUS_E_NULL_VALUE;
-	}
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
@@ -308,7 +306,6 @@ void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx) {
-		mlme_err("cm ctx NULL");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		return;
 	}
@@ -629,9 +626,10 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (cm_req->connect_req.connect_attempts >=
-	    CM_MAX_CANDIDATE_TO_BE_TRIED) {
-		mlme_info("Max %d candidates tried for the conenction",
-			  cm_req->connect_req.connect_attempts);
+	    cm_ctx->max_connect_attempts) {
+		mlme_info("%d attempts tried for the connect req (cm id %d), max %d",
+			  cm_req->connect_req.connect_attempts,
+			  cm_req->cm_id, cm_ctx->max_connect_attempts);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -744,10 +742,8 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	struct cm_req *cm_req;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
-	if (!cm_req) {
-		mlme_err("cm req NULL connect fail");
+	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	status = cm_get_valid_candidate(cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -786,10 +782,8 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	struct wlan_cm_connect_req *req;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req) {
-		mlme_err("cm req NULL for *cm_id %x", *cm_id);
+	if (!cm_req)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	cm_ctx->active_cm_id = *cm_id;
 	req = &cm_req->connect_req.req;
@@ -822,10 +816,8 @@ cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	struct cm_req *cm_req;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req) {
-		mlme_err("cm req NULL for *cm_id %x", *cm_id);
+	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
 
@@ -840,10 +832,8 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	QDF_STATUS status;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req) {
-		mlme_err("cm req NULL for *cm_id %x", *cm_id);
+	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
-	}
 	/*
 	 * fill vdev crypto for the peer.
 	 */
@@ -906,14 +896,10 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_SUCCESS;
 
 	sm_state = cm_get_state(cm_ctx);
-	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
 	mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
-
-	if (sm_state == WLAN_CM_S_INIT || sm_state == WLAN_CM_S_CONNECTED) {
-		cm_inform_if_mgr_connect_complete(cm_ctx->vdev,
-						  resp->connect_status);
-		cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
-	}
+	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
+	cm_inform_if_mgr_connect_complete(cm_ctx->vdev, resp->connect_status);
+	cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
 
 	/* Update scan entry in case connect is success or fails with bssid */
 	if (!qdf_is_macaddr_zero(&resp->bssid)) {
@@ -932,8 +918,8 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 	}
 
 	/*
-	 * update fils/wep key and inform legacy, update bcn filter and scan
-	 * entry mlme info,, start OBSS scan for open mode.
+	 * update fils/wep key and inform legacy, update bcn filter,
+	 * start OBSS scan for open mode.
 	 */
 
 	cm_remove_cmd(cm_ctx, resp->cm_id);
@@ -965,10 +951,8 @@ QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
 	uint32_t prefix;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx) {
-		mlme_err("cm ctx NULL");
+	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	cm_id = cm_ctx->active_cm_id;
 	prefix = CM_ID_GET_PREFIX(cm_id);
@@ -1024,10 +1008,8 @@ QDF_STATUS cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
 	struct wlan_cm_connect_rsp *resp;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx) {
-		mlme_err("cm ctx NULL");
+	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	cm_id = cm_ctx->active_cm_id;
 	prefix = CM_ID_GET_PREFIX(cm_id);
@@ -1086,10 +1068,8 @@ QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 	struct wlan_cm_connect_rsp *resp;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx) {
-		mlme_err("cm ctx NULL");
+	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	cm_id = cm_ctx->active_cm_id;
 	prefix = CM_ID_GET_PREFIX(cm_id);
@@ -1252,11 +1232,8 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-
-	if (!cm_ctx) {
-		mlme_err("cm ctx NULL");
+	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev), cm_ctx->vdev);
 

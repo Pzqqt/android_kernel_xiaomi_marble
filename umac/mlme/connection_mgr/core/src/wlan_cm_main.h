@@ -28,8 +28,8 @@
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
 
-/* Max candidate to be tried to connect */
-#define CM_MAX_CANDIDATE_TO_BE_TRIED 5
+/* Max candidate/attempts to be tried to connect */
+#define CM_MAX_CONNECT_ATTEMPTS 5
 /* Max time to wait for scan for SSID */
 #define CM_SCAN_MAX_TIME 5000
 /* Max connect/disconnect/roam req that can be queued at a time */
@@ -169,6 +169,7 @@ struct connect_ies {
  * @req_ie: request ies for connect/disconnect set by osif/user separately from
  * connect req
  * @global_cmd_id: global cmd id for getting cm id for connect/disconnect req
+ * @max_connect_attempts: Max attempts to be tried for a connect req
  */
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -185,6 +186,7 @@ struct cnx_mgr {
 	bool force_rsne_override;
 	struct connect_ies req_ie;
 	qdf_atomic_t global_cmd_id;
+	uint8_t max_connect_attempts;
 };
 
 /**

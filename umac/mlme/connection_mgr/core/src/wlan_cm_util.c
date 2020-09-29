@@ -47,15 +47,21 @@ wlan_cm_id cm_get_cm_id(struct cnx_mgr *cm_ctx, enum wlan_cm_source source)
 	return cmd_id;
 }
 
-struct cnx_mgr *cm_get_cm_ctx(struct wlan_objmgr_vdev *vdev)
+struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
+				 const char *func, uint32_t line)
 {
 	struct vdev_mlme_obj *vdev_mlme;
+	struct cnx_mgr *cm_ctx = NULL;
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme)
-		return NULL;
+	if (vdev_mlme)
+		cm_ctx = vdev_mlme->cnx_mgr_ctx;
 
-	return vdev_mlme->cnx_mgr_ctx;
+	if (!cm_ctx)
+		mlme_nofl_err("%s:%u: cm_ctx NULL vdev %d", func, line,
+			      wlan_vdev_get_id(vdev));
+
+	return cm_ctx;
 }
 
 void cm_reset_active_cm_id(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id)
@@ -174,7 +180,8 @@ exit:
 	return match;
 }
 
-struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+struct cm_req *cm_get_req_by_cm_id_fl(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
+				      const char *func, uint32_t line)
 {
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req * cm_req;
@@ -194,6 +201,9 @@ struct cm_req *cm_get_req_by_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 		next_node = NULL;
 	}
 	cm_req_lock_release(cm_ctx);
+
+	mlme_nofl_info("%s:%u: cm req not found for cm id %d", func,
+		       line, cm_id);
 
 	return NULL;
 }
@@ -399,4 +409,104 @@ void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
 	/* In success/failure case wlan_scan_cancel free the req memory */
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("Cancel scan request failed");
+}
+
+void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
+				 uint8_t max_connect_attempts)
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	cm_ctx->max_connect_attempts =
+		QDF_MIN(max_connect_attempts, CM_MAX_CONNECT_ATTEMPTS);
+	mlme_debug("max connect attempts set to %d, requested %d",
+		   cm_ctx->max_connect_attempts, max_connect_attempts);
+}
+
+bool cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+
+	if (state == WLAN_CM_S_CONNECTING)
+		return true;
+
+	return false;
+}
+
+bool cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+
+	if (state == WLAN_CM_S_CONNECTED)
+		return true;
+
+	return false;
+}
+
+bool cm_is_vdev_disconnecting(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+
+	if (state == WLAN_CM_S_DISCONNECTING)
+		return true;
+
+	return false;
+}
+
+bool cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+
+	if (state == WLAN_CM_S_INIT)
+		return true;
+
+	return false;
+}
+
+bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+
+	if (state == WLAN_CM_S_ROAMING)
+		return true;
+
+	return false;
 }

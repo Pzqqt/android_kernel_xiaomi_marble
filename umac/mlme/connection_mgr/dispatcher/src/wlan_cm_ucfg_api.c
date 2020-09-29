@@ -19,3 +19,43 @@
  *
  * This file maintains definitaions public ucfg apis.
  */
+
+#include <wlan_cm_ucfg_api.h>
+#include "connection_mgr/core/src/wlan_cm_main_api.h"
+
+QDF_STATUS ucfg_cm_start_connect(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_connect_req *req)
+{
+	return cm_connect_start_req(vdev, req);
+}
+
+QDF_STATUS ucfg_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_disconnect_req *req)
+{
+	return cm_disconnect_start_req(vdev, req);
+}
+
+bool ucfg_cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool ucfg_cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool ucfg_cm_is_vdev_disconnecting(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool ucfg_cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}
+
+bool ucfg_cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_is_vdev_connecting(vdev);
+}

@@ -137,10 +137,8 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	struct cm_req *cm_req;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req) {
-		mlme_err("cm req NULL connect fail");
+	if (!cm_req)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	cm_ctx->active_cm_id = *cm_id;
 
@@ -185,11 +183,8 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-
-	if (!cm_ctx) {
-		mlme_err("cm ctx NULL");
+	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	/*
 	 * This would be freed as part of removal from cm req list if adding

@@ -853,10 +853,9 @@ QDF_STATUS cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
 	}
 
 	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx) {
-		mlme_err("cm_ctx is NULL");
+	if (!cm_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	cm_lock_acquire(cm_ctx);
 
 	/* store entry state and sub state for prints */
