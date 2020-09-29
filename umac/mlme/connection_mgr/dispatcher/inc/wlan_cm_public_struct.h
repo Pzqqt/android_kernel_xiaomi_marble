@@ -174,11 +174,13 @@ struct wlan_cm_connect_req {
  * vdev mgr
  * @vdev_id: vdev id
  * @cm_id: Connect manager id
+ * @assoc_ie: assoc ie
  * @bss: scan entry for the candidate
  */
 struct wlan_cm_vdev_connect_req {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
+	struct element_info assoc_ie;
 	struct scan_cache_node *bss;
 };
 

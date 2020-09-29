@@ -855,6 +855,24 @@ bool cm_connect_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
 	return cm_check_cmid_match_list_head(cm_ctx, &resp->cm_id);
 }
 
+static void cm_fill_vdev_crypto_params(struct cnx_mgr *cm_ctx,
+				       struct wlan_cm_connect_req *req)
+{
+	/* fill vdev crypto from the connect req */
+	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_AUTH_MODE,
+				   req->crypto.auth_type);
+	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_KEY_MGMT,
+				   req->crypto.akm_suites);
+	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER,
+				   req->crypto.ciphers_pairwise);
+	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER,
+				   req->crypto.group_cipher);
+	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER,
+				   req->crypto.mgmt_ciphers);
+	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_RSN_CAP,
+				   req->crypto.rsn_caps);
+}
+
 QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct cm_req *cm_req;
@@ -868,6 +886,7 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	cm_ctx->active_cm_id = *cm_id;
 	req = &cm_req->connect_req.req;
 	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
+	cm_fill_vdev_crypto_params(cm_ctx, req);
 
 	status = cm_get_valid_candidate(cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -910,17 +929,51 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	struct wlan_cm_vdev_connect_req req;
 	struct cm_req *cm_req;
 	QDF_STATUS status;
+	struct security_info *neg_sec_info;
+	uint16_t rsn_caps;
+	uint8_t country_code[REG_ALPHA2_LEN + 1];
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(wlan_vdev_get_pdev(cm_ctx->vdev));
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
 	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
+
 	/*
-	 * fill vdev crypto for the peer.
+	 * Some non PMF AP misbehave if in assoc req RSN IE contain PMF capable
+	 * bit set. Thus only if AP and self are capable, try PMF connection
+	 * else set PMF as 0. The PMF filtering is already taken care in
+	 * get scan results.
 	 */
+	neg_sec_info = &cm_req->connect_req.cur_candidate->entry->neg_sec_info;
+	rsn_caps = cm_req->connect_req.req.crypto.rsn_caps;
+	if (!(neg_sec_info->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED &&
+	      rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)) {
+		rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
+		rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+		rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED;
+		wlan_crypto_set_vdev_param(cm_ctx->vdev,
+					   WLAN_CRYPTO_PARAM_RSN_CAP,
+					   rsn_caps);
+	}
 
 	req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	req.cm_id = *cm_id;
+	req.assoc_ie = cm_req->connect_req.req.assoc_ie;
 	req.bss = cm_req->connect_req.cur_candidate;
+
+	wlan_reg_read_current_country(psoc, country_code);
+	mlme_nofl_info(CM_PREFIX_FMT "Connecting to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d akm 0x%x cipher: uc 0x%x mc 0x%x, CC: %c%c",
+		       CM_PREFIX_REF(req.vdev_id, req.cm_id),
+		       cm_req->connect_req.req.ssid.length,
+		       cm_req->connect_req.req.ssid.ssid,
+		       QDF_MAC_ADDR_REF(req.bss->entry->bssid.bytes),
+		       req.bss->entry->rssi_raw,
+		       req.bss->entry->channel.chan_freq,
+		       neg_sec_info->key_mgmt, neg_sec_info->ucastcipherset,
+		       neg_sec_info->mcastcipherset, country_code[0],
+		       country_code[1]);
 
 	status = mlme_cm_connect_req(cm_ctx->vdev, &req);
 	if (QDF_IS_STATUS_ERROR(status)) {
