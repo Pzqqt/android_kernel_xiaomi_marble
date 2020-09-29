@@ -474,6 +474,7 @@ static int ipa3_qmi_send_req_wait(struct qmi_handle *client_handle,
 		return ret;
 	}
 
+	mutex_lock(&ipa3_qmi_lock);
 	ret = qmi_send_request(client_handle,
 		&ipa3_qmi_ctx->server_sq,
 		&txn,
@@ -481,6 +482,10 @@ static int ipa3_qmi_send_req_wait(struct qmi_handle *client_handle,
 		req_desc->max_msg_len,
 		req_desc->ei_array,
 		req);
+
+	if (unlikely(!ipa_q6_clnt))
+		return -EINVAL;
+	mutex_unlock(&ipa3_qmi_lock);
 
 	if (ret < 0) {
 		qmi_txn_cancel(&txn);
@@ -1507,9 +1512,11 @@ static void ipa3_q6_clnt_svc_arrive(struct work_struct *work)
 		IPAWANERR(
 		"ipa3_qmi_init_modem_send_sync_msg failed due to SSR!\n");
 		/* Cleanup when ipa3_wwan_remove is called */
+		mutex_lock(&ipa3_qmi_lock);
 		qmi_handle_release(ipa_q6_clnt);
 		vfree(ipa_q6_clnt);
 		ipa_q6_clnt = NULL;
+		mutex_unlock(&ipa3_qmi_lock);
 		return;
 	}
 
@@ -1849,6 +1856,7 @@ void ipa3_qmi_service_exit(void)
 	/* qmi-client */
 
 	/* Release client handle */
+	mutex_lock(&ipa3_qmi_lock);
 	if (ipa_q6_clnt != NULL) {
 		qmi_handle_release(ipa_q6_clnt);
 		vfree(ipa_q6_clnt);
@@ -1860,7 +1868,6 @@ void ipa3_qmi_service_exit(void)
 	}
 
 	/* clean the QMI msg cache */
-	mutex_lock(&ipa3_qmi_lock);
 	if (ipa3_qmi_ctx != NULL) {
 		vfree(ipa3_qmi_ctx);
 		ipa3_qmi_ctx = NULL;
