@@ -455,7 +455,7 @@ static void tgt_mc_cp_stats_extract_peer_extd_stats(
 	/* no matched peer */
 	if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
 	    selected == ev->num_peer_extd_stats) {
-		cp_stats_err("peer not found stats");
+		cp_stats_rl_err("peer not found stats");
 		return;
 	}
 }
@@ -506,7 +506,7 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 	/* no matched peer */
 	if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
 	    selected == ev->num_peer_stats) {
-		cp_stats_err("peer not found for stats");
+		cp_stats_rl_err("peer not found for stats");
 	}
 
 extd2_stats:
