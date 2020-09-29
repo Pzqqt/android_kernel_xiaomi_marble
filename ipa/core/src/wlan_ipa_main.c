@@ -97,6 +97,13 @@ QDF_STATUS ipa_send_uc_offload_enable_disable(struct wlan_objmgr_pdev *pdev,
 	return tgt_ipa_uc_offload_enable_disable(pdev, req);
 }
 
+QDF_STATUS
+ipa_send_intrabss_enable_disable(struct wlan_objmgr_pdev *pdev,
+				 struct ipa_intrabss_control_params *req)
+{
+	return tgt_ipa_intrabss_enable_disable(pdev, req);
+}
+
 void ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_soc)
 {
 	struct wlan_objmgr_pdev *pdev;

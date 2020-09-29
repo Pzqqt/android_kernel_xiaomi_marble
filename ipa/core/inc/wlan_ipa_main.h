@@ -155,6 +155,17 @@ QDF_STATUS ipa_send_uc_offload_enable_disable(struct wlan_objmgr_pdev *pdev,
 				struct ipa_uc_offload_control_params *req);
 
 /**
+ * ipa_send_intrabss_enable_disable() - wdi intrabss enable/disable notify to fw
+ * @pdev: objmgr pdev object
+ * @req: ipa intrabss control request
+ *
+ * Return: QDF status success or failure
+ */
+QDF_STATUS
+ipa_send_intrabss_enable_disable(struct wlan_objmgr_pdev *pdev,
+				 struct ipa_intrabss_control_params *req);
+
+/**
  * ipa_set_dp_handle() - set dp soc handle
  * @psoc: psoc handle
  * @dp_soc: dp soc handle

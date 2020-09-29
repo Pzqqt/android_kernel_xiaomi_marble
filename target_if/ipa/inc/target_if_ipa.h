@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,15 @@
  * Return: None
  */
 void target_if_ipa_register_tx_ops(ipa_uc_offload_control_req *ipa_tx_op);
+
+/**
+ * target_if_ipa_register_intrabss_ops() - Register IPA component INTRABSS OPS
+ * @ipa_intrabss_op: IPA if intrabss transmit op
+ *
+ * Return: None
+ */
+void
+target_if_ipa_register_intrabss_ops(ipa_intrabss_control_req *ipa_intrabss_op);
 
 #endif /* IPA_OFFLOAD */
 #endif /* _TARGET_IF_IPA_H_ */

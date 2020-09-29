@@ -113,6 +113,7 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 
 	ipa_obj->pdev = pdev;
 	target_if_ipa_register_tx_ops(&ipa_obj->ipa_tx_op);
+	target_if_ipa_register_intrabss_ops(&ipa_obj->ipa_intrabss_op);
 
 	ipa_debug("ipa pdev attached");
 

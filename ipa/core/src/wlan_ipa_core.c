@@ -1819,6 +1819,47 @@ bool wlan_ipa_uc_is_loaded(struct wlan_ipa_priv *ipa_ctx)
 	return ipa_ctx->uc_loaded;
 }
 
+#ifdef INTRA_BSS_FWD_OFFLOAD
+/**
+ * wlan_ipa_intrabss_enable_disable() - wdi intrabss enable/disable notify to fw
+ * @ipa_ctx: global IPA context
+ * @offload_type: MCC or SCC
+ * @session_id: Session Id
+ * @enable: intrabss enable or disable
+ *
+ * Return: none
+ */
+static void wlan_ipa_intrabss_enable_disable(struct wlan_ipa_priv *ipa_ctx,
+					     uint8_t session_id,
+					     bool enable)
+{
+	struct ipa_intrabss_control_params intrabss_req = {0};
+	uint32_t intra_bss_fwd = 0;
+
+	if (!enable || ipa_ctx->disable_intrabss_fwd[session_id]) {
+		ipa_debug("%s: ipa_offload->enable=%d, rx_fwd_disabled=%d",
+			  __func__, enable,
+			  ipa_ctx->disable_intrabss_fwd[session_id]);
+		intra_bss_fwd = 1;
+	}
+
+	intrabss_req.vdev_id = session_id;
+	intrabss_req.enable = intra_bss_fwd;
+
+	if (QDF_STATUS_SUCCESS !=
+	    ipa_send_intrabss_enable_disable(ipa_ctx->pdev, &intrabss_req)) {
+		ipa_err("intrabss offload vdev_id=%d, enable=%d failure",
+			session_id, intra_bss_fwd);
+	}
+}
+#else
+static inline
+void wlan_ipa_intrabss_enable_disable(struct wlan_ipa_priv *ipa_ctx,
+				      uint8_t session_id,
+				      bool enable)
+{}
+#endif
+
 /**
  * wlan_ipa_uc_offload_enable_disable() - wdi enable/disable notify to fw
  * @ipa_ctx: global IPA context
@@ -1863,6 +1904,8 @@ static void wlan_ipa_uc_offload_enable_disable(struct wlan_ipa_priv *ipa_ctx,
 	} else {
 		ipa_ctx->vdev_offload_enabled[session_id] = enable;
 	}
+
+	wlan_ipa_intrabss_enable_disable(ipa_ctx, session_id, enable);
 }
 
 #ifdef WDI3_STATS_UPDATE
