@@ -53,7 +53,8 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 		/* command removed from pending list. */
 		break;
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
-		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
+		mlme_err(CM_PREFIX_LOG "Active command timeout",
+			 wlan_vdev_get_id(vdev), cmd->cmd_id);
 		QDF_ASSERT(0);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
@@ -81,7 +82,8 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 
 	status = wlan_objmgr_vdev_try_get_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("unable to get reference");
+		mlme_err(CM_PREFIX_LOG "unable to get reference",
+			 wlan_vdev_get_id(cm_ctx->vdev), req->cm_id);
 		return status;
 	}
 
@@ -103,7 +105,9 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 		/* command moved to active list. Do nothing */
 		break;
 	default:
-		mlme_err("ser cmd status %d", ser_cmd_status);
+		mlme_err(CM_PREFIX_LOG "ser cmd status %d",
+			 wlan_vdev_get_id(cm_ctx->vdev), req->cm_id,
+			 ser_cmd_status);
 		wlan_objmgr_vdev_release_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
 
 		return QDF_STATUS_E_FAILURE;

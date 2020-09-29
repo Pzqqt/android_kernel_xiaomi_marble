@@ -27,7 +27,8 @@ void cm_set_state(struct cnx_mgr *cm_ctx, enum wlan_cm_sm_state state)
 	if (state < WLAN_CM_S_MAX)
 		cm_ctx->sm.cm_state = state;
 	else
-		mlme_err("mlme state (%d) is invalid", state);
+		mlme_err("vdev %d mlme state (%d) is invalid",
+			 wlan_vdev_get_id(cm_ctx->vdev), state);
 }
 
 void cm_set_substate(struct cnx_mgr *cm_ctx, enum wlan_cm_sm_state substate)
@@ -35,7 +36,8 @@ void cm_set_substate(struct cnx_mgr *cm_ctx, enum wlan_cm_sm_state substate)
 	if ((substate > WLAN_CM_S_MAX) && (substate < WLAN_CM_SS_MAX))
 		cm_ctx->sm.cm_substate = substate;
 	else
-		mlme_err(" mlme sub state (%d) is invalid", substate);
+		mlme_err("vdev %d mlme sub state (%d) is invalid",
+			 wlan_vdev_get_id(cm_ctx->vdev), substate);
 }
 
 void cm_sm_state_update(struct cnx_mgr *cm_ctx,
@@ -43,7 +45,8 @@ void cm_sm_state_update(struct cnx_mgr *cm_ctx,
 			enum wlan_cm_sm_state substate)
 {
 	if (!cm_ctx) {
-		mlme_err("cm_ctx is NULL");
+		mlme_err("vdev %d cm_ctx is NULL",
+			 wlan_vdev_get_id(cm_ctx->vdev));
 		return;
 	}
 
@@ -848,7 +851,8 @@ QDF_STATUS cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
 	struct cnx_mgr *cm_ctx;
 
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE) {
-		mlme_err("Invalid mode %d", op_mode);
+		mlme_err("vdev %d Invalid mode %d",
+			 wlan_vdev_get_id(cm_ctx->vdev), op_mode);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
@@ -889,7 +893,8 @@ QDF_STATUS cm_sm_create(struct cnx_mgr *cm_ctx)
 			    cm_sm_event_names,
 			    QDF_ARRAY_SIZE(cm_sm_event_names));
 	if (!sm) {
-		mlme_err("CM MLME SM allocation failed");
+		mlme_err("vdev %d CM State Machine allocation failed",
+			 wlan_vdev_get_id(cm_ctx->vdev));
 		return QDF_STATUS_E_NOMEM;
 	}
 	cm_ctx->sm.sm_hdl = sm;

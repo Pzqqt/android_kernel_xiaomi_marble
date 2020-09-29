@@ -79,7 +79,6 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	vdev_mlme->cnx_mgr_ctx->vdev = vdev_mlme->vdev;
 	status = cm_sm_create(vdev_mlme->cnx_mgr_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("CM MLME SM allocation failed");
 		qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
 		vdev_mlme->cnx_mgr_ctx = NULL;
 		return QDF_STATUS_E_NOMEM;

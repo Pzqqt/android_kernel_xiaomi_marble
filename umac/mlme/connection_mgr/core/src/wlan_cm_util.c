@@ -58,7 +58,7 @@ struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
 		cm_ctx = vdev_mlme->cnx_mgr_ctx;
 
 	if (!cm_ctx)
-		mlme_nofl_err("%s:%u: cm_ctx NULL vdev %d", func, line,
+		mlme_nofl_err("%s:%u: vdev %d cm_ctx is NULL", func, line,
 			      wlan_vdev_get_id(vdev));
 
 	return cm_ctx;
@@ -139,7 +139,7 @@ bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 exit:
 	cm_req_lock_release(cm_ctx);
 	if (!match)
-		mlme_info("head_cm_id %d didn't match the given cm_id %d",
+		mlme_info("head_cm_id 0x%x didn't match the given cm_id 0x%x",
 			  head_cm_id, *cm_id);
 
 	return match;
@@ -174,7 +174,7 @@ bool cm_check_scanid_match_list_head(struct cnx_mgr *cm_ctx,
 exit:
 	cm_req_lock_release(cm_ctx);
 	if (!match)
-		mlme_info("head_scan_id %d didn't match the given scan_id %d prefix %x",
+		mlme_info("head_scan_id 0x%x didn't match the given scan_id 0x%x prefix 0x%x",
 			  head_scan_id, *scan_id, prefix);
 
 	return match;
@@ -202,7 +202,7 @@ struct cm_req *cm_get_req_by_cm_id_fl(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
 	}
 	cm_req_lock_release(cm_ctx);
 
-	mlme_nofl_info("%s:%u: cm req not found for cm id %d", func,
+	mlme_nofl_info("%s:%u: cm req not found for cm id 0x%x", func,
 		       line, cm_id);
 
 	return NULL;
@@ -268,7 +268,9 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	cm_req_lock_acquire(cm_ctx);
 	if (qdf_list_size(&cm_ctx->req_list) >= CM_MAX_REQ) {
 		cm_req_lock_release(cm_ctx);
-		mlme_err("List full size %d", qdf_list_size(&cm_ctx->req_list));
+		mlme_err(CM_PREFIX_LOG "List full size %d",
+			 wlan_vdev_get_id(cm_ctx->vdev), cm_req->cm_id,
+			 qdf_list_size(&cm_ctx->req_list));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -334,7 +336,8 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 
 	if (!cm_req) {
 		cm_req_lock_release(cm_ctx);
-		mlme_err("cm req id %d not found", cm_id);
+		mlme_err("vdev %d cm req id %d not found",
+			 wlan_vdev_get_id(cm_ctx->vdev), cm_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -361,7 +364,8 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc) {
-		mlme_err("Failed to find psoc from vdev");
+		mlme_err(CM_PREFIX_LOG "Failed to find psoc",
+			 wlan_vdev_get_id(cm_ctx->vdev), cm_id);
 		return;
 	}
 
@@ -408,7 +412,8 @@ void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
 	status = wlan_scan_cancel(req);
 	/* In success/failure case wlan_scan_cancel free the req memory */
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_err("Cancel scan request failed");
+		mlme_err("vdev %d cancel scan request failed",
+			 wlan_vdev_get_id(vdev));
 }
 
 void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
@@ -422,7 +427,8 @@ void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 
 	cm_ctx->max_connect_attempts =
 		QDF_MIN(max_connect_attempts, CM_MAX_CONNECT_ATTEMPTS);
-	mlme_debug("max connect attempts set to %d, requested %d",
+	mlme_debug("vdev %d max connect attempts set to %d, requested %d",
+		   wlan_vdev_get_id(vdev),
 		   cm_ctx->max_connect_attempts, max_connect_attempts);
 }
 
