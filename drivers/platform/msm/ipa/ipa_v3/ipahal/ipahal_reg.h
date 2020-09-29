@@ -142,6 +142,13 @@ enum ipahal_reg_name {
 	IPA_ENDP_GSI_CFG_TLV_n,
 	IPA_COAL_EVICT_LRU,
 	IPA_COAL_QMAP_CFG,
+	IPA_FLAVOR_0,
+	IPA_STATE_AGGR_ACTIVE_n,
+	IPA_AGGR_FORCE_CLOSE_n,
+	IPA_STAT_QUOTA_MASK_EE_n_REG_k,
+	IPA_SUSPEND_IRQ_INFO_EE_n_REG_k,
+	IPA_SUSPEND_IRQ_CLR_EE_n_REG_k,
+	IPA_SUSPEND_IRQ_EN_EE_n_REG_k,
 	IPA_REG_MAX,
 };
 
@@ -333,6 +340,7 @@ struct ipahal_reg_timers_pulse_gran_cfg {
 	enum ipa_timers_time_gran_type gran_0;
 	enum ipa_timers_time_gran_type gran_1;
 	enum ipa_timers_time_gran_type gran_2;
+	enum ipa_timers_time_gran_type gran_3;
 };
 
 /*
@@ -633,6 +641,7 @@ struct ipahal_reg_tx_cfg {
 	u32 pa_mask_en;
 	bool dual_tx_enable;
 	bool sspnd_pa_no_start_state;
+	bool holb_sticky_drop_en;
 };
 
 /*
@@ -698,6 +707,20 @@ struct ipahal_reg_coal_qmap_cfg {
 };
 
 /*
+ * struct ipahal_ipa_flavor_0 - IPA_FLAVOR_0 register
+ * @ipa_pipes: Number of supported pipes
+ * @ipa_cons_pipes: Number of consumer pipes
+ * @ipa_prod_pipes: Number of producer pipes
+ * @ipa_prod_lowest: Number of first producer pipe
+ */
+struct ipahal_ipa_flavor_0 {
+	u8 ipa_pipes;
+	u8 ipa_cons_pipes;
+	u8 ipa_prod_pipes;
+	u8 ipa_prod_lowest;
+};
+
+/*
  * ipahal_print_all_regs() - Loop and read and print all the valid registers
  *  Parameterized registers are also printed for all the valid ranges.
  *  Print to dmsg and IPC logs
@@ -721,9 +744,31 @@ u32 ipahal_read_reg_n(enum ipahal_reg_name reg, u32 n);
 u32 ipahal_read_reg_mn(enum ipahal_reg_name reg, u32 m, u32 n);
 
 /*
+* ipahal_read_reg_nk() - Read from n/k parameterized reg
+*/
+static inline u32 ipahal_read_reg_nk(enum ipahal_reg_name reg, u32 n, u32 k)
+{
+	return ipahal_read_reg_mn(reg, k, n);
+}
+
+/*
+* ipahal_read_ep_reg_n() - Get n parameterized reg value according to ep
+*/
+u32 ipahal_read_ep_reg_n(enum ipahal_reg_name reg, u32 n, u32 ep_num);
+
+/*
  * ipahal_write_reg_mn() - Write to m/n parameterized reg a raw value
  */
 void ipahal_write_reg_mn(enum ipahal_reg_name reg, u32 m, u32 n, u32 val);
+
+/*
+* ipahal_write_reg_nk() - Write to n/k parameterized reg a raw value
+*/
+static inline void ipahal_write_reg_nk(
+	enum ipahal_reg_name reg, u32 n, u32 k, u32 val)
+{
+	ipahal_write_reg_mn(reg, k, n, val);
+}
 
 /*
  * ipahal_write_reg_n() - Write to n parameterized reg a raw value
@@ -754,6 +799,26 @@ static inline u32 ipahal_read_reg(enum ipahal_reg_name reg)
 }
 
 /*
+ * ipahal_read_ep_reg() - Get the raw value of a ep reg
+ */
+u32 ipahal_read_ep_reg(enum ipahal_reg_name reg, u32 ep_num);
+
+/*
+ * ipahal_test_ep_bit() - return true if a ep bit is set
+ */
+bool ipahal_test_ep_bit(u32 reg_val, u32 ep_num);
+
+/*
+ * ipahal_get_ep_bit() - get ep bit set in the right offset
+ */
+u32 ipahal_get_ep_bit(u32 ep_num);
+
+/*
+ * ipahal_get_ep_reg_idx() - get ep reg index according to ep num
+ */
+u32 ipahal_get_ep_reg_idx(u32 ep_num);
+
+/*
  * ipahal_write_reg() - Write to reg a raw value
  */
 static inline void ipahal_write_reg(enum ipahal_reg_name reg,
@@ -780,9 +845,24 @@ static inline void ipahal_write_reg_fields(enum ipahal_reg_name reg,
 }
 
 /*
+ * ipahal_write_ep_reg() - Write to ep reg a raw value
+ */
+void ipahal_write_ep_reg(enum ipahal_reg_name reg, u32 ep_num, u32 val);
+
+/*
+ * ipahal_write_ep_reg_n() - Write to ep reg a raw value
+ */
+void ipahal_write_ep_reg_n(enum ipahal_reg_name reg, u32 n, u32 ep_num, u32 val);
+
+/*
  * Get the offset of a m/n parameterized register
  */
 u32 ipahal_get_reg_mn_ofst(enum ipahal_reg_name reg, u32 m, u32 n);
+
+/*
+* Get the offset of a ep n register according to ep index and n
+*/
+u32 ipahal_get_ep_reg_n_offset(enum ipahal_reg_name reg, u32 n, u32 ep_num);
 
 /*
  * Get the offset of a n parameterized register
@@ -791,6 +871,11 @@ static inline u32 ipahal_get_reg_n_ofst(enum ipahal_reg_name reg, u32 n)
 {
 	return ipahal_get_reg_mn_ofst(reg, 0, n);
 }
+
+/*
+ * Get the offset of a ep register according to ep index
+ */
+u32 ipahal_get_ep_reg_offset(enum ipahal_reg_name reg, u32 ep_num);
 
 /*
  * Get the offset of a register

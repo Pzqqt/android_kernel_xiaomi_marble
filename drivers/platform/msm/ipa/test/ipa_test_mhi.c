@@ -1798,6 +1798,7 @@ static int ipa_mhi_test_create_aggr_open_frame(void)
 	int rc;
 	int i;
 	u32 aggr_state_active;
+	enum ipa_hw_type ipa_ver;
 
 	IPA_UT_LOG("Entry\n");
 
@@ -1854,7 +1855,16 @@ static int ipa_mhi_test_create_aggr_open_frame(void)
 
 	msleep(20);
 
-	aggr_state_active = ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+	ipa_ver = ipa_get_hw_type();
+	if (ipa_ver >= IPA_HW_v5_0) {
+		aggr_state_active =
+			ipahal_read_ep_reg(IPA_STATE_AGGR_ACTIVE_n,
+				test_mhi_ctx->cons_hdl);
+	} else {
+		aggr_state_active =
+			ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+	}
+
 	IPA_UT_LOG("IPA_STATE_AGGR_ACTIVE  0x%x\n", aggr_state_active);
 	if (aggr_state_active == 0) {
 		IPA_UT_LOG("No aggregation frame open!\n");
@@ -1924,7 +1934,13 @@ static int ipa_mhi_test_suspend_aggr_open(bool force)
 		IPA_UT_LOG("AFTER resume\n");
 	}
 
-	ipahal_write_reg(IPA_AGGR_FORCE_CLOSE, (1 << test_mhi_ctx->cons_hdl));
+	if (ipa_get_hw_type() >= IPA_HW_v5_0)
+		ipahal_write_ep_reg(IPA_AGGR_FORCE_CLOSE_n,
+			test_mhi_ctx->cons_hdl,
+			ipahal_get_ep_bit(test_mhi_ctx->cons_hdl));
+	else
+		ipahal_write_reg(IPA_AGGR_FORCE_CLOSE,
+			ipahal_get_ep_bit(test_mhi_ctx->cons_hdl));
 
 	IPA_MHI_TEST_CHECK_MSI_INTR(false, timeout);
 	if (timeout) {
@@ -2282,6 +2298,7 @@ static int ipa_mhi_test_channel_reset_aggr_open(void)
 	int rc;
 	u32 aggr_state_active;
 	struct ipa_ep_cfg_aggr ep_aggr;
+	enum ipa_hw_type ipa_ver;
 
 	IPA_UT_LOG("Entry\n");
 
@@ -2299,7 +2316,16 @@ static int ipa_mhi_test_channel_reset_aggr_open(void)
 		return rc;
 	}
 
-	aggr_state_active = ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+	ipa_ver = ipa_get_hw_type();
+	if (ipa_ver >= IPA_HW_v5_0) {
+		aggr_state_active =
+			ipahal_read_ep_reg(IPA_STATE_AGGR_ACTIVE_n,
+				test_mhi_ctx->cons_hdl);
+	} else {
+		aggr_state_active =
+			ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+	}
+
 	IPADBG("IPA_STATE_AGGR_ACTIVE 0x%x\n", aggr_state_active);
 	if (aggr_state_active != 0) {
 		IPA_UT_LOG("aggregation frame open after reset!\n");

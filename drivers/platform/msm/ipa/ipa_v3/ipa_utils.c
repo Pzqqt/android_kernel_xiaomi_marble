@@ -4734,6 +4734,7 @@ static void ipa_cfg_qtime(void)
 	gran_cfg.gran_0 = IPA_TIMERS_TIME_GRAN_100_USEC;
 	gran_cfg.gran_1 = IPA_TIMERS_TIME_GRAN_1_MSEC;
 	gran_cfg.gran_2 = IPA_TIMERS_TIME_GRAN_1_MSEC;
+	gran_cfg.gran_3 = IPA_TIMERS_TIME_GRAN_1_MSEC;
 	val = ipahal_read_reg(IPA_TIMERS_PULSE_GRAN_CFG);
 	IPADBG("timer pulse granularity before cfg: 0x%x\n", val);
 	ipahal_write_reg_fields(IPA_TIMERS_PULSE_GRAN_CFG, &gran_cfg);
@@ -5845,7 +5846,7 @@ static int ipa3_process_timer_cfg(u32 time_us,
 
 	gran0_step = ipa3_time_gran_usec_step(gran_cfg.gran_0);
 	gran1_step = ipa3_time_gran_usec_step(gran_cfg.gran_1);
-	/* gran_2 is not used by AP */
+	/* gran_2 and gran_3 are not used by AP */
 
 	IPADBG("gran0 usec step=%u  gran1 usec step=%u\n",
 		gran0_step, gran1_step);
@@ -7235,11 +7236,18 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+		u32 offset = 0;
+
 		ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 		reg_write_coal_close.skip_pipeline_clear = false;
 		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_coal_close.offset = ipahal_get_reg_ofst(
-			IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, ep_idx);
+		reg_write_coal_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(ep_idx, &valmask);
 		reg_write_coal_close.value = valmask.val;
 		reg_write_coal_close.value_mask = valmask.mask;
@@ -7423,6 +7431,7 @@ static int ipa3_tag_generate_force_close_desc(struct ipa3_desc desc[],
 	struct ipahal_imm_cmd_register_write reg_write_agg_close;
 	struct ipahal_imm_cmd_pyld *cmd_pyld;
 	struct ipahal_reg_valmask valmask;
+	u32 offset = 0;
 
 	for (i = start_pipe; i < end_pipe; i++) {
 		ipahal_read_reg_n_fields(IPA_ENDP_INIT_AGGR_n, i, &ep_aggr);
@@ -7438,8 +7447,13 @@ static int ipa3_tag_generate_force_close_desc(struct ipa3_desc desc[],
 		reg_write_agg_close.skip_pipeline_clear = false;
 		reg_write_agg_close.pipeline_clear_options =
 			IPAHAL_FULL_PIPELINE_CLEAR;
-		reg_write_agg_close.offset =
-			ipahal_get_reg_ofst(IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, i);
+		reg_write_agg_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(i, &valmask);
 		reg_write_agg_close.value = valmask.val;
 		reg_write_agg_close.value_mask = valmask.mask;
@@ -7634,6 +7648,12 @@ EXPORT_SYMBOL(ipa3_get_transport_type);
 
 u32 ipa3_get_num_pipes(void)
 {
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		struct ipahal_ipa_flavor_0 ipa_flavor;
+
+		ipahal_read_reg_fields(IPA_FLAVOR_0, &ipa_flavor);
+		return ipa_flavor.ipa_pipes;
+	}
 	return ipahal_read_reg(IPA_ENABLED_PIPES);
 }
 
@@ -8539,7 +8559,7 @@ void ipa3_force_close_coal(void)
 
 int ipa3_suspend_apps_pipes(bool suspend)
 {
-	int res;
+	int res, i;
 
 	/* As per HPG first need start/stop coalescing channel
 	 * then default one. Coalescing client number was greater then
@@ -8585,11 +8605,24 @@ int ipa3_suspend_apps_pipes(bool suspend)
 
 		usleep_range(IPA_TAG_SLEEP_MIN_USEC, IPA_TAG_SLEEP_MAX_USEC);
 
-		res = ipahal_read_reg_n(IPA_SUSPEND_IRQ_INFO_EE_n,
-			ipa3_ctx->ee);
-		if (res) {
-			IPADBG("suspend irq is pending 0x%x\n", res);
-			goto undo_qmap_cons;
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+			for (i = 0; i < IPA_EP_ARR_SIZE; i++) {
+				res = ipahal_read_reg_nk(
+					IPA_SUSPEND_IRQ_INFO_EE_n_REG_k,
+					ipa3_ctx->ee, i);
+				if (res) {
+					IPADBG("suspend irq is pending 0x%x\n",
+						res);
+					goto undo_qmap_cons;
+				}
+			}
+		} else {
+			res = ipahal_read_reg_n(IPA_SUSPEND_IRQ_INFO_EE_n,
+				ipa3_ctx->ee);
+			if (res) {
+				IPADBG("suspend irq is pending 0x%x\n", res);
+				goto undo_qmap_cons;
+			}
 		}
 	}
 do_prod:
@@ -8680,6 +8713,7 @@ int ipa3_allocate_coal_close_frame(void)
 	struct ipahal_imm_cmd_register_write reg_write_cmd = { 0 };
 	struct ipahal_reg_valmask valmask;
 	int ep_idx;
+	u32 offset = 0;
 
 	ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 	if (ep_idx == IPA_EP_NOT_ALLOCATED)
@@ -8687,7 +8721,13 @@ int ipa3_allocate_coal_close_frame(void)
 	IPADBG("Allocate coal close frame cmd\n");
 	reg_write_cmd.skip_pipeline_clear = false;
 	reg_write_cmd.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-	reg_write_cmd.offset = ipahal_get_reg_ofst(IPA_AGGR_FORCE_CLOSE);
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+		offset = ipahal_get_reg_ofst(
+			IPA_AGGR_FORCE_CLOSE);
+	else
+		offset = ipahal_get_ep_reg_offset(
+			IPA_AGGR_FORCE_CLOSE_n, ep_idx);
+	reg_write_cmd.offset = offset;
 	ipahal_get_aggr_force_close_valmask(ep_idx, &valmask);
 	reg_write_cmd.value = valmask.val;
 	reg_write_cmd.value_mask = valmask.mask;

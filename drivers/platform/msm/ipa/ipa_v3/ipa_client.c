@@ -1625,9 +1625,18 @@ int ipa3_xdci_suspend(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	}
 
 	if (!dl_data_pending) {
-		aggr_active_bitmap = ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
-		if (aggr_active_bitmap & (1 << dl_clnt_hdl)) {
-			IPADBG("DL/DPL data pending due to open aggr. frame\n");
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+			aggr_active_bitmap =
+				ipahal_read_ep_reg(IPA_STATE_AGGR_ACTIVE_n,
+					dl_clnt_hdl);
+		} else {
+			aggr_active_bitmap =
+				ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+		}
+		if (ipahal_test_ep_bit(aggr_active_bitmap, dl_clnt_hdl)) {
+			IPADBG(
+				"DL/DPL data pending due to open aggr. frame\n"
+			);
 			dl_data_pending = true;
 		}
 	}

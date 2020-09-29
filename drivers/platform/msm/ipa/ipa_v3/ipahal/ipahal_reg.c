@@ -13,6 +13,10 @@
 
 #define IPA_MAX_MSG_LEN 4096
 
+#define IPA_BIT_MAP_CELL_NUM(num) ((num) >> 5)
+#define IPA_BIT_MAP_CELL_MSK(num) \
+	(1 << (num - (IPA_BIT_MAP_CELL_NUM(num) << 5)))
+
 static const char *ipareg_name_to_str[IPA_REG_MAX] = {
 	__stringify(IPA_ROUTE),
 	__stringify(IPA_IRQ_STTS_EE_n),
@@ -140,7 +144,14 @@ static const char *ipareg_name_to_str[IPA_REG_MAX] = {
 	__stringify(IPA_ENDP_GSI_CFG_AOS_n),
 	__stringify(IPA_ENDP_GSI_CFG_TLV_n),
 	__stringify(IPA_COAL_EVICT_LRU),
-	__stringify(IPA_COAL_QMAP_CFG)
+	__stringify(IPA_COAL_QMAP_CFG),
+	__stringify(IPA_FLAVOR_0),
+	__stringify(IPA_STATE_AGGR_ACTIVE_n),
+	__stringify(IPA_AGGR_FORCE_CLOSE_n),
+	__stringify(IPA_STAT_QUOTA_MASK_EE_n_REG_k),
+	__stringify(IPA_SUSPEND_IRQ_INFO_EE_n_REG_k),
+	__stringify(IPA_SUSPEND_IRQ_CLR_EE_n_REG_k),
+	__stringify(IPA_SUSPEND_IRQ_EN_EE_n_REG_k),
 };
 
 static void ipareg_construct_dummy(enum ipahal_reg_name reg,
@@ -309,6 +320,27 @@ static void ipareg_construct_rsrg_grp_xy_v4_5(
 	if (reg == IPA_SRC_RSRC_GRP_45_RSRC_TYPE_n ||
 		reg == IPA_DST_RSRC_GRP_45_RSRC_TYPE_n)
 		return;
+
+	IPA_SETFIELD_IN_REG(*val, grp->y_min,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MIN_LIM_SHFT_V3_5,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MIN_LIM_BMSK_V3_5);
+	IPA_SETFIELD_IN_REG(*val, grp->y_max,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MAX_LIM_SHFT_V3_5,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MAX_LIM_BMSK_V3_5);
+}
+
+static void ipareg_construct_rsrg_grp_xy_v5_0(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_rsrc_grp_cfg *grp =
+		(struct ipahal_reg_rsrc_grp_cfg *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, grp->x_min,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MIN_LIM_SHFT_V3_5,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MIN_LIM_BMSK_V3_5);
+	IPA_SETFIELD_IN_REG(*val, grp->x_max,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MAX_LIM_SHFT_V3_5,
+		IPA_RSRC_GRP_XY_RSRC_TYPE_n_X_MAX_LIM_BMSK_V3_5);
 
 	IPA_SETFIELD_IN_REG(*val, grp->y_min,
 		IPA_RSRC_GRP_XY_RSRC_TYPE_n_Y_MIN_LIM_SHFT_V3_5,
@@ -499,6 +531,25 @@ static void ipareg_construct_endp_status_n_v4_5(
 	IPA_SETFIELD_IN_REG(*val, ep_status->status_pkt_suppress,
 			IPA_ENDP_STATUS_n_STATUS_PKT_SUPPRESS_SHFT,
 			IPA_ENDP_STATUS_n_STATUS_PKT_SUPPRESS_BMSK);
+}
+
+static void ipareg_construct_endp_status_n_v5_0(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_ep_cfg_status *ep_status =
+		(struct ipahal_reg_ep_cfg_status *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, ep_status->status_en,
+		IPA_ENDP_STATUS_n_STATUS_EN_SHFT,
+		IPA_ENDP_STATUS_n_STATUS_EN_BMSK);
+
+	IPA_SETFIELD_IN_REG(*val, ep_status->status_ep,
+		IPA_ENDP_STATUS_n_STATUS_ENDP_SHFT_V5_0,
+		IPA_ENDP_STATUS_n_STATUS_ENDP_BMSK_V5_0);
+
+	IPA_SETFIELD_IN_REG(*val, ep_status->status_pkt_suppress,
+		IPA_ENDP_STATUS_n_STATUS_PKT_SUPPRESS_SHFT,
+		IPA_ENDP_STATUS_n_STATUS_PKT_SUPPRESS_BMSK);
 }
 
 static void ipareg_construct_clkon_cfg_common(
@@ -887,6 +938,20 @@ static void ipareg_construct_timers_pulse_gran_cfg(
 		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_BMSK(2));
 }
 
+static void ipareg_construct_timers_pulse_gran_cfg_v5_0(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	const struct ipahal_reg_timers_pulse_gran_cfg *gran_cfg =
+		(const struct ipahal_reg_timers_pulse_gran_cfg *)fields;
+
+	ipareg_construct_timers_pulse_gran_cfg(reg, fields, val);
+
+	IPA_SETFIELD_IN_REG(*val,
+		ipareg_timers_pulse_gran_code(gran_cfg->gran_3),
+		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_SHFT(3),
+		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_BMSK(3));
+}
+
 static void ipareg_parse_timers_pulse_gran_cfg(
 	enum ipahal_reg_name reg, void *fields, u32 val)
 {
@@ -908,6 +973,21 @@ static void ipareg_parse_timers_pulse_gran_cfg(
 		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_SHFT(2),
 		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_BMSK(2));
 	gran_cfg->gran_2 = ipareg_timers_pulse_gran_decode(code);
+}
+
+static void ipareg_parse_timers_pulse_gran_cfg_v5_0(
+	enum ipahal_reg_name reg, void *fields, u32 val)
+{
+	u8 code;
+	struct ipahal_reg_timers_pulse_gran_cfg *gran_cfg =
+		(struct ipahal_reg_timers_pulse_gran_cfg *)fields;
+
+	ipareg_parse_timers_pulse_gran_cfg(reg, fields, val);
+
+	code = IPA_GETFIELD_FROM_REG(val,
+		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_SHFT(3),
+		IPA_TIMERS_PULSE_GRAN_CFG_GRAN_X_BMSK(3));
+	gran_cfg->gran_3 = ipareg_timers_pulse_gran_decode(code);
 }
 
 static void ipareg_construct_timers_xo_clk_div_cfg(
@@ -1118,6 +1198,55 @@ static void ipareg_construct_comp_cfg_v4_9(
 
 }
 
+static void ipareg_construct_comp_cfg_v5_0(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_comp_cfg *comp_cfg =
+		(struct ipahal_reg_comp_cfg *)fields;
+
+	ipareg_construct_comp_cfg_comon(comp_cfg, val);
+
+	IPA_SETFIELD_IN_REG(*val,
+		!!comp_cfg->gen_qmb_0_dynamic_asize,
+		IPA_COMP_CFG_GEN_QMB_0_DYNAMIC_ASIZE_SHFT_v5_0,
+		IPA_COMP_CFG_GEN_QMB_0_DYNAMIC_ASIZE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+		!!comp_cfg->gen_qmb_1_dynamic_asize,
+		IPA_COMP_CFG_GEN_QMB_1_DYNAMIC_ASIZE_SHFT_v5_0,
+		IPA_COMP_CFG_GEN_QMB_1_DYNAMIC_ASIZE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+		!!comp_cfg->ipa_atomic_fetcher_arb_lock_dis,
+		IPA_COMP_CFG_IPA_ATOMIC_FETCHER_ARB_LOCK_DIS_SHFT_v5_0,
+		IPA_COMP_CFG_IPA_ATOMIC_FETCHER_ARB_LOCK_DIS_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+	!!comp_cfg->gsi_if_out_of_buf_stop_reset_mask_enable,
+	IPA_COMP_CFG_GSI_IF_OUT_OF_BUF_STOP_RESET_MASK_ENABLE_SHFT_v5_0,
+	IPA_COMP_CFG_GSI_IF_OUT_OF_BUF_STOP_RESET_MASK_ENABLE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+	!!comp_cfg->genqmb_aooowr,
+	IPA_COMP_CFG_GENQMB_AOOOWR_SHFT_v5_0,
+	IPA_COMP_CFG_GENQMB_AOOOWR_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+	!!comp_cfg->qmb_ram_rd_cache_disable,
+	IPA_COMP_CFG_QMB_RAM_RD_CACHE_DISABLE_SHFT_v5_0,
+	IPA_COMP_CFG_QMB_RAM_RD_CACHE_DISABLE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+	!!comp_cfg->ipa_full_flush_wait_rsc_closure_en,
+	IPA_COMP_CFG_IPA_FULL_FLUSH_WAIT_RSC_CLOSURE_EN_SHFT_v5_0,
+	IPA_COMP_CFG_IPA_FULL_FLUSH_WAIT_RSC_CLOSURE_EN_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val,
+	!!comp_cfg->ram_arb_priority_client_samp_fix_disable,
+	IPA_COMP_CFG_RAM_ARB_PRIORITY_CLIENT_SAMP_FIX_DISABLE_SHFT_v5_0,
+	IPA_COMP_CFG_RAM_ARB_PRIORITY_CLIENT_SAMP_FIX_DISABLE_BMSK_v5_0);
+}
+
 static void ipareg_parse_comp_cfg_common(
 	struct ipahal_reg_comp_cfg *comp_cfg, u32 val)
 {
@@ -1290,6 +1419,56 @@ static void ipareg_parse_comp_cfg_v4_9(
 	IPA_GETFIELD_FROM_REG(val,
 	IPA_COMP_CFG_RAM_ARB_PRIORITY_CLIENT_SAMP_FIX_DISABLE_SHFT_v4_9,
 	IPA_COMP_CFG_RAM_ARB_PRIORITY_CLIENT_SAMP_FIX_DISABLE_BMSK_v4_9);
+
+}
+
+static void ipareg_parse_comp_cfg_v5_0(
+	enum ipahal_reg_name reg, void *fields, u32 val)
+{
+	struct ipahal_reg_comp_cfg *comp_cfg =
+		(struct ipahal_reg_comp_cfg *)fields;
+
+	ipareg_parse_comp_cfg_common(comp_cfg, val);
+
+	comp_cfg->gen_qmb_0_dynamic_asize =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_GEN_QMB_0_DYNAMIC_ASIZE_SHFT_v5_0,
+		IPA_COMP_CFG_GEN_QMB_0_DYNAMIC_ASIZE_BMSK_v5_0);
+
+	comp_cfg->gen_qmb_1_dynamic_asize =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_GEN_QMB_1_DYNAMIC_ASIZE_SHFT_v5_0,
+		IPA_COMP_CFG_GEN_QMB_1_DYNAMIC_ASIZE_BMSK_v5_0);
+
+	comp_cfg->ipa_atomic_fetcher_arb_lock_dis =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_IPA_ATOMIC_FETCHER_ARB_LOCK_DIS_SHFT_v5_0,
+		IPA_COMP_CFG_IPA_ATOMIC_FETCHER_ARB_LOCK_DIS_BMSK_v5_0);
+
+	comp_cfg->gsi_if_out_of_buf_stop_reset_mask_enable =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_GSI_IF_OUT_OF_BUF_STOP_RESET_MASK_ENABLE_SHFT_v5_0,
+		IPA_COMP_CFG_GSI_IF_OUT_OF_BUF_STOP_RESET_MASK_ENABLE_BMSK_v5_0);
+
+	comp_cfg->genqmb_aooowr =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_GENQMB_AOOOWR_SHFT_v5_0,
+		IPA_COMP_CFG_GENQMB_AOOOWR_BMSK_v5_0);
+
+	comp_cfg->qmb_ram_rd_cache_disable =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_QMB_RAM_RD_CACHE_DISABLE_SHFT_v5_0,
+		IPA_COMP_CFG_QMB_RAM_RD_CACHE_DISABLE_BMSK_v5_0);
+
+	comp_cfg->ipa_full_flush_wait_rsc_closure_en =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_IPA_FULL_FLUSH_WAIT_RSC_CLOSURE_EN_SHFT_v5_0,
+		IPA_COMP_CFG_IPA_FULL_FLUSH_WAIT_RSC_CLOSURE_EN_BMSK_v5_0);
+
+	comp_cfg->ram_arb_priority_client_samp_fix_disable =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_COMP_CFG_RAM_ARB_PRIORITY_CLIENT_SAMP_FIX_DISABLE_SHFT_v5_0,
+		IPA_COMP_CFG_RAM_ARB_PRIORITY_CLIENT_SAMP_FIX_DISABLE_BMSK_v5_0);
 
 }
 
@@ -1594,6 +1773,17 @@ static void ipareg_construct_endp_init_rsrc_grp_n_v4_9(
 		IPA_ENDP_INIT_RSRC_GRP_n_RSRC_GRP_BMSK_v4_9);
 }
 
+static void ipareg_construct_endp_init_rsrc_grp_n_v5_0(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_endp_init_rsrc_grp *rsrc_grp =
+		(struct ipahal_reg_endp_init_rsrc_grp *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, rsrc_grp->rsrc_grp,
+		IPA_ENDP_INIT_RSRC_GRP_n_RSRC_GRP_SHFT_v5_0,
+		IPA_ENDP_INIT_RSRC_GRP_n_RSRC_GRP_BMSK_v5_0);
+}
+
 static void ipareg_construct_endp_init_hdr_metadata_n(
 		enum ipahal_reg_name reg, const void *fields, u32 *val)
 {
@@ -1767,6 +1957,21 @@ static void ipareg_construct_endp_init_hol_block_timer_n_v4_5(
 		IPA_ENDP_INIT_HOL_BLOCK_TIMER_n_GRAN_SEL_BMSK_V4_5);
 }
 
+static void ipareg_construct_endp_init_hol_block_timer_n_v5_0(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipa_ep_cfg_holb *ep_holb =
+		(struct ipa_ep_cfg_holb *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, ep_holb->scaled_time,
+		IPA_ENDP_INIT_HOL_BLOCK_TIMER_n_TIME_LIMIT_SHFT_V5_0,
+		IPA_ENDP_INIT_HOL_BLOCK_TIMER_n_TIME_LIMIT_BMSK_V5_0);
+
+	IPA_SETFIELD_IN_REG(*val, ep_holb->pulse_generator,
+		IPA_ENDP_INIT_HOL_BLOCK_TIMER_n_GRAN_SEL_SHFT_V5_0,
+		IPA_ENDP_INIT_HOL_BLOCK_TIMER_n_GRAN_SEL_BMSK_V5_0);
+}
+
 static void ipareg_construct_endp_init_ctrl_n(enum ipahal_reg_name reg,
 	const void *fields, u32 *val)
 {
@@ -1871,6 +2076,21 @@ static void ipareg_construct_endp_init_mode_n_v4_5(enum ipahal_reg_name reg,
 	IPA_SETFIELD_IN_REG(*val, init_mode->dst_pipe_number,
 		IPA_ENDP_INIT_MODE_n_DEST_PIPE_INDEX_SHFT_V4_5,
 		IPA_ENDP_INIT_MODE_n_DEST_PIPE_INDEX_BMSK_V4_5);
+}
+
+static void ipareg_construct_endp_init_mode_n_v5_0(enum ipahal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct ipahal_reg_endp_init_mode *init_mode =
+		(struct ipahal_reg_endp_init_mode *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, init_mode->ep_mode.mode,
+		IPA_ENDP_INIT_MODE_n_MODE_SHFT_V4_5,
+		IPA_ENDP_INIT_MODE_n_MODE_BMSK_V4_5);
+
+	IPA_SETFIELD_IN_REG(*val, init_mode->dst_pipe_number,
+		IPA_ENDP_INIT_MODE_n_DEST_PIPE_INDEX_SHFT_V5_0,
+		IPA_ENDP_INIT_MODE_n_DEST_PIPE_INDEX_BMSK_V5_0);
 }
 
 static void ipareg_construct_endp_init_route_n(enum ipahal_reg_name reg,
@@ -2133,6 +2353,23 @@ static void ipareg_construct_endp_init_hdr_ext_n_v4_5(enum ipahal_reg_name reg,
 		);
 }
 
+static void ipareg_construct_endp_init_hdr_ext_n_v5_0(enum ipahal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	const struct ipa_ep_cfg_hdr_ext *ep_hdr_ext =
+		(const struct ipa_ep_cfg_hdr_ext *)fields;
+
+	ipareg_construct_endp_init_hdr_ext_n_v4_5(reg, fields, val);
+
+	IPA_SETFIELD_IN_REG(*val, ep_hdr_ext->hdr_bytes_to_remove_valid,
+		IPA_ENDP_INIT_HDR_EXT_n_HDR_BYTES_TO_REMOVE_VALID_SHFT_v5_0,
+		IPA_ENDP_INIT_HDR_EXT_n_HDR_BYTES_TO_REMOVE_VALID_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val, ep_hdr_ext->hdr_bytes_to_remove,
+		IPA_ENDP_INIT_HDR_EXT_n_HDR_BYTES_TO_REMOVE_SHFT_v5_0,
+		IPA_ENDP_INIT_HDR_EXT_n_HDR_BYTES_TO_REMOVE_BMSK_v5_0);
+}
+
 static void ipareg_construct_endp_init_hdr_n(enum ipahal_reg_name reg,
 	const void *fields, u32 *val)
 {
@@ -2279,6 +2516,38 @@ static void ipareg_construct_route(enum ipahal_reg_name reg,
 	IPA_SETFIELD_IN_REG(*val, route->route_def_retain_hdr,
 		IPA_ROUTE_ROUTE_DEF_RETAIN_HDR_SHFT,
 		IPA_ROUTE_ROUTE_DEF_RETAIN_HDR_BMSK);
+}
+
+static void ipareg_construct_route_v5_0(enum ipahal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct ipahal_reg_route *route;
+
+	route = (struct ipahal_reg_route *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, route->route_dis,
+		IPA_ROUTE_ROUTE_DIS_SHFT_v5_0,
+		IPA_ROUTE_ROUTE_DIS_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val, route->route_def_pipe,
+		IPA_ROUTE_ROUTE_DEF_PIPE_SHFT_v5_0,
+		IPA_ROUTE_ROUTE_DEF_PIPE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val, route->route_def_hdr_table,
+		IPA_ROUTE_ROUTE_DEF_HDR_TABLE_SHFT_v5_0,
+		IPA_ROUTE_ROUTE_DEF_HDR_TABLE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val, route->route_def_hdr_ofst,
+		IPA_ROUTE_ROUTE_DEF_HDR_OFST_SHFT_v5_0,
+		IPA_ROUTE_ROUTE_DEF_HDR_OFST_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val, route->route_frag_def_pipe,
+		IPA_ROUTE_ROUTE_FRAG_DEF_PIPE_SHFT_v5_0,
+		IPA_ROUTE_ROUTE_FRAG_DEF_PIPE_BMSK_v5_0);
+
+	IPA_SETFIELD_IN_REG(*val, route->route_def_retain_hdr,
+		IPA_ROUTE_ROUTE_DEF_RETAIN_HDR_SHFT_v5_0,
+		IPA_ROUTE_ROUTE_DEF_RETAIN_HDR_BMSK_v5_0);
 }
 
 static void ipareg_construct_qsb_max_writes(enum ipahal_reg_name reg,
@@ -2451,6 +2720,20 @@ static void ipareg_parse_tx_cfg_v4_9(enum ipahal_reg_name reg,
 		IPA_TX_CFG_SSPND_PA_NO_START_STATE_BMSK_V4_9);
 }
 
+static void ipareg_parse_tx_cfg_v5_0(enum ipahal_reg_name reg,
+	void *fields, u32 val)
+{
+	struct ipahal_reg_tx_cfg *tx_cfg;
+
+	ipareg_parse_tx_cfg_v4_9(reg, fields, val);
+
+	tx_cfg = (struct ipahal_reg_tx_cfg *)fields;
+
+	tx_cfg->holb_sticky_drop_en = IPA_GETFIELD_FROM_REG(val,
+		IPA_TX_CFG_HOLB_STICKY_DROP_EN_SHFT_v5_0,
+		IPA_TX_CFG_HOLB_STICKY_DROP_EN_BMSK_v5_0);
+}
+
 static void ipareg_construct_tx_cfg(enum ipahal_reg_name reg,
 	const void *fields, u32 *val)
 {
@@ -2533,6 +2816,20 @@ static void ipareg_construct_tx_cfg_v4_9(enum ipahal_reg_name reg,
 	IPA_SETFIELD_IN_REG(*val, tx_cfg->sspnd_pa_no_start_state,
 		IPA_TX_CFG_SSPND_PA_NO_START_STATE_SHFT_V4_9,
 		IPA_TX_CFG_SSPND_PA_NO_START_STATE_BMSK_V4_9);
+}
+
+static void ipareg_construct_tx_cfg_v5_0(enum ipahal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct ipahal_reg_tx_cfg *tx_cfg;
+
+	ipareg_construct_tx_cfg_v4_9(reg, fields, val);
+
+	tx_cfg = (struct ipahal_reg_tx_cfg *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, tx_cfg->holb_sticky_drop_en,
+		IPA_TX_CFG_HOLB_STICKY_DROP_EN_SHFT_v5_0,
+		IPA_TX_CFG_HOLB_STICKY_DROP_EN_BMSK_v5_0);
 }
 
 static void ipareg_construct_idle_indication_cfg(enum ipahal_reg_name reg,
@@ -2721,6 +3018,28 @@ static void ipareg_parse_coal_qmap_cfg(enum ipahal_reg_name reg,
 		IPA_COAL_QMAP_CFG_SHFT, IPA_COAL_QMAP_CFG_BMSK);
 }
 
+static void ipareg_parse_ipa_flavor_0(enum ipahal_reg_name reg,
+	void *fields, u32 val)
+{
+	struct ipahal_ipa_flavor_0 *ipa_flavor =
+		(struct ipahal_ipa_flavor_0 *)fields;
+
+	memset(ipa_flavor, 0, sizeof(*ipa_flavor));
+
+	ipa_flavor->ipa_pipes = IPA_GETFIELD_FROM_REG(val,
+		IPA_FLAVOR_0_IPA_PIPES_SHFT,
+		IPA_FLAVOR_0_IPA_PIPES_BMSK);
+	ipa_flavor->ipa_cons_pipes = IPA_GETFIELD_FROM_REG(val,
+		IPA_FLAVOR_0_IPA_CONS_PIPES_SHFT,
+		IPA_FLAVOR_0_IPA_CONS_PIPES_BMSK);
+	ipa_flavor->ipa_prod_pipes = IPA_GETFIELD_FROM_REG(val,
+		IPA_FLAVOR_0_IPA_PROD_PIPES_SHFT,
+		IPA_FLAVOR_0_IPA_PROD_PIPES_BMSK);
+	ipa_flavor->ipa_prod_lowest = IPA_GETFIELD_FROM_REG(val,
+		IPA_FLAVOR_0_IPA_PROD_LOWEST_SHFT,
+		IPA_FLAVOR_0_IPA_PROD_LOWEST_BMSK);
+}
+
 /*
  * struct ipahal_reg_obj - Register H/W information for specific IPA version
  * @construct - CB to construct register value from abstracted structure
@@ -2741,6 +3060,7 @@ struct ipahal_reg_obj {
 	int n_start;
 	int n_end;
 	bool en_print;
+	u32 m_ofst;
 };
 
 /*
@@ -2758,865 +3078,1206 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	/* IPAv3 */
 	[IPA_HW_v3_0][IPA_ROUTE] = {
 		ipareg_construct_route, ipareg_parse_dummy,
-		0x00000048, 0, 0, 0, 0},
+		0x00000048, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_IRQ_STTS_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003008, 0x1000, 0, 0, 0},
+		0x00003008, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000300c, 0x1000, 0, 0, 0},
+		0x0000300c, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003010, 0x1000, 0, 0, 0},
+		0x00003010, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SUSPEND_IRQ_INFO_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003098, 0x1000, 0, 0, 0},
+		0x00003098, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_BCR] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000001D0, 0, 0, 0, 0},
+		0x000001D0, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENABLED_PIPES] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000038, 0, 0, 0, 0},
+		0x00000038, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_VERSION] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000034, 0, 0, 0, 0},
+		0x00000034, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_TAG_TIMER] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000060, 0, 0, 0, 0},
+		0x00000060, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_COMP_HW_VERSION] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000030, 0, 0, 0, 0},
+		0x00000030, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_COMP_CFG] = {
 		ipareg_construct_comp_cfg, ipareg_parse_comp_cfg,
-		0x0000003C, 0, 0, 0, 0},
+		0x0000003C, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_STATE_AGGR_ACTIVE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000010C, 0, 0, 0, 0},
+		0x0000010C, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_HDR_n] = {
 		ipareg_construct_endp_init_hdr_n, ipareg_parse_dummy,
-		0x00000810, 0x70, 0, 0, 0},
+		0x00000810, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_HDR_EXT_n] = {
 		ipareg_construct_endp_init_hdr_ext_n, ipareg_parse_dummy,
-		0x00000814, 0x70, 0, 0, 0},
+		0x00000814, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_AGGR_n] = {
 		ipareg_construct_endp_init_aggr_n,
 		ipareg_parse_endp_init_aggr_n,
-		0x00000824, 0x70, 0, 0, 0},
+		0x00000824, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_AGGR_FORCE_CLOSE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000001EC, 0, 0, 0, 0},
+		0x000001EC, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_ROUTE_n] = {
 		ipareg_construct_endp_init_route_n, ipareg_parse_dummy,
-		0x00000828, 0x70, 0, 0, 0},
+		0x00000828, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_MODE_n] = {
 		ipareg_construct_endp_init_mode_n, ipareg_parse_dummy,
-		0x00000820, 0x70, 0, 0, 0},
+		0x00000820, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_NAT_n] = {
 		ipareg_construct_endp_init_nat_n, ipareg_parse_dummy,
-		0x0000080C, 0x70, 0, 0, 0},
+		0x0000080C, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_CTRL_n] = {
 		ipareg_construct_endp_init_ctrl_n,
 		ipareg_parse_endp_init_ctrl_n,
-		0x00000800, 0x70, 0, 0, 0},
+		0x00000800, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_CTRL_SCND_n] = {
 		ipareg_construct_endp_init_ctrl_scnd_n, ipareg_parse_dummy,
-		0x00000804, 0x70, 0, 0, 0},
+		0x00000804, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_HOL_BLOCK_EN_n] = {
 		ipareg_construct_endp_init_hol_block_en_n,
 		ipareg_parse_dummy,
-		0x0000082c, 0x70, 0, 0, 0},
+		0x0000082c, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_HOL_BLOCK_TIMER_n] = {
 		ipareg_construct_endp_init_hol_block_timer_n,
 		ipareg_parse_dummy,
-		0x00000830, 0x70, 0, 0, 0},
+		0x00000830, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_DEAGGR_n] = {
 		ipareg_construct_endp_init_deaggr_n,
 		ipareg_parse_dummy,
-		0x00000834, 0x70, 0, 0, 0},
+		0x00000834, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_SEQ_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000083C, 0x70, 0, 0, 0},
+		0x0000083C, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DEBUG_CNT_REG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000600, 0x4, 0, 0, 0},
+		0x00000600, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_CFG_n] = {
 		ipareg_construct_endp_init_cfg_n, ipareg_parse_dummy,
-		0x00000808, 0x70, 0, 0, 0},
+		0x00000808, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_IRQ_EE_UC_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000301c, 0x1000, 0, 0, 0},
+		0x0000301c, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_HDR_METADATA_MASK_n] = {
 		ipareg_construct_endp_init_hdr_metadata_mask_n,
 		ipareg_parse_dummy,
-		0x00000818, 0x70, 0, 0, 0},
+		0x00000818, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_HDR_METADATA_n] = {
 		ipareg_construct_endp_init_hdr_metadata_n,
 		ipareg_parse_dummy,
-		0x0000081c, 0x70, 0, 0, 0},
+		0x0000081c, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_INIT_RSRC_GRP_n] = {
 		ipareg_construct_endp_init_rsrc_grp_n,
 		ipareg_parse_dummy,
-		0x00000838, 0x70, 0, 0, 0},
+		0x00000838, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SHARED_MEM_SIZE] = {
 		ipareg_construct_dummy, ipareg_parse_shared_mem_size,
-		0x00000054, 0, 0, 0, 0},
+		0x00000054, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SW_AREA_RAM_DIRECT_ACCESS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00007000, 0x4, 0, 0, 0},
+		0x00007000, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DEBUG_CNT_CTRL_n] = {
 		ipareg_construct_debug_cnt_ctrl_n, ipareg_parse_dummy,
-		0x00000640, 0x4, 0, 0, 0},
+		0x00000640, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_UC_MAILBOX_m_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00032000, 0x4, 0, 0, 0},
+		0x00032000, 0x4, 0, 0, 0, 0x80},
 	[IPA_HW_v3_0][IPA_FILT_ROUT_HASH_FLUSH] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000090, 0, 0, 0, 0},
+		0x00000090, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SINGLE_NDP_MODE] = {
 		ipareg_construct_single_ndp_mode, ipareg_parse_single_ndp_mode,
-		0x00000068, 0, 0, 0, 0},
+		0x00000068, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_QCNCM] = {
 		ipareg_construct_qcncm, ipareg_parse_qcncm,
-		0x00000064, 0, 0, 0, 0},
+		0x00000064, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SYS_PKT_PROC_CNTXT_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000001e0, 0, 0, 0, 0},
+		0x000001e0, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_LOCAL_PKT_PROC_CNTXT_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000001e8, 0, 0, 0, 0},
+		0x000001e8, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_STATUS_n] = {
 		ipareg_construct_endp_status_n, ipareg_parse_dummy,
-		0x00000840, 0x70, 0, 0, 0},
+		0x00000840, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_ENDP_FILTER_ROUTER_HSH_CFG_n] = {
 		ipareg_construct_hash_cfg_n, ipareg_parse_hash_cfg_n,
-		0x0000085C, 0x70, 0, 0, 0},
+		0x0000085C, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SRC_RSRC_GRP_01_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x00000400, 0x20, 0, 0, 0},
+		0x00000400, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SRC_RSRC_GRP_23_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x00000404, 0x20, 0, 0, 0},
+		0x00000404, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SRC_RSRC_GRP_45_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x00000408, 0x20, 0, 0, 0},
+		0x00000408, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_SRC_RSRC_GRP_67_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x0000040C, 0x20, 0, 0, 0},
+		0x0000040C, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DST_RSRC_GRP_01_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x00000500, 0x20, 0, 0, 0},
+		0x00000500, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DST_RSRC_GRP_23_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x00000504, 0x20, 0, 0, 0},
+		0x00000504, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DST_RSRC_GRP_45_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x00000508, 0x20, 0, 0, 0},
+		0x00000508, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DST_RSRC_GRP_67_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy, ipareg_parse_dummy,
-		0x0000050c, 0x20, 0, 0, 0},
+		0x0000050c, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_RX_HPS_CLIENTS_MIN_DEPTH_0] = {
 		ipareg_construct_rx_hps_clients_depth0, ipareg_parse_dummy,
-		0x000023C4, 0, 0, 0, 0},
+		0x000023C4, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_RX_HPS_CLIENTS_MIN_DEPTH_1] = {
 		ipareg_construct_rx_hps_clients_depth1, ipareg_parse_dummy,
-		0x000023C8, 0, 0, 0, 0},
+		0x000023C8, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_RX_HPS_CLIENTS_MAX_DEPTH_0] = {
 		ipareg_construct_rx_hps_clients_depth0, ipareg_parse_dummy,
-		0x000023CC, 0, 0, 0, 0},
+		0x000023CC, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_RX_HPS_CLIENTS_MAX_DEPTH_1] = {
 		ipareg_construct_rx_hps_clients_depth1, ipareg_parse_dummy,
-		0x000023D0, 0, 0, 0, 0},
+		0x000023D0, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_QSB_MAX_WRITES] = {
 		ipareg_construct_qsb_max_writes, ipareg_parse_dummy,
-		0x00000074, 0, 0, 0, 0},
+		0x00000074, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_QSB_MAX_READS] = {
 		ipareg_construct_qsb_max_reads, ipareg_parse_dummy,
-		0x00000078, 0, 0, 0, 0},
+		0x00000078, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DPS_SEQUENCER_FIRST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0001e000, 0, 0, 0, 0},
+		0x0001e000, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DPS_SEQUENCER_LAST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0001e07c, 0, 0, 0, 0},
+		0x0001e07c, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_HPS_SEQUENCER_FIRST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0001e080, 0, 0, 0, 0},
+		0x0001e080, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_HPS_SEQUENCER_LAST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0001e26c, 0, 0, 0, 0},
+		0x0001e26c, 0, 0, 0, 0, 0},
 
 
 	/* IPAv3.1 */
 	[IPA_HW_v3_1][IPA_SUSPEND_IRQ_INFO_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003030, 0x1000, 0, 0, 0},
+		0x00003030, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_1][IPA_SUSPEND_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003034, 0x1000, 0, 0, 0},
+		0x00003034, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v3_1][IPA_SUSPEND_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003038, 0x1000, 0, 0, 0},
+		0x00003038, 0x1000, 0, 0, 0, 0},
 
 
 	/* IPAv3.5 */
 	[IPA_HW_v3_5][IPA_TX_CFG] = {
 		ipareg_construct_tx_cfg, ipareg_parse_tx_cfg,
-		0x000001FC, 0, 0, 0, 0},
+		0x000001FC, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_SRC_RSRC_GRP_01_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v3_5, ipareg_parse_dummy,
-		0x00000400, 0x20, 0, 0, 0},
+		0x00000400, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_SRC_RSRC_GRP_23_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v3_5, ipareg_parse_dummy,
-		0x00000404, 0x20, 0, 0, 0},
+		0x00000404, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_SRC_RSRC_GRP_45_RSRC_TYPE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_SRC_RSRC_GRP_67_RSRC_TYPE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_DST_RSRC_GRP_01_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v3_5, ipareg_parse_dummy,
-		0x00000500, 0x20, 0, 0, 0},
+		0x00000500, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_DST_RSRC_GRP_23_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v3_5, ipareg_parse_dummy,
-		0x00000504, 0x20, 0, 0, 0},
+		0x00000504, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_DST_RSRC_GRP_45_RSRC_TYPE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_DST_RSRC_GRP_67_RSRC_TYPE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_ENDP_INIT_RSRC_GRP_n] = {
 		ipareg_construct_endp_init_rsrc_grp_n_v3_5,
 		ipareg_parse_dummy,
-		0x00000838, 0x70, 0, 0, 0},
+		0x00000838, 0x70, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_RX_HPS_CLIENTS_MIN_DEPTH_0] = {
 		ipareg_construct_rx_hps_clients_depth0_v3_5,
 		ipareg_parse_dummy,
-		0x000023C4, 0, 0, 0, 0},
+		0x000023C4, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_RX_HPS_CLIENTS_MIN_DEPTH_1] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_RX_HPS_CLIENTS_MAX_DEPTH_0] = {
 		ipareg_construct_rx_hps_clients_depth0_v3_5,
 		ipareg_parse_dummy,
-		0x000023CC, 0, 0, 0, 0},
+		0x000023CC, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_RX_HPS_CLIENTS_MAX_DEPTH_1] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_IDLE_INDICATION_CFG] = {
 		ipareg_construct_idle_indication_cfg, ipareg_parse_dummy,
-		0x00000220, 0, 0, 0, 0},
+		0x00000220, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_HPS_FTCH_ARB_QUEUE_WEIGHT] = {
 		ipareg_construct_hps_queue_weights,
-		ipareg_parse_hps_queue_weights, 0x000005a4, 0, 0, 0, 0},
+		ipareg_parse_hps_queue_weights, 0x000005a4, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_COUNTER_CFG] = {
 		ipareg_construct_counter_cfg, ipareg_parse_counter_cfg,
-		0x000001F0, 0, 0, 0, 0},
+		0x000001F0, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_ENDP_GSI_CFG1_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00002794, 0x4, 0, 0, 0 },
+		0x00002794, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_ENDP_GSI_CFG_AOS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000029A8, 0x4, 0, 0, 0 },
+		0x000029A8, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_ENDP_GSI_CFG_TLV_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00002924, 0x4, 0, 0, 0 },
+		0x00002924, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v3_5][IPA_HPS_SEQUENCER_LAST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0001e1fc, 0, 0, 0, 0},
+		0x0001e1fc, 0, 0, 0, 0, 0},
 
 	/* IPAv4.0 */
 	[IPA_HW_v4_0][IPA_SUSPEND_IRQ_INFO_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003030, 0x1000, 0, 0, 1},
+		0x00003030, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_SUSPEND_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003034, 0x1000, 0, 0, 1},
+		0x00003034, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_SUSPEND_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003038, 0x1000, 0, 0, 1},
+		0x00003038, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000300c, 0x1000, 0, 0, 1},
+		0x0000300c, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_TAG_TIMER] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000060, 0, 0, 0, 1},
+		0x00000060, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_CTRL_n] = {
 		ipareg_construct_endp_init_ctrl_n_v4_0, ipareg_parse_dummy,
-		0x00000800, 0x70, 0, 22, 1},
+		0x00000800, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_HDR_EXT_n] = {
 		ipareg_construct_endp_init_hdr_ext_n, ipareg_parse_dummy,
-		0x00000814, 0x70, 0, 22, 1},
+		0x00000814, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_AGGR_n] = {
 		ipareg_construct_endp_init_aggr_n,
 		ipareg_parse_endp_init_aggr_n,
-		0x00000824, 0x70, 0, 22, 1},
+		0x00000824, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_TX_CFG] = {
 		ipareg_construct_tx_cfg_v4_0, ipareg_parse_tx_cfg_v4_0,
-		0x000001FC, 0, 0, 0, 0},
+		0x000001FC, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_DEBUG_CNT_REG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_DEBUG_CNT_CTRL_n] = {
 		ipareg_construct_debug_cnt_ctrl_n, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_QCNCM] = {
 		ipareg_construct_qcncm, ipareg_parse_qcncm,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_SINGLE_NDP_MODE] = {
 		ipareg_construct_single_ndp_mode, ipareg_parse_single_ndp_mode,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_QSB_MAX_READS] = {
 		ipareg_construct_qsb_max_reads_v4_0, ipareg_parse_dummy,
-		0x00000078, 0, 0, 0, 0},
+		0x00000078, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_FILT_ROUT_HASH_FLUSH] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000014c, 0, 0, 0, 0},
+		0x0000014c, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_HDR_n] = {
 		ipareg_construct_endp_init_hdr_n, ipareg_parse_dummy,
-		0x00000810, 0x70, 0, 22, 1},
+		0x00000810, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_ROUTE_n] = {
 		ipareg_construct_endp_init_route_n, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_MODE_n] = {
 		ipareg_construct_endp_init_mode_n, ipareg_parse_dummy,
-		0x00000820, 0x70, 0, 9, 1},
+		0x00000820, 0x70, 0, 9, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_NAT_n] = {
 		ipareg_construct_endp_init_nat_n, ipareg_parse_dummy,
-		0x0000080C, 0x70, 0, 9, 1},
+		0x0000080C, 0x70, 0, 9, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_STATUS_n] = {
 		ipareg_construct_endp_status_n_v4_0, ipareg_parse_dummy,
-		0x00000840, 0x70, 0, 22, 1},
+		0x00000840, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_FILTER_ROUTER_HSH_CFG_n] = {
 		ipareg_construct_hash_cfg_n, ipareg_parse_hash_cfg_n,
-		0x0000085C, 0x70, 0, 31, 1},
+		0x0000085C, 0x70, 0, 31, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_CONN_TRACK_n] = {
 		ipareg_construct_endp_init_conn_track_n,
 		ipareg_parse_dummy,
-		0x00000850, 0x70, 0, 9, 1},
+		0x00000850, 0x70, 0, 9, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_CTRL_SCND_n] = {
 		ipareg_construct_endp_init_ctrl_scnd_n, ipareg_parse_dummy,
-		0x00000804, 0x70, 0, 22, 1},
+		0x00000804, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_HOL_BLOCK_EN_n] = {
 		ipareg_construct_endp_init_hol_block_en_n,
 		ipareg_parse_dummy,
-		0x0000082c, 0x70, 10, 22, 1},
+		0x0000082c, 0x70, 10, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_HOL_BLOCK_TIMER_n] = {
 		ipareg_construct_endp_init_hol_block_timer_n,
 		ipareg_parse_dummy,
-		0x00000830, 0x70, 10, 22, 1},
+		0x00000830, 0x70, 10, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_DEAGGR_n] = {
 		ipareg_construct_endp_init_deaggr_n,
 		ipareg_parse_dummy,
-		0x00000834, 0x70, 0, 9, 1},
+		0x00000834, 0x70, 0, 9, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_SEQ_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000083C, 0x70, 0, 9, 1},
+		0x0000083C, 0x70, 0, 9, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_CFG_n] = {
 		ipareg_construct_endp_init_cfg_n, ipareg_parse_dummy,
-		0x00000808, 0x70, 0, 22, 1},
+		0x00000808, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_IRQ_EE_UC_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000301c, 0x1000, 0, 0, 1},
+		0x0000301c, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_HDR_METADATA_MASK_n] = {
 		ipareg_construct_endp_init_hdr_metadata_mask_n,
 		ipareg_parse_dummy,
-		0x00000818, 0x70, 10, 22, 1},
+		0x00000818, 0x70, 10, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_HDR_METADATA_n] = {
 		ipareg_construct_endp_init_hdr_metadata_n,
 		ipareg_parse_dummy,
-		0x0000081c, 0x70, 0, 9, 1},
+		0x0000081c, 0x70, 0, 9, 1, 0},
 	[IPA_HW_v4_0][IPA_CLKON_CFG] = {
 		ipareg_construct_clkon_cfg, ipareg_parse_clkon_cfg,
-		0x00000044, 0, 0, 0, 0},
+		0x00000044, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_QUOTA_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000700, 0x4, 0, 0, 0},
+		0x00000700, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_QUOTA_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000708, 0x4, 0, 0, 0},
+		0x00000708, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_TETHERING_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000710, 0x4, 0, 0, 0},
+		0x00000710, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_TETHERING_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000718, 0x4, 0, 0, 0},
+		0x00000718, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_FILTER_IPV4_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000720, 0, 0, 0, 0},
+		0x00000720, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_FILTER_IPV6_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000724, 0, 0, 0, 0},
+		0x00000724, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_ROUTER_IPV4_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000728, 0, 0, 0, 0},
+		0x00000728, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_ROUTER_IPV6_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000072C, 0, 0, 0, 0},
+		0x0000072C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_FILTER_IPV4_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000730, 0, 0, 0, 0},
+		0x00000730, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_FILTER_IPV6_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000734, 0, 0, 0, 0},
+		0x00000734, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_ROUTER_IPV4_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000738, 0, 0, 0, 0},
+		0x00000738, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_ROUTER_IPV6_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000073C, 0, 0, 0, 0},
+		0x0000073C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_FILTER_IPV4_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000740, 0, 0, 0, 0},
+		0x00000740, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_FILTER_IPV6_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000744, 0, 0, 0, 0},
+		0x00000744, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_ROUTER_IPV4_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000748, 0, 0, 0, 0},
+		0x00000748, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_ROUTER_IPV6_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000074C, 0, 0, 0, 0},
+		0x0000074C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_0][IPA_STAT_DROP_CNT_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000750, 0x4, 0, 0, 1},
+		0x00000750, 0x4, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STAT_DROP_CNT_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000758, 0x4, 0, 0, 1},
+		0x00000758, 0x4, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_TX_WRAPPER] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000090, 0, 0, 0, 1},
+		0x00000090, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_TX1] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000094, 0, 0, 0, 1},
+		0x00000094, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_FETCHER] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000098, 0, 0, 0, 1},
+		0x00000098, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_FETCHER_MASK] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000009C, 0, 0, 0, 1},
+		0x0000009C, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_DFETCHER] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000A0, 0, 0, 0, 1},
+		0x000000A0, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_ACL] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000A4, 0, 0, 0, 1},
+		0x000000A4, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000A8, 0, 0, 0, 1},
+		0x000000A8, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_RX_ACTIVE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000AC, 0, 0, 0, 1},
+		0x000000AC, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_TX0] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000B0, 0, 0, 0, 1},
+		0x000000B0, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_AGGR_ACTIVE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000B4, 0, 0, 0, 1},
+		0x000000B4, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_GSI_TLV] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000B8, 0, 0, 0, 1},
+		0x000000B8, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_GSI_AOS] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000BC, 0, 0, 0, 1},
+		0x000000BC, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_GSI_IF] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000C0, 0, 0, 0, 1},
+		0x000000C0, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_STATE_GSI_SKIP] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000C4, 0, 0, 0, 1},
+		0x000000C4, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_SNOC_FEC_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003018, 0x1000, 0, 0, 1},
+		0x00003018, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_FEC_ADDR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003020, 0x1000, 0, 0, 1},
+		0x00003020, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_FEC_ADDR_MSB_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003024, 0x1000, 0, 0, 1},
+		0x00003024, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_FEC_ATTR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003028, 0x1000, 0, 0, 1},
+		0x00003028, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_HOLB_DROP_IRQ_INFO_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000303C, 0x1000, 0, 0, 1},
+		0x0000303C, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_HOLB_DROP_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003040, 0x1000, 0, 0, 1},
+		0x00003040, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_HOLB_DROP_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00003044, 0x1000, 0, 0, 1},
+		0x00003044, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_CTRL_STATUS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000864, 0x70, 0, 22, 1},
+		0x00000864, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_PROD_CFG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000CC8, 0x70, 10, 22, 1},
+		0x00000CC8, 0x70, 10, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_INIT_RSRC_GRP_n] = {
 		ipareg_construct_endp_init_rsrc_grp_n_v3_5,
 		ipareg_parse_dummy,
-		0x00000838, 0x70, 0, 22, 1},
+		0x00000838, 0x70, 0, 22, 1, 0},
 	[IPA_HW_v4_0][IPA_ENDP_YELLOW_RED_MARKER_CFG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000CC0, 0x70, 10, 22, 1},
+		0x00000CC0, 0x70, 10, 22, 1, 0},
 
 	/* IPA4.2 */
 	[IPA_HW_v4_2][IPA_IDLE_INDICATION_CFG] = {
 		ipareg_construct_idle_indication_cfg, ipareg_parse_dummy,
-		0x00000240, 0, 0, 0, 0},
+		0x00000240, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_2][IPA_ENDP_INIT_HOL_BLOCK_TIMER_n] = {
 		ipareg_construct_endp_init_hol_block_timer_n_v4_2,
 		ipareg_parse_dummy,
-		0x00000830, 0x70, 8, 16, 1},
+		0x00000830, 0x70, 8, 16, 1, 0},
 	[IPA_HW_v4_2][IPA_ENDP_FILTER_ROUTER_HSH_CFG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_2][IPA_HPS_FTCH_ARB_QUEUE_WEIGHT] = {
 		ipareg_construct_dummy,
-		ipareg_parse_dummy, -1, 0, 0, 0, 0},
+		ipareg_parse_dummy, -1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_2][IPA_FILT_ROUT_HASH_EN] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000148, 0, 0, 0, 0},
+		0x00000148, 0, 0, 0, 0, 0},
 
 	/* IPA4.5 */
 	[IPA_HW_v4_5][IPA_SRC_RSRC_GRP_01_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v4_5, ipareg_parse_dummy,
-		0x00000400, 0x20, 0, 0, 0},
+		0x00000400, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_SRC_RSRC_GRP_23_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v4_5, ipareg_parse_dummy,
-		0x00000404, 0x20, 0, 0, 0},
+		0x00000404, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_SRC_RSRC_GRP_45_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v4_5, ipareg_parse_dummy,
-		0x00000408, 0x20, 0, 0, 0},
+		0x00000408, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_DST_RSRC_GRP_01_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v4_5, ipareg_parse_dummy,
-		0x00000500, 0x20, 0, 0, 0},
+		0x00000500, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_DST_RSRC_GRP_23_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v4_5, ipareg_parse_dummy,
-		0x00000504, 0x20, 0, 0, 0},
+		0x00000504, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_DST_RSRC_GRP_45_RSRC_TYPE_n] = {
 		ipareg_construct_rsrg_grp_xy_v4_5, ipareg_parse_dummy,
-		0x00000508, 0x20, 0, 0, 0},
+		0x00000508, 0x20, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_RX_HPS_CLIENTS_MIN_DEPTH_0] = {
 		ipareg_construct_rx_hps_clients_depth0_v4_5,
 		ipareg_parse_dummy,
-		0x000023c4, 0, 0, 0, 0},
+		0x000023c4, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_RX_HPS_CLIENTS_MAX_DEPTH_0] = {
 		ipareg_construct_rx_hps_clients_depth0_v4_5,
 		ipareg_parse_dummy,
-		0x000023cc, 0, 0, 0, 0},
+		0x000023cc, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_BCR] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_COMP_CFG] = {
 		ipareg_construct_comp_cfg_v4_5, ipareg_parse_comp_cfg_v4_5,
-		0x0000003C, 0, 0, 0, 0},
+		0x0000003C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STATE_TX_WRAPPER] = {
 		ipareg_construct_dummy, ipareg_parse_state_tx_wrapper_v4_5,
-		0x00000090, 0, 0, 0, 1 },
+		0x00000090, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STATE_FETCHER_MASK] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STATE_FETCHER_MASK_0] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000009C, 0, 0, 0, 1},
+		0x0000009C, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STATE_FETCHER_MASK_1] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000CC, 0, 0, 0, 1},
+		0x000000CC, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_COUNTER_CFG] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STATE_GSI_IF_CONS] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000C8, 0, 0, 0, 1},
+		0x000000C8, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STATE_DPL_FIFO] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000D0, 0, 0, 0, 1},
+		0x000000D0, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STATE_COAL_MASTER] = {
 		ipareg_construct_dummy, ipareg_parse_state_coal_master,
-		0x000000D4, 0, 0, 0, 1},
+		0x000000D4, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_GENERIC_RAM_ARBITER_PRIORITY] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000D8, 0, 0, 0, 1},
+		0x000000D8, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STATE_NLO_AGGR] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000DC, 0, 0, 0, 1},
+		0x000000DC, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STATE_COAL_MASTER_1] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000000E0, 0, 0, 0, 1},
+		0x000000E0, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_YELLOW_RED_MARKER_CFG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000860, 0x70, 13, 30, 1},
+		0x00000860, 0x70, 13, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_MODE_n] = {
 		ipareg_construct_endp_init_mode_n_v4_5, ipareg_parse_dummy,
-		0x00000820, 0x70, 0, 12, 1},
+		0x00000820, 0x70, 0, 12, 1, 0},
 	[IPA_HW_v4_5][IPA_TX_CFG] = {
 		ipareg_construct_tx_cfg_v4_5, ipareg_parse_tx_cfg_v4_5,
-		0x000001FC, 0, 0, 0, 0},
+		0x000001FC, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_CLKON_CFG] = {
 		ipareg_construct_clkon_cfg_v4_5, ipareg_parse_clkon_cfg_v4_5,
-		0x00000044, 0, 0, 0, 0},
+		0x00000044, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_QTIME_TIMESTAMP_CFG] = {
 		ipareg_construct_qtime_timestamp_cfg, ipareg_parse_dummy,
-		0x00000024c, 0, 0, 0, 1},
+		0x00000024c, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_TIMERS_PULSE_GRAN_CFG] = {
 		ipareg_construct_timers_pulse_gran_cfg,
 		ipareg_parse_timers_pulse_gran_cfg,
-		0x000000254, 0, 0, 0, 1},
+		0x000000254, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_TIMERS_XO_CLK_DIV_CFG] = {
 		ipareg_construct_timers_xo_clk_div_cfg,
 		ipareg_parse_timers_xo_clk_div_cfg,
-		0x000000250, 0, 0, 0, 1},
+		0x000000250, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STAT_QUOTA_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000700, 0x4, 0, 0, 0},
+		0x00000700, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_QUOTA_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000708, 0x4, 0, 0, 0},
+		0x00000708, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_TETHERING_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000710, 0x4, 0, 0, 0},
+		0x00000710, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_TETHERING_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000718, 0x4, 0, 0, 0},
+		0x00000718, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_FILTER_IPV4_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000720, 0, 0, 0, 0},
+		0x00000720, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_FILTER_IPV6_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000724, 0, 0, 0, 0},
+		0x00000724, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_ROUTER_IPV4_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000728, 0, 0, 0, 0},
+		0x00000728, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_ROUTER_IPV6_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000072C, 0, 0, 0, 0},
+		0x0000072C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_DROP_CNT_BASE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000750, 0x4, 0, 0, 1},
+		0x00000750, 0x4, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_STAT_DROP_CNT_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000758, 0x4, 0, 0, 1},
+		0x00000758, 0x4, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_SEQ_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000083C, 0x70, 0, 12, 1},
+		0x0000083C, 0x70, 0, 12, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_CFG_n] = {
 		ipareg_construct_endp_init_cfg_n, ipareg_parse_dummy,
-		0x00000808, 0x70, 0, 30, 1},
+		0x00000808, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_DEAGGR_n] = {
 		ipareg_construct_endp_init_deaggr_n_v4_5,
 		ipareg_parse_dummy,
-		0x00000834, 0x70, 0, 12, 1},
+		0x00000834, 0x70, 0, 12, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_CTRL_n] = {
 		ipareg_construct_endp_init_ctrl_n_v4_0, ipareg_parse_dummy,
-		0x00000800, 0x70, 0, 30, 1},
+		0x00000800, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_CTRL_SCND_n] = {
 		ipareg_construct_endp_init_ctrl_scnd_n, ipareg_parse_dummy,
-		0x00000804, 0x70, 0, 30, 1},
+		0x00000804, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_CTRL_STATUS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000864, 0x70, 0, 30, 1},
+		0x00000864, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_PROD_CFG_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000CC8, 0x70, 13, 30, 1},
+		0x00000CC8, 0x70, 13, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_FILTER_ROUTER_HSH_CFG_n] = {
 		ipareg_construct_hash_cfg_n, ipareg_parse_hash_cfg_n,
-		0x0000085C, 0x70, 0, 31, 1},
+		0x0000085C, 0x70, 0, 31, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_STATUS_n] = {
 		ipareg_construct_endp_status_n_v4_5, ipareg_parse_dummy,
-		0x00000840, 0x70, 0, 30, 1},
+		0x00000840, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_NAT_n] = {
 		ipareg_construct_endp_init_nat_n, ipareg_parse_dummy,
-		0x0000080C, 0x70, 0, 12, 1},
+		0x0000080C, 0x70, 0, 12, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_CONN_TRACK_n] = {
 		ipareg_construct_endp_init_conn_track_n,
 		ipareg_parse_dummy,
-		0x00000850, 0x70, 0, 12, 1},
+		0x00000850, 0x70, 0, 12, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_RSRC_GRP_n] = {
 		ipareg_construct_endp_init_rsrc_grp_n_v4_5,
 		ipareg_parse_dummy,
-		0x00000838, 0x70, 0, 30, 1},
+		0x00000838, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_STAT_FILTER_IPV4_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_FILTER_IPV6_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_ROUTER_IPV4_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_ROUTER_IPV6_START_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_FILTER_IPV4_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_FILTER_IPV6_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_ROUTER_IPV4_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_STAT_ROUTER_IPV6_END_ID] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		-1, 0, 0, 0, 0},
+		-1, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_DPS_SEQUENCER_FIRST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00002570, 0, 0, 0, 0},
+		0x00002570, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_DPS_SEQUENCER_LAST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00002574, 0, 0, 0, 0},
+		0x00002574, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_HPS_SEQUENCER_FIRST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00002578, 0, 0, 0, 0},
+		0x00002578, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_HPS_SEQUENCER_LAST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000257c, 0, 0, 0, 0},
+		0x0000257c, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_NAT_TIMER] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00000058, 0, 0, 0, 1},
+		0x00000058, 0, 0, 0, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_HOL_BLOCK_EN_n] = {
 		ipareg_construct_endp_init_hol_block_en_n,
 		ipareg_parse_dummy,
-		0x0000082c, 0x70, 13, 30, 1},
+		0x0000082c, 0x70, 13, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_HOL_BLOCK_TIMER_n] = {
 		ipareg_construct_endp_init_hol_block_timer_n_v4_5,
 		ipareg_parse_dummy,
-		0x00000830, 0x70, 13, 30, 1},
+		0x00000830, 0x70, 13, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_AGGR_n] = {
 		ipareg_construct_endp_init_aggr_n_v4_5,
 		ipareg_parse_endp_init_aggr_n_v4_5,
-		0x00000824, 0x70, 0, 30, 1},
+		0x00000824, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_SW_AREA_RAM_DIRECT_ACCESS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000010000, 0x4, 0, 0, 0},
+		0x000010000, 0x4, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_HDR_n] = {
 		ipareg_construct_endp_init_hdr_n_v4_5, ipareg_parse_dummy,
-		0x00000810, 0x70, 0, 30, 1},
+		0x00000810, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_HDR_EXT_n] = {
 		ipareg_construct_endp_init_hdr_ext_n_v4_5, ipareg_parse_dummy,
-		0x00000814, 0x70, 0, 30, 1},
+		0x00000814, 0x70, 0, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_HDR_METADATA_n] = {
 		ipareg_construct_endp_init_hdr_metadata_n,
 		ipareg_parse_dummy,
-		0x0000081c, 0x70, 0, 12, 1},
+		0x0000081c, 0x70, 0, 12, 1, 0},
 	[IPA_HW_v4_5][IPA_ENDP_INIT_HDR_METADATA_MASK_n] = {
 		ipareg_construct_endp_init_hdr_metadata_mask_n,
 		ipareg_parse_dummy,
-		0x00000818, 0x70, 13, 30, 1},
+		0x00000818, 0x70, 13, 30, 1, 0},
 	[IPA_HW_v4_5][IPA_UC_MAILBOX_m_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00082000, 0x4, 0, 0, 0},
+		0x00082000, 0x4, 0, 0, 0, 0x80},
 	[IPA_HW_v4_5][IPA_COAL_EVICT_LRU] = {
 		ipareg_construct_coal_evict_lru, ipareg_parse_coal_evict_lru,
-		0x0000180C, 0, 0, 0, 0},
+		0x0000180C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_5][IPA_COAL_QMAP_CFG] = {
 		ipareg_construct_coal_qmap_cfg, ipareg_parse_coal_qmap_cfg,
-		0x00001810, 0, 0, 0, 0},
+		0x00001810, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_7][IPA_STATE_TX_WRAPPER] = {
 		ipareg_construct_dummy, ipareg_parse_state_tx_wrapper_v4_7,
-		0x00000090, 0, 0, 0, 1 },
+		0x00000090, 0, 0, 0, 1, 0},
 
 	/* IPA4.9 */
 
-	/*IPA_DEBUG*/
+	/* IPA_DEBUG */
 	[IPA_HW_v4_9][IPA_ENDP_GSI_CFG1_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000026C0, 0x4, 0, 30, 0 },
+		0x000026C0, 0x4, 0, 30, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_GSI_CFG_TLV_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00002758, 0x4, 0, 30, 0 },
+		0x00002758, 0x4, 0, 30, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_GSI_CFG_AOS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x000027D4, 0x4, 0, 30, 0 },
+		0x000027D4, 0x4, 0, 30, 0, 0},
 
 
-	/*IPA_CFG*/
+	/* IPA_CFG */
 	[IPA_HW_v4_9][IPA_COMP_CFG] = {
 		ipareg_construct_comp_cfg_v4_9, ipareg_parse_comp_cfg_v4_9,
-		0x0000003C, 0, 0, 0, 0},
+		0x0000003C, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_QSB_MAX_READS] = {
 		ipareg_construct_qsb_max_reads_v4_0, ipareg_parse_qsb_max_reads,
-		0x00000078, 0, 0, 0, 0},
+		0x00000078, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_QSB_MAX_WRITES] = {
 		ipareg_construct_qsb_max_writes, ipareg_parse_qsb_max_writes,
-		0x00000074, 0, 0, 0, 0},
+		0x00000074, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_TX_CFG] = {
 		ipareg_construct_tx_cfg_v4_9, ipareg_parse_tx_cfg_v4_9,
-		0x000001FC, 0, 0, 0, 0},
+		0x000001FC, 0, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_NAT_n] = {
 		ipareg_construct_endp_init_nat_n, ipareg_parse_dummy,
-		0x0000080C, 0x70, 0, 10, 0},
+		0x0000080C, 0x70, 0, 10, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_HDR_n] = {
 		ipareg_construct_endp_init_hdr_n_v4_9, ipareg_parse_dummy,
-		0x00000810, 0x70, 0, 30, 0},
+		0x00000810, 0x70, 0, 30, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_HDR_METADATA_n] = {
 		ipareg_construct_endp_init_hdr_metadata_n,
 		ipareg_parse_dummy,
-		0x0000081c, 0x70, 0, 10, 0},
+		0x0000081c, 0x70, 0, 10, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_MODE_n] = {
 		ipareg_construct_endp_init_mode_n_v4_5, ipareg_parse_dummy,
-		0x00000820, 0x70, 0, 10, 0},
+		0x00000820, 0x70, 0, 10, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_DEAGGR_n] = {
 		ipareg_construct_endp_init_deaggr_n_v4_5,
 		ipareg_parse_dummy,
-		0x00000834, 0x70, 0, 10, 0},
+		0x00000834, 0x70, 0, 10, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_RSRC_GRP_n] = {
 		ipareg_construct_endp_init_rsrc_grp_n_v4_9,
 		ipareg_parse_dummy,
-		0x00000838, 0x70, 0, 30, 0},
+		0x00000838, 0x70, 0, 30, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_SEQ_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000083C, 0x70, 0, 10, 0},
+		0x0000083C, 0x70, 0, 10, 0, 0},
 	[IPA_HW_v4_9][IPA_ENDP_INIT_CONN_TRACK_n] = {
 		ipareg_construct_endp_init_conn_track_n,
 		ipareg_parse_dummy,
-		0x00000850, 0x70, 0, 10, 0},
+		0x00000850, 0x70, 0, 10, 0, 0},
+	[IPA_HW_v4_9][IPA_GENERIC_RAM_ARBITER_PRIORITY] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000DC, 0, 0, 0, 1, 0},
 
-	/*IPA_EE*/
+	/* IPA_EE */
 	[IPA_HW_v4_9][IPA_IRQ_STTS_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004008, 0x1000, 0, 0, 0},
+		0x00004008, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000400c, 0x1000, 0, 0, 0},
+		0x0000400c, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004010, 0x1000, 0, 0, 0},
+		0x00004010, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_SNOC_FEC_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004018, 0x1000, 0, 0, 0},
+		0x00004018, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_SUSPEND_IRQ_INFO_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004030, 0x1000, 0, 0, 0},
+		0x00004030, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_SUSPEND_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004034, 0x1000, 0, 0, 0},
+		0x00004034, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_SUSPEND_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004038, 0x1000, 0, 0, 0},
+		0x00004038, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_HOLB_DROP_IRQ_INFO_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000403C, 0x1000, 0, 0, 0},
+		0x0000403C, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_HOLB_DROP_IRQ_EN_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004040, 0x1000, 0, 0, 0},
+		0x00004040, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_HOLB_DROP_IRQ_CLR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004044, 0x1000, 0, 0, 0},
+		0x00004044, 0x1000, 0, 0, 0, 0},
 	[IPA_HW_v4_9][IPA_IRQ_EE_UC_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x0000401c, 0x1000, 0, 0, 1},
+		0x0000401c, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_9][IPA_FEC_ADDR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004020, 0x1000, 0, 0, 1},
+		0x00004020, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_9][IPA_FEC_ADDR_MSB_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004024, 0x1000, 0, 0, 1},
+		0x00004024, 0x1000, 0, 0, 1, 0},
 	[IPA_HW_v4_9][IPA_FEC_ATTR_EE_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
-		0x00004028, 0x1000, 0, 0, 1},
+		0x00004028, 0x1000, 0, 0, 1, 0},
+
+	/* IPA5.0 */
+
+	/* IPA_CFG */
+	[IPA_HW_v5_0][IPA_COMP_HW_VERSION] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000024, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_VERSION] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000028, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_FLAVOR_0] = {
+		ipareg_construct_dummy, ipareg_parse_ipa_flavor_0,
+		0x00000000, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_ENABLED_PIPES] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_COMP_CFG] = {
+		ipareg_construct_comp_cfg_v5_0, ipareg_parse_comp_cfg_v5_0,
+		0x0000002C, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_CLKON_CFG] = {
+		ipareg_construct_clkon_cfg_v4_5, ipareg_parse_clkon_cfg_v4_5,
+		0x00000034, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_ROUTE] = {
+		ipareg_construct_route_v5_0, ipareg_parse_dummy,
+		0x00000038, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SHARED_MEM_SIZE] = {
+		ipareg_construct_dummy, ipareg_parse_shared_mem_size,
+		0x00000040, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_NAT_TIMER] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000048, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_TAG_TIMER] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000044, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_QSB_MAX_WRITES] = {
+		ipareg_construct_qsb_max_writes, ipareg_parse_qsb_max_writes,
+		0x00000054, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_QSB_MAX_READS] = {
+		ipareg_construct_qsb_max_reads_v4_0, ipareg_parse_qsb_max_reads,
+		0x00000058, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STATE_TX1] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000098, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_FETCHER] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000A4, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_FETCHER_MASK_0] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000A8, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_DFETCHER] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000AC, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_ACL] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000B0, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000B4, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_RX_ACTIVE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_TX0] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000094, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_AGGR_ACTIVE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_AGGR_ACTIVE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000100, 0x4, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_GSI_TLV] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_GSI_AOS] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000B8, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_GENERIC_RAM_ARBITER_PRIORITY] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000004DC, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STATE_COAL_MASTER_1] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000000DC, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_FILT_ROUT_HASH_EN] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_FILT_ROUT_HASH_FLUSH] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SYS_PKT_PROC_CNTXT_BASE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000470, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_LOCAL_PKT_PROC_CNTXT_BASE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000478, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_AGGR_FORCE_CLOSE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_AGGR_FORCE_CLOSE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000006B0, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_TX_CFG] = {
+		ipareg_construct_tx_cfg_v5_0, ipareg_parse_tx_cfg_v5_0,
+		0x00000488, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_IDLE_INDICATION_CFG] = {
+		ipareg_construct_idle_indication_cfg, ipareg_parse_dummy,
+		0x000004A8, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_QTIME_TIMESTAMP_CFG] = {
+		ipareg_construct_qtime_timestamp_cfg, ipareg_parse_dummy,
+		0x0000004Ac, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_TIMERS_XO_CLK_DIV_CFG] = {
+		ipareg_construct_timers_xo_clk_div_cfg,
+		ipareg_parse_timers_xo_clk_div_cfg,
+		0x0000004B0, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_TIMERS_PULSE_GRAN_CFG] = {
+		ipareg_construct_timers_pulse_gran_cfg_v5_0,
+		ipareg_parse_timers_pulse_gran_cfg_v5_0,
+		0x0000004B4, 0, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_SRC_RSRC_GRP_01_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x00000500, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SRC_RSRC_GRP_23_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x00000504, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_DST_RSRC_GRP_01_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x00000600, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_DST_RSRC_GRP_23_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x00000604, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SRC_RSRC_GRP_45_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x00000508, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SRC_RSRC_GRP_67_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x0000050C, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_DST_RSRC_GRP_45_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x00000608, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_DST_RSRC_GRP_67_RSRC_TYPE_n] = {
+		ipareg_construct_rsrg_grp_xy_v5_0, ipareg_parse_dummy,
+		0x0000060C, 0x20, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_QUOTA_BASE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000006D0, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_QUOTA_MASK_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_QUOTA_MASK_EE_n_REG_k] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000710, 0x4, 0, 0, 0, 0x8},
+	[IPA_HW_v5_0][IPA_STAT_TETHERING_BASE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000006E0, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_TETHERING_MASK_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_FILTER_IPV4_BASE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000700, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_FILTER_IPV6_BASE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000704, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_ROUTER_IPV4_BASE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000708, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_ROUTER_IPV6_BASE] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000070C, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_DROP_CNT_BASE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000006F0, 0x4, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STAT_DROP_CNT_MASK_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x4, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_CTRL_n] = {
+		ipareg_construct_endp_init_ctrl_n_v4_0, ipareg_parse_dummy,
+		0x00001000, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_CTRL_SCND_n] = {
+		ipareg_construct_endp_init_ctrl_scnd_n, ipareg_parse_dummy,
+		0x00001004, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_CFG_n] = {
+		ipareg_construct_endp_init_cfg_n, ipareg_parse_dummy,
+		0x00001008, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_NAT_n] = {
+		ipareg_construct_endp_init_nat_n, ipareg_parse_dummy,
+		0x0000100C, 0x80, 0, 10, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_HDR_n] = {
+		ipareg_construct_endp_init_hdr_n_v4_9, ipareg_parse_dummy,
+		0x00001010, 0x80, 0, 30, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_HDR_EXT_n] = {
+		ipareg_construct_endp_init_hdr_ext_n_v5_0, ipareg_parse_dummy,
+		0x00001014, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_HDR_METADATA_n] = {
+		ipareg_construct_endp_init_hdr_metadata_n,
+		ipareg_parse_dummy,
+		0x0000101c, 0x80, 0, 10, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_MODE_n] = {
+		ipareg_construct_endp_init_mode_n_v5_0, ipareg_parse_dummy,
+		0x00001020, 0x80, 0, 10, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_AGGR_n] = {
+		ipareg_construct_endp_init_aggr_n_v4_5,
+		ipareg_parse_endp_init_aggr_n_v4_5,
+		0x00001024, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_DEAGGR_n] = {
+		ipareg_construct_endp_init_deaggr_n,
+		ipareg_parse_dummy,
+		0x00001034, 0x80, 0, 10, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_RSRC_GRP_n] = {
+		ipareg_construct_endp_init_rsrc_grp_n_v5_0,
+		ipareg_parse_dummy,
+		0x00001038, 0x80, 0, 30, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_SEQ_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000103C, 0x80, 0, 10, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_STATUS_n] = {
+		ipareg_construct_endp_status_n_v5_0, ipareg_parse_dummy,
+		0x00001040, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_CONN_TRACK_n] = {
+		ipareg_construct_endp_init_conn_track_n,
+		ipareg_parse_dummy,
+		0x00001050, 0x80, 0, 10, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_FILTER_ROUTER_HSH_CFG_n] = {
+		ipareg_construct_hash_cfg_n, ipareg_parse_hash_cfg_n,
+		-1, 0x70, 0, 31, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_CTRL_STATUS_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00001064, 0x80, 0, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_HDR_METADATA_MASK_n] = {
+		ipareg_construct_endp_init_hdr_metadata_mask_n,
+		ipareg_parse_dummy,
+		0x00001018, 0x80, 13, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_HOL_BLOCK_EN_n] = {
+		ipareg_construct_endp_init_hol_block_en_n,
+		ipareg_parse_dummy,
+		0x0000102c, 0x80, 13, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_HOL_BLOCK_TIMER_n] = {
+		ipareg_construct_endp_init_hol_block_timer_n_v5_0,
+		ipareg_parse_dummy,
+		0x00001030, 0x80, 13, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_PROD_CFG_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00001068, 0x80, 13, 30, 1, 0},
+	[IPA_HW_v5_0][IPA_COAL_EVICT_LRU] = {
+		ipareg_construct_coal_evict_lru, ipareg_parse_coal_evict_lru,
+		0x00000918, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_COAL_QMAP_CFG] = {
+		ipareg_construct_coal_qmap_cfg, ipareg_parse_coal_qmap_cfg,
+		0x0000091c, 0, 0, 0, 0, 0},
+
+	/* IPA_DEBUG */
+	[IPA_HW_v5_0][IPA_RX_HPS_CLIENTS_MIN_DEPTH_1] = { //TODO contstruct not matching previous version
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000082C8, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_RX_HPS_CLIENTS_MAX_DEPTH_1] = { //TODO contstruct not matching previous version
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x000082D0, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_RX_HPS_CLIENTS_MIN_DEPTH_0] = {
+		ipareg_construct_rx_hps_clients_depth0_v4_5,
+		ipareg_parse_dummy,
+		0x000082c4, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_RX_HPS_CLIENTS_MAX_DEPTH_0] = {
+		ipareg_construct_rx_hps_clients_depth0_v4_5,
+		ipareg_parse_dummy,
+		0x000082CC, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_DPS_SEQUENCER_FIRST] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00008584, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_DPS_SEQUENCER_LAST] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00008588, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_HPS_SEQUENCER_FIRST] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000858C, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_HPS_SEQUENCER_LAST] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00008590, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_GSI_CFG1_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00008800, 0x4, 0, 30, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_GSI_CFG_TLV_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00009000, 0x4, 0, 30, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_GSI_CFG_AOS_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00009400, 0x4, 0, 30, 0, 0},
+
+	/* IPA_EE */
+	[IPA_HW_v5_0][IPA_IRQ_STTS_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C008, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_IRQ_EN_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C00c, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_IRQ_CLR_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C010, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SNOC_FEC_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C018, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SUSPEND_IRQ_INFO_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SUSPEND_IRQ_INFO_EE_n_REG_k] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C030, 0x1000, 0, 0, 0, 0x4},
+	[IPA_HW_v5_0][IPA_SUSPEND_IRQ_EN_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SUSPEND_IRQ_EN_EE_n_REG_k] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C050, 0x1000, 0, 0, 0, 0x4},
+	[IPA_HW_v5_0][IPA_SUSPEND_IRQ_CLR_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_SUSPEND_IRQ_CLR_EE_n_REG_k] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C070, 0x1000, 0, 0, 0, 0x4},
+	[IPA_HW_v5_0][IPA_HOLB_DROP_IRQ_INFO_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_HOLB_DROP_IRQ_EN_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_HOLB_DROP_IRQ_CLR_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		-1, 0x1000, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_IRQ_EE_UC_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C01c, 0x1000, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_FEC_ADDR_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C020, 0x1000, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_FEC_ADDR_MSB_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C024, 0x1000, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_FEC_ATTR_EE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000C028, 0x1000, 0, 0, 1, 0},
 };
 
 /*
@@ -3707,7 +4368,8 @@ int ipahal_reg_init(enum ipa_hw_type ipa_hw_type)
 				 * explicitly overridden register.
 				 * Check validity
 				 */
-				if (!ipahal_reg_objs[i+1][j].offset) {
+				if (!ipahal_reg_objs[i+1][j].offset &&
+				    (i + 1 < IPA_HW_v5_0 || j != IPA_FLAVOR_0)) {
 					IPAHAL_ERR(
 					  "reg=%s with zero offset ipa_ver=%d\n",
 					  ipahal_reg_name_str(j), i+1);
@@ -3774,6 +4436,38 @@ u32 ipahal_read_reg_n(enum ipahal_reg_name reg, u32 n)
 }
 
 /*
+* ipahal_read_ep_reg() - Get the raw value of a ep reg
+*/
+u32 ipahal_read_ep_reg(enum ipahal_reg_name reg, u32 ep_num)
+{
+	return ipahal_read_reg_n(reg, IPA_BIT_MAP_CELL_NUM(ep_num));
+}
+
+/*
+ * ipahal_test_ep_bit() - return true if a ep bit is set
+ */
+bool ipahal_test_ep_bit(u32 reg_val, u32 ep_num)
+{
+	return !!(reg_val & IPA_BIT_MAP_CELL_MSK(ep_num));
+}
+
+/*
+ * ipahal_get_ep_bit() - get ep bit set in the right offset
+ */
+u32 ipahal_get_ep_bit(u32 ep_num)
+{
+	return IPA_BIT_MAP_CELL_MSK(ep_num);
+}
+
+/*
+ * ipahal_get_ep_reg_idx() - get ep reg index according to ep num
+ */
+u32 ipahal_get_ep_reg_idx(u32 ep_num)
+{
+	return IPA_BIT_MAP_CELL_NUM(ep_num);
+}
+
+/*
  * ipahal_read_reg_mn() - Get mn parameterized reg value
  */
 u32 ipahal_read_reg_mn(enum ipahal_reg_name reg, u32 m, u32 n)
@@ -3795,15 +4489,18 @@ u32 ipahal_read_reg_mn(enum ipahal_reg_name reg, u32 m, u32 n)
 		WARN_ON_ONCE(1);
 		return -EPERM;
 	}
-	/*
-	 * Currently there is one register with m and n parameters
-	 *	IPA_UC_MAILBOX_m_n. The m value of it is 0x80.
-	 * If more such registers will be added in the future,
-	 *	we can move the m parameter to the table above.
-	 */
-	offset += 0x80 * m;
+
+	offset += ipahal_reg_objs[ipahal_ctx->hw_type][reg].m_ofst * m;
 	offset += ipahal_reg_objs[ipahal_ctx->hw_type][reg].n_ofst * n;
 	return ioread32(ipahal_ctx->base + offset);
+}
+
+/*
+* ipahal_read_ep_reg_n() - Get n parameterized reg value according to ep
+*/
+u32 ipahal_read_ep_reg_n(enum ipahal_reg_name reg, u32 n, u32 ep_num)
+{
+	return ipahal_read_reg_mn(reg, IPA_BIT_MAP_CELL_NUM(ep_num), n);
 }
 
 /*
@@ -3828,15 +4525,26 @@ void ipahal_write_reg_mn(enum ipahal_reg_name reg, u32 m, u32 n, u32 val)
 		WARN_ON(1);
 		return;
 	}
-	/*
-	 * Currently there is one register with m and n parameters
-	 *	IPA_UC_MAILBOX_m_n. The m value of it is 0x80.
-	 * If more such registers will be added in the future,
-	 *	we can move the m parameter to the table above.
-	 */
-	offset +=  0x80 * m;
+
+	offset += ipahal_reg_objs[ipahal_ctx->hw_type][reg].m_ofst * m;
 	offset += ipahal_reg_objs[ipahal_ctx->hw_type][reg].n_ofst * n;
 	iowrite32(val, ipahal_ctx->base + offset);
+}
+
+/*
+ * ipahal_write_ep_reg() - Write to ep reg a raw value
+ */
+void ipahal_write_ep_reg(enum ipahal_reg_name reg, u32 ep_num, u32 val)
+{
+	return ipahal_write_reg_n(reg, IPA_BIT_MAP_CELL_NUM(ep_num), val);
+}
+
+/*
+ * ipahal_write_ep_reg_n() - Write to ep reg a raw value
+ */
+void ipahal_write_ep_reg_n(enum ipahal_reg_name reg, u32 n, u32 ep_num, u32 val)
+{
+	return ipahal_write_reg_mn(reg, IPA_BIT_MAP_CELL_NUM(ep_num), n, val);
 }
 
 /*
@@ -3933,16 +4641,27 @@ u32 ipahal_get_reg_mn_ofst(enum ipahal_reg_name reg, u32 m, u32 n)
 		WARN_ON(1);
 		return -EPERM;
 	}
-	/*
-	 * Currently there is one register with m and n parameters
-	 *	IPA_UC_MAILBOX_m_n. The m value of it is 0x80.
-	 * If more such registers will be added in the future,
-	 *	we can move the m parameter to the table above.
-	 */
-	offset +=  0x80 * m;
+
+	offset += ipahal_reg_objs[ipahal_ctx->hw_type][reg].m_ofst * m;
 	offset += ipahal_reg_objs[ipahal_ctx->hw_type][reg].n_ofst * n;
 
 	return offset;
+}
+
+/*
+ * Get the offset of a ep register according to ep index
+ */
+u32 ipahal_get_ep_reg_offset(enum ipahal_reg_name reg, u32 ep_num)
+{
+	return ipahal_get_reg_mn_ofst(reg, 0, IPA_BIT_MAP_CELL_NUM(ep_num));
+}
+
+/*
+* Get the offset of a ep n register according to ep index and n
+*/
+u32 ipahal_get_ep_reg_n_offset(enum ipahal_reg_name reg, u32 n, u32 ep_num)
+{
+	return ipahal_get_reg_mn_ofst(reg, IPA_BIT_MAP_CELL_NUM(ep_num), n);
 }
 
 u32 ipahal_get_reg_base(void)
@@ -3997,11 +4716,25 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT_V4_5;
 		bmsk =
 		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK_V4_5;
-	} else if (ipahal_ctx->hw_type <= IPA_HW_v4_7) {
+	} else if (ipahal_ctx->hw_type <= IPA_HW_v4_9) {
 		shft =
-		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT_V4_7;
+		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT_V4_9;
 		bmsk =
-		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK_V4_7;
+		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK_V4_9;
+	} else if (ipahal_ctx->hw_type <= IPA_HW_v5_0) {
+		u8 reg_idx;
+
+		shft =
+		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT_V5_0;
+
+		reg_idx = IPA_BIT_MAP_CELL_NUM(ep_idx);
+		bmsk = (reg_idx ?
+		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK_2_v5_0 :
+		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK_v5_0);
+	} else {
+		IPAHAL_ERR("unknown ipa ver %d\n", ipahal_ctx->hw_type);
+		ipa_assert();
+		return;
 	}
 
 	if (ep_idx > (sizeof(valmask->val) * 8 - 1)) {
@@ -4009,7 +4742,9 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 		ipa_assert();
 		return;
 	}
-	IPA_SETFIELD_IN_REG(valmask->val, 1 << ep_idx, shft, bmsk);
+	IPA_SETFIELD_IN_REG(valmask->val,
+		IPA_BIT_MAP_CELL_MSK(ep_idx),
+		shft, bmsk);
 	valmask->mask = bmsk;
 }
 

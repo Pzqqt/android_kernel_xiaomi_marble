@@ -3492,10 +3492,17 @@ static int ipa3_q6_clean_q6_flt_tbls(enum ipa_ip_type ip,
 	coal_ep = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (coal_ep != IPA_EP_NOT_ALLOCATED) {
+		u32 offset = 0;
+
 		reg_write_coal_close.skip_pipeline_clear = false;
 		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_coal_close.offset = ipahal_get_reg_ofst(
-			IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, coal_ep);
+		reg_write_coal_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(coal_ep, &valmask);
 		reg_write_coal_close.value = valmask.val;
 		reg_write_coal_close.value_mask = valmask.mask;
@@ -3653,11 +3660,18 @@ static int ipa3_q6_clean_q6_rt_tbls(enum ipa_ip_type ip,
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+		u32 offset = 0;
+
 		i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 		reg_write_coal_close.skip_pipeline_clear = false;
 		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_coal_close.offset = ipahal_get_reg_ofst(
-			IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, i);
+		reg_write_coal_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(i, &valmask);
 		reg_write_coal_close.value = valmask.val;
 		reg_write_coal_close.value_mask = valmask.mask;
@@ -3777,11 +3791,18 @@ static int ipa3_q6_clean_q6_tables(void)
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+		u32 offset = 0;
+
 		i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 		reg_write_coal_close.skip_pipeline_clear = false;
 		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_coal_close.offset = ipahal_get_reg_ofst(
-			IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, i);
+		reg_write_coal_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(i, &valmask);
 		reg_write_coal_close.value = valmask.val;
 		reg_write_coal_close.value_mask = valmask.mask;
@@ -3855,11 +3876,18 @@ static int ipa3_q6_set_ex_path_to_apps(void)
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+		u32 offset = 0;
+
 		i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 		reg_write_coal_close.skip_pipeline_clear = false;
 		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_coal_close.offset = ipahal_get_reg_ofst(
-			IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, i);
+		reg_write_coal_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(i, &valmask);
 		reg_write_coal_close.value = valmask.val;
 		reg_write_coal_close.value_mask = valmask.mask;
@@ -4255,11 +4283,18 @@ int _ipa_init_hdr_v3_0(void)
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+		u32 offset = 0;
+
 		i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 		reg_write_coal_close.skip_pipeline_clear = false;
 		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_coal_close.offset = ipahal_get_reg_ofst(
-			IPA_AGGR_FORCE_CLOSE);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+			offset = ipahal_get_reg_ofst(
+				IPA_AGGR_FORCE_CLOSE);
+		else
+			offset = ipahal_get_ep_reg_offset(
+				IPA_AGGR_FORCE_CLOSE_n, i);
+		reg_write_coal_close.offset = offset;
 		ipahal_get_aggr_force_close_valmask(i, &valmask);
 		reg_write_coal_close.value = valmask.val;
 		reg_write_coal_close.value_mask = valmask.mask;
@@ -5721,25 +5756,41 @@ void ipa3_suspend_handler(enum ipa_irq_type interrupt,
 				void *private_data,
 				void *interrupt_data)
 {
-	u32 suspend_data =
+	u32 *suspend_data =
 		((struct ipa_tx_suspend_irq_data *)interrupt_data)->endpoints;
 	u32 bmsk = 1;
-	u32 i = 0;
+	u32 i = 0, j = 0, ep_arr_size, ep_per_reg;
 	int res;
-	struct ipa_ep_cfg_holb holb_cfg;
 	u32 pipe_bitmask = 0;
 
-	IPADBG("interrupt=%d, interrupt_data=%u\n",
-		interrupt, suspend_data);
-	memset(&holb_cfg, 0, sizeof(holb_cfg));
+	IPADBG("interrupt=%d\n", interrupt);
 
-	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++, bmsk = bmsk << 1)
-		if ((suspend_data & bmsk) && (ipa3_ctx->ep[i].valid))
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		ep_arr_size = IPA_EP_ARR_SIZE;
+		ep_per_reg = IPA_EP_PER_REG;
+	} else {
+		ep_arr_size = 1;
+		ep_per_reg = ipa3_ctx->ipa_num_pipes;
+	}
+
+	j = 0;
+	for (i = 0; i < ipa3_ctx->ipa_num_pipes && j < ep_arr_size; i++) {
+		if ((suspend_data[j] & bmsk) && (ipa3_ctx->ep[i].valid))
 			pipe_bitmask |= bmsk;
-	res = ipa_pm_handle_suspend(pipe_bitmask);
-	if (res) {
-		IPAERR("ipa_pm_handle_suspend failed %d\n", res);
-		return;
+		bmsk = bmsk << 1;
+
+		if ((i % IPA_EP_PER_REG) == (ep_per_reg - 1)) {
+			IPADBG("interrupt data: %u\n", suspend_data[j]);
+			res = ipa_pm_handle_suspend(pipe_bitmask, j);
+			if (res) {
+				IPAERR(
+				"ipa_pm_handle_suspend failed %d\n", res);
+				return;
+			}
+			pipe_bitmask = 0;
+			bmsk = 1;
+			j++;
+		}
 	}
 }
 

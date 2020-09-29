@@ -1201,14 +1201,17 @@ EXPORT_SYMBOL(ipa_pm_deactivate_sync);
 /**
  * ipa_pm_handle_suspend(): calls the callbacks of suspended clients to wake up
  * @pipe_bitmask: the bits represent the indexes of the clients to be woken up
+ * @pipe_arr_idx: if larger than 0 add to pipe num 32 * pipe_arr_idx
  *
  * Returns: 0 on success, negative on failure
  */
-int ipa_pm_handle_suspend(u32 pipe_bitmask)
+int ipa_pm_handle_suspend(u32 pipe_bitmask, u32 pipe_arr_idx)
 {
 	int i;
 	struct ipa_pm_client *client;
 	bool client_notified[IPA_PM_MAX_CLIENTS] = { false };
+	u32 pipe_add;
+	u32 max_pipes;
 
 	if (ipa_pm_ctx == NULL) {
 		IPA_PM_ERR("PM_ctx is null\n");
@@ -1220,10 +1223,12 @@ int ipa_pm_handle_suspend(u32 pipe_bitmask)
 	if (pipe_bitmask == 0)
 		return 0;
 
+	pipe_add = pipe_arr_idx * 32;
+	max_pipes = IPA3_MAX_NUM_PIPES;
 	mutex_lock(&ipa_pm_ctx->client_mutex);
-	for (i = 0; i < IPA3_MAX_NUM_PIPES; i++) {
+	for (i = 0; i < IPA_EP_PER_REG && (i + pipe_add) < max_pipes; i++) {
 		if (pipe_bitmask & (1 << i)) {
-			client = ipa_pm_ctx->clients_by_pipe[i];
+			client = ipa_pm_ctx->clients_by_pipe[i + pipe_add];
 			if (client && !client_notified[client->hdl]) {
 				if (client->callback) {
 					client->callback(client->callback_params

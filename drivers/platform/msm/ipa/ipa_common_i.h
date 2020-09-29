@@ -18,6 +18,8 @@
 
 #define WARNON_RATELIMIT_BURST 1
 #define IPA_RATELIMIT_BURST 1
+#define IPA_EP_ARR_SIZE 2
+#define IPA_EP_PER_REG 32
 
 #define __FILENAME__ \
 	(strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
@@ -438,7 +440,7 @@ struct ipa_tz_unlock_reg_info {
  * @dma_addr: DMA address of this Rx packet
  */
 struct ipa_tx_suspend_irq_data {
-	u32 endpoints;
+	u32 endpoints[IPA_EP_ARR_SIZE];
 };
 
 extern const char *ipa_clients_strings[];

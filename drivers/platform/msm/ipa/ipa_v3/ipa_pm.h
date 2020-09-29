@@ -96,7 +96,7 @@ int ipa_pm_deregister(u32 hdl);
 /* IPA Internal Functions */
 int ipa_pm_init(struct ipa_pm_init_params *params);
 int ipa_pm_destroy(void);
-int ipa_pm_handle_suspend(u32 pipe_bitmask);
+int ipa_pm_handle_suspend(u32 pipe_bitmask, u32 pipe_arr_idx);
 int ipa_pm_deactivate_all_deferred(void);
 int ipa_pm_stat(char *buf, int size);
 int ipa_pm_exceptions_stat(char *buf, int size);
@@ -157,7 +157,7 @@ static inline int ipa_pm_destroy(void)
 	return -EPERM;
 }
 
-static inline int ipa_pm_handle_suspend(u32 pipe_bitmask)
+static inline int ipa_pm_handle_suspend(u32 pipe_bitmask, u32 pipe_arr_idx)
 {
 	return -EPERM;
 }

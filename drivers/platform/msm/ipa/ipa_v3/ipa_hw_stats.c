@@ -257,12 +257,18 @@ static void ipa_close_coal_frame(struct ipahal_imm_cmd_pyld **coal_cmd_pyld)
 	int i;
 	struct ipahal_reg_valmask valmask;
 	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	u32 offset = 0;
 
 	i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 	reg_write_coal_close.skip_pipeline_clear = false;
 	reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-	reg_write_coal_close.offset = ipahal_get_reg_ofst(
-		IPA_AGGR_FORCE_CLOSE);
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+		offset = ipahal_get_reg_ofst(
+			IPA_AGGR_FORCE_CLOSE);
+	else
+		offset = ipahal_get_ep_reg_offset(
+			IPA_AGGR_FORCE_CLOSE_n, i);
+	reg_write_coal_close.offset = offset;
 	ipahal_get_aggr_force_close_valmask(i, &valmask);
 	reg_write_coal_close.value = valmask.val;
 	reg_write_coal_close.value_mask = valmask.mask;
@@ -306,6 +312,7 @@ int ipa_init_quota_stats(u32 pipe_bitmask)
 	dma_addr_t dma_address;
 	int ret;
 	int num_cmd = 0;
+	int ipa_ep_idx = IPA_EP_NOT_ALLOCATED;
 
 	if (!ipa3_ctx->hw_stats.enabled)
 		return 0;
@@ -338,8 +345,8 @@ int ipa_init_quota_stats(u32 pipe_bitmask)
 	}
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
-	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) !=
-		IPA_EP_NOT_ALLOCATED) {
+	ipa_ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
+	if (ipa_ep_idx != IPA_EP_NOT_ALLOCATED) {
 		ipa_close_coal_frame(&coal_cmd_pyld);
 		if (!coal_cmd_pyld) {
 			IPAERR("failed to construct coal close IC\n");
@@ -353,8 +360,19 @@ int ipa_init_quota_stats(u32 pipe_bitmask)
 	/* setting the registers and init the stats pyld are done atomically */
 	quota_mask.skip_pipeline_clear = false;
 	quota_mask.pipeline_clear_options = IPAHAL_FULL_PIPELINE_CLEAR;
-	quota_mask.offset = ipahal_get_reg_n_ofst(IPA_STAT_QUOTA_MASK_n,
-		ipa3_ctx->ee);
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+		quota_mask.offset = ipahal_get_reg_n_ofst(IPA_STAT_QUOTA_MASK_n,
+			ipa3_ctx->ee);
+	} else {
+		if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED) {
+			ret = -EFAULT;
+			goto destroy_coal_cmd;
+		}
+		quota_mask.offset = ipahal_get_ep_reg_n_offset(
+			IPA_STAT_QUOTA_MASK_EE_n_REG_k,
+			ipa3_ctx->ee,
+			ipa_ep_idx);
+	}
 	quota_mask.value = pipe_bitmask;
 	quota_mask.value_mask = ~0;
 	quota_mask_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_REGISTER_WRITE,

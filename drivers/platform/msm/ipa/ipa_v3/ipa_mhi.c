@@ -721,19 +721,25 @@ bool ipa3_has_open_aggr_frame(enum ipa_client_type client)
 	u32 aggr_state_active;
 	int ipa_ep_idx;
 
-	aggr_state_active = ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
-	IPA_MHI_DBG_LOW("IPA_STATE_AGGR_ACTIVE_OFST 0x%x\n", aggr_state_active);
-
 	ipa_ep_idx = ipa_get_ep_mapping(client);
 	if (ipa_ep_idx == -1) {
 		ipa_assert();
 		return false;
 	}
 
-	if ((1 << ipa_ep_idx) & aggr_state_active)
-		return true;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		aggr_state_active =
+			ipahal_read_ep_reg(IPA_STATE_AGGR_ACTIVE_n,
+				ipa_ep_idx);
+	} else {
+		aggr_state_active =
+			ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+	}
 
-	return false;
+	IPA_MHI_DBG_LOW("IPA_STATE_AGGR_ACTIVE_OFST 0x%x, ep_idx %d\n",
+		ipa_ep_idx, aggr_state_active);
+
+	return ipahal_test_ep_bit(aggr_state_active, ipa_ep_idx);
 }
 EXPORT_SYMBOL(ipa3_has_open_aggr_frame);
 
