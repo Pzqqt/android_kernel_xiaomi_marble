@@ -142,6 +142,7 @@
 #include "enet.h"
 #include <cdp_txrx_cmn_struct.h>
 #include <dp_txrx.h>
+#include <dp_rx_thread.h>
 #include "wlan_hdd_sysfs.h"
 #include "wlan_disa_ucfg_api.h"
 #include "wlan_disa_obj_mgmt_api.h"
@@ -9680,21 +9681,24 @@ static inline void hdd_low_tput_gro_flush_skip_handler(
 			struct hdd_context *hdd_ctx,
 			enum pld_bus_width_type next_vote_level)
 {
-	uint32_t bus_low_cnt_threshold =
-				hdd_ctx->config->bus_low_cnt_threshold;
-	struct hdd_adapter *adapter;
+	uint32_t threshold = hdd_ctx->config->bus_low_cnt_threshold;
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+	int i;
 
 	if (next_vote_level == PLD_BUS_WIDTH_LOW) {
-		if (++hdd_ctx->bus_low_vote_cnt >= bus_low_cnt_threshold)
+		if (++hdd_ctx->bus_low_vote_cnt >= threshold)
 			qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 1);
 	} else {
-		if (qdf_atomic_read(&hdd_ctx->low_tput_gro_enable)) {
+		if (qdf_atomic_read(&hdd_ctx->low_tput_gro_enable) &&
+		    hdd_ctx->enable_dp_rx_threads) {
 			/* flush pending rx pkts when LOW->IDLE */
 			hdd_debug("flush queued GRO pkts");
-			hdd_for_each_adapter(hdd_ctx, adapter)
-				hdd_rx_flush_packet_cbk(adapter,
-							adapter->vdev_id);
+			for (i = 0; i < cdp_get_num_rx_contexts(soc); i++) {
+				dp_rx_gro_flush_ind(soc, i,
+						    DP_RX_GRO_NORMAL_FLUSH);
+			}
 		}
+
 		hdd_ctx->bus_low_vote_cnt = 0;
 		qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 0);
 	}
