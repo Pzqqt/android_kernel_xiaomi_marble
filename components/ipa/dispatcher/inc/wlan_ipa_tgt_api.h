@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,4 +33,15 @@
  */
 QDF_STATUS tgt_ipa_uc_offload_enable_disable(struct wlan_objmgr_pdev *pdev,
 				struct ipa_uc_offload_control_params *req);
+
+/**
+ * tgt_ipa_intrabss_enable_disable() - send ipa intrabss control to target if
+ * @pdev: objmgr pdev object
+ * @req: ipa intrabss control request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_ipa_intrabss_enable_disable(struct wlan_objmgr_pdev *pdev,
+				struct ipa_intrabss_control_params *req);
 #endif /* _WLAN_IPA_TGT_API_H_ */
