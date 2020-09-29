@@ -6552,7 +6552,8 @@ void lim_add_he_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
 		     sizeof(add_sta_params->he_config));
 
 	add_sta_params->he_mcs_12_13_map =
-		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp;
+		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_80 |
+		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_160 << 8;
 
 	if (lim_is_he_6ghz_band(pe_session))
 		lim_update_he_6ghz_band_caps(mac_ctx,
@@ -6661,7 +6662,8 @@ void lim_intersect_sta_he_caps(struct mac_context *mac_ctx,
 	if (assoc_req->qcn_ie.present &&
 	    assoc_req->qcn_ie.he_mcs13_attr.present) {
 		sta_ds->he_mcs_12_13_map =
-		      assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp;
+		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_80 |
+		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_160 << 8;
 	} else {
 		return;
 	}
@@ -6833,7 +6835,8 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	if (assoc_rsp->qcn_ie.present &&
 	    assoc_rsp->qcn_ie.he_mcs13_attr.present) {
 		sta_ds->he_mcs_12_13_map =
-			assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp;
+		assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_80 |
+		assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_160 << 8;
 	} else {
 		return;
 	}

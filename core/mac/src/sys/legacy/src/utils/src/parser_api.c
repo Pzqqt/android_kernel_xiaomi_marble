@@ -1239,7 +1239,8 @@ static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
 
 	qcn_ie->present = 1;
 	qcn_ie->he_mcs13_attr.present = 1;
-	qcn_ie->he_mcs13_attr.he_mcs_12_13_supp = mcs_12_13_supp;
+	qcn_ie->he_mcs13_attr.he_mcs_12_13_supp_80 = mcs_12_13_supp & 0xFF;
+	qcn_ie->he_mcs13_attr.he_mcs_12_13_supp_160 = mcs_12_13_supp >> 8;
 }
 #else /* WLAN_FEATURE_11AX */
 static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
@@ -1259,9 +1260,9 @@ void populate_dot11f_qcn_ie(struct mac_context *mac,
 	    ((attr_id == QCN_IE_ATTR_ID_ALL) ||
 	    (attr_id == QCN_IE_ATTR_ID_VERSION))) {
 		qcn_ie->present = 1;
-		qcn_ie->version_attr.present = 1;
-		qcn_ie->version_attr.version = QCN_IE_VERSION_SUPPORTED;
-		qcn_ie->version_attr.sub_version = QCN_IE_SUBVERSION_SUPPORTED;
+		qcn_ie->qcn_version.present = 1;
+		qcn_ie->qcn_version.version = QCN_IE_VERSION_SUPPORTED;
+		qcn_ie->qcn_version.sub_version = QCN_IE_SUBVERSION_SUPPORTED;
 	}
 	if (mac->mlme_cfg->vht_caps.vht_cap_info.vht_mcs_10_11_supp) {
 		qcn_ie->present = 1;
