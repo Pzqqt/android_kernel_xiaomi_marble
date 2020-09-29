@@ -2562,6 +2562,39 @@ static void csr_dump_occupied_chan_list(struct csr_channel *occupied_ch)
 
 	qdf_mem_free(chan_buff);
 }
+
+/**
+ * csr_should_add_to_occupied_channels() - validates bands of active_ch_freq and
+ * curr node freq before addition of curr node freq to occupied channels
+ *
+ * @active_ch_freq: active channel frequency
+ * @cur_node_chan_freq: curr channel frequency
+ * @dual_sta_roam_active: dual sta roam active
+ *
+ * Return: True if active_ch_freq and cur_node_chan_freq belongs to same
+ * bands else false
+ **/
+static bool csr_should_add_to_occupied_channels(uint16_t active_ch_freq,
+						uint16_t cur_node_chan_freq,
+						bool dual_sta_roam_active)
+{
+	/* all channels can be added if dual STA roam is not active */
+	if (!dual_sta_roam_active)
+		return true;
+
+	/* when dual STA roam is active, channels must be in the same band */
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(active_ch_freq) &&
+	    WLAN_REG_IS_24GHZ_CH_FREQ(cur_node_chan_freq))
+		return true;
+
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(active_ch_freq) &&
+	    !WLAN_REG_IS_24GHZ_CH_FREQ(cur_node_chan_freq))
+		return true;
+
+	/* not in same band */
+	return false;
+}
+
 void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 				     uint8_t sessionId)
 {
@@ -2571,6 +2604,10 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	qdf_list_node_t *next_lst = NULL;
 	struct scan_cache_node *cur_node = NULL;
 	struct scan_filter *filter;
+	bool dual_sta_roam_active;
+	struct wlan_channel *chan;
+	struct wlan_objmgr_vdev *vdev;
+
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[sessionId];
 	tCsrRoamConnectedProfile *profile = NULL;
@@ -2632,33 +2669,53 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	if (list)
 		sme_debug("num_entries %d", qdf_list_size(list));
 	if (!list || (list && !qdf_list_size(list))) {
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
-		qdf_mem_free(filter);
-		if (list)
-			ucfg_scan_purge_results(list);
-		csr_dump_occupied_chan_list(
-			&mac_ctx->scan.occupiedChannels[sessionId]);
-		return;
+		goto err;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, sessionId,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("vdev null");
+		goto err;
+	}
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+	if (!chan) {
+		sme_err("no active channel");
+		goto err;
+	}
+
+	dual_sta_roam_active =
+			wlan_mlme_get_dual_sta_roaming_enabled(mac_ctx->psoc);
 
 	qdf_list_peek_front(list, &cur_lst);
 	while (cur_lst) {
 		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
 					    node);
-		csr_add_to_occupied_channels(
-				mac_ctx, cur_node->entry->channel.chan_freq,
-				sessionId,
-				&mac_ctx->scan.occupiedChannels[sessionId],
-				true);
+
+		if (csr_should_add_to_occupied_channels
+					(chan->ch_freq,
+					 cur_node->entry->channel.chan_freq,
+					 dual_sta_roam_active))
+
+			csr_add_to_occupied_channels
+				   (mac_ctx, cur_node->entry->channel.chan_freq,
+				    sessionId,
+				    &mac_ctx->scan.occupiedChannels[sessionId],
+				    true);
+
 		qdf_list_peek_next(list, cur_lst, &next_lst);
 		cur_lst = next_lst;
 		next_lst = NULL;
 	}
+err:
 	csr_dump_occupied_chan_list(&mac_ctx->scan.occupiedChannels[sessionId]);
-
 	qdf_mem_free(filter);
-	ucfg_scan_purge_results(list);
+	if (list)
+		ucfg_scan_purge_results(list);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+	return;
 }
 
 /**
