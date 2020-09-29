@@ -37,8 +37,7 @@
  * @WLAN_CM_SM_EV_CONNECT_START:          Connect start process initiate
  * @WLAN_CM_SM_EV_CONNECT_ACTIVE:         Connect request is activated
  * @WLAN_CM_SM_EV_CONNECT_SUCCESS:        Connect success
- * @WLAN_CM_SM_EV_CANDIDATE_SELECT_IND_SUCCESS: Mlme resp for mlme active cmd
- * req
+ * @WLAN_CM_SM_EV_BSS_SELECT_IND_SUCCESS: Mlme resp for BSS select indication
  * @WLAN_CM_SM_EV_BSS_CREATE_PEER_SUCCESS: BSS peer create success
  * @WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE: Get next candidate for connection
  * @WLAN_CM_SM_EV_CONNECT_FAILURE:        Connect failed for all candidate
@@ -70,7 +69,7 @@ enum wlan_cm_sm_evt {
 	WLAN_CM_SM_EV_CONNECT_START = 6,
 	WLAN_CM_SM_EV_CONNECT_ACTIVE = 7,
 	WLAN_CM_SM_EV_CONNECT_SUCCESS = 8,
-	WLAN_CM_SM_EV_CANDIDATE_SELECT_IND_SUCCESS = 9,
+	WLAN_CM_SM_EV_BSS_SELECT_IND_SUCCESS = 9,
 	WLAN_CM_SM_EV_BSS_CREATE_PEER_SUCCESS = 10,
 	WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE = 11,
 	WLAN_CM_SM_EV_CONNECT_FAILURE = 12,

@@ -35,10 +35,10 @@ QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 	return cm_disconnect_start_req(vdev, req);
 }
 
-QDF_STATUS wlan_cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
-					    QDF_STATUS status)
+QDF_STATUS wlan_cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
+				      QDF_STATUS status)
 {
-	return cm_candidate_select_ind_rsp(vdev, status);
+	return cm_bss_select_ind_rsp(vdev, status);
 }
 
 QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,

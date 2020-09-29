@@ -47,15 +47,15 @@ QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_disconnect_req *req);
 
 /**
- * wlan_cm_candidate_select_ind_rsp() - Connection manager resp for candidate
+ * wlan_cm_bss_select_ind_rsp() - Connection manager resp for bss
  * select indication
  * @vdev: vdev pointer
  * @status: Status
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
-					    QDF_STATUS status);
+QDF_STATUS wlan_cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
+				      QDF_STATUS status);
 
 /**
  * wlan_cm_bss_peer_create_rsp() - Connection manager bss peer create response

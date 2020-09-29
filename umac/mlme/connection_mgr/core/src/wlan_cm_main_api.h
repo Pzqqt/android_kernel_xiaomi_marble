@@ -104,16 +104,16 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 				 struct wlan_cm_connect_rsp *connect_resp);
 
 /**
- * cm_peer_create_on_candidate_select_ind_resp() - Called to create peer
- * if peer select inidication's resp was success
+ * cm_peer_create_on_bss_select_ind_resp() - Called to create peer
+ * if bss select inidication's resp was success
  * @cm_ctx: connection manager context
  * @cm_id: Connection mgr ID assigned to this connect request.
  *
  * Return: QDF status
  */
 QDF_STATUS
-cm_peer_create_on_candidate_select_ind_resp(struct cnx_mgr *cm_ctx,
-					    wlan_cm_id *cm_id);
+cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx,
+				      wlan_cm_id *cm_id);
 
 /**
  * cm_resume_connect_after_peer_create() - Called after bss create rsp
@@ -126,15 +126,15 @@ QDF_STATUS
 cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
 
 /**
- * cm_candidate_select_ind_rsp() - Connection manager resp for candidate
+ * cm_bss_select_ind_rsp() - Connection manager resp for bss
  * select indication
  * @vdev: vdev pointer
  * @status: Status
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
-				       QDF_STATUS status);
+QDF_STATUS cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
+				 QDF_STATUS status);
 
 /**
  * cm_bss_peer_create_rsp() - handle bss peer create response

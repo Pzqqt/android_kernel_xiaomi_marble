@@ -706,8 +706,7 @@ static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 }
 
 static QDF_STATUS
-cm_send_candidate_select_indication(struct cnx_mgr *cm_ctx,
-				    struct cm_connect_req *req)
+cm_send_bss_select_ind(struct cnx_mgr *cm_ctx, struct cm_connect_req *req)
 {
 	QDF_STATUS status;
 	struct wlan_cm_vdev_connect_req vdev_req;
@@ -717,7 +716,7 @@ cm_send_candidate_select_indication(struct cnx_mgr *cm_ctx,
 	vdev_req.cm_id = req->cm_id;
 	vdev_req.bss = req->cur_candidate;
 
-	status = mlme_cm_candidate_select_ind(cm_ctx->vdev, &vdev_req);
+	status = mlme_cm_bss_select_ind(cm_ctx->vdev, &vdev_req);
 	if (QDF_IS_STATUS_SUCCESS(status) ||
 	    status == QDF_STATUS_E_NOSUPPORT)
 		return status;
@@ -729,7 +728,7 @@ cm_send_candidate_select_indication(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_E_FAILURE;
 
 	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, req->cm_id,
-					CM_CANDIDATE_SELECT_IND_FAILED);
+					CM_BSS_SELECT_IND_FAILED);
 	cm_sm_deliver_event_sync(cm_ctx,
 				 WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
 				 sizeof(*resp), resp);
@@ -756,8 +755,7 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 
 	mlme_cm_osif_failed_candidate_ind(cm_ctx->vdev, resp);
 
-	status = cm_send_candidate_select_indication(cm_ctx,
-						     &cm_req->connect_req);
+	status = cm_send_bss_select_ind(cm_ctx, &cm_req->connect_req);
 	/*
 	 * If candidate select indication is not supported continue with bss
 	 * peer create, else peer will be created after resp.
@@ -801,8 +799,7 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_err;
 
-	status = cm_send_candidate_select_indication(cm_ctx,
-						     &cm_req->connect_req);
+	status = cm_send_bss_select_ind(cm_ctx, &cm_req->connect_req);
 	/*
 	 * If candidate select indication is not supported continue with bss
 	 * peer create, else peer will be created after resp.
@@ -820,8 +817,7 @@ connect_err:
 }
 
 QDF_STATUS
-cm_peer_create_on_candidate_select_ind_resp(struct cnx_mgr *cm_ctx,
-					    wlan_cm_id *cm_id)
+cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct cm_req *cm_req;
 
@@ -1018,8 +1014,8 @@ post_err:
 	return qdf_status;
 }
 
-QDF_STATUS cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
-				       QDF_STATUS status)
+QDF_STATUS cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
+				 QDF_STATUS status)
 {
 	struct cnx_mgr *cm_ctx;
 	QDF_STATUS qdf_status;
@@ -1044,7 +1040,7 @@ QDF_STATUS cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		qdf_status =
 			cm_sm_deliver_event(vdev,
-				WLAN_CM_SM_EV_CANDIDATE_SELECT_IND_SUCCESS,
+				WLAN_CM_SM_EV_BSS_SELECT_IND_SUCCESS,
 				sizeof(wlan_cm_id), &cm_id);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			return qdf_status;
@@ -1060,7 +1056,7 @@ QDF_STATUS cm_candidate_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 
 	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, cm_id,
-					CM_CANDIDATE_SELECT_IND_FAILED);
+					CM_BSS_SELECT_IND_FAILED);
 	qdf_status =
 		cm_sm_deliver_event(vdev,
 				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,

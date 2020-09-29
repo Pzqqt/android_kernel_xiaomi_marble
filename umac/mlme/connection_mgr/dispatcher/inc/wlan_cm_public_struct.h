@@ -207,7 +207,7 @@ struct wlan_cm_vdev_discon_req {
  * enum wlan_cm_connect_fail_reason: connection manager connect fail reason
  * @CM_NO_CANDIDATE_FOUND: No candidate found
  * @CM_ABORT_DUE_TO_NEW_REQ_RECVD: Aborted as new command is received and
- * @CM_CANDIDATE_SELECT_IND_FAILED: Failed candidate select indication
+ * @CM_BSS_SELECT_IND_FAILED: Failed BSS select indication
  * State machine is not able to handle as state has changed due to new command.
  * @CM_PEER_CREATE_FAILED: peer create failed
  * @CM_JOIN_FAILED: Failed in joining state
@@ -226,7 +226,7 @@ struct wlan_cm_vdev_discon_req {
 enum wlan_cm_connect_fail_reason {
 	CM_NO_CANDIDATE_FOUND,
 	CM_ABORT_DUE_TO_NEW_REQ_RECVD,
-	CM_CANDIDATE_SELECT_IND_FAILED,
+	CM_BSS_SELECT_IND_FAILED,
 	CM_PEER_CREATE_FAILED,
 	CM_JOIN_FAILED,
 	CM_JOIN_TIMEOUT,
