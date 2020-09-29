@@ -934,27 +934,27 @@ static struct CE_pipe_config target_ce_config_wlan_adrastea[] = {
 #define QCN_9100_CE_COUNT 6
 static struct CE_attr host_ce_config_wlan_qcn9100[] = {
 	/* host->target HTC control and raw streams */
-	{/*CE0*/ (EPPING_CE_FLAGS_POLL), 0, 16, 2048, 0, NULL,},
+	{/*CE0*/ (CE_ATTR_FLAGS), 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
-	{/*CE1*/ (EPPING_CE_FLAGS_POLL), 0, 0,  2048,
+	{/*CE1*/ (CE_ATTR_FLAGS), 0, 0,  2048,
 		512, NULL,},
 	/* target->host WMI */
-	{/*CE2*/ (EPPING_CE_FLAGS_POLL), 0, 0,  2048,
+	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  2048,
 		128, NULL,},
 	/* host->target WMI */
-	{/*CE3*/ (EPPING_CE_FLAGS_POLL), 0, 32, 2048, 0, NULL,},
+	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
-	{/*CE4*/ (EPPING_CE_FLAGS_POLL), 0,
+	{/*CE4*/ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
-	{/*CE5*/ (EPPING_CE_FLAGS_POLL), 0, 0, 2048,
+	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
 		512, NULL,},
 	/* Target autonomous HIF_memcpy */
-	{/*CE6*/ EPPING_CE_FLAGS_POLL, 0, 0, 0, 0, NULL,},
+	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* host->target WMI (mac1) */
-	{/*CE7*/ EPPING_CE_FLAGS_POLL, 0, 0, 0, 0, NULL,},
+	{/*CE7*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* Reserved for target */
-	{/*CE8*/ EPPING_CE_FLAGS_POLL, 0, 0, 0, 0, NULL,},
+	{/*CE8*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 

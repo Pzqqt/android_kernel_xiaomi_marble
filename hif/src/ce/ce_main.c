@@ -3312,6 +3312,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		hif_state->target_ce_config_sz =
 					sizeof(target_ce_config_wlan_qcn9100);
 		scn->ce_count = QCN_9100_CE_COUNT;
+		scn->disable_wake_irq = 1;
 		break;
 	case TARGET_TYPE_QCA5018:
 		hif_state->host_ce_config = host_ce_config_wlan_qca5018;

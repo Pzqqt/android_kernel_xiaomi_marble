@@ -110,11 +110,19 @@ static inline int hif_snoc_get_context_size(void)
 
 #ifdef HIF_PCI
 QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc);
+QDF_STATUS hif_update_irq_ops_with_pci(struct hif_softc *hif_sc);
 int hif_pci_get_context_size(void);
 #else
 static inline QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 {
 	hif_warn("not supported");
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS hif_update_irq_ops_with_pci(struct hif_softc *hif_sc)
+{
+	HIF_ERROR("%s: not supported", __func__);
 	return QDF_STATUS_E_NOSUPPORT;
 }
 /**

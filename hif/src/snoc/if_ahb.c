@@ -565,6 +565,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	if (target_type == TARGET_TYPE_QCN9100) {
 		hif_ahb_get_soc_info_pld(sc, dev);
+		hif_update_irq_ops_with_pci(ol_sc);
 	} else {
 		status = pfrm_platform_get_resource(&pdev->dev,
 						    (struct qdf_pfm_hndl *)pdev,
