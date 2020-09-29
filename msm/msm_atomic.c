@@ -142,50 +142,16 @@ static void msm_atomic_wait_for_commit_done(
 	}
 }
 
-static bool
-msm_disable_outputs_for_clone_conn(struct drm_device *dev,
-		struct drm_atomic_state *old_state)
-{
-	struct drm_connector *connector;
-	struct drm_connector_state *old_conn_state;
-	struct drm_crtc_state *old_crtc_state;
-	struct drm_crtc *crtc = NULL;
-	int i;
-	bool clone_state = false;
-
-	for_each_old_connector_in_state(old_state, connector,
-			old_conn_state, i) {
-
-		if (!old_conn_state->crtc)
-			continue;
-
-		old_crtc_state = drm_atomic_get_old_crtc_state(old_state,
-							old_conn_state->crtc);
-		if (!old_crtc_state->active ||
-		    !old_conn_state->crtc->state->connectors_changed ||
-		    (!_msm_seamless_for_conn(connector, old_conn_state,
-				 false) && (connector->connector_type !=
-						DRM_MODE_CONNECTOR_VIRTUAL)))
-			return false;
-
-		if (crtc)
-			clone_state = (crtc == old_conn_state->crtc)
-				? true : false;
-
-		crtc = old_conn_state->crtc;
-	}
-
-	return clone_state;
-}
-
 static void
-msm_disable_connector_outputs(struct drm_device *dev,
-		struct drm_atomic_state *old_state)
+msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 {
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state;
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *old_crtc_state;
 	int i;
 
+	SDE_ATRACE_BEGIN("msm_disable");
 	for_each_old_connector_in_state(old_state, connector,
 			old_conn_state, i) {
 		const struct drm_encoder_helper_funcs *funcs;
@@ -238,18 +204,6 @@ msm_disable_connector_outputs(struct drm_device *dev,
 
 		drm_bridge_post_disable(encoder->bridge);
 	}
-}
-
-static void
-msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
-{
-	struct drm_crtc *crtc;
-	struct drm_crtc_state *old_crtc_state;
-	int i;
-
-	SDE_ATRACE_BEGIN("msm_disable");
-	if (!msm_disable_outputs_for_clone_conn(dev, old_state))
-		msm_disable_connector_outputs(dev, old_state);
 
 	for_each_old_crtc_in_state(old_state, crtc, old_crtc_state, i) {
 		const struct drm_crtc_helper_funcs *funcs;
@@ -567,9 +521,6 @@ static void complete_commit(struct msm_commit *c)
 	drm_atomic_helper_cleanup_planes(dev, state);
 
 	kms->funcs->complete_commit(kms, state);
-
-	if (msm_disable_outputs_for_clone_conn(dev, state))
-		msm_disable_connector_outputs(dev, state);
 
 	drm_atomic_state_put(state);
 
