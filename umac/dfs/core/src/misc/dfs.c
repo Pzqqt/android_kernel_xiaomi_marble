@@ -206,6 +206,17 @@ int dfs_create_object(struct wlan_dfs **dfs)
 	return 0;
 }
 
+#if defined(QCA_SUPPORT_DFS_CHAN_POSTNOL)
+static void dfs_postnol_attach(struct wlan_dfs *dfs)
+{
+	dfs->dfs_chan_postnol_mode = CH_WIDTH_INVALID;
+}
+#else
+static inline void dfs_postnol_attach(struct wlan_dfs *dfs)
+{
+}
+#endif
+
 int dfs_attach(struct wlan_dfs *dfs)
 {
 	int ret;
@@ -229,6 +240,7 @@ int dfs_attach(struct wlan_dfs *dfs)
 	dfs_cac_timer_attach(dfs);
 	dfs_zero_cac_attach(dfs);
 	dfs_nol_attach(dfs);
+	dfs_postnol_attach(dfs);
 
 	/*
 	 * Init of timer ,dfs_testtimer_task is required by both partial
