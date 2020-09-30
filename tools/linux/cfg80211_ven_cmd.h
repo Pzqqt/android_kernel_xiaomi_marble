@@ -781,6 +781,7 @@ enum {
 	IEEE80211_PARAM_VDEV_REF_LEAK_TEST          = 721,
 #endif
 	IEEE80211_PARAM_DISABLE_INACT_PROBING      = 722, /* Disable FW inactivity Probing behavior */
+	IEEE80211_PARAM_PRB_RETRY                  = 723,   /* Set/Get probe-response frame retry limit */
 };
 
 enum {
@@ -1496,6 +1497,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_oce_wan_mtr",       IEEE80211_PARAM_OCE_WAN_METRICS, GET_PARAM, 0},
 	{"prb_rate",            IEEE80211_PARAM_PRB_RATE, SET_PARAM, 1},
 	{"g_prb_rate",          IEEE80211_PARAM_PRB_RATE, GET_PARAM, 0},
+	{"prb_retry",           IEEE80211_PARAM_PRB_RETRY, SET_PARAM, 1},
+	{"g_prb_retry",         IEEE80211_PARAM_PRB_RETRY, GET_PARAM, 0},
 	{"oce_hlp",             IEEE80211_PARAM_OCE_HLP, SET_PARAM, 1},
 	{"g_oce_hlp",           IEEE80211_PARAM_OCE_HLP, GET_PARAM, 0},
 	{"nbr_scan_prd",        IEEE80211_PARAM_NBR_SCAN_PERIOD, SET_PARAM, 1},
