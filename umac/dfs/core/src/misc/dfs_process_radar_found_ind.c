@@ -1255,11 +1255,19 @@ bool dfs_is_radarsource_agile(struct wlan_dfs *dfs,
 			      struct radar_found_info *radar_found)
 {
 	bool is_radar_from_agile_dfs =
+	    (dfs_is_agile_precac_enabled(dfs) ||
+	     dfs_is_agile_rcac_enabled(dfs)) &&
+	     dfs_is_precac_timer_running(dfs) &&
 	    (radar_found->detector_id == dfs_get_agile_detector_id(dfs));
 	bool is_radar_from_zero_wait_dfs =
 	    (dfs_is_legacy_precac_enabled(dfs) &&
 	     dfs_is_precac_timer_running(dfs) &&
 	     (radar_found->segment_id == SEG_ID_SECONDARY));
+
+	dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE,
+		  "radar on PreCAC segment: ADFS:%d Zero Wait DFS:%d",
+		  is_radar_from_agile_dfs,
+		  is_radar_from_zero_wait_dfs);
 
 	return (is_radar_from_agile_dfs || is_radar_from_zero_wait_dfs);
 }
