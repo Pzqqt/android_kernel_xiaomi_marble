@@ -1594,6 +1594,16 @@ static int wlan_hdd_runtime_resume(struct device *dev)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
+	/*
+	 * In__hdd_soc_remove, runtime_sync_resume is called before setting
+	 * unload_in_progress flag. wlan_hdd_validate_context will cause
+	 * resume fail, if driver load/unload in-progress, so not doing
+	 * wlan_hdd_validate_context, have only SSR in progress check.
+	 */
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return 0;
+	}
 	if (cds_is_driver_recovering()) {
 		hdd_debug("Recovery in progress, state:0x%x",
 			  cds_get_driver_state());
