@@ -239,10 +239,10 @@ static void dp_mst_sim_destroy_port(struct kref *ref)
 		kfree(port->cached_edid);
 
 	if (port->connector) {
-		mutex_lock(&mgr->destroy_connector_lock);
-		list_add(&port->next, &mgr->destroy_connector_list);
-		mutex_unlock(&mgr->destroy_connector_lock);
-		schedule_work(&mgr->destroy_connector_work);
+		mutex_lock(&mgr->delayed_destroy_lock);
+		list_add(&port->next, &mgr->destroy_port_list);
+		mutex_unlock(&mgr->delayed_destroy_lock);
+		schedule_work(&mgr->delayed_destroy_work);
 		return;
 	}
 
