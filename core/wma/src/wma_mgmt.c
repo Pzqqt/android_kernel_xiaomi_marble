@@ -798,10 +798,12 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 			    uint8_t *destmac)
 {
 	struct sta_keep_alive_params params = { 0 };
+	struct wma_txrx_node *intr;
 
 	if (wma_validate_handle(wma))
 		return;
 
+	intr = &wma->interfaces[vdev_id];
 	if (timeperiod > cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD)) {
 		wmi_err("Invalid period %d Max limit %d", timeperiod,
 			 cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD));
@@ -811,6 +813,11 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 	params.vdev_id = vdev_id;
 	params.method = method;
 	params.timeperiod = timeperiod;
+	if (intr) {
+		if (intr->bss_max_idle_period)
+			params.timeperiod = intr->bss_max_idle_period;
+	}
+
 	if (hostv4addr)
 		qdf_mem_copy(params.hostv4addr, hostv4addr, QDF_IPV4_ADDR_SIZE);
 	if (destv4addr)

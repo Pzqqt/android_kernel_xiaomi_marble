@@ -8649,6 +8649,47 @@ uint32_t dot11f_get_packed_ie_bss_color_change(
 }; /* End extern "C". */
 #endif /* C++ */
 
+/* EID 90 (0x5a) */
+typedef struct sDot11fIEbss_max_idle_period {
+	uint8_t             present;
+	uint16_t            max_idle_period;
+	uint8_t prot_keep_alive_reqd:1;
+	uint8_t             reserved:7;
+} tDot11fIEbss_max_idle_period;
+
+#define DOT11F_EID_BSS_MAX_IDLE_PERIOD (90)
+
+/* N.B. These #defines do *not* include the EID & length */
+#define DOT11F_IE_BSS_MAX_IDLE_PERIOD_MIN_LEN (3)
+
+#define DOT11F_IE_BSS_MAX_IDLE_PERIOD_MAX_LEN (3)
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* C++ */
+__must_check uint32_t dot11f_unpack_ie_bss_max_idle_period(
+	tpAniSirGlobal,
+	uint8_t *,
+	uint8_t,
+	tDot11fIEbss_max_idle_period*,
+	bool);
+
+uint32_t dot11f_pack_ie_bss_max_idle_period(
+	tpAniSirGlobal,
+	tDot11fIEbss_max_idle_period *,
+	uint8_t *,
+	uint32_t,
+	uint32_t*);
+
+uint32_t dot11f_get_packed_ie_bss_max_idle_period(
+	tpAniSirGlobal,
+	tDot11fIEbss_max_idle_period *,
+	uint32_t*);
+
+#ifdef __cplusplus
+}; /* End extern "C". */
+#endif /* C++ */
+
 /* EID 255 (0xff) Extended EID 88 (0x58) */
 typedef struct sDot11fIEdecriptor_element {
 	uint8_t                     present;
@@ -10035,6 +10076,7 @@ typedef struct sDot11fAssocRequest{
 	tDot11fIEWAPIOpaque                    WAPIOpaque;
 	tDot11fIEWAPI                          WAPI;
 	tDot11fIERRMEnabledCap                 RRMEnabledCap;
+	tDot11fIEbss_max_idle_period           bss_max_idle_period;
 	tDot11fIEQosMapSet                     QosMapSet;
 	tDot11fIEExtCap                        ExtCap;
 	tDot11fIEVHTCaps                       VHTCaps;
@@ -10095,6 +10137,7 @@ typedef struct sDot11fAssocResponse{
 	tDot11fIEFTInfo                       FTInfo;
 	uint16_t                              num_RICDataDesc;
 	tDot11fIERICDataDesc                  RICDataDesc[2];
+	tDot11fIEbss_max_idle_period          bss_max_idle_period;
 	tDot11fIEWPA                          WPA;
 	tDot11fIETimeoutInterval              TimeoutInterval;
 	tDot11fIEHTCaps                       HTCaps;
@@ -10985,6 +11028,7 @@ typedef struct sDot11fReAssocRequest{
 	tDot11fIEFTInfo                      FTInfo;
 	uint16_t                             num_RICDataDesc;
 	tDot11fIERICDataDesc                 RICDataDesc[2];
+	tDot11fIEbss_max_idle_period         bss_max_idle_period;
 	tDot11fIESuppOperatingClasses        SuppOperatingClasses;
 	tDot11fIEWPAOpaque                   WPAOpaque;
 	tDot11fIEHTCaps                      HTCaps;
@@ -11032,45 +11076,46 @@ uint32_t dot11f_get_packed_re_assoc_request_size(tpAniSirGlobal pCtx,
 #endif /* C++ */
 
 typedef struct sDot11fReAssocResponse{
-	tDot11fFfCapabilities              Capabilities;
-	tDot11fFfStatus                    Status;
-	tDot11fFfAID                       AID;
-	tDot11fIESuppRates                 SuppRates;
-	tDot11fIEExtSuppRates              ExtSuppRates;
-	tDot11fIEEDCAParamSet              EDCAParamSet;
-	tDot11fIERCPIIE                    RCPIIE;
-	tDot11fIERSNIIE                    RSNIIE;
-	tDot11fIERRMEnabledCap             RRMEnabledCap;
-	tDot11fIERSNOpaque                 RSNOpaque;
-	tDot11fIEMobilityDomain            MobilityDomain;
-	tDot11fIEFTInfo                    FTInfo;
-	uint16_t                           num_RICDataDesc;
-	tDot11fIERICDataDesc               RICDataDesc[2];
-	tDot11fIEWPA                       WPA;
-	tDot11fIETimeoutInterval           TimeoutInterval;
-	tDot11fIEHTCaps                    HTCaps;
-	tDot11fIEHTInfo                    HTInfo;
-	tDot11fIEWMMParams                 WMMParams;
-	tDot11fIEESERadMgmtCap             ESERadMgmtCap;
-	tDot11fIEESETrafStrmMet            ESETrafStrmMet;
-	tDot11fIEESETxmitPower             ESETxmitPower;
-	uint16_t                           num_WMMTSPEC;
-	tDot11fIEWMMTSPEC                  WMMTSPEC[4];
-	tDot11fIEESETrafStrmRateSet        ESETrafStrmRateSet;
-	tDot11fIEWscReassocRes             WscReassocRes;
-	tDot11fIEP2PAssocRes               P2PAssocRes;
-	tDot11fIEVHTCaps                   VHTCaps;
-	tDot11fIEVHTOperation              VHTOperation;
-	tDot11fIEExtCap                    ExtCap;
-	tDot11fIEOBSSScanParameters        OBSSScanParameters;
-	tDot11fIEQosMapSet                 QosMapSet;
-	tDot11fIEvendor_vht_ie             vendor_vht_ie;
-	tDot11fIEhe_cap                    he_cap;
-	tDot11fIEhe_op                     he_op;
-	tDot11fIEhe_6ghz_band_cap          he_6ghz_band_cap;
-	tDot11fIEbss_color_change          bss_color_change;
-	tDot11fIEmu_edca_param_set         mu_edca_param_set;
-	tDot11fIEMBO_IE                    MBO_IE;
+	tDot11fFfCapabilities               Capabilities;
+	tDot11fFfStatus                     Status;
+	tDot11fFfAID                        AID;
+	tDot11fIESuppRates                  SuppRates;
+	tDot11fIEExtSuppRates               ExtSuppRates;
+	tDot11fIEEDCAParamSet               EDCAParamSet;
+	tDot11fIERCPIIE                     RCPIIE;
+	tDot11fIERSNIIE                     RSNIIE;
+	tDot11fIERRMEnabledCap              RRMEnabledCap;
+	tDot11fIERSNOpaque                  RSNOpaque;
+	tDot11fIEMobilityDomain             MobilityDomain;
+	tDot11fIEFTInfo                     FTInfo;
+	uint16_t                            num_RICDataDesc;
+	tDot11fIERICDataDesc                RICDataDesc[2];
+	tDot11fIEbss_max_idle_period        bss_max_idle_period;
+	tDot11fIEWPA                        WPA;
+	tDot11fIETimeoutInterval            TimeoutInterval;
+	tDot11fIEHTCaps                     HTCaps;
+	tDot11fIEHTInfo                     HTInfo;
+	tDot11fIEWMMParams                  WMMParams;
+	tDot11fIEESERadMgmtCap              ESERadMgmtCap;
+	tDot11fIEESETrafStrmMet             ESETrafStrmMet;
+	tDot11fIEESETxmitPower              ESETxmitPower;
+	uint16_t                            num_WMMTSPEC;
+	tDot11fIEWMMTSPEC                   WMMTSPEC[4];
+	tDot11fIEESETrafStrmRateSet         ESETrafStrmRateSet;
+	tDot11fIEWscReassocRes              WscReassocRes;
+	tDot11fIEP2PAssocRes                P2PAssocRes;
+	tDot11fIEVHTCaps                    VHTCaps;
+	tDot11fIEVHTOperation               VHTOperation;
+	tDot11fIEExtCap                     ExtCap;
+	tDot11fIEOBSSScanParameters         OBSSScanParameters;
+	tDot11fIEQosMapSet                  QosMapSet;
+	tDot11fIEvendor_vht_ie              vendor_vht_ie;
+	tDot11fIEhe_cap                     he_cap;
+	tDot11fIEhe_op                      he_op;
+	tDot11fIEhe_6ghz_band_cap           he_6ghz_band_cap;
+	tDot11fIEbss_color_change           bss_color_change;
+	tDot11fIEmu_edca_param_set          mu_edca_param_set;
+	tDot11fIEMBO_IE                     MBO_IE;
 } tDot11fReAssocResponse;
 
 #define DOT11F_REASSOCRESPONSE (27)

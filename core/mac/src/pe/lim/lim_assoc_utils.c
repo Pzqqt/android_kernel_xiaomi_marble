@@ -3492,6 +3492,14 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
 	}
+	if (pAssocRsp->bss_max_idle_period.present) {
+		pAddBssParams->bss_max_idle_period =
+			pAssocRsp->bss_max_idle_period.max_idle_period;
+		pe_debug("bss_max_idle_period %d",
+			 pAddBssParams->bss_max_idle_period);
+	} else {
+		pAddBssParams->bss_max_idle_period = 0;
+	}
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP

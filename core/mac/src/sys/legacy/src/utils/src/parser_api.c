@@ -2866,6 +2866,11 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 	if (ar->qcn_ie.present)
 		qdf_mem_copy(&pAssocReq->qcn_ie, &ar->qcn_ie,
 			     sizeof(tDot11fIEqcn_ie));
+	if (ar->bss_max_idle_period.present) {
+		qdf_mem_copy(&pAssocReq->bss_max_idle_period,
+			     &ar->bss_max_idle_period,
+			     sizeof(tDot11fIEbss_max_idle_period));
+	}
 	if (ar->he_cap.present) {
 		qdf_mem_copy(&pAssocReq->he_cap, &ar->he_cap,
 			     sizeof(tDot11fIEhe_cap));
@@ -3305,6 +3310,13 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 				sizeof(struct ese_tsm_ie));
 	}
 #endif
+	if (ar->bss_max_idle_period.present) {
+		qdf_mem_copy(&pAssocRsp->bss_max_idle_period,
+			     &ar->bss_max_idle_period,
+			     sizeof(tDot11fIEbss_max_idle_period));
+		pe_debug("Rcvd Assoc Rsp with BSS max idle period %d",
+			 pAssocRsp->bss_max_idle_period.max_idle_period);
+	}
 
 	if (ar->VHTCaps.present) {
 		qdf_mem_copy(&pAssocRsp->VHTCaps, &ar->VHTCaps,
