@@ -2481,9 +2481,7 @@ static void wmi_control_diag_rx(void *ctx, HTC_PACKET *htc_packet)
 
 	wmi_handle = soc->wmi_pdev[0];
 	if (!wmi_handle) {
-		WMI_LOGE
-		("unable to get wmi_handle for diag event end point id:%d\n",
-		 htc_packet->Endpoint);
+		wmi_err("unable to get wmi_handle for diag event end point id:%d", htc_packet->Endpoint);
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
@@ -3298,24 +3296,12 @@ wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 }
 
 #ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7
-/**
- * wmi_diag_connect_pdev_htc_service()
- * WMI DIAG API to get connect to HTC service
- *
- * @wmi_handle: handle to WMI.
- * @htc_handle: handle to HTC
- *
- * @Return: QDF_STATUS
- */
 QDF_STATUS wmi_diag_connect_pdev_htc_service(struct wmi_unified *wmi_handle,
 					     HTC_HANDLE htc_handle)
 {
 	QDF_STATUS status;
-	struct htc_service_connect_resp response;
-	struct htc_service_connect_req connect;
-
-	OS_MEMZERO(&connect, sizeof(connect));
-	OS_MEMZERO(&response, sizeof(response));
+	struct htc_service_connect_resp response = {0};
+	struct htc_service_connect_req connect = {0};
 
 	/* meta data is unused for now */
 	connect.pMetaData = NULL;
