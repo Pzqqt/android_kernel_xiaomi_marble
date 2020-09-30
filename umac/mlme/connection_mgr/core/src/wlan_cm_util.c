@@ -208,6 +208,141 @@ struct cm_req *cm_get_req_by_cm_id_fl(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
 	return NULL;
 }
 
+/**
+ * cm_fill_connect_resp_from_req() - Fill connect resp from connect request
+ * @resp: cm connect response
+ * @cm_req: cm request
+ *
+ * Context: Can be called from APIs holding cm request list lock
+ *
+ * Return: void
+ */
+static void
+cm_fill_connect_resp_from_req(struct wlan_cm_connect_rsp *resp,
+			      struct cm_req *cm_req)
+{
+	struct scan_cache_node *candidate;
+	struct wlan_cm_connect_req *req;
+
+	req = &cm_req->connect_req.req;
+	candidate = cm_req->connect_req.cur_candidate;
+	if (candidate)
+		qdf_copy_macaddr(&resp->bssid, &candidate->entry->bssid);
+	else if (!qdf_is_macaddr_zero(&req->bssid))
+		qdf_copy_macaddr(&resp->bssid, &req->bssid);
+	else
+		qdf_copy_macaddr(&resp->bssid, &req->bssid_hint);
+
+	if (candidate)
+		resp->freq = candidate->entry->channel.chan_freq;
+	else
+		resp->freq = req->chan_freq;
+
+	resp->ssid = req->ssid;
+}
+
+/**
+ * cm_connect_inform_os_if_connect_complete() - Fill fail connect resp from req
+ * and indicate same to osif
+ * @cm_ctx: connection manager context
+ * @cm_req: cm request
+ *
+ * Context: Can be called from APIs holding cm request list lock
+ *
+ * Return: void
+ */
+static void
+cm_connect_inform_os_if_connect_complete(struct cnx_mgr *cm_ctx,
+					 struct cm_req *cm_req)
+{
+	struct wlan_cm_connect_rsp *resp;
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		return;
+
+	resp->connect_status = QDF_STATUS_E_FAILURE;
+	resp->cm_id = cm_req->cm_id;
+	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	resp->reason = CM_ABORT_DUE_TO_NEW_REQ_RECVD;
+
+	/* Get bssid and ssid and freq for the cm id from the req list */
+	cm_fill_connect_resp_from_req(resp, cm_req);
+
+	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
+	qdf_mem_free(resp);
+}
+
+static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
+					     wlan_cm_id cm_id)
+{
+	struct wlan_serialization_queued_cmd_info cmd_info;
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+
+	qdf_mem_zero(&cmd_info, sizeof(cmd_info));
+	cmd_info.cmd_id = cm_id;
+	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
+
+	if (prefix == CONNECT_REQ_PREFIX)
+		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	else
+		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
+
+	cmd_info.vdev = cm_ctx->vdev;
+
+	if (cm_id == cm_ctx->active_cm_id) {
+		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
+		wlan_serialization_remove_cmd(&cmd_info);
+	} else {
+		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
+		wlan_serialization_cancel_request(&cmd_info);
+	}
+}
+
+void
+cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req;
+	uint32_t prefix;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+
+		prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
+
+		/* Only remove the pending requests matching the prefix */
+		if ((prefix & flush_prefix) != prefix ||
+		    cm_req->cm_id == cm_ctx->active_cm_id) {
+			cur_node = next_node;
+			next_node = NULL;
+			continue;
+		}
+
+		if (prefix == CONNECT_REQ_PREFIX) {
+			cm_connect_inform_os_if_connect_complete(cm_ctx,
+								 cm_req);
+			cm_ctx->connect_count--;
+			cm_free_connect_req_mem(&cm_req->connect_req);
+		} else {
+			/* Todo:- fill disconnect rsp and inform OSIF */
+			cm_ctx->disconnect_count--;
+		}
+
+		cm_remove_cmd_from_serialization(cm_ctx, cm_req->cm_id);
+		qdf_list_remove_node(&cm_ctx->req_list, &cm_req->node);
+		qdf_mem_free(cm_req);
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	cm_req_lock_release(cm_ctx);
+}
+
 QDF_STATUS
 cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id,
@@ -216,8 +351,6 @@ cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req *cm_req;
 	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
-	struct scan_cache_node *candidate;
-	struct wlan_cm_connect_req *req;
 
 	if (prefix != CONNECT_REQ_PREFIX)
 		return QDF_STATUS_E_INVAL;
@@ -229,24 +362,7 @@ cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 		cm_req = qdf_container_of(cur_node, struct cm_req, node);
 
 		if (cm_req->cm_id == cm_id) {
-			req = &cm_req->connect_req.req;
-			candidate = cm_req->connect_req.cur_candidate;
-			if (candidate)
-				qdf_copy_macaddr(&resp->bssid,
-						 &candidate->entry->bssid);
-			else if (!qdf_is_macaddr_zero(&req->bssid))
-				qdf_copy_macaddr(&resp->bssid,
-						 &req->bssid);
-			else
-				qdf_copy_macaddr(&resp->bssid,
-						 &req->bssid_hint);
-			if (candidate)
-				resp->freq =
-					candidate->entry->channel.chan_freq;
-			else
-				resp->freq = req->chan_freq;
-			qdf_mem_copy(&resp->ssid, &req->ssid,
-				     sizeof(resp->bssid));
+			cm_fill_connect_resp_from_req(resp, cm_req);
 			cm_req_lock_release(cm_ctx);
 			return QDF_STATUS_SUCCESS;
 		}
@@ -359,8 +475,6 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_serialization_queued_cmd_info cmd_info;
-	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
 	QDF_STATUS status;
 
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
@@ -374,24 +488,7 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
-	qdf_mem_zero(&cmd_info, sizeof(cmd_info));
-	cmd_info.cmd_id = cm_id;
-	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
-
-	if (prefix == CONNECT_REQ_PREFIX)
-		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
-	else
-		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
-
-	cmd_info.vdev = cm_ctx->vdev;
-
-	if (cm_id == cm_ctx->active_cm_id) {
-		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
-		wlan_serialization_remove_cmd(&cmd_info);
-	} else {
-		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
-		wlan_serialization_cancel_request(&cmd_info);
-	}
+	cm_remove_cmd_from_serialization(cm_ctx, cm_id);
 }
 
 void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,

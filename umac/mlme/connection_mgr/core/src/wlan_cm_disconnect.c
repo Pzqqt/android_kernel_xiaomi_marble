@@ -208,6 +208,36 @@ cm_inform_if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
+void
+cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx)
+{
+	struct cm_req *cm_req;
+	struct cm_disconnect_req *disconnect_req;
+	QDF_STATUS status;
+
+	cm_req = qdf_mem_malloc(sizeof(*cm_req));
+
+	if (!cm_req)
+		return;
+
+	disconnect_req = &cm_req->discon_req;
+	disconnect_req->req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	disconnect_req->req.source = CM_INTERNAL_DISCONNECT;
+
+	status = cm_add_disconnect_req_to_list(cm_ctx, disconnect_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "failed to add disconnect req",
+			 CM_PREFIX_REF(disconnect_req->req.vdev_id,
+				       disconnect_req->cm_id));
+		qdf_mem_free(cm_req);
+		return;
+	}
+
+	status = cm_disconnect_start(cm_ctx, disconnect_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(cm_req);
+}
+
 QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 			       struct cm_disconnect_req *req)
 {

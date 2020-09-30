@@ -560,6 +560,68 @@ cm_inform_if_mgr_connect_start(struct wlan_objmgr_vdev *vdev)
 
 #endif
 
+QDF_STATUS
+cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *cm_req,
+					enum wlan_cm_sm_state cm_state_substate)
+{
+	switch (cm_state_substate) {
+	case WLAN_CM_S_CONNECTED:
+	case WLAN_CM_SS_JOIN_ACTIVE:
+		/*
+		 * In connected state, there would be no pending command, so
+		 * for new connect request, queue internal disconnect
+		 *
+		 * In join active state there would be only one active connect
+		 * request in the cm req list, so to abort at certain stages and
+		 * to cleanup after its completion, queue internal disconnect.
+		 */
+		cm_initiate_internal_disconnect(cm_ctx);
+		break;
+	case WLAN_CM_SS_SCAN:
+		/* In the scan state abort the ongoing scan */
+		cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev),
+				    cm_ctx->vdev);
+		/* fallthrough */
+	case WLAN_CM_SS_JOIN_PENDING:
+		/*
+		 * In case of scan or join pending there could be 2 scenarios:-
+		 *
+		 * 1. There is a connect request pending, so just remove
+		 *    the pending connect req. As we will queue a new connect
+		 *    req all resp for pending conenct req will be dropped.
+		 * 2. There is a connect request in active and
+		 *    and a internal disconnect followed by a connect req in
+		 *    pending. In this case the disconnect will take care of
+		 *    cleaning up the active connect request and thus only
+		 *    remove the pending conenct.
+		 */
+		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX);
+		break;
+	case WLAN_CM_S_DISCONNECTING:
+		/*
+		 * In case of disconnecting state, there could be 2 scenarios:-
+		 * In both case no state specific action is required.
+		 * 1. There is disconnect request in the cm_req list, no action
+		 *    required to cleanup.
+		 *    so just add the connect request to the list.
+		 * 2. There is a connect request activated, followed by
+		 *    disconnect in pending queue. So keep the disconenct
+		 *    to cleanup the active connect and no action required to
+		 *    cleanup.
+		 */
+		break;
+	default:
+		mlme_err("Vdev %d Connect req in invalid state %d",
+			 wlan_vdev_get_id(cm_ctx->vdev),
+			 cm_state_substate);
+		return QDF_STATUS_E_FAILURE;
+	};
+
+	/* Queue the new connect request after state specific actions */
+	return cm_add_connect_req_to_list(cm_ctx, cm_req);
+}
+
 QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 			    struct cm_connect_req *cm_req)
 {

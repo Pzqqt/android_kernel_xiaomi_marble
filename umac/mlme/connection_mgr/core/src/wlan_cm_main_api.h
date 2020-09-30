@@ -52,6 +52,23 @@
 QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx, struct cm_connect_req *req);
 
 /**
+ * cm_handle_connect_req_in_non_init_state() - Handle connect request in non
+ * init state.
+ * @cm_ctx: connection manager context
+ * @cm_req: cm request
+ * @cm_state_substate: state of CM SM
+ *
+ * Context: Can be called only while handling connection manager event
+ *          ie holding state machine lock
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *cm_req,
+					enum wlan_cm_sm_state cm_state_substate);
+
+/**
  * cm_connect_scan_start() - This API will be called to initiate the connect
  * scan if no candidate are found in scan db.
  * @cm_ctx: connection manager context
@@ -328,6 +345,18 @@ QDF_STATUS cm_vdev_down_req(struct wlan_objmgr_vdev *vdev, uint32_t status);
 QDF_STATUS cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 			     struct wlan_cm_discon_rsp *resp);
 
+/**
+ * cm_initiate_internal_disconnect() - Initiate internal disconnect to cleanup
+ * a active connect in case of back to back request
+ * @cm_ctx: connection manager context
+ *
+ * Context: Can be called from any context. Hold the SM lock while calling this
+ * api.
+ *
+ * Return: void
+ */
+void cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx);
+
 /*************** UTIL APIs ****************/
 
 /**
@@ -445,6 +474,17 @@ QDF_STATUS
 cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id,
 					 struct wlan_cm_connect_rsp *resp);
+
+/**
+ * cm_flush_pending_request() - Flush all pending requests matching flush prefix
+ * @cm_ctx: connection manager context
+ * @flush_prefix: prefix for the type of command to flush
+ *
+ * Context: Can be called from any context.
+ *
+ * Return: void
+ */
+void cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix);
 
 /**
  * cm_remove_cmd() - Remove cmd from req list and serialization
