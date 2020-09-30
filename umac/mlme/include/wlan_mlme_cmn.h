@@ -99,7 +99,7 @@ struct mlme_cm_ops {
  * @mlme_multi_vdev_restart_resp:           callback to process multivdev
  *                                          restart response
  * @mlme_cm_ext_connect_start_ind_cb:       callback to indicate connect start
- * @mlme_cm_ext_candidate_select_ind_cb:    callback to indicate candidate
+ * @mlme_cm_ext_bss_select_ind_cb:          callback to indicate candidate
  *                                          select for connect
  * @mlme_cm_ext_bss_peer_create_req_cb:     callback to bss peer create request
  * @mlme_cm_ext_connect_req_cb:             callback for connect request to
@@ -149,7 +149,7 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_cm_ext_connect_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req);
-	QDF_STATUS (*mlme_cm_ext_candidate_select_ind_cb)(
+	QDF_STATUS (*mlme_cm_ext_bss_select_ind_cb)(
 			struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_vdev_connect_req *req);
 	QDF_STATUS (*mlme_cm_ext_bss_peer_create_req_cb)(
@@ -384,15 +384,15 @@ QDF_STATUS mlme_cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 				     struct wlan_cm_connect_req *req);
 
 /**
- * mlme_cm_candidate_select_ind() - Connection manager ext Connect candidate
+ * mlme_cm_bss_select_ind() - Connection manager ext Connect candidate
  * select indication, to do operations for the candidate
  * @vdev: VDEV object
  * @req: Vdev connect request
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_candidate_select_ind(struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_vdev_connect_req *req);
+QDF_STATUS mlme_cm_bss_select_ind(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_vdev_connect_req *req);
 
 /**
  * mlme_cm_bss_peer_create_req() - Connection manager ext bss peer create

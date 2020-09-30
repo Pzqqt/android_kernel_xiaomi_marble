@@ -258,13 +258,13 @@ QDF_STATUS mlme_cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 	return ret;
 }
 
-QDF_STATUS mlme_cm_candidate_select_ind(struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_vdev_connect_req *req)
+QDF_STATUS mlme_cm_bss_select_ind(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_vdev_connect_req *req)
 {
 	QDF_STATUS ret = QDF_STATUS_E_NOSUPPORT;
 
-	if ((glbl_ops) && glbl_ops->mlme_cm_ext_candidate_select_ind_cb)
-		ret = glbl_ops->mlme_cm_ext_candidate_select_ind_cb(vdev, req);
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_bss_select_ind_cb)
+		ret = glbl_ops->mlme_cm_ext_bss_select_ind_cb(vdev, req);
 
 	return ret;
 }
