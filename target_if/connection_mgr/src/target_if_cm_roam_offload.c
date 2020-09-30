@@ -627,6 +627,12 @@ target_if_cm_roam_scan_offload_ap_profile(
 		req->min_rssi_params[BMISS_MIN_RSSI].min_rssi -=
 						NOISE_FLOOR_DBM_DEFAULT;
 		req->min_rssi_params[BMISS_MIN_RSSI].min_rssi &= 0x000000ff;
+
+		req->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM].min_rssi -=
+						NOISE_FLOOR_DBM_DEFAULT;
+		req->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM].min_rssi &=
+						0x000000ff;
+
 	}
 
 	return wmi_unified_send_roam_scan_offload_ap_cmd(wmi_handle, req);

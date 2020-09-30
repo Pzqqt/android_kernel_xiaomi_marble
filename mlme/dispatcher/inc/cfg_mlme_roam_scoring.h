@@ -231,6 +231,33 @@
 
 /*
  * <ini>
+ * min_rssi_for_2g_to_5g_roam - Candidate AP minimum RSSI for
+ * 2G to 5G roam trigger (in dBm)
+ * @Min: -120
+ * @Max: 0
+ * @Default: -70
+ *
+ * Minimum RSSI value of the candidate AP to consider it as candidate
+ * for 2G to 5G roam.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_2G_TO_5G_ROAM_MIN_RSSI CFG_INI_INT( \
+	"min_rssi_for_2g_to_5g_roam", \
+	-120, \
+	0, \
+	-70, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Minimum RSSI of candidate AP for 2G to 5G roam trigger")
+
+/*
+ * <ini>
  * idle_roam_score_delta - Roam score delta value in percentage for idle roam.
  * @Min: 0
  * @Max: 100
@@ -323,6 +350,7 @@
 	CFG(CFG_APSD_ENABLED) \
 	CFG(CFG_DISCONNECT_ROAM_TRIGGER_MIN_RSSI) \
 	CFG(CFG_BMISS_ROAM_MIN_RSSI) \
+	CFG(CFG_2G_TO_5G_ROAM_MIN_RSSI) \
 	CFG(CFG_IDLE_ROAM_SCORE_DELTA) \
 	CFG(CFG_BTM_ROAM_SCORE_DELTA) \
 	CFG(CFG_VENDOR_ROAM_SCORE_ALGORITHM)
