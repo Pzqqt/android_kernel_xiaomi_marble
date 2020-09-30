@@ -50,8 +50,8 @@ static void if_mgr_enable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_vdev *vdev,
-				 struct wlan_objmgr_pdev *pdev,
+QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_pdev *pdev,
+				 struct wlan_objmgr_vdev *vdev,
 				 enum wlan_cm_rso_control_requestor requestor)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -95,8 +95,8 @@ static void if_mgr_disable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_objmgr_pdev *pdev,
+QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_pdev *pdev,
+				  struct wlan_objmgr_vdev *vdev,
 				  enum wlan_cm_rso_control_requestor requestor)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -117,8 +117,8 @@ QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS
-if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
-				       struct wlan_objmgr_pdev *pdev)
+if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
+				       struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
@@ -140,8 +140,8 @@ if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS if_mgr_enable_roaming_after_p2p_disconnect(
-				struct wlan_objmgr_vdev *vdev,
 				struct wlan_objmgr_pdev *pdev,
+				struct wlan_objmgr_vdev *vdev,
 				enum wlan_cm_rso_control_requestor requestor)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;

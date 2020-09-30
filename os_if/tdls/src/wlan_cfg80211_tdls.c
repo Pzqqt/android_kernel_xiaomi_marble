@@ -98,52 +98,6 @@ void wlan_cfg80211_tdls_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
 	osif_priv->osif_tdls = NULL;
 }
 
-void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
-{
-	struct vdev_osif_priv *osif_priv;
-	struct osif_tdls_vdev *tdls_priv;
-	QDF_STATUS status;
-	unsigned long rc;
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = ucfg_get_tdls_vdev(psoc, WLAN_OSIF_TDLS_ID);
-	if (!vdev)
-		return;
-
-	osif_priv = wlan_vdev_get_ospriv(vdev);
-
-	if (!osif_priv || !osif_priv->osif_tdls) {
-		osif_err("osif priv or tdls priv is NULL");
-		goto release_ref;
-	}
-	tdls_priv = osif_priv->osif_tdls;
-
-	reinit_completion(&tdls_priv->tdls_teardown_comp);
-	status = ucfg_tdls_teardown_links(psoc);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		osif_err("ucfg_tdls_teardown_links failed err %d", status);
-		goto release_ref;
-	}
-
-	osif_debug("Wait for tdls teardown completion. Timeout %u ms",
-		   WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS);
-
-	rc = wait_for_completion_timeout(
-		&tdls_priv->tdls_teardown_comp,
-		msecs_to_jiffies(WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS));
-
-	if (0 == rc) {
-		osif_err(" Teardown Completion timed out rc: %ld", rc);
-		goto release_ref;
-	}
-
-	osif_debug("TDLS teardown completion status %ld ", rc);
-
-release_ref:
-	wlan_objmgr_vdev_release_ref(vdev,
-				     WLAN_OSIF_TDLS_ID);
-}
-
 void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)
 {
 	ucfg_tdls_notify_reset_adapter(vdev);
@@ -971,9 +925,6 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 		break;
 	case TDLS_EVENT_SETUP_REQ:
 		wlan_cfg80211_tdls_indicate_setup(ind);
-		break;
-	case TDLS_EVENT_TEARDOWN_LINKS_DONE:
-		complete(&tdls_priv->tdls_teardown_comp);
 		break;
 	case TDLS_EVENT_USER_CMD:
 		tdls_priv->tdls_user_cmd_len = ind->status;

@@ -1315,30 +1315,27 @@ void tdls_disable_offchan_and_teardown_links(
 	}
 }
 
-void tdls_teardown_connections(struct wlan_objmgr_psoc *psoc)
+void tdls_teardown_connections(struct tdls_link_teardown *tdls_teardown)
 {
-	struct tdls_osif_indication indication;
-	struct tdls_soc_priv_obj *tdls_soc;
+	struct tdls_vdev_priv_obj *tdls_vdev_obj;
 	struct wlan_objmgr_vdev *tdls_vdev;
 
-
-	tdls_soc = wlan_psoc_get_tdls_soc_obj(psoc);
-	if (!tdls_soc)
-		return;
-
 	/* Get the tdls specific vdev and clear the links */
-	tdls_vdev = tdls_get_vdev(psoc, WLAN_TDLS_SB_ID);
+	tdls_vdev = tdls_get_vdev(tdls_teardown->psoc, WLAN_TDLS_SB_ID);
 	if (!tdls_vdev) {
 		tdls_err("Unable get the vdev");
 		return;
 	}
+
+	tdls_vdev_obj = wlan_vdev_get_tdls_vdev_obj(tdls_vdev);
+	if (!tdls_vdev_obj) {
+		tdls_err("vdev priv is NULL");
+		return;
+	}
+
 	tdls_disable_offchan_and_teardown_links(tdls_vdev);
-
-	indication.vdev = tdls_vdev;
-
-	if (tdls_soc->tdls_event_cb)
-		tdls_soc->tdls_event_cb(tdls_soc->tdls_evt_cb_data,
-				     TDLS_EVENT_TEARDOWN_LINKS_DONE,
-				     &indication);
+	qdf_event_set(&tdls_vdev_obj->tdls_teardown_comp);
 	wlan_objmgr_vdev_release_ref(tdls_vdev, WLAN_TDLS_SB_ID);
+	wlan_objmgr_psoc_release_ref(tdls_teardown->psoc, WLAN_TDLS_SB_ID);
+	qdf_mem_free(tdls_teardown);
 }

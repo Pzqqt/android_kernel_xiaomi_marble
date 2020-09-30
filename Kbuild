@@ -1472,6 +1472,7 @@ TDLS_OBJS := $(TDLS_DIR)/core/src/wlan_tdls_main.o \
        $(TDLS_DIR)/dispatcher/src/wlan_tdls_ucfg_api.o \
        $(TDLS_DIR)/dispatcher/src/wlan_tdls_utils_api.o \
        $(TDLS_DIR)/dispatcher/src/wlan_tdls_cfg.o \
+       $(TDLS_DIR)/dispatcher/src/wlan_tdls_api.o \
        $(TDLS_OS_IF_SRC)/wlan_cfg80211_tdls.o \
        $(TDLS_TARGET_IF_SRC)/target_if_tdls.o
 endif

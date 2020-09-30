@@ -110,6 +110,7 @@
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include "wlan_tdls_cfg_api.h"
+#include "wlan_tdls_ucfg_api.h"
 #include <wlan_hdd_bss_transition.h>
 #include <wlan_hdd_concurrency_matrix.h>
 #include <wlan_hdd_p2p_listen_offload.h>
@@ -18663,11 +18664,24 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		goto ret_status;
 	}
 
+	/**
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	ucfg_if_mgr_deliver_event(vdev, WLAN_IF_MGR_EV_CONNECT_START, NULL);
+
+	hdd_objmgr_put_vdev(vdev);
+#else
 	/* Disable roaming on all other adapters before connect start */
 	wlan_hdd_disable_roaming(adapter, RSO_CONNECT_START);
 
-	hdd_notify_teardown_tdls_links(hdd_ctx->psoc);
-
+	ucfg_tdls_teardown_links_sync(hdd_ctx->psoc);
+#endif
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
@@ -20693,10 +20707,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	 * Following code will be cleaned up once the interface manager
 	 * module is enabled
 	 */
-#ifdef WLAN_FEATURE_INTERFACE_MGR
-	ucfg_if_mgr_deliver_event(adapter->vdev, WLAN_IF_MGR_EV_CONNECT_START,
-				  NULL);
-#else
+#ifndef WLAN_FEATURE_INTERFACE_MGR
 	/*
 	 * Disable NAN Discovery if incoming connection is P2P or if a STA
 	 * connection already exists and if this is a case of STA+STA

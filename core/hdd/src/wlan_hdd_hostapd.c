@@ -94,6 +94,7 @@
 #include "wlan_hdd_sta_info.h"
 #include "ftm_time_sync_ucfg_api.h"
 #include <wlan_hdd_dcs.h>
+#include "wlan_tdls_ucfg_api.h"
 #ifdef WLAN_FEATURE_INTERFACE_MGR
 #include "wlan_if_mgr_ucfg_api.h"
 #include "wlan_if_mgr_public_struct.h"
@@ -5153,8 +5154,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if (policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
 		return -EINVAL;
 
-	hdd_notify_teardown_tdls_links(hdd_ctx->psoc);
-
+	/**
+	 * Following code will be cleaned once the interface manager
+	 * module is enabled.
+	 */
+#ifndef WLAN_FEATURE_INTERFACE_MGR
+	ucfg_tdls_teardown_links_sync(hdd_ctx->psoc);
+#endif
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
 					     &sap_force_11n_for_11ac);
 	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,

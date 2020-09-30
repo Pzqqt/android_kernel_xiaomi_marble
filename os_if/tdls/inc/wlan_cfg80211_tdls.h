@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -258,17 +258,6 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
 			       bool lfr_roam,
 			       bool user_disconnect,
 			       struct wlan_objmgr_vdev *vdev);
-
-/**
- * hdd_notify_teardown_tdls_links() - notify TDLS to teardown links
- * @psoc: psoc object
- *
- * Notify tdls to teardown all the links, due to certain events
- * in the system
- *
- * Return: None
- */
-void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc);
 
 #else /* FEATURE_WLAN_TDLS */
 static inline
