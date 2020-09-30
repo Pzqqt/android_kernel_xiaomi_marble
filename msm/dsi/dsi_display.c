@@ -4636,7 +4636,7 @@ static int dsi_display_dynamic_clk_configure_cmd(struct dsi_display *display,
 
 	rc = dsi_display_update_dsi_bitrate(display, clk_rate);
 	if (!rc) {
-		DSI_INFO("%s: bit clk is ready to be configured to '%d'\n",
+		DSI_DEBUG("%s: bit clk is ready to be configured to '%d'\n",
 				__func__, clk_rate);
 		atomic_set(&display->clkrate_change_pending, 1);
 	} else {
@@ -5249,7 +5249,7 @@ static int dsi_display_force_update_dsi_clk(struct dsi_display *display)
 	rc = dsi_display_link_clk_force_update_ctrl(display->dsi_clk_handle);
 
 	if (!rc) {
-		DSI_INFO("dsi bit clk has been configured to %d\n",
+		DSI_DEBUG("dsi bit clk has been configured to %d\n",
 			display->cached_clk_rate);
 
 		atomic_set(&display->clkrate_change_pending, 0);
@@ -7137,11 +7137,11 @@ int dsi_display_set_mode(struct dsi_display *display,
 		goto error;
 	}
 
-	DSI_INFO("mdp_transfer_time_us=%d us\n",
-			adj_mode.priv_info->mdp_transfer_time_us);
-	DSI_INFO("hactive= %d,vactive= %d,fps=%d\n",
-			timing.h_active, timing.v_active,
-			timing.refresh_rate);
+	DSI_INFO("mdp_transfer_time=%d, hactive=%d, vactive=%d, fps=%d\n",
+			adj_mode.priv_info->mdp_transfer_time_us,
+			timing.h_active, timing.v_active, timing.refresh_rate);
+	SDE_EVT32(adj_mode.priv_info->mdp_transfer_time_us,
+			timing.h_active, timing.v_active, timing.refresh_rate);
 
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
 error:
