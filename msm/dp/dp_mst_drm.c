@@ -335,7 +335,8 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 			dp_mst_sim_topology_put_port(port);
 			goto put_port;
 		}
-		(*mstb->mgr->cbs->register_connector)(port->connector);
+
+		drm_connector_register(port->connector);
 	}
 
 put_port:
@@ -1880,30 +1881,6 @@ dp_mst_add_connector(struct drm_dp_mst_topology_mgr *mgr,
 	return connector;
 }
 
-static void dp_mst_register_connector(struct drm_connector *connector)
-{
-	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
-
-	connector->status = connector->funcs->detect(connector, false);
-
-	DP_MST_INFO("register mst connector id:%d\n", connector->base.id);
-	drm_connector_register(connector);
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
-}
-
-static void dp_mst_destroy_connector(struct drm_dp_mst_topology_mgr *mgr,
-					   struct drm_connector *connector)
-{
-	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
-
-	DP_MST_INFO("destroy mst connector id:%d\n", connector->base.id);
-
-	drm_connector_unregister(connector);
-	drm_connector_put(connector);
-}
-
 static enum drm_connector_status
 dp_mst_fixed_connector_detect(struct drm_connector *connector, bool force,
 			void *display)
@@ -2091,53 +2068,6 @@ dp_mst_add_fixed_connector(struct drm_dp_mst_topology_mgr *mgr,
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
 
 	return connector;
-}
-
-static void dp_mst_register_fixed_connector(struct drm_connector *connector)
-{
-	struct sde_connector *c_conn = to_sde_connector(connector);
-	struct dp_display *dp_display = c_conn->display;
-	struct dp_mst_private *dp_mst = dp_display->dp_mst_prv_info;
-	int i;
-
-	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
-
-	/* skip connector registered for fixed topology ports */
-	for (i = 0; i < MAX_DP_MST_DRM_BRIDGES; i++) {
-		if (dp_mst->mst_bridge[i].fixed_connector == connector) {
-			DP_MST_DEBUG("found fixed connector %d\n",
-					DRMID(connector));
-			return;
-		}
-	}
-
-	dp_mst_register_connector(connector);
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
-}
-
-static void dp_mst_destroy_fixed_connector(struct drm_dp_mst_topology_mgr *mgr,
-					   struct drm_connector *connector)
-{
-	struct dp_mst_private *dp_mst;
-	int i;
-
-	DP_MST_DEBUG("enter\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
-
-	dp_mst = container_of(mgr, struct dp_mst_private, mst_mgr);
-
-	/* skip connector destroy for fixed topology ports */
-	for (i = 0; i < MAX_DP_MST_DRM_BRIDGES; i++) {
-		if (dp_mst->mst_bridge[i].fixed_connector == connector) {
-			dp_mst->mst_bridge[i].fixed_port_added = false;
-			DP_MST_DEBUG("destroy fixed connector %d\n",
-					DRMID(connector));
-			return;
-		}
-	}
-
-	dp_mst_destroy_connector(mgr, connector);
 }
 
 static struct drm_connector *
@@ -2379,14 +2309,10 @@ static const struct dp_mst_drm_cbs dp_mst_display_cbs = {
 
 static const struct drm_dp_mst_topology_cbs dp_mst_drm_cbs = {
 	.add_connector = dp_mst_add_connector,
-	.register_connector = dp_mst_register_connector,
-	.destroy_connector = dp_mst_destroy_connector,
 };
 
 static const struct drm_dp_mst_topology_cbs dp_mst_fixed_drm_cbs = {
 	.add_connector = dp_mst_add_fixed_connector,
-	.register_connector = dp_mst_register_fixed_connector,
-	.destroy_connector = dp_mst_destroy_fixed_connector,
 };
 
 static void dp_mst_sim_init(struct dp_mst_private *mst)
