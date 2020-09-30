@@ -1198,12 +1198,16 @@ scm_update_channel_list(struct scan_start_request *req,
 	}
 
 	req->scan_req.chan_list.num_chan = num_scan_channels;
-	/* Dont upadte the channel list for SAP mode */
+	/* Dont update the channel list:
+	 * - if not STA mode and
+	 * - if scan mode is set to SCAN_MODE_6G_NO_OPERATION
+	 */
 	op_mode = wlan_vdev_mlme_get_opmode(req->vdev);
 	if (op_mode != QDF_SAP_MODE &&
 	    op_mode != QDF_P2P_DEVICE_MODE &&
 	    op_mode != QDF_P2P_CLIENT_MODE &&
-	    op_mode != QDF_P2P_GO_MODE) {
+	    op_mode != QDF_P2P_GO_MODE &&
+	    scan_obj->scan_def.scan_mode_6g != SCAN_MODE_6G_NO_OPERATION) {
 		scm_update_6ghz_channel_list(req->vdev,
 					     &req->scan_req.chan_list,
 					     scan_obj);

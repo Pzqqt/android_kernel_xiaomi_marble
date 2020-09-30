@@ -29,12 +29,14 @@
  * @SCAN_MODE_6G_NO_CHANNEL: Remove 6GHz channels in the scan request
  * @SCAN_MODE_6G_PSC_CHANNEL: Allow/Add 6Ghz PSC channels to scan request
  * @SCAN_MODE_6G_ALL_CHANNEL: Allow all the 6Ghz channels
+ * @SCAN_MODE_6G_NO_OPERATION: Don't perform any action keep channel list as is
  */
 enum scan_mode_6ghz {
 	SCAN_MODE_6G_NO_CHANNEL,
 	SCAN_MODE_6G_PSC_CHANNEL,
 	SCAN_MODE_6G_ALL_CHANNEL,
-	SCAN_MODE_6G_MAX = SCAN_MODE_6G_ALL_CHANNEL,
+	SCAN_MODE_6G_NO_OPERATION,
+	SCAN_MODE_6G_MAX = SCAN_MODE_6G_NO_OPERATION,
 };
 
 /*
@@ -1202,13 +1204,14 @@ enum scan_mode_6ghz {
  * <ini>
  * scan_mode_6ghz - 6ghz Scan mode
  * @Min: 0
- * @Max: 2
- * @Default: 2
+ * @Max: 3
+ * @Default: 1
  *
  * Configure the 6Ghz scan mode
  * 0 - Remove 6GHz channels in the scan request
  * 1 - Allow/Add 6Ghz PSC channels to scan request
  * 2 - Allow all the 6Ghz channels
+ * 3 - Don't perform any action keep channel list as is
  *
  * Related: SCAN
  *
