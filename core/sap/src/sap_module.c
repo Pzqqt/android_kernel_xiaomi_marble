@@ -3012,12 +3012,6 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 		return 0;
 	}
 
-	if (wlan_reg_is_disable_for_freq(mac->pdev, sap_ctx->chan_freq)) {
-		sap_debug("channel is disabled");
-		*csa_reason = CSA_REASON_CHAN_DISABLED;
-		return wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
-	}
-
 	if (ucfg_reg_get_band(mac->pdev, &band) != QDF_STATUS_SUCCESS) {
 		sap_err("Failed to get current band config");
 		return 0;
@@ -3049,6 +3043,11 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 		sap_debug("Restore chan freq: %d, width: %d",
 			  restart_freq, restart_ch_width);
 		*csa_reason = CSA_REASON_BAND_RESTRICTED;
+	} else if (wlan_reg_is_disable_for_freq(mac->pdev,
+						sap_ctx->chan_freq)) {
+		sap_debug("channel is disabled");
+		*csa_reason = CSA_REASON_CHAN_DISABLED;
+		return wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
 	} else {
 		sap_debug("No need switch SAP/Go channel");
 		return 0;
