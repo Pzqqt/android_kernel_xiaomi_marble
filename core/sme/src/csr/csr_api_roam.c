@@ -17710,6 +17710,9 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
 	req_buf->min_rssi_params[BMISS_MIN_RSSI] =
 			mac_ctx->mlme_cfg->trig_min_rssi[BMISS_MIN_RSSI];
+	req_buf->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM] =
+			mac_ctx->mlme_cfg->trig_min_rssi[MIN_RSSI_2G_TO_5G_ROAM];
+
 	req_buf->score_delta_param[IDLE_ROAM_TRIGGER] =
 			mac_ctx->mlme_cfg->trig_score_delta[IDLE_ROAM_TRIGGER];
 	req_buf->score_delta_param[BTM_ROAM_TRIGGER] =
@@ -19978,6 +19981,9 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
 	params->min_rssi_params[BMISS_MIN_RSSI] =
 			mac_ctx->mlme_cfg->trig_min_rssi[BMISS_MIN_RSSI];
+	params->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM] =
+			mac_ctx->mlme_cfg->trig_min_rssi[MIN_RSSI_2G_TO_5G_ROAM];
+
 	params->score_delta_param[IDLE_ROAM_TRIGGER] =
 			mac_ctx->mlme_cfg->trig_score_delta[IDLE_ROAM_TRIGGER];
 	params->score_delta_param[BTM_ROAM_TRIGGER] =

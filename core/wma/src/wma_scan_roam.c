@@ -1420,6 +1420,9 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 			roam_req->min_rssi_params[DEAUTH_MIN_RSSI];
 	ap_profile.min_rssi_params[BMISS_MIN_RSSI] =
 			roam_req->min_rssi_params[BMISS_MIN_RSSI];
+	ap_profile.min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM] =
+			roam_req->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM];
+
 	if (!db2dbm_enabled) {
 		ap_profile.min_rssi_params[DEAUTH_MIN_RSSI].min_rssi -=
 				       WMA_NOISE_FLOOR_DBM_DEFAULT;
@@ -1429,6 +1432,11 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 		ap_profile.min_rssi_params[BMISS_MIN_RSSI].min_rssi -=
 			       WMA_NOISE_FLOOR_DBM_DEFAULT;
 		ap_profile.min_rssi_params[BMISS_MIN_RSSI].min_rssi &=
+				0x000000ff;
+
+		ap_profile.min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM].min_rssi -=
+				   WMA_NOISE_FLOOR_DBM_DEFAULT;
+		ap_profile.min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM].min_rssi &=
 				0x000000ff;
 	}
 
