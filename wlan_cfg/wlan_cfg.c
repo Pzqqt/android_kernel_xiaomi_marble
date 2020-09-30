@@ -330,7 +330,7 @@ struct wlan_srng_cfg g_wlan_srng_cfg[MAX_RING_TYPES];
 /* REO_DST ring configuration */
 struct wlan_srng_cfg wlan_srng_reo_cfg = {
 	.timer_threshold = WLAN_CFG_INT_TIMER_THRESHOLD_REO_RING,
-	.batch_count_threshold = 0,
+	.batch_count_threshold = WLAN_CFG_INT_BATCH_THRESHOLD_REO_RING,
 	.low_threshold = 0,
 };
 
