@@ -884,8 +884,8 @@ QDF_STATUS cm_sm_create(struct cnx_mgr *cm_ctx)
 	struct wlan_sm *sm;
 	uint8_t name[WLAN_SM_ENGINE_MAX_NAME];
 
-	qdf_snprintf(name, sizeof(name), "CM-VDEV-%d",
-		     wlan_vdev_get_id(cm_ctx->vdev));
+	qdf_scnprintf(name, sizeof(name), "CM-VDEV-%d",
+		      wlan_vdev_get_id(cm_ctx->vdev));
 	sm = wlan_sm_create(name, cm_ctx,
 			    WLAN_CM_S_INIT,
 			    cm_sm_info,
