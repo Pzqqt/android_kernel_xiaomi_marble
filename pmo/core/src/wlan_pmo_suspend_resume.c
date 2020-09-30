@@ -813,11 +813,15 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 
 	if (type == QDF_SYSTEM_SUSPEND) {
 		pmo_info("system suspend wow");
-		if ((psoc_cfg) &&
-		    (psoc_cfg->is_mod_dtim_on_sys_suspend_enabled))
-			param.flags |= WMI_WOW_FLAG_SYSTEM_SUSPEND_WOW;
+		param.flags |= WMI_WOW_FLAG_SYSTEM_SUSPEND_WOW;
 	} else {
 		pmo_info("RTPM wow");
+	}
+
+	if ((psoc_cfg) &&
+	    (psoc_cfg->is_mod_dtim_on_sys_suspend_enabled)) {
+		pmo_info("mod DTIM enabled");
+		param.flags |= WMI_WOW_FLAG_MOD_DTIM_ON_SYS_SUSPEND;
 	}
 
 	status = pmo_tgt_psoc_send_wow_enable_req(psoc, &param);
