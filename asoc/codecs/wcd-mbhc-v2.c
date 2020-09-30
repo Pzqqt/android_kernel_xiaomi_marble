@@ -515,6 +515,15 @@ static void wcd_mbhc_set_and_turnoff_hph_padac(struct wcd_mbhc *mbhc)
 int wcd_mbhc_get_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 			uint32_t *zr)
 {
+	int detection_type = -EINVAL;
+
+	WCD_MBHC_REG_READ(WCD_MBHC_MECH_DETECTION_TYPE, detection_type);
+	/* Call compute impedance only when accessory is inserted */
+	if (!detection_type) {
+		if (mbhc->mbhc_cb->compute_impedance)
+			mbhc->mbhc_cb->compute_impedance(mbhc,
+						&mbhc->zl, &mbhc->zr);
+	}
 	*zl = mbhc->zl;
 	*zr = mbhc->zr;
 

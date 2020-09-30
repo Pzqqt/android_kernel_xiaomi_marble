@@ -18,6 +18,7 @@
 #include "bolero-cdc.h"
 #include "internal.h"
 #include "bolero-clk-rsc.h"
+#include "asoc/bolero-slave-internal.h"
 
 #define DRV_NAME "bolero_codec"
 
@@ -202,37 +203,37 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 	}
 
 	switch (event) {
-	case WCD_BOLERO_EVT_RX_MUTE:
+	case SLV_BOLERO_EVT_RX_MUTE:
 		if (priv->macro_params[RX_MACRO].event_handler)
 			priv->macro_params[RX_MACRO].event_handler(
 				priv->component,
 				BOLERO_MACRO_EVT_RX_MUTE, data);
 		break;
-	case WCD_BOLERO_EVT_IMPED_TRUE:
+	case SLV_BOLERO_EVT_IMPED_TRUE:
 		if (priv->macro_params[RX_MACRO].event_handler)
 			priv->macro_params[RX_MACRO].event_handler(
 				priv->component,
 				BOLERO_MACRO_EVT_IMPED_TRUE, data);
 		break;
-	case WCD_BOLERO_EVT_IMPED_FALSE:
+	case SLV_BOLERO_EVT_IMPED_FALSE:
 		if (priv->macro_params[RX_MACRO].event_handler)
 			priv->macro_params[RX_MACRO].event_handler(
 				priv->component,
 				BOLERO_MACRO_EVT_IMPED_FALSE, data);
 		break;
-	case WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST:
+	case SLV_BOLERO_EVT_RX_COMPANDER_SOFT_RST:
 		if (priv->macro_params[RX_MACRO].event_handler)
 			priv->macro_params[RX_MACRO].event_handler(
 				priv->component,
 				BOLERO_MACRO_EVT_RX_COMPANDER_SOFT_RST, data);
 		break;
-	case WCD_BOLERO_EVT_BCS_CLK_OFF:
+	case SLV_BOLERO_EVT_BCS_CLK_OFF:
 		if (priv->macro_params[TX_MACRO].event_handler)
 			priv->macro_params[TX_MACRO].event_handler(
 				priv->component,
 				BOLERO_MACRO_EVT_BCS_CLK_OFF, data);
 		break;
-	case WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE:
+	case SLV_BOLERO_EVT_RX_PA_GAIN_UPDATE:
 		/* Update PA Gain only for bolero version 2.1 */
 		if (priv->version == BOLERO_VERSION_2_1)
 			if (priv->macro_params[RX_MACRO].event_handler)
@@ -241,13 +242,13 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 					BOLERO_MACRO_EVT_RX_PA_GAIN_UPDATE,
 					data);
 		break;
-	case WCD_BOLERO_EVT_HPHL_HD2_ENABLE:
+	case SLV_BOLERO_EVT_HPHL_HD2_ENABLE:
 		if (priv->macro_params[RX_MACRO].event_handler)
 			priv->macro_params[RX_MACRO].event_handler(
 				priv->component,
 				BOLERO_MACRO_EVT_HPHL_HD2_ENABLE, data);
 		break;
-	case WCD_BOLERO_EVT_HPHR_HD2_ENABLE:
+	case SLV_BOLERO_EVT_HPHR_HD2_ENABLE:
 		if (priv->macro_params[RX_MACRO].event_handler)
 			priv->macro_params[RX_MACRO].event_handler(
 				priv->component,
@@ -329,7 +330,7 @@ void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n)
 		dev_err(dev, "%s: priv is null\n", __func__);
 		return;
 	}
-	event = BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR;
+	event = BOLERO_SLV_EVT_TX_CH_HOLD_CLEAR;
 	if (adc_n == BOLERO_ADC0)
 		amic = 0x1;
 	else if (adc_n == BOLERO_ADC1)
@@ -687,6 +688,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
 	if (macro_id == TX_MACRO) {
 		priv->macro_params[macro_id].reg_wake_irq = ops->reg_wake_irq;
+		priv->macro_params[macro_id].clk_switch = ops->clk_switch;
 		priv->macro_params[macro_id].reg_evt_listener =
 							ops->reg_evt_listener;
 		priv->macro_params[macro_id].clk_enable = ops->clk_enable;
@@ -761,6 +763,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 	priv->macro_params[macro_id].dev = NULL;
 	if (macro_id == TX_MACRO) {
 		priv->macro_params[macro_id].reg_wake_irq = NULL;
+		priv->macro_params[macro_id].clk_switch = NULL;
 		priv->macro_params[macro_id].reg_evt_listener = NULL;
 		priv->macro_params[macro_id].clk_enable = NULL;
 	}
@@ -796,10 +799,10 @@ void bolero_wsa_pa_on(struct device *dev, bool adie_lb)
 	}
 	if (adie_lb)
 		bolero_cdc_notifier_call(priv,
-			BOLERO_WCD_EVT_PA_ON_POST_FSCLK_ADIE_LB);
+			BOLERO_SLV_EVT_PA_ON_POST_FSCLK_ADIE_LB);
 	else
 		bolero_cdc_notifier_call(priv,
-			BOLERO_WCD_EVT_PA_ON_POST_FSCLK);
+			BOLERO_SLV_EVT_PA_ON_POST_FSCLK);
 }
 EXPORT_SYMBOL(bolero_wsa_pa_on);
 
@@ -916,7 +919,7 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 			BOLERO_MACRO_EVT_SSR_UP, 0x0);
 	}
 	trace_printk("%s: SSR up events processed by all macros\n", __func__);
-	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_UP);
+	bolero_cdc_notifier_call(priv, BOLERO_SLV_EVT_SSR_UP);
 	return 0;
 }
 
@@ -931,7 +934,7 @@ static void bolero_ssr_disable(struct device *dev, void *data)
 		return;
 	}
 
-	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_PA_OFF_PRE_SSR);
+	bolero_cdc_notifier_call(priv, BOLERO_SLV_EVT_PA_OFF_PRE_SSR);
 	regcache_cache_only(priv->regmap, true);
 
 	mutex_lock(&priv->clk_lock);
@@ -947,7 +950,7 @@ static void bolero_ssr_disable(struct device *dev, void *data)
 			priv->component,
 			BOLERO_MACRO_EVT_SSR_DOWN, 0x0);
 	}
-	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_DOWN);
+	bolero_cdc_notifier_call(priv, BOLERO_SLV_EVT_SSR_DOWN);
 }
 
 static struct snd_info_entry_ops bolero_info_ops = {
@@ -1063,6 +1066,40 @@ int bolero_register_wake_irq(struct snd_soc_component *component,
 	return 0;
 }
 EXPORT_SYMBOL(bolero_register_wake_irq);
+
+/**
+ * bolero_tx_clk_switch - Switch tx macro clock
+ *
+ * @component: pointer to codec component instance.
+ *
+ * @clk_src: clk source
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
+int bolero_tx_clk_switch(struct snd_soc_component *component, int clk_src)
+{
+	struct bolero_priv *priv = NULL;
+	int ret = 0;
+
+	if (!component)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv)
+		return -EINVAL;
+
+	if (!bolero_is_valid_codec_dev(priv->dev)) {
+		dev_err(component->dev, "%s: invalid codec\n", __func__);
+		return -EINVAL;
+	}
+
+	if (priv->macro_params[TX_MACRO].clk_switch)
+		ret = priv->macro_params[TX_MACRO].clk_switch(component,
+							      clk_src);
+
+	return ret;
+}
+EXPORT_SYMBOL(bolero_tx_clk_switch);
 
 /**
  * bolero_tx_mclk_enable - Enable/Disable TX Macro mclk

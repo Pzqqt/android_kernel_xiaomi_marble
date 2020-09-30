@@ -2183,12 +2183,12 @@ handle_irq:
 				dev_err_ratelimited(swrm->dev,
 					"%s: SWR wokeup during clock stop\n",
 					__func__);
-			/* It might be possible the slave device gets reset
-			 * and slave interrupt gets missed. So re-enable
-			 * Host IRQ and process slave pending
-			 * interrupts, if any.
-			 */
-			swrm_enable_slave_irq(swrm);
+				/* It might be possible the slave device gets
+				 * reset and slave interrupt gets missed. So
+				 * re-enable Host IRQ and process slave pending
+				 * interrupts, if any.
+				 */
+				swrm_enable_slave_irq(swrm);
 			}
 			break;
 		default:
@@ -2493,7 +2493,6 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x02;
 
-
 	reg[len] = SWRM_INTERRUPT_CLEAR;
 	value[len++] = 0xFFFFFFFF;
 
@@ -2504,6 +2503,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	reg[len] = SWRM_CPU1_INTERRUPT_EN;
 	value[len++] = swrm->intr_mask;
+
 	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x03;
 
@@ -2583,6 +2583,7 @@ static int swrm_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct clk *lpass_core_hw_vote = NULL;
 	struct clk *lpass_core_audio = NULL;
+	u32 is_wcd937x = 0;
 
 	/* Allocate soundwire master driver structure */
 	swrm = devm_kzalloc(&pdev->dev, sizeof(struct swr_mstr_ctrl),
@@ -2615,6 +2616,14 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: failed to get master id\n", __func__);
 		goto err_pdata_fail;
 	}
+	/* update the physical device address if wcd937x. */
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,is_wcd937x",
+				&is_wcd937x);
+	if (ret)
+		dev_dbg(&pdev->dev, "%s: failed to get wcd info\n", __func__);
+	else if (is_wcd937x)
+		swrm_phy_dev[1] = 0xa01170223;
+
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,dynamic-port-map-supported",
 				&swrm->dynamic_port_map_supported);
 	if (ret) {
@@ -3236,12 +3245,12 @@ static int swrm_runtime_suspend(struct device *dev)
 				swrm->ipc_wakeup_triggered = false;
 			}
 		}
-
 	}
 
 	/* Retain  SSR state until resume */
 	if (current_state != SWR_MSTR_SSR)
 		swrm->state = SWR_MSTR_DOWN;
+
 exit:
 	if (swrm->state != SWR_MSTR_UP) {
 		if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false))

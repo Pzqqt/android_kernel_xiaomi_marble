@@ -885,8 +885,10 @@ correct_plug_type:
 		 */
 		if ((plug_type == MBHC_PLUG_TYPE_HEADSET) ||
 		    (plug_type == MBHC_PLUG_TYPE_ANC_HEADPHONE)) {
-			pr_debug("%s: plug_type:0x%x already reported\n",
-				 __func__, mbhc->current_plug);
+			pr_debug("%s: plug_type:0x%x current_plug: 0x%x already reported\n",
+				 __func__, plug_type, mbhc->current_plug);
+			if (mbhc->current_plug != plug_type)
+				goto report;
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ADC_MODE, 0);
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ADC_EN, 0);
 			goto enable_supply;

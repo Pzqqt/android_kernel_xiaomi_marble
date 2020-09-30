@@ -39,6 +39,7 @@ obj-m += asoc/codecs/wcd937x/
 endif
 
 ifeq ($(TARGET_SUPPORT), $(filter $(TARGET_SUPPORT), sa8155 sa8155ivi sa6155 sa8195 qtiquingvm))
+KBUILD_OPTIONS += CONFIG_SND_SOC_AUTO=y
 obj-m := ipc/
 obj-m += dsp/
 obj-m += asoc/
@@ -63,6 +64,8 @@ all:
 	$(shell ln -s $(KERNEL_SRC)/drivers/base/regmap/internal.h $(shell pwd)/include/soc/internal.h)
 	$(shell rm -fr $(shell pwd)/soc/pinctrl-utils.h)
 	$(shell ln -s $(KERNEL_SRC)/drivers/pinctrl/pinctrl-utils.h $(shell pwd)/soc/pinctrl-utils.h)
+	$(shell rm -fr $(shell pwd)/include/soc/qcom/secure_buffer.h)
+	$(shell ln -s $(KERNEL_SRC)/include/soc/qcom/secure_buffer.h $(shell pwd)/include/soc/qcom/secure_buffer.h)
 	$(shell mkdir $(shell pwd)/linux)
 	$(shell mkdir $(shell pwd)/sound)
 	$(shell mkdir $(shell pwd)/linux/mfd)
