@@ -2638,6 +2638,8 @@ static inline void wmi_workqueue_watchdog_bite(void *arg)
 	struct wmi_wq_dbg_info *info = arg;
 
 	wmi_workqueue_watchdog_warn(info->wd_msg_type_id);
+
+	qdf_print_thread_trace(info->task);
 }
 #endif
 
