@@ -25,6 +25,9 @@
 
 static void dp_rx_fisa_flush_flow_wrap(struct dp_fisa_rx_sw_ft *sw_ft);
 
+/** REO will push frame into REO2FW RING */
+#define REO_DESTINATION_FW 6
+
 #if defined(FISA_DEBUG_ENABLE)
 /**
  * hex_dump_skb_data() - Helper function to dump skb while debugging
@@ -899,6 +902,7 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 {
 	uint8_t *rx_tlv_hdr;
 	uint32_t flow_idx;
+	uint32_t reo_destination_indication;
 	bool flow_invalid, flow_timeout, flow_idx_valid;
 	struct dp_fisa_rx_sw_ft *sw_ft_entry = NULL;
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
@@ -907,6 +911,20 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 		return sw_ft_entry;
 
 	rx_tlv_hdr = qdf_nbuf_data(nbuf);
+	/*
+	 * Get reo_destination_indication from RX_PKT_TLV-->msdu_end,
+	 * if reo_destination_indication == 6, it means this frame is
+	 * reinjected by FW offload module, these frames should not go to FISA
+	 * since REO2SW1 will be selected by FW offload module. If same flow
+	 * frames hash select other REO2SW rings, same flow UDP frames will go
+	 * to different REO2SW ring.
+	 */
+	hal_rx_msdu_get_reo_destination_indication(hal_soc_hdl, rx_tlv_hdr,
+						   &reo_destination_indication);
+
+	if (qdf_unlikely(reo_destination_indication == REO_DESTINATION_FW))
+		return sw_ft_entry;
+
 	hal_rx_msdu_get_flow_params(hal_soc_hdl, rx_tlv_hdr, &flow_invalid,
 				    &flow_timeout, &flow_idx);
 
@@ -1094,7 +1112,7 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 		 * This is 3rd skb for flow.
 		 * After head skb, 2nd skb in fraglist
 		 */
-		if (fisa_flow->last_skb) {
+		if (qdf_likely(fisa_flow->last_skb)) {
 			qdf_nbuf_set_next(fisa_flow->last_skb, nbuf);
 		} else {
 			qdf_nbuf_free(nbuf);
@@ -1443,8 +1461,11 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	/* Packets of the flow are arriving on a different REO than
 	 * the one configured.
 	 */
-	if (fisa_flow->napi_id != napi_id)
+	if (qdf_unlikely(fisa_flow->napi_id != napi_id)) {
+		QDF_BUG(0);
 		DP_STATS_INC(fisa_hdl, reo_mismatch, 1);
+		return FISA_AGGR_NOT_ELIGIBLE;
+	}
 
 	hal_cumulative_ip_len = hal_rx_get_fisa_cumulative_ip_length(
 								hal_soc_hdl,
@@ -1716,8 +1737,6 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 						    head_nbuf, fisa_flow);
 		if (fisa_ret == FISA_AGGR_DONE)
 			goto next_msdu;
-		else
-			qdf_assert(0);
 
 pull_nbuf:
 		nbuf_skip_rx_pkt_tlv(dp_fisa_rx_hdl->soc_hdl->hal_soc,
