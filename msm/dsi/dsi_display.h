@@ -408,6 +408,16 @@ void dsi_display_put_mode(struct dsi_display *display,
 int dsi_display_get_default_lms(void *dsi_display, u32 *num_lm);
 
 /**
+ * dsi_display_get_qsync_min_fps() - get qsync min fps for given fps
+ * @display:            Handle to display.
+ * @mode_fps:           Fps value of current mode
+ *
+ * Return: error code.
+ */
+int dsi_display_get_qsync_min_fps(void *dsi_display, u32 mode_fps);
+
+
+/**
  * dsi_display_find_mode() - retrieve cached DSI mode given relevant params
  * @display:            Handle to display.
  * @cmp:                Mode to use as comparison to find original

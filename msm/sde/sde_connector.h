@@ -374,6 +374,14 @@ struct sde_connector_ops {
 	 */
 	void (*set_allowed_mode_switch)(struct drm_connector *connector,
 			void *display);
+
+	/**
+	 * get_qsync_min_fps - Get qsync min fps from qsync-min-fps-list
+	 * @display: Pointer to private display structure
+	 * @mode_fps: Fps value in dfps list
+	 * Returns: Qsync min fps value on success
+	 */
+	int (*get_qsync_min_fps)(void *display, u32 mode_fps);
 };
 
 /**

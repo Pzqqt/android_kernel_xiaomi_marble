@@ -470,7 +470,7 @@ static void sde_encoder_phys_vid_setup_timing_engine(
 exit:
 	if (phys_enc->parent_ops.get_qsync_fps)
 		phys_enc->parent_ops.get_qsync_fps(
-				phys_enc->parent, &qsync_min_fps);
+			phys_enc->parent, &qsync_min_fps, mode.vrefresh);
 
 	/* only panels which support qsync will have a non-zero min fps */
 	if (qsync_min_fps) {
