@@ -255,6 +255,7 @@ struct tdls_soc_priv_obj {
  * @valid_mac_entries: number of valid mac entry in @ct_peer_mac_table
  * @magic: magic
  * @tx_queue: tx frame queue
+ * @tdls_teardown_comp: tdls teardown completion
  */
 struct tdls_vdev_priv_obj {
 	struct wlan_objmgr_vdev *vdev;
@@ -271,6 +272,7 @@ struct tdls_vdev_priv_obj {
 	uint32_t magic;
 	uint8_t session_id;
 	qdf_list_t tx_queue;
+	qdf_event_t tdls_teardown_comp;
 };
 
 /**

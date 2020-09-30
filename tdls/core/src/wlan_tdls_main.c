@@ -271,7 +271,7 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 	tdls_vdev_obj = qdf_mem_malloc(sizeof(*tdls_vdev_obj));
 	if (!tdls_vdev_obj) {
 		status = QDF_STATUS_E_NOMEM;
-		goto err;
+		goto err_attach;
 	}
 
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
@@ -280,12 +280,16 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 						       QDF_STATUS_SUCCESS);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("Failed to attach vdev tdls component");
-		goto err;
+		goto err_attach;
 	}
 	tdls_vdev_obj->vdev = vdev;
 	status = tdls_vdev_init(tdls_vdev_obj);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto err;
+		goto err_vdev_init;
+
+	status = qdf_event_create(&tdls_vdev_obj->tdls_teardown_comp);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_event_create;
 
 	pdev = wlan_vdev_get_pdev(vdev);
 
@@ -295,19 +299,28 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 
 	if (QDF_STATUS_SUCCESS != status) {
 		tdls_err("scan event register failed ");
-		tdls_vdev_deinit(tdls_vdev_obj);
-		goto err;
+		goto err_register;
 	}
 
 	tdls_debug("tdls object attach to vdev successfully");
 	return status;
-err:
+
+err_register:
+	qdf_event_destroy(&tdls_vdev_obj->tdls_teardown_comp);
+err_event_create:
+	tdls_vdev_deinit(tdls_vdev_obj);
+err_vdev_init:
+	wlan_objmgr_vdev_component_obj_detach(vdev,
+					      WLAN_UMAC_COMP_TDLS,
+					      (void *)tdls_vdev_obj);
+err_attach:
 	if (tdls_soc_obj->tdls_osif_deinit_cb)
 		tdls_soc_obj->tdls_osif_deinit_cb(vdev);
 	if (tdls_vdev_obj) {
 		qdf_mem_free(tdls_vdev_obj);
 		tdls_vdev_obj = NULL;
 	}
+
 	return status;
 }
 
@@ -315,7 +328,7 @@ QDF_STATUS tdls_vdev_obj_destroy_notification(struct wlan_objmgr_vdev *vdev,
 					      void *arg)
 {
 	QDF_STATUS status;
-	void *tdls_vdev_obj;
+	struct tdls_vdev_priv_obj *tdls_vdev_obj;
 	struct tdls_soc_priv_obj *tdls_soc_obj;
 	uint32_t tdls_feature_flags;
 
@@ -343,16 +356,18 @@ QDF_STATUS tdls_vdev_obj_destroy_notification(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_event_destroy(&tdls_vdev_obj->tdls_teardown_comp);
+	tdls_vdev_deinit(tdls_vdev_obj);
+
 	status = wlan_objmgr_vdev_component_obj_detach(vdev,
 						       WLAN_UMAC_COMP_TDLS,
 						       tdls_vdev_obj);
 	if (QDF_IS_STATUS_ERROR(status))
 		tdls_err("Failed to detach vdev tdls component");
 
-	tdls_vdev_deinit(tdls_vdev_obj);
-	qdf_mem_free(tdls_vdev_obj);
 	if (tdls_soc_obj->tdls_osif_deinit_cb)
 		tdls_soc_obj->tdls_osif_deinit_cb(vdev);
+	qdf_mem_free(tdls_vdev_obj);
 
 	return status;
 }

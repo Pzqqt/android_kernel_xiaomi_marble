@@ -25,6 +25,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "wlan_if_mgr_main.h"
 #include "wlan_p2p_cfg_api.h"
+#include "wlan_tdls_api.h"
 
 QDF_STATUS if_mgr_ap_start_bss(struct wlan_objmgr_vdev *vdev,
 			       struct if_mgr_event_data *event_data)
@@ -40,6 +41,8 @@ QDF_STATUS if_mgr_ap_start_bss(struct wlan_objmgr_vdev *vdev,
 	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
 
+	wlan_tdls_teardown_links_sync(psoc);
+
 	if (policy_mgr_is_hw_mode_change_in_progress(psoc)) {
 		if (!QDF_IS_STATUS_SUCCESS(
 		    policy_mgr_wait_for_connection_update(psoc))) {
@@ -50,7 +53,7 @@ QDF_STATUS if_mgr_ap_start_bss(struct wlan_objmgr_vdev *vdev,
 
 	if (policy_mgr_is_sta_active_connection_exists(psoc))
 		/* Disable Roaming on all vdev's before starting bss */
-		if_mgr_disable_roaming(vdev, pdev, RSO_START_BSS);
+		if_mgr_disable_roaming(pdev, vdev, RSO_START_BSS);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -82,7 +85,7 @@ if_mgr_ap_start_bss_complete(struct wlan_objmgr_vdev *vdev,
 		ifmgr_debug("p2p go mode, keep roam disabled");
 	} else {
 		/* Enable Roaming after start bss in case of failure/success */
-		if_mgr_enable_roaming(vdev, pdev, RSO_START_BSS);
+		if_mgr_enable_roaming(pdev, vdev, RSO_START_BSS);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -119,7 +122,7 @@ if_mgr_ap_stop_bss_complete(struct wlan_objmgr_vdev *vdev,
 	if (cfg_p2p_is_roam_config_disabled(psoc) &&
 	    wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE) {
 		ifmgr_debug("p2p go disconnected enable roam");
-		if_mgr_enable_roaming(vdev, pdev, RSO_START_BSS);
+		if_mgr_enable_roaming(pdev, vdev, RSO_START_BSS);
 	}
 
 	return QDF_STATUS_SUCCESS;

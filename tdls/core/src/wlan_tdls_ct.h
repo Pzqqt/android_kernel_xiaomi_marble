@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -152,7 +152,7 @@ void tdls_discovery_timeout_peer_cb(void *user_data);
 void tdls_implicit_disable(struct tdls_vdev_priv_obj *tdls_vdev);
 
 /**
- * tdls_is_vdev_authenticated() -check the vdev authentication state
+ * tdls_is_vdev_authenticated() - check the vdev authentication state
  * @vdev: vdev oobject
  *
  * Return: true or false
@@ -160,12 +160,12 @@ void tdls_implicit_disable(struct tdls_vdev_priv_obj *tdls_vdev);
 bool tdls_is_vdev_authenticated(struct wlan_objmgr_vdev *vdev);
 
 /**
- * tdls_teardown_connections() -teardown and delete all the tdls peers
- * @psoc: psoc object
+ * tdls_teardown_connections() - teardown and delete all the tdls peers
+ * @tdls_teardown: tdls teardown struct
  *
  * Return: true or false
  */
-void tdls_teardown_connections(struct wlan_objmgr_psoc *psoc);
+void tdls_teardown_connections(struct tdls_link_teardown *tdls_teardown);
 
 /**
  * tdls_disable_offchan_and_teardown_links - Disable offchannel
@@ -178,7 +178,7 @@ void tdls_disable_offchan_and_teardown_links(
 				struct wlan_objmgr_vdev *vdev);
 
 /**
- * tdls_delete_all_tdls_peers(): send request to delete tdls peers
+ * tdls_delete_all_tdls_peers() - send request to delete tdls peers
  * @vdev: vdev object
  * @tdls_soc: tdls soc object
  *

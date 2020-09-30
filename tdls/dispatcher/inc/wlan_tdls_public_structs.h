@@ -1337,4 +1337,12 @@ struct tdls_del_sta_req {
 	struct qdf_mac_addr peermac;
 };
 
+/**
+ * struct tdls_link_teardown - TDLS link teardown struct
+ * @psoc: soc object
+ */
+struct tdls_link_teardown {
+	struct wlan_objmgr_psoc *psoc;
+};
+
 #endif

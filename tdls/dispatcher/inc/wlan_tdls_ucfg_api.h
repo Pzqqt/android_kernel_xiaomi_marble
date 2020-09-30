@@ -152,12 +152,20 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *msg_req);
 
 /**
- * ucfg_tdls_teardown_links() - teardown all TDLS links
+ * ucfg_tdls_teardown_links() - notify TDLS modules to teardown all TDLS links.
+ * @psoc: psoc object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_tdls_teardown_links_sync() - teardown all TDLS links.
  * @psoc: psoc object
  *
  * Return: None
  */
-QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_psoc *psoc);
+void ucfg_tdls_teardown_links_sync(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_tdls_notify_reset_adapter() - notify reset adapter
@@ -348,6 +356,11 @@ static inline
 QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void ucfg_tdls_teardown_links_sync(struct wlan_objmgr_psoc *psoc)
+{
 }
 
 static inline

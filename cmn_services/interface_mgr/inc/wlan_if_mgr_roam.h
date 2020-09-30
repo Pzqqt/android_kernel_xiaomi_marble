@@ -56,8 +56,8 @@ struct bssid_search_arg {
 
 /**
  * if_mgr_enable_roaming() - interface manager enable roaming
- * @vdev: vdev object
  * @pdev: pdev object
+ * @vdev: vdev object
  * @requestor: RSO enable requestor
  *
  * Interface manager api to enable roaming for all other active vdev id's
@@ -66,14 +66,14 @@ struct bssid_search_arg {
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_vdev *vdev,
-				 struct wlan_objmgr_pdev *pdev,
+QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_pdev *pdev,
+				 struct wlan_objmgr_vdev *vdev,
 				 enum wlan_cm_rso_control_requestor requestor);
 
 /**
  * if_mgr_disable_roaming() - interface manager disable roaming
- * @vdev: vdev object
  * @pdev: pdev object
+ * @vdev: vdev object
  * @requestor: RSO disable requestor
  *
  * Interface manager api to disable roaming for all other active vdev id's
@@ -82,15 +82,15 @@ QDF_STATUS if_mgr_enable_roaming(struct wlan_objmgr_vdev *vdev,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_objmgr_pdev *pdev,
+QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_pdev *pdev,
+				  struct wlan_objmgr_vdev *vdev,
 				  enum wlan_cm_rso_control_requestor requestor);
 
 /**
  * if_mgr_enable_roaming_on_connected_sta() - interface manager disable roaming
  * on connected STA
- * @vdev: vdev object
  * @pdev: pdev object
+ * @vdev: vdev object
  *
  * Loops through connected vdevs and disables roaming if it is STA
  *
@@ -99,14 +99,14 @@ QDF_STATUS if_mgr_disable_roaming(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
-				       struct wlan_objmgr_pdev *pdev);
+if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
+				       struct wlan_objmgr_vdev *vdev);
 
 /**
  * if_mgr_enable_roaming_after_p2p_disconnect() - interface manager enable
  * roaming after p2p disconnect
- * @vdev: vdev object
  * @pdev: pdev object
+ * @vdev: vdev object
  * @requestor: RSO enable requestor
  *
  * Disables roaming on p2p vdevs if the state is disconnected
@@ -116,8 +116,8 @@ if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS if_mgr_enable_roaming_after_p2p_disconnect(
-				struct wlan_objmgr_vdev *vdev,
 				struct wlan_objmgr_pdev *pdev,
+				struct wlan_objmgr_vdev *vdev,
 				enum wlan_cm_rso_control_requestor requestor);
 
 /**
