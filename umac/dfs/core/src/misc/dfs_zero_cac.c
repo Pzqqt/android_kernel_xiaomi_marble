@@ -5174,3 +5174,47 @@ exit:
 	return status;
 }
 #endif
+#if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
+void dfs_translate_radar_params_for_agile_chan(struct wlan_dfs *dfs,
+					       struct radar_found_info *r_info)
+{
+	if (dfs->dfs_precac_chwidth == CH_WIDTH_160MHZ) {
+		if (r_info->freq_offset > 0) {
+			/*
+			 * If the radar hit frequency is right to the center of
+			 * 160MHz center frequency, then the segment id should
+			 * be secondary segment. The offset frequeny that was
+			 * with respect to the 160MHz channel center should be
+			 * converted offset frequency based on the right 80MHz
+			 * center by subtracting 40MHz on the offset received.
+			 */
+
+			r_info->segment_id = SECONDARY_SEG;
+			r_info->freq_offset -= DFS_160MHZ_SECOND_SEG_OFFSET;
+		} else {
+			/*
+			 * If the radar hit frequency is left to the center of
+			 * 160MHz center frequency, then the segment id should
+			 * be primary segment. The offset frequeny that was with
+			 * respect to the 160MHz channel center should be
+			 * converted into offset frequency based on the left
+			 * 80MHz center by adding 40MHz on the offset received.
+			 */
+			r_info->segment_id = PRIMARY_SEG;
+			r_info->freq_offset += DFS_160MHZ_SECOND_SEG_OFFSET;
+		}
+	} else if (IS_HOST_AGILE_CURCHAN_165MHZ(dfs)) {
+		if (r_info->freq_offset > DFS_160MHZ_SECOND_SEG_OFFSET) {
+			/*
+			 * If the radar hit frequency is on the right 80MHz
+			 * segment of the 165MHz channel then the segment id
+			 * should be secondary segment id and the offset should
+			 * be converted to be based on the right 80MHz center
+			 * frequency 5775MHz by subtracting 85MHz.
+			 */
+			r_info->segment_id = SECONDARY_SEG;
+			r_info->freq_offset -= DFS_80P80MHZ_SECOND_SEG_OFFSET;
+		}
+	}
+}
+#endif
