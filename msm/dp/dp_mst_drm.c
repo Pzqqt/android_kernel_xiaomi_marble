@@ -64,8 +64,9 @@ struct dp_drm_mst_fw_helper_ops {
 	int (*update_payload_part1)(struct drm_dp_mst_topology_mgr *mgr);
 	int (*check_act_status)(struct drm_dp_mst_topology_mgr *mgr);
 	int (*update_payload_part2)(struct drm_dp_mst_topology_mgr *mgr);
-	enum drm_connector_status (*detect_port)(
+	int (*detect_port_ctx)(
 		struct drm_connector *connector,
+		struct drm_modeset_acquire_ctx *ctx,
 		struct drm_dp_mst_topology_mgr *mgr,
 		struct drm_dp_mst_port *port);
 	struct edid *(*get_edid)(struct drm_connector *connector,
@@ -631,17 +632,18 @@ static void dp_mst_sim_handle_hpd_irq(void *dp_display,
 	}
 }
 
-static enum drm_connector_status dp_mst_detect_port(
+static int dp_mst_detect_port(
 			struct drm_connector *connector,
+			struct drm_modeset_acquire_ctx *ctx,
 			struct drm_dp_mst_topology_mgr *mgr,
 			struct drm_dp_mst_port *port)
 {
 	struct dp_mst_private *mst = container_of(mgr,
 			struct dp_mst_private, mst_mgr);
-	enum drm_connector_status status = connector_status_disconnected;
+	int status = connector_status_disconnected;
 
 	if (mst->mst_session_state)
-		status = drm_dp_mst_detect_port(connector, mgr, port);
+		status = drm_dp_mst_detect_port(connector, ctx, mgr, port);
 
 	DP_MST_DEBUG("mst port status: %d, session state: %d\n",
 		status, mst->mst_session_state);
@@ -707,7 +709,7 @@ static const struct dp_drm_mst_fw_helper_ops drm_dp_mst_fw_helper_ops = {
 	.update_payload_part1      = drm_dp_update_payload_part1,
 	.check_act_status          = drm_dp_check_act_status,
 	.update_payload_part2      = drm_dp_update_payload_part2,
-	.detect_port               = dp_mst_detect_port,
+	.detect_port_ctx           = dp_mst_detect_port,
 	.get_edid                  = drm_dp_mst_get_edid,
 	.topology_mgr_set_mst      = drm_dp_mst_topology_mgr_set_mst,
 	.get_vcpi_info             = _dp_mst_get_vcpi_info,
@@ -724,7 +726,7 @@ static const struct dp_drm_mst_fw_helper_ops drm_dp_sim_mst_fw_helper_ops = {
 	.update_payload_part1      = dp_mst_sim_update_payload_part1,
 	.check_act_status          = dp_mst_sim_no_action,
 	.update_payload_part2      = dp_mst_sim_update_payload_part2,
-	.detect_port               = dp_mst_detect_port,
+	.detect_port_ctx           = dp_mst_detect_port,
 	.get_edid                  = dp_mst_sim_get_edid,
 	.topology_mgr_set_mst      = dp_mst_sim_topology_mgr_set_mst,
 	.get_vcpi_info             = _dp_mst_get_vcpi_info,
@@ -1356,12 +1358,15 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
 	enum drm_connector_status status;
 	struct dp_mst_connector mst_conn;
+	struct drm_modeset_acquire_ctx ctx;
 
 	DP_MST_DEBUG("enter:\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
-	status = mst->mst_fw_cbs->detect_port(connector,
-			&mst->mst_mgr,
+	drm_modeset_acquire_init(&ctx, 0);
+
+	status = mst->mst_fw_cbs->detect_port_ctx(connector,
+			&ctx, &mst->mst_mgr,
 			c_conn->mst_port);
 
 	memset(&mst_conn, 0, sizeof(mst_conn));
@@ -1374,6 +1379,7 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 	DP_MST_INFO("conn:%d status:%d\n", connector->base.id, status);
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, status);
 
+	drm_modeset_acquire_fini(&ctx);
 	return status;
 }
 
