@@ -70,6 +70,7 @@ struct dp_ctrl_private {
 	bool mst_mode;
 	bool fec_mode;
 	bool dsc_mode;
+	bool sim_mode;
 
 	atomic_t aborted;
 
@@ -328,6 +329,12 @@ static int dp_ctrl_link_training_1(struct dp_ctrl_private *ctrl)
 	ctrl->aux->state &= ~DP_STATE_TRAIN_1_SUCCEEDED;
 	ctrl->aux->state |= DP_STATE_TRAIN_1_STARTED;
 
+	if (ctrl->sim_mode) {
+		DP_DEBUG("simulation enabled, skip clock recovery\n");
+		ret = 0;
+		goto skip_training;
+	}
+
 	dp_ctrl_state_ctrl(ctrl, 0);
 	/* Make sure to clear the current pattern before starting a new one */
 	wmb();
@@ -398,6 +405,7 @@ static int dp_ctrl_link_training_1(struct dp_ctrl_private *ctrl)
 		}
 	}
 
+skip_training:
 	ctrl->aux->state &= ~DP_STATE_TRAIN_1_STARTED;
 
 	if (ret)
@@ -450,6 +458,12 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 	ctrl->aux->state &= ~DP_STATE_TRAIN_2_FAILED;
 	ctrl->aux->state &= ~DP_STATE_TRAIN_2_SUCCEEDED;
 	ctrl->aux->state |= DP_STATE_TRAIN_2_STARTED;
+
+	if (ctrl->sim_mode) {
+		DP_DEBUG("simulation enabled, skip channel equalization\n");
+		ret = 0;
+		goto skip_training;
+	}
 
 	dp_ctrl_state_ctrl(ctrl, 0);
 	/* Make sure to clear the current pattern before starting a new one */
@@ -505,6 +519,7 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 		ctrl->link->adjust_levels(ctrl->link, link_status);
 	}
 
+skip_training:
 	ctrl->aux->state &= ~DP_STATE_TRAIN_2_STARTED;
 
 	if (ret)
@@ -1397,6 +1412,18 @@ static void dp_ctrl_isr(struct dp_ctrl *dp_ctrl)
 		dp_ctrl_idle_patterns_sent(ctrl);
 }
 
+void dp_ctrl_set_sim_mode(struct dp_ctrl *dp_ctrl, bool en)
+{
+	struct dp_ctrl_private *ctrl;
+
+	if (!dp_ctrl)
+		return;
+
+	ctrl = container_of(dp_ctrl, struct dp_ctrl_private, dp_ctrl);
+	ctrl->sim_mode = en;
+	DP_INFO("sim_mode=%d\n", ctrl->sim_mode);
+}
+
 struct dp_ctrl *dp_ctrl_get(struct dp_ctrl_in *in)
 {
 	int rc = 0;
@@ -1445,6 +1472,7 @@ struct dp_ctrl *dp_ctrl_get(struct dp_ctrl_in *in)
 	dp_ctrl->stream_off = dp_ctrl_stream_off;
 	dp_ctrl->stream_pre_off = dp_ctrl_stream_pre_off;
 	dp_ctrl->set_mst_channel_info = dp_ctrl_set_mst_channel_info;
+	dp_ctrl->set_sim_mode = dp_ctrl_set_sim_mode;
 
 	return dp_ctrl;
 error:

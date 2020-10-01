@@ -1603,6 +1603,7 @@ static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
 		debug->dp_debug.sim_mode = true;
 		debug->aux->set_sim_mode(debug->aux, true,
 			debug->edid, debug->dpcd);
+		debug->ctrl->set_sim_mode(debug->ctrl, true);
 	} else {
 		if (debug->hotplug) {
 			DP_WARN("sim mode off before hotplug disconnect\n");
@@ -1613,6 +1614,7 @@ static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
 		debug->ctrl->abort(debug->ctrl, true);
 
 		debug->aux->set_sim_mode(debug->aux, false, NULL, NULL);
+		debug->ctrl->set_sim_mode(debug->ctrl, false);
 		debug->dp_debug.sim_mode = false;
 
 		debug->panel->set_edid(debug->panel, 0);
