@@ -1537,7 +1537,8 @@ struct cdp_throttle_ops {
  * @ipa_register_op_cb:
  * @ipa_get_stat:
  * @ipa_tx_data_frame:
- * @ipa_tx_buf_smmu_mapping: Provide SMMU mappings for Tx
+ * @ipa_tx_buf_smmu_mapping: Create SMMU mappings for Tx
+ * @ipa_tx_buf_smmu_unmapping: Release SMMU mappings for Tx
  * buffers to IPA
  */
 struct cdp_ipa_ops {
@@ -1605,6 +1606,8 @@ struct cdp_ipa_ops {
 				    qdf_nbuf_t nbuf, bool *fwd_success);
 	QDF_STATUS (*ipa_tx_buf_smmu_mapping)(struct cdp_soc_t *soc_hdl,
 					      uint8_t pdev_id);
+	QDF_STATUS (*ipa_tx_buf_smmu_unmapping)(struct cdp_soc_t *soc_hdl,
+						uint8_t pdev_id);
 };
 #endif
 
