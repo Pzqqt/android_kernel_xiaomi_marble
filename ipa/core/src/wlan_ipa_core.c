@@ -617,8 +617,10 @@ static void wlan_ipa_pm_flush(void *data)
 
 int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 {
-	if (!ipa_is_ready())
+	if (!ipa_is_ready()) {
+		ipa_info("IPA is not READY");
 		return 0;
+	}
 
 	if (!num_buf) {
 		ipa_info("No buffers to map/unmap");
@@ -3698,6 +3700,8 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 	wlan_ipa_uc_disable_pipes(ipa_ctx, true);
 
 	if (true == ipa_ctx->uc_loaded) {
+		cdp_ipa_tx_buf_smmu_unmapping(ipa_ctx->dp_soc,
+					      ipa_ctx->dp_pdev_id);
 		status = cdp_ipa_cleanup(ipa_ctx->dp_soc,
 					 ipa_ctx->dp_pdev_id,
 					 ipa_ctx->tx_pipe_handle,
