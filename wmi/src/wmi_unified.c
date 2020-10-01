@@ -129,7 +129,7 @@ struct wmi_command_debug wmi_command_log_buffer[WMI_CMD_DEBUG_MAX_ENTRY];
 
 /* WMI commands TX completed */
 uint32_t g_wmi_command_tx_cmp_buf_idx = 0;
-struct wmi_command_debug
+struct wmi_command_cmp_debug
 	wmi_command_tx_cmp_log_buffer[WMI_CMD_CMPL_DEBUG_MAX_ENTRY];
 
 /* WMI events when processed */
@@ -159,26 +159,36 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 	h->log_info.wmi_command_log_buf_info.length++;			\
 }
 
-#define WMI_COMMAND_TX_CMP_RECORD(h, a, b) {				\
+#define WMI_COMMAND_TX_CMP_RECORD(h, a, b, da, pa) {			\
 	if (wmi_cmd_cmpl_log_max_entry <=				\
 		*(h->log_info.wmi_command_tx_cmp_log_buf_info.p_buf_tail_idx))\
 		*(h->log_info.wmi_command_tx_cmp_log_buf_info.		\
 				p_buf_tail_idx) = 0;			\
-	((struct wmi_command_debug *)h->log_info.			\
+	((struct wmi_command_cmp_debug *)h->log_info.			\
 		wmi_command_tx_cmp_log_buf_info.buf)			\
 		[*(h->log_info.wmi_command_tx_cmp_log_buf_info.		\
 				p_buf_tail_idx)].			\
 							command	= a;	\
-	qdf_mem_copy(((struct wmi_command_debug *)h->log_info.		\
+	qdf_mem_copy(((struct wmi_command_cmp_debug *)h->log_info.	\
 				wmi_command_tx_cmp_log_buf_info.buf)	\
 		[*(h->log_info.wmi_command_tx_cmp_log_buf_info.		\
 			p_buf_tail_idx)].				\
 		data, b, wmi_record_max_length);			\
-	((struct wmi_command_debug *)h->log_info.			\
+	((struct wmi_command_cmp_debug *)h->log_info.			\
 		wmi_command_tx_cmp_log_buf_info.buf)			\
 		[*(h->log_info.wmi_command_tx_cmp_log_buf_info.		\
 				p_buf_tail_idx)].			\
 		time = qdf_get_log_timestamp();				\
+	((struct wmi_command_cmp_debug *)h->log_info.			\
+		wmi_command_tx_cmp_log_buf_info.buf)			\
+		[*(h->log_info.wmi_command_tx_cmp_log_buf_info.		\
+				p_buf_tail_idx)].			\
+		dma_addr = da;						\
+	((struct wmi_command_cmp_debug *)h->log_info.			\
+		wmi_command_tx_cmp_log_buf_info.buf)			\
+		[*(h->log_info.wmi_command_tx_cmp_log_buf_info.		\
+				p_buf_tail_idx)].			\
+		phy_addr = pa;						\
 	(*(h->log_info.wmi_command_tx_cmp_log_buf_info.p_buf_tail_idx))++;\
 	h->log_info.wmi_command_tx_cmp_log_buf_info.length++;		\
 }
@@ -469,8 +479,8 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	/* WMI commands TX completed */
 	cmd_tx_cmpl_log_buf->length = 0;
 	cmd_tx_cmpl_log_buf->buf_tail_idx = 0;
-	cmd_tx_cmpl_log_buf->buf = (struct wmi_command_debug *) qdf_mem_malloc(
-		wmi_cmd_cmpl_log_max_entry * sizeof(struct wmi_command_debug));
+	cmd_tx_cmpl_log_buf->buf = (struct wmi_command_cmp_debug *) qdf_mem_malloc(
+		wmi_cmd_cmpl_log_max_entry * sizeof(struct wmi_command_cmp_debug));
 	cmd_tx_cmpl_log_buf->size = wmi_cmd_cmpl_log_max_entry;
 
 	if (!cmd_tx_cmpl_log_buf->buf)
@@ -667,6 +677,60 @@ wmi_print_cmd_log_buffer(struct wmi_log_buf_t *log_buffer, uint32_t count,
 }
 
 /**
+ * wmi_print_cmd_cmp_log_buffer() - wmi command completion log printer
+ * @log_buffer: the command completion log buffer metadata of the buffer to print
+ * @count: the maximum number of entries to print
+ * @print: an abstract print method, e.g. a qdf_print() or seq_printf() wrapper
+ * @print_priv: any data required by the print method, e.g. a file handle
+ *
+ * Return: None
+ */
+static void
+wmi_print_cmd_cmp_log_buffer(struct wmi_log_buf_t *log_buffer, uint32_t count,
+			 qdf_abstract_print *print, void *print_priv)
+{
+	static const int data_len =
+		WMI_DEBUG_ENTRY_MAX_LENGTH / sizeof(uint32_t);
+	char str[128];
+	uint32_t idx;
+
+	if (count > log_buffer->size)
+		count = log_buffer->size;
+	if (count > log_buffer->length)
+		count = log_buffer->length;
+
+	/* subtract count from index, and wrap if necessary */
+	idx = log_buffer->size + *log_buffer->p_buf_tail_idx - count;
+	idx %= log_buffer->size;
+
+	print(print_priv, "Time (seconds)      Cmd Id              Payload");
+	while (count) {
+		struct wmi_command_cmp_debug *cmd_log = (struct wmi_command_cmp_debug *)
+			&((struct wmi_command_cmp_debug *)log_buffer->buf)[idx];
+		uint64_t secs, usecs;
+		int len = 0;
+		int i;
+
+		qdf_log_timestamp_to_secs(cmd_log->time, &secs, &usecs);
+		len += scnprintf(str + len, sizeof(str) - len,
+				 "% 8lld.%06lld    %6u (0x%06x)    ",
+				 secs, usecs,
+				 cmd_log->command, cmd_log->command);
+		for (i = 0; i < data_len; ++i) {
+			len += scnprintf(str + len, sizeof(str) - len,
+					 "0x%08x ", cmd_log->data[i]);
+		}
+
+		print(print_priv, str);
+
+		--count;
+		++idx;
+		if (idx >= log_buffer->size)
+			idx = 0;
+	}
+}
+
+/**
  * wmi_print_event_log_buffer() - an output agnostic wmi event log printer
  * @log_buffer: the event log buffer metadata of the buffer to print
  * @count: the maximum number of entries to print
@@ -733,7 +797,7 @@ inline void
 wmi_print_cmd_tx_cmp_log(wmi_unified_t wmi, uint32_t count,
 			 qdf_abstract_print *print, void *print_priv)
 {
-	wmi_print_cmd_log_buffer(
+	wmi_print_cmd_cmp_log_buffer(
 		&wmi->log_info.wmi_command_tx_cmp_log_buf_info,
 		count, print, print_priv);
 }
@@ -796,7 +860,7 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
  *
  * Return: Length of characters printed
  */
-#define GENERATE_COMMAND_DEBUG_SHOW_FUNCS(func_base, wmi_ring_size)	\
+#define GENERATE_COMMAND_DEBUG_SHOW_FUNCS(func_base, wmi_ring_size, wmi_record_type)\
 	static int debug_wmi_##func_base##_show(struct seq_file *m,	\
 						void *v)		\
 	{								\
@@ -828,10 +892,10 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 		outlen = wmi_bp_seq_printf(m, "Length = %d\n", wmi_log->length);\
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);\
 		while (nread--) {					\
-			struct wmi_command_debug *wmi_record;		\
+			struct wmi_record_type *wmi_record;		\
 									\
-			wmi_record = (struct wmi_command_debug *)	\
-			&(((struct wmi_command_debug *)wmi_log->buf)[pos]);\
+			wmi_record = (struct wmi_record_type *)	\
+			&(((struct wmi_record_type *)wmi_log->buf)[pos]);\
 			outlen += wmi_bp_seq_printf(m, "CMD ID = %x\n",	\
 				(wmi_record->command));			\
 			qdf_log_timestamp_to_secs(wmi_record->time, &secs,\
@@ -912,13 +976,17 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 		return outlen;						\
 	}
 
-GENERATE_COMMAND_DEBUG_SHOW_FUNCS(command_log, wmi_display_size);
-GENERATE_COMMAND_DEBUG_SHOW_FUNCS(command_tx_cmp_log, wmi_display_size);
+GENERATE_COMMAND_DEBUG_SHOW_FUNCS(command_log, wmi_display_size,
+				  wmi_command_debug);
+GENERATE_COMMAND_DEBUG_SHOW_FUNCS(command_tx_cmp_log, wmi_display_size,
+				  wmi_command_cmp_debug);
 GENERATE_EVENT_DEBUG_SHOW_FUNCS(event_log, wmi_display_size);
 GENERATE_EVENT_DEBUG_SHOW_FUNCS(rx_event_log, wmi_display_size);
-GENERATE_COMMAND_DEBUG_SHOW_FUNCS(mgmt_command_log, wmi_display_size);
+GENERATE_COMMAND_DEBUG_SHOW_FUNCS(mgmt_command_log, wmi_display_size,
+				  wmi_command_debug);
 GENERATE_COMMAND_DEBUG_SHOW_FUNCS(mgmt_command_tx_cmp_log,
-					wmi_display_size);
+					wmi_display_size,
+					wmi_command_debug);
 GENERATE_EVENT_DEBUG_SHOW_FUNCS(mgmt_event_log, wmi_display_size);
 
 /**
@@ -1012,7 +1080,7 @@ static int debug_wmi_log_size_show(struct seq_file *m, void *v)
 GENERATE_DEBUG_WRITE_FUNCS(command_log, wmi_cmd_log_max_entry,
 			   wmi_command_debug);
 GENERATE_DEBUG_WRITE_FUNCS(command_tx_cmp_log, wmi_cmd_cmpl_log_max_entry,
-			   wmi_command_debug);
+			   wmi_command_cmp_debug);
 GENERATE_DEBUG_WRITE_FUNCS(event_log, wmi_event_log_max_entry,
 			   wmi_event_debug);
 GENERATE_DEBUG_WRITE_FUNCS(rx_event_log, wmi_event_log_max_entry,
@@ -3079,6 +3147,8 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	struct wmi_debug_log_info *log_info;
 	uint32_t cmd_id;
 	uint8_t *offset_ptr;
+	qdf_dma_addr_t dma_addr;
+	uint64_t phy_addr;
 #endif
 
 	ASSERT(wmi_cmd_buf);
@@ -3096,6 +3166,9 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 		cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf),
 				WMI_CMD_HDR, COMMANDID);
 
+		dma_addr = QDF_NBUF_CB_PADDR(wmi_cmd_buf);
+		phy_addr = qdf_mem_virt_to_phys(qdf_nbuf_data(wmi_cmd_buf));
+
 		qdf_spin_lock_bh(&log_info->wmi_record_lock);
 		/* Record 16 bytes of WMI cmd tx complete data
 		 * - exclude TLV and WMI headers
@@ -3106,7 +3179,8 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 						       offset_ptr);
 		} else {
 			WMI_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
-						  offset_ptr);
+						  offset_ptr, dma_addr,
+						  phy_addr);
 		}
 
 		qdf_spin_unlock_bh(&log_info->wmi_record_lock);

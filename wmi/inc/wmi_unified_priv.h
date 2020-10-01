@@ -211,6 +211,23 @@ struct wmi_command_debug {
 };
 
 /**
+ * struct wmi_command_cmp_debug - WMI command completion log buffer data type
+ * @ command - Store WMI Command id
+ * @ data - Stores WMI command data
+ * @ time - Time of WMI command handling
+ * @ dma_addr - dma address of the WMI buffer
+ * @ phy_addr - physical address of the WMI buffer
+ */
+struct wmi_command_cmp_debug {
+	uint32_t command;
+	/* WMI cmd data excluding TLV and WMI headers */
+	uint32_t data[WMI_DEBUG_ENTRY_MAX_LENGTH / sizeof(uint32_t)];
+	uint64_t time;
+	qdf_dma_addr_t dma_addr;
+	uint64_t phy_addr;
+};
+
+/**
  * struct wmi_event_debug - WMI event log buffer data type
  * @ command - Store WMI Event id
  * @ data - Stores WMI Event data
