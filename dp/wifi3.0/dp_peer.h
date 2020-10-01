@@ -511,16 +511,16 @@ dp_peer_update_state(struct dp_soc *soc,
 		break;
 
 	default:
+		qdf_spin_unlock_bh(&peer->peer_state_lock);
 		dp_alert("Invalid peer state %u for peer "QDF_MAC_ADDR_FMT,
 			 state, QDF_MAC_ADDR_REF(peer->mac_addr.raw));
-		qdf_spin_unlock_bh(&peer->peer_state_lock);
 		return;
 	}
+	peer->peer_state = state;
+	qdf_spin_unlock_bh(&peer->peer_state_lock);
 	dp_info("Updating peer state from %u to %u mac "QDF_MAC_ADDR_FMT"\n",
 		peer_state, state,
 		QDF_MAC_ADDR_REF(peer->mac_addr.raw));
-	peer->peer_state = state;
-	qdf_spin_unlock_bh(&peer->peer_state_lock);
 }
 
 void dp_print_ast_stats(struct dp_soc *soc);

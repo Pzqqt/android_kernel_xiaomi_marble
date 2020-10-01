@@ -1248,8 +1248,12 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 
 	ast_entry->delete_in_progress = true;
 
-	peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
-				     DP_MOD_ID_AST);
+	/* In teardown del ast is called after setting logical delete state
+	 * use __dp_peer_get_ref_by_id to get the reference irrespective of
+	 * state
+	 */
+	peer = __dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+				       DP_MOD_ID_AST);
 
 	dp_peer_ast_send_wds_del(soc, ast_entry, peer);
 
@@ -1503,13 +1507,16 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 		  ast_entry->next_hop, ast_entry->peer_id);
 
 	/*
-	 * If peer is NULL, the peer is about to get
+	 * If peer state is logical delete, the peer is about to get
 	 * teared down with a peer delete command to firmware,
 	 * which will cleanup all the wds ast entries.
 	 * So, no need to send explicit wds ast delete to firmware.
 	 */
 	if (ast_entry->next_hop) {
-		if (peer)
+		if (peer && dp_peer_state_cmp(peer,
+					      DP_PEER_STATE_LOGICAL_DELETE))
+			delete_in_fw = false;
+		else
 			delete_in_fw = true;
 
 		cdp_soc->ol_ops->peer_del_wds_entry(soc->ctrl_psoc,

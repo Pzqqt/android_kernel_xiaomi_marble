@@ -10179,10 +10179,10 @@ dp_peer_teardown_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	dp_peer_update_state(soc, peer, DP_PEER_STATE_LOGICAL_DELETE);
+
 	qdf_spin_lock_bh(&soc->ast_lock);
 	dp_peer_delete_ast_entries(soc, peer);
-
-	dp_peer_update_state(soc, peer, DP_PEER_STATE_LOGICAL_DELETE);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
