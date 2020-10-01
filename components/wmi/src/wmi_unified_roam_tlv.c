@@ -307,10 +307,11 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 		       WMITLV_TAG_STRUC_wmi_roam_data_rssi_roaming_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 		       (wmi_roam_data_rssi_roaming_param));
-	wmi_debug("Data rssi threshold: %d, triggers: 0x%x, rx time: %d",
-		 data_rssi_param->roam_data_rssi_thres,
-		 data_rssi_param->flags,
-		 data_rssi_param->rx_inactivity_ms);
+	wmi_debug("vdev %d Data rssi threshold: %d, triggers: 0x%x, rx time: %d",
+		  rssi_threshold_fp->vdev_id,
+		  data_rssi_param->roam_data_rssi_thres,
+		  data_rssi_param->flags,
+		  data_rssi_param->rx_inactivity_ms);
 
 	wmi_mtrace(WMI_ROAM_SCAN_RSSI_THRESHOLD, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
@@ -2407,7 +2408,7 @@ send_roam_scan_offload_mode_cmd_tlv(
 		WMI_SEC_TO_MSEC(src_rso_mode_info->min_delay_btw_scans);
 	roam_scan_mode_fp->roam_scan_mode = src_rso_mode_info->roam_scan_mode;
 	roam_scan_mode_fp->vdev_id = rso_req->vdev_id;
-	wmi_debug("vdev_id:%d roam scan mode:0x%x min_delay_bitmap:0x%x min_delay_btw_scans:%d",
+	wmi_debug("RSO_CFG: vdev_id:%d roam scan mode:0x%x min_delay_bitmap:0x%x min_delay_btw_scans:%d",
 		  rso_req->vdev_id,
 		  roam_scan_mode_fp->roam_scan_mode,
 		  roam_scan_mode_fp->min_delay_roam_trigger_reason_bitmask,
@@ -2974,7 +2975,8 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 				ap_profile->profile.rsn_mcastmgmtcipherset;
 	profile->rssi_abs_thresh = ap_profile->profile.rssi_abs_thresh;
 
-	wmi_debug("AP PROFILE: flags:%x rssi_thres:%d bg_rssi_thres:%d ssid:%.*s authmode:%d uc cipher:%d mc cipher:%d mc mgmt cipher:%d rssi abs thresh:%d",
+	wmi_debug("vdev %d AP PROFILE: flags:%x rssi_thres:%d bg_rssi_thres:%d ssid:%.*s authmode:%d uc cipher:%d mc cipher:%d mc mgmt cipher:%d rssi abs thresh:%d",
+		 roam_ap_profile_fp->vdev_id,
 		 profile->flags, profile->rssi_threshold,
 		 profile->bg_rssi_threshold,
 		 profile->ssid.ssid_len, ap_profile->profile.ssid.ssid,
@@ -3414,17 +3416,18 @@ static QDF_STATUS send_roam_scan_offload_rssi_change_cmd_tlv(
 	rssi_change_fp->bcn_rssi_weight = params->bcn_rssi_weight;
 	rssi_change_fp->hirssi_delay_btw_scans = params->hirssi_delay_btw_scans;
 
+	wmi_nofl_debug("RSO_CFG: vdev %d rssi_change_thresh:%d bcn_rssi_weight:%d hirssi_delay_btw_scans:%d",
+		       rssi_change_fp->vdev_id,
+		       rssi_change_fp->roam_scan_rssi_change_thresh,
+		       rssi_change_fp->bcn_rssi_weight,
+		       rssi_change_fp->hirssi_delay_btw_scans);
+
 	wmi_mtrace(WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
 		   rssi_change_fp->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				      WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
-
-	wmi_nofl_debug("RSO_CFG: rssi_change_thresh:%d bcn_rssi_weight:%d hirssi_delay_btw_scans:%d",
-		       rssi_change_fp->roam_scan_rssi_change_thresh,
-		       rssi_change_fp->bcn_rssi_weight,
-		       rssi_change_fp->hirssi_delay_btw_scans);
 
 	return QDF_STATUS_SUCCESS;
 error:
@@ -3699,6 +3702,13 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->btm_bitmap = params->btm_query_bitmask;
 	cmd->btm_candidate_min_score = params->btm_candidate_min_score;
 
+	wmi_debug("RSO_CFG: vdev_id:%u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%u",
+		  cmd->vdev_id, cmd->flags, cmd->btm_bitmap,
+		  cmd->btm_candidate_min_score);
+	wmi_debug("RSO_CFG: btm_solicited_timeout:%u btm_max_attempt_cnt:%u btm_sticky_time:%u disassoc_timer_threshold:%u",
+		  cmd->solicited_timeout_ms, cmd->max_attempt_cnt,
+		  cmd->stick_time_seconds, cmd->disassoc_timer_threshold);
+
 	wmi_mtrace(WMI_ROAM_BTM_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_ROAM_BTM_CONFIG_CMDID)) {
@@ -3746,7 +3756,7 @@ send_roam_bss_load_config_tlv(wmi_unified_t wmi_handle,
 	cmd->rssi_2g_threshold = params->rssi_threshold_24ghz;
 	cmd->rssi_5g_threshold = params->rssi_threshold_5ghz;
 
-	wmi_debug("vdev:%d bss_load_thres:%d monitor_time:%d rssi_2g:%d rssi_5g:%d",
+	wmi_debug("RSO_CFG: vdev:%d bss_load_thres:%d monitor_time:%d rssi_2g:%d rssi_5g:%d",
 		  cmd->vdev_id, cmd->bss_load_threshold,
 		  cmd->monitor_time_window, cmd->rssi_2g_threshold,
 		  cmd->rssi_5g_threshold);
@@ -3794,8 +3804,7 @@ send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
 
 	cmd->vdev_id = req->vdev_id;
 	cmd->enable = req->enable;
-	wmi_debug("Send WMI_ROAM_DEAUTH_CONFIG vdev_id:%d enable:%d",
-		 cmd->vdev_id, cmd->enable);
+	wmi_debug("RSO_CFG: vdev_id:%d enable:%d", cmd->vdev_id, cmd->enable);
 
 	wmi_mtrace(WMI_ROAM_DEAUTH_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -3844,7 +3853,7 @@ send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
 	cmd->min_rssi = idle_roam_params->conn_ap_min_rssi;
 	cmd->idle_time = idle_roam_params->inactive_time;
 	cmd->data_packet_count = idle_roam_params->data_pkt_count;
-	wmi_debug("Send WMI_ROAM_IDLE_CONFIG_CMDID vdev_id:%d enable:%d band:%d rssi_delta:%d min_rssi:%d idle_time:%d data_pkt:%d",
+	wmi_debug("RSO_CFG: vdev_id:%d enable:%d band:%d rssi_delta:%d min_rssi:%d idle_time:%d data_pkt:%d",
 		 cmd->vdev_id, cmd->enable,
 		 cmd->band, cmd->rssi_delta, cmd->min_rssi,
 		 cmd->idle_time, cmd->data_packet_count);
@@ -4016,8 +4025,8 @@ send_offload_11k_cmd_tlv(wmi_unified_t wmi_handle,
 			     neighbor_report_offload->ssid.ssid_len);
 	}
 
-	wmi_debug("RSO_CFG: 11k_bitmask:%u time_offset:%u low_rssi_offset:%u bmiss_count_trigger:%u per_threshold_offset%u",
-		  params->offload_11k_bitmask,
+	wmi_debug("RSO_CFG: vdev %d 11k_bitmask:%u time_offset:%u low_rssi_offset:%u bmiss_count_trigger:%u per_threshold_offset%u",
+		  cmd->vdev_id, params->offload_11k_bitmask,
 		  params->neighbor_report_params.time_offset,
 		  params->neighbor_report_params.low_rssi_offset,
 		  params->neighbor_report_params.bmiss_count_trigger,

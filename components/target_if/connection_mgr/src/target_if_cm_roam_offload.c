@@ -157,7 +157,7 @@ target_if_cm_roam_scan_bmiss_cnt(wmi_unified_t wmi_handle,
 	first_bcnt = req->roam_bmiss_first_bcnt;
 	final_bcnt = req->roam_bmiss_final_bcnt;
 
-	target_if_debug("first_bcnt: %d, final_bcnt: %d",
+	target_if_debug("vdev_id %d first_bcnt: %d, final_bcnt: %d", vdev_id,
 			first_bcnt, final_bcnt);
 
 	status = target_if_vdev_set_param(wmi_handle, vdev_id,
@@ -450,8 +450,8 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 		}
 	}
 
-	target_if_debug("RSO_CFG: db2dbm enabled:%d, good_rssi_threshold:%d, early_stop_thresholds en:%d, min:%d, max:%d, roam_scan_rssi_thresh:%d, roam_rssi_thresh_diff:%d",
-			db2dbm_enabled, req->good_rssi_threshold,
+	target_if_debug("RSO_CFG: vdev %d: db2dbm enabled:%d, good_rssi_threshold:%d, early_stop_thresholds en:%d, min:%d, max:%d, roam_scan_rssi_thresh:%d, roam_rssi_thresh_diff:%d",
+			req->vdev_id, db2dbm_enabled, req->good_rssi_threshold,
 			req->early_stop_scan_enable,
 			req->roam_earlystop_thres_min,
 			req->roam_earlystop_thres_max, req->rssi_thresh,
@@ -696,7 +696,8 @@ target_if_cm_roam_scan_filter(wmi_unified_t wmi_handle, uint8_t command,
 		}
 	}
 
-	target_if_debug("RSO_CFG: op_bitmap:0x%x num_rssi_rejection_ap:%d delta_rssi:%d",
+	target_if_debug("RSO_CFG: vdev %d op_bitmap:0x%x num_rssi_rejection_ap:%d delta_rssi:%d",
+			req->filter_params.vdev_id,
 			req->filter_params.op_bitmap,
 			req->filter_params.num_rssi_rejection_ap,
 			req->filter_params.delta_rssi);
@@ -718,13 +719,6 @@ static QDF_STATUS
 target_if_cm_roam_scan_btm_offload(wmi_unified_t wmi_handle,
 				   struct wlan_roam_btm_config *req)
 {
-	target_if_debug("RSO_CFG: vdev_id:%u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%u",
-			req->vdev_id, req->btm_offload_config,
-			req->btm_query_bitmask, req->btm_candidate_min_score);
-	target_if_debug("RSO_CFG: btm_solicited_timeout:%u btm_max_attempt_cnt:%u btm_sticky_time:%u disassoc_timer_threshold:%u",
-			req->btm_solicited_timeout, req->btm_max_attempt_cnt,
-			req->btm_sticky_time, req->disassoc_timer_threshold);
-
 	return wmi_unified_send_btm_config(wmi_handle, req);
 }
 
