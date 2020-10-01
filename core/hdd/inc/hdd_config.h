@@ -1309,6 +1309,43 @@ struct dhcp_server {
 	"00E04C 00 01", \
 	"Used to specify action OUIs to reconnect when assoc timeout")
 
+/*
+ * <ini>
+ * gActionOUIDisableTWT - Used to specify action OUIs to control TWT param
+ * while joining the candidate AP
+ *
+ * This ini is used to specify AP OUIs. Some APs advertise TWT but do not
+ * follow through when the STA reaches out to them. Thus, TWT will be
+ * disabled when we receive OUIs of those APs.
+ * Note: User should strictly add new action OUIs at the end of this
+ * default value.
+ *
+ * Default OUIs: (All values in Hex)
+ * OUI 1: 001018
+ *   OUI data Len: 00
+ *   Info Mask : 01 - only OUI present in Info mask
+ *
+ * OUI 2: 000986
+ *   OUI data Len: 00
+ *   Info Mask : 01 - only OUI present in Info mask
+ *
+ * Refer to gEnableActionOUI for more detail about the format.
+ *
+ * Related: gEnableActionOUI
+ *
+ * Supported Feature: Action OUIs
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACTION_OUI_DISABLE_TWT CFG_INI_STRING( \
+	"gActionOUIDisableTWT", \
+	0, \
+	ACTION_OUI_MAX_STR_LEN, \
+	"001018 00 01 000986 00 01", \
+	"Used to specify action OUIs to control TWT configuration")
+
 /* End of action oui inis */
 
 #ifdef ENABLE_MTRACE_LOG
@@ -1747,6 +1784,7 @@ enum host_log_level {
 	CFG(CFG_ACTION_OUI_DISABLE_AGGRESSIVE_EDCA) \
 	CFG(CFG_ACTION_OUI_SWITCH_TO_11N_MODE) \
 	CFG(CFG_ACTION_OUI_RECONN_ASSOCTIMEOUT) \
+	CFG(CFG_ACTION_OUI_DISABLE_TWT) \
 	CFG(CFG_ADVERTISE_CONCURRENT_OPERATION) \
 	CFG(CFG_BUG_ON_REINIT_FAILURE) \
 	CFG(CFG_DBS_SCAN_SELECTION) \
