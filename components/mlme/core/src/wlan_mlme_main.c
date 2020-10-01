@@ -994,7 +994,7 @@ static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_cfg *mlme_cfg)
 {
-	uint32_t chan_width;
+	uint32_t chan_width, mcs_12_13;
 	uint16_t value = 0;
 	struct wlan_mlme_he_caps *he_caps = &mlme_cfg->he_caps;
 
@@ -1169,13 +1169,15 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_zero(he_caps->he_ppet_2g, MLME_HE_PPET_LEN);
 	qdf_mem_zero(he_caps->he_ppet_5g, MLME_HE_PPET_LEN);
 
-	value = cfg_get(psoc, CFG_HE_MCS_12_13_SUPPORT);
+	mcs_12_13 = cfg_get(psoc, CFG_HE_MCS_12_13_SUPPORT);
 	/* Get 2.4Ghz and 5Ghz value */
 	mlme_cfg->he_caps.he_mcs_12_13_supp_2g =
-		QDF_GET_BITS(value, HE_MCS12_13_24G_INDEX * HE_MCS12_13_BITS,
+		QDF_GET_BITS(mcs_12_13,
+			     HE_MCS12_13_24G_INDEX * HE_MCS12_13_BITS,
 			     HE_MCS12_13_BITS);
 	mlme_cfg->he_caps.he_mcs_12_13_supp_5g =
-		QDF_GET_BITS(value, HE_MCS12_13_5G_INDEX * HE_MCS12_13_BITS,
+		QDF_GET_BITS(mcs_12_13,
+			     HE_MCS12_13_5G_INDEX * HE_MCS12_13_BITS,
 			     HE_MCS12_13_BITS);
 
 	mlme_cfg->he_caps.enable_6g_sec_check = false;

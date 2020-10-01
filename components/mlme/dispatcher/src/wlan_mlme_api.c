@@ -859,6 +859,11 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 						  wma_cfg->he_mcs_12_13_supp_2g;
 	mlme_obj->cfg.he_caps.he_mcs_12_13_supp_5g &=
 						  wma_cfg->he_mcs_12_13_supp_5g;
+	mlme_debug("mcs_12_13 2G: %x 5G: %x FW_cap: 2G: %x 5G: %x",
+		   mlme_obj->cfg.he_caps.he_mcs_12_13_supp_2g,
+		   mlme_obj->cfg.he_caps.he_mcs_12_13_supp_5g,
+		   wma_cfg->he_mcs_12_13_supp_2g,
+		   wma_cfg->he_mcs_12_13_supp_5g);
 
 	return status;
 }
