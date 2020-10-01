@@ -99,6 +99,7 @@ const EID_20_40_BSS_COEXISTENCE      =  72;
 const EID_20_40_BSS_INTOLERANT_REPORT=  73;
 const EID_OBSS_SCAN_PARAMETERS       =  74;
 const EID_FT_RIC_DESCRIPTOR          =  75;
+const EID_MSCS_STATUS                =  76;
 const EID_LINK_IDENTIFIER            = 101;
 const EID_PTI_CONTROL                = 105;
 const EID_PU_BUFFER_STATUS           = 106;
@@ -2910,6 +2911,57 @@ IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
     };
 }
 
+IE tclas_mask (EID_EXTN_ID_ELEMENT) OUI (0x59)
+{
+    classifier_type, 1;
+    classifier_mask, 1;
+    UNION info (DISCRIMINATOR classifier_type)
+    {
+        IpParams (classifier_type IS 4)
+        {
+            version, 1;
+            UNION params (DISCRIMINATOR version)
+            {
+                IpV4Params (version IS 4)
+                {
+                    source[4];
+                    dest[4];
+                    src_port, 2;
+                    dest_port, 2;
+                    DSCP, 1;
+                    proto, 1;
+                    reserved, 1;
+                }
+                IpV6Params (version IS 6)
+                {
+                    source[16];
+                    dest[16];
+                    src_port, 2;
+                    dest_port, 2;
+                    DSCP, 1;
+                    next_header, 1;
+                    flow_label[3];
+                }
+            };
+        }
+    };
+}
+
+IE mscs_status (EID_MSCS_STATUS)
+{
+     status_code,        1;
+}
+
+IE decriptor_element (EID_EXTN_ID_ELEMENT) OUI (0x58)
+{
+     request_type,                1;
+     user_priority_control,       2;
+     stream_timeout,              4;
+     OPTIE IE tclas_mask;
+     OPTIE IE mscs_status;
+     //Optional Vendor specific IEs ... ignoring
+}
+
 IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
 {
     {
@@ -4452,6 +4504,14 @@ FRAME vendor_action_frame
     FF    Category;
     FF    vendor_oui;
     FF    vendor_action_subtype;
+}
+
+FRAME mscs_request_action_frame
+{
+    FF     Category;
+    FF     Action;
+    FF     DialogToken;
+    MANDIE decriptor_element;
 }
 
 // Local Variables:
