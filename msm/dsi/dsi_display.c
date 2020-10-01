@@ -842,7 +842,8 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 
 	status_mode = panel->esd_config.status_mode;
 
-	if (status_mode == ESD_MODE_SW_SIM_SUCCESS)
+	if ((status_mode == ESD_MODE_SW_SIM_SUCCESS) ||
+			(dsi_display->sw_te_using_wd))
 		goto release_panel_lock;
 
 	if (status_mode == ESD_MODE_SW_SIM_FAILURE) {
@@ -853,6 +854,9 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 
 	if (te_check_override)
 		te_rechecks = MAX_TE_RECHECKS;
+
+	if (panel->panel_mode == DSI_OP_VIDEO_MODE)
+		te_rechecks = 0;
 
 	ret = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 		DSI_ALL_CLKS, DSI_CLK_ON);
