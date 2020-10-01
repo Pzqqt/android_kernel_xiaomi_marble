@@ -52,6 +52,10 @@ bool wmi_get_action_oui_id(enum action_oui_id action_id,
 		*id = WMI_VENDOR_OUI_ACTION_DISABLE_AGGRESSIVE_TX;
 		return true;
 
+	case ACTION_OUI_DISABLE_TWT:
+		*id = WMI_VENDOR_OUI_ACTION_DISABLE_FW_TRIGGERED_TWT;
+		return true;
+
 	default:
 		return false;
 	}
