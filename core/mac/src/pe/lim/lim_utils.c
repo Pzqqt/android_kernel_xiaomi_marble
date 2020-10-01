@@ -299,6 +299,8 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_SET_HW_MODE_RESP";
 	case eWNI_SME_HW_MODE_TRANS_IND:
 		return "eWNI_SME_HW_MODE_TRANS_IND";
+	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
+		return "SIR_LIM_PROCESS_DEFERRED_QUEUE";
 	default:
 		return "Unknown";
 	}

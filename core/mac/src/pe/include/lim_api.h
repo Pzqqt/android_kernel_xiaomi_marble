@@ -67,9 +67,42 @@
 #define LIM_IS_CONNECTION_ACTIVE(pe_session)  (pe_session->LimRxedBeaconCntDuringHB)
 /*mac->lim.gLimProcessDefdMsgs*/
 #define GET_LIM_PROCESS_DEFD_MESGS(mac) (mac->lim.gLimProcessDefdMsgs)
+
+/**
+ * lim_post_msg_api() - post normal priority PE message
+ * @mac: mac context
+ * @msg: message to be posted
+ *
+ * This function is called to post a message to the tail of the PE
+ * message queue to be processed in the MC Thread with normal
+ * priority.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
+ */
+QDF_STATUS lim_post_msg_api(struct mac_context *mac, struct scheduler_msg *msg);
+
+static inline void
+lim_post_msg_to_process_deferred_queue(struct mac_context *mac)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	if (!mac->lim.gLimProcessDefdMsgs || !mac->lim.gLimDeferredMsgQ.size)
+		return;
+
+	msg.type = SIR_LIM_PROCESS_DEFERRED_QUEUE;
+	msg.bodyptr = NULL;
+	msg.bodyval = 0;
+
+	status = lim_post_msg_api(mac, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("Failed to post lim msg:0x%x", msg.type);
+}
+
 #define SET_LIM_PROCESS_DEFD_MESGS(mac, val) \
-		mac->lim.gLimProcessDefdMsgs = val; \
-		pe_debug("Defer LIM msg %d", val);
+	mac->lim.gLimProcessDefdMsgs = val; \
+	pe_debug("Defer LIM msg %d", val); \
+	lim_post_msg_to_process_deferred_queue(mac);
 
 /* LIM exported function templates */
 #define LIM_MIN_BCN_PR_LENGTH  12
@@ -168,19 +201,6 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
  * This called upon reset/persona change etc
  */
 void lim_cleanup(struct mac_context *);
-
-/**
- * lim_post_msg_api() - post normal priority PE message
- * @mac: mac context
- * @msg: message to be posted
- *
- * This function is called to post a message to the tail of the PE
- * message queue to be processed in the MC Thread with normal
- * priority.
- *
- * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
- */
-QDF_STATUS lim_post_msg_api(struct mac_context *mac, struct scheduler_msg *msg);
 
 /**
  * lim_post_msg_high_priority() - post high priority PE message

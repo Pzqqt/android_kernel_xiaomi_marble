@@ -2105,6 +2105,8 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
+		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
