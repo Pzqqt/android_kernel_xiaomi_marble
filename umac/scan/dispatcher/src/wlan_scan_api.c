@@ -91,6 +91,64 @@ void wlan_scan_cfg_set_active_2g_dwelltime(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.active_dwell_2g = dwell_time;
 }
 
+#ifdef CONFIG_BAND_6GHZ
+QDF_STATUS wlan_scan_cfg_get_active_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						 uint32_t *dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return QDF_STATUS_E_INVAL;
+
+	*dwell_time = scan_obj->scan_def.active_dwell_6g;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_scan_cfg_set_active_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						 uint32_t dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return QDF_STATUS_E_INVAL;
+
+	scan_obj->scan_def.active_dwell_6g = dwell_time;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_scan_cfg_get_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return QDF_STATUS_E_INVAL;
+
+	*dwell_time = scan_obj->scan_def.passive_dwell_6g;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_scan_cfg_set_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						  uint32_t dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return QDF_STATUS_E_INVAL;
+
+	scan_obj->scan_def.passive_dwell_6g = dwell_time;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 void wlan_scan_cfg_get_conc_active_dwelltime(struct wlan_objmgr_psoc *psoc,
 					     uint32_t *dwell_time)
 {

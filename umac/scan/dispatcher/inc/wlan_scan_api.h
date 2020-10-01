@@ -48,6 +48,49 @@ void wlan_scan_cfg_set_active_2g_dwelltime(struct wlan_objmgr_psoc *psoc,
 void wlan_scan_cfg_get_active_2g_dwelltime(struct wlan_objmgr_psoc *psoc,
 					   uint32_t *dwell_time);
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * wlan_scan_cfg_set_active_6g_dwelltime() - API to set scan active 6g dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan active dwell time
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_cfg_set_active_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						 uint32_t dwell_time);
+
+/**
+ * wlan_scan_cfg_get_active_6g_dwelltime() - API to get active 6g dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan active dwelltime
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_cfg_get_active_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						 uint32_t *dwell_time);
+
+/**
+ * wlan_scan_cfg_set_passive_6g_dwelltime() - API to set scan passive 6g
+ *                                            dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan passive dwell time
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_cfg_set_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						  uint32_t dwell_time);
+
+/**
+ * wlan_scan_cfg_get_passive_6g_dwelltime() - API to get passive 6g dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan passive dwelltime
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_cfg_get_passive_6g_dwelltime(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *dwell_time);
+#endif
+
 /**
  * wlan_scan_cfg_set_active_dwelltime() - API to set scan active dwelltime
  * @psoc: pointer to psoc object
