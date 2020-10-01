@@ -1557,7 +1557,8 @@ static void sde_kms_wait_for_commit_done(struct msm_kms *kms,
 
 	SDE_ATRACE_BEGIN("sde_kms_wait_for_commit_done");
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
-		if (encoder->crtc != crtc)
+		if (encoder->crtc != crtc &&
+				!sde_encoder_is_cwb_disabling(encoder, crtc))
 			continue;
 		/*
 		 * Wait for post-flush if necessary to delay before

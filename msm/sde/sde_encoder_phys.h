@@ -642,6 +642,26 @@ static inline enum sde_3d_blend_mode sde_encoder_helper_get_3d_blend_mode(
 }
 
 /**
+ * sde_encoder_phys_is_cwb_disabling - Check if CWB encoder attached to this
+ *	 CRTC and it is in SDE_ENC_DISABLING state.
+ * @phys_enc: Pointer to physical encoder structure
+ * @crtc: drm crtc
+ * @Return: true if cwb encoder is in disabling state
+ */
+static inline bool sde_encoder_phys_is_cwb_disabling(
+	struct sde_encoder_phys *phys, struct drm_crtc *crtc)
+{
+	struct sde_encoder_phys_wb *wb_enc;
+
+	if (!phys || !phys->in_clone_mode ||
+				phys->enable_state != SDE_ENC_DISABLING)
+		return false;
+
+	wb_enc = container_of(phys, struct sde_encoder_phys_wb, base);
+	return (wb_enc->crtc == crtc) ? true : false;
+}
+
+/**
  * sde_encoder_helper_split_config - split display configuration helper function
  *	This helper function may be used by physical encoders to configure
  *	the split display related registers.
