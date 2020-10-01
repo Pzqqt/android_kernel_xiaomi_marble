@@ -46,33 +46,6 @@ cm_fill_failure_resp_from_cm_id(struct cnx_mgr *cm_ctx,
 	cm_fill_bss_info_in_connect_rsp_by_cm_id(cm_ctx, cm_id, resp);
 }
 
-/**
- * cm_connect_handle_event_post_fail() - initiate connect failure if msg posting
- * to SM fails
- * @cm_ctx: connection manager context
- * @cm_id: cm_id for connect req for which post fails
- *
- * Context: Can be called from any context and to be used only after posting a
- * msg to SM fails from external event e.g. peer create resp,
- * HW mode change resp  serialization cb.
- *
- * Return: QDF_STATUS
- */
-static void
-cm_connect_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
-{
-	struct wlan_cm_connect_rsp *resp;
-
-	resp = qdf_mem_malloc(sizeof(*resp));
-	if (!resp)
-		return;
-
-	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, cm_id,
-					CM_ABORT_DUE_TO_NEW_REQ_RECVD);
-	cm_connect_complete(cm_ctx, resp);
-	qdf_mem_free(resp);
-}
-
 static QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id)
 {
@@ -212,18 +185,22 @@ static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * cm_send_connect_start_fail() - initiate conenct failure
- * @cm_ctx: connection manager context
- * @req: connect req for which connect failed
- * @reason: failure reason
- *
- * Context: Can be called from any context and to be used only after posting a
- * msg to SM (ie holding the SM lock) to avoid use after free for req.
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
+void
+cm_connect_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+{
+	struct wlan_cm_connect_rsp *resp;
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		return;
+
+	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, cm_id,
+					CM_ABORT_DUE_TO_NEW_REQ_RECVD);
+	cm_connect_complete(cm_ctx, resp);
+	qdf_mem_free(resp);
+}
+
+QDF_STATUS
 cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
 			   struct cm_connect_req *req,
 			   enum wlan_cm_connect_fail_reason reason)
@@ -606,31 +583,32 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_free(filter);
 
 	if (!candidate_list || !qdf_list_size(candidate_list)) {
+		QDF_STATUS status;
+
 		if (candidate_list)
 			wlan_scan_purge_results(candidate_list);
-		mlme_info(CM_PREFIX_FMT "no valid candidate found, num_bss %d",
-			  CM_PREFIX_REF(vdev_id, cm_req->cm_id), num_bss);
+		mlme_info(CM_PREFIX_FMT "no valid candidate found, num_bss %d scan_id %d",
+			  CM_PREFIX_REF(vdev_id, cm_req->cm_id), num_bss,
+			  cm_req->scan_id);
+
 		/*
-		 * Do connect scan only of no candidates were found
-		 * if candidates were found and were removed due to invalid
-		 * return failure
+		 * If connect scan was already done OR candidate were found
+		 * but none of them were valid return QDF_STATUS_E_EMPTY.
 		 */
-		if (!num_bss) {
-			QDF_STATUS status;
+		if (cm_req->scan_id || num_bss)
+			return QDF_STATUS_E_EMPTY;
 
-			status = cm_sm_deliver_event_sync(cm_ctx,
-							  WLAN_CM_SM_EV_SCAN,
-							  sizeof(*cm_req),
-							  cm_req);
-			/*
-			 * If connect scan is initiated, return pending, so that
-			 * connect start after scan complete
-			 */
-			if (QDF_IS_STATUS_SUCCESS(status))
-				return QDF_STATUS_E_PENDING;
-		}
+		/* Try connect scan to search for any valid candidate */
+		status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_SCAN,
+						  sizeof(*cm_req), cm_req);
+		/*
+		 * If connect scan is initiated, return pending, so that
+		 * connect start after scan complete
+		 */
+		if (QDF_IS_STATUS_SUCCESS(status))
+			status = QDF_STATUS_E_PENDING;
 
-		return QDF_STATUS_E_EMPTY;
+		return status;
 	}
 	cm_req->candidate_list = candidate_list;
 

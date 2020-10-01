@@ -99,8 +99,6 @@ struct cm_state_sm {
  * struct cm_connect_req - connect req stored in connect manager
  * @cm_id: Connect manager id
  * @scan_id: scan id for scan for ssid
- * @scan_timer: timer for scan for ssid to get completed
- * @hw_mode_timer: timer for hw mode chane to get completed
  * @req: connect req from osif
  * @rsn_ie: rsn_ie in connect req
  * @candidate_list: candidate list
@@ -111,8 +109,6 @@ struct cm_state_sm {
 struct cm_connect_req {
 	wlan_cm_id cm_id;
 	wlan_scan_id scan_id;
-	qdf_timer_t scan_timer;
-	qdf_timer_t hw_mode_timer;
 	struct wlan_cm_connect_req req;
 	struct element_info rsn_ie;
 	qdf_list_t *candidate_list;
@@ -178,6 +174,7 @@ struct connect_ies {
  * connect req
  * @global_cmd_id: global cmd id for getting cm id for connect/disconnect req
  * @max_connect_attempts: Max attempts to be tried for a connect req
+ * @scan_requester_id: scan requester id.
  */
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -195,6 +192,7 @@ struct cnx_mgr {
 	struct connect_ies req_ie;
 	qdf_atomic_t global_cmd_id;
 	uint8_t max_connect_attempts;
+	wlan_scan_requester scan_requester_id;
 };
 
 /**

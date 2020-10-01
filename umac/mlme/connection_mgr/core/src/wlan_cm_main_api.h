@@ -108,6 +108,35 @@ QDF_STATUS cm_connect_scan_resp(struct cnx_mgr *cm_ctx, wlan_scan_id *scan_id,
 				QDF_STATUS status);
 
 /**
+ * cm_connect_handle_event_post_fail() - initiate connect failure if msg posting
+ * to SM fails
+ * @cm_ctx: connection manager context
+ * @cm_id: cm_id for connect req for which post fails
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM fails from external event e.g. peer create resp,
+ * HW mode change resp  serialization cb.
+ *
+ * Return: QDF_STATUS
+ */
+void
+cm_connect_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * wlan_cm_scan_cb() - Callback function for scan for ssid
+ * @vdev: VDEV MLME comp object
+ * @event: scan event definition
+ * @arg: reference to connection manager context
+ *
+ * API handles scan success/failure case
+ *
+ * Context: Can be called from any context.
+ * Return: None
+ */
+void wlan_cm_scan_cb(struct wlan_objmgr_vdev *vdev,
+		     struct scan_event *event, void *arg);
+
+/**
  * cm_connect_resp_cmid_match_list_head() - Check if resp cmid is same as list
  * head
  * @cm_ctx: connection manager context
@@ -228,6 +257,22 @@ QDF_STATUS cm_add_connect_req_to_list(struct cnx_mgr *cm_ctx,
  */
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req);
+
+/**
+ * cm_send_connect_start_fail() - initiate connect failure
+ * @cm_ctx: connection manager context
+ * @req: connect req for which connect failed
+ * @reason: failure reason
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM (ie holding the SM lock) to avoid use after free for req.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
+			   struct cm_connect_req *req,
+			   enum wlan_cm_connect_fail_reason reason);
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 /**
@@ -645,5 +690,47 @@ bool cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev);
  * Return: bool
  */
 bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * cm_connect_handle_event_post_fail() - initiate connect failure if msg posting
+ * to SM fails
+ * @cm_ctx: connection manager context
+ * @cm_id: cm_id for connect req for which post fails
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM fails from external event e.g. peer create resp,
+ * HW mode change resp  serialization cb.
+ *
+ * Return: QDF_STATUS
+ */
+void
+cm_connect_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+
+/**
+ * cm_get_req_by_scan_id() - Get cm req matching the scan id
+ * @cm_ctx: connection manager context
+ * @scan_id: scan id of scan req
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM (ie holding the SM lock) to avoid use after free. also returned req
+ * should only be used till SM lock is hold.
+ *
+ * Return: cm req from the req list whose scan id matches the argument
+ */
+struct cm_req *cm_get_req_by_scan_id(struct cnx_mgr *cm_ctx,
+				     wlan_scan_id scan_id);
+
+/**
+ * cm_get_cm_id_by_scan_id() - Get cm id by matching the scan id
+ * @cm_ctx: connection manager context
+ * @scan_id: scan id of scan req
+ *
+ * Context: Can be called from any context and used to get cm_id
+ * from scan id when SM lock is not held
+ *
+ * Return: cm id from the req list whose scan id matches the argument
+ */
+wlan_cm_id cm_get_cm_id_by_scan_id(struct cnx_mgr *cm_ctx,
+				   wlan_scan_id scan_id);
 
 #endif /* __WLAN_CM_MAIN_API_H__ */

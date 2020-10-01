@@ -20,6 +20,8 @@
 
 #include "wlan_cm_main.h"
 #include "wlan_cm_sm.h"
+#include "wlan_scan_api.h"
+#include "wlan_cm_main_api.h"
 
 #ifdef WLAN_CM_USE_SPINLOCK
 /**
@@ -67,6 +69,7 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 	QDF_STATUS status;
 
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
@@ -76,7 +79,7 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	if (!vdev_mlme->cnx_mgr_ctx)
 		return QDF_STATUS_E_NOMEM;
 
-	vdev_mlme->cnx_mgr_ctx->vdev = vdev_mlme->vdev;
+	vdev_mlme->cnx_mgr_ctx->vdev = vdev;
 	status = cm_sm_create(vdev_mlme->cnx_mgr_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
@@ -88,6 +91,12 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	qdf_list_create(&vdev_mlme->cnx_mgr_ctx->req_list, CM_MAX_REQ);
 	cm_req_lock_create(vdev_mlme->cnx_mgr_ctx);
 
+	vdev_mlme->cnx_mgr_ctx->scan_requester_id =
+		wlan_scan_register_requester(psoc,
+					     "CM",
+					     wlan_cm_scan_cb,
+					     vdev_mlme->cnx_mgr_ctx);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -95,10 +104,15 @@ QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	wlan_scan_requester scan_requester_id;
 
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
 
+	scan_requester_id = vdev_mlme->cnx_mgr_ctx->scan_requester_id;
+	wlan_scan_unregister_requester(psoc,
+				       scan_requester_id);
 	cm_req_lock_destroy(vdev_mlme->cnx_mgr_ctx);
 	qdf_list_destroy(&vdev_mlme->cnx_mgr_ctx->req_list);
 	cm_sm_destroy(vdev_mlme->cnx_mgr_ctx);

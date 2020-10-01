@@ -717,3 +717,54 @@ bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
 
 	return false;
 }
+
+struct cm_req *cm_get_req_by_scan_id(struct cnx_mgr *cm_ctx,
+				     wlan_scan_id scan_id)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+
+		if (cm_req->connect_req.scan_id == scan_id) {
+			cm_req_lock_release(cm_ctx);
+			return cm_req;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	return NULL;
+}
+
+wlan_cm_id cm_get_cm_id_by_scan_id(struct cnx_mgr *cm_ctx,
+				   wlan_scan_id scan_id)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req;
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+
+		if (cm_req->connect_req.scan_id == scan_id) {
+			cm_req_lock_release(cm_ctx);
+			return cm_req->cm_id;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	return CM_ID_INVALID;
+}
+
