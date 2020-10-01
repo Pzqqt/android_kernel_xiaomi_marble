@@ -2058,6 +2058,81 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *tx_power)
 	return 0;
 } /* End of hdd_parse_setmaxtxpower_command */
 
+#ifdef CONFIG_BAND_6GHZ
+static int hdd_get_dwell_time_6g(struct wlan_objmgr_psoc *psoc,
+				 uint8_t *command, char *extra, uint8_t n,
+				 uint8_t *len)
+{
+	uint32_t val = 0;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	if (strncmp(command, "GETDWELLTIME 6G MAX", 19) == 0) {
+		status = ucfg_scan_cfg_get_active_6g_dwelltime(psoc, &val);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			*len = scnprintf(extra, n, "GETDWELLTIME 6G MAX %u\n",
+					 val);
+	} else if (strncmp(command, "GETDWELLTIME PASSIVE 6G MAX", 27) == 0) {
+		status = ucfg_scan_cfg_get_passive_6g_dwelltime(psoc, &val);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			*len = scnprintf(extra, n,
+					 "GETDWELLTIME PASSIVE 6G MAX %u\n",
+					 val);
+	}
+
+	return qdf_status_to_os_return(status);
+}
+
+static int hdd_set_dwell_time_6g(struct wlan_objmgr_psoc *psoc,
+				 uint8_t *command)
+{
+	uint8_t *value = command;
+	int temp = 0;
+	uint32_t val = 0;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	if (strncmp(command, "SETDWELLTIME 6G MAX", 19) == 0) {
+		if (drv_cmd_validate(command, 19))
+			return -EINVAL;
+
+		value = value + 20;
+		temp = kstrtou32(value, 10, &val);
+		if (temp || !cfg_in_range(CFG_ACTIVE_MAX_6G_CHANNEL_TIME,
+					  val)) {
+			hdd_err_rl("argument passed for SETDWELLTIME 6G MAX is incorrect");
+			return -EFAULT;
+		}
+		status = ucfg_scan_cfg_set_active_6g_dwelltime(psoc, val);
+	} else if (strncmp(command, "SETDWELLTIME PASSIVE 6G MAX", 27) == 0) {
+		if (drv_cmd_validate(command, 27))
+			return -EINVAL;
+
+		value = value + 28;
+		temp = kstrtou32(value, 10, &val);
+		if (temp || !cfg_in_range(CFG_PASSIVE_MAX_6G_CHANNEL_TIME,
+					  val)) {
+			hdd_err_rl("argument passed for SETDWELLTIME PASSIVE 6G MAX is incorrect");
+			return -EFAULT;
+		}
+		status = ucfg_scan_cfg_set_passive_6g_dwelltime(psoc, val);
+	}
+
+	return qdf_status_to_os_return(status);
+}
+#else
+static int hdd_get_dwell_time_6g(struct wlan_objmgr_psoc *psoc,
+				 uint8_t *command, char *extra, uint8_t n,
+				 uint8_t *len)
+{
+	return -EINVAL;
+}
+
+static int hdd_set_dwell_time_6g(struct wlan_objmgr_psoc *psoc,
+				 uint8_t *command)
+{
+	return -EINVAL;
+}
+#endif
+
 static int hdd_get_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command,
 			      char *extra, uint8_t n, uint8_t *len)
 {
@@ -2091,7 +2166,7 @@ static int hdd_get_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command,
 		return 0;
 	}
 
-	return -EINVAL;
+	return hdd_get_dwell_time_6g(psoc, command, extra, n, len);
 }
 
 static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
@@ -2151,7 +2226,7 @@ static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
 		}
 		ucfg_scan_cfg_set_active_dwelltime(psoc, val);
 	} else {
-		retval = -EINVAL;
+		retval = hdd_set_dwell_time_6g(psoc, command);
 	}
 
 	return retval;
