@@ -211,15 +211,26 @@ QDF_STATUS ol_txrx_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl,
 					uint8_t pdev_id);
 
 /**
- * ol_txrx_ipa_tx_buf_smmu_mapping() Create SMMU mappings for IPA
- * allocated TX buffers
- * @soc_hdl - handle to the soc
- * @pdev_id - pdev id number, to get the handle
+ * ol_txrx_ipa_tx_buf_smmu_mapping() - Create SMMU mappings for IPA
+ *				       allocated TX buffers
+ * @soc_hdl: handle to the soc
+ * @pdev_id: pdev id number, to get the handle
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS ol_txrx_ipa_tx_buf_smmu_mapping(
-	struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+QDF_STATUS ol_txrx_ipa_tx_buf_smmu_mapping(struct cdp_soc_t *soc_hdl,
+					   uint8_t pdev_id);
+
+/**
+ * ol_txrx_ipa_tx_buf_smmu_unmapping() - Release SMMU mappings for IPA
+ *					 allocated TX buffers
+ * @soc_hdl: handle to the soc
+ * @pdev_id: pdev id number, to get the handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_tx_buf_smmu_unmapping(struct cdp_soc_t *soc_hdl,
+					     uint8_t pdev_id);
 
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
 /**

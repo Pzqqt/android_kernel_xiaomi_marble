@@ -1206,38 +1206,14 @@ out:
 static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 {
 	uint16_t idx;
-	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
-	uint32_t num_unmapped = 0;
-
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
-		mem_map_table = qdf_mem_map_table_alloc(
-					pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt);
-		if (!mem_map_table) {
-			qdf_print("Failed to allocate memory");
-			return;
-		}
-		mem_info = mem_map_table;
-	}
 
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx]) {
-			if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
-				*mem_info = pdev->ipa_uc_tx_rsc.
-					      tx_buf_pool_strg[idx]->mem_info;
-				mem_info++;
-				num_unmapped++;
-			}
 			qdf_mem_shared_mem_free(pdev->osdev,
 						pdev->ipa_uc_tx_rsc.
 							tx_buf_pool_strg[idx]);
 			pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx] = NULL;
 		}
-	}
-
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
-		if (num_unmapped)
-			cds_smmu_map_unmap(false, num_unmapped, mem_map_table);
-		qdf_mem_free(mem_map_table);
 	}
 }
 #else
@@ -1336,38 +1312,14 @@ pwr2:
 static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 {
 	uint16_t idx;
-	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
-	uint32_t num_unmapped = 0;
-
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
-		mem_map_table = qdf_mem_map_table_alloc(
-					pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt);
-		if (!mem_map_table) {
-			qdf_print("Failed to allocate memory");
-			return;
-		}
-		mem_info = mem_map_table;
-	}
 
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx]) {
-			if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
-				*mem_info = pdev->ipa_uc_tx_rsc.
-					      tx_buf_pool_strg[idx]->mem_info;
-				mem_info++;
-				num_unmapped++;
-			}
 			qdf_mem_shared_mem_free(pdev->osdev,
 						pdev->ipa_uc_tx_rsc.
 							tx_buf_pool_strg[idx]);
 			pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx] = NULL;
 		}
-	}
-
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
-		if (num_unmapped)
-			cds_smmu_map_unmap(false, num_unmapped, mem_map_table);
-		qdf_mem_free(mem_map_table);
 	}
 }
 #endif
