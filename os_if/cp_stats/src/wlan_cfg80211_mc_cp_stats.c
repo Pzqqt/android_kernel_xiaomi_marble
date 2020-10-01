@@ -76,6 +76,13 @@ static void wlan_cfg80211_mc_cp_stats_dealloc(void *priv)
 	wlan_free_mib_stats(stats);
 }
 
+#define QCA_WLAN_VENDOR_ATTR_TOTAL_DRIVER_FW_LOCAL_WAKE \
+	QCA_WLAN_VENDOR_ATTR_WAKE_STATS_TOTAL_DRIVER_FW_LOCAL_WAKE
+#define QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_PTR \
+	QCA_WLAN_VENDOR_ATTR_WAKE_STATS_DRIVER_FW_LOCAL_WAKE_CNT_PTR
+#define QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_SZ \
+	QCA_WLAN_VENDOR_ATTR_WAKE_STATS_DRIVER_FW_LOCAL_WAKE_CNT_SZ
+
 /**
  * wlan_cfg80211_mc_cp_stats_send_wake_lock_stats() - API to send wakelock stats
  * @wiphy: wiphy pointer
@@ -139,62 +146,71 @@ static int wlan_cfg80211_mc_cp_stats_send_wake_lock_stats(struct wiphy *wiphy,
 	total_rx_data_wake = stats->ucast_wake_up_count +
 			stats->bcast_wake_up_count + rx_multicast_cnt;
 
-	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_TOTAL_CMD_EVENT_WAKE, 0) ||
-	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CMD_EVENT_WAKE_CNT_PTR, 0) ||
-	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CMD_EVENT_WAKE_CNT_SZ, 0) ||
-	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_TOTAL_DRIVER_FW_LOCAL_WAKE,
-			0) ||
-	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_PTR,
-			0) ||
-	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_SZ,
+	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_TOTAL_CMD_EVENT_WAKE,
 			0) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_TOTAL_RX_DATA_WAKE,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_CMD_EVENT_WAKE_CNT_PTR,
+			0) ||
+	    nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_CMD_EVENT_WAKE_CNT_SZ,
+			0) ||
+	    nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_TOTAL_DRIVER_FW_LOCAL_WAKE,
+			0) ||
+	    nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_PTR,
+			0) ||
+	    nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_SZ,
+			0) ||
+	    nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_TOTAL_RX_DATA_WAKE,
 			total_rx_data_wake) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_RX_UNICAST_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_RX_UNICAST_CNT,
 			stats->ucast_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_RX_MULTICAST_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_RX_MULTICAST_CNT,
 			rx_multicast_cnt) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_RX_BROADCAST_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_RX_BROADCAST_CNT,
 			stats->bcast_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP_PKT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP_PKT,
 			stats->icmpv4_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP6_PKT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP6_PKT,
 			icmpv6_cnt) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP6_RA,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP6_RA,
 			stats->ipv6_mcast_ra_stats) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP6_NA,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP6_NA,
 			stats->ipv6_mcast_na_stats) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP6_NS,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP6_NS,
 			stats->ipv6_mcast_ns_stats) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP4_RX_MULTICAST_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP4_RX_MULTICAST_CNT,
 			stats->ipv4_mcast_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_ICMP6_RX_MULTICAST_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_ICMP6_RX_MULTICAST_CNT,
 			ipv6_rx_multicast_addr_cnt) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_RSSI_BREACH_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_RSSI_BREACH_CNT,
 			stats->rssi_breach_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_LOW_RSSI_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_LOW_RSSI_CNT,
 			stats->low_rssi_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_GSCAN_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_GSCAN_CNT,
 			stats->gscan_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_PNO_COMPLETE_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_PNO_COMPLETE_CNT,
 			stats->pno_complete_wake_up_count) ||
 	    nla_put_u32(skb,
-			QCA_WLAN_VENDOR_ATTR_PNO_MATCH_CNT,
+			QCA_WLAN_VENDOR_ATTR_WAKE_STATS_PNO_MATCH_CNT,
 			stats->pno_match_wake_up_count)) {
 		osif_err("nla put fail");
 		goto nla_put_failure;
@@ -207,6 +223,10 @@ nla_put_failure:
 	wlan_cfg80211_vendor_free_skb(skb);
 	return -EINVAL;
 }
+
+#undef QCA_WLAN_VENDOR_ATTR_TOTAL_DRIVER_FW_LOCAL_WAKE
+#undef QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_PTR
+#undef QCA_WLAN_VENDOR_ATTR_DRIVER_FW_LOCAL_WAKE_CNT_SZ
 
 int wlan_cfg80211_mc_cp_stats_get_wakelock_stats(struct wlan_objmgr_psoc *psoc,
 						 struct wiphy *wiphy)
