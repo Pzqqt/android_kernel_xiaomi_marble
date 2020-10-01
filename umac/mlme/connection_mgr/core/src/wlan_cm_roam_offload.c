@@ -587,6 +587,12 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	if (!stop_req)
 		return QDF_STATUS_E_NOMEM;
 
+	stop_req->btm_config.vdev_id = vdev_id;
+	stop_req->disconnect_params.vdev_id = vdev_id;
+	stop_req->idle_params.vdev_id = vdev_id;
+	stop_req->roam_triggers.vdev_id = vdev_id;
+	stop_req->rssi_params.vdev_id = vdev_id;
+
 	/* do the filling as csr_post_rso_stop */
 	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
 	if (QDF_IS_STATUS_ERROR(status)) {
