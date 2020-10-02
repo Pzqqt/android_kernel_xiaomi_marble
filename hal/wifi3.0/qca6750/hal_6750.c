@@ -1909,6 +1909,7 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	hal_rx_flow_setup_cmem_fse_6750,
 	hal_rx_flow_get_cmem_fse_ts_6750,
 	hal_rx_flow_get_cmem_fse_6750,
+	NULL
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {

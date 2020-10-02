@@ -1775,6 +1775,10 @@ struct hal_hw_txrx_ops qcn9100_hal_hw_txrx_ops = {
 	hal_rx_mpdu_end_offset_get_generic,
 	hal_rx_flow_setup_fse_9100,
 	hal_compute_reo_remap_ix2_ix3_9100,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 struct hal_hw_srng_config hw_srng_table_9100[] = {

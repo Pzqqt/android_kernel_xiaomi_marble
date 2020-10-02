@@ -1324,7 +1324,11 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	hal_rx_mpdu_start_offset_get_generic,
 	hal_rx_mpdu_end_offset_get_generic,
 	hal_rx_flow_setup_fse_8074v1,
-	hal_compute_reo_remap_ix2_ix3_8074v1
+	hal_compute_reo_remap_ix2_ix3_8074v1,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {
