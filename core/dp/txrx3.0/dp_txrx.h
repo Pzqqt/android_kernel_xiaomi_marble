@@ -73,7 +73,15 @@ static inline void dp_rx_napi_gro_flush(struct napi_struct *napi,
 	}
 }
 #else
-#define dp_rx_napi_gro_flush(_napi, flush_code) napi_gro_flush((_napi), false)
+static inline void dp_rx_napi_gro_flush(struct napi_struct *napi,
+					enum dp_rx_gro_flush_code flush_code)
+{
+	if (napi->poll) {
+		/* Skipping GRO flush in low TPUT */
+		if (flush_code != DP_RX_GRO_LOW_TPUT_FLUSH)
+			napi_gro_flush(napi, false);
+	}
+}
 #endif
 
 #ifdef FEATURE_WLAN_DP_RX_THREADS
