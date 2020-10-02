@@ -1111,6 +1111,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_sscan_evt_message_fixed_param,
     WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_send_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_qos_null_frame_tx_compl_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1562,6 +1563,7 @@ typedef enum {
     OP(WMI_WFA_CONFIG_CMDID) \
     OP(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID) \
     OP(WMI_QOS_NULL_FRAME_TX_SEND_CMDID) \
+    OP(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4511,6 +4513,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_GET_TPC_STATS_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_tpc_stats_cmd_fixed_param, wmi_pdev_get_tpc_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_TPC_STATS_CMDID);
+
+/* Duration based tx mode selection Enable Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param, wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/

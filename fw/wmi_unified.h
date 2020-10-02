@@ -436,6 +436,8 @@ typedef enum {
     WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID,
     /** TPC stats display command */
     WMI_PDEV_GET_TPC_STATS_CMDID,
+    /** ENABLE/DISABLE Duration based tx mode selection */
+    WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -27217,6 +27219,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_GET_SCHED_METHOD_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
         WMI_RETURN_STRING(WMI_QOS_NULL_FRAME_TX_SEND_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -31856,6 +31859,20 @@ typedef struct {
      */
     A_UINT32 non_srg_obss_en_bssid_bitmap[2];
 } wmi_pdev_non_srg_obss_bssid_enable_bitmap_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /* enable/disable Duration based Tx Mode selection */
+    A_UINT32 duration_based_tx_mode_selection;
+} wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param;
 
 typedef enum {
     /* Simulation test command types */
