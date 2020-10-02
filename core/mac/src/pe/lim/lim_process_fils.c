@@ -1419,8 +1419,10 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 
 	fils_info = wlan_cm_get_fils_connection_info(mac_ctx->psoc,
 						     session->vdev_id);
-	if (!fils_info)
+	if (!fils_info) {
+		pe_debug("FILS: CM Fils info is NULL");
 		return;
+	}
 
 	pe_fils_info = session->fils_info;
 	if (!pe_fils_info)
@@ -1457,9 +1459,10 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 	if (fils_info->r_rk_length) {
 		pe_fils_info->fils_rrk =
 			qdf_mem_malloc(fils_info->r_rk_length);
-		if (!pe_fils_info->fils_rrk)
+		if (!pe_fils_info->fils_rrk) {
 			qdf_mem_free(pe_fils_info->keyname_nai_data);
 			return;
+		}
 
 		if (fils_info->r_rk_length <= WLAN_FILS_MAX_RRK_LENGTH)
 			qdf_mem_copy(pe_fils_info->fils_rrk,
@@ -1506,6 +1509,7 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 		qdf_mem_copy(pe_fils_info->fils_pmk, fils_info->pmk,
 			     fils_info->pmk_len);
 	}
+
 	pe_debug("FILS: fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d",
 		 fils_info->is_fils_connection,
 		 fils_info->key_nai_length,

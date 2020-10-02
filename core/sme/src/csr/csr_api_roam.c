@@ -7874,10 +7874,6 @@ static void update_profile_fils_info(struct mac_context *mac,
 	qdf_mem_copy(des_profile->fils_con_info,
 			src_profile->fils_con_info,
 			sizeof(struct wlan_fils_connection_info));
-
-	wlan_cm_update_mlme_fils_connection_info(mac->psoc,
-						 des_profile->fils_con_info,
-						 vdev_id);
 	des_profile->hlp_ie =
 		qdf_mem_malloc(src_profile->hlp_ie_len);
 	if (!des_profile->hlp_ie)

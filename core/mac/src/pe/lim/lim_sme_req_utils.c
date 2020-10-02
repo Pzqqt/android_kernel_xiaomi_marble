@@ -74,8 +74,10 @@ lim_is_rsn_ie_valid_in_sme_req_message(struct mac_context *mac_ctx,
 			       rsn_ie->length, privacy, val);
 	}
 
-	if (!rsn_ie->length)
+	if (!rsn_ie->length) {
+		pe_debug("RSN IE length is 0");
 		return true;
+	}
 
 	if ((rsn_ie->rsnIEdata[0] != DOT11F_EID_RSN)
 #ifdef FEATURE_WLAN_WAPI
