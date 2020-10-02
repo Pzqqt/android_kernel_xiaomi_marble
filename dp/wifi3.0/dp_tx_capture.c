@@ -732,6 +732,11 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 			ppdu_desc = (struct cdp_tx_completion_ppdu *)
 					qdf_nbuf_data(ppdu_nbuf);
 
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_INFO_MED,
+				  "ppdu_id:%u tsf:%llu removed from pending ppdu q",
+				  ppdu_desc->ppdu_id,
+				  ppdu_desc->ppdu_start_timestamp);
 			/*
 			 * check if peer id is matching
 			 * the user peer_id
@@ -1581,6 +1586,10 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 	uint32_t k;
 	uint32_t ba_bitmap = 0;
 	int last_set_bit;
+	uint32_t last_ba_set_bit = 0;
+	uint8_t extra_ba_mpdus = 0;
+	uint32_t last_ba_seq = 0;
+	uint32_t enq_ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS] = {0};
 
 	user = (struct cdp_tx_completion_ppdu_user *)data;
 
@@ -1628,6 +1637,10 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 		}
 	}
 
+	if (num_mpdu > mpdu_tried) {
+		extra_ba_mpdus = 1;
+	}
+
 	/* Adjust failed_bitmap to start from same seq_no as enq_bitmap */
 	last_set_bit = 0;
 	if (start_seq <= ba_seq_no) {
@@ -1641,11 +1654,30 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 			carry = ((ba_bitmap & (bitmask << (32 - diff))) >>
 				(32 - diff));
 
-			user->failed_bitmap[i] = user->enq_bitmap[i] &
-						 user->failed_bitmap[i];
+			if (user->failed_bitmap[i]) {
+				last_ba_set_bit = i * 32 +
+					  qdf_fls(user->failed_bitmap[i]) - 1;
+				if (extra_ba_mpdus) {
+					enq_ba_bitmap[i] =
+						user->failed_bitmap[i];
+					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+						  QDF_TRACE_LEVEL_INFO_MED,
+						  "i=%d failed_bitmap[%d] = 0x%x last_ba_set_bit:%d\n",
+						  i, i, user->failed_bitmap[i],
+						  last_ba_set_bit);
+				}
+			}
+
 			if (user->enq_bitmap[i]) {
 				last_set_bit = i * 32 +
 					qdf_fls(user->enq_bitmap[i]) - 1;
+			}
+
+			if (extra_ba_mpdus) {
+				user->enq_bitmap[i] = enq_ba_bitmap[i];
+			} else {
+				user->failed_bitmap[i] = user->enq_bitmap[i] &
+							 user->failed_bitmap[i];
 			}
 		}
 	} else {
@@ -1654,7 +1686,7 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 		diff = diff & 0x1F;
 
 		bitmask = (1 << diff) - 1;
-		for (i = 0; i < size; i++, k++) {
+		for (i = 0; i < size && (k < (size - 1)); i++, k++) {
 			ba_bitmap = user->ba_bitmap[k];
 			user->failed_bitmap[i] = ba_bitmap >> diff;
 			/* get next ba_bitmap */
@@ -1663,17 +1695,52 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 			user->failed_bitmap[i] |=
 				((carry & bitmask) << (32 - diff));
 
-			user->failed_bitmap[i] = user->enq_bitmap[i] &
-						 user->failed_bitmap[i];
+			if (user->failed_bitmap[i]) {
+				last_ba_set_bit = i * 32 +
+					  qdf_fls(user->failed_bitmap[i]) - 1;
+				if (extra_ba_mpdus) {
+					enq_ba_bitmap[i] =
+						user->failed_bitmap[i];
+					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+						  QDF_TRACE_LEVEL_INFO_MED,
+						  "i=%d failed_bitmap[%d] = 0x%x last_ba_set_bit:%d\n",
+						  i, i, user->failed_bitmap[i],
+						  last_ba_set_bit);
+				}
+			}
+
 			if (user->enq_bitmap[i]) {
 				last_set_bit = i * 32 +
 					qdf_fls(user->enq_bitmap[i]) - 1;
+			}
+
+			if (extra_ba_mpdus) {
+				user->enq_bitmap[i] = enq_ba_bitmap[i];
+			} else {
+				user->failed_bitmap[i] = user->enq_bitmap[i] &
+							 user->failed_bitmap[i];
 			}
 		}
 	}
 	user->last_enq_seq = user->start_seq + last_set_bit;
 	user->ba_size = user->last_enq_seq - user->start_seq + 1;
+
+	last_ba_seq = user->start_seq + last_ba_set_bit;
+
+	if (extra_ba_mpdus) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+			  QDF_TRACE_LEVEL_INFO_MED,
+			  "ppdu_id:%u ba_size:%u modified_ba_size:%u last_ba_set_bit:%u start_seq: %u\n",
+			  ppdu_id,
+			  user->ba_size,
+			  last_ba_seq - user->start_seq + 1,
+			  last_ba_set_bit, user->start_seq);
+		user->ba_size = last_ba_seq - user->start_seq + 1;
+
+		user->last_enq_seq = last_ba_seq;
+	}
 }
+
 
 /*
  * dp_soc_set_txrx_ring_map_single()
@@ -4661,7 +4728,8 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 
 			for (i = 0; (i < user->ba_size) && mpdus_tried; i++) {
 				if (qdf_likely(user->tid != DP_NON_QOS_TID) &&
-				    !(SEQ_BIT(user->enq_bitmap, i)))
+				    !(SEQ_BIT(user->enq_bitmap, i)) &&
+				    !mpdu_tried)
 					continue;
 				mpdus_tried--;
 				/* missed seq number */
@@ -4730,6 +4798,25 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 					dp_tx_cap_stats_mpdu_update(peer,
 							PEER_MPDU_ARR, 1);
 				}
+			}
+
+			for (/* get i from previous stored value*/;
+			     i < user->ba_size; i++) {
+				qdf_nbuf_queue_t *tmp_q;
+
+				/* missed seq number */
+				seq_no = start_seq + i;
+
+				tmp_q = &user->mpdu_q;
+				/* any error case we need to handle */
+				mpdu_nbuf = qdf_nbuf_queue_remove(tmp_q);
+				/* check mpdu_nbuf NULL */
+				if (!mpdu_nbuf)
+					continue;
+
+				user->mpdus[seq_no - start_seq] = mpdu_nbuf;
+				dp_tx_cap_stats_mpdu_update(peer,
+							    PEER_MPDU_ARR, 1);
 			}
 
 			mpdu_tried = user->mpdu_tried_ucast +
@@ -5057,6 +5144,8 @@ dequeue_msdu_again:
 
 			if (qdf_nbuf_is_queue_empty(
 						&head_msdu)) {
+				if (user->completion_status == 2)
+					goto nbuf_add_ref;
 				user->skip = 1;
 				goto free_nbuf_dec_ref;
 			}
@@ -5117,6 +5206,7 @@ dequeue_msdu_again:
 						    mpdu_suc);
 			dp_tx_cap_stats_mpdu_update(peer, PEER_MPDU_TRI,
 						    mpdu_tri);
+nbuf_add_ref:
 			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
 			/* get reference count */
 			ref_cnt = qdf_nbuf_get_users(nbuf_ppdu);
@@ -6412,8 +6502,7 @@ static QDF_STATUS debug_ppdu_desc_log_show(qdf_debugfs_file_t file, void *arg)
 				   user->delayed_ba);
 
 		qdf_debugfs_printf(file,
-				   "\tS_SEQ:%d ENQ_BITMAP[",
-				   user->start_seq);
+				   "\tS_SEQ:%d ENQ_BITMAP[", user->start_seq);
 		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++)
 			qdf_debugfs_printf(file, " 0x%x",
 					   user->enq_bitmap[i]);
