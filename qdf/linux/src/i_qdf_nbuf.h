@@ -772,6 +772,20 @@ __qdf_nbuf_alloc(__qdf_device_t osdev, size_t size, int reserve, int align,
 __qdf_nbuf_t __qdf_nbuf_alloc_no_recycler(size_t size, int reserve, int align,
 					  const char *func, uint32_t line);
 
+/**
+ * __qdf_nbuf_clone() - clone the nbuf (copy is readonly)
+ * @skb: Pointer to network buffer
+ *
+ * if GFP_ATOMIC is overkill then we can check whether its
+ * called from interrupt context and then do it or else in
+ * normal case use GFP_KERNEL
+ *
+ * example     use "in_irq() || irqs_disabled()"
+ *
+ * Return: cloned skb
+ */
+__qdf_nbuf_t __qdf_nbuf_clone(__qdf_nbuf_t nbuf);
+
 void __qdf_nbuf_free(struct sk_buff *skb);
 QDF_STATUS __qdf_nbuf_map(__qdf_device_t osdev,
 			struct sk_buff *skb, qdf_dma_dir_t dir);
@@ -1040,30 +1054,6 @@ static inline size_t __qdf_nbuf_get_nr_frags(struct sk_buff *skb)
 #define __qdf_nbuf_pool_delete(osdev)
 
 /**
- * __qdf_nbuf_clone() - clone the nbuf (copy is readonly)
- * @skb: Pointer to network buffer
- *
- * if GFP_ATOMIC is overkill then we can check whether its
- * called from interrupt context and then do it or else in
- * normal case use GFP_KERNEL
- *
- * example     use "in_irq() || irqs_disabled()"
- *
- * Return: cloned skb
- */
-static inline struct sk_buff *__qdf_nbuf_clone(struct sk_buff *skb)
-{
-	struct sk_buff *skb_new = NULL;
-
-	skb_new = skb_clone(skb, GFP_ATOMIC);
-	if (skb_new) {
-		__qdf_frag_count_inc(__qdf_nbuf_get_nr_frags(skb_new));
-		__qdf_nbuf_count_inc(skb_new);
-	}
-	return skb_new;
-}
-
-/**
  * __qdf_nbuf_copy() - returns a private copy of the skb
  * @skb: Pointer to network buffer
  *
@@ -1078,7 +1068,6 @@ static inline struct sk_buff *__qdf_nbuf_copy(struct sk_buff *skb)
 
 	skb_new = skb_copy(skb, GFP_ATOMIC);
 	if (skb_new) {
-		__qdf_frag_count_inc(__qdf_nbuf_get_nr_frags(skb_new));
 		__qdf_nbuf_count_inc(skb_new);
 	}
 	return skb_new;

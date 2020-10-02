@@ -3900,6 +3900,22 @@ void qdf_net_buf_debug_acquire_frag(qdf_nbuf_t buf, const char *func,
 void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
 				    uint32_t line);
 
+/**
+ * qdf_nbuf_frag_count_inc() - Increment global frag counter
+ * @buf: qdf_nbuf_t
+ *
+ * Return: none
+ */
+void qdf_nbuf_frag_count_inc(qdf_nbuf_t buf);
+
+/**
+ * qdf_nbuf_frag_count_dec() - Decrement global frag counter
+ * @buf: qdf_nbuf_t
+ *
+ * Return: none
+ */
+void qdf_nbuf_frag_count_dec(qdf_nbuf_t buf);
+
 #else /* NBUF_FRAG_MEMORY_DEBUG */
 
 /**
@@ -3954,6 +3970,15 @@ static inline void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf,
 						  uint32_t line)
 {
 }
+
+static inline void qdf_nbuf_frag_count_inc(qdf_nbuf_t buf)
+{
+}
+
+static inline void qdf_nbuf_frag_count_dec(qdf_nbuf_t buf)
+{
+}
+
 #endif /* NBUF_FRAG_MEMORY_DEBUG */
 
 #ifdef MEMORY_DEBUG

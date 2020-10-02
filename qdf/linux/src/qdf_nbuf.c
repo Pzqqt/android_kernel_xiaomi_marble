@@ -445,6 +445,64 @@ void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
 qdf_export_symbol(__qdf_nbuf_count_dec);
 #endif
 
+#ifdef NBUF_FRAG_MEMORY_DEBUG
+void qdf_nbuf_frag_count_inc(qdf_nbuf_t nbuf)
+{
+	qdf_nbuf_t ext_list;
+	uint32_t num_nr_frags;
+	uint32_t total_num_nr_frags;
+
+	num_nr_frags = qdf_nbuf_get_nr_frags(nbuf);
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	total_num_nr_frags = num_nr_frags;
+
+	/* Take into account the frags attached to frag_list */
+	ext_list = qdf_nbuf_get_ext_list(nbuf);
+	while (ext_list) {
+		num_nr_frags = qdf_nbuf_get_nr_frags(ext_list);
+		qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+		total_num_nr_frags += num_nr_frags;
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
+
+	qdf_frag_count_inc(total_num_nr_frags);
+}
+
+qdf_export_symbol(qdf_nbuf_frag_count_inc);
+
+void  qdf_nbuf_frag_count_dec(qdf_nbuf_t nbuf)
+{
+	qdf_nbuf_t ext_list;
+	uint32_t num_nr_frags;
+	uint32_t total_num_nr_frags;
+
+	if (qdf_nbuf_get_users(nbuf) > 1)
+		return;
+
+	num_nr_frags = qdf_nbuf_get_nr_frags(nbuf);
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	total_num_nr_frags = num_nr_frags;
+
+	/* Take into account the frags attached to frag_list */
+	ext_list = qdf_nbuf_get_ext_list(nbuf);
+	while (ext_list) {
+		if (qdf_nbuf_get_users(ext_list) == 1) {
+			num_nr_frags = qdf_nbuf_get_nr_frags(ext_list);
+			qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+			total_num_nr_frags += num_nr_frags;
+		}
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
+
+	qdf_frag_count_dec(total_num_nr_frags);
+}
+
+qdf_export_symbol(qdf_nbuf_frag_count_dec);
+
+#endif
+
 #if defined(CONFIG_WIFI_EMULATION_WIFI_3_0) && defined(BUILD_X86) && \
 	!defined(QCA_WIFI_QCN9000)
 struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
@@ -636,13 +694,7 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 	if (pld_nbuf_pre_alloc_free(skb))
 		return;
 
-	/**
-	 * Decrement global frag counter only when last user of nbuf
-	 * does free so as to avoid decrementing count on every free
-	 * expect the last one in case where nbuf has multiple users
-	 */
-	if (qdf_nbuf_get_users(skb) == 1)
-		qdf_frag_count_dec(qdf_nbuf_get_nr_frags(skb));
+	qdf_nbuf_frag_count_dec(skb);
 
 	qdf_nbuf_count_dec(skb);
 	qdf_mem_skb_dec(skb->truesize);
@@ -653,6 +705,20 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 }
 
 qdf_export_symbol(__qdf_nbuf_free);
+
+__qdf_nbuf_t __qdf_nbuf_clone(__qdf_nbuf_t skb)
+{
+	qdf_nbuf_t skb_new = NULL;
+
+	skb_new = skb_clone(skb, GFP_ATOMIC);
+	if (skb_new) {
+		qdf_nbuf_frag_count_inc(skb_new);
+		qdf_nbuf_count_inc(skb_new);
+	}
+	return skb_new;
+}
+
+qdf_export_symbol(__qdf_nbuf_clone);
 
 #ifdef NBUF_MEMORY_DEBUG
 enum qdf_nbuf_event_type {
@@ -2885,11 +2951,24 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 		idx++;
 	}
 
-	/* Take care to delete the debug entries for frag_list */
+	/**
+	 * Take care to update the debug entries for frag_list and also
+	 * for the frags attached to frag_list
+	 */
 	ext_list = qdf_nbuf_get_ext_list(nbuf);
 	while (ext_list) {
 		if (qdf_nbuf_get_users(ext_list) == 1) {
 			qdf_nbuf_panic_on_free_if_mapped(ext_list, func, line);
+			idx = 0;
+			num_nr_frags = qdf_nbuf_get_nr_frags(ext_list);
+			qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+			while (idx < num_nr_frags) {
+				p_frag = qdf_nbuf_get_frag_addr(ext_list, idx);
+				if (qdf_likely(p_frag))
+					qdf_frag_debug_refcount_dec(p_frag,
+								    func, line);
+				idx++;
+			}
 			qdf_net_buf_debug_delete_node(ext_list);
 		}
 
@@ -2905,6 +2984,7 @@ qdf_nbuf_t qdf_nbuf_clone_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 {
 	uint32_t num_nr_frags;
 	uint32_t idx = 0;
+	qdf_nbuf_t ext_list;
 	qdf_frag_t p_frag;
 
 	qdf_nbuf_t cloned_buf = __qdf_nbuf_clone(buf);
@@ -2925,6 +3005,23 @@ qdf_nbuf_t qdf_nbuf_clone_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 		if (qdf_likely(p_frag))
 			qdf_frag_debug_refcount_inc(p_frag, func, line);
 		idx++;
+	}
+
+	/* Take care to update debug entries for frags attached to frag_list */
+	ext_list = qdf_nbuf_get_ext_list(cloned_buf);
+	while (ext_list) {
+		idx = 0;
+		num_nr_frags = qdf_nbuf_get_nr_frags(ext_list);
+
+		qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+		while (idx < num_nr_frags) {
+			p_frag = qdf_nbuf_get_frag_addr(ext_list, idx);
+			if (qdf_likely(p_frag))
+				qdf_frag_debug_refcount_inc(p_frag, func, line);
+			idx++;
+		}
+		ext_list = qdf_nbuf_queue_next(ext_list);
 	}
 
 	/* Store SKB in internal QDF tracking table */
@@ -4878,6 +4975,7 @@ void qdf_net_buf_debug_acquire_frag(qdf_nbuf_t buf, const char *func,
 {
 	uint32_t num_nr_frags;
 	uint32_t idx = 0;
+	qdf_nbuf_t ext_list;
 	qdf_frag_t p_frag;
 
 	if (qdf_unlikely(!buf))
@@ -4894,6 +4992,26 @@ void qdf_net_buf_debug_acquire_frag(qdf_nbuf_t buf, const char *func,
 			qdf_frag_debug_refcount_inc(p_frag, func, line);
 		idx++;
 	}
+
+	/**
+	 * Take care to update the refcount in the debug entries for the
+	 * frags attached to frag_list
+	 */
+	ext_list = qdf_nbuf_get_ext_list(buf);
+	while (ext_list) {
+		idx = 0;
+		num_nr_frags = qdf_nbuf_get_nr_frags(ext_list);
+
+		qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+		while (idx < num_nr_frags) {
+			p_frag = qdf_nbuf_get_frag_addr(ext_list, idx);
+			if (qdf_likely(p_frag))
+				qdf_frag_debug_refcount_inc(p_frag, func, line);
+			idx++;
+		}
+		ext_list = qdf_nbuf_queue_next(ext_list);
+	}
 }
 
 qdf_export_symbol(qdf_net_buf_debug_acquire_frag);
@@ -4902,6 +5020,7 @@ void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
 				    uint32_t line)
 {
 	uint32_t num_nr_frags;
+	qdf_nbuf_t ext_list;
 	uint32_t idx = 0;
 	qdf_frag_t p_frag;
 
@@ -4927,6 +5046,24 @@ void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
 		if (qdf_likely(p_frag))
 			qdf_frag_debug_refcount_dec(p_frag, func, line);
 		idx++;
+	}
+
+	/* Take care to update debug entries for frags attached to frag_list */
+	ext_list = qdf_nbuf_get_ext_list(buf);
+	while (ext_list) {
+		if (qdf_nbuf_get_users(ext_list) == 1) {
+			idx = 0;
+			num_nr_frags = qdf_nbuf_get_nr_frags(ext_list);
+			qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+			while (idx < num_nr_frags) {
+				p_frag = qdf_nbuf_get_frag_addr(ext_list, idx);
+				if (qdf_likely(p_frag))
+					qdf_frag_debug_refcount_dec(p_frag,
+								    func, line);
+				idx++;
+			}
+		}
+		ext_list = qdf_nbuf_queue_next(ext_list);
 	}
 }
 
