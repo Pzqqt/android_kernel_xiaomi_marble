@@ -588,9 +588,17 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, struct dp_pdev *pdev, uint32_t mac_id,
 						    l3_hdr_pad +
 						    frag_len);
 
-			dp_rx_mon_add_msdu_to_list(head_msdu, msdu, &last_msdu,
-						   rx_tlv_hdr, frag_len,
-						   l3_hdr_pad);
+			if (dp_rx_mon_add_msdu_to_list(head_msdu, msdu,
+						       &last_msdu,
+						       rx_tlv_hdr, frag_len,
+						       l3_hdr_pad)
+				!= QDF_STATUS_SUCCESS) {
+				dp_rx_mon_add_msdu_to_list_failure_handler(rx_tlv_hdr,
+					pdev, &last_msdu, head_msdu,
+					tail_msdu, __func__);
+				drop_mpdu = true;
+				goto next_msdu;
+			}
 
 next_msdu:
 			rx_buf_reaped++;
@@ -626,8 +634,8 @@ next_msdu:
 	}
 	pdev->rx_mon_stats.dest_mpdu_done++;
 
-	dp_rx_mon_init_tail_msdu(msdu, last_msdu, tail_msdu);
-	dp_rx_mon_remove_raw_frame_fcs_len(head_msdu);
+	dp_rx_mon_init_tail_msdu(head_msdu, msdu, last_msdu, tail_msdu);
+	dp_rx_mon_remove_raw_frame_fcs_len(head_msdu, tail_msdu);
 
 	return rx_buf_reaped;
 }
