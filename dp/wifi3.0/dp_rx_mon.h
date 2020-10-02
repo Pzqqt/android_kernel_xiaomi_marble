@@ -32,17 +32,18 @@
  */
 #ifdef DP_RX_MON_MEM_FRAG
 /*
- *----------------------------------
- *| Reserve | PF Tag | Radiotap hdr|
- *|  64B    |   64B  |    128B     |
- *----------------------------------
- * Reserved 64B is used to fill Protocol & Flow tag before writing into
- * actual offset, data gets written to actual offset after updating
- * radiotap HDR.
+ *  -------------------------------------------------
+ * |       Protocol & Flow TAG      | Radiotap header|
+ * |                                |  Length(128 B) |
+ * |  ((4* QDF_NBUF_MAX_FRAGS) * 2) |                |
+ *  -------------------------------------------------
  */
-#define DP_RX_MON_MAX_MONITOR_HEADER (256)
-#else
-#define DP_RX_MON_MAX_MONITOR_HEADER (512)
+#define DP_RX_MON_MAX_RADIO_TAP_HDR (128)
+#define DP_RX_MON_PF_TAG_LEN_PER_FRAG (4)
+#define DP_RX_MON_TOT_PF_TAG_LEN \
+	((DP_RX_MON_PF_TAG_LEN_PER_FRAG) * (QDF_NBUF_MAX_FRAGS))
+#define DP_RX_MON_MAX_MONITOR_HEADER \
+	((DP_RX_MON_TOT_PF_TAG_LEN * 2) + (DP_RX_MON_MAX_RADIO_TAP_HDR))
 #endif
 
 /* The maximum buffer length allocated for radiotap for monitor status buffer */
@@ -357,6 +358,41 @@ void dp_rx_mon_frag_adjust_frag_len(uint32_t *total_len, uint32_t *frag_len,
 	NULL
 
 /**
+ * dp_rx_mon_add_msdu_to_list_failure_handler() - Handler for nbuf buffer
+ *                                                  attach failure
+ *
+ * @rx_tlv_hdr: rx_tlv_hdr
+ * @pdev: struct dp_pdev *
+ * @last: skb pointing to last skb in chained list at any moment
+ * @head_msdu: parent skb in the chained list
+ * @tail_msdu: Last skb in the chained list
+ * @func_name: caller function name
+ *
+ * Return: void
+ */
+static inline void
+dp_rx_mon_add_msdu_to_list_failure_handler(void *rx_tlv_hdr,
+					   struct dp_pdev *pdev,
+					   qdf_nbuf_t *last,
+					   qdf_nbuf_t *head_msdu,
+					   qdf_nbuf_t *tail_msdu,
+					   const char *func_name)
+{
+	DP_STATS_INC(pdev, replenish.nbuf_alloc_fail, 1);
+	qdf_frag_free(rx_tlv_hdr);
+	if (head_msdu)
+		qdf_nbuf_list_free(*head_msdu);
+	dp_err("[%s] failed to allocate subsequent parent buffer to hold all frag\n",
+	       func_name);
+	if (head_msdu)
+		*head_msdu = NULL;
+	if (last)
+		*last = NULL;
+	if (tail_msdu)
+		*tail_msdu = NULL;
+}
+
+/**
  * dp_rx_mon_get_paddr_from_desc() - Get paddr from desc
  */
 static inline
@@ -413,19 +449,27 @@ dp_rx_mon_buffer_unmap(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 static inline
 QDF_STATUS dp_rx_mon_alloc_parent_buffer(qdf_nbuf_t *head_msdu)
 {
-	/* Headroom should accommodate radiotap header
+	/*
+	 * Headroom should accommodate radiotap header
 	 * and protocol and flow tag for all frag
+	 * Length reserved to accommodate Radiotap header
+	 * is 128 bytes and length reserved for Protocol
+	 * flow tag will vary based on QDF_NBUF_MAX_FRAGS.
 	 */
-	/* --------------------------------------
-	 * | Protocol & Flow TAG | Radiotap header|
-	 * |     64 B            |  Length(128 B) |
-	 * --------------------------------------
+	/*  -------------------------------------------------
+	 * |       Protocol & Flow TAG      | Radiotap header|
+	 * |                                |  Length(128 B) |
+	 * |  ((4* QDF_NBUF_MAX_FRAGS) * 2) |                |
+	 *  -------------------------------------------------
 	 */
+
 	*head_msdu = qdf_nbuf_alloc_no_recycler(DP_RX_MON_MAX_MONITOR_HEADER,
 						DP_RX_MON_MAX_MONITOR_HEADER, 4);
 
 	if (!(*head_msdu))
 		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_zero(qdf_nbuf_head(*head_msdu), qdf_nbuf_headroom(*head_msdu));
 
 	/* Set *head_msdu->next as NULL as all msdus are
 	 * mapped via nr frags
@@ -577,26 +621,85 @@ static inline void dp_rx_mon_buffer_set_pktlen(qdf_nbuf_t msdu, uint32_t size)
  * @l2_hdr_offset: l2 hdr padding
  */
 static inline
-void dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
-				qdf_nbuf_t *last, qdf_frag_t rx_desc_tlv,
-				uint32_t frag_len, uint32_t l2_hdr_offset)
+QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
+				      qdf_nbuf_t *last, qdf_frag_t rx_desc_tlv,
+				      uint32_t frag_len,
+				      uint32_t l2_hdr_offset)
 {
-	qdf_nbuf_add_rx_frag(rx_desc_tlv, *head_msdu, SIZE_OF_MONITOR_TLV,
+	uint32_t num_frags;
+	qdf_nbuf_t msdu_curr;
+
+	/* Here head_msdu and *head_msdu must not be NULL */
+	if (qdf_unlikely(!head_msdu || !(*head_msdu))) {
+		dp_err("[%s] head_msdu || *head_msdu is Null while adding frag to skb\n",
+		       __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* In case of first desc of MPDU, assign curr msdu to *head_msdu */
+	if (!qdf_nbuf_get_nr_frags(*head_msdu))
+		msdu_curr = *head_msdu;
+	else
+		msdu_curr = *last;
+
+	/* Current msdu must not be NULL */
+	if (qdf_unlikely(!msdu_curr)) {
+		dp_err("[%s] Current msdu can't be Null while adding frag to skb\n",
+		       __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	num_frags = qdf_nbuf_get_nr_frags(msdu_curr);
+	if (num_frags < QDF_NBUF_MAX_FRAGS) {
+		qdf_nbuf_add_rx_frag(rx_desc_tlv, msdu_curr,
+				     SIZE_OF_MONITOR_TLV,
+				     frag_len + l2_hdr_offset,
+				     RX_MONITOR_BUFFER_SIZE,
+				     false);
+		if (*last != msdu_curr)
+			*last = msdu_curr;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/* Execution will reach here only if num_frags == QDF_NBUF_MAX_FRAGS */
+	msdu_curr = NULL;
+	if ((dp_rx_mon_alloc_parent_buffer(&msdu_curr))
+	    != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_nbuf_add_rx_frag(rx_desc_tlv, msdu_curr, SIZE_OF_MONITOR_TLV,
 			     frag_len + l2_hdr_offset, RX_MONITOR_BUFFER_SIZE,
 			     false);
+
+	/* Add allocated nbuf in the chain */
+	qdf_nbuf_set_next(*last, msdu_curr);
+
+	/* Assign current msdu to last to avoid traversal */
+	*last = msdu_curr;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * dp_rx_mon_init_tail_msdu() - Initialize tail msdu
  *
+ * @head_msdu: Parent buffer to hold MPDU data
  * @msdu: Msdu to be updated in tail_msdu
  * @last: last msdu
  * @tail_msdu: Last msdu
  */
 static inline
-void dp_rx_mon_init_tail_msdu(qdf_nbuf_t msdu, qdf_nbuf_t last,
-			      qdf_nbuf_t *tail_msdu)
+void dp_rx_mon_init_tail_msdu(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
+			      qdf_nbuf_t last, qdf_nbuf_t *tail_msdu)
 {
+	if (!head_msdu || !(*head_msdu)) {
+		*tail_msdu = NULL;
+		return;
+	}
+
+	if (last)
+		qdf_nbuf_set_next(last, NULL);
+	*tail_msdu = last;
 }
 
 /**
@@ -605,22 +708,29 @@ void dp_rx_mon_init_tail_msdu(qdf_nbuf_t msdu, qdf_nbuf_t last,
  * If feature is disabled, then removal happens in restitch logic.
  *
  * @head_msdu: Head msdu
+ * @tail_msdu: Tail msdu
  */
 static inline
-void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu)
+void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu,
+					qdf_nbuf_t *tail_msdu)
 {
 	qdf_frag_t addr;
 
+	if (qdf_unlikely(!head_msdu || !tail_msdu || !(*head_msdu)))
+		return;
+
+	/* If *head_msdu is valid, then *tail_msdu must be valid */
+	/* If head_msdu is valid, then it must have nr_frags */
+	/* If tail_msdu is valid, then it must have nr_frags */
+
 	/* Strip FCS_LEN for Raw frame */
-	if (head_msdu && *head_msdu) {
-		addr = qdf_nbuf_get_frag_addr(*head_msdu, 0);
-		addr -= SIZE_OF_MONITOR_TLV;
-		if (HAL_RX_DESC_GET_DECAP_FORMAT(addr) ==
-		    HAL_HW_RX_DECAP_FORMAT_RAW) {
-			qdf_nbuf_trim_add_frag_size(*head_msdu,
-				qdf_nbuf_get_nr_frags(*head_msdu) - 1,
-						-HAL_RX_FCS_LEN, 0);
-		}
+	addr = qdf_nbuf_get_frag_addr(*head_msdu, 0);
+	addr -= SIZE_OF_MONITOR_TLV;
+	if (HAL_RX_DESC_GET_DECAP_FORMAT(addr) ==
+	    HAL_HW_RX_DECAP_FORMAT_RAW) {
+		qdf_nbuf_trim_add_frag_size(*tail_msdu,
+			qdf_nbuf_get_nr_frags(*tail_msdu) - 1,
+					-HAL_RX_FCS_LEN, 0);
 	}
 }
 
@@ -657,6 +767,16 @@ qdf_frag_t dp_rx_mon_get_nbuf_80211_hdr(qdf_nbuf_t nbuf)
 
 #define DP_RX_MON_GET_NBUF_FROM_DESC(rx_desc) \
 	(rx_desc->nbuf)
+
+static inline void
+dp_rx_mon_add_msdu_to_list_failure_handler(void *rx_tlv_hdr,
+					   struct dp_pdev *pdev,
+					   qdf_nbuf_t *last,
+					   qdf_nbuf_t *head_msdu,
+					   qdf_nbuf_t *tail_msdu,
+					   const char *func_name)
+{
+}
 
 static inline
 qdf_dma_addr_t dp_rx_mon_get_paddr_from_desc(struct dp_rx_desc *rx_desc)
@@ -738,9 +858,10 @@ static inline void dp_rx_mon_buffer_set_pktlen(qdf_nbuf_t msdu, uint32_t size)
 }
 
 static inline
-void dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
-				qdf_nbuf_t *last, qdf_frag_t rx_desc_tlv,
-				uint32_t frag_len, uint32_t l2_hdr_offset)
+QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
+				      qdf_nbuf_t *last, qdf_frag_t rx_desc_tlv,
+				      uint32_t frag_len,
+				      uint32_t l2_hdr_offset)
 {
 	if (head_msdu && !*head_msdu) {
 		*head_msdu = msdu;
@@ -749,11 +870,12 @@ void dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
 			qdf_nbuf_set_next(*last, msdu);
 	}
 	*last = msdu;
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline
-void dp_rx_mon_init_tail_msdu(qdf_nbuf_t msdu, qdf_nbuf_t last,
-			      qdf_nbuf_t *tail_msdu)
+void dp_rx_mon_init_tail_msdu(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
+			      qdf_nbuf_t last, qdf_nbuf_t *tail_msdu)
 {
 	if (last)
 		qdf_nbuf_set_next(last, NULL);
@@ -762,7 +884,8 @@ void dp_rx_mon_init_tail_msdu(qdf_nbuf_t msdu, qdf_nbuf_t last,
 }
 
 static inline
-void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu)
+void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu,
+					qdf_nbuf_t *tail_msdu)
 {
 }
 
