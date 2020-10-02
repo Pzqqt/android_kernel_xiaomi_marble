@@ -1321,7 +1321,7 @@ exit:
 	 * and want source to redo some part of initialization which can
 	 * be helpful in debugging.
 	 */
-	DP_INFO("test requested: %s\n",
+	DP_INFO("event: %s\n",
 		dp_link_get_test_name(dp_link->sink_request));
 	return 0;
 }
@@ -1404,7 +1404,7 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 
 	dp_link->phy_params.p_level = max;
 
-	print_hex_dump(KERN_DEBUG, "[drm-dp] Req (VxPx): ",
+	print_hex_dump_debug("[drm-dp] Req (VxPx): ",
 		DUMP_PREFIX_NONE, 8, 2, buf, sizeof(buf), false);
 
 	/**
