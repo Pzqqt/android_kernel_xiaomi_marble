@@ -1753,7 +1753,7 @@ static ssize_t dp_debug_read_dump(struct file *file,
 		goto end;
 
 	snprintf(prefix, sizeof(prefix), "%s: ", debug->reg_dump);
-	print_hex_dump(KERN_DEBUG, prefix, DUMP_PREFIX_NONE,
+	print_hex_dump_debug(prefix, DUMP_PREFIX_NONE,
 		16, 4, buf, len, false);
 
 	len = min_t(size_t, count, len);

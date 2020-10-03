@@ -634,7 +634,7 @@ static void dp_catalog_panel_setup_vsif_infoframe_sdp(
 	memcpy(buf + off, &data, sizeof(data));
 	off += sizeof(data);
 
-	print_hex_dump(KERN_DEBUG, "[drm-dp] VSCEXT: ",
+	print_hex_dump_debug("[drm-dp] VSCEXT: ",
 			DUMP_PREFIX_NONE, 16, 4, buf, off, false);
 }
 
@@ -749,7 +749,7 @@ static void dp_catalog_panel_setup_hdr_infoframe_sdp(
 	memcpy(buf + off, &data, sizeof(data));
 	off += sizeof(data);
 
-	print_hex_dump(KERN_DEBUG, "[drm-dp] HDR: ",
+	print_hex_dump_debug("[drm-dp] HDR: ",
 			DUMP_PREFIX_NONE, 16, 4, buf, off, false);
 }
 
@@ -841,7 +841,7 @@ static void dp_catalog_panel_setup_vsc_sdp(struct dp_catalog_panel *panel)
 	memcpy(buf + off, &data, sizeof(data));
 	off += sizeof(data);
 
-	print_hex_dump(KERN_DEBUG, "[drm-dp] VSC: ",
+	print_hex_dump_debug("[drm-dp] VSC: ",
 			DUMP_PREFIX_NONE, 16, 4, buf, off, false);
 }
 

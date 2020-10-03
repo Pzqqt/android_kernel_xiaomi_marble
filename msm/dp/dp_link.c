@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "dp_link.h"
@@ -1113,19 +1113,15 @@ static u8 get_link_status(const u8 link_status[DP_LINK_STATUS_SIZE], int r)
  */
 static int dp_link_process_link_status_update(struct dp_link_private *link)
 {
-	if (!(get_link_status(link->link_status, DP_LANE_ALIGN_STATUS_UPDATED) &
-		DP_LINK_STATUS_UPDATED) || /* link status updated */
-		(drm_dp_clock_recovery_ok(link->link_status,
-			link->dp_link.link_params.lane_count) &&
-	     drm_dp_channel_eq_ok(link->link_status,
-			link->dp_link.link_params.lane_count)))
-		return -EINVAL;
-
+	bool channel_eq_done = drm_dp_channel_eq_ok(link->link_status,
+			link->dp_link.link_params.lane_count);
+	bool clock_recovery_done = drm_dp_clock_recovery_ok(link->link_status,
+			link->dp_link.link_params.lane_count);
 	DP_DEBUG("channel_eq_done = %d, clock_recovery_done = %d\n",
-			drm_dp_channel_eq_ok(link->link_status,
-			link->dp_link.link_params.lane_count),
-			drm_dp_clock_recovery_ok(link->link_status,
-			link->dp_link.link_params.lane_count));
+			channel_eq_done, clock_recovery_done);
+
+	if (channel_eq_done && clock_recovery_done)
+		return -EINVAL;
 
 	return 0;
 }
@@ -1325,7 +1321,7 @@ exit:
 	 * and want source to redo some part of initialization which can
 	 * be helpful in debugging.
 	 */
-	DP_INFO("test requested: %s\n",
+	DP_INFO("event: %s\n",
 		dp_link_get_test_name(dp_link->sink_request));
 	return 0;
 }
@@ -1408,7 +1404,7 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 
 	dp_link->phy_params.p_level = max;
 
-	print_hex_dump(KERN_DEBUG, "[drm-dp] Req (VxPx): ",
+	print_hex_dump_debug("[drm-dp] Req (VxPx): ",
 		DUMP_PREFIX_NONE, 8, 2, buf, sizeof(buf), false);
 
 	/**
