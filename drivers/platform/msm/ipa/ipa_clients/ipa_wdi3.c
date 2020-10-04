@@ -115,11 +115,19 @@ static int ipa_wdi_init_internal(struct ipa_wdi_init_in_params *in,
 
 	ipa_wdi_ctx->is_smmu_enabled = out->is_smmu_enabled;
 
-	if (ipa3_get_ctx()->ipa_wdi3_over_gsi)
+	if (IPA_WDI2_OVER_GSI() || (in->wdi_version == IPA_WDI_3))
 		out->is_over_gsi = true;
 	else
 		out->is_over_gsi = false;
 	return 0;
+}
+
+static int ipa_get_wdi_version_internal(void)
+{
+	if (ipa_wdi_ctx)
+		return ipa_wdi_ctx->wdi_version;
+	/* default version is IPA_WDI_3 */
+	return IPA_WDI_3;
 }
 
 static int ipa_wdi_cleanup_internal(void)
@@ -285,10 +293,10 @@ static int ipa_wdi_reg_intf_internal(struct ipa_wdi_reg_intf_in_params *in)
 	rx.prop = rx_prop;
 	memset(rx_prop, 0, sizeof(rx_prop));
 	rx_prop[0].ip = IPA_IP_v4;
-	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi)
-		rx_prop[0].src_pipe = IPA_CLIENT_WLAN1_PROD;
-	else
+	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3)
 		rx_prop[0].src_pipe = IPA_CLIENT_WLAN2_PROD;
+	else
+		rx_prop[0].src_pipe = IPA_CLIENT_WLAN1_PROD;
 	rx_prop[0].hdr_l2_type = in->hdr_info[0].hdr_type;
 	if (in->is_meta_data_valid) {
 		rx_prop[0].attrib.attrib_mask |= IPA_FLT_META_DATA;
@@ -297,10 +305,10 @@ static int ipa_wdi_reg_intf_internal(struct ipa_wdi_reg_intf_in_params *in)
 	}
 
 	rx_prop[1].ip = IPA_IP_v6;
-	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi)
-		rx_prop[1].src_pipe = IPA_CLIENT_WLAN1_PROD;
-	else
+	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3)
 		rx_prop[1].src_pipe = IPA_CLIENT_WLAN2_PROD;
+	else
+		rx_prop[1].src_pipe = IPA_CLIENT_WLAN1_PROD;
 	rx_prop[1].hdr_l2_type = in->hdr_info[1].hdr_type;
 	if (in->is_meta_data_valid) {
 		rx_prop[1].attrib.attrib_mask |= IPA_FLT_META_DATA;
@@ -609,15 +617,15 @@ static int ipa_wdi_disconn_pipes_internal(void)
 		}
 	}
 
-	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi) {
-		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
-		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
-	} else {
+	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
 		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_PROD);
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS);
 		if (ipa_wdi_ctx->is_tx1_used)
 			ipa_ep_idx_tx1 =
 				ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS1);
+	} else {
+		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
+		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
 	}
 
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
@@ -656,15 +664,15 @@ static int ipa_wdi_enable_pipes_internal(void)
 		return -EPERM;
 	}
 
-	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi) {
-		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
-		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
-	} else {
+	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
 		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_PROD);
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS);
 		if (ipa_wdi_ctx->is_tx1_used)
 			ipa_ep_idx_tx1 =
 				ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS1);
+	} else {
+		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
+		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
 	}
 
 	if (ipa_ep_idx_tx <= 0 || ipa_ep_idx_rx <= 0)
@@ -722,15 +730,15 @@ static int ipa_wdi_disable_pipes_internal(void)
 		return -EPERM;
 	}
 
-	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi) {
-		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
-		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
-	} else {
+	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
 		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_PROD);
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS);
 		if (ipa_wdi_ctx->is_tx1_used)
 			ipa_ep_idx_tx1 =
 				ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS1);
+	} else {
+		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
+		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
 	}
 
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
@@ -809,6 +817,7 @@ void ipa_wdi3_register(void)
 	funcs.ipa_wdi_release_smmu_mapping = ipa3_release_wdi_mapping;
 	funcs.ipa_wdi_set_perf_profile = ipa_wdi_set_perf_profile_internal;
 	funcs.ipa_wdi_sw_stats = ipa3_set_wlan_tx_info;
+	funcs.ipa_get_wdi_version = ipa_get_wdi_version_internal;
 
 	if (ipa_fmwk_register_ipa_wdi3(&funcs))
 		pr_err("failed to register ipa_wdi3 APIs\n");
