@@ -1805,11 +1805,16 @@ static bool wmi_is_legacy_d0wow_disable_cmd(wmi_buf_t buf, uint32_t cmd_id)
 #endif
 
 #ifdef WMI_INTERFACE_SEQUENCE_CHECK
+static inline void wmi_interface_sequence_reset(struct wmi_unified *wmi_handle)
+{
+	wmi_handle->wmi_sequence = 0;
+	wmi_handle->wmi_exp_sequence = 0;
+}
+
 static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
 {
 	qdf_spinlock_create(&wmi_handle->wmi_seq_lock);
-	wmi_handle->wmi_sequence = 0;
-	wmi_handle->wmi_exp_sequence = 0;
+	wmi_interface_sequence_reset(wmi_handle);
 }
 
 static inline void wmi_interface_sequence_deinit(struct wmi_unified *wmi_handle)
@@ -1867,6 +1872,10 @@ static inline void wmi_interface_sequence_check(struct wmi_unified *wmi_handle,
 	}
 }
 #else
+static inline void wmi_interface_sequence_reset(struct wmi_unified *wmi_handle)
+{
+}
+
 static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
 {
 }
@@ -2876,6 +2885,7 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 	wmi_handle->htc_handle = soc->htc_handle;
 	wmi_handle->max_msg_len = soc->max_msg_len[pdev_idx];
 	wmi_handle->tag_crash_inject = false;
+	wmi_interface_sequence_reset(wmi_handle);
 
 	return wmi_handle;
 
