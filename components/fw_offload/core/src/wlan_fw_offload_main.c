@@ -548,7 +548,6 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	ucfg_fwol_fetch_tsf_sync_host_gpio_pin(psoc, fwol_cfg);
 	ucfg_fwol_fetch_dhcp_server_settings(psoc, fwol_cfg);
 	fwol_cfg->sap_xlna_bypass = cfg_get(psoc, CFG_SET_SAP_XLNA_BYPASS);
-	fwol_cfg->ocl_cfg = cfg_get(psoc, CFG_SET_OCL_CFG);
 	fwol_cfg->enable_ilp = cfg_get(psoc, CFG_SET_ENABLE_ILP);
 
 	return status;

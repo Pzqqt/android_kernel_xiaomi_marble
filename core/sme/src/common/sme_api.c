@@ -13635,18 +13635,6 @@ QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params)
 	return wma_send_coex_config_cmd(wma_handle, coex_cfg_params);
 }
 
-QDF_STATUS sme_send_ocl_cmd(struct ocl_cmd_params *ocl_params)
-{
-	void *wma_handle;
-
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma handle is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	return wma_send_ocl_cmd(wma_handle, ocl_params);
-}
-
 #ifdef WLAN_FEATURE_FIPS
 QDF_STATUS sme_fips_request(mac_handle_t mac_handle, struct fips_params *param,
 			    wma_fips_cb callback, void *context)

@@ -5455,58 +5455,6 @@ bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
 	return 0;
 }
 
-/**
- * hdd_send_ocl_cmd() - Send ocl command to FW
- * @hdd_ctx: HDD context
- * @adapter: Primary adapter context
- *
- * This function is used to send OCL mode configuration to FW
- *
- * Return: 0 on success and -EINVAL on failure
- */
-static int hdd_send_ocl_cmd(struct hdd_context *hdd_ctx,
-			    struct hdd_adapter *adapter)
-{
-	struct ocl_cmd_params ocl_params = {0};
-	struct wlan_objmgr_psoc *psoc;
-	QDF_STATUS status;
-
-	if (!hdd_ctx) {
-		hdd_err("hdd_ctx is invalid");
-		goto err;
-	}
-
-	if (!adapter) {
-		hdd_err("adapter is invalid");
-		goto err;
-	}
-
-	psoc = hdd_ctx->psoc;
-
-	if (!psoc) {
-		hdd_err("HDD psoc is invalid");
-		goto err;
-	}
-
-	status = ucfg_fwol_get_ocl_cfg(psoc, &ocl_params.en_dis_chain);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Unable to get OCL mode configuration");
-		goto err;
-	}
-
-	ocl_params.vdev_id = adapter->vdev_id;
-
-	status = sme_send_ocl_cmd(&ocl_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to send ocl command");
-		goto err;
-	}
-
-	return 0;
-err:
-	return -EINVAL;
-}
-
 int hdd_vdev_create(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
@@ -5617,8 +5565,6 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		VDEV_CMD);
 	}
 	hdd_store_nss_chains_cfg_in_vdev(adapter);
-
-	hdd_send_ocl_cmd(hdd_ctx, adapter);
 
 	/* Configure vdev params */
 	ucfg_fwol_configure_vdev_params(hdd_ctx->psoc, hdd_ctx->pdev,

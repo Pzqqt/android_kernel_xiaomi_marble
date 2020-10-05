@@ -427,17 +427,6 @@ QDF_STATUS wma_send_coex_config_cmd(WMA_HANDLE wma_handle,
 				    struct coex_config_params *coex_cfg_params);
 
 /**
- * wma_send_ocl_cmd() - Send OCL command
- * @wma_handle: wma handle
- * @ocl_params: OCL command params
- *
- * This function sends WMI command to send OCL mode configuration
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wma_send_ocl_cmd(WMA_HANDLE wma_handle,
-			    struct ocl_cmd_params *ocl_params);
-/**
  * wma_set_power_config() - update power config in wma
  * @vdev_id:	the Id of the vdev to configure
  * @power:	new power value

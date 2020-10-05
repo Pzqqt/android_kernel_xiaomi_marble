@@ -2382,14 +2382,6 @@ QDF_STATUS sme_set_sar_power_limits(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params);
 
-/**
- * sme_send_ocl_cmd() - Send OCL command
- * @ocl_params: OCL command params
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_send_ocl_cmd(struct ocl_cmd_params *ocl_params);
-
 void sme_set_cc_src(mac_handle_t mac_handle, enum country_src);
 
 
