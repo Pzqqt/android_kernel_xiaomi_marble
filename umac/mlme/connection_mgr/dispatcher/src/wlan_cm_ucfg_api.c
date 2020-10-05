@@ -42,20 +42,20 @@ bool ucfg_cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
 
 bool ucfg_cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 {
-	return cm_is_vdev_connecting(vdev);
+	return cm_is_vdev_connected(vdev);
 }
 
 bool ucfg_cm_is_vdev_disconnecting(struct wlan_objmgr_vdev *vdev)
 {
-	return cm_is_vdev_connecting(vdev);
+	return cm_is_vdev_disconnecting(vdev);
 }
 
 bool ucfg_cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev)
 {
-	return cm_is_vdev_connecting(vdev);
+	return cm_is_vdev_disconnected(vdev);
 }
 
 bool ucfg_cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
 {
-	return cm_is_vdev_connecting(vdev);
+	return cm_is_vdev_roaming(vdev);
 }

@@ -860,7 +860,7 @@ QDF_STATUS cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
 
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE) {
 		mlme_err("vdev %d Invalid mode %d",
-			 wlan_vdev_get_id(cm_ctx->vdev), op_mode);
+			 wlan_vdev_get_id(vdev), op_mode);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
