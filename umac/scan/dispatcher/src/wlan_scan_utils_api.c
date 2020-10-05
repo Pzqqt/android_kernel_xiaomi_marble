@@ -1949,6 +1949,9 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(hdr->i_addr3, new_bssid,
 				     QDF_MAC_ADDR_SIZE);
+			bcn = (struct wlan_bcn_frame *)(new_frame + sizeof(struct wlan_frame_hdr));
+			/* update the non-tx capability */
+			qdf_mem_copy(&bcn->capability, subelement + 4, 2);
 			/* Copy the new ie generated from MBSSID profile*/
 			qdf_mem_copy(new_frame +
 					offsetof(struct wlan_bcn_frame, ie) +
