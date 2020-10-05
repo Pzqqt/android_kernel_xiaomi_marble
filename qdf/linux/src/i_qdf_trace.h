@@ -414,6 +414,13 @@ static inline void __qdf_bug(void)
 		} \
 	} while (0)
 
+#define QDF_BUG_ON_ASSERT(_condition) \
+	do { \
+		if (!(_condition)) { \
+			__qdf_bug(); \
+		} \
+	} while (0)
+
 #else /* PANIC_ON_BUG */
 
 #define QDF_DEBUG_PANIC(reason...) \
@@ -427,6 +434,13 @@ static inline void __qdf_bug(void)
 	} while (false)
 
 #define QDF_BUG(_condition) \
+	do { \
+		if (!(_condition)) { \
+			/* no-op */ \
+		} \
+	} while (0)
+
+#define QDF_BUG_ON_ASSERT(_condition) \
 	do { \
 		if (!(_condition)) { \
 			/* no-op */ \
