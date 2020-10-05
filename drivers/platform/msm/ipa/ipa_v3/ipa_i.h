@@ -2955,8 +2955,8 @@ int ipa3_wigig_init_i(void);
 #define IPA_STATS_MAX_PIPE_BIT 32
 
 struct ipa_teth_stats_endpoints {
-	u32 prod_mask;
-	u32 dst_ep_mask[IPA_STATS_MAX_PIPE_BIT];
+	u32 prod_mask[IPA5_PIPE_REG_NUM];
+	u32 dst_ep_mask[IPA5_PIPES_NUM][IPA5_PIPE_REG_NUM];
 };
 
 int ipa_hw_stats_init(void);
@@ -2965,7 +2965,7 @@ int ipa_init_flt_rt_stats(void);
 
 int ipa_debugfs_init_stats(struct dentry *parent);
 
-int ipa_init_quota_stats(u32 pipe_bitmask);
+int ipa_init_quota_stats(u32 *pipe_bitmask);
 
 int ipa_get_quota_stats(struct ipa_quota_stats_all *out);
 
@@ -2975,7 +2975,7 @@ int ipa_reset_all_quota_stats(void);
 
 int ipa_drop_stats_init(void);
 
-int ipa_init_drop_stats(u32 pipe_bitmask);
+int ipa_init_drop_stats(u32 *pipe_bitmask);
 
 int ipa_get_drop_stats(struct ipa_drop_stats_all *out);
 

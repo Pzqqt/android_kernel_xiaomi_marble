@@ -698,4 +698,19 @@ int ipahal_init(enum ipa_hw_type ipa_hw_type, void __iomem *base,
 void ipahal_destroy(void);
 void ipahal_free_dma_mem(struct ipa_mem_buffer *mem);
 
+/*
+* ipahal_test_ep_bit() - return true if a ep bit is set
+*/
+bool ipahal_test_ep_bit(u32 reg_val, u32 ep_num);
+
+/*
+* ipahal_get_ep_bit() - get ep bit set in the right offset
+*/
+u32 ipahal_get_ep_bit(u32 ep_num);
+
+/*
+* ipahal_get_ep_reg_idx() - get ep reg index according to ep num
+*/
+u32 ipahal_get_ep_reg_idx(u32 ep_num);
+
 #endif /* _IPAHAL_H_ */

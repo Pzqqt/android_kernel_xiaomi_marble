@@ -9,6 +9,9 @@
 #include <linux/ipa.h>
 
 #define IPAHAL_MAX_PIPES 32
+#define IPAHAL_MAX_PIPES_PER_REG 32
+#define IPAHAL_IPA5_PIPES_NUM 36
+#define IPAHAL_IPA5_PIPE_REG_NUM 2
 #define IPAHAL_MAX_RULE_ID_32 (1024 / 32) /* 10 bits of rule id */
 
 enum ipahal_hw_stats_type {
@@ -45,7 +48,7 @@ struct ipahal_stats_offset {
  * @enabled_bitmask: bit mask of pipes to be monitored
  */
 struct ipahal_stats_init_quota {
-	u32 enabled_bitmask;
+	u32 enabled_bitmask[IPAHAL_IPA5_PIPE_REG_NUM];
 };
 
 /*
@@ -75,7 +78,7 @@ struct ipahal_stats_quota {
  * @stats: array of statistics per pipe
  */
 struct ipahal_stats_quota_all {
-	struct ipahal_stats_quota stats[IPAHAL_MAX_PIPES];
+	struct ipahal_stats_quota stats[IPAHAL_IPA5_PIPES_NUM];
 };
 
 /*
@@ -84,8 +87,8 @@ struct ipahal_stats_quota_all {
  * @cons_bitmask: bit mask of consumer pipes to be monitored per producer
  */
 struct ipahal_stats_init_tethering {
-	u32 prod_bitmask;
-	u32 cons_bitmask[IPAHAL_MAX_PIPES];
+	u32 prod_bitmask[IPAHAL_IPA5_PIPE_REG_NUM];
+	u32 cons_bitmask[IPAHAL_IPA5_PIPES_NUM][IPAHAL_IPA5_PIPE_REG_NUM];
 };
 
 /*
@@ -117,7 +120,7 @@ struct ipahal_stats_tethering {
  */
 struct ipahal_stats_tethering_all {
 	struct ipahal_stats_tethering
-		stats[IPAHAL_MAX_PIPES][IPAHAL_MAX_PIPES];
+		stats[IPAHAL_IPA5_PIPES_NUM][IPAHAL_IPA5_PIPES_NUM];
 };
 
 /*
@@ -178,7 +181,7 @@ struct ipahal_stats_get_offset_flt_rt_v4_5 {
  * @enabled_bitmask: bit mask of pipes to be monitored
  */
 struct ipahal_stats_init_drop {
-	u32 enabled_bitmask;
+	u32 enabled_bitmask[IPAHAL_IPA5_PIPE_REG_NUM];
 };
 
 /*
@@ -204,7 +207,7 @@ struct ipahal_stats_drop {
  * @stats: array of statistics per pipes
  */
 struct ipahal_stats_drop_all {
-	struct ipahal_stats_drop stats[IPAHAL_MAX_PIPES];
+	struct ipahal_stats_drop stats[IPAHAL_IPA5_PIPES_NUM];
 };
 
 /*

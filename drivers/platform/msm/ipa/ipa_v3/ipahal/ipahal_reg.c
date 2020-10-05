@@ -152,6 +152,8 @@ static const char *ipareg_name_to_str[IPA_REG_MAX] = {
 	__stringify(IPA_SUSPEND_IRQ_INFO_EE_n_REG_k),
 	__stringify(IPA_SUSPEND_IRQ_CLR_EE_n_REG_k),
 	__stringify(IPA_SUSPEND_IRQ_EN_EE_n_REG_k),
+	__stringify(IPA_STAT_TETHERING_MASK_EE_n_REG_k),
+	__stringify(IPA_STAT_DROP_CNT_MASK_EE_n_REG_k),
 };
 
 static void ipareg_construct_dummy(enum ipahal_reg_name reg,
@@ -4096,6 +4098,9 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	[IPA_HW_v5_0][IPA_STAT_TETHERING_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		-1, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_STAT_TETHERING_MASK_EE_n_REG_k] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000750, 0x4, 0, 0, 0, 0x8},
 	[IPA_HW_v5_0][IPA_STAT_FILTER_IPV4_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		0x00000700, 0, 0, 0, 0, 0},
@@ -4114,6 +4119,9 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	[IPA_HW_v5_0][IPA_STAT_DROP_CNT_MASK_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		-1, 0x4, 0, 0, 1, 0},
+	[IPA_HW_v5_0][IPA_STAT_DROP_CNT_MASK_EE_n_REG_k] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000790 , 0x4, 0, 0, 1, 0x8},
 	[IPA_HW_v5_0][IPA_ENDP_INIT_CTRL_n] = {
 		ipareg_construct_endp_init_ctrl_n_v4_0, ipareg_parse_dummy,
 		0x00001000, 0x80, 0, 30, 1, 0},
@@ -4659,9 +4667,9 @@ u32 ipahal_get_ep_reg_offset(enum ipahal_reg_name reg, u32 ep_num)
 /*
 * Get the offset of a ep n register according to ep index and n
 */
-u32 ipahal_get_ep_reg_n_offset(enum ipahal_reg_name reg, u32 n, u32 ep_num)
+u32 ipahal_get_reg_nk_offset(enum ipahal_reg_name reg, u32 n, u32 k)
 {
-	return ipahal_get_reg_mn_ofst(reg, IPA_BIT_MAP_CELL_NUM(ep_num), n);
+	return ipahal_get_reg_mn_ofst(reg, k, n);
 }
 
 u32 ipahal_get_reg_base(void)

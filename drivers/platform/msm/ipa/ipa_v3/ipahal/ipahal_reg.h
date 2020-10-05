@@ -149,6 +149,8 @@ enum ipahal_reg_name {
 	IPA_SUSPEND_IRQ_INFO_EE_n_REG_k,
 	IPA_SUSPEND_IRQ_CLR_EE_n_REG_k,
 	IPA_SUSPEND_IRQ_EN_EE_n_REG_k,
+	IPA_STAT_TETHERING_MASK_EE_n_REG_k,
+	IPA_STAT_DROP_CNT_MASK_EE_n_REG_k,
 	IPA_REG_MAX,
 };
 
@@ -804,21 +806,6 @@ static inline u32 ipahal_read_reg(enum ipahal_reg_name reg)
 u32 ipahal_read_ep_reg(enum ipahal_reg_name reg, u32 ep_num);
 
 /*
- * ipahal_test_ep_bit() - return true if a ep bit is set
- */
-bool ipahal_test_ep_bit(u32 reg_val, u32 ep_num);
-
-/*
- * ipahal_get_ep_bit() - get ep bit set in the right offset
- */
-u32 ipahal_get_ep_bit(u32 ep_num);
-
-/*
- * ipahal_get_ep_reg_idx() - get ep reg index according to ep num
- */
-u32 ipahal_get_ep_reg_idx(u32 ep_num);
-
-/*
  * ipahal_write_reg() - Write to reg a raw value
  */
 static inline void ipahal_write_reg(enum ipahal_reg_name reg,
@@ -860,9 +847,9 @@ void ipahal_write_ep_reg_n(enum ipahal_reg_name reg, u32 n, u32 ep_num, u32 val)
 u32 ipahal_get_reg_mn_ofst(enum ipahal_reg_name reg, u32 m, u32 n);
 
 /*
-* Get the offset of a ep n register according to ep index and n
+* Get the offset of a n,k register
 */
-u32 ipahal_get_ep_reg_n_offset(enum ipahal_reg_name reg, u32 n, u32 ep_num);
+u32 ipahal_get_reg_nk_offset(enum ipahal_reg_name reg, u32 n, u32 l);
 
 /*
  * Get the offset of a n parameterized register
