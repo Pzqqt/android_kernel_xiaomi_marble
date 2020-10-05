@@ -377,7 +377,7 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 {
 	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
 }
-#endif
+#endif /* WLAN_POLICY_MGR_ENABLE */
 
 static inline void cm_delete_pmksa_for_bssid(struct cnx_mgr *cm_ctx,
 					     struct qdf_mac_addr *bssid)
@@ -402,7 +402,75 @@ void cm_delete_pmksa_for_single_pmk_bssid(struct cnx_mgr *cm_ctx,
 					  struct qdf_mac_addr *bssid)
 {
 }
-#endif
+#endif /* WLAN_SAE_SINGLE_PMK && WLAN_FEATURE_ROAM_OFFLOAD */
+
+#ifdef WLAN_FEATURE_FILS_SK
+/*
+ * cm_create_fils_realm_hash: API to create hash using realm
+ * @fils_info: fils connection info obtained from supplicant
+ * @tmp_hash: pointer to new hash
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_create_fils_realm_hash(struct wlan_fils_con_info *fils_info,
+			  uint8_t *tmp_hash)
+{
+	uint8_t *hash;
+	uint8_t *data;
+
+	if (!fils_info->realm_len)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	hash = qdf_mem_malloc(SHA256_DIGEST_SIZE);
+	if (!hash)
+		return QDF_STATUS_E_NOMEM;
+
+	data = fils_info->realm;
+	qdf_get_hash(SHA256_CRYPTO_TYPE, 1, &data, &fils_info->realm_len, hash);
+	qdf_mem_copy(tmp_hash, hash, REALM_HASH_LEN);
+	qdf_mem_free(hash);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void cm_update_fils_scan_filter(struct scan_filter *filter,
+				       struct cm_connect_req *cm_req)
+
+{
+	uint8_t realm_hash[REALM_HASH_LEN];
+	QDF_STATUS status;
+
+	if (!cm_req->req.fils_info.is_fils_connection)
+		return;
+
+	status = cm_create_fils_realm_hash(&cm_req->req.fils_info, realm_hash);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	filter->fils_scan_filter.realm_check = true;
+	mlme_debug(CM_PREFIX_FMT "creating realm based on fils info",
+		   CM_PREFIX_REF(cm_req->req.vdev_id, cm_req->cm_id));
+	qdf_mem_copy(filter->fils_scan_filter.fils_realm, realm_hash,
+		     REALM_HASH_LEN);
+}
+
+#else
+static inline void cm_update_fils_scan_filter(struct scan_filter *filter,
+					      struct cm_connect_req *cm_req)
+{ }
+#endif /* WLAN_FEATURE_FILS_SK */
+
+static inline void
+cm_set_pmf_caps(struct wlan_cm_connect_req *req, struct scan_filter *filter)
+{
+	if (req->crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
+		filter->pmf_cap = WLAN_PMF_REQUIRED;
+	else if (req->crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+	else
+		filter->pmf_cap = WLAN_PMF_DISABLED;
+}
 
 #ifdef CONN_MGR_ADV_FEATURE
 static QDF_STATUS
@@ -492,6 +560,54 @@ use_same_candidate:
 	return true;
 }
 
+static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
+					    struct cnx_mgr *cm_ctx,
+					    struct scan_filter *filter,
+					    struct wlan_cm_connect_req *req)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	filter->enable_adaptive_11r =
+		wlan_mlme_adaptive_11r_enabled(psoc);
+	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) != QDF_STA_MODE)
+		return;
+
+	wlan_cm_dual_sta_roam_update_connect_channels(psoc, filter);
+	filter->dot11mode = req->dot11mode_filter;
+}
+
+static void cm_update_security_filter(struct scan_filter *filter,
+				      struct wlan_cm_connect_req *req)
+{
+	uint8_t wsc_oui[OUI_LENGTH];
+	uint8_t osen_oui[OUI_LENGTH];
+	uint32_t oui_cpu;
+
+	oui_cpu = qdf_be32_to_cpu(WSC_OUI);
+	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
+	oui_cpu = qdf_be32_to_cpu(OSEN_OUI);
+	qdf_mem_copy(osen_oui, &oui_cpu, OUI_LENGTH);
+
+	/* Ignore security match for rsn override, OSEN and WPS connection */
+	if (req->force_rsne_override ||
+	    wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len) ||
+	    wlan_get_vendor_ie_ptr_from_oui(osen_oui, OUI_LENGTH,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len)) {
+		filter->ignore_auth_enc_type = 1;
+		return;
+	}
+
+	filter->authmodeset = req->crypto.auth_type;
+	filter->ucastcipherset = req->crypto.ciphers_pairwise;
+	filter->key_mgmt = req->crypto.akm_suites;
+	filter->mcastcipherset = req->crypto.group_cipher;
+	filter->mgmtcipherset = req->crypto.mgmt_ciphers;
+	cm_set_pmf_caps(req, filter);
+}
+
 #else
 static inline QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
@@ -507,20 +623,34 @@ bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 {
 	return false;
 }
-#endif
 
-static inline void
-cm_set_pmf_caps(struct cm_connect_req *cm_req, struct scan_filter *filter)
+static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
+					    struct cnx_mgr *cm_ctx,
+					    struct scan_filter *filter,
+					    struct wlan_cm_connect_req *req)
+{ }
+
+static void cm_update_security_filter(struct scan_filter *filter,
+				      struct wlan_cm_connect_req *req)
 {
-	if (cm_req->req.crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
-		filter->pmf_cap = WLAN_PMF_REQUIRED;
-	else if (cm_req->req.crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
-		filter->pmf_cap = WLAN_PMF_CAPABLE;
-	else
-		filter->pmf_cap = WLAN_PMF_DISABLED;
-}
+	if (!QDF_HAS_PARAM(req->crypto.auth_type, WLAN_CRYPTO_AUTH_WAPI) &&
+	    !QDF_HAS_PARAM(req->crypto.auth_type, WLAN_CRYPTO_AUTH_RSNA) &&
+	    !QDF_HAS_PARAM(req->crypto.auth_type, WLAN_CRYPTO_AUTH_WPA)) {
+		filter->ignore_auth_enc_type = 1;
+		return;
+	}
 
-static void cm_connect_prepare_scan_fliter(struct cnx_mgr *cm_ctx,
+	filter->authmodeset = req->crypto.auth_type;
+	filter->ucastcipherset = req->crypto.ciphers_pairwise;
+	filter->key_mgmt = req->crypto.akm_suites;
+	filter->mcastcipherset = req->crypto.group_cipher;
+	filter->mgmtcipherset = req->crypto.mgmt_ciphers;
+	cm_set_pmf_caps(req, filter);
+}
+#endif /* CONN_MGR_ADV_FEATURE */
+
+static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
+					   struct cnx_mgr *cm_ctx,
 					   struct cm_connect_req *cm_req,
 					   struct scan_filter *filter)
 {
@@ -539,20 +669,9 @@ static void cm_connect_prepare_scan_fliter(struct cnx_mgr *cm_ctx,
 		filter->chan_freq_list[0] = cm_req->req.chan_freq;
 	}
 
-	/* Fill band (STA+STA) */
-	/* RSN OVERRIDE */
-
-	filter->authmodeset = cm_req->req.crypto.auth_type;
-	filter->ucastcipherset = cm_req->req.crypto.ciphers_pairwise;
-	filter->key_mgmt = cm_req->req.crypto.akm_suites;
-	filter->mcastcipherset = cm_req->req.crypto.group_cipher;
-	filter->mgmtcipherset = cm_req->req.crypto.mgmt_ciphers;
-
-	cm_set_pmf_caps(cm_req, filter);
-
-	/* FOR WPS/OSEN set ignore auth */
-	/* SET mobility domain */
-	/* Fill fils info */
+	cm_update_security_filter(filter, &cm_req->req);
+	cm_update_fils_scan_filter(filter, cm_req);
+	cm_update_advance_filter(pdev, cm_ctx, filter, &cm_req->req);
 }
 
 static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
@@ -569,7 +688,7 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	if (!filter)
 		return QDF_STATUS_E_NOMEM;
 
-	cm_connect_prepare_scan_fliter(cm_ctx, cm_req, filter);
+	cm_connect_prepare_scan_filter(pdev, cm_ctx, cm_req, filter);
 
 	candidate_list = wlan_scan_get_result(pdev, filter);
 	if (candidate_list) {

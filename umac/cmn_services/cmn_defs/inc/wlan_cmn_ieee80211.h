@@ -49,6 +49,7 @@
 #define AP_TX_PWR_ATTR 107
 #define OCE_SUBNET_ID_ATTR 108
 #define OCE_SUBNET_ID_LEN 6
+#define OSEN_OUI 0x506f9a12
 
 /* WCN IE */
 /* Microsoft OUI */
