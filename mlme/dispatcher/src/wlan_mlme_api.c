@@ -4281,6 +4281,19 @@ wlan_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_ADAPTIVE_11R
+bool wlan_mlme_adaptive_11r_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_ADAPTIVE_11R);
+
+	return mlme_obj->cfg.lfr.enable_adaptive_11r;
+}
+#endif
+
 QDF_STATUS
 wlan_mlme_get_mawc_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
 {
