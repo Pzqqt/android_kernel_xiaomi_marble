@@ -116,6 +116,72 @@ static inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 }
 #endif /* WLAN_CM_USE_SPINLOCK */
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+QDF_STATUS cm_set_key(struct cnx_mgr *cm_ctx, bool unicast,
+		      uint8_t key_idx, struct qdf_mac_addr *bssid)
+{
+	struct wlan_crypto_key *crypto_key;
+
+	crypto_key = wlan_crypto_get_key(cm_ctx->vdev, key_idx);
+
+	return wlan_crypto_set_key_req(cm_ctx->vdev, crypto_key, (unicast ?
+				       WLAN_CRYPTO_KEY_TYPE_UNICAST :
+				       WLAN_CRYPTO_KEY_TYPE_GROUP));
+}
+#endif
+
+#ifdef WLAN_FEATURE_FILS_SK
+void cm_store_fils_key(struct cnx_mgr *cm_ctx, bool unicast,
+		       uint8_t key_id, uint16_t key_length,
+		       uint8_t *key, struct qdf_mac_addr *bssid,
+		       wlan_cm_id cm_id)
+{
+	struct wlan_crypto_key *crypto_key = NULL;
+	QDF_STATUS status;
+	uint8_t i;
+	int32_t cipher;
+	enum wlan_crypto_cipher_type cipher_type = WLAN_CRYPTO_CIPHER_NONE;
+
+	if (unicast)
+		cipher = wlan_crypto_get_param(cm_ctx->vdev,
+					       WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	else
+		cipher = wlan_crypto_get_param(cm_ctx->vdev,
+					       WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+
+	for (i = 0; i <= WLAN_CRYPTO_CIPHER_MAX; i++) {
+		if (QDF_HAS_PARAM(cipher, i)) {
+			cipher_type = i;
+			break;
+		}
+	}
+	crypto_key = wlan_crypto_get_key(cm_ctx->vdev, key_id);
+	if (!crypto_key) {
+		crypto_key = qdf_mem_malloc(sizeof(*crypto_key));
+		if (!crypto_key)
+			return;
+		status = wlan_crypto_save_key(cm_ctx->vdev, key_id, crypto_key);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlme_err(CM_PREFIX_FMT "Failed to save key",
+				 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					       cm_id));
+			qdf_mem_free(crypto_key);
+			return;
+		}
+	}
+	qdf_mem_zero(crypto_key, sizeof(*crypto_key));
+	crypto_key->cipher_type = cipher_type;
+	crypto_key->keylen = key_length;
+	crypto_key->keyix = key_id;
+	qdf_mem_copy(&crypto_key->keyval[0], key, key_length);
+	qdf_mem_copy(crypto_key->macaddr, bssid->bytes, QDF_MAC_ADDR_SIZE);
+	mlme_debug(CM_PREFIX_FMT "cipher_type %d key_len %d, key_id %d mac:" QDF_MAC_ADDR_FMT,
+		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
+		   crypto_key->cipher_type, crypto_key->keylen,
+		   crypto_key->keyix, QDF_MAC_ADDR_REF(crypto_key->macaddr));
+}
+#endif
+
 bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	qdf_list_node_t *cur_node = NULL;

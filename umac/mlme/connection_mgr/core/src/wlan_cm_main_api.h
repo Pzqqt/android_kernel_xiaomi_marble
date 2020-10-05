@@ -26,6 +26,7 @@
 #include "wlan_cm_main.h"
 #include "wlan_cm_sm.h"
 #include <include/wlan_mlme_cmn.h>
+#include <wlan_crypto_global_api.h>
 #ifdef WLAN_FEATURE_INTERFACE_MGR
 #include <wlan_if_mgr_api.h>
 #endif
@@ -481,6 +482,39 @@ struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
  * Return: void
  */
 void cm_reset_active_cm_id(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id);
+
+#ifdef CRYPTO_SET_KEY_CONVERGED
+/**
+ * cm_set_key() - set wep or fils key on connection completion
+ * @cm_ctx: connection manager context
+ * @unicast: if key is unicast
+ * @key_idx: Key index
+ * @bssid: bssid of the connected AP
+ *
+ * Return: void
+ */
+QDF_STATUS cm_set_key(struct cnx_mgr *cm_ctx, bool unicast,
+		      uint8_t key_idx, struct qdf_mac_addr *bssid);
+#endif
+
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * cm_store_fils_key() - store fils keys in crypto on connection complete
+ * @cm_ctx: connection manager context
+ * @unicast: if key is unicast
+ * @key_id: Key index
+ * @key_length: key length
+ * @key: key data
+ * @bssid: bssid of the connected AP
+ * @cm_id: cm_id of the connection
+ *
+ * Return: void
+ */
+void cm_store_fils_key(struct cnx_mgr *cm_ctx, bool unicast,
+		       uint8_t key_id, uint16_t key_length,
+		       uint8_t *key, struct qdf_mac_addr *bssid,
+		       wlan_cm_id cm_id);
+#endif
 
 /**
  * cm_check_cmid_match_list_head() - check if list head command matches the

@@ -26,7 +26,6 @@
 #include "wlan_policy_mgr_api.h"
 #endif
 #include <wlan_serialization_api.h>
-#include "wlan_crypto_global_api.h"
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
 #include "wlan_cm_roam_api.h"
@@ -455,10 +454,61 @@ static void cm_update_fils_scan_filter(struct scan_filter *filter,
 		     REALM_HASH_LEN);
 }
 
+static inline bool cm_is_fils_connection(struct cnx_mgr *cm_ctx,
+					 struct wlan_cm_connect_rsp *resp)
+{
+	int32_t key_mgmt;
+
+	key_mgmt = wlan_crypto_get_param(cm_ctx->vdev,
+					 WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	if (!(key_mgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256 |
+			  1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA384 |
+			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256 |
+			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384)))
+		return false;
+
+	resp->is_fils_connection = true;
+
+	return true;
+}
+
+static QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
+				  struct wlan_cm_connect_rsp *resp)
+{
+	struct fils_connect_rsp_params *fils_ie;
+
+	fils_ie = resp->connect_ies.fils_ie;
+
+	if (!fils_ie)
+		return QDF_STATUS_E_INVAL;
+
+	cm_store_fils_key(cm_ctx, true, 0, fils_ie->tk_len, fils_ie->tk,
+			  &resp->bssid, resp->cm_id);
+	cm_store_fils_key(cm_ctx, false, 2, fils_ie->gtk_len, fils_ie->gtk,
+			  &resp->bssid, resp->cm_id);
+	cm_set_key(cm_ctx, true, 0, &resp->bssid);
+	cm_set_key(cm_ctx, false, 2, &resp->bssid);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 static inline void cm_update_fils_scan_filter(struct scan_filter *filter,
 					      struct cm_connect_req *cm_req)
 { }
+
+static inline bool cm_is_fils_connection(struct cnx_mgr *cm_ctx,
+					 struct wlan_cm_connect_rsp *resp)
+{
+	return false;
+}
+
+static inline QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
+					 struct wlan_cm_connect_rsp *resp)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_FILS_SK */
 
 static inline void
@@ -608,6 +658,24 @@ static void cm_update_security_filter(struct scan_filter *filter,
 	cm_set_pmf_caps(req, filter);
 }
 
+/**
+ * cm_set_fils_wep_key() - check and set wep or fils keys if required
+ * @cm_ctx: connection manager context
+ * @resp: connect resp
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM (ie holding the SM lock) i.e. on successful connection.
+ */
+static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
+				struct wlan_cm_connect_rsp *resp)
+{
+	if (cm_is_fils_connection(cm_ctx, resp)) {
+		cm_set_fils_key(cm_ctx, resp);
+		return;
+	}
+
+	/* set WEP keys */
+}
 #else
 static inline QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
@@ -647,6 +715,11 @@ static void cm_update_security_filter(struct scan_filter *filter,
 	filter->mgmtcipherset = req->crypto.mgmt_ciphers;
 	cm_set_pmf_caps(req, filter);
 }
+
+static inline void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
+				       struct wlan_cm_connect_rsp *resp)
+{}
+
 #endif /* CONN_MGR_ADV_FEATURE */
 
 static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
@@ -1333,8 +1406,11 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 
 	sm_state = cm_get_state(cm_ctx);
 	if (QDF_IS_STATUS_SUCCESS(resp->connect_status) &&
-	    sm_state == WLAN_CM_S_CONNECTED)
+	    sm_state == WLAN_CM_S_CONNECTED) {
 		cm_update_scan_db_on_connect_success(cm_ctx, resp);
+		/* set WEP and FILS key on success */
+		cm_set_fils_wep_key(cm_ctx, resp);
+	}
 
 	mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
 	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);

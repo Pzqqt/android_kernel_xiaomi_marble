@@ -22,6 +22,7 @@
 #include <wlan_serialization_api.h>
 #include "wlan_utility.h"
 #include "wlan_scan_api.h"
+#include "wlan_crypto_global_api.h"
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
 #endif
@@ -379,9 +380,8 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 
 	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
-
+	wlan_crypto_free_vdev_key(cm_ctx->vdev);
 	cm_inform_if_mgr_disconnect_complete(cm_ctx->vdev);
-
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
 
 	/*
