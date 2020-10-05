@@ -1473,12 +1473,14 @@ QDF_STATUS wmi_unified_process_ll_stats_get_cmd(wmi_unified_t wmi_handle,
  *                                              get station request
  * @wmi_handle: wmi handle
  * @get_req: unified ll stats and get station request command params
+ * @is_always_over_qmi: flag to send stats request always over qmi
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_process_unified_ll_stats_get_sta_cmd(
 				wmi_unified_t wmi_handle,
-				const struct ll_stats_get_params *get_req);
+				const struct ll_stats_get_params *get_req,
+				bool is_always_over_qmi);
 #endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 

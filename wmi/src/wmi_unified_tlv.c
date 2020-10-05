@@ -5229,18 +5229,20 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
  *                                           station request
  * @wmi_handle: wmi handle
  * @get_req: ll stats get request command params
+ * @is_always_over_qmi: flag to send stats request always over qmi
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_unified_ll_stats_get_sta_cmd_tlv(
 				wmi_unified_t wmi_handle,
-				const struct ll_stats_get_params *get_req)
+				const struct ll_stats_get_params *get_req,
+				bool is_always_over_qmi)
 {
 	wmi_request_unified_ll_get_sta_cmd_fixed_param *unified_cmd;
 	int32_t len;
 	wmi_buf_t buf;
 	void *buf_ptr;
-	int ret;
+	QDF_STATUS ret;
 
 	len = sizeof(*unified_cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -5279,14 +5281,23 @@ static QDF_STATUS send_unified_ll_stats_get_sta_cmd_tlv(
 		  QDF_MAC_ADDR_REF(get_req->peer_macaddr.bytes));
 
 	wmi_mtrace(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID, get_req->vdev_id, 0);
-	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
-					  WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
-	if (ret) {
+
+	if (is_always_over_qmi && wmi_is_qmi_stats_enabled(wmi_handle)) {
+		ret = wmi_unified_cmd_send_over_qmi(
+					wmi_handle, buf, len,
+					WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
+	} else {
+		ret = wmi_unified_cmd_send_pm_chk(
+					wmi_handle, buf, len,
+					WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
+	}
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return ret;
 }
 #endif
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
