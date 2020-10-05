@@ -122,7 +122,7 @@ static inline QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 static inline
 QDF_STATUS hif_update_irq_ops_with_pci(struct hif_softc *hif_sc)
 {
-	HIF_ERROR("%s: not supported", __func__);
+	hif_err("not supported");
 	return QDF_STATUS_E_NOSUPPORT;
 }
 /**
