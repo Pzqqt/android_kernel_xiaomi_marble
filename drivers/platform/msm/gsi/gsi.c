@@ -1269,6 +1269,7 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 	}
 
 	spin_lock_init(&gsi_ctx->slock);
+	gsi_ctx->per = *props;
 	if (props->intr == GSI_INTR_IRQ) {
 		if (!props->irq) {
 			GSIERR("bad irq specified %u\n", props->irq);
@@ -1376,7 +1377,6 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		    props->emulator_intcntrlr_client_isr;
 	}
 
-	gsi_ctx->per = *props;
 	gsi_ctx->per_registered = true;
 	mutex_init(&gsi_ctx->mlock);
 	atomic_set(&gsi_ctx->num_chan, 0);
