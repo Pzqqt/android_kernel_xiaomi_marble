@@ -11032,13 +11032,13 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	bool is_vendor_acs_support =
 		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
 
-	hdd_for_each_adapter(hdd_ctxt, adapter) {
+	hdd_for_each_adapter_dev_held(hdd_ctxt, adapter) {
 		if (!(adapter->device_mode == QDF_SAP_MODE &&
 		    adapter->session.ap.sap_config.acs_cfg.acs_mode)) {
-			hdd_debug("skip device mode:%d acs:%d",
-				  adapter->device_mode,
-				  adapter->session.ap.sap_config.
-				  acs_cfg.acs_mode);
+			hdd_debug_rl("skip device mode:%d acs:%d",
+				     adapter->device_mode,
+			adapter->session.ap.sap_config.acs_cfg.acs_mode);
+			dev_put(adapter->dev);
 			continue;
 		}
 
@@ -11082,6 +11082,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 				restart_chan_store);
 			hdd_debug("ch:%d is safe. no need to change channel",
 				  ap_chan);
+			dev_put(adapter->dev);
 			continue;
 		}
 
@@ -11100,6 +11101,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		if (is_vendor_acs_support && is_acs_support_for_dfs_ltecoex) {
 			hdd_update_acs_timer_reason(adapter,
 				QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX);
+			dev_put(adapter->dev);
 			continue;
 		}
 
@@ -11143,6 +11145,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 						CSA_REASON_UNSAFE_CHANNEL);
 				hdd_switch_sap_channel(adapter, restart_chan,
 						       true);
+				dev_put(adapter->dev);
 				return;
 			}
 			else {
@@ -11150,9 +11153,12 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 				wlan_hdd_send_svc_nlink_msg(
 						hdd_ctxt->radio_index,
 						WLAN_SVC_LTE_COEX_IND, NULL, 0);
+				dev_put(adapter->dev);
 				return;
 			}
 		}
+		/* dev_put has to be done here */
+		dev_put(adapter->dev);
 	}
 }
 
