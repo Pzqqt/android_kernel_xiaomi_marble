@@ -286,16 +286,6 @@ QDF_STATUS ucfg_fwol_get_enable_fw_module_log_level(
 QDF_STATUS ucfg_fwol_get_sap_xlna_bypass(struct wlan_objmgr_psoc *psoc,
 					 bool *sap_xlna_bypass);
 
-/**
- * ucfg_fwol_get_ocl_cfg() - Assigns ocl_cfg value
- * @psoc: pointer to the psoc object
- * @ocl_cfg: pointer to return ocl_cfg
- *
- * Return: QDF Status
- */
-QDF_STATUS ucfg_fwol_get_ocl_cfg(struct wlan_objmgr_psoc *psoc,
-				 uint32_t *ocl_cfg);
-
 #ifdef FEATURE_WLAN_RA_FILTERING
 /**
  * ucfg_fwol_set_is_rate_limit_enabled() - Sets the is_rate_limit_enabled value
@@ -777,12 +767,6 @@ ucfg_fwol_get_enable_fw_module_log_level(
 static inline QDF_STATUS
 ucfg_fwol_get_sap_xlna_bypass(struct wlan_objmgr_psoc *psoc,
 			      uint8_t *sap_xlna_bypass)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-static inline QDF_STATUS
-ucfg_fwol_get_ocl_cfg(struct wlan_objmgr_psoc *psoc, uint32_t *ocl_cfg)
 {
 	return QDF_STATUS_E_FAILURE;
 }

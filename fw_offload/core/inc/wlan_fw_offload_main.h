@@ -212,7 +212,6 @@ struct wlan_fwol_neighbor_report_cfg {
  * @enable_dhcp_server_offload: DHCP Offload is enabled or not
  * @dhcp_max_num_clients: Max number of DHCP client supported
  * @dwelltime_params: adaptive dwell time parameters
- * @ocl_cfg: OCL mode configuration
  * @enable_ilp: ILP HW block configuration
  */
 struct wlan_fwol_cfg {
@@ -264,7 +263,6 @@ struct wlan_fwol_cfg {
 	uint32_t dhcp_max_num_clients;
 #endif
 	struct adaptive_dwelltime_params dwelltime_params;
-	uint32_t ocl_cfg;
 	bool enable_ilp;
 };
 
