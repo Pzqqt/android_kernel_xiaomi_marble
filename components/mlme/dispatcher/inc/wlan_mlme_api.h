@@ -2796,6 +2796,22 @@ wlan_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val);
 
 /**
+ * wlan_mlme_adaptive_11r_enabled() - check if adaptive 11r feature is enaled
+ * or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: bool
+ */
+#ifdef WLAN_ADAPTIVE_11R
+bool wlan_mlme_adaptive_11r_enabled(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool wlan_mlme_adaptive_11r_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
+/**
  * wlan_mlme_get_mawc_enabled() - Get mawc enabled status
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller

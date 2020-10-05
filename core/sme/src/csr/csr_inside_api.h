@@ -395,30 +395,6 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
 				     struct scan_filter *filter);
 
-#ifdef WLAN_ADAPTIVE_11R
-/*
- * csr_update_adaptive_11r_scan_filter() - fill adaptive 11r support in filter
- * @mac_ctx: mac ctx
- * @filter: scan filter
- *
- * Return void
- */
-static inline void
-csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
-				    struct scan_filter *filter)
-{
-	filter->enable_adaptive_11r =
-		   mac_ctx->mlme_cfg->lfr.enable_adaptive_11r;
-}
-#else
-static inline void
-csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
-				    struct scan_filter *filter)
-{
-	filter->enable_adaptive_11r = false;
-}
-#endif
-
 /*
  * csr_fill_filter_from_vdev_crypto() - fill scan filter crypto from vdev crypto
  * @mac_ctx: csr auth type

@@ -11177,7 +11177,8 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 
 	csr_update_fils_scan_filter(filter, profile);
 
-	csr_update_adaptive_11r_scan_filter(mac_ctx, filter);
+	filter->enable_adaptive_11r =
+		wlan_mlme_adaptive_11r_enabled(mac_ctx->psoc);
 	csr_update_scan_filter_dot11mode(mac_ctx, filter);
 
 	return QDF_STATUS_SUCCESS;
