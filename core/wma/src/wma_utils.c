@@ -2512,7 +2512,9 @@ wma_send_ll_stats_get_cmd(tp_wma_handle wma_handle,
 						wma_handle->wmi_handle, cmd);
 
 	return wmi_process_unified_ll_stats_get_sta_cmd(
-						wma_handle->wmi_handle, cmd);
+			wma_handle->wmi_handle, cmd,
+			cfg_get(wma_handle->psoc,
+				CFG_SEND_LL_AND_GET_STATION_STATS_OVER_QMI));
 }
 #else
 static QDF_STATUS

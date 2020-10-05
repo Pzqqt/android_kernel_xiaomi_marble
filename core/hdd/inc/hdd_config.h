@@ -1587,9 +1587,33 @@ struct dhcp_server {
 			CFG_VALUE_OR_DEFAULT, \
 			"Station stats cache expiry")
 
+/*
+ * <ini>
+ * send_ll_and_get_station_stats_over_qmi - Flag to send clubbed ll_stats and
+ *                                          get_station request over qmi
+ *
+ * @Min: 0
+ * @Max: 1
+ * Default: 0
+ *
+ * This ini param is used to send the unified ll_stats and get_station request
+ * over qmi.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_SEND_LL_AND_GET_STATION_STATS_OVER_QMI CFG_INI_BOOL( \
+			"send_ll_and_get_station_stats_over_qmi", \
+			0, \
+			"send ll and get station stats over qmi")
+
 #define CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ \
 	 CFG(CFG_CLUB_LL_STA_AND_GET_STATION) \
-	 CFG(CFG_STA_STATS_CACHE_EXPIRY)
+	 CFG(CFG_STA_STATS_CACHE_EXPIRY) \
+	 CFG(CFG_SEND_LL_AND_GET_STATION_STATS_OVER_QMI)
 #else
 #define CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ
 #endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
