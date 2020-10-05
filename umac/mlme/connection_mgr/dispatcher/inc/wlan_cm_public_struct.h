@@ -31,6 +31,12 @@
 #define CM_ID_INVALID 0xFFFFFFFF
 typedef uint32_t wlan_cm_id;
 
+/* Diconnect active timeout */
+#define DISCONNECT_TIMEOUT   STOP_RESPONSE_TIMER + DELETE_RESPONSE_TIMER + 1000
+
+/* Diconnect command wait timeout */
+#define CM_DISCONNECT_CMD_TIMEOUT DISCONNECT_TIMEOUT + 2000
+
 /**
  * struct wlan_cm_wep_key_params - store wep key info
  * @key: key info

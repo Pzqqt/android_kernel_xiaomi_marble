@@ -21,6 +21,7 @@
  * request apis.
  */
 
+#include "wlan_osif_priv.h"
 #include "osif_cm_req.h"
 #include "wlan_cm_ucfg_api.h"
 #include "wlan_nl_to_crypto_params.h"
@@ -395,16 +396,11 @@ connect_start_fail:
 	return qdf_status_to_os_return(status);
 }
 
-int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
-		       uint16_t reason)
+static QDF_STATUS osif_cm_send_disconnect(struct wlan_objmgr_vdev *vdev,
+					  uint16_t reason)
 {
-	struct wlan_cm_disconnect_req *req;
-	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	QDF_STATUS status;
-
-	osif_info("%s(vdevid-%d): Received Disconnect reason:%d %s",
-		  dev->name, vdev_id, reason,
-		  ucfg_cm_reason_code_to_str(reason));
+	struct wlan_cm_disconnect_req *req;
 
 	status = osif_cm_reset_id_and_src(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -412,17 +408,62 @@ int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req)
-		return -ENOMEM;
+		return QDF_STATUS_E_NOMEM;
 
-	req->vdev_id = vdev_id;
+	req->vdev_id = wlan_vdev_get_id(vdev);
 	req->source = CM_OSIF_DISCONNECT;
 	req->reason_code = reason;
 	status = ucfg_cm_start_disconnect(vdev, req);
+	qdf_mem_free(req);
+
+	return status;
+}
+
+int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
+		       uint16_t reason)
+{
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	QDF_STATUS status;
+
+	osif_info("%s(vdevid-%d): Received Disconnect reason:%d %s",
+		  dev->name, vdev_id, reason,
+		  ucfg_cm_reason_code_to_str(reason));
+
+	status = osif_cm_send_disconnect(vdev, reason);
 	if (QDF_IS_STATUS_ERROR(status))
 		osif_err("Disconnect failed with status %d", status);
-
-	qdf_mem_free(req);
 
 	return qdf_status_to_os_return(status);
 }
 
+int osif_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev, uint16_t reason)
+{
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	QDF_STATUS status;
+
+	if (ucfg_cm_is_vdev_disconnected(vdev))
+		return 0;
+
+	if (!osif_priv) {
+		osif_err("vdev %d invalid vdev osif priv", vdev_id);
+		return -EINVAL;
+	}
+
+	osif_info("vdevid-%d: Received Disconnect reason:%d %s",
+		  vdev_id, reason, ucfg_cm_reason_code_to_str(reason));
+
+	qdf_event_reset(&osif_priv->cm_info.disconnect_complete);
+	status = osif_cm_send_disconnect(vdev, reason);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Disconnect failed with status %d", status);
+		return qdf_status_to_os_return(status);
+	}
+
+	status = qdf_wait_single_event(&osif_priv->cm_info.disconnect_complete,
+				       CM_DISCONNECT_CMD_TIMEOUT);
+	if (QDF_IS_STATUS_ERROR(status))
+		osif_err("Disconnect timeout with status %d", status);
+
+	return qdf_status_to_os_return(status);
+}

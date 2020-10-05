@@ -150,5 +150,7 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 				    locally_generated, rsp->ap_discon_ie.ptr,
 				    rsp->ap_discon_ie.len, GFP_KERNEL);
 
+	qdf_event_set(&osif_priv->cm_info.disconnect_complete);
+
 	return status;
 }

@@ -117,8 +117,6 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 	return status;
 }
 
-#define DISCONNECT_TIMEOUT   STOP_RESPONSE_TIMER + DELETE_RESPONSE_TIMER + 1000
-
 static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 					struct cnx_mgr *cm_ctx,
 					struct cm_disconnect_req *req)

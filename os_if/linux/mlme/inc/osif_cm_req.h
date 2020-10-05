@@ -38,8 +38,7 @@
  *
  * Return: int
  */
-int osif_cm_connect(struct net_device *dev,
-		    struct wlan_objmgr_vdev *vdev,
+int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 		    struct cfg80211_connect_params *req);
 
 /**
@@ -50,8 +49,17 @@ int osif_cm_connect(struct net_device *dev,
  *
  * Return: int
  */
-int osif_cm_disconnect(struct net_device *dev,
-		       struct wlan_objmgr_vdev *vdev,
+int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 		       uint16_t reason);
+
+/**
+ * osif_cm_disconnect_sync() - Disconnect vdev and wait for it to complete
+ * @vdev: vdev pointer
+ * @reason: disconnect reason
+ *
+ * Return: int
+ */
+int osif_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev, uint16_t reason);
+
 #endif
 #endif /* __OSIF_CM_REQ_H */
