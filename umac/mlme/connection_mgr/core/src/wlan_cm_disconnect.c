@@ -99,8 +99,8 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 		/* command removed from pending list. */
 		break;
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
-		mlme_err(CM_PREFIX_LOG "Active command timeout",
-			 wlan_vdev_get_id(vdev), cmd->cmd_id);
+		mlme_err(CM_PREFIX_FMT "Active command timeout",
+			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
 		QDF_ASSERT(0);
 		cm_send_disconnect_resp(cm_ctx, cmd->cmd_id);
 		break;
@@ -126,11 +126,12 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 	struct wlan_serialization_command cmd = {0, };
 	enum wlan_serialization_status ser_cmd_status;
 	QDF_STATUS status;
+	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 
 	status = wlan_objmgr_vdev_try_get_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err(CM_PREFIX_LOG "unable to get reference",
-			 wlan_vdev_get_id(cm_ctx->vdev), req->cm_id);
+		mlme_err(CM_PREFIX_FMT "unable to get reference",
+			 CM_PREFIX_REF(vdev_id, req->cm_id));
 		return status;
 	}
 
@@ -152,9 +153,8 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 		/* command moved to active list. Do nothing */
 		break;
 	default:
-		mlme_err(CM_PREFIX_LOG "ser cmd status %d",
-			 wlan_vdev_get_id(cm_ctx->vdev), req->cm_id,
-			 ser_cmd_status);
+		mlme_err(CM_PREFIX_FMT "ser cmd status %d",
+			 CM_PREFIX_REF(vdev_id, req->cm_id), ser_cmd_status);
 		wlan_objmgr_vdev_release_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
 
 		return QDF_STATUS_E_FAILURE;
@@ -245,15 +245,15 @@ cm_update_scan_mlme_on_disconnect(struct wlan_objmgr_vdev *vdev,
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		mlme_err(CM_PREFIX_LOG "failed to find pdev",
-			 req->req.vdev_id, req->cm_id);
+		mlme_err(CM_PREFIX_FMT "failed to find pdev",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		return;
 	}
 
 	chan = wlan_vdev_get_active_channel(vdev);
 	if (!chan) {
-		mlme_err(CM_PREFIX_LOG "failed to get active channel",
-			 req->req.vdev_id, req->cm_id);
+		mlme_err(CM_PREFIX_FMT "failed to get active channel",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		return;
 	}
 
@@ -261,8 +261,8 @@ cm_update_scan_mlme_on_disconnect(struct wlan_objmgr_vdev *vdev,
 					 &bss_info.ssid.length);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err(CM_PREFIX_LOG "failed to get ssid",
-			 req->req.vdev_id, req->cm_id);
+		mlme_err(CM_PREFIX_FMT "failed to get ssid",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		return;
 	}
 
@@ -302,14 +302,14 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	cm_update_scan_mlme_on_disconnect(cm_ctx->vdev,
 					  &cm_req->discon_req);
 
-	mlme_debug(CM_PREFIX_LOG "disconnect " QDF_MAC_ADDR_FMT " source %d reason %d",
-		   req->req.vdev_id, req->cm_id,
+	mlme_debug(CM_PREFIX_FMT "disconnect " QDF_MAC_ADDR_FMT " source %d reason %d",
+		   CM_PREFIX_REF(req->req.vdev_id, req->cm_id),
 		   QDF_MAC_ADDR_REF(req->req.bssid.bytes),
 		   req->req.source, req->req.reason_code);
 	status = mlme_cm_disconnect_req(cm_ctx->vdev, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err(CM_PREFIX_LOG "disconnect req fail", req->req.vdev_id,
-			 req->cm_id);
+		mlme_err(CM_PREFIX_FMT "disconnect req fail",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		cm_send_disconnect_resp(cm_ctx, req->cm_id);
 	}
 	qdf_mem_free(req);
@@ -326,8 +326,9 @@ cm_inform_blm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		mlme_err(CM_PREFIX_LOG "failed to find pdev",
-			 wlan_vdev_get_id(vdev), resp->req.cm_id);
+		mlme_err(CM_PREFIX_FMT "failed to find pdev",
+			 CM_PREFIX_REF(wlan_vdev_get_id(vdev),
+				       resp->req.cm_id));
 		return;
 	}
 
@@ -431,8 +432,9 @@ QDF_STATUS cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 	prefix = CM_ID_GET_PREFIX(cm_id);
 
 	if (prefix != DISCONNECT_REQ_PREFIX || cm_id != resp->req.cm_id) {
-		mlme_err("prefix %x cm_id %x does not match with active request cm_id %x",
-			 prefix, resp->req.cm_id, cm_id);
+		mlme_err(CM_PREFIX_FMT "Active cm_id 0x%x is different",
+			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), resp->req.cm_id),
+			 cm_id);
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto disconnect_complete;
 	}

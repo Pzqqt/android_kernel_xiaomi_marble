@@ -268,8 +268,9 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	cm_req_lock_acquire(cm_ctx);
 	if (qdf_list_size(&cm_ctx->req_list) >= CM_MAX_REQ) {
 		cm_req_lock_release(cm_ctx);
-		mlme_err(CM_PREFIX_LOG "List full size %d",
-			 wlan_vdev_get_id(cm_ctx->vdev), cm_req->cm_id,
+		mlme_err(CM_PREFIX_FMT "List full size %d",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+				       cm_req->cm_id),
 			 qdf_list_size(&cm_ctx->req_list));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -336,8 +337,8 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 
 	if (!cm_req) {
 		cm_req_lock_release(cm_ctx);
-		mlme_err("vdev %d cm req id %d not found",
-			 wlan_vdev_get_id(cm_ctx->vdev), cm_id);
+		mlme_err(CM_PREFIX_FMT " req not found",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -364,8 +365,8 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc) {
-		mlme_err(CM_PREFIX_LOG "Failed to find psoc",
-			 wlan_vdev_get_id(cm_ctx->vdev), cm_id);
+		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
 		return;
 	}
 

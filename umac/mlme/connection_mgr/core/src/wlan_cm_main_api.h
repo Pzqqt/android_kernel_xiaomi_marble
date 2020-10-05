@@ -36,7 +36,8 @@
 
 #define CM_ID_GET_PREFIX(cm_id)     cm_id & 0xFFFF0000
 
-#define CM_PREFIX_LOG "vdev %d cm_id 0x%x: "
+#define CM_PREFIX_FMT "vdev %d cm_id 0x%x: "
+#define CM_PREFIX_REF(vdev_id, cm_id) (vdev_id), (cm_id)
 
 /*************** CONNECT APIs ****************/
 
