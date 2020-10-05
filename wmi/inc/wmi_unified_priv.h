@@ -1009,10 +1009,6 @@ QDF_STATUS (*send_process_del_periodic_tx_ptrn_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_auto_shutdown_timer_cmd)(wmi_unified_t wmi_handle,
 						  uint32_t timer_val);
 
-QDF_STATUS
-(*send_ocl_cmd)(wmi_unified_t wmi_handle,
-		struct ocl_cmd_params *param);
-
 #ifdef WLAN_FEATURE_NAN
 QDF_STATUS (*send_nan_req_cmd)(wmi_unified_t wmi_handle,
 			struct nan_msg_params *nan_req);

@@ -2397,47 +2397,6 @@ static QDF_STATUS send_peer_unmap_conf_cmd_tlv(wmi_unified_t wmi,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * send_ocl_cmd_tlv() - send ocl command to fw
- * @wmi_handle: wmi handle
- * @param: pointer to coex config param
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS
-send_ocl_cmd_tlv(wmi_unified_t wmi_handle, struct ocl_cmd_params *param)
-{
-	wmi_set_ocl_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	QDF_STATUS ret;
-	int32_t len;
-
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf)
-		return QDF_STATUS_E_FAILURE;
-
-	cmd = (wmi_set_ocl_cmd_fixed_param *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(
-		       wmi_set_ocl_cmd_fixed_param));
-
-	cmd->vdev_id = param->vdev_id;
-	cmd->en_dis_chain = param->en_dis_chain;
-
-	wmi_mtrace(WMI_SET_OCL_CMDID, cmd->vdev_id, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_SET_OCL_CMDID);
-
-	if (ret != 0) {
-		wmi_err("Sending OCL CMD failed");
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-}
-
 void wmi_sta_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2479,7 +2438,6 @@ void wmi_sta_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_set_arp_stats_req_cmd = send_set_arp_stats_req_cmd_tlv;
 	ops->send_get_arp_stats_req_cmd = send_get_arp_stats_req_cmd_tlv;
 	ops->send_peer_unmap_conf_cmd = send_peer_unmap_conf_cmd_tlv;
-	ops->send_ocl_cmd = send_ocl_cmd_tlv;
 
 	wmi_tdls_attach_tlv(wmi_handle);
 	wmi_policy_mgr_attach_tlv(wmi_handle);

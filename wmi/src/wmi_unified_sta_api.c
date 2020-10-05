@@ -415,13 +415,3 @@ QDF_STATUS wmi_unified_peer_unmap_conf_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS
-wmi_unified_send_ocl_cmd(wmi_unified_t wmi_handle,
-			 struct ocl_cmd_params *param)
-{
-	if (wmi_handle->ops->send_ocl_cmd)
-		return wmi_handle->ops->send_ocl_cmd(wmi_handle, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
