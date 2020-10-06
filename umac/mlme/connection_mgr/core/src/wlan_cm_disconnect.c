@@ -20,7 +20,7 @@
 #include "wlan_cm_main_api.h"
 #include "wlan_cm_sm.h"
 #include <wlan_serialization_api.h>
-#include "wlan_mlme_vdev_mgr_interface.h"
+#include "wlan_utility.h"
 #include "wlan_scan_api.h"
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
@@ -336,19 +336,15 @@ cm_inform_blm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 					     BLM_AP_DISCONNECTED);
 }
 #else
-static void
+static inline void
 cm_inform_blm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_discon_rsp *resp)
-{
-	return QDF_STATUS_SUCCESS;
-}
+{}
 #endif
 
 QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 				  struct wlan_cm_discon_rsp *resp)
 {
-	/* update fils/wep key and inform legacy, update bcn filter */
-
 	/*
 	 * If the entry is not present in the list, it must have been cleared
 	 * already.
@@ -409,7 +405,7 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_DISCONNECT_REQ,
 				     sizeof(*disconnect_req), disconnect_req);
-	/* free the req if connect is not handled */
+	/* free the req if disconnect is not handled */
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(cm_req);
 

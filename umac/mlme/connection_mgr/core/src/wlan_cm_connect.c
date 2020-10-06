@@ -385,10 +385,10 @@ static void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 }
 #else
 
-static QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
-					      qdf_list_t *scan_list,
-					      uint8_t vdev_id,
-					      uint8_t connect_id)
+static inline
+QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
+				       qdf_list_t *scan_list, uint8_t vdev_id,
+				       uint8_t connect_id)
 {
 	return QDF_STATUS_E_ALREADY;
 }
@@ -552,7 +552,7 @@ cm_inform_if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS
+static inline QDF_STATUS
 cm_inform_if_mgr_connect_start(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
@@ -893,7 +893,7 @@ cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS
+static inline QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_connect_rsp *resp)
 {

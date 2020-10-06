@@ -219,6 +219,7 @@ void cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 QDF_STATUS cm_handle_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
 				    enum wlan_cm_sm_evt event);
 #else
+static inline
 QDF_STATUS cm_handle_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
 				    enum wlan_cm_sm_evt event)
 {
