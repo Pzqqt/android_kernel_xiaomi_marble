@@ -1783,7 +1783,7 @@ static int ipa_mhi_test_create_aggr_open_frame(void)
 	struct sk_buff *skb;
 	int rc;
 	int i;
-	u32 aggr_state_active;
+	u64 aggr_state_active;
 	enum ipa_hw_type ipa_ver;
 
 	IPA_UT_LOG("Entry\n");
@@ -1844,11 +1844,13 @@ static int ipa_mhi_test_create_aggr_open_frame(void)
 	ipa_ver = ipa_get_hw_type();
 	if (ipa_ver >= IPA_HW_v5_0) {
 		aggr_state_active =
-			ipahal_read_ep_reg(IPA_STATE_AGGR_ACTIVE_n,
-				test_mhi_ctx->cons_hdl);
+			(u64)ipahal_read_ep_reg_n(IPA_STATE_AGGR_ACTIVE_n, 0,
+						test_mhi_ctx->cons_hdl) |
+			(((u64)ipahal_read_ep_reg_n(IPA_STATE_AGGR_ACTIVE_n, 1,
+						test_mhi_ctx->cons_hdl)) << 32);
 	} else {
 		aggr_state_active =
-			ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
+			(u64)ipahal_read_reg(IPA_STATE_AGGR_ACTIVE);
 	}
 
 	IPA_UT_LOG("IPA_STATE_AGGR_ACTIVE  0x%x\n", aggr_state_active);
