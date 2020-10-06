@@ -4901,6 +4901,7 @@ void __qdf_nbuf_add_rx_frag(__qdf_frag_t buf, __qdf_nbuf_t nbuf,
 	uint8_t nr_frag;
 
 	nr_frag = __qdf_nbuf_get_nr_frags(nbuf);
+	qdf_assert_always(nr_frag < QDF_NBUF_MAX_FRAGS);
 
 	page = virt_to_head_page(buf);
 	frag_offset = buf - page_address(page);
