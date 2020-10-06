@@ -40,7 +40,7 @@ enum CMN_BW_TYPES {
 #define NUM_HT_MCS 8
 #define NUM_VHT_MCS 12
 
-#define NUM_HE_MCS 12
+#define NUM_HE_MCS 14
 
 #define NUM_SPATIAL_STREAM 4
 #define NUM_SPATIAL_STREAMS 8

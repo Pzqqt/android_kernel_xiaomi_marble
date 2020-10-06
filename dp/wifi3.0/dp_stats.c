@@ -85,6 +85,8 @@ static const struct cdp_rate_debug dp_ppdu_rate_string[DOT11_MAX][MAX_MCS] = {
 		{"HE MCS 9 (256-QAM 5/6)  ", MCS_VALID},
 		{"HE MCS 10 (1024-QAM 3/4)", MCS_VALID},
 		{"HE MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"HE MCS 12 (4096-QAM 3/4)", MCS_VALID},
+		{"HE MCS 13 (4096-QAM 5/6)", MCS_VALID},
 		{"INVALID ", MCS_VALID},
 	}
 };
@@ -104,6 +106,8 @@ dp_mu_rate_string[RX_TYPE_MU_MAX][MAX_MCS] = {
 		{"HE MU-MIMO MCS 9 (256-QAM 5/6)  ", MCS_VALID},
 		{"HE MU-MIMO MCS 10 (1024-QAM 3/4)", MCS_VALID},
 		{"HE MU-MIMO MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"HE MU-MIMO MCS 12 (4096-QAM 3/4)", MCS_VALID},
+		{"HE MU-MIMO MCS 13 (4096-QAM 5/6)", MCS_VALID},
 		{"INVALID ", MCS_VALID},
 	},
 	{
@@ -119,6 +123,8 @@ dp_mu_rate_string[RX_TYPE_MU_MAX][MAX_MCS] = {
 		{"HE OFDMA MCS 9 (256-QAM 5/6)  ", MCS_VALID},
 		{"HE OFDMA MCS 10 (1024-QAM 3/4)", MCS_VALID},
 		{"HE OFDMA MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"HE OFDMA MCS 12 (4096-QAM 3/4)", MCS_VALID},
+		{"HE OFDMA MCS 13 (4096-QAM 5/6)", MCS_VALID},
 		{"INVALID ", MCS_VALID},
 	},
 };

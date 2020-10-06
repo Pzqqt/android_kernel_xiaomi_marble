@@ -43,7 +43,7 @@
 #endif
 
 /* 1 additional MCS is for invalid values */
-#define MAX_MCS (12 + 1)
+#define MAX_MCS (14 + 1)
 #define MAX_MCS_11A 8
 #define MAX_MCS_11B 7
 #define MAX_MCS_11AC 12
@@ -313,6 +313,8 @@ static const struct cdp_rate_debug cdp_rate_string[DOT11_MAX][MAX_MCS] = {
 		{"HE MCS 9 (256-QAM 5/6)  ", MCS_VALID},
 		{"HE MCS 10 (1024-QAM 3/4)", MCS_VALID},
 		{"HE MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"HE MCS 12 (4096-QAM 3/4)", MCS_VALID},
+		{"HE MCS 13 (4096-QAM 5/6)", MCS_VALID},
 		{"INVALID ", MCS_INVALID},
 	}
 };
