@@ -85,13 +85,17 @@ void tdls_discovery_timeout_peer_cb(void *user_data)
 	struct tdls_peer *peer;
 	QDF_STATUS status;
 	struct tdls_vdev_priv_obj *tdls_vdev;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!user_data) {
 		tdls_err("discovery time out data is null");
 		return;
 	}
 
-	tdls_vdev = (struct tdls_vdev_priv_obj *) user_data;
+	vdev = tdls_get_vdev(user_data, WLAN_TDLS_NB_ID);
+	if (!vdev)
+		return;
+	tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
 
 	for (i = 0; i < WLAN_TDLS_PEER_LIST_SIZE; i++) {
 		head = &tdls_vdev->peer_list[i];
@@ -112,6 +116,7 @@ void tdls_discovery_timeout_peer_cb(void *user_data)
 		}
 	}
 	tdls_vdev->discovery_sent_cnt = 0;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 
 	/* add tdls power save prohibited */
 
@@ -928,10 +933,8 @@ void tdls_ct_handler(void *user_data)
 	if (!user_data)
 		return;
 
-	vdev = (struct wlan_objmgr_vdev *)user_data;
-
-	if (QDF_STATUS_SUCCESS != wlan_objmgr_vdev_try_get_ref(vdev,
-							WLAN_TDLS_NB_ID))
+	vdev = tdls_get_vdev(user_data, WLAN_TDLS_NB_ID);
+	if (!vdev)
 		return;
 
 	tdls_ct_process_handler(vdev);

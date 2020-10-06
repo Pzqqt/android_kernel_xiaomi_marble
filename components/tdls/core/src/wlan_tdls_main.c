@@ -215,17 +215,17 @@ static QDF_STATUS tdls_vdev_init(struct tdls_vdev_priv_obj *vdev_obj)
 				WLAN_TDLS_PEER_SUB_LIST_SIZE);
 	}
 	qdf_mc_timer_init(&vdev_obj->peer_update_timer, QDF_TIMER_TYPE_SW,
-			  tdls_ct_handler, vdev_obj->vdev);
+			  tdls_ct_handler, soc_obj->soc);
 	qdf_mc_timer_init(&vdev_obj->peer_discovery_timer, QDF_TIMER_TYPE_SW,
-			  tdls_discovery_timeout_peer_cb, vdev_obj);
+			  tdls_discovery_timeout_peer_cb, soc_obj->soc);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static void tdls_vdev_deinit(struct tdls_vdev_priv_obj *vdev_obj)
 {
-	qdf_mc_timer_stop(&vdev_obj->peer_update_timer);
-	qdf_mc_timer_stop(&vdev_obj->peer_discovery_timer);
+	qdf_mc_timer_stop_sync(&vdev_obj->peer_update_timer);
+	qdf_mc_timer_stop_sync(&vdev_obj->peer_discovery_timer);
 
 	qdf_mc_timer_destroy(&vdev_obj->peer_update_timer);
 	qdf_mc_timer_destroy(&vdev_obj->peer_discovery_timer);
