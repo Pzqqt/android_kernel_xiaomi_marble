@@ -11430,7 +11430,8 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 	.ipa_disable_pipes = dp_ipa_disable_pipes,
 	.ipa_set_perf_level = dp_ipa_set_perf_level,
 	.ipa_rx_intrabss_fwd = dp_ipa_rx_intrabss_fwd,
-	.ipa_tx_buf_smmu_mapping = dp_ipa_tx_buf_smmu_mapping
+	.ipa_tx_buf_smmu_mapping = dp_ipa_tx_buf_smmu_mapping,
+	.ipa_tx_buf_smmu_unmapping = dp_ipa_tx_buf_smmu_unmapping
 };
 #endif
 

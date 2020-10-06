@@ -106,11 +106,9 @@ static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 				 size);
 
 	if (create)
-		qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
+		return qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
 	else
-		qdf_ipa_wdi_release_smmu_mapping(1, &mem_map_table);
-
-	return QDF_STATUS_SUCCESS;
+		return qdf_ipa_wdi_release_smmu_mapping(1, &mem_map_table);
 }
 
 QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
@@ -169,6 +167,11 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 	qdf_nbuf_t nbuf;
 	uint32_t buf_len;
 
+	if (!ipa_is_ready()) {
+		dp_info("IPA is not READY");
+		return 0;
+	}
+
 	for (index = 0; index < tx_buffer_cnt; index++) {
 		nbuf = (qdf_nbuf_t)
 			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[index];
@@ -176,8 +179,10 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 			continue;
 		buf_len = qdf_nbuf_get_data_len(nbuf);
 		ret = __dp_ipa_handle_buf_smmu_mapping(
-				soc, nbuf, buf_len, true);
+				soc, nbuf, buf_len, create);
+		qdf_assert_always(!ret);
 	}
+
 	return ret;
 }
 
@@ -294,19 +299,12 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 	int idx;
 	qdf_nbuf_t nbuf;
 	struct dp_ipa_resources *ipa_res;
-	bool is_ipa_ready = qdf_ipa_is_ready();
-	uint32_t buf_len;
 
 	for (idx = 0; idx < soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		nbuf = (qdf_nbuf_t)
 			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx];
 		if (!nbuf)
 			continue;
-		buf_len = qdf_nbuf_get_data_len(nbuf);
-		if (qdf_mem_smmu_s1_enabled(soc->osdev) && is_ipa_ready)
-			__dp_ipa_handle_buf_smmu_mapping(
-					soc, nbuf, buf_len, false);
-
 		qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_BIDIRECTIONAL);
 		qdf_nbuf_free(nbuf);
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx] =
@@ -2049,6 +2047,30 @@ QDF_STATUS dp_ipa_tx_buf_smmu_mapping(
 		return QDF_STATUS_SUCCESS;
 	}
 	ret = __dp_ipa_tx_buf_smmu_mapping(soc, pdev, true);
+
+	return ret;
+}
+
+QDF_STATUS dp_ipa_tx_buf_smmu_unmapping(
+	struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	QDF_STATUS ret;
+
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!qdf_mem_smmu_s1_enabled(soc->osdev)) {
+		dp_debug("SMMU S1 disabled");
+		return QDF_STATUS_SUCCESS;
+	}
+	ret = __dp_ipa_tx_buf_smmu_mapping(soc, pdev, false);
+
 	return ret;
 }
 
