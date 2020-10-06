@@ -47,7 +47,7 @@ cdp_mscs_peer_lookup_n_get_priority(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->mscs_ops->mscs_peer_lookup_n_get_priority)
-		soc->ops->mscs_ops->mscs_peer_lookup_n_get_priority(soc,
+		return soc->ops->mscs_ops->mscs_peer_lookup_n_get_priority(soc,
 						peer_mac, nbuf);
 	return 0;
 }
