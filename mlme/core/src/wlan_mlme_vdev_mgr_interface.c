@@ -588,6 +588,36 @@ QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_MSCS
+QDF_STATUS mlme_set_is_mscs_req_sent(struct wlan_objmgr_vdev *vdev, bool val)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->mscs_req_info.is_mscs_req_sent = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_get_is_mscs_req_sent(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	return mlme_priv->mscs_req_info.is_mscs_req_sent;
+}
+#endif
+
 bool mlme_is_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
 {
 	struct mlme_legacy_priv *mlme_priv;
