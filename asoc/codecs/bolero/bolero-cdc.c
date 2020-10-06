@@ -1072,7 +1072,7 @@ EXPORT_SYMBOL(bolero_register_wake_irq);
  *
  * @component: pointer to codec component instance.
  *
- * @clk_src: clk source
+ * @clk_src: 0 for TX_RCG and 1 for VA_RCG
  *
  * Returns 0 on success or -EINVAL on error.
  */

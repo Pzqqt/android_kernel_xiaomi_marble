@@ -179,7 +179,6 @@ struct tx_macro_priv {
 	int amic_sample_rate;
 	bool lpi_enable;
 	bool register_event_listener;
-	u16 current_clk_id;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -1818,11 +1817,11 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_v3[] = {
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
 			tx_macro_tx_swr_clk_event,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
 			tx_macro_va_swr_clk_event,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
@@ -2870,46 +2869,12 @@ static int tx_macro_clk_switch(struct snd_soc_component *component, int clk_src)
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
-	dev_dbg(component->dev,
-		"%s: va_swr_clk_cnt %d, tx_swr_clk_cnt %d, tx_clk_status %d\n",
-		__func__, tx_priv->va_swr_clk_cnt,
-		tx_priv->tx_swr_clk_cnt, tx_priv->tx_clk_status);
-	if (tx_priv->current_clk_id == clk_src) {
-		dev_dbg(component->dev,
-			"%s: requested clk %d is same as current\n",
-			__func__, clk_src);
-		return 0;
-	} else if (tx_priv->va_swr_clk_cnt != 0 && tx_priv->tx_clk_status) {
-		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-				TX_CORE_CLK,
-				clk_src,
-				true);
-		if (ret) {
-			dev_dbg(component->dev,
-				"%s: request clock %d enable failed\n",
-				__func__, clk_src);
-			goto ret;
-		}
-		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-				TX_CORE_CLK,
-				tx_priv->current_clk_id,
-				false);
-		if (ret) {
-			dev_dbg(component->dev,
-				"%s: request clock  disable failed\n",
-				__func__);
-			bolero_clk_rsc_request_clock(tx_priv->dev,
-				TX_CORE_CLK,
-				clk_src,
-				false);
-			goto ret;
-		}
-		tx_priv->current_clk_id = clk_src;
-	} else {
-		ret = -EBUSY;
+	if (tx_priv->swr_ctrl_data) {
+		ret = swrm_wcd_notify(
+			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+			SWR_REQ_CLK_SWITCH, &clk_src);
 	}
 
-ret:
 	return ret;
 }
 
@@ -3495,7 +3460,6 @@ static int tx_macro_probe(struct platform_device *pdev)
 	tx_macro_init_ops(&ops, tx_io_base);
 	ops.clk_id_req = TX_CORE_CLK;
 	ops.default_clk_id = TX_CORE_CLK;
-	tx_priv->current_clk_id = TX_CORE_CLK;
 	ret = bolero_register_macro(&pdev->dev, TX_MACRO, &ops);
 	if (ret) {
 		dev_err(&pdev->dev,
