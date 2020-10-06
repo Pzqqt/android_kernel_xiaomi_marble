@@ -103,7 +103,7 @@ struct ipa3_0_rt_rule_hw_hdr {
 };
 
 /**
- * struct ipa3_0_rt_rule_hw_hdr - HW header of IPA routing rule
+ * struct ipa4_5_rt_rule_hw_hdr - HW header of IPA routing rule
  * @word: routing rule header properties
  * @en_rule: enable rule - Equation bit fields
  * @pipe_dest_idx: destination pipe index
@@ -137,6 +137,46 @@ struct ipa4_5_rt_rule_hw_hdr {
 			u64 retain_hdr:1;
 			u64 rule_id:10;
 			u64 stats_cnt_idx_lsb : 6;
+		} hdr;
+	} u;
+};
+
+/**
+ * struct ipa5_0_rt_rule_hw_hdr - HW header of IPA routing rule
+ * @word: routing rule header properties
+ * @en_rule: enable rule - Equation bit fields
+ * @pipe_dest_idx: destination pipe index
+ * @stats_cnt_idx_lsb: stats cnt index
+ * @priority: Rule priority. Added to distinguish rules order
+ *  at the integrated table consisting from hashable and
+ *  non-hashable parts
+ * @rsvd: reserved bit
+ * @close_aggr_irq_mod: close aggregation/coalescing and close GSI
+ *  interrupt moderation
+ * @rule_id: rule ID that will be returned in the packet status
+ * @hdr_offset: header offset
+ * @proc_ctx: whether hdr_offset points to header table or to
+ *	header processing context table
+ * @retain_hdr: added to add back to the packet the header removed
+ *  as part of header removal. This will be done as part of
+ *  header insertion block.
+ * @system: Is referenced header is lcl or sys memory
+ */
+struct ipa5_0_rt_rule_hw_hdr {
+	union {
+		u64 word;
+		struct {
+			u64 en_rule : 16;
+			u64 pipe_dest_idx : 8;
+			u64 stats_cnt_idx : 8;
+			u64 priority : 8;
+			u64 rsvd : 1;
+			u64 close_aggr_irq_mod : 1;
+			u64 rule_id : 10;
+			u64 hdr_offset : 9;
+			u64 proc_ctx : 1;
+			u64 retain_hdr : 1;
+			u64 system : 1;
 		} hdr;
 	} u;
 };
@@ -247,6 +287,47 @@ struct ipa4_5_flt_rule_hw_hdr {
 			u64 rsvd2 : 4;
 			u64 rule_id : 10;
 			u64 stats_cnt_idx_lsb : 6;
+		} hdr;
+	} u;
+};
+
+/**
+ * struct ipa5_0_flt_rule_hw_hdr - HW header of IPA filter rule
+ * @word: filtering rule properties
+ * @en_rule: enable rule
+ * @rt_tbl_idx: index in routing table
+ * @stats_cnt_idx: stats cnt index
+ * @priority: Rule priority. Added to distinguish rules order
+ *  at the integrated table consisting from hashable and
+ *  non-hashable parts
+ * @close_aggr_irq_mod: close aggregation/coalescing and close GSI
+ *  interrupt moderation
+ * @rule_id: rule ID that will be returned in the packet status
+ * @action: post filtering action
+ * @pdn_idx: in case of go to src nat action possible to input the pdn index to
+ *  the NAT block
+ * @set_metadata: enable metadata replacement in the NAT block
+ * @retain_hdr: added to add back to the packet the header removed
+ *  as part of header removal. This will be done as part of
+ *  header insertion block.
+ * @rsvd1\rsvd2: reserved bits
+ */
+struct ipa5_0_flt_rule_hw_hdr {
+	union {
+		u64 word;
+		struct {
+			u64 en_rule : 16;
+			u64 rt_tbl_idx : 8;
+			u64 stats_cnt_idx : 8;
+			u64 priority : 8;
+			u64 rsvd1 : 1;
+			u64 close_aggr_irq_mod : 1;
+			u64 rule_id : 10;
+			u64 action : 5;
+			u64 pdn_idx : 4;
+			u64 set_metadata : 1;
+			u64 retain_hdr : 1;
+			u64 rsvd2 : 1;
 		} hdr;
 	} u;
 };

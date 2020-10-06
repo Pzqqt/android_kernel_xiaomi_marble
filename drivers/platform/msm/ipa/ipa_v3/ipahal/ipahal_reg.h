@@ -151,6 +151,9 @@ enum ipahal_reg_name {
 	IPA_SUSPEND_IRQ_EN_EE_n_REG_k,
 	IPA_STAT_TETHERING_MASK_EE_n_REG_k,
 	IPA_STAT_DROP_CNT_MASK_EE_n_REG_k,
+	IPA_FILT_ROUT_CACHE_FLUSH,
+	IPA_FILTER_CACHE_CFG_n,
+	IPA_ROUTER_CACHE_CFG_n,
 	IPA_REG_MAX,
 };
 
@@ -453,6 +456,16 @@ struct ipahal_reg_fltrt_hash_tuple {
 };
 
 /*
+* struct ipahal_reg_fltrt_cache_tuple - IPA cache tuple register
+* @flt: cache tuple info for flt\rt
+* @undefinedX: Undefined/Unused bit fields set of the register
+*/
+struct ipahal_reg_fltrt_cache_tuple {
+	struct ipahal_reg_hash_tuple tuple;
+	u32 undefined;
+};
+
+/*
  * enum ipahal_reg_dbg_cnt_type - Debug Counter Type
  * DBG_CNT_TYPE_IPV4_FLTR - Count IPv4 filtering rules
  * DBG_CNT_TYPE_IPV4_ROUT - Count IPv4 routing rules
@@ -565,6 +578,16 @@ struct ipahal_reg_fltrt_hash_flush {
 	bool v6_flt;
 	bool v4_rt;
 	bool v4_flt;
+};
+
+/*
+* struct ipahal_reg_fltrt_cache_flush - Flt/Rt flush configuration
+* @rt - Flush Routing cache
+* @flt - Flush Filtering cache
+*/
+struct ipahal_reg_fltrt_cache_flush {
+	bool rt;
+	bool flt;
 };
 
 /*
@@ -892,6 +915,10 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 	struct ipahal_reg_valmask *valmask);
 void ipahal_get_fltrt_hash_flush_valmask(
 	struct ipahal_reg_fltrt_hash_flush *flush,
+	struct ipahal_reg_valmask *valmask);
+
+void ipahal_get_fltrt_cache_flush_valmask(
+	struct ipahal_reg_fltrt_cache_flush *flush,
 	struct ipahal_reg_valmask *valmask);
 
 #endif /* _IPAHAL_REG_H_ */

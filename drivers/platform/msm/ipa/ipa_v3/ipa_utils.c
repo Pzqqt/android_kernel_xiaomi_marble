@@ -4583,7 +4583,15 @@ int ipa3_cfg_filter(u32 disable)
  */
 static int ipa_disable_hashing_rt_flt_v4_2(void)
 {
-
+	/*
+	 * note this register deprecated starting IPAv5 if need to disable
+	 * use alternative
+	 */
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		IPAERR("reg deprecated\n");
+		WARN_ON(1);
+		return -EPERM;
+	}
 	IPADBG("Disable hashing for filter and route table in IPA 4.2 HW\n");
 	ipahal_write_reg(IPA_FILT_ROUT_HASH_EN,
 					IPA_FILT_ROUT_HASH_REG_VAL_v4_2);

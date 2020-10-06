@@ -887,6 +887,9 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 	list_for_each_entry(tbl, &set->head_rt_tbl_list, link) {
 		i = 0;
 		list_for_each_entry(entry, &tbl->head_rt_rule_list, link) {
+			pr_err("tbl_idx:%d tbl_name:%s tbl_ref:%u ",
+				entry->tbl->idx, entry->tbl->name,
+				entry->tbl->ref_cnt);
 			if (entry->proc_ctx &&
 				(!ipa3_check_idr_if_freed(entry->proc_ctx))) {
 				ofst = entry->proc_ctx->offset_entry->offset;
@@ -894,10 +897,6 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 					(ofst +
 					ipa3_ctx->hdr_proc_ctx_tbl.start_offset)
 					>> 5;
-
-				pr_err("tbl_idx:%d tbl_name:%s tbl_ref:%u ",
-					entry->tbl->idx, entry->tbl->name,
-					entry->tbl->ref_cnt);
 				pr_err("rule_idx:%d dst:%d ep:%d S:%u ",
 					i, entry->rule.dst,
 					ipa3_get_ep_mapping(entry->rule.dst),
@@ -905,24 +904,11 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 				pr_err("proc_ctx[32B]:%u attrib_mask:%08x ",
 					ofst_words,
 					entry->rule.attrib.attrib_mask);
-				pr_err("rule_id:%u max_prio:%u prio:%u ",
-					entry->rule_id, entry->rule.max_prio,
-					entry->prio);
-				pr_err("enable_stats:%u counter_id:%u\n",
-					entry->rule.enable_stats,
-					entry->rule.cnt_idx);
-				pr_err("hashable:%u retain_hdr:%u ",
-					entry->rule.hashable,
-					entry->rule.retain_hdr);
 			} else {
 				if (entry->hdr)
 					ofst = entry->hdr->offset_entry->offset;
 				else
 					ofst = 0;
-
-				pr_err("tbl_idx:%d tbl_name:%s tbl_ref:%u ",
-					entry->tbl->idx, entry->tbl->name,
-					entry->tbl->ref_cnt);
 				pr_err("rule_idx:%d dst:%d ep:%d S:%u ",
 					i, entry->rule.dst,
 					ipa3_get_ep_mapping(entry->rule.dst),
@@ -930,16 +916,19 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 				pr_err("hdr_ofst[words]:%u attrib_mask:%08x ",
 					ofst >> 2,
 					entry->rule.attrib.attrib_mask);
-				pr_err("rule_id:%u max_prio:%u prio:%u ",
-					entry->rule_id, entry->rule.max_prio,
-					entry->prio);
-				pr_err("enable_stats:%u counter_id:%u\n",
-					entry->rule.enable_stats,
-					entry->rule.cnt_idx);
-				pr_err("hashable:%u retain_hdr:%u ",
-					entry->rule.hashable,
-					entry->rule.retain_hdr);
 			}
+			pr_err("rule_id:%u max_prio:%u prio:%u ",
+				entry->rule_id, entry->rule.max_prio,
+				entry->prio);
+			pr_err("enable_stats:%u counter_id:%u ",
+				entry->rule.enable_stats,
+				entry->rule.cnt_idx);
+			pr_err("hashable:%u retain_hdr:%u ",
+				entry->rule.hashable,
+				entry->rule.retain_hdr);
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+				pr_err("close_aggr_irq_mod: %u\n",
+					entry->rule.close_aggr_irq_mod);
 
 			ipa3_attrib_dump(&entry->rule.attrib, ip);
 			i++;
@@ -1000,6 +989,10 @@ static ssize_t ipa3_read_rt_hw(struct file *file, char __user *ubuf,
 		for (rl = 0 ; rl < rules_num ; rl++) {
 			pr_err("rule_idx:%d dst ep:%d L:%u ",
 				rl, rules[rl].dst_pipe_idx, rules[rl].hdr_lcl);
+
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+				pr_err("close_aggr_irq_mod: %u ",
+					rules[rl].close_aggr_irq_mod);
 
 			if (rules[rl].hdr_type == IPAHAL_RT_RULE_HDR_PROC_CTX)
 				pr_err("proc_ctx:%u attrib_mask:%08x ",
@@ -1166,6 +1159,9 @@ static ssize_t ipa3_read_flt(struct file *file, char __user *ubuf, size_t count,
 				pr_err("pdn index %d, set metadata %d ",
 					entry->rule.pdn_idx,
 					entry->rule.set_metadata);
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+				pr_err("close_aggr_irq_mod %u ",
+					entry->rule.close_aggr_irq_mod);
 			if (eq) {
 				res = ipa3_attrib_dump_eq(
 						&entry->rule.eq_attrib);
@@ -1232,6 +1228,9 @@ static ssize_t ipa3_read_flt_hw(struct file *file, char __user *ubuf,
 			pr_err("rule_id:%u cnt_id:%hhu prio:%u\n",
 				rules[rl].id, rules[rl].cnt_idx,
 				rules[rl].priority);
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+				pr_err("close_aggr_irq_mod %u\n",
+					rules[rl].rule.close_aggr_irq_mod);
 			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_0)
 				pr_err("pdn: %u, set_metadata: %u ",
 					rules[rl].rule.pdn_idx,
@@ -1264,6 +1263,9 @@ static ssize_t ipa3_read_flt_hw(struct file *file, char __user *ubuf,
 			pr_err("rule_id:%u cnt_id:%hhu prio:%u\n",
 				rules[rl].id, rules[rl].cnt_idx,
 				rules[rl].priority);
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+				pr_err("close_aggr_irq_mod %u\n",
+					rules[rl].rule.close_aggr_irq_mod);
 			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_0)
 				pr_err("pdn: %u, set_metadata: %u ",
 					rules[rl].rule.pdn_idx,

@@ -28,6 +28,8 @@
  * rt rule.
  * @cnt_idx: if enable_stats is 1 and cnt_idx is 0, then cnt_idx
  * will be assigned by ipa driver.
+ * @close_aggr_irq_mod: close aggregation/coalescing and close GSI
+ *  interrupt moderation
  */
 struct ipa_rt_rule_i {
 	enum ipa_client_type dst;
@@ -40,6 +42,7 @@ struct ipa_rt_rule_i {
 	u8 coalesce;
 	u8 enable_stats;
 	u8 cnt_idx;
+	u8 close_aggr_irq_mod;
 };
 
 /**
@@ -72,6 +75,8 @@ struct ipa_rt_rule_i {
  * flt rule.
  * @cnt_idx: if 0 means disable, otherwise use for index.
  * will be assigned by ipa driver.
+ * @close_aggr_irq_mod: close aggregation/coalescing and close GSI
+ *  interrupt moderation
  */
 struct ipa_flt_rule_i {
 	u8 retain_hdr;
@@ -89,6 +94,7 @@ struct ipa_flt_rule_i {
 	u8 pdn_idx;
 	u8 enable_stats;
 	u8 cnt_idx;
+	u8 close_aggr_irq_mod;
 };
 
 #endif /* _IPA_DEFS_H_ */

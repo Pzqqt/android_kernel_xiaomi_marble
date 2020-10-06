@@ -81,6 +81,8 @@ struct ipahal_rt_rule_gen_params {
  * @retain_hdr: to retain the removed header in header removal
  * @id: Rule ID
  * @cnt_idx: stats counter index
+ * @close_aggr_irq_mod: close aggregation/coalescing and close GSI
+ *  interrupt moderation
  * @eq_attrib: Equations and their params in the rule
  * @rule_size: Rule size in memory
  */
@@ -93,6 +95,7 @@ struct ipahal_rt_rule_entry {
 	bool retain_hdr;
 	u32 id;
 	u8 cnt_idx;
+	u8 close_aggr_irq_mod;
 	struct ipa_ipfltri_rule_eq eq_attrib;
 	u32 rule_size;
 };

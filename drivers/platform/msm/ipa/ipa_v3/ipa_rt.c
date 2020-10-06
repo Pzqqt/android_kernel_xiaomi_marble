@@ -471,7 +471,6 @@ int __ipa_commit_rt_v3(enum ipa_ip_type ip)
 	u32 lcl_hash_hdr, lcl_nhash_hdr;
 	u32 lcl_hash_bdy, lcl_nhash_bdy;
 	bool lcl_hash, lcl_nhash;
-	struct ipahal_reg_fltrt_hash_flush flush;
 	struct ipahal_reg_valmask valmask;
 	int i;
 	struct ipa3_rt_tbl_set *set;
@@ -602,16 +601,30 @@ int __ipa_commit_rt_v3(enum ipa_ip_type ip)
 	 */
 	if (!ipa3_ctx->ipa_fltrt_not_hashable) {
 		/* flushing ipa internal hashable rt rules cache */
-		memset(&flush, 0, sizeof(flush));
-		if (ip == IPA_IP_v4)
-			flush.v4_rt = true;
-		else
-			flush.v6_rt = true;
-		ipahal_get_fltrt_hash_flush_valmask(&flush, &valmask);
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+			struct ipahal_reg_fltrt_cache_flush flush_cache;
+
+			memset(&flush_cache, 0, sizeof(flush_cache));
+			flush_cache.rt = true;
+			ipahal_get_fltrt_cache_flush_valmask(
+				&flush_cache, &valmask);
+			reg_write_cmd.offset = ipahal_get_reg_ofst(
+				IPA_FILT_ROUT_CACHE_FLUSH);
+		} else {
+			struct ipahal_reg_fltrt_hash_flush flush_hash;
+
+			memset(&flush_hash, 0, sizeof(flush_hash));
+			if (ip == IPA_IP_v4)
+				flush_hash.v4_rt = true;
+			else
+				flush_hash.v6_rt = true;
+			ipahal_get_fltrt_hash_flush_valmask(
+				&flush_hash, &valmask);
+			reg_write_cmd.offset = ipahal_get_reg_ofst(
+				IPA_FILT_ROUT_HASH_FLUSH);
+		}
 		reg_write_cmd.skip_pipeline_clear = false;
 		reg_write_cmd.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-		reg_write_cmd.offset = ipahal_get_reg_ofst(
-					IPA_FILT_ROUT_HASH_FLUSH);
 		reg_write_cmd.value = valmask.val;
 		reg_write_cmd.value_mask = valmask.mask;
 		cmd_pyld[num_cmd] = ipahal_construct_imm_cmd(
@@ -2330,8 +2343,6 @@ bail:
  */
 int ipa3_set_rt_tuple_mask(int tbl_idx, struct ipahal_reg_hash_tuple *tuple)
 {
-	struct ipahal_reg_fltrt_hash_tuple fltrt_tuple;
-
 	if (!tuple) {
 		IPAERR_RL("bad tuple\n");
 		return -EINVAL;
@@ -2357,11 +2368,23 @@ int ipa3_set_rt_tuple_mask(int tbl_idx, struct ipahal_reg_hash_tuple *tuple)
 		return -EINVAL;
 	}
 
-	ipahal_read_reg_n_fields(IPA_ENDP_FILTER_ROUTER_HSH_CFG_n,
-		tbl_idx, &fltrt_tuple);
-	fltrt_tuple.rt = *tuple;
-	ipahal_write_reg_n_fields(IPA_ENDP_FILTER_ROUTER_HSH_CFG_n,
-		tbl_idx, &fltrt_tuple);
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		struct ipahal_reg_fltrt_cache_tuple cache_tuple;
+
+		ipahal_read_reg_n_fields(IPA_ROUTER_CACHE_CFG_n,
+			tbl_idx, &cache_tuple);
+		cache_tuple.tuple = *tuple;
+		ipahal_write_reg_n_fields(IPA_ROUTER_CACHE_CFG_n,
+			tbl_idx, &cache_tuple);
+	} else {
+		struct ipahal_reg_fltrt_hash_tuple hash_tuple;
+
+		ipahal_read_reg_n_fields(IPA_ENDP_FILTER_ROUTER_HSH_CFG_n,
+			tbl_idx, &hash_tuple);
+		hash_tuple.rt = *tuple;
+		ipahal_write_reg_n_fields(IPA_ENDP_FILTER_ROUTER_HSH_CFG_n,
+			tbl_idx, &hash_tuple);
+	}
 
 	return 0;
 }

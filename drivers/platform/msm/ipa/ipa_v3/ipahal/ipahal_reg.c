@@ -154,6 +154,9 @@ static const char *ipareg_name_to_str[IPA_REG_MAX] = {
 	__stringify(IPA_SUSPEND_IRQ_EN_EE_n_REG_k),
 	__stringify(IPA_STAT_TETHERING_MASK_EE_n_REG_k),
 	__stringify(IPA_STAT_DROP_CNT_MASK_EE_n_REG_k),
+	__stringify(IPA_FILT_ROUT_CACHE_FLUSH),
+	__stringify(IPA_FILTER_CACHE_CFG_n),
+	__stringify(IPA_ROUTER_CACHE_CFG_n),
 };
 
 static void ipareg_construct_dummy(enum ipahal_reg_name reg,
@@ -408,6 +411,37 @@ static void ipareg_construct_hash_cfg_n(
 		IPA_ENDP_FILTER_ROUTER_HSH_CFG_n_UNDEFINED2_BMSK);
 }
 
+static void ipareg_construct_cache_cfg_n(
+	enum ipahal_reg_name reg, const void *fields, u32 *val)
+{
+	struct ipahal_reg_fltrt_cache_tuple *tuple =
+		(struct ipahal_reg_fltrt_cache_tuple *)fields;
+
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.src_id,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_ID_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_ID_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.src_ip_addr,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_IP_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_IP_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.dst_ip_addr,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_IP_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_IP_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.src_port,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_PORT_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_PORT_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.dst_port,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_PORT_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_PORT_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.protocol,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_PROTOCOL_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_PROTOCOL_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->tuple.meta_data,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_METADATA_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_METADATA_BMSK);
+	IPA_SETFIELD_IN_REG(*val, tuple->undefined,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_UNDEFINED_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_UNDEFINED_BMSK);
+}
 static void ipareg_parse_hash_cfg_n(
 	enum ipahal_reg_name reg, void *fields, u32 val)
 {
@@ -478,6 +512,46 @@ static void ipareg_parse_hash_cfg_n(
 		IPA_GETFIELD_FROM_REG(val,
 		IPA_ENDP_FILTER_ROUTER_HSH_CFG_n_UNDEFINED2_SHFT,
 		IPA_ENDP_FILTER_ROUTER_HSH_CFG_n_UNDEFINED2_BMSK);
+}
+
+static void ipareg_parse_cache_cfg_n(
+	enum ipahal_reg_name reg, void *fields, u32 val)
+{
+	struct ipahal_reg_fltrt_cache_tuple *tuple =
+		(struct ipahal_reg_fltrt_cache_tuple *)fields;
+
+	tuple->tuple.src_id =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_ID_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_ID_BMSK);
+	tuple->tuple.src_ip_addr =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_IP_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_IP_BMSK);
+	tuple->tuple.dst_ip_addr =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_IP_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_IP_BMSK);
+	tuple->tuple.src_port =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_PORT_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_SRC_PORT_BMSK);
+	tuple->tuple.dst_port =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_PORT_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_DST_PORT_BMSK);
+	tuple->tuple.protocol =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_PROTOCOL_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_PROTOCOL_BMSK);
+	tuple->tuple.meta_data =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_METADATA_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_CACHE_MSK_METADATA_BMSK);
+	tuple->undefined =
+		IPA_GETFIELD_FROM_REG(val,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_UNDEFINED_SHFT,
+		IPA_ENDP_FILTER_ROUTER_CACHE_CFG_n_UNDEFINED_BMSK);
 }
 
 static void ipareg_construct_endp_status_n_common(
@@ -4030,6 +4104,9 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	[IPA_HW_v5_0][IPA_FILT_ROUT_HASH_FLUSH] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		-1, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_FILT_ROUT_CACHE_FLUSH] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000404, 0, 0, 0, 0, 0 },
 	[IPA_HW_v5_0][IPA_SYS_PKT_PROC_CNTXT_BASE] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		0x00000470, 0, 0, 0, 0, 0},
@@ -4170,8 +4247,14 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 		ipareg_parse_dummy,
 		0x00001050, 0x80, 0, 10, 0, 0},
 	[IPA_HW_v5_0][IPA_ENDP_FILTER_ROUTER_HSH_CFG_n] = {
-		ipareg_construct_hash_cfg_n, ipareg_parse_hash_cfg_n,
+		ipareg_construct_dummy, ipareg_parse_dummy,
 		-1, 0x70, 0, 31, 1, 0},
+	[IPA_HW_v5_0][IPA_FILTER_CACHE_CFG_n] = {
+		ipareg_construct_cache_cfg_n, ipareg_parse_cache_cfg_n,
+		0x0000105C , 0x80, 0, 31, 1, 0},
+	[IPA_HW_v5_0][IPA_ROUTER_CACHE_CFG_n] = {
+		ipareg_construct_cache_cfg_n, ipareg_parse_cache_cfg_n,
+		0x00001070 , 0x80, 0, 31, 1, 0},
 	[IPA_HW_v5_0][IPA_ENDP_INIT_CTRL_STATUS_n] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
 		0x00001064, 0x80, 0, 30, 1, 0},
@@ -4781,5 +4864,26 @@ void ipahal_get_fltrt_hash_flush_valmask(
 		valmask->val |=
 			(1<<IPA_FILT_ROUT_HASH_FLUSH_IPv4_FILT_SHFT);
 
+	valmask->mask = valmask->val;
+}
+
+void ipahal_get_fltrt_cache_flush_valmask(
+	struct ipahal_reg_fltrt_cache_flush *flush,
+	struct ipahal_reg_valmask *valmask)
+{
+	if (!flush || !valmask) {
+		IPAHAL_ERR("Input error: flush=%pK ; valmask=%pK\n",
+			flush, valmask);
+		return;
+	}
+
+	memset(valmask, 0, sizeof(struct ipahal_reg_valmask));
+
+	if (flush->rt)
+		valmask->val |=
+		(1 << IPA_FILT_ROUT_CACHE_FLUSH_ROUT_SHFT);
+	if (flush->flt)
+		valmask->val |=
+		(1 << IPA_FILT_ROUT_CACHE_FLUSH_FILT_SHFT);
 	valmask->mask = valmask->val;
 }

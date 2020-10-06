@@ -18,68 +18,16 @@
 		IPA_FLT_MAC_SRC_ADDR_802_3 | IPA_FLT_MAC_DST_ADDR_802_1Q | \
 		IPA_FLT_MAC_SRC_ADDR_802_1Q)
 
-/*
- * struct ipahal_fltrt_obj - Flt/Rt H/W information for specific IPA version
- * @support_hash: Is hashable tables supported
- * @tbl_width: Width of table in bytes
- * @sysaddr_alignment: System table address alignment
- * @lcladdr_alignment: Local table offset alignment
- * @blk_sz_alignment: Rules block size alignment
- * @rule_start_alignment: Rule start address alignment
- * @tbl_hdr_width: Width of the header structure in bytes
- * @tbl_addr_mask: Masking for Table address
- * @rule_max_prio: Max possible priority of a rule
- * @rule_min_prio: Min possible priority of a rule
- * @low_rule_id: Low value of Rule ID that can be used
- * @rule_id_bit_len: Rule is high (MSB) bit len
- * @rule_buf_size: Max size rule may utilize.
- * @write_val_to_hdr: Write address or offset to header entry
- * @create_flt_bitmap: Create bitmap in H/W format using given bitmap
- * @create_tbl_addr: Given raw table address, create H/W formated one
- * @parse_tbl_addr: Parse the given H/W address (hdr format)
- * @rt_generate_hw_rule: Generate RT rule in H/W format
- * @flt_generate_hw_rule: Generate FLT rule in H/W format
- * @flt_generate_eq: Generate flt equation attributes from rule attributes
- * @rt_parse_hw_rule: Parse rt rule read from H/W
- * @flt_parse_hw_rule: Parse flt rule read from H/W
- * @eq_bitfield: Array of the bit fields of the support equations.
- *	0xFF means the equation is not supported
- */
-struct ipahal_fltrt_obj {
-	bool support_hash;
-	u32 tbl_width;
-	u32 sysaddr_alignment;
-	u32 lcladdr_alignment;
-	u32 blk_sz_alignment;
-	u32 rule_start_alignment;
-	u32 tbl_hdr_width;
-	u32 tbl_addr_mask;
-	int rule_max_prio;
-	int rule_min_prio;
-	u32 low_rule_id;
-	u32 rule_id_bit_len;
-	u32 rule_buf_size;
-	u8* (*write_val_to_hdr)(u64 val, u8 *hdr);
-	u64 (*create_flt_bitmap)(u64 ep_bitmap);
-	u64 (*create_tbl_addr)(bool is_sys, u64 addr);
-	void (*parse_tbl_addr)(u64 hwaddr, u64 *addr, bool *is_sys);
-	int (*rt_generate_hw_rule)(struct ipahal_rt_rule_gen_params *params,
-		u32 *hw_len, u8 *buf);
-	int (*flt_generate_hw_rule)(struct ipahal_flt_rule_gen_params *params,
-		u32 *hw_len, u8 *buf);
-	int (*flt_generate_eq)(enum ipa_ip_type ipt,
-		const struct ipa_rule_attrib *attrib,
-		struct ipa_ipfltri_rule_eq *eq_atrb);
-	int (*rt_parse_hw_rule)(u8 *addr, struct ipahal_rt_rule_entry *rule);
-	int (*flt_parse_hw_rule)(u8 *addr, struct ipahal_flt_rule_entry *rule);
-	u8 eq_bitfield[IPA_EQ_MAX];
-};
-
-
 static u64 ipa_fltrt_create_flt_bitmap(u64 ep_bitmap)
 {
 	/* At IPA3, there global configuration is possible but not used */
 	return (ep_bitmap << 1) & ~0x1;
+}
+
+static u64 ipa_fltrt_create_flt_bitmap_v5_0(u64 ep_bitmap)
+{
+	/* At IPA5, ep_bitmap is all 64 bits bit map */
+	return ep_bitmap;
 }
 
 static u64 ipa_fltrt_create_tbl_addr(bool is_sys, u64 addr)
@@ -162,11 +110,15 @@ static int ipa_rt_parse_hw_rule(u8 *addr,
 		struct ipahal_rt_rule_entry *rule);
 static int ipa_rt_parse_hw_rule_ipav4_5(u8 *addr,
 		struct ipahal_rt_rule_entry *rule);
+static int ipa_rt_parse_hw_rule_ipav5_0(u8 *addr,
+	struct ipahal_rt_rule_entry *rule);
 static int ipa_flt_parse_hw_rule(u8 *addr,
 		struct ipahal_flt_rule_entry *rule);
 static int ipa_flt_parse_hw_rule_ipav4(u8 *addr,
 		struct ipahal_flt_rule_entry *rule);
 static int ipa_flt_parse_hw_rule_ipav4_5(u8 *addr,
+	struct ipahal_flt_rule_entry *rule);
+static int ipa_flt_parse_hw_rule_ipav5_0(u8 *addr,
 	struct ipahal_flt_rule_entry *rule);
 
 #define IPA_IS_RAN_OUT_OF_EQ(__eq_array, __eq_index) \
@@ -323,6 +275,75 @@ static int ipa_rt_gen_hw_rule_ipav4_5(struct ipahal_rt_rule_gen_params *params,
 	rule_hdr->u.hdr.stats_cnt_idx_msb = (params->cnt_idx & 0xC0) >> 6;
 
 	buf += sizeof(struct ipa4_5_rt_rule_hw_hdr);
+
+	if (ipa_fltrt_generate_hw_rule_bdy(params->ipt, &params->rule->attrib,
+		&buf, &en_rule)) {
+		IPAHAL_ERR("fail to generate hw rule\n");
+		return -EPERM;
+	}
+	rule_hdr->u.hdr.en_rule = en_rule;
+
+	IPAHAL_DBG_LOW("en_rule 0x%x\n", en_rule);
+	ipa_write_64(rule_hdr->u.word, (u8 *)rule_hdr);
+
+	if (*hw_len == 0) {
+		*hw_len = buf - start;
+	} else if (*hw_len != (buf - start)) {
+		IPAHAL_ERR("hw_len differs b/w passed=0x%x calc=%td\n",
+			*hw_len, (buf - start));
+		return -EPERM;
+	}
+
+	return 0;
+}
+
+static int ipa_rt_gen_hw_rule_ipav5_0(struct ipahal_rt_rule_gen_params *params,
+	u32 *hw_len, u8 *buf)
+{
+	struct ipa5_0_rt_rule_hw_hdr *rule_hdr;
+	u8 *start;
+	u16 en_rule = 0;
+
+	start = buf;
+	rule_hdr = (struct ipa5_0_rt_rule_hw_hdr *)buf;
+
+	ipa_assert_on(params->dst_pipe_idx & ~0xFF);
+	rule_hdr->u.hdr.pipe_dest_idx = params->dst_pipe_idx;
+	switch (params->hdr_type) {
+	case IPAHAL_RT_RULE_HDR_PROC_CTX:
+		rule_hdr->u.hdr.system = !params->hdr_lcl;
+		rule_hdr->u.hdr.proc_ctx = 1;
+		ipa_assert_on(params->hdr_ofst & 31);
+		rule_hdr->u.hdr.hdr_offset = (params->hdr_ofst) >> 5;
+		break;
+	case IPAHAL_RT_RULE_HDR_RAW:
+		rule_hdr->u.hdr.system = !params->hdr_lcl;
+		rule_hdr->u.hdr.proc_ctx = 0;
+		ipa_assert_on(params->hdr_ofst & 3);
+		rule_hdr->u.hdr.hdr_offset = (params->hdr_ofst) >> 2;
+		break;
+	case IPAHAL_RT_RULE_HDR_NONE:
+		rule_hdr->u.hdr.system = !params->hdr_lcl;
+		rule_hdr->u.hdr.proc_ctx = 0;
+		rule_hdr->u.hdr.hdr_offset = 0;
+		break;
+	default:
+		IPAHAL_ERR("Invalid HDR type %d\n", params->hdr_type);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
+
+	ipa_assert_on(params->priority & ~0xFF);
+	rule_hdr->u.hdr.priority = params->priority;
+	rule_hdr->u.hdr.retain_hdr = params->rule->retain_hdr ? 0x1 : 0x0;
+	ipa_assert_on(params->id & ~((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
+	ipa_assert_on(params->id == ((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
+	rule_hdr->u.hdr.rule_id = params->id;
+	rule_hdr->u.hdr.stats_cnt_idx = params->cnt_idx;
+	rule_hdr->u.hdr.close_aggr_irq_mod =
+		params->rule->close_aggr_irq_mod ? 0x1 : 0x0;
+
+	buf += sizeof(struct ipa5_0_rt_rule_hw_hdr);
 
 	if (ipa_fltrt_generate_hw_rule_bdy(params->ipt, &params->rule->attrib,
 		&buf, &en_rule)) {
@@ -602,6 +623,154 @@ static int ipa_flt_gen_hw_rule_ipav4_5(
 	return 0;
 }
 
+static int ipa_flt_gen_hw_rule_ipav5_0(
+	struct ipahal_flt_rule_gen_params *params,
+	u32 *hw_len, u8 *buf)
+{
+	struct ipa5_0_flt_rule_hw_hdr *rule_hdr;
+	u8 *start;
+	u16 en_rule = 0;
+
+	start = buf;
+	rule_hdr = (struct ipa5_0_flt_rule_hw_hdr *)buf;
+
+	switch (params->rule->action) {
+	case IPA_PASS_TO_ROUTING:
+		rule_hdr->u.hdr.action = 0x0;
+		break;
+	case IPA_PASS_TO_SRC_NAT:
+		rule_hdr->u.hdr.action = 0x1;
+		break;
+	case IPA_PASS_TO_DST_NAT:
+		rule_hdr->u.hdr.action = 0x2;
+		break;
+	case IPA_PASS_TO_EXCEPTION:
+		rule_hdr->u.hdr.action = 0x3;
+		break;
+	default:
+		IPAHAL_ERR("Invalid Rule Action %d\n", params->rule->action);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
+
+	ipa_assert_on(params->rt_tbl_idx & ~0xFF);
+	rule_hdr->u.hdr.rt_tbl_idx = params->rt_tbl_idx;
+	rule_hdr->u.hdr.retain_hdr = params->rule->retain_hdr ? 0x1 : 0x0;
+
+	ipa_assert_on(params->rule->pdn_idx & ~0xF);
+	rule_hdr->u.hdr.pdn_idx = params->rule->pdn_idx;
+	rule_hdr->u.hdr.set_metadata = params->rule->set_metadata ? 0x1 : 0x0;
+	rule_hdr->u.hdr.rsvd1 = 0;
+	rule_hdr->u.hdr.rsvd2 = 0;
+
+	ipa_assert_on(params->priority & ~0xFF);
+	rule_hdr->u.hdr.priority = params->priority;
+	ipa_assert_on(params->id & ~((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
+	ipa_assert_on(params->id == ((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
+	rule_hdr->u.hdr.rule_id = params->id;
+	rule_hdr->u.hdr.stats_cnt_idx = params->cnt_idx;
+	rule_hdr->u.hdr.close_aggr_irq_mod =
+		params->rule->close_aggr_irq_mod ? 0x1 : 0x0;
+
+	buf += sizeof(struct ipa5_0_flt_rule_hw_hdr);
+
+	if (params->rule->eq_attrib_type) {
+		if (ipa_fltrt_generate_hw_rule_bdy_from_eq(
+			&params->rule->eq_attrib, &buf)) {
+			IPAHAL_ERR("fail to generate hw rule from eq\n");
+			return -EPERM;
+		}
+		en_rule = params->rule->eq_attrib.rule_eq_bitmap;
+	} else {
+		if (ipa_fltrt_generate_hw_rule_bdy(params->ipt,
+			&params->rule->attrib, &buf, &en_rule)) {
+			IPAHAL_ERR("fail to generate hw rule\n");
+			return -EPERM;
+		}
+	}
+	rule_hdr->u.hdr.en_rule = en_rule;
+
+	IPAHAL_DBG_LOW("en_rule=0x%x, action=%d, rt_idx=%d, retain_hdr=%d\n",
+		en_rule,
+		rule_hdr->u.hdr.action,
+		rule_hdr->u.hdr.rt_tbl_idx,
+		rule_hdr->u.hdr.retain_hdr);
+	IPAHAL_DBG_LOW("priority=%d, rule_id=%d, pdn=%d, set_metadata=%d\n",
+		rule_hdr->u.hdr.priority,
+		rule_hdr->u.hdr.rule_id,
+		rule_hdr->u.hdr.pdn_idx,
+		rule_hdr->u.hdr.set_metadata);
+
+	ipa_write_64(rule_hdr->u.word, (u8 *)rule_hdr);
+
+	if (*hw_len == 0) {
+		*hw_len = buf - start;
+	} else if (*hw_len != (buf - start)) {
+		IPAHAL_ERR("hw_len differs b/w passed=0x%x calc=%td\n",
+			*hw_len, (buf - start));
+		return -EPERM;
+	}
+
+	return 0;
+}
+
+/*
+* struct ipahal_fltrt_obj - Flt/Rt H/W information for specific IPA version
+* @support_hash: Is hashable tables supported
+* @tbl_width: Width of table in bytes
+* @sysaddr_alignment: System table address alignment
+* @lcladdr_alignment: Local table offset alignment
+* @blk_sz_alignment: Rules block size alignment
+* @rule_start_alignment: Rule start address alignment
+* @tbl_hdr_width: Width of the header structure in bytes
+* @tbl_addr_mask: Masking for Table address
+* @rule_max_prio: Max possible priority of a rule
+* @rule_min_prio: Min possible priority of a rule
+* @low_rule_id: Low value of Rule ID that can be used
+* @rule_id_bit_len: Rule is high (MSB) bit len
+* @rule_buf_size: Max size rule may utilize.
+* @write_val_to_hdr: Write address or offset to header entry
+* @create_flt_bitmap: Create bitmap in H/W format using given bitmap
+* @create_tbl_addr: Given raw table address, create H/W formated one
+* @parse_tbl_addr: Parse the given H/W address (hdr format)
+* @rt_generate_hw_rule: Generate RT rule in H/W format
+* @flt_generate_hw_rule: Generate FLT rule in H/W format
+* @flt_generate_eq: Generate flt equation attributes from rule attributes
+* @rt_parse_hw_rule: Parse rt rule read from H/W
+* @flt_parse_hw_rule: Parse flt rule read from H/W
+* @eq_bitfield: Array of the bit fields of the support equations.
+*	0xFF means the equation is not supported
+*/
+struct ipahal_fltrt_obj {
+	bool support_hash;
+	u32 tbl_width;
+	u32 sysaddr_alignment;
+	u32 lcladdr_alignment;
+	u32 blk_sz_alignment;
+	u32 rule_start_alignment;
+	u32 tbl_hdr_width;
+	u32 tbl_addr_mask;
+	int rule_max_prio;
+	int rule_min_prio;
+	u32 low_rule_id;
+	u32 rule_id_bit_len;
+	u32 rule_buf_size;
+	u8* (*write_val_to_hdr)(u64 val, u8 *hdr);
+	u64(*create_flt_bitmap)(u64 ep_bitmap);
+	u64(*create_tbl_addr)(bool is_sys, u64 addr);
+	void(*parse_tbl_addr)(u64 hwaddr, u64 *addr, bool *is_sys);
+	int(*rt_generate_hw_rule)(struct ipahal_rt_rule_gen_params *params,
+		u32 *hw_len, u8 *buf);
+	int(*flt_generate_hw_rule)(struct ipahal_flt_rule_gen_params *params,
+		u32 *hw_len, u8 *buf);
+	int(*flt_generate_eq)(enum ipa_ip_type ipt,
+		const struct ipa_rule_attrib *attrib,
+		struct ipa_ipfltri_rule_eq *eq_atrb);
+	int(*rt_parse_hw_rule)(u8 *addr, struct ipahal_rt_rule_entry *rule);
+	int(*flt_parse_hw_rule)(u8 *addr, struct ipahal_flt_rule_entry *rule);
+	u8 eq_bitfield[IPA_EQ_MAX];
+};
+
 /*
  * This array contains the FLT/RT info for IPAv3 and later.
  * All the information on IPAv3 are statically defined below.
@@ -789,6 +958,51 @@ static struct ipahal_fltrt_obj ipahal_fltrt_objs[IPA_HW_MAX] = {
 			[IPA_IS_FRAG]			= 15,
 			[IPA_IS_PURE_ACK]		= 0,
 		},
+	},
+
+	/* IPAv5 */
+	[IPA_HW_v5_0] = {
+			true,
+			IPA3_0_HW_TBL_WIDTH,
+			IPA3_0_HW_TBL_SYSADDR_ALIGNMENT,
+			IPA3_0_HW_TBL_LCLADDR_ALIGNMENT,
+			IPA3_0_HW_TBL_BLK_SIZE_ALIGNMENT,
+			IPA3_0_HW_RULE_START_ALIGNMENT,
+			IPA3_0_HW_TBL_HDR_WIDTH,
+			IPA3_0_HW_TBL_ADDR_MASK,
+			IPA3_0_RULE_MAX_PRIORITY,
+			IPA3_0_RULE_MIN_PRIORITY,
+			IPA3_0_LOW_RULE_ID,
+			IPA3_0_RULE_ID_BIT_LEN,
+			IPA3_0_HW_RULE_BUF_SIZE,
+			ipa_write_64,
+			ipa_fltrt_create_flt_bitmap_v5_0,
+			ipa_fltrt_create_tbl_addr,
+			ipa_fltrt_parse_tbl_addr,
+			ipa_rt_gen_hw_rule_ipav5_0,
+			ipa_flt_gen_hw_rule_ipav5_0,
+			ipa_flt_generate_eq,
+			ipa_rt_parse_hw_rule_ipav5_0,
+			ipa_flt_parse_hw_rule_ipav5_0,
+			{
+				[IPA_TOS_EQ] = 0xFF,
+				[IPA_PROTOCOL_EQ] = 1,
+				[IPA_TC_EQ] = 2,
+				[IPA_OFFSET_MEQ128_0] = 3,
+				[IPA_OFFSET_MEQ128_1] = 4,
+				[IPA_OFFSET_MEQ32_0] = 5,
+				[IPA_OFFSET_MEQ32_1] = 6,
+				[IPA_IHL_OFFSET_MEQ32_0] = 7,
+				[IPA_IHL_OFFSET_MEQ32_1] = 8,
+				[IPA_METADATA_COMPARE] = 9,
+				[IPA_IHL_OFFSET_RANGE16_0] = 10,
+				[IPA_IHL_OFFSET_RANGE16_1] = 11,
+				[IPA_IHL_OFFSET_EQ_32] = 12,
+				[IPA_IHL_OFFSET_EQ_16] = 13,
+				[IPA_FL_EQ] = 14,
+				[IPA_IS_FRAG] = 15,
+				[IPA_IS_PURE_ACK] = 0,
+			},
 	},
 };
 
@@ -3202,7 +3416,7 @@ static int ipa_rt_parse_hw_rule_ipav4_5(u8 *addr,
 	IPAHAL_DBG_LOW("read hdr 0x%llx\n", rule_hdr->u.word);
 
 	if (rule_hdr->u.word == 0) {
-		/* table termintator - empty table */
+		/* table terminator - empty table */
 		rule->rule_size = 0;
 		return 0;
 	}
@@ -3222,6 +3436,46 @@ static int ipa_rt_parse_hw_rule_ipav4_5(u8 *addr,
 	rule->cnt_idx = rule_hdr->u.hdr.stats_cnt_idx_lsb |
 		(rule_hdr->u.hdr.stats_cnt_idx_msb) << 6;
 	rule->id = rule_hdr->u.hdr.rule_id;
+
+	atrb->rule_eq_bitmap = rule_hdr->u.hdr.en_rule;
+	return ipa_fltrt_parse_hw_rule_eq(addr, sizeof(*rule_hdr),
+		atrb, &rule->rule_size);
+}
+
+static int ipa_rt_parse_hw_rule_ipav5_0(u8 *addr,
+	struct ipahal_rt_rule_entry *rule)
+{
+	struct ipa5_0_rt_rule_hw_hdr *rule_hdr;
+	struct ipa_ipfltri_rule_eq *atrb;
+
+	IPAHAL_DBG_LOW("Entry\n");
+
+	rule_hdr = (struct ipa5_0_rt_rule_hw_hdr *)addr;
+	atrb = &rule->eq_attrib;
+
+	IPAHAL_DBG_LOW("read hdr 0x%llx\n", rule_hdr->u.word);
+
+	if (rule_hdr->u.word == 0) {
+		/* table terminator - empty table */
+		rule->rule_size = 0;
+		return 0;
+	}
+
+	rule->dst_pipe_idx = rule_hdr->u.hdr.pipe_dest_idx;
+	if (rule_hdr->u.hdr.proc_ctx) {
+		rule->hdr_type = IPAHAL_RT_RULE_HDR_PROC_CTX;
+		rule->hdr_ofst = (rule_hdr->u.hdr.hdr_offset) << 5;
+	} else {
+		rule->hdr_type = IPAHAL_RT_RULE_HDR_RAW;
+		rule->hdr_ofst = (rule_hdr->u.hdr.hdr_offset) << 2;
+	}
+	rule->hdr_lcl = !rule_hdr->u.hdr.system;
+
+	rule->priority = rule_hdr->u.hdr.priority;
+	rule->retain_hdr = rule_hdr->u.hdr.retain_hdr;
+	rule->cnt_idx = rule_hdr->u.hdr.stats_cnt_idx;
+	rule->id = rule_hdr->u.hdr.rule_id;
+	rule->close_aggr_irq_mod = rule_hdr->u.hdr.close_aggr_irq_mod;
 
 	atrb->rule_eq_bitmap = rule_hdr->u.hdr.en_rule;
 	return ipa_fltrt_parse_hw_rule_eq(addr, sizeof(*rule_hdr),
@@ -3335,7 +3589,7 @@ static int ipa_flt_parse_hw_rule_ipav4_5(u8 *addr,
 	atrb = &rule->rule.eq_attrib;
 
 	if (rule_hdr->u.word == 0) {
-		/* table termintator - empty table */
+		/* table terminator - empty table */
 		rule->rule_size = 0;
 		return 0;
 	}
@@ -3367,6 +3621,57 @@ static int ipa_flt_parse_hw_rule_ipav4_5(u8 *addr,
 	rule->rule.set_metadata = rule_hdr->u.hdr.set_metadata;
 	rule->cnt_idx = rule_hdr->u.hdr.stats_cnt_idx_lsb |
 		(rule_hdr->u.hdr.stats_cnt_idx_msb) << 6;
+
+	atrb->rule_eq_bitmap = rule_hdr->u.hdr.en_rule;
+	rule->rule.eq_attrib_type = 1;
+	return ipa_fltrt_parse_hw_rule_eq(addr, sizeof(*rule_hdr),
+		atrb, &rule->rule_size);
+}
+
+static int ipa_flt_parse_hw_rule_ipav5_0(u8 *addr,
+	struct ipahal_flt_rule_entry *rule)
+{
+	struct ipa5_0_flt_rule_hw_hdr *rule_hdr;
+	struct ipa_ipfltri_rule_eq *atrb;
+
+	IPAHAL_DBG_LOW("Entry\n");
+
+	rule_hdr = (struct ipa5_0_flt_rule_hw_hdr *)addr;
+	atrb = &rule->rule.eq_attrib;
+
+	if (rule_hdr->u.word == 0) {
+		/* table terminator - empty table */
+		rule->rule_size = 0;
+		return 0;
+	}
+
+	switch (rule_hdr->u.hdr.action) {
+	case 0x0:
+		rule->rule.action = IPA_PASS_TO_ROUTING;
+		break;
+	case 0x1:
+		rule->rule.action = IPA_PASS_TO_SRC_NAT;
+		break;
+	case 0x2:
+		rule->rule.action = IPA_PASS_TO_DST_NAT;
+		break;
+	case 0x3:
+		rule->rule.action = IPA_PASS_TO_EXCEPTION;
+		break;
+	default:
+		IPAHAL_ERR("Invalid Rule Action %d\n", rule_hdr->u.hdr.action);
+		WARN_ON_RATELIMIT_IPA(1);
+		rule->rule.action = rule_hdr->u.hdr.action;
+	}
+
+	rule->rule.rt_tbl_idx = rule_hdr->u.hdr.rt_tbl_idx;
+	rule->rule.retain_hdr = rule_hdr->u.hdr.retain_hdr;
+	rule->priority = rule_hdr->u.hdr.priority;
+	rule->id = rule_hdr->u.hdr.rule_id;
+	rule->rule.pdn_idx = rule_hdr->u.hdr.pdn_idx;
+	rule->rule.set_metadata = rule_hdr->u.hdr.set_metadata;
+	rule->cnt_idx = rule_hdr->u.hdr.stats_cnt_idx;
+	rule->rule.close_aggr_irq_mod = rule_hdr->u.hdr.close_aggr_irq_mod;
 
 	atrb->rule_eq_bitmap = rule_hdr->u.hdr.en_rule;
 	rule->rule.eq_attrib_type = 1;

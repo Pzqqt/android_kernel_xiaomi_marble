@@ -3730,7 +3730,6 @@ static int ipa3_q6_clean_q6_tables(void)
 	struct ipahal_imm_cmd_register_write reg_write_cmd = {0};
 	int retval = 0;
 	int num_cmds = 0;
-	struct ipahal_reg_fltrt_hash_flush flush;
 	struct ipahal_reg_valmask valmask;
 	struct ipahal_imm_cmd_register_write reg_write_coal_close;
 	int i;
@@ -3818,14 +3817,29 @@ static int ipa3_q6_clean_q6_tables(void)
 		++num_cmds;
 	}
 
-	flush.v4_flt = true;
-	flush.v4_rt = true;
-	flush.v6_flt = true;
-	flush.v6_rt = true;
-	ipahal_get_fltrt_hash_flush_valmask(&flush, &valmask);
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		struct ipahal_reg_fltrt_cache_flush flush_cache;
+
+		memset(&flush_cache, 0, sizeof(flush_cache));
+		flush_cache.flt = true;
+		flush_cache.rt = true;
+		ipahal_get_fltrt_cache_flush_valmask(
+			&flush_cache, &valmask);
+		reg_write_cmd.offset = ipahal_get_reg_ofst(
+			IPA_FILT_ROUT_CACHE_FLUSH);
+	} else {
+		struct ipahal_reg_fltrt_hash_flush flush_hash;
+
+		flush_hash.v4_flt = true;
+		flush_hash.v4_rt = true;
+		flush_hash.v6_flt = true;
+		flush_hash.v6_rt = true;
+		ipahal_get_fltrt_hash_flush_valmask(&flush_hash, &valmask);
+		reg_write_cmd.offset = ipahal_get_reg_ofst(
+			IPA_FILT_ROUT_HASH_FLUSH);
+	}
 	reg_write_cmd.skip_pipeline_clear = false;
 	reg_write_cmd.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-	reg_write_cmd.offset = ipahal_get_reg_ofst(IPA_FILT_ROUT_HASH_FLUSH);
 	reg_write_cmd.value = valmask.val;
 	reg_write_cmd.value_mask = valmask.mask;
 	cmd_pyld[num_cmds] = ipahal_construct_imm_cmd(
