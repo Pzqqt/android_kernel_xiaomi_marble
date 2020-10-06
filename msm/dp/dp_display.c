@@ -11,6 +11,7 @@
 #include <linux/of_irq.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
 #include <linux/usb/phy.h>
+#include <linux/jiffies.h>
 
 #include "sde_connector.h"
 
@@ -158,6 +159,7 @@ struct dp_display_private {
 	struct device_node *aux_switch_node;
 	struct dentry *root;
 	struct completion notification_comp;
+	struct completion attention_comp;
 
 	struct dp_hpd     *hpd;
 	struct dp_parser  *parser;
@@ -1026,6 +1028,8 @@ static void dp_display_host_deinit(struct dp_display_private *dp)
 static int dp_display_process_hpd_high(struct dp_display_private *dp)
 {
 	int rc = -EINVAL;
+	unsigned long wait_timeout_ms;
+	unsigned long t;
 
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
@@ -1101,7 +1105,14 @@ end:
 	 * Delay the HPD connect notification to see if sink generates any
 	 * IRQ HPDs immediately after the HPD high.
 	 */
-	usleep_range(10000, 10100);
+	reinit_completion(&dp->attention_comp);
+	wait_timeout_ms = min_t(unsigned long,
+			dp->debug->connect_notification_delay_ms,
+			(unsigned long) MAX_CONNECT_NOTIFICATION_DELAY_MS);
+	t = wait_for_completion_timeout(&dp->attention_comp,
+		msecs_to_jiffies(wait_timeout_ms));
+	DP_DEBUG("wait_timeout=%lu ms, time_waited=%u ms\n", wait_timeout_ms,
+		jiffies_to_msecs(t));
 
 	/*
 	 * If an IRQ HPD is pending, then do not send a connect notification.
@@ -1118,7 +1129,7 @@ end:
 	 */
 	if (!dp->mst.mst_active &&
 		(work_busy(&dp->attention_work) == WORK_BUSY_PENDING)) {
-		SDE_EVT32_EXTERNAL(dp->state, 99);
+		SDE_EVT32_EXTERNAL(dp->state, 99, jiffies_to_msecs(t));
 		DP_DEBUG("Attention pending, skip HPD notification\n");
 		goto skip_notify;
 	}
@@ -1127,7 +1138,8 @@ end:
 		dp_display_send_hpd_notification(dp);
 
 skip_notify:
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, rc);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state,
+		wait_timeout_ms, rc);
 	return rc;
 }
 
@@ -1333,6 +1345,9 @@ static int dp_display_handle_disconnect(struct dp_display_private *dp)
 
 static void dp_display_disconnect_sync(struct dp_display_private *dp)
 {
+	int disconnect_delay_ms;
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	/* cancel any pending request */
 	dp_display_state_add(DP_STATE_ABORTED);
 
@@ -1344,7 +1359,22 @@ static void dp_display_disconnect_sync(struct dp_display_private *dp)
 	cancel_work_sync(&dp->attention_work);
 	flush_workqueue(dp->wq);
 
+	/*
+	 * Delay the teardown of the mainlink for better interop experience.
+	 * It is possible that certain sinks can issue an HPD high immediately
+	 * following an HPD low as soon as they detect the mainlink being
+	 * turned off. This can sometimes result in the HPD low pulse getting
+	 * lost with certain cable. This issue is commonly seen when running
+	 * DP LL CTS test 4.2.1.3.
+	 */
+	disconnect_delay_ms = min_t(u32, dp->debug->disconnect_delay_ms,
+			(u32) MAX_DISCONNECT_DELAY_MS);
+	DP_DEBUG("disconnect delay = %d ms\n", disconnect_delay_ms);
+	msleep(disconnect_delay_ms);
+
 	dp_display_handle_disconnect(dp);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state,
+		disconnect_delay_ms);
 }
 
 static int dp_display_usbpd_disconnect_cb(struct device *dev)
@@ -1572,6 +1602,7 @@ static int dp_display_usbpd_attention_cb(struct device *dev)
 	} else if ((dp->hpd->hpd_irq && dp_display_state_is(DP_STATE_READY)) ||
 			dp->debug->mst_hpd_sim) {
 		queue_work(dp->wq, &dp->attention_work);
+		complete_all(&dp->attention_comp);
 	} else if (dp->process_hpd_connect ||
 			 !dp_display_state_is(DP_STATE_CONNECTED)) {
 		dp_display_state_remove(DP_STATE_ABORTED);
@@ -3384,6 +3415,7 @@ static int dp_display_probe(struct platform_device *pdev)
 	}
 
 	init_completion(&dp->notification_comp);
+	init_completion(&dp->attention_comp);
 
 	dp->pdev = pdev;
 	dp->name = "drm_dp";

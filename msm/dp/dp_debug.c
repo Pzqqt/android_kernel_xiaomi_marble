@@ -2277,6 +2277,37 @@ static int dp_debug_init_feature_toggle(struct dp_debug_private *debug,
 	return rc;
 }
 
+static int dp_debug_init_configs(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_ulong("connect_notification_delay_ms", 0644, dir,
+		&debug->dp_debug.connect_notification_delay_ms);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs connect_notification_delay_ms failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+	debug->dp_debug.connect_notification_delay_ms =
+		DEFAULT_CONNECT_NOTIFICATION_DELAY_MS;
+
+	file = debugfs_create_u32("disconnect_delay_ms", 0644, dir,
+		&debug->dp_debug.disconnect_delay_ms);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs disconnect_delay_ms failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+	debug->dp_debug.disconnect_delay_ms = DEFAULT_DISCONNECT_DELAY_MS;
+
+	return rc;
+
+}
+
 static int dp_debug_init(struct dp_debug *dp_debug)
 {
 	int rc = 0;
@@ -2340,6 +2371,10 @@ static int dp_debug_init(struct dp_debug *dp_debug)
 		goto error_remove_dir;
 
 	rc = dp_debug_init_feature_toggle(debug, dir);
+	if (rc)
+		goto error_remove_dir;
+
+	rc = dp_debug_init_configs(debug, dir);
 	if (rc)
 		goto error_remove_dir;
 
