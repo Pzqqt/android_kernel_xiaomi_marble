@@ -423,6 +423,12 @@ static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
 		goto fail;
 	}
 	nla_nest_end(skb, nla_attr);
+
+	hdd_nofl_debug(
+		"STA Tx rate info:: bitrate:%d, bitrate_compat:%d, NSS:%d",
+		bitrate, bitrate_compat,
+		hdd_sta_ctx->cache_conn_info.txrate.nss);
+
 	return 0;
 fail:
 	return -EINVAL;
@@ -631,24 +637,36 @@ hdd_add_ap_standard_info(struct sk_buff *skb,
 			 struct hdd_station_ctx *hdd_sta_ctx, int idx)
 {
 	struct nlattr *nla_attr;
+	struct hdd_connection_info *conn_info;
 
+	conn_info = &hdd_sta_ctx->cache_conn_info;
 	nla_attr = nla_nest_start(skb, idx);
 	if (!nla_attr)
 		goto fail;
-	if (hdd_sta_ctx->cache_conn_info.conn_flag.vht_present)
+	if (conn_info->conn_flag.vht_present) {
 		if (nla_put(skb, NL80211_ATTR_VHT_CAPABILITY,
-			    sizeof(hdd_sta_ctx->cache_conn_info.vht_caps),
-			    &hdd_sta_ctx->cache_conn_info.vht_caps)) {
+			    sizeof(conn_info->vht_caps),
+			    &conn_info->vht_caps)) {
 			hdd_err("put fail");
 			goto fail;
 		}
-	if (hdd_sta_ctx->cache_conn_info.conn_flag.ht_present)
+		hdd_nofl_debug("STA VHT capabilities:");
+		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+				   (uint8_t *)&conn_info->vht_caps,
+				   sizeof(conn_info->vht_caps));
+	}
+	if (conn_info->conn_flag.ht_present) {
 		if (nla_put(skb, NL80211_ATTR_HT_CAPABILITY,
-			    sizeof(hdd_sta_ctx->cache_conn_info.ht_caps),
-			    &hdd_sta_ctx->cache_conn_info.ht_caps)) {
+			    sizeof(conn_info->ht_caps),
+			    &conn_info->ht_caps)) {
 			hdd_err("put fail");
 			goto fail;
 		}
+		hdd_nofl_debug("STA HT capabilities:");
+		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+				   (uint8_t *)&conn_info->ht_caps,
+				   sizeof(conn_info->ht_caps));
+	}
 	nla_nest_end(skb, nla_attr);
 	return 0;
 fail:
@@ -657,20 +675,25 @@ fail:
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
      defined(WLAN_FEATURE_11AX)
-static int32_t hdd_add_he_oper_info(
-				struct sk_buff *skb,
-				struct hdd_station_ctx *hdd_sta_ctx)
+static int32_t hdd_add_he_oper_info(struct sk_buff *skb,
+				    struct hdd_station_ctx *hdd_sta_ctx)
 {
 	int32_t ret = 0;
+	struct hdd_connection_info *conn_info;
 
-	if (!hdd_sta_ctx->cache_conn_info.he_oper_len ||
-	    !hdd_sta_ctx->cache_conn_info.he_operation)
+	conn_info = &hdd_sta_ctx->cache_conn_info;
+	if (!conn_info->he_oper_len || !conn_info->he_operation)
 		return ret;
 
-	if (nla_put(skb, HE_OPERATION,
-		    hdd_sta_ctx->cache_conn_info.he_oper_len,
-		     hdd_sta_ctx->cache_conn_info.he_operation))
+	if (nla_put(skb, HE_OPERATION, conn_info->he_oper_len,
+		    conn_info->he_operation)) {
 		ret = -EINVAL;
+	} else {
+		hdd_nofl_debug("STA HE operation:");
+		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+				   (uint8_t *)&conn_info->he_operation,
+				   conn_info->he_oper_len);
+	}
 
 	qdf_mem_free(hdd_sta_ctx->cache_conn_info.he_operation);
 	hdd_sta_ctx->cache_conn_info.he_operation = NULL;
@@ -779,14 +802,20 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 		hdd_err("put fail");
 		goto fail;
 	}
-	if (hdd_sta_ctx->cache_conn_info.conn_flag.ht_op_present)
+	if (hdd_sta_ctx->cache_conn_info.conn_flag.ht_op_present) {
 		if (nla_put(skb, HT_OPERATION,
 			    (sizeof(hdd_sta_ctx->cache_conn_info.ht_operation)),
 			    &hdd_sta_ctx->cache_conn_info.ht_operation)) {
 			hdd_err("put fail");
 			goto fail;
 		}
-	if (hdd_sta_ctx->cache_conn_info.conn_flag.vht_op_present)
+		hdd_nofl_debug("STA HT operation:");
+		qdf_trace_hex_dump(
+			QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			(uint8_t *)&hdd_sta_ctx->cache_conn_info.ht_operation,
+			sizeof(hdd_sta_ctx->cache_conn_info.ht_operation));
+	}
+	if (hdd_sta_ctx->cache_conn_info.conn_flag.vht_op_present) {
 		if (nla_put(skb, VHT_OPERATION,
 			    (sizeof(hdd_sta_ctx->
 					cache_conn_info.vht_operation)),
@@ -794,11 +823,17 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 			hdd_err("put fail");
 			goto fail;
 		}
+		hdd_nofl_debug("STA VHT operation:");
+		qdf_trace_hex_dump(
+			QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			(uint8_t *)&hdd_sta_ctx->cache_conn_info.vht_operation,
+			sizeof(hdd_sta_ctx->cache_conn_info.vht_operation));
+	}
 	if (hdd_add_he_oper_info(skb, hdd_sta_ctx)) {
 		hdd_err("put fail");
 		goto fail;
 	}
-	if (hdd_sta_ctx->cache_conn_info.conn_flag.hs20_present)
+	if (hdd_sta_ctx->cache_conn_info.conn_flag.hs20_present) {
 		if (nla_put(skb, AP_INFO_HS20_INDICATION,
 			    (sizeof(hdd_sta_ctx->cache_conn_info.hs20vendor_ie)
 			     - 1),
@@ -806,6 +841,12 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 			hdd_err("put fail");
 			goto fail;
 		}
+		hdd_nofl_debug("STA hs20 vendor IE:");
+		qdf_trace_hex_dump(
+			QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			(uint8_t *)(tmp_hs20 + 1),
+			sizeof(hdd_sta_ctx->cache_conn_info.hs20vendor_ie) - 1);
+	}
 
 	if (nla_put_u32(skb, DISCONNECT_REASON,
 			adapter->last_disconnect_reason)) {
@@ -819,8 +860,26 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 				skb_tailroom(skb), ie_len, nl_buf_len);
 			goto fail;
 		}
+
+		hdd_nofl_debug("Beacon IEs len: %u", ie_len);
+
 		qdf_mem_free(ies);
 	}
+
+	hdd_nofl_debug(
+		"STA Info:: SSID:%s, BSSID:" QDF_MAC_ADDR_FMT ", freq:%d, "
+		"Noise:%d, signal:%d, roam_count:%d, last_auth_type:%d, "
+		"dot11mode:%d, disconnect_reason:%d, ",
+		hdd_sta_ctx->cache_conn_info.last_ssid.SSID.ssId,
+		QDF_MAC_ADDR_REF(hdd_sta_ctx->cache_conn_info.bssid.bytes),
+		hdd_sta_ctx->cache_conn_info.chan_freq,
+		(hdd_sta_ctx->cache_conn_info.noise + 100),
+		(hdd_sta_ctx->cache_conn_info.signal + 100),
+		hdd_sta_ctx->cache_conn_info.roam_count,
+		hdd_convert_auth_type(
+			hdd_sta_ctx->cache_conn_info.last_auth_type),
+		hdd_convert_dot11mode(hdd_sta_ctx->cache_conn_info.dot11mode),
+		adapter->last_disconnect_reason);
 
 	return cfg80211_vendor_cmd_reply(skb);
 fail:
@@ -884,6 +943,7 @@ static int32_t hdd_add_survey_info_sap(struct sk_buff *skb,
 		goto fail;
 	}
 	nla_nest_end(skb, nla_attr);
+	hdd_nofl_debug("Remote STA freq: %d", stainfo->freq);
 	return 0;
 fail:
 	return -EINVAL;
@@ -933,6 +993,7 @@ static int hdd_add_tx_bitrate_sap(struct sk_buff *skb,
 		goto fail;
 	}
 	nla_nest_end(skb, nla_attr);
+	hdd_nofl_debug("Remote STA VHT NSS: %d", stainfo->nss);
 	return 0;
 fail:
 	return -EINVAL;
@@ -981,6 +1042,7 @@ static int32_t hdd_add_sta_info_sap(struct sk_buff *skb, int8_t rssi,
 		goto fail;
 
 	nla_nest_end(skb, nla_attr);
+	hdd_nofl_debug("Remote STA RSSI: %d", rssi - HDD_NOISE_FLOOR_DBM);
 	return 0;
 fail:
 	return -EINVAL;
@@ -1093,6 +1155,9 @@ static int hdd_add_ap_standard_info_sap(struct sk_buff *skb,
 			hdd_err("put fail");
 			goto fail;
 		}
+
+		hdd_nofl_debug("Remote STA VHT capabilities len:%u",
+			       (uint32_t)sizeof(stainfo->vht_caps));
 	}
 	if (stainfo->ht_present) {
 		if (nla_put(skb, NL80211_ATTR_HT_CAPABILITY,
@@ -1101,6 +1166,9 @@ static int hdd_add_ap_standard_info_sap(struct sk_buff *skb,
 			hdd_err("put fail");
 			goto fail;
 		}
+
+		hdd_nofl_debug("Remote STA HT capabilities len:%u",
+			       (uint32_t)sizeof(stainfo->ht_caps));
 	}
 	nla_nest_end(skb, nla_attr);
 	return 0;
@@ -1226,13 +1294,15 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 
 	if (!(stainfo->rx_mc_bc_cnt & HDD_STATION_INFO_RX_MC_BC_COUNT)) {
 		hdd_debug("rx mc bc count is not supported by FW");
-	}
-
-	else if (nla_put_u32(skb, REMOTE_RX_BC_MC_COUNT,
-			     (stainfo->rx_mc_bc_cnt &
-			      (~HDD_STATION_INFO_RX_MC_BC_COUNT)))) {
+	} else if (nla_put_u32(skb, REMOTE_RX_BC_MC_COUNT,
+			       (stainfo->rx_mc_bc_cnt &
+			       (~HDD_STATION_INFO_RX_MC_BC_COUNT)))) {
 		hdd_err("rx mc bc put fail");
 		goto fail;
+	} else {
+		hdd_nofl_debug("Remote STA RX mc_bc_count: %d",
+			       (stainfo->rx_mc_bc_cnt &
+			       (~HDD_STATION_INFO_RX_MC_BC_COUNT)));
 	}
 
 	/* Currently rx_retry count is not supported */
@@ -1242,6 +1312,8 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 			hdd_err("rx retry count put fail");
 			goto fail;
 		}
+		hdd_nofl_debug("Remote STA retry count: %d",
+			       stainfo->rx_retry_cnt);
 	}
 
 	if (stainfo->assoc_req_ies.len) {
@@ -1250,7 +1322,19 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 			hdd_err("Failed to put assoc req IEs");
 			goto fail;
 		}
+		hdd_nofl_debug("Remote STA assoc req IE len: %d",
+			       stainfo->assoc_req_ies.len);
 	}
+
+	hdd_nofl_debug(
+		"Remote STA Info:: freq:%d, RSSI:%d, Tx NSS:%d, Reason code:%d,"
+		"capability:0x%x, Supported mode:%d, chan_width:%d, Tx rate:%d,"
+		"Rx rate:%d, dot11mode:%d",
+		stainfo->freq, stainfo->rssi - HDD_NOISE_FLOOR_DBM,
+		stainfo->nss, stainfo->reason_code, stainfo->capability,
+		stainfo->support_mode, channel_width, stainfo->tx_rate,
+		stainfo->rx_rate, stainfo->dot11_mode);
+
 	hdd_sta_info_detach(&adapter->cache_sta_info_list, &stainfo);
 	hdd_put_sta_info_ref(&adapter->cache_sta_info_list, &stainfo, true,
 			     STA_INFO_GET_CACHED_STATION_REMOTE);
