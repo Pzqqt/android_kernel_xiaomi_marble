@@ -4204,9 +4204,13 @@ int _ipa_init_sram_v3(void)
 		IPA_MEM_PART(modem_hdr_proc_ctx_ofst) - 4);
 	ipa3_sram_set_canary(ipa_sram_mmio,
 		IPA_MEM_PART(modem_hdr_proc_ctx_ofst));
-	if (ipa_get_hw_type_internal() >= IPA_HW_v4_5) {
+	if (ipa_get_hw_type_internal() >= IPA_HW_v4_5
+		&& ipa_get_hw_type_internal() < IPA_HW_v5_0) {
 		ipa3_sram_set_canary(ipa_sram_mmio,
 			IPA_MEM_PART(nat_tbl_ofst) - 12);
+	} else if (ipa_get_hw_type_internal() >= IPA_HW_v5_0) {
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(nat_tbl_ofst) - 28);
 	}
 	if (ipa_get_hw_type_internal() >= IPA_HW_v4_0) {
 		if (ipa_get_hw_type_internal() < IPA_HW_v4_5) {
@@ -4230,10 +4234,15 @@ int _ipa_init_sram_v3(void)
 			IPA_MEM_PART(modem_ofst) - 4);
 		ipa3_sram_set_canary(ipa_sram_mmio, IPA_MEM_PART(modem_ofst));
 	}
-	ipa3_sram_set_canary(ipa_sram_mmio,
-		(ipa_get_hw_type_internal() >= IPA_HW_v3_5) ?
+
+	if (ipa_get_hw_type_internal() >= IPA_HW_v5_0) {
+		ipa3_sram_set_canary(ipa_sram_mmio, IPA_MEM_PART(pdn_config_ofst));
+	} else {
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			(ipa_get_hw_type_internal() >= IPA_HW_v3_5) ?
 			IPA_MEM_PART(uc_descriptor_ram_ofst) :
 			IPA_MEM_PART(end_ofst));
+	}
 
 	iounmap(ipa_sram_mmio);
 
@@ -6040,6 +6049,9 @@ static enum gsi_ver ipa3_get_gsi_ver(enum ipa_hw_type ipa_hw_type)
 		break;
 	case IPA_HW_v4_11:
 		gsi_ver = GSI_VER_2_11;
+		break;
+	case IPA_HW_v5_0:
+		gsi_ver = GSI_VER_3_0;
 		break;
 	default:
 		IPAERR("No GSI version for ipa type %d\n", ipa_hw_type);
