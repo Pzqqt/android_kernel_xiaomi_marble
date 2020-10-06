@@ -44,7 +44,7 @@
 #define HTT_PID_BIT_MASK 0x3
 
 #define DP_EXT_MSG_LENGTH 2048
-
+#define HTT_HEADER_LEN 16
 #define HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN 16
 
 #define HTT_SHIFT_UPPER_TIMESTAMP 32
@@ -1980,11 +1980,13 @@ dp_htt_stats_dbgfs_send_msg(struct dp_pdev *pdev, uint32_t *msg_word,
 	/* send 5th word of HTT msg to upper layer */
 	dbgfs_cfg.msg_word = (msg_word + 4);
 	dbgfs_cfg.m = pdev->dbgfs_cfg->m;
-	msg_len = qdf_min(msg_len, (uint32_t)DP_EXT_MSG_LENGTH);
+
+	/* stats message length + 16 size of HTT header*/
+	msg_len = qdf_min(msg_len + HTT_HEADER_LEN, (uint32_t)DP_EXT_MSG_LENGTH);
 
 	if (pdev->dbgfs_cfg->htt_stats_dbgfs_msg_process)
 		pdev->dbgfs_cfg->htt_stats_dbgfs_msg_process(&dbgfs_cfg,
-							     (msg_len + 4));
+							     (msg_len - HTT_HEADER_LEN));
 
 	/* Get TLV Done bit from 4th msg word */
 	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*(msg_word + 3));
