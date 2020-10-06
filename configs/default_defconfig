@@ -300,6 +300,9 @@ CONFIG_ADAPTIVE_11R := y
 #Flag to enable sae single pmk feature
 CONFIG_SAE_SINGLE_PMK := y
 
+#Flag to enable mscs feature
+CONFIG_FEATURE_MSCS := y
+
 #Flag to enable FILS Feature (11ai)
 CONFIG_WLAN_FEATURE_FILS := y
 ifneq ($(CONFIG_QCA_CLD_WLAN),)

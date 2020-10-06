@@ -34,6 +34,7 @@
 #include "dot11f.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
+#include "wlan_mlme_main.h"
 
 #define COUNTRY_STRING_LENGTH    (3)
 #define COUNTRY_INFO_MAX_CHANNEL (84)
@@ -974,6 +975,12 @@ void populate_dot11f_tspec(struct mac_tspec_ie *pOld, tDot11fIETSPEC *pDot11f);
 
 void populate_dot11f_wmmtspec(struct mac_tspec_ie *pOld,
 			      tDot11fIEWMMTSPEC *pDot11f);
+
+#ifdef WLAN_FEATURE_MSCS
+void
+populate_dot11f_mscs_dec_element(struct mscs_req_info *mscs_req,
+				 tDot11fmscs_request_action_frame *dot11f);
+#endif
 
 QDF_STATUS
 populate_dot11f_tclas(struct mac_context *mac,

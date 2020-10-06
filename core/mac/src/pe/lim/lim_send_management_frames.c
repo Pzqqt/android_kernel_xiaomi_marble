@@ -56,6 +56,7 @@
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
 #include <wlan_mlme_api.h>
+#include <wlan_mlme_main.h>
 
 /**
  *
@@ -1092,6 +1093,132 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 		pe_err("Could not send an Add TS Request (%X",
 			qdf_status);
 } /* End lim_send_addts_req_action_frame. */
+
+#ifdef WLAN_FEATURE_MSCS
+/**
+ * lim_mscs_req_tx_complete_cnf()- Confirmation for mscs req sent over the air
+ * @context: pointer to global mac
+ * @buf: buffer
+ * @tx_complete : Sent status
+ * @params; tx completion params
+ *
+ * Return: This returns QDF_STATUS
+ */
+
+static QDF_STATUS lim_mscs_req_tx_complete_cnf(void *context, qdf_nbuf_t buf,
+					       uint32_t tx_complete,
+					       void *params)
+{
+	uint16_t mscs_ack_status;
+	uint16_t reason_code;
+
+	pe_debug("mscs req TX: %s (%d)",
+		 (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
+		      "success" : "fail", tx_complete);
+
+	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
+		mscs_ack_status = ACKED;
+		reason_code = QDF_STATUS_SUCCESS;
+	} else {
+		mscs_ack_status = NOT_ACKED;
+		reason_code = QDF_STATUS_E_FAILURE;
+	}
+	if (buf)
+		qdf_nbuf_free(buf);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void lim_send_mscs_req_action_frame(struct mac_context *mac,
+				    struct qdf_mac_addr peer_mac,
+				    struct mscs_req_info *mscs_req,
+				    struct pe_session *pe_session)
+{
+	uint8_t *frame;
+	tDot11fmscs_request_action_frame mscs_req_frame;
+	uint32_t payload, bytes;
+	tpSirMacMgmtHdr peer_mac_hdr;
+	void *packet;
+	QDF_STATUS qdf_status;
+	tpSirMacMgmtHdr mac_hdr;
+
+	qdf_mem_zero(&mscs_req_frame, sizeof(mscs_req_frame));
+
+	mscs_req_frame.Action.action = MCSC_REQ;
+	mscs_req_frame.DialogToken.token = mscs_req->dialog_token;
+	mscs_req_frame.Category.category = ACTION_CATEGORY_RVS;
+	populate_dot11f_mscs_dec_element(mscs_req, &mscs_req_frame);
+	bytes = dot11f_get_packed_mscs_request_action_frameSize(mac,
+					&mscs_req_frame, &payload);
+	if (DOT11F_FAILED(bytes)) {
+		pe_err("Failed to calculate the packed size for an MSCS Request (0x%08x)",
+		       bytes);
+		/* We'll fall back on the worst case scenario: */
+		payload = sizeof(tDot11fmscs_request_action_frame);
+	} else if (DOT11F_WARNED(bytes)) {
+		pe_warn("There were warnings while calculating the packed size for MSCS Request (0x%08x)",
+			bytes);
+	}
+
+	bytes = payload + sizeof(struct qdf_mac_addr);
+
+	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
+				      (void **)&packet);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		pe_err("Failed to allocate %d bytes for an mscs request",
+		       bytes);
+		return;
+	}
+	/* Paranoia: */
+	qdf_mem_zero(frame, bytes);
+
+	lim_populate_mac_header(mac, frame, SIR_MAC_MGMT_FRAME,
+				SIR_MAC_MGMT_ACTION,
+				peer_mac.bytes, pe_session->self_mac_addr);
+	peer_mac_hdr = (tpSirMacMgmtHdr) frame;
+
+	qdf_mem_copy(peer_mac.bytes, pe_session->bssId, QDF_MAC_ADDR_SIZE);
+
+	lim_set_protected_bit(mac, pe_session, peer_mac.bytes, peer_mac_hdr);
+
+	bytes = dot11f_pack_mscs_request_action_frame(mac, &mscs_req_frame,
+						      frame +
+						      sizeof(tSirMacMgmtHdr),
+						      payload, &payload);
+	if (DOT11F_FAILED(bytes)) {
+		pe_err("Failed to pack an mscs Request " "(0x%08x)", bytes);
+		cds_packet_free((void *)packet);
+			return; /* allocated! */
+	} else if (DOT11F_WARNED(bytes)) {
+			pe_warn("There were warnings while packing an mscs Request (0x%08x)",
+				bytes);
+	}
+
+	mac_hdr = (tpSirMacMgmtHdr) frame;
+
+	pe_debug("mscs req TX: vdev id: %d to "QDF_MAC_ADDR_FMT" seq num[%d], frame subtype:%d ",
+		 mscs_req->vdev_id, peer_mac.bytes, mac->mgmtSeqNum,
+		 mac_hdr->fc.subType);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   frame,
+			   (uint16_t)(sizeof(tSirMacMgmtHdr) + payload));
+	qdf_status =
+		wma_tx_frameWithTxComplete(mac, packet,
+			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
+			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
+			   lim_tx_complete, frame, lim_mscs_req_tx_complete_cnf,
+			   HAL_USE_PEER_STA_REQUESTED_MASK, pe_session->vdev_id,
+			   false, 0, RATEID_DEFAULT);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		mlme_set_is_mscs_req_sent(pe_session->vdev, true);
+	} else {
+		pe_err("Could not send an mscs Request (%X)", qdf_status);
+	}
+
+	/* Pkt will be freed up by the callback */
+} /* End lim_send_mscs_req_action_frame */
+#endif
 
 /**
  * lim_assoc_rsp_tx_complete() - Confirmation for assoc rsp OTA

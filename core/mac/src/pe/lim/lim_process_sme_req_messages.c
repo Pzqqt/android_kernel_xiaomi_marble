@@ -3064,6 +3064,63 @@ send_failure_addts_rsp:
 			       smesessionId);
 }
 
+#ifdef WLAN_FEATURE_MSCS
+static void
+__lim_process_sme_mscs_req(struct mac_context *mac, uint32_t *msg_buf)
+{
+	struct qdf_mac_addr peer_mac;
+	struct mscs_req_info *mscs_req;
+	struct pe_session *pe_session;
+	uint8_t pe_session_id;
+
+	if (!msg_buf) {
+		pe_err("Buffer is Pointing to NULL");
+		return;
+	}
+
+	mscs_req = (struct mscs_req_info *) msg_buf;
+	pe_session = pe_find_session_by_bssid(mac, mscs_req->bssid.bytes,
+					      &pe_session_id);
+	if (!pe_session) {
+		pe_err("Session Does not exist for bssid: " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(mscs_req->bssid.bytes));
+		return;
+	}
+
+	if (!LIM_IS_STA_ROLE(pe_session)) {
+		pe_err("MSCS req received on AP - ignoring");
+		return;
+	}
+
+	if (QDF_IS_STATUS_ERROR(wlan_vdev_mlme_is_active(pe_session->vdev))) {
+		pe_err("mscs req in unexpected vdev SM state:%d",
+		       wlan_vdev_mlme_get_state(pe_session->vdev));
+		return;
+	}
+
+	if (mscs_req->is_mscs_req_sent) {
+		pe_err("MSCS req already sent");
+		return;
+	}
+
+	qdf_mem_copy(peer_mac.bytes, pe_session->bssId, QDF_MAC_ADDR_SIZE);
+
+	/* save the mscs request */
+	mscs_req->is_mscs_req_sent = true;
+
+	/* ship out the message now */
+	lim_send_mscs_req_action_frame(mac, peer_mac, mscs_req,
+				       pe_session);
+}
+#else
+static inline void
+__lim_process_sme_mscs_req(struct mac_context *mac, uint32_t *msg_buf)
+{
+	return;
+}
+
+#endif
+
 static void
 __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *msg_buf)
 {
@@ -4649,6 +4706,11 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	case eWNI_SME_ADDTS_REQ:
 		pe_debug("Received ADDTS_REQ message");
 		__lim_process_sme_addts_req(mac, msg_buf);
+		break;
+
+	case eWNI_SME_MSCS_REQ:
+		pe_debug("Received MSCS_REQ message");
+		__lim_process_sme_mscs_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_DELTS_REQ:

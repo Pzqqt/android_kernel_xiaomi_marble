@@ -353,6 +353,65 @@
 
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
+#ifdef WLAN_FEATURE_MSCS
+/*
+ * <ini>
+ * mscs_pkt_threshold - Voice pkt count threshold
+ *
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 1200
+ *
+ * This ini specifies the Voice pkt count threshold to
+ * Send MSCS action frame to AP
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_VO_PKT_COUNT_THRESHOLD \
+		CFG_INI_UINT( \
+		"mscs_pkt_threshold", \
+		0, \
+		10000, \
+		1200, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Voice pkt count threshold")
+
+/*
+ * <ini>
+ * mscs_voice_interval - mscs voice interval in sec
+ *
+ * @Min: 0
+ * @Max: 300
+ * @Default: 30
+ *
+ * This ini specifies the mscs voice interval to
+ * monitor voice tx packet count to send MSCS action frame
+ *
+ * Related: mscs_pkt_threshold
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_MSCS_VOICE_INTERVAL \
+		CFG_INI_UINT( \
+		"mscs_voice_interval", \
+		0, \
+		300, \
+		30, \
+		CFG_VALUE_OR_DEFAULT, \
+		"mscs voice interval")
+
+#define CFG_MSCS_FEATURE_ALL \
+		CFG(CFG_VO_PKT_COUNT_THRESHOLD) \
+		CFG(CFG_MSCS_VOICE_INTERVAL)
+
+#else
+#define CFG_MSCS_FEATURE_ALL
+#endif
+
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /*
  * <ini>
@@ -1445,6 +1504,7 @@
 	CFG(CFG_DP_RX_WAKELOCK_TIMEOUT) \
 	CFG(CFG_DP_NUM_DP_RX_THREADS) \
 	CFG(CFG_DP_HTC_WMI_CREDIT_CNT) \
+	CFG_MSCS_FEATURE_ALL \
 	CFG_DP_ENABLE_FASTPATH_ALL \
 	CFG_HDD_DP_BUS_BANDWIDTH \
 	CFG_DP_DRIVER_TCP_DELACK \

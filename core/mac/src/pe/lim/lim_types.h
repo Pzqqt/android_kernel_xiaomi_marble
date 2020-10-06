@@ -642,6 +642,24 @@ void lim_send_delts_req_action_frame(struct mac_context *mac, tSirMacAddr peer,
 void lim_send_addts_req_action_frame(struct mac_context *mac, tSirMacAddr peerMacAddr,
 				     tSirAddtsReqInfo *addts, struct pe_session *);
 
+#ifdef WLAN_FEATURE_MSCS
+/**
+ * lim_send_mscs_req_action_frame() - Send mscs req
+ * @mac_ctx: Handle for mac context
+ * @peer_mac: Mac address of requesting peer
+ * @mscs_req: mscs request buffer
+ * @pe_session: PE session id.
+ *
+ * Builds and sends mscs action frame to the peer.
+ *
+ * Return: void
+ */
+void lim_send_mscs_req_action_frame(struct mac_context *mac,
+				    struct qdf_mac_addr peer_mac,
+				    struct mscs_req_info *mscs_req,
+				    struct pe_session *pe_session);
+#endif
+
 /**
  * lim_send_assoc_rsp_mgmt_frame() - Send assoc response
  * @mac_ctx: Handle for mac context

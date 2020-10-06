@@ -1742,6 +1742,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case eWNI_SME_DEAUTH_CNF:
 	case eWNI_SME_ASSOC_CNF:
 	case eWNI_SME_ADDTS_REQ:
+	case eWNI_SME_MSCS_REQ:
 	case eWNI_SME_DELTS_REQ:
 	case eWNI_SME_SESSION_UPDATE_PARAM:
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:

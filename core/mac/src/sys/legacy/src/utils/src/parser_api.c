@@ -5057,6 +5057,28 @@ void populate_dot11f_tspec(struct mac_tspec_ie *pOld, tDot11fIETSPEC *pDot11f)
 
 } /* End populate_dot11f_tspec. */
 
+#ifdef WLAN_FEATURE_MSCS
+void
+populate_dot11f_mscs_dec_element(struct mscs_req_info *mscs_req,
+				 tDot11fmscs_request_action_frame *dot11f)
+{
+	dot11f->decriptor_element.request_type =
+			mscs_req->dec.request_type;
+	dot11f->decriptor_element.user_priority_control =
+			mscs_req->dec.user_priority_control;
+	dot11f->decriptor_element.stream_timeout =
+			mscs_req->dec.stream_timeout;
+	dot11f->decriptor_element.tclas_mask.classifier_type =
+			mscs_req->dec.tclas_mask.classifier_type;
+	dot11f->decriptor_element.tclas_mask.classifier_mask =
+			mscs_req->dec.tclas_mask.classifier_mask;
+
+	dot11f->decriptor_element.present = 1;
+	dot11f->decriptor_element.tclas_mask.present = 1;
+
+} /* End populate_dot11f_decriptor_element */
+#endif
+
 void populate_dot11f_wmmtspec(struct mac_tspec_ie *pOld,
 			      tDot11fIEWMMTSPEC *pDot11f)
 {

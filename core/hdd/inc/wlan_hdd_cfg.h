@@ -175,6 +175,11 @@ struct hdd_config {
 	bool enable_latency_crit_clients;
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
+#ifdef WLAN_FEATURE_MSCS
+	uint32_t mscs_pkt_threshold;
+	uint32_t mscs_voice_interval;
+#endif /* WLAN_FEATURE_MSCS */
+
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
 	bool del_ack_enable;
 	uint32_t del_ack_threshold_high;

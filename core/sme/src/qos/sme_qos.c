@@ -81,6 +81,14 @@
 /* The Dialog Token field shall be set [...] to a non-zero value */
 #define SME_QOS_MIN_DIALOG_TOKEN         1
 #define SME_QOS_MAX_DIALOG_TOKEN         0xFF
+
+#ifdef WLAN_FEATURE_MSCS
+#define MSCS_USER_PRIORITY               0x07C0
+#define MSCS_STREAM_TIMEOUT              60 /* in sec */
+#define MSCS_TCLAS_CLASSIFIER_MASK       0x5F
+#define MSCS_TCLAS_CLASSIFIER_TYPE       4
+#endif
+
 /* Type declarations */
 /* Enumeration of the various states in the QoS state m/c */
 enum sme_qos_states {
@@ -3812,6 +3820,47 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_MSCS
+void sme_send_mscs_action_frame(uint8_t vdev_id)
+{
+	struct mscs_req_info *mscs_req;
+	struct sme_qos_sessioninfo *qos_session;
+	struct scheduler_msg msg = {0};
+	QDF_STATUS qdf_status;
+
+	qos_session = &sme_qos_cb.sessionInfo[vdev_id];
+	if (!qos_session) {
+		sme_debug("qos_session is NULL");
+		return;
+	}
+	mscs_req = qdf_mem_malloc(sizeof(*mscs_req));
+	if (!mscs_req)
+		return;
+
+	mscs_req->vdev_id = vdev_id;
+	qdf_mem_copy(&mscs_req->bssid.bytes[0],
+		     &qos_session->assocInfo.bss_desc->bssId[0],
+		     sizeof(struct qdf_mac_addr));
+
+	mscs_req->dialog_token = sme_qos_assign_dialog_token();
+	mscs_req->dec.request_type = SCS_REQ_ADD;
+	mscs_req->dec.user_priority_control = MSCS_USER_PRIORITY;
+	mscs_req->dec.stream_timeout = (MSCS_STREAM_TIMEOUT * 1000);
+	mscs_req->dec.tclas_mask.classifier_type = MSCS_TCLAS_CLASSIFIER_TYPE;
+	mscs_req->dec.tclas_mask.classifier_mask = MSCS_TCLAS_CLASSIFIER_MASK;
+
+	msg.type = eWNI_SME_MSCS_REQ;
+	msg.reserved = 0;
+	msg.bodyptr = mscs_req;
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					    QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		sme_err("Fail to send mscs request to PE");
+		qdf_mem_free(mscs_req);
+	}
+}
+#endif
 
 /**
  * sme_qos_add_ts_req() - send ADDTS request.

@@ -3378,6 +3378,30 @@ static void hdd_ini_tx_flow_control(struct hdd_config *config,
 }
 #endif
 
+#ifdef WLAN_FEATURE_MSCS
+/**
+ * hdd_ini_mscs_params() - Initialize INIs related to MSCS feature
+ * @config: pointer to hdd config
+ * @psoc: pointer to psoc obj
+ *
+ * Return: none
+ */
+static void hdd_ini_mscs_params(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+{
+	config->mscs_pkt_threshold =
+		cfg_get(psoc, CFG_VO_PKT_COUNT_THRESHOLD);
+	config->mscs_voice_interval =
+		cfg_get(psoc, CFG_MSCS_VOICE_INTERVAL);
+}
+
+#else
+static inline void hdd_ini_mscs_params(struct hdd_config *config,
+				       struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * hdd_ini_tx_flow_control() - Initialize INIs concerned about bus bandwidth
@@ -3581,6 +3605,7 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 	hdd_ini_tx_flow_control(config, psoc);
 	hdd_ini_bus_bandwidth(config, psoc);
 	hdd_ini_tcp_settings(config, psoc);
+	hdd_ini_mscs_params(config, psoc);
 
 	hdd_ini_tcp_del_ack_settings(config, psoc);
 
