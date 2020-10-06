@@ -1387,8 +1387,8 @@ __qdf_nbuf_append_ext_list(struct sk_buff *skb_head,
 			struct sk_buff *ext_list, size_t ext_len)
 {
 	skb_shinfo(skb_head)->frag_list = ext_list;
-	skb_head->data_len = ext_len;
-	skb_head->len += skb_head->data_len;
+	skb_head->data_len += ext_len;
+	skb_head->len += ext_len;
 }
 
 /**
