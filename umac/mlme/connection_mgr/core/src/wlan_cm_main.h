@@ -30,6 +30,12 @@
 
 /* Max candidate/attempts to be tried to connect */
 #define CM_MAX_CONNECT_ATTEMPTS 5
+/*
+ * Default max retry attempts to be tried for a candidate.
+ * In SAE connection this value will be overwritten from the sae_connect_retries
+ * INI
+ */
+#define CM_MAX_CANDIDATE_RETRIES 1
 /* Max time to wait for scan for SSID */
 #define CM_SCAN_MAX_TIME 5000
 /* Max connect/disconnect/roam req that can be queued at a time */
@@ -99,6 +105,7 @@ struct cm_state_sm {
  * @rsn_ie: rsn_ie in connect req
  * @candidate_list: candidate list
  * @cur_candidate: current candidate
+ * @cur_candidate_retries: attempts for current candidate
  * @connect_attempts: number of connect attempts tried
  */
 struct cm_connect_req {
@@ -110,6 +117,7 @@ struct cm_connect_req {
 	struct element_info rsn_ie;
 	qdf_list_t *candidate_list;
 	struct scan_cache_node *cur_candidate;
+	uint8_t cur_candidate_retries;
 	uint8_t connect_attempts;
 };
 

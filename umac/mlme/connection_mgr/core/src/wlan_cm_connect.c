@@ -29,6 +29,7 @@
 #include "wlan_crypto_global_api.h"
 #ifdef CONN_MGR_ADV_FEATURE
 #include "wlan_blm_api.h"
+#include "wlan_cm_roam_api.h"
 #endif
 
 static void
@@ -425,6 +426,111 @@ void cm_delete_pmksa_for_single_pmk_bssid(struct cnx_mgr *cm_ctx,
 }
 #endif
 
+#ifdef CONN_MGR_ADV_FEATURE
+static QDF_STATUS
+cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_rsp *resp)
+{
+	struct wlan_objmgr_pdev *pdev;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
+			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), resp->cm_id));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(resp->connect_status))
+		wlan_blm_update_bssid_connect_params(pdev, resp->bssid,
+						     BLM_AP_CONNECTED);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cm_is_retry_with_same_candidate() - This API check if reconnect attempt is
+ * required with the same candidate again
+ * @cm_ctx: connection manager context
+ * @req: Connect request.
+ * @resp: connect resp from previous connection attempt
+ *
+ * This function return true if same candidate needs to be tried again
+ *
+ * Return: bool
+ */
+static bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
+					    struct cm_connect_req *req,
+					    struct wlan_cm_connect_rsp *resp)
+{
+	uint8_t max_retry_count = CM_MAX_CANDIDATE_RETRIES;
+	uint32_t key_mgmt;
+	struct wlan_objmgr_psoc *psoc;
+	bool sae_connection;
+
+	psoc = wlan_pdev_get_psoc(wlan_vdev_get_pdev(cm_ctx->vdev));
+	key_mgmt = req->cur_candidate->entry->neg_sec_info.key_mgmt;
+
+	/* Try once again for the invalid PMKID case without PMKID */
+	if (resp->reason_code == STATUS_INVALID_PMKID)
+		goto use_same_candidate;
+
+	/* Try again for the JOIN timeout if only one candidate */
+	if (resp->reason == CM_JOIN_TIMEOUT &&
+	    qdf_list_size(req->candidate_list) == 1) {
+		/* Get assoc retry count */
+		wlan_mlme_get_sae_assoc_retry_count(psoc, &max_retry_count);
+		goto use_same_candidate;
+	}
+
+	/*
+	 * Try again for the ASSOC timeout in SAE connection or
+	 * AP has reconnect on assoc timeout OUI.
+	 */
+	sae_connection = key_mgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE |
+				     1 << WLAN_CRYPTO_KEY_MGMT_FT_SAE);
+	if (resp->reason == CM_ASSOC_TIMEOUT && (sae_connection ||
+	    (mlme_get_reconn_after_assoc_timeout_flag(psoc, resp->vdev_id)))) {
+		/* For SAE use max retry count from INI */
+		if (sae_connection)
+			wlan_mlme_get_sae_assoc_retry_count(psoc,
+							    &max_retry_count);
+		goto use_same_candidate;
+	}
+
+	return false;
+
+use_same_candidate:
+	if (req->cur_candidate_retries >= max_retry_count)
+		return false;
+
+	mlme_info(CM_PREFIX_FMT "Retry again with " QDF_MAC_ADDR_FMT ", status code %d reason %d key_mgmt 0x%x retry count %d max retry %d",
+		  CM_PREFIX_REF(resp->vdev_id, resp->cm_id),
+		  QDF_MAC_ADDR_REF(resp->bssid.bytes), resp->reason_code,
+		  resp->reason, key_mgmt, req->cur_candidate_retries,
+		  max_retry_count);
+
+	req->cur_candidate_retries++;
+
+	return true;
+}
+
+#else
+static inline QDF_STATUS
+cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_rsp *resp)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
+				     struct cm_connect_req req,
+				     struct wlan_cm_connect_rsp *resp)
+{
+	return false;
+}
+#endif
+
 static inline void
 cm_set_pmf_caps(struct cm_connect_req *cm_req, struct scan_filter *filter)
 {
@@ -721,6 +827,7 @@ connect_err:
  * candidate
  * @cm_ctx: connection manager context
  * @cm_req: Connect request.
+ * @resp: connect resp from previous connection attempt
  *
  * This function return a valid candidate to try connection. It return failure
  * if no valid candidate is present or all valid candidate are tried.
@@ -728,13 +835,15 @@ connect_err:
  * Return: QDF status
  */
 static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
-					 struct cm_req *cm_req)
+					 struct cm_req *cm_req,
+					 struct wlan_cm_connect_rsp *resp)
 {
 	struct scan_cache_node *scan_node = NULL;
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct scan_cache_node *new_candidate = NULL, *prev_candidate;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	bool use_same_candidate = false;
 
 	prev_candidate = cm_req->connect_req.cur_candidate;
 	if (cm_req->connect_req.connect_attempts >=
@@ -745,6 +854,14 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 			  cm_ctx->max_connect_attempts);
 		status = QDF_STATUS_E_FAILURE;
 		goto flush_single_pmk;
+	}
+
+	if (prev_candidate && resp &&
+	    cm_is_retry_with_same_candidate(cm_ctx, &cm_req->connect_req,
+					    resp)) {
+		new_candidate = prev_candidate;
+		use_same_candidate = true;
+		goto try_same_candidate;
 	}
 
 	/*
@@ -774,7 +891,7 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 	}
 
 	/*
-	 * If cur_node is NULL cur candidate was last to be tried so no more
+	 * If cur_node is NULL prev candidate was last to be tried so no more
 	 * candidates left for connect now.
 	 */
 	if (!cur_node) {
@@ -785,15 +902,21 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 		goto flush_single_pmk;
 	}
 
+	/* Reset current candidate retries when a new candidate is tried */
+	cm_req->connect_req.cur_candidate_retries = 0;
+
+try_same_candidate:
 	cm_req->connect_req.connect_attempts++;
 	cm_req->connect_req.cur_candidate = new_candidate;
 
 flush_single_pmk:
 	/*
 	 * If connection fails with Single PMK bssid (prev candidate),
-	 * clear the pmk entry.
+	 * clear the pmk entry. Flush only in case if we are not trying again
+	 * with same candidate again.
 	 */
-	if (prev_candidate && util_scan_entry_single_pmk(prev_candidate->entry))
+	if (prev_candidate && !use_same_candidate &&
+	    util_scan_entry_single_pmk(prev_candidate->entry))
 		cm_delete_pmksa_for_single_pmk_bssid(cm_ctx,
 						&prev_candidate->entry->bssid);
 
@@ -872,7 +995,7 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
 
-	status = cm_get_valid_candidate(cm_ctx, cm_req);
+	status = cm_get_valid_candidate(cm_ctx, cm_req, resp);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_err;
 
@@ -935,7 +1058,7 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
 	cm_fill_vdev_crypto_params(cm_ctx, req);
 
-	status = cm_get_valid_candidate(cm_ctx, cm_req);
+	status = cm_get_valid_candidate(cm_ctx, cm_req, NULL);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_err;
 
@@ -1033,35 +1156,6 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 
 	return status;
 }
-
-#ifdef CONN_MGR_ADV_FEATURE
-static QDF_STATUS
-cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_rsp *resp)
-{
-	struct wlan_objmgr_pdev *pdev;
-
-	pdev = wlan_vdev_get_pdev(vdev);
-	if (!pdev) {
-		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
-			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), resp->cm_id));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (QDF_IS_STATUS_SUCCESS(resp->connect_status))
-		wlan_blm_update_bssid_connect_params(pdev, resp->bssid,
-						     BLM_AP_CONNECTED);
-
-	return QDF_STATUS_SUCCESS;
-}
-#else
-static inline QDF_STATUS
-cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_rsp *resp)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_rsp *resp)
