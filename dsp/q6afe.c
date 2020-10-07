@@ -2280,6 +2280,10 @@ static int afe_send_cps_config(int src_port)
 			continue;
 		}
 
+		if (i >= this_afe.num_spkrs) {
+			pr_err("%s: invalid ch index %d\n", __func__, i);
+			goto fail_cmd;
+		}
 		memcpy(packed_payload + cpy_size,
 			&this_afe.cps_config->spkr_dep_cfg[i],
 			sizeof(struct lpass_swr_spkr_dep_cfg_t));
@@ -2302,6 +2306,8 @@ static int afe_send_cps_config(int src_port)
 		pr_err("%s: port = 0x%x param = 0x%x failed %d\n", __func__,
 		       src_port, param_info.param_id, ret);
 
+
+fail_cmd:
 	pr_debug("%s: config.pdata.param_id 0x%x status %d 0x%x\n", __func__,
 		 param_info.param_id, ret, src_port);
 	kfree(packed_payload);
