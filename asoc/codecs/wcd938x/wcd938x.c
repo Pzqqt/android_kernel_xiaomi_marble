@@ -2184,8 +2184,6 @@ static int wcd938x_event_notify(struct notifier_block *block,
 				__func__);
 		} else {
 			wcd938x_mbhc_hs_detect(component, mbhc->mbhc_cfg);
-			if (wcd938x->usbc_hs_status)
-				mdelay(500);
 		}
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = false;
 		wcd938x->dev_up = true;
@@ -2193,6 +2191,8 @@ static int wcd938x_event_notify(struct notifier_block *block,
 			blocking_notifier_call_chain(&wcd938x->notifier,
 						     WCD938X_EVT_SSR_UP,
 						     NULL);
+		if (wcd938x->usbc_hs_status)
+			mdelay(500);
 		break;
 	case BOLERO_SLV_EVT_CLK_NOTIFY:
 		snd_soc_component_update_bits(component,
