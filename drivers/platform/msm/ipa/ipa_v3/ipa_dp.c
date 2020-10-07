@@ -1203,7 +1203,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
 		result = -ENOMEM;
-		goto fail_gen2;
+		goto fail_napi;
 	}
 
 	ep->valid = 1;
@@ -1220,17 +1220,17 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		ep->sys->status_stat =
 			kzalloc(sizeof(struct ipa3_status_stats), GFP_KERNEL);
 		if (!ep->sys->status_stat)
-			goto fail_gen2;
+			goto fail_napi;
 	}
 
 	if (!ep->skip_ep_cfg) {
 		if (ipa3_cfg_ep(ipa_ep_idx, &sys_in->ipa_ep_cfg)) {
 			IPAERR("fail to configure EP.\n");
-			goto fail_gen2;
+			goto fail_napi;
 		}
 		if (ipa3_cfg_ep_status(ipa_ep_idx, &ep->status)) {
 			IPAERR("fail to configure status of EP.\n");
-			goto fail_gen2;
+			goto fail_napi;
 		}
 		IPADBG("ep %d configuration successful\n", ipa_ep_idx);
 	} else {
@@ -1240,7 +1240,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	result = ipa_gsi_setup_channel(sys_in, ep);
 	if (result) {
 		IPAERR("Failed to setup GSI channel\n");
-		goto fail_gen2;
+		goto fail_napi;
 	}
 
 	*clnt_hdl = ipa_ep_idx;
@@ -1251,7 +1251,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			IPAERR("failed to alloc repl for client %d\n",
 					sys_in->client);
 			result = -ENOMEM;
-			goto fail_gen2;
+			goto fail_napi;
 		}
 		atomic_set(&ep->sys->repl->pending, 0);
 		ep->sys->repl->capacity = ep->sys->rx_pool_sz + 1;
@@ -1276,7 +1276,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			IPAERR("failed to alloc repl for client %d\n",
 					sys_in->client);
 			result = -ENOMEM;
-			goto fail_gen2;
+			goto fail_napi;
 		}
 		atomic_set(&ep->sys->page_recycle_repl->pending, 0);
 		ep->sys->page_recycle_repl->capacity =
@@ -1381,6 +1381,11 @@ fail_page_recycle_repl:
 		ep->sys->page_recycle_repl->capacity = 0;
 		kfree(ep->sys->page_recycle_repl);
 	}
+fail_napi:
+	/* Delete NAPI TX object. */
+	if (ipa3_ctx->tx_napi_enable &&
+		(IPA_CLIENT_IS_PROD(sys_in->client)))
+		netif_napi_del(&ep->sys->napi_tx);
 fail_gen2:
 	ipa_pm_deregister(ep->sys->pm_hdl);
 fail_pm:
