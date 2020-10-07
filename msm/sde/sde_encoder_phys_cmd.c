@@ -174,12 +174,14 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
 	struct sde_encoder_phys_cmd *cmd_enc;
-	u32 event = 0;
+	struct sde_hw_ctl *ctl;
+	u32 scheduler_status = INVALID_CTL_STATUS, event = 0;
 
 	if (!phys_enc || !phys_enc->hw_pp)
 		return;
 
 	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
+	ctl = phys_enc->hw_ctl;
 
 	SDE_ATRACE_BEGIN("pp_done_irq");
 
@@ -196,8 +198,11 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 		spin_unlock(phys_enc->enc_spinlock);
 	}
 
+	if (ctl && ctl->ops.get_scheduler_status)
+		scheduler_status = ctl->ops.get_scheduler_status(ctl);
+
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent),
-			phys_enc->hw_pp->idx - PINGPONG_0, event);
+			phys_enc->hw_pp->idx - PINGPONG_0, event, scheduler_status);
 
 	/* Signal any waiting atomic commit thread */
 	wake_up_all(&phys_enc->pending_kickoff_wq);

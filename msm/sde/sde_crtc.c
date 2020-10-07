@@ -1419,7 +1419,7 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 	uint32_t stage_idx, lm_idx, layout_idx;
 	int zpos_cnt[MAX_LAYOUTS_PER_CRTC][SDE_STAGE_MAX + 1];
 	int i, mode, cnt = 0;
-	bool bg_alpha_enable = false, is_secure = false;
+	bool bg_alpha_enable = false;
 	u32 blend_type;
 	DECLARE_BITMAP(fetch_active, SSPP_MAX);
 
@@ -1454,9 +1454,6 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
 		mode = sde_plane_get_property(pstate,
 				PLANE_PROP_FB_TRANSLATION_MODE);
-		is_secure = ((mode == SDE_DRM_FB_SEC) ||
-				(mode == SDE_DRM_FB_SEC_DIR_TRANS)) ?
-				true : false;
 
 		set_bit(sde_plane_pipe(plane), fetch_active);
 		sde_plane_ctl_flush(plane, ctl, true);
@@ -1488,7 +1485,7 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 					state->src_w >> 16, state->src_h >> 16,
 					state->crtc_x, state->crtc_y,
 					state->crtc_w, state->crtc_h,
-					pstate->rotation, is_secure);
+					pstate->rotation, mode);
 
 			/*
 			 * none or left layout will program to layer mixer
