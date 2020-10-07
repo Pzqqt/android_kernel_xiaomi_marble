@@ -173,7 +173,6 @@ struct va_macro_priv {
 	bool lpi_enable;
 	bool register_event_listener;
 	int dec_mode[VA_MACRO_NUM_DECIMATORS];
-	int disable_afe_wakeup_event_listener;
 };
 
 static bool va_macro_get_data(struct snd_soc_component *component,
@@ -493,8 +492,7 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 				dev_dbg(va_dev, "%s: clock switch failed\n",
 					__func__);
 		}
-		if (va_priv->lpi_enable &&
-			!va_priv->disable_afe_wakeup_event_listener) {
+		if (va_priv->lpi_enable) {
 			bolero_register_event_listener(component, true);
 			va_priv->register_event_listener = true;
 		}
@@ -3057,10 +3055,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
 	u32 is_used_va_swr_gpio = 0;
-	u32 disable_afe_wakeup_event_listener = 0;
 	const char *is_used_va_swr_gpio_dt = "qcom,is-used-swr-gpio";
-	const char *disable_afe_wakeup_event_listener_dt =
-			"qcom,disable-afe-wakeup-event-listener";
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
 			    GFP_KERNEL);
@@ -3102,18 +3097,6 @@ static int va_macro_probe(struct platform_device *pdev)
 			is_used_va_swr_gpio = 0;
 		}
 	}
-
-	if (of_find_property(pdev->dev.of_node,
-			     disable_afe_wakeup_event_listener_dt, NULL)) {
-		ret = of_property_read_u32(pdev->dev.of_node,
-					   disable_afe_wakeup_event_listener_dt,
-					   &disable_afe_wakeup_event_listener);
-		if (ret)
-			dev_dbg(&pdev->dev, "%s: error reading %s in dt\n",
-				__func__, disable_afe_wakeup_event_listener_dt);
-	}
-	va_priv->disable_afe_wakeup_event_listener =
-			disable_afe_wakeup_event_listener;
 
 	va_priv->va_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					"qcom,va-swr-gpios", 0);
