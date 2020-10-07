@@ -31,14 +31,14 @@
 #include "wlan_scan_api.h"
 
 /**
- * ucfg_scan_register_requester() - assigns requester ID to caller and
- * registers scan event call back handler
+ * ucfg_scan_register_requester() - Public ucfg API, assigns requester ID
+ * to caller and registers scan event call back handler
  * @psoc:       psoc object
  * @module_name:name of requester module
  * @event_cb:   event callback function pointer
  * @arg:        argument to @event_cb
  *
- * API, allows other components to allocate requester id
+ * API, allows other components to allocate requester id.
  * Normally used by modules at init time to register their callback
  * and get one requester id. @event_cb will be invoked for
  * all scan events whose requester id matches with @requester.
@@ -46,23 +46,29 @@
  * Return: assigned non zero requester id for success
  *         zero (0) for failure
  */
-wlan_scan_requester
+static inline wlan_scan_requester
 ucfg_scan_register_requester(struct wlan_objmgr_psoc *psoc,
-	uint8_t *module_name, scan_event_handler event_cb, void *arg);
+	uint8_t *module_name, scan_event_handler event_cb, void *arg)
+{
+	return wlan_scan_register_requester(psoc, module_name, event_cb, arg);
+}
 
 /**
- * ucfg_scan_unregister_requester() -reclaims previously allocated requester ID
+ * ucfg_scan_unregister_requester() -Public ucfg API, reclaims previously
+ * allocated requester ID
  * @psoc:       psoc object
  * @requester:  requester ID to reclaim.
  *
- * API, reclaims previously allocated requester id by
- * ucfg_scan_get_req_id_reg_cb()
+ * API, reclaims previously allocated requester id.
  *
  * Return: void
  */
+static inline
 void ucfg_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
-	wlan_scan_requester requester);
-
+	wlan_scan_requester requester)
+{
+	return wlan_scan_unregister_requester(psoc, requester);
+}
 
 /**
  * ucfg_get_scan_requester_name()- returns module name of requester ID owner
@@ -76,18 +82,19 @@ void ucfg_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
 uint8_t *ucfg_get_scan_requester_name(struct wlan_objmgr_psoc *psoc,
 	wlan_scan_requester requester);
 
-
-
 /**
- * ucfg_scan_get_scan_id() - allocates scan ID
+ * ucfg_scan_get_scan_id() - Public ucfg API to allocate scan ID
  * @psoc: psoc object
  *
- * API, allocates a new scan id for caller
+ * Public ucfg API, allocates a new scan id for caller
  *
  * Return: newly allocated scan ID
  */
-wlan_scan_id
-ucfg_scan_get_scan_id(struct wlan_objmgr_psoc *psoc);
+static inline
+wlan_scan_id ucfg_scan_get_scan_id(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_scan_get_scan_id(psoc);
+}
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
@@ -454,17 +461,20 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 	scan_event_handler event_cb, void *arg);
 
 /**
- * ucfg_scan_init_default_params() - get the defaults scan params
+ * ucfg_scan_init_default_params() - Public ucfg API to initialize scan params
  * @vdev: vdev object
  * @req: scan request object
  *
- * get the defaults scan params
+ * Public ucfg API to initialize scan start request with defaults scan params
  *
  * Return: QDF_STATUS_SUCCESS or error code
  */
-QDF_STATUS
+static inline QDF_STATUS
 ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
-	struct scan_start_request *req);
+	struct scan_start_request *req)
+{
+	return wlan_scan_init_default_params(vdev, req);
+}
 
 /**
  * ucfg_scan_init_ssid_params() - initialize scan request ssid list

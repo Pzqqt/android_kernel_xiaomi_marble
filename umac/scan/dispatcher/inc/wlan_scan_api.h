@@ -318,4 +318,64 @@ QDF_STATUS wlan_scan_start(struct scan_start_request *req);
  */
 QDF_STATUS wlan_scan_cancel(struct scan_cancel_request *req);
 
+/**
+ * wlan_scan_get_scan_id() - Public API to allocate scan ID
+ * @psoc: psoc object
+ *
+ * Public API, allocates a new scan id for caller
+ *
+ * Return: newly allocated scan ID
+ */
+wlan_scan_id
+wlan_scan_get_scan_id(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_scan_init_default_params() - Public API to initialize scan params
+ * @vdev: vdev object
+ * @req: scan request object
+ *
+ * Public API to initialize scan start request with defaults scan params
+ *
+ * Return: QDF_STATUS_SUCCESS or error code
+ */
+QDF_STATUS
+wlan_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
+			      struct scan_start_request *req);
+
+/**
+ * wlan_scan_register_requester() - Public API, assigns requester ID
+ * to caller and registers scan event call back handler
+ * @psoc:       psoc object
+ * @module_name:name of requester module
+ * @event_cb:   event callback function pointer
+ * @arg:        argument to @event_cb
+ *
+ * API, allows other components to allocate requester id.
+ * Normally used by modules at init time to register their callback
+ * and get one requester id. @event_cb will be invoked for
+ * all scan events whose requester id matches with @requester.
+ *
+ * Return: assigned non zero requester id for success
+ *         zero (0) for failure
+ */
+wlan_scan_requester
+wlan_scan_register_requester(struct wlan_objmgr_psoc *psoc,
+			     uint8_t *module_name,
+			     scan_event_handler event_cb,
+			     void *arg);
+
+/**
+ * wlan_scan_unregister_requester() -Public API, reclaims previously
+ * allocated requester ID
+ * @psoc:       psoc object
+ * @requester:  requester ID to reclaim.
+ *
+ * API, reclaims previously allocated requester id.
+ *
+ * Return: void
+ */
+void
+wlan_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
+			       wlan_scan_requester requester);
+
 #endif
