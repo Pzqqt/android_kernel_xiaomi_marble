@@ -2179,7 +2179,7 @@ static void afe_send_custom_topology(void)
 		goto unlock;
 	this_afe.set_custom_topology = 0;
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err("%s cal_block not found!!\n", __func__);
 		goto unlock;
 	}
@@ -3027,7 +3027,7 @@ static struct cal_block_data *afe_find_cal_topo_id_by_port(
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 		/* Skip cal_block if it is already marked stale */
-		if (cal_utils_is_cal_stale(cal_block))
+		if (cal_utils_is_cal_stale(cal_block, cal_type))
 			continue;
 		pr_debug("%s: port id: 0x%x, dev_acdb_id: %d\n", __func__,
 			 port_id, this_afe.dev_acdb_id[afe_port_index]);
@@ -3602,7 +3602,7 @@ static int send_afe_cal_type(int cal_index, int port_id)
 		cal_block = cal_utils_get_only_cal_block(
 				this_afe.cal_data[cal_index]);
 
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err_ratelimited("%s cal_block not found!!\n", __func__);
 		ret = -EINVAL;
 		goto unlock;
@@ -8131,7 +8131,7 @@ static int afe_sidetone_iir(u16 tx_port_id)
 	}
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err("%s: cal_block not found\n ", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
@@ -8258,7 +8258,7 @@ static int afe_sidetone(u16 tx_port_id, u16 rx_port_id, bool enable)
 
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err("%s: cal_block not found\n", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
@@ -10326,7 +10326,7 @@ static struct cal_block_data *afe_find_hw_delay_by_path(
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 
-		if (cal_utils_is_cal_stale(cal_block))
+		if (cal_utils_is_cal_stale(cal_block, cal_type))
 			continue;
 
 		if (((struct audio_cal_info_hw_delay *)cal_block->cal_info)
