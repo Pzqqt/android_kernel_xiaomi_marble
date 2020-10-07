@@ -1373,6 +1373,7 @@ static int bolero_probe(struct platform_device *pdev)
 		bolero_reg_access[VA_MACRO] = bolero_va_reg_access_v3;
 	}
 
+	BLOCKING_INIT_NOTIFIER_HEAD(&priv->notifier);
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
 	priv->initial_boot = true;
