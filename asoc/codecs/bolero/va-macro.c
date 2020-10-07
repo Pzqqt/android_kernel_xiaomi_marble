@@ -428,12 +428,8 @@ static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
 			}
 			va_priv->current_clk_id = VA_CORE_CLK;
 		}
-		msm_cdc_pinctrl_set_wakeup_capable(
-				va_priv->va_swr_gpio_p, false);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		msm_cdc_pinctrl_set_wakeup_capable(
-				va_priv->va_swr_gpio_p, true);
 		if (va_priv->current_clk_id == VA_CORE_CLK &&
 			va_priv->va_swr_clk_cnt != 0 &&
 			va_priv->tx_clk_status) {
@@ -610,9 +606,12 @@ static int va_macro_tx_va_mclk_enable(struct va_macro_priv *va_priv,
 		(enable ? "enable" : "disable"), va_priv->va_mclk_users);
 
 	if (enable) {
-		if (va_priv->swr_clk_users == 0)
+		if (va_priv->swr_clk_users == 0) {
 			msm_cdc_pinctrl_select_active_state(
 						va_priv->va_swr_gpio_p);
+			msm_cdc_pinctrl_set_wakeup_capable(
+					va_priv->va_swr_gpio_p, false);
+		}
 		clk_tx_ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
@@ -705,9 +704,12 @@ static int va_macro_tx_va_mclk_enable(struct va_macro_priv *va_priv,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   false);
-		if (va_priv->swr_clk_users == 0)
+		if (va_priv->swr_clk_users == 0) {
+			msm_cdc_pinctrl_set_wakeup_capable(
+					va_priv->va_swr_gpio_p, true);
 			msm_cdc_pinctrl_select_sleep_state(
 						va_priv->va_swr_gpio_p);
+		}
 	}
 	return 0;
 
