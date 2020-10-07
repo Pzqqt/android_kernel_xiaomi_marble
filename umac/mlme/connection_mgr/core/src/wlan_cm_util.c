@@ -120,13 +120,83 @@ static inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 QDF_STATUS cm_set_key(struct cnx_mgr *cm_ctx, bool unicast,
 		      uint8_t key_idx, struct qdf_mac_addr *bssid)
 {
+	enum wlan_crypto_cipher_type cipher;
 	struct wlan_crypto_key *crypto_key;
+	uint8_t wep_key_idx = 0;
 
-	crypto_key = wlan_crypto_get_key(cm_ctx->vdev, key_idx);
+	cipher = wlan_crypto_get_cipher(cm_ctx->vdev, unicast, key_idx);
+	if (IS_WEP_CIPHER(cipher)) {
+		wep_key_idx = wlan_crypto_get_default_key_idx(cm_ctx->vdev,
+							      !unicast);
+		crypto_key = wlan_crypto_get_key(cm_ctx->vdev, wep_key_idx);
+		qdf_mem_copy(crypto_key->macaddr, bssid->bytes,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		crypto_key = wlan_crypto_get_key(cm_ctx->vdev, key_idx);
+	}
 
 	return wlan_crypto_set_key_req(cm_ctx->vdev, crypto_key, (unicast ?
 				       WLAN_CRYPTO_KEY_TYPE_UNICAST :
 				       WLAN_CRYPTO_KEY_TYPE_GROUP));
+}
+#endif
+
+#ifdef CONN_MGR_ADV_FEATURE
+void cm_store_wep_key(struct cnx_mgr *cm_ctx,
+		      struct wlan_cm_connect_crypto_info *crypto,
+		      wlan_cm_id cm_id)
+{
+	struct wlan_crypto_key *crypto_key = NULL;
+	QDF_STATUS status;
+	enum wlan_crypto_cipher_type cipher_type;
+	struct wlan_cm_wep_key_params *wep_keys;
+
+	if (!(crypto->ciphers_pairwise & (1 << WLAN_CRYPTO_CIPHER_WEP_40 |
+					  1 << WLAN_CRYPTO_CIPHER_WEP_104)))
+		return;
+
+	if (crypto->ciphers_pairwise & 1 << WLAN_CRYPTO_CIPHER_WEP_40)
+		cipher_type = WLAN_CRYPTO_CIPHER_WEP_40;
+	else
+		cipher_type = WLAN_CRYPTO_CIPHER_WEP_104;
+
+	wep_keys = &crypto->wep_keys;
+	status = wlan_crypto_validate_key_params(cipher_type,
+						 wep_keys->key_idx,
+						 wep_keys->key_len,
+						 wep_keys->seq_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "Invalid key params",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
+		return;
+	}
+
+	crypto_key = wlan_crypto_get_key(cm_ctx->vdev, wep_keys->key_idx);
+	if (!crypto_key) {
+		crypto_key = qdf_mem_malloc(sizeof(*crypto_key));
+		if (!crypto_key)
+			return;
+
+		status = wlan_crypto_save_key(cm_ctx->vdev, wep_keys->key_idx,
+					      crypto_key);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlme_err(CM_PREFIX_FMT "Failed to save key",
+				 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					       cm_id));
+			qdf_mem_free(crypto_key);
+			return;
+		}
+	}
+	qdf_mem_zero(crypto_key, sizeof(*crypto_key));
+	crypto_key->cipher_type = cipher_type;
+	crypto_key->keylen = wep_keys->key_len;
+	crypto_key->keyix = wep_keys->key_idx;
+	qdf_mem_copy(&crypto_key->keyval[0], wep_keys->key, wep_keys->key_len);
+	qdf_mem_copy(&crypto_key->keyrsc[0], wep_keys->seq, wep_keys->seq_len);
+	mlme_debug(CM_PREFIX_FMT "cipher_type %d key_len %d, seq_len %d",
+		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
+		   crypto_key->cipher_type, wep_keys->key_len,
+		   wep_keys->seq_len);
 }
 #endif
 

@@ -669,12 +669,26 @@ static void cm_update_security_filter(struct scan_filter *filter,
 static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 				struct wlan_cm_connect_rsp *resp)
 {
+	int32_t cipher;
+	struct qdf_mac_addr broadcast_mac = QDF_MAC_ADDR_BCAST_INIT;
+
+	/* Check and set FILS keys */
 	if (cm_is_fils_connection(cm_ctx, resp)) {
 		cm_set_fils_key(cm_ctx, resp);
 		return;
 	}
+	/* Check and set WEP keys */
+	cipher = wlan_crypto_get_param(cm_ctx->vdev,
+				       WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (cipher < 0)
+		return;
 
-	/* set WEP keys */
+	if (!(cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40 |
+			1 << WLAN_CRYPTO_CIPHER_WEP_104)))
+		return;
+
+	cm_set_key(cm_ctx, true, 0, &resp->bssid);
+	cm_set_key(cm_ctx, false, 0, &broadcast_mac);
 }
 #else
 static inline QDF_STATUS
@@ -1241,6 +1255,7 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req = &cm_req->connect_req.req;
 	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
 	cm_fill_vdev_crypto_params(cm_ctx, req);
+	cm_store_wep_key(cm_ctx, &req->crypto, *cm_id);
 
 	status = cm_get_valid_candidate(cm_ctx, cm_req, NULL, NULL);
 	if (QDF_IS_STATUS_ERROR(status))

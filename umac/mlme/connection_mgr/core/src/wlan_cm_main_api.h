@@ -497,6 +497,25 @@ QDF_STATUS cm_set_key(struct cnx_mgr *cm_ctx, bool unicast,
 		      uint8_t key_idx, struct qdf_mac_addr *bssid);
 #endif
 
+#ifdef CONN_MGR_ADV_FEATURE
+/**
+ * cm_store_wep_key() - store wep keys in crypto on connect active
+ * @cm_ctx: connection manager context
+ * @crypto: connection crypto info
+ * @cm_id: cm_id of the connection
+ *
+ * Return: void
+ */
+void cm_store_wep_key(struct cnx_mgr *cm_ctx,
+		      struct wlan_cm_connect_crypto_info *crypto,
+		      wlan_cm_id cm_id);
+#else
+static inline void cm_store_wep_key(struct cnx_mgr *cm_ctx,
+				    struct wlan_cm_connect_crypto_info *crypto,
+				    wlan_cm_id cm_id)
+{}
+#endif
+
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * cm_store_fils_key() - store fils keys in crypto on connection complete
