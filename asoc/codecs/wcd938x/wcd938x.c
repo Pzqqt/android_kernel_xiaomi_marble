@@ -2843,15 +2843,22 @@ static int wcd938x_tx_master_ch_get(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int slave_ch_idx;
+	struct wcd938x_priv *wcd938x = NULL;
+	int slave_ch_idx = -EINVAL;
+
+	if (component == NULL)
+		return -EINVAL;
+
+	wcd938x = snd_soc_component_get_drvdata(component);
+	if (wcd938x == NULL)
+		return -EINVAL;
 
 	wcd938x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+	if (slave_ch_idx < 0 || slave_ch_idx >= WCD938X_MAX_SLAVE_CH_TYPES)
+		return -EINVAL;
 
-	if (slave_ch_idx != -EINVAL)
-		ucontrol->value.integer.value[0] =
-				wcd938x_slave_get_master_ch_val(
-				wcd938x->tx_master_ch_map[slave_ch_idx]);
+	ucontrol->value.integer.value[0] = wcd938x_slave_get_master_ch_val(
+			wcd938x->tx_master_ch_map[slave_ch_idx]);
 
 	return 0;
 }
@@ -2861,19 +2868,27 @@ static int wcd938x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int slave_ch_idx;
+	struct wcd938x_priv *wcd938x = NULL;
+	int slave_ch_idx = -EINVAL;
+
+	if (component == NULL)
+		return -EINVAL;
+
+	wcd938x = snd_soc_component_get_drvdata(component);
+	if (wcd938x == NULL)
+		return -EINVAL;
 
 	wcd938x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+
+	if (slave_ch_idx < 0 || slave_ch_idx >= WCD938X_MAX_SLAVE_CH_TYPES)
+		return -EINVAL;
 
 	dev_dbg(component->dev, "%s: slave_ch_idx: %d", __func__, slave_ch_idx);
 	dev_dbg(component->dev, "%s: ucontrol->value.enumerated.item[0] = %ld\n",
 			__func__, ucontrol->value.enumerated.item[0]);
 
-	if (slave_ch_idx != -EINVAL)
-		wcd938x->tx_master_ch_map[slave_ch_idx] =
-				wcd938x_slave_get_master_ch(
-					ucontrol->value.enumerated.item[0]);
+	wcd938x->tx_master_ch_map[slave_ch_idx] = wcd938x_slave_get_master_ch(
+				ucontrol->value.enumerated.item[0]);
 	return 0;
 }
 
