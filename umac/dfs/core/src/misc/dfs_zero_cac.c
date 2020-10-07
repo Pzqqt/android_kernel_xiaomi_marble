@@ -3593,7 +3593,8 @@ dfs_save_rcac_ch_params(struct wlan_dfs *dfs, struct ch_params rcac_ch_params,
  * Return: Rolling CAC frequency in MHZ.
  */
 static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
-				     enum phy_ch_width curchan_chwidth)
+				     enum phy_ch_width curchan_chwidth,
+				     enum phy_ch_width agile_chwidth)
 {
 	bool is_user_rcac_chan_valid = false;
 	qdf_freq_t rcac_freq, rcac_center_freq = 0;
@@ -3610,17 +3611,17 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 	/* Check if user configured RCAC frequency is valid */
 	if (dfs->dfs_agile_rcac_freq_ucfg)
 		is_user_rcac_chan_valid =
-		    dfs_is_rcac_chan_valid(dfs, curchan_chwidth,
+		    dfs_is_rcac_chan_valid(dfs, agile_chwidth,
 					   dfs->dfs_agile_rcac_freq_ucfg);
 
 	if (is_user_rcac_chan_valid) {
 		rcac_freq = dfs->dfs_agile_rcac_freq_ucfg;
 		if (dfs_find_dfschan_for_freq(dfs, rcac_freq, 0,
-					      curchan_chwidth,
+					      agile_chwidth,
 					      &dfs_chan) != QDF_STATUS_SUCCESS)
 			goto exit;
 
-		nxt_chan_params.ch_width = curchan_chwidth;
+		nxt_chan_params.ch_width = agile_chwidth;
 		/* Get the ch_params from regulatory. ch_width and rcac_freq
 		 * are the input given to fetch other params of struct
 		 * ch_params.
@@ -3718,7 +3719,8 @@ exit:
 
 #else
 static inline qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
-					    enum phy_ch_width curchan_chwidth)
+					    enum phy_ch_width curchan_chwidth,
+					    enum phy_ch_width agile_chwidth)
 {
 	return 0;
 }
@@ -3781,7 +3783,8 @@ void dfs_set_agilecac_chan_for_freq(struct wlan_dfs *dfs,
 	dfs->dfs_precac_chwidth = agile_chwidth;
 
 	if (dfs_is_agile_rcac_enabled(dfs))
-		ieee_chan_freq = dfs_find_rcac_chan(dfs, curchan_chwidth);
+		ieee_chan_freq = dfs_find_rcac_chan(dfs, curchan_chwidth,
+						    agile_chwidth);
 	else
 		ieee_chan_freq = dfs_find_precac_chan(dfs, pri_ch_freq,
 						      sec_ch_freq);
