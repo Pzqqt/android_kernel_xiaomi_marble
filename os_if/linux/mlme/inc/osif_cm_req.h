@@ -31,15 +31,34 @@
 #include "wlan_objmgr_vdev_obj.h"
 
 /**
+ * struct osif_connect_params - extra connect params
+ * @scan_ie: default scan ie to be used in connect scan and unicast probe req
+ * during connect
+ * @force_rsne_override: force the arbitrary rsne received in connect req to be
+ * used with out validation, used for the scenarios where the device is used
+ * as a testbed device with special functionality and not recommended
+ * for production.
+ * @dot11mode_filter: dot11mode filter used to restrict connection to
+ * 11n/11ac/11ax.
+ */
+struct osif_connect_params {
+	struct element_info scan_ie;
+	bool force_rsne_override;
+	enum dot11_mode_filter dot11mode_filter;
+};
+
+/**
  * osif_cm_connect() - Connect start request
  * @dev: net dev
  * @vdev: vdev pointer
  * @req: connect req
+ * @params: connect params
  *
  * Return: int
  */
 int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
-		    struct cfg80211_connect_params *req);
+		    const struct cfg80211_connect_params *req,
+		    const struct osif_connect_params *params);
 
 /**
  * osif_cm_disconnect() - Disconnect start request

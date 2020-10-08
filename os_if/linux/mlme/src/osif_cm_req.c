@@ -47,7 +47,7 @@ static void osif_cm_free_wep_key_params(struct wlan_cm_connect_req *connect_req)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
 static QDF_STATUS
 osif_cm_update_wep_seq_info(struct wlan_cm_connect_req *connect_req,
-			    struct cfg80211_connect_params *req)
+			    const struct cfg80211_connect_params *req)
 {
 	if (req->crypto.wep_keys->seq_len) {
 		connect_req->crypto.wep_keys.seq_len =
@@ -67,15 +67,15 @@ osif_cm_update_wep_seq_info(struct wlan_cm_connect_req *connect_req,
 #else
 static inline QDF_STATUS
 osif_cm_update_wep_seq_info(struct wlan_cm_connect_req *connect_req,
-			    struct cfg80211_connect_params *req)
+			    const struct cfg80211_connect_params *req)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 
-static QDF_STATUS osif_cm_set_wep_key_params(
-				struct wlan_cm_connect_req *connect_req,
-				struct cfg80211_connect_params *req)
+static QDF_STATUS
+osif_cm_set_wep_key_params(struct wlan_cm_connect_req *connect_req,
+			   const struct cfg80211_connect_params *req)
 {
 	if (!req->key_len)
 		return QDF_STATUS_SUCCESS;
@@ -95,7 +95,7 @@ static QDF_STATUS osif_cm_set_wep_key_params(
 }
 
 static void osif_cm_set_auth_type(struct wlan_cm_connect_req *connect_req,
-				  struct cfg80211_connect_params *req)
+				  const struct cfg80211_connect_params *req)
 {
 	wlan_crypto_auth_mode crypto_auth_type =
 			osif_nl_to_crypto_auth_type(req->auth_type);
@@ -116,7 +116,7 @@ static void osif_cm_set_auth_type(struct wlan_cm_connect_req *connect_req,
 
 static
 QDF_STATUS osif_cm_set_crypto_params(struct wlan_cm_connect_req *connect_req,
-				     struct cfg80211_connect_params *req)
+				     const struct cfg80211_connect_params *req)
 {
 	uint32_t i = 0;
 	QDF_STATUS status;
@@ -193,7 +193,7 @@ static bool osif_cm_is_akm_suite_fils(uint32_t key_mgmt)
 	}
 }
 
-static bool osif_cm_is_conn_type_fils(struct cfg80211_connect_params *req)
+static bool osif_cm_is_conn_type_fils(const struct cfg80211_connect_params *req)
 {
 	int num_akm_suites = req->crypto.n_akm_suites;
 	uint32_t key_mgmt = req->crypto.akm_suites[0];
@@ -218,8 +218,9 @@ static bool osif_cm_is_conn_type_fils(struct cfg80211_connect_params *req)
 	return true;
 }
 
-static QDF_STATUS osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
-					struct cfg80211_connect_params *req)
+static QDF_STATUS
+osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
+		      const struct cfg80211_connect_params *req)
 {
 	connect_req->fils_info.is_fils_connection =
 					osif_cm_is_conn_type_fils(req);
@@ -262,7 +263,7 @@ static QDF_STATUS osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
 #else
 static inline
 QDF_STATUS osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
-				 struct cfg80211_connect_params *req)
+				 const struct cfg80211_connect_params *req)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -271,13 +272,14 @@ QDF_STATUS osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 static inline void
 osif_cm_set_prev_bssid(struct wlan_cm_connect_req *connect_req,
-		       struct cfg80211_connect_params *req)
+		       const struct cfg80211_connect_params *req)
 {
 	qdf_mem_copy(connect_req->prev_bssid.bytes, req->prev_bssid,
 		     QDF_MAC_ADDR_SIZE);
 }
 
-static inline void osif_cm_dump_prev_bssid(struct cfg80211_connect_params *req)
+static inline
+void osif_cm_dump_prev_bssid(const struct cfg80211_connect_params *req)
 {
 	if (req->prev_bssid)
 		osif_nofl_debug("prev BSSID "QDF_MAC_ADDR_FMT,
@@ -287,19 +289,20 @@ static inline void osif_cm_dump_prev_bssid(struct cfg80211_connect_params *req)
 #else
 static inline void
 osif_cm_set_prev_bssid(struct wlan_cm_connect_req *connect_req,
-		       struct cfg80211_connect_params *req)
+		       const struct cfg80211_connect_params *req)
 {
 }
 
-static inline void osif_cm_dump_prev_bssid(struct cfg80211_connect_params *req)
+static inline
+void osif_cm_dump_prev_bssid(const struct cfg80211_connect_params *req)
 {
 }
 
 #endif
 
-static inline void osif_cm_dump_connect_req(struct net_device *dev,
-					    uint8_t vdev_id,
-					    struct cfg80211_connect_params *req)
+static inline void
+osif_cm_dump_connect_req(struct net_device *dev, uint8_t vdev_id,
+			 const struct cfg80211_connect_params *req)
 {
 	uint32_t i;
 
@@ -328,8 +331,44 @@ static inline void osif_cm_dump_connect_req(struct net_device *dev,
 				req->crypto.ciphers_pairwise[i]);
 }
 
+static void
+osif_cm_fill_connect_params(struct wlan_cm_connect_req *req,
+			    const struct osif_connect_params *params)
+{
+	if (!params)
+		return;
+
+	if (params->scan_ie.len) {
+		req->scan_ie.ptr = qdf_mem_malloc(params->scan_ie.len);
+		if (req->scan_ie.ptr) {
+			qdf_mem_copy(req->scan_ie.ptr, params->scan_ie.ptr,
+				     params->scan_ie.len);
+			req->scan_ie.len = params->scan_ie.len;
+		}
+	}
+	req->dot11mode_filter = params->dot11mode_filter;
+	req->force_rsne_override = params->force_rsne_override;
+}
+
+static void osif_cm_free_connect_req(struct wlan_cm_connect_req *connect_req)
+{
+	if (connect_req->scan_ie.ptr) {
+		qdf_mem_free(connect_req->scan_ie.ptr);
+		connect_req->assoc_ie.ptr = NULL;
+	}
+
+	if (connect_req->assoc_ie.ptr) {
+		qdf_mem_free(connect_req->assoc_ie.ptr);
+		connect_req->assoc_ie.ptr = NULL;
+	}
+
+	osif_cm_free_wep_key_params(connect_req);
+	qdf_mem_free(connect_req);
+}
+
 int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
-		    struct cfg80211_connect_params *req)
+		    const struct cfg80211_connect_params *req,
+		    const struct osif_connect_params *params)
 {
 	struct wlan_cm_connect_req *connect_req;
 	const u8 *bssid_hint = req->bssid_hint;
@@ -395,17 +434,14 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_start_fail;
 
+	osif_cm_fill_connect_params(connect_req, params);
+
 	status = ucfg_cm_start_connect(vdev, connect_req);
 	if (QDF_IS_STATUS_ERROR(status))
 		osif_err("Connect failed with status %d", status);
 
 connect_start_fail:
-	if (connect_req->assoc_ie.ptr) {
-		qdf_mem_free(connect_req->assoc_ie.ptr);
-		connect_req->assoc_ie.ptr = NULL;
-	}
-	osif_cm_free_wep_key_params(connect_req);
-	qdf_mem_free(connect_req);
+	osif_cm_free_connect_req(connect_req);
 
 	return qdf_status_to_os_return(status);
 }

@@ -144,6 +144,13 @@ enum wlan_cm_source {
  * @crypto: crypto related info
  * @assoc_ie:Additional assoc IE to be appended in assoc req
  *           (Include RSN/WPA/WAPI/WPS ies)
+ * @scan_ie: Default scan ie to be used in the uncast probe req and connect scan
+ * @force_rsne_override: force the arbitrary rsne received in connect req to be
+ * used with out validation, used for the scenarios where the device is used
+ * as a testbed device with special functionality and not recommended
+ * for production.
+ * @dot11mode_filter: dot11mode filter used to restrict connection to
+ * 11n/11ac/11ax.
  * @ht_caps: ht capability
  * @ht_caps_mask: mask of valid ht caps
  * @vht_caps: vht capability
@@ -160,6 +167,9 @@ struct wlan_cm_connect_req {
 	uint32_t chan_freq;
 	struct wlan_cm_connect_crypto_info crypto;
 	struct element_info assoc_ie;
+	struct element_info scan_ie;
+	bool force_rsne_override;
+	enum dot11_mode_filter dot11mode_filter;
 	uint16_t ht_caps;
 	uint16_t ht_caps_mask;
 	uint32_t vht_caps;
@@ -174,13 +184,20 @@ struct wlan_cm_connect_req {
  * vdev mgr
  * @vdev_id: vdev id
  * @cm_id: Connect manager id
- * @assoc_ie: assoc ie
+ * @force_rsne_override: force the arbitrary rsne received in connect req to be
+ * used with out validation, used for the scenarios where the device is used
+ * as a testbed device with special functionality and not recommended
+ * for production.
+ * @assoc_ie: assoc ie to be used in assoc req
+ * @scan_ie: Default scan ie to be used in the uncast probe req
  * @bss: scan entry for the candidate
  */
 struct wlan_cm_vdev_connect_req {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
+	bool force_rsne_override;
 	struct element_info assoc_ie;
+	struct element_info scan_ie;
 	struct scan_cache_node *bss;
 };
 

@@ -1130,7 +1130,9 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 
 	req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	req.cm_id = *cm_id;
+	req.force_rsne_override = cm_req->connect_req.req.force_rsne_override;
 	req.assoc_ie = cm_req->connect_req.req.assoc_ie;
+	req.scan_ie = cm_req->connect_req.req.scan_ie;
 	req.bss = cm_req->connect_req.cur_candidate;
 
 	wlan_reg_read_current_country(psoc, country_code);
@@ -1466,15 +1468,29 @@ cm_set_crypto_params_from_ie(struct wlan_cm_connect_req *req)
 }
 
 static QDF_STATUS
-cm_allocate_and_copy_assoc_wep_ie(struct wlan_cm_connect_req *target,
+cm_allocate_and_copy_ies_and_keys(struct wlan_cm_connect_req *target,
 				  struct wlan_cm_connect_req *source)
 {
+	/* Reset the copied pointers of target */
+	source->assoc_ie.ptr = NULL;
+	source->crypto.wep_keys.key = NULL;
+	source->crypto.wep_keys.seq = NULL;
+	source->scan_ie.ptr = NULL;
+
+	if (source->scan_ie.ptr) {
+		target->scan_ie.ptr = qdf_mem_malloc(source->scan_ie.len);
+		if (!target->scan_ie.ptr)
+			target->scan_ie.len = 0;
+		else
+			qdf_mem_copy(target->scan_ie.ptr,
+				     source->scan_ie.ptr, source->scan_ie.len);
+	}
+
 	if (source->assoc_ie.ptr) {
 		target->assoc_ie.ptr = qdf_mem_malloc(source->assoc_ie.len);
 		if (!target->assoc_ie.ptr)
 			return QDF_STATUS_E_NOMEM;
 
-		target->assoc_ie.len = source->assoc_ie.len;
 		qdf_mem_copy(target->assoc_ie.ptr, source->assoc_ie.ptr,
 			     source->assoc_ie.len);
 	}
@@ -1483,10 +1499,8 @@ cm_allocate_and_copy_assoc_wep_ie(struct wlan_cm_connect_req *target,
 		target->crypto.wep_keys.key =
 			qdf_mem_malloc(source->crypto.wep_keys.key_len);
 		if (!target->crypto.wep_keys.key)
-			goto wep_key_alloc_fail;
+			return QDF_STATUS_E_NOMEM;
 
-		target->crypto.wep_keys.key_len =
-				source->crypto.wep_keys.key_len;
 		qdf_mem_copy(target->crypto.wep_keys.key,
 			     source->crypto.wep_keys.key,
 			     source->crypto.wep_keys.key_len);
@@ -1496,33 +1510,14 @@ cm_allocate_and_copy_assoc_wep_ie(struct wlan_cm_connect_req *target,
 		target->crypto.wep_keys.seq =
 			qdf_mem_malloc(source->crypto.wep_keys.seq_len);
 		if (!target->crypto.wep_keys.seq)
-			goto wep_seq_alloc_fail;
+			return QDF_STATUS_E_NOMEM;
 
-		target->crypto.wep_keys.seq_len =
-					source->crypto.wep_keys.seq_len;
 		qdf_mem_copy(target->crypto.wep_keys.seq,
 			     source->crypto.wep_keys.seq,
 			     source->crypto.wep_keys.seq_len);
 	}
 
 	return QDF_STATUS_SUCCESS;
-
-wep_seq_alloc_fail:
-	if (target->crypto.wep_keys.key) {
-		qdf_mem_zero(target->crypto.wep_keys.key,
-			     target->crypto.wep_keys.key_len);
-		qdf_mem_free(target->crypto.wep_keys.key);
-		target->crypto.wep_keys.key = NULL;
-	}
-
-wep_key_alloc_fail:
-	if (target->assoc_ie.ptr) {
-		qdf_mem_zero(target->assoc_ie.ptr, target->assoc_ie.len);
-		qdf_mem_free(target->assoc_ie.ptr);
-		target->assoc_ie.ptr = NULL;
-	}
-
-	return QDF_STATUS_E_NOMEM;
 }
 
 QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
@@ -1550,16 +1545,16 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 	connect_req = &cm_req->connect_req;
 	connect_req->req = *req;
 
-	status = cm_allocate_and_copy_assoc_wep_ie(&connect_req->req, req);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(cm_req);
-		return status;
-	}
+	status = cm_allocate_and_copy_ies_and_keys(&connect_req->req, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err;
+
 	cm_set_crypto_params_from_ie(&connect_req->req);
 
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_CONNECT_REQ,
 				     sizeof(*connect_req), connect_req);
 
+err:
 	/* free the req if connect is not handled */
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cm_free_connect_req_mem(connect_req);

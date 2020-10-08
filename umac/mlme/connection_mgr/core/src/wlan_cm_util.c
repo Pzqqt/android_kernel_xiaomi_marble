@@ -469,31 +469,33 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void cm_zero_and_free_memory(uint8_t *ptr, uint32_t len)
+{
+	if (!ptr)
+		return;
+
+	qdf_mem_zero(ptr, len);
+	qdf_mem_free(ptr);
+}
+
 void cm_free_connect_req_mem(struct cm_connect_req *connect_req)
 {
+	struct wlan_cm_connect_req *req;
+
+	req = &connect_req->req;
+
 	if (connect_req->candidate_list)
 		wlan_scan_purge_results(connect_req->candidate_list);
 
-	if (connect_req->req.assoc_ie.ptr) {
-		qdf_mem_zero(connect_req->req.assoc_ie.ptr,
-			     connect_req->req.assoc_ie.len);
-		qdf_mem_free(connect_req->req.assoc_ie.ptr);
-		connect_req->req.assoc_ie.ptr = NULL;
-	}
+	cm_zero_and_free_memory(req->assoc_ie.ptr, req->assoc_ie.len);
+	cm_zero_and_free_memory(req->scan_ie.ptr, req->scan_ie.len);
 
-	if (connect_req->req.crypto.wep_keys.key) {
-		qdf_mem_zero(connect_req->req.crypto.wep_keys.key,
-			     connect_req->req.crypto.wep_keys.key_len);
-		qdf_mem_free(connect_req->req.crypto.wep_keys.key);
-		connect_req->req.crypto.wep_keys.key = NULL;
-	}
+	cm_zero_and_free_memory(req->crypto.wep_keys.key,
+				req->crypto.wep_keys.key_len);
+	cm_zero_and_free_memory(req->crypto.wep_keys.seq,
+				req->crypto.wep_keys.seq_len);
 
-	if (connect_req->req.crypto.wep_keys.seq) {
-		qdf_mem_zero(connect_req->req.crypto.wep_keys.seq,
-			     connect_req->req.crypto.wep_keys.seq_len);
-		qdf_mem_free(connect_req->req.crypto.wep_keys.seq);
-		connect_req->req.crypto.wep_keys.seq = NULL;
-	}
+	qdf_mem_zero(connect_req, sizeof(*connect_req));
 }
 
 QDF_STATUS
