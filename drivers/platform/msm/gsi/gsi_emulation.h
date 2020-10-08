@@ -9,7 +9,6 @@
 # include <linux/interrupt.h>
 
 # include "gsi.h"
-# include "gsi_reg.h"
 
 #if defined(CONFIG_IPA_EMULATION)
 # include "gsi_emulation_stubs.h"

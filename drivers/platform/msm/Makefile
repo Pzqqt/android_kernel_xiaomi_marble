@@ -27,8 +27,9 @@ endif
 
 DATAIPADRVTOP = $(srctree)/techpack/dataipa/drivers/platform/msm
 
-ifneq (,$(filter $(CONFIG_IPA3),y m))
+ifneq (,$(filter $(CONFIG_IPA3) $(CONFIG_GSI),y m))
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi/gsihal
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/ipahal

@@ -30,9 +30,6 @@
 #define GSI_NO_EVT_ERINDEX 31
 #define GSI_ISR_CACHE_MAX 20
 
-#define gsi_readl(c)	(readl_relaxed(c))
-#define gsi_writel(v, c)	({ __iowmb(); writel_relaxed((v), (c)); })
-
 #define GSI_IPC_LOGGING(buf, fmt, args...) \
 	do { \
 		if (buf) \
@@ -2037,10 +2034,11 @@ void gsi_wdi3_dump_register(unsigned long chan_hdl);
 
  * @gsi_base_addr: Base address of GSI register space
  * @gsi_size: Mapping size of the GSI register space
+ * @ver: The appropriate GSI version enum
  *
  * @Return gsi_status
  */
-int gsi_map_base(phys_addr_t gsi_base_addr, u32 gsi_size);
+int gsi_map_base(phys_addr_t gsi_base_addr, u32 gsi_size, enum gsi_ver ver);
 
 /**
  * gsi_unmap_base - Peripheral should call this function to undo the

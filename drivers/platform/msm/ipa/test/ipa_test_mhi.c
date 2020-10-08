@@ -8,7 +8,7 @@
 #include <linux/ipa.h>
 #include "ipa_i.h"
 #include "gsi.h"
-#include "gsi_reg.h"
+#include "gsihal.h"
 #include "ipa_ut_framework.h"
 
 #define IPA_MHI_TEST_NUM_CHANNELS		8
@@ -322,7 +322,6 @@ struct ipa_mhi_transfer_ring_element {
  * struct ipa_test_mhi_context - MHI test context
  */
 struct ipa_test_mhi_context {
-	void __iomem *gsi_mmio;
 	struct ipa_mem_buffer msi;
 	struct ipa_mem_buffer ch_ctx_array;
 	struct ipa_mem_buffer ev_ctx_array;
@@ -809,20 +808,10 @@ static int ipa_test_mhi_suite_setup(void **ppriv)
 		goto fail_free_ctx;
 	}
 
-	test_mhi_ctx->gsi_mmio =
-	    ioremap(test_mhi_ctx->transport_phys_addr,
-			    test_mhi_ctx->transport_size);
-	if (!test_mhi_ctx->gsi_mmio) {
-		IPA_UT_ERR("failed to remap GSI HW size=%lu\n",
-			   test_mhi_ctx->transport_size);
-		rc = -EFAULT;
-		goto fail_free_ctx;
-	}
-
 	rc = ipa_test_mhi_alloc_mmio_space();
 	if (rc) {
 		IPA_UT_ERR("failed to alloc mmio space");
-		goto fail_iounmap;
+		goto fail_free_ctx;
 	}
 
 	rc = ipa_mhi_test_setup_data_structures();
@@ -849,8 +838,6 @@ fail_destroy_data_structures:
 	ipa_mhi_test_destroy_data_structures();
 fail_free_mmio_spc:
 	ipa_test_mhi_free_mmio_space();
-fail_iounmap:
-	iounmap(test_mhi_ctx->gsi_mmio);
 fail_free_ctx:
 	kfree(test_mhi_ctx);
 	test_mhi_ctx = NULL;
@@ -870,7 +857,6 @@ static int ipa_test_mhi_suite_teardown(void *priv)
 	ipa_teardown_sys_pipe(test_mhi_ctx->test_prod_hdl);
 	ipa_mhi_test_destroy_data_structures();
 	ipa_test_mhi_free_mmio_space();
-	iounmap(test_mhi_ctx->gsi_mmio);
 	kfree(test_mhi_ctx);
 	test_mhi_ctx = NULL;
 
@@ -1399,12 +1385,11 @@ static int ipa_mhi_test_q_transfer_re(struct ipa_mem_buffer *mmio,
 		IPA_UT_LOG("DB to event 0x%llx: base %pa ofst 0x%x\n",
 			p_events[event_ring_index].wp,
 			&(test_mhi_ctx->transport_phys_addr),
-			GSI_EE_n_EV_CH_k_DOORBELL_0_OFFS(
-			event_ring_index + ipa3_ctx->mhi_evid_limits[0], 0));
-		iowrite32(p_events[event_ring_index].wp,
-			test_mhi_ctx->gsi_mmio +
-			GSI_EE_n_EV_CH_k_DOORBELL_0_OFFS(
-			event_ring_index + ipa3_ctx->mhi_evid_limits[0], 0));
+			gsihal_get_reg_nk_ofst(GSI_EE_n_EV_CH_k_DOORBELL_0, 0,
+			event_ring_index + ipa3_ctx->mhi_evid_limits[0]));
+		gsihal_write_reg_nk(GSI_EE_n_EV_CH_k_DOORBELL_0, 0,
+			event_ring_index + ipa3_ctx->mhi_evid_limits[0],
+			p_events[event_ring_index].wp);
 	}
 
 	for (i = 0; i < buf_array_size; i++) {
@@ -1446,12 +1431,13 @@ static int ipa_mhi_test_q_transfer_re(struct ipa_mem_buffer *mmio,
 					"DB to channel 0x%llx: base %pa ofst 0x%x\n"
 					, p_channels[channel_idx].wp
 					, &(test_mhi_ctx->transport_phys_addr)
-					, GSI_EE_n_GSI_CH_k_DOORBELL_0_OFFS(
-						channel_idx, 0));
-				iowrite32(p_channels[channel_idx].wp,
-					test_mhi_ctx->gsi_mmio +
-					GSI_EE_n_GSI_CH_k_DOORBELL_0_OFFS(
-					channel_idx, 0));
+					, gsihal_get_reg_nk_ofst(
+						GSI_EE_n_GSI_CH_k_DOORBELL_0,
+						0, channel_idx));
+				gsihal_write_reg_nk(
+					GSI_EE_n_GSI_CH_k_DOORBELL_0,
+					0, channel_idx,
+					p_channels[channel_idx].wp);
 			}
 		} else {
 			curr_re->word_C.bits.chain = 1;

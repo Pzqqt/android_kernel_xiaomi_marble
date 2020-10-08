@@ -2,7 +2,7 @@
 
 obj-$(CONFIG_GSI) += gsim.o
 
-gsim-objs := gsi.o
+gsim-objs := gsi.o gsihal/gsihal.o gsihal/gsihal_reg.o
 
 gsim-$(CONFIG_DEBUG_FS) += gsi_dbg.o
 

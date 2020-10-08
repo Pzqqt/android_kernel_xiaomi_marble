@@ -6050,9 +6050,6 @@ static enum gsi_ver ipa3_get_gsi_ver(enum ipa_hw_type ipa_hw_type)
 	case IPA_HW_v4_11:
 		gsi_ver = GSI_VER_2_11;
 		break;
-	case IPA_HW_v5_0:
-		gsi_ver = GSI_VER_3_0;
-		break;
 	default:
 		IPAERR("No GSI version for ipa type %d\n", ipa_hw_type);
 		WARN_ON(1);
@@ -7284,20 +7281,6 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	 * Setup access for register collection/dump on crash
 	 */
 	if (ipa_reg_save_init(IPA_MEM_INIT_VAL) != 0) {
-		result = -EFAULT;
-		goto fail_gsi_map;
-	}
-
-	/*
-	 * Since we now know where the transport's registers live,
-	 * let's set up access to them.  This is done since subseqent
-	 * functions, that deal with the transport, require the
-	 * access.
-	 */
-	if (gsi_map_base(
-		ipa3_res.transport_mem_base,
-		ipa3_res.transport_mem_size) != 0) {
-		IPAERR("Allocation of gsi base failed\n");
 		result = -EFAULT;
 		goto fail_gsi_map;
 	}
@@ -9012,6 +8995,20 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 	if (result) {
 		IPAERR("IPA dts parsing failed\n");
 		return result;
+	}
+
+	/*
+	* Since we now know where the transport's registers live,
+	* let's set up access to them.  This is done since subsequent
+	* functions, that deal with the transport, require the
+	* access.
+	*/
+	if (gsi_map_base(
+		ipa3_res.transport_mem_base,
+		ipa3_res.transport_mem_size,
+		ipa3_get_gsi_ver(ipa3_res.ipa_hw_type)) != 0) {
+		IPAERR("Allocation of gsi base failed\n");
+		return -EFAULT;
 	}
 
 	/* Get GSI version */

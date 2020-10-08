@@ -9,8 +9,8 @@
 #include <linux/random.h>
 #include <linux/uaccess.h>
 #include <linux/msm_gsi.h>
-#include "gsi_reg.h"
 #include "gsi.h"
+#include "gsihal.h"
 
 #define TERR(fmt, args...) \
 		pr_err("%s:%d " fmt, __func__, __LINE__, ## args)
@@ -69,53 +69,53 @@ static ssize_t gsi_dump_evt(struct file *file,
 		return -EINVAL;
 	}
 
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_0_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_0,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX0  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_1_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_1,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX1  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_2_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_2,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX2  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_3_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_3,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX3  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_4_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_4,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX4  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_5_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_5,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX5  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_6_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_6,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX6  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_7_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_7,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX7  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_8_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_8,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX8  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_9_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_9,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX9  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_10_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_10,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX10 0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_11_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_11,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX11 0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_12_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_12,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX12 0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_CNTXT_13_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_13,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d CTX13 0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_SCRATCH_0_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_SCRATCH_0,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d SCR0  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_EV_CH_k_SCRATCH_1_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_EV_CH_k_SCRATCH_1,
+		gsi_ctx->per.ee, arg1);
 	TERR("EV%2d SCR1  0x%x\n", arg1, val);
 
 	if (arg2) {
@@ -182,57 +182,50 @@ static ssize_t gsi_dump_ch(struct file *file,
 		return -EINVAL;
 	}
 
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_0_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_0,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX0  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_1_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_1,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX1  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_2_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_2,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX2  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_3_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_3,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX3  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_4_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_4,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX4  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_5_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_5,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX5  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_6_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_6,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX6  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_7_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_7,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX7  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_RE_FETCH_READ_PTR_OFFS(arg1,
-			gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_RE_FETCH_READ_PTR,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d REFRP 0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR_OFFS(arg1,
-			gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d REFWP 0x%x\n", arg1, val);
-	if (gsi_ctx->per.ver >= GSI_VER_2_5) {
-		val = gsi_readl(gsi_ctx->base +
-			GSI_V2_5_EE_n_GSI_CH_k_QOS_OFFS(arg1, gsi_ctx->per.ee));
-	} else {
-		val = gsi_readl(gsi_ctx->base +
-			GSI_EE_n_GSI_CH_k_QOS_OFFS(arg1, gsi_ctx->per.ee));
-	}
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_QOS,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d QOS   0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_SCRATCH_0_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_0,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d SCR0  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_SCRATCH_1_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_1,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d SCR1  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_SCRATCH_2_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_2,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d SCR2  0x%x\n", arg1, val);
-	val = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_SCRATCH_3_OFFS(arg1, gsi_ctx->per.ee));
+	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_3,
+		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d SCR3  0x%x\n", arg1, val);
 
 	if (arg2) {
@@ -482,17 +475,15 @@ static void gsi_dbg_update_ch_dp_stats(struct gsi_chan_ctx *ctx)
 	int ee = gsi_ctx->per.ee;
 	uint16_t used_hw;
 
-	rp_hw = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_4_OFFS(ctx->props.ch_id, ee));
-	rp_hw |= ((uint64_t)gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_5_OFFS(ctx->props.ch_id, ee)))
-		<< 32;
+	rp_hw = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_4,
+		ee, ctx->props.ch_id);
+	rp_hw |= ((uint64_t)gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_5,
+		ee, ctx->props.ch_id)) << 32;
 
-	wp_hw = gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_6_OFFS(ctx->props.ch_id, ee));
-	wp_hw |= ((uint64_t)gsi_readl(gsi_ctx->base +
-		GSI_EE_n_GSI_CH_k_CNTXT_7_OFFS(ctx->props.ch_id, ee)))
-		<< 32;
+	wp_hw = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_6,
+		ee, ctx->props.ch_id);
+	wp_hw |= ((uint64_t)gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_7,
+		ee, ctx->props.ch_id)) << 32;
 
 	start_hw = gsi_find_idx_from_addr(&ctx->ring, rp_hw);
 	end_hw = gsi_find_idx_from_addr(&ctx->ring, wp_hw);
