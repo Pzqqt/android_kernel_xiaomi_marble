@@ -233,6 +233,7 @@ struct wsa_macro_priv {
 			[WSA_MACRO_CHILD_DEVICES_MAX];
 	int child_count;
 	int ear_spkr_gain;
+	int wsa_spkrrecv;
 	int spkr_gain_offset;
 	int spkr_mode;
 	int is_softclip_on[WSA_MACRO_SOFTCLIP_MAX];
@@ -291,6 +292,11 @@ static const struct snd_kcontrol_new wsa_int1_vbat_mix_switch[] = {
 	SOC_DAPM_SINGLE("WSA RX1 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
 };
 
+static const char *const wsa_macro_ear_spkrrecv_text[] = {
+	"OFF", "ON"
+};
+static SOC_ENUM_SINGLE_EXT_DECL(wsa_macro_ear_spkrrecv_enum,
+				wsa_macro_ear_spkrrecv_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_macro_ear_spkr_pa_gain_enum,
 				wsa_macro_ear_spkr_pa_gain_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_macro_spkr_boost_stage_enum,
@@ -1703,6 +1709,12 @@ static int wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
 			dev_dbg(wsa_priv->dev, "%s: RX0 Volume %d dB\n",
 				__func__, val);
 		}
+		if(wsa_priv->wsa_spkrrecv) {
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x00);
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_COMPANDER0_CTL3, 0x80, 0x80);
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/*
@@ -1717,6 +1729,10 @@ static int wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
 			dev_dbg(wsa_priv->dev, "%s: Reset RX0 Volume to 0 dB\n",
 				__func__);
 		}
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x01);
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_COMPANDER0_CTL3, 0x80, 0x00);
 		break;
 	}
 
@@ -2093,6 +2109,43 @@ static int wsa_macro_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa_macro_ear_spkrrecv_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = wsa_priv->wsa_spkrrecv;
+
+	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		 __func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int wsa_macro_ear_spkrrecv_put(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+        struct snd_soc_component *component =
+                                snd_soc_kcontrol_component(kcontrol);
+        struct device *wsa_dev = NULL;
+        struct wsa_macro_priv *wsa_priv = NULL;
+
+        if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+                return -EINVAL;
+        wsa_priv->wsa_spkrrecv = ucontrol->value.integer.value[0];
+
+        dev_dbg(component->dev, "%s:spkrrecv status = %d\n",
+                 __func__, wsa_priv->wsa_spkrrecv);
+
+        return 0;
+}
+
 static int wsa_macro_ear_spkr_pa_gain_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2354,6 +2407,9 @@ static int wsa_macro_soft_clip_enable_put(struct snd_kcontrol *kcontrol,
 }
 
 static const struct snd_kcontrol_new wsa_macro_snd_controls[] = {
+	SOC_ENUM_EXT("WSA SPKRRECV", wsa_macro_ear_spkrrecv_enum,
+			wsa_macro_ear_spkrrecv_get,
+			wsa_macro_ear_spkrrecv_put),
 	SOC_ENUM_EXT("EAR SPKR PA Gain", wsa_macro_ear_spkr_pa_gain_enum,
 		     wsa_macro_ear_spkr_pa_gain_get,
 		     wsa_macro_ear_spkr_pa_gain_put),
@@ -2742,10 +2798,10 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 static const struct wsa_macro_reg_mask_val wsa_macro_reg_init[] = {
 	{BOLERO_CDC_WSA_BOOST0_BOOST_CFG1, 0x3F, 0x12},
 	{BOLERO_CDC_WSA_BOOST0_BOOST_CFG2, 0x1C, 0x08},
-	{BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x0C},
+	{BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x18},
 	{BOLERO_CDC_WSA_BOOST1_BOOST_CFG1, 0x3F, 0x12},
 	{BOLERO_CDC_WSA_BOOST1_BOOST_CFG2, 0x1C, 0x08},
-	{BOLERO_CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x0C},
+	{BOLERO_CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x18},
 	{BOLERO_CDC_WSA_BOOST0_BOOST_CTL, 0x70, 0x58},
 	{BOLERO_CDC_WSA_BOOST1_BOOST_CTL, 0x70, 0x58},
 	{BOLERO_CDC_WSA_RX0_RX_PATH_CFG1, 0x08, 0x08},

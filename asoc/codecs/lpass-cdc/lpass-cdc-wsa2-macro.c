@@ -272,6 +272,7 @@ struct lpass_cdc_wsa2_macro_priv {
 	struct snd_soc_component *component;
 	int rx_0_count;
 	int rx_1_count;
+	int wsa_spkrrecv;
 	unsigned long active_ch_mask[LPASS_CDC_WSA2_MACRO_MAX_DAIS];
 	unsigned long active_ch_cnt[LPASS_CDC_WSA2_MACRO_MAX_DAIS];
 	int rx_port_value[LPASS_CDC_WSA2_MACRO_RX_MAX];
@@ -320,6 +321,10 @@ static const char * const lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_text[] = {
 	"OFF", "ON"
 };
 
+static const char *const lpass_cdc_wsa2_macro_ear_spkrrecv_text[] = {
+	"OFF", "ON"
+};
+
 static const char * const lpass_cdc_wsa2_macro_comp_mode_text[] = {
 	"G_21_DB", "G_19P5_DB", "G_18_DB", "G_16P5_DB", "G_15_DB",
 	"G_13P5_DB", "G_12_DB", "G_10P5_DB", "G_9_DB"
@@ -333,6 +338,8 @@ static const struct snd_kcontrol_new wsa2_int1_vbat_mix_switch[] = {
 	SOC_DAPM_SINGLE("WSA2 RX1 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
 };
 
+static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa2_macro_ear_spkrrecv_enum,
+				lpass_cdc_wsa2_macro_ear_spkrrecv_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_enum,
 			lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa2_macro_comp_mode_enum,
@@ -1529,6 +1536,9 @@ static int lpass_cdc_wsa2_macro_enable_interpolator(struct snd_soc_dapm_widget *
 	if (!lpass_cdc_wsa2_macro_get_data(component, &wsa2_dev, &wsa2_priv, __func__))
 		return -EINVAL;
 
+	if (!lpass_cdc_wsa2_macro_get_data(component, &wsa2_dev, &wsa2_priv, __func__))
+		return -EINVAL;
+
 	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
 	if (!(strcmp(w->name, "WSA2_RX INT0 INTERP"))) {
@@ -2027,6 +2037,43 @@ static int lpass_cdc_wsa2_macro_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int lpass_cdc_wsa2_macro_ear_spkrrecv_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa2_dev = NULL;
+	struct lpass_cdc_wsa2_macro_priv *wsa2_priv = NULL;
+
+	if (!lpass_cdc_wsa2_macro_get_data(component, &wsa2_dev, &wsa2_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = wsa2_priv->wsa_spkrrecv;
+
+	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		 __func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int lpass_cdc_wsa2_macro_ear_spkrrecv_put(struct snd_kcontrol *kcontrol,
+                                        struct snd_ctl_elem_value *ucontrol)
+{
+        struct snd_soc_component *component =
+                                snd_soc_kcontrol_component(kcontrol);
+        struct device *wsa2_dev = NULL;
+        struct lpass_cdc_wsa2_macro_priv *wsa2_priv = NULL;
+
+        if (!lpass_cdc_wsa2_macro_get_data(component, &wsa2_dev, &wsa2_priv, __func__))
+                return -EINVAL;
+        wsa2_priv->wsa_spkrrecv = ucontrol->value.integer.value[0];
+
+        dev_dbg(component->dev, "%s:spkrrecv status = %d\n",
+                 __func__, wsa2_priv->wsa_spkrrecv);
+
+        return 0;
+}
+
 static int lpass_cdc_wsa2_macro_comp_mode_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2238,6 +2285,9 @@ static int lpass_cdc_wsa2_macro_soft_clip_enable_put(struct snd_kcontrol *kcontr
 }
 
 static const struct snd_kcontrol_new lpass_cdc_wsa2_macro_snd_controls[] = {
+	SOC_ENUM_EXT("WSA2 SPKRRECV", lpass_cdc_wsa2_macro_ear_spkrrecv_enum,
+			lpass_cdc_wsa2_macro_ear_spkrrecv_get,
+			lpass_cdc_wsa2_macro_ear_spkrrecv_put),
 	SOC_ENUM_EXT("WSA2_GSM mode Enable", lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_enum,
 		     lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_func_get,
 		     lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_func_put),
@@ -2658,10 +2708,10 @@ static const struct lpass_cdc_wsa2_macro_reg_mask_val
 				lpass_cdc_wsa2_macro_reg_init[] = {
 	{LPASS_CDC_WSA2_BOOST0_BOOST_CFG1, 0x3F, 0x12},
 	{LPASS_CDC_WSA2_BOOST0_BOOST_CFG2, 0x1C, 0x08},
-	{LPASS_CDC_WSA2_COMPANDER0_CTL7, 0x1E, 0x0C},
+	{LPASS_CDC_WSA2_COMPANDER0_CTL7, 0x1E, 0x18},
 	{LPASS_CDC_WSA2_BOOST1_BOOST_CFG1, 0x3F, 0x12},
 	{LPASS_CDC_WSA2_BOOST1_BOOST_CFG2, 0x1C, 0x08},
-	{LPASS_CDC_WSA2_COMPANDER1_CTL7, 0x1E, 0x0C},
+	{LPASS_CDC_WSA2_COMPANDER1_CTL7, 0x1E, 0x18},
 	{LPASS_CDC_WSA2_BOOST0_BOOST_CTL, 0x70, 0x58},
 	{LPASS_CDC_WSA2_BOOST1_BOOST_CTL, 0x70, 0x58},
 	{LPASS_CDC_WSA2_RX0_RX_PATH_CFG1, 0x08, 0x08},
