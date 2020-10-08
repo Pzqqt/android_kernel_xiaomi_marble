@@ -5773,6 +5773,7 @@ send_packet_power_info_get_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 }
 
+#ifdef WLAN_FEATURE_GPIO_CFG
 /**
  * send_gpio_config_cmd_non_tlv() - send gpio config to fw
  * @wmi_handle: wmi handle
@@ -5790,8 +5791,8 @@ send_gpio_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 	u_int32_t len = sizeof(wmi_gpio_config_cmd);
 
 	/* Sanity Checks */
-	if (param->pull_type > WMI_GPIO_PULL_DOWN ||
-		param->intr_mode > WMI_GPIO_INTTYPE_LEVEL_HIGH) {
+	if (param->pin_pull_type > WMI_HOST_GPIO_PULL_DOWN ||
+		param->pin_intr_mode > WMI_HOST_GPIO_INTMODE_LEVEL_HIGH) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -5800,10 +5801,10 @@ send_gpio_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 
 	cmd = (wmi_gpio_config_cmd *)wmi_buf_data(wmibuf);
-	cmd->gpio_num = param->gpio_num;
-	cmd->input = param->input;
-	cmd->pull_type = param->pull_type;
-	cmd->intr_mode = param->intr_mode;
+	cmd->gpio_num = param->pin_num;
+	cmd->input = param->pin_dir;
+	cmd->pull_type = param->pin_pull_type;
+	cmd->intr_mode = param->pin_intr_mode;
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, len,
 		WMI_GPIO_CONFIG_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
@@ -5836,8 +5837,8 @@ send_gpio_output_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 
 	cmd = (wmi_gpio_output_cmd *)wmi_buf_data(wmibuf);
-	cmd->gpio_num = param->gpio_num;
-	cmd->set = param->set;
+	cmd->gpio_num = param->pin_num;
+	cmd->set = param->pin_set;
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, len,
 		WMI_GPIO_OUTPUT_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
@@ -5848,6 +5849,7 @@ send_gpio_output_cmd_non_tlv(wmi_unified_t wmi_handle,
 	return ret;
 
 }
+#endif
 
 /*
  * send_rtt_meas_req_test_cmd_non_tlv() - send rtt meas req test cmd to fw
@@ -10356,8 +10358,10 @@ struct wmi_ops non_tlv_ops =  {
 	.send_nf_dbr_dbm_info_get_cmd = send_nf_dbr_dbm_info_get_cmd_non_tlv,
 	.send_packet_power_info_get_cmd =
 			send_packet_power_info_get_cmd_non_tlv,
+#ifdef WLAN_FEATURE_GPIO_CFG
 	.send_gpio_config_cmd = send_gpio_config_cmd_non_tlv,
 	.send_gpio_output_cmd = send_gpio_output_cmd_non_tlv,
+#endif
 	.send_rtt_meas_req_test_cmd = send_rtt_meas_req_test_cmd_non_tlv,
 	.send_rtt_meas_req_cmd = send_rtt_meas_req_cmd_non_tlv,
 	.send_lci_set_cmd = send_lci_set_cmd_non_tlv,
