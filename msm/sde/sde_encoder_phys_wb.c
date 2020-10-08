@@ -467,12 +467,14 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 
 	hw_ctl = crtc->mixers[0].hw_ctl;
 	if (hw_ctl && hw_ctl->ops.setup_intf_cfg_v1 &&
-			test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
+			test_bit(SDE_WB_CWB_CTRL | SDE_WB_DCWB_CTRL,
+					&hw_wb->caps->features)) {
 		struct sde_hw_intf_cfg_v1 intf_cfg = { 0, };
 
 		for (i = 0; i < crtc->num_mixers; i++)
-			intf_cfg.cwb[intf_cfg.cwb_count++] =
-				(enum sde_cwb)(hw_pp->idx + i);
+			intf_cfg.cwb[intf_cfg.cwb_count++] = (enum sde_cwb)
+				(test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features) ?
+					((hw_pp->idx % 2) + i) : (hw_pp->idx + i));
 
 		if (hw_pp->merge_3d && (intf_cfg.merge_3d_count <
 				MAX_MERGE_3D_PER_CTL_V1) && need_merge)
@@ -483,12 +485,17 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 			hw_pp->ops.setup_3d_mode(hw_pp, (enable && need_merge) ?
 					BLEND_3D_H_ROW_INT : 0);
 
-		if (hw_wb->ops.bind_pingpong_blk)
+		if ((hw_wb->ops.bind_pingpong_blk) &&
+				test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features))
 			hw_wb->ops.bind_pingpong_blk(hw_wb, enable, hw_pp->idx);
+
+		if ((hw_wb->ops.bind_dcwb_pp_blk) &&
+				test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features))
+			hw_wb->ops.bind_dcwb_pp_blk(hw_wb, enable, hw_pp->idx);
 
 		if (hw_ctl->ops.update_intf_cfg) {
 			hw_ctl->ops.update_intf_cfg(hw_ctl, &intf_cfg, enable);
-			SDE_DEBUG("in CWB mode on CTL_%d PP-%d merge3d:%d\n",
+			SDE_DEBUG("in CWB/DCWB mode on CTL_%d PP-%d merge3d:%d\n",
 					hw_ctl->idx - CTL_0,
 					hw_pp->idx - PINGPONG_0,
 					hw_pp->merge_3d ?
@@ -503,7 +510,7 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 
 		if (hw_ctl && hw_ctl->ops.update_wb_cfg) {
 			hw_ctl->ops.update_wb_cfg(hw_ctl, intf_cfg, enable);
-			SDE_DEBUG("in CWB mode adding WB for CTL_%d\n",
+			SDE_DEBUG("in CWB/DCWB mode adding WB for CTL_%d\n",
 					hw_ctl->idx - CTL_0);
 		}
 	}
@@ -593,13 +600,14 @@ static void _sde_enc_phys_wb_detect_cwb(struct sde_encoder_phys *phys_enc,
 	u32 encoder_mask = 0;
 
 	/* Check if WB has CWB support */
-	if (wb_cfg->features & BIT(SDE_WB_HAS_CWB)) {
+	if ((wb_cfg->features & BIT(SDE_WB_HAS_CWB))
+			|| (wb_cfg->features & BIT(SDE_WB_HAS_DCWB))) {
 		encoder_mask = crtc_state->encoder_mask;
 		encoder_mask &= ~drm_encoder_mask(phys_enc->parent);
 	}
 	phys_enc->in_clone_mode = encoder_mask ? true : false;
 
-	SDE_DEBUG("detect CWB - status:%d\n", phys_enc->in_clone_mode);
+	SDE_DEBUG("detect CWB(OR)DCWB - status:%d\n", phys_enc->in_clone_mode);
 }
 
 static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
@@ -863,6 +871,7 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 	int i = 0;
 	int cwb_capture_mode = 0;
 	enum sde_cwb cwb_idx = 0;
+	enum sde_dcwb dcwb_idx = 0;
 	enum sde_cwb src_pp_idx = 0;
 	bool dspp_out = false;
 	bool need_merge = false;
@@ -895,9 +904,19 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 	dspp_out = (cwb_capture_mode == CAPTURE_DSPP_OUT);
 	need_merge = (crtc->num_mixers > 1) ? true : false;
 
-	if (src_pp_idx > CWB_0 ||  ((cwb_idx + crtc->num_mixers) > CWB_MAX)) {
-		SDE_ERROR("invalid hw config for CWB\n");
-		return;
+	if (test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
+		dcwb_idx = (enum sde_dcwb) ((hw_pp->idx % 2) + i);
+		if ((dcwb_idx + crtc->num_mixers) > DCWB_MAX) {
+			SDE_ERROR("invalid hw config for DCWB. dcwb_idx=%d, num_mixers=%d\n",
+				dcwb_idx, crtc->num_mixers);
+			return;
+		}
+	} else {
+		if (src_pp_idx > CWB_0 ||  ((cwb_idx + crtc->num_mixers) > CWB_MAX)) {
+			SDE_ERROR("invalid hw config for CWB. pp_idx-%d, cwb_idx=%d, num_mixers=%d\n",
+				src_pp_idx, dcwb_idx, crtc->num_mixers);
+			return;
+		}
 	}
 
 	if (hw_ctl->ops.update_bitmask)
@@ -908,18 +927,30 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_CDM,
 				hw_cdm->idx, 1);
 
-	if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
+	if (test_bit(SDE_WB_CWB_CTRL | SDE_WB_DCWB_CTRL,
+					&hw_wb->caps->features)) {
 		for (i = 0; i < crtc->num_mixers; i++) {
-			cwb_idx = (enum sde_cwb) (hw_pp->idx + i);
 			src_pp_idx = (enum sde_cwb) (src_pp_idx + i);
 
-			if (hw_wb->ops.program_cwb_ctrl)
-				hw_wb->ops.program_cwb_ctrl(hw_wb, cwb_idx,
-						src_pp_idx, dspp_out, enable);
+			if (test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
+				dcwb_idx = (enum sde_dcwb) ((hw_pp->idx % 2) + i);
+				if (hw_wb->ops.program_dcwb_ctrl)
+					hw_wb->ops.program_dcwb_ctrl(hw_wb, dcwb_idx,
+						src_pp_idx, cwb_capture_mode,
+						enable);
+				if (hw_ctl->ops.update_bitmask)
+					hw_ctl->ops.update_bitmask(hw_ctl,
+						SDE_HW_FLUSH_CWB, dcwb_idx, 1);
 
-			if (hw_ctl->ops.update_bitmask)
-				hw_ctl->ops.update_bitmask(hw_ctl,
+			} else if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
+				cwb_idx = (enum sde_cwb) (hw_pp->idx + i);
+				if (hw_wb->ops.program_cwb_ctrl)
+					hw_wb->ops.program_cwb_ctrl(hw_wb, cwb_idx,
+						src_pp_idx, dspp_out, enable);
+				if (hw_ctl->ops.update_bitmask)
+					hw_ctl->ops.update_bitmask(hw_ctl,
 						SDE_HW_FLUSH_CWB, cwb_idx, 1);
+			}
 		}
 
 		if (need_merge && hw_ctl->ops.update_bitmask

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_MDSS_H
@@ -223,6 +223,8 @@ enum sde_pingpong {
 	PINGPONG_3,
 	PINGPONG_4,
 	PINGPONG_5,
+	PINGPONG_CWB_0,
+	PINGPONG_CWB_1,
 	PINGPONG_S0,
 	PINGPONG_MAX
 };
@@ -302,6 +304,12 @@ enum sde_cwb {
 	CWB_MAX
 };
 
+enum sde_dcwb {
+	DCWB_0 = 0x1,
+	DCWB_1,
+	DCWB_MAX
+};
+
 enum sde_wd_timer {
 	WD_TIMER_0 = 0x1,
 	WD_TIMER_1,
@@ -335,6 +343,7 @@ enum sde_merge_3d {
 	MERGE_3D_0 = 1,
 	MERGE_3D_1,
 	MERGE_3D_2,
+	MERGE_3D_CWB_0,
 	MERGE_3D_MAX
 };
 

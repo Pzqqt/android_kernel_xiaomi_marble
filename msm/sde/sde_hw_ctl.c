@@ -162,6 +162,11 @@ static const u32 cwb_flush_tbl[CWB_MAX] = {SDE_NONE, SDE_NONE, 1, 2, 3,
 	4, 5};
 
 /**
+ * list of CWB bits in CTL_CWB_FLUSH for dedicated cwb
+ */
+static const u32 dcwb_flush_tbl[CWB_MAX] = {SDE_NONE, SDE_NONE, 0, 1};
+
+/**
  * list of DSPP sub-blk flush bits in CTL_DSPP_x_FLUSH
  */
 static const u32 dspp_sub_blk_flush_tbl[SDE_DSPP_MAX] = {

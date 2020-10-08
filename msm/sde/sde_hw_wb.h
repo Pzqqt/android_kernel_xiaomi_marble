@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_WB_H
@@ -115,6 +115,16 @@ struct sde_hw_wb_ops {
 			const enum sde_pingpong pp);
 
 	/**
+	 * bind_dcwb_pp_blk - enable/disable the connection with cwb pp
+	 * @ctx: Pointer to wb context
+	 * @enable: enable/disable connection
+	 * @pp: pingpong blk id
+	 */
+	void (*bind_dcwb_pp_blk)(struct sde_hw_wb *ctx,
+			bool enable,
+			const enum sde_pingpong pp);
+
+	/**
 	 * program_cwb_ctrl - program cwb block configp
 	 * @ctx: Pointer to wb context
 	 * @pp_idx: Current CWB block index to poram
@@ -124,6 +134,17 @@ struct sde_hw_wb_ops {
 	 */
 	void (*program_cwb_ctrl)(struct sde_hw_wb *ctx, const enum sde_cwb cwb,
 		const enum sde_cwb data_src, bool dspp_out, bool enable);
+
+	/**
+	 * program_dcwb_ctrl - program cwb block configp
+	 * @ctx: Pointer to wb context
+	 * @pp_idx: Current CWB block index to poram
+	 * @data_src: Source CWB/PingPong block index
+	 * @tap_location: Tap LM output, dspp output or Demura output
+	 * @enable: enable or disable the CWB path to tap the output
+	 */
+	void (*program_dcwb_ctrl)(struct sde_hw_wb *ctx, const enum sde_dcwb cwb,
+		const enum sde_cwb data_src, int tap_location, bool enable);
 };
 
 /**
@@ -137,6 +158,7 @@ struct sde_hw_wb_ops {
  * @ops: function pointers
  * @hw_mdp: MDP top level hardware block
  * @cwb_hw: CWB control hwio details
+ * @dcwb_hw: DCWB control hwio details
  */
 struct sde_hw_wb {
 	struct sde_hw_blk base;
@@ -153,6 +175,7 @@ struct sde_hw_wb {
 
 	struct sde_hw_mdp *hw_mdp;
 	struct sde_hw_blk_reg_map cwb_hw;
+	struct sde_hw_blk_reg_map dcwb_hw;
 };
 
 /**

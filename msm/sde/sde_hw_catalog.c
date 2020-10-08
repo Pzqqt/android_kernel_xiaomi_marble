@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -306,6 +306,7 @@ enum {
 enum {
 	PP_OFF,
 	PP_LEN,
+	PP_CWB,
 	TE_OFF,
 	TE_LEN,
 	TE2_OFF,
@@ -782,6 +783,7 @@ static struct sde_prop_type ds_prop[] = {
 static struct sde_prop_type pp_prop[] = {
 	{PP_OFF, "qcom,sde-pp-off", true, PROP_TYPE_U32_ARRAY},
 	{PP_LEN, "qcom,sde-pp-size", false, PROP_TYPE_U32},
+	{PP_CWB, "qcom,sde-pp-cwb", false, PROP_TYPE_U32_ARRAY},
 	{TE_OFF, "qcom,sde-te-off", false, PROP_TYPE_U32_ARRAY},
 	{TE_LEN, "qcom,sde-te-size", false, PROP_TYPE_U32},
 	{TE2_OFF, "qcom,sde-te2-off", false, PROP_TYPE_U32_ARRAY},
@@ -2349,7 +2351,18 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 			set_bit(SDE_WB_INPUT_CTRL, &wb->features);
 
-		if (sde_cfg->has_cwb_support) {
+		if (sde_cfg->has_dedicated_cwb_support) {
+			set_bit(SDE_WB_HAS_DCWB, &wb->features);
+			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
+				set_bit(SDE_WB_DCWB_CTRL, &wb->features);
+			if (major_version >= SDE_HW_MAJOR(SDE_HW_VER_810)) {
+				sde_cfg->cwb_blk_off = 0x66A00;
+				sde_cfg->cwb_blk_stride = 0x400;
+			} else {
+				sde_cfg->cwb_blk_off = 0x83000;
+				sde_cfg->cwb_blk_stride = 0x100;
+			}
+		} else if (sde_cfg->has_cwb_support) {
 			set_bit(SDE_WB_HAS_CWB, &wb->features);
 			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 				set_bit(SDE_WB_CWB_CTRL, &wb->features);
@@ -3628,6 +3641,9 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 
 		if (PROP_VALUE_ACCESS(prop_value, PP_SLAVE, i))
 			set_bit(SDE_PINGPONG_SLAVE, &pp->features);
+
+		if (PROP_VALUE_ACCESS(prop_value, PP_CWB, i))
+			set_bit(SDE_PINGPONG_CWB, &pp->features);
 
 		if (major_version < SDE_HW_MAJOR(SDE_HW_VER_700)) {
 			sblk->dsc.base = PROP_VALUE_ACCESS(prop_value,
