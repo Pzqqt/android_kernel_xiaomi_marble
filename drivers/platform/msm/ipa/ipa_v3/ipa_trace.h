@@ -123,19 +123,35 @@ TRACE_EVENT(
 TRACE_EVENT(
 	rmnet_ipa_netif_rcv_skb3,
 
-	TP_PROTO(unsigned long rx_pkt_cnt),
+	TP_PROTO(const struct sk_buff *skb, unsigned long rx_pkt_cnt),
 
-	TP_ARGS(rx_pkt_cnt),
+	TP_ARGS(skb, rx_pkt_cnt),
 
 	TP_STRUCT__entry(
+		__string(name,			skb->dev->name)
+		__field(const void *,	skbaddr)
+		__field(u16,			protocol)
+		__field(unsigned int,	len)
+		__field(unsigned int,	data_len)
 		__field(unsigned long,	rx_pkt_cnt)
 	),
 
 	TP_fast_assign(
+		__assign_str(name, skb->dev->name);
+		__entry->skbaddr = skb;
+		__entry->protocol = ntohs(skb->protocol);
+		__entry->len = skb->len;
+		__entry->data_len = skb->data_len;
 		__entry->rx_pkt_cnt = rx_pkt_cnt;
 	),
 
-	TP_printk("rx_pkt_cnt=%lu", __entry->rx_pkt_cnt)
+	TP_printk("dev=%s skbaddr=%p protocol=0x%04x len=%u data_len=%u rx_pkt_cnt=%lu",
+		__get_str(name),
+		__entry->skbaddr,
+		__entry->protocol,
+		__entry->len,
+		__entry->data_len,
+		__entry->rx_pkt_cnt)
 );
 
 TRACE_EVENT(
@@ -174,6 +190,112 @@ TRACE_EVENT(
 	TP_printk("napi_overall_poll_pkt_cnt=%d", __entry->poll_num)
 );
 
+TRACE_EVENT(
+	ipa3_napi_schedule,
+
+	TP_PROTO(unsigned long client),
+
+	TP_ARGS(client),
+
+	TP_STRUCT__entry(
+		__field(unsigned long,	client)
+	),
+
+	TP_fast_assign(
+		__entry->client = client;
+	),
+
+	TP_printk("client=%lu", __entry->client)
+);
+
+TRACE_EVENT(
+	ipa3_napi_poll_entry,
+
+	TP_PROTO(unsigned long client),
+
+	TP_ARGS(client),
+
+	TP_STRUCT__entry(
+		__field(unsigned long,	client)
+	),
+
+	TP_fast_assign(
+		__entry->client = client;
+	),
+
+	TP_printk("client=%lu", __entry->client)
+);
+
+
+TRACE_EVENT(
+	ipa3_napi_poll_exit,
+
+	TP_PROTO(unsigned long client),
+
+	TP_ARGS(client),
+
+	TP_STRUCT__entry(
+		__field(unsigned long,	client)
+	),
+
+	TP_fast_assign(
+		__entry->client = client;
+	),
+
+	TP_printk("client=%lu", __entry->client)
+);
+
+TRACE_EVENT(
+	ipa3_tx_dp,
+
+	TP_PROTO(const struct sk_buff *skb, unsigned long client),
+
+	TP_ARGS(skb, client),
+
+	TP_STRUCT__entry(
+		__string(name,			skb->dev->name)
+		__field(const void *,	skbaddr)
+		__field(u16,			protocol)
+		__field(unsigned int,	len)
+		__field(unsigned int,	data_len)
+		__field(unsigned long,	client)
+	),
+
+	TP_fast_assign(
+		__assign_str(name, skb->dev->name);
+		__entry->skbaddr = skb;
+		__entry->protocol = ntohs(skb->protocol);
+		__entry->len = skb->len;
+		__entry->data_len = skb->data_len;
+		__entry->client = client;
+	),
+
+	TP_printk("dev=%s skbaddr=%p protocol=0x%04x len=%u data_len=%u client=%lu",
+		__get_str(name),
+		__entry->skbaddr,
+		__entry->protocol,
+		__entry->len,
+		__entry->data_len,
+		__entry->client)
+);
+
+TRACE_EVENT(
+	ipa3_tx_done,
+
+	TP_PROTO(unsigned long client),
+
+	TP_ARGS(client),
+
+	TP_STRUCT__entry(
+		__field(unsigned long,	client)
+	),
+
+	TP_fast_assign(
+		__entry->client = client;
+	),
+
+	TP_printk("client=%lu", __entry->client)
+);
 
 #endif /* _IPA_TRACE_H */
 

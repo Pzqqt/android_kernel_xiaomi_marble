@@ -1394,7 +1394,7 @@ static void apps_ipa_packet_receive_notify(void *priv,
 		skb->protocol = htons(ETH_P_MAP);
 
 		if (ipa3_rmnet_res.ipa_napi_enable) {
-			trace_rmnet_ipa_netif_rcv_skb3(dev->stats.rx_packets);
+			trace_rmnet_ipa_netif_rcv_skb3(skb, dev->stats.rx_packets);
 			result = netif_receive_skb(skb);
 		} else {
 			if (dev->stats.rx_packets % IPA_WWAN_RX_SOFTIRQ_THRESH
