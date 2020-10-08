@@ -8,13 +8,10 @@
 
 #include "msm_vidc_inst.h"
 
-u32 msm_vidc_decoder_scratch_size_iris2(struct msm_vidc_inst *inst);
-u32 msm_vidc_decoder_scratch_1_size_iris2(struct msm_vidc_inst *inst);
-u32 msm_vidc_decoder_persist_1_size_iris2(struct msm_vidc_inst *inst);
-
-u32 msm_vidc_encoder_scratch_size_iris2(struct msm_vidc_inst *inst);
-u32 msm_vidc_encoder_scratch_1_size_iris2(struct msm_vidc_inst *inst);
-u32 msm_vidc_encoder_scratch_2_size_iris2(struct msm_vidc_inst *inst);
-u32 msm_vidc_encoder_persist_size_iris2(struct msm_vidc_inst *inst);
-
+int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type);
+int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type);
+int msm_buffer_extra_count_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type);
 #endif // __H_MSM_VIDC_BUFFER_IRIS2_H__

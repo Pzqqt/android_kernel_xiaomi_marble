@@ -49,11 +49,12 @@ static inline is_output_meta_buffer(enum msm_vidc_buffer_type buffer_type)
 
 static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 {
-	return buffer_type == MSM_VIDC_BUF_SCRATCH ||
-		buffer_type == MSM_VIDC_BUF_SCRATCH_1 ||
-		buffer_type == MSM_VIDC_BUF_SCRATCH_2 ||
-		buffer_type == MSM_VIDC_BUF_PERSIST ||
-		buffer_type == MSM_VIDC_BUF_PERSIST_1;
+	return buffer_type == MSM_VIDC_BUF_BIN ||
+		buffer_type == MSM_VIDC_BUF_COMV ||
+		buffer_type == MSM_VIDC_BUF_NON_COMV ||
+		buffer_type == MSM_VIDC_BUF_LINE ||
+		buffer_type == MSM_VIDC_BUF_DPB ||
+		buffer_type == MSM_VIDC_BUF_PERSIST;
 }
 
 static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
@@ -96,6 +97,8 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst);
 int msm_vidc_add_session(struct msm_vidc_inst *inst);
 int msm_vidc_session_open(struct msm_vidc_inst *inst);
 int msm_vidc_session_set_codec(struct msm_vidc_inst *inst);
+int msm_vidc_session_stop(struct msm_vidc_inst *inst,
+		enum msm_vidc_port_type port);
 int msm_vidc_session_close(struct msm_vidc_inst *inst);
 int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst);
 int msm_vidc_core_init(struct msm_vidc_core *core);

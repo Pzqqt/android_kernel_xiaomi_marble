@@ -9,7 +9,6 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/interrupt.h>
-#include <linux/irqreturn.h>
 
 #include "msm_vidc_internal.h"
 #include "msm_vidc_debug.h"
@@ -20,18 +19,6 @@
 #include "venus_hfi.h"
 
 #define BASE_DEVICE_NUMBER 32
-
-static irqreturn_t msm_vidc_isr(int irq, void *data)
-{
-	struct msm_vidc_core *core = data;
-
-	d_vpr_e("%s()\n", __func__);
-
-	disable_irq_nosync(irq);
-	queue_work(core->device_workq, &core->device_work);
-
-	return IRQ_HANDLED;
-}
 
 static int msm_vidc_init_irq(struct msm_vidc_core *core)
 {
@@ -54,7 +41,7 @@ static int msm_vidc_init_irq(struct msm_vidc_core *core)
 		goto exit;
 	}
 
-	rc = request_irq(dt->irq, msm_vidc_isr, IRQF_TRIGGER_HIGH,
+	rc = request_irq(dt->irq, venus_hfi_isr, IRQF_TRIGGER_HIGH,
 				     "msm_vidc", core);
 	if (unlikely(rc)) {
 		d_vpr_e("%s: request_irq failed\n", __func__);

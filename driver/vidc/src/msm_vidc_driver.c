@@ -296,22 +296,18 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 	case MSM_VIDC_BUF_OUTPUT_META:
 		region = MSM_VIDC_NON_SECURE;
 		break;
-	case MSM_VIDC_BUF_SCRATCH:
+	case MSM_VIDC_BUF_BIN:
 		region = MSM_VIDC_SECURE_BITSTREAM;
 		break;
-	case MSM_VIDC_BUF_SCRATCH_1:
+	case MSM_VIDC_BUF_COMV:
+	case MSM_VIDC_BUF_NON_COMV:
+	case MSM_VIDC_BUF_LINE:
 		region = MSM_VIDC_SECURE_NONPIXEL;
 		break;
-	case MSM_VIDC_BUF_SCRATCH_2:
+	case MSM_VIDC_BUF_DPB:
 		region = MSM_VIDC_SECURE_PIXEL;
 		break;
 	case MSM_VIDC_BUF_PERSIST:
-		if (is_encode_session(inst))
-			region = MSM_VIDC_SECURE_NONPIXEL;
-		else
-			region = MSM_VIDC_SECURE_BITSTREAM;
-		break;
-	case MSM_VIDC_BUF_PERSIST_1:
 		region = MSM_VIDC_SECURE_NONPIXEL;
 		break;
 	default:
@@ -334,16 +330,18 @@ struct msm_vidc_buffers *msm_vidc_get_buffers(
 		return &inst->buffers.output;
 	case MSM_VIDC_BUF_OUTPUT_META:
 		return &inst->buffers.output_meta;
-	case MSM_VIDC_BUF_SCRATCH:
-		return &inst->buffers.scratch;
-	case MSM_VIDC_BUF_SCRATCH_1:
-		return &inst->buffers.scratch_1;
-	case MSM_VIDC_BUF_SCRATCH_2:
-		return &inst->buffers.scratch_2;
+	case MSM_VIDC_BUF_BIN:
+		return &inst->buffers.bin;
+	case MSM_VIDC_BUF_COMV:
+		return &inst->buffers.comv;
+	case MSM_VIDC_BUF_NON_COMV:
+		return &inst->buffers.non_comv;
+	case MSM_VIDC_BUF_LINE:
+		return &inst->buffers.line;
+	case MSM_VIDC_BUF_DPB:
+		return &inst->buffers.dpb;
 	case MSM_VIDC_BUF_PERSIST:
 		return &inst->buffers.persist;
-	case MSM_VIDC_BUF_PERSIST_1:
-		return &inst->buffers.persist_1;
 	default:
 		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
@@ -364,16 +362,18 @@ struct msm_vidc_mappings *msm_vidc_get_mappings(
 		return &inst->mappings.output;
 	case MSM_VIDC_BUF_OUTPUT_META:
 		return &inst->mappings.output_meta;
-	case MSM_VIDC_BUF_SCRATCH:
-		return &inst->mappings.scratch;
-	case MSM_VIDC_BUF_SCRATCH_1:
-		return &inst->mappings.scratch_1;
-	case MSM_VIDC_BUF_SCRATCH_2:
-		return &inst->mappings.scratch_2;
+	case MSM_VIDC_BUF_BIN:
+		return &inst->mappings.bin;
+	case MSM_VIDC_BUF_COMV:
+		return &inst->mappings.comv;
+	case MSM_VIDC_BUF_NON_COMV:
+		return &inst->mappings.non_comv;
+	case MSM_VIDC_BUF_LINE:
+		return &inst->mappings.line;
+	case MSM_VIDC_BUF_DPB:
+		return &inst->mappings.dpb;
 	case MSM_VIDC_BUF_PERSIST:
 		return &inst->mappings.persist;
-	case MSM_VIDC_BUF_PERSIST_1:
-		return &inst->mappings.persist_1;
 	default:
 		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
@@ -386,16 +386,18 @@ struct msm_vidc_allocations *msm_vidc_get_allocations(
 	const char *func)
 {
 	switch (buffer_type) {
-	case MSM_VIDC_BUF_SCRATCH:
-		return &inst->allocations.scratch;
-	case MSM_VIDC_BUF_SCRATCH_1:
-		return &inst->allocations.scratch_1;
-	case MSM_VIDC_BUF_SCRATCH_2:
-		return &inst->allocations.scratch_2;
+	case MSM_VIDC_BUF_BIN:
+		return &inst->allocations.bin;
+	case MSM_VIDC_BUF_COMV:
+		return &inst->allocations.comv;
+	case MSM_VIDC_BUF_NON_COMV:
+		return &inst->allocations.non_comv;
+	case MSM_VIDC_BUF_LINE:
+		return &inst->allocations.line;
+	case MSM_VIDC_BUF_DPB:
+		return &inst->allocations.dpb;
 	case MSM_VIDC_BUF_PERSIST:
 		return &inst->allocations.persist;
-	case MSM_VIDC_BUF_PERSIST_1:
-		return &inst->allocations.persist_1;
 	default:
 		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
@@ -410,6 +412,7 @@ int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
 	if (!request_state) {
 		s_vpr_e(inst->sid, "%s: invalid request state\n", func);
 		return -EINVAL;
@@ -541,6 +544,8 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 	if (rc)
 		return rc;
 
+	msm_vidc_memory_put_dmabuf(buf->dmabuf);
+
 	/* delete the buffer from buffers->list */
 	list_del(&buf->list);
 	kfree(buf);
@@ -628,7 +633,6 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	dmabuf = msm_vidc_memory_get_dmabuf(vb2->planes[0].m.fd);
 	if (!dmabuf)
 		return NULL;
-	msm_vidc_memory_put_dmabuf(dmabuf);
 
 	/* check if it is an existing buffer */
 	list_for_each_entry(buf, &buffers->list, list) {
@@ -679,6 +683,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	return buf;
 
 error:
+	msm_vidc_memory_put_dmabuf(dmabuf);
 	if (!found)
 		kfree(buf);
 	return NULL;
@@ -1171,6 +1176,54 @@ int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+int msm_vidc_session_stop(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	enum signal_session_response signal_type;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (port == INPUT_PORT) {
+		signal_type = SIGNAL_CMD_STOP_INPUT;
+	} else if (port == OUTPUT_PORT) {
+		signal_type = SIGNAL_CMD_STOP_OUTPUT;
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid port: %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_stop(inst, port);
+	if (rc)
+		return rc;
+
+	core = inst->core;
+	mutex_unlock(&inst->lock);
+	s_vpr_h(inst->sid, "%s: wait on port: %d for time: %d ms\n",
+		__func__, port, core->capabilities[HW_RESPONSE_TIMEOUT].value);
+	rc = wait_for_completion_timeout(
+			&inst->completions[signal_type],
+			msecs_to_jiffies(
+			core->capabilities[HW_RESPONSE_TIMEOUT].value));
+	mutex_lock(&inst->lock);
+	if (!rc) {
+		s_vpr_e(inst->sid, "%s: session stop timed out for port: %d\n",
+				__func__, port);
+		//msm_comm_kill_session(inst);
+		rc = -EIO;
+	} else {
+		rc = 0;
+		s_vpr_h(inst->sid, "%s: stop successful on port: %d\n",
+			__func__, port);
+	}
+
+	return rc;
+}
+
 int msm_vidc_session_close(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -1186,6 +1239,8 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 		return rc;
 
 	core = inst->core;
+	s_vpr_h(inst->sid, "%s: wait on close for time: %d ms\n",
+		__func__, core->capabilities[HW_RESPONSE_TIMEOUT].value);
 	rc = wait_for_completion_timeout(
 			&inst->completions[SIGNAL_CMD_CLOSE],
 			msecs_to_jiffies(
@@ -1196,6 +1251,7 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 		rc = -EIO;
 	} else {
 		rc = 0;
+		s_vpr_h(inst->sid, "%s: close successful\n", __func__);
 	}
 
 	return rc;

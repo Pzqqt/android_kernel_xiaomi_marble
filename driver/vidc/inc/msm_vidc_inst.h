@@ -26,11 +26,12 @@ struct msm_vidc_session_ops {
 };
 
 struct msm_vidc_allocations_info {
-	struct msm_vidc_allocations     scratch;
-	struct msm_vidc_allocations     scratch_1;
-	struct msm_vidc_allocations     scratch_2;
+	struct msm_vidc_allocations     bin;
+	struct msm_vidc_allocations     comv;
+	struct msm_vidc_allocations     non_comv;
+	struct msm_vidc_allocations     line;
+	struct msm_vidc_allocations     dpb;
 	struct msm_vidc_allocations     persist;
-	struct msm_vidc_allocations     persist_1;
 };
 
 struct msm_vidc_mappings_info {
@@ -38,11 +39,12 @@ struct msm_vidc_mappings_info {
 	struct msm_vidc_mappings        output;
 	struct msm_vidc_mappings        input_meta;
 	struct msm_vidc_mappings        output_meta;
-	struct msm_vidc_mappings        scratch;
-	struct msm_vidc_mappings        scratch_1;
-	struct msm_vidc_mappings        scratch_2;
+	struct msm_vidc_mappings        bin;
+	struct msm_vidc_mappings        comv;
+	struct msm_vidc_mappings        non_comv;
+	struct msm_vidc_mappings        line;
+	struct msm_vidc_mappings        dpb;
 	struct msm_vidc_mappings        persist;
-	struct msm_vidc_mappings        persist_1;
 };
 
 struct msm_vidc_buffers_info {
@@ -50,11 +52,12 @@ struct msm_vidc_buffers_info {
 	struct msm_vidc_buffers        output;
 	struct msm_vidc_buffers        input_meta;
 	struct msm_vidc_buffers        output_meta;
-	struct msm_vidc_buffers        scratch;
-	struct msm_vidc_buffers        scratch_1;
-	struct msm_vidc_buffers        scratch_2;
+	struct msm_vidc_buffers        bin;
+	struct msm_vidc_buffers        comv;
+	struct msm_vidc_buffers        non_comv;
+	struct msm_vidc_buffers        line;
+	struct msm_vidc_buffers        dpb;
 	struct msm_vidc_buffers        persist;
-	struct msm_vidc_buffers        persist_1;
 };
 
 enum msm_vidc_inst_state {

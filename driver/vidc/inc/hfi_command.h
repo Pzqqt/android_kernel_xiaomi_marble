@@ -6,6 +6,9 @@
 #ifndef __H_HFI_COMMAND_H__
 #define __H_HFI_COMMAND_H__
 
+#include <linux/types.h>
+#include <linux/bits.h>
+
 #define HFI_VIDEO_ARCH_OX               0x1
 
 struct hfi_header {
@@ -34,8 +37,8 @@ struct hfi_buffer {
 	u32 buffer_size;
 	u32 data_offset;
 	u32 data_size;
-	u32 flags;
 	u64 timestamp;
+	u32 flags;
 	u32 reserved[5];
 };
 
@@ -81,13 +84,15 @@ enum hfi_buffer_type {
 	HFI_BUFFER_BITSTREAM  = 0x00000001,
 	HFI_BUFFER_RAW        = 0x00000002,
 	HFI_BUFFER_METADATA   = 0x00000003,
-	HFI_BUFFER_SCRATCH    = 0x00000010,
-	HFI_BUFFER_SCRATCH_1  = 0x00000011,
-	HFI_BUFFER_SCRATCH_2  = 0x00000012,
-	HFI_BUFFER_PERSIST    = 0x00000013,
-	HFI_BUFFER_PERSIST_1  = 0x00000014,
-	HFI_BUFFER_SUBCACHE   = 0x00000020,
-	HFI_BUFFER_SFR        = 0x00000021,
+	HFI_BUFFER_DPB        = 0x00000004,
+	HFI_BUFFER_BIN        = 0x00000005,
+	HFI_BUFFER_LINE       = 0x00000006,
+	HFI_BUFFER_ARP        = 0x00000007,
+	HFI_BUFFER_COMV       = 0x00000008,
+	HFI_BUFFER_NON_COMV   = 0x00000009,
+	HFI_BUFFER_PERSIST    = 0x0000000A,
+	HFI_BUFFER_SUBCACHE   = 0x0000000B,
+	HFI_BUFFER_SFR        = 0x0000000C,
 };
 
 enum hfi_buffer_host_flags {

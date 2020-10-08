@@ -1003,7 +1003,7 @@ static u32 calculate_mpeg2d_persist1_size(void)
 }
 
 /* decoder internal buffers */
-u32 msm_vidc_decoder_scratch_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
 	u32 size = 0;
@@ -1050,7 +1050,7 @@ u32 msm_vidc_decoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 	return size;
 }
 
-u32 msm_vidc_decoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_decoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
 	u32 size = 0;
@@ -1101,7 +1101,7 @@ u32 msm_vidc_decoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 	return size;
 }
 
-u32 msm_vidc_decoder_persist_1_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_decoder_persist_size_iris2(struct msm_vidc_inst *inst)
 {
 	u32 size = 0;
 
@@ -1125,7 +1125,7 @@ u32 msm_vidc_decoder_persist_1_size_iris2(struct msm_vidc_inst *inst)
 }
 
 /* encoder internal buffers */
-u32 msm_vidc_encoder_scratch_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
 	u32 size = 0;
@@ -1161,7 +1161,7 @@ u32 msm_vidc_encoder_scratch_size_iris2(struct msm_vidc_inst *inst)
 	return size;
 }
 
-u32 msm_vidc_encoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_encoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
 	u32 size = 0;
@@ -1198,7 +1198,7 @@ u32 msm_vidc_encoder_scratch_1_size_iris2(struct msm_vidc_inst *inst)
 	return size;
 }
 
-u32 msm_vidc_encoder_scratch_2_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_encoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 {
 	u32 width, height, num_ref;
 	bool is_tenbit = false;
@@ -1212,14 +1212,171 @@ u32 msm_vidc_encoder_scratch_2_size_iris2(struct msm_vidc_inst *inst)
 	f = &inst->fmts[OUTPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
-	num_ref = 4; //msm_vidc_get_num_ref_frames(inst);
-	is_tenbit = false; //(inst->bit_depth == MSM_VIDC_BIT_DEPTH_10);
+	num_ref = 4; // TODO: msm_vidc_get_num_ref_frames(inst);
+	is_tenbit = false; // TODO: (inst->bit_depth == MSM_VIDC_BIT_DEPTH_10);
 
 	return calculate_enc_scratch2_size(inst, width, height,
 			num_ref, is_tenbit);
 }
 
-u32 msm_vidc_encoder_persist_size_iris2(struct msm_vidc_inst *inst)
+static u32 msm_vidc_encoder_persist_size_iris2(struct msm_vidc_inst *inst)
 {
 	return calculate_enc_persist_size();
+}
+
+int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
+{
+	int size = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return size;
+	}
+
+	if (is_decode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+			size = msm_vidc_decoder_input_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			size = msm_vidc_decoder_output_size(inst);
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+			size = msm_vidc_decoder_input_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT_META:
+			size = msm_vidc_decoder_output_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_BIN:
+			size = msm_vidc_decoder_bin_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+			size = msm_vidc_decoder_scratch_1_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+			//size = msm_vidc_decoder_persist_1_size_iris2(inst);
+			size = msm_vidc_decoder_persist_size_iris2(inst);
+			break;
+		default:
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+			size = msm_vidc_encoder_input_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			size = msm_vidc_encoder_output_size(inst);
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+			size = msm_vidc_encoder_input_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT_META:
+			size = msm_vidc_encoder_output_meta_size(inst);
+			break;
+		case MSM_VIDC_BUF_BIN:
+			size = msm_vidc_encoder_bin_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+			size = msm_vidc_encoder_scratch_1_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_DPB:
+			size = msm_vidc_encoder_dpb_size_iris2(inst);
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+			size = msm_vidc_encoder_persist_size_iris2(inst);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return size;
+}
+
+int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
+{
+	int count = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (is_decode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			count = msm_vidc_input_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			count = msm_vidc_output_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_BIN:
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+		case MSM_VIDC_BUF_PERSIST:
+			count = 1;
+			break;
+		default:
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+		case MSM_VIDC_BUF_INPUT_META:
+			count = msm_vidc_input_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			count = msm_vidc_output_min_count(inst);
+			break;
+		case MSM_VIDC_BUF_BIN:
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+		case MSM_VIDC_BUF_DPB:
+		case MSM_VIDC_BUF_PERSIST:
+			count = 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return count;
+}
+
+int msm_buffer_extra_count_iris2(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
+{
+	int count = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (buffer_type) {
+	case MSM_VIDC_BUF_INPUT:
+	case MSM_VIDC_BUF_INPUT_META:
+		count = msm_vidc_input_extra_count(inst);
+		break;
+	case MSM_VIDC_BUF_OUTPUT:
+	case MSM_VIDC_BUF_OUTPUT_META:
+		count = msm_vidc_output_extra_count(inst);
+		break;
+	default:
+		break;
+	}
+
+	return count;
 }

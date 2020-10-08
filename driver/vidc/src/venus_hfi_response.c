@@ -34,7 +34,13 @@ bool is_valid_hfi_buffer_type(struct msm_vidc_inst *inst,
 
 	if (buffer_type != HFI_BUFFER_BITSTREAM &&
 	    buffer_type != HFI_BUFFER_RAW &&
-	    buffer_type != HFI_BUFFER_METADATA) {
+	    buffer_type != HFI_BUFFER_METADATA &&
+	    buffer_type != HFI_BUFFER_BIN &&
+	    buffer_type != HFI_BUFFER_COMV &&
+	    buffer_type != HFI_BUFFER_NON_COMV &&
+	    buffer_type != HFI_BUFFER_LINE &&
+	    buffer_type != HFI_BUFFER_DPB &&
+	    buffer_type != HFI_BUFFER_PERSIST) {
 		s_vpr_e(inst->sid, "%s: invalid buffer type %#x\n",
 			func, buffer_type);
 		return false;
@@ -185,6 +191,8 @@ static int handle_session_start(struct msm_vidc_inst *inst,
 static int handle_session_stop(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
+	int signal_type = -1;
+
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
 		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
@@ -193,7 +201,34 @@ static int handle_session_stop(struct msm_vidc_inst *inst,
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		s_vpr_h(inst->sid, "%s: successful for port %d\n",
 			__func__, pkt->port);
-	signal_session_msg_receipt(inst, SIGNAL_CMD_STOP);
+
+	if (is_encode_session(inst)) {
+		if (pkt->port == HFI_PORT_RAW) {
+			signal_type = SIGNAL_CMD_STOP_INPUT;
+		} else if (pkt->port == HFI_PORT_BITSTREAM) {
+			signal_type = SIGNAL_CMD_STOP_OUTPUT;
+		} else {
+			s_vpr_e(inst->sid, "%s: invalid port: %d\n",
+				__func__, pkt->port);
+			return -EINVAL;
+		}
+	} else if (is_decode_session(inst)) {
+		if (pkt->port == HFI_PORT_RAW) {
+			signal_type = SIGNAL_CMD_STOP_OUTPUT;
+		} else if (pkt->port == HFI_PORT_BITSTREAM) {
+			signal_type = SIGNAL_CMD_STOP_INPUT;
+		} else {
+			s_vpr_e(inst->sid, "%s: invalid port: %d\n",
+				__func__, pkt->port);
+			return -EINVAL;
+		}
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid session\n", __func__);
+		return -EINVAL;
+	}
+
+	if (signal_type != -1)
+		signal_session_msg_receipt(inst, signal_type);
 	return 0;
 }
 
@@ -441,6 +476,32 @@ static int handle_port_settings_change(struct msm_vidc_inst *inst,
 	return 0;
 }
 
+static int handle_session_subscribe_mode(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt)
+{
+	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
+		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+	}
+
+	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
+		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+	return 0;
+}
+
+static int handle_session_delivery_mode(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt)
+{
+	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
+		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+	}
+
+	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
+		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+	return 0;
+}
+
 static int handle_session_command(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -459,6 +520,10 @@ static int handle_session_command(struct msm_vidc_inst *inst,
 		return handle_session_buffer(inst, pkt);
 	case HFI_CMD_SETTINGS_CHANGE:
 		return handle_port_settings_change(inst, pkt);
+	case HFI_CMD_SUBSCRIBE_MODE:
+		return handle_session_subscribe_mode(inst, pkt);
+	case HFI_CMD_DELIVERY_MODE:
+		return handle_session_delivery_mode(inst, pkt);
 	default:
 		s_vpr_e(inst->sid, "%s: Unsupported command type: %#x\n",
 			__func__, pkt->type);
@@ -531,39 +596,47 @@ static int handle_system_response(struct msm_vidc_core *core,
 	struct hfi_header *hdr)
 {
 	int rc = 0;
-	struct hfi_packet *pkt;
+	struct hfi_packet *packet;
+	u8 *pkt;
 	int i;
 
-	pkt = (struct hfi_packet *)((u8 *)hdr + sizeof(struct hfi_header));
+	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	for (i = 0; i < hdr->num_packets; i++) {
 		if (validate_packet((u8 *)pkt, core->response_packet,
-				core->packet_size, __func__))
-			return -EINVAL;
-		if (pkt->type == HFI_CMD_INIT) {
-			rc = handle_system_init(core, pkt);
-		} else if (pkt->type > HFI_SYSTEM_ERROR_BEGIN &&
-				pkt->type < HFI_SYSTEM_ERROR_END) {
-			rc = handle_system_error(core, pkt);
-		} else if (pkt->type > HFI_PROP_BEGIN &&
-				pkt->type < HFI_PROP_CODEC) {
-			rc = handle_system_property(core, pkt);
+				core->packet_size, __func__)) {
+			rc = -EINVAL;
+			goto exit;
+		}
+		packet = (struct hfi_packet *)pkt;
+		if (packet->type == HFI_CMD_INIT) {
+			rc = handle_system_init(core, packet);
+		} else if (packet->type > HFI_SYSTEM_ERROR_BEGIN &&
+			   packet->type < HFI_SYSTEM_ERROR_END) {
+			rc = handle_system_error(core, packet);
+		} else if (packet->type > HFI_PROP_BEGIN &&
+			   packet->type < HFI_PROP_CODEC) {
+			rc = handle_system_property(core, packet);
 		} else {
 			d_vpr_e("%s: Unknown packet type: %#x\n",
-			__func__, pkt->type);
-			return -EINVAL;
+			__func__, packet->type);
+			rc = -EINVAL;
+			goto exit;
 		}
-		pkt += pkt->size;
+		pkt += packet->size;
 	}
+exit:
 	return rc;
 }
 
 static int handle_session_response(struct msm_vidc_core *core,
 	struct hfi_header *hdr)
 {
-	struct hfi_packet *pkt;
+	int rc = 0;
 	struct msm_vidc_inst *inst;
-	int i, rc = 0;
+	struct hfi_packet *packet;
+	u8 *pkt;
+	int i;
 
 	inst = get_inst(core, hdr->session_id);
 	if (!inst) {
@@ -572,29 +645,31 @@ static int handle_session_response(struct msm_vidc_core *core,
 	}
 
 	mutex_lock(&inst->lock);
-	pkt = (struct hfi_packet *)((u8 *)hdr + sizeof(struct hfi_header));
+	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	for (i = 0; i < hdr->num_packets; i++) {
-		if (validate_packet((u8 *)pkt, core->response_packet,
+		if (validate_packet(pkt, core->response_packet,
 				core->packet_size, __func__)) {
 			rc = -EINVAL;
 			goto exit;
 		}
-		if (pkt->type < HFI_CMD_END && pkt->type > HFI_CMD_BEGIN) {
-			rc = handle_session_command(inst, pkt);
-		} else if (pkt->type > HFI_PROP_BEGIN &&
-				pkt->type < HFI_PROP_END) {
-			rc = handle_session_property(inst, pkt);
-		} else if (pkt->type > HFI_SESSION_ERROR_BEGIN &&
-				pkt->type < HFI_SESSION_ERROR_END) {
-			rc = handle_session_error(inst, pkt);
+		packet = (struct hfi_packet *)pkt;
+		if (packet->type < HFI_CMD_END &&
+		    packet->type > HFI_CMD_BEGIN) {
+			rc = handle_session_command(inst, packet);
+		} else if (packet->type > HFI_PROP_BEGIN &&
+			   packet->type < HFI_PROP_END) {
+			rc = handle_session_property(inst, packet);
+		} else if (packet->type > HFI_SESSION_ERROR_BEGIN &&
+			   packet->type < HFI_SESSION_ERROR_END) {
+			rc = handle_session_error(inst, packet);
 		} else {
 			s_vpr_e(inst->sid, "%s: Unknown packet type: %#x\n",
-				__func__, pkt->type);
+				__func__, packet->type);
 			rc = -EINVAL;
 			goto exit;
 		}
-		pkt += pkt->size;
+		pkt += packet->size;
 	}
 exit:
 	mutex_unlock(&inst->lock);

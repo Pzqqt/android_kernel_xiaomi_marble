@@ -62,7 +62,15 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 		switch(buffer_type) {
 		case MSM_VIDC_BUF_INPUT:
 		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_BIN:
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+		case MSM_VIDC_BUF_DPB:
 			hfi_port = HFI_PORT_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+			hfi_port = HFI_PORT_BITSTREAM | HFI_PORT_RAW;
 			break;
 		case MSM_VIDC_BUF_OUTPUT:
 		case MSM_VIDC_BUF_OUTPUT_META:
@@ -77,7 +85,15 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 		switch (buffer_type) {
 		case MSM_VIDC_BUF_INPUT:
 		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_BIN:
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+		case MSM_VIDC_BUF_DPB:
 			hfi_port = HFI_PORT_RAW;
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+			hfi_port = HFI_PORT_BITSTREAM | HFI_PORT_RAW;
 			break;
 		case MSM_VIDC_BUF_OUTPUT:
 		case MSM_VIDC_BUF_OUTPUT_META:
@@ -113,16 +129,18 @@ u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
 	case MSM_VIDC_BUF_INPUT_META:
 	case MSM_VIDC_BUF_OUTPUT_META:
 		return HFI_BUFFER_METADATA;
-	case MSM_VIDC_BUF_SCRATCH:
-		return HFI_BUFFER_SCRATCH;
-	case MSM_VIDC_BUF_SCRATCH_1:
-		return HFI_BUFFER_SCRATCH_1;
-	case MSM_VIDC_BUF_SCRATCH_2:
-		return HFI_BUFFER_SCRATCH_2;
+	case MSM_VIDC_BUF_BIN:
+		return HFI_BUFFER_BIN;
+	case MSM_VIDC_BUF_COMV:
+		return HFI_BUFFER_COMV;
+	case MSM_VIDC_BUF_NON_COMV:
+		return HFI_BUFFER_NON_COMV;
+	case MSM_VIDC_BUF_LINE:
+		return HFI_BUFFER_LINE;
+	case MSM_VIDC_BUF_DPB:
+		return HFI_BUFFER_DPB;
 	case MSM_VIDC_BUF_PERSIST:
 		return HFI_BUFFER_PERSIST;
-	case MSM_VIDC_BUF_PERSIST_1:
-		return HFI_BUFFER_PERSIST_1;
 	default:
 		d_vpr_e("invalid buffer type %d\n",
 			buffer_type);

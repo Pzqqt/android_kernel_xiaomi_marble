@@ -444,7 +444,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
-	enum msm_vidc_inst_state new_state = 0;
+	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
 	int port;
 
 	if (!inst) {
@@ -523,7 +523,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
-	enum msm_vidc_inst_state new_state = 0;
+	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
 	int port;
 
 	if (!inst) {
@@ -759,25 +759,28 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.output.list);
 	INIT_LIST_HEAD(&inst->buffers.output_meta.list);
-	INIT_LIST_HEAD(&inst->buffers.scratch.list);
-	INIT_LIST_HEAD(&inst->buffers.scratch_1.list);
-	INIT_LIST_HEAD(&inst->buffers.scratch_2.list);
+	INIT_LIST_HEAD(&inst->buffers.bin.list);
+	INIT_LIST_HEAD(&inst->buffers.comv.list);
+	INIT_LIST_HEAD(&inst->buffers.non_comv.list);
+	INIT_LIST_HEAD(&inst->buffers.line.list);
+	INIT_LIST_HEAD(&inst->buffers.dpb.list);
 	INIT_LIST_HEAD(&inst->buffers.persist.list);
-	INIT_LIST_HEAD(&inst->buffers.persist_1.list);
-	INIT_LIST_HEAD(&inst->allocations.scratch.list);
-	INIT_LIST_HEAD(&inst->allocations.scratch_1.list);
-	INIT_LIST_HEAD(&inst->allocations.scratch_2.list);
+	INIT_LIST_HEAD(&inst->allocations.bin.list);
+	INIT_LIST_HEAD(&inst->allocations.comv.list);
+	INIT_LIST_HEAD(&inst->allocations.non_comv.list);
+	INIT_LIST_HEAD(&inst->allocations.line.list);
+	INIT_LIST_HEAD(&inst->allocations.dpb.list);
 	INIT_LIST_HEAD(&inst->allocations.persist.list);
-	INIT_LIST_HEAD(&inst->allocations.persist_1.list);
 	INIT_LIST_HEAD(&inst->mappings.input.list);
 	INIT_LIST_HEAD(&inst->mappings.input_meta.list);
 	INIT_LIST_HEAD(&inst->mappings.output.list);
 	INIT_LIST_HEAD(&inst->mappings.output_meta.list);
-	INIT_LIST_HEAD(&inst->mappings.scratch.list);
-	INIT_LIST_HEAD(&inst->mappings.scratch_1.list);
-	INIT_LIST_HEAD(&inst->mappings.scratch_2.list);
+	INIT_LIST_HEAD(&inst->mappings.bin.list);
+	INIT_LIST_HEAD(&inst->mappings.comv.list);
+	INIT_LIST_HEAD(&inst->mappings.non_comv.list);
+	INIT_LIST_HEAD(&inst->mappings.line.list);
+	INIT_LIST_HEAD(&inst->mappings.dpb.list);
 	INIT_LIST_HEAD(&inst->mappings.persist.list);
-	INIT_LIST_HEAD(&inst->mappings.persist_1.list);
 	INIT_LIST_HEAD(&inst->children.list);
 	INIT_LIST_HEAD(&inst->firmware.list);
 	inst->domain = session_type;

@@ -33,7 +33,7 @@ u32 msm_vdec_subscribe_for_properties[] = {
 };
 
 u32 msm_vdec_subscribe_for_metadata[] = {
-	HFI_PROP_TAG_NOT_PROPAGATED_TO_OUTPUT,
+	HFI_PROP_BUFFER_TAG,
 };
 
 u32 msm_vdec_deliver_as_metadata[] = {
@@ -496,30 +496,44 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	inst->buffers.scratch.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_SCRATCH);
-	inst->buffers.scratch_1.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_SCRATCH_1);
-	inst->buffers.persist_1.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_PERSIST_1);
+	inst->buffers.bin.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_BIN);
+	inst->buffers.comv.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_COMV);
+	inst->buffers.non_comv.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_NON_COMV);
+	inst->buffers.line.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_LINE);
+	inst->buffers.persist.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_PERSIST);
 
-	inst->buffers.scratch.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_SCRATCH);
-	inst->buffers.scratch_1.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_SCRATCH_1);
-	inst->buffers.persist_1.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_PERSIST_1);
+	inst->buffers.bin.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_BIN);
+	inst->buffers.comv.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_COMV);
+	inst->buffers.non_comv.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_NON_COMV);
+	inst->buffers.line.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_LINE);
+	inst->buffers.persist.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_PERSIST);
 
 	s_vpr_h(inst->sid, "internal buffer: min     size\n");
-        s_vpr_h(inst->sid, "scratch  buffer: %d      %d\n",
-		inst->buffers.scratch.min_count,
-		inst->buffers.scratch.size);
-	s_vpr_h(inst->sid, "scratch1 buffer: %d      %d\n",
-		inst->buffers.scratch_1.min_count,
-		inst->buffers.scratch_1.size);
-	s_vpr_h(inst->sid, "persist1 buffer: %d      %d\n",
-		inst->buffers.persist_1.min_count,
-		inst->buffers.persist_1.size);
+	s_vpr_h(inst->sid, "bin  buffer: %d      %d\n",
+		inst->buffers.bin.min_count,
+		inst->buffers.bin.size);
+	s_vpr_h(inst->sid, "comv  buffer: %d      %d\n",
+		inst->buffers.comv.min_count,
+		inst->buffers.comv.size);
+	s_vpr_h(inst->sid, "non_comv  buffer: %d      %d\n",
+		inst->buffers.non_comv.min_count,
+		inst->buffers.non_comv.size);
+	s_vpr_h(inst->sid, "line buffer: %d      %d\n",
+		inst->buffers.line.min_count,
+		inst->buffers.line.size);
+	s_vpr_h(inst->sid, "persist buffer: %d      %d\n",
+		inst->buffers.persist.min_count,
+		inst->buffers.persist.size);
 
 	return rc;
 }
@@ -534,13 +548,19 @@ static int msm_vdec_create_input_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_SCRATCH);
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_SCRATCH_1);
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_COMV);
 	if (rc)
 		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_PERSIST_1);
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	if (rc)
+		return rc;
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	if (rc)
+		return rc;
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
 	if (rc)
 		return rc;
 
@@ -557,18 +577,25 @@ static int msm_vdec_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_SCRATCH);
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_SCRATCH_1);
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_COMV);
 	if (rc)
 		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_PERSIST_1);
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	if (rc)
+		return rc;
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	if (rc)
+		return rc;
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
 	if (rc)
 		return rc;
 
 	return 0;
 }
+
 /*
 static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 {
@@ -614,24 +641,13 @@ static int msm_vdec_port_settings_subscription(struct msm_vidc_inst *inst,
 	     i++)
 		payload[i + 1] = msm_vdec_subscribe_for_port_settings_change[i];
 
-	rc = hfi_create_header(inst->packet, inst->packet_size,
-		inst->session_id,
-		core->header_id++);
-	if (rc)
-		return rc;
-
-	rc = hfi_create_packet(inst->packet,  inst->packet_size,
-		HFI_CMD_SUBSCRIBE_MODE,
-		(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-		HFI_HOST_FLAGS_INTR_REQUIRED),
-		HFI_PAYLOAD_U32_ARRAY,
-		get_hfi_port(inst, port),
-		core->packet_id++,
-		&payload[0],
-		(ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change) + 1) *
-		sizeof(u32));
-	if (rc)
-		return rc;
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_SUBSCRIBE_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			(ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change) + 1) *
+			sizeof(u32));
 
 	return rc;
 }
@@ -655,24 +671,13 @@ static int msm_vdec_property_subscription(struct msm_vidc_inst *inst,
 	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_properties); i++)
 		payload[i + 1] = msm_vdec_subscribe_for_properties[i];
 
-	rc = hfi_create_header(inst->packet, inst->packet_size,
-			inst->session_id,
-			core->header_id++);
-	if (rc)
-		return rc;
-
-	rc = hfi_create_packet(inst->packet,  inst->packet_size,
+	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
-			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-			HFI_HOST_FLAGS_INTR_REQUIRED),
+			port,
 			HFI_PAYLOAD_U32_ARRAY,
-			get_hfi_port(inst, port),
-			core->packet_id++,
 			&payload[0],
 			(ARRAY_SIZE(msm_vdec_subscribe_for_properties) + 1) *
 			sizeof(u32));
-	if (rc)
-		return rc;
 
 	return rc;
 }
@@ -696,24 +701,13 @@ static int msm_vdec_metadata_subscription(struct msm_vidc_inst *inst,
 	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_metadata); i++)
 		payload[i + 1] = msm_vdec_subscribe_for_metadata[i];
 
-	rc = hfi_create_header(inst->packet, inst->packet_size,
-			inst->session_id,
-			core->header_id++);
-	if (rc)
-		return rc;
-
-	rc = hfi_create_packet(inst->packet,  inst->packet_size,
+	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
-			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-			HFI_HOST_FLAGS_INTR_REQUIRED),
+			port,
 			HFI_PAYLOAD_U32_ARRAY,
-			get_hfi_port(inst, port),
-			core->packet_id++,
 			&payload[0],
 			(ARRAY_SIZE(msm_vdec_subscribe_for_metadata) + 1) *
 			sizeof(u32));
-	if (rc)
-		return rc;
 
 	return rc;
 }
@@ -737,53 +731,13 @@ static int msm_vdec_metadata_delivery(struct msm_vidc_inst *inst,
 	for (i = 0; i < ARRAY_SIZE(msm_vdec_deliver_as_metadata); i++)
 		payload[i + 1] = msm_vdec_deliver_as_metadata[i];
 
-	rc = hfi_create_header(inst->packet, inst->packet_size,
-		inst->session_id,
-		core->header_id++);
-	if (rc)
-		return rc;
-
-	rc = hfi_create_packet(inst->packet, inst->packet_size,
-		HFI_CMD_DELIVERY_MODE,
-		(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
-		HFI_HOST_FLAGS_INTR_REQUIRED),
-		HFI_PAYLOAD_U32_ARRAY,
-		get_hfi_port(inst, port),
-		core->packet_id++,
-		&payload[0],
-		(ARRAY_SIZE(msm_vdec_deliver_as_metadata) + 1) * sizeof(u32));
-	if (rc)
-		return rc;
-
-	return rc;
-}
-
-static int msm_vdec_subscription(struct msm_vidc_inst *inst,
-	enum msm_vidc_port_type port)
-{
-	int rc = 0;
-
-	rc = msm_vdec_port_settings_subscription(inst, port);
-	if (rc)
-		return rc;
-	rc = msm_vdec_property_subscription(inst, port);
-	if (rc)
-		return rc;
-	rc = msm_vdec_metadata_subscription(inst, port);
-	if (rc)
-		return rc;
-
-	return rc;
-}
-
-static int msm_vdec_deliveries(struct msm_vidc_inst *inst,
-	enum msm_vidc_port_type port)
-{
-	int rc = 0;
-
-	rc = msm_vdec_metadata_delivery(inst, port);
-	if (rc)
-		return rc;
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_DELIVERY_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			(ARRAY_SIZE(msm_vdec_deliver_as_metadata) + 1) *
+			sizeof(u32));
 
 	return rc;
 }
@@ -796,9 +750,12 @@ int msm_vdec_stop_input(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s()\n", __func__);
 
-	return rc;
+	rc = msm_vidc_session_stop(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	return 0;
 }
 
 int msm_vdec_start_input(struct msm_vidc_inst *inst)
@@ -848,13 +805,17 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vdec_subscription(inst, INPUT_PORT);
+	rc = msm_vdec_port_settings_subscription(inst, INPUT_PORT);
 	if (rc)
-		goto error;
+		return rc;
 
-	rc = msm_vdec_deliveries(inst, INPUT_PORT);
+	rc = msm_vdec_property_subscription(inst, INPUT_PORT);
 	if (rc)
-		goto error;
+		return rc;
+
+	rc = msm_vdec_metadata_delivery(inst, INPUT_PORT);
+	if (rc)
+		return rc;
 
 	rc = venus_hfi_start(inst, INPUT_PORT);
 	if (rc)
@@ -873,13 +834,16 @@ int msm_vdec_stop_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	return rc;
+	rc = msm_vidc_session_stop(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
+
+	return 0;
 }
 
 int msm_vdec_start_output(struct msm_vidc_inst *inst)
@@ -896,13 +860,13 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vdec_subscription(inst, OUTPUT_PORT);
+	rc = msm_vdec_port_settings_subscription(inst, OUTPUT_PORT);
 	if (rc)
-		goto error;
+		return rc;
 
-	rc = msm_vdec_deliveries(inst, OUTPUT_PORT);
+	rc = msm_vdec_metadata_subscription(inst, OUTPUT_PORT);
 	if (rc)
-		goto error;
+		return rc;
 
 	rc = venus_hfi_start(inst, OUTPUT_PORT);
 	if (rc)

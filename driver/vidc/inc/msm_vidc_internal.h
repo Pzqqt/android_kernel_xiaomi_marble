@@ -109,11 +109,12 @@ enum msm_vidc_buffer_type {
 	MSM_VIDC_BUF_INPUT_META,
 	MSM_VIDC_BUF_OUTPUT_META,
 	MSM_VIDC_BUF_QUEUE,
-	MSM_VIDC_BUF_SCRATCH,
-	MSM_VIDC_BUF_SCRATCH_1,
-	MSM_VIDC_BUF_SCRATCH_2,
+	MSM_VIDC_BUF_BIN,
+	MSM_VIDC_BUF_COMV,
+	MSM_VIDC_BUF_NON_COMV,
+	MSM_VIDC_BUF_LINE,
+	MSM_VIDC_BUF_DPB,
 	MSM_VIDC_BUF_PERSIST,
-	MSM_VIDC_BUF_PERSIST_1,
 };
 
 /* always match with v4l2 flags V4L2_BUF_FLAG_* */
@@ -144,7 +145,7 @@ enum msm_vidc_buffer_region {
 };
 
 enum msm_vidc_port_type {
-	INPUT_PORT,
+	INPUT_PORT = 0,
 	OUTPUT_PORT,
 	INPUT_META_PORT,
 	OUTPUT_META_PORT,
@@ -339,7 +340,8 @@ enum profiling_points {
 };
 
 enum signal_session_response {
-	SIGNAL_CMD_STOP  = 0,
+	SIGNAL_CMD_STOP_INPUT = 0,
+	SIGNAL_CMD_STOP_OUTPUT,
 	SIGNAL_CMD_CLOSE,
 	MAX_SIGNAL,
 };

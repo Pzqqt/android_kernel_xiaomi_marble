@@ -594,8 +594,8 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	}
 
 	// TODO: handle writing packet
-	d_vpr_e("skip writing packet\n");
-	return 0;
+	//d_vpr_e("skip writing packet\n");
+	//return 0;
 
 	packet_size_in_words = (*(u32 *)packet) >> 2;
 	if (!packet_size_in_words || packet_size_in_words >
@@ -915,18 +915,36 @@ dbg_error_null:
 	return rc;
 }
 
-/*TODO:darshana needs discussion*/
-static void __flush_debug_queue(struct msm_vidc_core *core, u8 *header)
+// TODO: revisit once firmware updated to latest interface headers
+struct hfi_packet_header {
+	u32 size;
+	u32 packet_type;
+};
+
+struct hfi_msg_sys_debug_packet {
+	u32 size;
+	u32 packet_type;
+	u32 msg_type;
+	u32 msg_size;
+	u32 time_stamp_hi;
+	u32 time_stamp_lo;
+	u8 rg_msg_data[1];
+};
+
+static void __flush_debug_queue(struct msm_vidc_core *core, u8 *packet)
 {
 	bool local_packet = false;
 	enum vidc_msg_prio log_level = msm_vidc_debug;
-	struct hfi_packet *pkt;
-	u32 payload = 0;
 
-	if (!header) {
-		header = kzalloc(VIDC_IFACEQ_VAR_HUGE_PKT_SIZE, GFP_KERNEL);
-		if (!header) {
-			d_vpr_e("%s: Fail to allocate mem\n", __func__);
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	if (!packet) {
+		packet = kzalloc(VIDC_IFACEQ_VAR_HUGE_PKT_SIZE, GFP_KERNEL);
+		if (!packet) {
+			d_vpr_e("%s: fail to allocate\n", __func__);
 			return;
 		}
 
@@ -950,20 +968,21 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *header)
 		} \
 	})
 
-	while (!__iface_dbgq_read(core, header)) {
-		struct hfi_header *hdr =
-			(struct hfi_header *) header;
+	while (!__iface_dbgq_read(core, packet)) {
+		struct hfi_packet_header *pkt =
+			(struct hfi_packet_header *) packet;
 
-		if (validate_packet((u8 *)pkt, core->response_packet,
-				core->packet_size, __func__))
-			return;
+		if (pkt->size < sizeof(struct hfi_packet_header)) {
+			d_vpr_e("Invalid pkt size - %s\n", __func__);
+			continue;
+		}
 
-		pkt = (struct hfi_packet *)(hdr + sizeof(struct hfi_header));
-		if (pkt->type == HFI_PROP_DEBUG_LOG_LEVEL) {
+		if (1) {
+			struct hfi_msg_sys_debug_packet *pkt =
+				(struct hfi_msg_sys_debug_packet *) packet;
+
 			SKIP_INVALID_PKT(pkt->size,
-				sizeof(u32), sizeof(*pkt));
-
-			payload = (u32) *((u8 *)pkt + sizeof(struct hfi_packet));
+				pkt->msg_size, sizeof(*pkt));
 
 			/*
 			 * All fw messages starts with new line character. This
@@ -972,14 +991,14 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *header)
 			 * from the message fixes this to print it in a single
 			 * line.
 			 */
-			//pkt->rg_msg_data[sizeof(u32)-1] = '\0';
-			dprintk_firmware(log_level, "%s", &payload);
+			pkt->rg_msg_data[pkt->msg_size-1] = '\0';
+			dprintk_firmware(log_level, "%s", &pkt->rg_msg_data[1]);
 		}
 	}
 #undef SKIP_INVALID_PKT
 
 	if (local_packet)
-		kfree(header);
+		kfree(packet);
 }
 
 static int __sys_set_debug(struct msm_vidc_core *core, u32 debug)
@@ -2318,6 +2337,18 @@ static int __response_handler(struct msm_vidc_core *core)
 	return rc;
 }
 
+irqreturn_t venus_hfi_isr(int irq, void *data)
+{
+	struct msm_vidc_core *core = data;
+
+	d_vpr_e("%s()\n", __func__);
+
+	disable_irq_nosync(irq);
+	queue_work(core->device_workq, &core->device_work);
+
+	return IRQ_HANDLED;
+}
+
 void venus_hfi_work_handler(struct work_struct *work)
 {
 	struct msm_vidc_core *core;
@@ -2561,7 +2592,7 @@ int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
 				HFI_PROP_CODEC,
 				HFI_HOST_FLAGS_NONE,
 				HFI_PORT_NONE,
-				HFI_PAYLOAD_U32,
+				HFI_PAYLOAD_U32_ENUM,
 				&codec,
 				sizeof(u32));
 	if (rc)
@@ -2699,6 +2730,49 @@ int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 	if (rc)
 		return rc;
 
+	return rc;
+}
+
+int venus_hfi_session_command(struct msm_vidc_inst *inst,
+	u32 cmd, enum msm_vidc_port_type port, u32 payload_type,
+	void *payload, u32 payload_size)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->packet || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			inst->session_id,
+			core->header_id++);
+	if (rc)
+		return rc;
+
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+			cmd,
+			(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+			HFI_HOST_FLAGS_INTR_REQUIRED),
+			payload_type,
+			get_hfi_port(inst, port),
+			core->packet_id++,
+			payload,
+			payload_size);
+
+	if (rc)
+		goto err_cmd;
+
+	s_vpr_h(inst->sid, "Command packet 0x%x created\n", cmd);
+	__iface_cmdq_write(inst->core, inst->packet);
+
+	return rc;
+
+err_cmd:
+	s_vpr_e(inst->sid, "%s: create packet failed for cmd: %d\n",
+		__func__, cmd);
 	return rc;
 }
 

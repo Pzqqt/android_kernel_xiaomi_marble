@@ -188,6 +188,49 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 
 void msm_vidc_stop_streaming(struct vb2_queue *q)
 {
+	int rc = 0;
+	struct msm_vidc_inst *inst;
+
+	if (!q || !q->drv_priv) {
+		d_vpr_e("%s: invalid input, q = %pK\n", q);
+		return;
+	}
+	inst = q->drv_priv;
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+	if (q->type == INPUT_META_PLANE || q->type == OUTPUT_META_PLANE) {
+		s_vpr_h(inst->sid, "%s: nothing to stop on meta port %d\n",
+			__func__, q->type);
+		return;
+	}
+	if (!is_decode_session(inst) && !is_encode_session(inst)) {
+		s_vpr_e(inst->sid, "%s: invalid session %d\n",
+			__func__, inst->domain);
+		return;
+	}
+	s_vpr_h(inst->sid, "Streamoff: %d\n", q->type);
+
+	if (q->type == INPUT_MPLANE) {
+		if (is_decode_session(inst))
+			rc = msm_vdec_stop_input(inst);
+		//else if (is_encode_session(inst))
+		//	rc = msm_venc_start_input(inst);
+	} else if (q->type == OUTPUT_MPLANE) {
+		if (is_decode_session(inst))
+			rc = msm_vdec_stop_output(inst);
+		//else if (is_encode_session(inst))
+		//	rc = msm_venc_start_output(inst);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, q->type);
+	}
+
+	if (rc)
+		s_vpr_e(inst->sid, "%s: stop failed for qtype: %d\n",
+			__func__, q->type);
+
+	return;
 }
 
 void msm_vidc_buf_queue(struct vb2_buffer *vb2)
