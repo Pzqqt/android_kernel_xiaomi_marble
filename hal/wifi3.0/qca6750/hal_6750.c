@@ -1740,6 +1740,24 @@ hal_rx_flow_get_cmem_fse_6750(struct hal_soc *hal_soc, uint32_t fse_offset,
 		fse[i] = HAL_CMEM_READ(hal_soc, fse_offset + i * 4);
 }
 
+/**
+ * hal_rx_msdu_get_reo_destination_indication_6750: API to get
+ * reo_destination_indication from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ * @reo_destination_indication: pointer to return value of reo_destination_indication
+ *
+ * Return: none
+ */
+static void
+hal_rx_msdu_get_reo_destination_indication_6750(uint8_t *buf,
+						uint32_t *reo_destination_indication)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	*reo_destination_indication = HAL_RX_MSDU_END_REO_DEST_IND_GET(msdu_end);
+}
+
 static
 void hal_compute_reo_remap_ix2_ix3_6750(uint32_t *ring, uint32_t num_rings,
 					uint32_t *remap1, uint32_t *remap2)
@@ -1909,7 +1927,7 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	hal_rx_flow_setup_cmem_fse_6750,
 	hal_rx_flow_get_cmem_fse_ts_6750,
 	hal_rx_flow_get_cmem_fse_6750,
-	NULL
+	hal_rx_msdu_get_reo_destination_indication_6750
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {
