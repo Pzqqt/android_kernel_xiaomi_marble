@@ -6457,13 +6457,10 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 {
 	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
 			static_cache_read_work.work);
-	struct drm_crtc *crtc;
+	struct drm_crtc *crtc = &sde_crtc->base;
+	struct sde_hw_ctl *ctl = sde_crtc->mixers[0].hw_ctl;
 	struct drm_encoder *enc, *drm_enc = NULL;
-
-	if (!sde_crtc)
-		return;
-
-	crtc = &sde_crtc->base;
+	struct drm_plane *plane;
 
 	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE)
 		return;
@@ -6474,8 +6471,9 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 			return;
 	}
 
-	if (!drm_enc) {
-		SDE_ERROR("invalid encoder\n");
+	if (!drm_enc || !ctl || !sde_crtc->num_mixers) {
+		SDE_ERROR("invalid object, drm_enc:%d, ctl:%d\n", !drm_enc,
+				!ctl);
 		return;
 	}
 
@@ -6483,7 +6481,14 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 
 	sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_READ, false);
 
-	/* kickoff encoder with previous configuration and wait for VBLANK */
+	/* flush only the sys-cache enabled SSPPs */
+	if (ctl->ops.clear_pending_flush)
+		ctl->ops.clear_pending_flush(ctl);
+
+	drm_atomic_crtc_for_each_plane(plane, crtc)
+		sde_plane_ctl_flush(plane, ctl, true);
+
+	/* kickoff encoder and wait for VBLANK */
 	sde_encoder_kickoff(drm_enc, false, false);
 	sde_encoder_wait_for_event(drm_enc, MSM_ENC_VBLANK);
 
