@@ -206,6 +206,11 @@ static ssize_t gsi_dump_ch(struct file *file,
 	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_7,
 		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d CTX7  0x%x\n", arg1, val);
+	if (gsi_ctx->per.ver >= GSI_VER_3_0) {
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_8,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d CTX8  0x%x\n", arg1, val);
+	}
 	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_RE_FETCH_READ_PTR,
 		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d REFRP 0x%x\n", arg1, val);
@@ -227,6 +232,26 @@ static ssize_t gsi_dump_ch(struct file *file,
 	val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_3,
 		gsi_ctx->per.ee, arg1);
 	TERR("CH%2d SCR3  0x%x\n", arg1, val);
+	if (gsi_ctx->per.ver >= GSI_VER_3_0) {
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_4,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d SCR4  0x%x\n", arg1, val);
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_5,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d SCR5  0x%x\n", arg1, val);
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_6,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d SCR6  0x%x\n", arg1, val);
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_7,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d SCR7  0x%x\n", arg1, val);
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_8,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d SCR8  0x%x\n", arg1, val);
+		val = gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_SCRATCH_9,
+			gsi_ctx->per.ee, arg1);
+		TERR("CH%2d SCR9  0x%x\n", arg1, val);
+	}
 
 	if (arg2) {
 		ctx = &gsi_ctx->chan[arg1];

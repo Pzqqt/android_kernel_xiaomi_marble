@@ -25,9 +25,9 @@
 #define GSI_ASSERT() \
 	BUG()
 
-#define GSI_CHAN_MAX      31
-#define GSI_EVT_RING_MAX  24
-#define GSI_NO_EVT_ERINDEX 31
+#define GSI_CHAN_MAX      36
+#define GSI_EVT_RING_MAX  31
+#define GSI_NO_EVT_ERINDEX 255
 #define GSI_ISR_CACHE_MAX 20
 
 #define GSI_IPC_LOGGING(buf, fmt, args...) \
@@ -84,6 +84,7 @@ enum gsi_ver {
 	GSI_VER_2_7 = 7,
 	GSI_VER_2_9 = 8,
 	GSI_VER_2_11 = 9,
+	GSI_VER_3_0 = 10,
 	GSI_VER_MAX,
 };
 
@@ -187,7 +188,7 @@ struct gsi_evt_ring_props {
 	enum gsi_evt_chtype intf;
 	enum gsi_intr_type intr;
 	enum gsi_evt_ring_elem_size re_size;
-	uint16_t ring_len;
+	uint32_t ring_len;
 	uint64_t ring_base_addr;
 	void *ring_base_vaddr;
 	uint16_t int_modt;
@@ -1129,7 +1130,7 @@ struct gsi_ring_ctx {
 	uint64_t rp;
 	uint64_t wp_local;
 	uint64_t rp_local;
-	uint16_t len;
+	uint32_t len;
 	uint8_t elem_sz;
 	uint16_t max_num_elem;
 	uint64_t end;

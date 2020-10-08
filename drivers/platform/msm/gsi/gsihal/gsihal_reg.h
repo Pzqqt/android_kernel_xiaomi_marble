@@ -43,6 +43,7 @@ enum gsihal_reg_name {
 	GSI_EE_n_GSI_HW_PARAM,
 	GSI_EE_n_GSI_HW_PARAM_0,
 	GSI_EE_n_GSI_HW_PARAM_2,
+	GSI_EE_n_GSI_HW_PARAM_4,
 	GSI_EE_n_GSI_SW_VERSION,
 	GSI_EE_n_CNTXT_INTSET,
 	GSI_EE_n_CNTXT_MSI_BASE_LSB,
@@ -72,10 +73,17 @@ enum gsihal_reg_name {
 	GSI_EE_n_GSI_CH_k_SCRATCH_1,
 	GSI_EE_n_GSI_CH_k_SCRATCH_2,
 	GSI_EE_n_GSI_CH_k_SCRATCH_3,
+	GSI_EE_n_GSI_CH_k_SCRATCH_4,
+	GSI_EE_n_GSI_CH_k_SCRATCH_5,
+	GSI_EE_n_GSI_CH_k_SCRATCH_6,
+	GSI_EE_n_GSI_CH_k_SCRATCH_7,
+	GSI_EE_n_GSI_CH_k_SCRATCH_8,
+	GSI_EE_n_GSI_CH_k_SCRATCH_9,
 	GSI_EE_n_GSI_CH_k_CNTXT_4,
 	GSI_EE_n_GSI_CH_k_CNTXT_5,
 	GSI_EE_n_GSI_CH_k_CNTXT_6,
 	GSI_EE_n_GSI_CH_k_CNTXT_7,
+	GSI_EE_n_GSI_CH_k_CNTXT_8,
 	GSI_EE_n_EV_CH_k_CNTXT_4,
 	GSI_EE_n_EV_CH_k_CNTXT_5,
 	GSI_EE_n_EV_CH_k_CNTXT_6,
@@ -129,6 +137,20 @@ enum gsihal_reg_name {
 	GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR,
 	GSI_GSI_INST_RAM_n,
 	GSI_GSI_IRAM_PTR_MSI_DB,
+	GSI_GSI_IRAM_PTR_INT_NOTIFY_MCS,
+	GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_k,
+	GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_k,
+	GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_MSK_k,
+	GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_MSK_k,
+	GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_CLR_k,
+	GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_CLR_k,
+	GSI_EE_n_CNTXT_SRC_IEOB_IRQ_k,
+	GSI_EE_n_CNTXT_SRC_IEOB_IRQ_MSK_k,
+	GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k,
+	GSI_INTER_EE_n_SRC_GSI_CH_IRQ_k,
+	GSI_INTER_EE_n_SRC_GSI_CH_IRQ_CLR_k,
+	GSI_INTER_EE_n_SRC_EV_CH_IRQ_k,
+	GSI_INTER_EE_n_SRC_EV_CH_IRQ_CLR_k,
 	GSI_REG_MAX
 };
 
@@ -188,6 +210,11 @@ struct gsihal_reg_hw_param2 {
 	uint32_t gsi_num_ev_per_ee;
 	uint32_t gsi_num_ch_per_ee;
 	uint32_t gsi_iram_size;
+};
+
+struct gsihal_reg_hw_param4 {
+	uint32_t gsi_iram_protcol_cnt;
+	uint32_t gsi_num_ev_per_ee;
 };
 
 struct gsihal_reg_gsi_status {
@@ -256,6 +283,7 @@ struct gsihal_reg_ee_n_gsi_ch_cmd {
 };
 
 struct gsihal_reg_gsi_ee_n_gsi_ch_k_qos {
+	uint32_t low_latency_en; //3.0
 	uint32_t db_in_bytes; //2.9
 	uint32_t empty_lvl_thrshold;
 	uint32_t prefetch_mode;
@@ -267,6 +295,7 @@ struct gsihal_reg_gsi_ee_n_gsi_ch_k_qos {
 
 struct gsihal_reg_ch_k_cntxt_1 {
 	uint32_t r_length;
+	uint32_t erindex;
 };
 
 struct gsihal_reg_gsi_cfg {
@@ -373,9 +402,70 @@ void gsihal_write_reg_fields(enum gsihal_reg_name reg, const void *fields);
 u32 gsihal_read_reg_fields(enum gsihal_reg_name reg, void *fields);
 
 /*
+* gsihal_get_bit_map_array_size() - Get the size of the bit map
+*	array size according to the
+*	GSI version.
+*/
+u32 gsihal_get_bit_map_array_size(void);
+
+/*
+* gsihal_read_ch_reg() - Get the raw value of a ch reg
+*/
+u32 gsihal_read_ch_reg(enum gsihal_reg_name reg, u32 ch_num);
+
+/*
+ * gsihal_test_ch_bit() - return true if a ch bit is set
+ */
+bool gsihal_test_ch_bit(u32 reg_val, u32 ch_num);
+
+/*
+ * gsihal_get_ch_bit() - get ch bit set in the right offset
+ */
+u32 gsihal_get_ch_bit(u32 ch_num);
+
+/*
+ * gsihal_get_ch_reg_idx() - get ch reg index according to ch num
+ */
+u32 gsihal_get_ch_reg_idx(u32 ch_num);
+
+/*
+ * gsihal_get_ch_reg_mask() - get ch reg mask according to ch num
+ */
+u32 gsihal_get_ch_reg_mask(u32 ch_num);
+
+/*
+ * gsihal_get_ch_reg_offset() - Get the offset of a ch register according to
+ *	ch index
+ */
+u32 gsihal_get_ch_reg_offset(enum gsihal_reg_name reg, u32 ch_num);
+
+/*
+ * gsihal_get_ch_reg_n_offset() - Get the offset of a ch n register according
+ *	to ch index and n
+ */
+u32 gsihal_get_ch_reg_n_offset(enum gsihal_reg_name reg, u32 n, u32 ch_num);
+
+/*
+ * gsihal_write_ch_bit_map_reg_n() - Write mask to ch reg a raw value
+ */
+void gsihal_write_ch_bit_map_reg_n(enum gsihal_reg_name reg, u32 n, u32 ch_num,
+	u32 mask);
+
+/*
+ * gsihal_write_set_ch_bit_map_reg_n() - Set ch bit in reg a raw value
+ */
+void gsihal_write_set_ch_bit_map_reg_n(enum gsihal_reg_name reg, u32 n,
+	u32 ch_num);
+
+/*
  * Get the offset of a nk parameterized register
  */
 u32 gsihal_get_reg_nk_ofst(enum gsihal_reg_name reg, u32 n, u32 k);
+
+/*
+ * Check that ring length is valid
+ */
+bool gsihal_check_ring_length_valid(u32 r_len, u32 elem_size);
 
 /*
  * Get the offset of a n parameterized register

@@ -7,6 +7,18 @@
 #include "gsihal_reg_i.h"
 #include "gsihal_reg.h"
 
+/*
+*	GSI_CH_BIT_MAP_ARR_SIZE - The number of cells in bit map
+*		registers for GSI channels.
+*		This is taken from the k range
+*		of each bit map register.
+*/
+#define GSI_CH_BIT_MAP_ARR_SIZE			(1)
+
+/* Utility macros to use with bit map arrays*/
+#define GSI_CH_BIT_MAP_CELL_NUM(num)	((num) >> 5)
+#define GSI_BIT_MAP_CELL_MSK(num)		(1 << (num - (GSI_CH_BIT_MAP_CELL_NUM(num) << 5)))
+
 #define gsi_readl(c)	(readl_relaxed(c))
 #define gsi_writel(v, c)	({ __iowmb(); writel_relaxed((v), (c)); })
 
@@ -41,6 +53,7 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_EE_n_GSI_HW_PARAM),
 	__stringify(GSI_EE_n_GSI_HW_PARAM_0),
 	__stringify(GSI_EE_n_GSI_HW_PARAM_2),
+	__stringify(GSI_EE_n_GSI_HW_PARAM_4),
 	__stringify(GSI_EE_n_GSI_SW_VERSION),
 	__stringify(GSI_EE_n_CNTXT_INTSET),
 	__stringify(GSI_EE_n_CNTXT_MSI_BASE_LSB),
@@ -70,10 +83,17 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_1),
 	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_2),
 	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_3),
+	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_4),
+	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_5),
+	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_6),
+	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_7),
+	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_8),
+	__stringify(GSI_EE_n_GSI_CH_k_SCRATCH_9),
 	__stringify(GSI_EE_n_GSI_CH_k_CNTXT_4),
 	__stringify(GSI_EE_n_GSI_CH_k_CNTXT_5),
 	__stringify(GSI_EE_n_GSI_CH_k_CNTXT_6),
 	__stringify(GSI_EE_n_GSI_CH_k_CNTXT_7),
+	__stringify(GSI_EE_n_GSI_CH_k_CNTXT_8),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_4),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_5),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_6),
@@ -127,6 +147,20 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR),
 	__stringify(GSI_GSI_INST_RAM_n),
 	__stringify(GSI_GSI_IRAM_PTR_MSI_DB),
+	__stringify(GSI_GSI_IRAM_PTR_INT_NOTIFY_MCS),
+	__stringify(GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_MSK_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_MSK_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_CLR_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_CLR_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_MSK_k),
+	__stringify(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k),
+	__stringify(GSI_INTER_EE_n_SRC_GSI_CH_IRQ_k),
+	__stringify(GSI_INTER_EE_n_SRC_GSI_CH_IRQ_CLR_k),
+	__stringify(GSI_INTER_EE_n_SRC_EV_CH_IRQ_k),
+	__stringify(GSI_INTER_EE_n_SRC_EV_CH_IRQ_CLR_k),
 };
 
 /*
@@ -247,7 +281,47 @@ static void gsireg_parse_ch_k_cntxt_0_v2_5(enum gsihal_reg_name reg,
 		GSI_V2_5_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_PROTOCOL_MSB_BMSK);
 }
 
-static void gsireg_parse_ev_ch_k_cntxt_0(enum gsihal_reg_name reg, void *fields,
+static void gsireg_parse_ch_k_cntxt_0_v3_0(enum gsihal_reg_name reg,
+	void *fields, u32 val)
+{
+	struct gsihal_reg_ch_k_cntxt_0 *ch_k_ctxt =
+		(struct gsihal_reg_ch_k_cntxt_0 *) fields;
+
+	ch_k_ctxt->element_size = GSI_GETFIELD_FROM_REG(val,
+		GSI_EE_n_GSI_CH_k_CNTXT_0_ELEMENT_SIZE_SHFT,
+		GSI_EE_n_GSI_CH_k_CNTXT_0_ELEMENT_SIZE_BMSK);
+	ch_k_ctxt->chstate = GSI_GETFIELD_FROM_REG(val,
+		GSI_EE_n_GSI_CH_k_CNTXT_0_CHSTATE_SHFT,
+		GSI_EE_n_GSI_CH_k_CNTXT_0_CHSTATE_BMSK);
+	ch_k_ctxt->chid = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHID_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHID_BMSK);
+	ch_k_ctxt->ee = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_EE_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_EE_BMSK);
+	ch_k_ctxt->chtype_dir = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_DIR_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_DIR_BMSK);
+	ch_k_ctxt->chtype_protocol = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_PROTOCOL_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_PROTOCOL_BMSK);
+}
+
+static void gsireg_parse_ch_k_cntxt_1_v3_0(enum gsihal_reg_name reg,
+	void *fields, u32 val)
+{
+	struct gsihal_reg_ch_k_cntxt_1 *ch_k_ctxt =
+		(struct gsihal_reg_ch_k_cntxt_1 *) fields;
+
+	ch_k_ctxt->r_length = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_BMSK);
+	ch_k_ctxt->erindex = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_ERINDEX_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_ERINDEX_BMSK);
+}
+
+static void gsireg_parse_ev_ch_k_cntxt_0_common(enum gsihal_reg_name reg, void *fields,
 	u32 val)
 {
 	struct gsihal_reg_ev_ch_k_cntxt_0 *ev_ch_k_ctxt =
@@ -259,12 +333,22 @@ static void gsireg_parse_ev_ch_k_cntxt_0(enum gsihal_reg_name reg, void *fields,
 	ev_ch_k_ctxt->chstate = GSI_GETFIELD_FROM_REG(val,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHSTATE_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHSTATE_BMSK);
-	ev_ch_k_ctxt->intype = GSI_GETFIELD_FROM_REG(val,
-		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_SHFT,
-		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_BMSK);
 	ev_ch_k_ctxt->evchid = GSI_GETFIELD_FROM_REG(val,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EVCHID_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EVCHID_BMSK);
+}
+
+static void gsireg_parse_ev_ch_k_cntxt_0(enum gsihal_reg_name reg, void *fields,
+	u32 val)
+{
+	struct gsihal_reg_ev_ch_k_cntxt_0 *ev_ch_k_ctxt =
+		(struct gsihal_reg_ev_ch_k_cntxt_0 *) fields;
+
+	gsireg_parse_ev_ch_k_cntxt_0_common(reg, fields, val);
+
+	ev_ch_k_ctxt->intype = GSI_GETFIELD_FROM_REG(val,
+		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_SHFT,
+		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_BMSK);
 	ev_ch_k_ctxt->ee = GSI_GETFIELD_FROM_REG(val,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EE_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EE_BMSK);
@@ -273,7 +357,26 @@ static void gsireg_parse_ev_ch_k_cntxt_0(enum gsihal_reg_name reg, void *fields,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHTYPE_BMSK);
 }
 
-static void gsireg_construct_ev_ch_k_cntxt_0(enum gsihal_reg_name reg,
+static void gsireg_parse_ev_ch_k_cntxt_0_v3_0(enum gsihal_reg_name reg, void *fields,
+	u32 val)
+{
+	struct gsihal_reg_ev_ch_k_cntxt_0 *ev_ch_k_ctxt =
+		(struct gsihal_reg_ev_ch_k_cntxt_0 *) fields;
+
+	gsireg_parse_ev_ch_k_cntxt_0_common(reg, fields, val);
+
+	ev_ch_k_ctxt->ee = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_EE_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_EE_BMSK);
+	ev_ch_k_ctxt->intype = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_INTYPE_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_INTYPE_BMSK);
+	ev_ch_k_ctxt->chtype = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_CHTYPE_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_CHTYPE_BMSK);
+}
+
+static void gsireg_construct_ev_ch_k_cntxt_0_common(enum gsihal_reg_name reg,
 	const void *fields, u32 *val)
 {
 	struct gsihal_reg_ev_ch_k_cntxt_0 *ctxt =
@@ -285,18 +388,47 @@ static void gsireg_construct_ev_ch_k_cntxt_0(enum gsihal_reg_name reg,
 	GSI_SETFIELD_IN_REG(*val, ctxt->chstate,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHSTATE_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHSTATE_BMSK);
-	GSI_SETFIELD_IN_REG(*val, ctxt->intype,
-		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_SHFT,
-		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_BMSK);
 	GSI_SETFIELD_IN_REG(*val, ctxt->evchid,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EVCHID_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EVCHID_BMSK);
+}
+
+static void gsireg_construct_ev_ch_k_cntxt_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_ev_ch_k_cntxt_0 *ctxt =
+		(struct gsihal_reg_ev_ch_k_cntxt_0 *)fields;
+
+	gsireg_construct_ev_ch_k_cntxt_0_common(reg, fields, val);
+
+	GSI_SETFIELD_IN_REG(*val, ctxt->intype,
+		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_SHFT,
+		GSI_EE_n_EV_CH_k_CNTXT_0_INTYPE_BMSK);
 	GSI_SETFIELD_IN_REG(*val, ctxt->ee,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EE_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_EE_BMSK);
 	GSI_SETFIELD_IN_REG(*val, ctxt->chtype,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHTYPE_SHFT,
 		GSI_EE_n_EV_CH_k_CNTXT_0_CHTYPE_BMSK);
+}
+
+static void gsireg_construct_ev_ch_k_cntxt_0_v3_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_ev_ch_k_cntxt_0 *ctxt =
+		(struct gsihal_reg_ev_ch_k_cntxt_0 *)fields;
+
+	gsireg_construct_ev_ch_k_cntxt_0_common(reg, fields, val);
+
+	GSI_SETFIELD_IN_REG(*val, ctxt->ee,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_EE_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_EE_BMSK);
+	GSI_SETFIELD_IN_REG(*val, ctxt->intype,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_INTYPE_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_INTYPE_BMSK);
+	GSI_SETFIELD_IN_REG(*val, ctxt->chtype,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_CHTYPE_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_0_CHTYPE_BMSK);
 }
 
 static void gsireg_parse_cntxt_glob_irq_stts(enum gsihal_reg_name reg,
@@ -453,6 +585,58 @@ static void gsireg_parse_hw_param2_v2_2(enum gsihal_reg_name reg,
 		GSI_V2_2_EE_n_GSI_HW_PARAM_2_GSI_USE_RD_WR_ENG_BMSK);
 }
 
+static void gsireg_parse_hw_param2_v3_0(enum gsihal_reg_name reg,
+	void *fields, u32 val)
+{
+	struct gsihal_reg_hw_param2 *hw_param =
+		(struct gsihal_reg_hw_param2 *) fields;
+
+	hw_param->gsi_ch_full_logic = GSI_GETFIELD_FROM_REG(val,
+		GSI_V1_3_EE_n_GSI_HW_PARAM_2_GSI_CH_FULL_LOGIC_SHFT,
+		GSI_V1_3_EE_n_GSI_HW_PARAM_2_GSI_CH_FULL_LOGIC_BMSK);
+	hw_param->gsi_ch_pend_translate = GSI_GETFIELD_FROM_REG(val,
+		GSI_V1_3_EE_n_GSI_HW_PARAM_2_GSI_CH_PEND_TRANSLATE_SHFT,
+		GSI_V1_3_EE_n_GSI_HW_PARAM_2_GSI_CH_PEND_TRANSLATE_BMSK);
+	hw_param->gsi_num_ch_per_ee = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_SHFT,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_BMSK);
+	hw_param->gsi_iram_size = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_2_GSI_IRAM_SIZE_SHFT,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_2_GSI_IRAM_SIZE_BMSK);
+	hw_param->gsi_sdma_n_iovec = GSI_GETFIELD_FROM_REG(val,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_SDMA_N_IOVEC_SHFT,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_SDMA_N_IOVEC_BMSK);
+	hw_param->gsi_sdma_max_burst = GSI_GETFIELD_FROM_REG(val,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_SDMA_MAX_BURST_SHFT,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_SDMA_MAX_BURST_BMSK);
+	hw_param->gsi_sdma_n_int = GSI_GETFIELD_FROM_REG(val,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_SDMA_N_INT_SHFT,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_SDMA_N_INT_BMSK);
+	hw_param->gsi_use_sdma = GSI_GETFIELD_FROM_REG(val,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_USE_SDMA_SHFT,
+		GSI_V2_0_EE_n_GSI_HW_PARAM_2_GSI_USE_SDMA_BMSK);
+	hw_param->gsi_use_inter_ee = GSI_GETFIELD_FROM_REG(val,
+		GSI_V2_2_EE_n_GSI_HW_PARAM_2_GSI_USE_INTER_EE_SHFT,
+		GSI_V2_2_EE_n_GSI_HW_PARAM_2_GSI_USE_INTER_EE_BMSK);
+	hw_param->gsi_use_rd_wr_eng = GSI_GETFIELD_FROM_REG(val,
+		GSI_V2_2_EE_n_GSI_HW_PARAM_2_GSI_USE_RD_WR_ENG_SHFT,
+		GSI_V2_2_EE_n_GSI_HW_PARAM_2_GSI_USE_RD_WR_ENG_BMSK);
+}
+
+static void gsireg_parse_hw_param4_v3_0(enum gsihal_reg_name reg,
+	void *fields, u32 val)
+{
+	struct gsihal_reg_hw_param4 *hw_param =
+		(struct gsihal_reg_hw_param4 *) fields;
+
+	hw_param->gsi_iram_protcol_cnt = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_4_GSI_IRAM_PROTCOL_CNT_SHFT,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_4_GSI_IRAM_PROTCOL_CNT_BMSK);
+	hw_param->gsi_num_ev_per_ee = GSI_GETFIELD_FROM_REG(val,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_4_GSI_NUM_EV_PER_EE_SHFT,
+		GSI_V3_0_EE_n_GSI_HW_PARAM_4_GSI_NUM_EV_PER_EE_BMSK);
+}
+
 static void gsireg_parse_gsi_status(enum gsihal_reg_name reg,
 	void *fields, u32 val)
 {
@@ -484,6 +668,17 @@ static void gsireg_construct_ev_ch_k_cntxt_1_v2_9(enum gsihal_reg_name reg,
 	GSI_SETFIELD_IN_REG(*val, ctxt->r_length,
 		GSI_V2_9_EE_n_EV_CH_k_CNTXT_1_R_LENGTH_SHFT,
 		GSI_V2_9_EE_n_EV_CH_k_CNTXT_1_R_LENGTH_BMSK);
+}
+
+static void gsireg_construct_ev_ch_k_cntxt_1_v3_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_ev_ch_k_cntxt_1 *ctxt =
+		(struct gsihal_reg_ev_ch_k_cntxt_1 *)fields;
+
+	GSI_SETFIELD_IN_REG(*val, ctxt->r_length,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_1_R_LENGTH_SHFT,
+		GSI_V3_0_EE_n_EV_CH_k_CNTXT_1_R_LENGTH_BMSK);
 }
 
 static void gsireg_construct_ev_ch_k_cntxt_2(enum gsihal_reg_name reg,
@@ -665,7 +860,20 @@ static void gsireg_construct_ee_n_gsi_ch_k_qos_v2_9(enum gsihal_reg_name reg,
 		GSI_V2_9_EE_n_GSI_CH_k_QOS_DB_IN_BYTES_BMSK);
 }
 
-static void gsireg_construct_ch_k_cntxt_0(enum gsihal_reg_name reg,
+static void gsireg_construct_ee_n_gsi_ch_k_qos_v3_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_gsi_ee_n_gsi_ch_k_qos *ch_qos =
+		(struct gsihal_reg_gsi_ee_n_gsi_ch_k_qos *)fields;
+
+	gsireg_construct_ee_n_gsi_ch_k_qos_v2_9(reg, fields, val);
+
+	GSI_SETFIELD_IN_REG(*val, !!ch_qos->low_latency_en,
+		GSI_V3_0_EE_n_GSI_CH_k_QOS_LOW_LATENCY_EN_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_QOS_LOW_LATENCY_EN_BMSK);
+}
+
+static void gsireg_construct_ch_k_cntxt_0_common(enum gsihal_reg_name reg,
 	const void *fields, u32 *val)
 {
 	struct gsihal_reg_ch_k_cntxt_0 *ch_cntxt =
@@ -677,6 +885,16 @@ static void gsireg_construct_ch_k_cntxt_0(enum gsihal_reg_name reg,
 	GSI_SETFIELD_IN_REG(*val, ch_cntxt->chstate,
 		GSI_EE_n_GSI_CH_k_CNTXT_0_CHSTATE_SHFT,
 		GSI_EE_n_GSI_CH_k_CNTXT_0_CHSTATE_BMSK);
+}
+
+static void gsireg_construct_ch_k_cntxt_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_ch_k_cntxt_0 *ch_cntxt =
+		(struct gsihal_reg_ch_k_cntxt_0 *)fields;
+
+	gsireg_construct_ch_k_cntxt_0_common(reg, fields, val);
+
 	GSI_SETFIELD_IN_REG(*val, ch_cntxt->erindex,
 		GSI_EE_n_GSI_CH_k_CNTXT_0_ERINDEX_SHFT,
 		GSI_EE_n_GSI_CH_k_CNTXT_0_ERINDEX_BMSK);
@@ -707,6 +925,28 @@ static void gsireg_construct_ch_k_cntxt_0_v2_5(enum gsihal_reg_name reg,
 		GSI_V2_5_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_PROTOCOL_MSB_BMSK);
 }
 
+static void gsireg_construct_ch_k_cntxt_0_v3_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_ch_k_cntxt_0 *ch_cntxt =
+		(struct gsihal_reg_ch_k_cntxt_0 *)fields;
+
+	gsireg_construct_ch_k_cntxt_0_common(reg, fields, val);
+
+	GSI_SETFIELD_IN_REG(*val, ch_cntxt->chid,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHID_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHID_BMSK);
+	GSI_SETFIELD_IN_REG(*val, ch_cntxt->ee,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_EE_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_EE_BMSK);
+	GSI_SETFIELD_IN_REG(*val, !!ch_cntxt->chtype_dir,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_DIR_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_DIR_BMSK);
+	GSI_SETFIELD_IN_REG(*val, ch_cntxt->chtype_protocol,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_PROTOCOL_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_0_CHTYPE_PROTOCOL_BMSK);
+}
+
 static void gsireg_construct_ch_k_cntxt_1(enum gsihal_reg_name reg,
 	const void *fields, u32 *val)
 {
@@ -727,6 +967,20 @@ static void gsireg_construct_ch_k_cntxt_1_v2_9(enum gsihal_reg_name reg,
 	GSI_SETFIELD_IN_REG(*val, ch_cntxt->r_length,
 		GSI_V2_9_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_SHFT,
 		GSI_V2_9_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_BMSK);
+}
+
+static void gsireg_construct_ch_k_cntxt_1_v3_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_ch_k_cntxt_1 *ch_cntxt =
+		(struct gsihal_reg_ch_k_cntxt_1 *)fields;
+
+	GSI_SETFIELD_IN_REG(*val, ch_cntxt->r_length,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_BMSK);
+	GSI_SETFIELD_IN_REG(*val, ch_cntxt->erindex,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_ERINDEX_SHFT,
+		GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_ERINDEX_BMSK);
 }
 
 static void gsireg_construct_ee_n_gsi_ch_cmd(enum gsihal_reg_name reg,
@@ -796,6 +1050,23 @@ static void gsireg_construct_gsi_ee_generic_cmd(enum gsihal_reg_name reg,
 	GSI_SETFIELD_IN_REG(*val, cmd->ee,
 		GSI_EE_n_GSI_EE_GENERIC_CMD_EE_SHFT,
 		GSI_EE_n_GSI_EE_GENERIC_CMD_EE_BMSK);
+}
+
+static void gsireg_construct_gsi_ee_generic_cmd_v3_0(enum gsihal_reg_name reg,
+	const void *fields, u32 *val)
+{
+	struct gsihal_reg_gsi_ee_generic_cmd *cmd =
+		(struct gsihal_reg_gsi_ee_generic_cmd *)fields;
+
+	GSI_SETFIELD_IN_REG(*val, cmd->opcode,
+		GSI_EE_n_GSI_EE_GENERIC_CMD_OPCODE_SHFT,
+		GSI_EE_n_GSI_EE_GENERIC_CMD_OPCODE_BMSK);
+	GSI_SETFIELD_IN_REG(*val, cmd->virt_chan_idx,
+		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_VIRT_CHAN_IDX_SHFT,
+		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_VIRT_CHAN_IDX_BMSK);
+	GSI_SETFIELD_IN_REG(*val, cmd->ee,
+		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_EE_SHFT,
+		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_EE_BMSK);
 }
 
 static void gsireg_construct_cntxt_gsi_irq_en(enum gsihal_reg_name reg,
@@ -1406,6 +1677,245 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_2_11][GSI_GSI_IRAM_PTR_MSI_DB] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x00000414, 0, 0 },
+
+	/* GSIv3_0 */
+	[GSI_VER_3_0][GSI_GSI_IRAM_PTR_INT_NOTIFY_MCS] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00000470, 0, 0 },
+	[GSI_VER_3_0][GSI_GSI_INST_RAM_n] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x000a4000, GSI_GSI_INST_RAM_n_WORD_SZ, 0},
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_0] = {
+	gsireg_construct_ch_k_cntxt_0_v3_0, gsireg_parse_ch_k_cntxt_0_v3_0,
+	0x00014000, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_1] = {
+	gsireg_construct_ch_k_cntxt_1_v3_0, gsireg_parse_ch_k_cntxt_1_v3_0,
+	0x00014004, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_2] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014008, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_3] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001400c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_4] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014010, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_5] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014014, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_6] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014018, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_7] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001401c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_8] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014020 , 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_RE_FETCH_READ_PTR] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014040, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_RE_FETCH_WRITE_PTR] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014044, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_QOS] = {
+	gsireg_construct_ee_n_gsi_ch_k_qos_v3_0, gsireg_parse_dummy,
+	0x00014048, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_0] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001404c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_1] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014050, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_2] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014054, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_3] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014058, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_4] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001405c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_5] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014060, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_6] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014064, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_7] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014068, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_8] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001406c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_SCRATCH_9] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014070, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_0] = {
+	gsireg_construct_ev_ch_k_cntxt_0_v3_0, gsireg_parse_ev_ch_k_cntxt_0_v3_0,
+	0x0001c000, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_1] = {
+	gsireg_construct_ev_ch_k_cntxt_1_v3_0, gsireg_parse_dummy,
+	0x0001c004, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_2] = {
+	gsireg_construct_ev_ch_k_cntxt_2, gsireg_parse_dummy,
+	0x0001c008, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_3] = {
+	gsireg_construct_ev_ch_k_cntxt_3, gsireg_parse_dummy,
+	0x0001c00c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_4] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001c010, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_5] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001c014, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_6] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001c018, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_7] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001c01c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_8] = {
+	gsireg_construct_ev_ch_k_cntxt_8, gsireg_parse_dummy,
+	0x0001c020, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_9] = {
+	gsireg_construct_ev_ch_k_cntxt_9, gsireg_parse_dummy,
+	0x0001c024, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_10] = {
+	gsireg_construct_ev_ch_k_cntxt_10, gsireg_parse_dummy,
+	0x0001c028, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_11] = {
+	gsireg_construct_ev_ch_k_cntxt_11, gsireg_parse_dummy,
+	0x0001c02c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_12] = {
+	gsireg_construct_ev_ch_k_cntxt_12, gsireg_parse_dummy,
+	0x0001c030, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_CNTXT_13] = {
+	gsireg_construct_ev_ch_k_cntxt_13, gsireg_parse_dummy,
+	0x0001c034, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_SCRATCH_0] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001c048, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_SCRATCH_1] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001c04c, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_DOORBELL_0] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00024000, 0x12000, 0x8 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_DOORBELL_1] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00024004, 0x12000, 0x8 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_DOORBELL_0] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00024800, 0x12000, 0x8 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_k_DOORBELL_1] = {
+	gsireg_construct_ev_ch_k_doorbell_1, gsireg_parse_dummy,
+	0x00024804, 0x12000, 0x8 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_STATUS] = {
+	gsireg_construct_dummy, gsireg_parse_gsi_status,
+	0x00025000, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_CH_CMD] = {
+	gsireg_construct_ee_n_gsi_ch_cmd, gsireg_parse_dummy,
+	0x00025008, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_EV_CH_CMD] = {
+	gsireg_construct_ee_n_ev_ch_cmd, gsireg_parse_dummy,
+	0x00025010, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_EE_GENERIC_CMD] = {
+	gsireg_construct_gsi_ee_generic_cmd_v3_0, gsireg_parse_dummy,
+	0x00025018, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_HW_PARAM_2] = {
+	gsireg_construct_dummy, gsireg_parse_hw_param2_v3_0,
+	0x00025040, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_HW_PARAM_4] = {
+	gsireg_construct_dummy, gsireg_parse_hw_param4_v3_0,
+	0x00025050, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_GSI_SW_VERSION] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025044, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_TYPE_IRQ] = {
+	gsireg_construct_dummy, gsireg_parse_ctx_type_irq,
+	0x00025080, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_TYPE_IRQ_MSK] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025088, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025090, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_MSK_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025094, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ_CLR_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025098, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0002509c, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_MSK_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x000250a0, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_EV_CH_IRQ_CLR_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x000250a4, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_IEOB_IRQ_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x000250a8, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_IEOB_IRQ_MSK_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x000250ac, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x000250b0, 0x12000, 0x24 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_GLOB_IRQ_STTS] = {
+	gsireg_construct_dummy, gsireg_parse_cntxt_glob_irq_stts,
+	0x00025200, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_GLOB_IRQ_EN] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025204, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_GLOB_IRQ_CLR] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025208, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_GSI_IRQ_STTS] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0002520c, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_GSI_IRQ_EN] = {
+	gsireg_construct_cntxt_gsi_irq_en, gsireg_parse_dummy,
+	0x00025210, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_GSI_IRQ_CLR] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025214, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_MSI_BASE_LSB] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025230, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_MSI_BASE_MSB] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025234, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_INTSET] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025220, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_ERROR_LOG] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025240, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_ERROR_LOG_CLR] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00025244, 0x12000, 0 },
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SCRATCH_0] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00024500, 0x12000, 0},
+	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_GSI_CH_IRQ_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0000c018, 0x1000, 0x18 },
+	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_GSI_CH_IRQ_CLR_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0000c020, 0x1000, 0x18 },
+	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_EV_CH_IRQ_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0000c024, 0x1000, 0x18 },
+	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_EV_CH_IRQ_CLR_k] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0000c02c, 0x1000, 0x18 },
+	[GSI_VER_3_0][GSI_MAP_EE_n_CH_k_VP_TABLE] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00009000, 0x400, 0x4 },
 };
 
 /*
@@ -1709,6 +2219,90 @@ u32 gsihal_get_reg_nk_ofst(enum gsihal_reg_name reg, u32 n, u32 k)
 	return offset;
 }
 
+/*
+* gsihal_get_bit_map_array_size() - Get the size of the bit map
+*	array size according to the
+*	GSI version.
+*/
+u32 gsihal_get_bit_map_array_size()
+{
+	return GSI_CH_BIT_MAP_ARR_SIZE;
+}
+
+/*
+* gsihal_read_ch_reg() - Get the raw value of a ch reg
+*/
+u32 gsihal_read_ch_reg(enum gsihal_reg_name reg, u32 ch_num)
+{
+	return gsihal_read_reg_n(reg, GSI_CH_BIT_MAP_CELL_NUM(ch_num));
+}
+
+/*
+ * gsihal_test_ch_bit() - return true if a ch bit is set
+ */
+bool gsihal_test_ch_bit(u32 reg_val, u32 ch_num)
+{
+	return !!(reg_val & GSI_BIT_MAP_CELL_MSK(ch_num));
+}
+
+/*
+ * gsihal_get_ch_bit() - get ch bit set in the right offset
+ */
+u32 gsihal_get_ch_bit(u32 ch_num)
+{
+	return GSI_BIT_MAP_CELL_MSK(ch_num);
+}
+
+/*
+ * gsihal_get_ch_reg_idx() - get ch reg index according to ch num
+ */
+u32 gsihal_get_ch_reg_idx(u32 ch_num)
+{
+	return GSI_CH_BIT_MAP_CELL_NUM(ch_num);
+}
+
+/*
+ * gsihal_get_ch_reg_mask() - get ch reg mask according to ch num
+ */
+u32 gsihal_get_ch_reg_mask(u32 ch_num)
+{
+	return GSI_BIT_MAP_CELL_MSK(ch_num);
+}
+
+/*
+ * Get the offset of a ch register according to ch index
+ */
+u32 gsihal_get_ch_reg_offset(enum gsihal_reg_name reg, u32 ch_num)
+{
+	return gsihal_get_reg_nk_ofst(reg, 0, GSI_CH_BIT_MAP_CELL_NUM(ch_num));
+}
+
+/*
+* Get the offset of a ch n register according to ch index and n
+*/
+u32 gsihal_get_ch_reg_n_offset(enum gsihal_reg_name reg, u32 n, u32 ch_num)
+{
+	return gsihal_get_reg_nk_ofst(reg, GSI_CH_BIT_MAP_CELL_NUM(ch_num), n);
+}
+
+/*
+ * gsihal_write_ch_bit_map_reg_n() - Write mask to ch reg a raw value
+ */
+void gsihal_write_ch_bit_map_reg_n(enum gsihal_reg_name reg, u32 n, u32 ch_num,
+	u32 mask)
+{
+	gsihal_write_reg_nk(reg, n, GSI_CH_BIT_MAP_CELL_NUM(ch_num), mask);
+}
+
+/*
+ * gsihal_write_set_ch_bit_map_reg_n() - Set ch bit in reg a raw value
+ */
+void gsihal_write_set_ch_bit_map_reg_n(enum gsihal_reg_name reg, u32 n,
+	u32 ch_num)
+{
+	gsihal_write_reg_nk(reg, n, GSI_CH_BIT_MAP_CELL_NUM(ch_num),
+		GSI_BIT_MAP_CELL_MSK(ch_num));
+}
 
 /*
  * Get GSI instruction ram MAX size
@@ -1738,6 +2332,9 @@ unsigned long gsihal_get_inst_ram_size(void)
 		break;
 	case GSI_VER_2_9:
 		maxn = GSI_V2_9_GSI_INST_RAM_n_MAXn;
+		break;
+	case GSI_VER_3_0:
+		maxn = GSI_V3_0_GSI_INST_RAM_n_MAXn;
 		break;
 	case GSI_VER_ERR:
 	case GSI_VER_MAX:
@@ -1778,7 +2375,7 @@ int gsihal_reg_init(enum gsi_ver gsi_ver)
 				* explicitly overridden register.
 				* Check validity
 				*/
-				if (!gsihal_reg_objs[i + 1][j].offset) {
+				if (j != GSI_GSI_CFG && !gsihal_reg_objs[i + 1][j].offset) {
 					GSIERR(
 						"reg=%s with zero offset gsi_ver=%d\n",
 						gsihal_reg_name_str(j), i + 1);
@@ -1800,6 +2397,36 @@ int gsihal_reg_init(enum gsi_ver gsi_ver)
 		}
 	}
 	return 0;
+}
+
+/*
+ * Check that ring length is valid
+ */
+bool gsihal_check_ring_length_valid(u32 r_len, u32 elem_size)
+{
+	if (gsihal_ctx->gsi_ver >= GSI_VER_3_0) {
+		if (r_len & ~GSI_V3_0_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_BMSK) {
+			GSIERR("bad params ring_len %u is out of bounds\n", r_len);
+			return false;
+		}
+		if (r_len / elem_size >= GSI_V3_0_MAX_ELEMENTS_PER_RING) {
+			GSIERR("bad params ring_len %u / re_size %u > 64k elements \n",
+				r_len, elem_size);
+			return false;
+		}
+	} else if (gsihal_ctx->gsi_ver >= GSI_VER_2_9) {
+		if (r_len & ~GSI_V2_9_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_BMSK) {
+			GSIERR("bad params ring_len %u is out of bounds\n", r_len);
+			return false;
+		}
+	} else {
+		if (r_len & ~GSI_EE_n_GSI_CH_k_CNTXT_1_R_LENGTH_BMSK) {
+			GSIERR("bad params ring_len %u is out of bounds\n", r_len);
+			return false;
+		}
+	}
+
+	return true;
 }
 
 /*

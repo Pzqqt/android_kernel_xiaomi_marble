@@ -921,10 +921,10 @@ struct ipa3_wlan_comm_memb {
 };
 
 struct ipa_gsi_ep_mem_info {
-	u16 evt_ring_len;
+	u32 evt_ring_len;
 	u64 evt_ring_base_addr;
 	void *evt_ring_base_vaddr;
-	u16 chan_ring_len;
+	u32 chan_ring_len;
 	u64 chan_ring_base_addr;
 	void *chan_ring_base_vaddr;
 	u64 evt_ring_rp_addr;
