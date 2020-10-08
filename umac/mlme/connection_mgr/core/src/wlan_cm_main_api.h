@@ -69,6 +69,23 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 					enum wlan_cm_sm_state cm_state_substate);
 
 /**
+ * cm_handle_discon_req_in_non_connected_state() - Handle disconnect req in non
+ * connected state.
+ * @cm_ctx: connection manager context
+ * @cm_req: cm request
+ * @cm_state_substate: state of CM SM
+ *
+ * Context: Can be called only while handling connection manager event
+ *          ie holding state machine lock
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
+					struct cm_disconnect_req *cm_req,
+					enum wlan_cm_sm_state cm_state_substate);
+
+/**
  * cm_connect_scan_start() - This API will be called to initiate the connect
  * scan if no candidate are found in scan db.
  * @cm_ctx: connection manager context
@@ -356,6 +373,18 @@ QDF_STATUS cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
  * Return: void
  */
 void cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx);
+
+/**
+ * cm_send_disconnect_resp() - Initiate disconnect resp for the cm_id
+ * @cm_ctx: connection manager context
+ * @cm_id: cm id to send disconnect resp for
+ *
+ * Context: Can be called from any context. Hold the SM lock while calling this
+ * api.
+ *
+ * Return: void
+ */
+void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 
 /*************** UTIL APIs ****************/
 

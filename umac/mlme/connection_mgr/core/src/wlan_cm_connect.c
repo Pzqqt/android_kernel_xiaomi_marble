@@ -485,11 +485,20 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 		 * if candidates were found and were removed due to invalid
 		 * return failure
 		 */
-		if (!num_bss)
-			return cm_sm_deliver_event_sync(cm_ctx,
-							WLAN_CM_SM_EV_SCAN,
-							sizeof(*cm_req),
-							cm_req);
+		if (!num_bss) {
+			QDF_STATUS status;
+
+			status = cm_sm_deliver_event_sync(cm_ctx,
+							  WLAN_CM_SM_EV_SCAN,
+							  sizeof(*cm_req),
+							  cm_req);
+			/*
+			 * If connect scan is initiated, return pending, so that
+			 * connect start after scan complete
+			 */
+			if (QDF_IS_STATUS_SUCCESS(status))
+				return QDF_STATUS_E_PENDING;
+		}
 
 		return QDF_STATUS_E_EMPTY;
 	}
@@ -589,12 +598,12 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 		 *
 		 * 1. There is a connect request pending, so just remove
 		 *    the pending connect req. As we will queue a new connect
-		 *    req all resp for pending conenct req will be dropped.
+		 *    req, all resp for pending connect req will be dropped.
 		 * 2. There is a connect request in active and
 		 *    and a internal disconnect followed by a connect req in
 		 *    pending. In this case the disconnect will take care of
 		 *    cleaning up the active connect request and thus only
-		 *    remove the pending conenct.
+		 *    remove the pending connect.
 		 */
 		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX);
 		break;
@@ -650,6 +659,9 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	mlme_cm_connect_start_ind(cm_ctx->vdev, &cm_req->req);
 
 	status = cm_connect_get_candidates(pdev, cm_ctx, cm_req);
+	/* In case of status pending connect will continue after scan */
+	if (status == QDF_STATUS_E_PENDING)
+		return QDF_STATUS_SUCCESS;
 	if (QDF_IS_STATUS_ERROR(status)) {
 		reason = CM_NO_CANDIDATE_FOUND;
 		goto connect_err;

@@ -26,8 +26,7 @@
 #include "wlan_blm_api.h"
 #endif
 
-static void
-cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
 	struct wlan_cm_discon_rsp resp;
 	QDF_STATUS status;
@@ -206,8 +205,7 @@ cm_inform_if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
-void
-cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx)
+void cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx)
 {
 	struct cm_req *cm_req;
 	struct cm_disconnect_req *disconnect_req;
@@ -231,9 +229,7 @@ cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx)
 		return;
 	}
 
-	status = cm_disconnect_start(cm_ctx, disconnect_req);
-	if (QDF_IS_STATUS_ERROR(status))
-		qdf_mem_free(cm_req);
+	cm_disconnect_start(cm_ctx, disconnect_req);
 }
 
 QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
@@ -243,11 +239,12 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 	QDF_STATUS status;
 
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
-	if (!pdev)
+	if (!pdev) {
+		cm_send_disconnect_resp(cm_ctx, req->cm_id);
 		return QDF_STATUS_E_INVAL;
+	}
 
-	 /* disconnect TDLS, P2P roc cleanup */
-
+	/* disconnect TDLS, P2P roc cleanup */
 	cm_inform_if_mgr_disconnect_start(cm_ctx->vdev);
 	cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev), cm_ctx->vdev);
 	mlme_cm_osif_disconnect_start_ind(cm_ctx->vdev);
@@ -387,9 +384,96 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
 
+	/*
+	 * Remove all pending disconnect if this is an active disconnect
+	 * complete.
+	 */
+	if (resp->req.cm_id == cm_ctx->active_cm_id)
+		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX);
+
 	cm_remove_cmd(cm_ctx, resp->req.cm_id);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
+					struct cm_disconnect_req *cm_req,
+					enum wlan_cm_sm_state cm_state_substate)
+{
+	enum wlan_cm_sm_state cur_state = cm_get_state(cm_ctx);
+
+	/*
+	 * South bound and peer disconnect requests are meant for only in
+	 * connected state, so if the state is connecting a new connect has
+	 * been received, hence skip the non-osif disconnect request.
+	 */
+	if (cur_state == WLAN_CM_S_CONNECTING &&
+	    cm_req->req.source != CM_OSIF_DISCONNECT) {
+		mlme_info("Vdev %d ignore disconnect req from source %d in state %d",
+			  wlan_vdev_get_id(cm_ctx->vdev), cm_req->req.source,
+			  cm_state_substate);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (cm_state_substate) {
+	case WLAN_CM_S_DISCONNECTING:
+		/*
+		 * There would be pending disconnect requests in the list, and
+		 * if they are flushed as part of new disconnect
+		 * (cm_flush_pending_request), OS_IF would inform the kernel
+		 * about the disconnect done even though the disconnect is still
+		 * pending. So update OS_IF with invalid CM_ID so that the resp
+		 * of only the new disconnect req is given to kernel.
+		 */
+		mlme_cm_osif_update_id_and_src(cm_ctx->vdev,
+					       CM_SOURCE_INVALID,
+					       CM_ID_INVALID);
+		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX);
+		break;
+	case WLAN_CM_SS_JOIN_ACTIVE:
+		/*
+		 * In join active state, there would be no pending command, so
+		 * for new disconnect request, queue disconnect.
+		 * In disconnecting state queue the new disconnect request, and
+		 * when the old diconnect moves the SM to init it would be
+		 * dropped and required callbacks would be called.
+		 */
+		break;
+	case WLAN_CM_SS_SCAN:
+		/* In the scan state abort the ongoing scan */
+		cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev),
+				    cm_ctx->vdev);
+		/* fallthrough */
+	case WLAN_CM_SS_JOIN_PENDING:
+		/*
+		 * There would be pending disconnect requests in the list, and
+		 * if they are flushed as part of new disconnect
+		 * (cm_flush_pending_request), OS_IF would inform the kernel
+		 * about the disconnect done even though the disconnect is still
+		 * pending. So update OS_IF with invalid CM_ID so that the resp
+		 * of only the new disconnect req is given to kernel.
+		 */
+		mlme_cm_osif_update_id_and_src(cm_ctx->vdev,
+					       CM_SOURCE_INVALID,
+					       CM_ID_INVALID);
+		/*
+		 * In case of scan or join pending there could be a connect and
+		 * disconnect requests pending, so flush all the requests except
+		 * the activated request.
+		 */
+		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX);
+		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX);
+		break;
+	default:
+		mlme_err("Vdev %d disconnect req in invalid state %d",
+			 wlan_vdev_get_id(cm_ctx->vdev),
+			 cm_state_substate);
+		return QDF_STATUS_E_FAILURE;
+	};
+
+	/* Queue the new disconnect request after state specific actions */
+	return cm_add_disconnect_req_to_list(cm_ctx, cm_req);
 }
 
 QDF_STATUS cm_add_disconnect_req_to_list(struct cnx_mgr *cm_ctx,

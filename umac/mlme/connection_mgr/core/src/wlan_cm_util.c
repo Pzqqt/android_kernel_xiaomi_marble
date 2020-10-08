@@ -242,8 +242,8 @@ cm_fill_connect_resp_from_req(struct wlan_cm_connect_rsp *resp,
 }
 
 /**
- * cm_connect_inform_os_if_connect_complete() - Fill fail connect resp from req
- * and indicate same to osif
+ * cm_handle_connect_flush() - Fill fail connect resp from req and indicate
+ * same to osif
  * @cm_ctx: connection manager context
  * @cm_req: cm request
  *
@@ -252,8 +252,7 @@ cm_fill_connect_resp_from_req(struct wlan_cm_connect_rsp *resp,
  * Return: void
  */
 static void
-cm_connect_inform_os_if_connect_complete(struct cnx_mgr *cm_ctx,
-					 struct cm_req *cm_req)
+cm_handle_connect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 {
 	struct wlan_cm_connect_rsp *resp;
 
@@ -271,6 +270,27 @@ cm_connect_inform_os_if_connect_complete(struct cnx_mgr *cm_ctx,
 
 	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
 	qdf_mem_free(resp);
+}
+
+/**
+ * cm_handle_disconnect_flush() - Fill disconnect resp from req and indicate
+ * same to osif
+ * @cm_ctx: connection manager context
+ * @cm_req: cm request
+ *
+ * Context: Can be called from APIs holding cm request list lock
+ *
+ * Return: void
+ */
+static void
+cm_handle_disconnect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
+{
+	struct wlan_cm_discon_rsp resp;
+
+	resp.req.cm_id = cm_req->cm_id;
+	resp.req.req = cm_req->discon_req.req;
+
+	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, &resp);
 }
 
 static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
@@ -320,8 +340,8 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
 
 		prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
 
-		/* Only remove the pending requests matching the prefix */
-		if ((prefix & flush_prefix) != prefix ||
+		/* Only remove the pending requests matching the flush prefix */
+		if (prefix != flush_prefix ||
 		    cm_req->cm_id == cm_ctx->active_cm_id) {
 			cur_node = next_node;
 			next_node = NULL;
@@ -329,12 +349,11 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
 		}
 
 		if (prefix == CONNECT_REQ_PREFIX) {
-			cm_connect_inform_os_if_connect_complete(cm_ctx,
-								 cm_req);
+			cm_handle_connect_flush(cm_ctx, cm_req);
 			cm_ctx->connect_count--;
 			cm_free_connect_req_mem(&cm_req->connect_req);
 		} else {
-			/* Todo:- fill disconnect rsp and inform OSIF */
+			cm_handle_disconnect_flush(cm_ctx, cm_req);
 			cm_ctx->disconnect_count--;
 		}
 		mlme_debug(CM_PREFIX_FMT,
