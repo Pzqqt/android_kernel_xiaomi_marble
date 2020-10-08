@@ -132,7 +132,7 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 		return status;
 	}
 
-	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	cmd.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
 	cmd.cmd_id = req->cm_id;
 	cmd.cmd_cb = cm_ser_disconnect_cb;
 	cmd.source = WLAN_UMAC_COMP_MLME;

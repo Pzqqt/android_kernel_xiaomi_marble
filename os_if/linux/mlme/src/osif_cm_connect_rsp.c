@@ -423,7 +423,7 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 				rsp->connect_ies.assoc_req.ptr,
 				rsp->connect_ies.assoc_req.len,
 				rsp->connect_ies.assoc_rsp.ptr,
-				rsp->connect_ies.assoc_rsp.len
+				rsp->connect_ies.assoc_rsp.len,
 				status, GFP_KERNEL);
 }
 #endif /* CFG80211_CONNECT_BSS */

@@ -44,6 +44,35 @@ static void osif_cm_free_wep_key_params(struct wlan_cm_connect_req *connect_req)
 	}
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
+static QDF_STATUS
+osif_cm_update_wep_seq_info(struct wlan_cm_connect_req *connect_req,
+			    struct cfg80211_connect_params *req)
+{
+	if (req->crypto.wep_keys->seq_len) {
+		connect_req->crypto.wep_keys.seq_len =
+						req->crypto.wep_keys->seq_len;
+		connect_req->crypto.wep_keys.seq =
+			qdf_mem_malloc(connect_req->crypto.wep_keys.seq_len);
+		if (!connect_req->crypto.wep_keys.seq) {
+			osif_cm_free_wep_key_params(connect_req);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(connect_req->crypto.wep_keys.seq,
+			     req->crypto.wep_keys->seq,
+			     connect_req->crypto.wep_keys.seq_len);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+osif_cm_update_wep_seq_info(struct wlan_cm_connect_req *connect_req,
+			    struct cfg80211_connect_params *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 static QDF_STATUS osif_cm_set_wep_key_params(
 				struct wlan_cm_connect_req *connect_req,
 				struct cfg80211_connect_params *req)
@@ -62,21 +91,7 @@ static QDF_STATUS osif_cm_set_wep_key_params(
 	qdf_mem_copy(connect_req->crypto.wep_keys.key, req->key,
 		     connect_req->crypto.wep_keys.key_len);
 
-	if (req->crypto.wep_keys->seq_len) {
-		connect_req->crypto.wep_keys.seq_len =
-						req->crypto.wep_keys->seq_len;
-		connect_req->crypto.wep_keys.seq =
-			qdf_mem_malloc(connect_req->crypto.wep_keys.seq_len);
-		if (!connect_req->crypto.wep_keys.seq) {
-			osif_cm_free_wep_key_params(connect_req);
-			return QDF_STATUS_E_NOMEM;
-		}
-		qdf_mem_copy(connect_req->crypto.wep_keys.seq,
-			     req->crypto.wep_keys->seq,
-			     connect_req->crypto.wep_keys.seq_len);
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return osif_cm_update_wep_seq_info(connect_req, req);
 }
 
 static void osif_cm_set_auth_type(struct wlan_cm_connect_req *connect_req,
@@ -92,7 +107,7 @@ static void osif_cm_set_auth_type(struct wlan_cm_connect_req *connect_req,
 			crypto_auth_type = WLAN_CRYPTO_AUTH_WPA;
 		else
 			crypto_auth_type = WLAN_CRYPTO_AUTH_RSNA;
-	} else if (!req->crypto.wpa_versions) {
+	} else if (!req->crypto.n_ciphers_pairwise) {
 		crypto_auth_type = WLAN_CRYPTO_AUTH_OPEN;
 	}
 
@@ -272,7 +287,9 @@ static inline void osif_cm_dump_prev_bssid(struct cfg80211_connect_params *req)
 #else
 static inline void
 osif_cm_set_prev_bssid(struct wlan_cm_connect_req *connect_req,
-		       struct cfg80211_connect_params *req);
+		       struct cfg80211_connect_params *req)
+{
+}
 
 static inline void osif_cm_dump_prev_bssid(struct cfg80211_connect_params *req)
 {
@@ -335,7 +352,7 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 		qdf_mem_copy(connect_req->bssid.bytes, req->bssid,
 			     QDF_MAC_ADDR_SIZE);
 	else if (bssid_hint)
-		qdf_mem_copy(connect_req->bssid.bytes, req->bssid_hint,
+		qdf_mem_copy(connect_req->bssid_hint.bytes, req->bssid_hint,
 			     QDF_MAC_ADDR_SIZE);
 
 	osif_cm_set_prev_bssid(connect_req, req);
@@ -348,9 +365,6 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 
 	qdf_mem_copy(connect_req->ssid.ssid, req->ssid,
 		     connect_req->ssid.length);
-
-	qdf_mem_copy(connect_req->bssid_hint.bytes, bssid_hint,
-		     QDF_MAC_ADDR_SIZE);
 
 	if (req->channel)
 		connect_req->chan_freq = req->channel->center_freq;
