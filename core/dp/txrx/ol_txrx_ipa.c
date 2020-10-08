@@ -295,7 +295,7 @@ static QDF_STATUS __ol_txrx_ipa_tx_buf_smmu_mapping(struct ol_txrx_pdev_t *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (qdf_mem_smmu_s1_enabled(htt_pdev->osdev)) {
+	if (!qdf_mem_smmu_s1_enabled(htt_pdev->osdev)) {
 		ol_txrx_info("SMMU-S1 mapping is disabled");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -320,6 +320,8 @@ static QDF_STATUS __ol_txrx_ipa_tx_buf_smmu_mapping(struct ol_txrx_pdev_t *pdev,
 	ret = cds_smmu_map_unmap(create, unmap_cnt, mem_map_table);
 	qdf_assert_always(!ret);
 	qdf_mem_free(mem_map_table);
+	htt_pdev->ipa_uc_tx_rsc.ipa_smmu_mapped = create;
+	ol_txrx_info("smmu_map_unmap:%d of %d Tx buffers", create, unmap_cnt);
 
 	return ret;
 }

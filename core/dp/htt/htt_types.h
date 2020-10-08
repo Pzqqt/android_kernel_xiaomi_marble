@@ -123,6 +123,7 @@ struct htt_ipa_uc_tx_resource_t {
 	uint32_t tx_comp_idx_paddr;
 	qdf_shared_mem_t **tx_buf_pool_strg;
 	uint32_t alloc_tx_buf_cnt;
+	bool ipa_smmu_mapped;
 };
 
 /**

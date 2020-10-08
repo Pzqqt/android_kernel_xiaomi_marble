@@ -1379,6 +1379,8 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
 		pdev, uc_tx_buf_sz, uc_tx_buf_cnt, uc_tx_partition_base);
 
+	pdev->ipa_uc_tx_rsc.ipa_smmu_mapped = false;
+
 
 	return 0;
 
