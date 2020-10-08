@@ -1027,6 +1027,20 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 				     struct wlan_crypto_pmksa *pmksa,
 				     bool set);
 
+/**
+ * wlan_crypto_update_pmk_cache_ft - Updates the mobility domain information
+ * for a BSSID in the PMKSA Cache table.
+ * @vdev: vdev
+ * @pmksa: pmksa to be updated.
+ *
+ * This function gets called from ucfg to update pmksa with mdid.
+ * And flush the matching mdid entries.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_update_pmk_cache_ft(struct wlan_objmgr_vdev *vdev,
+					   struct wlan_crypto_pmksa *pmksa);
+
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * wlan_crypto_selective_clear_sae_single_pmk_entries - Clear the PMK entries

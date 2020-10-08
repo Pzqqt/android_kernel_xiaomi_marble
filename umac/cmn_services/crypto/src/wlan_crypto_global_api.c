@@ -370,6 +370,7 @@ QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
 		return QDF_STATUS_E_INVAL;
 	}
 	crypto_params->pmksa[first_available_slot] = pmksa;
+	crypto_debug("PMKSA: Added the PMKSA entry at index=%d", i);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -407,6 +408,8 @@ QDF_STATUS wlan_crypto_del_pmksa(struct wlan_crypto_params *crypto_params,
 				     sizeof(struct wlan_crypto_pmksa));
 			qdf_mem_free(crypto_params->pmksa[i]);
 			crypto_params->pmksa[i] = NULL;
+			crypto_debug("PMKSA: Deleted PMKSA entry at index=%d",
+				     i);
 
 			/* Find and remove the entries matching the pmk */
 			for (j = 0; j < WLAN_CRYPTO_MAX_PMKID; j++) {
@@ -420,6 +423,8 @@ QDF_STATUS wlan_crypto_del_pmksa(struct wlan_crypto_params *crypto_params,
 					sizeof(struct wlan_crypto_pmksa));
 					qdf_mem_free(crypto_params->pmksa[j]);
 					crypto_params->pmksa[j] = NULL;
+					crypto_debug("PMKSA: Deleted PMKSA at idx=%d",
+						     j);
 				}
 			}
 			/* reset stored pmk */
@@ -489,6 +494,81 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 			status = wlan_crypto_del_pmksa(crypto_params, pmksa);
 	}
 
+	return status;
+}
+
+QDF_STATUS wlan_crypto_update_pmk_cache_ft(struct wlan_objmgr_vdev *vdev,
+					   struct wlan_crypto_pmksa *pmksa)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_crypto_pmksa *cached_pmksa;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+	uint8_t mdie_present, i;
+	uint16_t mobility_domain;
+
+	if (!pmksa) {
+		crypto_err("pmksa is NULL for set operation");
+		return status;
+	}
+
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return status;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+
+	if (pmksa->mdid.mdie_present) {
+		for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+			if (!crypto_params->pmksa[i])
+				continue;
+			cached_pmksa = crypto_params->pmksa[i];
+			mdie_present = cached_pmksa->mdid.mdie_present;
+			mobility_domain = cached_pmksa->mdid.mobility_domain;
+
+			/* In FT connection when STA connects to AP1 then PMK1
+			 * gets cached. And if STA disconnects from AP1 and
+			 * connects to AP2 then PMK2 gets cached. This will
+			 * result in having multiple PMK cache entries for the
+			 * same MDID. So delete the old/stale PMK cache entries
+			 * for the same mobility domain as of the newly added
+			 * entry. And Update the MDID for the matching BSSID or
+			 * SSID PMKSA entry.
+			 */
+			if (qdf_is_macaddr_equal
+				(&cached_pmksa->bssid, &pmksa->bssid)) {
+				cached_pmksa->mdid.mdie_present = 1;
+				cached_pmksa->mdid.mobility_domain =
+						pmksa->mdid.mobility_domain;
+				crypto_debug("Updated the MDID at index=%d", i);
+				status = QDF_STATUS_SUCCESS;
+			} else if (pmksa->ssid_len &&
+				   !qdf_mem_cmp(pmksa->ssid,
+						cached_pmksa->ssid,
+						pmksa->ssid_len) &&
+				   !qdf_mem_cmp(pmksa->cache_id,
+						cached_pmksa->cache_id,
+						WLAN_CACHE_ID_LEN)) {
+				cached_pmksa->mdid.mdie_present = 1;
+				cached_pmksa->mdid.mobility_domain =
+						pmksa->mdid.mobility_domain;
+				crypto_debug("Updated the MDID at index=%d", i);
+				status = QDF_STATUS_SUCCESS;
+			} else if (mdie_present &&
+				   (pmksa->mdid.mobility_domain ==
+				    mobility_domain)) {
+				qdf_mem_zero(crypto_params->pmksa[i],
+					     sizeof(struct wlan_crypto_pmksa));
+				qdf_mem_free(crypto_params->pmksa[i]);
+				crypto_params->pmksa[i] = NULL;
+				crypto_debug("Deleted PMKSA at index=%d", i);
+				status = QDF_STATUS_SUCCESS;
+			}
+		}
+	}
 	return status;
 }
 
@@ -2376,6 +2456,8 @@ wlan_crypto_rsn_keymgmt_to_suite(uint32_t keymgmt)
 		return RSN_AUTH_KEY_MGMT_OWE;
 	case WLAN_CRYPTO_KEY_MGMT_DPP:
 		return RSN_AUTH_KEY_MGMT_DPP;
+	case WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384:
+		return RSN_AUTH_KEY_MGMT_FT_802_1X_SUITE_B_384;
 	}
 
 	return status;
@@ -2992,6 +3074,13 @@ uint8_t *wlan_crypto_build_rsnie_with_pmksa(struct wlan_objmgr_vdev *vdev,
 	if (HAS_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_OSEN)) {
 		selcnt[0]++;
 		RSN_ADD_KEYMGMT_TO_SUITE(frm, WLAN_CRYPTO_KEY_MGMT_OSEN);
+	}
+	if (HAS_KEY_MGMT(crypto_params,
+			 WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384)) {
+		uint32_t kmgmt = WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384;
+
+		selcnt[0]++;
+		RSN_ADD_KEYMGMT_TO_SUITE(frm, kmgmt);
 	}
 add_rsn_caps:
 	WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);

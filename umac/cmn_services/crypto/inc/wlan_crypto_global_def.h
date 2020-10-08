@@ -244,6 +244,17 @@ enum fils_erp_cryptosuite {
 };
 
 /**
+ * struct mobility_domain_params - structure containing
+ *				   mobility domain info
+ * @mdie_present: mobility domain present or not
+ * @mobility_domain: mobility domain
+ */
+struct mobility_domain_params {
+	uint8_t mdie_present;
+	uint16_t mobility_domain;
+};
+
+/**
  * struct wlan_crypto_pmksa - structure of crypto to contain pmkid
  * @bssid: bssid for which pmkid is saved
  * @pmkid: pmkid info
@@ -253,6 +264,7 @@ enum fils_erp_cryptosuite {
  * @ssid: ssid information
  * @cache_id: cache id
  * @single_pmk_supported: SAE single pmk supported BSS
+ * @mdid: structure to contain mobility domain parameters
  */
 struct wlan_crypto_pmksa {
 	struct qdf_mac_addr bssid;
@@ -265,6 +277,7 @@ struct wlan_crypto_pmksa {
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 	bool       single_pmk_supported;
 #endif
+	struct mobility_domain_params mdid;
 };
 
 /**
