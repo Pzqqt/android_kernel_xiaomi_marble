@@ -515,15 +515,6 @@ static void wcd_mbhc_set_and_turnoff_hph_padac(struct wcd_mbhc *mbhc)
 int wcd_mbhc_get_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 			uint32_t *zr)
 {
-	int detection_type = -EINVAL;
-
-	WCD_MBHC_REG_READ(WCD_MBHC_MECH_DETECTION_TYPE, detection_type);
-	/* Call compute impedance only when accessory is inserted */
-	if (!detection_type) {
-		if (mbhc->mbhc_cb->compute_impedance)
-			mbhc->mbhc_cb->compute_impedance(mbhc,
-						&mbhc->zl, &mbhc->zr);
-	}
 	*zl = mbhc->zl;
 	*zr = mbhc->zr;
 
@@ -1630,8 +1621,6 @@ static int wcd_mbhc_set_keycode(struct wcd_mbhc *mbhc)
 static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 					   unsigned long mode, void *ptr)
 {
-	unsigned int l_det_en = 0;
-	unsigned int detection_type = 0;
 	struct wcd_mbhc *mbhc = container_of(nb, struct wcd_mbhc, fsa_nb);
 
 	if (!mbhc)
@@ -1644,23 +1633,6 @@ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 			mbhc->mbhc_cb->clk_setup(mbhc->component, true);
 		/* insertion detected, enable L_DET_EN */
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
-	} else {
-		WCD_MBHC_REG_READ(WCD_MBHC_MECH_DETECTION_TYPE, detection_type);
-		WCD_MBHC_REG_READ(WCD_MBHC_L_DET_EN, l_det_en);
-		/* If both l_det_en and detection type are set, it means device was
-		 * unplugged during SSR and detection interrupt was not handled.
-		 * So trigger device disconnect */
-		if (detection_type && l_det_en) {
-			/* Set the detection type appropriately */
-			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MECH_DETECTION_TYPE,
-						 !detection_type);
-			/* Set current plug type to the state before SSR */
-			mbhc->current_plug = mbhc->plug_before_ssr;
-
-			wcd_mbhc_swch_irq_handler(mbhc);
-			mbhc->mbhc_cb->lock_sleep(mbhc, false);
-			mbhc->plug_before_ssr = MBHC_PLUG_TYPE_NONE;
-		}
 	}
 	return 0;
 }

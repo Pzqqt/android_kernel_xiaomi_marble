@@ -34,6 +34,7 @@
 
 #define SPK_GAIN_12DB 4
 #define WIDGET_NAME_MAX_SIZE 80
+#define REGMAP_REGISTER_CHECK_RETRY 30
 
 #define MAX_NAME_LEN 30
 #define WSA881X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
@@ -102,7 +103,7 @@ static int32_t wsa881x_resource_acquire(struct snd_soc_component *component,
 
 const char *wsa_tz_names[] = {"wsa881x.0e", "wsa881x.0f"};
 
-struct wsa881x_pdata wsa_pdata[MAX_WSA881X_DEVICE];
+static struct wsa881x_pdata wsa_pdata[MAX_WSA881X_DEVICE];
 
 static bool pinctrl_init;
 
@@ -1142,6 +1143,7 @@ static int wsa881x_probe(struct snd_soc_component *component)
 {
 	struct i2c_client *client;
 	int ret = 0;
+	int retry = REGMAP_REGISTER_CHECK_RETRY;
 	int wsa881x_index = 0;
 	struct snd_soc_dapm_context *dapm =
 					snd_soc_component_get_dapm(component);
@@ -1165,6 +1167,16 @@ static int wsa881x_probe(struct snd_soc_component *component)
 	wsa_pdata[wsa881x_index].tz_pdata.wsa_temp_reg_read =
 						wsa881x_temp_reg_read;
 	snd_soc_component_set_drvdata(component, &wsa_pdata[wsa881x_index]);
+	while (retry) {
+		if (wsa_pdata[wsa881x_index].regmap[WSA881X_ANALOG_SLAVE]
+							!= NULL)
+			break;
+		msleep(100);
+		retry--;
+	}
+	if (!retry)
+		dev_err(&client->dev, "%s: max retry expired and regmap of\n"
+				"analog slave not initilized\n", __func__);
 	wsa881x_init_thermal(&wsa_pdata[wsa881x_index].tz_pdata);
 	INIT_DELAYED_WORK(&wsa_pdata[wsa881x_index].ocp_ctl_work,
 				wsa881x_ocp_ctl_work);
@@ -1382,9 +1394,9 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 	}
 
 	if (pdata->status == WSA881X_STATUS_I2C) {
-		dev_dbg(&client->dev, "%s:probe for other slaves\n"
-			"devices of codec I2C slave Addr = %x\n",
-			__func__, client->addr);
+		dev_info(&client->dev, "%s:probe for other slaves\n"
+			"devices of codec I2C slave Addr = %x wsa_idx = %d\n",
+			__func__, client->addr, wsa881x_index);
 		dev_dbg(&client->dev, "%s:wsa_idx = %d SLAVE = %d\n",
 				__func__, wsa881x_index, WSA881X_ANALOG_SLAVE);
 		pdata->regmap[WSA881X_ANALOG_SLAVE] =
@@ -1402,6 +1414,7 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 		client->dev.platform_data = pdata;
 		i2c_set_clientdata(client, pdata);
 		pdata->client[WSA881X_ANALOG_SLAVE] = client;
+		pdata->regmap_flag = true;
 		if (pdata->version == WSA881X_2_0)
 			wsa881x_update_regmap_2_0(
 					pdata->regmap[WSA881X_ANALOG_SLAVE],
@@ -1467,7 +1480,6 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 			goto err;
 		}
 		pdata->client[WSA881X_DIGITAL_SLAVE] = client;
-		pdata->regmap_flag = true;
 		ret = check_wsa881x_presence(client);
 		if (ret < 0) {
 			dev_err(&client->dev,
@@ -1551,6 +1563,8 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 		component->name_prefix = pdata->wsa881x_name_prefix;
 
 		pdata->status = WSA881X_STATUS_I2C;
+		dev_info(&client->dev, "%s:pdata status changed to I2C\n",
+			__func__);
 		goto err1;
 	}
 err_mem:

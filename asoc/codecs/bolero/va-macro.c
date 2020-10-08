@@ -173,7 +173,6 @@ struct va_macro_priv {
 	bool lpi_enable;
 	bool register_event_listener;
 	int dec_mode[VA_MACRO_NUM_DECIMATORS];
-	int disable_afe_wakeup_event_listener;
 };
 
 static bool va_macro_get_data(struct snd_soc_component *component,
@@ -393,12 +392,64 @@ static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		if (va_priv->default_clk_id != VA_CORE_CLK) {
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					VA_CORE_CLK,
+					true);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock VA_CLK enable failed\n",
+					__func__);
+				break;
+			}
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					TX_CORE_CLK,
+					false);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock TX_CLK enable failed\n",
+					__func__);
+				bolero_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					VA_CORE_CLK,
+					false);
+				break;
+			}
+		}
 		msm_cdc_pinctrl_set_wakeup_capable(
 				va_priv->va_swr_gpio_p, false);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		msm_cdc_pinctrl_set_wakeup_capable(
 				va_priv->va_swr_gpio_p, true);
+		if (va_priv->default_clk_id == TX_CORE_CLK) {
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					TX_CORE_CLK,
+					true);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock TX_CLK disable failed\n",
+					__func__);
+				break;
+			}
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					VA_CORE_CLK,
+					false);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock VA_CLK disable failed\n",
+					__func__);
+				bolero_clk_rsc_request_clock(va_priv->dev,
+					TX_CORE_CLK,
+					TX_CORE_CLK,
+					false);
+				break;
+			}
+		}
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -436,8 +487,12 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					"%s: lpass audio hw enable failed\n",
 					__func__);
 		}
-		if (va_priv->lpi_enable &&
-		    !va_priv->disable_afe_wakeup_event_listener) {
+		if (!ret) {
+			if (bolero_tx_clk_switch(component, VA_CORE_CLK))
+				dev_dbg(va_dev, "%s: clock switch failed\n",
+					__func__);
+		}
+		if (va_priv->lpi_enable) {
 			bolero_register_event_listener(component, true);
 			va_priv->register_event_listener = true;
 		}
@@ -447,6 +502,8 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			va_priv->register_event_listener = false;
 			bolero_register_event_listener(component, false);
 		}
+		if (bolero_tx_clk_switch(component, TX_CORE_CLK))
+			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
 			digital_cdc_rsc_mgr_hw_vote_disable(
 				va_priv->lpass_audio_hw_vote);
@@ -506,10 +563,11 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			ret = bolero_tx_mclk_enable(component, 1);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (va_priv->lpi_enable)
+		if (va_priv->lpi_enable) {
 			va_macro_mclk_enable(va_priv, 0, true);
-		else
+		} else {
 			bolero_tx_mclk_enable(component, 0);
+		}
 
 		if (va_priv->tx_clk_status > 0) {
 			bolero_clk_rsc_request_clock(va_priv->dev,
@@ -1903,15 +1961,15 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets_v2[] = {
 		VA_MACRO_AIF3_CAP, 0,
 		va_aif3_cap_mixer_v2, ARRAY_SIZE(va_aif3_cap_mixer_v2)),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", 0, SND_SOC_NOPM, 0, 0,
 			      va_macro_swr_pwr_event_v2,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_TX_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
 			      va_macro_tx_swr_clk_event_v2,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
 			      va_macro_swr_clk_event_v2,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
@@ -1945,7 +2003,7 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets_v3[] = {
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", 0, SND_SOC_NOPM, 0, 0,
 			      va_macro_swr_pwr_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
@@ -2997,10 +3055,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
 	u32 is_used_va_swr_gpio = 0;
-	u32 disable_afe_wakeup_event_listener = 0;
 	const char *is_used_va_swr_gpio_dt = "qcom,is-used-swr-gpio";
-	const char *disable_afe_wakeup_event_listener_dt =
-			"qcom,disable-afe-wakeup-event-listener";
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
 			    GFP_KERNEL);
@@ -3042,18 +3097,6 @@ static int va_macro_probe(struct platform_device *pdev)
 			is_used_va_swr_gpio = 0;
 		}
 	}
-
-	if (of_find_property(pdev->dev.of_node,
-			     disable_afe_wakeup_event_listener_dt, NULL)) {
-		ret = of_property_read_u32(pdev->dev.of_node,
-					   disable_afe_wakeup_event_listener_dt,
-					   &disable_afe_wakeup_event_listener);
-		if (ret)
-			dev_dbg(&pdev->dev, "%s: error reading %s in dt\n",
-				__func__, disable_afe_wakeup_event_listener_dt);
-	}
-	va_priv->disable_afe_wakeup_event_listener =
-			disable_afe_wakeup_event_listener;
 
 	va_priv->va_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					"qcom,va-swr-gpios", 0);

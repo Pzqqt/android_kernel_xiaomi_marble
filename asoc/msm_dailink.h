@@ -318,7 +318,7 @@ SND_SOC_DAILINK_DEFS(quin_tdm_rx_7_hostless,
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
 
 SND_SOC_DAILINK_DEFS(quin_tdm_tx_7_hostless,
-	DAILINK_COMP_ARRAY(COMP_CPU("QUIN_TDM_RX_7_HOSTLESS")),
+	DAILINK_COMP_ARRAY(COMP_CPU("QUIN_TDM_TX_7_HOSTLESS")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
 

@@ -220,11 +220,18 @@ static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 	u8 port_type = 0;
 	u8 port_id = w->shift;
 
+	if (port_id >= SWR_DMIC_MAX_PORTS)
+	{
+		dev_err(component->dev, "%s: invalid port id: %d\n",
+			__func__, port_id);
+		return -EINVAL;
+	}
+
 	/*
 	 * Port 1 is high quality / 2.4 or 3.072 Mbps
 	 * Port 2 is listen low power / 0.6 or 0.768 Mbps
 	 */
-	if(port_id == SWR_DMIC_HIFI_PORT)
+	if (port_id == SWR_DMIC_HIFI_PORT)
 		ch_rate = SWR_CLK_RATE_2P4MHZ;
 	else
 		ch_rate = SWR_CLK_RATE_0P6MHZ;

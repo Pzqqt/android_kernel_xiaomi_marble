@@ -752,6 +752,9 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 	if (swrm->mport_cfg[SWRM_DSD_PARAMS_PORT].port_en &&
 				(swrm->master_id == MASTER_ID_RX))
 		usecase = 1;
+	else if ((swrm->master_id == MASTER_ID_RX) &&
+		(swrm->bus_clk == SWR_CLK_RATE_11P2896MHZ))
+		usecase = 2;
 
 	if (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ)
 		usecase = 1;
@@ -2748,6 +2751,11 @@ static int swrm_probe(struct platform_device *pdev)
 	}
 	devm_kfree(&pdev->dev, temp);
 
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,is-always-on",
+				&swrm->is_always_on);
+	if (ret)
+		dev_dbg(&pdev->dev, "%s: failed to get is_always_on flag\n", __func__);
+
 	swrm->reg_irq = pdata->reg_irq;
 	swrm->master.read = swrm_read;
 	swrm->master.write = swrm_write;
@@ -2870,7 +2878,7 @@ static int swrm_probe(struct platform_device *pdev)
 	 * controller will be up now
 	 */
 	swr_master_add_boarddevices(&swrm->master);
-	if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, true))
+	if (!swrm->is_always_on && swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, true))
 		dev_dbg(&pdev->dev, "%s: Audio HW Vote is failed\n", __func__);
 	mutex_lock(&swrm->mlock);
 	swrm_clk_request(swrm, true);
@@ -3018,7 +3026,7 @@ static int swrm_runtime_resume(struct device *dev)
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 	int ret = 0;
 	bool swrm_clk_req_err = false;
-	bool hw_core_err = false;
+	bool hw_core_err = false, aud_core_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
 	u32 temp = 0;
@@ -3034,9 +3042,11 @@ static int swrm_runtime_resume(struct device *dev)
 			__func__);
 		hw_core_err = true;
 	}
-	if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, true))
+	if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, true)) {
 		dev_err(dev, "%s:lpass audio hw enable failed\n",
 			__func__);
+		aud_core_err = true;
+	}
 
 	if ((swrm->state == SWR_MSTR_DOWN) ||
 	    (swrm->state == SWR_MSTR_SSR && swrm->dev_up)) {
@@ -3127,6 +3137,9 @@ static int swrm_runtime_resume(struct device *dev)
 		swrm->state = SWR_MSTR_UP;
 	}
 exit:
+	if (swrm->is_always_on && !aud_core_err)
+		swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false);
+
 	if (!hw_core_err)
 		swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
 	if (swrm_clk_req_err)
@@ -3149,7 +3162,7 @@ static int swrm_runtime_suspend(struct device *dev)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 	int ret = 0;
-	bool hw_core_err = false;
+	bool hw_core_err = false, aud_core_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
 	int current_state = 0;
@@ -3169,6 +3182,8 @@ static int swrm_runtime_suspend(struct device *dev)
 		hw_core_err = true;
 	}
 
+	if (swrm->is_always_on && swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, true))
+		aud_core_err = true;
 	if ((current_state == SWR_MSTR_UP) ||
 	    (current_state == SWR_MSTR_SSR)) {
 
@@ -3250,11 +3265,12 @@ static int swrm_runtime_suspend(struct device *dev)
 		swrm->state = SWR_MSTR_DOWN;
 
 exit:
-	if (swrm->state != SWR_MSTR_UP) {
+	if (!swrm->is_always_on && swrm->state != SWR_MSTR_UP) {
 		if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false))
 			dev_dbg(dev, "%s:lpass audio hw enable failed\n",
 			__func__);
-	}
+	} else if (swrm->is_always_on && !aud_core_err)
+		swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false);
 
 	if (!hw_core_err)
 		swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);

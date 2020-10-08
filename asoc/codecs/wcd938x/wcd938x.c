@@ -1883,9 +1883,12 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 		default:
 			break;
 		}
-		if (wcd938x->adc_count == 0)
+		if (wcd938x->adc_count == 0) {
 			snd_soc_component_update_bits(component,
 					WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x00);
+			snd_soc_component_update_bits(component,
+					WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
+		}
 		break;
 	};
 	return ret;
@@ -2156,8 +2159,6 @@ static int wcd938x_event_notify(struct notifier_block *block,
 						     WCD938X_EVT_SSR_DOWN,
 						     NULL);
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = true;
-		wcd938x->mbhc->wcd_mbhc.plug_before_ssr =
-					wcd938x->mbhc->wcd_mbhc.current_plug;
 		mbhc = &wcd938x->mbhc->wcd_mbhc;
 		wcd938x->usbc_hs_status = get_usbc_hs_status(component,
 						mbhc->mbhc_cfg);
@@ -2183,8 +2184,6 @@ static int wcd938x_event_notify(struct notifier_block *block,
 				__func__);
 		} else {
 			wcd938x_mbhc_hs_detect(component, mbhc->mbhc_cfg);
-			if (wcd938x->usbc_hs_status)
-				mdelay(500);
 		}
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = false;
 		wcd938x->dev_up = true;
@@ -2192,6 +2191,8 @@ static int wcd938x_event_notify(struct notifier_block *block,
 			blocking_notifier_call_chain(&wcd938x->notifier,
 						     WCD938X_EVT_SSR_UP,
 						     NULL);
+		if (wcd938x->usbc_hs_status)
+			mdelay(500);
 		break;
 	case BOLERO_SLV_EVT_CLK_NOTIFY:
 		snd_soc_component_update_bits(component,
@@ -2842,15 +2843,22 @@ static int wcd938x_tx_master_ch_get(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int slave_ch_idx;
+	struct wcd938x_priv *wcd938x = NULL;
+	int slave_ch_idx = -EINVAL;
+
+	if (component == NULL)
+		return -EINVAL;
+
+	wcd938x = snd_soc_component_get_drvdata(component);
+	if (wcd938x == NULL)
+		return -EINVAL;
 
 	wcd938x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+	if (slave_ch_idx < 0 || slave_ch_idx >= WCD938X_MAX_SLAVE_CH_TYPES)
+		return -EINVAL;
 
-	if (slave_ch_idx != -EINVAL)
-		ucontrol->value.integer.value[0] =
-				wcd938x_slave_get_master_ch_val(
-				wcd938x->tx_master_ch_map[slave_ch_idx]);
+	ucontrol->value.integer.value[0] = wcd938x_slave_get_master_ch_val(
+			wcd938x->tx_master_ch_map[slave_ch_idx]);
 
 	return 0;
 }
@@ -2860,19 +2868,27 @@ static int wcd938x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int slave_ch_idx;
+	struct wcd938x_priv *wcd938x = NULL;
+	int slave_ch_idx = -EINVAL;
+
+	if (component == NULL)
+		return -EINVAL;
+
+	wcd938x = snd_soc_component_get_drvdata(component);
+	if (wcd938x == NULL)
+		return -EINVAL;
 
 	wcd938x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+
+	if (slave_ch_idx < 0 || slave_ch_idx >= WCD938X_MAX_SLAVE_CH_TYPES)
+		return -EINVAL;
 
 	dev_dbg(component->dev, "%s: slave_ch_idx: %d", __func__, slave_ch_idx);
 	dev_dbg(component->dev, "%s: ucontrol->value.enumerated.item[0] = %ld\n",
 			__func__, ucontrol->value.enumerated.item[0]);
 
-	if (slave_ch_idx != -EINVAL)
-		wcd938x->tx_master_ch_map[slave_ch_idx] =
-				wcd938x_slave_get_master_ch(
-					ucontrol->value.enumerated.item[0]);
+	wcd938x->tx_master_ch_map[slave_ch_idx] = wcd938x_slave_get_master_ch(
+				ucontrol->value.enumerated.item[0]);
 	return 0;
 }
 

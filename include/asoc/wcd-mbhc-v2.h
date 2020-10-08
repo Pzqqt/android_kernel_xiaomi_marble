@@ -551,7 +551,6 @@ struct wcd_mbhc {
 	wait_queue_head_t wait_btn_press;
 	bool is_btn_press;
 	u8 current_plug;
-	u8 plug_before_ssr;
 	bool in_swch_irq_handler;
 	bool hphl_swh; /*track HPHL switch NC / NO */
 	bool gnd_swh; /*track GND switch NC / NO */

@@ -687,35 +687,6 @@ static struct snd_soc_dai_driver msm_fe_dais[] = {
 	},
 	{
 		.playback = {
-			.stream_name = "AFE Playback",
-			.aif_name = "PCM_RX",
-			.rates = (SNDRV_PCM_RATE_8000 |
-				SNDRV_PCM_RATE_16000 |
-				SNDRV_PCM_RATE_48000),
-			.formats = SNDRV_PCM_FMTBIT_S16_LE,
-			.channels_min = 1,
-			.channels_max = 2,
-			.rate_min =     8000,
-			.rate_max =     48000,
-		},
-		.capture = {
-			.stream_name = "AFE Capture",
-			.aif_name = "PCM_TX",
-			.rates = (SNDRV_PCM_RATE_8000 |
-				SNDRV_PCM_RATE_16000 |
-				SNDRV_PCM_RATE_48000),
-			.formats = SNDRV_PCM_FMTBIT_S16_LE,
-			.channels_min = 1,
-			.channels_max = 2,
-			.rate_min =     8000,
-			.rate_max =     48000,
-		},
-		.ops = &msm_fe_dai_ops,
-		.name = "AFE-PROXY",
-		.probe = fe_dai_probe,
-	},
-	{
-		.playback = {
 			.stream_name = "HDMI_HOSTLESS Playback",
 			.aif_name = "HDMI_DL_HL",
 			.rates = SNDRV_PCM_RATE_8000_48000,

@@ -236,6 +236,7 @@ struct afe_ctl {
 	int dev_acdb_id[AFE_MAX_PORTS];
 	routing_cb rt_cb;
 	struct audio_uevent_data *uevent_data;
+	uint32_t afe_port_start_failed[AFE_MAX_PORTS];
 	/* cal info for AFE */
 	struct afe_fw_info *fw_data;
 	u32 island_mode[AFE_MAX_PORTS];
@@ -2178,7 +2179,7 @@ static void afe_send_custom_topology(void)
 		goto unlock;
 	this_afe.set_custom_topology = 0;
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err("%s cal_block not found!!\n", __func__);
 		goto unlock;
 	}
@@ -2279,6 +2280,10 @@ static int afe_send_cps_config(int src_port)
 			continue;
 		}
 
+		if (i >= this_afe.num_spkrs) {
+			pr_err("%s: invalid ch index %d\n", __func__, i);
+			goto fail_cmd;
+		}
 		memcpy(packed_payload + cpy_size,
 			&this_afe.cps_config->spkr_dep_cfg[i],
 			sizeof(struct lpass_swr_spkr_dep_cfg_t));
@@ -2301,6 +2306,8 @@ static int afe_send_cps_config(int src_port)
 		pr_err("%s: port = 0x%x param = 0x%x failed %d\n", __func__,
 		       src_port, param_info.param_id, ret);
 
+
+fail_cmd:
 	pr_debug("%s: config.pdata.param_id 0x%x status %d 0x%x\n", __func__,
 		 param_info.param_id, ret, src_port);
 	kfree(packed_payload);
@@ -3020,7 +3027,7 @@ static struct cal_block_data *afe_find_cal_topo_id_by_port(
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 		/* Skip cal_block if it is already marked stale */
-		if (cal_utils_is_cal_stale(cal_block))
+		if (cal_utils_is_cal_stale(cal_block, cal_type))
 			continue;
 		pr_debug("%s: port id: 0x%x, dev_acdb_id: %d\n", __func__,
 			 port_id, this_afe.dev_acdb_id[afe_port_index]);
@@ -3595,7 +3602,7 @@ static int send_afe_cal_type(int cal_index, int port_id)
 		cal_block = cal_utils_get_only_cal_block(
 				this_afe.cal_data[cal_index]);
 
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err_ratelimited("%s cal_block not found!!\n", __func__);
 		ret = -EINVAL;
 		goto unlock;
@@ -5643,13 +5650,13 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		/* One time call: only for first time */
 		afe_send_custom_topology();
 		/*
-		 * Deregister existing afe topology before
-		 * sending a new one for VA use cases only
+		 * Deregister existing afe topology before sending a new
+		 * one if the previous afe port start failed for this port
 		 */
-		if (port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_0 ||
-		    port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_1 ||
-		    port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_2)
+		if (this_afe.afe_port_start_failed[port_index] == true) {
 			afe_port_topology_deregister(port_id);
+			this_afe.afe_port_start_failed[port_index] = false;
+		}
 		afe_send_port_topology_id(port_id);
 		afe_send_cal(port_id);
 		afe_send_hw_delay(port_id, rate);
@@ -5966,6 +5973,8 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	ret = afe_send_cmd_port_start(port_id);
 
 fail_cmd:
+	if (ret)
+		this_afe.afe_port_start_failed[port_index] = true;
 	mutex_unlock(&this_afe.afe_cmd_lock);
 	return ret;
 }
@@ -8122,7 +8131,7 @@ static int afe_sidetone_iir(u16 tx_port_id)
 	}
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err("%s: cal_block not found\n ", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
@@ -8249,7 +8258,7 @@ static int afe_sidetone(u16 tx_port_id, u16 rx_port_id, bool enable)
 
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block, this_afe.cal_data[cal_index])) {
 		pr_err("%s: cal_block not found\n", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
@@ -10317,7 +10326,7 @@ static struct cal_block_data *afe_find_hw_delay_by_path(
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 
-		if (cal_utils_is_cal_stale(cal_block))
+		if (cal_utils_is_cal_stale(cal_block, cal_type))
 			continue;
 
 		if (((struct audio_cal_info_hw_delay *)cal_block->cal_info)
@@ -11164,6 +11173,7 @@ int __init afe_init(void)
 		this_afe.power_mode[i] = 0;
 		this_afe.vad_cfg[i].is_enable = 0;
 		this_afe.vad_cfg[i].pre_roll = 0;
+		this_afe.afe_port_start_failed[i] = false;
 		init_waitqueue_head(&this_afe.wait[i]);
 	}
 	init_waitqueue_head(&this_afe.wait_wakeup);

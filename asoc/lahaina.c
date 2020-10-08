@@ -310,6 +310,7 @@ struct mi2s_conf {
 	struct mutex lock;
 	u32 ref_cnt;
 	u32 msm_is_mi2s_master;
+	bool audio_core_vote;
 };
 
 static u32 mi2s_ebit_clk[MI2S_MAX] = {
@@ -5242,7 +5243,8 @@ void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
 		return;
 	}
 
-	if (IS_MSM_INTERFACE_MI2S(index) && IS_FRACTIONAL(sample_rate)) {
+	if ((IS_MSM_INTERFACE_MI2S(index) && IS_FRACTIONAL(sample_rate)) ||
+	    mi2s_intf_conf[index].audio_core_vote) {
 		if (pdata->lpass_audio_hw_vote != NULL) {
 			if (--pdata->core_audio_vote_count == 0) {
 				clk_disable_unprepare(
@@ -5251,6 +5253,7 @@ void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
 				pr_err("%s: audio vote mismatch\n", __func__);
 				pdata->core_audio_vote_count = 0;
 			}
+			mi2s_intf_conf[index].audio_core_vote = false;
 		} else {
 			pr_err("%s: Invalid lpass audio hw node\n", __func__);
 		}
@@ -5312,6 +5315,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 			}
 		}
 		pdata->core_audio_vote_count++;
+		mi2s_intf_conf[index].audio_core_vote = true;
 	}
 
 	if (++mi2s_intf_conf[index].ref_cnt == 1) {
@@ -7808,6 +7812,7 @@ static void msm_i2s_auxpcm_init(struct platform_device *pdev)
 	for (count = 0; count < MI2S_MAX; count++) {
 		mutex_init(&mi2s_intf_conf[count].lock);
 		mi2s_intf_conf[count].ref_cnt = 0;
+		mi2s_intf_conf[count].audio_core_vote = false;
 	}
 
 	ret = of_property_read_u32_array(pdev->dev.of_node,
@@ -7832,6 +7837,7 @@ static void msm_i2s_auxpcm_deinit(void)
 		mutex_destroy(&mi2s_intf_conf[count].lock);
 		mi2s_intf_conf[count].ref_cnt = 0;
 		mi2s_intf_conf[count].msm_is_mi2s_master = 0;
+		mi2s_intf_conf[count].audio_core_vote = false;
 	}
 }
 

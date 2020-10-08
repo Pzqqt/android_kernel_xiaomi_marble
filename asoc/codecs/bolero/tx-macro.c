@@ -179,6 +179,8 @@ struct tx_macro_priv {
 	int amic_sample_rate;
 	bool lpi_enable;
 	bool register_event_listener;
+	u16 current_clk_id;
+	int disable_afe_wakeup_event_listener;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -1817,11 +1819,11 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_v3[] = {
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
 			tx_macro_tx_swr_clk_event,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
 			tx_macro_va_swr_clk_event,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
@@ -2644,17 +2646,19 @@ static int tx_macro_register_event_listener(struct snd_soc_component *component,
 	if (tx_priv->swr_ctrl_data &&
 		(!tx_priv->tx_swr_clk_cnt || !tx_priv->va_swr_clk_cnt)) {
 		if (enable) {
-			ret = swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_REGISTER_WAKEUP, NULL);
+			if (!tx_priv->disable_afe_wakeup_event_listener)
+				ret = swrm_wcd_notify(
+					tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+					SWR_REGISTER_WAKEUP, NULL);
 			msm_cdc_pinctrl_set_wakeup_capable(
 					tx_priv->tx_swr_gpio_p, false);
 		} else {
 			msm_cdc_pinctrl_set_wakeup_capable(
 					tx_priv->tx_swr_gpio_p, true);
-			ret = swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEREGISTER_WAKEUP, NULL);
+			if (!tx_priv->disable_afe_wakeup_event_listener)
+				ret = swrm_wcd_notify(
+					tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+					SWR_DEREGISTER_WAKEUP, NULL);
 		}
 	}
 
@@ -2846,6 +2850,70 @@ static int tx_macro_clk_div_get(struct snd_soc_component *component)
 		return -EINVAL;
 
 	return tx_priv->dmic_clk_div;
+}
+
+static int tx_macro_clk_switch(struct snd_soc_component *component, int clk_src)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+	int ret = 0;
+
+	if (!component)
+		return -EINVAL;
+
+	tx_dev = bolero_get_device_ptr(component->dev, TX_MACRO);
+	if (!tx_dev) {
+		dev_err(component->dev,
+			"%s: null device for macro!\n", __func__);
+		return -EINVAL;
+	}
+	tx_priv = dev_get_drvdata(tx_dev);
+	if (!tx_priv) {
+		dev_err(component->dev,
+			"%s: priv is null for macro!\n", __func__);
+		return -EINVAL;
+	}
+	dev_dbg(component->dev,
+		"%s: va_swr_clk_cnt %d, tx_swr_clk_cnt %d, tx_clk_status %d\n",
+		__func__, tx_priv->va_swr_clk_cnt,
+		tx_priv->tx_swr_clk_cnt, tx_priv->tx_clk_status);
+	if (tx_priv->current_clk_id == clk_src) {
+		dev_dbg(component->dev,
+			"%s: requested clk %d is same as current\n",
+			__func__, clk_src);
+		return 0;
+	} else if (tx_priv->va_swr_clk_cnt != 0 && tx_priv->tx_clk_status) {
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+				TX_CORE_CLK,
+				clk_src,
+				true);
+		if (ret) {
+			dev_dbg(component->dev,
+				"%s: request clock %d enable failed\n",
+				__func__, clk_src);
+			goto ret;
+		}
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+				TX_CORE_CLK,
+				tx_priv->current_clk_id,
+				false);
+		if (ret) {
+			dev_dbg(component->dev,
+				"%s: request clock  disable failed\n",
+				__func__);
+			bolero_clk_rsc_request_clock(tx_priv->dev,
+				TX_CORE_CLK,
+				clk_src,
+				false);
+			goto ret;
+		}
+		tx_priv->current_clk_id = clk_src;
+	} else {
+		ret = -EBUSY;
+	}
+
+ret:
+	return ret;
 }
 
 static int tx_macro_core_vote(void *handle, bool enable)
@@ -3331,6 +3399,7 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->reg_wake_irq = tx_macro_reg_wake_irq;
 	ops->set_port_map = tx_macro_set_port_map;
 	ops->clk_div_get = tx_macro_clk_div_get;
+	ops->clk_switch = tx_macro_clk_switch;
 	ops->reg_evt_listener = tx_macro_register_event_listener;
 	ops->clk_enable = __tx_macro_mclk_enable;
 }
@@ -3345,6 +3414,9 @@ static int tx_macro_probe(struct platform_device *pdev)
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
 	u32 is_used_tx_swr_gpio = 1;
 	const char *is_used_tx_swr_gpio_dt = "qcom,is-used-swr-gpio";
+	u32 disable_afe_wakeup_event_listener = 0;
+	const char *disable_afe_wakeup_event_listener_dt =
+			"qcom,disable-afe-wakeup-event-listener";
 
 	if (!bolero_is_va_macro_registered(&pdev->dev)) {
 		dev_err(&pdev->dev,
@@ -3411,6 +3483,19 @@ static int tx_macro_probe(struct platform_device *pdev)
 		sample_rate, tx_priv) == TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
 	}
+
+	if (of_find_property(pdev->dev.of_node,
+			     disable_afe_wakeup_event_listener_dt, NULL)) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   disable_afe_wakeup_event_listener_dt,
+					   &disable_afe_wakeup_event_listener);
+		if (ret)
+			dev_dbg(&pdev->dev, "%s: error reading %s in dt\n",
+				__func__, disable_afe_wakeup_event_listener_dt);
+	}
+	tx_priv->disable_afe_wakeup_event_listener =
+			disable_afe_wakeup_event_listener;
+
 	if (is_used_tx_swr_gpio) {
 		tx_priv->reset_swr = true;
 		INIT_WORK(&tx_priv->tx_macro_add_child_devices_work,
@@ -3429,6 +3514,7 @@ static int tx_macro_probe(struct platform_device *pdev)
 	tx_macro_init_ops(&ops, tx_io_base);
 	ops.clk_id_req = TX_CORE_CLK;
 	ops.default_clk_id = TX_CORE_CLK;
+	tx_priv->current_clk_id = TX_CORE_CLK;
 	ret = bolero_register_macro(&pdev->dev, TX_MACRO, &ops);
 	if (ret) {
 		dev_err(&pdev->dev,

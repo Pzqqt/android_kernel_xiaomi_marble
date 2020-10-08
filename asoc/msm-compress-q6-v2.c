@@ -3083,18 +3083,18 @@ static int msm_compr_pointer(struct snd_compr_stream *cstream,
 	spin_lock_irqsave(&prtd->lock, flags);
 	tstamp.sampling_rate = prtd->sample_rate;
 	tstamp.byte_offset = prtd->byte_offset;
-	if (cstream->direction == SND_COMPRESS_PLAYBACK)
+	if (cstream->direction == SND_COMPRESS_PLAYBACK) {
+		runtime->total_bytes_transferred = prtd->copied_total;
 		tstamp.copied_total = prtd->copied_total;
-	else if (cstream->direction == SND_COMPRESS_CAPTURE)
+	}
+	else if (cstream->direction == SND_COMPRESS_CAPTURE) {
+		runtime->total_bytes_available = prtd->received_total;
 		tstamp.copied_total = prtd->received_total;
+	}
 	first_buffer = prtd->first_buffer;
 	if (atomic_read(&prtd->error)) {
 		pr_err_ratelimited("%s Got RESET EVENTS notification, return error\n",
 				   __func__);
-		if (cstream->direction == SND_COMPRESS_PLAYBACK)
-			runtime->total_bytes_transferred = prtd->copied_total;
-		else
-			runtime->total_bytes_available = prtd->received_total;
 		tstamp.pcm_io_frames = 0;
 		memcpy(arg, &tstamp, sizeof(struct snd_compr_tstamp));
 		spin_unlock_irqrestore(&prtd->lock, flags);

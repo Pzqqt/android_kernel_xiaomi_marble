@@ -181,8 +181,6 @@ static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 	int ret = 0;
 
 	if (!lpi_dev_up) {
-		pr_err_ratelimited("%s: ADSP is down due to SSR, return\n",
-				  __func__);
 		return 0;
 	}
 	pm_runtime_get_sync(lpi_dev);
