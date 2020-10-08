@@ -62,7 +62,12 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->mode_check_interval =          params->mode_check_interval;
 	cmd->add_sta_slot_interval =        params->add_sta_slot_interval;
 	cmd->remove_sta_slot_interval =     params->remove_sta_slot_interval;
-	cmd->flags =                        params->flags;
+
+	TWT_EN_DIS_FLAGS_SET_BTWT(cmd->flags, params->b_twt_enable);
+	TWT_EN_DIS_FLAGS_SET_L_MBSSID(cmd->flags,
+				      params->b_twt_legacy_mbss_enable);
+	TWT_EN_DIS_FLAGS_SET_AX_MBSSID(cmd->flags,
+				       params->b_twt_ax_mbss_enable);
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 			WMI_TWT_ENABLE_CMDID);
