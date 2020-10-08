@@ -1051,12 +1051,14 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 					wlan_vdev_get_pdev(cm_ctx->vdev),
 					&bss_info, &mlme_info);
 	}
-
 	/*
 	 * update fils/wep key and inform legacy, update bcn filter,
 	 * start OBSS scan for open mode.
 	 */
 
+	mlme_debug(CM_PREFIX_FMT,
+		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+				 resp->cm_id));
 	cm_remove_cmd(cm_ctx, resp->cm_id);
 
 	return QDF_STATUS_SUCCESS;

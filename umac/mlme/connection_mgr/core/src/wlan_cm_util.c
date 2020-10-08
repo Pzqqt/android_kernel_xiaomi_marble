@@ -291,9 +291,15 @@ static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
 	cmd_info.vdev = cm_ctx->vdev;
 
 	if (cm_id == cm_ctx->active_cm_id) {
+		mlme_debug(CM_PREFIX_FMT "Remove from active",
+			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					 cm_id));
 		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
 		wlan_serialization_remove_cmd(&cmd_info);
 	} else {
+		mlme_debug(CM_PREFIX_FMT "Remove from pending",
+			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					 cm_id));
 		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
 		wlan_serialization_cancel_request(&cmd_info);
 	}
@@ -331,7 +337,9 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
 			/* Todo:- fill disconnect rsp and inform OSIF */
 			cm_ctx->disconnect_count--;
 		}
-
+		mlme_debug(CM_PREFIX_FMT,
+			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					 cm_req->cm_id));
 		cm_remove_cmd_from_serialization(cm_ctx, cm_req->cm_id);
 		qdf_list_remove_node(&cm_ctx->req_list, &cm_req->node);
 		qdf_mem_free(cm_req);
@@ -397,6 +405,9 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	else
 		cm_ctx->disconnect_count++;
 	cm_req_lock_release(cm_ctx);
+	mlme_debug(CM_PREFIX_FMT,
+		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+				 cm_req->cm_id));
 
 	mlme_cm_osif_update_id_and_src(cm_ctx->vdev, source, cm_req->cm_id);
 
@@ -465,6 +476,9 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	} else {
 		cm_ctx->disconnect_count--;
 	}
+	mlme_debug(CM_PREFIX_FMT,
+		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+				 cm_req->cm_id));
 
 	qdf_mem_free(cm_req);
 	cm_req_lock_release(cm_ctx);
