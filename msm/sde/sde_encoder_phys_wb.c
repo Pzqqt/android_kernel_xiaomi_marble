@@ -1390,6 +1390,7 @@ static int sde_encoder_phys_wb_wait_for_commit_done(
 			phys_enc->in_clone_mode) {
 		rc = _sde_encoder_phys_wb_wait_for_commit_done(phys_enc, true);
 		_sde_encoder_phys_wb_reset_state(phys_enc);
+		sde_encoder_phys_wb_irq_ctrl(phys_enc, false);
 	} else {
 		rc = _sde_encoder_phys_wb_wait_for_commit_done(phys_enc, false);
 	}
@@ -1676,8 +1677,10 @@ static void sde_encoder_phys_wb_disable(struct sde_encoder_phys *phys_enc)
 		_sde_encoder_phys_wb_update_cwb_flush(phys_enc, false);
 		phys_enc->enable_state = SDE_ENC_DISABLING;
 
-		if (wb_enc->crtc->state->active)
+		if (wb_enc->crtc->state->active) {
+			sde_encoder_phys_wb_irq_ctrl(phys_enc, true);
 			return;
+		}
 
 		goto exit;
 	}
