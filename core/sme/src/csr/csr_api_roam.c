@@ -7321,6 +7321,8 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct join_rsp *join_rsp = context;
 	uint32_t len;
+	enum csr_akm_type akm_type;
+	uint8_t mdie_present;
 
 	if (!join_rsp) {
 		sme_err("join_rsp is NULL");
@@ -7521,6 +7523,16 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 
 			csr_roam_free_connected_info(mac_ctx,
 						     &session->connectedInfo);
+
+			akm_type = session->connectedProfile.AuthType;
+			mdie_present =
+				session->connectedProfile.mdid.mdie_present;
+			if (akm_type == eCSR_AUTH_TYPE_FT_SAE && mdie_present) {
+				sme_debug("Update the MDID in PMK cache for FT-SAE case");
+				csr_update_pmk_cache_ft(mac_ctx,
+							session_id, session);
+			}
+
 			len = join_rsp->assocReqLength +
 				join_rsp->assocRspLength +
 				join_rsp->beaconLength;
@@ -14214,6 +14226,68 @@ csr_store_sae_single_pmk_to_global_cache(struct mac_context *mac,
 	qdf_mem_free(pmk_info);
 }
 #endif
+
+void csr_update_pmk_cache_ft(struct mac_context *mac, uint32_t vdev_id,
+			     struct csr_roam_session *session)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_crypto_pmksa pmksa;
+	enum QDF_OPMODE vdev_mode;
+
+	if (!session) {
+		sme_err("session not found");
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev is NULL");
+		return;
+	}
+
+	vdev_mode = wlan_vdev_mlme_get_opmode(vdev);
+	/* If vdev mode is STA then proceed further */
+	if (vdev_mode != QDF_STA_MODE) {
+		sme_err("vdev mode is not STA");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+
+	/*
+	 * In FT connection fetch the MDID from Session and send it to crypto
+	 * so that it will update the crypto PMKSA table with the MDID for the
+	 * matching BSSID or SSID PMKSA entry. And delete the old/stale PMK
+	 * cache entries for the same mobility domain as of the newly added
+	 * entry to avoid multiple PMK cache entries for the same MDID.
+	 */
+	qdf_copy_macaddr(&pmksa.bssid, &session->connectedProfile.bssid);
+	sme_debug("copied the BSSID from session to PMKSA");
+	if (session->connectedProfile.SSID.length) {
+		qdf_mem_copy(&pmksa.ssid, &session->connectedProfile.SSID.ssId,
+			     session->connectedProfile.SSID.length);
+		qdf_mem_copy(
+			&pmksa.cache_id,
+			&session->pConnectBssDesc->fils_info_element.cache_id,
+			CACHE_ID_LEN);
+		pmksa.ssid_len = session->connectedProfile.SSID.length;
+		sme_debug("copied the SSID from session to PMKSA");
+	}
+
+	if (session->connectedProfile.mdid.mdie_present) {
+		pmksa.mdid.mdie_present = 1;
+		pmksa.mdid.mobility_domain =
+				session->connectedProfile.mdid.mobility_domain;
+		sme_debug("copied the MDID from session to PMKSA");
+
+		status = wlan_crypto_update_pmk_cache_ft(vdev, &pmksa);
+		if (status == QDF_STATUS_SUCCESS)
+			sme_debug("Updated the crypto cache table");
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
 
 QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 					 uint32_t sessionId,

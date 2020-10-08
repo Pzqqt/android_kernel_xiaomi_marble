@@ -894,6 +894,16 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 					 tPmkidCacheInfo *pmksa,
 					 bool flush_cache);
 
+/**
+ * csr_update_pmk_cache_ft - API to update MDID in PMKSA cache entry
+ * @session_id: session ID
+ * @session: sme session pointer
+ *
+ * Return: None
+ */
+void csr_update_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
+			     struct csr_roam_session *session);
+
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_clear_sae_single_pmk - API to clear single_pmk_info cache
