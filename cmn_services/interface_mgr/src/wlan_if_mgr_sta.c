@@ -120,11 +120,7 @@ QDF_STATUS if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 		if_mgr_enable_roaming(vdev, pdev, RSO_CONNECT_START);
 	}
 
-	status = policy_mgr_check_n_start_opportunistic_timer(psoc);
-	if (status) {
-		ifmgr_err("Failed to start dbs opportunistic timer");
-		return status;
-	}
+	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
 	policy_mgr_check_concurrent_intf_and_restart_sap(psoc);
 
