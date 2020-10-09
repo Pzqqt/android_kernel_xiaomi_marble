@@ -1071,19 +1071,19 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->num_noa_descriptors *
 		       sizeof(wmi_p2p_noa_descriptor));
-	wmi_info("%s: vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
-		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
-		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
-		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d"
-		"req->dis_hw_ack: %d ", __func__, req->vdev_id,
-		chan->mhz, req->channel.phy_mode, chan->info,
-		req->channel.dfs_set, req->beacon_interval, cmd->dtim_period,
-		chan->band_center_freq1, chan->band_center_freq2,
-		chan->reg_info_1, chan->reg_info_2, req->channel.maxregpower,
-		req->preferred_tx_streams, req->preferred_rx_streams,
-		req->ldpc_rx_enabled, req->cac_duration_ms,
-		req->regdomain, req->he_ops,
-		req->disable_hw_ack);
+	wmi_info("vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
+		 "beacon interval %d dtim %d center_chan %d center_freq2 %d "
+		 "reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
+		 "Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d"
+		 "req->dis_hw_ack: %d ", req->vdev_id,
+		 chan->mhz, req->channel.phy_mode, chan->info,
+		 req->channel.dfs_set, req->beacon_interval, cmd->dtim_period,
+		 chan->band_center_freq1, chan->band_center_freq2,
+		 chan->reg_info_1, chan->reg_info_2, req->channel.maxregpower,
+		 req->preferred_tx_streams, req->preferred_rx_streams,
+		 req->ldpc_rx_enabled, req->cac_duration_ms,
+		 req->regdomain, req->he_ops,
+		 req->disable_hw_ack);
 
 	if (req->is_restart) {
 		wmi_mtrace(WMI_VDEV_RESTART_REQUEST_CMDID, cmd->vdev_id, 0);
@@ -1853,10 +1853,10 @@ static QDF_STATUS send_wow_enable_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->pause_iface_config = WOW_IFACE_PAUSE_DISABLED;
 	cmd->flags = param->flags;
 
-	wmi_info("suspend type: %s flag is 0x%x",
-		 cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
-		 "WOW_IFACE_PAUSE_ENABLED" : "WOW_IFACE_PAUSE_DISABLED",
-		 cmd->flags);
+	wmi_debug("suspend type: %s flag is 0x%x",
+		  cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
+		  "WOW_IFACE_PAUSE_ENABLED" : "WOW_IFACE_PAUSE_DISABLED",
+		  cmd->flags);
 
 	wmi_mtrace(WMI_WOW_ENABLE_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -4183,9 +4183,9 @@ static QDF_STATUS send_peer_rate_report_cmd_tlv(wmi_unified_t wmi_handle,
 		}
 	}
 
-	wmi_err("enable %d backoff_time %d period %d",
-		 cmd->enable_rate_report,
-		 cmd->report_backoff_time, cmd->report_timer_period);
+	wmi_debug("enable %d backoff_time %d period %d",
+		  cmd->enable_rate_report,
+		  cmd->report_backoff_time, cmd->report_timer_period);
 
 	wmi_mtrace(WMI_PEER_SET_RATE_REPORT_CONDITION_CMDID, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -12062,17 +12062,17 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 	radar_found->freq_offset = radar_event->freq_offset;
 	radar_found->sidx = radar_event->sidx;
 
-	wmi_info("processed radar found event pdev %d,"
-		"Radar Event Info:pdev_id %d,timestamp %d,chan_freq  (dur) %d,"
-		"chan_width (RSSI) %d,detector_id (false_radar) %d,"
-		"freq_offset (radar_check) %d,segment_id %d,sidx %d,"
-		"is_chirp %d,detection mode %d",
-		radar_event->pdev_id, radar_found->pdev_id,
-		radar_event->timestamp, radar_event->chan_freq,
-		radar_event->chan_width, radar_event->detector_id,
-		radar_event->freq_offset, radar_event->segment_id,
-		radar_event->sidx, radar_event->is_chirp,
-		radar_event->detection_mode);
+	wmi_debug("processed radar found event pdev %d,"
+		  "Radar Event Info:pdev_id %d,timestamp %d,chan_freq  (dur) %d,"
+		  "chan_width (RSSI) %d,detector_id (false_radar) %d,"
+		  "freq_offset (radar_check) %d,segment_id %d,sidx %d,"
+		  "is_chirp %d,detection mode %d",
+		  radar_event->pdev_id, radar_found->pdev_id,
+		  radar_event->timestamp, radar_event->chan_freq,
+		  radar_event->chan_width, radar_event->detector_id,
+		  radar_event->freq_offset, radar_event->segment_id,
+		  radar_event->sidx, radar_event->is_chirp,
+		  radar_event->detection_mode);
 
 	return QDF_STATUS_SUCCESS;
 }
