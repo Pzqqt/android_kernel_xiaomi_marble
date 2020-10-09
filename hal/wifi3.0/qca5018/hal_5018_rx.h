@@ -54,23 +54,34 @@
 	HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_9, SW_FRAME_GROUP_ID)
 #define HAL_REO_R0_CONFIG(soc, reg_val, reo_params)		\
 	do { \
-		reg_val &= \
-			~(HWIO_REO_R0_GENERAL_ENABLE_SOFT_REORDER_DEST_RING_BMSK |\
-			HWIO_REO_R0_GENERAL_ENABLE_AGING_LIST_ENABLE_BMSK | \
+		(reg_val) &= \
+			~(HWIO_REO_R0_GENERAL_ENABLE_AGING_LIST_ENABLE_BMSK |\
 			HWIO_REO_R0_GENERAL_ENABLE_AGING_FLUSH_ENABLE_BMSK); \
-		reg_val |= \
-			HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, \
-			       SOFT_REORDER_DEST_RING, \
-			       (reo_params)->frag_dst_ring) |	\
+		(reg_val) |= \
 			HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, \
 			       AGING_LIST_ENABLE, 1) |\
 			HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, \
 			       AGING_FLUSH_ENABLE, 1);\
 		HAL_REG_WRITE((soc), \
-			      HWIO_REO_R0_GENERAL_ENABLE_ADDR( \
+			      HWIO_REO_R0_GENERAL_ENABLE_ADDR(	\
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
+			      (reg_val));		\
+		(reg_val) = \
+			HAL_REG_READ((soc), \
+				     HWIO_REO_R0_MISC_CTL_ADDR(	\
+				     SEQ_WCSS_UMAC_REO_REG_OFFSET)); \
+		(reg_val) &= \
+			~(HWIO_REO_R0_MISC_CTL_FRAGMENT_DEST_RING_BMSK); \
+		(reg_val) |= \
+			HAL_SM(HWIO_REO_R0_MISC_CTL,	\
+			       FRAGMENT_DEST_RING, \
+			       (reo_params)->frag_dst_ring); \
+		HAL_REG_WRITE((soc), \
+			      HWIO_REO_R0_MISC_CTL_ADDR( \
 			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
 			      (reg_val)); \
 	} while (0)
+
 #define HAL_RX_MSDU_DESC_INFO_GET(msdu_details_ptr) \
 	((struct rx_msdu_desc_info *) \
 	_OFFSET_TO_BYTE_PTR((msdu_details_ptr), \
