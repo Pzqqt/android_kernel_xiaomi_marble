@@ -376,3 +376,14 @@ int hif_dummy_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 void hif_dummy_config_irq_affinity(struct hif_softc *scn)
 {
 }
+
+/**
+ * hif_dummy_config_irq_by_ceid - dummy call
+ * @scn: hif context
+ * @ce_id : copy engine id
+ * Return: 0
+ */
+int hif_dummy_config_irq_by_ceid(struct hif_softc *scn, int ce_id)
+{
+	return 0;
+}

@@ -60,6 +60,7 @@ static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
 	bus_ops->hif_config_irq_affinity =
 		&hif_dummy_config_irq_affinity;
+	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))

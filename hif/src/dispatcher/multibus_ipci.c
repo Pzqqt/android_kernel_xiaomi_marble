@@ -77,6 +77,7 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_needs_bmi = &hif_ipci_needs_bmi;
 	bus_ops->hif_config_irq_affinity =
 		&hif_dummy_config_irq_affinity;
+	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
 
 	return QDF_STATUS_SUCCESS;
 }
