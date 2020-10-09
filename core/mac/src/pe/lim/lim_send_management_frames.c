@@ -57,6 +57,7 @@
 #include "wlan_utility.h"
 #include <wlan_mlme_api.h>
 #include <wlan_mlme_main.h>
+#include "wlan_crypto_global_api.h"
 
 /**
  *
@@ -5064,6 +5065,44 @@ returnAfterError:
 	return nSirStatus;
 } /* End lim_send_sa_query_request_frame */
 
+static bool
+lim_is_self_and_peer_ocv_capable(struct mac_context *mac,
+				 uint8_t *peer,
+				 struct pe_session *pe_session)
+{
+	uint16_t self_rsn_cap, aid;
+	tpDphHashNode sta_ds;
+
+	self_rsn_cap = wlan_crypto_get_param(pe_session->vdev,
+					     WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (!(self_rsn_cap & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
+		return false;
+
+	sta_ds = dph_lookup_hash_entry(mac, peer, &aid,
+				       &pe_session->dph.dphHashTable);
+
+	if (sta_ds && sta_ds->ocv_enabled)
+		return true;
+
+	return false;
+}
+
+static void
+lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
+		    tDot11fIEoci *oci)
+{
+	uint8_t country_code[CDS_COUNTRY_CODE_LEN + 1];
+
+	wlan_reg_read_current_country(mac->psoc, country_code);
+	oci->op_class = wlan_reg_dmn_get_opclass_from_channel(
+			country_code,
+			wlan_reg_freq_to_chan(mac->pdev, session->curr_op_freq),
+			session->ch_width);
+	oci->prim_ch_num = session->ch_center_freq_seg0;
+	oci->freq_seg_1_ch_num = session->ch_center_freq_seg1;
+	oci->present = 1;
+}
+
 /**
  * \brief Send SA query response action frame to peer
  *
@@ -5108,6 +5147,8 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 	/*11w SA query response transId is same as
 	   SA query request transId */
 	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
+	if (lim_is_self_and_peer_ocv_capable(mac, peer, pe_session))
+		lim_fill_oci_params(mac, pe_session, &frm.oci);
 
 	nStatus = dot11f_get_packed_sa_query_rsp_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -5119,7 +5160,6 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 		pe_warn("There were warnings while calculating the packed size for an SA Query Response (0x%08x)",
 			nStatus);
 	}
-
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 	qdf_status =
 		cds_packet_alloc(nBytes, (void **)&pFrame, (void **)&pPacket);

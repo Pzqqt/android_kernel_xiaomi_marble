@@ -2361,6 +2361,13 @@ IE PTIControl (EID_PTI_CONTROL)                 // 7.3.2.65
     sequence_control,     2;
 }
 
+IE oci (EID_EXTN_ID_ELEMENT) OUI ( 0x36 )
+{
+    op_class, 1;
+    prim_ch_num, 1;
+    freq_seg_1_ch_num, 1;
+}
+
 IE PUBufferStatus (EID_PU_BUFFER_STATUS)        // 7.3.2.66
 {
     {
@@ -4406,6 +4413,7 @@ FRAME SaQueryReq
     FF     Category;
     FF     Action;
     FF     TransactionId;
+    OPTIE  oci;
 }
 
 FRAME SaQueryRsp
@@ -4413,6 +4421,7 @@ FRAME SaQueryRsp
     FF     Category;
     FF     Action;
     FF     TransactionId;
+    OPTIE  oci;
 }
 
 FRAME QosMapConfigure

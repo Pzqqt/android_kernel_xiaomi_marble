@@ -1422,6 +1422,29 @@ static void lim_update_sta_ds_op_classes(tpSirAssocReq assoc_req,
 		     sizeof(tDot11fIESuppOperatingClasses));
 }
 
+static bool lim_is_ocv_enable_in_assoc_req(struct mac_context *mac_ctx,
+					   struct sSirAssocReq *assoc_req)
+{
+	uint32_t ret;
+	tDot11fIERSN dot11f_ie_rsn = {0};
+
+	if ((assoc_req->rsnPresent) && !(assoc_req->rsn.length))
+		return false;
+
+	/* Unpack the RSN IE */
+	ret = dot11f_unpack_ie_rsn(mac_ctx, &assoc_req->rsn.info[0],
+				   assoc_req->rsn.length, &dot11f_ie_rsn,
+				   false);
+	if (!DOT11F_SUCCEEDED(ret))
+		return false;
+
+	if (*(uint16_t *)&dot11f_ie_rsn.RSN_Cap &
+	    WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED)
+		return true;
+
+	return false;
+}
+
 /**
  * lim_update_sta_ds() - updates ds dph entry
  * @mac_ctx: pointer to Global MAC structure
@@ -1773,6 +1796,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		retry_interval = cfg_default(CFG_PMF_SA_QUERY_RETRY_INTERVAL);
 	}
 	if (sta_ds->rmfEnabled) {
+		sta_ds->ocv_enabled = lim_is_ocv_enable_in_assoc_req(mac_ctx,
+								     assoc_req);
 		/* Try to delete it before, creating.*/
 		lim_delete_pmf_query_timer(sta_ds);
 		if (tx_timer_create(mac_ctx, &sta_ds->pmfSaQueryTimer,

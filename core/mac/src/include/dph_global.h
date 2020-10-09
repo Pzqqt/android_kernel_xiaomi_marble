@@ -102,6 +102,7 @@ typedef struct sDphHashNode {
 	uint8_t wsmEnabled:1;
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
+	uint8_t ocv_enabled:1;
 	/* LIM state */
 	struct lim_sta_context mlmStaContext;
 	/* qos parameter info */
