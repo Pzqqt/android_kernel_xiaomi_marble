@@ -11419,6 +11419,7 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 	.ipa_set_doorbell_paddr = dp_ipa_set_doorbell_paddr,
 	.ipa_op_response = dp_ipa_op_response,
 	.ipa_register_op_cb = dp_ipa_register_op_cb,
+	.ipa_deregister_op_cb = dp_ipa_deregister_op_cb,
 	.ipa_get_stat = dp_ipa_get_stat,
 	.ipa_tx_data_frame = dp_tx_send_ipa_data_frame,
 	.ipa_enable_autonomy = dp_ipa_enable_autonomy,

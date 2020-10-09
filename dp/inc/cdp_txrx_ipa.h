@@ -162,6 +162,28 @@ cdp_ipa_register_op_cb(ol_txrx_soc_handle soc, uint8_t pdev_id,
 }
 
 /**
+ * cdp_ipa_deregister_op_cb() - deregister event handler function pointer
+ * @soc - data path soc handle
+ * @pdev_id - device instance id
+ *
+ * Deregister event handler function pointer from pdev
+ *
+ * return QDF_STATUS_SUCCESS
+ */
+static inline
+void cdp_ipa_deregister_op_cb(ol_txrx_soc_handle soc, uint8_t pdev_id)
+{
+	if (!soc || !soc->ops || !soc->ops->ipa_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->ipa_ops->ipa_deregister_op_cb)
+		soc->ops->ipa_ops->ipa_deregister_op_cb(soc, pdev_id);
+}
+
+/**
  * cdp_ipa_get_stat() - get IPA data path stats from FW
  * @soc - data path soc handle
  * @pdev_id - device instance id

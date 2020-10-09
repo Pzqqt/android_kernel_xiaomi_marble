@@ -96,6 +96,15 @@ QDF_STATUS dp_ipa_register_op_cb(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				 ipa_uc_op_cb_type op_cb, void *usr_ctxt);
 
 /**
+ * dp_ipa_register_op_cb() - Deregister OP handler function
+ * @soc_hdl - data path soc handle
+ * @pdev_id - device instance id
+ *
+ * Return: none
+ */
+void dp_ipa_deregister_op_cb(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
+
+/**
  * dp_ipa_get_stat() - Get firmware wdi status
  * @soc_hdl - data path soc handle
  * @pdev_id - device instance id

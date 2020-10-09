@@ -845,6 +845,21 @@ QDF_STATUS dp_ipa_register_op_cb(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+void dp_ipa_deregister_op_cb(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("Invalid instance");
+		return;
+	}
+
+	dp_debug("Deregister OP handler callback");
+	pdev->ipa_uc_op_cb = NULL;
+	pdev->usr_ctxt = NULL;
+}
+
 QDF_STATUS dp_ipa_get_stat(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	/* TBD */

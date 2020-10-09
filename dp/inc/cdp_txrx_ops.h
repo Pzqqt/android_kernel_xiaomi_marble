@@ -1555,6 +1555,8 @@ struct cdp_ipa_ops {
 					 void (*ipa_uc_op_cb_type)
 					 (uint8_t *op_msg, void *osif_ctxt),
 					 void *usr_ctxt);
+	void (*ipa_deregister_op_cb)(struct cdp_soc_t *soc_hdl,
+				     uint8_t pdev_id);
 	QDF_STATUS (*ipa_get_stat)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 	qdf_nbuf_t (*ipa_tx_data_frame)(struct cdp_soc_t *soc_hdl,
 					uint8_t vdev_id, qdf_nbuf_t skb);
