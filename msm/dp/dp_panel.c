@@ -1422,7 +1422,9 @@ static int dp_panel_dsc_prepare_basic_params(
 	comp_info->dsc_info.config.pic_height = dp_mode->timing.v_active;
 	comp_info->dsc_info.config.slice_width = slice_width;
 
-	if (comp_info->dsc_info.config.pic_height % 16 == 0)
+	if (comp_info->dsc_info.config.pic_height % 108 == 0)
+		comp_info->dsc_info.config.slice_height = 108;
+	else if (comp_info->dsc_info.config.pic_height % 16 == 0)
 		comp_info->dsc_info.config.slice_height = 16;
 	else if (comp_info->dsc_info.config.pic_height % 12 == 0)
 		comp_info->dsc_info.config.slice_height = 12;
