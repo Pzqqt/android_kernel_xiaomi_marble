@@ -866,6 +866,7 @@ static void dp_ctrl_host_deinit(struct dp_ctrl *dp_ctrl)
 
 static void dp_ctrl_send_video(struct dp_ctrl_private *ctrl)
 {
+	reinit_completion(&ctrl->video_comp);
 	ctrl->catalog->state_ctrl(ctrl->catalog, ST_SEND_VIDEO);
 }
 
