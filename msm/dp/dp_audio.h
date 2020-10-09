@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_AUDIO_H_
@@ -15,15 +15,18 @@
  * struct dp_audio
  * @lane_count: number of lanes configured in current session
  * @bw_code: link rate's bandwidth code for current session
+ * @tui_active: set to true if TUI is active in the system
  */
 struct dp_audio {
 	u32 lane_count;
 	u32 bw_code;
+	bool tui_active;
 
 	/**
 	 * on()
 	 *
-	 * Enables the audio by notifying the user module.
+	 * Notifies user mode clients that DP is powered on, and that audio
+	 * playback can start on the external display.
 	 *
 	 * @dp_audio: an instance of struct dp_audio.
 	 *
@@ -34,7 +37,8 @@ struct dp_audio {
 	/**
 	 * off()
 	 *
-	 * Disables the audio by notifying the user module.
+	 * Notifies user mode clients that DP is shutting down, and audio
+	 * playback should be stopped on the external display.
 	 *
 	 * @dp_audio: an instance of struct dp_audio.
 	 *

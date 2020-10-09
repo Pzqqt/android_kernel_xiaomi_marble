@@ -397,6 +397,11 @@ static int dp_audio_info_setup(struct platform_device *pdev,
 		return rc;
 	}
 
+	if (audio->dp_audio.tui_active) {
+		DP_DEBUG("TUI session active\n");
+		return 0;
+	}
+
 	mutex_lock(&audio->ops_lock);
 
 	audio->channels = params->num_of_channels;
@@ -494,6 +499,11 @@ static void dp_audio_teardown_done(struct platform_device *pdev)
 	audio = dp_audio_get_data(pdev);
 	if (IS_ERR(audio))
 		return;
+
+	if (audio->dp_audio.tui_active) {
+		DP_DEBUG("TUI session active\n");
+		return;
+	}
 
 	mutex_lock(&audio->ops_lock);
 	dp_audio_enable(audio, false);
