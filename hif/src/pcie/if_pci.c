@@ -3647,6 +3647,28 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	return 0;
 }
 
+int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
+{
+	int ret;
+	struct hif_softc *scn = (struct hif_softc *)hif_handle;
+	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
+
+	ret = pld_force_wake_release(scn->qdf_dev->dev);
+	if (ret) {
+		hif_err("force wake release failure");
+		HIF_STATS_INC(pci_scn, mhi_force_wake_release_failure, 1);
+		return ret;
+	}
+
+	HIF_STATS_INC(pci_scn, mhi_force_wake_release_success, 1);
+	hif_write32_mb(scn,
+		       scn->mem +
+		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG,
+		       0);
+	HIF_STATS_INC(pci_scn, soc_force_wake_release_success, 1);
+	return 0;
+}
+
 #else /* DEVICE_FORCE_WAKE_ENABLE */
 /** hif_force_wake_request() - Disable the PCIE scratch register
  * write/read
@@ -3683,7 +3705,6 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 
 	return 0;
 }
-#endif /* DEVICE_FORCE_WAKE_ENABLE */
 
 int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
 {
@@ -3699,13 +3720,9 @@ int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
 	}
 
 	HIF_STATS_INC(pci_scn, mhi_force_wake_release_success, 1);
-	hif_write32_mb(scn,
-		       scn->mem +
-		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG,
-		       0);
-	HIF_STATS_INC(pci_scn, soc_force_wake_release_success, 1);
 	return 0;
 }
+#endif /* DEVICE_FORCE_WAKE_ENABLE */
 
 void hif_print_pci_stats(struct hif_pci_softc *pci_handle)
 {

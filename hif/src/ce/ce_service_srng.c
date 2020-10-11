@@ -944,10 +944,10 @@ static void ce_prepare_shadow_register_v2_cfg_srng(struct hif_softc *scn,
 		/* return with original configuration*/
 		return;
 	}
-
-	hal_construct_shadow_config(scn->hal_soc);
+	hal_construct_srng_shadow_regs(scn->hal_soc);
 	ce_construct_shadow_config_srng(scn);
-
+	hal_set_shadow_regs(scn->hal_soc);
+	hal_construct_shadow_regs(scn->hal_soc);
 	/* get updated configuration */
 	hal_get_shadow_config(scn->hal_soc, shadow_config,
 			      num_shadow_registers_configured);
