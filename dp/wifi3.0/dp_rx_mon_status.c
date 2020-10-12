@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1255,6 +1255,18 @@ dp_rx_mon_populate_cfr_info(struct dp_pdev *pdev,
 		= ppdu_info->cfr_info.rtt_che_buffer_pointer_high8;
 	cfr_info->rtt_che_buffer_pointer_low32
 		= ppdu_info->cfr_info.rtt_che_buffer_pointer_low32;
+	cfr_info->rtt_cfo_measurement
+		= (int16_t)ppdu_info->cfr_info.rtt_cfo_measurement;
+	cfr_info->agc_gain_info0
+		= ppdu_info->cfr_info.agc_gain_info0;
+	cfr_info->agc_gain_info1
+		= ppdu_info->cfr_info.agc_gain_info1;
+	cfr_info->agc_gain_info2
+		= ppdu_info->cfr_info.agc_gain_info2;
+	cfr_info->agc_gain_info3
+		= ppdu_info->cfr_info.agc_gain_info3;
+	cfr_info->rx_start_ts
+		= ppdu_info->cfr_info.rx_start_ts;
 }
 
 /**
