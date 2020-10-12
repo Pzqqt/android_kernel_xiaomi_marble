@@ -1333,6 +1333,12 @@ int hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
 {
 	switch (vendor_phy_mode) {
 	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+		if (is_6ghz_supported)
+			*supported_band = REG_BAND_MASK_ALL;
+		else
+			*supported_band =
+				BIT(REG_BAND_2G) | BIT(REG_BAND_5G);
+		break;
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
