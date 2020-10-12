@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,6 +62,8 @@ enum cfrmetaversion {
 	CFR_META_VERSION_1,
 	CFR_META_VERSION_2,
 	CFR_META_VERSION_3,
+	CFR_META_VERSION_4,
+	CFR_META_VERSION_5,
 	CFR_META_VERSION_MAX = 0xFF,
 };
 
@@ -166,6 +168,28 @@ struct cfr_metadata_version_2 {
 	u_int16_t   chain_phase[HOST_MAX_CHAINS];
 } __attribute__ ((__packed__));
 
+struct cfr_metadata_version_4 {
+	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
+	u_int8_t    status;
+	u_int8_t    capture_bw;
+	u_int8_t    channel_bw;
+	u_int8_t    phy_mode;
+	u_int16_t   prim20_chan;
+	u_int16_t   center_freq1;
+	u_int16_t   center_freq2;
+	u_int8_t    capture_mode;
+	u_int8_t    capture_type;
+	u_int8_t    sts_count;
+	u_int8_t    num_rx_chain;
+	u_int32_t   timestamp;
+	u_int32_t   length;
+	u_int32_t   chain_rssi[HOST_MAX_CHAINS];
+	u_int16_t   chain_phase[HOST_MAX_CHAINS];
+	u_int32_t   rtt_cfo_measurement;
+	u_int8_t    agc_gain[HOST_MAX_CHAINS];
+	u_int32_t   rx_start_ts;
+} __attribute__ ((__packed__));
+
 #ifdef WLAN_ENH_CFR_ENABLE
 struct cfr_metadata_version_3 {
 	u_int8_t    status;
@@ -190,6 +214,34 @@ struct cfr_metadata_version_3 {
 	u_int32_t   chain_rssi[HOST_MAX_CHAINS];
 	u_int16_t   chain_phase[HOST_MAX_CHAINS];
 } __attribute__ ((__packed__));
+
+struct cfr_metadata_version_5 {
+	u_int8_t    status;
+	u_int8_t    capture_bw;
+	u_int8_t    channel_bw;
+	u_int8_t    phy_mode;
+	u_int16_t   prim20_chan;
+	u_int16_t   center_freq1;
+	u_int16_t   center_freq2;
+	u_int8_t    capture_mode; /* ack_capture_mode */
+	u_int8_t    capture_type; /* cfr_capture_type */
+	u_int8_t    sts_count;
+	u_int8_t    num_rx_chain;
+	u_int64_t   timestamp;
+	u_int32_t   length;
+	u_int8_t    is_mu_ppdu;
+	u_int8_t    num_mu_users;
+	union {
+		u_int8_t    su_peer_addr[QDF_MAC_ADDR_SIZE];
+		u_int8_t    mu_peer_addr[MAX_CFR_MU_USERS][QDF_MAC_ADDR_SIZE];
+	} peer_addr;
+	u_int32_t   chain_rssi[HOST_MAX_CHAINS];
+	u_int16_t   chain_phase[HOST_MAX_CHAINS];
+	u_int32_t   rtt_cfo_measurement;
+	u_int8_t    agc_gain[HOST_MAX_CHAINS];
+	u_int32_t   rx_start_ts;
+} __attribute__ ((__packed__));
+
 #endif
 
 struct csi_cfr_header {
@@ -199,13 +251,17 @@ struct csi_cfr_header {
 	u_int8_t    cfr_data_version;
 	u_int8_t    chip_type;
 	u_int8_t    pltform_type;
-	u_int32_t   Reserved;
+	u_int32_t   cfr_metadata_len;
 
 	union {
 		struct cfr_metadata_version_1 meta_v1;
 		struct cfr_metadata_version_2 meta_v2;
 #ifdef WLAN_ENH_CFR_ENABLE
 		struct cfr_metadata_version_3 meta_v3;
+#endif
+		struct cfr_metadata_version_4 meta_v4;
+#ifdef WLAN_ENH_CFR_ENABLE
+		struct cfr_metadata_version_5 meta_v5;
 #endif
 	} u;
 } __attribute__ ((__packed__));
