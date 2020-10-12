@@ -443,10 +443,14 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 		       rsp->reason, rsp->reason_code);
 
 	status = osif_validate_connect_and_reset_src_id(osif_priv, rsp->cm_id);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_cm_connect_comp_ind(vdev, rsp, OSIF_NOT_HANDLED);
 		return status;
+	}
 
+	osif_cm_connect_comp_ind(vdev, rsp, OSIF_PRE_USERSPACE_UPDATE);
 	osif_indcate_connect_results(vdev, osif_priv, rsp);
+	osif_cm_connect_comp_ind(vdev, rsp, OSIF_POST_USERSPACE_UPDATE);
 
 	return QDF_STATUS_SUCCESS;
 }

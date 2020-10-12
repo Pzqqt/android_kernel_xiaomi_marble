@@ -26,6 +26,8 @@
 #include "wlan_cfg80211.h"
 #include "osif_cm_rsp.h"
 
+static struct osif_cm_ops *osif_cm_legacy_ops;
+
 const char *
 osif_cm_qca_reason_to_str(enum qca_disconnect_reason_codes reason)
 {
@@ -217,6 +219,21 @@ osif_cm_disconnect_complete_cb(struct wlan_objmgr_vdev *vdev,
 	return osif_disconnect_handler(vdev, rsp);
 }
 
+#ifdef CONN_MGR_ADV_FEATURE
+static QDF_STATUS
+osif_cm_disable_netif_queue(struct wlan_objmgr_vdev *vdev)
+{
+	return osif_cm_netif_queue_ind(vdev,
+				       WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
+				       WLAN_CONTROL_PATH);
+}
+#else
+static inline QDF_STATUS
+osif_cm_disable_netif_queue(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * osif_cm_disconnect_start_cb() - Disconnect start callback
  * @vdev: vdev pointer
@@ -229,7 +246,8 @@ osif_cm_disconnect_complete_cb(struct wlan_objmgr_vdev *vdev,
 static QDF_STATUS
 osif_cm_disconnect_start_cb(struct wlan_objmgr_vdev *vdev)
 {
-	return QDF_STATUS_SUCCESS;
+	/* Disable netif queue on disconnect start */
+	return osif_cm_disable_netif_queue(vdev);
 }
 
 static struct mlme_cm_ops cm_ops = {
@@ -305,3 +323,61 @@ QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS osif_cm_connect_comp_ind(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_connect_rsp *rsp,
+				    enum osif_cb_type type)
+{
+	osif_cm_connect_comp_cb cb = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (osif_cm_legacy_ops)
+		cb = osif_cm_legacy_ops->connect_complete_cb;
+	if (cb)
+		ret = cb(vdev, rsp, type);
+
+	return ret;
+}
+
+QDF_STATUS osif_cm_disconnect_comp_ind(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_discon_rsp *rsp,
+				       enum osif_cb_type type)
+{
+	osif_cm_disconnect_comp_cb cb = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (osif_cm_legacy_ops)
+		cb = osif_cm_legacy_ops->disconnect_complete_cb;
+	if (cb)
+		ret = cb(vdev, rsp, type);
+
+	return ret;
+}
+
+#ifdef CONN_MGR_ADV_FEATURE
+QDF_STATUS osif_cm_netif_queue_ind(struct wlan_objmgr_vdev *vdev,
+				   enum netif_action_type action,
+				   enum netif_reason_type reason)
+{
+	osif_cm_netif_queue_ctrl_cb cb = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (osif_cm_legacy_ops)
+		cb = osif_cm_legacy_ops->netif_queue_control_cb;
+	if (cb)
+		ret = cb(vdev, action, reason);
+
+	return ret;
+}
+#endif
+
+void osif_cm_set_legacy_cb(struct osif_cm_ops *osif_legacy_ops)
+{
+	osif_cm_legacy_ops = osif_legacy_ops;
+}
+
+void osif_cm_reset_legacy_cb(void)
+{
+	osif_cm_legacy_ops = NULL;
+}
+

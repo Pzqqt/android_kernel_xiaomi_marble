@@ -140,16 +140,20 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 		       osif_cm_qca_reason_to_str(osif_priv->cm_info.last_disconnect_reason));
 
 	status = osif_validate_disconnect_and_reset_src_id(osif_priv, rsp);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_cm_disconnect_comp_ind(vdev, rsp, OSIF_NOT_HANDLED);
 		return status;
+	}
 
 	if (rsp->req.req.source == CM_PEER_DISCONNECT)
 		locally_generated = false;
 
+	osif_cm_disconnect_comp_ind(vdev, rsp, OSIF_PRE_USERSPACE_UPDATE);
 	osif_cm_indicate_disconnect(osif_priv->wdev->netdev, ieee80211_reason,
 				    locally_generated, rsp->ap_discon_ie.ptr,
 				    rsp->ap_discon_ie.len, GFP_KERNEL);
 
+	osif_cm_disconnect_comp_ind(vdev, rsp, OSIF_POST_USERSPACE_UPDATE);
 	qdf_event_set(&osif_priv->cm_info.disconnect_complete);
 
 	return status;

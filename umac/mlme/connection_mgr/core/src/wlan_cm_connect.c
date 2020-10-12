@@ -618,7 +618,7 @@ cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 
 static inline
 bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
-				     struct cm_connect_req req,
+				     struct cm_connect_req *req,
 				     struct wlan_cm_connect_rsp *resp)
 {
 	return false;
