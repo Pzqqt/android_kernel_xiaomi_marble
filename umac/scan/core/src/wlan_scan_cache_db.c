@@ -535,8 +535,10 @@ static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
 					scm_scan_entry_put_ref(scan_db,
 							       oldest_node,
 							       true);
+				qdf_spin_lock_bh(&scan_db->scan_db_lock);
 				oldest_node = cur_node;
 				scm_scan_entry_get_ref(oldest_node);
+				qdf_spin_lock_bh(&scan_db->scan_db_lock);
 			}
 
 			cur_node = scm_get_next_node(scan_db,
