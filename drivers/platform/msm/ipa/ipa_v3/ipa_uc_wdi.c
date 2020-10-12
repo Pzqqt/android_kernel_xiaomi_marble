@@ -2638,25 +2638,28 @@ int ipa3_suspend_gsi_wdi_pipe(u32 clnt_hdl)
 		return -EFAULT;
 	}
 	if (ep->valid) {
-		source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx);
-		source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx);
+		if (IPA_CLIENT_IS_PROD(ep->client)) {
+			source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx);
+			source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx);
 
-		IPADBG("suspended pipe %d\n", ipa_ep_idx);
-		res = ipa3_enable_force_clear(clnt_hdl,
-			false, source_pipe_bitmask, source_pipe_reg_idx);
-		if (res) {
-			/*
-			 * assuming here modem SSR, AP can remove
-			 * the delay in this case
-			 */
-			IPAERR("failed to force clear %d\n", res);
-			IPAERR("remove delay from SCND reg\n");
-			ep_ctrl_scnd.endp_delay = false;
-			ipahal_write_reg_n_fields(
+			IPADBG("suspended pipe %d\n", ipa_ep_idx);
+			res = ipa3_enable_force_clear(clnt_hdl,
+				false, source_pipe_bitmask,
+					source_pipe_reg_idx);
+			if (res) {
+				/*
+				 * assuming here modem SSR, AP can remove
+				 * the delay in this case
+				 */
+				IPAERR("failed to force clear %d\n", res);
+				IPAERR("remove delay from SCND reg\n");
+				ep_ctrl_scnd.endp_delay = false;
+				ipahal_write_reg_n_fields(
 					IPA_ENDP_INIT_CTRL_SCND_n, clnt_hdl,
-					&ep_ctrl_scnd);
-		} else {
-			disable_force_clear = true;
+						&ep_ctrl_scnd);
+			} else {
+				disable_force_clear = true;
+			}
 		}
 retry_gsi_stop:
 		res = ipa3_stop_gsi_channel(ipa_ep_idx);
