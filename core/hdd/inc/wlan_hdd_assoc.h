@@ -478,4 +478,37 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter);
  */
 bool hdd_any_valid_peer_present(struct hdd_adapter *adapter);
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * hdd_cm_register_cb() - Sets legacy callbacks to osif
+ *
+ * API to set legacy callbacks to osif
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_cm_register_cb(void);
+
+/**
+ * void hdd_cm_unregister_cb(void)() - Resets legacy callbacks to osif
+ *
+ * API to reset legacy callbacks to osif
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS
+ */
+
+void hdd_cm_unregister_cb(void);
+
+#else
+static inline QDF_STATUS hdd_cm_register_cb(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void hdd_cm_unregister_cb(void)
+{
+}
+#endif
+
 #endif

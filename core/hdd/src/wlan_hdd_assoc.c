@@ -82,6 +82,9 @@
 #include "wlan_if_mgr_ucfg_api.h"
 #include "wlan_if_mgr_public_struct.h"
 #endif
+#include "wlan_cm_public_struct.h"
+#include "osif_cm_util.h"
+
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -5614,3 +5617,45 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 
 	hdd_exit();
 }
+
+#ifdef FEATURE_CM_ENABLE
+static QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
+					  struct wlan_cm_connect_rsp *rsp,
+					  enum osif_cb_type type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS hdd_cm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+					     struct wlan_cm_discon_rsp *rsp,
+					     enum osif_cb_type type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
+					     enum netif_action_type action,
+					     enum netif_reason_type reason)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+struct osif_cm_ops osif_ops = {
+	.connect_complete_cb = hdd_cm_connect_complete,
+	.disconnect_complete_cb = hdd_cm_disconnect_complete,
+	.netif_queue_control_cb = hdd_cm_netif_queue_control,
+};
+
+QDF_STATUS hdd_cm_register_cb(void)
+{
+	osif_cm_set_legacy_cb(&osif_ops);
+
+	return osif_cm_register_cb();
+}
+
+void hdd_cm_unregister_cb(void)
+{
+	osif_cm_reset_legacy_cb();
+}
+#endif
+

@@ -196,6 +196,7 @@
 #include <cdp_txrx_ctrl.h>
 #include "qdf_lock.h"
 #include "wlan_hdd_thermal.h"
+#include "osif_cm_util.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -5400,6 +5401,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	adapter->vdev = NULL;
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
+	osif_cm_osif_priv_deinit(vdev);
 
 	/* Release the hdd reference */
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
@@ -5524,6 +5526,8 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	adapter->vdev_id = wlan_vdev_get_id(vdev);
 	adapter->vdev = vdev;
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
+
+	osif_cm_osif_priv_init(vdev);
 
 	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
 	status = sme_vdev_post_vdev_create_setup(hdd_ctx->mac_handle, vdev);
@@ -16070,6 +16074,33 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 }
 
 /**
+ * hdd_component_cb_init() - Initialize component callbacks
+ *
+ * This function initializes hdd callbacks to different
+ * components
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS hdd_component_cb_init(void)
+{
+	return hdd_cm_register_cb();
+}
+
+/**
+ * hdd_component_cb_deinit() - De-initialize component callbacks
+ *
+ * This function de-initializes hdd callbacks with different components
+ *
+ * Context: Any context.
+ * Return: None`
+ */
+static void hdd_component_cb_deinit(void)
+{
+	return hdd_cm_unregister_cb();
+}
+
+/**
  * hdd_component_init() - Initialize all components
  *
  * Return: QDF_STATUS
@@ -16079,6 +16110,7 @@ static QDF_STATUS hdd_component_init(void)
 	QDF_STATUS status;
 
 	/* initialize converged components */
+
 	status = ucfg_mlme_global_init();
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
@@ -16790,11 +16822,18 @@ int hdd_driver_load(void)
 		goto trans_stop;
 	}
 
+	status = hdd_component_cb_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init component cb; status:%u", status);
+		errno = qdf_status_to_os_return(status);
+		goto hdd_deinit;
+	}
+
 	status = hdd_component_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to init components; status:%u", status);
 		errno = qdf_status_to_os_return(status);
-		goto hdd_deinit;
+		goto comp_cb_deinit;
 	}
 
 	status = qdf_wake_lock_create(&wlan_wake_lock, "wlan");
@@ -16859,6 +16898,8 @@ wakelock_destroy:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 comp_deinit:
 	hdd_component_deinit();
+comp_cb_deinit:
+	hdd_component_cb_deinit();
 hdd_deinit:
 	hdd_deinit();
 trans_stop:
@@ -16947,6 +16988,7 @@ void hdd_driver_unload(void)
 	hdd_set_conparam(0);
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
+	hdd_component_cb_deinit();
 	hdd_deinit();
 
 	osif_driver_sync_trans_stop(driver_sync);
