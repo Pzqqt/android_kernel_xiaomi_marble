@@ -13,6 +13,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <linux/ratelimit.h>
 #include <linux/clk.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
@@ -148,16 +149,19 @@ static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 {
 	int ret = 0;
 	struct lpi_gpio_state *state = dev_get_drvdata(lpi_dev);
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (!lpi_dev_up) {
-		pr_err_ratelimited("%s: ADSP is down due to SSR, return\n",
+		if (__ratelimit(&rtl))
+			pr_err("%s: ADSP is down due to SSR, return\n",
 				   __func__);
 		return 0;
 	}
 	pm_runtime_get_sync(lpi_dev);
 	mutex_lock(&state->core_hw_vote_lock);
 	if (!state->core_hw_vote_status) {
-		pr_err_ratelimited("%s: core hw vote clk is not enabled\n",
+		if (__ratelimit(&rtl))
+			pr_err("%s: core hw vote clk is not enabled\n",
 				__func__);
 		ret = -EINVAL;
 		goto err;
@@ -179,6 +183,7 @@ static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 {
 	struct lpi_gpio_state *state = dev_get_drvdata(lpi_dev);
 	int ret = 0;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (!lpi_dev_up) {
 		return 0;
@@ -186,7 +191,8 @@ static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 	pm_runtime_get_sync(lpi_dev);
 	mutex_lock(&state->core_hw_vote_lock);
 	if (!state->core_hw_vote_status) {
-		pr_err_ratelimited("%s: core hw vote clk is not enabled\n",
+		if (__ratelimit(&rtl))
+			pr_err("%s: core hw vote clk is not enabled\n",
 				__func__);
 		ret = -EINVAL;
 		goto err;
