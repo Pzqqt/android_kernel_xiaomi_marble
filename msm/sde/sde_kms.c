@@ -2525,33 +2525,29 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
 		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
 
-		new_state = to_sde_crtc_state(new_cstate);
-
-		if (!new_cstate->active && !new_cstate->active_changed)
+		if (!new_cstate->active && !old_cstate->active)
 			continue;
 
+		new_state = to_sde_crtc_state(new_cstate);
 		new_vm_req = sde_crtc_get_property(new_state,
 				CRTC_PROP_VM_REQ_STATE);
 
-		commit_crtc_cnt++;
-
-		if (old_cstate) {
-			old_state = to_sde_crtc_state(old_cstate);
-			old_vm_req = sde_crtc_get_property(old_state,
-					CRTC_PROP_VM_REQ_STATE);
-		}
+		old_state = to_sde_crtc_state(old_cstate);
+		old_vm_req = sde_crtc_get_property(old_state,
+				CRTC_PROP_VM_REQ_STATE);
 
 		/**
 		 * No active request if the transition is from
 		 * VM_REQ_NONE to VM_REQ_NONE
 		 */
-		if (new_vm_req || (old_state && old_vm_req))
+		if (new_vm_req || old_vm_req)
 			vm_req_active = true;
 
 		idle_pc_state = sde_crtc_get_property(new_state,
 						CRTC_PROP_IDLE_PC_STATE);
 
 		active_crtc = crtc;
+		commit_crtc_cnt++;
 	}
 
 	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
