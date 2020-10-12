@@ -1400,25 +1400,12 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * cds_get_context() - get context data area
- *
- * @module_id: ID of the module who's context data is being retrieved.
- *
- * Each module in the system has a context / data area that is allocated
- * and managed by CDS.  This API allows any user to get a pointer to its
- * allocated context data area from the CDS global context.
- *
- * Return: pointer to the context data area of the module ID
- *	   specified, or NULL if the context data is not allocated for
- *	   the module ID specified
- */
-void *cds_get_context(QDF_MODULE_ID module_id)
+void *__cds_get_context(QDF_MODULE_ID module_id, const char *func)
 {
 	void *context = NULL;
 
 	if (!gp_cds_context) {
-		cds_err("cds context pointer is null");
+		cds_err("cds context pointer is null (via %s)", func);
 		return NULL;
 	}
 
@@ -1489,15 +1476,16 @@ void *cds_get_context(QDF_MODULE_ID module_id)
 
 	default:
 	{
-		cds_err("Module ID %i does not have its context maintained by CDS",
-			module_id);
+		cds_err("Module ID %d does not have its context maintained by CDS (via %s)",
+			module_id, func);
 		QDF_ASSERT(0);
 		return NULL;
 	}
 	}
 
 	if (!context)
-		cds_err("Module ID %i context is Null", module_id);
+		cds_err("Module ID %d context is Null (via %s)",
+			module_id, func);
 
 	return context;
 } /* cds_get_context() */

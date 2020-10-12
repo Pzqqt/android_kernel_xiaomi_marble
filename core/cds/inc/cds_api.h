@@ -354,7 +354,21 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc);
 
-void *cds_get_context(QDF_MODULE_ID module_id);
+/**
+ * cds_get_context() - get context data area
+ * @module_id: ID of the module who's context data is being retrieved.
+ *
+ * Each module in the system has a context/data area that is allocated
+ * and managed by CDS.  This API allows any user to get a pointer to its
+ * allocated context data area from the CDS global context.
+ *
+ * Return: pointer to the context data area of the module ID
+ *	   specified, or NULL if the context data is not allocated for
+ *	   the module ID specified.
+ */
+#define cds_get_context(module_id) \
+	__cds_get_context(module_id, __func__)
+void *__cds_get_context(QDF_MODULE_ID module_id, const char *func);
 
 void *cds_get_global_context(void);
 
