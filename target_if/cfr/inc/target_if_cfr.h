@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,6 +47,10 @@
  * Cypress - Tx completion event for one-shot capture (or) RXTLV event for RCC
  */
 #define CORRELATE_TX_EV_MODULE_ID 1
+
+#define get_u16_lsb(value) (uint16_t)(value)
+#define get_u16_msb(value) (uint16_t)(((uint32_t)value) >> 16)
+#define get_gain_db(value) ((value) & 0xFF)
 
 /**
  * target_if_cfr_init_pdev() - Inits cfr pdev and registers necessary handlers.
