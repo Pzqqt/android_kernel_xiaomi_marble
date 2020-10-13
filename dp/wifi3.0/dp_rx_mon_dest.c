@@ -2045,3 +2045,129 @@ dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev)
 	return status;
 }
 
+#if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
+uint32_t
+dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	struct dp_soc *soc = pdev->soc;
+	hal_rxdma_desc_t rxdma_dst_ring_desc;
+	hal_soc_handle_t hal_soc;
+	void *mon_dst_srng;
+	union dp_rx_desc_list_elem_t *head = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
+	uint32_t rx_bufs_used = 0;
+	void *rx_msdu_link_desc;
+	uint32_t msdu_count = 0;
+	uint16 num_msdus;
+	struct hal_buf_info buf_info;
+	struct hal_rx_msdu_list msdu_list;
+	qdf_nbuf_t nbuf;
+	uint32_t i;
+	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
+	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
+	struct rx_desc_pool *rx_desc_pool;
+	uint32_t reap_cnt = 0;
+
+	if (qdf_unlikely(!soc || !soc->hal_soc))
+		return reap_cnt;
+
+	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, mac_id);
+
+	if (qdf_unlikely(!mon_dst_srng || !hal_srng_initialized(mon_dst_srng)))
+		return reap_cnt;
+
+	hal_soc = soc->hal_soc;
+
+	qdf_spin_lock_bh(&pdev->mon_lock);
+
+	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_dst_srng))) {
+		qdf_spin_unlock_bh(&pdev->mon_lock);
+		return reap_cnt;
+	}
+
+	rx_desc_pool = dp_rx_get_mon_desc_pool(soc, mac_id, pdev->pdev_id);
+
+	while ((rxdma_dst_ring_desc =
+		hal_srng_dst_peek(hal_soc, mon_dst_srng)) &&
+		reap_cnt < MON_DROP_REAP_LIMIT) {
+		msdu_count = 0;
+
+		do {
+			hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc,
+						     &buf_info, &msdu_count);
+			rx_msdu_link_desc = dp_rx_cookie_2_mon_link_desc(pdev,
+							      buf_info, mac_id);
+
+			if (qdf_unlikely(!rx_msdu_link_desc)) {
+				pdev->rx_mon_stats.mon_link_desc_invalid++;
+				goto next_entry;
+			}
+
+			hal_rx_msdu_list_get(soc->hal_soc, rx_msdu_link_desc,
+					     &msdu_list, &num_msdus);
+
+			for (i = 0; i < num_msdus; i++) {
+				struct dp_rx_desc *rx_desc;
+
+				rx_desc = dp_rx_get_mon_desc(soc,
+							msdu_list.sw_cookie[i]);
+
+				if (qdf_unlikely(!rx_desc)) {
+					pdev->rx_mon_stats.
+							mon_rx_desc_invalid++;
+					continue;
+				}
+
+				nbuf = DP_RX_MON_GET_NBUF_FROM_DESC(rx_desc);
+				rx_bufs_used++;
+
+				if (!rx_desc->unmapped) {
+					dp_rx_mon_buffer_unmap(soc, rx_desc,
+							rx_desc_pool->buf_size);
+					rx_desc->unmapped = 1;
+				}
+
+				qdf_nbuf_free(nbuf);
+				dp_rx_add_to_free_desc_list(&head, &tail,
+							    rx_desc);
+			}
+
+			/*
+			 * Store the current link buffer into to the local
+			 * structure to be  used for release purpose.
+			 */
+			hal_rxdma_buff_addr_info_set(rx_link_buf_info,
+						     buf_info.paddr,
+						     buf_info.sw_cookie,
+						     buf_info.rbm);
+
+			hal_rx_mon_next_link_desc_get(rx_msdu_link_desc,
+						      &buf_info);
+			if (dp_rx_monitor_link_desc_return(pdev,
+							   (hal_buff_addrinfo_t)
+							   rx_link_buf_info,
+							   mac_id, bm_action) !=
+			    QDF_STATUS_SUCCESS)
+				dp_info_rl("monitor link desc return failed");
+		} while (buf_info.paddr && msdu_count);
+
+next_entry:
+		reap_cnt++;
+		rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,
+							    mon_dst_srng);
+	}
+
+	hal_srng_access_end(hal_soc, mon_dst_srng);
+
+	qdf_spin_unlock_bh(&pdev->mon_lock);
+
+	if (rx_bufs_used) {
+		dp_rx_buffers_replenish(soc, mac_id,
+					dp_rxdma_get_mon_buf_ring(pdev, mac_id),
+					rx_desc_pool,
+					rx_bufs_used, &head, &tail);
+	}
+
+	return reap_cnt;
+}
+#endif

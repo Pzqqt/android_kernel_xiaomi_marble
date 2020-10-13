@@ -27,6 +27,13 @@
 #define MON_BUF_MIN_ENTRIES 64
 
 /*
+ * The below macro defines the maximum number of ring entries that would
+ * be processed in a single instance when processing each of the non-monitoring
+ * RXDMA2SW ring.
+ */
+#define MON_DROP_REAP_LIMIT 64
+
+/*
  * The maximum headroom reserved for monitor destination buffer to
  * accomodate radiotap header and protocol flow tag
  */
@@ -235,6 +242,20 @@ QDF_STATUS dp_mon_link_free(struct dp_pdev *pdev);
  */
 uint32_t dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			uint32_t mac_id, uint32_t quota);
+
+/**
+ * dp_mon_drop_packets_for_mac() - Drop the mon status ring and
+ *  dest ring packets for a given mac. Packets in status ring and
+ *  dest ring are dropped independently.
+ * @pdev: DP pdev
+ * @mac_id: mac id
+ * @quota: max number of status ring entries that can be processed
+ *
+ * Return: work done
+ */
+uint32_t dp_mon_drop_packets_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
+				     uint32_t quota);
+
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu);
 /*
@@ -1093,5 +1114,18 @@ dp_rx_mon_init_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
 {
 }
 
+#endif
+
+#if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
+/**
+ * dp_mon_dest_srng_drop_for_mac() - Drop the mon dest ring packets for
+ *  a given mac
+ * @pdev: DP pdev
+ * @mac_id: mac id
+ *
+ * Return: None
+ */
+uint32_t
+dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id);
 #endif
 #endif
