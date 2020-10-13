@@ -3286,7 +3286,8 @@ static void dp_ppdu_desc_free_all(struct dp_tx_cap_nbuf_list *ptr_nbuf_list,
  * return: qdf_nbuf_t
  */
 static qdf_nbuf_t
-dp_tx_mon_get_next_mpdu(struct cdp_tx_completion_ppdu_user *xretry_user,
+dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
+			struct cdp_tx_completion_ppdu_user *xretry_user,
 			qdf_nbuf_t mpdu_nbuf)
 {
 	qdf_nbuf_t next_nbuf = NULL;
@@ -3319,8 +3320,8 @@ dp_tx_mon_get_next_mpdu(struct cdp_tx_completion_ppdu_user *xretry_user,
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: This is buggy scenario, did not find nbuf in queue ",
-				  __func__);
+				  "%s: bug scenario, did not find nbuf in queue pdev %08x, peer id %d, tid %d, mpdu_nbuf %08x",
+				  __func__, pdev, tx_tid->peer_id, tx_tid->tid, mpdu_nbuf);
 			qdf_assert_always(0);
 		}
 	} else {
@@ -3415,7 +3416,8 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 					 * This API removes mpdu_nbuf from q
 					 * and returns next mpdu from the queue
 					 */
-					mpdu_nbuf = dp_tx_mon_get_next_mpdu(
+					mpdu_nbuf = dp_tx_mon_get_next_mpdu(pdev,
+							tx_tid,
 							xretry_user, mpdu_nbuf);
 				} else {
 					index = seq_no - start_seq;
