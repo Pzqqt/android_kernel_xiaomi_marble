@@ -37,17 +37,20 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 
 	d_mpr_h("%s: entering\n", __func__);
 
+	/* check for null input */
 	if (!client_desc) {
 		d_mpr_e("%s: null input descriptor\n", __func__);
 		goto err_exit;
 	}
 
+	/* check for client type, then register */
 	if (client_desc->client_type == MMRM_CLIENT_CLOCK) {
 		client = mmrm_clk_client_register(
 					drv_data->clk_mgr, client_desc);
-		if (!client)
+		if (!client) {
 			d_mpr_e("%s: failed to register client\n", __func__);
 			goto err_exit;
+		}
 	} else {
 		d_mpr_e("%s: unknown client_type %d\n",
 			__func__, client_desc->client_type);
@@ -61,37 +64,50 @@ err_exit:
 	d_mpr_h("%s: error exit\n", __func__);
 	return client;
 }
+EXPORT_SYMBOL(mmrm_client_register);
 
 int mmrm_client_deregister(struct mmrm_client *client)
 {
 	int rc = 0;
 
+	d_mpr_h("%s: entering\n", __func__);
+
+	/* check for null input */
 	if (!client) {
 		d_mpr_e("%s: invalid input client\n", __func__);
 		rc = -EINVAL;
 		goto err_exit;
 	}
 
+	/* check for client type, then deregister */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
 		rc = mmrm_clk_client_deregister(drv_data->clk_mgr, client);
-		if (!rc)
+		if (rc != 0) {
 			d_mpr_e("%s: failed to deregister client\n", __func__);
+			goto err_exit;
+		}
 	} else {
 		d_mpr_e("%s: unknown client_type %d\n",
 			__func__, client->client_type);
 	}
 
+	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
+
 err_exit:
 	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
+EXPORT_SYMBOL(mmrm_client_deregister);
 
 int mmrm_client_set_value(struct mmrm_client *client,
 	struct mmrm_client_data *client_data, unsigned long val)
 {
 	int rc = 0;
 
+	d_mpr_h("%s: entering\n", __func__);
+
+	/* check for null input */
 	if (!client || !client_data) {
 		d_mpr_e("%s: invalid input client(%pK) client_data(%pK)\n",
 			__func__, client, client_data);
@@ -99,28 +115,37 @@ int mmrm_client_set_value(struct mmrm_client *client,
 		goto err_exit;
 	}
 
+	/* check for client type, then set value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
 		rc = mmrm_clk_client_setval(drv_data->clk_mgr, client,
 				client_data, val);
-		if (!rc)
-			d_mpr_e("%s: failed to deregister client\n", __func__);
+		if (rc != 0) {
+			d_mpr_e("%s: failed to set value for client\n", __func__);
+			goto err_exit;
+		}
 	} else {
 		d_mpr_e("%s: unknown client_type %d\n",
 			__func__, client->client_type);
 	}
 
+	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
+EXPORT_SYMBOL(mmrm_client_set_value);
 
-int mmrm_client_set_value_inrange(struct mmrm_client *client,
+int mmrm_client_set_value_in_range(struct mmrm_client *client,
 	struct mmrm_client_data *client_data,
 	struct mmrm_client_res_value *val)
 {
 	int rc = 0;
 
+	d_mpr_h("%s: entering\n", __func__);
+
+	/* check for null input */
 	if (!client || !client_data || !val) {
 		d_mpr_e(
 			"%s: invalid input client(%pK) client_data(%pK) val(%pK)\n",
@@ -129,28 +154,36 @@ int mmrm_client_set_value_inrange(struct mmrm_client *client,
 		goto err_exit;
 	}
 
+	/* check for client type, then set value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
 		rc = mmrm_clk_client_setval_inrange(drv_data->clk_mgr,
 				client, client_data, val);
-		if (!rc)
-			d_mpr_e("%s: failed to deregister client\n", __func__);
+		if (rc != 0) {
+			d_mpr_e("%s: failed to set value for client\n", __func__);
+			goto err_exit;
+		}
 	} else {
 		d_mpr_e("%s: unknown client_type %d\n",
 			__func__, client->client_type);
-
 	}
 
+	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
+EXPORT_SYMBOL(mmrm_client_set_value_in_range);
 
 int mmrm_client_get_value(struct mmrm_client *client,
 	struct mmrm_client_res_value *val)
 {
 	int rc = 0;
 
+	d_mpr_h("%s: entering\n", __func__);
+
+	/* check for null input */
 	if (!client || !val) {
 		d_mpr_e("%s: invalid input client(%pK) val(%pK)\n",
 			__func__, client, val);
@@ -158,21 +191,27 @@ int mmrm_client_get_value(struct mmrm_client *client,
 		goto err_exit;
 	}
 
+	/* check for client type, then get value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
 		rc = mmrm_clk_client_getval(drv_data->clk_mgr,
 				client, val);
-		if (!rc)
-			d_mpr_e("%s: failed to deregister client\n", __func__);
+		if (rc != 0) {
+			d_mpr_e("%s: failed to get value for client\n", __func__);
+			goto err_exit;
+		}
 	} else {
 		d_mpr_e("%s: unknown client_type %d\n",
 			__func__, client->client_type);
 	}
 
+	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
+EXPORT_SYMBOL(mmrm_client_get_value);
 
 static int msm_mmrm_probe_init(struct platform_device *pdev)
 {

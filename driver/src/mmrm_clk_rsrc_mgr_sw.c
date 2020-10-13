@@ -27,6 +27,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
 
 	u32 c = 0;
+	u32 clk_client_src_id = 0;
 
 	mutex_lock(&sw_clk_mgr->lock);
 
@@ -38,20 +39,24 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 		goto err_nofree_entry;
 	}
 
+	/* look for entry that matches domain and id */
+	clk_client_src_id = (clk_desc.client_domain << 16 | clk_desc.client_id);
 	for (c = 0; c < sinfo->tot_clk_clients; c++) {
-		if (clk_desc.client_id == sinfo->clk_client_tbl[c].clk_src_id)
+		if (clk_client_src_id == sinfo->clk_client_tbl[c].clk_src_id)
 			break;
 	}
 
+	/* entry not found */
 	if (c == sinfo->tot_clk_clients) {
 		d_mpr_e("%s: unknown clk client %d\n",
-			__func__, clk_desc.client_id);
+			__func__, clk_client_src_id);
 		rc = -EINVAL;
 		goto err_nofree_entry;
 	}
 
 	tbl_entry = &sinfo->clk_client_tbl[c];
 
+	/* entry already registered */
 	if (tbl_entry->client) {
 		d_mpr_e("%s: client csid(%d) already registered\n",
 			__func__, tbl_entry->clk_src_id);
