@@ -1361,4 +1361,29 @@ void csr_fill_auth_type(enum csr_akm_type *auth_type,
  */
 enum csr_cfgdot11mode csr_phy_mode_to_dot11mode(enum wlan_phymode phy_mode);
 
+/*
+ * csr_mlme_vdev_disconnect_all_p2p_client_event() - Callback for MLME module
+ *	to send a disconnect all P2P event to the SAP event handler
+ * @vdev_id: vdev id of SAP
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_mlme_vdev_disconnect_all_p2p_client_event(uint8_t vdev_id);
+
+/*
+ * csr_mlme_vdev_stop_bss() - Callback for MLME module to send a stop BSS event
+ *	to the SAP event handler
+ * @vdev_id: vdev id of SAP
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_mlme_vdev_stop_bss(uint8_t vdev_id);
+
+/*
+ * csr_mlme_get_concurrent_operation_freq() - Callback for MLME module to
+ *	get the concurrent operation frequency
+ *
+ * Return: concurrent frequency
+ */
+qdf_freq_t csr_mlme_get_concurrent_operation_freq(void);
 #endif

@@ -78,6 +78,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_if_mgr_public_struct.h"
 #include "wlan_if_mgr_ucfg_api.h"
+#include "wlan_if_mgr_roam.h"
 #include "wlan_roam_debug.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
@@ -4513,7 +4514,7 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 		enum csr_join_state *roam_state,
 		struct scan_result_list *bss_list)
 {
-	uint32_t conc_freq = 0, chan_freq;
+	uint32_t chan_freq;
 	bool status = false;
 	struct tag_csrscan_result *scan_result = NULL;
 	tCsrScanResultInfo *result = NULL;
@@ -4550,51 +4551,32 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 			result->BssDescriptor.bssId,
 			sizeof(tSirMacAddr));
 		candidate_info.chan_freq = result->BssDescriptor.chan_freq;
+		candidate_info.beacon_interval =
+			result->BssDescriptor.beaconInterval;
+		candidate_info.chan_freq = result->BssDescriptor.chan_freq;
 		event_data.validate_bss_info = candidate_info;
 		qdf_status = ucfg_if_mgr_deliver_event(vdev,
 						WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
 						&event_data);
 
+		result->BssDescriptor.beaconInterval =
+						candidate_info.beacon_interval;
+
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			*roam_state = eCsrStopRoamingDueToConcurrency;
 			status = true;
 			*roam_bss_entry = csr_ll_next(&bss_list->List,
-						*roam_bss_entry,
-						LL_ACCESS_LOCK);
+						      *roam_bss_entry,
+						      LL_ACCESS_LOCK);
 			continue;
 		}
-		if (policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc)
-			&& !csr_is_valid_mc_concurrent_session(mac_ctx,
-					vdev_id, &result->BssDescriptor)) {
-			conc_freq = csr_get_concurrent_operation_freq(
-					mac_ctx);
-			sme_debug("csr Conc Channel freq: %d", conc_freq);
 
-			if (conc_freq) {
-				if ((conc_freq == chan_freq) ||
-				    (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc)
-				    && !WLAN_REG_IS_SAME_BAND_FREQS(
-				    conc_freq, chan_freq))) {
-				/*
-				 * make this 0 because we do not want the below
-				 * check to pass as we don't want to connect on
-				 * other channel
-				 */
-					sme_debug("Conc chnl freq match: %d",
-						  conc_freq);
-					conc_freq = 0;
-				}
-			}
-		}
-
-		/* Ok to roam this */
-		if (!conc_freq &&
-		    QDF_IS_STATUS_SUCCESS(csr_roam_should_roam(mac_ctx,
-					  vdev_id, &result->BssDescriptor,
-					  roam_id))) {
+		if (QDF_IS_STATUS_SUCCESS(csr_roam_should_roam(mac_ctx, vdev_id,
+					  &result->BssDescriptor, roam_id))) {
 			status = false;
 			break;
 		}
+
 		*roam_state = eCsrStopRoamingDueToConcurrency;
 		status = true;
 		*roam_bss_entry = csr_ll_next(&bss_list->List, *roam_bss_entry,
@@ -14418,7 +14400,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 						uint32_t sessionId)
 {
-	struct change_bi_params *pMsg;
+	struct wlan_change_bi *pMsg;
 	uint16_t len = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -14444,19 +14426,19 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 	else
 		status = QDF_STATUS_SUCCESS;
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pMsg->messageType = eWNI_SME_CHNG_MCC_BEACON_INTERVAL;
+		pMsg->message_type = eWNI_SME_CHNG_MCC_BEACON_INTERVAL;
 		pMsg->length = len;
 
 		qdf_copy_macaddr(&pMsg->bssid, &pSession->self_mac_addr);
 		sme_debug("CSR Attempting to change BI for Bssid= "
 			  QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(pMsg->bssid.bytes));
-		pMsg->sessionId = sessionId;
+		pMsg->session_id = sessionId;
 		sme_debug("session %d BeaconInterval %d",
 			sessionId,
 			mac->roam.roamSession[sessionId].bssParams.
 			beaconInterval);
-		pMsg->beaconInterval =
+		pMsg->beacon_interval =
 			mac->roam.roamSession[sessionId].bssParams.beaconInterval;
 		status = umac_send_mb_message_to_mac(pMsg);
 	}
@@ -14684,7 +14666,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 					 struct bss_description *bss_desc)
 {
 	struct start_bss_req *pMsg;
-	uint16_t wTmp;
+	struct validate_bss_data candidate_info;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -14706,18 +14688,19 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	qdf_copy_macaddr(&pMsg->self_macaddr, &pSession->self_mac_addr);
 	/* beaconInterval */
 	if (bss_desc && bss_desc->beaconInterval)
-		wTmp = bss_desc->beaconInterval;
+		candidate_info.beacon_interval = bss_desc->beaconInterval;
 	else if (pParam->beaconInterval)
-		wTmp = pParam->beaconInterval;
+		candidate_info.beacon_interval = pParam->beaconInterval;
 	else
-		wTmp = MLME_CFG_BEACON_INTERVAL_DEF;
+		candidate_info.beacon_interval = MLME_CFG_BEACON_INTERVAL_DEF;
 
-	csr_validate_mcc_beacon_interval(mac,
-					 pParam->operation_chan_freq,
-					 &wTmp, sessionId, pParam->bssPersona);
+	candidate_info.chan_freq = pParam->operation_chan_freq;
+	if_mgr_is_beacon_interval_valid(mac->pdev, sessionId,
+					&candidate_info);
+
 	/* Update the beacon Interval */
-	pParam->beaconInterval = wTmp;
-	pMsg->beaconInterval = wTmp;
+	pParam->beaconInterval = candidate_info.beacon_interval;
+	pMsg->beaconInterval = candidate_info.beacon_interval;
 	pMsg->dot11mode =
 		csr_translate_to_wni_cfg_dot11_mode(mac,
 						    pParam->uCfgDot11Mode);

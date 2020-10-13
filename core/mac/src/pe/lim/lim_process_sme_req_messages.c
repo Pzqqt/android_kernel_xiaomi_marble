@@ -6377,7 +6377,7 @@ static void __lim_process_sme_session_update(struct mac_context *mac_ctx,
 static void __lim_process_sme_change_bi(struct mac_context *mac,
 					uint32_t *msg_buf)
 {
-	struct change_bi_params *pChangeBIParams;
+	struct wlan_change_bi *pChangeBIParams;
 	struct pe_session *pe_session;
 	uint8_t sessionId = 0;
 	tUpdateBeaconParams beaconParams;
@@ -6390,7 +6390,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 	}
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
-	pChangeBIParams = (struct change_bi_params *)msg_buf;
+	pChangeBIParams = (struct wlan_change_bi *)msg_buf;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pChangeBIParams->bssid.bytes,
@@ -6402,19 +6402,19 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 
 	/*Update pe_session Beacon Interval */
 	if (pe_session->beaconParams.beaconInterval !=
-	    pChangeBIParams->beaconInterval) {
+	    pChangeBIParams->beacon_interval) {
 		pe_session->beaconParams.beaconInterval =
-			pChangeBIParams->beaconInterval;
+			pChangeBIParams->beacon_interval;
 	}
 
 	/*Update sch beaconInterval */
 	if (mac->sch.beacon_interval !=
-	    pChangeBIParams->beaconInterval) {
+	    pChangeBIParams->beacon_interval) {
 		mac->sch.beacon_interval =
-			pChangeBIParams->beaconInterval;
+			pChangeBIParams->beacon_interval;
 
 		pe_debug("LIM send update BeaconInterval Indication: %d",
-			pChangeBIParams->beaconInterval);
+			pChangeBIParams->beacon_interval);
 
 		if (false == mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
 			/* Update beacon */
@@ -6423,7 +6423,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 			beaconParams.bss_idx = pe_session->vdev_id;
 			/* Set change in beacon Interval */
 			beaconParams.beaconInterval =
-				pChangeBIParams->beaconInterval;
+				pChangeBIParams->beacon_interval;
 			beaconParams.paramChangeBitmap =
 				PARAM_BCN_INTERVAL_CHANGED;
 			lim_send_beacon_params(mac, &beaconParams, pe_session);

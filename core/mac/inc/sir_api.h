@@ -1702,15 +1702,6 @@ struct sir_delete_session {
 	uint8_t vdev_id;
 };
 
-/* Beacon Interval */
-struct change_bi_params {
-	uint16_t messageType;
-	uint16_t length;
-	uint16_t beaconInterval;        /* Beacon Interval */
-	struct qdf_mac_addr bssid;
-	uint8_t sessionId;      /* Session ID */
-};
-
 #ifdef QCA_HT_2040_COEX
 struct set_ht2040_mode {
 	uint16_t messageType;
