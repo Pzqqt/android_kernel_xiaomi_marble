@@ -2373,11 +2373,13 @@ static int hif_completion_thread_startup_by_ceid(struct HIF_CE_state *hif_state,
 	struct hif_msg_callbacks *hif_msg_callbacks =
 		&hif_state->msg_callbacks_current;
 	struct HIF_CE_pipe_info *pipe_info;
+	struct CE_state *ce_state;
 
 	if (pipe_num >= CE_COUNT_MAX)
 		return -EINVAL;
 
 	pipe_info = &hif_state->pipe_info[pipe_num];
+	ce_state = scn->ce_id_to_state[pipe_num];
 
 	if (!hif_msg_callbacks ||
 	    !hif_msg_callbacks->rxCompletionHandler ||
@@ -2408,10 +2410,10 @@ static int hif_completion_thread_startup_by_ceid(struct HIF_CE_state *hif_state,
 	if (attr.src_nentries)
 		qdf_spinlock_create(&pipe_info->completion_freeq_lock);
 
-	/* PKTLOG callback is already updated from htt_htc_soc_attach() */
-	if (pipe_num != hif_get_pktlog_ce_num(scn))
+	if (!(ce_state->attr_flags & CE_ATTR_INIT_ON_DEMAND))
 		qdf_mem_copy(&pipe_info->pipe_callbacks, hif_msg_callbacks,
 			     sizeof(pipe_info->pipe_callbacks));
+
 	return 0;
 }
 
