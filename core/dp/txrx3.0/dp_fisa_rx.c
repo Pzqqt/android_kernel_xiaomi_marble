@@ -1763,6 +1763,7 @@ QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 		&((struct dp_fisa_rx_sw_ft *)rx_fst->base)[0];
 	int ft_size = rx_fst->max_entries;
 	int i;
+	uint64_t avg_aggregated;
 
 	dp_info("Num of flows programmed %d", rx_fst->add_flow_count);
 	dp_info("Num of flows evicted %d", rx_fst->del_flow_count);
@@ -1779,9 +1780,9 @@ QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 		dp_info("num msdu aggr %d", sw_ft_entry->aggr_count);
 		dp_info("flush count %d", sw_ft_entry->flush_count);
 		dp_info("bytes_aggregated %llu", sw_ft_entry->bytes_aggregated);
-		dp_info("avg aggregation %llu",
-			sw_ft_entry->bytes_aggregated / sw_ft_entry->flush_count
-			);
+		avg_aggregated = sw_ft_entry->bytes_aggregated;
+		qdf_do_div(avg_aggregated, sw_ft_entry->flush_count);
+		dp_info("avg aggregation %llu", avg_aggregated);
 		print_flow_tuple(&sw_ft_entry->rx_flow_tuple_info);
 	}
 	return QDF_STATUS_SUCCESS;
