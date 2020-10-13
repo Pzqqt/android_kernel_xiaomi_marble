@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -454,4 +454,30 @@ void mlme_vdev_self_peer_delete_resp(struct del_vdev_params *param);
  * Return: none
  */
 void mlme_vdev_del_resp(uint8_t vdev_id);
+
+/**
+ * wlan_sap_disconnect_all_p2p_client() - send SAP disconnect all P2P
+ *	client event to the SAP event handler
+ * @vdev_id: vdev id of SAP
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_disconnect_all_p2p_client(uint8_t vdev_id);
+
+/**
+ * wlan_sap_stop_bss() - send SAP stop bss event to the SAP event
+ *	handler
+ * @vdev_id: vdev id of SAP
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_stop_bss(uint8_t vdev_id);
+
+/**
+ * wlan_get_conc_freq() - get concurrent operation frequency
+ *
+ * Return: concurrent frequency
+ */
+qdf_freq_t wlan_get_conc_freq(void);
+
 #endif

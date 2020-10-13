@@ -16,7 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: define internal APIs related to the mlme component
+ * DOC: define internal APIs related to the mlme component, legacy APIs are
+ *	called for the time being, but will be cleaned up after convergence
  */
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
@@ -31,6 +32,7 @@
 #include "wlan_crypto_global_api.h"
 #include "target_if_wfa_testcmd.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include "csr_api.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -1644,6 +1646,21 @@ QDF_STATUS mlme_vdev_self_peer_delete(struct scheduler_msg *self_peer_del_msg)
 		mlme_err("Failed to detach vdev");
 
 	return status;
+}
+
+QDF_STATUS wlan_sap_disconnect_all_p2p_client(uint8_t vdev_id)
+{
+	return csr_mlme_vdev_disconnect_all_p2p_client_event(vdev_id);
+}
+
+QDF_STATUS wlan_sap_stop_bss(uint8_t vdev_id)
+{
+	return csr_mlme_vdev_stop_bss(vdev_id);
+}
+
+qdf_freq_t wlan_get_conc_freq(void)
+{
+	return csr_mlme_get_concurrent_operation_freq();
 }
 
 /**
