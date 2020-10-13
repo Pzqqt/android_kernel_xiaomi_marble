@@ -2955,7 +2955,6 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	struct hdd_station_ctx *sta_ctx;
 	struct sap_context *sap_ctx;
 	uint8_t conc_rule1 = 0;
-	uint8_t scc_on_lte_coex = 0;
 	bool is_p2p_go_session = false;
 	struct wlan_objmgr_vdev *vdev;
 	bool strict;
@@ -3043,15 +3042,6 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 		return -EINVAL;
 	}
 
-	status =
-	ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(hdd_ctx->psoc,
-						      &scc_on_lte_coex);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("can't get STA-SAP SCC on lte coex channel setting");
-		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
-		return -EINVAL;
-	}
-
 	/*
 	 * Reject channel change req  if reassoc in progress on any adapter.
 	 * sme_is_any_session_in_middle_of_roaming is for LFR2 and
@@ -3081,14 +3071,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	hdd_objmgr_put_vdev(vdev);
 
 	strict = is_p2p_go_session;
-	/*
-	 * scc_on_lte_coex should be considered only when csa is triggered
-	 * by unsafe channel.
-	 */
-	if (sap_ctx->csa_reason == CSA_REASON_UNSAFE_CHANNEL)
-		strict = strict || (forced && !scc_on_lte_coex);
-	else
-		strict = strict || forced;
+	strict = strict || forced;
 	status = wlansap_set_channel_change_with_csa(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		target_chan_freq,
