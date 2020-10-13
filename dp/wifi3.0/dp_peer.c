@@ -244,11 +244,9 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 	index = dp_peer_find_hash_index(soc, &peer->mac_addr);
 	qdf_spin_lock_bh(&soc->peer_hash_lock);
 
-	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) !=
-			QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "unable to get peer reference at MAP mac "QDF_MAC_ADDR_FMT,
-			  peer ? QDF_MAC_ADDR_REF(peer->mac_addr.raw) : NULL);
+	if (QDF_IS_STATUS_ERROR(dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG))) {
+		dp_err("unable to get peer ref at MAP mac: "QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 		qdf_spin_unlock_bh(&soc->peer_hash_lock);
 		return;
 	}
@@ -277,11 +275,9 @@ void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
 			   struct dp_peer *peer)
 {
 	qdf_spin_lock_bh(&vdev->peer_list_lock);
-	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) !=
-			QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "unable to get peer reference at MAP mac "QDF_MAC_ADDR_FMT,
-			  peer ? QDF_MAC_ADDR_REF(peer->mac_addr.raw) : NULL);
+	if (QDF_IS_STATUS_ERROR(dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG))) {
+		dp_err("unable to get peer ref at MAP mac: "QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		return;
 	}
@@ -348,12 +344,9 @@ void dp_peer_find_id_to_obj_add(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->peer_map_lock);
 
-	if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) !=
-			QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "unable to get peer reference at MAP mac "QDF_MAC_ADDR_FMT" peer_id %u",
-			  peer ? QDF_MAC_ADDR_REF(peer->mac_addr.raw) : NULL, peer_id);
-
+	if (QDF_IS_STATUS_ERROR(dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG))) {
+		dp_err("unable to get peer ref at MAP mac: "QDF_MAC_ADDR_FMT" peer_id %u",
+		       QDF_MAC_ADDR_REF(peer->mac_addr.raw), peer_id);
 		qdf_spin_unlock_bh(&soc->peer_map_lock);
 		return;
 	}
