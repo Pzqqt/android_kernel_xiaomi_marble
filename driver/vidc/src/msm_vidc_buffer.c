@@ -9,6 +9,7 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_internal.h"
 
 #define MIN_INPUT_BUFFERS 4
 #define MIN_ENC_OUTPUT_BUFFERS 4
@@ -182,9 +183,47 @@ u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 {
-	u32 size = ALIGN(15 * 1024 * 1024, SZ_4K);
-	size = 4; // TODO
-	return size;
+	u32 frame_size;
+	u32 mbs_per_frame;
+	u32 width, height;
+	struct v4l2_format *f;
+
+	f = &inst->fmts[OUTPUT_PORT];
+	/*
+	 * Encoder output size calculation: 32 Align width/height
+	 * For resolution < 720p : YUVsize * 4
+	 * For resolution > 720p & <= 4K : YUVsize / 2
+	 * For resolution > 4k : YUVsize / 4
+	 * Initially frame_size = YUVsize * 2;
+	 */
+
+	/* if (is_grid_session(inst)) {
+		f->fmt.pix_mp.width = f->fmt.pix_mp.height = HEIC_GRID_DIMENSION;
+	} */
+	width = ALIGN(f->fmt.pix_mp.width, BUFFER_ALIGNMENT_SIZE(32));
+	height = ALIGN(f->fmt.pix_mp.height, BUFFER_ALIGNMENT_SIZE(32));
+	mbs_per_frame = NUM_MBS_PER_FRAME(width, height);
+	frame_size = (width * height * 3);
+
+	if (mbs_per_frame < NUM_MBS_720P)
+		frame_size = frame_size << 1;
+	else if (mbs_per_frame <= NUM_MBS_4k)
+		frame_size = frame_size >> 2;
+	else
+		frame_size = frame_size >> 3;
+
+	/*if ((inst->rc_type == RATE_CONTROL_OFF) ||
+		(inst->rc_type == V4L2_MPEG_VIDEO_BITRATE_MODE_CQ))
+		frame_size = frame_size << 1;
+
+	if (inst->rc_type == RATE_CONTROL_LOSSLESS)
+		frame_size = (width * height * 9) >> 2; */
+
+	/* multiply by 10/8 (1.25) to get size for 10 bit case */
+	if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
+		frame_size = frame_size + (frame_size >> 2);
+
+	return ALIGN(frame_size, SZ_4K);
 }
 
 u32 msm_vidc_encoder_input_meta_size(struct msm_vidc_inst *inst)

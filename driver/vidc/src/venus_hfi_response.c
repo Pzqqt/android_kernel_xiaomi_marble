@@ -36,6 +36,7 @@ bool is_valid_hfi_buffer_type(struct msm_vidc_inst *inst,
 	    buffer_type != HFI_BUFFER_RAW &&
 	    buffer_type != HFI_BUFFER_METADATA &&
 	    buffer_type != HFI_BUFFER_BIN &&
+	    buffer_type != HFI_BUFFER_ARP &&
 	    buffer_type != HFI_BUFFER_COMV &&
 	    buffer_type != HFI_BUFFER_NON_COMV &&
 	    buffer_type != HFI_BUFFER_LINE &&

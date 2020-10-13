@@ -86,6 +86,7 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_INPUT:
 		case MSM_VIDC_BUF_INPUT_META:
 		case MSM_VIDC_BUF_BIN:
+		case MSM_VIDC_BUF_ARP:
 		case MSM_VIDC_BUF_COMV:
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
@@ -131,6 +132,8 @@ u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
 		return HFI_BUFFER_METADATA;
 	case MSM_VIDC_BUF_BIN:
 		return HFI_BUFFER_BIN;
+	case MSM_VIDC_BUF_ARP:
+		return HFI_BUFFER_ARP;
 	case MSM_VIDC_BUF_COMV:
 		return HFI_BUFFER_COMV;
 	case MSM_VIDC_BUF_NON_COMV:

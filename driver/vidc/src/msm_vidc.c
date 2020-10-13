@@ -760,12 +760,14 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->buffers.output.list);
 	INIT_LIST_HEAD(&inst->buffers.output_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.bin.list);
+	INIT_LIST_HEAD(&inst->buffers.arp.list);
 	INIT_LIST_HEAD(&inst->buffers.comv.list);
 	INIT_LIST_HEAD(&inst->buffers.non_comv.list);
 	INIT_LIST_HEAD(&inst->buffers.line.list);
 	INIT_LIST_HEAD(&inst->buffers.dpb.list);
 	INIT_LIST_HEAD(&inst->buffers.persist.list);
 	INIT_LIST_HEAD(&inst->allocations.bin.list);
+	INIT_LIST_HEAD(&inst->allocations.arp.list);
 	INIT_LIST_HEAD(&inst->allocations.comv.list);
 	INIT_LIST_HEAD(&inst->allocations.non_comv.list);
 	INIT_LIST_HEAD(&inst->allocations.line.list);
@@ -776,6 +778,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->mappings.output.list);
 	INIT_LIST_HEAD(&inst->mappings.output_meta.list);
 	INIT_LIST_HEAD(&inst->mappings.bin.list);
+	INIT_LIST_HEAD(&inst->mappings.arp.list);
 	INIT_LIST_HEAD(&inst->mappings.comv.list);
 	INIT_LIST_HEAD(&inst->mappings.non_comv.list);
 	INIT_LIST_HEAD(&inst->mappings.line.list);

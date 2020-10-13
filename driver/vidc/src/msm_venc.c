@@ -13,6 +13,47 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_platform.h"
 #include "msm_vidc_debug.h"
+#include "venus_hfi.h"
+#include "hfi_packet.h"
+
+u32 msm_venc_input_set_prop[] = {
+	HFI_PROP_COLOR_FORMAT,
+	HFI_PROP_ALIGN_RESOLUTION,
+	HFI_PROP_CROP_COORDINATE_TOP_LEFT,
+	HFI_PROP_CROP_RESOLUTION,
+};
+
+u32 msm_venc_output_set_prop[] = {
+	HFI_PROP_ALIGN_RESOLUTION,
+	HFI_PROP_CROP_COORDINATE_TOP_LEFT,
+	HFI_PROP_CROP_RESOLUTION,
+};
+
+u32 msm_venc_input_subscribe_for_properties[] = {
+	HFI_PROP_TAG_NOT_PROPAGATED_TO_OUTPUT,
+};
+
+u32 msm_venc_deliver_as_metadata[] = {
+	HFI_PROP_BUFFER_TAG,
+	HFI_PROP_SEI_MASTERING_DISPLAY_COLOUR,
+	HFI_PROP_SEI_CONTENT_LIGHT_LEVEL,
+	HFI_PROP_SEI_HDR10PLUS_USERDATA,
+	HFI_PROP_CVP_STAT_INFO,
+};
+
+u32 msm_venc_subscribe_for_metadata[] = {
+	HFI_PROP_BUFFER_TAG,
+	HFI_PROP_METADATA_SEQ_HEADER_NAL,
+	HFI_PROP_TIMESTAMP,
+	HFI_PROP_LTR_MARK_USE_DETAILS,
+	HFI_PROP_SUBFRAME_OUTPUT,
+	HFI_PROP_ENC_QP_METADATA,
+};
+
+u32 msm_venc_output_subscribe_for_properties[] = {
+	HFI_PROP_PICTURE_TYPE,
+	HFI_PROP_BUFFER_MARK,
+};
 
 static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 codec)
 {
@@ -22,6 +63,617 @@ static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 codec)
 
 	inst->codec = v4l2_codec_to_driver(codec, __func__);
 	rc = msm_vidc_get_inst_capability(inst);
+	return rc;
+}
+
+static int msm_venc_set_colorformat(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 pixelformat;
+	enum msm_vidc_colorformat_type colorformat;
+	u32 hfi_colorformat;
+
+	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	pixelformat = inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat;
+	if (pixelformat != V4L2_PIX_FMT_NV12_UBWC &&
+	    pixelformat != V4L2_PIX_FMT_NV12_TP10_UBWC) {
+		s_vpr_e(inst->sid, "%s: invalid pixelformat %#x\n",
+			__func__, pixelformat);
+		return -EINVAL;
+	}
+	colorformat = v4l2_colorformat_to_driver(pixelformat, __func__);
+	hfi_colorformat = get_hfi_colorformat(inst, colorformat);
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_COLOR_FORMAT,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_U32_ENUM,
+			&hfi_colorformat,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_resolution(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 resolution;
+
+	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	resolution = inst->fmts[port].fmt.pix_mp.width << 16 |
+		inst->fmts[port].fmt.pix_mp.height;
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_ALIGN_RESOLUTION,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_32_PACKED,
+			&resolution,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_crop_top_left(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 crop_top_left;
+
+	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	crop_top_left = 0;
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_CROP_COORDINATE_TOP_LEFT,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_32_PACKED,
+			&crop_top_left,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_crop_resolution(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 crop;
+
+	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	/* output buffer resolution is nothing but crop */
+	crop = inst->fmts[INPUT_PORT].fmt.pix_mp.width << 16 |
+		inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_CROP_RESOLUTION,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_32_PACKED,
+			&crop,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_stage(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_core *core = inst->core;
+
+	rc = call_session_op(core, decide_work_mode, inst);
+	if (rc) {
+		s_vpr_e(inst->sid, "%s: decide_work_mode failed\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_STAGE,
+			HFI_HOST_FLAGS_NONE,
+			HFI_PORT_NONE,
+			HFI_PAYLOAD_U32,
+			&inst->stage,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_pipe(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_core *core = inst->core;
+
+	rc = call_session_op(core, decide_work_route, inst);
+	if (rc) {
+		s_vpr_e(inst->sid, "%s: decide_work_route failed\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_PIPE,
+			HFI_HOST_FLAGS_NONE,
+			HFI_PORT_NONE,
+			HFI_PAYLOAD_U32,
+			&inst->pipe,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	int i = 0;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(msm_venc_input_set_prop);
+	     i++) {
+		switch (msm_venc_input_set_prop[i]) {
+		case HFI_PROP_COLOR_FORMAT:
+			rc = msm_venc_set_colorformat(inst, INPUT_PORT);
+			break;
+		case HFI_PROP_ALIGN_RESOLUTION:
+			rc = msm_venc_set_resolution(inst, INPUT_PORT);
+			break;
+		case HFI_PROP_CROP_COORDINATE_TOP_LEFT:
+			rc = msm_venc_set_crop_top_left(inst, INPUT_PORT);
+			break;
+		case HFI_PROP_CROP_RESOLUTION:
+			rc = msm_venc_set_crop_resolution(inst, INPUT_PORT);
+			break;
+		default:
+			d_vpr_e("%s: unknown property %#x\n", __func__,
+				msm_venc_input_set_prop[i]);
+			rc = -EINVAL;
+			break;
+		}
+	}
+
+	return rc;
+}
+
+static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	int i = 0;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	//TODO: set HFI_PORT_NONE properties at master port streamon.
+	rc = msm_venc_set_stage(inst);
+	if (rc)
+		return rc;
+
+	rc = msm_venc_set_pipe(inst);
+	if (rc)
+		return rc;
+
+	for (i = 0; i < ARRAY_SIZE(msm_venc_output_set_prop);
+	     i++) {
+		switch (msm_venc_output_set_prop[i]) {
+		case HFI_PROP_ALIGN_RESOLUTION:
+			rc = msm_venc_set_resolution(inst, OUTPUT_PORT);
+			break;
+		case HFI_PROP_CROP_COORDINATE_TOP_LEFT:
+			rc = msm_venc_set_crop_top_left(inst, OUTPUT_PORT);
+			break;
+		case HFI_PROP_CROP_RESOLUTION:
+			rc = msm_venc_set_crop_resolution(inst, OUTPUT_PORT);
+			break;
+		default:
+			d_vpr_e("%s: unknown property %#x\n", __func__,
+				msm_venc_output_set_prop[i]);
+			rc = -EINVAL;
+			break;
+		}
+	}
+
+	return rc;
+}
+
+static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	inst->buffers.arp.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_ARP);
+	inst->buffers.bin.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_BIN);
+	/* inst->buffers.comv.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_COMV);
+	inst->buffers.non_comv.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_NON_COMV); */
+	inst->buffers.line.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_LINE);
+	inst->buffers.dpb.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_DPB);
+	/* inst->buffers.persist.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_PERSIST); */
+
+	inst->buffers.arp.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_ARP);
+	inst->buffers.bin.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_BIN);
+	/* inst->buffers.comv.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_COMV);
+	inst->buffers.non_comv.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_NON_COMV); */
+	inst->buffers.line.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_LINE);
+	inst->buffers.dpb.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_DPB);
+	/* inst->buffers.persist.min_count = call_session_op(core, min_count,
+			inst, MSM_VIDC_BUF_PERSIST); */
+
+	s_vpr_h(inst->sid, "internal buffer: min     size\n");
+	s_vpr_h(inst->sid, "arp  buffer: %d      %d\n",
+		inst->buffers.arp.min_count,
+		inst->buffers.arp.size);
+	s_vpr_h(inst->sid, "bin  buffer: %d      %d\n",
+		inst->buffers.bin.min_count,
+		inst->buffers.bin.size);
+	/* s_vpr_h(inst->sid, "comv  buffer: %d      %d\n",
+		inst->buffers.comv.min_count,
+		inst->buffers.comv.size);
+	s_vpr_h(inst->sid, "non_comv  buffer: %d      %d\n",
+		inst->buffers.non_comv.min_count,
+		inst->buffers.non_comv.size); */
+	s_vpr_h(inst->sid, "line buffer: %d      %d\n",
+		inst->buffers.line.min_count,
+		inst->buffers.line.size);
+	s_vpr_h(inst->sid, "dpb buffer: %d      %d\n",
+		inst->buffers.dpb.min_count,
+		inst->buffers.dpb.size);
+	/* s_vpr_h(inst->sid, "persist buffer: %d      %d\n",
+		inst->buffers.persist.min_count,
+		inst->buffers.persist.size); */
+
+	return rc;
+}
+
+static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_ARP);
+	if (rc)
+		return rc;
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_BIN);
+	if (rc)
+		return rc;
+	/* rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	if (rc)
+		return rc;
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	if (rc)
+		return rc; */
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	if (rc)
+		return rc;
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+	/* rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
+	if (rc)
+		return rc; */
+
+	return 0;
+}
+
+static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_ARP);
+	if (rc)
+		return rc;
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_BIN);
+	if (rc)
+		return rc;
+	/* rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	if (rc)
+		return rc;
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	if (rc)
+		return rc; */
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	if (rc)
+		return rc;
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+	// TODO: fw is not accepting persist buffer and returning session error.
+	//rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+static int msm_venc_property_subscription(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	u32 payload[32] = {0};
+	u32 i;
+	u32 payload_size = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_PROPERTY;
+	if (port == INPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(msm_venc_input_subscribe_for_properties); i++)
+			payload[i + 1] = msm_venc_input_subscribe_for_properties[i];
+		payload_size = (ARRAY_SIZE(msm_venc_input_subscribe_for_properties) + 1) *
+				sizeof(u32);
+	} else if (port == OUTPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(msm_venc_output_subscribe_for_properties); i++)
+			payload[i + 1] = msm_venc_output_subscribe_for_properties[i];
+		payload_size = (ARRAY_SIZE(msm_venc_output_subscribe_for_properties) + 1) *
+				sizeof(u32);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid port: %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_SUBSCRIBE_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			payload_size);
+
+	return rc;
+}
+
+static int msm_venc_metadata_delivery(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	u32 payload[32] = {0};
+	u32 i;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_METADATA;
+	for (i = 0; i < ARRAY_SIZE(msm_venc_deliver_as_metadata); i++)
+		payload[i + 1] = msm_venc_deliver_as_metadata[i];
+
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_DELIVERY_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			(ARRAY_SIZE(msm_venc_deliver_as_metadata) + 1) *
+			sizeof(u32));
+
+	return rc;
+}
+
+static int msm_venc_metadata_subscription(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	u32 payload[32] = {0};
+	u32 i;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_METADATA;
+	for (i = 0; i < ARRAY_SIZE(msm_venc_subscribe_for_metadata); i++)
+		payload[i + 1] = msm_venc_subscribe_for_metadata[i];
+
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_SUBSCRIBE_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			(ARRAY_SIZE(msm_venc_subscribe_for_metadata) + 1) *
+			sizeof(u32));
+
+	return rc;
+}
+
+int msm_venc_stop_input(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_session_stop(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+int msm_venc_start_input(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	s_vpr_h(inst->sid, "%s()\n", __func__);
+
+	//rc = msm_vidc_check_session_supported(inst);
+	if (rc)
+		goto error;
+	//rc = msm_vidc_check_scaling_supported(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_venc_set_input_properties(inst);
+	if (rc)
+		goto error;
+
+	/* Decide bse vpp delay after work mode */
+	//msm_vidc_set_bse_vpp_delay(inst);
+
+	rc = msm_venc_get_input_internal_buffers(inst);
+	if (rc)
+		goto error;
+	/* check for memory after all buffers calculation */
+	//rc = msm_vidc_check_memory_supported(inst);
+	if (rc)
+		goto error;
+
+	//msm_vidc_update_dcvs(inst);
+	//msm_vidc_update_batching(inst);
+	//msm_vidc_scale_power(inst);
+
+	rc = msm_venc_create_input_internal_buffers(inst);
+	rc = 0; // TODO
+	if (rc)
+		goto error;
+	rc = msm_venc_queue_input_internal_buffers(inst);
+	rc = 0; // TODO
+	if (rc)
+		goto error;
+
+	rc = msm_venc_property_subscription(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = msm_venc_metadata_delivery(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = venus_hfi_start(inst, INPUT_PORT);
+	if (rc)
+		goto error;
+
+	s_vpr_h(inst->sid, "%s: done\n", __func__);
+	return 0;
+
+error:
+	s_vpr_e(inst->sid, "%s: failed\n", __func__);
+	msm_venc_stop_input(inst);
+	return rc;
+}
+
+int msm_venc_stop_output(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_session_stop(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+int msm_venc_start_output(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_venc_set_output_properties(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_venc_property_subscription(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = msm_venc_metadata_subscription(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = venus_hfi_start(inst, OUTPUT_PORT);
+	if (rc)
+		goto error;
+
+	d_vpr_h("%s: done\n", __func__);
+	return 0;
+
+error:
+	msm_venc_stop_output(inst);
 	return rc;
 }
 

@@ -575,6 +575,7 @@ static u32 calculate_enc_scratch_size(struct msm_vidc_inst *inst,
 
 	bitstream_size = ALIGN(bitstream_size, VENUS_DMA_ALIGNMENT);
 	if (1) { // TODO: work_mode == HFI_WORKMODE_2) {
+		s_vpr_e(inst->sid, "work mode 2\n");
 		total_bitbin_buffers = 3;
 		bitbin_size = bitstream_size * 17 / 10;
 		bitbin_size = ALIGN(bitbin_size, VENUS_DMA_ALIGNMENT);
@@ -1288,7 +1289,8 @@ int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_DPB:
 			size = msm_vidc_encoder_dpb_size_iris2(inst);
 			break;
-		case MSM_VIDC_BUF_PERSIST:
+		//case MSM_VIDC_BUF_PERSIST:
+		case MSM_VIDC_BUF_ARP:
 			size = msm_vidc_encoder_persist_size_iris2(inst);
 			break;
 		default:
@@ -1344,7 +1346,8 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
 		case MSM_VIDC_BUF_DPB:
-		case MSM_VIDC_BUF_PERSIST:
+		//case MSM_VIDC_BUF_PERSIST:
+		case MSM_VIDC_BUF_ARP:
 			count = 1;
 			break;
 		default:

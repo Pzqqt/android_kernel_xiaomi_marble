@@ -171,19 +171,26 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_start_input(inst);
-		//else if (is_encode_session(inst))
-		//	rc = msm_venc_start_input(inst);
+		else if (is_encode_session(inst))
+			rc = msm_venc_start_input(inst);
+		else
+			goto error;
 	} else if (q->type == OUTPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_start_output(inst);
-		//else if (is_encode_session(inst))
-		//	rc = msm_venc_start_output(inst);
+		else if (is_encode_session(inst))
+			rc = msm_venc_start_output(inst);
+		else
+			goto error;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, q->type);
-		rc = -EINVAL;
+		goto error;
 	}
 
 	return rc;
+
+error:
+	s_vpr_e(inst->sid, "%s: invalid session/qtype, qtype %d\n", __func__, q->type);
+	return -EINVAL;
 }
 
 void msm_vidc_stop_streaming(struct vb2_queue *q)
@@ -215,21 +222,29 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_stop_input(inst);
-		//else if (is_encode_session(inst))
-		//	rc = msm_venc_start_input(inst);
+		else if (is_encode_session(inst))
+			rc = msm_venc_stop_input(inst);
+		else
+			goto error;
 	} else if (q->type == OUTPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_stop_output(inst);
-		//else if (is_encode_session(inst))
-		//	rc = msm_venc_start_output(inst);
+		else if (is_encode_session(inst))
+			rc = msm_venc_stop_output(inst);
+		else
+			goto error;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, q->type);
+		goto error;
 	}
 
 	if (rc)
 		s_vpr_e(inst->sid, "%s: stop failed for qtype: %d\n",
 			__func__, q->type);
+	return;
 
+error:
+	s_vpr_e(inst->sid, "%s: invalid session/qtype, qtype: %d\n",
+			__func__, q->type);
 	return;
 }
 

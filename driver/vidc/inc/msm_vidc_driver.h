@@ -50,6 +50,7 @@ static inline is_output_meta_buffer(enum msm_vidc_buffer_type buffer_type)
 static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_BIN ||
+		buffer_type == MSM_VIDC_BUF_ARP ||
 		buffer_type == MSM_VIDC_BUF_COMV ||
 		buffer_type == MSM_VIDC_BUF_NON_COMV ||
 		buffer_type == MSM_VIDC_BUF_LINE ||

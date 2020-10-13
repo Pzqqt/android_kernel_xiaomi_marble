@@ -68,6 +68,10 @@
 	(V4L2_CTRL_ID2WHICH(idx) == V4L2_CTRL_CLASS_MPEG) && \
 	V4L2_CTRL_DRIVER_PRIV(idx))
 
+#define BUFFER_ALIGNMENT_SIZE(x) x
+#define NUM_MBS_720P (((1280 + 15) >> 4) * ((720 + 15) >> 4))
+#define NUM_MBS_4k (((4096 + 15) >> 4) * ((2304 + 15) >> 4))
+
 /*
  * Convert Q16 number into Integer and Fractional part upto 2 places.
  * Ex : 105752 / 65536 = 1.61; 1.61 in Q16 = 105752;
@@ -110,6 +114,7 @@ enum msm_vidc_buffer_type {
 	MSM_VIDC_BUF_OUTPUT_META,
 	MSM_VIDC_BUF_QUEUE,
 	MSM_VIDC_BUF_BIN,
+	MSM_VIDC_BUF_ARP,
 	MSM_VIDC_BUF_COMV,
 	MSM_VIDC_BUF_NON_COMV,
 	MSM_VIDC_BUF_LINE,

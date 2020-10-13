@@ -308,6 +308,8 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 		region = MSM_VIDC_SECURE_PIXEL;
 		break;
 	case MSM_VIDC_BUF_PERSIST:
+	// TODO: Need to revisit for ARP
+	case MSM_VIDC_BUF_ARP:
 		region = MSM_VIDC_SECURE_NONPIXEL;
 		break;
 	default:
@@ -332,6 +334,8 @@ struct msm_vidc_buffers *msm_vidc_get_buffers(
 		return &inst->buffers.output_meta;
 	case MSM_VIDC_BUF_BIN:
 		return &inst->buffers.bin;
+	case MSM_VIDC_BUF_ARP:
+		return &inst->buffers.arp;
 	case MSM_VIDC_BUF_COMV:
 		return &inst->buffers.comv;
 	case MSM_VIDC_BUF_NON_COMV:
@@ -364,6 +368,8 @@ struct msm_vidc_mappings *msm_vidc_get_mappings(
 		return &inst->mappings.output_meta;
 	case MSM_VIDC_BUF_BIN:
 		return &inst->mappings.bin;
+	case MSM_VIDC_BUF_ARP:
+		return &inst->mappings.arp;
 	case MSM_VIDC_BUF_COMV:
 		return &inst->mappings.comv;
 	case MSM_VIDC_BUF_NON_COMV:
@@ -388,6 +394,8 @@ struct msm_vidc_allocations *msm_vidc_get_allocations(
 	switch (buffer_type) {
 	case MSM_VIDC_BUF_BIN:
 		return &inst->allocations.bin;
+	case MSM_VIDC_BUF_ARP:
+		return &inst->allocations.arp;
 	case MSM_VIDC_BUF_COMV:
 		return &inst->allocations.comv;
 	case MSM_VIDC_BUF_NON_COMV:
