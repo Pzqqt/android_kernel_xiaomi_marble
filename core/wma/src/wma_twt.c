@@ -39,7 +39,7 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id,
 	}
 	twt_enable_params.pdev_id = pdev_id;
 	twt_enable_params.sta_cong_timer_ms = congestion_timeout;
-	TWT_EN_DIS_FLAGS_SET_BTWT(twt_enable_params.flags, bcast_val);
+	twt_enable_params.b_twt_enable = bcast_val;
 	ret = wmi_unified_twt_enable_cmd(wma->wmi_handle, &twt_enable_params);
 
 	if (ret)
