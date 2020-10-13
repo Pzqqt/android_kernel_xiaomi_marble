@@ -1198,8 +1198,8 @@ void lim_send_mscs_req_action_frame(struct mac_context *mac,
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 
 	pe_debug("mscs req TX: vdev id: %d to "QDF_MAC_ADDR_FMT" seq num[%d], frame subtype:%d ",
-		 mscs_req->vdev_id, peer_mac.bytes, mac->mgmtSeqNum,
-		 mac_hdr->fc.subType);
+		 mscs_req->vdev_id, QDF_MAC_ADDR_REF(peer_mac.bytes),
+		 mac->mgmtSeqNum, mac_hdr->fc.subType);
 
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   frame,
