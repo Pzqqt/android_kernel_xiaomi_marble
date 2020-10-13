@@ -1027,8 +1027,13 @@ int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 		sde_kms->hw_intr->ops.clear_all_irqs(sde_kms->hw_intr);
 
 	/* enable the display path IRQ's */
-	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+	drm_for_each_encoder_mask(encoder, crtc->dev,
+					crtc->state->encoder_mask) {
+		if (sde_encoder_in_clone_mode(encoder))
+			continue;
+
 		sde_encoder_irq_control(encoder, true);
+	}
 
 	/* Schedule ESD work */
 	list_for_each_entry(connector, &ddev->mode_config.connector_list, head)
@@ -1317,8 +1322,13 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 	/* if vm_req is enabled, once CRTC on the commit is guaranteed */
 	sde_kms_wait_for_frame_transfer_complete(&sde_kms->base, crtc);
 
-	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+	drm_for_each_encoder_mask(encoder, crtc->dev,
+					crtc->state->encoder_mask) {
+		if (sde_encoder_in_clone_mode(encoder))
+			continue;
+
 		sde_encoder_irq_control(encoder, false);
+	}
 
 	list_for_each_entry(plane, &ddev->mode_config.plane_list, head)
 		sde_plane_set_sid(plane, 0);
@@ -1359,8 +1369,13 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 	}
 
 	/* disable SDE irq's */
-	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+	drm_for_each_encoder_mask(encoder, crtc->dev,
+					crtc->state->encoder_mask) {
+		if (sde_encoder_in_clone_mode(encoder))
+			continue;
+
 		sde_encoder_irq_control(encoder, false);
+	}
 
 	/* disable IRQ line */
 	sde_irq_update(&sde_kms->base, false);
@@ -2483,13 +2498,16 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	struct sde_kms *sde_kms;
 	struct drm_device *dev;
 	struct drm_crtc *crtc;
-	struct drm_crtc_state *new_cstate, *old_cstate;
+	struct drm_encoder *encoder;
+	struct drm_crtc_state *new_cstate, *old_cstate, *active_cstate;
 	uint32_t i, commit_crtc_cnt = 0, global_crtc_cnt = 0;
+	uint32_t crtc_encoder_cnt = 0;
 	struct drm_crtc *active_crtc = NULL, *global_active_crtc = NULL;
 	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
 	struct sde_vm_ops *vm_ops;
 	bool vm_req_active = false;
 	enum sde_crtc_idle_pc_state idle_pc_state;
+	struct sde_mdss_cfg *catalog;
 	int rc = 0;
 
 	if (!kms || !state)
@@ -2497,6 +2515,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 
 	sde_kms = to_sde_kms(kms);
 	dev = sde_kms->dev;
+	catalog = sde_kms->catalog;
 
 	vm_ops = sde_vm_get_ops(sde_kms);
 	if (!vm_ops)
@@ -2548,6 +2567,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 						CRTC_PROP_IDLE_PC_STATE);
 
 		active_crtc = crtc;
+		active_cstate = new_cstate;
 		commit_crtc_cnt++;
 	}
 
@@ -2563,24 +2583,36 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		global_active_crtc = crtc;
 	}
 
-	/* Check for single crtc commits only on valid VM requests */
-	if (active_crtc && global_active_crtc &&
-		(commit_crtc_cnt > sde_kms->catalog->max_trusted_vm_displays ||
-		 global_crtc_cnt > sde_kms->catalog->max_trusted_vm_displays ||
-		 active_crtc != global_active_crtc)) {
-		SDE_ERROR(
-		"VM switch failed; MAX:%d a_cnt:%d g_cnt:%d a_crtc:%d g_crtc:%d\n",
-			   sde_kms->catalog->max_trusted_vm_displays,
-			   commit_crtc_cnt, global_crtc_cnt, DRMID(active_crtc),
-			   DRMID(global_active_crtc));
-		rc = -E2BIG;
-		goto end;
+	if (active_crtc) {
+		drm_for_each_encoder_mask(encoder, active_crtc->dev,
+				active_cstate->encoder_mask)
+			crtc_encoder_cnt++;
 	}
 
-	/* disable idle-pc before releasing the HW */
-	if ((new_vm_req == VM_REQ_RELEASE) &&
-			(idle_pc_state == IDLE_PC_ENABLE)) {
-		SDE_ERROR("VM switch failed since idle-pc is enabled\n");
+	/* Check for single crtc commits only on valid VM requests */
+	if (active_crtc && global_active_crtc &&
+		(commit_crtc_cnt > catalog->max_trusted_vm_displays ||
+			global_crtc_cnt > catalog->max_trusted_vm_displays ||
+			active_crtc != global_active_crtc)) {
+		SDE_ERROR(
+		"VM switch failed; MAX:%d a_cnt:%d g_cnt:%d a_crtc:%d g_crtc:%d\n",
+			   catalog->max_trusted_vm_displays,
+			   commit_crtc_cnt, global_crtc_cnt, DRMID(active_crtc),
+			   DRMID(global_active_crtc));
+		rc =  -E2BIG;
+		goto end;
+
+	} else if ((new_vm_req == VM_REQ_RELEASE) &&
+	    ((idle_pc_state == IDLE_PC_ENABLE) ||
+		(crtc_encoder_cnt > TRUSTED_VM_MAX_ENCODER_PER_CRTC))) {
+		/*
+		 * disable idle-pc before releasing the HW
+		 * allow only specified number of encoders on a given crtc
+		 */
+		SDE_ERROR(
+			"VM switch failed; idle-pc:%d max:%d encoder_cnt:%d\n",
+				idle_pc_state, TRUSTED_VM_MAX_ENCODER_PER_CRTC,
+				crtc_encoder_cnt);
 		rc = -EINVAL;
 		goto end;
 	}

@@ -8,6 +8,8 @@
 
 #include "msm_drv.h"
 
+#define TRUSTED_VM_MAX_ENCODER_PER_CRTC	1
+
 struct sde_kms;
 
 /**
