@@ -34,6 +34,8 @@
 #define DSI_CLOCK_BITRATE_RADIX 10
 #define MAX_TE_SOURCE_ID  2
 
+#define SEC_PANEL_NAME_MAX_LEN  256
+
 static char dsi_display_primary[MAX_CMDLINE_PARAM_LEN];
 static char dsi_display_secondary[MAX_CMDLINE_PARAM_LEN];
 static struct dsi_display_boot_param boot_displays[MAX_DSI_ACTIVE_DISPLAY] = {
@@ -1772,9 +1774,15 @@ static int dsi_display_debugfs_init(struct dsi_display *display)
 	int rc = 0;
 	struct dentry *dir, *dump_file, *misr_data;
 	char name[MAX_NAME_SIZE];
+	char panel_name[SEC_PANEL_NAME_MAX_LEN];
+	char secondary_panel_str[] = "_secondary";
 	int i;
 
-	dir = debugfs_create_dir(display->name, NULL);
+	strlcpy(panel_name, display->name, SEC_PANEL_NAME_MAX_LEN);
+	if (strcmp(display->display_type, "secondary") == 0)
+		strlcat(panel_name, secondary_panel_str, SEC_PANEL_NAME_MAX_LEN);
+
+	dir = debugfs_create_dir(panel_name, NULL);
 	if (IS_ERR_OR_NULL(dir)) {
 		rc = PTR_ERR(dir);
 		DSI_ERR("[%s] debugfs create dir failed, rc = %d\n",
