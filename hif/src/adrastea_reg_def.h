@@ -1186,7 +1186,11 @@
 
 #define MISSING                                        0
 #define MISSING_FOR_ADRASTEA                           MISSING
+#ifdef QCN7605_PCIE_GOLBAL_RESET_SUPPORT
+#define ADRASTEA_PCIE_LOCAL_REG_BASE_ADDRESS           0x3000
+#else
 #define ADRASTEA_PCIE_LOCAL_REG_BASE_ADDRESS           0
+#endif
 #define ADRASTEA_WIFI_RTC_REG_BASE_ADDRESS                     0x45000
 #define ADRASTEA_RTC_SOC_REG_BASE_ADDRESS                      0x113000
 #define ADRASTEA_GPIO_ATHR_WLAN_REG_BASE_ADDRESS               0x85000
