@@ -1250,11 +1250,11 @@ static void dp_display_process_mst_hpd_low(struct dp_display_private *dp)
 		if (dp->mst.cbs.hpd)
 			dp->mst.cbs.hpd(&dp->dp_display, false);
 
-		dp_display_update_mst_state(dp, false);
-
 		if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
 				dp_display_state_is(DP_STATE_ENABLED)))
 			rc = dp_display_send_hpd_notification(dp);
+
+		dp_display_update_mst_state(dp, false);
 
 		if (dp->mst.cbs.set_mgr_state) {
 			info.mst_protocol = dp->parser->has_mst_sideband;
