@@ -1521,12 +1521,15 @@ static ssize_t debugfs_alter_esd_check_mode(struct file *file,
 		goto error;
 	}
 
-	if (!esd_config->esd_enabled)
+	if (!esd_config->esd_enabled) {
+		rc = -EINVAL;
 		goto error;
+	}
 
 	if (!strcmp(buf, "te_signal_check\n")) {
 		if (display->panel->panel_mode == DSI_OP_VIDEO_MODE) {
 			DSI_INFO("TE based ESD check for Video Mode panels is not allowed\n");
+			rc = -EINVAL;
 			goto error;
 		}
 		DSI_INFO("ESD check is switched to TE mode by user\n");
