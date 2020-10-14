@@ -139,41 +139,24 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	struct wlan_lmac_if_atf_rx_ops *atf_rx_ops = &rx_ops->atf_rx_ops;
 
 	/* ATF rx ops */
-	atf_rx_ops->atf_get_atf_commit = tgt_atf_get_atf_commit;
 	atf_rx_ops->atf_get_fmcap = tgt_atf_get_fmcap;
-	atf_rx_ops->atf_get_obss_scale = tgt_atf_get_obss_scale;
 	atf_rx_ops->atf_get_mode = tgt_atf_get_mode;
 	atf_rx_ops->atf_get_msdu_desc = tgt_atf_get_msdu_desc;
 	atf_rx_ops->atf_get_max_vdevs = tgt_atf_get_max_vdevs;
 	atf_rx_ops->atf_get_peers = tgt_atf_get_peers;
 	atf_rx_ops->atf_get_tput_based = tgt_atf_get_tput_based;
 	atf_rx_ops->atf_get_logging = tgt_atf_get_logging;
-	atf_rx_ops->atf_update_buf_held = tgt_atf_update_buf_held;
 	atf_rx_ops->atf_get_ssidgroup = tgt_atf_get_ssidgroup;
 	atf_rx_ops->atf_get_vdev_ac_blk_cnt = tgt_atf_get_vdev_ac_blk_cnt;
 	atf_rx_ops->atf_get_peer_blk_txbitmap = tgt_atf_get_peer_blk_txbitmap;
 	atf_rx_ops->atf_get_vdev_blk_txtraffic = tgt_atf_get_vdev_blk_txtraffic;
 	atf_rx_ops->atf_get_sched = tgt_atf_get_sched;
-	atf_rx_ops->atf_get_tx_tokens = tgt_atf_get_tx_tokens;
-	atf_rx_ops->atf_account_subgroup_txtokens =
-					tgt_atf_account_subgroup_txtokens;
-	atf_rx_ops->atf_adjust_subgroup_txtokens =
-					tgt_atf_adjust_subgroup_txtokens;
-	atf_rx_ops->atf_get_subgroup_airtime = tgt_atf_get_subgroup_airtime;
-	atf_rx_ops->atf_subgroup_free_buf = tgt_atf_subgroup_free_buf;
-	atf_rx_ops->atf_update_subgroup_tidstate =
-					tgt_atf_update_subgroup_tidstate;
-	atf_rx_ops->atf_buf_distribute = tgt_atf_buf_distribute;
-	atf_rx_ops->atf_get_shadow_alloted_tx_tokens =
-					tgt_atf_get_shadow_alloted_tx_tokens;
-	atf_rx_ops->atf_get_txtokens_common = tgt_atf_get_txtokens_common;
 	atf_rx_ops->atf_get_peer_stats = tgt_atf_get_peer_stats;
 	atf_rx_ops->atf_get_token_allocated = tgt_atf_get_token_allocated;
 	atf_rx_ops->atf_get_token_utilized = tgt_atf_get_token_utilized;
 
 	atf_rx_ops->atf_set_sched = tgt_atf_set_sched;
 	atf_rx_ops->atf_set_fmcap = tgt_atf_set_fmcap;
-	atf_rx_ops->atf_set_obss_scale = tgt_atf_set_obss_scale;
 	atf_rx_ops->atf_set_msdu_desc = tgt_atf_set_msdu_desc;
 	atf_rx_ops->atf_set_max_vdevs = tgt_atf_set_max_vdevs;
 	atf_rx_ops->atf_set_peers = tgt_atf_set_peers;
