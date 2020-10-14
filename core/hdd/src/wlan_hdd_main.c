@@ -8197,9 +8197,13 @@ static void hdd_stop_p2p_go(struct hdd_adapter *adapter)
 static inline void hdd_delete_sta(struct hdd_adapter *adapter)
 {
 }
+
 #else
-static inline void hdd_stop_p2p_go(struct hdd_adapter *adapter)
+static void hdd_stop_p2p_go(struct hdd_adapter *adapter)
 {
+	hdd_debug("[SSR] send stop iface ap to supplicant");
+	cfg80211_stop_iface(adapter->hdd_ctx->wiphy, &adapter->wdev,
+			    GFP_KERNEL);
 }
 
 /**
