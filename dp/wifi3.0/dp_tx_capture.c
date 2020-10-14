@@ -4517,7 +4517,9 @@ dp_tx_ppdu_stats_flush(struct dp_pdev *pdev,
 	if (!peer)
 		return;
 
-	dp_peer_tx_cap_tid_queue_flush_tlv(pdev, peer, ppdu_desc, usr_idx);
+	if (peer->tx_capture.is_tid_initialized) {
+		dp_peer_tx_cap_tid_queue_flush_tlv(pdev, peer, ppdu_desc, usr_idx);
+	}
 
 	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
 	return;
@@ -4881,6 +4883,12 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
 				continue;
 			}
+
+			if (!peer->tx_capture.is_tid_initialized) {
+				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
+				continue;
+			}
+
 			tx_tid = &peer->tx_capture.tx_tid[cur_user->tid];
 			qdf_nbuf_queue_init(&head_ppdu);
 			dp_tx_mon_proc_pending_ppdus(pdev, tx_tid,
