@@ -507,6 +507,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 	mutex_init(&pSchedContext->affinity_lock);
 	pSchedContext->high_throughput_required = false;
 	pSchedContext->rx_affinity_required = false;
+	pSchedContext->active_staid = OL_TXRX_INVALID_LOCAL_PEER_ID;
 #endif
 	gp_cds_sched_context = pSchedContext;
 
@@ -719,6 +720,7 @@ void cds_drop_rxpkt_by_staid(p_cds_sched_context pSchedContext, uint16_t staId)
 	struct list_head local_list;
 	struct cds_ol_rx_pkt *pkt, *tmp;
 	qdf_nbuf_t buf, next_buf;
+	uint32_t timeout = 0;
 
 	INIT_LIST_HEAD(&local_list);
 	spin_lock_bh(&pSchedContext->ol_rx_queue_lock);
@@ -743,6 +745,15 @@ void cds_drop_rxpkt_by_staid(p_cds_sched_context pSchedContext, uint16_t staId)
 		}
 		cds_free_ol_rx_pkt(pSchedContext, pkt);
 	}
+
+	while (pSchedContext->active_staid == staId &&
+	       timeout <= CDS_ACTIVE_STAID_CLEANUP_TIMEOUT) {
+		qdf_mdelay(CDS_ACTIVE_STAID_CLEANUP_DELAY);
+		timeout += CDS_ACTIVE_STAID_CLEANUP_DELAY;
+	}
+
+	if (pSchedContext->active_staid == staId)
+		cds_err("Failed to cleanup RX packets for staId:%u", staId);
 }
 
 /**
@@ -764,11 +775,13 @@ static void cds_rx_from_queue(p_cds_sched_context pSchedContext)
 		pkt = list_first_entry(&pSchedContext->ol_rx_thread_queue,
 				       struct cds_ol_rx_pkt, list);
 		list_del(&pkt->list);
+		pSchedContext->active_staid = pkt->staId;
 		spin_unlock_bh(&pSchedContext->ol_rx_queue_lock);
 		sta_id = pkt->staId;
 		pkt->callback(pkt->context, pkt->Rxpkt, sta_id);
 		cds_free_ol_rx_pkt(pSchedContext, pkt);
 		spin_lock_bh(&pSchedContext->ol_rx_queue_lock);
+		pSchedContext->active_staid = OL_TXRX_INVALID_LOCAL_PEER_ID;
 	}
 	spin_unlock_bh(&pSchedContext->ol_rx_queue_lock);
 }
