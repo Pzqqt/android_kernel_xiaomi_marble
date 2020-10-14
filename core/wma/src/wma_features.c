@@ -1477,6 +1477,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "ROAM_PMKID_REQUEST";
 	case WOW_REASON_VDEV_DISCONNECT:
 		return "VDEV_DISCONNECT";
+	case WOW_REASON_LOCAL_DATA_UC_DROP:
+		return "LOCAL_DATA_UC_DROP";
 	default:
 		return "unknown";
 	}
@@ -1505,6 +1507,7 @@ static bool wma_wow_reason_has_stats(enum wake_reason_e reason)
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 	case WOW_REASON_11D_SCAN:
+	case WOW_REASON_LOCAL_DATA_UC_DROP:
 		return true;
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 	case WOW_REASON_WLAN_MD:
@@ -1551,13 +1554,14 @@ static void wma_wow_stats_display(struct wake_lock_stats *stats)
 		      stats->mgmt_action);
 
 	wma_nofl_alert("pno_match:%d pno_complete:%d gscan:%d "
-		      "low_rssi:%d rssi_breach:%d oem:%d scan_11d:%d",
+		      "low_rssi:%d rssi_breach:%d oem:%d ucdrop:%d scan_11d:%d",
 		      stats->pno_match_wake_up_count,
 		      stats->pno_complete_wake_up_count,
 		      stats->gscan_wake_up_count,
 		      stats->low_rssi_wake_up_count,
 		      stats->rssi_breach_wake_up_count,
 		      stats->oem_response_wake_up_count,
+		      stats->uc_drop_wake_up_count,
 		      stats->scan_11d);
 }
 

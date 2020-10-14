@@ -551,6 +551,7 @@ static void vdev_iterator(struct wlan_objmgr_psoc *psoc, void *vdev, void *arg)
 	stats->pno_match_wake_up_count += vdev_stats->pno_match_wake_up_count;
 	stats->oem_response_wake_up_count +=
 			vdev_stats->oem_response_wake_up_count;
+	stats->uc_drop_wake_up_count += vdev_stats->uc_drop_wake_up_count;
 	stats->pwr_save_fail_detected += vdev_stats->pwr_save_fail_detected;
 	stats->scan_11d += vdev_stats->scan_11d;
 }
@@ -661,6 +662,7 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 			     "\tG-Scan: %u\n"
 			     "\tPNO Complete: %u\n"
 			     "\tPNO Match: %u\n"
+			     "\tUC Drop wake_count: %u\n"
 			     "\tOEM rsp wake_count: %u\n"
 			     "\twake count due to pwr_save_fail_detected: %u\n"
 			     "\twake count due to 11d scan: %u\n",
@@ -679,6 +681,7 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 			     wow_stats.gscan_wake_up_count,
 			     wow_stats.pno_complete_wake_up_count,
 			     wow_stats.pno_match_wake_up_count,
+			     wow_stats.uc_drop_wake_up_count,
 			     wow_stats.oem_response_wake_up_count,
 			     wow_stats.pwr_save_fail_detected,
 			     wow_stats.scan_11d);
