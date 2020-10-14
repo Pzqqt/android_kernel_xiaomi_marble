@@ -104,10 +104,10 @@ int tgt_cfr_get_target_type(struct wlan_objmgr_psoc *psoc)
 	return target_type;
 }
 
-int tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
-	int status = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
@@ -115,16 +115,16 @@ int tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev)
 	if (cfr_tx_ops->cfr_init_pdev)
 		status = cfr_tx_ops->cfr_init_pdev(psoc, pdev);
 
-	if (status != 0)
+	if (QDF_IS_STATUS_ERROR(status))
 		cfr_err("Error occurred with exit code %d\n", status);
 
 	return status;
 }
 
-int tgt_cfr_deinit_pdev(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS tgt_cfr_deinit_pdev(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
-	int status = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
@@ -132,7 +132,7 @@ int tgt_cfr_deinit_pdev(struct wlan_objmgr_pdev *pdev)
 	if (cfr_tx_ops->cfr_deinit_pdev)
 		status = cfr_tx_ops->cfr_deinit_pdev(psoc, pdev);
 
-	if (status != 0)
+	if (QDF_IS_STATUS_ERROR(status))
 		cfr_err("Error occurred with exit code %d\n", status);
 
 	return status;

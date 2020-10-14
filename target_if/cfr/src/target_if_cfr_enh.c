@@ -1439,18 +1439,18 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
  *
  * Return: Success/Failure status
  */
-static int
+static QDF_STATUS
 target_if_register_tx_completion_enh_event_handler(struct wlan_objmgr_psoc
 						   *psoc)
 {
 	/* Register completion handler here */
 	wmi_unified_t wmi_hdl;
-	int ret = 0;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_hdl) {
 		cfr_err("Unable to get wmi handle");
-		return -EINVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	ret = wmi_unified_register_event_handler(wmi_hdl,
@@ -1474,18 +1474,18 @@ target_if_register_tx_completion_enh_event_handler(struct wlan_objmgr_psoc
  *
  * Return: Success/Failure status
  */
-static int
+static QDF_STATUS
 target_if_unregister_tx_completion_enh_event_handler(struct wlan_objmgr_psoc
 						     *psoc)
 {
 	/* Unregister completion handler here */
 	wmi_unified_t wmi_hdl;
-	int status = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_hdl) {
 		cfr_err("Unable to get wmi handle");
-		return -EINVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	status = wmi_unified_unregister_event(wmi_hdl,
@@ -1776,14 +1776,14 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS cfr_enh_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 			       struct wlan_objmgr_pdev *pdev)
 {
-	int status;
+	QDF_STATUS status;
 	struct pdev_cfr *pcfr;
 
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
 	if (!pcfr) {
 		cfr_err("pcfr is NULL");
-		return -EINVAL;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	if (pcfr->lut_timer_init) {

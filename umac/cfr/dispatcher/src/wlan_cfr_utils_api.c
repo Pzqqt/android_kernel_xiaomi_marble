@@ -96,7 +96,7 @@ QDF_STATUS wlan_cfr_deinit(void)
 
 QDF_STATUS wlan_cfr_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
-	int status;
+	QDF_STATUS status;
 
 	if (wlan_cfr_is_feature_disabled(pdev)) {
 		cfr_err("cfr is disabled");
@@ -123,7 +123,7 @@ QDF_STATUS wlan_cfr_pdev_open(struct wlan_objmgr_pdev *pdev)
 
 QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
-	int status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (wlan_cfr_is_feature_disabled(pdev)) {
 		cfr_err("cfr is disabled");
@@ -141,7 +141,7 @@ QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev)
 
 QDF_STATUS cfr_initialize_pdev(struct wlan_objmgr_pdev *pdev)
 {
-	int status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (wlan_cfr_is_feature_disabled(pdev)) {
 		cfr_err("cfr is disabled");
@@ -161,7 +161,7 @@ qdf_export_symbol(cfr_initialize_pdev);
 
 QDF_STATUS cfr_deinitialize_pdev(struct wlan_objmgr_pdev *pdev)
 {
-	int status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (wlan_cfr_is_feature_disabled(pdev)) {
 		cfr_err("cfr is disabled");

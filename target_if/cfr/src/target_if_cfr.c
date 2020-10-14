@@ -288,8 +288,9 @@ static QDF_STATUS target_if_cfr_deinit_target(struct wlan_objmgr_psoc *psoc,
 	return cfr_enh_deinit_pdev(psoc, pdev);
 }
 
-int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
-			    struct wlan_objmgr_pdev *pdev)
+QDF_STATUS
+target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev)
 {
 	uint32_t target_type;
 	QDF_STATUS status;
@@ -307,11 +308,12 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 		status = QDF_STATUS_SUCCESS;
 	}
 
-	return qdf_status_to_os_return(status);
+	return status;
 }
 
-int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_objmgr_pdev *pdev)
+QDF_STATUS
+target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			  struct wlan_objmgr_pdev *pdev)
 {
 	uint32_t target_type;
 	QDF_STATUS status;
@@ -328,11 +330,12 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		status = QDF_STATUS_SUCCESS;
 	}
 
-	return qdf_status_to_os_return(status);
+	return status;
 }
 #else
-int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
-			    struct wlan_objmgr_pdev *pdev)
+QDF_STATUS
+target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev)
 {
 	uint32_t target_type;
 	struct pdev_cfr *pa;
@@ -379,8 +382,9 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NOSUPPORT;
 }
 
-int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_objmgr_pdev *pdev)
+QDF_STATUS
+target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			  struct wlan_objmgr_pdev *pdev)
 {
 	uint32_t target_type;
 

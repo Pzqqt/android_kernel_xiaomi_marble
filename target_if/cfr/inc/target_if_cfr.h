@@ -55,8 +55,9 @@
  *
  * Return: Registration status for necessary handlers
  */
-int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
-			    struct wlan_objmgr_pdev *pdev);
+QDF_STATUS
+target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev);
 
 /**
  * target_if_cfr_deinit_pdev() - De-inits corresponding pdev and handlers.
@@ -65,8 +66,9 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
  *
  * Return: De-registration status for necessary handlers
  */
-int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_objmgr_pdev *pdev);
+QDF_STATUS
+target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			  struct wlan_objmgr_pdev *pdev);
 
 /**
  * target_if_cfr_tx_ops_register() - Registers tx ops for cfr module

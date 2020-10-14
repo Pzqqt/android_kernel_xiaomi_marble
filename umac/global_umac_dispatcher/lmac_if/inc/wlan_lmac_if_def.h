@@ -523,10 +523,10 @@ struct wlan_lmac_if_sa_api_tx_ops {
  * a successful commit session.
  */
 struct wlan_lmac_if_cfr_tx_ops {
-	int (*cfr_init_pdev)(struct wlan_objmgr_psoc *psoc,
-			     struct wlan_objmgr_pdev *pdev);
-	int (*cfr_deinit_pdev)(struct wlan_objmgr_psoc *psoc,
-			       struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*cfr_init_pdev)(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*cfr_deinit_pdev)(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_objmgr_pdev *pdev);
 	int (*cfr_enable_cfr_timer)(struct wlan_objmgr_pdev *pdev,
 				    uint32_t cfr_timer);
 	int (*cfr_start_capture)(struct wlan_objmgr_pdev *pdev,

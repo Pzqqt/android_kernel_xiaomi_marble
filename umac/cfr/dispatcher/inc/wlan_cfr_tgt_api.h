@@ -34,7 +34,7 @@
  *
  * Return: success/failure of init
  */
-int tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev);
+QDF_STATUS tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_cfr_deinit_pdev() - API that de-registers CFR to handlers.
@@ -42,7 +42,7 @@ int tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev);
  *
  * Return: success/failure of de-init
  */
-int tgt_cfr_deinit_pdev(struct wlan_objmgr_pdev *pdev);
+QDF_STATUS tgt_cfr_deinit_pdev(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_cfr_get_target_type() - API to determine target type.
