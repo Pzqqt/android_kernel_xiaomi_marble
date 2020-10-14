@@ -888,27 +888,32 @@ void dfs_reset_bangradar(struct wlan_dfs *dfs)
 	dfs->dfs_bangradar_type = DFS_NO_BANGRADAR;
 }
 
-int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
-		struct dfs_channel *chan)
+/**
+ * dfs_radar_found_event_basic_sanity() - Check if radar event is received on a
+ * DFS channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Current channel.
+ *
+ * Return: If a radar event found on NON-DFS channel return false. Otherwise,
+ * return true.
+ */
+static
+bool dfs_radar_found_event_basic_sanity(struct wlan_dfs *dfs,
+					struct dfs_channel *chan)
 {
-		if (!chan) {
-			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"dfs->dfs_curchan is NULL");
-			return 0;
-		}
+	if (!chan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"dfs->dfs_curchan is NULL");
+		return false;
+	}
 
-		if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				  "radar event on non-DFS chan");
-			if (!(dfs->dfs_is_offload_enabled)) {
-				dfs_reset_radarq(dfs);
-				dfs_reset_alldelaylines(dfs);
-				dfs_reset_bangradar(dfs);
-			}
-			return 0;
-		}
+	if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "radar event on non-DFS chan");
+		return false;
+	}
 
-	return 1;
+	return true;
 }
 
 void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs)
@@ -1332,7 +1337,7 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 	 * Detector we need to process it since Agile Detector has a
 	 * different channel.
 	 */
-	if (!dfs_radarevent_basic_sanity(dfs, dfs_curchan))
+	if (!dfs_radar_found_event_basic_sanity(dfs, dfs_curchan))
 		goto exit;
 
 	dfs_compute_radar_found_cfreq(dfs, radar_found, &freq_center);

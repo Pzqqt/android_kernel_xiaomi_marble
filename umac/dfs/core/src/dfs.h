@@ -2679,17 +2679,6 @@ void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
 		uint16_t flagext);
 
 /**
- * dfs_radarevent_basic_sanity() - Check basic sanity of the radar event
- * @dfs: Pointer to wlan_dfs structure.
- * @chan: Current channel.
- *
- * Return: If a radar event found on NON-DFS channel  return 0.  Otherwise,
- * return 1.
- */
-int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
-		struct dfs_channel *chan);
-
-/**
  * wlan_psoc_get_dfs_txops() - Get dfs_tx_ops pointer
  * @psoc: Pointer to psoc structure.
  *

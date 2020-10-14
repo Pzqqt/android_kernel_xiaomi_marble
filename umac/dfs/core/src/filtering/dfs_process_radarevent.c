@@ -1433,6 +1433,65 @@ void dfs_radar_found_action(struct wlan_dfs *dfs,
 	}
 }
 
+/**
+ * dfs_is_radar_source_legacy_agile() - Check if radar pulse event is received
+ * on a Zero CAC agile channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: If a radar pulse event is received on a zero cac agile
+ * channel return true. Otherwise, return false.
+ */
+#if defined(ATH_SUPPORT_ZERO_CAC_DFS)
+static
+bool dfs_is_radar_source_legacy_agile(struct wlan_dfs *dfs)
+{
+	if (dfs_is_legacy_precac_enabled(dfs) &&
+	    dfs_is_precac_timer_running(dfs) &&
+	    dfs->dfs_precac_secondary_freq_mhz)
+		return true;
+	return false;
+}
+#else
+static
+bool dfs_is_radar_source_legacy_agile(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
+
+/**
+ * dfs_radar_pulse_event_basic_sanity() - Check if radar pulse event is received
+ * on a DFS channel or Zero CAC agile channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Current channel.
+ *
+ * Return: If a radar pulse event is received on DFS channel or zero cac agile
+ * channel return true. Otherwise, return false.
+ */
+static
+bool dfs_radar_pulse_event_basic_sanity(struct wlan_dfs *dfs,
+					struct dfs_channel *chan)
+{
+	if (!chan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS1,
+			"dfs->dfs_curchan is NULL");
+		return false;
+	}
+
+	if (dfs_is_radar_source_legacy_agile(dfs))
+		return true;
+
+	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			  "radar event on a non-DFS chan");
+		dfs_reset_radarq(dfs);
+		dfs_reset_alldelaylines(dfs);
+		dfs_reset_bangradar(dfs);
+		return false;
+	}
+	return true;
+}
+
 void dfs_process_radarevent(
 	struct wlan_dfs *dfs,
 	struct dfs_channel *chan)
@@ -1443,8 +1502,9 @@ void dfs_process_radarevent(
 	int false_radar_found = 0;
 	bool bangradar = false;
 
-	if (!dfs_radarevent_basic_sanity(dfs, chan))
+	if (!dfs_radar_pulse_event_basic_sanity(dfs, chan))
 		return;
+
 	/*
 	 * TEST : Simulate radar bang, make sure we add the channel to NOL
 	 * (bug 29968)
