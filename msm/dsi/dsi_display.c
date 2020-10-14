@@ -36,6 +36,7 @@
 
 #define SEC_PANEL_NAME_MAX_LEN  256
 
+u8 dbgfs_tx_cmd_buf[SZ_4K];
 static char dsi_display_primary[MAX_CMDLINE_PARAM_LEN];
 static char dsi_display_secondary[MAX_CMDLINE_PARAM_LEN];
 static struct dsi_display_boot_param boot_displays[MAX_DSI_ACTIVE_DISPLAY] = {
@@ -1014,10 +1015,9 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		u32 cmd_buf_len)
 {
 	struct dsi_display *dsi_display = display;
-	struct dsi_cmd_desc cmd;
-	u8 cmd_payload[MAX_CMD_PAYLOAD_SIZE];
-	int rc = 0;
-	bool state = false;
+	int rc = 0, cnt = 0, i = 0;
+	bool state = false, transfer = false;
+	struct dsi_panel_cmd_set *set;
 
 	if (!dsi_display || !cmd_buf) {
 		DSI_ERR("[DSI] invalid params\n");
@@ -1026,12 +1026,8 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 
 	DSI_DEBUG("[DSI] Display command transfer\n");
 
-	rc = dsi_display_cmd_prepare(cmd_buf, cmd_buf_len,
-			&cmd, cmd_payload, MAX_CMD_PAYLOAD_SIZE);
-	if (rc) {
-		DSI_ERR("[DSI] command prepare failed. rc %d\n", rc);
-		return rc;
-	}
+	if ((cmd_buf[1]) || (cmd_buf[3] & MIPI_DSI_MSG_LASTCOMMAND))
+		transfer = true;
 
 	mutex_lock(&dsi_display->display_lock);
 	rc = dsi_display_ctrl_get_host_init_state(dsi_display, &state);
@@ -1053,8 +1049,59 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		goto end;
 	}
 
-	rc = dsi_display->host.ops->transfer(&dsi_display->host,
-			&cmd.msg);
+	/*
+	 * Reset the dbgfs buffer if the commands sent exceed the available
+	 * buffer size. For video mode, limiting the buffer size to 2K to
+	 * ensure no performance issues.
+	 */
+	if (dsi_display->panel->panel_mode == DSI_OP_CMD_MODE) {
+		if ((dsi_display->tx_cmd_buf_ndx + cmd_buf_len) > SZ_4K) {
+			memset(dbgfs_tx_cmd_buf, 0, SZ_4K);
+			dsi_display->tx_cmd_buf_ndx = 0;
+		}
+	} else {
+		if ((dsi_display->tx_cmd_buf_ndx + cmd_buf_len) > SZ_2K) {
+			memset(dbgfs_tx_cmd_buf, 0, SZ_4K);
+			dsi_display->tx_cmd_buf_ndx = 0;
+		}
+	}
+
+	memcpy(&dbgfs_tx_cmd_buf[dsi_display->tx_cmd_buf_ndx], cmd_buf,
+			cmd_buf_len);
+	dsi_display->tx_cmd_buf_ndx += cmd_buf_len;
+	if (transfer) {
+		struct dsi_cmd_desc *cmds;
+
+		set = &dsi_display->cmd_set;
+		set->count = 0;
+		dsi_panel_get_cmd_pkt_count(dbgfs_tx_cmd_buf,
+				dsi_display->tx_cmd_buf_ndx, &cnt);
+		dsi_panel_alloc_cmd_packets(set, cnt);
+		dsi_panel_create_cmd_packets(dbgfs_tx_cmd_buf,
+				dsi_display->tx_cmd_buf_ndx, cnt, set->cmds);
+		cmds = set->cmds;
+		dsi_display->tx_cmd_buf_ndx = 0;
+
+		for (i = 0; i < cnt; i++) {
+			if (cmds->last_command)
+				cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+			rc = dsi_display->host.ops->transfer(&dsi_display->host,
+					&cmds->msg);
+			if (rc < 0) {
+				DSI_ERR("failed to send command, rc=%d\n", rc);
+				goto end;
+			}
+			if (cmds->post_wait_ms)
+				usleep_range(cmds->post_wait_ms*1000,
+						((cmds->post_wait_ms*1000)+10));
+			cmds++;
+		}
+
+		memset(dbgfs_tx_cmd_buf, 0, SZ_4K);
+		dsi_panel_destroy_cmd_packets(set);
+		dsi_panel_dealloc_cmd_packets(set);
+	}
+
 end:
 	mutex_unlock(&dsi_display->display_lock);
 	return rc;

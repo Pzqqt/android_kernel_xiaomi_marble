@@ -1352,7 +1352,8 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 	hw_flags |= (flags & DSI_CTRL_CMD_DEFER_TRIGGER) ?
 			DSI_CTRL_HW_CMD_WAIT_FOR_TRIGGER : 0;
 
-	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND))
+	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND) ||
+			(flags & DSI_CTRL_CMD_LAST_COMMAND))
 		hw_flags |= DSI_CTRL_CMD_LAST_COMMAND;
 
 	if (flags & DSI_CTRL_CMD_DEFER_TRIGGER) {
@@ -1488,6 +1489,8 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 
 	dsi_ctrl_validate_msg_flags(dsi_ctrl, msg, flags);
 
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags);
+
 	if (dsi_ctrl->dma_wait_queued)
 		dsi_ctrl_flush_cmd_dma_queue(dsi_ctrl);
 
@@ -1527,7 +1530,23 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND))
+	/*
+	 * In case of broadcast CMD length cannot be greater than 512 bytes
+	 * as specified by HW limitations. Need to overwrite the flags to
+	 * set the LAST_COMMAND flag to ensure no command transfer failures.
+	 */
+	if ((*flags & DSI_CTRL_CMD_FETCH_MEMORY) &&
+			(*flags & DSI_CTRL_CMD_BROADCAST)) {
+		if ((dsi_ctrl->cmd_len + length) > 240) {
+			dsi_ctrl_mask_overflow(dsi_ctrl, true);
+			*flags |= DSI_CTRL_CMD_LAST_COMMAND;
+			SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE1,
+					flags);
+		}
+	}
+
+	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND) ||
+			(*flags & DSI_CTRL_CMD_LAST_COMMAND))
 		buffer[3] |= BIT(7);//set the last cmd bit in header.
 
 	if (*flags & DSI_CTRL_CMD_FETCH_MEMORY) {
@@ -1548,7 +1567,8 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 
 		dsi_ctrl->cmd_len += length;
 
-		if (!(msg->flags & MIPI_DSI_MSG_LASTCOMMAND)) {
+		if (!(msg->flags & MIPI_DSI_MSG_LASTCOMMAND) &&
+				!(*flags & DSI_CTRL_CMD_LAST_COMMAND)) {
 			goto error;
 		} else {
 			cmd_mem.length = dsi_ctrl->cmd_len;
