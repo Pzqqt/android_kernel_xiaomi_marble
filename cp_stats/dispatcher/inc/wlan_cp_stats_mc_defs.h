@@ -131,6 +131,7 @@ enum txrate_gi {
  * @pno_complete_wake_up_count: pno complete wakeup count
  * @pno_match_wake_up_count:    pno match wakeup count
  * @oem_response_wake_up_count: oem response wakeup count
+ * @uc_drop_wake_up_count:      local data uc drop wakeup count
  * @pwr_save_fail_detected:     pwr save fail detected wakeup count
  * @scan_11d                    11d scan wakeup count
  * @mgmt_assoc: association request management frame
@@ -158,6 +159,7 @@ struct wake_lock_stats {
 	uint32_t pno_complete_wake_up_count;
 	uint32_t pno_match_wake_up_count;
 	uint32_t oem_response_wake_up_count;
+	uint32_t uc_drop_wake_up_count;
 	uint32_t pwr_save_fail_detected;
 	uint32_t scan_11d;
 	uint32_t mgmt_assoc;

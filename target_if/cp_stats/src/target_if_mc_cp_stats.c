@@ -1069,6 +1069,10 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 		stats->pwr_save_fail_detected++;
 		break;
 
+	case WOW_REASON_LOCAL_DATA_UC_DROP:
+		stats->uc_drop_wake_up_count++;
+		break;
+
 	default:
 		break;
 	}
