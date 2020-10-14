@@ -633,6 +633,58 @@ cm_fill_disconnect_resp_from_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
 	return QDF_STATUS_E_FAILURE;
 }
 
+void cm_inform_bcn_probe(struct cnx_mgr *cm_ctx, uint8_t *bcn_probe,
+			 uint32_t len, qdf_freq_t freq, int32_t rssi,
+			 wlan_cm_id cm_id)
+{
+	qdf_nbuf_t buf;
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t *data, i, vdev_id;
+	struct mgmt_rx_event_params rx_param = {0};
+	struct wlan_frame_hdr *hdr;
+	enum mgmt_frame_type frm_type = MGMT_BEACON;
+
+	vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	if (!bcn_probe || !len || (len < sizeof(*hdr))) {
+		mlme_err(CM_PREFIX_FMT "bcn_probe is null or invalid len %d",
+			 CM_PREFIX_REF(vdev_id, cm_id), len);
+		return;
+	}
+
+	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return;
+	}
+
+	hdr = (struct wlan_frame_hdr *)bcn_probe;
+	if ((hdr->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+	    MGMT_SUBTYPE_PROBE_RESP)
+		frm_type = MGMT_PROBE_RESP;
+
+	rx_param.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	rx_param.chan_freq = freq;
+	rx_param.rssi = rssi;
+
+	/* Set all per chain rssi as invalid */
+	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++)
+		rx_param.rssi_ctl[i] = WLAN_INVALID_PER_CHAIN_RSSI;
+
+	buf = qdf_nbuf_alloc(NULL, qdf_roundup(len, 4), 0, 4, false);
+	if (!buf)
+		return;
+
+	qdf_nbuf_put_tail(buf, len);
+	qdf_nbuf_set_protocol(buf, ETH_P_CONTROL);
+
+	data = qdf_nbuf_data(buf);
+	qdf_mem_copy(data, bcn_probe, len);
+	/* buf will be freed by scan module in error or success case */
+	wlan_scan_process_bcn_probe_rx_sync(wlan_pdev_get_psoc(pdev), buf,
+					    &rx_param, frm_type);
+}
+
 bool cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
 {
 	struct cnx_mgr *cm_ctx;

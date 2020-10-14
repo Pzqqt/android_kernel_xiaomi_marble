@@ -640,6 +640,25 @@ cm_fill_disconnect_resp_from_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
 				   struct wlan_cm_discon_rsp *resp);
 
 /**
+ * cm_inform_bcn_probe() - update scan db with beacon or probe resp
+ * @cm_ctx: connection manager context
+ * @bcn_probe: beacon or probe resp received during connect
+ * @len: beacon or probe resp length
+ * @rssi: rssi of the beacon or probe resp
+ * @cm_id: cm id of connect/disconnect req
+ *
+ * update scan db, so that kernel and driver do not age out
+ * the connected AP entry.
+ *
+ * Context: Any Context.
+ *
+ * Return: void
+ */
+void cm_inform_bcn_probe(struct cnx_mgr *cm_ctx, uint8_t *bcn_probe,
+			 uint32_t len, qdf_freq_t freq, int32_t rssi,
+			 wlan_cm_id cm_id);
+
+/**
  * cm_set_max_connect_attempts() - Set max connect attempts
  * @vdev: vdev pointer
  * @max_connect_attempts: max connect attempts to be set.

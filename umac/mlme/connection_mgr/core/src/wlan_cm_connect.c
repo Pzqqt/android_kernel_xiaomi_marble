@@ -1137,6 +1137,53 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	return status;
 }
 
+/**
+ * cm_update_scan_db_on_connect_success() - update scan db with beacon or
+ * probe resp
+ * @cm_ctx: connection manager context
+ * @resp: connect resp
+ *
+ * update scan db, so that kernel and driver do not age out
+ * the connected AP entry.
+ *
+ * Context: Can be called from any context and to be used only if connect
+ * is successful and SM is in conencted state. i.e. SM lock is hold.
+ *
+ * Return: void
+ */
+static void
+cm_update_scan_db_on_connect_success(struct cnx_mgr *cm_ctx,
+				     struct wlan_cm_connect_rsp *resp)
+{
+	struct element_info *bcn_probe_rsp;
+	struct cm_req *cm_req;
+	int32_t rssi;
+
+	if (!cm_is_vdev_connected(cm_ctx->vdev))
+		return;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
+	if (!cm_req)
+		return;
+	if (!cm_req->connect_req.cur_candidate)
+		return;
+
+	/*
+	 * Get beacon or probe resp from connect response, and if not present
+	 * use cur candidate to get beacon or probe resp
+	 */
+	if (resp->connect_ies.bcn_probe_rsp.ptr)
+		bcn_probe_rsp = &resp->connect_ies.bcn_probe_rsp;
+	else
+		bcn_probe_rsp =
+			&cm_req->connect_req.cur_candidate->entry->raw_frame;
+
+	rssi = cm_req->connect_req.cur_candidate->entry->rssi_raw;
+
+	cm_inform_bcn_probe(cm_ctx, bcn_probe_rsp->ptr, bcn_probe_rsp->len,
+			    resp->freq, rssi, resp->cm_id);
+}
+
 QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_rsp *resp)
 {
@@ -1152,6 +1199,10 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_SUCCESS;
 
 	sm_state = cm_get_state(cm_ctx);
+	if (QDF_IS_STATUS_SUCCESS(resp->connect_status) &&
+	    sm_state == WLAN_CM_S_CONNECTED)
+		cm_update_scan_db_on_connect_success(cm_ctx, resp);
+
 	mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
 	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
 	cm_inform_if_mgr_connect_complete(cm_ctx->vdev, resp->connect_status);
