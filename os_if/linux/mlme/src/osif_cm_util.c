@@ -25,6 +25,7 @@
 #include "wlan_osif_priv.h"
 #include "wlan_cfg80211.h"
 #include "osif_cm_rsp.h"
+#include "wlan_cfg80211_scan.h"
 
 static struct osif_cm_ops *osif_cm_legacy_ops;
 
@@ -220,6 +221,26 @@ osif_cm_disconnect_complete_cb(struct wlan_objmgr_vdev *vdev,
 }
 
 #ifdef CONN_MGR_ADV_FEATURE
+void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
+			struct vdev_osif_priv *osif_priv,
+			struct qdf_mac_addr *bssid,
+			uint8_t *ssid, uint8_t ssid_len)
+{
+	struct wiphy *wiphy = osif_priv->wdev->wiphy;
+	struct scan_filter *filter;
+
+	__wlan_cfg80211_unlink_bss_list(wiphy, bssid->bytes,
+					ssid_len ? ssid : NULL, ssid_len);
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter)
+		return;
+
+	filter->num_of_bssid = 1;
+	qdf_copy_macaddr(&filter->bssid_list[0], bssid);
+	ucfg_scan_flush_results(wlan_vdev_get_pdev(vdev), filter);
+	qdf_mem_free(filter);
+}
+
 static QDF_STATUS
 osif_cm_disable_netif_queue(struct wlan_objmgr_vdev *vdev)
 {

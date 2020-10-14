@@ -173,6 +173,31 @@ typedef QDF_STATUS
 	(*osif_cm_netif_queue_ctrl_cb)(struct wlan_objmgr_vdev *vdev,
 				       enum netif_action_type action,
 				       enum netif_reason_type reason);
+
+/**
+ * osif_cm_unlink_bss() - function to unlink bss from kernel and scan database
+ * on connect timeouts reasons
+ * @vdev: vdev pointer
+ * @osif_priv: Pointer to vdev osif priv
+ * @bssid: bssid to flush
+ * @ssid: optional ssid to flush
+ * @ssid_len: optional ssid length
+ *
+ * This function flush the bss from scan db of kernel and driver matching the
+ * bssid. ssid is optional to pass to match the bss.
+ *
+ * Return: void
+ */
+void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
+			struct vdev_osif_priv *osif_priv,
+			struct qdf_mac_addr *bssid,
+			uint8_t *ssid, uint8_t ssid_len);
+#else
+static inline
+void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
+			struct vdev_osif_priv *osif_priv,
+			struct qdf_mac_addr *bssid,
+			uint8_t *ssid, uint8_t ssid_len) {}
 #endif
 
 /**

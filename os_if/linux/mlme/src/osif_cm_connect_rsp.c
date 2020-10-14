@@ -428,6 +428,18 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* CFG80211_CONNECT_BSS */
 
+static inline
+bool osif_cm_is_unlink_bss_required(enum wlan_cm_connect_fail_reason reason)
+{
+	if (reason == CM_NO_CANDIDATE_FOUND ||
+	    reason == CM_JOIN_TIMEOUT ||
+	    reason == CM_AUTH_TIMEOUT ||
+	    reason == CM_ASSOC_TIMEOUT)
+		return true;
+
+	return false;
+}
+
 QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_rsp *rsp)
 {
@@ -441,6 +453,10 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 		       rsp->ssid.length, rsp->ssid.ssid,
 		       rsp->connect_status ? "FAILURE" : "SUCCESS", rsp->cm_id,
 		       rsp->reason, rsp->reason_code);
+
+	if (osif_cm_is_unlink_bss_required(rsp->reason))
+		osif_cm_unlink_bss(vdev, osif_priv, &rsp->bssid, rsp->ssid.ssid,
+				   rsp->ssid.length);
 
 	status = osif_validate_connect_and_reset_src_id(osif_priv, rsp->cm_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -467,5 +483,8 @@ QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
 		       rsp->ssid.length, rsp->ssid.ssid, rsp->cm_id,
 		       rsp->reason, rsp->reason_code);
 
+	if (osif_cm_is_unlink_bss_required(rsp->reason))
+		osif_cm_unlink_bss(vdev, osif_priv, &rsp->bssid, rsp->ssid.ssid,
+				   rsp->ssid.length);
 	return QDF_STATUS_SUCCESS;
 }
