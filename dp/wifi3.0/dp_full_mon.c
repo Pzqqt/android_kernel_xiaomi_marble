@@ -142,12 +142,15 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 			union dp_rx_desc_list_elem_t *desc_list = NULL;
 			union dp_rx_desc_list_elem_t *tail = NULL;
 
-			/* If this is DMA not done WAR case,
-			 * free buffer and current SW descriptor and
-			 * make buf_addr_info NULL, so that call to
+			/* If this is DMA not done WAR case, unmap and
+			 * free buffer and current SW descriptor
+			 * and make buf_addr_info NULL, so that call to
 			 * dp_rx_mon_status_process() replenishes entry to
 			 * status ring
 			 */
+			qdf_nbuf_unmap_nbytes_single(soc->osdev, status_nbuf,
+						     QDF_DMA_FROM_DEVICE,
+						     rx_desc_pool->buf_size);
 			qdf_nbuf_free(status_nbuf);
 			dp_rx_add_to_free_desc_list(&desc_list,
 						&tail, rx_desc);
