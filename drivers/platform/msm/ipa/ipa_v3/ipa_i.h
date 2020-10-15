@@ -2436,6 +2436,7 @@ struct ipa3_controller {
 };
 
 extern struct ipa3_context *ipa3_ctx;
+extern bool ipa_net_initialized;
 
 /* public APIs */
 /* Generic GSI channels functions */

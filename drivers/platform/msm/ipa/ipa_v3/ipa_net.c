@@ -22,9 +22,14 @@
 #include "ipa_i.h"
 #include "ipa_qmi_service.h"
 
+bool ipa_net_initialized = false;
+
 static int __init ipa_late_init(void)
 {
 	int rc = 0;
+
+	/* We are here, thus the subsys_initcall is finished */
+	ipa_net_initialized = true;
 
 	IPADBG("IPA late init\n");
 
