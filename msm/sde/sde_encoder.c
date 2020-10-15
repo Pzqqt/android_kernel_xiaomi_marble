@@ -994,7 +994,9 @@ static int sde_encoder_virt_atomic_check(
 	}
 
 	drm_mode_set_crtcinfo(adj_mode, 0);
-	SDE_EVT32(DRMID(drm_enc), adj_mode->flags, adj_mode->private_flags);
+	SDE_EVT32(DRMID(drm_enc), adj_mode->flags, adj_mode->private_flags,
+		 old_top, adj_mode->vrefresh, adj_mode->hdisplay,
+		 adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal);
 
 	return ret;
 }
@@ -1307,8 +1309,6 @@ static int _sde_encoder_update_rsc_client(
 			rsc_state = SDE_RSC_CLK_STATE;
 	}
 
-	SDE_EVT32(rsc_state, qsync_mode);
-
 	is_vid_mode = sde_encoder_check_curr_mode(&sde_enc->base,
 				MSM_DISPLAY_VIDEO_MODE);
 	mode = &sde_enc->crtc->state->mode;
@@ -1338,6 +1338,9 @@ static int _sde_encoder_update_rsc_client(
 		rsc_config->jitter_denom = mode_info->jitter_denom;
 		sde_enc->rsc_state_init = false;
 	}
+
+	SDE_EVT32(DRMID(drm_enc), rsc_state, qsync_mode,
+				 rsc_config->fps, sde_enc->rsc_state_init);
 
 	if (rsc_state != SDE_RSC_IDLE_STATE && !sde_enc->rsc_state_init
 			&& (disp_info->display_type == SDE_CONNECTOR_PRIMARY)) {

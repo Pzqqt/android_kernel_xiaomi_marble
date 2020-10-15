@@ -440,7 +440,8 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 
 			DRM_DEBUG("detach nsec-dev:%pK attach sec-dev:%pK\n",
 					obj->import_attach->dev, dev);
-			SDE_EVT32(obj->import_attach->dev, dev, msm_obj->sgt);
+			SDE_EVT32(obj->import_attach->dev, dev, msm_obj->sgt,
+					 msm_obj->obj_dirty);
 
 			if (msm_obj->sgt)
 				dma_buf_unmap_attachment(obj->import_attach,
