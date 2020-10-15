@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/device.h>
@@ -77,6 +77,7 @@ struct swr_haptics_dev {
 	struct regmap			*regmap;
 	struct swr_port			port;
 	struct regulator		*vdd;
+	u8				vmax;
 };
 
 static bool swr_hap_volatile_register(struct device *dev, unsigned int reg)
@@ -169,6 +170,15 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		rc = regmap_write(swr_hap->regmap, SWR_VMAX_REG, swr_hap->vmax);
+		if (rc) {
+			dev_err(swr_hap->dev, "%s: SWR_VMAX update failed, rc=%d\n",
+				__func__, rc);
+			return rc;
+		}
+		regmap_read(swr_hap->regmap, SWR_VMAX_REG, &val);
+		regmap_read(swr_hap->regmap, SWR_READ_DATA_REG, &val);
+		dev_dbg(swr_hap->dev, "%s: swr_vmax is set to 0x%x\n", __func__, val);
 		swr_device_wakeup_vote(swr_hap->swr_slave);
 		swr_connect_port(swr_hap->swr_slave, &port_id, num_port,
 				&ch_mask, &ch_rate, &num_ch, &port_type);
@@ -208,6 +218,39 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 
 	return 0;
 }
+
+static int haptics_vmax_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct swr_haptics_dev *swr_hap =
+			snd_soc_component_get_drvdata(component);
+
+	pr_debug("%s: vmax %u\n", __func__, swr_hap->vmax);
+	ucontrol->value.integer.value[0] = swr_hap->vmax;
+
+	return 0;
+}
+
+static int haptics_vmax_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct swr_haptics_dev *swr_hap =
+			snd_soc_component_get_drvdata(component);
+
+	swr_hap->vmax = ucontrol->value.integer.value[0];
+	pr_debug("%s: vmax %u\n", __func__, swr_hap->vmax);
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new haptics_snd_controls[] = {
+	SOC_SINGLE_EXT("Haptics Amplitude Step", SND_SOC_NOPM, 0, 100, 0,
+		haptics_vmax_get, haptics_vmax_put),
+};
 
 static const struct snd_soc_dapm_widget haptics_comp_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("HAP_IN"),
@@ -255,6 +298,8 @@ static const struct snd_soc_component_driver swr_haptics_component = {
 	.name = "swr-haptics",
 	.probe = haptics_comp_probe,
 	.remove = haptics_comp_remove,
+	.controls = haptics_snd_controls,
+	.num_controls = ARRAY_SIZE(haptics_snd_controls),
 	.dapm_widgets = haptics_comp_dapm_widgets,
 	.num_dapm_widgets = ARRAY_SIZE(haptics_comp_dapm_widgets),
 	.dapm_routes = haptics_comp_dapm_route,
@@ -321,6 +366,8 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	if (!swr_hap)
 		return -ENOMEM;
 
+	/* VMAX default to 5V */
+	swr_hap->vmax = 100;
 	swr_hap->swr_slave = sdev;
 	swr_hap->dev = &sdev->dev;
 	swr_set_dev_data(sdev, swr_hap);
