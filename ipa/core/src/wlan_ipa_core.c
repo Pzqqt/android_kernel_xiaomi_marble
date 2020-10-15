@@ -1622,7 +1622,7 @@ static QDF_STATUS wlan_ipa_uc_handle_first_con(struct wlan_ipa_priv *ipa_ctx)
 {
 	ipa_debug("enter");
 
-	if (ipa_ctx->num_sap_connected > 1) {
+	if (qdf_ipa_get_lan_rx_napi() && (ipa_ctx->num_sap_connected > 1)) {
 		ipa_debug("Multiple SAP connected. Not enabling pipes. Exit");
 		return QDF_STATUS_E_PERM;
 	}
@@ -1982,17 +1982,7 @@ static QDF_STATUS wlan_ipa_send_msg(qdf_netdev_t net_dev,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_ipa_handle_multiple_sap_evt() - Handle multiple SAP connect/disconnect
- * @ipa_ctx: IPA global context
- * @type: IPA event type.
- *
- * This function is used to disable pipes when multiple SAP are connected and
- * enable pipes back when only one SAP is connected.
- *
- * Return: None
- */
-static inline
+#ifdef IPA_LAN_RX_NAPI_SUPPORT
 void wlan_ipa_handle_multiple_sap_evt(struct wlan_ipa_priv *ipa_ctx,
 				      qdf_ipa_wlan_event type)
 {
@@ -2034,6 +2024,7 @@ void wlan_ipa_handle_multiple_sap_evt(struct wlan_ipa_priv *ipa_ctx,
 			wlan_ipa_uc_disable_pipes(ipa_ctx, true);
 	}
 }
+#endif
 
 /**
  * __wlan_ipa_wlan_evt() - IPA event handler
@@ -2184,7 +2175,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					}
 				}
 
-				if (ipa_ctx->num_sap_connected == 1) {
+				if (qdf_ipa_get_lan_rx_napi() &&
+				    ipa_ctx->num_sap_connected == 1) {
 					wlan_ipa_handle_multiple_sap_evt(ipa_ctx,
 									 type);
 				}
@@ -2305,12 +2297,13 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
-			if (ipa_ctx->num_sap_connected == 1) {
+			if (qdf_ipa_get_lan_rx_napi() &&
+			    (ipa_ctx->num_sap_connected > 1)) {
+				wlan_ipa_handle_multiple_sap_evt(ipa_ctx, type);
+			} else {
 				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 							SIR_AP_RX_DATA_OFFLOAD,
 							session_id, true);
-			} else {
-				wlan_ipa_handle_multiple_sap_evt(ipa_ctx, type);
 			}
 			qdf_mutex_acquire(&ipa_ctx->event_lock);
 		}
@@ -2451,7 +2444,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			}
 		}
 
-		if (ipa_ctx->num_sap_connected == 1)
+		if (qdf_ipa_get_lan_rx_napi() &&
+		    (ipa_ctx->num_sap_connected == 1))
 			wlan_ipa_handle_multiple_sap_evt(ipa_ctx, type);
 
 		qdf_mutex_release(&ipa_ctx->event_lock);
