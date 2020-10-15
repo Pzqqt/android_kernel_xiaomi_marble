@@ -8744,36 +8744,6 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t session
 	return status;
 }
 
-QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessionId,
-					eCsrRoamDisconnectReason reason,
-					enum wlan_reason_code mac_reason)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("session: %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-	/* Not to call cancel roaming here */
-	/* Only issue disconnect when necessary */
-	if (csr_is_conn_state_connected(mac, sessionId)
-	    || csr_is_roam_command_waiting_for_session(mac, sessionId)
-	    || CSR_IS_CONN_NDI(&pSession->connectedProfile)) {
-		status = csr_roam_issue_disassociate_cmd(mac, sessionId,
-							 reason, mac_reason);
-	} else if (pSession->scan_info.profile) {
-		mac->roam.roamSession[sessionId].connectState =
-			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING;
-		csr_scan_abort_mac_scan(mac, sessionId, INVAL_SCAN_ID);
-		status = QDF_STATUS_CMD_NOT_QUEUED;
-		sme_debug("Disconnect cmd not queued, Roam command is not present return with status: %d",
-			status);
-	}
-
-	return status;
-}
-
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static void
 csr_disable_roaming_offload(struct mac_context *mac_ctx, uint32_t vdev_id)
@@ -8793,6 +8763,7 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 			       enum wlan_reason_code mac_reason)
 {
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!session) {
 		sme_err("session: %d not found ", session_id);
@@ -8807,8 +8778,13 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 	csr_roam_remove_duplicate_command(mac_ctx, session_id, NULL,
 					  eCsrForcedDisassoc);
 
-	return csr_roam_disconnect_internal(mac_ctx, session_id, reason,
-					    mac_reason);
+	if (csr_is_conn_state_connected(mac_ctx, session_id)
+	    || csr_is_roam_command_waiting_for_session(mac_ctx, session_id)
+	    || CSR_IS_CONN_NDI(&session->connectedProfile))
+		status = csr_roam_issue_disassociate_cmd(mac_ctx, session_id,
+							 reason, mac_reason);
+
+	return status;
 }
 
 QDF_STATUS
@@ -11968,9 +11944,9 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 
 	if (QDF_IS_STATUS_ERROR(pSwitchChnInd->status)) {
 		sme_err("Channel switch failed");
-		csr_roam_disconnect_internal(mac_ctx, sessionId,
-					     eCSR_DISCONNECT_REASON_DEAUTH,
-					     REASON_CHANNEL_SWITCH_FAILED);
+		csr_roam_disconnect(mac_ctx, sessionId,
+				    eCSR_DISCONNECT_REASON_DEAUTH,
+				    REASON_CHANNEL_SWITCH_FAILED);
 		return;
 	}
 	session->connectedProfile.op_freq = pSwitchChnInd->freq;
@@ -12229,10 +12205,10 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 			== mac_ctx->roam.curSubState[sessionId])
 		    || (eCSR_ROAM_SUBSTATE_JOINED_NO_TRAFFIC ==
 			 mac_ctx->roam.curSubState[sessionId]))) {
-			sme_warn("Calling csr_roam_disconnect_internal");
-			csr_roam_disconnect_internal(mac_ctx, sessionId,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					REASON_UNSPEC_FAILURE);
+			sme_warn("Calling csr_roam_disconnect");
+			csr_roam_disconnect(mac_ctx, sessionId,
+					    eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					    REASON_UNSPEC_FAILURE);
 		} else {
 			sme_warn("Skipping the new scan as CSR is in state: %s and sub-state: %s",
 				mac_trace_getcsr_roam_state(
