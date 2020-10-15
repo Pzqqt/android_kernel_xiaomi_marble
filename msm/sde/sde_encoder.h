@@ -574,6 +574,12 @@ static inline u32 sde_encoder_get_dfps_maxfps(struct drm_encoder *drm_enc)
 }
 
 /**
+ * sde_encoder_virt_reset - delay encoder virt reset
+ * @drm_enc:	Pointer to drm encoder structure
+ */
+void sde_encoder_virt_reset(struct drm_encoder *drm_enc);
+
+/**
  * sde_encoder_get_kms - retrieve the kms from encoder
  * @drm_enc:    Pointer to drm encoder structure
  */

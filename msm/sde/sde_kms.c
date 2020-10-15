@@ -1532,6 +1532,7 @@ static void sde_kms_wait_for_commit_done(struct msm_kms *kms,
 	struct drm_encoder *encoder;
 	struct drm_device *dev;
 	int ret;
+	bool cwb_disabling;
 
 	if (!kms || !crtc || !crtc->state) {
 		SDE_ERROR("invalid params\n");
@@ -1557,9 +1558,14 @@ static void sde_kms_wait_for_commit_done(struct msm_kms *kms,
 
 	SDE_ATRACE_BEGIN("sde_kms_wait_for_commit_done");
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
-		if (encoder->crtc != crtc &&
-				!sde_encoder_is_cwb_disabling(encoder, crtc))
-			continue;
+		cwb_disabling = false;
+		if (encoder->crtc != crtc) {
+			cwb_disabling = sde_encoder_is_cwb_disabling(encoder,
+					crtc);
+			if (!cwb_disabling)
+				continue;
+		}
+
 		/*
 		 * Wait for post-flush if necessary to delay before
 		 * plane_cleanup. For example, wait for vsync in case of video
@@ -1574,6 +1580,9 @@ static void sde_kms_wait_for_commit_done(struct msm_kms *kms,
 		}
 
 		sde_crtc_complete_flip(crtc, NULL);
+
+		if (cwb_disabling)
+			sde_encoder_virt_reset(encoder);
 	}
 
 	sde_crtc_static_cache_read_kickoff(crtc);
