@@ -8141,6 +8141,7 @@ dp_config_debug_sniffer(struct dp_pdev *pdev, int val)
 	 */
 	if (pdev->mcopy_mode) {
 #ifdef FEATURE_PERPKT_INFO
+		dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_DISABLE);
 		dp_pdev_disable_mcopy_code(pdev);
 		dp_mon_filter_reset_mcopy_mode(pdev);
 		status = dp_mon_filter_update(pdev);
@@ -8201,6 +8202,7 @@ dp_config_debug_sniffer(struct dp_pdev *pdev, int val)
 		/*
 		 * Setup the M copy mode filter.
 		 */
+		dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
 		dp_mon_filter_setup_mcopy_mode(pdev);
 		status = dp_mon_filter_update(pdev);
 		if (status != QDF_STATUS_SUCCESS) {
