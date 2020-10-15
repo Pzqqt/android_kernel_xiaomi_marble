@@ -584,10 +584,9 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 	struct ramdump_info *info;
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!qdf_dev) {
-		BMI_ERR("%s qdf_dev is NULL", __func__);
+	if (!qdf_dev)
 		return -EINVAL;
-	}
+
 	if (pld_is_fw_dump_skipped(qdf_dev->dev)) {
 		BMI_INFO("%s ssr enabled, skip ramdump", __func__);
 		return 0;
