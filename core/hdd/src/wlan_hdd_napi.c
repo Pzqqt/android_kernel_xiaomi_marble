@@ -289,7 +289,6 @@ static int hdd_napi_perfd_cpufreq(enum qca_napi_tput_state req_state)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (unlikely(!hdd_ctx)) {
-		hdd_err("cannot get hdd_context");
 		rc = -EFAULT;
 		goto hnpc_ret;
 	}

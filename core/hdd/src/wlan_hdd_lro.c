@@ -49,10 +49,8 @@ static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
 {
 	struct hif_opaque_softc *hif_hdl =
 		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_hdl) {
-		hdd_err("hif_hdl is NULL");
+	if (!hif_hdl)
 		return NULL;
-	}
 
 	return hif_get_lro_info(QDF_NBUF_CB_RX_CTX_ID(skb), hif_hdl);
 }

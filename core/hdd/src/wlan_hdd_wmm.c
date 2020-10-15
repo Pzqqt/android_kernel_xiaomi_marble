@@ -2432,10 +2432,8 @@ bool hdd_wmm_is_acm_allowed(uint8_t vdev_id)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Unable to fetch the hdd context");
+	if (!hdd_ctx)
 		return false;
-	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (hdd_validate_adapter(adapter))

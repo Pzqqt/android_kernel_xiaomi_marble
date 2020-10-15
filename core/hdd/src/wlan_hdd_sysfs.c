@@ -386,10 +386,8 @@ static ssize_t __show_beacon_reception_stats(struct net_device *net_dev,
 	QDF_STATUS status;
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
-	if (ret_val) {
-		hdd_err("hdd ctx is invalid");
+	if (ret_val)
 		return ret_val;
-	}
 
 	if (!adapter || adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		hdd_err("Invalid adapter or adapter has invalid magic");

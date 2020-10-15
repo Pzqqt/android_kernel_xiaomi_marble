@@ -8384,10 +8384,8 @@ static void hdd_set_wlm_host_latency_level(struct hdd_context *hdd_ctx,
 {
 	ol_txrx_soc_handle soc_hdl = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (!soc_hdl) {
-		hdd_err("txrx soc handle NULL");
+	if (!soc_hdl)
 		return;
-	}
 
 	if (latency_host_flags & WLM_HOST_PM_QOS_FLAG)
 		hdd_ctx->pm_qos_request_flags |= (1 << adapter->vdev_id);
@@ -12091,10 +12089,9 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 
 	hdd_enter_dev(wdev->netdev);
 
-	if (!qdf_ctx) {
-		hdd_err("qdf_ctx is NULL");
+	if (!qdf_ctx)
 		return -EINVAL;
-	}
+
 	curr_mode = hdd_get_conparam();
 	if (QDF_GLOBAL_FTM_MODE == curr_mode ||
 	    QDF_GLOBAL_MONITOR_MODE == curr_mode) {
@@ -14927,10 +14924,8 @@ int wlan_hdd_send_mode_change_event(void)
 
 	hdd_enter();
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	err = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != err)
@@ -18450,10 +18445,8 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	uint32_t ch_freq = 0;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return true;
-	}
 
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	/* probably no sap running, no handling required */

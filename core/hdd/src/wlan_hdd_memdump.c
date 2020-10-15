@@ -64,10 +64,8 @@ void hdd_driver_mem_cleanup(void)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD context");
+	if (!hdd_ctx)
 		return;
-	}
 
 	if (hdd_ctx->driver_dump_mem) {
 		qdf_mem_free(hdd_ctx->driver_dump_mem);
@@ -282,10 +280,8 @@ int hdd_driver_memdump_init(void)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD context");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	mutex_init(&hdd_ctx->memdump_lock);
 

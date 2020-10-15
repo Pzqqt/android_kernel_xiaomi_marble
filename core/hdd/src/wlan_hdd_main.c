@@ -838,10 +838,9 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter;
 
-	if (!hdd_ctx) {
-		hdd_err("hdd ctx is NULL");
+	if (!hdd_ctx)
 		return;
-	}
+
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	wlan_hdd_mod_fc_timer(adapter, action);
 	wlan_hdd_netif_queue_control(adapter, action, reason);
@@ -959,10 +958,8 @@ static int __hdd_netdev_notifier_call(struct net_device *net_dev,
 	}
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD Context is Null");
+	if (!hdd_ctx)
 		return NOTIFY_DONE;
-	}
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_debug("Driver module is closed");
@@ -2963,10 +2960,8 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/*
 	 * ROME platform doesn't support any DBS related commands in FW,
@@ -3114,10 +3109,8 @@ void hdd_update_hw_sw_info(struct hdd_context *hdd_ctx)
 	uint32_t buf_len;
 
 	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_sc) {
-		hdd_err("HIF context is NULL");
+	if (!hif_sc)
 		return;
-	}
 
 	hif_get_hw_info(hif_sc, &hdd_ctx->target_hw_version,
 			&hdd_ctx->target_hw_revision,
@@ -3164,11 +3157,8 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 	}
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-
-	if (!cds_ctx) {
-		hdd_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return;
-	}
 
 	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		switch (i) {
@@ -3743,10 +3733,8 @@ static void hdd_enable_power_management(struct hdd_context *hdd_ctx)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
-	if (!hif_ctx) {
-		hdd_err("Bus Interface Context is Invalid");
+	if (!hif_ctx)
 		return;
-	}
 
 	hif_enable_power_management(hif_ctx, cds_is_packet_log_enabled());
 	hdd_wlan_register_pm_qos_notifier(hdd_ctx);
@@ -3763,10 +3751,8 @@ static void hdd_disable_power_management(struct hdd_context *hdd_ctx)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
-	if (!hif_ctx) {
-		hdd_err("Bus Interface Context is Invalid");
+	if (!hif_ctx)
 		return;
-	}
 
 	hdd_wlan_unregister_pm_qos_notifier(hdd_ctx);
 	hif_disable_power_management(hif_ctx);
@@ -3844,7 +3830,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 	hdd_enter();
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_dev) {
-		hdd_err("QDF Device Context is Invalid return");
 		hdd_exit();
 		return -EINVAL;
 	}
@@ -3891,7 +3876,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 		if (!hif_ctx) {
-			hdd_err("hif context is null!!");
 			ret = -EINVAL;
 			goto power_down;
 		}
@@ -4947,10 +4931,8 @@ static int __hdd_set_features(struct net_device *net_dev,
 		return 0;
 	}
 
-	if (!soc) {
-		hdd_err("soc handle is NULL");
+	if (!soc)
 		return 0;
-	}
 
 	hdd_debug("vdev mode %d vdev_id %d current features 0x%llx, changed features 0x%llx",
 		  adapter->device_mode, adapter->vdev_id, net_dev->features,
@@ -5000,10 +4982,8 @@ void hdd_netdev_update_features(struct hdd_adapter *adapter)
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	bool request_feature_update = false;
 
-	if (!soc) {
-		hdd_err("soc handle is NULL");
+	if (!soc)
 		return;
-	}
 
 	if (!cdp_cfg_get(soc, cfg_dp_disable_legacy_mode_csum_offload))
 		return;
@@ -5261,10 +5241,8 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD_CTX");
+	if (!hdd_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter) {
@@ -8445,10 +8423,8 @@ QDF_STATUS hdd_adapter_iterate(hdd_adapter_iterate_cb cb, void *context)
 	int i;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (unlikely(!hdd_ctx)) {
-		hdd_err("HDD context is Null");
+	if (unlikely(!hdd_ctx))
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	for (hdd_get_front_adapter_no_lock(hdd_ctx, &adapter); adapter;
@@ -8611,10 +8587,8 @@ enum QDF_OPMODE hdd_get_device_mode(uint32_t vdev_id)
 	struct hdd_adapter *adapter;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD context");
+	if (!hdd_ctx)
 		return QDF_MAX_NO_OF_MODE;
-	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter) {
@@ -9307,10 +9281,8 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 		return;
 
 	soc = cds_get_context(QDF_MODULE_ID_SOC);
-	if (!soc) {
-		hdd_err("soc is NULL");
+	if (!soc)
 		return;
-	}
 
 	counter++;
 	if (data_in_interval)
@@ -10260,10 +10232,8 @@ static void hdd_adapter_param_update_work(void *arg)
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
 
-	if (!hdd_ctx) {
-		hdd_err("Invalid hdd context");
+	if (!hdd_ctx)
 		return;
-	}
 
 	hdd_adapter_ops_record_event(hdd_ctx,
 				     WLAN_HDD_ADAPTER_OPS_WORK_SCHED,
@@ -11724,10 +11694,8 @@ int hdd_psoc_idle_shutdown(struct device *dev)
 	int ret;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	if (!hdd_ctx) {
-		hdd_err_rl("hdd ctx is null");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	if (is_mode_change_psoc_idle_shutdown)
 		ret = __hdd_mode_change_psoc_idle_shutdown(hdd_ctx);
@@ -11756,10 +11724,8 @@ int hdd_psoc_idle_restart(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	if (!hdd_ctx) {
-		hdd_err_rl("hdd ctx is null");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	return __hdd_psoc_idle_restart(hdd_ctx);
 }
@@ -13956,10 +13922,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	hdd_enter();
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf_ctx) {
-		hdd_err("QDF device context NULL");
+	if (!qdf_ctx)
 		return -EINVAL;
-	}
 
 	cds_set_module_stop_in_progress(true);
 
@@ -14083,10 +14047,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		hdd_err("Hif context is Null");
+	if (!hif_ctx)
 		ret = -EINVAL;
-	}
 
 	if (hdd_ctx->target_hw_name) {
 		qdf_mem_free(hdd_ctx->target_hw_name);
@@ -14165,10 +14127,8 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 	char *buf = *buf_ptr;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Failed to get hdd context ");
+	if (!hdd_ctx)
 		return;
-	}
 
 	hdd_debug("size of buffer: %d", *size);
 
@@ -14633,10 +14593,8 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	wlan_hdd_update_wiphy(hdd_ctx);
 
 	hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!hdd_ctx->mac_handle) {
-		hdd_err("Mac Handle is null");
+	if (!hdd_ctx->mac_handle)
 		goto stop_modules;
-	}
 
 	errno = hdd_wiphy_init(hdd_ctx);
 	if (errno) {
@@ -15802,10 +15760,8 @@ static void hdd_inform_wifi_off(void)
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct osif_psoc_sync *psoc_sync;
 
-	if (!hdd_ctx) {
-		hdd_err("HDD context is Null");
+	if (!hdd_ctx)
 		return;
-	}
 
 	ret = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
 	if (ret)
@@ -17699,10 +17655,8 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 	struct hdd_is_connection_in_progress_priv *context = ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return QDF_STATUS_E_ABORTED;
-	}
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -17927,16 +17881,12 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	uint32_t restart_freq;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return;
-	}
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		hdd_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return;
-	}
 
 	if (policy_mgr_get_concurrency_mode(hdd_ctx->psoc)
 		!= (QDF_STA_MASK | QDF_SAP_MASK)) {
@@ -17986,10 +17936,8 @@ bool hdd_set_connection_in_progress(bool value)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return false;
-	}
 
 	qdf_spin_lock(&hdd_ctx->connection_status_lock);
 	/*
@@ -18166,10 +18114,8 @@ bool wlan_hdd_is_session_type_monitor(uint8_t session_type)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return false;
-	}
 
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) &&
 	    cds_get_conparam() != QDF_GLOBAL_MONITOR_MODE &&
@@ -18191,10 +18137,8 @@ bool wlan_hdd_check_mon_concurrency(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	if (!hdd_ctx) {
-		hdd_err("HDD context is null");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
 		if (policy_mgr_get_concurrency_mode(hdd_ctx->psoc) ==
@@ -18356,10 +18300,8 @@ void hdd_sme_monitor_mode_callback(uint8_t vdev_id)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err_rl("Invalid HDD_CTX");
+	if (!hdd_ctx)
 		return;
-	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter) {
@@ -18431,10 +18373,8 @@ void hdd_beacon_latency_event_cb(uint32_t latency_level)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err_rl("Invalid HDD_CTX");
+	if (!hdd_ctx)
 		return;
-	}
 
 	if (latency_level ==
 		QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW)

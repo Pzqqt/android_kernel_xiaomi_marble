@@ -1047,10 +1047,8 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		hdd_err("Hif context is Null");
+	if (!hif_ctx)
 		return -EINVAL;
-	}
 
 	hdd_debug("PM QOS update: runtime_pm_prevented %d Current value: %ld",
 		  hdd_ctx->runtime_pm_prevented, curr_val);
@@ -1309,10 +1307,8 @@ hdd_suspend_wlan(void)
 	hdd_info("WLAN being suspended by OS");
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is Null");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		hdd_info("Recovery in Progress. State: 0x%x Ignore suspend!!!",
@@ -1370,10 +1366,8 @@ static int hdd_resume_wlan(void)
 	hdd_info("WLAN being resumed by OS");
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is Null");
+	if (!hdd_ctx)
 		return -EINVAL;
-	}
 
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		hdd_info("Recovery in Progress. State: 0x%x Ignore resume!!!",
@@ -1465,10 +1459,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	/* Get the HDD context. */
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is Null");
+	if (!hdd_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	hdd_set_connection_in_progress(false);
 	policy_mgr_clear_concurrent_session_count(hdd_ctx->psoc);
@@ -1646,10 +1638,9 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	/* Get the HDD context */
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is Null");
+	if (!hdd_ctx)
 		goto err_ctx_null;
-	}
+
 	bug_on_reinit_failure = hdd_ctx->config->bug_on_reinit_failure;
 
 	adapter = hdd_get_first_valid_adapter(hdd_ctx);
@@ -1982,10 +1973,8 @@ static void hdd_suspend_cb(void)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return;
-	}
 
 	complete(&hdd_ctx->mc_sus_event_var);
 }
@@ -2809,16 +2798,13 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_dev) {
-		hdd_err("Failed to get QDF device context");
 		QDF_BUG(0);
 		return;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		hdd_err("Failed to get HIF context");
+	if (!hif_ctx)
 		return;
-	}
 
 	if (!test_and_clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
 		hdd_alert("Not unit-test suspended; Nothing to do");
@@ -2903,16 +2889,12 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf_dev) {
-		hdd_err("Failed to get QDF device context");
+	if (!qdf_dev)
 		return -EINVAL;
-	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		hdd_err("Failed to get HIF context");
+	if (!hif_ctx)
 		return -EINVAL;
-	}
 
 	if (test_and_set_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
 		hdd_alert("Already unit-test suspended; Nothing to do");
@@ -2996,10 +2978,8 @@ int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		hdd_err("Failed to get HIF context");
+	if (!hif_ctx)
 		return -EINVAL;
-	}
 
 	hif_ut_apps_resume(hif_ctx);
 	__hdd_wlan_fake_apps_resume(wiphy, dev);

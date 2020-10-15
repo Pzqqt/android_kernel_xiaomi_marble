@@ -2109,10 +2109,9 @@ static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = NULL;
 
-	if (!hdd_ctx) {
-		hdd_err("Invalid hdd context");
+	if (!hdd_ctx)
 		return;
-	}
+
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter) {
 		hdd_err("Invalid vdev_id");
@@ -2203,10 +2202,8 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 	psoc = cbk_data;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD Context");
+	if (!hdd_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (!hdd_ctx->tdls_nap_active)
 		return status;

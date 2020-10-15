@@ -57,16 +57,12 @@ void hdd_ipa_set_tx_flow_info(void)
 	struct wlan_objmgr_psoc *psoc;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return;
-	}
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		hdd_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return;
-	}
 
 	psoc = hdd_ctx->psoc;
 
@@ -516,10 +512,8 @@ void hdd_ipa_set_mcc_mode(bool mcc_mode)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
+	if (!hdd_ctx)
 		return;
-	}
 
 	ucfg_ipa_set_mcc_mode(hdd_ctx->pdev, mcc_mode);
 }

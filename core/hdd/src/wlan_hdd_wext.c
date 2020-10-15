@@ -6309,10 +6309,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		enum qca_wlan_ac_type duration[QCA_WLAN_AC_ALL];
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-		if (!soc) {
-			hdd_err("Invalid SOC handle");
+		if (!soc)
 			break;
-		}
 
 		for (i = 0; i < QCA_WLAN_AC_ALL; i++)
 			cdp_get_ba_timeout(soc, i, &duration[i]);
@@ -8950,10 +8948,9 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	{
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-		if (!soc) {
-			hdd_err("Invalid handles");
+		if (!soc)
 			break;
-		}
+
 		cdp_set_ba_timeout(soc, value[1], value[2]);
 		break;
 	}
