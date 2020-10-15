@@ -1264,10 +1264,8 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		sap_alert("invalid MAC handle");
+	if (!mac_handle)
 		return;
-	}
 
 	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_SAP, event->type,
 		   event->vdev_id, event->scan_id);

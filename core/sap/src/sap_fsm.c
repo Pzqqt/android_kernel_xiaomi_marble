@@ -876,11 +876,8 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	uint32_t default_op_freq;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		/* we have a serious problem */
-		sap_alert("invalid mac_handle");
+	if (!mac_handle)
 		return QDF_STATUS_E_FAULT;
-	}
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	if (!mac_ctx) {
@@ -1781,10 +1778,8 @@ bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
 	}
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		sap_err("invalid mac_handle");
+	if (!mac_handle)
 		return false;
-	}
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	if (!mac_ctx) {
