@@ -1872,7 +1872,7 @@ int ipa_init_drop_stats(u32 *pipe_bitmask)
 	} else {
 		for (i = 0; i < IPA5_PIPE_REG_NUM; i++) {
 			drop_mask.offset = ipahal_get_reg_nk_offset(
-				IPA_STAT_DROP_CNT_MASK_n,
+				IPA_STAT_DROP_CNT_MASK_EE_n_REG_k,
 				ipa3_ctx->ee, i);
 			drop_mask.value = pipe_bitmask[i];
 			drop_mask_pyld[i] = ipahal_construct_imm_cmd(
