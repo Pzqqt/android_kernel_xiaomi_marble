@@ -333,10 +333,8 @@ QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param)
 	}
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx) {
-		pe_err("mac_ctx is NULL");
+	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	session = param->session;
 	if (param->result_code

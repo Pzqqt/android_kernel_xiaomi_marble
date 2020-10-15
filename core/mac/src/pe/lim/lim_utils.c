@@ -8071,7 +8071,6 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
-		pe_err("mac_ctx is NULL");
 		if (data)
 			qdf_mem_free(data);
 		return QDF_STATUS_E_INVAL;
@@ -8262,10 +8261,8 @@ QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 	}
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx) {
-		pe_err("mac_ctx is NULL");
+	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	session = pe_find_session_by_session_id(mac_ctx,
 						start_req->sessionId);
@@ -8400,7 +8397,6 @@ QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
-		pe_err("mac_ctx is NULL");
 		if (data)
 			qdf_mem_free(data);
 		return QDF_STATUS_E_INVAL;
@@ -8609,10 +8605,9 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	enum channel_state ch_state;
 	uint32_t start_ch_freq;
 
-	if (!mac_ctx) {
-		pe_err("Invalid mac context");
+	if (!mac_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");

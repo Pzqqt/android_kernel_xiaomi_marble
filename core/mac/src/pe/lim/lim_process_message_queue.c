@@ -939,10 +939,8 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 		return;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx) {
-		pe_err("Failed to get mac_ctx");
+	if (!mac_ctx)
 		return;
-	}
 
 	filter = &mac_ctx->bcn_filter;
 

@@ -1257,10 +1257,9 @@ QDF_STATUS lim_sta_handle_connect_fail(join_params *param)
 	}
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx) {
-		pe_err("Mac context is NULL");
+	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
+
 	session = pe_find_session_by_session_id(mac_ctx, param->pe_session_id);
 	if (!session) {
 		pe_err("session is NULL");
@@ -1702,10 +1701,8 @@ lim_process_mlm_del_all_sta_rsp(struct vdev_mlme_obj *vdev_mlme,
 	vdev_id = wlan_vdev_get_id(vdev);
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx) {
-		pe_err("mac_ctx is NULL");
+	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 

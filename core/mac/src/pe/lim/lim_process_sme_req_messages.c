@@ -4721,7 +4721,6 @@ QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
-		pe_err("mac_ctx is NULL");
 		if (data)
 			qdf_mem_free(data);
 		return QDF_STATUS_E_INVAL;

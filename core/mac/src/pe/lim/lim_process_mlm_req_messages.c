@@ -212,10 +212,8 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct bss_params *addbss_param = NULL;
 
-	if (!wma) {
-		pe_err("Invalid wma handle");
+	if (!wma)
 		return eSIR_SME_INVALID_PARAMETERS;
-	}
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
