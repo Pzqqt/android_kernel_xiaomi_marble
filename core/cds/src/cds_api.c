@@ -184,10 +184,8 @@ static bool cds_is_drv_connected(void)
 	qdf_device_t qdf_ctx;
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf_ctx) {
-		cds_err("cds context is invalid");
+	if (!qdf_ctx)
 		return false;
-	}
 
 	ret = pld_is_drv_connected(qdf_ctx->dev);
 
@@ -200,10 +198,8 @@ static bool cds_is_drv_supported(void)
 	struct pld_platform_cap cap = {0};
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf_ctx) {
-		cds_err("cds context is invalid");
+	if (!qdf_ctx)
 		return false;
-	}
 
 	pld_get_platform_cap(qdf_ctx->dev, &cap);
 
@@ -216,10 +212,8 @@ static QDF_STATUS cds_wmi_send_recv_qmi(void *buf, uint32_t len, void * cb_ctx,
 	qdf_device_t qdf_ctx;
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf_ctx) {
-		cds_err("cds context is invalid");
+	if (!qdf_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (pld_qmi_send(qdf_ctx->dev, 0, buf, len, cb_ctx, wmi_rx_cb))
 		return QDF_STATUS_E_INVAL;
@@ -548,11 +542,8 @@ cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
 		return;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-
-	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return;
-	}
 
 	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		cds_cfg->ac_specs[i] = cds_ctx->ac_specs[i];
@@ -637,10 +628,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	cds_debug("Opening CDS");
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		cds_alert("Trying to open CDS without a PreOpen");
+	if (!cds_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/* Initialize the timer module */
 	qdf_timer_module_init();
@@ -679,8 +668,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
-		cds_alert("scn is null!");
-
 		status = QDF_STATUS_E_FAILURE;
 		goto err_sched_close;
 	}
@@ -754,8 +741,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	HTCHandle = cds_get_context(QDF_MODULE_ID_HTC);
 	gp_cds_context->cfg_ctx = NULL;
 	if (!HTCHandle) {
-		cds_alert("HTCHandle is null!");
-
 		status = QDF_STATUS_E_FAILURE;
 		goto err_wma_close;
 	}
@@ -1063,16 +1048,12 @@ QDF_STATUS cds_pre_enable(void)
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!scn) {
-		cds_err("hif context is null");
+	if (!scn)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	soc = cds_get_context(QDF_MODULE_ID_SOC);
-	if (!soc) {
-		cds_err("soc context is null");
+	if (!soc)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	/* call Packetlog connect service */
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
@@ -1116,8 +1097,6 @@ stop_wmi:
 		cds_suspend_target(gp_cds_context->wma_context);
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx)
-		cds_err("Failed to get hif_handle!");
 
 	wma_wmi_stop();
 
@@ -1270,10 +1249,8 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	handle = cds_get_context(QDF_MODULE_ID_PE);
-	if (!handle) {
-		cds_err("Invalid PE context return!");
+	if (!handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	umac_stop();
 
@@ -1293,16 +1270,12 @@ QDF_STATUS cds_post_disable(void)
 	QDF_STATUS qdf_status;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		cds_err("Failed to get wma_handle!");
+	if (!wma_handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		cds_err("Failed to get hif_handle!");
+	if (!hif_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	/* flush any unprocessed scheduler messages */
 	sched_ctx = scheduler_get_context();
@@ -1855,10 +1828,8 @@ static QDF_STATUS cds_force_assert_target_via_wmi(qdf_device_t qdf)
 	t_wma_handle *wma;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		cds_err("wma is null");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	status = wma_crash_inject(wma, RECOVERY_SIM_SELF_RECOVERY, 0);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1948,10 +1919,8 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	}
 
 	qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf) {
-		cds_err("Qdf context is null");
+	if (!qdf)
 		return;
-	}
 
 	/*
 	 * if *wlan* recovery is disabled, crash here for debugging  for
@@ -2608,10 +2577,8 @@ void cds_init_ini_config(struct cds_config_info *cfg)
 	struct cds_context *cds_ctx;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return;
-	}
 
 	cds_ctx->cds_cfg = cfg;
 }
@@ -2627,10 +2594,8 @@ void cds_deinit_ini_config(void)
 	struct cds_config_info *cds_cfg;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return;
-	}
 
 	cds_cfg = cds_ctx->cds_cfg;
 	cds_ctx->cds_cfg = NULL;
@@ -2649,10 +2614,8 @@ struct cds_config_info *cds_get_ini_config(void)
 	struct cds_context *cds_ctx;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
+	if (!cds_ctx)
 		return NULL;
-	}
 
 	return cds_ctx->cds_cfg;
 }
@@ -2667,10 +2630,8 @@ bool cds_is_5_mhz_enabled(void)
 	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!p_cds_context) {
-		cds_err("cds context is invalid");
+	if (!p_cds_context)
 		return false;
-	}
 
 	if (p_cds_context->cds_cfg)
 		return (p_cds_context->cds_cfg->sub_20_channel_width ==
@@ -2689,10 +2650,8 @@ bool cds_is_10_mhz_enabled(void)
 	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!p_cds_context) {
-		cds_err("cds context is invalid");
+	if (!p_cds_context)
 		return false;
-	}
 
 	if (p_cds_context->cds_cfg)
 		return (p_cds_context->cds_cfg->sub_20_channel_width ==
@@ -2711,10 +2670,8 @@ bool cds_is_sub_20_mhz_enabled(void)
 	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!p_cds_context) {
-		cds_err("cds context is invalid");
+	if (!p_cds_context)
 		return false;
-	}
 
 	if (p_cds_context->cds_cfg)
 		return p_cds_context->cds_cfg->sub_20_channel_width;
@@ -2732,10 +2689,8 @@ bool cds_is_self_recovery_enabled(void)
 	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!p_cds_context) {
-		cds_err("cds context is invalid");
+	if (!p_cds_context)
 		return false;
-	}
 
 	if (p_cds_context->cds_cfg)
 		return p_cds_context->cds_cfg->self_recovery_enabled;
@@ -2753,10 +2708,8 @@ bool cds_is_fw_down(void)
 	qdf_device_t qdf_ctx;
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf_ctx) {
-		cds_err("cds context is invalid");
+	if (!qdf_ctx)
 		return false;
-	}
 
 	return pld_is_fw_down(qdf_ctx->dev);
 }

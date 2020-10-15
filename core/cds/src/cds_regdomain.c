@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -679,10 +679,8 @@ void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 	const struct reg_dmn_pair *regpair;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		cds_err("unable to get WMA handle");
+	if (!wma)
 		return;
-	}
 
 	if (!reg->regpair) {
 		cds_err(FL("no regpair is found, can not proceed"));
