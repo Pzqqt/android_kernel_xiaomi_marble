@@ -1592,11 +1592,8 @@ void htt_fill_wisa_ext_header(qdf_nbuf_t msdu,
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	QDF_STATUS status;
 
-	if (!qdf_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: qdf_ctx is NULL", __func__);
+	if (!qdf_ctx)
 		return;
-	}
 
 	local_desc_ext->valid_mcs_mask = 1;
 	if (WISA_MODE_EXT_HEADER_6MBPS == type)
@@ -1692,11 +1689,9 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	qdf_dma_dir_t dir;
 	QDF_STATUS status;
 
-	if (qdf_unlikely(!qdf_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: qdf_ctx is NULL", __func__);
+	if (qdf_unlikely(!qdf_ctx))
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	if (qdf_unlikely(!msdu_info)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: bad arg: msdu_info is NULL", __func__);

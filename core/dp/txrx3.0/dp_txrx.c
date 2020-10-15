@@ -343,10 +343,8 @@ void dp_prealloc_deinit(void)
 	struct dp_consistent_prealloc_unaligned *up;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!qdf_ctx) {
-		dp_warn("qdf_ctx is NULL");
+	if (!qdf_ctx)
 		return;
-	}
 
 	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_consistent_allocs); i++) {
 		p = &g_dp_consistent_allocs[i];
@@ -412,7 +410,6 @@ QDF_STATUS dp_prealloc_init(void)
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!qdf_ctx) {
-		dp_err("qdf_ctx is NULL");
 		QDF_BUG(0);
 		return QDF_STATUS_E_FAILURE;
 	}

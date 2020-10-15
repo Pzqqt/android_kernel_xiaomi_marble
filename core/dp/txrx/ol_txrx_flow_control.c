@@ -115,10 +115,8 @@ void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	ol_txrx_pdev_handle pdev;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -232,7 +230,6 @@ static int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool, bool force)
 	}
 
 	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
 		QDF_ASSERT(0);
 		return -ENOMEM;
 	}
@@ -322,7 +319,6 @@ QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force)
 	}
 
 	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -497,10 +493,8 @@ void ol_tx_clear_flow_pool_stats(void)
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	ol_txrx_pdev_handle pdev;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -581,10 +575,8 @@ ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)
 	uint16_t desc_count = src_pool->avail_desc;
 	uint16_t desc_move_count = 0;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return -EINVAL;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -648,10 +640,8 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 	uint32_t stop_threshold;
 	uint32_t start_threshold;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return NULL;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -725,10 +715,8 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	ol_txrx_pdev_handle pdev;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return -EINVAL;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if ((!pdev) || (!pool) || (pool->status != FLOW_POOL_INVALID)) {
@@ -764,7 +752,6 @@ static struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
 	bool is_found = false;
 
 	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
 		QDF_ASSERT(0);
 		return NULL;
 	}
@@ -867,10 +854,8 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 	ol_txrx_dbg("flow_id %d flow_type %d flow_pool_id %d flow_pool_size %d",
 		    flow_id, flow_type, flow_pool_id, flow_pool_size);
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (qdf_unlikely(!pdev)) {
@@ -931,10 +916,8 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 	ol_txrx_dbg("flow_id %d flow_type %d flow_pool_id %d",
 		    flow_id, flow_type, flow_pool_id);
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (qdf_unlikely(!pdev)) {
@@ -988,10 +971,8 @@ int ol_tx_distribute_descs_to_deficient_pools_from_global_pool(void)
 	struct ol_tx_desc_t *tx_desc;
 	uint8_t free_invalid_pool = 0;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return -EINVAL;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -1125,10 +1106,8 @@ static void ol_tx_flow_pool_update(struct ol_tx_flow_pool_t *pool,
 	uint32_t stop_threshold;
 	uint32_t start_threshold;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -1176,10 +1155,8 @@ static void ol_tx_flow_pool_resize(struct ol_tx_flow_pool_t *pool,
 	struct ol_tx_desc_t *tx_desc = NULL;
 	uint16_t temp = 0;
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -1318,10 +1295,8 @@ void ol_tx_flow_pool_resize_handler(uint8_t flow_pool_id,
 	ol_txrx_dbg("flow_pool_id %d flow_pool_size %d",
 		    flow_pool_id, flow_pool_size);
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (qdf_unlikely(!pdev)) {

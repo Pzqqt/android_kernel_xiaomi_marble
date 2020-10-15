@@ -659,10 +659,9 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (qdf_unlikely(!soc)) {
-		ol_txrx_err("soc is NULL");
+	if (qdf_unlikely(!soc))
 		return;
-	}
+
 	vdev = peer->vdev;
 
 	/* bypass defrag for safe mode */

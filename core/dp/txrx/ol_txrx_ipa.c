@@ -119,11 +119,8 @@ QDF_STATUS ol_txrx_ipa_uc_get_resource(struct cdp_soc_t *soc_hdl,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return QDF_STATUS_E_NOENT;
-	}
 
 	ipa_res = &pdev->ipa_resource;
 	htt_ipa_uc_get_resource(pdev->htt_pdev,
@@ -547,11 +544,8 @@ static inline void ol_txrx_ipa_wdi_tx_params(
 {
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return;
-	}
 
 	QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
@@ -613,11 +607,8 @@ static inline void ol_txrx_ipa_wdi_tx_params(
 {
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return;
-	}
 
 	QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = QDF_IPA_CLIENT_WLAN_LEGACY_CONS;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
@@ -683,11 +674,8 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return QDF_STATUS_E_NOENT;
-	}
 
 	pipe_in = qdf_mem_malloc(sizeof(*pipe_in));
 	if (!pipe_in)
@@ -809,10 +797,8 @@ QDF_STATUS ol_txrx_ipa_cleanup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	ol_txrx_pdev_handle pdev;
 
-	if (!soc || !osdev) {
-		ol_txrx_err("%s invalid instance", __func__);
+	if (!soc || !osdev)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	pdev = ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 	if (!pdev) {
@@ -1128,11 +1114,8 @@ static inline void ol_txrx_ipa_tx_params(
 {
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return;
-	}
 
 	QDF_IPA_PIPE_IN_DL_COMP_RING_BASE_PA(pipe_in) =
 		qdf_mem_get_dma_addr(osdev,
@@ -1163,11 +1146,8 @@ static inline void ol_txrx_ipa_rx_params(
 {
 	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return;
-	}
 
 	QDF_IPA_PIPE_IN_UL_RDY_RING_BASE_PA(pipe_in) =
 		ipa_res->rx_rdy_ring->mem_info.pa;
@@ -1200,11 +1180,8 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!osdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf device is null!", __func__);
+	if (!osdev)
 		return QDF_STATUS_E_NOENT;
-	}
 
 	ipa_res = &pdev->ipa_resource;
 	qdf_mem_zero(&pipe_in, sizeof(pipe_in));
