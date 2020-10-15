@@ -881,18 +881,37 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_llstats_free_radio_stats() - free wifi_radio_stats member pointers
+ * @radiostat: Pointer to stats data
+ *
+ * Return: void
+ */
+static void hdd_llstats_free_radio_stats(struct wifi_radio_stats *radiostat)
+{
+	if (radiostat->total_num_tx_power_levels &&
+	    radiostat->tx_time_per_power_level) {
+		qdf_mem_free(radiostat->tx_time_per_power_level);
+		radiostat->tx_time_per_power_level = NULL;
+	}
+	if (radiostat->num_channels && radiostat->channels) {
+		qdf_mem_free(radiostat->channels);
+		radiostat->channels = NULL;
+	}
+}
+
+/**
  * hdd_llstats_post_radio_stats() - post radio stats
  * @adapter: Pointer to device adapter
  * @more_data: More data
  * @radiostat: Pointer to stats data
  * @num_radio: Number of radios
  *
- * Return: 0 on success; errno on failure
+ * Return: void
  */
-static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
-					u32 more_data,
-					struct wifi_radio_stats *radiostat,
-					u32 num_radio)
+static void hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
+					 u32 more_data,
+					 struct wifi_radio_stats *radiostat,
+					 u32 num_radio)
 {
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -913,7 +932,8 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 
 	if (!vendor_event) {
 		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		return -ENOMEM;
+		hdd_llstats_free_radio_stats(radiostat);
+		goto failure;
 	}
 
 	if (nla_put_u32(vendor_event,
@@ -962,6 +982,7 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
 			radiostat->num_channels)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+		hdd_llstats_free_radio_stats(radiostat);
 
 		goto failure;
 	}
@@ -973,11 +994,7 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 			    sizeof(u32) *
 			    radiostat->total_num_tx_power_levels,
 			    radiostat->tx_time_per_power_level);
-		qdf_mem_free(radiostat->tx_time_per_power_level);
-		radiostat->tx_time_per_power_level = NULL;
 		if (ret) {
-			qdf_mem_free(radiostat->channels);
-			radiostat->channels = NULL;
 			hdd_err("nla_put fail");
 			goto failure;
 		}
@@ -986,18 +1003,17 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 	if (radiostat->num_channels) {
 		ret = hdd_llstats_radio_fill_channels(adapter, radiostat,
 						      vendor_event);
-		qdf_mem_free(radiostat->channels);
-		radiostat->channels = NULL;
 		if (ret)
 			goto failure;
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
-	return 0;
+	hdd_llstats_free_radio_stats(radiostat);
+	return;
 
 failure:
 	kfree_skb(vendor_event);
-	return -EINVAL;
+	hdd_llstats_free_radio_stats(radiostat);
 }
 
 /**
@@ -1019,7 +1035,7 @@ hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 				   struct wifi_radio_stats *radio_stat,
 				   u32 num_radio)
 {
-	int i, nr, ret;
+	int i, nr;
 	struct wifi_radio_stats *radio_stat_save = radio_stat;
 
 	/*
@@ -1054,11 +1070,8 @@ hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 
 	radio_stat = radio_stat_save;
 	for (nr = 0; nr < num_radio; nr++) {
-		ret = hdd_llstats_post_radio_stats(adapter, more_data,
-						   radio_stat, num_radio);
-		if (ret)
-			return;
-
+		hdd_llstats_post_radio_stats(adapter, more_data,
+					     radio_stat, num_radio);
 		radio_stat++;
 	}
 
