@@ -746,6 +746,19 @@ enum wlan_reason_code {
  * listen interval is too large.
  * @STATUS_INVALID_FT_ACTION_FRAME_COUNT: Invalid FT Action frame count.
  * @STATUS_INVALID_PMKID: Invalid pairwise master key identifier (PMKID).
+ *
+ * Internal status codes: Add any internal status code just after
+ * STATUS_PROP_START and decrease the value of STATUS_PROP_START
+ * accordingly.
+ *
+ * @STATUS_PROP_START: Start of prop status codes.
+ * @STATUS_NO_NETWORK_FOUND: No network found
+ * @STATUS_AUTH_TX_FAIL: Failed to sent AUTH on air
+ * @STATUS_AUTH_NO_ACK_RECEIVED: No ack received for Auth tx
+ * @STATUS_AUTH_NO_RESP_RECEIVED: No Auth response for Auth tx
+ * @STATUS_ASSOC_TX_FAIL: Failed to sent Assoc on air
+ * @STATUS_ASSOC_NO_ACK_RECEIVED: No ack received for Assoc tx
+ * @STATUS_ASSOC_NO_RESP_RECEIVED: No Assoc response for Assoc tx
  */
 enum wlan_status_code {
 	STATUS_SUCCESS = 0,
@@ -794,6 +807,16 @@ enum wlan_status_code {
 	STATUS_ASSOC_DENIED_LISTEN_INT_TOO_LARGE = 51,
 	STATUS_INVALID_FT_ACTION_FRAME_COUNT = 52,
 	STATUS_INVALID_PMKID = 53,
+
+	/* Error STATUS code for intenal usage*/
+	STATUS_PROP_START = 65528,
+	STATUS_NO_NETWORK_FOUND = 65528,
+	STATUS_AUTH_TX_FAIL = 65529,
+	STATUS_AUTH_NO_ACK_RECEIVED = 65530,
+	STATUS_AUTH_NO_RESP_RECEIVED = 65531,
+	STATUS_ASSOC_TX_FAIL = 65532,
+	STATUS_ASSOC_NO_ACK_RECEIVED = 65533,
+	STATUS_ASSOC_NO_RESP_RECEIVED = 65534,
 };
 
 #define WLAN_OUI_SIZE 4

@@ -31,7 +31,19 @@
 #include <cdp_txrx_mob_def.h>
 #endif
 
-#ifdef FEATURE_CM_ENABLE
+/**
+ * osif_cm_mac_to_qca_connect_fail_reason() - Convert to qca internal connect
+ * fail reason
+ * @internal_reason: Mac reason code of type @wlan_status_code
+ *
+ * Check if it is internal status code and convert it to the
+ * enum qca_sta_connect_fail_reason_codes.
+ *
+ * Return: Reason code of type enum qca_sta_connect_fail_reason_codes
+ */
+enum qca_sta_connect_fail_reason_codes
+osif_cm_mac_to_qca_connect_fail_reason(enum wlan_status_code internal_reason);
+
 /**
  * osif_cm_qca_reason_to_str() - return string conversion of qca reason code
  * @reason: enum qca_disconnect_reason_codes
@@ -56,6 +68,7 @@ osif_cm_qca_reason_to_str(enum qca_disconnect_reason_codes reason);
 enum qca_disconnect_reason_codes
 osif_cm_mac_to_qca_reason(enum wlan_reason_code internal_reason);
 
+#ifdef FEATURE_CM_ENABLE
 /**
  * osif_cm_register_cb() - API to register connection manager
  * callbacks.
