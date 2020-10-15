@@ -679,40 +679,20 @@ void dfs_get_160mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
 }
 
 /*
- * dfs_get_165mhz_bonding_channels() - Get bonding frequency list of restricted
- * 80P80MHz/165MHz channel.
- *
- * @freq_list: Pointer to frequency list.
- */
-static
-void dfs_get_165mhz_bonding_channels(uint16_t *freq_list)
-{
-	uint16_t center_freq = RESTRICTED_80P80_LEFT_80_CENTER_FREQ;
-
-	freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-
-	center_freq = RESTRICTED_80P80_RIGHT_80_CENTER_FREQ;
-	freq_list[4] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-	freq_list[5] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[6] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	freq_list[7] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-}
-
-/*
  * dfs_get_agile_subchans_for_curchan_160() - Get bonding frequency list of
  * agile channels when current operating channel is 160MHz.
  *
  * @dfs: Pointer to DFS structure.
  * @center_freq: Center frequency of the channel.
+ * @segment_id: Segment ID of interest. 0 for primary segment and 1 for
+ * secondary segment.
  * @freq_list: Pointer to frequency list.
  * @nchannels: Number of subchannel.
  */
 static void
 dfs_get_agile_subchans_for_curchan_160(struct wlan_dfs *dfs,
 				       uint16_t center_freq,
+				       uint32_t segment_id,
 				       uint16_t *freq_list,
 				       uint8_t *nchannels)
 {
@@ -733,13 +713,24 @@ dfs_get_agile_subchans_for_curchan_160(struct wlan_dfs *dfs,
 		 */
 		dfs_get_160mhz_bonding_channels(center_freq,
 						freq_list);
-	else if (dfs->dfs_precac_chwidth == CH_WIDTH_80P80MHZ)
+	else if (dfs->dfs_precac_chwidth == CH_WIDTH_80P80MHZ) {
 		/*
-		 * The current operating channel is 160MHz and
-		 * the agile channel is 165MHz(restricted
-		 * 80P80MHZ). Pine ADFS specific.
+		 * The current operating channel is 160MHz and the agile channel
+		 * is 165MHz(restricted 80P80MHZ). Pine ADFS specific.
+		 * If the segment id is primary segment 0, shift the center
+		 * frequency 5730MHz to the center of left 80MHz segment 5690MHz
+		 * and add the subchannels of the left 80MHz segment.
+		 * If the segment id is secondary segment 1, shift the center
+		 * frequency 5730MHz to the center of right 80MHz segment
+		 * 5775MHz and add the subchannels of the right 80MHz segment.
 		 */
-		dfs_get_165mhz_bonding_channels(freq_list);
+		*nchannels = 4;
+		center_freq = (segment_id) ?
+			(center_freq + DFS_165MHZ_SECOND_SEG_OFFSET_RIGHT) :
+			(center_freq - DFS_165MHZ_SECOND_SEG_OFFSET_LEFT);
+		dfs_get_80mhz_bonding_channels(center_freq,
+					       freq_list);
+	}
 }
 
 /*
@@ -789,21 +780,43 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 		if (detector_id == dfs_get_agile_detector_id(dfs))
 			dfs_get_agile_subchans_for_curchan_160(dfs,
 							       center_freq,
+							       segment_id,
 							       freq_list,
 							       &nchannels);
 		else
 			dfs_get_160mhz_bonding_channels(center_freq, freq_list);
-	} else if (WLAN_IS_CHAN_MODE_165(dfs, curchan)) {
-		nchannels = 8;
+	} else if (WLAN_IS_CHAN_MODE_80_80(curchan)) {
 		/*
 		 * If the current channel's bandwidth is 80P80MHz,
 		 * the corresponding agile Detector's bandwidth will be 160MHz
 		 * in case of Pine ADFS.
 		 */
-		if (detector_id == dfs_get_agile_detector_id(dfs))
-			dfs_get_160mhz_bonding_channels(center_freq, freq_list);
-		else
-			dfs_get_165mhz_bonding_channels(freq_list);
+		if (detector_id == dfs_get_agile_detector_id(dfs)) {
+			if (dfs->dfs_precac_chwidth == CH_WIDTH_160MHZ) {
+				nchannels = 8;
+				dfs_get_160mhz_bonding_channels(center_freq,
+								freq_list);
+			} else if (dfs->dfs_precac_chwidth == CH_WIDTH_80MHZ) {
+				nchannels = 4;
+				dfs_get_80mhz_bonding_channels(center_freq,
+							       freq_list);
+			} else {
+				dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"Incorrect precac width %u",
+					dfs->dfs_precac_chwidth);
+			}
+		} else {
+			/*
+			 * If the radar is getting detected in 80P80MHz home
+			 * channel, only the 80MHz segment that is infected with
+			 * radar is of interest. The other 80MHz segment is
+			 * ignored. The center frequency of the radar infected
+			 * segment is dfs_ch_mhz_freq_seg1 if primary and
+			 * dfs_ch_mhz_freq_seg2 in case of secondary.
+			 */
+			nchannels = 4;
+			dfs_get_80mhz_bonding_channels(center_freq, freq_list);
+		}
 	}
 
 	return nchannels;
