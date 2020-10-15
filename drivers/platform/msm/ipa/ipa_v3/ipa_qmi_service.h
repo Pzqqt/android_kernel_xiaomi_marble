@@ -343,6 +343,8 @@ void ipa3_qmi_init(void);
 
 void ipa3_qmi_cleanup(void);
 
+int ipa3_wwan_platform_driver_register(void);
+
 int ipa3_wwan_init(void);
 
 void ipa3_wwan_cleanup(void);
@@ -523,6 +525,11 @@ static inline void ipa3_qmi_init(void)
 static inline void ipa3_qmi_cleanup(void)
 {
 
+}
+
+static inline int ipa3_wwan_platform_driver_register(void)
+{
+	return -EPERM;
 }
 
 static inline int ipa3_wwan_init(void)

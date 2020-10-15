@@ -4846,7 +4846,14 @@ static void rmnet_ipa_debugfs_init(void){}
 static void rmnet_ipa_debugfs_remove(void){}
 #endif /* CONFIG_DEBUG_FS */
 
+int ipa3_wwan_platform_driver_register(void)
+{
+	int rc = platform_driver_register(&rmnet_ipa_driver);
+	if (rc)
+		IPAWANERR_RL("rmnet_ipa driver register fail rc=%d\n", rc);
 
+	return rc;
+}
 
 int ipa3_wwan_init(void)
 {
@@ -4915,21 +4922,10 @@ int ipa3_wwan_init(void)
 		rmnet_ipa3_ctx->rmt_mdm_subsys_notify_handle = ssr_hdl;
 	}
 
-	rc = platform_driver_register(&rmnet_ipa_driver);
-	if (rc) {
-		IPAWANERR_RL("rmnet_ipa driver register fail rc=%d\n", rc);
-		goto fail_unreg_rmt_mdm_ssr;
-	}
+	/* The platform driver register is done later in the ipa_late_init */
 
 	return 0;
 
-fail_unreg_rmt_mdm_ssr:
-	if (ipa3_ctx_get_type(PLATFORM_TYPE) == IPA_PLAT_TYPE_APQ) {
-		subsys_notif_unregister_notifier(
-			rmnet_ipa3_ctx->rmt_mdm_subsys_notify_handle,
-			&ipa3_rmt_mdm_ssr_notifier);
-		rmnet_ipa3_ctx->rmt_mdm_subsys_notify_handle = NULL;
-	}
 fail_unreg_lcl_mdm_ssr:
 	if (rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle) {
 		subsys_notif_unregister_notifier(

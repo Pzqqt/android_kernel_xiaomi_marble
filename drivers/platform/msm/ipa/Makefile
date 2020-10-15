@@ -45,7 +45,10 @@ ipam-$(CONFIG_IPA_UT) += test/ipa_ut_framework.o test/ipa_test_example.o \
 	test/ipa_test_hw_stats.o test/ipa_pm_ut.o \
 	test/ipa_test_wdi3.o
 
+ipanetm-y += ipa_v3/ipa_net.o
+
 obj-$(CONFIG_IPA3) += ipam.o
+obj-$(CONFIG_IPA3) += ipanetm.o
 
 obj-y += ipa_v3/ ipa_clients/
 
