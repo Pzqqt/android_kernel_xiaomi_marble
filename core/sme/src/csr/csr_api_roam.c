@@ -1058,10 +1058,8 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!qdf_ctx) {
-		sme_err("qdf_ctx is NULL");
+	if (!qdf_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	lock_status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_ERROR(lock_status))
@@ -1856,10 +1854,8 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
 	bool      is_unsafe_chan;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	if (!qdf_ctx) {
-		cds_err("qdf_ctx is NULL");
+	if (!qdf_ctx)
 		return true;
-	}
 
 	if ((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
 	     ROAMING_DFS_CHANNEL_DISABLED ||
@@ -16774,7 +16770,6 @@ csr_roam_pmkid_req_callback(uint8_t vdev_id,
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
-		sme_err("NULL mac ptr");
 		QDF_ASSERT(0);
 		return -EINVAL;
 	}

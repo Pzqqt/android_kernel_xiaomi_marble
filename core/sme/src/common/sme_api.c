@@ -131,11 +131,8 @@ struct mac_context *sme_get_mac_context(void)
 	mac_handle_t mac_handle;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-		FL("invalid mac_handle"));
+	if (!mac_handle)
 		return NULL;
-	}
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 
@@ -539,12 +536,11 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 	}
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (mac_handle) {
+	if (mac_handle)
 		mac_ctx = MAC_CONTEXT(mac_handle);
-	} else {
-		sme_err("No mac_handle found");
+	else
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	sme_cmd = cmd->umac_cmd;
 	if (!sme_cmd) {
 		sme_err("No SME command found");
@@ -602,12 +598,11 @@ QDF_STATUS sme_ser_cmd_callback(struct wlan_serialization_command *cmd,
 	tSmeCmd *sme_cmd;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (mac_handle) {
+	if (mac_handle)
 		mac_ctx = MAC_CONTEXT(mac_handle);
-	} else {
-		sme_err("mac_handle is null");
+	else
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	/*
 	 * Do not acquire lock here as sme global lock is already acquired in
 	 * caller or MC thread context
@@ -3819,10 +3814,8 @@ QDF_STATUS sme_oem_req_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	oem_data_req = qdf_mem_malloc(sizeof(*oem_data_req));
 	if (!oem_data_req)
@@ -3869,10 +3862,8 @@ QDF_STATUS sme_oem_data_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -7748,11 +7739,8 @@ QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle,
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	mac = MAC_CONTEXT(mac_handle);
 	status = sme_acquire_global_lock(&mac->sme);
@@ -8186,11 +8174,9 @@ QDF_STATUS sme_set_idle_powersave_config(bool value)
 {
 	void *wmaContext = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wmaContext) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: wmaContext is NULL", __func__);
+	if (!wmaContext)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  " Idle Ps Set Value %d", value);
 
@@ -11087,11 +11073,8 @@ QDF_STATUS sme_enable_uapsd_for_ac(sme_ac_enum_type ac, uint8_t tid,
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-					"wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	switch (ac) {
 	case SME_AC_BK:
@@ -11149,11 +11132,9 @@ QDF_STATUS sme_disable_uapsd_for_ac(sme_ac_enum_type ac, uint32_t sessionId)
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	if (QDF_STATUS_SUCCESS !=
 	    wma_disable_uapsd_per_ac(wma_handle, sessionId, access_category)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -11569,10 +11550,8 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 	uint32_t param_val = 0;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma handle is NULL");
+	if (!wma_handle)
 		return -EIO;
-	}
 
 	status = sme_validate_session_for_cap_update(mac_ctx, session_id,
 						     session);
@@ -12366,11 +12345,8 @@ QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	wma_set_peer_authorized_cb(wma_handle, auth_cb);
 	return wma_set_peer_param(wma_handle, peer_addr, WMI_PEER_AUTHORIZE,
@@ -12505,11 +12481,8 @@ QDF_STATUS sme_set_fw_test(struct set_fwtest_params *fw_test)
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_process_fw_test_cmd(wma_handle, fw_test);
 }
@@ -12526,11 +12499,9 @@ QDF_STATUS sme_ht40_stop_obss_scan(mac_handle_t mac_handle, uint32_t vdev_id)
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	wma_ht40_stop_obss_scan(wma_handle, vdev_id);
 	return QDF_STATUS_SUCCESS;
 }
@@ -12852,11 +12823,8 @@ QDF_STATUS sme_set_apf_instructions(mac_handle_t mac_handle,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_set_apf_instructions(wma_handle, req);
 }
@@ -12867,11 +12835,8 @@ QDF_STATUS sme_set_apf_enable_disable(mac_handle_t mac_handle, uint8_t vdev_id,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_send_apf_enable_cmd(wma_handle, vdev_id, apf_enable);
 }
@@ -12883,11 +12848,8 @@ sme_apf_write_work_memory(mac_handle_t mac_handle,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_send_apf_write_work_memory_cmd(wma_handle, write_params);
 }
@@ -12911,11 +12873,8 @@ sme_apf_read_work_memory(mac_handle_t mac_handle,
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_send_apf_read_work_memory_cmd(wma_handle, read_params);
 }
@@ -13402,11 +13361,8 @@ QDF_STATUS sme_get_sar_power_limits(mac_handle_t mac_handle,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_get_sar_limit(wma_handle, callback, context);
 }
@@ -13417,11 +13373,8 @@ QDF_STATUS sme_set_sar_power_limits(mac_handle_t mac_handle,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_set_sar_limit(wma_handle, sar_limit_cmd);
 }
@@ -13431,10 +13384,9 @@ QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params)
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	return wma_send_coex_config_cmd(wma_handle, coex_cfg_params);
 }
 
@@ -13445,10 +13397,8 @@ QDF_STATUS sme_fips_request(mac_handle_t mac_handle, struct fips_params *param,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_fips_request(wma_handle, param, callback, context);
 }
@@ -13459,11 +13409,9 @@ QDF_STATUS sme_set_cts2self_for_p2p_go(mac_handle_t mac_handle)
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	if (QDF_STATUS_SUCCESS !=
 		wma_set_cts2self_for_p2p_go(wma_handle, true)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -14073,10 +14021,8 @@ QDF_STATUS sme_set_peer_param(uint8_t *peer_addr, uint32_t param_id,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_set_peer_param(wma_handle, peer_addr, param_id,
 				  param_value, vdev_id);
@@ -14195,11 +14141,9 @@ void sme_store_pdev(mac_handle_t mac_handle, struct wlan_objmgr_pdev *pdev)
 	}
 	mac_ctx->pdev = pdev;
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("wma handle is NULL"));
+	if (!wma_handle)
 		return;
-	}
+
 	wma_store_pdev(wma_handle, pdev);
 	pdev->pdev_nif.pdev_fw_caps |= SUPPORTED_CRYPTO_CAPS;
 }
@@ -14232,11 +14176,8 @@ QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params)
 	t_wma_handle *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_twt_process_add_dialog(wma_handle, params);
 }
@@ -14247,11 +14188,8 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
 	t_wma_handle *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wma_twt_process_del_dialog(wma_handle, params);
 }
@@ -14330,10 +14268,8 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/*bodyptr should be freeable*/
 	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
@@ -14390,10 +14326,8 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/*bodyptr should be freeable*/
 	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
@@ -14451,10 +14385,8 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/*bodyptr should be freeable*/
 	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
@@ -14512,10 +14444,8 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/*bodyptr should be freeable*/
 	cmd_params = qdf_mem_malloc(sizeof(*cmd_params));
@@ -14717,11 +14647,9 @@ QDF_STATUS sme_set_vc_mode_config(uint32_t vc_bitmap)
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	if (QDF_STATUS_SUCCESS !=
 		wma_set_vc_mode_config(wma_handle, vc_bitmap)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -15033,10 +14961,9 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 	}
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		sme_err("mac_handle is null");
+	if (!mac_handle)
 		return 0;
-	}
+
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	vdev_id = wlan_vdev_get_id(vdev);
 	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
@@ -15063,10 +14990,9 @@ enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
 	}
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		sme_err("mac_handle is null");
+	if (!mac_handle)
 		return CH_WIDTH_INVALID;
-	}
+
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	vdev_id = wlan_vdev_get_id(vdev);
 	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
@@ -16230,10 +16156,8 @@ QDF_STATUS sme_check_for_duplicate_session(mac_handle_t mac_handle,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
-	if (!soc) {
-		sme_err("Failed to get soc handle");
+	if (!soc)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (QDF_STATUS_SUCCESS != sme_acquire_global_lock(&mac_ctx->sme))
 		return status;
@@ -16261,10 +16185,8 @@ QDF_STATUS sme_get_ani_level(mac_handle_t mac_handle, uint32_t *freqs,
 	void *wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		sme_err("wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	mac->ani_params.ani_level_cb = callback;
 	mac->ani_params.context = context;
@@ -16346,10 +16268,8 @@ QDF_STATUS sme_process_monitor_mode_vdev_up_evt(uint8_t vdev_id)
 	struct mac_context *mac;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle) {
-		sme_err("mac_handle is not valid");
+	if (!mac_handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	mac = MAC_CONTEXT(mac_handle);
 
