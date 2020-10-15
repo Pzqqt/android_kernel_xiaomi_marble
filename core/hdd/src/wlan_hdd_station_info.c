@@ -42,6 +42,7 @@
 #include <cdp_txrx_stats_struct.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_host_stats.h>
+#include <osif_cm_util.h>
 
 /*
  * define short names for the global vendor params
@@ -68,6 +69,8 @@
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_MIC_ERROR_COUNT
 #define STA_INFO_BEACON_REPLAY_COUNT \
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_BEACON_REPLAY_COUNT
+#define STA_INFO_CONNECT_FAIL_REASON_CODE \
+	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_CONNECT_FAIL_REASON_CODE
 #define STA_INFO_MAX \
 	QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_MAX
 
@@ -1647,7 +1650,16 @@ hdd_get_pmf_bcn_protect_stats_len(struct hdd_adapter *adapter)
 		return 0;
 
 	/* 4 pmf becon protect counters each of 32 bit */
-	return nla_attr_size(sizeof(uint32_t) * 4);
+	return nla_total_size(sizeof(uint32_t)) * 4;
+}
+
+static uint32_t
+hdd_get_connect_fail_reason_code_len(struct hdd_adapter *adapter)
+{
+	if (adapter->connect_req_status == STATUS_SUCCESS)
+		return 0;
+
+	return nla_total_size(sizeof(uint32_t));
 }
 
 /**
@@ -1674,6 +1686,31 @@ static int hdd_add_pmf_bcn_protect_stats(struct sk_buff *skb,
 			adapter->hdd_stats.bcn_protect_stats.bcn_mic_fail_cnt) ||
 	    nla_put_u32(skb, STA_INFO_BEACON_REPLAY_COUNT,
 			adapter->hdd_stats.bcn_protect_stats.bcn_replay_cnt)) {
+		hdd_err("put fail");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_add_connect_fail_reason_code() - Fills connect fail reason code
+ * @skb: pointer to skb
+ * @adapter: pointer to hdd adapter
+ *
+ * Return: on success 0 else error code
+ */
+static int hdd_add_connect_fail_reason_code(struct sk_buff *skb,
+					    struct hdd_adapter *adapter)
+{
+	uint32_t reason;
+
+	reason = osif_cm_mac_to_qca_connect_fail_reason(
+					adapter->connect_req_status);
+	if (!reason)
+		return 0;
+
+	if (nla_put_u32(skb, STA_INFO_CONNECT_FAIL_REASON_CODE, reason)) {
 		hdd_err("put fail");
 		return -EINVAL;
 	}
@@ -1915,17 +1952,18 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 				   struct hdd_adapter *adapter)
 {
 	struct sk_buff *skb;
-	uint32_t nl_buf_len;
+	uint32_t nl_buf_len, connect_fail_rsn_len;
 	struct hdd_station_ctx *hdd_sta_ctx;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	if (wlan_hdd_get_station_stats(adapter)) {
+	if (wlan_hdd_get_station_stats(adapter))
 		hdd_err_rl("wlan_hdd_get_station_stats fail");
-		return -EINVAL;
-	}
 
 	nl_buf_len = hdd_get_pmf_bcn_protect_stats_len(adapter);
+	connect_fail_rsn_len = hdd_get_connect_fail_reason_code_len(adapter);
+	nl_buf_len += connect_fail_rsn_len;
+
 	if (!nl_buf_len) {
 		hdd_err_rl("Failed to get bcn pmf stats");
 		return -EINVAL;
@@ -1942,6 +1980,13 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 		hdd_err_rl("hdd_add_pmf_bcn_protect_stats fail");
 		kfree_skb(skb);
 		return -EINVAL;
+	}
+
+	if (connect_fail_rsn_len) {
+		if (hdd_add_connect_fail_reason_code(skb, adapter)) {
+			hdd_err_rl("hdd_add_connect_fail_reason_code fail");
+			return -ENOMEM;
+		}
 	}
 
 	return cfg80211_vendor_cmd_reply(skb);

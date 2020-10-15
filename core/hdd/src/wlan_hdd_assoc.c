@@ -2823,6 +2823,15 @@ static inline void hdd_netif_queue_enable(struct hdd_adapter *adapter)
 	}
 }
 
+static void hdd_save_connect_status(struct hdd_adapter *adapter,
+				    struct csr_roam_info *roam_info)
+{
+	if (!roam_info)
+		return;
+
+	adapter->connect_req_status = roam_info->reasonCode;
+}
+
 /**
  * hdd_association_completion_handler() - association completion handler
  * @adapter: pointer to adapter
@@ -2887,6 +2896,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	sta_ctx->cache_conn_info.signal = sta_ctx->conn_info.signal;
 	sta_ctx->cache_conn_info.noise = sta_ctx->conn_info.noise;
 
+	hdd_save_connect_status(adapter, roam_info);
 	/*
 	 * reset scan reject params if connection is success or we received
 	 * final failure from CSR after trying with all APs.

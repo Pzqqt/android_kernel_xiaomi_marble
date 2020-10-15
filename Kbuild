@@ -866,11 +866,11 @@ OS_IF_INC += -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/gpio/inc
 
 OS_IF_OBJ += $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
-	     $(OS_IF_DIR)/linux/crypto/src/wlan_nl_to_crypto_params.o
+	     $(OS_IF_DIR)/linux/crypto/src/wlan_nl_to_crypto_params.o \
+	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_util.o
 
 ifeq ($(CONFIG_CM_ENABLE), y)
-OS_IF_OBJ += $(OS_IF_DIR)/linux/mlme/src/osif_cm_util.o \
-	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_connect_rsp.o \
+OS_IF_OBJ += $(OS_IF_DIR)/linux/mlme/src/osif_cm_connect_rsp.o \
 	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_disconnect_rsp.o \
 	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_req.o \
 	     $(OS_IF_DIR)/linux/mlme/src/osif_cm_roam_rsp.o

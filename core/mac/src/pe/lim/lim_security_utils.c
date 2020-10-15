@@ -459,7 +459,7 @@ lim_restore_from_auth_state(struct mac_context *mac, tSirResultCodes resultCode,
 	 * host have received the auth rsp and no longer auth
 	 * retry is needed also cancel the auth rety timer
 	 */
-	mac->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
+	mac->auth_ack_status = LIM_ACK_RCD_SUCCESS;
 
 	/* Auth retry and AUth failure timers are not started for SAE */
 	/* 'Change' timer for future activations */
