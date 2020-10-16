@@ -1152,6 +1152,7 @@ cm_roam_switch_to_roam_start(struct wlan_objmgr_pdev *pdev,
 					    WLAN_ROAMING_IN_PROG);
 			break;
 		}
+		/* fallthrough */
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:
@@ -1213,6 +1214,7 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 * transition to WLAN_ROAM_SYNCH_IN_PROG not allowed otherwise
 		 * if we're already RSO stopped, fall through to return failure
 		 */
+		/* fallthrough */
 	case WLAN_ROAM_INIT:
 	case WLAN_ROAM_DEINIT:
 	case WLAN_ROAM_SYNCH_IN_PROG:
