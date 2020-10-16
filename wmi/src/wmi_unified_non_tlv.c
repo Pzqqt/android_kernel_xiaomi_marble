@@ -1021,7 +1021,7 @@ static QDF_STATUS send_peer_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	param_id = convert_host_peer_param_id_to_target_id_non_tlv(param->param_id);
 	if (param_id == WMI_UNAVAILABLE_PARAM) {
-		WMI_LOGW("%s: Unavailable param %d", __func__, param->param_id);
+		wmi_err("Unavailable param %d", param->param_id);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 	buf = wmi_buf_alloc(wmi_handle, len);
