@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -20,7 +20,7 @@
 /**
  * DOC: reg_db.c
  * This file implements QCA regulatory database.
- * Current implementation conforms to database version 31.
+ * Current implementation conforms to database version 33.
  */
 
 #include <qdf_types.h>
@@ -253,7 +253,7 @@ enum reg_domain {
 	FCC11_WORLD = 0x19,
 	FCC13_WORLD = 0xE4,
 	FCC14_FCCB = 0xE6,
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	FCC15_FCCA = 0xEA,
 	FCC16_FCCA = 0xE8,
 #endif
@@ -270,6 +270,7 @@ enum reg_domain {
 	ETSI14_WORLD = 0x29,
 	ETSI15_WORLD = 0x31,
 	ETSI16_WORLD = 0x4A,
+	ETSI17_WORLD = 0x4B,
 
 	APL1_WORLD = 0x52,
 	APL1_ETSIC = 0x55,
@@ -965,7 +966,7 @@ enum reg_domains_5g {
 	FCC11,
 	FCC13,
 	FCC14,
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	FCC15,
 	FCC16,
 #endif
@@ -981,6 +982,7 @@ enum reg_domains_5g {
 	ETSI14,
 	ETSI15,
 	ETSI16,
+	ETSI17,
 	APL1,
 	APL2,
 	APL4,
@@ -1034,7 +1036,7 @@ const struct reg_domain_pair g_reg_dmn_pairs[] = {
 	{FCC11_WORLD, FCC11, WORLD},
 	{FCC13_WORLD, FCC13, WORLD},
 	{FCC14_FCCB, FCC14, FCCB},
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	{FCC15_FCCA, FCC15, FCCA},
 	{FCC16_FCCA, FCC16, FCCA},
 #endif
@@ -1051,6 +1053,7 @@ const struct reg_domain_pair g_reg_dmn_pairs[] = {
 	{ETSI14_WORLD, ETSI14, WORLD},
 	{ETSI15_WORLD, ETSI15, WORLD},
 	{ETSI16_WORLD, ETSI16, WORLD},
+	{ETSI17_WORLD, ETSI17, WORLD},
 
 	{APL1_WORLD, APL1, WORLD},
 	{APL1_ETSIC, APL1, ETSIC},
@@ -1170,6 +1173,7 @@ enum reg_rules_5g {
 	CHAN_5170_5250_9,
 	CHAN_5170_5250_10,
 	CHAN_5170_5250_11,
+	CHAN_5170_5250_12,
 	CHAN_5170_5330_1,
 	CHAN_5170_5330_2,
 	CHAN_5250_5330_1,
@@ -1195,6 +1199,7 @@ enum reg_rules_5g {
 	CHAN_5490_5730_5,
 	CHAN_5490_5730_6,
 	CHAN_5490_5730_7,
+	CHAN_5490_5730_8,
 	CHAN_5490_5710_1,
 	CHAN_5490_5710_2,
 	CHAN_5490_5710_3,
@@ -1223,6 +1228,7 @@ enum reg_rules_5g {
 	CHAN_5735_5835_7,
 	CHAN_5735_5835_8,
 	CHAN_5735_5835_9,
+	CHAN_5735_5835_10,
 	CHAN_5735_5875_1,
 	CHAN_5735_5875_2,
 	CHAN_5735_5875_3,
@@ -1234,11 +1240,13 @@ enum reg_rules_5g {
 	CHAN_5735_5815_4,
 	CHAN_5735_5775_1,
 	CHAN_5735_5895_1,
+	CHAN_5735_5895_2,
 	CHAN_5835_5855_1,
+	CHAN_5835_5855_2,
 	CHAN_5855_5875_1,
 	CHAN_5850_5925_1,
 	CHAN_5850_5925_2,
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	CHAN_5945_7125_1,
 	CHAN_5945_7125_2,
 	CHAN_5945_7125_3,
@@ -1261,6 +1269,7 @@ const struct regulatory_rule reg_rules_5g[] = {
 	[CHAN_5170_5250_9] = {5170, 5250, 40, 30, 0},
 	[CHAN_5170_5250_10] = {5170, 5250, 20, 20, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5170_5250_11] = {5170, 5250, 80, 16, 0},
+	[CHAN_5170_5250_12] = {5170, 5250, 80, 24, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5170_5330_1] = {5170, 5330, 160, 20, REGULATORY_CHAN_NO_IR},
 	[CHAN_5170_5330_2] = {5170, 5330, 160, 24, 0},
 	[CHAN_5250_5330_1] = {5250, 5330, 80, 23, REGULATORY_CHAN_RADAR},
@@ -1289,6 +1298,8 @@ const struct regulatory_rule reg_rules_5g[] = {
 	[CHAN_5490_5730_5] = {5490, 5730, 160, 30, REGULATORY_CHAN_RADAR},
 	[CHAN_5490_5730_6] = {5490, 5730, 160, 23, REGULATORY_CHAN_RADAR},
 	[CHAN_5490_5730_7] = {5490, 5730, 160, 20, REGULATORY_CHAN_RADAR},
+	[CHAN_5490_5730_8] = {5490, 5730, 160, 30, REGULATORY_CHAN_RADAR |
+						   REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5490_5710_1] = {5490, 5710, 160, 30, REGULATORY_CHAN_RADAR},
 	[CHAN_5490_5710_2] = {5490, 5710, 160, 20, REGULATORY_CHAN_RADAR},
 	[CHAN_5490_5710_3] = {5490, 5710, 160, 27, REGULATORY_CHAN_RADAR},
@@ -1315,8 +1326,9 @@ const struct regulatory_rule reg_rules_5g[] = {
 	[CHAN_5735_5835_5] = {5735, 5835, 80, 20, REGULATORY_CHAN_NO_IR},
 	[CHAN_5735_5835_6] = {5735, 5835, 80, 24, 0},
 	[CHAN_5735_5835_7] = {5735, 5835, 80, 36, 0},
-	[CHAN_5735_5835_8] = {5735, 5835, 80, 23, REGULATORY_CHAN_RADAR},
+	[CHAN_5735_5835_8] = {5735, 5835, 80, 23, 0},
 	[CHAN_5735_5835_9] = {5735, 5835, 80, 30, REGULATORY_CHAN_RADAR},
+	[CHAN_5735_5835_10] = {5735, 5835, 80, 14, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5735_5875_1] = {5735, 5875, 20, 27, REGULATORY_CHAN_RADAR},
 	[CHAN_5735_5875_2] = {5735, 5875, 20, 30, 0},
 	[CHAN_5735_5875_3] = {5735, 5875, 80, 30, 0},
@@ -1328,11 +1340,13 @@ const struct regulatory_rule reg_rules_5g[] = {
 	[CHAN_5735_5815_4] = {5735, 5815, 20, 20, 0},
 	[CHAN_5735_5775_1] = {5735, 5775, 40, 23, 0},
 	[CHAN_5735_5895_1] = {5735, 5895, 160, 30, 0},
+	[CHAN_5735_5895_2] = {5735, 5895, 160, 20, REGULATORY_CHAN_NO_IR},
 	[CHAN_5835_5855_1] = {5835, 5855, 20, 30, 0},
+	[CHAN_5835_5855_2] = {5835, 5855, 20, 14, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5855_5875_1] = {5855, 5875, 20, 30, 0},
 	[CHAN_5850_5925_1] = {5850, 5925, 20, 24, 0},
 	[CHAN_5850_5925_2] = {5850, 5925, 20, 30, 0},
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	[CHAN_5945_7125_1] = {5945, 7125, 160, 21, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5945_7125_2] = {5945, 7125, 160, 27, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_5945_7125_3] = {5945, 7125, 160, 20, REGULATORY_CHAN_NO_IR},
@@ -1362,7 +1376,7 @@ const struct regdomain regdomains_5g[] = {
 	[FCC5] = {CTL_FCC, DFS_UNINIT_REGION, 2, 80, 6, 2, {CHAN_5170_5250_4,
 							    CHAN_5735_5835_2} },
 
-	[FCC6] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 5, {CHAN_5170_5250_5,
+	[FCC6] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 5, {CHAN_5170_5250_12,
 							  CHAN_5250_5330_7,
 							  CHAN_5490_5590_1,
 							  CHAN_5650_5730_1,
@@ -1396,7 +1410,7 @@ const struct regdomain regdomains_5g[] = {
 							      CHAN_5735_5835_2}
 							      },
 
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	[FCC15] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 0, 5, {CHAN_5170_5250_5,
 							   CHAN_5250_5330_7,
 							   CHAN_5490_5730_1,
@@ -1473,6 +1487,13 @@ const struct regdomain regdomains_5g[] = {
 	[ETSI16] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 80, 0, 2, {CHAN_5170_5250_11,
 							       CHAN_5735_5875_4}
 							       },
+
+	[ETSI17] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 5, {CHAN_5170_5250_8,
+							      CHAN_5250_5330_12,
+							      CHAN_5490_5730_8,
+							      CHAN_5735_5835_10,
+							      CHAN_5835_5855_2}
+							      },
 
 	[APL1] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 80, 0, 1, {CHAN_5735_5835_2}
 							     },
@@ -1576,7 +1597,7 @@ const struct regdomain regdomains_5g[] = {
 							    CHAN_5250_5330_12,
 							    CHAN_5490_5730_6} },
 
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	[WORLD_5G_1] = {CTL_NONE, DFS_UNINIT_REGION, 2, 160, 0, 3, {CHAN_5170_5330_1,
 								    CHAN_5735_5835_5,
 								    CHAN_5945_7125_3}
@@ -1592,10 +1613,10 @@ const struct regdomain regdomains_5g[] = {
 								    CHAN_5735_5835_5}
 								    },
 
-	[WORLD_5G_2] = {CTL_NONE, DFS_UNINIT_REGION, 2, 160, 0, 3, {CHAN_5170_5330_1,
-								    CHAN_5490_5730_2,
-								    CHAN_5735_5835_5}
-								    },
+	[WORLD_5G_2] = {CTL_NONE, DFS_UNINIT_REGION, 2, 160, 0, 3,
+							{CHAN_5170_5330_1,
+							 CHAN_5490_5730_2,
+							 CHAN_5735_5895_2} },
 #endif
 
 };
@@ -1832,7 +1853,7 @@ bool reg_etsi13_regdmn(uint8_t reg_dmn)
 	return reg_dmn == ETSI13;
 }
 
-#ifdef CONFIG_BAND_6GHZ
+#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 bool reg_fcc_regdmn(uint8_t reg_dmn)
 {
 	return ((reg_dmn == FCC3) ||
