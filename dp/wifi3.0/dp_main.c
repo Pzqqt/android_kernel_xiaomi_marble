@@ -13329,7 +13329,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
 		soc->hw_nac_monitor_support = 1;
 		soc->per_tid_basize_max_tid = 8;
-		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
+		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS_11AX;
 		soc->disable_mac1_intr = 1;
 		soc->disable_mac2_intr = 1;
 		soc->wbm_release_desc_rx_sg_support = 1;
