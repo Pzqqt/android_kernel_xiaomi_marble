@@ -62,9 +62,9 @@ static QDF_STATUS send_peer_add_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, wds_macaddr %pM flag %d\n",
-		 __func__, param->peer_addr, param->vdev_id,
-		 param->dest_addr, param->flags);
+	wmi_debug("peer_macaddr %pM vdev_id %d, wds_macaddr %pM flag %d",
+		  param->peer_addr, param->vdev_id,
+		  param->dest_addr, param->flags);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -104,8 +104,8 @@ static QDF_STATUS send_peer_del_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: vdev_id %d wds_addr %pM\n",
-		 __func__, param->vdev_id, param->dest_addr);
+	wmi_debug("vdev_id %d wds_addr %pM",
+		  param->vdev_id, param->dest_addr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -155,9 +155,9 @@ static QDF_STATUS send_peer_update_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMI_LOGD("%s: peer_addr %pM vdev_id %d wds_addr %pM flags %d\n",
-		 __func__, param->peer_macaddr, param->vdev_id,
-		 param->wds_macaddr, param->flags);
+	wmi_debug("peer_addr %pM vdev_id %d wds_addr %pM flags %d",
+		  param->peer_macaddr, param->vdev_id,
+		  param->wds_macaddr, param->flags);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -196,7 +196,7 @@ send_pdev_get_tpc_config_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 
 	}
-	WMI_LOGD("%s:send success", __func__);
+	wmi_debug("send success");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1082,7 +1082,7 @@ static QDF_STATUS extract_pdev_tpc_config_ev_param_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(param->maxRegAllowedPowerAGTXBF,
 		event->maxRegAllowedPowerAGTXBF,
 		sizeof(param->maxRegAllowedPowerAGTXBF));
-	WMI_LOGD("%s:extract success", __func__);
+	wmi_debug("extract success");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1438,9 +1438,9 @@ extract_nfcal_power_ev_param_tlv(wmi_unified_t wmi_handle,
 	ch_nfdbm = param_buf->nfdbm;
 	ch_freqnum = param_buf->freqnum;
 
-	WMI_LOGD("pdev_id[%x], num_nfdbr[%d], num_nfdbm[%d] num_freqnum[%d]",
-		 event->pdev_id, param_buf->num_nfdbr,
-		 param_buf->num_nfdbm, param_buf->num_freqnum);
+	wmi_debug("pdev_id[%x], num_nfdbr[%d], num_nfdbm[%d] num_freqnum[%d]",
+		  event->pdev_id, param_buf->num_nfdbr,
+		  param_buf->num_nfdbm, param_buf->num_freqnum);
 
 	if (param_buf->num_nfdbr >
 	    WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS) {
@@ -2367,7 +2367,7 @@ send_peer_chan_width_switch_cmd_tlv(wmi_unified_t wmi_handle,
 		max_peers_per_command = max_peers_per_buf;
 	}
 
-	WMI_LOGD("Setting peer limit as %u", max_peers_per_command);
+	wmi_debug("Setting peer limit as %u", max_peers_per_command);
 
 	while (pending_peers > 0) {
 		len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
@@ -2415,8 +2415,8 @@ send_peer_chan_width_switch_cmd_tlv(wmi_unified_t wmi_handle,
 			cmd_peer_list[ix].chan_width =
 					param_peer_list[ix].chan_width;
 
-			WMI_LOGD("Peer[%u]: chan_width = %u", ix,
-				 cmd_peer_list[ix].chan_width);
+			wmi_debug("Peer[%u]: chan_width = %u", ix,
+				  cmd_peer_list[ix].chan_width);
 		}
 
 		pending_peers -= cmd->num_peers;
@@ -2467,7 +2467,7 @@ static QDF_STATUS extract_multi_vdev_restart_resp_event_tlv(
 	qdf_mem_copy(param->vdev_id_bmap, param_buf->vdev_ids_bitmap,
 		     sizeof(param->vdev_id_bmap));
 
-	WMI_LOGD("vdev_id_bmap is as follows");
+	wmi_debug("vdev_id_bmap is as follows");
 	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   param->vdev_id_bmap, sizeof(param->vdev_id_bmap));
 

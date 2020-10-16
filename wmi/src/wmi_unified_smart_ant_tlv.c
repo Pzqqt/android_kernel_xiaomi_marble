@@ -146,7 +146,6 @@ static QDF_STATUS send_smart_ant_set_rx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
-	WMI_LOGD("%s:\n", __func__);
 	if (!buf) {
 		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
 		return QDF_STATUS_E_NOMEM;
