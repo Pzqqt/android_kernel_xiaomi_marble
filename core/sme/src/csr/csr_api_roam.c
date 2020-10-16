@@ -20605,6 +20605,10 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 
 	rso_config->rso_11r_info.enable_ft_im_roaming =
 		mac->mlme_cfg->lfr.enable_ft_im_roaming;
+	rso_config->rso_11r_info.mdid.mdie_present =
+		session->connectedProfile.mdid.mdie_present;
+	rso_config->rso_11r_info.mdid.mobility_domain =
+		session->connectedProfile.mdid.mobility_domain;
 	rso_config->rso_11r_info.r0kh_id_length =
 			session->ftSmeContext.r0kh_id_len;
 	qdf_mem_copy(rso_config->rso_11r_info.r0kh_id,
