@@ -625,7 +625,7 @@ static inline int pld_pcie_idle_shutdown(struct device *dev)
 
 static inline int pld_pcie_force_assert_target(struct device *dev)
 {
-	return cnss_force_collect_rddm(dev);
+	return cnss_force_fw_assert(dev);
 }
 
 static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
