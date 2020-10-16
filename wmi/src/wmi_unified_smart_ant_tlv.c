@@ -50,7 +50,7 @@ static QDF_STATUS send_smart_ant_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -112,16 +112,16 @@ static QDF_STATUS send_smart_ant_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				WMI_PDEV_SMART_ANT_ENABLE_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE(" %s :WMI Failed\n", __func__);
-		WMI_LOGE("enable:%d mode:%d  rx_antenna: 0x%08x PINS: [%d %d %d %d] Func[%d %d %d %d] cmdstatus=%d\n",
-			 cmd->enable,
-			 cmd->mode,
-			 cmd->rx_antenna,
-			 param->gpio_pin[0], param->gpio_pin[1],
-			 param->gpio_pin[2], param->gpio_pin[3],
-			 param->gpio_func[0], param->gpio_func[1],
-			 param->gpio_func[2], param->gpio_func[3],
-			 ret);
+		wmi_err("WMI Failed");
+		wmi_err("enable:%d mode:%d  rx_antenna: 0x%08x PINS: [%d %d %d %d] Func[%d %d %d %d] cmdstatus=%d",
+			cmd->enable,
+			cmd->mode,
+			cmd->rx_antenna,
+			param->gpio_pin[0], param->gpio_pin[1],
+			param->gpio_pin[2], param->gpio_pin[3],
+			param->gpio_func[0], param->gpio_func[1],
+			param->gpio_func[2], param->gpio_func[3],
+			ret);
 		wmi_buf_free(buf);
 	}
 
@@ -147,7 +147,7 @@ static QDF_STATUS send_smart_ant_set_rx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -169,11 +169,10 @@ static QDF_STATUS send_smart_ant_set_rx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 				WMI_PDEV_SMART_ANT_SET_RX_ANTENNA_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE(" %s :WMI Failed\n", __func__);
-		WMI_LOGE("%s: rx_antenna: 0x%08x cmdstatus=%d\n",
-			 __func__,
-			 cmd->rx_antenna,
-			 ret);
+		wmi_err("WMI Failed");
+		wmi_err("rx_antenna: 0x%08x cmdstatus=%d",
+			cmd->rx_antenna,
+			ret);
 		wmi_buf_free(buf);
 	}
 
@@ -206,7 +205,7 @@ static QDF_STATUS send_smart_ant_set_tx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -245,7 +244,7 @@ static QDF_STATUS send_smart_ant_set_tx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 				   WMI_PEER_SMART_ANT_SET_TX_ANTENNA_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE(" %s :WMI Failed\n", __func__);
+		wmi_err("WMI Failed");
 		wmi_buf_free(buf);
 	}
 
@@ -274,7 +273,7 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -314,7 +313,7 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID)) {
 		wmi_buf_free(buf);
-		WMI_LOGE("%s :WMI Failed\n", __func__);
+		wmi_err("WMI Failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -348,7 +347,7 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
 	buf = wmi_buf_alloc(wmi_handle, len);
 
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -401,7 +400,7 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
 				WMI_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE(" %s :WMI Failed\n", __func__);
+		wmi_err("WMI Failed");
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -435,14 +434,14 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 	len = sizeof(*cmd) + args_tlv_len;
 
 	if (param->args_count == 0) {
-		WMI_LOGE("%s: Can't send a command with %d arguments\n",
-			  __func__, param->args_count);
+		wmi_err("Can't send a command with %d arguments",
+			param->args_count);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		wmi_err("wmi_buf_alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -477,10 +476,10 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 			   WMI_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID);
 
 	if (ret != 0) {
-		WMI_LOGE("%s: WMI FAILED:Sent cmd_id: 0x%x\n Node: %02x:%02x:%02x:%02x:%02x:%02x cmdstatus=%d\n",
-			 __func__, param->cmd_id, macaddr[0],
-			 macaddr[1], macaddr[2], macaddr[3],
-			 macaddr[4], macaddr[5], ret);
+		wmi_err("WMI FAILED:Sent cmd_id: 0x%x\n Node: %02x:%02x:%02x:%02x:%02x:%02x cmdstatus=%d",
+			param->cmd_id, macaddr[0],
+			macaddr[1], macaddr[2], macaddr[3],
+			macaddr[4], macaddr[5], ret);
 		wmi_buf_free(buf);
 	}
 
@@ -526,8 +525,8 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 	if (rate_cap->ratecount[0]) {
 		if (param_buf->num_ratecode_legacy >
 				SA_MAX_LEGACY_RATE_WORDS) {
-			WMI_LOGE("Invalid Number of ratecode_legacy %d",
-					param_buf->num_ratecode_legacy);
+			wmi_err("Invalid Number of ratecode_legacy %d",
+				param_buf->num_ratecode_legacy);
 			return QDF_STATUS_E_FAILURE;
 		}
 		ofdm_rate = param_buf->ratecode_legacy;
@@ -545,8 +544,8 @@ static QDF_STATUS extract_peer_ratecode_list_ev_tlv(
 
 	htindex = 0;
 	if (param_buf->num_ratecode_mcs > SA_MAX_HT_RATE_WORDS) {
-		WMI_LOGE("Invalid Number of ratecode_mcs %d",
-				param_buf->num_ratecode_mcs);
+		wmi_err("Invalid Number of ratecode_mcs %d",
+			param_buf->num_ratecode_mcs);
 		return QDF_STATUS_E_FAILURE;
 	}
 	mcs_rate = param_buf->ratecode_mcs;
