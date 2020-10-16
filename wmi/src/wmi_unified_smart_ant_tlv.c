@@ -388,8 +388,8 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
 		itr += 2;
 		train_param->train_antenna_series = param->antenna_array[loop];
 		train_param->rc_flags = 0;
-		WMI_LOGI(FL("Series number:%d\n"), loop);
-		WMI_LOGI(FL("Rate [0x%02x] Tx_Antenna [0x%08x]\n"),
+		wmi_info("Series number:%d", loop);
+		wmi_info("Rate [0x%02x] Tx_Antenna [0x%08x]",
 			 train_param->train_rate_series,
 			 train_param->train_antenna_series);
 		train_param++;
@@ -467,7 +467,7 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 
 	for (i = 0; i < param->args_count; i++) {
 		node_config_args[i] = param->args_arr[i];
-		WMI_LOGI("%d", param->args_arr[i]);
+		wmi_info("%d", param->args_arr[i]);
 	}
 
 	wmi_mtrace(WMI_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID,
