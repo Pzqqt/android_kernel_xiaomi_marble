@@ -43,14 +43,10 @@ static void if_mgr_enable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 	if (curr_vdev_id != vdev_id &&
 	    vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
 	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
-		/* IFMGR Verification: Temporary call to sme_start_roaming api,
-		 * will be replaced by converged roaming api
-		 * once roaming testing is complete.
-		 */
-		ifmgr_debug("Roaming started on vdev_id %d", vdev_id);
-		sme_start_roaming(cds_get_context(QDF_MODULE_ID_SME),
-				  vdev_id, REASON_DRIVER_DISABLED,
-				  roam_arg->requestor);
+		ifmgr_debug("Roaming enabled on vdev_id %d", vdev_id);
+		wlan_cm_enable_rso(pdev, vdev_id,
+				   roam_arg->requestor,
+				   REASON_DRIVER_ENABLED);
 	}
 }
 
@@ -92,10 +88,10 @@ static void if_mgr_disable_roaming_on_vdev(struct wlan_objmgr_pdev *pdev,
 		 * will be replaced by converged roaming api
 		 * once roaming testing is complete.
 		 */
-		ifmgr_debug("Roaming stopped on vdev_id %d", vdev_id);
-		sme_stop_roaming(cds_get_context(QDF_MODULE_ID_SME),
-				 vdev_id, REASON_DRIVER_DISABLED,
-				 roam_arg->requestor);
+		ifmgr_debug("Roaming disabled on vdev_id %d", vdev_id);
+		wlan_cm_disable_rso(pdev, vdev_id,
+				    roam_arg->requestor,
+				    REASON_DRIVER_DISABLED);
 	}
 }
 
@@ -135,14 +131,8 @@ if_mgr_enable_roaming_on_connected_sta(struct wlan_objmgr_vdev *vdev,
 
 	if (policy_mgr_is_sta_active_connection_exists(psoc) &&
 	    wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
-		/* IFMGR Verification: Temporary call to
-		 * sme_enable_roaming_on_connected_sta api,
-		 * will be replaced by converged roaming api
-		 * once roaming testing is complete.
-		 */
 		ifmgr_debug("Enable roaming on connected sta for vdev_id %d", vdev_id);
-		sme_enable_roaming_on_connected_sta(cds_get_context(QDF_MODULE_ID_SME),
-						    vdev_id);
+		wlan_cm_enable_roaming_on_connected_sta(pdev, vdev_id);
 		policy_mgr_set_pcl_for_connected_vdev(psoc, vdev_id, true);
 	}
 
