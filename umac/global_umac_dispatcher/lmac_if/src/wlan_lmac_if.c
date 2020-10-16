@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -289,11 +289,27 @@ static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(
 }
 #endif /* WIFI_POS_CONVERGED */
 
+#ifdef CONFIG_BAND_6GHZ
+static void wlan_lmac_if_register_master_list_ext_handler(
+					struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->reg_rx_ops.master_list_ext_handler =
+		tgt_reg_process_master_chan_list_ext;
+}
+#else
+static inline void wlan_lmac_if_register_master_list_ext_handler(
+					struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 static void wlan_lmac_if_umac_reg_rx_ops_register(
 	struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	rx_ops->reg_rx_ops.master_list_handler =
 		tgt_reg_process_master_chan_list;
+
+	wlan_lmac_if_register_master_list_ext_handler(rx_ops);
 
 	rx_ops->reg_rx_ops.reg_11d_new_cc_handler =
 		tgt_reg_process_11d_new_country;

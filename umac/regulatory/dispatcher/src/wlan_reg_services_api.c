@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -440,6 +440,36 @@ QDF_STATUS wlan_regulatory_deinit(void)
 	return ret_status;
 }
 
+#ifdef CONFIG_BAND_6GHZ
+static void
+regulatory_assign_register_master_ext_handler(struct wlan_objmgr_psoc *psoc,
+					struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+	if (tx_ops->register_master_ext_handler)
+		tx_ops->register_master_ext_handler(psoc, NULL);
+}
+
+static void
+regulatory_assign_unregister_master_ext_handler(struct wlan_objmgr_psoc *psoc,
+					struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+	if (tx_ops->unregister_master_ext_handler)
+		tx_ops->unregister_master_ext_handler(psoc, NULL);
+}
+#else
+static inline void
+regulatory_assign_register_master_ext_handler(struct wlan_objmgr_psoc *psoc,
+					struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+}
+
+static inline void
+regulatory_assign_unregister_master_ext_handler(struct wlan_objmgr_psoc *psoc,
+					struct wlan_lmac_if_reg_tx_ops *tx_ops)
+{
+}
+#endif
+
 QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
@@ -447,6 +477,7 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 	tx_ops = reg_get_psoc_tx_ops(psoc);
 	if (tx_ops->register_master_handler)
 		tx_ops->register_master_handler(psoc, NULL);
+	regulatory_assign_register_master_ext_handler(psoc, tx_ops);
 	if (tx_ops->register_11d_new_cc_handler)
 		tx_ops->register_11d_new_cc_handler(psoc, NULL);
 	if (tx_ops->register_ch_avoid_event_handler)
@@ -464,6 +495,7 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 		tx_ops->unregister_11d_new_cc_handler(psoc, NULL);
 	if (tx_ops->unregister_master_handler)
 		tx_ops->unregister_master_handler(psoc, NULL);
+	regulatory_assign_unregister_master_ext_handler(psoc, tx_ops);
 	if (tx_ops->unregister_ch_avoid_event_handler)
 		tx_ops->unregister_ch_avoid_event_handler(psoc, NULL);
 

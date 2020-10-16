@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -35,12 +35,6 @@
 #include <../../core/src/reg_build_chan_list.h>
 #include <../../core/src/reg_offload_11d_scan.h>
 
-/**
- * tgt_process_master_chan_list() - process master channel list
- * @reg_info: regulatory info
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
 					    *reg_info)
 {
@@ -60,6 +54,28 @@ QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
 
 	return reg_process_master_chan_list(reg_info);
 }
+
+#ifdef CONFIG_BAND_6GHZ
+QDF_STATUS tgt_reg_process_master_chan_list_ext(struct cur_regulatory_info
+						*reg_info)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = reg_info->psoc;
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc_reg->offload_enabled)
+		return QDF_STATUS_SUCCESS;
+
+	return reg_process_master_chan_list_ext(reg_info);
+}
+#endif
 
 QDF_STATUS tgt_reg_process_11d_new_country(struct wlan_objmgr_psoc *psoc,
 		struct reg_11d_new_country *reg_11d_new_cc)

@@ -817,6 +817,8 @@ struct wlan_lmac_if_ftm_rx_ops {
  *                  pointers for regulatory component
  * @register_master_handler: pointer to register event handler
  * @unregister_master_handler:  pointer to unregister event handler
+ * @register_master_ext_handler: pointer to register ext event handler
+ * @unregister_master_ext_handler: pointer to unregister ext event handler
  * @register_11d_new_cc_handler: pointer to register 11d cc event handler
  * @unregister_11d_new_cc_handler:  pointer to unregister 11d cc event handler
  * @send_ctl_info: call-back function to send CTL info to firmware
@@ -826,7 +828,12 @@ struct wlan_lmac_if_reg_tx_ops {
 					      void *arg);
 	QDF_STATUS (*unregister_master_handler)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
-
+#ifdef CONFIG_BAND_6GHZ
+	QDF_STATUS (*register_master_ext_handler)(struct wlan_objmgr_psoc *psoc,
+						  void *arg);
+	QDF_STATUS (*unregister_master_ext_handler)
+				(struct wlan_objmgr_psoc *psoc, void *arg);
+#endif
 	QDF_STATUS (*set_country_code)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
 	QDF_STATUS (*fill_umac_legacy_chanlist)(struct wlan_objmgr_pdev *pdev,
@@ -1163,6 +1170,10 @@ struct wlan_lmac_if_mgmt_txrx_rx_ops {
 struct wlan_lmac_if_reg_rx_ops {
 	QDF_STATUS (*master_list_handler)(struct cur_regulatory_info
 					  *reg_info);
+#ifdef CONFIG_BAND_6GHZ
+	QDF_STATUS (*master_list_ext_handler)(struct cur_regulatory_info
+					      *reg_info);
+#endif
 	QDF_STATUS (*reg_11d_new_cc_handler)(struct wlan_objmgr_psoc *psoc,
 			struct reg_11d_new_country *reg_11d_new_cc);
 	QDF_STATUS (*reg_set_regdb_offloaded)(struct wlan_objmgr_psoc *psoc,
