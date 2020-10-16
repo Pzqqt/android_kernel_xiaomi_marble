@@ -2579,13 +2579,17 @@ int pld_is_fw_down(struct device *dev)
 }
 
 /**
- * pld_force_assert_target() - Send a force assert to FW.
- * This can use various sideband requests available at platform to
- * initiate a FW assert.
- * @dev: device
+ * pld_force_assert_target() - Send a force assert request to FW.
+ * @dev: device pointer
  *
- *  Return: 0 if force assert of target was triggered successfully
- *          Non zero failure code for errors
+ * This can use various sideband requests available at platform driver to
+ * initiate a FW assert.
+ *
+ * Context: Any context
+ * Return:
+ * 0 - force assert of FW is triggered successfully.
+ * -EOPNOTSUPP - force assert is not supported.
+ * Other non-zero codes - other failures or errors
  */
 int pld_force_assert_target(struct device *dev)
 {
@@ -2611,14 +2615,20 @@ int pld_force_assert_target(struct device *dev)
 }
 
 /**
- * pld_collect_rddm() - Collect ramdump before FW assert.
- * This can used to collect ramdump before FW assert.
- * @dev: device
+ * pld_force_collect_target_dump() - Collect FW dump after asserting FW.
+ * @dev: device pointer
  *
- *  Return: 0 if ramdump is collected successfully
- *          Non zero failure code for errors
+ * This API will send force assert request to FW and wait till FW dump has
+ * been collected.
+ *
+ * Context: Process context only since this is a blocking call.
+ * Return:
+ * 0 - FW dump is collected successfully.
+ * -EOPNOTSUPP - forcing assert and collecting FW dump is not supported.
+ * -ETIMEDOUT - FW dump collection is timed out for any reason.
+ * Other non-zero codes - other failures or errors
  */
-int pld_collect_rddm(struct device *dev)
+int pld_force_collect_target_dump(struct device *dev)
 {
 	enum pld_bus_type type = pld_get_bus_type(dev);
 
@@ -2632,7 +2642,7 @@ int pld_collect_rddm(struct device *dev)
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
 	case PLD_BUS_TYPE_IPCI:
-		return 0;
+		return -EOPNOTSUPP;
 	default:
 		pr_err("Invalid device type %d\n", type);
 		return -EINVAL;

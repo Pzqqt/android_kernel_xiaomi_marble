@@ -743,7 +743,7 @@ unsigned int pld_socinfo_get_serial_number(struct device *dev);
 int pld_is_qmi_disable(struct device *dev);
 int pld_is_fw_down(struct device *dev);
 int pld_force_assert_target(struct device *dev);
-int pld_collect_rddm(struct device *dev);
+int pld_force_collect_target_dump(struct device *dev);
 int pld_qmi_send_get(struct device *dev);
 int pld_qmi_send_put(struct device *dev);
 int pld_qmi_send(struct device *dev, int type, void *cmd,

@@ -1935,7 +1935,7 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 
 	cds_set_recovery_in_progress(true);
 	cds_set_assert_target_in_progress(true);
-	if (pld_collect_rddm(qdf->dev))
+	if (pld_force_collect_target_dump(qdf->dev))
 		cds_force_assert_target(qdf);
 	cds_set_assert_target_in_progress(false);
 
