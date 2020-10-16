@@ -1712,11 +1712,11 @@ out:
  */
 static void cache_station_stats_cb(struct stats_event *ev, void *cookie)
 {
-	struct hdd_adapter *adapter = cookie;
+	struct hdd_adapter *adapter = cookie, *next_adapter = NULL;
 	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 	uint8_t vdev_id = adapter->vdev_id;
 
-	hdd_for_each_adapter_dev_held(hdd_ctx, adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
 		if (adapter->vdev_id != vdev_id) {
 			dev_put(adapter->dev);
 			continue;
@@ -1724,6 +1724,8 @@ static void cache_station_stats_cb(struct stats_event *ev, void *cookie)
 		copy_station_stats_to_adapter(adapter, ev);
 		/* dev_put has to be done here */
 		dev_put(adapter->dev);
+		if (next_adapter)
+			dev_put(next_adapter->dev);
 		break;
 	}
 }
@@ -6525,13 +6527,13 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 
 void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 {
-	struct hdd_adapter *adapter = NULL;
+	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
 	struct hdd_tx_rx_stats *stats;
 	int i = 0;
 	uint32_t total_rx_pkt, total_rx_dropped,
 		 total_rx_delv, total_rx_refused;
 
-	hdd_for_each_adapter_dev_held(ctx, adapter) {
+	hdd_for_each_adapter_dev_held_safe(ctx, adapter, next_adapter) {
 		total_rx_pkt = 0;
 		total_rx_dropped = 0;
 		total_rx_delv = 0;

@@ -122,25 +122,34 @@ static int hdd_close_ndi(struct hdd_adapter *adapter)
 #ifdef NDP_SAP_CONCURRENCY_ENABLE
 static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter, *next_adapter = NULL;
 	struct hdd_station_ctx *sta_ctx;
 
-	hdd_for_each_adapter(hdd_ctx, adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
 		switch (adapter->device_mode) {
 		case QDF_P2P_GO_MODE:
 			if (test_bit(SOFTAP_BSS_STARTED,
-				     &adapter->event_flags))
+				     &adapter->event_flags)) {
+				dev_put(adapter->dev);
+				if (next_adapter)
+					dev_put(next_adapter->dev);
 				return false;
+			}
 			break;
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (hdd_conn_is_connected(sta_ctx) ||
-			    hdd_is_connecting(sta_ctx))
+			    hdd_is_connecting(sta_ctx)) {
+				dev_put(adapter->dev);
+				if (next_adapter)
+					dev_put(next_adapter->dev);
 				return false;
+			}
 			break;
 		default:
 			break;
 		}
+		dev_put(adapter->dev);
 	}
 
 	return true;
@@ -148,26 +157,35 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 #else
 static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter, *next_adapter = NULL;
 	struct hdd_station_ctx *sta_ctx;
 
-	hdd_for_each_adapter(hdd_ctx, adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
 		switch (adapter->device_mode) {
 		case QDF_P2P_GO_MODE:
 		case QDF_SAP_MODE:
 			if (test_bit(SOFTAP_BSS_STARTED,
-				     &adapter->event_flags))
+				     &adapter->event_flags)) {
+				dev_put(adapter->dev);
+				if (next_adapter)
+					dev_put(next_adapter->dev);
 				return false;
+			}
 			break;
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (hdd_conn_is_connected(sta_ctx) ||
-			    hdd_is_connecting(sta_ctx))
+			    hdd_is_connecting(sta_ctx)) {
+				dev_put(adapter->dev);
+				if (next_adapter)
+					dev_put(next_adapter->dev);
 				return false;
+			}
 			break;
 		default:
 			break;
 		}
+		dev_put(adapter->dev);
 	}
 
 	return true;
@@ -546,7 +564,7 @@ error_init_txrx:
 
 int hdd_ndi_open(char *iface_name)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter, *next_adapter = NULL;
 	struct qdf_mac_addr random_ndi_mac;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t ndi_adapter_count = 0;
@@ -558,9 +576,10 @@ int hdd_ndi_open(char *iface_name)
 		return -EINVAL;
 	}
 
-	hdd_for_each_adapter(hdd_ctx, adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
 		if (WLAN_HDD_IS_NDI(adapter))
 			ndi_adapter_count++;
+		dev_put(adapter->dev);
 	}
 	if (ndi_adapter_count >= MAX_NDI_ADAPTERS) {
 		hdd_err("Can't allow more than %d NDI adapters",

@@ -45,7 +45,7 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 	struct hdd_context *hdd_ctx;
 	struct qdf_notifer_data *hdd_hang_data = data;
 	uint8_t *hdd_buf_ptr;
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter, *next_adapter = NULL;
 	uint32_t total_len;
 	struct wlan_objmgr_vdev *vdev;
 	struct hdd_hang_event_fixed_param *cmd;
@@ -77,7 +77,7 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 		hdd_hang_data->offset += total_len;
 	}
 
-	hdd_for_each_adapter_dev_held(hdd_ctx, adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
 		vdev = hdd_objmgr_get_vdev(adapter);
 		if (!vdev) {
 			dev_put(adapter->dev);
