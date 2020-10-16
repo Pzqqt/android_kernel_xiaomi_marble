@@ -6055,6 +6055,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_PRINT_STATS("hal ring access full fail: %u msdus",
 			       pdev->soc->stats.rx.err.hal_ring_access_full_fail);
 
+		DP_PRINT_STATS("Rx BAR frames:%d", soc->stats.rx.bar_frame);
+
 		for (error_code = 0; error_code < HAL_REO_ERR_MAX;
 				error_code++) {
 			if (!pdev->soc->stats.rx.err.reo_error[error_code])
@@ -6636,6 +6638,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("REO Error(0-14):%s", reo_error);
 	DP_PRINT_STATS("REO CMD SEND FAIL: %d",
 		       soc->stats.rx.err.reo_cmd_send_fail);
+
+	DP_PRINT_STATS("Rx BAR frames:%d", soc->stats.rx.bar_frame);
 }
 
 #ifdef FEATURE_TSO_STATS

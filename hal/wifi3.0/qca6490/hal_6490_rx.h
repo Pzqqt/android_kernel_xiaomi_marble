@@ -307,6 +307,17 @@
 			      HWIO_REO_R0_MISC_CTL_ADDR( \
 			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
 			      (reg_val)); \
+		reg_val = \
+			HAL_REG_READ((soc), \
+				     HWIO_REO_R0_GENERAL_ENABLE_ADDR(	\
+				     SEQ_WCSS_UMAC_REO_REG_OFFSET)); \
+		reg_val &= \
+			(~HWIO_REO_R0_GENERAL_ENABLE_BAR_DEST_RING_BMSK |\
+				(REO_REMAP_TCL << HWIO_REO_R0_GENERAL_ENABLE_BAR_DEST_RING_SHFT)); \
+		HAL_REG_WRITE((soc), \
+			      HWIO_REO_R0_GENERAL_ENABLE_ADDR( \
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
+			      (reg_val)); \
 	} while (0)
 
 #define HAL_RX_MSDU_DESC_INFO_GET(msdu_details_ptr) \

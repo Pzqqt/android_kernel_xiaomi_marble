@@ -186,12 +186,14 @@ enum hal_rx_msdu_desc_flags {
  *                      [2] AMPDU flag
  *			[3] raw_ampdu
  * @peer_meta_data:	Upper bits containing peer id, vdev id
+ * @bar_frame: indicates if received frame is a bar frame
  */
 struct hal_rx_mpdu_desc_info {
 	uint16_t msdu_count;
 	uint16_t mpdu_seq; /* 12 bits for length */
 	uint32_t mpdu_flags;
 	uint32_t peer_meta_data; /* sw progamed meta-data:MAC Id & peer Id */
+	uint16_t bar_frame;
 };
 
 /**
@@ -427,6 +429,11 @@ enum hal_rx_ret_buf_manager {
 	HAL_RX_MPDU_AMPDU_FLAG_GET(mpdu_info_ptr) |	\
 	HAL_RX_MPDU_RAW_MPDU_GET(mpdu_info_ptr))
 
+#define HAL_RX_MPDU_BAR_FRAME_GET(mpdu_info_ptr) \
+	((mpdu_info_ptr[RX_MPDU_DESC_INFO_0_BAR_FRAME_OFFSET >> 2] & \
+	RX_MPDU_DESC_INFO_0_BAR_FRAME_MASK) >> \
+	RX_MPDU_DESC_INFO_0_BAR_FRAME_LSB)
+
 
 #define HAL_RX_MSDU_PKT_LENGTH_GET(msdu_info_ptr)		\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(msdu_info_ptr,		\
@@ -558,6 +565,7 @@ static inline void hal_rx_mpdu_desc_info_get(void *desc_addr,
 	mpdu_desc_info->mpdu_flags = HAL_RX_MPDU_FLAGS_GET(mpdu_info);
 	mpdu_desc_info->peer_meta_data =
 		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
+	mpdu_desc_info->bar_frame = HAL_RX_MPDU_BAR_FRAME_GET(mpdu_info);
 }
 
 /*
