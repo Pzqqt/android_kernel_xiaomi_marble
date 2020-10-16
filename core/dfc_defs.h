@@ -6,11 +6,7 @@
 #ifndef _DFC_DEFS_H
 #define _DFC_DEFS_H
 
-#ifdef RMNET_LA_PLATFORM
 #include <linux/soc/qcom/qmi.h>
-#else
-#include "../../../../../../../src/kernel/msm-5.4/include/linux/soc/qcom/qmi.h"
-#endif
 #include "qmi_rmnet_i.h"
 
 #define DFC_ACK_TYPE_DISABLE 1

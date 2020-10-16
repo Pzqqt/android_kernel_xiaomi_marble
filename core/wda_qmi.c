@@ -12,11 +12,7 @@
  */
 
 #include <linux/rtnetlink.h>
-#ifdef RMNET_LA_PLATFORM
 #include <linux/soc/qcom/qmi.h>
-#else
-#include "../../../../../../../src/kernel/msm-5.4/include/linux/soc/qcom/qmi.h"
-#endif
 #include "rmnet_qmi.h"
 #define CREATE_TRACE_POINTS
 #include "wda.h"

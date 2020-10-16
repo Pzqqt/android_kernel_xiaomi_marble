@@ -10,12 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-#ifdef RMNET_LA_PLATFORM
 #include <linux/soc/qcom/qmi.h>
-#else
-#include "../../../../../../../src/kernel/msm-5.4/include/linux/soc/qcom/qmi.h"
-#endif
-
 #include "qmi_rmnet_i.h"
 #include "qmi_rmnet.h"
 #include "rmnet_qmi.h"
