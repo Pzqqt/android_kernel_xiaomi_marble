@@ -2536,13 +2536,25 @@ static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
 	struct wmi_unified *wmi_handle = wmi_cb_ctx;
 	wmi_buf_t evt_buf;
 	uint32_t evt_id;
+	int wmi_msg_len;
 
 	if (!wmi_handle || !buf)
 		return -EINVAL;
 
-	evt_buf = wmi_buf_alloc(wmi_handle, len);
+	/**
+	 * Subtract WMI_MIN_HEAD_ROOM from received QMI event length to get
+	 * wmi message length
+	 */
+	wmi_msg_len = len - WMI_MIN_HEAD_ROOM;
+
+	evt_buf = wmi_buf_alloc(wmi_handle, wmi_msg_len);
 	if (!evt_buf)
 		return -ENOMEM;
+
+	/*
+	 * Set the length of the buffer to match the allocation size.
+	 */
+	qdf_nbuf_set_pktlen(evt_buf, len);
 
 	qdf_mem_copy(qdf_nbuf_data(evt_buf), buf, len);
 	evt_id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
