@@ -2255,10 +2255,11 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC, 0);
 			buf += WMI_TLV_HDR_SIZE;
 
-			wmi_debug("RSO_CFG: vdev[%d] 11r TLV psk_msk_len = %d psk_msk_ext:%d",
+			wmi_debug("RSO_CFG: vdev[%d] 11r TLV psk_msk_len = %d psk_msk_ext:%d md:0x%x",
 				  roam_req->vdev_id,
 				  roam_offload_11r->psk_msk_len,
-				  roam_offload_11r->psk_msk_ext_len);
+				  roam_offload_11r->psk_msk_ext_len,
+				  roam_offload_11r->mdid);
 		} else {
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC,
 				       sizeof(wmi_roam_11i_offload_tlv_param));
