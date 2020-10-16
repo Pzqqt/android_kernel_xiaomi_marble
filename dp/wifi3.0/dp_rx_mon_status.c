@@ -106,7 +106,7 @@ dp_rx_mon_handle_status_buf_done(struct dp_pdev *pdev,
 	 * hold on to mon destination ring.
 	 */
 	if (buf_status != QDF_STATUS_SUCCESS) {
-		dp_err("Monitor status ring: DMA is not done "
+		dp_err_rl("Monitor status ring: DMA is not done "
 			     "for nbuf: %pK", status_nbuf);
 		pdev->rx_mon_stats.tlv_tag_status_err++;
 		return DP_MON_STATUS_NO_DMA;
