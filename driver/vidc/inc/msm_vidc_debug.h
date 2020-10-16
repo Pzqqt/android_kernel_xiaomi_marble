@@ -42,7 +42,7 @@ enum vidc_msg_prio {
 	VIDC_PRINTK     = 0x00001000,
 	VIDC_FTRACE     = 0x00002000,
 	FW_LOW          = 0x00010000,
-	FW_MEDIUM       = 0x00020000,
+	FW_MED          = 0x00020000,
 	FW_HIGH         = 0x00040000,
 	FW_ERROR        = 0x00080000,
 	FW_FATAL        = 0x00100000,

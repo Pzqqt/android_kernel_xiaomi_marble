@@ -957,7 +957,7 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *packet)
 		log_level |= FW_PRINTK;
 	}
 
-#define SKIP_INVALID_PKT(pkt_size, payload_size, pkt_hdr_size) ({ \
+#define SKIP_INVALID_PKT(pkt_size, payload_size, pkt_hdr_size) { \
 		if (pkt_size < pkt_hdr_size || \
 			payload_size < MIN_PAYLOAD_SIZE || \
 			payload_size > \
@@ -966,7 +966,7 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *packet)
 				__func__, payload_size); \
 			continue; \
 		} \
-	})
+	}
 
 	while (!__iface_dbgq_read(core, packet)) {
 		struct hfi_packet_header *pkt =
@@ -2168,7 +2168,7 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	for (i = 0; i < VIDC_IFACEQ_NUMQ; i++) {
 		iface_q = &core->iface_queues[i];
 		iface_q->q_array.align_device_addr = map.device_addr + offset;
-		iface_q->q_array.align_virtual_addr = alloc.kvaddr + offset;
+		iface_q->q_array.align_virtual_addr = (void*)((char*)alloc.kvaddr + offset);
 		iface_q->q_array.mem_size = VIDC_IFACEQ_QUEUE_SIZE;
 		offset += iface_q->q_array.mem_size;
 		iface_q->q_hdr = VIDC_IFACEQ_GET_QHDR_START_ADDR(

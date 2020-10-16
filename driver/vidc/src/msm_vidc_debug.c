@@ -6,7 +6,7 @@
 #include "msm_vidc_debug.h"
 
 int msm_vidc_debug = VIDC_HIGH | VIDC_LOW | VIDC_PKT | VIDC_ERR | VIDC_PRINTK |
-	FW_ERROR | FW_FATAL | FW_FTRACE | FW_LOW | FW_MEDIUM | FW_HIGH |
+	FW_ERROR | FW_FATAL | FW_FTRACE | FW_LOW | FW_MED | FW_HIGH |
 	FW_PERF | FW_PRINTK;
 EXPORT_SYMBOL(msm_vidc_debug);
 

@@ -16,12 +16,12 @@
 #include "venus_hfi.h"
 #include "msm_vidc.h"
 
-#define COUNT_BITS(a, out) ({       \
+#define COUNT_BITS(a, out) {       \
 	while ((a) >= 1) {          \
 		(out) += (a) & (1); \
 		(a) >>= (1);        \
 	}                           \
-})
+}
 
 void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)

@@ -696,9 +696,12 @@ static int msm_vidc_read_resources_from_dt(struct platform_device *pdev)
 	kres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	dt->register_base = kres ? kres->start : -1;
 	dt->register_size = kres ? (kres->end + 1 - kres->start) : -1;
+	d_vpr_h("%s: register base %pa, size %#x\n",
+		__func__, &dt->register_base, dt->register_size);
 
 	kres = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	dt->irq = kres ? kres->start : -1;
+	d_vpr_h("%s: irq %d\n", __func__, dt->irq);
 
 	rc = msm_vidc_load_fw_name(core);
 	if (rc)

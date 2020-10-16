@@ -72,7 +72,6 @@ static struct attribute_group msm_vidc_core_attr_group = {
 static const struct of_device_id msm_vidc_dt_match[] = {
 	{.compatible = "qcom,msm-vidc"},
 	{.compatible = "qcom,msm-vidc,context-bank"},
-	{}
 };
 MODULE_DEVICE_TABLE(of, msm_vidc_dt_match);
 
@@ -319,7 +318,7 @@ static int msm_vidc_remove(struct platform_device *pdev)
 	return rc;
 }
 
-static struct platform_driver msm_vidc_driver = {
+struct platform_driver msm_vidc_driver = {
 	.probe = msm_vidc_probe,
 	.remove = msm_vidc_remove,
 	.driver = {
