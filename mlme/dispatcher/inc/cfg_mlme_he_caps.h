@@ -28,14 +28,48 @@
 				0, \
 				"HE Control")
 
-#define CFG_HE_TWT_REQUESTOR CFG_BOOL( \
+/*
+ * <ini>
+ * he_twt_requestor- Enable HE TWT requestor.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable HE TWT requestor.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_TWT_REQUESTOR CFG_INI_BOOL( \
 				"he_twt_requestor", \
-				0, \
+				1, \
 				"HE Twt Requestor")
 
-#define CFG_HE_TWT_RESPONDER CFG_BOOL( \
+/*
+ * <ini>
+ * he_twt_responder- Enable HE TWT responder.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable HE TWT responder.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_TWT_RESPONDER CFG_INI_BOOL( \
 				"he_twt_responder", \
-				0, \
+				1, \
 				"HE Twt Responder")
 
 #define CFG_HE_FRAGMENTATION CFG_UINT( \

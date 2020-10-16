@@ -575,13 +575,15 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_obj->cfg.he_caps.dot11_he_cap.present = 1;
 	mlme_obj->cfg.he_caps.dot11_he_cap.htc_he = he_cap->htc_he;
 
-	mlme_obj->cfg.he_caps.dot11_he_cap.twt_request =
-				he_cap->twt_request;
-	mlme_obj->cfg.he_caps.dot11_he_cap.twt_responder =
-				he_cap->twt_responder;
+	value = QDF_MIN(he_cap->twt_request,
+			mlme_obj->cfg.he_caps.dot11_he_cap.twt_request);
+	mlme_obj->cfg.he_caps.dot11_he_cap.twt_request = value;
 
-	value = QDF_MIN(
-			he_cap->fragmentation,
+	value = QDF_MIN(he_cap->twt_responder,
+			mlme_obj->cfg.he_caps.dot11_he_cap.twt_responder);
+	mlme_obj->cfg.he_caps.dot11_he_cap.twt_responder = value;
+
+	value = QDF_MIN(he_cap->fragmentation,
 			mlme_obj->cfg.he_caps.he_dynamic_fragmentation);
 
 	if (cfg_in_range(CFG_HE_FRAGMENTATION, value))
