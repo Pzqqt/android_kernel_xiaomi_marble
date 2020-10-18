@@ -140,7 +140,7 @@
 
 /*
  * <ini>
- * BandCapability - Preferred band (0: Both 2.4G and 5G,
+ * BandCapability - Preferred band (0: 2.4G, 5G, and 6G,
  *				    1: 2.4G only,
  *				    2: 5G only,
  *				    3: Both 2.4G and 5G,

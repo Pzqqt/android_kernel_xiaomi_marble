@@ -764,7 +764,7 @@ uint32_t hdd_reg_legacy_setband_to_reg_wifi_band_bitmap(uint8_t qca_setband)
 
 	switch (qca_setband) {
 	case QCA_SETBAND_AUTO:
-		band_bitmap |= (BIT(REG_BAND_2G) | BIT(REG_BAND_5G));
+		band_bitmap |= REG_BAND_MASK_ALL;
 		break;
 	case QCA_SETBAND_5G:
 		band_bitmap |= BIT(REG_BAND_5G);
