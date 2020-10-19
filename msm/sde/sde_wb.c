@@ -14,8 +14,8 @@
 #include "sde_formats.h"
 
 /* maximum display mode resolution if not available from catalog */
-#define SDE_WB_MODE_MAX_WIDTH	4096
-#define SDE_WB_MODE_MAX_HEIGHT	4096
+#define SDE_WB_MODE_MAX_WIDTH	5120
+#define SDE_WB_MODE_MAX_HEIGHT	5120
 
 /* Serialization lock for sde_wb_list */
 static DEFINE_MUTEX(sde_wb_list_lock);
