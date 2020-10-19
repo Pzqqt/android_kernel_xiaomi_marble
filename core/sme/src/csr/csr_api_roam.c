@@ -14112,6 +14112,7 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint32_t sessionId,
 				bool update_to_fw)
 {
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	enum csr_akm_type akm_type;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -14124,6 +14125,16 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint32_t sessionId,
 				 connectedProfile.AuthType)) {
 		sme_debug("PMK update is not required for ESE");
 		return QDF_STATUS_SUCCESS;
+	}
+
+	akm_type = pSession->connectedProfile.AuthType;
+	if ((akm_type == eCSR_AUTH_TYPE_FT_RSN ||
+	     akm_type == eCSR_AUTH_TYPE_FT_FILS_SHA256 ||
+	     akm_type == eCSR_AUTH_TYPE_FT_FILS_SHA384 ||
+	     akm_type == eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384) &&
+	    pSession->connectedProfile.mdid.mdie_present) {
+		sme_debug("Auth type: %d update the MDID in cache", akm_type);
+		csr_update_pmk_cache_ft(mac, sessionId, pSession);
 	}
 
 	if (update_to_fw)
