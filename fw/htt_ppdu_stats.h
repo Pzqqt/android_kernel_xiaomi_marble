@@ -845,6 +845,19 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_M     0x00008000
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_S             15
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_M) >> \
+    HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_S)
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_S)); \
+     } while (0)
+
 #define HTT_PPDU_STATS_USER_COMMON_TLV_NUM_FRAMES_M     0xffff0000
 #define HTT_PPDU_STATS_USER_COMMON_TLV_NUM_FRAMES_S             16
 
@@ -910,12 +923,12 @@ typedef struct {
     union {
         A_UINT32 bw__mpdus_tried__mcast;
         struct {
-            A_UINT32 mcast:              1,
-                     mpdus_tried:        9,
-                     bw:                 4,
-                     delayed_ba:         1,
-                     reserved0:          1,
-                     num_frames:        16;
+            A_UINT32 mcast:                    1,
+                     mpdus_tried:              9,
+                     bw:                       4,
+                     delayed_ba:               1,
+                     is_sqno_valid_in_buffer:  1,
+                     num_frames:              16;
         };
     };
 
