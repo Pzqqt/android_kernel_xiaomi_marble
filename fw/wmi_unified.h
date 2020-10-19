@@ -1998,6 +1998,7 @@ typedef enum {
     /** WMI events related to regulatory offload */
     WMI_REG_CHAN_LIST_CC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_REGULATORY),
     WMI_11D_NEW_COUNTRY_EVENTID,
+    WMI_REG_CHAN_LIST_CC_EXT_EVENTID,
 
     /** Events for TWT(Target Wake Time) of STA and AP  */
     WMI_TWT_ENABLE_COMPLETE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TWT),
@@ -4463,6 +4464,9 @@ typedef enum {
 
 /* Extend 6ghz channel measure time */
 #define WMI_SCAN_FLAG_EXT_6GHZ_EXTEND_MEASURE_TIME    0x00000400
+
+/* Force unicast address in RA */
+#define WMI_SCAN_FLAG_EXT_FORCE_UNICAST_RA            0x00000800
 
 /**
  * Currently passive scan has higher priority than beacon and
@@ -27300,6 +27304,38 @@ typedef struct {
                                   bits 31:16 reserved */
 } wmi_regulatory_rule_struct;
 
+#define WMI_REG_RULE_PSD_FLAG_GET(psd_power_info) \
+    WMI_GET_BITS(psd_power_info, 0, 1)
+#define WMI_REG_RULE_PSD_FLAG_SET(psd_power_info, value) \
+    WMI_SET_BITS(psd_power_info, 0, 1, value)
+
+#define WMI_REG_RULE_PSD_EIRP_GET(psd_power_info) \
+    WMI_GET_BITS(psd_power_info, 16, 16)
+#define WMI_REG_RULE_PSD_EIRP_SET(psd_power_info, value) \
+    WMI_SET_BITS(psd_power_info, 16, 16, value)
+
+typedef struct {
+    A_UINT32  tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_regulatory_rule_ext_struct */
+    A_UINT32  freq_info;       /* bits 15:0  = u16 start_freq,
+                                  bits 31:16 = u16 end_freq
+                                  (both in MHz units)
+                                  use same MACRO as wmi_regulatory_rule_struct
+                                */
+    A_UINT32  bw_pwr_info;     /* bits 15:0  = u16 max_bw (MHz units),
+                                  bits 23:16 = u8 reg_power (dBm units),
+                                  bits 31:24 = u8 ant_gain (dB units)
+                                  use same MACRO as wmi_regulatory_rule_struct
+                                */
+    A_UINT32  flag_info;       /* bits 15:0  = u16 flags,
+                                  bits 31:16 reserved
+                                  use same MACRO as wmi_regulatory_rule_struct
+                                */
+    A_UINT32  psd_power_info;  /* bits 0     - whether PSD power,
+                                  bits 15:1  - reserved
+                                  bits 31:16 - maximum PSD EIRP (dB/MHz)
+                                */
+} wmi_regulatory_rule_ext_struct;
+
 typedef enum {
     WMI_REG_DFS_UNINIT_REGION = 0,
     WMI_REG_DFS_FCC_REGION    = 1,
@@ -27348,6 +27384,64 @@ typedef struct {
     A_UINT32 num_5g_reg_rules;
 /* followed by wmi_regulatory_rule_struct TLV array. First 2G and then 5G */
 } wmi_reg_chan_list_cc_event_fixed_param;
+
+typedef enum {
+    WMI_REG_CLIENT_REGULAR = 0,
+    WMI_REG_CLIENT_SUBORDINATE = 1,
+    /* 2 and 3 are reserved for future growth */
+    WMI_REG_CLIENT_MAX = 4, /* can't expand, b/c used as array length below */
+} wmi_reg_client_type;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext_fixed_param */
+    A_UINT32 status_code; /* WMI_REG_SET_CC_STATUS_CODE */
+    A_UINT32 phy_id;
+    A_UINT32 alpha2;
+    A_UINT32 num_phy;
+    A_UINT32 country_id;  /* uses CountryCode enum values */
+    A_UINT32 domain_code; /* used EnumRd enum values */
+    A_UINT32 dfs_region;  /* WMI_REG_DFS_REGION */
+    A_UINT32 phybitmap;   /* WMI_REGULATORY_PHYBITMAP */
+    A_UINT32 min_bw_2g;   /* BW in MHz */
+    A_UINT32 max_bw_2g;   /* BW in MHz */
+    A_UINT32 min_bw_5g;   /* BW in MHz */
+    A_UINT32 max_bw_5g;   /* BW in MHz */
+    A_UINT32 num_2g_reg_rules;
+    A_UINT32 num_5g_reg_rules;
+    A_UINT32 client_type;            /* populated if device can function as client */
+    A_UINT32 rnr_tpe_usable;         /* If RNR TPE Octet usable for that country   */
+    A_UINT32 unspecified_ap_usable;  /* If unspecified AP usable for that country  */
+    A_UINT32 domain_code_6g_ap_lpi;
+    A_UINT32 domain_code_6g_ap_sp;
+    A_UINT32 domain_code_6g_ap_vlp;
+    A_UINT32 domain_code_6g_client_lpi[WMI_REG_CLIENT_MAX];
+    A_UINT32 domain_code_6g_client_sp[WMI_REG_CLIENT_MAX];
+    A_UINT32 domain_code_6g_client_vlp[WMI_REG_CLIENT_MAX];
+    A_UINT32 min_bw_6g_ap_sp; /* MHz */
+    A_UINT32 max_bw_6g_ap_sp;
+    A_UINT32 min_bw_6g_ap_lpi;
+    A_UINT32 max_bw_6g_ap_lpi;
+    A_UINT32 min_bw_6g_ap_vlp;
+    A_UINT32 max_bw_6g_ap_vlp;
+    A_UINT32 min_bw_6g_client_sp[WMI_REG_CLIENT_MAX];
+    A_UINT32 max_bw_6g_client_sp[WMI_REG_CLIENT_MAX];
+    A_UINT32 min_bw_6g_client_lpi[WMI_REG_CLIENT_MAX];
+    A_UINT32 max_bw_6g_client_lpi[WMI_REG_CLIENT_MAX];
+    A_UINT32 min_bw_6g_client_vlp[WMI_REG_CLIENT_MAX];
+    A_UINT32 max_bw_6g_client_vlp[WMI_REG_CLIENT_MAX];
+    A_UINT32 num_6g_reg_rules_ap_sp;
+    A_UINT32 num_6g_reg_rules_ap_lpi;
+    A_UINT32 num_6g_reg_rules_ap_vlp;
+    A_UINT32 num_6g_reg_rules_client_sp[WMI_REG_CLIENT_MAX];
+    A_UINT32 num_6g_reg_rules_client_lpi[WMI_REG_CLIENT_MAX];
+    A_UINT32 num_6g_reg_rules_client_vlp[WMI_REG_CLIENT_MAX];
+/*
+ * This fixed_param TLV is followed by wmi_regulatory_rule_ext struct TLV array.
+ * Within the reg rule ext TLV array, the 2G elements occur first,
+ * then the 5G elements, then the 6G elements (AP SG, AP LPI, AP VLP,
+ * client SP x4, client LPI x4, client vlp x4).
+ */
+} wmi_reg_chan_list_cc_event_ext_fixed_param;
 
 typedef struct {
     A_UINT32  tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_11d_scan_start_cmd_fixed_param */
