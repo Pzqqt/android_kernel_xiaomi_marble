@@ -1191,6 +1191,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx;
 	struct qdf_mac_addr *mac_addr;
 	struct hdd_station_info *sta = *sta_info;
+	struct hdd_ap_ctx *ap_ctx;
 
 	if (!adapter) {
 		hdd_err("NULL adapter");
@@ -1233,6 +1234,12 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	}
 
 	hdd_del_latency_critical_client(adapter, sta->dot11_mode);
+
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	if (!QDF_IS_ADDR_BROADCAST(sta->sta_mac.bytes) &&
+	    sta->dot11_mode < QCA_WLAN_802_11_MODE_INVALID)
+		ap_ctx->client_count[sta->dot11_mode]--;
+
 	hdd_sta_info_detach(&adapter->sta_info_list, &sta);
 
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
@@ -1267,7 +1274,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	 * If the address is a broadcast address, then provide the self mac addr
 	 * to the data path. Else provide the mac address of the connected peer.
 	 */
-	if (qdf_is_macaddr_broadcast(sta_mac) && ap_ctx)
+	if (qdf_is_macaddr_broadcast(sta_mac))
 		qdf_mem_copy(&txrx_desc.peer_addr, &adapter->mac_addr,
 			     QDF_MAC_ADDR_SIZE);
 	else
@@ -1357,6 +1364,9 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		sta_info->peer_state = OL_TXRX_PEER_STATE_CONN;
 	}
 
+	if (!qdf_is_macaddr_broadcast(sta_mac) &&
+	    dot11mode < QCA_WLAN_802_11_MODE_INVALID)
+		ap_ctx->client_count[dot11mode]++;
 	hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true,
 			     STA_INFO_SOFTAP_REGISTER_STA);
 	hdd_debug("Enabling queues");

@@ -974,6 +974,7 @@ struct hdd_fw_txrx_stats {
  * @vendor_acs_timer_initialized: Is @vendor_acs_timer initialized?
  * @bss_stop_reason: Reason why the BSS was stopped
  * @acs_in_progress: In progress acs flag for an adapter
+ * @client_count: client count per dot11_mode
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
@@ -994,6 +995,7 @@ struct hdd_ap_ctx {
 	bool vendor_acs_timer_initialized;
 	enum bss_stop_reason bss_stop_reason;
 	qdf_atomic_t acs_in_progress;
+	uint16_t client_count[QCA_WLAN_802_11_MODE_INVALID];
 };
 
 /**

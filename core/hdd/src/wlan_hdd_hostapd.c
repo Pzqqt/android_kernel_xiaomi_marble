@@ -1394,6 +1394,40 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
 	return maxrate;
 }
 
+#if SUPPORT_11AX
+/**
+ * hdd_convert_11ax_phymode_to_dot11mode() - get dot11 mode from phymode
+ * @phymode: phymode of sta associated to SAP
+ *
+ * The function is to convert the 11ax phymode to corresponding dot11 mode
+ *
+ * Return: dot11mode.
+ */
+static inline enum qca_wlan_802_11_mode
+hdd_convert_11ax_phymode_to_dot11mode(int phymode)
+{
+	switch (phymode) {
+	case MODE_11AX_HE20:
+	case MODE_11AX_HE40:
+	case MODE_11AX_HE80:
+	case MODE_11AX_HE80_80:
+	case MODE_11AX_HE160:
+	case MODE_11AX_HE20_2G:
+	case MODE_11AX_HE40_2G:
+	case MODE_11AX_HE80_2G:
+		return QCA_WLAN_802_11_MODE_11AX;
+	default:
+		return QCA_WLAN_802_11_MODE_INVALID;
+	}
+}
+#else
+static inline enum qca_wlan_802_11_mode
+hdd_convert_11ax_phymode_to_dot11mode(int phymode)
+{
+	return QCA_WLAN_802_11_MODE_INVALID;
+}
+#endif
+
 enum qca_wlan_802_11_mode hdd_convert_dot11mode_from_phymode(int phymode)
 {
 
@@ -1426,9 +1460,8 @@ enum qca_wlan_802_11_mode hdd_convert_dot11mode_from_phymode(int phymode)
 	case MODE_11AC_VHT160:
 #endif
 		return QCA_WLAN_802_11_MODE_11AC;
-
 	default:
-		return QCA_WLAN_802_11_MODE_INVALID;
+		return hdd_convert_11ax_phymode_to_dot11mode(phymode);
 	}
 
 }
