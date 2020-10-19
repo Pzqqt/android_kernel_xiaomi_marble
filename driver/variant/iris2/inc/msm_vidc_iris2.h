@@ -13,3 +13,4 @@ int msm_vidc_init_iris2(struct msm_vidc_core *core);
 //	return -EINVAL;
 //}
 //#endif
+int msm_vidc_deinit_iris2(struct msm_vidc_core *core);

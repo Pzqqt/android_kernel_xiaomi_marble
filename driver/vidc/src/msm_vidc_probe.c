@@ -20,12 +20,32 @@
 
 #define BASE_DEVICE_NUMBER 32
 
+static int msm_vidc_deinit_irq(struct msm_vidc_core *core)
+{
+	struct msm_vidc_dt *dt;
+
+	if (!core || !core->pdev || !core->dt) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	dt = core->dt;
+	d_vpr_h("%s: reg_base = %pa, reg_size = %#x\n",
+		__func__, &dt->register_base, dt->register_size);
+
+	if (dt->irq)
+		free_irq(dt->irq, core);
+	dt->irq = 0;
+
+	if (core->register_base_addr)
+		devm_iounmap(&core->pdev->dev, core->register_base_addr);
+	core->register_base_addr = 0;
+	return 0;
+}
+
 static int msm_vidc_init_irq(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	struct msm_vidc_dt *dt;
-
-	d_vpr_e("%s()\n", __func__);
 
 	if (!core || !core->pdev || !core->dt) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -38,6 +58,7 @@ static int msm_vidc_init_irq(struct msm_vidc_core *core)
 	if (!core->register_base_addr) {
 		d_vpr_e("could not map reg addr %pa of size %d\n",
 			&dt->register_base, dt->register_size);
+		rc = -EINVAL;
 		goto exit;
 	}
 
@@ -55,9 +76,7 @@ static int msm_vidc_init_irq(struct msm_vidc_core *core)
 	return 0;
 
 exit:
-	if (core->device_workq)
-		destroy_workqueue(core->device_workq);
-
+	msm_vidc_deinit_irq(core);
 	return rc;
 }
 
@@ -75,10 +94,29 @@ static const struct of_device_id msm_vidc_dt_match[] = {
 };
 MODULE_DEVICE_TABLE(of, msm_vidc_dt_match);
 
-
-void msm_vidc_release_video_device(struct video_device *vdev)
+static void msm_vidc_release_video_device(struct video_device *vdev)
 {
 	d_vpr_e("%s:\n", __func__);
+}
+
+static void msm_vidc_unregister_video_device(struct msm_vidc_core *core,
+		enum msm_vidc_domain_type type)
+{
+	int index;
+
+	d_vpr_h("%s()\n", __func__);
+
+	if (type == MSM_VIDC_DECODER)
+		index = 0;
+	else if (type == MSM_VIDC_ENCODER)
+		index = 1;
+	else
+		return;
+
+	//rc = device_create_file(&core->vdev[index].vdev.dev, &dev_attr_link_name);
+	video_set_drvdata(&core->vdev[index].vdev, NULL);
+	video_unregister_device(&core->vdev[index].vdev);
+	//memset vdev to 0
 }
 
 static int msm_vidc_register_video_device(struct msm_vidc_core *core,
@@ -124,6 +162,28 @@ static int msm_vidc_register_video_device(struct msm_vidc_core *core,
 	}
 
 	return 0;
+}
+
+static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	d_vpr_h("%s()\n", __func__);
+
+	mutex_destroy(&core->lock);
+	core->state = MSM_VIDC_CORE_DEINIT;
+
+	if (core->pm_workq)
+		destroy_workqueue(core->pm_workq);
+
+	if (core->device_workq)
+		destroy_workqueue(core->device_workq);
+
+	return rc;
 }
 
 static int msm_vidc_initialize_core(struct msm_vidc_core *core)
@@ -280,42 +340,35 @@ static int msm_vidc_probe(struct platform_device *pdev)
 
 static int msm_vidc_remove(struct platform_device *pdev)
 {
-	int rc = 0;
-
-	d_vpr_h("%s()\n", __func__);
-
-/*
 	struct msm_vidc_core *core;
 
 	if (!pdev) {
 		d_vpr_e("%s: invalid input %pK", __func__, pdev);
 		return -EINVAL;
 	}
-
 	core = dev_get_drvdata(&pdev->dev);
 	if (!core) {
 		d_vpr_e("%s: invalid core", __func__);
 		return -EINVAL;
 	}
 
-	if (core->vidc_core_workq)
-		destroy_workqueue(core->vidc_core_workq);
-	vidc_hfi_deinitialize(core->hfi_type, core->device);
-	device_remove_file(&core->vdev[MSM_VIDC_ENCODER].vdev.dev,
-				&dev_attr_link_name);
-	video_unregister_device(&core->vdev[MSM_VIDC_ENCODER].vdev);
-	device_remove_file(&core->vdev[MSM_VIDC_DECODER].vdev.dev,
-				&dev_attr_link_name);
-	video_unregister_device(&core->vdev[MSM_VIDC_DECODER].vdev);
-	v4l2_device_unregister(&core->v4l2_dev);
+	d_vpr_h("%s()\n", __func__);
 
-	//msm_vidc_free_platform_resources(&core->resources);
+	msm_vidc_unregister_video_device(core, MSM_VIDC_ENCODER);
+	msm_vidc_unregister_video_device(core, MSM_VIDC_DECODER);
+	//device_remove_file(&core->vdev[MSM_VIDC_ENCODER].vdev.dev,
+				//&dev_attr_link_name);
+	//device_remove_file(&core->vdev[MSM_VIDC_DECODER].vdev.dev,
+				//&dev_attr_link_name);
+	v4l2_device_unregister(&core->v4l2_dev);
 	sysfs_remove_group(&pdev->dev.kobj, &msm_vidc_core_attr_group);
+	msm_vidc_deinit_irq(core);
+	msm_vidc_deinit_platform(pdev);
+	msm_vidc_deinit_dt(pdev);
+	msm_vidc_deinitialize_core(core);
 	dev_set_drvdata(&pdev->dev, NULL);
-	mutex_destroy(&core->lock);
 	kfree(core);
-*/
-	return rc;
+	return 0;
 }
 
 struct platform_driver msm_vidc_driver = {

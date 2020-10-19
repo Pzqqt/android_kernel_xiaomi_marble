@@ -88,6 +88,34 @@ static int msm_vidc_init_ops(struct msm_vidc_core *core)
 	return 0;
 }
 
+int msm_vidc_deinit_platform(struct platform_device *pdev)
+{
+	struct msm_vidc_core *core;
+
+	if (!pdev) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	core = dev_get_drvdata(&pdev->dev);
+	if (!core) {
+		d_vpr_e("%s: core not found in device %s",
+			dev_name(&pdev->dev));
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s()\n", __func__);
+
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-vidc"))
+		msm_vidc_deinit_iris2(core);
+
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-vidc"))
+		msm_vidc_deinit_platform_waipio(core);
+
+	kfree(core->platform);
+	return 0;
+}
+
 int msm_vidc_init_platform(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -104,7 +132,7 @@ int msm_vidc_init_platform(struct platform_device *pdev)
 	core = dev_get_drvdata(&pdev->dev);
 	if (!core) {
 		d_vpr_e("%s: core not found in device %s",
-				dev_name(&pdev->dev));
+			dev_name(&pdev->dev));
 		return -EINVAL;
 	}
 
@@ -133,9 +161,4 @@ int msm_vidc_init_platform(struct platform_device *pdev)
 	}
 
 	return rc;
-}
-
-int msm_vidc_deinit_platform(struct platform_device *pdev)
-{
-	return 0;
 }

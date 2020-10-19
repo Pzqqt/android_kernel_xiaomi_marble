@@ -9,5 +9,6 @@
 #include "msm_vidc_core.h"
 
 int msm_vidc_init_platform_waipio(struct msm_vidc_core *core);
+int msm_vidc_deinit_platform_waipio(struct msm_vidc_core *core);
 
 #endif // _MSM_VIDC_WAIPIO_H_
