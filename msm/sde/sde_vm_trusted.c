@@ -190,6 +190,18 @@ end:
 	return rc;
 }
 
+int _sde_vm_resource_init(struct sde_kms *sde_kms,
+		struct drm_atomic_state *state)
+{
+	int rc = 0;
+
+	rc = sde_kms_vm_trusted_resource_init(sde_kms, state);
+	if (rc)
+		SDE_ERROR("vm resource init failed\n");
+
+	return rc;
+}
+
 int _sde_vm_populate_res(struct sde_kms *sde_kms, struct sde_vm_trusted *vm)
 {
 	struct msm_io_res io_res;
@@ -384,18 +396,12 @@ static int _sde_vm_accept(struct sde_kms *kms)
 	if (rc)
 		goto res_accept_fail;
 
-	rc = sde_kms_vm_trusted_resource_init(kms);
-	if (rc) {
-		SDE_ERROR("vm resource init failed\n");
-		goto res_accept_fail;
-	}
-
-	goto end;
+	return 0;
 
 res_accept_fail:
 	_sde_vm_release_irq(kms->vm);
 	_sde_vm_release_mem(kms->vm);
-end:
+
 	return rc;
 }
 
@@ -414,6 +420,7 @@ static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 	ops->vm_request_valid = sde_vm_request_valid;
 	ops->vm_acquire_fail_handler = _sde_vm_release;
 	ops->vm_msg_send = sde_vm_msg_send;
+	ops->vm_resource_init = _sde_vm_resource_init;
 }
 
 int sde_vm_trusted_init(struct sde_kms *kms)

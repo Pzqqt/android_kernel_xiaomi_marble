@@ -897,7 +897,7 @@ static int msm_drm_component_init(struct device *dev)
 	drm_mode_config_reset(ddev);
 
 	if (kms && kms->funcs && kms->funcs->cont_splash_config) {
-		ret = kms->funcs->cont_splash_config(kms);
+		ret = kms->funcs->cont_splash_config(kms, NULL);
 		if (ret) {
 			dev_err(dev, "kms cont_splash config failed.\n");
 			goto fail;
