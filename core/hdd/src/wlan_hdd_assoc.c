@@ -250,12 +250,43 @@ static inline void wlan_hdd_sae_callback(struct hdd_adapter *adapter,
 #endif
 
 /**
+ * hdd_start_powersave_timer_on_associated() - Start auto powersave timer
+ *  after associated
+ * @adapter: pointer to the adapter
+ *
+ * This function will start auto powersave timer for STA/P2P Client.
+ *
+ * Return: none
+ */
+static void hdd_start_powersave_timer_on_associated(struct hdd_adapter *adapter)
+{
+	uint32_t timeout;
+	uint32_t auto_bmps_timer_val;
+	struct hdd_station_ctx *hddstactx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (adapter->device_mode != QDF_STA_MODE &&
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE)
+		return;
+	ucfg_mlme_get_auto_bmps_timer_value(hdd_ctx->psoc,
+					    &auto_bmps_timer_val);
+	timeout = hddstactx->hdd_reassoc_scenario ?
+		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
+		(auto_bmps_timer_val * 1000);
+	sme_ps_enable_auto_ps_timer(hdd_ctx->mac_handle,
+				    adapter->vdev_id,
+				    timeout);
+}
+
+/**
  * hdd_conn_set_authenticated() - set authentication state
  * @adapter: pointer to the adapter
  * @auth_state: authentication state
  *
  * This function updates the global HDD station context
- * authentication state.
+ * authentication state. And to start auto powersave timer
+ * if ptk installed case and open security case.
  *
  * Return: none
  */
@@ -279,7 +310,10 @@ hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 							   time_buffer_size);
 	else
 		qdf_mem_zero(auth_time, time_buffer_size);
-
+	if (auth_state &&
+	    (sta_ctx->conn_info.ptk_installed ||
+	     sta_ctx->conn_info.uc_encrypt_type == eCSR_ENCRYPT_TYPE_NONE))
+		hdd_start_powersave_timer_on_associated(adapter);
 }
 
 void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
@@ -2601,37 +2635,20 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status;
 	uint8_t *mac_addr;
-	uint32_t timeout, auto_bmps_timer_val;
 	struct hdd_station_ctx *hddstactx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	ucfg_mlme_get_auto_bmps_timer_value(hdd_ctx->psoc,
-					    &auto_bmps_timer_val);
-	timeout = hddstactx->hdd_reassoc_scenario ?
-		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
-		(auto_bmps_timer_val * 1000);
 
 	mac_addr = hddstactx->conn_info.bssid.bytes;
-
 	hdd_debug("Changing Peer state to AUTHENTICATED for Sta = "
 		  QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr));
 
 	/* Connections that do not need Upper layer authentication,
 	 * transition TL to 'Authenticated' state after the keys are set
 	 */
-
 	status = hdd_change_peer_state(adapter, mac_addr,
 				       OL_TXRX_PEER_STATE_AUTH);
 	hdd_conn_set_authenticated(adapter, true);
 	hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
-
-	if ((QDF_STA_MODE == adapter->device_mode) ||
-	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
-		sme_ps_enable_auto_ps_timer(hdd_ctx->mac_handle,
-					    adapter->vdev_id,
-					    timeout);
-	}
 
 	return qdf_status_to_os_return(status);
 }
