@@ -3102,13 +3102,24 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	uint8_t cnt = 0;
 	bool sha384_akm;
 	uint8_t *ie_ptr;
+	uint16_t status_code;
 
 	ar = qdf_mem_malloc(sizeof(*ar));
 	if (!ar)
 		return QDF_STATUS_E_FAILURE;
 
-	/* decrypt the cipher text using AEAD decryption */
-	if (lim_is_fils_connection(session_entry)) {
+	status_code = sir_read_u16(frame +
+				   SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET);
+	if (lim_is_fils_connection(session_entry) && status_code)
+		pe_debug("FILS: assoc reject Status code:%d", status_code);
+
+	/*
+	 * decrypt the cipher text using AEAD decryption, if association
+	 * response status code is successful, else the don't do AEAD decryption
+	 * since AP doesn't inlude FILS session IE when association reject is
+	 * sent
+	 */
+	if (lim_is_fils_connection(session_entry) && !status_code) {
 		status = aead_decrypt_assoc_rsp(mac, session_entry,
 						ar, frame, &frame_len);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {

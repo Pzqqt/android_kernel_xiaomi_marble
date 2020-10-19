@@ -254,6 +254,7 @@
 
 /* Association/Reassociation offsets */
 #define SIR_MAC_REASSOC_REQ_SSID_OFFSET      10
+#define SIR_MAC_ASSOC_RSP_STATUS_CODE_OFFSET 2
 
 /* Association Request offsets */
 #define SIR_MAC_ASSOC_REQ_SSID_OFFSET        4
