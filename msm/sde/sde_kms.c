@@ -1272,59 +1272,6 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 	}
 }
 
-void _sde_kms_program_mode_info(struct sde_kms *sde_kms)
-{
-	struct drm_encoder *encoder;
-	struct drm_crtc *crtc;
-	struct drm_connector *connector;
-	struct drm_connector_list_iter conn_iter;
-	struct dsi_display *dsi_display;
-	struct drm_display_mode *drm_mode;
-	int i;
-	struct drm_device *dev;
-	u32 mode_index = 0;
-
-	if (!sde_kms->dev || !sde_kms->hw_mdp)
-		return;
-
-	dev = sde_kms->dev;
-	sde_kms->hw_mdp->ops.clear_mode_index(sde_kms->hw_mdp);
-
-	for (i = 0; i < sde_kms->dsi_display_count; i++) {
-		dsi_display = (struct dsi_display *)sde_kms->dsi_displays[i];
-
-		if (dsi_display->bridge->base.encoder) {
-			encoder = dsi_display->bridge->base.encoder;
-			crtc = encoder->crtc;
-
-			if (!crtc->state->active)
-				continue;
-
-			mutex_lock(&dev->mode_config.mutex);
-			drm_connector_list_iter_begin(dev, &conn_iter);
-			drm_for_each_connector_iter(connector, &conn_iter) {
-				if (connector->encoder_ids[0]
-						== encoder->base.id)
-					break;
-			}
-			drm_connector_list_iter_end(&conn_iter);
-			mutex_unlock(&dev->mode_config.mutex);
-
-			list_for_each_entry(drm_mode, &connector->modes, head) {
-				if (drm_mode_equal(
-						&crtc->state->mode, drm_mode))
-					break;
-				mode_index++;
-			}
-
-			sde_kms->hw_mdp->ops.set_mode_index(
-					sde_kms->hw_mdp, i, mode_index);
-			SDE_DEBUG("crtc:%d, display_idx:%d, mode_index:%d\n",
-					DRMID(crtc), i, mode_index);
-		}
-	}
-}
-
 int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 	struct drm_atomic_state *state)
 {
@@ -1457,9 +1404,6 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 
 	/* properly handoff color processing features */
 	sde_cp_crtc_vm_primary_handoff(crtc);
-
-	/* program the current drm mode info to scratch reg */
-	_sde_kms_program_mode_info(sde_kms);
 
 	/* handle non-SDE clients pre-release */
 	if (vm_ops->vm_client_pre_release) {
@@ -3007,32 +2951,6 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	return 0;
 }
 
-static struct drm_display_mode *_sde_kms_get_splash_mode(
-		struct sde_kms *sde_kms, struct drm_connector *connector,
-		u32 display_idx)
-{
-	struct drm_display_mode *drm_mode = NULL, *curr_mode = NULL;
-	u32 i = 0, mode_index;
-
-	if (sde_kms->splash_data.type == SDE_SPLASH_HANDOFF) {
-		/* currently consider modes[0] as the preferred mode */
-		curr_mode = list_first_entry(&connector->modes,
-				struct drm_display_mode, head);
-	} else if (sde_kms->hw_mdp && sde_kms->hw_mdp->ops.get_mode_index) {
-		mode_index = sde_kms->hw_mdp->ops.get_mode_index(
-				sde_kms->hw_mdp, display_idx);
-		list_for_each_entry(drm_mode, &connector->modes, head) {
-			if (mode_index == i) {
-				curr_mode = drm_mode;
-				break;
-			}
-			i++;
-		}
-	}
-
-	return curr_mode;
-}
-
 static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
 		struct dsi_display *dsi_display)
 {
@@ -3242,13 +3160,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 
 		crtc->state->encoder_mask = (1 << drm_encoder_index(encoder));
 
-		drm_mode = _sde_kms_get_splash_mode(sde_kms, connector, i);
-		if (!drm_mode) {
-			SDE_ERROR("invalid drm-mode type:%d, index:%d\n",
-				sde_kms->splash_data.type, i);
-			return -EINVAL;
-		}
-
+		/* currently consider modes[0] as the preferred mode */
+		drm_mode = list_first_entry(&connector->modes,
+				struct drm_display_mode, head);
 		SDE_DEBUG("drm_mode->name = %s, type=0x%x, flags=0x%x\n",
 				drm_mode->name, drm_mode->type,
 				drm_mode->flags);

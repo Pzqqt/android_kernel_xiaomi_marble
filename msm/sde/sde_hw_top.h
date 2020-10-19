@@ -208,28 +208,6 @@ struct sde_hw_mdp_ops {
 	void (*set_mdp_hw_events)(struct sde_hw_mdp *mdp, bool enable);
 
 	/**
-	 * clear_mode_index - clears the mode index in spare reg
-	 * @mdp: mdp top context driver
-	 */
-	void (*clear_mode_index)(struct sde_hw_mdp *mdp);
-
-	/**
-	 * set_mode_index - sets the current drm mode index to spare reg
-	 * @mdp: mdp top context driver
-	 * @display_id: display index
-	 * @mode: drm mode index
-	 */
-	void (*set_mode_index)(struct sde_hw_mdp *mdp, u32 display_id,
-			u32 mode);
-
-	/**
-	 * get_mode_index - gets the current drm mode index from spare reg
-	 * @mdp: mdp top context driver
-	 * @display_id: display index
-	 */
-	u32 (*get_mode_index)(struct sde_hw_mdp *mdp, u32 display_id);
-
-	/**
 	 * set_cwb_ppb_cntl - select the data point for CWB
 	 * @mdp: mdp top context driver
 	 * @dual: indicates if dual pipe line needs to be programmed
