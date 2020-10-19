@@ -765,18 +765,22 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 					qdf_nbuf_t msdu, uint16_t hdrlen)
 {
 	QDF_STATUS status;
-	uint32_t pktlen = 0;
+	uint32_t pktlen = 0, prev_data_len;
 	uint8_t mic[IEEE80211_WEP_MICLEN];
 	uint8_t mic0[IEEE80211_WEP_MICLEN];
-	qdf_nbuf_t prev = NULL, next;
+	qdf_nbuf_t prev = NULL, prev0, next;
+	uint8_t len0 = 0;
 
 	next = msdu;
+	prev0 = msdu;
 	while (next) {
 		pktlen += (qdf_nbuf_len(next) - hdrlen);
 		prev = next;
 		dp_debug("pktlen %u",
 			 (uint32_t)(qdf_nbuf_len(next) - hdrlen));
 		next = qdf_nbuf_next(next);
+		if (next && !qdf_nbuf_next(next))
+			prev0 = prev;
 	}
 
 	if (!prev) {
@@ -785,10 +789,30 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 		return QDF_STATUS_E_DEFRAG_ERROR;
 	}
 
-	qdf_nbuf_copy_bits(prev, qdf_nbuf_len(prev) - dp_f_tkip.ic_miclen,
-			   dp_f_tkip.ic_miclen, (caddr_t)mic0);
-	qdf_nbuf_trim_tail(prev, dp_f_tkip.ic_miclen);
+	prev_data_len = qdf_nbuf_len(prev) - hdrlen;
+	if (prev_data_len < dp_f_tkip.ic_miclen) {
+		if (prev0 == prev) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s Fragments don't have MIC header !\n", __func__);
+			return QDF_STATUS_E_DEFRAG_ERROR;
+		}
+		len0 = dp_f_tkip.ic_miclen - (uint8_t)prev_data_len;
+		qdf_nbuf_copy_bits(prev0, qdf_nbuf_len(prev0) - len0, len0,
+				   (caddr_t)mic0);
+		qdf_nbuf_trim_tail(prev0, len0);
+	}
+
+	qdf_nbuf_copy_bits(prev, (qdf_nbuf_len(prev) -
+			   (dp_f_tkip.ic_miclen - len0)),
+			   (dp_f_tkip.ic_miclen - len0),
+			   (caddr_t)(&mic0[len0]));
+	qdf_nbuf_trim_tail(prev, (dp_f_tkip.ic_miclen - len0));
 	pktlen -= dp_f_tkip.ic_miclen;
+
+	if (((qdf_nbuf_len(prev) - hdrlen) == 0) && prev != msdu) {
+		qdf_nbuf_free(prev);
+		qdf_nbuf_set_next(prev0, NULL);
+	}
 
 	status = dp_rx_defrag_mic(key, msdu, hdrlen,
 				pktlen, mic);
@@ -1520,8 +1544,10 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 
 	/* Convert the header to 802.3 header */
 	dp_rx_defrag_nwifi_to_8023(soc, peer, tid, frag_list_head, hdr_space);
-	if (dp_rx_construct_fraglist(peer, tid, frag_list_head, hdr_space))
-		return QDF_STATUS_E_DEFRAG_ERROR;
+	if (qdf_nbuf_next(frag_list_head)) {
+		if (dp_rx_construct_fraglist(peer, tid, frag_list_head, hdr_space))
+			return QDF_STATUS_E_DEFRAG_ERROR;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
