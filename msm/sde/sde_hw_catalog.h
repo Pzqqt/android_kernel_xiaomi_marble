@@ -320,6 +320,7 @@ enum {
  * @SDE_MIXER_GC              Gamma correction block
  * @SDE_DIM_LAYER             Layer mixer supports dim layer
  * @SDE_DISP_CWB_PREF         Layer mixer preferred for CWB
+ * @SDE_DISP_DCWB_PREF        Layer mixer preferred for Dedicated CWB
  * @SDE_DISP_PRIMARY_PREF     Layer mixer preferred for primary display
  * @SDE_DISP_SECONDARY_PREF   Layer mixer preferred for secondary display
  * @SDE_MIXER_COMBINED_ALPHA  Layer mixer bg and fg alpha in single register
@@ -333,6 +334,7 @@ enum {
 	SDE_DISP_PRIMARY_PREF,
 	SDE_DISP_SECONDARY_PREF,
 	SDE_DISP_CWB_PREF,
+	SDE_DISP_DCWB_PREF,
 	SDE_MIXER_COMBINED_ALPHA,
 	SDE_MIXER_MAX
 };
