@@ -4581,17 +4581,17 @@ void gsi_wdi3_write_evt_ring_db(unsigned long evt_ring_hdl,
 	}
 
 	if (gsi_ctx->per.ver >= GSI_VER_2_9) {
-		gsihal_write_reg_n(GSI_EE_n_EV_CH_k_CNTXT_10,
-			gsi_ctx->per.ee, db_addr_low);
+		gsihal_write_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_10,
+			gsi_ctx->per.ee, evt_ring_hdl, db_addr_low);
 
-		gsihal_write_reg_n(GSI_EE_n_EV_CH_k_CNTXT_11,
-			gsi_ctx->per.ee, db_addr_high);
+		gsihal_write_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_11,
+			gsi_ctx->per.ee, evt_ring_hdl, db_addr_high);
 	} else {
-		gsihal_write_reg_n(GSI_EE_n_EV_CH_k_CNTXT_12,
-			gsi_ctx->per.ee, db_addr_low);
+		gsihal_write_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_12,
+			gsi_ctx->per.ee, evt_ring_hdl, db_addr_low);
 
-		gsihal_write_reg_n(GSI_EE_n_EV_CH_k_CNTXT_13,
-			gsi_ctx->per.ee, db_addr_high);
+		gsihal_write_reg_nk(GSI_EE_n_EV_CH_k_CNTXT_13,
+			gsi_ctx->per.ee, evt_ring_hdl, db_addr_high);
 	}
 }
 EXPORT_SYMBOL(gsi_wdi3_write_evt_ring_db);
