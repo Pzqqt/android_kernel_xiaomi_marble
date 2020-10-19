@@ -236,7 +236,8 @@ static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
 	{RXDMA_DST, (sizeof(struct reo_entrance_ring)) * WLAN_CFG_RXDMA_ERR_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	/* REFILL ring 0 */
 	{RXDMA_BUF, (sizeof(struct wbm_buffer_ring)) * WLAN_CFG_RXDMA_REFILL_RING_SIZE, 0, NULL, NULL, 0, 0},
-
+	/* REO Exception ring */
+	{REO_EXCEPTION, (sizeof(struct reo_destination_ring)) * WLAN_CFG_REO_EXCEPTION_RING_SIZE, 0, NULL, NULL, 0, 0},
 };
 
 /* Number of HW link descriptors needed (rounded to power of 2) */
