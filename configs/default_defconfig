@@ -1169,9 +1169,6 @@ CONFIG_RX_HASH_DEBUG := y
 #Enable connection manager
 CONFIG_CM_ENABLE := n
 
-#Flag to enable roam offload compilation of connection manager module
-CONFIG_CM_ROAM_OFFLOAD := y
-
 #Enable VDEV OPS wakelock feature
 CONFIG_FEATURE_VDEV_OPS_WAKELOCK := y
 

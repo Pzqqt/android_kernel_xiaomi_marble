@@ -20442,7 +20442,7 @@ csr_cm_update_rso_ese_info(struct mac_context *mac,
 	rso_config->rso_11r_info.is_11r_assoc = roam_info->is11rAssoc;
 }
 #else
-static
+static inline void
 csr_cm_update_rso_ese_info(struct mac_context *mac,
 			   struct wlan_roam_scan_offload_params *rso_config,
 			   tpCsrNeighborRoamControlInfo roam_info,

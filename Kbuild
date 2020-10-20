@@ -1279,11 +1279,8 @@ MLME_INC += $(CM_INC)
 CM_ROAM_OBJS :=    $(CM_DIR)/dispatcher/src/wlan_cm_tgt_if_tx_api.o \
 			$(CM_DIR)/dispatcher/src/wlan_cm_roam_api.o \
 			$(CM_DIR)/dispatcher/src/wlan_cm_roam_ucfg_api.o \
-			$(CM_TGT_IF_DIR)/src/target_if_cm_roam_offload.o
-
-ifeq ($(CONFIG_CM_ROAM_OFFLOAD), y)
-CM_ROAM_OBJS += $(CM_DIR)/core/src/wlan_cm_roam_offload.o
-endif
+			$(CM_TGT_IF_DIR)/src/target_if_cm_roam_offload.o \
+			$(CM_DIR)/core/src/wlan_cm_roam_offload.o
 
 MLME_OBJS += $(CM_ROAM_OBJS)
 
@@ -2647,7 +2644,7 @@ cppflags-$(CONFIG_FEATURE_MOTION_DETECTION) += -DWLAN_FEATURE_MOTION_DETECTION
 cppflags-$(CONFIG_WLAN_FW_OFFLOAD) += -DWLAN_FW_OFFLOAD
 cppflags-$(CONFIG_WLAN_FEATURE_ELNA) += -DWLAN_FEATURE_ELNA
 cppflags-$(CONFIG_FEATURE_COEX) += -DFEATURE_COEX
-cppflags-$(CONFIG_CM_ROAM_OFFLOAD) += -DROAM_OFFLOAD_V1
+cppflags-y += -DROAM_OFFLOAD_V1
 cppflags-y += -DWLAN_FEATURE_INTERFACE_MGR
 cppflags-$(CONFIG_HOST_WAKEUP_OVER_QMI) += -DHOST_WAKEUP_OVER_QMI
 
