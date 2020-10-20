@@ -1225,6 +1225,38 @@ enum scan_mode_6ghz {
 			CFG_VALUE_OR_DEFAULT, \
 			"6ghz scan mode")
 
+/*
+ * <ini>
+ * scan_mode_6ghz_duty_cycle - 6ghz Scan mode duty cycle
+ * @Min: 0
+ * @Max: 0xFFFF
+ * @Default: 4
+ *
+ * Configure the 6Ghz scan mode duty cycle
+ * 0 - No full scan needed, all scans are optimized
+ * 1 - No scan optimization, all full scans are considered as it is
+ * 2 - Every alternate full scan req is considered as it is without optimization
+ * 3 - Every third full scan req is considered as it is without optimization
+ * 4 - Every fourth full scan req is considered as it is without optimization
+ *
+ * This INI is used to disable optimization on full scan requests after every
+ * duty cycle and send it as it is to firmware. The optimization is to fill 6ghz
+ * channels and scan for only RNR channels based on the ini scan_mode_6ghz.
+ *
+ * Related: scan_mode_6ghz
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_6GHZ_SCAN_MODE_DUTY_CYCLE CFG_INI_UINT( \
+			"scan_mode_6ghz_duty_cycle", \
+			0, \
+			0xFFFF, \
+			4, \
+			CFG_VALUE_OR_DEFAULT, \
+			"6ghz scan mode duty cycle")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_DROP_BCN_ON_INVALID_FREQ) \
@@ -1257,6 +1289,7 @@ enum scan_mode_6ghz {
 	CFG(CFG_AP_SCAN_BURST_DURATION) \
 	CFG(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH) \
 	CFG(CFG_6GHZ_SCAN_MODE) \
+	CFG(CFG_6GHZ_SCAN_MODE_DUTY_CYCLE) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */
