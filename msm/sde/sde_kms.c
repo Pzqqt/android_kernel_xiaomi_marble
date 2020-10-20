@@ -205,30 +205,6 @@ static int _sde_kms_dump_clks_state(struct sde_kms *sde_kms)
 }
 #endif
 
-static int sde_kms_enable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
-{
-	int ret;
-
-	if (!kms || !crtc)
-		return -EINVAL;
-
-	SDE_ATRACE_BEGIN("sde_kms_enable_vblank");
-	ret = sde_crtc_vblank(crtc, true);
-	SDE_ATRACE_END("sde_kms_enable_vblank");
-
-	return ret;
-}
-
-static void sde_kms_disable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
-{
-	if (!kms || !crtc)
-		return;
-
-	SDE_ATRACE_BEGIN("sde_kms_disable_vblank");
-	sde_crtc_vblank(crtc, false);
-	SDE_ATRACE_END("sde_kms_disable_vblank");
-}
-
 static void sde_kms_wait_for_frame_transfer_complete(struct msm_kms *kms,
 		struct drm_crtc *crtc)
 {
@@ -3752,8 +3728,6 @@ static const struct msm_kms_funcs kms_funcs = {
 	.complete_commit = sde_kms_complete_commit,
 	.wait_for_crtc_commit_done = sde_kms_wait_for_commit_done,
 	.wait_for_tx_complete = sde_kms_wait_for_frame_transfer_complete,
-	.enable_vblank   = sde_kms_enable_vblank,
-	.disable_vblank  = sde_kms_disable_vblank,
 	.check_modified_format = sde_format_check_modified_format,
 	.atomic_check = sde_kms_atomic_check,
 	.get_format      = sde_get_msm_format,

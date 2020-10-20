@@ -344,51 +344,6 @@ int msm_get_src_bpc(int chroma_format,
 	return src_bpp;
 }
 
-struct vblank_work {
-	struct kthread_work work;
-	int crtc_id;
-	bool enable;
-	struct msm_drm_private *priv;
-};
-
-static void vblank_ctrl_worker(struct kthread_work *work)
-{
-	struct vblank_work *cur_work = container_of(work,
-					struct vblank_work, work);
-	struct msm_drm_private *priv = cur_work->priv;
-	struct msm_kms *kms = priv->kms;
-
-	if (cur_work->enable)
-		kms->funcs->enable_vblank(kms, priv->crtcs[cur_work->crtc_id]);
-	else
-		kms->funcs->disable_vblank(kms, priv->crtcs[cur_work->crtc_id]);
-
-	kfree(cur_work);
-}
-
-static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
-					int crtc_id, bool enable)
-{
-	struct vblank_work *cur_work;
-	struct kthread_worker *worker;
-
-	if (!priv || crtc_id >= priv->num_crtcs)
-		return -EINVAL;
-
-	cur_work = kzalloc(sizeof(*cur_work), GFP_ATOMIC);
-	if (!cur_work)
-		return -ENOMEM;
-
-	kthread_init_work(&cur_work->work, vblank_ctrl_worker);
-	cur_work->crtc_id = crtc_id;
-	cur_work->enable = enable;
-	cur_work->priv = priv;
-	worker = &priv->event_thread[crtc_id].worker;
-
-	kthread_queue_work(worker, &cur_work->work);
-	return 0;
-}
-
 static int msm_drm_uninit(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
@@ -1116,26 +1071,6 @@ static void msm_irq_uninstall(struct drm_device *dev)
 	kms->funcs->irq_uninstall(kms);
 }
 
-static int msm_enable_vblank(struct drm_device *dev, unsigned int pipe)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	if (!kms)
-		return -ENXIO;
-	DBG("dev=%pK, crtc=%u", dev, pipe);
-	return vblank_ctrl_queue_work(priv, pipe, true);
-}
-
-static void msm_disable_vblank(struct drm_device *dev, unsigned int pipe)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	if (!kms)
-		return;
-	DBG("dev=%pK, crtc=%u", dev, pipe);
-	vblank_ctrl_queue_work(priv, pipe, false);
-}
-
 /*
  * DRM ioctls:
  */
@@ -1727,8 +1662,6 @@ static struct drm_driver msm_driver = {
 	.irq_preinstall     = msm_irq_preinstall,
 	.irq_postinstall    = msm_irq_postinstall,
 	.irq_uninstall      = msm_irq_uninstall,
-	.enable_vblank      = msm_enable_vblank,
-	.disable_vblank     = msm_disable_vblank,
 	.gem_free_object_unlocked    = msm_gem_free_object,
 	.gem_vm_ops         = &vm_ops,
 	.dumb_create        = msm_gem_dumb_create,

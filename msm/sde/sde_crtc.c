@@ -50,6 +50,13 @@ struct sde_crtc_custom_events {
 			struct sde_irq_callback *irq);
 };
 
+struct vblank_work {
+	struct kthread_work work;
+	int crtc_id;
+	bool enable;
+	struct msm_drm_private *priv;
+};
+
 static int sde_crtc_power_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *ad_irq);
 static int sde_crtc_idle_interrupt_handler(struct drm_crtc *crtc_drm,
@@ -6274,6 +6281,72 @@ static void _sde_crtc_destroy_debugfs(struct drm_crtc *crtc)
 }
 #endif /* CONFIG_DEBUG_FS */
 
+static void vblank_ctrl_worker(struct kthread_work *work)
+{
+	struct vblank_work *cur_work = container_of(work,
+					struct vblank_work, work);
+	struct msm_drm_private *priv = cur_work->priv;
+	struct msm_kms *kms = priv->kms;
+
+	sde_crtc_vblank(priv->crtcs[cur_work->crtc_id], cur_work->enable);
+
+	kfree(cur_work);
+}
+
+static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
+					int crtc_id, bool enable)
+{
+	struct vblank_work *cur_work;
+	struct drm_crtc *crtc;
+	struct kthread_worker *worker;
+
+	if (!priv || crtc_id >= priv->num_crtcs)
+		return -EINVAL;
+
+	cur_work = kzalloc(sizeof(*cur_work), GFP_ATOMIC);
+	if (!cur_work)
+		return -ENOMEM;
+
+	crtc = priv->crtcs[crtc_id];
+
+	kthread_init_work(&cur_work->work, vblank_ctrl_worker);
+	cur_work->crtc_id = crtc_id;
+	cur_work->enable = enable;
+	cur_work->priv = priv;
+	worker = &priv->event_thread[crtc_id].worker;
+
+	kthread_queue_work(worker, &cur_work->work);
+	return 0;
+}
+
+static int sde_crtc_enable_vblank(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	unsigned int pipe = crtc->index;
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_kms *kms = priv->kms;
+
+	if (!kms)
+		return -ENXIO;
+
+	DBG("dev=%pK, crtc=%u", dev, pipe);
+	return vblank_ctrl_queue_work(priv, pipe, true);
+}
+
+static void sde_crtc_disable_vblank(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	unsigned int pipe = crtc->index;
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_kms *kms = priv->kms;
+
+	if (!kms)
+		return;
+	DBG("dev=%pK, crtc=%u", dev, pipe);
+
+	vblank_ctrl_queue_work(priv, pipe, false);
+}
+
 static int sde_crtc_late_register(struct drm_crtc *crtc)
 {
 	return _sde_crtc_init_debugfs(crtc);
@@ -6287,6 +6360,8 @@ static void sde_crtc_early_unregister(struct drm_crtc *crtc)
 static const struct drm_crtc_funcs sde_crtc_funcs = {
 	.set_config = drm_atomic_helper_set_config,
 	.destroy = sde_crtc_destroy,
+	.enable_vblank = sde_crtc_enable_vblank,
+	.disable_vblank = sde_crtc_disable_vblank,
 	.page_flip = drm_atomic_helper_page_flip,
 	.atomic_set_property = sde_crtc_atomic_set_property,
 	.atomic_get_property = sde_crtc_atomic_get_property,

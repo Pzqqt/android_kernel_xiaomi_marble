@@ -57,8 +57,6 @@ struct msm_kms_funcs {
 	int (*irq_postinstall)(struct msm_kms *kms);
 	void (*irq_uninstall)(struct msm_kms *kms);
 	irqreturn_t (*irq)(struct msm_kms *kms);
-	int (*enable_vblank)(struct msm_kms *kms, struct drm_crtc *crtc);
-	void (*disable_vblank)(struct msm_kms *kms, struct drm_crtc *crtc);
 	/* modeset, bracketing atomic_commit(): */
 	void (*prepare_fence)(struct msm_kms *kms,
 			struct drm_atomic_state *state);
