@@ -5168,7 +5168,9 @@ exit:
 	return status;
 }
 #endif
-#if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
+
+#if (defined(QCA_SUPPORT_AGILE_DFS) || defined(QCA_SUPPORT_ADFS_RCAC)) && \
+     defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
 void dfs_translate_radar_params_for_agile_chan(struct wlan_dfs *dfs,
 					       struct radar_found_info *r_info)
 {
