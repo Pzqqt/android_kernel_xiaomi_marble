@@ -313,6 +313,8 @@ wlan_hdd_wifi_test_config_policy[
 #define CSA_IGNORE 1
 #define SA_QUERY_TIMEOUT_DEFAULT 0
 #define SA_QUERY_TIMEOUT_IGNORE 1
+#define FILS_DISCV_FRAMES_DISABLE 0
+#define FILS_DISCV_FRAMES_ENABLE 1
 
 #define FEATURE_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION                    \
 {                                                                        \
