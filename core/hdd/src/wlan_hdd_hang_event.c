@@ -58,12 +58,11 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 	if (!hdd_ctx)
 		return NOTIFY_STOP_MASK;
 
-	if (hdd_hang_data->offset >= QDF_WLAN_MAX_HOST_OFFSET)
-		return NOTIFY_STOP_MASK;
-
 	if (state == QDF_SCAN_ATTEMPT_FAILURES) {
 		total_len = sizeof(*cmd_scan);
 		hdd_buf_ptr = hdd_hang_data->hang_data + hdd_hang_data->offset;
+		if (hdd_hang_data->offset + total_len > QDF_WLAN_HANG_FW_OFFSET)
+			return NOTIFY_STOP_MASK;
 		cmd_scan = (struct hdd_scan_fixed_param *)hdd_buf_ptr;
 		QDF_HANG_EVT_SET_HDR(&cmd_scan->tlv_header,
 				     HANG_EVT_TAG_OS_IF_SCAN,
@@ -85,6 +84,12 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 		}
 		total_len = sizeof(*cmd);
 		hdd_buf_ptr = hdd_hang_data->hang_data + hdd_hang_data->offset;
+		if (hdd_hang_data->offset + total_len >
+				QDF_WLAN_HANG_FW_OFFSET) {
+			hdd_objmgr_put_vdev(vdev);
+			dev_put(adapter->dev);
+			return NOTIFY_STOP_MASK;
+		}
 		cmd = (struct hdd_hang_event_fixed_param *)hdd_buf_ptr;
 		QDF_HANG_EVT_SET_HDR(&cmd->tlv_header,
 				     HANG_EVT_TAG_OS_IF,

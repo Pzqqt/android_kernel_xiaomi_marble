@@ -138,7 +138,8 @@ int ol_peer_recovery_notifier_cb(struct notifier_block *block,
 	if (!peer)
 		return -EINVAL;
 
-	if (notif_data->offset >= QDF_WLAN_MAX_HOST_OFFSET)
+	if (notif_data->offset + sizeof(struct peer_hang_data) >
+			QDF_WLAN_HANG_FW_OFFSET)
 		return NOTIFY_STOP_MASK;
 
 	QDF_HANG_EVT_SET_HDR(&hang_data.tlv_header,
