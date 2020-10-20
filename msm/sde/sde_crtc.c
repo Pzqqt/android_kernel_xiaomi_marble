@@ -4159,7 +4159,12 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 			(u8 *)&power_on);
 
-	_sde_crtc_flush_event_thread(crtc);
+	if (atomic_read(&sde_crtc->frame_pending)) {
+		mutex_unlock(&sde_crtc->crtc_lock);
+		_sde_crtc_flush_event_thread(crtc);
+		mutex_lock(&sde_crtc->crtc_lock);
+	}
+
 	kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
 	kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
 
