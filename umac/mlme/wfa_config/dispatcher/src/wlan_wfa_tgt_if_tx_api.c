@@ -25,6 +25,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_wfa_tgt_if_tx_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_vdev_mgr_tgt_if_tx_api.h"
 #include "wma.h"
 
 static inline struct wlan_wfa_cmd_tx_ops *
@@ -57,10 +58,26 @@ wlan_send_wfatest_cmd(struct wlan_objmgr_vdev *vdev,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wlan_wfa_cmd_tx_ops *tx_ops;
+	struct vdev_mlme_obj *mlme_obj;
+	struct config_fils_params param = {0};
 
 	if (!vdev || !wmi_wfatest) {
 		mlme_legacy_err("vdev or test params is NULL");
 		return status;
+	}
+
+	if (wmi_wfatest->cmd == WFA_FILS_DISCV_FRAMES) {
+		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+		if (!mlme_obj) {
+			wma_err("failed to get mlme_obj");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		param.vdev_id = wmi_wfatest->vdev_id;
+		if (wmi_wfatest->value)
+			param.fd_period = DEFAULT_FILS_DISCOVERY_PERIOD;
+
+		return tgt_vdev_mgr_fils_enable_send(mlme_obj, &param);
 	}
 
 	tx_ops = wlan_wfatest_get_tx_ops_from_vdev(vdev);
