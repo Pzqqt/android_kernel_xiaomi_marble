@@ -382,8 +382,9 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 static inline void cm_delete_pmksa_for_bssid(struct cnx_mgr *cm_ctx,
 					     struct qdf_mac_addr *bssid)
 {
-	struct wlan_crypto_pmksa pmksa = {0};
+	struct wlan_crypto_pmksa pmksa;
 
+	qdf_mem_zero(&pmksa, sizeof(pmksa));
 	qdf_copy_macaddr(&pmksa.bssid, bssid);
 	wlan_crypto_set_del_pmksa(cm_ctx->vdev, &pmksa, false);
 }

@@ -81,7 +81,6 @@ struct wlan_cm_connect_crypto_info {
 #define WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH 253
 #define WLAN_CM_FILS_MAX_REALM_LEN 255
 #define WLAN_CM_FILS_MAX_RRK_LENGTH 64
-#define WLAN_CM_FILS_MAX_RIK_LENGTH CM_FILS_MAX_RRK_LENGTH
 
 /**
  * struct wlan_fils_con_info - fils connect req info
@@ -113,7 +112,10 @@ struct wlan_fils_con_info {
  * @CM_OSIF_DISCONNECT: Disconnect req initiated by OSIF or north bound
  * @CM_PEER_DISCONNECT: Disconnect req initiated by peer sending deauth/disassoc
  * only for this localy generated will be false while indicating to kernel
- * @CM_SB_DISCONNECT: Disconnect req initiated by South bound/VDEV mgr/Peer mgr
+ * @CM_SB_DISCONNECT: Disconnect initiated from firmware. eg HB failure,
+ * sta kickout etc
+ * @CM_MLME_DISCONNECT: Disconnect req initiated by mlme. eg VDEV mgr or any
+ * other mlme component.
  * @CM_INTERNAL_DISCONNECT: Internal disconnect initiated by Connection manager
  * on receiving the back to back commands
  * @CM_ROAM_DISCONNECT: Disconnect req due to HO failure
@@ -126,6 +128,7 @@ enum wlan_cm_source {
 	CM_OSIF_DISCONNECT,
 	CM_PEER_DISCONNECT,
 	CM_SB_DISCONNECT,
+	CM_MLME_DISCONNECT,
 	CM_INTERNAL_DISCONNECT,
 	CM_ROAM_DISCONNECT,
 	CM_SOURCE_MAX,
