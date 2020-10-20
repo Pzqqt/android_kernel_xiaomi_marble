@@ -2142,10 +2142,13 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				 */
 				qdf_nbuf_free(msdu_info->u.sg_info
 					      .curr_seg->nbuf);
-				if (msdu_info->u.sg_info.curr_seg->next)
+				if (msdu_info->u.sg_info.curr_seg->next) {
 					msdu_info->u.sg_info.curr_seg =
 						msdu_info->u.sg_info
 						.curr_seg->next;
+					nbuf = msdu_info->u.sg_info
+					       .curr_seg->nbuf;
+				}
 				i++;
 				continue;
 			}
@@ -2227,10 +2230,13 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				 */
 				qdf_nbuf_free(msdu_info->u.sg_info
 					      .curr_seg->nbuf);
-				if (msdu_info->u.sg_info.curr_seg->next)
+				if (msdu_info->u.sg_info.curr_seg->next) {
 					msdu_info->u.sg_info.curr_seg =
 						msdu_info->u.sg_info
 						.curr_seg->next;
+					nbuf = msdu_info->u.sg_info
+					       .curr_seg->nbuf;
+				}
 				i++;
 				continue;
 			}
@@ -3477,13 +3483,16 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 			return;
 		}
 	}
+	/* If it's ME frame, dont unmap the cloned nbuf's */
+	if ((desc->flags & DP_TX_DESC_FLAG_ME) && qdf_nbuf_is_cloned(nbuf))
+		goto nbuf_free;
 
 	qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
 				     QDF_DMA_TO_DEVICE, nbuf->len);
 
 	if (desc->flags & DP_TX_DESC_FLAG_MESH_MODE)
 		return dp_mesh_tx_comp_free_buff(soc, desc);
-
+nbuf_free:
 	qdf_nbuf_free(nbuf);
 }
 
