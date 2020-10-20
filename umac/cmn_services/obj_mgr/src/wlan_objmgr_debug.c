@@ -403,7 +403,7 @@ wlan_objmgr_trace_print_ref(union wlan_objmgr_del_obj *obj,
 		peer_obj = &obj->obj_peer->peer_objmgr;
 		trace = &peer_obj->trace;
 		for (id = 0; id < WLAN_REF_ID_MAX; id++) {
-			if (qdf_atomic_read(&vdev_obj->ref_id_dbg[id])) {
+			if (qdf_atomic_read(&peer_obj->ref_id_dbg[id])) {
 				obj_mgr_debug("Reference:");
 
 				func_head = trace->references[id].head;
@@ -648,12 +648,10 @@ static inline void
 wlan_objmgr_trace_check_line(struct wlan_objmgr_trace_func *tmp_func_node,
 			     struct wlan_objmgr_trace *trace, int line)
 {
-	struct wlan_objmgr_line_ref_node *line_node;
 	struct wlan_objmgr_line_ref_node *tmp_ln_node;
 
 	tmp_ln_node = tmp_func_node->line_head;
 	while (tmp_ln_node) {
-		line_node = tmp_ln_node;
 		if (tmp_ln_node->line_ref.line == line) {
 			qdf_atomic_inc(&tmp_ln_node->line_ref.cnt);
 			break;
@@ -662,8 +660,10 @@ wlan_objmgr_trace_check_line(struct wlan_objmgr_trace_func *tmp_func_node,
 	}
 	if (!tmp_ln_node) {
 		tmp_ln_node = wlan_objmgr_trace_line_node_alloc(line);
-		if (tmp_ln_node)
-			line_node->next = tmp_ln_node;
+		if (tmp_ln_node) {
+			tmp_ln_node->next = tmp_func_node->line_head;
+			tmp_func_node->line_head = tmp_ln_node;
+		}
 	}
 }
 
@@ -703,7 +703,7 @@ wlan_objmgr_trace_ref(struct wlan_objmgr_trace_func **func_head,
 	qdf_spin_unlock_bh(&trace->trace_lock);
 }
 
-void
+static void
 wlan_objmgr_trace_del_line(struct wlan_objmgr_line_ref_node **line_head)
 {
 	struct wlan_objmgr_line_ref_node *del_tmp_node;
