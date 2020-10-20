@@ -10958,7 +10958,7 @@ static void csr_update_fils_scan_filter(struct scan_filter *filter,
 						   realm_hash);
 		if (filter->fils_scan_filter.realm_check)
 			qdf_mem_copy(filter->fils_scan_filter.fils_realm,
-				     realm_hash, REAM_HASH_LEN);
+				     realm_hash, REALM_HASH_LEN);
 	}
 }
 
