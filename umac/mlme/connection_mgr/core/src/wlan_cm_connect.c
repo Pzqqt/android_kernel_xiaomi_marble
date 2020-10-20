@@ -1228,6 +1228,19 @@ cm_send_bss_select_ind(struct cnx_mgr *cm_ctx, struct cm_connect_req *req)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void cm_update_ser_timer_for_new_candidate(struct cnx_mgr *cm_ctx,
+						  wlan_cm_id cm_id)
+{
+	struct wlan_serialization_command cmd;
+
+	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	cmd.cmd_id = cm_id;
+	cmd.cmd_timeout_duration = cm_ctx->connect_timeout;
+	cmd.vdev = cm_ctx->vdev;
+
+	wlan_serialization_update_timer(&cmd);
+}
+
 QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 				 struct wlan_cm_connect_resp *resp)
 {
@@ -1251,6 +1264,8 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	 */
 	if (!same_candidate_used)
 		mlme_cm_osif_failed_candidate_ind(cm_ctx->vdev, resp);
+
+	cm_update_ser_timer_for_new_candidate(cm_ctx, resp->cm_id);
 
 	status = cm_send_bss_select_ind(cm_ctx, &cm_req->connect_req);
 	/*

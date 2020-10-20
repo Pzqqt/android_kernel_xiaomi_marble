@@ -31,7 +31,8 @@
 
 /* Max candidate/attempts to be tried to connect */
 #define CM_MAX_CONNECT_ATTEMPTS 5
-#define CM_MAX_CONNECT_TIMEOUT 30000
+#define CM_MAX_CONNECT_TIMEOUT 10000
+
 /*
  * Default max retry attempts to be tried for a candidate.
  * In SAE connection this value will be overwritten from the sae_connect_retries
