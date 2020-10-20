@@ -1875,7 +1875,7 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x00025208, 0x12000, 0 },
 	[GSI_VER_3_0][GSI_EE_n_CNTXT_GSI_IRQ_STTS] = {
-	gsireg_construct_dummy, gsireg_parse_dummy,
+	gsireg_construct_dummy, gsireg_parse_cntxt_gsi_irq_stts,
 	0x0002520c, 0x12000, 0 },
 	[GSI_VER_3_0][GSI_EE_n_CNTXT_GSI_IRQ_EN] = {
 	gsireg_construct_cntxt_gsi_irq_en, gsireg_parse_dummy,
