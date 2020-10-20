@@ -2419,7 +2419,14 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->tmpl_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, param->frm, param->tmpl_len);
+
+	/* for big endian host, copy engine byte_swap is enabled
+	 * But the frame content is in network byte order
+	 * Need to byte swap the frame content - so when copy engine
+	 * does byte_swap - target gets frame content in the correct order
+	 */
+	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(buf_ptr, param->frm,
+					param->tmpl_len);
 
 	wmi_mtrace(WMI_BCN_TMPL_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle,
@@ -3514,7 +3521,13 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(bufp, WMITLV_TAG_ARRAY_BYTE, roundup(bufp_len,
 							    sizeof(uint32_t)));
 	bufp += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(bufp, param->pdata, bufp_len);
+
+	/* for big endian host, copy engine byte_swap is enabled
+	 * But the frame content is in network byte order
+	 * Need to byte swap the frame content - so when copy engine
+	 * does byte_swap - target gets frame content in the correct order
+	 */
+	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(bufp, param->pdata, bufp_len);
 
 	status = qdf_nbuf_map_single(qdf_ctx, param->tx_frame,
 				     QDF_DMA_TO_DEVICE);
