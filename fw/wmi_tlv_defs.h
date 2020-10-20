@@ -1114,6 +1114,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_regulatory_rule_ext_struct,
     WMITLV_TAG_STRUC_wmi_reg_chan_list_cc_event_ext_fixed_param,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_mem_stats_struct,
 } WMITLV_TAG_ID;
 
 /*
@@ -5853,7 +5854,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
 #define WMITLV_TABLE_WMI_CTRL_PATH_STATS_EVENTID(id, op, buf, len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param, wmi_ctrl_path_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_pdev_stats_struct, ctrl_path_pdev_stats, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_extd_stats, vdev_extd_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_extd_stats, vdev_extd_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_mem_stats_struct, ctrl_path_mem_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_RADIO_CHAN_STATS_EVENTID(id, op, buf, len) \

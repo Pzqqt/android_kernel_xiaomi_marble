@@ -9367,6 +9367,73 @@ typedef struct {
     A_UINT32 vdev_pause_fail_rt_to_sched_algo_fifo_full_cnt;
 } wmi_ctrl_path_pdev_stats_struct;
 
+typedef enum {
+    WMI_CTRL_PATH_STATS_ARENA_HRAM,
+    WMI_CTRL_PATH_STATS_ARENA_HCRAM,
+    WMI_CTRL_PATH_STATS_ARENA_HREMOTE,
+    WMI_CTRL_PATH_STATS_ARENA_HCREMOTE,
+    WMI_CTRL_PATH_STATS_ARENA_REMOTE,
+    WMI_CTRL_PATH_STATS_ARENA_SRAM,
+    WMI_CTRL_PATH_STATS_ARENA_SRAM_AUX,
+    WMI_CTRL_PATH_STATS_ARENA_PAGEABLE,
+    WMI_CTRL_PATH_STATS_ARENA_CMEM,
+    WMI_CTRL_PATH_STATS_ARENA_TRAM,
+    WMI_CTRL_PATH_STATS_ARENA_HWIO,
+    WMI_CTRL_PATH_STATS_ARENA_CALDB,
+    WMI_CTRL_PATH_STATS_ARENA_M3,
+    WMI_CTRL_PATH_STATS_ARENA_ETMREMOTE,
+    WMI_CTRL_PATH_STATS_ARENA_M3_DUMP,
+    WMI_CTRL_PATH_STATS_ARENA_EMUPHY,
+    WMI_CTRL_PATH_STATS_ARENA_DBG_SRAM,
+    WMI_CTRL_PATH_STATS_ARENA_DBG_SRAM_AUX,
+    WMI_CTRL_PATH_STATS_ARENA_SRAM_AUX_OVERFLOW,
+    WMI_CTRL_PATH_STATS_ARENA_AMSS,
+    WMI_CTRL_PATH_STATS_ARENA_MAX,
+} wmi_ctrl_path_fw_arena_ids;
+
+/*
+ * Used by some hosts to print names of arenas, based on
+ * wmi_ctrl_path_fw_arena_ids values specified in
+ * wmi_ctrl_path_mem_stats_struct in ctrl_path_stats event msg.
+ */
+static INLINE A_UINT8 *wmi_ctrl_path_fw_arena_id_to_name(A_UINT32 arena_id)
+{
+    switch(arena_id)
+    {
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_HRAM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_HCRAM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_HREMOTE);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_HCREMOTE);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_REMOTE);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_SRAM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_SRAM_AUX);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_PAGEABLE);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_CMEM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_TRAM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_HWIO);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_CALDB);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_M3);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_ETMREMOTE);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_M3_DUMP);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_EMUPHY);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_DBG_SRAM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_DBG_SRAM_AUX);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_SRAM_AUX_OVERFLOW);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_ARENA_AMSS);
+    }
+
+    return (A_UINT8 *) "WMI_CTRL_PATH_STATS_ARENA_UNKNOWN";
+}
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 arena_id;          /* see wmi_ctrl_path_fw_arena_ids */
+    A_UINT32 total_bytes;       /* total bytes in each arena */
+    A_UINT32 allocated_bytes;   /* allocated bytes in each arena */
+} wmi_ctrl_path_mem_stats_struct;
+
 typedef struct {
     /** TLV tag and len; tag equals
     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
@@ -25605,9 +25672,12 @@ typedef struct {
 typedef enum {
     /*
      * Multiple stats type can be requested together, so each value
-     * within this enum represents a bit within a stats bitmap.
+     * within this enum represents a bit position within a stats bitmap.
      */
-    WMI_REQUEST_CTRL_PATH_PDEV_TX_STAT = 0x00000001,
+    /* bit 0 is currently unused / reserved */
+    WMI_REQUEST_CTRL_PATH_PDEV_TX_STAT   = 1,
+    WMI_REQUEST_CTRL_PATH_VDEV_EXTD_STAT = 2,
+    WMI_REQUEST_CTRL_PATH_MEM_STAT       = 3,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
