@@ -163,9 +163,6 @@ void htc_log_hang_credit_history(struct notifier_block *block, void *data)
 	if (!htc_hang_data)
 		return;
 
-	if (htc_hang_data->offset >= QDF_WLAN_MAX_HOST_OFFSET)
-		return;
-
 	total_len = sizeof(struct htc_hang_data_fixed_param);
 	qdf_spin_lock_bh(&g_htc_credit_lock);
 
@@ -184,6 +181,10 @@ void htc_log_hang_credit_history(struct notifier_block *block, void *data)
 						&htc_credit_history_buffer[idx];
 		htc_buf_ptr = htc_hang_data->hang_data + htc_hang_data->offset;
 		cmd = (struct htc_hang_data_fixed_param *)htc_buf_ptr;
+
+		if (htc_hang_data->offset + total_len > QDF_WLAN_HANG_FW_OFFSET)
+			return;
+
 		QDF_HANG_EVT_SET_HDR(&cmd->tlv_header,
 				     HANG_EVT_TAG_HTC_CREDIT_HIST,
 		QDF_HANG_GET_STRUCT_TLVLEN(struct htc_hang_data_fixed_param));

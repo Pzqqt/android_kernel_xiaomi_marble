@@ -87,6 +87,8 @@ struct hif_bus_ops {
 	bool (*hif_needs_bmi)(struct hif_softc *hif_sc);
 	void (*hif_config_irq_affinity)(struct hif_softc *hif_sc);
 	int (*hif_config_irq_by_ceid)(struct hif_softc *hif_sc, int ce_id);
+	void (*hif_log_bus_info)(struct hif_softc *scn, uint8_t *data,
+				 unsigned int *offset);
 };
 
 #ifdef HIF_SNOC
@@ -264,4 +266,23 @@ void hif_config_irq_affinity(struct hif_softc *hif_sc);
  * Return: 0 on success, negative value on error.
  */
 int hif_config_irq_by_ceid(struct hif_softc *hif_sc, int ce_id);
+
+#ifdef HIF_BUS_LOG_INFO
+/**
+ * hif_log_bus_info() - API to log bus related info
+ * @scn: hif handle
+ * @data: hang event data buffer
+ * @offset: offset at which data needs to be written
+ *
+ * Return:  None
+ */
+void hif_log_bus_info(struct hif_softc *scn, uint8_t *data,
+		      unsigned int *offset);
+#else
+static inline
+void hif_log_bus_info(struct hif_softc *scn, uint8_t *data,
+		      unsigned int *offset)
+{
+}
+#endif
 #endif /* _MULTIBUS_H_ */

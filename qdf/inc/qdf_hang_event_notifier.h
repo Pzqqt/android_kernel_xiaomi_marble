@@ -43,6 +43,7 @@
  * @HANG_EVT_TAG_WMI_CMD_HIST: HTC event tag wmi command history hang event tag
  * @HANG_EVT_TAG_DP_PEER_INFO: DP peer info hang event tag
  * @HANG_EVT_TAG_CE_INFO: Copy Engine hang event tag
+ * @HANG_EVT_TAG_BUS_INFO: Bus hang event tag
  */
 enum hang_event_tag {
 	HANG_EVT_TAG_CDS,
@@ -53,10 +54,11 @@ enum hang_event_tag {
 	HANG_EVT_TAG_WMI_CMD_HIST,
 	HANG_EVT_TAG_HTC_CREDIT_HIST,
 	HANG_EVT_TAG_DP_PEER_INFO,
-	HANG_EVT_TAG_CE_INFO
+	HANG_EVT_TAG_CE_INFO,
+	HANG_EVT_TAG_BUS_INFO
 };
 
-#define QDF_HANG_EVENT_TLV_HDR_SIZE   (sizeof(uint32_t))
+#define QDF_HANG_EVENT_TLV_HDR_SIZE   (sizeof(uint16_t))
 
 #define QDF_HANG_EVT_SET_HDR(tlv_buf, tag, len) \
 	(((uint16_t *)(tlv_buf))[0]) = (((tag) << 8) | ((len) & 0x000000FF))

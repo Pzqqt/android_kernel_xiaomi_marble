@@ -57,6 +57,11 @@ struct hif_tasklet_entry {
 	void *hif_handler; /* struct hif_pci_softc */
 };
 
+struct hang_event_bus_info {
+	uint16_t tlv_header;
+	uint16_t dev_id;
+} qdf_packed;
+
 /**
  * struct hif_msi_info - Structure to hold msi info
  * @magic: cookie
@@ -190,4 +195,14 @@ void hif_print_pci_stats(struct hif_pci_softc *pci_scn)
 {
 }
 #endif /* FORCE_WAKE */
+#ifdef HIF_BUS_LOG_INFO
+void hif_log_pcie_info(struct hif_softc *scn, uint8_t *data,
+		       unsigned int *offset);
+#else
+static inline
+void hif_log_pcie_info(struct hif_softc *scn, uint8_t *data,
+		       unsigned int *offset)
+{
+}
+#endif
 #endif /* __ATH_PCI_H__ */

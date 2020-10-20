@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,6 +67,7 @@ QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_bus_reset_resume = &hif_usb_bus_reset_resume;
 	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
 	bus_ops->hif_needs_bmi = &hif_usb_needs_bmi;
+	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
 
 	return QDF_STATUS_SUCCESS;
 }

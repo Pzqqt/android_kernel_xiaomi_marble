@@ -4486,6 +4486,9 @@ void hif_log_ce_info(struct hif_softc *scn, uint8_t *data,
 	size = sizeof(info) -
 		(CE_COUNT_MAX - info.ce_count) * sizeof(struct ce_index);
 
+	if (*offset + size > QDF_WLAN_HANG_FW_OFFSET)
+		return;
+
 	QDF_HANG_EVT_SET_HDR(&info.tlv_header, HANG_EVT_TAG_CE_INFO,
 			     size - QDF_HANG_EVENT_TLV_HDR_SIZE);
 

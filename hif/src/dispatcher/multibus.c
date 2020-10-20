@@ -574,3 +574,12 @@ int hif_config_irq_by_ceid(struct hif_softc *hif_sc, int ce_id)
 {
 	return hif_sc->bus_ops.hif_config_irq_by_ceid(hif_sc, ce_id);
 }
+
+#ifdef HIF_BUS_LOG_INFO
+void hif_log_bus_info(struct hif_softc *hif_sc, uint8_t *data,
+		      unsigned int *offset)
+{
+	if (hif_sc->bus_ops.hif_log_bus_info)
+		hif_sc->bus_ops.hif_log_bus_info(hif_sc, data, offset);
+}
+#endif
