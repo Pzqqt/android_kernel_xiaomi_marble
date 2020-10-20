@@ -48,6 +48,22 @@ QDF_STATUS ucfg_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_disconnect_req *req);
 
 /**
+ * ucfg_cm_disconnect_sync() - disconnect request with wait till
+ * completed
+ * @vdev: vdev pointer
+ * @source: disconnect source
+ * @reason_code: disconnect reason
+ *
+ * Context: Only call for north bound disconnect req, if wait till complete
+ * is required, e.g. during vdev delete. Do not call from scheduler context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_cm_source source,
+				   enum wlan_reason_code reason_code);
+
+/**
  * ucfg_cm_is_vdev_connecting() - check if vdev is in conneting state
  * @vdev: vdev pointer
  *

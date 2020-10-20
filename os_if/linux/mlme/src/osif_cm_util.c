@@ -337,7 +337,6 @@ QDF_STATUS osif_cm_osif_priv_init(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
 	enum QDF_OPMODE mode = wlan_vdev_mlme_get_opmode(vdev);
-	QDF_STATUS status;
 
 	if (mode != QDF_STA_MODE && mode != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
@@ -349,19 +348,7 @@ QDF_STATUS osif_cm_osif_priv_init(struct wlan_objmgr_vdev *vdev)
 
 	qdf_spinlock_create(&osif_priv->cm_info.cmd_id_lock);
 
-	status = qdf_event_create(&osif_priv->cm_info.disconnect_complete);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		osif_err("failed to create disconnect complete event fro vdev %d",
-			 wlan_vdev_get_id(vdev));
-		goto event_create_fail;
-	}
-
-	return status;
-
-event_create_fail:
-	qdf_spinlock_destroy(&osif_priv->cm_info.cmd_id_lock);
-
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
@@ -376,7 +363,6 @@ QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
 		osif_err("Invalid vdev osif priv");
 		return QDF_STATUS_E_INVAL;
 	}
-	qdf_event_destroy(&osif_priv->cm_info.disconnect_complete);
 	qdf_spinlock_destroy(&osif_priv->cm_info.cmd_id_lock);
 
 	return QDF_STATUS_SUCCESS;

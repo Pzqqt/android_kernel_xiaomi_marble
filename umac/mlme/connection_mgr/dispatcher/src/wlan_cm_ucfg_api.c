@@ -35,6 +35,13 @@ QDF_STATUS ucfg_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 	return cm_disconnect_start_req(vdev, req);
 }
 
+QDF_STATUS ucfg_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_cm_source source,
+				   enum wlan_reason_code reason_code)
+{
+	return wlan_cm_disconnect_sync(vdev, source, reason_code);
+}
+
 bool ucfg_cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
 {
 	return cm_is_vdev_connecting(vdev);

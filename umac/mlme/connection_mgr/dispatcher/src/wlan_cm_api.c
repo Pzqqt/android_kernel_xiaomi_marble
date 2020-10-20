@@ -29,10 +29,33 @@ QDF_STATUS wlan_cm_start_connect(struct wlan_objmgr_vdev *vdev,
 	return cm_connect_start_req(vdev, req);
 }
 
-QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_disconnect_req *req)
+QDF_STATUS wlan_cm_disconnect(struct wlan_objmgr_vdev *vdev,
+			      enum wlan_cm_source source,
+			      enum wlan_reason_code reason_code,
+			      struct qdf_mac_addr *bssid)
 {
-	return cm_disconnect_start_req(vdev, req);
+	struct wlan_cm_disconnect_req req = {0};
+
+	req.vdev_id = wlan_vdev_get_id(vdev);
+	req.source = source;
+	req.reason_code = reason_code;
+	if (bssid)
+		qdf_copy_macaddr(&req.bssid, bssid);
+
+	return cm_disconnect_start_req(vdev, &req);
+}
+
+QDF_STATUS wlan_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_cm_source source,
+				   enum wlan_reason_code reason_code)
+{
+	struct wlan_cm_disconnect_req req = {0};
+
+	req.vdev_id = wlan_vdev_get_id(vdev);
+	req.source = source;
+	req.reason_code = reason_code;
+
+	return cm_disconnect_start_req_sync(vdev, &req);
 }
 
 QDF_STATUS wlan_cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,

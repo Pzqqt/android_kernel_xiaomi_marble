@@ -37,14 +37,36 @@ QDF_STATUS wlan_cm_start_connect(struct wlan_objmgr_vdev *vdev,
 				 struct wlan_cm_connect_req *req);
 
 /**
- * wlan_cm_start_disconnect() - disconnect start request
+ * wlan_cm_disconnect() - disconnect start request
  * @vdev: vdev pointer
- * @req: disconnect req
+ * @source: disconnect source
+ * @reason_code: disconnect reason
+ * @bssid: bssid of AP to disconnect, can be null if not known
+ *
+ * Context: can be called from any context
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_disconnect_req *req);
+QDF_STATUS wlan_cm_disconnect(struct wlan_objmgr_vdev *vdev,
+			      enum wlan_cm_source source,
+			      enum wlan_reason_code reason_code,
+			      struct qdf_mac_addr *bssid);
+
+/**
+ * wlan_cm_disconnect_sync() - disconnect request with wait till
+ * completed
+ * @vdev: vdev pointer
+ * @source: disconnect source
+ * @reason_code: disconnect reason
+ *
+ * Context: Only call for north bound disconnect req, if wait till complete
+ * is required, e.g. during vdev delete. Do not call from scheduler context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_cm_source source,
+				   enum wlan_reason_code reason_code);
 
 /**
  * wlan_cm_bss_select_ind_rsp() - Connection manager resp for bss

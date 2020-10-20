@@ -489,31 +489,12 @@ int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 int osif_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev, uint16_t reason)
 {
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
 	QDF_STATUS status;
-
-	if (ucfg_cm_is_vdev_disconnected(vdev))
-		return 0;
-
-	if (!osif_priv) {
-		osif_err("vdev %d invalid vdev osif priv", vdev_id);
-		return -EINVAL;
-	}
 
 	osif_info("vdevid-%d: Received Disconnect reason:%d %s",
 		  vdev_id, reason, ucfg_cm_reason_code_to_str(reason));
 
-	qdf_event_reset(&osif_priv->cm_info.disconnect_complete);
-	status = osif_cm_send_disconnect(vdev, reason);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		osif_err("Disconnect failed with status %d", status);
-		return qdf_status_to_os_return(status);
-	}
-
-	status = qdf_wait_single_event(&osif_priv->cm_info.disconnect_complete,
-				       CM_DISCONNECT_CMD_TIMEOUT);
-	if (QDF_IS_STATUS_ERROR(status))
-		osif_err("Disconnect timeout with status %d", status);
+	status = ucfg_cm_disconnect_sync(vdev, CM_OSIF_DISCONNECT, reason);
 
 	return qdf_status_to_os_return(status);
 }

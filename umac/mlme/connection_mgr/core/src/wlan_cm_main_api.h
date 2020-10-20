@@ -364,6 +364,20 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req);
 
 /**
+ * cm_disconnect_start_req_sync() - disconnect request with wait till
+ * completed
+ * @vdev: vdev pointer
+ * @req: disconnect req
+ *
+ * Context: Only call for north bound disconnect req, if wait till complete
+ * is required, e.g. during vdev delete. Do not call from scheduler context.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_disconnect_start_req_sync(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_disconnect_req *req);
+
+/**
  * cm_bss_peer_delete_req() - Connection manager bss peer delete
  * request
  * @vdev: VDEV object

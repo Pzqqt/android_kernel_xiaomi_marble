@@ -96,6 +96,7 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 					     "CM",
 					     wlan_cm_scan_cb,
 					     vdev_mlme->cnx_mgr_ctx);
+	qdf_event_create(&vdev_mlme->cnx_mgr_ctx->disconnect_complete);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -110,6 +111,7 @@ QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
 
+	qdf_event_destroy(&vdev_mlme->cnx_mgr_ctx->disconnect_complete);
 	scan_requester_id = vdev_mlme->cnx_mgr_ctx->scan_requester_id;
 	wlan_scan_unregister_requester(psoc,
 				       scan_requester_id);

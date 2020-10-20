@@ -401,6 +401,10 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 	if (!cm_ctx->disconnect_count && cm_ctx->connect_count)
 		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX, true);
 
+	/* Set the disconnect wait event once all disconnect are completed */
+	if (!cm_ctx->disconnect_count)
+		qdf_event_set(&cm_ctx->disconnect_complete);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -535,6 +539,31 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 	/* free the req if disconnect is not handled */
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(cm_req);
+
+	return status;
+}
+
+QDF_STATUS cm_disconnect_start_req_sync(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_disconnect_req *req)
+{
+	struct cnx_mgr *cm_ctx;
+	QDF_STATUS status;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_event_reset(&cm_ctx->disconnect_complete);
+	status = cm_disconnect_start_req(vdev, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Disconnect failed with status %d", status);
+		return status;
+	}
+
+	status = qdf_wait_single_event(&cm_ctx->disconnect_complete,
+				       CM_DISCONNECT_CMD_TIMEOUT);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("Disconnect timeout with status %d", status);
 
 	return status;
 }

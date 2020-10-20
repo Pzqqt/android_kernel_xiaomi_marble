@@ -24,6 +24,7 @@
 #define __WLAN_CM_MAIN_H__
 
 #include "include/wlan_vdev_mlme.h"
+#include <qdf_event.h>
 
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
@@ -177,6 +178,7 @@ struct connect_ies {
  * @global_cmd_id: global cmd id for getting cm id for connect/disconnect req
  * @max_connect_attempts: Max attempts to be tried for a connect req
  * @scan_requester_id: scan requester id.
+ * @disconnect_complete: disconnect completion wait event
  */
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -195,6 +197,7 @@ struct cnx_mgr {
 	qdf_atomic_t global_cmd_id;
 	uint8_t max_connect_attempts;
 	wlan_scan_requester scan_requester_id;
+	qdf_event_t disconnect_complete;
 };
 
 /**
