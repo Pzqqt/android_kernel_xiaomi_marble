@@ -2792,12 +2792,14 @@ struct set_fwtest_params {
  * @WFA_CONFIG_CSA: configure the driver to ignore CSA
  * @WFA_CONFIG_OCV: configure OCI
  * @WFA_CONFIG_SA_QUERY: configure driver/firmware to ignore SAquery timeout
+ * @WFA_FILS_DISCV_FRAMES: FD frames TX enable disable config
  */
 enum wfa_test_cmds {
 	WFA_CONFIG_RXNE,
 	WFA_CONFIG_CSA,
 	WFA_CONFIG_OCV,
 	WFA_CONFIG_SA_QUERY,
+	WFA_FILS_DISCV_FRAMES,
 };
 
 /**
