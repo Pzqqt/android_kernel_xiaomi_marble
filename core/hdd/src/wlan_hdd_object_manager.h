@@ -117,10 +117,18 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
  *
  * Return: pointer to vdev object for success, NULL for failure
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+#define hdd_objmgr_get_vdev(adapter) \
+	__hdd_objmgr_get_vdev(adapter, __func__, __LINE__)
+struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
+					       const char *func,
+					       int line);
+#else
 #define hdd_objmgr_get_vdev(adapter) \
 	__hdd_objmgr_get_vdev(adapter, __func__)
 struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
 					       const char *func);
+#endif
 
 /**
  * hdd_objmgr_put_vdev() - Release reference of vdev object
@@ -131,9 +139,16 @@ struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
  *
  * Return: void
  */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+#define hdd_objmgr_put_vdev(vdev) \
+	__hdd_objmgr_put_vdev(vdev, __func__, __LINE__)
+void __hdd_objmgr_put_vdev(struct wlan_objmgr_vdev *vdev, const char *func,
+			   int line);
+#else
 #define hdd_objmgr_put_vdev(vdev) \
 	__hdd_objmgr_put_vdev(vdev, __func__)
 void __hdd_objmgr_put_vdev(struct wlan_objmgr_vdev *vdev, const char *func);
+#endif
 
 /**
  * hdd_objmgr_set_peer_mlme_auth_state() - set the peer mlme auth state
