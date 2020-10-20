@@ -4103,6 +4103,9 @@ struct afe_id_aptx_adaptive_enc_init
 /* Macro for defining the packetizer ID: COP. */
 #define AFE_MODULE_ID_PACKETIZER_COP 0x0001322A
 
+/* Macro for defining the packetizer ID: COP V2 */
+#define AFE_MODULE_ID_PACKETIZER_COP_V2     0x000132F9
+
 /*
  * Packetizer type parameter for the #AVS_MODULE_ID_ENCODER module.
  * This parameter cannot be set runtime.
@@ -4168,6 +4171,7 @@ struct afe_id_aptx_adaptive_enc_init
  */
 #define AFE_MODULE_ID_DEPACKETIZER_COP        0x00013233
 #define AFE_MODULE_ID_DEPACKETIZER_COP_V1     0x000132E9
+#define AFE_MODULE_ID_DEPACKETIZER_COP_V2     0x000132FC
 
 /* Macros for dynamic loading of modules by AVCS */
 
@@ -4175,9 +4179,21 @@ struct afe_id_aptx_adaptive_enc_init
 
 #define AVS_MODULE_ID_PACKETIZER_COP_V1     0x000132E8
 
+#define AVS_MODULE_ID_PACKETIZER_COP_V2     0x000132F9
+
 #define AVS_MODULE_ID_DEPACKETIZER_COP      0x00013233
 
 #define AVS_MODULE_ID_DEPACKETIZER_COP_V1   0x000132E9
+
+#define AVS_MODULE_ID_DEPACKETIZER_COP_V2   0x000132FC
+
+/*
+ * Depacketizer and packetizer type parameter for the
+ * #AVS_MODULE_ID_DEPACKETIZER_COP_V2 module and
+ * #AVS_MODULE_ID_PACKETIZER_COP_V2 module.
+ */
+
+#define AVS_COP_V2_PARAM_ID_STREAM_INFO     0x000132FD
 
 /*
  * Depacketizer type parameter for the #AVS_MODULE_ID_DECODER module.
@@ -4192,6 +4208,12 @@ struct afe_id_aptx_adaptive_enc_init
 struct aptx_channel_mode_param_t {
 	u32 channel_mode;
 } __packed;
+
+#define CAPI_V2_PARAM_SET_LC3_ENC_DOWNMIX_2_MONO    0x00013384
+struct lc3_channel_mode_param_t {
+	u32 channel_mode;
+} __packed;
+
 /*
  * Decoder buffer ID parameter for the #AVS_MODULE_ID_DECODER module.
  * This parameter cannot be set runtime.
@@ -4410,6 +4432,10 @@ struct asm_aac_enc_cfg_t {
 /* FMT ID for apt-X Adaptive speech */
 #define ASM_MEDIA_FMT_APTX_AD_SPEECH 0x00013208
 
+/* FMT ID for lc3 codec */
+#define ASM_MEDIA_FMT_LC3 0x0001337E
+#define ENC_CODEC_TYPE_LC3 0x2B000000
+
 #define PCM_CHANNEL_L         1
 #define PCM_CHANNEL_R         2
 #define PCM_CHANNEL_C         3
@@ -4469,6 +4495,70 @@ struct asm_aptx_ad_speech_enc_cfg_t
 	struct afe_imc_dec_enc_info imc_info;
 	struct asm_aptx_ad_speech_mode_cfg_t speech_mode;
 } __attribute__ ((packed));
+
+
+#define CAPI_V2_PARAM_LC3_ENC_INIT 0x00013381
+#define CAPI_V2_PARAM_LC3_DEC_MODULE_INIT 0x00013391
+struct afe_lc3_stream_map_t {
+	uint32_t stream_id;
+	uint32_t direction;
+	uint32_t channel_mask_lsw;
+	uint32_t channel_mask_msw;
+} __packed;
+
+struct afe_stream_map_t {
+	uint32_t audio_location;
+	uint8_t stream_id;
+	uint8_t direction;
+} __packed;
+
+struct afe_lc3_cfg_t {
+	uint32_t api_version;
+	uint32_t sampling_freq;
+	uint32_t max_octets_per_frame;
+	uint32_t frame_duration;
+	uint32_t bit_depth;
+	uint32_t num_blocks;
+	uint8_t  default_q_level;
+	uint8_t  vendor_specific[16];
+	uint32_t mode;
+} __packed;
+
+struct afe_lc3_enc_cfg_t {
+	struct afe_lc3_cfg_t toAirConfig;
+	uint32_t stream_map_size;
+	struct afe_stream_map_t streamMapOut[16];
+} __packed;
+
+struct afe_lc3_dec_cfg_t {
+	struct afe_lc3_cfg_t FromAir;
+	uint32_t decoder_output_channel;
+	uint32_t stream_map_size;
+	struct afe_stream_map_t streamMapIn[16];
+} __packed;
+
+struct avs_cop_v2_param_id_stream_info_t {
+	uint32_t stream_map_size;
+	struct afe_lc3_stream_map_t streamMap[16];
+} __packed;
+
+struct afe_lc3_dec_config_t {
+	struct avs_cop_v2_param_id_stream_info_t streamMapToAir;
+} __packed;
+
+struct afe_lc3_enc_config_t {
+	struct afe_lc3_enc_cfg_t to_Air_cfg;
+	struct avs_cop_v2_param_id_stream_info_t streamMapToAir;
+} __packed;
+
+struct asm_enc_lc3_cfg_t {
+	struct afe_imc_dec_enc_info imc_info;
+	struct afe_lc3_enc_config_t enc_codec;
+} __packed;
+
+struct asm_lc3_dec_cfg_t {
+	struct afe_lc3_dec_config_t dec_codec;
+} __packed;
 
 struct afe_matched_port_t
 {
@@ -4765,12 +4855,14 @@ union afe_enc_config_data {
 	struct asm_ldac_enc_cfg_t  ldac_config;
 	struct asm_aptx_ad_enc_cfg_t  aptx_ad_config;
 	struct asm_aptx_ad_speech_enc_cfg_t aptx_ad_speech_config;
+	struct asm_enc_lc3_cfg_t lc3_enc_config;
 };
 
 struct afe_enc_config {
 	u32 format;
 	u32 scrambler_mode;
 	u32 mono_mode;
+	u32 lc3_mono_mode;
 	union afe_enc_config_data data;
 };
 
@@ -4830,6 +4922,7 @@ union afe_dec_config_data {
 	struct asm_mp3_dec_cfg_t mp3_config;
 	struct asm_aptx_ad_dec_cfg_t aptx_ad_config;
 	struct asm_aptx_ad_speech_dec_cfg_t aptx_ad_speech_config;
+	struct asm_lc3_dec_cfg_t lc3_dec_config;
 };
 
 struct afe_dec_config {

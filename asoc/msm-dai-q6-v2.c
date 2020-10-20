@@ -31,6 +31,9 @@
 #define MSM_DAI_TWS_CHANNEL_MODE_ONE 1
 #define MSM_DAI_TWS_CHANNEL_MODE_TWO 2
 
+#define MSM_DAI_LC3_CHANNEL_MODE_ONE 1
+#define MSM_DAI_LC3_CHANNEL_MODE_TWO 2
+
 #define spdif_clock_value(rate) (2*rate*32*2)
 #define CHANNEL_STATUS_SIZE 24
 #define CHANNEL_STATUS_MASK_INIT 0x0
@@ -63,6 +66,7 @@ enum {
 	DEC_FMT_MP3 = ASM_MEDIA_FMT_MP3,
 	ENC_FMT_APTX_AD_SPEECH = ASM_MEDIA_FMT_APTX_AD_SPEECH,
 	DEC_FMT_APTX_AD_SPEECH = ASM_MEDIA_FMT_APTX_AD_SPEECH,
+	ENC_FMT_LC3 = ASM_MEDIA_FMT_LC3,
 };
 
 enum {
@@ -3234,7 +3238,11 @@ static int msm_dai_q6_afe_enc_cfg_get(struct snd_kcontrol *kcontrol,
 				&dai_data->enc_config.data,
 				sizeof(struct asm_aptx_ad_speech_enc_cfg_t));
 			break;
-
+		case ENC_FMT_LC3:
+			memcpy(ucontrol->value.bytes.data + format_size,
+				&dai_data->enc_config.data,
+				sizeof(struct asm_enc_lc3_cfg_t));
+			break;
 		default:
 			pr_debug("%s: unknown format = %d\n",
 				 __func__, dai_data->enc_config.format);
@@ -3303,6 +3311,11 @@ static int msm_dai_q6_afe_enc_cfg_put(struct snd_kcontrol *kcontrol,
 				ucontrol->value.bytes.data + format_size,
 				sizeof(struct asm_aptx_ad_speech_enc_cfg_t));
 			break;
+		case ENC_FMT_LC3:
+			memcpy(&dai_data->enc_config.data,
+				ucontrol->value.bytes.data + format_size,
+				sizeof(struct asm_enc_lc3_cfg_t));
+			break;
 
 		default:
 			pr_debug("%s: Ignore enc config for unknown format = %d\n",
@@ -3333,6 +3346,12 @@ static const char *const tws_chs_mode_text[] = {"Zero", "One", "Two"};
 
 static const struct soc_enum tws_chs_mode_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tws_chs_mode_text), tws_chs_mode_text),
+};
+
+static const char *const lc3_chs_mode_text[] = {"Zero", "One", "Two"};
+
+static const struct soc_enum lc3_chs_mode_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(lc3_chs_mode_text), lc3_chs_mode_text),
 };
 
 static int msm_dai_q6_afe_input_channel_get(struct snd_kcontrol *kcontrol,
@@ -3416,6 +3435,67 @@ static int msm_dai_q6_tws_channel_mode_put(struct snd_kcontrol *kcontrol,
 			ucontrol->value.integer.value[0] ==
 			MSM_DAI_TWS_CHANNEL_MODE_TWO)
 			dai_data->enc_config.mono_mode =
+				ucontrol->value.integer.value[0];
+		else
+			return -EINVAL;
+	}
+exit:
+	return ret;
+}
+
+static int msm_dai_q6_lc3_channel_mode_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_dai *dai = kcontrol->private_data;
+	struct msm_dai_q6_dai_data *dai_data = NULL;
+
+	if (dai)
+		dai_data = dev_get_drvdata(dai->dev);
+
+	if (dai_data) {
+		ucontrol->value.integer.value[0] =
+				dai_data->enc_config.lc3_mono_mode;
+		pr_debug("%s:lc3 channel mode = %d\n",
+			 __func__, dai_data->enc_config.lc3_mono_mode);
+	}
+
+	return 0;
+}
+
+static int msm_dai_q6_lc3_channel_mode_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_dai *dai = kcontrol->private_data;
+	struct msm_dai_q6_dai_data *dai_data = NULL;
+	int ret = 0;
+	u32 format = 0;
+
+	if (dai)
+		dai_data = dev_get_drvdata(dai->dev);
+
+	if (dai_data)
+		format = dai_data->enc_config.format;
+	else
+		goto exit;
+
+	if (format == ENC_FMT_LC3) {
+		if (test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+			ret = afe_set_lc3_channel_mode(format,
+				dai->id, ucontrol->value.integer.value[0]);
+			if (ret < 0) {
+				pr_err("%s: channel mode setting failed for LC3\n",
+				__func__);
+				goto exit;
+			} else {
+				pr_debug("%s: updating lc3 channel mode : %d\n",
+				__func__, dai_data->enc_config.lc3_mono_mode);
+			}
+		}
+		if (ucontrol->value.integer.value[0] ==
+			MSM_DAI_LC3_CHANNEL_MODE_ONE ||
+			ucontrol->value.integer.value[0] ==
+			MSM_DAI_LC3_CHANNEL_MODE_TWO)
+			dai_data->enc_config.lc3_mono_mode =
 				ucontrol->value.integer.value[0];
 		else
 			return -EINVAL;
@@ -3628,7 +3708,10 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 		.info = msm_dai_q6_afe_enc_cfg_info,
 		.get = msm_dai_q6_afe_enc_cfg_get,
 		.put = msm_dai_q6_afe_enc_cfg_put,
-	}
+	},
+	SOC_ENUM_EXT("LC3 Channel Mode", lc3_chs_mode_enum[0],
+			msm_dai_q6_lc3_channel_mode_get,
+			msm_dai_q6_lc3_channel_mode_put)
 };
 
 static int  msm_dai_q6_afe_dec_cfg_info(struct snd_kcontrol *kcontrol,
@@ -3671,6 +3754,13 @@ static int msm_dai_q6_afe_feedback_dec_cfg_get(struct snd_kcontrol *kcontrol,
 		memcpy(ucontrol->value.bytes.data + format_size + abr_size,
 			&dai_data->dec_config.data,
 			sizeof(struct asm_aptx_ad_speech_dec_cfg_t));
+		break;
+	case ASM_MEDIA_FMT_LC3:
+		pr_debug("%s: afe_dec_cfg for %d format\n",
+				__func__, dai_data->dec_config.format);
+		memcpy(ucontrol->value.bytes.data + format_size + abr_size,
+			&dai_data->dec_config.data,
+			sizeof(struct asm_lc3_dec_cfg_t));
 		break;
 	default:
 		pr_debug("%s: no afe_dec_cfg for format %d\n",
@@ -3715,6 +3805,13 @@ static int msm_dai_q6_afe_feedback_dec_cfg_put(struct snd_kcontrol *kcontrol,
 		memcpy(&dai_data->dec_config.data,
 			ucontrol->value.bytes.data + format_size + abr_size,
 			sizeof(struct asm_aptx_ad_speech_dec_cfg_t));
+		break;
+	case ASM_MEDIA_FMT_LC3:
+		pr_debug("%s: afe_dec_cfg for %d format\n",
+				__func__, dai_data->dec_config.format);
+		memcpy(&dai_data->dec_config.data,
+			ucontrol->value.bytes.data + format_size + abr_size,
+			sizeof(struct asm_lc3_dec_cfg_t));
 		break;
 	default:
 		pr_debug("%s: no afe_dec_cfg for format %d\n",
@@ -4148,6 +4245,9 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&afe_enc_config_controls[5],
 				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&afe_enc_config_controls[6],
+				dai));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&avd_drift_config_controls[2],
 					dai));
