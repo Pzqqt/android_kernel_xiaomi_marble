@@ -1076,7 +1076,8 @@
  */
 #define CFG_IS_BSSID_HINT_PRIORITY CFG_INI_UINT(\
 			"is_bssid_hint_priority",\
-			0, 1, 0,\
+			0, 1, \
+			PLATFORM_VALUE(0, 1), \
 			CFG_VALUE_OR_DEFAULT, \
 			"Set priority for connection with bssid_hint")
 
