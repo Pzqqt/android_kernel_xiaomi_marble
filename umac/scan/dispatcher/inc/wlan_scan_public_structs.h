@@ -453,7 +453,7 @@ struct scan_cache_entry {
 #define WLAN_SCAN_FILTER_NUM_SSID 5
 #define WLAN_SCAN_FILTER_NUM_BSSID 5
 
-#define REAM_HASH_LEN 2
+#define REALM_HASH_LEN 2
 #define CACHE_IDENTIFIER_LEN 2
 #define HESSID_LEN 6
 
@@ -466,7 +466,7 @@ struct scan_cache_entry {
  */
 struct fils_filter_info {
 	bool realm_check;
-	uint8_t fils_realm[REAM_HASH_LEN];
+	uint8_t fils_realm[REALM_HASH_LEN];
 	uint8_t security_type;
 };
 #endif

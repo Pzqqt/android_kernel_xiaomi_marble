@@ -575,13 +575,13 @@ static bool scm_is_fils_config_match(struct scan_filter *filter,
 
 	for (i = 1; i <= indication_ie->realm_identifiers_cnt; i++) {
 		if (!qdf_mem_cmp(filter->fils_scan_filter.fils_realm,
-				 data, REAM_HASH_LEN))
+				 data, REALM_HASH_LEN))
 			return true;
 		/* Max realm count reached */
 		if (indication_ie->realm_identifiers_cnt == i)
 			break;
 
-		data = data + REAM_HASH_LEN;
+		data = data + REALM_HASH_LEN;
 	}
 
 	return false;
