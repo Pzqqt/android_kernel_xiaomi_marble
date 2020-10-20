@@ -6151,10 +6151,18 @@ static int _sde_debugfs_fence_status_show(struct seq_file *s, void *data)
 		seq_printf(s, "plane:%u stage:%d\n", plane->base.id,
 			pstate->stage);
 
-		fence = pstate->input_fence;
-		SDE_EVT32(DRMID(crtc), fence);
-		if (fence)
-			sde_fence_list_dump(fence, &s);
+		SDE_EVT32(DRMID(crtc), plane->base.id, pstate->input_fence);
+		if (pstate->input_fence) {
+
+			rcu_read_lock();
+			fence = dma_fence_get_rcu(pstate->input_fence);
+			rcu_read_unlock();
+
+			if (fence) {
+				sde_fence_list_dump(fence, &s);
+				dma_fence_put(fence);
+			}
+		}
 	}
 
 	/* Dump release fence info */
