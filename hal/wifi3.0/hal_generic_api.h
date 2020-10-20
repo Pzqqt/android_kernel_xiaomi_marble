@@ -1642,6 +1642,22 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 	return HAL_TLV_STATUS_PPDU_NOT_DONE;
 }
 
+static void hal_setup_reo_swap(struct hal_soc *soc)
+{
+	uint32_t reg_val;
+
+	reg_val = HAL_REG_READ(soc, HWIO_REO_R0_CACHE_CTL_CONFIG_ADDR(
+		SEQ_WCSS_UMAC_REO_REG_OFFSET));
+
+	reg_val |= HAL_SM(HWIO_REO_R0_CACHE_CTL_CONFIG, WRITE_STRUCT_SWAP, 1);
+	reg_val |= HAL_SM(HWIO_REO_R0_CACHE_CTL_CONFIG, READ_STRUCT_SWAP, 1);
+
+#if defined(QDF_BIG_ENDIAN_MACHINE)
+	HAL_REG_WRITE(soc, HWIO_REO_R0_CACHE_CTL_CONFIG_ADDR(
+		SEQ_WCSS_UMAC_REO_REG_OFFSET), reg_val);
+#endif
+}
+
 /**
  * hal_reo_setup - Initialize HW REO block
  *
@@ -1665,6 +1681,9 @@ static void hal_reo_setup_generic(struct hal_soc *soc,
 	/* TODO: Error destination ring setting is left to default.
 	 * Default setting is to send all errors to release ring.
 	 */
+
+	/* Set the reo descriptor swap bits in case of BIG endian platform */
+	hal_setup_reo_swap(soc);
 
 	HAL_REG_WRITE(soc,
 		HWIO_REO_R0_AGING_THRESHOLD_IX_0_ADDR(
@@ -1813,7 +1832,8 @@ void hal_srng_src_hw_init_generic(struct hal_soc *hal,
 			SRNG_SM(SRNG_SRC_FLD(MSI1_BASE_MSB,
 			MSI1_ENABLE), 1);
 		SRNG_SRC_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
-		SRNG_SRC_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
+		SRNG_SRC_REG_WRITE(srng, MSI1_DATA,
+				   qdf_cpu_to_le32(srng->msi_data));
 	}
 
 	SRNG_SRC_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
@@ -1928,7 +1948,8 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 			SRNG_SM(SRNG_DST_FLD(MSI1_BASE_MSB,
 			MSI1_ENABLE), 1);
 		SRNG_DST_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
-		SRNG_DST_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
+		SRNG_DST_REG_WRITE(srng, MSI1_DATA,
+				   qdf_cpu_to_le32(srng->msi_data));
 	}
 
 	SRNG_DST_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);

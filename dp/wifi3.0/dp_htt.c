@@ -1028,7 +1028,7 @@ int htt_srng_setup(struct htt_soc *soc, int mac_id,
 	msg_word++;
 	*msg_word = 0;
 	HTT_SRING_SETUP_RING_MSI_DATA_SET(*msg_word,
-		srng_params.msi_data);
+		qdf_cpu_to_le32(srng_params.msi_data));
 
 	/* word 11 */
 	msg_word++;
@@ -1303,9 +1303,6 @@ int htt_h2t_rx_ring_cfg(struct htt_soc *htt_soc, int pdev_id,
 
 	HTT_RX_RING_SELECTION_CFG_STATUS_TLV_SET(*msg_word,
 		!!(srng_params.flags & HAL_SRNG_MSI_SWAP));
-
-	HTT_RX_RING_SELECTION_CFG_PKT_TLV_SET(*msg_word,
-		!!(srng_params.flags & HAL_SRNG_DATA_TLV_SWAP));
 
 	HTT_RX_RING_SELECTION_CFG_RX_OFFSETS_VALID_SET(*msg_word,
 						htt_tlv_filter->offset_valid);

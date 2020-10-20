@@ -32,6 +32,9 @@
 #define HAL_WBM_RELEASE_RING_2_BUFFER_TYPE    0
 #define HAL_WBM_RELEASE_RING_2_DESC_TYPE      1
 
+#define HAL_TX_DESC_TLV_TAG_OFFSET 1
+#define HAL_TX_DESC_TLV_LEN_OFFSET 10
+
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants
   ---------------------------------------------------------------------------*/
@@ -45,8 +48,10 @@
 
 #define HAL_TX_DESC_SET_TLV_HDR(desc, tag, len) \
 do {                                            \
-	((struct tlv_32_hdr *) desc)->tlv_tag = (tag); \
-	((struct tlv_32_hdr *) desc)->tlv_len = (len); \
+	uint32_t temp = 0; \
+	temp |= (tag << HAL_TX_DESC_TLV_TAG_OFFSET); \
+	temp |= (len << HAL_TX_DESC_TLV_LEN_OFFSET); \
+	(*(uint32_t *)desc) = temp; \
 } while (0)
 
 #define HAL_TX_TCL_DATA_TAG WIFITCL_DATA_CMD_E
