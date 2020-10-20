@@ -22428,11 +22428,11 @@ static const struct snd_kcontrol_new lsm2_mixer_controls[] = {
 		MSM_BACKEND_DAI_INT3_MI2S_TX,
 		MSM_FRONTEND_DAI_LSM2, 1, 0, msm_routing_get_listen_mixer,
 		msm_routing_put_listen_mixer),
+#endif
 	SOC_DOUBLE_EXT("VA_CDC_DMA_TX_0", SND_SOC_NOPM,
 		MSM_BACKEND_DAI_VA_CDC_DMA_TX_0,
 		MSM_FRONTEND_DAI_LSM2, 1, 0, msm_routing_get_listen_mixer,
 		msm_routing_put_listen_mixer),
-#endif
 	SOC_DOUBLE_EXT("VA_CDC_DMA_TX_1", SND_SOC_NOPM,
 		MSM_BACKEND_DAI_VA_CDC_DMA_TX_1,
 		MSM_FRONTEND_DAI_LSM2, 1, 0, msm_routing_get_listen_mixer,
