@@ -6563,6 +6563,38 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	return status;
 }
 
+static void dp_flush_monitor_rings(struct dp_soc *soc)
+{
+	struct dp_pdev *pdev = soc->pdev_list[0];
+	hal_soc_handle_t hal_soc = soc->hal_soc;
+	uint32_t lmac_id;
+	uint32_t hp, tp;
+	uint8_t dp_intr_id;
+	int budget;
+	void *mon_dst_srng;
+
+	if (pdev->mon_chan_band == REG_BAND_UNKNOWN)
+		return;
+
+	lmac_id = pdev->ch_band_lmac_id_mapping[pdev->mon_chan_band];
+	if (qdf_unlikely(lmac_id == DP_MON_INVALID_LMAC_ID))
+		return;
+
+	dp_intr_id = soc->mon_intr_id_lmac_map[lmac_id];
+	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, lmac_id);
+
+	/* reap full ring */
+	budget = wlan_cfg_get_dma_mon_stat_ring_size(pdev->wlan_cfg_ctx);
+
+	hal_get_sw_hptp(hal_soc, mon_dst_srng, &tp, &hp);
+	dp_info("Before reap: Monitor DST ring HP %u TP %u", hp, tp);
+
+	dp_mon_process(soc, &soc->intr_ctx[dp_intr_id], lmac_id, budget);
+
+	hal_get_sw_hptp(hal_soc, mon_dst_srng, &tp, &hp);
+	dp_info("After reap: Monitor DST ring HP %u TP %u", hp, tp);
+}
+
 /**
  * dp_vdev_unref_delete() - check and process vdev delete
  * @soc : DP specific soc pointer
@@ -6601,8 +6633,10 @@ void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev,
 		vdev, QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 
 	if (wlan_op_mode_monitor == vdev->opmode) {
-		if (soc->intr_mode == DP_INTR_POLL)
+		if (soc->intr_mode == DP_INTR_POLL) {
 			qdf_timer_sync_cancel(&soc->int_timer);
+			dp_flush_monitor_rings(soc);
+		}
 		pdev->monitor_vdev = NULL;
 		goto free_vdev;
 	}
