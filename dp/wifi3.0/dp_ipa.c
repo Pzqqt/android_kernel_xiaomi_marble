@@ -1778,16 +1778,54 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * dp_ipa_get_tx_comp_pending_check() - Check if tx completions are pending.
+ * @soc: DP pdev Context
+ *
+ * Ring full condition is checked to find if buffers are left for
+ * processing as host only allocates buffers in this ring and IPA HW processes
+ * the buffer.
+ *
+ * Return: True if tx completions are pending
+ */
+static bool dp_ipa_get_tx_comp_pending_check(struct dp_soc *soc)
+{
+	struct dp_srng *tx_comp_ring =
+				&soc->tx_comp_ring[IPA_TX_COMP_RING_IDX];
+	uint32_t hp, tp, entry_size, buf_cnt;
+
+	hal_get_hw_hptp(soc->hal_soc, tx_comp_ring->hal_srng, &hp, &tp,
+			WBM2SW_RELEASE);
+	entry_size = hal_srng_get_entrysize(soc->hal_soc, WBM2SW_RELEASE) >> 2;
+
+	if (hp > tp)
+		buf_cnt = (hp - tp) / entry_size;
+	else
+		buf_cnt = (tx_comp_ring->num_entries - tp + hp) / entry_size;
+
+	return (soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt != buf_cnt);
+}
+
 QDF_STATUS dp_ipa_disable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	int timeout = TX_COMP_DRAIN_WAIT_TIMEOUT_MS;
 	QDF_STATUS result;
 
 	if (!pdev) {
 		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	while (dp_ipa_get_tx_comp_pending_check(soc)) {
+		qdf_sleep(TX_COMP_DRAIN_WAIT_MS);
+		timeout -= TX_COMP_DRAIN_WAIT_MS;
+		if (timeout <= 0) {
+			dp_err("Tx completions pending. Force Disabling pipes");
+			break;
+		}
 	}
 
 	result = qdf_ipa_wdi_disable_pipes();

@@ -24,6 +24,10 @@
 #define IPA_REO_DEST_RING_IDX	3
 #define IPA_RX_REFILL_BUF_RING_IDX	2
 
+/* Adding delay before disabling ipa pipes if any Tx Completions are pending */
+#define TX_COMP_DRAIN_WAIT_MS	50
+#define TX_COMP_DRAIN_WAIT_TIMEOUT_MS	200
+
 /**
  * struct dp_ipa_uc_tx_hdr - full tx header registered to IPA hardware
  * @eth:     ether II header
