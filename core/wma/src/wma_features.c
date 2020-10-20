@@ -2412,7 +2412,8 @@ static int wma_wake_event_packet(
 		 * dump event buffer which contains more info regarding
 		 * current page fault.
 		 */
-		wma_debug("PAGE_FAULT occurs during suspend:");
+		wma_debug("PAGE_FAULT occurs during suspend: packet_len %u",
+			  packet_len);
 		qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   packet, packet_len);
 		break;
