@@ -2689,18 +2689,21 @@ static void sde_kms_vm_res_release(struct msm_kms *kms,
 		struct drm_atomic_state *state)
 {
 	struct drm_crtc *crtc;
-	struct drm_crtc_state *crtc_state;
+	struct drm_crtc_state *new_cstate, *old_cstate;
 	struct sde_vm_ops *vm_ops;
 	enum sde_crtc_vm_req vm_req;
 	struct sde_kms *sde_kms = to_sde_kms(kms);
 	int i;
 
-	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
-		struct sde_crtc_state *cstate;
+	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
+		struct sde_crtc_state *new_state;
 
-		cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+		if (!new_cstate->active && !old_cstate->active)
+			continue;
 
-		vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+		new_state = to_sde_crtc_state(new_cstate);
+		vm_req = sde_crtc_get_property(new_state,
+					CRTC_PROP_VM_REQ_STATE);
 		if (vm_req != VM_REQ_ACQUIRE)
 			return;
 	}
