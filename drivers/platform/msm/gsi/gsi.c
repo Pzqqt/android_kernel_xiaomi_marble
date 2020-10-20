@@ -3983,6 +3983,12 @@ int gsi_poll_n_channel(unsigned long chan_hdl,
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
+	/* Before going to poll packet make sure it was in allocated state */
+	if (unlikely(ctx->state  == GSI_CHAN_STATE_NOT_ALLOCATED)) {
+		GSIERR("bad state %d\n", ctx->state);
+		return -GSI_STATUS_UNSUPPORTED_OP;
+	}
+
 	if (!ctx->evtr) {
 		GSIERR("no event ring associated chan_hdl=%lu\n", chan_hdl);
 		return -GSI_STATUS_UNSUPPORTED_OP;
