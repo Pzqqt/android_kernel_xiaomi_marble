@@ -506,6 +506,7 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 	struct cdp_rx_stats_ppdu_user *ppdu_user;
 	uint8_t cache_idx;
 	uint8_t user_idx;
+	uint8_t max_users;
 	bool idx_match = false;
 
 	if (soc_stats_ctx->stats_ver != RDK_RATE_STATS &&
@@ -513,6 +514,8 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		return;
 
 	user_idx = 0;
+	max_users = QDF_MIN(cdp_rx_ppdu->num_users, CDP_MU_MAX_USERS);
+
 	do {
 		STATS_CTX_LOCK_ACQUIRE(&soc_stats_ctx->rx_ctx_lock);
 		if (cdp_rx_ppdu->u.ppdu_type != DP_PPDU_TYPE_SU) {
@@ -553,7 +556,6 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 			soc_stats_ctx->rxs_last_idx_cache_hit++;
 			RATE_STATS_LOCK_RELEASE(&rx_stats->lock);
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
-			user_idx++;
 			continue;
 		}
 
@@ -578,7 +580,6 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 			soc_stats_ctx->rxs_cache_hit++;
 			RATE_STATS_LOCK_RELEASE(&rx_stats->lock);
 			STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
-			user_idx++;
 			continue;
 		} else {
 			wlan_peer_flush_rx_rate_stats(soc_stats_ctx, stats_ctx);
@@ -591,10 +592,7 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		}
 		RATE_STATS_LOCK_RELEASE(&rx_stats->lock);
 		STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
-
-		user_idx++;
-	} while (user_idx < cdp_rx_ppdu->num_users &&
-		 user_idx < CDP_MU_MAX_USERS);
+	} while (++user_idx < max_users);
 }
 
 static inline void
