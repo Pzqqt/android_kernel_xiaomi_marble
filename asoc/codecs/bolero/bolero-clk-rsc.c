@@ -11,7 +11,6 @@
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
-#include <linux/ratelimit.h>
 #include "bolero-cdc.h"
 #include "bolero-clk-rsc.h"
 
@@ -194,15 +193,13 @@ static int bolero_clk_rsc_mux0_clk_request(struct bolero_clk_rsc *priv,
 					   bool enable)
 {
 	int ret = 0;
-	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (enable) {
 		/* Enable Requested Core clk */
 		if (priv->clk_cnt[clk_id] == 0) {
 			ret = clk_prepare_enable(priv->clk[clk_id]);
 			if (ret < 0) {
-				if (__ratelimit(&rtl))
-					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+				dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
 							__func__, clk_id);
 				goto done;
 			}
@@ -210,8 +207,7 @@ static int bolero_clk_rsc_mux0_clk_request(struct bolero_clk_rsc *priv,
 				ret = clk_prepare_enable(
 					priv->clk[clk_id + NPL_CLK_OFFSET]);
 				if (ret < 0) {
-					if (__ratelimit(&rtl))
-						dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
 						__func__,
 						clk_id + NPL_CLK_OFFSET);
 					goto err;
@@ -250,7 +246,6 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 	int ret = 0;
 	int default_clk_id = priv->default_clk_id[clk_id];
 	u32 muxsel = 0;
-	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	clk_muxsel = bolero_clk_rsc_get_clk_muxsel(priv, clk_id);
 	if (!clk_muxsel) {
@@ -270,17 +265,15 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 
 			ret = clk_prepare_enable(priv->clk[clk_id]);
 			if (ret < 0) {
-				if (__ratelimit(&rtl))
-					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
-						__func__, clk_id);
+				dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+					__func__, clk_id);
 				goto err_clk;
 			}
 			if (priv->clk[clk_id + NPL_CLK_OFFSET]) {
 				ret = clk_prepare_enable(
 					priv->clk[clk_id + NPL_CLK_OFFSET]);
 				if (ret < 0) {
-					if (__ratelimit(&rtl))
-						dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
 						__func__,
 						clk_id + NPL_CLK_OFFSET);
 					goto err_npl_clk;

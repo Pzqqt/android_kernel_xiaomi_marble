@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -14,7 +14,6 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
-#include <linux/ratelimit.h>
 #include <dsp/q6afe-v2.h>
 #include "audio-ext-clk-up.h"
 
@@ -68,7 +67,6 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	struct pinctrl_info *pnctrl_info = &clk_priv->audio_clk.pnctrl_info;
 	int ret;
-	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS) &&
 		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
@@ -77,8 +75,7 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 			__func__, clk_priv->clk_src);
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 		if (ret < 0) {
-			if (__ratelimit(&rtl))
-				pr_err_ratelimited("%s afe_set_digital_codec_core_clock failed\n",
+			pr_err_ratelimited("%s afe_set_digital_codec_core_clock failed\n",
 				__func__);
 			return ret;
 		}
@@ -104,7 +101,6 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	struct pinctrl_info *pnctrl_info = &clk_priv->audio_clk.pnctrl_info;
 	int ret;
-	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (pnctrl_info->pinctrl) {
 		ret = pinctrl_select_state(pnctrl_info->pinctrl,
@@ -122,11 +118,9 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 		trace_printk("%s: unvote for %d clock\n",
 			__func__, clk_priv->clk_src);
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
-		if (ret < 0) {
-			if (__ratelimit(&rtl))
-				pr_err_ratelimited("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
+		if (ret < 0)
+			pr_err_ratelimited("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
 				__func__, ret);
-		}
 	}
 
 	if (pnctrl_info->base)
@@ -155,7 +149,6 @@ static int lpass_hw_vote_prepare(struct clk_hw *hw)
 {
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	int ret;
-	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE)  {
 		trace_printk("%s: vote for %d clock\n",
@@ -177,8 +170,7 @@ static int lpass_hw_vote_prepare(struct clk_hw *hw)
 			"LPASS_HW_DCODEC",
 			&clk_priv->lpass_audio_hwvote_client_handle);
 		if (ret < 0) {
-			if (__ratelimit(&rtl))
-				pr_err("%s lpass audio hw vote failed %d\n",
+			pr_err("%s lpass audio hw vote failed %d\n",
 				__func__, ret);
 			return ret;
 		}
