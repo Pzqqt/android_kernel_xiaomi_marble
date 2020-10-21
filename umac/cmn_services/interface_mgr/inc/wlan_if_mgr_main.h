@@ -21,6 +21,8 @@
 #ifndef _WLAN_IF_MGR_MAIN_API_H_
 #define _WLAN_IF_MGR_MAIN_API_H_
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+
 #include <qdf_atomic.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
@@ -89,7 +91,6 @@ QDF_STATUS wlan_if_mgr_deinit(void);
  */
 QDF_STATUS wlan_if_mgr_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
 						 void *arg_list);
-
 /**
  * wlan_scan_psoc_deleted_notification() - scan psoc delete handler
  * @psoc: psoc object
@@ -99,5 +100,15 @@ QDF_STATUS wlan_if_mgr_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_if_mgr_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 						   void *arg_list);
+#else
+inline QDF_STATUS wlan_if_mgr_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
+QDF_STATUS wlan_if_mgr_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif

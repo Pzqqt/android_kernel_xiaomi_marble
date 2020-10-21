@@ -80,11 +80,7 @@
 #ifdef DCS_INTERFERENCE_DETECTION
 #include <wlan_dcs_init_deinit_api.h>
 #endif
-
-#ifdef WLAN_FEATURE_INTERFACE_MGR
 #include <wlan_if_mgr_main.h>
-#endif
-
 #include <wlan_gpio_api.h>
 
 /**
@@ -868,7 +864,6 @@ static QDF_STATUS fd_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* WLAN_SUPPORT_FILS */
 
-#ifdef WLAN_FEATURE_INTERFACE_MGR
 static QDF_STATUS dispatcher_if_mgr_init(void)
 {
 	return wlan_if_mgr_init();
@@ -878,17 +873,6 @@ static QDF_STATUS dispatcher_if_mgr_deinit(void)
 {
 	return wlan_if_mgr_deinit();
 }
-#else
-static QDF_STATUS dispatcher_if_mgr_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_if_mgr_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #ifdef FEATURE_COEX
 static QDF_STATUS dispatcher_coex_init(void)

@@ -21,6 +21,8 @@
 #ifndef _WLAN_IF_MGR_API_H_
 #define _WLAN_IF_MGR_API_H_
 
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_if_mgr_public_struct.h"
@@ -36,5 +38,13 @@
 QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
 				struct if_mgr_event_data *event_data);
+#else
+QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
+				enum wlan_if_mgr_evt event,
+				struct if_mgr_event_data *event_data)
+{
 
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
