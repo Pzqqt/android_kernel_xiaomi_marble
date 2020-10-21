@@ -663,8 +663,7 @@ exit:
 static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 		struct drm_crtc *crtc, u32 bus_id)
 {
-	u64 bw_sum_of_intfs = 0, bus_ab_quota, bus_ib_quota;
-	struct sde_core_perf_params perf = { { 0 } };
+	u64 bw_sum_of_intfs = 0, bus_ib_quota = 0, bus_ab_quota;
 	enum sde_crtc_client_type client_vote, curr_client_type
 					= sde_crtc_get_client_type(crtc);
 	struct drm_crtc *tmp_crtc;
@@ -672,7 +671,6 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 	struct msm_drm_private *priv = kms->dev->dev_private;
 	struct sde_crtc *sde_crtc;
 
-	u64 tmp_max_per_pipe_ib;
 	u64 tmp_bw_ctl;
 
 	drm_for_each_crtc(tmp_crtc, crtc->dev) {
@@ -682,27 +680,21 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 
 			/* use current perf, which are the values voted */
 			sde_crtc = to_sde_crtc(tmp_crtc);
-			tmp_max_per_pipe_ib =
-			  sde_crtc->cur_perf.max_per_pipe_ib[bus_id];
 			tmp_bw_ctl =
 			  sde_crtc->cur_perf.bw_ctl[bus_id];
 
-			perf.max_per_pipe_ib[bus_id] =
-				max(perf.max_per_pipe_ib[bus_id],
-				tmp_max_per_pipe_ib);
 
 			bw_sum_of_intfs += tmp_bw_ctl;
 
-			SDE_DEBUG("crtc=%d bus_id=%d bw=%llu perf_pipe:%llu\n",
+			SDE_DEBUG("crtc=%d bus_id=%d bw=%llu\n",
 				tmp_crtc->base.id, bus_id,
-				tmp_bw_ctl, tmp_max_per_pipe_ib);
+				tmp_bw_ctl);
 		}
 	}
 
 	bus_ab_quota = max(bw_sum_of_intfs, kms->perf.perf_tune.min_bus_vote);
 	bus_ab_quota = min(bus_ab_quota,
 			kms->catalog->perf.max_bw_high*1000ULL);
-	bus_ib_quota = perf.max_per_pipe_ib[bus_id];
 
 	if (kms->perf.perf_tune.mode == SDE_PERF_MODE_FIXED) {
 		bus_ab_quota = max(kms->perf.fix_core_ab_vote,
