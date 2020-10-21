@@ -131,12 +131,16 @@ struct cm_disconnect_req {
  * struct cm_req - connect manager req
  * @node: connection manager req node
  * @cm_id: cm id
+ * @failed_req: set if req failed before serialization,
+ * with a commands pending before it, ie this is the latest command which failed
+ * but still some operation(req) is pending.
  * @connect_req: connect req
  * @disconnect_req: disconnect req
  */
 struct cm_req {
 	qdf_list_node_t node;
 	wlan_cm_id cm_id;
+	bool failed_req;
 	union {
 		struct cm_connect_req connect_req;
 		struct cm_disconnect_req discon_req;

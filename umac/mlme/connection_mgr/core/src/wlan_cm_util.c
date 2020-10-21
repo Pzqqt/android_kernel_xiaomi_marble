@@ -462,11 +462,12 @@ static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
 }
 
 void
-cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
+cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
+			 bool only_failed_req)
 {
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req *cm_req;
-	uint32_t prefix;
+	uint32_t req_prefix;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
@@ -474,17 +475,18 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
 		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
 		cm_req = qdf_container_of(cur_node, struct cm_req, node);
 
-		prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
+		req_prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
 
 		/* Only remove the pending requests matching the flush prefix */
-		if (prefix != flush_prefix ||
-		    cm_req->cm_id == cm_ctx->active_cm_id) {
-			cur_node = next_node;
-			next_node = NULL;
-			continue;
-		}
+		if (req_prefix != prefix ||
+		    cm_req->cm_id == cm_ctx->active_cm_id)
+			goto next;
 
-		if (prefix == CONNECT_REQ_PREFIX) {
+		/* If only_failed_req is set flush only failed req */
+		if (only_failed_req && !cm_req->failed_req)
+			goto next;
+
+		if (req_prefix == CONNECT_REQ_PREFIX) {
 			cm_handle_connect_flush(cm_ctx, cm_req);
 			cm_ctx->connect_count--;
 			cm_free_connect_req_mem(&cm_req->connect_req);
@@ -498,7 +500,7 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix)
 		cm_remove_cmd_from_serialization(cm_ctx, cm_req->cm_id);
 		qdf_list_remove_node(&cm_ctx->req_list, &cm_req->node);
 		qdf_mem_free(cm_req);
-
+next:
 		cur_node = next_node;
 		next_node = NULL;
 	}

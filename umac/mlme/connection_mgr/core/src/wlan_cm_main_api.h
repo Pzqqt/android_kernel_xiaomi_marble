@@ -617,13 +617,15 @@ bool cm_is_cm_id_current_candidate_single_pmk(struct cnx_mgr *cm_ctx,
 /**
  * cm_flush_pending_request() - Flush all pending requests matching flush prefix
  * @cm_ctx: connection manager context
- * @flush_prefix: prefix for the type of command to flush
+ * @prefix: prefix for the type of command to flush
+ * @only_failed_req: flush only the failed pending req
  *
  * Context: Can be called from any context.
  *
  * Return: void
  */
-void cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t flush_prefix);
+void cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
+			      bool only_failed_req);
 
 /**
  * cm_remove_cmd() - Remove cmd from req list and serialization

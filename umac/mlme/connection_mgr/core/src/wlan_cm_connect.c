@@ -920,9 +920,16 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 		 *    cleaning up the active connect request and thus only
 		 *    remove the pending connect.
 		 */
-		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX);
+		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX, false);
 		break;
 	case WLAN_CM_S_DISCONNECTING:
+		/*
+		 * Flush failed pending connect req as new req is received
+		 * and its no longer the latest one.
+		 */
+		if (cm_ctx->connect_count)
+			cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX,
+						 true);
 		/*
 		 * In case of disconnecting state, there could be 2 scenarios:-
 		 * In both case no state specific action is required.

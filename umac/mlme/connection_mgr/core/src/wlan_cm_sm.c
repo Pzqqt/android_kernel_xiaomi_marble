@@ -422,6 +422,8 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 	struct cnx_mgr *cm_ctx = ctx;
 	bool event_handled;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_cm_connect_rsp *resp;
+	struct cm_req *cm_req;
 
 	switch (event) {
 	case WLAN_CM_SM_EV_CONNECT_REQ:
@@ -478,6 +480,30 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 		/* check if connect resp cm id is valid for the current req */
 		if (!cm_connect_resp_cmid_match_list_head(cm_ctx, data)) {
 			event_handled = false;
+			break;
+		}
+		/*
+		 * On connect req failure (before serialization), if there is a
+		 * pending disconnect req then move to disconnecting state and
+		 * wait for disconnect to complete before moving to INIT state.
+		 * Else directly transition to INIT state.
+		 *
+		 * On disconnect completion or a new connect/disconnect req in
+		 * disconnnecting state, the failed connect req will be flushed.
+		 * This will ensure SM moves to INIT state after completion of
+		 * all operation.
+		 */
+		if (cm_ctx->disconnect_count) {
+			resp = data;
+
+			mlme_debug(CM_PREFIX_FMT "disconnect_count %d",
+				   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+						 resp->cm_id),
+				   cm_ctx->disconnect_count);
+			cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
+			cm_req->failed_req = true;
+			cm_sm_transition_to(cm_ctx, WLAN_CM_S_DISCONNECTING);
+			event_handled = true;
 			break;
 		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_INIT);

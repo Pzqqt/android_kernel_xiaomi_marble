@@ -389,9 +389,16 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 	 * complete.
 	 */
 	if (resp->req.cm_id == cm_ctx->active_cm_id)
-		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX);
+		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX, false);
 
 	cm_remove_cmd(cm_ctx, resp->req.cm_id);
+	mlme_debug(CM_PREFIX_FMT "disconnect count %d connect count %d",
+		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+				 resp->req.cm_id),
+		   cm_ctx->disconnect_count, cm_ctx->connect_count);
+	/* Flush failed connect req as pending disconnect is completed */
+	if (!cm_ctx->disconnect_count && cm_ctx->connect_count)
+		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX, true);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -429,7 +436,14 @@ cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
 		mlme_cm_osif_update_id_and_src(cm_ctx->vdev,
 					       CM_SOURCE_INVALID,
 					       CM_ID_INVALID);
-		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX);
+		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX, false);
+		/*
+		 * Flush failed pending connect req as new req is received
+		 * and its no longer the latest one.
+		 */
+		if (cm_ctx->connect_count)
+			cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX,
+						 true);
 		break;
 	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*
@@ -462,8 +476,8 @@ cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
 		 * disconnect requests pending, so flush all the requests except
 		 * the activated request.
 		 */
-		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX);
-		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX);
+		cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX, false);
+		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX, false);
 		break;
 	default:
 		mlme_err("Vdev %d disconnect req in invalid state %d",
