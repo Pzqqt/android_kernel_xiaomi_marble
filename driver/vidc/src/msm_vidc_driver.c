@@ -5,7 +5,7 @@
 
 #include <linux/iommu.h>
 #include <linux/workqueue.h>
-#include <media/msm_vidc_utils.h>
+#include <media/v4l2_vidc_extensions.h>
 #include <media/msm_media_info.h>
 
 #include "msm_vidc_driver.h"

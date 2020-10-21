@@ -6,7 +6,7 @@
 #ifndef _MSM_VIDC_CONTROL_H_
 #define _MSM_VIDC_CONTROL_H_
 
-#include <media/msm_vidc_utils.h>
+#include <media/v4l2_vidc_extensions.h>
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
 

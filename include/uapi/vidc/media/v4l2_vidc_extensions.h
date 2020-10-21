@@ -3,8 +3,8 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __MSM_VIDC_UTILS_H__
-#define __MSM_VIDC_UTILS_H__
+#ifndef __V4l2_VIDC_EXTENSIONS_H__
+#define __V4l2_VIDC_EXTENSIONS_H__
 
 #include <linux/types.h>
 #include <linux/v4l2-controls.h>
