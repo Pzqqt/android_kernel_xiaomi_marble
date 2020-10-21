@@ -4,6 +4,7 @@
  */
 
 #include <linux/dma-buf.h>
+#include <linux/dma-heap.h>
 #include <linux/dma-direction.h>
 #include <linux/iommu.h>
 #include <linux/msm_dma_iommu_mapping.h>
@@ -156,7 +157,7 @@ void msm_cvp_smem_put_dma_buf(void *dma_buf)
 		return;
 	}
 
-	dma_buf_put((struct dma_buf *)dma_buf);
+	dma_heap_buffer_free((struct dma_buf *)dma_buf);
 }
 
 int msm_cvp_map_smem(struct msm_cvp_inst *inst,
@@ -246,6 +247,7 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 	int rc = 0;
 	int ion_flags = 0;
 	struct dma_buf *dbuf = NULL;
+	struct dma_heap *heap;
 
 	if (!res) {
 		dprintk(CVP_ERR, "%s: NULL res\n", __func__);
@@ -280,7 +282,8 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 		heap_mask = ION_HEAP(ION_SECURE_HEAP_ID);
 	}
 
-	dbuf = ion_alloc(size, heap_mask, ion_flags);
+	heap = dma_heap_find("qcom,system");
+	dbuf = dma_heap_buffer_alloc(heap, size, 0, 0);
 	if (IS_ERR_OR_NULL(dbuf)) {
 		dprintk(CVP_ERR,
 		"Failed to allocate shared memory = %x bytes, %llx, %x %x\n",
@@ -330,7 +333,7 @@ fail_map:
 	if (map_kernel)
 		dma_buf_end_cpu_access(dbuf, DMA_BIDIRECTIONAL);
 fail_device_address:
-	dma_buf_put(dbuf);
+	dma_heap_buffer_free(dbuf);
 fail_shared_mem_alloc:
 	return rc;
 }
@@ -354,7 +357,7 @@ static int free_dma_mem(struct msm_cvp_smem *mem)
 	}
 
 	if (mem->dma_buf) {
-		dma_buf_put(mem->dma_buf);
+		dma_heap_buffer_free(mem->dma_buf);
 		mem->dma_buf = NULL;
 	}
 

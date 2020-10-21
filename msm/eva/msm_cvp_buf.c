@@ -511,7 +511,7 @@ static void msm_cvp_unmap_frame_buf(struct msm_cvp_inst *inst,
 		if (smem->bitmap_index >= MAX_DMABUF_NUMS) {
 			/* smem not in dmamap cache */
 			msm_cvp_unmap_smem(inst, smem, "unmap cpu");
-			dma_buf_put(smem->dma_buf);
+			dma_heap_buffer_free(smem->dma_buf);
 			kmem_cache_free(cvp_driver->smem_cache, smem);
 			buf->smem = NULL;
 		} else {
@@ -589,7 +589,7 @@ int msm_cvp_unmap_user_persist(struct msm_cvp_inst *inst,
 				/* smem not in dmamap cache */
 				msm_cvp_unmap_smem(inst, smem,
 						"unmap cpu");
-				dma_buf_put(smem->dma_buf);
+				dma_heap_buffer_free(smem->dma_buf);
 				kmem_cache_free(
 					cvp_driver->smem_cache,
 					smem);

@@ -9,6 +9,7 @@
 #include <linux/poll.h>
 #include <linux/types.h>
 #include <linux/dma-buf.h>
+#include <linux/dma-heap.h>
 #include <linux/ion.h>
 #include <linux/msm_ion.h>
 #include <linux/refcount.h>

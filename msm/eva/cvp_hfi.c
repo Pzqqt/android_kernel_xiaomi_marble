@@ -1357,7 +1357,6 @@ static int __iface_cmdq_write_relaxed(struct iris_hfi_device *device,
 	struct cvp_iface_q_info *q_info;
 	struct cvp_hal_cmd_pkt_hdr *cmd_packet;
 	int result = -E2BIG;
-	struct dma_buf *dbuf;
 
 	if (!device || !pkt) {
 		dprintk(CVP_ERR, "Invalid Params\n");
@@ -1365,9 +1364,6 @@ static int __iface_cmdq_write_relaxed(struct iris_hfi_device *device,
 	}
 
 	__strict_check(device);
-
-	dbuf = device->iface_q_table.mem_data.dma_buf;
-	dma_buf_begin_cpu_access(dbuf, DMA_BIDIRECTIONAL);
 
 	if (!__core_in_valid_state(device)) {
 		dprintk(CVP_ERR, "%s - fw not in init state\n", __func__);
@@ -1414,7 +1410,6 @@ static int __iface_cmdq_write_relaxed(struct iris_hfi_device *device,
 
 err_q_write:
 err_q_null:
-	dma_buf_end_cpu_access(dbuf, DMA_BIDIRECTIONAL);
 	return result;
 }
 
@@ -2961,7 +2956,6 @@ static int __response_handler(struct iris_hfi_device *device)
 	int packet_count = 0;
 	u8 *raw_packet = NULL;
 	bool requeue_pm_work = true;
-	struct dma_buf *dbuf_sfr, *dbuf_hfi;
 
 	if (!device || device->state != IRIS_STATE_INIT)
 		return 0;
@@ -2977,10 +2971,6 @@ static int __response_handler(struct iris_hfi_device *device)
 		return 0;
 	}
 
-	dbuf_sfr = device->sfr.mem_data.dma_buf;
-	dbuf_hfi = device->iface_q_table.mem_data.dma_buf;
-	dma_buf_begin_cpu_access(dbuf_sfr, DMA_BIDIRECTIONAL);
-	dma_buf_begin_cpu_access(dbuf_hfi, DMA_BIDIRECTIONAL);
 	if (device->intr_status & CVP_FATAL_INTR_BMSK) {
 		struct cvp_hfi_sfr_struct *vsfr = (struct cvp_hfi_sfr_struct *)
 			device->sfr.align_virtual_addr;
@@ -3083,8 +3073,6 @@ static int __response_handler(struct iris_hfi_device *device)
 
 exit:
 	__flush_debug_queue(device, raw_packet);
-	dma_buf_end_cpu_access(dbuf_hfi, DMA_BIDIRECTIONAL);
-	dma_buf_end_cpu_access(dbuf_sfr, DMA_BIDIRECTIONAL);
 	return packet_count;
 }
 
