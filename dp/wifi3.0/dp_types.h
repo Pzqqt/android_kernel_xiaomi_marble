@@ -2924,6 +2924,7 @@ struct dp_fisa_rx_sw_ft {
 	/* CMEM parameters */
 	uint32_t cmem_offset;
 	uint32_t metadata;
+	uint32_t reo_dest_indication;
 };
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_fisa_rx_sw_ft)
