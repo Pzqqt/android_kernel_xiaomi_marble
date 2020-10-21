@@ -2167,6 +2167,30 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		}
 
 		/*
+		 * For frames with multiple segments (TSO, ME), jump to next
+		 * segment.
+		 */
+		if (msdu_info->frm_type == dp_tx_frm_tso) {
+			if (msdu_info->u.tso_info.curr_seg->next) {
+				msdu_info->u.tso_info.curr_seg =
+					msdu_info->u.tso_info.curr_seg->next;
+
+				/*
+				 * If this is a jumbo nbuf, then increment the
+				 * number of nbuf users for each additional
+				 * segment of the msdu. This will ensure that
+				 * the skb is freed only after receiving tx
+				 * completion for all segments of an nbuf
+				 */
+				qdf_nbuf_inc_users(nbuf);
+
+				/* Check with MCL if this is needed */
+				/* nbuf = msdu_info->u.tso_info.curr_seg->nbuf;
+				 */
+			}
+		}
+
+		/*
 		 * Enqueue the Tx MSDU descriptor to HW for transmit
 		 */
 		status = dp_tx_hw_enqueue(soc, vdev, tx_desc, htt_tcl_metadata,
@@ -2210,6 +2234,17 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				i++;
 				continue;
 			}
+
+			/*
+			 * For TSO frames, the nbuf users increment done for
+			 * the current segment has to be reverted, since the
+			 * hw enqueue for this segment failed
+			 */
+			if (msdu_info->frm_type == dp_tx_frm_tso &&
+			    msdu_info->u.tso_info.curr_seg) {
+				qdf_nbuf_free(nbuf);
+			}
+
 			goto done;
 		}
 
@@ -2219,28 +2254,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		 * as first element, following 2 blocks of code (for TSO and SG)
 		 * can be combined into 1
 		 */
-
-		/*
-		 * For frames with multiple segments (TSO, ME), jump to next
-		 * segment.
-		 */
-		if (msdu_info->frm_type == dp_tx_frm_tso) {
-			if (msdu_info->u.tso_info.curr_seg->next) {
-				msdu_info->u.tso_info.curr_seg =
-					msdu_info->u.tso_info.curr_seg->next;
-
-				/*
-				 * If this is a jumbo nbuf, then increment the number of
-				 * nbuf users for each additional segment of the msdu.
-				 * This will ensure that the skb is freed only after
-				 * receiving tx completion for all segments of an nbuf
-				 */
-				qdf_nbuf_inc_users(nbuf);
-
-				/* Check with MCL if this is needed */
-				/* nbuf = msdu_info->u.tso_info.curr_seg->nbuf; */
-			}
-		}
 
 		/*
 		 * For Multicast-Unicast converted packets,
