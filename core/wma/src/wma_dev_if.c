@@ -1059,7 +1059,7 @@ static void wma_dcs_clear_vdev_starting(struct mac_context *mac_ctx,
  * interference mitigation
  * @mac_ctx: mac context
  * @mac_id: mac id
- * @vdev_id: vdev id
+ * @rsp: vdev start response
  *
  * This function is used to enable wlan interference mitigation through
  * send dcs command
@@ -1069,14 +1069,14 @@ static void wma_dcs_clear_vdev_starting(struct mac_context *mac_ctx,
 static void wma_dcs_wlan_interference_mitigation_enable(
 					struct mac_context *mac_ctx,
 					uint32_t mac_id,
-					uint32_t vdev_id)
+					struct vdev_start_response *rsp)
 {
 	int vdev_index;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t count;
 	bool wlan_interference_mitigation_enable =
 			mac_ctx->sap.dcs_info.
-				wlan_interference_mitigation_enable[vdev_id];
+			wlan_interference_mitigation_enable[rsp->vdev_id];
 
 	count = policy_mgr_get_sap_go_count_on_mac(
 			mac_ctx->psoc, list, mac_id);
@@ -1094,15 +1094,18 @@ static void wma_dcs_wlan_interference_mitigation_enable(
 	}
 
 	if (wlan_interference_mitigation_enable)
-		ucfg_config_dcs_enable(
-			mac_ctx->psoc, mac_id, CAP_DCS_WLANIM);
-	ucfg_wlan_dcs_cmd(mac_ctx->psoc, mac_id, true);
+		ucfg_config_dcs_event_data(mac_ctx->psoc, mac_id, true);
+
+	if (rsp->resp_type == WMI_HOST_VDEV_START_RESP_EVENT) {
+		ucfg_config_dcs_enable(mac_ctx->psoc, mac_id, CAP_DCS_WLANIM);
+		ucfg_wlan_dcs_cmd(mac_ctx->psoc, mac_id, true);
+	}
 }
 #else
 static void wma_dcs_wlan_interference_mitigation_enable(
 					struct mac_context *mac_ctx,
 					uint32_t mac_id,
-					uint32_t vdev_id)
+					struct vdev_start_response *rsp)
 {
 }
 
@@ -1234,8 +1237,7 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id)) {
 		wma_dcs_clear_vdev_starting(mac_ctx, rsp->vdev_id);
 		wma_dcs_wlan_interference_mitigation_enable(mac_ctx,
-							    iface->mac_id,
-							    rsp->vdev_id);
+							    iface->mac_id, rsp);
 	}
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
