@@ -255,12 +255,34 @@ void lim_update_he_bw_cap_mcs(struct pe_session *session,
 							HE_MCS_ALL_DISABLED;
 	}
 }
+
+void lim_update_he_mcs_12_13_map(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id, uint16_t he_mcs_12_13_map)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("vdev not found for id: %d", vdev_id);
+		return;
+	}
+	wlan_vdev_obj_lock(vdev);
+	wlan_vdev_mlme_set_he_mcs_12_13_map(vdev, he_mcs_12_13_map);
+	wlan_vdev_obj_unlock(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
 #else
 static inline void lim_extract_he_op(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct)
 {}
 static void lim_check_is_he_mcs_valid(struct pe_session *session,
 				      tSirProbeRespBeacon *beacon_struct)
+{
+}
+
+void lim_update_he_mcs_12_13_map(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id, uint16_t he_mcs_12_13_map)
 {
 }
 #endif

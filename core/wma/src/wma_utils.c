@@ -66,6 +66,7 @@
 #include <../../core/src/vdev_mgr_ops.h>
 #include "cdp_txrx_misc.h"
 #include <cdp_txrx_host_stats.h>
+#include "wlan_mlme_ucfg_api.h"
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -177,7 +178,15 @@ static struct index_he_data_rate_type he_mcs_nss1[] = {
 	{11, {{1434, 1354, 1219}, {0} },
 	     {{2868, 2708, 2438}, {0} },
 	     {{6004, 5671, 5104}, {0} },
-	     {{12010, 11342, 10208}, {0} } }
+	     {{12010, 11342, 10208}, {0} } },
+	{12, {{1549, 1463, 1316}, {0} },
+	     {{3097, 2925, 2633}, {0} },
+	     {{6485, 6125, 5513}, {0} },
+	     {{12971, 12250, 11025}, {0} } },
+	{13, {{1721, 1625, 1463}, {0} },
+	     {{3441, 3250, 2925}, {0} },
+	     {{7206, 6806, 6125}, {0} },
+	     {{14412, 13611, 12250}, {0} } }
 };
 
 /*MCS parameters with Nss = 2*/
@@ -230,7 +239,15 @@ static struct index_he_data_rate_type he_mcs_nss2[] = {
 	{11, {{2868,  2708,  2438}, {0} },
 	     {{5735,  5417,  4875}, {0} },
 	     {{12010, 11343, 10208}, {0} },
-	     {{24019, 22685, 20416}, {0} } }
+	     {{24019, 22685, 20416}, {0} } },
+	{12, {{3097,  2925,  2633}, {0} },
+	     {{6194,  5850,  5265}, {0} },
+	     {{12971, 12250, 11025}, {0} },
+	     {{25941, 24500, 22050}, {0} } },
+	{13, {{3441,  3250,  2925}, {0} },
+	     {{6882,  6500,  5850}, {0} },
+	     {{14412, 13611, 12250}, {0} },
+	     {{28824, 27222, 24500}, {0} } }
 };
 #endif
 
@@ -318,6 +335,7 @@ static inline uint16_t wma_mcs_rate_match(uint16_t raw_rate,
  * wma_get_mcs_idx() - get mcs index
  * @raw_rate: raw rate from fw
  * @rate_flags: rate flags
+ * @he_mcs_12_13_map: he mcs12/13 map
  * @nss: nss
  * @dcm: dcm
  * @guard_interval: guard interval
@@ -328,12 +346,13 @@ static inline uint16_t wma_mcs_rate_match(uint16_t raw_rate,
  */
 static uint16_t wma_match_he_rate(uint16_t raw_rate,
 				  enum tx_rate_info rate_flags,
+				  uint16_t he_mcs_12_13_map,
 				  uint8_t *nss, uint8_t *dcm,
 				  enum txrate_gi *guard_interval,
 				  enum tx_rate_info *mcs_rate_flag,
 				  uint8_t *p_index)
 {
-	uint8_t index = 0;
+	uint8_t index = 0, max_he_mcs_idx;
 	uint8_t dcm_index_max = 1;
 	uint8_t dcm_index = 0;
 	uint16_t match_rate = 0;
@@ -345,7 +364,12 @@ static uint16_t wma_match_he_rate(uint16_t raw_rate,
 		TX_RATE_HE20)))
 		return 0;
 
-	for (index = 0; index < MAX_HE_MCS_IDX; index++) {
+	if (he_mcs_12_13_map)
+		max_he_mcs_idx = MAX_HE_MCS12_13_IDX;
+	else
+		max_he_mcs_idx = MAX_HE_MCS_IDX;
+
+	for (index = 0; index < max_he_mcs_idx; index++) {
 		dcm_index_max = IS_MCS_HAS_DCM_RATE(index) ? 2 : 1;
 
 		for (dcm_index = 0; dcm_index < dcm_index_max;
@@ -433,6 +457,7 @@ rate_found:
 #else
 static uint16_t wma_match_he_rate(uint16_t raw_rate,
 				  enum tx_rate_info rate_flags,
+				  uint16_t he_mcs_12_13_map,
 				  uint8_t *nss, uint8_t *dcm,
 				  enum txrate_gi *guard_interval,
 				  enum tx_rate_info *mcs_rate_flag,
@@ -443,6 +468,7 @@ static uint16_t wma_match_he_rate(uint16_t raw_rate,
 #endif
 
 uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
+			uint16_t he_mcs_12_13_map,
 			uint8_t *nss, uint8_t *dcm,
 			enum txrate_gi *guard_interval,
 			enum tx_rate_info *mcs_rate_flag)
@@ -452,12 +478,12 @@ uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 	uint16_t *nss1_rate;
 	uint16_t *nss2_rate;
 
-	wma_debug("Rates from FW:  raw_rate:%d rate_flgs: 0x%x, nss: %d",
-		  raw_rate, rate_flags, *nss);
+	wma_debug("Rates from FW:  raw_rate:%d rate_flgs: 0x%x he_mcs_12_13_map: 0x%x nss: %d",
+		  raw_rate, rate_flags, he_mcs_12_13_map, *nss);
 
 	*mcs_rate_flag = rate_flags;
 
-	match_rate = wma_match_he_rate(raw_rate, rate_flags,
+	match_rate = wma_match_he_rate(raw_rate, rate_flags, he_mcs_12_13_map,
 				       nss, dcm, guard_interval,
 				       mcs_rate_flag, &index);
 	if (match_rate)

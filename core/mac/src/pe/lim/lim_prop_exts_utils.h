@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016, 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016, 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,4 +67,14 @@ ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t nss);
 
+/**
+ * lim_update_he_mcs_12_13_map() - update he_mcs_12_13_map in vdev object
+ * @psoc: Pointer to Global MAC structure
+ * @vdev_id: vdev id
+ * @he_mcs_12_13_map: he mcs 12/13 map
+ *
+ * Return: None
+ */
+void lim_update_he_mcs_12_13_map(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id, uint16_t he_mcs_12_13_map);
 #endif /* __LIM_PROP_EXTS_UTILS_H */

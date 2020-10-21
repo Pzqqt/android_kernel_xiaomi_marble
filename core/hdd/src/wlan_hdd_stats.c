@@ -173,11 +173,14 @@ static struct index_vht_data_rate_type supported_vht_mcs_rate_nss2[] = {
 };
 
 /*array index points to MCS and array value points respective rssi*/
-static int rssi_mcs_tbl[][12] = {
-/*  MCS 0   1    2   3    4    5    6    7    8    9    10   11*/
-	{-82, -79, -77, -74, -70, -66, -65, -64, -59, -57, -52, -48},  /* 20 */
-	{-79, -76, -74, -71, -67, -63, -62, -61, -56, -54, -49, -45},  /* 40 */
-	{-76, -73, -71, -68, -64, -60, -59, -58, -53, -51, -46, -42}   /* 80 */
+static int rssi_mcs_tbl[][14] = {
+/*  MCS 0   1    2   3    4    5    6    7    8    9    10   11   12   13*/
+	/* 20 */
+	{-82, -79, -77, -74, -70, -66, -65, -64, -59, -57, -52, -48, -46, -42},
+	/* 40 */
+	{-79, -76, -74, -71, -67, -63, -62, -61, -56, -54, -49, -45, -43, -39},
+	/* 80 */
+	{-76, -73, -71, -68, -64, -60, -59, -58, -53, -51, -46, -42, -46, -36}
 };
 
 static bool get_station_fw_request_needed = true;
@@ -1610,6 +1613,7 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 	struct wlan_mlme_nss_chains *dynamic_cfg;
 	uint32_t tx_nss, rx_nss;
 	struct wlan_objmgr_vdev *vdev;
+	uint16_t he_mcs_12_13_map;
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
@@ -1688,16 +1692,19 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 	adapter->hdd_stats.class_a_stat.tx_rate = stats->tx_rate;
 	adapter->hdd_stats.class_a_stat.rx_rate = stats->rx_rate;
 	adapter->hdd_stats.class_a_stat.tx_rx_rate_flags = stats->tx_rate_flags;
+
+	he_mcs_12_13_map = wlan_vdev_mlme_get_he_mcs_12_13_map(vdev);
 	adapter->hdd_stats.class_a_stat.tx_mcs_index =
 		sme_get_mcs_idx(stats->tx_rate, stats->tx_rate_flags,
+				he_mcs_12_13_map,
 				&adapter->hdd_stats.class_a_stat.tx_nss,
 				&adapter->hdd_stats.class_a_stat.tx_dcm,
 				&adapter->hdd_stats.class_a_stat.tx_gi,
 				&adapter->hdd_stats.class_a_stat.
 				tx_mcs_rate_flags);
-
 	adapter->hdd_stats.class_a_stat.rx_mcs_index =
 		sme_get_mcs_idx(stats->rx_rate, stats->tx_rate_flags,
+				he_mcs_12_13_map,
 				&adapter->hdd_stats.class_a_stat.rx_nss,
 				&adapter->hdd_stats.class_a_stat.rx_dcm,
 				&adapter->hdd_stats.class_a_stat.rx_gi,
@@ -4862,6 +4869,7 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 	uint16_t max_rate = 0;
 	uint32_t vht_mcs_map;
 	bool is_vht20_mcs9 = false;
+	uint16_t he_mcs_12_13_map = 0;
 	uint16_t current_rate = 0;
 	qdf_size_t or_leng = CSR_DOT11_SUPPORTED_RATES_MAX;
 	uint8_t operational_rates[CSR_DOT11_SUPPORTED_RATES_MAX];
@@ -4951,6 +4959,8 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 		return false;
 	}
 
+	he_mcs_12_13_map = wlan_vdev_mlme_get_he_mcs_12_13_map(vdev);
+
 	hdd_objmgr_put_vdev(vdev);
 
 	for (i = 0; i < er_leng; i++) {
@@ -5024,8 +5034,11 @@ bool hdd_report_max_rate(struct hdd_adapter *adapter,
 			}
 
 			if (rate_flags & (TX_RATE_HE20 | TX_RATE_HE40 |
-			    TX_RATE_HE80 | TX_RATE_HE160))
+			    TX_RATE_HE80 | TX_RATE_HE160)) {
 				max_mcs_idx = 11;
+				if (he_mcs_12_13_map)
+					max_mcs_idx = 13;
+			}
 
 			if (rssidx != 0) {
 				for (i = 0; i <= max_mcs_idx; i++) {

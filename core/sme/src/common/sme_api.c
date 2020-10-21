@@ -15573,11 +15573,12 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 #endif
 
 uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
+			uint16_t he_mcs_12_13_map,
 			uint8_t *nss, uint8_t *dcm,
 			enum txrate_gi *guard_interval,
 			enum tx_rate_info *mcs_rate_flags)
 {
-	return wma_get_mcs_idx(raw_rate, rate_flags,
+	return wma_get_mcs_idx(raw_rate, rate_flags, he_mcs_12_13_map,
 			       nss, dcm, guard_interval, mcs_rate_flags);
 }
 

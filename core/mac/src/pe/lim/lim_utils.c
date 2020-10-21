@@ -6854,6 +6854,11 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	else
 		sta_ds->he_mcs_12_13_map &=
 			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g;
+
+	lim_update_he_mcs_12_13_map(mac_ctx->psoc,
+				    session_entry->smeSessionId,
+				    sta_ds->he_mcs_12_13_map);
+
 }
 
 void lim_update_stads_he_6ghz_op(struct pe_session *session,

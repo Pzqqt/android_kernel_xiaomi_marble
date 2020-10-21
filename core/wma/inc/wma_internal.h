@@ -52,6 +52,7 @@
 #define MAX_VHT_MCS_IDX 10
 #ifdef WLAN_FEATURE_11AX
 #define MAX_HE_MCS_IDX 12
+#define MAX_HE_MCS12_13_IDX 14
 #endif
 #define INVALID_MCS_IDX 255
 

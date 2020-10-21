@@ -508,6 +508,7 @@ void wma_wmi_stop(void);
  * wma_get_mcs_idx() - get mcs index
  * @raw_rate: raw rate from fw
  * @rate_flags: rate flags
+ * @he_mcs_12_13_map: he mcs12/13 map
  * @nss: nss
  * @dcm: dcm
  * @guard_interval: guard interval
@@ -516,6 +517,7 @@ void wma_wmi_stop(void);
  *  Return: mcs index
  */
 uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
+			uint16_t he_mcs_12_13_map,
 			uint8_t *nss, uint8_t *dcm,
 			enum txrate_gi *guard_interval,
 			enum tx_rate_info *mcs_rate_flag);
