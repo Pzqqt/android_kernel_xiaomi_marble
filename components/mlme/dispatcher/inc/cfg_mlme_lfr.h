@@ -2436,7 +2436,7 @@
  * used for WFA certification.
  * @Min: 0
  * @Max: 0xFFFFFFFF
- * @Default: 0x1FFFF
+ * @Default: 0x3FFFF
  *
  * ROAM_TRIGGER_REASON_PER         BIT 1
  * ROAM_TRIGGER_REASON_BMISS       BIT 2
@@ -2454,7 +2454,8 @@
  * ROAM_TRIGGER_REASON_IDLE        BIT 14
  * ROAM_TRIGGER_REASON_STA_KICKOUT BIT 15
  * ROAM_TRIGGER_REASON_ESS_RSSI    BIT 16
- * ROAM_TRIGGER_REASON_MAX         BIT 17
+ * ROAM_TRIGGER_REASON_WTC_BTM     BIT 17
+ * ROAM_TRIGGER_REASON_MAX         BIT 18
  *
  * Related: none
  *
@@ -2468,7 +2469,7 @@
 			"roam_triggers", \
 			0, \
 			0xFFFFFFFF, \
-			0x1FFFF, \
+			0x3FFFF, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Bitmap of roaming triggers")
 
