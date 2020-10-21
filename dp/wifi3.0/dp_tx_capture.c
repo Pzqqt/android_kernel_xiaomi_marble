@@ -1560,6 +1560,28 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 }
 
 /**
+ * get_number_of_1s(): Function to get number of 1s
+ * @value: value to find
+ *
+ * return: number of 1s
+ */
+static
+inline uint32_t get_number_of_1s(uint32_t value)
+{
+	uint32_t shift[] = {1, 2, 4, 8, 16};
+	uint32_t magic_number[] = { 0x55555555, 0x33333333, 0x0F0F0F0F,
+				    0x00FF00FF, 0x0000FFFF};
+	uint8_t k = 0;
+
+	for (; k <= 4; k++) {
+		value = (value & magic_number[k]) +
+			((value >> shift[k]) & magic_number[k]);
+	}
+
+	return value;
+}
+
+/**
  * dp_process_ppdu_stats_update_failed_bitmap(): update failed bitmap
  * @pdev: dp_pdev
  * @data: tx completion ppdu desc
@@ -1590,6 +1612,7 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 	uint8_t extra_ba_mpdus = 0;
 	uint32_t last_ba_seq = 0;
 	uint32_t enq_ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS] = {0};
+	uint32_t mpdu_enq = 0;
 
 	user = (struct cdp_tx_completion_ppdu_user *)data;
 
@@ -1726,6 +1749,32 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 	user->ba_size = user->last_enq_seq - user->start_seq + 1;
 
 	last_ba_seq = user->start_seq + last_ba_set_bit;
+
+	/* mpdu_tried should be always higher than last ba bit in ba bitmap */
+	if ((user->mpdu_tried_ucast) &&
+	    (user->mpdu_tried_ucast < last_set_bit)) {
+
+		for (i = 0; i < size; i++)
+			mpdu_enq += get_number_of_1s(user->enq_bitmap[i]);
+
+		if (user->mpdu_tried_ucast < mpdu_enq) {
+			for (i = 0; i < size; i++)
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_INFO_MED,
+					  "ppdu_id[%d] ba_bitmap[%x] enqueue_bitmap[%x] failed_bitmap[%x]",
+					  ppdu_id, user->ba_bitmap[i],
+					  user->enq_bitmap[i],
+					  user->failed_bitmap[i]);
+
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_INFO_MED,
+				   "last_set_bit:%d mpdu_tried_ucast %d mpdu_enq %d\n",
+				   last_set_bit, user->mpdu_tried_ucast,
+				   mpdu_enq);
+
+			user->mpdu_tried_ucast = mpdu_enq;
+		}
+	}
 
 	if (extra_ba_mpdus) {
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
@@ -1904,28 +1953,6 @@ dp_config_enh_tx_capture(struct dp_pdev *pdev, uint8_t val)
 		  qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * get_number_of_1s(): Function to get number of 1s
- * @value: value to find
- *
- * return: number of 1s
- */
-static
-inline uint32_t get_number_of_1s(uint32_t value)
-{
-	uint32_t shift[] = {1, 2, 4, 8, 16};
-	uint32_t magic_number[] = { 0x55555555, 0x33333333, 0x0F0F0F0F,
-				    0x00FF00FF, 0x0000FFFF};
-	uint8_t k = 0;
-
-	for (; k <= 4; k++) {
-		value = (value & magic_number[k]) +
-			((value >> shift[k]) & magic_number[k]);
-	}
-
-	return value;
 }
 
 /**
