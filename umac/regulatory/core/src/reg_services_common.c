@@ -2045,7 +2045,7 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
 						&country_index,
 						&regdmn_pair);
 	} else if (rd->flags == REGDMN_IS_SET) {
-		reg_get_rdpair_from_regdmn_id(rd->cc.regdmn_id,
+		reg_get_rdpair_from_regdmn_id(rd->cc.regdmn.reg_2g_5g_pair_id,
 					      &regdmn_pair);
 	}
 
@@ -2085,7 +2085,8 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_pdev *pdev,
 		qdf_mem_copy(rd->cc.alpha, pdev_priv_obj->current_country,
 			     sizeof(rd->cc.alpha));
 	} else if (rd->flags == REGDMN_IS_SET) {
-		rd->cc.regdmn_id = pdev_priv_obj->reg_dmn_pair;
+		rd->cc.regdmn.reg_2g_5g_pair_id = pdev_priv_obj->reg_dmn_pair;
+		rd->cc.regdmn.sixg_superdmn_id = pdev_priv_obj->reg_6g_superid;
 	}
 
 	return QDF_STATUS_SUCCESS;

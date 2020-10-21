@@ -900,6 +900,7 @@ struct cur_reg_rule {
  * @num_phy: number of phy
  * @phy_id: phy id
  * @reg_dmn_pair: reg domain pair
+ * @reg_6g_superid: 6G super domain id
  * @ctry_code: country code
  * @alpha2: country alpha2
  * @offload_enabled: offload enabled
@@ -920,6 +921,7 @@ struct cur_regulatory_info {
 	uint8_t num_phy;
 	uint8_t phy_id;
 	uint16_t reg_dmn_pair;
+	uint16_t reg_6g_superid;
 	uint16_t ctry_code;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 	bool offload_enabled;
@@ -1093,7 +1095,7 @@ struct mas_chan_params {
 	char current_country[REG_ALPHA2_LEN + 1];
 	uint16_t def_region_domain;
 	uint16_t def_country_code;
-	uint16_t reg_dmn_pair;
+	uint32_t reg_dmn_pair;
 	uint16_t ctry_code;
 	struct reg_rule_info reg_rules;
 };
@@ -1114,15 +1116,19 @@ enum cc_regdmn_flag {
 
 /**
  * struct cc_regdmn_s: User country code or regdomain
- * @country_code: Country code
- * @regdmn_id:    Regdomain pair ID
- * @alpha:        Country ISO
- * @flags:        Regdomain flags
+ * @country_code:     Country code
+ * @reg_2g_5g_pair_id:  Regdomain pair ID (2Ghz + 5Ghz domain pair)
+ * @sixg_superdmn_id: 6Ghz super domain id
+ * @alpha:            Country ISO
+ * @flags:            Regdomain flags
  */
 struct cc_regdmn_s {
 	union {
 		uint16_t country_code;
-		uint16_t regdmn_id;
+		struct {
+			uint16_t reg_2g_5g_pair_id;
+			uint16_t sixg_superdmn_id;
+		} regdmn;
 		uint8_t alpha[REG_ALPHA2_LEN + 1];
 	} cc;
 	uint8_t flags;

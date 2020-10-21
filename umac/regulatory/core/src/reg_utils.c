@@ -258,10 +258,11 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 			}
 			if (reg_is_world_ctry_code(
 				    pdev_priv_obj->def_region_domain))
-				rd.cc.regdmn_id =
+				rd.cc.regdmn.reg_2g_5g_pair_id =
 					pdev_priv_obj->def_region_domain;
 			else
-				rd.cc.regdmn_id = DEFAULT_WORLD_REGDMN;
+				rd.cc.regdmn.reg_2g_5g_pair_id =
+							DEFAULT_WORLD_REGDMN;
 			rd.flags = REGDMN_IS_SET;
 		} else {
 			qdf_mem_copy(rd.cc.alpha, cc.country,

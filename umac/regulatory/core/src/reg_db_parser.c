@@ -128,7 +128,7 @@ QDF_STATUS reg_get_rdpair_from_country_iso(uint8_t *alpha2,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS reg_get_rdpair_from_regdmn_id(uint16_t regdmn_id,
+QDF_STATUS reg_get_rdpair_from_regdmn_id(uint16_t reg_2g_5g_pair_id,
 					 uint16_t *regdmn_pair)
 {
 	uint16_t j;
@@ -137,7 +137,7 @@ QDF_STATUS reg_get_rdpair_from_regdmn_id(uint16_t regdmn_id,
 	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
 
 	for (j = 0; j < num_reg_dmn; j++) {
-		if (g_reg_dmn_pairs[j].reg_dmn_pair_id == regdmn_id)
+		if (g_reg_dmn_pairs[j].reg_dmn_pair_id == reg_2g_5g_pair_id)
 			break;
 	}
 

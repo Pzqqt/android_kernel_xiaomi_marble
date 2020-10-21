@@ -12464,7 +12464,10 @@ static QDF_STATUS send_user_country_code_cmd_tlv(wmi_unified_t wmi_handle,
 				rd->cc.alpha[2]);
 	} else if (rd->flags == REGDMN_IS_SET) {
 		cmd->countrycode_type = WMI_COUNTRYCODE_DOMAIN_CODE;
-		cmd->country_code.domain_code = rd->cc.regdmn_id;
+		WMI_SET_BITS(cmd->country_code.domain_code, 0, 16,
+			     rd->cc.regdmn.reg_2g_5g_pair_id);
+		WMI_SET_BITS(cmd->country_code.domain_code, 16, 16,
+			     rd->cc.regdmn.sixg_superdmn_id);
 	}
 
 	wmi_mtrace(WMI_SET_INIT_COUNTRY_CMDID, NO_SESSION, 0);

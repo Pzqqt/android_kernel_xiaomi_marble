@@ -160,6 +160,7 @@ struct wlan_regulatory_psoc_priv_obj {
  * @pdev_opened: whether pdev has been opened by application
  * @band_capability: bitmap of bands enabled, using enum reg_wifi_band as the
  *	bit position value
+ * @reg_6g_superid: 6Ghz super domain id
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -174,6 +175,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	uint16_t def_country_code;
 	char current_country[REG_ALPHA2_LEN + 1];
 	uint16_t reg_dmn_pair;
+	uint16_t reg_6g_superid;
 	uint16_t ctry_code;
 #ifdef DISABLE_UNII_SHARED_BANDS
 	uint8_t unii_5g_bitmap;
