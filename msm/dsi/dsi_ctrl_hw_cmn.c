@@ -1687,3 +1687,18 @@ int dsi_ctrl_hw_cmn_wait4dynamic_refresh_done(struct dsi_ctrl_hw *ctrl)
 
 	return 0;
 }
+
+bool dsi_ctrl_hw_cmn_vid_engine_busy(struct dsi_ctrl_hw *ctrl)
+{
+	u32 reg = 0, video_engine_busy = BIT(3);
+	int rc;
+	u32 const sleep_us = 1000;
+	u32 const timeout_us = 50000;
+
+	rc = readl_poll_timeout(ctrl->base + DSI_STATUS, reg,
+			!(reg & video_engine_busy), sleep_us, timeout_us);
+	if (rc)
+		return true;
+
+	return false;
+}

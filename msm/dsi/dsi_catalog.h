@@ -263,6 +263,7 @@ void dsi_phy_hw_v3_0_dyn_refresh_pipe_delay(struct dsi_phy_hw *phy,
 					    struct dsi_dyn_clk_delay *delay);
 
 int dsi_ctrl_hw_cmn_wait4dynamic_refresh_done(struct dsi_ctrl_hw *ctrl);
+bool dsi_ctrl_hw_cmn_vid_engine_busy(struct dsi_ctrl_hw *ctrl);
 int dsi_phy_hw_v3_0_cache_phy_timings(struct dsi_phy_per_lane_cfgs *timings,
 				      u32 *dst, u32 size);
 
