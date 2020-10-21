@@ -80,6 +80,7 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 # for LPASS_CDC Codec
 ifdef CONFIG_SND_SOC_LPASS_CDC
 	LPASS_CDC_OBJS += lpass-cdc.o
+	LPASS_CDC_OBJS += lpass-cdc-comp.o
 	LPASS_CDC_OBJS += lpass-cdc-utils.o
 	LPASS_CDC_OBJS += lpass-cdc-regmap.o
 	LPASS_CDC_OBJS += lpass-cdc-tables.o

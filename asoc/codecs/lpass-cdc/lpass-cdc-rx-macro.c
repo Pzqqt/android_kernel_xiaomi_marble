@@ -18,6 +18,7 @@
 
 #include <asoc/msm-cdc-pinctrl.h>
 #include "lpass-cdc.h"
+#include "lpass-cdc-comp.h"
 #include "lpass-cdc-registers.h"
 #include "lpass-cdc-clk-rsc.h"
 
@@ -102,19 +103,14 @@ static const struct wcd_imped_val imped_index[] = {
 	{13, 9},
 };
 
-struct comp_coeff_val {
-	u8 lsb;
-	u8 msb;
-};
-
 enum {
 	HPH_ULP,
 	HPH_LOHIFI,
 	HPH_MODE_MAX,
 };
 
-static const struct comp_coeff_val
-			comp_coeff_table [HPH_MODE_MAX][COMP_MAX_COEFF] = {
+static struct comp_coeff_val
+		comp_coeff_table [HPH_MODE_MAX][COMP_MAX_COEFF] = {
 	{
 		{0x40, 0x00},
 		{0x4C, 0x00},
@@ -169,6 +165,20 @@ static const struct comp_coeff_val
 		{0x13, 0x0D},
 		{0x6F, 0x0F},
 	},
+};
+
+enum {
+	RX_MODE_ULP,
+	RX_MODE_LOHIFI,
+	RX_MODE_EAR,
+	RX_MODE_MAX
+};
+
+static u8 comp_setting_table[RX_MODE_MAX][COMP_MAX_SETTING] =
+{
+	{0x00, 0x10, 0x06, 0x12, 0x21, 0x30, 0x3F, 0x48, 0xC4, 0xC, 0xC, 0xB0}, /* ULP */
+	{0x00, 0x00, 0x06, 0x12, 0x1E, 0x2A, 0x36, 0x3C, 0xC4, 0x0, 0xC, 0xB0}, /* LOHIFI */
+	{0x00, 0x10, 0x06, 0x12, 0x1E, 0x2A, 0x30, 0x30, 0xDC, 0xC, 0xC, 0xB0}, /* EAR -36 max_attn */
 };
 
 struct lpass_cdc_rx_macro_reg_mask_val {
@@ -1774,27 +1784,16 @@ static int lpass_cdc_rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static int lpass_cdc_rx_macro_config_compander(struct snd_soc_component *component,
-				struct lpass_cdc_rx_macro_priv *rx_priv,
-				int interp_n, int event)
+static void lpass_cdc_rx_macro_droop_setting(struct snd_soc_component *component,
+					    int interp_n, int event)
 {
-	int comp = 0;
-	u16 comp_ctl0_reg = 0, rx_path_cfg0_reg = 0, rx_path_cfg3_reg = 0;
-	u16 rx0_path_ctl_reg = 0;
 	u8 pcm_rate = 0, val = 0;
-
-	/* AUX does not have compander */
-	if (interp_n == INTERP_AUX)
-		return 0;
-
-	comp = interp_n;
-	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
-		__func__, event, comp + 1, rx_priv->comp_enabled[comp]);
+	u16 rx0_path_ctl_reg = 0, rx_path_cfg3_reg = 0;
 
 	rx_path_cfg3_reg = LPASS_CDC_RX_RX0_RX_PATH_CFG3 +
-					(comp * LPASS_CDC_RX_MACRO_RX_PATH_OFFSET);
+					(interp_n * LPASS_CDC_RX_MACRO_RX_PATH_OFFSET);
 	rx0_path_ctl_reg = LPASS_CDC_RX_RX0_RX_PATH_CTL +
-					(comp * LPASS_CDC_RX_MACRO_RX_PATH_OFFSET);
+					(interp_n * LPASS_CDC_RX_MACRO_RX_PATH_OFFSET);
 	pcm_rate = (snd_soc_component_read(component, rx0_path_ctl_reg)
 						& 0x0F);
 	if (pcm_rate < 0x06)
@@ -1812,14 +1811,50 @@ static int lpass_cdc_rx_macro_config_compander(struct snd_soc_component *compone
 	if (SND_SOC_DAPM_EVENT_OFF(event))
 		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
 					0x03, 0x03);
+}
+
+static int lpass_cdc_rx_macro_config_compander(struct snd_soc_component *component,
+				struct lpass_cdc_rx_macro_priv *rx_priv,
+				int interp_n, int event)
+{
+	int comp = 0;
+	u16 comp_ctl0_reg = 0, comp_ctl8_reg = 0, rx_path_cfg0_reg = 0;
+	u16 comp_coeff_lsb_reg = 0, comp_coeff_msb_reg = 0;
+	u16 mode = rx_priv->hph_pwr_mode;
+
+	comp = interp_n;
 	if (!rx_priv->comp_enabled[comp])
 		return 0;
 
+	if (rx_priv->is_ear_mode_on && interp_n == INTERP_HPHL)
+		mode = RX_MODE_EAR;
+
+	if (interp_n == INTERP_HPHL) {
+		comp_coeff_lsb_reg = LPASS_CDC_RX_TOP_HPHL_COMP_WR_LSB;
+		comp_coeff_msb_reg = LPASS_CDC_RX_TOP_HPHL_COMP_WR_MSB;
+	} else if (interp_n == INTERP_HPHR) {
+		comp_coeff_lsb_reg = LPASS_CDC_RX_TOP_HPHR_COMP_WR_LSB;
+		comp_coeff_msb_reg = LPASS_CDC_RX_TOP_HPHR_COMP_WR_MSB;
+	} else {
+		/* compander coefficients are loaded only for hph path */
+		return 0;
+	}
 	comp_ctl0_reg = LPASS_CDC_RX_COMPANDER0_CTL0 +
+					(comp * LPASS_CDC_RX_MACRO_COMP_OFFSET);
+	comp_ctl8_reg = LPASS_CDC_RX_COMPANDER0_CTL8 +
 					(comp * LPASS_CDC_RX_MACRO_COMP_OFFSET);
 	rx_path_cfg0_reg = LPASS_CDC_RX_RX0_RX_PATH_CFG0 +
 					(comp * LPASS_CDC_RX_MACRO_RX_PATH_OFFSET);
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
+		lpass_cdc_load_compander_coeff(component,
+				comp_coeff_lsb_reg, comp_coeff_msb_reg,
+				comp_coeff_table[rx_priv->hph_pwr_mode],
+				COMP_MAX_COEFF);
+
+		lpass_cdc_update_compander_setting(component,
+					comp_ctl8_reg,
+					comp_setting_table[mode]);
+
 		/* Enable Compander Clock */
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
 					0x01, 0x01);
@@ -1840,47 +1875,6 @@ static int lpass_cdc_rx_macro_config_compander(struct snd_soc_component *compone
 					0x01, 0x00);
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
 					0x04, 0x00);
-	}
-
-	return 0;
-}
-
-static int lpass_cdc_rx_macro_load_compander_coeff(struct snd_soc_component *component,
-					 struct lpass_cdc_rx_macro_priv *rx_priv,
-					 int interp_n, int event)
-{
-	int comp = 0;
-	u16 comp_coeff_lsb_reg = 0, comp_coeff_msb_reg = 0;
-	int i = 0;
-	int hph_pwr_mode = HPH_LOHIFI;
-
-	if (!rx_priv->comp_enabled[comp])
-		return 0;
-
-	if (interp_n == INTERP_HPHL) {
-		comp_coeff_lsb_reg = LPASS_CDC_RX_TOP_HPHL_COMP_WR_LSB;
-		comp_coeff_msb_reg = LPASS_CDC_RX_TOP_HPHL_COMP_WR_MSB;
-	} else if (interp_n == INTERP_HPHR) {
-		comp_coeff_lsb_reg = LPASS_CDC_RX_TOP_HPHR_COMP_WR_LSB;
-		comp_coeff_msb_reg = LPASS_CDC_RX_TOP_HPHR_COMP_WR_MSB;
-	} else {
-		/* compander coefficients are loaded only for hph path */
-		return 0;
-	}
-
-	comp = interp_n;
-	hph_pwr_mode = rx_priv->hph_pwr_mode;
-	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
-		__func__, event, comp + 1, rx_priv->comp_enabled[comp]);
-
-	if (SND_SOC_DAPM_EVENT_ON(event)) {
-		/* Load Compander Coeff */
-		for (i = 0; i < COMP_MAX_COEFF; i++) {
-			snd_soc_component_write(component, comp_coeff_lsb_reg,
-					comp_coeff_table[hph_pwr_mode][i].lsb);
-			snd_soc_component_write(component, comp_coeff_msb_reg,
-					comp_coeff_table[hph_pwr_mode][i].msb);
-		}
 	}
 
 	return 0;
@@ -2670,8 +2664,6 @@ static int lpass_cdc_rx_macro_enable_interp_clk(struct snd_soc_component *compon
 					0x01, 0x01);
 			snd_soc_component_update_bits(component, rx_cfg2_reg,
 					0x03, 0x03);
-			lpass_cdc_rx_macro_load_compander_coeff(component, rx_priv,
-						      interp_idx, event);
 			lpass_cdc_rx_macro_idle_detect_control(component, rx_priv,
 					interp_idx, event);
 			if (rx_priv->hph_hd2_mode)
@@ -2679,6 +2671,8 @@ static int lpass_cdc_rx_macro_enable_interp_clk(struct snd_soc_component *compon
 					component, interp_idx, event);
 			lpass_cdc_rx_macro_hphdelay_lutbypass(component, rx_priv,
 						    interp_idx, event);
+			lpass_cdc_rx_macro_droop_setting(component,
+						interp_idx, event);
 			lpass_cdc_rx_macro_config_compander(component, rx_priv,
 						interp_idx, event);
 			if (interp_idx == INTERP_AUX) {
