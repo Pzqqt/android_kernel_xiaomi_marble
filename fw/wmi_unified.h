@@ -4316,6 +4316,14 @@ typedef struct {
 /**
  * TLV (tag length value) parameters follow the scan_cmd
  * structure. The TLV's are:
+ *     channel_list:
+ *         If FW supports WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL,
+ *             then channel_list may fill the upper 12 bits with channel flags,
+ *             while using only the lower 20 bits for channel frequency.
+ *             Check WMI_SCAN_CHANNEL_FLAG macros for the channel flags
+ *         If FW doesn't support WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL,
+ *             then channel_list only holds the frequency value
+ *         Use WMI_SCAN_CHANNEL_FREQ_MASK & WMI_SCAN_CHANNEL_FLAGS_MASK
  *     A_UINT32 channel_list[num_chan]; // in MHz
  *     wmi_ssid ssid_list[num_ssids];
  *     wmi_mac_addr bssid_list[num_bssid];
@@ -4489,6 +4497,24 @@ typedef enum {
 
 /* Combine short SSID with legacy bssid list */
 #define WMI_SCAN_HINT_FLAG_COMBINE_BSSID_LIST   0x00000004
+
+
+#define WMI_SCAN_CHANNEL_FREQ_MASK  0x000FFFFF
+#define WMI_SCAN_CHANNEL_FLAGS_MASK 0xFFF00000
+
+/**
+ * Per channel configuration flags
+ */
+
+/**
+ * WMI_SCAN_CHANNEL_FLAG_SCAN_ONLY_IF_RNR_FOUND:
+ *     If this flag is set, then scan only if the corresponding channel
+ *     is found via RNR IE during 2g/5g scan.
+ *     If this flag is not set, then FW always scans the channel
+ *     irrespective of RNR and also FW ignores
+ *     WMI_SCAN_FLAG_EXT_6GHZ_SKIP_NON_RNR_CH flag
+ */
+#define WMI_SCAN_CHANNEL_FLAG_SCAN_ONLY_IF_RNR_FOUND 0x001
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param */
