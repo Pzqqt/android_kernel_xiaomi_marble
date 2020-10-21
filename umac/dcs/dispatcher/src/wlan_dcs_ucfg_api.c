@@ -96,3 +96,9 @@ void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
 {
 	wlan_dcs_clear(psoc, pdev_id);
 }
+
+void ucfg_config_dcs_event_data(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+				bool dcs_algorithm_process)
+{
+	wlan_dcs_set_algorithm_process(psoc, pdev_id, dcs_algorithm_process);
+}

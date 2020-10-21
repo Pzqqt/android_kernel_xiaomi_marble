@@ -127,4 +127,19 @@ uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
  * Return: None
  */
 void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
+
+/**
+ * ucfg_config_dcs_event_data() - config dcs event data to do algorithm
+ * process or not
+ * @psoc: psoc pointer
+ * @pdev_id: pdev_id
+ * @dcs_algorithm_process: dcs algorithm process or not
+ *
+ * The function gets called to config dcs event data to do algorithm
+ * process or not
+ *
+ * Return: None
+ */
+void ucfg_config_dcs_event_data(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+				bool dcs_algorithm_process);
 #endif /* _WLAN_DCS_UCFG_API_H_ */

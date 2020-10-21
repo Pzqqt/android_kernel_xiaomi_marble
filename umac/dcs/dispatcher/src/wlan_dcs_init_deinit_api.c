@@ -176,6 +176,7 @@ QDF_STATUS wlan_dcs_psoc_open(struct wlan_objmgr_psoc *psoc)
 		dcs_pdev_priv = &dcs_psoc_obj->dcs_pdev_priv[loop];
 		dcs_pdev_priv->dcs_host_params.dcs_enable_cfg =
 					cfg_get(psoc, CFG_DCS_ENABLE);
+		dcs_pdev_priv->dcs_host_params.dcs_algorithm_process = false;
 		dcs_pdev_priv->dcs_host_params.dcs_debug =
 					cfg_get(psoc, CFG_DCS_DEBUG);
 		dcs_pdev_priv->dcs_host_params.phy_err_penalty =

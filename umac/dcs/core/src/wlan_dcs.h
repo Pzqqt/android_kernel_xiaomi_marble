@@ -68,6 +68,7 @@ struct pdev_dcs_im_stats {
  * struct pdev_dcs_params - define dcs configuration parameter in pdev object
  * @dcs_enable_cfg: dcs enable from ini config
  * @dcs_enable: dcs enable from ucfg config
+ * @dcs_algorithm_process: do dcs algorithm process or not
  * @dcs_debug: dcs debug trace level
  * @phy_err_penalty: phy error penalty
  * @phy_err_threshold: phy error threshold
@@ -81,6 +82,7 @@ struct pdev_dcs_im_stats {
 struct pdev_dcs_params {
 	uint8_t dcs_enable_cfg;
 	uint8_t dcs_enable;
+	bool dcs_algorithm_process;
 	enum wlan_dcs_debug_level dcs_debug;
 	uint32_t phy_err_penalty;
 	uint32_t phy_err_threshold;
@@ -237,4 +239,20 @@ void wlan_dcs_disable_timer_fn(void *dcs_timer_args);
  * Return: None
  */
 void wlan_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
+
+/**
+ * wlan_dcs_set_algorithm_process() - config dcs event data to do algorithm
+ * process or not
+ * @psoc: psoc pointer
+ * @pdev_id: pdev_id
+ * @dcs_algorithm_process: dcs algorithm process
+ *
+ * The function gets called to config dcs event data to do algorithm
+ * process or not
+ *
+ * Return: None
+ */
+void wlan_dcs_set_algorithm_process(struct wlan_objmgr_psoc *psoc,
+				    uint32_t pdev_id,
+				    bool dcs_algorithm_process);
 #endif  /* _WLAN_DCS_H_ */
