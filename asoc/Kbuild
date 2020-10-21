@@ -88,6 +88,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/gvmautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+		include $(AUDIO_ROOT)/config/sdxlemurauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdxlemurautoconf.h
+	endif
 endif
 endif
 
@@ -174,6 +179,10 @@ ifdef CONFIG_SND_SOC_QDSP6V2
 	PLATFORM_OBJS += platform_init.o
 endif
 
+ifdef CONFIG_SND_SOC_SDX
+	MACHINE_OBJS += sdx-target.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \
@@ -247,6 +256,9 @@ obj-$(CONFIG_SND_SOC_BENGAL) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_SA8155) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_SDX) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 # inject some build related information

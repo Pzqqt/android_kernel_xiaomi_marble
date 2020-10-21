@@ -108,6 +108,7 @@ int gpr_send_pkt(struct gpr_device *adev, struct gpr_pkt *pkt)
 	spin_lock_irqsave(&adev->lock, flags);
 
 	hdr = &pkt->hdr;
+	hdr->dst_domain_id = adev->domain_id;
 	pkt_size = GPR_PKT_GET_PACKET_BYTE_SIZE(hdr->header);
 
 	dev_dbg(gpr->dev, "SVC_ID %d %s packet size %d\n",

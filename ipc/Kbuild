@@ -89,6 +89,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/gvmautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+		include $(AUDIO_ROOT)/config/sdxlemurauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdxlemurautoconf.h
+	endif
 endif
 endif
 

@@ -11,6 +11,8 @@
 #include <asoc/wcd9xxx-common-v2.h>
 #include <asoc/wcd-mbhc-v2.h>
 
+#define WCD934X_DRV_NAME "tavil_codec"
+
 #define WCD934X_REGISTER_START_OFFSET  0x800
 #define WCD934X_SB_PGD_PORT_RX_BASE   0x40
 #define WCD934X_SB_PGD_PORT_TX_BASE   0x50

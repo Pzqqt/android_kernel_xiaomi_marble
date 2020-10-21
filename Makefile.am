@@ -17,6 +17,11 @@ endif
 ifeq ($(TARGET_SUPPORT), sdmsteppe)
 KBUILD_OPTIONS += CONFIG_ARCH_SM6150=y
 endif
+ifeq ($(TARGET_SUPPORT), sdxlemur))
+KBUILD_OPTIONS += CONFIG_ARCH_SDXLEMUR=y
+endif
+
+subdir-ccflags-y += -I$(AUDIO_ROOT)/include/uapi/
 
 subdir-ccflags-y += -I$(AUDIO_ROOT)/include/uapi/
 
@@ -25,7 +30,7 @@ obj-m += dsp/
 obj-m += soc/
 obj-m += asoc/
 obj-m += asoc/codecs/
-ifeq ($(TARGET_SUPPORT), $(filter $(TARGET_SUPPORT), sdmsteppe))
+ifeq ($(TARGET_SUPPORT), $(filter $(TARGET_SUPPORT), sdmsteppe sdxlemur))
 obj-m += asoc/codecs/wcd934x/
 endif
 ifeq ($(TARGET_SUPPORT), $(filter $(TARGET_SUPPORT), qcs40x))

@@ -36,6 +36,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+		include $(AUDIO_ROOT)/config/sdxlemurauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdxlemurautoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:
@@ -71,6 +76,7 @@ ifdef CONFIG_SND_SOC_WCD934X
 	WCD934X_OBJS += wcd934x-mbhc.o
 	WCD934X_OBJS += wcd934x-dsd.o
 endif
+
 
 LINUX_INC +=	-Iinclude/linux
 
