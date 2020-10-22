@@ -2466,8 +2466,7 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 			struct dp_rx_desc *rx_desc;
 			union dp_rx_desc_list_elem_t *rx_desc_elem;
 
-			rx_desc_pool = dp_rx_get_mon_desc_pool(soc, mac_id,
-							       pdev->pdev_id);
+			rx_desc_pool = &soc->rx_desc_status[mac_id];
 
 			qdf_spin_lock_bh(&rx_desc_pool->lock);
 

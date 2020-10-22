@@ -261,5 +261,6 @@ struct cdp_pdev_mon_stats {
 	uint32_t dest_ppdu_drop;
 	uint32_t mon_link_desc_invalid;
 	uint32_t mon_rx_desc_invalid;
+	uint32_t mon_nbuf_sanity_err;
 };
 #endif

@@ -2090,11 +2090,11 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 	while ((rxdma_dst_ring_desc =
 		hal_srng_dst_peek(hal_soc, mon_dst_srng)) &&
 		reap_cnt < MON_DROP_REAP_LIMIT) {
-		msdu_count = 0;
+
+		hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc,
+					     &buf_info, &msdu_count);
 
 		do {
-			hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc,
-						     &buf_info, &msdu_count);
 			rx_msdu_link_desc = dp_rx_cookie_2_mon_link_desc(pdev,
 							      buf_info, mac_id);
 
@@ -2108,6 +2108,7 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 
 			for (i = 0; i < num_msdus; i++) {
 				struct dp_rx_desc *rx_desc;
+				qdf_dma_addr_t buf_paddr;
 
 				rx_desc = dp_rx_get_mon_desc(soc,
 							msdu_list.sw_cookie[i]);
@@ -2119,6 +2120,16 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 				}
 
 				nbuf = DP_RX_MON_GET_NBUF_FROM_DESC(rx_desc);
+				buf_paddr =
+					 dp_rx_mon_get_paddr_from_desc(rx_desc);
+
+				if (qdf_unlikely(!rx_desc->in_use || !nbuf ||
+						 msdu_list.paddr[i] !=
+						 buf_paddr)) {
+					pdev->rx_mon_stats.
+							mon_nbuf_sanity_err++;
+					continue;
+				}
 				rx_bufs_used++;
 
 				if (!rx_desc->unmapped) {
@@ -2130,6 +2141,10 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 				qdf_nbuf_free(nbuf);
 				dp_rx_add_to_free_desc_list(&head, &tail,
 							    rx_desc);
+
+				if (!(msdu_list.msdu_info[i].msdu_flags &
+				      HAL_MSDU_F_MSDU_CONTINUATION))
+					msdu_count--;
 			}
 
 			/*
