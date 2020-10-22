@@ -247,9 +247,10 @@ struct vdev_mlme_mgmt_ap {
 
 /**
  * struct vdev_mlme_mgmt_sta - sta specific vdev mlme mgmt cfg
- * @.
+ * @he_mcs_12_13_map: map to indicate mcs12/13 caps of peer&dut
  */
 struct vdev_mlme_mgmt_sta {
+	uint16_t he_mcs_12_13_map;
 };
 
 /**
@@ -914,4 +915,61 @@ static inline bool wlan_vdev_mlme_is_special_vdev(
 
 	return vdev_mlme->mgmt.generic.special_vdev_mode;
 }
+
+#ifdef WLAN_FEATURE_11AX
+/**
+ * wlan_vdev_mlme_set_he_mcs_12_13_map() - set he mcs12/13 map
+ * @vdev: VDEV object
+ * @he_mcs_12_13_map: he mcs12/13 map from self&peer
+ *
+ * API to set he mcs 12/13 map
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_set_he_mcs_12_13_map(
+				struct wlan_objmgr_vdev *vdev,
+				uint16_t he_mcs_12_13_map)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return;
+
+	vdev_mlme->mgmt.sta.he_mcs_12_13_map = he_mcs_12_13_map;
+}
+
+/**
+ * wlan_vdev_mlme_get_he_mcs_12_13_map() - get he mcs12/13 map
+ * @vdev: VDEV object
+ *
+ * API to get he mcs12/13 support capability
+ *
+ * Return:
+ * @he_mcs_12_13_map: he mcs12/13 map
+ */
+static inline uint16_t wlan_vdev_mlme_get_he_mcs_12_13_map(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return 0;
+
+	return vdev_mlme->mgmt.sta.he_mcs_12_13_map;
+}
+#else
+static inline void wlan_vdev_mlme_set_he_mcs_12_13_map(
+				struct wlan_objmgr_vdev *vdev,
+				uint16_t he_mcs_12_13_map)
+{
+}
+
+static inline uint16_t wlan_vdev_mlme_get_he_mcs_12_13_map(
+				struct wlan_objmgr_vdev *vdev)
+{
+	return 0;
+}
+#endif
 #endif
