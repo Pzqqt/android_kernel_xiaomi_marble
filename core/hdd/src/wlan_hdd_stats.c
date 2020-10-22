@@ -1743,7 +1743,7 @@ static void cache_station_stats_cb(struct stats_event *ev, void *cookie)
 	}
 }
 
-static void
+static QDF_STATUS
 wlan_hdd_set_station_stats_request_pending(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_peer *peer;
@@ -1751,18 +1751,17 @@ wlan_hdd_set_station_stats_request_pending(struct hdd_adapter *adapter)
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!adapter->hdd_ctx->is_get_station_clubbed_in_ll_stats_req)
-		return;
+		return QDF_STATUS_E_INVAL;
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
-		return;
+		return QDF_STATUS_E_INVAL;
 
 	if (adapter->hdd_stats.is_ll_stats_req_in_progress) {
 		hdd_err("Previous ll_stats request is in progress");
-		goto get_station_stats_fail;
+		hdd_objmgr_put_vdev(vdev);
+		return QDF_STATUS_E_ALREADY;
 	}
-
-	adapter->hdd_stats.is_ll_stats_req_in_progress = true;
 
 	info.cookie = adapter;
 	info.u.get_station_stats_cb = cache_station_stats_cb;
@@ -1771,8 +1770,11 @@ wlan_hdd_set_station_stats_request_pending(struct hdd_adapter *adapter)
 	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_OSIF_ID);
 	if (!peer) {
 		osif_err("peer is null");
-		goto get_station_stats_fail;
+		hdd_objmgr_put_vdev(vdev);
+		return QDF_STATUS_E_INVAL;
 	}
+
+	adapter->hdd_stats.is_ll_stats_req_in_progress = true;
 
 	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
 
@@ -1780,9 +1782,8 @@ wlan_hdd_set_station_stats_request_pending(struct hdd_adapter *adapter)
 
 	ucfg_mc_cp_stats_set_pending_req(wlan_vdev_get_psoc(vdev),
 					 TYPE_STATION_STATS, &info);
-
-get_station_stats_fail:
 	hdd_objmgr_put_vdev(vdev);
+	return QDF_STATUS_SUCCESS;
 }
 
 static void
@@ -1832,9 +1833,10 @@ static QDF_STATUS wlan_hdd_stats_request_needed(struct hdd_adapter *adapter)
 }
 
 #else
-static void
+static QDF_STATUS
 wlan_hdd_set_station_stats_request_pending(struct hdd_adapter *adapter)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 static void
@@ -1868,7 +1870,9 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 
 	hdd_enter_dev(adapter->dev);
 
-	wlan_hdd_set_station_stats_request_pending(adapter);
+	status = wlan_hdd_set_station_stats_request_pending(adapter);
+	if (status == QDF_STATUS_E_ALREADY)
+		return qdf_status_to_os_return(status);
 
 	request = osif_request_alloc(&params);
 	if (!request) {
@@ -1891,8 +1895,6 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("sme_ll_stats_get_req Failed");
 		ret = qdf_status_to_os_return(status);
-		wlan_hdd_reset_station_stats_request_pending(hdd_ctx->psoc,
-							     adapter);
 		goto exit;
 	}
 	ret = osif_request_wait_for_response(request);
@@ -1903,8 +1905,6 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 		priv->request_bitmap = 0;
 		qdf_spin_unlock(&priv->ll_stats_lock);
 		ret = -ETIMEDOUT;
-		wlan_hdd_reset_station_stats_request_pending(hdd_ctx->psoc,
-							     adapter);
 	} else {
 		hdd_update_station_stats_cached_timestamp(adapter);
 	}
@@ -1923,6 +1923,7 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	}
 	qdf_list_destroy(&priv->ll_stats_q);
 exit:
+	wlan_hdd_reset_station_stats_request_pending(hdd_ctx->psoc, adapter);
 	hdd_exit();
 	osif_request_put(request);
 
