@@ -2502,6 +2502,12 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	if (!vm_ops)
 		return 0;
 
+	if (!vm_ops->vm_request_valid || !vm_ops->vm_owns_hw ||
+				!vm_ops->vm_acquire)
+		return -EINVAL;
+
+	sde_vm_lock(sde_kms);
+
 	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
 		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
 
@@ -2516,12 +2522,27 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		old_vm_req = sde_crtc_get_property(old_state,
 				CRTC_PROP_VM_REQ_STATE);
 
-		/**
+		/*
 		 * No active request if the transition is from
 		 * VM_REQ_NONE to VM_REQ_NONE
 		 */
-		if (new_vm_req || old_vm_req)
-			vm_req_active = true;
+		if (old_vm_req || new_vm_req) {
+			rc = vm_ops->vm_request_valid(sde_kms,
+					old_vm_req, new_vm_req);
+			if (rc) {
+				SDE_ERROR(
+				"VM transition check failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
+					old_vm_req, new_vm_req,
+					vm_ops->vm_owns_hw(sde_kms), rc);
+				goto end;
+			} else if (old_vm_req == VM_REQ_ACQUIRE &&
+					new_vm_req == VM_REQ_NONE) {
+				SDE_DEBUG(
+				"VM transition valid; ignore further checks\n");
+			} else {
+				vm_req_active = true;
+			}
+		}
 
 		idle_pc_state = sde_crtc_get_property(new_state,
 						CRTC_PROP_IDLE_PC_STATE);
@@ -2529,6 +2550,10 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		active_crtc = crtc;
 		commit_crtc_cnt++;
 	}
+
+	/* return early if no active vm request */
+	if (!vm_req_active)
+		goto end;
 
 	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
 		if (!crtc->state->active)
@@ -2539,36 +2564,39 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	}
 
 	/* Check for single crtc commits only on valid VM requests */
-	if (vm_req_active && active_crtc && global_active_crtc &&
+	if (active_crtc && global_active_crtc &&
 		(commit_crtc_cnt > sde_kms->catalog->max_trusted_vm_displays ||
 		 global_crtc_cnt > sde_kms->catalog->max_trusted_vm_displays ||
 		 active_crtc != global_active_crtc)) {
 		SDE_ERROR(
-			   "failed to switch VM due to CRTC concurrencies: MAX_CNT: %d active_cnt: %d global_cnt: %d active_crtc: %d global_crtc: %d\n",
+		"VM switch failed; MAX:%d a_cnt:%d g_cnt:%d a_crtc:%d g_crtc:%d\n",
 			   sde_kms->catalog->max_trusted_vm_displays,
-			   commit_crtc_cnt, global_crtc_cnt, active_crtc,
-			   global_active_crtc);
-		return -E2BIG;
+			   commit_crtc_cnt, global_crtc_cnt, DRMID(active_crtc),
+			   DRMID(global_active_crtc));
+		rc = -E2BIG;
+		goto end;
 	}
-
-	if (!vm_req_active)
-		return 0;
 
 	/* disable idle-pc before releasing the HW */
 	if ((new_vm_req == VM_REQ_RELEASE) &&
 			(idle_pc_state == IDLE_PC_ENABLE)) {
-		SDE_ERROR("failed to switch VM since idle-pc is enabled\n");
-		return -EINVAL;
+		SDE_ERROR("VM switch failed since idle-pc is enabled\n");
+		rc = -EINVAL;
+		goto end;
 	}
 
-	sde_vm_lock(sde_kms);
+	if ((new_vm_req == VM_REQ_ACQUIRE) && !vm_ops->vm_owns_hw(sde_kms)) {
+		rc = vm_ops->vm_acquire(sde_kms);
+		if (rc) {
+			SDE_ERROR(
+			"VM acquire failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
+				old_vm_req, new_vm_req,
+				vm_ops->vm_owns_hw(sde_kms), rc);
+			goto end;
+		}
+	}
 
-	if (vm_ops->vm_request_valid)
-		rc = vm_ops->vm_request_valid(sde_kms, old_vm_req, new_vm_req);
-	if (rc)
-		SDE_ERROR(
-		"failed to complete vm transition request. old_state = %d, new_state = %d, hw_ownership: %d\n",
-		old_vm_req, new_vm_req, vm_ops->vm_owns_hw(sde_kms));
+end:
 	sde_vm_unlock(sde_kms);
 
 	return rc;
