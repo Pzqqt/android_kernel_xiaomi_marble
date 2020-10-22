@@ -827,6 +827,13 @@ struct dsi_ctrl_hw_ops {
 	 * @ctrl:         Pointer to the controller host hardware.
 	 */
 	int (*wait4dynamic_refresh_done)(struct dsi_ctrl_hw *ctrl);
+
+	/**
+	 * hw.ops.vid_engine_busy() - Returns true if vid engine is busy
+	 * @ctrl:	Pointer to the controller host hardware.
+	 */
+	bool (*vid_engine_busy)(struct dsi_ctrl_hw *ctrl);
+
 	/**
 	 * hw.ops.hs_req_sel() - enable continuous clk support through phy
 	 * @ctrl:	Pointer to the controller host hardware.

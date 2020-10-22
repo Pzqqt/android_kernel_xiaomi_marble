@@ -63,6 +63,7 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 	ctrl->ops.wait4dynamic_refresh_done =
 		dsi_ctrl_hw_cmn_wait4dynamic_refresh_done;
 	ctrl->ops.hs_req_sel = dsi_ctrl_hw_cmn_hs_req_sel;
+	ctrl->ops.vid_engine_busy = dsi_ctrl_hw_cmn_vid_engine_busy;
 
 	switch (version) {
 	case DSI_CTRL_VERSION_1_4:

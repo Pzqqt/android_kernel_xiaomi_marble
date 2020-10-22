@@ -3703,6 +3703,7 @@ int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
 {
 	int rc = 0;
 	bool on;
+	bool vid_eng_busy;
 
 	if (!dsi_ctrl || (state >= DSI_CTRL_ENGINE_MAX)) {
 		DSI_CTRL_ERR(dsi_ctrl, "Invalid params\n");
@@ -3722,9 +3723,17 @@ int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
 	if (!skip_op) {
 		on = (state == DSI_CTRL_ENGINE_ON) ? true : false;
 		dsi_ctrl->hw.ops.video_engine_en(&dsi_ctrl->hw, on);
+		vid_eng_busy = dsi_ctrl->hw.ops.vid_engine_busy(&dsi_ctrl->hw);
 
-		/* perform a reset when turning off video engine */
-		if (!on && dsi_ctrl->version < DSI_CTRL_VERSION_1_3)
+		/*
+		 * During ESD check failure, DSI video engine can get stuck
+		 * sending data from display engine. In use cases where GDSC
+		 * toggle does not happen like DP MST connected or secure video
+		 * playback, display does not recover back after ESD failure.
+		 * Perform a reset if video engine is stuck.
+		 */
+		if (!on && (dsi_ctrl->version < DSI_CTRL_VERSION_1_3 ||
+								vid_eng_busy))
 			dsi_ctrl->hw.ops.soft_reset(&dsi_ctrl->hw);
 	}
 
