@@ -30,7 +30,7 @@
 
 static const u32 cwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, INTR_IDX_PP1_OVFL,
 	INTR_IDX_PP2_OVFL, INTR_IDX_PP3_OVFL, INTR_IDX_PP4_OVFL,
-	INTR_IDX_PP5_OVFL, SDE_NONE, SDE_NONE};
+	INTR_IDX_PP5_OVFL, INTR_IDX_PP_CWB_OVFL, SDE_NONE};
 
 /**
  * sde_rgb2yuv_601l - rgb to yuv color space conversion matrix
@@ -1164,8 +1164,10 @@ static void sde_encoder_phys_wb_irq_ctrl(
 {
 
 	struct sde_encoder_phys_wb *wb_enc = to_sde_encoder_phys_wb(phys);
+	const struct sde_wb_cfg *wb_cfg;
 	int index = 0, refcount;
 	int ret = 0, pp = 0;
+	u32 max_num_of_irqs = 0;
 
 	if (!wb_enc)
 		return;
@@ -1178,15 +1180,23 @@ static void sde_encoder_phys_wb_irq_ctrl(
 		SDE_ERROR("invalid pingpong index for WB or CWB\n");
 		return;
 	}
-
 	refcount = atomic_read(&phys->wbirq_refcount);
+
+	/*
+	 * For Dedicated CWB, only one overflow IRQ is used for
+	 * both the PP_CWB blks. Make sure only one IRQ is registered
+	 * when D-CWB is enabled.
+	 */
+	wb_cfg = wb_enc->hw_wb->caps;
+	max_num_of_irqs = (wb_cfg->features & BIT(SDE_WB_HAS_DCWB)) ?
+					1 : CRTC_DUAL_MIXERS_ONLY;
 
 	if (enable && atomic_inc_return(&phys->wbirq_refcount) == 1) {
 		sde_encoder_helper_register_irq(phys, INTR_IDX_WB_DONE);
 		if (ret)
 			atomic_dec_return(&phys->wbirq_refcount);
 
-		for (index = 0; index < CRTC_DUAL_MIXERS_ONLY; index++)
+		for (index = 0; index < max_num_of_irqs; index++)
 			if (cwb_irq_tbl[index + pp] != SDE_NONE)
 				sde_encoder_helper_register_irq(phys,
 					cwb_irq_tbl[index + pp]);
@@ -1196,7 +1206,7 @@ static void sde_encoder_phys_wb_irq_ctrl(
 		if (ret)
 			atomic_inc_return(&phys->wbirq_refcount);
 
-		for (index = 0; index < CRTC_DUAL_MIXERS_ONLY; index++)
+		for (index = 0; index < max_num_of_irqs; index++)
 			if (cwb_irq_tbl[index + pp] != SDE_NONE)
 				sde_encoder_helper_unregister_irq(phys,
 					cwb_irq_tbl[index + pp]);
@@ -1870,6 +1880,7 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 {
 	struct sde_encoder_phys *phys_enc;
 	struct sde_encoder_phys_wb *wb_enc;
+	const struct sde_wb_cfg *wb_cfg;
 	struct sde_hw_mdp *hw_mdp;
 	struct sde_encoder_irq *irq;
 	int ret = 0;
@@ -1952,6 +1963,7 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 	atomic_set(&phys_enc->pending_retire_fence_cnt, 0);
 	atomic_set(&phys_enc->wbirq_refcount, 0);
 	init_waitqueue_head(&phys_enc->pending_kickoff_wq);
+	wb_cfg = wb_enc->hw_wb->caps;
 
 	irq = &phys_enc->irq[INTR_IDX_WB_DONE];
 	INIT_LIST_HEAD(&irq->cb.list);
@@ -1963,55 +1975,68 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 	irq->cb.arg = wb_enc;
 	irq->cb.func = sde_encoder_phys_wb_done_irq;
 
-	irq = &phys_enc->irq[INTR_IDX_PP1_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp1_overflow";
-	irq->hw_idx = CWB_1;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP1_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+	if (wb_cfg && (wb_cfg->features & BIT(SDE_WB_HAS_DCWB))) {
+		irq = &phys_enc->irq[INTR_IDX_PP_CWB_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp_cwb0_overflow";
+		irq->hw_idx = PINGPONG_CWB_0;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP_CWB_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP2_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp2_overflow";
-	irq->hw_idx = CWB_2;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP2_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+	} else {
+		irq = &phys_enc->irq[INTR_IDX_PP1_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp1_overflow";
+		irq->hw_idx = CWB_1;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP1_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP3_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp3_overflow";
-	irq->hw_idx = CWB_3;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP3_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+		irq = &phys_enc->irq[INTR_IDX_PP2_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp2_overflow";
+		irq->hw_idx = CWB_2;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP2_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP4_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp4_overflow";
-	irq->hw_idx = CWB_4;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP4_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+		irq = &phys_enc->irq[INTR_IDX_PP3_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp3_overflow";
+		irq->hw_idx = CWB_3;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP3_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP5_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp5_overflow";
-	irq->hw_idx = CWB_5;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP5_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+		irq = &phys_enc->irq[INTR_IDX_PP4_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp4_overflow";
+		irq->hw_idx = CWB_4;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP4_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
+
+		irq = &phys_enc->irq[INTR_IDX_PP5_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp5_overflow";
+		irq->hw_idx = CWB_5;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP5_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
+	}
 
 	/* create internal buffer for disable logic */
 	if (_sde_encoder_phys_wb_init_internal_fb(wb_enc,

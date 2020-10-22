@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/bitops.h>
@@ -121,6 +121,7 @@
 #define SDE_INTR_CWB_3_OVERFLOW BIT(15)
 #define SDE_INTR_CWB_4_OVERFLOW BIT(20)
 #define SDE_INTR_CWB_5_OVERFLOW BIT(21)
+#define SDE_INTR_CWB_OVERFLOW BIT(29)
 
 /**
  * Histogram VIG done interrupt status bit definitions
@@ -343,6 +344,8 @@ static struct sde_irq_type sde_irq_intr2_map[] = {
 
 	{ SDE_IRQ_TYPE_PING_PONG_TE_CHECK, PINGPONG_S0,
 		SDE_INTR_PING_PONG_S0_TE_DETECTED, -1},
+
+	{ SDE_IRQ_TYPE_CWB_OVERFLOW, PINGPONG_CWB_0, SDE_INTR_CWB_OVERFLOW, -1},
 
 	{ SDE_IRQ_TYPE_PING_PONG_COMP, PINGPONG_4,
 		SDE_INTR_PING_PONG_4_DONE, -1},
