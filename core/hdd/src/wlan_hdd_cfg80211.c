@@ -23539,7 +23539,8 @@ static void hdd_update_chan_info(struct hdd_context *hdd_ctx,
 #endif
 
 #if defined(WLAN_FEATURE_FILS_SK) &&\
-	defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) &&\
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) ||\
+		(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))) &&\
 	(defined(CFG80211_UPDATE_CONNECT_PARAMS) ||\
 		(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)))
 
