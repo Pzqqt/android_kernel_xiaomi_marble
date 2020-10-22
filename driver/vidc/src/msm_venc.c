@@ -80,8 +80,8 @@ static int msm_venc_set_colorformat(struct msm_vidc_inst *inst,
 	}
 
 	pixelformat = inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat;
-	if (pixelformat != V4L2_PIX_FMT_NV12_UBWC &&
-	    pixelformat != V4L2_PIX_FMT_NV12_TP10_UBWC) {
+	if (pixelformat != V4L2_PIX_FMT_VIDC_NV12C &&
+	    pixelformat != V4L2_PIX_FMT_VIDC_TP10C) {
 		s_vpr_e(inst->sid, "%s: invalid pixelformat %#x\n",
 			__func__, pixelformat);
 		return -EINVAL;
@@ -753,7 +753,7 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		}
 		fmt = &inst->fmts[INPUT_META_PORT];
 		fmt->type = INPUT_META_PLANE;
-		fmt->fmt.meta.dataformat = V4L2_PIX_FMT_VIDC_META;
+		fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
 		fmt->fmt.meta.buffersize = call_session_op(core, buffer_size,
 				inst, MSM_VIDC_BUF_INPUT_META);
 		inst->buffers.input_meta.min_count =
@@ -830,7 +830,7 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		}
 		fmt = &inst->fmts[OUTPUT_META_PORT];
 		fmt->type = OUTPUT_META_PLANE;
-		fmt->fmt.meta.dataformat = V4L2_PIX_FMT_VIDC_META;
+		fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
 		fmt->fmt.meta.buffersize = call_session_op(core, buffer_size,
 				inst, MSM_VIDC_BUF_OUTPUT_META);
 		inst->buffers.output_meta.min_count =
@@ -927,7 +927,7 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 		strlcpy(f->description, "colorformat", sizeof(f->description));
 	} else if (f->type == INPUT_META_PLANE || f->type == OUTPUT_META_PLANE) {
 		if (!f->index) {
-			f->pixelformat = V4L2_PIX_FMT_VIDC_META;
+			f->pixelformat = V4L2_META_FMT_VIDC;
 			strlcpy(f->description, "metadata", sizeof(f->description));
 		} else {
 			return -EINVAL;
@@ -977,7 +977,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 
 	f = &inst->fmts[OUTPUT_META_PORT];
 	f->type = OUTPUT_META_PLANE;
-	f->fmt.meta.dataformat = V4L2_PIX_FMT_VIDC_META;
+	f->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
 	f->fmt.meta.buffersize = call_session_op(core, buffer_size,
 			inst, MSM_VIDC_BUF_OUTPUT_META);
 	inst->buffers.output_meta.min_count = inst->buffers.output.min_count;
@@ -987,7 +987,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 
 	f = &inst->fmts[INPUT_PORT];
 	f->type = INPUT_MPLANE;
-	f->fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12_UBWC;
+	f->fmt.pix_mp.pixelformat = V4L2_PIX_FMT_VIDC_NV12C;
 	f->fmt.pix_mp.width = VENUS_Y_STRIDE(
 		v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__),
 		DEFAULT_WIDTH);
@@ -1009,7 +1009,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 
 	f = &inst->fmts[INPUT_META_PORT];
 	f->type = INPUT_META_PLANE;
-	f->fmt.meta.dataformat = V4L2_PIX_FMT_VIDC_META;
+	f->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
 	f->fmt.meta.buffersize = call_session_op(core, buffer_size,
 			inst, MSM_VIDC_BUF_INPUT_META);
 	inst->buffers.input_meta.min_count = inst->buffers.input.min_count;

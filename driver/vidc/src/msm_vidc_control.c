@@ -72,22 +72,18 @@ static const char * const * msm_vidc_get_qmenu_type(
 static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 {
 	switch (control_id) {
-	case V4L2_CID_MPEG_VIDC_VIDEO_DECODE_ORDER:
-		return "Decode Order";
-	case V4L2_CID_MPEG_VIDC_VIDEO_SYNC_FRAME_DECODE:
+	case V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE:
 		return "Sync Frame Decode";
-	case V4L2_CID_MPEG_VIDC_VIDEO_SECURE:
+	case V4L2_CID_MPEG_VIDC_SECURE:
 		return "Secure Mode";
-	case V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_MODE:
+	case V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST:
 		return "Low Latency Mode";
+	/* TODO(AS)
 	case V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_HINT:
 		return "Low Latency Hint";
 	case V4L2_CID_MPEG_VIDC_VIDEO_BUFFER_SIZE_LIMIT:
 		return "Buffer Size Limit";
-	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
-		return "Video Bitrate Control";
-	case V4L2_CID_MPEG_VIDEO_HEVC_SIZE_OF_LENGTH_FIELD:
-		return "NAL Format";
+	*/
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);

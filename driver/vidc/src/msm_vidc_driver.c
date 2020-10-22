@@ -173,16 +173,16 @@ enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 v4l2_colorformat,
 	case V4L2_PIX_FMT_NV21:
 		colorformat = MSM_VIDC_FMT_NV21;
 		break;
-	case V4L2_PIX_FMT_NV12_UBWC:
+	case V4L2_PIX_FMT_VIDC_NV12C:
 		colorformat = MSM_VIDC_FMT_NV12_UBWC;
 		break;
-	case V4L2_PIX_FMT_NV12_TP10_UBWC:
+	case V4L2_PIX_FMT_VIDC_TP10C:
 		colorformat = MSM_VIDC_FMT_NV12_TP10_UBWC;
 		break;
-	case V4L2_PIX_FMT_RGBA8888_UBWC:
+	case V4L2_PIX_FMT_VIDC_ARGB32C:
 		colorformat = MSM_VIDC_FMT_RGBA8888_UBWC;
 		break;
-	case V4L2_PIX_FMT_NV12_P010:
+	case V4L2_PIX_FMT_VIDC_P010:
 		colorformat = MSM_VIDC_FMT_NV12_P010;
 		break;
 	default:
@@ -206,16 +206,16 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 		v4l2_colorformat = V4L2_PIX_FMT_NV21;
 		break;
 	case MSM_VIDC_FMT_NV12_UBWC:
-		v4l2_colorformat = V4L2_PIX_FMT_NV12_UBWC;
+		v4l2_colorformat = V4L2_PIX_FMT_VIDC_NV12C;
 		break;
 	case MSM_VIDC_FMT_NV12_TP10_UBWC:
-		v4l2_colorformat = V4L2_PIX_FMT_NV12_TP10_UBWC;
+		v4l2_colorformat = V4L2_PIX_FMT_VIDC_TP10C;
 		break;
 	case MSM_VIDC_FMT_RGBA8888_UBWC:
-		v4l2_colorformat = V4L2_PIX_FMT_RGBA8888_UBWC;
+		v4l2_colorformat = V4L2_PIX_FMT_VIDC_ARGB32C;
 		break;
 	case MSM_VIDC_FMT_NV12_P010:
-		v4l2_colorformat = V4L2_PIX_FMT_NV12_P010;
+		v4l2_colorformat = V4L2_PIX_FMT_VIDC_P010;
 		break;
 	default:
 		d_vpr_e("%s: invalid driver color format %#x\n",
@@ -232,15 +232,13 @@ u32 v4l2_colorformat_to_media(u32 v4l2_fmt, const char *func)
 		return COLOR_FMT_NV12;
 	case V4L2_PIX_FMT_NV21:
 		return COLOR_FMT_NV21;
-	case V4L2_PIX_FMT_NV12_512:
-		return COLOR_FMT_NV12_512;
-	case V4L2_PIX_FMT_NV12_P010:
+	case V4L2_PIX_FMT_VIDC_P010:
 		return COLOR_FMT_P010;
-	case V4L2_PIX_FMT_NV12_UBWC:
+	case V4L2_PIX_FMT_VIDC_NV12C:
 		return COLOR_FMT_NV12_UBWC;
-	case V4L2_PIX_FMT_NV12_TP10_UBWC:
+	case V4L2_PIX_FMT_VIDC_TP10C:
 		return COLOR_FMT_NV12_BPP10_UBWC;
-	case V4L2_PIX_FMT_RGBA8888_UBWC:
+	case V4L2_PIX_FMT_VIDC_ARGB32C:
 		return COLOR_FMT_RGBA8888_UBWC;
 	default:
 		d_vpr_e("%s: invalid v4l2 color fmt: %#x, set default (NV12)",
