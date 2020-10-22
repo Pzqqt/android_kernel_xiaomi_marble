@@ -378,4 +378,15 @@ int dsi_panel_get_io_resources(struct dsi_panel *panel,
 void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		struct dsi_display_mode *mode, u32 frame_threshold_us);
 
+int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt);
+
+int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
+		u32 packet_count);
+
+int dsi_panel_create_cmd_packets(const char *data, u32 length, u32 count,
+					struct dsi_cmd_desc *cmd);
+
+void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set);
+
+void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set);
 #endif /* _DSI_PANEL_H_ */
