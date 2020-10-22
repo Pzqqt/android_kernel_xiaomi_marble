@@ -28,7 +28,7 @@
 
 void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
-	struct wlan_cm_discon_rsp resp;
+	struct wlan_cm_discon_rsp resp = {0};
 	QDF_STATUS status;
 
 	status = cm_fill_disconnect_resp_from_cm_id(cm_ctx, cm_id, &resp);

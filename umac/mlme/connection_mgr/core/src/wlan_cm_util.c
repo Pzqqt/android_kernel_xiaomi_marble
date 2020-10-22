@@ -285,7 +285,7 @@ cm_handle_connect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 static void
 cm_handle_disconnect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 {
-	struct wlan_cm_discon_rsp resp;
+	struct wlan_cm_discon_rsp resp = {0};
 
 	resp.req.cm_id = cm_req->cm_id;
 	resp.req.req = cm_req->discon_req.req;
