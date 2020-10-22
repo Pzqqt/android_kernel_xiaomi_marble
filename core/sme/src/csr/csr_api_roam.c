@@ -7866,22 +7866,37 @@ static void update_profile_fils_info(struct mac_context *mac,
 	if (!src_profile->fils_con_info->is_fils_connection)
 		return;
 
+	if (des_profile->fils_con_info)
+		qdf_mem_free(des_profile->fils_con_info);
+
 	des_profile->fils_con_info =
 		qdf_mem_malloc(sizeof(struct wlan_fils_connection_info));
 	if (!des_profile->fils_con_info)
 		return;
 
 	qdf_mem_copy(des_profile->fils_con_info,
-			src_profile->fils_con_info,
-			sizeof(struct wlan_fils_connection_info));
-	des_profile->hlp_ie =
-		qdf_mem_malloc(src_profile->hlp_ie_len);
-	if (!des_profile->hlp_ie)
-		return;
+		     src_profile->fils_con_info,
+		     sizeof(struct wlan_fils_connection_info));
 
-	qdf_mem_copy(des_profile->hlp_ie, src_profile->hlp_ie,
-		     src_profile->hlp_ie_len);
-	des_profile->hlp_ie_len = src_profile->hlp_ie_len;
+	wlan_cm_update_mlme_fils_connection_info(mac->psoc,
+						 des_profile->fils_con_info,
+						 vdev_id);
+
+	if (src_profile->hlp_ie_len) {
+		if (des_profile->hlp_ie)
+			qdf_mem_free(des_profile->hlp_ie);
+
+		des_profile->hlp_ie =
+			qdf_mem_malloc(src_profile->hlp_ie_len);
+		if (!des_profile->hlp_ie) {
+			qdf_mem_free(des_profile->fils_con_info);
+			des_profile->fils_con_info = NULL;
+			return;
+		}
+		qdf_mem_copy(des_profile->hlp_ie, src_profile->hlp_ie,
+			     src_profile->hlp_ie_len);
+		des_profile->hlp_ie_len = src_profile->hlp_ie_len;
+	}
 }
 #else
 static inline
