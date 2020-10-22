@@ -651,9 +651,10 @@ QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
 	qdf_nbuf_t msdu_curr;
 
 	/* Here head_msdu and *head_msdu must not be NULL */
-	if (qdf_unlikely(!head_msdu || !(*head_msdu))) {
-		dp_err("[%s] head_msdu || *head_msdu is Null while adding frag to skb\n",
-		       __func__);
+	/* Dont add frag to skb if frag length is zero. Drop frame */
+	if (qdf_unlikely(!frag_len || !head_msdu || !(*head_msdu))) {
+		dp_err("[%s] frag_len[%d] || head_msdu[%pK] || *head_msdu is Null while adding frag to skb\n",
+		       __func__, frag_len, head_msdu);
 		return QDF_STATUS_E_FAILURE;
 	}
 
