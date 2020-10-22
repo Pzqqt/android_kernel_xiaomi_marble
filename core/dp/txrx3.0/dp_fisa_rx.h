@@ -44,6 +44,7 @@ struct dp_fisa_rx_fst_update_elem {
 	struct cdp_rx_flow_tuple_info flow_tuple_info;
 	struct dp_vdev *vdev;
 	uint32_t flow_idx;
+	uint32_t reo_dest_indication;
 	bool is_tcp_flow;
 	bool is_udp_flow;
 	u8 reo_id;

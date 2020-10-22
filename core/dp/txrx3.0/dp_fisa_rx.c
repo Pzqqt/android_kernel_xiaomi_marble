@@ -286,8 +286,7 @@ dp_rx_fisa_setup_cmem_fse(struct dp_rx_fst *fisa_hdl, uint32_t hashed_flow_idx,
 				fisa_hdl->base)[hashed_flow_idx]);
 	sw_ft_entry->metadata = ++fisa_hdl->meta_counter;
 
-	/* REO destination index starts from 1 */
-	flow.reo_destination_indication = flow_steer_info + 1;
+	flow.reo_destination_indication = flow_steer_info;
 	flow.fse_metadata = sw_ft_entry->metadata;
 	flow.tuple_info.dest_ip_127_96 = rx_flow_info->dest_ip_127_96;
 	flow.tuple_info.dest_ip_95_64 = rx_flow_info->dest_ip_95_64;
@@ -552,10 +551,12 @@ dp_fisa_rx_delete_flow(struct dp_rx_fst *fisa_hdl,
 	/* Add HW FT entry */
 	sw_ft_entry->cmem_offset = dp_rx_fisa_setup_cmem_fse(
 					fisa_hdl, hashed_flow_idx,
-					&elem->flow_tuple_info, elem->reo_id);
+					&elem->flow_tuple_info,
+					elem->reo_dest_indication);
 
 	sw_ft_entry->is_populated = true;
 	sw_ft_entry->napi_id = elem->reo_id;
+	sw_ft_entry->reo_dest_indication = elem->reo_dest_indication;
 	qdf_mem_copy(&sw_ft_entry->rx_flow_tuple_info, &elem->flow_tuple_info,
 		     sizeof(struct cdp_rx_flow_tuple_info));
 
@@ -613,6 +614,7 @@ static void dp_fisa_rx_fst_update(struct dp_rx_fst *fisa_hdl,
 	uint32_t lru_ft_entry_time = 0xffffffff;
 	uint32_t lru_ft_entry_idx = 0;
 	uint32_t timestamp;
+	uint32_t reo_dest_indication;
 
 	/* Get the hash from TLV
 	 * FSE FT Toeplitz hash is same Common parser hash available in TLV
@@ -623,6 +625,7 @@ static void dp_fisa_rx_fst_update(struct dp_rx_fst *fisa_hdl,
 	hashed_flow_idx = flow_hash & fisa_hdl->hash_mask;
 	max_skid_length = fisa_hdl->max_skid_length;
 	rx_flow_tuple_info = &elem->flow_tuple_info;
+	reo_dest_indication = elem->reo_dest_indication;
 
 	dp_fisa_debug("flow_hash 0x%x hashed_flow_idx 0x%x", flow_hash,
 		      hashed_flow_idx);
@@ -643,9 +646,10 @@ static void dp_fisa_rx_fst_update(struct dp_rx_fst *fisa_hdl,
 				dp_rx_fisa_setup_cmem_fse(fisa_hdl,
 							  hashed_flow_idx,
 							  rx_flow_tuple_info,
-							  elem->reo_id);
+							  reo_dest_indication);
 			sw_ft_entry->is_populated = true;
 			sw_ft_entry->napi_id = elem->reo_id;
+			sw_ft_entry->reo_dest_indication = reo_dest_indication;
 			qdf_mem_copy(&sw_ft_entry->rx_flow_tuple_info,
 				     rx_flow_tuple_info,
 				     sizeof(struct cdp_rx_flow_tuple_info));
@@ -787,6 +791,7 @@ dp_fisa_rx_queue_fst_update_work(struct dp_rx_fst *fisa_hdl, uint32_t flow_idx,
 	struct dp_fisa_rx_fst_update_elem *elem;
 	struct dp_fisa_rx_sw_ft *sw_ft_entry;
 	uint32_t hashed_flow_idx;
+	uint32_t reo_dest_indication;
 	bool found;
 
 	is_flow_tcp = HAL_RX_TLV_GET_TCP_PROTO(rx_tlv_hdr);
@@ -798,6 +803,8 @@ dp_fisa_rx_queue_fst_update_work(struct dp_rx_fst *fisa_hdl, uint32_t flow_idx,
 		return NULL;
 	}
 
+	hal_rx_msdu_get_reo_destination_indication(hal_soc_hdl, rx_tlv_hdr,
+						   &reo_dest_indication);
 	qdf_spin_lock_bh(&fisa_hdl->dp_rx_fst_lock);
 	found = dp_fisa_rx_is_fst_work_queued(fisa_hdl, flow_idx);
 	qdf_spin_unlock_bh(&fisa_hdl->dp_rx_fst_lock);
@@ -827,6 +834,7 @@ dp_fisa_rx_queue_fst_update_work(struct dp_rx_fst *fisa_hdl, uint32_t flow_idx,
 	elem->is_tcp_flow = is_flow_tcp;
 	elem->is_udp_flow = is_flow_udp;
 	elem->reo_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+	elem->reo_dest_indication = reo_dest_indication;
 	elem->vdev = vdev;
 
 	qdf_spin_lock_bh(&fisa_hdl->dp_rx_fst_lock);
