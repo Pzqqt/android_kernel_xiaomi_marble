@@ -292,6 +292,33 @@ static int hdd_convert_auth_type(uint32_t auth_type)
 	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
 		ret_val = QCA_WLAN_AUTH_TYPE_FT_SUITEB_EAP_SHA384;
 		break;
+	case eCSR_AUTH_TYPE_SAE:
+		ret_val = QCA_WLAN_AUTH_TYPE_SAE;
+		break;
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+		ret_val = QCA_WLAN_AUTH_TYPE_FILS_SHA256;
+		break;
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+		ret_val = QCA_WLAN_AUTH_TYPE_FILS_SHA384;
+		break;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		ret_val = QCA_WLAN_AUTH_TYPE_FT_FILS_SHA256;
+		break;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		ret_val = QCA_WLAN_AUTH_TYPE_FT_FILS_SHA384;
+		break;
+	case eCSR_AUTH_TYPE_DPP_RSN:
+		ret_val = QCA_WLAN_AUTH_TYPE_DPP_RSN;
+		break;
+	case eCSR_AUTH_TYPE_OWE:
+		ret_val = QCA_WLAN_AUTH_TYPE_OWE;
+		break;
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
+		ret_val = QCA_WLAN_AUTH_TYPE_SUITEB_EAP_SHA256;
+		break;
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
+		ret_val = QCA_WLAN_AUTH_TYPE_SUITEB_EAP_SHA384;
+		break;
 	case eCSR_NUM_OF_SUPPORT_AUTH_TYPE:
 	case eCSR_AUTH_TYPE_FAILED:
 	case eCSR_AUTH_TYPE_NONE:
