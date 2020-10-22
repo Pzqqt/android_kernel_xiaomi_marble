@@ -1089,7 +1089,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 					&cmds->msg);
 			if (rc < 0) {
 				DSI_ERR("failed to send command, rc=%d\n", rc);
-				goto end;
+				break;
 			}
 			if (cmds->post_wait_ms)
 				usleep_range(cmds->post_wait_ms*1000,
