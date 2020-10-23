@@ -14408,6 +14408,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_peer_estimated_linkspeed_event_id] =
 				WMI_PEER_ESTIMATED_LINKSPEED_EVENTID;
 	event_ids[wmi_peer_state_event_id] = WMI_PEER_STATE_EVENTID;
+	event_ids[wmi_peer_create_conf_event_id] =
+					WMI_PEER_CREATE_CONF_EVENTID;
 	event_ids[wmi_peer_delete_response_event_id] =
 					WMI_PEER_DELETE_RESP_EVENTID;
 	event_ids[wmi_peer_delete_all_response_event_id] =
