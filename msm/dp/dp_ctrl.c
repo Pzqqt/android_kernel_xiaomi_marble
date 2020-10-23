@@ -1158,16 +1158,32 @@ static void dp_ctrl_fec_dsc_setup(struct dp_ctrl_private *ctrl)
 	u8 fec_sts = 0;
 	int rlen;
 	u32 dsc_enable;
+	int i, max_retries = 3;
+	bool fec_en_detected = false;
 
 	if (!ctrl->fec_mode)
 		return;
 
-	ctrl->catalog->fec_config(ctrl->catalog, ctrl->fec_mode);
+	/* Need to try to enable multiple times due to BS symbols collisions */
+	for (i = 0; i < max_retries; i++) {
+		ctrl->catalog->fec_config(ctrl->catalog, ctrl->fec_mode);
 
-	/* wait for controller to start fec sequence */
-	usleep_range(900, 1000);
-	drm_dp_dpcd_readb(ctrl->aux->drm_aux, DP_FEC_STATUS, &fec_sts);
-	DP_DEBUG("sink fec status:%d\n", fec_sts);
+		/* wait for controller to start fec sequence */
+		usleep_range(900, 1000);
+
+		/* read back FEC status and check if it is enabled */
+		drm_dp_dpcd_readb(ctrl->aux->drm_aux, DP_FEC_STATUS, &fec_sts);
+		if (fec_sts & DP_FEC_DECODE_EN_DETECTED) {
+			fec_en_detected = true;
+			break;
+		}
+	}
+
+	SDE_EVT32_EXTERNAL(i, fec_en_detected);
+	DP_DEBUG("retries %d, fec_en_detected %d\n", i, fec_en_detected);
+
+	if (!fec_en_detected)
+		DP_WARN("failed to enable sink fec\n");
 
 	dsc_enable = ctrl->dsc_mode ? 1 : 0;
 	rlen = drm_dp_dpcd_writeb(ctrl->aux->drm_aux, DP_DSC_ENABLE,
