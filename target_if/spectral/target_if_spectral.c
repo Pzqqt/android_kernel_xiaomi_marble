@@ -2188,8 +2188,7 @@ target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 		swar->null_fftbin_adj = 0;
 	}
 
-	if ((target_type == TARGET_TYPE_QCA8074V2) ||
-	    (target_type == TARGET_TYPE_QCN9100))
+	if (target_type == TARGET_TYPE_QCA8074V2)
 		swar->packmode_fftbin_size_adj = 1;
 	else
 		swar->packmode_fftbin_size_adj = 0;
