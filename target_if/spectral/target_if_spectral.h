@@ -91,6 +91,7 @@
 #define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_QCN9000  (10)
 #define SPECTRAL_PARAM_RPT_MODE_MIN               (0)
 #define SPECTRAL_PARAM_RPT_MODE_MAX               (3)
+#define MAX_FFTBIN_VALUE                          (255)
 
 /* DBR ring debug size for Spectral */
 #define SPECTRAL_DBR_RING_DEBUG_SIZE 512

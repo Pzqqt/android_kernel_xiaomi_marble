@@ -44,6 +44,8 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	struct target_if_spectral_ops *p_sops = NULL;
 	uint32_t *binptr_32 = NULL;
 	uint16_t *binptr_16 = NULL;
+	uint32_t pwr_32;
+	uint16_t pwr_16;
 	int idx = 0;
 	struct spectral_samp_data *samp_data;
 	static int samp_msg_index;
@@ -152,16 +154,33 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		qdf_mem_copy(cp, pcp,
 			     sizeof(struct spectral_classifier_params));
 
+		/*
+		 * To check whether FFT bin values exceed 8 bits, we add a
+		 * check before copying values to samp_data->bin_pwr.
+		 * If it crosses 8 bits, we cap the values to maximum value
+		 * supported by 8 bits ie. 255. This needs to be done as the
+		 * destination array in SAMP message is 8 bits. This is a
+		 * temporary solution till an array of 16 bits is used for
+		 * SAMP message.
+		 */
 		if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
-			for (idx = 0; idx < pwr_count; idx++)
-				samp_data->bin_pwr[idx] = *(binptr_32++);
+			for (idx = 0; idx < pwr_count; idx++) {
+				pwr_32 = *(binptr_32++);
+				if (qdf_unlikely(pwr_32 > MAX_FFTBIN_VALUE))
+					pwr_32 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr[idx] = pwr_32;
+			}
 		} else if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			binptr_16 = (uint16_t *)bin_pwr_data;
-			for (idx = 0; idx < pwr_count; idx++)
-				samp_data->bin_pwr[idx] = *(binptr_16++);
+			for (idx = 0; idx < pwr_count; idx++) {
+				pwr_16 = *(binptr_16++);
+				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
+					pwr_16 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr[idx] = pwr_16;
+			}
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr[0], bin_pwr_data,
@@ -224,20 +243,42 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		samp_data->bin_pwr_count_5mhz = pwr_count_5mhz;
 
 		bin_pwr_data = params->bin_pwr_data_sec80;
+
+		/*
+		 * To check whether FFT bin values exceed 8 bits, we add a
+		 * check before copying values to samp_data->bin_pwr_sec80.
+		 * If it crosses 8 bits, we cap the values to maximum value
+		 * supported by 8 bits ie. 255. This needs to be done as the
+		 * destination array in SAMP message is 8 bits. This is a
+		 * temporary solution till an array of 16 bits is used for
+		 * SAMP message.
+		 */
 		if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
-			for (idx = 0; idx < pwr_count_sec80; idx++)
-				samp_data->bin_pwr_sec80[idx] = *(binptr_32++);
+			for (idx = 0; idx < pwr_count_sec80; idx++) {
+				pwr_32 = *(binptr_32++);
+				if (qdf_unlikely(pwr_32 > MAX_FFTBIN_VALUE))
+					pwr_32 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr_sec80[idx] = pwr_32;
+			}
 		} else if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			binptr_16 = (uint16_t *)bin_pwr_data;
-			for (idx = 0; idx < pwr_count_sec80; idx++)
-				samp_data->bin_pwr_sec80[idx] = *(binptr_16++);
+			for (idx = 0; idx < pwr_count_sec80; idx++) {
+				pwr_16 = *(binptr_16++);
+				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
+					pwr_16 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr_sec80[idx] = pwr_16;
+			}
 
 			binptr_16 = (uint16_t *)params->bin_pwr_data_5mhz;
-			for (idx = 0; idx < pwr_count_5mhz; idx++)
-				samp_data->bin_pwr_5mhz[idx] = *(binptr_16++);
+			for (idx = 0; idx < pwr_count_5mhz; idx++) {
+				pwr_16 = *(binptr_16++);
+				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
+					pwr_16 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr_5mhz[idx] = pwr_16;
+			}
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr_sec80[0],
