@@ -242,6 +242,8 @@ enum dsi_dyn_clk_feature_type {
  * enum dsi_cmd_set_type  - DSI command set type
  * @DSI_CMD_SET_PRE_ON:	                   Panel pre on
  * @DSI_CMD_SET_ON:                        Panel on
+ * @DSI_CMD_SET_VID_ON:                    Video mode panel on
+ * @DSI_CMD_SET_CMD_ON:                    Command mode panel on
  * @DSI_CMD_SET_POST_ON:                   Panel post on
  * @DSI_CMD_SET_PRE_OFF:                   Panel pre off
  * @DSI_CMD_SET_OFF:                       Panel off
@@ -249,10 +251,10 @@ enum dsi_dyn_clk_feature_type {
  * @DSI_CMD_SET_PRE_RES_SWITCH:            Pre resolution switch
  * @DSI_CMD_SET_RES_SWITCH:                Resolution switch
  * @DSI_CMD_SET_POST_RES_SWITCH:           Post resolution switch
- * @DSI_CMD_SET_CMD_TO_VID_SWITCH:         Cmd to video mode switch
- * @DSI_CMD_SET_POST_CMD_TO_VID_SWITCH:    Post cmd to vid switch
- * @DSI_CMD_SET_VID_TO_CMD_SWITCH:         Video to cmd mode switch
- * @DSI_CMD_SET_POST_VID_TO_CMD_SWITCH:    Post vid to cmd switch
+ * @DSI_CMD_SET_VID_SWITCH_IN:             Video mode switch in
+ * @DSI_CMD_SET_VID_SWITCH_OUT:            Video mode switch out
+ * @DSI_CMD_SET_CMD_SWITCH_IN:             Cmd mode switch in
+ * @DSI_CMD_SET_CMD_SWITCH_OUT:            Cmd mode switch out
  * @DSI_CMD_SET_PANEL_STATUS:              Panel status
  * @DSI_CMD_SET_LP1:                       Low power mode 1
  * @DSI_CMD_SET_LP2:                       Low power mode 2
@@ -268,6 +270,8 @@ enum dsi_dyn_clk_feature_type {
 enum dsi_cmd_set_type {
 	DSI_CMD_SET_PRE_ON = 0,
 	DSI_CMD_SET_ON,
+	DSI_CMD_SET_VID_ON,
+	DSI_CMD_SET_CMD_ON,
 	DSI_CMD_SET_POST_ON,
 	DSI_CMD_SET_PRE_OFF,
 	DSI_CMD_SET_OFF,
@@ -275,10 +279,10 @@ enum dsi_cmd_set_type {
 	DSI_CMD_SET_PRE_RES_SWITCH,
 	DSI_CMD_SET_RES_SWITCH,
 	DSI_CMD_SET_POST_RES_SWITCH,
-	DSI_CMD_SET_CMD_TO_VID_SWITCH,
-	DSI_CMD_SET_POST_CMD_TO_VID_SWITCH,
-	DSI_CMD_SET_VID_TO_CMD_SWITCH,
-	DSI_CMD_SET_POST_VID_TO_CMD_SWITCH,
+	DSI_CMD_SET_VID_SWITCH_IN,
+	DSI_CMD_SET_VID_SWITCH_OUT,
+	DSI_CMD_SET_CMD_SWITCH_IN,
+	DSI_CMD_SET_CMD_SWITCH_OUT,
 	DSI_CMD_SET_PANEL_STATUS,
 	DSI_CMD_SET_LP1,
 	DSI_CMD_SET_LP2,
