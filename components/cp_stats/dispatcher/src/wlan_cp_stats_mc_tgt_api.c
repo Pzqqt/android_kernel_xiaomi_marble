@@ -704,7 +704,7 @@ tgt_mc_cp_stats_extract_congestion_stats(struct wlan_objmgr_psoc *psoc,
 	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
 
 	if (last_req.u.congestion_notif_cb && is_congested)
-		last_req.u.congestion_notif_cb(congestion);
+		last_req.u.congestion_notif_cb(last_req.vdev_id, congestion);
 
 out:
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CP_STATS_ID);

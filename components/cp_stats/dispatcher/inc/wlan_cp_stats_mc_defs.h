@@ -193,7 +193,8 @@ struct request_info {
 					 void *cookie);
 		void (*get_peer_stats_cb)(struct stats_event *ev,
 					  void *cookie);
-		void (*congestion_notif_cb)(uint8_t congestion);
+		void (*congestion_notif_cb)(uint8_t vdev_id,
+					    uint8_t congestion);
 	} u;
 	uint32_t vdev_id;
 	uint32_t pdev_id;

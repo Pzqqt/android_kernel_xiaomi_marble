@@ -92,19 +92,27 @@ static int get_congestion_report_len(void)
 
 /**
  * hdd_congestion_notification_cb() - congestion notification callback function
+ * @vdev_id: vdev id
  * @congestion: congestion percentage
  *
  * Return: None
  */
-static void hdd_congestion_notification_cb(uint8_t congestion)
+static void hdd_congestion_notification_cb(uint8_t vdev_id, uint8_t congestion)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter;
 	struct sk_buff *event;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, NULL,
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("Failed to find adapter of vdev %d", vdev_id);
+		return;
+	}
+
+	event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, &(adapter->wdev),
 				  get_congestion_report_len(),
 				  QCA_NL80211_VENDOR_SUBCMD_MEDIUM_ASSESS_INDEX,
 				  GFP_KERNEL);
