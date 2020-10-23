@@ -34,6 +34,8 @@
 #include <drm/drm_crtc.h>
 #include <drm/drm_dp_mst_helper.h>
 #include <drm/drm_fixed.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_dp_helper.h>
 
 #include "msm_drv.h"
 #include "msm_kms.h"
@@ -151,6 +153,7 @@ struct dp_mst_private {
 	const struct dp_drm_mst_fw_helper_ops *mst_fw_cbs;
 	struct dp_mst_sim_mode simulator;
 	struct mutex mst_lock;
+	struct mutex edid_lock;
 	enum dp_drv_state state;
 	bool mst_session_state;
 };
@@ -1379,23 +1382,50 @@ static int dp_mst_connector_get_modes(struct drm_connector *connector,
 	struct sde_connector *c_conn = to_sde_connector(connector);
 	struct dp_display *dp_display = display;
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
-	struct edid *edid;
 	int rc = 0;
+	struct edid *edid = NULL;
 
 	DP_MST_DEBUG("enter:\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
-	edid = mst->mst_fw_cbs->get_edid(connector, &mst->mst_mgr,
-			c_conn->mst_port);
+	mutex_lock(&mst->edid_lock);
 
-	if (edid)
-		rc = dp_display->mst_connector_update_edid(dp_display,
-				connector, edid);
+	if (c_conn->cached_edid)
+		goto duplicate_edid;
 
-	DP_MST_DEBUG("mst connector get modes. id: %d\n", connector->base.id);
+	mutex_unlock(&mst->edid_lock);
 
-	DP_MST_DEBUG("exit:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
+	edid = mst->mst_fw_cbs->get_edid(connector,
+			&mst->mst_mgr, c_conn->mst_port);
+
+	if (!edid) {
+		DP_MST_DEBUG("get edid failed. id: %d\n",
+				connector->base.id);
+		goto end;
+	}
+
+	mutex_lock(&mst->edid_lock);
+	c_conn->cached_edid = edid;
+
+duplicate_edid:
+
+	edid = drm_edid_duplicate(c_conn->cached_edid);
+
+	mutex_unlock(&mst->edid_lock);
+
+	if (IS_ERR(edid)) {
+		rc = PTR_ERR(edid);
+		DP_MST_DEBUG("edid duplication failed. id: %d\n",
+				connector->base.id);
+		goto end;
+	}
+
+	rc = dp_display->mst_connector_update_edid(dp_display,
+			connector, edid);
+
+end:
+	DP_MST_DEBUG("exit: id: %d rc: %d\n", connector->base.id, rc);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, rc);
 
 	return rc;
 }
@@ -1727,6 +1757,9 @@ static void dp_mst_connector_pre_destroy(struct drm_connector *connector,
 
 	DP_MST_DEBUG("enter:\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, conn_id);
+
+	kfree(c_conn->cached_edid);
+	c_conn->cached_edid = NULL;
 
 	drm_dp_mst_put_port_malloc(c_conn->mst_port);
 
@@ -2227,6 +2260,9 @@ static void dp_mst_display_hpd_irq(void *dp_display,
 	u8 esi[14];
 	unsigned int esi_res = DP_SINK_COUNT_ESI + 1;
 	bool handled;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *conn;
+	struct sde_connector *c_conn;
 
 	if (info->mst_hpd_sim) {
 		if (mst->simulator.mst_state && (info->mst_sim_add_con ||
@@ -2268,6 +2304,22 @@ static void dp_mst_display_hpd_irq(void *dp_display,
 	/* ack the request */
 	if (handled) {
 		rc = drm_dp_dpcd_write(mst->caps.drm_aux, esi_res, &esi[1], 3);
+
+		if (esi[1] & DP_UP_REQ_MSG_RDY) {
+			drm_connector_list_iter_begin(dp->drm_dev, &conn_iter);
+			drm_for_each_connector_iter(conn, &conn_iter) {
+
+				c_conn = to_sde_connector(conn);
+				if (!c_conn->mst_port)
+					continue;
+
+				mutex_lock(&mst->edid_lock);
+				kfree(c_conn->cached_edid);
+				c_conn->cached_edid = NULL;
+				mutex_unlock(&mst->edid_lock);
+			}
+			drm_connector_list_iter_end(&conn_iter);
+		}
 
 		if (rc != 3)
 			DP_ERR("dpcd esi_res failed. rlen=%d\n", rc);
@@ -2354,6 +2406,7 @@ int dp_mst_init(struct dp_display *dp_display)
 	dp_mst.dp_display = dp_display;
 
 	mutex_init(&dp_mst.mst_lock);
+	mutex_init(&dp_mst.edid_lock);
 
 	ret = drm_dp_mst_topology_mgr_init(&dp_mst.mst_mgr, dev,
 					dp_mst.caps.drm_aux,
@@ -2386,6 +2439,7 @@ int dp_mst_init(struct dp_display *dp_display)
 
 error:
 	mutex_destroy(&dp_mst.mst_lock);
+	mutex_destroy(&dp_mst.edid_lock);
 	return ret;
 }
 
@@ -2410,6 +2464,7 @@ void dp_mst_deinit(struct dp_display *dp_display)
 	dp_mst.mst_initialized = false;
 
 	mutex_destroy(&mst->mst_lock);
+	mutex_destroy(&mst->edid_lock);
 
 	DP_MST_INFO("dp drm mst topology manager deinit completed\n");
 }
