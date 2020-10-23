@@ -325,33 +325,21 @@ end:
 		lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
 }
 
-/**
- * lim_post_join_set_link_state_callback()- registered callback to perform post
- * peer creation operations
- *
- * @mac: pointer to global mac structure
- * @callback_arg: registered callback argument
- * @status: peer creation status
- *
- * this is registered callback function during association to perform
- * post peer creation operation based on the peer creation status
- *
- * Return: none
- */
-static void lim_post_join_set_link_state_callback(
-		struct mac_context *mac,
-		struct pe_session *session_entry, QDF_STATUS status)
+void
+lim_post_join_set_link_state_callback(struct mac_context *mac, uint32_t vdev_id,
+				      QDF_STATUS status)
 {
 	tLimMlmJoinCnf mlm_join_cnf;
+	struct pe_session *session_entry;
 
+	session_entry = pe_find_session_by_vdev_id(mac, vdev_id);
 	if (!session_entry) {
-		pe_err("sessionId is NULL");
+		pe_err("vdev_id:%d PE session is NULL", vdev_id);
 		return;
 	}
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to find pe session for session id:%d",
-			session_entry->peSessionId);
+		pe_err("vdev%d: Failed to create peer", session_entry->vdev_id);
 		goto failure;
 	}
 
@@ -359,8 +347,7 @@ static void lim_post_join_set_link_state_callback(
 	 * store the channel switch session_entry in the lim
 	 * global variable
 	 */
-	session_entry->channelChangeReasonCode =
-			 LIM_SWITCH_CHANNEL_JOIN;
+	session_entry->channelChangeReasonCode = LIM_SWITCH_CHANNEL_JOIN;
 	session_entry->pLimMlmReassocRetryReq = NULL;
 	lim_send_switch_chnl_params(mac, session_entry);
 
@@ -395,18 +382,13 @@ static void
 lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 				       struct pe_session *session)
 {
-	QDF_STATUS status;
-
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_JOIN_FAIL_TIMER);
 
 	/* assign appropriate sessionId to the timer object */
 	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
-	status = wma_add_bss_peer_sta(session->vdev_id, session->bssId);
-	lim_post_join_set_link_state_callback(mac_ctx, session, status);
-
-	return;
+	wma_add_bss_peer_sta(session->vdev_id, session->bssId);
 }
 
 /**

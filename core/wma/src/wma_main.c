@@ -3318,6 +3318,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_peer_assoc_conf_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_peer_create_conf_event_id,
+					   wma_peer_create_confirm_handler,
+					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_peer_delete_response_event_id,
 					   wma_peer_delete_handler,
 					   WMA_RX_SERIALIZER_CTX);
@@ -5378,9 +5382,6 @@ static void wma_update_mlme_related_tgt_caps(struct wlan_objmgr_psoc *psoc,
 	mlme_tgt_cfg.stop_all_host_scan_support =
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_host_scan_stop_vdev_all);
-	mlme_tgt_cfg.peer_create_conf_support =
-		wmi_service_enabled(wmi_handle,
-				    wmi_service_peer_create_conf);
 	mlme_tgt_cfg.dual_sta_roam_fw_support =
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_dual_sta_roam_support);
@@ -5472,6 +5473,11 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	}
 
 	wma_update_mlme_related_tgt_caps(wma_handle->psoc, wmi_handle);
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_peer_create_conf))
+		wlan_psoc_nif_fw_ext_cap_set(wma_handle->psoc,
+					     WLAN_SOC_F_PEER_CREATE_RESP);
+
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 
 	tgt_cfg.sub_20_support = wma_handle->sub_20_support;

@@ -166,6 +166,9 @@
 #define WMA_PDEV_SET_HW_MODE_RESP 0x06
 #define WMA_PDEV_MAC_CFG_RESP 0x07
 
+#define WMA_PEER_CREATE_RESPONSE 0x08
+#define WMA_PEER_CREATE_RESPONSE_TIMEOUT SIR_PEER_CREATE_RESPONSE_TIMEOUT
+
 /* FW response timeout values in milli seconds */
 #define WMA_VDEV_PLCY_MGR_TIMEOUT        SIR_VDEV_PLCY_MGR_TIMEOUT
 #define WMA_VDEV_HW_MODE_REQUEST_TIMEOUT WMA_VDEV_PLCY_MGR_TIMEOUT
@@ -1641,7 +1644,18 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
 			   uint8_t vdev_id, bool no_fw_peer_delete);
 
-QDF_STATUS wma_create_peer(tp_wma_handle wma, uint8_t peer_addr[6],
+/**
+ * wma_create_peer() - Call wma_add_peer() to send peer create command to fw
+ * and setup cdp peer
+ * @wma: wma handle
+ * @peer_addr: peer mac address
+ * @peer_type: peer type
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_create_peer(tp_wma_handle wma,
+			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 			   u_int32_t peer_type, u_int8_t vdev_id);
 
 QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,

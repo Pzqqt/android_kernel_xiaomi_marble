@@ -630,10 +630,6 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
 QDF_STATUS wma_peer_unmap_conf_send(tp_wma_handle wma,
 				    struct send_peer_unmap_conf_params *msg);
 
-QDF_STATUS wma_create_peer(tp_wma_handle wma,
-			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			   uint32_t peer_type, uint8_t vdev_id);
-
 /**
  * wma_send_del_bss_response() - send delete bss resp
  * @wma: wma handle
@@ -1376,6 +1372,18 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);
 int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);
+
+/**
+ * wma_peer_create_confirm_handler  - Handle peer create confirmation
+ * result
+ * @handle: wma_handle
+ * @evt_param_info: event data
+ * @len: event length
+ *
+ * Return: 0 on success. Error value on failure
+ */
+int wma_peer_create_confirm_handler(void *handle, uint8_t *evt_param_info,
+				    uint32_t len);
 
 int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);

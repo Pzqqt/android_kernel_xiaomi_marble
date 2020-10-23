@@ -39,6 +39,7 @@
 #include "qdf_mem.h"
 #include "qdf_trace.h"
 #include "wma_if.h"
+#include "wma.h"
 
 /**
  * mac_trace_get_neighbour_roam_state() - Get the neighbor roam state
@@ -607,6 +608,7 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 		CASE_RETURN_STRING(WMA_GET_RCPI_REQ);
 		CASE_RETURN_STRING(WMA_SET_DBS_SCAN_SEL_CONF_PARAMS);
 		CASE_RETURN_STRING(WMA_GET_ROAM_SCAN_STATS);
+		CASE_RETURN_STRING(WMA_PEER_CREATE_RESPONSE);
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 		CASE_RETURN_STRING(WMA_SET_THERMAL_THROTTLE_CFG);
 		CASE_RETURN_STRING(WMA_SET_THERMAL_MGMT);
