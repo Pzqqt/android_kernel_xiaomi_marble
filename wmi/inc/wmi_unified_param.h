@@ -7247,6 +7247,31 @@ struct wmi_host_pdev_qvit_event {
 };
 
 /**
+ * enum wmi_peer_create_status - Peer Create response status
+ * @WMI_PEER_CREATE_SUCCESS: Peer creation successful at fw
+ * @WMI_PEER_EXISTS: Peer with same mac exists at fw
+ * @WMI_PEER_CREATE_FAILED: Peer creation failed at fw
+ */
+enum wmi_peer_create_status {
+	WMI_PEER_CREATE_SUCCESS = 0,
+	WMI_PEER_EXISTS = 1,
+	WMI_PEER_CREATE_FAILED = 2,
+};
+
+/**
+ * struct wmi_host_peer_create_response_event - Peer Create response event param
+ * @vdev_id: vdev id
+ * @mac_address: Peer Mac Address
+ * @status: Peer create status
+ *
+ */
+struct wmi_host_peer_create_response_event {
+	uint32_t vdev_id;
+	struct qdf_mac_addr mac_address;
+	uint32_t status;
+};
+
+/**
  * struct wmi_host_peer_delete_response_event - Peer Delete response event param
  * @vdev_id: vdev id
  * @mac_address: Peer Mac Address

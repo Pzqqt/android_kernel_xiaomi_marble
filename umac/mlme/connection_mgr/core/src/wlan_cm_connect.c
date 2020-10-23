@@ -926,6 +926,7 @@ connect_err:
  * @cm_ctx: connection manager context
  * @cm_req: Connect request.
  * @resp: connect resp from previous connection attempt
+ * @same_candidate_used: this will be set if same candidate used
  *
  * This function return a valid candidate to try connection. It return failure
  * if no valid candidate is present or all valid candidate are tried.
@@ -934,7 +935,8 @@ connect_err:
  */
 static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 					 struct cm_req *cm_req,
-					 struct wlan_cm_connect_rsp *resp)
+					 struct wlan_cm_connect_rsp *resp,
+					 bool *same_candidate_used)
 {
 	struct scan_cache_node *scan_node = NULL;
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
@@ -1018,6 +1020,9 @@ flush_single_pmk:
 		cm_delete_pmksa_for_single_pmk_bssid(cm_ctx,
 						&prev_candidate->entry->bssid);
 
+	if (same_candidate_used)
+		*same_candidate_used = use_same_candidate;
+
 	return status;
 }
 
@@ -1088,16 +1093,24 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 {
 	QDF_STATUS status;
 	struct cm_req *cm_req;
+	bool same_candidate_used = false;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
 	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
 
-	status = cm_get_valid_candidate(cm_ctx, cm_req, resp);
+	status = cm_get_valid_candidate(cm_ctx, cm_req, resp,
+					&same_candidate_used);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_err;
 
-	mlme_cm_osif_failed_candidate_ind(cm_ctx->vdev, resp);
+	/*
+	 * Do not indicate to OSIF if same candidate is used again as we are not
+	 * done with this candidate. So inform once we move to next candidate.
+	 * This will also avoid flush for the scan entry.
+	 */
+	if (!same_candidate_used)
+		mlme_cm_osif_failed_candidate_ind(cm_ctx->vdev, resp);
 
 	status = cm_send_bss_select_ind(cm_ctx, &cm_req->connect_req);
 	/*
@@ -1156,7 +1169,7 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
 	cm_fill_vdev_crypto_params(cm_ctx, req);
 
-	status = cm_get_valid_candidate(cm_ctx, cm_req, NULL);
+	status = cm_get_valid_candidate(cm_ctx, cm_req, NULL, NULL);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_err;
 

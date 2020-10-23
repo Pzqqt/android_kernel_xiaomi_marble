@@ -1814,7 +1814,7 @@ QDF_STATUS (*extract_mib_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 #endif
 
 QDF_STATUS (*extract_thermal_stats)(wmi_unified_t wmi_handle, void *evt_buf,
-	uint32_t *temp, uint32_t *level, uint32_t *pdev_id);
+	uint32_t *temp, enum thermal_throttle_level *level, uint32_t *pdev_id);
 
 QDF_STATUS (*extract_thermal_level_stats)(wmi_unified_t wmi_handle,
 		void *evt_buf, uint8_t idx, uint32_t *levelcount,
@@ -1989,6 +1989,11 @@ QDF_STATUS (*extract_pdev_qvit_event)(wmi_unified_t wmi_hdl,
 
 uint16_t (*wmi_set_htc_tx_tag)(wmi_unified_t wmi_handle,
 				wmi_buf_t buf, uint32_t cmd_id);
+
+QDF_STATUS (*extract_peer_create_response_event)(
+			wmi_unified_t wmi_handle,
+			void *evt_buf,
+			struct wmi_host_peer_create_response_event *param);
 
 QDF_STATUS (*extract_peer_delete_response_event)(
 			wmi_unified_t wmi_handle,
