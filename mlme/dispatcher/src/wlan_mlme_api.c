@@ -472,8 +472,6 @@ wlan_mlme_update_cfg_with_tgt_caps(struct wlan_objmgr_psoc *psoc,
 	mlme_obj->cfg.gen.bigtk_support = tgt_caps->bigtk_support;
 	mlme_obj->cfg.gen.stop_all_host_scan_support =
 			tgt_caps->stop_all_host_scan_support;
-	mlme_obj->cfg.gen.peer_create_conf_support =
-			tgt_caps->peer_create_conf_support;
 	mlme_obj->cfg.gen.dual_sta_roam_fw_support =
 			tgt_caps->dual_sta_roam_fw_support;
 
@@ -2095,16 +2093,6 @@ bool wlan_mlme_get_host_scan_abort_support(struct wlan_objmgr_psoc *psoc)
 		return false;
 
 	return mlme_obj->cfg.gen.stop_all_host_scan_support;
-}
-
-bool wlan_mlme_get_peer_create_conf_support(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
-
-	if (!mlme_obj)
-		return false;
-
-	return mlme_obj->cfg.gen.peer_create_conf_support;
 }
 
 bool wlan_mlme_get_dual_sta_roam_support(struct wlan_objmgr_psoc *psoc)

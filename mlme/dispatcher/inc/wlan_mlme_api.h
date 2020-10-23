@@ -824,15 +824,6 @@ QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
 bool wlan_mlme_get_host_scan_abort_support(struct wlan_objmgr_psoc *psoc);
 
 /**
- * wlan_mlme_get_peer_create_conf_support  - Get if the firmware supports
- * peer create confirm event
- * @psoc: PSOC object pointer
- *
- * Return: True if capability is supported, else False
- */
-bool wlan_mlme_get_peer_create_conf_support(struct wlan_objmgr_psoc *psoc);
-
-/**
  * wlan_mlme_get_dual_sta_roam_support  - Get support for dual sta roaming
  * feature
  * @psoc: PSOC object pointer
