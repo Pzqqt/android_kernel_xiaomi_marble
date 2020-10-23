@@ -204,6 +204,8 @@
 #define WLAN_SOC_F_BCAST_TWT           0x04000000
        /* WDS Extended support */
 #define WLAN_SOC_F_WDS_EXTENDED        0x08000000
+/* Peer create response */
+#define WLAN_SOC_F_PEER_CREATE_RESP    0x10000000
 
 
 /* PSOC op flags */
