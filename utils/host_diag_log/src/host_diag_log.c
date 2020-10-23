@@ -196,6 +196,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 	uint8_t *pBuf;
 	event_report_t *pEvent_report;
 	uint16_t total_len;
+	int ret;
 
 	if (cds_is_load_or_unload_in_progress())
 		return;
@@ -226,8 +227,9 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 
 		memcpy(pBuf, pPayload, length);
 
-		if (ptt_sock_send_msg_to_app
-			    (wmsg, 0, ANI_NL_MSG_PUMAC, INVALID_PID) < 0) {
+		ret = ptt_sock_send_msg_to_app
+			    (wmsg, 0, ANI_NL_MSG_PUMAC, INVALID_PID);
+		if ((ret < 0) && (ret != -ESRCH)) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
 				  "Ptt Socket error sending message to the app!!");
 			qdf_mem_free((void *)wmsg);

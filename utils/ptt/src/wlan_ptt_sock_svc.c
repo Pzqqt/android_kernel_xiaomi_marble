@@ -158,7 +158,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	else
 		err = nl_srv_bcast_ptt(skb);
 
-	if (err)
+	if ((err < 0) && (err != -ESRCH))
 		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
 			  "%s:Failed sending Msg Type [0x%X] to pid[%d]\n",
 			  __func__, be16_to_cpu(wmsg->type), pid);
