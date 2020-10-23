@@ -168,7 +168,13 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 		goto done;
 
 	uc_op_work->msg = msg;
-	qdf_sched_work(0, &uc_op_work->work);
+
+	if (!qdf_atomic_read(&ipa_ctx->deinit_in_prog)) {
+		qdf_sched_work(0, &uc_op_work->work);
+	} else {
+		uc_op_work->msg = NULL;
+		goto done;
+	}
 
 	/* work handler will free the msg buffer */
 	return;
@@ -3210,6 +3216,7 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 	qdf_list_create(&ipa_ctx->pending_event, 1000);
 	qdf_mutex_create(&ipa_ctx->event_lock);
 	qdf_mutex_create(&ipa_ctx->ipa_lock);
+	qdf_atomic_init(&ipa_ctx->deinit_in_prog);
 
 	status = wlan_ipa_wdi_setup_rm(ipa_ctx);
 	if (status != QDF_STATUS_SUCCESS)
@@ -3767,6 +3774,15 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 
 	wlan_ipa_uc_disable_pipes(ipa_ctx, true);
 
+	cdp_ipa_deregister_op_cb(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id);
+	qdf_atomic_set(&ipa_ctx->deinit_in_prog, 1);
+
+	for (i = 0; i < WLAN_IPA_UC_OPCODE_MAX; i++) {
+		qdf_cancel_work(&ipa_ctx->uc_op_work[i].work);
+		qdf_mem_free(ipa_ctx->uc_op_work[i].msg);
+		ipa_ctx->uc_op_work[i].msg = NULL;
+	}
+
 	if (true == ipa_ctx->uc_loaded) {
 		cdp_ipa_tx_buf_smmu_unmapping(ipa_ctx->dp_soc,
 					      ipa_ctx->dp_pdev_id);
@@ -3782,14 +3798,6 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 	qdf_mutex_acquire(&ipa_ctx->ipa_lock);
 	wlan_ipa_cleanup_pending_event(ipa_ctx);
 	qdf_mutex_release(&ipa_ctx->ipa_lock);
-
-	cdp_ipa_deregister_op_cb(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id);
-
-	for (i = 0; i < WLAN_IPA_UC_OPCODE_MAX; i++) {
-		qdf_cancel_work(&ipa_ctx->uc_op_work[i].work);
-		qdf_mem_free(ipa_ctx->uc_op_work[i].msg);
-		ipa_ctx->uc_op_work[i].msg = NULL;
-	}
 
 	ipa_debug("exit: ret=%d", status);
 	return status;
