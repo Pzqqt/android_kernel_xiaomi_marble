@@ -92,7 +92,9 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 	}
 
 	/* Notify peer free only for non self peer*/
-	if (peer == wlan_vdev_get_selfpeer(vdev))
+	if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer),
+			 wlan_vdev_mlme_get_macaddr(vdev)) ==
+				QDF_STATUS_SUCCESS)
 		peer_free_notify = false;
 
 	vdev_id = wlan_vdev_get_id(vdev);
