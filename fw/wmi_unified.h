@@ -1298,6 +1298,7 @@ typedef enum {
     WMI_TWT_RESUME_DIALOG_CMDID,
     WMI_TWT_BTWT_INVITE_STA_CMDID,
     WMI_TWT_BTWT_REMOVE_STA_CMDID,
+    WMI_TWT_NUDGE_DIALOG_CMDID,
 
     /** WMI commands related to motion detection **/
     WMI_MOTION_DET_CONFIG_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MOTION_DET),
@@ -2010,6 +2011,7 @@ typedef enum {
     WMI_TWT_BTWT_INVITE_STA_COMPLETE_EVENTID,
     WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID,
     WMI_TWT_SESSION_STATS_EVENTID,
+    WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID,
 
     /** Events in Prototyping phase */
     WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PROTOTYPE),
@@ -27326,6 +27328,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID);
         WMI_RETURN_STRING(WMI_QOS_NULL_FRAME_TX_SEND_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID);
+        WMI_RETURN_STRING(WMI_TWT_NUDGE_DIALOG_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -28320,7 +28323,7 @@ typedef struct {
     wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 sp_offset_us;  /* this long time after TWT resumed the 1st SP will start */
-    A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax sectin "9.4.1.60 TWT Information field" */
+    A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax section "9.4.1.60 TWT Information field" */
 } wmi_twt_resume_dialog_cmd_fixed_param;
 
 /* status code of resuming TWT dialog */
@@ -28342,6 +28345,34 @@ typedef struct {
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_RESUME_TWT_STATUS_T */
 } wmi_twt_resume_dialog_complete_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_cmd_fixed_param  */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+    A_UINT32 suspend_duration_ms;  /* this long time after TWT paused the 1st SP will start (millisecond) */
+    A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax section "9.4.1.60 TWT Information field" */
+} wmi_twt_nudge_dialog_cmd_fixed_param;
+
+/* status code of nudging TWT dialog */
+typedef enum _WMI_TWT_NUDGE_STATUS_T {
+    WMI_NUDGE_TWT_STATUS_OK,                  /* nudging TWT dialog successfully completed */
+    WMI_NUDGE_TWT_STATUS_DIALOG_ID_NOT_EXIST, /* TWT dialog ID doesn't exist */
+    WMI_NUDGE_TWT_STATUS_INVALID_PARAM,       /* invalid parameters */
+    WMI_NUDGE_TWT_STATUS_DIALOG_ID_BUSY,      /* FW is in the process of handling this dialog */
+    WMI_NUDGE_TWT_STATUS_NO_RESOURCE,         /* FW resource exhausted */
+    WMI_NUDGE_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
+    WMI_NUDGE_TWT_STATUS_UNKNOWN_ERROR,       /* nudging TWT dialog failed with an unknown reason */
+} WMI_TWT_NUDGE_STATUS_T;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_complete_event_fixed_param */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+    A_UINT32 status;        /* refer to WMI_NUDGE_TWT_STATUS_T */
+} wmi_twt_nudge_dialog_complete_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_btwt_invite_sta_cmd_fixed_param  */
