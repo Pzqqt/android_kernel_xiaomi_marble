@@ -173,6 +173,7 @@ struct va_macro_priv {
 	int dapm_tx_clk_status;
 	bool lpi_enable;
 	bool register_event_listener;
+	bool clk_div_switch;
 	int dec_mode[VA_MACRO_NUM_DECIMATORS];
 	u16 current_clk_id;
 };
@@ -206,7 +207,7 @@ static int va_macro_clk_div_get(struct snd_soc_component *component)
 		return -EINVAL;
 
 	if ((va_priv->version >= BOLERO_VERSION_2_0)
-		&& !va_priv->lpi_enable
+		&& va_priv->clk_div_switch
 		&& (va_priv->dmic_clk_div == VA_MACRO_CLK_DIV_16))
 		return VA_MACRO_CLK_DIV_8;
 
@@ -1524,6 +1525,10 @@ static int va_macro_hw_params(struct snd_pcm_substream *substream,
 		params_channels(params));
 
 	sample_rate = params_rate(params);
+	if (sample_rate > 16000)
+		va_priv->clk_div_switch = true;
+	else
+		va_priv->clk_div_switch = false;
 	switch (sample_rate) {
 	case 8000:
 		tx_fs_rate = 0;

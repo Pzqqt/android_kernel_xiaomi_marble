@@ -476,14 +476,15 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 	mutex_lock(&priv->fs_gen_lock);
 	if (enable) {
 		if (priv->reg_seq_en_cnt++ == 0) {
-			for (i = 0; i < (priv->num_fs_reg * 2); i += 2) {
-				dev_dbg(priv->dev, "%s: Register: %d, value: %d\n",
+			for (i = 0; i < (priv->num_fs_reg * 3); i += 3) {
+				dev_dbg(priv->dev, "%s: Register: %d, mask: %d, value %d\n",
 					__func__, priv->fs_gen_seq[i],
-					priv->fs_gen_seq[i + 1]);
+					priv->fs_gen_seq[i + 1],
+					priv->fs_gen_seq[i + 2]);
 				regmap_update_bits(regmap,
 						   priv->fs_gen_seq[i],
 						   priv->fs_gen_seq[i + 1],
-						   priv->fs_gen_seq[i + 1]);
+						   priv->fs_gen_seq[i + 2]);
 			}
 		}
 	} else {
@@ -495,8 +496,8 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 			return;
 		}
 		if (--priv->reg_seq_en_cnt == 0) {
-			for (i = ((priv->num_fs_reg - 1) * 2); i >= 0; i -= 2) {
-				dev_dbg(priv->dev, "%s: Register: %d, value: %d\n",
+			for (i = ((priv->num_fs_reg - 1) * 3); i >= 0; i -= 3) {
+				dev_dbg(priv->dev, "%s: Register: %d, mask: %d\n",
 					__func__, priv->fs_gen_seq[i],
 					priv->fs_gen_seq[i + 1]);
 				regmap_update_bits(regmap, priv->fs_gen_seq[i],
@@ -621,7 +622,7 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err;
 	}
-	priv->num_fs_reg = fs_gen_size/(2 * sizeof(u32));
+	priv->num_fs_reg = fs_gen_size/(3 * sizeof(u32));
 	priv->fs_gen_seq = devm_kzalloc(&pdev->dev, fs_gen_size, GFP_KERNEL);
 	if (!priv->fs_gen_seq) {
 		ret = -ENOMEM;
@@ -632,7 +633,7 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 	ret = of_property_read_u32_array(pdev->dev.of_node,
 					 "qcom,fs-gen-sequence",
 					 priv->fs_gen_seq,
-					 priv->num_fs_reg * 2);
+					 priv->num_fs_reg * 3);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "%s: unable to parse fs-gen-sequence, ret = %d\n",
 			__func__, ret);
