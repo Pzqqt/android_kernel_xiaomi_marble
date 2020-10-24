@@ -27,6 +27,7 @@
 #define _WLAN_SCAN_MANAGER_API_H_
 
 #include "wlan_scan_main.h"
+#include "wlan_scan_manager_6ghz.h"
 
 /**
  * struct scan_event_listners - listeners interested in a particular scan event
