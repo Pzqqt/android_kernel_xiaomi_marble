@@ -917,6 +917,10 @@ ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
 UMAC_SCAN_OBJS += $(UMAC_SCAN_DISP_DIR)/wlan_extscan_api.o
 endif
 
+ifeq ($(CONFIG_BAND_6GHZ), y)
+UMAC_SCAN_OBJS += $(UMAC_SCAN_CORE_DIR)/wlan_scan_manager_6ghz.o
+endif
+
 ############# UMAC_SPECTRAL_SCAN ############
 UMAC_SPECTRAL_DIR := spectral
 UMAC_SPECTRAL_DISP_INC_DIR := $(UMAC_SPECTRAL_DIR)/dispatcher/inc
