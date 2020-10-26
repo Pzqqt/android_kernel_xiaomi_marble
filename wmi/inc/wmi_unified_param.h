@@ -5264,6 +5264,7 @@ typedef enum {
 #ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
 	wmi_service_get_station_in_ll_stats_req,
 #endif
+	wmi_service_scan_conf_per_ch_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

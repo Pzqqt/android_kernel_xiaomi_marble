@@ -15177,6 +15177,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_MBSS_PARAM_IN_VDEV_START_SUPPORT;
 	wmi_service[wmi_service_fse_cmem_alloc_support] =
 			WMI_SERVICE_FSE_CMEM_ALLOC_SUPPORT;
+	wmi_service[wmi_service_scan_conf_per_ch_support] =
+			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
 
 	wmi_populate_service_get_sta_in_ll_stats_req(wmi_service);
 }

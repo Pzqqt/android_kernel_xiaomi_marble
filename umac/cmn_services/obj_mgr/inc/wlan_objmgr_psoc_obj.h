@@ -142,6 +142,8 @@
 #define WLAN_SOC_CEXT_EMA_AP           0x00400000
 	/* MBSS PARAM IN START REQ Support */
 #define WLAN_SOC_CEXT_MBSS_PARAM_IN_START   0x00800000
+/* Per channel scan config flags support */
+#define WLAN_SOC_CEXT_SCAN_PER_CH_CONFIG    0x01000000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
