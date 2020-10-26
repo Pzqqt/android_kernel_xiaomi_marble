@@ -4522,6 +4522,7 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 	struct drm_crtc *crtc = NULL;
 	struct drm_connector *conn = NULL;
 	struct sde_kms *sde_kms = NULL;
+	struct sde_vm_ops *vm_ops;
 
 	if (!kms || !obj) {
 		SDE_ERROR("invalid argument kms %pK obj %pK\n", kms, obj);
@@ -4529,6 +4530,14 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 	}
 
 	sde_kms = to_sde_kms(kms);
+	vm_ops = sde_vm_get_ops(sde_kms);
+	sde_vm_lock(sde_kms);
+	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+		sde_vm_unlock(sde_kms);
+		DRM_INFO("HW is owned by other VM\n");
+		return -EACCES;
+	}
+
 	switch (obj->type) {
 	case DRM_MODE_OBJECT_CRTC:
 		crtc = obj_to_crtc(obj);
@@ -4541,6 +4550,7 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 		break;
 	}
 
+	sde_vm_unlock(sde_kms);
 	return ret;
 }
 
