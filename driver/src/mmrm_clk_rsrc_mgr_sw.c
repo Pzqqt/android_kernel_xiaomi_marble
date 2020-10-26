@@ -154,66 +154,81 @@ err_not_valid_client:
 	return rc;
 }
 
-static int mmrm_sw_get_req_current(
+static int mmrm_sw_get_req_level(
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
-	unsigned long clk_val, u32 *req_current)
+	unsigned long clk_val, u32 *req_level)
 {
 	int rc = 0;
-	u32 i;
-	int voltage_corner = mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_NOM];
+	int voltage_corner;
+	u32 level;
 
 	/* get voltage corner */
-	/* TBD: voltage_corner = qcom_clk_get_voltage(tbl_entry->clk, val); */
-	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
-		if (voltage_corner == mmrm_sw_vdd_corner[i])
+	voltage_corner = qcom_clk_get_voltage(tbl_entry->clk, clk_val);
+
+	/* voltage corner is below svsl1 */
+	if (voltage_corner < mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1]) {
+		/* TBD: remove this when scaling calculations are added */
+		d_mpr_e("%s: csid(%d): lower voltage corner(%d)\n",
+			__func__, tbl_entry->clk_src_id, voltage_corner);
+		*req_level = MMRM_VDD_LEVEL_SVS_L1;
+		return rc;
+	}
+
+	/* match vdd level */
+	for (level = 0; level < MMRM_VDD_LEVEL_MAX; level++) {
+		if (voltage_corner == mmrm_sw_vdd_corner[level])
 			break;
 	}
 
-	if (i == MMRM_VDD_LEVEL_MAX) {
-		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for rate(%lld)\n",
-			__func__, tbl_entry->clk_src_id,
-			voltage_corner, clk_val);
+	if (level == MMRM_VDD_LEVEL_MAX) {
+		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for clk rate(%llu)\n",
+			__func__, tbl_entry->clk_src_id, voltage_corner, clk_val);
 		rc = -EINVAL;
-		goto err_invalid_corner;
+		return rc;
 	}
 
-	/* get current for the voltage corner */
-	*req_current = tbl_entry->current_ma[i];
-
-	return rc;
-
-err_invalid_corner:
+	*req_level = level;
+	d_mpr_h("%s: req_level(%d)\n", __func__, level);
 	return rc;
 }
 
 static int mmrm_sw_check_peak_current(
 	struct mmrm_sw_clk_mgr_info *sinfo,
-	u32 req_cur)
+	int delta_cur)
 {
 	int rc = 0;
 	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
 
-	/* check for peak overshoot */
-	if ((peak_data->aggreg_val + req_cur) >= peak_data->threshold) {
-		rc = -EINVAL;
-		/* TBD: return from here */
+	/* check for negative value */
+	if ((signed)peak_data->aggreg_val + delta_cur <= 0) {
+		peak_data->aggreg_val = 0;
+		d_mpr_h("%s: aggregate(%lu)\n", __func__, peak_data->aggreg_val);
+		return rc;
 	}
 
-	/* update peak current */
-	peak_data->aggreg_val += req_cur;
+	/* check for peak overshoot */
+	if ((signed)peak_data->aggreg_val + delta_cur >= peak_data->threshold) {
+		rc = -EINVAL;
+		return rc;
+	}
 
+	/* update peak data */
+	peak_data->aggreg_val += delta_cur;
+	d_mpr_h("%s: aggregate(%lu)\n", __func__, peak_data->aggreg_val);
 	return rc;
 }
 
 static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	struct mmrm_client *client,
 	struct mmrm_client_data *client_data,
-	unsigned long val)
+	unsigned long clk_val)
 {
 	int rc = 0;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
 	struct mmrm_sw_clk_mgr_info *sinfo = &(sw_clk_mgr->data.sw_info);
-	u32 req_cur;
+	bool req_reserve;
+	u32 req_level;
+	u32 prev_cur, req_cur;
 
 	d_mpr_h("%s: entering\n", __func__);
 
@@ -225,52 +240,112 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 		goto err_invalid_client;
 	}
 
+	if (!client_data) {
+		d_mpr_e("%s: invalid client data\n", __func__);
+		rc = -EINVAL;
+		goto err_invalid_client_data;
+	}
+
 	/* get table entry */
 	tbl_entry = &sinfo->clk_client_tbl[client->client_uid];
-	if (!tbl_entry->clk) {
+	if (IS_ERR_OR_NULL(tbl_entry->clk)) {
 		d_mpr_e("%s: clk src not registered\n");
 		rc = -EINVAL;
 		goto err_invalid_client;
 	}
 
-	/* check if already configured */
-	if (tbl_entry->clk_rate == val) {
-		d_mpr_h("%s: csid(%d) same as previous clk rate %lld\n",
-			__func__, tbl_entry->clk_src_id, val);
-		goto exit_no_err;
+	/* Check if the requested clk rate is the same as the current clk rate.
+	 * When clk rates are the same, compare this with the current state.
+	 * Skip when duplicate calculations will be made.
+	 * --- current ---- requested --- action ---
+	 * a.  reserve  &&  req_reserve:  skip
+	 * b. !reserve  && !req_reserve:  skip
+	 * c. !reserve  &&  req_reserve:  skip
+	 * d.  reserve  && !req_reserve:  set clk rate
+	 */
+	req_reserve = client_data->flags & MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY;
+	if (tbl_entry->clk_rate == clk_val) {
+		d_mpr_h("%s: csid(%d) same as previous clk rate %llu\n",
+			__func__, tbl_entry->clk_src_id, clk_val);
+
+		/* a & b */
+		if (tbl_entry->reserve == req_reserve)
+			goto exit_no_err;
+
+		/* c & d */
+		mutex_lock(&sw_clk_mgr->lock);
+		tbl_entry->reserve = req_reserve;
+		mutex_unlock(&sw_clk_mgr->lock);
+
+		/* skip or set clk rate */
+		if (req_reserve)
+			goto exit_no_err;
+		else
+			goto set_clk_rate;
 	}
 
-	/* get the required current val */
-	rc = mmrm_sw_get_req_current(tbl_entry, val, &req_cur);
-	if (rc || !req_cur) {
-		d_mpr_e("%s: csid(%d) unable to get req current\n",
-			__func__, tbl_entry->clk_src_id);
-		rc = -EINVAL;
-		goto err_invalid_clk_val;
+	/* get corresponding level & current */
+	if (clk_val) {
+		rc = mmrm_sw_get_req_level(tbl_entry, clk_val, &req_level);
+		if (rc || req_level >= MMRM_VDD_LEVEL_MAX) {
+			d_mpr_e("%s: csid(%d) unable to get level for clk rate %llu\n",
+				__func__, tbl_entry->clk_src_id, clk_val);
+			rc = -EINVAL;
+			goto err_invalid_clk_val;
+		}
+		req_cur = tbl_entry->current_ma[req_level];
+	} else {
+		req_level = 0;
+		req_cur = 0;
+	}
+
+	/* get previous level & current */
+	if (tbl_entry->clk_rate) {
+		if (tbl_entry->vdd_level >= MMRM_VDD_LEVEL_MAX) {
+			d_mpr_e("%s: csid(%d) invalid level %lu\n",
+				__func__, tbl_entry->clk_src_id, tbl_entry->vdd_level);
+			rc = -EINVAL;
+			goto err_invalid_clk_val;
+		}
+		prev_cur = tbl_entry->current_ma[tbl_entry->vdd_level];
+	} else {
+		prev_cur = 0;
 	}
 
 	mutex_lock(&sw_clk_mgr->lock);
 
-	/* check & update for peak current */
-	rc = mmrm_sw_check_peak_current(sinfo, req_cur);
-	if (!rc) {
-		d_mpr_e("%s: csid (%d) peak overshoot req_cur(%d) peak_cur(%d)\n",
+	/* check and update for peak current */
+	rc = mmrm_sw_check_peak_current(sinfo, (signed)(req_cur - prev_cur));
+	if (rc) {
+		d_mpr_e("%s: csid (%d) peak overshoot req_cur(%lu) peak_cur(%lu)\n",
 			__func__, tbl_entry->clk_src_id, req_cur,
 			sinfo->peak_cur_data.aggreg_val);
-		/* TBD: unlock & check for mitigation */
+		mutex_unlock(&sw_clk_mgr->lock);
+		goto err_peak_overshoot;
 	}
 
-	/* update the current rate value */
-	tbl_entry->clk_rate = val;
+	/* update table entry */
+	tbl_entry->clk_rate = clk_val;
+	tbl_entry->vdd_level = req_level;
+	tbl_entry->reserve = req_reserve;
+
 	mutex_unlock(&sw_clk_mgr->lock);
 
-	/* set clock rate */
-	d_mpr_e("%s: csid(%d) setting clk rate %llu\n", __func__,
-		tbl_entry->clk_src_id, val);
-	rc = clk_set_rate(tbl_entry->clk, val);
+	/* check reserve only flag (skip set clock rate) */
+	if (req_reserve) {
+		d_mpr_h("%s: csid(%d) skip setting clk rate\n",
+		__func__, tbl_entry->clk_src_id);
+		rc = 0;
+		goto exit_no_err;
+	}
+
+set_clk_rate:
+	d_mpr_h("%s: csid(%d) setting clk rate %llu\n",
+		__func__, tbl_entry->clk_src_id, clk_val);
+	rc = clk_set_rate(tbl_entry->clk, clk_val);
 	if (rc) {
-		d_mpr_e("%s: csid(%d) failed to set clock rate %llu\n",
-		__func__, tbl_entry->clk_src_id, val);
+		d_mpr_e("%s: csid(%d) failed to set clk rate %llu\n",
+			__func__, tbl_entry->clk_src_id, clk_val);
 		rc = -EINVAL;
 		/* TBD: incase of failure clk_rate is invalid */
 		goto err_clk_set_fail;
@@ -280,8 +355,10 @@ exit_no_err:
 	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
-err_invalid_clk_val:
 err_invalid_client:
+err_invalid_client_data:
+err_invalid_clk_val:
+err_peak_overshoot:
 err_clk_set_fail:
 	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
