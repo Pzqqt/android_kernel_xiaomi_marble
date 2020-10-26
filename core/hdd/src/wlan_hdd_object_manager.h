@@ -174,4 +174,54 @@ int hdd_objmgr_set_peer_mlme_auth_state(struct wlan_objmgr_vdev *vdev,
 int hdd_objmgr_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
 				   enum wlan_peer_state peer_state);
 
+/**
+ * hdd_objmgr_get_vdev_by_user() - Get reference of vdev from adapter
+ *  with user id
+ * @adapter: hdd adapter
+ * @dbgid: reference count dbg id
+ *
+ * Return: pointer to vdev object for success, NULL for failure
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+#define hdd_objmgr_get_vdev_by_user(adapter, dbgid) \
+	__hdd_objmgr_get_vdev_by_user(adapter, dbgid, __func__, __LINE__)
+struct wlan_objmgr_vdev *
+__hdd_objmgr_get_vdev_by_user(struct hdd_adapter *adapter,
+			      wlan_objmgr_ref_dbgid id,
+			      const char *func,
+			      int line);
+#else
+#define hdd_objmgr_get_vdev_by_user(adapter, dbgid) \
+	__hdd_objmgr_get_vdev_by_user(adapter, dbgid, __func__)
+struct wlan_objmgr_vdev *
+__hdd_objmgr_get_vdev_by_user(struct hdd_adapter *adapter,
+			      wlan_objmgr_ref_dbgid id,
+			      const char *func);
+#endif
+
+/**
+ * hdd_objmgr_put_vdev_by_user() - Release reference of vdev object with
+ *  user id
+ * @vdev: pointer to vdev object
+ * @dbgid: reference count dbg id
+ *
+ * This API releases vdev object reference which was acquired using
+ * hdd_objmgr_get_vdev_by_user().
+ *
+ * Return: void
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+#define hdd_objmgr_put_vdev_by_user(vdev, dbgid) \
+	__hdd_objmgr_put_vdev_by_user(vdev, dbgid, __func__, __LINE__)
+void
+__hdd_objmgr_put_vdev_by_user(struct wlan_objmgr_vdev *vdev,
+			      wlan_objmgr_ref_dbgid id, const char *func,
+			      int line);
+#else
+#define hdd_objmgr_put_vdev_by_user(vdev, dbgid) \
+	__hdd_objmgr_put_vdev_by_user(vdev, dbgid, __func__)
+void
+__hdd_objmgr_put_vdev_by_user(struct wlan_objmgr_vdev *vdev,
+			      wlan_objmgr_ref_dbgid id, const char *func);
+#endif
 #endif /* end #if !defined(WLAN_HDD_OBJECT_MANAGER_H) */
