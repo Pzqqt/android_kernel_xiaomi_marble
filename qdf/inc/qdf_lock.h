@@ -90,13 +90,13 @@ do { \
 	uint64_t BEFORE_LOCK_time; \
 	uint64_t AFTER_LOCK_time;  \
 	bool BEFORE_LOCK_is_locked = was_locked; \
-	BEFORE_LOCK_time = qdf_get_log_timestamp(); \
+	BEFORE_LOCK_time = qdf_get_log_timestamp_lightweight(); \
 	do {} while (0)
 
 
 #define AFTER_LOCK(lock, func) \
 	lock->stats.acquired_by = func; \
-	AFTER_LOCK_time = qdf_get_log_timestamp(); \
+	AFTER_LOCK_time = qdf_get_log_timestamp_lightweight(); \
 	lock->stats.acquired++; \
 	lock->stats.last_acquired = AFTER_LOCK_time; \
 	if (BEFORE_LOCK_is_locked) { \
@@ -121,11 +121,11 @@ do { \
 do { \
 	uint64_t BEFORE_LOCK_time; \
 	uint64_t AFTER_LOCK_time;  \
-	BEFORE_LOCK_time = qdf_get_log_timestamp(); \
+	BEFORE_LOCK_time = qdf_get_log_timestamp_lightweight(); \
 	do {} while (0)
 
 #define AFTER_TRYLOCK(lock, trylock_return, func) \
-	AFTER_LOCK_time = qdf_get_log_timestamp(); \
+	AFTER_LOCK_time = qdf_get_log_timestamp_lightweight(); \
 	if (trylock_return) { \
 		lock->stats.acquired++; \
 		lock->stats.last_acquired = AFTER_LOCK_time; \
@@ -138,7 +138,7 @@ do { \
 /* max_hold_time in US */
 #define BEFORE_UNLOCK(lock, max_hold_time) \
 do {\
-	uint64_t held_time = qdf_get_log_timestamp() - \
+	uint64_t held_time = qdf_get_log_timestamp_lightweight() - \
 		lock->stats.last_acquired; \
 	lock->stats.held_time += held_time; \
 \
