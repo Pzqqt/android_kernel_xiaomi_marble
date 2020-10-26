@@ -56,6 +56,7 @@
 #include <wlan_crypto_global_api.h>
 #include "../../core/src/vdev_mgr_ops.h"
 #include "wma.h"
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -1163,6 +1164,58 @@ lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 		 rsn_caps);
 
 	return peer_rmf_capable;
+}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
+static QDF_STATUS
+lim_cm_handle_join_req(struct cm_vdev_join_req *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
+{
+	struct cm_vdev_join_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = lim_cm_handle_join_req(req);
+
+	cm_free_join_req(req);
+
+	return status;
+}
+
+static QDF_STATUS
+lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
+{
+	struct wlan_cm_vdev_discon_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = lim_cm_handle_disconnect_req(req);
+
+	qdf_mem_free(req);
+
+	return status;
 }
 #endif
 
