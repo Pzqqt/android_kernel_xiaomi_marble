@@ -973,6 +973,50 @@ close:
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * cds_should_suspend_target() - Get value whether target can suspend
+ *
+ * Return: true if target can suspend, otherwise false
+ */
+static bool cds_should_suspend_target(void)
+{
+	struct hif_opaque_softc *hif_ctx;
+	struct hif_target_info *tgt_info;
+	uint32_t target_type = TARGET_TYPE_UNKNOWN;
+
+	/* don't suspend during SSR */
+	if (cds_is_driver_recovering())
+		return false;
+
+	/* don't suspend if the driver is in a bad state */
+	if (cds_is_driver_in_bad_state())
+		return false;
+
+	/* if we are in any mode other than FTM we should suspend */
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE)
+		return true;
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (hif_ctx) {
+		tgt_info = hif_get_target_info_handle(hif_ctx);
+		if (tgt_info)
+			target_type = tgt_info->target_type;
+	}
+
+	/*
+	 * for most target we also want to suspend in FTM mode,
+	 * but some targets do not support that.
+	 */
+	if (target_type == TARGET_TYPE_AR6320 ||
+	    target_type == TARGET_TYPE_AR6320V1 ||
+	    target_type == TARGET_TYPE_AR6320V2 ||
+	    target_type == TARGET_TYPE_AR6320V3)
+		return false;
+
+	/* target should support suspend in FTM mode */
+	return true;
+}
+
 #ifdef HIF_USB
 static inline void cds_suspend_target(tp_wma_handle wma_handle)
 {
@@ -1275,7 +1319,7 @@ QDF_STATUS cds_post_disable(void)
 	 */
 
 	cds_debug("send deinit sequence to firmware");
-	if (!(cds_is_driver_recovering() || cds_is_driver_in_bad_state()))
+	if (cds_should_suspend_target())
 		cds_suspend_target(wma_handle);
 	hif_disable_isr(hif_ctx);
 	hif_reset_soc(hif_ctx);
