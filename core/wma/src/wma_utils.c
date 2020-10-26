@@ -2046,6 +2046,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	struct wifi_radio_stats *rs_results = NULL;
 	struct wifi_channel_stats *chn_results;
 	struct wifi_channel_stats *channels_in_this_event;
+	bool per_chan_rx_tx_time_enabled = false;
 	int32_t status;
 
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
@@ -2187,6 +2188,12 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		rs_results->tx_time_per_power_level = NULL;
 	}
 
+	per_chan_rx_tx_time_enabled = wmi_service_enabled(
+		wma_handle->wmi_handle,
+		wmi_service_ll_stats_per_chan_rx_tx_time);
+	if (!per_chan_rx_tx_time_enabled)
+		wma_nofl_debug("LL Stats per channel tx time and rx time are not supported.");
+
 	rs_results->more_channels = fixed_param->more_channels;
 	num_chan_in_this_event = radio_stats->num_channels;
 
@@ -2211,14 +2218,10 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 				       channel_stats->center_freq1,
 				       channel_stats->radio_awake_time,
 				       channel_stats->cca_busy_time);
-			if (wmi_service_enabled(
-			      wma_handle->wmi_handle,
-			      wmi_service_ll_stats_per_chan_rx_tx_time)) {
+			if (per_chan_rx_tx_time_enabled) {
 				wma_nofl_debug("tx time %u rx time %u",
 					       channel_stats->tx_time,
 					       channel_stats->rx_time);
-			} else {
-				wma_nofl_debug("LL Stats per channel tx time and rx time are not supported.");
 			}
 
 			channel_stats++;
