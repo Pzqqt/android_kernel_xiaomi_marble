@@ -64,7 +64,7 @@ static int __show_tdls_all_peers(struct net_device *net_dev, char *buf)
 		goto exit;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 	if (!vdev) {
 		ret_val += scnprintf(buf + ret_val, PAGE_SIZE - ret_val,
 				     "\nVDEV is NULL\n");
@@ -72,7 +72,7 @@ static int __show_tdls_all_peers(struct net_device *net_dev, char *buf)
 	}
 	ret_val += wlan_cfg80211_tdls_get_all_peers(vdev, buf + ret_val,
 						    PAGE_SIZE - ret_val);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 
 exit:
 	if ((PAGE_SIZE - ret_val) > 0)

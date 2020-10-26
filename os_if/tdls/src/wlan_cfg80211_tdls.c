@@ -106,7 +106,7 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
 	unsigned long rc;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = ucfg_get_tdls_vdev(psoc, WLAN_OSIF_ID);
+	vdev = ucfg_get_tdls_vdev(psoc, WLAN_OSIF_TDLS_ID);
 	if (!vdev)
 		return;
 
@@ -141,7 +141,7 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
 
 release_ref:
 	wlan_objmgr_vdev_release_ref(vdev,
-				     WLAN_OSIF_ID);
+				     WLAN_OSIF_TDLS_ID);
 }
 
 void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)

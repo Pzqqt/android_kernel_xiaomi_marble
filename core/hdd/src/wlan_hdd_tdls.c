@@ -97,13 +97,13 @@ int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter,
 		return len;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 	if (!vdev) {
 		len = scnprintf(buf, buflen, "\nVDEV is NULL\n");
 		return len;
 	}
 	ret = wlan_cfg80211_tdls_get_all_peers(vdev, buf, buflen);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 
 	return ret;
 }
@@ -242,12 +242,12 @@ __wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	if (hdd_ctx->tdls_umac_comp_active) {
 		struct wlan_objmgr_vdev *vdev;
 
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (!vdev)
 			return -EINVAL;
 		ret = wlan_cfg80211_tdls_configure_mode(vdev,
 							trigger_mode);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		return ret;
 	}
 
@@ -512,14 +512,14 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		struct wlan_objmgr_vdev *vdev;
 		int ret;
 
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (!vdev)
 			return -EINVAL;
 		ret = wlan_cfg80211_tdls_mgmt(vdev, peer,
 					      action_code, dialog_token,
 					      status_code, peer_capability,
 					      buf, len);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		return ret;
 	}
 
@@ -674,11 +674,11 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	if (hdd_ctx->tdls_umac_comp_active) {
 		struct wlan_objmgr_vdev *vdev;
 
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (!vdev)
 			return -EINVAL;
 		status = wlan_cfg80211_tdls_oper(vdev, peer, oper);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		hdd_exit();
 		return status;
 	}
@@ -730,11 +730,11 @@ int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->tdls_umac_comp_active) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (vdev) {
 			status = ucfg_set_tdls_offchannel(vdev,
 							  offchannel);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		}
 	}
 	return qdf_status_to_os_return(status);
@@ -748,11 +748,11 @@ int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->tdls_umac_comp_active) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (vdev) {
 			status = ucfg_set_tdls_secoffchanneloffset(vdev,
 								 offchanoffset);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		}
 	}
 	return qdf_status_to_os_return(status);
@@ -778,11 +778,11 @@ int hdd_set_tdls_offchannelmode(struct hdd_context *hdd_ctx,
 	}
 
 	if (hdd_ctx->tdls_umac_comp_active) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (vdev) {
 			status = ucfg_set_tdls_offchan_mode(vdev,
 							    offchanmode);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		}
 	}
 	return qdf_status_to_os_return(status);
@@ -832,11 +832,11 @@ int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 		struct wlan_objmgr_vdev *vdev;
 		int ret;
 
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 		if (!vdev)
 			return -EINVAL;
 		ret = wlan_tdls_antenna_switch(vdev, mode);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 		return ret;
 	}
 
