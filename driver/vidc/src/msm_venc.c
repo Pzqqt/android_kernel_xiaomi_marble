@@ -12,6 +12,7 @@
 #include "msm_vidc_driver.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_platform.h"
+#include "msm_vidc_control.h"
 #include "msm_vidc_debug.h"
 #include "venus_hfi.h"
 #include "hfi_packet.h"
@@ -55,14 +56,30 @@ u32 msm_venc_output_subscribe_for_properties[] = {
 	HFI_PROP_BUFFER_MARK,
 };
 
-static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 codec)
+static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
+	if (inst->codec && inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat == v4l2_codec)
+		return 0;
 
-	inst->codec = v4l2_codec_to_driver(codec, __func__);
+	s_vpr_h(inst->sid, "%s: codec changed from %#x to %#x\n",
+		__func__, inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, v4l2_codec);
+
+	inst->codec = v4l2_codec_to_driver(v4l2_codec, __func__);
 	rc = msm_vidc_get_inst_capability(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_ctrl_deinit(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_ctrl_init(inst);
+	if (rc)
+		goto exit;
+
+exit:
 	return rc;
 }
 

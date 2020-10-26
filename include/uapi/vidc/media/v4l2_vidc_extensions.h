@@ -29,14 +29,15 @@
 /* vendor controls start */
 #define V4L2_CID_MPEG_VIDC_BASE                 (V4L2_CTRL_CLASS_MPEG | 0x2000)
 
+#define V4L2_MPEG_MSM_VIDC_DISABLE 0
+#define V4L2_MPEG_MSM_VIDC_ENABLE 1
+
 #define V4L2_CID_MPEG_VIDC_SECURE               (V4L2_CID_MPEG_VIDC_BASE + 0x1)
 /* HEIC encoder and decoder */
 #define V4L2_CID_MPEG_VIDC_HEIC                 (V4L2_CID_MPEG_VIDC_BASE + 0x2)
 #define V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST   (V4L2_CID_MPEG_VIDC_BASE + 0x3)
 /* FIXme: */
 #define V4L2_CID_MPEG_VIDC_CODEC_CONFIG         (V4L2_CID_MPEG_VIDC_BASE + 0x4)
-/* thumbnail decoding */
-#define V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE       (V4L2_CID_MPEG_VIDC_BASE + 0x4)
 /* B frame min/max qp */
 #define V4L2_CID_MPEG_VIDC_B_FRAME_MIN_QP       (V4L2_CID_MPEG_VIDC_BASE + 0x5)
 #define V4L2_CID_MPEG_VIDC_B_FRAME_MAX_QP       (V4L2_CID_MPEG_VIDC_BASE + 0x6)

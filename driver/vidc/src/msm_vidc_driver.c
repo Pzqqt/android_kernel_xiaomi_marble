@@ -1280,8 +1280,8 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 		if (core->inst_caps[i].domain == inst->domain &&
 			core->inst_caps[i].codec == inst->codec) {
 			s_vpr_h(inst->sid,
-				"%s: copied capabilities with %#x codec\n",
-				__func__, inst->codec);
+				"%s: copied capabilities with %#x codec, %#x domain\n",
+				__func__, inst->codec, inst->domain);
 			memcpy(inst->capabilities, &core->inst_caps[i],
 				sizeof(struct msm_vidc_inst_capability));
 		}

@@ -804,9 +804,6 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		if (rc)
 			goto error;
 	}
-	rc = msm_vidc_ctrl_init(inst);
-	if (rc)
-		goto error;
 
 	rc = msm_vidc_vb2_queue_init(inst);
 	if (rc)

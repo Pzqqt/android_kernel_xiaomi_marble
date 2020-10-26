@@ -20,10 +20,6 @@ static bool is_priv_ctrl(u32 id)
 	 * Treat below standard controls as private because
 	 * we have added custom values to the controls
 	 */
-	switch (id) {
-	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
-		return true;
-	}
 
 	return false;
 }
@@ -47,6 +43,13 @@ static const char *const mpeg_video_stream_format[] = {
 	NULL,
 };
 
+static const char *const mpeg_video_blur_types[] = {
+	"Blur None",
+	"Blur External",
+	"Blur Adaptive",
+	NULL,
+};
+
 static const char *const roi_map_type[] = {
 	"None",
 	"2-bit",
@@ -62,6 +65,8 @@ static const char * const * msm_vidc_get_qmenu_type(
 		return mpeg_video_rate_control;
 	case V4L2_CID_MPEG_VIDEO_HEVC_SIZE_OF_LENGTH_FIELD:
 		return mpeg_video_stream_format;
+	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
+		return mpeg_video_blur_types;
 	default:
 		s_vpr_e(inst->sid, "%s: No available qmenu for ctrl %#x\n",
 			__func__, control_id);
@@ -72,18 +77,50 @@ static const char * const * msm_vidc_get_qmenu_type(
 static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 {
 	switch (control_id) {
-	case V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE:
-		return "Sync Frame Decode";
 	case V4L2_CID_MPEG_VIDC_SECURE:
 		return "Secure Mode";
+	case V4L2_CID_MPEG_VIDC_HEIC:
+		return "HEIC";
 	case V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST:
 		return "Low Latency Mode";
-	/* TODO(AS)
-	case V4L2_CID_MPEG_VIDC_VIDEO_LOWLATENCY_HINT:
-		return "Low Latency Hint";
-	case V4L2_CID_MPEG_VIDC_VIDEO_BUFFER_SIZE_LIMIT:
-		return "Buffer Size Limit";
-	*/
+	case V4L2_CID_MPEG_VIDC_CODEC_CONFIG:
+		return "Codec Config";
+	case V4L2_CID_MPEG_VIDC_B_FRAME_MIN_QP:
+		return "B frame Min QP";
+	case V4L2_CID_MPEG_VIDC_B_FRAME_MAX_QP:
+		return "B frame Max QP";
+	case V4L2_CID_MPEG_VIDC_LTRCOUNT:
+		return "LTR count";
+	case V4L2_CID_MPEG_VIDC_USELTRFRAME:
+		return "Use LTR Frame";
+	case V4L2_CID_MPEG_VIDC_MARKLTRFRAME:
+		return "Mark LTR Frame";
+	case V4L2_CID_MPEG_VIDC_BASELAYER_PRIORITY:
+		return "Baselayer Priority";
+	case V4L2_CID_MPEG_VIDC_INTRA_REFRESH_PERIOD:
+		return "Intra Refresh Period";
+	case V4L2_CID_MPEG_VIDC_AU_DELIMITER:
+		return "AU Delimiter";
+	case V4L2_CID_MPEG_VIDC_TIME_DELTA_BASED_RC:
+		return "Time Delta Based RC";
+	case V4L2_CID_MPEG_VIDC_CONTENT_ADAPTIVE_CODING:
+		return "Content Adaptive Coding";
+	case V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST:
+		return "Quality Bitrate Boost";
+	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
+		return "Blur Types";
+	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION:
+		return "Blur Resolution";
+	case V4L2_CID_MPEG_VIDC_VIDEO_VPE_CSC_CUSTOM_MATRIX:
+		return "CSC Custom Matrix";
+	case V4L2_CID_MPEG_VIDC_METADATA_ENABLE:
+		return "Metadata Enable";
+	case V4L2_CID_MPEG_VIDC_METADATA_DISABLE:
+		return "Metadata Disable";
+	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY:
+		return "H264 Display Delay";
+	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE:
+		return "H264 Display Delay Enable";
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);
@@ -169,6 +206,13 @@ static int msm_vidc_adjust_property(struct msm_vidc_inst *inst,
 
 	capability = inst->capabilities;
 
+	/*
+	 * skip for uninitialized cap properties.
+	 * Eg: Skip Tramform 8x8 cap that is uninitialized for HEVC codec
+	 */
+	if (!capability->cap[cap_id].cap)
+		return 0;
+
 	if (capability->cap[cap_id].adjust) {
 		rc = capability->cap[cap_id].adjust(inst, NULL);
 		if (rc)
@@ -180,7 +224,7 @@ static int msm_vidc_adjust_property(struct msm_vidc_inst *inst,
 	if (rc)
 		goto exit;
 
-	/* add cap_id to firmware list always */
+	/* add cap_id to firmware list  */
 	rc = msm_vidc_add_capid_to_list(inst, cap_id, FW_LIST);
 	if (rc)
 		goto exit;
@@ -252,6 +296,19 @@ exit:
 	return rc;
 }
 
+int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: invalid parameters\n", __func__);
+		return -EINVAL;
+	}
+
+	v4l2_ctrl_handler_free(&inst->ctrl_handler);
+	kfree(inst->ctrls);
+
+	return 0;
+}
+
 int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -279,7 +336,8 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			num_ctrls++;
 	}
 	if (!num_ctrls) {
-		s_vpr_e(inst->sid, "%s: failed to allocate ctrl\n", __func__);
+		s_vpr_e(inst->sid, "%s: no ctrls available in cap database\n",
+			__func__);
 		return -EINVAL;
 	}
 	inst->ctrls = kcalloc(num_ctrls,
@@ -346,7 +404,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			ctrl_cfg.name = msm_vidc_get_priv_ctrl_name(inst->sid,
 					capability->cap[idx].v4l2_id);
 			if (!ctrl_cfg.name) {
-				s_vpr_e(inst->sid, "%s: invalid control, %#x\n",
+				s_vpr_e(inst->sid, "%s: %#x ctrl name is null\n",
 					__func__, ctrl_cfg.id);
 				return -EINVAL;
 			}
@@ -492,7 +550,7 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 	s32 adjusted_value;
 	enum msm_vidc_inst_capability_type parent_id;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 codec = -1, profile = -1;
+	s32 profile = -1;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -511,33 +569,75 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 	while (i < MAX_CAP_PARENTS &&
 		capability->cap[ENTROPY_MODE].parents[i]) {
 		parent_id = capability->cap[ENTROPY_MODE].parents[i];
-		if (parent_id == CODEC)
-			codec = inst->codec;
-		else if (parent_id == profile)
+		if (parent_id == PROFILE)
 			profile = capability->cap[PROFILE].value;
 		else
 			s_vpr_e(inst->sid,
 				"%s: invalid parent %d\n",
 				__func__, parent_id);
+		i++;
 	}
 
-	if (codec == -1 || profile == -1) {
+	if (profile == -1) {
 		s_vpr_e(inst->sid,
 			"%s: missing parents %d %d\n",
-			__func__, codec, profile);
+			__func__, profile);
 		return 0;
 	}
 
-	if (codec == MSM_VIDC_H264 &&
-	    (profile == V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE ||
+	if ((profile == V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE ||
 	    profile == V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE) &&
 	    adjusted_value == V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC)
 		adjusted_value = V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC;
 
 	if (capability->cap[ENTROPY_MODE].value != adjusted_value) {
-		s_vpr_h(inst->sid, "%s: adjusted from %#x to %#x\n", __func__,
+		s_vpr_h(inst->sid, "%s: updated from %#x to adjusted %#x\n", __func__,
 			capability->cap[ENTROPY_MODE].value, adjusted_value);
 		capability->cap[ENTROPY_MODE].value = adjusted_value;
+	}
+
+	return rc;
+}
+
+int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	int i = 0;
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	enum msm_vidc_inst_capability_type parent_id;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (ctrl)
+		adjusted_value = ctrl->val;
+	else
+		adjusted_value = capability->cap[LTR_COUNT].value;
+
+	/* check parents and adjust cabac session value */
+	while (i < MAX_CAP_PARENTS &&
+		capability->cap[LTR_COUNT].parents[i]) {
+		parent_id = capability->cap[LTR_COUNT].parents[i];
+		i++;
+	}
+
+	if (!(rc_type == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR
+		/* TODO(AS): remove comment after below rc modes are upstreamed
+		|| rc_type == RATE_CONTROL_OFF ||
+		|| rc_tpe == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR_VFR
+		*/))
+		adjusted_value = 0;
+
+	if (capability->cap[LTR_COUNT].value != adjusted_value) {
+		s_vpr_h(inst->sid, "%s: adjusted from %#x to %#x\n", __func__,
+			capability->cap[LTR_COUNT].value, adjusted_value);
+		capability->cap[LTR_COUNT].value = adjusted_value;
 	}
 
 	return rc;

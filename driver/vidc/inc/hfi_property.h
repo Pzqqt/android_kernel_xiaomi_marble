@@ -233,7 +233,7 @@ enum hfi_rate_control {
 };
 #define HFI_PROP_RATE_CONTROL                                   0x0300012a
 
-#define HFI_PROP_FRAMERATE_BASED_RATE_CONTROL                   0x0300012b
+#define HFI_PROP_TIME_DELTA_BASED_RATE_CONTROL                  0x0300012b
 
 #define HFI_PROP_CONTENT_ADAPTIVE_CODING                        0x0300012c
 
