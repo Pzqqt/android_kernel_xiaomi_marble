@@ -163,13 +163,13 @@ static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
 	struct cca_stats cca_stats;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_STATS_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return -EINVAL;
 	}
 	status = ucfg_mc_cp_stats_cca_stats_get(vdev, &cca_stats);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
 
@@ -464,7 +464,8 @@ static void hdd_get_max_tx_bitrate(struct hdd_context *hdd_ctx,
 	my_tx_rate = adapter->hdd_stats.class_a_stat.tx_rate;
 
 	if (!(tx_rate_flags & TX_RATE_LEGACY)) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter,
+						   WLAN_OSIF_STATS_ID);
 		if (vdev) {
 			/*
 			 * Take static NSS for reporting max rates.
@@ -472,7 +473,7 @@ static void hdd_get_max_tx_bitrate(struct hdd_context *hdd_ctx,
 			 * as per the environment quality.
 			 */
 			tx_nss = wlan_vdev_mlme_get_nss(vdev);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
 		} else {
 			tx_nss = adapter->hdd_stats.class_a_stat.tx_nss;
 		}
