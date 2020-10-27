@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,8 +61,8 @@ struct ieee80211_frame_bar {
 	uint8_t    i_dur[2];
 	uint8_t    i_ra[QDF_MAC_ADDR_SIZE];
 	uint8_t    i_ta[QDF_MAC_ADDR_SIZE];
-	uint8_t   i_ctl;
-	uint8_t   i_seq;
+	uint16_t   i_ctl;
+	uint16_t   i_seq;
 /* FCS */
 } __packed;
 
