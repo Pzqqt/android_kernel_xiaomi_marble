@@ -411,6 +411,9 @@ QDF_STATUS mlme_cm_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
  * @vdev: VDEV object
  * @req: Vdev connect request
  *
+ * Context: The req is on stack, so the API need to make a copy, if it want to
+ * use the req after return.
+ *
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_connect_req(struct wlan_objmgr_vdev *vdev,

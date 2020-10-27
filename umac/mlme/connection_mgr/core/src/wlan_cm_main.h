@@ -100,7 +100,6 @@ struct cm_state_sm {
  * @cm_id: Connect manager id
  * @scan_id: scan id for scan for ssid
  * @req: connect req from osif
- * @rsn_ie: rsn_ie in connect req
  * @candidate_list: candidate list
  * @cur_candidate: current candidate
  * @cur_candidate_retries: attempts for current candidate
@@ -110,7 +109,6 @@ struct cm_connect_req {
 	wlan_cm_id cm_id;
 	wlan_scan_id scan_id;
 	struct wlan_cm_connect_req req;
-	struct element_info rsn_ie;
 	qdf_list_t *candidate_list;
 	struct scan_cache_node *cur_candidate;
 	uint8_t cur_candidate_retries;

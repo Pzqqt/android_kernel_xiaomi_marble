@@ -403,6 +403,18 @@ void cm_delete_pmksa_for_single_pmk_bssid(struct cnx_mgr *cm_ctx,
 }
 #endif /* WLAN_SAE_SINGLE_PMK && WLAN_FEATURE_ROAM_OFFLOAD */
 
+static inline void
+cm_set_pmf_caps(struct wlan_cm_connect_req *req, struct scan_filter *filter)
+{
+	if (req->crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
+		filter->pmf_cap = WLAN_PMF_REQUIRED;
+	else if (req->crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+	else
+		filter->pmf_cap = WLAN_PMF_DISABLED;
+}
+
+#ifdef CONN_MGR_ADV_FEATURE
 #ifdef WLAN_FEATURE_FILS_SK
 /*
  * cm_create_fils_realm_hash: API to create hash using realm
@@ -511,18 +523,6 @@ static inline QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
 }
 #endif /* WLAN_FEATURE_FILS_SK */
 
-static inline void
-cm_set_pmf_caps(struct wlan_cm_connect_req *req, struct scan_filter *filter)
-{
-	if (req->crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
-		filter->pmf_cap = WLAN_PMF_REQUIRED;
-	else if (req->crypto.rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
-		filter->pmf_cap = WLAN_PMF_CAPABLE;
-	else
-		filter->pmf_cap = WLAN_PMF_DISABLED;
-}
-
-#ifdef CONN_MGR_ADV_FEATURE
 static QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_connect_rsp *resp)
@@ -1340,6 +1340,11 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.assoc_ie = cm_req->connect_req.req.assoc_ie;
 	req.scan_ie = cm_req->connect_req.req.scan_ie;
 	req.bss = cm_req->connect_req.cur_candidate;
+	req.fils_info = &cm_req->connect_req.req.fils_info;
+	req.ht_caps = cm_req->connect_req.req.ht_caps;
+	req.ht_caps_mask = cm_req->connect_req.req.ht_caps_mask;
+	req.vht_caps = cm_req->connect_req.req.vht_caps;
+	req.vht_caps_mask = cm_req->connect_req.req.vht_caps_mask;
 
 	wlan_reg_get_cc_and_src(psoc, country_code);
 	mlme_nofl_info(CM_PREFIX_FMT "Connecting to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d akm 0x%x cipher: uc 0x%x mc 0x%x, CC: %c%c",
