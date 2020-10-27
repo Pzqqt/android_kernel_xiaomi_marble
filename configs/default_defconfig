@@ -711,6 +711,10 @@ ifeq ($(CONFIG_ARCH_BENGAL), y)
 CONFIG_SMMU_S1_UNMAP := y
 endif
 
+ifeq ($(CONFIG_ICNSS2_HELIUM), y)
+CONFIG_SMMU_S1_UNMAP := y
+endif
+
 ifeq ($(CONFIG_ROME_IF), sdio)
 CONFIG_PKTLOG_LEGACY := y
 endif
