@@ -676,8 +676,10 @@ QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
 
 	wma_debug("enter");
 
-	if (!wma_is_vdev_valid(vdev_id))
-		return QDF_STATUS_E_FAILURE;
+	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
+		if (!wma_is_vdev_valid(vdev_id))
+			return QDF_STATUS_E_FAILURE;
+	}
 
 	if (arg_count > WMA_MAX_NUM_ARGS) {
 		wma_err("arg_count is crossed the boundary");

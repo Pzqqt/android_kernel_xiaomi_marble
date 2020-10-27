@@ -7121,6 +7121,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	case WE_UNIT_TEST_CMD:
 	{
 		QDF_STATUS status;
+		uint8_t vdev_id = 0;
 
 		if ((apps_args[0] < WLAN_MODULE_ID_MIN) ||
 		    (apps_args[0] >= WLAN_MODULE_ID_MAX)) {
@@ -7133,12 +7134,17 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			return -EINVAL;
 		}
 
+		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+			vdev_id = 0;
+		else
+			vdev_id = adapter->vdev_id;
+
 		if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
 			hdd_err_rl("Invalid vdev id");
 			return -EINVAL;
 		}
 
-		status = sme_send_unit_test_cmd(adapter->vdev_id,
+		status = sme_send_unit_test_cmd(vdev_id,
 						apps_args[0],
 						apps_args[1],
 						&apps_args[2]);
