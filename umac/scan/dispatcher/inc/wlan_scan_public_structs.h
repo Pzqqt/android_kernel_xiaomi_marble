@@ -692,13 +692,22 @@ struct probe_req_whitelist_attr {
 };
 
 /**
+ * Set this flag for a 6g channel to scan it only if an RNR IE is found
+ * with that channel while scanning 2g/5g bands
+ */
+#define FLAG_SCAN_ONLY_IF_RNR_FOUND 0x1
+
+/**
  * struct chan_info - channel information
  * @freq: frequency to scan
  * @phymode: phymode in which @frequency should be scanned
+ * @flags: Flags to define channel property. Firmware can use this info for
+ *  different operations, e.g.: scan
  */
 struct chan_info {
 	qdf_freq_t freq;
 	uint32_t phymode;
+	uint8_t flags;
 };
 
 /**

@@ -327,6 +327,9 @@ struct extscan_def_config {
  * @max_active_scans_allowed: maximum number of active parallel scan allowed
  *                            per psoc
  * @scan_mode_6g: scan mode in 6Ghz
+ * @duty_cycle_6ghz: Enable optimization on 6g channels for every full scan
+ *                   except the duty cycle. So that every nth scan(depending on
+ *                   duty cycle) is a full scan and rest are all optimized scans
  * @enable_connected_scan: enable scans after connection
  * @scan_priority: default scan priority
  * @adaptive_dwell_time_mode: adaptive dwell mode with connection
@@ -414,6 +417,7 @@ struct scan_default_params {
 	uint8_t go_scan_burst_duration;
 	uint8_t ap_scan_burst_duration;
 	enum scan_mode_6ghz scan_mode_6g;
+	uint8_t duty_cycle_6ghz;
 	bool enable_connected_scan;
 	enum scan_priority scan_priority;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
@@ -506,6 +510,9 @@ struct scan_cb {
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
  * @rnr_channel_db: RNR channel list database
+ * @duty_cycle_cnt_6ghz: Scan count to track the full scans and decide whether
+ *                        to optimizate 6g channels in the scan request based
+ *                        on the ini scan_mode_6ghz_duty_cycle.
  */
 struct wlan_scan_obj {
 	uint32_t scan_disabled;
@@ -539,6 +546,7 @@ struct wlan_scan_obj {
 	uint64_t scm_scan_event_duration;
 	uint64_t scm_scan_to_post_scan_duration;
 #endif
+	uint16_t duty_cycle_cnt_6ghz;
 };
 
 #ifdef ENABLE_SCAN_PROFILE

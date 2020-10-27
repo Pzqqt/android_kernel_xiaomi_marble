@@ -38,6 +38,14 @@
  */
 #define FULL_SCAN_CH_COUNT_MIN_BY_USERSPACE 11
 
+/*
+ * This can used to set the RNR_ONLY flag to certain type(PSC/non-PSC) or
+ * all channels.
+ */
+#define SET_RNR_FLAG_TO_PSC_CHANNEL 0x1
+#define SET_RNR_FLAG_TO_NON_PSC_CHANNEL 0x2
+#define SET_RNR_FLAG_TO_ALL_6G_CHANNELS 0x3
+
 /**
  * scm_update_6ghz_channel_list() - Update 6ghz channel list in the scan req
  * @req: scan start request
@@ -51,11 +59,28 @@
 void
 scm_update_6ghz_channel_list(struct scan_start_request *req,
 			     struct wlan_scan_obj *scan_obj);
+
+/**
+ * scm_is_6ghz_scan_optimization_supported() - Check firmware capability
+ * @psoc: psoc
+ *
+ * Check if firmware supports 6ghz scan optimization from fw_ext_caps of psoc.
+ *
+ * Return: None
+ */
+bool
+scm_is_6ghz_scan_optimization_supported(struct wlan_objmgr_psoc *psoc);
 #else
 static inline void
 scm_update_6ghz_channel_list(struct scan_start_request *req,
 			     struct wlan_scan_obj *scan_obj)
 {
+}
+
+static inline bool
+scm_is_6ghz_scan_optimization_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif
 

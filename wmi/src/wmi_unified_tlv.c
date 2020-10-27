@@ -64,6 +64,19 @@
 #include <wmi_unified_vdev_api.h>
 #include <wmi_unified_vdev_tlv.h>
 
+/*
+ * If FW supports WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL,
+ * then channel_list may fill the upper 12 bits with channel flags,
+ * while using only the lower 20 bits for channel frequency.
+ * If FW doesn't support WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL,
+ * then channel_list only holds the frequency value.
+ */
+#define CHAN_LIST_FLAG_MASK_POS 20
+#define TARGET_SET_FREQ_IN_CHAN_LIST_TLV(buf, freq) \
+			((buf) |= ((freq) & WMI_SCAN_CHANNEL_FREQ_MASK))
+#define TARGET_SET_FLAGS_IN_CHAN_LIST_TLV(buf, flags) \
+			((buf) |= ((flags) << CHAN_LIST_FLAG_MASK_POS))
+
 /* HTC service ids for WMI for multi-radio */
 static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
 				WMI_CONTROL_SVC_WMAC1,
@@ -2974,8 +2987,12 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	for (i = 0; i < params->chan_list.num_chan; ++i)
-		tmp_ptr[i] = params->chan_list.chan[i].freq;
+	for (i = 0; i < params->chan_list.num_chan; ++i) {
+		TARGET_SET_FREQ_IN_CHAN_LIST_TLV(tmp_ptr[i],
+					params->chan_list.chan[i].freq);
+		TARGET_SET_FLAGS_IN_CHAN_LIST_TLV(tmp_ptr[i],
+					params->chan_list.chan[i].flags);
+	}
 
 	WMITLV_SET_HDR(buf_ptr,
 		       WMITLV_TAG_ARRAY_UINT32,
