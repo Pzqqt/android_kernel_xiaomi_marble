@@ -431,12 +431,14 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 		struct device *dev;
 		struct dma_buf *dmabuf;
 		bool reattach = false;
+		unsigned long dma_map_attrs;
 
 		dev = msm_gem_get_aspace_device(aspace);
 		if ((dev && obj->import_attach) &&
 				((dev != obj->import_attach->dev) ||
 				msm_obj->obj_dirty)) {
 			dmabuf = obj->import_attach->dmabuf;
+			dma_map_attrs = obj->import_attach->dma_map_attrs;
 
 			DRM_DEBUG("detach nsec-dev:%pK attach sec-dev:%pK\n",
 					obj->import_attach->dev, dev);
@@ -455,6 +457,12 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 				ret = PTR_ERR(obj->import_attach);
 				return ret;
 			}
+			/*
+			 * obj->import_attach is created as part of dma_buf_attach.
+			 * Re-apply the dma_map_attr in this case to be in sync
+			 * with iommu_map attrs during map_attachment callback.
+			 */
+			obj->import_attach->dma_map_attrs |= dma_map_attrs;
 			msm_obj->obj_dirty = false;
 			reattach = true;
 		}
