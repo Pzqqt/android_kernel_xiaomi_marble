@@ -14144,6 +14144,14 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			QDF_ASSERT(0);
 		}
 
+		hdd_component_pdev_close(hdd_ctx->pdev);
+		dispatcher_pdev_close(hdd_ctx->pdev);
+		ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to destroy pdev; errno:%d", ret);
+			QDF_ASSERT(0);
+		}
+
 		qdf_status = cds_close(hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_warn("Failed to stop CDS: %d", qdf_status);
@@ -14156,15 +14164,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			hdd_err("WBUFF de-init unsuccessful; status: %d",
 				qdf_status);
 
-		hdd_component_pdev_close(hdd_ctx->pdev);
-
 		hdd_component_psoc_close(hdd_ctx->psoc);
-		dispatcher_pdev_close(hdd_ctx->pdev);
-		ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
-		if (ret) {
-			hdd_err("Failed to destroy pdev; errno:%d", ret);
-			QDF_ASSERT(0);
-		}
 		/* pdev close and destroy use tx rx ops so call this here */
 		wlan_global_lmac_if_close(hdd_ctx->psoc);
 	}
