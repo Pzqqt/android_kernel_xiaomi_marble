@@ -2737,6 +2737,11 @@ static int __hdd_mon_open(struct net_device *dev)
 
 	hdd_enter_dev(dev);
 
+	if (test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags)) {
+		hdd_debug_rl("Monitor interface is already up");
+		return 0;
+	}
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
