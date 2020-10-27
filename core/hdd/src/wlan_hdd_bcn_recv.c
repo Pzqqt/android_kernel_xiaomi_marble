@@ -335,12 +335,12 @@ static int __wlan_hdd_cfg80211_bcn_rcv_op(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SCAN_ID);
 	if (!vdev)
 		return -EINVAL;
 
 	scan_req_status = ucfg_scan_get_pdev_status(wlan_vdev_get_pdev(vdev));
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_SCAN_ID);
 
 	if (scan_req_status != SCAN_NOT_IN_PROGRESS) {
 		hdd_debug("Scan in progress: %d, bcn rpt start OP not allowed",

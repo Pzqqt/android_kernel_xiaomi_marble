@@ -673,7 +673,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SCAN_ID);
 	if (!vdev) {
 		status = -EINVAL;
 		goto error;
@@ -692,7 +692,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		params.priority = SCAN_PRIORITY_COUNT;
 
 	status = wlan_cfg80211_scan(vdev, request, &params);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SCAN_ID);
 error:
 	if (params.default_ie.ptr)
 		qdf_mem_free(params.default_ie.ptr);
@@ -1330,7 +1330,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SCAN_ID);
 	if (!vdev)
 		return -EINVAL;
 
@@ -1338,7 +1338,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 			ucfg_get_scan_backoff_multiplier(hdd_ctx->psoc);
 	ret = wlan_cfg80211_sched_scan_start(vdev, request,
 					     scan_backoff_multiplier);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SCAN_ID);
 
 	return ret;
 }
@@ -1398,11 +1398,11 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SCAN_ID);
 	if (!vdev)
 		return -EINVAL;
 	ret = wlan_cfg80211_sched_scan_stop(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SCAN_ID);
 
 	return ret;
 }

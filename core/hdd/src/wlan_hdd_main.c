@@ -7283,10 +7283,12 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 		if (adapter->device_mode == QDF_STA_MODE) {
 			struct wlan_objmgr_vdev *vdev;
 
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_SCAN_ID);
 			if (vdev) {
 				wlan_cfg80211_sched_scan_stop(vdev);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(vdev,
+							    WLAN_OSIF_SCAN_ID);
 			}
 		}
 		break;
