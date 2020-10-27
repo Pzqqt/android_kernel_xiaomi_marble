@@ -15,6 +15,7 @@
  */
 
 #include "qca_multi_link_tbl.h"
+#include "qca_multi_link.h"
 #include "qdf_module.h"
 #include "qdf_trace.h"
 
@@ -176,6 +177,10 @@ QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *
 	}
 
 	if (fdb_entry->is_local) {
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!qca_multi_link_is_dbdc_processing_reqd(net_dev)) {
 		return QDF_STATUS_SUCCESS;
 	}
 
