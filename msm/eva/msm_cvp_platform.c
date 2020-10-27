@@ -46,14 +46,18 @@ static struct msm_cvp_common_data default_common_data[] = {
 	},
 };
 
-static struct msm_cvp_common_data sm8250_common_data[] = {
+static struct msm_cvp_common_data sm8450_common_data[] = {
+	{
+		.key = "qcom,auto-pil",
+		.value = 0,
+	},
 	{
 		.key = "qcom,never-unload-fw",
 		.value = 1,
 	},
 	{
 		.key = "qcom,sw-power-collapse",
-		.value = 1,
+		.value = 0,
 	},
 	{
 		.key = "qcom,domain-attr-non-fatal-faults",
@@ -97,60 +101,6 @@ static struct msm_cvp_common_data sm8250_common_data[] = {
 	}
 };
 
-static struct msm_cvp_common_data sm8350_common_data[] = {
-	{
-		.key = "qcom,auto-pil",
-		.value = 1,
-	},
-	{
-		.key = "qcom,never-unload-fw",
-		.value = 1,
-	},
-	{
-		.key = "qcom,sw-power-collapse",
-		.value = 1,
-	},
-	{
-		.key = "qcom,domain-attr-non-fatal-faults",
-		.value = 1,
-	},
-	{
-		.key = "qcom,max-secure-instances",
-		.value = 2,             /*
-					 * As per design driver allows 3rd
-					 * instance as well since the secure
-					 * flags were updated later for the
-					 * current instance. Hence total
-					 * secure sessions would be
-					 * max-secure-instances + 1.
-					 */
-	},
-	{
-		.key = "qcom,max-hw-load",
-		.value = 3916800,       /*
-					 * 1920x1088/256 MBs@480fps. It is less
-					 * any other usecases (ex:
-					 * 3840x2160@120fps, 4096x2160@96ps,
-					 * 7680x4320@30fps)
-					 */
-	},
-	{
-		.key = "qcom,power-collapse-delay",
-		.value = 3000,
-	},
-	{
-		.key = "qcom,hw-resp-timeout",
-		.value = 2000,
-	},
-	{
-		.key = "qcom,dsp-resp-timeout",
-		.value = 1000
-	},
-	{
-		.key = "qcom,debug-timeout",
-		.value = 0,
-	}
-};
 
 
 /* Default UBWC config for LPDDR5 */
@@ -167,30 +117,19 @@ static struct msm_cvp_platform_data default_data = {
 	.ubwc_config = 0x0,
 };
 
-static struct msm_cvp_platform_data sm8250_data = {
-	.common_data = sm8250_common_data,
-	.common_data_length =  ARRAY_SIZE(sm8250_common_data),
+static struct msm_cvp_platform_data sm8450_data = {
+	.common_data = sm8450_common_data,
+	.common_data_length =  ARRAY_SIZE(sm8450_common_data),
 	.sku_version = 0,
 	.vpu_ver = VPU_VERSION_5,
 	.ubwc_config = kona_ubwc_data,
 };
 
-static struct msm_cvp_platform_data sm8350_data = {
-	.common_data = sm8350_common_data,
-	.common_data_length =  ARRAY_SIZE(sm8350_common_data),
-	.sku_version = 0,
-	.vpu_ver = VPU_VERSION_5,
-	.ubwc_config = kona_ubwc_data,
-};
 
 static const struct of_device_id msm_cvp_dt_match[] = {
 	{
-		.compatible = "qcom,lahaina-cvp",
-		.data = &sm8350_data,
-	},
-	{
-		.compatible = "qcom,kona-cvp",
-		.data = &sm8250_data,
+		.compatible = "qcom,waipio-cvp",
+		.data = &sm8450_data,
 	},
 	{},
 };
@@ -215,7 +154,7 @@ void *cvp_get_drv_data(struct device *dev)
 
 	driver_data = (struct msm_cvp_platform_data *)match->data;
 
-	if (!strcmp(match->compatible, "qcom,lahaina-cvp")) {
+	if (!strcmp(match->compatible, "qcom,waipio-cvp")) {
 		ddr_type = of_fdt_get_ddrtype();
 		if (ddr_type == -ENOENT) {
 			dprintk(CVP_ERR,
