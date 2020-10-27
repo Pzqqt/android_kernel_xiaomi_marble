@@ -320,7 +320,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			return;
 
 		if ((sa_peer->vdev->opmode == wlan_op_mode_ap) &&
-		    sa_peer->delete_in_progress) {
+		    !sa_peer->delete_in_progress) {
 			qdf_mem_copy(wds_src_mac,
 				     (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
 				     QDF_MAC_ADDR_SIZE);
