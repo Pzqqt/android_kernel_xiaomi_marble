@@ -1724,16 +1724,6 @@ int wma_oem_event_handler(void *wma_ctx, uint8_t *event_buff, uint32_t len);
 #endif
 
 /**
- * wma_set_roam_triggers() - Send roam trigger bitmap to WMI
- * @wma_handle: wma handle
- * @triggers: Carries vdev id and roam trigger bitmap.
- *
- * Return: Success or Failure status
- */
-QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma_handle,
-				 struct wlan_roam_triggers *triggers);
-
-/**
  * wma_get_ani_level_evt_handler - event handler to fetch ani level
  * @handle: the wma handle
  * @event_buf: buffer with event
