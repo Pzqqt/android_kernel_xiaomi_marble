@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,8 +146,8 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	else
 		cfr_header.chip_type = CFR_CAPTURE_RADIO_NONE;
 
-	cfr_header.pltform_type          = CFR_PLATFORM_TYPE_ARM;
-	cfr_header.Reserved              = 0;
+	cfr_header.pltform_type        = CFR_PLATFORM_TYPE_ARM;
+	cfr_header.cfr_metadata_len    = sizeof(struct cfr_metadata_version_1);
 
 	switch (cfr_msg_type) {
 
