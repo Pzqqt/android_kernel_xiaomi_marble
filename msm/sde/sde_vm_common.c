@@ -306,14 +306,8 @@ int sde_vm_request_valid(struct sde_kms *sde_kms,
 			rc = -EINVAL;
 		break;
 	case VM_REQ_ACQUIRE:
-		if (old_state != VM_REQ_RELEASE) {
+		if (old_state != VM_REQ_RELEASE)
 			rc = -EINVAL;
-		} else if (!vm_ops->vm_owns_hw(sde_kms)) {
-			if (vm_ops->vm_acquire)
-				rc = vm_ops->vm_acquire(sde_kms);
-			else
-				rc = -EINVAL;
-		}
 		break;
 	default:
 		SDE_ERROR("invalid vm request\n");
