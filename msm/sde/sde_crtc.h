@@ -254,9 +254,9 @@ struct sde_crtc_misr_info {
  * @enabled       : whether the SDE CRTC is currently enabled. updated in the
  *                  commit-thread, not state-swap time which is earlier, so
  *                  safe to make decisions on during VBLANK on/off work
- * @feature_list  : list of color processing features supported on a crtc
- * @active_list   : list of color processing features are active
- * @dirty_list    : list of color processing features are dirty
+ * @cp_feature_list  : list of color processing features supported on a crtc
+ * @cp_active_list   : list of color processing features are active
+ * @cp_dirty_list    : list of color processing features are dirty
  * @ad_dirty      : list containing ad properties that are dirty
  * @ad_active     : list containing ad properties that are active
  * @crtc_lock     : crtc lock around create, destroy and access.
@@ -331,9 +331,9 @@ struct sde_crtc {
 	struct kernfs_node *retire_frame_event_sf;
 	bool enabled;
 
-	struct list_head feature_list;
-	struct list_head active_list;
-	struct list_head dirty_list;
+	struct list_head cp_feature_list;
+	struct list_head cp_active_list;
+	struct list_head cp_dirty_list;
 	struct list_head ad_dirty;
 	struct list_head ad_active;
 	struct list_head user_event_list;
