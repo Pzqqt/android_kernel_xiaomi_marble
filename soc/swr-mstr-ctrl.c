@@ -206,16 +206,11 @@ static ssize_t swrm_reg_show(struct swr_mstr_ctrl *swrm, char __user *ubuf,
 	int i, reg_val, len;
 	ssize_t total = 0;
 	char tmp_buf[SWR_MSTR_MAX_BUF_LEN];
-	int rem = 0;
 
 	if (!ubuf || !ppos)
 		return 0;
 
 	i = ((int) *ppos + SWRM_BASE);
-	rem = i%4;
-
-	if (rem)
-		i = (i - rem);
 
 	for (; i <= SWRM_MAX_REGISTER; i += 4) {
 		usleep_range(100, 150);
@@ -233,7 +228,7 @@ static ssize_t swrm_reg_show(struct swr_mstr_ctrl *swrm, char __user *ubuf,
 			total = -EFAULT;
 			goto copy_err;
 		}
-		*ppos += len;
+		*ppos += 4;
 		total += len;
 	}
 
