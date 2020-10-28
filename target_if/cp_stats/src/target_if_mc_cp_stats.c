@@ -492,7 +492,7 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 
 	/* Extract peer_stats */
 	if (!stats_param->num_peer_stats)
-		return QDF_STATUS_SUCCESS;
+		goto adv_stats;
 
 	ev->peer_stats = qdf_mem_malloc(sizeof(*ev->peer_stats) *
 						stats_param->num_peer_stats);
@@ -519,6 +519,7 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 							TGT_NOISE_FLOOR_DBM;
 	}
 
+adv_stats:
 	target_if_cp_stats_extract_peer_extd_stats(wmi_hdl, stats_param, ev,
 						   data);
 

@@ -1017,7 +1017,7 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 		info.num_peer_adv_stats = 1;
 		qdf_mem_copy(info.peer_adv_stats,
 			     peer_mc_stats->adv_stats,
-			     sizeof(peer_mc_stats->adv_stats));
+			     sizeof(*peer_mc_stats->adv_stats));
 	}
 
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
