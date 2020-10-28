@@ -630,6 +630,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			cfg_get(psoc, CFG_DP_RX_RADIO_1_DEFAULT_REO);
 	wlan_cfg_ctx->radio2_rx_default_reo =
 			cfg_get(psoc, CFG_DP_RX_RADIO_2_DEFAULT_REO);
+	wlan_cfg_ctx->wow_check_rx_pending_enable =
+			cfg_get(psoc, CFG_DP_WOW_CHECK_RX_PENDING);
 
 	return wlan_cfg_ctx;
 }

@@ -191,6 +191,7 @@ struct wlan_srng_cfg {
  * @rx_pending_low_threshold: threshold of stopping pkt drop
  * @is_swlm_enabled: flag to enable/disable SWLM
  * @tx_per_pkt_vdev_id_check: Enable tx perpkt vdev id check
+ * @wow_check_rx_pending_enable: Enable RX frame pending check in WoW
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -306,6 +307,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t radio0_rx_default_reo;
 	uint8_t radio1_rx_default_reo;
 	uint8_t radio2_rx_default_reo;
+	bool wow_check_rx_pending_enable;
 };
 
 /**
