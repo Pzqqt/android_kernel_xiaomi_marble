@@ -4801,8 +4801,12 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 	uint8_t smeSessionId = 0;
 	bool is_last_report = false;
 
+	/* Malloc size of (tDot11fIEMeasurementReport) * (num_report - 1)
+	 * as memory for one Dot11fIEMeasurementReport is already calculated.
+	 */
 	tDot11fRadioMeasurementReport *frm =
-		qdf_mem_malloc(sizeof(tDot11fRadioMeasurementReport));
+		qdf_mem_malloc(sizeof(tDot11fRadioMeasurementReport) +
+		(sizeof(tDot11fIEMeasurementReport) * (num_report - 1)));
 	if (!frm)
 		return QDF_STATUS_E_NOMEM;
 
@@ -4814,15 +4818,11 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 
 	smeSessionId = pe_session->smeSessionId;
 
-
 	frm->Category.category = ACTION_CATEGORY_RRM;
 	frm->Action.action = RRM_RADIO_MEASURE_RPT;
 	frm->DialogToken.token = dialog_token;
 
-	frm->num_MeasurementReport =
-		(num_report >
-		 RADIO_REPORTS_MAX_IN_A_FRAME) ? RADIO_REPORTS_MAX_IN_A_FRAME :
-		num_report;
+	frm->num_MeasurementReport = num_report;
 
 	for (i = 0; i < frm->num_MeasurementReport; i++) {
 		frm->MeasurementReport[i].type = pRRMReport[i].type;

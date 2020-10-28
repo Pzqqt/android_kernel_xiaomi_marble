@@ -3162,7 +3162,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			return -EINVAL;
 		}
 
-		if (rx_pkt->pkt_meta.mpdu_data_len > WMA_MAX_MGMT_MPDU_LEN) {
+		if (rx_pkt->pkt_meta.mpdu_data_len > MAX_MGMT_MPDU_LEN) {
 			wma_err("Data Len %d greater than max, dropping frame",
 				rx_pkt->pkt_meta.mpdu_data_len);
 			cds_pkt_return_packet(rx_pkt);
@@ -3434,7 +3434,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	/*
 	 * If the mpdu_data_len is greater than Max (2k), drop the frame
 	 */
-	if (rx_pkt->pkt_meta.mpdu_data_len > WMA_MAX_MGMT_MPDU_LEN) {
+	if (rx_pkt->pkt_meta.mpdu_data_len > MAX_MGMT_MPDU_LEN) {
 		wma_err("Data Len %d greater than max, dropping frame from "QDF_MAC_ADDR_FMT,
 			 rx_pkt->pkt_meta.mpdu_data_len,
 			 QDF_MAC_ADDR_REF(wh->i_addr3));

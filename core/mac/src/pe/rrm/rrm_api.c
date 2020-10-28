@@ -938,6 +938,9 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 	uint16_t offset = 0;
 	uint8_t frag_id = 0;
 	uint8_t num_frames, num_reports_in_frame, final_measurement_index;
+	uint32_t populated_beacon_report_size = 0;
+	uint32_t max_reports_in_frame = 0;
+	uint32_t radio_meas_rpt_size = 0, dot11_meas_rpt_size = 0;
 	bool is_last_measurement_frame;
 
 
@@ -1113,13 +1116,22 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 		pe_debug("TX: [802.11 BCN_RPT] Total reports filled %d, last bcn_rpt ind:%d",
 			 i , curr_req->request.Beacon.last_beacon_report_indication);
 
-		num_frames = i / RADIO_REPORTS_MAX_IN_A_FRAME;
-		if (i % RADIO_REPORTS_MAX_IN_A_FRAME)
+		/* Calculate size of populated beacon reports */
+		radio_meas_rpt_size =  sizeof(tSirMacRadioMeasureReport);
+		populated_beacon_report_size = (i * radio_meas_rpt_size);
+
+		/* Calculate num of mgmt frames to send */
+		num_frames = populated_beacon_report_size / MAX_MGMT_MPDU_LEN;
+		if (populated_beacon_report_size % MAX_MGMT_MPDU_LEN)
 			num_frames++;
+
+		/* Calculate num of maximum mgmt reports per frame */
+		dot11_meas_rpt_size = sizeof(tDot11fRadioMeasurementReport);
+		max_reports_in_frame = MAX_MGMT_MPDU_LEN / dot11_meas_rpt_size;
 
 		for (j = 0; j < num_frames; j++) {
 			num_reports_in_frame = QDF_MIN((i - report_index),
-						RADIO_REPORTS_MAX_IN_A_FRAME);
+						max_reports_in_frame);
 
 			final_measurement_index =
 				mac_ctx->rrm.rrmPEContext.num_active_request;

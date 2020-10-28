@@ -142,6 +142,9 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 
 #endif
 
+/* Maximum management packet data unit length */
+#define MAX_MGMT_MPDU_LEN 2304
+
 struct scheduler_msg;
 
 /**
