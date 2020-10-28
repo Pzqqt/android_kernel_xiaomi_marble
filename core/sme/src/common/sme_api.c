@@ -10793,7 +10793,6 @@ QDF_STATUS sme_beacon_debug_stats_req(
  * This is a synchronous call
  * @mac_handle: The handle returned by mac_open.
  * @session_id: Session Identifier
- * @key_mgmt_offload_enabled: key mgmt enable/disable flag
  * @pmkid_modes: PMKID modes of PMKSA caching and OKC
  * Return: QDF_STATUS_SUCCESS - SME updated config successfully.
  * Other status means SME is failed to update.
@@ -10801,7 +10800,6 @@ QDF_STATUS sme_beacon_debug_stats_req(
 
 QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
 					uint8_t session_id,
-					bool key_mgmt_offload_enabled,
 					struct pmkid_mode_bits *pmkid_modes)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -10810,12 +10808,8 @@ QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"%s: LFR3: key_mgmt_offload_enabled changed to %d",
-				  __func__, key_mgmt_offload_enabled);
 			status = csr_roam_set_key_mgmt_offload(mac_ctx,
 						session_id,
-						key_mgmt_offload_enabled,
 						pmkid_modes);
 		} else
 			status = QDF_STATUS_E_INVAL;

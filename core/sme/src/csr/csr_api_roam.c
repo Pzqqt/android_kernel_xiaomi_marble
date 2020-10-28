@@ -16838,7 +16838,6 @@ QDF_STATUS csr_get_snr(struct mac_context *mac,
  * csr_roam_set_key_mgmt_offload() - enable/disable key mgmt offload
  * @mac_ctx: mac context.
  * @session_id: Session Identifier
- * @roam_key_mgmt_offload_enabled: key mgmt enable/disable flag
  * @pmkid_modes: PMKID modes of PMKSA caching and OKC
  *
  * Return: QDF_STATUS_SUCCESS - CSR updated config successfully.
@@ -16847,7 +16846,6 @@ QDF_STATUS csr_get_snr(struct mac_context *mac,
 
 QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
 					 uint32_t session_id,
-					 bool roam_key_mgmt_offload_enabled,
 					 struct pmkid_mode_bits *pmkid_modes)
 {
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -16856,7 +16854,6 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
 		sme_err("session %d not found", session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-	session->RoamKeyMgmtOffloadEnabled = roam_key_mgmt_offload_enabled;
 	session->pmkid_modes.fw_okc = pmkid_modes->fw_okc;
 	session->pmkid_modes.fw_pmksa_cache = pmkid_modes->fw_pmksa_cache;
 	return QDF_STATUS_SUCCESS;
@@ -17012,7 +17009,8 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 		wlan_cm_get_roam_scan_scheme_bitmap(mac_ctx->psoc,
 						    session->vdev_id);
 
-	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
+	req_buf->RoamKeyMgmtOffloadEnabled =
+			mac_ctx->mlme_cfg->lfr.lfr3_roaming_offload;
 	req_buf->pmkid_modes.fw_okc =
 		(pmkid_modes & CFG_PMKID_MODES_OKC) ? 1 : 0;
 	req_buf->pmkid_modes.fw_pmksa_cache =
@@ -20608,7 +20606,7 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 
 	/* Update 11i TLV related Fields */
 	rso_config->rso_11i_info.roam_key_mgmt_offload_enabled =
-			session->RoamKeyMgmtOffloadEnabled;
+			mac->mlme_cfg->lfr.lfr3_roaming_offload;
 	rso_config->rso_11i_info.fw_okc =
 			(pmkid_modes & CFG_PMKID_MODES_OKC) ? 1 : 0;
 	rso_config->rso_11i_info.fw_pmksa_cache =

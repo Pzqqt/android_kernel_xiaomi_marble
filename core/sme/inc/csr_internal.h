@@ -602,7 +602,6 @@ struct csr_roam_session {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
 	size_t pmk_len;
-	uint8_t RoamKeyMgmtOffloadEnabled;
 	struct roam_offload_synch_ind *roam_synch_data;
 	struct pmkid_mode_bits pmkid_modes;
 #endif

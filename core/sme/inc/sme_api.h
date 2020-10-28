@@ -1708,10 +1708,10 @@ sme_reset_link_layer_stats_ind_cb(mac_handle_t mac_handle)
 QDF_STATUS sme_set_wisa_params(mac_handle_t mac_handle,
 			       struct sir_wisa_params *wisa_params);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
-		uint8_t session_id,
-		bool key_mgmt_offload_enabled,
-		struct pmkid_mode_bits *pmkid_modes);
+QDF_STATUS
+sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
+					 uint8_t session_id,
+					 struct pmkid_mode_bits *pmkid_modes);
 #endif
 QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 			       csr_link_status_callback callback,
