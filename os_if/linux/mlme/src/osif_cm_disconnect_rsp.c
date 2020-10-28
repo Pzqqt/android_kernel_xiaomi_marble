@@ -102,8 +102,6 @@ osif_cm_get_disconnect_reason(struct vdev_osif_priv *osif_priv, uint16_t reason)
 {
 	enum ieee80211_reasoncode ieee80211_reason = WLAN_REASON_UNSPECIFIED;
 
-	osif_priv->cm_info.last_disconnect_reason =
-					osif_cm_mac_to_qca_reason(reason);
 	if (reason < REASON_PROP_START)
 		ieee80211_reason = reason;
 	/*
@@ -123,7 +121,9 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
 	bool locally_generated = true;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	enum qca_disconnect_reason_codes qca_reason;
 
+	qca_reason = osif_cm_mac_to_qca_reason(rsp->req.req.reason_code);
 	ieee80211_reason =
 		osif_cm_get_disconnect_reason(osif_priv,
 					      rsp->req.req.reason_code);
@@ -136,8 +136,8 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 		       QDF_MAC_ADDR_REF(rsp->req.req.bssid.bytes),
 		       rsp->req.cm_id, rsp->req.req.source, ieee80211_reason,
 		       ucfg_cm_reason_code_to_str(rsp->req.req.reason_code),
-		       osif_priv->cm_info.last_disconnect_reason,
-		       osif_cm_qca_reason_to_str(osif_priv->cm_info.last_disconnect_reason));
+		       qca_reason,
+		       osif_cm_qca_reason_to_str(qca_reason));
 
 	/* Unlink bss if disconnect is from peer or south bound */
 	if (rsp->req.req.source == CM_PEER_DISCONNECT ||

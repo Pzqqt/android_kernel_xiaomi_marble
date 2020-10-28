@@ -150,7 +150,7 @@ enum osif_cb_type {
  */
 typedef QDF_STATUS
 	(*osif_cm_connect_comp_cb)(struct wlan_objmgr_vdev *vdev,
-				   struct wlan_cm_connect_rsp *rsp,
+				   struct wlan_cm_connect_resp *rsp,
 				   enum osif_cb_type type);
 
 /**
@@ -243,7 +243,7 @@ struct osif_cm_ops {
  * Return: QDF_STATUS
  */
 QDF_STATUS osif_cm_connect_comp_ind(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_connect_rsp *rsp,
+				    struct wlan_cm_connect_resp *rsp,
 				    enum osif_cb_type type);
 
 /**

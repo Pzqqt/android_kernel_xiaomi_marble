@@ -146,7 +146,7 @@ void wlan_cm_scan_cb(struct wlan_objmgr_vdev *vdev,
  * Return: bool
  */
 bool cm_connect_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
-					  struct wlan_cm_connect_rsp *resp);
+					  struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_connect_active() - This API would be called after the connect
@@ -168,7 +168,7 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
  * Return: QDF status
  */
 QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
-				 struct wlan_cm_connect_rsp *connect_resp);
+				 struct wlan_cm_connect_resp *connect_resp);
 
 /**
  * cm_peer_create_on_bss_select_ind_resp() - Called to create peer
@@ -223,7 +223,7 @@ QDF_STATUS cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
-			  struct wlan_cm_connect_rsp *resp);
+			  struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_connect_complete() - This API would be called after connect complete
@@ -236,7 +236,7 @@ QDF_STATUS cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
  * Return: QDF status
  */
 QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
-			       struct wlan_cm_connect_rsp *resp);
+			       struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_add_connect_req_to_list() - add connect req to the connection manager
@@ -614,7 +614,7 @@ QDF_STATUS cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 QDF_STATUS
 cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id,
-					 struct wlan_cm_connect_rsp *resp);
+					 struct wlan_cm_connect_resp *resp);
 
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 bool cm_is_cm_id_current_candidate_single_pmk(struct cnx_mgr *cm_ctx,

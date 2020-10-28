@@ -136,7 +136,7 @@ osif_connect_timeout(struct net_device *dev, const u8 *bssid,
  */
 static void __osif_connect_bss(struct net_device *dev,
 			       struct cfg80211_bss *bss,
-			       struct wlan_cm_connect_rsp *rsp,
+			       struct wlan_cm_connect_resp *rsp,
 			       enum ieee80211_statuscode status)
 {
 	enum nl80211_timeout_reason nl_timeout_reason;
@@ -168,7 +168,7 @@ static void osif_connect_timeout(
 
 static void __osif_connect_bss(struct net_device *dev,
 			       struct cfg80211_bss *bss,
-			       struct wlan_cm_connect_rsp *rsp,
+			       struct wlan_cm_connect_resp *rsp,
 			       ieee80211_statuscode status)
 {
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
@@ -194,7 +194,7 @@ static void __osif_connect_bss(struct net_device *dev,
 #if defined CFG80211_CONNECT_TIMEOUT || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
 static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
-			     struct wlan_cm_connect_rsp *rsp)
+			     struct wlan_cm_connect_resp *rsp)
 {
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
 
@@ -213,7 +213,7 @@ static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
 }
 #else /* CFG80211_CONNECT_TIMEOUT */
 static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
-			     struct wlan_cm_connect_rsp *rsp)
+			     struct wlan_cm_connect_resp *rsp)
 {
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
 
@@ -292,6 +292,13 @@ osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
 
 #if defined(CFG80211_CONNECT_DONE) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+
+static enum ieee80211_statuscode
+osif_get_statuscode(enum wlan_status_code status)
+{
+	return (enum ieee80211_statuscode)status;
+}
+
 /**
  * osif_connect_done() - Wrapper API to call cfg80211_connect_done
  * @dev: network device
@@ -305,7 +312,7 @@ osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
  * Return: None
  */
 static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
-			      struct wlan_cm_connect_rsp *rsp)
+			      struct wlan_cm_connect_resp *rsp)
 {
 	struct cfg80211_connect_resp_params conn_rsp_params;
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
@@ -313,8 +320,8 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 	osif_enter_dev(dev);
 
 	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
-		if (rsp->reason_code)
-			status = rsp->reason_code;
+		if (rsp->status_code)
+			status = osif_get_statuscode(rsp->status_code);
 		else
 			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
 	}
@@ -343,7 +350,7 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 #else /* CFG80211_CONNECT_DONE */
 static inline void
 osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
-		  struct wlan_cm_connect_rsp *rsp)
+		  struct wlan_cm_connect_resp *rsp)
 { }
 #endif /* CFG80211_CONNECT_DONE */
 #endif /* WLAN_FEATURE_FILS_SK */
@@ -365,7 +372,7 @@ osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
  */
 static int osif_update_connect_results(struct net_device *dev,
 				       struct cfg80211_bss *bss,
-				       struct wlan_cm_connect_rsp *rsp)
+				       struct wlan_cm_connect_resp *rsp)
 {
 	if (!rsp->is_fils_connection) {
 		osif_debug("fils IE is NULL");
@@ -379,7 +386,7 @@ static int osif_update_connect_results(struct net_device *dev,
 
 static inline int osif_update_connect_results(struct net_device *dev,
 					      struct cfg80211_bss *bss,
-					      struct wlan_cm_connect_rsp *rsp)
+					      struct wlan_cm_connect_resp *rsp)
 {
 	return -EINVAL;
 }
@@ -387,7 +394,7 @@ static inline int osif_update_connect_results(struct net_device *dev,
 
 static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					 struct vdev_osif_priv *osif_priv,
-					 struct wlan_cm_connect_rsp *rsp)
+					 struct wlan_cm_connect_resp *rsp)
 {
 	struct cfg80211_bss *bss = NULL;
 	struct ieee80211_channel *chan;
@@ -407,7 +414,7 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 #else  /* CFG80211_CONNECT_BSS */
 static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					 struct vdev_osif_priv *osif_priv,
-					 struct wlan_cm_connect_rsp *rsp)
+					 struct wlan_cm_connect_resp *rsp)
 {
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
 
@@ -441,18 +448,18 @@ bool osif_cm_is_unlink_bss_required(enum wlan_cm_connect_fail_reason reason)
 }
 
 QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *rsp)
+				struct wlan_cm_connect_resp *rsp)
 {
 	struct vdev_osif_priv *osif_priv  = wlan_vdev_get_ospriv(vdev);
 	QDF_STATUS status;
 
-	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" is %s cm_id %d cm_reason %d reason_code %d",
+	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" is %s cm_id %d cm_reason %d status_code %d",
 		       osif_priv->wdev->netdev->name, rsp->vdev_id,
 		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
 		       QDF_MAC_ADDR_REF(rsp->bssid.bytes),
 		       rsp->ssid.length, rsp->ssid.ssid,
 		       rsp->connect_status ? "FAILURE" : "SUCCESS", rsp->cm_id,
-		       rsp->reason, rsp->reason_code);
+		       rsp->reason, rsp->status_code);
 
 	if (osif_cm_is_unlink_bss_required(rsp->reason))
 		osif_cm_unlink_bss(vdev, osif_priv, &rsp->bssid, rsp->ssid.ssid,
@@ -472,7 +479,7 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
-					    struct wlan_cm_connect_rsp *rsp)
+					 struct wlan_cm_connect_resp *rsp)
 {
 	struct vdev_osif_priv *osif_priv  = wlan_vdev_get_ospriv(vdev);
 
@@ -481,7 +488,7 @@ QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
 		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
 		       QDF_MAC_ADDR_REF(rsp->bssid.bytes),
 		       rsp->ssid.length, rsp->ssid.ssid, rsp->cm_id,
-		       rsp->reason, rsp->reason_code);
+		       rsp->reason, rsp->status_code);
 
 	if (osif_cm_is_unlink_bss_required(rsp->reason))
 		osif_cm_unlink_bss(vdev, osif_priv, &rsp->bssid, rsp->ssid.ssid,

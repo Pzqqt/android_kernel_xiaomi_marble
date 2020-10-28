@@ -47,15 +47,12 @@ struct pdev_osif_priv {
  * @last_source: Last command request source
  * @last_id: Last command from connection manager
  * @cmd_id_lock: lock to update and read last command source
- * @last_disconnect_reason: last disconnect reason to be indicated in get
- * station
  * @ext_priv: legacy data pointer.
  */
 struct osif_cm_info {
 	enum wlan_cm_source last_source;
 	wlan_cm_id last_id;
 	struct qdf_spinlock cmd_id_lock;
-	enum qca_disconnect_reason_codes last_disconnect_reason;
 	void *ext_priv;
 };
 #endif

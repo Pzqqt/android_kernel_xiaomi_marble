@@ -193,7 +193,7 @@ QDF_STATUS osif_cm_reset_id_and_src(struct wlan_objmgr_vdev *vdev)
  */
 static QDF_STATUS
 osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_connect_rsp *rsp)
+			    struct wlan_cm_connect_resp *rsp)
 {
 	return osif_connect_handler(vdev, rsp);
 }
@@ -207,7 +207,7 @@ osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
  */
 static QDF_STATUS
 osif_cm_failed_candidate_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_connect_rsp *rsp)
+			    struct wlan_cm_connect_resp *rsp)
 {
 	return osif_failed_candidate_handler(vdev, rsp);
 }
@@ -369,7 +369,7 @@ QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
 }
 
 QDF_STATUS osif_cm_connect_comp_ind(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_connect_rsp *rsp,
+				    struct wlan_cm_connect_resp *rsp,
 				    enum osif_cb_type type)
 {
 	osif_cm_connect_comp_cb cb = NULL;

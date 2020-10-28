@@ -99,7 +99,7 @@ QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_rsp *resp);
+			       struct wlan_cm_connect_resp *resp);
 
 /**
  * wlan_cm_bss_peer_delete_ind() - Connection manager peer delete indication

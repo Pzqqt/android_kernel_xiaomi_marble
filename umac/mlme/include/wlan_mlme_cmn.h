@@ -55,10 +55,10 @@
 struct mlme_cm_ops {
 	QDF_STATUS (*mlme_cm_connect_complete_cb)(
 					struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_connect_rsp *rsp);
+					struct wlan_cm_connect_resp *rsp);
 	QDF_STATUS (*mlme_cm_failed_candidate_cb)(
 					struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_connect_rsp *rsp);
+					struct wlan_cm_connect_resp *rsp);
 	QDF_STATUS (*mlme_cm_update_id_and_src_cb)(
 					struct wlan_objmgr_vdev *vdev,
 					enum wlan_cm_source source,
@@ -159,7 +159,7 @@ struct mlme_ext_ops {
 			struct wlan_cm_vdev_connect_req *req);
 	QDF_STATUS (*mlme_cm_ext_connect_complete_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *rsp);
+				struct wlan_cm_connect_resp *rsp);
 	QDF_STATUS (*mlme_cm_ext_disconnect_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_disconnect_req *req);
@@ -428,7 +428,7 @@ QDF_STATUS mlme_cm_connect_req(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_connect_rsp *rsp);
+					struct wlan_cm_connect_resp *rsp);
 
 /**
  * mlme_cm_disconnect_start_ind() - Connection manager ext disconnect start
@@ -489,7 +489,7 @@ QDF_STATUS mlme_cm_vdev_down_req(struct wlan_objmgr_vdev *vdev);
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
-					 struct wlan_cm_connect_rsp *rsp);
+					 struct wlan_cm_connect_resp *rsp);
 
 /**
  * mlme_cm_osif_failed_candidate_ind() - Failed Candidate indication to osif
@@ -500,7 +500,7 @@ QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 mlme_cm_osif_failed_candidate_ind(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_cm_connect_rsp *rsp);
+				  struct wlan_cm_connect_resp *rsp);
 
 /**
  * mlme_cm_osif_update_id_and_src() - Update connection id and source to osif

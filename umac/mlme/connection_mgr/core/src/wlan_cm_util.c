@@ -354,7 +354,7 @@ struct cm_req *cm_get_req_by_cm_id_fl(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
  * Return: void
  */
 static void
-cm_fill_connect_resp_from_req(struct wlan_cm_connect_rsp *resp,
+cm_fill_connect_resp_from_req(struct wlan_cm_connect_resp *resp,
 			      struct cm_req *cm_req)
 {
 	struct scan_cache_node *candidate;
@@ -390,7 +390,7 @@ cm_fill_connect_resp_from_req(struct wlan_cm_connect_rsp *resp,
 static void
 cm_handle_connect_flush(struct cnx_mgr *cm_ctx, struct cm_req *cm_req)
 {
-	struct wlan_cm_connect_rsp *resp;
+	struct wlan_cm_connect_resp *resp;
 
 	resp = qdf_mem_malloc(sizeof(*resp));
 	if (!resp)
@@ -512,7 +512,7 @@ next:
 QDF_STATUS
 cm_fill_bss_info_in_connect_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id,
-					 struct wlan_cm_connect_rsp *resp)
+					 struct wlan_cm_connect_resp *resp)
 {
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req *cm_req;

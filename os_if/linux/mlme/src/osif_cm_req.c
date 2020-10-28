@@ -374,7 +374,28 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 	const u8 *bssid_hint = req->bssid_hint;
 	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
 	QDF_STATUS status;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
+	struct wlan_objmgr_vdev *temp_vdev;
 
+	if (req->bssid)
+		qdf_mem_copy(bssid.bytes, req->bssid,
+			     QDF_MAC_ADDR_SIZE);
+	else if (bssid_hint)
+		qdf_mem_copy(bssid.bytes, req->bssid_hint,
+			     QDF_MAC_ADDR_SIZE);
+
+	temp_vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(
+						wlan_vdev_get_pdev(vdev),
+						bssid.bytes,
+						WLAN_OSIF_CM_ID);
+
+	if (temp_vdev) {
+		osif_err("vdev %d already exist with same mac address"
+			 QDF_MAC_ADDR_FMT, wlan_vdev_get_id(temp_vdev),
+			 QDF_MAC_ADDR_REF(bssid.bytes));
+		wlan_objmgr_vdev_release_ref(temp_vdev, WLAN_OSIF_CM_ID);
+		return -EINVAL;
+	}
 	osif_cm_dump_connect_req(dev, vdev_id, req);
 
 	status = osif_cm_reset_id_and_src(vdev);
@@ -399,6 +420,7 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 	connect_req->ssid.length = req->ssid_len;
 	if (connect_req->ssid.length > WLAN_SSID_MAX_LEN) {
 		osif_err("Invalid ssid len %zu", req->ssid_len);
+		osif_cm_free_connect_req(connect_req);
 		return -EINVAL;
 	}
 

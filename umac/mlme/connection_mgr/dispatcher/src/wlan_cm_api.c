@@ -72,7 +72,7 @@ QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS wlan_cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_rsp *resp)
+			       struct wlan_cm_connect_resp *resp)
 {
 	return cm_connect_rsp(vdev, resp);
 }

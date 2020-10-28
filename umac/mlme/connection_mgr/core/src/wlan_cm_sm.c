@@ -422,7 +422,7 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 	struct cnx_mgr *cm_ctx = ctx;
 	bool event_handled;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_cm_connect_rsp *resp;
+	struct wlan_cm_connect_resp *resp;
 	struct cm_req *cm_req;
 
 	switch (event) {

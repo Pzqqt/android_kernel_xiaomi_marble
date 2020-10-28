@@ -54,7 +54,7 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_connect_rsp *rsp);
+				struct wlan_cm_connect_resp *rsp);
 
 /**
  * osif_failed_candidate_handler() - API to indicate individual candidate
@@ -70,7 +70,7 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
-					 struct wlan_cm_connect_rsp *rsp);
+					 struct wlan_cm_connect_resp *rsp);
 
 #endif /* FEATURE_CM_ENABLE */
 #endif /* __OSIF_CM_RSP_H */

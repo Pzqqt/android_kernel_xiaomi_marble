@@ -293,7 +293,7 @@ QDF_STATUS mlme_cm_connect_req(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS mlme_cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_connect_rsp *rsp)
+					struct wlan_cm_connect_resp *rsp)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
@@ -357,7 +357,7 @@ QDF_STATUS mlme_cm_vdev_down_req(struct wlan_objmgr_vdev *vdev)
 }
 
 QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_connect_rsp *rsp)
+				    struct wlan_cm_connect_resp *rsp)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
@@ -369,7 +369,7 @@ QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 mlme_cm_osif_failed_candidate_ind(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_cm_connect_rsp *rsp)
+				  struct wlan_cm_connect_resp *rsp)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 

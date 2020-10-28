@@ -279,6 +279,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_OSIF_SPECTRAL_ID:      spectal operations in OS IF
  * @WLAN_OSIF_POWER_ID:         power operations in OS IF
  * @WLAN_OSIF_TDLS_ID:          TDLS operations in OS IF
+ * @WLAN_OSIF_CM_ID:            Connection manager osif reference id
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -374,7 +375,7 @@ typedef enum {
 	WLAN_OSIF_SPECTRAL_ID = 85,
 	WLAN_OSIF_POWER_ID    = 86,
 	WLAN_OSIF_TDLS_ID     = 87,
-
+	WLAN_OSIF_CM_ID       = 88,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -476,6 +477,7 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_OSIF_SPECTRAL_ID",
 					"WLAN_OSIF_POWER_ID",
 					"WLAN_OSIF_TDLS_ID",
+					"WLAN_OSIF_CM_ID",
 					};
 
 	if (id >= WLAN_REF_ID_MAX)

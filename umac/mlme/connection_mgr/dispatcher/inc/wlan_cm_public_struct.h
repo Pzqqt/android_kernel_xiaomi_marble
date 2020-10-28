@@ -349,12 +349,12 @@ struct wlan_connect_rsp_ies {
  * @freq: Channel frequency
  * @connect_status: connect status success or failure
  * @reason: connect fail reason, valid only in case of failure
- * @reason_code: protocol reason code of the connect failure
+ * @status_code: protocol status code received in auth/assoc resp
  * @aid: aid
  * @connect_ies: connect related IE required by osif to send to kernel
  * @is_fils_connection: is fils connection
  */
-struct wlan_cm_connect_rsp {
+struct wlan_cm_connect_resp {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
 	struct qdf_mac_addr bssid;
@@ -362,7 +362,7 @@ struct wlan_cm_connect_rsp {
 	qdf_freq_t freq;
 	QDF_STATUS connect_status;
 	enum wlan_cm_connect_fail_reason reason;
-	uint8_t reason_code;
+	enum wlan_status_code status_code;
 	uint8_t aid;
 	struct wlan_connect_rsp_ies connect_ies;
 #ifdef WLAN_FEATURE_FILS_SK
