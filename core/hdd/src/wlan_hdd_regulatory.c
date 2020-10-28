@@ -1572,6 +1572,8 @@ static void __hdd_country_change_work_handle(struct hdd_context *hdd_ctx)
 	 * selection for SAPs
 	 */
 	hdd_country_change_update_sta(hdd_ctx);
+	sme_generic_change_country_code(hdd_ctx->mac_handle,
+					hdd_ctx->reg.alpha2);
 	hdd_country_change_update_sap(hdd_ctx);
 }
 
@@ -1645,8 +1647,6 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	} else {
 		hdd_config_tdls_with_band_switch(hdd_ctx);
 
-		sme_generic_change_country_code(hdd_ctx->mac_handle,
-				hdd_ctx->reg.alpha2);
 		qdf_sched_work(0, &hdd_ctx->country_change_work);
 	}
 }
