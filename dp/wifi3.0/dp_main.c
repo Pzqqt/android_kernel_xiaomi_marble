@@ -10132,6 +10132,8 @@ dp_soc_handle_pdev_mode_change
 		return QDF_STATUS_E_FAILURE;
 
 	pdev->lmac_id = lmac_id;
+	pdev->target_pdev_id =
+		dp_calculate_target_pdev_id_from_host_pdev_id(soc, pdev_id);
 	dp_info(" mode change %d %d\n", pdev->pdev_id, pdev->lmac_id);
 
 	/*Set host PDEV ID for lmac_id*/
