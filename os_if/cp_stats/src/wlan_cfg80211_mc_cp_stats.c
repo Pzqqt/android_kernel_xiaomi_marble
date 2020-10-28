@@ -897,7 +897,7 @@ wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
 	cookie = osif_request_cookie(request);
 	priv = osif_request_priv(request);
 	info.cookie = cookie;
-	info.u.get_peer_stats_cb = get_station_adv_stats_cb;
+	info.u.get_station_stats_cb = get_station_adv_stats_cb;
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
 						     &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
