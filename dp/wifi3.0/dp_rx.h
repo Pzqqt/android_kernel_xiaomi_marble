@@ -1284,7 +1284,7 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr, struct dp_vdev *vdev,
  * @soc: core txrx main context
  * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
  * @ring_desc: opaque pointer to the RX ring descriptor
- * @rx_desc: host rs descriptor
+ * @rx_desc: host rx descriptor
  *
  * Return: void
  */

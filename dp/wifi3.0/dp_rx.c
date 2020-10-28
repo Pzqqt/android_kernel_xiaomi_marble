@@ -2348,6 +2348,9 @@ more_data:
 		status = dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
 			DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
+			dp_info_rl("Nbuf sanity check failure!");
+			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
+						   ring_desc, rx_desc);
 			rx_desc->in_err_state = 1;
 			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
