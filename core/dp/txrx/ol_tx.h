@@ -119,6 +119,28 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
+/**
+ * ol_tx_comp_hw_to_qdf_status(): map ol hw to qdf status
+ * @status: hw status
+ *
+ * Return: qdf tx rx status
+ */
+static inline enum qdf_dp_tx_rx_status
+ol_tx_comp_hw_to_qdf_status(uint16_t status)
+{
+	switch (status) {
+	case HTT_TX_COMPL_IND_STAT_OK:
+		return QDF_TX_RX_STATUS_OK;
+	case HTT_TX_COMPL_IND_STAT_DISCARD:
+	case HTT_TX_COMPL_IND_STAT_DROP:
+		return QDF_TX_RX_STATUS_FW_DISCARD;
+	case HTT_TX_COMPL_IND_STAT_NO_ACK:
+		return QDF_TX_RX_STATUS_NO_ACK;
+	default:
+		return QDF_TX_RX_STATUS_DEFAULT;
+	}
+}
+
 static inline
 int ol_txrx_tx_is_raw(enum ol_tx_spec tx_spec)
 {
