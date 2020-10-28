@@ -2265,7 +2265,7 @@ static bool policy_mgr_is_concurrency_allowed_4_port(
 			policy_mgr_err("couldn't start 4th port for bad force scc cfg");
 			return false;
 		}
-		if (pm_ctx->cfg.dual_mac_feature ||
+		if (!policy_mgr_is_dbs_enable(psoc) ||
 		    !pm_ctx->cfg.sta_sap_scc_on_dfs_chnl  ||
 		    !pm_ctx->cfg.sta_sap_scc_on_lte_coex_chnl) {
 			policy_mgr_err(
