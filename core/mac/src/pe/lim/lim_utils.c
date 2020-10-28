@@ -2210,20 +2210,20 @@ uint8_t lim_get_ht_capability(struct mac_context *mac,
 		break;
 
 	case eHT_RX_STBC:
-		retVal = (uint8_t) pe_session->ht_config.ht_rx_stbc;
+		retVal = (uint8_t) pe_session->ht_config.rx_stbc;
 		break;
 
 	case eHT_TX_STBC:
-		retVal = (uint8_t) pe_session->ht_config.ht_tx_stbc;
+		retVal = (uint8_t) pe_session->ht_config.tx_stbc;
 		break;
 
 	case eHT_SHORT_GI_40MHZ:
-		retVal = (uint8_t)(pe_session->ht_config.ht_sgi40) ?
+		retVal = (uint8_t)(pe_session->ht_config.short_gi_40_mhz) ?
 			mac->mlme_cfg->ht_caps.ht_cap_info.short_gi_40_mhz : 0;
 		break;
 
 	case eHT_SHORT_GI_20MHZ:
-		retVal = (uint8_t)(pe_session->ht_config.ht_sgi20) ?
+		retVal = (uint8_t)(pe_session->ht_config.short_gi_20_mhz) ?
 			mac->mlme_cfg->ht_caps.ht_cap_info.short_gi_20_mhz : 0;
 		break;
 
@@ -2241,7 +2241,7 @@ uint8_t lim_get_ht_capability(struct mac_context *mac,
 		break;
 
 	case eHT_ADVANCED_CODING:
-		retVal = (uint8_t) pe_session->ht_config.ht_rx_ldpc;
+		retVal = (uint8_t) pe_session->ht_config.adv_coding_cap;
 		break;
 
 	case eHT_MAX_RX_AMPDU_FACTOR:
@@ -6895,7 +6895,7 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
 	struct he_cap_network_endian *he_cap_from_ie;
 	uint8_t extracted_buff[DOT11F_IE_HE_CAP_MAX_LEN + 2];
 	QDF_STATUS status;
-	struct sir_vht_config *vht_cfg = &session->vht_config;
+	struct wlan_vht_config *vht_cfg = &session->vht_config;
 	qdf_mem_zero(extracted_buff, sizeof(extracted_buff));
 	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
 			&add_ie->probeRespBCNDataLen,

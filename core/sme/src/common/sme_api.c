@@ -8414,28 +8414,43 @@ QDF_STATUS sme_set_idle_powersave_config(bool value)
 	return QDF_STATUS_SUCCESS;
 }
 
-int16_t sme_get_ht_config(mac_handle_t mac_handle, uint8_t session_id,
+int16_t sme_get_ht_config(mac_handle_t mac_handle, uint8_t vdev_id,
 			  uint16_t ht_capab)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, session_id);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_ht_config ht_cap_info;
 
 	if (!pSession) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: pSession is NULL", __func__);
 		return -EIO;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev)
+		return -EIO;
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return -EIO;
+	}
+	ht_cap_info.caps = vdev_mlme->proto.ht_info.ht_caps;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	switch (ht_capab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		return pSession->ht_config.ht_rx_ldpc;
+		return ht_cap_info.ht_caps.adv_coding_cap;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		return pSession->ht_config.ht_tx_stbc;
+		return ht_cap_info.ht_caps.tx_stbc;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		return pSession->ht_config.ht_rx_stbc;
+		return ht_cap_info.ht_caps.rx_stbc;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
-		return pSession->ht_config.ht_sgi20;
+		return ht_cap_info.ht_caps.short_gi_20_mhz;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
-		return pSession->ht_config.ht_sgi40;
+		return ht_cap_info.ht_caps.short_gi_40_mhz;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "invalid ht capability");
@@ -8443,11 +8458,14 @@ int16_t sme_get_ht_config(mac_handle_t mac_handle, uint8_t session_id,
 	}
 }
 
-int sme_update_ht_config(mac_handle_t mac_handle, uint8_t sessionId,
+int sme_update_ht_config(mac_handle_t mac_handle, uint8_t vdev_id,
 			 uint16_t htCapab, int value)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, vdev_id);
+	struct wlan_ht_config ht_cap_info;
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *vdev_mlme;
 
 	if (!pSession) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -8455,33 +8473,45 @@ int sme_update_ht_config(mac_handle_t mac_handle, uint8_t sessionId,
 		return -EIO;
 	}
 
-	if (QDF_STATUS_SUCCESS != wma_set_htconfig(sessionId, htCapab, value)) {
+	if (QDF_STATUS_SUCCESS != wma_set_htconfig(vdev_id, htCapab, value)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to set ht capability in target");
 		return -EIO;
 	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev)
+		return -EIO;
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return -EIO;
+	}
+	ht_cap_info.caps = vdev_mlme->proto.ht_info.ht_caps;
 
 	switch (htCapab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		pSession->ht_config.ht_rx_ldpc = value;
+		ht_cap_info.ht_caps.adv_coding_cap = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		pSession->ht_config.ht_tx_stbc = value;
+		ht_cap_info.ht_caps.tx_stbc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		pSession->ht_config.ht_rx_stbc = value;
+		ht_cap_info.ht_caps.rx_stbc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
 		value = value ? 1 : 0; /* HT SGI can be only 1 or 0 */
-		pSession->ht_config.ht_sgi20 = value;
+		ht_cap_info.ht_caps.short_gi_20_mhz = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
 		value = value ? 1 : 0; /* HT SGI can be only 1 or 0 */
-		pSession->ht_config.ht_sgi40 = value;
+		ht_cap_info.ht_caps.short_gi_40_mhz = value;
 		break;
 	}
+	vdev_mlme->proto.ht_info.ht_caps = ht_cap_info.caps;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
-	csr_roam_update_config(mac, sessionId, htCapab, value);
+	csr_roam_update_config(mac, vdev_id, htCapab, value);
 	return 0;
 }
 
@@ -11376,6 +11406,29 @@ QDF_STATUS sme_disable_uapsd_for_ac(sme_ac_enum_type ac, uint32_t sessionId)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void sme_vdev_ht_tx_stbc(struct mac_context *mac_ctx,
+				bool ht_tx_stbc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_ht_config ht_cap_info;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev)
+		return;
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+	ht_cap_info.caps = vdev_mlme->proto.ht_info.ht_caps;
+
+	ht_cap_info.ht_caps.tx_stbc = ht_tx_stbc;
+	vdev_mlme->proto.ht_info.ht_caps = ht_cap_info.caps;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
+
 /**
  * sme_update_nss() - SME API to change the number for spatial streams
  * (1 or 2)
@@ -11393,7 +11446,6 @@ QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss)
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint32_t i;
 	struct mlme_ht_capabilities_info *ht_cap_info;
-	struct csr_roam_session *csr_session;
 	struct mlme_vht_capabilities_info *vht_cap_info;
 
 	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
@@ -11408,9 +11460,8 @@ QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss)
 
 		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			if (CSR_IS_SESSION_VALID(mac_ctx, i)) {
-				csr_session = &mac_ctx->roam.roamSession[i];
-				csr_session->ht_config.ht_tx_stbc =
-					ht_cap_info->tx_stbc;
+				sme_vdev_ht_tx_stbc(mac_ctx,
+						    ht_cap_info->tx_stbc, i);
 			}
 		}
 

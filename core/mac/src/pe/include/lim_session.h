@@ -394,8 +394,8 @@ struct pe_session {
 	int8_t rssi;
 #endif
 	uint8_t max_amsdu_num;
-	struct ht_config ht_config;
-	struct sir_vht_config vht_config;
+	struct mlme_ht_capabilities_info ht_config;
+	struct wlan_vht_config vht_config;
 	/*
 	 * Place holder for StartBssReq message
 	 * received by SME state machine

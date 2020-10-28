@@ -2480,7 +2480,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 			add_sta_params->nwType = eSIR_11B_NW_TYPE;
 	}
 
-	if (add_sta_params->htCapable && session_entry->ht_config.ht_tx_stbc) {
+	if (add_sta_params->htCapable && session_entry->ht_config.tx_stbc) {
 		struct sDot11fIEHTCaps *ht_caps = (struct sDot11fIEHTCaps *)
 			&add_sta_params->ht_caps;
 		if (ht_caps->rxSTBC)
@@ -2762,8 +2762,10 @@ lim_add_sta_self(struct mac_context *mac, uint8_t updateSta,
 		pAddStaParams->maxAmpduSize =
 			lim_get_ht_capability(mac, eHT_MAX_RX_AMPDU_FACTOR,
 					      pe_session);
-		pAddStaParams->fShortGI20Mhz = pe_session->ht_config.ht_sgi20;
-		pAddStaParams->fShortGI40Mhz = pe_session->ht_config.ht_sgi40;
+		pAddStaParams->fShortGI20Mhz =
+			pe_session->ht_config.short_gi_20_mhz;
+		pAddStaParams->fShortGI40Mhz =
+			pe_session->ht_config.short_gi_40_mhz;
 	}
 	pAddStaParams->vhtCapable = pe_session->vhtCapability;
 	if (pAddStaParams->vhtCapable)
@@ -3552,7 +3554,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)
 			&& pBeaconStruct->HTCaps.present) {
 		pAddBssParams->staContext.htCapable = 1;
-		if (pe_session->ht_config.ht_tx_stbc)
+		if (pe_session->ht_config.tx_stbc)
 			pAddBssParams->staContext.stbc_capable =
 				pAssocRsp->HTCaps.rxSTBC;
 
@@ -3648,14 +3650,14 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		 * values are set as 0 in session entry then we will
 		 * hardcode this values to 0.
 		 */
-		if (pe_session->ht_config.ht_sgi20) {
+		if (pe_session->ht_config.short_gi_20_mhz) {
 			pAddBssParams->staContext.fShortGI20Mhz =
 				(uint8_t)pAssocRsp->HTCaps.shortGI20MHz;
 		} else {
 			pAddBssParams->staContext.fShortGI20Mhz = false;
 		}
 
-		if (pe_session->ht_config.ht_sgi40) {
+		if (pe_session->ht_config.short_gi_40_mhz) {
 			pAddBssParams->staContext.fShortGI40Mhz =
 				(uint8_t) pAssocRsp->HTCaps.shortGI40MHz;
 		} else {
@@ -4008,13 +4010,13 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 		 * from AP supports. If these values are set as 0 in ini file
 		 * then we will hardcode this values to 0.
 		 */
-		if (pe_session->ht_config.ht_sgi20)
+		if (pe_session->ht_config.short_gi_20_mhz)
 			pAddBssParams->staContext.fShortGI20Mhz =
 				(uint8_t)pBeaconStruct->HTCaps.shortGI20MHz;
 		else
 			pAddBssParams->staContext.fShortGI20Mhz = false;
 
-		if (pe_session->ht_config.ht_sgi40)
+		if (pe_session->ht_config.short_gi_40_mhz)
 			pAddBssParams->staContext.fShortGI40Mhz =
 				(uint8_t) pBeaconStruct->HTCaps.shortGI40MHz;
 		else

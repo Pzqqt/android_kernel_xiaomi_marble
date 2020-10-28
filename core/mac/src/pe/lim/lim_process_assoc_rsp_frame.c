@@ -101,13 +101,13 @@ static void lim_update_stads_htcap(struct mac_context *mac_ctx,
 		/* Check if we have support for gShortGI20Mhz and
 		 * gShortGI40Mhz from ini file
 		 */
-		if (session_entry->ht_config.ht_sgi20)
+		if (session_entry->ht_config.short_gi_20_mhz)
 			sta_ds->htShortGI20Mhz =
 			      (uint8_t)assoc_rsp->HTCaps.shortGI20MHz;
 		else
 			sta_ds->htShortGI20Mhz = false;
 
-		if (session_entry->ht_config.ht_sgi40)
+		if (session_entry->ht_config.short_gi_40_mhz)
 			sta_ds->htShortGI40Mhz =
 				      (uint8_t)assoc_rsp->HTCaps.shortGI40MHz;
 		else

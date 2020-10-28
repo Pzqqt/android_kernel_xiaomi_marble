@@ -560,6 +560,72 @@ static inline bool lim_is_6g_allowed_sec(struct mac_context *mac,
 #endif
 
 /**
+ * lim_set_ldpc_exception() - to set allow any LDPC exception permitted
+ * @mac_ctx: Pointer to mac context
+ * @vdev_mlme: vdev mlme
+ * @channel: Given channel number where connection will go
+ *
+ * This API will check if hardware allows LDPC to be enabled for provided
+ * channel and user has enabled the RX LDPC selection
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS lim_set_ldpc_exception(struct mac_context *mac_ctx,
+					 struct vdev_mlme_obj *vdev_mlme,
+					 uint32_t ch_freq)
+{
+	struct wlan_vht_config vht_config;
+	struct wlan_ht_config ht_caps;
+
+	vht_config.caps = vdev_mlme->proto.vht_info.caps;
+	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
+
+	if (mac_ctx->mlme_cfg->ht_caps.ht_cap_info.adv_coding_cap &&
+	    wma_is_rx_ldpc_supported_for_channel(ch_freq)) {
+		ht_caps.ht_caps.adv_coding_cap = 1;
+		vht_config.ldpc_coding = 1;
+		sme_debug("LDPC enable for ch freq[%d]", ch_freq);
+	} else {
+		ht_caps.ht_caps.adv_coding_cap = 0;
+		vht_config.ldpc_coding = 0;
+		sme_debug("LDPC disable for ch freq[%d]", ch_freq);
+	}
+	vdev_mlme->proto.vht_info.caps = vht_config.caps;
+	vdev_mlme->proto.ht_info.ht_caps = ht_caps.caps;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void lim_start_bss_update_ht_vht_caps(struct mac_context *mac_ctx,
+					     struct pe_session *session)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_vht_config vht_config;
+	uint8_t value = 0;
+	struct wlan_ht_config ht_caps;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
+	if (!vdev_mlme)
+		return;
+	if (!policy_mgr_is_dbs_enable(mac_ctx->psoc))
+		lim_set_ldpc_exception(mac_ctx, vdev_mlme,
+				       session->curr_op_freq);
+	vht_config.caps = vdev_mlme->proto.vht_info.caps;
+	value = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
+	vht_config.su_beam_formee =
+		value && mac_ctx->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_sap;
+	value = MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
+	vht_config.csnof_beamformer_antSup = value;
+	vht_config.mu_beam_formee = 0;
+
+	session->vht_config = vht_config;
+	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
+	session->ht_config = ht_caps.ht_caps;
+	pe_debug("HT capability 0x%x VHT capability 0x%x",
+		 ht_caps.caps, vht_config.caps);
+}
+
+/**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
  *@mac_ctx: Pointer to Global MAC structure
  *@msg_buf: A pointer to the SME message buffer
@@ -673,9 +739,9 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 					assocRespDataLen);
 		}
 		/* Store the session related params in newly created session */
+		session->curr_op_freq = sme_start_bss_req->oper_ch_freq;
 		session->pLimStartBssReq = sme_start_bss_req;
-		session->ht_config = sme_start_bss_req->ht_config;
-		session->vht_config = sme_start_bss_req->vht_config;
+		lim_start_bss_update_ht_vht_caps(mac_ctx, session);
 
 		sir_copy_mac_addr(session->self_mac_addr,
 				  sme_start_bss_req->self_macaddr.bytes);
@@ -689,9 +755,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		session->beaconParams.beaconInterval =
 			sme_start_bss_req->beaconInterval;
-
-		/* Store the oper freq in session Table */
-		session->curr_op_freq = sme_start_bss_req->oper_ch_freq;
 
 		/* Update the phymode */
 		session->gLimPhyMode = sme_start_bss_req->nwType;
@@ -1100,6 +1163,114 @@ static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void lim_join_req_update_ht_vht_caps(struct mac_context *mac,
+					    struct pe_session *session,
+					    struct bss_description *bss_desc)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_vht_config vht_config;
+	uint8_t value, value1, *buf;
+	tDot11fBeaconIEs *bcn_ie;
+	uint32_t status, buf_len;
+	tDot11fIEVHTCaps *vht_caps = NULL;
+	uint8_t tx_bf_csn = 0;
+	struct wlan_ht_config ht_caps;
+
+	bcn_ie = qdf_mem_malloc(sizeof(*bcn_ie));
+	if (!bcn_ie)
+		return;
+
+	buf_len = lim_get_ielen_from_bss_description(bss_desc);
+	buf = (uint8_t *)bss_desc->ieFields;
+	status = dot11f_unpack_beacon_i_es(mac, buf, buf_len, bcn_ie, false);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to parse Beacon IEs (0x%08x, %d bytes):",
+			status, buf_len);
+		qdf_mem_free(bcn_ie);
+		return;
+	} else if (DOT11F_WARNED(status)) {
+		pe_debug("warnings (0x%08x, %d bytes):", status, buf_len);
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
+	if (!vdev_mlme) {
+		qdf_mem_free(bcn_ie);
+		return;
+	}
+
+	lim_set_ldpc_exception(mac, vdev_mlme, session->curr_op_freq);
+	vht_config.caps = vdev_mlme->proto.vht_info.caps;
+
+	value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
+	value1 = mac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp;
+
+	vht_config.su_beam_formee = value;
+
+	if (bcn_ie->VHTCaps.present)
+		vht_caps = &bcn_ie->VHTCaps;
+	else if (bcn_ie->vendor_vht_ie.VHTCaps.present)
+		vht_caps = &bcn_ie->vendor_vht_ie.VHTCaps;
+	/* Set BF CSN value only if SU Bformee is enabled */
+	if (vht_caps && vht_config.su_beam_formee) {
+		tx_bf_csn = value1;
+		/*
+		 * Certain commercial AP display a bad behavior when
+		 * CSN value in  assoc request is more than AP's CSN.
+		 * Sending absolute self CSN value with such AP leads to
+		 * IOT issues. However this issue is observed only with
+		 * CSN cap of less than 4. To avoid such issues, take a
+		 * min of self and peer CSN while sending ASSOC request.
+		 */
+		if (bcn_ie->Vendor1IE.present &&
+		    vht_caps->csnofBeamformerAntSup < 4) {
+			if (vht_caps->csnofBeamformerAntSup)
+				tx_bf_csn = QDF_MIN(tx_bf_csn,
+					vht_caps->csnofBeamformerAntSup);
+		}
+	}
+	vht_config.csnof_beamformer_antSup = tx_bf_csn;
+
+	value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformer;
+	/*
+	 * Set SU Bformer only if SU Bformer is enabled in INI
+	 * and AP is SU Bformee capable
+	 */
+	if (value && !((IS_BSS_VHT_CAPABLE(bcn_ie->VHTCaps) &&
+	    bcn_ie->VHTCaps.suBeamformeeCap) ||
+	    (IS_BSS_VHT_CAPABLE(bcn_ie->vendor_vht_ie.VHTCaps) &&
+	    bcn_ie->vendor_vht_ie.VHTCaps.suBeamformeeCap)))
+		value = 0;
+
+	vht_config.su_beam_former = value;
+
+	/* Set num soundingdim value to 0 if SU Bformer is disabled */
+	if (!vht_config.su_beam_former)
+		vht_config.num_soundingdim = 0;
+
+	value = mac->mlme_cfg->vht_caps.vht_cap_info.enable_mu_bformee;
+	/*
+	 * Set MU Bformee only if SU Bformee is enabled and
+	 * MU Bformee is enabled in INI
+	 */
+	if (value && vht_config.su_beam_formee &&
+	    bcn_ie->VHTCaps.muBeamformerCap)
+		vht_config.mu_beam_formee = 1;
+	else
+		vht_config.mu_beam_formee = 0;
+
+	qdf_mem_free(bcn_ie);
+
+	if (IS_DOT11_MODE_VHT(session->dot11mode) &&
+	    session->opmode != QDF_STA_MODE)
+		vht_config.su_beam_formee = 0;
+
+	session->vht_config = vht_config;
+	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
+	session->ht_config = ht_caps.ht_caps;
+	pe_debug("HT capability 0x%x VHT capability 0x%x",
+		 ht_caps.caps, vht_config.caps);
+}
+
 /**
  * lim_send_ft_reassoc_req() - send vdev start request for ft_reassoc
  *@session: pe session
@@ -1360,9 +1531,11 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		/* Store beaconInterval */
 		session->beaconParams.beaconInterval =
 			bss_desc->beaconInterval;
-
-		session->ht_config = sme_join_req->ht_config;
-		session->vht_config = sme_join_req->vht_config;
+		/* Copy oper freq to the session Table */
+		session->curr_op_freq = bss_desc->chan_freq;
+		/* Copy the dot 11 mode in to the session table */
+		session->dot11mode = sme_join_req->dot11mode;
+		lim_join_req_update_ht_vht_caps(mac_ctx, session, bss_desc);
 
 		/* Copying of bssId is already done, while creating session */
 		sir_copy_mac_addr(session->self_mac_addr,
@@ -1390,9 +1563,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		else
 			session->isCiscoVendorAP = false;
 
-		/* Copy the dot 11 mode in to the session table */
-
-		session->dot11mode = sme_join_req->dot11mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		session->cc_switch_mode = sme_join_req->cc_switch_mode;
 #endif
@@ -1409,18 +1579,9 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		 * self and peer rates
 		 */
 		session->supported_nss_1x1 = true;
-
-		/* Copy oper freq to the session Table */
-		session->curr_op_freq = bss_desc->chan_freq;
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
-			if (session->opmode == QDF_STA_MODE) {
-				session->vht_config.su_beam_formee =
-					sme_join_req->vht_config.su_beam_formee;
-			} else {
-				session->vht_config.su_beam_formee = 0;
-			}
 			session->enableVhtpAid =
 				sme_join_req->enableVhtpAid;
 			session->enableVhtGid =
@@ -1799,9 +1960,9 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	if (session_entry->vhtCapability) {
 		if (session_entry->opmode == QDF_STA_MODE) {
 			session_entry->vht_config.su_beam_formee =
-				reassoc_req->vht_config.su_beam_formee;
+			    mac_ctx->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
 		} else {
-			reassoc_req->vht_config.su_beam_formee = 0;
+			session_entry->vht_config.su_beam_formee = 0;
 		}
 		session_entry->enableVhtpAid =
 			reassoc_req->enableVhtpAid;
@@ -3499,19 +3660,19 @@ static void lim_process_sme_update_config(struct mac_context *mac_ctx,
 
 	switch (msg->capab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		pe_session->ht_config.ht_rx_ldpc = msg->value;
+		pe_session->ht_config.adv_coding_cap = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		pe_session->ht_config.ht_tx_stbc = msg->value;
+		pe_session->ht_config.tx_stbc = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		pe_session->ht_config.ht_rx_stbc = msg->value;
+		pe_session->ht_config.rx_stbc = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
-		pe_session->ht_config.ht_sgi20 = msg->value;
+		pe_session->ht_config.short_gi_20_mhz = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
-		pe_session->ht_config.ht_sgi40 = msg->value;
+		pe_session->ht_config.short_gi_40_mhz = msg->value;
 		break;
 	}
 

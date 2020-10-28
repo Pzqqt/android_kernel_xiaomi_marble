@@ -14498,46 +14498,6 @@ static void csr_add_supported_5Ghz_channels(struct mac_context *mac_ctx,
 	}
 }
 
-/**
- * csr_set_ldpc_exception() - to set allow any LDPC exception permitted
- * @mac_ctx: Pointer to mac context
- * @session: Pointer to SME/CSR session
- * @channel: Given channel number where connection will go
- * @usr_cfg_rx_ldpc: User provided RX LDPC setting
- *
- * This API will check if hardware allows LDPC to be enabled for provided
- * channel and user has enabled the RX LDPC selection
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS csr_set_ldpc_exception(struct mac_context *mac_ctx,
-			struct csr_roam_session *session, uint32_t ch_freq,
-			bool usr_cfg_rx_ldpc)
-{
-	if (!mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"mac_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (!session) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"session is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(ch_freq)) {
-		session->ht_config.ht_rx_ldpc = 1;
-		session->vht_config.ldpc_coding = 1;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"LDPC enable for ch freq[%d]", ch_freq);
-	} else {
-		session->ht_config.ht_rx_ldpc = 0;
-		session->vht_config.ldpc_coding = 0;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"LDPC disable for ch freq[%d]", ch_freq);
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef WLAN_FEATURE_FILS_SK
 /*
  * csr_validate_and_update_fils_info: Copy fils connection info to join request
@@ -14906,9 +14866,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	tSirMacRateSet OpRateSet;
 	tSirMacRateSet ExRateSet;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	uint32_t dw_tmp, dot11mode = 0;
+	uint32_t dot11mode = 0;
 	uint8_t *wpaRsnIE = NULL;
-	uint8_t txBFCsnValue = 0;
 	struct join_req *csr_join_req;
 	tSirMacCapabilityInfo *pAP_capabilityInfo;
 	bool fTmp;
@@ -14917,12 +14876,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
 	uint8_t ese_config = 0;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
-	uint32_t value = 0, value1 = 0;
 	bool is_vendor_ap_present;
 	struct vdev_type_nss *vdev_type_nss;
 	struct action_oui_search_attr vendor_ap_search_attr;
-	tDot11fIEVHTCaps *vht_caps = NULL;
-	bool bvalue = 0;
 	enum csr_akm_type akm;
 	bool force_max_nss;
 	uint8_t ap_nss;
@@ -15026,10 +14982,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			      pProfile->negotiatedMCEncryptionType,
 			      mac->scan.countryCodeCurrent[0],
 			      mac->scan.countryCodeCurrent[1]);
-		/* bsstype */
-		dw_tmp = csr_translate_bsstype_to_mac_type
-						(pProfile->BSSType);
-		csr_join_req->bsstype = dw_tmp;
 		/* dot11mode */
 		dot11mode =
 			csr_translate_to_wni_cfg_dot11_mode(mac,
@@ -15603,24 +15555,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				(&pIes->Country.triplets[0]));
 			csr_apply_power2_current(mac);
 		}
-		/*
-		 * If RX LDPC has been disabled for 2.4GHz channels and enabled
-		 * for 5Ghz for STA like persona then here is how to handle
-		 * those cases (by now channel has been decided).
-		 */
-		if (eSIR_INFRASTRUCTURE_MODE == csr_join_req->bsstype ||
-		    !policy_mgr_is_dbs_enable(mac->psoc))
-			csr_set_ldpc_exception(mac, pSession,
-					       bss_freq,
-					       mac->mlme_cfg->ht_caps.
-					       ht_cap_info.adv_coding_cap);
-		csr_join_req->ht_config = pSession->ht_config;
-		csr_join_req->vht_config = pSession->vht_config;
-		sme_debug("ht capability 0x%x VHT capability 0x%x",
-			(unsigned int)(*(uint32_t *) &csr_join_req->ht_config),
-			(unsigned int)(*(uint32_t *) &csr_join_req->
-			vht_config));
-
 		if (IS_DOT11_MODE_HE(csr_join_req->dot11mode)) {
 			csr_join_req_copy_he_cap(csr_join_req, pSession);
 			/* change the HE caps like sts per band */
@@ -15629,64 +15563,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 							       mac,
 							       bss_freq);
 		}
-
-		value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
-		value1 = mac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp;
-
-		csr_join_req->vht_config.su_beam_formee = value;
-
-		if (pIes->VHTCaps.present)
-			vht_caps = &pIes->VHTCaps;
-		else if (pIes->vendor_vht_ie.VHTCaps.present)
-			vht_caps = &pIes->vendor_vht_ie.VHTCaps;
-		/* Set BF CSN value only if SU Bformee is enabled */
-		if (vht_caps && csr_join_req->vht_config.su_beam_formee) {
-			txBFCsnValue = (uint8_t)value1;
-			/*
-			 * Certain commercial AP display a bad behavior when
-			 * CSN value in  assoc request is more than AP's CSN.
-			 * Sending absolute self CSN value with such AP leads to
-			 * IOT issues. However this issue is observed only with
-			 * CSN cap of less than 4. To avoid such issues, take a
-			 * min of self and peer CSN while sending ASSOC request.
-			 */
-			if (pIes->Vendor1IE.present &&
-					vht_caps->csnofBeamformerAntSup < 4) {
-				if (vht_caps->csnofBeamformerAntSup)
-					txBFCsnValue = QDF_MIN(txBFCsnValue,
-					  vht_caps->csnofBeamformerAntSup);
-			}
-		}
-		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
-
-		bvalue = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformer;
-		/*
-		 * Set SU Bformer only if SU Bformer is enabled in INI
-		 * and AP is SU Bformee capable
-		 */
-		if (bvalue && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
-		    pIes->VHTCaps.suBeamformeeCap) ||
-		    (IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps) &&
-		     pIes->vendor_vht_ie.VHTCaps.suBeamformeeCap)))
-			bvalue = 0;
-
-		csr_join_req->vht_config.su_beam_former = bvalue;
-
-		/* Set num soundingdim value to 0 if SU Bformer is disabled */
-		if (!csr_join_req->vht_config.su_beam_former)
-			csr_join_req->vht_config.num_soundingdim = 0;
-
-		value =
-			mac->mlme_cfg->vht_caps.vht_cap_info.enable_mu_bformee;
-		/*
-		 * Set MU Bformee only if SU Bformee is enabled and
-		 * MU Bformee is enabled in INI
-		 */
-		if (value && csr_join_req->vht_config.su_beam_formee &&
-				pIes->VHTCaps.muBeamformerCap)
-			csr_join_req->vht_config.mu_beam_formee = 1;
-		else
-			csr_join_req->vht_config.mu_beam_formee = 0;
 
 		csr_join_req->enableVhtpAid =
 			mac->mlme_cfg->vht_caps.vht_cap_info.enable_paid;
@@ -16179,7 +16055,6 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 {
 	struct start_bss_req *pMsg;
 	uint16_t wTmp;
-	uint32_t value = 0;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -16242,31 +16117,6 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = mac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
-	/*
-	 * If RX LDPC has been disabled for 2.4GHz channels and enabled
-	 * for 5Ghz for STA like persona then here is how to handle
-	 * those cases (by now channel has been decided).
-	 */
-	if (!policy_mgr_is_dbs_enable(mac->psoc))
-		csr_set_ldpc_exception(mac, pSession,
-				       pParam->operation_chan_freq,
-				       mac->mlme_cfg->ht_caps.
-				       ht_cap_info.adv_coding_cap);
-
-	pMsg->vht_config = pSession->vht_config;
-	pMsg->ht_config = pSession->ht_config;
-
-	value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
-	pMsg->vht_config.su_beam_formee =
-		(uint8_t)value &&
-		(uint8_t)mac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_sap;
-	value = MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
-	pMsg->vht_config.csnof_beamformer_antSup = (uint8_t)value;
-	pMsg->vht_config.mu_beam_formee = 0;
-
-	sme_debug("ht capability 0x%x VHT capability 0x%x",
-		  (*(uint32_t *) &pMsg->ht_config),
-		  (*(uint32_t *) &pMsg->vht_config));
 #ifdef WLAN_FEATURE_11W
 	pMsg->pmfCapable = pParam->mfpCapable;
 	pMsg->pmfRequired = pParam->mfpRequired;
@@ -16470,7 +16320,6 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS status;
 	uint32_t existing_session_id;
-	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *session;
 	struct mlme_vht_capabilities_info *vht_cap_info;
 	u8 vdev_id;
@@ -16478,6 +16327,8 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 	mac_handle_t mac_handle;
 	struct mac_context *mac_ctx;
 	struct wlan_objmgr_vdev *vdev;
+	struct wlan_vht_config vht_config;
+	struct wlan_ht_config ht_cap;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 	mac_ctx = MAC_CONTEXT(mac_handle);
@@ -16552,37 +16403,35 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 		return status;
 	}
 
-	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
-	session->ht_config.ht_rx_ldpc = ht_cap_info->adv_coding_cap;
-	session->ht_config.ht_tx_stbc = ht_cap_info->tx_stbc;
-	session->ht_config.ht_rx_stbc = ht_cap_info->rx_stbc;
-	session->ht_config.ht_sgi20 = ht_cap_info->short_gi_20_mhz;
-	session->ht_config.ht_sgi40 = ht_cap_info->short_gi_40_mhz;
+	ht_cap.caps = 0;
+	vht_config.caps = 0;
+	ht_cap.ht_caps = mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
+	vdev_mlme->proto.ht_info.ht_caps = ht_cap.caps;
 
-	session->vht_config.max_mpdu_len = vht_cap_info->ampdu_len;
-	session->vht_config.supported_channel_widthset =
+	vht_config.max_mpdu_len = vht_cap_info->ampdu_len;
+	vht_config.supported_channel_widthset =
 			vht_cap_info->supp_chan_width;
-	session->vht_config.ldpc_coding = vht_cap_info->ldpc_coding_cap;
-	session->vht_config.shortgi80 = vht_cap_info->short_gi_80mhz;
-	session->vht_config.shortgi160and80plus80 =
+	vht_config.ldpc_coding = vht_cap_info->ldpc_coding_cap;
+	vht_config.shortgi80 = vht_cap_info->short_gi_80mhz;
+	vht_config.shortgi160and80plus80 =
 			vht_cap_info->short_gi_160mhz;
-	session->vht_config.tx_stbc = vht_cap_info->tx_stbc;
-	session->vht_config.rx_stbc = vht_cap_info->rx_stbc;
-	session->vht_config.su_beam_former = vht_cap_info->su_bformer;
-	session->vht_config.su_beam_formee = vht_cap_info->su_bformee;
-	session->vht_config.csnof_beamformer_antSup =
+	vht_config.tx_stbc = vht_cap_info->tx_stbc;
+	vht_config.rx_stbc = vht_cap_info->rx_stbc;
+	vht_config.su_beam_former = vht_cap_info->su_bformer;
+	vht_config.su_beam_formee = vht_cap_info->su_bformee;
+	vht_config.csnof_beamformer_antSup =
 			vht_cap_info->tx_bfee_ant_supp;
-	session->vht_config.num_soundingdim = vht_cap_info->num_soundingdim;
-	session->vht_config.mu_beam_former = vht_cap_info->mu_bformer;
-	session->vht_config.mu_beam_formee = vht_cap_info->enable_mu_bformee;
-	session->vht_config.vht_txops = vht_cap_info->txop_ps;
-	session->vht_config.htc_vhtcap = vht_cap_info->htc_vhtc;
-	session->vht_config.rx_antpattern = vht_cap_info->rx_antpattern;
-	session->vht_config.tx_antpattern = vht_cap_info->tx_antpattern;
+	vht_config.num_soundingdim = vht_cap_info->num_soundingdim;
+	vht_config.mu_beam_former = vht_cap_info->mu_bformer;
+	vht_config.mu_beam_formee = vht_cap_info->enable_mu_bformee;
+	vht_config.vht_txops = vht_cap_info->txop_ps;
+	vht_config.htc_vhtcap = vht_cap_info->htc_vhtc;
+	vht_config.rx_antpattern = vht_cap_info->rx_antpattern;
+	vht_config.tx_antpattern = vht_cap_info->tx_antpattern;
 
-	session->vht_config.max_ampdu_lenexp =
+	vht_config.max_ampdu_lenexp =
 			vht_cap_info->ampdu_len_exponent;
-
+	vdev_mlme->proto.vht_info.caps = vht_config.caps;
 	csr_update_session_he_cap(mac_ctx, session);
 
 	/*
