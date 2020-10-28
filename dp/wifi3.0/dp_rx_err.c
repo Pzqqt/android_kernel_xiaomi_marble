@@ -460,8 +460,10 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
  *
  * @soc: core txrx main context
  * @nbuf: pointer to msdu skb
- * @peer_id: dp peer ID
  * @rx_tlv_hdr: start of rx tlv header
+ * @mpdu_desc_info: pointer to mpdu level description info
+ * @peer_id: dp peer ID
+ * @tid: dp tid
  *
  * This function process the msdu delivered from REO2TCL
  * ring with error type OOR
@@ -471,18 +473,30 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 static void
 dp_rx_oor_handle(struct dp_soc *soc,
 		 qdf_nbuf_t nbuf,
+		 uint8_t *rx_tlv_hdr,
+		 struct hal_rx_mpdu_desc_info *mpdu_desc_info,
 		 uint16_t peer_id,
-		 uint8_t *rx_tlv_hdr)
+		 uint8_t tid)
 {
 	uint32_t frame_mask = FRAME_MASK_IPV4_ARP | FRAME_MASK_IPV4_DHCP |
 				FRAME_MASK_IPV4_EAPOL | FRAME_MASK_IPV6_DHCP;
 	struct dp_peer *peer = NULL;
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
-	if (!peer) {
-		dp_info_rl("peer not found");
+	if (!peer || tid >= DP_MAX_TIDS) {
+		dp_info_rl("peer or tid %d not valid", tid);
 		goto free_nbuf;
 	}
+
+	/*
+	 * For REO error 7 OOR, if it is retry frame under BA session,
+	 * then it is likely SN duplicated frame, do not deliver EAPOL
+	 * to stack in this case since the connection might fail due to
+	 * duplicated EAP response.
+	 */
+	if (mpdu_desc_info->mpdu_flags & HAL_MPDU_F_RETRY_BIT &&
+	    peer->rx_tid[tid].ba_status == DP_RX_BA_ACTIVE)
+		frame_mask &= ~FRAME_MASK_IPV4_EAPOL;
 
 	if (dp_rx_deliver_special_frame(soc, peer, nbuf, frame_mask,
 					rx_tlv_hdr)) {
@@ -593,23 +607,24 @@ more_msdu_link_desc:
 			DP_STATS_INC(soc, rx.err.reo_err_oor_sg_count, 1);
 		}
 
+		/*
+		 * only first msdu, mpdu start description tlv valid?
+		 * and use it for following msdu.
+		 */
+		if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+						   rx_tlv_hdr_last))
+			tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
+							rx_tlv_hdr_first);
+
 		switch (err_code) {
 		case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
-			/*
-			 * only first msdu, mpdu start description tlv valid?
-			 * and use it for following msdu.
-			 */
-			if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
-							   rx_tlv_hdr_last))
-				tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
-							      rx_tlv_hdr_first);
-
 			dp_2k_jump_handle(soc, nbuf, rx_tlv_hdr_last,
 					  peer_id, tid);
 			break;
 
 		case HAL_REO_ERR_REGULAR_FRAME_OOR:
-			dp_rx_oor_handle(soc, nbuf, peer_id, rx_tlv_hdr_last);
+			dp_rx_oor_handle(soc, nbuf, rx_tlv_hdr_last,
+					 mpdu_desc_info, peer_id, tid);
 			break;
 		default:
 			dp_err_rl("Non-support error code %d", err_code);
