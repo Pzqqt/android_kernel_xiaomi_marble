@@ -4060,6 +4060,10 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 					sde_connector_is_qsync_updated(
 					sde_enc->cur_master->connector)) {
 				_helper_flush_qsync(phys);
+
+				if (is_cmd_mode)
+					_sde_encoder_update_rsc_client(drm_enc,
+							true);
 			}
 		}
 	}
