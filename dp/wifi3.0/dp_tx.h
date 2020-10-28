@@ -339,6 +339,27 @@ void dp_tx_vdev_multipass_deinit(struct dp_vdev *vdev);
 #endif
 
 /**
+ * dp_tx_hw_to_qdf()- convert hw status to qdf status
+ * @status: hw status
+ *
+ * Return: qdf tx rx status
+ */
+static inline enum qdf_dp_tx_rx_status dp_tx_hw_to_qdf(uint16_t status)
+{
+	switch (status) {
+	case HAL_TX_TQM_RR_FRAME_ACKED:
+		return QDF_TX_RX_STATUS_OK;
+	case HAL_TX_TQM_RR_REM_CMD_REM:
+	case HAL_TX_TQM_RR_REM_CMD_TX:
+	case HAL_TX_TQM_RR_REM_CMD_NOTX:
+	case HAL_TX_TQM_RR_REM_CMD_AGED:
+		return QDF_TX_RX_STATUS_FW_DISCARD;
+	default:
+		return QDF_TX_RX_STATUS_DEFAULT;
+	}
+}
+
+/**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
  * @vdev: DP Virtual device handle
  * @nbuf: Buffer pointer

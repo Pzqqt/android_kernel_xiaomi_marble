@@ -1433,10 +1433,12 @@ enum qdf_context_mode {
  * enum qdf_dp_tx_rx_status - TX/RX packet status
  * @QDF_TX_RX_STATUS_INVALID: default invalid status
  * @QDF_TX_RX_STATUS_OK: successfully sent + acked
- * @QDF_TX_RX_STATUS_FW_DISCARD: packet not sent
- * @QDF_TX_RX_STATUS_NO_ACK: packet sent but no ack
- * @QDF_TX_RX_STATUS_DROP: packet dropped in host
+ * @QDF_TX_RX_STATUS_DISCARD: queued but not sent over air
+ * @QDF_TX_RX_STATUS_NO_ACK: packet sent but no ack received
+ * @QDF_TX_RX_STATUS_DROP: packet dropped due to congestion
  * @QDF_TX_RX_STATUS_DOWNLOAD_SUCC: packet delivered to target
+ * @QDF_TX_RX_STATUS_DEFAULT: default status
+ * @QDF_TX_RX_STATUS_MAX:
  */
 enum qdf_dp_tx_rx_status {
 	QDF_TX_RX_STATUS_INVALID,
@@ -1445,28 +1447,8 @@ enum qdf_dp_tx_rx_status {
 	QDF_TX_RX_STATUS_NO_ACK,
 	QDF_TX_RX_STATUS_DROP,
 	QDF_TX_RX_STATUS_DOWNLOAD_SUCC,
-	QDF_TX_RX_STATUS_MAX,
-};
-
-/**
- * enum qdf_dp_tx_comp_status - TX COMPL packet status
- * @QDF_TX_COMP_STATUS_OK: successfully sent + acked
- * @QDF_TX_COMP_STATUS_STAT_DISCARD: packet not sent in FW
- * @QDF_TX_COMP_STATUS_STAT_NO_ACK: packet sent but no ack
- * @QDF_TX_COMP_STATUS_STAT_POSTPONE: equal HTT_TX_COMPL_IND_STAT_POSTPONE
- * @QDF_TX_COMP_STATUS_STAT_PEER_DEL: equal HTT_TX_COMPL_IND_STAT_PEER_DEL
- * @QDF_TX_COMP_STATUS_STAT_DROP: packet dropped in FW
- * @QDF_TX_COMP_STATUS_STAT_INSPECT: equal HTT_TX_COMPL_IND_STAT_HOST_INSPECT
- */
-enum qdf_dp_tx_comp_status {
-	QDF_TX_COMP_STATUS_OK,
-	QDF_TX_COMP_STATUS_STAT_DISCARD,
-	QDF_TX_COMP_STATUS_STAT_NO_ACK,
-	QDF_TX_COMP_STATUS_STAT_POSTPONE,
-	QDF_TX_COMP_STATUS_STAT_PEER_DEL,
-	QDF_TX_COMP_STATUS_STAT_DROP,
-	QDF_TX_COMP_STATUS_STAT_INSPECT,
-	QDF_TX_COMP_STATUS_STAT_MAX,
+	QDF_TX_RX_STATUS_DEFAULT,
+	QDF_TX_RX_STATUS_MAX
 };
 
 /**
