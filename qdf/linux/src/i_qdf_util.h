@@ -267,6 +267,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_iowrite32(offset, value)     iowrite32(value, offset)
 
 #define __qdf_roundup(x, y) roundup(x, y)
+#define __qdf_ceil(x, y) DIV_ROUND_UP(x, y)
 
 #if LINUX_VERSION_CODE  < KERNEL_VERSION(4, 3, 0)
 #define  __qdf_ewma_tx_lag_init(tx_lag)

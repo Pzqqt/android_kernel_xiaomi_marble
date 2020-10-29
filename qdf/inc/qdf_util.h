@@ -291,6 +291,15 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 #define qdf_roundup(x, y) __qdf_roundup(x, y)
 
 /**
+ * qdf_ceil() - roundup of x/y
+ * @x: dividend
+ * @y: divisor
+ *
+ * Return: rounded value
+ */
+#define qdf_ceil(x, y) __qdf_ceil(x, y)
+
+/**
  * qdf_is_macaddr_equal() - compare two QDF MacAddress
  * @mac_addr1: Pointer to one qdf MacAddress to compare
  * @mac_addr2: Pointer to the other qdf MacAddress to compare
