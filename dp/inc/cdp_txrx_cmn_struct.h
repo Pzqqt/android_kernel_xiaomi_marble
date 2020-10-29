@@ -1105,6 +1105,7 @@ enum cdp_pdev_param_type {
  * @cdp_vdev_param_safe_mode: set safe mode
  * @cdp_vdev_param_drop_unenc: set drop unencrypted flag
  * @cdp_vdev_param_hlos_tid_override: set hlos tid override
+ * @cdp_vdev_param_peer_authorize: set peer authorize
  *
  * @cdp_pdev_param_dbg_snf: Enable debug sniffer feature
  * @cdp_pdev_param_bpr_enable: Enable bcast probe feature
@@ -1171,6 +1172,7 @@ typedef union cdp_config_param_t {
 	uint32_t cdp_vdev_param_drop_unenc;
 	uint8_t cdp_vdev_param_hlos_tid_override;
 	bool cdp_vdev_param_wds_ext;
+	uint8_t cdp_vdev_param_peer_authorize;
 
 	/* pdev params */
 	bool cdp_pdev_param_cptr_latcy;
@@ -1282,6 +1284,7 @@ enum cdp_pdev_bpr_param {
  * @CDP_ENABLE_IGMP_MCAST_EN: enable/disable igmp multicast enhancement
  * @CDP_ENABLE_HLOS_TID_OVERRIDE: set hlos tid override flag
  * @CDP_CFG_WDS_EXT: enable/disable wds ext feature
+ * @CDP_ENABLE_PEER_AUTHORIZE: enable peer authorize flag
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1312,6 +1315,7 @@ enum cdp_vdev_param_type {
 #ifdef QCA_SUPPORT_WDS_EXTENDED
 	CDP_CFG_WDS_EXT,
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
+	CDP_ENABLE_PEER_AUTHORIZE,
 };
 
 /*

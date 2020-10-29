@@ -2630,6 +2630,28 @@ done:
 
 		if (qdf_likely(peer)) {
 			vdev = peer->vdev;
+
+			/*
+			 * In encryption mode, all data packets except
+			 * EAPOL frames should be dropped when peer is not
+			 * authenticated. Thie feature is enabled for all peers
+			 * under this vdev when peer_authorize flag is set.
+			 */
+			if (qdf_unlikely(vdev->peer_authorize)) {
+				if (qdf_unlikely(vdev->sec_type != cdp_sec_type_none)) {
+					/*
+					 * Allow only EAPOL frames
+					 */
+					if (qdf_unlikely(!peer->authorize &&
+								!qdf_nbuf_is_ipv4_eapol_pkt(nbuf))) {
+						qdf_nbuf_free(nbuf);
+						nbuf = next;
+						DP_STATS_INC(soc, rx.err.peer_unauth_rx_pkt_drop, 1);
+						continue;
+					}
+				}
+			}
+
 		} else {
 			nbuf->next = NULL;
 			dp_rx_deliver_to_stack_no_peer(soc, nbuf);

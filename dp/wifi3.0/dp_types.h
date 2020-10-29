@@ -995,6 +995,8 @@ struct dp_soc_stats {
 			uint32_t msdu_continuation_err;
 			/* REO OOR eapol drop count */
 			uint32_t reo_err_oor_eapol_drop;
+			/* Non Eapol packet drop count due to peer not authorized  */
+			uint32_t peer_unauth_rx_pkt_drop;
 		} err;
 
 		/* packet count per core - per ring */
@@ -2404,6 +2406,9 @@ struct dp_vdev {
 	 * skipped
 	 */
 	uint8_t skip_sw_tid_classification;
+
+	/* Flag to enable peer authorization */
+	uint8_t peer_authorize;
 
 	/* AST hash value for BSS peer in HW valid for STA VAP*/
 	uint16_t bss_ast_hash;
