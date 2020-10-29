@@ -158,8 +158,8 @@ send_gpio_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->pull_type = convert_gpio_pull_type(param->pin_pull_type);
 	cmd->intr_mode = convert_gpio_interrupt_mode(param->pin_intr_mode);
 
-	WMI_LOGD("GPIO num %d, input-dir %d, pull_type %d, intr_mode %d",
-		 cmd->gpio_num, cmd->input, cmd->pull_type, cmd->intr_mode);
+	wmi_debug("GPIO num %d, input-dir %d, pull_type %d, intr_mode %d",
+		  cmd->gpio_num, cmd->input, cmd->pull_type, cmd->intr_mode);
 	wmi_mtrace(WMI_GPIO_CONFIG_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				   WMI_GPIO_CONFIG_CMDID);
@@ -208,7 +208,7 @@ send_gpio_output_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->gpio_num = param->pin_num;
 	cmd->set = convert_gpio_output_value(param->pin_set);
 
-	WMI_LOGD("GPIO num %d, set %d", cmd->gpio_num, cmd->set);
+	wmi_debug("GPIO num %d, set %d", cmd->gpio_num, cmd->set);
 	wmi_mtrace(WMI_GPIO_OUTPUT_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				   WMI_GPIO_OUTPUT_CMDID);
