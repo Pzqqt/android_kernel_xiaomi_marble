@@ -2035,19 +2035,6 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	iface->pause_bitmap &= ~(1 << bit_pos);
 }
 
-#ifndef ROAM_OFFLOAD_V1
-/**
- * wma_process_roaming_config() - process roam request
- * @wma_handle: wma handle
- * @roam_req: roam request parameters
- *
- * Main routine to handle ROAM commands coming from CSR module.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
-				     struct roam_offload_scan_req *roam_req);
-#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_send_roam_preauth_status() - Send the preauth status to wmi

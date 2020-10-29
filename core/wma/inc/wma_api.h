@@ -808,26 +808,6 @@ int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,
 int wma_wlm_stats_rsp(void *wma_ctx, uint8_t *event, uint32_t len);
 #endif /* FEATURE_WLM_STATS */
 
-#ifndef ROAM_OFFLOAD_V1
-/**
- * wma_update_roam_offload_flag() -  update roam offload flag to fw
- * @wma:     wma handle
- * @params: Roaming enable/disable params
- *
- * Return: none
- */
-void wma_update_roam_offload_flag(void *handle,
-				  struct roam_init_params *params);
-/**
- * wma_set_roam_disable_cfg() - Set roam module disable cfg to fw
- * @wma: wma handle
- * @params: Roaming module enable/disable params
- *
- * Return: none
- */
-void wma_set_roam_disable_cfg(void *handle, struct roam_disable_cfg *params);
-#endif
-
 /**
  * wma_self_peer_create() - create self peer in objmgr
  * @vdev_mlme: vdev mlme component private object

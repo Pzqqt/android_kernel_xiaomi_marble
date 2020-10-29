@@ -2414,7 +2414,6 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 	wma_lost_link_info_handler(wma, vdev_id, rssi);
 }
 
-#ifdef ROAM_OFFLOAD_V1
 void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)
 {
 	tp_wma_handle wma;
@@ -2427,7 +2426,7 @@ void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)
 
 	wma_beacon_miss_handler(wma, vdev_id, rssi);
 }
-#endif
+
 /**
  * wma_get_status_str() - get string of tx status from firmware
  * @status: tx status

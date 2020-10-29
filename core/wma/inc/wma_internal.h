@@ -344,26 +344,8 @@ wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle, uint8_t *event,
 }
 #endif
 
-#ifndef ROAM_OFFLOAD_V1
-/**
- * wma_update_per_roam_config() -per roam config parameter updation to FW
- * @handle: wma handle
- * @req_buf: per roam config parameters
- *
- * Return: none
- */
-void wma_update_per_roam_config(WMA_HANDLE handle,
-				 struct wlan_per_roam_config_req *req_buf);
-#endif
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list);
-
-#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && !defined(ROAM_OFFLOAD_V1)
-QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
-					roam_offload_param *
-					roam_offload_params,
-					struct roam_offload_scan_req *roam_req);
-#endif
 
 A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr);
