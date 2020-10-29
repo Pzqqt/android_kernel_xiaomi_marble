@@ -1557,16 +1557,16 @@ void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
 		last_ticks_rx[subtype] = curr_ticks;
 
 	if (status == QDF_TX_RX_STATUS_INVALID)
-		qdf_nofl_info("%s %s: SA:"QDF_MAC_ADDR_FMT" DA:"QDF_MAC_ADDR_FMT,
-			      qdf_get_pkt_type_string(type, subtype),
-			      dir ? "RX":"TX", QDF_MAC_ADDR_REF(sa),
-			      QDF_MAC_ADDR_REF(da));
+		qdf_nofl_debug("%s %s: SA:"QDF_MAC_ADDR_FMT" DA:"QDF_MAC_ADDR_FMT,
+			       qdf_get_pkt_type_string(type, subtype),
+			       dir ? "RX":"TX", QDF_MAC_ADDR_REF(sa),
+			       QDF_MAC_ADDR_REF(da));
 	else
-		qdf_nofl_info("%s %s: SA:"QDF_MAC_ADDR_FMT" DA:"QDF_MAC_ADDR_FMT" msdu_id:%d status: %s",
-			      qdf_get_pkt_type_string(type, subtype),
-			      dir ? "RX":"TX", QDF_MAC_ADDR_REF(sa),
-			      QDF_MAC_ADDR_REF(da), msdu_id,
-			      qdf_get_pkt_status_string(status));
+		qdf_nofl_debug("%s %s: SA:"QDF_MAC_ADDR_FMT" DA:"QDF_MAC_ADDR_FMT" msdu_id:%d status: %s",
+			       qdf_get_pkt_type_string(type, subtype),
+			       dir ? "RX":"TX", QDF_MAC_ADDR_REF(sa),
+			       QDF_MAC_ADDR_REF(da), msdu_id,
+			       qdf_get_pkt_status_string(status));
 }
 
 qdf_export_symbol(qdf_dp_log_proto_pkt_info);
