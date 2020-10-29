@@ -5620,7 +5620,7 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 
 #ifdef FEATURE_CM_ENABLE
 static QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
-					  struct wlan_cm_connect_rsp *rsp,
+					  struct wlan_cm_connect_resp *rsp,
 					  enum osif_cb_type type)
 {
 	return QDF_STATUS_SUCCESS;

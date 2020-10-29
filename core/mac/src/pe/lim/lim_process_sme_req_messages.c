@@ -1346,7 +1346,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct pe_session *pe_session,
 				        QDF_STATUS connect_status,
 				        enum wlan_status_code status_code)
 {
-	struct wlan_cm_connect_rsp *connect_rsp = &rsp->connect_rsp;
+	struct wlan_cm_connect_resp *connect_rsp = &rsp->connect_rsp;
 	struct wlan_connect_rsp_ies *connect_ie = &rsp->connect_rsp.connect_ies;
 
 	connect_rsp->cm_id = pe_session->cm_id;
@@ -1357,7 +1357,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct pe_session *pe_session,
 	connect_rsp->freq = pe_session->curr_op_freq;
 	connect_rsp->connect_status = connect_status;
 	connect_rsp->reason = reason;
-	connect_rsp->reason_code = status_code;
+	connect_rsp->status_code = status_code;
 	connect_rsp->ssid.length =
 			QDF_MIN(WLAN_SSID_MAX_LEN, pe_session->ssId.length);
 	qdf_mem_copy(connect_rsp->ssid.ssid, pe_session->ssId.ssId,
@@ -1394,7 +1394,7 @@ lim_cm_fill_join_rsp_from_connect_req(struct cm_vdev_join_req *req,
 				      struct cm_vdev_join_rsp *rsp,
 				      enum wlan_cm_connect_fail_reason reason)
 {
-	struct wlan_cm_connect_rsp *connect_rsp = &rsp->connect_rsp;
+	struct wlan_cm_connect_resp *connect_rsp = &rsp->connect_rsp;
 
 	connect_rsp->cm_id = req->cm_id;
 	connect_rsp->vdev_id = req->vdev_id;
