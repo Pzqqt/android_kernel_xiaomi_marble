@@ -617,12 +617,7 @@ static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 	triggers.vdev_id = vdev_id;
 	triggers.trigger_bitmap = wlan_mlme_get_roaming_triggers(mac_ctx->psoc);
 	sme_debug("Reset roam trigger bitmap to 0x%x", triggers.trigger_bitmap);
-#ifdef ROAM_OFFLOAD_V1
 	wlan_cm_rso_set_roam_trigger(mac_ctx->pdev, vdev_id, &triggers);
-#else
-	/* temp change, This will be removed with ROAM_OFFLOAD_V1 enabled */
-	sme_set_roam_triggers(MAC_HANDLE(mac_ctx), &triggers);
-#endif
 	sme_roam_control_restore_default_config(MAC_HANDLE(mac_ctx),
 						vdev_id);
 }
@@ -1273,7 +1268,6 @@ bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId)
 	return val;
 }
 
-#ifdef ROAM_OFFLOAD_V1
 bool
 wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id)
@@ -1295,7 +1289,6 @@ wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	return csr_neighbor_middle_of_roaming(mac_ctx, vdev_id);
 }
-#endif
 
 /**
  * csr_neighbor_roam_process_handoff_req - Processes handoff request

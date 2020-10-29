@@ -227,18 +227,6 @@ QDF_STATUS csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 				      enum roam_offload_state state,
 				      uint8_t reason);
 
-#ifndef ROAM_OFFLOAD_V1
-/**
- * csr_post_rso_stop() - Post RSO stop message to WMA
- * @mac: mac context
- * @vdev_id: vdev id
- * @reason: reason for requesting RSO stop
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason);
-#endif
 /**
  * csr_enable_roaming_on_connected_sta() - Enable roaming on other connected
  *  sta vdev
@@ -275,14 +263,6 @@ QDF_STATUS csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-
-#ifndef ROAM_OFFLOAD_V1
-static inline
-csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
 
 static inline QDF_STATUS
 csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)

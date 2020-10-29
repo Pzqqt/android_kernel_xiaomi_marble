@@ -1407,31 +1407,6 @@ void csr_clear_channel_status(struct mac_context *mac);
 QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 			       struct assoc_ind *assoc_ind);
 
-/**
- * csr_send_roam_offload_init_msg() - Send roam enable/disable flag to fw
- * @mac: mac context
- * @vdev_id: vdev id
- * @enable: enable/disable roam flag
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
-			       bool enable);
-
-#ifndef ROAM_OFFLOAD_V1
-/**
- * csr_send_roam_disable_cfg_msg() - Send roam module enable/disable cfg to fw
- * @mac: mac context
- * @vdev_id: vdev id
- * @cfg: roaming enable/disable cfg
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS csr_send_roam_disable_cfg_msg(struct mac_context *mac,
-					 uint32_t vdev_id, uint8_t cfg);
-#endif
-
 typedef void (*csr_ani_callback)(int8_t *ani, void *context);
 
 #ifdef WLAN_FEATURE_11W
