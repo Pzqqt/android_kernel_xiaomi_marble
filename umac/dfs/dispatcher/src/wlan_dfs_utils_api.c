@@ -1246,6 +1246,15 @@ QDF_STATUS utils_dfs_bw_reduced_channel_for_freq(
 
 	if (ch_state == CHANNEL_STATE_DFS ||
 	    ch_state == CHANNEL_STATE_ENABLE) {
+		/* If the current channel is 80P80MHz and radar is detected on
+		 * the channel, the next highest bandwidth that maybe available
+		 * is 80MHz. Since the current regulatory algorithm reduces the
+		 * bandwidth from 80P80MHz to 160MHz, provide the channel
+		 * width as 80MHz if current channel is 80P80MHz.
+		 */
+		if (chan_params->ch_width == CH_WIDTH_80P80MHZ)
+			chan_params->ch_width = CH_WIDTH_80MHZ;
+
 		chan_params->mhz_freq_seg0 =
 			dfs_curchan->dfs_ch_mhz_freq_seg1;
 		chan_params->mhz_freq_seg1 =
