@@ -20,7 +20,6 @@
  * DOC: qdf_net_if
  * This file provides OS dependent network interface related APIs
  */
-
 #include "qdf_net_if.h"
 #include "qdf_types.h"
 #include "qdf_module.h"
@@ -57,3 +56,34 @@ char *qdf_net_if_get_devname(struct qdf_net_if *nif)
 }
 
 qdf_export_symbol(qdf_net_if_get_devname);
+
+/**
+ * qdf_net_if_get_dev_by_name() - Find a network device by its name
+ * @nif_name: network device name
+ *
+ * This function retrieves the network device by its name
+ *
+ * Return: qdf network device
+ */
+struct qdf_net_if *qdf_net_if_get_dev_by_name(char *nif_name)
+{
+	return __qdf_net_if_get_dev_by_name(nif_name);
+}
+
+qdf_export_symbol(qdf_net_if_get_dev_by_name);
+
+/**
+ * qdf_net_if_release_dev() - Release reference to network device
+ * @nif: network device
+ *
+ * This function releases reference to the network device
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qdf_net_if_release_dev(struct qdf_net_if  *nif)
+{
+	return __qdf_net_if_release_dev(nif);
+}
+
+qdf_export_symbol(qdf_net_if_release_dev);
