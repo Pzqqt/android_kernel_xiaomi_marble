@@ -3164,7 +3164,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 	int group_number, mask, num_ring;
 
 	/* number of tx ring */
-	num_ring = wlan_cfg_num_tcl_data_rings(soc->wlan_cfg_ctx);
+	num_ring = soc->num_tcl_data_rings;
 
 	/*
 	 * group mask for tx completion  ring.
@@ -3199,7 +3199,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 	}
 
 	/* number of rx rings */
-	num_ring = wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
+	num_ring = soc->num_reo_dest_rings;
 
 	/*
 	 * group mask for reo destination ring.
@@ -13040,14 +13040,15 @@ static void dp_soc_srng_deinit(struct dp_soc *soc)
 		dp_deinit_tx_pair_by_index(soc, i);
 
 	/* TCL command and status rings */
-	wlan_minidump_remove(soc->tcl_cmd_credit_ring.base_vaddr_unaligned);
-	dp_srng_deinit(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0);
+	if (soc->init_tcl_cmd_cred_ring) {
+		wlan_minidump_remove(soc->tcl_cmd_credit_ring.base_vaddr_unaligned);
+		dp_srng_deinit(soc, &soc->tcl_cmd_credit_ring,
+			       TCL_CMD_CREDIT, 0);
+	}
+
 	wlan_minidump_remove(soc->tcl_status_ring.base_vaddr_unaligned);
 	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
 
-	/* Rx data rings */
-	soc->num_reo_dest_rings =
-			wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
 	for (i = 0; i < soc->num_reo_dest_rings; i++) {
 		/* TODO: Get number of rings and ring sizes
 		 * from wlan_cfg
@@ -13088,7 +13089,6 @@ static void dp_soc_srng_deinit(struct dp_soc *soc)
 static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 {
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
-	uint32_t num_tcl_data_rings, num_reo_dest_rings;
 	uint8_t i;
 
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
@@ -13108,19 +13108,21 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 			  WLAN_MD_DP_SRNG_WBM_DESC_REL,
 			  "wbm_desc_rel_ring");
 
-	/* TCL command and status rings */
-	if (dp_srng_init(soc, &soc->tcl_cmd_credit_ring,
-			 TCL_CMD_CREDIT, 0, 0)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_init failed for tcl_cmd_ring"));
-		goto fail1;
-	}
+	if (soc->init_tcl_cmd_cred_ring) {
+		/* TCL command and status rings */
+		if (dp_srng_init(soc, &soc->tcl_cmd_credit_ring,
+				 TCL_CMD_CREDIT, 0, 0)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  FL("dp_srng_init failed for tcl_cmd_ring"));
+			goto fail1;
+		}
 
-	wlan_minidump_log(soc->tcl_cmd_credit_ring.base_vaddr_unaligned,
-			  soc->tcl_cmd_credit_ring.alloc_size,
-			  soc->ctrl_psoc,
-			  WLAN_MD_DP_SRNG_TCL_CMD,
-			  "wbm_desc_rel_ring");
+		wlan_minidump_log(soc->tcl_cmd_credit_ring.base_vaddr_unaligned,
+				  soc->tcl_cmd_credit_ring.alloc_size,
+				  soc->ctrl_psoc,
+				  WLAN_MD_DP_SRNG_TCL_CMD,
+				  "wbm_desc_rel_ring");
+	}
 
 	if (dp_srng_init(soc, &soc->tcl_status_ring, TCL_STATUS, 0, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -13161,10 +13163,10 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 			  "reo_release_ring");
 
 	/* Rx exception ring */
-	if (dp_srng_init(soc, &soc->reo_exception_ring, REO_EXCEPTION, 0,
-			 MAX_REO_DEST_RINGS)) {
+	if (dp_srng_init(soc, &soc->reo_exception_ring,
+			 REO_EXCEPTION, 0, MAX_REO_DEST_RINGS)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_init failed for reo_exception_ring"));
+			  FL("dp_srng_init failed - reo_exception"));
 		goto fail1;
 	}
 
@@ -13203,17 +13205,14 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 			  WLAN_MD_DP_SRNG_REO_STATUS,
 			  "reo_status_ring");
 
-	num_tcl_data_rings = wlan_cfg_num_tcl_data_rings(soc_cfg_ctx);
-	num_reo_dest_rings = wlan_cfg_num_reo_dest_rings(soc_cfg_ctx);
-
-	for (i = 0; i < num_tcl_data_rings; i++) {
+	for (i = 0; i < soc->num_tcl_data_rings; i++) {
 		if (dp_init_tx_ring_pair_by_index(soc, i))
 			goto fail1;
 	}
 
 	dp_create_ext_stats_event(soc);
 
-	for (i = 0; i < num_reo_dest_rings; i++) {
+	for (i = 0; i < soc->num_reo_dest_rings; i++) {
 		/* Initialize REO destination ring */
 		if (dp_srng_init(soc, &soc->reo_dest_ring[i], REO_DST, i, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -13252,7 +13251,9 @@ static void dp_soc_srng_free(struct dp_soc *soc)
 	for (i = 0; i < soc->num_tcl_data_rings; i++)
 		dp_free_tx_ring_pair_by_index(soc, i);
 
-	dp_srng_free(soc, &soc->tcl_cmd_credit_ring);
+	if (soc->init_tcl_cmd_cred_ring)
+		dp_srng_free(soc, &soc->tcl_cmd_credit_ring);
+
 	dp_srng_free(soc, &soc->tcl_status_ring);
 
 	for (i = 0; i < soc->num_reo_dest_rings; i++)
@@ -13260,7 +13261,9 @@ static void dp_soc_srng_free(struct dp_soc *soc)
 
 	dp_srng_free(soc, &soc->reo_reinject_ring);
 	dp_srng_free(soc, &soc->rx_rel_ring);
+
 	dp_srng_free(soc, &soc->reo_exception_ring);
+
 	dp_srng_free(soc, &soc->reo_cmd_ring);
 	dp_srng_free(soc, &soc->reo_status_ring);
 }
@@ -13277,7 +13280,6 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	uint32_t entries;
 	uint32_t i;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
-	uint32_t num_tcl_data_rings, num_reo_dest_rings;
 	uint32_t cached = WLAN_CFG_DST_RING_CACHED_DESC;
 	uint32_t tx_comp_ring_size, tx_ring_size, reo_dst_ring_size;
 
@@ -13294,11 +13296,13 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 
 	entries = wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size(soc_cfg_ctx);
 	/* TCL command and status rings */
-	if (dp_srng_alloc(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT,
-			  entries, 0)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_alloc failed for tcl_cmd_ring"));
-		goto fail1;
+	if (soc->init_tcl_cmd_cred_ring) {
+		if (dp_srng_alloc(soc, &soc->tcl_cmd_credit_ring,
+				  TCL_CMD_CREDIT, entries, 0)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  FL("dp_srng_alloc failed for tcl_cmd_ring"));
+			goto fail1;
+		}
 	}
 
 	entries = wlan_cfg_get_dp_soc_tcl_status_ring_size(soc_cfg_ctx);
@@ -13332,7 +13336,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->reo_exception_ring, REO_EXCEPTION,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_alloc failed for reo_exception_ring"));
+			  FL("dp_srng_alloc failed - reo_exception"));
 		goto fail1;
 	}
 
@@ -13352,8 +13356,6 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	num_tcl_data_rings = wlan_cfg_num_tcl_data_rings(soc_cfg_ctx);
-	num_reo_dest_rings = wlan_cfg_num_reo_dest_rings(soc_cfg_ctx);
 	tx_comp_ring_size = wlan_cfg_tx_comp_ring_size(soc_cfg_ctx);
 	tx_ring_size = wlan_cfg_tx_ring_size(soc_cfg_ctx);
 	reo_dst_ring_size = wlan_cfg_get_reo_dst_ring_size(soc_cfg_ctx);
@@ -13362,14 +13364,12 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
 		cached = 0;
 
-	for (i = 0; i < num_tcl_data_rings; i++) {
+	for (i = 0; i < soc->num_tcl_data_rings; i++) {
 		if (dp_alloc_tx_ring_pair_by_index(soc, i))
 			goto fail1;
 	}
 
-	soc->num_tcl_data_rings = num_tcl_data_rings;
-
-	for (i = 0; i < num_reo_dest_rings; i++) {
+	for (i = 0; i < soc->num_reo_dest_rings; i++) {
 		/* Setup REO destination ring */
 		if (dp_srng_alloc(soc, &soc->reo_dest_ring[i], REO_DST,
 				  reo_dst_ring_size, cached)) {
@@ -13378,7 +13378,6 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 			goto fail1;
 		}
 	}
-	soc->num_reo_dest_rings = num_reo_dest_rings;
 
 	return QDF_STATUS_SUCCESS;
 
@@ -13542,6 +13541,18 @@ static void dp_soc_cfg_attach(struct dp_soc *soc)
 		wlan_cfg_set_num_tx_ext_desc_pool(soc->wlan_cfg_ctx, 0);
 		wlan_cfg_set_num_tx_desc(soc->wlan_cfg_ctx, 0);
 		wlan_cfg_set_num_tx_ext_desc(soc->wlan_cfg_ctx, 0);
+		soc->init_tcl_cmd_cred_ring = false;
+		soc->num_tcl_data_rings =
+			wlan_cfg_num_nss_tcl_data_rings(soc->wlan_cfg_ctx);
+		soc->num_reo_dest_rings =
+			wlan_cfg_num_nss_reo_dest_rings(soc->wlan_cfg_ctx);
+
+	} else {
+		soc->init_tcl_cmd_cred_ring = true;
+		soc->num_tcl_data_rings =
+			wlan_cfg_num_tcl_data_rings(soc->wlan_cfg_ctx);
+		soc->num_reo_dest_rings =
+			wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
 	}
 }
 
@@ -13624,8 +13635,9 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 	 * Initialize command/credit ring descriptor
 	 * Command/CREDIT ring also used for sending DATA cmds
 	 */
-	hal_tx_init_cmd_credit_ring(soc->hal_soc,
-				    soc->tcl_cmd_credit_ring.hal_srng);
+	if (soc->init_tcl_cmd_cred_ring)
+		hal_tx_init_cmd_credit_ring(soc->hal_soc,
+					    soc->tcl_cmd_credit_ring.hal_srng);
 
 	dp_tx_pdev_init(pdev);
 	/*

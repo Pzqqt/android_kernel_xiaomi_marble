@@ -201,9 +201,11 @@ struct wlan_cfg_dp_soc_ctxt {
 	int max_alloc_size;
 	int per_pdev_tx_ring;
 	int num_tcl_data_rings;
+	int num_nss_tcl_data_rings;
 	int per_pdev_rx_ring;
 	int per_pdev_lmac_ring;
 	int num_reo_dest_rings;
+	int num_nss_reo_dest_rings;
 	int num_tx_desc_pool;
 	int num_tx_ext_desc_pool;
 	int num_tx_desc;
@@ -679,12 +681,20 @@ uint32_t wlan_cfg_max_alloc_size(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_per_pdev_tx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_num_tcl_data_rings() - Number of TCL Data rings supported by device
+ * wlan_cfg_num_tcl_data_rings() - Number of TCL Data rings (HOST mode)
  * @wlan_cfg_ctx
  *
  * Return: num_tcl_data_rings
  */
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/*
+ * wlan_cfg_num_nss_tcl_data_rings() - Number of TCL Data rings (NSS offload)
+ * @wlan_cfg_ctx
+ *
+ * Return: num_tcl_data_rings
+ */
+int wlan_cfg_num_nss_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
  * wlan_cfg_per_pdev_rx_ring() - Return true if Rx rings are mapped as
@@ -705,12 +715,20 @@ int wlan_cfg_per_pdev_rx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_per_pdev_lmac_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_num_reo_dest_rings() - Number of REO Data rings supported by device
+ * wlan_cfg_num_reo_dest_rings() - Number of REO Data rings (HOST mode)
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_reo_dest_rings
  */
 int wlan_cfg_num_reo_dest_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/*
+ * wlan_cfg_num_nss_reo_dest_rings() - Number of REO Data rings (NSS offload)
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: num_reo_dest_rings
+ */
+int wlan_cfg_num_nss_reo_dest_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
  * wlan_cfg_pkt_type() - Default 802.11 encapsulation type

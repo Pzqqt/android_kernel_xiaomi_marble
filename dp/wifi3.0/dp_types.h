@@ -1402,6 +1402,8 @@ struct dp_soc {
 	uint8_t num_tcl_data_rings;
 
 	/* TCL CMD_CREDIT ring */
+	bool init_tcl_cmd_cred_ring;
+
 	/* It is used as credit based ring on QCN9000 else command ring */
 	struct dp_srng tcl_cmd_credit_ring;
 
