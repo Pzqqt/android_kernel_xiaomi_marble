@@ -1937,6 +1937,7 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	bool flag_no_2g_chan  = 0;
 	bool flag_no_5g_chan  = 0;
 	bool flag_no_japan_w53 = 0;
+	bool flag_no_6g_freq;
 	int i;
 	bool found = false;
 	uint16_t j;
@@ -1956,6 +1957,7 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	flag_no_dfs_chan = flags & DFS_RANDOM_CH_FLAG_NO_DFS_CH;
 	flag_no_2g_chan  = flags & DFS_RANDOM_CH_FLAG_NO_2GHZ_CH;
 	flag_no_5g_chan  = flags & DFS_RANDOM_CH_FLAG_NO_5GHZ_CH;
+	flag_no_6g_freq = flags & DFS_RANDOM_CH_FLAG_NO_6GHZ_CH;
 
 	if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH) {
 		num_channels =
@@ -2015,9 +2017,8 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 			continue;
 		}
 
-		if (flag_no_5g_chan && chan->dfs_ch_freq >
-		    DFS_MAX_24GHZ_CHANNEL_FREQ)
-		{
+		if (flag_no_5g_chan &&
+		    WLAN_REG_IS_5GHZ_CH_FREQ(chan->dfs_ch_freq)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				  "skip 5 GHz channel=%d", chan->dfs_ch_ieee);
 			continue;
@@ -2043,6 +2044,13 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 		    DFS_IS_CHAN_JAPAN_OUTDOOR_FREQ(chan->dfs_ch_freq)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				  "skip outdoor channel=%d", chan->dfs_ch_ieee);
+			continue;
+		}
+
+		if (flag_no_6g_freq &&
+		    WLAN_REG_IS_6GHZ_CHAN_FREQ(chan->dfs_ch_freq)) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+				  "skip 6 GHz channel=%d", chan->dfs_ch_ieee);
 			continue;
 		}
 

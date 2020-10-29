@@ -211,6 +211,9 @@ struct dfs_bangradar_params {
 #define DFS_RANDOM_CH_FLAG_RESTRICTED_80P80_ENABLED 0x0200
 						       /* 0000 0010 0000 0000 */
 
+/* Flag to exclude all 6GHz channels */
+#define DFS_RANDOM_CH_FLAG_NO_6GHZ_CH          0x00400 /* 0000 0100 0000 0000 */
+
 /**
  * struct wlan_dfs_caps - DFS capability structure.
  * @wlan_dfs_ext_chan_ok:         Can radar be detected on the extension chan?
