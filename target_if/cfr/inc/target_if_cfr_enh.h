@@ -93,6 +93,23 @@
 
 #define STREAMFS_NUM_SUBBUF_PINE 255
 
+/* Max 4 users in MU case for Spruce */
+#define SPRUCE_CFR_MU_USERS 4
+
+#define SPRUCE_MAX_HEADER_LENGTH_WORDS 16
+
+#define SPRUCE_MAX_DATA_LENGTH_BYTES 16384
+
+/* Max size :
+ * sizeof(csi_cfr_header) + 200 bytes(cfr header) + 16384 bytes(cfr payload)
+ */
+#define STREAMFS_MAX_SUBBUF_SPRUCE \
+	(sizeof(struct csi_cfr_header) + \
+	 (SPRUCE_MAX_HEADER_LENGTH_WORDS * 4) + \
+	 SPRUCE_MAX_DATA_LENGTH_BYTES)
+
+#define STREAMFS_NUM_SUBBUF_SPRUCE 255
+
 /* enum macrx_freeze_tlv_version: Reported by uCode in enh_dma_header
  * MACRX_FREEZE_TLV_VERSION_1: Single MU UL user info reported by MAC
  * MACRX_FREEZE_TLV_VERSION_2: Upto 4 MU UL user info reported by MAC
