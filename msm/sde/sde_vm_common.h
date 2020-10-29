@@ -75,9 +75,24 @@ int sde_vm_post_acquire(struct sde_kms *kms);
  */
 int sde_vm_pre_release(struct sde_kms *kms);
 
-
+/**
+ * sde_vm_request_valid - check the validity of state transition request
+ * @sde_kms: handle to sde_kms
+ * @old_state: old crtc vm req state
+ * @new_state: new crtc vm req state
+ * @return: 0 on success
+ */
 int sde_vm_request_valid(struct sde_kms *sde_kms,
 			  enum sde_crtc_vm_req old_state,
 			  enum sde_crtc_vm_req new_state);
+
+/**
+ * sde_vm_msg_send - send display custom message through message queue
+ * @sde_vm: handle to sde_vm struct
+ * @msg: payload data
+ * @msg_size: payload data size
+ * @return: 0 on success
+ */
+int sde_vm_msg_send(struct sde_vm *sde_vm, void *msg, size_t msg_size);
 
 #endif /* __SDE_VM_COMMON_H__ */

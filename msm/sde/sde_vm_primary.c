@@ -9,6 +9,7 @@
 #include "sde_kms.h"
 #include "sde_vm.h"
 #include "sde_vm_common.h"
+#include "sde_vm_msgq.h"
 
 #define to_vm_primary(vm) ((struct sde_vm_primary *)vm)
 
@@ -266,6 +267,8 @@ static void _sde_vm_deinit(struct sde_kms *sde_kms, struct sde_vm_ops *ops)
 
 	sde_vm = to_vm_primary(sde_kms->vm);
 
+	sde_vm_msgq_deinit(sde_kms->vm);
+
 	if (sde_vm->base.mem_notification_cookie)
 		hh_mem_notifier_unregister(
 				sde_vm->base.mem_notification_cookie);
@@ -289,6 +292,7 @@ static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 	ops->vm_prepare_commit = sde_kms_vm_primary_prepare_commit;
 	ops->vm_post_commit = sde_kms_vm_primary_post_commit;
 	ops->vm_request_valid = sde_vm_request_valid;
+	ops->vm_msg_send = sde_vm_msg_send;
 }
 
 int sde_vm_primary_init(struct sde_kms *kms)
@@ -317,6 +321,12 @@ int sde_vm_primary_init(struct sde_kms *kms)
 	kms->vm = &sde_vm->base;
 
 	mutex_init(&sde_vm->base.vm_res_lock);
+
+	rc = sde_vm_msgq_init(kms->vm);
+	if (rc) {
+		SDE_ERROR("failed to initialize the msgq, rc=%d\n", rc);
+		goto init_fail;
+	}
 
 	return 0;
 init_fail:
