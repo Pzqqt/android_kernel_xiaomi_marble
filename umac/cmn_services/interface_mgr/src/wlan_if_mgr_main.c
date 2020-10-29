@@ -40,6 +40,8 @@ QDF_STATUS wlan_if_mgr_init(void)
 	}
 	ifmgr_debug("interface mgr psoc create and delete handler registered with objmgr");
 
+	return status;
+
 fail_psoc_destroy:
 	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_IF_MGR,
 			wlan_if_mgr_psoc_created_notification, NULL);
