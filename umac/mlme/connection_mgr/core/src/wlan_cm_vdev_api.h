@@ -56,7 +56,7 @@ struct cm_vdev_join_req {
  */
 struct cm_vdev_join_rsp {
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_cm_connect_rsp connect_rsp;
+	struct wlan_cm_connect_resp connect_rsp;
 };
 
 /**
@@ -93,7 +93,7 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 cm_handle_connect_complete(struct wlan_objmgr_vdev *vdev,
-			   struct wlan_cm_connect_rsp *rsp);
+			   struct wlan_cm_connect_resp *rsp);
 
 /**
  * cm_handle_disconnect_req() - Connection manager ext disconnect

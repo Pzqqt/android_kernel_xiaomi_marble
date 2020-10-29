@@ -160,7 +160,7 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 cm_handle_connect_complete(struct wlan_objmgr_vdev *vdev,
-			   struct wlan_cm_connect_rsp *rsp)
+			   struct wlan_cm_connect_resp *rsp)
 {
 	return QDF_STATUS_SUCCESS;
 }
