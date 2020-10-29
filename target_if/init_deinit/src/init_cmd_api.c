@@ -471,6 +471,8 @@ void init_deinit_prepare_send_init_cmd(
 	else
 		target_if_debug("0x%x\n", info->target_caps.fw_version_1);
 
+	target_if_ext_res_cfg_enable(psoc, tgt_hdl, NULL);
+
 	wmi_unified_init_cmd_send(wmi_handle, &init_param);
 
 	/* Set Max scans allowed */
