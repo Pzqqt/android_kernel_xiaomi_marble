@@ -513,6 +513,8 @@ struct scan_cb {
  * @duty_cycle_cnt_6ghz: Scan count to track the full scans and decide whether
  *                        to optimizate 6g channels in the scan request based
  *                        on the ini scan_mode_6ghz_duty_cycle.
+ * @allow_bss_with_incomplete_ie: Continue scan entry even if any corrupted IES are
+ *			    present.
  */
 struct wlan_scan_obj {
 	uint32_t scan_disabled;
@@ -547,6 +549,7 @@ struct wlan_scan_obj {
 	uint64_t scm_scan_to_post_scan_duration;
 #endif
 	uint16_t duty_cycle_cnt_6ghz;
+	bool allow_bss_with_incomplete_ie;
 };
 
 #ifdef ENABLE_SCAN_PROFILE

@@ -1285,6 +1285,30 @@ enum scan_mode_6ghz {
 			CFG_VALUE_OR_DEFAULT, \
 			"6ghz scan mode duty cycle")
 
+/*
+ * <ini>
+ * scan_allow_bss_with_corrupted_ie - Continue scan even if corrupted IEs are
+ * present.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to continue scan even if corrupted IEs are present. If this
+ * ini is enable, the scan module skips the IEs following corrupted IEs(IE's
+ * with invalid len) and adds the scan entry without completely dropping the
+ * frame.
+ *
+ * Related: scan
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+#define CFG_SCAN_ALLOW_BSS_WITH_CORRUPTED_IE CFG_INI_BOOL( \
+			"scan_allow_bss_with_corrupted_ie", \
+			false, \
+			"scan allow bss with corrupted ie")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_DROP_BCN_ON_INVALID_FREQ) \
@@ -1318,6 +1342,7 @@ enum scan_mode_6ghz {
 	CFG(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH) \
 	CFG(CFG_6GHZ_SCAN_MODE) \
 	CFG(CFG_6GHZ_SCAN_MODE_DUTY_CYCLE) \
+	CFG(CFG_SCAN_ALLOW_BSS_WITH_CORRUPTED_IE) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */
