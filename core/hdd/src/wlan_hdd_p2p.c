@@ -883,6 +883,16 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 }
 #endif
 
+static void hdd_clean_up_sap_interface(struct hdd_context *hdd_ctx,
+				       struct hdd_adapter *adapter)
+{
+	wlan_hdd_release_intf_addr(hdd_ctx,
+				   adapter->mac_addr.bytes);
+	hdd_stop_adapter(hdd_ctx, adapter);
+	hdd_deinit_adapter(hdd_ctx, adapter, true);
+	hdd_close_adapter(hdd_ctx, adapter, true);
+}
+
 int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
 	struct net_device *dev = wdev->netdev;
@@ -921,16 +931,13 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 	if (adapter->device_mode == QDF_SAP_MODE &&
 	    wlan_sap_is_pre_cac_active(hdd_ctx->mac_handle)) {
+		hdd_clean_up_sap_interface(hdd_ctx, adapter);
 		hdd_clean_up_pre_cac_interface(hdd_ctx);
 	} else if (wlan_hdd_is_session_type_monitor(
 					adapter->device_mode)) {
 		wlan_hdd_del_monitor(hdd_ctx, adapter, TRUE);
 	} else {
-		wlan_hdd_release_intf_addr(hdd_ctx,
-					   adapter->mac_addr.bytes);
-		hdd_stop_adapter(hdd_ctx, adapter);
-		hdd_deinit_adapter(hdd_ctx, adapter, true);
-		hdd_close_adapter(hdd_ctx, adapter, true);
+		hdd_clean_up_sap_interface(hdd_ctx, adapter);
 	}
 
 	if (!hdd_is_any_interface_open(hdd_ctx))
