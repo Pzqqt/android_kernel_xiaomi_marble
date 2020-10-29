@@ -2563,11 +2563,13 @@ void wlansap_cleanup_cac_timer(struct sap_context *sap_ctx)
 	}
 
 	if (mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-		qdf_mc_timer_stop(&mac->sap.SapDfsInfo.
-				  sap_dfs_cac_timer);
 		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
-		qdf_mc_timer_destroy(
-			&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		if (!sap_ctx->dfs_cac_offload) {
+			qdf_mc_timer_stop(
+				&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+			qdf_mc_timer_destroy(
+				&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		}
 		sap_err("sapdfs, force cleanup running dfs cac timer");
 	}
 }
