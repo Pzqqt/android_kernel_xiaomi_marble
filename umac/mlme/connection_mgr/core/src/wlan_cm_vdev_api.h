@@ -29,7 +29,7 @@
 #include "scheduler_api.h"
 
 /**
- * struct cm_vdev_join_req - connect req from legacy CM to peer manager
+ * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
  * @vdev_id: vdev id
  * @cm_id: Connect manager id
  * @force_rsne_override: force the arbitrary rsne received in connect req to be
@@ -47,6 +47,16 @@ struct cm_vdev_join_req {
 	struct element_info assoc_ie;
 	struct element_info scan_ie;
 	struct scan_cache_entry *entry;
+};
+
+/**
+ * struct cm_vdev_join_rsp - connect rsp from vdev mgr to connection mgr
+ * @psoc: psoc object
+ * @connect_rsp: Connect response to be sent to CM
+ */
+struct cm_vdev_join_rsp {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_cm_connect_rsp connect_rsp;
 };
 
 /**
@@ -156,6 +166,25 @@ QDF_STATUS cm_process_join_req(struct scheduler_msg *msg);
  */
 QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg);
 
+/**
+ * wlan_cm_send_connect_rsp() - Process vdev join rsp and send to CM
+ * @msg: scheduler message
+ *
+ * Process connect response and send it to CM SM.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg);
+
+/**
+ * wlan_cm_free_connect_rsp() - Function to free all params in join rsp
+ * @rsp: CM join response
+ *
+ * Function to free up all the memory in join rsp.
+ *
+ * Return: void
+ */
+void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp);
 
 #endif /* FEATURE_CM_ENABLE */
 #endif /* __WLAN_CM_VDEV_API_H__ */

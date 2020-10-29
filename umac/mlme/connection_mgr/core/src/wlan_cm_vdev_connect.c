@@ -22,6 +22,7 @@
 #include "wlan_cm_vdev_api.h"
 #include "wlan_scan_utils_api.h"
 #include "wlan_mlme_dbg.h"
+#include "wlan_cm_api.h"
 
 void cm_free_join_req(struct cm_vdev_join_req *join_req)
 {
@@ -84,6 +85,35 @@ cm_copy_join_params(struct cm_vdev_join_req *join_req,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
+{
+	struct cm_vdev_join_rsp *rsp;
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_FAILURE;
+
+	rsp = msg->bodyptr;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(rsp->psoc,
+						    rsp->connect_rsp.vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d cm_id 0x%x : vdev not found",
+			 rsp->connect_rsp.vdev_id, rsp->connect_rsp.cm_id);
+		wlan_cm_free_connect_rsp(rsp);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_cm_connect_rsp(vdev, &rsp->connect_rsp);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	wlan_cm_free_connect_rsp(rsp);
+
+	return status;
+}
+
 QDF_STATUS
 cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_cm_vdev_connect_req *req)
@@ -133,4 +163,38 @@ cm_handle_connect_complete(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_connect_rsp *rsp)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef WLAN_FEATURE_FILS_SK
+static inline void wlan_cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
+{
+	if (!connect_ie->fils_ie)
+		return;
+
+	if (connect_ie->fils_ie->fils_pmk) {
+		qdf_mem_zero(connect_ie->fils_ie->fils_pmk,
+			     connect_ie->fils_ie->fils_pmk_len);
+		qdf_mem_free(connect_ie->fils_ie->fils_pmk);
+	}
+	qdf_mem_zero(connect_ie->fils_ie, sizeof(*connect_ie->fils_ie));
+	qdf_mem_free(connect_ie->fils_ie);
+}
+#else
+static inline void wlan_cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
+{
+}
+#endif
+
+void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
+{
+	struct wlan_connect_rsp_ies *connect_ie =
+						&rsp->connect_rsp.connect_ies;
+
+	qdf_mem_free(connect_ie->assoc_req.ptr);
+	qdf_mem_free(connect_ie->bcn_probe_rsp.ptr);
+	qdf_mem_free(connect_ie->assoc_rsp.ptr);
+	qdf_mem_free(connect_ie->ric_resp_ie.ptr);
+	wlan_cm_free_fils_ie(connect_ie);
+	qdf_mem_zero(rsp, sizeof(*rsp));
+	qdf_mem_free(rsp);
 }
