@@ -321,6 +321,8 @@ enum msm_vidc_inst_capability_type {
 	CHROMA_QP_INDEX_OFFSET,
 	DISPLAY_DELAY_ENABLE,
 	DISPLAY_DELAY,
+	CONCEAL_COLOR_8BIT,
+	CONCEAL_COLOR_10BIT,
 	INST_CAP_MAX,
 };
 
@@ -525,8 +527,8 @@ struct msm_vidc_color_info {
 };
 
 struct msm_vidc_crop {
-	u32 x;
-	u32 y;
+	u32 left;
+	u32 top;
 	u32 width;
 	u32 height;
 };
@@ -534,11 +536,6 @@ struct msm_vidc_crop {
 struct msm_vidc_properties {
 	u32                    frame_rate;
 	u32                    operating_rate;
-	u32                    bit_rate;
-	u32                    profile;
-	u32                    level;
-	u32                    entropy_mode;
-	u32                    rc_type;
 };
 
 struct msm_vidc_subscription_params {

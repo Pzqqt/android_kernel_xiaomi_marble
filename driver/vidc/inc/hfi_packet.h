@@ -11,7 +11,6 @@
 #include "msm_vidc_core.h"
 #include "hfi_command.h"
 #include "hfi_property.h"
-#include "hfi_definition.h"
 
 u32 get_hfi_port(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port);

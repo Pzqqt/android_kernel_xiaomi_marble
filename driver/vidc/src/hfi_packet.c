@@ -313,7 +313,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 		goto err_sys_init;
 
 	/* HFI_CMD_SYSTEM_INIT */
-	payload = HFI_VIDEO_ARCH_OX;
+	payload = HFI_VIDEO_ARCH_LX;
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_CMD_INIT,
 				   (HFI_HOST_FLAGS_RESPONSE_REQUIRED |

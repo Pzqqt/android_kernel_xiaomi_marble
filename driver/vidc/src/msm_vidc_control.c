@@ -880,7 +880,7 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 		break;
 	default:
 		s_vpr_e(inst->sid,
-			"%s: invalid ctrl with cap_id\n", cap_id);
+			"%s: invalid ctrl with cap_id %d\n", __func__, cap_id);
 		return -EINVAL;
 	}
 	return 0;

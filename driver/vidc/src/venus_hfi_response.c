@@ -100,8 +100,20 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 	case HFI_ERROR_MAX_SESSIONS:
 		error = "exceeded max sessions";
 		break;
-	case HFI_ERROR_UNSUPPORTED:
-		error = "unsupported bitstream";
+	case HFI_ERROR_UNKNOWN_SESSION:
+		error = "unknown session id";
+		break;
+	case HFI_ERROR_INVALID_STATE:
+		error = "invalid operation for current state";
+		break;
+	case HFI_ERROR_INSUFFICIENT_RESOURCES:
+		error = "insufficient resources";
+		break;
+	case HFI_ERROR_BUFFER_NOT_SET:
+		error = "internal buffers not set";
+		break;
+	case HFI_ERROR_FATAL:
+		error = "fatal error";
 		break;
 	default:
 		error = "unknown";
@@ -274,7 +286,8 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->flags = 0;
-	if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT) {
+	//todo:
+	/*if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT) {
 		s_vpr_h(inst->sid, "%s: data corrupted\n", __func__);
 		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;
 	}
@@ -282,7 +295,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 		s_vpr_e(inst->sid, "%s: unsupported input\n", __func__);
 		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;
 		// TODO: move inst->state to error state
-	}
+	}*/
 
 	print_vidc_buffer(VIDC_HIGH, "EBD", inst, buf);
 	msm_vidc_vb2_buffer_done(inst, buf);
@@ -326,16 +339,19 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
 
 	buf->flags = 0;
-	if (buffer->flags & HFI_BUF_FW_FLAG_KEYFRAME)
-		buf->flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;
+	//todo: moved to HFI_PROP_PICTURE_TYPE
+	/*if (buffer->flags & HFI_BUF_FW_FLAG_KEYFRAME)
+		buf->flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;*/
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
-	if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT)
-		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;
+	//moved to HFI_INFO_DATA_CORRUPT
+	/*if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT)
+		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;*/
 	if (buffer->flags & HFI_BUF_FW_FLAG_CODEC_CONFIG)
 		buf->flags |= MSM_VIDC_BUF_FLAG_CODECCONFIG;
-	if (buffer->flags & HFI_BUF_FW_FLAG_SUBFRAME)
-		buf->flags |= MSM_VIDC_BUF_FLAG_SUBFRAME;
+	//moved to HFI_PROP_SUBFRAME_OUTPUT
+	/*if (buffer->flags & HFI_BUF_FW_FLAG_SUBFRAME)
+		buf->flags |= MSM_VIDC_BUF_FLAG_SUBFRAME;*/
 
 	print_vidc_buffer(VIDC_HIGH, "FBD", inst, buf);
 	msm_vidc_vb2_buffer_done(inst, buf);

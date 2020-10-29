@@ -17,6 +17,7 @@
 #define DDR_TYPE_LPDDR4X 0x7
 #define DDR_TYPE_LPDDR5 0x8
 #define DDR_TYPE_LPDDR5X 0x9
+#define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
 
 #define UBWC_CONFIG(mco, mlo, hbo, bslo, bso, rs, mc, ml, hbb, bsl, bsp) \
 {	\
@@ -894,6 +895,16 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		{ENTROPY_MODE},
 		NULL, msm_vidc_set_u32},
+
+	/* conceal color */
+	{CONCEAL_COLOR_8BIT, DEC, CODECS_ALL, 0x0, 0xff3fcff, 1,
+		DEFAULT_VIDEO_CONCEAL_COLOR_BLACK,
+		V4L2_CID_MPEG_VIDEO_MUTE_YUV,
+		HFI_PROP_CONCEAL_COLOR_8BIT},
+	{CONCEAL_COLOR_10BIT, DEC, CODECS_ALL, 0x0, 0x3fffffff, 1,
+		DEFAULT_VIDEO_CONCEAL_COLOR_BLACK,
+		V4L2_CID_MPEG_VIDEO_MUTE_YUV,
+		HFI_PROP_CONCEAL_COLOR_10BIT},
 };
 
 /*
