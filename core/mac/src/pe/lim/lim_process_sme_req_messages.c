@@ -1340,9 +1340,208 @@ lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 
 #ifdef FEATURE_CM_ENABLE
 static QDF_STATUS
+lim_cm_prepare_join_rsp_from_pe_session(struct pe_session *pe_session,
+				        struct cm_vdev_join_rsp *rsp,
+				        enum wlan_cm_connect_fail_reason reason,
+				        QDF_STATUS connect_status,
+				        enum wlan_status_code status_code)
+{
+	struct wlan_cm_connect_rsp *connect_rsp = &rsp->connect_rsp;
+	struct wlan_connect_rsp_ies *connect_ie = &rsp->connect_rsp.connect_ies;
+
+	connect_rsp->cm_id = pe_session->cm_id;
+	connect_rsp->vdev_id = pe_session->vdev_id;
+	qdf_mem_copy(connect_rsp->bssid.bytes, pe_session->bssId,
+		     QDF_MAC_ADDR_SIZE);
+
+	connect_rsp->freq = pe_session->curr_op_freq;
+	connect_rsp->connect_status = connect_status;
+	connect_rsp->reason = reason;
+	connect_rsp->reason_code = status_code;
+	connect_rsp->ssid.length =
+			QDF_MIN(WLAN_SSID_MAX_LEN, pe_session->ssId.length);
+	qdf_mem_copy(connect_rsp->ssid.ssid, pe_session->ssId.ssId,
+		     connect_rsp->ssid.length);
+	connect_rsp->aid = pe_session->limAID;
+
+	if (pe_session->assoc_req) {
+		connect_ie->assoc_req.len = pe_session->assocReqLen;
+		connect_ie->assoc_req.ptr =
+			qdf_mem_malloc(sizeof(connect_ie->assoc_req.len));
+		if (!connect_ie->assoc_req.ptr)
+			return QDF_STATUS_E_NOMEM;
+
+		qdf_mem_copy(connect_ie->assoc_req.ptr, pe_session->assoc_req,
+			     connect_ie->assoc_req.len);
+	}
+
+	if (pe_session->assocRsp) {
+		connect_ie->assoc_rsp.len = pe_session->assocRspLen;
+		connect_ie->assoc_rsp.ptr =
+			qdf_mem_malloc(sizeof(connect_ie->assoc_rsp.len));
+		if (!connect_ie->assoc_rsp.ptr)
+			return QDF_STATUS_E_NOMEM;
+
+		qdf_mem_copy(connect_ie->assoc_rsp.ptr, pe_session->assocRsp,
+			     connect_ie->assoc_rsp.len);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+lim_cm_fill_join_rsp_from_connect_req(struct cm_vdev_join_req *req,
+				      struct cm_vdev_join_rsp *rsp,
+				      enum wlan_cm_connect_fail_reason reason)
+{
+	struct wlan_cm_connect_rsp *connect_rsp = &rsp->connect_rsp;
+
+	connect_rsp->cm_id = req->cm_id;
+	connect_rsp->vdev_id = req->vdev_id;
+	qdf_copy_macaddr(&connect_rsp->bssid, &req->entry->bssid);
+	connect_rsp->freq = req->entry->channel.chan_freq;
+	connect_rsp->connect_status = QDF_STATUS_E_FAILURE;
+	connect_rsp->reason = reason;
+	connect_rsp->ssid = req->entry->ssid;
+}
+
+static QDF_STATUS lim_cm_flush_connect_rsp(struct scheduler_msg *msg)
+{
+	struct cm_vdev_join_rsp *rsp;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_INVAL;
+
+	rsp = msg->bodyptr;
+	wlan_cm_free_connect_rsp(rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
+		        struct pe_session *pe_session,
+		        struct cm_vdev_join_req *req,
+		        enum wlan_cm_connect_fail_reason reason,
+		        QDF_STATUS connect_status,
+		        enum wlan_status_code status_code)
+{
+	struct cm_vdev_join_rsp *rsp;
+	QDF_STATUS status;
+	struct scheduler_msg msg;
+
+	if (!pe_session && !req)
+		return;
+
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp)
+		return;
+
+	rsp->psoc = mac_ctx->psoc;
+
+	if (!pe_session) {
+		lim_cm_fill_join_rsp_from_connect_req(req, rsp, reason);
+	} else {
+		status =
+			lim_cm_prepare_join_rsp_from_pe_session(pe_session,
+								rsp,
+								reason,
+								connect_status,
+								status_code);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wlan_cm_free_connect_rsp(rsp);
+			return;
+		}
+	}
+
+	qdf_mem_zero(&msg, sizeof(msg));
+
+	msg.bodyptr = rsp;
+	msg.callback = wlan_cm_send_connect_rsp;
+	msg.flush_callback = lim_cm_flush_connect_rsp;
+
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("vdev_id: %d cm_id 0x%x : msg post fails",
+			rsp->connect_rsp.vdev_id, rsp->connect_rsp.cm_id);
+		wlan_cm_free_connect_rsp(rsp);
+	}
+}
+
+static struct pe_session *
+lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
+{
+	struct pe_session *pe_session;
+	uint8_t session_id;
+	struct wlan_objmgr_vdev *vdev;
+
+	pe_session = pe_find_session_by_bssid(mac_ctx, req->entry->bssid.bytes,
+					      &session_id);
+
+	if (pe_session) {
+		pe_err("vdev_id: %d cm_id 0x%x :pe-session(%d (vdev %d)) already exists for BSSID: "
+		       QDF_MAC_ADDR_FMT " in lim_sme_state = %X",
+		       req->vdev_id, req->cm_id, session_id,
+		       pe_session->vdev_id,
+		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes),
+		       pe_session->limSmeState);
+		return NULL;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+						    req->vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		pe_err("vdev_id: %d cm_id 0x%x : vdev not found", req->vdev_id,
+		       req->cm_id);
+		return NULL;
+	}
+
+	pe_session = pe_create_session(mac_ctx, req->entry->bssid.bytes,
+			&session_id,
+			mac_ctx->lim.max_sta_of_pe_session,
+			eSIR_INFRASTRUCTURE_MODE,
+			req->vdev_id,
+			wlan_vdev_mlme_get_opmode(vdev));
+	if (!pe_session)
+		pe_err("vdev_id: %d cm_id 0x%x : pe_session create failed BSSID"
+		       QDF_MAC_ADDR_FMT, req->vdev_id, req->cm_id,
+		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes));
+
+	pe_session->cm_id = req->cm_id;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return pe_session;
+}
+
+static QDF_STATUS
 lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 {
+	struct mac_context *mac_ctx;
+	struct pe_session *pe_session;
+
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	pe_session = lim_cm_create_session(mac_ctx, req);
+
+	if (!pe_session)
+		goto fail;
+
 	return QDF_STATUS_SUCCESS;
+
+fail:
+	lim_cm_send_connect_rsp(mac_ctx, pe_session, req, CM_GENERIC_FAILURE,
+			        QDF_STATUS_E_FAILURE, 0);
+	return QDF_STATUS_E_FAILURE;
 }
 
 QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
@@ -1679,7 +1878,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				ret_code = eSIR_SME_INVALID_PARAMETERS;
 				goto end;
 			}
-
 		}
 		if (sme_join_req->addIEScan.length)
 			qdf_mem_copy(&session->lim_join_req->addIEScan,

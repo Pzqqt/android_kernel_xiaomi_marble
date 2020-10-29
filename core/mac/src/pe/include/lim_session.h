@@ -19,6 +19,7 @@
 #if !defined(__LIM_SESSION_H)
 #define __LIM_SESSION_H
 
+#include "wlan_cm_public_struct.h"
 /**=========================================================================
 
    \file  lim_session.h
@@ -140,6 +141,9 @@ struct obss_detection_cfg {
 struct pe_session {
 	/* To check session table is in use or free */
 	uint8_t available;
+#ifdef FEATURE_CM_ENABLE
+	wlan_cm_id cm_id;
+#endif
 	uint16_t peSessionId;
 	union {
 		uint8_t smeSessionId;
