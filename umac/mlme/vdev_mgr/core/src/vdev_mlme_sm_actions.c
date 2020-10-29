@@ -414,7 +414,7 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 	}
 }
 
-#define MULTIVDEV_RESTART_MAX_RETRY_CNT 100
+#define MULTIVDEV_RESTART_MAX_RETRY_CNT 200
 static os_timer_func(mlme_restart_req_timeout)
 {
 	qdf_bitmap(tmp_restart_pend_vdev_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
