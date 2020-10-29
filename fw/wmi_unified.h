@@ -21949,6 +21949,14 @@ typedef struct {
   */
 #define WMI_DEBUG_LOG_PARAM_MOD_ENABLE_BITMAP    0x5
 
+/**
+ *  Wow mode specific logging enablement
+ *  Wow mode module_id_bitmap : identifies the modules for which the log level
+ *                  should be set in WOW and modules for which the log level
+ *                  should be reset to DBGLOG_MAX_LVL.
+ */
+#define WMI_DEBUG_LOG_PARAM_WOW_MOD_ENABLE_BITMAP 0x6
+
 #define NUM_MODULES_PER_ENTRY ((sizeof(A_UINT32)) << 3)
 
 #define WMI_MODULE_ENABLE(pmid_bitmap,mod_id) \
