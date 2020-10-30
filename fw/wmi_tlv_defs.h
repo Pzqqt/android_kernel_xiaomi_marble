@@ -1117,6 +1117,12 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ctrl_path_mem_stats_struct,
     WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_vendor_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_vendor_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_vendor_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_vendor_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_vendor_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_vendor_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
