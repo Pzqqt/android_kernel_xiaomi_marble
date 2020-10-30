@@ -6698,6 +6698,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	struct wmi_unified *wmi_handle;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	target_resource_config *wlan_res_cfg;
+	uint8_t sta_sap_scc_on_dfs_chnl;
 
 	wma_debug("Enter");
 
@@ -6760,6 +6761,18 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	}
 	wma_init_scan_fw_mode_config(wma_handle->psoc, conc_scan_config_bits,
 				     fw_config_bits);
+
+	policy_mgr_get_sta_sap_scc_on_dfs_chnl(wma_handle->psoc,
+					       &sta_sap_scc_on_dfs_chnl);
+
+	/*
+	 * For non-dbs HW, disallow sta+sap on DFS channel as if SAP comes
+	 * on DFS master mode enable (sta_sap_scc_on_dfs_chnl = 2), scan will
+	 * be disabled and STA cannot connect to any other channel
+	 */
+	if (!policy_mgr_is_hw_dbs_capable(wma_handle->psoc) &&
+	    sta_sap_scc_on_dfs_chnl == 2)
+		policy_mgr_set_sta_sap_scc_on_dfs_chnl(wma_handle->psoc, 1);
 
 	target_psoc_set_num_radios(tgt_hdl, 1);
 

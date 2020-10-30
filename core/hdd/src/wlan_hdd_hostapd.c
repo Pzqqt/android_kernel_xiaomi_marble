@@ -3243,6 +3243,8 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* Initialized ch_width to CH_WIDTH_MAX */
+	ch_params.ch_width = CH_WIDTH_MAX;
 	intf_ch_freq = wlansap_get_chan_band_restrict(sap_context, &csa_reason);
 	if (intf_ch_freq)
 		goto sap_restart;
@@ -3315,7 +3317,10 @@ sap_restart:
 	}
 	hdd_debug("SAP restart orig chan freq: %d, new freq: %d",
 		  hdd_ap_ctx->sap_config.chan_freq, intf_ch_freq);
-	ch_params.ch_width = CH_WIDTH_MAX;
+	ch_params.ch_width = wlan_sap_get_concurrent_bw(hdd_ctx->pdev,
+							hdd_ctx->psoc,
+							intf_ch_freq,
+							ch_params.ch_width);
 	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
 
 	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,

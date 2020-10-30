@@ -179,6 +179,20 @@ QDF_STATUS policy_mgr_set_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_get_force_1x1(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *force_1x1);
+
+/**
+ * policy_mgr_set_sta_sap_scc_on_dfs_chnl() - to set sta_sap_scc_on_dfs_chnl
+ * @psoc: pointer to psoc
+ * @sta_sap_scc_on_dfs_chnl: value to be set
+ *
+ * This API is used to set sta_sap_scc_on_dfs_chnl
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+policy_mgr_set_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
+				       uint8_t sta_sap_scc_on_dfs_chnl);
+
 /**
  * policy_mgr_get_sta_sap_scc_on_dfs_chnl() - to find out if STA and SAP
  *						   SCC is allowed on DFS channel
@@ -818,6 +832,7 @@ uint32_t policy_mgr_get_dfs_beaconing_session_id(
  * if any DFS session
  * @psoc: PSOC object information
  * @ch_freq: pointer to channel frequency that needs to filled
+ * @ch_width: pointer to channel width for the beaconing session
  *
  * If any beaconing session such as SAP or GO present and it is on DFS channel
  * then this function will return true
@@ -825,7 +840,9 @@ uint32_t policy_mgr_get_dfs_beaconing_session_id(
  * Return: true if session is on DFS or false if session is on non-dfs channel
  */
 bool policy_mgr_is_any_dfs_beaconing_session_present(
-		struct wlan_objmgr_psoc *psoc, uint32_t *ch_freq);
+		struct wlan_objmgr_psoc *psoc, qdf_freq_t *ch_freq,
+		enum hw_mode_bandwidth *ch_width);
+
 /**
  * policy_mgr_allow_concurrency() - Check for allowed concurrency
  * combination consulting the PCL
@@ -2066,6 +2083,36 @@ uint32_t policy_mgr_get_sap_go_count_on_mac(struct wlan_objmgr_psoc *psoc,
 					    uint32_t *list, uint8_t mac_id);
 
 /**
+ * policy_mgr_is_sta_present_on_dfs_channel() - to find whether any DFS STA is
+ *                                              present
+ * @psoc: PSOC object information
+ * @vdev_id: pointer to vdev_id. It will be filled with the vdev_id of DFS STA
+ * @ch_freq: pointer to channel frequency on which DFS STA is present
+ * @ch_width: pointer channel width on which DFS STA is connected
+ * If any STA is connected on DFS channel then this function will return true
+ *
+ * Return: true if session is on DFS or false if session is on non-dfs channel
+ */
+bool policy_mgr_is_sta_present_on_dfs_channel(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *vdev_id,
+					      qdf_freq_t *ch_freq,
+					      enum hw_mode_bandwidth *ch_width);
+
+/**
+ * policy_mgr_is_sta_present_on_freq() - Checks whether sta is present on the
+ *                                       given frequency
+ * @psoc: PSOC object information
+ * @vdev_id: pointer to vdev_id. It will be filled with the vdev_id of DFS STA
+ * @ch_freq: channel for which this checks is needed
+ * @ch_width: pointer channel width on which DFS STA is connected
+ *
+ * Return: true if STA is found in ch_freq
+ */
+bool policy_mgr_is_sta_present_on_freq(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *vdev_id, qdf_freq_t ch_freq,
+				       enum hw_mode_bandwidth *ch_width);
+
+/**
  * policy_mgr_is_sta_gc_active_on_mac() - Is there active sta/gc for a
  * given mac id
  * @psoc: PSOC object information
@@ -2965,6 +3012,14 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
  */
 bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 				uint32_t ch_freq);
+
+/**
+ * policy_mgr_get_ch_width() - Convert hw_mode_bandwidth to phy_ch_width
+ * @bw: Hardware mode band width used by WMI
+ *
+ * Return: phy_ch_width
+ */
+enum phy_ch_width policy_mgr_get_ch_width(enum hw_mode_bandwidth bw);
 
 /**
  * policy_mgr_is_force_scc() - checks if SCC needs to be

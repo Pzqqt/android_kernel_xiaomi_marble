@@ -576,6 +576,44 @@ eCsrPhyMode wlan_sap_get_phymode(struct sap_context *sap_ctx)
 	return sap_ctx->csr_roamProfile.phyMode;
 }
 
+enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
+					     struct wlan_objmgr_psoc *psoc,
+					     qdf_freq_t con_ch_freq,
+					     enum phy_ch_width channel_width)
+{
+	enum hw_mode_bandwidth sta_ch_width;
+	enum phy_ch_width sta_chan_width;
+	bool sta_present, is_con_chan_dfs = false;
+	uint8_t sta_vdev_id;
+
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(con_ch_freq))
+		return CH_WIDTH_20MHZ;
+
+	if (wlan_reg_is_6ghz_chan_freq(con_ch_freq))
+		return channel_width;
+
+	sta_present = policy_mgr_is_sta_present_on_freq(psoc,
+							&sta_vdev_id,
+							con_ch_freq,
+							&sta_ch_width);
+
+	/* if no STA present return max of BW and 80MHZ */
+	if (!sta_present)
+		return CH_WIDTH_80MHZ;
+
+	sta_chan_width = policy_mgr_get_ch_width(sta_ch_width);
+	if (wlan_reg_is_dfs_for_freq(pdev, con_ch_freq) ||
+	    sta_chan_width == CH_WIDTH_160MHZ)
+		is_con_chan_dfs = true;
+
+	/* if STA not on DFS return max of BW and 80MHZ */
+	if (!is_con_chan_dfs)
+		return  QDF_MAX(sta_chan_width, CH_WIDTH_80MHZ);
+
+	/* If sta channel is DFS return min of 80 and STA BW */
+	return QDF_MIN(sta_chan_width, CH_WIDTH_80MHZ);
+}
+
 uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx)
 {
 	if (!sap_ctx) {
