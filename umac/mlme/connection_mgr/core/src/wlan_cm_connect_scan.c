@@ -58,10 +58,26 @@ static QDF_STATUS cm_fill_scan_req(struct cnx_mgr *cm_ctx,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
+	req->scan_req.scan_type = SCAN_TYPE_SCAN_FOR_CONNECT;
 	req->scan_req.scan_id = cm_req->scan_id;
 	req->scan_req.scan_req_id = cm_ctx->scan_requester_id;
 	req->scan_req.scan_f_passive = false;
 	req->scan_req.scan_f_bcast_probe = false;
+
+	if (cm_req->req.scan_ie.len) {
+		req->scan_req.extraie.ptr =
+			qdf_mem_malloc(cm_req->req.scan_ie.len);
+
+		if (!req->scan_req.extraie.ptr) {
+			status = QDF_STATUS_E_NOMEM;
+			return status;
+		}
+
+		qdf_mem_copy(req->scan_req.extraie.ptr,
+			     cm_req->req.scan_ie.ptr,
+			     cm_req->req.scan_ie.len);
+		req->scan_req.extraie.len = cm_req->req.scan_ie.len;
+	}
 
 	if (wlan_vdev_mlme_get_opmode(cm_ctx->vdev) == QDF_P2P_CLIENT_MODE)
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
@@ -129,6 +145,11 @@ QDF_STATUS cm_connect_scan_start(struct cnx_mgr *cm_ctx,
 	status = cm_fill_scan_req(cm_ctx, cm_req, scan_req);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
+		if (scan_req->scan_req.extraie.ptr) {
+			qdf_mem_free(scan_req->scan_req.extraie.ptr);
+			scan_req->scan_req.extraie.len = 0;
+			scan_req->scan_req.extraie.ptr = NULL;
+		}
 		qdf_mem_free(scan_req);
 		goto scan_err;
 	}
