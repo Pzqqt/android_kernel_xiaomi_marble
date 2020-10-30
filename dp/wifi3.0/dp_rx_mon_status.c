@@ -2455,18 +2455,58 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 		hal_srng_src_peek_n_get_next(hal_soc, mon_status_srng)) &&
 		reap_cnt < MON_DROP_REAP_LIMIT && quota--) {
 		uint64_t buf_addr;
+		uint32_t rx_buf_cookie;
+		struct dp_rx_desc *rx_desc;
+		qdf_nbuf_t status_nbuf;
+		uint8_t *status_buf;
+		enum dp_mon_reap_status reap_status;
+		qdf_dma_addr_t iova;
+		struct rx_desc_pool *rx_desc_pool;
+
+		rx_desc_pool = &soc->rx_desc_status[mac_id];
 
 		buf_addr = (HAL_RX_BUFFER_ADDR_31_0_GET(ring_desc) |
 		   ((uint64_t)(HAL_RX_BUFFER_ADDR_39_32_GET(ring_desc)) << 32));
 
-		if (qdf_unlikely(!buf_addr)) {
-			struct rx_desc_pool *rx_desc_pool;
-			qdf_dma_addr_t iova;
-			qdf_nbuf_t status_nbuf;
-			struct dp_rx_desc *rx_desc;
-			union dp_rx_desc_list_elem_t *rx_desc_elem;
+		if (qdf_likely(buf_addr)) {
+			rx_buf_cookie = HAL_RX_BUF_COOKIE_GET(ring_desc);
+			rx_desc = dp_rx_cookie_2_va_mon_status(soc,
+							       rx_buf_cookie);
 
-			rx_desc_pool = &soc->rx_desc_status[mac_id];
+			qdf_assert(rx_desc);
+
+			status_nbuf = rx_desc->nbuf;
+
+			qdf_nbuf_sync_for_cpu(soc->osdev, status_nbuf,
+					      QDF_DMA_FROM_DEVICE);
+
+			status_buf = qdf_nbuf_data(status_nbuf);
+
+			if (hal_get_rx_status_done(status_buf) !=
+			    QDF_STATUS_SUCCESS) {
+				/* If done status is missing:
+				 * 1. As per MAC team's suggestion,
+				 *    when HP + 1 entry is peeked and if DMA
+				 *    is not done and if HP + 2 entry's DMA done
+				 *    is set. skip HP + 1 entry and
+				 *    start processing in next interrupt.
+				 * 2. If HP + 2 entry's DMA done is not set,
+				 *    poll onto HP + 1 entry DMA done to be set.
+				 *    Check status for same buffer for next time
+				 *    dp_rx_mon_status_srng_process
+				 */
+				reap_status =
+					dp_rx_mon_handle_status_buf_done(pdev,
+							       mon_status_srng);
+				if (reap_status == DP_MON_STATUS_NO_DMA)
+					break;
+			}
+			qdf_nbuf_unmap_nbytes_single(soc->osdev, status_nbuf,
+						     QDF_DMA_FROM_DEVICE,
+						     rx_desc_pool->buf_size);
+			qdf_nbuf_free(status_nbuf);
+		} else {
+			union dp_rx_desc_list_elem_t *rx_desc_elem;
 
 			qdf_spin_lock_bh(&rx_desc_pool->lock);
 
@@ -2479,36 +2519,34 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 			qdf_spin_unlock_bh(&rx_desc_pool->lock);
 
 			rx_desc = &rx_desc_elem->rx_desc;
-
-			status_nbuf = dp_rx_nbuf_prepare(soc, pdev);
-
-			if (qdf_unlikely(!status_nbuf)) {
-				union dp_rx_desc_list_elem_t *desc_list = NULL;
-				union dp_rx_desc_list_elem_t *tail = NULL;
-
-				dp_info_rl("fail to allocate or map nbuf");
-				dp_rx_add_to_free_desc_list(&desc_list, &tail,
-							    rx_desc);
-				dp_rx_add_desc_list_to_free_list(soc,
-								 &desc_list,
-								 &tail, mac_id,
-								 rx_desc_pool);
-
-				hal_rxdma_buff_addr_info_set(ring_desc, 0, 0,
-							 HAL_RX_BUF_RBM_SW3_BM);
-
-				break;
-			}
-
-			iova = qdf_nbuf_get_frag_paddr(status_nbuf, 0);
-
-			rx_desc->nbuf = status_nbuf;
-			rx_desc->in_use = 1;
-
-			hal_rxdma_buff_addr_info_set(ring_desc, iova,
-						     rx_desc->cookie,
-						     HAL_RX_BUF_RBM_SW3_BM);
 		}
+
+		status_nbuf = dp_rx_nbuf_prepare(soc, pdev);
+
+		if (qdf_unlikely(!status_nbuf)) {
+			union dp_rx_desc_list_elem_t *desc_list = NULL;
+			union dp_rx_desc_list_elem_t *tail = NULL;
+
+			dp_info_rl("fail to allocate or map nbuf");
+			dp_rx_add_to_free_desc_list(&desc_list, &tail,
+						    rx_desc);
+			dp_rx_add_desc_list_to_free_list(soc,
+							 &desc_list,
+							 &tail, mac_id,
+							 rx_desc_pool);
+
+			hal_rxdma_buff_addr_info_set(ring_desc, 0, 0,
+						     HAL_RX_BUF_RBM_SW3_BM);
+			break;
+		}
+
+		iova = qdf_nbuf_get_frag_paddr(status_nbuf, 0);
+
+		rx_desc->nbuf = status_nbuf;
+		rx_desc->in_use = 1;
+
+		hal_rxdma_buff_addr_info_set(ring_desc, iova, rx_desc->cookie,
+					     HAL_RX_BUF_RBM_SW3_BM);
 
 		reap_cnt++;
 		hal_srng_src_get_next(hal_soc, mon_status_srng);
