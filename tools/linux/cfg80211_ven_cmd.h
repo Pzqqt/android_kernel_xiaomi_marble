@@ -1248,6 +1248,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_RNR_MEMBER_OF_ESS_24G_5G_CO_LOCATED = 461,
 	/* RNR stats */
 	OL_ATH_PARAM_RNR_STATS = 462,
+	/* NSS WiFi offload status */
+	OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS = 463,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3229,6 +3231,8 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_MEMBER_OF_ESS_24G_5G_CO_LOCATED, GET_PARAM, 0},
 	{"get_rnr_stats",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_STATS, GET_PARAM, 0},
+	{"g_nss_wifi_ol",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS, GET_PARAM, 0},
 };
 #endif
 #endif
