@@ -2749,6 +2749,18 @@ void wma_get_fw_phy_mode_for_freq_cb(uint32_t freq, uint32_t chan_width,
 	}
 
 	dot11_mode = mac->mlme_cfg->dot11_mode.dot11_mode;
+
+	/* Update invalid dot11 modes to valid dot11 modes */
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq) &&
+	    dot11_mode == MLME_DOT11_MODE_11A)
+		dot11_mode = MLME_DOT11_MODE_11G;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(freq) &&
+	    (dot11_mode == MLME_DOT11_MODE_11B ||
+	     dot11_mode == MLME_DOT11_MODE_11G ||
+	     dot11_mode == MLME_DOT11_MODE_11G_ONLY))
+		dot11_mode = MLME_DOT11_MODE_11A;
+
 	host_phy_mode = wma_chan_phy_mode(freq, chan_width, dot11_mode);
 	*phy_mode = wma_host_to_fw_phymode(host_phy_mode);
 }
