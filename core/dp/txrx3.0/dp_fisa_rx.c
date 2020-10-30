@@ -920,18 +920,15 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 		return sw_ft_entry;
 
 	rx_tlv_hdr = qdf_nbuf_data(nbuf);
-	/*
-	 * Get reo_destination_indication from RX_PKT_TLV-->msdu_end,
-	 * if reo_destination_indication == 6, it means this frame is
-	 * reinjected by FW offload module, these frames should not go to FISA
-	 * since REO2SW1 will be selected by FW offload module. If same flow
-	 * frames hash select other REO2SW rings, same flow UDP frames will go
-	 * to different REO2SW ring.
-	 */
 	hal_rx_msdu_get_reo_destination_indication(hal_soc_hdl, rx_tlv_hdr,
 						   &reo_destination_indication);
-
-	if (qdf_unlikely(reo_destination_indication == REO_DESTINATION_FW))
+	/*
+	 * Compare reo_destination_indication between reo ring descriptor
+	 * and rx_pkt_tlvs, if they are different, then likely these kind
+	 * of frames re-injected by FW or touched by other module already,
+	 * skip FISA to avoid REO2SW ring mismatch issue for same flow.
+	 */
+	if (reo_destination_indication != qdf_nbuf_get_rx_reo_dest_ind(nbuf))
 		return sw_ft_entry;
 
 	hal_rx_msdu_get_flow_params(hal_soc_hdl, rx_tlv_hdr, &flow_invalid,
