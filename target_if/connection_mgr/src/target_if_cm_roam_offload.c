@@ -516,65 +516,6 @@ target_if_cm_roam_scan_offload_scan_period(
 	return wmi_unified_roam_scan_offload_scan_period(wmi_handle, req);
 }
 
-#ifdef WLAN_FEATURE_11W
-/**
- * target_if_roam_fill_11w_params() - Fill the 11w related parameters
- * for ap profile
- * @vdev: vdev object
- * @req: roam ap profile parameters
- *
- * Return: None
- */
-static void
-target_if_cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
-				  struct ap_profile_params *req)
-{
-	uint32_t group_mgmt_cipher;
-	uint16_t rsn_caps;
-	bool peer_rmf_capable = false;
-	uint32_t keymgmt;
-
-	if (!vdev) {
-		target_if_err("Invalid vdev");
-		return;
-	}
-
-	rsn_caps = (uint16_t)wlan_crypto_get_param(vdev,
-						   WLAN_CRYPTO_PARAM_RSN_CAP);
-	if (wlan_crypto_vdev_has_mgmtcipher(
-					vdev,
-					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC) |
-					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256) |
-					(1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) &&
-					(rsn_caps &
-					 WLAN_CRYPTO_RSN_CAP_MFP_ENABLED))
-		peer_rmf_capable = true;
-
-	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
-
-	if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC))
-		group_mgmt_cipher = WMI_CIPHER_AES_CMAC;
-	else if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC))
-		group_mgmt_cipher = WMI_CIPHER_AES_GMAC;
-	else if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256))
-		group_mgmt_cipher = WMI_CIPHER_BIP_GMAC_256;
-	 else
-		group_mgmt_cipher = WMI_CIPHER_NONE;
-
-	if (peer_rmf_capable) {
-		req->profile.rsn_mcastmgmtcipherset = group_mgmt_cipher;
-		req->profile.flags |= WMI_AP_PROFILE_FLAG_PMF;
-	} else {
-		req->profile.rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
-	}
-}
-#else
-static inline
-void target_if_cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
-				       struct ap_profile_params *req)
-{}
-#endif
-
 /**
  * target_if_cm_roam_scan_offload_ap_profile() - send roam ap profile to
  * firmware
@@ -605,8 +546,6 @@ target_if_cm_roam_scan_offload_ap_profile(
 	    rsn_authmode == WMI_AUTH_CCKM_RSNA)
 		req->profile.rsn_authmode =
 		target_if_cm_roam_scan_get_cckm_mode(vdev, rsn_authmode);
-
-	target_if_cm_roam_fill_11w_params(vdev, req);
 
 	db2dbm_enabled = wmi_service_enabled(wmi_handle,
 					     wmi_service_hw_db2dbm_support);
