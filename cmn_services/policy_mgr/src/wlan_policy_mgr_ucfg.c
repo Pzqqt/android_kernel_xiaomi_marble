@@ -55,9 +55,15 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_FORCE_1X1_FEATURE);
 	cfg->sta_sap_scc_on_dfs_chnl =
 		cfg_get(psoc, CFG_STA_SAP_SCC_ON_DFS_CHAN);
+
+	/*
+	 * Force set sta_sap_scc_on_dfs_chnl on Non-DBS HW so that standalone
+	 * SAP is not allowed on DFS channel on non-DBS HW, Also, force SCC in
+	 * case of STA+SAP
+	 */
 	if (cfg->sta_sap_scc_on_dfs_chnl == 2 &&
 	    !cfg_get(psoc, CFG_ENABLE_DFS_MASTER_CAPABILITY))
-		cfg->sta_sap_scc_on_dfs_chnl = 0;
+		cfg->sta_sap_scc_on_dfs_chnl = 1;
 	cfg->nan_sap_scc_on_lte_coex_chnl =
 		cfg_get(psoc, CFG_NAN_SAP_SCC_ON_LTE_COEX_CHAN);
 	cfg->sta_sap_scc_on_lte_coex_chnl =
