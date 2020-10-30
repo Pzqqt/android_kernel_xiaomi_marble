@@ -5095,13 +5095,14 @@ lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
 		    tDot11fIEoci *oci)
 {
 	uint8_t country_code[CDS_COUNTRY_CODE_LEN + 1];
+	uint8_t prim_ch_num = wlan_reg_freq_to_chan(mac->pdev,
+						    session->curr_op_freq);
 
 	wlan_reg_read_current_country(mac->psoc, country_code);
-	oci->op_class = wlan_reg_dmn_get_opclass_from_channel(
-			country_code,
-			wlan_reg_freq_to_chan(mac->pdev, session->curr_op_freq),
-			session->ch_width);
-	oci->prim_ch_num = session->ch_center_freq_seg0;
+	oci->op_class = wlan_reg_dmn_get_opclass_from_channel(country_code,
+							     prim_ch_num,
+							     session->ch_width);
+	oci->prim_ch_num = prim_ch_num;
 	oci->freq_seg_1_ch_num = session->ch_center_freq_seg1;
 	oci->present = 1;
 }
