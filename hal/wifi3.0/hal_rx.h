@@ -504,6 +504,10 @@ enum hal_rx_ret_buf_manager {
 		RX_MSDU_DESC_INFO_0_DA_IDX_TIMEOUT_OFFSET)) &	\
 		RX_MSDU_DESC_INFO_0_DA_IDX_TIMEOUT_MASK)
 
+#define HAL_RX_REO_MSDU_REO_DST_IND_GET(reo_desc)	\
+	(HAL_RX_MSDU_REO_DST_IND_GET(&		\
+	(((struct reo_destination_ring *)	\
+	   reo_desc)->rx_msdu_desc_info_details)))
 
 #define HAL_RX_MSDU_FLAGS_GET(msdu_info_ptr) \
 	(HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_GET(msdu_info_ptr) | \
