@@ -2239,9 +2239,6 @@ struct roam_offload_scan_req {
 	struct scoring_param score_params;
 #ifdef WLAN_FEATURE_FILS_SK
 	bool is_fils_connection;
-#ifndef ROAM_OFFLOAD_V1
-	struct roam_fils_params roam_fils_params;
-#endif
 #endif
 	uint32_t btm_offload_config;
 	uint32_t btm_solicited_timeout;

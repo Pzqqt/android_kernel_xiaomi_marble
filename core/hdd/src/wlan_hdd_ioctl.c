@@ -779,19 +779,12 @@ static int hdd_parse_reassoc(struct hdd_adapter *adapter, const char *command,
 	return ret;
 }
 
-#ifdef ROAM_OFFLOAD_V1
 static inline
 void hdd_abort_roam_scan(struct hdd_context *hdd_ctx, uint8_t vdev_id)
 {
 	ucfg_cm_abort_roam_scan(hdd_ctx->pdev, vdev_id);
 }
-#else
-static inline
-void hdd_abort_roam_scan(struct hdd_context *hdd_ctx, uint8_t vdev_id)
-{
-	sme_abort_roam_scan(hdd_ctx->mac_handle, vdev_id);
-}
-#endif
+
 /**
  * hdd_sendactionframe() - send a userspace-supplied action frame
  * @adapter:	Adapter upon which the command was received

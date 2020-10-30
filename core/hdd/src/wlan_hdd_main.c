@@ -5601,7 +5601,6 @@ hdd_vdev_destroy_procedure:
 	return errno;
 }
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
@@ -5709,111 +5708,6 @@ error_init_txrx:
 
 	return status;
 }
-#else
-QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
-	struct hdd_context *hdd_ctx;
-	QDF_STATUS status;
-	int ret_val;
-	mac_handle_t mac_handle;
-	bool bval = false;
-	uint8_t enable_sifs_burst = 0;
-	uint32_t fine_time_meas_cap = 0, roam_triggers;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	mac_handle = hdd_ctx->mac_handle;
-	sme_set_curr_device_mode(mac_handle, adapter->device_mode);
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("unable to get vht_enable2x2");
-	sme_set_pdev_ht_vht_ies(mac_handle, bval);
-
-	sme_set_vdev_ies_per_band(mac_handle, adapter->vdev_id,
-				  adapter->device_mode);
-
-	hdd_roam_profile_init(adapter);
-	hdd_register_wext(adapter->dev);
-
-	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
-	sme_roam_reset_configs(mac_handle, adapter->vdev_id);
-
-	/* set fast roaming capability in sme session */
-	status = sme_config_fast_roaming(mac_handle, adapter->vdev_id,
-					 true);
-	/* Set the default operation channel freq*/
-	sta_ctx->conn_info.chan_freq = hdd_ctx->config->operating_chan_freq;
-
-	/* Make the default Auth Type as OPEN */
-	sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-
-	status = hdd_init_tx_rx(adapter);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("hdd_init_tx_rx() failed, status code %08d [x%08x]",
-		       status, status);
-		goto error_init_txrx;
-	}
-
-	set_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
-
-	status = hdd_wmm_adapter_init(adapter);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("hdd_wmm_adapter_init() failed, status code %08d [x%08x]",
-		       status, status);
-		goto error_wmm_init;
-	}
-
-	set_bit(WMM_INIT_DONE, &adapter->event_flags);
-
-	status = ucfg_get_enable_sifs_burst(hdd_ctx->psoc, &enable_sifs_burst);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("Failed to get sifs burst value, use default");
-
-	ret_val = sme_cli_set_command(adapter->vdev_id,
-				      WMI_PDEV_PARAM_BURST_ENABLE,
-				      enable_sifs_burst,
-				      PDEV_CMD);
-	if (ret_val)
-		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
-
-
-	hdd_set_netdev_flags(adapter);
-
-	/* rcpi info initialization */
-	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
-
-	if (adapter->device_mode == QDF_STA_MODE) {
-		roam_triggers = ucfg_mlme_get_roaming_triggers(hdd_ctx->psoc);
-		mlme_set_roam_trigger_bitmap(hdd_ctx->psoc, adapter->vdev_id,
-					     roam_triggers);
-		wlan_cm_roam_disable_vendor_btm(hdd_ctx->psoc,
-						adapter->vdev_id);
-		ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc,
-						 &fine_time_meas_cap);
-		sme_cli_set_command(
-			adapter->vdev_id,
-			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
-			(bool)(fine_time_meas_cap & WMI_FW_STA_RTT_RESPR),
-			VDEV_CMD);
-		sme_cli_set_command(
-			adapter->vdev_id,
-			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
-			(bool)(fine_time_meas_cap & WMI_FW_STA_RTT_INITR),
-			VDEV_CMD);
-	}
-
-	return QDF_STATUS_SUCCESS;
-
-error_wmm_init:
-	clear_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
-	hdd_deinit_tx_rx(adapter);
-error_init_txrx:
-	hdd_unregister_wext(adapter->dev);
-	QDF_BUG(!hdd_vdev_destroy(adapter));
-
-	return status;
-}
-#endif
 
 /**
  * hdd_deinit_station_mode() - De-initialize the station adapter

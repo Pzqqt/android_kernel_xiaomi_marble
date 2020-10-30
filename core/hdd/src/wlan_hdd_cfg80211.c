@@ -4777,13 +4777,8 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 	status = ucfg_cm_update_roam_scan_scheme_bitmap(hdd_ctx->psoc,
 							vdev_id, 0);
 
-#ifdef ROAM_OFFLOAD_V1
 	status = ucfg_cm_rso_set_roam_trigger(hdd_ctx->pdev, vdev_id,
 					      &triggers);
-#else
-	/* temp change, This will be removed with ROAM_OFFLOAD_V1 enabled */
-	status = sme_set_roam_triggers(hdd_ctx->mac_handle, &triggers);
-#endif
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set roam control trigger bitmap");
 
@@ -13321,7 +13316,6 @@ void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
 	complete(&adapter->lfr_fw_status.disable_lfr_event);
 }
 
-#ifdef ROAM_OFFLOAD_V1
 /**
  * __wlan_hdd_cfg80211_set_fast_roaming() - enable/disable roaming
  * @wiphy: Pointer to wireless phy
@@ -13413,98 +13407,6 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	hdd_exit();
 	return ret;
 }
-#else
-/**
- * __wlan_hdd_cfg80211_set_fast_roaming() - enable/disable roaming
- * @wiphy: Pointer to wireless phy
- * @wdev: Pointer to wireless device
- * @data: Pointer to data
- * @data_len: Length of @data
- *
- * This function is used to enable/disable roaming using vendor commands
- *
- * Return: 0 on success, negative errno on failure
- */
-static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
-					    struct wireless_dev *wdev,
-					    const void *data, int data_len)
-{
-	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct net_device *dev = wdev->netdev;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
-	uint32_t is_fast_roam_enabled;
-	int ret;
-	QDF_STATUS qdf_status;
-	unsigned long rc;
-	struct hdd_station_ctx *hdd_sta_ctx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	mac_handle_t mac_handle;
-
-	hdd_enter_dev(dev);
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Command not allowed in FTM mode");
-		return -EINVAL;
-	}
-
-	ret = wlan_cfg80211_nla_parse(tb,
-				      QCA_WLAN_VENDOR_ATTR_MAX, data, data_len,
-				      qca_wlan_vendor_attr);
-	if (ret) {
-		hdd_err("Invalid ATTR");
-		return -EINVAL;
-	}
-
-	/* Parse and fetch Enable flag */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_POLICY]) {
-		hdd_err("attr enable failed");
-		return -EINVAL;
-	}
-
-	is_fast_roam_enabled = nla_get_u32(
-				tb[QCA_WLAN_VENDOR_ATTR_ROAMING_POLICY]);
-	hdd_debug("isFastRoamEnabled %d", is_fast_roam_enabled);
-
-	/* Update roaming */
-	mac_handle = hdd_ctx->mac_handle;
-	qdf_status = sme_config_fast_roaming(mac_handle, adapter->vdev_id,
-					     is_fast_roam_enabled);
-	if (qdf_status != QDF_STATUS_SUCCESS)
-		hdd_err("sme_config_fast_roaming failed with status=%d",
-				qdf_status);
-	ret = qdf_status_to_os_return(qdf_status);
-
-	if (eConnectionState_Associated == hdd_sta_ctx->conn_info.conn_state &&
-		QDF_IS_STATUS_SUCCESS(qdf_status) && !is_fast_roam_enabled) {
-
-		INIT_COMPLETION(adapter->lfr_fw_status.disable_lfr_event);
-		/*
-		 * wait only for LFR disable in fw as LFR enable
-		 * is always success
-		 */
-		rc = wait_for_completion_timeout(
-				&adapter->lfr_fw_status.disable_lfr_event,
-				msecs_to_jiffies(WAIT_TIME_RSO_CMD_STATUS));
-		if (!rc) {
-			hdd_err("Timed out waiting for RSO CMD status");
-			return -ETIMEDOUT;
-		}
-
-		if (!adapter->lfr_fw_status.is_disabled) {
-			hdd_err("Roam disable attempt in FW fails");
-			return -EBUSY;
-		}
-	}
-
-	hdd_exit();
-	return ret;
-}
-#endif
 
 /**
  * wlan_hdd_cfg80211_set_fast_roaming() - enable/disable roaming

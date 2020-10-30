@@ -3902,133 +3902,7 @@ lim_send_vdev_restart(struct mac_context *mac,
 	vdev_mgr_start_send(mlme_obj,  true);
 }
 
-#ifndef ROAM_OFFLOAD_V1
-/**
- * __lim_process_roam_scan_offload_req() - Process Roam scan offload from csr
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: Pointer to SME message buffer
- *
- * Return: None
- */
-static void __lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
-						uint32_t *msg_buf)
-{
-	struct pe_session *pe_session;
-	struct scheduler_msg wma_msg = {0};
-	QDF_STATUS status;
-	struct roam_offload_scan_req *req_buffer;
-	uint16_t local_ie_len;
-	uint8_t *local_ie_buf;
-
-	req_buffer = (struct roam_offload_scan_req *)msg_buf;
-	pe_session = pe_find_session_by_vdev_id(mac_ctx,
-					req_buffer->sessionId);
-
-	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
-	if (!local_ie_buf) {
-		qdf_mem_zero(req_buffer, sizeof(*req_buffer));
-		qdf_mem_free(req_buffer);
-		return;
-	}
-
-	local_ie_len = req_buffer->assoc_ie.length;
-	/* Update ext cap IE if present */
-	if (local_ie_len &&
-	    !lim_update_ext_cap_ie(mac_ctx, req_buffer->assoc_ie.addIEdata,
-				   local_ie_buf, &local_ie_len, pe_session)) {
-		if (local_ie_len <
-		    QDF_ARRAY_SIZE(req_buffer->assoc_ie.addIEdata)) {
-			req_buffer->assoc_ie.length = local_ie_len;
-			qdf_mem_copy(req_buffer->assoc_ie.addIEdata,
-				     local_ie_buf, local_ie_len);
-		}
-	}
-	qdf_mem_free(local_ie_buf);
-
-	if (pe_session)
-		lim_update_fils_rik(pe_session, req_buffer);
-
-	wma_msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
-	wma_msg.bodyptr = req_buffer;
-
-	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Posting WMA_ROAM_SCAN_OFFLOAD_REQ failed");
-		qdf_mem_zero(req_buffer, sizeof(*req_buffer));
-		qdf_mem_free(req_buffer);
-	}
-}
-#else
-static inline void
-__lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
-				    uint32_t *msg_buf)
-{}
-#endif
-
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-#ifndef ROAM_OFFLOAD_V1
-/**
- * lim_send_roam_offload_init() - Process Roam offload flag from csr
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: Pointer to SME message buffer
- *
- * Return: None
- */
-static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
-				       uint32_t *msg_buf)
-{
-	struct scheduler_msg wma_msg = {0};
-	QDF_STATUS status;
-
-	wma_msg.type = WMA_ROAM_INIT_PARAM;
-	wma_msg.bodyptr = msg_buf;
-
-	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Posting WMA_ROAM_INIT_PARAM failed");
-		qdf_mem_free(msg_buf);
-	}
-}
-
-static void lim_send_roam_disable_cfg(struct mac_context *mac_ctx,
-				      uint32_t *msg_buf)
-{
-	struct scheduler_msg wma_msg = {0};
-	QDF_STATUS status;
-
-	wma_msg.type = WMA_ROAM_DISABLE_CFG;
-	wma_msg.bodyptr = msg_buf;
-
-	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Posting WMA_ROAM_DISABLE_CFG failed");
-		qdf_mem_free(msg_buf);
-	}
-}
-
-/**
- * lim_send_roam_per_command() - Process roam send PER command from csr
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: Pointer to SME message buffer
- *
- * Return: None
- */
-static void lim_send_roam_per_command(struct mac_context *mac_ctx,
-				      uint32_t *msg_buf)
-{
-	struct scheduler_msg wma_msg = {0};
-	QDF_STATUS status;
-
-	wma_msg.type = WMA_SET_PER_ROAM_CONFIG_CMD;
-	wma_msg.bodyptr = msg_buf;
-
-	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Posting WMA_ROAM_INIT_PARAM failed");
-		qdf_mem_free(msg_buf);
-	}
-}
-#endif
 /**
  * lim_send_roam_set_pcl() - Process Roam offload flag from csr
  * @mac_ctx: Pointer to Global MAC structure
@@ -4052,25 +3926,6 @@ static void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 	}
 }
 #else
-
-#ifndef ROAM_OFFLOAD_V1
-static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
-				       uint32_t *msg_buf)
-{
-	qdf_mem_free(msg_buf);
-}
-
-static void lim_send_roam_per_command(struct mac_context *mac_ctx,
-				      uint32_t *msg_buf)
-{
-	qdf_mem_free(msg_buf);
-}
-static void lim_send_roam_disable_cfg(struct mac_context *mac_ctx,
-				      uint32_t *msg_buf)
-{
-	qdf_mem_free(msg_buf);
-}
-#endif
 static inline void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 					 struct set_pcl_req *msg_buf)
 {
@@ -5148,24 +5003,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		lim_send_roam_set_pcl(mac, (struct set_pcl_req *)msg_buf);
 		bufConsumed = false;
 		break;
-#ifndef ROAM_OFFLOAD_V1
-	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
-		__lim_process_roam_scan_offload_req(mac, msg_buf);
-		bufConsumed = false;
-		break;
-	case eWNI_SME_ROAM_INIT_PARAM:
-		lim_send_roam_offload_init(mac, msg_buf);
-		bufConsumed = false;
-		break;
-	case eWNI_SME_ROAM_DISABLE_CFG:
-		lim_send_roam_disable_cfg(mac, msg_buf);
-		bufConsumed = false;
-		break;
-	case eWNI_SME_ROAM_SEND_PER_REQ:
-		lim_send_roam_per_command(mac, msg_buf);
-		bufConsumed = false;
-		break;
-#endif
 	case eWNI_SME_ROAM_INVOKE:
 		lim_process_roam_invoke(mac, msg_buf);
 		bufConsumed = false;

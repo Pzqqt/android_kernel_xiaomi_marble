@@ -105,7 +105,6 @@ QDF_STATUS sme_release_global_lock(struct sme_context *sme)
 	return qdf_mutex_release(&sme->sme_global_lock);
 }
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS cm_roam_acquire_lock(void)
 {
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_SME);
@@ -125,7 +124,6 @@ QDF_STATUS cm_roam_release_lock(void)
 
 	return sme_release_global_lock(&mac->sme);
 }
-#endif
 
 struct mac_context *sme_get_mac_context(void)
 {
@@ -6320,83 +6318,6 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifndef ROAM_OFFLOAD_V1
-/**
- * sme_config_fast_roaming() - enable/disable LFR support at runtime
- * @mac_handle - The handle returned by macOpen.
- * @session_id - Session Identifier
- * @is_fast_roam_enabled - flag to enable/disable roaming
- *
- * When Supplicant issues enabled/disable fast roaming on the basis
- * of the Bssid modification in network block (e.g. AutoJoin mode N/W block)
- *
- * Return: QDF_STATUS
- */
-
-QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
-				   const bool is_fast_roam_enabled)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	enum roam_offload_state state;
-	QDF_STATUS status;
-	bool supplicant_disabled_roaming;
-	uint32_t set_val = 0;
-	enum roam_offload_state  cur_state;
-
-	/*
-	 * supplicant_disabled_roaming flag is altered when supplicant sends
-	 * vendor command to enable/disable roaming after association.
-	 *
-	 * This request from wpa_supplicant will be skipped in this function
-	 * if roaming is disabled using driver command or INI and
-	 * supplicant_disabled_roaming flag remains set. So make sure to set
-	 * supplicant_disabled_roaming flag as per wpa_supplicant even if roam
-	 * request from wpa_supplicant ignored.
-	 */
-	if (!mac_ctx->mlme_cfg->lfr.lfr_enabled) {
-		sme_debug("ROAM: Fast roam is disabled through ini");
-		if (!is_fast_roam_enabled)
-			return QDF_STATUS_SUCCESS;
-		return  QDF_STATUS_E_FAILURE;
-	}
-	cur_state = mlme_get_roam_state(mac_ctx->psoc, session_id);
-	if (cur_state == WLAN_ROAM_INIT) {
-		if (!is_fast_roam_enabled)
-			set_val =
-			WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING;
-		status = csr_send_roam_disable_cfg_msg(mac_ctx, session_id,
-						       set_val);
-
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("ROAM: update fast roaming failed, status: %d",
-				status);
-		}
-	}
-	mac_ctx->mlme_cfg->sta.usr_disabled_roaming = !is_fast_roam_enabled;
-
-	supplicant_disabled_roaming =
-		mlme_get_supplicant_disabled_roaming(mac_ctx->psoc,
-						     session_id);
-	if (!is_fast_roam_enabled && supplicant_disabled_roaming) {
-		sme_debug("ROAM: RSO disabled by wpa supplicant already");
-		return QDF_STATUS_E_ALREADY;
-	}
-	mlme_set_supplicant_disabled_roaming(mac_ctx->psoc, session_id,
-					     !is_fast_roam_enabled);
-
-	state = (is_fast_roam_enabled) ?
-		WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_RSO_STOPPED;
-	status = csr_post_roam_state_change(mac_ctx, session_id, state,
-					    REASON_SUPPLICANT_DISABLED_ROAMING);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("ROAM: update fast roaming failed. status: %d", status);
-		return  QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 		    const uint8_t *key, const int key_len)
@@ -6454,7 +6375,6 @@ int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 }
 #endif
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t vdev_id,
 			    uint8_t reason,
 			    enum wlan_cm_rso_control_requestor requestor)
@@ -6507,137 +6427,6 @@ bool sme_roaming_in_progress(mac_handle_t mac_handle, uint8_t vdev_id)
 
 	return wlan_cm_roaming_in_progress(mac->pdev, vdev_id);
 }
-
-#else
-/**
- * sme_stop_roaming() - Stop roaming for a given sessionId
- *  This is a synchronous call
- *
- * @mac_handle - The handle returned by mac_open
- * @sessionId - Session Identifier
- *
- * Return QDF_STATUS_SUCCESS on success
- *        Other status on failure
- */
-QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
-			    uint8_t reason,
-			    enum wlan_cm_rso_control_requestor requestor)
-{
-	QDF_STATUS status;
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session;
-
-	session = CSR_GET_SESSION(mac_ctx, session_id);
-
-	if (!session) {
-		sme_err("ROAM: incorrect vdev ID %d", session_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to acquire global SME lock!");
-		return status;
-	}
-
-	if (reason == REASON_DRIVER_DISABLED && requestor)
-		mlme_set_operations_bitmap(mac_ctx->psoc, session_id,
-					   requestor, false);
-
-	status = csr_post_roam_state_change(mac_ctx, session_id,
-					    WLAN_ROAM_RSO_STOPPED,
-					    REASON_DRIVER_DISABLED);
-
-	sme_release_global_lock(&mac_ctx->sme);
-	return status;
-}
-
-QDF_STATUS sme_abort_roaming(mac_handle_t mac_handle, uint8_t vdev_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status;
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to acquire global SME lock!");
-		return status;
-	}
-
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc, vdev_id) ||
-	    sme_neighbor_middle_of_roaming(mac_handle, vdev_id)) {
-		sme_release_global_lock(&mac_ctx->sme);
-		return QDF_STATUS_E_BUSY;
-	}
-
-	/* RSO stop cmd will be issued with global SME lock held to avoid
-	 * any racing conditions with wma/csr layer
-	 */
-	sme_stop_roaming(mac_handle, vdev_id, REASON_DRIVER_DISABLED,
-			 RSO_INVALID_REQUESTOR);
-
-	sme_release_global_lock(&mac_ctx->sme);
-	return QDF_STATUS_SUCCESS;
-}
-
-/*
- * sme_start_roaming() - Start roaming for a given sessionId
- *  This is a synchronous call
- *
- * mac_handle      - The handle returned by mac_open
- * sessionId - Session Identifier
- * Return QDF_STATUS_SUCCESS on success
- *	Other status on failure
- */
-QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
-			     uint8_t reason,
-			     enum wlan_cm_rso_control_requestor requestor)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (reason == REASON_DRIVER_ENABLED && requestor) {
-		mlme_set_operations_bitmap(mac->psoc, sessionId, requestor,
-					   true);
-	}
-
-	status = sme_acquire_global_lock(&mac->sme);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
-
-	status = csr_post_roam_state_change(mac, sessionId,
-					    WLAN_ROAM_RSO_ENABLED,
-					    REASON_DRIVER_ENABLED);
-
-	sme_release_global_lock(&mac->sme);
-
-	return status;
-}
-
-bool sme_roaming_in_progress(mac_handle_t mac_handle, uint8_t vdev_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status;
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to acquire global SME lock!");
-		return false;
-	}
-
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc, vdev_id) ||
-	    MLME_IS_ROAMING_IN_PROG(mac_ctx->psoc, vdev_id) ||
-	    mlme_is_roam_invoke_in_progress(mac_ctx->psoc, vdev_id) ||
-	    sme_neighbor_middle_of_roaming(mac_handle, vdev_id)) {
-		sme_release_global_lock(&mac_ctx->sme);
-		return true;
-	}
-
-	sme_release_global_lock(&mac_ctx->sme);
-	return false;
-}
-
-#endif
 
 /*
  * sme_set_roam_opportunistic_scan_threshold_diff() -
@@ -9812,37 +9601,6 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 	sme_release_global_lock(&mac->sme);
 	return status;
 }
-
-#ifndef ROAM_OFFLOAD_V1
-/*
- * sme_abort_roam_scan() -
- * API to abort current roam scan cycle by roam scan offload module.
- *
- * mac_handle - The handle returned by mac_open.
- * sessionId - Session Identifier
- * Return QDF_STATUS
- */
-
-QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
-		/* acquire the lock for the sme object */
-		status = sme_acquire_global_lock(&mac->sme);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			csr_roam_offload_scan(mac, sessionId,
-					      ROAM_SCAN_OFFLOAD_ABORT_SCAN,
-					      REASON_ROAM_ABORT_ROAM_SCAN);
-			/* release the lock for the sme object */
-			sme_release_global_lock(&mac->sme);
-		}
-	}
-
-	return status;
-}
-#endif
 
 QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
 					  uint8_t wifi_band,
@@ -16324,97 +16082,6 @@ void sme_chan_to_freq_list(
 		freq_list[count] =
 			wlan_reg_chan_to_freq(pdev, (uint32_t)chan_list[count]);
 }
-
-#ifndef ROAM_OFFLOAD_V1
-static QDF_STATUS sme_enable_roaming(struct mac_context *mac, uint32_t vdev_id,
-				     bool enable)
-{
-	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
-	QDF_STATUS status;
-	uint8_t reason = REASON_SUPPLICANT_DE_INIT_ROAMING;
-
-	if (!session) {
-		sme_err("Roam session is NULL for vdev %d", vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	if (enable)
-		reason = REASON_SUPPLICANT_INIT_ROAMING;
-
-	csr_post_roam_state_change(
-			mac, vdev_id,
-			enable ? WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_DEINIT,
-			reason);
-
-	sme_release_global_lock(&mac->sme);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_rso_init_deinit(struct mac_context *mac,
-			       struct wlan_roam_triggers *triggers)
-{
-	QDF_STATUS status;
-
-	if (!triggers->trigger_bitmap)
-		status = sme_enable_roaming(mac, triggers->vdev_id,
-					    false);
-	else
-		status = sme_enable_roaming(mac, triggers->vdev_id,
-					    true);
-
-	return status;
-}
-
-QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
-				 struct wlan_roam_triggers *triggers)
-{
-	QDF_STATUS status;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	struct wlan_roam_triggers *roam_trigger_data;
-
-	mlme_set_roam_trigger_bitmap(mac->psoc, triggers->vdev_id,
-				     triggers->trigger_bitmap);
-
-	status = sme_rso_init_deinit(mac, triggers);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	/* per contract must make a copy of the params when messaging */
-	roam_trigger_data = qdf_mem_malloc(sizeof(*roam_trigger_data));
-	if (!roam_trigger_data)
-		return QDF_STATUS_E_NOMEM;
-
-	*roam_trigger_data = *triggers;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(roam_trigger_data);
-		return status;
-	}
-
-	/* Serialize the req through MC thread */
-	message.bodyptr = roam_trigger_data;
-	message.type = SIR_HAL_SET_ROAM_TRIGGERS;
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_WMA,
-					&message);
-	sme_release_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("failed to post ROAM_TRIGGERS msg");
-		qdf_mem_free(roam_trigger_data);
-	}
-
-	return status;
-}
-#endif
 
 QDF_STATUS
 sme_send_vendor_btm_params(mac_handle_t mac_handle, uint8_t vdev_id)

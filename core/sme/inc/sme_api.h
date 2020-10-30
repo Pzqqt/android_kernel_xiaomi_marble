@@ -984,10 +984,6 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 		const bool
 		isFastRoamIniFeatureEnabled);
 
-#ifndef ROAM_OFFLOAD_V1
-QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
-				   const bool is_fast_roam_enabled);
-#endif
 QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 			    uint8_t reason,
 			    enum wlan_cm_rso_control_requestor requestor);
@@ -1634,10 +1630,6 @@ QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_WLAN_EXTSCAN */
-
-#ifndef ROAM_OFFLOAD_V1
-QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId);
-#endif
 
 /**
  * sme_get_vht_ch_width() - SME API to get the max supported FW chan width
