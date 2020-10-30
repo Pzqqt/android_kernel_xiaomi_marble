@@ -634,9 +634,6 @@ struct start_bss_req {
 	tSirNwType nwType;      /* Indicates 11a/b/g */
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
-#ifdef WLAN_FEATURE_11AX
-	tDot11fIEhe_cap he_config;
-#endif
 #ifdef WLAN_FEATURE_11W
 	bool pmfCapable;
 	bool pmfRequired;
@@ -955,9 +952,6 @@ struct join_req {
 	bool isFastRoamIniFeatureEnabled;
 
 	uint8_t txLdpcIniFeatureEnabled;
-#ifdef WLAN_FEATURE_11AX
-	tDot11fIEhe_cap he_config;
-#endif
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;

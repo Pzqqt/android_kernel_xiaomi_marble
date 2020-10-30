@@ -774,7 +774,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		if (IS_DOT11_MODE_HE(session->dot11mode)) {
 			lim_update_session_he_capable(mac_ctx, session);
-			lim_copy_bss_he_cap(session, sme_start_bss_req);
+			lim_copy_bss_he_cap(session);
 		} else if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
 			pe_err("Invalid oper_ch_freq %d for dot11mode %d",
 			       session->curr_op_freq, session->dot11mode);
@@ -1818,7 +1818,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		if (IS_DOT11_MODE_HE(session->dot11mode)) {
 			lim_update_session_he_capable(mac_ctx, session);
-			lim_copy_join_req_he_cap(session, sme_join_req);
+			lim_copy_join_req_he_cap(session);
 		}
 
 
