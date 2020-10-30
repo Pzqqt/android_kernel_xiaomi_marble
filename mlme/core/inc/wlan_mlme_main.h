@@ -259,6 +259,8 @@ struct mscs_req_info {
  * @opr_rate_set: operational rates set
  * @ext_opr_rate_set: extended operational rates set
  * @mscs_req_info: Information related to mscs request
+ * @he_config: he config
+ * @he_sta_obsspd: he_sta_obsspd
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -288,6 +290,10 @@ struct mlme_legacy_priv {
 	struct mlme_cfg_str ext_opr_rate_set;
 #ifdef WLAN_FEATURE_MSCS
 	struct mscs_req_info mscs_req_info;
+#endif
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEhe_cap he_config;
+	uint32_t he_sta_obsspd;
 #endif
 };
 
