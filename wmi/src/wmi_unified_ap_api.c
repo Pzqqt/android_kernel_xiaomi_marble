@@ -306,6 +306,19 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_peer_create_response_event(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct wmi_host_peer_create_response_event *param)
+{
+	if (wmi_handle->ops->extract_peer_create_response_event)
+		return wmi_handle->ops->extract_peer_create_response_event(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_extract_peer_delete_response_event(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,

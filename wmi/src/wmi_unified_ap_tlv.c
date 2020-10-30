@@ -1355,6 +1355,38 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(wmi_unified_t wmi_handle,
 }
 
 /*
+ * extract_peer_create_response_event_tlv() - extract peer create response event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param vdev_id: Pointer to hold vdev_id
+ * @param mac_addr: Pointer to hold peer mac address
+ * @param status: Peer create status
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_peer_create_response_event_tlv(wmi_unified_t wmi_hdl,
+	void *evt_buf, struct wmi_host_peer_create_response_event *param)
+{
+	WMI_PEER_CREATE_CONF_EVENTID_param_tlvs *param_buf;
+	wmi_peer_create_conf_event_fixed_param *ev;
+
+	param_buf = (WMI_PEER_CREATE_CONF_EVENTID_param_tlvs *)evt_buf;
+
+	ev = (wmi_peer_create_conf_event_fixed_param *) param_buf->fixed_param;
+	if (!ev) {
+		WMI_LOGE("%s: Invalid peer_create response", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	param->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr,
+			&param->mac_address.bytes[0]);
+	param->status = ev->status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
  * extract_peer_delete_response_event_tlv() - extract peer delete response event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -2589,6 +2621,8 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_dcs_interference_type = extract_dcs_interference_type_tlv;
 	ops->extract_dcs_cw_int = extract_dcs_cw_int_tlv;
 	ops->extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv;
+	ops->extract_peer_create_response_event =
+				extract_peer_create_response_event_tlv;
 	ops->extract_peer_delete_response_event =
 				extract_peer_delete_response_event_tlv;
 	ops->extract_pdev_csa_switch_count_status =
