@@ -73,24 +73,7 @@ QDF_STATUS wlan_if_mgr_deinit(void)
 QDF_STATUS wlan_if_mgr_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
 						 void *arg_list)
 {
-	struct wlan_if_mgr_obj *ifmgr_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	ifmgr_obj = qdf_mem_malloc_atomic(sizeof(struct wlan_if_mgr_obj));
-	if (!ifmgr_obj) {
-		ifmgr_err("Failed to allocate memory");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	/* Attach scan private date to psoc */
-	status = wlan_objmgr_psoc_component_obj_attach(psoc,
-						       WLAN_UMAC_COMP_IF_MGR,
-						       (void *)ifmgr_obj,
-						       QDF_STATUS_SUCCESS);
-	if (QDF_IS_STATUS_ERROR(status))
-		ifmgr_err("Failed to attach psoc scan component");
-	else
-		ifmgr_debug("interface mgr object attach to psoc successful");
 
 	return status;
 }
@@ -99,26 +82,7 @@ QDF_STATUS
 wlan_if_mgr_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 					void *arg_list)
 {
-	void *ifmgr_obj = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	ifmgr_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
-							  WLAN_UMAC_COMP_IF_MGR);
-
-	if (!ifmgr_obj) {
-		ifmgr_err("Failed to detach interface mgr in psoc ctx");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	status = wlan_objmgr_psoc_component_obj_detach(psoc,
-						       WLAN_UMAC_COMP_IF_MGR,
-						       ifmgr_obj);
-	if (QDF_IS_STATUS_ERROR(status))
-		ifmgr_err("Failed to detach psoc interface mgr component");
-	else
-		ifmgr_debug("interface mgr object detach to psoc successful");
-
-	qdf_mem_free(ifmgr_obj);
 
 	return status;
 }

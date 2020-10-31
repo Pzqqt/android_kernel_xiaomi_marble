@@ -66,14 +66,6 @@
 #define ifmgr_hex_dump(level, data, buf_len) \
 		qdf_trace_hex_dump(QDF_MODULE_ID_IFMGR, level, data, buf_len)
 
-/**
- * struct wlan_if_mgr_obj - interface object definition
- *
- */
-struct wlan_if_mgr_obj {
-
-};
-
 /*
  * wlan_if_mgr_init() - Interface manager module initialization API
  *
