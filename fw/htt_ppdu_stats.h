@@ -31,6 +31,8 @@
 
 #define HTT_BA_64_BIT_MAP_SIZE_DWORDS 2
 #define HTT_BA_256_BIT_MAP_SIZE_DWORDS 8
+#define HTT_BA_1024_BIT_MAP_SIZE_DWORDS 32
+
 enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_COMMON_TLV,                    /* htt_ppdu_stats_common_tlv */
     HTT_PPDU_STATS_USR_COMMON_TLV,                /* htt_ppdu_stats_user_common_tlv */
@@ -38,8 +40,8 @@ enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV,    /* htt_ppdu_stats_enq_mpdu_bitmap_64_tlv */
     HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV,   /* htt_ppdu_stats_enq_mpdu_bitmap_256_tlv */
     HTT_PPDU_STATS_SCH_CMD_STATUS_TLV,            /* htt_ppdu_stats_sch_cmd_tlv_v */
-    HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV,        /* htt_ppdu_stats_user_cmpltn_common_tlv */
-    HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV,  /* htt_ppdu_stats_user_cmpltn_ba_bitmap_64_tlv */
+    HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV,        /* htt_ppdu_stats_user_compltn_common_tlv */
+    HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV,  /* htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv */
     HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV, /* htt_ppdu_stats_user_cmpltn_ba_bitmap_256_tlv */
     HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV, /* htt_ppdu_stats_user_cmpltn_ack_ba_status_tlv */
     HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV,         /* htt_ppdu_stats_flush_tlv */
@@ -47,6 +49,8 @@ enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_INFO_TLV,                      /* htt_ppdu_stats_info */
     HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV,       /* htt_ppdu_stats_tx_mgmtctrl_payload_tlv */
     HTT_PPDU_STATS_USERS_INFO_TLV,                /* htt_ppdu_stats_users_info_tlv */
+    HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_1024_TLV,  /* htt_ppdu_stats_enq_mpdu_bitmap_1024_tlv */
+    HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_1024_TLV,/* htt_ppdu_stats_user_compltn_ba_bitmap_1024_tlv */
 
     /* New TLV's are added above to this line */
     HTT_PPDU_STATS_MAX_TAG,
@@ -1595,6 +1599,24 @@ typedef struct {
     A_UINT32 enq_bitmap[HTT_BA_256_BIT_MAP_SIZE_DWORDS];
 } htt_ppdu_stats_enq_mpdu_bitmap_256_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* BIT [ 7 :   0]   :- tid_num
+     * BIT [ 15:   8]   :- reserved0
+     * BIT [ 31:  16]   :- sw_peer_id
+     */
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:         8,
+                     reserved0:       8,
+                     sw_peer_id:     16;
+        };
+    };
+    A_UINT32 start_seq;
+    A_UINT32 enq_bitmap[HTT_BA_1024_BIT_MAP_SIZE_DWORDS];
+} htt_ppdu_stats_enq_mpdu_bitmap_1024_tlv;
+
 /* COMPLETION_STATUS defined in HTT_PPDU_STATS_USER_COMPLETION_STATUS */
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_COMPLETION_STATUS_M     0x000000ff
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_COMPLETION_STATUS_S              0
@@ -2019,6 +2041,24 @@ typedef struct {
     A_UINT32 ba_seq_no;
     A_UINT32 ba_bitmap[HTT_BA_256_BIT_MAP_SIZE_DWORDS];
 } htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* BIT [ 7 :   0]   :- tid_num
+     * BIT [ 15:   8]   :- reserved0
+     * BIT [ 31:  16]   :- sw_peer_id
+     */
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:        8,
+                     reserved0:      8,
+                     sw_peer_id:    16;
+        };
+    };
+    A_UINT32 ba_seq_no;
+    A_UINT32 ba_bitmap[HTT_BA_1024_BIT_MAP_SIZE_DWORDS];
+} htt_ppdu_stats_user_compltn_ba_bitmap_1024_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_SW_PEER_ID_M     0x0000ffff
 #define HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_SW_PEER_ID_S              0

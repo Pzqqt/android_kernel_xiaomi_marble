@@ -126,7 +126,7 @@ extern "C" {
     (((num_entries) / (32 / (bits_per_entry))) +            \
     (((num_entries) % (32 / (bits_per_entry))) ? 1 : 0))
 
-#define WMI_RETURN_STRING(str) case ((str)): return (uint8_t *)(# str);
+#define WMI_RETURN_STRING(str) case ((str)): return (A_UINT8 *)(# str);
 
 static INLINE A_UINT32 wmi_packed_arr_get_bits(A_UINT32 *arr,
     A_UINT32 entry_index, A_UINT32 bits_per_entry)
