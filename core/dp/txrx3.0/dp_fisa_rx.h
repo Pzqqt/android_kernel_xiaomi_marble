@@ -38,6 +38,9 @@
 #define FISA_FLOW_MAX_CUMULATIVE_IP_LEN \
 	(FISA_MAX_SINGLE_CUMULATIVE_IP_LEN * FISA_FLOW_MAX_AGGR_COUNT)
 
+#define IPSEC_PORT 500
+#define IPSEC_NAT_PORT 4500
+
 struct dp_fisa_rx_fst_update_elem {
 	/* Do not add new entries here */
 	qdf_list_node_t node;
