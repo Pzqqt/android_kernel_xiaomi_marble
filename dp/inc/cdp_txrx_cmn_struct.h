@@ -2441,6 +2441,7 @@ enum cdp_flow_protocol_type {
 struct cdp_rx_flow_tuple_info {
 #ifdef WLAN_SUPPORT_RX_FISA
 	uint8_t tuple_populated;
+	uint8_t is_exception;
 #endif
 	uint32_t dest_ip_127_96;
 	uint32_t dest_ip_95_64;
