@@ -1328,6 +1328,16 @@ int dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_log_lvl)
 	return 0;
 }
 
+int dbglog_set_mod_wow_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_log_lvl)
+{
+	/* set the global module level to log_lvl */
+	wma_config_debug_module_cmd(wmi_handle,
+				    WMI_DEBUG_LOG_PARAM_WOW_MOD_ENABLE_BITMAP,
+				    mod_log_lvl, NULL, 0);
+
+	return 0;
+}
+
 void
 dbglog_set_vap_enable_bitmap(wmi_unified_t wmi_handle,
 			     uint32_t vap_enable_bitmap)
