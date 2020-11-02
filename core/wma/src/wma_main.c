@@ -2890,6 +2890,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	target_resource_config *wlan_res_cfg;
 	uint8_t delay_before_vdev_stop;
 	uint32_t self_gen_frm_pwr = 0;
+	uint32_t device_mode = cds_get_conparam();
 
 	wma_debug("Enter");
 
@@ -2929,7 +2930,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		goto err_free_wma_handle;
 	}
 
-	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
+	if (device_mode != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_create(&wma_handle->extscan_wake_lock,
 					"wlan_extscan_wl");
@@ -3000,6 +3001,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
 
 	target_psoc_set_target_type(tgt_psoc_info, target_type);
+	target_psoc_set_device_mode(tgt_psoc_info, device_mode);
 	/* Save the WMI & HTC handle */
 	target_psoc_set_wmi_hdl(tgt_psoc_info, wmi_handle);
 	wma_handle->wmi_handle = wmi_handle;
