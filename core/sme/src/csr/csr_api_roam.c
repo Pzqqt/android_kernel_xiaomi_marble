@@ -14922,18 +14922,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		}
 #endif /* FEATURE_WLAN_ESE */
 
-		if ((csr_is11h_supported(mac)) &&
-			(WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) &&
-			(pIes->Country.present) &&
-			(!mac->mlme_cfg->sap_cfg.country_code_priority)) {
-			csr_save_to_channel_power2_g_5_g(mac,
-				pIes->Country.num_triplets *
-				sizeof(tSirMacChanInfo),
-				(tSirMacChanInfo *)
-				(&pIes->Country.triplets[0]));
-			csr_apply_power2_current(mac);
-		}
-
 		if (pProfile->bOSENAssociation)
 			csr_join_req->isOSENConnection = true;
 		else

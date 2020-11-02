@@ -114,7 +114,7 @@ const EID_AID                        =  197;
 const EID_EXT_CAP           	     =  127;
 const EID_OPERATING_MODE             =  199;
 const EID_WIDER_BW_CHANNEL_SWITCH_ANN=  194;
-const VHT_TRANSMIT_POWER_ENVELOPE    = 195;
+const EID_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
 const EID_VENDOR_SPECIFIC            = 221;
 const EID_FILS_INDICATION            = 240;
@@ -1332,7 +1332,8 @@ IE RequestedInfo (EID_REQUEST)            // 7.3.2.12
 IE Country (EID_COUNTRY)                  // 7.3.2.9
 {
     country[3];
-    OPTIONAL triplets[3][0..84];
+    first_triplet[3];
+    OPTIONAL more_triplets[3][0..80];
 }
 
 IE FHParams (EID_FH_PATTERN)              // 7.3.2.10
@@ -2448,15 +2449,20 @@ IE WiderBWChanSwitchAnn (EID_WIDER_BW_CHANNEL_SWITCH_ANN)
    newCenterChanFreq1,    1;
 }
 
-IE vht_transmit_power_env (VHT_TRANSMIT_POWER_ENVELOPE)
+IE transmit_power_env (EID_TRANSMIT_POWER_ENVELOPE)
 {
-    bytes[2..5];
+    {
+        max_tx_pwr_count:             3;
+        max_tx_pwr_interpret:         3;
+        max_tx_pwr_category:          2;
+    }
+    tx_power[1..8];
 }
 
 IE ChannelSwitchWrapper (EID_CHANNEL_SWITCH_WRAPPER)
 {
     OPTIE IE  WiderBWChanSwitchAnn;
-    OPTIE IE  vht_transmit_power_env;
+    OPTIE IE  transmit_power_env;
 }
 IE ExtCap (EID_EXT_CAP)
 {
@@ -3111,7 +3117,8 @@ IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)
             { // control
                 ch_width: 2;
                 dup_bcon: 1;
-                reserved: 5;
+                reg_info: 3;
+                reserved: 2;
             }
             center_freq_seg0, 1;
             center_freq_seg1, 1;
@@ -3678,7 +3685,7 @@ FRAME Beacon2
     OPTIE  P2PBeacon;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
-    OPTIE  vht_transmit_power_env;
+    OPTIE  transmit_power_env[0..8];
     OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
     OPTIE  ExtCap;
@@ -4015,7 +4022,7 @@ FRAME ProbeResponse                       // 7.2.3.9
 
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
-    OPTIE  vht_transmit_power_env;
+    OPTIE  transmit_power_env[0..8];
     OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
     OPTIE  ExtCap;
@@ -4059,6 +4066,7 @@ FRAME DeAuth                              // 7.2.3.11
     FF    Reason;
     OPTIE P2PDeAuth;
 }
+
 
 FRAME AddTSRequest                        // 7.4.2.1
 {

@@ -264,12 +264,16 @@ populate_dot11_supp_operating_classes(struct mac_context *mac_ptr,
 }
 
 void
-populate_dot11f_vht_tx_power_env(struct mac_context *mac,
-				 tDot11fIEvht_transmit_power_env *pDot11f,
-				 enum phy_ch_width ch_width, uint32_t chan_freq)
+populate_dot11f_tx_power_env(struct mac_context *mac,
+			     tDot11fIEtransmit_power_env *pDot11f,
+			     enum phy_ch_width ch_width, uint32_t chan_freq,
+			     uint16_t *num_tpe, bool is_ch_switch)
 {
 	uint8_t num_tx_power, i, tx_power;
 	int reg_max;
+
+	if (!is_ch_switch)
+		*num_tpe = 1;
 
 	switch (ch_width) {
 	case CH_WIDTH_20MHZ:
@@ -310,15 +314,15 @@ populate_dot11f_vht_tx_power_env(struct mac_context *mac,
 		tx_power = reg_max;
 
 	/* Ignore EID field */
-	pDot11f->present = 1;
-	pDot11f->num_bytes = num_tx_power + 2;
+	pDot11f[0].present = 1;
+	pDot11f[0].num_tx_power = num_tx_power + 2;
 	/*
 	 * Max Transmit Power count and
 	 * Max Transmit Power units = 0 (EIRP)
 	 */
-	pDot11f->bytes[0] = num_tx_power;
+	pDot11f[0].tx_power[0] = num_tx_power;
 	for (i = 0; i <= num_tx_power; i++)
-		pDot11f->bytes[i + 1] = tx_power;
+		pDot11f[0].tx_power[i + 1] = tx_power;
 }
 
 void
@@ -356,13 +360,14 @@ populate_dot11f_chan_switch_wrapper(struct mac_context *mac,
 	pDot11f->WiderBWChanSwitchAnn.present = 1;
 
 	/*
-	 * Add the VHT Transmit power Envelope Sublement.
+	 * Add the Transmit power Envelope Sublement.
 	 */
 	if (pe_session->vhtCapability) {
-		populate_dot11f_vht_tx_power_env(mac,
-				&pDot11f->vht_transmit_power_env,
+		populate_dot11f_tx_power_env(mac,
+				&pDot11f->transmit_power_env,
 				pe_session->gLimChannelSwitch.ch_width,
-				pe_session->gLimChannelSwitch.primaryChannel);
+				pe_session->gLimChannelSwitch.primaryChannel,
+				NULL, true);
 	}
 }
 
@@ -394,6 +399,8 @@ populate_dot11f_country(struct mac_context *mac,
 	enum reg_wifi_band cur_triplet_band;
 	int chan_enum;
 	struct regulatory_channel *cur_chan_list;
+	uint8_t buffer_triplets[81][3];
+	uint8_t i,j, num_triplets = 0;
 	QDF_STATUS status;
 
 	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
@@ -414,19 +421,18 @@ populate_dot11f_country(struct mac_context *mac,
 	ctry_ie->country[REG_ALPHA2_LEN] = 0x04;
 
 	cur_triplet_valid = false;
-	ctry_ie->num_triplets = 0;
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 		if (wlan_reg_is_6ghz_chan_freq(
 			    cur_chan_list[chan_enum].center_freq)) {
 			if (cur_triplet_valid) {
-				ctry_ie->triplets[ctry_ie->num_triplets][0] =
+				buffer_triplets[num_triplets][0] =
 					wlan_reg_freq_to_chan(mac->pdev,
 							      cur_triplet_freq);
-				ctry_ie->triplets[ctry_ie->num_triplets][1] =
+				buffer_triplets[num_triplets][1] =
 					cur_triplet_num_chans;
-				ctry_ie->triplets[ctry_ie->num_triplets][2] =
+				buffer_triplets[num_triplets][2] =
 					cur_triplet_tx_power;
-				ctry_ie->num_triplets++;
+				num_triplets++;
 				cur_triplet_valid =  false;
 			}
 			break;
@@ -435,14 +441,14 @@ populate_dot11f_country(struct mac_context *mac,
 		if (cur_chan_list[chan_enum].chan_flags &
 		    REGULATORY_CHAN_DISABLED) {
 			if (cur_triplet_valid) {
-				ctry_ie->triplets[ctry_ie->num_triplets][0] =
+				buffer_triplets[num_triplets][0] =
 					wlan_reg_freq_to_chan(mac->pdev,
 							      cur_triplet_freq);
-				ctry_ie->triplets[ctry_ie->num_triplets][1] =
+				buffer_triplets[num_triplets][1] =
 					cur_triplet_num_chans;
-				ctry_ie->triplets[ctry_ie->num_triplets][2] =
+				buffer_triplets[num_triplets][2] =
 					cur_triplet_tx_power;
-				ctry_ie->num_triplets++;
+				num_triplets++;
 				cur_triplet_valid =  false;
 			}
 			continue;
@@ -455,14 +461,14 @@ populate_dot11f_country(struct mac_context *mac,
 			     wlan_reg_freq_to_band(cur_chan_list[chan_enum].center_freq)))
 				cur_triplet_num_chans++;
 			else {
-				ctry_ie->triplets[ctry_ie->num_triplets][0] =
+				buffer_triplets[num_triplets][0] =
 					wlan_reg_freq_to_chan(mac->pdev,
 							      cur_triplet_freq);
-				ctry_ie->triplets[ctry_ie->num_triplets][1] =
+				buffer_triplets[num_triplets][1] =
 					cur_triplet_num_chans;
-				ctry_ie->triplets[ctry_ie->num_triplets][2] =
+				buffer_triplets[num_triplets][2] =
 					cur_triplet_tx_power;
-				ctry_ie->num_triplets++;
+				num_triplets++;
 
 				cur_triplet_freq =
 					cur_chan_list[chan_enum].center_freq;
@@ -481,12 +487,22 @@ populate_dot11f_country(struct mac_context *mac,
 		}
 	}
 
-	if (ctry_ie->num_triplets == 0) {
+	if (num_triplets == 0) {
 		/* at-least one triplet should be present */
 		qdf_mem_free(cur_chan_list);
 		return QDF_STATUS_SUCCESS;
 	}
 
+	ctry_ie->num_more_triplets = num_triplets - 1;
+	ctry_ie->first_triplet[0] = buffer_triplets[0][0];
+	ctry_ie->first_triplet[1] = buffer_triplets[0][1];
+	ctry_ie->first_triplet[2] = buffer_triplets[0][2];
+
+	for (i = 0; i < ctry_ie->num_more_triplets; i++) {
+		for (j = 0; j < 3; j++) {
+			ctry_ie->more_triplets[i][j] = buffer_triplets[i+1][j];
+		}
+	}
 	ctry_ie->present = 1;
 
 	qdf_mem_free(cur_chan_list);
@@ -6021,10 +6037,7 @@ QDF_STATUS
 populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 				    tDot11fTimingAdvertisementFrame *frame)
 {
-	uint32_t val, len, j = 0;
-	uint8_t temp[CFG_MAX_STR_LEN], code[3];
-	tSirMacChanInfo *max_tx_power_data;
-	int32_t rem_length = 0, copied_length = 0;
+	uint32_t val = 0;
 
 	/* Capabilities */
 	val = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
@@ -6050,30 +6063,7 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 		(uint16_t)((val >> WNI_CFG_BLOCK_ACK_ENABLED_IMMEDIATE) & 1);
 
 	/* Country */
-	len = mac_ctx->mlme_cfg->power.max_tx_power_5.len;
-	max_tx_power_data =
-		(tSirMacChanInfo *)mac_ctx->mlme_cfg->power.max_tx_power_5.data;
-	rem_length = len;
-	while (rem_length >= (sizeof(tSirMacChanInfo))) {
-		temp[copied_length++] =
-			(uint8_t)wlan_reg_freq_to_chan(
-					mac_ctx->pdev,
-					max_tx_power_data[j].first_freq);
-
-		temp[copied_length++] = max_tx_power_data[j].numChannels;
-		temp[copied_length++] = max_tx_power_data[j].maxTxPower;
-		j++;
-		rem_length -= (sizeof(tSirMacChanInfo));
-	}
-
-	wlan_reg_read_current_country(mac_ctx->psoc, code);
-	qdf_mem_copy(&frame->Country, code, 2);
-	if (copied_length > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE)
-		copied_length = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
-
-	frame->Country.num_triplets = (uint8_t)(copied_length / 3);
-	qdf_mem_copy((uint8_t *)&frame->Country.triplets, temp, copied_length);
-	frame->Country.present = 1;
+	populate_dot11f_country(mac_ctx, &frame->Country, NULL);
 
 	/* PowerConstraints */
 	frame->PowerConstraints.localPowerConstraints =

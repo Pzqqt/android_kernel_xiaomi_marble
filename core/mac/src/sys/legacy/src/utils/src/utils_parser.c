@@ -265,18 +265,23 @@ void convert_tim(struct mac_context *mac, tSirMacTim *pOld, tDot11fIETIM *pNew)
 void convert_country(struct mac_context *mac,
 		     tSirCountryInformation *pOld, tDot11fIECountry *pNew)
 {
-	int i;
+	uint8_t i = 0;
 
 	qdf_mem_copy(pOld->countryString, pNew->country, COUNTRY_STRING_LENGTH);
 
-	pOld->numIntervals = pNew->num_triplets;
+	pOld->numIntervals = pNew->num_more_triplets;
 
-	for (i = 0; i < pNew->num_triplets; ++i) {
-		pOld->channelTransmitPower[i].channelNumber =
-			pNew->triplets[i][0];
-		pOld->channelTransmitPower[i].numChannel = pNew->triplets[i][1];
-		pOld->channelTransmitPower[i].maxTransmitPower =
-			pNew->triplets[i][2];
+	pOld->channelTransmitPower[i].channelNumber = pNew->first_triplet[0];
+	pOld->channelTransmitPower[i].numChannel = pNew->first_triplet[1];
+	pOld->channelTransmitPower[i].maxTransmitPower = pNew->first_triplet[2];
+
+	for (i = 0; i < pNew->num_more_triplets; i++) {
+		pOld->channelTransmitPower[i+1].channelNumber =
+				pNew->more_triplets[i][0];
+		pOld->channelTransmitPower[i+1].numChannel =
+				pNew->more_triplets[i][1];
+		pOld->channelTransmitPower[i+1].maxTransmitPower =
+				pNew->more_triplets[i][2];
 	}
 }
 
