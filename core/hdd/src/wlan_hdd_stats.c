@@ -1923,6 +1923,7 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	if (ret) {
 		hdd_err("Target response timed out request id %d request bitmap 0x%x",
 			priv->request_id, priv->request_bitmap);
+		sme_radio_tx_mem_free();
 		qdf_spin_lock(&priv->ll_stats_lock);
 		priv->request_bitmap = 0;
 		qdf_spin_unlock(&priv->ll_stats_lock);

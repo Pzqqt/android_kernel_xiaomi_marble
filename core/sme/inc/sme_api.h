@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1635,6 +1635,13 @@ QDF_STATUS sme_ll_stats_set_req(mac_handle_t mac_handle,
 QDF_STATUS sme_ll_stats_get_req(mac_handle_t mac_handle,
 				tSirLLStatsGetReq *get_stats_req,
 				void *context);
+
+/**
+ * sme_radio_tx_mem_free() - SME API to free the ll_stats memory
+ *
+ * Return: None
+ */
+void sme_radio_tx_mem_free(void);
 
 /**
  * sme_set_link_layer_stats_ind_cb() -

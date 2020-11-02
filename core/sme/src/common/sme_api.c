@@ -10229,6 +10229,19 @@ QDF_STATUS sme_set_wisa_params(mac_handle_t mac_handle,
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 
+void sme_radio_tx_mem_free(void)
+{
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		sme_err("Invalid wma handle");
+		return;
+	}
+	wma_unified_radio_tx_mem_free(wma_handle);
+}
+
 /*
  * sme_ll_stats_clear_req() -
  * SME API to clear Link Layer Statistics
