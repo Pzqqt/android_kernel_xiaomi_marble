@@ -27,6 +27,10 @@
 #include "wlan_cm_bss_score_param.h"
 #include "wlan_scan_api.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_mgmt_txrx_utils_api.h"
+#ifdef CONN_MGR_ADV_FEATURE
+#include "wlan_mlme_api.h"
+#endif
 
 #define CM_20MHZ_BW_INDEX                  0
 #define CM_40MHZ_BW_INDEX                  1
@@ -95,6 +99,29 @@
 	QDF_GET_BITS(value32, (8 * (bw_index)), 8)
 #define CM_SET_SCORE_PERCENTAGE(value32, score_pcnt, bw_index) \
 	QDF_SET_BITS(value32, (8 * (bw_index)), 8, score_pcnt)
+
+#ifdef CONN_MGR_ADV_FEATURE
+/* 3.2 us + 0.8 us(GI) */
+#define PPDU_PAYLOAD_SYMBOL_DUR_US 4
+/* 12.8 us + (0.8 + 1.6)/2 us(GI) */
+#define HE_PPDU_PAYLOAD_SYMBOL_DUR_US 14
+#define MAC_HEADER_LEN 26
+/* Minimum snrDb supported by LUT */
+#define SNR_DB_TO_BIT_PER_TONE_LUT_MIN -10
+/* Maximum snrDb supported by LUT */
+#define SNR_DB_TO_BIT_PER_TONE_LUT_MAX 9
+#define DB_NUM 20
+/*
+ * A fudge factor to represent HW implementation margin in dB.
+ * Predicted throughput matches pretty well with OTA throughput with this
+ * fudge factor.
+ */
+#define SNR_MARGIN_DB 16
+#define TWO_IN_DB 3
+static int32_t
+SNR_DB_TO_BIT_PER_TONE_LUT[DB_NUM] = {0, 171, 212, 262, 323, 396, 484,
+586, 706, 844, 1000, 1176, 1370, 1583, 1812, 2058, 2317, 2588, 2870, 3161};
+#endif
 
 static bool cm_is_better_bss(struct scan_cache_entry *bss1,
 			     struct scan_cache_entry *bss2)
@@ -815,6 +842,455 @@ void wlan_cm_get_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
 	*value = mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed;
 }
 
+static enum phy_ch_width
+cm_calculate_bandwidth(struct scan_cache_entry *entry,
+		       struct psoc_phy_config *phy_config)
+{
+	uint8_t bw_above_20 = 0;
+	bool is_vht = false;
+	enum phy_ch_width ch_width;
+
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(entry->channel.chan_freq)) {
+		bw_above_20 = phy_config->bw_above_20_24ghz;
+		if (phy_config->vht_24G_cap)
+			is_vht = true;
+	} else if (phy_config->vht_cap) {
+		is_vht = true;
+		bw_above_20 = phy_config->bw_above_20_5ghz;
+	}
+
+	if (IS_WLAN_PHYMODE_160MHZ(entry->phy_mode))
+		ch_width = CH_WIDTH_160MHZ;
+	else if (IS_WLAN_PHYMODE_80MHZ(entry->phy_mode))
+		ch_width = CH_WIDTH_80MHZ;
+	else if (IS_WLAN_PHYMODE_40MHZ(entry->phy_mode))
+		ch_width = CH_WIDTH_40MHZ;
+	else
+		ch_width = CH_WIDTH_20MHZ;
+
+	if (!phy_config->ht_cap &&
+	    ch_width >= CH_WIDTH_20MHZ)
+		ch_width = CH_WIDTH_20MHZ;
+
+	if (!is_vht && ch_width > CH_WIDTH_40MHZ)
+		ch_width = CH_WIDTH_40MHZ;
+
+	if (!bw_above_20)
+		ch_width = CH_WIDTH_20MHZ;
+
+	return ch_width;
+}
+
+static uint8_t cm_etp_get_ba_win_size_from_esp(uint8_t esp_ba_win_size)
+{
+	/*
+	 * BA Window Size subfield is three bits in length and indicates the
+	 * size of the Block Ack window that is.
+	 * 802.11-2016.pdf Table 9-262 BA Window Size subfield encoding
+	 */
+	switch (esp_ba_win_size) {
+	case 1: return 2;
+	case 2: return 4;
+	case 3: return 6;
+	case 4: return 8;
+	case 5: return 16;
+	case 6: return 32;
+	case 7: return 64;
+	default: return 1;
+	}
+}
+
+static uint16_t cm_get_etp_ntone(bool is_ht, bool is_vht,
+				 enum phy_ch_width ch_width)
+{
+	uint16_t n_sd = 52, n_seg = 1;
+
+	if (is_vht) {
+		/* Refer Table 21-5 in IEEE80211-2016 Spec */
+		if (ch_width == CH_WIDTH_20MHZ)
+			n_sd = 52;
+		else if (ch_width == CH_WIDTH_40MHZ)
+			n_sd = 108;
+		else if (ch_width == CH_WIDTH_80MHZ)
+			n_sd = 234;
+		else if (ch_width == CH_WIDTH_80P80MHZ)
+			n_sd = 234, n_seg = 2;
+		else if (ch_width == CH_WIDTH_160MHZ)
+			n_sd = 468;
+	} else if (is_ht) {
+		/* Refer Table 19-6 in IEEE80211-2016 Spec */
+		if (ch_width == CH_WIDTH_20MHZ)
+			n_sd = 52;
+		if (ch_width == CH_WIDTH_40MHZ)
+			n_sd = 108;
+	} else {
+		n_sd = 48;
+	}
+
+	return (n_sd * n_seg);
+}
+
+/* Refer Table 27-64 etc in Draft P802.11ax_D7.0.txt */
+static uint16_t cm_get_etp_he_ntone(enum phy_ch_width ch_width)
+{
+	uint16_t n_sd = 234, n_seg = 1;
+
+	if (ch_width == CH_WIDTH_20MHZ)
+		n_sd = 234;
+	else if (ch_width == CH_WIDTH_40MHZ)
+		n_sd = 468;
+	else if (ch_width == CH_WIDTH_80MHZ)
+		n_sd = 980;
+	else if (ch_width == CH_WIDTH_80P80MHZ)
+		n_sd = 980, n_seg = 2;
+	else if (ch_width == CH_WIDTH_160MHZ)
+		n_sd = 1960;
+
+	return (n_sd * n_seg);
+}
+
+static uint16_t cm_get_etp_phy_header_dur_us(bool is_ht, bool is_vht,
+					     uint8_t nss)
+{
+	uint16_t dur_us = 0;
+
+	if (is_vht) {
+		/*
+		 * Refer Figure 21-4 in 80211-2016 Spec
+		 * 8 (L-STF) + 8 (L-LTF) + 4 (L-SIG) +
+		 * 8 (VHT-SIG-A) + 4 (VHT-STF) + 4 (VHT-SIG-B)
+		 */
+		dur_us = 36;
+		/* (nss * VHT-LTF) = (nss * 4) */
+		dur_us += (nss << 2);
+	} else if (is_ht) {
+		/*
+		 * Refer Figure 19-1 in 80211-2016 Spec
+		 * 8 (L-STF) + 8 (L-LTF) + 4 (L-SIG) + 8 (HT-SIG) +
+		 * 4 (HT-STF)
+		 */
+		dur_us = 32;
+		/* (nss * HT-LTF = nss * 4) */
+		dur_us += (nss << 2);
+	} else {
+		/*
+		 * non-HT
+		 * Refer Figure 19-1 in 80211-2016 Spec
+		 * 8 (L-STF) + 8 (L-LTF) + 4 (L-SIG)
+		 */
+		dur_us = 20;
+	}
+	return dur_us;
+}
+
+static uint32_t
+cm_get_etp_max_bits_per_sc_1000x_for_nss(struct wlan_objmgr_psoc *psoc,
+					 struct scan_cache_entry *entry,
+					 uint8_t nss,
+					 struct psoc_phy_config *phy_config)
+{
+	uint32_t max_bits_per_sc_1000x = 5000; /* 5 * 1000 */
+	uint8_t mcs_map;
+	struct wlan_ie_vhtcaps *bss_vht_cap;
+	struct wlan_ie_hecaps *bss_he_cap;
+	uint32_t self_rx_mcs_map;
+	QDF_STATUS status;
+
+	bss_vht_cap = (struct wlan_ie_vhtcaps *)util_scan_entry_vhtcap(entry);
+	bss_he_cap = (struct wlan_ie_hecaps *)util_scan_entry_hecap(entry);
+	if (!phy_config->vht_cap || !bss_vht_cap) {
+		mlme_err("vht unsupported");
+		return max_bits_per_sc_1000x;
+	}
+
+	status = wlan_mlme_cfg_get_vht_rx_mcs_map(psoc, &self_rx_mcs_map);
+	if (QDF_IS_STATUS_ERROR(status))
+		return max_bits_per_sc_1000x;
+
+	if (nss == 4) {
+		mcs_map = (self_rx_mcs_map & 0xC0) >> 6;
+		mcs_map = QDF_MIN(mcs_map,
+				  (bss_vht_cap->rx_mcs_map & 0xC0) >> 6);
+	} else if (nss == 3) {
+		mcs_map = (self_rx_mcs_map & 0x30) >> 4;
+		mcs_map = QDF_MIN(mcs_map,
+				  (bss_vht_cap->rx_mcs_map & 0x30) >> 4);
+	} else if (nss == 2) {
+		mcs_map = (self_rx_mcs_map & 0x0C) >> 2;
+		mcs_map = QDF_MIN(mcs_map,
+				  (bss_vht_cap->rx_mcs_map & 0x0C) >> 2);
+	} else {
+		mcs_map = (self_rx_mcs_map & 0x03);
+		mcs_map = QDF_MIN(mcs_map, (bss_vht_cap->rx_mcs_map & 0x03));
+	}
+	if (bss_he_cap) {
+		if (mcs_map == 2)
+			max_bits_per_sc_1000x = 8333; /* 10 *5/6 * 1000 */
+		else if (mcs_map == 1)
+			max_bits_per_sc_1000x = 7500; /* 10 * 3/4 * 1000 */
+	} else {
+		if (mcs_map == 2)
+			max_bits_per_sc_1000x = 6667; /* 8 * 5/6 * 1000 */
+		else if (mcs_map == 1)
+			max_bits_per_sc_1000x = 6000; /* 8 * 3/4 * 1000 */
+	}
+	return max_bits_per_sc_1000x;
+}
+
+/* Refer Table 9-163 in 80211-2016 Spec */
+static uint32_t cm_etp_get_min_mpdu_ss_us_100x(struct htcap_cmn_ie *htcap)
+{
+	tSirMacHTParametersInfo *ampdu_param;
+	uint8_t ampdu_density;
+
+	ampdu_param = (tSirMacHTParametersInfo *)&htcap->ampdu_param;
+	ampdu_density = ampdu_param->mpduDensity;
+
+	if (ampdu_density == 1)
+		return 25; /* (1/4) * 100 */
+	else if (ampdu_density == 2)
+		return 50; /* (1/2) * 100 */
+	else if (ampdu_density == 3)
+		return 100; /* 1 * 100 */
+	else if (ampdu_density == 4)
+		return 200; /* 2 * 100 */
+	else if (ampdu_density == 5)
+		return 400; /* 4 * 100 */
+	else if (ampdu_density == 6)
+		return 800; /* 8 * 100 */
+	else if (ampdu_density == 7)
+		return 1600; /* 16 * 100 */
+	else
+		return 100;
+}
+
+/* Refer Table 9-162 in 80211-2016 Spec */
+static uint32_t cm_etp_get_max_amsdu_len(struct wlan_objmgr_psoc *psoc,
+					 struct htcap_cmn_ie *htcap)
+{
+	uint8_t bss_max_amsdu;
+	uint32_t bss_max_amsdu_len;
+	QDF_STATUS status;
+
+	status = wlan_mlme_get_max_amsdu_num(psoc, &bss_max_amsdu);
+	if (QDF_IS_STATUS_ERROR(status))
+		bss_max_amsdu_len = 3839;
+	else if (bss_max_amsdu == 1)
+		bss_max_amsdu_len =  7935;
+	else
+		bss_max_amsdu_len = 3839;
+
+	return bss_max_amsdu_len;
+}
+
+   // Calculate the number of bits per tone based on the input of SNR in dB
+    // The output is scaled up by BIT_PER_TONE_SCALE for integer representation
+static uint32_t
+calculate_bit_per_tone(int32_t rssi, enum phy_ch_width ch_width)
+{
+	int32_t noise_floor_db_boost;
+	int32_t noise_floor_dbm;
+	int32_t snr_db;
+	int32_t bit_per_tone;
+	int32_t lut_in_idx;
+
+	noise_floor_db_boost = TWO_IN_DB * ch_width;
+	noise_floor_dbm = WLAN_NOISE_FLOOR_DBM_DEFAULT + noise_floor_db_boost +
+			SNR_MARGIN_DB;
+	snr_db = rssi - noise_floor_dbm;
+	if (snr_db <= SNR_DB_TO_BIT_PER_TONE_LUT_MAX) {
+		lut_in_idx = QDF_MAX(snr_db, SNR_DB_TO_BIT_PER_TONE_LUT_MIN)
+			- SNR_DB_TO_BIT_PER_TONE_LUT_MIN;
+		lut_in_idx = QDF_MIN(lut_in_idx, DB_NUM - 1);
+		bit_per_tone = SNR_DB_TO_BIT_PER_TONE_LUT[lut_in_idx];
+	} else {
+		/*
+		 * SNR_tone = 10^(SNR/10)
+		 * log2(1+SNR_tone) ~= log2(SNR_tone) =
+		 * log10(SNR_tone)/log10(2) = log10(10^(SNR/10)) / 0.3
+		 * = (SNR/10) / 0.3 = SNR/3
+		 * So log2(1+SNR_tone) = SNR/3. 1000x for this is SNR*334
+		 */
+		bit_per_tone = snr_db * 334;
+	}
+
+	return bit_per_tone;
+}
+
+static uint32_t
+cm_calculate_etp(struct wlan_objmgr_psoc *psoc,
+		 struct scan_cache_entry *entry,
+		 struct etp_params  *etp_param,
+		 uint8_t max_nss, enum phy_ch_width ch_width,
+		 bool is_ht, bool is_vht, bool is_he,
+		 int8_t rssi,
+		 struct psoc_phy_config *phy_config)
+{
+	uint16_t ntone;
+	uint16_t phy_hdr_dur_us, max_amsdu_len = 1500, min_mpdu_ss_us_100x = 0;
+	uint32_t max_bits_per_sc_1000x, log_2_snr_tone_1000x;
+	uint32_t ppdu_payload_dur_us = 0, mpdu_per_ampdu, mpdu_per_ppdu;
+	uint32_t single_ppdu_dur_us, estimated_throughput_mbps, data_rate_kbps;
+	struct htcap_cmn_ie *htcap;
+
+	htcap = (struct htcap_cmn_ie *)util_scan_entry_htcap(entry);
+	if (ch_width > CH_WIDTH_160MHZ)
+		return CM_AVOID_CANDIDATE_MIN_SCORE;
+
+	if (is_he)
+		ntone = cm_get_etp_he_ntone(ch_width);
+	else
+		ntone = cm_get_etp_ntone(is_ht, is_vht, ch_width);
+	phy_hdr_dur_us = cm_get_etp_phy_header_dur_us(is_ht, is_vht, max_nss);
+
+	max_bits_per_sc_1000x =
+		cm_get_etp_max_bits_per_sc_1000x_for_nss(psoc, entry,
+							 max_nss, phy_config);
+	if (rssi < WLAN_NOISE_FLOOR_DBM_DEFAULT)
+		return CM_AVOID_CANDIDATE_MIN_SCORE;
+
+	log_2_snr_tone_1000x = calculate_bit_per_tone(rssi, ch_width);
+
+	/* Eq. R-2 Pg:3508 in 80211-2016 Spec */
+	if (is_he)
+		data_rate_kbps =
+			QDF_MIN(log_2_snr_tone_1000x, max_bits_per_sc_1000x) *
+			(max_nss * ntone) / HE_PPDU_PAYLOAD_SYMBOL_DUR_US;
+	else
+		data_rate_kbps =
+			QDF_MIN(log_2_snr_tone_1000x, max_bits_per_sc_1000x) *
+			(max_nss * ntone) / PPDU_PAYLOAD_SYMBOL_DUR_US;
+	mlme_debug("data_rate_kbps: %d", data_rate_kbps);
+	if (data_rate_kbps < 1000) {
+		/* Return ETP as 1 since datarate is not even 1 Mbps */
+		return CM_AVOID_CANDIDATE_MIN_SCORE;
+	}
+	/* compute MPDU_p_PPDU */
+	if (is_ht) {
+		min_mpdu_ss_us_100x =
+			cm_etp_get_min_mpdu_ss_us_100x(htcap);
+		max_amsdu_len =
+			cm_etp_get_max_amsdu_len(psoc, htcap);
+		ppdu_payload_dur_us =
+			etp_param->data_ppdu_dur_target_us - phy_hdr_dur_us;
+		mpdu_per_ampdu =
+			QDF_MIN(qdf_ceil(ppdu_payload_dur_us * 100,
+					 min_mpdu_ss_us_100x),
+				qdf_ceil(ppdu_payload_dur_us *
+					 (data_rate_kbps / 1000),
+					 (MAC_HEADER_LEN + max_amsdu_len) * 8));
+		mpdu_per_ppdu = QDF_MIN(etp_param->ba_window_size,
+					QDF_MAX(1, mpdu_per_ampdu));
+	} else {
+		mpdu_per_ppdu = 1;
+	}
+
+	/* compute PPDU_Dur */
+	single_ppdu_dur_us =
+		qdf_ceil((MAC_HEADER_LEN + max_amsdu_len) * mpdu_per_ppdu * 8,
+			 (data_rate_kbps / 1000) * PPDU_PAYLOAD_SYMBOL_DUR_US);
+	single_ppdu_dur_us *= PPDU_PAYLOAD_SYMBOL_DUR_US;
+	single_ppdu_dur_us += phy_hdr_dur_us;
+
+	estimated_throughput_mbps =
+		qdf_ceil(mpdu_per_ppdu * max_amsdu_len * 8, single_ppdu_dur_us);
+	estimated_throughput_mbps =
+		(estimated_throughput_mbps *
+		 etp_param->airtime_fraction) /
+		 CM_MAX_ESTIMATED_AIR_TIME_FRACTION;
+
+	if (estimated_throughput_mbps < CM_AVOID_CANDIDATE_MIN_SCORE)
+		estimated_throughput_mbps = CM_AVOID_CANDIDATE_MIN_SCORE;
+	if (estimated_throughput_mbps > CM_BEST_CANDIDATE_MAX_BSS_SCORE)
+		estimated_throughput_mbps = CM_BEST_CANDIDATE_MAX_BSS_SCORE;
+
+	mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d HT %d VHT %d HE %d ATF: %d NSS %d, ch_width: %d",
+			QDF_MAC_ADDR_REF(entry->bssid.bytes),
+			entry->channel.chan_freq,
+			entry->rssi_raw, is_ht, is_vht, is_he,
+			etp_param->airtime_fraction,
+			entry->nss, ch_width);
+	if (is_ht)
+		mlme_nofl_debug("min_mpdu_ss_us_100x = %d, max_amsdu_len = %d, ppdu_payload_dur_us = %d, mpdu_per_ampdu = %d, mpdu_per_ppdu = %d, ba_window_size = %d",
+				min_mpdu_ss_us_100x, max_amsdu_len,
+				ppdu_payload_dur_us, mpdu_per_ampdu,
+				mpdu_per_ppdu, etp_param->ba_window_size);
+	mlme_nofl_debug("ETP score params: ntone: %d, phy_hdr_dur_us: %d, max_bits_per_sc_1000x: %d, log_2_snr_tone_1000x: %d mpdu_p_ppdu = %d, max_amsdu_len = %d, ppdu_dur_us = %d, total score = %d",
+			ntone, phy_hdr_dur_us, max_bits_per_sc_1000x,
+			log_2_snr_tone_1000x, mpdu_per_ppdu, max_amsdu_len,
+			single_ppdu_dur_us, estimated_throughput_mbps);
+
+	return estimated_throughput_mbps;
+}
+
+static uint32_t
+cm_calculate_etp_score(struct wlan_objmgr_psoc *psoc,
+		       struct scan_cache_entry *entry,
+		       struct psoc_phy_config *phy_config)
+{
+	enum phy_ch_width ch_width;
+	uint32_t nss;
+	bool is_he_intersect = false;
+	bool is_vht_intersect = false;
+	bool is_ht_intersect = false;
+	struct wlan_esp_info *esp;
+	struct wlan_esp_ie *esp_ie;
+	struct etp_params etp_param;
+
+	if (phy_config->he_cap && entry->ie_list.hecap)
+		is_he_intersect = true;
+	if ((phy_config->vht_cap || phy_config->vht_24G_cap) &&
+	    (entry->ie_list.vhtcap ||
+	     WLAN_REG_IS_6GHZ_CHAN_FREQ(entry->channel.chan_freq)))
+		is_vht_intersect = true;
+	if (phy_config->ht_cap && entry->ie_list.htcap)
+		is_ht_intersect = true;
+	nss = cm_get_sta_nss(psoc, entry->channel.chan_freq,
+			     phy_config->vdev_nss_24g,
+			     phy_config->vdev_nss_5g);
+	nss = QDF_MIN(nss, entry->nss);
+	ch_width = cm_calculate_bandwidth(entry, phy_config);
+
+	/* Initialize default ETP params */
+	etp_param.airtime_fraction = 255 / 2;
+	etp_param.ba_window_size = 32;
+	etp_param.data_ppdu_dur_target_us = 5000; /* 5 msec */
+
+	if (entry->air_time_fraction) {
+		etp_param.airtime_fraction = entry->air_time_fraction;
+		esp_ie = (struct wlan_esp_ie *)
+			util_scan_entry_esp_info(entry);
+		if (esp_ie) {
+			esp = &esp_ie->esp_info_AC_BE;
+			etp_param.ba_window_size =
+				cm_etp_get_ba_win_size_from_esp(esp->ba_window_size);
+			etp_param.data_ppdu_dur_target_us =
+					50 * esp->ppdu_duration;
+			mlme_debug("esp ba_window_size: %d, ppdu_duration: %d",
+				   esp->ba_window_size, esp->ppdu_duration);
+		}
+	} else if (entry->qbss_chan_load) {
+		mlme_debug("qbss_chan_load: %d", entry->qbss_chan_load);
+		etp_param.airtime_fraction =
+			CM_MAX_ESTIMATED_AIR_TIME_FRACTION -
+			entry->qbss_chan_load;
+	}
+	/* If ini vendor_roam_score_algorithm=1, just calculate ETP of all
+	 * bssid of ssid selected by high layer, and try to connect AP by
+	 * order of ETP, legacy algorithm with following Parameters/Weightage
+	 * becomes useless. ETP should be [1Mbps, 20000Mbps],matches score
+	 * range: [1, 20000]
+	 */
+	return cm_calculate_etp(psoc, entry,
+				  &etp_param,
+				  nss,
+				  ch_width,
+				  is_ht_intersect,
+				  is_vht_intersect,
+				  is_he_intersect,
+				  entry->rssi_raw,
+				  phy_config);
+}
 #else
 static bool
 cm_get_pcl_weight_of_channel(uint32_t chan_freq,
@@ -864,6 +1340,14 @@ static inline bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
 				       struct scan_cache_entry *entry)
 {
 	return true;
+}
+
+static uint32_t
+cm_calculate_etp_score(struct wlan_objmgr_psoc *psoc,
+		       struct scan_cache_entry *entry,
+		       struct psoc_phy_config *phy_config)
+{
+	return 0;
 }
 #endif
 
@@ -934,9 +1418,9 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	struct psoc_phy_config *phy_config;
 
 	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
-
 	if (!mlme_psoc_obj)
 		return 0;
+
 	phy_config = &mlme_psoc_obj->psoc_cfg.phy_config;
 	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
 	weight_config = &score_config->weight_config;
@@ -951,7 +1435,11 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 				CM_BEST_CANDIDATE_MAX_BSS_SCORE);
 		return CM_BEST_CANDIDATE_MAX_BSS_SCORE;
 	}
-
+	if (score_config->vendor_roam_score_algorithm) {
+		score = cm_calculate_etp_score(psoc, entry, phy_config);
+		entry->bss_score = score;
+		return score;
+	}
 	rssi_score = cm_calculate_rssi_score(&score_config->rssi_score,
 					     entry->rssi_raw,
 					     weight_config->rssi_weightage);
@@ -1401,5 +1889,7 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_SCORING_BAND_WEIGHT_PER_IDX));
 	score_cfg->is_bssid_hint_priority =
 			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
+	score_cfg->vendor_roam_score_algorithm =
+			cfg_get(psoc, CFG_VENDOR_ROAM_SCORE_ALGORITHM);
 	score_cfg->check_assoc_disallowed = true;
 }

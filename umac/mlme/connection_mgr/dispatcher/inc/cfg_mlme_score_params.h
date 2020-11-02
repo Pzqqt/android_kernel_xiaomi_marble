@@ -1080,6 +1080,30 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Set priority for connection with bssid_hint")
 
+/*
+ * <ini>
+ * vendor_roam_score_algorithm - Algorithm to calculate AP score
+ * @Min: false
+ * @Max: true
+ * @Default: false
+ *
+ * By default the value is false and default roam algorithm will be used.
+ * When the value is true, the V2 roaming algorithm will be used:
+ * For this V2 algo, AP score calculation is based on ETP and below equation:
+ * AP Score = (RSSIfactor * rssiweight(0.65)) + (CUfactor *cuweight(0.35))
+ *
+ * Related: None
+ *
+ * Supported Feature: roam score algorithm
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_VENDOR_ROAM_SCORE_ALGORITHM \
+	CFG_INI_BOOL("vendor_roam_score_algorithm", false, \
+	"Roam candidate selection score algorithm")
+
 #define CFG_MLME_SCORE_ALL \
 	CFG(CFG_SCORING_RSSI_WEIGHTAGE) \
 	CFG(CFG_SCORING_HT_CAPS_WEIGHTAGE) \
@@ -1116,6 +1140,7 @@
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_7_TO_4) \
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_11_TO_8) \
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12) \
-	CFG(CFG_IS_BSSID_HINT_PRIORITY)
+	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
+	CFG(CFG_VENDOR_ROAM_SCORE_ALGORITHM)
 
 #endif /* __CFG_MLME_SCORE_PARAMS_H */

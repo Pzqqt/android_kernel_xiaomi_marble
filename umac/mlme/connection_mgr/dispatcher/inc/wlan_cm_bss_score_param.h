@@ -127,6 +127,7 @@ struct per_slot_score {
  * @band_weight_per_index: band weight per index
  * @is_bssid_hint_priority: True if bssid_hint is given priority
  * @check_assoc_disallowed: Should assoc be disallowed if MBO OCE IE indicate so
+ * @vendor_roam_score_algorithm: Preferred ETP vendor roam score algorithm
  */
 struct scoring_cfg {
 	struct weight_cfg weight_config;
@@ -138,6 +139,7 @@ struct scoring_cfg {
 	uint32_t band_weight_per_index;
 	bool is_bssid_hint_priority;
 	bool check_assoc_disallowed;
+	bool vendor_roam_score_algorithm;
 };
 
 /**
@@ -162,6 +164,18 @@ enum cm_blacklist_action {
 	CM_BLM_NO_ACTION,
 	CM_BLM_REMOVE,
 	CM_BLM_AVOID,
+};
+
+/**
+ * struct etp_params - params for estimated throughput
+ * @airtime_fraction: Portion of airtime available for outbound transmissions
+ * @data_ppdu_dur_target_us: Expected duration of a single PPDU, in us
+ * @ba_window_size: Block ack window size of the transmitter
+ */
+struct etp_params {
+	uint32_t airtime_fraction;
+	uint32_t data_ppdu_dur_target_us;
+	uint32_t ba_window_size;
 };
 
 #ifdef FEATURE_BLACKLIST_MGR
