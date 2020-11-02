@@ -345,9 +345,11 @@ wlan_ser_move_non_scan_pending_to_active(
 						   &next_cmd_list->cmd_in_use);
 			}
 
-			if (vdev_cmd_active)
+			if (vdev_cmd_active) {
+				qdf_atomic_clear_bit(CMD_MARKED_FOR_MOVEMENT,
+						     &pending_cmd_list->cmd_in_use);
 				continue;
-
+			}
 		} else {
 			if (vdev_cmd_active)
 				break;
@@ -423,12 +425,19 @@ wlan_ser_move_non_scan_pending_to_active(
 		if (vdev_queue_lookup || pdev_queue->blocking_cmd_active)
 			break;
 
-		if (next_cmd_list) {
-			qdf_atomic_clear_bit(CMD_MARKED_FOR_MOVEMENT,
-					     &next_cmd_list->cmd_in_use);
+		qsize =  wlan_serialization_list_size(pending_queue);
+		if (!qsize) {
+			wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+			goto error;
 		}
 
-		next_cmd_list = NULL;
+		qdf_status = wlan_serialization_peek_front(pending_queue,
+							   &pending_node);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			ser_err("can't peek cmd");
+			wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+			goto error;
+		}
 	}
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
