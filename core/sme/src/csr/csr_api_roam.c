@@ -17334,7 +17334,8 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		score_config->nss_weight_per_index;
 
 	req_score_params->vendor_roam_score_algorithm =
-			roam_score_params->vendor_roam_score_algorithm;
+			score_config->vendor_roam_score_algorithm;
+
 
 	req_score_params->roam_score_delta =
 				roam_score_params->roam_score_delta;

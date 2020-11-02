@@ -2045,7 +2045,6 @@ struct wlan_mlme_rssi_cfg_score  {
  * @roam_trigger_bitmap: bitmap for various roam triggers
  * @roam_score_delta: percentage delta in roam score
  * @apsd_enabled: Enable automatic power save delivery
- * @vendor_roam_score_algorithm: Preferred vendor roam score algorithm
  * @min_roam_score_delta: Minimum difference between connected AP's and
  *			candidate AP's roam score to start roaming.
  */
@@ -2054,7 +2053,6 @@ struct wlan_mlme_roam_scoring_cfg {
 	uint32_t roam_trigger_bitmap;
 	uint32_t roam_score_delta;
 	bool apsd_enabled;
-	uint32_t vendor_roam_score_algorithm;
 	uint32_t min_roam_score_delta;
 };
 
