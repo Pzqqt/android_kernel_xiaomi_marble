@@ -24,6 +24,7 @@
 #include "wlan_ftm_svc_i.h"
 #include <wlan_lmac_if_def.h>
 #include <wlan_ftm_ucfg_api.h>
+#include "target_if.h"
 
 static inline struct wlan_lmac_if_ftm_tx_ops *
 wlan_psoc_get_ftm_txops(struct wlan_objmgr_psoc *psoc)
@@ -58,6 +59,22 @@ wlan_ftm_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 {
 	QDF_STATUS status;
 	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj;
+	uint32_t device_mode;
+	struct wlan_objmgr_psoc *psoc;
+	struct target_psoc_info *target_psoc_info;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAULT;
+
+	target_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!target_psoc_info)
+		return QDF_STATUS_E_FAULT;
+
+	device_mode = target_psoc_get_device_mode(target_psoc_info);
+
+	if (device_mode != QDF_GLOBAL_FTM_MODE)
+		return QDF_STATUS_SUCCESS;
 
 	ftm_pdev_obj = qdf_mem_malloc(sizeof(*ftm_pdev_obj));
 
@@ -105,7 +122,24 @@ wlan_ftm_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 					void *arg_list)
 {
 	QDF_STATUS status;
-	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj =
+	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj;
+	struct wlan_objmgr_psoc *psoc;
+	struct target_psoc_info *target_psoc_info;
+	uint32_t device_mode;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAULT;
+
+	target_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!target_psoc_info)
+		return QDF_STATUS_E_FAULT;
+
+	device_mode = target_psoc_get_device_mode(target_psoc_info);
+	if (device_mode != QDF_GLOBAL_FTM_MODE)
+		return QDF_STATUS_SUCCESS;
+
+	ftm_pdev_obj =
 		wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_FTM);
 
 	if (!ftm_pdev_obj) {
