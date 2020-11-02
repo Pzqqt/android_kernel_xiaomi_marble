@@ -48,6 +48,15 @@ wlan_cfg80211_gpio_config_policy[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DIR] = {
 						.type = NLA_U32,
 						.len = sizeof(uint32_t) },
+	[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_MUX_CONFIG] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t) },
+	[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DRIVE] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t) },
+	[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t) },
 };
 
 /**
@@ -147,6 +156,58 @@ convert_vendor_gpio_output_value(enum qca_gpio_value value)
 }
 
 /**
+ * convert_vendor_gpio_drive() - Function to convert vendor
+ * gpio drive
+ * @drive: value of enum gpio_drive
+ *
+ * Convert the vendor gpio drive to wmi unified gpio output drive
+ *
+ * Return: wmi unified gpio output drive config
+ */
+static enum gpio_drive
+convert_vendor_gpio_drive(enum qca_gpio_drive drive)
+{
+	switch (drive) {
+	case QCA_WLAN_GPIO_DRIVE_2MA:
+		return WMI_HOST_GPIO_DRIVE_2MA;
+	case QCA_WLAN_GPIO_DRIVE_4MA:
+		return WMI_HOST_GPIO_DRIVE_4MA;
+	case QCA_WLAN_GPIO_DRIVE_6MA:
+		return WMI_HOST_GPIO_DRIVE_6MA;
+	case QCA_WLAN_GPIO_DRIVE_8MA:
+		return WMI_HOST_GPIO_DRIVE_8MA;
+	case QCA_WLAN_GPIO_DRIVE_10MA:
+		return WMI_HOST_GPIO_DRIVE_10MA;
+	case QCA_WLAN_GPIO_DRIVE_12MA:
+		return WMI_HOST_GPIO_DRIVE_12MA;
+	case QCA_WLAN_GPIO_DRIVE_14MA:
+		return WMI_HOST_GPIO_DRIVE_14MA;
+	case QCA_WLAN_GPIO_DRIVE_16MA:
+		return WMI_HOST_GPIO_DRIVE_16MA;
+	default:
+		return WMI_HOST_GPIO_DRIVE_2MA;
+	}
+}
+
+/**
+ * convert_vendor_gpio_init_enable() - Function to convert vendor
+ * gpio init_enable
+ * @internal_config: Param to decide whether to use internal config
+ *
+ * Convert the vendor internal_config to wmi unified gpio output init_enable
+ *
+ * Return: wmi unified gpio output init_enable config
+ */
+static enum gpio_init_enable
+convert_vendor_gpio_init_enable(uint32_t internal_config)
+{
+	if(internal_config)
+		return WMI_HOST_GPIO_INIT_DISABLE;
+	else
+		return WMI_HOST_GPIO_INIT_ENABLE;
+}
+
+/**
  * wlan_set_gpio_config() - set the gpio configuration info
  * @psoc: the pointer of wlan_objmgr_psoc
  * @attr: list of attributes
@@ -162,50 +223,79 @@ wlan_set_gpio_config(struct wlan_objmgr_psoc *psoc,
 	enum qca_gpio_direction pin_dir;
 	enum qca_gpio_pull_type pull_type;
 	enum qca_gpio_interrupt_mode intr_mode;
+	enum qca_gpio_drive drive;
+	uint32_t internal_config;
 	QDF_STATUS status;
 
 	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PINNUM];
 	if (!gpio_attr) {
-		osif_err("attr gpio number failed");
+		osif_err_rl("attr gpio number failed");
 		return -EINVAL;
 	}
 	cfg_param.pin_num = nla_get_u32(gpio_attr);
 
 	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DIR];
 	if (!gpio_attr) {
-		osif_err("attr gpio dir failed");
+		osif_err_rl("attr gpio dir failed");
 		return -EINVAL;
 	}
 	pin_dir = nla_get_u32(gpio_attr);
 	if (pin_dir >= QCA_WLAN_GPIO_DIR_MAX) {
-		osif_err("attr gpio direction invalid");
+		osif_err_rl("attr gpio direction invalid");
 		return -EINVAL;
 	}
 	cfg_param.pin_dir = convert_vendor_gpio_direction(pin_dir);
 
 	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PULL_TYPE];
 	if (!gpio_attr) {
-		osif_err("attr gpio pull failed");
+		osif_err_rl("attr gpio pull failed");
 		return -EINVAL;
 	}
 	pull_type = nla_get_u32(gpio_attr);
 	if (pull_type >= QCA_WLAN_GPIO_PULL_MAX) {
-		osif_err("attr gpio pull type invalid");
+		osif_err_rl("attr gpio pull type invalid");
 		return -EINVAL;
 	}
 	cfg_param.pin_pull_type = convert_vendor_gpio_pull_type(pull_type);
 
 	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTR_MODE];
 	if (!gpio_attr) {
-		osif_err("attr gpio interrupt mode failed");
+		osif_err_rl("attr gpio interrupt mode failed");
 		return -EINVAL;
 	}
 	intr_mode = nla_get_u32(gpio_attr);
 	if (intr_mode >= QCA_WLAN_GPIO_INTMODE_MAX) {
-		osif_err("attr gpio interrupt mode invalid");
+		osif_err_rl("attr gpio interrupt mode invalid");
 		return -EINVAL;
 	}
 	cfg_param.pin_intr_mode = convert_vendor_gpio_interrupt_mode(intr_mode);
+
+	/* Below are optional parameters. Initialize to zero */
+	cfg_param.mux_config_val = WMI_HOST_GPIO_MUX_DEFAULT;
+	cfg_param.drive = WMI_HOST_GPIO_DRIVE_2MA;
+	cfg_param.init_enable = WMI_HOST_GPIO_INIT_DISABLE;
+
+	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_MUX_CONFIG];
+	if (gpio_attr) {
+		cfg_param.mux_config_val = nla_get_u32(gpio_attr);
+	}
+
+	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DRIVE];
+	if (gpio_attr) {
+		drive = nla_get_u32(gpio_attr);
+		if (drive >= QCA_WLAN_GPIO_DRIVE_MAX) {
+			osif_err_rl("attr gpio drive invalid");
+			return -EINVAL;
+		}
+		cfg_param.drive = convert_vendor_gpio_drive(drive);
+	}
+
+	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG];
+	if (gpio_attr) {
+		internal_config = nla_get_u32(gpio_attr);
+		cfg_param.init_enable =
+			convert_vendor_gpio_init_enable(internal_config);
+	}
 
 	status = ucfg_set_gpio_config(psoc, &cfg_param);
 	return status;
@@ -229,19 +319,19 @@ wlan_set_gpio_output(struct wlan_objmgr_psoc *psoc,
 
 	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PINNUM];
 	if (!gpio_attr) {
-		osif_err("attr gpio number failed");
+		osif_err_rl("attr gpio number failed");
 		return -EINVAL;
 	}
 	out_param.pin_num = nla_get_u32(gpio_attr);
 
 	gpio_attr = attr[QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_VALUE];
 	if (!gpio_attr) {
-		osif_err("attr gpio value failed");
+		osif_err_rl("attr gpio value failed");
 		return -EINVAL;
 	}
 	pin_set = nla_get_u32(gpio_attr);
 	if (pin_set >= QCA_WLAN_GPIO_LEVEL_MAX) {
-		osif_err("attr gpio level invalid");
+		osif_err_rl("attr gpio level invalid");
 		return -EINVAL;
 	}
 	out_param.pin_set = convert_vendor_gpio_output_value(pin_set);
@@ -287,11 +377,11 @@ wlan_cfg80211_start_gpio_config(struct wiphy *wiphy,
 		} else if (command == QCA_WLAN_VENDOR_GPIO_OUTPUT) {
 			ret = wlan_set_gpio_output(psoc, attr);
 		} else {
-			osif_err("Invalid command");
+			osif_err_rl("Invalid command");
 			return -EINVAL;
 		}
 	} else {
-		osif_err("Invalid command");
+		osif_err_rl("Invalid command");
 		return -EINVAL;
 	}
 

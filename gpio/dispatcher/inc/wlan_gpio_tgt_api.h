@@ -57,12 +57,16 @@ tgt_set_gpio_output_req(struct wlan_objmgr_psoc *psoc,
  * @input: enable/disable the gpio pin
  * @pull_type: gpio pull type
  * @intr_mode: gpio interrupt mode
+ * @mux_config_val: gpio MUX value
+ * @drive: gpio drive
+ * @init_enable: gpio init_enable
  *
  * Return: status of operation
  */
 QDF_STATUS tgt_gpio_config(struct wlan_objmgr_psoc *psoc, uint32_t gpio_num,
 			   uint32_t input, uint32_t pull_type,
-			   uint32_t intr_mode);
+			   uint32_t intr_mode,  uint32_t mux_config_val,
+			   uint32_t drive, uint32_t init_enable);
 /**
  * tgt_if_gpio_output() - API to send gpio output request
  * @psoc: pointer to psoc object

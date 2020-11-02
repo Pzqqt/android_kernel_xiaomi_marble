@@ -3597,6 +3597,52 @@ enum gpio_value {
 };
 
 /**
+ * enum gpio_init_enable - GPIO init enable
+ * @WMI_HOST_GPIO_INIT_DISABLE: Disable INIT
+ * @WMI_HOST_GPIO_INIT_ENABLE: Enable INIT
+ * @WMI_HOST_GPIO_INIT_MAX: invalid gpio init_enable
+ */
+enum gpio_init_enable {
+	WMI_HOST_GPIO_INIT_DISABLE = 0,
+	WMI_HOST_GPIO_INIT_ENABLE = 1,
+	WMI_HOST_GPIO_INIT_MAX,
+};
+
+/**
+ * enum gpio_drive - GPIO drive
+ * @WMI_HOST_GPIO_DRIVE_2MA: drive 2MA
+ * @WMI_HOST_GPIO_DRIVE_4MA: drive 4MA
+ * @WMI_HOST_GPIO_DRIVE_6MA: drive 6MA
+ * @WMI_HOST_GPIO_DRIVE_8MA: drive 8MA
+ * @WMI_HOST_GPIO_DRIVE_10MA: drive 10MA
+ * @WMI_HOST_GPIO_DRIVE_12MA: drive 12MA
+ * @WMI_HOST_GPIO_DRIVE_14MA: drive 14MA
+ * @WMI_HOST_GPIO_DRIVE_16MA: drive 16MA
+ * @WMI_HOST_GPIO_DRIVE_MAX: invalid gpio drive
+ */
+enum gpio_drive {
+	WMI_HOST_GPIO_DRIVE_2MA = 0,
+	WMI_HOST_GPIO_DRIVE_4MA = 1,
+	WMI_HOST_GPIO_DRIVE_6MA = 2,
+	WMI_HOST_GPIO_DRIVE_8MA = 3,
+	WMI_HOST_GPIO_DRIVE_10MA = 4,
+	WMI_HOST_GPIO_DRIVE_12MA = 5,
+	WMI_HOST_GPIO_DRIVE_14MA = 6,
+	WMI_HOST_GPIO_DRIVE_16MA = 7,
+	WMI_HOST_GPIO_DRIVE_MAX,
+};
+
+/**
+ * enum gpio_mux_config - GPIO mux_config
+ * @WMI_HOST_GPIO_MUX_DEFAULT: Default mux value
+ * @WMI_HOST_GPIO_MUX_MAX: maximum allowed gpio mux_config
+ */
+enum gpio_mux_config {
+	WMI_HOST_GPIO_MUX_DEFAULT = 0,
+	WMI_HOST_GPIO_MUX_MAX = 15,
+};
+
+/**
  * struct wmi_host_gpio_input_event - GPIO input event structure
  * @gpio_num: GPIO number which changed state
  */
@@ -3616,6 +3662,9 @@ struct gpio_config_params {
 	enum gpio_direction pin_dir;
 	enum gpio_pull_type pin_pull_type;
 	enum gpio_interrupt_mode pin_intr_mode;
+	enum gpio_mux_config mux_config_val;
+	enum gpio_drive drive;
+	enum gpio_init_enable init_enable;
 };
 
 /**
