@@ -58,7 +58,6 @@ wmi_unified_set_rssi_monitoring_cmd(wmi_unified_t wmi_handle,
 				    struct rssi_monitor_param *req);
 #endif
 
-#ifdef ROAM_OFFLOAD_V1
 /**
  * wmi_unified_roam_scan_offload_rssi_thresh_cmd() - set roam scan rssi
  *							parameters
@@ -85,34 +84,6 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
  */
 QDF_STATUS wmi_unified_roam_scan_offload_scan_period(
 	wmi_unified_t wmi_handle, struct wlan_roam_scan_period_params *param);
-#else
-/**
- * wmi_unified_roam_scan_offload_rssi_thresh_cmd() - set roam scan rssi
- *                                                      parameters
- * @wmi_handle: wmi handle
- * @roam_req: roam rssi related parameters
- *
- * This function reads the incoming @roam_req and fill in the destination
- * WMI structure and send down the roam scan rssi configs down to the firmware
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
-		wmi_unified_t wmi_handle,
-		struct roam_offload_scan_rssi_params *roam_req);
-
-/**
- * wmi_unified_roam_scan_offload_scan_period() - set roam offload scan period
- * @wmi_handle: wmi handle
- * @param: pointer to roam scan period params to be sent to fw
- *
- * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_roam_scan_offload_scan_period(
-	wmi_unified_t wmi_handle, struct roam_scan_period_params *param);
-#endif
 
 /**
  * wmi_unified_roam_mawc_params_cmd() - configure roaming MAWC parameters
@@ -270,7 +241,6 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 					struct set_pcl_cmd_params *params);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-#ifdef ROAM_OFFLOAD_V1
 /**
  * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
  * @wmi_handle: wmi handle
@@ -285,23 +255,6 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
 			wmi_unified_t wmi_handle,
 			struct wlan_roam_scan_offload_params *rso_cfg);
-#else
-/**
- * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
- * @wmi_handle: wmi handle
- * @scan_cmd_fp: scan related parameters
- * @roam_req: roam related parameters
- *
- * This function reads the incoming @roam_req and fill in the destination
- * WMI structure and send down the roam scan configs down to the firmware
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
-				wmi_unified_t wmi_handle,
-				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
-				struct roam_offload_scan_params *roam_req);
-#endif
 
 /**
  * wmi_unified_send_roam_scan_offload_ap_cmd() - set roam ap profile in fw
@@ -330,7 +283,6 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(wmi_unified_t wmi_handle,
 					     uint32_t command,
 					     uint32_t vdev_id);
 
-#ifdef ROAM_OFFLOAD_V1
 /**
  * wmi_unified_roam_scan_offload_chan_list_cmd  - Roam scan offload channel
  * list command
@@ -357,42 +309,6 @@ QDF_STATUS
 wmi_unified_roam_scan_offload_rssi_change_cmd(
 		wmi_unified_t wmi_handle,
 		struct wlan_roam_rssi_change_params *params);
-#else
-/**
- * wmi_unified_roam_scan_offload_rssi_change_cmd() - set roam offload RSSI th
- * @wmi_handle: wmi handle
- * @rssi_change_thresh: RSSI Change threshold
- * @vdev_id: vdev id
- *
- * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS
-wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
-					      uint32_t vdev_id,
-					      int32_t rssi_change_thresh,
-					      uint32_t hirssi_delay_btw_scans);
-
-/**
- * wmi_unified_roam_scan_offload_chan_list_cmd() - set roam offload channel list
- * @wmi_handle: wmi handle
- * @chan_count: channel count
- * @chan_list: channel list
- * @list_type: list type
- * @vdev_id: vdev id
- *
- * Set roam offload channel list.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS
-wmi_unified_roam_scan_offload_chan_list_cmd(wmi_unified_t wmi_handle,
-					    uint8_t chan_count,
-					    uint32_t *chan_list,
-					    uint8_t list_type,
-					    uint32_t vdev_id);
-#endif
 
 /**
  * wmi_unified_set_per_roam_config() - set PER roam config in FW

@@ -46,7 +46,6 @@ wmi_unified_set_rssi_monitoring_cmd(wmi_unified_t wmi_handle,
 }
 #endif /* FEATURE_RSSI_MONITOR */
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 		wmi_unified_t wmi_handle,
 		struct wlan_roam_offload_scan_rssi_params *roam_req)
@@ -69,29 +68,6 @@ wmi_unified_roam_scan_offload_scan_period(
 
 	return QDF_STATUS_E_FAILURE;
 }
-#else
-QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
-		wmi_unified_t wmi_handle,
-		struct roam_offload_scan_rssi_params *roam_req)
-{
-	if (wmi_handle->ops->send_roam_scan_offload_rssi_thresh_cmd)
-		return wmi_handle->ops->send_roam_scan_offload_rssi_thresh_cmd(
-				wmi_handle, roam_req);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
-wmi_unified_roam_scan_offload_scan_period(wmi_unified_t wmi_handle,
-					  struct roam_scan_period_params *param)
-{
-	if (wmi_handle->ops->send_roam_scan_offload_scan_period_cmd)
-		return wmi_handle->ops->send_roam_scan_offload_scan_period_cmd(
-							wmi_handle, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 QDF_STATUS wmi_unified_roam_mawc_params_cmd(
 			wmi_unified_t wmi_handle,
@@ -209,7 +185,6 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
 			wmi_unified_t wmi_handle,
 			struct wlan_roam_scan_offload_params *rso_cfg)
@@ -220,19 +195,6 @@ QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
-#else
-QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(
-				wmi_unified_t wmi_handle,
-				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
-				struct roam_offload_scan_params *roam_req)
-{
-	if (wmi_handle->ops->send_roam_scan_offload_mode_cmd)
-		return wmi_handle->ops->send_roam_scan_offload_mode_cmd(
-				wmi_handle, scan_cmd_fp, roam_req);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 QDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(
 				wmi_unified_t wmi_handle,
@@ -257,7 +219,6 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS
 wmi_unified_roam_scan_offload_chan_list_cmd(
 		wmi_unified_t wmi_handle,
@@ -269,24 +230,7 @@ wmi_unified_roam_scan_offload_chan_list_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
-#else
-QDF_STATUS
-wmi_unified_roam_scan_offload_chan_list_cmd(wmi_unified_t wmi_handle,
-					    uint8_t chan_count,
-					    uint32_t *chan_list,
-					    uint8_t list_type,
-					    uint32_t vdev_id)
-{
-	if (wmi_handle->ops->send_roam_scan_offload_chan_list_cmd)
-		return wmi_handle->ops->send_roam_scan_offload_chan_list_cmd(
-					wmi_handle, chan_count, chan_list,
-					list_type, vdev_id);
 
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
-
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(
 		wmi_unified_t wmi_handle,
 		struct wlan_roam_rssi_change_params *params)
@@ -297,21 +241,6 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
-#else
-QDF_STATUS
-wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
-					      uint32_t vdev_id,
-					      int32_t rssi_change_thresh,
-					      uint32_t hirssi_delay_btw_scans)
-{
-	if (wmi_handle->ops->send_roam_scan_offload_rssi_change_cmd)
-		return wmi_handle->ops->send_roam_scan_offload_rssi_change_cmd(
-				wmi_handle, vdev_id, rssi_change_thresh,
-				hirssi_delay_btw_scans);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 QDF_STATUS
 wmi_unified_set_per_roam_config(wmi_unified_t wmi_handle,

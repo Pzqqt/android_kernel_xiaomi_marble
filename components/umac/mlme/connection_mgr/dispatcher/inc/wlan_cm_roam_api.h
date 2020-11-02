@@ -31,7 +31,6 @@
 /* Default value of reason code */
 #define DISABLE_VENDOR_BTM_CONFIG 2
 
-#ifdef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * wlan_cm_enable_roaming_on_connected_sta() - Enable roaming on other connected
@@ -327,15 +326,6 @@ QDF_STATUS
 wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			   enum roam_cfg_param roam_cfg_type,
 			   struct cm_roam_values_copy *src_config);
-#else
-static inline QDF_STATUS
-wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			   enum roam_cfg_param roam_cfg_type,
-			   struct cm_roam_values_copy *src_config)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**
