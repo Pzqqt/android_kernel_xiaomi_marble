@@ -6759,32 +6759,59 @@ enum qca_wlan_vendor_acs_select_reason {
  *
  * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PINNUM: Required (u32)
  * value to specify the gpio number.
- * This is required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * Required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
  * %QCA_WLAN_VENDOR_GPIO_CONFIG or %.QCA_WLAN_VENDOR_GPIO_OUTPUT.
  *
  * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_VALUE: Required (u32)
  * value to specify the gpio output level, please refer to enum qca_gpio_value
  * to get the available value that this item can use.
- * This is required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * Required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
  * %QCA_WLAN_VENDOR_GPIO_OUTPUT.
  *
- * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PULL_TYPE: Required (u32)
+ * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PULL_TYPE: Optional (u32)
  * value to specify the gpio pull type, please refer to enum qca_gpio_pull_type
  * to get the available value that this item can use.
- * This is required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
- * %QCA_WLAN_VENDOR_GPIO_CONFIG.
+ * Required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * %QCA_WLAN_VENDOR_GPIO_CONFIG and
+ * %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG attribute is not present.
+ * Optional when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG
+ * attribute is present.
  *
- * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTR_MODE: Required (u32)
+ * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTR_MODE: Optional (u32)
  * value to specify the gpio interrupt mode, please refer to enum
  * qca_gpio_interrupt_mode to get the available value that this item can use.
- * This is required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
- * %QCA_WLAN_VENDOR_GPIO_CONFIG.
+ * Required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * %QCA_WLAN_VENDOR_GPIO_CONFIG and
+ * %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG attribute is not present.
+ * Optional when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG
+ * attribute is present.
  *
- * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DIR: Required (u32)
+ * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DIR: Optional (u32)
  * value to specify the gpio direction, please refer to enum qca_gpio_direction
  * to get the available value that this item can use.
- * This is required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
- * %QCA_WLAN_VENDOR_GPIO_CONFIG.
+ * Required, when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * %QCA_WLAN_VENDOR_GPIO_CONFIG and
+ * %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG attribute is not present.
+ * Optional when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG
+ * attribute is present.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_MUX_CONFIG: Optional (u32)
+ * Value to specify the mux config. Meaning of a given value is dependent
+ * on the target chipset and gpio pin. Must be of the range 0-15.
+ * Optional when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * %QCA_WLAN_VENDOR_GPIO_CONFIG. Defaults to 0.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DRIVE: Optional (u32)
+ * Value to specify the drive, Refer to enum qca_gpio_drive.
+ * Optional when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * %QCA_WLAN_VENDOR_GPIO_CONFIG. Defaults to QCA_WLAN_GPIO_DRIVE_2MA(0).
+ *
+ * @QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG: Optional (flag)
+ * Optional when %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND is
+ * %QCA_WLAN_VENDOR_GPIO_CONFIG. When present this attribute signals that all
+ * other parameters for the given GPIO will be obtained from internal
+ * configuration. Only %QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PINNUM must be
+ * specified to indicate the GPIO pin being configured.
  */
 enum qca_wlan_gpio_attr {
 	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INVALID = 0,
@@ -6800,6 +6827,12 @@ enum qca_wlan_gpio_attr {
 	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTR_MODE = 5,
 	/* Unsigned 32-bit attribute for GPIO direction to configure */
 	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DIR = 6,
+	/* Unsigned 32-bit attribute for GPIO mux config */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_MUX_CONFIG = 7,
+	/* Unsigned 32-bit attribute for GPIO drive */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_DRIVE = 8,
+	/* Flag attribute for using internal gpio configuration */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTERNAL_CONFIG = 9,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_LAST,
@@ -6872,6 +6905,30 @@ enum qca_gpio_interrupt_mode {
 	QCA_WLAN_GPIO_INTMODE_LEVEL_LOW = 4,
 	QCA_WLAN_GPIO_INTMODE_LEVEL_HIGH = 5,
 	QCA_WLAN_GPIO_INTMODE_MAX,
+};
+
+/**
+ * enum gpio_drive - GPIO drive
+ * @QCA_WLAN_GPIO_DRIVE_2MA: drive 2MA
+ * @QCA_WLAN_GPIO_DRIVE_4MA: drive 4MA
+ * @QCA_WLAN_GPIO_DRIVE_6MA: drive 6MA
+ * @QCA_WLAN_GPIO_DRIVE_8MA: drive 8MA
+ * @QCA_WLAN_GPIO_DRIVE_10MA: drive 10MA
+ * @QCA_WLAN_GPIO_DRIVE_12MA: drive 12MA
+ * @QCA_WLAN_GPIO_DRIVE_14MA: drive 14MA
+ * @QCA_WLAN_GPIO_DRIVE_16MA: drive 16MA
+ * @QCA_WLAN_GPIO_DRIVE_MAX: invalid gpio drive
+ */
+enum qca_gpio_drive {
+	QCA_WLAN_GPIO_DRIVE_2MA = 0,
+	QCA_WLAN_GPIO_DRIVE_4MA = 1,
+	QCA_WLAN_GPIO_DRIVE_6MA = 2,
+	QCA_WLAN_GPIO_DRIVE_8MA = 3,
+	QCA_WLAN_GPIO_DRIVE_10MA = 4,
+	QCA_WLAN_GPIO_DRIVE_12MA = 5,
+	QCA_WLAN_GPIO_DRIVE_14MA = 6,
+	QCA_WLAN_GPIO_DRIVE_16MA = 7,
+	QCA_WLAN_GPIO_DRIVE_MAX,
 };
 
 /**
