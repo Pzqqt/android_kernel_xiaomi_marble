@@ -55,6 +55,16 @@ static inline void qdf_nbuf_ipa_priv_set(qdf_nbuf_t buf, uint32_t priv)
 	__qdf_nbuf_ipa_priv_set(buf, priv);
 }
 
+static inline void qdf_nbuf_tx_notify_comp_set(qdf_nbuf_t buf, uint8_t val)
+{
+	QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(buf) = val;
+}
+
+static inline uint8_t qdf_nbuf_tx_notify_comp_get(qdf_nbuf_t buf)
+{
+	return QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(buf);
+}
+
 /**
  * qdf_nbuf_set_rx_protocol_tag()
  * @buf: Network buffer
