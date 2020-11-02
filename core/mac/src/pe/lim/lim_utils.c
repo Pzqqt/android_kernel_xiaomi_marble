@@ -6760,11 +6760,12 @@ static bool lim_check_is_bss_greater_than_4_nss_supp(struct pe_session *session,
 	return false;
 }
 
-static bool lim_check_he_80_mcs11_supp(struct pe_session *session,
+bool lim_check_he_80_mcs11_supp(struct pe_session *session,
 				       tDot11fIEhe_cap *he_cap)
 {
 	uint16_t rx_mcs_map;
 	uint16_t tx_mcs_map;
+
 	rx_mcs_map = he_cap->rx_he_mcs_map_lt_80;
 	tx_mcs_map = he_cap->tx_he_mcs_map_lt_80;
 	if ((session->nss == NSS_1x1_MODE) &&

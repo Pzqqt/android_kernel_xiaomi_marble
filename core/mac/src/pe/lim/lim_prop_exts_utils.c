@@ -346,9 +346,14 @@ static inline bool lim_extract_adaptive_11r_cap(uint8_t *ie, uint16_t ie_len)
 static void lim_check_peer_ldpc_and_update(struct pe_session *session,
 				    tSirProbeRespBeacon *beacon_struct)
 {
+	/*
+	 * In 2.4G if AP supports HE till MCS 0-9 we can associate
+	 * with HE mode instead downgrading to 11ac
+	 */
 	if (session->he_capable &&
 	    WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq) &&
 	    beacon_struct->he_cap.present &&
+	    lim_check_he_80_mcs11_supp(session, &beacon_struct->he_cap) &&
 	    !beacon_struct->he_cap.ldpc_coding) {
 		session->he_capable = false;
 		pe_err("LDPC check failed for HE operation");

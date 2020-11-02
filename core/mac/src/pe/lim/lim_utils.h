@@ -1194,6 +1194,16 @@ void lim_log_he_bss_color(struct mac_context *mac,
 void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap);
 
 /**
+ * lim_check_he_80_mcs11_supp() - Check whether MCS 0-11 rates are supported
+ * @session: pointer to PE session
+ * @he_cap: pointer to HE capabilities
+ *
+ * Return: true if MCS 0-11 rates are supported
+ */
+bool lim_check_he_80_mcs11_supp(struct pe_session *session,
+				       tDot11fIEhe_cap *he_cap);
+
+/**
  * lim_update_stads_he_caps() - Copy HE capability into STA DPH hash table entry
  * @mac_ctx: pointer to mac context
  * @sta_ds: pointer to sta dph hash table entry
