@@ -117,6 +117,7 @@
 #endif
 
 #include "wlan_hdd_sta_info.h"
+#include "wlan_hdd_bus_bandwidth.h"
 
 /*
  * Preprocessor definitions and constants
@@ -1767,6 +1768,7 @@ struct hdd_adapter_ops_history {
  * @multi_client_thermal_mitigation: Multi client thermal mitigation by fw
  * @is_therm_cmd_supp: get temperature command enable or disable
  * @disconnect_for_sta_mon_conc: disconnect if sta monitor intf concurrency
+ * @bbm_ctx: bus bandwidth manager context
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2110,6 +2112,9 @@ struct hdd_context {
 	bool multi_client_thermal_mitigation;
 #endif
 	bool disconnect_for_sta_mon_conc;
+#ifdef FEATURE_BUS_BANDWIDTH_MGR
+	struct bbm_context *bbm_ctx;
+#endif
 };
 
 /**

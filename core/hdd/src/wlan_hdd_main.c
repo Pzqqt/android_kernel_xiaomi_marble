@@ -199,6 +199,7 @@
 #include "osif_cm_util.h"
 #include "wlan_hdd_gpio_wakeup.h"
 #include "wlan_hdd_bootup_marker.h"
+#include "wlan_hdd_bus_bandwidth.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -8889,6 +8890,8 @@ static int hdd_context_deinit(struct hdd_context *hdd_ctx)
 
 	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
 
+	hdd_bbm_context_deinit(hdd_ctx);
+
 	hdd_sap_context_destroy(hdd_ctx);
 
 	hdd_rx_wake_lock_destroy(hdd_ctx);
@@ -11646,6 +11649,10 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto scan_destroy;
 
+	ret = hdd_bbm_context_init(hdd_ctx);
+	if (ret)
+		goto sap_destroy;
+
 	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
 
 	hdd_init_offloaded_packets_ctx(hdd_ctx);
@@ -11653,12 +11660,15 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	ret = wlan_hdd_cfg80211_init(hdd_ctx->parent_dev, hdd_ctx->wiphy,
 				     hdd_ctx->config);
 	if (ret)
-		goto sap_destroy;
+		goto bbm_destroy;
 
 	qdf_wake_lock_create(&hdd_ctx->monitor_mode_wakelock,
 			     "monitor_mode_wakelock");
 
 	return 0;
+
+bbm_destroy:
+	hdd_bbm_context_deinit(hdd_ctx);
 
 sap_destroy:
 	hdd_sap_context_destroy(hdd_ctx);
