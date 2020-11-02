@@ -1003,14 +1003,15 @@ static void dp_display_process_mst_hpd_high(struct dp_display_private *dp,
 	DP_MST_DEBUG("mst_hpd_high. mst_active:%d\n", dp->mst.mst_active);
 }
 
-static void dp_display_host_init(struct dp_display_private *dp)
+static int dp_display_host_init(struct dp_display_private *dp)
 {
 	bool flip = false;
 	bool reset;
+	int rc = 0;
 
 	if (dp_display_state_is(DP_STATE_INITIALIZED)) {
 		dp_display_state_log("[already initialized]");
-		return;
+		return rc;
 	}
 
 	if (dp->hpd->orientation == ORIENTATION_CC2)
@@ -1018,9 +1019,21 @@ static void dp_display_host_init(struct dp_display_private *dp)
 
 	reset = dp->debug->sim_mode ? false : !dp->hpd->multi_func;
 
-	dp->power->init(dp->power, flip);
+	rc = dp->power->init(dp->power, flip);
+	if (rc) {
+		DP_WARN("Power init failed.\n");
+		SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_CASE1, dp->state);
+		return rc;
+	}
+
 	dp->hpd->host_init(dp->hpd, &dp->catalog->hpd);
-	dp->ctrl->init(dp->ctrl, flip, reset);
+	rc = dp->ctrl->init(dp->ctrl, flip, reset);
+	if (rc) {
+		DP_WARN("Ctrl init Failed.\n");
+		SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_CASE2, dp->state);
+		goto error_ctrl;
+	}
+
 	enable_irq(dp->irq);
 	dp_display_abort_hdcp(dp, false);
 
@@ -1028,6 +1041,12 @@ static void dp_display_host_init(struct dp_display_private *dp)
 
 	/* log this as it results from user action of cable connection */
 	DP_INFO("[OK]\n");
+	return rc;
+
+error_ctrl:
+	dp->hpd->host_deinit(dp->hpd, &dp->catalog->hpd);
+	dp->power->deinit(dp->power);
+	return rc;
 }
 
 static void dp_display_host_ready(struct dp_display_private *dp)
@@ -1148,7 +1167,24 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 	 */
 	if (dp_display_state_is(DP_STATE_SRC_PWRDN) &&
 			dp_display_state_is(DP_STATE_CONFIGURED)) {
-		dp_display_host_init(dp);
+		rc = dp_display_host_init(dp);
+		if (rc) {
+			DP_WARN("Host init Failed");
+			if (!dp_display_state_is(DP_STATE_SUSPENDED)) {
+				/*
+				 * If not suspended no point of going forward if
+				 * resource is not enabled.
+				 */
+				dp_display_state_remove(DP_STATE_CONNECTED);
+			}
+			goto end;
+		}
+
+		/*
+		 * If device is suspended and host_init fails, there is
+		 * one more chance for host init to happen in prepare which
+		 * is why DP_STATE_SRC_PWRDN is removed only at success.
+		 */
 		dp_display_state_remove(DP_STATE_SRC_PWRDN);
 	}
 
@@ -1326,7 +1362,12 @@ static int dp_display_usbpd_configure_cb(struct device *dev)
 	dp_display_state_remove(DP_STATE_ABORTED);
 	dp_display_state_add(DP_STATE_CONFIGURED);
 
-	dp_display_host_init(dp);
+	rc = dp_display_host_init(dp);
+	if (rc) {
+		DP_ERR("Host init Failed");
+		mutex_unlock(&dp->session_lock);
+		return rc;
+	}
 
 	/* check for hpd high */
 	if (dp->hpd->hpd_high)
@@ -2119,7 +2160,23 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	 */
 	if (dp_display_state_is(DP_STATE_SRC_PWRDN) &&
 			dp_display_state_is(DP_STATE_CONFIGURED)) {
-		dp_display_host_init(dp);
+		rc = dp_display_host_init(dp);
+		if (rc) {
+			/*
+			 * Skip all the events that are similar to abort case, just that
+			 * the stream clks should be enabled so that no commit failure can
+			 * be seen.
+			 */
+			DP_ERR("Host init failed.\n");
+			goto end;
+		}
+
+		/*
+		 * Remove DP_STATE_SRC_PWRDN flag on successful host_init to
+		 * prevent cases such as below.
+		 * 1. MST stream 1 failed to do host init then stream 2 can retry again.
+		 * 2. Resume path fails, now sink sends hpd_high=0 and hpd_high=1.
+		 */
 		dp_display_state_remove(DP_STATE_SRC_PWRDN);
 	}
 
