@@ -658,7 +658,6 @@ QDF_STATUS (*send_set_rssi_monitoring_cmd)(wmi_unified_t wmi_handle,
 					struct rssi_monitor_param *req);
 #endif /* FEATURE_RSSI_MONITOR */
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
 			wmi_unified_t wmi_handle,
 			struct wlan_roam_offload_scan_rssi_params *roam_req);
@@ -666,15 +665,6 @@ QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
 QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(
 				wmi_unified_t wmi_handle,
 				struct wlan_roam_scan_period_params *params);
-#else
-QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
-				wmi_unified_t wmi_handle,
-				struct roam_offload_scan_rssi_params *roam_req);
-
-QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(
-					wmi_unified_t wmi_handle,
-					struct roam_scan_period_params *params);
-#endif
 
 QDF_STATUS (*send_roam_mawc_params_cmd)(
 				wmi_unified_t wmi_handle,
@@ -683,15 +673,9 @@ QDF_STATUS (*send_roam_mawc_params_cmd)(
 QDF_STATUS (*send_roam_scan_filter_cmd)(wmi_unified_t wmi_handle,
 				struct roam_scan_filter_params *roam_req);
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS (*send_roam_scan_offload_mode_cmd)(
 		wmi_unified_t wmi_handle,
 		struct wlan_roam_scan_offload_params *rso_cfg);
-#else
-QDF_STATUS (*send_roam_scan_offload_mode_cmd)(wmi_unified_t wmi_handle,
-				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
-				struct roam_offload_scan_params *roam_req);
-#endif
 
 QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
 				    struct ap_profile_params *ap_profile);
@@ -699,7 +683,6 @@ QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_scan_offload_cmd)(wmi_unified_t wmi_handle,
 				 uint32_t command, uint32_t vdev_id);
 
-#ifdef ROAM_OFFLOAD_V1
 QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(
 			wmi_unified_t wmi_handle,
 			struct wlan_roam_scan_channel_list *rso_ch_info);
@@ -707,17 +690,6 @@ QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(
 QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(
 				wmi_unified_t wmi_handle,
 				struct wlan_roam_rssi_change_params *params);
-
-#else
-QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(wmi_unified_t wmi_handle,
-					uint32_t vdev_id,
-					int32_t rssi_change_thresh,
-					uint32_t hirssi_delay_btw_scans);
-QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(wmi_unified_t wmi_handle,
-				   uint8_t chan_count,
-				   uint32_t *chan_list,
-				   uint8_t list_type, uint32_t vdev_id);
-#endif
 
 QDF_STATUS (*send_per_roam_config_cmd)(wmi_unified_t wmi_handle,
 		struct wlan_per_roam_config_req *req_buf);
