@@ -3778,7 +3778,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(struct mac_context *mac,
 					mac, sessionId,
 					p_del_sta_params->peerMacAddr);
 
-		status = csr_queue_sme_command(mac, pCommand, true);
+		status = csr_queue_sme_command(mac, pCommand, false);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
 	} while (0);
@@ -3823,7 +3823,7 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 		csr_roam_issue_disconnect_stats(mac, sessionId,
 						pDelStaParams->peerMacAddr);
 
-		status = csr_queue_sme_command(mac, pCommand, true);
+		status = csr_queue_sme_command(mac, pCommand, false);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
 	} while (0);
