@@ -646,7 +646,6 @@ struct wlan_per_roam_config_req {
 	struct wlan_per_roam_config per_config;
 };
 
-#ifdef ROAM_OFFLOAD_V1
 #define NOISE_FLOOR_DBM_DEFAULT          (-96)
 #define RSSI_MIN_VALUE                   (-128)
 #define RSSI_MAX_VALUE                   (127)
@@ -1051,7 +1050,6 @@ struct wlan_roam_scan_channel_list {
 	uint32_t chan_freq_list[ROAM_MAX_CHANNELS];
 	uint8_t chan_cache_type;
 };
-#endif
 
 /**
  * struct wlan_roam_rssi_change_params  - RSSI change parameters to be sent over
@@ -1069,7 +1067,6 @@ struct wlan_roam_rssi_change_params {
 	int32_t rssi_change_thresh;
 };
 
-#ifdef ROAM_OFFLOAD_V1
 /**
  * struct wlan_roam_start_config - structure containing parameters for
  * roam start config
@@ -1164,8 +1161,6 @@ struct wlan_roam_update_config {
 	struct wlan_roam_idle_params idle_params;
 	struct wlan_roam_triggers roam_triggers;
 };
-
-#endif
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
@@ -1274,7 +1269,6 @@ struct set_pcl_req {
 struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
 					    struct set_pcl_req *req);
-#ifdef ROAM_OFFLOAD_V1
 	QDF_STATUS (*send_roam_offload_init_req)(
 			struct wlan_objmgr_vdev *vdev,
 			struct wlan_roam_offload_init_params *params);
@@ -1295,7 +1289,6 @@ struct wlan_cm_roam_tx_ops {
 					 struct wlan_roam_triggers *req);
 	QDF_STATUS (*send_roam_disable_config)(struct wlan_objmgr_vdev *vdev,
 				struct roam_disable_cfg *req);
-#endif
 };
 
 /**
