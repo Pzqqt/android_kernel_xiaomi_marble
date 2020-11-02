@@ -15516,21 +15516,14 @@ void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
 	wlan_psoc_set_phy_config(mac_ctx->psoc, &config);
 }
 
-void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
+static void
+__sme_enable_fw_module_log_level(uint8_t *enable_fw_module_log_level,
+				 uint8_t enable_fw_module_log_level_num,
+				 int vdev_id, int param_id)
 {
-	QDF_STATUS status;
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	uint8_t *enable_fw_module_log_level;
-	uint8_t enable_fw_module_log_level_num;
 	uint8_t count = 0;
 	uint32_t value = 0;
 	int ret;
-
-	status = ucfg_fwol_get_enable_fw_module_log_level(
-			mac_ctx->psoc, &enable_fw_module_log_level,
-			&enable_fw_module_log_level_num);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
 
 	while (count < enable_fw_module_log_level_num) {
 		/*
@@ -15562,15 +15555,42 @@ void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
 
 		value = enable_fw_module_log_level[count] << 16;
 		value |= enable_fw_module_log_level[count + 1];
-		ret = sme_cli_set_command(vdev_id,
-					  WMI_DBGLOG_MOD_LOG_LEVEL,
-					  value, DBG_CMD);
+		ret = sme_cli_set_command(vdev_id, param_id, value, DBG_CMD);
 		if (ret != 0)
 			sme_err("Failed to enable FW module log level %d ret %d",
 				value, ret);
 
 		count += 2;
 	}
+}
+
+void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
+{
+	QDF_STATUS status;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint8_t *enable_fw_module_log_level;
+	uint8_t enable_fw_module_log_level_num;
+
+	status = ucfg_fwol_get_enable_fw_module_log_level(
+			mac_ctx->psoc, &enable_fw_module_log_level,
+			&enable_fw_module_log_level_num);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	__sme_enable_fw_module_log_level(enable_fw_module_log_level,
+					 enable_fw_module_log_level_num,
+					 vdev_id,
+					 WMI_DBGLOG_MOD_LOG_LEVEL);
+
+	enable_fw_module_log_level_num = 0;
+	status = ucfg_fwol_wow_get_enable_fw_module_log_level(
+			mac_ctx->psoc, &enable_fw_module_log_level,
+			&enable_fw_module_log_level_num);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	__sme_enable_fw_module_log_level(enable_fw_module_log_level,
+					 enable_fw_module_log_level_num,
+					 vdev_id,
+					 WMI_DBGLOG_MOD_WOW_LOG_LEVEL);
 }
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION

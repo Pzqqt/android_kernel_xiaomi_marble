@@ -1018,6 +1018,13 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				wma_err("dbglog_module_log_enable failed ret %d",
 					ret);
 			break;
+		case WMI_DBGLOG_MOD_WOW_LOG_LEVEL:
+			ret = dbglog_set_mod_wow_log_lvl(wma->wmi_handle,
+							 privcmd->param_value);
+			if (ret)
+				wma_err("WMI_DBGLOG_MOD_WOW_LOG_LEVEL failed ret %d",
+					ret);
+			break;
 		case WMI_DBGLOG_TYPE:
 			ret = dbglog_parser_type_init(wma->wmi_handle,
 							privcmd->param_value);

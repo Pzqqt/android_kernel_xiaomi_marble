@@ -394,6 +394,44 @@
 	"29,1,31,1,36,1,38,1,46,1,47,1,50,1,52,1,53,1,56,1,60,1,61,1", \
 	"Set modulized firmware debug log level")
 
+/*
+ * <ini>
+ * gFwDebugWowModuleLoglevel - modulized firmware wow debug log level
+ * @Min: N/A
+ * @Max: N/A
+ * @Default: N/A
+ *
+ * This ini is used to set modulized firmware wow debug log level.
+ * FW module log level input string format looks like below:
+ * gFwDebugWowModuleLoglevel="<FW Module ID>,<Log Level>,..."
+ * For example:
+ * gFwDebugWowModuleLoglevel="1,0,2,1,3,2,4,3,5,4,6,5,7,6"
+ * The above input string means:
+ * For FW module ID 1 enable log level 0
+ * For FW module ID 2 enable log level 1
+ * For FW module ID 3 enable log level 2
+ * For FW module ID 4 enable log level 3
+ * For FW module ID 5 enable log level 4
+ * For FW module ID 6 enable log level 5
+ * For FW module ID 7 enable log level 6
+ * For valid values of log levels check enum DBGLOG_LOG_LVL and
+ * for valid values of module ids check enum WLAN_MODULE_ID.
+ *
+ * Related: None
+ *
+ * Supported Feature: Debugging
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_FW_WOW_MODULE_LOG_LEVEL CFG_INI_STRING( \
+	"gFwDebugWowModuleLoglevel", \
+	0, \
+	FW_MODULE_LOG_LEVEL_STRING_LENGTH, \
+	"5,3,18,3,31,3,36,3", \
+	"Set modulized firmware wow debug log level")
+
 #ifdef FEATURE_WLAN_RA_FILTERING
 /* <ini>
  * gRAFilterEnable
@@ -776,6 +814,6 @@
 	CFG(CFG_TX_SCH_DELAY) \
 	CFG(CFG_ENABLE_SECONDARY_RATE) \
 	CFG(CFG_SET_SAP_XLNA_BYPASS) \
-	CFG(CFG_SET_ENABLE_ILP)
-
+	CFG(CFG_SET_ENABLE_ILP) \
+	CFG(CFG_ENABLE_FW_WOW_MODULE_LOG_LEVEL)
 #endif
