@@ -2973,18 +2973,15 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 	struct dp_ast_entry *ast_entry = NULL;
 	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
-	if (qdf_nbuf_get_tx_ftype(nbuf) == CB_FTYPE_INTRABSS_FWD) {
-		qdf_spin_lock_bh(&soc->ast_lock);
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = dp_peer_ast_hash_find_by_pdevid
+				(soc,
+				 (uint8_t *)(eh->ether_shost),
+				 vdev->pdev->pdev_id);
 
-		ast_entry = dp_peer_ast_hash_find_by_pdevid
-					(soc,
-					 (uint8_t *)(eh->ether_shost),
-					 vdev->pdev->pdev_id);
-
-		if (ast_entry)
-			sa_peer_id = ast_entry->peer_id;
-		qdf_spin_unlock_bh(&soc->ast_lock);
-	}
+	if (ast_entry)
+		sa_peer_id = ast_entry->peer_id;
+	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
