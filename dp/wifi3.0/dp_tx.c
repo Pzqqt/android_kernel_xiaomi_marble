@@ -917,6 +917,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
 	tx_desc->pkt_offset = 0;
+	tx_desc->length = qdf_nbuf_headlen(nbuf);
 
 	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
 
@@ -984,6 +985,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		tx_desc->pkt_offset = align_pad + htt_hdr_size;
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		is_exception = 1;
+		tx_desc->length -= tx_desc->pkt_offset;
 	}
 
 #if !TQM_BYPASS_WAR
@@ -1069,6 +1071,13 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	tx_desc->msdu_ext_desc = msdu_ext_desc;
 	tx_desc->flags |= DP_TX_DESC_FLAG_FRAG;
+
+	tx_desc->dma_addr = msdu_ext_desc->paddr;
+
+	if (msdu_ext_desc->flags & DP_TX_EXT_DESC_FLAG_METADATA_VALID)
+		tx_desc->length = HAL_TX_EXT_DESC_WITH_META_DATA;
+	else
+		tx_desc->length = HAL_TX_EXTENSION_DESC_LEN_BYTES;
 
 	return tx_desc;
 failure:
@@ -1340,7 +1349,6 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		 struct cdp_tx_exception_metadata *tx_exc_metadata,
 		 struct dp_tx_msdu_info_s *msdu_info)
 {
-	uint8_t type;
 	void *hal_tx_desc;
 	uint32_t *hal_tx_desc_cached;
 	int coalesce = 0;
@@ -1372,27 +1380,9 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	hal_tx_desc_cached = (void *) cached_desc;
 
-	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG) {
-		type = HAL_TX_BUF_TYPE_EXT_DESC;
-		tx_desc->dma_addr = tx_desc->msdu_ext_desc->paddr;
-
-		if (tx_desc->msdu_ext_desc->flags &
-			DP_TX_EXT_DESC_FLAG_METADATA_VALID)
-			tx_desc->length = HAL_TX_EXT_DESC_WITH_META_DATA;
-		else
-			tx_desc->length = HAL_TX_EXTENSION_DESC_LEN_BYTES;
-	} else {
-		tx_desc->length = qdf_nbuf_len(tx_desc->nbuf) -
-					tx_desc->pkt_offset;
-		type = HAL_TX_BUF_TYPE_BUFFER;
-		tx_desc->dma_addr = qdf_nbuf_mapped_paddr_get(tx_desc->nbuf);
-	}
-
-	qdf_assert_always(tx_desc->dma_addr);
-
 	hal_tx_desc_set_buf_addr(soc->hal_soc, hal_tx_desc_cached,
 				 tx_desc->dma_addr, bm_id, tx_desc->id,
-				 type);
+				 (tx_desc->flags & DP_TX_DESC_FLAG_FRAG));
 	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
 				vdev->lmac_id);
 	hal_tx_desc_set_search_type(soc->hal_soc, hal_tx_desc_cached,
@@ -1437,8 +1427,10 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
-			 tx_desc->length, type, (uint64_t)tx_desc->dma_addr,
-			 tx_desc->pkt_offset, tx_desc->id);
+			 tx_desc->length,
+			 (tx_desc->flags & DP_TX_DESC_FLAG_FRAG),
+			 (uint64_t)tx_desc->dma_addr, tx_desc->pkt_offset,
+			 tx_desc->id);
 
 	hal_ring_hdl = dp_tx_get_hal_ring_hdl(soc, ring_id);
 
@@ -2036,6 +2028,7 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		goto release_desc;
 	}
 
+	tx_desc->dma_addr = qdf_nbuf_mapped_paddr_get(tx_desc->nbuf);
 	/* Enqueue the Tx MSDU descriptor to HW for transmit */
 	status = dp_tx_hw_enqueue(soc, vdev, tx_desc, htt_tcl_metadata,
 				  tx_exc_metadata, msdu_info);
