@@ -1374,7 +1374,7 @@ static QDF_STATUS extract_peer_create_response_event_tlv(wmi_unified_t wmi_hdl,
 
 	ev = (wmi_peer_create_conf_event_fixed_param *) param_buf->fixed_param;
 	if (!ev) {
-		WMI_LOGE("%s: Invalid peer_create response", __func__);
+		wmi_err("Invalid peer_create response");
 		return QDF_STATUS_E_FAILURE;
 	}
 
