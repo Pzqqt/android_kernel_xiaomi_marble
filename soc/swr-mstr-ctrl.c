@@ -63,7 +63,6 @@
 
 #define SWRS_SCP_INT_STATUS_CLEAR_1 0x40
 #define SWRS_SCP_INT_STATUS_MASK_1 0x41
-#define SWRM_NUM_AUTO_ENUM_SLAVES    6
 
 #define SWRM_MCP_SLV_STATUS_MASK    0x03
 #define SWRM_ROW_CTRL_MASK    0xF8
@@ -1916,7 +1915,7 @@ static int swrm_find_alert_slave(struct swr_mstr_ctrl *swrm,
 	int i;
 	bool found = false;
 
-	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+	for (i = 0; i < (swrm->num_dev + 1); i++) {
 		if ((status & SWRM_MCP_SLV_STATUS_MASK) == SWR_ALERT) {
 			*devnum = i;
 			found = true;
@@ -1943,7 +1942,7 @@ static void swrm_enable_slave_irq(struct swr_mstr_ctrl *swrm)
 		return;
 	}
 	dev_dbg(swrm->dev, "%s: slave status: 0x%x\n", __func__, status);
-	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+	for (i = 0; i < (swrm->num_dev + 1); i++) {
 		if (status & SWRM_MCP_SLV_STATUS_MASK) {
 			swrm_cmd_fifo_rd_cmd(swrm, &temp, i, 0x0,
 					SWRS_SCP_INT_STATUS_CLEAR_1, 1);
@@ -1964,7 +1963,7 @@ static int swrm_check_slave_change_status(struct swr_mstr_ctrl *swrm,
 	int ret = SWR_NOT_PRESENT;
 
 	if (status != swrm->slave_status) {
-		for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+		for (i = 0; i < (swrm->num_dev + 1); i++) {
 			if ((status & SWRM_MCP_SLV_STATUS_MASK) !=
 			    (swrm->slave_status & SWRM_MCP_SLV_STATUS_MASK)) {
 				ret = (status & SWRM_MCP_SLV_STATUS_MASK);
@@ -2346,10 +2345,7 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 			__func__);
 		return ret;
 	}
-	if (swrm->num_dev)
-		num_dev = swrm->num_dev;
-	else
-		num_dev = mstr->num_dev;
+	num_dev = swrm->num_dev;
 
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
@@ -2688,23 +2684,6 @@ static int swrm_probe(struct platform_device *pdev)
 		swrm->clk_stop_mode0_supp = FALSE;
 	}
 
-	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
-				   &swrm->num_dev);
-	if (ret) {
-		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
-			__func__, "qcom,swr-num-dev");
-	} else {
-		if (swrm->num_dev > SWRM_NUM_AUTO_ENUM_SLAVES) {
-			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
-				__func__, swrm->num_dev,
-				SWRM_NUM_AUTO_ENUM_SLAVES);
-			ret = -EINVAL;
-			goto err_pdata_fail;
-		} else {
-			swrm->master.num_dev = swrm->num_dev;
-		}
-	}
-
 	/* Parse soundwire port mapping */
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr-num-ports",
 				&num_ports);
@@ -2886,6 +2865,34 @@ static int swrm_probe(struct platform_device *pdev)
 	mutex_lock(&swrm->mlock);
 	swrm_clk_request(swrm, true);
 	swrm->version = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
+
+	swrm->rd_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+				& SWRM_COMP_PARAMS_RD_FIFO_DEPTH) >> 15);
+	swrm->wr_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+				& SWRM_COMP_PARAMS_WR_FIFO_DEPTH) >> 10);
+
+	swrm->num_auto_enum = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+                                & SWRM_COMP_PARAMS_AUTO_ENUM_SLAVES) >> 20);
+	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
+				   &swrm->num_dev);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: Looking up %s property failed\n",
+			__func__, "qcom,swr-num-dev");
+		goto err_pdata_fail;
+	} else {
+		if (swrm->num_dev > swrm->num_auto_enum) {
+			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
+				__func__, swrm->num_dev,
+				swrm->num_auto_enum);
+			ret = -EINVAL;
+			goto err_pdata_fail;
+		} else {
+			dev_dbg(&pdev->dev,
+				"max swr devices expected to attach - %d, supported auto_enum - %d\n",
+				swrm->num_dev, swrm->num_auto_enum);
+		}
+	}
+
 	ret = swrm_master_init(swrm);
 	if (ret < 0) {
 		dev_err(&pdev->dev,
@@ -2901,11 +2908,6 @@ static int swrm_probe(struct platform_device *pdev)
 
 	if (pdev->dev.of_node)
 		of_register_swr_devices(&swrm->master);
-
-	swrm->rd_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
-				& SWRM_COMP_PARAMS_RD_FIFO_DEPTH) >> 15);
-	swrm->wr_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
-				& SWRM_COMP_PARAMS_WR_FIFO_DEPTH) >> 10);
 
 #ifdef CONFIG_DEBUG_FS
 	swrm->debugfs_swrm_dent = debugfs_create_dir(dev_name(&pdev->dev), 0);
