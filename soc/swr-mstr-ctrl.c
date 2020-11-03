@@ -119,7 +119,7 @@ enum {
 #define FALSE 0
 
 #define SWRM_MAX_PORT_REG    120
-#define SWRM_MAX_INIT_REG    11
+#define SWRM_MAX_INIT_REG    12
 
 #define MAX_FIFO_RD_FAIL_RETRY 3
 
@@ -2488,8 +2488,15 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_CMD_FIFO_CFG;
 	value[len++] = val;
 
+	if (swrm->version >= SWRM_VERSION_1_7) {
+		reg[len] = SWRM_LINK_MANAGER_EE;
+		value[len++] = swrm->ee_val;
+	}
 	reg[len] = SWRM_MCP_BUS_CTRL;
-	value[len++] = 0x2;
+	if (swrm->version < SWRM_VERSION_1_7)
+		value[len++] = 0x2;
+	else
+		value[len++] = 0x2 << swrm->ee_val;
 
 	/* Set IRQ to PULSE */
 	reg[len] = SWRM_COMP_CFG;
@@ -2505,6 +2512,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	reg[len] = SWRM_CPU1_INTERRUPT_EN;
 	value[len++] = swrm->intr_mask;
+
 
 	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x03;
@@ -2611,6 +2619,14 @@ static int swrm_probe(struct platform_device *pdev)
 			__func__);
 		ret = -EINVAL;
 		goto err_pdata_fail;
+	}
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr-master-ee-val",
+				&swrm->ee_val);
+	if (ret) {
+		dev_dbg(&pdev->dev,
+			"%s: ee_val not specified, initialize with default val\n",
+			__func__);
+		swrm->ee_val = 0x1;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr_master_id",
 				&swrm->master_id);
@@ -3034,7 +3050,7 @@ static int swrm_runtime_resume(struct device *dev)
 	bool hw_core_err = false, aud_core_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
-	u32 temp = 0;
+	u32 temp = 0, val = 0;
 
 	dev_dbg(dev, "%s: pm_runtime: resume, state:%d\n",
 		__func__, swrm->state);
@@ -3125,8 +3141,12 @@ static int swrm_runtime_resume(struct device *dev)
 				temp &= 0xFFFFFFFD;
 				iowrite32(temp, swrm->swrm_hctl_reg);
 			}
+			if (swrm->version < SWRM_VERSION_1_7)
+				val = 0x2;
+			else
+				val = 0x2 << swrm->ee_val;
 			/*wake up from clock stop*/
-			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, 0x2);
+			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, val);
 			/* clear and enable bus clash interrupt */
 			swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x08);
 			swrm->intr_mask |= 0x08;

@@ -140,6 +140,7 @@ struct swr_mstr_ctrl {
 	u8 rcmd_id;
 	u8 wcmd_id;
 	u32 master_id;
+	u32 ee_val;
 	u32 dynamic_port_map_supported;
 	void *handle; /* SWR Master handle from client for read and writes */
 	int (*read)(void *handle, int reg);
