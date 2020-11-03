@@ -72,17 +72,39 @@ static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_POSTED_START, "posted_start"},
 };
 
+static inline struct sde_kms *_sde_connector_get_kms(struct drm_connector *conn)
+{
+	struct msm_drm_private *priv;
+
+	if (!conn || !conn->dev || !conn->dev->dev_private) {
+		SDE_ERROR("invalid connector\n");
+		return NULL;
+	}
+	priv = conn->dev->dev_private;
+	if (!priv || !priv->kms) {
+		SDE_ERROR("invalid kms\n");
+		return NULL;
+	}
+
+	return to_sde_kms(priv->kms);
+}
+
 static int sde_backlight_device_update_status(struct backlight_device *bd)
 {
 	int brightness;
 	struct dsi_display *display;
-	struct sde_connector *c_conn;
+	struct sde_connector *c_conn = bl_get_data(bd);
 	int bl_lvl;
 	struct drm_event event;
 	int rc = 0;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct sde_vm_ops *vm_ops;
+
+	sde_kms = _sde_connector_get_kms(&c_conn->base);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
+		return -EINVAL;
+	}
 
 	brightness = bd->props.brightness;
 
@@ -90,11 +112,6 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 			(bd->props.state & BL_CORE_FBBLANK) ||
 			(bd->props.state & BL_CORE_SUSPENDED))
 		brightness = 0;
-
-	c_conn = bl_get_data(bd);
-
-	priv = c_conn->base.dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
 
 	display = (struct dsi_display *) c_conn->display;
 	if (brightness > display->panel->bl_config.bl_max_level)
@@ -171,23 +188,18 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 	struct backlight_properties props;
 	struct dsi_display *display;
 	struct dsi_backlight_config *bl_config;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	static int display_count;
 	char bl_node_name[BL_NODE_NAME_SIZE];
 
-	if (!c_conn || !dev || !dev->dev || !dev->dev_private) {
-		SDE_ERROR("invalid param\n");
+	sde_kms = _sde_connector_get_kms(&c_conn->base);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
 		return -EINVAL;
 	} else if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
 		return 0;
 	}
 
-	priv = dev->dev_private;
-	if (!priv->kms)
-		return -EINVAL;
-
-	sde_kms = to_sde_kms(priv->kms);
 	display = (struct dsi_display *) c_conn->display;
 	bl_config = &display->panel->bl_config;
 
@@ -390,18 +402,14 @@ int sde_connector_get_dither_cfg(struct drm_connector *conn,
 static void sde_connector_get_avail_res_info(struct drm_connector *conn,
 		struct msm_resource_caps_info *avail_res)
 {
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct drm_encoder *drm_enc = NULL;
 
-	if (!conn || !conn->dev || !conn->dev->dev_private)
+	sde_kms = _sde_connector_get_kms(conn);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
 		return;
-
-	priv = conn->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
-
-	if (!sde_kms)
-		return;
+	}
 
 	if (conn->state && conn->state->best_encoder)
 		drm_enc = conn->state->best_encoder;
@@ -902,9 +910,13 @@ void sde_connector_helper_bridge_disable(struct drm_connector *connector)
 	struct sde_connector *c_conn = NULL;
 	struct dsi_display *display;
 	bool poms_pending = false;
+	struct sde_kms *sde_kms;
 
-	if (!connector)
+	sde_kms = _sde_connector_get_kms(connector);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
 		return;
+	}
 
 	c_conn = to_sde_connector(connector);
 	if (c_conn->connector_type == DRM_MODE_CONNECTOR_DSI) {
@@ -923,7 +935,7 @@ void sde_connector_helper_bridge_disable(struct drm_connector *connector)
 	/* Disable ESD thread */
 	sde_connector_schedule_status_work(connector, false);
 
-	if (c_conn->bl_device) {
+	if (!sde_in_trusted_vm(sde_kms) && c_conn->bl_device) {
 		c_conn->bl_device->props.power = FB_BLANK_POWERDOWN;
 		c_conn->bl_device->props.state |= BL_CORE_FBBLANK;
 		backlight_update_status(c_conn->bl_device);
@@ -936,9 +948,13 @@ void sde_connector_helper_bridge_enable(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn = NULL;
 	struct dsi_display *display;
+	struct sde_kms *sde_kms;
 
-	if (!connector)
+	sde_kms = _sde_connector_get_kms(connector);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
 		return;
+	}
 
 	c_conn = to_sde_connector(connector);
 	display = (struct dsi_display *) c_conn->display;
@@ -955,7 +971,7 @@ void sde_connector_helper_bridge_enable(struct drm_connector *connector)
 				MSM_ENC_TX_COMPLETE);
 	c_conn->allow_bl_update = true;
 
-	if (c_conn->bl_device) {
+	if (!sde_in_trusted_vm(sde_kms) && c_conn->bl_device) {
 		c_conn->bl_device->props.power = FB_BLANK_UNBLANK;
 		c_conn->bl_device->props.state &= ~BL_CORE_FBBLANK;
 		backlight_update_status(c_conn->bl_device);
@@ -2522,20 +2538,17 @@ static const struct drm_connector_helper_funcs sde_connector_helper_ops_v2 = {
 static int sde_connector_populate_mode_info(struct drm_connector *conn,
 	struct sde_kms_info *info)
 {
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct sde_connector *c_conn = NULL;
 	struct drm_display_mode *mode;
 	struct msm_mode_info mode_info;
 	int rc = 0;
 
-	if (!conn || !conn->dev || !conn->dev->dev_private) {
-		SDE_ERROR("invalid arguments\n");
+	sde_kms = _sde_connector_get_kms(conn);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
 		return -EINVAL;
 	}
-
-	priv = conn->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
 
 	c_conn = to_sde_connector(conn);
 	if (!c_conn->ops.get_mode_info) {
