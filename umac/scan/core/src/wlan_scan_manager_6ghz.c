@@ -75,8 +75,7 @@ scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 	if (tmp_list_count <= 1)
 		return;
 
-	rnr_chan_info =
-		qdf_mem_malloc(sizeof(rnr_chan_info) * MAX_6GHZ_CHANNEL);
+	rnr_chan_info = qdf_mem_malloc(sizeof(rnr_chan_info) * tmp_list_count);
 	if (!rnr_chan_info)
 		return;
 
@@ -214,6 +213,17 @@ static void scm_add_rnr_info(struct wlan_objmgr_pdev *pdev,
 
 	scm_update_rnr_info(psoc, req);
 }
+#else
+static void
+scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
+			   struct chan_list *chan_list)
+{
+}
+
+static void scm_add_rnr_info(struct wlan_objmgr_pdev *pdev,
+			     struct scan_start_request *req)
+{
+}
 #endif
 
 static inline bool
@@ -321,17 +331,6 @@ scm_is_6ghz_scan_optimization_supported(struct wlan_objmgr_psoc *psoc)
 					    WLAN_SOC_CEXT_SCAN_PER_CH_CONFIG);
 }
 
-static inline bool
-scm_is_sta_in_conneceted_state(struct wlan_objmgr_vdev *vdev)
-{
-	QDF_STATUS status = wlan_vdev_is_up(vdev);
-
-	if (QDF_IS_STATUS_SUCCESS(status))
-		return true;
-
-	return false;
-}
-
 void
 scm_update_6ghz_channel_list(struct scan_start_request *req,
 			     struct wlan_scan_obj *scan_obj)
@@ -381,31 +380,20 @@ scm_update_6ghz_channel_list(struct scan_start_request *req,
 	case SCAN_MODE_6G_RNR_ONLY:
 		/*
 		 * When the ini is set to SCAN_MODE_6G_RNR_ONLY,
-		 * always(connected/disconnected state) set RNR flag for
-		 * all(PSC and non-PSC) channels.
+		 * always set RNR flag for all(PSC and non-PSC) channels.
 		 */
 		scm_set_rnr_flag_all_6g_ch(&chan_list->chan[0], num_scan_ch);
 		break;
 	case SCAN_MODE_6G_PSC_CHANNEL:
 		/*
 		 * When the ini is set to SCAN_MODE_6G_PSC_CHANNEL,
-		 * always(connected/disconnected state) set RNR flag for
-		 * non-PSC channels.
+		 * always set RNR flag for non-PSC channels.
 		 */
 		scm_set_rnr_flag_non_psc_6g_ch(&chan_list->chan[0],
 					       num_scan_ch);
 		break;
 	case SCAN_MODE_6G_PSC_DUTY_CYCLE:
 	case SCAN_MODE_6G_ALL_DUTY_CYCLE:
-		/*
-		 * When the ini is set to SCAN_MODE_6G_PSC_DUTY_CYCLE/
-		 * SCAN_MODE_6G_ALL_DUTY_CYCLE, set RNR flag only in
-		 * disconnected state. Connected scan is going to be a split
-		 * scan and no need to optimize the scan time.
-		 */
-		if (scm_is_sta_in_conneceted_state(vdev))
-			break;
-
 		if (!scm_is_duty_cycle_scan(scan_obj))
 			scm_set_rnr_flag_all_6g_ch(&chan_list->chan[0],
 						   num_scan_ch);
