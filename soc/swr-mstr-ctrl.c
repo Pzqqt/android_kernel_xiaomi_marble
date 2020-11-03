@@ -771,6 +771,7 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 				bool dir, bool enable)
 {
 	u16 reg_addr = 0;
+	u32 reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL;
 
 	if (!port_num || port_num > 6) {
 		dev_err(swrm->dev, "%s: invalid port: %d\n",
@@ -781,10 +782,12 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 				SWRM_DOUT_DP_PCM_PORT_CTRL(port_num));
 	swr_master_write(swrm, reg_addr, enable);
 
+	if (swrm->version >= SWRM_VERSION_1_7)
+		reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL_V1P7;
+
 	if (enable)
-		swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, 0x1E);
-	else
-		swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, 0x6);
+		reg_val |= SWRM_COMP_FEATURE_CFG_PCM_EN_MASK;
+	swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, reg_val);
 	return 0;
 }
 
