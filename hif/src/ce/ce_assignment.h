@@ -982,6 +982,12 @@ static struct CE_pipe_config target_ce_config_wlan_qcn9100[] = {
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
+#ifdef QCA_LOWMEM_CONFIG
+#define PKTLOG_DST_ENTRIES 128
+#else
+#define PKTLOG_DST_ENTRIES 512
+#endif
+
 #define QCA_5018_CE_COUNT 6
 static struct CE_attr host_ce_config_wlan_qca5018[] = {
 	/* host->target HTC control and raw streams */
@@ -1002,7 +1008,7 @@ static struct CE_attr host_ce_config_wlan_qca5018[] = {
 	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
 #else
 	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
-		512, NULL,},
+		PKTLOG_DST_ENTRIES, NULL,},
 #endif
 	/* Target autonomous HIF_memcpy */
 	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
@@ -1058,7 +1064,7 @@ static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
 #else
 	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
-		512, NULL,},
+		PKTLOG_DST_ENTRIES, NULL,},
 #endif
 	/* Target autonomous HIF_memcpy */
 	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
