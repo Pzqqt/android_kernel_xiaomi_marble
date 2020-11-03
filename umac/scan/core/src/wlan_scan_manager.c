@@ -602,12 +602,11 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 		scm_update_passive_dwell_time(vdev, req);
 
 	if (policy_mgr_get_connection_count(psoc)) {
-		if (req->scan_req.scan_f_passive)
-			req->scan_req.dwell_time_passive =
-				scan_obj->scan_def.conc_passive_dwell;
-		else
+		if (!req->scan_req.scan_f_passive)
 			req->scan_req.dwell_time_active =
 				scan_obj->scan_def.conc_active_dwell;
+		req->scan_req.dwell_time_passive =
+			scan_obj->scan_def.conc_passive_dwell;
 		req->scan_req.max_rest_time =
 				scan_obj->scan_def.conc_max_rest_time;
 		req->scan_req.min_rest_time =
