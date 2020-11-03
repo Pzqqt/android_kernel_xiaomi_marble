@@ -93,6 +93,10 @@
 #include <wlan_dcs_ucfg_api.h>
 #endif
 
+#ifdef FEATURE_STA_MODE_VOTE_LINK
+#include "wlan_ipa_ucfg_api.h"
+#endif
+
 QDF_STATUS wma_find_vdev_id_by_addr(tp_wma_handle wma, uint8_t *addr,
 				    uint8_t *vdev_id)
 {
@@ -4504,6 +4508,21 @@ static void wma_sap_allow_runtime_pm(tp_wma_handle wma)
 	qdf_runtime_pm_allow_suspend(&wma->sap_prevent_runtime_pm_lock);
 }
 
+#ifdef FEATURE_STA_MODE_VOTE_LINK
+static bool wma_add_sta_allow_sta_mode_vote_link(uint8_t oper_mode)
+{
+	if (oper_mode == BSS_OPERATIONAL_MODE_STA && ucfg_ipa_is_enabled())
+		return true;
+
+	return false;
+}
+#else /* !FEATURE_STA_MODE_VOTE_LINK */
+static bool wma_add_sta_allow_sta_mode_vote_link(uint8_t oper_mode)
+{
+	return false;
+}
+#endif /* FEATURE_STA_MODE_VOTE_LINK */
+
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
@@ -4542,6 +4561,9 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		wma_debug("disable runtime pm and vote for link up");
 		htc_vote_link_up(htc_handle);
 		wma_sap_prevent_runtime_pm(wma);
+	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
+		wma_debug("vote for link up");
+		htc_vote_link_up(htc_handle);
 	}
 }
 
@@ -4603,6 +4625,9 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		wma_debug("allow runtime pm and vote for link down");
 		htc_vote_link_down(htc_handle);
 		wma_sap_allow_runtime_pm(wma);
+	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
+		wma_debug("vote for link down");
+		htc_vote_link_down(htc_handle);
 	}
 }
 

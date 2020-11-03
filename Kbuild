@@ -3714,6 +3714,8 @@ ifeq ($(CONFIG_FEATURE_IPA_PIPE_CHANGE_WDI1), y)
 cppflags-y += -DFEATURE_IPA_PIPE_CHANGE_WDI1
 endif
 
+cppflags-$(CONFIG_FEATURE_STA_MODE_VOTE_LINK) += -DFEATURE_STA_MODE_VOTE_LINK
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
