@@ -613,7 +613,7 @@ use_same_candidate:
 static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 					    struct cnx_mgr *cm_ctx,
 					    struct scan_filter *filter,
-					    struct wlan_cm_connect_req *req)
+					    struct cm_connect_req *cm_req)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
@@ -623,7 +623,8 @@ static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 		return;
 
 	wlan_cm_dual_sta_roam_update_connect_channels(psoc, filter);
-	filter->dot11mode = req->dot11mode_filter;
+	filter->dot11mode = cm_req->req.dot11mode_filter;
+	cm_update_fils_scan_filter(filter, cm_req);
 }
 
 static void cm_update_security_filter(struct scan_filter *filter,
@@ -709,7 +710,7 @@ bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 					    struct cnx_mgr *cm_ctx,
 					    struct scan_filter *filter,
-					    struct wlan_cm_connect_req *req)
+					    struct cm_connect_req *cm_req)
 { }
 
 static void cm_update_security_filter(struct scan_filter *filter,
@@ -757,8 +758,7 @@ static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
 	}
 
 	cm_update_security_filter(filter, &cm_req->req);
-	cm_update_fils_scan_filter(filter, cm_req);
-	cm_update_advance_filter(pdev, cm_ctx, filter, &cm_req->req);
+	cm_update_advance_filter(pdev, cm_ctx, filter, cm_req);
 }
 
 static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
@@ -1299,6 +1299,19 @@ cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+static void cm_copy_fils_info(struct wlan_cm_vdev_connect_req *req,
+			      struct cm_req *cm_req)
+{
+	req->fils_info = &cm_req->connect_req.req.fils_info;
+}
+#else
+static inline void cm_copy_fils_info(struct wlan_cm_vdev_connect_req *req,
+				     struct cm_req *cm_req)
+{
+}
+#endif
+
 QDF_STATUS
 cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
@@ -1340,7 +1353,7 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.assoc_ie = cm_req->connect_req.req.assoc_ie;
 	req.scan_ie = cm_req->connect_req.req.scan_ie;
 	req.bss = cm_req->connect_req.cur_candidate;
-	req.fils_info = &cm_req->connect_req.req.fils_info;
+	cm_copy_fils_info(&req, cm_req);
 	req.ht_caps = cm_req->connect_req.req.ht_caps;
 	req.ht_caps_mask = cm_req->connect_req.req.ht_caps_mask;
 	req.vht_caps = cm_req->connect_req.req.vht_caps;
