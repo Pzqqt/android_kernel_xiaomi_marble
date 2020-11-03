@@ -156,6 +156,12 @@ struct hdd_apf_context {
 #define NUM_TX_QUEUES 4
 #endif
 
+/*
+ * Number of DPTRACE records to dump when a cfg80211 disconnect with reason
+ * WLAN_REASON_DEAUTH_LEAVING DEAUTH is received from user-space.
+ */
+#define WLAN_DEAUTH_DPTRACE_DUMP_COUNT 100
+
 /* HDD_IS_RATE_LIMIT_REQ: Macro helper to implement rate limiting
  * @flag: The flag to determine if limiting is required or not
  * @rate: The number of seconds within which if multiple commands come, the

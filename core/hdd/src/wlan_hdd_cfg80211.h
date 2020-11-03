@@ -869,34 +869,4 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
  */
 bool hdd_is_legacy_connection(struct hdd_adapter *adapter);
 
-#ifdef FEATURE_CM_ENABLE
-/**
- * wlan_hdd_cm_connect() - cfg80211 connect api
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to network device
- * @req: Pointer to cfg80211 connect request
- *
- * This function is used to issue connect request to connection manager
- *
- * Context: Any context.
- * Return: 0 for success, non-zero for failure
- */
-int wlan_hdd_cm_connect(struct wiphy *wiphy,
-			struct net_device *ndev,
-			struct cfg80211_connect_params *req);
-
-/**
- * wlan_hdd_cm_disconnect() - cfg80211 disconnect api
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to network device
- * @reason: Disconnect reason code
- *
- * This function is used to issue disconnect request to conection manager
- *
- * Return: 0 for success, non-zero for failure
- */
-int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
-			   struct net_device *dev, u16 reason);
-#endif
-
 #endif
