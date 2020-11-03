@@ -475,6 +475,7 @@ endif #CONFIG_HELIUMPLUS
 
 ifeq ($(CONFIG_LITHIUM), y)
 CONFIG_RX_DEFRAG_DO_NOT_REINJECT := y
+CONFIG_MARK_ICMP_REQ_TO_FW := y
 #
 # Enable VERBOSE debug INI mechanism
 #
