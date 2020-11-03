@@ -901,6 +901,7 @@ util_scan_populate_bcn_ie_list(struct wlan_objmgr_pdev *pdev,
 	uint8_t chan_idx;
 	struct wlan_scan_obj *scan_obj;
 	struct wlan_objmgr_psoc *psoc;
+	uint8_t tpe_idx = 0;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
@@ -1093,6 +1094,13 @@ util_scan_populate_bcn_ie_list(struct wlan_objmgr_pdev *pdev,
 							   ie);
 			if (QDF_IS_STATUS_ERROR(status))
 				goto err_status;
+			break;
+		case WLAN_ELEMID_VHT_TX_PWR_ENVLP:
+			if (ie->ie_len < WLAN_TPE_IE_MIN_LEN)
+				goto err;
+			if (tpe_idx >= WLAN_MAX_NUM_TPE_IE)
+				goto err;
+			scan_params->ie_list.tpe[tpe_idx++] = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_CHAN_SWITCH_WRAP:
 			scan_params->ie_list.cswrp = (uint8_t *)ie;

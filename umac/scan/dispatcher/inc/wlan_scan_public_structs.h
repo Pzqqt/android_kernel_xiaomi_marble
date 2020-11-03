@@ -111,6 +111,7 @@ struct channel_info {
  * @vhtcap:     pointer to vhtcap ie
  * @vhtop:      pointer to vhtop ie
  * @opmode:     pointer to opmode ie
+ * @tpe:        array of pointers to transmit power envelope ie
  * @cswrp:      pointer to channel switch announcement wrapper ie
  * @widebw:     pointer to wide band channel switch sub ie
  * @txpwrenvlp: pointer to tx power envelop sub ie
@@ -158,6 +159,7 @@ struct ie_list {
 	uint8_t *vhtcap;
 	uint8_t *vhtop;
 	uint8_t *opmode;
+	uint8_t *tpe[WLAN_MAX_NUM_TPE_IE];
 	uint8_t *cswrp;
 	uint8_t *widebw;
 	uint8_t *txpwrenvlp;
