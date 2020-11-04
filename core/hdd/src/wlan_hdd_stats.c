@@ -709,9 +709,6 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			    struct wifi_interface_info *info)
 {
 	struct hdd_station_ctx *sta_ctx;
-	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
-	/* pre-existing layering violation */
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	info->mode = hdd_map_device_to_ll_iface_mode(adapter->device_mode);
 
@@ -754,11 +751,8 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		}
 	}
 
-	qdf_mem_copy(info->countryStr,
-		     mac->scan.countryCodeCurrent, REG_ALPHA2_LEN + 1);
-
-	qdf_mem_copy(info->apCountryStr,
-		     mac->scan.countryCodeCurrent, REG_ALPHA2_LEN + 1);
+	wlan_reg_get_cc_and_src(adapter->hdd_ctx->psoc, info->countryStr);
+	wlan_reg_get_cc_and_src(adapter->hdd_ctx->psoc, info->apCountryStr);
 
 	return true;
 }
