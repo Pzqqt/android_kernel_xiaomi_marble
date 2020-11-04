@@ -246,15 +246,21 @@ wlan_ser_move_non_scan_pending_to_active(
 	bool vdev_cmd_active = 0;
 	bool vdev_queue_lookup = false;
 
-	pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-
-	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
-	vdev_queue = &ser_vdev_obj->vdev_q[SER_VDEV_QUEUE_COMP_NON_SCAN];
-
 	if (!ser_pdev_obj) {
 		ser_err("Can't find ser_pdev_obj");
 		goto error;
 	}
+
+	pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
+
+	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
+
+	if (!ser_vdev_obj) {
+		ser_err("Can't find ser_vdev_obj");
+		goto error;
+	}
+
+	vdev_queue = &ser_vdev_obj->vdev_q[SER_VDEV_QUEUE_COMP_NON_SCAN];
 
 	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 
