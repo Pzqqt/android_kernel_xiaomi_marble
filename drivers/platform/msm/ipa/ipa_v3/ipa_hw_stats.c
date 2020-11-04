@@ -10,6 +10,8 @@
 #include "ipahal.h"
 #include "ipahal_hw_stats.h"
 
+#define IPA_INIT_DROP_STATS_MAX_CMD_NUM 5
+
 static inline u32 ipa_hw_stats_get_ep_bit_n_idx(enum ipa_client_type client,
 	u32 *reg_idx)
 {
@@ -1791,7 +1793,7 @@ int ipa_init_drop_stats(u32 *pipe_bitmask)
 	struct ipahal_imm_cmd_pyld *drop_mask_pyld[IPAHAL_IPA5_PIPE_REG_NUM] =
 		{0};
 	struct ipahal_imm_cmd_pyld *coal_cmd_pyld = NULL;
-	struct ipa3_desc desc[4] = { {0} };
+	struct ipa3_desc desc[IPA_INIT_DROP_STATS_MAX_CMD_NUM] = { {0} };
 	dma_addr_t dma_address;
 	int ret, i;
 	int num_cmd = 0;
@@ -1807,7 +1809,7 @@ int ipa_init_drop_stats(u32 *pipe_bitmask)
 	for (i = 0; i < IPA5_PIPE_REG_NUM; i++) {
 		ipa3_ctx->hw_stats.drop.init.enabled_bitmask[i] =
 			pipe_bitmask[i];
-		IPADBG_LOW("pipe_bitmask[%d]=0x%x\n", i, pipe_bitmask);
+		IPADBG_LOW("pipe_bitmask[%d]=0x%x\n", i, pipe_bitmask[i]);
 	}
 
 	pyld = ipahal_stats_generate_init_pyld(IPAHAL_HW_STATS_DROP,
