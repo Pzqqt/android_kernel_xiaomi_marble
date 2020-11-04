@@ -2130,63 +2130,19 @@ int dsi_panel_get_io_resources(struct dsi_panel *panel,
 	struct list_head temp_head;
 	struct msm_io_mem_entry *io_mem, *pos, *tmp;
 	struct list_head *mem_list = &io_res->mem;
-	int i, rc = 0, address_count, pin_count;
-	u32 *pins = NULL, *address = NULL;
-	u32 base, size;
-	struct dsi_parser_utils *utils = &panel->utils;
+	int i, rc = 0;
 
 	INIT_LIST_HEAD(&temp_head);
 
-	address_count = utils->count_u32_elems(utils->data,
-				"qcom,dsi-panel-gpio-address");
-	if (address_count != 2) {
-		DSI_DEBUG("panel gpio address not defined\n");
-		return 0;
-	}
-
-	address =  kzalloc(sizeof(u32) * address_count, GFP_KERNEL);
-	if (!address)
-		return -ENOMEM;
-
-	rc = utils->read_u32_array(utils->data, "qcom,dsi-panel-gpio-address",
-				address, address_count);
-	if (rc) {
-		DSI_ERR("panel gpio address not defined correctly\n");
-		goto end;
-	}
-	base = address[0];
-	size = address[1];
-
-	pin_count = utils->count_u32_elems(utils->data,
-				"qcom,dsi-panel-gpio-pins");
-	if (pin_count < 0) {
-		DSI_ERR("panel gpio pins not defined\n");
-		rc = pin_count;
-		goto end;
-	}
-
-	pins =  kzalloc(sizeof(u32) * pin_count, GFP_KERNEL);
-	if (!pins) {
-		rc = -ENOMEM;
-		goto end;
-	}
-
-	rc = utils->read_u32_array(utils->data, "qcom,dsi-panel-gpio-pins",
-				pins, pin_count);
-	if (rc) {
-		DSI_ERR("panel gpio pins not defined correctly\n");
-		goto end;
-	}
-
-	for (i = 0; i < pin_count; i++) {
+	for (i = 0; i < panel->tlmm_gpio_count; i++) {
 		io_mem = kzalloc(sizeof(*io_mem), GFP_KERNEL);
 		if (!io_mem) {
 			rc = -ENOMEM;
 			goto parse_fail;
 		}
 
-		io_mem->base = base + (pins[i] * size);
-		io_mem->size = size;
+		io_mem->base = panel->tlmm_gpio[i].addr;
+		io_mem->size = panel->tlmm_gpio[i].size;
 
 		list_add(&io_mem->list, &temp_head);
 	}
@@ -2200,8 +2156,6 @@ parse_fail:
 		kzfree(pos);
 	}
 end:
-	kzfree(pins);
-	kzfree(address);
 	return rc;
 }
 
@@ -2288,6 +2242,54 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 
 error:
 	return rc;
+}
+
+static int dsi_panel_parse_tlmm_gpio(struct dsi_panel *panel)
+{
+	struct dsi_parser_utils *utils = &panel->utils;
+	u32 base, size, pin;
+	int pin_count, address_count, name_count, i;
+
+	address_count = of_property_count_u32_elems(utils->data,
+				"qcom,dsi-panel-gpio-address");
+	if (address_count != 2) {
+		DSI_DEBUG("panel gpio address not defined\n");
+		return 0;
+	}
+
+	of_property_read_u32_index(utils->data,
+			"qcom,dsi-panel-gpio-address", 0, &base);
+	of_property_read_u32_index(utils->data,
+			"qcom,dsi-panel-gpio-address", 1, &size);
+
+	pin_count = of_property_count_u32_elems(utils->data,
+				"qcom,dsi-panel-gpio-pins");
+	name_count = of_property_count_strings(utils->data,
+				"qcom,dsi-panel-gpio-names");
+	if ((pin_count < 0) || (name_count < 0) || (pin_count != name_count)) {
+		DSI_ERR("invalid gpio pins/names\n");
+		return -EINVAL;
+	}
+
+	panel->tlmm_gpio = kcalloc(pin_count,
+				sizeof(struct dsi_tlmm_gpio), GFP_KERNEL);
+	if (!panel->tlmm_gpio)
+		return -ENOMEM;
+
+	panel->tlmm_gpio_count = pin_count;
+	for (i = 0; i < pin_count; i++) {
+		of_property_read_u32_index(utils->data,
+				"qcom,dsi-panel-gpio-pins", i, &pin);
+		panel->tlmm_gpio[i].num = pin;
+		panel->tlmm_gpio[i].addr = base + (pin * size);
+		panel->tlmm_gpio[i].size = size;
+
+		of_property_read_string_index(utils->data,
+				"qcom,dsi-panel-gpio-names", i,
+				&(panel->tlmm_gpio[i].name));
+	}
+
+	return 0;
 }
 
 static int dsi_panel_parse_bl_pwm_config(struct dsi_panel *panel)
@@ -3487,6 +3489,12 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 		goto error;
 	}
 
+	rc = dsi_panel_parse_tlmm_gpio(panel);
+	if (rc) {
+		DSI_ERR("failed to parse panel tlmm gpios, rc=%d\n", rc);
+		goto error;
+	}
+
 	rc = dsi_panel_parse_power_cfg(panel);
 	if (rc)
 		DSI_ERR("failed to parse power config, rc=%d\n", rc);
@@ -3645,6 +3653,7 @@ int dsi_panel_drv_deinit(struct dsi_panel *panel)
 	if (rc)
 		DSI_ERR("[%s] failed to put regs, rc=%d\n", panel->name, rc);
 
+	kfree(panel->tlmm_gpio);
 	panel->host = NULL;
 	memset(&panel->mipi_device, 0x0, sizeof(panel->mipi_device));
 

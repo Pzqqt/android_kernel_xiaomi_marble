@@ -182,6 +182,13 @@ struct dsi_panel_spr_info {
 	enum msm_display_spr_pack_type pack_type;
 };
 
+struct dsi_tlmm_gpio {
+	u32 num;
+	u32 addr;
+	u32 size;
+	const char *name;
+};
+
 struct dsi_panel;
 
 struct dsi_panel_ops {
@@ -252,6 +259,9 @@ struct dsi_panel {
 	int panel_test_gpio;
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
+
+	struct dsi_tlmm_gpio *tlmm_gpio;
+	u32 tlmm_gpio_count;
 
 	struct dsi_panel_ops panel_ops;
 };
