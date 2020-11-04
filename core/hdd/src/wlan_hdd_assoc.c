@@ -84,6 +84,7 @@
 #endif
 #include "wlan_cm_public_struct.h"
 #include "osif_cm_util.h"
+#include "wlan_hdd_cm_api.h"
 
 
 /* These are needed to recognize WPA and RSN suite types */
@@ -5627,27 +5628,6 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 }
 
 #ifdef FEATURE_CM_ENABLE
-static QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
-					  struct wlan_cm_connect_resp *rsp,
-					  enum osif_cb_type type)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS hdd_cm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
-					     struct wlan_cm_discon_rsp *rsp,
-					     enum osif_cb_type type)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
-					     enum netif_action_type action,
-					     enum netif_reason_type reason)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 struct osif_cm_ops osif_ops = {
 	.connect_complete_cb = hdd_cm_connect_complete,
 	.disconnect_complete_cb = hdd_cm_disconnect_complete,

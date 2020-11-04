@@ -3092,6 +3092,11 @@ int hdd_wlan_notify_modem_power_state(int state);
 void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len);
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable);
+#else
+static inline void
+wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
+{
+}
 #endif
 
 struct hdd_adapter *

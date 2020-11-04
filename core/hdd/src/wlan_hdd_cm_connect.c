@@ -131,3 +131,10 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	hdd_objmgr_put_vdev(vdev);
 	return status;
 }
+
+QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_connect_resp *rsp,
+				   enum osif_cb_type type)
+{
+	return QDF_STATUS_SUCCESS;
+}

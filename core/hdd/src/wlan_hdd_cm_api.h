@@ -24,6 +24,8 @@
 #define __WLAN_HDD_CM_API_H
 
 #include <net/cfg80211.h>
+#include "wlan_cm_public_struct.h"
+#include "osif_cm_util.h"
 
 #ifdef FEATURE_CM_ENABLE
 /**
@@ -53,6 +55,18 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
  */
 int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 			   struct net_device *dev, u16 reason);
+
+QDF_STATUS hdd_cm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+				      struct wlan_cm_discon_rsp *rsp,
+				      enum osif_cb_type type);
+
+QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
+				      enum netif_action_type action,
+				      enum netif_reason_type reason);
+
+QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_connect_resp *rsp,
+				   enum osif_cb_type type);
 
 #else
 static inline int
