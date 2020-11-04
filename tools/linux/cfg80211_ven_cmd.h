@@ -240,7 +240,7 @@ enum {
 	IEEE80211_PARAM_TXBF_CVUPDATE_PER = 241,        /* per theshold to initial CV update*/
 #endif
 	IEEE80211_PARAM_MAXSTA              = 242,
-	IEEE80211_PARAM_RRM_STATS           = 243,
+	IEEE80211_PARAM_RRM_STATS           = 243,      /* RRM Stats */
 	IEEE80211_PARAM_RRM_SLWINDOW        = 244,
 	IEEE80211_PARAM_MFP_TEST    = 245,
 	IEEE80211_PARAM_SCAN_BAND   = 246,                /* only scan channels of requested band */
@@ -784,6 +784,7 @@ enum {
 	IEEE80211_PARAM_PRB_RETRY                  = 723,   /* Set/Get probe-response frame retry limit */
 	IEEE80211_PARAM_PEER_AUTHORIZE             = 724, /* Enable port authorization */
 	IEEE80211_PARAM_FWD_ACTION_FRAMES_TO_APP   = 725,   /* Forward 11k/v frames to Hostapd instead of handling in driver */
+	IEEE80211_PARAM_WNM_STATS                  = 726,   /* WNM Stats */
 };
 
 enum {
@@ -2253,6 +2254,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_peer_authorize ",     IEEE80211_PARAM_PEER_AUTHORIZE, GET_PARAM, 0},
 	{"fwd_act_app",               IEEE80211_PARAM_FWD_ACTION_FRAMES_TO_APP, SET_PARAM, 1},
 	{"g_fwd_act_app",             IEEE80211_PARAM_FWD_ACTION_FRAMES_TO_APP, GET_PARAM, 0},
+	{"wnmstats",                  IEEE80211_PARAM_WNM_STATS, SET_PARAM, 1},
+	{"get_wnmstats",              IEEE80211_PARAM_WNM_STATS, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
