@@ -1273,9 +1273,9 @@ bool dfs_is_radarsource_agile(struct wlan_dfs *dfs,
 			      struct radar_found_info *radar_found)
 {
 	bool is_radar_from_agile_dfs =
-	    (dfs_is_agile_precac_enabled(dfs) ||
+	    ((dfs_is_agile_precac_enabled(dfs) &&
+	      dfs_is_precac_timer_running(dfs)) ||
 	     dfs_is_agile_rcac_enabled(dfs)) &&
-	     dfs_is_precac_timer_running(dfs) &&
 	    (radar_found->detector_id == dfs_get_agile_detector_id(dfs));
 	bool is_radar_from_zero_wait_dfs =
 	    (dfs_is_legacy_precac_enabled(dfs) &&
