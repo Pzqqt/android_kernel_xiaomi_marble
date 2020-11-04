@@ -55,6 +55,8 @@ static void hdd_dcs_cb(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 
 	if (policy_mgr_is_force_scc(psoc) &&
 	    policy_mgr_is_sta_gc_active_on_mac(psoc, mac_id)) {
+		ucfg_config_dcs_event_data(psoc, mac_id, true);
+
 		hdd_debug("force scc %d, mac id %d sta gc count %d",
 			  policy_mgr_is_force_scc(psoc), mac_id,
 			  policy_mgr_is_sta_gc_active_on_mac(psoc, mac_id));
