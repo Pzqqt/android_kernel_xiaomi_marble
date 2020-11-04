@@ -2425,6 +2425,9 @@ send_peer_chan_width_switch_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->num_peers = (pending_peers >= max_peers_per_command) ?
 					max_peers_per_command : pending_peers;
 
+		WMI_PEER_CHAN_WIDTH_SWITCH_SET_VDEV_ID(cmd->vdev_var, param->vdev_id);
+		WMI_PEER_CHAN_WIDTH_SWITCH_SET_VALID_VDEV_ID(cmd->vdev_var);
+
 		WMITLV_SET_HDR(((void *)cmd + sizeof(*cmd)),
                                WMITLV_TAG_ARRAY_STRUC,
 			       cmd->num_peers *
