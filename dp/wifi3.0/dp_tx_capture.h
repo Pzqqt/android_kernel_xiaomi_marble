@@ -243,6 +243,9 @@ struct dbg_tx_comp_ppdu_user {
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t start_seq;
 	uint32_t enq_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint32_t ba_size;
+	uint32_t last_enq_seq;
+	uint32_t failed_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	bool is_mcast;

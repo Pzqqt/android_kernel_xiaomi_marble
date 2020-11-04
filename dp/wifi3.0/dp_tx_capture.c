@@ -2003,11 +2003,15 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 		diff = diff & 0x1F;
 
 		bitmask = (1 << diff) - 1;
-		for (i = 0; i < size && (k < (size - 1)); i++, k++) {
+		for (i = 0; i < size && k < size; i++, k++) {
 			ba_bitmap = user->ba_bitmap[k];
 			user->failed_bitmap[i] = ba_bitmap >> diff;
 			/* get next ba_bitmap */
-			ba_bitmap = user->ba_bitmap[k + 1];
+			if (k < (size - 1))
+				ba_bitmap = user->ba_bitmap[k + 1];
+			else
+				ba_bitmap = 0;
+
 			carry = (ba_bitmap & bitmask);
 			user->failed_bitmap[i] |=
 				((carry & bitmask) << (32 - diff));
@@ -5227,6 +5231,9 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				user->mpdus[seq_no - start_seq] = mpdu_nbuf;
 				dp_tx_cap_stats_mpdu_update(peer,
 							    PEER_MPDU_ARR, 1);
+
+				SEQ_SEG(user->failed_bitmap, i) |=
+					SEQ_SEG_MSK(user->failed_bitmap[0], i);
 			}
 
 			mpdu_tried = user->mpdu_tried_ucast +
@@ -6892,10 +6899,16 @@ void *dbg_copy_ppdu_desc(qdf_nbuf_t nbuf_ppdu)
 		ptr_dbg_ppdu->user[i].start_seq = ppdu_desc->user[i].start_seq;
 		qdf_mem_copy(ptr_dbg_ppdu->user[i].ba_bitmap,
 			     ppdu_desc->user[i].ba_bitmap,
-			     CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+			     CDP_BA_256_BIT_MAP_SIZE_DWORDS * sizeof(uint32_t));
 		qdf_mem_copy(ptr_dbg_ppdu->user[i].enq_bitmap,
 			     ppdu_desc->user[i].enq_bitmap,
-			     CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+			     CDP_BA_256_BIT_MAP_SIZE_DWORDS * sizeof(uint32_t));
+		qdf_mem_copy(ptr_dbg_ppdu->user[i].failed_bitmap,
+			     ppdu_desc->user[i].failed_bitmap,
+			     CDP_BA_256_BIT_MAP_SIZE_DWORDS * sizeof(uint32_t));
+		ptr_dbg_ppdu->user[i].last_enq_seq =
+					ppdu_desc->user[i].last_enq_seq;
+		ptr_dbg_ppdu->user[i].ba_size = ppdu_desc->user[i].ba_size;
 		ptr_dbg_ppdu->user[i].num_mpdu = ppdu_desc->user[i].num_mpdu;
 		ptr_dbg_ppdu->user[i].num_msdu = ppdu_desc->user[i].num_msdu;
 		ptr_dbg_ppdu->user[i].is_mcast = ppdu_desc->user[i].is_mcast;
@@ -7009,6 +7022,14 @@ static QDF_STATUS debug_ppdu_desc_log_show(qdf_debugfs_file_t file, void *arg)
 		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++)
 			qdf_debugfs_printf(file, " 0x%x",
 					   user->ba_bitmap[i]);
+		qdf_debugfs_printf(file, "]\n");
+
+		qdf_debugfs_printf(file,
+				   "\tL_ENQ:%d BA_SZ:%d F_BITMAP[",
+				   user->last_enq_seq, user->ba_size);
+		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++)
+			qdf_debugfs_printf(file, " 0x%x",
+					   user->failed_bitmap[i]);
 		qdf_debugfs_printf(file, "]\n");
 	}
 	qdf_debugfs_printf(file,
