@@ -118,7 +118,7 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 	drm_mode->private = (int *)dsi_mode->priv_info;
 
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_SEAMLESS)
-		drm_mode->flags |= DRM_MODE_FLAG_SEAMLESS;
+		drm_mode->private_flags |= DRM_MODE_FLAG_SEAMLESS;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_DFPS)
 		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_DYNAMIC_FPS;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_VBLANK_PRE_MODESET)

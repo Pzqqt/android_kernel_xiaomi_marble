@@ -42,6 +42,8 @@
 #define MSM_MODE_FLAG_SEAMLESS_POMS			(1<<4)
 /* Request to switch the bit clk */
 #define MSM_MODE_FLAG_SEAMLESS_DYN_CLK			(1<<5)
+/* Request to make the seamless switch */
+#define DRM_MODE_FLAG_SEAMLESS				(1<<6)
 
 /* As there are different display controller blocks depending on the
  * snapdragon version, the kms support is split out and the appropriate
@@ -206,7 +208,7 @@ struct msm_kms *sde_kms_init(struct drm_device *dev);
  */
 static inline bool msm_is_mode_seamless(const struct drm_display_mode *mode)
 {
-	return (mode->flags & DRM_MODE_FLAG_SEAMLESS);
+	return (mode->private_flags & DRM_MODE_FLAG_SEAMLESS);
 }
 
 static inline bool msm_is_mode_seamless_dms(const struct drm_display_mode *mode)
@@ -217,7 +219,7 @@ static inline bool msm_is_mode_seamless_dms(const struct drm_display_mode *mode)
 
 static inline bool msm_is_mode_dynamic_fps(const struct drm_display_mode *mode)
 {
-	return ((mode->flags & DRM_MODE_FLAG_SEAMLESS) &&
+	return ((mode->private_flags & DRM_MODE_FLAG_SEAMLESS) &&
 		(mode->private_flags & MSM_MODE_FLAG_SEAMLESS_DYNAMIC_FPS));
 }
 
