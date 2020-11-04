@@ -31,6 +31,9 @@ struct mmrm_driver_data {
 	struct mmrm_clk_platform_resources clk_res;
 	struct mmrm_clk_mgr *clk_mgr;
 	struct mmrm_clk_mgr_ops *clk_mgr_ops;
+
+	/* debugfs */
+	struct dentry *debugfs_root;
 };
 
 struct mmrm_platform_data *mmrm_get_platform_data(struct device *dev);

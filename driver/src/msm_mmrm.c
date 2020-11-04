@@ -218,6 +218,7 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 	int rc = 0;
 
 	d_mpr_h("%s: entering\n", __func__);
+
 	drv_data = kzalloc(sizeof(*drv_data), GFP_KERNEL);
 	if (!drv_data) {
 		d_mpr_e("%s: unable to allocate memory for mmrm driver\n",
@@ -233,6 +234,10 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 		rc = -EINVAL;
 		goto err_get_drv_data;
 	}
+
+	drv_data->debugfs_root = msm_mmrm_debugfs_init();
+	if (!drv_data->debugfs_root)
+		d_mpr_e("%s: failed to create debugfs for mmrm\n", __func__);
 
 	dev_set_drvdata(&pdev->dev, drv_data);
 
@@ -251,15 +256,16 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 	}
 
 	d_mpr_h("%s: exiting with success\n", __func__);
-
 	return rc;
 
 err_mmrm_init:
+	msm_mmrm_debugfs_deinit(drv_data->debugfs_root);
 err_read_pltfrm_rsc:
 	mmrm_free_platform_resources(drv_data);
 err_get_drv_data:
 	RESET_DRV_DATA(drv_data);
 err_no_mem:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
 
@@ -275,10 +281,10 @@ static int msm_mmrm_probe(struct platform_device *pdev)
 		return msm_mmrm_probe_init(pdev);
 
 	d_mpr_h("%s: exiting: no compatible device node\n", __func__);
-
 	return rc;
 
 err_exit:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
 
@@ -294,14 +300,17 @@ static int msm_mmrm_remove(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
+	msm_mmrm_debugfs_deinit(drv_data->debugfs_root);
 	mmrm_deinit(drv_data);
 	mmrm_free_platform_resources(drv_data);
 	dev_set_drvdata(&pdev->dev, NULL);
 	RESET_DRV_DATA(drv_data);
 
+	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
 err_exit:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
 
@@ -310,7 +319,7 @@ static const struct of_device_id msm_mmrm_dt_match[] = {
 	{}
 };
 
-MODULE_DEVICE_TABLE(of, msm_mmrm_of_match);
+MODULE_DEVICE_TABLE(of, msm_mmrm_dt_match);
 
 static struct platform_driver msm_mmrm_driver = {
 	.probe = msm_mmrm_probe,
@@ -335,10 +344,10 @@ static int __init msm_mmrm_init(void)
 	}
 
 	d_mpr_h("%s: exiting\n", __func__);
-
 	return rc;
 
 err_platform_drv_reg:
+	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
 
