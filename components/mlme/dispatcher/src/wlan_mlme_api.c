@@ -3620,6 +3620,34 @@ wlan_mlme_get_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+char *mlme_get_roam_status_str(uint32_t roam_status)
+{
+	switch (roam_status) {
+	case 0:
+		return "SUCCESS";
+	case 1:
+		return "FAILED";
+	case 2:
+		return "NO ROAM";
+	default:
+		return "UNKNOWN";
+	}
+}
+
+char *mlme_get_roam_scan_type_str(uint32_t roam_scan_type)
+{
+	switch (roam_scan_type) {
+	case 0:
+		return "PARTIAL";
+	case 1:
+		return "FULL";
+	case 2:
+		return "NO SCAN";
+	default:
+		return "UNKNOWN";
+	}
+}
+
 char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 {
 	switch (roam_scan_trigger) {

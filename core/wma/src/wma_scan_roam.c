@@ -2012,7 +2012,7 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 
 	mlme_get_converted_timestamp(timestamp, time);
 	wma_info("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
-		 time, vdev_id, (scan->type ? "FULL" : "PARTIAL"),
+		 time, vdev_id, mlme_get_roam_scan_type_str(scan->type),
 		 buf1, buf);
 	wma_log_roam_scan_candidates(scan->ap, scan->num_ap);
 
@@ -2040,13 +2040,13 @@ wma_rso_print_roam_result(struct wmi_roam_result *res,
 	if (!buf)
 		return;
 
-	if (!res->status)
+	if (res->status == 1)
 		qdf_snprint(buf, ROAM_FAILURE_BUF_SIZE, "Reason: %s",
 			    mlme_get_roam_fail_reason_str(res->fail_reason));
 
 	mlme_get_converted_timestamp(res->timestamp, time);
 	wma_info("%s [ROAM_RESULT]: VDEV[%d] %s %s",
-		 time, vdev_id, (res->status) ? "SUCCESS" : "FAILED", buf);
+		 time, vdev_id, mlme_get_roam_status_str(res->status), buf);
 
 	qdf_mem_free(buf);
 }
