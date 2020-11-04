@@ -13753,7 +13753,7 @@ extract_roam_result_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	src_data = &param_buf->roam_result[idx];
 
 	dst->present = true;
-	dst->status = src_data->roam_status ? false : true;
+	dst->status = src_data->roam_status;
 	dst->timestamp = src_data->timestamp;
 	dst->fail_reason = src_data->roam_fail_reason;
 

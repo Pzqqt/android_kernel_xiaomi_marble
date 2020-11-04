@@ -7896,13 +7896,14 @@ struct wmi_roam_scan_data {
  * struct wmi_roam_result - Roam result related info.
  * @present:            Flag to check if the roam result tlv is present
  * @timestamp:          Host timestamp in millisecs
- * @status:             0 - Roaming is success ; 1 - Roaming failed
+ * @status:             0 - Roaming is success ; 1 - Roaming failed ;
+ * 2 - No roam
  * @fail_reason:        One of WMI_ROAM_FAIL_REASON_ID
  */
 struct wmi_roam_result {
 	bool present;
 	uint32_t timestamp;
-	bool status;
+	uint32_t status;
 	uint32_t fail_reason;
 };
 
