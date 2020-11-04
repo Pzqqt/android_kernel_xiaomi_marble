@@ -266,6 +266,7 @@ struct hdd_config {
 #ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
 	uint32_t sta_stats_cache_expiry_time;
 #endif
+	int icmp_req_to_fw_mark_interval;
 };
 
 /**

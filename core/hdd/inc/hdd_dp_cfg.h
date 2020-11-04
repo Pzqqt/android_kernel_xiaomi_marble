@@ -1429,6 +1429,40 @@
 		 WLAN_CFG_WMI_CREDIT_DEFAULT, \
 		 CFG_VALUE_OR_DEFAULT, "WMI HTC CREDIT COUNT")
 
+#define WLAN_CFG_ICMP_REQ_TO_FW_MARK_ALL (-1)
+#define WLAN_CFG_ICMP_REQ_TO_FW_MARK_INTERVAL 0
+#define WLAN_CFG_ICMP_REQ_TO_FW_MARK_INTERVAL_MIN (-1)
+#define WLAN_CFG_ICMP_REQ_TO_FW_MARK_INTERVAL_MAX 100000
+
+/*
+ * <ini>
+ * icmp_req_to_fw_mark_interval - Interval to mark the ICMP Request packet
+ *				  to be sent to FW.
+ * @Min: -1
+ * @Max:  100000
+ * @Default: 0
+ *
+ * This ini is used to control DP Software to mark the ICMP request packets
+ * to be sent to FW at certain interval (in milliseconds).
+ * The value 0 is used to disable marking of ICMP requests to be sent to FW.
+ * The value -1 is used to mark all the ICMP requests to be sent to FW.
+ * Any value greater than zero indicates the time interval (in milliseconds)
+ * at which ICMP requests are marked to be sent to FW.
+ *
+ * Supported modes: All modes
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DP_ICMP_REQ_TO_FW_MARK_INTERVAL \
+	CFG_INI_INT("icmp_req_to_fw_mark_interval", \
+		    WLAN_CFG_ICMP_REQ_TO_FW_MARK_INTERVAL_MIN, \
+		    WLAN_CFG_ICMP_REQ_TO_FW_MARK_INTERVAL_MAX, \
+		    WLAN_CFG_ICMP_REQ_TO_FW_MARK_INTERVAL, \
+		    CFG_VALUE_OR_DEFAULT, \
+		    "Interval to mark ICMP Request packets to be sent to FW")
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define CFG_HDD_DP_LEGACY_TX_FLOW \
 	CFG(CFG_DP_LL_TX_FLOW_LWM) \
@@ -1504,6 +1538,7 @@
 	CFG(CFG_DP_RX_WAKELOCK_TIMEOUT) \
 	CFG(CFG_DP_NUM_DP_RX_THREADS) \
 	CFG(CFG_DP_HTC_WMI_CREDIT_CNT) \
+	CFG(CFG_DP_ICMP_REQ_TO_FW_MARK_INTERVAL) \
 	CFG_MSCS_FEATURE_ALL \
 	CFG_DP_ENABLE_FASTPATH_ALL \
 	CFG_HDD_DP_BUS_BANDWIDTH \
