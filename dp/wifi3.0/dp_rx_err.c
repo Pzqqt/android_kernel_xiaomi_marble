@@ -1958,6 +1958,15 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		}
 
 		hal_rx_wbm_err_info_get(ring_desc, &wbm_err_info, hal_soc);
+		nbuf = rx_desc->nbuf;
+		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+						  rx_desc_pool->buf_size,
+						  false);
+		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
+					     QDF_DMA_FROM_DEVICE,
+					     rx_desc_pool->buf_size);
+		rx_desc->unmapped = 1;
 
 		if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support &&
 				 dp_rx_is_sg_formation_required(&wbm_err_info))) {
@@ -1969,34 +1978,24 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 				/* Update length from first buffer in SG */
 				soc->wbm_sg_param.wbm_sg_desc_msdu_len =
 					hal_rx_msdu_start_msdu_len_get(
-						qdf_nbuf_data(rx_desc->nbuf));
+						qdf_nbuf_data(nbuf));
 				soc->wbm_sg_param.wbm_is_first_msdu_in_sg = true;
 			}
 
 			if (msdu_continuation) {
 				/* MSDU continued packets */
-				qdf_nbuf_set_rx_chfrag_cont(rx_desc->nbuf, 1);
-				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) =
+				qdf_nbuf_set_rx_chfrag_cont(nbuf, 1);
+				QDF_NBUF_CB_RX_PKT_LEN(nbuf) =
 					soc->wbm_sg_param.wbm_sg_desc_msdu_len;
 			} else {
 				/* This is the terminal packet in SG */
-				qdf_nbuf_set_rx_chfrag_start(rx_desc->nbuf, 1);
-				qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
-				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) =
+				qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
+				qdf_nbuf_set_rx_chfrag_end(nbuf, 1);
+				QDF_NBUF_CB_RX_PKT_LEN(nbuf) =
 					soc->wbm_sg_param.wbm_sg_desc_msdu_len;
 				process_sg_buf = true;
 			}
 		}
-
-		nbuf = rx_desc->nbuf;
-		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
-		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
-						  rx_desc_pool->buf_size,
-						  false);
-		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
-					     QDF_DMA_FROM_DEVICE,
-					     rx_desc_pool->buf_size);
-		rx_desc->unmapped = 1;
 
 		/*
 		 * save the wbm desc info in nbuf TLV. We will need this
