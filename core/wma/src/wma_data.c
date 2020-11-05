@@ -1416,10 +1416,8 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 	/* Get the txRx Pdev ID */
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 
-	if (!soc) {
-		wma_err("SOC context is NULL");
+	if (!soc)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (pdev_id != OL_TXRX_INVALID_PDEV_ID) {
 		/* Deregister with TxRx for Tx Mgmt completion call back */
@@ -1516,10 +1514,8 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 		return 0;
 	}
 
-	if (!soc) {
-		wma_err("SOC context is NULL");
+	if (!soc)
 		return -EINVAL;
-	}
 
 	wmi_event = param_buf->fixed_param;
 	vdev_map = wmi_event->vdev_map;
@@ -2260,7 +2256,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	iface = &wma_handle->interfaces[vdev_id];
 
 	if (!soc) {
-		wma_err("SOC context is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2964,10 +2959,8 @@ void wma_delete_invalid_peer_entries(uint8_t vdev_id, uint8_t *peer_mac_addr)
 	uint8_t i;
 	struct wma_txrx_node *iface;
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return;
-	}
 
 	iface = &wma->interfaces[vdev_id];
 
@@ -3000,10 +2993,8 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 	bool invalid_peer_found = false;
 	struct wma_txrx_node *iface;
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return -EINVAL;
-	}
 
 	iface = &wma->interfaces[vdev_id];
 	rx_inv_msg = qdf_mem_malloc(sizeof(struct ol_rx_inv_peer_params));

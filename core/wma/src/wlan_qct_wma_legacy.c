@@ -113,7 +113,6 @@ QDF_STATUS umac_send_mb_message_to_mac(void *msg)
 	void *mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 
 	if (!mac_handle) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SYS, "Invalid MAC handle");
 		qdf_mem_free(msg);
 		return QDF_STATUS_E_FAILURE;
 	}

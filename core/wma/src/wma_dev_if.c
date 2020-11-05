@@ -376,11 +376,8 @@ QDF_STATUS wma_vdev_detach_callback(struct vdev_delete_response *rsp)
 	struct wma_txrx_node *iface = NULL;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!wma) {
-		wma_err("wma handle is NULL for VDEV_%d", rsp->vdev_id);
+	if (!wma)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/* Sanitize the vdev id*/
 	if (rsp->vdev_id > wma->max_bssid) {
@@ -488,7 +485,6 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	int i;
 
 	if (!soc) {
-		wma_err("SOC context is NULL");
 		status = QDF_STATUS_E_FAILURE;
 		goto rel_ref;
 	}
@@ -905,11 +901,8 @@ static void wma_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
 		return;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if(!wma) {
-		wma_err("wma handle NULL");
+	if(!wma)
 		return;
-	}
 
 	old_peer_phymode = wlan_peer_get_phymode(peer);
 	vdev_chan = wlan_vdev_mlme_get_des_chan(vdev);
@@ -1166,10 +1159,9 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	struct config_ratemask_params rparams = {0};
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("wma wma is NULL for VDEV_%d", rsp->vdev_id);
+	if (!wma)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	psoc = wma->psoc;
 	if (!psoc) {
 		wma_err("psoc is NULL");
@@ -1334,10 +1326,8 @@ bool wma_is_vdev_valid(uint32_t vdev_id)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_debug("vdev_id: %d, null wma_handle", vdev_id);
+	if (!wma_handle)
 		return false;
-	}
 
 	/* No of interface are allocated based on max_bssid value */
 	if (vdev_id >= wma_handle->max_bssid) {
@@ -1469,11 +1459,10 @@ QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS qdf_status;
 
-	if (!wma) {
-		wma_err("peer_id_cnt: %d, null wma_handle", peer_id_cnt);
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
+	wma_debug("peer_id_cnt: %d", peer_id_cnt);
 	qdf_status = wmi_unified_peer_unmap_conf_send(
 						wma->wmi_handle,
 						vdev_id, peer_id_cnt,
@@ -1487,10 +1476,8 @@ QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
 
 		wma_debug("post unmap_conf cmd to MC thread");
 
-		if (!mac_ctx) {
-			wma_err("mac_ctx is NULL");
+		if (!mac_ctx)
 			return QDF_STATUS_E_FAILURE;
-		}
 
 		peer_unmap_conf_req = qdf_mem_malloc(sizeof(
 					struct send_peer_unmap_conf_params));
@@ -1577,7 +1564,6 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
 	}
 
 	if (!soc) {
-		wma_err("SOC context is NULL");
 		QDF_BUG(0);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1811,10 +1797,8 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 		goto err;
 	}
 
-	if (!dp_soc) {
-		wma_err("DP SOC context is NULL");
+	if (!dp_soc)
 		goto err;
-	}
 
 	if (qdf_is_macaddr_group((struct qdf_mac_addr *)peer_addr) ||
 	    qdf_is_macaddr_zero((struct qdf_mac_addr *)peer_addr)) {
@@ -2025,10 +2009,9 @@ wma_check_and_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!mac_ctx) {
-		wma_err("Failed to get mac_ctx");
+	if (!mac_ctx)
 		return;
-	}
+
 	if (mac_ctx->sap.sap_channel_avoidance)
 		wma_find_mcc_ap(wma, vdev_id, false);
 }
@@ -2162,10 +2145,8 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 	uint32_t vdev_stop_type;
 	struct del_bss_resp *vdev_stop_resp;
 
-	if (!wma) {
-		wma_err("wma is null");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	/* Ignore stop_response in Monitor mode */
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
@@ -2275,10 +2256,8 @@ QDF_STATUS wma_vdev_stop_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("wma handle is NULL for VDEV_%d", rsp->vdev_id);
+	if (!wma)
 		return status;
-	}
 
 	iface = &wma->interfaces[vdev_mlme->vdev->vdev_objmgr.vdev_id];
 
@@ -2299,16 +2278,12 @@ void wma_cleanup_vdev(struct wlan_objmgr_vdev *vdev)
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	struct vdev_mlme_obj *vdev_mlme;
 
-	if (!soc) {
-		wma_err("SOC handle is NULL");
+	if (!soc)
 		return;
-	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		wma_err("WMA context is invalid");
+	if (!wma_handle)
 		return;
-	}
 
 	if (!wma_handle->interfaces[vdev_id].vdev) {
 		wma_err("vdev is NULL");
@@ -2335,10 +2310,8 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 	tp_wma_handle wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		wma_err("WMA context is invalid");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (mlme_vdev_uses_self_peer(vdev_mlme->mgmt.generic.type,
 				     vdev_mlme->mgmt.generic.subtype)) {
@@ -2377,21 +2350,12 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	tp_wma_handle wma_handle;
 	uint8_t amsdu_val;
 
-	if (!mac) {
-		wma_err("Failed to get mac");
+	if (!mac)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		wma_err("WMA context is invalid");
+	if (!wma_handle || !soc)
 		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!soc) {
-		wma_err("SOC context is invalid");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_WMA_ID) !=
 		QDF_STATUS_SUCCESS)
@@ -2676,14 +2640,9 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	QDF_STATUS status;
 	uint8_t btc_chain_mode;
 
-	if (!wma) {
-		wma_err("Invalid wma handle");
+	if (!wma || !mac_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
-	if (!mac_ctx) {
-		wma_err("Invalid mac context");
-		return QDF_STATUS_E_FAILURE;
-	}
+
 	intr = wma->interfaces;
 	if (!intr) {
 		wma_err("Invalid interface");
@@ -2979,10 +2938,8 @@ void wma_hold_req_timer(void *data)
 	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Failed to get wma");
+	if (!wma)
 		return;
-	}
 
 	status = wma_find_req_on_timer_expiry(wma, tgt_req);
 
@@ -3328,14 +3285,9 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 	struct vdev_mlme_obj *mlme_obj;
 	uint8_t *mac_addr;
 
-	if (!soc) {
-		wma_err("Invalid soc");
+	if (!soc || !wma)
 		return QDF_STATUS_E_FAILURE;
-	}
-	if (!wma) {
-		wma_err("Invalid wma handle");
-		return QDF_STATUS_E_FAILURE;
-	}
+
 	iface = &wma->interfaces[vdev_id];
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
@@ -3380,10 +3332,9 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t bss_power;
 
-	if (!wma) {
-		wma_err("Invalid wma handle");
+	if (!wma)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	intr = &wma->interfaces[vdev_id];
 	if (!intr) {
 		wma_err("Invalid interface");
@@ -3498,10 +3449,8 @@ QDF_STATUS wma_pre_assoc_req(struct bss_params *add_bss)
 	tp_wma_handle wma;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid wma");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	status = wma_update_iface_params(wma, add_bss);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -3640,14 +3589,8 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid wma");
+	if (!wma || !mac || !soc)
 		return QDF_STATUS_E_INVAL;
-	}
-	if (!mac) {
-		wma_err("Invalid mac context");
-		return QDF_STATUS_E_INVAL;
-	}
 
 	vdev_id = add_bss->staContext.smesessionId;
 
@@ -4984,10 +4927,8 @@ static void wma_vdev_reset_beacon_interval_timer(void *data)
 	uint8_t vdev_id = req->vdev_id;
 
 	wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Failed to get wma");
+	if (!wma)
 		goto end;
-	}
 
 	/* Change the beacon interval back to its original value */
 	wma_debug("Change beacon interval back to %d", beacon_interval);
@@ -5042,10 +4983,8 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid wma");
+	if (!wma)
 		goto err;
-	}
 
 	status = wma_create_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT, vdev_id);
 err:
@@ -5059,10 +4998,8 @@ QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id)
 	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid wma");
+	if (!wma)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	wma_debug("vdev_id: %d, pausing tx_ll_queue for VDEV_STOP", vdev_id);
 	cdp_fc_vdev_pause(soc, vdev_id,

@@ -205,11 +205,8 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 	struct wma_txrx_node *intr;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!wma_handle) {
-		wma_err("Failed to get wma_handle");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAULT;
-	}
 
 	intr = &wma_handle->interfaces[psnr_req->sessionId];
 	/* command is in progress */
@@ -559,10 +556,8 @@ enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 	uint16_t bw_val = wlan_reg_get_bw_value(chan_width);
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		wma_err("wma_handle is NULL");
+	if (!wma)
 		return WLAN_PHYMODE_AUTO;
-	}
 
 	if (chan_width >= CH_WIDTH_INVALID) {
 		wma_err_rl("Invalid channel width %d", chan_width);
@@ -983,10 +978,8 @@ void wma_check_and_set_wake_timer(uint32_t time)
 	bool is_set_key_in_progress = false;
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		wma_err("WMA is closed");
+	if (!wma)
 		return;
-	}
 
 	if (!wmi_service_enabled(wma->wmi_handle,
 		wmi_service_wow_wakeup_by_timer_pattern)) {
@@ -1208,10 +1201,8 @@ int wma_oem_data_response_handler(void *handle,
 	struct oem_data_rsp *oem_rsp;
 	struct mac_context *pmac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pmac) {
-		wma_err("Invalid pmac");
+	if (!pmac)
 		return -EINVAL;
-	}
 
 	if (!pmac->sme.oem_data_rsp_callback) {
 		wma_err("Callback not registered");
@@ -3393,10 +3384,8 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 	wma_debug("reg_dmn: %d regdmn2g: %d regdmn5g :%d ctl2g: %d ctl5g: %d",
 		 reg_dmn, regdmn2G, regdmn5G, ctl2G, ctl5G);
 
-	if (!wma) {
-		wma_err("wma context is NULL");
+	if (!wma)
 		return;
-	}
 
 	status = wmi_unified_send_regdomain_info_to_fw_cmd(wma->wmi_handle,
 			reg_dmn, regdmn2G, regdmn5G, ctl2G, ctl5G);
@@ -3462,7 +3451,6 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	if (!soc) {
-		wma_err("SOC context is NULL");
 		ret = -EINVAL;
 		goto end_tdls_peer_state;
 	}
@@ -3648,10 +3636,9 @@ int wma_get_apf_caps_event_handler(void *handle, u_int8_t *cmd_param_info,
 	struct mac_context *pmac = (struct mac_context *)cds_get_context(
 				QDF_MODULE_ID_PE);
 
-	if (!pmac) {
-		wma_err("Invalid pmac");
+	if (!pmac)
 		return -EINVAL;
-	}
+
 	if (!pmac->sme.apf_get_offload_cb) {
 		wma_err("Callback not registered");
 		return -EINVAL;
@@ -3878,10 +3865,8 @@ int wma_apf_read_work_memory_event_handler(void *handle, uint8_t *evt_buf,
 		return -EINVAL;
 	}
 
-	if (!pmac) {
-		wma_err("Invalid pmac");
+	if (!pmac)
 		return -EINVAL;
-	}
 
 	if (!pmac->sme.apf_read_mem_cb) {
 		wma_err("Callback not registered");
@@ -3944,10 +3929,8 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("WMA context is invalid!");
+	if (!wma_handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	intr = wma_handle->interfaces;
 	if (!intr) {
@@ -4418,10 +4401,8 @@ int wma_get_arp_stats_handler(void *handle, uint8_t *data,
 	struct rsp_stats rsp = {0};
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!mac) {
-		wma_err("Invalid mac context");
+	if (!mac)
 		return -EINVAL;
-	}
 
 	if (!mac->sme.get_arp_stats_cb) {
 		wma_err("Callback not registered");
@@ -4677,10 +4658,8 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	if (wma && wma->cds_context)
 		mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!mac) {
-		wma_err("Invalid mac context");
+	if (!mac)
 		return -EINVAL;
-	}
 
 	param_buf = (WMI_CHAN_INFO_EVENTID_param_tlvs *)event_buf;
 	if (!param_buf)  {
@@ -4979,10 +4958,9 @@ static void wma_send_set_key_rsp(uint8_t vdev_id, bool pairwise,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct qdf_mac_addr bcast_mac = QDF_MAC_ADDR_BCAST_INIT;
 
-	if (!wma) {
-		wma_err("WMA context does not exist");
+	if (!wma)
 		return;
-	}
+
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
 						    vdev_id,
 						    WLAN_LEGACY_WMA_ID);
@@ -5050,10 +5028,8 @@ void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
 	struct wlan_objmgr_peer *peer;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		wma_err("wma context is NULL");
+	if (!wma)
 		return;
-	}
 
 	peer = wlan_objmgr_get_peer(wma->psoc,
 				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
@@ -5085,10 +5061,9 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wma_txrx_node *iface;
 
-	if (!wma) {
-		wma_err("Invalid WMA context");
+	if (!wma)
 		return;
-	}
+
 	iface = &wma->interfaces[session_id];
 	if (!iface) {
 		wma_err("iface not found for session id %d", session_id);
