@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +87,7 @@ wlan_peer_flush_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 				  stats_ctx->pdev_id, &buf);
 
 	soc_stats_ctx->rxs_cache_flush++;
-	qdf_info("rxs_cache_flush: %d", soc_stats_ctx->rxs_cache_flush);
+	dp_info("rxs_cache_flush: %d", soc_stats_ctx->rxs_cache_flush);
 
 	qdf_mem_zero(rx_stats->stats, WLANSTATS_CACHE_SIZE *
 		     sizeof(struct wlan_rx_rate_stats));
@@ -142,7 +142,7 @@ wlan_peer_flush_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 				  stats_ctx->pdev_id, &buf);
 
 	soc_stats_ctx->txs_cache_flush++;
-	qdf_info("txs_cache_flush: %d", soc_stats_ctx->txs_cache_flush);
+	dp_info("txs_cache_flush: %d", soc_stats_ctx->txs_cache_flush);
 
 	qdf_mem_zero(tx_stats->stats, WLANSTATS_CACHE_SIZE *
 		     sizeof(struct wlan_tx_rate_stats));
@@ -164,7 +164,7 @@ wlan_peer_flush_tx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 	uint8_t bw_max_idx;
 
 	if (!soc_stats_ctx) {
-		qdf_info("soc stats context is NULL\n");
+		dp_info("soc stats context is NULL\n");
 		return;
 	}
 
@@ -222,7 +222,7 @@ wlan_peer_flush_rx_link_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 	uint8_t bw_max_idx;
 
 	if (!soc_stats_ctx) {
-		qdf_info("soc stats context is NULL\n");
+		dp_info("soc stats context is NULL\n");
 		return;
 	}
 
@@ -889,7 +889,7 @@ void wlan_peer_destroy_event_handler(void *ctx, enum WDI_EVENT event,
 			qdf_mem_free(stats->link_metrics);
 		}
 		qdf_mem_free(stats);
-		qdf_info("DEBUG DEiniitialized rate stats");
+		dp_info("Debug Deinitialized rate stats");
 	}
 	STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->rx_ctx_lock);
 	STATS_CTX_LOCK_RELEASE(&soc_stats_ctx->tx_ctx_lock);
