@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -299,13 +299,14 @@ ssize_t audio_pkt_read(struct file *file, char __user *buf,
 int audpkt_chk_and_update_physical_addr(struct audio_gpr_pkt *gpr_pkt)
 {
 	int ret = 0;
-
+        size_t pa_len = 0;
 	dma_addr_t paddr;
+
 	if (gpr_pkt->audpkt_mem_map.mmap_header.property_flag &
 				APM_MEMORY_MAP_BIT_MASK_IS_OFFSET_MODE) {
 		ret = msm_audio_get_phy_addr(
 			(int) gpr_pkt->audpkt_mem_map.mmap_payload.shm_addr_lsw,
-			&paddr);
+			&paddr, &pa_len);
 		if (ret < 0) {
 			AUDIO_PKT_ERR("%s Get phy. address failed, ret %d\n",
 					__func__, ret);

@@ -27,6 +27,6 @@ struct audio_buffer {
 	uint32_t   actual_size; /* actual number of bytes read by DSP */
 	struct      dma_buf *dma_buf;
 };
-int msm_audio_get_phy_addr(int fd, dma_addr_t *paddr);
+int msm_audio_get_phy_addr(int fd, dma_addr_t *paddr, size_t *pa_len);
 void msm_audio_ion_crash_handler(void);
 #endif /* _LINUX_MSM_AUDIO_ION_H */

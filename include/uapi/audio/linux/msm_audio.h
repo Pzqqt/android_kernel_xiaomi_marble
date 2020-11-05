@@ -2,7 +2,7 @@
 /*
  *
  * Copyright (C) 2008 Google, Inc.
- * Copyright (c) 2012, 2014, 2017, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014, 2017, 2020, 2021 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _UAPI_LINUX_MSM_AUDIO_H
@@ -106,8 +106,9 @@
 #define AUDIO_PM_RELAX      _IOW(AUDIO_IOCTL_MAGIC, 106, unsigned int)
 #define AUDIO_REGISTER_ION   _IOW(AUDIO_IOCTL_MAGIC, 107, struct msm_audio_ion_info)
 #define AUDIO_DEREGISTER_ION _IOW(AUDIO_IOCTL_MAGIC, 108, struct msm_audio_ion_info)
-#define	AUDIO_MAX_COMMON_IOCTL_NUM	109
-
+#define IOCTL_MAP_HYP_ASSIGN _IOW(AUDIO_IOCTL_MAGIC, 109, int)
+#define IOCTL_UNMAP_HYP_ASSIGN _IOW(AUDIO_IOCTL_MAGIC, 110, int)
+#define	AUDIO_MAX_COMMON_IOCTL_NUM	111
 
 #define HANDSET_MIC			0x01
 #define HANDSET_SPKR			0x02
