@@ -60,6 +60,7 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	tpSirMacMgmtHdr mac_hdr;
 	tSchBeaconStruct *bcn_ptr;
 	uint8_t *frame;
+	const uint8_t *owe_transition_ie;
 	uint16_t frame_len;
 
 	mac_ctx->lim.gLimNumBeaconsRcvd++;
@@ -118,11 +119,15 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 	if (session->limMlmState ==
 			eLIM_MLM_WT_JOIN_BEACON_STATE) {
+		owe_transition_ie = wlan_get_vendor_ie_ptr_from_oui(
+					OWE_TRANSITION_OUI_TYPE,
+					OWE_TRANSITION_OUI_SIZE,
+					frame + SIR_MAC_B_PR_SSID_OFFSET,
+					frame_len - SIR_MAC_B_PR_SSID_OFFSET);
 		if (session->connected_akm == ANI_AKM_TYPE_OWE &&
-		    wlan_get_vendor_ie_ptr_from_oui(OWE_TRANSITION_OUI_TYPE,
-						    OWE_TRANSITION_OUI_SIZE,
-						    frame, frame_len)) {
-			pe_debug("Drop OWE rx beacon. Wait for probe for join success");
+		    owe_transition_ie) {
+			pe_debug("vdev:%d Drop OWE rx beacon. Wait for probe for join success",
+				 session->vdev_id);
 			qdf_mem_free(bcn_ptr);
 			return;
 		}
