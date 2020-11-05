@@ -55,6 +55,7 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 	dfs_reset(dfs);
 	dfs_nol_update(dfs);
 	dfs_reset_precaclists(dfs);
+	dfs_init_chan_state_array(pdev);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1733,3 +1734,161 @@ utils_dfs_precac_status_for_channel(struct wlan_objmgr_pdev *pdev,
 	return dfs_precac_status_for_channel(dfs, &chan);
 }
 #endif
+
+#if defined(WLAN_DISP_CHAN_INFO)
+#define FIRST_DFS_CHAN_NUM  52
+#define CHAN_NUM_SPACING     4
+#define INVALID_INDEX     (-1)
+#define IS_CHAN_DFS(_flags) ((_flags) & REGULATORY_CHAN_RADAR)
+/**
+ * utils_dfs_convert_freq_to_index() - Converts a DFS channel frequency
+ * to the DFS channel state array index. The input frequency should be a DFS
+ * channel frequency and this check should be done in the caller.
+ * @freq: Input DFS channel frequency.
+ * @index: Output DFS channel state array index.
+ *
+ * Return: QDF_STATUS.
+ */
+static void utils_dfs_convert_freq_to_index(qdf_freq_t freq, int8_t *index)
+{
+	uint16_t chan_num;
+	int8_t tmp_index;
+
+	chan_num = (freq - WLAN_5_GHZ_BASE_FREQ) / WLAN_CHAN_SPACING_5MHZ;
+	tmp_index = (chan_num - FIRST_DFS_CHAN_NUM) / CHAN_NUM_SPACING;
+	*index = ((tmp_index >= 0) && (tmp_index < NUM_DFS_CHANS)) ?
+		  tmp_index : INVALID_INDEX;
+}
+
+/**
+ * utils_dfs_update_chan_state_array_element() - Update the per dfs channel
+ * state array element indexed by the frequency with the new state.
+ *
+ * @freq: Input DFS Channel frequency which will converted to channel state
+ * array index.
+ * @state: Input DFS state with which the value indexed by frequency will be
+ * updated with.
+ *
+ * Return: void.
+ */
+static QDF_STATUS
+utils_dfs_update_chan_state_array_element(struct wlan_dfs *dfs,
+					  qdf_freq_t freq,
+					  enum channel_dfs_state state)
+{
+	int8_t index;
+
+	if (state == CH_DFS_S_INVALID)
+		return QDF_STATUS_E_INVAL;
+
+	utils_dfs_convert_freq_to_index(freq, &index);
+
+	if (index == INVALID_INDEX)
+		return QDF_STATUS_E_INVAL;
+
+	dfs->dfs_channel_state_array[index] = state;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dfs_init_chan_state_array(struct wlan_objmgr_pdev *pdev)
+{
+	struct regulatory_channel *cur_chan_list;
+	struct wlan_dfs *dfs;
+	int i;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+
+	if (!dfs)
+		return QDF_STATUS_E_FAILURE;
+
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+			sizeof(struct regulatory_channel));
+
+	if (!cur_chan_list)
+		return QDF_STATUS_E_NOMEM;
+
+	if (wlan_reg_get_current_chan_list(
+				pdev, cur_chan_list) != QDF_STATUS_SUCCESS) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "failed to get curr channel list");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		qdf_freq_t freq = cur_chan_list[i].center_freq;
+
+		if (!IS_CHAN_DFS(cur_chan_list[i].chan_flags))
+			continue;
+
+		utils_dfs_update_chan_state_array_element(dfs,
+							  freq,
+							  CH_DFS_S_CAC_REQ);
+	}
+
+	qdf_mem_free(cur_chan_list);
+	qdf_err("channel state array initialized");
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS utils_dfs_get_chan_dfs_state(struct wlan_objmgr_pdev *pdev,
+					enum channel_dfs_state *dfs_ch_s)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+
+	if (!dfs)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_copy(dfs_ch_s,
+		     dfs->dfs_channel_state_array,
+		     sizeof(dfs->dfs_channel_state_array));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(utils_dfs_get_chan_dfs_state);
+
+/**
+ * convert_event_to_state() - Coverts the dfs events WLAN_DFS_EVENTS to dfs
+ * states channel_dfs_state.
+ * @event: Input DFS event.
+ * @state: Output DFS state.
+ *
+ * Return: void.
+ */
+static
+void convert_event_to_state(enum WLAN_DFS_EVENTS event,
+			    enum channel_dfs_state *state)
+{
+	static const
+	enum channel_dfs_state ev_to_state[WLAN_EV_PCAC_COMPLETED + 1] = {
+	[WLAN_EV_RADAR_DETECTED] = CH_DFS_S_INVALID,
+	[WLAN_EV_CAC_RESET]      = CH_DFS_S_CAC_REQ,
+	[WLAN_EV_CAC_STARTED]    = CH_DFS_S_CAC_STARTED,
+	[WLAN_EV_CAC_COMPLETED]  = CH_DFS_S_CAC_COMPLETED,
+	[WLAN_EV_NOL_STARTED]    = CH_DFS_S_NOL,
+	[WLAN_EV_NOL_FINISHED]   = CH_DFS_S_CAC_REQ,
+	[WLAN_EV_PCAC_STARTED]   = CH_DFS_S_PRECAC_STARTED,
+	[WLAN_EV_PCAC_COMPLETED] = CH_DFS_S_PRECAC_COMPLETED,
+	};
+
+	*state = ev_to_state[event];
+}
+
+QDF_STATUS utils_dfs_update_chan_state_array(struct wlan_objmgr_pdev *pdev,
+					     qdf_freq_t freq,
+					     enum WLAN_DFS_EVENTS event)
+{
+	enum channel_dfs_state state;
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs)
+		return QDF_STATUS_E_FAILURE;
+
+	convert_event_to_state(event, &state);
+	return utils_dfs_update_chan_state_array_element(dfs, freq, state);
+}
+#endif /* WLAN_DISP_CHAN_INFO */

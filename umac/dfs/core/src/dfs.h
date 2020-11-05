@@ -1143,6 +1143,10 @@ struct dfs_rcac_params {
  * @dfs_chan_postnol_mode:           Phymode the AP switches to, post NOL.
  * @dfs_chan_postnol_cfreq2:         Secondary center frequency the AP
  *                                   switches to, post NOL.
+ * @dfs_channel_state_array:         Stores the channel states like CAC STARTED,
+ *                                   CAC REQUIRED, CAC COMPLETED, NOL,
+ *                                   PRECAC STARTED, PRECAC COMPLETED etc. of
+ *                                   all the DFS channels.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1322,6 +1326,9 @@ struct wlan_dfs {
 	enum phy_ch_width dfs_chan_postnol_mode;
 	qdf_freq_t     dfs_chan_postnol_cfreq2;
 #endif
+#if defined(WLAN_DISP_CHAN_INFO)
+	enum channel_dfs_state dfs_channel_state_array[NUM_DFS_CHANS];
+#endif /* WLAN_DISP_CHAN_INFO */
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)

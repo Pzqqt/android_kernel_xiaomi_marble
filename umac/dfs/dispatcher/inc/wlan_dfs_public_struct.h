@@ -23,7 +23,7 @@
 
 #ifndef __WLAN_DFS_PUBLIC_STRUCT_H_
 #define __WLAN_DFS_PUBLIC_STRUCT_H_
-
+#include <wlan_cmn.h>
 /* TODO: This structure has many redundant variables, needs cleanup */
 /**
  * struct radar_found_info - radar found info
@@ -163,5 +163,36 @@ struct dfs_agile_cac_params {
 	uint32_t min_precac_timeout;
 	uint32_t max_precac_timeout;
 	enum adfs_ocac_mode ocac_mode;
+};
+
+/* The first DFS channel number is 52 and the last DFS channel number is 161(in
+ * case of ETSI EN302502). So, the array size is taken as (161 - 52) / 4 ~= 30.
+ */
+#define NUM_DFS_CHANS 30
+
+/**
+ * enum channel_dfs_state - DFS  channel states.
+ * @CH_DFS_S_INVALID: The DFS state for invalid channel numbers that are not
+ *                    part of the radio's channel list.
+ * @CH_DFS_S_CAC_REQ: Indicates that the CAC/Off-channel CAC has to performed
+ *                    before Tx on the DFS channel.
+ * @CH_DFS_S_CAC_STARTED: Indicates that the CAC has been started for the DFS
+ *                        channel.
+ * @CH_DFS_S_CAC_COMPLETED: Indicates that the CAC has been completed for the
+ *                          DFS channel.
+ * @CH_DFS_S_NOL: Indicates that the DFS channel is in NOL.
+ * @CH_DFS_S_PRECAC_STARTED: Indicates that the PreCAC has been started for the
+ *                           DFS channel.
+ * @CH_DFS_S_PRECAC_COMPLETED: Indicates that the PreCAC has been completed for
+ *                             the DFS channel.
+ */
+enum channel_dfs_state {
+	CH_DFS_S_INVALID,
+	CH_DFS_S_CAC_REQ,
+	CH_DFS_S_CAC_STARTED,
+	CH_DFS_S_CAC_COMPLETED,
+	CH_DFS_S_NOL,
+	CH_DFS_S_PRECAC_STARTED,
+	CH_DFS_S_PRECAC_COMPLETED,
 };
 #endif

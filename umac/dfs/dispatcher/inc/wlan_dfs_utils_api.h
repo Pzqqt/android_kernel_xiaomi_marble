@@ -1051,4 +1051,60 @@ utils_dfs_precac_status_for_channel(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#if defined(WLAN_DISP_CHAN_INFO)
+/**
+ * utils_dfs_get_chan_dfs_state() - Get the channel state array of the channels
+ * in a radio.
+ * @pdev: Pointer to the pdev.
+ * @dfs_ch_s: Output channel state array of the dfs channels in the radio.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS utils_dfs_get_chan_dfs_state(struct wlan_objmgr_pdev *pdev,
+					enum channel_dfs_state *dfs_ch_s);
+
+/**
+ * utils_dfs_update_chan_state_array() - Update the channel state of the dfs
+ * channel indicated by the frequency. The dfs event is converted to
+ * appropriate dfs state.
+ * @pdev: Pointer to the pdev.
+ * @freq: Input frequency.
+ * @event: Input dfs event.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS utils_dfs_update_chan_state_array(struct wlan_objmgr_pdev *pdev,
+					     qdf_freq_t freq,
+					     enum WLAN_DFS_EVENTS event);
+
+/**
+ * dfs_init_chan_state_array() - Initialize the dfs channel state array.
+ *
+ * @pdev: Pointer to the pdev.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS dfs_init_chan_state_array(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+QDF_STATUS utils_dfs_get_chan_dfs_state(struct wlan_objmgr_pdev *pdev,
+					enum channel_dfs_state *dfs_ch_s)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS utils_dfs_update_chan_state_array(struct wlan_objmgr_pdev *pdev,
+					     uint16_t freq,
+					     enum WLAN_DFS_EVENTS event)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS dfs_init_chan_state_array(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* WLAN_DISP_CHAN_INFO */
 #endif /* _WLAN_DFS_UTILS_API_H_ */
