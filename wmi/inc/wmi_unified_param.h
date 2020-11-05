@@ -8475,4 +8475,14 @@ struct wmi_raw_event_buffer {
 	void *evt_processed_buf;
 };
 
+/**
+ * struct wmi_pdev_enable_tx_mode_selection - fw tx mode selection
+ * @pdev_id: radio id
+ * @enable_tx_mode_selection: flag to enable tx mode selection
+ */
+struct wmi_pdev_enable_tx_mode_selection {
+	uint32_t pdev_id;
+	uint32_t enable_tx_mode_selection;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */

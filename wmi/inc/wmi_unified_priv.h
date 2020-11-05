@@ -2448,6 +2448,11 @@ QDF_STATUS (*send_vdev_tsf_tstamp_action_cmd)(wmi_unified_t wmi,
 QDF_STATUS (*extract_vdev_tsf_report_event)(wmi_unified_t wmi_handle,
 					    void *evt_buf,
 					    struct wmi_host_tsf_event *param);
+#ifdef WMI_AP_SUPPORT
+QDF_STATUS (*set_radio_tx_mode_select_cmd)(
+				wmi_unified_t wmi,
+				struct wmi_pdev_enable_tx_mode_selection *param);
+#endif
 };
 
 /* Forward declartion for psoc*/
