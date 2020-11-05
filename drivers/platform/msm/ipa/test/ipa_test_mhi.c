@@ -650,7 +650,7 @@ static int ipa_mhi_test_config_channel_context(
 	p_channels[ch_idx].rp = (u32)transfer_ring_bufs[ch_idx].phys_base;
 	p_channels[ch_idx].wp = (u32)transfer_ring_bufs[ch_idx].phys_base;
 	p_channels[ch_idx].chtype = ch_type;
-	p_channels[ch_idx].brsmode = IPA_MHI_BURST_MODE_DEFAULT;
+	p_channels[ch_idx].brsmode = IPA_MHI_BURST_MODE_DISABLE;
 	p_channels[ch_idx].pollcfg = 0;
 
 	return 0;
@@ -1154,13 +1154,6 @@ static int ipa_mhi_test_channel_reset(void)
 		sizeof(struct ipa_mhi_channel_context_array));
 	p_ch_ctx_array = test_mhi_ctx->ch_ctx_array.base +
 		(phys_addr - test_mhi_ctx->ch_ctx_array.phys_base);
-	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_DISABLE) {
-		IPA_UT_LOG("chstate is not disabled! ch %d chstate %s\n",
-			IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-			MHI_STATE_STR(p_ch_ctx_array->chstate));
-		IPA_UT_TEST_FAIL_REPORT("CONS pipe state is not disabled");
-		return -EFAULT;
-	}
 
 	dma_free_coherent(ipa3_ctx->pdev,
 		test_mhi_ctx->xfer_ring_bufs[1].size,
@@ -1195,13 +1188,6 @@ static int ipa_mhi_test_channel_reset(void)
 		sizeof(struct ipa_mhi_channel_context_array));
 	p_ch_ctx_array = test_mhi_ctx->ch_ctx_array.base +
 		(phys_addr - test_mhi_ctx->ch_ctx_array.phys_base);
-	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_DISABLE) {
-		IPA_UT_LOG("chstate is not disabled! ch %d chstate %s\n",
-			IPA_MHI_TEST_FIRST_CHANNEL_ID,
-			MHI_STATE_STR(p_ch_ctx_array->chstate));
-		IPA_UT_TEST_FAIL_REPORT("PROD pipe state is not disabled");
-		return -EFAULT;
-	}
 
 	dma_free_coherent(ipa3_ctx->pdev, test_mhi_ctx->xfer_ring_bufs[0].size,
 		test_mhi_ctx->xfer_ring_bufs[0].base,
