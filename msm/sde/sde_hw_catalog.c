@@ -155,6 +155,8 @@
 #define SDE_UIDLE_MAX_DWNSCALE 1500
 #define SDE_UIDLE_MAX_FPS_60 60
 #define SDE_UIDLE_MAX_FPS_90 90
+#define SDE_UIDLE_MAX_FPS_120 120
+#define SDE_UIDLE_MAX_FPS_240 240
 
 #define SSPP_GET_REGDMA_BASE(blk_base, top_off) ((blk_base) >= (top_off) ?\
 		(blk_base) - (top_off) : (blk_base))
@@ -4789,7 +4791,8 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 	if (!uidle_cfg->uidle_rev)
 		return;
 
-	if ((IS_SDE_UIDLE_REV_101(uidle_cfg->uidle_rev)) ||
+	if ((IS_SDE_UIDLE_REV_102(uidle_cfg->uidle_rev)) ||
+			(IS_SDE_UIDLE_REV_101(uidle_cfg->uidle_rev)) ||
 			(IS_SDE_UIDLE_REV_100(uidle_cfg->uidle_rev))) {
 		uidle_cfg->fal10_exit_cnt = SDE_UIDLE_FAL10_EXIT_CNT;
 		uidle_cfg->fal10_exit_danger = SDE_UIDLE_FAL10_EXIT_DANGER;
@@ -4809,6 +4812,13 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 			uidle_cfg->fal10_threshold =
 				SDE_UIDLE_FAL10_THRESHOLD_90;
 			uidle_cfg->max_fps = SDE_UIDLE_MAX_FPS_90;
+		} else if (IS_SDE_UIDLE_REV_102(uidle_cfg->uidle_rev)) {
+			set_bit(SDE_UIDLE_QACTIVE_OVERRIDE,
+					&uidle_cfg->features);
+			uidle_cfg->fal10_threshold =
+				SDE_UIDLE_FAL10_THRESHOLD_90;
+			uidle_cfg->max_fps = SDE_UIDLE_MAX_FPS_90;
+			uidle_cfg->max_fal1_fps = SDE_UIDLE_MAX_FPS_240;
 		}
 	} else {
 		pr_err("invalid uidle rev:0x%x, disabling uidle\n",
@@ -5114,7 +5124,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
 		sde_cfg->has_vig_p010 = true;
 		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_0;
-		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_1;
+		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_2;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;

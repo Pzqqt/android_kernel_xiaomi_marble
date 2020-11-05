@@ -125,11 +125,14 @@
  */
 #define SDE_UIDLE_VERSION_1_0_0		0x100
 #define SDE_UIDLE_VERSION_1_0_1		0x101
+#define SDE_UIDLE_VERSION_1_0_2		0x102
 
 #define IS_SDE_UIDLE_REV_100(rev) \
 	((rev) == SDE_UIDLE_VERSION_1_0_0)
 #define IS_SDE_UIDLE_REV_101(rev) \
 	((rev) == SDE_UIDLE_VERSION_1_0_1)
+#define IS_SDE_UIDLE_REV_102(rev) \
+	((rev) == SDE_UIDLE_VERSION_1_0_2)
 
 #define SDE_UIDLE_MAJOR(rev)		((rev) >> 8)
 
@@ -968,6 +971,7 @@ struct sde_mdp_cfg {
  *	                    This ratio is multiplied x1000 to allow
  *	                    3 decimal precision digits.
  * @max_fps:                maximum fps to allow micro idle
+ * @max_fal1_fps:           maximum fps to allow micro idle FAL1 only
  * @uidle_rev:              uidle revision supported by the target,
  *                          zero if no support
  * @debugfs_perf:           enable/disable performance counters and status
@@ -987,6 +991,7 @@ struct sde_uidle_cfg {
 	u32 fal10_threshold;
 	u32 max_dwnscale;
 	u32 max_fps;
+	u32 max_fal1_fps;
 	u32 uidle_rev;
 	u32 debugfs_perf;
 	bool debugfs_ctrl;

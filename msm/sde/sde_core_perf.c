@@ -491,13 +491,13 @@ static void _sde_core_uidle_setup_wd(struct sde_kms *kms,
 }
 
 static void _sde_core_uidle_setup_cfg(struct sde_kms *kms,
-	bool enable)
+	enum sde_uidle_state state)
 {
 	struct sde_uidle_ctl_cfg cfg;
 	struct sde_hw_uidle *uidle;
 
 	uidle = kms->hw_uidle;
-	cfg.uidle_enable = enable;
+	cfg.uidle_state = state;
 	cfg.fal10_danger =
 		kms->catalog->uidle_cfg.fal10_danger;
 	cfg.fal10_exit_cnt =
@@ -507,7 +507,7 @@ static void _sde_core_uidle_setup_cfg(struct sde_kms *kms,
 
 	SDE_DEBUG("fal10_danger:%d fal10_exit_cnt:%d fal10_exit_danger:%d\n",
 		cfg.fal10_danger, cfg.fal10_exit_cnt, cfg.fal10_exit_danger);
-	SDE_EVT32(enable, cfg.fal10_danger, cfg.fal10_exit_cnt,
+	SDE_EVT32(state, cfg.fal10_danger, cfg.fal10_exit_cnt,
 		cfg.fal10_exit_danger);
 
 	if (uidle->ops.set_uidle_ctl)
@@ -529,19 +529,21 @@ static void _sde_core_uidle_setup_ctl(struct drm_crtc *crtc,
 }
 
 static int _sde_core_perf_enable_uidle(struct sde_kms *kms,
-	struct drm_crtc *crtc, bool enable)
+	struct drm_crtc *crtc, enum sde_uidle_state uidle_state)
 {
 	int rc = 0;
+	bool enable = (uidle_state > UIDLE_STATE_DISABLE);
 
-	if (!kms->dev || !kms->dev->dev || !kms->hw_uidle) {
-		SDE_ERROR("wrong params won't enable uidlen");
+	if (!kms->dev || !kms->dev->dev || !kms->hw_uidle ||
+			uidle_state >= UIDLE_STATE_ENABLE_MAX) {
+		SDE_ERROR("wrong params won't enable uidle_state %d\n", uidle_state);
 		rc = -EINVAL;
 		goto exit;
 	}
 
-	SDE_EVT32(enable);
+	SDE_EVT32(uidle_state);
 	_sde_core_uidle_setup_wd(kms, enable);
-	_sde_core_uidle_setup_cfg(kms, enable);
+	_sde_core_uidle_setup_cfg(kms, uidle_state);
 	_sde_core_uidle_setup_ctl(crtc, enable);
 
 	kms->perf.uidle_enabled = enable;
@@ -596,7 +598,7 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 {
 	struct drm_crtc *tmp_crtc;
 	struct sde_kms *kms;
-	bool disable_uidle = false;
+	enum sde_uidle_state uidle_status = UIDLE_STATE_FAL1_FAL10;
 	u32 fps;
 
 	if (!crtc) {
@@ -621,6 +623,8 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 	}
 
 	drm_for_each_crtc(tmp_crtc, crtc->dev) {
+		enum sde_uidle_state uidle_crtc_status = UIDLE_STATE_FAL1_FAL10;
+
 		if (_sde_core_perf_crtc_is_power_on(tmp_crtc)) {
 
 			/*
@@ -638,19 +642,29 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 				tmp_crtc->base.id, fps,
 				_sde_core_perf_is_wb(tmp_crtc),
 				_sde_core_perf_is_cwb(tmp_crtc),
-				disable_uidle, enable);
+				uidle_status, uidle_crtc_status, enable);
 
 			if (_sde_core_perf_is_wb(tmp_crtc) ||
-				_sde_core_perf_is_cwb(tmp_crtc) || (!fps ||
-				 fps > kms->perf.catalog->uidle_cfg.max_fps)) {
-				disable_uidle = true;
+				_sde_core_perf_is_cwb(tmp_crtc) || !fps) {
+				uidle_status = UIDLE_STATE_DISABLE;
 				break;
 			}
+
+			/* Check if FAL1 only should be enabled */
+			if (fps <=  kms->perf.catalog->uidle_cfg.max_fps)
+				uidle_crtc_status = UIDLE_STATE_FAL1_FAL10;
+			else if (fps <= kms->perf.catalog->uidle_cfg.max_fal1_fps)
+				uidle_crtc_status = UIDLE_STATE_FAL1_ONLY;
+
+			if (uidle_crtc_status == UIDLE_STATE_DISABLE)
+				break;
+			else if (uidle_crtc_status < uidle_status)
+				uidle_status = uidle_crtc_status;
 		}
 	}
 
 	_sde_core_perf_enable_uidle(kms, crtc,
-		(enable && !disable_uidle) ? true : false);
+			enable ? uidle_status : UIDLE_STATE_DISABLE);
 
 	/* If perf counters enabled, set them up now */
 	if (kms->catalog->uidle_cfg.debugfs_perf)

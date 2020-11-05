@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  */
 
@@ -161,10 +161,17 @@ void sde_hw_uidle_setup_ctl(struct sde_hw_uidle *uidle,
 		struct sde_uidle_ctl_cfg *cfg)
 {
 	struct sde_hw_blk_reg_map *c = &uidle->hw;
+	bool enable = false;
 	u32 reg_val;
 
 	reg_val = SDE_REG_READ(c, UIDLE_CTL);
-	reg_val = (reg_val & ~BIT(31)) | (cfg->uidle_enable ? BIT(31) : 0);
+
+	enable = (cfg->uidle_state > UIDLE_STATE_DISABLE &&
+		cfg->uidle_state < UIDLE_STATE_ENABLE_MAX);
+	reg_val = (reg_val & ~BIT(31)) | (enable ? BIT(31) : 0);
+	reg_val = (reg_val & ~BIT(30)) | (cfg->uidle_state
+			== UIDLE_STATE_FAL1_ONLY ? BIT(30) : 0);
+
 	reg_val = (reg_val & ~FAL10_DANGER_MSK) |
 		((cfg->fal10_danger << FAL10_DANGER_SHFT) &
 		FAL10_DANGER_MSK);
