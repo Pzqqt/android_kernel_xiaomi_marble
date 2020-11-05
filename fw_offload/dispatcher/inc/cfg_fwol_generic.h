@@ -787,6 +787,35 @@
 		1, \
 		"ILP configuration")
 
+/*
+ *
+ * <ini>
+ * sap_sho_config - Bitmap to Enable/Disable SAP HW offload
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This INI is used to configure sap hw offload.
+ *
+ * bit-0: enable/disable SHO
+ * bit-1: enable for Sta connected state as well.
+ * bit-2 to bit-31: Reserved
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SAP_SHO_CONFIG CFG_INI_UINT(\
+		"sap_sho_config", \
+		0, \
+		3, \
+		1, \
+		CFG_VALUE_OR_DEFAULT, \
+		"enable SHO config")
+
 #define CFG_FWOL_GENERIC_ALL \
 	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
@@ -815,5 +844,7 @@
 	CFG(CFG_ENABLE_SECONDARY_RATE) \
 	CFG(CFG_SET_SAP_XLNA_BYPASS) \
 	CFG(CFG_SET_ENABLE_ILP) \
-	CFG(CFG_ENABLE_FW_WOW_MODULE_LOG_LEVEL)
+	CFG(CFG_ENABLE_FW_WOW_MODULE_LOG_LEVEL) \
+	CFG(CFG_SAP_SHO_CONFIG)
+
 #endif

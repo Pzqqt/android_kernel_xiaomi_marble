@@ -236,3 +236,14 @@ QDF_STATUS tgt_fwol_pdev_param_send(struct wlan_objmgr_pdev *pdev,
 	return wmi_unified_pdev_param_send(wmi_handle, &pdev_param,
 					   FWOL_WILDCARD_PDEV_ID);
 }
+
+QDF_STATUS tgt_fwol_vdev_param_send(struct wlan_objmgr_psoc *psoc,
+				    struct vdev_set_params vdev_param)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_vdev_set_param_send(wmi_handle, &vdev_param);
+}
