@@ -9208,6 +9208,26 @@ void ipa3_set_resorce_groups_min_max_limits(void)
 	IPADBG("EXIT\n");
 }
 
+static void ipa3_gsi_poll_after_suspend(struct ipa3_ep_context *ep)
+{
+	bool empty;
+
+	IPADBG("switch ch %ld to poll\n", ep->gsi_chan_hdl);
+	gsi_config_channel_mode(ep->gsi_chan_hdl, GSI_CHAN_MODE_POLL);
+	gsi_is_channel_empty(ep->gsi_chan_hdl, &empty);
+	if (!empty) {
+		IPADBG("ch %ld not empty\n", ep->gsi_chan_hdl);
+		/* queue a work to start polling if don't have one */
+		atomic_set(&ipa3_ctx->transport_pm.eot_activity, 1);
+		if (!atomic_read(&ep->sys->curr_polling_state)) {
+			ipa3_inc_acquire_wakelock();
+			atomic_set(&ep->sys->curr_polling_state, 1);
+			queue_work(ep->sys->wq, &ep->sys->work);
+		}
+	}
+}
+
+
 static bool ipa3_gsi_channel_is_quite(struct ipa3_ep_context *ep)
 {
 	bool empty;
@@ -9360,14 +9380,10 @@ EXPORT_SYMBOL(ipa3_stop_gsi_channel);
 
 static int _ipa_suspend_resume_pipe(enum ipa_client_type client, bool suspend)
 {
+	struct ipa_ep_cfg_ctrl cfg;
 	int ipa_ep_idx, coal_ep_idx;
 	struct ipa3_ep_context *ep;
 	int res;
-
-	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
-		IPAERR("not supported\n");
-		return -EPERM;
-	}
 
 	ipa_ep_idx = ipa3_get_ep_mapping(client);
 	if (ipa_ep_idx < 0) {
@@ -9379,9 +9395,24 @@ static int _ipa_suspend_resume_pipe(enum ipa_client_type client, bool suspend)
 	if (!ep->valid)
 		return 0;
 
-	coal_ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
-
 	IPADBG("%s pipe %d\n", suspend ? "suspend" : "unsuspend", ipa_ep_idx);
+
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
+		if(client == IPA_CLIENT_APPS_WAN_CONS ||
+			client == IPA_CLIENT_APPS_LAN_CONS) {
+			memset(&cfg, 0, sizeof(cfg));
+			cfg.ipa_ep_suspend = suspend;
+			ipa3_cfg_ep_ctrl(ipa_ep_idx, &cfg);
+			if (suspend)
+				ipa3_gsi_poll_after_suspend(ep);
+			else if (!atomic_read(&ep->sys->curr_polling_state))
+				gsi_config_channel_mode(ep->gsi_chan_hdl,
+					GSI_CHAN_MODE_CALLBACK);
+		}
+		return 0;
+	}
+
+	coal_ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 
 	/*
 	 * Configure the callback mode only one time after starting the channel
