@@ -591,6 +591,14 @@ void
 wmi_flush_endpoint(wmi_unified_t wmi_handle);
 
 /**
+ * API to stop wmi sequence check
+ *
+ * @param wmi_handle      : handle to WMI.
+ */
+void
+wmi_interface_sequence_stop(wmi_unified_t wmi_handle);
+
+/**
  * wmi_pdev_id_conversion_enable() - API to enable pdev_id and phy_id
  *                     conversion in WMI. By default pdev_id and
  *                     phyid conversion is not done in WMI.

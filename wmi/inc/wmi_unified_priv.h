@@ -2549,6 +2549,8 @@ struct wmi_unified {
 	uint32_t *cmd_phy_id_map;
 	uint32_t *evt_phy_id_map;
 #ifdef WMI_INTERFACE_SEQUENCE_CHECK
+	/* wmi sequence stop */
+	bool wmi_sequence_stop;
 	/* wmi next transmit sequence number */
 	uint32_t wmi_sequence;
 	/* wmi completion expected sequence number */

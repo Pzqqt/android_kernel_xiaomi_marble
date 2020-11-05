@@ -1809,6 +1809,7 @@ static inline void wmi_interface_sequence_reset(struct wmi_unified *wmi_handle)
 {
 	wmi_handle->wmi_sequence = 0;
 	wmi_handle->wmi_exp_sequence = 0;
+	wmi_handle->wmi_sequence_stop = false;
 }
 
 static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
@@ -1820,6 +1821,11 @@ static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
 static inline void wmi_interface_sequence_deinit(struct wmi_unified *wmi_handle)
 {
 	qdf_spinlock_destroy(&wmi_handle->wmi_seq_lock);
+}
+
+void wmi_interface_sequence_stop(struct wmi_unified *wmi_handle)
+{
+	wmi_handle->wmi_sequence_stop = true;
 }
 
 static inline QDF_STATUS wmi_htc_send_pkt(struct wmi_unified *wmi_handle,
@@ -1852,6 +1858,10 @@ static inline QDF_STATUS wmi_htc_send_pkt(struct wmi_unified *wmi_handle,
 static inline void wmi_interface_sequence_check(struct wmi_unified *wmi_handle,
 						wmi_buf_t buf)
 {
+	/* Skip sequence check when wmi sequence stop is set */
+	if (wmi_handle->wmi_sequence_stop)
+		return;
+
 	qdf_spin_lock_bh(&wmi_handle->wmi_seq_lock);
 	/* Match the completion sequence and expected sequence number */
 	if (qdf_nbuf_get_mark(buf) != wmi_handle->wmi_exp_sequence) {
@@ -1881,6 +1891,10 @@ static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
 }
 
 static inline void wmi_interface_sequence_deinit(struct wmi_unified *wmi_handle)
+{
+}
+
+void wmi_interface_sequence_stop(struct wmi_unified *wmi_handle)
 {
 }
 
