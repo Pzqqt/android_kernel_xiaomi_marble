@@ -858,7 +858,8 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	if (te_check_override)
 		te_rechecks = MAX_TE_RECHECKS;
 
-	if (panel->panel_mode == DSI_OP_VIDEO_MODE)
+	if ((dsi_display->trusted_vm_env) ||
+			(panel->panel_mode == DSI_OP_VIDEO_MODE))
 		te_rechecks = 0;
 
 	ret = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
