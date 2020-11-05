@@ -60,4 +60,14 @@ QDF_STATUS tgt_fwol_register_rx_ops(struct wlan_fwol_rx_ops *rx_ops);
 QDF_STATUS tgt_fwol_pdev_param_send(struct wlan_objmgr_pdev *pdev,
 				    struct pdev_params pdev_param);
 
+/**
+ * tgt_fwol_vdev_param_send() - send vdev params to firmware
+ * @psoc: psoc handle
+ * @vdev_set_params: vdev params
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS tgt_fwol_vdev_param_send(struct wlan_objmgr_psoc *psoc,
+				    struct vdev_set_params vdev_param);
+
 #endif /* _WLAN_FWOL_TGT_API_H */
