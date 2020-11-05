@@ -1752,7 +1752,7 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 
 	/* mpdu_tried should be always higher than last ba bit in ba bitmap */
 	if ((user->mpdu_tried_ucast) &&
-	    (user->mpdu_tried_ucast < last_set_bit)) {
+	    (user->mpdu_tried_ucast < (last_set_bit + 1))) {
 
 		for (i = 0; i < size; i++)
 			mpdu_enq += get_number_of_1s(user->enq_bitmap[i]);
