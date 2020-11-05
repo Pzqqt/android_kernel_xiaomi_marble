@@ -621,7 +621,8 @@ static inline QDF_STATUS DP_HTT_SEND_HTC_PKT(struct htt_soc *soc,
 	status = htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
 	if (status == QDF_STATUS_SUCCESS)
 		htt_htc_misc_pkt_list_add(soc, pkt);
-
+	else
+		soc->stats.fail_count++;
 	return status;
 }
 
@@ -643,6 +644,7 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 		if (htc_packet_get_magic_cookie(&(pkt->u.pkt.htc_pkt)) !=
 		    HTC_PACKET_MAGIC_COOKIE) {
 			pkt = next;
+			soc->stats.skip_count++;
 			continue;
 		}
 		netbuf = (qdf_nbuf_t) (pkt->u.pkt.htc_pkt.pNetBufContext);
@@ -659,6 +661,8 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 	}
 	soc->htt_htc_pkt_misclist = NULL;
 	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
+	dp_info("HTC Packets, fail count = %d, skip count = %d",
+		soc->stats.fail_count, soc->stats.skip_count);
 }
 
 /*

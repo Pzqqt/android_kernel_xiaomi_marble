@@ -194,6 +194,8 @@ struct htt_soc {
 	struct {
 		int htc_err_cnt;
 		int htc_pkt_free;
+		int skip_count;
+		int fail_count;
 		/* rtpm put skip count for ver req msg */
 		int htt_ver_req_put_skip;
 	} stats;
