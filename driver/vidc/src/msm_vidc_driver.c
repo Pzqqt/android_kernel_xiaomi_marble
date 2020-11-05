@@ -1047,7 +1047,7 @@ static int vb2q_init(struct msm_vidc_inst *inst,
 	core = inst->core;
 
 	q->type = type;
-	q->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
+	q->io_modes = VB2_DMABUF;
 	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	q->ops = core->vb2_ops;
 	q->mem_ops = core->vb2_mem_ops;

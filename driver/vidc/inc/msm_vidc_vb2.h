@@ -13,6 +13,11 @@
 void *msm_vb2_get_userptr(struct device *dev, unsigned long vaddr,
 			unsigned long size, enum dma_data_direction dma_dir);
 void msm_vb2_put_userptr(void *buf_priv);
+void* msm_vb2_attach_dmabuf(struct device* dev, struct dma_buf* dbuf,
+	unsigned long size, enum dma_data_direction dma_dir);
+void msm_vb2_detach_dmabuf(void* buf_priv);
+int msm_vb2_map_dmabuf(void* buf_priv);
+void msm_vb2_unmap_dmabuf(void* buf_priv);
 
 /* vb2_ops */
 int msm_vidc_queue_setup(struct vb2_queue *q,

@@ -69,6 +69,10 @@ static struct vb2_ops msm_vb2_ops = {
 static struct vb2_mem_ops msm_vb2_mem_ops = {
 	.get_userptr                    = msm_vb2_get_userptr,
 	.put_userptr                    = msm_vb2_put_userptr,
+	.attach_dmabuf                  = msm_vb2_attach_dmabuf,
+	.detach_dmabuf                  = msm_vb2_detach_dmabuf,
+	.map_dmabuf                     = msm_vb2_map_dmabuf,
+	.unmap_dmabuf                   = msm_vb2_unmap_dmabuf,
 };
 
 static int msm_vidc_init_ops(struct msm_vidc_core *core)

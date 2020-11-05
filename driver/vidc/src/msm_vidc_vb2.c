@@ -22,6 +22,25 @@ void msm_vb2_put_userptr(void *buf_priv)
 {
 }
 
+void* msm_vb2_attach_dmabuf(struct device* dev, struct dma_buf* dbuf,
+	unsigned long size, enum dma_data_direction dma_dir)
+{
+	return (void*)0xdeadbeef;
+}
+
+void msm_vb2_detach_dmabuf(void* buf_priv)
+{
+}
+
+int msm_vb2_map_dmabuf(void* buf_priv)
+{
+	return 0;
+}
+
+void msm_vb2_unmap_dmabuf(void* buf_priv)
+{
+}
+
 int msm_vidc_queue_setup(struct vb2_queue *q,
 		unsigned int *num_buffers, unsigned int *num_planes,
 		unsigned int sizes[], struct device *alloc_devs[])
