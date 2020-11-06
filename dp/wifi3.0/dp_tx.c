@@ -2096,13 +2096,16 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 			return;
 		}
 	}
+	/* If it's ME frame, dont unmap the cloned nbuf's */
+	if ((desc->flags & DP_TX_DESC_FLAG_ME) && qdf_nbuf_is_cloned(nbuf))
+		goto nbuf_free;
 
 	qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
 				     QDF_DMA_TO_DEVICE, nbuf->len);
 
 	if (desc->flags & DP_TX_DESC_FLAG_MESH_MODE)
 		return dp_mesh_tx_comp_free_buff(soc, desc);
-
+nbuf_free:
 	qdf_nbuf_free(nbuf);
 }
 
