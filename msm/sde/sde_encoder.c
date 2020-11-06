@@ -68,6 +68,9 @@
 
 #define EVT_TIME_OUT_SPLIT 2
 
+/* worst case poll time for delay_kickoff to be cleared */
+#define DELAY_KICKOFF_POLL_TIMEOUT_US 100000
+
 /* Maximum number of VSYNC wait attempts for RSC state transition */
 #define MAX_RSC_WAIT	5
 
@@ -4173,6 +4176,19 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error,
 	if (is_error)
 		_sde_encoder_reset_ctl_hw(drm_enc);
 
+	if (sde_enc->delay_kickoff) {
+		u32 loop_count = 20;
+		u32 sleep = DELAY_KICKOFF_POLL_TIMEOUT_US / loop_count;
+
+		for (i = 0; i < loop_count; i++) {
+			usleep_range(sleep, sleep * 2);
+			if (!sde_enc->delay_kickoff)
+				break;
+		}
+
+		SDE_EVT32(DRMID(drm_enc), i, SDE_EVTLOG_FUNC_CASE1);
+	}
+
 	/* All phys encs are ready to go, trigger the kickoff */
 	_sde_encoder_kickoff_phys(sde_enc, config_changed);
 
@@ -5360,6 +5376,7 @@ int sde_encoder_display_failure_notification(struct drm_encoder *enc,
 	event_thread = &priv->event_thread[sde_enc->crtc->index];
 
 	if (!skip_pre_kickoff) {
+		sde_enc->delay_kickoff = true;
 		kthread_queue_work(&event_thread->worker,
 				   &sde_enc->esd_trigger_work);
 		kthread_flush_work(&sde_enc->esd_trigger_work);
@@ -5372,8 +5389,10 @@ int sde_encoder_display_failure_notification(struct drm_encoder *enc,
 	 */
 	sde_encoder_helper_switch_vsync(enc, true);
 
-	if (!skip_pre_kickoff)
+	if (!skip_pre_kickoff) {
 		sde_encoder_wait_for_event(enc, MSM_ENC_TX_COMPLETE);
+		sde_enc->delay_kickoff = false;
+	}
 
 	return 0;
 }
