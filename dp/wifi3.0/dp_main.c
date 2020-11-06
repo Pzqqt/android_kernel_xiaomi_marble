@@ -248,6 +248,9 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    int ring_num);
 #define DP_INTR_POLL_TIMER_MS	5
 
+#define MON_VDEV_TIMER_INIT 0x1
+#define MON_VDEV_TIMER_RUNNING 0x2
+
 /* Generic AST entry aging timer value */
 #define DP_AST_AGING_TIMER_DEFAULT_MS	1000
 #define DP_MCS_LENGTH (6*MAX_MCS)
@@ -2030,12 +2033,14 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			int_ctx->intr_stats.num_reo_status_ring_masks++;
 	}
 
-	work_done = dp_process_lmac_rings(int_ctx, remaining_quota);
-	if (work_done) {
-		budget -=  work_done;
-		if (budget <= 0)
-			goto budget_done;
-		remaining_quota = budget;
+	if (qdf_unlikely(!(soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING))) {
+		work_done = dp_process_lmac_rings(int_ctx, remaining_quota);
+		if (work_done) {
+			budget -=  work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
 	}
 
 	qdf_lro_flush(int_ctx->lro_ctx);
@@ -2043,6 +2048,70 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 
 budget_done:
 	return dp_budget - budget;
+}
+
+/* dp_mon_vdev_timer()- timer poll for interrupts
+ *
+ * @arg: SoC Handle
+ *
+ * Return:
+ *
+ */
+static void dp_mon_vdev_timer(void *arg)
+{
+	struct dp_soc *soc = (struct dp_soc *)arg;
+	struct dp_pdev *pdev = soc->pdev_list[0];
+	enum timer_yield_status yield = DP_TIMER_NO_YIELD;
+	uint32_t work_done  = 0, total_work_done = 0;
+	int budget = 0xffff;
+	uint32_t remaining_quota = budget;
+	uint64_t start_time;
+	uint32_t lmac_id = DP_MON_INVALID_LMAC_ID;
+	uint32_t lmac_iter;
+	int max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
+
+	if (!qdf_atomic_read(&soc->cmn_init_done))
+		return;
+
+	if (pdev->mon_chan_band != REG_BAND_UNKNOWN)
+		lmac_id = pdev->ch_band_lmac_id_mapping[pdev->mon_chan_band];
+
+	start_time = qdf_get_log_timestamp();
+	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+
+	while (yield == DP_TIMER_NO_YIELD) {
+		for (lmac_iter = 0; lmac_iter < max_mac_rings; lmac_iter++) {
+			if (lmac_iter == lmac_id)
+				work_done = dp_mon_process(
+						    soc, NULL,
+						    lmac_iter, remaining_quota);
+			else
+				work_done =
+					dp_mon_drop_packets_for_mac(pdev,
+								    lmac_iter,
+								    remaining_quota);
+			if (work_done) {
+				budget -=  work_done;
+				if (budget <= 0) {
+					yield = DP_TIMER_WORK_EXHAUST;
+					goto budget_done;
+				}
+				remaining_quota = budget;
+				total_work_done += work_done;
+			}
+		}
+
+		yield = dp_should_timer_irq_yield(soc, total_work_done,
+						  start_time);
+		total_work_done = 0;
+	}
+
+budget_done:
+	if (yield == DP_TIMER_WORK_EXHAUST ||
+	    yield == DP_TIMER_TIME_EXHAUST)
+		qdf_timer_mod(&soc->mon_vdev_timer, 1);
+	else
+		qdf_timer_mod(&soc->mon_vdev_timer, DP_INTR_POLL_TIMER_MS);
 }
 
 /* dp_interrupt_timer()- timer poll for interrupts
@@ -4668,6 +4737,10 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 	dp_hw_link_desc_pool_banks_free(soc, WLAN_INVALID_PDEV_ID);
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 	dp_soc_rx_history_detach(soc);
+	if (soc->mon_vdev_timer_state & MON_VDEV_TIMER_INIT) {
+		qdf_timer_free(&soc->mon_vdev_timer);
+		soc->mon_vdev_timer_state = 0;
+	}
 
 	qdf_mem_free(soc);
 }
@@ -4873,6 +4946,10 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 		       dp_mon_reap_timer_handler, (void *)soc,
 		       QDF_TIMER_TYPE_WAKE_APPS);
 	soc->reap_timer_init = 1;
+	qdf_timer_init(soc->osdev, &soc->mon_vdev_timer,
+		       dp_mon_vdev_timer, (void *)soc,
+		       QDF_TIMER_TYPE_WAKE_APPS);
+	soc->mon_vdev_timer_state |= MON_VDEV_TIMER_INIT;
 	return status;
 }
 #else
@@ -5382,6 +5459,11 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 		if ((pdev->vdev_count == 0) ||
 		    (wlan_op_mode_monitor == vdev->opmode))
 			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	} else if (soc->intr_mode == DP_INTR_MSI &&
+		   wlan_op_mode_monitor == vdev->opmode &&
+		   soc->mon_vdev_timer_state & MON_VDEV_TIMER_INIT) {
+		qdf_timer_mod(&soc->mon_vdev_timer, DP_INTR_POLL_TIMER_MS);
+		soc->mon_vdev_timer_state |= MON_VDEV_TIMER_RUNNING;
 	}
 
 	dp_vdev_id_map_tbl_add(soc, vdev, vdev_id);
@@ -6643,6 +6725,11 @@ void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev,
 		if (soc->intr_mode == DP_INTR_POLL) {
 			qdf_timer_sync_cancel(&soc->int_timer);
 			dp_flush_monitor_rings(soc);
+		} else if (soc->intr_mode == DP_INTR_MSI &&
+			soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING) {
+			qdf_timer_sync_cancel(&soc->mon_vdev_timer);
+			dp_flush_monitor_rings(soc);
+			soc->mon_vdev_timer_state &= ~MON_VDEV_TIMER_RUNNING;
 		}
 		pdev->monitor_vdev = NULL;
 		goto free_vdev;

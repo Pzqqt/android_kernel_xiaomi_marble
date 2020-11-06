@@ -1538,6 +1538,8 @@ struct dp_soc {
 	qdf_timer_t int_timer;
 	uint8_t intr_mode;
 	uint8_t lmac_polled_mode;
+	qdf_timer_t mon_vdev_timer;
+	uint8_t mon_vdev_timer_state;
 
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
