@@ -191,29 +191,52 @@ static int dsi_panel_gpio_release(struct dsi_panel *panel)
 	return rc;
 }
 
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel)
+int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env)
 {
-	struct dsi_panel_reset_config *r_config;
-
 	if (!panel) {
 		DSI_ERR("Invalid panel param\n");
 		return -EINVAL;
 	}
 
-	r_config = &panel->reset_config;
-	if (!r_config) {
-		DSI_ERR("Invalid panel reset configuration\n");
-		return -EINVAL;
+	/* toggle reset-gpio by writing directly to register in trusted-vm */
+	if (trusted_vm_env) {
+		struct dsi_tlmm_gpio *gpio = NULL;
+		void __iomem *io;
+		u32 offset = 0x4;
+		int i;
+
+		for (i = 0; i < panel->tlmm_gpio_count; i++)
+			if (!strcmp(panel->tlmm_gpio[i].name, "reset-gpio"))
+				gpio = &panel->tlmm_gpio[i];
+
+		if (!gpio) {
+			DSI_ERR("reset gpio not found\n");
+			return -EINVAL;
+		}
+
+		io = ioremap(gpio->addr, gpio->size);
+		writel_relaxed(0, io + offset);
+		iounmap(io);
+
+	} else {
+		struct dsi_panel_reset_config *r_config = &panel->reset_config;
+
+		if (!r_config) {
+			DSI_ERR("Invalid panel reset configuration\n");
+			return -EINVAL;
+		}
+
+		if (!gpio_is_valid(r_config->reset_gpio)) {
+			DSI_ERR("failed to pull down gpio\n");
+			return -EINVAL;
+		}
+		gpio_set_value(r_config->reset_gpio, 0);
 	}
 
-	if (gpio_is_valid(r_config->reset_gpio)) {
-		gpio_set_value(r_config->reset_gpio, 0);
-		SDE_EVT32(SDE_EVTLOG_FUNC_CASE1);
-		DSI_INFO("GPIO pulled low to simulate ESD\n");
-		return 0;
-	}
-	DSI_ERR("failed to pull down gpio\n");
-	return -EINVAL;
+	SDE_EVT32(SDE_EVTLOG_FUNC_CASE1);
+	DSI_INFO("GPIO pulled low to simulate ESD\n");
+
+	return 0;
 }
 
 static int dsi_panel_reset(struct dsi_panel *panel)

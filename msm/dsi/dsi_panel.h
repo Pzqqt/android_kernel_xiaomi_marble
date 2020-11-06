@@ -298,7 +298,7 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 				int topology_override,
 				bool trusted_vm_env);
 
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel);
+int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env);
 
 void dsi_panel_put(struct dsi_panel *panel);
 
