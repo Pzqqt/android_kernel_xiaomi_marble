@@ -842,6 +842,26 @@ int wsa883x_codec_get_dev_num(struct snd_soc_component *component)
 }
 EXPORT_SYMBOL(wsa883x_codec_get_dev_num);
 
+static int wsa883x_get_dev_num(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wsa883x_priv *wsa883x;
+
+	if (!component)
+		return -EINVAL;
+
+	wsa883x = snd_soc_component_get_drvdata(component);
+	if (!wsa883x) {
+		pr_err("%s: wsa883x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	ucontrol->value.integer.value[0] = wsa883x->swr_slave->dev_num;
+	return 0;
+}
+
 static int wsa883x_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -953,6 +973,9 @@ static const struct snd_kcontrol_new wsa883x_snd_controls[] = {
 
 	SOC_SINGLE_EXT("WSA Temp", SND_SOC_NOPM, 0, UINT_MAX, 0,
 			wsa_get_temp, NULL),
+
+	SOC_SINGLE_EXT("WSA Get DevNum", SND_SOC_NOPM, 0, UINT_MAX, 0,
+	        wsa883x_get_dev_num, NULL),
 
 	SOC_ENUM_EXT("WSA MODE", wsa_dev_mode_enum,
 		     wsa_dev_mode_get, wsa_dev_mode_put),
