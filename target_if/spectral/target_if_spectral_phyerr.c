@@ -2045,7 +2045,10 @@ target_if_consume_spectral_report_gen3(
 			params.datalen_sec80 = fft_hdr_length * 2;
 
 			marker = &spectral->rparams.marker[spectral_mode];
-			qdf_assert_always(marker->is_valid);
+			if (!marker->is_valid) {
+				/* update stats */
+				goto fail_no_print;
+			}
 			params.bin_pwr_data = temp +
 				marker->start_pri80 * fft_bin_size;
 			params.pwr_count = marker->num_pri80;
@@ -2182,6 +2185,7 @@ target_if_consume_spectral_report_gen3(
 	return 0;
  fail:
 	spectral_err_rl("Error while processing Spectral report");
+fail_no_print:
 	if (spectral_mode != SPECTRAL_SCAN_MODE_INVALID)
 		reset_160mhz_delivery_state_machine(spectral, spectral_mode);
 	return -EPERM;
