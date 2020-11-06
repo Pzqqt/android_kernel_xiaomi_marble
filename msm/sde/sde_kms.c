@@ -2460,6 +2460,7 @@ static void sde_kms_lastclose(struct msm_kms *kms)
 	}
 
 	state->acquire_ctx = &ctx;
+	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
 
 retry:
 	ret = drm_modeset_lock_all_ctx(dev, &ctx);
@@ -2483,12 +2484,13 @@ out_ctx:
 	if (ret)
 		SDE_ERROR("kms lastclose failed: %d\n", ret);
 
+	SDE_EVT32(ret, SDE_EVTLOG_FUNC_EXIT);
 	return;
 
 backoff:
 	drm_atomic_state_clear(state);
 	drm_modeset_backoff(&ctx);
-
+	SDE_EVT32(ret, SDE_EVTLOG_FUNC_CASE1);
 	goto retry;
 }
 
