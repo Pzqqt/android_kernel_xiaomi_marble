@@ -99,6 +99,34 @@
 /* Max number of bonding channels in 160 MHz segment */
 #define NUM_CHANNELS_160MHZ 8
 
+#if defined(QCA_DFS_RCSA_SUPPORT)
+/**
+ * dfs_send_nol_ie_and_rcsa()- Send NOL IE and RCSA action frames.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar found structure.
+ * @nol_freq_list: List of 20MHz frequencies on which radar has been detected.
+ * @num_channels: number of radar affected channels.
+ * @wait_for_csa: indicates if the repeater AP should take DFS action or wait
+ * for CSA
+ *
+ * Return: void.
+ */
+void dfs_send_nol_ie_and_rcsa(struct wlan_dfs *dfs,
+			      struct radar_found_info *radar_found,
+			      uint16_t *nol_freq_list,
+			      uint8_t num_channels,
+			      bool *wait_for_csa);
+#else
+static inline
+void dfs_send_nol_ie_and_rcsa(struct wlan_dfs *dfs,
+			      struct radar_found_info *radar_found,
+			      uint16_t *nol_freq_list,
+			      uint8_t num_channels,
+			      bool *wait_for_csa)
+{
+}
+#endif /* QCA_DFS_RCSA_SUPPORT */
+
 /**
  * struct freqs_offsets - frequency and offset information
  * @freq: channel frequency in mhz.
