@@ -2067,6 +2067,28 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	 */
 	sta_ctx->hdd_reassoc_scenario = false;
 
+	/*
+	* Following code will be cleaned once the interface manager
+	* module is enabled.
+	*/
+#ifdef WLAN_FEATURE_INTERFACE_MGR
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (vdev) {
+		ucfg_if_mgr_deliver_event(vdev,
+					  WLAN_IF_MGR_EV_DISCONNECT_COMPLETE,
+					  NULL);
+		hdd_objmgr_put_vdev(vdev);
+	}
+#else
+	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc) &&
+	    QDF_STA_MODE == adapter->device_mode) {
+		sme_enable_roaming_on_connected_sta(mac_handle,
+						    adapter->vdev_id);
+		policy_mgr_set_pcl_for_connected_vdev(hdd_ctx->psoc,
+						      adapter->vdev_id, true);
+	}
+#endif
+
 	/* Unblock anyone waiting for disconnect to complete */
 	complete(&adapter->disconnect_comp_var);
 
@@ -2077,23 +2099,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	hdd_reset_limit_off_chan(adapter);
 
 	hdd_print_bss_info(sta_ctx);
-
-	/*
-	 * Following code will be cleaned once the interface manager
-	 * module is enabled.
-	 */
-#ifdef WLAN_FEATURE_INTERFACE_MGR
-	ucfg_if_mgr_deliver_event(adapter->vdev,
-				  WLAN_IF_MGR_EV_DISCONNECT_COMPLETE, NULL);
-#else
-	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc) &&
-	    QDF_STA_MODE == adapter->device_mode) {
-		sme_enable_roaming_on_connected_sta(mac_handle,
-						    adapter->vdev_id);
-		policy_mgr_set_pcl_for_connected_vdev(hdd_ctx->psoc,
-						      adapter->vdev_id, true);
-	}
-#endif
 
 	return status;
 }
