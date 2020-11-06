@@ -169,7 +169,9 @@ ifdef CONFIG_SND_SOC_WSA881X_ANALOG
 	WSA881X_ANALOG_OBJS += wsa881x-analog.o
 	WSA881X_ANALOG_OBJS += wsa881x-tables-analog.o
 	WSA881X_ANALOG_OBJS += wsa881x-regmap-analog.o
+ifndef CONFIG_WSA881X_TEMP_SENSOR_DISABLE
 	WSA881X_ANALOG_OBJS += wsa881x-temp-sensor.o
+endif
 endif
 ifdef CONFIG_SND_SOC_MSM_STUB
 	STUB_OBJS += msm_stub.o

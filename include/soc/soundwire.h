@@ -17,7 +17,7 @@
 #define SWR_CLK_RATE_2P4MHZ      2400000
 #define SWR_CLK_RATE_4P8MHZ      4800000
 #define SWR_CLK_RATE_9P6MHZ      9600000
-#define SWR_CLK_RATE_11P2896MHZ  1128960
+#define SWR_CLK_RATE_11P2896MHZ  11289600
 
 extern struct bus_type soundwire_type;
 struct swr_device;

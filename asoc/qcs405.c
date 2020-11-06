@@ -21,6 +21,7 @@
 #include <sound/pcm_params.h>
 #include <sound/info.h>
 #include <dsp/audio_notifier.h>
+#include <dsp/apr_audio-v2.h>
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
 #include <dsp/msm_mdf.h>
@@ -178,6 +179,7 @@ struct dev_config {
 	u32 sample_rate;
 	u32 bit_format;
 	u32 channels;
+	u32 data_format;
 };
 
 struct msm_wsa881x_dev_info {
@@ -206,6 +208,7 @@ struct msm_asoc_mach_data {
 	u32 tdm_micb_voltage;
 	u32 tdm_micb_current;
 	bool codec_is_csra;
+	void __iomem *mi2s_dsd_mode[MI2S_MAX];
 };
 
 struct msm_asoc_wcd93xx_codec {
@@ -478,6 +481,19 @@ static const char *const slim_tx_ch_text[] = {"One", "Two", "Three", "Four",
 static const char *const vi_feed_ch_text[] = {"One", "Two"};
 static char const *bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE",
 					  "S32_LE"};
+static const char *const data_format_text[] = {
+	"LPCM",
+	"Compr",
+	"LPCM-60958",
+	"Compr-60958",
+	"NA4",
+	"NA5",
+	"NA6",
+	"NA7",
+	"NA8",
+	"DSD_DOP_W_MARKER",
+	"NATIVE_DSD_DATA"
+};
 static char const *slim_sample_rate_text[] = {"KHZ_8", "KHZ_16",
 					"KHZ_32", "KHZ_44P1", "KHZ_48",
 					"KHZ_88P2", "KHZ_96", "KHZ_176P4",
@@ -616,6 +632,8 @@ static SOC_ENUM_SINGLE_EXT_DECL(sen_mi2s_rx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sen_mi2s_tx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(mi2s_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(mi2s_tx_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(mi2s_rx_data_format, data_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(mi2s_tx_data_format, data_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_tx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_meta_mi2s_rx_sample_rate, mi2s_rate_text);
@@ -3251,7 +3269,8 @@ static int msm_mi2s_rx_format_put(struct snd_kcontrol *kcontrol,
 		return idx;
 
 	/* check for PRIM_MI2S and CSRAx config to allow 24bit BE config only */
-	if ((PRIM_MI2S == idx) && (true==pdata->codec_is_csra))
+	if ((idx == PRIM_MI2S) && (pdata->codec_is_csra == true)
+			&& mi2s_rx_cfg[idx].data_format != AFE_DSD_DATA)
 	{
 		mi2s_rx_cfg[idx].bit_format = SNDRV_PCM_FORMAT_S24_LE;
 		pr_debug("%s: Keeping default format idx[%d]_rx_format = %d, item = %d\n",
@@ -3301,6 +3320,74 @@ static int msm_mi2s_tx_format_put(struct snd_kcontrol *kcontrol,
 	pr_debug("%s: idx[%d]_tx_format = %d, item = %d\n", __func__,
 		  idx, mi2s_tx_cfg[idx].bit_format,
 		  ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_mi2s_tx_data_format_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	mi2s_tx_cfg[idx].data_format = ucontrol->value.enumerated.item[0];
+
+	pr_debug("%s: idx[%d]_data_format = %d, item = %d\n", __func__,
+		  idx, mi2s_tx_cfg[idx].data_format,
+		  ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_mi2s_rx_data_format_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	mi2s_rx_cfg[idx].data_format = ucontrol->value.enumerated.item[0];
+
+	pr_debug("%s: idx[%d]_data_format = %d, item = %d\n", __func__,
+		  idx, mi2s_rx_cfg[idx].data_format,
+		  ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_mi2s_tx_data_format_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] = mi2s_tx_cfg[idx].data_format;
+
+	pr_debug("%s: idx[%d]_tx_format = %d, item = %d\n", __func__,
+		idx, mi2s_tx_cfg[idx].data_format,
+		ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_mi2s_rx_data_format_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = mi2s_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] = mi2s_rx_cfg[idx].data_format;
+
+	pr_debug("%s: idx[%d]_rx_format = %d, item = %d\n", __func__,
+		idx, mi2s_rx_cfg[idx].data_format,
+		ucontrol->value.enumerated.item[0]);
 
 	return 0;
 }
@@ -4335,6 +4422,18 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_mi2s_rx_ch_get, msm_mi2s_rx_ch_put),
 	SOC_ENUM_EXT("SEN_MI2S_TX Channels", sen_mi2s_tx_chs,
 			msm_mi2s_tx_ch_get, msm_mi2s_tx_ch_put),
+	SOC_ENUM_EXT("PRIM_MI2S_TX DataFormat", mi2s_tx_data_format,
+			msm_mi2s_tx_data_format_get,
+				msm_mi2s_tx_data_format_put),
+	SOC_ENUM_EXT("QUAT_MI2S_TX DataFormat", mi2s_tx_data_format,
+			msm_mi2s_tx_data_format_get,
+				msm_mi2s_tx_data_format_put),
+	SOC_ENUM_EXT("PRIM_MI2S_RX DataFormat", mi2s_rx_data_format,
+			msm_mi2s_rx_data_format_get,
+				msm_mi2s_rx_data_format_put),
+	SOC_ENUM_EXT("QUAT_MI2S_RX DataFormat", mi2s_rx_data_format,
+			msm_mi2s_rx_data_format_get,
+				msm_mi2s_rx_data_format_put),
 	SOC_ENUM_EXT("PRIM_MI2S_RX Format", mi2s_rx_format,
 			msm_mi2s_rx_format_get, msm_mi2s_rx_format_put),
 	SOC_ENUM_EXT("PRIM_MI2S_TX Format", mi2s_tx_format,
@@ -6349,7 +6448,7 @@ static struct snd_soc_ops msm_fe_qos_ops = {
 
 static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 {
-	int ret = 0;
+	int ret = 0, val = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	struct snd_soc_dai_link *dai_link = rtd->dai_link;
@@ -6357,6 +6456,12 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+	int data_format;
+
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		data_format = mi2s_rx_cfg[index].data_format;
+	else
+		data_format = mi2s_tx_cfg[index].data_format;
 
 	dev_dbg(rtd->card->dev,
 		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
@@ -6382,6 +6487,9 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 			mi2s_clk[index].clk_id = mi2s_ebit_clk[index];
 			fmt = SND_SOC_DAIFMT_CBM_CFM;
 		}
+
+		if (data_format == AFE_DSD_DATA)
+			fmt = SND_SOC_DAIFMT_CBM_CFS;
 		ret = msm_mi2s_set_sclk(substream, true);
 		if (ret < 0) {
 			dev_err(rtd->card->dev,
@@ -6396,9 +6504,34 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 				__func__, index, ret);
 			goto clk_off;
 		}
-		if (pdata->mi2s_gpio_p[index])
-			msm_cdc_pinctrl_select_active_state(
+
+		if (pdata->mi2s_gpio_p[index]) {
+			if ((data_format == AFE_DSD_DATA) &&
+					((index == QUAT_MI2S) ||
+						(index == PRIM_MI2S))) {
+				msm_cdc_pinctrl_select_alt_active_state(
+						pdata->mi2s_gpio_p[index]);
+			} else {
+				msm_cdc_pinctrl_select_active_state(
 					pdata->mi2s_gpio_p[index]);
+			}
+		}
+
+		if (index == QUAT_MI2S || index == PRIM_MI2S) {
+			switch (data_format) {
+			case AFE_DSD_DATA:
+				if (pdata->mi2s_dsd_mode[index]) {
+					val = ioread32(
+						pdata->mi2s_dsd_mode[index]);
+					val = val | 0x1;
+					iowrite32(val,
+						pdata->mi2s_dsd_mode[index]);
+				}
+				break;
+			default:
+				break;
+			}
+		}
 	}
 
 	ret = qcs405_send_island_vad_config(dai_link->id);
@@ -6452,10 +6585,17 @@ static int msm_mi2s_snd_hw_free(struct snd_pcm_substream *substream)
 static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 {
 	int ret;
+	int val;
+	int data_format;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	int index = rtd->cpu_dai->id;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		data_format = mi2s_rx_cfg[index].data_format;
+	else
+		data_format = mi2s_tx_cfg[index].data_format;
 
 	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
 		 substream->name, substream->stream);
@@ -6469,6 +6609,22 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 		if (pdata->mi2s_gpio_p[index])
 			msm_cdc_pinctrl_select_sleep_state(
 					pdata->mi2s_gpio_p[index]);
+
+		if (index == QUAT_MI2S || index == PRIM_MI2S) {
+			switch (data_format) {
+			case AFE_DSD_DATA:
+				if (pdata->mi2s_dsd_mode[index]) {
+					val = ioread32(
+						pdata->mi2s_dsd_mode[index]);
+					val = val & ~1;
+					iowrite32(val,
+						pdata->mi2s_dsd_mode[index]);
+				}
+				break;
+			default:
+				break;
+			}
+		}
 
 		ret = msm_mi2s_set_sclk(substream, false);
 		if (ret < 0)
@@ -9750,6 +9906,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	const char *micb_supply_str1 = "tdm-vdd-micb";
 	const char *micb_voltage_str = "qcom,tdm-vdd-micb-voltage";
 	const char *micb_current_str = "qcom,tdm-vdd-micb-current";
+	u32 v_base_addr;
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev, "No platform supplied from device tree\n");
@@ -9760,6 +9917,31 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			sizeof(struct msm_asoc_mach_data), GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
+
+	ret = of_property_read_u32(
+		pdev->dev.of_node, "tcsr_i2s_dsd_prim", &v_base_addr);
+	if (ret) {
+		dev_err(&pdev->dev, "MUX addr invalid for MI2S dsd prim\n");
+	} else {
+		pdata->mi2s_dsd_mode[PRIM_MI2S] =
+			devm_ioremap(&pdev->dev, v_base_addr, 4);
+		if (pdata->mi2s_dsd_mode[PRIM_MI2S] == NULL) {
+			pr_err("%s ioremap failure for muxsel virt addr dsd prim\n",
+				__func__);
+		}
+	}
+	ret = of_property_read_u32(
+		pdev->dev.of_node, "tcsr_i2s_dsd_quat", &v_base_addr);
+	if (ret) {
+		dev_err(&pdev->dev, "MUX addr invalid for MI2S dsd quat\n");
+	} else {
+		pdata->mi2s_dsd_mode[QUAT_MI2S] =
+			devm_ioremap(&pdev->dev, v_base_addr, 4);
+		if (pdata->mi2s_dsd_mode[QUAT_MI2S] == NULL) {
+			pr_err("%s ioremap failure for muxsel virt addr dsd quat\n",
+				__func__);
+		}
+	}
 
 	/* test for ep92 HDMI bridge and update dai links accordingly */
 	ret = msm_detect_ep92_dev(pdev, card);

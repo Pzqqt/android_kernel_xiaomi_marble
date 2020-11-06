@@ -15,6 +15,7 @@
 #include <linux/platform_device.h>
 #include <dsp/apr_audio-v2.h>
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
+#include <linux/ratelimit.h>
 #ifdef CONFIG_AUDIO_PRM
 #include <dsp/audio_prm.h>
 #else
@@ -73,6 +74,7 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	struct pinctrl_info *pnctrl_info = &clk_priv->audio_clk.pnctrl_info;
 	int ret;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS) &&
 		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX) && !clk_priv->clk_cfg.enable)  {
@@ -83,7 +85,8 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 #endif
 		if (ret < 0) {
-			pr_err_ratelimited("%s afe_set_digital_codec_core_clock failed\n",
+			if (__ratelimit(&rtl))
+				pr_err_ratelimited("%s afe_set_digital_codec_core_clock failed\n",
 				__func__);
 			return ret;
 		}
@@ -110,6 +113,7 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	struct pinctrl_info *pnctrl_info = &clk_priv->audio_clk.pnctrl_info;
 	int ret;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (pnctrl_info->pinctrl) {
 		ret = pinctrl_select_state(pnctrl_info->pinctrl,
@@ -131,9 +135,11 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 #else
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 #endif
-		if (ret < 0)
-			pr_err_ratelimited("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
+		if (ret < 0) {
+			if (__ratelimit(&rtl))
+				pr_err_ratelimited("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
 				__func__, ret);
+		}
 	}
 
 	if (pnctrl_info->base)
@@ -160,9 +166,10 @@ static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
 
 static int lpass_hw_vote_prepare(struct clk_hw *hw)
 {
+	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
+	int ret;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
-        struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
-        int ret;
 	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE)  {
 #ifdef CONFIG_AUDIO_PRM
 		pr_debug("%s: clk_id %d ",__func__, clk_priv->prm_clk_cfg.clk_id);
@@ -191,7 +198,8 @@ static int lpass_hw_vote_prepare(struct clk_hw *hw)
 			&clk_priv->lpass_audio_hwvote_client_handle);
 #endif
 		if (ret < 0) {
-			pr_err("%s lpass audio hw vote failed %d\n",
+			if (__ratelimit(&rtl))
+				pr_err("%s lpass audio hw vote failed %d\n",
 				__func__, ret);
 			return ret;
 		}

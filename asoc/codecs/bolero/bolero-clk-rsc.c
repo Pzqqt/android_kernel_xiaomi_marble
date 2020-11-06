@@ -11,6 +11,7 @@
 #include <linux/kernel.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
+#include <linux/ratelimit.h>
 #include "bolero-cdc.h"
 #include "bolero-clk-rsc.h"
 
@@ -193,13 +194,15 @@ static int bolero_clk_rsc_mux0_clk_request(struct bolero_clk_rsc *priv,
 					   bool enable)
 {
 	int ret = 0;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	if (enable) {
 		/* Enable Requested Core clk */
 		if (priv->clk_cnt[clk_id] == 0) {
 			ret = clk_prepare_enable(priv->clk[clk_id]);
 			if (ret < 0) {
-				dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+				if (__ratelimit(&rtl))
+					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
 							__func__, clk_id);
 				goto done;
 			}
@@ -207,7 +210,8 @@ static int bolero_clk_rsc_mux0_clk_request(struct bolero_clk_rsc *priv,
 				ret = clk_prepare_enable(
 					priv->clk[clk_id + NPL_CLK_OFFSET]);
 				if (ret < 0) {
-					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+					if (__ratelimit(&rtl))
+						dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
 						__func__,
 						clk_id + NPL_CLK_OFFSET);
 					goto err;
@@ -246,6 +250,7 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 	int ret = 0;
 	int default_clk_id = priv->default_clk_id[clk_id];
 	u32 muxsel = 0;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	clk_muxsel = bolero_clk_rsc_get_clk_muxsel(priv, clk_id);
 	if (!clk_muxsel) {
@@ -265,15 +270,17 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 
 			ret = clk_prepare_enable(priv->clk[clk_id]);
 			if (ret < 0) {
-				dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
-					__func__, clk_id);
+				if (__ratelimit(&rtl))
+					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+						__func__, clk_id);
 				goto err_clk;
 			}
 			if (priv->clk[clk_id + NPL_CLK_OFFSET]) {
 				ret = clk_prepare_enable(
 					priv->clk[clk_id + NPL_CLK_OFFSET]);
 				if (ret < 0) {
-					dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
+					if (__ratelimit(&rtl))
+						dev_err_ratelimited(priv->dev, "%s:clk_id %d enable failed\n",
 						__func__,
 						clk_id + NPL_CLK_OFFSET);
 					goto err_npl_clk;
@@ -469,14 +476,15 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 	mutex_lock(&priv->fs_gen_lock);
 	if (enable) {
 		if (priv->reg_seq_en_cnt++ == 0) {
-			for (i = 0; i < (priv->num_fs_reg * 2); i += 2) {
-				dev_dbg(priv->dev, "%s: Register: %d, value: %d\n",
+			for (i = 0; i < (priv->num_fs_reg * 3); i += 3) {
+				dev_dbg(priv->dev, "%s: Register: %d, mask: %d, value %d\n",
 					__func__, priv->fs_gen_seq[i],
-					priv->fs_gen_seq[i + 1]);
+					priv->fs_gen_seq[i + 1],
+					priv->fs_gen_seq[i + 2]);
 				regmap_update_bits(regmap,
 						   priv->fs_gen_seq[i],
 						   priv->fs_gen_seq[i + 1],
-						   priv->fs_gen_seq[i + 1]);
+						   priv->fs_gen_seq[i + 2]);
 			}
 		}
 	} else {
@@ -488,8 +496,8 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 			return;
 		}
 		if (--priv->reg_seq_en_cnt == 0) {
-			for (i = ((priv->num_fs_reg - 1) * 2); i >= 0; i -= 2) {
-				dev_dbg(priv->dev, "%s: Register: %d, value: %d\n",
+			for (i = ((priv->num_fs_reg - 1) * 3); i >= 0; i -= 3) {
+				dev_dbg(priv->dev, "%s: Register: %d, mask: %d\n",
 					__func__, priv->fs_gen_seq[i],
 					priv->fs_gen_seq[i + 1]);
 				regmap_update_bits(regmap, priv->fs_gen_seq[i],
@@ -614,7 +622,7 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err;
 	}
-	priv->num_fs_reg = fs_gen_size/(2 * sizeof(u32));
+	priv->num_fs_reg = fs_gen_size/(3 * sizeof(u32));
 	priv->fs_gen_seq = devm_kzalloc(&pdev->dev, fs_gen_size, GFP_KERNEL);
 	if (!priv->fs_gen_seq) {
 		ret = -ENOMEM;
@@ -625,7 +633,7 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 	ret = of_property_read_u32_array(pdev->dev.of_node,
 					 "qcom,fs-gen-sequence",
 					 priv->fs_gen_seq,
-					 priv->num_fs_reg * 2);
+					 priv->num_fs_reg * 3);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "%s: unable to parse fs-gen-sequence, ret = %d\n",
 			__func__, ret);

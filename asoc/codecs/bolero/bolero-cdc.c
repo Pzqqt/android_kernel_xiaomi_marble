@@ -15,6 +15,7 @@
 #include <linux/pm_runtime.h>
 #include <soc/swr-common.h>
 #include <dsp/digital-cdc-rsc-mgr.h>
+#include <linux/ratelimit.h>
 #include "bolero-cdc.h"
 #include "internal.h"
 #include "bolero-clk-rsc.h"
@@ -1373,6 +1374,7 @@ static int bolero_probe(struct platform_device *pdev)
 		bolero_reg_access[VA_MACRO] = bolero_va_reg_access_v3;
 	}
 
+	BLOCKING_INIT_NOTIFIER_HEAD(&priv->notifier);
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
 	priv->initial_boot = true;
@@ -1444,6 +1446,7 @@ int bolero_runtime_resume(struct device *dev)
 {
 	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
 	int ret = 0;
+	static DEFINE_RATELIMIT_STATE(rtl, 1 * HZ, 1);
 
 	mutex_lock(&priv->vote_lock);
 	if (priv->lpass_core_hw_vote == NULL) {
@@ -1472,8 +1475,9 @@ audio_vote:
 	if (priv->core_audio_vote_count == 0) {
 		ret = digital_cdc_rsc_mgr_hw_vote_enable(priv->lpass_audio_hw_vote);
 		if (ret < 0) {
-			dev_err(dev, "%s:lpass audio hw enable failed\n",
-				__func__);
+			if (__ratelimit(&rtl))
+				dev_err(dev, "%s:lpass audio hw enable failed\n",
+					__func__);
 			goto done;
 		}
 	}
