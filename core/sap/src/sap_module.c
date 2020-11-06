@@ -2478,10 +2478,6 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 	 * ACS result after scan in SAP context callback function.
 	 */
 	sap_context->sap_event_cb = acs_event_callback;
-	/*
-	 * init dfs channel nol
-	 */
-	sap_init_dfs_channel_nol_list(sap_context);
 
 	/*
 	 * Issue the scan request. This scan request is
