@@ -6444,8 +6444,10 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	struct stats_event *stats;
 	struct wlan_objmgr_vdev *vdev;
 
-	if (!get_station_fw_request_needed)
+	if (!get_station_fw_request_needed) {
+		hdd_debug("return cached get_station stats");
 		return 0;
+	}
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
