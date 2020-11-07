@@ -34,6 +34,7 @@ enum {
 	AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE,
 	AUDIO_EXT_CLK_LPASS8,
 	AUDIO_EXT_CLK_LPASS_AUDIO_HW_VOTE,
+	AUDIO_EXT_CLK_LPASS9,
 	AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_EXTERNAL_PLL = AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_MAX,
@@ -160,6 +161,16 @@ static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
 		}
 		pr_debug("%s: parent index = %u\n", __func__, ret);
 		return ret;
+	} else if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS6) &&
+		    (clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX) &&
+		     clk_priv->clk_name) {
+			for (i = 0; i < num_parents; i++) {
+				if (!strcmp(parent_names[i],
+						clk_priv->clk_name))
+					ret = i;
+			}
+			pr_debug("%s: parent index = %u\n", __func__, ret);
+			return ret;
 	} else
 		return 0;
 }
@@ -371,6 +382,9 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk6",
+				.parent_names = (const char *[])
+							{ "audio_lpass_mclk5" },
+				.num_parents = 1,
 				.ops = &audio_ext_clk_ops,
 			},
 		},
@@ -382,6 +396,9 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk7",
+				.parent_names = (const char *[])
+							{ "audio_lpass_mclk5" },
+				.num_parents = 1,
 				.ops = &audio_ext_clk_ops,
 			},
 		},
@@ -402,6 +419,9 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk8",
+				.parent_names = (const char *[])
+							{ "audio_lpass_mclk5" },
+				.num_parents = 1,
 				.ops = &audio_ext_clk_ops,
 			},
 		},
@@ -412,6 +432,20 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.hw.init = &(struct clk_init_data){
 				.name = "lpass_audio_hw_vote_clk",
 				.ops = &lpass_hw_vote_ops,
+			},
+		},
+	},
+	{
+		.pnctrl_info = {NULL},
+		.fact = {
+			.mult = 1,
+			.div = 1,
+			.hw.init = &(struct clk_init_data){
+				.name = "audio_lpass_mclk9",
+				.parent_names = (const char *[])
+							{ "audio_lpass_mclk5" },
+				.num_parents = 1,
+				.ops = &audio_ext_clk_ops,
 			},
 		},
 	},
