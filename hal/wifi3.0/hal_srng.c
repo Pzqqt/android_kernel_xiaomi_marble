@@ -220,7 +220,7 @@ QDF_STATUS hal_construct_shadow_regs(void *hal_soc)
 			shadow_config_index;
 		hal->list_shadow_reg_config[i].va =
 			SHADOW_REGISTER(shadow_config_index) +
-			(uint64_t)hal->dev_base_addr;
+			(uintptr_t)hal->dev_base_addr;
 		hal_debug("target_reg %x, shadow register 0x%x shadow_index 0x%x",
 			  hal->shadow_config[shadow_config_index].addr,
 			  SHADOW_REGISTER(shadow_config_index),
