@@ -15541,6 +15541,32 @@ void hdd_bus_bw_compute_reset_prev_txrx_stats(struct hdd_adapter *adapter)
 
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
+#if defined MSM_PLATFORM && (LINUX_VERSION_CODE <= KERNEL_VERSION(4, 19, 0))
+/**
+ * hdd_inform_stop_sap() - call cfg80211 API to stop SAP
+ * @adapter: pointer to adapter
+ *
+ * This function calls cfg80211 API to stop SAP
+ *
+ * Return: None
+ */
+static void hdd_inform_stop_sap(struct hdd_adapter *adapter)
+{
+	hdd_debug("SAP stopped due to invalid channel vdev id %d",
+		  wlan_vdev_get_id(adapter->vdev));
+	cfg80211_ap_stopped(adapter->dev, GFP_KERNEL);
+}
+
+#else
+static void hdd_inform_stop_sap(struct hdd_adapter *adapter)
+{
+	hdd_debug("SAP stopped due to invalid channel vdev id %d",
+		  wlan_vdev_get_id(adapter->vdev));
+	cfg80211_stop_iface(adapter->hdd_ctx->wiphy, &adapter->wdev,
+			    GFP_KERNEL);
+}
+#endif
+
 /**
  * wlan_hdd_stop_sap() - This function stops bss of SAP.
  * @ap_adapter: SAP adapter
@@ -15589,6 +15615,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 						ap_adapter->vdev_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, ap_adapter->device_mode,
 					    false);
+		hdd_inform_stop_sap(ap_adapter);
 		hdd_debug("SAP Stop Success");
 	} else {
 		hdd_err("Can't stop ap because its not started");
