@@ -71,6 +71,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #ifdef WLAN_SUPPORT_MSCS
 #include "dp_mscs.h"
 #endif
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+#include "dp_mesh_latency.h"
+#endif
 #ifdef ATH_SUPPORT_IQUE
 #include "dp_txrx_me.h"
 #endif
@@ -9133,6 +9136,16 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		val->cdp_vdev_param_peer_authorize =
 			    vdev->peer_authorize;
 		break;
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	case CDP_ENABLE_PEER_TID_LATENCY:
+		val->cdp_vdev_param_peer_tid_latency_enable =
+			vdev->peer_tid_latency_enabled;
+		break;
+	case CDP_SET_VAP_MESH_TID:
+		val->cdp_vdev_param_mesh_tid =
+				vdev->mesh_tid_latency_config.latency_tid;
+		break;
+#endif
 	default:
 		dp_cdp_err("%pk: param value %d is wrong\n",
 			   soc, param);
@@ -9263,6 +9276,20 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 	case CDP_ENABLE_PEER_AUTHORIZE:
 		vdev->peer_authorize = val.cdp_vdev_param_peer_authorize;
 		break;
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	case CDP_ENABLE_PEER_TID_LATENCY:
+		dp_info("vdev_id %d enable peer tid latency %d", vdev_id,
+			val.cdp_vdev_param_peer_tid_latency_enable);
+		vdev->peer_tid_latency_enabled =
+			val.cdp_vdev_param_peer_tid_latency_enable;
+		break;
+	case CDP_SET_VAP_MESH_TID:
+		dp_info("vdev_id %d enable peer tid latency %d", vdev_id,
+			val.cdp_vdev_param_mesh_tid);
+		vdev->mesh_tid_latency_config.latency_tid
+				= val.cdp_vdev_param_mesh_tid;
+		break;
+#endif
 	default:
 		break;
 	}
@@ -11388,6 +11415,13 @@ static struct cdp_mscs_ops dp_ops_mscs = {
 };
 #endif
 
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+static struct cdp_mesh_latency_ops dp_ops_mesh_latency = {
+	.mesh_latency_update_peer_parameter =
+		dp_mesh_latency_update_peer_parameter,
+};
+#endif
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * dp_runtime_suspend() - ensure DP is ready to runtime suspend
@@ -12068,6 +12102,9 @@ static struct cdp_ops dp_txrx_ops = {
 #endif
 #ifdef WLAN_SUPPORT_MSCS
 	.mscs_ops = &dp_ops_mscs,
+#endif
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	.mesh_latency_ops = &dp_ops_mesh_latency,
 #endif
 };
 

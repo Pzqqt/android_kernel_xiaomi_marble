@@ -2592,6 +2592,15 @@ struct dp_vdev {
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t mod_refs[DP_MOD_ID_MAX];
 	uint8_t num_latency_critical_conn;
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	uint8_t peer_tid_latency_enabled;
+	/* tid latency configuration parameters */
+	struct {
+		uint32_t service_interval;
+		uint32_t burst_size;
+		uint8_t latency_tid;
+	} mesh_tid_latency_config;
+#endif
 };
 
 
@@ -2711,6 +2720,26 @@ struct dp_wds_ext_peer {
 	unsigned long init;
 };
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
+
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+/*Advanced Mesh latency feature based macros */
+/*
+ * struct dp_peer_mesh_latency parameter - Mesh latency related
+ * parameters. This data is updated per peer per TID based on
+ * the flow tuple classification in external rule database
+ * during packet processing.
+ * @service_interval - Service interval associated with TID
+ * @burst_size - Burst size additive over multiple flows
+ * @ac - custom ac derived from service interval
+ * @msduq - MSDU queue number within TID
+ */
+struct dp_peer_mesh_latency_parameter {
+	uint32_t service_interval;
+	uint32_t burst_size;
+	uint8_t ac;
+	uint8_t msduq;
+};
+#endif
 
 /* Peer structure for data path state */
 struct dp_peer {
@@ -2836,6 +2865,9 @@ struct dp_peer {
 #ifdef QCA_SUPPORT_WDS_EXTENDED
 	struct dp_wds_ext_peer wds_ext;
 	ol_txrx_rx_fp osif_rx;
+#endif
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	struct dp_peer_mesh_latency_parameter mesh_latency_params[DP_MAX_TIDS];
 #endif
 };
 

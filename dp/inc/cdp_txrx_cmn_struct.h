@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1106,6 +1106,8 @@ enum cdp_pdev_param_type {
  * @cdp_vdev_param_drop_unenc: set drop unencrypted flag
  * @cdp_vdev_param_hlos_tid_override: set hlos tid override
  * @cdp_vdev_param_peer_authorize: set peer authorize
+ * @cdp_vdev_param_peer_tid_latency_enable: set peer tid latency enable flag
+ * @cdp_vdev_param_mesh_tid: config tatency tid on vdev
  *
  * @cdp_pdev_param_dbg_snf: Enable debug sniffer feature
  * @cdp_pdev_param_bpr_enable: Enable bcast probe feature
@@ -1173,6 +1175,8 @@ typedef union cdp_config_param_t {
 	uint8_t cdp_vdev_param_hlos_tid_override;
 	bool cdp_vdev_param_wds_ext;
 	uint8_t cdp_vdev_param_peer_authorize;
+	uint8_t cdp_vdev_param_peer_tid_latency_enable;
+	uint8_t cdp_vdev_param_mesh_tid;
 
 	/* pdev params */
 	bool cdp_pdev_param_cptr_latcy;
@@ -1285,6 +1289,8 @@ enum cdp_pdev_bpr_param {
  * @CDP_ENABLE_HLOS_TID_OVERRIDE: set hlos tid override flag
  * @CDP_CFG_WDS_EXT: enable/disable wds ext feature
  * @CDP_ENABLE_PEER_AUTHORIZE: enable peer authorize flag
+ * @CDP_ENABLE_PEER_TID_LATENCY: set peer tid latency enable flag
+ * @CDP_SET_VAP_MESH_TID : Set latency tid in vap
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1316,6 +1322,10 @@ enum cdp_vdev_param_type {
 	CDP_CFG_WDS_EXT,
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 	CDP_ENABLE_PEER_AUTHORIZE,
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	CDP_ENABLE_PEER_TID_LATENCY,
+	CDP_SET_VAP_MESH_TID,
+#endif
 };
 
 /*
