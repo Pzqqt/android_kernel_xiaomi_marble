@@ -759,7 +759,8 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 		 * zero and "dfs_precac_secondary_freq" holds the secondary
 		 * frequency.
 		 */
-		if (dfs_is_precac_timer_running(dfs))
+		if (dfs_is_legacy_precac_enabled(dfs) &&
+		    dfs_is_precac_timer_running(dfs))
 			center_freq = dfs->dfs_precac_secondary_freq_mhz;
 		else
 			center_freq = curchan->dfs_ch_mhz_freq_seg2;
