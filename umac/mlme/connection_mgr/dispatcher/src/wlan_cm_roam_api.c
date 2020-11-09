@@ -144,7 +144,7 @@ QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
 
-	if (reason == REASON_DRIVER_DISABLED && requestor)
+	if (reason == REASON_DRIVER_ENABLED && requestor)
 		mlme_set_operations_bitmap(psoc, vdev_id, requestor, true);
 
 	status = cm_roam_acquire_lock();
