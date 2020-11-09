@@ -419,8 +419,8 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
 
 	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
-		if (rsp->reason_code)
-			status = rsp->reason_code;
+		if (rsp->status_code)
+			status = rsp->status_code;
 		else
 			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
 	}
