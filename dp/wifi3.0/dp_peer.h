@@ -26,6 +26,13 @@
 
 #define DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC 5000
 
+#define dp_peer_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_PEER, params)
+#define dp_peer_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_PEER, params)
+#define dp_peer_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_PEER, params)
+#define dp_peer_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_PEER, ## params)
+#define dp_peer_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_PEER, params)
+
 typedef void dp_peer_iter_func(struct dp_soc *soc, struct dp_peer *peer,
 			       void *arg);
 void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id id);

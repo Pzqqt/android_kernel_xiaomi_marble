@@ -9462,9 +9462,8 @@ dp_txrx_get_peer_stats_param(struct cdp_soc_t *soc, uint8_t vdev_id,
 						      DP_MOD_ID_CDP);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid Peer for Mac "QDF_MAC_ADDR_FMT,
-			  QDF_MAC_ADDR_REF(peer_mac));
+		dp_peer_err("%pK: Invalid Peer for Mac " QDF_MAC_ADDR_FMT,
+			    soc, QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_FAILURE;
 	} else if (type < cdp_peer_stats_max) {
 		switch (type) {
@@ -9511,14 +9510,12 @@ dp_txrx_get_peer_stats_param(struct cdp_soc_t *soc, uint8_t vdev_id,
 			buf->rx_avg_rssi = peer->stats.rx.avg_rssi;
 			break;
 		default:
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "Invalid value");
+			dp_peer_err("%pK: Invalid value", soc);
 			ret = QDF_STATUS_E_FAILURE;
 			break;
 		}
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid value");
+		dp_peer_err("%pK: Invalid value", soc);
 		ret = QDF_STATUS_E_FAILURE;
 	}
 
