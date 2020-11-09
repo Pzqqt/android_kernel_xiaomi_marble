@@ -419,6 +419,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_MEDIUM_ASSESS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_medium_assess.o
 endif
 
+ifeq ($(CONFIG_WLAN_ENABLE_GPIO_WAKEUP),y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_gpio_wakeup.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -3716,6 +3720,7 @@ cppflags-y += -DFEATURE_IPA_PIPE_CHANGE_WDI1
 endif
 
 cppflags-$(CONFIG_FEATURE_STA_MODE_VOTE_LINK) += -DFEATURE_STA_MODE_VOTE_LINK
+cppflags-$(CONFIG_WLAN_ENABLE_GPIO_WAKEUP) += -DWLAN_ENABLE_GPIO_WAKEUP
 
 KBUILD_CPPFLAGS += $(cppflags-y)
 
