@@ -11525,6 +11525,8 @@ static QDF_STATUS dp_bus_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		dp_service_mon_rings(soc, DP_MON_REAP_BUDGET);
 	}
 
+	hal_flush_reg_write_work(soc->hal_soc);
+
 	return QDF_STATUS_SUCCESS;
 }
 

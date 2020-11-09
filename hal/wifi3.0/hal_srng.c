@@ -593,17 +593,15 @@ static void hal_reg_write_work(void *arg)
 	hif_allow_link_low_power_states(hal->hif_handle);
 }
 
-/**
- * hal_flush_reg_write_work() - flush all writes from regiter write queue
- * @arg: hal_soc pointer
- *
- * Return: None
- */
-static inline void hal_flush_reg_write_work(struct hal_soc *hal)
+static void __hal_flush_reg_write_work(struct hal_soc *hal)
 {
 	qdf_cancel_work(&hal->reg_write_work);
 	qdf_flush_work(&hal->reg_write_work);
 	qdf_flush_workqueue(0, hal->reg_write_wq);
+}
+
+void hal_flush_reg_write_work(hal_soc_handle_t hal_handle)
+{	__hal_flush_reg_write_work((struct hal_soc *)hal_handle);
 }
 
 /**
@@ -739,7 +737,7 @@ static QDF_STATUS hal_delayed_reg_write_init(struct hal_soc *hal)
  */
 static void hal_delayed_reg_write_deinit(struct hal_soc *hal)
 {
-	hal_flush_reg_write_work(hal);
+	__hal_flush_reg_write_work(hal);
 	qdf_destroy_workqueue(0, hal->reg_write_wq);
 	qdf_mem_free(hal->reg_write_queue);
 }
