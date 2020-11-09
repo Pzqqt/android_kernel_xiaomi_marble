@@ -251,6 +251,22 @@ enum active_apf_mode {
 };
 
 /**
+ * enum pmo_gpio_wakeup_mode - gpio wakeup mode
+ * @PMO_GPIO_WAKEUP_MODE_INVALID: gpio wakeup trigger invalid
+ * @PMO_GPIO_WAKEUP_MODE_RISING: gpio wakeup trigger rising
+ * @PMO_GPIO_WAKEUP_MODE_FALLING: gpio wakeup trigger failing
+ * @PMO_GPIO_WAKEUP_MODE_HIGH: gpio wakeup trigger high
+ * @PMO_GPIO_WAKEUP_MODE_LOW: gpio wakeup trigger low
+ */
+enum pmo_gpio_wakeup_mode {
+	PMO_GPIO_WAKEUP_MODE_INVALID,
+	PMO_GPIO_WAKEUP_MODE_RISING,
+	PMO_GPIO_WAKEUP_MODE_FALLING,
+	PMO_GPIO_WAKEUP_MODE_HIGH,
+	PMO_GPIO_WAKEUP_MODE_LOW,
+};
+
+/**
  * struct pmo_psoc_cfg - user configuration required for pmo
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
  * @apf_enable: true if psoc supports apf else false
@@ -307,6 +323,9 @@ enum active_apf_mode {
  * @ito_repeat_count: Indicates ito repeated count
  * @is_mod_dtim_on_sys_suspend_enabled: true when mod dtim is enabled for
  * system suspend wow else false
+ * @enable_gpio_wakeup: enable gpio wakeup
+ * @gpio_wakeup_pin: gpio wakeup pin
+ * @gpio_wakeup_mode: gpio wakeup mode
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -371,6 +390,11 @@ struct pmo_psoc_cfg {
 	enum active_apf_mode active_mc_bc_apf_mode;
 	uint8_t ito_repeat_count;
 	bool is_mod_dtim_on_sys_suspend_enabled;
+#ifdef WLAN_ENABLE_GPIO_WAKEUP
+	bool enable_gpio_wakeup;
+	uint32_t gpio_wakeup_pin;
+	enum pmo_gpio_wakeup_mode gpio_wakeup_mode;
+#endif
 };
 
 /**

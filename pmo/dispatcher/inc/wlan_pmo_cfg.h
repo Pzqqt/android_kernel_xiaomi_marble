@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,7 @@
 #include "wlan_pmo_pkt_filter_cfg.h"
 #include "wlan_pmo_runtime_pm_cfg.h"
 #include "wlan_pmo_wow_pulse_cfg.h"
+#include "wlan_pmo_gpio_wakeup_cfg.h"
 
 #define CFG_PMO_ALL \
 	CFG_EXTWOW_ALL \
@@ -32,6 +33,7 @@
 	CFG_PMO_APF_ALL \
 	CFG_PMO_COMMON_ALL \
 	CFG_RUNTIME_PM_ALL \
-	CFG_WOW_PULSE_ALL
+	CFG_WOW_PULSE_ALL \
+	CFG_GPIO_WAKEUP_ALL
 
 #endif /* WLAN_PMO_CFG_H__ */

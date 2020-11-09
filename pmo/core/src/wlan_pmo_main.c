@@ -171,6 +171,24 @@ static void wlan_pmo_ra_filtering_init_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_ENABLE_GPIO_WAKEUP
+static void wlan_pmo_gpio_wakeup_init_cfg(struct wlan_objmgr_psoc *psoc,
+					  struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->enable_gpio_wakeup =
+		cfg_get(psoc, CFG_PMO_ENABLE_GPIO_WAKEUP);
+	psoc_cfg->gpio_wakeup_pin =
+		cfg_get(psoc, CFG_PMO_GPIO_WAKEUP_PIN);
+	psoc_cfg->gpio_wakeup_mode =
+		cfg_get(psoc, CFG_PMO_GPIO_WAKEUP_MODE);
+}
+#else
+static void wlan_pmo_gpio_wakeup_init_cfg(struct wlan_objmgr_psoc *psoc,
+					  struct pmo_psoc_cfg *psoc_cfg)
+{
+}
+#endif
+
 static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct pmo_psoc_cfg *psoc_cfg)
 {
@@ -212,6 +230,7 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ACTIVE_MC_BC_APF_MODE);
 	psoc_cfg->ito_repeat_count = cfg_get(psoc, CFG_ITO_REPEAT_COUNT);
 	wlan_pmo_ra_filtering_init_cfg(psoc, psoc_cfg);
+	wlan_pmo_gpio_wakeup_init_cfg(psoc, psoc_cfg);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
