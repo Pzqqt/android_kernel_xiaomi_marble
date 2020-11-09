@@ -2924,32 +2924,9 @@ IE tclas_mask (EID_EXTN_ID_ELEMENT) OUI (0x59)
     classifier_mask, 1;
     UNION info (DISCRIMINATOR classifier_type)
     {
-        IpParams (classifier_type IS 4)
+        ip_param (classifier_type IS 4)
         {
-            version, 1;
-            UNION params (DISCRIMINATOR version)
-            {
-                IpV4Params (version IS 4)
-                {
-                    source[4];
-                    dest[4];
-                    src_port, 2;
-                    dest_port, 2;
-                    DSCP, 1;
-                    proto, 1;
-                    reserved, 1;
-                }
-                IpV6Params (version IS 6)
-                {
-                    source[16];
-                    dest[16];
-                    src_port, 2;
-                    dest_port, 2;
-                    DSCP, 1;
-                    next_header, 1;
-                    flow_label[3];
-                }
-            };
+            reserved[16];
         }
     };
 }
