@@ -6183,6 +6183,34 @@ int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	return errno;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+/*
+ * Beginning with 4.7 struct ieee80211_channel uses enum nl80211_band
+ * ieee80211_channel_band() - return channel band
+ * chan: channel
+ *
+ * Return: channel band
+ */
+static inline
+enum nl80211_band ieee80211_channel_band(const struct ieee80211_channel *chan)
+{
+	return chan->band;
+}
+#else
+/*
+ * Prior to 4.7 struct ieee80211_channel used enum ieee80211_band. However the
+ * ieee80211_band enum values are assigned from enum nl80211_band so we can
+ * safely typecast one to another.
+ */
+static inline
+enum nl80211_band ieee80211_channel_band(const struct ieee80211_channel *chan)
+{
+	enum ieee80211_band band = chan->band;
+
+	return (enum nl80211_band)band;
+}
+#endif
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)) || \
 	defined(CFG80211_BEACON_TX_RATE_CUSTOM_BACKPORT)
 /**
@@ -6237,7 +6265,7 @@ static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
 	struct cfg80211_bitrate_mask *beacon_rate_mask;
 	enum nl80211_band band;
 
-	band = params->chandef.chan->band;
+	band = ieee80211_channel_band(params->chandef.chan);
 	beacon_rate_mask = &params->beacon_rate;
 	if (beacon_rate_mask->control[band].legacy) {
 		adapter->session.ap.sap_config.beacon_tx_rate =
