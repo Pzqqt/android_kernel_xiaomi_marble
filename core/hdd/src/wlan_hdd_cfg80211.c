@@ -169,6 +169,7 @@
 #include "wlan_wfa_ucfg_api.h"
 #include <osif_cm_util.h>
 #include <osif_cm_req.h>
+#include "wlan_hdd_bootup_marker.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -20788,12 +20789,14 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	wlan_hdd_check_ht20_ht40_ind(hdd_ctx, adapter, req);
 
+	hdd_place_marker(adapter, "TRY TO CONNECT", NULL);
 	status = wlan_hdd_cfg80211_connect_start(adapter, req->ssid,
 						 req->ssid_len, req->bssid,
 						 bssid_hint, ch_freq, 0);
 	if (status) {
 		wlan_hdd_cfg80211_clear_privacy(adapter);
 		hdd_err("connect failed");
+		hdd_place_marker(adapter, "CONNECT FAILURE", NULL);
 	}
 
 	hdd_exit();
@@ -21008,6 +21011,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	wlan_hdd_wait_for_roaming(mac_handle, adapter);
 
+	hdd_place_marker(adapter, "TRY TO DISCONNECT", NULL);
 	/*stop tx queues */
 	hdd_debug("Disabling queues");
 	reset_mscs_params(adapter);

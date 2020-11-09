@@ -86,6 +86,7 @@
 #include "osif_cm_util.h"
 #include "wlan_hdd_cm_api.h"
 
+#include "wlan_hdd_bootup_marker.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1935,6 +1936,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	/* indicate 'disconnect' status to wpa_supplicant... */
 	hdd_send_association_event(dev, roam_info);
+	hdd_place_marker(adapter, "DISCONNECTED", NULL);
 
 	/*
 	 * Following code will be cleaned once the interface manager
@@ -3001,6 +3003,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 		/* Indicate 'connect' status to user space */
 		hdd_send_association_event(dev, roam_info);
+		hdd_place_marker(adapter, "ASSOCIATION COMPLETE", NULL);
 
 		if (policy_mgr_is_mcc_in_24G(hdd_ctx->psoc)) {
 			if (hdd_ctx->miracast_value)

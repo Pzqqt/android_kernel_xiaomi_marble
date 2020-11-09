@@ -428,6 +428,10 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cm_connect.o \
 	    $(HDD_SRC_DIR)/wlan_hdd_cm_disconnect.o
 endif
 
+ifeq ($(CONFIG_WLAN_BOOTUP_MARKER), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_bootup_marker.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -3732,6 +3736,11 @@ ccflags-$(CONFIG_GET_DRIVER_MODE) += -DFEATURE_GET_DRIVER_MODE
 
 ifeq ($(CONFIG_FEATURE_IPA_PIPE_CHANGE_WDI1), y)
 cppflags-y += -DFEATURE_IPA_PIPE_CHANGE_WDI1
+endif
+
+cppflags-$(CONFIG_WLAN_BOOTUP_MARKER) += -DWLAN_BOOTUP_MARKER
+ifdef CONFIG_WLAN_PLACEMARKER_PREFIX
+ccflags-y += -DWLAN_PLACEMARKER_PREFIX=\"$(CONFIG_WLAN_PLACEMARKER_PREFIX)\"
 endif
 
 cppflags-$(CONFIG_FEATURE_STA_MODE_VOTE_LINK) += -DFEATURE_STA_MODE_VOTE_LINK

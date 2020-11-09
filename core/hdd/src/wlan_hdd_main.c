@@ -198,6 +198,7 @@
 #include "wlan_hdd_thermal.h"
 #include "osif_cm_util.h"
 #include "wlan_hdd_gpio_wakeup.h"
+#include "wlan_hdd_bootup_marker.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -16735,6 +16736,7 @@ int hdd_driver_load(void)
 
 	pr_err("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 	       g_wlan_driver_version);
+	hdd_place_marker(NULL, "START LOADING", NULL);
 
 	status = hdd_qdf_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -16810,6 +16812,7 @@ int hdd_driver_load(void)
 	}
 
 	hdd_debug("%s: driver loaded", WLAN_MODULE_NAME);
+	hdd_place_marker(NULL, "DRIVER LOADED", NULL);
 
 	return 0;
 
@@ -16861,6 +16864,7 @@ void hdd_driver_unload(void)
 
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
+	hdd_place_marker(NULL, "START UNLOADING", NULL);
 
 	/*
 	 * Wait for any trans to complete and then start the driver trans
@@ -16873,6 +16877,7 @@ void hdd_driver_unload(void)
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Unable to unload wlan; status:%u", status);
+		hdd_place_marker(NULL, "UNLOAD FAILURE", NULL);
 		return;
 	}
 
@@ -16911,6 +16916,7 @@ void hdd_driver_unload(void)
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Unable to unload wlan; status:%u", status);
+		hdd_place_marker(NULL, "UNLOAD FAILURE", NULL);
 		return;
 	}
 
@@ -16932,6 +16938,7 @@ void hdd_driver_unload(void)
 	osif_sync_deinit();
 
 	hdd_qdf_deinit();
+	hdd_place_marker(NULL, "UNLOAD DONE", NULL);
 }
 
 #ifdef FEATURE_WLAN_RESIDENT_DRIVER
