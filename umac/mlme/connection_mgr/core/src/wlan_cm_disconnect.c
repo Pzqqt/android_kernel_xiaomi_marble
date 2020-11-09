@@ -38,6 +38,105 @@ void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 		cm_disconnect_complete(cm_ctx, &resp);
 }
 
+#ifdef WLAN_CM_USE_SPINLOCK
+static QDF_STATUS cm_activate_disconnect_req_flush_cb(struct scheduler_msg *msg)
+{
+	struct wlan_serialization_command *cmd = msg->bodyptr;
+
+	if (!cmd || !cmd->vdev) {
+		mlme_err("Null input cmd:%pK", cmd);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_objmgr_vdev_release_ref(cmd->vdev, WLAN_MLME_CM_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS cm_activate_disconnect_req_sched_cb(struct scheduler_msg *msg)
+{
+	struct wlan_serialization_command *cmd = msg->bodyptr;
+	struct wlan_objmgr_vdev *vdev;
+	struct cnx_mgr *cm_ctx;
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	if (!cmd) {
+		mlme_err("cmd is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = cmd->vdev;
+	if (!vdev) {
+		mlme_err("vdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	ret = cm_sm_deliver_event(
+			cm_ctx->vdev,
+			WLAN_CM_SM_EV_DISCONNECT_ACTIVE,
+			sizeof(wlan_cm_id),
+			&cmd->cmd_id);
+
+	/*
+	 * Called from scheduler context hence
+	 * handle failure if posting fails
+	 */
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		mlme_err(CM_PREFIX_FMT "Activation failed for cmd:%d",
+			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id),
+			 cmd->cmd_type);
+		cm_send_disconnect_resp(cm_ctx, cmd->cmd_id);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	return ret;
+}
+
+static QDF_STATUS
+cm_activate_disconnect_req(struct wlan_serialization_command *cmd)
+{
+	struct wlan_objmgr_vdev *vdev = cmd->vdev;
+	struct scheduler_msg msg = {0};
+	QDF_STATUS ret;
+
+	msg.bodyptr = cmd;
+	msg.callback = cm_activate_disconnect_req_sched_cb;
+	msg.flush_callback = cm_activate_disconnect_req_flush_cb;
+
+	ret = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_MLME_CM_ID);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return ret;
+
+	ret = scheduler_post_message(QDF_MODULE_ID_MLME,
+				     QDF_MODULE_ID_MLME,
+				     QDF_MODULE_ID_MLME, &msg);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		mlme_err(CM_PREFIX_FMT "Failed to post scheduler_msg",
+			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return ret;
+	}
+	mlme_debug(CM_PREFIX_FMT "Cmd act in sched cmd type:%d",
+		   CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_type);
+
+	return ret;
+}
+#else
+static QDF_STATUS
+cm_activate_disconnect_req(struct wlan_serialization_command *cmd)
+{
+	return cm_sm_deliver_event(
+			cm_ctx->vdev,
+			WLAN_CM_SM_EV_DISCONNECT_ACTIVE,
+			sizeof(wlan_cm_id),
+			&cmd->cmd_id);
+}
+#endif
+
 static QDF_STATUS
 cm_sm_deliver_disconnect_event(struct cnx_mgr *cm_ctx,
 			       struct wlan_serialization_command *cmd)
@@ -48,11 +147,7 @@ cm_sm_deliver_disconnect_event(struct cnx_mgr *cm_ctx,
 	 * acquired.
 	 */
 	if (cmd->activation_reason == SER_PENDING_TO_ACTIVE)
-		return cm_sm_deliver_event(
-					cm_ctx->vdev,
-					WLAN_CM_SM_EV_DISCONNECT_ACTIVE,
-					sizeof(wlan_cm_id),
-					&cmd->cmd_id);
+		return cm_activate_disconnect_req(cmd);
 	else
 		return cm_sm_deliver_event_sync(
 					cm_ctx,
