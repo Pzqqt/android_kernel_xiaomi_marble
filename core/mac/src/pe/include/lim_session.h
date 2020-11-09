@@ -137,6 +137,9 @@ struct obss_detection_cfg {
  * @ap_ecsa_wakelock: wakelock to complete CSA operation.
  * @ap_ecsa_runtime_lock: runtime lock to complete SAP CSA operation.
  * to Adaptive 11R network
+ * @prev_auth_seq_num: Sequence number of previously received auth frame to
+ * detect duplicate frames.
+ * @prev_auth_mac_addr: mac_addr of the sta correspond to @prev_auth_seq_num
  */
 struct pe_session {
 	/* To check session table is in use or free */
@@ -552,6 +555,7 @@ struct pe_session {
 #endif
 	/* previous auth frame's sequence number */
 	uint16_t prev_auth_seq_num;
+	tSirMacAddr prev_auth_mac_addr;
 	struct obss_detection_cfg obss_offload_cfg;
 	struct obss_detection_cfg current_obss_detection;
 	bool is_session_obss_offload_enabled;
