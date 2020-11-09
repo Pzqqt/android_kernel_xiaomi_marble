@@ -23,6 +23,7 @@ INCS += -I$(obj)/$(DEPTH)/umac/scan
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/umac/son/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/umac/son/core/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/spectral/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/scan/inc
