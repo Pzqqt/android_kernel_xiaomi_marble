@@ -5147,10 +5147,6 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 		goto free_net_dev;
 	}
 
-	qdf_status = hdd_adapter_feature_update_work_init(adapter);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		goto free_net_dev;
-
 	init_completion(&adapter->vdev_destroy_event);
 
 	adapter->offloads_configured = false;
@@ -5811,7 +5807,6 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 	wlan_hdd_debugfs_csr_deinit(adapter);
 
 	hdd_debugfs_exit(adapter);
-	hdd_adapter_feature_update_work_deinit(adapter);
 
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
@@ -6598,6 +6593,10 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		return NULL;
 	}
 
+	status = hdd_adapter_feature_update_work_init(adapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_cleanup_adapter;
+
 	adapter->upgrade_udp_qos_threshold = QCA_WLAN_AC_BE;
 	qdf_spinlock_create(&adapter->vdev_lock);
 	qdf_atomic_init(&hdd_ctx->num_latency_critical_clients);
@@ -6613,33 +6612,21 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	hdd_sta_info_init(&adapter->sta_info_list);
 	hdd_sta_info_init(&adapter->cache_sta_info_list);
 
-	if (QDF_STATUS_SUCCESS == status) {
-		/* Add it to the hdd's session list. */
-		status = hdd_add_adapter_back(hdd_ctx, adapter);
-	}
+	/* Add it to the hdd's session list. */
+	status = hdd_add_adapter_back(hdd_ctx, adapter);
+	if (QDF_STATUS_SUCCESS != status)
+		goto err_destroy_adapter_features_update_work;
 
-	if (QDF_STATUS_SUCCESS != status) {
-		if (adapter) {
-			hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
-			adapter = NULL;
-		}
-
-		return NULL;
-	}
 	hdd_apf_context_init(adapter);
 
-	if (QDF_STATUS_SUCCESS == status) {
-		policy_mgr_set_concurrency_mode(hdd_ctx->psoc,
-			session_type);
+	policy_mgr_set_concurrency_mode(hdd_ctx->psoc, session_type);
 
-		/* Adapter successfully added. Increment the vdev count */
-		hdd_ctx->current_intf_count++;
+	/* Adapter successfully added. Increment the vdev count */
+	hdd_ctx->current_intf_count++;
 
-		hdd_debug("current_intf_count=%d",
-		       hdd_ctx->current_intf_count);
+	hdd_debug("current_intf_count=%d", hdd_ctx->current_intf_count);
 
-		hdd_check_and_restart_sap_with_non_dfs_acs();
-	}
+	hdd_check_and_restart_sap_with_non_dfs_acs();
 
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
 		hdd_err("debugfs: Interface %s init failed",
@@ -6654,6 +6641,15 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	hdd_periodic_sta_stats_init(adapter);
 
 	return adapter;
+
+err_destroy_adapter_features_update_work:
+	hdd_adapter_feature_update_work_deinit(adapter);
+
+err_cleanup_adapter:
+	if (adapter) {
+		hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
+		adapter = NULL;
+	}
 
 err_free_netdev:
 	if (ndev)
@@ -6671,6 +6667,7 @@ static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
 	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
 	qdf_event_destroy(&adapter->acs_complete_event);
 	qdf_event_destroy(&adapter->peer_cleanup_done);
+	hdd_adapter_feature_update_work_deinit(adapter);
 	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
 
 	if (hdd_ctx->current_intf_count != 0)
