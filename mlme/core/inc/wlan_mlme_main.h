@@ -158,28 +158,8 @@ struct tclas_mask {
 	uint8_t classifier_mask;
 	union {
 		struct {
-			uint8_t version;
-			union {
-				struct {
-					uint8_t source[4];
-					uint8_t dest[4];
-					uint16_t src_port;
-					uint16_t dest_port;
-					uint8_t dscp;
-					uint8_t proto;
-					uint8_t reserved;
-				} ip_v4_params;
-				struct {
-					uint8_t source[16];
-					uint8_t dest[16];
-					uint16_t src_port;
-					uint16_t dest_port;
-					uint8_t DSCP;
-					uint8_t next_header;
-					uint8_t flow_label[3];
-				} ip_v6_params;
-			} params;
-		} ip_params; /* classifier_type = 4 */
+			uint8_t reserved[16];
+		} ip_param; /* classifier_type = 4 */
 	} info;
 };
 
