@@ -10949,10 +10949,8 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
 				if ((value >= tx_min) && (value <= tx_max)) {
 					pdev->num_tx_allowed = value;
 				} else {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_INFO,
-						  "Failed to update num_tx_allowed, Q_min = %d Q_max = %d",
-						  tx_min, tx_max);
+					dp_tx_info("%pK: Failed to update num_tx_allowed, Q_min = %d Q_max = %d",
+						   soc, tx_min, tx_max);
 					break;
 				}
 			} else {
@@ -10961,8 +10959,7 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
 		}
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "%s: not handled param %d ", __func__, param);
+		dp_tx_info("%pK: not handled param %d ", soc, param);
 		break;
 	}
 

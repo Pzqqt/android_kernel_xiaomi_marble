@@ -74,6 +74,20 @@ do {                                                           \
 /* number of dwords for htt_tx_msdu_desc_ext2_t */
 #define DP_TX_MSDU_INFO_META_DATA_DWORDS 7
 
+#define dp_tx_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_TX, params)
+#define dp_tx_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_TX, params)
+#define dp_tx_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_TX, params)
+#define dp_tx_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_TX, ## params)
+#define dp_tx_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_TX, params)
+
+#define dp_tx_comp_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_TX_COMP, params)
+#define dp_tx_comp_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_TX_COMP, params)
+#define dp_tx_comp_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_TX_COMP, params)
+#define dp_tx_comp_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_TX_COMP, ## params)
+#define dp_tx_comp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_TX_COMP, params)
+
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 /**
