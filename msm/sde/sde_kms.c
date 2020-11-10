@@ -1408,7 +1408,11 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 		goto exit;
 
 	/* handle SDE pre-release */
-	sde_kms_vm_pre_release(sde_kms, state);
+	rc = sde_kms_vm_pre_release(sde_kms, state);
+	if (rc) {
+		SDE_ERROR("sde vm pre_release failed, rc=%d\n", rc);
+		goto exit;
+	}
 
 	/* properly handoff color processing features */
 	sde_cp_crtc_vm_primary_handoff(crtc);
@@ -1420,7 +1424,8 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 	if (vm_ops->vm_client_pre_release) {
 		rc = vm_ops->vm_client_pre_release(sde_kms);
 		if (rc) {
-			SDE_ERROR("sde vm pre_release failed, rc=%d\n", rc);
+			SDE_ERROR("sde vm client pre_release failed, rc=%d\n",
+					rc);
 			goto exit;
 		}
 	}
@@ -2509,6 +2514,10 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	enum sde_crtc_idle_pc_state idle_pc_state;
 	struct sde_mdss_cfg *catalog;
 	int rc = 0;
+	struct sde_connector *sde_conn;
+	struct dsi_display *dsi_display;
+	struct drm_connector *connector;
+	struct drm_connector_state *new_connstate;
 
 	if (!kms || !state)
 		return -EINVAL;
@@ -2587,6 +2596,29 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		drm_for_each_encoder_mask(encoder, active_crtc->dev,
 				active_cstate->encoder_mask)
 			crtc_encoder_cnt++;
+	}
+
+	SDE_EVT32(old_vm_req, new_vm_req, vm_ops->vm_owns_hw(sde_kms));
+	SDE_DEBUG("VM  o_state:%d, n_state:%d, hw_owner:%d\n", old_vm_req,
+			new_vm_req, vm_ops->vm_owns_hw(sde_kms));
+
+	for_each_new_connector_in_state(state, connector, new_connstate, i) {
+		int conn_mask = active_cstate->connector_mask;
+
+		if (drm_connector_mask(connector) & conn_mask) {
+			sde_conn = to_sde_connector(connector);
+			dsi_display = (struct dsi_display *) sde_conn->display;
+
+			SDE_EVT32(DRMID(connector), DRMID(active_crtc), i,
+					dsi_display->type,
+					dsi_display->trusted_vm_env);
+			SDE_DEBUG(
+			"VM display:%s, conn:%d, crtc:%d, type:%d, tvm:%d,",
+					dsi_display->name, DRMID(connector),
+					DRMID(active_crtc), dsi_display->type,
+					dsi_display->trusted_vm_env);
+			break;
+		}
 	}
 
 	/* Check for single crtc commits only on valid VM requests */
@@ -4547,6 +4579,10 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 
 	ret = sde_rm_cont_splash_res_init(priv, &sde_kms->rm,
 				&sde_kms->splash_data, sde_kms->catalog);
+	if (ret) {
+		SDE_ERROR("invalid cont splash init, ret:%d\n", ret);
+		return -EINVAL;
+	}
 
 	for (i = 0; i < sde_kms->dsi_display_count; i++) {
 		handoff_display = &sde_kms->splash_data.splash_display[i];
