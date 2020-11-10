@@ -2576,6 +2576,7 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 
 	ucfg_mlme_get_fine_time_meas_cap(psoc, &fine_time_meas_cap);
 	nan_req->params.rtt_cap = fine_time_meas_cap;
+	nan_req->params.disable_6g_nan = ucfg_get_disable_6g_nan(psoc);
 
 	nla_memcpy(nan_req->params.request_data,
 		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);

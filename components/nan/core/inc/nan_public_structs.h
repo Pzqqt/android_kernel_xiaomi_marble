@@ -569,10 +569,12 @@ struct nan_disable_ind_msg {
  * @request_data_len: request data length
  * @request_data: request data
  * @rtt_cap: indicate if responder/initiator role is supported
+ * @disable_6g_nan: Disable NAN in 6Ghz
  */
 struct nan_msg_params {
 	uint16_t request_data_len;
 	uint32_t rtt_cap;
+	bool disable_6g_nan;
 	/* Variable length, do not add anything after this */
 	uint8_t request_data[];
 };

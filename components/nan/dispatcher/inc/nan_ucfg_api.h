@@ -476,6 +476,16 @@ QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc);
  * Return: True if NAN is allowed on the given frequency
  */
 bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq);
+
+/**
+ * ucfg_get_disable_6g_nan() - Get NAN feature configuration for 6GHz
+ * @psoc: pointer to psoc object
+ *
+ * Return: Boolean flag indicating whether the NAN feature is disabled in
+ *         6GHz or not
+ */
+bool ucfg_get_disable_6g_nan(struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -594,6 +604,11 @@ static inline
 bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {
 	return false;
+}
+
+static inline bool ucfg_get_disable_6g_nan(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
