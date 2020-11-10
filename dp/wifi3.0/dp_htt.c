@@ -651,9 +651,8 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 		qdf_nbuf_unmap(soc->osdev, netbuf, QDF_DMA_TO_DEVICE);
 
 		soc->stats.htc_pkt_free++;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			 "%s: Pkt free count %d",
-			 __func__, soc->stats.htc_pkt_free);
+		dp_htt_info("%pK: Pkt free count %d",
+			    soc->dp_soc, soc->stats.htc_pkt_free);
 
 		qdf_nbuf_free(netbuf);
 		qdf_mem_free(pkt);
@@ -1993,8 +1992,8 @@ dp_htt_stats_dbgfs_send_msg(struct dp_pdev *pdev, uint32_t *msg_word,
 	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*(msg_word + 3));
 	if (done) {
 		if (qdf_event_set(&pdev->dbgfs_cfg->htt_stats_dbgfs_event))
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "Failed to set event for debugfs htt stats");
+			dp_htt_err("%pK: Failed to set event for debugfs htt stats"
+				   , pdev->soc);
 	}
 }
 #else
@@ -3770,16 +3769,14 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 					(struct cdp_tx_completion_ppdu *)
 					qdf_nbuf_data(ppdu_info->nbuf);
 				tmp_user = &tmp_ppdu_desc->user[0];
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO_MED,
-					  "S_PID [%d] S_TSF[%u] TLV_BITMAP[0x%x] [CMPLTN - %d ACK_BA - %d] CS[%d] - R_PID[%d] R_TSF[%u] R_TLV_TAG[0x%x]\n",
-					  ppdu_info->ppdu_id,
-					  ppdu_info->tsf_l32,
-					  ppdu_info->tlv_bitmap,
-					  tmp_user->completion_status,
-					  ppdu_info->compltn_common_tlv,
-					  ppdu_info->ack_ba_tlv,
-					  ppdu_id, tsf_l32, tlv_type);
+				dp_htt_tx_stats_info("S_PID [%d] S_TSF[%u] TLV_BITMAP[0x%x] [CMPLTN - %d ACK_BA - %d] CS[%d] - R_PID[%d] R_TSF[%u] R_TLV_TAG[0x%x]\n",
+						     ppdu_info->ppdu_id,
+						     ppdu_info->tsf_l32,
+						     ppdu_info->tlv_bitmap,
+						     tmp_user->completion_status,
+						     ppdu_info->compltn_common_tlv,
+						     ppdu_info->ack_ba_tlv,
+						     ppdu_id, tsf_l32, tlv_type);
 				qdf_nbuf_free(ppdu_info->nbuf);
 				ppdu_info->nbuf = NULL;
 				qdf_mem_free(ppdu_info);
@@ -4417,8 +4414,7 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc->dp_soc,
 							 target_pdev_id);
 	if (pdev_id >= MAX_PDEV_CNT) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev id %d is invalid", pdev_id);
+		dp_htt_debug("%pK: pdev id %d is invalid", soc, pdev_id);
 		return;
 	}
 
@@ -5051,12 +5047,12 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"-----%s:%d----\n cookie <-> %d\n config_param_0 %u\n"
-		"config_param_1 %u\n config_param_2 %u\n"
-		"config_param_4 %u\n -------------",
-		__func__, __LINE__, cookie_val, config_param_0,
-		config_param_1, config_param_2,	config_param_3);
+	dp_htt_tx_stats_info("%pK: cookie <-> %d\n config_param_0 %u\n"
+			     "config_param_1 %u\n config_param_2 %u\n"
+			     "config_param_4 %u\n -------------",
+			     pdev->soc, cookie_val,
+			     config_param_0,
+			     config_param_1, config_param_2, config_param_3);
 
 	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
@@ -5184,9 +5180,8 @@ QDF_STATUS dp_h2t_3tuple_config_send(struct dp_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		  "config_param_sent %s:%d 0x%x for target_pdev %d\n -------------",
-		  __func__, __LINE__, tuple_mask, target_pdev_id);
+	dp_htt_info("%pK: config_param_sent 0x%x for target_pdev %d\n -------------",
+		    pdev->soc, tuple_mask, target_pdev_id);
 
 	msg_word = (uint32_t *)qdf_nbuf_data(msg);
 	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
@@ -5253,8 +5248,8 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 			HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, true);
 
 	if (!msg) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"Fail to allocate HTT_H2T_PPDU_STATS_CFG_MSG_SZ msg buffer");
+		dp_htt_err("%pK: Fail to allocate HTT_H2T_PPDU_STATS_CFG_MSG_SZ msg buffer"
+			   , pdev->soc);
 		qdf_assert(0);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -5275,8 +5270,8 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 	 * The contribution from the HTC header is added separately inside HTC.
 	 */
 	if (qdf_nbuf_put_tail(msg, HTT_H2T_PPDU_STATS_CFG_MSG_SZ) == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"Failed to expand head for HTT_CFG_STATS");
+		dp_htt_err("%pK: Failed to expand head for HTT_CFG_STATS"
+			   , pdev->soc);
 		qdf_nbuf_free(msg);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5292,8 +5287,7 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 
 	pkt = htt_htc_pkt_alloc(soc);
 	if (!pkt) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"Fail to allocate dp_htt_htc_pkt buffer");
+		dp_htt_err("%pK: Fail to allocate dp_htt_htc_pkt buffer", pdev->soc);
 		qdf_assert(0);
 		qdf_nbuf_free(msg);
 		return QDF_STATUS_E_NOMEM;
