@@ -6597,7 +6597,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_cleanup_adapter;
 
-	adapter->upgrade_udp_qos_threshold = QCA_WLAN_AC_BE;
+	adapter->upgrade_udp_qos_threshold = QCA_WLAN_AC_BK;
 	qdf_spinlock_create(&adapter->vdev_lock);
 	qdf_atomic_init(&hdd_ctx->num_latency_critical_clients);
 
