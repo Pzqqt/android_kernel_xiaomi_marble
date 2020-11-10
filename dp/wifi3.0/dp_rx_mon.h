@@ -60,6 +60,13 @@
 #define DP_RX_MON_RAW_L2_HDR_PAD_BYTE (0)
 #define DP_RX_MON_NONRAW_L2_HDR_PAD_BYTE (2)
 
+#define dp_rx_mon_dest_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_RX_MON_DEST, params)
+#define dp_rx_mon_dest_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_RX_MON_DEST, params)
+#define dp_rx_mon_dest_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_RX_MON_DEST, params)
+#define dp_rx_mon_dest_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_RX_MON_DEST, ## params)
+#define dp_rx_mon_dest_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_RX_MON_DEST, params)
+
 /**
  * enum dp_mon_reap_status - monitor status ring ppdu status
  *

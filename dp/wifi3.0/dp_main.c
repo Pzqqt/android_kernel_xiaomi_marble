@@ -7278,8 +7278,8 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
 
 	status = dp_mon_filter_update(pdev);
 	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to reset monitor filters"));
+		dp_rx_mon_dest_err("%pK: Failed to reset monitor filters",
+				   soc);
 	}
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
@@ -7470,8 +7470,8 @@ dp_pdev_set_advance_monitor_filter(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	dp_mon_filter_setup_mon_mode(pdev);
 	status = dp_mon_filter_update(pdev);
 	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to set filter for advance mon mode"));
+		dp_rx_mon_dest_err("%pK: Failed to set filter for advance mon mode",
+				   soc);
 		dp_mon_filter_reset_mon_mode(pdev);
 	}
 

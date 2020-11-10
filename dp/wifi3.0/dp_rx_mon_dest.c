@@ -185,8 +185,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct cdp_mon_status *rs;
 
 	if (qdf_unlikely(!dp_pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_dest_debug("%pK: pdev is null for mac_id = %d", soc, mac_id);
 		return rx_bufs_used;
 	}
 
@@ -291,10 +290,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			data = dp_rx_mon_get_buffer_data(rx_desc);
 			rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
 
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_DEBUG,
-				"[%s] i=%d, ppdu_id=%x, num_msdus = %u",
-				__func__, i, *ppdu_id, num_msdus);
+			dp_rx_mon_dest_debug("%pK: i=%d, ppdu_id=%x, num_msdus = %u",
+					     soc, i, *ppdu_id, num_msdus);
 
 			if (is_first_msdu) {
 				if (!hal_rx_mpdu_start_tlv_tag_valid(
@@ -314,18 +311,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						rxdma_dst_ring_desc);
 				is_first_msdu = false;
 
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_DEBUG,
-					"[%s] msdu_ppdu_id=%x",
-					__func__, msdu_ppdu_id);
+				dp_rx_mon_dest_debug("%pK: msdu_ppdu_id=%x",
+						     soc, msdu_ppdu_id);
 
 				if (*ppdu_id > msdu_ppdu_id)
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_DEBUG,
-						"[%s][%d] ppdu_id=%d "
-						"msdu_ppdu_id=%d",
-						__func__, __LINE__, *ppdu_id,
-						msdu_ppdu_id);
+					dp_rx_mon_dest_debug("%pK: ppdu_id=%d "
+							     "msdu_ppdu_id=%d", soc,
+							     *ppdu_id, msdu_ppdu_id);
 
 				if ((*ppdu_id < msdu_ppdu_id) && (
 					(msdu_ppdu_id - *ppdu_id) <
@@ -414,12 +406,10 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				qdf_assert_always(0);
 			}
 #endif
-			QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  "%s: rx_pkt_offset=%d, l2_hdr_offset=%d, msdu_len=%d, frag_len %u",
-					  __func__, rx_pkt_offset, l2_hdr_offset,
-					  msdu_list.msdu_info[i].msdu_len,
-					  frag_len);
+			dp_rx_mon_dest_debug("%pK: rx_pkt_offset=%d, l2_hdr_offset=%d, msdu_len=%d, frag_len %u",
+					     soc, rx_pkt_offset, l2_hdr_offset,
+					     msdu_list.msdu_info[i].msdu_len,
+					     frag_len);
 
 			if (dp_rx_mon_add_msdu_to_list(head_msdu, msdu, &last,
 						       rx_desc_tlv, frag_len,
@@ -553,8 +543,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	qdf_nbuf_t msdu_curr;
 
 	if (qdf_unlikely(!dp_pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_dest_debug("%pK: pdev is null for mac_id = %d", soc, mac_id);
 		return NULL;
 	}
 	qdf_mem_zero(&buf_info, sizeof(struct hal_rx_mon_dest_buf_info));
@@ -600,9 +589,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 */
 	hdr_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "[%s][%d] decap format not raw",
-		  __func__, __LINE__);
+	dp_rx_mon_dest_debug("%pK: decap format not raw", soc);
 
 	/* Base size */
 	wifi_hdr_len = sizeof(struct ieee80211_frame);
@@ -907,17 +894,15 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	dp_rx_mon_fraglist_prepare(head_msdu, tail_msdu);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s %d head_msdu %pK head_msdu->len %u",
-		  __func__, __LINE__,
-		  head_msdu, head_msdu->len);
+	dp_rx_mon_dest_debug("%pK: head_msdu %pK head_msdu->len %u",
+			     soc, head_msdu, head_msdu->len);
 
 mpdu_stitch_done:
 	return head_msdu;
 
 mpdu_stitch_fail:
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		  "%s mpdu_stitch_fail head_msdu %pK", __func__, head_msdu);
+	dp_rx_mon_dest_err("%pK: mpdu_stitch_fail head_msdu %pK",
+			   soc, head_msdu);
 	return NULL;
 }
 #endif
@@ -941,8 +926,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	mpdu_buf = NULL;
 
 	if (qdf_unlikely(!dp_pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_dest_debug("%pK: pdev is null for mac_id = %d",
+				     soc, mac_id);
 		return NULL;
 	}
 
@@ -986,10 +971,9 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 		dp_rx_msdus_set_payload(soc, head_msdu);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "[%s][%d] decap format raw head %pK head->next %pK last_msdu %pK last_msdu->next %pK",
-				  __func__, __LINE__, head_msdu, head_msdu->next,
-				  last_msdu, last_msdu->next);
+			dp_rx_mon_dest_debug("%pK: decap format raw head %pK head->next %pK last_msdu %pK last_msdu->next %pK",
+					     soc, head_msdu, head_msdu->next,
+					     last_msdu, last_msdu->next);
 
 		mpdu_buf = head_msdu;
 
@@ -1045,9 +1029,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	hdr_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "[%s][%d] decap format not raw",
-		  __func__, __LINE__);
+	dp_rx_mon_dest_debug("%pK: decap format not raw", soc);
 
 
 	/* Base size */
@@ -1195,10 +1177,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	qdf_nbuf_append_ext_list(mpdu_buf, head_frag_list,
 			frag_list_sum_len);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s %d mpdu_buf %pK mpdu_buf->len %u",
-		  __func__, __LINE__,
-		  mpdu_buf, mpdu_buf->len);
+	dp_rx_mon_dest_debug("%pK: mpdu_buf %pK mpdu_buf->len %u",
+			     soc, mpdu_buf, mpdu_buf->len);
 
 mpdu_stitch_done:
 	/* Check if this buffer contains the PPDU end status for TSF */
@@ -1218,9 +1198,8 @@ mpdu_stitch_done:
 
 mpdu_stitch_fail:
 	if ((mpdu_buf) && (decap_format != HAL_HW_RX_DECAP_FORMAT_RAW)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s mpdu_stitch_fail mpdu_buf %pK",
-			  __func__, mpdu_buf);
+		dp_rx_mon_dest_err("%pK: mpdu_stitch_fail mpdu_buf %pK",
+				   soc, mpdu_buf);
 		/* Free the head buffer */
 		qdf_nbuf_free(mpdu_buf);
 	}
@@ -1469,11 +1448,10 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 						mon_mpdu,
 						&pdev->ppdu_info.rx_status);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "[%s][%d] mon_mpdu=%pK monitor_vdev %pK osif_vdev %pK"
-			  , __func__, __LINE__, mon_mpdu, pdev->monitor_vdev,
-			  (pdev->monitor_vdev ? pdev->monitor_vdev->osif_vdev
-			   : NULL));
+		dp_rx_mon_dest_debug("%pK: mon_mpdu=%pK monitor_vdev %pK osif_vdev %pK"
+				     , soc, mon_mpdu, pdev->monitor_vdev,
+				     (pdev->monitor_vdev ? pdev->monitor_vdev->osif_vdev
+				     : NULL));
 		goto mon_deliver_fail;
 	}
 
@@ -1484,9 +1462,8 @@ mon_deliver_fail:
 	while (mon_skb) {
 		skb_next = qdf_nbuf_next(mon_skb);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "[%s][%d] mon_skb=%pK len %u", __func__,
-				  __LINE__, mon_skb, mon_skb->len);
+		 dp_rx_mon_dest_debug("%pK: [%s][%d] mon_skb=%pK len %u",
+				      soc,  __func__, __LINE__, mon_skb, mon_skb->len);
 
 		qdf_nbuf_free(mon_skb);
 		mon_skb = skb_next;
@@ -1548,8 +1525,8 @@ QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 
 allocate_dummy_msdu_fail:
-	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP, "[%s][%d] mon_skb=%pK ",
-			   __func__, __LINE__, dummy_msdu);
+		 dp_rx_mon_dest_debug("%pK: mon_skb=%pK ",
+				      soc, dummy_msdu);
 
 mon_deliver_non_std_fail:
 	return QDF_STATUS_E_INVAL;
@@ -1572,17 +1549,15 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	struct cdp_pdev_mon_stats *rx_mon_stats;
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_dest_debug("%pK: pdev is null for mac_id = %d", soc, mac_id);
 		return;
 	}
 
 	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, mac_for_pdev);
 
 	if (!mon_dst_srng || !hal_srng_initialized(mon_dst_srng)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring Init Failed -- %pK",
-			__func__, __LINE__, mon_dst_srng);
+		dp_rx_mon_dest_err("%pK: : HAL Monitor Destination Ring Init Failed -- %pK",
+				   soc, mon_dst_srng);
 		return;
 	}
 
@@ -1647,10 +1622,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 				sizeof(pdev->ppdu_info.rx_status));
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "%s %d ppdu_id %x != ppdu_info.com_info.ppdu_id %x",
-				  __func__, __LINE__,
-				  ppdu_id, pdev->ppdu_info.com_info.ppdu_id);
+			dp_rx_mon_dest_debug("%pK: ppdu_id %x != ppdu_info.com_info.ppdu_id %x",
+					     soc, ppdu_id, pdev->ppdu_info.com_info.ppdu_id);
 			break;
 		}
 
@@ -1984,9 +1957,8 @@ dp_rx_pdev_mon_desc_pool_alloc(struct dp_pdev *pdev)
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		status = dp_rx_pdev_mon_cmn_desc_pool_alloc(pdev, mac_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_ERROR, "%s: %d failed\n",
-				  __func__, mac_id);
+			dp_rx_mon_dest_err("%pK: %d failed\n",
+					   pdev->soc, mac_id);
 
 			for (count = 0; count < mac_id; count++)
 				dp_rx_pdev_mon_cmn_desc_pool_free(pdev, count);
@@ -2042,9 +2014,8 @@ dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev)
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		status = dp_rx_pdev_mon_cmn_buffers_alloc(pdev, mac_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_ERROR, "%s: %d failed\n",
-				  __func__, mac_id);
+			dp_rx_mon_dest_err("%pK: %d failed\n",
+					   pdev->soc, mac_id);
 			return status;
 		}
 	}
