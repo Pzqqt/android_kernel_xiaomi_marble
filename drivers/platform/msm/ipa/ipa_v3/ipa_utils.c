@@ -6290,7 +6290,7 @@ void ipa_init_ep_flt_bitmap(void)
 			gsi_ep_ptr =
 				&ipa3_ep_mapping[hw_idx][cl].ipa_gsi_ep_info;
 			pipe_num = gsi_ep_ptr->ipa_ep_num;
-			bitmap |= (1U << pipe_num);
+			bitmap |= (1ULL << pipe_num);
 			if (bitmap != ipa3_ctx->ep_flt_bitmap) {
 				ipa3_ctx->ep_flt_bitmap = bitmap;
 				ipa3_ctx->ep_flt_num++;
@@ -6315,7 +6315,7 @@ bool ipa_is_ep_support_flt(int pipe_idx)
 		return false;
 	}
 
-	return ipa3_ctx->ep_flt_bitmap & (1U<<pipe_idx);
+	return ipa3_ctx->ep_flt_bitmap & (1ULL<<pipe_idx);
 }
 
 /**
