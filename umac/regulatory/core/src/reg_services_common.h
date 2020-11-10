@@ -1304,6 +1304,7 @@ reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
  */
 enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap);
 #endif
+
 #if defined(CONFIG_BAND_6GHZ)
 /**
  * reg_set_cur_6g_ap_pwr_type() - Set the current 6G regulatory AP power type.
@@ -1402,4 +1403,58 @@ QDF_STATUS reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+
+#ifdef CONFIG_HOST_FIND_CHAN
+/**
+ * reg_update_max_phymode_chwidth_for_pdev() - Update the maximum phymode
+ * and the corresponding chwidth for the pdev.
+ * @pdev: Pointer to PDEV object.
+ *
+ */
+void reg_update_max_phymode_chwidth_for_pdev(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_modify_chan_list_for_max_chwidth() - Update the maximum bandwidth for
+ * each channel in the current channel list.
+ * @pdev: Pointer to PDEV object.
+ * @cur_chan_list: Pointer to the pdev current channel list.
+ *
+ * In countries like DK, the channel 144 is not supported by the regulatory.
+ * When we get the regulatory rules, the entire UNII-2E's max bandwidth is set
+ * to 160MHz but this is only true for channel 100 to 128. Channels 132 and
+ * and 136 will have maximum bandwidth of 40MHz and channel 140 will have a
+ * max bandwidth value of 20MHz (since 144 is not available).
+ * These values in the current channel list are not updated based on the
+ * bonded channels and hence will have an incorrect value for particular
+ * channels.
+ * Use this API to update the maximum bandwidth based on the device
+ * capabilities and the availability of adjacent channels.
+ */
+void
+reg_modify_chan_list_for_max_chwidth(struct wlan_objmgr_pdev *pdev,
+				     struct regulatory_channel *cur_chan_list);
+
+#else
+static inline void
+reg_update_max_phymode_chwidth_for_pdev(struct wlan_objmgr_pdev *pdev)
+{
+}
+
+static inline void
+reg_modify_chan_list_for_max_chwidth(struct wlan_objmgr_pdev *pdev,
+				     struct regulatory_channel *cur_chan_list)
+{
+}
+
+#endif /* CONFIG_HOST_FIND_CHAN */
+
+/**
+ * reg_is_phymode_unallowed() - Check if requested phymode is unallowed
+ * @phy_in: phymode that the user requested
+ * @phymode_bitmap: bitmap of unallowed phymodes for specific country
+ *
+ * Return: true if phymode is not allowed, else false
+ */
+bool reg_is_phymode_unallowed(enum reg_phymode phy_in, uint32_t phymode_bitmap);
+
 #endif

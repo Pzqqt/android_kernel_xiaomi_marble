@@ -208,7 +208,7 @@ static void reg_modify_chan_list_for_dfs_channels(
 		return;
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-		if (chan_list[chan_enum].state == CHANNEL_STATE_DFS) {
+		if (chan_list[chan_enum].chan_flags & REGULATORY_CHAN_RADAR) {
 			chan_list[chan_enum].state = CHANNEL_STATE_DISABLE;
 			chan_list[chan_enum].chan_flags |=
 				REGULATORY_CHAN_DISABLED;
@@ -865,6 +865,9 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 	reg_modify_chan_list_for_5dot9_ghz_channels(pdev_priv_obj->pdev_ptr,
 						    pdev_priv_obj->
 						    cur_chan_list);
+
+	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
+					     pdev_priv_obj->cur_chan_list);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
@@ -947,6 +950,8 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	reg_modify_chan_list_for_japan(pdev);
 	pdev_priv_obj->chan_list_recvd =
 		psoc_priv_obj->chan_list_recvd[phy_id];
+
+	reg_update_max_phymode_chwidth_for_pdev(pdev);
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
 	if (reg_tx_ops->fill_umac_legacy_chanlist) {

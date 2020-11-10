@@ -167,6 +167,8 @@ struct wlan_regulatory_psoc_priv_obj {
  * domain.
  * @reg_unspecified_ap_usable: Indicates if the AP type mentioned is not part of
  * 802.11 standard.
+ * @max_phymode: The maximum phymode supported by the device and regulatory.
+ * @max_chwidth: The maximum bandwidth corresponding to the maximum phymode.
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -211,6 +213,10 @@ struct wlan_regulatory_pdev_priv_obj {
 	enum reg_6g_client_type reg_cur_6g_client_mobility_type;
 	bool reg_rnr_tpe_usable;
 	bool reg_unspecified_ap_usable;
+#endif
+#ifdef CONFIG_HOST_FIND_CHAN
+	enum reg_phymode max_phymode;
+	enum phy_ch_width max_chwidth;
 #endif
 };
 
