@@ -19953,6 +19953,8 @@ typedef struct {
 #define WMI_NAN_SET_RANGING_INITIATOR_ROLE(flag, val) WMI_SET_BITS(flag, 0, 1, val)
 #define WMI_NAN_GET_RANGING_RESPONDER_ROLE(flag)      WMI_GET_BITS(flag, 1, 1)
 #define WMI_NAN_SET_RANGING_RESPONDER_ROLE(flag, val) WMI_SET_BITS(flag, 1, 1, val)
+#define WMI_NAN_GET_NAN_6G_DISABLE(flag)              WMI_GET_BITS(flag, 2, 1)
+#define WMI_NAN_SET_NAN_6G_DISABLE(flag, val)         WMI_SET_BITS(flag, 2, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_host_config_param */
@@ -19962,7 +19964,8 @@ typedef struct {
     /** Flags: refer to WMI_NAN_GET/SET macros
      *  Bit   0    -> Nan ranging initiator role (0 - Disable, 1 - Enable)
      *  Bit   1    -> Nan ranging responder role (0 - Disable, 1 - Enable)
-     *  Bits  2-31 -> Reserved
+     *  Bit   2    -> Nan 6 GHz support          (1 - Disable, 0 - Enable)
+     *  Bits  3-31 -> Reserved
      */
     A_UINT32 flags;
 } wmi_nan_host_config_param_PROTOTYPE;
