@@ -34,6 +34,13 @@
 #include "dp_ratetable.h"
 #endif
 
+#define dp_rx_mon_status_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_RX_MON_STATUS, params)
+#define dp_rx_mon_status_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_RX_MON_STATUS, params)
+#define dp_rx_mon_status_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_RX_MON_STATUS, params)
+#define dp_rx_mon_status_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_RX_MON_STATUS, ## params)
+#define dp_rx_mon_status_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_RX_MON_STATUS, params)
+
 static inline
 QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 					      uint32_t mac_id,
@@ -80,10 +87,8 @@ dp_rx_mon_handle_status_buf_done(struct dp_pdev *pdev,
 	ring_entry = hal_srng_src_peek_n_get_next_next(hal_soc,
 						       mon_status_srng);
 	if (!ring_entry) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("Monitor status ring entry is NULL "
-			     "for SRNG: %pK"),
-			     mon_status_srng);
+		dp_rx_mon_status_debug("%pK: Monitor status ring entry is NULL for SRNG: %pK",
+				       soc, mon_status_srng);
 		return DP_MON_STATUS_NO_DMA;
 	}
 	rx_buf_cookie = HAL_RX_BUF_COOKIE_GET(ring_entry);
@@ -643,8 +648,8 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 			break;
 		default:
 			pkt_bw_offset = 0;
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "Invalid BW index = %d", ppdu->u.bw);
+			dp_rx_mon_status_debug("%pK: Invalid BW index = %d",
+					       soc, ppdu->u.bw);
 		}
 
 		DP_STATS_UPD(peer, rx.rssi, (ppdu->rssi + pkt_bw_offset));
@@ -1591,8 +1596,7 @@ dp_rx_ul_ofdma_ru_size_to_width(
 		width = 74;
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "RU size to width convert err");
+		dp_rx_mon_status_err("RU size to width convert err");
 		break;
 	}
 	*ru_width = width;
@@ -1683,8 +1687,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 	uint32_t rx_enh_capture_mode;
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_status_debug("%pK: pdev is null for mac_id = %d", soc,
+				       mac_id);
 		return;
 	}
 
@@ -1901,8 +1905,8 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	uint32_t work_done = 0;
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_status_debug("%pK: pdev is null for mac_id = %d",
+				       soc, mac_id);
 		return work_done;
 	}
 
@@ -2299,8 +2303,8 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(dp_soc, mac_id);
 
 	if (!dp_pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_status_debug("%pK: pdev is null for mac_id = %d",
+				       dp_soc, mac_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2308,9 +2312,8 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 	qdf_assert(rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] requested %d buffers for replenish",
-		__func__, __LINE__, num_req_buffers);
+	dp_rx_mon_status_debug("%pK: requested %d buffers for replenish",
+			       dp_soc, num_req_buffers);
 
 	/*
 	 * if desc_list is NULL, allocate the descs from freelist
@@ -2324,15 +2327,13 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 							  tail);
 
 		if (!num_alloc_desc) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"[%s][%d] no free rx_descs in freelist",
-			__func__, __LINE__);
+			dp_rx_mon_status_err("%pK: no free rx_descs in freelist",
+					     dp_soc);
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] %d rx desc allocated", __func__, __LINE__,
-			num_alloc_desc);
+		dp_rx_mon_status_debug("%pK: %d rx desc allocated", dp_soc,
+				       num_alloc_desc);
 
 		num_req_buffers = num_alloc_desc;
 	}
@@ -2341,9 +2342,8 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	num_entries_avail = hal_srng_src_num_avail(dp_soc->hal_soc,
 				rxdma_srng, sync_hw_ptr);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] no of available entries in rxdma ring: %d",
-		  __func__, __LINE__, num_entries_avail);
+	dp_rx_mon_status_debug("%pK: no of available entries in rxdma ring: %d",
+			       dp_soc, num_entries_avail);
 
 	if (num_entries_avail < num_req_buffers) {
 		num_desc_to_free = num_req_buffers - num_entries_avail;
@@ -2360,9 +2360,8 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		 * to fill in buffer at current HP.
 		 */
 		if (qdf_unlikely(!rx_netbuf)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: qdf_nbuf allocate or map fail, count %d",
-				__func__, count);
+			dp_rx_mon_status_err("%pK: qdf_nbuf allocate or map fail, count %d",
+					     dp_soc, count);
 			break;
 		}
 
@@ -2374,9 +2373,8 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 						rxdma_srng);
 
 		if (qdf_unlikely(!rxdma_ring_entry)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"[%s][%d] rxdma_ring_entry is NULL, count - %d",
-					__func__, __LINE__, count);
+			dp_rx_mon_status_err("%pK: rxdma_ring_entry is NULL, count - %d",
+					     dp_soc, count);
 			qdf_nbuf_unmap_nbytes_single(dp_soc->osdev, rx_netbuf,
 						     QDF_DMA_FROM_DEVICE,
 						     rx_desc_pool->buf_size);
@@ -2391,23 +2389,21 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 			(*desc_list)->rx_desc.cookie, owner);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] rx_desc=%pK, cookie=%d, nbuf=%pK, \
-			paddr=%pK",
-			__func__, __LINE__, &(*desc_list)->rx_desc,
-			(*desc_list)->rx_desc.cookie, rx_netbuf,
-			(void *)paddr);
+		dp_rx_mon_status_debug("%pK: rx_desc=%pK, cookie=%d, nbuf=%pK, paddr=%pK",
+				       dp_soc, &(*desc_list)->rx_desc,
+				       (*desc_list)->rx_desc.cookie, rx_netbuf,
+				       (void *)paddr);
 
 		*desc_list = next;
 	}
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"successfully replenished %d buffers", num_req_buffers);
+	dp_rx_mon_status_debug("%pK: successfully replenished %d buffers",
+			       dp_soc, num_req_buffers);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"%d rx desc added back to free list", num_desc_to_free);
+	dp_rx_mon_status_debug("%pK: %d rx desc added back to free list",
+			       dp_soc, num_desc_to_free);
 
 	/*
 	 * add any available free desc back to the free list
