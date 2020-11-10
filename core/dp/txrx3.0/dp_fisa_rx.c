@@ -25,8 +25,11 @@
 
 static void dp_rx_fisa_flush_flow_wrap(struct dp_fisa_rx_sw_ft *sw_ft);
 
-/** REO will push frame into REO2FW RING */
-#define REO_DESTINATION_FW 6
+/*
+ * Used by FW to route RX packets to host REO2SW1 ring if IPA hit
+ * RX back pressure.
+ */
+#define REO_DEST_IND_IPA_REROUTE 2
 
 #if defined(FISA_DEBUG_ENABLE)
 /**
@@ -928,7 +931,8 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 {
 	uint8_t *rx_tlv_hdr;
 	uint32_t flow_idx;
-	uint32_t reo_destination_indication;
+	uint32_t tlv_reo_dest_ind;
+	uint8_t  ring_reo_dest_ind;
 	bool flow_invalid, flow_timeout, flow_idx_valid;
 	struct dp_fisa_rx_sw_ft *sw_ft_entry = NULL;
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
@@ -938,14 +942,16 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 
 	rx_tlv_hdr = qdf_nbuf_data(nbuf);
 	hal_rx_msdu_get_reo_destination_indication(hal_soc_hdl, rx_tlv_hdr,
-						   &reo_destination_indication);
+						   &tlv_reo_dest_ind);
+	ring_reo_dest_ind = qdf_nbuf_get_rx_reo_dest_ind(nbuf);
 	/*
 	 * Compare reo_destination_indication between reo ring descriptor
 	 * and rx_pkt_tlvs, if they are different, then likely these kind
 	 * of frames re-injected by FW or touched by other module already,
 	 * skip FISA to avoid REO2SW ring mismatch issue for same flow.
 	 */
-	if (reo_destination_indication != qdf_nbuf_get_rx_reo_dest_ind(nbuf))
+	if (tlv_reo_dest_ind != ring_reo_dest_ind ||
+	    REO_DEST_IND_IPA_REROUTE == ring_reo_dest_ind)
 		return sw_ft_entry;
 
 	hal_rx_msdu_get_flow_params(hal_soc_hdl, rx_tlv_hdr, &flow_invalid,
@@ -968,7 +974,7 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 
 	sw_ft_entry = dp_rx_fisa_add_ft_entry(fisa_hdl, flow_idx, nbuf, vdev,
 					      rx_tlv_hdr,
-					      reo_destination_indication);
+					      tlv_reo_dest_ind);
 
 	return sw_ft_entry;
 }
