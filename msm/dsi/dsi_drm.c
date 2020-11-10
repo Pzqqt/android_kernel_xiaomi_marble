@@ -1152,7 +1152,7 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 	struct list_head *mode_list = &connector->modes;
 	struct dsi_display *disp = display;
 	struct dsi_panel *panel;
-	int mode_count, rc = 0;
+	int mode_count = 0, rc = 0;
 	struct dsi_display_mode_priv_info *dsi_mode_info, *cmp_dsi_mode_info;
 	bool allow_switch = false;
 
@@ -1162,7 +1162,8 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 	}
 
 	panel = disp->panel;
-	mode_count = panel->num_display_modes;
+	list_for_each_entry(drm_mode, &connector->modes, head)
+		mode_count++;
 
 	list_for_each_entry(drm_mode, &connector->modes, head) {
 
@@ -1180,6 +1181,8 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 		mode_list = mode_list->next;
 		cmp_mode_idx = 1;
 		list_for_each_entry(cmp_drm_mode, mode_list, head) {
+			if (&cmp_drm_mode->head == &connector->modes)
+				continue;
 			convert_to_dsi_mode(cmp_drm_mode, &dsi_mode);
 
 			rc = dsi_display_find_mode(display, &dsi_mode,
