@@ -296,6 +296,7 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 					   WMI_FW_NAN_RTT_INITR));
 	WMI_NAN_SET_RANGING_RESPONDER_ROLE(cfg->flags, !!(nan_msg->rtt_cap &
 					   WMI_FW_NAN_RTT_RESPR));
+	WMI_NAN_SET_NAN_6G_DISABLE(cfg->flags, nan_msg->disable_6g_nan);
 
 	wmi_mtrace(WMI_NAN_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_NAN_CMDID);
