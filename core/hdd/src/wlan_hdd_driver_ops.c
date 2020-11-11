@@ -47,6 +47,7 @@
 #include <qdf_notifier.h>
 #include <qdf_hang_event_notifier.h>
 #include "wlan_hdd_thermal.h"
+#include "wlan_hdd_bus_bandwidth.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1114,6 +1115,7 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	void *dp_soc;
 	struct pmo_wow_enable_params pmo_params;
 	int pending;
+	struct bbm_params param = {0};
 
 	hdd_info("starting bus suspend");
 
@@ -1188,7 +1190,9 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	 * Remove bus votes at the very end, after making sure there are no
 	 * pending bus transactions from WLAN SOC for TX/RX.
 	 */
-	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
+	param.policy = BBM_NON_PERSISTENT_POLICY;
+	param.policy_info.flag = BBM_APPS_SUSPEND;
+	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
 	hdd_info("bus suspend succeeded");
 	return 0;
@@ -1318,6 +1322,7 @@ int wlan_hdd_bus_resume(void)
 	int status;
 	QDF_STATUS qdf_status;
 	void *dp_soc;
+	struct bbm_params param = {0};
 
 	if (cds_is_driver_recovering())
 		return 0;
@@ -1345,13 +1350,9 @@ int wlan_hdd_bus_resume(void)
 	 * Add bus votes at the beginning, before making sure there are any
 	 * bus transactions from WLAN SOC for TX/RX.
 	 */
-	if (hdd_is_any_adapter_connected(hdd_ctx)) {
-		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-					  PLD_BUS_WIDTH_MEDIUM);
-	} else {
-		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-					  PLD_BUS_WIDTH_NONE);
-	}
+	param.policy = BBM_NON_PERSISTENT_POLICY;
+	param.policy_info.flag = BBM_APPS_RESUME;
+	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
 	status = hif_bus_resume(hif_ctx);
 	if (status) {

@@ -2747,6 +2747,7 @@ static int __hdd_mon_open(struct net_device *dev)
 	int ret;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct bbm_params param = {0};
 
 	hdd_enter_dev(dev);
 
@@ -2799,10 +2800,11 @@ static int __hdd_mon_open(struct net_device *dev)
 		ret = hdd_enable_monitor_mode(dev);
 
 	if (!ret) {
+		param.policy = BBM_DRIVER_MODE_POLICY;
+		param.policy_info.driver_mode = QDF_GLOBAL_MONITOR_MODE;
+		hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 		hdd_set_current_throughput_level(hdd_ctx,
 						 PLD_BUS_WIDTH_VERY_HIGH);
-		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-					  PLD_BUS_WIDTH_VERY_HIGH);
 	}
 
 	return ret;
@@ -9932,49 +9934,45 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	cpumask_t pm_qos_cpu_mask;
 	bool is_rx_pm_qos_high = false;
 	bool is_tx_pm_qos_high = false;
+	enum tput_level tput_level;
+	struct bbm_params param = {0};
 
 	cpumask_clear(&pm_qos_cpu_mask);
 
-	if (hdd_ctx->high_bus_bw_request)
+	if (hdd_ctx->high_bus_bw_request) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
-	else if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold)
+		tput_level = TPUT_LEVEL_VERY_HIGH;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_very_high_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_VERY_HIGH;
-	else if (total_pkts > hdd_ctx->config->bus_bw_high_threshold)
+		tput_level = TPUT_LEVEL_VERY_HIGH;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_high_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
-	else if (total_pkts > hdd_ctx->config->bus_bw_medium_threshold)
+		tput_level = TPUT_LEVEL_HIGH;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_medium_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_MEDIUM;
-	else if (total_pkts > hdd_ctx->config->bus_bw_low_threshold)
+		tput_level = TPUT_LEVEL_MEDIUM;
+	} else if (total_pkts > hdd_ctx->config->bus_bw_low_threshold) {
 		next_vote_level = PLD_BUS_WIDTH_LOW;
-	else
+		tput_level = TPUT_LEVEL_LOW;
+	} else {
 		next_vote_level = PLD_BUS_WIDTH_IDLE;
+		tput_level = TPUT_LEVEL_IDLE;
+	}
+
+	param.policy = BBM_TPUT_POLICY;
+	param.policy_info.tput_level = tput_level;
+	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
 	dptrace_high_tput_req =
 			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
 	hdd_low_tput_gro_flush_skip_handler(hdd_ctx, next_vote_level);
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
-		hdd_debug("BW Vote level %d, tx_packets: %lld, rx_packets: %lld",
-			  next_vote_level, tx_packets, rx_packets);
+		hdd_debug("tx_packets: %lld, rx_packets: %lld",
+			  tx_packets, rx_packets);
 
 		hdd_ctx->cur_vote_level = next_vote_level;
 		vote_level_change = true;
-
-		/*
-		 * 11g/a clients are latency sensitive, and any delay in DDR
-		 * access for fetching the packet can cause throughput drop.
-		 * For 11g/a clients LOW voting level is not sufficient for
-		 * peak throughput. Vote for higher DDR frequency if latency
-		 * critical connections are present.
-		 */
-		if (hdd_ctx->config->enable_latency_crit_clients &&
-		    (next_vote_level == PLD_BUS_WIDTH_LOW ||
-		     next_vote_level == PLD_BUS_WIDTH_IDLE) &&
-		    qdf_atomic_read(&hdd_ctx->num_latency_critical_clients))
-			pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-						  PLD_BUS_WIDTH_LOW_LATENCY);
-		else
-			pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-						  next_vote_level);
 
 		if ((next_vote_level == PLD_BUS_WIDTH_LOW) ||
 		    (next_vote_level == PLD_BUS_WIDTH_IDLE)) {
@@ -14231,6 +14229,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	int ret = 0;
 	int debugfs_threads;
 	struct target_psoc_info *tgt_hdl;
+	struct bbm_params param = {0};
 
 	hdd_enter();
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
@@ -14397,7 +14396,14 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	hdd_sap_destroy_ctx_all(hdd_ctx, is_recovery_stop);
 	hdd_sta_destroy_ctx_all(hdd_ctx);
-	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
+
+	/*
+	 * Reset the driver mode specific bus bw level
+	 */
+	param.policy = BBM_DRIVER_MODE_POLICY;
+	param.policy_info.driver_mode = QDF_GLOBAL_MAX_MODE;
+	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
+
 	hdd_deinit_adapter_ops_wq(hdd_ctx);
 	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_check_for_leaks(hdd_ctx, is_recovery_stop);
@@ -15747,6 +15753,7 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 
 static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
+	struct bbm_params param = {0};
 	if (!qdf_periodic_work_stop_sync(&hdd_ctx->bus_bw_work))
 		goto exit;
 
@@ -15764,12 +15771,12 @@ exit:
 	 * stopped. We should remove the bus bw voting, if no adapter is
 	 * connected
 	 */
-	if (!hdd_is_any_adapter_connected(hdd_ctx)) {
+	param.policy = BBM_TPUT_POLICY;
+	param.policy_info.tput_level = TPUT_LEVEL_NONE;
+	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
+
+	if (!hdd_is_any_adapter_connected(hdd_ctx))
 		qdf_atomic_set(&hdd_ctx->num_latency_critical_clients, 0);
-		hdd_ctx->cur_vote_level = PLD_BUS_WIDTH_NONE;
-		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-					  PLD_BUS_WIDTH_NONE);
-	}
 }
 
 void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
@@ -16852,6 +16859,7 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 {
 	enum QDF_GLOBAL_MODE curr_mode;
 	int errno;
+	struct bbm_params param = {0};
 
 	hdd_info("Driver mode changing to %d", next_mode);
 
@@ -16929,12 +16937,9 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	con_mode = next_mode;
 	hdd_info("Driver mode successfully changed to %d", next_mode);
 
-	if (con_mode == QDF_GLOBAL_FTM_MODE)
-		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-					  PLD_BUS_WIDTH_VERY_HIGH);
-	else if (con_mode == QDF_GLOBAL_MISSION_MODE)
-		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
-					  PLD_BUS_WIDTH_NONE);
+	param.policy = BBM_DRIVER_MODE_POLICY;
+	param.policy_info.driver_mode = con_mode;
+	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
 	return 0;
 }
