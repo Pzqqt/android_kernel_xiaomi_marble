@@ -218,7 +218,7 @@ int ipa3_setup_apps_low_lat_cons_pipe(void)
 
 	if (!ipa3_ctx->rmnet_ctl_enable) {
 		IPAERR("low lat pipe is disabled");
-		return -ENXIO;
+		return 0;
 	}
 	ep_idx = ipa_get_ep_mapping(
 		IPA_CLIENT_APPS_WAN_LOW_LAT_CONS);
@@ -303,7 +303,7 @@ int ipa3_setup_apps_low_lat_prod_pipe(void)
 
 	if (!ipa3_ctx->rmnet_ctl_enable) {
 		IPAERR("Low lat pipe is disabled");
-		return -ENXIO;
+		return 0;
 	}
 	ep_idx = ipa_get_ep_mapping(
 		IPA_CLIENT_APPS_WAN_LOW_LAT_PROD);
