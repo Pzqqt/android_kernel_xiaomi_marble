@@ -750,7 +750,7 @@ static int ipa_test_hw_stats_query_drop_stats(void *priv)
                        continue;
 
                reg_idx = ipahal_get_ep_reg_idx(ep_idx);
-               if (!(ipa3_ctx->hw_stats.drop.init.enabled_bitmask[reg_idx] &
+               if (!(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
                        ipahal_get_ep_bit(ep_idx)))
                        continue;
 
@@ -810,7 +810,7 @@ static int ipa_test_hw_stats_query_teth_stats(void *priv)
                        continue;
 
                prod_reg = ipahal_get_ep_reg_idx(ep_idx);
-               if (!(ipa3_ctx->hw_stats.teth.init.prod_bitmask[prod_reg] &
+               if (!(ipa3_ctx->hw_stats->teth.init.prod_bitmask[prod_reg] &
                        ipahal_get_ep_bit(ep_idx)))
                        continue;
 
@@ -830,7 +830,7 @@ static int ipa_test_hw_stats_query_teth_stats(void *priv)
                                continue;
 
                        cons_reg = ipahal_get_ep_reg_idx(j);
-                       if (!(ipa3_ctx->hw_stats.teth.init.
+                       if (!(ipa3_ctx->hw_stats->teth.init.
                                cons_bitmask[ep_idx][cons_reg]
                                & ipahal_get_ep_bit(cons_idx)))
                                continue;
@@ -907,7 +907,7 @@ static int ipa_test_hw_stats_query_quota_stats(void *priv)
                        continue;
 
                reg_idx = ipahal_get_ep_reg_idx(ep_idx);
-               if (!(ipa3_ctx->hw_stats.quota.init.enabled_bitmask[reg_idx] &
+               if (!(ipa3_ctx->hw_stats->quota.init.enabled_bitmask[reg_idx] &
                        ipahal_get_ep_bit(ep_idx)))
                        continue;
 

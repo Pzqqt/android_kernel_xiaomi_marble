@@ -2114,7 +2114,7 @@ struct ipa3_context {
 	u32 ipa_tz_unlock_reg_num;
 	struct ipa_tz_unlock_reg_info *ipa_tz_unlock_reg;
 	struct ipa_dma_task_info dma_task_info;
-	struct ipa_hw_stats hw_stats;
+	struct ipa_hw_stats *hw_stats;
 	struct ipa_flt_rt_counter flt_rt_counters;
 	struct ipa_cne_evt ipa_cne_evt_req_cache[IPA_MAX_NUM_REQ_CACHE];
 	int num_ipa_cne_evt_req;

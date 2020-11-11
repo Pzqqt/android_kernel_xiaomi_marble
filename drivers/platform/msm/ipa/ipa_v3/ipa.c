@@ -9978,6 +9978,10 @@ static void __exit ipa_module_exit(void)
 	if (running_emulation)
 		pci_unregister_driver(&ipa_pci_driver);
 	platform_driver_unregister(&ipa_plat_drv);
+	if(ipa3_ctx->hw_stats) {
+		kfree(ipa3_ctx->hw_stats);
+		ipa3_ctx->hw_stats = NULL;
+	}
 	kfree(ipa3_ctx);
 	ipa3_ctx = NULL;
 }
