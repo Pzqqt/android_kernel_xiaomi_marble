@@ -4726,6 +4726,30 @@ static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 	return scr;
 }
 
+int gsi_query_aqc_msi_addr(unsigned long chan_hdl, u32 *addr)
+{
+	if (!gsi_ctx) {
+		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
+		return -GSI_STATUS_NODEV;
+	}
+
+	if (chan_hdl >= gsi_ctx->max_ch) {
+		GSIERR("bad params chan_hdl=%lu\n", chan_hdl);
+		return -GSI_STATUS_INVALID_PARAMS;
+	}
+
+	if (gsi_ctx->chan[chan_hdl].state == GSI_CHAN_STATE_NOT_ALLOCATED) {
+		GSIERR("bad state %d\n",
+			gsi_ctx->chan[chan_hdl].state);
+		return -GSI_STATUS_UNSUPPORTED_OP;
+	}
+
+	*addr = gsihal_get_reg_nk_ofst(GSI_EE_n_GSI_CH_k_CNTXT_8,
+		gsi_ctx->per.ee, chan_hdl);
+
+	return 0;
+}
+EXPORT_SYMBOL(gsi_query_aqc_msi_addr);
 
 static int msm_gsi_probe(struct platform_device *pdev)
 {

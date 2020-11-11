@@ -3157,22 +3157,10 @@ static inline int ipa_eth_init(void) { return 0; }
 static inline void ipa_eth_exit(void) { }
 #endif
 void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client);
-int ipa3_eth_rtk_connect(
+int ipa3_eth_connect(
 	struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type);
-int ipa3_eth_aqc_connect(
-	struct ipa_eth_client_pipe_info *pipe,
-	enum ipa_client_type client_type);
-int ipa3_eth_emac_connect(
-	struct ipa_eth_client_pipe_info *pipe,
-	enum ipa_client_type client_type);
-int ipa3_eth_rtk_disconnect(
-	struct ipa_eth_client_pipe_info *pipe,
-	enum ipa_client_type client_type);
-int ipa3_eth_aqc_disconnect(
-	struct ipa_eth_client_pipe_info *pipe,
-	enum ipa_client_type client_type);
-int ipa3_eth_emac_disconnect(
+int ipa3_eth_disconnect(
 	struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type);
 int ipa3_eth_client_conn_evt(struct ipa_ecm_msg *msg);
