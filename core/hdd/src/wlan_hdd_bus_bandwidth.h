@@ -48,6 +48,8 @@ enum bus_bw_level {
 	BUS_BW_LEVEL_MAX,
 };
 
+#define BUS_BW_LEVEL_RESUME BUS_BW_LEVEL_3
+
 /**
  * enum tput_level - throughput levels
  *
@@ -181,6 +183,20 @@ int hdd_bbm_context_init(struct hdd_context *hdd_ctx);
  * Returns: None
  */
 void hdd_bbm_context_deinit(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_bbm_apply_independent_policy() - Function to apply independent policies
+ *  to set the bus bw level
+ * @hdd_ctx: HDD context
+ * @params: BBM policy related params
+ *
+ * The function applies BBM related policies and appropriately sets the bus
+ * bandwidth level.
+ *
+ * Returns: None
+ */
+void hdd_bbm_apply_independent_policy(struct hdd_context *hdd_ctx,
+				      struct bbm_params *params);
 #else
 static inline int hdd_bbm_context_init(struct hdd_context *hdd_ctx)
 {
@@ -188,6 +204,12 @@ static inline int hdd_bbm_context_init(struct hdd_context *hdd_ctx)
 }
 
 static inline void hdd_bbm_context_deinit(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_bbm_apply_independent_policy(struct hdd_context *hdd_ctx,
+				      struct bbm_params *params)
 {
 }
 #endif
