@@ -15210,6 +15210,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_FSE_CMEM_ALLOC_SUPPORT;
 	wmi_service[wmi_service_scan_conf_per_ch_support] =
 			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
+	wmi_service[wmi_service_csa_beacon_template] =
+			WMI_SERVICE_CSA_BEACON_TEMPLATE;
 
 	wmi_populate_service_get_sta_in_ll_stats_req(wmi_service);
 }
