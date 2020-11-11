@@ -3391,6 +3391,17 @@ int sme_update_he_ldpc_supp(mac_handle_t mac_handle, uint8_t session_id,
  */
 int sme_update_he_twt_req_support(mac_handle_t mac_handle, uint8_t session_id,
 				  uint8_t cfg_val);
+
+/**
+ * sme_update_he_full_ul_mumimo() - Configure full bandwidth of ul mu-mimo
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ * @value: set value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_full_ul_mumimo(mac_handle_t mac_handle, uint8_t session_id,
+				 uint8_t cfg_val);
 #else
 static inline void sme_update_tgt_he_cap(mac_handle_t mac_handle,
 					 struct wma_tgt_cfg *cfg,
@@ -3518,6 +3529,13 @@ static inline void sme_config_su_ppdu_queue(uint8_t session_id, bool enable)
 static inline int sme_update_he_twt_req_support(mac_handle_t mac_handle,
 						uint8_t session_id,
 						uint8_t cfg_val)
+{
+	return 0;
+}
+
+static inline int sme_update_he_full_ul_mumimo(mac_handle_t mac_handle,
+					       uint8_t session_id,
+					       uint8_t cfg_val)
 {
 	return 0;
 }

@@ -7061,6 +7061,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FILS_DISCOVERY_FRAMES_TX] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FULL_BW_UL_MU_MIMO] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -9683,6 +9685,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1];
 	int ret_val = 0;
 	uint8_t cfg_val = 0;
+	uint8_t ini_val = 0;
 	uint8_t set_val = 0;
 	struct sme_config_params *sme_config;
 	bool update_sme_cfg = false;
@@ -10157,6 +10160,39 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_update_he_twt_req_support(hdd_ctx->mac_handle,
 							adapter->vdev_id,
 							cfg_val);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FULL_BW_UL_MU_MIMO;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		ini_val = cfg_get(hdd_ctx->psoc, CFG_HE_UL_MUMIMO);
+		hdd_debug("fullbw_ulmumimo: cfg %d, ini %d", cfg_val, ini_val);
+		if (cfg_val) {
+			switch (ini_val) {
+			case CFG_NO_SUPPORT_UL_MUMIMO:
+			case CFG_FULL_BW_SUPPORT_UL_MUMIMO:
+				cfg_val = CFG_FULL_BW_SUPPORT_UL_MUMIMO;
+				break;
+			case CFG_PARTIAL_BW_SUPPORT_UL_MUMIMO:
+			case CFG_FULL_PARTIAL_BW_SUPPORT_UL_MUMIMO:
+				cfg_val = CFG_FULL_PARTIAL_BW_SUPPORT_UL_MUMIMO;
+				break;
+			}
+		} else {
+			switch (ini_val) {
+			case CFG_NO_SUPPORT_UL_MUMIMO:
+			case CFG_FULL_BW_SUPPORT_UL_MUMIMO:
+				cfg_val = CFG_NO_SUPPORT_UL_MUMIMO;
+				break;
+			case CFG_PARTIAL_BW_SUPPORT_UL_MUMIMO:
+			case CFG_FULL_PARTIAL_BW_SUPPORT_UL_MUMIMO:
+				cfg_val = CFG_PARTIAL_BW_SUPPORT_UL_MUMIMO;
+				break;
+			}
+		}
+		ret_val = sme_update_he_full_ul_mumimo(hdd_ctx->mac_handle,
+						       adapter->vdev_id,
+						       cfg_val);
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_PMF_PROTECTION;

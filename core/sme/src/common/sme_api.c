@@ -11894,6 +11894,25 @@ int sme_update_he_twt_req_support(mac_handle_t mac_handle, uint8_t session_id,
 
 	return 0;
 }
+
+int sme_update_he_full_ul_mumimo(mac_handle_t mac_handle, uint8_t session_id,
+				 uint8_t cfg_val)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ul_mu = cfg_val;
+
+	csr_update_session_he_cap(mac_ctx, session);
+
+	return 0;
+}
 #endif
 
 QDF_STATUS
