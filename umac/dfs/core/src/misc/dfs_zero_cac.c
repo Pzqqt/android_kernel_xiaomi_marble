@@ -5160,6 +5160,19 @@ dfs_process_radar_ind_on_agile_chan(struct wlan_dfs *dfs,
 			 radar_found->detector_id,
 			 nol_freq_list,
 			 num_channels);
+	 /*
+	  * EV 129487 : We have detected radar in the channel,
+	  * stop processing PHY error data as this can cause
+	  * false detect in the new channel while channel
+	  * change is in progress.
+	  */
+
+	 if (!dfs->dfs_is_offload_enabled) {
+		 dfs_radar_disable(dfs);
+		 dfs_second_segment_radar_disable(dfs);
+		 dfs_reset_radarq(dfs);
+	 }
+
 	if (is_radar_source_agile)
 		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
 					       DFS_AGILE_SM_EV_ADFS_RADAR);
