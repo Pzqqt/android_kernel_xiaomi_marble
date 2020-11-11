@@ -3564,11 +3564,10 @@ static void _sde_crtc_remove_pipe_flush(struct drm_crtc *crtc)
 	}
 }
 
-static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc,
-		struct drm_crtc_state *old_state)
+static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
-	struct sde_crtc_state *cstate = to_sde_crtc_state(old_state);
+	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 	struct sde_kms *sde_kms = _sde_crtc_get_kms(crtc);
 	struct msm_drm_private *priv;
 	struct msm_drm_thread *event_thread;
@@ -3815,7 +3814,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		spin_unlock_irqrestore(&dev->event_lock, flags);
 	}
 
-	_sde_crtc_schedule_idle_notify(crtc, old_state);
+	_sde_crtc_schedule_idle_notify(crtc);
 
 	SDE_ATRACE_END("crtc_commit");
 }
