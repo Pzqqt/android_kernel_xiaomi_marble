@@ -447,7 +447,7 @@ enum wmamsgtype {
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
 
 #define wma_tx_frame(hHal, pFrmBuf, frmLen, frmType, txDir, tid, pCompFunc, \
-		   pData, txFlag, sessionid, channel_freq, rid) \
+		   pData, txFlag, sessionid, channel_freq, rid, peer_rssi) \
 	(QDF_STATUS)( wma_tx_packet( \
 		      cds_get_context(QDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
@@ -462,11 +462,12 @@ enum wmamsgtype {
 		      (sessionid), \
 		      (false), \
 		      (channel_freq), \
-		      (rid)))
+		      (rid), \
+		      (peer_rssi)))
 
 #define wma_tx_frameWithTxComplete(hHal, pFrmBuf, frmLen, frmType, txDir, tid, \
 	 pCompFunc, pData, pCBackFnTxComp, txFlag, sessionid, tdlsflag, \
-	 channel_freq, rid) \
+	 channel_freq, rid, peer_rssi) \
 	(QDF_STATUS)( wma_tx_packet( \
 		      cds_get_context(QDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
@@ -481,7 +482,8 @@ enum wmamsgtype {
 		      (sessionid), \
 		      (tdlsflag), \
 		      (channel_freq), \
-		      (rid)))
+		      (rid), \
+		      (peer_rssi)))
 
 /**
  * struct sUapsd_Params - Powersave Offload Changes
@@ -674,6 +676,7 @@ void wma_tx_abort(uint8_t vdev_id);
  * @tdls_flag: tdls flag
  * @channel_freq: channel frequency
  * @rid: rate id
+ * @peer_rssi: peer RSSI value
  *
  * This function sends the frame corresponding to the
  * given vdev id.
@@ -687,7 +690,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 void *pData,
 			 wma_tx_ota_comp_callback tx_frm_ota_comp_cb,
 			 uint8_t tx_flag, uint8_t vdev_id, bool tdls_flag,
-			 uint16_t channel_freq, enum rateid rid);
+			 uint16_t channel_freq, enum rateid rid,
+			 int8_t peer_rssi);
 
 /**
  * wma_open() - Allocate wma context and initialize it.

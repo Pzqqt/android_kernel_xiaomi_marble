@@ -518,6 +518,9 @@ typedef struct sAniSirLim {
 	tCacheParams protStaOverlapCache[LIM_PROT_STA_OVERLAP_CACHE_SIZE];
 	tCacheParams protStaCache[LIM_PROT_STA_CACHE_SIZE];
 
+	/* Peer RSSI value */
+	int8_t bss_rssi;
+
 	/* ASSOC RELATED END */
 
 	/* //////////////////////////////  HT RELATED           ////////////////////////////////////////// */

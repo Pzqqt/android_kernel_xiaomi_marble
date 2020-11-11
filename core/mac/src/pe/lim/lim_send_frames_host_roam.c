@@ -451,7 +451,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 				(uint16_t) (bytes + ft_ies_length),
 				TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 				lim_tx_complete, frame, tx_flag, vdev_id,
-				0, RATEID_DEFAULT);
+				0, RATEID_DEFAULT, 0);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       pe_session->peSessionId, qdf_status));
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -786,7 +786,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + nPayload),
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, txFlag, smeSessionId, 0,
-			   RATEID_DEFAULT);
+			   RATEID_DEFAULT, 0);
 	MTRACE(qdf_trace
 		       (QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       pe_session->peSessionId, qdf_status));
