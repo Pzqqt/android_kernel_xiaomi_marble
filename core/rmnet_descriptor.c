@@ -1441,6 +1441,140 @@ rmnet_frag_data_check_coal_header(struct rmnet_frag_descriptor *frag_desc,
 	return 0;
 }
 
+static int rmnet_frag_checksum_pkt(struct rmnet_frag_descriptor *frag_desc)
+{
+	struct rmnet_priv *priv = netdev_priv(frag_desc->dev);
+	struct rmnet_fragment *frag;
+	int offset = sizeof(struct rmnet_map_header) +
+		     sizeof(struct rmnet_map_v5_csum_header);
+	u8 *version, __version;
+	__wsum csum;
+	u16 csum_len;
+
+	version = rmnet_frag_header_ptr(frag_desc, offset, sizeof(*version),
+					&__version);
+	if (!version)
+		return -EINVAL;
+
+	if ((*version & 0xF0) == 0x40) {
+		struct iphdr *iph;
+		u8 __iph[60]; /* Max IP header size (0xF * 4) */
+
+		/* We need to access the entire IP header including options
+		 * to validate its checksum. Fortunately, the version byte
+		 * also will tell us the length, so we only need to pull
+		 * once ;)
+		 */
+		frag_desc->ip_len = (*version & 0xF) * 4;
+		iph = rmnet_frag_header_ptr(frag_desc, offset,
+					    frag_desc->ip_len,
+					    __iph);
+		if (!iph || ip_is_fragment(iph))
+			return -EINVAL;
+
+		/* Length needs to be sensible */
+		csum_len = ntohs(iph->tot_len);
+		if (csum_len > frag_desc->len - offset)
+			return -EINVAL;
+
+		csum_len -= frag_desc->ip_len;
+		/* IPv4 checksum must be valid */
+		if (ip_fast_csum((u8 *)iph, frag_desc->ip_len)) {
+			priv->stats.csum_sw++;
+			return 0;
+		}
+
+		frag_desc->ip_proto = 4;
+		frag_desc->trans_proto = iph->protocol;
+		csum = ~csum_tcpudp_magic(iph->saddr, iph->daddr,
+					  csum_len,
+					  frag_desc->trans_proto, 0);
+	} else if ((*version & 0xF0) == 0x60) {
+		struct ipv6hdr *ip6h, __ip6h;
+		int ip_len;
+		__be16 frag_off;
+		u8 protocol;
+
+		ip6h = rmnet_frag_header_ptr(frag_desc, offset, sizeof(*ip6h),
+					     &__ip6h);
+		if (!ip6h)
+			return -EINVAL;
+
+		frag_desc->ip_proto = 6;
+		protocol = ip6h->nexthdr;
+		ip_len = rmnet_frag_ipv6_skip_exthdr(frag_desc,
+						     offset + sizeof(*ip6h),
+						     &protocol, &frag_off);
+		if (ip_len < 0 || frag_off)
+			return -EINVAL;
+
+		/* Length needs to be sensible */
+		frag_desc->ip_len = (u16)ip_len;
+		csum_len = ntohs(ip6h->payload_len);
+		if (csum_len + frag_desc->ip_len > frag_desc->len - offset)
+			return -EINVAL;
+
+		frag_desc->trans_proto = protocol;
+		csum = ~csum_ipv6_magic(&ip6h->saddr, &ip6h->daddr,
+					csum_len,
+					frag_desc->trans_proto, 0);
+	} else {
+		/* Not checksumable */
+		return -EINVAL;
+	}
+
+	/* Protocol check */
+	if (frag_desc->trans_proto != IPPROTO_TCP &&
+	    frag_desc->trans_proto != IPPROTO_UDP)
+		return -EINVAL;
+
+	offset += frag_desc->ip_len;
+	/* Check for UDP zero csum packets */
+	if (frag_desc->trans_proto == IPPROTO_UDP) {
+		struct udphdr *uh, __uh;
+
+		uh = rmnet_frag_header_ptr(frag_desc, offset, sizeof(*uh),
+					   &__uh);
+		if (!uh)
+			return -EINVAL;
+
+		if (!uh->check) {
+			if (frag_desc->ip_proto == 4) {
+				/* Zero checksum is valid */
+				priv->stats.csum_sw++;
+				return 1;
+			}
+
+			/* Not valid in IPv6 */
+			priv->stats.csum_sw++;
+			return 0;
+		}
+	}
+
+	/* Walk the frags and checksum each chunk */
+	list_for_each_entry(frag, &frag_desc->frags, list) {
+		u32 frag_size = skb_frag_size(&frag->frag);
+
+		if (!csum_len)
+			break;
+
+		if (offset < frag_size) {
+			void *addr = skb_frag_address(&frag->frag) + offset;
+			u32 len = min_t(u32, csum_len, frag_size - offset);
+
+			/* Checksum 'len' bytes and add them in */
+			csum = csum_partial(addr, len, csum);
+			csum_len -= len;
+			offset = 0;
+		} else {
+			offset -= frag_size;
+		}
+	}
+
+	priv->stats.csum_sw++;
+	return !csum_fold(csum);
+}
+
 /* Process a QMAPv5 packet header */
 int rmnet_frag_process_next_hdr_packet(struct rmnet_frag_descriptor *frag_desc,
 				       struct rmnet_port *port,
@@ -1485,7 +1619,18 @@ int rmnet_frag_process_next_hdr_packet(struct rmnet_frag_descriptor *frag_desc,
 			priv->stats.csum_ok++;
 			frag_desc->csum_valid = true;
 		} else {
-			priv->stats.csum_valid_unset++;
+			int valid = rmnet_frag_checksum_pkt(frag_desc);
+
+			if (valid < 0) {
+				priv->stats.csum_validation_failed++;
+			} else if (valid) {
+				/* All's good */
+				priv->stats.csum_ok++;
+				frag_desc->csum_valid = true;
+			} else {
+				/* Checksum is actually bad */
+				priv->stats.csum_valid_unset++;
+			}
 		}
 
 		if (!rmnet_frag_pull(frag_desc, port,
