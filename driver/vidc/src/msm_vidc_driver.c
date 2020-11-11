@@ -34,14 +34,14 @@ void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 	mbuf = get_meta_buffer(inst, vbuf);
 	if (!mbuf)
 		dprintk(tag, inst->sid,
-			"%s: %s: idx %2d fd %3d off %d daddr %#x size %d filled %d flags %#x ts %lld attr %#x\n",
+			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
 			str, vbuf->type == MSM_VIDC_BUF_INPUT ? "INPUT" : "OUTPUT",
 			vbuf->index, vbuf->fd, vbuf->data_offset,
 			vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
 			vbuf->flags, vbuf->timestamp, vbuf->attr);
 	else
 		dprintk(tag, inst->sid,
-			"%s: %s: idx %2d fd %3d off %d daddr %#x size %d filled %d flags %#x ts %lld attr %#x meta: fd %3d daddr %#x size %d\n",
+			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x meta: fd %3d daddr %#llx size %d\n",
 			str, vbuf->type == MSM_VIDC_BUF_INPUT ? "INPUT" : "OUTPUT",
 			vbuf->index, vbuf->fd, vbuf->data_offset,
 			vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
@@ -784,14 +784,78 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	return rc;
 }
 
-int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
-		enum msm_vidc_buffer_type buffer_type)
+int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer)
+{
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_allocations *allocations;
+	struct msm_vidc_mappings *mappings;
+	struct msm_vidc_alloc *alloc, *alloc_dummy;
+	struct msm_vidc_map  *map, *map_dummy;
+	struct msm_vidc_buffer *buf, *dummy;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!is_internal_buffer(buffer->type)) {
+		s_vpr_e(inst->sid, "%s: buffer type %#x is not internal\n",
+			__func__, buffer->type);
+		return 0;
+	}
+
+	s_vpr_h(inst->sid,
+		"%s: destroy buffer_type %#x, size %d device_addr %#x\n",
+		__func__, buffer->type, buffer->buffer_size,
+		buffer->device_addr);
+
+	buffers = msm_vidc_get_buffers(inst, buffer->type, __func__);
+	if (!buffers)
+		return -EINVAL;
+	allocations = msm_vidc_get_allocations(inst, buffer->type, __func__);
+	if (!allocations)
+		return -EINVAL;
+	mappings = msm_vidc_get_mappings(inst, buffer->type, __func__);
+	if (!mappings)
+		return -EINVAL;
+
+	list_for_each_entry_safe(map, map_dummy, &mappings->list, list) {
+		if (map->dmabuf == buffer->dmabuf) {
+			msm_vidc_memory_unmap(inst->core, map);
+			list_del(&map->list);
+			kfree(map);
+		}
+	}
+
+	list_for_each_entry_safe(alloc, alloc_dummy, &allocations->list, list) {
+		if (alloc->dmabuf == buffer->dmabuf) {
+			msm_vidc_memory_free(inst->core, alloc);
+			list_del(&alloc->list);
+			kfree(alloc);
+		}
+	}
+
+	list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
+		if (buf->dmabuf == buffer->dmabuf) {
+			list_del(&buf->list);
+			kfree(buf);
+		}
+	}
+
+	return 0;
+}
+
+int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type, u32 index)
 {
 	int rc = 0;
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_allocations *allocations;
 	struct msm_vidc_mappings *mappings;
-	int i;
+	struct msm_vidc_buffer *buffer;
+	struct msm_vidc_alloc *alloc;
+	struct msm_vidc_map *map;
 
 	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
@@ -814,65 +878,83 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 	if (!mappings)
 		return -EINVAL;
 
-	for (i = 0; i < buffers->min_count; i++) {
-		struct msm_vidc_buffer *buffer;
-		struct msm_vidc_alloc *alloc;
-		struct msm_vidc_map *map;
-
-		if (!buffers->size) {
-			s_vpr_e(inst->sid, "%s: invalid buffer %#x\n",
-				__func__, buffer_type);
-			return -EINVAL;
-		}
-		buffer = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
-		if (!buffer) {
-			s_vpr_e(inst->sid, "%s: buf alloc failed\n", __func__);
-			return -ENOMEM;
-		}
-		INIT_LIST_HEAD(&buffer->list);
-		buffer->valid = true;
-		buffer->type = buffer_type;
-		buffer->index = i;
-		buffer->buffer_size = buffers->size;
-		list_add_tail(&buffer->list, &buffers->list);
-
-		alloc = kzalloc(sizeof(struct msm_vidc_alloc), GFP_KERNEL);
-		if (!alloc) {
-			s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
-			return -ENOMEM;
-		}
-		INIT_LIST_HEAD(&alloc->list);
-		alloc->type = buffer_type;
-		alloc->region = msm_vidc_get_buffer_region(inst,
-					buffer_type, __func__);
-		alloc->size = buffer->buffer_size;
-		rc = msm_vidc_memory_alloc(inst->core, alloc);
-		if (rc)
-			return -ENOMEM;
-		list_add_tail(&alloc->list, &allocations->list);
-
-		map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
-		if (!map) {
-			s_vpr_e(inst->sid, "%s: map alloc failed\n", __func__);
-			return -ENOMEM;
-		}
-		INIT_LIST_HEAD(&map->list);
-		map->type = alloc->type;
-		map->region = alloc->region;
-		map->dmabuf = alloc->dmabuf;
-		rc = msm_vidc_memory_map(inst->core, map);
-		if (rc)
-			return -ENOMEM;
-		list_add_tail(&map->list, &mappings->list);
-
-		buffer->device_addr = map->device_addr;
-		s_vpr_h(inst->sid,
-			"%s: created buffer_type %#x, size %d device_addr %#x\n",
-			__func__, buffer_type, buffers->size,
-			buffer->device_addr);
+	if (!buffers->size) {
+		s_vpr_e(inst->sid, "%s: invalid buffer %#x\n",
+			__func__, buffer_type);
+		return -EINVAL;
 	}
+	buffer = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+	if (!buffer) {
+		s_vpr_e(inst->sid, "%s: buf alloc failed\n", __func__);
+		return -ENOMEM;
+	}
+	INIT_LIST_HEAD(&buffer->list);
+	buffer->valid = true;
+	buffer->type = buffer_type;
+	buffer->index = index;
+	buffer->buffer_size = buffers->size;
+	list_add_tail(&buffer->list, &buffers->list);
+
+	alloc = kzalloc(sizeof(struct msm_vidc_alloc), GFP_KERNEL);
+	if (!alloc) {
+		s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
+		return -ENOMEM;
+	}
+	INIT_LIST_HEAD(&alloc->list);
+	alloc->type = buffer_type;
+	alloc->region = msm_vidc_get_buffer_region(inst,
+		buffer_type, __func__);
+	alloc->size = buffer->buffer_size;
+	rc = msm_vidc_memory_alloc(inst->core, alloc);
+	if (rc)
+		return -ENOMEM;
+	list_add_tail(&alloc->list, &allocations->list);
+
+	map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
+	if (!map) {
+		s_vpr_e(inst->sid, "%s: map alloc failed\n", __func__);
+		return -ENOMEM;
+	}
+	INIT_LIST_HEAD(&map->list);
+	map->type = alloc->type;
+	map->region = alloc->region;
+	map->dmabuf = alloc->dmabuf;
+	rc = msm_vidc_memory_map(inst->core, map);
+	if (rc)
+		return -ENOMEM;
+	list_add_tail(&map->list, &mappings->list);
+
+	buffer->dmabuf = alloc->dmabuf;
+	buffer->device_addr = map->device_addr;
+	s_vpr_h(inst->sid,
+		"%s: created buffer_type %#x, size %d device_addr %#x\n",
+		__func__, buffer_type, buffers->size,
+		buffer->device_addr);
 
 	return 0;
+}
+
+int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	int i;
+
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	buffers = msm_vidc_get_buffers(inst, buffer_type, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	for (i = 0; i < buffers->min_count; i++)
+		rc = msm_vidc_create_internal_buffer(inst, buffer_type, i);
+
+	return rc;
 }
 
 int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,

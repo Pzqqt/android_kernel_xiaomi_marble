@@ -8,6 +8,46 @@
 #include "venus_hfi_response.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_driver.h"
+#include "msm_vdec.h"
+
+u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
+	enum hfi_packet_port_type hfi_port)
+{
+	enum msm_vidc_port_type port = MAX_PORT;
+
+	if (is_decode_session(inst)) {
+		switch (hfi_port) {
+		case HFI_PORT_BITSTREAM:
+			port = INPUT_PORT;
+			break;
+		case HFI_PORT_RAW:
+			port = OUTPUT_PORT;
+			break;
+		default:
+			s_vpr_e(inst->sid, "%s: invalid hfi port type %d\n",
+				__func__, hfi_port);
+			break;
+		}
+	} else if (is_encode_session(inst)) {
+		switch (hfi_port) {
+		case HFI_PORT_RAW:
+			port = INPUT_PORT;
+			break;
+		case HFI_PORT_BITSTREAM:
+			port = OUTPUT_PORT;
+			break;
+		default:
+			s_vpr_e(inst->sid, "%s: invalid hfi port type %d\n",
+				__func__, hfi_port);
+			break;
+		}
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid domain %#x\n",
+			__func__, inst->domain);
+	}
+
+	return port;
+}
 
 bool is_valid_hfi_port(struct msm_vidc_inst *inst, u32 port,
 	const char *func)
@@ -426,6 +466,151 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static int handle_persist_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_PERSIST, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
+static int handle_line_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_LINE, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
+static int handle_non_comv_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_NON_COMV, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
+static int handle_comv_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_COMV, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
+static int handle_bin_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_BIN, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
 static int handle_session_buffer(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -470,6 +655,16 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 				rc = handle_input_metadata_buffer(inst, buffer);
 			else if (buf_type == HFI_BUFFER_BITSTREAM)
 				rc = handle_input_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_BIN)
+				rc = handle_bin_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_COMV)
+				rc = handle_comv_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_NON_COMV)
+				rc = handle_non_comv_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_LINE)
+				rc = handle_line_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_PERSIST)
+				rc = handle_persist_buffer(inst, buffer);
 		} else if (port_type == HFI_PORT_RAW) {
 			if (buf_type == HFI_BUFFER_METADATA)
 				rc = handle_output_metadata_buffer(inst, buffer);
@@ -552,7 +747,54 @@ static int handle_session_command(struct msm_vidc_inst *inst,
 static int handle_session_property(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
+	u32 port;
+	u32 *payload_ptr;
+
 	s_vpr_h(inst->sid, "%s: property type %#x\n", __func__, pkt->type);
+
+	port = vidc_port_from_hfi(inst, pkt->port);
+	payload_ptr = (u32 *)((u8 *)pkt + sizeof(struct hfi_packet));
+
+	switch (pkt->type) {
+	case HFI_PROP_BITSTREAM_RESOLUTION:
+		inst->subcr_params[port].bitstream_resolution = payload_ptr[0];
+		break;
+	case HFI_PROP_CROP_OFFSETS:
+		inst->subcr_params[port].crop_offsets =
+			(u64)payload_ptr[0] << 32 | payload_ptr[1];
+		break;
+	case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
+		inst->subcr_params[port].bit_depth = payload_ptr[0];
+		break;
+	case HFI_PROP_CABAC_SESSION:
+		inst->subcr_params[port].cabac = payload_ptr[0];
+		break;
+	case HFI_PROP_CODED_FRAMES:
+		inst->subcr_params[port].coded_frames = payload_ptr[0];
+		break;
+	case HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT:
+		inst->subcr_params[port].fw_min_count = payload_ptr[0];
+		break;
+	case HFI_PROP_PIC_ORDER_CNT_TYPE:
+		inst->subcr_params[port].pic_order_cnt = payload_ptr[0];
+		break;
+	case HFI_PROP_SIGNAL_COLOR_INFO:
+		inst->subcr_params[port].color_info = payload_ptr[0];
+		break;
+	case HFI_PROP_PROFILE:
+		inst->subcr_params[port].profile = payload_ptr[0];
+		break;
+	case HFI_PROP_LEVEL:
+		inst->subcr_params[port].level = payload_ptr[0];
+		break;
+	case HFI_PROP_TIER:
+		inst->subcr_params[port].tier = payload_ptr[0];
+		break;
+	default:
+		s_vpr_e(inst->sid, "%s: invalid port settings property %#x\n",
+			__func__, pkt->type);
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -662,6 +904,8 @@ static int handle_session_response(struct msm_vidc_core *core,
 	}
 
 	mutex_lock(&inst->lock);
+	inst->hfi_cmd_type = 0;
+	inst->hfi_port = 0;
 	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	for (i = 0; i < hdr->num_packets; i++) {
@@ -673,6 +917,15 @@ static int handle_session_response(struct msm_vidc_core *core,
 		packet = (struct hfi_packet *)pkt;
 		if (packet->type < HFI_CMD_END &&
 		    packet->type > HFI_CMD_BEGIN) {
+			if (inst->hfi_cmd_type || inst->hfi_port) {
+				s_vpr_e(inst->sid,
+					"%s: invalid cmd %d, port %d \n",
+					__func__, inst->hfi_cmd_type,
+					inst->hfi_port);
+				return -EINVAL;
+			}
+			inst->hfi_cmd_type = packet->type;
+			inst->hfi_port = packet->port;
 			rc = handle_session_command(inst, packet);
 		} else if (packet->type > HFI_PROP_BEGIN &&
 			   packet->type < HFI_PROP_END) {
@@ -688,6 +941,14 @@ static int handle_session_response(struct msm_vidc_core *core,
 		}
 		pkt += packet->size;
 	}
+
+	if (inst->hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
+		if (inst->hfi_port == HFI_PORT_BITSTREAM)
+			rc = msm_vdec_input_port_settings_change(inst);
+		else if (inst->hfi_port == HFI_PORT_RAW)
+			rc = msm_vdec_output_port_settings_change(inst);
+	}
+
 exit:
 	mutex_unlock(&inst->lock);
 	put_inst(inst);

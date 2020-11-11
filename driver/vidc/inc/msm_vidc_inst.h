@@ -111,8 +111,7 @@ struct msm_vidc_inst {
 	bool                               subscribed_output_psc;
 	bool                               subscribed_input_prop;
 	bool                               subscribed_output_prop;
-	struct msm_vidc_subscription_params       vidc_subcr[MAX_PORT];
-	struct msm_vidc_subscription_params       hfi_subcr[MAX_PORT];
+	struct msm_vidc_subscription_params       subcr_params[MAX_PORT];
 	struct msm_vidc_decode_batch       decode_batch;
 	struct msm_vidc_decode_vpp_delay   decode_vpp_delay;
 	struct msm_vidc_session_idle       session_idle;
@@ -124,6 +123,9 @@ struct msm_vidc_inst {
 	struct msm_vidc_debug              debug;
 	struct msm_vidc_inst_capability   *capabilities;
 	struct completion                  completions[MAX_SIGNAL];
+	u32                                hfi_cmd_type;
+	u32                                hfi_port;
+
 };
 
 #endif // _MSM_VIDC_INST_H_

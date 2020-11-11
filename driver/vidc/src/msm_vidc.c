@@ -789,6 +789,8 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
 	inst->request = false;
+	inst->hfi_cmd_type = 0;
+	inst->hfi_port = 0;
 	for (i = 0; i < MAX_SIGNAL; i++)
 		init_completion(&inst->completions[i]);
 

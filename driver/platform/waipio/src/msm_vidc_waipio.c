@@ -905,6 +905,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		DEFAULT_VIDEO_CONCEAL_COLOR_BLACK,
 		V4L2_CID_MPEG_VIDEO_MUTE_YUV,
 		HFI_PROP_CONCEAL_COLOR_10BIT},
+
+	{STAGE, DEC|ENC, CODECS_ALL, 1, 2, 1, 2},
+	{PIPE, DEC|ENC, CODECS_ALL, 1, 4, 1, 4},
+	{POC, DEC, H264, 0, 1, 1, 0},
 };
 
 /*

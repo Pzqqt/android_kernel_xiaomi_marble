@@ -323,6 +323,9 @@ enum msm_vidc_inst_capability_type {
 	DISPLAY_DELAY,
 	CONCEAL_COLOR_8BIT,
 	CONCEAL_COLOR_10BIT,
+	STAGE,
+	PIPE,
+	POC,
 	INST_CAP_MAX,
 };
 
@@ -539,16 +542,17 @@ struct msm_vidc_properties {
 };
 
 struct msm_vidc_subscription_params {
-	u32                    align_width;
-	u32                    align_height;
-	struct msm_vidc_crop   crop;
-	struct msm_vidc_color_info   color_info;
+	u32                    bitstream_resolution;
+	u64                    crop_offsets;
 	u32                    bit_depth;
 	u32                    cabac;
-	u32                    interlace;
-	u32                    min_count;
+	u32                    coded_frames;
+	u32                    fw_min_count;
 	u32                    pic_order_cnt;
+	u32                    color_info;
 	u32                    profile;
+	u32                    level;
+	u32                    tier;
 };
 
 struct msm_vidc_decode_vpp_delay {
