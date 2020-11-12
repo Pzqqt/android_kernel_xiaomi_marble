@@ -623,7 +623,7 @@ static void wlan_ipa_pm_flush(void *data)
 
 int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 {
-	if (!ipa_is_ready()) {
+	if (!ipa_cb_is_ready()) {
 		ipa_info("IPA is not READY");
 		return 0;
 	}
@@ -3392,7 +3392,7 @@ QDF_STATUS wlan_ipa_cleanup(struct wlan_ipa_priv *ipa_ctx)
 	struct wlan_ipa_iface_context *iface_context;
 	int i;
 
-	if (!ipa_is_ready())
+	if (!ipa_cb_is_ready())
 		return QDF_STATUS_SUCCESS;
 
 	if (!wlan_ipa_uc_is_enabled(ipa_ctx->config))
