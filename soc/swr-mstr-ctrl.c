@@ -749,17 +749,14 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 	struct port_params *params;
 	u32 usecase = 0;
 
+	if (swrm->master_id == MASTER_ID_TX)
+		return 0;
 	/* TODO - Send usecase information to avoid checking for master_id */
 	if (swrm->mport_cfg[SWRM_DSD_PARAMS_PORT].port_en &&
 				(swrm->master_id == MASTER_ID_RX))
 		usecase = 1;
 	else if ((swrm->master_id == MASTER_ID_RX) &&
 		(swrm->bus_clk == SWR_CLK_RATE_11P2896MHZ))
-		usecase = 2;
-
-	if (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ)
-		usecase = 1;
-	else if (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ)
 		usecase = 2;
 
 	params = swrm->port_param[usecase];
@@ -1413,7 +1410,9 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 {
 	u32 value = 0, slv_id = 0;
 	struct swr_port_info *port_req;
-	int i;
+	int i, j;
+	u16 sinterval = 0xFFFF;
+	u8 lane_ctrl = 0;
 	struct swrm_mports *mport;
 	u32 reg[SWRM_MAX_PORT_REG];
 	u32 val[SWRM_MAX_PORT_REG];
@@ -1439,8 +1438,11 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 
 		if (mport->stream_type == SWR_PCM)
 			swrm_pcm_port_config(swrm, (i + 1), mport->dir, true);
-
+		j = 0;
+		lane_ctrl  = 0;
+		sinterval = 0xFFFF;
 		list_for_each_entry(port_req, &mport->port_req_list, list) {
+			j++;
 			slv_id = port_req->slave_port_id;
 			/* Assumption: If different channels in the same port
 			 * on master is enabled for different slaves, then each
@@ -1448,6 +1450,18 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 			 */
 			swrm_get_device_frame_shape(swrm, mport, port_req);
 
+			if (j == 1) {
+				sinterval = port_req->sinterval;
+				lane_ctrl = port_req->lane_ctrl;
+			} else if (sinterval != port_req->sinterval ||
+					lane_ctrl != port_req->lane_ctrl) {
+				dev_err(swrm->dev,
+					"%s:slaves/slave ports attaching to mport%d"\
+					" are not using same SI or data lane, update slave tables,"\
+					"bailing out without setting port config\n",
+					__func__, i);
+				return;
+			}
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
 			val[len++] = SWR_REG_VAL_PACK(port_req->req_ch,
 					port_req->dev_num, 0x00,
@@ -1528,6 +1542,10 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 			}
 			port_req->ch_en = port_req->req_ch;
 			dev_offset[port_req->dev_num] = port_req->offset1;
+		}
+		if (swrm->master_id == MASTER_ID_TX) {
+			mport->sinterval = sinterval;
+			mport->lane_ctrl = lane_ctrl;
 		}
 		value = ((mport->req_ch)
 				<< SWRM_DP_PORT_CTRL_EN_CHAN_SHFT);
@@ -2800,9 +2818,23 @@ static int swrm_probe(struct platform_device *pdev)
 	cpu_latency_qos_add_request(&swrm->pm_qos_req,
 			   PM_QOS_DEFAULT_VALUE);
 
-	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++)
+	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++) {
 		INIT_LIST_HEAD(&swrm->mport_cfg[i].port_req_list);
 
+		if (swrm->master_id == MASTER_ID_TX) {
+			swrm->mport_cfg[i].sinterval = 0xFFFF;
+			swrm->mport_cfg[i].offset1 = 0x00;
+			swrm->mport_cfg[i].offset2 = 0x00;
+			swrm->mport_cfg[i].hstart = 0xFF;
+			swrm->mport_cfg[i].hstop = 0xFF;
+			swrm->mport_cfg[i].blk_pack_mode = 0xFF;
+			swrm->mport_cfg[i].blk_grp_count = 0xFF;
+			swrm->mport_cfg[i].word_length = 0xFF;
+			swrm->mport_cfg[i].lane_ctrl = 0x00;
+			swrm->mport_cfg[i].dir = 0x00;
+			swrm->mport_cfg[i].stream_type = 0x00;
+		}
+	}
 	if (of_property_read_u32(pdev->dev.of_node,
 			"qcom,disable-div2-clk-switch",
 			&swrm->disable_div2_clk_switch)) {
