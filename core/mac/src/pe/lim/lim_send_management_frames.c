@@ -3578,6 +3578,13 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 			       (QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			       pe_session->peSessionId, qdf_status));
 
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			pe_err("Failed to send disassoc frame");
+			lim_tx_complete(mac, pPacket, true);
+			lim_send_disassoc_cnf(mac);
+			return;
+		}
+
 		val = SYS_MS_TO_TICKS(LIM_DISASSOC_DEAUTH_ACK_TIMEOUT);
 
 		if (tx_timer_change
