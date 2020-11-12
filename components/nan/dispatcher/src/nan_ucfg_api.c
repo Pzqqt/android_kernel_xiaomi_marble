@@ -645,6 +645,9 @@ QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 				return QDF_STATUS_E_INVAL;
 			}
 
+			if (policy_mgr_is_sta_mon_concurrency(psoc))
+				return QDF_STATUS_E_INVAL;
+
 			/*
 			 * Take a psoc reference while it is being used by the
 			 * NAN requests.

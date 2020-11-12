@@ -4500,3 +4500,89 @@ uint8_t policy_mgr_get_roam_enabled_sta_session_id(
 
 	return WLAN_UMAC_VDEV_ID_MAX;
 }
+
+bool policy_mgr_is_sta_mon_concurrency(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t conc_mode;
+
+	if (wlan_mlme_is_sta_mon_conc_supported(psoc)) {
+		conc_mode = policy_mgr_get_concurrency_mode(psoc);
+		if (conc_mode & QDF_STA_MASK &&
+		    conc_mode & QDF_MONITOR_MASK) {
+			policy_mgr_err("STA + MON mode is UP");
+			return true;
+		}
+	}
+	return false;
+}
+
+QDF_STATUS policy_mgr_check_mon_concurrency(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t num_open_session = 0;
+
+	if (policy_mgr_mode_specific_num_open_sessions(
+				psoc,
+				QDF_MONITOR_MODE,
+				&num_open_session) != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_INVAL;
+
+	if (num_open_session) {
+		policy_mgr_err("monitor mode already exists, only one is possible");
+		return QDF_STATUS_E_BUSY;
+	}
+
+	num_open_session = policy_mgr_mode_specific_connection_count(
+					psoc,
+					PM_SAP_MODE,
+					NULL);
+
+	if (num_open_session) {
+		policy_mgr_err("cannot add monitor mode, due to SAP concurrency");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Ensure there is only one station interface */
+	if (policy_mgr_mode_specific_num_open_sessions(
+				psoc,
+				QDF_STA_MODE,
+				&num_open_session) != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_INVAL;
+
+	if (num_open_session > 1) {
+		policy_mgr_err("cannot add monitor mode, due to %u sta interfaces",
+			       num_open_session);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	num_open_session = policy_mgr_mode_specific_connection_count(
+					psoc,
+					PM_P2P_CLIENT_MODE,
+					NULL);
+
+	if (num_open_session) {
+		policy_mgr_err("cannot add monitor mode, due to P2P CLIENT concurrency");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	num_open_session = policy_mgr_mode_specific_connection_count(
+					psoc,
+					PM_P2P_GO_MODE,
+					NULL);
+
+	if (num_open_session) {
+		policy_mgr_err("cannot add monitor mode, due to P2P GO concurrency");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	num_open_session = policy_mgr_mode_specific_connection_count(
+					psoc,
+					PM_NAN_DISC_MODE,
+					NULL);
+
+	if (num_open_session) {
+		policy_mgr_err("cannot add monitor mode, due to NAN concurrency");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

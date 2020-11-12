@@ -489,7 +489,9 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 		goto rel_ref;
 	}
 
-	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+	if ((cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE) ||
+	    (policy_mgr_is_sta_mon_concurrency(wma_handle->psoc) &&
+	    wlan_vdev_mlme_get_opmode(iface->vdev) == QDF_MONITOR_MODE))
 		wma_handle_monitor_mode_vdev_detach(wma_handle, vdev_id);
 
 rel_ref:
