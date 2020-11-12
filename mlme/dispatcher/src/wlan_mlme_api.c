@@ -4670,3 +4670,24 @@ QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static enum monitor_mode_concurrency
+wlan_mlme_get_monitor_mode_concurrency(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_MONITOR_MODE_CONCURRENCY);
+
+	return mlme_obj->cfg.gen.monitor_mode_concurrency;
+}
+
+bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	if (wlan_mlme_get_monitor_mode_concurrency(psoc) ==
+						MONITOR_MODE_CONC_STA_SCAN_MON)
+		return true;
+
+	return false;
+}
