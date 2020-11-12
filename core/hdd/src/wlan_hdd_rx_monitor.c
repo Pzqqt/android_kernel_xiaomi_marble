@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,15 +25,8 @@
 #include <cds_utils.h>
 #include "wlan_hdd_rx_monitor.h"
 #include "ol_txrx.h"
+#include "cdp_txrx_mon.h"
 
-/**
- * hdd_rx_monitor_callback(): Callback function for receive monitor mode
- * @vdev: Handle to vdev object
- * @mpdu: pointer to mpdu to be delivered to os
- * @rx_status: receive status
- *
- * Returns: None
- */
 void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 				qdf_nbuf_t rxbuf,
 				void *rx_status)
@@ -95,29 +88,12 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 	}
 }
 
-/**
- * hdd_monitor_set_rx_monitor_cb(): Set rx monitor mode callback function
- * @txrx: pointer to txrx ops
- * @rx_monitor_cb: pointer to callback function
- *
- * Returns: None
- */
 void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
 				ol_txrx_rx_mon_fp rx_monitor_cb)
 {
 	txrx->rx.mon = rx_monitor_cb;
 }
 
-/**
- * hdd_enable_monitor_mode() - Enable monitor mode
- * @dev: Pointer to the net_device structure
- *
- * This function invokes cdp interface API to enable
- * monitor mode configuration on the hardware. In this
- * case sends HTT messages to FW to setup hardware rings
- *
- * Return: 0 for success; non-zero for failure
- */
 int hdd_enable_monitor_mode(struct net_device *dev)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -130,4 +106,11 @@ int hdd_enable_monitor_mode(struct net_device *dev)
 		return -EINVAL;
 
 	return cdp_set_monitor_mode(soc, vdev_id, false);
+}
+
+int hdd_disable_monitor_mode(void)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	return cdp_reset_monitor_mode(soc, OL_TXRX_PDEV_ID, false);
 }

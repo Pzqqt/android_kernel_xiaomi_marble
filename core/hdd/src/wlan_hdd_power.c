@@ -1479,7 +1479,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
 
-	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
+	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
+						PACKET_CAPTURE_MODE_DISABLE) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
 			vdev = hdd_objmgr_get_vdev_by_user(adapter,
@@ -1896,7 +1897,8 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
 
-	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
+	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
+						PACKET_CAPTURE_MODE_DISABLE) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
 			vdev = hdd_objmgr_get_vdev_by_user(adapter,
@@ -2140,7 +2142,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 			goto resume_ol_rx;
 	}
 
-	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
+	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
+						PACKET_CAPTURE_MODE_DISABLE) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
 			vdev = hdd_objmgr_get_vdev_by_user(adapter,
@@ -2177,7 +2180,8 @@ resume_dp_thread:
 		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
 
 	/* Resume packet capture MON thread */
-	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
+	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
+						PACKET_CAPTURE_MODE_DISABLE) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
 			vdev = hdd_objmgr_get_vdev_by_user(adapter,

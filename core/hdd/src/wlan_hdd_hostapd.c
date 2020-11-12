@@ -5146,6 +5146,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
+
+	if (policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
+		return -EINVAL;
+
 	hdd_notify_teardown_tdls_links(hdd_ctx->psoc);
 
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,

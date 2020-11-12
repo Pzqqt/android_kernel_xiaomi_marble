@@ -17042,7 +17042,10 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	if (wlan_hdd_check_mon_concurrency())
+	if (wlan_hdd_is_mon_concurrency())
+		return -EINVAL;
+
+	if (policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
 		return -EINVAL;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
@@ -18415,7 +18418,8 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
 	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev, oper_freq,
 					     sec_ch_freq, ch_params);
 
-	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE ||
+	    policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
 		hdd_mon_select_cbmode(adapter, oper_freq, ch_params);
 }
 
@@ -20632,6 +20636,9 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
 		return status;
+
+	if (policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
+		return -EINVAL;
 
 	if (req->bssid)
 		bssid = req->bssid;

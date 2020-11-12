@@ -1867,7 +1867,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	struct net_device *dev = adapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	bool sendDisconInd = true;
+	bool send_discon_ind = true;
 	mac_handle_t mac_handle;
 	struct wlan_ies disconnect_ies = {0};
 	bool from_ap = false;
@@ -1915,8 +1915,13 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	    sta_ctx->conn_info.conn_state) ||
 	    (eConnectionState_Connecting ==
 	    sta_ctx->conn_info.conn_state)) {
-		hdd_debug("HDD has initiated a disconnect, no need to send disconnect indication to kernel");
-		sendDisconInd = false;
+		if (hdd_ctx->disconnect_for_sta_mon_conc) {
+			hdd_debug("Disconnect triggered by HDD to add monitor intf notify kernel");
+			hdd_ctx->disconnect_for_sta_mon_conc = false;
+		} else {
+			hdd_debug("HDD has initiated a disconnect, don't send disconnect indication to kernel");
+			send_discon_ind = false;
+		}
 	} else {
 		INIT_COMPLETION(adapter->disconnect_comp_var);
 		hdd_conn_set_connection_state(adapter,
@@ -1954,7 +1959,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	 * Only send indication to kernel if not initiated
 	 * by kernel
 	 */
-	if (sendDisconInd) {
+	if (send_discon_ind) {
 		int reason = WLAN_REASON_UNSPECIFIED;
 
 		if (roam_info && roam_info->disconnect_ies) {

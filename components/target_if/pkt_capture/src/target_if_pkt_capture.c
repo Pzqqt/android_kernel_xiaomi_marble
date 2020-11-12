@@ -175,7 +175,7 @@ target_if_register_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
 	}
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
-	if (ucfg_pkt_capture_get_mode(psoc) &&
+	if ((ucfg_pkt_capture_get_mode(psoc) != PACKET_CAPTURE_MODE_DISABLE) &&
 	    wmi_service_enabled(wmi_handle,
 				wmi_service_packet_capture_support)) {
 		QDF_STATUS status;
