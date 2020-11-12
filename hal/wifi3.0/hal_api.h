@@ -600,6 +600,11 @@ uint32_t hal_read32_mb_cmem(struct hal_soc *hal_soc, uint32_t offset)
 }
 #endif
 
+/* Max times allowed for register writing retry */
+#define HAL_REG_WRITE_RETRY_MAX		5
+/* Delay milliseconds for each time retry */
+#define HAL_REG_WRITE_RETRY_DELAY	1
+
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
 /* To check shadow config index range between 0..31 */
 #define HAL_SHADOW_REG_INDEX_LOW 32
@@ -682,7 +687,6 @@ static inline QDF_STATUS hal_write32_mb_shadow_confirm(
 	int i;
 	QDF_STATUS ret;
 	uint32_t shadow_reg_offset;
-	uint32_t read_value;
 	int shadow_config_index;
 	bool is_reg_offset_present = false;
 
@@ -705,9 +709,8 @@ static inline QDF_STATUS hal_write32_mb_shadow_confirm(
 	}
 	if (is_reg_offset_present) {
 		ret = hal_poll_dirty_bit_reg(hal, shadow_config_index);
-		read_value = hal_read32_mb(hal, reg_offset);
-		hal_info("Shadow retry:reg 0x%x val 0x%x readval 0x%x ret %d",
-			 reg_offset, value, read_value, ret);
+		hal_info("Shadow write:reg 0x%x val 0x%x ret %d",
+			 reg_offset, value, ret);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			HAL_STATS_INC(hal, shadow_reg_write_fail, 1);
 			return ret;
@@ -716,23 +719,6 @@ static inline QDF_STATUS hal_write32_mb_shadow_confirm(
 	}
 	return ret;
 }
-
-#else /* GENERIC_SHADOW_REGISTER_ACCESS_ENABLE */
-
-static inline QDF_STATUS hal_write32_mb_shadow_confirm(
-	struct hal_soc *hal_soc,
-	uint32_t offset,
-	uint32_t value)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif /* GENERIC_SHADOW_REGISTER_ACCESS_ENABLE */
-
-/* Max times allowed for register writing retry */
-#define HAL_REG_WRITE_RETRY_MAX		5
-/* Delay milliseconds for each time retry */
-#define HAL_REG_WRITE_RETRY_DELAY	1
 
 /**
  * hal_write32_mb_confirm_retry() - write register with confirming and
@@ -754,9 +740,21 @@ static inline void hal_write32_mb_confirm_retry(struct hal_soc *hal_soc,
 						uint32_t value,
 						bool recovery)
 {
+	QDF_STATUS ret;
+
+	ret = hal_write32_mb_shadow_confirm(hal_soc, offset, value);
+	if (QDF_IS_STATUS_ERROR(ret) && recovery)
+		qdf_trigger_self_recovery(NULL, QDF_HAL_REG_WRITE_FAILURE);
+}
+#else /* GENERIC_SHADOW_REGISTER_ACCESS_ENABLE */
+
+static inline void hal_write32_mb_confirm_retry(struct hal_soc *hal_soc,
+						uint32_t offset,
+						uint32_t value,
+						bool recovery)
+{
 	uint8_t retry_cnt = 0;
 	uint32_t read_value;
-	QDF_STATUS ret;
 
 	while (retry_cnt <= HAL_REG_WRITE_RETRY_MAX) {
 		hal_write32_mb_confirm(hal_soc, offset, value);
@@ -771,13 +769,10 @@ static inline void hal_write32_mb_confirm_retry(struct hal_soc *hal_soc,
 		retry_cnt++;
 	}
 
-	if (retry_cnt > HAL_REG_WRITE_RETRY_MAX) {
-		ret = hal_write32_mb_shadow_confirm(hal_soc, offset, value);
-		if (QDF_IS_STATUS_ERROR(ret) && recovery)
-			qdf_trigger_self_recovery(
-				NULL, QDF_HAL_REG_WRITE_FAILURE);
-	}
+	if (retry_cnt > HAL_REG_WRITE_RETRY_MAX && recovery)
+		qdf_trigger_self_recovery(NULL, QDF_HAL_REG_WRITE_FAILURE);
 }
+#endif /* GENERIC_SHADOW_REGISTER_ACCESS_ENABLE */
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
 /**
