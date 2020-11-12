@@ -161,6 +161,7 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_INTER_EE_n_SRC_GSI_CH_IRQ_CLR_k),
 	__stringify(GSI_INTER_EE_n_SRC_EV_CH_IRQ_k),
 	__stringify(GSI_INTER_EE_n_SRC_EV_CH_IRQ_CLR_k),
+	__stringify(GSI_GSI_SHRAM_n),
 };
 
 /*
@@ -1661,6 +1662,9 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_2_5][GSI_GSI_INST_RAM_n] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x0001b000, GSI_GSI_INST_RAM_n_WORD_SZ, 0},
+	[GSI_VER_2_5][GSI_GSI_SHRAM_n] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00002000, GSI_GSI_SHRAM_n_WORD_SZ, 0 },
 
 	/* GSIv2_9 */
 	[GSI_VER_2_9][GSI_EE_n_EV_CH_k_CNTXT_1] = {

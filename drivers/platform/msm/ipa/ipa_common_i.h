@@ -13,6 +13,7 @@
 #include <linux/ipa_uc_offload.h>
 #include <linux/ipa_wdi3.h>
 #include <linux/ipa_wigig.h>
+#include <linux/ipa_eth.h>
 #include <linux/ratelimit.h>
 #include "gsi.h"
 
@@ -420,7 +421,11 @@ struct IpaHwOffloadStatsAllocCmdData_t {
  * @ch_num: number of ch supported for given protocol
  */
 struct ipa_uc_dbg_ring_stats {
-	struct IpaHwRingStats_t ring[IPA_MAX_CH_STATS_SUPPORTED];
+	union {
+		struct IpaHwRingStats_t ring[IPA_MAX_CH_STATS_SUPPORTED];
+		struct ipa_uc_dbg_rtk_ring_stats
+			rtk[IPA_MAX_CH_STATS_SUPPORTED];
+	} u;
 	u8 num_ch;
 };
 
@@ -771,5 +776,33 @@ int ipa3_get_smmu_params(struct ipa_smmu_in_params *in,
 * Returns: 0 on success, negative on failure
 */
 int ipa3_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs);
+
+int ipa_eth_rtk_connect(
+	struct ipa_eth_client_pipe_info *pipe,
+	enum ipa_client_type client_type);
+
+int ipa_eth_aqc_connect(
+	struct ipa_eth_client_pipe_info *pipe,
+	enum ipa_client_type client_type);
+
+int ipa_eth_emac_connect(
+	struct ipa_eth_client_pipe_info *pipe,
+	enum ipa_client_type client_type);
+
+int ipa_eth_rtk_disconnect(
+	struct ipa_eth_client_pipe_info *pipe,
+	enum ipa_client_type client_type);
+
+int ipa_eth_aqc_disconnect(
+	struct ipa_eth_client_pipe_info *pipe,
+	enum ipa_client_type client_type);
+
+int ipa_eth_emac_disconnect(
+	struct ipa_eth_client_pipe_info *pipe,
+	enum ipa_client_type client_type);
+
+int ipa_eth_client_conn_evt(struct ipa_ecm_msg *msg);
+
+int ipa_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
 
 #endif /* _IPA_COMMON_I_H_ */

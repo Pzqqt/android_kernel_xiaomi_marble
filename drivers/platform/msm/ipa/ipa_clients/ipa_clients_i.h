@@ -21,4 +21,6 @@ void ipa_mhi_register(void);
 
 void ipa_wigig_register(void);
 
+void ipa_eth_register(void);
+
 #endif /* _IPA_CLIENTS_I_H */

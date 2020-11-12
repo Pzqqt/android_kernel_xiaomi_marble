@@ -26,6 +26,8 @@ static int __init ipa_clients_manager_init(void)
 
 	ipa_wigig_register();
 
+	ipa_eth_register();
+
 	ipa3_notify_clients_registered();
 
 	return 0;
