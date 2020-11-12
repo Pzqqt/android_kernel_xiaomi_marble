@@ -1123,6 +1123,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_vendor_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_vendor_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_vendor_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_msg_info_tlv_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -4187,7 +4188,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLM_CONFIG_CMDID);
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_neighbor_report_channel_info, roam_neighbor_report_chan_info, WMITLV_SIZE_VAR) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_frame_info, roam_frame_info, WMITLV_SIZE_VAR) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_initial_info, roam_initial_info, WMITLV_SIZE_VAR) \
-  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_btm_response_info, roam_btm_response_info, WMITLV_SIZE_VAR)
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_btm_response_info, roam_btm_response_info, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_msg_info, roam_msg_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_STATS_EVENTID);
 
 /* Motion detection cmd */

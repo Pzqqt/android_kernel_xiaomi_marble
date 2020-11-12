@@ -29340,6 +29340,29 @@ typedef struct {
     A_UINT32 timer_canceled;
 } wmi_roam_initial_info;
 
+typedef enum {
+    WMI_ROAM_MSG_RSSI_RECOVERED = 1, /* Connected AP RSSI is recovered to good region */
+} WMI_ROAM_MSG_ID;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_msg_info_tlv_param */
+    /*
+     * timestamp is the absolute time (in milliseconds) w.r.t host timer
+     * which is synchronized between the host and target
+     */
+    A_UINT32 timestamp;
+    A_UINT32 msg_id; /* Message ID from WMI_ROAM_MSG_ID */
+    /* msg_param values are interpreted differently for different msg_id values.
+     * if msg_id == WMI_ROAM_MSG_RSSI_RECOVERED:
+     *     msg_param1 contains current AP RSSI in dBm
+     *         (unsigned -> signed conversion is required)
+     *     msg_param2 contains next trigger RSSI threshold in dBm
+     *         (unsigned -> signed conversion is required)
+     */
+    A_UINT32 msg_param1;
+    A_UINT32 msg_param2;
+} wmi_roam_msg_info;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_stats_event_fixed_param */
     A_UINT32 vdev_id;
