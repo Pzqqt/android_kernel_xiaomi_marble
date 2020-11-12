@@ -1748,8 +1748,9 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 			ch_params.ch_width =
 				chnl_switch_info->newChanWidth;
-			wlan_reg_set_channel_params(mac_ctx->pdev,
-					csa_params->channel, 0, &ch_params);
+			wlan_reg_set_channel_params_for_freq(
+				mac_ctx->pdev, csa_params->csa_chan_freq, 0,
+				&ch_params);
 			chnl_switch_info->newCenterChanFreq0 =
 				ch_params.center_freq_seg0;
 			/*
