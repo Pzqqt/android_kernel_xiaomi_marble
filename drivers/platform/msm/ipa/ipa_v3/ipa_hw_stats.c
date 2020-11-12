@@ -11,6 +11,8 @@
 #include "ipahal_hw_stats.h"
 
 #define IPA_INIT_DROP_STATS_MAX_CMD_NUM 5
+#define IPA_INIT_TETH_STATS_MAX_CMD_NUM 5
+#define IPA_INIT_QUOTA_STATS_MAX_CMD_NUM 5
 
 static inline u32 ipa_hw_stats_get_ep_bit_n_idx(enum ipa_client_type client,
 	u32 *reg_idx)
@@ -430,7 +432,7 @@ int ipa_init_quota_stats(u32 *pipe_bitmask)
 	struct ipahal_imm_cmd_register_write quota_mask = {0};
 	struct ipahal_imm_cmd_pyld *quota_mask_pyld[IPA5_PIPE_REG_NUM] = {0};
 	struct ipahal_imm_cmd_pyld *coal_cmd_pyld = NULL;
-	struct ipa3_desc desc[4] = { {0} };
+	struct ipa3_desc desc[IPA_INIT_QUOTA_STATS_MAX_CMD_NUM] = { {0} };
 	dma_addr_t dma_address;
 	int ret;
 	int num_cmd = 0;
@@ -790,7 +792,7 @@ int ipa_init_teth_stats(struct ipa_teth_stats_endpoints *in)
 	struct ipahal_imm_cmd_register_write teth_mask = { 0 };
 	struct ipahal_imm_cmd_pyld *teth_mask_pyld[IPA5_PIPE_REG_NUM] = {0};
 	struct ipahal_imm_cmd_pyld *coal_cmd_pyld = NULL;
-	struct ipa3_desc desc[4] = { {0} };
+	struct ipa3_desc desc[IPA_INIT_TETH_STATS_MAX_CMD_NUM] = { {0} };
 	dma_addr_t dma_address;
 	int ret;
 	int i, j;
