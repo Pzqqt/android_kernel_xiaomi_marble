@@ -26,7 +26,7 @@
 #include "wlan_ipa_ucfg_api.h"
 
 static bool g_ipa_is_ready;
-bool ipa_is_ready(void)
+bool ipa_cb_is_ready(void)
 {
 	return g_ipa_is_ready;
 }
