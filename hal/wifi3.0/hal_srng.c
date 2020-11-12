@@ -547,6 +547,7 @@ static void hal_reg_write_work(void *arg)
 	uint64_t delta_us;
 	uint8_t ring_id;
 	uint32_t *addr;
+	uint32_t num_processed = 0;
 
 	q_elem = &hal->reg_write_queue[(hal->read_idx)];
 	q_elem->work_scheduled_time = qdf_get_log_timestamp();
@@ -584,20 +585,30 @@ static void hal_reg_write_work(void *arg)
 		hal_verbose_debug("read_idx %u srng 0x%x, addr 0x%pK dequeue_val %u sched delay %llu us",
 				  hal->read_idx, ring_id, addr, write_val, delta_us);
 
-		qdf_atomic_dec(&hal->active_work_cnt);
+		num_processed++;
 		hal->read_idx = (hal->read_idx + 1) &
 					(HAL_REG_WRITE_QUEUE_LEN - 1);
 		q_elem = &hal->reg_write_queue[(hal->read_idx)];
 	}
 
 	hif_allow_link_low_power_states(hal->hif_handle);
+	/*
+	 * Decrement active_work_cnt by the number of elements dequeued after
+	 * hif_allow_link_low_power_states.
+	 * This makes sure that hif_try_complete_tasks will wait till we make
+	 * the bus access in hif_allow_link_low_power_states. This will avoid
+	 * race condition between delayed register worker and bus suspend
+	 * (system suspend or runtime suspend).
+	 *
+	 * The following decrement should be done at the end!
+	 */
+	qdf_atomic_sub(num_processed, &hal->active_work_cnt);
 }
 
 static void __hal_flush_reg_write_work(struct hal_soc *hal)
 {
 	qdf_cancel_work(&hal->reg_write_work);
-	qdf_flush_work(&hal->reg_write_work);
-	qdf_flush_workqueue(0, hal->reg_write_wq);
+
 }
 
 void hal_flush_reg_write_work(hal_soc_handle_t hal_handle)
@@ -738,6 +749,8 @@ static QDF_STATUS hal_delayed_reg_write_init(struct hal_soc *hal)
 static void hal_delayed_reg_write_deinit(struct hal_soc *hal)
 {
 	__hal_flush_reg_write_work(hal);
+
+	qdf_flush_workqueue(0, hal->reg_write_wq);
 	qdf_destroy_workqueue(0, hal->reg_write_wq);
 	qdf_mem_free(hal->reg_write_queue);
 }
