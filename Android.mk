@@ -68,7 +68,9 @@ include $(foreach chip, $(TARGET_WLAN_CHIP), $(LOCAL_PATH)/.$(chip)/Android.mk)
 
 else # Multi-ok check
 
+ifeq ($(WLAN_PROFILE),)
 WLAN_PROFILE := default
+endif
 
 ifeq ($(LOCAL_DEV_NAME), qcacld-3.0)
 
