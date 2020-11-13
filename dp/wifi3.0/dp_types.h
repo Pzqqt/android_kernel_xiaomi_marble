@@ -1095,7 +1095,7 @@ struct rx_buff_pool {
  * value being power of 2.
  */
 #define DP_RX_HIST_MAX 2048
-#define DP_RX_ERR_HIST_MAX 4096
+#define DP_RX_ERR_HIST_MAX 2048
 #define DP_RX_REINJECT_HIST_MAX 1024
 
 QDF_COMPILE_TIME_ASSERT(rx_history_size,
