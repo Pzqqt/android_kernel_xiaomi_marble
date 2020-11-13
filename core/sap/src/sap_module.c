@@ -1285,6 +1285,10 @@ static char *sap_get_csa_reason_str(enum sap_csa_reason_code reason)
 		return "BAND_RESTRICTED";
 	case CSA_REASON_DCS:
 		return "DCS";
+	case CSA_REASON_CHAN_DISABLED:
+		return "DISABLED";
+	case CSA_REASON_CHAN_PASSIVE:
+		return "PASSIVE";
 	default:
 		return "UNKNOWN";
 	}
@@ -2999,13 +3003,14 @@ static uint32_t wlansap_get_2g_first_safe_chan_freq(struct sap_context *sap_ctx)
 		freq = cur_chan_list[i].center_freq;
 		state = wlan_reg_get_channel_state_for_freq(pdev, freq);
 		if (state != CHANNEL_STATE_DISABLE &&
+		    state != CHANNEL_STATE_PASSIVE &&
 		    state != CHANNEL_STATE_INVALID &&
 		    wlan_reg_is_24ghz_ch_freq(freq) &&
 		    policy_mgr_is_safe_channel(psoc, freq) &&
 		    wlansap_is_channel_present_in_acs_list(freq,
 							   acs_freq_list,
 							   acs_list_count)) {
-			sap_debug("find a 2g channel: %d", freq);
+			sap_debug("found a 2g channel: %d", freq);
 			goto err;
 		}
 	}
@@ -3014,6 +3019,63 @@ static uint32_t wlansap_get_2g_first_safe_chan_freq(struct sap_context *sap_ctx)
 err:
 	qdf_mem_free(cur_chan_list);
 	return freq;
+}
+
+uint32_t wlansap_get_safe_channel_from_pcl_for_sap(struct sap_context *sap_ctx)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct mac_context *mac;
+	struct sir_pcl_list pcl = {0};
+	uint32_t pcl_freqs[NUM_CHANNELS] = {0};
+	QDF_STATUS status;
+	uint32_t pcl_len = 0;
+
+	if (!sap_ctx) {
+		sap_err("NULL parameter");
+		return INVALID_CHANNEL_ID;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return INVALID_CHANNEL_ID;
+	}
+
+	pdev = sap_ctx->vdev->vdev_objmgr.wlan_pdev;
+	if (!pdev) {
+		sap_err("NULL pdev");
+	}
+
+	status = policy_mgr_get_pcl_for_vdev_id(mac->psoc, PM_SAP_MODE,
+						pcl_freqs, &pcl_len,
+						pcl.weight_list,
+						QDF_ARRAY_SIZE(pcl.weight_list),
+						sap_ctx->sessionId);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sap_err("Get PCL failed");
+		return INVALID_CHANNEL_ID;
+	}
+
+	if (pcl_len) {
+		status = policy_mgr_filter_passive_ch(pdev, pcl_freqs,
+						      &pcl_len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sap_err("failed to filter passive channels");
+			return INVALID_CHANNEL_ID;
+		}
+
+		if (pcl_len) {
+			sap_debug("select %d from valid ch freq list",
+				  pcl_freqs[0]);
+			return pcl_freqs[0];
+		}
+		sap_debug("no active channels found in PCL");
+	} else {
+		sap_debug("pcl length is zero!");
+	}
+
+	return wlansap_get_2g_first_safe_chan_freq(sap_ctx);
 }
 
 qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
@@ -3081,6 +3143,11 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 		sap_debug("channel is disabled");
 		*csa_reason = CSA_REASON_CHAN_DISABLED;
 		return wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
+	} else if (wlan_reg_is_passive_for_freq(mac->pdev,
+						sap_ctx->chan_freq)) {
+		sap_debug("channel is passive");
+		*csa_reason = CSA_REASON_CHAN_PASSIVE;
+		return wlansap_get_safe_channel_from_pcl_for_sap(sap_ctx);
 	} else {
 		sap_debug("No need switch SAP/Go channel");
 		return 0;

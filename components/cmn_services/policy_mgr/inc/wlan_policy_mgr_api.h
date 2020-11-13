@@ -76,7 +76,7 @@ typedef const enum policy_mgr_conc_next_action
  * @CSA_REASON_BAND_RESTRICTED: band disabled or re-enabled
  * @CSA_REASON_DCS: DCS
  * @CSA_REASON_CHAN_DISABLED: channel is disabled
- *
+ * @CSA_REASON_CHAN_PASSIVE: channel is passive
  */
 enum sap_csa_reason_code {
 	CSA_REASON_UNKNOWN,
@@ -91,6 +91,7 @@ enum sap_csa_reason_code {
 	CSA_REASON_BAND_RESTRICTED,
 	CSA_REASON_DCS,
 	CSA_REASON_CHAN_DISABLED,
+	CSA_REASON_CHAN_PASSIVE,
 };
 
 /**
@@ -3615,6 +3616,18 @@ bool policy_mgr_get_5g_scc_prefer(
 bool policy_mgr_dump_channel_list(uint32_t len,
 				  uint32_t *pcl_channels,
 				  uint8_t *pcl_weight);
+
+/**
+ * policy_mgr_filter_passive_ch() -filter out passive channels from the list
+ * @pdev: Pointer to pdev
+ * @ch_freq_list: pointer to channel frequency list
+ * @ch_cnt: number of channels in list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_filter_passive_ch(struct wlan_objmgr_pdev *pdev,
+					uint32_t *ch_freq_list,
+					uint32_t *ch_cnt);
 
 /**
  * policy_mgr_is_restart_sap_required() - check whether sap need restart
