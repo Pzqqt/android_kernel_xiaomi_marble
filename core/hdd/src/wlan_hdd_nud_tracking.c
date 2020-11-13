@@ -587,3 +587,8 @@ void hdd_nud_unregister_netevent_notifier(struct hdd_context *hdd_ctx)
 			hdd_debug("Unregistered netevent notifier");
 	}
 }
+
+void hdd_nud_indicate_roam(struct hdd_adapter *adapter)
+{
+	hdd_nud_set_tracking(adapter, NUD_NONE, false);
+}

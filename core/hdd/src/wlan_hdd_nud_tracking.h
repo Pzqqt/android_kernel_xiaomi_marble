@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -149,6 +149,14 @@ void hdd_nud_unregister_netevent_notifier(struct hdd_context *hdd_ctx);
  */
 void hdd_nud_flush_work(struct hdd_adapter *adapter);
 
+/**
+ * hdd_nud_indicate_roam() - reset NUD when roaming happens
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+void hdd_nud_indicate_roam(struct hdd_adapter *adapter);
+
 #else
 static inline void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 					    struct qdf_mac_addr gw_mac_addr)
@@ -190,6 +198,11 @@ hdd_nud_unregister_netevent_notifier(struct hdd_context *hdd_ctx)
 
 static inline void
 hdd_nud_flush_work(struct hdd_adapter *adapter)
+{
+}
+
+static inline void
+hdd_nud_indicate_roam(struct hdd_adapter *adapter)
 {
 }
 #endif /* WLAN_NUD_TRACKING */

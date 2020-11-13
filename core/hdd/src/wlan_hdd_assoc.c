@@ -3403,6 +3403,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					      eCSR_BSS_TYPE_INFRASTRUCTURE);
 			}
 
+			hdd_nud_indicate_roam(adapter);
 			/* Start the tx queues */
 			hdd_debug("Enabling queues");
 			hdd_netif_queue_enable(adapter);
