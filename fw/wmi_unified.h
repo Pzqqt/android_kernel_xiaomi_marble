@@ -26610,6 +26610,11 @@ typedef enum {
     WMI_THERMAL_MITIGATION      = 1,
     /* shut down the tx completely */
     WMI_THERMAL_SHUTOFF         = 2,
+    /* THERMAL_SHUTDOWN_TGT
+     * The target is over the temperature limit even with tx shut off.
+     * The target will be shut down entirely to control the temperature.
+     */
+    WMI_THERMAL_SHUTDOWN_TGT    = 3,
 } WMI_THERMAL_THROT_LEVEL;
 
 /** FW response with the stats event id for every pdev and zones */
