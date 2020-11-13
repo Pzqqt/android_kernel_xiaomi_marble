@@ -2049,6 +2049,7 @@ struct dp_pdev {
 	uint16_t md_data_filter;
 
 	qdf_atomic_t num_tx_outstanding;
+	int32_t tx_descs_max;
 
 	qdf_atomic_t num_tx_exception;
 

@@ -11914,7 +11914,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	dp_info("Mem stats: DMA = %u HEAP = %u SKB = %u",
 		qdf_dma_mem_stats_read(),
 		qdf_heap_mem_stats_read(),
-		qdf_skb_mem_stats_read());
+		qdf_skb_total_mem_stats_read());
 
 	return soc;
 fail5:
@@ -12115,7 +12115,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	dp_info("Mem stats: DMA = %u HEAP = %u SKB = %u",
 		qdf_dma_mem_stats_read(),
 		qdf_heap_mem_stats_read(),
-		qdf_skb_mem_stats_read());
+		qdf_skb_total_mem_stats_read());
 
 	return soc;
 fail6:
@@ -13764,7 +13764,7 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 	dp_info("Mem stats: DMA = %u HEAP = %u SKB = %u",
 		qdf_dma_mem_stats_read(),
 		qdf_heap_mem_stats_read(),
-		qdf_skb_mem_stats_read());
+		qdf_skb_total_mem_stats_read());
 
 	return QDF_STATUS_SUCCESS;
 fail9:
