@@ -1147,6 +1147,16 @@ reg_get_5g_bonded_channel_for_freq(struct wlan_objmgr_pdev *pdev,
  * Return: True if channel state is disabled, else false
  */
 bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
+/**
+ * reg_is_passive_for_freq() - Check if the given channel frequency is in
+ * passive state
+ * @pdev: Pointer to pdev
+ * @freq: Channel frequency
+ *
+ * Return: True if channel state is passive, else false
+ */
+bool reg_is_passive_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 #endif /* CONFIG_CHAN_FREQ_API */
 
 /**

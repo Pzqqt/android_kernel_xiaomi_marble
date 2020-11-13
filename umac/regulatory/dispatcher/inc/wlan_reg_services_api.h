@@ -1335,6 +1335,17 @@ bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 				  qdf_freq_t freq);
 
 /**
+ * wlan_reg_is_passive_for_freq() - Check the channel flags to see if the
+ * passive flag is set
+ * @pdev: pdev ptr
+ * @freq: Channel center frequency
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_passive_for_freq(struct wlan_objmgr_pdev *pdev,
+				  qdf_freq_t freq);
+
+/**
  * wlan_reg_chan_to_band() - Get band from channel number
  * @chan_num: channel number
  *

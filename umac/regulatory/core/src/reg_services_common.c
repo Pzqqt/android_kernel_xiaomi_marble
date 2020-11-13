@@ -3956,6 +3956,15 @@ bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 
 	return ch_state == CHANNEL_STATE_DISABLE;
 }
+
+bool reg_is_passive_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	uint32_t chan_flags;
+
+	chan_flags = reg_get_channel_flags_for_freq(pdev, freq);
+
+	return chan_flags & REGULATORY_CHAN_NO_IR;
+}
 #endif /* CONFIG_CHAN_FREQ_API */
 
 uint8_t  reg_get_max_tx_power(struct wlan_objmgr_pdev *pdev)

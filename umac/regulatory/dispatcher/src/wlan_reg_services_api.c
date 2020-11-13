@@ -1011,6 +1011,12 @@ bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_is_disable_for_freq(pdev, freq);
 }
 
+bool wlan_reg_is_passive_for_freq(struct wlan_objmgr_pdev *pdev,
+				  qdf_freq_t freq)
+{
+	return reg_is_passive_for_freq(pdev, freq);
+}
+
 QDF_STATUS
 wlan_reg_get_channel_list_with_power_for_freq(struct wlan_objmgr_pdev *pdev,
 					      struct channel_power *ch_list,
