@@ -7,6 +7,7 @@
 #include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/thermal.h>
 #include <linux/pm_runtime.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -56,6 +57,7 @@
 #define LPASS_CDC_WSA_MACRO_EC_MIX_TX1_MASK 0x18
 
 #define LPASS_CDC_WSA_MACRO_MAX_DMA_CH_PER_PORT 0x2
+#define LPASS_CDC_WSA_MACRO_THERMAL_MAX_STATE 11
 
 enum {
 	LPASS_CDC_WSA_MACRO_RX0 = 0,
@@ -271,6 +273,9 @@ struct lpass_cdc_wsa_macro_priv {
 	u16 default_clk_id;
 	u32 pcm_rate_vi;
 	int wsa_digital_mute_status[LPASS_CDC_WSA_MACRO_RX_MAX];
+	struct thermal_cooling_device *tcdev;
+	uint32_t thermal_cur_state;
+	uint32_t thermal_max_state;
 };
 
 static int lpass_cdc_wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
@@ -3024,6 +3029,73 @@ exit:
 	return ret;
 }
 
+/* Thermal Functions */
+static int lpass_cdc_wsa_macro_get_max_state(
+					struct thermal_cooling_device *cdev,
+					unsigned long *state)
+{
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = cdev->devdata;
+	if (!wsa_priv) {
+		pr_err("%s: cdev->devdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+	*state = wsa_priv->thermal_max_state;
+
+	return 0;
+}
+
+static int lpass_cdc_wsa_macro_get_cur_state(
+					struct thermal_cooling_device *cdev,
+					unsigned long *state)
+{
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = cdev->devdata;
+
+	if (!wsa_priv) {
+		pr_err("%s: cdev->devdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+	*state = wsa_priv->thermal_cur_state;
+
+	pr_debug("%s: thermal current state:%lu\n", __func__, *state);
+	return 0;
+}
+
+static int lpass_cdc_wsa_macro_set_cur_state(
+					struct thermal_cooling_device *cdev,
+					unsigned long state)
+{
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = cdev->devdata;
+	u8 gain = 0;
+
+	if (!wsa_priv) {
+		pr_err("%s: cdev->devdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (state < wsa_priv->thermal_max_state)
+		wsa_priv->thermal_cur_state = state;
+	else
+		wsa_priv->thermal_cur_state = wsa_priv->thermal_max_state;
+
+	gain = (u8)(gain - wsa_priv->thermal_cur_state);
+	dev_dbg(wsa_priv->dev,
+		"%s: requested state:%d, actual state: %d, gain: %#x\n",
+		__func__, state, wsa_priv->thermal_cur_state, gain);
+
+	snd_soc_component_update_bits(wsa_priv->component,
+		LPASS_CDC_WSA_RX0_RX_VOL_CTL, 0xFF, gain);
+	snd_soc_component_update_bits(wsa_priv->component,
+		LPASS_CDC_WSA_RX1_RX_VOL_CTL, 0xFF, gain);
+
+	return 0;
+}
+
+static struct thermal_cooling_device_ops wsa_cooling_ops = {
+	.get_max_state = lpass_cdc_wsa_macro_get_max_state,
+	.get_cur_state = lpass_cdc_wsa_macro_get_cur_state,
+	.set_cur_state = lpass_cdc_wsa_macro_set_cur_state,
+};
+
 static int lpass_cdc_wsa_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
@@ -3222,7 +3294,7 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 {
 	struct macro_ops ops;
 	struct lpass_cdc_wsa_macro_priv *wsa_priv;
-	u32 wsa_base_addr, default_clk_id;
+	u32 wsa_base_addr, default_clk_id, thermal_max_state;
 	char __iomem *wsa_io_base;
 	int ret = 0;
 	u8 bcl_pmic_params[3];
@@ -3327,6 +3399,32 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 		goto reg_macro_fail;
 	}
 	schedule_work(&wsa_priv->lpass_cdc_wsa_macro_add_child_devices_work);
+
+	if (of_find_property(wsa_priv->dev->of_node, "#cooling-cells", NULL)) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   "qcom,thermal-max-state",
+					   &thermal_max_state);
+		if (ret) {
+			dev_info(&pdev->dev, "%s: could not find %s entry in dt\n",
+				__func__, "qcom,thermal-max-state");
+			wsa_priv->thermal_max_state =
+					LPASS_CDC_WSA_MACRO_THERMAL_MAX_STATE;
+		} else {
+			wsa_priv->thermal_max_state = thermal_max_state;
+		}
+		wsa_priv->tcdev = devm_thermal_of_cooling_device_register(
+						&pdev->dev,
+						wsa_priv->dev->of_node,
+						"wsa", wsa_priv,
+						&wsa_cooling_ops);
+		if (IS_ERR(wsa_priv->tcdev)) {
+			dev_err(&pdev->dev,
+				"%s: failed to register wsa macro as cooling device\n",
+				__func__);
+			wsa_priv->tcdev = NULL;
+		}
+	}
+
 	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
@@ -3349,6 +3447,9 @@ static int lpass_cdc_wsa_macro_remove(struct platform_device *pdev)
 
 	if (!wsa_priv)
 		return -EINVAL;
+
+	if (wsa_priv->tcdev)
+		thermal_cooling_device_unregister(wsa_priv->tcdev);
 
 	for (count = 0; count < wsa_priv->child_count &&
 		count < LPASS_CDC_WSA_MACRO_CHILD_DEVICES_MAX; count++)
