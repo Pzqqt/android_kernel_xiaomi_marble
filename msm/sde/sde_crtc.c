@@ -3849,10 +3849,8 @@ static int _sde_crtc_vblank_enable_no_lock(
 		if (ret < 0)
 			return ret;
 
-		drm_for_each_encoder(enc, crtc->dev) {
-			if (enc->crtc != crtc)
-				continue;
-
+		drm_for_each_encoder_mask(enc, crtc->dev,
+				crtc->state->encoder_mask) {
 			SDE_EVT32(DRMID(&sde_crtc->base), DRMID(enc), enable,
 					sde_crtc->enabled);
 
@@ -3860,10 +3858,8 @@ static int _sde_crtc_vblank_enable_no_lock(
 					sde_crtc_vblank_cb, (void *)crtc);
 		}
 	} else {
-		drm_for_each_encoder(enc, crtc->dev) {
-			if (enc->crtc != crtc)
-				continue;
-
+		drm_for_each_encoder_mask(enc, crtc->dev,
+				crtc->state->encoder_mask) {
 			SDE_EVT32(DRMID(&sde_crtc->base), DRMID(enc), enable,
 					sde_crtc->enabled);
 
