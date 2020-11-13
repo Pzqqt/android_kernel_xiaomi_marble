@@ -5368,6 +5368,7 @@ sme_handle_generic_change_country_code(struct mac_context *mac_ctx,
 
 	/* reset info based on new cc, and we are done */
 	csr_apply_channel_power_info_wrapper(mac_ctx);
+	csr_update_beacon(mac_ctx);
 
 	csr_scan_filter_results(mac_ctx);
 

@@ -1450,4 +1450,13 @@ enum reg_phymode csr_convert_to_reg_phy_mode(eCsrPhyMode csr_phy_mode,
  */
 eCsrPhyMode csr_convert_from_reg_phy_mode(enum reg_phymode phymode);
 
+/*
+ * csr_update_beacon() - CSR API to update beacon template
+ * @mac: mac context
+ *
+ * This API is used to update beacon template to FW
+ *
+ * Return: None
+ */
+void csr_update_beacon(struct mac_context *mac);
 #endif
