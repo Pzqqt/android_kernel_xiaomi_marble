@@ -7078,6 +7078,14 @@ typedef enum {
     /* Param to enable/disable PCIE HW ILP */
     WMI_PDEV_PARAM_PCIE_HW_ILP,
 
+    /*
+     * Configure the TXTD_START_TIMESTAMP parameters
+     * The timestamp units are nanoseconds.
+     * This parameter can be used to adjust at what point the TXTD module
+     * will start operating after the STA connects to an AP.
+     */
+    WMI_PDEV_PARAM_SET_TXTD_START_TIMESTAMP,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
