@@ -674,16 +674,16 @@ static qca_multi_link_status_t qca_multi_link_secondary_ap_rx(struct net_device 
 	qdf_ether_header_t *eh = (qdf_ether_header_t *) qdf_nbuf_data(nbuf);
 
 	ap_wiphy = ap_dev->ieee80211_ptr->wiphy;
-
 	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG, FL("Secondary AP Rx: always_primary=%d, loop_detected=%d,\
 				drop_secondary_mcast=%d, shost %pM dhost %pM\n"),
 				qca_multi_link_cfg.always_primary, qca_multi_link_cfg.loop_detected,
 				qca_multi_link_cfg.drop_secondary_mcast, eh->ether_shost, eh->ether_dhost);
 
 	/*
-	 *If the AP is on a fast lane radio, always give the packet to bridge.
+	 * If the AP is on a fast lane radio or if no backhaul is enabled,
+	 * always give the packet to bridge.
 	 */
-	if (is_fast_lane_radio(ap_wiphy)) {
+	if (is_fast_lane_radio(ap_wiphy) || is_no_backhaul_radio(ap_wiphy)) {
 		return QCA_MULTI_LINK_PKT_ALLOW;
 	}
 
