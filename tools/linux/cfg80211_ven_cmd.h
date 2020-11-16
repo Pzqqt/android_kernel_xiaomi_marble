@@ -1252,6 +1252,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_RNR_STATS = 462,
 	/* NSS WiFi offload status */
 	OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS = 463,
+	/* enable EMA */
+	OL_ATH_PARAM_ENABLE_EMA = 464,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3241,6 +3243,8 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RNR_STATS, GET_PARAM, 0},
 	{"g_nss_wifi_ol",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS, GET_PARAM, 0},
+	{"enable_ema",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_EMA, SET_PARAM, 1},
 };
 #endif
 #endif
