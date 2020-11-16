@@ -941,6 +941,7 @@ static int sde_encoder_virt_atomic_check(
 	struct sde_crtc_state *sde_crtc_state = NULL;
 	enum sde_rm_topology_name old_top;
 	int ret = 0;
+	bool qsync_dirty = false, has_modeset = false;
 
 	if (!drm_enc || !crtc_state || !conn_state) {
 		SDE_ERROR("invalid arg(s), drm_enc %d, crtc/conn state %d/%d\n",
@@ -997,6 +998,19 @@ static int sde_encoder_virt_atomic_check(
 	}
 
 	drm_mode_set_crtcinfo(adj_mode, 0);
+
+	has_modeset = sde_crtc_atomic_check_has_modeset(conn_state->state,
+				conn_state->crtc);
+	qsync_dirty = msm_property_is_dirty(&sde_conn->property_info,
+				&sde_conn_state->property_state,
+				CONNECTOR_PROP_QSYNC_MODE);
+
+	if (has_modeset && qsync_dirty &&
+		!msm_is_mode_seamless_vrr(adj_mode)) {
+		SDE_ERROR("invalid qsync update during modeset\n");
+		return -EINVAL;
+	}
+
 	SDE_EVT32(DRMID(drm_enc), adj_mode->flags, adj_mode->private_flags,
 		 old_top, adj_mode->vrefresh, adj_mode->hdisplay,
 		 adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal);
