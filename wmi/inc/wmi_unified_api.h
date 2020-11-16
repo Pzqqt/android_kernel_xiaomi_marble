@@ -144,13 +144,15 @@ enum wmi_target_type {
  * @WMI_RX_WORK_CTX: work queue context execution provided by WMI layer
  * @WMI_RX_UMAC_CTX: execution context provided by umac layer
  * @WMI_RX_SERIALIZER_CTX: Execution context is serialized thread context
+ * @WMI_RX_DIAG_WORK_CTX: work queue execution context for FW diag events
  *
  */
 enum wmi_rx_exec_ctx {
 	WMI_RX_WORK_CTX,
 	WMI_RX_UMAC_CTX,
 	WMI_RX_TASKLET_CTX = WMI_RX_UMAC_CTX,
-	WMI_RX_SERIALIZER_CTX = 2
+	WMI_RX_SERIALIZER_CTX = 2,
+	WMI_RX_DIAG_WORK_CTX
 };
 
 /**

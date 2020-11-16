@@ -2232,6 +2232,30 @@ QDF_STATUS wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 }
 qdf_export_symbol(wmi_unified_unregister_event_handler);
 
+static void
+wmi_process_rx_diag_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
+					    void *evt_buf)
+{
+	uint32_t num_diag_events_pending;
+
+	qdf_spin_lock_bh(&wmi_handle->diag_eventq_lock);
+	if (RX_DIAG_WQ_MAX_SIZE > 0) {
+		num_diag_events_pending = qdf_nbuf_queue_len(
+						&wmi_handle->diag_event_queue);
+
+		if (num_diag_events_pending == RX_DIAG_WQ_MAX_SIZE) {
+			qdf_spin_unlock_bh(&wmi_handle->diag_eventq_lock);
+			wmi_handle->wmi_rx_diag_events_dropped++;
+			qdf_nbuf_free(evt_buf);
+			return;
+		}
+	}
+
+	qdf_nbuf_queue_add(&wmi_handle->diag_event_queue, evt_buf);
+	qdf_spin_unlock_bh(&wmi_handle->diag_eventq_lock);
+	qdf_sched_work(0, &wmi_handle->rx_diag_event_work);
+}
+
 void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 					    void *evt_buf)
 {
@@ -2447,12 +2471,14 @@ static void wmi_process_control_rx(struct wmi_unified *wmi_handle,
 #endif
 
 	if (exec_ctx == WMI_RX_WORK_CTX) {
-		wmi_process_fw_event_worker_thread_ctx
-					(wmi_handle, evt_buf);
+		wmi_process_fw_event_worker_thread_ctx(wmi_handle, evt_buf);
 	} else if (exec_ctx == WMI_RX_TASKLET_CTX) {
 		wmi_process_fw_event(wmi_handle, evt_buf);
 	} else if (exec_ctx == WMI_RX_SERIALIZER_CTX) {
 		wmi_process_fw_event_sched_thread_ctx(wmi_handle, evt_buf);
+	} else if (exec_ctx == WMI_RX_DIAG_WORK_CTX) {
+		wmi_process_rx_diag_event_worker_thread_ctx(wmi_handle,
+							    evt_buf);
 	} else {
 		wmi_err("Invalid event context %d", exec_ctx);
 		qdf_nbuf_free(evt_buf);
@@ -2780,6 +2806,47 @@ static void wmi_rx_event_work(void *arg)
 	qdf_timer_free(&wd_timer);
 }
 
+/**
+ * wmi_rx_diag_event_work() - process rx diag event in work queue context
+ * @arg: opaque pointer to wmi handle
+ *
+ * This function process fw diag event to serialize it through rx worker thread.
+ *
+ * Return: none
+ */
+static void wmi_rx_diag_event_work(void *arg)
+{
+	wmi_buf_t buf;
+	struct wmi_unified *wmi = arg;
+	qdf_timer_t wd_timer;
+	struct wmi_wq_dbg_info info;
+
+	if (!wmi) {
+		wmi_err("Invalid WMI handle");
+		return;
+	}
+
+	/* initialize WMI workqueue watchdog timer */
+	qdf_timer_init(NULL, &wd_timer, &wmi_workqueue_watchdog_bite,
+		       &info, QDF_TIMER_TYPE_SW);
+	qdf_spin_lock_bh(&wmi->diag_eventq_lock);
+	buf = qdf_nbuf_queue_remove(&wmi->diag_event_queue);
+	qdf_spin_unlock_bh(&wmi->diag_eventq_lock);
+	while (buf) {
+		qdf_timer_start(&wd_timer, WMI_WQ_WD_TIMEOUT);
+		info.wd_msg_type_id =
+		   WMI_GET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID);
+		info.wmi_wq = NULL;
+		info.task = qdf_get_current_task();
+		__wmi_control_rx(wmi, buf);
+		qdf_timer_stop(&wd_timer);
+		qdf_spin_lock_bh(&wmi->diag_eventq_lock);
+		buf = qdf_nbuf_queue_remove(&wmi->diag_event_queue);
+		qdf_spin_unlock_bh(&wmi->diag_eventq_lock);
+	}
+	qdf_timer_free(&wd_timer);
+}
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * wmi_runtime_pm_init() - initialize runtime pm wmi variables
@@ -2847,6 +2914,28 @@ static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle,
 }
 #endif
 
+static QDF_STATUS wmi_initialize_worker_context(struct wmi_unified *wmi_handle)
+{
+	wmi_handle->wmi_rx_work_queue =
+		qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
+	if (!wmi_handle->wmi_rx_work_queue) {
+		wmi_err("failed to create wmi_rx_event_work_queue");
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	qdf_spinlock_create(&wmi_handle->eventq_lock);
+	qdf_nbuf_queue_init(&wmi_handle->event_queue);
+	qdf_create_work(0, &wmi_handle->rx_event_work,
+			wmi_rx_event_work, wmi_handle);
+	qdf_spinlock_create(&wmi_handle->diag_eventq_lock);
+	qdf_nbuf_queue_init(&wmi_handle->diag_event_queue);
+	qdf_create_work(0, &wmi_handle->rx_diag_event_work,
+			wmi_rx_diag_event_work, wmi_handle);
+	wmi_handle->wmi_rx_diag_events_dropped = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wmi_unified_get_pdev_handle: Get WMI SoC handle
  * @param wmi_soc: Pointer to wmi soc object
@@ -2857,6 +2946,7 @@ static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle,
 void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 {
 	struct wmi_unified *wmi_handle;
+	QDF_STATUS status;
 
 	if (pdev_idx >= WMI_MAX_RADIOS)
 		return NULL;
@@ -2868,22 +2958,15 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		if (!wmi_handle)
 			return NULL;
 
+		status = wmi_initialize_worker_context(wmi_handle);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto error;
+
 		wmi_handle->scn_handle = soc->scn_handle;
 		wmi_handle->event_id = soc->event_id;
 		wmi_handle->event_handler = soc->event_handler;
 		wmi_handle->ctx = soc->ctx;
 		wmi_handle->ops = soc->ops;
-		qdf_spinlock_create(&wmi_handle->eventq_lock);
-		qdf_nbuf_queue_init(&wmi_handle->event_queue);
-
-		qdf_create_work(0, &wmi_handle->rx_event_work,
-				wmi_rx_event_work, wmi_handle);
-		wmi_handle->wmi_rx_work_queue =
-			qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
-		if (!wmi_handle->wmi_rx_work_queue) {
-			wmi_err("failed to create wmi_rx_event_work_queue");
-			goto error;
-		}
 		wmi_handle->wmi_events = soc->wmi_events;
 		wmi_handle->services = soc->services;
 		wmi_handle->soc = soc;
@@ -2985,6 +3068,7 @@ void *wmi_unified_attach(void *scn_handle,
 {
 	struct wmi_unified *wmi_handle;
 	struct wmi_soc *soc;
+	QDF_STATUS status;
 
 	soc = (struct wmi_soc *) qdf_mem_malloc(sizeof(struct wmi_soc));
 	if (!soc)
@@ -2997,6 +3081,11 @@ void *wmi_unified_attach(void *scn_handle,
 		qdf_mem_free(soc);
 		return NULL;
 	}
+
+	status = wmi_initialize_worker_context(wmi_handle);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto error;
+
 	wmi_handle->soc = soc;
 	wmi_handle->soc->soc_idx = param->soc_id;
 	wmi_handle->soc->is_async_ep = param->is_async_ep;
@@ -3011,21 +3100,6 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->cmd_phy_id_map = soc->cmd_phy_id_map;
 	wmi_handle->evt_phy_id_map = soc->evt_phy_id_map;
 	soc->scn_handle = scn_handle;
-	qdf_atomic_init(&wmi_handle->pending_cmds);
-	qdf_atomic_init(&wmi_handle->is_target_suspended);
-	qdf_atomic_init(&wmi_handle->num_stats_over_qmi);
-	wmi_runtime_pm_init(wmi_handle);
-	qdf_spinlock_create(&wmi_handle->eventq_lock);
-	qdf_nbuf_queue_init(&wmi_handle->event_queue);
-	qdf_create_work(0, &wmi_handle->rx_event_work,
-			wmi_rx_event_work, wmi_handle);
-	wmi_handle->wmi_rx_work_queue =
-		qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
-	if (!wmi_handle->wmi_rx_work_queue) {
-		wmi_err("failed to create wmi_rx_event_work_queue");
-		goto error;
-	}
-	wmi_interface_logging_init(wmi_handle, WMI_HOST_PDEV_ID_0);
 	wmi_handle->target_type = param->target_type;
 	soc->target_type = param->target_type;
 
@@ -3038,6 +3112,13 @@ void *wmi_unified_attach(void *scn_handle,
 		wmi_err("wmi attach is not registered");
 		goto error;
 	}
+
+	qdf_atomic_init(&wmi_handle->pending_cmds);
+	qdf_atomic_init(&wmi_handle->is_target_suspended);
+	qdf_atomic_init(&wmi_handle->num_stats_over_qmi);
+	wmi_runtime_pm_init(wmi_handle);
+	wmi_interface_logging_init(wmi_handle, WMI_HOST_PDEV_ID_0);
+
 	wmi_interface_sequence_init(wmi_handle);
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = param->use_cookie;
@@ -3099,6 +3180,14 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 						&soc->wmi_pdev[i]->event_queue);
 			}
 
+			buf = qdf_nbuf_queue_remove(
+					&soc->wmi_pdev[i]->diag_event_queue);
+			while (buf) {
+				qdf_nbuf_free(buf);
+				buf = qdf_nbuf_queue_remove(
+					&soc->wmi_pdev[i]->diag_event_queue);
+			}
+
 			wmi_log_buffer_free(soc->wmi_pdev[i]);
 
 			/* Free events logs list */
@@ -3107,6 +3196,8 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 					soc->wmi_pdev[i]->events_logs_list);
 
 			qdf_spinlock_destroy(&soc->wmi_pdev[i]->eventq_lock);
+			qdf_spinlock_destroy(
+					&soc->wmi_pdev[i]->diag_eventq_lock);
 
 			wmi_interface_sequence_deinit(soc->wmi_pdev[i]);
 			wmi_ext_dbgfs_deinit(soc->wmi_pdev[i]);
