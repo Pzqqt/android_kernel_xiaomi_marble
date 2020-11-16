@@ -858,7 +858,8 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	if (te_check_override)
 		te_rechecks = MAX_TE_RECHECKS;
 
-	if (panel->panel_mode == DSI_OP_VIDEO_MODE)
+	if ((dsi_display->trusted_vm_env) ||
+			(panel->panel_mode == DSI_OP_VIDEO_MODE))
 		te_rechecks = 0;
 
 	ret = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
@@ -1529,7 +1530,8 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 
 	if (display->esd_trigger) {
 		DSI_INFO("ESD attack triggered by user\n");
-		rc = dsi_panel_trigger_esd_attack(display->panel);
+		rc = dsi_panel_trigger_esd_attack(display->panel,
+						display->trusted_vm_env);
 		if (rc) {
 			DSI_ERR("Failed to trigger ESD attack\n");
 			goto error;
