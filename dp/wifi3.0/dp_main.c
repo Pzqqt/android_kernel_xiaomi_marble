@@ -4975,18 +4975,20 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 			       hal_srng, RXDMA_BUF);
 #ifndef DISABLE_MON_CONFIG
 
-		htt_srng_setup(soc->htt_handle, mac_for_pdev,
-			       soc->rxdma_mon_buf_ring[lmac_id].hal_srng,
-			       RXDMA_MONITOR_BUF);
-		htt_srng_setup(soc->htt_handle, mac_for_pdev,
-			       soc->rxdma_mon_dst_ring[lmac_id].hal_srng,
-			       RXDMA_MONITOR_DST);
+		if (soc->wlan_cfg_ctx->rxdma1_enable) {
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				       soc->rxdma_mon_buf_ring[lmac_id].hal_srng,
+				       RXDMA_MONITOR_BUF);
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				       soc->rxdma_mon_dst_ring[lmac_id].hal_srng,
+				       RXDMA_MONITOR_DST);
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				       soc->rxdma_mon_desc_ring[lmac_id].hal_srng,
+				       RXDMA_MONITOR_DESC);
+		}
 		htt_srng_setup(soc->htt_handle, mac_for_pdev,
 			       soc->rxdma_mon_status_ring[lmac_id].hal_srng,
 			       RXDMA_MONITOR_STATUS);
-		htt_srng_setup(soc->htt_handle, mac_for_pdev,
-			       soc->rxdma_mon_desc_ring[lmac_id].hal_srng,
-			       RXDMA_MONITOR_DESC);
 #endif
 		htt_srng_setup(soc->htt_handle, mac_for_pdev,
 			       soc->rxdma_err_dst_ring[lmac_id].hal_srng,
@@ -13508,11 +13510,13 @@ static void dp_soc_cfg_attach(struct dp_soc *soc)
 		wlan_cfg_set_tso_desc_attach_defer(soc->wlan_cfg_ctx, 1);
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
+		wlan_cfg_set_rxdma1_enable(soc->wlan_cfg_ctx);
 		break;
 	case TARGET_TYPE_QCN9000:
 		wlan_cfg_set_tso_desc_attach_defer(soc->wlan_cfg_ctx, 1);
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCN9000);
+		wlan_cfg_set_rxdma1_enable(soc->wlan_cfg_ctx);
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);
