@@ -375,6 +375,11 @@ QDF_STATUS
 QDF_STATUS
 (*extract_roam_initial_info)(wmi_unified_t wmi_handle, void *evt_buf,
 			     struct roam_initial_data *dst, uint8_t idx);
+
+QDF_STATUS
+(*extract_roam_msg_info)(wmi_unified_t wmi_handle, void *evt_buf,
+			 struct roam_msg_info *dst, uint8_t idx);
+
 #endif
 
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
