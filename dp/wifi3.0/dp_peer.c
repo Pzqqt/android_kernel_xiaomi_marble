@@ -2997,13 +2997,15 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	dp_peer_tx_cleanup(vdev, peer);
-
-	/* cleanup the Rx reorder queues for this peer */
-	dp_peer_rx_cleanup(vdev, peer);
-
 	/* save vdev related member in case vdev freed */
 	vdev_opmode = vdev->opmode;
+
+	dp_peer_tx_cleanup(vdev, peer);
+
+	if (vdev_opmode != wlan_op_mode_monitor)
+	/* cleanup the Rx reorder queues for this peer */
+		dp_peer_rx_cleanup(vdev, peer);
+
 	qdf_mem_copy(vdev_mac_addr, vdev->mac_addr.raw,
 		     QDF_MAC_ADDR_SIZE);
 
