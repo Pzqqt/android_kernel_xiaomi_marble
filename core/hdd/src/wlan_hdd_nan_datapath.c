@@ -368,13 +368,13 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
 	}
 	psoc = wlan_vdev_get_psoc(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 
 	if (roam_status == eCSR_ROAM_NDP_STATUS_UPDATE) {
 		switch (roam_result) {
@@ -467,14 +467,14 @@ static int update_ndi_state(struct hdd_adapter *adapter, uint32_t state)
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	status = os_if_nan_set_ndi_state(vdev, state);
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	return status;
 }
 
@@ -639,7 +639,7 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 		goto err_handler;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		ret = -EINVAL;
@@ -651,7 +651,7 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 	 */
 	ucfg_nan_set_ndp_create_transaction_id(vdev, transaction_id);
 	ucfg_nan_set_ndi_state(vdev, NAN_DATA_NDI_CREATING_STATE);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	/*
 	 * The NAN data interface has been created at this point.
 	 * Unlike traditional device modes, where the higher application
@@ -709,7 +709,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 		return -EINVAL;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return -EINVAL;
@@ -717,7 +717,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 
 	os_if_nan_set_ndp_delete_transaction_id(vdev, transaction_id);
 	os_if_nan_set_ndi_state(vdev, NAN_DATA_NDI_DELETING_STATE);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	/* Delete the interface */
 	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
 	if (ret)
@@ -763,7 +763,7 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 
 	if (ndi_rsp->status == QDF_STATUS_SUCCESS) {
 		hdd_alert("NDI interface successfully created");
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 		if (!vdev) {
 			qdf_mem_free(roam_info);
 			hdd_err("vdev is NULL");
@@ -772,7 +772,7 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 
 		os_if_nan_set_ndp_create_transaction_id(vdev, 0);
 		os_if_nan_set_ndi_state(vdev, NAN_DATA_NDI_CREATED_STATE);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
@@ -866,14 +866,14 @@ void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
 	}
 
 	os_if_nan_ndi_session_end(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 }
 
 /**
