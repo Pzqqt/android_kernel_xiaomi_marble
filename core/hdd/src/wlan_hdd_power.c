@@ -180,7 +180,7 @@ static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -189,7 +189,7 @@ static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 	status = ucfg_pmo_enable_gtk_offload_in_fwr(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable gtk offload");
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
 /**
@@ -212,7 +212,7 @@ static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 	/* Passing as void* as PMO does not know legacy HDD adapter type */
 	gtk_rsp_request.callback_context = (void *)adapter;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -229,7 +229,7 @@ static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable gtk offload");
 put_vdev:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
 #ifdef WLAN_NS_OFFLOAD
@@ -464,7 +464,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 		goto free_req;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		goto free_req;
@@ -478,7 +478,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 
 	hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD, SIR_OFFLOAD_ENABLE);
 put_vdev:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 free_req:
 	qdf_mem_free(ns_req);
 
@@ -502,7 +502,7 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 		goto out;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		goto out;
@@ -521,7 +521,7 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 		hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD,
 			SIR_OFFLOAD_DISABLE);
 put_vdev:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 out:
 	hdd_exit();
 
@@ -611,7 +611,7 @@ static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -621,7 +621,7 @@ static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable hardware filter");
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	hdd_exit();
 }
 
@@ -632,7 +632,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -642,7 +642,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable hardware filter");
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 
 	hdd_exit();
 }
@@ -653,7 +653,7 @@ static void hdd_enable_action_frame_patterns(struct hdd_adapter *adapter)
 	struct wlan_objmgr_vdev *vdev;
 	hdd_enter();
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -664,7 +664,7 @@ static void hdd_enable_action_frame_patterns(struct hdd_adapter *adapter)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_info("Failed to enable action frame patterns");
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 
 	hdd_exit();
 }
@@ -676,7 +676,7 @@ static void hdd_disable_action_frame_patterns(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -686,7 +686,7 @@ static void hdd_disable_action_frame_patterns(struct hdd_adapter *adapter)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_info("Failed to disable action frame patterns");
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 
 	hdd_exit();
 }
@@ -698,7 +698,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		goto out;
@@ -724,7 +724,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 		hdd_enable_hw_filter(adapter);
 	hdd_enable_action_frame_patterns(adapter);
 put_vdev:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 out:
 	hdd_exit();
 
@@ -737,7 +737,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		goto out;
@@ -764,7 +764,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 	hdd_disable_action_frame_patterns(adapter);
 
 put_vdev:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 out:
 	hdd_exit();
 
@@ -1114,7 +1114,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	if (!arp_req)
 		return;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		goto free_req;
@@ -1154,7 +1154,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	hdd_wlan_offload_event(PMO_IPV4_ARP_REPLY_OFFLOAD, PMO_OFFLOAD_ENABLE);
 
 put_vdev:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 free_req:
 	qdf_mem_free(arp_req);
 }
@@ -1173,7 +1173,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 		return;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return;
@@ -1181,7 +1181,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 
 	status = ucfg_pmo_flush_arp_offload_req(vdev);
 	if (status != QDF_STATUS_SUCCESS) {
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 		hdd_err("Failed to flush arp Offload");
 		return;
 	}
@@ -1192,7 +1192,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 			PMO_OFFLOAD_DISABLE);
 	else
 		hdd_info("fail to disable arp offload");
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
 void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
@@ -1482,10 +1482,12 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_POWER_ID);
 			if (vdev) {
 				ucfg_pkt_capture_resume_mon_thread(vdev);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(
+					vdev, WLAN_OSIF_POWER_ID);
 			} else {
 				hdd_err("vdev is NULL");
 			}
@@ -1897,10 +1899,12 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_POWER_ID);
 			if (vdev) {
 				ucfg_pkt_capture_resume_mon_thread(vdev);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(
+					vdev, WLAN_OSIF_POWER_ID);
 			} else {
 				hdd_err("vdev is NULL");
 			}
@@ -2139,16 +2143,18 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_POWER_ID);
 			if (!vdev) {
 				hdd_err("vdev is NULL");
 				goto resume_dp_thread;
 			}
 			if (ucfg_pkt_capture_suspend_mon_thread(vdev)) {
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(
+					vdev, WLAN_OSIF_POWER_ID);
 				goto resume_dp_thread;
 			}
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 		}
 	}
 
@@ -2174,10 +2180,12 @@ resume_dp_thread:
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
 		adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 		if (adapter) {
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_POWER_ID);
 			if (vdev) {
 				ucfg_pkt_capture_resume_mon_thread(vdev);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(
+					vdev, WLAN_OSIF_POWER_ID);
 			} else {
 				hdd_err("vdev is NULL");
 			}
@@ -2516,14 +2524,14 @@ static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)
 {
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		hdd_info("vdev is NULL");
 		return;
 	}
 
 	wlan_cfg80211_mc_cp_stats_get_tx_power(vdev, dbm);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
 #ifdef FEATURE_ANI_LEVEL_REQUEST

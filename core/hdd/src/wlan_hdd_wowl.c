@@ -224,7 +224,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		wow_pattern.pattern_id = empty_slot;
 		wow_pattern.pattern_byte_offset = 0;
 
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 		if (!vdev) {
 			hdd_err("vdev is null");
 			qdf_mem_free(g_hdd_wowl_ptrns[empty_slot]);
@@ -240,7 +240,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			qdf_mem_free(g_hdd_wowl_ptrns[empty_slot]);
 			g_hdd_wowl_ptrns[empty_slot] = NULL;
 		}
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 		dump_hdd_wowl_ptrn(&wow_pattern);
 
 next_ptrn:
@@ -295,12 +295,12 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	if (!patternFound)
 		return false;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		return false;
 
 	status = ucfg_pmo_del_wow_user_pattern(vdev, id);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (QDF_IS_STATUS_ERROR(status))
 		return false;
 
@@ -405,13 +405,13 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 		pattern_mask += 2;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		return false;
 
 	/* Register the pattern downstream */
 	qdf_ret_status = ucfg_pmo_add_wow_user_pattern(vdev, &wow_pattern);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("pmo_wow_user_pattern failed with error code (%d).",
 			  qdf_ret_status);
@@ -458,12 +458,12 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		return false;
 
 	qdf_ret_status = ucfg_pmo_del_wow_user_pattern(vdev, pattern_idx);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("sme_wowl_del_bcast_pattern failed with error code (%d).",
 			 qdf_ret_status);
