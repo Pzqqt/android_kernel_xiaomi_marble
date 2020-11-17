@@ -409,6 +409,17 @@ static void ipa3_uc_save_dbg_stats(u32 size)
 		} else
 			goto unmap;
 		break;
+	case IPA_HW_PROTOCOL_RTK:
+		if (!ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio) {
+			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_size =
+				size;
+			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_ofst =
+				addr_offset;
+			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio =
+				mmio;
+		} else
+			goto unmap;
+		break;
 	case IPA_HW_PROTOCOL_WDI:
 		if (!ipa3_ctx->wdi2_ctx.dbg_stats.uc_dbg_stats_mmio) {
 			ipa3_ctx->wdi2_ctx.dbg_stats.uc_dbg_stats_size =
@@ -1483,6 +1494,10 @@ int ipa3_uc_debug_stats_dealloc(uint32_t prot_id)
 	case IPA_HW_PROTOCOL_AQC:
 		iounmap(ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio);
 		ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio = NULL;
+		break;
+	case IPA_HW_PROTOCOL_RTK:
+		iounmap(ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio);
+		ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio = NULL;
 		break;
 	case IPA_HW_PROTOCOL_WDI:
 		iounmap(ipa3_ctx->wdi2_ctx.dbg_stats.uc_dbg_stats_mmio);

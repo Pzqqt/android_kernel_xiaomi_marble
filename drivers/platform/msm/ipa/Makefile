@@ -31,6 +31,7 @@ ipam-y += \
 	ipa_v3/ipahal/ipahal_fltrt.o \
 	ipa_v3/ipahal/ipahal_hw_stats.o \
 	ipa_v3/ipahal/ipahal_nat.o \
+	ipa_v3/ipa_eth_i.o \
 
 ipam-$(CONFIG_RMNET_IPA3) += ipa_v3/rmnet_ipa.o ipa_v3/ipa_qmi_service_v01.o \
 	ipa_v3/ipa_qmi_service.o ipa_v3/rmnet_ctl_ipa.o \

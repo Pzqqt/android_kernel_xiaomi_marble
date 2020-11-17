@@ -15,6 +15,9 @@
 /* GSI_GSI_INST_RAM_n */
 #define GSI_GSI_INST_RAM_n_WORD_SZ 0x4
 
+/* GSI_GSI_SHRAM_n */
+#define GSI_GSI_SHRAM_n_WORD_SZ 0x4
+
 #define GSI_GSI_INST_RAM_n_MAXn 4095
 #define GSI_V2_0_GSI_INST_RAM_n_MAXn 6143
 #define GSI_V2_2_GSI_INST_RAM_n_MAXn 4095

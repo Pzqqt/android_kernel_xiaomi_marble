@@ -151,6 +151,7 @@ enum gsihal_reg_name {
 	GSI_INTER_EE_n_SRC_GSI_CH_IRQ_CLR_k,
 	GSI_INTER_EE_n_SRC_EV_CH_IRQ_k,
 	GSI_INTER_EE_n_SRC_EV_CH_IRQ_CLR_k,
+	GSI_GSI_SHRAM_n,
 	GSI_REG_MAX
 };
 

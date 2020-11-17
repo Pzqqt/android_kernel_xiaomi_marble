@@ -24,6 +24,7 @@
 #define DIR_PRODUCER 1
 
 #define MAX_AQC_CHANNELS 2
+#define MAX_RTK_CHANNELS 2
 #define MAX_11AD_CHANNELS 5
 #define MAX_WDI2_CHANNELS 2
 #define MAX_WDI3_CHANNELS 2
@@ -81,6 +82,7 @@ enum ipa3_hw_features {
  * @IPA_HW_PROTOCOL_ETH : protocol related to ETH operation in IPA HW
  * @IPA_HW_PROTOCOL_MHIP: protocol related to MHIP operation in IPA HW
  * @IPA_HW_PROTOCOL_USB : protocol related to USB operation in IPA HW
+ * @IPA_HW_PROTOCOL_RTK : protocol related to RTK operation in IPA HW
  */
 enum ipa4_hw_protocol {
 	IPA_HW_PROTOCOL_COMMON = 0x0,
@@ -91,6 +93,7 @@ enum ipa4_hw_protocol {
 	IPA_HW_PROTOCOL_ETH = 0x5,
 	IPA_HW_PROTOCOL_MHIP = 0x6,
 	IPA_HW_PROTOCOL_USB = 0x7,
+	IPA_HW_PROTOCOL_RTK = 0x9,
 	IPA_HW_PROTOCOL_MAX
 };
 
@@ -589,7 +592,75 @@ struct IpaHw11adInitCmdData_t {
  */
 struct IpaHw11adDeinitCmdData_t {
 	u32 reserved;
-};
+} __packed;
+
+/**
+ * struct IpaHwRtkSetupCmdData_t  - rlk setup channel command data
+ * @dir: Direction RX/TX
+ * @gsi_ch: GSI Channel number
+ * @reserved: 16 bytes padding
+ */
+struct IpaHwRtkSetupCmdData_t {
+	uint8_t dir;
+	uint8_t gsi_ch;
+	uint16_t reserved;
+} __packed;
+
+/**
+ * struct IpaHwRtkCommonChCmdData - rtk tear down channel command data
+ * @gsi_ch: GSI Channel number
+ * @reserved_0: padding
+ * @reserved_1: padding
+ */
+struct IpaHwRtkCommonChCmdData_t {
+	uint8_t gsi_ch;
+	uint8_t reserved_0;
+	uint16_t reserved_1;
+} __packed;
+
+/**
+ * struct IpaHwAQCInitCmdData_t - AQC peripheral init command data
+ * @periph_baddr_lsb: Peripheral Base Address LSB (pa/IOVA)
+ * @periph_baddr_msb: Peripheral Base Address MSB (pa/IOVA)
+ */
+struct IpaHwAQCInitCmdData_t {
+	u32 periph_baddr_lsb;
+	u32 periph_baddr_msb;
+} __packed;
+
+/**
+ * struct IpaHwAQCDeinitCmdData_t - AQC peripheral deinit command data
+ * @reserved: Reserved for future
+ */
+struct IpaHwAQCDeinitCmdData_t {
+	u32 reserved;
+} __packed;
+
+/**
+ * struct IpaHwAQCSetupCmdData_t - AQC setup channel command data
+ * @dir: Direction RX/TX
+ * @aqc_ch: aqc channel number
+ * @gsi_ch: GSI Channel number
+ * @reserved: 8 bytes padding
+ */
+struct IpaHwAQCSetupCmdData_t {
+	u8 dir;
+	u8 aqc_ch;
+	u8 gsi_ch;
+	u8 reserved;
+} __packed;
+
+/**
+ * struct IpaHwAQCCommonChCmdData_t - AQC tear down channel command data
+ * @gsi_ch: GSI Channel number
+ * @reserved_0: padding
+ * @reserved_1: padding
+ */
+struct IpaHwAQCCommonChCmdData_t {
+	u8 gsi_ch;
+	u8 reserved_0;
+	u16 reserved_1;
+} __packed;
 
 /**
  * struct IpaHwSetUpCmd  - Structure holding the parameters
@@ -599,7 +670,9 @@ struct IpaHw11adDeinitCmdData_t {
  */
 union IpaHwSetUpCmd {
 	struct Ipa3HwNtnSetUpCmdData_t NtnSetupCh_params;
-	struct IpaHw11adSetupCmdData_t	W11AdSetupCh_params;
+	struct IpaHwAQCSetupCmdData_t AqcSetupCh_params;
+	struct IpaHw11adSetupCmdData_t W11AdSetupCh_params;
+	struct IpaHwRtkSetupCmdData_t RtkSetupCh_params;
 } __packed;
 
 struct IpaHwOffloadSetUpCmdData_t {
@@ -662,6 +735,8 @@ struct IpaHwOffloadSetUpCmdData_t_v4_0 {
  */
 union IpaHwCommonChCmd {
 	union Ipa3HwNtnCommonChCmdData_t NtnCommonCh_params;
+	struct IpaHwAQCCommonChCmdData_t AqcCommonCh_params;
+	struct IpaHwRtkCommonChCmdData_t RtkCommonCh_params;
 	struct IpaHw11adCommonChCmdData_t W11AdCommonCh_params;
 } __packed;
 
@@ -743,6 +818,7 @@ struct IpaHwOffloadCommonChCmdData_t_v4_0 {
  */
 union IpaHwPeripheralInitCmd {
 	struct IpaHw11adInitCmdData_t W11AdInit_params;
+	struct IpaHwAQCInitCmdData_t AqcInit_params;
 } __packed;
 
 struct IpaHwPeripheralInitCmdData_t {
@@ -757,6 +833,7 @@ struct IpaHwPeripheralInitCmdData_t {
  */
 union IpaHwPeripheralDeinitCmd {
 	struct IpaHw11adDeinitCmdData_t W11AdDeinit_params;
+	struct IpaHwAQCDeinitCmdData_t AqcDeinit_params;
 } __packed;
 
 struct IpaHwPeripheralDeinitCmdData_t {
