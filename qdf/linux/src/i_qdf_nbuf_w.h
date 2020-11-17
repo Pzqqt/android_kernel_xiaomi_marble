@@ -147,6 +147,13 @@ __qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end)
 {
 	dmac_inv_range(buf_start, buf_end);
 }
+#elif defined(__LINUX_MIPS32_ARCH__) || defined(__LINUX_MIPS64_ARCH__)
+static inline void
+__qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end)
+{
+	dma_cache_inv((unsigned long)buf_start,
+		      (unsigned long)(buf_end - buf_start));
+}
 #else
 static inline void
 __qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end)
