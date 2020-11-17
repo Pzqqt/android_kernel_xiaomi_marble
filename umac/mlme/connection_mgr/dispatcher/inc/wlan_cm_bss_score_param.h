@@ -249,12 +249,10 @@ void wlan_cm_set_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
  * wlan_cm_reset_check_6ghz_security() - reset check 6Ghz security to orignal
  * value
  * @psoc: pointer to psoc object
- * @value: value to be set
  *
  * Return: void
  */
-void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
-				     bool value);
+void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_cm_get_check_6ghz_security() - Get 6Ghz allowe AKM mask
@@ -296,8 +294,7 @@ void wlan_cm_set_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
 				     bool value) {}
 
 static inline
-void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
-				        bool value) {}
+void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc) {}
 
 static inline
 bool wlan_cm_get_check_6ghz_security(struct wlan_objmgr_psoc *psoc)

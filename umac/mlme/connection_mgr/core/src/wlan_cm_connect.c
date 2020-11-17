@@ -743,9 +743,6 @@ static void cm_connect_prepare_scan_filter(struct wlan_objmgr_pdev *pdev,
 					   struct scan_filter *filter,
 					   bool security_valid_for_6ghz)
 {
-	struct wlan_objmgr_psoc *psoc;
-
-	psoc = wlan_pdev_get_psoc(pdev);
 	if (!qdf_is_macaddr_zero(&cm_req->req.bssid)) {
 		filter->num_of_bssid = 1;
 		qdf_copy_macaddr(&filter->bssid_list[0], &cm_req->req.bssid);

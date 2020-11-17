@@ -1825,8 +1825,7 @@ void wlan_cm_set_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
 	mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security = value;
 }
 
-void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
-				       bool value)
+void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc)
 {
 	struct psoc_mlme_obj *mlme_psoc_obj;
 
@@ -1835,7 +1834,7 @@ void wlan_cm_reset_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
 		return;
 
 	mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security =
-					cfg_get(psoc ,CFG_CHECK_6GHZ_SECURITY);
+					cfg_get(psoc, CFG_CHECK_6GHZ_SECURITY);
 }
 
 bool wlan_cm_get_check_6ghz_security(struct wlan_objmgr_psoc *psoc)
