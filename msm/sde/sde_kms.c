@@ -993,11 +993,39 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 
 }
 
+static struct drm_crtc *sde_kms_vm_get_vm_crtc(
+		struct drm_atomic_state *state)
+{
+	int i;
+	enum sde_crtc_vm_req vm_req = VM_REQ_NONE;
+	struct drm_crtc *crtc, *vm_crtc = NULL;
+	struct drm_crtc_state *new_cstate, *old_cstate;
+	struct sde_crtc_state *vm_cstate;
+
+	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
+		if (!new_cstate->active && !old_cstate->active)
+			continue;
+
+		vm_cstate = to_sde_crtc_state(new_cstate);
+		vm_req = sde_crtc_get_property(vm_cstate,
+				CRTC_PROP_VM_REQ_STATE);
+		if (vm_req != VM_REQ_NONE) {
+			SDE_DEBUG("valid vm request:%d found on crtc-%d\n",
+					vm_req, crtc->base.id);
+			vm_crtc = crtc;
+			break;
+		}
+	}
+
+	return vm_crtc;
+}
+
 int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 				      struct drm_atomic_state *state)
 {
 	struct drm_device *ddev;
 	struct drm_crtc *crtc;
+	struct drm_crtc_state *new_cstate;
 	struct drm_encoder *encoder;
 	struct drm_connector *connector;
 	struct sde_vm_ops *vm_ops;
@@ -1011,10 +1039,12 @@ int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 	if (!vm_ops)
 		return -EINVAL;
 
-	crtc = state->crtcs[0].ptr;
+	crtc = sde_kms_vm_get_vm_crtc(state);
+	if (!crtc)
+		return 0;
 
-	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
-
+	new_cstate = drm_atomic_get_new_crtc_state(state, crtc);
+	cstate = to_sde_crtc_state(new_cstate);
 	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
 	if (vm_req != VM_REQ_ACQUIRE)
 		return 0;
@@ -1055,13 +1085,19 @@ int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
 {
 	struct drm_device *ddev;
 	struct drm_plane *plane;
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *new_cstate;
 	struct sde_crtc_state *cstate;
 	enum sde_crtc_vm_req vm_req;
 
 	ddev = sde_kms->dev;
 
-	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+	crtc = sde_kms_vm_get_vm_crtc(state);
+	if (!crtc)
+		return 0;
 
+	new_cstate = drm_atomic_get_new_crtc_state(state, crtc);
+	cstate = to_sde_crtc_state(new_cstate);
 	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
 	if (vm_req != VM_REQ_ACQUIRE)
 		return 0;
@@ -1308,16 +1344,15 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 	vm_ops = sde_vm_get_ops(sde_kms);
 	ddev = sde_kms->dev;
 
-	crtc = state->crtcs[0].ptr;
-	new_cstate = state->crtcs[0].new_state;
-	cstate = to_sde_crtc_state(new_cstate);
+	crtc = sde_kms_vm_get_vm_crtc(state);
+	if (!crtc)
+		return 0;
 
+	new_cstate = drm_atomic_get_new_crtc_state(state, crtc);
+	cstate = to_sde_crtc_state(new_cstate);
 	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
 	if (vm_req != VM_REQ_RELEASE)
-		return rc;
-
-	if (!new_cstate->active && !new_cstate->active_changed)
-		return rc;
+		return 0;
 
 	/* if vm_req is enabled, once CRTC on the commit is guaranteed */
 	sde_kms_wait_for_frame_transfer_complete(&sde_kms->base, crtc);
@@ -1356,7 +1391,9 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 
 	ddev = sde_kms->dev;
 
-	crtc = state->crtcs[0].ptr;
+	crtc = sde_kms_vm_get_vm_crtc(state);
+	if (!crtc)
+		return 0;
 
 	/* if vm_req is enabled, once CRTC on the commit is guaranteed */
 	sde_kms_wait_for_frame_transfer_complete(&sde_kms->base, crtc);
@@ -1392,6 +1429,7 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 	struct sde_vm_ops *vm_ops;
 	struct sde_crtc_state *cstate;
 	struct drm_crtc *crtc;
+	struct drm_crtc_state *new_cstate;
 	enum sde_crtc_vm_req vm_req;
 	int rc = 0;
 
@@ -1400,12 +1438,15 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 
 	vm_ops = sde_vm_get_ops(sde_kms);
 
-	crtc = state->crtcs[0].ptr;
-	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+	crtc = sde_kms_vm_get_vm_crtc(state);
+	if (!crtc)
+		return 0;
 
+	new_cstate = drm_atomic_get_new_crtc_state(state, crtc);
+	cstate = to_sde_crtc_state(new_cstate);
 	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
 	if (vm_req != VM_REQ_RELEASE)
-		goto exit;
+		return 0;
 
 	/* handle SDE pre-release */
 	sde_kms_vm_pre_release(sde_kms, state);
@@ -2723,27 +2764,24 @@ static void sde_kms_vm_res_release(struct msm_kms *kms,
 		struct drm_atomic_state *state)
 {
 	struct drm_crtc *crtc;
-	struct drm_crtc_state *new_cstate, *old_cstate;
+	struct drm_crtc_state *new_cstate;
+	struct sde_crtc_state *cstate;
 	struct sde_vm_ops *vm_ops;
 	enum sde_crtc_vm_req vm_req;
 	struct sde_kms *sde_kms = to_sde_kms(kms);
-	int i;
-
-	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
-		struct sde_crtc_state *new_state;
-
-		if (!new_cstate->active && !old_cstate->active)
-			continue;
-
-		new_state = to_sde_crtc_state(new_cstate);
-		vm_req = sde_crtc_get_property(new_state,
-					CRTC_PROP_VM_REQ_STATE);
-		if (vm_req != VM_REQ_ACQUIRE)
-			return;
-	}
 
 	vm_ops = sde_vm_get_ops(sde_kms);
 	if (!vm_ops)
+		return;
+
+	crtc = sde_kms_vm_get_vm_crtc(state);
+	if (!crtc)
+		return;
+
+	new_cstate = drm_atomic_get_new_crtc_state(state, crtc);
+	cstate = to_sde_crtc_state(new_cstate);
+	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+	if (vm_req != VM_REQ_ACQUIRE)
 		return;
 
 	sde_vm_lock(sde_kms);
