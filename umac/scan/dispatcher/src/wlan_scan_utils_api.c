@@ -1767,9 +1767,9 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 	tmp_old = util_scan_find_ie(WLAN_ELEMID_SSID, ie, ielen);
 	tmp_old = (tmp_old) ? tmp_old + tmp_old[1] + 2 : ie;
 
-	while (tmp_old + tmp_old[1] + 2 - ie <= ielen) {
+	while (((tmp_old + tmp_old[1] + 2) - ie) <= ielen) {
 		if (tmp_old[0] == 0) {
-			tmp_old++;
+			tmp_old += tmp_old[1] + 2;
 			continue;
 		}
 
@@ -1820,7 +1820,7 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 			}
 		}
 
-		if (tmp_old + tmp_old[1] + 2 - ie == ielen)
+		if (((tmp_old + tmp_old[1] + 2) - ie) >= ielen)
 			break;
 
 		tmp_old += tmp_old[1] + 2;
@@ -1830,21 +1830,24 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 	 * copied to new ie, skip ssid, capability, bssid-index ie
 	 */
 	tmp_new = sub_copy;
-	while (tmp_new + tmp_new[1] + 2 - sub_copy <= subie_len) {
+	while (((tmp_new + tmp_new[1] + 2) - sub_copy) <= subie_len) {
 		if (!(tmp_new[0] == WLAN_ELEMID_NONTX_BSSID_CAP ||
 		      tmp_new[0] == WLAN_ELEMID_SSID ||
-		      tmp_new[0] == WLAN_ELEMID_MULTI_BSSID_IDX ||
-		      tmp_new[0] == 0xff)) {
+		      tmp_new[0] == WLAN_ELEMID_MULTI_BSSID_IDX)) {
 			qdf_mem_copy(pos, tmp_new, tmp_new[1] + 2);
 			pos += tmp_new[1] + 2;
 		}
-		if (tmp_new + tmp_new[1] + 2 - sub_copy == subie_len)
+		if (((tmp_new + tmp_new[1] + 2) - sub_copy) >= subie_len)
 			break;
 		tmp_new += tmp_new[1] + 2;
 	}
 
 	qdf_mem_free(sub_copy);
-	return pos - new_ie;
+
+	if (pos > new_ie)
+		return pos - new_ie;
+	else
+		return 0;
 }
 
 static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
@@ -1882,7 +1885,7 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 	if (!new_ie)
 		return QDF_STATUS_E_NOMEM;
 
-	while (pos < ie + ielen + 2) {
+	while (pos < (ie + ielen + 2)) {
 		tmp = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID, pos,
 					ielen - (pos - ie));
 		if (!tmp)
@@ -1893,18 +1896,18 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 		/* Skip Element ID, Len, MaxBSSID Indicator */
 		if (tmp[1] < 4)
 			break;
-		for (subelement = tmp + 3; subelement < mbssid_end_pos - 1;
+		for (subelement = tmp + 3; subelement < (mbssid_end_pos - 1);
 		     subelement += 2 + subelement[1]) {
 			subie_len = subelement[1];
-			if (mbssid_end_pos - subelement < 2 + subie_len)
+			if ((mbssid_end_pos - subelement) < (2 + subie_len))
 				break;
-			if (subelement[0] != 0 || subelement[1] < 4) {
+			if ((subelement[0] != 0) || (subelement[1] < 4)) {
 				/* not a valid BSS profile */
 				continue;
 			}
 
-			if (subelement[2] != WLAN_ELEMID_NONTX_BSSID_CAP ||
-			    subelement[3] != 2) {
+			if ((subelement[2] != WLAN_ELEMID_NONTX_BSSID_CAP) ||
+			    (subelement[3] != 2)) {
 				/* The first element within the Nontransmitted
 				 * BSSID Profile is not the Nontransmitted
 				 * BSSID Capability element.
@@ -1916,8 +1919,8 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 			mbssid_index_ie =
 				util_scan_find_ie(WLAN_ELEMID_MULTI_BSSID_IDX,
 						  subelement + 2, subie_len);
-			if (!mbssid_index_ie || mbssid_index_ie[1] < 1 ||
-			    mbssid_index_ie[2] == 0) {
+			if (!mbssid_index_ie || (mbssid_index_ie[1] < 1) ||
+			    (mbssid_index_ie[2] == 0)) {
 				/* No valid Multiple BSSID-Index element */
 				continue;
 			}
