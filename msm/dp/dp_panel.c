@@ -1357,9 +1357,28 @@ static int dp_panel_dsc_prepare_basic_params(
 	u32 ppr_per_slice;
 	u32 slice_caps_1;
 	u32 slice_caps_2;
+	u32 dsc_version_major, dsc_version_minor;
+	bool dsc_version_supported = false;
 
-	comp_info->dsc_info.config.dsc_version_major = 0x1;
-	comp_info->dsc_info.config.dsc_version_minor = 0x1;
+	dsc_version_major = dp_panel->sink_dsc_caps.version & 0xF;
+	dsc_version_minor = (dp_panel->sink_dsc_caps.version >> 4) & 0xF;
+	dsc_version_supported = (dsc_version_major == 0x1 &&
+			(dsc_version_minor == 0x1 || dsc_version_minor == 0x2))
+			? true : false;
+
+	DP_DEBUG("DSC version: %d.%d, dpcd value: %x\n",
+			dsc_version_major, dsc_version_minor,
+			dp_panel->sink_dsc_caps.version);
+
+	if (!dsc_version_supported) {
+		dsc_version_major = 1;
+		dsc_version_minor = 1;
+		DP_ERR("invalid sink DSC version, fallback to %d.%d\n",
+				dsc_version_major, dsc_version_minor);
+	}
+
+	comp_info->dsc_info.config.dsc_version_major = dsc_version_major;
+	comp_info->dsc_info.config.dsc_version_minor = dsc_version_minor;
 	comp_info->dsc_info.scr_rev = 0x0;
 
 	comp_info->dsc_info.slice_per_pkt = 0;
