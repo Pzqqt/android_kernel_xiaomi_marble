@@ -216,10 +216,9 @@ fwol_set_adaptive_dwelltime_config(
 	QDF_STATUS status;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		fwol_err("wma handle is null");
+	if (!wma_handle)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	status = wma_send_adapt_dwelltime_params(wma_handle,
 						 dwelltime_params);
 	return status;

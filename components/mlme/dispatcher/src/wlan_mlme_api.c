@@ -2274,10 +2274,8 @@ QDF_STATUS wlan_mlme_set_rts_threshold(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 
@@ -2312,10 +2310,8 @@ QDF_STATUS wlan_mlme_set_frag_threshold(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("wma_handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 
