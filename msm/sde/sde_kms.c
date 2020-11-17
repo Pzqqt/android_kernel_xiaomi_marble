@@ -3023,6 +3023,40 @@ static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
 	return 0;
 }
 
+static int sde_kms_vm_trusted_cont_splash_res_init(struct sde_kms *sde_kms)
+{
+	int i;
+	void *display;
+	struct dsi_display *dsi_display;
+	struct drm_encoder *encoder;
+
+	if (!sde_kms)
+		return -EINVAL;
+
+	if (!sde_in_trusted_vm(sde_kms))
+		return 0;
+
+	for (i = 0; i < sde_kms->dsi_display_count; i++) {
+		display = sde_kms->dsi_displays[i];
+		dsi_display = (struct dsi_display *)display;
+
+		if (!dsi_display->bridge->base.encoder) {
+			SDE_ERROR("no encoder on dsi display:%d", i);
+			return -EINVAL;
+		}
+
+		encoder = dsi_display->bridge->base.encoder;
+		encoder->possible_crtcs = 1 << i;
+
+		SDE_DEBUG(
+		"dsi-display:%d encoder id[%d]=%d name=%s crtcs=%x\n", i,
+				encoder->index, encoder->base.id,
+				encoder->name, encoder->possible_crtcs);
+	}
+
+	return 0;
+}
+
 static int sde_kms_cont_splash_config(struct msm_kms *kms)
 {
 	void *display;
@@ -3049,6 +3083,12 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 	dev = sde_kms->dev;
 	if (!dev) {
 		SDE_ERROR("invalid device\n");
+		return -EINVAL;
+	}
+
+	rc = sde_kms_vm_trusted_cont_splash_res_init(sde_kms);
+	if (rc) {
+		SDE_ERROR("failed vm cont splash resource init, rc=%d", rc);
 		return -EINVAL;
 	}
 
@@ -3104,9 +3144,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		encoder->crtc = priv->crtcs[i];
 		crtc = encoder->crtc;
 		splash_display->encoder =  encoder;
-
-		SDE_DEBUG("for dsi-display:%d crtc id = %d enc id =%d\n",
-				i, crtc->base.id, encoder->base.id);
+		SDE_DEBUG("for dsi-display:%d crtc id[%d]:%d enc id[%d]:%d\n",
+				i, crtc->index, crtc->base.id, encoder->index,
+				encoder->base.id);
 
 		mutex_lock(&dev->mode_config.mutex);
 		drm_connector_list_iter_begin(dev, &conn_iter);
