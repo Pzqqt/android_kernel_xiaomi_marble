@@ -622,8 +622,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 					&session_id,
 					mac_ctx->lim.max_sta_of_pe_session,
 					sme_start_bss_req->bssType,
-					sme_start_bss_req->vdev_id,
-					sme_start_bss_req->bssPersona);
+					sme_start_bss_req->vdev_id);
 			if (!session) {
 				pe_warn("Session Can not be created");
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -1429,8 +1428,7 @@ lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 			&session_id,
 			mac_ctx->lim.max_sta_of_pe_session,
 			eSIR_INFRASTRUCTURE_MODE,
-			req->vdev_id,
-			wlan_vdev_mlme_get_opmode(vdev));
+			req->vdev_id);
 	if (!pe_session)
 		pe_err("vdev_id: %d cm_id 0x%x : pe_session create failed BSSID"
 		       QDF_MAC_ADDR_FMT, req->vdev_id, req->cm_id,
@@ -1511,6 +1509,37 @@ QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
 	qdf_mem_free(req);
 
 	return status;
+}
+#endif
+
+static bool lim_is_fast_roam_enabled(struct mac_context *mac_ctx,
+				     struct wlan_objmgr_vdev *vdev) {
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+		return false;
+
+	if (mac_ctx->mlme_cfg->lfr.enable_fast_roam_in_concurrency)
+		return mac_ctx->mlme_cfg->lfr.lfr_enabled;
+
+	/*
+	 * If fast roam in concurrency is disabled and there are concurrent
+	 * sessions runnig return false.
+	 */
+	if (policy_mgr_get_connection_count(mac_ctx->psoc))
+		return false;
+
+	return mac_ctx->mlme_cfg->lfr.lfr_enabled;
+}
+
+#ifdef FEATURE_WLAN_ESE
+static inline bool lim_is_ese_enabled(struct mac_context *mac_ctx)
+{
+	return mac_ctx->mlme_cfg->lfr.ese_enabled;
+}
+#else
+static inline bool lim_is_ese_enabled(struct mac_context *mac_ctx)
+{
+	return false;
 }
 #endif
 
@@ -1631,8 +1660,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 					&session_id,
 					mac_ctx->lim.max_sta_of_pe_session,
 					eSIR_INFRASTRUCTURE_MODE,
-					sme_join_req->vdev_id,
-					sme_join_req->staPersona);
+					sme_join_req->vdev_id);
 			if (!session) {
 				pe_err("Session Can not be created");
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -1642,7 +1670,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			lim_set_bcn_probe_filter(mac_ctx, session,
 						 bss_chan_id);
 		}
-		session->max_amsdu_num = sme_join_req->max_amsdu_num;
+		session->max_amsdu_num =
+				mac_ctx->mlme_cfg->ht_caps.max_num_amsdu;
 		session->enable_session_twt_support =
 			sme_join_req->enable_session_twt_support;
 		/*
@@ -1666,13 +1695,23 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				  sme_join_req->self_mac_addr);
 
 		session->statypeForBss = STA_ENTRY_PEER;
-		session->limWmeEnabled = sme_join_req->isWMEenabled;
-		session->limQosEnabled = sme_join_req->isQosEnabled;
+
+		if (mac_ctx->roam.roamSession[in_req->vdev_id].fWMMConnection)
+			session->limWmeEnabled = true;
+		else
+			session->limWmeEnabled = false;
+
+		if (mac_ctx->roam.roamSession[in_req->vdev_id].fQOSConnection)
+			session->limQosEnabled = true;
+		else
+			session->limQosEnabled = false;
+
 		session->wps_registration = sme_join_req->wps_registration;
 		session->he_with_wep_tkip = sme_join_req->he_with_wep_tkip;
 
-		session->enable_bcast_probe_rsp =
-				sme_join_req->enable_bcast_probe_rsp;
+		if (session->opmode == QDF_STA_MODE)
+			session->enable_bcast_probe_rsp =
+				mac_ctx->mlme_cfg->oce.enable_bcast_probe_rsp;
 
 		/* Store vendor specific IE for CISCO AP */
 		ie_len = (bss_desc->length + sizeof(bss_desc->length) -
@@ -1691,11 +1730,12 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->cc_switch_mode = sme_join_req->cc_switch_mode;
 #endif
 		session->nwType = bss_desc->nwType;
-		session->enableAmpduPs = sme_join_req->enableAmpduPs;
-		session->enableHtSmps = sme_join_req->enableHtSmps;
-		session->htSmpsvalue = sme_join_req->htSmps;
+		session->enableAmpduPs =
+			mac_ctx->mlme_cfg->ht_caps.enable_ampdu_ps;
+		session->enableHtSmps = mac_ctx->mlme_cfg->ht_caps.enable_smps;
+		session->htSmpsvalue = mac_ctx->mlme_cfg->ht_caps.smps;
 		session->send_smps_action =
-			sme_join_req->send_smps_action;
+			mac_ctx->roam.configParam.send_smps_action;
 		/*
 		 * By default supported NSS 1x1 is set to true
 		 * and later on updated while determining session
@@ -1707,9 +1747,9 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
 			session->enableVhtpAid =
-				sme_join_req->enableVhtpAid;
+			   mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_paid;
 			session->enableVhtGid =
-				sme_join_req->enableVhtGid;
+			   mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
 		}
 
 		/*Phy mode */
@@ -1772,13 +1812,17 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 #ifdef FEATURE_WLAN_ESE
 		session->isESEconnection = sme_join_req->isESEconnection;
 #endif
-		session->isFastTransitionEnabled =
-			sme_join_req->isFastTransitionEnabled;
-
 		session->isFastRoamIniFeatureEnabled =
-			sme_join_req->isFastRoamIniFeatureEnabled;
+			lim_is_fast_roam_enabled(mac_ctx, session->vdev);
+
+		session->isFastTransitionEnabled =
+					lim_is_ese_enabled(mac_ctx) ||
+					session->isFastRoamIniFeatureEnabled;
+
+
+
 		session->txLdpcIniFeatureEnabled =
-			sme_join_req->txLdpcIniFeatureEnabled;
+			mac_ctx->mlme_cfg->ht_caps.tx_ldpc_enable;
 
 		lim_update_fils_config(mac_ctx, session, sme_join_req);
 		lim_update_sae_config(session, sme_join_req);
@@ -2087,9 +2131,9 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 			session_entry->vht_config.su_beam_formee = 0;
 		}
 		session_entry->enableVhtpAid =
-			reassoc_req->enableVhtpAid;
+			mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_paid;
 		session_entry->enableVhtGid =
-			reassoc_req->enableVhtGid;
+			mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
 		pe_debug("vht su bformer [%d]", session_entry->vht_config.su_beam_former);
 	}
 
@@ -2103,10 +2147,10 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		session_entry->vht_config.su_beam_formee,
 		session_entry->vht_config.su_beam_former);
 
-	session_entry->enableHtSmps = reassoc_req->enableHtSmps;
-	session_entry->htSmpsvalue = reassoc_req->htSmps;
+	session_entry->enableHtSmps = mac_ctx->mlme_cfg->ht_caps.enable_smps;
+	session_entry->htSmpsvalue = mac_ctx->mlme_cfg->ht_caps.smps;
 	session_entry->send_smps_action =
-		reassoc_req->send_smps_action;
+		mac_ctx->roam.configParam.send_smps_action;
 	pe_debug("enableHtSmps: %d htSmps: %d send action: %d supported nss 1x1: %d",
 		session_entry->enableHtSmps,
 		session_entry->htSmpsvalue,

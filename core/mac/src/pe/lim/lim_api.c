@@ -2512,8 +2512,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 					   &session_id,
 					   mac_ctx->lim.max_sta_of_pe_session,
 					   session_ptr->bssType,
-					   session_ptr->vdev_id,
-					   session_ptr->opmode);
+					   session_ptr->vdev_id);
 	if (!ft_session_ptr) {
 		pe_err("LFR3:Cannot create PE Session");
 		lim_print_mac_addr(mac_ctx, bss_desc->bssId, LOGE);
@@ -2851,8 +2850,7 @@ void lim_mon_init_session(struct mac_context *mac_ptr,
 					   &session_id,
 					   mac_ptr->lim.max_sta_of_pe_session,
 					   eSIR_MONITOR_MODE,
-					   msg->vdev_id,
-					   QDF_MONITOR_MODE);
+					   msg->vdev_id);
 	if (!psession_entry) {
 		pe_err("Monitor mode: Session Can not be created");
 		lim_print_mac_addr(mac_ptr, msg->bss_id.bytes, LOGE);

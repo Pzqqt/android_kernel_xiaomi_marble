@@ -14956,7 +14956,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	int8_t pwr_limit = 0;
 	struct ps_global_info *ps_global_info = &mac->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
-	uint8_t ese_config = 0;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	bool is_vendor_ap_present;
 	struct vdev_type_nss *vdev_type_nss;
@@ -14967,6 +14966,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	struct wlan_objmgr_vdev *vdev;
 	bool follow_ap_edca;
 	bool reconn_after_assoc_timeout = false;
+#ifdef FEATURE_WLAN_ESE
+	bool ese_config = false;
+#endif
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15247,7 +15249,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		csr_join_req->cc_switch_mode =
 			mac->roam.configParam.cc_switch_mode;
 #endif
-		csr_join_req->staPersona = (uint8_t) pProfile->csrPersona;
 		csr_join_req->wps_registration = pProfile->bWPSAssociation;
 		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
 		csr_join_req->force_24ghz_in_ht20 =
@@ -15601,19 +15602,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			}
 		}
 #endif /* FEATURE_WLAN_ESE */
-		if (ese_config
-		    || csr_roam_is_fast_roam_enabled(mac, sessionId))
-			csr_join_req->isFastTransitionEnabled = true;
-		else
-			csr_join_req->isFastTransitionEnabled = false;
-
-		if (csr_roam_is_fast_roam_enabled(mac, sessionId))
-			csr_join_req->isFastRoamIniFeatureEnabled = true;
-		else
-			csr_join_req->isFastRoamIniFeatureEnabled = false;
-
-		csr_join_req->txLdpcIniFeatureEnabled =
-			(uint8_t)mac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
 		if ((csr_is11h_supported(mac)) &&
 			(WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) &&
@@ -15627,44 +15615,10 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			csr_apply_power2_current(mac);
 		}
 
-		csr_join_req->enableVhtpAid =
-			mac->mlme_cfg->vht_caps.vht_cap_info.enable_paid;
-
-		csr_join_req->enableVhtGid =
-			mac->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
-
-		csr_join_req->enableAmpduPs =
-			(uint8_t)mac->mlme_cfg->ht_caps.enable_ampdu_ps;
-
-		csr_join_req->enableHtSmps =
-			(uint8_t)mac->mlme_cfg->ht_caps.enable_smps;
-
-		csr_join_req->htSmps = (uint8_t)mac->mlme_cfg->ht_caps.smps;
-		csr_join_req->send_smps_action =
-			mac->roam.configParam.send_smps_action;
-
-		csr_join_req->max_amsdu_num =
-			(uint8_t)mac->mlme_cfg->ht_caps.max_num_amsdu;
-
-		if (mac->roam.roamSession[sessionId].fWMMConnection)
-			csr_join_req->isWMEenabled = true;
-		else
-			csr_join_req->isWMEenabled = false;
-
-		if (mac->roam.roamSession[sessionId].fQOSConnection)
-			csr_join_req->isQosEnabled = true;
-		else
-			csr_join_req->isQosEnabled = false;
-
 		if (pProfile->bOSENAssociation)
 			csr_join_req->isOSENConnection = true;
 		else
 			csr_join_req->isOSENConnection = false;
-
-		/* Fill rrm config parameters */
-		qdf_mem_copy(&csr_join_req->rrm_config,
-			     &mac->rrm.rrmConfig,
-			     sizeof(struct rrm_config_param));
 
 		pAP_capabilityInfo =
 			(tSirMacCapabilityInfo *)
@@ -15757,10 +15711,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
-
-		if (pSession->pCurRoamProfile->csrPersona == QDF_STA_MODE)
-			csr_join_req->enable_bcast_probe_rsp =
-				mac->mlme_cfg->oce.enable_bcast_probe_rsp;
 
 		csr_join_req->enable_session_twt_support = csr_enable_twt(mac,
 									  pIes);

@@ -908,7 +908,6 @@ struct join_req {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	enum QDF_OPMODE staPersona;       /* Persona */
 	bool wps_registration;
 	ePhyChanBondState cbMode;       /* Pass CB mode value in Join. */
 
@@ -947,27 +946,11 @@ struct join_req {
 	bool isESEconnection;
 	tESETspecInfo eseTspecInfo;
 #endif
-
-	bool isFastTransitionEnabled;
-	bool isFastRoamIniFeatureEnabled;
-
-	uint8_t txLdpcIniFeatureEnabled;
-	uint8_t enableVhtpAid;
-	uint8_t enableVhtGid;
-	uint8_t enableAmpduPs;
-	uint8_t enableHtSmps;
-	uint8_t htSmps;
-	bool send_smps_action;
 	bool he_with_wep_tkip;
-	uint8_t max_amsdu_num;
-	bool isWMEenabled;
-	bool isQosEnabled;
 	bool isOSENConnection;
-	struct rrm_config_param rrm_config;
 	bool spectrumMgtIndicator;
 	struct power_cap_info powerCap;
 	struct supported_channels supportedChannels;
-	bool enable_bcast_probe_rsp;
 	bool sae_pmk_cached;
 	/* Pls make this as last variable in struct */
 	bool force_24ghz_in_ht20;

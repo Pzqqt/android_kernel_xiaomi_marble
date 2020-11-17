@@ -544,7 +544,7 @@ void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 struct pe_session *pe_create_session(struct mac_context *mac,
 				     uint8_t *bssid, uint8_t *sessionId,
 				     uint16_t numSta, enum bss_type bssType,
-				     uint8_t vdev_id, enum QDF_OPMODE opmode)
+				     uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	uint8_t i;
@@ -603,7 +603,6 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	*sessionId = i;
 	session_ptr->peSessionId = i;
 	session_ptr->bssType = bssType;
-	session_ptr->opmode = opmode;
 	session_ptr->gLimPhyMode = WNI_CFG_PHY_MODE_11G;
 	/* Initialize CB mode variables when session is created */
 	session_ptr->htSupportedChannelWidthSet = 0;
@@ -620,10 +619,6 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->fIgnoreCapsChange = 0;
 	session_ptr->is_session_obss_color_collision_det_enabled =
 		mac->mlme_cfg->obss_ht40.obss_color_collision_offload_enabled;
-
-	pe_debug("Create PE session: %d opmode %d vdev_id %d  BSSID: "QDF_MAC_ADDR_FMT" Max No of STA: %d",
-		 *sessionId, opmode, vdev_id, QDF_MAC_ADDR_REF(bssid),
-		 numSta);
 
 	if (bssType == eSIR_INFRA_AP_MODE) {
 		session_ptr->pSchProbeRspTemplate =
@@ -653,6 +648,11 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->vdev = vdev;
 	session_ptr->vdev_id = vdev_id;
 	session_ptr->mac_ctx = mac;
+	session_ptr->opmode = wlan_vdev_mlme_get_opmode(vdev);
+
+	pe_debug("Create PE session: %d opmode %d vdev_id %d  BSSID: "QDF_MAC_ADDR_FMT" Max No of STA: %d",
+		 *sessionId, session_ptr->opmode, vdev_id,
+		 QDF_MAC_ADDR_REF(bssid), numSta);
 
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)
 		lim_ft_open(mac, &mac->lim.gpSession[i]);

@@ -1569,10 +1569,9 @@ void rrm_cleanup(struct mac_context *mac, uint8_t idx)
 void lim_update_rrm_capability(struct mac_context *mac_ctx,
 			       struct join_req *join_req)
 {
-	mac_ctx->rrm.rrmPEContext.rrmEnable = join_req->rrm_config.rrm_enabled;
+	mac_ctx->rrm.rrmPEContext.rrmEnable =
+				mac_ctx->rrm.rrmConfig.rrm_enabled;
 	qdf_mem_copy(&mac_ctx->rrm.rrmPEContext.rrmEnabledCaps,
-		     &join_req->rrm_config.rm_capability,
+		     &mac_ctx->rrm.rrmConfig.rm_capability,
 		     RMENABLEDCAP_MAX_LEN);
-
-	return;
 }
