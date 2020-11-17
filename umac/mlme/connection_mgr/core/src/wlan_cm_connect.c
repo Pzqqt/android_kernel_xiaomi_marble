@@ -30,6 +30,7 @@
 #include "wlan_blm_api.h"
 #include "wlan_cm_roam_api.h"
 #endif
+#include <wlan_utility.h>
 
 static void
 cm_fill_failure_resp_from_cm_id(struct cnx_mgr *cm_ctx,
@@ -799,7 +800,7 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	 */
 	if (cm_req->req.chan_freq && !security_valid_for_6ghz &&
 	    WLAN_REG_IS_6GHZ_CHAN_FREQ(cm_req->req.chan_freq)) {
-		mlme_info(CM_PREFIX_FMT "6ghz freq given and 6Ghz not allowed for the security in connect req",
+		mlme_info(CM_PREFIX_FMT "6ghz freq (%d) given and 6Ghz not allowed for the security in connect req",
 			  CM_PREFIX_REF(vdev_id, cm_req->cm_id),
 			  cm_req->req.chan_freq);
 		return QDF_STATUS_E_INVAL;
