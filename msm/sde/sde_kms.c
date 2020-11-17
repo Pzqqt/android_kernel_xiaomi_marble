@@ -4614,12 +4614,6 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 		return -EINVAL;
 	}
 
-	if (sde_kms->dsi_display_count != 1) {
-		SDE_ERROR("no. of displays not supported:%d\n",
-				sde_kms->dsi_display_count);
-		return -EINVAL;
-	}
-
 	dev = sde_kms->dev;
 	priv = dev->dev_private;
 	sde_kms->splash_data.type = SDE_VM_HANDOFF;
@@ -4636,6 +4630,12 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 							handoff_display);
 		else
 			dsi_display_set_active_state(display, true);
+	}
+
+	if (sde_kms->splash_data.num_splash_displays != 1) {
+		SDE_ERROR("no. of displays not supported:%d\n",
+				sde_kms->splash_data.num_splash_displays);
+		goto error;
 	}
 
 	ret = sde_kms_cont_splash_config(&sde_kms->base);
