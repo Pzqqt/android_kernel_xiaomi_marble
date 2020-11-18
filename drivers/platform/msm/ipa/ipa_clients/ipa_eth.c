@@ -38,6 +38,8 @@
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
+#define IPA_ETH_PIPES_NO 6
+
 struct ipa_eth_ready_cb_wrapper {
 	struct list_head link;
 	struct ipa_eth_ready *info;
@@ -82,6 +84,36 @@ static struct notifier_block uc_rdy_cb = {
 };
 
 static DECLARE_WORK(ipa_eth_ready_notify, ipa_eth_ready_notify_work);
+
+static bool pipe_connected[IPA_ETH_PIPES_NO];
+
+static u8 client_to_pipe_index(enum ipa_client_type client_type)
+{
+	switch (client_type) {
+	case IPA_CLIENT_ETHERNET_CONS:
+		return 0;
+		break;
+	case IPA_CLIENT_ETHERNET_PROD:
+		return 1;
+		break;
+	case IPA_CLIENT_RTK_ETHERNET_CONS:
+		return 2;
+		break;
+	case IPA_CLIENT_RTK_ETHERNET_PROD:
+		return 3;
+		break;
+	case IPA_CLIENT_AQC_ETHERNET_CONS:
+		return 4;
+		break;
+	case IPA_CLIENT_AQC_ETHERNET_PROD:
+		return 5;
+		break;
+	default:
+		IPAERR("invalid eth client_type\n");
+		ipa_assert();
+	}
+	return 0;
+}
 
 static int ipa_eth_init_internal(void)
 {
@@ -389,6 +421,7 @@ static int ipa_eth_client_connect_pipe(
 {
 	enum ipa_client_type client_type;
 	struct ipa_eth_client *client;
+	int ret;
 
 	if (!pipe) {
 		IPA_ETH_ERR("invalid pipe\n");
@@ -405,26 +438,20 @@ static int ipa_eth_client_connect_pipe(
 		IPA_ETH_ERR("invalid client type\n");
 		return -EFAULT;
 	}
-	pipe->pipe_hdl = ipa_eth_pipe_hdl_alloc((void *)pipe);
-	switch (client->client_type) {
-	case IPA_ETH_CLIENT_AQC107:
-	case IPA_ETH_CLIENT_AQC113:
-		ipa3_eth_aqc_connect(pipe, client_type);
-		break;
-	case IPA_ETH_CLIENT_RTK8111K:
-	case IPA_ETH_CLIENT_RTK8125B:
-		ipa3_eth_rtk_connect(pipe, client_type);
-		break;
-	case IPA_ETH_CLIENT_NTN:
-	case IPA_ETH_CLIENT_EMAC:
-		/* add support if needed */
-		break;
-	default:
-		IPA_ETH_ERR("invalid client type%d\n",
-			client->client_type);
-		ipa_eth_pipe_hdl_remove(pipe->pipe_hdl);
+
+	if (pipe_connected[client_to_pipe_index(client_type)]) {
+		IPA_ETH_ERR("client already connected\n");
+		return -EFAULT;
 	}
-	return 0;
+
+	pipe->pipe_hdl = ipa_eth_pipe_hdl_alloc((void *)pipe);
+
+	ret = ipa3_eth_connect(pipe, client_type);
+	if (!ret) {
+		pipe_connected[client_to_pipe_index(client_type)] = true;
+	}
+
+	return ret;
 }
 
 static int ipa_eth_client_disconnect_pipe(
@@ -432,6 +459,7 @@ static int ipa_eth_client_disconnect_pipe(
 {
 	enum ipa_client_type client_type;
 	struct ipa_eth_client *client;
+	int result;
 
 	if (!pipe) {
 		IPA_ETH_ERR("invalid pipe\n");
@@ -449,24 +477,18 @@ static int ipa_eth_client_disconnect_pipe(
 		IPA_ETH_ERR("invalid client type\n");
 		return -EFAULT;
 	}
-	switch (client->client_type) {
-	case IPA_ETH_CLIENT_AQC107:
-	case IPA_ETH_CLIENT_AQC113:
-		ipa3_eth_aqc_disconnect(pipe, client_type);
-		break;
-	case IPA_ETH_CLIENT_RTK8111K:
-	case IPA_ETH_CLIENT_RTK8125B:
-		ipa3_eth_rtk_disconnect(pipe, client_type);
-		break;
-	case IPA_ETH_CLIENT_NTN:
-	case IPA_ETH_CLIENT_EMAC:
-		ipa3_eth_emac_disconnect(pipe, client_type);
-		break;
-	default:
-		IPA_ETH_ERR("invalid client type%d\n",
-			client->client_type);
+
+	if (!pipe_connected[client_to_pipe_index(client_type)]) {
+		IPA_ETH_ERR("client not connected\n");
 		return -EFAULT;
 	}
+
+	result = ipa3_eth_disconnect(pipe, client_type);
+	if (result)
+		return result;
+
+	pipe_connected[client_to_pipe_index(client_type)] = false;
+
 	ipa_eth_pipe_hdl_remove(pipe->pipe_hdl);
 	return 0;
 }

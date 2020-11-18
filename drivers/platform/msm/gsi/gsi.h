@@ -979,6 +979,26 @@ union __packed gsi_wdi3_channel_scratch2_reg {
 };
 
 /**
+ * gsi_aqc_channel_scratch - AQC SW config area of
+ * channel scratch
+ *
+ * @buff_addr_lsb: AQC buffer address LSB (RX)
+ * @buff_addr_msb: AQC buffer address MSB (RX)
+ * @fix_buff_size: buff size in log2
+ * @head_ptr_lsb: head pointer address LSB (RX)
+ * @head_ptr_msb: head pointer address MSB (RX)
+ */
+ struct __packed gsi_aqc_channel_scratch {
+	 uint32_t buff_addr_lsb;
+	 uint32_t buff_addr_msb : 8;
+	 uint32_t reserved1 : 8;
+	 unsigned fix_buff_size : 16;
+	 uint32_t head_ptr_lsb;
+	 uint32_t head_ptr_msb : 9;
+	 uint32_t reserved2 : 23;
+ };
+
+/**
  * gsi_channel_scratch - channel scratch SW config area
  *
  */
@@ -993,6 +1013,7 @@ union __packed gsi_channel_scratch {
 	struct __packed gsi_wdi3_channel_scratch wdi3;
 	struct __packed gsi_mhip_channel_scratch mhip;
 	struct __packed gsi_wdi2_channel_scratch_new wdi2_new;
+	struct __packed gsi_aqc_channel_scratch aqc;
 	struct __packed gsi_rtk_channel_scratch rtk;
 	struct __packed {
 		uint32_t word1;
@@ -1140,6 +1161,17 @@ struct __packed gsi_rtk_evt_scratch {
 };
 
 /**
+ * gsi_aqc_evt_scratch - AQC protocol SW config area of
+ * event scratch
+ * @reserved1: reserve bit.
+ * @reserved2: reserve bit.
+ */
+struct __packed gsi_aqc_evt_scratch {
+	uint32_t reserved1;
+	uint32_t reserved2;
+};
+
+/**
  * gsi_evt_scratch - event scratch SW config area
  *
  */
@@ -1150,6 +1182,7 @@ union __packed gsi_evt_scratch {
 	struct __packed gsi_11ad_evt_scratch w11ad;
 	struct __packed gsi_wdi3_evt_scratch wdi3;
 	struct __packed gsi_mhip_evt_scratch mhip;
+	struct __packed gsi_aqc_evt_scratch aqc;
 	struct __packed gsi_rtk_evt_scratch rtk;
 	struct __packed {
 		uint32_t word1;
@@ -2189,6 +2222,16 @@ int gsi_alloc_channel_ee(unsigned int chan_idx, unsigned int ee, int *code);
  */
 int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 								int *code);
+
+/**
+* gsi_query_aqc_msi_addr - get aqc channel msi address
+*
+* @chan_id: channel id
+* @addr: [out] aqc channel msi address
+*
+* @Return gsi_status
+*/
+int gsi_query_aqc_msi_addr(unsigned long chan_hdl, u32 *addr);
 
 /*
  * Here is a typical sequence of calls
