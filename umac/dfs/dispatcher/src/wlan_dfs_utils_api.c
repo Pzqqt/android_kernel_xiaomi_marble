@@ -1355,16 +1355,14 @@ void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 
 	qdf_mem_zero(dfs_nolinfo, sizeof(*dfs_nolinfo));
 	DFS_GET_NOL_LOCKED(dfs, dfs_nolinfo->dfs_nol, &num_chans);
-	if (num_chans > 0) {
 
-		if (num_chans > DFS_MAX_NOL_CHANNEL)
-			dfs_nolinfo->num_chans = DFS_MAX_NOL_CHANNEL;
-		else
-			dfs_nolinfo->num_chans = num_chans;
+	if (num_chans > DFS_MAX_NOL_CHANNEL)
+		dfs_nolinfo->num_chans = DFS_MAX_NOL_CHANNEL;
+	else
+		dfs_nolinfo->num_chans = num_chans;
 
-		pld_wlan_set_dfs_nol(qdf_dev->dev, (void *)dfs_nolinfo,
-				     (uint16_t)sizeof(*dfs_nolinfo));
-	}
+	pld_wlan_set_dfs_nol(qdf_dev->dev, (void *)dfs_nolinfo,
+			     (uint16_t)sizeof(*dfs_nolinfo));
 	qdf_mem_free(dfs_nolinfo);
 }
 #endif
