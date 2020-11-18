@@ -3340,7 +3340,8 @@ QDF_STATUS wlan_ipa_cleanup(struct wlan_ipa_priv *ipa_ctx)
 	/* Teardown IPA sys_pipe for MCC */
 	if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
 		wlan_ipa_teardown_sys_pipe(ipa_ctx);
-		qdf_cancel_work(&ipa_ctx->mcc_work);
+		if (ipa_ctx->uc_loaded)
+			qdf_cancel_work(&ipa_ctx->mcc_work);
 	}
 
 	wlan_ipa_wdi_destroy_rm(ipa_ctx);
