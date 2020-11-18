@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  */
 
 /*
@@ -1310,7 +1310,12 @@ out:
 	return ret;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static void ipa3_wwan_tx_timeout(struct net_device *dev,
+	unsigned int txqueue)
+#else /* Legacy API. */
 static void ipa3_wwan_tx_timeout(struct net_device *dev)
+#endif
 {
 	struct ipa3_wwan_private *wwan_ptr = netdev_priv(dev);
 
@@ -1318,7 +1323,6 @@ static void ipa3_wwan_tx_timeout(struct net_device *dev)
 		IPAWANERR("[%s] data stall in UL, %d outstanding\n",
 			dev->name, atomic_read(&wwan_ptr->outstanding_pkts));
 }
-
 /**
  * apps_ipa_tx_complete_notify() - Rx notify
  *
@@ -4868,39 +4872,19 @@ static void rmnet_ipa_debugfs_init(void)
 		return;
 	}
 
-	dbgfs->dfile_outstanding_high = debugfs_create_u32("outstanding_high",
+	debugfs_create_u32("outstanding_high",
 		read_write_mode, dbgfs->dent,
 		&rmnet_ipa3_ctx->outstanding_high);
-	if (!dbgfs->dfile_outstanding_high ||
-		IS_ERR(dbgfs->dfile_outstanding_high)) {
-		pr_err("failed to create file for outstanding_high\n");
-		goto fail;
-	}
 
-	dbgfs->dfile_outstanding_high_ctl =
 		debugfs_create_u32("outstanding_high_ctl",
 		read_write_mode, dbgfs->dent,
 		&rmnet_ipa3_ctx->outstanding_high_ctl);
-	if (!dbgfs->dfile_outstanding_high_ctl ||
-		IS_ERR(dbgfs->dfile_outstanding_high_ctl)) {
-		pr_err("failed to create file for outstanding_high_ctl\n");
-		goto fail;
-	}
 
-	dbgfs->dfile_outstanding_low = debugfs_create_u32("outstanding_low",
+	debugfs_create_u32("outstanding_low",
 		read_write_mode, dbgfs->dent,
 		&rmnet_ipa3_ctx->outstanding_low);
-	if (!dbgfs->dfile_outstanding_low ||
-		IS_ERR(dbgfs->dfile_outstanding_low)) {
-		pr_err("failed to create file for outstanding_low\n");
-		goto fail;
-	}
 
 	return;
-
-fail:
-	debugfs_remove_recursive(dbgfs->dent);
-	memset(dbgfs, 0, sizeof(struct rmnet_ipa_debugfs));
 }
 
 static void rmnet_ipa_debugfs_remove(void)

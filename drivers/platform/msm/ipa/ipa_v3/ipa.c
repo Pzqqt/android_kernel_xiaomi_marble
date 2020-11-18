@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -145,6 +145,11 @@ static struct ipa3_plat_drv_res ipa3_res = {0, };
 static struct clk *ipa3_clk;
 
 struct ipa3_context *ipa3_ctx = NULL;
+/* ipa_i.h is included in ipa_client modules and ipa3_ctx is
+ * declared as extern in ipa_i.h. So export ipa3_ctx variable
+ * to be visible to ipa_client module.
+*/
+EXPORT_SYMBOL(ipa3_ctx);
 
 int ipa3_plat_drv_probe(struct platform_device *pdev_p);
 int ipa3_pci_drv_probe(
@@ -629,7 +634,7 @@ static int ipa3_active_clients_log_init(void)
 			GFP_KERNEL);
 	active_clients_table_buf = kzalloc(sizeof(
 			char[IPA3_ACTIVE_CLIENTS_TABLE_BUF_SIZE]), GFP_KERNEL);
-	if (ipa3_ctx->ipa3_active_clients_logging.log_buffer == NULL) {
+	if (ipa3_ctx->ipa3_active_clients_logging.log_buffer[0] == NULL) {
 		pr_err("Active Clients Logging memory allocation failed\n");
 		goto bail;
 	}

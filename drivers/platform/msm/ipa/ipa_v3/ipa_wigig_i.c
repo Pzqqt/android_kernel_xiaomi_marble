@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "ipa_i.h"
@@ -1954,7 +1954,6 @@ int ipa3_wigig_init_debugfs_i(struct dentry *parent) { return 0; }
 int ipa3_wigig_init_debugfs_i(struct dentry *parent)
 {
 	const mode_t read_write_mode = 0664;
-	struct dentry *file = NULL;
 	struct dentry *dent;
 
 	dent = debugfs_create_dir("ipa_wigig", parent);
@@ -1965,38 +1964,18 @@ int ipa3_wigig_init_debugfs_i(struct dentry *parent)
 
 	wigig_dent = dent;
 
-	file = debugfs_create_u8("modc", read_write_mode, dent,
+	debugfs_create_u8("modc", read_write_mode, dent,
 		&int_modc);
-	if (IS_ERR_OR_NULL(file)) {
-		IPAERR("fail to create file modc\n");
-		goto fail;
-	}
 
-	file = debugfs_create_u16("modt", read_write_mode, dent,
+	debugfs_create_u16("modt", read_write_mode, dent,
 		&int_modt);
-	if (IS_ERR_OR_NULL(file)) {
-		IPAERR("fail to create file modt\n");
-		goto fail;
-	}
 
-	file = debugfs_create_u8("rx_mod_th", read_write_mode, dent,
+	debugfs_create_u8("rx_mod_th", read_write_mode, dent,
 		&rx_hwtail_mod_threshold);
-	if (IS_ERR_OR_NULL(file)) {
-		IPAERR("fail to create file rx_mod_th\n");
-		goto fail;
-	}
 
-	file = debugfs_create_u8("tx_mod_th", read_write_mode, dent,
+	debugfs_create_u8("tx_mod_th", read_write_mode, dent,
 		&tx_hwtail_mod_threshold);
-	if (IS_ERR_OR_NULL(file)) {
-		IPAERR("fail to create file tx_mod_th\n");
-		goto fail;
-	}
 
 	return 0;
-fail:
-	debugfs_remove_recursive(dent);
-	wigig_dent = NULL;
-	return -EFAULT;
 }
 #endif

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -371,17 +371,6 @@ static ssize_t ipa_mhi_debugfs_stats(struct file *file,
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
 }
 
-static ssize_t ipa_mhi_debugfs_uc_stats(struct file *file,
-	char __user *ubuf,
-	size_t count,
-	loff_t *ppos)
-{
-	int nbytes = 0;
-
-	nbytes += ipa3_uc_mhi_print_stats(dbg_buff, IPA_MHI_MAX_MSG_LEN);
-	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
-}
-
 static ssize_t ipa_mhi_debugfs_dump_host_ch_ctx_arr(struct file *file,
 	char __user *ubuf,
 	size_t count,
@@ -447,10 +436,6 @@ const struct file_operations ipa_mhi_stats_ops = {
 	.read = ipa_mhi_debugfs_stats,
 };
 
-const struct file_operations ipa_mhi_uc_stats_ops = {
-	.read = ipa_mhi_debugfs_uc_stats,
-};
-
 const struct file_operations ipa_mhi_dump_host_ch_ctx_ops = {
 	.read = ipa_mhi_debugfs_dump_host_ch_ctx_arr,
 };
@@ -477,19 +462,8 @@ static void ipa_mhi_debugfs_init(void)
 		goto fail;
 	}
 
-	file = debugfs_create_file("uc_stats", read_only_mode, dent,
-		0, &ipa_mhi_uc_stats_ops);
-	if (!file || IS_ERR(file)) {
-		IPA_MHI_ERR("fail to create file uc_stats\n");
-		goto fail;
-	}
-
-	file = debugfs_create_u32("use_ipadma", read_write_mode, dent,
+	debugfs_create_u32("use_ipadma", read_write_mode, dent,
 		&ipa_mhi_client_ctx->use_ipadma);
-	if (!file || IS_ERR(file)) {
-		IPA_MHI_ERR("fail to create file use_ipadma\n");
-		goto fail;
-	}
 
 	file = debugfs_create_file("dump_host_channel_ctx_array",
 		read_only_mode, dent, 0, &ipa_mhi_dump_host_ch_ctx_ops);

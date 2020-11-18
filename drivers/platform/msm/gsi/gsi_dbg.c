@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/completion.h>
@@ -148,7 +148,6 @@ static ssize_t gsi_dump_ch(struct file *file,
 	u32 arg2;
 	unsigned long missing;
 	char *sptr, *token;
-	uint32_t val;
 	struct gsi_chan_ctx *ctx;
 	uint16_t i;
 
