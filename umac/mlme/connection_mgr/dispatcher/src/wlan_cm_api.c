@@ -126,6 +126,24 @@ bool wlan_cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
 	return cm_is_vdev_roaming(vdev);
 }
 
+enum wlan_cm_active_request_type
+wlan_cm_get_active_req_type(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_get_active_req_type(vdev);
+}
+
+bool wlan_cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_vdev_connect_req *req)
+{
+	return cm_get_active_connect_req(vdev, req);
+}
+
+bool wlan_cm_get_active_disconnect_req(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_vdev_discon_req *req)
+{
+	return cm_get_active_disconnect_req(vdev, req);
+}
+
 const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason)
 {
 	if (reason > REASON_PROP_START)

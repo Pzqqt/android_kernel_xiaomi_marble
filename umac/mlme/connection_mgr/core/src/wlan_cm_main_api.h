@@ -772,6 +772,41 @@ bool cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev);
  */
 bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * cm_get_active_req_type() - CM active req type
+ * @vdev: vdev pointer
+ *
+ * Return: CM active req type
+ */
+enum wlan_cm_active_request_type
+cm_get_active_req_type(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_get_active_connect_req() - Get copy of active connect request
+ * @vdev: vdev pointer
+ * @req: pointer to the copy of the active connect request
+ * *
+ * Context: Should be called only in the conext of the
+ * cm request activation
+ *
+ * Return: true and connect req if any request is active
+ */
+bool cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_vdev_connect_req *req);
+
+/**
+ * cm_get_active_disconnect_req() - Get copy of active disconnect request
+ * @vdev: vdev pointer
+ * @req: pointer to the copy of the active disconnect request
+ * *
+ * Context: Should be called only in the conext of the
+ * cm request activation
+ *
+ * Return: true and disconnect req if any request is active
+ */
+bool cm_get_active_disconnect_req(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_vdev_discon_req *req);
+
 /*
  * cm_connect_handle_event_post_fail() - initiate connect failure if msg posting
  * to SM fails

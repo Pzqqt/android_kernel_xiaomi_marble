@@ -387,6 +387,18 @@ struct wlan_cm_discon_rsp {
 	struct element_info ap_discon_ie;
 };
 
+/*
+ * enum wlan_cm_active_request_type: CM active req type
+ * @CM_NONE: No active serialisation command
+ * @CM_CONNECT_ACTIVE: Connect active in serialisation
+ * @CM_DISCONNECT_ACTIVE: DicConnect active in serialisation
+ */
+enum wlan_cm_active_request_type {
+	CM_NONE,
+	CM_CONNECT_ACTIVE,
+	CM_DISCONNECT_ACTIVE,
+};
+
 #endif /* FEATURE_CM_ENABLE */
 
 #endif /* __WLAN_CM_PUBLIC_STRUCT_H__ */

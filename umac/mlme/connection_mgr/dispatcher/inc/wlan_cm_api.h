@@ -184,6 +184,32 @@ bool wlan_cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev);
 bool wlan_cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * wlan_cm_get_active_connect_req() - Get copy of active connect request
+ * @vdev: vdev pointer
+ * @req: pointer to the copy of the active connect request
+ * *
+ * Context: Should be called only in the conext of the
+ * cm request activation
+ *
+ * Return: true and connect req if any request is active
+ */
+bool wlan_cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_vdev_connect_req *req);
+
+/**
+ * wlan_cm_get_active_disconnect_req() - Get copy of active disconnect request
+ * @vdev: vdev pointer
+ * @req: pointer to the copy of the active disconnect request
+ * *
+ * Context: Should be called only in the conext of the
+ * cm request activation
+ *
+ * Return: true and disconnect req if any request is active
+ */
+bool wlan_cm_get_active_disconnect_req(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_vdev_discon_req *req);
+
+/**
  * wlan_cm_reason_code_to_str() - return string conversion of reason code
  * @reason: reason code.
  *
@@ -193,6 +219,17 @@ bool wlan_cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev);
  *         "Unknown" otherwise.
  */
 const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason);
+
+/**
+ * wlan_cm_get_active_req_type() - return cm  active request type
+ * @vdev: vdev pointer
+ *
+ * This function returns the cm active request type
+ *
+ * Return: active request type if any, otherwise return 0
+ */
+enum wlan_cm_active_request_type
+wlan_cm_get_active_req_type(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_cm_hw_mode_change_resp() - HW mode change response
