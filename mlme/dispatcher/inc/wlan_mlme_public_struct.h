@@ -1396,6 +1396,8 @@ struct wlan_mlme_acs {
  * @is_twt_enabled: global twt configuration
  * @is_twt_responder_enabled: twt responder
  * @is_twt_requestor_enabled: twt requestor
+ * @is_bcast_responder_enabled: bcast responder enable/disable
+ * @is_bcast_requestor_enabled: bcast requestor enable/disable
  * @twt_congestion_timeout: congestion timeout value
  */
 struct wlan_mlme_cfg_twt {
@@ -1403,6 +1405,8 @@ struct wlan_mlme_cfg_twt {
 	bool is_twt_enabled;
 	bool is_twt_responder_enabled;
 	bool is_twt_requestor_enabled;
+	bool is_bcast_responder_enabled;
+	bool is_bcast_requestor_enabled;
 	uint32_t twt_congestion_timeout;
 };
 

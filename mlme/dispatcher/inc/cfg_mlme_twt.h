@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,7 @@
  * twt_requestor - twt requestor.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This cfg is used to store twt requestor config.
  *
@@ -42,14 +42,14 @@
  */
 #define CFG_TWT_REQUESTOR CFG_INI_BOOL( \
 		"twt_requestor", \
-		0, \
+		1, \
 		"TWT requestor")
 /*
  * <ini>
  * twt_responder - twt responder.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This cfg is used to store twt responder config.
  *
@@ -63,7 +63,7 @@
  */
 #define CFG_TWT_RESPONDER CFG_INI_BOOL( \
 		"twt_responder", \
-		0, \
+		1, \
 		"TWT responder")
 
 /*
@@ -138,12 +138,58 @@
 		100, \
 		CFG_VALUE_OR_DEFAULT, \
 		"twt congestion timeout")
+/*
+ * <ini>
+ * twt_bcast_req_resp_config - To enable broadcast twt requestor and responder.
+ * @Min: 0 Disable the extended twt capability
+ * @Max: 3
+ * @Default: 0
+ *
+ * This cfg is used to configure the broadcast TWT requestor and responder.
+ * Bitmap for enabling the broadcast twt requestor and responder.
+ * BIT 0: Enable/Disable broadcast twt requestor.
+ * BIT 1: Enable/Disable broadcast twt responder.
+ * BIT 2-31: Reserved
+ *
+ * Related: CFG_ENABLE_TWT
+ * Related: CFG_TWT_RESPONDER
+ * Related: CFG_TWT_REQUESTOR
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+/* defines to extract the requestor/responder capabilities from cfg */
+#define TWT_BCAST_REQ_INDEX    0
+#define TWT_BCAST_REQ_BITS     1
+#define TWT_BCAST_RES_INDEX    1
+#define TWT_BCAST_RES_BITS     1
+
+#define CFG_BCAST_TWT_REQ_RESP CFG_INI_UINT( \
+		"twt_bcast_req_resp_config", \
+		0, \
+		3, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"BROADCAST TWT CAPABILITY")
+
+#define CFG_TWT_GET_BCAST_REQ(_bcast_conf) \
+	QDF_GET_BITS(_bcast_conf, \
+		     TWT_BCAST_REQ_INDEX, \
+		     TWT_BCAST_REQ_BITS)
+
+#define CFG_TWT_GET_BCAST_RES(_bcast_conf) \
+	QDF_GET_BITS(_bcast_conf, \
+		     TWT_BCAST_RES_INDEX, \
+		     TWT_BCAST_RES_BITS)
 
 #define CFG_TWT_ALL \
 	CFG(CFG_BCAST_TWT) \
 	CFG(CFG_ENABLE_TWT) \
 	CFG(CFG_TWT_REQUESTOR) \
 	CFG(CFG_TWT_RESPONDER) \
-	CFG(CFG_TWT_CONGESTION_TIMEOUT)
-
+	CFG(CFG_TWT_CONGESTION_TIMEOUT) \
+	CFG(CFG_BCAST_TWT_REQ_RESP)
 #endif /* __CFG_MLME_TWT_H */
