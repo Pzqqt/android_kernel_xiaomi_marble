@@ -1600,4 +1600,27 @@ void dp_rx_link_desc_refill_duplicate_check(
 				struct dp_soc *soc,
 				struct hal_buf_info *buf_info,
 				hal_buff_addrinfo_t ring_buf_info);
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+/**
+ * dp_rx_deliver_to_pkt_capture() - deliver rx packet to packet capture
+ * @soc : dp_soc handle
+ * @pdev: dp_pdev handle
+ * @peer_id: peer_id of the peer for which completion came
+ * @ppdu_id: ppdu_id
+ * @netbuf: Buffer pointer
+ *
+ * This function is used to deliver rx packet to packet capture
+ */
+void dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
+				  uint16_t peer_id, uint32_t ppdu_id,
+				  qdf_nbuf_t netbuf);
+#else
+static inline void
+dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
+			     uint16_t peer_id, uint32_t ppdu_id,
+			     qdf_nbuf_t netbuf)
+{
+}
+#endif
 #endif /* _DP_RX_H */

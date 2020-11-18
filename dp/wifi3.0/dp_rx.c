@@ -2203,6 +2203,27 @@ static inline void dp_rx_update_stats(struct dp_soc *soc,
 {
 }
 #endif
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+/**
+ * dp_rx_deliver_to_pkt_capture() - deliver rx packet to packet capture
+ * @soc : dp_soc handle
+ * @pdev: dp_pdev handle
+ * @peer_id: peer_id of the peer for which completion came
+ * @ppdu_id: ppdu_id
+ * @netbuf: Buffer pointer
+ *
+ * This function is used to deliver rx packet to packet capture
+ */
+void dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
+				  uint16_t peer_id, uint32_t ppdu_id,
+				  qdf_nbuf_t netbuf)
+{
+	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, netbuf,
+			     peer_id, WDI_NO_VAL, pdev->pdev_id);
+}
+#endif
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -2852,10 +2873,13 @@ done:
 	}
 
 	if (qdf_likely(deliver_list_head)) {
-		if (qdf_likely(peer))
+		if (qdf_likely(peer)) {
+			dp_rx_deliver_to_pkt_capture(soc, vdev->pdev, peer_id,
+						     0, deliver_list_head);
 			dp_rx_deliver_to_stack(soc, vdev, peer,
 					       deliver_list_head,
 					       deliver_list_tail);
+		}
 		else {
 			nbuf = deliver_list_head;
 			while (nbuf) {
