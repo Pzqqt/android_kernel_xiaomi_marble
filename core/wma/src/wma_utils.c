@@ -3388,10 +3388,8 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 	uint32_t buf_size;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid WMA handle");
+	if (!wma)
 		return NULL;
-	}
 
 	if (vdev_id >= wma->max_bssid) {
 		wma_err("Invalid vdev_id %u", vdev_id);
@@ -3435,10 +3433,8 @@ uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id)
 	struct wlan_objmgr_vdev *vdev;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid WMA handle");
+	if (!wma)
 		return NULL;
-	}
 
 	if (vdev_id >= wma->max_bssid) {
 		wma_err("Invalid vdev_id %u", vdev_id);
@@ -3512,10 +3508,8 @@ struct wma_txrx_node  *wma_get_interface_by_vdev_id(uint8_t vdev_id)
 	tp_wma_handle wma;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid WMA handle");
+	if (!wma)
 		return NULL;
-	}
 
 	if (vdev_id >= wma->max_bssid) {
 		wma_err("Invalid vdev_id %u", vdev_id);
@@ -3558,10 +3552,8 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid WMA handle");
+	if (!wma)
 		return;
-	}
 
 	if (!wma->interfaces) {
 		wma_err("Interface is NULL");
