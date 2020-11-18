@@ -53,7 +53,7 @@ static int msm_vidc_init_irq(struct msm_vidc_core *core)
 	}
 	dt = core->dt;
 
-	core->register_base_addr = devm_ioremap_nocache(&core->pdev->dev,
+	core->register_base_addr = devm_ioremap(&core->pdev->dev,
 			dt->register_base, dt->register_size);
 	if (!core->register_base_addr) {
 		d_vpr_e("could not map reg addr %pa of size %d\n",
@@ -91,6 +91,7 @@ static struct attribute_group msm_vidc_core_attr_group = {
 static const struct of_device_id msm_vidc_dt_match[] = {
 	{.compatible = "qcom,msm-vidc"},
 	{.compatible = "qcom,msm-vidc,context-bank"},
+	{},
 };
 MODULE_DEVICE_TABLE(of, msm_vidc_dt_match);
 
@@ -148,7 +149,7 @@ static int msm_vidc_register_video_device(struct msm_vidc_core *core,
 		V4L2_CAP_META_OUTPUT |
 		V4L2_CAP_STREAMING;
 	rc = video_register_device(&core->vdev[index].vdev,
-					VFL_TYPE_GRABBER, nr);
+					VFL_TYPE_VIDEO, nr);
 	if (rc) {
 		d_vpr_e("Failed to register the video device\n");
 		return rc;
