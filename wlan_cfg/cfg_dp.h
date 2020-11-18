@@ -1084,36 +1084,6 @@
 		false, \
 		"enable rx frame pending check in WoW mode")
 
-#define WLAN_CFG_SEND_ALL_ICMP_REQ_TO_FW (-1)
-#define WLAN_CFG_SEND_ICMP_REQ_TO_FW 0
-#define WLAN_CFG_SEND_ICMP_REQ_TO_FW_MIN (-1)
-#define WLAN_CFG_SEND_ICMP_REQ_TO_FW_MAX 100000
-
-/*
- * <ini>
- * send_icmp_pkt_to_fw - Send ICMP Request packet to FW.
- * @Min: -1
- * @Max:  100000
- * @Default: 0
- *
- * This ini is used to control DP Software to send ICMP request packets to FW
- * at certain interval (in milliseconds).
- * The value 0 is used to disable sending the ICMP requests to FW.
- * The value -1 is used to send all ICMP requests to FW.
- * Any value greater than zero indicates the time interval (in milliseconds)
- * at which ICMP requests should be sent to FW.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_DP_SEND_ICMP_REQ_TO_FW \
-	CFG_INI_INT("send_icmp_req_to_fw", \
-		    WLAN_CFG_SEND_ICMP_REQ_TO_FW_MIN, \
-		    WLAN_CFG_SEND_ICMP_REQ_TO_FW_MAX, \
-		    WLAN_CFG_SEND_ICMP_REQ_TO_FW, \
-		    CFG_VALUE_OR_DEFAULT, "Send ICMP Request packets to FW")
-
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -1206,6 +1176,5 @@
 		CFG(CFG_DP_RX_RADIO_0_DEFAULT_REO) \
 		CFG(CFG_DP_RX_RADIO_1_DEFAULT_REO) \
 		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO) \
-		CFG(CFG_DP_WOW_CHECK_RX_PENDING) \
-		CFG(CFG_DP_SEND_ICMP_REQ_TO_FW)
+		CFG(CFG_DP_WOW_CHECK_RX_PENDING)
 #endif /* _CFG_DP_H_ */
