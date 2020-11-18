@@ -192,6 +192,7 @@ typedef union {
  *                       +          (TXRX)|(HTT)|(HTC)|(HIF)|(CE)|(FREE)]
  * @tx.trace.is_packet_priv:
  * @tx.trace.packet_track: {NBUF_TX_PKT_[(DATA)|(MGMT)]_TRACK}
+ * @tx.trace.to_fw: Flag to indicate send this packet to FW
  * @tx.trace.proto_type: bitmap of NBUF_PKT_TRAC_TYPE[(EAPOL)|(DHCP)|
  *                          + (MGMT_ACTION)] - 4 bits
  * @tx.trace.dp_trace: flag (Datapath trace)
@@ -274,8 +275,8 @@ struct qdf_nbuf_cb {
 			union {
 				uint8_t packet_state;
 				uint8_t dp_trace:1,
-					packet_track:4,
-					rsrvd:3;
+					packet_track:3,
+					rsrvd:4;
 			} trace;
 			uint16_t vdev_id:8,
 				 tid_val:4,
@@ -329,7 +330,8 @@ struct qdf_nbuf_cb {
 			struct {
 				uint8_t packet_state:7,
 					is_packet_priv:1;
-				uint8_t packet_track:4,
+				uint8_t packet_track:3,
+					to_fw:1,
 					proto_type:4;
 				uint8_t dp_trace:1,
 					is_bcast:1,
@@ -495,6 +497,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_TX_PACKET_TRACK(skb)\
 	(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.trace.packet_track)
+
+#define QDF_NBUF_CB_TX_PACKET_TO_FW(skb)\
+	(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.tx.trace.to_fw)
 
 #define QDF_NBUF_CB_RX_PACKET_TRACK(skb)\
 		(((struct qdf_nbuf_cb *) \
