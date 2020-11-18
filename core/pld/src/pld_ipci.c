@@ -287,6 +287,63 @@ static int pld_ipci_runtime_resume(struct device *dev)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static int pld_update_hang_evt_data(struct icnss_uevent_hang_data *evt_data,
+				    struct pld_uevent_data *data)
+{
+	if (!evt_data || !data)
+		return -EINVAL;
+
+	data->hang_data.hang_event_data = evt_data->hang_event_data;
+	data->hang_data.hang_event_data_len = evt_data->hang_event_data_len;
+	return 0;
+}
+
+static int pld_ipci_uevent(struct device *dev,
+			   struct icnss_uevent_data *uevent)
+{
+	struct pld_context *pld_context;
+	struct icnss_uevent_fw_down_data *uevent_data = NULL;
+	struct pld_uevent_data data = {0};
+	struct icnss_uevent_hang_data *hang_data = NULL;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (!pld_context->ops->uevent)
+		goto out;
+
+	if (!uevent)
+		return -EINVAL;
+
+	switch (uevent->uevent) {
+	case ICNSS_UEVENT_FW_CRASHED:
+		data.uevent = PLD_FW_CRASHED;
+		break;
+	case ICNSS_UEVENT_FW_DOWN:
+		if (!uevent->data)
+			return -EINVAL;
+		uevent_data = (struct icnss_uevent_fw_down_data *)uevent->data;
+		data.uevent = PLD_FW_DOWN;
+		data.fw_down.crashed = uevent_data->crashed;
+		break;
+	case ICNSS_UEVENT_HANG_DATA:
+		if (!uevent->data)
+			return -EINVAL;
+		hang_data = (struct icnss_uevent_hang_data *)uevent->data;
+		data.uevent = PLD_FW_HANG_EVENT;
+		pld_update_hang_evt_data(hang_data, &data);
+		break;
+	default:
+		goto out;
+	}
+
+	pld_context->ops->uevent(dev, &data);
+out:
+	return 0;
+}
+#else
 static int pld_ipci_uevent(struct device *dev,
 			   struct icnss_uevent_data *uevent)
 {
@@ -323,6 +380,7 @@ static int pld_ipci_uevent(struct device *dev,
 out:
 	return 0;
 }
+#endif
 
 /**
  * pld_ipci_idle_restart_cb() - Perform idle restart
