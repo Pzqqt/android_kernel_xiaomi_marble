@@ -2300,6 +2300,7 @@ int hif_pci_bus_suspend(struct hif_softc *scn)
 	return 0;
 }
 
+#ifdef PCI_LINK_STATUS_SANITY
 /**
  * __hif_check_link_status() - API to check if PCIe link is active/not
  * @scn: HIF Context
@@ -2338,6 +2339,13 @@ static int __hif_check_link_status(struct hif_softc *scn)
 	pld_is_pci_link_down(sc->dev);
 	return -EACCES;
 }
+#else
+static inline int __hif_check_link_status(struct hif_softc *scn)
+{
+	return 0;
+}
+#endif
+
 
 #ifdef HIF_BUS_LOG_INFO
 void hif_log_pcie_info(struct hif_softc *scn, uint8_t *data,
@@ -2823,6 +2831,9 @@ static void hif_ce_srng_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
 
 static void hif_ce_srng_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
 {
+	if (__hif_check_link_status(hif_sc))
+		return;
+
 	pfrm_enable_irq(hif_sc->qdf_dev->dev,
 			hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
 }
