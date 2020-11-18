@@ -11375,8 +11375,8 @@ dp_txrx_ext_stats_request(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	req->rx_mpdu_received = soc->ext_stats.rx_mpdu_received;
 	req->rx_mpdu_delivered = soc->ext_stats.rx_mpdu_received;
 	req->rx_mpdu_missed = soc->ext_stats.rx_mpdu_missed;
-	req->rx_mpdu_error = soc->stats.rx.err_ring_pkts -
-				soc->stats.rx.rx_frags;
+	/* only count error source from RXDMA */
+	req->rx_mpdu_error = pdev->stats.err.rxdma_error;
 
 	return QDF_STATUS_SUCCESS;
 }
