@@ -3618,6 +3618,14 @@ ccflags-y += -DSCAN_CHAN_STATS_EVENT_ENAB=$(CONFIG_SCAN_CHAN_STATS_EVENT_ENAB)
 CONFIG_MAX_BCN_PROBE_IN_SCAN_QUEUE ?= 150
 ccflags-y += -DMAX_BCN_PROBE_IN_SCAN_QUEUE=$(CONFIG_MAX_BCN_PROBE_IN_SCAN_QUEUE)
 
+#CONFIG_RX_DIAG_WQ_MAX_SIZE maximum number FW diag events that can be queued in
+#FW diag events work queue. Host driver will discard the all diag events after
+#this limit is reached.
+#
+# Value 0 represents no limit and any non zero value represents the maximum
+# size of the work queue.
+CONFIG_RX_DIAG_WQ_MAX_SIZE ?= 0
+ccflags-y += -DRX_DIAG_WQ_MAX_SIZE=$(CONFIG_RX_DIAG_WQ_MAX_SIZE)
 
 CONFIG_MGMT_DESC_POOL_MAX ?= 64
 ccflags-y += -DMGMT_DESC_POOL_MAX=$(CONFIG_MGMT_DESC_POOL_MAX)
