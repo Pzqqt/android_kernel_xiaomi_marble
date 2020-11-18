@@ -1077,7 +1077,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 
 	sme_debug("intf_ch:%d sap_ch:%d cc_switch_mode:%d, dbs:%d",
 		  intf_ch_freq, sap_ch_freq, cc_switch_mode,
-		  policy_mgr_is_dbs_enable(mac_ctx->psoc));
+		  policy_mgr_is_hw_dbs_capable(mac_ctx->psoc));
 
 	if (intf_ch_freq && sap_ch_freq != intf_ch_freq &&
 	    !policy_mgr_is_force_scc(mac_ctx->psoc)) {
@@ -1102,7 +1102,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 		       sap_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484)) ||
 		     (intf_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
 		      sap_ch_freq > wlan_reg_ch_to_freq(CHAN_ENUM_2484)))) {
-			if (policy_mgr_is_dbs_enable(mac_ctx->psoc) ||
+			if (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||
 			    cc_switch_mode ==
 			    QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
 				intf_ch_freq = 0;
@@ -1166,7 +1166,6 @@ uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 
 	return connected_session;
 }
-
 
 bool csr_is_concurrent_session_running(struct mac_context *mac)
 {
