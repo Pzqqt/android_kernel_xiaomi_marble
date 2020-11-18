@@ -508,6 +508,7 @@ ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_TWT
 QDF_STATUS
 ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
 			    bool *val)
@@ -667,6 +668,77 @@ ucfg_mlme_set_enable_twt(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_mlme_get_twt_bcast_requestor(struct wlan_objmgr_psoc *psoc,
+				  bool *val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		uint32_t b_req_res;
+
+		b_req_res = cfg_default(CFG_BCAST_TWT_REQ_RESP);
+		*val = CFG_TWT_GET_BCAST_REQ(b_req_res);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.twt_cfg.is_bcast_requestor_enabled;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
+				  bool *val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		uint32_t b_req_res;
+
+		b_req_res = cfg_default(CFG_BCAST_TWT_REQ_RESP);
+		*val = CFG_TWT_GET_BCAST_RES(b_req_res);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.twt_cfg.is_bcast_responder_enabled;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_twt_bcast_requestor(struct wlan_objmgr_psoc *psoc,
+				  bool val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.twt_cfg.is_bcast_requestor_enabled = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
+				  bool val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.twt_cfg.is_bcast_responder_enabled = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS
 ucfg_mlme_get_dot11p_mode(struct wlan_objmgr_psoc *psoc,

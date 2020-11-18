@@ -27,7 +27,7 @@
 #include "wmi_unified_priv.h"
 
 void wma_send_twt_enable_cmd(uint32_t pdev_id,
-			     uint32_t congestion_timeout, bool bcast_val)
+			     struct twt_enable_disable_conf *conf)
 {
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wmi_twt_enable_param twt_enable_params = {0};
@@ -37,8 +37,11 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id,
 		return;
 
 	twt_enable_params.pdev_id = pdev_id;
-	twt_enable_params.sta_cong_timer_ms = congestion_timeout;
-	twt_enable_params.b_twt_enable = bcast_val;
+	twt_enable_params.sta_cong_timer_ms = conf->congestion_timeout;
+	twt_enable_params.b_twt_enable = conf->bcast_en;
+	twt_enable_params.ext_conf_present = conf->ext_conf_present;
+	twt_enable_params.twt_role = conf->role;
+	twt_enable_params.twt_oper = conf->oper;
 	ret = wmi_unified_twt_enable_cmd(wma->wmi_handle, &twt_enable_params);
 
 	if (ret)
@@ -87,7 +90,8 @@ int wma_twt_en_complete_event_handler(void *handle,
 	return status;
 }
 
-void wma_send_twt_disable_cmd(uint32_t pdev_id)
+void wma_send_twt_disable_cmd(uint32_t pdev_id,
+			      struct twt_enable_disable_conf *conf)
 {
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wmi_twt_disable_param twt_disable_params = {0};
@@ -97,6 +101,10 @@ void wma_send_twt_disable_cmd(uint32_t pdev_id)
 		return;
 
 	twt_disable_params.pdev_id = pdev_id;
+	twt_disable_params.ext_conf_present = conf->ext_conf_present;
+	twt_disable_params.twt_role = conf->role;
+	twt_disable_params.twt_oper = conf->oper;
+
 	ret = wmi_unified_twt_disable_cmd(wma->wmi_handle, &twt_disable_params);
 
 	if (ret)
@@ -431,6 +439,37 @@ int wma_twt_resume_dialog_complete_event_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 
 	return status;
+}
+
+/**
+ * wma_update_bcast_twt_support() - update bcost twt support
+ * @wh: wma handle
+ * @tgt_cfg: target configuration to be updated
+ *
+ * Update braodcast twt support based on service bit.
+ *
+ * Return: None
+ */
+void wma_update_bcast_twt_support(tp_wma_handle wh,
+				  struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wh->wmi_handle,
+				wmi_service_bcast_twt_support))
+		tgt_cfg->bcast_twt_support = true;
+	else
+		tgt_cfg->bcast_twt_support = false;
+
+	if (wmi_service_enabled(wh->wmi_handle,
+				wmi_service_twt_bcast_req_support))
+		tgt_cfg->twt_bcast_req_support = true;
+	else
+		tgt_cfg->twt_bcast_req_support = false;
+
+	if (wmi_service_enabled(wh->wmi_handle,
+				wmi_service_twt_bcast_resp_support))
+		tgt_cfg->twt_bcast_res_support = true;
+	else
+		tgt_cfg->twt_bcast_res_support = false;
 }
 
 void wma_register_twt_events(tp_wma_handle wma_handle)

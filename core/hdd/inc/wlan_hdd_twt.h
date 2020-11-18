@@ -42,6 +42,29 @@ struct wmi_twt_resume_dialog_cmd_param;
 extern const struct nla_policy
 wlan_hdd_wifi_twt_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_MAX + 1];
 
+/**
+ * enum twt_role - TWT role definitions
+ * @TWT_REQUESTOR: Individual/Bcast TWT requestor role
+ * @TWT_REQUESTOR_INDV: Individual TWT requestor role
+ * @TWT_REQUESTOR_BCAST: Broadcast TWT requestor role
+ * @TWT_RESPONDER: Individual/Bcast TWT responder role
+ * @TWT_RESPONDER_INDV: Individual TWT responder role
+ * @TWT_RESPONDER_BCAST: Broadcast TWT responder role
+ * @TWT_ROLE_ALL: All TWT roles
+ */
+enum twt_role {
+	TWT_REQUESTOR,
+	TWT_REQUESTOR_INDV,
+	/* Bcast alone cannot be enabled, but can be disabled */
+	TWT_REQUESTOR_BCAST,
+	TWT_RESPONDER,
+	TWT_RESPONDER_INDV,
+	/* Bcast alone cannot be enabled, but can be disabled */
+	TWT_RESPONDER_BCAST,
+	TWT_ROLE_ALL,
+	TWT_ROLE_MAX,
+};
+
 #ifdef WLAN_SUPPORT_TWT
 /**
  * enum twt_status - TWT target state
@@ -165,6 +188,16 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
  */
 int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
 					  struct nlattr **tb);
+/**
+ * hdd_send_twt_role_disable_cmd() - Send a specific TWT role
+ * disable to firmware
+ * @hdd_ctx: hdd context pointer
+ * @role : TWT role to be disabled
+ *
+ * Return: None
+ */
+void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
+				   enum twt_role role);
 
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT                            \
 {                                                                        \
@@ -216,6 +249,11 @@ int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
 	return -EINVAL;
 }
 
+static inline
+void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
+				   enum twt_role role)
+{
+}
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT
 
 #endif

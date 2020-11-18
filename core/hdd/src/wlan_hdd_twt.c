@@ -33,6 +33,7 @@
 #include "wma_twt.h"
 #include "osif_sync.h"
 #include "wlan_osif_request_manager.h"
+#include "cfg_ucfg_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 
 #define TWT_SETUP_COMPLETE_TIMEOUT 4000
@@ -1998,51 +1999,134 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg)
 {
 	struct wma_tgt_services *services = &cfg->services;
-	bool enable_twt = false;
+	bool twt_bcast_req;
+	bool twt_bcast_res;
+	bool enable_twt;
+	bool twt_req;
+	bool twt_res;
 
 	ucfg_mlme_get_enable_twt(hdd_ctx->psoc, &enable_twt);
-	hdd_debug("TWT: enable_twt=%d, tgt Req=%d, Res=%d",
-		  enable_twt, services->twt_requestor,
-		  services->twt_responder);
+
+	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
+
+	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &twt_res);
+
+	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc,
+					  &twt_bcast_req);
+
+	ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc,
+					  &twt_bcast_res);
+
+	hdd_debug("ini: enable_twt=%d, bcast_req=%d, bcast_res=%d",
+		  enable_twt, twt_bcast_req, twt_bcast_res);
+	hdd_debug("ini: twt_req=%d, twt_res=%d", twt_req, twt_res);
+	hdd_debug("svc:  req=%d, res=%d, bcast_req=%d, bcast_res=%d",
+		  services->twt_requestor, services->twt_responder,
+		  cfg->twt_bcast_req_support, cfg->twt_bcast_res_support);
 
 	ucfg_mlme_set_twt_requestor(hdd_ctx->psoc,
 				    QDF_MIN(services->twt_requestor,
-					    enable_twt));
+					    (enable_twt && twt_req)));
 
 	ucfg_mlme_set_twt_responder(hdd_ctx->psoc,
 				    QDF_MIN(services->twt_responder,
-					    enable_twt));
+					    (enable_twt && twt_res)));
+
+	twt_req = enable_twt && twt_bcast_req;
+	ucfg_mlme_set_twt_bcast_requestor(hdd_ctx->psoc,
+					  QDF_MIN(cfg->twt_bcast_req_support,
+						  twt_req));
+
+	twt_res = enable_twt && twt_bcast_res;
+	ucfg_mlme_set_twt_bcast_responder(hdd_ctx->psoc,
+					  QDF_MIN(cfg->twt_bcast_res_support,
+						  twt_res));
 }
 
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
-	bool req_val = 0, resp_val = 0, bcast_val = 0;
-	uint32_t congestion_timeout = 0;
+	struct twt_enable_disable_conf twt_en_dis = {0};
+	bool is_requestor_en;
+	bool is_responder_en;
+	bool twt_bcast_en;
 
-	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &req_val);
-	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &resp_val);
-	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &bcast_val);
+	/* Get MLME TWT config */
+	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &is_requestor_en);
+	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &is_responder_en);
+	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &twt_en_dis.bcast_en);
 	ucfg_mlme_get_twt_congestion_timeout(hdd_ctx->psoc,
-					     &congestion_timeout);
+					     &twt_en_dis.congestion_timeout);
+	hdd_debug("TWT mlme cfg:req: %d, res:%d, bcast:%d, cong:%d, pdev:%d",
+		  is_requestor_en, is_responder_en, twt_en_dis.bcast_en,
+		   twt_en_dis.congestion_timeout, pdev_id);
 
-	hdd_debug("TWT cfg req:%d, responder:%d, bcast:%d, pdev:%d, cong:%d",
-		  req_val, resp_val, bcast_val, pdev_id, congestion_timeout);
+	/* The below code takes care of the following :
+	 * If user wants to separately enable requestor and responder roles,
+	 * and also the broadcast TWT capaibilities separately for each role.
+	 * This is done by reusing the INI configuration to indicate the user
+	 * preference and sending the command accordingly.
+	 * Legacy targets did not provide this. Newer targets provide this.
+	 *
+	 * 1. The MLME config holds the intersection of fw cap and user config
+	 * 2. This may result in two enable commands sent for legacy, but
+	 *    that's fine, since the firmware returns harmlessly for the
+	 *    second command.
+	 * 3. The new two parameters in the enable command are ignored
+	 *    by legacy targets, and honored by new targets.
+	 */
 
-	if (req_val || resp_val || bcast_val)
-		wma_send_twt_enable_cmd(pdev_id, congestion_timeout, bcast_val);
+	/* If requestor configured, send requestor bcast/ucast config */
+	if (is_requestor_en) {
+		twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
+		twt_en_dis.ext_conf_present = true;
+		ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc, &twt_bcast_en);
+		if (twt_bcast_en)
+			twt_en_dis.oper = WMI_TWT_OPERATION_BROADCAST;
+		else
+			twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
+
+		wma_send_twt_enable_cmd(pdev_id, &twt_en_dis);
+	}
+
+	/* If responder configured, send responder bcast/ucast config */
+	if (is_responder_en) {
+		twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
+		twt_en_dis.ext_conf_present = true;
+		ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc, &twt_bcast_en);
+		if (twt_bcast_en)
+			twt_en_dis.oper = WMI_TWT_OPERATION_BROADCAST;
+		else
+			twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
+
+		wma_send_twt_enable_cmd(pdev_id, &twt_en_dis);
+	}
+
+	return;
 }
 
 QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+	struct twt_enable_disable_conf twt_en_dis = {0};
+	QDF_STATUS status;
 
 	hdd_debug("TWT disable cmd :pdev:%d", pdev_id);
 
-	wma_send_twt_disable_cmd(pdev_id);
+	/* One disable should be fine, with extended configuration
+	 * set to false, and extended arguments will be ignored by target
+	 */
+	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
+	twt_en_dis.ext_conf_present = false;
+	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
 
-	return qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
-				     TWT_DISABLE_COMPLETE_TIMEOUT);
+	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
+				       TWT_DISABLE_COMPLETE_TIMEOUT);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_warn("TWT Responder disable timedout");
+
+	return status;
 }
 
 /**
@@ -2103,8 +2187,12 @@ hdd_twt_disable_comp_cb(hdd_handle_t hdd_handle)
 		hdd_err("TWT: Invalid HDD Context");
 		return;
 	}
+
 	prev_state = hdd_ctx->twt_state;
-	hdd_ctx->twt_state = TWT_DISABLED;
+	/* Do not change the state for role specific disables */
+	if (hdd_ctx->twt_state == TWT_DISABLE_REQUESTED) {
+		hdd_ctx->twt_state = TWT_DISABLED;
+	}
 
 	hdd_debug("TWT: State transitioned from %d to %d",
 		  prev_state, hdd_ctx->twt_state);
@@ -2112,6 +2200,52 @@ hdd_twt_disable_comp_cb(hdd_handle_t hdd_handle)
 	status = qdf_event_set(&hdd_ctx->twt_disable_comp_evt);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to set twt_disable_comp_evt");
+}
+
+void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
+				   enum twt_role role)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+	struct twt_enable_disable_conf twt_en_dis = {0};
+	QDF_STATUS status;
+
+	hdd_debug("TWT disable cmd :pdev:%d : %d", pdev_id, role);
+
+	if ((role == TWT_REQUESTOR) || (role == TWT_REQUESTOR_INDV)) {
+		twt_en_dis.ext_conf_present = true;
+		twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
+		twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
+		wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
+	}
+
+	if (role == TWT_REQUESTOR_BCAST) {
+		twt_en_dis.ext_conf_present = true;
+		twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
+		twt_en_dis.oper = WMI_TWT_OPERATION_BROADCAST;
+		wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
+	}
+
+	if ((role == TWT_RESPONDER) || (role == TWT_RESPONDER_INDV)) {
+		twt_en_dis.ext_conf_present = true;
+		twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
+		twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
+		wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
+	}
+
+	if (role == TWT_RESPONDER_BCAST) {
+		twt_en_dis.ext_conf_present = true;
+		twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
+		twt_en_dis.oper = WMI_TWT_OPERATION_BROADCAST;
+		wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
+	}
+
+	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
+				       TWT_DISABLE_COMPLETE_TIMEOUT);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_warn("TWT request disable timedout");
+		return;
+	}
 }
 
 void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)

@@ -187,6 +187,8 @@ struct board_info {
  * @sar_version: Version of SAR supported by firmware
  * @bcast_twt_support: braodcast twt support
  * @restricted_80p80_bw_supp: Restricted 80+80MHz(165MHz BW) support
+ * @twt_bcast_req_support: twt bcast requestor support
+ * @twt_bcast_res_support: twt bcast responder support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -230,5 +232,9 @@ struct wma_tgt_cfg {
 	struct nan_tgt_caps nan_caps;
 	bool bcast_twt_support;
 	bool restricted_80p80_bw_supp;
+#ifdef WLAN_SUPPORT_TWT
+	bool twt_bcast_req_support;
+	bool twt_bcast_res_support;
+#endif
 };
 #endif /* WMA_TGT_CFG_H */

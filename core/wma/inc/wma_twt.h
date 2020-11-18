@@ -22,7 +22,22 @@
 #include "wma.h"
 #include "wmi_unified_twt_param.h"
 
-#ifdef WLAN_SUPPORT_TWT
+/**
+ * struct twt_enable_disable_conf - TWT enable/disable configuration/parameters
+ * @congestion_timeout: Congestion timer value in ms for firmware controlled TWT
+ * @bcast_en: If bcast TWT enabled
+ * @ext_conf_present: If extended config is present
+ * @role: The configuration is for WMI_TWT_ROLE
+ * @oper: The configuration is for WMI_TWT_OPERATION
+ */
+struct twt_enable_disable_conf {
+	uint32_t congestion_timeout;
+	bool bcast_en;
+	bool ext_conf_present;
+	enum WMI_TWT_ROLE role;
+	enum WMI_TWT_OPERATION oper;
+};
+
 /**
  * struct twt_add_dialog_complete_event - TWT add dialog complete event
  * @params: Fixed parameters for TWT add dialog complete event
@@ -36,17 +51,16 @@ struct twt_add_dialog_complete_event {
 	struct wmi_twt_add_dialog_additional_params additional_params;
 };
 
+#ifdef WLAN_SUPPORT_TWT
 /**
  * wma_send_twt_enable_cmd() - Send TWT Enable command to firmware
  * @pdev_id: pdev id
- * @congestion_timeout: Timeout value for the TWT congestion timer
- * @bcast_val: broadcast twt support
+ * @conf: Pointer to twt_enable_disable_conf
  *
  * Return: None
  */
 void wma_send_twt_enable_cmd(uint32_t pdev_id,
-			     uint32_t congestion_timeout,
-			     bool bcast_val);
+			     struct twt_enable_disable_conf *conf);
 
 /**
  * wma_set_twt_peer_caps() - Fill the peer TWT capabilities
@@ -61,10 +75,12 @@ void wma_set_twt_peer_caps(tpAddStaParams params,
 /**
  * wma_send_twt_disable_cmd() - Send TWT disable command to firmware
  * @pdev_id: pdev id
+ * @conf: Pointer to twt_enable_disable_conf
  *
  * Return: None
  */
-void wma_send_twt_disable_cmd(uint32_t pdev_id);
+void wma_send_twt_disable_cmd(uint32_t pdev_id,
+			      struct twt_enable_disable_conf *conf);
 
 /**
  * wma_twt_process_add_dialog() - Process twt add dialog command
@@ -113,15 +129,37 @@ QDF_STATUS
 wma_twt_process_resume_dialog(t_wma_handle *wma_handle,
 			      struct wmi_twt_resume_dialog_cmd_param *params);
 
+/**
+ * wma_update_bcast_twt_support() - update bcost twt support
+ * @wh: wma handle
+ * @tgt_cfg: target configuration to be updated
+ *
+ * Update braodcast twt support based on service bit.
+ *
+ * Return: None
+ */
+void wma_update_bcast_twt_support(tp_wma_handle wh,
+				  struct wma_tgt_cfg *tgt_cfg);
+/**
+ * wma_register_twt_events() - register for TWT wmi events
+ * @wma_handle : wma handle
+ *
+ * Registers the wmi event handlers for TWT.
+ *
+ * Return: None
+ */
+void wma_register_twt_events(tp_wma_handle wma_handle);
 #else
-static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
-					   uint32_t congestion_timeout,
-					   bool bcast_val)
+static inline void
+wma_send_twt_enable_cmd(uint32_t pdev_id,
+			struct twt_enable_disable_conf *conf)
 {
 	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
 }
 
-static inline void wma_send_twt_disable_cmd(uint32_t pdev_id)
+static inline void
+wma_send_twt_disable_cmd(uint32_t pdev_id,
+			 struct twt_enable_disable_conf *conf)
 {
 }
 
@@ -164,6 +202,15 @@ wma_twt_process_resume_dialog(t_wma_handle *wma_handle,
 	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
 
 	return QDF_STATUS_E_INVAL;
+}
+
+static inline void wma_update_bcast_twt_support(tp_wma_handle wh,
+						struct wma_tgt_cfg *tgt_cfg)
+{
+}
+
+static inline void wma_register_twt_events(tp_wma_handle wma_handle)
+{
 }
 #endif
 

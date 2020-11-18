@@ -905,6 +905,7 @@ static void hdd_clean_up_interface(struct hdd_context *hdd_ctx,
 	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 	hdd_close_adapter(hdd_ctx, adapter, true);
+	hdd_send_twt_enable_cmd(hdd_ctx);
 }
 
 int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
@@ -1200,6 +1201,12 @@ int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 
 	status = ucfg_p2p_set_ps(psoc, ps_config);
 	hdd_debug("p2p set power save, status:%d", status);
+
+	/* P2P-GO-NOA and TWT do not go hand in hand */
+	if (ps_config->duration)
+		hdd_send_twt_role_disable_cmd(hdd_ctx, TWT_RESPONDER);
+	else
+		hdd_send_twt_enable_cmd(hdd_ctx);
 
 	return qdf_status_to_os_return(status);
 }
