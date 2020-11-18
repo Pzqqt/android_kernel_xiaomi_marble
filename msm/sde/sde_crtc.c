@@ -3971,7 +3971,7 @@ static void sde_crtc_clear_cached_mixer_cfg(struct drm_crtc *crtc)
 	SDE_EVT32(DRMID(crtc));
 }
 
-static void sde_crtc_reset_sw_state_for_ipc(struct drm_crtc *crtc)
+void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 	struct drm_plane *plane;
@@ -4074,7 +4074,7 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		sde_cp_crtc_pre_ipc(crtc);
 		break;
 	case SDE_POWER_EVENT_POST_DISABLE:
-		sde_crtc_reset_sw_state_for_ipc(crtc);
+		sde_crtc_reset_sw_state(crtc);
 		sde_cp_crtc_suspend(crtc);
 		event.type = DRM_EVENT_SDE_POWER;
 		event.length = sizeof(power_on);
