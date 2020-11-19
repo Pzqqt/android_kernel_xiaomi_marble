@@ -42,6 +42,8 @@
 #include "lim_send_messages.h"
 #include "rrm_global.h"
 #include "rrm_api.h"
+#include "wlan_lmac_if_def.h"
+#include "wlan_reg_services_api.h"
 
 /* -------------------------------------------------------------------- */
 /**
@@ -246,8 +248,8 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 	tSirMacLinkReport LinkReport;
 	tpSirMacMgmtHdr pHdr;
 	int8_t currentRSSI = 0;
-	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
 	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
 	pe_debug("Received Link measurement request");
 
@@ -257,31 +259,24 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 	}
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
-	tx_pwr_attr.reg_max = pe_session->def_max_tx_pwr;
-	tx_pwr_attr.ap_tx_power = pLinkReq->MaxTxPower.maxTxPower;
-
-	LinkReport.txPower = lim_get_max_tx_power(mac, &tx_pwr_attr);
-
-	/** If firmware updated max tx power is non zero, respond to rrm link
-	 *  measurement request with min of firmware updated ap tx power and
-	 *  max power derived from lim_get_max_tx_power API.
-	 */
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
-	if (mlme_obj && mlme_obj->mgmt.generic.tx_pwrlimit)
-		LinkReport.txPower = QDF_MIN(LinkReport.txPower,
-					mlme_obj->mgmt.generic.tx_pwrlimit);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
-	if ((LinkReport.txPower != (uint8_t) (pe_session->maxTxPower)) &&
-	    (QDF_STATUS_SUCCESS == rrm_send_set_max_tx_power_req(mac,
-							   LinkReport.txPower,
-							   pe_session))) {
-		pe_warn("maxTx power in link report is not same as local..."
-			" Local: %d Link Request TxPower: %d"
-			" Link Report TxPower: %d",
-			pe_session->maxTxPower, LinkReport.txPower,
-			pLinkReq->MaxTxPower.maxTxPower);
-		pe_session->maxTxPower =
-			LinkReport.txPower;
+	if (pLinkReq->MaxTxPower.maxTxPower !=
+			mlme_obj->reg_tpc_obj.ap_constraint_power) {
+
+		tx_ops = wlan_reg_get_tx_ops(mac->psoc);
+
+		mlme_obj->reg_tpc_obj.ap_constraint_power =
+					pLinkReq->MaxTxPower.maxTxPower;
+		lim_calculate_tpc(mac, pe_session, true);
+
+		if (tx_ops->set_tpc_power)
+			tx_ops->set_tpc_power(mac->psoc, pe_session->vdev_id,
+					      &mlme_obj->reg_tpc_obj);
 	}
 
 	LinkReport.dialogToken = pLinkReq->DialogToken.token;

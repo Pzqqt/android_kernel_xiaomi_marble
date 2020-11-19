@@ -148,9 +148,22 @@ QDF_STATUS lim_send_set_max_tx_power_req(struct mac_context *mac,
 		struct pe_session *pe_session);
 
 /**
+ * lim_get_num_pwr_levels() - Utility to get number of tx power levels
+ * @is_psd: PSD power check
+ * @ch_width: BSS channel bandwidth
+ *
+ * This function is used to get the number of tx power levels based on
+ * channel bandwidth and psd power.
+ *
+ * Return: number of tx power levels
+ */
+uint32_t lim_get_num_pwr_levels(bool is_psd,
+				enum phy_ch_width ch_width);
+
+/**
  * lim_get_max_tx_power() - Utility to get maximum tx power
  * @mac: mac handle
- * @attr: pointer to buffer containing list of tx powers
+ * @mlme_obj: pointer to struct containing list of tx powers
  *
  * This function is used to get the maximum possible tx power from the list
  * of tx powers mentioned in @attr.
@@ -158,7 +171,22 @@ QDF_STATUS lim_send_set_max_tx_power_req(struct mac_context *mac,
  * Return: Max tx power
  */
 uint8_t lim_get_max_tx_power(struct mac_context *mac,
-			     struct lim_max_tx_pwr_attr *attr);
+			     struct vdev_mlme_obj *mlme_obj);
+/**
+ * lim_calculate_tpc() - Utility to get maximum tx power
+ * @mac: mac handle
+ * @session: PE Session Entry
+ * @is_pwr_constraint_absolute: If local power constraint is an absolute
+ * value or an offset value.
+ *
+ * This function is used to get the maximum possible tx power from the list
+ * of tx powers mentioned in @attr.
+ *
+ * Return: None
+ */
+void lim_calculate_tpc(struct mac_context *mac,
+		       struct pe_session *session,
+		       bool is_pwr_constraint_absolute);
 
 /* AID pool management functions */
 void lim_init_peer_idxpool(struct mac_context *, struct pe_session *);

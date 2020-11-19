@@ -60,6 +60,10 @@
 #include <wlan_action_oui_ucfg_api.h>
 #include <wlan_cm_api.h>
 #include <wlan_mlme_api.h>
+#include <wlan_mlme_ucfg_api.h>
+#include <wlan_reg_ucfg_api.h>
+#include "wlan_lmac_if_def.h"
+#include "wlan_reg_services_api.h"
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
@@ -99,6 +103,20 @@ static void lim_process_update_add_ies(struct mac_context *mac, uint32_t *pMsg);
 
 static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 						uint32_t *msg);
+
+/**
+ * enum get_next_lower_bw - Get next higher bandwidth for a given BW.
+ * This enum is used in conjunction with
+ * wlan_reg_set_channel_params_for_freq API to fetch center frequencies
+ * for each BW starting from 20MHz upto Max BSS BW in case of non-PSD power.
+ *
+ */
+static const enum phy_ch_width get_next_higher_bw[] = {
+	[CH_WIDTH_20MHZ] = CH_WIDTH_40MHZ,
+	[CH_WIDTH_40MHZ] = CH_WIDTH_80MHZ,
+	[CH_WIDTH_80MHZ] = CH_WIDTH_160MHZ,
+	[CH_WIDTH_160MHZ] = CH_WIDTH_INVALID
+};
 
 /**
  * lim_process_set_hw_mode() - Send set HW mode command to WMA
@@ -2498,8 +2516,9 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	ePhyChanBondState cb_mode;
 	const uint8_t *vendor_ie;
 	uint16_t ie_len;
-	int8_t local_power_constraint, reg_max;
-	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
+	int8_t local_power_constraint;
+	struct vdev_mlme_obj *mlme_obj;
+	bool is_pwr_constraint;
 	tSirMacCapabilityInfo *ap_cap_info;
 	uint8_t wmm_mode, value;
 	struct wlan_mlme_lfr_cfg *lfr = &mac_ctx->mlme_cfg->lfr;
@@ -2690,24 +2709,23 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	session->limCurrentBssCaps = bss_desc->capabilityInfo;
 
-	reg_max = wlan_reg_get_channel_reg_power_for_freq(
-		mac_ctx->pdev, session->curr_op_freq);
-	local_power_constraint = reg_max;
-
-	tx_pwr_attr.reg_max = reg_max;
-	tx_pwr_attr.ap_tx_power = local_power_constraint;
-	tx_pwr_attr.frequency = session->curr_op_freq;
-
-	session->maxTxPower = lim_get_max_tx_power(mac_ctx,
-						   &tx_pwr_attr);
-	session->def_max_tx_pwr = session->maxTxPower;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
+	if (!mlme_obj) {
+		qdf_mem_free(ie_struct);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	lim_extract_ap_capability(mac_ctx,
 		(uint8_t *)bss_desc->ieFields,
 		lim_get_ielen_from_bss_description(bss_desc),
 		&session->limCurrentBssQosCaps,
 		&session->gLimCurrentBssUapsd,
-		&local_power_constraint, session);
+		&local_power_constraint, session, &is_pwr_constraint);
+
+	mlme_obj->reg_tpc_obj.ap_constraint_power = local_power_constraint;
+
+	session->maxTxPower = lim_get_max_tx_power(mac_ctx, mlme_obj);
+	session->def_max_tx_pwr = session->maxTxPower;
 
 	session->limRFBand = lim_get_rf_band(session->curr_op_freq);
 
@@ -3933,19 +3951,63 @@ end:
 }
 #endif
 
+uint32_t lim_get_num_pwr_levels(bool is_psd,
+				enum phy_ch_width ch_width)
+{
+	uint32_t num_pwr_levels = 0;
+
+	if (is_psd) {
+		switch (ch_width) {
+		case CH_WIDTH_20MHZ:
+			num_pwr_levels = 1;
+			break;
+		case CH_WIDTH_40MHZ:
+			num_pwr_levels = 2;
+			break;
+		case CH_WIDTH_80MHZ:
+			num_pwr_levels = 4;
+			break;
+		case CH_WIDTH_160MHZ:
+			num_pwr_levels = 8;
+			break;
+		default:
+			pe_err("Invalid channel width");
+			return 0;
+		}
+	} else {
+		switch (ch_width) {
+		case CH_WIDTH_20MHZ:
+			num_pwr_levels = 1;
+			break;
+		case CH_WIDTH_40MHZ:
+			num_pwr_levels = 2;
+			break;
+		case CH_WIDTH_80MHZ:
+			num_pwr_levels = 3;
+			break;
+		case CH_WIDTH_160MHZ:
+			num_pwr_levels = 4;
+			break;
+		default:
+			pe_err("Invalid channel width");
+			return 0;
+		}
+	}
+	return num_pwr_levels;
+}
+
 uint8_t lim_get_max_tx_power(struct mac_context *mac,
-			     struct lim_max_tx_pwr_attr *attr)
+			     struct vdev_mlme_obj *mlme_obj)
 {
 	uint8_t max_tx_power = 0;
 	uint8_t tx_power;
 
-	if (!attr)
-		return 0;
+	if (wlan_reg_get_fcc_constraint(mac->pdev,
+					mlme_obj->reg_tpc_obj.frequency[0]))
+		return mlme_obj->reg_tpc_obj.reg_max[0];
 
-	if (wlan_reg_get_fcc_constraint(mac->pdev, attr->frequency))
-		return attr->reg_max;
-
-	tx_power = QDF_MIN(attr->reg_max, attr->ap_tx_power);
+	tx_power = QDF_MIN(mlme_obj->reg_tpc_obj.reg_max[0],
+			   mlme_obj->reg_tpc_obj.ap_constraint_power);
 
 	if (tx_power >= MIN_TX_PWR_CAP && tx_power <= MAX_TX_PWR_CAP)
 		max_tx_power = tx_power;
@@ -3955,6 +4017,133 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
 		max_tx_power = MAX_TX_PWR_CAP;
 
 	return max_tx_power;
+}
+
+void lim_calculate_tpc(struct mac_context *mac,
+		       struct pe_session *session,
+		       bool is_pwr_constraint_absolute)
+{
+	bool is_psd_power = false;
+	bool is_tpe_present = false, is_6ghz_freq = false;
+	uint8_t i = 0;
+	int8_t max_tx_power;
+	uint16_t reg_max, eirp_power = 0;
+	uint16_t local_constraint, bw_val = 0;
+	uint32_t num_pwr_levels, ap_power_type_6g = 0;
+	qdf_freq_t oper_freq, start_freq = 0;
+	struct ch_params ch_params;
+	struct vdev_mlme_obj *mlme_obj;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return;
+	}
+
+	oper_freq = session->curr_op_freq;
+	bw_val = wlan_reg_get_bw_value(session->ch_width);
+
+	/* start frequency calculation */
+	wlan_reg_set_channel_params_for_freq(mac->pdev, oper_freq, 0,
+					     &ch_params);
+	start_freq = ch_params.mhz_freq_seg0 - bw_val / 2;
+
+	if (mlme_obj->reg_tpc_obj.num_pwr_levels) {
+		is_tpe_present = true;
+		num_pwr_levels = mlme_obj->reg_tpc_obj.num_pwr_levels;
+	} else {
+		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
+		num_pwr_levels = lim_get_num_pwr_levels(is_psd_power,
+							session->ch_width);
+	}
+
+	if (!wlan_reg_is_6ghz_chan_freq(oper_freq))
+		reg_max = wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
+								  oper_freq);
+	else
+		is_6ghz_freq = true;
+
+	ch_params.ch_width = CH_WIDTH_20MHZ;
+
+	for (i = 0; i < num_pwr_levels; i++) {
+		if (is_tpe_present) {
+			if (is_6ghz_freq) {
+				ap_power_type_6g = session->ap_power_type;
+				wlan_reg_get_client_power_for_connecting_ap
+				(mac->pdev, ap_power_type_6g,
+				 mlme_obj->reg_tpc_obj.frequency[i],
+				 &is_psd_power, &reg_max, &eirp_power);
+			}
+		} else {
+			/* center frequency calculation */
+			if (is_psd_power) {
+				mlme_obj->reg_tpc_obj.frequency[i] =
+						start_freq + 10 + (20 * i);
+			} else {
+				wlan_reg_set_channel_params_for_freq
+					(mac->pdev, oper_freq, 0, &ch_params);
+				mlme_obj->reg_tpc_obj.frequency[i] =
+					ch_params.mhz_freq_seg0;
+				ch_params.ch_width =
+					get_next_higher_bw[ch_params.ch_width];
+			}
+			if (is_6ghz_freq) {
+				if (LIM_IS_STA_ROLE(session)) {
+					ap_power_type_6g =
+							session->ap_power_type;
+					wlan_reg_get_client_power_for_connecting_ap
+					(mac->pdev, ap_power_type_6g,
+					 mlme_obj->reg_tpc_obj.frequency[i],
+					 &is_psd_power, &reg_max, &eirp_power);
+				} else {
+					wlan_reg_get_6g_chan_ap_power
+					(mac->pdev,
+					 mlme_obj->reg_tpc_obj.frequency[i],
+					 &is_psd_power, &reg_max, &eirp_power);
+				}
+			}
+		}
+		mlme_obj->reg_tpc_obj.reg_max[i] = reg_max;
+		mlme_obj->reg_tpc_obj.chan_power_info[i].chan_cfreq =
+					mlme_obj->reg_tpc_obj.frequency[i];
+
+		/* max tx power calculation */
+		max_tx_power = mlme_obj->reg_tpc_obj.reg_max[i];
+		/* If AP local power constraint is present */
+		if (mlme_obj->reg_tpc_obj.ap_constraint_power) {
+			local_constraint =
+				mlme_obj->reg_tpc_obj.ap_constraint_power;
+			reg_max = mlme_obj->reg_tpc_obj.reg_max[i];
+			if (is_pwr_constraint_absolute)
+				max_tx_power = QDF_MIN(reg_max,
+						       local_constraint);
+			else
+				max_tx_power = reg_max - local_constraint;
+		}
+		/* If TPE is present */
+		if (is_tpe_present)
+			max_tx_power = QDF_MIN(max_tx_power, (int8_t)
+					       mlme_obj->reg_tpc_obj.tpe[i]);
+
+		/** If firmware updated max tx power is non zero,
+		 * then allocate the min of firmware updated ap tx
+		 * power and max power derived from above mentioned
+		 * parameters.
+		 */
+		if (mlme_obj->mgmt.generic.tx_pwrlimit)
+			max_tx_power =
+				QDF_MIN(max_tx_power, (int8_t)
+					mlme_obj->mgmt.generic.tx_pwrlimit);
+		else
+			pe_err("HW power limit from FW is zero");
+		mlme_obj->reg_tpc_obj.chan_power_info[i].tx_power =
+						(uint8_t)max_tx_power;
+	}
+
+	mlme_obj->reg_tpc_obj.num_pwr_levels = num_pwr_levels;
+	mlme_obj->reg_tpc_obj.is_psd_power = is_psd_power;
+	mlme_obj->reg_tpc_obj.eirp_power = eirp_power;
+	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
 }
 
 /**
@@ -3989,6 +4178,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	tSirMacCapabilityInfo *ap_cap_info;
 	struct bss_description *bss_desc;
 	uint8_t wmm_mode, value;
+	bool is_pwr_constraint;
 
 	vdev_id = in_req->vdev_id;
 
@@ -4166,7 +4356,11 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 			&session_entry->pLimReAssocReq->bssDescription),
 		&session_entry->limReassocBssQosCaps,
 		&session_entry->gLimCurrentBssUapsd,
-		&local_pwr_constraint, session_entry);
+		&local_pwr_constraint, session_entry,
+		&is_pwr_constraint);
+	if (is_pwr_constraint)
+		local_pwr_constraint = reg_max - local_pwr_constraint;
+
 	session_entry->maxTxPower = QDF_MIN(reg_max, (local_pwr_constraint));
 	session_entry->max_11h_pwr =
 		QDF_MIN(lim_get_cfg_max_tx_power(mac_ctx,

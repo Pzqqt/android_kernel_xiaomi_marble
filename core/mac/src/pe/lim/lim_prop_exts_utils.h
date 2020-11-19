@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016, 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016, 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,7 @@
  * @uapsd: pointer to uapsd
  * @local_constraint: Pointer to local power constraint.
  * @session: A pointer to session entry.
+ * @is_pwr_constraint: Check for Power constraint bit in beacon
  *
  * This function is called to extract AP's HCF/WME/WSM capability
  * from the IEs received from it in Beacon/Probe Response frames
@@ -52,7 +53,8 @@
 void
 lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 			  uint16_t ie_len, uint8_t *qos_cap, uint8_t *uapsd,
-			  int8_t *local_constraint, struct pe_session *session);
+			  int8_t *local_constraint, struct pe_session *session,
+			  bool *is_pwr_constraint);
 
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2657,6 +2657,9 @@ static void lim_process_switch_channel_join_req(
 	tLimMlmJoinCnf join_cnf;
 	uint8_t nontx_bss_id = 0;
 	struct bss_description *bss;
+	struct vdev_mlme_obj *mlme_obj;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	bool tpe_change = false;
 
 	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("Change channel failed!!");
@@ -2668,6 +2671,8 @@ static void lim_process_switch_channel_join_req(
 		pe_err("invalid pointer!!");
 		goto error;
 	}
+
+	tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
 	bss = &session_entry->lim_join_req->bssDescription;
 	nontx_bss_id = bss->mbssid_info.profile_num;
@@ -2756,6 +2761,22 @@ static void lim_process_switch_channel_join_req(
 			 mac_ctx->lim.gLimMlmState));
 		goto error;
 	}
+
+	lim_process_tpe_ie_from_beacon(mac_ctx, session_entry, bss,
+				       &tpe_change);
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session_entry->vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		goto error;
+	}
+
+	lim_calculate_tpc(mac_ctx, session_entry, false);
+
+	if (tx_ops->set_tpc_power)
+		tx_ops->set_tpc_power(mac_ctx->psoc,
+				      session_entry->vdev_id,
+				      &mlme_obj->reg_tpc_obj);
 
 	/* include additional IE if there is */
 	lim_send_probe_req_mgmt_frame(mac_ctx, &ssId,

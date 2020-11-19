@@ -44,6 +44,8 @@
 #include "wlan_pmo_ucfg_api.h"
 #include "wlan_objmgr_vdev_obj.h"
 #include <wlan_cm_api.h>
+#include "wlan_reg_services_api.h"
+#include "wlan_lmac_if_def.h"
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -235,6 +237,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct bss_params *addbss_param = NULL;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
 	if (!wma)
 		return eSIR_SME_INVALID_PARAMETERS;
@@ -245,6 +248,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		return eSIR_SME_INVALID_PARAMETERS;
 	}
 
+	tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, mlm_start_req->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	if (lim_is_session_he_capable(session)) {
@@ -289,6 +293,12 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto peer_cleanup;
 	wma_post_vdev_start_setup(vdev_id);
+
+	lim_calculate_tpc(mac_ctx, session, false);
+
+	if (tx_ops->set_tpc_power)
+		tx_ops->set_tpc_power(mac_ctx->psoc, session->vdev_id,
+				      &mlme_obj->reg_tpc_obj);
 
 	return eSIR_SME_SUCCESS;
 
