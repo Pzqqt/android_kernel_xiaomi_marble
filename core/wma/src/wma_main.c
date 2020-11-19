@@ -8499,9 +8499,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_set_max_tx_power(wma_handle,
 				     (tpMaxTxPowerParams) msg->bodyptr);
 		break;
-	case WMA_SEND_MAX_TX_POWER:
-		wma_send_max_tx_pwrlmt(wma_handle, msg->bodyval);
-		break;
 	case WMA_SET_KEEP_ALIVE:
 		wma_set_keepalive_req(wma_handle, msg->bodyptr);
 		break;

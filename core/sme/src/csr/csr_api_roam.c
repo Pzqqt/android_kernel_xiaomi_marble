@@ -7105,21 +7105,6 @@ static inline void csr_roam_process_he_info(struct join_rsp *sme_join_rsp,
 }
 #endif
 
-static void csr_update_tx_pwr_to_fw(struct mac_context *mac_ctx,
-				    uint8_t vdev_id)
-{
-	struct scheduler_msg msg = {0};
-
-	msg.type = WMA_SEND_MAX_TX_POWER;
-	msg.bodyval = vdev_id;
-	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
-							 QDF_MODULE_ID_WMA,
-							 QDF_MODULE_ID_WMA,
-							 &msg)) {
-		sme_err("Failed to post WMA_SEND_MAX_TX_POWER message to WMA");
-	}
-}
-
 static void csr_update_rsn_intersect_to_fw(struct wlan_objmgr_psoc *psoc,
 					   uint8_t vdev_id)
 {
@@ -7563,7 +7548,6 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 		csr_roam_link_up(mac_ctx, conn_profile->bssid);
 	}
 
-	csr_update_tx_pwr_to_fw(mac_ctx, session_id);
 	csr_update_rsn_intersect_to_fw(mac_ctx->psoc, session_id);
 	sme_free_join_rsp_fils_params(roam_info);
 	qdf_mem_free(roam_info);

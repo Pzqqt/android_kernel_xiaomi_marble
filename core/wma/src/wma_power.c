@@ -317,33 +317,6 @@ end:
 		wma_err("Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT");
 }
 
-void wma_send_max_tx_pwrlmt(WMA_HANDLE handle, uint8_t vdev_id)
-{
-	uint32_t max_tx_pwr;
-	struct wma_txrx_node *iface;
-	struct vdev_mlme_obj *mlme_obj;
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-
-	iface = &wma_handle->interfaces[vdev_id];
-	if (!iface) {
-		wma_err("Failed to get iface handle for vdev_id %d", vdev_id);
-		return;
-	}
-
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
-	if (!mlme_obj)
-		return;
-
-	max_tx_pwr = mlme_obj->mgmt.generic.tx_pwrlimit;
-	if (!max_tx_pwr)
-		return;
-
-	wma_nofl_debug("TXP[W][send_max_tx_pwr]: %d", max_tx_pwr);
-	wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
-			   WMI_VDEV_PARAM_TX_PWRLIMIT,
-			   max_tx_pwr);
-}
-
 /**
  * wma_set_max_tx_power() - set max tx power limit in fw
  * @handle: wma handle

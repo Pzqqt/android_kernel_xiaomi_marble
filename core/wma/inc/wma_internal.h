@@ -898,15 +898,6 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 void wma_disable_sta_ps_mode(tpDisablePsParams ps_req);
 
 /**
- * wma_send_max_tx_pwrlmt() - send max tx power limit to fw
- * @handle: wma handle
- * @vdev_id: vdev id
- *
- * Return: none
- */
-void wma_send_max_tx_pwrlmt(WMA_HANDLE handle, uint8_t vdev_id);
-
-/**
  * wma_enable_uapsd_mode() - enable uapsd mode in fw
  * @wma: wma handle
  * @ps_req: power save request
