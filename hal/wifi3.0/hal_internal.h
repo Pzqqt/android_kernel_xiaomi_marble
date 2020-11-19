@@ -471,8 +471,10 @@ struct hal_reo_params {
 	uint32_t remap2;
 	/** fragment destination ring */
 	uint8_t frag_dst_ring;
+	/* Destination for alternate */
+	uint8_t alt_dst_ind_0;
 	/** padding */
-	uint8_t padding[3];
+	uint8_t padding[2];
 };
 
 struct hal_hw_txrx_ops {

@@ -75,6 +75,20 @@
 			      HWIO_REO_R0_GENERAL_ENABLE_ADDR( \
 			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
 			      (reg_val)); \
+		(reg_val) = \
+		HAL_REG_READ((soc), \
+			     HWIO_REO_R0_DESTINATION_RING_ALT_CTRL_IX_0_ADDR(	\
+			     SEQ_WCSS_UMAC_REO_REG_OFFSET)); \
+		(reg_val) &= \
+			~(HWIO_REO_R0_DESTINATION_RING_ALT_CTRL_IX_0_DEST_RING_ALT_MAPPING_0_BMSK); \
+		(reg_val) |= \
+			HAL_SM(HWIO_REO_R0_DESTINATION_RING_ALT_CTRL_IX_0, \
+			       DEST_RING_ALT_MAPPING_0, \
+			       (reo_params)->alt_dst_ind_0); \
+		HAL_REG_WRITE((soc), \
+			      HWIO_REO_R0_DESTINATION_RING_ALT_CTRL_IX_0_ADDR( \
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
+			      (reg_val)); \
 	} while (0)
 
 #define HAL_RX_MSDU_DESC_INFO_GET(msdu_details_ptr) \

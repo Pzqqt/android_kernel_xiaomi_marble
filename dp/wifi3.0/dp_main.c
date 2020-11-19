@@ -12181,6 +12181,9 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	 */
 	dp_reo_frag_dst_set(soc, &reo_params.frag_dst_ring);
 
+	if (wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx))
+		reo_params.alt_dst_ind_0 = REO_REMAP_RELEASE;
+
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	hal_reo_set_err_dst_remap(soc->hal_soc);
