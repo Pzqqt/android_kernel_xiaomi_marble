@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,10 +131,10 @@ static inline void __qdf_timer_start(struct __qdf_timer_t *timer, uint32_t msec)
 	add_timer(os_timer);
 }
 
-static inline void __qdf_timer_mod(struct __qdf_timer_t *timer, uint32_t msec)
+static inline bool __qdf_timer_mod(struct __qdf_timer_t *timer, uint32_t msec)
 {
-	mod_timer(&timer->os_timer,
-		  jiffies + __qdf_scaled_msecs_to_jiffies(msec));
+	return mod_timer(&timer->os_timer,
+			 jiffies + __qdf_scaled_msecs_to_jiffies(msec));
 }
 
 static inline bool __qdf_timer_stop(struct __qdf_timer_t *timer)
