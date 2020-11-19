@@ -1395,10 +1395,8 @@ QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
 	QDF_STATUS ret;
 	uint32_t dword_he_op = 0;
 
-	if (!wma) {
-		wma_err("wrong wma_handle....");
+	if (wma_validate_handle(wma))
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	WMI_HEOPS_COLOR_SET(dword_he_op, he_op->bss_color);
 	WMI_HEOPS_DEFPE_SET(dword_he_op, he_op->default_pe);

@@ -2422,10 +2422,8 @@ static inline int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
  */
 void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 {
-	if (!wma_handle) {
-		wma_err("wma_handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return;
-	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				wmi_iface_link_stats_event_id,
@@ -3762,13 +3760,11 @@ bool wma_capability_enhanced_mcast_filter(void)
 bool wma_is_vdev_up(uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
-	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	bool is_up = false;
 
-	if (!wma) {
-		wma_err("WMA context is invalid!");
+	if (!wma)
 		return is_up;
-	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
 			WLAN_LEGACY_WMA_ID);
@@ -4009,16 +4005,13 @@ int wma_chip_power_save_failure_detected_handler(void *handle,
 	WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID_param_tlvs *param_buf;
 	wmi_chip_power_save_failure_detected_fixed_param  *event;
 	struct chip_pwr_save_fail_detected_params  pwr_save_fail_params;
-	struct mac_context *mac = (struct mac_context *)cds_get_context(
-						QDF_MODULE_ID_PE);
-	if (!wma) {
-		wma_err("wma_handle is NULL");
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (wma_validate_handle(wma))
 		return -EINVAL;
-	}
-	if (!mac) {
-		wma_err("Invalid mac context");
+
+	if (!mac)
 		return -EINVAL;
-	}
+
 	if (!mac->sme.chip_power_save_fail_cb) {
 		wma_err("Callback not registered");
 		return -EINVAL;
@@ -4062,10 +4055,8 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 	QDF_STATUS status;
 
 	wma_handle = handle;
-	if (!wma_handle) {
-		wma_err("NULL wma_handle");
+	if (wma_validate_handle(wma_handle))
 		return -EINVAL;
-	}
 
 	wmi_handle = wma_handle->wmi_handle;
 	if (!wmi_handle) {
@@ -4194,10 +4185,9 @@ QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
+
 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 	iface = &wma->interfaces[vdev_id];
 	vdev_mlme->proto.sta.assoc_id = iface->aid;
@@ -4250,10 +4240,9 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	enum vdev_assoc_type assoc_type;
 
-	if (!wma) {
-		wma_err("Invalid wma handle");
+	if (!wma)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev)) {
 		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
 		lim_process_switch_channel_rsp(wma->mac_context, data);
@@ -4284,10 +4273,8 @@ QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	ret = wma_mlme_roam_synch_event_handler_cb(wma, data, data_len);
 	if (ret != 0) {
@@ -4307,10 +4294,8 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	uint8_t vdev_id;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (mlme_is_chan_switch_in_progress(vdev)) {
 		mlme_set_chan_switch_in_progress(vdev, false);
@@ -4339,10 +4324,8 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	wma_send_vdev_down(wma, data);
 
@@ -4368,7 +4351,6 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
-		wma_err("wma handle is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
@@ -4410,10 +4392,8 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	struct add_bss_rsp *add_bss_rsp = data;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (wma_send_vdev_stop_to_fw(wma, add_bss_rsp->vdev_id))
 		wma_err("Failed to send vdev stop for vdev id %d",
@@ -4429,10 +4409,8 @@ QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
 		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
@@ -4450,10 +4428,9 @@ QDF_STATUS wma_mon_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
+
 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 	iface = &wma->interfaces[vdev_id];
 	vdev_mlme->proto.sta.assoc_id = 0;
@@ -4472,10 +4449,9 @@ QDF_STATUS wma_mon_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status;
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
+
 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 
 	status = wma_send_vdev_stop_to_fw(wma, vdev_id);
@@ -4498,10 +4474,9 @@ QDF_STATUS wma_mon_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status;
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
+
 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
 
 	status = wma_send_vdev_down_to_fw(wma, vdev_id);
@@ -4528,10 +4503,8 @@ int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,
 	wmi_request_wlm_stats_cmd_fixed_param *cmd;
 	QDF_STATUS status;
 
-	if (!wma_handle) {
-		wma_err("Invalid wma handle");
+	if (!wma_handle)
 		return -EINVAL;
-	}
 
 	wmi_handle = wma_handle->wmi_handle;
 	if (!wmi_handle) {
@@ -4584,10 +4557,9 @@ int wma_wlm_stats_rsp(void *wma_ctx, uint8_t *event, uint32_t evt_len)
 	uint32_t *raw_data;
 	uint32_t len, buffer_size, raw_data_num, i;
 
-	if (!wma_handle) {
-		wma_err("Invalid wma handle");
+	if (wma_validate_handle(wma_handle))
 		return -EINVAL;
-	}
+
 	if (!wma_handle->wlm_data.wlm_stats_callback) {
 		wma_err("No callback registered");
 		return -EINVAL;
@@ -4677,10 +4649,8 @@ int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
 	QDF_STATUS status;
 	tp_wma_handle wma_handle = (tp_wma_handle)wma_ctx;
 
-	if (!wma_handle) {
-		wma_err("NULL wma handle");
+	if (wma_validate_handle(wma_handle))
 		return -EINVAL;
-	}
 
 	param_buf =
 		   (WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID_param_tlvs *)event_buff;

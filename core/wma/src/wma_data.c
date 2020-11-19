@@ -955,10 +955,8 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 
-	if (!wma_handle) {
-		wma_err("Invalid WMA Handle");
+	if (wma_validate_handle(wma_handle))
 		return;
-	}
 
 	/*
 	 * if netBuf does not match with pending nbuf then just free the
@@ -1991,10 +1989,8 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 
 	wma = (tp_wma_handle) handle;
 
-	if (!wma) {
-		wma_err("Failed to get wma handle");
+	if (wma_validate_handle(wma))
 		return -EINVAL;
-	}
 
 	param_buf = (WMI_THERMAL_MGMT_EVENTID_param_tlvs *) event;
 
@@ -2250,11 +2246,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	bool is_5g = false;
 	uint8_t pdev_id;
 
-	if (!wma_handle) {
-		wma_err("wma_handle is NULL");
+	if (wma_validate_handle(wma_handle)) {
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	iface = &wma_handle->interfaces[vdev_id];
 
 	if (!soc) {

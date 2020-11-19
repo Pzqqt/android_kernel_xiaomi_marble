@@ -341,10 +341,8 @@ void wma_get_mws_coex_info_req(tp_wma_handle wma_handle,
 
 void wma_register_mws_coex_events(tp_wma_handle wma_handle)
 {
-	if (!wma_handle) {
-		wma_err("wma_handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return;
-	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				wmi_vdev_get_mws_coex_state_eventid,

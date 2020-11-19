@@ -799,10 +799,8 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 {
 	struct sta_keep_alive_params params = { 0 };
 
-	if (!wma) {
-		wma_err("wma handle is NULL");
+	if (wma_validate_handle(wma))
 		return;
-	}
 
 	if (timeperiod > cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD)) {
 		wmi_err("Invalid period %d Max limit %d", timeperiod,
@@ -2158,10 +2156,8 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 	uint32_t *adjusted_tsf = NULL;
 	uint32_t if_id = 0, vdev_map;
 
-	if (!wma) {
-		wma_err("Invalid wma handle");
+	if (wma_validate_handle(wma))
 		return -EINVAL;
-	}
 
 	param_buf = (WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
@@ -2223,10 +2219,8 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 static int wma_p2p_go_set_beacon_ie(t_wma_handle *wma_handle,
 				    A_UINT32 vdev_id, uint8_t *p2pIe)
 {
-	if (!wma_handle) {
-		wma_err("wma handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	return wmi_unified_p2p_go_set_beacon_ie_cmd(wma_handle->wmi_handle,
 							vdev_id, p2pIe);
@@ -2419,10 +2413,8 @@ void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)
 	tp_wma_handle wma;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		wma_err("Invalid wma");
+	if (!wma)
 		return;
-	}
 
 	wma_beacon_miss_handler(wma, vdev_id, rssi);
 }
@@ -2510,10 +2502,8 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 #endif
 	struct wmi_mgmt_params mgmt_params = {};
 
-	if (!wma_handle) {
-		wma_err("wma handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return -EINVAL;
-	}
 
 	wma_debug("status: %s wmi_desc_id: %d",
 		  wma_get_status_str(status), desc_id);
@@ -2860,10 +2850,8 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 
-	if (!wma) {
-		wma_err("Failed to get wma");
+	if (!wma)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	switch (ht_capab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
@@ -3332,7 +3320,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	static uint8_t limit_prints_recovery = RATE_LIMIT - 1;
 
 	if (!wma_handle) {
-		wma_err("wma handle is NULL");
 		qdf_nbuf_free(buf);
 		qdf_mem_free(rx_pkt);
 		return -EINVAL;
@@ -3573,10 +3560,8 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	qdf_nbuf_t wbuf;
 	QDF_STATUS status;
 
-	if (!wma_handle) {
-		wma_err("Failed to get WMA  context");
+	if (wma_validate_handle(wma_handle))
 		return -EINVAL;
-	}
 
 	mgmt_rx_params = qdf_mem_malloc(sizeof(*mgmt_rx_params));
 	if (!mgmt_rx_params) {
@@ -3685,10 +3670,8 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
 	tp_wma_handle wma_handle = (tp_wma_handle)
 				cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("Failed to get WMA context");
+	if (!wma_handle)
 		return QDF_STATUS_E_NULL_VALUE;
-	}
 
 #ifdef QCA_WIFI_FTM
 	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
@@ -3732,10 +3715,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma) {
-		wma_err("Failed to get WMA context");
+	if (!wma)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	wma->csr_roam_synch_cb = csr_roam_synch_cb;
 	wma->csr_roam_auth_event_handle_cb = csr_roam_auth_event_handle_cb;
 	wma->pe_roam_synch_cb = pe_roam_synch_cb;
@@ -3759,10 +3741,8 @@ QDF_STATUS wma_register_mgmt_frm_client(void)
 	tp_wma_handle wma_handle = (tp_wma_handle)
 				cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("Failed to get WMA context");
+	if (!wma_handle)
 		return QDF_STATUS_E_NULL_VALUE;
-	}
 
 	if (wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					       wmi_mgmt_rx_event_id,
@@ -3792,10 +3772,8 @@ void wma_register_packetdump_callback(
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("wma handle is NULL");
+	if (!wma_handle)
 		return;
-	}
 
 	wma_handle->wma_mgmt_tx_packetdump_cb = tx_cb;
 	wma_handle->wma_mgmt_rx_packetdump_cb = rx_cb;
@@ -3814,10 +3792,8 @@ void wma_deregister_packetdump_callback(void)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma_handle) {
-		wma_err("wma handle is NULL");
+	if (!wma_handle)
 		return;
-	}
 
 	wma_handle->wma_mgmt_tx_packetdump_cb = NULL;
 	wma_handle->wma_mgmt_rx_packetdump_cb = NULL;
@@ -3846,10 +3822,8 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		wma_err("wma handle is NULL");
+	if (!wma_handle)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				   wmi_service_mgmt_tx_wmi)) {

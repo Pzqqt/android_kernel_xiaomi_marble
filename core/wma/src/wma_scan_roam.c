@@ -2839,10 +2839,9 @@ int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
  */
 void wma_register_extscan_event_handler(tp_wma_handle wma_handle)
 {
-	if (!wma_handle) {
-		wma_err("extscan wma_handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return;
-	}
+
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_extscan_start_stop_event_id,
 					   wma_extscan_start_stop_event_handler,
@@ -4791,10 +4790,8 @@ int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FIPS)
 void wma_register_pmkid_req_event_handler(tp_wma_handle wma_handle)
 {
-	if (!wma_handle) {
-		wma_err("pmkid req wma_handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return;
-	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_roam_pmkid_request_event_id,

@@ -1044,6 +1044,8 @@ typedef struct {
  * wma_validate_handle() - Validate WMA handle
  * @wma_handle: wma handle
  *
+ * This function will log on error and hence caller should not log on error
+ *
  * Return: errno if WMA handle is NULL; 0 otherwise
  */
 #define wma_validate_handle(wma_handle) \

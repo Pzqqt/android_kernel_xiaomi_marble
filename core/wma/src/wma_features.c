@@ -512,10 +512,8 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 	uint8_t vdev_id;
 	wmi_peer_set_param_cmd_fixed_param peer_set_param_fp = {0};
 
-	if (!wma_handle) {
-		wma_err("wma_handle is NULL");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (!ta_dhcp_ind) {
 		wma_err("DHCP indication is NULL");
@@ -3995,10 +3993,8 @@ QDF_STATUS wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE handle,
 	uint32_t tx_aggr_size[4];
 	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 
-	if (!wma_handle) {
-		wma_err("WMA context is invald!");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	tx_aggr_size[0] = qos_aggr->tx_aggregation_size_be;
 	tx_aggr_size[1] = qos_aggr->tx_aggregation_size_bk;
@@ -4105,10 +4101,8 @@ QDF_STATUS wma_set_sw_retry_threshold_per_ac(WMA_HANDLE handle,
 	uint32_t sw_retry;
 	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 
-	if (!wma_handle) {
-		wma_err("WMA context is invalid!");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_BE] =
 		qos_aggr->tx_aggr_sw_retry_threshold_be;
