@@ -998,6 +998,32 @@ void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev)
 }
 #endif /* WDI_EVENT_ENABLE */
 
+#ifdef WLAN_DP_RESET_MON_BUF_RING_FILTER
+/**
+ * dp_mon_should_reset_buf_ring_filter() - Reset the monitor buf ring filter
+ * @soc: global DP soc handle
+ *
+ * WIN has targets which does not support monitor mode, but still do the
+ * monitor mode init/deinit, only the rxdma1_enable flag will be set to 0.
+ * MCL need to do the monitor buffer ring filter reset always, but this is
+ * not needed for WIN targets where rxdma1 is not enabled (the indicator
+ * that monitor mode is not enabled.
+ * This function is used as WAR till WIN cleans up the monitor mode
+ * function for targets where monitor mode is not enabled.
+ *
+ * Returns: true
+ */
+static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_soc *soc)
+{
+	return true;
+}
+#else
+static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_soc *soc)
+{
+	return false;
+}
+#endif
+
 /**
  * dp_mon_filter_update() - Setup the monitor filter setting for a srng
  * type
@@ -1044,7 +1070,7 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	dp_mon_filter_ht2_setup(soc, pdev, mon_srng_type, &filter);
 
 	mon_mode_set = filter.valid;
-	if (mon_mode_set) {
+	if (dp_mon_should_reset_buf_ring_filter(soc) || mon_mode_set) {
 		status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
 						mon_srng_type,
 						&filter.tlv_filter);
