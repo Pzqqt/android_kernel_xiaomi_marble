@@ -434,7 +434,7 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 			err = -EINVAL;
 			goto out_err;
 		}
-		/* fall through */
+		fallthrough;
 
 	case NLA_STRING:
 		if (attrlen < 1)
