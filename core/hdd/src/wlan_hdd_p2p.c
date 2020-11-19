@@ -899,8 +899,8 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 }
 #endif
 
-static void hdd_clean_up_interface(struct hdd_context *hdd_ctx,
-				   struct hdd_adapter *adapter)
+void hdd_clean_up_interface(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter)
 {
 	wlan_hdd_release_intf_addr(hdd_ctx,
 				   adapter->mac_addr.bytes);
