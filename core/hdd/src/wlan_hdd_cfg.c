@@ -1257,18 +1257,31 @@ QDF_STATUS hdd_get_nss(struct hdd_adapter *adapter, uint8_t *nss)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool bval;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("unable to get vht_enable2x2");
-		return status;
+	/*
+	 * If FW is supporting the dynamic nss update, this command is meant to
+	 * be per vdev, so get nss in the ini params of that particular vdev
+	 * otherwise get it from the global param enable2x2
+	 */
+	if (hdd_ctx->dynamic_nss_chains_support) {
+		uint8_t nss_2g, nss_5g;
+
+		sme_get_vdev_type_nss(adapter->device_mode, &nss_2g, &nss_5g);
+		/* Different settings in 2G and 5G is not supported */
+		*nss = nss_2g;
+	} else {
+		status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("unable to get vht_enable2x2");
+			return status;
+		}
+
+		*nss = (bval) ? 2 : 1;
+		if (!policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc) &&
+		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc))
+			*nss = *nss - 1;
 	}
-
-	*nss = (bval) ? 2 : 1;
-	if (!policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc) &&
-	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc))
-		*nss = *nss - 1;
 
 	return status;
 }
