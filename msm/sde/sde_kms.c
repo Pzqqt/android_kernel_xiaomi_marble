@@ -4595,18 +4595,24 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 	}
 
 	sde_kms = to_sde_kms(kms);
-	vm_ops = sde_vm_get_ops(sde_kms);
-	sde_vm_lock(sde_kms);
-	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
-		sde_vm_unlock(sde_kms);
-		DRM_INFO("HW is owned by other VM\n");
-		return -EACCES;
-	}
 
+	/* check vm ownership, if event registration requires HW access */
 	switch (obj->type) {
 	case DRM_MODE_OBJECT_CRTC:
+		vm_ops = sde_vm_get_ops(sde_kms);
+		sde_vm_lock(sde_kms);
+
+		if (vm_ops && vm_ops->vm_owns_hw
+				&& !vm_ops->vm_owns_hw(sde_kms)) {
+			sde_vm_unlock(sde_kms);
+			SDE_DEBUG("HW is owned by other VM\n");
+			return -EACCES;
+		}
+
 		crtc = obj_to_crtc(obj);
 		ret = sde_crtc_register_custom_event(sde_kms, crtc, event, en);
+
+		sde_vm_unlock(sde_kms);
 		break;
 	case DRM_MODE_OBJECT_CONNECTOR:
 		conn = obj_to_connector(obj);
@@ -4615,7 +4621,6 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 		break;
 	}
 
-	sde_vm_unlock(sde_kms);
 	return ret;
 }
 
