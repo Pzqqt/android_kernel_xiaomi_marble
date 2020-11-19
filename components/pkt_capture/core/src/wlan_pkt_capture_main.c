@@ -36,6 +36,7 @@ static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 
 #ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 wdi_event_subscribe PKT_CAPTURE_TX_SUBSCRIBER;
+wdi_event_subscribe PKT_CAPTURE_RX_SUBSCRIBER;
 
 /**
  * pkt_capture_wdi_event_subscribe() - Subscribe pkt capture callbacks
@@ -48,6 +49,7 @@ static void pkt_capture_wdi_event_subscribe(struct wlan_objmgr_psoc *psoc)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 
+	/* subscribing for tx data packets */
 	PKT_CAPTURE_TX_SUBSCRIBER.callback =
 				pkt_capture_callback;
 
@@ -55,6 +57,16 @@ static void pkt_capture_wdi_event_subscribe(struct wlan_objmgr_psoc *psoc)
 
 	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_TX_SUBSCRIBER,
 			  WDI_EVENT_PKT_CAPTURE_TX_DATA);
+
+	/* subscribing for rx data packets */
+	PKT_CAPTURE_RX_SUBSCRIBER.callback =
+				pkt_capture_callback;
+
+	PKT_CAPTURE_RX_SUBSCRIBER.context = wlan_psoc_get_dp_handle(psoc);
+
+	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
+			  WDI_EVENT_PKT_CAPTURE_RX_DATA);
+
 }
 
 /**
@@ -68,8 +80,13 @@ static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 
+	/* unsubscribing for tx data packets */
 	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_TX_SUBSCRIBER,
 			    WDI_EVENT_PKT_CAPTURE_TX_DATA);
+
+	/* unsubscribing for rx data packets */
+	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
+			    WDI_EVENT_PKT_CAPTURE_RX_DATA);
 }
 
 enum pkt_capture_mode
@@ -176,6 +193,16 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			tid, status, TXRX_PKTCAPTURE_PKT_FORMAT_8023,
 			bssid, NULL, tx_retry_cnt);
 
+		break;
+	}
+
+	case WDI_EVENT_PKT_CAPTURE_RX_DATA:
+	{
+		if (!(pkt_capture_get_pktcap_mode_lithium() &
+					PKT_CAPTURE_MODE_DATA_ONLY))
+			return;
+
+		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc);
 		break;
 	}
 

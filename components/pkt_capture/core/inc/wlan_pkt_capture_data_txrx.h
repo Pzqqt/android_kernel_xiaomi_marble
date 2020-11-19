@@ -74,6 +74,8 @@ void pkt_capture_datapkt_process(
 			uint8_t tid, uint8_t status, bool pktformat,
 			uint8_t *bssid, void *pdev,
 			uint8_t tx_retry_cnt);
+
+#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 /**
  * pkt_capture_msdu_process_pkts() - process data rx pkts
  * @bssid: bssid
@@ -88,6 +90,13 @@ void pkt_capture_msdu_process_pkts(
 			qdf_nbuf_t head_msdu,
 			uint8_t vdev_id,
 			htt_pdev_handle pdev);
+#else
+void pkt_capture_msdu_process_pkts(
+			uint8_t *bssid,
+			qdf_nbuf_t head_msdu,
+			uint8_t vdev_id,
+			void *psoc);
+#endif
 
 /**
  * pkt_capture_rx_in_order_drop_offload_pkt() - drop offload packets
