@@ -97,6 +97,19 @@ int ipa3_disable_data_path(u32 clnt_hdl)
 
 	IPADBG("Disabling data path\n");
 	if (IPA_CLIENT_IS_CONS(ep->client)) {
+		/*
+		 * for RG10 workaround uC needs to be loaded before
+		 * pipe can be suspended in this case.
+		 */
+		if (ipa3_ctx->apply_rg10_wa && ipa3_uc_state_check()) {
+			IPADBG("uC is not loaded yet, waiting...\n");
+			res = wait_for_completion_timeout(
+					&ipa3_ctx->uc_loaded_completion_obj,
+					60 * HZ);
+			if (res == 0)
+				IPADBG("timeout waiting for uC load\n");
+		}
+
 		memset(&holb_cfg, 0, sizeof(holb_cfg));
 		holb_cfg.en = IPA_HOLB_TMR_EN;
 		holb_cfg.tmr_val = 0;

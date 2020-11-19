@@ -222,6 +222,27 @@ struct IpaHwDbAddrInfo_t {
 	uint32_t mboxN;
 } __packed;
 
+/**
+ * When resource group 10 limitation mitigation is enabled, uC send
+ * cmd should be able to run in interrupt context, so using spin lock
+ * instead of mutex.
+ */
+#define IPA3_UC_LOCK(flags)						 \
+do {									 \
+	if (ipa3_ctx->apply_rg10_wa)					 \
+		spin_lock_irqsave(&ipa3_ctx->uc_ctx.uc_spinlock, flags); \
+	else								 \
+		mutex_lock(&ipa3_ctx->uc_ctx.uc_lock);			 \
+} while (0)
+
+#define IPA3_UC_UNLOCK(flags)						      \
+do {									      \
+	if (ipa3_ctx->apply_rg10_wa)					      \
+		spin_unlock_irqrestore(&ipa3_ctx->uc_ctx.uc_spinlock, flags); \
+	else								      \
+		mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);		      \
+} while (0)
+
 
 /**
  * Structure holding the parameters for IPA_CPU_2_HW_CMD_ENABLE_PIPE_MONITOR
@@ -774,7 +795,13 @@ int ipa3_uc_panic_notifier(struct notifier_block *this,
 	ipa3_ctx->uc_ctx.pending_cmd = ipa3_ctx->uc_ctx.uc_sram_mmio->cmdOp;
 	/* ensure write to shared memory is done before triggering uc */
 	wmb();
-	ipahal_write_reg_n(IPA_IRQ_EE_UC_n, 0, 0x1);
+
+	if (ipa3_ctx->apply_rg10_wa)
+		ipahal_write_reg_mn(IPA_UC_MAILBOX_m_n,
+			IPA_CPU_2_HW_CMD_MBOX_m,
+			IPA_CPU_2_HW_CMD_MBOX_n, 0x1);
+	else
+		ipahal_write_reg_n(IPA_IRQ_EE_UC_n, 0, 0x1);
 
 	/* give uc enough time to save state */
 	udelay(IPA_PKT_FLUSH_TO_US);
@@ -910,19 +937,26 @@ static int ipa3_uc_send_cmd_64b_param(u32 cmd_lo, u32 cmd_hi, u32 opcode,
 {
 	int index;
 	union IpaHwCpuCmdCompletedResponseData_t uc_rsp;
+	unsigned long flags = 0;
 	int retries = 0;
 	u32 uc_error_type;
 
 send_cmd_lock:
-	mutex_lock(&ipa3_ctx->uc_ctx.uc_lock);
+	IPA3_UC_LOCK(flags);
 
 	if (ipa3_uc_state_check()) {
 		IPADBG("uC send command aborted\n");
-		mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+		IPA3_UC_UNLOCK(flags);
 		return -EBADF;
 	}
 send_cmd:
-	init_completion(&ipa3_ctx->uc_ctx.uc_completion);
+	if (ipa3_ctx->apply_rg10_wa) {
+		if (!polling_mode)
+			IPADBG("Overriding mode to polling mode\n");
+		polling_mode = true;
+	} else {
+		init_completion(&ipa3_ctx->uc_ctx.uc_completion);
+	}
 
 	ipa3_ctx->uc_ctx.uc_sram_mmio->cmdParams = cmd_lo;
 	ipa3_ctx->uc_ctx.uc_sram_mmio->cmdParams_hi = cmd_hi;
@@ -935,8 +969,12 @@ send_cmd:
 
 	/* ensure write to shared memory is done before triggering uc */
 	wmb();
-
-	ipahal_write_reg_n(IPA_IRQ_EE_UC_n, 0, 0x1);
+	if (ipa3_ctx->apply_rg10_wa)
+		ipahal_write_reg_mn(IPA_UC_MAILBOX_m_n,
+			IPA_CPU_2_HW_CMD_MBOX_m,
+			IPA_CPU_2_HW_CMD_MBOX_n, 0x1);
+	else
+		ipahal_write_reg_n(IPA_IRQ_EE_UC_n, 0, 0x1);
 
 	if (polling_mode) {
 		struct IpaHwSharedMemCommonMapping_t *uc_sram_ptr =
@@ -952,8 +990,11 @@ send_cmd:
 					break;
 				}
 			}
-			usleep_range(IPA_UC_POLL_SLEEP_USEC,
-				IPA_UC_POLL_SLEEP_USEC);
+			if (ipa3_ctx->apply_rg10_wa)
+				udelay(IPA_UC_POLL_SLEEP_USEC);
+			else
+				usleep_range(IPA_UC_POLL_SLEEP_USEC,
+					IPA_UC_POLL_SLEEP_USEC);
 		}
 
 		if (index == IPA_UC_POLL_MAX_RETRY) {
@@ -963,7 +1004,7 @@ send_cmd:
 				IPAERR("uC reported on Error, errorType = %s\n",
 					ipa_hw_error_str(uc_error_type));
 			}
-			mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+			IPA3_UC_UNLOCK(flags);
 			/* Unexpected UC hardware state */
 			ipa_assert();
 		}
@@ -976,7 +1017,7 @@ send_cmd:
 				IPAERR("uC reported on Error, errorType = %s\n",
 					ipa_hw_error_str(uc_error_type));
 			}
-			mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+			IPA3_UC_UNLOCK(flags);
 			/* Unexpected UC hardware state */
 			ipa_assert();
 		}
@@ -994,11 +1035,11 @@ send_cmd:
 			retries++;
 			if (retries == IPA_GSI_CHANNEL_STOP_MAX_RETRY) {
 				IPAERR("Failed after %d tries\n", retries);
-				mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+				IPA3_UC_UNLOCK(flags);
 				/* Unexpected UC hardware state */
 				ipa_assert();
 			}
-			mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+			IPA3_UC_UNLOCK(flags);
 			if (ipa3_ctx->uc_ctx.uc_status ==
 			    IPA_HW_PROD_DISABLE_CMD_GSI_STOP_FAILURE)
 				ipa3_inject_dma_task_for_gsi();
@@ -1013,22 +1054,27 @@ send_cmd:
 			retries++;
 			if (retries >= IPA_GSI_CHANNEL_EMPTY_MAX_RETRY) {
 				IPAERR("Failed after %d tries\n", retries);
-				mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+				IPA3_UC_UNLOCK(flags);
 				return -EFAULT;
 			}
-			usleep_range(
-			IPA_GSI_CHANNEL_EMPTY_SLEEP_MIN_USEC,
-			IPA_GSI_CHANNEL_EMPTY_SLEEP_MAX_USEC);
+			if (ipa3_ctx->apply_rg10_wa)
+				udelay(
+				IPA_GSI_CHANNEL_EMPTY_SLEEP_MAX_USEC / 2 +
+				IPA_GSI_CHANNEL_EMPTY_SLEEP_MIN_USEC / 2);
+			else
+				usleep_range(
+				IPA_GSI_CHANNEL_EMPTY_SLEEP_MIN_USEC,
+				IPA_GSI_CHANNEL_EMPTY_SLEEP_MAX_USEC);
 			goto send_cmd;
 		}
 
 		IPAERR("Received status %u, Expected status %u\n",
 			ipa3_ctx->uc_ctx.uc_status, expected_status);
-		mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+		IPA3_UC_UNLOCK(flags);
 		return -EFAULT;
 	}
 
-	mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+	IPA3_UC_UNLOCK(flags);
 
 	IPADBG("uC cmd %u send succeeded\n", opcode);
 
@@ -1066,43 +1112,46 @@ int ipa3_uc_interface_init(void)
 		goto remap_fail;
 	}
 
-	result = ipa3_add_interrupt_handler(IPA_UC_IRQ_0,
-		ipa3_uc_event_handler, true,
-		ipa3_ctx);
-	if (result) {
-		IPAERR("Fail to register for UC_IRQ0 event interrupt\n");
-		result = -EFAULT;
-		goto irq_fail0;
-	}
-
-	result = ipa3_add_interrupt_handler(IPA_UC_IRQ_1,
-		ipa3_uc_response_hdlr, true,
-		ipa3_ctx);
-	if (result) {
-		IPAERR("fail to register for UC_IRQ1 rsp interrupt\n");
-		result = -EFAULT;
-		goto irq_fail1;
-	}
-
-	result = ipa3_add_interrupt_handler(IPA_UC_IRQ_2,
-		ipa3_uc_wigig_misc_int_handler, true,
-		ipa3_ctx);
-	if (result) {
-		IPAERR("fail to register for UC_IRQ2 wigig misc interrupt\n");
-		result = -EFAULT;
-		goto irq_fail2;
-	}
-
-	if (ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor) {
-		ipa_uc_holb_wq = alloc_workqueue(IPA_UC_HOLB_WORKQUEUE_NAME,
-				WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS, 1);
-
-		if (!ipa_uc_holb_wq) {
-			IPAERR("Failed to create ipa_uc_holb_wq\n");
+	if (!ipa3_ctx->apply_rg10_wa) {
+		result = ipa3_add_interrupt_handler(IPA_UC_IRQ_0,
+			ipa3_uc_event_handler, true,
+			ipa3_ctx);
+		if (result) {
+			IPAERR("Fail to register for UC_IRQ0 event interrupt\n");
 			result = -EFAULT;
-			goto irq_fail3;
+			goto irq_fail0;
+		}
+
+		result = ipa3_add_interrupt_handler(IPA_UC_IRQ_1,
+			ipa3_uc_response_hdlr, true,
+			ipa3_ctx);
+		if (result) {
+			IPAERR("fail to register for UC_IRQ1 rsp interrupt\n");
+			result = -EFAULT;
+			goto irq_fail1;
+		}
+
+		result = ipa3_add_interrupt_handler(IPA_UC_IRQ_2,
+			ipa3_uc_wigig_misc_int_handler, true,
+			ipa3_ctx);
+		if (result) {
+			IPAERR("fail to register for UC_IRQ2 wigig misc interrupt\n");
+			result = -EFAULT;
+			goto irq_fail2;
+		}
+
+		if (ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor) {
+			ipa_uc_holb_wq = alloc_workqueue(IPA_UC_HOLB_WORKQUEUE_NAME,
+					WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS, 1);
+
+			if (!ipa_uc_holb_wq) {
+				IPAERR("Failed to create ipa_uc_holb_wq\n");
+				result = -EFAULT;
+				goto irq_fail3;
+			}
 		}
 	}
+
 	ipa3_ctx->uc_ctx.uc_inited = true;
 
 	IPADBG("IPA uC interface is initialized\n");
@@ -1119,6 +1168,48 @@ irq_fail0:
 remap_fail:
 	return result;
 }
+
+
+/**
+ * ipa3_uc_load_notify() - Notification about uC loading
+ *
+ * This function should be called when IPA uC interface layer cannot
+ * determine by itself about uC loading by waits for external notification.
+ * Example is resource group 10 limitation were ipa driver does not get uC
+ * interrupts.
+ * The function should perform actions that were not done at init due to uC
+ * not being loaded then.
+ */
+void ipa3_uc_load_notify(void)
+{
+	int i;
+	int result;
+
+	if (!ipa3_ctx->apply_rg10_wa)
+		return;
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ipa3_ctx->uc_ctx.uc_loaded = true;
+	IPADBG("IPA uC loaded\n");
+
+	ipa3_proxy_clk_unvote();
+
+	ipa3_init_interrupts();
+
+	result = ipa3_add_interrupt_handler(IPA_UC_IRQ_0,
+		ipa3_uc_event_handler, true,
+		ipa3_ctx);
+	if (result)
+		IPAERR("Fail to register for UC_IRQ0 rsp interrupt.\n");
+
+	for (i = 0; i < IPA_HW_NUM_FEATURES; i++) {
+		if (ipa3_uc_hdlrs[i].ipa_uc_loaded_hdlr)
+			ipa3_uc_hdlrs[i].ipa_uc_loaded_hdlr();
+	}
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+}
+EXPORT_SYMBOL(ipa3_uc_load_notify);
+
 
 /**
  * ipa3_uc_send_cmd() - Send a command to the uC
@@ -1156,15 +1247,17 @@ int ipa3_uc_send_cmd(u32 cmd, u32 opcode, u32 expected_status,
 void ipa3_uc_register_handlers(enum ipa3_hw_features feature,
 			      struct ipa3_uc_hdlrs *hdlrs)
 {
+	unsigned long flags = 0;
+
 	if (0 > feature || IPA_HW_FEATURE_MAX <= feature) {
 		IPAERR("Feature %u is invalid, not registering hdlrs\n",
 		       feature);
 		return;
 	}
 
-	mutex_lock(&ipa3_ctx->uc_ctx.uc_lock);
+	IPA3_UC_LOCK(flags);
 	ipa3_uc_hdlrs[feature] = *hdlrs;
-	mutex_unlock(&ipa3_ctx->uc_ctx.uc_lock);
+	IPA3_UC_UNLOCK(flags);
 
 	IPADBG("uC handlers registered for feature %u\n", feature);
 }
@@ -1346,6 +1439,41 @@ int ipa3_uc_update_hw_flags(u32 flags)
 	return ipa3_uc_send_cmd(cmd.raw32b, IPA_CPU_2_HW_CMD_UPDATE_FLAGS, 0,
 		false, HZ);
 }
+
+/**
+ * ipa3_uc_rg10_write_reg() - write to register possibly via uC
+ *
+ * if the RG10 limitation workaround is enabled, then writing
+ * to a register will be proxied by the uC due to H/W limitation.
+ * This func should be called for RG10 registers only
+ *
+ * @Parameters: Like ipahal_write_reg_n() parameters
+ *
+ */
+void ipa3_uc_rg10_write_reg(enum ipahal_reg_name reg, u32 n, u32 val)
+{
+	int ret;
+	u32 paddr;
+
+	if (!ipa3_ctx->apply_rg10_wa)
+		return ipahal_write_reg_n(reg, n, val);
+
+
+	/* calculate register physical address */
+	paddr = ipa3_ctx->ipa_wrapper_base + ipa3_ctx->ctrl->ipa_reg_base_ofst;
+	paddr += ipahal_get_reg_n_ofst(reg, n);
+
+	IPADBG("Sending uC cmd to reg write: addr=0x%x val=0x%x\n",
+		paddr, val);
+	ret = ipa3_uc_send_cmd_64b_param(paddr, val,
+		IPA_CPU_2_HW_CMD_REG_WRITE, 0, true, 0);
+	if (ret) {
+		IPAERR("failed to send cmd to uC for reg write\n");
+		/* Unexpected UC hardware state */
+		BUG();
+	}
+}
+
 
 /**
  * ipa3_uc_memcpy() - Perform a memcpy action using IPA uC

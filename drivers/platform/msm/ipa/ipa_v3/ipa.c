@@ -6713,11 +6713,15 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v6];
 	}
 
-	result = ipa3_init_interrupts();
-	if (result) {
-		IPAERR("ipa initialization of interrupts failed\n");
-		result = -ENODEV;
-		goto fail_init_interrupts;
+	if (!ipa3_ctx->apply_rg10_wa) {
+		result = ipa3_init_interrupts();
+		if (result) {
+			IPAERR("ipa initialization of interrupts failed\n");
+			result = -ENODEV;
+			goto fail_init_interrupts;
+		}
+	} else {
+		IPADBG("Initialization of ipa interrupts skipped\n");
 	}
 
 	/*
@@ -7440,6 +7444,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->skip_uc_pipe_reset = resource_p->skip_uc_pipe_reset;
 	ipa3_ctx->tethered_flow_control = resource_p->tethered_flow_control;
 	ipa3_ctx->ee = resource_p->ee;
+	ipa3_ctx->apply_rg10_wa = resource_p->apply_rg10_wa;
 	ipa3_ctx->gsi_ch20_wa = resource_p->gsi_ch20_wa;
 	ipa3_ctx->wdi_over_pcie = resource_p->wdi_over_pcie;
 	ipa3_ctx->ipa3_active_clients_logging.log_rdy = false;

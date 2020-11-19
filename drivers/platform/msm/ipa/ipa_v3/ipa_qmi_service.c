@@ -277,8 +277,14 @@ static void ipa3_handle_modem_init_cmplt_req(struct qmi_handle *qmi_handle,
 	cmplt_req = (struct ipa_init_modem_driver_cmplt_req_msg_v01 *)
 		decoded_msg;
 
-	if (!ipa3_modem_init_cmplt)
+	if (!ipa3_modem_init_cmplt) {
 		ipa3_modem_init_cmplt = true;
+		if (ipa3_ctx->apply_rg10_wa && ipa3_qmi_modem_init_fin == true) {
+			IPAWANDBG("load uc related registers (%d)\n",
+				ipa3_qmi_modem_init_fin);
+				ipa3_uc_load_notify();
+		}
+	}
 
 	memset(&resp, 0, sizeof(resp));
 	resp.resp.result = IPA_QMI_RESULT_SUCCESS_V01;
@@ -1523,6 +1529,13 @@ static void ipa3_q6_clnt_svc_arrive(struct work_struct *work)
 		BUG();
 	}
 	ipa3_qmi_modem_init_fin = true;
+
+	/* got modem_init_cmplt_req already, load uc-related register */
+	if (ipa3_ctx->apply_rg10_wa && ipa3_modem_init_cmplt == true) {
+		IPAWANDBG("load uc related registers (%d)\n",
+			ipa3_modem_init_cmplt);
+		ipa3_uc_load_notify();
+	}
 
 	/* In cold-bootup, first_time_handshake = false */
 	ipa3_q6_handshake_complete(first_time_handshake);
