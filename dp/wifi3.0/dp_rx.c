@@ -950,10 +950,28 @@ out:
 	qdf_nbuf_pull_head(mpdu, RX_PKT_TLVS_LEN);
 	msg.nbuf = mpdu;
 	msg.vdev_id = vdev->vdev_id;
-	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer)
+
+	/*
+	 * NOTE: Only valid for HKv1.
+	 * If smart monitor mode is enabled on RE, we are getting invalid
+	 * peer frames with RA as STA mac of RE and the TA not matching
+	 * with any NAC list or the the BSSID.Such frames need to dropped
+	 * in order to avoid HM_WDS false addition.
+	 */
+	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer) {
+		if (!soc->hw_nac_monitor_support &&
+		    pdev->filter_neighbour_peers &&
+		    vdev->opmode == wlan_op_mode_sta) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_WARN,
+				  "Drop inv peer pkts with STA RA:%pm",
+				   wh->i_addr1);
+			goto free;
+		}
 		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
 				(struct cdp_ctrl_objmgr_psoc *)soc->ctrl_psoc,
 				pdev->pdev_id, &msg);
+	}
 
 free:
 	/* Drop and free packet */
