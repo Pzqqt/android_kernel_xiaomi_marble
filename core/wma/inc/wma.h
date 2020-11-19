@@ -1041,6 +1041,16 @@ typedef struct {
 } t_wma_handle, *tp_wma_handle;
 
 /**
+ * wma_validate_handle() - Validate WMA handle
+ * @wma_handle: wma handle
+ *
+ * Return: errno if WMA handle is NULL; 0 otherwise
+ */
+#define wma_validate_handle(wma_handle) \
+        __wma_validate_handle(wma_handle, __func__)
+int __wma_validate_handle(tp_wma_handle wma_handle, const char *func);
+
+/**
  * wma_vdev_nss_chain_params_send() - send vdev nss chain params to fw.
  * @vdev_id: vdev_id
  * @user_cfg: pointer to the params structure
