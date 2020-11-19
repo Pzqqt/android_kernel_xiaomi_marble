@@ -1424,6 +1424,7 @@ struct htt_tx_data_hdr_information *pkt_capture_tx_get_txcomplete_data_hdr(
 	return txcomplete_data_hrd_list;
 }
 
+#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 void pkt_capture_offload_deliver_indication_handler(
 					void *msg, uint8_t vdev_id,
 					uint8_t *bssid, htt_pdev_handle pdev)
@@ -1475,3 +1476,64 @@ void pkt_capture_offload_deliver_indication_handler(
 			tid, status, pkt_format, bssid, pdev,
 			offload_deliver_msg->tx_retry_cnt);
 }
+#else
+#define FRAME_CTRL_TYPE_DATA	0x0008
+void pkt_capture_offload_deliver_indication_handler(
+					void *msg, uint8_t vdev_id,
+					uint8_t *bssid, void *soc)
+{
+	int nbuf_len;
+	qdf_nbuf_t netbuf;
+	uint8_t status;
+	uint8_t tid = 0;
+	bool pkt_format;
+	u_int32_t *msg_word = (u_int32_t *)msg;
+	u_int8_t *buf = (u_int8_t *)msg;
+	struct htt_tx_data_hdr_information *txhdr;
+	struct htt_tx_offload_deliver_ind_hdr_t *offload_deliver_msg;
+	struct htt_tx_data_hdr_information *cmpl_desc = NULL;
+
+	offload_deliver_msg = (struct htt_tx_offload_deliver_ind_hdr_t *)msg;
+
+	txhdr = (struct htt_tx_data_hdr_information *)
+		(msg_word + 1);
+
+	nbuf_len = offload_deliver_msg->tx_mpdu_bytes;
+
+	netbuf = qdf_nbuf_alloc(NULL,
+				roundup(nbuf_len + RESERVE_BYTES, 4),
+				RESERVE_BYTES, 4, false);
+
+	if (!netbuf)
+		return;
+
+	qdf_nbuf_put_tail(netbuf, nbuf_len);
+
+	qdf_mem_copy(qdf_nbuf_data(netbuf),
+		     buf + sizeof(struct htt_tx_offload_deliver_ind_hdr_t),
+		     nbuf_len);
+
+	qdf_nbuf_push_head(
+			netbuf,
+			sizeof(struct htt_tx_data_hdr_information));
+
+	qdf_mem_copy(qdf_nbuf_data(netbuf), txhdr,
+		     sizeof(struct htt_tx_data_hdr_information));
+
+	status = offload_deliver_msg->status;
+	pkt_format = offload_deliver_msg->format;
+	tid = offload_deliver_msg->tid_num;
+
+	cmpl_desc = (struct htt_tx_data_hdr_information *)
+				(qdf_nbuf_data(netbuf));
+
+	/* filling packet type as data, as framectrl is not available */
+	cmpl_desc->framectrl = FRAME_CTRL_TYPE_DATA;
+
+	pkt_capture_datapkt_process(
+			vdev_id,
+			netbuf, TXRX_PROCESS_TYPE_DATA_TX,
+			tid, status, pkt_format, bssid, soc,
+			offload_deliver_msg->tx_retry_cnt);
+}
+#endif
