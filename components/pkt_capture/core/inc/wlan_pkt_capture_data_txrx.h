@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,9 @@
 
 #include "cdp_txrx_cmn_struct.h"
 #include <qdf_nbuf.h>
+#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 #include <htt_internal.h>
+#endif
 
 /**
  * pkt_capture_data_process_type - data pkt types to process
@@ -70,7 +72,7 @@ void pkt_capture_datapkt_process(
 			qdf_nbuf_t mon_buf_list,
 			enum pkt_capture_data_process_type type,
 			uint8_t tid, uint8_t status, bool pktformat,
-			uint8_t *bssid, htt_pdev_handle pdev,
+			uint8_t *bssid, void *pdev,
 			uint8_t tx_retry_cnt);
 /**
  * pkt_capture_msdu_process_pkts() - process data rx pkts

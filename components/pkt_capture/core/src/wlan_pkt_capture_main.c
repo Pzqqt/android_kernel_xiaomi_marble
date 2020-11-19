@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,9 @@
  * internally in pkt_capture component only.
  */
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#include <dp_types.h>
+#endif
 #include "wlan_pkt_capture_main.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_pkt_capture_mon_thread.h"
@@ -30,6 +33,166 @@
 #include "wlan_pkt_capture_tgt_api.h"
 
 static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+wdi_event_subscribe PKT_CAPTURE_TX_SUBSCRIBER;
+
+/**
+ * pkt_capture_wdi_event_subscribe() - Subscribe pkt capture callbacks
+ * @psoc: pointer to psoc object
+ *
+ * Return: None
+ */
+static void pkt_capture_wdi_event_subscribe(struct wlan_objmgr_psoc *psoc)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t pdev_id = WMI_PDEV_ID_SOC;
+
+	PKT_CAPTURE_TX_SUBSCRIBER.callback =
+				pkt_capture_callback;
+
+	PKT_CAPTURE_TX_SUBSCRIBER.context = wlan_psoc_get_dp_handle(psoc);
+
+	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_TX_SUBSCRIBER,
+			  WDI_EVENT_PKT_CAPTURE_TX_DATA);
+}
+
+/**
+ * pkt_capture_wdi_event_unsubscribe() - Unsubscribe pkt capture callbacks
+ * @psoc: pointer to psoc object
+ *
+ * Return: None
+ */
+static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t pdev_id = WMI_PDEV_ID_SOC;
+
+	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_TX_SUBSCRIBER,
+			    WDI_EVENT_PKT_CAPTURE_TX_DATA);
+}
+
+enum pkt_capture_mode
+pkt_capture_get_pktcap_mode_lithium()
+{
+	enum pkt_capture_mode mode = PACKET_CAPTURE_MODE_DISABLE;
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = pkt_capture_get_vdev();
+	if (!vdev)
+		return PACKET_CAPTURE_MODE_DISABLE;
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv)
+		pkt_capture_err("vdev_priv is NULL");
+	else
+		mode = vdev_priv->cb_ctx->pkt_capture_mode;
+
+	return mode;
+}
+
+void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
+			  u_int16_t vdev_id, uint32_t status)
+{
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
+	uint8_t tid = 0, tx_retry_cnt = 0;
+	struct htt_tx_data_hdr_information cmpl_desc;
+	struct htt_tx_data_hdr_information *ptr_cmpl_desc;
+	struct hal_tx_completion_status ppdu_hdr = {0};
+	uint32_t txcap_hdr_size = sizeof(struct htt_tx_data_hdr_information);
+	struct dp_soc *psoc = soc;
+
+	switch (event) {
+	case WDI_EVENT_PKT_CAPTURE_TX_DATA:
+	{
+		struct dp_tx_desc_s *desc = log_data;
+		qdf_nbuf_t netbuf;
+		int nbuf_len;
+
+		hal_tx_comp_get_status(&desc->comp, &ppdu_hdr, psoc->hal_soc);
+		if (!(pkt_capture_get_pktcap_mode_lithium() &
+					PKT_CAPTURE_MODE_DATA_ONLY)) {
+			return;
+		}
+
+		cmpl_desc.phy_timestamp_l32 = ppdu_hdr.tsf;
+		cmpl_desc.preamble = ppdu_hdr.pkt_type;
+		cmpl_desc.mcs = ppdu_hdr.mcs;
+		cmpl_desc.bw = ppdu_hdr.bw;
+		/* nss is not updated */
+		cmpl_desc.nss = 0;
+		cmpl_desc.rssi = ppdu_hdr.ack_frame_rssi;
+		/* rate is not updated */
+		cmpl_desc.rate = 0;
+		cmpl_desc.stbc = ppdu_hdr.stbc;
+		cmpl_desc.sgi = ppdu_hdr.sgi;
+		cmpl_desc.ldpc = ppdu_hdr.ldpc;
+		/* beamformed is not updated */
+		cmpl_desc.beamformed = 0;
+		cmpl_desc.framectrl = 0x0008;
+		cmpl_desc.tx_retry_cnt = ppdu_hdr.transmit_cnt;
+		tid = ppdu_hdr.tid;
+		status = ppdu_hdr.status;
+		tx_retry_cnt = ppdu_hdr.transmit_cnt;
+
+		nbuf_len = qdf_nbuf_len(desc->nbuf);
+		netbuf = qdf_nbuf_alloc(NULL,
+					roundup(nbuf_len + RESERVE_BYTES, 4),
+					RESERVE_BYTES, 4, false);
+
+		if (!netbuf)
+			return;
+
+		qdf_nbuf_put_tail(netbuf, nbuf_len);
+
+		qdf_mem_copy(qdf_nbuf_data(netbuf),
+			     qdf_nbuf_data(desc->nbuf), nbuf_len);
+
+		if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
+			netbuf = qdf_nbuf_realloc_headroom(netbuf,
+							   txcap_hdr_size);
+			if (!netbuf) {
+				QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL("No headroom"));
+				return;
+			}
+		}
+
+		if (!qdf_nbuf_push_head(netbuf, txcap_hdr_size)) {
+			QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE,
+				  QDF_TRACE_LEVEL_ERROR, FL("No headroom"));
+			qdf_nbuf_free(netbuf);
+			return;
+		}
+
+		ptr_cmpl_desc =
+		(struct htt_tx_data_hdr_information *)qdf_nbuf_data(netbuf);
+		qdf_mem_copy(ptr_cmpl_desc, &cmpl_desc, txcap_hdr_size);
+
+		pkt_capture_datapkt_process(
+			vdev_id, netbuf, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
+			tid, status, TXRX_PKTCAPTURE_PKT_FORMAT_8023,
+			bssid, NULL, tx_retry_cnt);
+
+		break;
+	}
+
+	default:
+		break;
+	}
+}
+
+#else
+static void pkt_capture_wdi_event_subscribe(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
 
 struct wlan_objmgr_vdev *pkt_capture_get_vdev()
 {
@@ -92,6 +255,7 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 
 	target_if_pkt_capture_register_tx_ops(&vdev_priv->tx_ops);
 	target_if_pkt_capture_register_rx_ops(&vdev_priv->rx_ops);
+	pkt_capture_wdi_event_subscribe(psoc);
 	pkt_capture_record_channel(vdev);
 
 	status = tgt_pkt_capture_register_ev_handler(vdev);
@@ -169,6 +333,7 @@ QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
 	wait_for_completion(&vdev_priv->mon_ctx->mon_register_event);
 	pkt_capture_drop_monpkt(vdev_priv->mon_ctx);
 
+	pkt_capture_wdi_event_unsubscribe(psoc);
 	status = tgt_pkt_capture_unregister_ev_handler(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		pkt_capture_err("Unable to unregister event handlers");

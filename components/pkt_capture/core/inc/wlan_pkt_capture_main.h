@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,9 @@
 #include "wlan_pkt_capture_priv.h"
 #include "wlan_pkt_capture_objmgr.h"
 #include "wlan_objmgr_vdev_obj.h"
+#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#include "cdp_txrx_stats_struct.h"
+#endif
 
 #define pkt_capture_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE, level, ## args)
@@ -198,4 +201,26 @@ void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
 void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq);
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+/**
+ * pkt_capture_get_pktcap_mode_lithium - Get packet capture mode
+ *
+ * Return: enum pkt_capture_mode
+ */
+enum pkt_capture_mode
+pkt_capture_get_pktcap_mode_lithium(void);
+
+/**
+ * pkt_capture_callback() - callback function for dp wdi events
+ * @soc: dp_soc handle
+ * @event: wdi event
+ * @log_data: nbuf data
+ * @vdev_id: vdev id
+ * @status: status
+ *
+ * Return: None
+ */
+void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
+			  u_int16_t vdev_id, uint32_t status);
+#endif
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */
