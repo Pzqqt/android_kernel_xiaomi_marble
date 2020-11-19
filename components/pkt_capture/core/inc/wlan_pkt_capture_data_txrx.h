@@ -115,6 +115,7 @@ void pkt_capture_rx_in_order_drop_offload_pkt(qdf_nbuf_t head_msdu);
  */
 bool pkt_capture_rx_in_order_offloaded_pkt(qdf_nbuf_t rx_ind_msg);
 
+#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 /**
  * pkt_capture_offload_deliver_indication_handler() - Handle offload data pkts
  * @msg: offload netbuf msg
@@ -127,6 +128,20 @@ bool pkt_capture_rx_in_order_offloaded_pkt(qdf_nbuf_t rx_ind_msg);
 void pkt_capture_offload_deliver_indication_handler(
 					void *msg, uint8_t vdev_id,
 					uint8_t *bssid, htt_pdev_handle pdev);
+#else
+/**
+ * pkt_capture_offload_deliver_indication_handler() - Handle offload data pkts
+ * @msg: offload netbuf msg
+ * @vdev_id: vdev id
+ * @bssid: bssid
+ * @soc: dp_soc handle
+ *
+ * Return: none
+ */
+void pkt_capture_offload_deliver_indication_handler(
+					void *msg, uint8_t vdev_id,
+					uint8_t *bssid, void *soc);
+#endif
 
 /**
  * pkt_capture_tx_hdr_elem_t - tx packets header struture to

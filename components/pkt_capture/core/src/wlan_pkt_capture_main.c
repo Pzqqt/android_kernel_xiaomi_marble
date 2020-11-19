@@ -37,6 +37,7 @@ static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 #ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 wdi_event_subscribe PKT_CAPTURE_TX_SUBSCRIBER;
 wdi_event_subscribe PKT_CAPTURE_RX_SUBSCRIBER;
+wdi_event_subscribe PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER;
 
 /**
  * pkt_capture_wdi_event_subscribe() - Subscribe pkt capture callbacks
@@ -67,6 +68,15 @@ static void pkt_capture_wdi_event_subscribe(struct wlan_objmgr_psoc *psoc)
 	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
 			  WDI_EVENT_PKT_CAPTURE_RX_DATA);
 
+	/* subscribing for offload tx data packets */
+	PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER.callback =
+				pkt_capture_callback;
+
+	PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER.context =
+						wlan_psoc_get_dp_handle(psoc);
+
+	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER,
+			  WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA);
 }
 
 /**
@@ -87,6 +97,10 @@ static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
 	/* unsubscribing for rx data packets */
 	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
 			    WDI_EVENT_PKT_CAPTURE_RX_DATA);
+
+	/* unsubscribing for offload tx data packets */
+	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER,
+			    WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA);
 }
 
 enum pkt_capture_mode
@@ -204,6 +218,34 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 
 		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc);
 		break;
+	}
+
+	case WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA:
+	{
+		struct htt_tx_offload_deliver_ind_hdr_t *offload_deliver_msg;
+		bool is_pkt_during_roam = false;
+		uint32_t freq = 0;
+
+		if (!(pkt_capture_get_pktcap_mode_lithium() &
+					PKT_CAPTURE_MODE_DATA_ONLY))
+			return;
+
+		offload_deliver_msg =
+		(struct htt_tx_offload_deliver_ind_hdr_t *)log_data;
+		is_pkt_during_roam =
+		(offload_deliver_msg->reserved_2 ? true : false);
+
+		if (is_pkt_during_roam) {
+			vdev_id = HTT_INVALID_VDEV;
+			freq =
+			(uint32_t)offload_deliver_msg->reserved_3;
+		} else {
+			vdev_id = offload_deliver_msg->vdev_id;
+		}
+
+		pkt_capture_offload_deliver_indication_handler(
+						log_data,
+						vdev_id, bssid, soc);
 	}
 
 	default:
