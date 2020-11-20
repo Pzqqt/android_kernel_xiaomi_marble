@@ -1999,9 +1999,20 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	struct switch_channel_ind *pSirSmeSwitchChInd;
-	enum reg_wifi_band band;
-	uint8_t band_mask;
+	struct wlan_channel *des_chan;
+	struct vdev_mlme_obj *mlme_obj;
 
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return;
+	}
+
+	des_chan = mlme_obj->vdev->vdev_mlme.des_chan;
+	if (!des_chan) {
+		pe_err("des_chan is NULL");
+		return;
+	}
 	pe_session->curr_op_freq = pe_session->curr_req_chan_freq;
 	/* We need to restore pre-channelSwitch state on the STA */
 	if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
@@ -2017,29 +2028,21 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 
 	pSirSmeSwitchChInd->messageType = eWNI_SME_SWITCH_CHL_IND;
 	pSirSmeSwitchChInd->length = sizeof(*pSirSmeSwitchChInd);
-	pSirSmeSwitchChInd->freq = pe_session->gLimChannelSwitch.sw_target_freq;
+	pSirSmeSwitchChInd->freq = des_chan->ch_freq;
 	pSirSmeSwitchChInd->sessionId = pe_session->smeSessionId;
-	pSirSmeSwitchChInd->chan_params.ch_width =
-			pe_session->gLimChannelSwitch.ch_width;
-	pSirSmeSwitchChInd->chan_params.sec_ch_offset =
+	pSirSmeSwitchChInd->chan_params.ch_width = des_chan->ch_width;
+	if (des_chan->ch_width > CH_WIDTH_20MHZ) {
+		pSirSmeSwitchChInd->chan_params.sec_ch_offset =
 			pe_session->gLimChannelSwitch.sec_ch_offset;
-	pSirSmeSwitchChInd->chan_params.center_freq_seg0 =
-			pe_session->gLimChannelSwitch.ch_center_freq_seg0;
-	pSirSmeSwitchChInd->chan_params.center_freq_seg1 =
-			pe_session->gLimChannelSwitch.ch_center_freq_seg1;
-	band = wlan_reg_freq_to_band(pSirSmeSwitchChInd->freq);
-	band_mask = 1 << band;
-
-	if (pe_session->gLimChannelSwitch.ch_center_freq_seg0)
+		pSirSmeSwitchChInd->chan_params.center_freq_seg0 =
+							des_chan->ch_freq_seg1;
 		pSirSmeSwitchChInd->chan_params.mhz_freq_seg0 =
-			wlan_reg_chan_band_to_freq(mac->pdev,
-			    pe_session->gLimChannelSwitch.ch_center_freq_seg0,
-			    band_mask);
-	if (pe_session->gLimChannelSwitch.ch_center_freq_seg1)
+							des_chan->ch_cfreq1;
+		pSirSmeSwitchChInd->chan_params.center_freq_seg1 =
+							des_chan->ch_freq_seg2;
 		pSirSmeSwitchChInd->chan_params.mhz_freq_seg1 =
-			wlan_reg_chan_band_to_freq(mac->pdev,
-			    pe_session->gLimChannelSwitch.ch_center_freq_seg1,
-			    band_mask);
+							des_chan->ch_cfreq2;
+	}
 
 	pSirSmeSwitchChInd->status = status;
 	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, pe_session->bssId,
