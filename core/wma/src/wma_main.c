@@ -154,18 +154,8 @@ void wma_set_fw_wlan_feat_caps(enum cap_bitmap feature)
  */
 static void wma_service_ready_ext_evt_timeout(void *data)
 {
-	tp_wma_handle wma_handle;
-
 	wma_alert("Timeout waiting for WMI_SERVICE_READY_EXT_EVENT");
 
-	wma_handle = (tp_wma_handle) data;
-
-	if (!wma_handle) {
-		wma_err("Invalid WMA handle");
-		goto end;
-	}
-
-end:
 	/* Assert here. Panic is being called in insmod thread */
 	QDF_ASSERT(0);
 }
@@ -9077,13 +9067,7 @@ QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg)
  */
 void wma_log_completion_timeout(void *data)
 {
-	tp_wma_handle wma_handle;
-
 	wma_debug("Timeout occurred for log completion command");
-
-	wma_handle = (tp_wma_handle) data;
-	if (!wma_handle)
-		wma_err("Invalid WMA handle");
 
 	/* Though we did not receive any event from FW,
 	 * we can flush whatever logs we have with us
