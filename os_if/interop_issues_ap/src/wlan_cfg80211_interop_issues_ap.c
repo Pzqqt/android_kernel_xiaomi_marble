@@ -181,14 +181,14 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_INTEROP_ISSUES_AP_ID);
 	if (!vdev) {
 		osif_err("Invalid vdev");
 		return -EINVAL;
 	}
 
 	psoc = wlan_vdev_get_psoc(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_INTEROP_ISSUES_AP_ID);
 	if (!psoc) {
 		osif_err("Invalid psoc");
 		return -EINVAL;
