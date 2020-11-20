@@ -119,8 +119,9 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	}
 #ifdef WLAN_FEATURE_11W
 	/* PMF: If this session is a PMF session, then ensure that this frame was protected */
-	if (pe_session->limRmfEnabled
-	    && (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
+	if (pe_session->limRmfEnabled &&
+	    pe_session->is_key_installed &&
+	    (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
 		DPU_FEEDBACK_UNPROTECTED_ERROR)) {
 		pe_debug("received an unprotected deauth from AP");
 		/*
