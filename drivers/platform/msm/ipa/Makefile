@@ -25,6 +25,7 @@ ipam-y += \
 	ipa_v3/ipa_wdi3_i.o \
 	ipa_v3/ipa_odl.o \
 	ipa_v3/ipa_wigig_i.o \
+	ipa_v3/ipa_qdss.o \
 	ipa_v3/ipa_uc_holb_monitor.o \
 	ipa_v3/ipahal/ipahal.o \
 	ipa_v3/ipahal/ipahal_reg.o \
