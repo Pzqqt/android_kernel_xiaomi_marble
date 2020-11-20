@@ -3650,4 +3650,22 @@ uint8_t policy_mgr_get_roam_enabled_sta_session_id(
 						struct wlan_objmgr_psoc *psoc,
 						uint8_t vdev_id);
 
+/**
+ * policy_mgr_is_sta_mon_concurrency() - check if MONITOR and STA concurrency
+ * is UP.
+ * @psoc: pointer to psoc object
+ *
+ * Return: True - if STA and monitor concurrency is there, else False
+ *
+ */
+bool policy_mgr_is_sta_mon_concurrency(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_check_mon_concurrency() - Checks if monitor intf can be added.
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS if allowed, else send failure
+ *
+ */
+QDF_STATUS policy_mgr_check_mon_concurrency(struct wlan_objmgr_psoc *psoc);
 #endif /* __WLAN_POLICY_MGR_API_H */

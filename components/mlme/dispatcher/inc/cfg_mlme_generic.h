@@ -31,6 +31,17 @@
 #define CFG_PMF_SA_QUERY_RETRY_INTERVAL_TYPE	CFG_UINT
 #endif /*WLAN_FEATURE_11W*/
 
+/**
+ * enum monitor_mode_concurrency - Monitor mode concurrency
+ * @MONITOR_MODE_CONC_NO_SUPPORT: No concurrency supported with monitor mode
+ * @MONITOR_MODE_CONC_STA_SCAN_MON: STA + monitor mode concurrency is supported
+ */
+enum monitor_mode_concurrency {
+	MONITOR_MODE_CONC_NO_SUPPORT,
+	MONITOR_MODE_CONC_STA_SCAN_MON,
+	MONITOR_MODE_CONC_AFTER_LAST,
+	MONITOR_MODE_CONC_MAX = MONITOR_MODE_CONC_AFTER_LAST - 1,
+};
 /*
  * pmfSaQueryMaxRetries - Control PMF SA query retries for SAP
  * @Min: 0
@@ -782,6 +793,34 @@
 	0, \
 	"WiFi Location Service(WLS) is 6Ghz capable or not")
 
+/*
+ * <ini>
+ *
+ * monitor_mode_conc - Monitor mode concurrency supported
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: None
+ *
+ * Monitor mode concurrency supported
+ * 0 - No concurrency supported
+ * 1 - Allow STA scan + Monitor mode concurrency
+ *
+ * Supported Feature: General
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MONITOR_MODE_CONCURRENCY CFG_INI_UINT( \
+	"monitor_mode_concurrency", \
+	MONITOR_MODE_CONC_NO_SUPPORT, \
+	MONITOR_MODE_CONC_MAX, \
+	MONITOR_MODE_CONC_NO_SUPPORT, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Monitor mode concurrency supported")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -814,5 +853,6 @@
 	CFG(CFG_ENABLE_RING_BUFFER) \
 	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \
 	CFG(CFG_SAE_CONNECION_RETRIES) \
-	CFG(CFG_WLS_6GHZ_CAPABLE)
+	CFG(CFG_WLS_6GHZ_CAPABLE) \
+	CFG(CFG_MONITOR_MODE_CONCURRENCY)
 #endif /* __CFG_MLME_GENERIC_H */

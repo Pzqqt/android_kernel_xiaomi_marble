@@ -4176,4 +4176,18 @@ ucfg_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
 }
 
 #endif
+
+/**
+ * ucfg_mlme_is_sta_mon_conc_supported() - Check if STA + Monitor mode
+ * concurrency is supported
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if supported, else false.
+ */
+static inline bool
+ucfg_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_is_sta_mon_conc_supported(psoc);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */
