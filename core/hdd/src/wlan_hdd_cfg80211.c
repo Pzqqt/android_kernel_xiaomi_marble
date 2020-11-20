@@ -6543,11 +6543,11 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	for (i = 0; i < 8; i++)
 		buf[7 - i] = replay_ctr[i];
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		goto end;
 	status = ucfg_pmo_cache_gtk_offload_req(vdev, gtk_req);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to cache GTK Offload");
 
@@ -18761,13 +18761,14 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			}
 		}
 #endif
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter,
+						   WLAN_OSIF_POWER_ID);
 		if (!vdev) {
 			status = -EINVAL;
 			goto conn_failure;
 		}
 		ucfg_pmo_flush_gtk_offload_req(vdev);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 		roam_profile->csrPersona = adapter->device_mode;
 
 		if (oper_freq) {
@@ -22677,13 +22678,13 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 		gtk_req->kck_len = NL80211_KCK_LEN;
 	}
 	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		result = -EINVAL;
 		goto out;
 	}
 	status = ucfg_pmo_cache_gtk_offload_req(vdev, gtk_req);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to cache GTK Offload");
 		result = qdf_status_to_os_return(status);

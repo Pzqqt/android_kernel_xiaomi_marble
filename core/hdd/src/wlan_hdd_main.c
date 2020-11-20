@@ -5317,19 +5317,19 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		return -EINVAL;
 
 	status = pmo_vdev_ready(vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 		return qdf_status_to_os_return(status);
 	}
 
 	status = ucfg_reg_11d_vdev_created_update(vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 		return qdf_status_to_os_return(status);
 	}
 
@@ -5338,7 +5338,7 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 	else
 		status = ucfg_pmo_enhanced_mc_filter_disable(vdev);
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 
 	return qdf_status_to_os_return(status);
 }

@@ -140,12 +140,12 @@ wlan_hdd_arp_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		return 0;
 
 	status = ucfg_pmo_get_arp_offload_params(vdev, &info);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret_val = scnprintf(buf, buf_avail_len,
 				    "\nARP OFFLOAD QUERY FAILED\n");
@@ -235,12 +235,12 @@ wlan_hdd_ns_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t i;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev)
 		return 0;
 
 	status = ucfg_pmo_get_ns_offload_params(vdev, &info);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret = scnprintf(buf, buf_avail_len,
 				"\nNS OFFLOAD QUERY FAILED\n");
