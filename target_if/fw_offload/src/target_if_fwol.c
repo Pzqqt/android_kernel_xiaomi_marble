@@ -332,10 +332,11 @@ target_if_fwol_register_thermal_throttle_handler(struct wlan_objmgr_psoc *psoc)
 		target_if_debug("thermal mitigation offload not enabled");
 		return;
 	}
-	status = wmi_unified_register_event(
+	status = wmi_unified_register_event_handler(
 				get_wmi_unified_hdl_from_psoc(psoc),
 				wmi_tt_stats_event_id,
-				target_if_fwol_thermal_throttle_event_handler);
+				target_if_fwol_thermal_throttle_event_handler,
+				WMI_RX_SERIALIZER_CTX);
 	if (QDF_IS_STATUS_ERROR(status))
 		target_if_debug("Failed to register thermal stats event cb");
 }
