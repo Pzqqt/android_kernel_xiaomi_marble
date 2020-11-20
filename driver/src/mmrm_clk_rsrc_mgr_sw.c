@@ -171,7 +171,7 @@ static int mmrm_sw_get_req_level(
 		d_mpr_e("%s: csid(%d): lower voltage corner(%d)\n",
 			__func__, tbl_entry->clk_src_id, voltage_corner);
 		*req_level = MMRM_VDD_LEVEL_SVS_L1;
-		return rc;
+		goto exit_no_err;
 	}
 
 	/* match vdd level */
@@ -184,11 +184,16 @@ static int mmrm_sw_get_req_level(
 		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for clk rate(%llu)\n",
 			__func__, tbl_entry->clk_src_id, voltage_corner, clk_val);
 		rc = -EINVAL;
-		return rc;
+		goto err_invalid_corner;
 	}
 
 	*req_level = level;
 	d_mpr_h("%s: req_level(%d)\n", __func__, level);
+
+exit_no_err:
+	return rc;
+
+err_invalid_corner:
 	return rc;
 }
 
@@ -203,18 +208,23 @@ static int mmrm_sw_check_peak_current(
 	if ((signed)peak_data->aggreg_val + delta_cur <= 0) {
 		peak_data->aggreg_val = 0;
 		d_mpr_h("%s: aggregate(%lu)\n", __func__, peak_data->aggreg_val);
-		return rc;
+		goto exit_no_err;
 	}
 
 	/* check for peak overshoot */
 	if ((signed)peak_data->aggreg_val + delta_cur >= peak_data->threshold) {
 		rc = -EINVAL;
-		return rc;
+		goto err_peak_overshoot;
 	}
 
 	/* update peak data */
 	peak_data->aggreg_val += delta_cur;
 	d_mpr_h("%s: aggregate(%lu)\n", __func__, peak_data->aggreg_val);
+
+exit_no_err:
+	return rc;
+
+err_peak_overshoot:
 	return rc;
 }
 
@@ -432,7 +442,8 @@ static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
 	fp_t nom_dyn_pwr, nom_leak_pwr, freq_sc, dyn_sc, leak_sc,
 		volt, dyn_pwr, leak_pwr, pwr_mw;
 
-	nom_dyn_pwr = FP_INT(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]);
+	nom_dyn_pwr = FP(Q16_INT(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]),
+		Q16_FRAC(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]), 100);
 	nom_leak_pwr = FP(Q16_INT(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]),
 		Q16_FRAC(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]), 100);
 
