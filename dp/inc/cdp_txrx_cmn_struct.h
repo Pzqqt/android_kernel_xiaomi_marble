@@ -2357,6 +2357,7 @@ enum cdp_dp_cfg {
 	cfg_dp_tso_enable,
 	cfg_dp_lro_enable,
 	cfg_dp_gro_enable,
+	cfg_dp_sg_enable,
 	cfg_dp_tx_flow_start_queue_offset,
 	cfg_dp_tx_flow_stop_queue_threshold,
 	cfg_dp_ipa_uc_tx_buf_size,

@@ -604,6 +604,22 @@
 	CFG_INI_BOOL("LROEnable", WLAN_LRO_ENABLE, \
 	"DP LRO Enable")
 
+/*
+ * <ini>
+ * CFG_DP_SG - Enable the SG feature standalonely
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini entry is used to enable/disable SG feature standalonely.
+ * Also does Rome support SG on TX, lithium does not.
+ * For example the lithium does not support SG on UDP frames.
+ * Which is able to handle SG only for TSO frames(in case TSO is enabled).
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_DP_SG \
 	CFG_INI_BOOL("dp_sg_support", false, \
 	"DP SG Enable")
