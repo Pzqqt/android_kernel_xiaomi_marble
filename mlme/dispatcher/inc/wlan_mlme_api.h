@@ -3029,4 +3029,12 @@ QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
 QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
 				 qdf_size_t len);
 
+/**
+ * wlan_mlme_is_sta_mon_conc_supported() - Check if STA + Monitor mode
+ * concurrency is supported
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if supported
+ */
+bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc);
 #endif /* _WLAN_MLME_API_H_ */

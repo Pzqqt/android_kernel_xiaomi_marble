@@ -28,6 +28,7 @@
 #include <wmi_unified_param.h>
 #include <sir_api.h>
 #include "wlan_cm_roam_public_struct.h"
+#include "cfg_mlme_generic.h"
 
 #define OWE_TRANSITION_OUI_TYPE "\x50\x6f\x9a\x1c"
 #define OWE_TRANSITION_OUI_SIZE 4
@@ -1275,6 +1276,7 @@ struct wlan_mlme_ratemask {
  * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
  * @sae_connect_retries: sae connect retry bitmask
  * @wls_6ghz_capable: wifi location service(WLS) is 6ghz capable
+ * @monitor_mode_concurrency: Monitor mode concurrency supported
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1317,6 +1319,7 @@ struct wlan_mlme_generic {
 	bool dual_sta_roam_fw_support;
 	uint32_t sae_connect_retries;
 	bool wls_6ghz_capable;
+	enum monitor_mode_concurrency monitor_mode_concurrency;
 };
 
 /*
