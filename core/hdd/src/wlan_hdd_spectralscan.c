@@ -77,7 +77,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
@@ -86,7 +86,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 	ret = wlan_cfg80211_spectral_scan_config_and_start(
 						wiphy, hdd_ctx->pdev,
 						vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 	hdd_exit();
 
 	return ret;
@@ -130,14 +130,14 @@ static int __wlan_hdd_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
 	}
 	ret = wlan_cfg80211_spectral_scan_stop(wiphy, hdd_ctx->pdev,
 					       vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 	hdd_exit();
 
 	return ret;
@@ -182,14 +182,14 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_config(
 	if (ret)
 		return ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
 	}
 	ret = wlan_cfg80211_spectral_scan_get_config(wiphy, hdd_ctx->pdev,
 						     vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 	hdd_exit();
 
 	return ret;
@@ -234,7 +234,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(
 	if (ret)
 		return ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
@@ -242,7 +242,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(
 	ret = wlan_cfg80211_spectral_scan_get_diag_stats(
 						wiphy, hdd_ctx->pdev,
 						vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 	hdd_exit();
 
 	return ret;
@@ -287,14 +287,14 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_cap_info(
 	if (ret)
 		return ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
 	}
 	ret = wlan_cfg80211_spectral_scan_get_cap(wiphy, hdd_ctx->pdev,
 						  vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 	hdd_exit();
 
 	return ret;
@@ -340,14 +340,14 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_status(
 	if (ret)
 		return ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
 	}
 	ret = wlan_cfg80211_spectral_scan_get_status(wiphy, hdd_ctx->pdev,
 						     vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 	hdd_exit();
 
 	return ret;
@@ -624,11 +624,11 @@ QDF_STATUS wlan_spectral_update_rx_chainmask(struct hdd_adapter *adapter)
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(adapter->hdd_ctx->pdev);
 	wma_get_rx_chainmask(pdev_id, &chainmask_2g, &chainmask_5g);
 	chainmask = home_chan > MAX_24GHZ_CHANNEL ? chainmask_5g : chainmask_2g;
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 	wlan_vdev_mlme_set_rxchainmask(vdev, chainmask);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SPECTRAL_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
