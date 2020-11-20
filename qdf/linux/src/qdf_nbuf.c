@@ -4723,7 +4723,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	rthdr->it_present = cpu_to_le32(rthdr->it_present);
 
 	if (headroom_sz < rtap_len) {
-		qdf_err("ERROR: not enough space to update radiotap");
+		qdf_debug("DEBUG: Not enough space to update radiotap");
 		return 0;
 	}
 	qdf_nbuf_push_head(nbuf, rtap_len);
