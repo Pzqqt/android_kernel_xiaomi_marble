@@ -1005,8 +1005,8 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 				msg_word_header, &msg_word_payload, num_msdus);
 	}
 
-	if ((ucfg_pkt_capture_get_mode((void *)soc->psoc) &
-	     PKT_CAPTURE_MODE_DATA_ONLY))
+	if ((ucfg_pkt_capture_get_mode((void *)soc->psoc) ==
+						PACKET_CAPTURE_MODE_DATA_ONLY))
 		pkt_capture_txcomp_hdr_list =
 				ucfg_pkt_capture_tx_get_txcomplete_data_hdr(
 								msg_word,

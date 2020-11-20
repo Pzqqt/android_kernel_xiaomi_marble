@@ -6847,7 +6847,8 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		wma_update_num_peers_tids(wma_handle, wlan_res_cfg);
 	}
 
-	if (ucfg_pkt_capture_get_mode(wma_handle->psoc) &&
+	if ((ucfg_pkt_capture_get_mode(wma_handle->psoc) !=
+						PACKET_CAPTURE_MODE_DISABLE) &&
 	    wmi_service_enabled(wmi_handle,
 				wmi_service_packet_capture_support))
 		wlan_res_cfg->pktcapture_support = true;
