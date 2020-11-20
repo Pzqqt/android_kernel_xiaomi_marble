@@ -2017,7 +2017,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	dcc_request.dcc_ndl_active_state_list_len = ndl_active_state_array_len;
 	dcc_request.dcc_ndl_active_state_list = ndl_active_state_array;
 
-	vdev = hdd_objmgr_get_vdev(adapter, WLAN_OSIF_OCB_ID);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_OCB_ID);
 	if (!vdev) {
 		rc = -EINVAL;
 		goto end;
