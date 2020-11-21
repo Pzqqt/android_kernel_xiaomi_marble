@@ -122,6 +122,3 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_SND_SOC_WCD934X) += wcd934x_dlkm.o
 wcd934x_dlkm-y := $(WCD934X_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

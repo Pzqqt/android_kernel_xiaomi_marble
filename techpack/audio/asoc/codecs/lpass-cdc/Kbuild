@@ -169,7 +169,3 @@ obj-$(CONFIG_LPASS_CDC_TX_MACRO) += lpass_cdc_tx_macro_dlkm.o
 lpass_cdc_tx_macro_dlkm-y := $(TX_OBJS)
 
 obj-$(CONFIG_LPASS_CDC_RX_MACRO) += lpass_cdc_rx_macro_dlkm.o
-lpass_cdc_rx_macro_dlkm-y := $(RX_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

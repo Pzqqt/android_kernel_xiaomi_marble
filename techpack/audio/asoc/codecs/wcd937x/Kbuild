@@ -124,6 +124,3 @@ wcd937x_dlkm-y := $(WCD937X_OBJS)
 
 obj-$(CONFIG_SND_SOC_WCD937X_SLAVE) += wcd937x_slave_dlkm.o
 wcd937x_slave_dlkm-y := $(WCD937X_SLAVE_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

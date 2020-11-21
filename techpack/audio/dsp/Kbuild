@@ -253,6 +253,3 @@ audpkt_ion_dlkm-y := $(AUDIO_PKT_ION)
 
 obj-$(CONFIG_VOICE_MHI) += voice_mhi_dlkm.o
 voice_mhi_dlkm-y := $(VOICE_MHI)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

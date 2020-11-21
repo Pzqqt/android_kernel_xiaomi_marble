@@ -101,6 +101,3 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_SND_SOC_EP92) += ep92_dlkm.o
 ep92_dlkm-y := $(EP92_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

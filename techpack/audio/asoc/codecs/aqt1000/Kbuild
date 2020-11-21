@@ -115,6 +115,3 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_SND_SOC_AQT1000) += aqt1000_cdc_dlkm.o
 aqt1000_cdc_dlkm-y := $(AQT1000_CDC_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

@@ -193,6 +193,3 @@ gpr_dlkm-y := $(GPRV_GLINK)
 
 obj-$(CONFIG_AUDIO_PKT) += audio_pkt_dlkm.o
 audio_pkt_dlkm-y := $(AUDIO_PKT)
-
-# inject some build related information
-CDEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
