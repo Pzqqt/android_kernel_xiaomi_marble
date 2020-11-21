@@ -1367,6 +1367,9 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 	/* disable vblank events */
 	drm_crtc_vblank_off(crtc);
 
+	/* reset sw state */
+	sde_crtc_reset_sw_state(crtc);
+
 	return rc;
 }
 

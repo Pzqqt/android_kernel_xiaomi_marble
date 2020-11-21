@@ -917,4 +917,11 @@ void sde_crtc_static_cache_read_kickoff(struct drm_crtc *crtc);
 int sde_crtc_get_num_datapath(struct drm_crtc *crtc,
 		struct drm_connector *connector);
 
+/**
+ * sde_crtc_reset_sw_state - reset dirty proerties on crtc and
+ *				planes attached to the crtc
+ * @crtc: Pointer to DRM crtc object
+ */
+void sde_crtc_reset_sw_state(struct drm_crtc *crtc);
+
 #endif /* _SDE_CRTC_H_ */
