@@ -11763,6 +11763,7 @@ typedef enum {
          *  5  | UL OFDMA, for AP its Tx OFDMA trigger for Sta its Rx OFDMA
          *     |           trigger receive & UL response
          *  6  | UL MUMIMO
+         *  7  | TXBF+OFDMA
          */
         WMI_VDEV_PARAM_SET_HEMU_MODE,                         /* 0x8002 */
         WMI_VDEV_PARAM_HEOPS_0_31,                            /* 0x8003 */
@@ -11797,6 +11798,10 @@ typedef enum {
 #define WMI_VDEV_HE_ULMUMIMO_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 6, 1)
 #define WMI_VDEV_HE_ULMUMIMO_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 6, 1, 1)
 #define WMI_VDEV_HE_ULMUMIMO_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 6, 1, 0)
+
+#define WMI_VDEV_HE_TXBF_OFDMA_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 7, 1)
+#define WMI_VDEV_HE_TXBF_OFDMA_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 7, 1, 1)
+#define WMI_VDEV_HE_TXBF_OFDMA_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 7, 1, 0)
 
 #define WMI_VDEV_HE_AX_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 0, 1)
 #define WMI_VDEV_HE_MU_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 2, 1)
