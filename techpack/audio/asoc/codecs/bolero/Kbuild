@@ -154,6 +154,3 @@ tx_macro_dlkm-y := $(TX_OBJS)
 
 obj-$(CONFIG_RX_MACRO) += rx_macro_dlkm.o
 rx_macro_dlkm-y := $(RX_OBJS)
-
-# inject some build related information
-DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
