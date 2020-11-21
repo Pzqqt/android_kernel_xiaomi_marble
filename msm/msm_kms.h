@@ -121,7 +121,8 @@ struct msm_kms_funcs {
 	/* destroys debugfs */
 	void (*debugfs_destroy)(struct msm_kms *kms);
 	/* handle continuous splash  */
-	int (*cont_splash_config)(struct msm_kms *kms);
+	int (*cont_splash_config)(struct msm_kms *kms,
+			struct drm_atomic_state *state);
 	/* check for continuous splash status */
 	bool (*check_for_splash)(struct msm_kms *kms);
 	/* topology lm information */

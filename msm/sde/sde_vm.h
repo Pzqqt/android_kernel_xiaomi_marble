@@ -166,6 +166,15 @@ struct sde_vm_ops {
 	 * @return - 0 on success, errorcode otherwise
 	 */
 	int (*vm_msg_send)(struct sde_vm *sde_vm, void *msg, size_t msg_size);
+
+	/**
+	 * vm_resource_init - hook to the handler when resource
+	 *                           accept/reclaim fails.
+	 * @sde_kms - handle to sde_kms
+	 * @state: current update atomic commit state
+	 */
+	int (*vm_resource_init)(struct sde_kms *sde_kms,
+			struct drm_atomic_state *state);
 };
 
 /**
