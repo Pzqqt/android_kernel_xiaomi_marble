@@ -266,6 +266,3 @@ msm_drm-$(CONFIG_DRM_MSM) += mi_disp/mi_disp_core.o \
 			     mi_disp/mi_sde_connector.o \
 			     mi_disp/mi_cooling_device.o \
 			     mi_disp/mi_backlight_ktz8866.o
-
-CDEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
-
