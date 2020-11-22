@@ -2589,6 +2589,44 @@ static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * set_radio_tx_mode_select_cmd_tlv - set radio tx mode select command
+ * @wmi: wmi handle
+ * @param: Tx mode select param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+set_radio_tx_mode_select_cmd_tlv(wmi_unified_t wmi,
+		struct wmi_pdev_enable_tx_mode_selection *param)
+{
+	wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_enable_duration_based_tx_mode_selection_cmd_fixed_param));
+	cmd->pdev_id = wmi->ops->convert_pdev_id_host_to_target(
+			wmi, param->pdev_id);
+	cmd->duration_based_tx_mode_selection = param->enable_tx_mode_selection;
+	wmi_mtrace(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID, cmd->pdev_id, 0);
+	if (wmi_unified_cmd_send(wmi, buf, len,
+				WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID)) {
+		wmi_err("%s: Failed to send WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID",
+				__func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2661,4 +2699,5 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_multi_vdev_restart_resp_event =
 				extract_multi_vdev_restart_resp_event_tlv;
 	ops->multisoc_tbtt_sync_cmd = send_multisoc_tbtt_sync_cmd_tlv;
+	ops->set_radio_tx_mode_select_cmd = set_radio_tx_mode_select_cmd_tlv;
 }

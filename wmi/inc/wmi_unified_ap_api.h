@@ -773,4 +773,15 @@ QDF_STATUS wmi_unified_peer_vlan_config_send(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_extract_muedca_params_handler(wmi_unified_t wmi_handle,
 		void *evt_buf, struct muedca_params *muedca_param_list);
 
+/**
+ *  wmi_unified_set_radio_tx_mode_select_cmd_send() - WMI ant switch tbl cmd function
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold tx mode selection param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_radio_tx_mode_select_cmd_send(
+		wmi_unified_t wmi_handle,
+		struct wmi_pdev_enable_tx_mode_selection *tx_mode_select_param);
+
 #endif /* _WMI_UNIFIED_AP_API_H_ */

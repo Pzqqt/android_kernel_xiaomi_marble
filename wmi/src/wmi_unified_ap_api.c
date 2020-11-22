@@ -611,3 +611,24 @@ QDF_STATUS wmi_extract_muedca_params_handler(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_set_radio_tx_mode_select_cmd_send() - WMI ant switch tbl cmd function
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold tx mode selection param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_radio_tx_mode_select_cmd_send(
+		wmi_unified_t wmi_hdl,
+		struct wmi_pdev_enable_tx_mode_selection
+		*tx_mode_select_param)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->set_radio_tx_mode_select_cmd)
+		return wmi_handle->ops->set_radio_tx_mode_select_cmd(
+				wmi_handle, tx_mode_select_param);
+	return QDF_STATUS_E_FAILURE;
+}
+

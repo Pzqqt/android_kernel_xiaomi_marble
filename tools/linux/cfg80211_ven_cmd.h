@@ -1254,6 +1254,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS = 463,
 	/* enable EMA */
 	OL_ATH_PARAM_ENABLE_EMA = 464,
+	/* enable Tx Mode Sselect */
+	OL_ATH_PARAM_ENABLE_TX_MODE_SELECT = 465,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3245,6 +3247,8 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS, GET_PARAM, 0},
 	{"enable_ema",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_EMA, SET_PARAM, 1},
+	{"dur_based_tx_mode_sselect",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_TX_MODE_SELECT, SET_PARAM, 1},
 };
 #endif
 #endif
