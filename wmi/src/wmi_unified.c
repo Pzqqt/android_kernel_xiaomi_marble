@@ -2246,6 +2246,8 @@ wmi_process_rx_diag_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 		if (num_diag_events_pending == RX_DIAG_WQ_MAX_SIZE) {
 			qdf_spin_unlock_bh(&wmi_handle->diag_eventq_lock);
 			wmi_handle->wmi_rx_diag_events_dropped++;
+			wmi_debug_rl("Rx diag events dropped count: %d",
+				     wmi_handle->wmi_rx_diag_events_dropped);
 			qdf_nbuf_free(evt_buf);
 			return;
 		}
