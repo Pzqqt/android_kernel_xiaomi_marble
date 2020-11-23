@@ -798,6 +798,127 @@ void dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer)
 }
 
 /*
+ * dp_action_frame_is_hostgen
+ * @category: action category code number
+ * @action: action code number
+ *
+ * return: true if action frame is host generated, else false
+ */
+bool dp_action_frame_is_hostgen(int category, int action)
+{
+	bool retval = true;
+
+	switch (category) {
+	case IEEE80211_ACTION_CAT_BA:
+		switch (action) {
+		case IEEE80211_ACTION_BA_ADDBA_REQUEST:
+		case IEEE80211_ACTION_BA_ADDBA_RESPONSE:
+		case IEEE80211_ACTION_BA_DELBA:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_PUBLIC:
+		switch (action) {
+		case IEEE80211_ACTION_PUBLIC_FINE_TMR:
+		case IEEE80211_ACTION_PUBLIC_FINE_TM:
+		case IEEE80211_ACTION_PUBLIC_FILS_DISC:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_RADIO:
+		switch (action) {
+		case IEEE80211_ACTION_RADIO_MGMT_NEIGH_REPT_REQ:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_HT:
+		switch (action) {
+		case IEEE80211_ACTION_HT_SMPOWERSAVE:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_SA_QUERY:
+		switch (action) {
+		case IEEE80211_ACTION_SA_QUERY_REQUEST:
+		case IEEE80211_ACTION_SA_QUERY_RESPONSE:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_WNM:
+		switch (action) {
+		case IEEE80211_ACTION_EVENT_REPORT:
+		case IEEE80211_ACTION_BSTM_QUERY:
+		case IEEE80211_ACTION_BSTM_RESP:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_TDLS:
+		switch (action) {
+		case IEEE80211_ACTION_TDLS_PEER_TRAFFIC_IND:
+		case IEEE80211_ACTION_TDLS_CHAN_SWITCH_REQ:
+		case IEEE80211_ACTION_TDLS_CHAN_SWITCH_RESP:
+		case IEEE80211_ACTION_TDLS_PEER_TRAFFIC_RESP:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_VHT:
+		switch (action) {
+		case IEEE80211_ACTION_VHT_OPMODE:
+		case IEEE80211_ACTION_VHT_GROUP_ID:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	case IEEE80211_ACTION_CAT_S1G:
+		switch (action) {
+		case IEEE80211_ACTION_TWT_SETUP:
+		case IEEE80211_ACTION_TWT_TEARDOWN:
+		case IEEE80211_ACTION_TWT_INFORMATION:
+			retval = false;
+			break;
+		default:
+			break;
+		}
+	break;
+
+	default:
+		break;
+	}
+	return retval;
+}
+
+/*
  * dp_deliver_mgmt_frm: Process
  * @pdev: DP PDEV handle
  * @nbuf: buffer containing the htt_ppdu_stats_tx_mgmtctrl_payload_tlv
@@ -855,8 +976,8 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			frm = (u_int8_t *)&wh[1];
 			ia = (struct ieee80211_action *)frm;
 
-			if ((ia->ia_category == IEEE80211_ACTION_CAT_S1G) &&
-			    (ia->ia_action == IEEE80211_ACTION_TWT_SETUP)) {
+			if (!dp_action_frame_is_hostgen(ia->ia_category,
+							ia->ia_action)) {
 				ptr_mgmt_hdr->is_sgen_pkt = false;
 			}
 		}
