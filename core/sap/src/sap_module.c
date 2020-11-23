@@ -3148,6 +3148,10 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 		sap_debug("channel is passive");
 		*csa_reason = CSA_REASON_CHAN_PASSIVE;
 		return wlansap_get_safe_channel_from_pcl_for_sap(sap_ctx);
+	} else if (!policy_mgr_is_safe_channel(mac->psoc, sap_ctx->chan_freq)) {
+		sap_debug("channel is unsafe");
+		*csa_reason = CSA_REASON_UNSAFE_CHANNEL;
+		return wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
 	} else {
 		sap_debug("No need switch SAP/Go channel");
 		return 0;
