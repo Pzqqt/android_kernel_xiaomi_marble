@@ -1413,7 +1413,8 @@ static bool mlme_vdev_subst_suspend_csa_restart_event(void *ctx,
 			mlme_vdev_sm_deliver_event(vdev_mlme,
 						   WLAN_VDEV_SM_EV_RESTART_REQ,
 						   event_data_len, event_data);
-		} else {
+		} else if (mlme_vdev_replace_csa_with_stop_start(vdev_mlme) ==
+						QDF_STATUS_E_NOSUPPORT) {
 			mlme_vdev_sm_transition_to
 				(vdev_mlme,
 				 WLAN_VDEV_SS_SUSPEND_SUSPEND_RESTART);

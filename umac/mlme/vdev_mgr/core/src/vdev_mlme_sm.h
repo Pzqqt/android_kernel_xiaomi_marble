@@ -580,6 +580,27 @@ static inline QDF_STATUS mlme_vdev_is_newchan_no_cac(
 	return ret;
 }
 
+/**
+ * mlme_vdev_replace_csa_with_stop_start - Support to use stop-start instead of
+ * multivdev restart in CSA with DFS chan
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * Return: NO_SUPPORT if the callback is not supported.
+ *         SUCCESS if stop-start is enqueued, else FAILURE.
+ */
+static inline QDF_STATUS mlme_vdev_replace_csa_with_stop_start(
+				struct vdev_mlme_obj *vdev_mlme)
+{
+	QDF_STATUS ret = QDF_STATUS_E_NOSUPPORT;
+
+	if ((vdev_mlme->ops) &&
+	    vdev_mlme->ops->mlme_vdev_replace_csa_with_stop_start)
+		ret = vdev_mlme->ops->mlme_vdev_replace_csa_with_stop_start(
+							vdev_mlme);
+
+	return ret;
+}
+
 #ifdef VDEV_SM_LOCK_SUPPORT
 /**
  * mlme_vdev_sm_spinlock_create - Create VDEV MLME spinlock
