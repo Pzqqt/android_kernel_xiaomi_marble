@@ -3630,7 +3630,7 @@ ccflags-y += -DMAX_BCN_PROBE_IN_SCAN_QUEUE=$(CONFIG_MAX_BCN_PROBE_IN_SCAN_QUEUE)
 #
 # Value 0 represents no limit and any non zero value represents the maximum
 # size of the work queue.
-CONFIG_RX_DIAG_WQ_MAX_SIZE ?= 0
+CONFIG_RX_DIAG_WQ_MAX_SIZE ?= 1000
 ccflags-y += -DRX_DIAG_WQ_MAX_SIZE=$(CONFIG_RX_DIAG_WQ_MAX_SIZE)
 
 CONFIG_MGMT_DESC_POOL_MAX ?= 64
