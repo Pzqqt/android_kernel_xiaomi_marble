@@ -290,7 +290,7 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 	if (!hal_soc->init_phase) {
 		ret = hif_force_wake_request(hal_soc->hif_handle);
 		if (ret) {
-			hal_err("Wake up request failed");
+			hal_err_rl("Wake up request failed");
 			qdf_check_state_before_panic();
 			return;
 		}

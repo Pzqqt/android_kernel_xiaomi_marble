@@ -710,7 +710,7 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
 
 	if (pld_force_wake_request(scn->qdf_dev->dev)) {
-		hif_err("force wake request send failed");
+		hif_err_rl("force wake request send failed");
 		return -EINVAL;
 	}
 
