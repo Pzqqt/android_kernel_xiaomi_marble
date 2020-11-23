@@ -2920,8 +2920,10 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 		struct sde_encoder_phys_wb *wb_enc)
 {
 	struct sde_encoder_virt *sde_enc;
+	struct sde_hw_ctl *ctl = phys_enc->hw_ctl;
+	struct sde_ctl_flush_cfg cfg;
 
-	phys_enc->hw_ctl->ops.reset(phys_enc->hw_ctl);
+	ctl->ops.reset(ctl);
 	sde_encoder_helper_reset_mixers(phys_enc, NULL);
 
 	if (wb_enc) {
@@ -2929,10 +2931,8 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 			wb_enc->hw_wb->ops.bind_pingpong_blk(wb_enc->hw_wb,
 					false, phys_enc->hw_pp->idx);
 
-			if (phys_enc->hw_ctl->ops.update_bitmask)
-				phys_enc->hw_ctl->ops.update_bitmask(
-						phys_enc->hw_ctl,
-						SDE_HW_FLUSH_WB,
+			if (ctl->ops.update_bitmask)
+				ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_WB,
 						wb_enc->hw_wb->idx, true);
 		}
 	} else {
@@ -2941,10 +2941,8 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 					phys_enc->hw_intf, false,
 					phys_enc->hw_pp->idx);
 
-			if (phys_enc->hw_ctl->ops.update_bitmask)
-				phys_enc->hw_ctl->ops.update_bitmask(
-						phys_enc->hw_ctl,
-						SDE_HW_FLUSH_INTF,
+			if (ctl->ops.update_bitmask)
+				ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_INTF,
 						phys_enc->hw_intf->idx, true);
 		}
 	}
@@ -2952,10 +2950,8 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 	if (phys_enc->hw_pp && phys_enc->hw_pp->ops.reset_3d_mode) {
 		phys_enc->hw_pp->ops.reset_3d_mode(phys_enc->hw_pp);
 
-		if (phys_enc->hw_ctl->ops.update_bitmask &&
-				phys_enc->hw_pp->merge_3d)
-			phys_enc->hw_ctl->ops.update_bitmask(
-					phys_enc->hw_ctl, SDE_HW_FLUSH_MERGE_3D,
+		if (ctl->ops.update_bitmask && phys_enc->hw_pp->merge_3d)
+			ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_MERGE_3D,
 					phys_enc->hw_pp->merge_3d->idx, true);
 	}
 
@@ -2964,23 +2960,24 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 		phys_enc->hw_cdm->ops.bind_pingpong_blk(phys_enc->hw_cdm,
 				false, phys_enc->hw_pp->idx);
 
-		if (phys_enc->hw_ctl->ops.update_bitmask)
-			phys_enc->hw_ctl->ops.update_bitmask(
-					phys_enc->hw_ctl, SDE_HW_FLUSH_CDM,
+		if (ctl->ops.update_bitmask)
+			ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_CDM,
 					phys_enc->hw_cdm->idx, true);
 	}
 
 	sde_enc = to_sde_encoder_virt(phys_enc->parent);
 
 	if (phys_enc == sde_enc->cur_master && phys_enc->hw_pp &&
-			phys_enc->hw_ctl->ops.reset_post_disable)
-		phys_enc->hw_ctl->ops.reset_post_disable(
-				phys_enc->hw_ctl, &phys_enc->intf_cfg_v1,
+			ctl->ops.reset_post_disable)
+		ctl->ops.reset_post_disable(ctl, &phys_enc->intf_cfg_v1,
 				phys_enc->hw_pp->merge_3d ?
 				phys_enc->hw_pp->merge_3d->idx : 0);
 
-	phys_enc->hw_ctl->ops.trigger_flush(phys_enc->hw_ctl);
-	phys_enc->hw_ctl->ops.trigger_start(phys_enc->hw_ctl);
+	ctl->ops.get_pending_flush(ctl, &cfg);
+	SDE_EVT32(DRMID(phys_enc->parent), cfg.pending_flush_mask);
+	ctl->ops.trigger_flush(ctl);
+	ctl->ops.trigger_start(ctl);
+	ctl->ops.clear_pending_flush(ctl);
 }
 
 static enum sde_intf sde_encoder_get_intf(struct sde_mdss_cfg *catalog,
