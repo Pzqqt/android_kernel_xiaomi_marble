@@ -122,6 +122,16 @@ void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 			     qdf_freq_t freq2,
 			     uint16_t *sec_flags,
 			     uint64_t *pri_flags);
+
+/**
+ * wlan_reg_is_band_present() - Check if input band channels are present
+ * in the regulatory current channel list.
+ * @pdev: pdev pointer.
+ * @reg_band: regulatory band.
+ *
+ */
+bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
+			      enum reg_wifi_band reg_band);
 #else
 static inline
 void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
@@ -170,6 +180,13 @@ wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 			uint16_t *sec_flags,
 			uint64_t *pri_flags)
 {
+}
+
+static inline
+bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
+			      enum reg_wifi_band reg_band)
+{
+	return false;
 }
 #endif /* CONFIG_HOST_FIND_CHAN */
 

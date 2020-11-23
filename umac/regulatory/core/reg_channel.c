@@ -27,6 +27,7 @@
 #include <reg_priv_objs.h>
 #include <reg_services_common.h>
 #include "reg_channel.h"
+#include <wlan_reg_channel_api.h>
 
 #ifdef CONFIG_HOST_FIND_CHAN
 
@@ -276,5 +277,63 @@ void reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev)
 
 	for (i = 0; i < NUM_CHANNELS; i++)
 		cur_chan_list[i].is_chan_hop_blocked = false;
+}
+
+/*
+ * reg_is_band_found_internal - Check if a band channel is found in the
+ * current channel list.
+ *
+ * @start_idx - Start index.
+ * @end_idx - End index.
+ * @cur_chan_list - Pointer to cur_chan_list.
+ */
+static bool reg_is_band_found_internal(enum channel_enum start_idx,
+				       enum channel_enum end_idx,
+				       struct regulatory_channel *cur_chan_list)
+{
+	uint8_t i;
+
+	for (i = start_idx; i <= end_idx; i++)
+		if (!(reg_is_chan_disabled(cur_chan_list[i])))
+			return true;
+
+	return false;
+}
+
+bool reg_is_band_present(struct wlan_objmgr_pdev *pdev,
+			 enum reg_wifi_band reg_band)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct regulatory_channel *cur_chan_list;
+	enum channel_enum min_chan_idx, max_chan_idx;
+
+	switch (reg_band) {
+	case REG_BAND_2G:
+		min_chan_idx = MIN_24GHZ_CHANNEL;
+		max_chan_idx = MAX_24GHZ_CHANNEL;
+		break;
+	case REG_BAND_5G:
+		min_chan_idx = MIN_49GHZ_CHANNEL;
+		max_chan_idx = MAX_5GHZ_CHANNEL;
+		break;
+	case REG_BAND_6G:
+		min_chan_idx = MIN_6GHZ_CHANNEL;
+		max_chan_idx = MAX_6GHZ_CHANNEL;
+		break;
+	default:
+		return false;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return false;
+	}
+
+	cur_chan_list = pdev_priv_obj->cur_chan_list;
+
+	return reg_is_band_found_internal(min_chan_idx, max_chan_idx,
+					  cur_chan_list);
 }
 #endif

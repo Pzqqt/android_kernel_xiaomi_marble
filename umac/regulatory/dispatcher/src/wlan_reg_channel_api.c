@@ -156,4 +156,12 @@ void wlan_reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev)
 {
 	 reg_clear_allchan_blocked(pdev);
 }
+
+bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
+			      enum reg_wifi_band reg_band)
+{
+	return reg_is_band_present(pdev, reg_band);
+}
+
+qdf_export_symbol(wlan_reg_is_band_present);
 #endif /* CONFIG_HOST_FIND_CHAN */
