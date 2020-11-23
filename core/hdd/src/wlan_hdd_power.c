@@ -1316,9 +1316,11 @@ hdd_suspend_wlan(void)
 		return -EINVAL;
 	}
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   NET_DEV_HOLD_SUSPEND_WLAN) {
 		if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter,
+						  NET_DEV_HOLD_SUSPEND_WLAN);
 			continue;
 		}
 
@@ -1335,7 +1337,7 @@ hdd_suspend_wlan(void)
 		/* Configure supported OffLoads */
 		hdd_enable_host_offloads(adapter, pmo_apps_suspend);
 		hdd_update_conn_state_mask(adapter, &conn_state_mask);
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, NET_DEV_HOLD_SUSPEND_WLAN);
 	}
 
 	status = ucfg_pmo_psoc_user_space_suspend_req(hdd_ctx->psoc,
@@ -1379,9 +1381,11 @@ static int hdd_resume_wlan(void)
 	hdd_wlan_suspend_resume_event(HDD_WLAN_EARLY_RESUME);
 
 	/*loop through all adapters. Concurrency */
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   NET_DEV_HOLD_RESUME_WLAN) {
 		if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter,
+						  NET_DEV_HOLD_RESUME_WLAN);
 			continue;
 		}
 
@@ -1398,7 +1402,7 @@ static int hdd_resume_wlan(void)
 		if (adapter->device_mode == QDF_STA_MODE)
 			status = hdd_disable_default_pkt_filters(adapter);
 
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, NET_DEV_HOLD_RESUME_WLAN);
 	}
 
 	ucfg_ipa_resume(hdd_ctx->pdev);
@@ -1435,14 +1439,16 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   NET_DEV_HOLD_SSR_RESTART_SAP) {
 		if (adapter->device_mode == QDF_SAP_MODE) {
 			if (test_bit(SOFTAP_INIT_DONE, &adapter->event_flags)) {
 				hdd_debug("Restart prev SAP session");
 				wlan_hdd_start_sap(adapter, true);
 			}
 		}
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter,
+					  NET_DEV_HOLD_SSR_RESTART_SAP);
 	}
 
 	hdd_exit();
@@ -1564,7 +1570,8 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   NET_DEV_HOLD_SEND_DEFAULT_SCAN_IES) {
 		if (hdd_is_interface_up(adapter) &&
 		    (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE) &&
@@ -1574,7 +1581,8 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 				      adapter->scan_info.default_scan_ies,
 				      adapter->scan_info.default_scan_ies_len);
 		}
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter,
+					  NET_DEV_HOLD_SEND_DEFAULT_SCAN_IES);
 	}
 }
 
@@ -2002,6 +2010,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	mac_handle_t mac_handle;
 	struct wlan_objmgr_vdev *vdev;
 	int rc;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_CFG80211_SUSPEND_WLAN;
 
 	hdd_enter();
 
@@ -2032,9 +2041,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * "dfs_cac_block_tx" is set to true when RADAR is found and stay true
 	 * until CAC is done for a SoftAP which is in started state.
 	 */
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
 
@@ -2047,9 +2057,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				hdd_err("RADAR detection in progress, do not allow suspend");
 				wlan_hdd_inc_suspend_stats(hdd_ctx,
 							   SUSPEND_FAIL_RADAR);
-				dev_put(adapter->dev);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
-					dev_put(next_adapter->dev);
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
 				return -EAGAIN;
 			} else if (!ucfg_pmo_get_enable_sap_suspend(
 				   hdd_ctx->psoc)) {
@@ -2057,9 +2068,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				 * suspend
 				 */
 				hdd_err("SAP does not support suspend!!");
-				dev_put(adapter->dev);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
-					dev_put(next_adapter->dev);
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
 				return -EOPNOTSUPP;
 			}
 		} else if (QDF_P2P_GO_MODE == adapter->device_mode) {
@@ -2069,13 +2081,14 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				 * suspend
 				 */
 				hdd_err("GO does not support suspend!!");
-				dev_put(adapter->dev);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
-					dev_put(next_adapter->dev);
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
 				return -EOPNOTSUPP;
 			}
 		}
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 	/* p2p cleanup task based on scheduler */
 	ucfg_p2p_cleanup_tx_by_psoc(hdd_ctx->psoc);
@@ -2087,14 +2100,15 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 
 	/* flush any pending powersave timers */
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
 
 		sme_ps_timer_flush_sync(mac_handle, adapter->vdev_id);
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
 	/*

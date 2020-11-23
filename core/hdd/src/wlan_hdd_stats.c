@@ -1729,17 +1729,20 @@ static void cache_station_stats_cb(struct stats_event *ev, void *cookie)
 	struct hdd_adapter *adapter = cookie, *next_adapter = NULL;
 	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 	uint8_t vdev_id = adapter->vdev_id;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_DISPLAY_TXRX_STATS;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		if (adapter->vdev_id != vdev_id) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
 		copy_station_stats_to_adapter(adapter, ev);
 		/* dev_put has to be done here */
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 		if (next_adapter)
-			dev_put(next_adapter->dev);
+			hdd_adapter_dev_put_debug(next_adapter,
+						  dbgid);
 		break;
 	}
 }
@@ -6566,8 +6569,10 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 	int i = 0;
 	uint32_t total_rx_pkt, total_rx_dropped,
 		 total_rx_delv, total_rx_refused;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_CACHE_STATION_STATS_CB;
 
-	hdd_for_each_adapter_dev_held_safe(ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(ctx, adapter, next_adapter,
+					   dbgid) {
 		total_rx_pkt = 0;
 		total_rx_dropped = 0;
 		total_rx_delv = 0;
@@ -6575,7 +6580,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		stats = &adapter->hdd_stats.tx_rx_stats;
 
 		if (adapter->vdev_id == INVAL_VDEV_ID) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
 
@@ -6588,7 +6593,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		}
 
 		/* dev_put has to be done here */
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 
 		hdd_debug("TX - called %u, dropped %u orphan %u",
 			  stats->tx_called, stats->tx_dropped,

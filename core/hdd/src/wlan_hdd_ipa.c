@@ -55,6 +55,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 	struct wlan_objmgr_psoc *psoc;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_IPA_SET_TX_FLOW_INFO;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx)
@@ -66,7 +67,8 @@ void hdd_ipa_set_tx_flow_info(void)
 
 	psoc = hdd_ctx->psoc;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -203,7 +205,8 @@ void hdd_ipa_set_tx_flow_info(void)
 
 					if (!preAdapterContext) {
 						hdd_err("SCC: Previous adapter context NULL");
-						dev_put(adapter->dev);
+						hdd_adapter_dev_put_debug(
+								adapter, dbgid);
 						continue;
 					}
 
@@ -252,7 +255,8 @@ void hdd_ipa_set_tx_flow_info(void)
 
 					if (!adapter5) {
 						hdd_err("MCC: 5GHz adapter context NULL");
-						dev_put(adapter->dev);
+						hdd_adapter_dev_put_debug(
+								adapter, dbgid);
 						continue;
 					}
 					adapter5->tx_flow_low_watermark =
@@ -281,7 +285,8 @@ void hdd_ipa_set_tx_flow_info(void)
 
 					if (!adapter2_4) {
 						hdd_err("MCC: 2.4GHz adapter context NULL");
-						dev_put(adapter->dev);
+						hdd_adapter_dev_put_debug(
+								adapter, dbgid);
 						continue;
 					}
 					adapter2_4->tx_flow_low_watermark =
@@ -314,7 +319,7 @@ void hdd_ipa_set_tx_flow_info(void)
 		}
 		targetChannel = 0;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 }
 

@@ -2957,13 +2957,15 @@ static bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
 	struct hdd_station_ctx *sta_ctx;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_IS_ANY_STA_CONNECTING;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
 		return false;
 	}
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
@@ -2972,13 +2974,14 @@ static bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
 			    eConnectionState_Connecting) {
 				hdd_debug("vdev_id %d: connecting",
 					  adapter->vdev_id);
-				dev_put(adapter->dev);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
-					dev_put(next_adapter->dev);
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
 				return true;
 			}
 		}
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
 	return false;
@@ -3512,10 +3515,12 @@ void hdd_sap_destroy_ctx_all(struct hdd_context *hdd_ctx, bool is_ssr)
 
 	hdd_debug("destroying all the sap context");
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   NET_DEV_HOLD_SAP_DESTROY_CTX_ALL) {
 		if (adapter->device_mode == QDF_SAP_MODE)
 			hdd_sap_destroy_ctx(adapter);
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter,
+					  NET_DEV_HOLD_SAP_DESTROY_CTX_ALL);
 	}
 }
 

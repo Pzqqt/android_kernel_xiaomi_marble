@@ -5754,8 +5754,11 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_ctx *sta_ctx;
+	wlan_net_dev_ref_dbgid dbgid =
+				NET_DEV_HOLD_CHECK_DFS_CHANNEL_FOR_ADAPTER;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		if ((device_mode == adapter->device_mode) &&
 		    (device_mode == QDF_SAP_MODE)) {
 			ap_ctx =
@@ -5772,9 +5775,10 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 				hdd_ctx->pdev,
 				ap_ctx->operating_chan_freq)) {
 				hdd_err("SAP running on DFS channel");
-				dev_put(adapter->dev);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
-					dev_put(next_adapter->dev);
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
 				return true;
 			}
 		}
@@ -5793,13 +5797,14 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 				hdd_ctx->pdev,
 				sta_ctx->conn_info.chan_freq))) {
 				hdd_err("client connected on DFS channel");
-				dev_put(adapter->dev);
+				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
-					dev_put(next_adapter->dev);
+					hdd_adapter_dev_put_debug(next_adapter,
+								  dbgid);
 				return true;
 			}
 		}
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
 	return false;
@@ -11962,10 +11967,12 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	uint32_t  operating_chan_freq;
 	uint8_t sap_operating_band = 0;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_GET_SAP_OPERATING_BAND;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		if (adapter->device_mode != QDF_SAP_MODE) {
-			dev_put(adapter->dev);
+			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
 
@@ -11978,7 +11985,7 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 		else
 			sap_operating_band = BAND_ALL;
 
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 
 	return sap_operating_band;

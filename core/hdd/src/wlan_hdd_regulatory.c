@@ -1397,10 +1397,12 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 	bool freq_changed, phy_changed;
 	qdf_freq_t oper_freq;
 	eCsrPhyMode csr_phy_mode;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_COUNTRY_CHANGE_UPDATE_STA;
 
 	pdev = hdd_ctx->pdev;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		oper_freq = hdd_get_adapter_home_channel(adapter);
 		freq_changed = wlan_reg_is_disable_for_freq(pdev, oper_freq);
 
@@ -1433,7 +1435,7 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 			break;
 		}
 		/* dev_put has to be done here */
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 }
 
@@ -1525,10 +1527,12 @@ static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
 	bool phy_changed;
 	qdf_freq_t oper_freq;
 	eCsrPhyMode csr_phy_mode;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_COUNTRY_CHANGE_UPDATE_SAP;
 
 	pdev = hdd_ctx->pdev;
 
-	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter) {
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
 		oper_freq = hdd_get_adapter_home_channel(adapter);
 
 		switch (adapter->device_mode) {
@@ -1561,7 +1565,7 @@ static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
 			break;
 		}
 		/* dev_put has to be done here */
-		dev_put(adapter->dev);
+		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 }
 
