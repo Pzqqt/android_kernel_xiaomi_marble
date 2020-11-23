@@ -1,7 +1,7 @@
 include $(WLAN_ROOT)/configs/genoa.pci.debug_defconfig
 
 # Number of vdevs supported at one time, used for allocating memory
-CONFIG_WLAN_MAX_VDEVS := 4
+CONFIG_WLAN_MAX_VDEVS := 5
 
 # Flag to enable/disable TARGET 11d scan
 CONFIG_TARGET_11D_SCAN := y
