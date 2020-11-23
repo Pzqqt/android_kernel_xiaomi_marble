@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1033,12 +1033,21 @@ static void flush_timer_init(void)
 	gwlan_logging.flush_timer_period = 0;
 }
 
+static void flush_timer_deinit(void)
+{
+	gwlan_logging.is_flush_timer_initialized = false;
+	qdf_spin_lock(&gwlan_logging.flush_timer_lock);
+	qdf_timer_stop(&gwlan_logging.flush_timer);
+	qdf_timer_free(&gwlan_logging.flush_timer);
+	qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
+	qdf_spinlock_destroy(&gwlan_logging.flush_timer_lock);
+}
+
 int wlan_logging_sock_init_svc(void)
 {
 	int i = 0, j, pkt_stats_size;
 	unsigned long irq_flag;
 
-	flush_timer_init();
 	spin_lock_init(&gwlan_logging.spin_lock);
 	spin_lock_init(&gwlan_logging.pkt_stats_lock);
 
@@ -1064,6 +1073,8 @@ int wlan_logging_sock_init_svc(void)
 				  (gwlan_logging.free_list.next);
 	list_del_init(gwlan_logging.free_list.next);
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
+
+	flush_timer_init();
 
 	/* Initialize the pktStats data structure here */
 	pkt_stats_size = sizeof(struct pkt_stats_msg);
@@ -1133,22 +1144,13 @@ err2:
 	vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
 err1:
+	flush_timer_deinit();
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
 	gwlan_logging.pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
 	free_log_msg_buffer();
 
 	return -ENOMEM;
-}
-
-static void flush_timer_deinit(void)
-{
-	gwlan_logging.is_flush_timer_initialized = false;
-	qdf_spin_lock(&gwlan_logging.flush_timer_lock);
-	qdf_timer_stop(&gwlan_logging.flush_timer);
-	qdf_timer_free(&gwlan_logging.flush_timer);
-	qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
-	qdf_spinlock_destroy(&gwlan_logging.flush_timer_lock);
 }
 
 int wlan_logging_sock_deinit_svc(void)
@@ -1172,10 +1174,6 @@ int wlan_logging_sock_deinit_svc(void)
 	wake_up_interruptible(&gwlan_logging.wait_queue);
 	wait_for_completion(&gwlan_logging.shutdown_comp);
 
-	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
-	gwlan_logging.pcur_node = NULL;
-	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
-
 	spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, irq_flag);
 	gwlan_logging.pkt_stats_pcur_node = NULL;
 	gwlan_logging.pkt_stats_msg_idx = 0;
@@ -1185,11 +1183,17 @@ int wlan_logging_sock_deinit_svc(void)
 			dev_kfree_skb(gpkt_stats_buffers[i].skb);
 	}
 	spin_unlock_irqrestore(&gwlan_logging.pkt_stats_lock, irq_flag);
-
 	vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
-	free_log_msg_buffer();
+
+	/* Delete the Flush timer then mark pcur_node NULL */
 	flush_timer_deinit();
+
+	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
+	gwlan_logging.pcur_node = NULL;
+	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
+
+	free_log_msg_buffer();
 
 	return 0;
 }
