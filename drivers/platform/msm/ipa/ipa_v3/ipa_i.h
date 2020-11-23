@@ -453,6 +453,8 @@ enum {
 
 #define MBOX_TOUT_MS 100
 
+#define IPA_RULE_CNT_MAX 512
+
 /* miscellaneous for rmnet_ipa and qmi_service */
 enum ipa_type_mode {
 	IPA_HW_TYPE,
