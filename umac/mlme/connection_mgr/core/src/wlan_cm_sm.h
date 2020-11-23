@@ -122,14 +122,7 @@ QDF_STATUS cm_sm_destroy(struct cnx_mgr *cm_ctx);
  * Return: void
  */
 #ifdef SM_ENG_HIST_ENABLE
-static inline void cm_sm_history_print(struct cnx_mgr *cm_ctx)
-{
-	return wlan_sm_print_history(cm_ctx->sm.sm_hdl);
-}
-#else
-static inline void cm_sm_history_print(struct cnx_mgr *cm_ctx)
-{
-}
+void cm_sm_history_print(struct wlan_objmgr_vdev *vdev);
 #endif
 
 #ifdef WLAN_CM_USE_SPINLOCK

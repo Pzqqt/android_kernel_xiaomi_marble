@@ -206,3 +206,10 @@ void wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	cm_hw_mode_change_resp(pdev, vdev_id, cm_id, status);
 }
 #endif /* ifdef POLICY_MGR_ENABLE */
+
+#ifdef SM_ENG_HIST_ENABLE
+void wlan_cm_sm_history_print(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_sm_history_print(vdev);
+}
+#endif

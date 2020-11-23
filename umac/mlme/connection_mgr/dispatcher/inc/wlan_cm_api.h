@@ -208,6 +208,21 @@ void wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 				 wlan_cm_id cm_id, QDF_STATUS status);
 #endif /* ifdef POLICY_MGR_ENABLE */
 
+/**
+ * wlan_cm_sm_history_print() - Prints SM history
+ * @vdev: Objmgr vdev
+ *
+ * API to print CM SM history
+ *
+ * Return: void
+ */
+#ifdef SM_ENG_HIST_ENABLE
+void wlan_cm_sm_history_print(struct wlan_objmgr_vdev *vdev);
+#else
+static inline void wlan_cm_sm_history_print(struct wlan_objmgr_vdev *vdev)
+{
+}
+#endif
 #else
 
 #ifdef WLAN_POLICY_MGR_ENABLE

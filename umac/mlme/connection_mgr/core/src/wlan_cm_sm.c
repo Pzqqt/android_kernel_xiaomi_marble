@@ -1090,3 +1090,18 @@ QDF_STATUS cm_sm_destroy(struct cnx_mgr *cm_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef SM_ENG_HIST_ENABLE
+void cm_sm_history_print(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		mlme_err("cm_ctx is NULL");
+		return;
+	}
+
+	return wlan_sm_print_history(cm_ctx->sm.sm_hdl);
+}
+#endif
