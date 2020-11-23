@@ -419,7 +419,7 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_CFR_ID);
 	if (!vdev) {
 		hdd_err("can't get vdev");
 		return -EINVAL;
@@ -448,7 +448,7 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 	}
 
 out:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_CFR_ID);
 	return ret;
 }
 #else
