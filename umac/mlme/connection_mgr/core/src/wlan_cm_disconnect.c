@@ -517,7 +517,8 @@ cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
 	 * been received, hence skip the non-osif disconnect request.
 	 */
 	if (cur_state == WLAN_CM_S_CONNECTING &&
-	    cm_req->req.source != CM_OSIF_DISCONNECT) {
+	    (cm_req->req.source != CM_OSIF_DISCONNECT &&
+	    cm_req->req.source != CM_OSIF_CFG_DISCONNECT)) {
 		mlme_info("Vdev %d ignore disconnect req from source %d in state %d",
 			  wlan_vdev_get_id(cm_ctx->vdev), cm_req->req.source,
 			  cm_state_substate);
