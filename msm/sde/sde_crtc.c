@@ -1193,6 +1193,9 @@ static int pstate_cmp(const void *a, const void *b)
 	int pa_zpos, pb_zpos;
 	enum sde_layout pa_layout, pb_layout;
 
+	if ((!pa || !pa->sde_pstate) || (!pb || !pb->sde_pstate))
+		return rc;
+
 	pa_zpos = sde_plane_get_property(pa->sde_pstate, PLANE_PROP_ZPOS);
 	pb_zpos = sde_plane_get_property(pb->sde_pstate, PLANE_PROP_ZPOS);
 
@@ -3564,11 +3567,10 @@ static void _sde_crtc_remove_pipe_flush(struct drm_crtc *crtc)
 	}
 }
 
-static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc,
-		struct drm_crtc_state *old_state)
+static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
-	struct sde_crtc_state *cstate = to_sde_crtc_state(old_state);
+	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 	struct sde_kms *sde_kms = _sde_crtc_get_kms(crtc);
 	struct msm_drm_private *priv;
 	struct msm_drm_thread *event_thread;
@@ -3815,19 +3817,19 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		spin_unlock_irqrestore(&dev->event_lock, flags);
 	}
 
-	_sde_crtc_schedule_idle_notify(crtc, old_state);
+	_sde_crtc_schedule_idle_notify(crtc);
 
 	SDE_ATRACE_END("crtc_commit");
 }
 
 /**
- * _sde_crtc_vblank_enable_no_lock - update power resource and vblank request
+ * _sde_crtc_vblank_enable - update power resource and vblank request
  * @sde_crtc: Pointer to sde crtc structure
  * @enable: Whether to enable/disable vblanks
  *
  * @Return: error code
  */
-static int _sde_crtc_vblank_enable_no_lock(
+static int _sde_crtc_vblank_enable(
 		struct sde_crtc *sde_crtc, bool enable)
 {
 	struct drm_crtc *crtc;
@@ -3839,38 +3841,38 @@ static int _sde_crtc_vblank_enable_no_lock(
 	}
 
 	crtc = &sde_crtc->base;
+	SDE_EVT32(DRMID(crtc), enable, sde_crtc->enabled,
+			crtc->state->encoder_mask,
+			sde_crtc->cached_encoder_mask);
 
 	if (enable) {
 		int ret;
 
-		/* drop lock since power crtc cb may try to re-acquire lock */
-		mutex_unlock(&sde_crtc->crtc_lock);
 		ret = pm_runtime_get_sync(crtc->dev->dev);
-		mutex_lock(&sde_crtc->crtc_lock);
 		if (ret < 0)
 			return ret;
 
+		mutex_lock(&sde_crtc->crtc_lock);
 		drm_for_each_encoder_mask(enc, crtc->dev,
-			crtc->state->encoder_mask) {
-			SDE_EVT32(DRMID(&sde_crtc->base), DRMID(enc), enable,
-					sde_crtc->enabled);
+				sde_crtc->cached_encoder_mask) {
+			SDE_EVT32(DRMID(crtc), DRMID(enc));
 
 			sde_encoder_register_vblank_callback(enc,
 					sde_crtc_vblank_cb, (void *)crtc);
 		}
+
+		mutex_unlock(&sde_crtc->crtc_lock);
 	} else {
+		mutex_lock(&sde_crtc->crtc_lock);
 		drm_for_each_encoder_mask(enc, crtc->dev,
-			crtc->state->encoder_mask) {
-			SDE_EVT32(DRMID(&sde_crtc->base), DRMID(enc), enable,
-					sde_crtc->enabled);
+				sde_crtc->cached_encoder_mask) {
+			SDE_EVT32(DRMID(crtc), DRMID(enc));
 
 			sde_encoder_register_vblank_callback(enc, NULL, NULL);
 		}
 
-		/* drop lock since power crtc cb may try to re-acquire lock */
 		mutex_unlock(&sde_crtc->crtc_lock);
 		pm_runtime_put_sync(crtc->dev->dev);
-		mutex_lock(&sde_crtc->crtc_lock);
 	}
 
 	return 0;
@@ -3972,7 +3974,7 @@ static void sde_crtc_clear_cached_mixer_cfg(struct drm_crtc *crtc)
 	SDE_EVT32(DRMID(crtc));
 }
 
-static void sde_crtc_reset_sw_state_for_ipc(struct drm_crtc *crtc)
+void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 	struct drm_plane *plane;
@@ -4075,7 +4077,7 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		sde_cp_crtc_pre_ipc(crtc);
 		break;
 	case SDE_POWER_EVENT_POST_DISABLE:
-		sde_crtc_reset_sw_state_for_ipc(crtc);
+		sde_crtc_reset_sw_state(crtc);
 		sde_cp_crtc_suspend(crtc);
 		event.type = DRM_EVENT_SDE_POWER;
 		event.length = sizeof(power_on);
@@ -4159,18 +4161,17 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 			(u8 *)&power_on);
 
-	if (atomic_read(&sde_crtc->frame_pending)) {
-		mutex_unlock(&sde_crtc->crtc_lock);
-		_sde_crtc_flush_event_thread(crtc);
-		mutex_lock(&sde_crtc->crtc_lock);
-	}
+	mutex_unlock(&sde_crtc->crtc_lock);
+	_sde_crtc_flush_event_thread(crtc);
+	mutex_lock(&sde_crtc->crtc_lock);
 
 	kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
 	kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
 
-	SDE_EVT32(DRMID(crtc), sde_crtc->enabled,
-			crtc->state->active, crtc->state->enable);
+	SDE_EVT32(DRMID(crtc), sde_crtc->enabled, crtc->state->active,
+			crtc->state->enable, sde_crtc->cached_encoder_mask);
 	sde_crtc->enabled = false;
+	sde_crtc->cached_encoder_mask = 0;
 
 	/* Try to disable uidle */
 	sde_core_perf_crtc_update_uidle(crtc, false);
@@ -4279,8 +4280,11 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	 * Avoid drm_crtc_vblank_on during seamless DMS case
 	 * when CRTC is already in enabled state
 	 */
-	if (!sde_crtc->enabled)
+	if (!sde_crtc->enabled) {
+		/* cache the encoder mask now for vblank work */
+		sde_crtc->cached_encoder_mask = crtc->state->encoder_mask;
 		drm_crtc_vblank_on(crtc);
+	}
 
 	mutex_lock(&sde_crtc->crtc_lock);
 	SDE_EVT32(DRMID(crtc), sde_crtc->enabled);
@@ -5119,14 +5123,10 @@ int sde_crtc_vblank(struct drm_crtc *crtc, bool en)
 	}
 	sde_crtc = to_sde_crtc(crtc);
 
-	mutex_lock(&sde_crtc->crtc_lock);
-	SDE_EVT32(DRMID(&sde_crtc->base), en, sde_crtc->enabled);
-	ret = _sde_crtc_vblank_enable_no_lock(sde_crtc, en);
+	ret = _sde_crtc_vblank_enable(sde_crtc, en);
 	if (ret)
 		SDE_ERROR("%s vblank enable failed: %d\n",
 				sde_crtc->name, ret);
-
-	mutex_unlock(&sde_crtc->crtc_lock);
 
 	return 0;
 }

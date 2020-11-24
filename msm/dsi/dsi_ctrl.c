@@ -637,6 +637,7 @@ static int dsi_ctrl_init_regmap(struct platform_device *pdev,
 		}
 		ctrl->hw.mmss_misc_base = ptr;
 		ctrl->hw.disp_cc_base = NULL;
+		ctrl->hw.mdp_intf_base = NULL;
 		break;
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
@@ -650,6 +651,10 @@ static int dsi_ctrl_init_regmap(struct platform_device *pdev,
 		}
 		ctrl->hw.disp_cc_base = ptr;
 		ctrl->hw.mmss_misc_base = NULL;
+
+		ptr = msm_ioremap(pdev, "mdp_intf_base", ctrl->name);
+		if (!IS_ERR(ptr))
+			ctrl->hw.mdp_intf_base = ptr;
 		break;
 	default:
 		break;
@@ -1332,6 +1337,25 @@ static void dsi_configure_command_scheduling(struct dsi_ctrl *dsi_ctrl,
 	}
 	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_EXIT,
 			sched_line_no, window);
+}
+
+static u32 calculate_schedule_line(struct dsi_ctrl *dsi_ctrl, u32 flags)
+{
+	u32 line_no = 0x1;
+	struct dsi_mode_info *timing;
+
+	/* check if custom dma scheduling line needed */
+	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) &&
+		(flags & DSI_CTRL_CMD_CUSTOM_DMA_SCHED))
+		line_no = dsi_ctrl->host_config.common_config.dma_sched_line;
+
+	timing = &(dsi_ctrl->host_config.video_timing);
+
+	if (timing)
+		line_no += timing->v_back_porch + timing->v_sync_width +
+			timing->v_active;
+
+	return line_no;
 }
 
 static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
@@ -2099,9 +2123,6 @@ static int dsi_ctrl_dev_probe(struct platform_device *pdev)
 		       dsi_ctrl->version);
 		goto fail_clks;
 	}
-
-	if (dsi_ctrl->hw.ops.map_mdp_regs)
-		dsi_ctrl->hw.ops.map_mdp_regs(pdev, &dsi_ctrl->hw);
 
 	item->ctrl = dsi_ctrl;
 	sde_dbg_dsi_ctrl_register(dsi_ctrl->hw.base, dsi_ctrl->name);
@@ -3389,6 +3410,10 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 {
 	int rc = 0;
 	struct dsi_ctrl_hw_ops dsi_hw_ops;
+	u32 v_total = 0, fps = 0, cur_line = 0, mem_latency_us = 100;
+	u32 line_time = 0, schedule_line = 0x1, latency_by_line = 0;
+	struct dsi_mode_info *timing;
+	unsigned long flag;
 
 	if (!dsi_ctrl) {
 		DSI_CTRL_ERR(dsi_ctrl, "Invalid params\n");
@@ -3403,6 +3428,18 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 		return rc;
 
 	mutex_lock(&dsi_ctrl->ctrl_lock);
+
+	timing = &(dsi_ctrl->host_config.video_timing);
+
+	if (timing &&
+		(dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE)) {
+		v_total = timing->v_sync_width + timing->v_back_porch +
+			timing->v_front_porch + timing->v_active;
+		fps = timing->refresh_rate;
+		schedule_line = calculate_schedule_line(dsi_ctrl, flags);
+		line_time = (1000000 / fps) / v_total;
+		latency_by_line = CEIL(mem_latency_us, line_time);
+	}
 
 	if (!(flags & DSI_CTRL_CMD_BROADCAST_MASTER)) {
 		dsi_hw_ops.trigger_command_dma(&dsi_ctrl->hw);
@@ -3426,7 +3463,35 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 		reinit_completion(&dsi_ctrl->irq_info.cmd_dma_done);
 
 		/* trigger command */
-		dsi_hw_ops.trigger_command_dma(&dsi_ctrl->hw);
+		if ((dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) &&
+			dsi_hw_ops.schedule_dma_cmd &&
+			(dsi_ctrl->current_state.vid_engine_state ==
+			DSI_CTRL_ENGINE_ON)) {
+			/*
+			 * This change reads the video line count from
+			 * MDP_INTF_LINE_COUNT register and checks whether
+			 * DMA trigger happens close to the schedule line.
+			 * If it is not close to the schedule line, then DMA
+			 * command transfer is triggered.
+			 */
+			while (1) {
+				local_irq_save(flag);
+				cur_line =
+				dsi_hw_ops.log_line_count(&dsi_ctrl->hw,
+					dsi_ctrl->cmd_mode);
+				if (cur_line <
+					(schedule_line - latency_by_line) ||
+					cur_line > (schedule_line + 1)) {
+					dsi_hw_ops.trigger_command_dma(
+						&dsi_ctrl->hw);
+					local_irq_restore(flag);
+					break;
+				}
+				local_irq_restore(flag);
+				udelay(1000);
+			}
+		} else
+			dsi_hw_ops.trigger_command_dma(&dsi_ctrl->hw);
 
 		if (dsi_ctrl->enable_cmd_dma_stats) {
 			u32 reg = dsi_hw_ops.log_line_count(&dsi_ctrl->hw,

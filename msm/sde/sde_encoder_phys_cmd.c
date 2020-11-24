@@ -23,8 +23,6 @@
 #define to_sde_encoder_phys_cmd(x) \
 	container_of(x, struct sde_encoder_phys_cmd, base)
 
-#define PP_TIMEOUT_MAX_TRIALS	4
-
 /*
  * Tearcheck sync start and continue thresholds are empirically found
  * based on common panels In the future, may want to allow panels to override
@@ -507,7 +505,6 @@ static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
 	u32 frame_event = SDE_ENCODER_FRAME_EVENT_ERROR
 				| SDE_ENCODER_FRAME_EVENT_SIGNAL_RELEASE_FENCE;
 	struct drm_connector *conn;
-	int event;
 	u32 pending_kickoff_cnt;
 	unsigned long lock_flags;
 
@@ -541,26 +538,25 @@ static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
 				pending_kickoff_cnt);
 
 		SDE_EVT32(DRMID(phys_enc->parent), SDE_EVTLOG_FATAL);
+		mutex_lock(phys_enc->vblank_ctl_lock);
 		sde_encoder_helper_unregister_irq(phys_enc, INTR_IDX_RDPTR);
 		if (sde_kms_is_secure_session_inprogress(phys_enc->sde_kms))
 			SDE_DBG_DUMP("secure", "all", "dbg_bus");
 		else
 			SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus");
 		sde_encoder_helper_register_irq(phys_enc, INTR_IDX_RDPTR);
+		mutex_unlock(phys_enc->vblank_ctl_lock);
 	}
 
 	/*
 	 * if the recovery event is registered by user, don't panic
 	 * trigger panic on first timeout if no listener registered
 	 */
-	if (recovery_events) {
-		event = cmd_enc->pp_timeout_report_cnt > PP_TIMEOUT_MAX_TRIALS ?
-			SDE_RECOVERY_HARD_RESET : SDE_RECOVERY_CAPTURE;
+	if (recovery_events)
 		sde_connector_event_notify(conn, DRM_EVENT_SDE_HW_RECOVERY,
-				sizeof(uint8_t), event);
-	} else if (cmd_enc->pp_timeout_report_cnt) {
+				sizeof(uint8_t), SDE_RECOVERY_CAPTURE);
+	else if (cmd_enc->pp_timeout_report_cnt)
 		SDE_DBG_DUMP("dsi_dbg_bus", "panic");
-	}
 
 	/* request a ctl reset before the next kickoff */
 	phys_enc->enable_state = SDE_ENC_ERR_NEEDS_HW_RESET;
