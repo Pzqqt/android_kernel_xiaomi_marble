@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -961,6 +961,9 @@ static int sde_encoder_virt_atomic_check(
 	sde_conn = to_sde_connector(conn_state->connector);
 	sde_conn_state = to_sde_connector_state(conn_state);
 	sde_crtc_state = to_sde_crtc_state(crtc_state);
+	ret = sde_connector_set_msm_mode(conn_state, adj_mode);
+	if (ret)
+		return ret;
 
 	SDE_EVT32(DRMID(drm_enc), crtc_state->mode_changed,
 		crtc_state->active_changed, crtc_state->connectors_changed);
@@ -1006,18 +1009,18 @@ static int sde_encoder_virt_atomic_check(
 				CONNECTOR_PROP_QSYNC_MODE);
 
 	if (has_modeset && qsync_dirty &&
-		(msm_is_mode_seamless_poms(adj_mode) ||
-		msm_is_mode_seamless_dms(adj_mode) ||
-		msm_is_mode_seamless_dyn_clk(adj_mode))) {
+		(msm_is_mode_seamless_poms(&sde_conn_state->msm_mode) ||
+		msm_is_mode_seamless_dms(&sde_conn_state->msm_mode) ||
+		msm_is_mode_seamless_dyn_clk(&sde_conn_state->msm_mode))) {
 		SDE_ERROR("invalid qsync update during modeset priv flag:%x\n",
-			adj_mode->private_flags);
+			sde_conn_state->msm_mode.private_flags);
 		return -EINVAL;
 	}
 
-	SDE_EVT32(DRMID(drm_enc), adj_mode->flags, adj_mode->private_flags,
-		 old_top, adj_mode->vrefresh, adj_mode->hdisplay,
-		 adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal);
-
+	SDE_EVT32(DRMID(drm_enc), adj_mode->flags,
+		sde_conn_state->msm_mode.private_flags,
+		old_top, adj_mode->vrefresh, adj_mode->hdisplay,
+		adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal);
 	return ret;
 }
 
@@ -2095,7 +2098,7 @@ static int sde_encoder_resource_control(struct drm_encoder *drm_enc,
 }
 
 static void sde_encoder_virt_mode_switch(struct drm_encoder *drm_enc,
-	enum sde_intf_mode intf_mode, struct drm_display_mode *adj_mode)
+	enum sde_intf_mode intf_mode, struct msm_display_mode *adj_mode)
 {
 	int i = 0;
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
@@ -2112,19 +2115,21 @@ static void sde_encoder_virt_mode_switch(struct drm_encoder *drm_enc,
 			sde_enc->phys_encs[i] = sde_enc->phys_vid_encs[i];
 
 		SDE_DEBUG_ENC(sde_enc, "switch to video physical encoder\n");
-		SDE_EVT32(DRMID(&sde_enc->base), intf_mode, adj_mode->flags,
-				adj_mode->private_flags, SDE_EVTLOG_FUNC_CASE1);
+		SDE_EVT32(DRMID(&sde_enc->base), intf_mode,
+				adj_mode->base->flags, adj_mode->private_flags,
+				SDE_EVTLOG_FUNC_CASE1);
 	} else if (intf_mode == INTF_MODE_VIDEO) {
 		for (i = 0; i < sde_enc->num_phys_encs; i++)
 			sde_enc->phys_encs[i] = sde_enc->phys_cmd_encs[i];
 
 		SDE_DEBUG_ENC(sde_enc, "switch to command physical encoder\n");
-		SDE_EVT32(DRMID(&sde_enc->base), intf_mode, adj_mode->flags,
-				adj_mode->private_flags, SDE_EVTLOG_FUNC_CASE2);
+		SDE_EVT32(DRMID(&sde_enc->base), intf_mode,
+				adj_mode->base->flags, adj_mode->private_flags,
+				SDE_EVTLOG_FUNC_CASE2);
 	}
 }
 
-static struct drm_connector *_sde_encoder_get_connector(
+struct drm_connector *sde_encoder_get_connector(
 		struct drm_device *dev, struct drm_encoder *drm_enc)
 {
 	struct drm_connector_list_iter conn_iter;
@@ -2227,7 +2232,7 @@ static bool sde_encoder_detect_panel_mode_switch(
 }
 
 static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
-		struct drm_display_mode *adj_mode, bool pre_modeset)
+		struct msm_display_mode *msm_mode, bool pre_modeset)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	enum sde_intf_mode intf_mode;
@@ -2239,8 +2244,8 @@ static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
 
 	if (pre_modeset) {
 		intf_mode = sde_encoder_get_intf_mode(drm_enc);
-		if (msm_is_mode_seamless_dms(adj_mode) ||
-				(msm_is_mode_seamless_dyn_clk(adj_mode) &&
+		if (msm_is_mode_seamless_dms(msm_mode) ||
+				(msm_is_mode_seamless_dyn_clk(msm_mode) &&
 				 is_cmd_mode)) {
 			/* restore resource state before releasing them */
 			ret = sde_encoder_resource_control(drm_enc,
@@ -2257,20 +2262,20 @@ static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
 			 * modeset to guarantee previous kickoff has finished.
 			 */
 			sde_encoder_dce_disable(sde_enc);
-		} else if (sde_encoder_detect_panel_mode_switch(adj_mode,
+		} else if (sde_encoder_detect_panel_mode_switch(msm_mode->base,
 					intf_mode)) {
 			_sde_encoder_modeset_helper_locked(drm_enc,
 					SDE_ENC_RC_EVENT_PRE_MODESET);
 			sde_encoder_virt_mode_switch(drm_enc, intf_mode,
-					adj_mode);
+					msm_mode);
 		}
 	} else {
-		if (msm_is_mode_seamless_dms(adj_mode) ||
-				(msm_is_mode_seamless_dyn_clk(adj_mode) &&
+		if (msm_is_mode_seamless_dms(msm_mode) ||
+				(msm_is_mode_seamless_dyn_clk(msm_mode) &&
 				is_cmd_mode))
 			sde_encoder_resource_control(&sde_enc->base,
 					SDE_ENC_RC_EVENT_POST_MODESET);
-		else if (msm_is_mode_seamless_poms(adj_mode))
+		else if (msm_is_mode_seamless_poms(msm_mode))
 			_sde_encoder_modeset_helper_locked(drm_enc,
 					SDE_ENC_RC_EVENT_POST_MODESET);
 	}
@@ -2285,6 +2290,8 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct sde_encoder_virt *sde_enc;
 	struct sde_kms *sde_kms;
 	struct drm_connector *conn;
+	struct sde_connector_state *c_state;
+	struct msm_display_mode *msm_mode;
 	int i = 0, ret;
 	int num_lm, num_intf, num_pp_per_intf;
 
@@ -2319,7 +2326,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	sde_crtc_set_qos_dirty(drm_enc->crtc);
 
 	/* get and store the mode_info */
-	conn = _sde_encoder_get_connector(sde_kms->dev, drm_enc);
+	conn = sde_encoder_get_connector(sde_kms->dev, drm_enc);
 	if (!conn) {
 		SDE_ERROR_ENC(sde_enc, "failed to find attached connector\n");
 		return;
@@ -2330,9 +2337,15 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 
 	sde_connector_state_get_mode_info(conn->state, &sde_enc->mode_info);
 	sde_encoder_dce_set_bpp(sde_enc->mode_info, sde_enc->crtc);
+	c_state = to_sde_connector_state(conn->state);
+	if (!c_state) {
+		SDE_ERROR_ENC(sde_enc, "could not get connector state");
+		return;
+	}
 
 	/* release resources before seamless mode change */
-	ret = sde_encoder_virt_modeset_rc(drm_enc, adj_mode, true);
+	msm_mode = &c_state->msm_mode;
+	ret = sde_encoder_virt_modeset_rc(drm_enc, msm_mode, true);
 	if (ret)
 		return;
 
@@ -2374,7 +2387,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 
 	/* update resources after seamless mode change */
-	sde_encoder_virt_modeset_rc(drm_enc, adj_mode, false);
+	sde_encoder_virt_modeset_rc(drm_enc, msm_mode, false);
 }
 
 void sde_encoder_control_te(struct drm_encoder *drm_enc, bool enable)
@@ -2694,8 +2707,10 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
 	int i, ret = 0;
+	struct sde_connector_state *c_state;
 	struct msm_compression_info *comp_info = NULL;
 	struct drm_display_mode *cur_mode = NULL;
+	struct msm_display_mode *msm_mode;
 	struct msm_display_info *disp_info;
 
 	if (!drm_enc || !drm_enc->crtc) {
@@ -2736,12 +2751,18 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	}
 
 	_sde_encoder_input_handler_register(drm_enc);
+	c_state = to_sde_connector_state(sde_enc->cur_master->connector->state);
+	if (!c_state) {
+		SDE_ERROR("invalid connector state\n");
+		return;
+	}
 
+	msm_mode = &c_state->msm_mode;
 	if ((drm_enc->crtc->state->connectors_changed &&
 			sde_encoder_in_clone_mode(drm_enc)) ||
-			!(msm_is_mode_seamless_vrr(cur_mode)
-			|| msm_is_mode_seamless_dms(cur_mode)
-			|| msm_is_mode_seamless_dyn_clk(cur_mode)))
+			!(msm_is_mode_seamless_vrr(msm_mode)
+			|| msm_is_mode_seamless_dms(msm_mode)
+			|| msm_is_mode_seamless_dyn_clk(msm_mode)))
 		kthread_init_delayed_work(&sde_enc->delayed_off_work,
 			sde_encoder_off_work);
 
@@ -2785,8 +2806,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 			 * already. Invoke restore to reconfigure the
 			 * new mode.
 			 */
-			if ((msm_is_mode_seamless_dms(cur_mode) ||
-				msm_is_mode_seamless_dyn_clk(cur_mode)) &&
+			if ((msm_is_mode_seamless_dms(msm_mode) ||
+				msm_is_mode_seamless_dyn_clk(msm_mode)) &&
 					phys->ops.restore)
 				phys->ops.restore(phys);
 			else if (phys->ops.enable)
@@ -2799,8 +2820,8 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 						sde_enc->misr_frame_count);
 	}
 
-	if ((msm_is_mode_seamless_dms(cur_mode) ||
-			msm_is_mode_seamless_dyn_clk(cur_mode)) &&
+	if ((msm_is_mode_seamless_dms(msm_mode) ||
+			msm_is_mode_seamless_dyn_clk(msm_mode)) &&
 			sde_enc->cur_master->ops.restore)
 		sde_enc->cur_master->ops.restore(sde_enc->cur_master);
 	else if (sde_enc->cur_master->ops.enable)
@@ -5285,9 +5306,9 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		return -EINVAL;
 	}
 
+	drm_mode = &encoder->crtc->state->adjusted_mode;
 	ret = sde_connector_get_mode_info(&sde_conn->base,
-			&encoder->crtc->state->adjusted_mode,
-			&sde_conn_state->mode_info);
+		drm_mode, &sde_conn_state->mode_info);
 	if (ret) {
 		SDE_ERROR_ENC(sde_enc,
 			"conn: ->get_mode_info failed. ret=%d\n", ret);
@@ -5314,7 +5335,6 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 
 	SDE_DEBUG_ENC(sde_enc, "connector topology = %llu\n",
 			sde_connector_get_topology_name(conn));
-	drm_mode = &encoder->crtc->state->adjusted_mode;
 	SDE_DEBUG_ENC(sde_enc, "hdisplay = %d, vdisplay = %d\n",
 			drm_mode->hdisplay, drm_mode->vdisplay);
 	drm_set_preferred_mode(conn, drm_mode->hdisplay, drm_mode->vdisplay);

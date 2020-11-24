@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -1152,23 +1152,25 @@ static void sde_encoder_phys_vid_handle_post_kickoff(
 static void sde_encoder_phys_vid_prepare_for_commit(
 		struct sde_encoder_phys *phys_enc)
 {
-	struct drm_crtc *crtc;
+	struct sde_connector_state *c_state;
 
 	if (!phys_enc || !phys_enc->parent) {
 		SDE_ERROR("invalid encoder parameters\n");
 		return;
 	}
 
-	crtc = phys_enc->parent->crtc;
-	if (!crtc || !crtc->state) {
-		SDE_ERROR("invalid crtc state\n");
-		return;
-	}
+	if (phys_enc->connector && phys_enc->connector->state) {
+		c_state = to_sde_connector_state(phys_enc->connector->state);
+		if (!c_state) {
+			SDE_ERROR("invalid connector state\n");
+			return;
+		}
 
-	if (!msm_is_mode_seamless_vrr(&crtc->state->adjusted_mode)
+		if (!msm_is_mode_seamless_vrr(&c_state->msm_mode)
 			&& sde_connector_is_qsync_updated(phys_enc->connector))
-		_sde_encoder_phys_vid_avr_ctrl(phys_enc);
+			_sde_encoder_phys_vid_avr_ctrl(phys_enc);
 
+	}
 }
 
 static void sde_encoder_phys_vid_irq_control(struct sde_encoder_phys *phys_enc,

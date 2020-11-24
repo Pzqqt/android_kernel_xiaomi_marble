@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -67,6 +67,8 @@ struct msm_kms_funcs {
 	void (*commit)(struct msm_kms *kms, struct drm_atomic_state *state);
 	void (*complete_commit)(struct msm_kms *kms,
 			struct drm_atomic_state *state);
+	struct msm_display_mode *(*get_msm_mode)(
+				struct drm_crtc_state *c_state);
 	/* functions to wait for atomic commit completed on each CRTC */
 	void (*wait_for_crtc_commit_done)(struct msm_kms *kms,
 					struct drm_crtc *crtc);
@@ -206,45 +208,45 @@ struct msm_kms *sde_kms_init(struct drm_device *dev);
 /**
  * Mode Set Utility Functions
  */
-static inline bool msm_is_mode_seamless(const struct drm_display_mode *mode)
+static inline bool msm_is_mode_seamless(const struct msm_display_mode *mode)
 {
 	return (mode->private_flags & DRM_MODE_FLAG_SEAMLESS);
 }
 
-static inline bool msm_is_mode_seamless_dms(const struct drm_display_mode *mode)
+static inline bool msm_is_mode_seamless_dms(const struct msm_display_mode *mode)
 {
 	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_DMS)
 		: false;
 }
 
-static inline bool msm_is_mode_dynamic_fps(const struct drm_display_mode *mode)
+static inline bool msm_is_mode_dynamic_fps(const struct msm_display_mode *mode)
 {
 	return ((mode->private_flags & DRM_MODE_FLAG_SEAMLESS) &&
 		(mode->private_flags & MSM_MODE_FLAG_SEAMLESS_DYNAMIC_FPS));
 }
 
-static inline bool msm_is_mode_seamless_vrr(const struct drm_display_mode *mode)
+static inline bool msm_is_mode_seamless_vrr(const struct msm_display_mode *mode)
 {
 	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_VRR)
 		: false;
 }
 
 static inline bool msm_is_mode_seamless_poms(
-		const struct drm_display_mode *mode)
+		const struct msm_display_mode *mode)
 {
 	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_POMS)
 		: false;
 }
 
 static inline bool msm_is_mode_seamless_dyn_clk(
-					const struct drm_display_mode *mode)
+					const struct msm_display_mode *mode)
 {
 	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_DYN_CLK)
 		: false;
 }
 
 static inline bool msm_needs_vblank_pre_modeset(
-		const struct drm_display_mode *mode)
+		const struct msm_display_mode *mode)
 {
 	return (mode->private_flags & MSM_MODE_FLAG_VBLANK_PRE_MODESET);
 }

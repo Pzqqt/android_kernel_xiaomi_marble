@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_CONNECTOR_H_
@@ -612,6 +612,7 @@ struct sde_connector {
  * @mode_info: local copy of msm_mode_info struct
  * @hdr_meta: HDR metadata info passed from userspace
  * @dyn_hdr_meta: Dynamic HDR metadata payload and state tracking
+ * @msm_mode: struct containing drm_mode and downstream private variables
  * @old_topology_name: topology of previous atomic state. remove this in later
  *	kernel versions which provide drm_atomic_state old_state pointers
  */
@@ -626,6 +627,7 @@ struct sde_connector_state {
 	struct msm_mode_info mode_info;
 	struct drm_msm_ext_hdr_metadata hdr_meta;
 	struct sde_connector_dyn_hdr_metadata dyn_hdr_meta;
+	struct msm_display_mode msm_mode;
 	enum sde_rm_topology_name old_topology_name;
 };
 
@@ -1025,6 +1027,15 @@ static inline int sde_connector_state_get_compression_info(
 		sizeof(struct msm_compression_info));
 	return 0;
 }
+
+/**
+* sde_connector_set_msm_mode - set msm_mode for connector state
+* @conn_state: Pointer to drm connector state structure
+* @adj_mode: Pointer to adjusted display mode for display
+* Returns: Zero on success
+*/
+int sde_connector_set_msm_mode(struct drm_connector_state *conn_state,
+				struct drm_display_mode *adj_mode);
 
 /**
 * sde_connector_get_mode_info - retrieve mode info for given mode

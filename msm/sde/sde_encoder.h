@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -558,6 +558,14 @@ void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable);
  * @enable: enable/disable flag
  */
 void sde_encoder_irq_control(struct drm_encoder *drm_enc, bool enable);
+
+/**sde_encoder_get_connector - get connector corresponding to encoder
+ * @dev:	Pointer to drm device structure
+ * @drm_enc:	Pointer to drm encoder structure
+ * Returns:	drm connector if found, null if not found
+ */
+struct drm_connector *sde_encoder_get_connector(struct drm_device *dev,
+			struct drm_encoder *drm_enc);
 
 /*
  * sde_encoder_get_dfps_maxfps - get dynamic FPS max frame rate of

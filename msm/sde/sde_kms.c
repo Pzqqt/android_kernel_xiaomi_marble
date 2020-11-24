@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -3507,6 +3507,11 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 	kthread_flush_worker(&priv->pp_event_worker);
 }
 
+struct msm_display_mode *sde_kms_get_msm_mode(struct drm_crtc_state *c_state)
+{
+	return sde_crtc_get_msm_mode(c_state);
+}
+
 static int sde_kms_pm_suspend(struct device *dev)
 {
 	struct drm_device *ddev;
@@ -3726,6 +3731,7 @@ static const struct msm_kms_funcs kms_funcs = {
 	.prepare_commit  = sde_kms_prepare_commit,
 	.commit          = sde_kms_commit,
 	.complete_commit = sde_kms_complete_commit,
+	.get_msm_mode = sde_kms_get_msm_mode,
 	.wait_for_crtc_commit_done = sde_kms_wait_for_commit_done,
 	.wait_for_tx_complete = sde_kms_wait_for_frame_transfer_complete,
 	.check_modified_format = sde_format_check_modified_format,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -293,6 +293,18 @@ enum panel_op_mode {
 	MSM_DISPLAY_VIDEO_MODE = 0,
 	MSM_DISPLAY_CMD_MODE,
 	MSM_DISPLAY_MODE_MAX,
+};
+
+/**
+ * struct msm_display_mode - wrapper for drm_display_mode
+ * @base: drm_display_mode attached to this msm_mode
+ * @private_flags: integer holding private driver mode flags
+ * @private: pointer to private driver information
+ */
+struct msm_display_mode {
+	struct drm_display_mode *base;
+	u32 private_flags;
+	u32 *private;
 };
 
 /**

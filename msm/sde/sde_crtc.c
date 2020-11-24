@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -40,6 +40,7 @@
 #include "sde_power_handle.h"
 #include "sde_core_perf.h"
 #include "sde_trace.h"
+#include "msm_drv.h"
 
 #define SDE_PSTATES_MAX (SDE_STAGE_MAX * 4)
 #define SDE_MULTIRECT_PLANE_MAX (SDE_STAGE_MAX * 2)
@@ -455,15 +456,83 @@ static void sde_crtc_destroy(struct drm_crtc *crtc)
 	kfree(sde_crtc);
 }
 
+struct msm_display_mode *sde_crtc_get_msm_mode(struct drm_crtc_state *c_state)
+{
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+	struct sde_connector_state *conn_state;
+	bool encoder_valid = false;
+
+	drm_for_each_encoder_mask(encoder, c_state->crtc->dev,
+			c_state->encoder_mask) {
+		if (!sde_encoder_in_clone_mode(encoder)) {
+			encoder_valid = true;
+			break;
+		}
+	}
+
+	if (!encoder_valid)
+		return NULL;
+
+	connector = sde_encoder_get_connector(c_state->crtc->dev, encoder);
+	if (!connector)
+		return NULL;
+
+	conn_state = to_sde_connector_state(connector->state);
+	if (!conn_state)
+		return NULL;
+
+	return &conn_state->msm_mode;
+}
+
 static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 		const struct drm_display_mode *mode,
 		struct drm_display_mode *adjusted_mode)
 {
+	struct msm_display_mode *msm_mode;
+	struct drm_crtc_state *c_state;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+	struct drm_connector_state *new_conn_state;
+	struct sde_connector_state *c_conn_state;
+	bool encoder_valid = false;
+	int i;
+
 	SDE_DEBUG("\n");
 
-	if ((msm_is_mode_seamless(adjusted_mode) ||
-	     (msm_is_mode_seamless_vrr(adjusted_mode) ||
-	      msm_is_mode_seamless_dyn_clk(adjusted_mode))) &&
+	c_state = container_of(adjusted_mode, struct drm_crtc_state,
+				adjusted_mode);
+
+	drm_for_each_encoder_mask(encoder, c_state->crtc->dev,
+		c_state->encoder_mask) {
+		if (!sde_encoder_in_clone_mode(encoder)) {
+			encoder_valid = true;
+			break;
+		}
+	}
+
+	if (!encoder_valid) {
+		SDE_ERROR("encoder not found\n");
+		return true;
+	}
+
+	for_each_new_connector_in_state(c_state->state, connector,
+			new_conn_state, i) {
+		if (new_conn_state->best_encoder == encoder){
+			break;
+		}
+	}
+
+	c_conn_state = to_sde_connector_state(new_conn_state);
+	if (!c_conn_state) {
+		SDE_ERROR("could not get connector state\n");
+		return true;
+	}
+
+	msm_mode = &c_conn_state->msm_mode;
+	if ((msm_is_mode_seamless(msm_mode) ||
+	     (msm_is_mode_seamless_vrr(msm_mode) ||
+	      msm_is_mode_seamless_dyn_clk(msm_mode))) &&
 	    (!crtc->enabled)) {
 		SDE_ERROR("crtc state prevents seamless transition\n");
 		return false;
@@ -4266,6 +4335,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	u32 power_on;
 	int ret, i;
 	struct sde_crtc_state *cstate;
+	struct msm_display_mode *msm_mode;
 
 	if (!crtc || !crtc->dev || !crtc->dev->dev_private) {
 		SDE_ERROR("invalid crtc\n");
@@ -4302,12 +4372,17 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	 * change is also consider to enable/disable UIDLE
 	 */
 	sde_core_perf_crtc_update_uidle(crtc, true);
+	msm_mode = sde_crtc_get_msm_mode(crtc->state);
+	if (!msm_mode){
+		SDE_ERROR("invalid msm mode, %s\n",
+			crtc->state->adjusted_mode.name);
+		return;
+	}
 
 	/* return early if crtc is already enabled, do this after UIDLE check */
 	if (sde_crtc->enabled) {
-		if (msm_is_mode_seamless_dms(&crtc->state->adjusted_mode) ||
-		msm_is_mode_seamless_dyn_clk(&crtc->state->adjusted_mode))
-
+		if (msm_is_mode_seamless_dms(msm_mode) ||
+				msm_is_mode_seamless_dyn_clk(msm_mode))
 			SDE_DEBUG("%s extra crtc enable expected during DMS\n",
 					sde_crtc->name);
 		else

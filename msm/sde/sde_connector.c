@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -419,6 +419,22 @@ static void sde_connector_get_avail_res_info(struct drm_connector *conn,
 	sde_rm_get_resource_info(&sde_kms->rm, drm_enc, avail_res);
 
 	avail_res->max_mixer_width = sde_kms->catalog->max_mixer_width;
+}
+
+int sde_connector_set_msm_mode(struct drm_connector_state *conn_state,
+				struct drm_display_mode *adj_mode)
+{
+	struct sde_connector_state *c_state;
+
+	c_state = to_sde_connector_state(conn_state);
+	if (!c_state || !adj_mode) {
+		SDE_ERROR("invalid params c_state: %d, adj_mode %d\n",
+				c_state == NULL, adj_mode == NULL);
+		return -EINVAL;
+	}
+
+	c_state->msm_mode.base = adj_mode;
+	return 0;
 }
 
 int sde_connector_get_mode_info(struct drm_connector *conn,

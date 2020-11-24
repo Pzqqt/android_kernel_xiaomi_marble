@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -587,6 +587,13 @@ static inline int sde_crtc_request_frame_reset(struct drm_crtc *crtc)
  * @en: true to enable vblanks, false to disable
  */
 int sde_crtc_vblank(struct drm_crtc *crtc, bool en);
+
+/**
+ * sde_crtc_get_msm_mode - get msm_mode for a given crtc state
+ * @c_state: Pointer to drm crtc state object
+ * Returns: msm_display_mode corresponding to this crtc state, or NULL if none
+ */
+struct msm_display_mode *sde_crtc_get_msm_mode(struct drm_crtc_state *c_state);
 
 /**
  * sde_crtc_commit_kickoff - trigger kickoff of the commit for this crtc

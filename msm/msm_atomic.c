@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2014 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -40,16 +40,25 @@ static inline bool _msm_seamless_for_crtc(struct drm_atomic_state *state,
 {
 	struct drm_connector *connector = NULL;
 	struct drm_connector_state  *conn_state = NULL;
+	struct msm_display_mode *msm_mode;
+	struct msm_drm_private *priv = state->dev->dev_private;
 	int i = 0;
 	int conn_cnt = 0;
 
-	if (msm_is_mode_seamless(&crtc_state->mode) ||
-		msm_is_mode_seamless_vrr(&crtc_state->adjusted_mode) ||
-		msm_is_mode_seamless_poms(&crtc_state->adjusted_mode) ||
-		msm_is_mode_seamless_dyn_clk(&crtc_state->adjusted_mode))
+	if (!priv || !priv->kms || !priv->kms->funcs->get_msm_mode)
+		return false;
+
+	msm_mode = priv->kms->funcs->get_msm_mode(crtc_state);
+	if (!msm_mode)
+		return false;
+
+	if (msm_is_mode_seamless(msm_mode) ||
+		msm_is_mode_seamless_vrr(msm_mode) ||
+		msm_is_mode_seamless_poms(msm_mode) ||
+		msm_is_mode_seamless_dyn_clk(msm_mode))
 		return true;
 
-	if (msm_is_mode_seamless_dms(&crtc_state->adjusted_mode) && !enable)
+	if (msm_is_mode_seamless_dms(msm_mode) && !enable)
 		return true;
 
 	if (!crtc_state->mode_changed && crtc_state->connectors_changed) {
@@ -71,6 +80,9 @@ static inline bool _msm_seamless_for_crtc(struct drm_atomic_state *state,
 static inline bool _msm_seamless_for_conn(struct drm_connector *connector,
 		struct drm_connector_state *old_conn_state, bool enable)
 {
+	struct msm_display_mode *msm_mode;
+	struct msm_drm_private *priv = connector->dev->dev_private;
+
 	if (!old_conn_state || !old_conn_state->crtc)
 		return false;
 
@@ -88,19 +100,17 @@ static inline bool _msm_seamless_for_conn(struct drm_connector *connector,
 		old_conn_state->crtc->state->connectors_changed)
 		return false;
 
-	if (msm_is_mode_seamless(&old_conn_state->crtc->state->mode))
-		return true;
+	if (!priv || !priv->kms || !priv->kms->funcs->get_msm_mode)
+		return false;
 
-	if (msm_is_mode_seamless_vrr(
-			&old_conn_state->crtc->state->adjusted_mode))
-		return true;
+	msm_mode = priv->kms->funcs->get_msm_mode(old_conn_state->crtc->state);
+	if (!msm_mode)
+		return false;
 
-	if (msm_is_mode_seamless_dyn_clk(
-			 &old_conn_state->crtc->state->adjusted_mode))
-		return true;
-
-	if (msm_is_mode_seamless_dms(
-			&old_conn_state->crtc->state->adjusted_mode))
+	if (msm_is_mode_seamless(msm_mode) ||
+		msm_is_mode_seamless_vrr(msm_mode) ||
+		msm_is_mode_seamless_dyn_clk(msm_mode) ||
+		msm_is_mode_seamless_dms(msm_mode))
 		return true;
 
 	return false;
@@ -359,6 +369,7 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 	for_each_oldnew_crtc_in_state(old_state, crtc, old_crtc_state,
 			new_crtc_state, i) {
 		const struct drm_crtc_helper_funcs *funcs;
+		struct msm_display_mode *msm_mode;
 
 		/* Need to filter out CRTCs where only planes change. */
 		if (!drm_atomic_crtc_needs_modeset(new_crtc_state))
@@ -382,8 +393,14 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 				funcs->commit(crtc);
 		}
 
-		if (msm_needs_vblank_pre_modeset(
-					&new_crtc_state->adjusted_mode))
+		if (!kms->funcs || !kms->funcs->get_msm_mode)
+			continue;
+
+		msm_mode = kms->funcs->get_msm_mode(new_crtc_state);
+		if (!msm_mode)
+			continue;
+
+		if (msm_needs_vblank_pre_modeset(msm_mode))
 			drm_crtc_wait_one_vblank(crtc);
 
 	}
