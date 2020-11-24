@@ -3,19 +3,34 @@
  * Copyright (c) 2016-2017, 2020 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/init.h>
+#include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/err.h>
+#include <linux/string.h>
+#include <linux/delay.h>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
 #include <linux/slab.h>
-#include <soc/qcom/subsystem_notif.h>
-#include <soc/qcom/service-notifier.h>
+#include <linux/remoteproc.h>
+#include <linux/remoteproc/qcom_rproc.h>
 #include <dsp/audio_notifier.h>
 #include "audio_ssr.h"
 #include "audio_pdr.h"
+
+
 
 /* Audio states internal to notifier. Client */
 /* used states defined in audio_notifier.h */
 /* for AUDIO_NOTIFIER_SERVICE_DOWN & UP */
 #define NO_SERVICE -2
 #define UNINIT_SERVICE -1
+
+static struct platform_device *adsp_private;
+
+struct adsp_notify_private {
+	struct rproc *rproc_h;
+};
 
 /*
  * Used for each client registered with audio notifier
@@ -39,8 +54,11 @@ struct service_info {
 	int                             domain_id;
 	int                             state;
 	void                            *handle;
-	/* Notifier block registered to service */
-	struct notifier_block           *nb;
+	/* Hook registered to service */
+	union {
+		void (*cb)(int, char *, void *);
+		struct notifier_block *nb;
+	} hook;
 	/* Used to determine when to register and deregister service */
 	int                             num_of_clients;
 	/* List of all clients registered to the service and domain */
@@ -51,8 +69,7 @@ static int audio_notifier_ssr_adsp_cb(struct notifier_block *this,
 				     unsigned long opcode, void *data);
 static int audio_notifier_ssr_modem_cb(struct notifier_block *this,
 				     unsigned long opcode, void *data);
-static int audio_notifier_pdr_adsp_cb(struct notifier_block *this,
-				     unsigned long opcode, void *data);
+static void audio_notifier_pdr_adsp_cb(int status, char *service_name, void *priv);
 
 static struct notifier_block notifier_ssr_adsp_nb = {
 	.notifier_call  = audio_notifier_ssr_adsp_cb,
@@ -64,11 +81,6 @@ static struct notifier_block notifier_ssr_modem_nb = {
 	.priority = 0,
 };
 
-static struct notifier_block notifier_pdr_adsp_nb = {
-	.notifier_call  = audio_notifier_pdr_adsp_cb,
-	.priority = 0,
-};
-
 static struct service_info service_data[AUDIO_NOTIFIER_MAX_SERVICES]
 				       [AUDIO_NOTIFIER_MAX_DOMAINS] = {
 
@@ -76,25 +88,25 @@ static struct service_info service_data[AUDIO_NOTIFIER_MAX_SERVICES]
 		.name = "SSR_ADSP",
 		.domain_id = AUDIO_SSR_DOMAIN_ADSP,
 		.state = AUDIO_NOTIFIER_SERVICE_DOWN,
-		.nb = &notifier_ssr_adsp_nb
+		.hook.nb = &notifier_ssr_adsp_nb
 	},
 	{
 		.name = "SSR_MODEM",
 		.domain_id = AUDIO_SSR_DOMAIN_MODEM,
 		.state = AUDIO_NOTIFIER_SERVICE_DOWN,
-		.nb = &notifier_ssr_modem_nb
+		.hook.nb = &notifier_ssr_modem_nb
 	} },
 
 	{{
 		.name = "PDR_ADSP",
 		.domain_id = AUDIO_PDR_DOMAIN_ADSP,
 		.state = UNINIT_SERVICE,
-		.nb = &notifier_pdr_adsp_nb
+		.hook.cb = &audio_notifier_pdr_adsp_cb
 	},
 	{	/* PDR MODEM service not enabled */
 		.name = "INVALID",
 		.state = NO_SERVICE,
-		.nb = NULL
+		.hook.nb = NULL
 	} }
 };
 
@@ -119,13 +131,26 @@ static int audio_notifier_get_default_service(int domain)
 	return service;
 }
 
-static void audio_notifier_disable_service(int service)
+#ifdef CONFIG_MSM_QDSP6_PDR
+static void audio_notifier_init_service(int service)
+{
+	int i;
+
+	for (i = 0; i < AUDIO_NOTIFIER_MAX_DOMAINS; i++) {
+		if (service_data[service][i].state == UNINIT_SERVICE)
+			service_data[service][i].state =
+				AUDIO_NOTIFIER_SERVICE_DOWN;
+	}
+}
+#else
+static void audio_notifier_init_service(int service)
 {
 	int i;
 
 	for (i = 0; i < AUDIO_NOTIFIER_MAX_DOMAINS; i++)
 		service_data[service][i].state = NO_SERVICE;
 }
+#endif
 
 static bool audio_notifier_is_service_enabled(int service)
 {
@@ -137,38 +162,34 @@ static bool audio_notifier_is_service_enabled(int service)
 	return false;
 }
 
-static void audio_notifier_init_service(int service)
-{
-	int i;
-
-	for (i = 0; i < AUDIO_NOTIFIER_MAX_DOMAINS; i++) {
-		if (service_data[service][i].state == UNINIT_SERVICE)
-			service_data[service][i].state =
-				AUDIO_NOTIFIER_SERVICE_DOWN;
-	}
-}
-
 static int audio_notifier_reg_service(int service, int domain)
 {
 	void *handle;
-	int ret = 0;
+	int ret = -EINVAL;
 	int curr_state = AUDIO_NOTIFIER_SERVICE_DOWN;
+	struct platform_device *pdev = adsp_private;
+	struct adsp_notify_private *priv = NULL;
+	struct rproc *rproc;
+
+	priv = platform_get_drvdata(pdev);
+	if (!priv) {
+		dev_err(&pdev->dev," %s: Private data get failed\n", __func__);
+		return ret;;
+	}
+
+	rproc = priv->rproc_h;
 
 	switch (service) {
 	case AUDIO_NOTIFIER_SSR_SERVICE:
-		handle = audio_ssr_register(
-			service_data[service][domain].domain_id,
-			service_data[service][domain].nb);
+		handle = audio_ssr_register(rproc->name,
+			service_data[service][domain].hook.nb);
 		break;
 	case AUDIO_NOTIFIER_PDR_SERVICE:
 		handle = audio_pdr_service_register(
 			service_data[service][domain].domain_id,
-			service_data[service][domain].nb, &curr_state);
+			service_data[service][domain].hook.cb);
 
-		if (curr_state == SERVREG_NOTIF_SERVICE_STATE_UP_V01)
-			curr_state = AUDIO_NOTIFIER_SERVICE_UP;
-		else
-			curr_state = AUDIO_NOTIFIER_SERVICE_DOWN;
+		curr_state = AUDIO_NOTIFIER_SERVICE_DOWN;
 		break;
 	default:
 		pr_err("%s: Invalid service %d\n",
@@ -203,12 +224,11 @@ static int audio_notifier_dereg_service(int service, int domain)
 	case AUDIO_NOTIFIER_SSR_SERVICE:
 		ret = audio_ssr_deregister(
 			service_data[service][domain].handle,
-			service_data[service][domain].nb);
+			service_data[service][domain].hook.nb);
 		break;
 	case AUDIO_NOTIFIER_PDR_SERVICE:
 		ret = audio_pdr_service_deregister(
-			service_data[service][domain].handle,
-			service_data[service][domain].nb);
+			service_data[service][domain].domain_id);
 		break;
 	default:
 		pr_err("%s: Invalid service %d\n",
@@ -396,39 +416,18 @@ static void audio_notifier_reg_all_clients(void)
 	}
 }
 
-static int audio_notifier_pdr_callback(struct notifier_block *this,
-				      unsigned long opcode, void *data)
-{
-	pr_debug("%s: Audio PDR framework state 0x%lx\n",
-		__func__, opcode);
-	mutex_lock(&notifier_mutex);
-	if (opcode == AUDIO_PDR_FRAMEWORK_DOWN)
-		audio_notifier_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
-	else
-		audio_notifier_init_service(AUDIO_NOTIFIER_PDR_SERVICE);
-
-	audio_notifier_reg_all_clients();
-	mutex_unlock(&notifier_mutex);
-	return 0;
-}
-
-static struct notifier_block pdr_nb = {
-	.notifier_call  = audio_notifier_pdr_callback,
-	.priority = 0,
-};
-
 static int audio_notifier_convert_opcode(unsigned long opcode,
 					unsigned long *notifier_opcode)
 {
 	int ret = 0;
 
 	switch (opcode) {
-	case SUBSYS_BEFORE_SHUTDOWN:
-	case SERVREG_NOTIF_SERVICE_STATE_DOWN_V01:
+	case QCOM_SSR_BEFORE_SHUTDOWN:
+	case SERVREG_SERVICE_STATE_DOWN:
 		*notifier_opcode = AUDIO_NOTIFIER_SERVICE_DOWN;
 		break;
-	case SUBSYS_AFTER_POWERUP:
-	case SERVREG_NOTIF_SERVICE_STATE_UP_V01:
+	case QCOM_SSR_AFTER_POWERUP:
+	case SERVREG_SERVICE_STATE_UP:
 		*notifier_opcode = AUDIO_NOTIFIER_SERVICE_UP;
 		break;
 	default:
@@ -470,12 +469,9 @@ done:
 	return NOTIFY_OK;
 }
 
-static int audio_notifier_pdr_adsp_cb(struct notifier_block *this,
-				     unsigned long opcode, void *data)
+static void audio_notifier_pdr_adsp_cb(int status, char *service_name, void *priv)
 {
-	return audio_notifier_service_cb(opcode,
-					AUDIO_NOTIFIER_PDR_SERVICE,
-					AUDIO_NOTIFIER_ADSP_DOMAIN);
+	audio_notifier_service_cb(status, AUDIO_NOTIFIER_PDR_SERVICE, AUDIO_NOTIFIER_ADSP_DOMAIN);
 }
 
 static int audio_notifier_ssr_adsp_cb(struct notifier_block *this,
@@ -573,7 +569,7 @@ done:
 }
 EXPORT_SYMBOL(audio_notifier_register);
 
-static int __init audio_notifier_subsys_init(void)
+static int audio_notifier_subsys_init(void)
 {
 	int i, j;
 
@@ -592,7 +588,7 @@ static int __init audio_notifier_subsys_init(void)
 	return 0;
 }
 
-static int __init audio_notifier_late_init(void)
+static int audio_notifier_late_init(void)
 {
 	/*
 	 * If pdr registration failed, register clients on next service
@@ -606,41 +602,78 @@ static int __init audio_notifier_late_init(void)
 	return 0;
 }
 
-#ifdef CONFIG_MSM_QDSP6_PDR
-static int __init audio_notifier_init(void)
+
+static int audio_notify_probe(struct platform_device *pdev)
 {
-	int ret;
+	int ret = -EINVAL;
+	struct adsp_notify_private *priv = NULL;
+	struct property *prop;
+	int size;
+	phandle rproc_phandle;
+
+	adsp_private = NULL;
+	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
+		ret = -ENOMEM;
+		return ret;
+	}
+	platform_set_drvdata(pdev, priv);
+	prop = of_find_property(pdev->dev.of_node, "qcom,rproc-handle", &size);
+	if (!prop) {
+		dev_err(&pdev->dev, "Missing remotproc handle\n");
+		return ret;
+	}
+	rproc_phandle = be32_to_cpup(prop->value);
+
+	priv->rproc_h = rproc_get_by_phandle(rproc_phandle);
+	if (!priv->rproc_h) {
+		dev_err(&pdev->dev, "remotproc handle NULL\n");
+		return ret;
+	}
+
+	adsp_private = pdev;
+
 
 	audio_notifier_subsys_init();
 
-	ret = audio_pdr_register(&pdr_nb);
-	if (ret < 0) {
-		pr_err("%s: PDR register failed, ret = %d, disable service\n",
-			__func__, ret);
-		audio_notifier_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
-	}
-
+	audio_notifier_init_service(AUDIO_NOTIFIER_PDR_SERVICE);
 	/* Do not return error since PDR enablement is not critical */
 	audio_notifier_late_init();
 
 	return 0;
 }
-#else
-static int __init audio_notifier_init(void)
+
+static int audio_notify_remove(struct platform_device *pdev)
 {
-	audio_notifier_subsys_init();
-	audio_notifier_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
-
-	audio_notifier_late_init();
-
 	return 0;
 }
-#endif
+
+static const struct of_device_id adsp_notify_dt_match[] = {
+	{ .compatible = "qcom,adsp-notify" },
+	{ }
+};
+MODULE_DEVICE_TABLE(of, adsp_notify_dt_match);
+
+static struct platform_driver adsp_notify_driver = {
+	.driver = {
+		.name = "adsp-notify",
+		.owner = THIS_MODULE,
+		.of_match_table = adsp_notify_dt_match,
+		.suppress_bind_attrs = true,
+	},
+	.probe = audio_notify_probe,
+	.remove = audio_notify_remove,
+};
+
+static int __init audio_notifier_init(void)
+{
+	return platform_driver_register(&adsp_notify_driver);
+}
 module_init(audio_notifier_init);
 
 static void __exit audio_notifier_exit(void)
 {
-	audio_pdr_deregister(&pdr_nb);
+	platform_driver_unregister(&adsp_notify_driver);
 }
 module_exit(audio_notifier_exit);
 

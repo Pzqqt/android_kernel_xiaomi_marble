@@ -1,39 +1,19 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __AUDIO_PDR_H_
 #define __AUDIO_PDR_H_
+
+#include <linux/soc/qcom/pdr.h>
 
 enum {
 	AUDIO_PDR_DOMAIN_ADSP,
 	AUDIO_PDR_DOMAIN_MAX
 };
 
-enum {
-	AUDIO_PDR_FRAMEWORK_DOWN,
-	AUDIO_PDR_FRAMEWORK_UP
-};
-
 #ifdef CONFIG_MSM_QDSP6_PDR
-
-/*
- * Use audio_pdr_register to register with the PDR subsystem this
- * should be done before module late init otherwise notification
- * of the AUDIO_PDR_FRAMEWORK_UP cannot be guaranteed.
- *
- * *nb - Pointer to a notifier block. Provide a callback function
- *       to be notified once the PDR framework has been initialized.
- *       Callback will receive either the AUDIO_PDR_FRAMEWORK_DOWN
- *       or AUDIO_PDR_FRAMEWORK_UP ioctl depending on the state of
- *       the PDR framework.
- *
- * Returns: Success: 0
- *          Failure: Error code
- */
-int audio_pdr_register(struct notifier_block *nb);
-int audio_pdr_deregister(struct notifier_block *nb);
 
 /*
  * Use audio_pdr_service_register to register with a PDR service
@@ -42,53 +22,35 @@ int audio_pdr_deregister(struct notifier_block *nb);
  * AUDIO_PDR_FRAMEWORK_UP ioctl.
  *
  * domain_id - Domain to use, example: AUDIO_PDR_ADSP
- * *nb - Pointer to a notifier block. Provide a callback function
- *       that will be notified of the state of the domain
- *       requested. The ioctls received by the callback are
- *       defined in service-notifier.h.
+ * *cb - Pointer to a callback function that will be notified of the state
+ *       of the domain requested. The ioctls received by the callback are
+ *       defined in pdr.h.
  *
  * Returns: Success: Client handle
  *          Failure: Pointer error code
  */
-void *audio_pdr_service_register(int domain_id,
-				 struct notifier_block *nb, int *curr_state);
+void *audio_pdr_service_register(int domain_id, void (*cb)(int, char *, void *));
 
 /*
  * Use audio_pdr_service_deregister to deregister with a PDR
  * service that was registered using the audio_pdr_service_register
  * API.
  *
- * *service_handle - Service handle returned by audio_pdr_service_register
- * *nb - Pointer to the notifier block. Used in the call to
- *       audio_pdr_service_register.
+ * domain_id - Domain to use, example: AUDIO_PDR_ADSP
  *
- * Returns: Success: Client handle
+ * Returns: Success: zero
  *          Failure: Error code
  */
-int audio_pdr_service_deregister(void *service_handle,
-				 struct notifier_block *nb);
+int audio_pdr_service_deregister(int domain_id);
 
 #else
 
-static inline int audio_pdr_register(struct notifier_block *nb)
-{
-	return -ENODEV;
-}
-
-static inline int audio_pdr_deregister(struct notifier_block *nb)
-{
-	return -ENODEV;
-}
-
-static inline void *audio_pdr_service_register(int domain_id,
-					       struct notifier_block *nb,
-					       int *curr_state)
+static inline void *audio_pdr_service_register(int domain_id, void (*cb)(int, char *, void *))
 {
 	return NULL;
 }
 
-static inline int audio_pdr_service_deregister(void *service_handle,
-					       struct notifier_block *nb)
+static inline int audio_pdr_service_deregister(int domain_id)
 {
 	return 0;
 }
