@@ -171,7 +171,7 @@ cm_lock_destroy(struct cnx_mgr *cm_ctx)
  */
 static inline void cm_lock_acquire(struct cnx_mgr *cm_ctx)
 {
-	qdf_spinlock_acquire(&cm_ctx->sm.cm_sm_lock);
+	qdf_spin_lock_bh(&cm_ctx->sm.cm_sm_lock);
 }
 
 /**
@@ -184,7 +184,7 @@ static inline void cm_lock_acquire(struct cnx_mgr *cm_ctx)
  */
 static inline void cm_lock_release(struct cnx_mgr *cm_ctx)
 {
-	qdf_spinlock_release(&cm_ctx->sm.cm_sm_lock);
+	qdf_spin_unlock_bh(&cm_ctx->sm.cm_sm_lock);
 }
 #else
 static inline void
