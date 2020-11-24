@@ -454,17 +454,10 @@ void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
  *
  * Return: bool
  */
-#ifdef CONN_MGR_ADV_FEATURE
 static inline bool cm_ser_get_blocking_cmd(void)
 {
 	return true;
 }
-#else
-static inline bool cm_ser_get_blocking_cmd(void)
-{
-	return false;
-}
-#endif
 
 /**
  * cm_get_cm_id() - Get unique cm id for connect/disconnect request
