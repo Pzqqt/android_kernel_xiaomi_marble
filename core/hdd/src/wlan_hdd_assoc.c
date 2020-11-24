@@ -2018,10 +2018,10 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	sme_reset_key(mac_handle, adapter->vdev_id);
 
 	if (adapter->device_mode == QDF_STA_MODE) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (vdev) {
 			wlan_crypto_free_vdev_key(vdev);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		}
 	}
 
@@ -2087,12 +2087,12 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	* module is enabled.
 	*/
 #ifdef WLAN_FEATURE_INTERFACE_MGR
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (vdev) {
 		ucfg_if_mgr_deliver_event(vdev,
 					  WLAN_IF_MGR_EV_DISCONNECT_COMPLETE,
 					  NULL);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	}
 #else
 	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc) &&
@@ -4394,7 +4394,7 @@ wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
 	uint32_t session_id = adapter->vdev_id;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev)
 		return;
 
@@ -4404,7 +4404,7 @@ wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
 				WLAN_CRYPTO_KEY_TYPE_UNICAST,
 				0);
 	}
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	if (errno)
 		hdd_err("ft set key failed");

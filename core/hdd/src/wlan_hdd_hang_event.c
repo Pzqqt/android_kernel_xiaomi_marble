@@ -79,7 +79,7 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (!vdev) {
 			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
@@ -88,7 +88,7 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 		hdd_buf_ptr = hdd_hang_data->hang_data + hdd_hang_data->offset;
 		if (hdd_hang_data->offset + total_len >
 				QDF_WLAN_HANG_FW_OFFSET) {
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 			hdd_adapter_dev_put_debug(adapter, dbgid);
 			if (next_adapter)
 				hdd_adapter_dev_put_debug(next_adapter,
@@ -104,7 +104,7 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 		cmd->vdev_state = wlan_vdev_mlme_get_state(vdev);
 		cmd->vdev_substate = wlan_vdev_mlme_get_substate(vdev);
 		hdd_hang_data->offset += total_len;
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}
 

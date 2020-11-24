@@ -6098,7 +6098,7 @@ static inline int drv_cmd_get_antenna_mode(struct hdd_adapter *adapter,
 	uint8_t len = 0;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev) {
 		hdd_err("vdev is NULL");
 		return -EINVAL;
@@ -6108,7 +6108,7 @@ static inline int drv_cmd_get_antenna_mode(struct hdd_adapter *adapter,
 	/* Overwrite this antenna mode if dynamic vdev chains are supported */
 	hdd_get_dynamic_antenna_mode(&antenna_mode,
 				     hdd_ctx->dynamic_nss_chains_support, vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
 			antenna_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);

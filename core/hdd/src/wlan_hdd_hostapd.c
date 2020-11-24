@@ -3103,7 +3103,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	 * Post the Channel Change request to SAP.
 	 */
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev) {
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		wlan_hdd_enable_roaming(adapter, RSO_SAP_CHANNEL_CHANGE);
@@ -3111,7 +3111,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	}
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE)
 		is_p2p_go_session = true;
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	strict = is_p2p_go_session;
 	strict = strict || forced;

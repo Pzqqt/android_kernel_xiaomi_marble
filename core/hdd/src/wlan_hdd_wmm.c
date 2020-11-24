@@ -1525,12 +1525,12 @@ QDF_STATUS hdd_send_dscp_up_map_to_fw(struct hdd_adapter *adapter)
 	struct wlan_objmgr_vdev *vdev;
 	int ret;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_FWOL_NB_ID);
 
 	if (vdev) {
 		/* Send DSCP to TID map table to FW */
 		ret = os_if_fwol_send_dscp_up_map_to_fw(vdev, dscp_to_up_map);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_FWOL_NB_ID);
 		if (ret && ret != -EOPNOTSUPP)
 			return QDF_STATUS_E_FAILURE;
 	}

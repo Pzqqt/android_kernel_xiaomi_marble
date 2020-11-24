@@ -56,7 +56,7 @@ hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
 	struct net_device *net_dev;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, FTM_TIME_SYNC_ID);
 	if (!vdev)
 		return;
 
@@ -83,5 +83,5 @@ hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
 						vdev, state,
 						hdd_sta_ctx->conn_info.bssid);
 out:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, FTM_TIME_SYNC_ID);
 }

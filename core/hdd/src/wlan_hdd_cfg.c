@@ -1297,7 +1297,7 @@ QDF_STATUS hdd_get_tx_nss(struct hdd_adapter *adapter, uint8_t *tx_nss)
 	enum band_info operating_band;
 	uint8_t proto_generic_nss;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev)
 		return QDF_STATUS_E_INVAL;
 
@@ -1306,7 +1306,7 @@ QDF_STATUS hdd_get_tx_nss(struct hdd_adapter *adapter, uint8_t *tx_nss)
 		dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
 		if (!dynamic_cfg) {
 			hdd_err("nss chain dynamic config NULL");
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 			return QDF_STATUS_E_INVAL;
 		}
 		if (adapter->device_mode == QDF_SAP_MODE ||
@@ -1331,7 +1331,7 @@ QDF_STATUS hdd_get_tx_nss(struct hdd_adapter *adapter, uint8_t *tx_nss)
 			*tx_nss = proto_generic_nss;
 	} else
 		*tx_nss = proto_generic_nss;
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev,  WLAN_OSIF_ID);
 
 	return status;
 }
@@ -1345,7 +1345,7 @@ QDF_STATUS hdd_get_rx_nss(struct hdd_adapter *adapter, uint8_t *rx_nss)
 	enum band_info operating_band;
 	uint8_t proto_generic_nss;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev)
 		return QDF_STATUS_E_INVAL;
 
@@ -1354,7 +1354,7 @@ QDF_STATUS hdd_get_rx_nss(struct hdd_adapter *adapter, uint8_t *rx_nss)
 		dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
 		if (!dynamic_cfg) {
 			hdd_err("nss chain dynamic config NULL");
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 			return QDF_STATUS_E_INVAL;
 		}
 		if (adapter->device_mode == QDF_SAP_MODE ||
@@ -1379,7 +1379,7 @@ QDF_STATUS hdd_get_rx_nss(struct hdd_adapter *adapter, uint8_t *rx_nss)
 			*rx_nss = proto_generic_nss;
 	} else
 		*rx_nss = proto_generic_nss;
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	return status;
 }

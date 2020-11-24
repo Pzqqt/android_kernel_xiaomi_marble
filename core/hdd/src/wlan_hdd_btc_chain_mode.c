@@ -151,12 +151,12 @@ static int __wlan_hdd_cfg80211_set_btc_chain_mode(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev)
 		return -EINVAL;
 
 	errno = wlan_cfg80211_coex_set_btc_chain_mode(vdev, data, data_len);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	return errno;
 }
