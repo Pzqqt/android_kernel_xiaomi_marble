@@ -2771,11 +2771,6 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch(
 	 */
 	policy_mgr_stop_opportunistic_timer(psoc);
 
-	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
-		policy_mgr_debug("Already in DBS mode");
-		return QDF_STATUS_E_ALREADY;
-	}
-
 	if (wlan_reg_freq_to_band(ch_freq) != REG_BAND_2G)
 		return QDF_STATUS_E_NOSUPPORT;
 
