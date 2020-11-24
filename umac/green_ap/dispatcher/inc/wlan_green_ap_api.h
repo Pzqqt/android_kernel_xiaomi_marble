@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,4 +168,14 @@ void wlan_green_ap_suspend_handle(struct wlan_objmgr_pdev *pdev);
  * Return: Appropriate status
  */
 QDF_STATUS wlan_green_ap_get_capab(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_green_ap_is_ps_waiting() - is power save in wait state
+ * @pdev: pdev pointer
+ *
+ * Check if power save is in wait state
+ *
+ * Return: Success or Failure
+ */
+bool wlan_green_ap_is_ps_waiting(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_GREEN_AP_API_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -197,7 +197,7 @@ QDF_STATUS ucfg_green_ap_config(struct wlan_objmgr_pdev *pdev, uint8_t val)
 					wlan_green_ap_check_mode,
 					&flag, 0, WLAN_GREEN_AP_ID);
 		if (flag == 1) {
-			green_ap_err("Radio not in AP mode."
+			green_ap_err("Radio not in AP/RE mode."
 					"Feature not supported");
 			return QDF_STATUS_E_NOSUPPORT;
 		}

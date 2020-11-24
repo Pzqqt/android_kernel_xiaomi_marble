@@ -498,3 +498,27 @@ void wlan_green_ap_suspend_handle(struct wlan_objmgr_pdev *pdev)
 
 	green_ap_ctx->ps_enable = WLAN_GREEN_AP_PS_SUSPEND;
 }
+
+bool wlan_green_ap_is_ps_waiting(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
+	if (!pdev) {
+		green_ap_err("pdev context passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_GREEN_AP);
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((green_ap_ctx->ps_state == WLAN_GREEN_AP_PS_WAIT_STATE) &&
+	    (green_ap_ctx->ps_enable)) {
+		return true;
+	}
+
+	return false;
+}
