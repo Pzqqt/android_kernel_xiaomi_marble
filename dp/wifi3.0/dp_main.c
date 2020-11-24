@@ -4328,20 +4328,24 @@ static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 			   ppdu_info_list_elem, ppdu_info_next) {
 		if (!ppdu_info)
 			break;
+		TAILQ_REMOVE(&pdev->ppdu_info_list,
+			     ppdu_info, ppdu_info_list_elem);
+		pdev->list_depth--;
 		qdf_assert_always(ppdu_info->nbuf);
 		qdf_nbuf_free(ppdu_info->nbuf);
 		qdf_mem_free(ppdu_info);
-		pdev->list_depth--;
 	}
 
 	TAILQ_FOREACH_SAFE(ppdu_info, &pdev->sched_comp_ppdu_list,
 			   ppdu_info_list_elem, ppdu_info_next) {
 		if (!ppdu_info)
 			break;
+		TAILQ_REMOVE(&pdev->sched_comp_ppdu_list,
+			     ppdu_info, ppdu_info_list_elem);
+		pdev->sched_comp_list_depth--;
 		qdf_assert_always(ppdu_info->nbuf);
 		qdf_nbuf_free(ppdu_info->nbuf);
 		qdf_mem_free(ppdu_info);
-		pdev->sched_comp_list_depth--;
 	}
 
 	if (pdev->ppdu_tlv_buf)
