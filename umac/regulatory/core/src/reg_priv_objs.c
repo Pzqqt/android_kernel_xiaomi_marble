@@ -65,6 +65,30 @@ struct wlan_regulatory_pdev_priv_obj *reg_get_pdev_obj(
 	return pdev_reg;
 }
 
+/*
+ * reg_set_5dot9_ghz_chan_in_master_mode - Set 5.9GHz channels to operate
+ * in master mode.
+ * @soc_reg_obj - Pointer to soc_reg_obj.
+ *
+ * Return: void
+ *
+ */
+#ifdef CONFIG_REG_CLIENT
+static void
+reg_set_5dot9_ghz_chan_in_master_mode(struct wlan_regulatory_psoc_priv_obj
+				      *soc_reg_obj)
+{
+	soc_reg_obj->enable_5dot9_ghz_chan_in_master_mode = false;
+}
+#else
+static void
+reg_set_5dot9_ghz_chan_in_master_mode(struct wlan_regulatory_psoc_priv_obj
+				      *soc_reg_obj)
+{
+	soc_reg_obj->enable_5dot9_ghz_chan_in_master_mode = true;
+}
+#endif
+
 QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg_list)
 {
@@ -94,7 +118,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->enable_srd_chan_in_master_mode = 0xFF;
 	soc_reg_obj->enable_11d_in_world_mode = false;
 	soc_reg_obj->five_dot_nine_ghz_supported = false;
-	soc_reg_obj->enable_5dot9_ghz_chan_in_master_mode = false;
+	reg_set_5dot9_ghz_chan_in_master_mode(soc_reg_obj);
 	soc_reg_obj->retain_nol_across_regdmn_update = false;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)

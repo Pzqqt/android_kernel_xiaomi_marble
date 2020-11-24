@@ -301,14 +301,6 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 			       struct reg_config_vars config_vars);
 
 /**
- * reg_is_regdb_offloaded() - is regdb offloaded
- * @psoc: Pointer to psoc object
- *
- * Return: true if regdb is offloaded, else false
- */
-bool reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc);
-
-/**
  * reg_program_mas_chan_list() - Program the master channel list
  * @psoc: Pointer to psoc structure
  * @reg_channels: Pointer to reg channels
@@ -418,11 +410,6 @@ static inline QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 					     struct reg_config_vars config_vars)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-static inline bool reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc)
-{
-	return false;
 }
 
 static inline void reg_program_mas_chan_list(

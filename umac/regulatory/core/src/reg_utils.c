@@ -813,19 +813,6 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-bool reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
-
-	psoc_priv_obj = reg_get_psoc_obj(psoc);
-	if (!psoc_priv_obj) {
-		reg_err("reg psoc private obj is NULL");
-		return false;
-	}
-
-	return psoc_priv_obj->offload_enabled;
-}
-
 void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 			       struct regulatory_channel *reg_channels,
 			       uint8_t *alpha2,

@@ -1457,4 +1457,11 @@ reg_modify_chan_list_for_max_chwidth(struct wlan_objmgr_pdev *pdev,
  */
 bool reg_is_phymode_unallowed(enum reg_phymode phy_in, uint32_t phymode_bitmap);
 
+/*
+ * reg_is_regdb_offloaded() - is regdb offloaded
+ * @psoc: Pointer to psoc object
+ *
+ * Return: true if regdb is offloaded, else false
+ */
+bool reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc);
 #endif
