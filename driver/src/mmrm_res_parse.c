@@ -34,13 +34,16 @@ static int mmrm_read_clk_pltfrm_rsrc_frm_drv_data(
 
 	pdata = ddata->platform_data;
 	cres = &ddata->clk_res;
+
 	cres->threshold = mmrm_find_key_value(pdata,
 						"qcom,mmrm_clk_threshold");
 	d_mpr_e("%s: configured mmrm clk threshold %d\n",
 		__func__, cres->threshold);
 
 	cres->scheme = mmrm_find_key_value(pdata,
-					"qcom,mmrm clk mgr scheme");
+					"qcom,mmrm_clk_mgr_scheme");
+	d_mpr_e("%s: configured mmrm scheme %d\n",
+		__func__, cres->scheme);
 
 	return rc;
 }

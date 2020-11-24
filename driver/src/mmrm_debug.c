@@ -7,21 +7,18 @@
 
 #include "mmrm_debug.h"
 
-int msm_mmrm_debug = MMRM_ERR | MMRM_PRINTK;
+int msm_mmrm_debug = MMRM_ERR | MMRM_WARN | MMRM_PRINTK;
 
 #define MAX_DBG_BUF_SIZE 4096
 
-static ssize_t msm_mmrm_debugfs_info_read(struct file *file,
-	char __user *buf,
-	size_t count,
-	loff_t *ppos)
+static ssize_t msm_mmrm_debugfs_info_read(
+	struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 	char *dbuf, *cur, *end;
 	ssize_t len = 0;
 
 	dbuf = kzalloc(MAX_DBG_BUF_SIZE, GFP_KERNEL);
-	if (!dbuf)
-	{
+	if (!dbuf) {
 		d_mpr_e("%s: Allocation failed!\n", __func__);
 		return -ENOMEM;
 	}
@@ -50,32 +47,32 @@ struct dentry *msm_mmrm_debugfs_init(void)
 
 	/* create a directory in debugfs root (/sys/kernel/debug) */
 	dir = debugfs_create_dir("msm_mmrm", NULL);
-	if (IS_ERR_OR_NULL(dir))
-	{
+	if (IS_ERR_OR_NULL(dir)) {
 		d_mpr_e("%s: Call to debugfs_create_dir(%s) failed!\n", __func__, "mmrm");
 		goto failed_create_dir;
 	}
 
 	/* basic info */
-	if (!debugfs_create_file("info", 0444, dir, &file_val, &msm_mmrm_debugfs_info_fops))
-	{
+	if (!debugfs_create_file("info", 0444, dir, &file_val, &msm_mmrm_debugfs_info_fops)) {
 		d_mpr_e("%s: Call to debugfs_create_file(%s) failed!\n", __func__, "info");
 		goto failed_create_dir;
 	}
 
-#define __debugfs_create(__type, __name, __value) ({ \
-	struct dentry *f = debugfs_create_##__type(__name, 0644, dir, __value); \
-	if (IS_ERR_OR_NULL(f)) { \
-		d_mpr_e("%s: Failed creating debugfs file '%pd/%s'\n", \
-			__func__, dir, __name); \
-		f = NULL; \
-	} \
-	f; \
-})
+#define __debugfs_create(__type, __name, __value) \
+	({ \
+		struct dentry *f = debugfs_create_##__type(__name, 0644, dir, __value); \
+		if (IS_ERR_OR_NULL(f)) { \
+			d_mpr_e("%s: Failed creating debugfs file '%pd/%s'\n", \
+				__func__, \
+				dir, \
+				__name); \
+			f = NULL; \
+		} \
+		f; \
+	})
 
 	/* add other params here */
-	ok =
-	__debugfs_create(u32, "debug_level", &msm_mmrm_debug);
+	ok = __debugfs_create(u32, "debug_level", &msm_mmrm_debug);
 
 #undef __debugfs_create
 

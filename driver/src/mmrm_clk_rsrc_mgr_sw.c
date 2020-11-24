@@ -164,12 +164,23 @@ static int mmrm_sw_get_req_level(
 
 	/* get voltage corner */
 	voltage_corner = qcom_clk_get_voltage(tbl_entry->clk, clk_val);
+	if (voltage_corner < 0 || voltage_corner > mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_TURBO]) {
+		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for clk rate(%llu)\n",
+			__func__,
+			tbl_entry->clk_src_id,
+			voltage_corner,
+			clk_val);
+		rc = voltage_corner;
+		goto err_invalid_corner;
+	}
 
 	/* voltage corner is below svsl1 */
 	if (voltage_corner < mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1]) {
 		/* TBD: remove this when scaling calculations are added */
-		d_mpr_e("%s: csid(%d): lower voltage corner(%d)\n",
-			__func__, tbl_entry->clk_src_id, voltage_corner);
+		d_mpr_w("%s: csid(%d): lower voltage corner(%d)\n",
+			__func__,
+			tbl_entry->clk_src_id,
+			voltage_corner);
 		*req_level = MMRM_VDD_LEVEL_SVS_L1;
 		goto exit_no_err;
 	}
@@ -182,7 +193,10 @@ static int mmrm_sw_get_req_level(
 
 	if (level == MMRM_VDD_LEVEL_MAX) {
 		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for clk rate(%llu)\n",
-			__func__, tbl_entry->clk_src_id, voltage_corner, clk_val);
+			__func__,
+			tbl_entry->clk_src_id,
+			voltage_corner,
+			clk_val);
 		rc = -EINVAL;
 		goto err_invalid_corner;
 	}
