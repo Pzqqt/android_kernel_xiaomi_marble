@@ -44,6 +44,8 @@ static struct dsi_display_boot_param boot_displays[MAX_DSI_ACTIVE_DISPLAY] = {
 	{.boot_param = dsi_display_secondary},
 };
 
+static void dsi_display_panel_id_notification(struct dsi_display *display);
+
 static const struct of_device_id dsi_display_dt_match[] = {
 	{.compatible = "qcom,dsi-display"},
 	{}
@@ -2448,6 +2450,7 @@ void dsi_display_enable_event(struct drm_connector *connector,
 			display_for_each_ctrl(i, display)
 				display->ctrl[i].ctrl->panel_id_cb
 				    = *event_info;
+		dsi_display_panel_id_notification(display);
 		break;
 	default:
 		/* nothing to do */
