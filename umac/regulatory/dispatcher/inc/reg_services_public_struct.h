@@ -779,6 +779,7 @@ enum country_src {
  * @max_bw: max bandwidth
  * @nol_chan: whether channel is nol
  * @nol_history: Set NOL-History when STA vap detects RADAR.
+ * @is_chan_hop_blocked: Whether channel is blocked for ACS hopping.
  */
 struct regulatory_channel {
 	qdf_freq_t center_freq;
@@ -791,6 +792,9 @@ struct regulatory_channel {
 	uint8_t ant_gain;
 	bool nol_chan;
 	bool nol_history;
+#ifdef CONFIG_HOST_FIND_CHAN
+	bool is_chan_hop_blocked;
+#endif
 };
 
 /**
