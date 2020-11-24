@@ -1253,14 +1253,10 @@ int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	if (inst->codec_set)
-		return 0;
-
 	rc = venus_hfi_session_set_codec(inst);
 	if (rc)
 		return rc;
 
-	inst->codec_set = true;
 	return 0;
 }
 

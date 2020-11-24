@@ -21,5 +21,7 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst);
 int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_output_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd);
+int msm_vdec_subscribe_port_settings_change(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port);
 
 #endif // _MSM_VDEC_H_

@@ -130,6 +130,30 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 	return 0;
 }
 
+static int handle_session_info(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt)
+{
+
+	int rc = 0;
+	char *info;
+
+	switch (pkt->type) {
+	case HFI_INFO_UNSUPPORTED:
+		info = "unsupported";
+		break;
+	case HFI_INFO_DATA_CORRUPT:
+		info = "data corrupt";
+		break;
+	default:
+		info = "unknown";
+		break;
+	}
+
+	s_vpr_e(inst->sid, "session info (%#x): %s\n", pkt->type, info);
+
+	return rc;
+}
+
 static int handle_session_error(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -633,7 +657,8 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
 	buf_type = buffer->type;
 	if (!is_valid_hfi_buffer_type(inst, buf_type, __func__)) {
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		/* TODO */
+		//msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 
@@ -915,9 +940,9 @@ static int handle_session_response(struct msm_vidc_core *core,
 			goto exit;
 		}
 		packet = (struct hfi_packet *)pkt;
-		if (packet->type < HFI_CMD_END &&
-		    packet->type > HFI_CMD_BEGIN) {
-			if (inst->hfi_cmd_type || inst->hfi_port) {
+		if (packet->type > HFI_CMD_BEGIN &&
+		    packet->type < HFI_CMD_END) {
+			if (inst->hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
 				s_vpr_e(inst->sid,
 					"%s: invalid cmd %d, port %d \n",
 					__func__, inst->hfi_cmd_type,
@@ -933,6 +958,9 @@ static int handle_session_response(struct msm_vidc_core *core,
 		} else if (packet->type > HFI_SESSION_ERROR_BEGIN &&
 			   packet->type < HFI_SESSION_ERROR_END) {
 			rc = handle_session_error(inst, packet);
+		} else if (packet->type > HFI_INFORMATION_BEGIN &&
+				packet->type < HFI_INFORMATION_END) {
+			rc = handle_session_info(inst, packet);
 		} else {
 			s_vpr_e(inst->sid, "%s: Unknown packet type: %#x\n",
 				__func__, packet->type);

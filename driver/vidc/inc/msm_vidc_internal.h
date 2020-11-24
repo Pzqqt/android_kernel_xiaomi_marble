@@ -131,6 +131,7 @@ enum msm_vidc_buffer_type {
 	MSM_VIDC_BUF_LINE,
 	MSM_VIDC_BUF_DPB,
 	MSM_VIDC_BUF_PERSIST,
+	MSM_VIDC_BUF_VPSS,
 };
 
 /* always match with v4l2 flags V4L2_BUF_FLAG_* */

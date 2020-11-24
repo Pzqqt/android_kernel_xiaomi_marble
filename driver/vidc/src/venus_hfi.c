@@ -921,24 +921,11 @@ dbg_error_null:
 	return rc;
 }
 
-// TODO: revisit once firmware updated to latest interface headers
-struct hfi_packet_header {
-	u32 size;
-	u32 packet_type;
-};
-
-struct hfi_msg_sys_debug_packet {
-	u32 size;
-	u32 packet_type;
-	u32 msg_type;
-	u32 msg_size;
-	u32 time_stamp_hi;
-	u32 time_stamp_lo;
-	u8 rg_msg_data[1];
-};
-
-static void __flush_debug_queue(struct msm_vidc_core *core, u8 *packet)
+static void __flush_debug_queue(struct msm_vidc_core *core,
+	u8 *packet, u32 packet_size)
 {
+	u8 *log;
+	struct hfi_debug_header *pkt;
 	bool local_packet = false;
 	enum vidc_msg_prio log_level = msm_vidc_debug;
 
@@ -947,12 +934,13 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *packet)
 		return;
 	}
 
-	if (!packet) {
+	if (!packet || !packet_size) {
 		packet = kzalloc(VIDC_IFACEQ_VAR_HUGE_PKT_SIZE, GFP_KERNEL);
 		if (!packet) {
 			d_vpr_e("%s: fail to allocate\n", __func__);
 			return;
 		}
+		packet_size = VIDC_IFACEQ_VAR_HUGE_PKT_SIZE;
 
 		local_packet = true;
 
@@ -963,45 +951,31 @@ static void __flush_debug_queue(struct msm_vidc_core *core, u8 *packet)
 		log_level |= FW_PRINTK;
 	}
 
-#define SKIP_INVALID_PKT(pkt_size, payload_size, pkt_hdr_size) { \
-		if (pkt_size < pkt_hdr_size || \
-			payload_size < MIN_PAYLOAD_SIZE || \
-			payload_size > \
-			(pkt_size - pkt_hdr_size + sizeof(u8))) { \
-			d_vpr_e("%s: invalid msg size - %d\n", \
-				__func__, payload_size); \
-			continue; \
-		} \
-	}
-
 	while (!__iface_dbgq_read(core, packet)) {
-		struct hfi_packet_header *pkt =
-			(struct hfi_packet_header *) packet;
+		pkt = (struct hfi_debug_header *) packet;
 
-		if (pkt->size < sizeof(struct hfi_packet_header)) {
-			d_vpr_e("Invalid pkt size - %s\n", __func__);
+		if (pkt->size < sizeof(struct hfi_debug_header)) {
+			d_vpr_e("%s: invalid pkt size %d\n",
+				__func__, pkt->size);
+			continue;
+		}
+		if (pkt->size > packet_size) {
+			d_vpr_e("%s: pkt size[%d] > packet_size[%d]\n",
+				__func__, pkt->size, packet_size);
 			continue;
 		}
 
-		if (1) {
-			struct hfi_msg_sys_debug_packet *pkt =
-				(struct hfi_msg_sys_debug_packet *) packet;
-
-			SKIP_INVALID_PKT(pkt->size,
-				pkt->msg_size, sizeof(*pkt));
-
-			/*
-			 * All fw messages starts with new line character. This
-			 * causes dprintk to print this message in two lines
-			 * in the kernel log. Ignoring the first character
-			 * from the message fixes this to print it in a single
-			 * line.
-			 */
-			pkt->rg_msg_data[pkt->msg_size-1] = '\0';
-			dprintk_firmware(log_level, "%s", &pkt->rg_msg_data[1]);
-		}
+		packet[packet_size - 1] = '\0';
+		/*
+		 * All fw messages starts with new line character. This
+		 * causes dprintk to print this message in two lines
+		 * in the kernel log. Ignoring the first character
+		 * from the message fixes this to print it in a single
+		 * line.
+		 */
+		log = (u8 *)packet + sizeof(struct hfi_debug_header) + 1;
+		dprintk_firmware(log_level, "%s", log);
 	}
-#undef SKIP_INVALID_PKT
 
 	if (local_packet)
 		kfree(packet);
@@ -1104,7 +1078,7 @@ static int __power_collapse(struct msm_vidc_core *core, bool force)
 	if (rc)
 		goto skip_power_off;
 
-	__flush_debug_queue(core, core->packet);
+	__flush_debug_queue(core, core->packet, core->packet_size);
 
 	rc = __suspend(core);
 	if (rc)
@@ -2439,7 +2413,7 @@ static int __response_handler(struct msm_vidc_core *core)
 	}
 
 	__schedule_power_collapse_work(core);
-	__flush_debug_queue(core, core->response_packet);
+	__flush_debug_queue(core, core->response_packet, core->packet_size);
 
 	return rc;
 }

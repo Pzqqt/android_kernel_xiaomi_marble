@@ -164,10 +164,24 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	}
 	s_vpr_h(inst->sid, "Streamon: %d\n", q->type);
 
-	if (!inst->codec_set) {
+	if (!inst->once_per_session_set) {
+		inst->once_per_session_set = true;
 		rc = msm_vidc_session_set_codec(inst);
 		if (rc)
-			return -EINVAL;
+			return rc;
+		if (is_decode_session(inst)) {
+			if (q->type == INPUT_MPLANE) {
+				rc = msm_vdec_subscribe_port_settings_change(
+					inst, INPUT_PORT);
+				if (rc)
+					return rc;
+			} else if (q->type == OUTPUT_MPLANE) {
+				rc = msm_vdec_subscribe_port_settings_change(
+					inst, OUTPUT_PORT);
+				if (rc)
+					return rc;
+			}
+		}
 	}
 
 	/*
