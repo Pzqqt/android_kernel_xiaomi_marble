@@ -18861,18 +18861,17 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		 */
 		if (adapter->device_mode == QDF_STA_MODE &&
 		    (adapter->scan_info.default_scan_ies ||
-		     adapter->scan_info.scan_add_ie.length) &&
-		    !roam_profile->nAddIEScanLength) {
-			if (adapter->scan_info.default_scan_ies) {
-				roam_profile->pAddIEScan =
-					adapter->scan_info.default_scan_ies;
-				roam_profile->nAddIEScanLength =
-					adapter->scan_info.default_scan_ies_len;
-			} else if (adapter->scan_info.scan_add_ie.length) {
+		     adapter->scan_info.scan_add_ie.length)) {
+			if (adapter->scan_info.scan_add_ie.length) {
 				roam_profile->pAddIEScan =
 					adapter->scan_info.scan_add_ie.addIEdata;
 				roam_profile->nAddIEScanLength =
 					adapter->scan_info.scan_add_ie.length;
+			} else if (adapter->scan_info.default_scan_ies) {
+				roam_profile->pAddIEScan =
+					adapter->scan_info.default_scan_ies;
+				roam_profile->nAddIEScanLength =
+					adapter->scan_info.default_scan_ies_len;
 			}
 		}
 

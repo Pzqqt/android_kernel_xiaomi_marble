@@ -7837,7 +7837,7 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 			pSrcProfile->nWAPIReqIELength);
 	}
 #endif /* FEATURE_WLAN_WAPI */
-	if (pSrcProfile->nAddIEScanLength) {
+	if (pSrcProfile->nAddIEScanLength && pSrcProfile->pAddIEScan) {
 		pDstProfile->pAddIEScan =
 			qdf_mem_malloc(pSrcProfile->nAddIEScanLength);
 		if (!pDstProfile->pAddIEScan) {
