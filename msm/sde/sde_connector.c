@@ -670,8 +670,7 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 
 	bl_config->bl_scale = c_conn->bl_scale > MAX_BL_SCALE_LEVEL ?
 			MAX_BL_SCALE_LEVEL : c_conn->bl_scale;
-	bl_config->bl_scale_sv = c_conn->bl_scale_sv > MAX_SV_BL_SCALE_LEVEL ?
-			MAX_SV_BL_SCALE_LEVEL : c_conn->bl_scale_sv;
+	bl_config->bl_scale_sv = c_conn->bl_scale_sv;
 
 	SDE_DEBUG("bl_scale = %u, bl_scale_sv = %u, bl_level = %u\n",
 		bl_config->bl_scale, bl_config->bl_scale_sv,
@@ -2836,7 +2835,7 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 		CONNECTOR_PROP_BL_SCALE);
 
 	msm_property_install_range(&c_conn->property_info, "sv_bl_scale",
-		0x0, 0, MAX_SV_BL_SCALE_LEVEL, MAX_SV_BL_SCALE_LEVEL,
+		0x0, 0, U32_MAX, MAX_SV_BL_SCALE_LEVEL,
 		CONNECTOR_PROP_SV_BL_SCALE);
 
 	c_conn->bl_scale_dirty = false;
