@@ -44,7 +44,7 @@
 
 #define SWR_MAX_CH_PER_PORT 8
 
-#define SWRM_NUM_AUTO_ENUM_SLAVES    6
+#define SWRM_NUM_AUTO_ENUM_SLAVES    11
 
 enum {
 	SWR_MSTR_PAUSE,
@@ -196,8 +196,8 @@ struct swr_mstr_ctrl {
 	u32 wr_fifo_depth;
 	u32 num_auto_enum;
 	bool enable_slave_irq;
-	u64 logical_dev[SWRM_NUM_AUTO_ENUM_SLAVES];
 	u32 is_always_on;
+	struct swr_port_params pp[SWR_UC_MAX][SWR_MAX_MSTR_PORT_NUM];/*max_devNum * max_ports 11 * 14 */
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_swrm_dent;
 	struct dentry *debugfs_peek;

@@ -26,7 +26,6 @@
 #include "swr-slave-registers.h"
 #include <dsp/digital-cdc-rsc-mgr.h>
 #include "swr-mstr-ctrl.h"
-#include "swr-slave-port-config.h"
 
 #define SWR_NUM_PORTS    4 /* TODO - Get this info from DT */
 
@@ -130,32 +129,6 @@ static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm);
 static u32 swr_master_read(struct swr_mstr_ctrl *swrm, unsigned int reg_addr);
 static void swr_master_write(struct swr_mstr_ctrl *swrm, u16 reg_addr, u32 val);
 static int swrm_runtime_resume(struct device *dev);
-
-static u64 swrm_phy_dev[] = {
-	0,
-	0xd01170223,
-	0x858350223,
-	0x858350222,
-	0x858350221,
-	0x858350220,
-};
-
-static u8 swrm_get_device_id(struct swr_mstr_ctrl *swrm, u8 devnum)
-{
-	int i;
-
-	for (i = 1; i < (swrm->num_dev + 1); i++) {
-		if (swrm->logical_dev[devnum] == swrm_phy_dev[i])
-			break;
-	}
-
-	if (i == (swrm->num_dev + 1)) {
-		pr_info("%s: could not find the slave\n", __func__);
-		i = devnum;
-	}
-
-	return i;
-}
 
 static u8 swrm_get_clk_div(int mclk_freq, int bus_clk_freq)
 {
@@ -1361,37 +1334,44 @@ static u8 swrm_get_controller_offset1(struct swr_mstr_ctrl *swrm,
 	return offset1;
 }
 
+static int swrm_get_uc(int bus_clk)
+{
+	switch (bus_clk) {
+		case SWR_CLK_RATE_4P8MHZ:
+			return SWR_UC1;
+		case SWR_CLK_RATE_1P2MHZ:
+			return SWR_UC2;
+		case SWR_CLK_RATE_0P6MHZ:
+			return SWR_UC3;
+		case SWR_CLK_RATE_9P6MHZ:
+		default:
+			return SWR_UC0;
+	}
+	return SWR_UC0;
+}
+
 static void swrm_get_device_frame_shape(struct swr_mstr_ctrl *swrm,
 					struct swrm_mports *mport,
 					struct swr_port_info *port_req)
 {
-	u32 port_id = 0;
-	u8 dev_num = 0;
-	struct port_params *pp_dev;
-	struct port_params *pp_port;
+	u32 uc = SWR_UC0;
+	u32 port_id_offset = 0;
 
-	if ((swrm->master_id == MASTER_ID_TX) &&
-		((swrm->bus_clk == SWR_CLK_RATE_9P6MHZ) ||
-		 (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ) ||
-		 (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ))) {
-		dev_num = swrm_get_device_id(swrm, port_req->dev_num);
-		port_id = port_req->slave_port_id;
-		if (swrm->bus_clk == SWR_CLK_RATE_9P6MHZ)
-			pp_dev = swrdev_frame_params_9p6MHz[dev_num].pp;
-		else if (swrm->bus_clk == SWR_CLK_RATE_0P6MHZ)
-			pp_dev = swrdev_frame_params_0p6MHz[dev_num].pp;
-		else
-			pp_dev = swrdev_frame_params_4p8MHz[dev_num].pp;
-		pp_port = &pp_dev[port_id];
-		port_req->sinterval = pp_port->si;
-		port_req->offset1 = pp_port->off1;
-		port_req->offset2 = pp_port->off2;
-		port_req->hstart = pp_port->hstart;
-		port_req->hstop = pp_port->hstop;
-		port_req->word_length = pp_port->wd_len;
-		port_req->blk_pack_mode = pp_port->bp_mode;
-		port_req->blk_grp_count = pp_port->bgp_ctrl;
-		port_req->lane_ctrl = pp_port->lane_ctrl;
+	if (swrm->master_id == MASTER_ID_TX) {
+		uc = swrm_get_uc(swrm->bus_clk);
+		port_id_offset = (port_req->dev_num - 1) *
+					SWR_MAX_DEV_PORT_NUM +
+					port_req->slave_port_id;
+		port_req->sinterval =
+				((swrm->bus_clk * 2) / port_req->ch_rate) - 1;
+		port_req->offset1 = swrm->pp[uc][port_id_offset].offset1;
+		port_req->offset2 = 0x00;
+		port_req->hstart = 0xFF;
+		port_req->hstop = 0xFF;
+		port_req->word_length = 0xFF;
+		port_req->blk_pack_mode = 0xFF;
+		port_req->blk_grp_count = 0xFF;
+		port_req->lane_ctrl = swrm->pp[uc][port_id_offset].lane_ctrl;
 	} else {
 		/* copy master port config to slave */
 		port_req->sinterval = mport->sinterval;
@@ -2398,7 +2378,6 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 							"%s: devnum %d assigned for dev %llx\n",
 							__func__, i,
 							swr_dev->addr);
-						swrm->logical_dev[i] = swr_dev->addr;
 					}
 				}
 			}
@@ -2412,6 +2391,27 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
 	return ret;
+}
+
+static int swrm_init_port_params(struct swr_master *mstr, u32 dev_num,
+				 u32 num_ports,
+				 struct swr_dev_frame_config *uc_arr)
+{
+	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(mstr);
+	int i, j, port_id_offset;
+
+	if (!swrm) {
+		pr_err("%s: Invalid handle to swr controller\n", __func__);
+		return 0;
+	}
+	for (i = 0; i < SWR_UC_MAX; i++) {
+		for (j = 0; j < num_ports; j++) {
+			port_id_offset = (dev_num - 1) * SWR_MAX_DEV_PORT_NUM + j;
+			swrm->pp[i][port_id_offset].offset1 = uc_arr[i].pp[j].offset1;
+			swrm->pp[i][port_id_offset].lane_ctrl = uc_arr[i].pp[j].lane_ctrl;
+		}
+	}
+	return 0;
 }
 
 static void swrm_device_wakeup_vote(struct swr_master *mstr)
@@ -2613,7 +2613,6 @@ static int swrm_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct clk *lpass_core_hw_vote = NULL;
 	struct clk *lpass_core_audio = NULL;
-	u32 is_wcd937x = 0;
 
 	/* Allocate soundwire master driver structure */
 	swrm = devm_kzalloc(&pdev->dev, sizeof(struct swr_mstr_ctrl),
@@ -2654,13 +2653,6 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: failed to get master id\n", __func__);
 		goto err_pdata_fail;
 	}
-	/* update the physical device address if wcd937x. */
-	ret = of_property_read_u32(pdev->dev.of_node, "qcom,is_wcd937x",
-				&is_wcd937x);
-	if (ret)
-		dev_dbg(&pdev->dev, "%s: failed to get wcd info\n", __func__);
-	else if (is_wcd937x)
-		swrm_phy_dev[1] = 0xa01170223;
 
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,dynamic-port-map-supported",
 				&swrm->dynamic_port_map_supported);
@@ -2779,6 +2771,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->master.write = swrm_write;
 	swrm->master.bulk_write = swrm_bulk_write;
 	swrm->master.get_logical_dev_num = swrm_get_logical_dev_num;
+	swrm->master.init_port_params = swrm_init_port_params;
 	swrm->master.connect_port = swrm_connect_port;
 	swrm->master.disconnect_port = swrm_disconnect_port;
 	swrm->master.slvdev_datapath_control = swrm_slvdev_datapath_control;

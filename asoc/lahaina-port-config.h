@@ -7,6 +7,7 @@
 #define _LAHAINA_PORT_CONFIG
 
 #include <soc/swr-common.h>
+#include <soc/soundwire.h>
 
 #define WSA_MSTR_PORT_MASK 0xFF
 /*
