@@ -620,6 +620,20 @@ static void dfs_agile_state_complete_entry(void *ctx)
 
 	/* Mark the RCAC channel as CAC done. */
 	dfs_mark_adfs_chan_as_cac_done(dfs);
+	/*
+	 * Check if rcac is done on preffered channel.
+	 * If so, change channel from intermediate channel to preffered chan.
+	 */
+	dfs_precac_check_home_chan_change(dfs);
+	/*
+	 * In case of preCAC interCAC, if the above home channel change fails,
+	 * we explicitly do agile start (DFS_AGILE_SM_EV_AGILE_START) as we need
+	 * to pick the next agile channel. However, in case of RCAC, if the
+	 * above home channel change fails, the agile continues in the current
+	 * RCAC channel therefore explicit agile start
+	 * (DFS_AGILE_SM_EV_AGILE_START) is not required. Refer to function
+	 * "dfs_agile_state_running_event"
+	 */
 }
 
 /**

@@ -1362,6 +1362,7 @@ dfs_decide_precac_preferred_chan_for_freq(struct wlan_dfs *dfs,
 					  enum wlan_phymode mode)
 {
 	struct dfs_channel *chan;
+	qdf_freq_t rcac_freq;
 
 	chan = qdf_mem_malloc(sizeof(struct dfs_channel));
 
@@ -1401,6 +1402,27 @@ dfs_decide_precac_preferred_chan_for_freq(struct wlan_dfs *dfs,
 			  chan->dfs_ch_freq,
 			  dfs->dfs_autoswitch_des_mode,
 			  *pref_chan_freq);
+
+		if (dfs_is_agile_rcac_enabled(dfs)) {
+			dfs_get_rcac_freq(dfs, &rcac_freq);
+			if (chan->dfs_ch_freq != rcac_freq) {
+				/*
+				 * Since the upper layer will not do any channel
+				 * restart, the agile state machine will not
+				 * automatically be restarted. Therefore, stop
+				 * and start the the agile state machine on the
+				 * desired channel.
+				 */
+				dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+							 DFS_AGILE_SM_EV_AGILE_STOP,
+							 0, (void *)dfs);
+				dfs_set_rcac_freq(dfs, chan->dfs_ch_freq);
+				dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+							 DFS_AGILE_SM_EV_AGILE_START,
+							 0, (void *)dfs);
+			}
+		}
+
 		dfs->dfs_autoswitch_chan = chan;
 		return true;
 	}
