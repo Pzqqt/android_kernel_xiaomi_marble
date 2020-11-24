@@ -8524,6 +8524,7 @@ struct hdd_adapter *hdd_get_adapter_by_rand_macaddr(
 				dev_put(next_adapter->dev);
 			return adapter;
 		}
+		dev_put(adapter->dev);
 	}
 
 	return NULL;
@@ -18239,6 +18240,7 @@ wlan_hdd_del_p2p_interface(struct hdd_context *hdd_ctx)
 			if (vdev_sync)
 				osif_vdev_sync_destroy(vdev_sync);
 		}
+		dev_put(adapter->dev);
 	}
 }
 

@@ -88,6 +88,8 @@ static int wlan_hdd_recovery_notifier_call(struct notifier_block *block,
 				QDF_WLAN_HANG_FW_OFFSET) {
 			hdd_objmgr_put_vdev(vdev);
 			dev_put(adapter->dev);
+			if (next_adapter)
+				dev_put(next_adapter->dev);
 			return NOTIFY_STOP_MASK;
 		}
 		cmd = (struct hdd_hang_event_fixed_param *)hdd_buf_ptr;
