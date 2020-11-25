@@ -70,14 +70,18 @@
 #endif /* QCA_WIFI_3_0 */
 
 #if HTT_PADDR64
-#define HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(frag_filed_ptr)                       \
+#define HTT_TX_DESC_FRAG_FIELD_UPDATE(frag_filed_ptr, frag_desc_addr)          \
 do {                                                                           \
+	*frag_filed_ptr = qdf_get_lower_32_bits(frag_desc_addr);               \
 	frag_filed_ptr++;                                                      \
 	/* frags_desc_ptr.hi */                                                \
-	*frag_filed_ptr = 0;                                                   \
+	*frag_filed_ptr = qdf_get_upper_32_bits(frag_desc_addr) & 0x1F;        \
 } while (0)
 #else
-#define HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(frag_filed_ptr) {}
+#define HTT_TX_DESC_FRAG_FIELD_UPDATE(frag_filed_ptr, frag_desc_addr)          \
+do {                                                                           \
+	*frag_filed_ptr = qdf_get_lower_32_bits(frag_desc_addr);               \
+} while (0)
 #endif
 
 /*--- setup / tear-down functions -------------------------------------------*/
@@ -134,13 +138,14 @@ static void htt_tx_frag_desc_field_update(struct htt_pdev_t *pdev,
 	unsigned int target_page;
 	unsigned int offset;
 	struct qdf_mem_dma_page_t *dma_page;
+	qdf_dma_addr_t frag_desc_addr;
 
 	target_page = index / pdev->frag_descs.desc_pages.num_element_per_page;
 	offset = index % pdev->frag_descs.desc_pages.num_element_per_page;
 	dma_page = &pdev->frag_descs.desc_pages.dma_pages[target_page];
-	*fptr = (uint32_t)(dma_page->page_p_addr +
+	frag_desc_addr = (dma_page->page_p_addr +
 		offset * pdev->frag_descs.size);
-	HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(fptr);
+	HTT_TX_DESC_FRAG_FIELD_UPDATE(fptr, frag_desc_addr);
 }
 
 /**
