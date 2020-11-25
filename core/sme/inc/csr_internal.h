@@ -607,7 +607,6 @@ struct csr_roam_session {
 	bool supported_nss_1x1;
 	uint8_t vdev_nss;
 	uint8_t nss;
-	bool nss_forced_1x1;
 	bool disable_hi_rssi;
 	bool dhcp_done;
 	enum wlan_reason_code disconnect_reason;

@@ -1250,4 +1250,33 @@ static inline uint32_t lim_truncate_ppet(uint8_t *ppet, uint32_t max_len)
 	}
 	return max_len;
 }
+
+QDF_STATUS wlan_parse_bss_description_ies(struct mac_context *mac_ctx,
+					  struct bss_description *bss_desc,
+					  tDot11fBeaconIEs *ie_struct);
+
+QDF_STATUS
+wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
+				    struct bss_description *bss_desc,
+				    tDot11fBeaconIEs **ie_struct);
+
+QDF_STATUS
+wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
+				   struct bss_description *bss_desc,
+				   struct scan_cache_entry *scan_entry);
+
+/**
+ * wlan_get_ielen_from_bss_description() - to get IE length
+ * from struct bss_description structure
+ * @pBssDescr: pBssDescr
+ *
+ * This function is called in various places to get IE length
+ * from struct bss_description structure
+ *
+ * @Return: total IE length
+ */
+uint16_t
+wlan_get_ielen_from_bss_description(struct bss_description *bss_desc);
+
+
 #endif /* __PARSE_H__ */

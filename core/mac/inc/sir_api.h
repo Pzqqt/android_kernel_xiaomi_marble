@@ -958,9 +958,6 @@ struct join_req {
 	bool force_24ghz_in_ht20;
 	bool force_rsne_override;
 	bool supported_nss_1x1;
-	uint8_t vdev_nss;
-	uint8_t nss;
-	bool nss_forced_1x1;
 	bool enable_session_twt_support;
 	struct bss_description bssDescription;
 	/*

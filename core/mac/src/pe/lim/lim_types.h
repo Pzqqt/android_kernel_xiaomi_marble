@@ -1082,28 +1082,7 @@ lim_post_mlm_message(struct mac_context *mac, uint32_t msgType,
 static inline uint16_t
 lim_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 {
-	uint16_t ielen;
-
-	if (!pBssDescr)
-		return 0;
-
-	/*
-	 * Length of BSS desription is without length of
-	 * length itself and length of pointer
-	 * that holds ieFields
-	 *
-	 * <------------sizeof(struct bss_description)-------------------->
-	 * +--------+---------------------------------+---------------+
-	 * | length | other fields                    | pointer to IEs|
-	 * +--------+---------------------------------+---------------+
-	 *                                            ^
-	 *                                            ieFields
-	 */
-
-	ielen = (uint16_t)(pBssDescr->length + sizeof(pBssDescr->length) -
-			   GET_FIELD_OFFSET(struct bss_description, ieFields));
-
-	return ielen;
+	return wlan_get_ielen_from_bss_description(pBssDescr);
 } /*** end lim_get_ielen_from_bss_description() ***/
 
 /**
