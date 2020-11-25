@@ -206,6 +206,11 @@ struct sde_hw_intf_ops {
 			struct intf_tear_status *status);
 
 	/**
+	 * Reset the interface frame & line counter
+	 */
+	void (*reset_counter)(struct sde_hw_intf *intf);
+
+	/**
 	 * Enable processing of 2 pixels per clock
 	 */
 	void (*enable_wide_bus)(struct sde_hw_intf *intf, bool enable);

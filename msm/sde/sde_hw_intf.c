@@ -192,6 +192,13 @@ static inline void _check_and_set_comp_bit(struct sde_hw_intf *ctx,
 		(*intf_cfg2) |= BIT(12);
 }
 
+static void sde_hw_intf_reset_counter(struct sde_hw_intf *ctx)
+{
+	struct sde_hw_blk_reg_map *c = &ctx->hw;
+
+	SDE_REG_WRITE(c, INTF_LINE_COUNT, BIT(31));
+}
+
 static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 		const struct intf_timing_params *p,
 		const struct sde_format *fmt)
@@ -458,7 +465,7 @@ static void sde_hw_intf_get_status(
 	s->is_en = SDE_REG_READ(c, INTF_TIMING_ENGINE_EN);
 	if (s->is_en) {
 		s->frame_count = SDE_REG_READ(c, INTF_FRAME_COUNT);
-		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT);
+		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT) & 0xffff;
 	} else {
 		s->line_count = 0;
 		s->frame_count = 0;
@@ -474,7 +481,7 @@ static void sde_hw_intf_v1_get_status(
 	s->is_en = SDE_REG_READ(c, INTF_STATUS) & BIT(0);
 	if (s->is_en) {
 		s->frame_count = SDE_REG_READ(c, INTF_FRAME_COUNT);
-		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT);
+		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT) & 0xffff;
 	} else {
 		s->line_count = 0;
 		s->frame_count = 0;
@@ -537,7 +544,7 @@ static u32 sde_hw_intf_get_line_count(struct sde_hw_intf *intf)
 
 	c = &intf->hw;
 
-	return SDE_REG_READ(c, INTF_LINE_COUNT);
+	return SDE_REG_READ(c, INTF_LINE_COUNT) & 0xffff;
 }
 
 static u32 sde_hw_intf_get_underrun_line_count(struct sde_hw_intf *intf)
@@ -847,6 +854,9 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 		ops->check_and_reset_tearcheck =
 			sde_hw_intf_v1_check_and_reset_tearcheck;
 	}
+
+	if (cap & BIT(SDE_INTF_RESET_COUNTER))
+		ops->reset_counter = sde_hw_intf_reset_counter;
 }
 
 static struct sde_hw_blk_ops sde_hw_ops = {

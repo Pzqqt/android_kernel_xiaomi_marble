@@ -1085,6 +1085,9 @@ static void sde_encoder_phys_vid_disable(struct sde_encoder_phys *phys_enc)
 	sde_encoder_phys_inc_pending(phys_enc);
 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
 
+	if (phys_enc->hw_intf->ops.reset_counter)
+		phys_enc->hw_intf->ops.reset_counter(phys_enc->hw_intf);
+
 	sde_encoder_phys_vid_single_vblank_wait(phys_enc);
 	if (phys_enc->hw_intf->ops.get_status)
 		phys_enc->hw_intf->ops.get_status(phys_enc->hw_intf,

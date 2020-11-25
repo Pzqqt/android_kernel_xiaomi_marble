@@ -498,6 +498,7 @@ enum {
  * @SDE_INTF_TE_ALIGN_VSYNC     INTF block has POMS Align vsync support
  * @SDE_INTF_WD_TIMER          INTF block has WD Timer support
  * @SDE_INTF_STATUS             INTF block has INTF_STATUS register
+ * @SDE_INTF_RESET_COUNTER      INTF block has frame/line counter reset support
  * @SDE_INTF_MAX
  */
 enum {
@@ -506,6 +507,7 @@ enum {
 	SDE_INTF_TE_ALIGN_VSYNC,
 	SDE_INTF_WD_TIMER,
 	SDE_INTF_STATUS,
+	SDE_INTF_RESET_COUNTER,
 	SDE_INTF_MAX
 };
 
