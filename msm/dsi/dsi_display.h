@@ -194,6 +194,7 @@ struct dsi_display_ext_bridge {
  *                    Set to false, otherwise.
  * @tx_cmd_buf_ndx:   Index to the DSI debugfs TX CMD buffer.
  * @cmd_set:	      Debugfs TX cmd set.
+ * @enabled:	      Boolean to indicate display enabled.
  */
 struct dsi_display {
 	struct platform_device *pdev;
@@ -292,6 +293,8 @@ struct dsi_display {
 
 	int tx_cmd_buf_ndx;
 	struct dsi_panel_cmd_set cmd_set;
+
+	bool enabled;
 };
 
 int dsi_display_dev_probe(struct platform_device *pdev);
