@@ -1128,7 +1128,7 @@ wlan_objmgr_peer_get_comp_ref_cnt(struct wlan_objmgr_peer *peer,
  *
  * Return: void
  */
-#ifdef WLAN_OBJMGR_TRACE
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
 static inline void
 wlan_objmgr_peer_trace_init_lock(struct wlan_objmgr_peer *peer)
 {
@@ -1147,7 +1147,7 @@ wlan_objmgr_peer_trace_init_lock(struct wlan_objmgr_peer *peer)
  *
  * Return: void
  */
-#ifdef WLAN_OBJMGR_TRACE
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
 static inline void
 wlan_objmgr_peer_trace_deinit_lock(struct wlan_objmgr_peer *peer)
 {
