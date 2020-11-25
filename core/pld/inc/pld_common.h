@@ -470,6 +470,7 @@ void pld_allow_l1(struct device *dev);
 int pld_set_pcie_gen_speed(struct device *dev, u8 pcie_gen_speed);
 
 void pld_is_pci_link_down(struct device *dev);
+void pld_get_bus_reg_dump(struct device *dev, uint8_t *buf, uint32_t len);
 int pld_shadow_control(struct device *dev, bool enable);
 void pld_schedule_recovery_work(struct device *dev,
 				enum pld_recovery_reason reason);
