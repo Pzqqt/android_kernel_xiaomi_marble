@@ -826,82 +826,6 @@ static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 }
 #endif
 
-#ifdef QCA_SUPPORT_WDS_EXTENDED
-/**
- * dp_is_tx_extended() - Configure AST override from peer ast entry
- *
- * @vdev: DP vdev handle
- * @tx_exc_metadata: Handle that holds exception path metadata
- *
- * Return: if this packet needs to exception to FW or not
- *	   (false: exception to wlan FW, true: do not exception)
- */
-static inline bool
-dp_is_tx_extended(struct dp_vdev *vdev, struct cdp_tx_exception_metadata
-		  *tx_exc_metadata)
-{
-	if (qdf_likely(!vdev->wds_ext_enabled))
-		return false;
-
-	if (tx_exc_metadata && !tx_exc_metadata->is_wds_extended)
-		return false;
-
-	return true;
-}
-
-/**
- * dp_tx_wds_ext() - Configure AST override from peer ast entry
- *
- * @soc: DP soc handle
- * @vdev: DP vdev handle
- * @peer_id: peer_id of the peer for which packet is destined
- * @msdu_info: MSDU info to be setup in MSDU descriptor and MSDU extension desc.
- *
- * Return: None
- */
-static inline void
-dp_tx_wds_ext(struct dp_soc *soc, struct dp_vdev *vdev, uint16_t peer_id,
-	      struct dp_tx_msdu_info_s *msdu_info)
-{
-	struct dp_peer *peer = NULL;
-
-	msdu_info->search_type = vdev->search_type;
-	msdu_info->ast_idx = vdev->bss_ast_idx;
-	msdu_info->ast_hash = vdev->bss_ast_hash;
-
-	if (qdf_likely(!vdev->wds_ext_enabled))
-		return;
-
-	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX);
-
-	if (qdf_unlikely(!peer))
-		return;
-
-	msdu_info->search_type = HAL_TX_ADDR_INDEX_SEARCH;
-	msdu_info->ast_idx = peer->self_ast_entry->ast_idx;
-	msdu_info->ast_hash = peer->self_ast_entry->ast_hash_value;
-	dp_peer_unref_delete(peer, DP_MOD_ID_TX);
-	msdu_info->exception_fw = 0;
-}
-#else
-
-static inline bool
-dp_is_tx_extended(struct dp_vdev *vdev, struct cdp_tx_exception_metadata
-		  *tx_exc_metadata)
-{
-	return false;
-}
-
-static inline void
-dp_tx_wds_ext(struct dp_soc *soc, struct dp_vdev *vdev, uint16_t peer_id,
-	      struct dp_tx_msdu_info_s *msdu_info)
-{
-	msdu_info->search_type = vdev->search_type;
-	msdu_info->ast_idx = vdev->bss_ast_idx;
-	msdu_info->ast_hash = vdev->bss_ast_hash;
-}
-#endif
-
 #ifdef WLAN_DP_FEATURE_MARK_ICMP_REQ_TO_FW
 /**
  * dp_tx_is_nbuf_marked_exception() - Check if the packet has been marked as
@@ -980,9 +904,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		if (!dp_tx_multipass_process(soc, vdev, nbuf, msdu_info))
 			goto failure;
 	}
-
-	if (qdf_unlikely(dp_is_tx_extended(vdev, tx_exc_metadata)))
-		return tx_desc;
 
 	/* Packets marked by upper layer (OS-IF) to be sent to FW */
 	if (dp_tx_is_nbuf_marked_exception(soc, nbuf))
@@ -1444,16 +1365,16 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
 				vdev->lmac_id);
 	hal_tx_desc_set_search_type(soc->hal_soc, hal_tx_desc_cached,
-				    msdu_info->search_type);
+				    vdev->search_type);
 	hal_tx_desc_set_search_index(soc->hal_soc, hal_tx_desc_cached,
-				     msdu_info->ast_idx);
+				     vdev->bss_ast_idx);
 	hal_tx_desc_set_dscp_tid_table_id(soc->hal_soc, hal_tx_desc_cached,
 					  vdev->dscp_tid_map_id);
 
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
 			sec_type_map[sec_type]);
 	hal_tx_desc_set_cache_set_num(soc->hal_soc, hal_tx_desc_cached,
-				      (msdu_info->ast_hash & 0xF));
+				      (vdev->bss_ast_hash & 0xF));
 
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_length(hal_tx_desc_cached, tx_desc->length);
@@ -2753,8 +2674,6 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		goto fail;
 
 	msdu_info.tid = tx_exc_metadata->tid;
-	dp_tx_wds_ext(soc, vdev, tx_exc_metadata->peer_id, &msdu_info);
-
 	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 	dp_verbose_debug("skb "QDF_MAC_ADDR_FMT,
 			 QDF_MAC_ADDR_REF(nbuf->data));
@@ -2812,9 +2731,6 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		goto send_multiple;
 	}
-
-	if (qdf_unlikely(!dp_tx_mcast_enhance(vdev, nbuf)))
-		return NULL;
 
 	if (qdf_likely(tx_exc_metadata->is_tx_sniffer)) {
 		DP_STATS_INC_PKT(vdev, tx_i.sniffer_rcvd, 1,
@@ -3123,7 +3039,6 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	 * (TID override disabled)
 	 */
 	msdu_info.tid = HTT_TX_EXT_TID_INVALID;
-	dp_tx_wds_ext(soc, vdev, peer_id, &msdu_info);
 	DP_STATS_INC_PKT(vdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {

@@ -159,15 +159,12 @@ struct dp_tx_msdu_info_s {
 	uint8_t tid;
 	uint8_t exception_fw;
 	uint8_t is_tx_sniffer;
-	uint8_t search_type;
 	union {
 		struct qdf_tso_info_t tso_info;
 		struct dp_tx_sg_info_s sg_info;
 	} u;
 	uint32_t meta_data[DP_TX_MSDU_INFO_META_DATA_DWORDS];
 	uint16_t ppdu_cookie;
-	uint16_t ast_idx;
-	uint16_t ast_hash;
 };
 
 /**
