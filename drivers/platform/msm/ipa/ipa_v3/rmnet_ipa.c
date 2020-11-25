@@ -177,6 +177,7 @@ struct rmnet_ipa3_context {
 
 static struct rmnet_ipa3_context *rmnet_ipa3_ctx;
 static struct ipa3_rmnet_plat_drv_res ipa3_rmnet_res;
+bool ipa_net_initialized = false;
 
 /**
  * ipa3_setup_a7_qmap_hdr() - Setup default a7 qmap hdr
@@ -4886,8 +4887,12 @@ int ipa3_wwan_platform_driver_register(void)
 	if (rc)
 		IPAWANERR_RL("rmnet_ipa driver register fail rc=%d\n", rc);
 
+	/* We are here, network stack initialization is finished */
+	ipa_net_initialized = true;
+
 	return rc;
 }
+EXPORT_SYMBOL(ipa3_wwan_platform_driver_register);
 
 int ipa3_wwan_init(void)
 {
@@ -5003,6 +5008,7 @@ void ipa3_wwan_cleanup(void)
 	kfree(rmnet_ipa3_ctx);
 	rmnet_ipa3_ctx = NULL;
 }
+EXPORT_SYMBOL(ipa3_wwan_cleanup);
 
 static void ipa3_wwan_msg_free_cb(void *buff, u32 len, u32 type)
 {
