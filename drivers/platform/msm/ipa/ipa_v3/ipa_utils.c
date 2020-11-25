@@ -4223,6 +4223,87 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 21, 7, 9, 9, IPA_EE_Q6, GSI_ESCAPE_BUF_ONLY, 0 },
 			IPA_TX_INSTANCE_UL },
+
+	/*For test purposes only*/
+	[IPA_5_1][IPA_CLIENT_TEST_PROD] = {
+			true, IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_PKT_PROCESS_NO_DEC_NO_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 0, 14, 8, 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_NA },
+
+	[IPA_5_1][IPA_CLIENT_TEST1_PROD] = {
+			true, IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 3, 15, 8, 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_NA },
+
+	[IPA_5_1][IPA_CLIENT_TEST2_PROD] = {
+			true, IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 1, 0, 16, 24, IPA_EE_AP, GSI_SMART_PRE_FETCH, 7 },
+			IPA_TX_INSTANCE_NA },
+
+	[IPA_5_1][IPA_CLIENT_TEST3_PROD] = {
+			true, IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 10, 5, 8, 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_NA },
+
+	[IPA_5_1][IPA_CLIENT_TEST4_PROD] = {
+			true,	IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_DMA_ONLY,
+			QMB_MASTER_SELECT_DDR,
+			{ 7, 17, 8, 16, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0 },
+			IPA_TX_INSTANCE_NA },
+
+	[IPA_5_1][IPA_CLIENT_TEST_CONS] =	{
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_PCIE,
+			{ 32, 8, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 1 },
+			IPA_TX_INSTANCE_DL },
+
+	[IPA_5_1][IPA_CLIENT_TEST1_CONS] = {
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_PCIE,
+			{ 30, 24, 9, 9, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0 },
+			IPA_TX_INSTANCE_DL },
+
+	[IPA_5_1][IPA_CLIENT_TEST2_CONS] =	{
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 33, 6, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_DL },
+
+	[IPA_5_1][IPA_CLIENT_TEST3_CONS] =	{
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_PCIE,
+			{ 29, 23, 9, 9, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0 },
+			IPA_TX_INSTANCE_DL },
+
+	[IPA_5_1][IPA_CLIENT_TEST4_CONS] = {
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_PCIE,
+			{ 34, 25, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_DL },
 };
 
 static struct ipa3_mem_partition ipa_4_1_mem_part = {
@@ -5081,6 +5162,8 @@ const char *ipa_get_version_string(enum ipa_hw_type ver)
 	case IPA_HW_v5_0:
 		str = "5.0";
 		break;
+	case IPA_HW_v5_1:
+		str = "5.1";
 	default:
 		str = "Invalid version";
 		break;
@@ -5518,6 +5601,9 @@ u8 ipa3_get_hw_type_index(void)
 		hw_type_index = IPA_5_0;
 		if (ipa3_ctx->ipa_config_is_mhi)
 			hw_type_index = IPA_5_0_MHI;
+		break;
+	case IPA_HW_v5_1:
+		hw_type_index = IPA_5_1;
 		break;
 	default:
 		IPAERR("Incorrect IPA version %d\n", ipa3_ctx->ipa_hw_type);
@@ -7634,6 +7720,7 @@ int ipa3_init_mem_partition(enum ipa_hw_type type)
 		ipa3_ctx->ctrl->mem_partition = &ipa_4_11_mem_part;
 		break;
 	case IPA_HW_v5_0:
+	case IPA_HW_v5_1:
 		ipa3_ctx->ctrl->mem_partition = &ipa_5_0_mem_part;
 		break;
 	case IPA_HW_None:
@@ -9299,6 +9386,7 @@ static void ipa3_write_rsrc_grp_type_reg(int group_index,
 			break;
 	case IPA_5_0:
 	case IPA_5_0_MHI:
+	case IPA_5_1:
 		if (src) {
 			switch (group_index) {
 			case IPA_v5_0_GROUP_UL:
@@ -9539,6 +9627,7 @@ void ipa3_set_resorce_groups_min_max_limits(void)
 		break;
 	case IPA_5_0:
 	case IPA_5_0_MHI:
+	case IPA_5_1:
 		src_rsrc_type_max = IPA_v5_0_RSRC_GRP_TYPE_SRC_MAX;
 		dst_rsrc_type_max = IPA_v5_0_RSRC_GRP_TYPE_DST_MAX;
 		src_grp_idx_max = IPA_v5_0_SRC_GROUP_MAX;
