@@ -143,7 +143,7 @@ cm_activate_connect_req(struct wlan_serialization_command *cmd)
 				     QDF_MODULE_ID_MLME, &msg);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		mlme_err(CM_PREFIX_FMT "Failed to post scheduler_msg"
+		mlme_err(CM_PREFIX_FMT "Failed to post scheduler_msg",
 			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		return ret;

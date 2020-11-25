@@ -121,7 +121,8 @@ cm_activate_disconnect_req(struct wlan_serialization_command *cmd)
 		return ret;
 	}
 	mlme_debug(CM_PREFIX_FMT "Cmd act in sched cmd type:%d",
-		   CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_type);
+		   CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id),
+		   cmd->cmd_type);
 
 	return ret;
 }
@@ -130,7 +131,7 @@ static QDF_STATUS
 cm_activate_disconnect_req(struct wlan_serialization_command *cmd)
 {
 	return cm_sm_deliver_event(
-			cm_ctx->vdev,
+			cmd->vdev,
 			WLAN_CM_SM_EV_DISCONNECT_ACTIVE,
 			sizeof(wlan_cm_id),
 			&cmd->cmd_id);
