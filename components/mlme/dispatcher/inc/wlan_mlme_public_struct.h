@@ -2487,6 +2487,7 @@ struct wlan_mlme_sae_single_pmk {
  * @data_11kv:          Neighbor report/BTM parameters.
  * @btm_rsp:            BTM response information
  * @roam_init_info:     Roam initial info
+ * @roam_msg_info:      roam related message information
  */
 struct mlme_roam_debug_info {
 	struct wmi_roam_trigger_info trigger;
@@ -2495,6 +2496,7 @@ struct mlme_roam_debug_info {
 	struct wmi_neighbor_report_data data_11kv;
 	struct roam_btm_response_data btm_rsp;
 	struct roam_initial_data roam_init_info;
+	struct roam_msg_info roam_msg_info;
 };
 
 /**

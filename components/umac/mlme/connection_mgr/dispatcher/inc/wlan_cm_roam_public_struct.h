@@ -1219,6 +1219,25 @@ struct roam_initial_data {
 };
 
 /**
+ * struct roam_msg_info - Roam message related information
+ * @present:    Flag to check if the roam msg info tlv is present
+ * @timestamp:  Timestamp is the absolute time w.r.t host timer which is
+ * synchronized between the host and target
+ * @msg_id:     Message ID from WMI_ROAM_MSG_ID
+ * @msg_param1: msg_param1, values is based on the host & FW
+ * understanding and depend on the msg ID
+ * @msg_param2: msg_param2 value is based on the host & FW understanding
+ * and depend on the msg ID
+ */
+struct roam_msg_info {
+	bool present;
+	uint32_t timestamp;
+	uint32_t msg_id;
+	uint32_t msg_param1;
+	uint32_t msg_param2;
+};
+
+/**
  * enum wlan_cm_rso_control_requestor - Driver disabled roaming requestor that
  * will request the roam module to disable roaming based on the mlme operation
  * @RSO_INVALID_REQUESTOR: invalid requestor

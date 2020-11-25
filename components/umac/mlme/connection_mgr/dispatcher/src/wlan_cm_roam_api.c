@@ -254,6 +254,16 @@ wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
+				   struct roam_msg_info *dst, uint8_t idx)
+{
+	if (wmi->ops->extract_roam_msg_info)
+		return wmi->ops->extract_roam_msg_info(wmi, evt_buf, dst, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id, bool pcl_per_vdev)
 {
