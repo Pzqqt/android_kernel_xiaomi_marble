@@ -407,6 +407,19 @@ wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
 				       uint8_t idx);
 
 /**
+ * wlan_cm_roam_extract_roam_msg_info() - Extract Roam msg stats
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
+				   struct roam_msg_info *dst, uint8_t idx);
+
+/**
  * wlan_cm_roam_activate_pcl_per_vdev() - Set the PCL command to be sent per
  * vdev instead of pdev.
  * @psoc: PSOC pointer
@@ -559,7 +572,7 @@ wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
 				  struct roam_btm_response_data *dst,
 				  uint8_t idx)
 {
-	return true;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 static inline QDF_STATUS
@@ -567,7 +580,14 @@ wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
 				       struct roam_initial_data *dst,
 				       uint8_t idx)
 {
-	return true;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
+				   struct roam_msg_info *dst, uint8_t idx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 static inline void
