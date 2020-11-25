@@ -4815,7 +4815,7 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_SHFT_V4_9;
 		bmsk =
 		IPA_AGGR_FORCE_CLOSE_AGGR_FORCE_CLOSE_PIPE_BITMAP_BMSK_V4_9;
-	} else if (ipahal_ctx->hw_type <= IPA_HW_v5_0) {
+	} else if (ipahal_ctx->hw_type <= IPA_HW_v5_1) {
 		u8 reg_idx;
 
 		shft =
