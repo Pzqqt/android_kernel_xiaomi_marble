@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -210,6 +210,8 @@
 #define WLAN_SOC_F_WDS_EXTENDED        0x08000000
 /* Peer create response */
 #define WLAN_SOC_F_PEER_CREATE_RESP    0x10000000
+/* Strict channel mode */
+#define WLAN_SOC_F_STRICT_CHANNEL      0x20000000
 
 
 /* PSOC op flags */
