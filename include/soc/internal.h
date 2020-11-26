@@ -1,1 +1,1 @@
-../../../../drivers/base/regmap/internal.h
+../../../../../../kernel_platform/common/drivers/base/regmap/internal.h

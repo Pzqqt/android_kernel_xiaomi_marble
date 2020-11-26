@@ -1,1 +1,1 @@
-../../../drivers/pinctrl/pinctrl-utils.h
+../../../../../kernel_platform/common/drivers/pinctrl/pinctrl-utils.h
