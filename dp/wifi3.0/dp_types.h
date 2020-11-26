@@ -892,6 +892,10 @@ struct dp_soc_stats {
 		uint32_t msdu_scatter_wait_break;
 		/* Number of bar frames received */
 		uint32_t bar_frame;
+		/* Number of frames routed from rxdma */
+		uint32_t rxdma2rel_route_drop;
+		/* Number of frames routed from reo*/
+		uint32_t reo2rel_route_drop;
 
 		struct {
 			/* Invalid RBM error count */

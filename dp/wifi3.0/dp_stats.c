@@ -6640,6 +6640,10 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 		       soc->stats.rx.err.reo_cmd_send_fail);
 
 	DP_PRINT_STATS("Rx BAR frames:%d", soc->stats.rx.bar_frame);
+	DP_PRINT_STATS("Rxdma2rel route drop:%d",
+		       soc->stats.rx.rxdma2rel_route_drop);
+	DP_PRINT_STATS("Reo2rel route drop:%d",
+		       soc->stats.rx.reo2rel_route_drop);
 }
 
 #ifdef FEATURE_TSO_STATS

@@ -2256,6 +2256,10 @@ done:
 						   wbm_err_info.reo_err_code);
 					qdf_nbuf_free(nbuf);
 				}
+			} else if (wbm_err_info.reo_psh_rsn
+				   == HAL_RX_WBM_REO_PSH_RSN_ROUTE) {
+				DP_STATS_INC(soc, rx.reo2rel_route_drop, 1);
+				qdf_nbuf_free(nbuf);
 			}
 		} else if (wbm_err_info.wbm_err_src ==
 					HAL_RX_WBM_ERR_SRC_RXDMA) {
@@ -2320,6 +2324,10 @@ done:
 					dp_err_rl("RXDMA error %d",
 						  wbm_err_info.rxdma_err_code);
 				}
+			} else if (wbm_err_info.rxdma_psh_rsn
+				   == HAL_RX_WBM_RXDMA_PSH_RSN_ROUTE) {
+				DP_STATS_INC(soc, rx.rxdma2rel_route_drop, 1);
+				qdf_nbuf_free(nbuf);
 			}
 		} else {
 			/* Should not come here */
