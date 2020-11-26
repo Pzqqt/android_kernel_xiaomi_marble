@@ -2551,7 +2551,8 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 					sde_enc->cur_master->hw_mdptop);
 
 	if (sde_enc->cur_master->hw_mdptop &&
-			sde_enc->cur_master->hw_mdptop->ops.reset_ubwc)
+			sde_enc->cur_master->hw_mdptop->ops.reset_ubwc &&
+			!sde_in_trusted_vm(sde_kms))
 		sde_enc->cur_master->hw_mdptop->ops.reset_ubwc(
 				sde_enc->cur_master->hw_mdptop,
 				sde_kms->catalog);
