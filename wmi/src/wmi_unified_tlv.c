@@ -14112,6 +14112,42 @@ extract_vdev_tsf_report_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_pdev_csa_switch_count_status_tlv() - extract pdev csa switch count
+ *					      status tlv
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold csa switch count status event param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_pdev_csa_switch_count_status_tlv(
+				wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct pdev_csa_switch_count_status *param)
+{
+	WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_csa_switch_count_status_event_fixed_param *csa_status;
+
+	param_buf = (WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID_param_tlvs *)
+		     evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid CSA status event");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	csa_status = param_buf->fixed_param;
+
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
+							csa_status->pdev_id);
+	param->current_switch_count = csa_status->current_switch_count;
+	param->num_vdevs = csa_status->num_vdevs;
+	param->vdev_ids = param_buf->vdev_ids;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -14468,6 +14504,8 @@ struct wmi_ops tlv_ops =  {
 				extract_cp_stats_more_pending_tlv,
 	.send_vdev_tsf_tstamp_action_cmd = send_vdev_tsf_tstamp_action_cmd_tlv,
 	.extract_vdev_tsf_report_event = extract_vdev_tsf_report_event_tlv,
+	.extract_pdev_csa_switch_count_status =
+		extract_pdev_csa_switch_count_status_tlv,
 };
 
 /**

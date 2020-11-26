@@ -710,6 +710,59 @@ static int target_if_vdev_mgr_multi_vdev_restart_resp_handler(
 	return qdf_status_to_os_return(status);
 }
 
+/**
+ * target_if_pdev_csa_status_event_handler - CSA event handler
+ * @scn: Pointer to scn structure
+ * @data: pointer to event data
+ * @datalen: event data length
+ *
+ * Return: 0 on success
+ */
+static int target_if_pdev_csa_status_event_handler(
+		ol_scn_t scn,
+		uint8_t *data,
+		uint32_t datalen)
+{
+	struct pdev_csa_switch_count_status csa_status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct target_psoc_info *tgt_hdl;
+	QDF_STATUS status;
+
+	if (!scn || !data) {
+		mlme_err("Invalid input");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		mlme_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		mlme_err("target_psoc_info is null");
+		return -EINVAL;
+	}
+
+	qdf_mem_zero(&csa_status, sizeof(csa_status));
+	status = wmi_extract_pdev_csa_switch_count_status(
+			wmi_handle, data, &csa_status);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Extracting CSA switch count status event failed");
+		return -EINVAL;
+	}
+
+	return target_if_csa_switch_count_status(psoc, tgt_hdl, csa_status);
+}
+
 QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 				struct wlan_objmgr_psoc *psoc)
 {
@@ -766,6 +819,16 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 			VDEV_RSP_RX_CTX);
 	if (QDF_IS_STATUS_ERROR(retval))
 		mlme_err("failed to register for multivdev restart response");
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_beacon_offload)) {
+		retval = wmi_unified_register_event_handler(
+				wmi_handle,
+				wmi_pdev_csa_switch_count_status_event_id,
+				target_if_pdev_csa_status_event_handler,
+				VDEV_RSP_RX_CTX);
+		if (QDF_IS_STATUS_ERROR(retval))
+			mlme_err("failed to register for csa event handler");
+	}
 
 	return retval;
 }
