@@ -8,7 +8,7 @@
 #define _APR_AUDIO_V2_H_
 
 #include <ipc/apr.h>
-#include <audio/linux/msm_audio.h>
+#include <linux/msm_audio.h>
 
 /* number of threshold levels in speaker protection module */
 #define MAX_CPS_LEVELS 3

@@ -46,6 +46,10 @@ ifeq ($(KERNEL_BUILD), 0)
 		include $(AUDIO_ROOT)/config/konaauto.conf
 		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_WAIPIO), y)
+		include $(AUDIO_ROOT)/config/waipioauto.conf
+		INCS    +=  -include $(AUDIO_ROOT)/config/waipioautoconf.h
+	endif
 	ifeq ($(CONFIG_ARCH_LITO), y)
 		include $(AUDIO_ROOT)/config/litoauto.conf
 		export
@@ -221,9 +225,6 @@ CHIP_NAME ?= $(MODNAME)
 CDEFINES += -DMULTI_IF_NAME=\"$(CHIP_NAME)\"
 endif
 
-ifeq ($(KERNEL_BUILD), 0)
-KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/ipc/Module.symvers
-endif
 
 obj-$(CONFIG_SND_SOC_MSM_QDSP6V2_INTF) += q6_dlkm.o
 q6_dlkm-y := $(Q6_OBJS)
