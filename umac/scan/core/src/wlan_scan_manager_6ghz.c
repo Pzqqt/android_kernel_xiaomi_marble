@@ -75,7 +75,7 @@ scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 	if (tmp_list_count <= 1)
 		return;
 
-	rnr_chan_info = qdf_mem_malloc(sizeof(rnr_chan_info) * tmp_list_count);
+	rnr_chan_info = qdf_mem_malloc(sizeof(*rnr_chan_info) * tmp_list_count);
 	if (!rnr_chan_info)
 		return;
 
