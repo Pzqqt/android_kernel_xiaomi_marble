@@ -243,9 +243,13 @@ enum WMI_HOST_TWT_COMMAND {
  *                 - the quotient of wake_intvl_us/wake_intvl_mantis must be
  *                   2 to N-th(0<=N<=31) power,
  *                   i.e., wake_intvl_us/wake_intvl_mantis == 2^N, 0<=N<=31
+ * @min_wake_intvl_us: Min tolerance limit of TWT wake interval
+ * @max_wake_intvl_us: Max tolerance limit of TWT wake interval
  * @wake_dura_us: TWT Wake Duration in units of us, must be <= 0xFFFF
  *                wake_dura_us must be divided evenly by 256,
  *                i.e., wake_dura_us % 256 == 0
+ * @min_wake_dura_us: Min tolerance limit of TWT wake duration.
+ * @max_wake_dura_us: Max tolerance limit of TWT wake duration.
  * @sp_offset_us: this long time after TWT setup the 1st SP will start.
  * @twt_cmd: cmd from enum WMI_HOST_TWT_COMMAND
  * @flag_bcast: 0 means Individual TWT,
@@ -268,7 +272,11 @@ struct wmi_twt_add_dialog_param {
 	uint32_t dialog_id;
 	uint32_t wake_intvl_us;
 	uint32_t wake_intvl_mantis;
+	uint32_t min_wake_intvl_us;
+	uint32_t max_wake_intvl_us;
 	uint32_t wake_dura_us;
+	uint32_t min_wake_dura_us;
+	uint32_t max_wake_dura_us;
 	uint32_t sp_offset_us;
 	enum WMI_HOST_TWT_COMMAND twt_cmd;
 	uint32_t

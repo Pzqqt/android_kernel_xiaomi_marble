@@ -171,6 +171,10 @@ send_twt_add_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->wake_intvl_mantis = params->wake_intvl_mantis;
 	cmd->wake_dura_us =      params->wake_dura_us;
 	cmd->sp_offset_us =      params->sp_offset_us;
+	cmd->min_wake_intvl_us = params->min_wake_intvl_us;
+	cmd->max_wake_intvl_us = params->max_wake_intvl_us;
+	cmd->min_wake_dura_us = params->min_wake_dura_us;
+	cmd->max_wake_dura_us = params->max_wake_dura_us;
 	TWT_FLAGS_SET_CMD(cmd->flags, params->twt_cmd);
 	TWT_FLAGS_SET_BROADCAST(cmd->flags, params->flag_bcast);
 	TWT_FLAGS_SET_TRIGGER(cmd->flags, params->flag_trigger);
