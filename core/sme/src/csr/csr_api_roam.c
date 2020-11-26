@@ -10736,10 +10736,8 @@ csr_issue_set_context_req_helper(struct mac_context *mac_ctx,
 	 * send OBSS scan and QOS event.
 	 */
 	if (profile &&
-	    profile->negotiatedUCEncryptionType == eCSR_ENCRYPT_TYPE_NONE) {
-		if (unicast)
-			return QDF_STATUS_SUCCESS;
-
+	    profile->negotiatedUCEncryptionType == eCSR_ENCRYPT_TYPE_NONE &&
+	    !unicast) {
 		install_key_rsp.length = sizeof(install_key_rsp);
 		install_key_rsp.status_code = eSIR_SME_SUCCESS;
 		install_key_rsp.sessionId = session_id;
