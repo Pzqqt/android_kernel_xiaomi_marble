@@ -61,7 +61,7 @@ do {                                                    \
 #define WCD_MBHC_REG_READ(function, val)	        \
 do {                                                    \
 	if (mbhc->wcd_mbhc_regs[function].reg) {        \
-		val = (((snd_soc_component_read32(mbhc->component,	\
+		val = (((snd_soc_component_read(mbhc->component,	\
 		mbhc->wcd_mbhc_regs[function].reg)) &	\
 		(mbhc->wcd_mbhc_regs[function].mask)) >> \
 		(mbhc->wcd_mbhc_regs[function].offset)); \

@@ -386,7 +386,7 @@ void msm_common_get_backend_name(const char *stream_name, char **backend_name)
 
 int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 {
-	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
 	struct snd_soc_component *component = NULL;
 	struct snd_soc_dai_link *dai_link = rtd->dai_link;
 	struct device *dev = rtd->card->dev;

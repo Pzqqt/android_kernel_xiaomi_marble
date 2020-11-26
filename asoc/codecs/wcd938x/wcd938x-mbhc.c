@@ -201,7 +201,7 @@ static void wcd938x_mbhc_clk_setup(struct snd_soc_component *component,
 
 static int wcd938x_mbhc_btn_to_num(struct snd_soc_component *component)
 {
-	return snd_soc_component_read32(component, WCD938X_ANA_MBHC_RESULT_3) & 0x7;
+	return snd_soc_component_read(component, WCD938X_ANA_MBHC_RESULT_3) & 0x7;
 }
 
 static void wcd938x_mbhc_mbhc_bias_control(struct snd_soc_component *component,
@@ -268,7 +268,7 @@ static bool wcd938x_mbhc_micb_en_status(struct wcd_mbhc *mbhc, int micb_num)
 	u8 val = 0;
 
 	if (micb_num == MIC_BIAS_2) {
-		val = ((snd_soc_component_read32(mbhc->component,
+		val = ((snd_soc_component_read(mbhc->component,
 								WCD938X_ANA_MICB2) & 0xC0)
 			>> 6);
 		if (val == 0x01)
@@ -279,7 +279,7 @@ static bool wcd938x_mbhc_micb_en_status(struct wcd_mbhc *mbhc, int micb_num)
 
 static bool wcd938x_mbhc_hph_pa_on_status(struct snd_soc_component *component)
 {
-	return (snd_soc_component_read32(component, WCD938X_ANA_HPH) & 0xC0) ?
+	return (snd_soc_component_read(component, WCD938X_ANA_HPH) & 0xC0) ?
 									true : false;
 }
 
@@ -487,10 +487,10 @@ static inline void wcd938x_wcd_mbhc_qfuse_cal(
 	int q1_cal;
 
 	if (*z_val < (WCD938X_ZDET_VAL_400/1000))
-		q1 = snd_soc_component_read32(component,
+		q1 = snd_soc_component_read(component,
 			WCD938X_DIGITAL_EFUSE_REG_23 + (2 * flag_l_r));
 	else
-		q1 = snd_soc_component_read32(component,
+		q1 = snd_soc_component_read(component,
 			WCD938X_DIGITAL_EFUSE_REG_24 + (2 * flag_l_r));
 	if (q1 & 0x80)
 		q1_cal = (10000 - ((q1 & 0x7F) * 25));
@@ -526,13 +526,13 @@ static void wcd938x_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 
-	reg0 = snd_soc_component_read32(component, WCD938X_ANA_MBHC_BTN5);
-	reg1 = snd_soc_component_read32(component, WCD938X_ANA_MBHC_BTN6);
-	reg2 = snd_soc_component_read32(component, WCD938X_ANA_MBHC_BTN7);
-	reg3 = snd_soc_component_read32(component, WCD938X_MBHC_CTL_CLK);
-	reg4 = snd_soc_component_read32(component, WCD938X_MBHC_NEW_ZDET_ANA_CTL);
+	reg0 = snd_soc_component_read(component, WCD938X_ANA_MBHC_BTN5);
+	reg1 = snd_soc_component_read(component, WCD938X_ANA_MBHC_BTN6);
+	reg2 = snd_soc_component_read(component, WCD938X_ANA_MBHC_BTN7);
+	reg3 = snd_soc_component_read(component, WCD938X_MBHC_CTL_CLK);
+	reg4 = snd_soc_component_read(component, WCD938X_MBHC_NEW_ZDET_ANA_CTL);
 
-	if (snd_soc_component_read32(component, WCD938X_ANA_MBHC_ELECT) & 0x80) {
+	if (snd_soc_component_read(component, WCD938X_ANA_MBHC_ELECT) & 0x80) {
 		is_fsm_disable = true;
 		regmap_update_bits(wcd938x->regmap,
 				   WCD938X_ANA_MBHC_ELECT, 0x80, 0x00);
@@ -780,12 +780,12 @@ static bool wcd938x_mbhc_get_moisture_status(struct wcd_mbhc *mbhc)
 	 * If moisture_en is already enabled, then skip to plug type
 	 * detection.
 	 */
-	if ((snd_soc_component_read32(component, WCD938X_MBHC_NEW_CTL_2) & 0x0C))
+	if ((snd_soc_component_read(component, WCD938X_MBHC_NEW_CTL_2) & 0x0C))
 		goto done;
 
 	wcd938x_mbhc_moisture_detect_en(mbhc, true);
 	/* Read moisture comparator status */
-	ret = ((snd_soc_component_read32(component, WCD938X_MBHC_NEW_FSM_STATUS)
+	ret = ((snd_soc_component_read(component, WCD938X_MBHC_NEW_FSM_STATUS)
 				& 0x20) ? 0 : 1);
 
 done:

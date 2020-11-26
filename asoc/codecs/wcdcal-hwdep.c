@@ -9,7 +9,7 @@
 #include <linux/ioctl.h>
 #include <linux/bitops.h>
 #include <sound/hwdep.h>
-#include <audio/sound/msmcal-hwdep.h>
+#include <sound/msmcal-hwdep.h>
 #include <sound/soc.h>
 #include <asoc/wcdcal-hwdep.h>
 
