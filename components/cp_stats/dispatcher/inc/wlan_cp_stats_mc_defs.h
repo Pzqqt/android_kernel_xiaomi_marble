@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,10 @@
 #include "qdf_event.h"
 /* For WMI_MAX_CHAINS */
 #include "wmi_unified.h"
+
+#ifdef QCA_SUPPORT_MC_CP_STATS
+#include "wlan_cp_stats_public_structs.h"
+#endif
 
 #ifdef WLAN_SUPPORT_TWT
 

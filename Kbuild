@@ -1940,7 +1940,9 @@ CP_STATS_OBJS := $(CP_MC_STATS_COMPONENT_SRC)/wlan_cp_stats_mc_tgt_api.o	\
 		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_ol_api.o			\
 		 $(CP_MC_STATS_OS_IF_SRC)/wlan_cfg80211_mc_cp_stats.o		\
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_utils_api.o		\
-		 $(WLAN_COMMON_ROOT)/target_if/cp_stats/src/target_if_cp_stats.o
+		 $(WLAN_COMMON_ROOT)/target_if/cp_stats/src/target_if_cp_stats.o	\
+		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_ucfg_api.o
+
 endif
 
 ###### DCS ######
@@ -2668,6 +2670,7 @@ cppflags-$(CONFIG_WLAN_WEXT_SUPPORT_ENABLE) += -DWLAN_WEXT_SUPPORT_ENABLE
 cppflags-$(CONFIG_WLAN_LOGGING_SOCK_SVC) += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 cppflags-$(CONFIG_WLAN_LOGGING_BUFFERS_DYNAMICALLY) += -DWLAN_LOGGING_BUFFERS_DYNAMICALLY
 cppflags-$(CONFIG_WLAN_FEATURE_FILS) += -DWLAN_FEATURE_FILS_SK
+cppflags-$(CONFIG_CP_STATS) += -DWLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_CP_STATS
 cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_MC_CP_STATS
 cppflags-$(CONFIG_CP_STATS) += -DWLAN_SUPPORT_LEGACY_CP_STATS_HANDLERS
