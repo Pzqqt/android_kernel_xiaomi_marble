@@ -26,10 +26,12 @@
 #include "wlan_cp_stats_mc_defs.h"
 #include "target_if_cp_stats.h"
 #include "wlan_cp_stats_tgt_api.h"
+#include "wlan_cp_stats_ucfg_api.h"
 #include "wlan_cp_stats_mc_tgt_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_cp_stats_utils_api.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
+#include "../../core/src/wlan_cp_stats_obj_mgr_handler.h"
 
 static bool tgt_mc_cp_stats_is_last_event(struct stats_event *ev,
 					  enum stats_req_type stats_type)
@@ -51,10 +53,25 @@ static bool tgt_mc_cp_stats_is_last_event(struct stats_event *ev,
 	return is_last_event;
 }
 
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+static void
+tgt_cp_stats_register_infra_cp_stats_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->cp_stats_rx_ops.process_infra_stats_event =
+				tgt_mc_cp_stats_process_infra_stats_event;
+}
+#else
+static void
+tgt_cp_stats_register_infra_cp_stats_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 void tgt_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	rx_ops->cp_stats_rx_ops.process_stats_event =
 					tgt_mc_cp_stats_process_stats_event;
+	tgt_cp_stats_register_infra_cp_stats_rx_ops(rx_ops);
 }
 
 static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
@@ -614,6 +631,37 @@ tgt_mc_cp_stats_extract_peer_stats_info_ext(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+#ifdef WLAN_SUPPORT_TWT
+static void
+tgt_mc_infra_cp_stats_extract_twt_stats(struct wlan_objmgr_psoc *psoc,
+					struct infra_cp_stats_event *ev)
+{
+	QDF_STATUS status;
+	get_infra_cp_stats_cb resp_cb;
+	void *context;
+
+	status = wlan_cp_stats_infra_cp_get_context(psoc, &resp_cb, &context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_get_infra_cp_stats_context failed");
+		return;
+	}
+
+	cp_stats_debug("num_twt_infra_cp_stats = %d action %d",
+		       ev->num_twt_infra_cp_stats, ev->action);
+
+	if (resp_cb)
+		resp_cb(ev, context);
+}
+#else
+static void
+tgt_mc_infra_cp_stats_extract_twt_stats(struct wlan_objmgr_psoc *psoc,
+					struct infra_cp_stats_event *ev)
+{
+}
+#endif
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
+
 #ifdef WLAN_FEATURE_MEDIUM_ASSESS
 static void
 tgt_mc_cp_stats_extract_congestion_stats(struct wlan_objmgr_psoc *psoc,
@@ -1078,6 +1126,20 @@ static void tgt_mc_cp_send_lost_link_stats(struct wlan_objmgr_psoc *psoc,
 	if (psoc_cp_stats_priv && psoc_cp_stats_priv->legacy_stats_cb)
 		psoc_cp_stats_priv->legacy_stats_cb(ev);
 }
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+QDF_STATUS tgt_mc_cp_stats_process_infra_stats_event(
+				struct wlan_objmgr_psoc *psoc,
+				struct infra_cp_stats_event *infra_event)
+{
+	if (!infra_event)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	tgt_mc_infra_cp_stats_extract_twt_stats(psoc, infra_event);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 					       struct stats_event *ev)
