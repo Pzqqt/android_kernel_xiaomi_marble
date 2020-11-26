@@ -34,14 +34,14 @@ static ssize_t hdd_ftm_time_sync_show(struct device *dev,
 		return scnprintf(buf, PAGE_SIZE, "Invalid device\n");
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, FTM_TIME_SYNC_ID);
 	if (!vdev)
 		return -EINVAL;
 
 	if (adapter->device_mode == QDF_STA_MODE)
 		size = ucfg_ftm_time_sync_show(vdev, buf);
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, FTM_TIME_SYNC_ID);
 	return size;
 }
 
