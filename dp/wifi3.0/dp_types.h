@@ -368,6 +368,14 @@ struct dp_rx_nbuf_frag_info {
 };
 
 /**
+ * enum dp_ctxt - context type
+ * @DP_PDEV_TYPE: PDEV context
+ */
+enum dp_ctxt_type {
+	DP_PDEV_TYPE
+};
+
+/**
  * enum dp_desc_type - source type for multiple pages allocation
  * @DP_TX_DESC_TYPE: DP SW TX descriptor
  * @DP_TX_EXT_DESC_TYPE: DP TX msdu extension descriptor
