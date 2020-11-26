@@ -591,6 +591,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 						   CFG_DP_RXDMA_ERR_DST_RING);
 	wlan_cfg_ctx->enable_data_stall_detection =
 		cfg_get(psoc, CFG_DP_ENABLE_DATA_STALL_DETECTION);
+	wlan_cfg_ctx->enable_force_rx_64_ba =
+		cfg_get(psoc, CFG_FORCE_RX_64_BA);
 	wlan_cfg_ctx->tx_flow_start_queue_offset =
 		cfg_get(psoc, CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
 	wlan_cfg_ctx->tx_flow_stop_queue_threshold =
@@ -1515,3 +1517,8 @@ void wlan_cfg_set_rxdma1_enable(struct wlan_cfg_dp_soc_ctxt *cfg)
 	cfg->rxdma1_enable = true;
 }
 #endif
+
+bool wlan_cfg_is_dp_force_rx_64_ba(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->enable_force_rx_64_ba;
+}

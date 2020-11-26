@@ -3283,7 +3283,8 @@ int dp_addba_requestprocess_wifi3(struct cdp_soc_t *cdp_soc,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct dp_rx_tid *rx_tid = NULL;
-	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)cdp_soc,
+	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
+	struct dp_peer *peer = dp_peer_find_hash_find(soc,
 						       peer_mac, 0, vdev_id,
 						       DP_MOD_ID_CDP);
 
@@ -3309,6 +3310,12 @@ int dp_addba_requestprocess_wifi3(struct cdp_soc_t *cdp_soc,
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		status = QDF_STATUS_E_FAILURE;
 		goto fail;
+	}
+
+	if (wlan_cfg_is_dp_force_rx_64_ba(soc->wlan_cfg_ctx)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "force use BA64 scheme");
+		buffersize = qdf_min((uint16_t)64, buffersize);
 	}
 
 	if (rx_tid->rx_ba_win_size_override == DP_RX_BA_SESSION_DISABLE) {
