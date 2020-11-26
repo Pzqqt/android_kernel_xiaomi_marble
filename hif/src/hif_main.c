@@ -843,6 +843,28 @@ static QDF_STATUS hif_hal_detach(struct hif_softc *scn)
 }
 #endif
 
+int hif_init_dma_mask(struct device *dev, enum qdf_bus_type bus_type)
+{
+	int ret;
+
+	switch (bus_type) {
+	case QDF_BUS_TYPE_IPCI:
+		ret = qdf_set_dma_coherent_mask(dev,
+						DMA_COHERENT_MASK_DEFAULT);
+		if (ret) {
+			hif_err("Failed to set dma mask error = %d", ret);
+			return ret;
+		}
+
+		break;
+	default:
+		/* Follow the existing sequence for other targets */
+		break;
+	}
+
+	return 0;
+}
+
 /**
  * hif_enable(): hif_enable
  * @hif_ctx: hif_ctx
