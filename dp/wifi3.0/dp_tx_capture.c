@@ -599,6 +599,9 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 		  "peer(%p) id:%d init!!", peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+		struct cdp_tx_completion_ppdu *xretry_ppdu = NULL;
+		struct cdp_tx_completion_ppdu_user *xretry_user = NULL;
+
 		tx_tid = &peer->tx_capture.tx_tid[tid];
 
 		if (qdf_atomic_test_and_set_bit(DP_PEER_TX_TID_INIT_DONE_BIT,
@@ -636,6 +639,10 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 			QDF_ASSERT(0);
 			return;
 		}
+		/* initialize xretry user mpduq */
+		xretry_ppdu = tx_tid->xretry_ppdu;
+		xretry_user = &xretry_ppdu->user[0];
+		qdf_nbuf_queue_init(&xretry_user->mpdu_q);
 
 		/* spinlock create */
 		qdf_spinlock_create(&tx_tid->tid_lock);
@@ -3442,7 +3449,8 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 	qdf_nbuf_queue_t temp_xretries;
 
 	if (mpdu_nbuf != qdf_nbuf_queue_first(&xretry_user->mpdu_q)) {
-		qdf_err(" mpdu_nbuf is not the head");
+		qdf_err("mpdu_nbuf %p is not the head, mpdu_q %p, len %d", mpdu_nbuf,
+			    xretry_user->mpdu_q, qdf_nbuf_queue_len(&xretry_user->mpdu_q));
 		next_nbuf = qdf_nbuf_queue_next(mpdu_nbuf);
 		/* Initialize temp list */
 		qdf_nbuf_queue_init(&temp_xretries);
@@ -3468,8 +3476,12 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: bug scenario, did not find nbuf in queue pdev %08x, peer id %d, tid %d, mpdu_nbuf %08x",
-				  __func__, pdev, tx_tid->peer_id, tx_tid->tid, mpdu_nbuf);
+				  "%s: bug scenario, did not find nbuf in queue\npdev %p "
+				  "peer id %d, tid: %p mpdu_nbuf %p xretry_user %p "
+				  "mpdu_q %p len %d",
+				  __func__, pdev, tx_tid->peer_id, tx_tid, mpdu_nbuf,
+				  xretry_user, xretry_user->mpdu_q,
+				  qdf_nbuf_queue_len(&xretry_user->mpdu_q));
 			qdf_assert_always(0);
 		}
 	} else {
@@ -3497,7 +3509,22 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 	uint8_t usr_idx = 0;
 
 	xretry_ppdu = tx_tid->xretry_ppdu;
+	if (!xretry_ppdu) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_FATAL,
+				  "%s: xretry_ppdu is NULL",
+				  __func__);
+		return;
+	}
+
 	xretry_user = &xretry_ppdu->user[0];
+	if (!xretry_user) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_FATAL,
+				  "%s: xretry_user is NULL",
+				  __func__);
+		return;
+	}
 
 	if (qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q)) {
 		TX_CAP_NBUF_QUEUE_FREE(&xretry_user->mpdu_q);
