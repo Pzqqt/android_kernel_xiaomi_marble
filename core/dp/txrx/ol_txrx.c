@@ -5859,6 +5859,9 @@ static uint32_t ol_txrx_get_cfg(struct cdp_soc_t *soc_hdl, enum cdp_dp_cfg cfg)
 	case cfg_dp_enable_p2p_ip_tcp_udp_checksum_offload:
 		value = cfg_ctx->p2p_ip_tcp_udp_checksum_offload;
 		break;
+	case cfg_dp_enable_nan_ip_tcp_udp_checksum_offload:
+		value = cfg_ctx->nan_tcp_udp_checksumoffload;
+		break;
 	case cfg_dp_tso_enable:
 		value = cfg_ctx->tso_enable;
 		break;
