@@ -477,6 +477,31 @@ QDF_STATUS dp_prealloc_init(void);
 void dp_prealloc_deinit(void);
 
 /**
+ * dp_prealloc_get_context_memory() - gets pre-alloc DP context memory from
+ *				      global pool
+ * @ctxt_type: type of DP context
+ *
+ * This is done only as part of init happening in a single context. Hence
+ * no lock is used for protection
+ *
+ * Return: Address of context
+ */
+void *dp_prealloc_get_context_memory(uint32_t ctxt_type);
+
+/**
+ * dp_prealloc_put_context_memory() - puts back pre-alloc DP context memory to
+ *				      global pool
+ * @ctxt_type: type of DP context
+ * @vaddr: address of DP context
+ *
+ * This is done only as part of de-init happening in a single context. Hence
+ * no lock is used for protection
+ *
+ * Return: Failure if address not found
+ */
+QDF_STATUS dp_prealloc_put_context_memory(uint32_t ctxt_type, void *vaddr);
+
+/**
  * dp_prealloc_get_coherent() - gets pre-alloc DP memory
  * @size: size of memory needed
  * @base_vaddr_unaligned: Unaligned virtual address.
