@@ -3580,7 +3580,6 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			pe_err("Failed to send disassoc frame");
-			lim_tx_complete(mac, pPacket, true);
 			lim_send_disassoc_cnf(mac);
 			return;
 		}
