@@ -379,20 +379,6 @@ QDF_STATUS wmi_extract_offchan_data_tx_compl_param(
 		struct wmi_host_offchan_data_tx_compl_event *param);
 
 /**
- * wmi_extract_pdev_csa_switch_count_status() - extract CSA switch count status
- * from event
- * @wmi_handle: wmi handle
- * @evt_buf: pointer to event buffer
- * @param: Pointer to CSA switch count status param
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_pdev_csa_switch_count_status(
-		wmi_unified_t wmi_handle,
-		void *evt_buf,
-		struct pdev_csa_switch_count_status *param);
-
-/**
  * wmi_extract_swba_num_vdevs() - extract swba num vdevs from event
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer

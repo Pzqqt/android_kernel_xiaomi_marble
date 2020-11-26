@@ -1002,42 +1002,6 @@ static QDF_STATUS extract_offchan_data_tx_compl_param_tlv(
 }
 
 /**
- * extract_pdev_csa_switch_count_status_tlv() - extract pdev csa switch count
- *					      status tlv
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param param: Pointer to hold csa switch count status event param
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-static QDF_STATUS extract_pdev_csa_switch_count_status_tlv(
-				wmi_unified_t wmi_handle,
-				void *evt_buf,
-				struct pdev_csa_switch_count_status *param)
-{
-	WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID_param_tlvs *param_buf;
-	wmi_pdev_csa_switch_count_status_event_fixed_param *csa_status;
-
-	param_buf = (WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID_param_tlvs *)
-		     evt_buf;
-	if (!param_buf) {
-		wmi_err("Invalid CSA status event");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	csa_status = param_buf->fixed_param;
-
-	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
-							wmi_handle,
-							csa_status->pdev_id);
-	param->current_switch_count = csa_status->current_switch_count;
-	param->num_vdevs = csa_status->num_vdevs;
-	param->vdev_ids = param_buf->vdev_ids;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * extract_pdev_tpc_config_ev_param_tlv() - extract pdev tpc configuration
  * param from event
  * @wmi_handle: wmi handle
@@ -2666,8 +2630,6 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 				extract_peer_create_response_event_tlv;
 	ops->extract_peer_delete_response_event =
 				extract_peer_delete_response_event_tlv;
-	ops->extract_pdev_csa_switch_count_status =
-				extract_pdev_csa_switch_count_status_tlv;
 	ops->extract_pdev_tpc_ev_param = extract_pdev_tpc_ev_param_tlv;
 	ops->extract_pdev_tpc_config_ev_param =
 			extract_pdev_tpc_config_ev_param_tlv;

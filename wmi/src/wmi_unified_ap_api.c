@@ -193,21 +193,6 @@ QDF_STATUS wmi_extract_offchan_data_tx_compl_param(
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_extract_pdev_csa_switch_count_status(
-		wmi_unified_t wmi_handle,
-		void *evt_buf,
-		struct pdev_csa_switch_count_status *param)
-{
-	if (wmi_handle->ops->extract_pdev_csa_switch_count_status)
-		return wmi_handle->ops->extract_pdev_csa_switch_count_status(
-				wmi_handle,
-				evt_buf,
-				param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-
 QDF_STATUS wmi_extract_swba_num_vdevs(wmi_unified_t wmi_handle, void *evt_buf,
 				      uint32_t *num_vdevs)
 {
