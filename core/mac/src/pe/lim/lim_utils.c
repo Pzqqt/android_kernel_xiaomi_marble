@@ -7971,12 +7971,92 @@ lim_send_dfs_chan_sw_ie_update(struct mac_context *mac_ctx, struct pe_session *s
 		 session->gLimChannelSwitch.switchCount);
 }
 
+bool lim_is_csa_tx_pending(uint8_t vdev_id)
+{
+	struct pe_session *session;
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	bool csa_tx_offload;
+
+	if (!mac_ctx) {
+		mlme_err("Invalid mac context");
+		return false;
+	}
+
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!session) {
+		pe_err("Session does not exist for given vdev_id %d", vdev_id);
+		return false;
+	}
+
+	csa_tx_offload = wlan_psoc_nif_fw_ext_cap_get(mac_ctx->psoc,
+						  WLAN_SOC_CEXT_CSA_TX_OFFLOAD);
+	if (session->dfsIncludeChanSwIe &&
+	    (session->gLimChannelSwitch.switchCount ==
+	     mac_ctx->sap.SapDfsInfo.sap_ch_switch_beacon_cnt) &&
+	     csa_tx_offload)
+		return true;
+
+	return false;
+}
+
+void lim_send_csa_tx_complete(uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	tSirSmeCSAIeTxCompleteRsp *chan_switch_tx_rsp;
+	struct pe_session *session;
+	struct scheduler_msg msg = {0};
+	bool csa_tx_offload;
+	uint8_t length = sizeof(*chan_switch_tx_rsp);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx) {
+		mlme_err("Invalid mac context");
+		return;
+	}
+
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!session) {
+		pe_err("Session does not exist for given vdev_id %d", vdev_id);
+		return;
+	}
+
+	/* Stop the timer if already running in case of csa*/
+	csa_tx_offload = wlan_psoc_nif_fw_ext_cap_get(mac_ctx->psoc,
+						WLAN_SOC_CEXT_CSA_TX_OFFLOAD);
+	if (csa_tx_offload)
+		qdf_mc_timer_stop(&session->ap_ecsa_timer);
+
+	/* Done with CSA IE update, send response back to SME */
+	session->gLimChannelSwitch.switchCount = 0;
+	if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
+		session->gLimChannelSwitch.switchMode = 0;
+
+	session->dfsIncludeChanSwIe = false;
+	session->dfsIncludeChanWrapperIe = false;
+
+	chan_switch_tx_rsp = qdf_mem_malloc(length);
+	if (!chan_switch_tx_rsp)
+		return;
+
+	chan_switch_tx_rsp->sessionId = session->smeSessionId;
+	chan_switch_tx_rsp->chanSwIeTxStatus = QDF_STATUS_SUCCESS;
+
+	msg.type = eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND;
+	msg.bodyptr = chan_switch_tx_rsp;
+
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(chan_switch_tx_rsp);
+}
+
 void lim_process_ap_ecsa_timeout(void *data)
 {
 	struct pe_session *session = (struct pe_session *)data;
 	struct mac_context *mac_ctx;
 	uint8_t bcn_int, ch_width;
 	uint32_t ch_freq;
+	bool csa_tx_offload;
 	QDF_STATUS status;
 
 	if (!session || !session->valid) {
@@ -7990,6 +8070,15 @@ void lim_process_ap_ecsa_timeout(void *data)
 		pe_debug("session->dfsIncludeChanSwIe not set");
 		return;
 	}
+
+	if (lim_is_csa_tx_pending(session->vdev_id))
+		return lim_send_csa_tx_complete(session->vdev_id);
+
+	csa_tx_offload = wlan_psoc_nif_fw_ext_cap_get(mac_ctx->psoc,
+						  WLAN_SOC_CEXT_CSA_TX_OFFLOAD);
+
+	if (csa_tx_offload)
+		return;
 
 	/* Stop the timer if already running */
 	qdf_mc_timer_stop(&session->ap_ecsa_timer);
@@ -8034,32 +8123,7 @@ void lim_process_ap_ecsa_timeout(void *data)
 			lim_process_ap_ecsa_timeout(session);
 		}
 	} else {
-		tSirSmeCSAIeTxCompleteRsp *chan_switch_tx_rsp;
-		struct scheduler_msg msg = {0};
-		uint8_t length = sizeof(*chan_switch_tx_rsp);
-
-		/* Done with CSA IE update, send response back to SME */
-		session->gLimChannelSwitch.switchCount = 0;
-		if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
-			session->gLimChannelSwitch.switchMode = 0;
-		session->dfsIncludeChanSwIe = false;
-		session->dfsIncludeChanWrapperIe = false;
-
-		chan_switch_tx_rsp = qdf_mem_malloc(length);
-		if (!chan_switch_tx_rsp)
-			return;
-
-		chan_switch_tx_rsp->sessionId = session->smeSessionId;
-		chan_switch_tx_rsp->chanSwIeTxStatus = QDF_STATUS_SUCCESS;
-
-		msg.type = eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND;
-		msg.bodyptr = chan_switch_tx_rsp;
-
-		status = scheduler_post_message(QDF_MODULE_ID_PE,
-						QDF_MODULE_ID_SME,
-						QDF_MODULE_ID_SME, &msg);
-		if (QDF_IS_STATUS_ERROR(status))
-			qdf_mem_free(chan_switch_tx_rsp);
+		lim_send_csa_tx_complete(session->vdev_id);
 	}
 }
 

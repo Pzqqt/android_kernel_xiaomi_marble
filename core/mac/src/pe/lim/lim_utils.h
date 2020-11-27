@@ -1662,6 +1662,23 @@ void lim_send_dfs_chan_sw_ie_update(struct mac_context *mac_ctx,
 void lim_process_ap_ecsa_timeout(void *session);
 
 /**
+ * lim_send_csa_tx_complete() - send csa tx complete event when beacon
+ * count decremented to zero
+ *
+ * @vdev_id - vdev_id
+ * Return None
+ */
+void lim_send_csa_tx_complete(uint8_t vdev_id);
+
+/**
+ * lim_is_csa_tx_pending() - check id csa tx ind not sent
+ *
+ * @vdev_id - vdev_id
+ * Return - true if csa tx ind is not sent else false
+ */
+bool lim_is_csa_tx_pending(uint8_t vdev_id);
+
+/**
  * lim_send_stop_bss_failure_resp() -send failure delete bss resp to sme
  * @mac_ctx: mac ctx
  * @session: session pointer
