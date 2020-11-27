@@ -111,7 +111,7 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 			struct pmo_vdev_priv_obj *vdev_ctx,
 			uint32_t *listen_interval)
 {
-	uint32_t max_mod_dtim, max_dtim;
+	uint32_t max_mod_dtim, max_dtim = 0;
 	uint32_t beacon_interval_mod;
 	struct pmo_psoc_cfg *psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
 	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
@@ -166,6 +166,11 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 			*listen_interval = cfg_default(CFG_LISTEN_INTERVAL);
 		}
 	}
+
+	pmo_info("sta dynamic dtim %d sta mod dtim %d sta_max_li_mod_dtim %d max_dtim %d",
+		 psoc_cfg->sta_dynamic_dtim, psoc_cfg->sta_mod_dtim,
+		 psoc_cfg->sta_max_li_mod_dtim, max_dtim);
+
 	return QDF_STATUS_SUCCESS;
 }
 

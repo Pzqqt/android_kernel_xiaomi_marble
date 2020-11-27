@@ -141,13 +141,13 @@
  * <ini>
  * gEnableModulatedDTIM - Enable/Disable modulated DTIM feature
  * @Min: 0
- * @Max: 5
+ * @Max: 10
  * @Default: 0
  *
  * This ini is used to enable/disable modulated DTIM feature.
  *
  * 0 - Disable modulated DTIM.
- * 1 to 5 - The maximum No. of modulated DTIM period used for calculating the
+ * 1 to 10 - The maximum No. of modulated DTIM period used for calculating the
  * target listen interval.
  *
  * The target listen interval will be updated to firmware when host driver is
@@ -163,7 +163,7 @@
 #define CFG_PMO_ENABLE_MODULATED_DTIM CFG_INI_UINT( \
 	"gEnableModulatedDTIM", \
 	0, \
-	5, \
+	10, \
 	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Enable/disable modulated DTIM feature")
