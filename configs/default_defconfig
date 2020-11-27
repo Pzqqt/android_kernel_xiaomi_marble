@@ -1055,12 +1055,6 @@ ifeq ($(CONFIG_LITHIUM), y)
 	CONFIG_WLAN_DP_PENDING_MEM_FLUSH := y
 endif
 
-ifeq (y,$(filter y,$(CONFIG_CNSS2_DEBUG) $(CONFIG_SLUB_DEBUG_ON)))
-	ifeq ($(CONFIG_CNSS_QCA6750), y)
-		CONFIG_FEATURE_PKTLOG := y
-	endif
-endif
-
 #Flag to enable hdd memory dump feature
 CONFIG_FEATURE_MEMDUMP_ENABLE := y
 
