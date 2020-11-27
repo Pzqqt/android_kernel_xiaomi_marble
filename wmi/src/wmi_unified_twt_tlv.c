@@ -68,9 +68,14 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				      params->b_twt_legacy_mbss_enable);
 	TWT_EN_DIS_FLAGS_SET_AX_MBSSID(cmd->flags,
 				       params->b_twt_ax_mbss_enable);
+	if (params->ext_conf_present) {
+		TWT_EN_DIS_FLAGS_SET_SPLIT_CONFIG(cmd->flags, 1);
+		TWT_EN_DIS_FLAGS_SET_REQ_RESP(cmd->flags, params->twt_role);
+		TWT_EN_DIS_FLAGS_SET_I_B_TWT(cmd->flags, params->twt_oper);
+	}
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
-			WMI_TWT_ENABLE_CMDID);
+				      WMI_TWT_ENABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wmi_err("Failed to send WMI_TWT_ENABLE_CMDID");
 		wmi_buf_free(buf);
@@ -103,9 +108,14 @@ static QDF_STATUS send_twt_disable_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_handle->ops->convert_pdev_id_host_to_target(
 						wmi_handle,
 						params->pdev_id);
+	if (params->ext_conf_present) {
+		TWT_EN_DIS_FLAGS_SET_SPLIT_CONFIG(cmd->flags, 1);
+		TWT_EN_DIS_FLAGS_SET_REQ_RESP(cmd->flags, params->twt_role);
+		TWT_EN_DIS_FLAGS_SET_I_B_TWT(cmd->flags, params->twt_oper);
+	}
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
-			WMI_TWT_DISABLE_CMDID);
+				      WMI_TWT_DISABLE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wmi_err("Failed to send WMI_TWT_DISABLE_CMDID");
 		wmi_buf_free(buf);

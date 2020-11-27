@@ -23,6 +23,24 @@
 #ifndef _WMI_UNIFIED_TWT_PARAM_H_
 #define _WMI_UNIFIED_TWT_PARAM_H_
 
+/* enum WMI_TWT_ROLE - role specified in ext conf in wmi_twt_enable/disable_cmd
+ * WMI_TWT_ROLE_REQUESTOR: TWT role is requestor
+ * WMI_TWT_ROLE_RESPONDER: TWT role is responder
+ */
+enum WMI_TWT_ROLE {
+	WMI_TWT_ROLE_REQUESTOR,
+	WMI_TWT_ROLE_RESPONDER,
+};
+
+/* enum WMI_TWT_OPERATION - specified in ext conf in wmi_twt_enable/disable_cmd
+ * WMI_TWT_OPERATION_INDIVIDUAL: Individual TWT operation
+ * WMI_TWT_OPERATION_BROADCAST: Broadcast TWT operation
+ */
+enum WMI_TWT_OPERATION {
+	WMI_TWT_OPERATION_INDIVIDUAL,
+	WMI_TWT_OPERATION_BROADCAST,
+};
+
 /**
  * @pdev_id: pdev_id for identifying the MAC.
  * @sta_cong_timer_ms: STA TWT congestion timer TO value in terms of ms
@@ -62,6 +80,9 @@
  *                 TWT slots for STAs. (units = milliseconds)
  * @remove_sta_slot_interval: Inrerval between decisions making to remove TWT
  *                 slot of STAs. (units = milliseconds)
+ * @twt_role: values from enum WMI_TWT_ROLE.
+ * @twt_oper: values from enum WMI_TWT_OPERATION.
+ * @ext_conf_present: If requestor/responder extend config is present.
  * @b_twt_enable: Enable or disable broadcast TWT.
  * @b_twt_legacy_mbss_enable: Enable or disable legacy MBSSID TWT.
  * @b_twt_ax_mbss_enable: Enable or disable 11AX MBSSID TWT.
@@ -84,6 +105,9 @@ struct wmi_twt_enable_param {
 	uint32_t mode_check_interval;
 	uint32_t add_sta_slot_interval;
 	uint32_t remove_sta_slot_interval;
+	enum WMI_TWT_ROLE twt_role;
+	enum WMI_TWT_OPERATION twt_oper;
+	bool ext_conf_present;
 	uint32_t b_twt_enable:1,
 		 b_twt_legacy_mbss_enable:1,
 		 b_twt_ax_mbss_enable:1;
@@ -114,11 +138,18 @@ struct wmi_twt_enable_complete_event_param {
 	uint32_t status;
 };
 
-/** struct wmi_twt_disable_param:
+/**
+ *struct wmi_twt_disable_param:
  * @pdev_id: pdev_id for identifying the MAC.
+ * @ext_conf_present: If requestor/responder extend config is present.
+ * @twt_role: values from enum WMI_TWT_ROLE.
+ * @twt_oper: values from enum WMI_TWT_OPERATION.
  */
 struct wmi_twt_disable_param {
 	uint32_t pdev_id;
+	bool ext_conf_present;
+	enum WMI_TWT_ROLE twt_role;
+	enum WMI_TWT_OPERATION twt_oper;
 };
 
 /** struct wmi_twt_disable_complete_event:

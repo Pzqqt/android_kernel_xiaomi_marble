@@ -15255,7 +15255,12 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
 	wmi_service[wmi_service_csa_beacon_template] =
 			WMI_SERVICE_CSA_BEACON_TEMPLATE;
-
+#ifdef WLAN_SUPPORT_TWT
+	wmi_service[wmi_service_twt_bcast_req_support] =
+			WMI_SERVICE_BROADCAST_TWT_REQUESTER;
+	wmi_service[wmi_service_twt_bcast_resp_support] =
+			WMI_SERVICE_BROADCAST_TWT_RESPONDER;
+#endif
 	wmi_populate_service_get_sta_in_ll_stats_req(wmi_service);
 }
 
