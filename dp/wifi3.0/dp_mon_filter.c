@@ -1001,7 +1001,7 @@ void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev)
 #ifdef WLAN_DP_RESET_MON_BUF_RING_FILTER
 /**
  * dp_mon_should_reset_buf_ring_filter() - Reset the monitor buf ring filter
- * @soc: global DP soc handle
+ * @pdev: DP PDEV handle
  *
  * WIN has targets which does not support monitor mode, but still do the
  * monitor mode init/deinit, only the rxdma1_enable flag will be set to 0.
@@ -1013,12 +1013,12 @@ void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev)
  *
  * Returns: true
  */
-static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_soc *soc)
+static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_pdev *pdev)
 {
-	return true;
+	return (pdev->monitor_vdev) ? true : false;
 }
 #else
-static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_soc *soc)
+static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_pdev *pdev)
 {
 	return false;
 }
@@ -1070,7 +1070,7 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	dp_mon_filter_ht2_setup(soc, pdev, mon_srng_type, &filter);
 
 	mon_mode_set = filter.valid;
-	if (dp_mon_should_reset_buf_ring_filter(soc) || mon_mode_set) {
+	if (dp_mon_should_reset_buf_ring_filter(pdev) || mon_mode_set) {
 		status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
 						mon_srng_type,
 						&filter.tlv_filter);
