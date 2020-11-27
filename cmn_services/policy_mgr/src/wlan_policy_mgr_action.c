@@ -2144,6 +2144,7 @@ static uint32_t policy_mgr_select_2g_chan(struct wlan_objmgr_psoc *psoc)
  * @con_ch_freq: concurrency channel
  * @sap_ch_freq: SAP starting channel
  * @sap_vdev_id: sap vdev id
+ * @vdev_opmode: vdev opmode
  *
  * Validate whether SAP can be forced scc to 6ghz band or not.
  * If not, select 2G band channel for DBS hw
@@ -2153,7 +2154,7 @@ static uint32_t policy_mgr_select_2g_chan(struct wlan_objmgr_psoc *psoc)
  */
 static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
-	uint32_t sap_ch_freq, uint8_t sap_vdev_id)
+	uint32_t sap_ch_freq, uint8_t sap_vdev_id, enum QDF_OPMODE vdev_opmode)
 {
 	uint32_t ch_freq = *con_ch_freq;
 
@@ -2167,9 +2168,16 @@ static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 			policy_mgr_debug("select 2G ch %d to achieve DBS",
 					 ch_freq);
 		} else {
-			/* Keep MCC 2G(or 5G) + 6G for non-DBS chip*/
+			/* MCC not supported for non-DBS chip*/
 			ch_freq = 0;
-			policy_mgr_debug("do not force SCC for non-dbs hw");
+			if (vdev_opmode == QDF_SAP_MODE) {
+				policy_mgr_debug("MCC situation in non-dbs hw STA freq %d SAP freq %d not supported",
+						 ch_freq, sap_ch_freq);
+				return QDF_STATUS_E_FAILURE;
+			} else {
+				policy_mgr_debug("MCC situation in non-dbs hw STA freq %d GO freq %d SCC not supported",
+						 ch_freq, sap_ch_freq);
+			}
 		}
 	}
 	if (ch_freq != sap_ch_freq)
@@ -2233,7 +2241,8 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 		ch_freq = sap_ch_freq;
 	} else if (ch_freq && WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq)) {
 		return policy_mgr_check_6ghz_sap_conc(
-			psoc, con_ch_freq, sap_ch_freq, sap_vdev_id);
+			psoc, con_ch_freq, sap_ch_freq, sap_vdev_id,
+			vdev_opmode);
 	}
 
 	sta_sap_scc_on_dfs_chan =
