@@ -3247,7 +3247,7 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NSS_WIFI_OFFLOAD_STATUS, GET_PARAM, 0},
 	{"enable_ema",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_EMA, SET_PARAM, 1},
-	{"dur_based_tx_mode_sselect",
+	{"dur_based_tx_mode_select",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_TX_MODE_SELECT, SET_PARAM, 1},
 };
 #endif
