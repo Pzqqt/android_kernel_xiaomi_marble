@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2735,6 +2735,163 @@ static QDF_STATUS send_lci_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+/**
+ * config_vdev_tid_latency_info_cmd_tlv() - enable vdev tid latency command
+ * @wmi: wmi handle
+ * @param: vdev tid latency config param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+config_vdev_tid_latency_info_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_vdev_tid_latency_config_params *param)
+{
+	wmi_vdev_latency_info *vdev_tid_latency_info;
+	wmi_vdev_tid_latency_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS retval;
+	uint32_t len = 0;
+	uint8_t i = 0;
+	uint8_t *buf_ptr = 0;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += param->num_vdev * sizeof(wmi_vdev_latency_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("wmi_buf_alloc failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_vdev_tid_latency_config_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_vdev_tid_latency_config_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_vdev_tid_latency_config_fixed_param));
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+			wmi_handle,
+			param->pdev_id);
+	cmd->vdev_id = param->vdev_id;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			sizeof(wmi_vdev_latency_info) * param->num_vdev);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	vdev_tid_latency_info = (wmi_vdev_latency_info *)buf_ptr;
+	for (i = 0; i < param->num_vdev; i++) {
+		WMITLV_SET_HDR(&vdev_tid_latency_info->tlv_header,
+				WMITLV_TAG_STRUC_wmi_vdev_latency_info,
+				WMITLV_GET_STRUCT_TLVLEN(
+					wmi_vdev_latency_info));
+		vdev_tid_latency_info->service_interval =
+			param->latency_info[i].service_interval;
+		vdev_tid_latency_info->burst_size =
+			param->latency_info[i].burst_size;
+		WMI_VDEV_LATENCY_SET_TIDNUM(
+				vdev_tid_latency_info->vdev_latency_info,
+				param->latency_info[i].latency_tid);
+		WMI_VDEV_LATENCY_SET_AC(
+				vdev_tid_latency_info->vdev_latency_info,
+				param->latency_info[i].ac);
+		WMI_VDEV_LATENCY_SET_DL_VALID(
+				vdev_tid_latency_info->vdev_latency_info,
+				param->latency_info[i].dl_enable);
+		WMI_VDEV_LATENCY_SET_UL_VALID(
+				vdev_tid_latency_info->vdev_latency_info,
+				param->latency_info[i].ul_enable);
+		vdev_tid_latency_info++;
+	}
+
+	wmi_mtrace(WMI_VDEV_TID_LATENCY_CONFIG_CMDID, NO_SESSION, 0);
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_VDEV_TID_LATENCY_CONFIG_CMDID);
+	if (QDF_IS_STATUS_ERROR(retval)) {
+		wmi_err("WMI Failed");
+		wmi_buf_free(buf);
+	}
+
+	return retval;
+}
+
+/**
+ * config_peer_latency_info_cmd_tlv() - enable peer latency command
+ * @wmi: wmi handle
+ * @param: peer latency config param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+config_peer_latency_info_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_peer_latency_config_params *param)
+{
+	wmi_tid_latency_info *tid_latency_info;
+	wmi_peer_tid_latency_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS retval;
+	uint32_t len = 0;
+	uint8_t i = 0;
+	uint8_t *buf_ptr = 0;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += param->num_peer * sizeof(wmi_tid_latency_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("wmi_buf_alloc failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_peer_tid_latency_config_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_peer_tid_latency_config_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_peer_tid_latency_config_fixed_param));
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+			wmi_handle,
+			param->pdev_id);
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			sizeof(wmi_tid_latency_info) * param->num_peer);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	tid_latency_info = (wmi_tid_latency_info *)buf_ptr;
+	for (i = 0; i < param->num_peer; i++) {
+		WMITLV_SET_HDR(&tid_latency_info->tlv_header,
+				WMITLV_TAG_STRUC_wmi_tid_latency_info,
+				WMITLV_GET_STRUCT_TLVLEN(
+					wmi_tid_latency_info));
+		tid_latency_info->service_interval =
+			param->latency_info[i].service_interval;
+		tid_latency_info->burst_size_diff =
+			param->latency_info[i].burst_size;
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->latency_info[i].peer_mac,
+				&tid_latency_info->dest_macaddr);
+		WMI_TID_LATENCY_SET_TIDNUM(tid_latency_info->latency_tid_info,
+				param->latency_info[i].latency_tid);
+		WMI_TID_LATENCY_SET_AC(tid_latency_info->latency_tid_info,
+				param->latency_info[i].ac);
+		WMI_TID_LATENCY_SET_DL_ENABLE(tid_latency_info->latency_tid_info,
+				param->latency_info[i].dl_enable);
+		WMI_TID_LATENCY_SET_UL_ENABLE(tid_latency_info->latency_tid_info,
+				param->latency_info[i].ul_enable);
+		WMI_LATENCY_SET_BURST_SIZE_SUM(tid_latency_info->latency_tid_info,
+				param->latency_info[i].add_or_sub);
+		tid_latency_info++;
+	}
+
+	wmi_mtrace(WMI_PEER_TID_LATENCY_CONFIG_CMDID, NO_SESSION, 0);
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_TID_LATENCY_CONFIG_CMDID);
+	if (QDF_IS_STATUS_ERROR(retval)) {
+		wmi_err("WMI Failed");
+		wmi_buf_free(buf);
+	}
+
+	return retval;
+}
+#endif
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2808,4 +2965,8 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->set_radio_tx_mode_select_cmd = set_radio_tx_mode_select_cmd_tlv;
 	ops->send_lcr_cmd = send_lcr_cmd_tlv;
 	ops->send_lci_cmd = send_lci_cmd_tlv;
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	ops->config_vdev_tid_latency_info_cmd = config_vdev_tid_latency_info_cmd_tlv;
+	ops->config_peer_latency_info_cmd = config_peer_latency_info_cmd_tlv;
+#endif
 }

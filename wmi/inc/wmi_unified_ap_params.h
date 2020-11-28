@@ -797,4 +797,77 @@ struct wmi_pdev_enable_tx_mode_selection {
 	uint32_t pdev_id;
 	uint32_t enable_tx_mode_selection;
 };
+
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+/**
+ * struct wmi_vdev_latency_info_params - vdev latency info params
+ * @service_interval: service interval in miliseconds
+ * @burst_size: burst size in bytes
+ * @latency_tid: tid associated with this latency information
+ * @ac: Access Category associated with this td
+ * @ul_enable: Bit to indicate ul latency enable
+ * @dl_enable: Bit to indicate dl latency enable
+ */
+struct wmi_vdev_latency_info_params {
+	uint32_t service_interval;
+	uint32_t burst_size;
+	uint32_t latency_tid :8,
+			 ac          :2,
+			 ul_enable   :1,
+			 dl_enable   :1,
+			 reserved    :20;
+};
+
+/**
+ * struct wmi_vdev_tid_latency_config_params - VDEV TID latency config params
+ * @num_vdev: Number of vdevs in this message
+ * @vdev_id: Associated vdev id
+ * @pdev_id: Associated pdev id
+ * @latency_info: Vdev latency info
+ */
+struct wmi_vdev_tid_latency_config_params {
+	uint8_t num_vdev;
+	uint16_t vdev_id;
+	uint16_t pdev_id;
+	struct wmi_vdev_latency_info_params latency_info[1];
+};
+
+/**
+ * struct wmi_peer_latency_info_params - peer latency info params
+ * @peer_mac: peer mac address
+ * @service_interval: service interval in miliseconds
+ * @burst_size: burst size in bytes
+ * @latency_tid: tid associated with this latency information
+ * @ac: Access Category associated with this td
+ * @ul_enable: Bit to indicate ul latency enable
+ * @dl_enable: Bit to indicate dl latency enable
+ * @flow_id: Flow id associated with tid
+ * @add_or_sub: Bit to indicate add/delete of latency params
+ */
+struct wmi_peer_latency_info_params {
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	uint32_t service_interval;
+	uint32_t burst_size;
+	uint32_t latency_tid :8,
+			ac          :2,
+			ul_enable   :1,
+			dl_enable   :1,
+			flow_id     :4,
+			add_or_sub  :2,
+			reserved    :14;
+};
+
+/**
+ * struct wmi_peer_latency_config_params - peer latency config params
+ * @num_peer: Number of peers in this message
+ * @vdev_id: Associated vdev id
+ * @pdev_id: Associated pdev id
+ * @latency_info: Vdev latency info
+ */
+struct wmi_peer_latency_config_params {
+	uint32_t num_peer;
+	uint32_t pdev_id;
+	struct wmi_peer_latency_info_params latency_info[1];
+};
+#endif
 #endif

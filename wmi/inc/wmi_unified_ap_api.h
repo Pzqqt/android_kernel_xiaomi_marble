@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -790,4 +790,30 @@ QDF_STATUS wmi_unified_send_lcr_cmd(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_unified_send_lci_cmd(wmi_unified_t wmi_handle,
 				    struct wifi_pos_lci_info *lci_info);
+
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+/**
+ * wmi_unified_config_vdev_tid_latency_info_cmd_send() - WMI for vdev latency
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold vdev tid latency config param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_config_vdev_tid_latency_info_cmd_send(
+		wmi_unified_t wmi_hdl,
+		struct wmi_vdev_tid_latency_config_params
+		*vdev_tid_latency_config_param);
+
+/**
+ * wmi_unified_config_peer_latency_info_cmd_send() - WMI for peer latency
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold peer latency config param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_config_peer_latency_info_cmd_send(
+		wmi_unified_t wmi_hdl,
+		struct wmi_peer_latency_config_params
+		*param);
+#endif
 #endif /* _WMI_UNIFIED_AP_API_H_ */
