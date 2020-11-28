@@ -602,7 +602,7 @@ more_msdu_link_desc:
 		rx_tlv_hdr_last = qdf_nbuf_data(tail_nbuf);
 
 		if (qdf_unlikely(head_nbuf != tail_nbuf)) {
-			nbuf = dp_rx_sg_create(head_nbuf);
+			nbuf = dp_rx_sg_create(soc, head_nbuf);
 			qdf_nbuf_set_is_frag(nbuf, 1);
 			DP_STATS_INC(soc, rx.err.reo_err_oor_sg_count, 1);
 		}
@@ -2182,7 +2182,7 @@ done:
 		 * QCN9000 has this support
 		 */
 		if (qdf_nbuf_is_rx_chfrag_cont(nbuf)) {
-			nbuf = dp_rx_sg_create(nbuf);
+			nbuf = dp_rx_sg_create(soc, nbuf);
 			next = nbuf->next;
 			/*
 			 * SG error handling is not done correctly,

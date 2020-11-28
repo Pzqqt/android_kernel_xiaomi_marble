@@ -1177,6 +1177,7 @@ static inline bool dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
 /**
  * dp_rx_sg_create() - create a frag_list for MSDUs which are spread across
  *		     multiple nbufs.
+ * @soc: DP SOC handle
  * @nbuf: pointer to the first msdu of an amsdu.
  *
  * This function implements the creation of RX frag_list for cases
@@ -1184,7 +1185,7 @@ static inline bool dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
  *
  * Return: returns the head nbuf which contains complete frag_list.
  */
-qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_rx_sg_create(struct dp_soc *soc, qdf_nbuf_t nbuf)
 {
 	qdf_nbuf_t parent, frag_list, next = NULL;
 	uint16_t frag_list_len = 0;
@@ -1229,6 +1230,18 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf)
 	 */
 	qdf_nbuf_set_rx_chfrag_start(parent, 1);
 	last_nbuf = dp_rx_adjust_nbuf_len(parent, &mpdu_len);
+
+	/*
+	 * HW issue:  MSDU cont bit is set but reported MPDU length can fit
+	 * in to single buffer
+	 *
+	 * Increment error stats and avoid SG list creation
+	 */
+	if (last_nbuf) {
+		DP_STATS_INC(soc, rx.err.msdu_continuation_err, 1);
+		qdf_nbuf_pull_head(parent, RX_PKT_TLVS_LEN);
+		return parent;
+	}
 
 	/*
 	 * this is where we set the length of the fragments which are
@@ -2668,7 +2681,7 @@ done:
 			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
 		} else if (qdf_nbuf_is_rx_chfrag_cont(nbuf)) {
 			msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-			nbuf = dp_rx_sg_create(nbuf);
+			nbuf = dp_rx_sg_create(soc, nbuf);
 			next = nbuf->next;
 
 			if (qdf_nbuf_is_raw_frame(nbuf)) {

@@ -977,6 +977,8 @@ struct dp_soc_stats {
 			uint32_t nbuf_sanity_fail;
 			/* Duplicate link desc refilled */
 			uint32_t dup_refill_link_desc;
+			/* Incorrect msdu continuation bit in MSDU desc */
+			uint32_t msdu_continuation_err;
 		} err;
 
 		/* packet count per core - per ring */
