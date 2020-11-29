@@ -308,41 +308,14 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 }
 
 #ifdef WLAN_MAX_LOGS_PER_SEC
-static qdf_time_t __log_window_end_ticks;
-static qdf_atomic_t __log_window_count;
-
-/**
- * assert_on_excessive_logging() - Check for and panic on excessive logging
- *
- * Track logging count using a quasi-tumbling window, 1 second long. If the max
- * logging count for a given window is exceeded, panic.
- *
- * Return: None
- */
-static void assert_on_excessive_logging(void)
+static inline void wlan_panic_on_excessive_logging(void)
 {
-	qdf_time_t now = qdf_system_ticks();
-
-	/*
-	 * If 'now' is more recent than the end of the window, reset.
-	 *
-	 * Note: This is not thread safe, and can result in more than one reset.
-	 * For our purposes, this is fine.
-	 */
-	if (!qdf_atomic_read(&__log_window_count)) {
-		__log_window_end_ticks = now + qdf_system_ticks_per_sec;
-	} else if (qdf_system_time_after(now, __log_window_end_ticks)) {
-		__log_window_end_ticks = now + qdf_system_ticks_per_sec;
-		qdf_atomic_set(&__log_window_count, 0);
-	}
-
-	/* this _is_ thread safe, and results in at most one panic */
-	if (qdf_atomic_inc_return(&__log_window_count) == WLAN_MAX_LOGS_PER_SEC)
+	if (qdf_detected_excessive_logging())
 		QDF_DEBUG_PANIC("Exceeded %d logs per second",
 				WLAN_MAX_LOGS_PER_SEC);
 }
 #else
-static inline void assert_on_excessive_logging(void) { }
+static inline void wlan_panic_on_excessive_logging(void) {}
 #endif /* WLAN_MAX_LOGS_PER_SEC */
 
 static inline void
@@ -351,19 +324,19 @@ log_to_console(QDF_TRACE_LEVEL level, const char *timestamp, const char *msg)
 	switch (level) {
 	case QDF_TRACE_LEVEL_FATAL:
 		pr_alert("%s %s\n", timestamp, msg);
-		assert_on_excessive_logging();
+		wlan_panic_on_excessive_logging();
 		break;
 	case QDF_TRACE_LEVEL_ERROR:
 		pr_err("%s %s\n", timestamp, msg);
-		assert_on_excessive_logging();
+		wlan_panic_on_excessive_logging();
 		break;
 	case QDF_TRACE_LEVEL_WARN:
 		pr_warn("%s %s\n", timestamp, msg);
-		assert_on_excessive_logging();
+		wlan_panic_on_excessive_logging();
 		break;
 	case QDF_TRACE_LEVEL_INFO:
 		pr_info("%s %s\n", timestamp, msg);
-		assert_on_excessive_logging();
+		wlan_panic_on_excessive_logging();
 		break;
 	case QDF_TRACE_LEVEL_INFO_HIGH:
 	case QDF_TRACE_LEVEL_INFO_MED:

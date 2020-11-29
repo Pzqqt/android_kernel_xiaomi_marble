@@ -3207,9 +3207,86 @@ void qdf_trace_display(void)
 }
 qdf_export_symbol(qdf_trace_display);
 
+#ifdef WLAN_MAX_LOGS_PER_SEC
+static qdf_time_t __log_window_end;
+static qdf_atomic_t __log_window_count;
+uint32_t qdf_rl_print_count = WLAN_MAX_LOGS_PER_SEC;
+uint32_t qdf_rl_print_time = 1;
+uint32_t qdf_rl_print_supressed;
+
+/**
+ * qdf_detected_excessive_logging() - Excessive logging detected
+ *
+ * Track logging count using a quasi-tumbling window.
+ * If the max logging count for a given window is exceeded,
+ * return true else fails.
+ *
+ * Return: true/false
+ */
+bool qdf_detected_excessive_logging(void)
+{
+	qdf_time_t now = qdf_system_ticks();
+	bool excessive_prints = false;
+
+	/*
+	 * If 'now' is more recent than the end of the window, reset.
+	 *
+	 * Note: This is not thread safe, and can result in more than one reset.
+	 * For our purposes, this is fine.
+	 */
+	if (!qdf_atomic_read(&__log_window_count)) {
+		__log_window_end = now + (qdf_system_ticks_per_sec * qdf_rl_print_time);
+	} else if (qdf_system_time_after(now, __log_window_end)) {
+		__log_window_end = now + (qdf_system_ticks_per_sec * qdf_rl_print_time);
+		qdf_atomic_set(&__log_window_count, 0);
+	}
+
+	if (qdf_atomic_inc_return(&__log_window_count) > qdf_rl_print_count)
+		excessive_prints = true;
+
+	return excessive_prints;
+}
+
+void qdf_rl_print_count_set(uint32_t rl_print_count)
+{
+	qdf_rl_print_count = rl_print_count;
+}
+
+qdf_export_symbol(qdf_rl_print_count_set);
+
+void qdf_rl_print_time_set(uint32_t rl_print_time)
+{
+	qdf_rl_print_time = rl_print_time;
+}
+
+qdf_export_symbol(qdf_rl_print_time_set);
+
+static inline void qdf_rl_print_supressed_log(void)
+{
+	if (qdf_rl_print_supressed) {
+		pr_err("QDF Ratelimiting: %d prints supressed",
+		       qdf_rl_print_supressed);
+		qdf_rl_print_supressed = 0;
+	}
+}
+
+static inline void qdf_rl_print_supressed_inc(void)
+{
+	qdf_rl_print_supressed++;
+}
+#else
+#define qdf_rl_print_supressed_log()
+#define qdf_rl_print_supressed_inc()
+#endif /* WLAN_MAX_LOGS_PER_SEC */
+
 #ifdef QDF_TRACE_PRINT_ENABLE
 static inline void print_to_console(char *str_buffer)
 {
+	if (qdf_detected_excessive_logging()) {
+		qdf_rl_print_supressed_inc();
+		return;
+	}
+	qdf_rl_print_supressed_log();
 	pr_err("%s\n", str_buffer);
 }
 #else

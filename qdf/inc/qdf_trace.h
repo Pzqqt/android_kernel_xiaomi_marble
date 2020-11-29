@@ -596,6 +596,43 @@ QDF_STATUS qdf_trace_spin_lock_init(void)
 #endif
 #endif
 
+#ifdef WLAN_MAX_LOGS_PER_SEC
+/**
+ * qdf_detected_excessive_logging() - Excessive logging detected
+ *
+ * Track logging count using a quasi-tumbling window.
+ * If the max logging count for a given window is exceeded,
+ * return true else fails.
+ *
+ * Return: true/false
+ */
+bool qdf_detected_excessive_logging(void);
+
+/**
+ * qdf_rl_print_count_set() - set the ratelimiting print count
+ * @rl_print_time: ratelimiting print count
+ *
+ * Return: none
+ */
+void qdf_rl_print_count_set(uint32_t rl_print_count);
+
+/**
+ * qdf_rl_print_time_set() - set the ratelimiting print time
+ * @rl_print_time: ratelimiting print time
+ *
+ * Return: none
+ */
+void qdf_rl_print_time_set(uint32_t rl_print_time);
+
+#else /* WLAN_MAX_LOGS_PER_SEC */
+static inline bool qdf_detected_excessive_logging(void)
+{
+	return false;
+}
+static inline void qdf_rl_print_count_set(uint32_t rl_print_count) {}
+static inline void qdf_rl_print_time_set(uint32_t rl_print_time) {}
+#endif /* WLAN_MAX_LOGS_PER_SEC */
+
 #ifdef ENABLE_MTRACE_LOG
 /**
  * qdf_mtrace_log() - Logs a message tracepoint to DIAG
