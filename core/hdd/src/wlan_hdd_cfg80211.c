@@ -170,6 +170,7 @@
 #include <osif_cm_util.h>
 #include <osif_cm_req.h>
 #include "wlan_hdd_bootup_marker.h"
+#include "wlan_hdd_cm_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -20766,9 +20767,9 @@ static inline void hdd_dump_connect_req(struct hdd_adapter *adapter,
  *
  * Return: 0 for success, non-zero for failure
  */
-static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
-				       struct net_device *ndev,
-				       struct cfg80211_connect_params *req)
+int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
+				struct net_device *ndev,
+				struct cfg80211_connect_params *req)
 {
 	int status;
 	uint32_t ch_freq;
@@ -20937,7 +20938,33 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	return status;
 }
+#ifdef FEATURE_CM_ENABLE
+/**
+ * wlan_hdd_cfg80211_connect() - cfg80211 connect api
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @req: Pointer to cfg80211 connect request
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
+				     struct net_device *ndev,
+				     struct cfg80211_connect_params *req)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
 
+	errno = osif_vdev_sync_op_start(ndev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_cm_connect(wiphy, ndev, req);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+#else
 /**
  * wlan_hdd_cfg80211_connect() - cfg80211 connect api
  * @wiphy: Pointer to wiphy
@@ -20963,6 +20990,7 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	return errno;
 }
+#endif
 
 /**
  * hdd_ieee80211_reason_code_to_str() - return string conversion of reason code
@@ -21176,8 +21204,8 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
  *
  * Return: 0 for success, non-zero for failure
  */
-static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
-					  struct net_device *dev, u16 reason)
+int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
+				   struct net_device *dev, u16 reason)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
@@ -21291,6 +21319,32 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 	return status;
 }
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * wlan_hdd_cfg80211_disconnect() - cfg80211 disconnect api
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @reason: Disconnect reason code
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
+					struct net_device *dev, u16 reason)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_cm_disconnect(wiphy, dev, reason);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+#else
 /**
  * wlan_hdd_cfg80211_disconnect() - cfg80211 disconnect api
  * @wiphy: Pointer to wiphy
@@ -21315,6 +21369,7 @@ static int wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 	return errno;
 }
+#endif
 
 /**
  * __wlan_hdd_cfg80211_set_wiphy_params() - set wiphy parameters
