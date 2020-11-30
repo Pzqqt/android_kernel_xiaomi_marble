@@ -913,6 +913,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 
 	if (cds_is_load_or_unload_in_progress()) {
 		wma_err("Driver load/unload in progress");
+		qdf_mem_free(ack_work);
 		return;
 	}
 
