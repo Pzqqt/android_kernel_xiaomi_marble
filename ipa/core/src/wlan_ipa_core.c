@@ -1066,6 +1066,8 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 }
 #endif /* MDM_PLATFORM */
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
+
 /**
  * __wlan_ipa_i2w_cb() - IPA to WLAN callback
  * @priv: pointer to private data registered with IPA (we register a
@@ -1164,6 +1166,24 @@ static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 
 	qdf_op_unprotect(op_sync);
 }
+
+#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
+
+/**
+ * wlan_ipa_i2w_cb() - IPA to WLAN callback
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the interface-specific IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data)
+{
+}
+
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 QDF_STATUS wlan_ipa_suspend(struct wlan_ipa_priv *ipa_ctx)
 {
@@ -1434,6 +1454,8 @@ static void wlan_ipa_cleanup_iface(struct wlan_ipa_iface_context *iface_context)
 	ipa_debug("exit: num_iface=%d", iface_context->ipa_ctx->num_iface);
 }
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
+
 /**
  * wlan_ipa_nbuf_cb() - IPA TX complete callback
  * @skb: packet buffer which was transmitted
@@ -1495,6 +1517,21 @@ static void wlan_ipa_nbuf_cb(qdf_nbuf_t skb)
 
 	wlan_ipa_wdi_rm_try_release(ipa_ctx);
 }
+
+#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
+
+/**
+ * wlan_ipa_nbuf_cb() - IPA TX complete callback
+ * @skb: packet buffer which was transmitted
+ *
+ * Return: None
+ */
+static void wlan_ipa_nbuf_cb(qdf_nbuf_t skb)
+{
+	dev_kfree_skb_any(skb);
+}
+
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 /**
  * wlan_ipa_setup_iface() - Setup IPA on a given interface
@@ -2789,6 +2826,8 @@ wlan_ipa_uc_proc_pending_event(struct wlan_ipa_priv *ipa_ctx, bool is_loading)
 	}
 }
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
+
 /**
  * wlan_ipa_free_tx_desc_list() - Free IPA Tx desc list
  * @ipa_ctx: IPA context
@@ -2864,7 +2903,6 @@ wlan_ipa_alloc_tx_desc_free_list(struct wlan_ipa_priv *ipa_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * wlan_ipa_setup_tx_sys_pipe() - Setup IPA Tx system pipes
  * @ipa_ctx: Global IPA IPA context
@@ -2912,7 +2950,30 @@ static int wlan_ipa_setup_tx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 
 	return ret;
 }
-#else
+#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
+
+/**
+ * wlan_ipa_free_tx_desc_list() - Free IPA Tx desc list
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+static inline void wlan_ipa_free_tx_desc_list(struct wlan_ipa_priv *ipa_ctx)
+{
+}
+
+/**
+ * wlan_ipa_alloc_tx_desc_free_list() - Allocate IPA Tx desc list
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+wlan_ipa_alloc_tx_desc_free_list(struct wlan_ipa_priv *ipa_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wlan_ipa_setup_tx_sys_pipe() - Setup IPA Tx system pipes
  * @ipa_ctx: IPA context
@@ -2929,7 +2990,7 @@ static int wlan_ipa_setup_tx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 	 */
 	return 0;
 }
-#endif
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #if defined(CONFIG_IPA_WDI_UNIFIED_API) && defined(IPA_WDI3_GSI)
 /**
