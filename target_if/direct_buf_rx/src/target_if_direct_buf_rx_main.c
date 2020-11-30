@@ -1002,7 +1002,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 			struct direct_buf_rx_module_param *mod_param,
 			void *aligned_vaddr, uint32_t cookie)
 {
-	uint64_t *ring_entry;
+	uint32_t *ring_entry;
 	uint32_t dw_lo, dw_hi = 0, map_status;
 	void *hal_soc, *srng;
 	qdf_dma_addr_t paddr;
@@ -1067,7 +1067,9 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	dw_lo = (uint64_t)paddr & 0xFFFFFFFF;
 	WMI_HOST_DBR_RING_ADDR_HI_SET(dw_hi, (uint64_t)paddr >> 32);
 	WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_SET(dw_hi, cookie);
-	*ring_entry = (uint64_t)dw_hi << 32 | dw_lo;
+	*ring_entry = qdf_cpu_to_le32(dw_lo);
+	ring_entry++;
+	*ring_entry = qdf_cpu_to_le32(dw_hi);
 	hal_srng_access_end(hal_soc, srng);
 
 	return QDF_STATUS_SUCCESS;
