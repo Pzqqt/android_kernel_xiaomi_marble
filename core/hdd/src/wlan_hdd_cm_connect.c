@@ -27,6 +27,9 @@
 #include "wlan_hdd_object_manager.h"
 #include "wlan_hdd_power.h"
 #include <osif_cm_req.h>
+#include <wlan_logging_sock_svc.h>
+#include <wlan_hdd_periodic_sta_stats.h>
+
 
 static void hdd_update_scan_ie_for_connect(struct hdd_adapter *adapter,
 					   struct osif_connect_params *params)
@@ -132,9 +135,58 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	return status;
 }
 
+static void
+hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_connect_resp *rsp)
+{
+	/*
+	 * Check if failure of scan for sssid is handled in osif or not
+	 */
+	hdd_debug("Invoking packetdump deregistration API");
+	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
+}
+
+static void
+hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_connect_resp *rsp)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+						wlan_vdev_get_id(vdev));
+
+	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
+	hdd_wmm_dscp_initial_state(adapter);
+	hdd_debug("Disabling queues");
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
+				     WLAN_CONTROL_PATH);
+	hdd_periodic_sta_stats_start(adapter);
+}
+
+static void hdd_cm_connect_failure(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_connect_resp *rsp,
+				   enum osif_cb_type type)
+{
+	switch (type) {
+	case OSIF_PRE_USERSPACE_UPDATE:
+		hdd_cm_connect_failure_pre_user_update(vdev, rsp);
+		break;
+	case OSIF_POST_USERSPACE_UPDATE:
+		hdd_cm_connect_failure_post_user_update(vdev, rsp);
+		break;
+	default:
+		hdd_cm_connect_failure_pre_user_update(vdev, rsp);
+		hdd_cm_connect_failure_post_user_update(vdev, rsp);
+	}
+}
+
 QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_connect_resp *rsp,
 				   enum osif_cb_type type)
 {
+	if (QDF_IS_STATUS_ERROR(rsp->connect_status))
+		hdd_cm_connect_failure(vdev, rsp, type);
+
 	return QDF_STATUS_SUCCESS;
 }
