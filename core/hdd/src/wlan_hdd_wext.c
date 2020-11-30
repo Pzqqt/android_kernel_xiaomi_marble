@@ -3918,7 +3918,7 @@ static int hdd_we_set_nss(struct hdd_adapter *adapter, int nss)
 		return -EINVAL;
 	}
 
-	status = hdd_update_nss(adapter, nss);
+	status = hdd_update_nss(adapter, nss, nss);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("cfg set failed, value %d status %d", nss, status);
 

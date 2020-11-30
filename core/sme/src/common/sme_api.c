@@ -11270,7 +11270,8 @@ void sme_update_he_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
 	uint32_t mcs_map = 0;
 
 	if (!nss || (nss > 2)) {
-		sme_err("invalid Nss value %d", nss);
+		sme_err("invalid Nss value nss %d", nss);
+		return;
 	}
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!csr_session) {
