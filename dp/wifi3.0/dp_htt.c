@@ -4931,7 +4931,7 @@ htt_htc_soc_attach(struct htt_soc *soc)
 
 	hif_save_htc_htt_config_endpoint(dpsoc->hif_handle, soc->htc_endpoint);
 
-	htt_interface_logging_init(&soc->htt_logger_handle);
+	htt_interface_logging_init(&soc->htt_logger_handle, soc->ctrl_psoc);
 	dp_hif_update_pipe_callback(soc->dp_soc, (void *)soc,
 		dp_htt_hif_t2h_hp_callback, DP_HTT_T2H_HP_PIPE);
 

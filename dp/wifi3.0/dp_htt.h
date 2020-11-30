@@ -31,7 +31,8 @@
 #else
 struct htt_logger;
 static inline
-void htt_interface_logging_init(struct htt_logger **htt_logger_handle)
+void htt_interface_logging_init(struct htt_logger **htt_logger_handle,
+				struct cdp_ctrl_objmgr_psoc *ctrl_psoc)
 {
 }
 
