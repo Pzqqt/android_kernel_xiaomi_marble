@@ -243,6 +243,8 @@ void qca_multi_link_deinit_module(void)
 	qca_multi_link_cfg.primary_wiphy = NULL;
 	qdf_list_destroy(&qca_multi_link_cfg.radio_list);
 	is_initialized = false;
+	qca_multi_link_cfg.qca_ml_set_loop_detection = NULL;
+	qca_multi_link_cfg.qca_ml_loop_detection_context = NULL;
 	qdf_spinlock_destroy(&qca_multi_link_cfg.radio_lock);
 
 	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
@@ -265,6 +267,8 @@ void qca_multi_link_init_module(void)
 	qca_multi_link_cfg.total_stavaps_up = 0;
 	qca_multi_link_cfg.loop_detected = 0;
 	qca_multi_link_cfg.primary_wiphy = NULL;
+	qca_multi_link_cfg.qca_ml_set_loop_detection = NULL;
+	qca_multi_link_cfg.qca_ml_loop_detection_context = NULL;
 	qdf_list_create(&qca_multi_link_cfg.radio_list, QCA_MULTI_LINK_RADIO_LIST_SIZE);
 	qdf_spinlock_create(&qca_multi_link_cfg.radio_lock);
 
@@ -889,6 +893,11 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 				if (qca_ml_entry.qal_fdb_is_local
 					&& (qca_ml_entry.qal_fdb_ieee80211_ptr->iftype == NL80211_IFTYPE_STATION)) {
 					qca_multi_link_cfg.loop_detected = true;
+					if (qca_multi_link_cfg.qca_ml_set_loop_detection) {
+						qca_multi_link_cfg.qca_ml_set_loop_detection(
+							qca_multi_link_cfg.qca_ml_loop_detection_context,
+							true);
+					}
 					QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO, FL("\n****Wifi Rptr Loop Detected****\n"));
 				}
 			}
@@ -1071,6 +1080,11 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
 				== NL80211_IFTYPE_STATION)) {
 			if (!qca_multi_link_cfg.loop_detected) {
 				qca_multi_link_cfg.loop_detected = true;
+				if (qca_multi_link_cfg.qca_ml_set_loop_detection) {
+					qca_multi_link_cfg.qca_ml_set_loop_detection(
+							qca_multi_link_cfg.qca_ml_loop_detection_context,
+							true);
+				}
 				QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
 						FL("\n****Wifi Rptr Loop Detected****\n"));
 			}
@@ -1393,3 +1407,21 @@ end:
 }
 
 qdf_export_symbol(qca_multi_link_sta_tx);
+
+/**
+ * qca_multi_link_set_dbdc_loop_detection_cb() - set the dbdc loop detection callback
+ * @qca_ml_cb: Callback function to be called during multi link loop detection.
+ */
+void qca_multi_link_set_dbdc_loop_detection_cb(
+		qca_multi_link_set_loop_detection_fn_t qca_ml_cb,
+		void *ctx)
+{
+	qca_multi_link_cfg.qca_ml_set_loop_detection = qca_ml_cb;
+	qca_multi_link_cfg.qca_ml_loop_detection_context = ctx;
+
+	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
+		FL("\nSetting DBDC Loop detection ctx:%p\n"), ctx);
+}
+
+qdf_export_symbol(qca_multi_link_set_dbdc_loop_detection_cb);
+
