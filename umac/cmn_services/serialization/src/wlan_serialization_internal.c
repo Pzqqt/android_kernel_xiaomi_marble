@@ -513,20 +513,19 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
-	/* Call cmd cb for remove request*/
-	if (cmd_bkup.cmd_cb) {
-		/* caller should release the memory */
-		ser_debug("Release memory for type %d id %d",
-			  cmd_bkup.cmd_type, cmd_bkup.cmd_id);
-		cmd_bkup.cmd_cb(&cmd_bkup,
-				     WLAN_SER_CB_RELEASE_MEM_CMD);
-	}
-
 	if (active_cmd) {
 		ser_status = wlan_serialization_move_pending_to_active(
 			cmd_bkup.cmd_type, ser_pdev_obj,
 			cmd_bkup.vdev,
 			blocking_cmd_removed);
+	}
+
+	/* Call cmd cb for remove request*/
+	if (cmd_bkup.cmd_cb) {
+		/* caller should release the memory */
+		ser_debug("Release memory for type %d id %d",
+			  cmd_bkup.cmd_type, cmd_bkup.cmd_id);
+		cmd_bkup.cmd_cb(&cmd_bkup, WLAN_SER_CB_RELEASE_MEM_CMD);
 	}
 
 	if (active_cmd)
