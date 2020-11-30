@@ -749,7 +749,7 @@ static int gf_open(struct inode *inode, struct file *filp)
 
 		gpio_direction_input(gf_dev->irq_gpio);
 		rc = request_threaded_irq(gf_dev->irq, NULL, gf_irq,
-						IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+						IRQF_TRIGGER_RISING | IRQF_ONESHOT | IRQF_PERF_AFFINE,
 						"gf", gf_dev);
 
 		if (!rc) {
