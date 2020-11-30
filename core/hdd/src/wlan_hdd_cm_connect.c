@@ -29,7 +29,13 @@
 #include <osif_cm_req.h>
 #include <wlan_logging_sock_svc.h>
 #include <wlan_hdd_periodic_sta_stats.h>
-
+#include <wlan_hdd_green_ap.h>
+#include <wlan_hdd_p2p.h>
+#include <wlan_p2p_ucfg_api.h>
+#include <wlan_pkt_capture_ucfg_api.h>
+#include <wlan_hdd_ipa.h>
+#include <wlan_ipa_ucfg_api.h>
+#include <wlan_hdd_ftm_time_sync.h>
 
 static void hdd_update_scan_ie_for_connect(struct hdd_adapter *adapter,
 					   struct osif_connect_params *params)
@@ -181,12 +187,161 @@ static void hdd_cm_connect_failure(struct wlan_objmgr_vdev *vdev,
 	}
 }
 
+static void
+hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_connect_resp *rsp)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+						wlan_vdev_get_id(vdev));
+	unsigned long rc;
+	int ret;
+
+	/*
+	 * check API hdd_conn_save_connect_info, hdd_add_beacon_filter
+	 * FEATURE_WLAN_WAPI, hdd_send_association_event,
+	 */
+
+	policy_mgr_incr_active_session(hdd_ctx->psoc,
+				adapter->device_mode, adapter->vdev_id);
+	hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode, true);
+	/* move ucfg_p2p_status_connect to cm */
+
+	ret = hdd_objmgr_set_peer_mlme_state(adapter->vdev,
+					     WLAN_ASSOC_STATE);
+	if (ret)
+		hdd_err("Peer object "QDF_MAC_ADDR_FMT" fail to set associated state",
+			QDF_MAC_ADDR_REF(rsp->bssid.bytes));
+
+	/*
+	 * check update hdd_send_update_beacon_ies_event,
+	 * hdd_send_ft_assoc_response, hdd_send_peer_status_ind_to_app
+	 * Update tdls module about connection event,
+	 * hdd_add_latency_critical_client
+	 */
+	hdd_bus_bw_compute_prev_txrx_stats(adapter);
+	hdd_bus_bw_compute_timer_start(hdd_ctx);
+
+	if (ucfg_pkt_capture_get_pktcap_mode(hdd_ctx->psoc))
+		ucfg_pkt_capture_record_channel(adapter->vdev);
+
+	hdd_ipa_set_tx_flow_info();
+
+	if (policy_mgr_is_mcc_in_24G(hdd_ctx->psoc)) {
+		if (hdd_ctx->miracast_value)
+			wlan_hdd_set_mas(adapter, hdd_ctx->miracast_value);
+	}
+
+	/* Initialize the Linkup event completion variable */
+	INIT_COMPLETION(adapter->linkup_event_var);
+
+	/*
+	 * Enable Linkup Event Servicing which allows the net
+	 * device notifier to set the linkup event variable.
+	 */
+	adapter->is_link_up_service_needed = true;
+
+	/* Switch on the Carrier to activate the device */
+	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_CARRIER_ON,
+				     WLAN_CONTROL_PATH);
+
+	/*
+	 * Wait for the Link to up to ensure all the queues
+	 * are set properly by the kernel.
+	 */
+	rc = wait_for_completion_timeout(
+				&adapter->linkup_event_var,
+				 msecs_to_jiffies(ASSOC_LINKUP_TIMEOUT));
+	if (!rc)
+		hdd_warn("Warning:ASSOC_LINKUP_TIMEOUT");
+
+	/*
+	 * Disable Linkup Event Servicing - no more service
+	 * required from the net device notifier call.
+	 */
+	adapter->is_link_up_service_needed = false;
+
+	/*check cdp_hl_fc_set_td_limit */
+
+	if (ucfg_ipa_is_enabled())
+		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
+				  adapter->device_mode,
+				  adapter->vdev_id,
+				  WLAN_IPA_STA_CONNECT,
+				  rsp->bssid.bytes);
+
+	wlan_hdd_auto_shutdown_enable(hdd_ctx, false);
+
+	DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
+		adapter->vdev_id,
+		QDF_TRACE_DEFAULT_PDEV_ID,
+		QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
+
+	/*
+	 * check for update bss db, hdd_roam_register_sta,
+	 * hdd_objmgr_set_peer_mlme_auth_state
+	 */
+}
+
+static void
+hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_connect_resp *rsp)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+						wlan_vdev_get_id(vdev));
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	/*
+	 * check for hdd_wmm_assoc, wlan_hdd_send_roam_auth_event,
+	 * hdd_roam_register_sta
+	 */
+
+	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
+
+	cdp_hl_fc_set_td_limit(soc, adapter->vdev_id,
+			       sta_ctx->conn_info.chan_freq);
+
+	hdd_debug("Enabling queues");
+
+	/*
+	 * hdd_netif_queue_enable(adapter); this is static function
+	 * will enable this once this code is enabled
+	 */
+
+	/* Inform FTM TIME SYNC about the connection with AP */
+	hdd_ftm_time_sync_sta_state_notify(adapter,
+					   FTM_TIME_SYNC_STA_CONNECTED);
+	hdd_periodic_sta_stats_start(adapter);
+}
+
+static void hdd_cm_connect_success(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_connect_resp *rsp,
+				   enum osif_cb_type type)
+{
+	switch (type) {
+	case OSIF_PRE_USERSPACE_UPDATE:
+		hdd_cm_connect_success_pre_user_update(vdev, rsp);
+		break;
+	case OSIF_POST_USERSPACE_UPDATE:
+		hdd_cm_connect_success_post_user_update(vdev, rsp);
+		break;
+	default:
+		hdd_cm_connect_success_pre_user_update(vdev, rsp);
+		hdd_cm_connect_success_post_user_update(vdev, rsp);
+	}
+}
+
 QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_connect_resp *rsp,
 				   enum osif_cb_type type)
 {
 	if (QDF_IS_STATUS_ERROR(rsp->connect_status))
 		hdd_cm_connect_failure(vdev, rsp, type);
+	else
+		hdd_cm_connect_success(vdev, rsp, type);
 
 	return QDF_STATUS_SUCCESS;
 }
