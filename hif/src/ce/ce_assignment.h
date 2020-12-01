@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1068,7 +1068,7 @@ static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 #endif
 	/* Target autonomous HIF_memcpy */
 	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
-	/* host->target WMI (mac1) */
+	/* Target CV prefetch */
 	{/*CE7*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* Reserved for target */
 	{/*CE8*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
@@ -1091,7 +1091,7 @@ static struct CE_pipe_config target_ce_config_wlan_qcn9000[] = {
 	{ /* CE5 */ 5, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* Reserved for target autonomous HIF_memcpy */
 	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
-	/* CE7 used only by Host */
+	/* Target CV prefetch */
 	{ /* CE7 */ 7, PIPEDIR_OUT, 32, 2048,
 		8192, 0,},
 	/* Reserved for target */
