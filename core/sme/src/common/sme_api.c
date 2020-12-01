@@ -13778,12 +13778,16 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_err("session %d not found", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return status;
 
 	control_bitmap = mlme_get_operations_bitmap(mac_ctx->psoc, vdev_id);
 	if (control_bitmap ||
 	    !MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, vdev_id)) {
 		sme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
 			  vdev_id, control_bitmap);
+		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -13792,6 +13796,7 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 
 	if (!vdev) {
 		sme_err("vdev is NULL, aborting roam invoke");
+		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -13800,6 +13805,7 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 	if (!vdev_roam_params) {
 		sme_err("Invalid vdev roam params, aborting roam invoke");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -13807,12 +13813,14 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_debug("Roaming already initiated by %d source",
 			  vdev_roam_params->source);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_BUSY;
 	}
 
 	roam_invoke_params = qdf_mem_malloc(sizeof(*roam_invoke_params));
 	if (!roam_invoke_params) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		sme_release_global_lock(&mac_ctx->sme);
 		return QDF_STATUS_E_NOMEM;
 	}
 	roam_invoke_params->vdev_id = vdev_id;
@@ -13834,6 +13842,7 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	sme_release_global_lock(&mac_ctx->sme);
 
 	return status;
 }
