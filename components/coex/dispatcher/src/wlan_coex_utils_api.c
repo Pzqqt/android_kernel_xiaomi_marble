@@ -24,6 +24,7 @@
 #include <wlan_coex_main.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_coex_utils_api.h>
+#include "cfg_ucfg_api.h"
 
 QDF_STATUS wlan_coex_init(void)
 {
@@ -75,9 +76,55 @@ QDF_STATUS wlan_coex_deinit(void)
 	return status;
 }
 
+#ifdef FEATURE_BTC_CHAIN_MODE
+/**
+ * wlan_coex_set_btc_chain_mode_with_ini() - set BTC init chain mode
+ * with ini
+ * @psoc: pointer to psoc object
+ *
+ * This function is used to set BTC init chain mode with ini
+ *
+ * Return: None
+ */
+static void
+wlan_coex_set_btc_chain_mode_with_ini(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t btc_chain_mode;
+	QDF_STATUS status;
+
+	status = wlan_coex_psoc_get_btc_chain_mode(psoc, &btc_chain_mode);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		coex_err("error for getting btc chain mode");
+		return;
+	}
+
+	if (btc_chain_mode == WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED) {
+		btc_chain_mode = cfg_get(psoc, CFG_SET_INIT_CHAIN_MODE_FOR_BTC);
+		if (btc_chain_mode != WLAN_COEX_BTC_CHAIN_MODE_SHARED &&
+		    btc_chain_mode != WLAN_COEX_BTC_CHAIN_MODE_SEPARATED &&
+		    btc_chain_mode != WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED) {
+			coex_err("invalid ini config %d for btc chain mode",
+				 btc_chain_mode);
+			return;
+		}
+
+		status = wlan_coex_psoc_set_btc_chain_mode(psoc,
+							   btc_chain_mode);
+		if (QDF_IS_STATUS_ERROR(status))
+			coex_err("error for setting btc init chain mode from ini");
+	}
+}
+#else
+static void
+wlan_coex_set_btc_chain_mode_with_ini(struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 QDF_STATUS
 wlan_coex_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
+	wlan_coex_set_btc_chain_mode_with_ini(psoc);
 	return wlan_coex_psoc_init(psoc);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -313,6 +313,41 @@
 #define THREE_WAY_COEX_CONFIG_LEGACY_CFG
 #endif
 
+#ifdef FEATURE_BTC_CHAIN_MODE
+/*
+ * <ini>
+ * gSetInitChainModeForBTC - Used to set init chain mode for BTC
+ * @Min: 0
+ * @Max: 0xFF
+ * @Default: 0xFF
+ *
+ * This ini is used to set init chain mode for BTC, default value
+ * should be set to the same as macro WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED(0xFF),
+ * only below values can be set:
+ * 0 - init WLAN 2.4G to support 2x2.
+ *     It means chains of BT and WLAN 2.4G are shared, or BT is OFF.
+ * 1 - init WLAN 2.4G as 1x1, chains of BT and WLAN 2.4G are separated.
+ * 0xFF - no need to send init chain mode for BTC to firmware.
+ *
+ * Supported Feature: init chain mode for BTC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SET_INIT_CHAIN_MODE_FOR_BTC CFG_INI_UINT( \
+		"gSetInitChainModeForBTC", \
+		0, \
+		0xFF, \
+		0xFF, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Init Chain Mode For BTC")
+
+#define SET_INIT_CHAIN_MODE_FOR_BTC_CFG CFG(CFG_SET_INIT_CHAIN_MODE_FOR_BTC)
+#else
+#define SET_INIT_CHAIN_MODE_FOR_BTC_CFG
+#endif
+
 #define CFG_COEX_ALL \
 	CFG(CFG_BTC_MODE) \
 	CFG(CFG_ANTENNA_ISOLATION) \
@@ -327,5 +362,6 @@
 	CFG(CFG_BT_INTERFERENCE_HIGH_UL) \
 	COEX_MPTA_HELPER_CFG \
 	CFG(CFG_BT_SCO_ALLOW_WLAN_2G_SCAN) \
-	THREE_WAY_COEX_CONFIG_LEGACY_CFG
+	THREE_WAY_COEX_CONFIG_LEGACY_CFG \
+	SET_INIT_CHAIN_MODE_FOR_BTC_CFG
 #endif
