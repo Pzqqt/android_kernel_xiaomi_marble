@@ -1094,6 +1094,9 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 			dsi_ctrl_setup_avr(display->ctrl[i].ctrl, enable);
 	}
 
+	if (display->drm_conn)
+		sde_connector_helper_post_kickoff(display->drm_conn);
+
 	return 0;
 }
 
