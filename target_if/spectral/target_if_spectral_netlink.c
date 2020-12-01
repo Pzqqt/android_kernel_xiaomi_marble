@@ -44,7 +44,6 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	struct target_if_spectral_ops *p_sops = NULL;
 	uint32_t *binptr_32 = NULL;
 	uint16_t *binptr_16 = NULL;
-	uint32_t pwr_32;
 	uint16_t pwr_16;
 	int idx = 0;
 	struct spectral_samp_data *samp_data;
@@ -167,10 +166,11 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count; idx++) {
-				pwr_32 = *(binptr_32++);
-				if (qdf_unlikely(pwr_32 > MAX_FFTBIN_VALUE))
-					pwr_32 = MAX_FFTBIN_VALUE;
-				samp_data->bin_pwr[idx] = pwr_32;
+				/* Read only the first 2 bytes of the DWORD */
+				pwr_16 = *((uint16_t *)binptr_32++);
+				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
+					pwr_16 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr[idx] = pwr_16;
 			}
 		} else if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
@@ -257,10 +257,11 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count_sec80; idx++) {
-				pwr_32 = *(binptr_32++);
-				if (qdf_unlikely(pwr_32 > MAX_FFTBIN_VALUE))
-					pwr_32 = MAX_FFTBIN_VALUE;
-				samp_data->bin_pwr_sec80[idx] = pwr_32;
+				/* Read only the first 2 bytes of the DWORD */
+				pwr_16 = *((uint16_t *)binptr_32++);
+				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
+					pwr_16 = MAX_FFTBIN_VALUE;
+				samp_data->bin_pwr_sec80[idx] = pwr_16;
 			}
 		} else if (swar->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {

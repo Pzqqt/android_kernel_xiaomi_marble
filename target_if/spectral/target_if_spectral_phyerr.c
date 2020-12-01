@@ -1394,6 +1394,7 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	size_t fft_bin_size;
 	size_t fft_bin_len_inband_tfer = 0;
 	uint8_t *fft_bin_buf = NULL;
+	size_t fft_bin_buf_size;
 
 	fft_bin_len = fft_hdr_length - spectral->rparams.fft_report_hdr_len;
 	fft_bin_count = target_if_spectral_get_bin_count_after_len_adj(
@@ -1444,6 +1445,8 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	spectral_debug("fft_avgpwr_db = %u", p_sfft->fft_avgpwr_db);
 	spectral_debug("fft_relpwr_db = %u", p_sfft->fft_relpwr_db);
 
+	fft_bin_buf_size = fft_bin_count;
+
 	if (fft_bin_count > 0) {
 		int idx;
 
@@ -1451,29 +1454,56 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		if (spectral->len_adj_swar.fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			uint32_t *binptr_32 = (uint32_t *)&p_fft_report->buf;
+			uint16_t *fft_bin_buf_16 = NULL;
 
-			fft_bin_buf = (uint8_t *)qdf_mem_malloc(MAX_NUM_BINS);
-			if (!fft_bin_buf) {
+			/* Useful width of FFT bin is 10 bits, increasing it to
+			 * byte boundary makes it 2 bytes. Hence, buffer to be
+			 * allocated should be of size fft_bin_count
+			 * multiplied by 2.
+			 */
+			fft_bin_buf_size <<= 1;
+
+			fft_bin_buf_16 = (uint16_t *)qdf_mem_malloc(
+						fft_bin_buf_size);
+			if (!fft_bin_buf_16) {
 				spectral_err("Failed to allocate memory");
 				return;
 			}
+
 			for (idx = 0; idx < fft_bin_count; idx++)
-				fft_bin_buf[idx] = *(binptr_32++);
+				fft_bin_buf_16[idx] =
+					*((uint16_t *)binptr_32++);
+
+			fft_bin_buf = (uint8_t *)fft_bin_buf_16;
 		} else if (spectral->len_adj_swar.fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			uint16_t *binptr_16 = (uint16_t *)&p_fft_report->buf;
+			uint16_t *fft_bin_buf_16 = NULL;
 
-			fft_bin_buf = (uint8_t *)qdf_mem_malloc(MAX_NUM_BINS);
-			if (!fft_bin_buf) {
+			/* Useful width of FFT bin is 10 bits, increasing it to
+			 * byte boundary makes it 2 bytes. Hence, buffer to be
+			 * allocated should be of size fft_bin_count
+			 * multiplied by 2.
+			 */
+			fft_bin_buf_size <<= 1;
+
+			fft_bin_buf_16 = (uint16_t *)qdf_mem_malloc(
+						fft_bin_buf_size);
+			if (!fft_bin_buf_16) {
 				spectral_err("Failed to allocate memory");
 				return;
 			}
+
 			for (idx = 0; idx < fft_bin_count; idx++)
-				fft_bin_buf[idx] = *(binptr_16++);
+				fft_bin_buf_16[idx] = *(binptr_16++);
+
+			fft_bin_buf = (uint8_t *)fft_bin_buf_16;
 		} else {
 			fft_bin_buf = (uint8_t *)&p_fft_report->buf;
 		}
-		target_if_spectral_hexdump(fft_bin_buf, fft_bin_count);
+
+		spectral_debug("FFT bin buffer size = %zu", fft_bin_buf_size);
+		target_if_spectral_hexdump(fft_bin_buf, fft_bin_buf_size);
 		if ((spectral->len_adj_swar.fftbin_size_war !=
 				SPECTRAL_FFTBIN_SIZE_NO_WAR) && fft_bin_buf)
 			qdf_mem_free(fft_bin_buf);
