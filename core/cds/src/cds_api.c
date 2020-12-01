@@ -223,6 +223,22 @@ static QDF_STATUS cds_wmi_send_recv_qmi(void *buf, uint32_t len, void * cb_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * cds_update_recovery_reason() - update the recovery reason code
+ * @reason: recovery reason
+ *
+ * Return: None
+ */
+static void cds_update_recovery_reason(enum qdf_hang_reason recovery_reason)
+{
+	if (!gp_cds_context) {
+		cds_err("gp_cds_context is null");
+		return;
+	}
+
+	gp_cds_context->recovery_reason = recovery_reason;
+}
+
 QDF_STATUS cds_init(void)
 {
 	QDF_STATUS status;
@@ -246,6 +262,8 @@ QDF_STATUS cds_init(void)
 	qdf_register_drv_connected_callback(cds_is_drv_connected);
 	qdf_register_drv_supported_callback(cds_is_drv_supported);
 	qdf_register_wmi_send_recv_qmi_callback(cds_wmi_send_recv_qmi);
+	qdf_register_recovery_reason_update(cds_update_recovery_reason);
+	qdf_register_get_bus_reg_dump(pld_get_bus_reg_dump);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -267,6 +285,8 @@ void cds_deinit(void)
 	if (!gp_cds_context)
 		return;
 
+	qdf_register_get_bus_reg_dump(NULL);
+	qdf_register_recovery_reason_update(NULL);
 	qdf_register_recovering_state_query_callback(NULL);
 	qdf_register_fw_down_callback(NULL);
 	qdf_register_is_driver_unloading_callback(NULL);
