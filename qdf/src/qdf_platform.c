@@ -31,6 +31,8 @@ static qdf_is_recovering_callback	is_recovering_cb;
 static qdf_is_drv_connected_callback    is_drv_connected_cb;
 static qdf_wmi_send_over_qmi_callback _wmi_send_recv_qmi_cb;
 static qdf_is_drv_supported_callback    is_drv_supported_cb;
+static qdf_recovery_reason_update_callback   update_recovery_reason_cb;
+
 
 void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
@@ -195,3 +197,21 @@ bool qdf_is_drv_supported(void)
 }
 
 qdf_export_symbol(qdf_is_drv_supported);
+
+void qdf_register_recovery_reason_update(qdf_recovery_reason_update_callback
+					 callback)
+{
+	update_recovery_reason_cb = callback;
+}
+
+qdf_export_symbol(qdf_register_recovery_reason_update);
+
+void qdf_recovery_reason_update(enum qdf_hang_reason reason)
+{
+	if (!update_recovery_reason_cb)
+		return;
+
+	update_recovery_reason_cb(reason);
+}
+
+qdf_export_symbol(qdf_recovery_reason_update);
