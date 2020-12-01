@@ -2021,6 +2021,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (vdev) {
 			wlan_crypto_free_vdev_key(vdev);
+			wlan_crypto_reset_vdev_params(vdev);
 			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		}
 	}
