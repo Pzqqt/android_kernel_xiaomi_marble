@@ -2084,6 +2084,13 @@ QDF_STATUS target_if_direct_buf_rx_print_ring_stat(
 			mod_param =
 				&dbr_pdev_obj->dbr_mod_param[mod_idx][srng_id];
 			dbr_ring_cfg = mod_param->dbr_ring_cfg;
+			if (!dbr_ring_cfg) {
+				direct_buf_rx_info("dbr_ring_cfg is NULL");
+				direct_buf_rx_info("mod id %d mod %s", mod_idx,
+						   g_dbr_module_name[mod_idx].
+						   module_name_str);
+				continue;
+			}
 			srng = dbr_ring_cfg->srng;
 			hal_get_sw_hptp(hal_soc, srng, &tp, &hp);
 			direct_buf_rx_debug("|%11d|%14s|%10x|%10x|",
