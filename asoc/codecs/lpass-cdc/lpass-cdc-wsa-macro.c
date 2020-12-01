@@ -148,7 +148,7 @@ static int lpass_cdc_wsa_macro_hw_params(struct snd_pcm_substream *substream,
 static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot);
-static int lpass_cdc_wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute);
+static int lpass_cdc_wsa_macro_mute_stream(struct snd_soc_dai *dai, int mute, int stream);
 /* Hold instance to soundwire platform device */
 struct lpass_cdc_wsa_macro_swr_ctrl_data {
 	struct platform_device *wsa_swr_pdev;
@@ -380,7 +380,7 @@ static const struct snd_kcontrol_new rx_mix_ec1_mux =
 static struct snd_soc_dai_ops lpass_cdc_wsa_macro_dai_ops = {
 	.hw_params = lpass_cdc_wsa_macro_hw_params,
 	.get_channel_map = lpass_cdc_wsa_macro_get_channel_map,
-	.digital_mute = lpass_cdc_wsa_macro_digital_mute,
+	.mute_stream = lpass_cdc_wsa_macro_mute_stream,
 };
 
 static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
@@ -617,9 +617,9 @@ static int lpass_cdc_wsa_macro_set_prim_interpolator_rate(struct snd_soc_dai *da
 		for (j = 0; j < NUM_INTERPOLATORS; j++) {
 			int_mux_cfg1 = int_mux_cfg0 + LPASS_CDC_WSA_MACRO_MUX_CFG1_OFFSET;
 
-			int_mux_cfg0_val = snd_soc_component_read32(component,
+			int_mux_cfg0_val = snd_soc_component_read(component,
 							int_mux_cfg0);
-			int_mux_cfg1_val = snd_soc_component_read32(component,
+			int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1);
 			inp0_sel = int_mux_cfg0_val & LPASS_CDC_WSA_MACRO_MUX_INP_MASK1;
 			inp1_sel = (int_mux_cfg0_val >>
@@ -681,7 +681,7 @@ static int lpass_cdc_wsa_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai
 
 		int_mux_cfg1 = LPASS_CDC_WSA_RX_INP_MUX_RX_INT0_CFG1;
 		for (j = 0; j < NUM_INTERPOLATORS; j++) {
-			int_mux_cfg1_val = snd_soc_component_read32(component,
+			int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1) &
 							LPASS_CDC_WSA_MACRO_MUX_INP_MASK1;
 			if (int_mux_cfg1_val == int_2_inp +
@@ -820,7 +820,7 @@ static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 		*rx_num = cnt;
 		break;
 	case LPASS_CDC_WSA_MACRO_AIF_ECHO:
-		val = snd_soc_component_read32(component,
+		val = snd_soc_component_read(component,
 			LPASS_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0);
 		if (val & LPASS_CDC_WSA_MACRO_EC_MIX_TX1_MASK) {
 			mask |= 0x2;
@@ -840,7 +840,7 @@ static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 	return 0;
 }
 
-static int lpass_cdc_wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
+static int lpass_cdc_wsa_macro_mute_stream(struct snd_soc_dai *dai, int mute, int stream)
 {
 	struct snd_soc_component *component = dai->component;
 	struct device *wsa_dev = NULL;
@@ -869,11 +869,11 @@ static int lpass_cdc_wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 				LPASS_CDC_WSA_MACRO_RX_PATH_DSMDEM_OFFSET;
 		int_mux_cfg0 = LPASS_CDC_WSA_RX_INP_MUX_RX_INT0_CFG0 + j * 8;
 		int_mux_cfg1 = int_mux_cfg0 + 4;
-		int_mux_cfg0_val = snd_soc_component_read32(component,
+		int_mux_cfg0_val = snd_soc_component_read(component,
 							int_mux_cfg0);
-		int_mux_cfg1_val = snd_soc_component_read32(component,
+		int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1);
-		if (snd_soc_component_read32(component, dsm_reg) & 0x01) {
+		if (snd_soc_component_read(component, dsm_reg) & 0x01) {
 			if (int_mux_cfg0_val || (int_mux_cfg1_val & 0x38))
 				snd_soc_component_update_bits(component, reg,
 							0x20, 0x20);
@@ -1295,7 +1295,7 @@ static int lpass_cdc_wsa_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		lpass_cdc_wsa_macro_enable_swr(w, kcontrol, event);
-		val = snd_soc_component_read32(component, gain_reg);
+		val = snd_soc_component_read(component, gain_reg);
 		val += offset_val;
 		snd_soc_component_write(component, gain_reg, val);
 		break;
@@ -1447,8 +1447,8 @@ static bool lpass_cdc_wsa_macro_adie_lb(struct snd_soc_component *component,
 
 	int_mux_cfg0 = LPASS_CDC_WSA_RX_INP_MUX_RX_INT0_CFG0 + interp_idx * 8;
 	int_mux_cfg1 = int_mux_cfg0 + 4;
-	int_mux_cfg0_val = snd_soc_component_read32(component, int_mux_cfg0);
-	int_mux_cfg1_val = snd_soc_component_read32(component, int_mux_cfg1);
+	int_mux_cfg0_val = snd_soc_component_read(component, int_mux_cfg0);
+	int_mux_cfg1_val = snd_soc_component_read(component, int_mux_cfg1);
 
 	int_n_inp0 = int_mux_cfg0_val & 0x0F;
 	if (int_n_inp0 == INTn_1_INP_SEL_DEC0 ||
@@ -1549,7 +1549,7 @@ static int lpass_cdc_wsa_macro_enable_prim_interpolator(
 				0x1, 0x1);
 		}
 		if ((reg != prim_int_reg) &&
-		    ((snd_soc_component_read32(
+		    ((snd_soc_component_read(
 				component, prim_int_reg)) & 0x10))
 			snd_soc_component_update_bits(component, reg,
 					0x10, 0x10);
@@ -1635,7 +1635,7 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 					0x01, 0x01);
 			offset_val = -2;
 		}
-		val = snd_soc_component_read32(component, gain_reg);
+		val = snd_soc_component_read(component, gain_reg);
 		val += offset_val;
 		snd_soc_component_write(component, gain_reg, val);
 		lpass_cdc_wsa_macro_config_ear_spkr_gain(component, wsa_priv,
@@ -1664,7 +1664,7 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 					LPASS_CDC_WSA_RX1_RX_PATH_MIX_SEC0,
 					0x01, 0x00);
 			offset_val = 2;
-			val = snd_soc_component_read32(component, gain_reg);
+			val = snd_soc_component_read(component, gain_reg);
 			val += offset_val;
 			snd_soc_component_write(component, gain_reg, val);
 		}
@@ -1759,7 +1759,7 @@ static int lpass_cdc_wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 						0x01, 0x01);
 		snd_soc_component_update_bits(component, boost_path_ctl,
 						0x10, 0x10);
-		if ((snd_soc_component_read32(component, reg_mix)) & 0x10)
+		if ((snd_soc_component_read(component, reg_mix)) & 0x10)
 			snd_soc_component_update_bits(component, reg_mix,
 						0x10, 0x00);
 		break;
@@ -1919,7 +1919,7 @@ static int lpass_cdc_wsa_macro_enable_echo(struct snd_soc_dapm_widget *w,
 
 	dev_dbg(wsa_dev, "%s %d %s\n", __func__, event, w->name);
 
-	val = snd_soc_component_read32(component,
+	val = snd_soc_component_read(component,
 				LPASS_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0);
 	if (!(strcmp(w->name, "WSA RX_MIX EC0_MUX")))
 		ec_tx = (val & 0x07) - 1;
@@ -2141,7 +2141,7 @@ static int lpass_cdc_wsa_macro_spkr_left_boost_stage_get(struct snd_kcontrol *kc
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
 
-	bst_state_max = snd_soc_component_read32(component,
+	bst_state_max = snd_soc_component_read(component,
 				LPASS_CDC_WSA_BOOST0_BOOST_CTL);
 	bst_state_max = (bst_state_max & 0x0c) >> 2;
 	ucontrol->value.integer.value[0] = bst_state_max;
@@ -2173,7 +2173,7 @@ static int lpass_cdc_wsa_macro_spkr_right_boost_stage_get(struct snd_kcontrol *k
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
 
-	bst_state_max = snd_soc_component_read32(component,
+	bst_state_max = snd_soc_component_read(component,
 				LPASS_CDC_WSA_BOOST1_BOOST_CTL);
 	bst_state_max = (bst_state_max & 0x0c) >> 2;
 	ucontrol->value.integer.value[0] = bst_state_max;
@@ -2286,7 +2286,7 @@ static int lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *k
 			snd_soc_kcontrol_component(kcontrol);
 
 	ucontrol->value.integer.value[0] =
-	    ((snd_soc_component_read32(
+	    ((snd_soc_component_read(
 		component, LPASS_CDC_WSA_VBAT_BCL_VBAT_CFG) & 0x04) ?
 	    1 : 0);
 

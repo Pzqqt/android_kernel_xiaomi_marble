@@ -1155,9 +1155,9 @@ static int lpass_cdc_soc_codec_probe(struct snd_soc_component *component)
 	}
 
 	/* Assign lpass_cdc version */
-	core_id_0 = snd_soc_component_read32(component,
+	core_id_0 = snd_soc_component_read(component,
 					LPASS_CDC_VA_TOP_CSR_CORE_ID_0);
-	core_id_1 = snd_soc_component_read32(component,
+	core_id_1 = snd_soc_component_read(component,
 					LPASS_CDC_VA_TOP_CSR_CORE_ID_1);
 	if ((core_id_0 == 0x01) && (core_id_1 == 0x0F))
 		priv->version = LPASS_CDC_VERSION_2_0;

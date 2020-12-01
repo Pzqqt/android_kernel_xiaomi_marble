@@ -781,12 +781,12 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 
 	adc_mux_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 		if (va_priv->version == LPASS_CDC_VERSION_2_1)
 			return true;
 		adc_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				LPASS_CDC_VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		if (adc_n < LPASS_CDC_ADC_MAX)
 			return true;
@@ -824,7 +824,7 @@ static void lpass_cdc_va_macro_tx_hpf_corner_freq_callback(
 		adc_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET *
 			hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				LPASS_CDC_VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		lpass_cdc_clear_amic_tx_hold(component->dev, adc_n);
@@ -1142,7 +1142,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		 	 */
 			usleep_range(1000, 1010);
 		}
-		hpf_cut_off_freq = (snd_soc_component_read32(
+		hpf_cut_off_freq = (snd_soc_component_read(
 					component, dec_cfg_reg) &
 				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
@@ -1185,9 +1185,9 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					msecs_to_jiffies(hpf_delay));
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
-			snd_soc_component_read32(component, tx_gain_ctl_reg));
+			snd_soc_component_read(component, tx_gain_ctl_reg));
 		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC) {
 				snd_soc_component_update_bits(component,
 					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
@@ -1246,7 +1246,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		cancel_delayed_work_sync(
 				&va_priv->va_mute_dwork[decimator].dwork);
 		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC)
 				snd_soc_component_update_bits(component,
 					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
