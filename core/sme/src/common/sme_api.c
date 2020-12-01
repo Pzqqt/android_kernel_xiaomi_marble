@@ -3309,26 +3309,6 @@ QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t mac_handle,
 	return status;
 }
 
-QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t mac_handle,
-				       uint8_t session_id,
-				       uint32_t *len, uint8_t *buf)
-{
-	QDF_STATUS status;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, session_id))
-			status = csr_roam_get_wpa_rsn_rsp_ie(mac, session_id,
-							     len, buf);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
 /*
  * sme_get_config_param() -
  * A wrapper function that HDD calls to get the global settings

@@ -768,19 +768,6 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
 QDF_STATUS csr_roam_get_wpa_rsn_req_ie(struct mac_context *mac, uint32_t sessionId,
 				       uint32_t *pLen, uint8_t *pBuf);
 
-/*
- * csr_roam_get_wpa_rsn_rsp_ie() -
- * Return the WPA or RSN IE from the beacon or probe rsp if connected
- *
- * pLen - caller allocated memory that has the length of pBuf as input.
- * Upon returned, *pLen has the needed or IE length in pBuf.
- * pBuf - Caller allocated memory that contain the IE field, if any, upon return
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- * big enough
- */
-QDF_STATUS csr_roam_get_wpa_rsn_rsp_ie(struct mac_context *mac, uint32_t sessionId,
-				       uint32_t *pLen, uint8_t *pBuf);
-
 /**
  * csr_roam_get_connect_profile() - To return the current connect profile,
  * caller must call csr_roam_free_connect_profile after it is done and before

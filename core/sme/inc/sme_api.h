@@ -683,26 +683,6 @@ QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t mac_handle,
 				       uint8_t session_id,
 				       uint32_t *len, uint8_t *buf);
 
-/**
- * sme_roam_get_wpa_rsn_rsp_ie() - Retrieve WPA/RSN Response IE
- * @mac_handle: Opaque handle to the global MAC context
- * @session_id: ID of the specific session
- * @len: Caller allocated memory that has the length of @buf as input.
- *	Upon returned, @len has the length of the IE store in @buf
- * @buf: Caller allocated memory that contain the IE field, if any,
- *	upon return
- *
- * A wrapper function to request CSR to return the WPA or RSN IE CSR
- * passes to PE to JOIN request or START_BSS request
- * This is a synchronous call.
- *
- * Return: QDF_STATUS - when fail, it usually means the buffer allocated is not
- *			 big enough
- */
-QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t mac_handle,
-				       uint8_t session_id,
-				       uint32_t *len, uint8_t *buf);
-
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 				struct sme_config_params *pParam);
 QDF_STATUS sme_get_snr(mac_handle_t mac_handle,

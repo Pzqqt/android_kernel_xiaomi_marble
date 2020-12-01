@@ -6133,243 +6133,6 @@ void csr_reset_pmkid_candidate_list(struct mac_context *mac,
 	pSession->NumPmkidCandidate = 0;
 }
 
-/**
- * csr_roam_save_params() - Helper function to save params
- * @mac_ctx: pointer to mac context
- * @session_ptr: Session pointer
- * @auth_type: auth type
- * @ie_ptr: pointer to ie
- * @ie_local: pointr to local ie
- *
- * This function will save params to session
- *
- * Return: none.
- */
-static QDF_STATUS csr_roam_save_params(struct mac_context *mac_ctx,
-				struct csr_roam_session *session_ptr,
-				enum csr_akm_type auth_type,
-				tDot11fBeaconIEs *ie_ptr,
-				tDot11fBeaconIEs *ie_local)
-{
-	uint32_t nIeLen;
-	uint8_t *pIeBuf;
-
-	if ((eCSR_AUTH_TYPE_RSN == auth_type) ||
-	    (eCSR_AUTH_TYPE_FT_RSN == auth_type) ||
-	    (eCSR_AUTH_TYPE_FT_RSN_PSK == auth_type) ||
-	    (eCSR_AUTH_TYPE_FT_SAE == auth_type) ||
-	    (eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384 == auth_type) ||
-	    (eCSR_AUTH_TYPE_SUITEB_EAP_SHA256 == auth_type) ||
-	    (eCSR_AUTH_TYPE_SUITEB_EAP_SHA384 == auth_type) ||
-#if defined WLAN_FEATURE_11W
-	    (eCSR_AUTH_TYPE_RSN_PSK_SHA256 == auth_type) ||
-	    (eCSR_AUTH_TYPE_RSN_8021X_SHA256 == auth_type) ||
-#endif
-	    (eCSR_AUTH_TYPE_RSN_PSK == auth_type)) {
-		if (ie_local->RSN.present) {
-			tDot11fIERSN *rsnie = &ie_local->RSN;
-			/*
-			 * Calculate the actual length
-			 * version + gp_cipher_suite + pwise_cipher_suite_count
-			 * + akm_suite_cnt + reserved + pwise_cipher_suites
-			 */
-			nIeLen = 8 + 2 + 2
-				+ (rsnie->pwise_cipher_suite_count * 4)
-				+ (rsnie->akm_suite_cnt * 4);
-			if (rsnie->pmkid_count)
-				/* pmkid */
-				nIeLen += 2 + rsnie->pmkid_count * 4;
-
-			/* nIeLen doesn't count EID and length fields */
-			session_ptr->pWpaRsnRspIE = qdf_mem_malloc(nIeLen + 2);
-			if (!session_ptr->pWpaRsnRspIE)
-				return QDF_STATUS_E_NOMEM;
-
-			session_ptr->pWpaRsnRspIE[0] = DOT11F_EID_RSN;
-			session_ptr->pWpaRsnRspIE[1] = (uint8_t) nIeLen;
-			/* copy upto akm_suite */
-			pIeBuf = session_ptr->pWpaRsnRspIE + 2;
-			qdf_mem_copy(pIeBuf, &rsnie->version,
-					sizeof(rsnie->version));
-			pIeBuf += sizeof(rsnie->version);
-			qdf_mem_copy(pIeBuf, &rsnie->gp_cipher_suite,
-				sizeof(rsnie->gp_cipher_suite));
-			pIeBuf += sizeof(rsnie->gp_cipher_suite);
-			qdf_mem_copy(pIeBuf, &rsnie->pwise_cipher_suite_count,
-				sizeof(rsnie->pwise_cipher_suite_count));
-			pIeBuf += sizeof(rsnie->pwise_cipher_suite_count);
-			if (rsnie->pwise_cipher_suite_count) {
-				/* copy pwise_cipher_suites */
-				qdf_mem_copy(pIeBuf, rsnie->pwise_cipher_suites,
-					rsnie->pwise_cipher_suite_count * 4);
-				pIeBuf += rsnie->pwise_cipher_suite_count * 4;
-			}
-			qdf_mem_copy(pIeBuf, &rsnie->akm_suite_cnt, 2);
-			pIeBuf += 2;
-			if (rsnie->akm_suite_cnt) {
-				/* copy akm_suite */
-				qdf_mem_copy(pIeBuf, rsnie->akm_suite,
-					rsnie->akm_suite_cnt * 4);
-				pIeBuf += rsnie->akm_suite_cnt * 4;
-			}
-			/* copy the rest */
-			qdf_mem_copy(pIeBuf, rsnie->akm_suite +
-				rsnie->akm_suite_cnt * 4,
-				2 + rsnie->pmkid_count * 4);
-			session_ptr->nWpaRsnRspIeLength = nIeLen + 2;
-		}
-	} else if ((eCSR_AUTH_TYPE_WPA == auth_type) ||
-			(eCSR_AUTH_TYPE_WPA_PSK == auth_type)) {
-		if (ie_local->WPA.present) {
-			tDot11fIEWPA *wpaie = &ie_local->WPA;
-			/* Calculate the actual length wpaie */
-			nIeLen = 12 + 2 /* auth_suite_count */
-				+ wpaie->unicast_cipher_count * 4
-				+ wpaie->auth_suite_count * 4;
-
-			/* The WPA capabilities follows the Auth Suite
-			 * (two octects)-- this field is optional, and
-			 * we always "send" zero, so just remove it.  This is
-			 * consistent with our assumptions in the frames
-			 * compiler; nIeLen doesn't count EID & length fields
-			 */
-			session_ptr->pWpaRsnRspIE = qdf_mem_malloc(nIeLen + 2);
-			if (!session_ptr->pWpaRsnRspIE)
-				return QDF_STATUS_E_NOMEM;
-			session_ptr->pWpaRsnRspIE[0] = DOT11F_EID_WPA;
-			session_ptr->pWpaRsnRspIE[1] = (uint8_t) nIeLen;
-			pIeBuf = session_ptr->pWpaRsnRspIE + 2;
-			/* Copy WPA OUI */
-			qdf_mem_copy(pIeBuf, &csr_wpa_oui[1], 4);
-			pIeBuf += 4;
-			qdf_mem_copy(pIeBuf, &wpaie->version,
-				8 + wpaie->unicast_cipher_count * 4);
-			pIeBuf += 8 + wpaie->unicast_cipher_count * 4;
-			qdf_mem_copy(pIeBuf, &wpaie->auth_suite_count,
-				2 + wpaie->auth_suite_count * 4);
-			pIeBuf += wpaie->auth_suite_count * 4;
-			session_ptr->nWpaRsnRspIeLength = nIeLen + 2;
-		}
-	}
-#ifdef FEATURE_WLAN_WAPI
-	else if ((eCSR_AUTH_TYPE_WAPI_WAI_PSK == auth_type) ||
-			(eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE ==
-			 auth_type)) {
-		if (ie_local->WAPI.present) {
-			tDot11fIEWAPI *wapi_ie = &ie_local->WAPI;
-			/* Calculate the actual length of wapi ie*/
-			nIeLen = 4 + 2 /* pwise_cipher_suite_count */
-				+ wapi_ie->akm_suite_count * 4
-				+ wapi_ie->unicast_cipher_suite_count * 4
-				+ 6;  /* gp_cipher_suite + preauth + reserved */
-
-			if (wapi_ie->bkid_count)
-				nIeLen += 2 + wapi_ie->bkid_count * 4;
-
-			/* nIeLen doesn't count EID and length fields */
-			session_ptr->pWapiRspIE =
-				qdf_mem_malloc(nIeLen + 2);
-			if (!session_ptr->pWapiRspIE)
-				return QDF_STATUS_E_NOMEM;
-			session_ptr->pWapiRspIE[0] = DOT11F_EID_WAPI;
-			session_ptr->pWapiRspIE[1] = (uint8_t) nIeLen;
-			pIeBuf = session_ptr->pWapiRspIE + 2;
-			/* copy upto akm_suite_count */
-			qdf_mem_copy(pIeBuf, &wapi_ie->version, 2);
-			pIeBuf += 4;
-			if (wapi_ie->akm_suite_count) {
-				/* copy akm_suites */
-				qdf_mem_copy(pIeBuf,
-					wapi_ie->akm_suites,
-					wapi_ie->akm_suite_count * 4);
-				pIeBuf += wapi_ie->akm_suite_count * 4;
-			}
-			qdf_mem_copy(pIeBuf,
-				&wapi_ie->unicast_cipher_suite_count, 2);
-			pIeBuf += 2;
-			if (wapi_ie->unicast_cipher_suite_count) {
-				uint16_t suite_size =
-					wapi_ie->unicast_cipher_suite_count * 4;
-				/* copy pwise_cipher_suites */
-				qdf_mem_copy(pIeBuf,
-					wapi_ie->unicast_cipher_suites,
-					suite_size);
-				pIeBuf += suite_size;
-			}
-			/* gp_cipher_suite */
-			qdf_mem_copy(pIeBuf,
-				wapi_ie->multicast_cipher_suite, 4);
-			pIeBuf += 4;
-			/* preauth + reserved */
-			qdf_mem_copy(pIeBuf,
-				wapi_ie->multicast_cipher_suite + 4, 2);
-			pIeBuf += 2;
-			if (wapi_ie->bkid_count) {
-				/* bkid_count */
-				qdf_mem_copy(pIeBuf, &wapi_ie->bkid_count, 2);
-				pIeBuf += 2;
-				/* copy akm_suites */
-				qdf_mem_copy(pIeBuf, wapi_ie->bkid,
-					wapi_ie->bkid_count * 4);
-				pIeBuf += wapi_ie->bkid_count * 4;
-			}
-			session_ptr->nWapiRspIeLength = nIeLen + 2;
-		}
-	}
-#endif /* FEATURE_WLAN_WAPI */
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS
-csr_roam_save_security_rsp_ie(struct mac_context *mac,
-			      uint32_t sessionId, enum csr_akm_type authType,
-			      struct bss_description *pSirBssDesc,
-			      tDot11fBeaconIEs *pIes)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	tDot11fBeaconIEs *pIesLocal = pIes;
-
-	if (!pSession) {
-		sme_err("session %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	sme_debug("authType %d session %d", authType, sessionId);
-	if ((eCSR_AUTH_TYPE_WPA == authType) ||
-		(eCSR_AUTH_TYPE_WPA_PSK == authType) ||
-		(eCSR_AUTH_TYPE_RSN == authType) ||
-		(eCSR_AUTH_TYPE_RSN_PSK == authType)
-		|| (eCSR_AUTH_TYPE_FT_RSN == authType) ||
-		(eCSR_AUTH_TYPE_FT_RSN_PSK == authType)
-		|| (eCSR_AUTH_TYPE_FT_SAE == authType)
-		|| (eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384 == authType)
-		|| (eCSR_AUTH_TYPE_SUITEB_EAP_SHA256 == authType)
-		|| (eCSR_AUTH_TYPE_SUITEB_EAP_SHA384 == authType)
-#ifdef FEATURE_WLAN_WAPI
-		|| (eCSR_AUTH_TYPE_WAPI_WAI_PSK == authType) ||
-		(eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE == authType)
-#endif /* FEATURE_WLAN_WAPI */
-#ifdef WLAN_FEATURE_11W
-		|| (eCSR_AUTH_TYPE_RSN_PSK_SHA256 == authType) ||
-		(eCSR_AUTH_TYPE_RSN_8021X_SHA256 == authType)
-#endif /* FEATURE_WLAN_WAPI */
-		|| (eCSR_AUTH_TYPE_SAE == authType)) {
-		if (!pIesLocal && !QDF_IS_STATUS_SUCCESS
-				(csr_get_parsed_bss_description_ies(mac,
-				pSirBssDesc, &pIesLocal)))
-			sme_err(" cannot parse IEs");
-		if (pIesLocal) {
-			status = csr_roam_save_params(mac, pSession, authType,
-					pIes, pIesLocal);
-			if (!pIes)
-				/* locally allocated */
-				qdf_mem_free(pIesLocal);
-		}
-	}
-	return status;
-}
-
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId)
 {
@@ -7148,19 +6911,6 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 
 	conn_profile = &session->connectedProfile;
 	sme_debug("receives association indication");
-	/* always free the memory here */
-	if (session->pWpaRsnRspIE) {
-		session->nWpaRsnRspIeLength = 0;
-		qdf_mem_free(session->pWpaRsnRspIE);
-		session->pWpaRsnRspIE = NULL;
-	}
-#ifdef FEATURE_WLAN_WAPI
-	if (session->pWapiRspIE) {
-		session->nWapiRspIeLength = 0;
-		qdf_mem_free(session->pWapiRspIE);
-		session->pWapiRspIE = NULL;
-	}
-#endif /* FEATURE_WLAN_WAPI */
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
@@ -7212,9 +6962,6 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 		roam_info->staId = STA_INVALID_IDX;
 		csr_roam_save_connected_information(mac_ctx, session_id,
 			profile, bss_desc, ies_ptr);
-		/* Save WPA/RSN IE */
-		csr_roam_save_security_rsp_ie(mac_ctx, session_id,
-			profile->negotiatedAuthType, bss_desc, ies_ptr);
 #ifdef FEATURE_WLAN_ESE
 		roam_info->isESEAssoc = conn_profile->isESEAssoc;
 #endif
@@ -14323,32 +14070,6 @@ QDF_STATUS csr_roam_get_wpa_rsn_req_ie(struct mac_context *mac, uint32_t session
 	return status;
 }
 
-QDF_STATUS csr_roam_get_wpa_rsn_rsp_ie(struct mac_context *mac, uint32_t sessionId,
-				       uint32_t *pLen, uint8_t *pBuf)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	uint32_t len;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("session %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pLen) {
-		len = *pLen;
-		*pLen = pSession->nWpaRsnRspIeLength;
-		if (pBuf) {
-			if (len >= pSession->nWpaRsnRspIeLength) {
-				qdf_mem_copy(pBuf, pSession->pWpaRsnRspIE,
-					     pSession->nWpaRsnRspIeLength);
-				status = QDF_STATUS_SUCCESS;
-			}
-		}
-	}
-	return status;
-}
-
 eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 						uint32_t sessionId)
 {
@@ -16124,22 +15845,12 @@ static void csr_init_session(struct mac_context *mac, uint32_t sessionId)
 		pSession->pWpaRsnReqIE = NULL;
 	}
 	pSession->nWpaRsnReqIeLength = 0;
-	if (pSession->pWpaRsnRspIE) {
-		qdf_mem_free(pSession->pWpaRsnRspIE);
-		pSession->pWpaRsnRspIE = NULL;
-	}
-	pSession->nWpaRsnRspIeLength = 0;
 #ifdef FEATURE_WLAN_WAPI
 	if (pSession->pWapiReqIE) {
 		qdf_mem_free(pSession->pWapiReqIE);
 		pSession->pWapiReqIE = NULL;
 	}
 	pSession->nWapiReqIeLength = 0;
-	if (pSession->pWapiRspIE) {
-		qdf_mem_free(pSession->pWapiRspIE);
-		pSession->pWapiRspIE = NULL;
-	}
-	pSession->nWapiRspIeLength = 0;
 #endif /* FEATURE_WLAN_WAPI */
 	if (pSession->pAddIEScan) {
 		qdf_mem_free(pSession->pAddIEScan);
@@ -20583,9 +20294,6 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	/* Add new mlme info to new BSSID after upting connectedProfile */
 	csr_update_scan_entry_associnfo(mac_ctx, session,
 					SCAN_ENTRY_CON_STATE_ASSOC);
-	csr_roam_save_security_rsp_ie(mac_ctx, session_id,
-			session->pCurRoamProfile->negotiatedAuthType,
-			bss_desc, ies_local);
 
 #ifdef FEATURE_WLAN_ESE
 	roam_info->isESEAssoc = conn_profile->isESEAssoc;

@@ -546,19 +546,11 @@ struct csr_roam_session {
 	uint32_t nWpaRsnReqIeLength;
 	/* contain the WPA/RSN IE in assoc req */
 	uint8_t *pWpaRsnReqIE;
-	/* the byte count for pWpaRsnRspIE */
-	uint32_t nWpaRsnRspIeLength;
-	/* this contain the WPA/RSN IE in beacon/probe rsp */
-	uint8_t *pWpaRsnRspIE;
 #ifdef FEATURE_WLAN_WAPI
 	/* the byte count of pWapiReqIE; */
 	uint32_t nWapiReqIeLength;
 	/* this contain the WAPI IE in assoc req */
 	uint8_t *pWapiReqIE;
-	/* the byte count for pWapiRspIE */
-	uint32_t nWapiRspIeLength;
-	/* this contain the WAPI IE in beacon/probe rsp */
-	uint8_t *pWapiRspIE;
 #endif /* FEATURE_WLAN_WAPI */
 	uint32_t nAddIEScanLength;      /* the byte count of pAddIeScanIE; */
 	/* contains the additional IE in (unicast) probe req at time of join */
