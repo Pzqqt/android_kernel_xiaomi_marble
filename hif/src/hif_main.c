@@ -483,6 +483,7 @@ int hif_recovery_notifier_cb(struct notifier_block *block, unsigned long state,
 	struct qdf_notifer_data *notif_data = data;
 	qdf_notif_block *notif_block;
 	struct hif_softc *hif_handle;
+	bool bus_id_invalid;
 
 	if (!data || !block)
 		return -EINVAL;
@@ -493,8 +494,11 @@ int hif_recovery_notifier_cb(struct notifier_block *block, unsigned long state,
 	if (!hif_handle)
 		return -EINVAL;
 
-	hif_log_bus_info(hif_handle, notif_data->hang_data,
-			 &notif_data->offset);
+	bus_id_invalid = hif_log_bus_info(hif_handle, notif_data->hang_data,
+					  &notif_data->offset);
+	if (bus_id_invalid)
+		return NOTIFY_STOP_MASK;
+
 	hif_log_ce_info(hif_handle, notif_data->hang_data,
 			&notif_data->offset);
 

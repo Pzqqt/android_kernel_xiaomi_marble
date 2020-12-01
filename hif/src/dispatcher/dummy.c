@@ -406,9 +406,10 @@ int hif_dummy_config_irq_by_ceid(struct hif_softc *scn, int ce_id)
  * @data: hang event data buffer
  * @offset: offset at which data needs to be written
  *
- * Return: None
+ * Return: bool
  */
-void hif_dummy_log_bus_info(struct hif_softc *scn, uint8_t *data,
+bool hif_dummy_log_bus_info(struct hif_softc *scn, uint8_t *data,
 			    unsigned int *offset)
 {
+	return false;
 }
