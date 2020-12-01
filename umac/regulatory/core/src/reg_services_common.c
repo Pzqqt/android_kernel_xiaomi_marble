@@ -4248,3 +4248,86 @@ enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap)
 		return BAND_UNKNOWN;
 }
 #endif
+
+#if defined(CONFIG_BAND_6GHZ)
+QDF_STATUS
+reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type reg_cur_6g_ap_pwr_type)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reg_cur_6g_ap_pwr_type > REG_MAX_SUPP_AP_TYPE) {
+		reg_err("Unsupported 6G AP power type");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* should we validate the input reg_cur_6g_ap_type? */
+	pdev_priv_obj->reg_cur_6g_ap_pwr_type = reg_cur_6g_ap_pwr_type;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*reg_cur_6g_ap_pwr_type = pdev_priv_obj->reg_cur_6g_ap_pwr_type;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_client_type
+			   *reg_cur_6g_client_mobility_type)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*reg_cur_6g_client_mobility_type =
+	    pdev_priv_obj->reg_cur_6g_client_mobility_type;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_get_rnr_tpe_usable(struct wlan_objmgr_pdev *pdev,
+				  bool *reg_rnr_tpe_usable)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*reg_rnr_tpe_usable = pdev_priv_obj->reg_rnr_tpe_usable;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
+					 bool *reg_unspecified_ap_usable)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*reg_unspecified_ap_usable = pdev_priv_obj->reg_unspecified_ap_usable;
+	return QDF_STATUS_SUCCESS;
+}
+#endif

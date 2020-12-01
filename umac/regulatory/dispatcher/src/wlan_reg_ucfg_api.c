@@ -348,3 +348,19 @@ ucfg_reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap)
 	return reg_get_unii_5g_bitmap(pdev, bitmap);
 }
 #endif
+
+#if defined(CONFIG_BAND_6GHZ)
+QDF_STATUS
+ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type reg_cur_6g_ap_pwr_type)
+{
+	return reg_set_cur_6g_ap_pwr_type(pdev, reg_cur_6g_ap_pwr_type);
+}
+
+QDF_STATUS
+ucfg_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type)
+{
+	return reg_get_cur_6g_ap_pwr_type(pdev, reg_cur_6g_ap_pwr_type);
+}
+#endif

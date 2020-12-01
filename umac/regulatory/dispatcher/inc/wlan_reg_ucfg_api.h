@@ -416,4 +416,44 @@ ucfg_reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap)
 }
 #endif
 
+#if defined(CONFIG_BAND_6GHZ)
+/**
+ * ucfg_reg_get_cur_6g_ap_pwr_type() - Get the current 6G regulatory AP power
+ * type.
+ * @pdev: Pointer to PDEV object.
+ * @reg_6g_ap_pwr_type: The current regulatory 6G AP type ie VLPI/LPI/SP.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS
+ucfg_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type);
+
+/**
+ * ucfg_reg_set_cur_6g_ap_pwr_type() - Set the current 6G regulatory AP power
+ * type.
+ * @pdev: Pointer to PDEV object.
+ * @reg_6g_ap_pwr_type: Regulatory 6G AP type ie VLPI/LPI/SP.
+ *
+ * Return: QDF_STATUS_E_INVAL if unable to set and QDF_STATUS_SUCCESS is set.
+ */
+QDF_STATUS
+ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type reg_cur_6g_ap_type);
+#else
+static inline QDF_STATUS
+ucfg_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type)
+{
+	*reg_cur_6g_ap_pwr_type = REG_INDOOR_AP;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type reg_cur_6g_ap_type)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif

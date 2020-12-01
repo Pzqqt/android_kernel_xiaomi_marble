@@ -1304,5 +1304,102 @@ reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
  */
 enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap);
 #endif
+#if defined(CONFIG_BAND_6GHZ)
+/**
+ * reg_set_cur_6g_ap_pwr_type() - Set the current 6G regulatory AP power type.
+ * @pdev: Pointer to PDEV object.
+ * @reg_6g_ap_type: Regulatory 6G AP type ie VLPI/LPI/SP.
+ *
+ * Return: QDF_STATUS_E_INVAL if unable to set and QDF_STATUS_SUCCESS is set.
+ */
+QDF_STATUS
+reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type reg_cur_6g_ap_pwr_type);
 
+/**
+ * reg_get_cur_6g_ap_pwr_type() - Get the current 6G regulatory AP power type.
+ * @reg_6g_ap_pwr_type: The current regulatory 6G AP type ie VLPI/LPI/SP.
+ * subordinate.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS
+reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type);
+/**
+ * reg_get_cur_6g_client_type() - Get the current 6G regulatory client Type.
+ * @pdev: Pointer to PDEV object.
+ * @reg_cur_6g_client_mobility_type: The current regulatory 6G client type ie.
+ * default/subordinate.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS
+reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_client_type
+			   *reg_cur_6g_client_mobility_type);
+
+/**
+ * reg_get_rnr_tpe_usable() - Tells if RNR IE is applicable for current domain.
+ * @pdev: Pointer to PDEV object.
+ * @reg_rnr_tpe_usable: Pointer to hold the bool value, true if RNR IE is
+ * applicable, else false.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS reg_get_rnr_tpe_usable(struct wlan_objmgr_pdev *pdev,
+				  bool *reg_rnr_tpe_usable);
+
+/**
+ * reg_get_unspecified_ap_usable() - Tells if AP type unspecified by 802.11 can
+ * be used or not.
+ * @pdev: Pointer to PDEV object.
+ * @reg_unspecified_ap_usable: Pointer to hold the bool value, true if
+ * unspecified AP types can be used in the IE, else false.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
+					 bool *reg_unspecified_ap_usable);
+#else
+static inline QDF_STATUS
+reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type reg_cur_6g_ap_pwr_type)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type)
+{
+	*reg_cur_6g_ap_pwr_type = REG_MAX_AP_TYPE;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
+			   enum reg_6g_client_type
+			   *reg_cur_6g_client_mobility_type)
+{
+	*reg_cur_6g_client_mobility_type = REG_SUBORDINATE_CLIENT;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS reg_get_rnr_tpe_usable(struct wlan_objmgr_pdev *pdev,
+				  bool *reg_rnr_tpe_usable)
+{
+	*reg_rnr_tpe_usable = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
+					 bool *reg_unspecified_ap_usable)
+{
+	*reg_unspecified_ap_usable = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif

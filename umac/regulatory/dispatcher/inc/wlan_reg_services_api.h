@@ -1600,4 +1600,67 @@ wlan_reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
 enum band_info wlan_reg_band_bitmap_to_band_info(uint32_t band_bitmap);
 #endif
 
+#if defined(CONFIG_BAND_6GHZ)
+/**
+ * wlan_reg_get_cur_6g_client_type() - Get the current 6G regulatory client
+ * type.
+ * @pdev: Pointer to PDEV object.
+ * @reg_cur_6g_client_mobility_type: The current regulatory 6G client type ie.
+ * default/subordinate.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS
+wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_client_type
+				*reg_cur_6g_client_mobility_type);
+/**
+ * wlan_reg_get_rnr_tpe_usable() - Tells if RNR IE is applicable for current
+ * domain.
+ * @pdev: Pointer to PDEV object.
+ * @reg_rnr_tpe_usable: Pointer to hold the bool value, true if RNR IE is
+ * applicable, else false.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wlan_reg_get_rnr_tpe_usable(struct wlan_objmgr_pdev *pdev,
+				       bool *reg_rnr_tpe_usable);
+
+/**
+ * wlan_reg_get_unspecified_ap_usable() - Tells if AP type unspecified by 802.11
+ * can be used or not.
+ * @pdev: Pointer to PDEV object.
+ * @reg_unspecified_ap_usable: Pointer to hold the bool value, true if
+ * unspecified AP types can be used in the IE, else false.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wlan_reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
+					      bool *reg_unspecified_ap_usable);
+#else
+static inline QDF_STATUS
+wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_client_type
+				*reg_cur_6g_client_mobility_type)
+{
+	*reg_cur_6g_client_mobility_type = REG_SUBORDINATE_CLIENT;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS wlan_reg_get_rnr_tpe_usable(struct wlan_objmgr_pdev *pdev,
+				       bool *reg_rnr_tpe_usable)
+{
+	*reg_rnr_tpe_usable = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS wlan_reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
+					      bool *reg_unspecified_ap_usable)
+{
+	*reg_unspecified_ap_usable = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif

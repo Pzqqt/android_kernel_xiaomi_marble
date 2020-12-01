@@ -1260,3 +1260,26 @@ enum band_info wlan_reg_band_bitmap_to_band_info(uint32_t band_bitmap)
 	return reg_band_bitmap_to_band_info(band_bitmap);
 }
 #endif
+
+#if defined(CONFIG_BAND_6GHZ)
+QDF_STATUS wlan_reg_get_rnr_tpe_usable(struct wlan_objmgr_pdev *pdev,
+				       bool *reg_rnr_tpe_usable)
+{
+	return reg_get_rnr_tpe_usable(pdev, reg_rnr_tpe_usable);
+}
+
+QDF_STATUS wlan_reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
+					      bool *reg_unspecified_ap_usable)
+{
+	return reg_get_unspecified_ap_usable(pdev, reg_unspecified_ap_usable);
+}
+
+QDF_STATUS
+wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_client_type
+				*reg_cur_6g_client_mobility_type)
+{
+	return reg_get_cur_6g_client_type(pdev,
+					  reg_cur_6g_client_mobility_type);
+}
+#endif

@@ -177,6 +177,51 @@ reg_reset_unii_5g_bitmap(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
 }
 #endif
 
+#if defined(CONFIG_BAND_6GHZ)
+#if defined(CONFIG_REG_CLIENT)
+/**
+ * reg_init_def_client_type() - Initialize the regulatory 6G client type.
+ *
+ * @pdev_priv_obj: pointer to wlan_regulatory_pdev_priv_obj.
+ *
+ * Return : void
+ */
+static void
+reg_init_def_client_type(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	pdev_priv_obj->reg_cur_6g_client_mobility_type = REG_DEFAULT_CLIENT;
+}
+#else
+static void
+reg_init_def_client_type(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	pdev_priv_obj->reg_cur_6g_client_mobility_type = REG_SUBORDINATE_CLIENT;
+}
+#endif
+
+/**
+ * reg_init_6g_vars() - Initialize the regulatory 6G variables viz.
+ * AP power type, client mobility type, rnr tpe usable and unspecified ap
+ * usable.
+ * @pdev_priv_obj: pointer to wlan_regulatory_pdev_priv_obj.
+ *
+ * Return : void
+ */
+static void
+reg_init_6g_vars(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	pdev_priv_obj->reg_cur_6g_ap_pwr_type = REG_INDOOR_AP;
+	pdev_priv_obj->reg_rnr_tpe_usable = false;
+	pdev_priv_obj->reg_unspecified_ap_usable = false;
+	reg_init_def_client_type(pdev_priv_obj);
+}
+#else
+static void
+reg_init_6g_vars(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif
+
 QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	struct wlan_objmgr_pdev *pdev, void *arg_list)
 {
@@ -256,6 +301,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	pdev_priv_obj->range_5g_low = range_5g_low;
 	pdev_priv_obj->range_5g_high = range_5g_high;
 	pdev_priv_obj->wireless_modes = reg_cap_ptr->wireless_modes;
+	reg_init_6g_vars(pdev_priv_obj);
 
 	reg_init_pdev_mas_chan_list(pdev_priv_obj,
 				    &psoc_priv_obj->mas_chan_params[phy_id]);
