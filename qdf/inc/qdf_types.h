@@ -1346,6 +1346,7 @@ enum qdf_suspend_type {
  * @QDF_WMI_BUF_SEQUENCE_MISMATCH: WMI Tx completion buffer sequence mismatch
  * @QDF_HAL_REG_WRITE_FAILURE: HAL register writing failures
  * @QDF_SUSPEND_NO_CREDIT: host lack of credit after suspend
+ * @QCA_HANG_BUS_FAILURE: Bus failure
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1371,6 +1372,7 @@ enum qdf_hang_reason {
 	QDF_WMI_BUF_SEQUENCE_MISMATCH,
 	QDF_HAL_REG_WRITE_FAILURE,
 	QDF_SUSPEND_NO_CREDIT,
+	QCA_HANG_BUS_FAILURE,
 };
 
 /**

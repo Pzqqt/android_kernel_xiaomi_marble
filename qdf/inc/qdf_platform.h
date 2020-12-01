@@ -303,4 +303,33 @@ void qdf_register_recovery_reason_update(qdf_recovery_reason_update_callback
  */
 void qdf_recovery_reason_update(enum qdf_hang_reason reason);
 
+/**
+ * qdf_bus_reg_dump() - callback for getting bus specific register dump
+ * @dev: Bus specific device
+ * @buf: Hang event buffer in which the data will be populated
+ * @len: length of data to be populated in the hang event buffer
+ *
+ * Return: none
+ */
+typedef void (*qdf_bus_reg_dump)(struct device *dev, uint8_t *buf,
+				 uint32_t len);
+
+/**
+ * qdf_register_get_bus_reg_dump() - Register callback to update bus register
+ *                                   dump
+ * @qdf_bus_reg_dump: callback to update bus register dump
+ *
+ * Return: none
+ */
+void qdf_register_get_bus_reg_dump(qdf_bus_reg_dump callback);
+
+/**
+ * qdf_get_bus_reg_dump() - Get the register dump for the bus
+ * @dev: device
+ * @buffer: buffer for hang data
+ * @len: len of hang data
+ *
+ * Return: none
+ */
+void qdf_get_bus_reg_dump(struct device *dev, uint8_t *buf, uint32_t len);
 #endif /*_QDF_PLATFORM_H*/
