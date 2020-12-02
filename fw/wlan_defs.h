@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018-2019 The Linux Foundation. All rights reserved.*
+ * Copyright (c) 2013-2016, 2018-2020 The Linux Foundation. All rights reserved.*
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -148,17 +148,25 @@ typedef enum {
     MODE_11AX_HE80_2G = 23,
 #endif
 
+#if SUPPORT_11BE
+    MODE_11BE_EHT20 = 24,
+    MODE_11BE_EHT40 = 25,
+    MODE_11BE_EHT80 = 26,
+    MODE_11BE_EHT80_80 = 27,
+    MODE_11BE_EHT160 = 28,
+    MODE_11BE_EHT160_160 = 29,
+    MODE_11BE_EHT320 = 30,
+    MODE_11BE_EHT20_2G = 31, /* For WIN */
+    MODE_11BE_EHT40_2G = 32, /* For WIN */
+#endif
+
     /*
      * MODE_UNKNOWN should not be used within the host / target interface.
-     * Thus, it is permissible for ODE_UNKNOWN to be conditionally-defined,
+     * Thus, it is permissible for MODE_UNKNOWN to be conditionally-defined,
      * taking different values when compiling for different targets.
      */
     MODE_UNKNOWN,
     MODE_UNKNOWN_NO_160MHZ_SUPPORT = 14, /* not needed? */
-#if 0
-    MODE_UNKNOWN_NO_11AX_SUPPORT = 16, /* not needed? */
-    MODE_UNKNOWN_11AX_SUPPORT = 24, /* not needed? */
-#endif
     MODE_UNKNOWN_160MHZ_SUPPORT = MODE_UNKNOWN, /* not needed? */
 
 #ifdef ATHR_WIN_NWF
@@ -233,6 +241,20 @@ typedef enum {
         ((mode) == MODE_11AX_HE40_2G) || \
         ((mode) == MODE_11AX_HE80_2G))
 #endif /* SUPPORT_11AX */
+
+#if SUPPORT_11BE
+#define IS_MODE_EHT(mode) (((mode) == MODE_11BE_EHT20) || \
+        ((mode) == MODE_11BE_EHT40)     || \
+        ((mode) == MODE_11BE_EHT80)     || \
+        ((mode) == MODE_11BE_EHT80_80)  || \
+        ((mode) == MODE_11BE_EHT160)    || \
+        ((mode) == MODE_11BE_EHT160_160)|| \
+        ((mode) == MODE_11BE_EHT320)    || \
+        ((mode) == MODE_11BE_EHT20_2G)  || \
+        ((mode) == MODE_11BE_EHT40_2G))
+#define IS_MODE_EHT_2G(mode) (((mode) == MODE_11BE_EHT20_2G) || \
+        ((mode) == MODE_11BE_EHT40_2G))
+#endif /* SUPPORT_11BE */
 
 #define IS_MODE_VHT_2G(mode) (((mode) == MODE_11AC_VHT20_2G) || \
         ((mode) == MODE_11AC_VHT40_2G) || \
