@@ -118,6 +118,8 @@ typedef struct wake_lock_stats stats_wake_lock;
  * @send_req_stats: function pointer to send request stats command to FW
  * @send_req_peer_stats: function pointer to send request peer stats command
  *                       to FW
+ * @set_pdev_stats_update_period: function pointer to set pdev stats update
+ *                                period to FW
  */
 struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*cp_stats_attach)(struct wlan_objmgr_psoc *psoc);
@@ -130,6 +132,9 @@ struct wlan_lmac_if_cp_stats_tx_ops {
 				     stats_req_info *req);
 	QDF_STATUS (*send_req_peer_stats)(struct wlan_objmgr_psoc *psoc,
 					  stats_req_info *req);
+	QDF_STATUS (*set_pdev_stats_update_period)(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t pdev_id, uint32_t val);
 };
 
 /**
