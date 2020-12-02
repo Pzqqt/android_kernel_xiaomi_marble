@@ -529,6 +529,8 @@ typedef enum {
     WMI_VDEV_GET_BIG_DATA_CMDID,
     /** Get per vdev BIG DATA stats phase 2 */
     WMI_VDEV_GET_BIG_DATA_P2_CMDID,
+    /** set TPC PSD/non-PSD power */
+    WMI_VDEV_SET_TPC_POWER_CMDID,
 
     /* peer specific commands */
 
@@ -5561,6 +5563,13 @@ typedef struct {
      * bits within this field.
      */
     A_UINT32 tx_flags;
+    /* peer_rssi:
+     * If non-zero, indicates saved peer beacon/probe resp RSSI (dBm units)
+     * ONLY for init connection auth/assoc pkt.
+     */
+    A_INT32 peer_rssi;
+
+
 /* This TLV is followed by array of bytes: First 64 bytes of management frame
  *   A_UINT8 bufp[];
  */
@@ -11737,6 +11746,11 @@ typedef enum {
      *  Bit : 2-31  - reserved
      */
     WMI_VDEV_PARAM_SHO_CONFIG,          /* 0xA4  */
+
+    /** Enable or disable Non-data HE Extended range
+     *  valid values: 0-Disable ER, 1-Enable ER.
+     */
+    WMI_VDEV_PARAM_NON_DATA_HE_RANGE_EXT,    /* 0xA5 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -27375,6 +27389,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_QOS_NULL_FRAME_TX_SEND_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID);
         WMI_RETURN_STRING(WMI_TWT_NUDGE_DIALOG_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SET_TPC_POWER_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -27563,6 +27578,7 @@ typedef struct {
     A_UINT32 domain_code_6g_client_lpi[WMI_REG_CLIENT_MAX];
     A_UINT32 domain_code_6g_client_sp[WMI_REG_CLIENT_MAX];
     A_UINT32 domain_code_6g_client_vlp[WMI_REG_CLIENT_MAX];
+    A_UINT32 domain_code_6g_super_id;
     A_UINT32 min_bw_6g_ap_sp; /* MHz */
     A_UINT32 max_bw_6g_ap_sp;
     A_UINT32 min_bw_6g_ap_lpi;
@@ -29570,6 +29586,39 @@ typedef struct {
      * A_UINT32 bd_datapath_stats[];
      */
 } wmi_vdev_send_big_data_p2_event_fixed_param;
+
+typedef enum {
+    WMI_6GHZ_REG_LPI = 0,
+    WMI_6GHZ_REG_VLP = 1,
+    WMI_6GHZ_REG_SP  = 2,
+    WMI_6GHZ_REG_MAX = 5, /* Can't expand, b/c used as array length below */
+} WMI_6GHZ_REG_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 psd_power;  /* Value: 0 or 1, is PSD power or not */
+    A_UINT32 eirp_power; /* Maximum EIRP power (dDm units), valid only if power is PSD */
+    A_UINT32 power_type_6ghz; /* Type: WMI_6GHZ_REG_TYPE, used for halphy CTL lookup */
+
+    /*
+     * This fixed_param TLV is followed by the below TLVs:
+     * num_pwr_levels of wmi_vdev_set_tpc_power_atomic_fixed_param
+     * For PSD power, it is the PSD/EIRP power of the frequency (20MHz chunks).
+     * For non-psd power, the power values are for 20, 40, and till
+     * BSS BW power levels.
+     * The num_pwr_levels will be checked by sw how many elements present
+     * in the variable-length array.
+     *
+     * wmi_vdev_set_tpc_power_atomic_fixed_param;
+     */
+} wmi_vdev_set_tpc_power_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 chan_cfreq; /* Channel center frequency (MHz) */
+    A_UINT32 tx_power;   /* Unit: dBm, either PSD/EIRP power for this frequency or incremental for non-PSD BW */
+} wmi_vdev_ch_power_info;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */

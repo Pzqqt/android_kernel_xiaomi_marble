@@ -1124,6 +1124,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_vendor_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_vendor_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_msg_info_tlv_param,
+    WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_ch_power_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1577,6 +1579,7 @@ typedef enum {
     OP(WMI_QOS_NULL_FRAME_TX_SEND_CMDID) \
     OP(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID) \
     OP(WMI_TWT_NUDGE_DIALOG_CMDID) \
+    OP(WMI_VDEV_SET_TPC_POWER_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1836,6 +1839,7 @@ typedef enum {
     OP(WMI_SSCAN_EVT_MESSAGE_EVENTID) \
     OP(WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID) \
     OP(WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID) \
+    OP(WMI_REG_CHAN_LIST_CC_EXT_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4471,6 +4475,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_BIG_DATA_CMDID);
 #define WMITLV_TABLE_WMI_VDEV_GET_BIG_DATA_P2_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_get_big_data_p2_cmd_fixed_param, wmi_vdev_get_big_data_p2_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_BIG_DATA_P2_CMDID);
+
+/* Vdev set TPC power */
+#define WMITLV_TABLE_WMI_VDEV_SET_TPC_POWER_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_cmd_fixed_param, wmi_vdev_set_tpc_power_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_ch_power_info, ch_pwr_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_TPC_POWER_CMDID);
 
 /* Frame inject command */
 #define WMITLV_TABLE_WMI_PDEV_FRAME_INJECT_CMDID(id,op,buf,len) \
