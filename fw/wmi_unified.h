@@ -25586,6 +25586,11 @@ typedef enum wmi_coex_config_type {
      * enable WLAN tx beamforming during coex case
      */
     WMI_COEX_CONFIG_ENABLE_TXBF = 46,
+    /* WMI_COEX_CONFIG_FORCED_ALGO
+     * config to select coex algorithm
+     * arg1: select fixed coex algorithm
+     */
+    WMI_COEX_CONFIG_FORCED_ALGO = 47,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
