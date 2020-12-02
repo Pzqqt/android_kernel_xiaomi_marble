@@ -1354,7 +1354,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		void *context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct sap_event sap_ap_event = {0};
+	struct sap_event *sap_ap_event;
 	struct mac_context *mac_ctx;
 	struct oem_channel_info *chaninfo;
 	tSap_StationAssocIndication *assoc_ind;
@@ -1375,6 +1375,10 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	sap_ap_event = qdf_mem_malloc(sizeof(*sap_ap_event));
+	if (!sap_ap_event)
+		return QDF_STATUS_E_NOMEM;
+
 	sap_debug("SAP event callback event = %s",
 		  sap_hdd_event_to_string(sap_hddevent));
 
@@ -1382,11 +1386,12 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_STA_ASSOC_IND:
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
 		/*  TODO - Indicate the assoc request indication to OS */
-		sap_ap_event.sapHddEventCode = eSAP_STA_ASSOC_IND;
-		assoc_ind = &sap_ap_event.sapevt.sapAssocIndication;
+		sap_ap_event->sapHddEventCode = eSAP_STA_ASSOC_IND;
+		assoc_ind = &sap_ap_event->sapevt.sapAssocIndication;
 
 		qdf_copy_macaddr(&assoc_ind->staMac, &csr_roaminfo->peerMac);
 		assoc_ind->staId = csr_roaminfo->staId;
@@ -1414,6 +1419,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				qdf_mem_free(csr_roaminfo->
 					     owe_pending_assoc_ind);
 				csr_roaminfo->owe_pending_assoc_ind = NULL;
+				qdf_mem_free(sap_ap_event);
 				return QDF_STATUS_E_INVAL;
 			}
 			if (!sap_save_owe_pending_assoc_ind(sap_ctx,
@@ -1422,18 +1428,20 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				qdf_mem_free(csr_roaminfo->
 					     owe_pending_assoc_ind);
 				csr_roaminfo->owe_pending_assoc_ind = NULL;
+				qdf_mem_free(sap_ap_event);
 				return QDF_STATUS_E_INVAL;
 			}
 			csr_roaminfo->owe_pending_assoc_ind = NULL;
 		}
 		break;
 	case eSAP_START_BSS_EVENT:
-		sap_ap_event.sapHddEventCode = eSAP_START_BSS_EVENT;
-		bss_complete = &sap_ap_event.sapevt.sapStartBssCompleteEvent;
+		sap_ap_event->sapHddEventCode = eSAP_START_BSS_EVENT;
+		bss_complete = &sap_ap_event->sapevt.sapStartBssCompleteEvent;
 
 		bss_complete->sessionId = sap_ctx->sessionId;
 		if (bss_complete->sessionId == WLAN_UMAC_VDEV_ID_MAX) {
 			sap_err("Invalid sessionId");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
 
@@ -1453,17 +1461,17 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_DFS_RADAR_DETECT:
 	case eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC:
 	case eSAP_DFS_NO_AVAILABLE_CHANNEL:
-		sap_ap_event.sapHddEventCode = sap_hddevent;
-		sap_ap_event.sapevt.sapStopBssCompleteEvent.status =
+		sap_ap_event->sapHddEventCode = sap_hddevent;
+		sap_ap_event->sapevt.sapStopBssCompleteEvent.status =
 			(eSapStatus) context;
 		break;
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
-		sap_handle_acs_scan_event(sap_ctx, &sap_ap_event,
-			(eSapStatus)context);
+		sap_handle_acs_scan_event(sap_ctx, sap_ap_event,
+					  (eSapStatus)context);
 		break;
 	case eSAP_ACS_CHANNEL_SELECTED:
-		sap_ap_event.sapHddEventCode = sap_hddevent;
-		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
+		sap_ap_event->sapHddEventCode = sap_hddevent;
+		acs_selected = &sap_ap_event->sapevt.sap_ch_selected;
 		if (eSAP_STATUS_SUCCESS == (eSapStatus)context) {
 			acs_selected->pri_ch_freq =
 						sap_ctx->acs_cfg->pri_ch_freq;
@@ -1480,8 +1488,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		break;
 
 	case eSAP_STOP_BSS_EVENT:
-		sap_ap_event.sapHddEventCode = eSAP_STOP_BSS_EVENT;
-		sap_ap_event.sapevt.sapStopBssCompleteEvent.status =
+		sap_ap_event->sapHddEventCode = eSAP_STOP_BSS_EVENT;
+		sap_ap_event->sapevt.sapStopBssCompleteEvent.status =
 			(eSapStatus) context;
 		break;
 
@@ -1490,20 +1498,22 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		if (!csr_roaminfo) {
 			sap_err("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
 		if (sap_ctx->fsm_state == SAP_STOPPING) {
 			sap_err("SAP is stopping, not able to handle any incoming (re)assoc req");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_ABORTED;
 		}
 
 		reassoc_complete =
-		    &sap_ap_event.sapevt.sapStationAssocReassocCompleteEvent;
+		    &sap_ap_event->sapevt.sapStationAssocReassocCompleteEvent;
 
 		if (csr_roaminfo->fReassocReq)
-			sap_ap_event.sapHddEventCode = eSAP_STA_REASSOC_EVENT;
+			sap_ap_event->sapHddEventCode = eSAP_STA_REASSOC_EVENT;
 		else
-			sap_ap_event.sapHddEventCode = eSAP_STA_ASSOC_EVENT;
+			sap_ap_event->sapHddEventCode = eSAP_STA_ASSOC_EVENT;
 
 		qdf_copy_macaddr(&reassoc_complete->staMac,
 				 &csr_roaminfo->peerMac);
@@ -1513,6 +1523,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		if (csr_roaminfo->assocReqLength < ASSOC_REQ_IE_OFFSET) {
 			sap_err("Invalid assoc request length:%d",
 				 csr_roaminfo->assocReqLength);
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
 		reassoc_complete->ies_len = (csr_roaminfo->assocReqLength -
@@ -1581,11 +1592,12 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_STA_DISASSOC_EVENT:
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
-		sap_ap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
+		sap_ap_event->sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
 		disassoc_comp =
-			&sap_ap_event.sapevt.sapStationDisassocCompleteEvent;
+			&sap_ap_event->sapevt.sapStationDisassocCompleteEvent;
 
 		qdf_copy_macaddr(&disassoc_comp->staMac,
 				 &csr_roaminfo->peerMac);
@@ -1609,11 +1621,12 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
-		sap_ap_event.sapHddEventCode = eSAP_STA_SET_KEY_EVENT;
+		sap_ap_event->sapHddEventCode = eSAP_STA_SET_KEY_EVENT;
 		key_complete =
-			&sap_ap_event.sapevt.sapStationSetKeyCompleteEvent;
+			&sap_ap_event->sapevt.sapStationSetKeyCompleteEvent;
 		key_complete->status = (eSapStatus) context;
 		qdf_copy_macaddr(&key_complete->peerMacAddr,
 				 &csr_roaminfo->peerMac);
@@ -1623,10 +1636,11 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
-		sap_ap_event.sapHddEventCode = eSAP_STA_MIC_FAILURE_EVENT;
-		mic_failure = &sap_ap_event.sapevt.sapStationMICFailureEvent;
+		sap_ap_event->sapHddEventCode = eSAP_STA_MIC_FAILURE_EVENT;
+		mic_failure = &sap_ap_event->sapevt.sapStationMICFailureEvent;
 
 		qdf_mem_copy(&mic_failure->srcMacAddr,
 			     csr_roaminfo->u.pMICFailureInfo->srcMacAddr,
@@ -1650,30 +1664,31 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
-		sap_ap_event.sapHddEventCode = eSAP_WPS_PBC_PROBE_REQ_EVENT;
+		sap_ap_event->sapHddEventCode = eSAP_WPS_PBC_PROBE_REQ_EVENT;
 
-		qdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
+		qdf_mem_copy(&sap_ap_event->sapevt.sapPBCProbeReqEvent.
 			     WPSPBCProbeReq, csr_roaminfo->u.pWPSPBCProbeReq,
 			     sizeof(tSirWPSPBCProbeReq));
 		break;
 
 	case eSAP_DISCONNECT_ALL_P2P_CLIENT:
-		sap_ap_event.sapHddEventCode = eSAP_DISCONNECT_ALL_P2P_CLIENT;
-		sap_ap_event.sapevt.sapActionCnf.actionSendSuccess =
+		sap_ap_event->sapHddEventCode = eSAP_DISCONNECT_ALL_P2P_CLIENT;
+		sap_ap_event->sapevt.sapActionCnf.actionSendSuccess =
 			(eSapStatus) context;
 		break;
 
 	case eSAP_MAC_TRIG_STOP_BSS_EVENT:
-		sap_ap_event.sapHddEventCode = eSAP_MAC_TRIG_STOP_BSS_EVENT;
-		sap_ap_event.sapevt.sapActionCnf.actionSendSuccess =
+		sap_ap_event->sapHddEventCode = eSAP_MAC_TRIG_STOP_BSS_EVENT;
+		sap_ap_event->sapevt.sapActionCnf.actionSendSuccess =
 			(eSapStatus) context;
 		break;
 
 	case eSAP_UNKNOWN_STA_JOIN:
-		sap_ap_event.sapHddEventCode = eSAP_UNKNOWN_STA_JOIN;
-		qdf_mem_copy((void *) sap_ap_event.sapevt.sapUnknownSTAJoin.
+		sap_ap_event->sapHddEventCode = eSAP_UNKNOWN_STA_JOIN;
+		qdf_mem_copy((void *)sap_ap_event->sapevt.sapUnknownSTAJoin.
 			     macaddr.bytes, (void *) context,
 			     QDF_MAC_ADDR_SIZE);
 		break;
@@ -1682,10 +1697,11 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
-		sap_ap_event.sapHddEventCode = eSAP_MAX_ASSOC_EXCEEDED;
-		qdf_copy_macaddr(&sap_ap_event.sapevt.
+		sap_ap_event->sapHddEventCode = eSAP_MAX_ASSOC_EXCEEDED;
+		qdf_copy_macaddr(&sap_ap_event->sapevt.
 				 sapMaxAssocExceeded.macaddr,
 				 &csr_roaminfo->peerMac);
 		break;
@@ -1701,9 +1717,9 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		sap_config_acs_result(MAC_HANDLE(mac_ctx), sap_ctx,
 				      sap_ctx->sec_ch_freq);
 
-		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_EVENT;
+		sap_ap_event->sapHddEventCode = eSAP_CHANNEL_CHANGE_EVENT;
 
-		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
+		acs_selected = &sap_ap_event->sapevt.sap_ch_selected;
 		acs_selected->pri_ch_freq = sap_ctx->chan_freq;
 		acs_selected->ht_sec_ch_freq = sap_ctx->sec_ch_freq;
 		acs_selected->ch_width =
@@ -1718,21 +1734,22 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		if (!csr_roaminfo) {
 			sap_debug("Invalid CSR Roam Info");
+			qdf_mem_free(sap_ap_event);
 			return QDF_STATUS_E_INVAL;
 		}
 		sap_debug("SAP event callback event = %s",
 			  "eSAP_ECSA_CHANGE_CHAN_IND");
-		sap_ap_event.sapHddEventCode = eSAP_ECSA_CHANGE_CHAN_IND;
-		sap_ap_event.sapevt.sap_chan_cng_ind.new_chan_freq =
+		sap_ap_event->sapHddEventCode = eSAP_ECSA_CHANGE_CHAN_IND;
+		sap_ap_event->sapevt.sap_chan_cng_ind.new_chan_freq =
 					   csr_roaminfo->target_chan_freq;
 		break;
 	case eSAP_DFS_NEXT_CHANNEL_REQ:
 		sap_debug("SAP event callback event = %s",
 			  "eSAP_DFS_NEXT_CHANNEL_REQ");
-		sap_ap_event.sapHddEventCode = eSAP_DFS_NEXT_CHANNEL_REQ;
+		sap_ap_event->sapHddEventCode = eSAP_DFS_NEXT_CHANNEL_REQ;
 		break;
 	case eSAP_STOP_BSS_DUE_TO_NO_CHNL:
-		sap_ap_event.sapHddEventCode = eSAP_STOP_BSS_DUE_TO_NO_CHNL;
+		sap_ap_event->sapHddEventCode = eSAP_STOP_BSS_DUE_TO_NO_CHNL;
 		sap_debug("stopping session_id:%d, bssid:"QDF_MAC_ADDR_FMT", chan_freq:%d",
 			   sap_ctx->sessionId,
 			   QDF_MAC_ADDR_REF(sap_ctx->self_mac_addr),
@@ -1740,8 +1757,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		break;
 
 	case eSAP_CHANNEL_CHANGE_RESP:
-		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_RESP;
-		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
+		sap_ap_event->sapHddEventCode = eSAP_CHANNEL_CHANGE_RESP;
+		acs_selected = &sap_ap_event->sapevt.sap_ch_selected;
 		acs_selected->pri_ch_freq = sap_ctx->chan_freq;
 		acs_selected->ht_sec_ch_freq = sap_ctx->sec_ch_freq;
 		acs_selected->ch_width =
@@ -1759,10 +1776,11 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		break;
 	}
 	qdf_status = (*sap_ctx->sap_event_cb)
-			(&sap_ap_event, sap_ctx->user_context);
+			(sap_ap_event, sap_ctx->user_context);
+
+	qdf_mem_free(sap_ap_event);
 
 	return qdf_status;
-
 }
 
 bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
