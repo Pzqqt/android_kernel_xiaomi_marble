@@ -95,14 +95,6 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 		tbl_entry->pvt_data,
 		tbl_entry->notifier_cb_fn);
 
-	/* print power entries for the clk src */
-	d_mpr_h("%s: csid(%d) l1_cur_ma(%d) l2_cur_ma(%d) l3_cur_ma(%d)\n",
-		__func__,
-		tbl_entry->clk_src_id,
-		tbl_entry->current_ma[MMRM_VDD_LEVEL_SVS_L1],
-		tbl_entry->current_ma[MMRM_VDD_LEVEL_NOM],
-		tbl_entry->current_ma[MMRM_VDD_LEVEL_TURBO]);
-
 	mutex_unlock(&sw_clk_mgr->lock);
 
 	d_mpr_h("%s: exiting with success\n", __func__);
@@ -176,7 +168,6 @@ static int mmrm_sw_get_req_level(
 
 	/* voltage corner is below svsl1 */
 	if (voltage_corner < mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1]) {
-		/* TBD: remove this when scaling calculations are added */
 		d_mpr_w("%s: csid(%d): lower voltage corner(%d)\n",
 			__func__,
 			tbl_entry->clk_src_id,
@@ -211,33 +202,139 @@ err_invalid_corner:
 	return rc;
 }
 
-static int mmrm_sw_check_peak_current(
+static int mmrm_sw_check_req_level(
 	struct mmrm_sw_clk_mgr_info *sinfo,
-	int delta_cur)
+	u32 clk_src_id, u32 req_level, u32 *adj_level)
 {
 	int rc = 0;
 	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
+	u32 c, level = req_level;
 
-	/* check for negative value */
-	if ((signed)peak_data->aggreg_val + delta_cur <= 0) {
+	if (req_level >= MMRM_VDD_LEVEL_MAX) {
+		d_mpr_e("%s: invalid level %lu\n", __func__, req_level);
+		rc = -EINVAL;
+		goto err_invalid_level;
+	}
+
+	/* req_level is rejected when another client has a higher level */
+	if (req_level < peak_data->aggreg_level) {
+		for (c = 0; c < sinfo->tot_clk_clients; c++) {
+			tbl_entry = &sinfo->clk_client_tbl[c];
+			if (IS_ERR_OR_NULL(tbl_entry->clk) || !tbl_entry->clk_rate ||
+				tbl_entry->clk_src_id == clk_src_id) {
+				continue;
+			}
+			if (tbl_entry->vdd_level == peak_data->aggreg_level) {
+				break;
+			}
+		}
+		/* reject req level */
+		if (c < sinfo->tot_clk_clients) {
+			level = peak_data->aggreg_level;
+		}
+	}
+
+	*adj_level = level;
+	d_mpr_h("%s: adj_level(%d)\n", __func__, level);
+	return rc;
+
+err_invalid_level:
+	return rc;
+}
+
+static int mmrm_sw_calculate_total_current(
+	struct mmrm_sw_clk_mgr_info *sinfo,
+	u32 req_level, u32 *total_cur)
+{
+	int rc = 0;
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
+	u32 c, sum_cur = 0;
+
+	if (req_level >= MMRM_VDD_LEVEL_MAX) {
+		d_mpr_e("%s: invalid level %lu\n", __func__, req_level);
+		rc = -EINVAL;
+		goto err_invalid_level;
+	}
+
+	/* calculate sum of values (scaled by volt) */
+	for (c = 0; c < sinfo->tot_clk_clients; c++) {
+		tbl_entry = &sinfo->clk_client_tbl[c];
+		if (IS_ERR_OR_NULL(tbl_entry->clk) || !tbl_entry->clk_rate) {
+			continue;
+		}
+		sum_cur += tbl_entry->current_ma[tbl_entry->vdd_level][req_level];
+	}
+
+	*total_cur = sum_cur;
+	d_mpr_h("%s: total_cur(%d)\n", __func__, sum_cur);
+	return rc;
+
+err_invalid_level:
+	return rc;
+}
+
+static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
+	u32 req_level, u32 clk_val)
+{
+	int rc = 0;
+	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	u32 adj_level = req_level;
+	u32 peak_cur = peak_data->aggreg_val;
+	u32 old_cur = 0, new_cur = 0;
+	int delta_cur;
+
+	/* check the req level and adjust according to tbl entries */
+	rc = mmrm_sw_check_req_level(sinfo, tbl_entry->clk_src_id, req_level, &adj_level);
+	if (rc) {
+		goto err_invalid_level;
+	}
+
+	/* recalculate aggregated current with adj level */
+	if (adj_level != peak_data->aggreg_level) {
+		rc = mmrm_sw_calculate_total_current(sinfo, req_level, &peak_cur);
+		if (rc) {
+			goto err_invalid_level;
+		}
+	}
+
+	/* calculate delta cur */
+	if (tbl_entry->clk_rate) {
+		old_cur = tbl_entry->current_ma[tbl_entry->vdd_level][adj_level];
+	}
+
+	if (clk_val) {
+		new_cur = tbl_entry->current_ma[req_level][adj_level];
+	}
+
+	delta_cur = (signed)new_cur - old_cur;
+
+	/* negative value, update peak data */
+	if ((signed)peak_cur + delta_cur <= 0) {
 		peak_data->aggreg_val = 0;
-		d_mpr_h("%s: aggregate(%lu)\n", __func__, peak_data->aggreg_val);
+		peak_data->aggreg_level = adj_level;
 		goto exit_no_err;
 	}
 
-	/* check for peak overshoot */
-	if ((signed)peak_data->aggreg_val + delta_cur >= peak_data->threshold) {
+	/* peak overshoot, do not update peak data */
+	if ((signed)peak_cur + delta_cur >= peak_data->threshold) {
 		rc = -EINVAL;
 		goto err_peak_overshoot;
 	}
 
 	/* update peak data */
-	peak_data->aggreg_val += delta_cur;
-	d_mpr_h("%s: aggregate(%lu)\n", __func__, peak_data->aggreg_val);
+	peak_data->aggreg_val = peak_cur + delta_cur;
+	peak_data->aggreg_level = adj_level;
 
 exit_no_err:
+	d_mpr_h("%s: aggreg_val(%lu) aggreg_level(%lu)\n",
+		__func__,
+		peak_data->aggreg_val,
+		peak_data->aggreg_level);
 	return rc;
 
+err_invalid_level:
 err_peak_overshoot:
 	return rc;
 }
@@ -252,7 +349,6 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	struct mmrm_sw_clk_mgr_info *sinfo = &(sw_clk_mgr->data.sw_info);
 	bool req_reserve;
 	u32 req_level;
-	u32 prev_cur, req_cur;
 
 	d_mpr_h("%s: entering\n", __func__);
 
@@ -308,7 +404,7 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 			goto set_clk_rate;
 	}
 
-	/* get corresponding level & current */
+	/* get corresponding level */
 	if (clk_val) {
 		rc = mmrm_sw_get_req_level(tbl_entry, clk_val, &req_level);
 		if (rc || req_level >= MMRM_VDD_LEVEL_MAX) {
@@ -317,32 +413,17 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 			rc = -EINVAL;
 			goto err_invalid_clk_val;
 		}
-		req_cur = tbl_entry->current_ma[req_level];
 	} else {
 		req_level = 0;
-		req_cur = 0;
-	}
-
-	/* get previous level & current */
-	if (tbl_entry->clk_rate) {
-		if (tbl_entry->vdd_level >= MMRM_VDD_LEVEL_MAX) {
-			d_mpr_e("%s: csid(%d) invalid level %lu\n",
-				__func__, tbl_entry->clk_src_id, tbl_entry->vdd_level);
-			rc = -EINVAL;
-			goto err_invalid_clk_val;
-		}
-		prev_cur = tbl_entry->current_ma[tbl_entry->vdd_level];
-	} else {
-		prev_cur = 0;
 	}
 
 	mutex_lock(&sw_clk_mgr->lock);
 
 	/* check and update for peak current */
-	rc = mmrm_sw_check_peak_current(sinfo, (signed)(req_cur - prev_cur));
+	rc = mmrm_sw_check_peak_current(sinfo, tbl_entry, req_level, clk_val);
 	if (rc) {
-		d_mpr_e("%s: csid (%d) peak overshoot req_cur(%lu) peak_cur(%lu)\n",
-			__func__, tbl_entry->clk_src_id, req_cur,
+		d_mpr_e("%s: csid (%d) peak overshoot peak_cur(%lu)\n",
+			__func__, tbl_entry->clk_src_id,
 			sinfo->peak_cur_data.aggreg_val);
 		mutex_unlock(&sw_clk_mgr->lock);
 		goto err_peak_overshoot;
@@ -450,7 +531,7 @@ static struct mmrm_clk_mgr_client_ops clk_client_swops = {
 static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
 {
-	u32 i;
+	u32 i, j;
 	struct voltage_corner_set *cset = &cres->corner_set;
 	u32 scaling_factor = 0, voltage_factor = 0;
 	fp_t nom_dyn_pwr, nom_leak_pwr, freq_sc, dyn_sc, leak_sc,
@@ -474,10 +555,6 @@ static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
 		leak_sc = FP(
 			Q16_INT(scaling_factor), Q16_FRAC(scaling_factor), 100);
 
-		voltage_factor = cset->corner_tbl[i].volt_factor;
-		volt = FP(
-			Q16_INT(voltage_factor), Q16_FRAC(voltage_factor), 100);
-
 		if (!i)
 			pwr_mw = fp_mult(nom_dyn_pwr, freq_sc);
 		else
@@ -488,17 +565,22 @@ static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
 
 		tbl_entry->dyn_pwr[i] = fp_round(dyn_pwr);
 		tbl_entry->leak_pwr[i] = fp_round(leak_pwr);
-		tbl_entry->current_ma[i] =
-			fp_round(fp_div((dyn_pwr+leak_pwr), volt));
 
-		d_mpr_h("%s: csid(%d) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) tot_pwr(%d) cur_ma(%d)\n",
-			__func__,
-			tbl_entry->clk_src_id,
-			cset->corner_tbl[i].name,
-			tbl_entry->dyn_pwr[i],
-			tbl_entry->leak_pwr[i],
-			fp_round(dyn_pwr+leak_pwr),
-			tbl_entry->current_ma[i]);
+		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
+			voltage_factor = cset->corner_tbl[j].volt_factor;
+			volt = FP(Q16_INT(voltage_factor), Q16_FRAC(voltage_factor), 100);
+
+			tbl_entry->current_ma[i][j] = fp_round(fp_div((dyn_pwr+leak_pwr), volt));
+
+			d_mpr_h("%s: csid(%d) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) tot_pwr(%d) cur_ma(%d)\n",
+				__func__,
+				tbl_entry->clk_src_id,
+				cset->corner_tbl[i].name,
+				tbl_entry->dyn_pwr[i],
+				tbl_entry->leak_pwr[i],
+				fp_round(dyn_pwr+leak_pwr),
+				tbl_entry->current_ma[i][j]);
+		}
 	}
 
 	return 0;
@@ -538,17 +620,6 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 			d_mpr_e("%s: csid(%d) failed to prepare table\n",
 				__func__, tbl_entry->clk_src_id);
 		}
-	}
-
-	/* print the tables */
-	for (c = 0; c < sinfo->tot_clk_clients; c++) {
-		tbl_entry = &sinfo->clk_client_tbl[c];
-		d_mpr_h("%s: csid(%d) l1_cur_ma(%d) l2_cur_ma(%d) l3_cur_ma(%d)\n",
-			__func__,
-			tbl_entry->clk_src_id,
-			tbl_entry->current_ma[MMRM_VDD_LEVEL_SVS_L1],
-			tbl_entry->current_ma[MMRM_VDD_LEVEL_NOM],
-			tbl_entry->current_ma[MMRM_VDD_LEVEL_TURBO]);
 	}
 
 	d_mpr_h("%s: exiting\n", __func__);
@@ -603,6 +674,7 @@ int mmrm_init_sw_clk_mgr(void *driver_data)
 	/* update the peak current threshold */
 	sinfo->peak_cur_data.threshold = cres->threshold;
 	sinfo->peak_cur_data.aggreg_val = 0;
+	sinfo->peak_cur_data.aggreg_level = MMRM_VDD_LEVEL_SVS_L1;
 
 	/* initialize mutex for sw clk mgr */
 	mutex_init(&sw_clk_mgr->lock);

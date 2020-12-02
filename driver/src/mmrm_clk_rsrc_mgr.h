@@ -49,7 +49,7 @@ struct mmrm_sw_clk_client_tbl_entry {
 	u64 freq[MMRM_VDD_LEVEL_MAX];
 	u32 dyn_pwr[MMRM_VDD_LEVEL_MAX];
 	u32 leak_pwr[MMRM_VDD_LEVEL_MAX];
-	u32 current_ma[MMRM_VDD_LEVEL_MAX];
+	u32 current_ma[MMRM_VDD_LEVEL_MAX][MMRM_VDD_LEVEL_MAX];
 
 	/* reference to this entry */
 	struct mmrm_client *client;
@@ -64,6 +64,7 @@ struct mmrm_sw_peak_current_data {
 	/* peak current data in ma */
 	u32 threshold;
 	u32 aggreg_val;
+	u32 aggreg_level;
 };
 
 struct mmrm_sw_clk_mgr_info {
