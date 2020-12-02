@@ -2994,8 +2994,7 @@ error_free_conn:
 	return ERR_PTR(rc);
 }
 
-static int _sde_conn_hw_recovery_handler(
-		struct drm_connector *connector, bool val)
+static int _sde_conn_enable_hw_recovery(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn;
 
@@ -3006,7 +3005,7 @@ static int _sde_conn_hw_recovery_handler(
 	c_conn = to_sde_connector(connector);
 
 	if (c_conn->encoder)
-		sde_encoder_recovery_events_handler(c_conn->encoder, val);
+		sde_encoder_enable_recovery_event(c_conn->encoder);
 
 	return 0;
 }
@@ -3024,7 +3023,7 @@ int sde_connector_register_custom_event(struct sde_kms *kms,
 		ret = 0;
 		break;
 	case DRM_EVENT_SDE_HW_RECOVERY:
-		ret = _sde_conn_hw_recovery_handler(conn_drm, val);
+		ret = _sde_conn_enable_hw_recovery(conn_drm);
 		break;
 	default:
 		break;
