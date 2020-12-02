@@ -484,6 +484,11 @@ typedef  enum  {
     WMI_SERVICE_QOS_NULL_FRAME_TX_OVER_WMI = 264, /* Indicates that FW supports tx of QoS null frame downloaded through WMI interface */
     WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL = 265, /* Indicates that FW supports per channel configuration support in the scan start command */
     WMI_SERVICE_CSA_BEACON_TEMPLATE = 266, /* Indicates that FW supports updating CSA count in beacon template */
+    WMI_SERVICE_BROADCAST_TWT_REQUESTER = 267, /* Indicates FW supports Broadcast TWT REQUESTER */
+    WMI_SERVICE_BROADCAST_TWT_RESPONDER = 268, /* Indicates FW supports Broadcast TWT RESPONDER */
+    WMI_SERVICE_TWT_NUDGE = 269, /* Indicates that FW supports TWT Nudge command and event */
+    WMI_SERVICE_TWT_STATS = 270, /* Indicates that FW supports TWT Get_stats command and event */
+    WMI_SERVICE_TWT_ALL_DIALOG_ID = 271, /* Indicates that FW supports TWT ALL dialog ID(255) for all commands and events, except for TWT add dialog and TWT get stats */
 
 
     WMI_MAX_EXT2_SERVICE

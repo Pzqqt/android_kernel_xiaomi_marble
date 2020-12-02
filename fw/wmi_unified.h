@@ -28117,7 +28117,7 @@ typedef struct {
     A_UINT32 flags;
 } wmi_wlm_config_cmd_fixed_param;
 
-/* Broadcast TWT enable/disable */
+/* Broadcast TWT enable/disable for both REQUESTER and RESPONDER */
 #define TWT_EN_DIS_FLAGS_GET_BTWT(flag)         WMI_GET_BITS(flag, 0, 1)
 #define TWT_EN_DIS_FLAGS_SET_BTWT(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
 
@@ -28128,6 +28128,41 @@ typedef struct {
 /* 11ax MBSSID enable/disable */
 #define TWT_EN_DIS_FLAGS_GET_AX_MBSSID(flag)      WMI_GET_BITS(flag, 2, 1)
 #define TWT_EN_DIS_FLAGS_SET_AX_MBSSID(flag, val) WMI_SET_BITS(flag, 2, 1, val)
+
+/* Configuration of TWT Modes,
+ * If this BIT is set BIT4/5 will be used in FW, else BIT4/5 will be ignored.
+ * Which means when we receive WMI_TWT_ENABLE_CMDID command from host,
+ * without BIT3 set we will enable both REQUESTER/RESPONDER.
+ *
+ * Same interepretation is used in WMI_TWT_DISABLE_CMDID, if BIT3 is not set
+ * we will disable both REQUESTER and RESPONDER.
+ */
+#define TWT_EN_DIS_FLAGS_GET_REQ_RES_BCAST_CONFIG(flag)      WMI_GET_BITS(flag, 3, 1)
+#define TWT_EN_DIS_FLAGS_SET_REQ_RES_BCAST_CONFIG(flag, val) WMI_SET_BITS(flag, 3, 1, val)
+
+/*
+ * The flags are used both in WMI_TWT_ENABLE_CMDID and WMI_TWT_DISABLE_CMDID.
+ * For instance, in WMI_TWT_ENABLE_CMDID if BIT4=0 and BIT5=0, then we will
+ * enable only Requester, we will not change any configuration of RESPONDER.
+ *
+ * Same way in WMI_TWT_DISABLE_CMDID if BIT4=0 and BIT5=0, then we will only
+ * disable REQUESTER, we will not alter any other configurations.
+ *
+ * If host is enabling or disabling both REQUESTER and RESPONDER host will
+ * send two WMI commands, one for REQUESTER and one for RESPONDER.
+ *
+ * |-----------------------------------------------------|
+ * |BIT4=0, BIT5=0  | Enable/Disable TWT requester       |
+ * |-----------------------------------------------------|
+ * |BIT4=0, BIT5=1  | Enable/Disable BCAST TWT requester |
+ * |-----------------------------------------------------|
+ * |BIT4=1, BIT5=0  | Enable/Disable TWT responder       |
+ * |-----------------------------------------------------|
+ * |BIT4=1, BIT5=1  | Enable/Disable BCAST TWT responder |
+ * |-----------------------------------------------------|
+ */
+#define TWT_FLAGS_GET_MODE(flag)      WMI_GET_BITS(flag, 4, 2)
+#define TWT_FLAGS_SET_MODE(flag, val) WMI_SET_BITS(flag, 4, 2, val)
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param  */
