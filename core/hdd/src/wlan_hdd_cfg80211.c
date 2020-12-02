@@ -4025,9 +4025,14 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
 	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &twt_res);
 
-	if (twt_req || twt_res)
+	if (twt_req || twt_res) {
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					      QCA_WLAN_VENDOR_FEATURE_TWT);
+
+		wlan_hdd_cfg80211_set_feature(
+				feature_flags,
+				QCA_WLAN_VENDOR_FEATURE_TWT_ASYNC_SUPPORT);
+	}
 
 	/* Check the kernel version for upstream commit aced43ce780dc5 that
 	 * has support for processing user cell_base hints when wiphy is

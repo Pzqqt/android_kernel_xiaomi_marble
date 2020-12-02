@@ -2100,7 +2100,7 @@ sme_process_twt_add_dialog_event(struct mac_context *mac,
 
 	callback = mac->sme.twt_add_dialog_cb;
 	if (callback)
-		callback(mac->hdd_handle, add_dialog_event);
+		callback(mac->psoc, add_dialog_event);
 }
 
 /**
@@ -2116,13 +2116,10 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 				 struct wmi_twt_del_dialog_complete_event_param *param)
 {
 	twt_del_dialog_cb callback;
-	void *context;
 
 	callback = mac->sme.twt_del_dialog_cb;
-	context = mac->sme.twt_del_dialog_context;
-	mac->sme.twt_del_dialog_cb = NULL;
 	if (callback)
-		callback(context, param);
+		callback(mac->psoc, param);
 }
 
 /**
@@ -2138,12 +2135,10 @@ sme_process_twt_pause_dialog_event(struct mac_context *mac,
 				   struct wmi_twt_pause_dialog_complete_event_param *param)
 {
 	twt_pause_dialog_cb callback;
-	void *context;
 
 	callback = mac->sme.twt_pause_dialog_cb;
-	context = mac->sme.twt_pause_dialog_context;
 	if (callback)
-		callback(context, param);
+		callback(mac->psoc, param);
 }
 
 /**
@@ -2181,12 +2176,10 @@ sme_process_twt_resume_dialog_event(struct mac_context *mac,
 				    struct wmi_twt_resume_dialog_complete_event_param *param)
 {
 	twt_resume_dialog_cb callback;
-	void *context;
 
 	callback = mac->sme.twt_resume_dialog_cb;
-	context = mac->sme.twt_resume_dialog_context;
 	if (callback)
-		callback(context, param);
+		callback(mac->psoc, param);
 }
 #else
 
@@ -13974,7 +13967,7 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
 	return wma_twt_process_del_dialog(wma_handle, params);
 }
 
-QDF_STATUS sme_init_twt_complete_cb(mac_handle_t mac_handle)
+QDF_STATUS sme_clear_twt_complete_cb(mac_handle_t mac_handle)
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -14012,20 +14005,6 @@ QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
 	}
 
 	return status;
-}
-
-QDF_STATUS sme_deregister_twt_callbacks(mac_handle_t mac_handle)
-{
-	struct twt_callbacks twt_cb;
-
-	twt_cb.twt_enable_cb = NULL;
-	twt_cb.twt_add_dialog_cb = NULL;
-	twt_cb.twt_del_dialog_cb = NULL;
-	twt_cb.twt_pause_dialog_cb = NULL;
-	twt_cb.twt_resume_dialog_cb = NULL;
-	twt_cb.twt_disable_cb = NULL;
-
-	return sme_register_twt_callbacks(mac_handle, &twt_cb);
 }
 
 QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
@@ -14079,8 +14058,7 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      twt_del_dialog_cb del_dialog_cb,
-			      struct wmi_twt_del_dialog_param *twt_params,
-			      void *context)
+			      struct wmi_twt_del_dialog_param *twt_params)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg twt_msg = {0};
@@ -14109,7 +14087,6 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 
 	/* Serialize the req through MC thread */
 	mac->sme.twt_del_dialog_cb = del_dialog_cb;
-	mac->sme.twt_del_dialog_context = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_DEL_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
@@ -14130,9 +14107,7 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS
 sme_pause_dialog_cmd(mac_handle_t mac_handle,
-		     twt_pause_dialog_cb pause_dialog_cb,
-		     struct wmi_twt_pause_dialog_cmd_param *twt_params,
-		     void *context)
+		     struct wmi_twt_pause_dialog_cmd_param *twt_params)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct wmi_twt_pause_dialog_cmd_param *cmd_params;
@@ -14160,8 +14135,6 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 	}
 
 	/* Serialize the req through MC thread */
-	mac->sme.twt_pause_dialog_cb = pause_dialog_cb;
-	mac->sme.twt_pause_dialog_context = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_PAUSE_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
@@ -14243,9 +14216,7 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS
 sme_resume_dialog_cmd(mac_handle_t mac_handle,
-		      twt_resume_dialog_cb resume_dialog_cb,
-		      struct wmi_twt_resume_dialog_cmd_param *twt_params,
-		      void *context)
+		      struct wmi_twt_resume_dialog_cmd_param *twt_params)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct wmi_twt_resume_dialog_cmd_param *cmd_params;
@@ -14273,8 +14244,6 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 	}
 
 	/* Serialize the req through MC thread */
-	mac->sme.twt_resume_dialog_cb = resume_dialog_cb;
-	mac->sme.twt_resume_dialog_context = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_RESUME_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);

@@ -3697,13 +3697,13 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params);
 QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params);
 
 /**
- * sme_init_twt_complete_cb() - Initialize TWT callbacks
+ * sme_clear_twt_complete_cb() - Initialize TWT callbacks
  * @mac_handle: MAC handle
  *
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
-QDF_STATUS sme_init_twt_complete_cb(mac_handle_t mac_handle);
+QDF_STATUS sme_clear_twt_complete_cb(mac_handle_t mac_handle);
 
 /**
  * sme_register_twt_callbacks() - TWT enable registrar
@@ -3734,31 +3734,25 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
  * @mac_handle: MAC handle
  * @twt_del_dialog_cb: Function callback to handle del_dialog event
  * @twt_params: TWT del dialog parameters
- * @context: os_if_request cookie
  *
  * Return: QDF Status
  */
 QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      twt_del_dialog_cb del_dialog_cb,
-			      struct wmi_twt_del_dialog_param *twt_params,
-			      void *context);
+			      struct wmi_twt_del_dialog_param *twt_params);
 
 /**
  * sme_pause_dialog_cmd() - Register callback and send TWT pause dialog
  * command to firmware
  * @mac_handle: MAC handle
- * @twt_pause_dialog_cb: Function callback to handle pause_dialog event
  * @twt_params: TWT pause dialog parameters
- * @context: os_if_request cookie
  *
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
 QDF_STATUS
 sme_pause_dialog_cmd(mac_handle_t mac_handle,
-		     twt_pause_dialog_cb pause_dialog_cb,
-		     struct wmi_twt_pause_dialog_cmd_param *twt_params,
-		     void *context);
+		     struct wmi_twt_pause_dialog_cmd_param *twt_params);
 
 /**
  * sme_nudge_dialog_cmd() - Register callback and send TWT nudge dialog
@@ -3781,27 +3775,14 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
  * sme_resume_dialog_cmd() - Register callback and send TWT resume dialog
  * command to firmware
  * @mac_handle: MAC handle
- * @twt_resume_dialog_cb: Function callback to handle resume_dialog event
  * @twt_params: TWT resume dialog parameters
- * @context: os_if_request cookie
  *
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
 QDF_STATUS
 sme_resume_dialog_cmd(mac_handle_t mac_handle,
-		      twt_resume_dialog_cb resume_dialog_cb,
-		      struct wmi_twt_resume_dialog_cmd_param *twt_params,
-		      void *context);
-
-/**
- * sme_deregister_twt_callbacks() - TWT enable deregistrar
- * @mac_handle: Opaque handle to the global MAC context
- *
- * Return: QDF Status
- */
-QDF_STATUS sme_deregister_twt_callbacks(mac_handle_t mac_handle);
-
+		      struct wmi_twt_resume_dialog_cmd_param *twt_params);
 #else
 
 static inline

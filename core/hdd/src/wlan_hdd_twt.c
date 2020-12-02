@@ -36,12 +36,8 @@
 #include "cfg_ucfg_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 
-#define TWT_SETUP_COMPLETE_TIMEOUT 4000
 #define TWT_DISABLE_COMPLETE_TIMEOUT 4000
-#define TWT_TERMINATE_COMPLETE_TIMEOUT 4000
-#define TWT_PAUSE_COMPLETE_TIMEOUT 4000
 #define TWT_NUDGE_COMPLETE_TIMEOUT 4000
-#define TWT_RESUME_COMPLETE_TIMEOUT 4000
 
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
@@ -53,17 +49,6 @@
 #define TWT_MAX_NEXT_TWT_SIZE                   3
 
 /**
- * struct twt_pause_dialog_comp_ev_priv - private struct for twt pause dialog
- * @pause_dialog_comp_ev_buf: buffer from TWT pause dialog complete_event
- *
- * This TWT pause dialog private structure is registered with os_if to
- * retrieve the TWT pause dialog response event buffer.
- */
-struct twt_pause_dialog_comp_ev_priv {
-	struct wmi_twt_pause_dialog_complete_event_param pause_dialog_comp_ev_buf;
-};
-
-/**
  * struct twt_nudge_dialog_comp_ev_priv - private struct for twt nudge dialog
  * @nudge_dialog_comp_ev_buf: buffer from TWT nudge dialog complete_event
  *
@@ -73,39 +58,6 @@ struct twt_pause_dialog_comp_ev_priv {
 struct twt_nudge_dialog_comp_ev_priv {
 	struct wmi_twt_nudge_dialog_complete_event_param
 						nudge_dialog_comp_ev_buf;
-};
-
-/**
- * struct twt_resume_dialog_comp_ev_priv - private struct for twt resume dialog
- * @resume_dialog_comp_ev_buf: buffer from TWT resume dialog complete_event
- *
- * This TWT resume dialog private structure is registered with os_if to
- * retrieve the TWT resume dialog response event buffer.
- */
-struct twt_resume_dialog_comp_ev_priv {
-	struct wmi_twt_resume_dialog_complete_event_param res_dialog_comp_ev_buf;
-};
-
-/**
- * struct twt_add_dialog_comp_ev_priv - private struct for twt add dialog
- * @add_dialog_comp_ev_buf: buffer from TWT add dialog complete_event
- *
- * This TWT add dialog private structure is registered with os_if to
- * retrieve the TWT add dialog response event buffer.
- */
-struct twt_add_dialog_comp_ev_priv {
-	struct twt_add_dialog_complete_event add_dialog_comp_ev_buf;
-};
-
-/**
- * struct twt_del_dialog_comp_ev_priv - private struct for twt del dialog
- * @del_dialog_comp_ev_buf: buffer from TWT del dialog complete_event
- *
- * This TWT del dialog private structure is registered with os_if to
- * retrieve the TWT del dialog response event buffer.
- */
-struct twt_del_dialog_comp_ev_priv {
-	struct wmi_twt_del_dialog_complete_event_param del_dialog_comp_ev_buf;
 };
 
 static const struct nla_policy
@@ -1127,27 +1079,34 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 
 /**
  * hdd_send_twt_setup_response  - Send TWT setup response to userspace
- * @hdd_handle: Pointer to opaque HDD handle
+ * @hdd_adapter: Pointer to HDD adapter. This pointer is expeceted to
+ * be validated by the caller.
  * @add_dialog_comp_ev_params: Add dialog completion event structure
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS hdd_send_twt_setup_response(
-		hdd_handle_t hdd_handle,
+		struct hdd_adapter *adapter,
 		struct twt_add_dialog_complete_event *add_dialog_comp_ev_params)
 {
-	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
+	struct hdd_context *hdd_ctx;
 	struct sk_buff *twt_vendor_event;
+	struct wireless_dev *wdev = adapter->dev->ieee80211_ptr;
 	size_t data_len;
 	QDF_STATUS status;
 	bool additional_params_present = false;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	if (add_dialog_comp_ev_params->params.num_additional_twt_params != 0)
 		additional_params_present = true;
 
 	data_len = hdd_get_twt_setup_event_len(additional_params_present);
 	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
-				hdd_ctx->wiphy, NULL, data_len,
+				hdd_ctx->wiphy, wdev, data_len,
 				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
 				GFP_KERNEL);
 	if (!twt_vendor_event) {
@@ -1171,25 +1130,29 @@ static QDF_STATUS hdd_send_twt_setup_response(
 /**
  * hdd_twt_add_dialog_comp_cb() - HDD callback for twt add dialog
  * complete event
- * @hdd_ctx: HDD Context
+ * @psoc: Pointer to global psoc
  * @add_dialog_event: Pointer to Add dialog complete event structure
  *
  * Return: None
  */
 static void
-hdd_twt_add_dialog_comp_cb(hdd_handle_t hdd_handle,
+hdd_twt_add_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 			   struct twt_add_dialog_complete_event *add_dialog_event)
 {
-	hdd_enter();
+	struct hdd_adapter *adapter;
+	uint8_t vdev_id = add_dialog_event->params.vdev_id;
+
+	adapter = wlan_hdd_get_adapter_from_vdev(psoc, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return;
+	}
 
 	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, add_dialog_event->params.dialog_id,
-		  add_dialog_event->params.status,
-		  add_dialog_event->params.vdev_id,
+		  add_dialog_event->params.status, vdev_id,
 		  QDF_MAC_ADDR_REF(add_dialog_event->params.peer_macaddr));
-	hdd_send_twt_setup_response(hdd_handle, add_dialog_event);
-
-	hdd_exit();
+	hdd_send_twt_setup_response(adapter, add_dialog_event);
 }
 
 /**
@@ -1315,7 +1278,21 @@ static QDF_STATUS
 hdd_twt_terminate_pack_resp_nlmsg(struct sk_buff *reply_skb,
 				  struct wmi_twt_del_dialog_complete_event_param *params)
 {
+	struct nlattr *config_attr;
 	int vendor_status;
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_TERMINATE)) {
+		hdd_err("TWT: Failed to put TWT operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		hdd_err("TWT: nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
 		       params->dialog_id)) {
@@ -1330,44 +1307,72 @@ hdd_twt_terminate_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	nla_nest_end(reply_skb, config_attr);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * hdd_twt_del_dialog_comp_cb() - callback function
  * to get twt terminate command complete event
- * @context: private context
+ * @psoc: Pointer to global psoc
  * @params: Pointer to del dialog complete event buffer
  *
  * Return: None
  */
 static void
-hdd_twt_del_dialog_comp_cb(void *context,
+hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 			   struct wmi_twt_del_dialog_complete_event_param *params)
 {
-	struct osif_request *request;
-	struct twt_del_dialog_comp_ev_priv *priv;
+	struct hdd_adapter *adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, params->vdev_id);
+	struct wireless_dev *wdev;
+	struct hdd_context *hdd_ctx;
+	struct sk_buff *twt_vendor_event;
+	size_t data_len;
+	QDF_STATUS status;
 
 	hdd_enter();
 
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("Obsolete request");
+	if (!adapter) {
+		hdd_err("adapter is NULL");
 		return;
 	}
 
-	priv = osif_request_priv(request);
-	qdf_mem_copy(&priv->del_dialog_comp_ev_buf, params,
-		     sizeof(*params));
-	osif_request_complete(request);
-	osif_request_put(request);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	wdev = adapter->dev->ieee80211_ptr;
+
+	data_len = hdd_get_twt_event_len() + nla_total_size(sizeof(u8));
+	data_len += NLA_HDRLEN;
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+				hdd_ctx->wiphy, wdev, data_len,
+				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+				GFP_KERNEL);
+	if (!twt_vendor_event) {
+		hdd_err("TWT: Del dialog skb alloc failed");
+		return;
+	}
 
 	hdd_debug("TWT: del dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
 
+	status = hdd_twt_terminate_pack_resp_nlmsg(twt_vendor_event, params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
+		return;
+	}
+
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+
 	hdd_exit();
+
+	return;
 }
 
 /**
@@ -1381,73 +1386,17 @@ static
 int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 				struct wmi_twt_del_dialog_param *twt_params)
 {
-	struct wmi_twt_del_dialog_complete_event_param *del_dialog_comp_ev_params;
-	struct twt_del_dialog_comp_ev_priv *priv;
-	static const struct osif_request_params osif_req_params = {
-		.priv_size = sizeof(*priv),
-		.timeout_ms = TWT_TERMINATE_COMPLETE_TIMEOUT,
-		.dealloc = NULL,
-	};
-	struct osif_request *request;
-	struct sk_buff *reply_skb = NULL;
 	QDF_STATUS status;
-	void *cookie;
-	int skb_len;
 	int ret = 0;
-
-	request = osif_request_alloc(&osif_req_params);
-	if (!request) {
-		hdd_err("twt osif request allocation failure");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	cookie = osif_request_cookie(request);
 
 	status = sme_del_dialog_cmd(hdd_ctx->mac_handle,
 				    hdd_twt_del_dialog_comp_cb,
-				    twt_params,
-				    cookie);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+				    twt_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to send del dialog command");
 		ret = qdf_status_to_os_return(status);
-		goto err;
 	}
 
-	ret = osif_request_wait_for_response(request);
-	if (ret) {
-		hdd_err("twt: del dialog req timedout");
-		ret = -ETIMEDOUT;
-		goto err;
-	}
-
-	priv = osif_request_priv(request);
-	del_dialog_comp_ev_params = &priv->del_dialog_comp_ev_buf;
-
-	skb_len = hdd_get_twt_event_len();
-	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
-							     skb_len);
-	if (!reply_skb) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	status = hdd_twt_terminate_pack_resp_nlmsg(reply_skb,
-						   del_dialog_comp_ev_params);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("Failed to pack nl del dialog response");
-		ret = qdf_status_to_os_return(status);
-		goto err;
-	}
-
-	ret = wlan_cfg80211_vendor_cmd_reply(reply_skb);
-
-err:
-	if (request)
-		osif_request_put(request);
-	if (ret && reply_skb)
-		kfree_skb(reply_skb);
 	return ret;
 }
 
@@ -1514,43 +1463,6 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 }
 
 /**
- * hdd_twt_pause_dialog_comp_cb() - callback function
- * to get twt pause command complete event
- * @context: private context
- * @params: Pointer to pause dialog complete event buffer
- *
- * Return: None
- */
-static void
-hdd_twt_pause_dialog_comp_cb(void *context,
-			     struct wmi_twt_pause_dialog_complete_event_param *params)
-{
-	struct osif_request *request;
-	struct twt_pause_dialog_comp_ev_priv *priv;
-
-	hdd_enter();
-
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("Obsolete request");
-		return;
-	}
-
-	priv = osif_request_priv(request);
-
-	qdf_mem_copy(&priv->pause_dialog_comp_ev_buf, params, sizeof(*params));
-	osif_request_complete(request);
-	osif_request_put(request);
-
-	hdd_debug("TWT: pause dialog_id:%d, status:%d vdev_id %d peer mac_addr "
-		  QDF_MAC_ADDR_FMT, params->dialog_id,
-		  params->status, params->vdev_id,
-		  QDF_MAC_ADDR_REF(params->peer_macaddr));
-
-	hdd_exit();
-}
-
-/**
  * hdd_twt_nudge_dialog_comp_cb() - callback function
  * to get twt nudge command complete event
  * @context: private context
@@ -1600,7 +1512,21 @@ static QDF_STATUS
 hdd_twt_pause_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			      struct wmi_twt_pause_dialog_complete_event_param *params)
 {
+	struct nlattr *config_attr;
 	int vendor_status;
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_SUSPEND)) {
+		hdd_err("TWT: Failed to put TWT operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		hdd_err("TWT: nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
 		       params->dialog_id)) {
@@ -1614,6 +1540,8 @@ hdd_twt_pause_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		hdd_err("TWT: Failed to put QCA_WLAN_TWT_PAUSE status");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	nla_nest_end(reply_skb, config_attr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1650,6 +1578,69 @@ hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * hdd_twt_pause_dialog_comp_cb() - callback function
+ * to get twt pause command complete event
+ * @psoc: pointer to global psoc
+ * @params: Pointer to pause dialog complete event buffer
+ *
+ * Return: None
+ */
+static void
+hdd_twt_pause_dialog_comp_cb(
+		struct wlan_objmgr_psoc *psoc,
+		struct wmi_twt_pause_dialog_complete_event_param *params)
+{
+	struct hdd_adapter *adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, params->vdev_id);
+	struct wireless_dev *wdev;
+	struct hdd_context *hdd_ctx;
+	struct sk_buff *twt_vendor_event;
+	size_t data_len;
+	QDF_STATUS status;
+
+	hdd_enter();
+
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	wdev = adapter->dev->ieee80211_ptr;
+
+	hdd_debug("TWT: pause dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, params->dialog_id,
+		  params->status, params->vdev_id,
+		  QDF_MAC_ADDR_REF(params->peer_macaddr));
+
+	data_len = hdd_get_twt_event_len() + nla_total_size(sizeof(u8));
+	data_len += NLA_HDRLEN;
+
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+				hdd_ctx->wiphy, wdev, data_len,
+				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+				GFP_KERNEL);
+	if (!twt_vendor_event) {
+		hdd_err("TWT: pause dialog alloc skb failed");
+		return;
+	}
+
+	status = hdd_twt_pause_pack_resp_nlmsg(twt_vendor_event, params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to pack nl pause dialog response");
+		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
+	}
+
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+
+	hdd_exit();
+}
+
 /**
  * hdd_send_twt_pause_dialog_cmd() - Send TWT pause dialog command to target
  * @hdd_ctx: HDD Context
@@ -1661,71 +1652,16 @@ static
 int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
 				  struct wmi_twt_pause_dialog_cmd_param *twt_params)
 {
-	struct wmi_twt_pause_dialog_complete_event_param *comp_ev_params;
-	struct twt_pause_dialog_comp_ev_priv *priv;
-	static const struct osif_request_params osif_req_params = {
-		.priv_size = sizeof(*priv),
-		.timeout_ms = TWT_PAUSE_COMPLETE_TIMEOUT,
-		.dealloc = NULL,
-	};
-	struct osif_request *request;
-	struct sk_buff *reply_skb = NULL;
 	QDF_STATUS status;
-	void *cookie;
-	int skb_len;
-	int ret;
-
-	request = osif_request_alloc(&osif_req_params);
-	if (!request) {
-		hdd_err("twt osif request allocation failure");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	cookie = osif_request_cookie(request);
+	int ret = 0;
 
 	status = sme_pause_dialog_cmd(hdd_ctx->mac_handle,
-				      hdd_twt_pause_dialog_comp_cb,
-				      twt_params, cookie);
+				      twt_params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to send pause dialog command");
 		ret = qdf_status_to_os_return(status);
-		goto err;
 	}
 
-	ret = osif_request_wait_for_response(request);
-	if (ret) {
-		hdd_err("twt: pause dialog req timedout");
-		ret = -ETIMEDOUT;
-		goto err;
-	}
-
-	priv = osif_request_priv(request);
-	comp_ev_params = &priv->pause_dialog_comp_ev_buf;
-
-	skb_len = hdd_get_twt_event_len();
-	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
-							     skb_len);
-	if (!reply_skb) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	status = hdd_twt_pause_pack_resp_nlmsg(reply_skb, comp_ev_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to pack nl pause dialog response");
-		ret = qdf_status_to_os_return(status);
-		goto err;
-	}
-
-	ret = wlan_cfg80211_vendor_cmd_reply(reply_skb);
-
-err:
-	if (request)
-		osif_request_put(request);
-	if (ret && reply_skb)
-		kfree_skb(reply_skb);
 	return ret;
 }
 
@@ -1948,43 +1884,6 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 }
 
 /**
- * hdd_twt_resume_dialog_comp_cb() - callback function
- * to get twt resume command complete event
- * @context: private context
- * @params: Pointer to resume dialog complete event buffer
- *
- * Return: None
- */
-static void
-hdd_twt_resume_dialog_comp_cb(void *context,
-			      struct wmi_twt_resume_dialog_complete_event_param *params)
-{
-	struct osif_request *request;
-	struct twt_resume_dialog_comp_ev_priv *priv;
-
-	hdd_enter();
-
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("Obsolete request");
-		return;
-	}
-
-	priv = osif_request_priv(request);
-
-	qdf_mem_copy(&priv->res_dialog_comp_ev_buf, params, sizeof(*params));
-	osif_request_complete(request);
-	osif_request_put(request);
-
-	hdd_debug("TWT: resume dialog_id:%d status:%d vdev_id %d peer mac_addr "
-		  QDF_MAC_ADDR_FMT, params->dialog_id,
-		  params->status, params->vdev_id,
-		  QDF_MAC_ADDR_REF(params->peer_macaddr));
-
-	hdd_exit();
-}
-
-/**
  * hdd_twt_resume_pack_resp_nlmsg() - pack the skb with
  * firmware response for twt resume command
  * @reply_skb: skb to store the response
@@ -1997,7 +1896,21 @@ static QDF_STATUS
 hdd_twt_resume_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			       struct wmi_twt_resume_dialog_complete_event_param *params)
 {
+	struct nlattr *config_attr;
 	int vendor_status;
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_RESUME)) {
+		hdd_err("TWT: Failed to put TWT operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		hdd_err("TWT: nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_RESUME_FLOW_ID,
 		       params->dialog_id)) {
@@ -2012,7 +1925,69 @@ hdd_twt_resume_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	nla_nest_end(reply_skb, config_attr);
+
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_twt_resume_dialog_comp_cb() - callback function
+ * to get twt resume command complete event
+ * @psoc: Pointer to global psoc
+ * @vdev_id: Vdev id
+ * @params: Pointer to resume dialog complete event buffer
+ *
+ * Return: None
+ */
+static void hdd_twt_resume_dialog_comp_cb(
+		struct wlan_objmgr_psoc *psoc,
+		struct wmi_twt_resume_dialog_complete_event_param *params)
+{
+	struct hdd_adapter *adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, params->vdev_id);
+	struct hdd_context *hdd_ctx;
+	struct wireless_dev *wdev;
+	struct sk_buff *twt_vendor_event;
+	size_t data_len;
+	QDF_STATUS status;
+
+	hdd_enter();
+
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	wdev = adapter->dev->ieee80211_ptr;
+
+	hdd_debug("TWT: resume dialog_id:%d status:%d vdev_id %d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, params->dialog_id,
+		  params->status, params->vdev_id,
+		  QDF_MAC_ADDR_REF(params->peer_macaddr));
+
+	data_len = hdd_get_twt_event_len() + nla_total_size(sizeof(u8));
+	data_len += NLA_HDRLEN;
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+			hdd_ctx->wiphy, wdev, data_len,
+			QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+			GFP_KERNEL);
+	if (!twt_vendor_event) {
+		hdd_err("TWT: skb alloc failed");
+		return;
+	}
+
+	status = hdd_twt_resume_pack_resp_nlmsg(twt_vendor_event, params);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to pack nl resume dialog response");
+
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+
+	hdd_exit();
 }
 
 /**
@@ -2026,71 +2001,16 @@ static int
 hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 			       struct wmi_twt_resume_dialog_cmd_param *twt_params)
 {
-	struct wmi_twt_resume_dialog_complete_event_param *comp_ev_params;
-	struct twt_resume_dialog_comp_ev_priv *priv;
-	static const struct osif_request_params osif_req_params = {
-		.priv_size = sizeof(*priv),
-		.timeout_ms = TWT_RESUME_COMPLETE_TIMEOUT,
-		.dealloc = NULL,
-	};
-	struct osif_request *request;
-	struct sk_buff *reply_skb = NULL;
 	QDF_STATUS status;
-	void *cookie;
-	int skb_len;
-	int ret;
-
-	request = osif_request_alloc(&osif_req_params);
-	if (!request) {
-		hdd_err("twt osif request allocation failure");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	cookie = osif_request_cookie(request);
+	int ret = 0;
 
 	status = sme_resume_dialog_cmd(hdd_ctx->mac_handle,
-				       hdd_twt_resume_dialog_comp_cb,
-				       twt_params, cookie);
+				       twt_params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to send resume dialog command");
 		ret = qdf_status_to_os_return(status);
-		goto err;
 	}
 
-	ret = osif_request_wait_for_response(request);
-	if (ret) {
-		hdd_err("twt: resume dialog req timedout");
-		ret = -ETIMEDOUT;
-		goto err;
-	}
-
-	priv = osif_request_priv(request);
-	comp_ev_params = &priv->res_dialog_comp_ev_buf;
-
-	skb_len = hdd_get_twt_event_len();
-	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
-							     skb_len);
-	if (!reply_skb) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	status = hdd_twt_resume_pack_resp_nlmsg(reply_skb, comp_ev_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to pack nl resume dialog response");
-		ret = qdf_status_to_os_return(status);
-		goto err;
-	}
-
-	ret = wlan_cfg80211_vendor_cmd_reply(reply_skb);
-
-err:
-	if (request)
-		osif_request_put(request);
-	if (ret && reply_skb)
-		kfree_skb(reply_skb);
 	return ret;
 }
 
@@ -2443,8 +2363,8 @@ QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
 
 /**
  * hdd_twt_enable_comp_cb() - TWT enable complete event callback
- * @hdd_handle: opaque handle for the global HDD Context
- * @twt_event: TWT event data received from the target
+ * @hdd_handle: Pointer to opaque HDD handle
+ * @params: Pointer to TWT enable completion parameters
  *
  * Return: None
  */
@@ -2455,10 +2375,6 @@ hdd_twt_enable_comp_cb(hdd_handle_t hdd_handle,
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	enum twt_status prev_state;
 
-	if (!hdd_ctx) {
-		hdd_err("TWT: Invalid HDD Context");
-		return;
-	}
 	prev_state = hdd_ctx->twt_state;
 	if (params->status == WMI_HOST_ENABLE_TWT_STATUS_OK ||
 	    params->status == WMI_HOST_ENABLE_TWT_STATUS_ALREADY_ENABLED) {
@@ -2495,16 +2411,10 @@ hdd_twt_disable_comp_cb(hdd_handle_t hdd_handle)
 	enum twt_status prev_state;
 	QDF_STATUS status;
 
-	if (!hdd_ctx) {
-		hdd_err("TWT: Invalid HDD Context");
-		return;
-	}
-
 	prev_state = hdd_ctx->twt_state;
 	/* Do not change the state for role specific disables */
-	if (hdd_ctx->twt_state == TWT_DISABLE_REQUESTED) {
+	if (hdd_ctx->twt_state == TWT_DISABLE_REQUESTED)
 		hdd_ctx->twt_state = TWT_DISABLED;
-	}
 
 	hdd_debug("TWT: State transitioned from %d to %d",
 		  prev_state, hdd_ctx->twt_state);
@@ -2567,7 +2477,7 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 
 	hdd_ctx->twt_state = TWT_INIT;
 
-	sme_init_twt_complete_cb(hdd_ctx->mac_handle);
+	sme_clear_twt_complete_cb(hdd_ctx->mac_handle);
 	twt_cb.twt_enable_cb = hdd_twt_enable_comp_cb;
 	twt_cb.twt_disable_cb = hdd_twt_disable_comp_cb;
 	twt_cb.twt_add_dialog_cb = hdd_twt_add_dialog_comp_cb;
@@ -2582,7 +2492,7 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 
 	status = qdf_event_create(&hdd_ctx->twt_disable_comp_evt);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_deregister_twt_callbacks(hdd_ctx->mac_handle);
+		sme_clear_twt_complete_cb(hdd_ctx->mac_handle);
 		hdd_err("twt_disable_comp_evt init failed");
 		return;
 	}
@@ -2598,8 +2508,8 @@ void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to destroy twt_disable_comp_evt");
 
-	status  = sme_deregister_twt_callbacks(hdd_ctx->mac_handle);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	status = sme_clear_twt_complete_cb(hdd_ctx->mac_handle);
+	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("De-register of twt disable cb failed: %d", status);
 
 	hdd_ctx->twt_state = TWT_CLOSED;
