@@ -28316,6 +28316,26 @@ typedef struct {
      * "9.4.2.199 TWT element" of latest 11ax draft
      */
     A_UINT32 b_twt_recommendation;
+
+    /* Min tolerance limit of wake interval.
+     * If this variable is set to 0 by host, FW will ignore it.
+     */
+    A_UINT32 min_wake_intvl_us;
+
+   /* Max tolerance limit of wake interval.
+    * If this variable is set to 0 by host, FW will ignore it.
+    */
+    A_UINT32 max_wake_intvl_us;
+
+   /* Min tolerance limit of wake duration.
+    * If this variable is set to 0 by host, FW will ignore it.
+    */
+    A_UINT32 min_wake_dura_us;
+
+   /* Max tolerance limit of wake duration.
+    * If this variable is set to 0 by host, FW will ignore it.
+    */
+    A_UINT32 max_wake_dura_us;
 } wmi_twt_add_dialog_cmd_fixed_param;
 
 /* status code of adding TWT dialog */
@@ -28330,6 +28350,8 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
     WMI_ADD_TWT_STATUS_NO_RESPONSE,         /* peer AP did not send the response frame */
     WMI_ADD_TWT_STATUS_DENIED,              /* AP did not accept the request */
     WMI_ADD_TWT_STATUS_UNKNOWN_ERROR,       /* adding TWT dialog failed with an unknown reason */
+    WMI_ADD_TWT_STATUS_AP_PARAMS_NOT_IN_RANGE,  /* peer AP wake interval, duration not in range */
+    WMI_ADD_TWT_STATUS_AP_IE_VALIDATION_FAILED, /* peer AP IE Validation Failed */
 } WMI_ADD_TWT_STATUS_T;
 
 typedef struct {
