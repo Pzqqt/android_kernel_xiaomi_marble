@@ -206,6 +206,29 @@ void (*twt_nudge_dialog_cb)(void *context,
 typedef
 void (*twt_resume_dialog_cb)(void *context,
 			     struct wmi_twt_resume_dialog_complete_event_param *params);
+
+/**
+ * struct twt_callbacks  - TWT response callback pointers
+ * @twt_enable_cb: TWT enable completion callback
+ * @twt_disable_cb: TWT disable completion callback
+ * @twt_add_dialog_cb: TWT add dialog completion callback
+ * @twt_del_dialog_cb: TWT delete dialog completion callback
+ * @twt_pause_dialog_cb: TWT pause dialog completion callback
+ * @twt_resume_dialog_cb: TWT resume dialog completion callback
+ */
+struct twt_callbacks {
+	void (*twt_enable_cb)(hdd_handle_t hdd_handle,
+			      struct wmi_twt_enable_complete_event_param *params);
+	void (*twt_disable_cb)(hdd_handle_t hdd_handle);
+	void (*twt_add_dialog_cb)(hdd_handle_t hdd_handle,
+				  struct twt_add_dialog_complete_event *add_dialog_event);
+	void (*twt_del_dialog_cb)(void *context,
+				  struct wmi_twt_del_dialog_complete_event_param *params);
+	void (*twt_pause_dialog_cb)(void *context,
+				    struct wmi_twt_pause_dialog_complete_event_param *params);
+	void (*twt_resume_dialog_cb)(void *context,
+				     struct wmi_twt_resume_dialog_complete_event_param *params);
+};
 #endif
 
 #ifdef FEATURE_WLAN_APF

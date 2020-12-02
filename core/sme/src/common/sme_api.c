@@ -2094,7 +2094,6 @@ sme_process_twt_add_dialog_event(struct mac_context *mac,
 	twt_add_dialog_cb callback;
 
 	callback = mac->sme.twt_add_dialog_cb;
-	mac->sme.twt_add_dialog_cb = NULL;
 	if (callback)
 		callback(mac->hdd_handle, add_dialog_event);
 }
@@ -2138,7 +2137,6 @@ sme_process_twt_pause_dialog_event(struct mac_context *mac,
 
 	callback = mac->sme.twt_pause_dialog_cb;
 	context = mac->sme.twt_pause_dialog_context;
-	mac->sme.twt_pause_dialog_cb = NULL;
 	if (callback)
 		callback(context, param);
 }
@@ -2182,7 +2180,6 @@ sme_process_twt_resume_dialog_event(struct mac_context *mac,
 
 	callback = mac->sme.twt_resume_dialog_cb;
 	context = mac->sme.twt_resume_dialog_context;
-	mac->sme.twt_resume_dialog_cb = NULL;
 	if (callback)
 		callback(context, param);
 }
@@ -14369,46 +14366,39 @@ QDF_STATUS sme_init_twt_complete_cb(mac_handle_t mac_handle)
 	return status;
 }
 
-QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
-					       twt_enable_cb twt_enable_cb)
+QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
+				      struct twt_callbacks *twt_cb)
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.twt_enable_cb = twt_enable_cb;
+		mac->sme.twt_enable_cb = twt_cb->twt_enable_cb;
+		mac->sme.twt_add_dialog_cb = twt_cb->twt_add_dialog_cb;
+		mac->sme.twt_del_dialog_cb = twt_cb->twt_del_dialog_cb;
+		mac->sme.twt_pause_dialog_cb = twt_cb->twt_pause_dialog_cb;
+		mac->sme.twt_resume_dialog_cb = twt_cb->twt_resume_dialog_cb;
+		mac->sme.twt_disable_cb = twt_cb->twt_disable_cb;
 		sme_release_global_lock(&mac->sme);
-		sme_debug("TWT: enable callback set");
+		sme_debug("TWT: callbacks registered");
 	}
 
 	return status;
 }
 
-QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
-						twt_disable_cb twt_disable_cb)
+QDF_STATUS sme_deregister_twt_callbacks(mac_handle_t mac_handle)
 {
-	QDF_STATUS status;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct twt_callbacks twt_cb;
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.twt_disable_cb = twt_disable_cb;
-		sme_release_global_lock(&mac->sme);
-		sme_debug("TWT: disable callback set");
-	}
+	twt_cb.twt_enable_cb = NULL;
+	twt_cb.twt_add_dialog_cb = NULL;
+	twt_cb.twt_del_dialog_cb = NULL;
+	twt_cb.twt_pause_dialog_cb = NULL;
+	twt_cb.twt_resume_dialog_cb = NULL;
+	twt_cb.twt_disable_cb = NULL;
 
-	return status;
-}
-
-QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle)
-{
-	return sme_register_twt_enable_complete_cb(mac_handle, NULL);
-}
-
-QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
-{
-	return sme_register_twt_disable_complete_cb(mac_handle, NULL);
+	return sme_register_twt_callbacks(mac_handle, &twt_cb);
 }
 
 QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
@@ -14438,13 +14428,6 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 		sme_err("failed to register add dialog callback");
 		qdf_mem_free(cmd_params);
 		return status;
-	}
-
-	if (mac->sme.twt_add_dialog_cb) {
-		sme_release_global_lock(&mac->sme);
-		qdf_mem_free(cmd_params);
-		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
-		return QDF_STATUS_E_BUSY;
 	}
 
 	/* Serialize the req through MC thread */
@@ -14497,13 +14480,6 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 		return status;
 	}
 
-	if (mac->sme.twt_del_dialog_cb) {
-		sme_release_global_lock(&mac->sme);
-		qdf_mem_free(cmd_params);
-		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
-		return QDF_STATUS_E_BUSY;
-	}
-
 	/* Serialize the req through MC thread */
 	mac->sme.twt_del_dialog_cb = del_dialog_cb;
 	mac->sme.twt_del_dialog_context = context;
@@ -14554,13 +14530,6 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 		sme_err("failed to register pause dialog callback");
 		qdf_mem_free(cmd_params);
 		return status;
-	}
-
-	if (mac->sme.twt_pause_dialog_cb) {
-		sme_release_global_lock(&mac->sme);
-		qdf_mem_free(cmd_params);
-		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
-		return QDF_STATUS_E_BUSY;
 	}
 
 	/* Serialize the req through MC thread */
@@ -14674,13 +14643,6 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 		sme_err("failed to register resume dialog callback");
 		qdf_mem_free(cmd_params);
 		return status;
-	}
-
-	if (mac->sme.twt_resume_dialog_cb) {
-		sme_release_global_lock(&mac->sme);
-		qdf_mem_free(cmd_params);
-		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
-		return QDF_STATUS_E_BUSY;
 	}
 
 	/* Serialize the req through MC thread */

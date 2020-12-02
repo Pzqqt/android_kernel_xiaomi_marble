@@ -2563,29 +2563,26 @@ void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
 void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
+	struct twt_callbacks twt_cb;
 
 	hdd_ctx->twt_state = TWT_INIT;
 
 	sme_init_twt_complete_cb(hdd_ctx->mac_handle);
-	status = sme_register_twt_enable_complete_cb(hdd_ctx->mac_handle,
-						     hdd_twt_enable_comp_cb);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	twt_cb.twt_enable_cb = hdd_twt_enable_comp_cb;
+	twt_cb.twt_disable_cb = hdd_twt_disable_comp_cb;
+	twt_cb.twt_add_dialog_cb = hdd_twt_add_dialog_comp_cb;
+	twt_cb.twt_del_dialog_cb = hdd_twt_del_dialog_comp_cb;
+	twt_cb.twt_pause_dialog_cb = hdd_twt_pause_dialog_comp_cb;
+	twt_cb.twt_resume_dialog_cb = hdd_twt_resume_dialog_comp_cb;
+	status = sme_register_twt_callbacks(hdd_ctx->mac_handle, &twt_cb);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Register twt enable complete failed");
 		return;
 	}
 
-	status = sme_register_twt_disable_complete_cb(hdd_ctx->mac_handle,
-						      hdd_twt_disable_comp_cb);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_deregister_twt_enable_complete_cb(hdd_ctx->mac_handle);
-		hdd_err("Register twt disable complete failed");
-		return;
-	}
-
 	status = qdf_event_create(&hdd_ctx->twt_disable_comp_evt);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_deregister_twt_disable_complete_cb(hdd_ctx->mac_handle);
-		sme_deregister_twt_enable_complete_cb(hdd_ctx->mac_handle);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_deregister_twt_callbacks(hdd_ctx->mac_handle);
 		hdd_err("twt_disable_comp_evt init failed");
 		return;
 	}
@@ -2597,16 +2594,13 @@ void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
-	status  = sme_deregister_twt_disable_complete_cb(hdd_ctx->mac_handle);
+	status = qdf_event_destroy(&hdd_ctx->twt_disable_comp_evt);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to destroy twt_disable_comp_evt");
+
+	status  = sme_deregister_twt_callbacks(hdd_ctx->mac_handle);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("De-register of twt disable cb failed: %d", status);
-	status  = sme_deregister_twt_enable_complete_cb(hdd_ctx->mac_handle);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("De-register of twt enable cb failed: %d", status);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy(
-				   &hdd_ctx->twt_disable_comp_evt)))
-		hdd_err("Failed to destroy twt_disable_comp_evt");
 
 	hdd_ctx->twt_state = TWT_CLOSED;
 }

@@ -3706,24 +3706,14 @@ QDF_STATUS sme_test_config_twt_setup(struct wmi_twt_add_dialog_param *params);
 QDF_STATUS sme_init_twt_complete_cb(mac_handle_t mac_handle);
 
 /**
- * sme_register_twt_enable_complete_cb() - TWT enable registrar
+ * sme_register_twt_callbacks() - TWT enable registrar
  * @mac_handle: MAC handle
- * @twt_enable_cb: Function callback to handle enable event
+ * @twt_cb: TWT callbacks
  *
  * Return: QDF Status
  */
-QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
-					       twt_enable_cb twt_enable_cb);
-
-/**
- * sme_register_twt_disable_complete_cb() - TWT disable registrar
- * @mac_handle: MAC handle
- * @twt_disable_cb: Function callback to handle disable event
- *
- * Return: QDF Status
- */
-QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
-						twt_disable_cb twt_disable_cb);
+QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
+				      struct twt_callbacks *twt_cb);
 
 /**
  * sme_add_dialog_cmd() - Register callback and send TWT add dialog
@@ -3805,20 +3795,13 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 		      void *context);
 
 /**
- * sme_deregister_twt_enable_complete_cb() - TWT enable deregistrar
+ * sme_deregister_twt_callbacks() - TWT enable deregistrar
  * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: QDF Status
  */
-QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle);
+QDF_STATUS sme_deregister_twt_callbacks(mac_handle_t mac_handle);
 
-/**
- * sme_deregister_twt_disable_complete_cb() - TWT disable deregistrar
- * @mac_handle: Opaque handle to the global MAC context
- *
- * Return: QDF Status
- */
-QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle);
 #else
 
 static inline
