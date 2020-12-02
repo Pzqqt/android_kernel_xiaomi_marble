@@ -36,6 +36,8 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_psoc *psoc;
 	enum QDF_OPMODE op_mode;
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS], i;
+	bool disable_nan = true;
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev)
@@ -50,20 +52,20 @@ QDF_STATUS if_mgr_connect_start(struct wlan_objmgr_vdev *vdev,
 	 * connection already exists and if this is a case of STA+STA
 	 * or SAP+STA concurrency
 	 */
-	sta_cnt = policy_mgr_mode_specific_connection_count(psoc,
-							    PM_STA_MODE,
-							    NULL);
-	sap_cnt = policy_mgr_mode_specific_connection_count(psoc,
-							    PM_SAP_MODE,
-							    NULL);
+	sta_cnt = policy_mgr_get_mode_specific_conn_info(psoc, NULL,
+							 vdev_id_list,
+							 PM_STA_MODE);
+	sap_cnt = policy_mgr_get_mode_specific_conn_info(psoc, NULL,
+							 &vdev_id_list[sta_cnt],
+							 PM_SAP_MODE);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	if (op_mode == QDF_P2P_CLIENT_MODE || sap_cnt || sta_cnt)
-		ucfg_nan_disable_concurrency(psoc);
-
-	/* STA+NDI concurrency gets preference over NDI+NDI. Disable
-	 * first NDI in case an NDI+NDI concurrency exists.
-	 */
-	ucfg_nan_check_and_disable_unsupported_ndi(psoc, false);
+	if (op_mode == QDF_P2P_CLIENT_MODE || sap_cnt || sta_cnt) {
+		for (i = 0; i < sta_cnt + sap_cnt; i++)
+			if (vdev_id_list[i] == wlan_vdev_get_id(vdev))
+				disable_nan = false;
+		if (disable_nan)
+			ucfg_nan_disable_concurrency(psoc);
+	}
 
 	/*
 	 * STA+NDI concurrency gets preference over NDI+NDI. Disable
