@@ -1264,6 +1264,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ENABLE_EMA = 464,
 	/* enable Tx Mode Sselect */
 	OL_ATH_PARAM_ENABLE_TX_MODE_SELECT = 465,
+	/* enable/disable user RNR in frame */
+	OL_ATH_PARAM_USER_RNR_FRM_CTRL = 466,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3269,6 +3271,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_EMA, SET_PARAM, 1},
 	{"dur_based_tx_mode_select",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_TX_MODE_SELECT, SET_PARAM, 1},
+	{"user_rnr_frame_sel",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_USER_RNR_FRM_CTRL, SET_PARAM, 1},
+	{"g_user_rnr_frame_sel",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_USER_RNR_FRM_CTRL, GET_PARAM, 1},
 };
 #endif
 #endif
