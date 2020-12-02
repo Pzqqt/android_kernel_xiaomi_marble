@@ -3810,6 +3810,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_PCIE,
 			{ 23, 1 , 9 , 9 , IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
 			IPA_TX_INSTANCE_DL },
+	[IPA_5_0_MHI][IPA_CLIENT_MHI_DPL_CONS] = {
+			true, IPA_v5_0_GROUP_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_PCIE,
+			{ 25, 2, 5, 5, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0 },
+			IPA_TX_INSTANCE_DL },
 	[IPA_5_0_MHI][IPA_CLIENT_USB_DPL_CONS] = {
 			true,   IPA_v5_0_GROUP_DL,
 			false,
