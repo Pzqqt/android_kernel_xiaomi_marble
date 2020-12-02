@@ -133,6 +133,7 @@ struct dp_panel {
 	bool dsc_en;
 	bool fec_en;
 	bool widebus_en;
+	bool dsc_continuous_pps;
 	bool mst_state;
 
 	s64 fec_overhead_fp;
