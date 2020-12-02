@@ -927,6 +927,13 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {
 		hdd_debug("Set ctx connection state to connected");
+		/* Disable LRO/GRO for NDI Mode */
+		if (hdd_ctx->ol_enable &&
+		    !NAN_CONCURRENCY_SUPPORTED(hdd_ctx->psoc)) {
+			hdd_debug("Disable LRO/GRO in NDI Mode");
+			hdd_disable_rx_ol_in_concurrency(true);
+		}
+
 		hdd_bus_bw_compute_prev_txrx_stats(adapter);
 		hdd_bus_bw_compute_timer_start(hdd_ctx);
 		sta_ctx->conn_info.conn_state = eConnectionState_NdiConnected;
@@ -958,6 +965,17 @@ void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
 				     WLAN_CONTROL_PATH);
 	hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);
 	hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
+	if ((hdd_ctx->ol_enable &&
+	     !NAN_CONCURRENCY_SUPPORTED(hdd_ctx->psoc)) &&
+	    ((policy_mgr_get_connection_count(hdd_ctx->psoc) == 0) ||
+	     ((policy_mgr_get_connection_count(hdd_ctx->psoc) == 1) &&
+	      (policy_mgr_mode_specific_connection_count(
+						hdd_ctx->psoc,
+						PM_STA_MODE,
+						NULL) == 1)))) {
+		hdd_debug("Enable LRO/GRO");
+		hdd_disable_rx_ol_in_concurrency(false);
+	}
 }
 
 /**
