@@ -863,4 +863,23 @@ cdp_soc_is_swlm_enabled(ol_txrx_soc_handle soc)
 
 	return 0;
 }
+
+/**
+ * cdp_display_txrx_hw_info() - Dump the DP rings info
+ * @soc: soc handle
+ *
+ * Return: none
+ */
+static inline void
+cdp_display_txrx_hw_info(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		return;
+	}
+
+	if (soc->ops->misc_ops->display_txrx_hw_info)
+		return soc->ops->misc_ops->display_txrx_hw_info(soc);
+}
 #endif /* _CDP_TXRX_MISC_H_ */
