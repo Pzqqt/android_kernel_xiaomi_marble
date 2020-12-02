@@ -1544,6 +1544,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	union iwreq_data wrqu;
 	int we_event;
 	char *msg;
@@ -1695,6 +1696,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		/* stop timer in sta/p2p_cli */
 		hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);
 		hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
+		cdp_display_txrx_hw_info(soc);
 	}
 	hdd_ipa_set_tx_flow_info();
 

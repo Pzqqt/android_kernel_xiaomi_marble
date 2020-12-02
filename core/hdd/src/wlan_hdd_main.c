@@ -9546,6 +9546,7 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 					  QDF_STATS_VERBOSITY_LEVEL_LOW);
 			wlan_hdd_display_netif_queue_history
 				(hdd_ctx, QDF_STATS_VERBOSITY_LEVEL_LOW);
+			cdp_display_txrx_hw_info(soc);
 			qdf_dp_trace_dump_stats();
 		}
 		counter = 0;
