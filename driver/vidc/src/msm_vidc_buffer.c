@@ -140,8 +140,7 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 {
-	u32 size = ALIGN(15 * 1024 * 1024, SZ_4K);
-	size = 4; // TODO
+	u32 size = ALIGN(1 * 1024 * 1024, SZ_4K);
 	return size;
 }
 

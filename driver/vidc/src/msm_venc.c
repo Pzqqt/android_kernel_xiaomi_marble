@@ -613,6 +613,31 @@ error:
 	return rc;
 }
 
+int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (cmd == V4L2_ENC_CMD_STOP) {
+		rc = venus_hfi_session_command(inst,
+				HFI_CMD_DRAIN,
+				INPUT_PORT,
+				HFI_PAYLOAD_NONE,
+				NULL,
+				0);
+		if (rc)
+			return rc;
+	} else {
+		d_vpr_e("%s: unknown cmd %d\n", __func__, cmd);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 int msm_venc_stop_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;

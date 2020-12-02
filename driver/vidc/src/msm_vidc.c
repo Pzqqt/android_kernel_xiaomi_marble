@@ -610,6 +610,19 @@ EXPORT_SYMBOL(msm_vidc_streamoff);
 
 int msm_vidc_cmd(void *instance, union msm_v4l2_cmd *cmd)
 {
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+	struct v4l2_decoder_cmd *dec = NULL;
+	struct v4l2_encoder_cmd *enc = NULL;
+
+	if (is_decode_session(inst)) {
+		dec = (struct v4l2_decoder_cmd *)cmd;
+		rc = msm_vdec_process_cmd(inst, dec->cmd);
+	} else if (is_encode_session(inst)) {
+		enc = (struct v4l2_encoder_cmd *)cmd;
+		rc = msm_venc_process_cmd(inst, enc->cmd);
+	}
+
 	return 0;
 }
 EXPORT_SYMBOL(msm_vidc_cmd);

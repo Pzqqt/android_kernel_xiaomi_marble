@@ -1117,7 +1117,7 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	event.type = V4L2_EVENT_SRC_CH_RESOLUTION;//todo
+	event.type = V4L2_EVENT_SOURCE_CHANGE;
 	event.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION;
 	v4l2_event_queue_fh(&inst->event_handler, &event);
 
@@ -1311,6 +1311,32 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		rc = msm_vidc_queue_buffer(inst, vb2);
 
 	return rc;
+}
+
+int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (cmd == V4L2_DEC_CMD_STOP) {
+		rc = venus_hfi_session_command(inst,
+				HFI_CMD_DRAIN,
+				INPUT_PORT,
+				HFI_PAYLOAD_NONE,
+				NULL,
+				0);
+		if (rc)
+			return rc;
+	} else {
+		d_vpr_e("%s: unknown cmd %d\n", __func__, cmd);
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
