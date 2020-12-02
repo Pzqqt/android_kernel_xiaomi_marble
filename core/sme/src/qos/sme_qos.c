@@ -3839,6 +3839,11 @@ void sme_send_mscs_action_frame(uint8_t vdev_id)
 		return;
 
 	mscs_req->vdev_id = vdev_id;
+	if (!qos_session->assocInfo.bss_desc) {
+		sme_err("BSS descriptor is NULL so we won't send request to PE");
+		qdf_mem_free(mscs_req);
+		return;
+	}
 	qdf_mem_copy(&mscs_req->bssid.bytes[0],
 		     &qos_session->assocInfo.bss_desc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
