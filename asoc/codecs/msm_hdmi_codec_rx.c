@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/platform_device.h>
 #include <linux/slab.h>
@@ -9,7 +9,7 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
-#include <linux/msm_ext_display.h>
+#include <linux/soc/qcom/msm_ext_display.h>
 
 #define DRV_NAME "HDMI_codec"
 
