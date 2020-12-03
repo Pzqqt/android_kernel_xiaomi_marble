@@ -1110,6 +1110,10 @@ void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
 	enum phy_ch_width chwidth = adfs_param->precac_chwidth;
 	uint32_t min_precac_timeout, max_precac_timeout;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
+	uint8_t n_sub_chans;
+	uint8_t i;
+	qdf_freq_t sub_chans[N_SUBCHANS_FOR_160BW];
+
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
 	dfs_soc_obj->dfs_precac_timer_running = 1;
@@ -1141,6 +1145,17 @@ void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
 	 * FW OCAC completion event and HOST timer firing at same time. */
 	if (min_precac_timeout)
 		min_precac_timeout += EXTRA_TIME_IN_MS;
+	n_sub_chans =
+		dfs_find_subchannels_for_center_freq(
+				adfs_param->precac_center_freq_1,
+				adfs_param->precac_center_freq_2,
+				adfs_param->precac_chwidth,
+				sub_chans);
+	for (i = 0; i < n_sub_chans; i++)
+		utils_dfs_deliver_event(dfs->dfs_pdev_obj,
+					sub_chans[i],
+					WLAN_EV_PCAC_STARTED);
+
 	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer, min_precac_timeout);
 }
 #endif
@@ -1160,6 +1175,9 @@ void dfs_start_precac_timer_for_freq(struct wlan_dfs *dfs,
 	int secondary_cac_timeout;
 	int precac_timeout;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
+	uint8_t n_sub_chans;
+	qdf_freq_t sub_chans[N_SUBCHANS_FOR_160BW];
+	uint8_t i;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
 	dfs_soc_obj->cur_agile_dfs_index = dfs->dfs_psoc_idx;
@@ -1226,6 +1244,15 @@ void dfs_start_precac_timer_for_freq(struct wlan_dfs *dfs,
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		"precactimeout = %d", (precac_timeout)*1000);
+	n_sub_chans = dfs_find_subchannels_for_center_freq(precac_chan_freq,
+							  0,
+							  CH_WIDTH_80MHZ,
+							  sub_chans);
+	for (i = 0; i < n_sub_chans; i++)
+		utils_dfs_deliver_event(dfs->dfs_pdev_obj,\
+					sub_chans[i],
+					WLAN_EV_PCAC_STARTED);
+
 	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer, (precac_timeout) * 1000);
 }
 #endif
