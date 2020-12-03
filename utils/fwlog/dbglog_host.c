@@ -4224,6 +4224,7 @@ static void cnss_diag_cmd_handler(const void *data, int data_len,
 {
 	struct dbglog_slot *slot = NULL;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
+	int len;
 
 	/*
 	 * audit note: it is ok to pass a NULL policy here since a
@@ -4242,15 +4243,17 @@ static void cnss_diag_cmd_handler(const void *data, int data_len,
 		return;
 	}
 
-	if (nla_len(tb[CLD80211_ATTR_DATA]) != sizeof(struct dbglog_slot)) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: attr length check fails\n",
+	len = nla_len(tb[CLD80211_ATTR_DATA]);
+	if (len < sizeof(struct dbglog_slot)) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: attr length less than sizeof(struct dbglog_slot)\n",
 				__func__));
 		return;
 	}
-	slot = (struct dbglog_slot *)nla_data(tb[CLD80211_ATTR_DATA]);
 
-	if (!slot) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: data NULL\n", __func__));
+	slot = (struct dbglog_slot *)nla_data(tb[CLD80211_ATTR_DATA]);
+	if (len != (sizeof(struct dbglog_slot) + (uint64_t) slot->length)) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: attr length check fails\n",
+				__func__));
 		return;
 	}
 
