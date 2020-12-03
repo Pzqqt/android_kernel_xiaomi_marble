@@ -194,6 +194,11 @@ blm_prune_old_entries_and_get_action(struct blm_reject_ap *blm_entry,
 		blm_debug(QDF_MAC_ADDR_FMT" in blacklist list, reject ap type %d removing from candidate list",
 			  QDF_MAC_ADDR_REF(blm_entry->bssid.bytes),
 			  blm_entry->reject_ap_type);
+
+		if (BLM_IS_AP_BLACKLISTED_BY_USERSPACE(blm_entry) ||
+		    BLM_IS_AP_IN_RSSI_REJECT_LIST(blm_entry))
+			return CM_BLM_FORCE_REMOVE;
+
 		return CM_BLM_REMOVE;
 	}
 
