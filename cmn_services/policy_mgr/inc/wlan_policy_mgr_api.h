@@ -3216,7 +3216,19 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 		struct wlan_objmgr_psoc *psoc, uint32_t *pcl,
 		uint32_t *len, uint8_t *weight_list, uint32_t weight_len);
-
+/**
+ * policy_mgr_is_sap_allowed_on_dfs_chan() - check if sap allowed on dfs channel
+ * @pdev: id of objmgr pdev
+ * @vdev_id: vdev id
+ * @channel: channel number
+ * This function is used to check if sta_sap_scc_on_dfs_chan ini is set,
+ * DFS master capability is assumed disabled in the driver.
+ *
+ * Return: true if sap is allowed on dfs channel,
+ * otherwise false
+ */
+bool policy_mgr_is_sap_allowed_on_dfs_chan(struct wlan_objmgr_pdev *pdev,
+					   uint8_t vdev_id, uint8_t channel);
 /**
  * policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan() - check if sta+sap scc
  * allowed on dfs chan
