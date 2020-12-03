@@ -3816,6 +3816,19 @@ static inline qdf_size_t qdf_nbuf_get_data_len(qdf_nbuf_t nbuf)
 	return __qdf_nbuf_get_data_len(nbuf);
 }
 
+/**
+ * qdf_nbuf_get_end_offset() - Return the size of the nbuf from
+ * head pointer to end pointer
+ * @nbuf: qdf_nbuf_t
+ *
+ * Return: size of network buffer from head pointer to end
+ * pointer
+ */
+static inline qdf_size_t qdf_nbuf_get_end_offset(qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_get_end_offset(nbuf);
+}
+
 #ifdef NBUF_FRAG_MEMORY_DEBUG
 
 #define qdf_nbuf_move_frag_page_offset(f, i, o) \
@@ -4001,6 +4014,26 @@ void qdf_nbuf_release_track_lock(uint32_t index,
  */
 QDF_NBUF_TRACK *qdf_nbuf_get_track_tbl(uint32_t index);
 #endif /* MEMORY_DEBUG */
+
+#ifdef CONFIG_WLAN_SYSFS_MEM_STATS
+/**
+ * qdf_record_nbuf_nbytes() - add or subtract the size of the nbuf
+ * from the total skb mem and DP tx/rx skb mem
+ * @nbytes: number of bytes
+ * @dir: direction
+ * @is_mapped: is mapped or unmapped memory
+ *
+ * Return: none
+ */
+void qdf_record_nbuf_nbytes(
+	uint32_t nbytes, qdf_dma_dir_t dir, bool is_mapped);
+
+#else /* CONFIG_WLAN_SYSFS_MEM_STATS */
+static inline void qdf_record_nbuf_nbytes(
+	int nbytes, qdf_dma_dir_t dir, bool is_mapped)
+{
+}
+#endif /* CONFIG_WLAN_SYSFS_MEM_STATS */
 
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_api_w.h>
