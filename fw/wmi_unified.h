@@ -28040,7 +28040,7 @@ typedef enum {
 *          (1) disable secondary rate
 */
 /* bit 0-3 of flags is used for scan operation */
-/* bit 0: WLM_FLAGS_SCAN_SUPPRESS, suppress all scan and other bits would be ignored if bit is set */
+/* bit 0: Avoid scan request from HLOS if bit is set */
 
 #define WLM_FLAGS_SCAN_SUPPRESS  1  /* suppress all scan request */
 
