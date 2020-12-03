@@ -1665,6 +1665,8 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 	enum cm_blacklist_action blacklist_action;
 	struct wlan_objmgr_psoc *psoc;
 	bool assoc_allowed;
+	struct scan_cache_node *force_connect_candidate = NULL;
+	bool are_all_candidate_blacklisted = true;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
@@ -1710,7 +1712,11 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 			blacklist_action = wlan_blacklist_action_on_bssid(pdev,
 							scan_entry->entry);
 		else
-			blacklist_action = CM_BLM_REMOVE;
+			blacklist_action = CM_BLM_FORCE_REMOVE;
+
+		if (blacklist_action == CM_BLM_NO_ACTION ||
+		    blacklist_action == CM_BLM_AVOID)
+			are_all_candidate_blacklisted = false;
 
 		if (blacklist_action == CM_BLM_NO_ACTION &&
 		    pcl_lst && pcl_lst->num_of_pcl_channels &&
@@ -1725,7 +1731,8 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 			}
 		}
 
-		if (blacklist_action == CM_BLM_NO_ACTION) {
+		if (blacklist_action == CM_BLM_NO_ACTION ||
+		    (are_all_candidate_blacklisted && blacklist_action == CM_BLM_REMOVE)) {
 			cm_calculate_bss_score(psoc, scan_entry->entry,
 					       pcl_chan_weight, bssid_hint);
 		} else if (blacklist_action == CM_BLM_AVOID) {
@@ -1739,7 +1746,40 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 					scan_entry->entry->bss_score);
 		}
 
-		/* Remove node from current locaion to add node back shorted */
+		/*
+		 * The below logic is added to select the best candidate
+		 * amongst the blacklisted candidates. This is done to
+		 * handle a case where all the BSSIDs become blacklisted
+		 * and hence there are continuous connection failures.
+		 * With the below logic if the action on BSSID is to remove
+		 * then we keep a backup node and restore the candidate
+		 * list.
+		 */
+		if (blacklist_action == CM_BLM_REMOVE &&
+		    are_all_candidate_blacklisted) {
+			if (!force_connect_candidate) {
+				force_connect_candidate =
+					qdf_mem_malloc(
+					   sizeof(*force_connect_candidate));
+				if (!force_connect_candidate)
+					return;
+				force_connect_candidate->entry =
+					util_scan_copy_cache_entry(scan_entry->entry);
+				if (!force_connect_candidate->entry)
+					return;
+			} else if (cm_is_better_bss(
+				   scan_entry->entry,
+				   force_connect_candidate->entry)) {
+				util_scan_free_cache_entry(
+					force_connect_candidate->entry);
+				force_connect_candidate->entry =
+				  util_scan_copy_cache_entry(scan_entry->entry);
+				if (!force_connect_candidate->entry)
+					return;
+			}
+		}
+
+		/* Remove node from current location to add node back sorted */
 		status = qdf_list_remove_node(scan_list, cur_node);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			mlme_err("failed to remove node for BSS "QDF_MAC_ADDR_FMT" from scan list",
@@ -1751,12 +1791,14 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 		 * If CM_BLM_REMOVE ie blacklisted or assoc not allowed then
 		 * free the entry else add back to the list sorted
 		 */
-		if (blacklist_action == CM_BLM_REMOVE) {
+		if (blacklist_action == CM_BLM_REMOVE ||
+		    blacklist_action == CM_BLM_FORCE_REMOVE) {
 			if (assoc_allowed)
-				mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, is in Blacklist, remove entry",
+				mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, blm action %d is in Blacklist, remove entry",
 					QDF_MAC_ADDR_REF(scan_entry->entry->bssid.bytes),
 					scan_entry->entry->channel.chan_freq,
-					scan_entry->entry->rssi_raw);
+					scan_entry->entry->rssi_raw,
+					blacklist_action);
 			util_scan_free_cache_entry(scan_entry->entry);
 			qdf_mem_free(scan_entry);
 		} else {
@@ -1765,6 +1807,17 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 
 		cur_node = next_node;
 		next_node = NULL;
+	}
+
+	if (are_all_candidate_blacklisted && force_connect_candidate) {
+		mlme_nofl_debug("All candidates in blacklist, Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, selected for connection",
+			QDF_MAC_ADDR_REF(force_connect_candidate->entry->bssid.bytes),
+			force_connect_candidate->entry->channel.chan_freq,
+			force_connect_candidate->entry->rssi_raw);
+		cm_list_insert_sorted(scan_list, force_connect_candidate);
+	} else if (force_connect_candidate) {
+		util_scan_free_cache_entry(force_connect_candidate->entry);
+		qdf_mem_free(force_connect_candidate);
 	}
 }
 

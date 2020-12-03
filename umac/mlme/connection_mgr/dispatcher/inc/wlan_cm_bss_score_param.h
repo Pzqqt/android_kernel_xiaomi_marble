@@ -162,11 +162,20 @@ struct pcl_freq_weight_list {
  * enum cm_blacklist_action - action taken by blacklist manager for the bssid
  * @CM_BLM_NO_ACTION: No operation to be taken for the BSSID in the scan list.
  * @CM_BLM_REMOVE: Remove the BSSID from the scan list (AP is blacklisted)
+ * This param is a way to inform the caller that this BSSID is blacklisted
+ * but it is a driver blacklist and we can connect to them if required.
+ * @CM_BLM_FORCE_REMOVE: Forcefully remove the BSSID from scan list.
+ * This param is introduced as we want to differentiate between optional
+ * mandatory blacklisting. Driver blacklisting is optional and won't
+ * fail any CERT or protocol violations as it is internal implementation.
+ * hence FORCE_REMOVE will mean that driver cannot connect to this BSSID
+ * in any situation.
  * @CM_BLM_AVOID: Add the Ap at last of the scan list (AP to Avoid)
  */
 enum cm_blacklist_action {
 	CM_BLM_NO_ACTION,
 	CM_BLM_REMOVE,
+	CM_BLM_FORCE_REMOVE,
 	CM_BLM_AVOID,
 };
 
