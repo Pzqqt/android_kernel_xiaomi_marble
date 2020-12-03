@@ -47,6 +47,33 @@ int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc,
 int hif_dummy_dump_registers(struct hif_softc *hif_sc);
 void hif_dummy_dump_target_memory(struct hif_softc *hif_sc, void *ramdump_base,
 				  uint32_t address, uint32_t size);
+
+/**
+ * hif_dummy_bus_reg_read32() - Read register in 32bits
+ * @hif_sc: PCIe control struct
+ * @offset: The register offset
+ *
+ * This function will read register in 32bits
+ *
+ * Return: return value for register with specified offset
+ */
+uint32_t hif_dummy_bus_reg_read32(struct hif_softc *hif_sc,
+				  uint32_t offset);
+
+/**
+ * hif_dummy_bus_reg_write32() - Write register in 32bits
+ * @hif_sc: PCIe control struct
+ * @offset: The register offset
+ * @value: The value need to be written
+ *
+ * This function will write register in 32bits
+ *
+ * Return: None
+ */
+void hif_dummy_bus_reg_write32(struct hif_softc *hif_sc,
+			       uint32_t offset,
+			       uint32_t value);
+
 void hif_dummy_ipa_get_ce_resource(struct hif_softc *hif_sc,
 				   qdf_shared_mem_t **ce_sr,
 				   uint32_t *sr_ring_size,

@@ -46,6 +46,10 @@
 #include "mp_dev.h"
 #include "hif_debug.h"
 
+#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490))
+#include "hal_api.h"
+#endif
+
 #include "if_pci_internal.h"
 #include "ce_tasklet.h"
 #include "targaddrs.h"
@@ -3170,6 +3174,34 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	hif_ext_group->irq_requested = true;
 	return 0;
 }
+
+#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490))
+uint32_t hif_pci_reg_read32(struct hif_softc *hif_sc,
+			    uint32_t offset)
+{
+	return hal_read32_mb(hif_sc->hal_soc, offset);
+}
+
+void hif_pci_reg_write32(struct hif_softc *hif_sc,
+			 uint32_t offset,
+			 uint32_t value)
+{
+	hal_write32_mb(hif_sc->hal_soc, offset, value);
+}
+#else
+/* TODO: Need to implement other chips carefully */
+uint32_t hif_pci_reg_read32(struct hif_softc *hif_sc,
+			    uint32_t offset)
+{
+	return 0;
+}
+
+void hif_pci_reg_write32(struct hif_softc *hif_sc,
+			 uint32_t offset,
+			 uint32_t value)
+{
+}
+#endif
 
 /**
  * hif_configure_irq() - configure interrupt

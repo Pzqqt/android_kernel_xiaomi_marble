@@ -69,6 +69,11 @@ struct hif_bus_ops {
 	void (*hif_dump_target_memory)(struct hif_softc *hif_sc,
 				       void *ramdump_base,
 				       uint32_t address, uint32_t size);
+	uint32_t (*hif_reg_read32)(struct hif_softc *hif_sc,
+				   uint32_t offset);
+	void (*hif_reg_write32)(struct hif_softc *hif_sc,
+				uint32_t offset,
+				uint32_t value);
 	void (*hif_ipa_get_ce_resource)(struct hif_softc *hif_sc,
 					qdf_shared_mem_t **ce_sr,
 					uint32_t *sr_ring_size,

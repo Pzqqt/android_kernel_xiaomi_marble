@@ -42,6 +42,26 @@
 #endif
 
 /**
+ * Get op_type, mem_type and offset fields from pos of procfs
+ * It will reuse pos, which is long long type
+ *
+ * op_type:     4 bits
+ * memtype:     8 bits
+ * reserve1:    20 bits
+ * offset:      32 bits
+ */
+#define OP_TYPE_LEGACY                  0
+#define OP_TYPE_EXT_QMI                 1
+#define OP_TYPE_EXT_DIRECT              2
+
+#define ATH_DIAG_EXT_OP_TYPE_BITS        4
+#define ATH_DIAG_EXT_OP_TYPE_INDEX       60
+#define ATH_DIAG_EXT_MEM_TYPE_BITS       8
+#define ATH_DIAG_EXT_MEM_TYPE_INDEX      52
+#define ATH_DIAG_EXT_OFFSET_BITS         32
+#define ATH_DIAG_EXT_OFFSET_INDEX        0
+
+/**
  * This structure hold information about the /proc file
  *
  */
@@ -55,8 +75,9 @@ static void *get_hif_hdl_from_file(struct file *file)
 	return (void *)scn;
 }
 
-static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
-				    size_t count, loff_t *pos)
+static ssize_t ath_procfs_diag_read_legacy(struct file *file,
+					   char __user *buf,
+					   size_t count, loff_t *pos)
 {
 	hif_handle_t hif_hdl;
 	int rv;
@@ -67,9 +88,6 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 
 	hif_hdl = get_hif_hdl_from_file(file);
 	scn = HIF_GET_SOFTC(hif_hdl);
-
-	if (scn->bus_ops.hif_addr_in_boundary(hif_hdl, (uint32_t)(*pos)))
-		return -EINVAL;
 
 	read_buffer = qdf_mem_malloc(count);
 	if (!read_buffer)
@@ -129,9 +147,9 @@ out:
 	return count;
 }
 
-static ssize_t ath_procfs_diag_write(struct file *file,
-				     const char __user *buf,
-				     size_t count, loff_t *pos)
+static ssize_t ath_procfs_diag_write_legacy(struct file *file,
+					    const char __user *buf,
+					    size_t count, loff_t *pos)
 {
 	hif_handle_t hif_hdl;
 	int rv;
@@ -142,9 +160,6 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 
 	hif_hdl = get_hif_hdl_from_file(file);
 	scn = HIF_GET_SOFTC(hif_hdl);
-
-	if (scn->bus_ops.hif_addr_in_boundary(hif_hdl, (uint32_t)(*pos)))
-		return -EINVAL;
 
 	write_buffer = qdf_mem_malloc(count);
 	if (!write_buffer)
@@ -204,6 +219,317 @@ out:
 		return count;
 	else
 		return -EIO;
+}
+
+#ifdef ATH_DIAG_EXT_DIRECT
+/* Used to dump register or SRAM from target directly */
+static int ath_procfs_direct_read(struct hif_softc *scn, uint32_t offset,
+				  uint8_t *buf, size_t count)
+{
+	size_t remaining = count;
+	uint32_t *p_val = (uint32_t *)buf;
+	uint32_t val;
+	uint8_t *buf_d, *buf_s;
+
+	if (!scn->bus_ops.hif_reg_read32)
+		return -EIO;
+
+	while (remaining >= 4) {
+		*p_val++ = scn->bus_ops.hif_reg_read32(scn,
+						       offset);
+		offset += 4;
+		remaining -= 4;
+	}
+
+	if (remaining) {
+		val = scn->bus_ops.hif_reg_read32(scn,
+						  offset);
+		buf_d = (uint8_t *)p_val;
+		buf_s = (uint8_t *)&val;
+		while (remaining) {
+			*buf_d++ = *buf_s++;
+			remaining--;
+		}
+	}
+
+	return 0;
+}
+
+/* Used to write register or SRAM to target directly */
+static int ath_procfs_direct_write(struct hif_softc *scn, uint32_t offset,
+				   uint8_t *buf, size_t count)
+{
+	size_t remaining = count;
+	uint32_t *p_val = (uint32_t *)buf;
+	uint32_t val;
+	uint8_t *buf_d, *buf_s;
+
+	if (!scn->bus_ops.hif_reg_write32 || !scn->bus_ops.hif_reg_read32)
+		return -EIO;
+
+	while (remaining >= 4) {
+		scn->bus_ops.hif_reg_write32(scn,
+					     offset,
+					     *p_val++);
+		offset += 4;
+		remaining -= 4;
+	}
+
+	if (remaining) {
+		val = scn->bus_ops.hif_reg_read32(scn,
+						  offset);
+		buf_s = (uint8_t *)p_val;
+		buf_d = (uint8_t *)&val;
+		while (remaining) {
+			*buf_d++ = *buf_s++;
+			remaining--;
+		}
+		scn->bus_ops.hif_reg_write32(scn,
+					     offset,
+					     val);
+	}
+
+	return 0;
+}
+#else
+static int ath_procfs_direct_read(struct hif_softc *scn, uint32_t offset,
+				  uint8_t *buf, size_t count)
+{
+	return -EIO;
+}
+
+/* Used to write register or SRAM to target directly */
+static int ath_procfs_direct_write(struct hif_softc *scn, uint32_t offset,
+				   uint8_t *buf, size_t count)
+{
+	return -EIO;
+}
+
+#endif
+
+static ssize_t ath_procfs_diag_read_ext(struct file *file, char __user *buf,
+					size_t count,
+					uint32_t op_type,
+					uint32_t memtype,
+					uint32_t offset)
+{
+	hif_handle_t hif_hdl = get_hif_hdl_from_file(file);
+	int rv = -EINVAL;
+	uint8_t *read_buffer;
+	struct hif_softc *scn;
+	struct hif_target_info *tgt_info;
+
+	if (!hif_hdl)
+		return -EINVAL;
+
+	read_buffer = qdf_mem_malloc(count);
+	if (!read_buffer)
+		return -ENOMEM;
+
+	scn = HIF_GET_SOFTC(hif_hdl);
+	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(hif_hdl));
+	switch (scn->bus_type) {
+	case QDF_BUS_TYPE_PCI:
+		switch (tgt_info->target_type) {
+		case TARGET_TYPE_QCA6390:
+		case TARGET_TYPE_QCA6490:
+		/* case Hamiltons: */
+			if (op_type == OP_TYPE_EXT_DIRECT)
+				rv = ath_procfs_direct_read(scn,
+							    offset,
+							    read_buffer,
+							    count);
+			else
+				rv = pld_athdiag_read(scn->qdf_dev->dev,
+						      offset,
+						      memtype,
+						      count,
+						      read_buffer);
+			break;
+		default:
+			hif_err("Unrecognized target type %d",
+				tgt_info->target_type);
+		}
+		break;
+	default:
+		hif_err("Unrecognized bus type %d", scn->bus_type);
+		break;
+	}
+
+	if (rv) {
+		hif_err("fail to read from target %d", rv);
+	} else {
+		rv = count;
+		if (copy_to_user(buf, read_buffer, count)) {
+			hif_err("copy_to_user error in /proc/%s",
+				PROCFS_NAME);
+			rv = -EFAULT;
+		}
+	}
+
+	qdf_mem_free(read_buffer);
+
+	return rv;
+}
+
+static ssize_t ath_procfs_diag_write_ext(struct file *file,
+					 const char __user *buf,
+					 size_t count,
+					 uint32_t op_type,
+					 uint32_t memtype,
+					 uint32_t offset)
+{
+	hif_handle_t hif_hdl = get_hif_hdl_from_file(file);
+	int rv = -EINVAL;
+	uint8_t *write_buffer;
+	struct hif_softc *scn;
+	struct hif_target_info *tgt_info;
+
+	if (!hif_hdl)
+		return -EINVAL;
+
+	scn = HIF_GET_SOFTC(hif_hdl);
+
+	write_buffer = qdf_mem_malloc(count);
+	if (!write_buffer)
+		return -ENOMEM;
+
+	if (copy_from_user(write_buffer, buf, count)) {
+		qdf_mem_free(write_buffer);
+		hif_err("copy_to_user error in /proc/%s",
+			PROCFS_NAME);
+		return -EFAULT;
+	}
+
+	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(hif_hdl));
+
+	switch (scn->bus_type) {
+	case QDF_BUS_TYPE_PCI:
+		switch (tgt_info->target_type) {
+		case TARGET_TYPE_QCA6390:
+		case TARGET_TYPE_QCA6490:
+		/* case Hamiltons: */
+			if (op_type == OP_TYPE_EXT_DIRECT)
+				rv = ath_procfs_direct_write(scn,
+							     offset,
+							     write_buffer,
+							     count);
+			else
+				rv = pld_athdiag_write(scn->qdf_dev->dev,
+						       offset,
+						       memtype,
+						       count,
+						       write_buffer);
+			break;
+		default:
+			hif_err("Unrecognized target type %d",
+				tgt_info->target_type);
+		}
+		break;
+	default:
+		hif_err("Unrecognized bus type %d", scn->bus_type);
+		break;
+	}
+
+	qdf_mem_free(write_buffer);
+
+	return (rv == 0) ? count : -EIO;
+}
+
+static void get_fields_from_pos(loff_t pos,
+				uint32_t *op_type,
+				uint32_t *memtype,
+				uint32_t *offset)
+{
+	*op_type = QDF_GET_BITS64(pos, ATH_DIAG_EXT_OP_TYPE_INDEX,
+				  ATH_DIAG_EXT_OP_TYPE_BITS);
+	*memtype = QDF_GET_BITS64(pos, ATH_DIAG_EXT_MEM_TYPE_INDEX,
+				  ATH_DIAG_EXT_MEM_TYPE_BITS);
+	*offset = QDF_GET_BITS64(pos, ATH_DIAG_EXT_OFFSET_INDEX,
+				 ATH_DIAG_EXT_OFFSET_BITS);
+}
+
+static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
+				    size_t count, loff_t *pos)
+{
+	hif_handle_t hif_hdl = get_hif_hdl_from_file(file);
+	int rv = -EINVAL;
+	struct hif_softc *scn;
+	uint32_t offset, memtype;
+	uint32_t op_type;
+
+	if (!hif_hdl)
+		return -EINVAL;
+
+	get_fields_from_pos(*pos, &op_type, &memtype, &offset);
+
+	scn = HIF_GET_SOFTC(hif_hdl);
+	if (scn->bus_ops.hif_addr_in_boundary(scn, offset))
+		return -EINVAL;
+
+	if (offset & 0x3)
+		return -EINVAL;
+
+	hif_info("rd cnt %zu offset 0x%x op_type %d type %d pos %llx",
+		 count, offset, op_type, memtype, *pos);
+
+	switch (op_type) {
+	case OP_TYPE_LEGACY:
+		rv = ath_procfs_diag_read_legacy(file, buf, count, pos);
+		break;
+	case OP_TYPE_EXT_QMI:
+	case OP_TYPE_EXT_DIRECT:
+		rv = ath_procfs_diag_read_ext(file, buf, count, op_type,
+					      memtype, offset);
+		break;
+	default:
+		hif_err("Unrecognized op type %d", op_type);
+		break;
+	}
+
+	return rv;
+}
+
+static ssize_t ath_procfs_diag_write(struct file *file,
+				     const char __user *buf,
+				     size_t count, loff_t *pos)
+{
+	hif_handle_t hif_hdl = get_hif_hdl_from_file(file);
+	int rv = -EINVAL;
+	struct hif_softc *scn;
+	uint32_t offset, memtype;
+	uint32_t op_type;
+
+	if (!hif_hdl)
+		return -EINVAL;
+
+	get_fields_from_pos(*pos, &op_type, &memtype, &offset);
+
+	scn = HIF_GET_SOFTC(hif_hdl);
+	if (scn->bus_ops.hif_addr_in_boundary(scn, offset))
+		return -EINVAL;
+
+	if (offset & 0x3)
+		return -EINVAL;
+
+	hif_info("wr cnt %zu offset 0x%x op_type %d mem_type %d",
+		 count, offset, op_type, memtype);
+
+	switch (op_type) {
+	case OP_TYPE_LEGACY:
+		rv = ath_procfs_diag_write_legacy(file, buf, count, pos);
+		break;
+	case OP_TYPE_EXT_QMI:
+	case OP_TYPE_EXT_DIRECT:
+		rv = ath_procfs_diag_write_ext(file, buf, count, op_type,
+					       memtype, offset);
+		break;
+	default:
+		hif_err("Unrecognized op type %d", op_type);
+		break;
+	}
+
+	return rv;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))

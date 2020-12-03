@@ -72,6 +72,8 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_irq_enable = &hif_pci_irq_enable;
 	bus_ops->hif_dump_registers = &hif_pci_dump_registers;
 	bus_ops->hif_dump_target_memory = &hif_ce_dump_target_memory;
+	bus_ops->hif_reg_read32 = &hif_pci_reg_read32;
+	bus_ops->hif_reg_write32 = &hif_pci_reg_write32;
 	bus_ops->hif_ipa_get_ce_resource = &hif_ce_ipa_get_ce_resource;
 	bus_ops->hif_mask_interrupt_call = &hif_dummy_mask_interrupt_call;
 	bus_ops->hif_enable_power_management =
