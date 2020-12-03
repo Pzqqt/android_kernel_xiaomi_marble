@@ -711,6 +711,51 @@ static int target_if_vdev_mgr_multi_vdev_restart_resp_handler(
 }
 
 /**
+ * target_if_vdev_csa_complete - CSA complete event handler
+ * @psoc: psoc
+ * @vdev_id: vdev id
+ *
+ * Return: 0 on success
+ */
+static int target_if_vdev_csa_complete(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_objmgr_vdev *vdev;
+	int ret = 0;
+
+	if (!psoc) {
+		mlme_err("Invalid input");
+		return -EINVAL;
+	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_VDEV_TARGET_IF_ID);
+	if (!vdev) {
+		mlme_err("VDEV is NULL");
+		return -EINVAL;
+	}
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("VDEV_%d: PSOC_%d VDEV_MLME is NULL", vdev_id,
+			 wlan_psoc_get_id(psoc));
+		ret = -EINVAL;
+		goto end;
+	}
+
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_csa_complete) {
+		status = vdev_mlme->ops->mlme_vdev_csa_complete(vdev_mlme);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlme_err("vdev csa complete failed");
+			ret = -EINVAL;
+		}
+	}
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_VDEV_TARGET_IF_ID);
+	return ret;
+}
+
+/**
  * target_if_pdev_csa_status_event_handler - CSA event handler
  * @scn: Pointer to scn structure
  * @data: pointer to event data
@@ -727,6 +772,7 @@ static int target_if_pdev_csa_status_event_handler(
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct target_psoc_info *tgt_hdl;
+	int i;
 	QDF_STATUS status;
 
 	if (!scn || !data) {
@@ -758,6 +804,14 @@ static int target_if_pdev_csa_status_event_handler(
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("Extracting CSA switch count status event failed");
 		return -EINVAL;
+	}
+
+	if (wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_CSA_TX_OFFLOAD)) {
+		for (i = 0; i < csa_status.num_vdevs; i++) {
+			if (!csa_status.current_switch_count)
+				target_if_vdev_csa_complete(psoc,
+							csa_status.vdev_ids[i]);
+		}
 	}
 
 	return target_if_csa_switch_count_status(psoc, tgt_hdl, csa_status);

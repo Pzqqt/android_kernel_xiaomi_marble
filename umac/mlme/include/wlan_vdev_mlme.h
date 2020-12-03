@@ -534,6 +534,9 @@ struct vdev_mlme_ops {
 				struct peer_delete_all_response *rsp);
 	QDF_STATUS (*mlme_vdev_replace_csa_with_stop_start)(
 				struct vdev_mlme_obj *vdev_mlme);
+	QDF_STATUS (*mlme_vdev_csa_complete)(
+				struct vdev_mlme_obj *vdev_mlme);
+
 };
 
 /**
