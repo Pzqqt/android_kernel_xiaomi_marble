@@ -790,6 +790,7 @@ enum {
 	IEEE80211_PARAM_CM_HISTORY                 = 727,   /* Print Connection SM history */
 #endif
 #endif
+	IEEE80211_PARAM_RTS                        = 728,   /* Vdev specific minimum packet size setting for which RTS/CTS is used */
 };
 
 enum {
@@ -2271,6 +2272,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 #endif
 #endif
 
+	{"rts",                       IEEE80211_PARAM_RTS, SET_PARAM, 1},
+	{"get_rts",                   IEEE80211_PARAM_RTS, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
