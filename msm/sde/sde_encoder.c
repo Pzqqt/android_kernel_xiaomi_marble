@@ -5423,8 +5423,7 @@ bool sde_encoder_recovery_events_enabled(struct drm_encoder *encoder)
 	return sde_enc->recovery_events_enabled;
 }
 
-void sde_encoder_recovery_events_handler(struct drm_encoder *encoder,
-		bool enabled)
+void sde_encoder_enable_recovery_event(struct drm_encoder *encoder)
 {
 	struct sde_encoder_virt *sde_enc;
 
@@ -5434,5 +5433,5 @@ void sde_encoder_recovery_events_handler(struct drm_encoder *encoder,
 	}
 
 	sde_enc = to_sde_encoder_virt(encoder);
-	sde_enc->recovery_events_enabled = enabled;
+	sde_enc->recovery_events_enabled = true;
 }
