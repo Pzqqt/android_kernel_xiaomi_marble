@@ -1,10 +1,16 @@
-# auto-detect subdirs
-ifeq ($(CONFIG_ARCH_WAIPIO), y)
-include $(srctree)/techpack/mmrm/config/waipiommrm.conf
-endif
+KBUILD_OPTIONS+= MMRM_ROOT=$(KERNEL_SRC)/$(M)
 
-ifeq ($(CONFIG_ARCH_WAIPIO), y)
-LINUXINCLUDE    += -include $(srctree)/techpack/mmrm/config/waipiommrmconf.h
-endif
+all: modules
 
-obj-y +=driver/
+modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
+
+modules_install:
+	$(MAKE) INSTALL_MOD_STRIP=1 -C $(KERNEL_SRC) M=$(M) modules_install
+
+%:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) $@ $(KBUILD_OPTIONS)
+
+clean:
+	rm -f *.o *.ko *.mod.c *.mod.o *~ .*.cmd Module.symvers
+	rm -rf .tmp_versions

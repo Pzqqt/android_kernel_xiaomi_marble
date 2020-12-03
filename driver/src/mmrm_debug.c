@@ -41,7 +41,6 @@ struct dentry *msm_mmrm_debugfs_init(void)
 {
 	struct dentry *dir;
 	int file_val;
-	bool ok = false;
 
 	d_mpr_h("%s: entering\n", __func__);
 
@@ -58,26 +57,8 @@ struct dentry *msm_mmrm_debugfs_init(void)
 		goto failed_create_dir;
 	}
 
-#define __debugfs_create(__type, __name, __value) \
-	({ \
-		struct dentry *f = debugfs_create_##__type(__name, 0644, dir, __value); \
-		if (IS_ERR_OR_NULL(f)) { \
-			d_mpr_e("%s: Failed creating debugfs file '%pd/%s'\n", \
-				__func__, \
-				dir, \
-				__name); \
-			f = NULL; \
-		} \
-		f; \
-	})
-
 	/* add other params here */
-	ok = __debugfs_create(u32, "debug_level", &msm_mmrm_debug);
-
-#undef __debugfs_create
-
-	if (!ok)
-		goto failed_create_dir;
+	debugfs_create_u32("debug_level", 0644, dir, &msm_mmrm_debug);
 
 	d_mpr_h("%s: exiting\n", __func__);
 	return dir;
