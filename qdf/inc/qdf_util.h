@@ -132,6 +132,10 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 		(_var) |= (((_val) & ((1 << (_num_bits)) - 1)) << (_index)); \
 		} while (0)
 
+/* Get number of bits from the index bit supporting 64 bits */
+#define QDF_GET_BITS64(_val, _index, _num_bits) \
+		(((_val) >> (_index)) & ((1LLU << (_num_bits)) - 1))
+
 #define QDF_DECLARE_EWMA(name, factor, weight) \
 	__QDF_DECLARE_EWMA(name, factor, weight)
 
