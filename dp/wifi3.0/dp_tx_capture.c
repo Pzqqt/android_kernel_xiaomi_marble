@@ -1330,7 +1330,7 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 			dp_tx_ppdu_stats_process,
 			pdev);
 	pdev->tx_capture.ppdu_stats_workqueue =
-		qdf_alloc_unbound_workqueue("ppdu_stats_work_queue");
+		qdf_create_singlethread_workqueue("ppdu_stats_work_queue");
 	STAILQ_INIT(&pdev->tx_capture.ppdu_stats_queue);
 	STAILQ_INIT(&pdev->tx_capture.ppdu_stats_defer_queue);
 	qdf_spinlock_create(&pdev->tx_capture.ppdu_stats_lock);
@@ -3435,34 +3435,40 @@ static void dp_ppdu_desc_free_all(struct dp_tx_cap_nbuf_list *ptr_nbuf_list,
 
 /**
  * dp_tx_mon_get_next_mpdu(): get next mpdu from retry queue.
+ * @tx_tid: tx capture peer tid
  * @xretry_user: pointer to ppdu_desc user.
  * @mpdu_nbuf: mpdu nbuf
+ * @ppdu_nbuf: ppdu nbuf from pending ppdu q
  *
  * return: qdf_nbuf_t
  */
 static qdf_nbuf_t
 dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			struct cdp_tx_completion_ppdu_user *xretry_user,
-			qdf_nbuf_t mpdu_nbuf)
+			qdf_nbuf_t mpdu_nbuf, qdf_nbuf_t ppdu_nbuf)
 {
 	qdf_nbuf_t next_nbuf = NULL;
 	qdf_nbuf_queue_t temp_xretries;
+	qdf_nbuf_t first_nbuf = NULL;
+	qdf_nbuf_t temp_nbuf = NULL;
 
 	if (mpdu_nbuf != qdf_nbuf_queue_first(&xretry_user->mpdu_q)) {
-		qdf_err("mpdu_nbuf %p is not the head, mpdu_q %p, len %d", mpdu_nbuf,
-			    xretry_user->mpdu_q, qdf_nbuf_queue_len(&xretry_user->mpdu_q));
 		next_nbuf = qdf_nbuf_queue_next(mpdu_nbuf);
+		qdf_err("mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
+			mpdu_nbuf, next_nbuf, xretry_user->mpdu_q,
+			qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
 		/* Initialize temp list */
 		qdf_nbuf_queue_init(&temp_xretries);
 		/* Move entries into temp list till the mpdu_nbuf is found */
-		while ((qdf_nbuf_queue_first(&xretry_user->mpdu_q)) &&
-		       (mpdu_nbuf !=
-				qdf_nbuf_queue_first(&xretry_user->mpdu_q))) {
-			qdf_nbuf_queue_add(&temp_xretries,
-				qdf_nbuf_queue_remove(&xretry_user->mpdu_q));
+		first_nbuf = qdf_nbuf_queue_first(&xretry_user->mpdu_q);
+		while (first_nbuf && (mpdu_nbuf != first_nbuf)) {
+			/* remove nbuf from queue */
+			temp_nbuf = qdf_nbuf_queue_remove(&xretry_user->mpdu_q);
+			qdf_nbuf_queue_add(&temp_xretries, temp_nbuf);
+			/* get first nbuf from queue again */
+			first_nbuf = qdf_nbuf_queue_first(&xretry_user->mpdu_q);
 		}
-		if ((qdf_nbuf_queue_first(&xretry_user->mpdu_q)) &&
-		    (mpdu_nbuf == qdf_nbuf_queue_first(&xretry_user->mpdu_q))) {
+		if (first_nbuf && (mpdu_nbuf == first_nbuf)) {
 			/* Remove mpdu_nbuf from queue */
 			qdf_nbuf_queue_remove(&xretry_user->mpdu_q);
 			/* Add remaining nbufs into temp queue */
@@ -3478,10 +3484,11 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 				  QDF_TRACE_LEVEL_FATAL,
 				  "%s: bug scenario, did not find nbuf in queue\npdev %p "
 				  "peer id %d, tid: %p mpdu_nbuf %p xretry_user %p "
-				  "mpdu_q %p len %d",
+				  "mpdu_q %p len %d temp_xretry %p",
 				  __func__, pdev, tx_tid->peer_id, tx_tid, mpdu_nbuf,
 				  xretry_user, xretry_user->mpdu_q,
-				  qdf_nbuf_queue_len(&xretry_user->mpdu_q));
+				  qdf_nbuf_queue_len(&xretry_user->mpdu_q),
+				  temp_xretries);
 			qdf_assert_always(0);
 		}
 	} else {
@@ -3593,7 +3600,8 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 					 */
 					mpdu_nbuf = dp_tx_mon_get_next_mpdu(pdev,
 							tx_tid,
-							xretry_user, mpdu_nbuf);
+							xretry_user, mpdu_nbuf,
+							ppdu_nbuf);
 				} else {
 					index = seq_no - start_seq;
 					CHECK_MPDUS_NULL(user->mpdus[index]);
