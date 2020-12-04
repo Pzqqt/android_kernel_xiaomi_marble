@@ -6,7 +6,6 @@
 #include "ipa_i.h"
 #include <linux/delay.h>
 
-#define IPA_RAM_UC_SMEM_SIZE 128
 #define IPA_HW_INTERFACE_VERSION     0x2000
 #define IPA_PKT_FLUSH_TO_US 100
 #define IPA_UC_POLL_SLEEP_USEC 100
@@ -1057,9 +1056,10 @@ int ipa3_uc_interface_init(void)
 
 	phys_addr = ipa3_ctx->ipa_wrapper_base +
 		ipa3_ctx->ctrl->ipa_reg_base_ofst +
-		ipahal_get_reg_n_ofst(IPA_SW_AREA_RAM_DIRECT_ACCESS_n, 0);
+		ipahal_get_reg_n_ofst(IPA_SW_AREA_RAM_DIRECT_ACCESS_n, 0) +
+		IPA_MEM_PART(uc_ofst);
 	ipa3_ctx->uc_ctx.uc_sram_mmio = ioremap(phys_addr,
-					       IPA_RAM_UC_SMEM_SIZE);
+		IPA_MEM_PART(uc_size));
 	if (!ipa3_ctx->uc_ctx.uc_sram_mmio) {
 		IPAERR("Fail to ioremap IPA uC SRAM\n");
 		result = -ENOMEM;

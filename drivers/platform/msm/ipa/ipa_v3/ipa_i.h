@@ -2434,6 +2434,8 @@ struct ipa3_mem_partition {
 	u32 stats_tethering_size;
 	u32 stats_fnr_ofst;
 	u32 stats_fnr_size;
+	u32 uc_ofst;
+	u32 uc_size;
 
 	/* Irrelevant starting IPA4.5 */
 	u32 stats_flt_v4_ofst;
