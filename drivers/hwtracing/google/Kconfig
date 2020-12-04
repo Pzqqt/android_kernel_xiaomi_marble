@@ -1,0 +1,15 @@
+config CORESIGHT_PLACEHOLDER
+	tristate "Coresight device placeholder driver"
+	default y
+	depends on !CORESIGHT
+	help
+	  For targets which do not use coresight, this option enables a placeholder
+	  which probes coresight devices to turn down clocks to save power.
+
+config CORESIGHT_AMBA_PLACEHOLDER
+	tristate "Coresight primecell device placeholder driver"
+	default y
+	depends on !CORESIGHT
+	help
+	  For targets which do not use coresight, this option enables a placeholder
+	  which probes coresight AMBA devices to turn down clocks to save power.
