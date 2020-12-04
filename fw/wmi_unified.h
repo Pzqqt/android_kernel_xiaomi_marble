@@ -28111,6 +28111,10 @@ typedef enum {
 #define WLM_FLAGS_WAL_RTS_PROTECTION_SET(flag, val)       WMI_SET_BITS(flag, 17, 1, val)
 #define WLM_FLAGS_WAL_DISABLE_SECONDARY_RATE(flag)        WMI_GET_BITS(flag, 18, 1)
 #define WLM_FLAGS_WAL_SECONDARY_RATE_SET(flag, val)       WMI_SET_BITS(flag, 18, 1, val)
+#define WLM_FLAGS_PS_IS_PCIE_L11_ENABLED(flag)            WMI_GET_BITS(flag, 19, 1)
+#define WLM_FLAGS_PS_SET_PCIE_L11_ENABLE(flag, val)       WMI_SET_BITS(flag, 19, 1, val)
+#define WLM_FLAGS_PS_IS_PHYRF_PS_ENABLED(flag)            WMI_GET_BITS(flag, 20, 1)
+#define WLM_FLAGS_PS_SET_PHYRF_PS_ENABLE(flag, val)       WMI_SET_BITS(flag, 20, 1, val)
 
 typedef struct {
     /** TLV tag and len; tag equals
