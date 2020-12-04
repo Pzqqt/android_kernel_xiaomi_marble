@@ -3215,11 +3215,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 	grp_mask =  &soc->wlan_cfg_ctx->int_tx_ring_mask[0];
 
 	/* loop and reset the mask for only offloaded ring */
-	for (j = 0; j < num_ring; j++) {
-		if (!dp_soc_ring_if_nss_offloaded(soc, WBM2SW_RELEASE, j)) {
-			continue;
-		}
-
+	for (j = 0; j < WLAN_CFG_NUM_TCL_DATA_RINGS; j++) {
 		/*
 		 * Group number corresponding to tx offloaded ring.
 		 */
@@ -3231,8 +3227,13 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 			return;
 		}
 
-		/* reset the tx mask for offloaded ring */
 		mask = wlan_cfg_get_tx_ring_mask(soc->wlan_cfg_ctx, group_number);
+		if (!dp_soc_ring_if_nss_offloaded(soc, WBM2SW_RELEASE, j) &&
+		    (!mask)) {
+			continue;
+		}
+
+		/* reset the tx mask for offloaded ring */
 		mask &= (~(1 << j));
 
 		/*
@@ -3250,11 +3251,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 	grp_mask = &soc->wlan_cfg_ctx->int_rx_ring_mask[0];
 
 	/* loop and reset the mask for only offloaded ring */
-	for (j = 0; j < num_ring; j++) {
-		if (!dp_soc_ring_if_nss_offloaded(soc, REO_DST, j)) {
-			continue;
-		}
-
+	for (j = 0; j < WLAN_CFG_NUM_REO_DEST_RING; j++) {
 		/*
 		 * Group number corresponding to rx offloaded ring.
 		 */
@@ -3266,8 +3263,13 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 			return;
 		}
 
-		/* set the interrupt mask for offloaded ring */
 		mask =  wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, group_number);
+		if (!dp_soc_ring_if_nss_offloaded(soc, REO_DST, j) &&
+		    (!mask)) {
+			continue;
+		}
+
+		/* reset the interrupt mask for offloaded ring */
 		mask &= (~(1 << j));
 
 		/*
