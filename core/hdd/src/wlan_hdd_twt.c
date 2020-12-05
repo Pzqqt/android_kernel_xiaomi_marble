@@ -885,6 +885,10 @@ int wmi_twt_del_status_to_vendor_twt_status(enum WMI_HOST_DEL_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
 	case WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_DEL_TWT_STATUS_PEER_INIT_TEARDOWN:
+		return QCA_WLAN_VENDOR_TWT_STATUS_PEER_INITIATED_TERMINATE;
+	case WMI_DEL_TWT_STATUS_ROAMING:
+		return QCA_WLAN_VENDOR_TWT_STATUS_ROAM_INITIATED_TERMINATE;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -1193,6 +1197,7 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 				 struct nlattr *twt_param_attr)
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct wmi_twt_add_dialog_param params = {0};
 	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
@@ -1211,6 +1216,9 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 			   hdd_sta_ctx->conn_info.conn_state);
 		return -EINVAL;
 	}
+
+	if (hdd_is_roaming_in_progress(hdd_ctx))
+		return -EBUSY;
 
 	qdf_mem_copy(params.peer_macaddr,
 		     hdd_sta_ctx->conn_info.bssid.bytes,
@@ -2015,6 +2023,125 @@ hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 }
 
 /**
+ * hdd_twt_pack_get_capabilities_resp  - TWT pack and send response to
+ * userspace for get capabilities command
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct nlattr *config_attr;
+	struct sk_buff *reply_skb;
+	size_t skb_len = NLMSG_HDRLEN;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	uint8_t peer_cap = 0, self_cap = 0;
+	bool twt_req = false, twt_bcast_req = false;
+
+	/*
+	 * Length of attribute QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF &
+	 * QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_PEER
+	 */
+	skb_len += 2 * nla_total_size(sizeof(u16)) + NLA_HDRLEN;
+
+	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
+							     skb_len);
+	if (!reply_skb) {
+		hdd_err("TWT: get_caps alloc reply skb failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		hdd_err("TWT: nla_nest_start error");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto free_skb;
+	}
+
+	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
+	if (twt_req)
+		self_cap |= QCA_WLAN_TWT_CAPA_REQUESTOR;
+
+	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc,
+					  &twt_bcast_req);
+	if (twt_bcast_req)
+		self_cap |= QCA_WLAN_TWT_CAPA_BROADCAST;
+
+	if (nla_put_u16(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF,
+			self_cap)) {
+		hdd_err("TWT: Failed to fill capabilities");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto free_skb;
+	}
+
+	if (nla_put_u16(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_PEER,
+			peer_cap)) {
+		hdd_err("TWT: Failed to fill capabilities");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto free_skb;
+	}
+
+	nla_nest_end(reply_skb, config_attr);
+
+	if (cfg80211_vendor_cmd_reply(reply_skb))
+		qdf_status = QDF_STATUS_E_INVAL;
+
+free_skb:
+	if (QDF_IS_STATUS_ERROR(qdf_status) && reply_skb)
+		kfree_skb(reply_skb);
+
+	return qdf_status;
+}
+
+/**
+ * hdd_twt_get_capabilities() - Process TWT resume operation
+ * in the received vendor command and send it to firmware
+ * @adapter: adapter pointer
+ * @twt_param_attr: nl attributes
+ *
+ * Handles QCA_WLAN_TWT_RESUME
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_get_capabilities(struct hdd_adapter *adapter,
+				    struct nlattr *twt_param_attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx;
+	QDF_STATUS status;
+	int ret = 0;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret < 0)
+		return -EINVAL;
+
+	if (adapter->device_mode != QDF_STA_MODE &&
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+		return -EOPNOTSUPP;
+	}
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
+			   adapter->vdev_id, adapter->device_mode,
+			   hdd_sta_ctx->conn_info.conn_state);
+		return -EINVAL;
+	}
+
+	if (hdd_is_roaming_in_progress(hdd_ctx))
+		return -EBUSY;
+
+	status = hdd_twt_pack_get_capabilities_resp(adapter);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err_rl("TWT: Get capabilities failed");
+
+	return qdf_status_to_os_return(status);
+}
+
+/**
  * hdd_twt_resume_session - Process TWT resume operation
  * in the received vendor command and send it to firmware
  * @adapter: adapter pointer
@@ -2114,22 +2241,23 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 
 	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION;
 	twt_oper_attr = tb[id];
+	twt_oper = nla_get_u8(twt_oper_attr);
 
 	if (!twt_oper_attr) {
-		hdd_err("TWT parameters NOT specified");
+		hdd_err("TWT operation NOT specified");
 		return -EINVAL;
 	}
 
 	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS;
 	twt_param_attr = tb[id];
 
-	if (!twt_param_attr) {
+	if (!twt_param_attr &&
+	    twt_oper != QCA_WLAN_TWT_GET_CAPABILITIES) {
 		hdd_err("TWT parameters NOT specified");
 		return -EINVAL;
 	}
 
-	twt_oper = nla_get_u8(twt_oper_attr);
-	hdd_debug("twt: TWT Operation 0x%x", twt_oper);
+	hdd_debug("TWT Operation 0x%x", twt_oper);
 
 	switch (twt_oper) {
 	case QCA_WLAN_TWT_SET:
@@ -2149,6 +2277,9 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 		break;
 	case QCA_WLAN_TWT_NUDGE:
 		ret = hdd_twt_nudge_session(adapter, twt_param_attr);
+		break;
+	case QCA_WLAN_TWT_GET_CAPABILITIES:
+		ret = hdd_twt_get_capabilities(adapter, twt_param_attr);
 		break;
 	default:
 		hdd_err("Invalid TWT Operation");
@@ -2204,6 +2335,7 @@ __wlan_hdd_cfg80211_wifi_twt_config(struct wiphy *wiphy,
 	}
 
 	errno = hdd_twt_configure(adapter, tb);
+
 	return errno;
 }
 
