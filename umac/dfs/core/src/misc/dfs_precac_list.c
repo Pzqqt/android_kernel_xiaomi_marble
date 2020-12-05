@@ -35,60 +35,6 @@
 #include <dfs_process_radar_found_ind.h>
 #include <dfs_internal.h>
 
-/* dfs_calculate_bw_for_same_pri_ch() - When the primary channel is a new
- * channel initialize the center channel frequency and bandwidth and when the
- * primary is same as previous channel update the center frequency and the
- * bandwidth.
- * @dfs:               WLAN DFS structure
- * @dfs_max_bw_info:   Structure to store precac tree root channel's
- * information.
- * @index:             The index that is manipulated.
- * @ichan:             The DFS channel structure that holds the primary channel
- *                     number, center frquency and channel bandwidth.
- * @delimiter:         Band gap in MHz from the current primary channel to next
- *                     primary channel.
- */
-static void
-dfs_calculate_bw_for_same_pri_ch(struct wlan_dfs *dfs,
-				 struct dfs_channel_bw *dfs_max_bw_info,
-				 int index,
-				 struct dfs_channel *ichan,
-				 int *delimiter)
-{
-	uint8_t temp_bw = 0;
-	uint16_t tmp_center_freq;
-
-	dfs_max_bw_info[index].dfs_pri_ch_freq = ichan->dfs_ch_freq;
-	tmp_center_freq = ichan->dfs_ch_mhz_freq_seg1;
-
-	if (WLAN_IS_CHAN_MODE_20(ichan)) {
-		temp_bw = DFS_CHWIDTH_20_VAL;
-	} else if (WLAN_IS_CHAN_MODE_40(ichan)) {
-		temp_bw = DFS_CHWIDTH_40_VAL;
-	} else if (WLAN_IS_CHAN_MODE_80(ichan) ||
-		   WLAN_IS_CHAN_MODE_80_80(ichan)) {
-		temp_bw = DFS_CHWIDTH_80_VAL;
-	if (dfs_is_restricted_80p80mhz_supported(dfs) &&
-	    WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(ichan) &&
-	    (ichan->dfs_ch_vhtop_ch_freq_seg1 ==
-	     RESTRICTED_80P80_LEFT_80_CENTER_CHAN) &&
-	    (ichan->dfs_ch_vhtop_ch_freq_seg2 ==
-	     RESTRICTED_80P80_RIGHT_80_CENTER_CHAN)) {
-		temp_bw = DFS_CHWIDTH_165_VAL;
-		tmp_center_freq = RESTRICTED_80P80_CHAN_CENTER_FREQ;
-		}
-	} else if (WLAN_IS_CHAN_MODE_160(ichan)) {
-		temp_bw = DFS_CHWIDTH_160_VAL;
-		tmp_center_freq = ichan->dfs_ch_mhz_freq_seg2;
-	}
-	if (temp_bw > dfs_max_bw_info[index].dfs_max_bw) {
-		dfs_max_bw_info[index].dfs_max_bw = temp_bw;
-		*delimiter = dfs_max_bw_info[index].dfs_pri_ch_freq +
-			     dfs_max_bw_info[index].dfs_max_bw;
-		dfs_max_bw_info[index].dfs_center_ch_freq = tmp_center_freq;
-	}
-}
-
 /* dfs_init_precac_tree_node() - Initialise the preCAC BSTree node with the
  *                               provided values.
  * @node:      Precac_tree_node to be filled.
@@ -802,64 +748,96 @@ static void dfs_fill_max_bw_for_chan(struct wlan_dfs *dfs,
 				     struct dfs_channel_bw *dfs_max_bw_info,
 				     int *num_precac_roots)
 {
+#define HALF_20MHZ_BW 10
 	int i;
-	int n_total_chans = 0;
-	int  n_chanseg_found = 0;
-	int prev_ch_freq = 0;
-	int delimiter = 0;
+	/* Number of channel segments found */
+	int j = 0;
+	qdf_freq_t right_edge_freq = 0;
+	struct regulatory_channel *cur_chan_list;
+	bool restricted_80p80_found = false;
 
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &n_total_chans);
-	for (i = 0; i < n_total_chans; i++) {
-		struct dfs_channel *ichan = NULL, lc;
-		/* The array index of the bandwidth list that needs to be
-		 * updated.
-		 */
-		int index_to_update;
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
 
-		ichan = &lc;
-		dfs_mlme_get_dfs_channels_for_freq
-			(dfs->dfs_pdev_obj,
-			 &ichan->dfs_ch_freq,
-			 &ichan->dfs_ch_flags,
-			 &ichan->dfs_ch_flagext,
-			 &ichan->dfs_ch_ieee,
-			 &ichan->dfs_ch_vhtop_ch_freq_seg1,
-			 &ichan->dfs_ch_vhtop_ch_freq_seg2,
-			 &ichan->dfs_ch_mhz_freq_seg1,
-			 &ichan->dfs_ch_mhz_freq_seg2,
-			 i);
-		if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(ichan))
-			continue;
-		if (ichan->dfs_ch_freq == prev_ch_freq) {
-			/* When the primary channels are common for consecutive
-			 * channels, for example 36HT20, 36HT40, 36HT80,...,
-			 * only the center frequecy and the bandwidth have to be
-			 * updated.
-			 */
-			index_to_update = n_chanseg_found - 1;
-			dfs_calculate_bw_for_same_pri_ch(dfs,
-							 dfs_max_bw_info,
-							 index_to_update,
-							 ichan,
-							 &delimiter);
-		} else if (ichan->dfs_ch_freq < delimiter) {
-			continue;
-		} else {
-			prev_ch_freq = ichan->dfs_ch_freq;
-			/* When the primary channels are unique and consecutive
-			 * like 149HT20, 153HT20, 157HT20,..., the new element
-			 * has to be initialized here.
-			 */
-			index_to_update = n_chanseg_found;
-			dfs_calculate_bw_for_same_pri_ch(dfs,
-							 dfs_max_bw_info,
-							 n_chanseg_found,
-							 ichan,
-							 &delimiter);
-			n_chanseg_found++;
-		}
+	if (!cur_chan_list) {
+		*num_precac_roots = 0;
+		return;
 	}
-	*num_precac_roots = n_chanseg_found;
+
+	if (wlan_reg_get_current_chan_list(dfs->dfs_pdev_obj,
+					   cur_chan_list) !=
+	    QDF_STATUS_SUCCESS) {
+		*num_precac_roots = 0;
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "failed to get curr channel list");
+		qdf_mem_free(cur_chan_list);
+		return;
+	}
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(cur_chan_list[i].center_freq))
+			continue;
+
+		if ((cur_chan_list[i].state == CHANNEL_STATE_DISABLE) &&
+		    !(cur_chan_list[i].nol_chan) &&
+		    !(cur_chan_list[i].nol_history))
+			continue;
+
+		if (cur_chan_list[i].center_freq <= right_edge_freq)
+			continue;
+
+		/* Check if the channel is non-DFS and bandwidth is less
+		 * than 80.
+		 */
+		if (!(cur_chan_list[i].chan_flags & REGULATORY_CHAN_RADAR) &&
+		    cur_chan_list[i].max_bw < DFS_CHWIDTH_80_VAL)
+			continue;
+
+		right_edge_freq =
+			cur_chan_list[i].center_freq -
+			HALF_20MHZ_BW +
+			cur_chan_list[i].max_bw;
+
+		if (dfs_is_restricted_80p80mhz_supported(dfs) &&
+		    IS_WITHIN_RANGE(cur_chan_list[i].center_freq,
+				    RESTRICTED_80P80_CHAN_CENTER_FREQ,
+				    DFS_CHWIDTH_165_VAL/2) &&
+			cur_chan_list[i].max_bw == DFS_CHWIDTH_80_VAL) {
+
+		    /* If channel 132 through 144 is already found as a 80MHz
+		     * channel, then one 80Mhz entry was added. Now since
+		     * channel 149 through 161 is also found, update the old
+		     * entry as a 165Mhz channel.
+		     */
+			if (restricted_80p80_found) {
+				dfs_max_bw_info[j - 1].dfs_max_bw =
+					DFS_CHWIDTH_165_VAL;
+				dfs_max_bw_info[j - 1].dfs_center_ch_freq =
+					RESTRICTED_80P80_CHAN_CENTER_FREQ;
+				right_edge_freq =
+					cur_chan_list[i].center_freq -
+					HALF_20MHZ_BW +
+					cur_chan_list[i].max_bw;
+				continue;
+			} else {
+				restricted_80p80_found = true;
+			}
+		}
+
+		dfs_max_bw_info[j].dfs_pri_ch_freq =
+			cur_chan_list[i].center_freq;
+		dfs_max_bw_info[j].dfs_max_bw =
+			cur_chan_list[i].max_bw;
+		dfs_max_bw_info[j].dfs_center_ch_freq =
+			cur_chan_list[i].center_freq -
+			HALF_20MHZ_BW +
+			(cur_chan_list[i].max_bw) / 2;
+		j++;
+	}
+
+	qdf_mem_free(cur_chan_list);
+
+	*num_precac_roots = j;
+
 	for (i = 0; i < *num_precac_roots; i++)
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "index = %d pri: %d centr: %d bw: %d",
