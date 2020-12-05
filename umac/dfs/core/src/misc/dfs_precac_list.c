@@ -1392,6 +1392,10 @@ void dfs_mark_precac_done_for_freq(struct wlan_dfs *dfs,
 					(precac_entry->bw/2))) {
 				dfs_mark_tree_node_as_cac_done_for_freq
 					(dfs, precac_entry, channels[i]);
+				utils_dfs_deliver_event(dfs->dfs_pdev_obj,
+							channels[i],
+							WLAN_EV_PCAC_COMPLETED);
+
 				break;
 			}
 		}
