@@ -514,10 +514,11 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	}
 
 	/*
-	 * NDI does not need scan from userspace to establish connection
-	 * and it does not support scan request either.
+	 * NDI and monitor mode don't need scan from userspace to establish
+	 * connection and it does not support scan request either.
 	 */
-	if (QDF_NDI_MODE == adapter->device_mode) {
+	if (QDF_NDI_MODE == adapter->device_mode ||
+	    QDF_MONITOR_MODE == adapter->device_mode) {
 		hdd_err("Scan not supported for %s",
 			qdf_opmode_str(adapter->device_mode));
 		return -EINVAL;
