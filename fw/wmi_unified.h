@@ -7095,6 +7095,15 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SET_TXTD_START_TIMESTAMP,
 
+    /*
+     * Parameter to configure and enable/disable features for mesh usecases
+     * bit    | config_mode
+     * -----------------
+     *  0     | Set to 1 to disable BSSID based spatial reuse.
+     *  1-31  | Reserved.
+     */
+    WMI_PDEV_PARAM_SET_MESH_PARAMS,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -27953,31 +27962,31 @@ typedef struct {
 } wmi_pdev_set_diversity_gain_cmd_fixed_param;
 
 /* flags for unit_test_event  */
-#define WMI_UNIT_TEST_EVENT_FLAG_STATUS			0   /* 0 = success, 1 = fail */
-#define WMI_UNIT_TEST_EVENT_FLAG_DONE			1   /* 0 = not done, 1 = done  */
+#define WMI_UNIT_TEST_EVENT_FLAG_STATUS         0   /* 0 = success, 1 = fail */
+#define WMI_UNIT_TEST_EVENT_FLAG_DONE           1   /* 0 = not done, 1 = done  */
 
 /* from bit 2 to bit 31 are reserved */
 
-#define WMI_SET_UNIT_TEST_EVENT_FLAG_STATUS_SUCCESS(flag) do {	\
-        (flag) |= (1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS);	\
+#define WMI_SET_UNIT_TEST_EVENT_FLAG_STATUS_SUCCESS(flag) do { \
+        (flag) |= (1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS); \
      } while (0)
 
-#define WMI_SET_UNIT_TEST_EVENT_FLAG_STATUS_FAIL(flag) do {	\
-        (flag) &= ~(1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS);	\
+#define WMI_SET_UNIT_TEST_EVENT_FLAG_STATUS_FAIL(flag) do { \
+        (flag) &= ~(1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS); \
      } while (0)
 
-#define WMI_GET_UNIT_TEST_EVENT_FLAG_STSTUS(flag)		\
+#define WMI_GET_UNIT_TEST_EVENT_FLAG_STSTUS(flag) \
         ((flag) & (1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS))
 
-#define WMI_SET_UNIT_TEST_EVENT_FLAG_DONE(flag) do {		\
-        (flag) |= (1 << WMI_UNIT_TEST_EVENT_FLAG_DONE);		\
+#define WMI_SET_UNIT_TEST_EVENT_FLAG_DONE(flag) do { \
+        (flag) |= (1 << WMI_UNIT_TEST_EVENT_FLAG_DONE); \
      } while (0)
 
-#define WMI_CLR_UNIT_TEST_EVENT_FLAG_DONE(flag) do {		\
-        (flag) &= ~(1 << WMI_UNIT_TEST_EVENT_FLAG_DONE);	\
+#define WMI_CLR_UNIT_TEST_EVENT_FLAG_DONE(flag) do { \
+        (flag) &= ~(1 << WMI_UNIT_TEST_EVENT_FLAG_DONE); \
      } while (0)
 
-#define WMI_GET_UNIT_TEST_EVENT_FLAG_DONE(flag)			\
+#define WMI_GET_UNIT_TEST_EVENT_FLAG_DONE(flag) \
         ((flag) & (1 << WMI_UNIT_TEST_EVENT_FLAG_DONE))
 
 typedef struct {
