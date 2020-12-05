@@ -87,7 +87,7 @@ ifeq ($(CONFIG_ARCH_SDX20), y)
 CONFIG_MOBILE_ROUTER := y
 endif
 
-ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
+ifeq (y, $(filter y, $(CONFIG_ARCH_SDXPRAIRIE), $(CONFIG_ARCH_SA515)))
 CONFIG_MOBILE_ROUTER := y
 endif
 
@@ -542,7 +542,7 @@ endif
 endif
 
 #Flag to enable SMMU S1 support
-ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
+ifeq (y, $(filter y, $(CONFIG_ARCH_SDXPRAIRIE), $(CONFIG_ARCH_SA515)))
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
@@ -737,7 +737,7 @@ ifeq ($(CONFIG_ARCH_MSM8996), y)
 CONFIG_CHANNEL_HOPPING_ALL_BANDS := y
 endif
 
-ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
+ifeq (y, $(filter y, $(CONFIG_ARCH_SDXPRAIRIE), $(CONFIG_ARCH_SA515)))
 	CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n
 	ifneq ($(CONFIG_SLUB_DEBUG), y)
 		CONFIG_DP_TRACE := n

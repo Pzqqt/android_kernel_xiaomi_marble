@@ -63,7 +63,7 @@ ifeq ($(CONFIG_ARCH_SDX20), y)
 CONFIG_MOBILE_ROUTER := y
 endif
 
-ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
+ifeq (y, $(filter y, $(CONFIG_ARCH_SDXPRAIRIE), $(CONFIG_ARCH_SA515)))
 CONFIG_MOBILE_ROUTER := y
 endif
 
