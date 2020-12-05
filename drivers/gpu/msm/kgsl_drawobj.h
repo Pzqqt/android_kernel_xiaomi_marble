@@ -161,6 +161,7 @@ TIMELINEOBJ(struct kgsl_drawobj *obj)
 	return container_of(obj, struct kgsl_drawobj_timeline, base);
 }
 
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 #define KGSL_FENCE_NAME_LEN 74
 
 struct fence_info {
@@ -171,6 +172,7 @@ struct event_fence_info {
 	struct fence_info *fences;
 	int num_fences;
 };
+#endif
 
 struct event_timeline_info {
 	u64 seqno;
