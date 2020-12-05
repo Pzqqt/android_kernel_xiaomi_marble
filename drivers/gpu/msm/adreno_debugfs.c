@@ -182,6 +182,7 @@ static void sync_event_print(struct seq_file *s,
 				sync_event->context->id, sync_event->timestamp);
 		break;
 	}
+#ifdef CONFIG_QCOM_KGSL_DEBUG
 	case KGSL_CMD_SYNCPOINT_TYPE_FENCE: {
 		int i;
 		struct event_fence_info *info = sync_event->priv;
@@ -191,6 +192,7 @@ static void sync_event_print(struct seq_file *s,
 				info->fences[i].name);
 		break;
 	}
+#endif
 	case KGSL_CMD_SYNCPOINT_TYPE_TIMELINE: {
 		int j;
 		struct event_timeline_info *info = sync_event->priv;
