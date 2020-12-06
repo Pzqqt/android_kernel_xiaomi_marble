@@ -3550,7 +3550,7 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 			qdf_nbuf_data(ppdu_nbuf);
 
 		usr_idx = dp_tx_find_usr_idx_from_peer_id(ppdu_desc,
-							  peer->peer_id);
+							  tx_tid->peer_id);
 
 		user = &ppdu_desc->user[usr_idx];
 
