@@ -102,20 +102,21 @@ ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 	CONFIG_PLD_SNOC_ICNSS_FLAG := y
 endif
 
-ifeq (y,$(findstring y,$(CONFIG_ICNSS2) $(CONFIG_ICNSS2_MODULE)))
+ifeq ($(CONFIG_LITHIUM), y)
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_ROME_IF = ipci
 	CONFIG_PLD_IPCI_ICNSS_FLAG := y
-else
+endif
+else ifeq (y,$(findstring y,$(CONFIG_ICNSS2) $(CONFIG_ICNSS2_MODULE)))
 	CONFIG_ROME_IF = snoc
 	CONFIG_QCA_WIFI_SDIO := n
 	CONFIG_ICNSS2_HELIUM := y
 	CONFIG_PLD_SNOC_ICNSS_FLAG := y
 endif
-endif
 
 ifdef CONFIG_IPCIE_FW_SIM
 	CONFIG_ROME_IF = ipci
+	CONFIG_PLD_IPCI_ICNSS_FLAG := n
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS_MODULE) $(CONFIG_CNSS2) $(CONFIG_CNSS2_MODULE)))
