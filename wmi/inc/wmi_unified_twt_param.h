@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -519,12 +519,16 @@ enum WMI_HOST_NUDGE_TWT_STATUS {
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  * @status: refer to WMI_HOST_PAUSE_TWT_STATUS
+ * @next_twt_tsf_us_lo: TSF lower bits (31:0) of next wake time
+ * @next_twt_tsf_us_hi: TSF higher bits (32:63) of next wake time
  */
 struct wmi_twt_nudge_dialog_complete_event_param {
 	uint32_t vdev_id;
 	uint8_t  peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t dialog_id;
 	enum WMI_HOST_NUDGE_TWT_STATUS status;
+	uint32_t next_twt_tsf_us_lo;
+	uint32_t next_twt_tsf_us_hi;
 };
 
 /**

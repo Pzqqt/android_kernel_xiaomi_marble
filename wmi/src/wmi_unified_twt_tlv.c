@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -703,6 +703,12 @@ static QDF_STATUS extract_twt_nudge_dialog_comp_event_tlv(
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->status = wmi_twt_nudge_status_to_host_twt_status(ev->status);
 	params->dialog_id = ev->dialog_id;
+	params->next_twt_tsf_us_lo = ev->sp_tsf_us_lo;
+	params->next_twt_tsf_us_hi = ev->sp_tsf_us_hi;
+
+	wmi_debug("vdev_id: %d dialog_id: %d tsf hi : %x tsf lo: %x",
+		  params->vdev_id, params->dialog_id,
+		  params->next_twt_tsf_us_hi, params->next_twt_tsf_us_lo);
 
 	return QDF_STATUS_SUCCESS;
 }
