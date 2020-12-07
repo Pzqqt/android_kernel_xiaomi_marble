@@ -222,6 +222,8 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 	p2p_vdev_obj->noa_status = true;
 	p2p_vdev_obj->non_p2p_peer_count = 0;
 	p2p_init_random_mac_vdev(p2p_vdev_obj);
+	qdf_mem_copy(p2p_vdev_obj->prev_action_frame_addr2,
+		     wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE);
 
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
 				WLAN_UMAC_COMP_P2P, p2p_vdev_obj,
@@ -546,6 +548,8 @@ static QDF_STATUS p2p_object_init_params(
 			cfg_get(psoc, CFG_GO_LINK_MONITOR_PERIOD);
 	p2p_soc_obj->param.p2p_device_addr_admin =
 			cfg_get(psoc, CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED);
+	p2p_soc_obj->param.is_random_seq_num_enabled =
+			cfg_get(psoc, CFG_ACTION_FRAME_RANDOM_SEQ_NUM_ENABLED);
 	return QDF_STATUS_SUCCESS;
 }
 
