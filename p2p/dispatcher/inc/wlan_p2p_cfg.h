@@ -98,7 +98,32 @@
 	1, \
 	"derive the P2P MAC address from the primary MAC address")
 
+/*
+ * <ini>
+ * action_frame_random_seq_num_enabled - Enables random sequence number
+ *                                       generation for action frames
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable random sequence number generation for
+ * action frames.
+ *
+ * Related: None.
+ *
+ * Supported Feature: P2P
+ *
+ * Usage: external
+ *
+ * </ini>
+ */
+#define CFG_ACTION_FRAME_RANDOM_SEQ_NUM_ENABLED CFG_INI_BOOL( \
+	"action_frame_random_seq_num_enabled", \
+	1, \
+	"Enable random seq nums for action frames")
+
 #define CFG_P2P_ALL \
+	CFG(CFG_ACTION_FRAME_RANDOM_SEQ_NUM_ENABLED) \
 	CFG(CFG_GO_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_GO_LINK_MONITOR_PERIOD) \
 	CFG(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED)
