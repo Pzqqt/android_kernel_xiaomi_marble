@@ -16109,7 +16109,9 @@ static void csr_update_btm_offload_config(struct mac_context *mac_ctx,
 					  struct csr_roam_session *session)
 {
 	struct wlan_objmgr_peer *peer;
-	bool is_pmf_enabled;
+	struct wlan_objmgr_vdev *vdev;
+	bool is_pmf_enabled, is_open_connection = false;
+	int32_t cipher;
 
 	*btm_offload_config =
 			mac_ctx->mlme_cfg->btm.btm_offload_config;
@@ -16142,16 +16144,35 @@ static void csr_update_btm_offload_config(struct mac_context *mac_ctx,
 	}
 
 	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_SME_ID);
-	sme_debug("get is_pmf_enabled %d for "QDF_MAC_ADDR_FMT, is_pmf_enabled,
-		  QDF_MAC_ADDR_REF(session->pConnectBssDesc->bssId));
 
-	/* If peer does not support PMF in case of OCE/MBO
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_SME_ID);
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+						    session->vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev:%d is NULL", session->vdev_id);
+		return;
+	}
+
+	cipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (!cipher || QDF_HAS_PARAM(cipher, WLAN_CRYPTO_CIPHER_NONE))
+		is_open_connection = true;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	/*
+	 * If peer does not support PMF in case of OCE/MBO
 	 * Connection, Disable BTM offload to firmware.
 	 */
 	if (session->pConnectBssDesc->mbo_oce_enabled_ap &&
-	    !is_pmf_enabled)
+	    (!is_pmf_enabled && !is_open_connection))
 		*btm_offload_config = 0;
+
+	sme_debug("is_open:%d is_pmf_enabled %d btm_offload_cfg:%d for "QDF_MAC_ADDR_FMT,
+		  is_open_connection, is_pmf_enabled,
+		  *btm_offload_config,
+		  QDF_MAC_ADDR_REF(session->pConnectBssDesc->bssId));
 }
 
 /**
