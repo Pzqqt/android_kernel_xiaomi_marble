@@ -4169,7 +4169,7 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 
 	iface = &wma->interfaces[vdev_id];
 
-	status = mlme_get_vdev_bss_peer_mac_addr(iface->vdev, &bss_peer);
+	status = wlan_vdev_get_bss_peer_mac(iface->vdev, &bss_peer);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Failed to get bssid");
 		return;

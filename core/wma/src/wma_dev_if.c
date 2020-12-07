@@ -88,7 +88,8 @@
 #include "wlan_coex_ucfg_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include "wmi_unified_vdev_api.h"
-
+#include <wlan_cm_api.h>
+#include <../../core/src/wlan_cm_vdev_api.h>
 #ifdef DCS_INTERFERENCE_DETECTION
 #include <wlan_dcs_ucfg_api.h>
 #endif
@@ -1277,7 +1278,7 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		struct qdf_mac_addr bss_peer;
 
 		status =
-			mlme_get_vdev_bss_peer_mac_addr(iface->vdev, &bss_peer);
+			wlan_vdev_get_bss_peer_mac(iface->vdev, &bss_peer);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			wma_err("Failed to get bssid");
 			return QDF_STATUS_E_INVAL;
@@ -1997,7 +1998,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, uint32_t vdev_id,
 			return -EINVAL;
 		}
 	} else {
-		qdf_status = mlme_get_vdev_bss_peer_mac_addr(
+		qdf_status = wlan_vdev_get_bss_peer_mac(
 				wma->interfaces[vdev_id].vdev,
 				&bssid);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
@@ -2212,6 +2213,7 @@ void wma_send_vdev_down(tp_wma_handle wma, struct del_bss_resp *resp)
 				      sizeof(*resp), resp);
 }
 
+#ifdef FEATURE_CM_ENABLE
 /**
  * wma_send_vdev_down_req() - handle vdev down req
  * @wma: wma handle
@@ -2219,6 +2221,26 @@ void wma_send_vdev_down(tp_wma_handle wma, struct del_bss_resp *resp)
  *
  * Return: none
  */
+
+static void wma_send_vdev_down_req(tp_wma_handle wma,
+				   struct del_bss_resp *resp)
+{
+	struct wma_txrx_node *iface = &wma->interfaces[resp->vdev_id];
+	enum QDF_OPMODE mode;
+
+	mode = wlan_vdev_mlme_get_opmode(iface->vdev);
+	if (mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE) {
+		/* initiate MLME Down req from CM for STA/CLI */
+		wlan_cm_bss_peer_delete_rsp(iface->vdev, resp->status);
+		qdf_mem_free(resp);
+		return;
+	}
+
+	wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+				      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+				      sizeof(*resp), resp);
+}
+#else
 static void wma_send_vdev_down_req(tp_wma_handle wma,
 				   struct del_bss_resp *resp)
 {
@@ -2228,16 +2250,100 @@ static void wma_send_vdev_down_req(tp_wma_handle wma,
 				      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
 				      sizeof(*resp), resp);
 }
+#endif
+
+static QDF_STATUS
+wma_delete_peer_on_vdev_stop(tp_wma_handle wma, uint8_t vdev_id)
+{
+	uint32_t vdev_stop_type;
+	struct del_bss_resp *vdev_stop_resp;
+	struct wma_txrx_node *iface;
+	QDF_STATUS status;
+	struct qdf_mac_addr bssid;
+
+	iface = &wma->interfaces[vdev_id];
+	status = wlan_vdev_get_bss_peer_mac(iface->vdev, &bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("Failed to get bssid");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = mlme_get_vdev_stop_type(iface->vdev, &vdev_stop_type);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("Failed to get wma req msg type for vdev id %d",
+			vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_stop_resp = qdf_mem_malloc(sizeof(*vdev_stop_resp));
+	if (!vdev_stop_resp)
+		return QDF_STATUS_E_NOMEM;
+
+	if (vdev_stop_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
+		status = wma_remove_peer(wma, bssid.bytes,
+					 vdev_id, true);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto free_params;
+
+		vdev_stop_resp->status = status;
+		vdev_stop_resp->vdev_id = vdev_id;
+		wma_send_vdev_down_req(wma, vdev_stop_resp);
+	} else if (vdev_stop_type == WMA_DELETE_BSS_REQ ||
+	    vdev_stop_type == WMA_SET_LINK_STATE) {
+		uint8_t type;
+
+		/* CCA is required only for sta interface */
+		if (iface->type == WMI_VDEV_TYPE_STA)
+			wma_get_cca_stats(wma, vdev_id);
+		if (vdev_stop_type == WMA_DELETE_BSS_REQ)
+			type = WMA_DELETE_PEER_RSP;
+		else
+			type = WMA_SET_LINK_PEER_RSP;
+
+		vdev_stop_resp->vdev_id = vdev_id;
+		vdev_stop_resp->status = status;
+		status = wma_remove_bss_peer(wma, vdev_id,
+					     vdev_stop_resp, type);
+		if (status) {
+			wma_err("Del bss failed vdev:%d", vdev_id);
+			wma_send_vdev_down_req(wma, vdev_stop_resp);
+			return status;
+		}
+
+		if (wmi_service_enabled(wma->wmi_handle,
+					wmi_service_sync_delete_cmds))
+			return status;
+
+		wma_send_vdev_down_req(wma, vdev_stop_resp);
+	}
+
+	return status;
+
+free_params:
+	qdf_mem_free(vdev_stop_resp);
+	return status;
+}
+
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS
+cm_send_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return QDF_STATUS_E_INVAL;
+
+	return wma_delete_peer_on_vdev_stop(wma, wlan_vdev_get_id(vdev));
+}
 
 QDF_STATUS
 __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wma_txrx_node *iface;
-	int status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	struct qdf_mac_addr bssid;
-	uint32_t vdev_stop_type;
-	struct del_bss_resp *vdev_stop_resp;
+	enum QDF_OPMODE mode;
 
 	if (!wma)
 		return QDF_STATUS_E_INVAL;
@@ -2261,68 +2367,52 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 			 resp_event->vdev_id);
 	}
 
-	status = mlme_get_vdev_bss_peer_mac_addr(iface->vdev, &bssid);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		wma_err("Failed to get bssid");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = mlme_get_vdev_stop_type(iface->vdev, &vdev_stop_type);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		wma_err("Failed to get wma req msg type for vdev id %d",
-			resp_event->vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	vdev_stop_resp = qdf_mem_malloc(sizeof(*vdev_stop_resp));
-	if (!vdev_stop_resp)
-		return QDF_STATUS_E_NOMEM;
-
-	if (vdev_stop_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
-		status = wma_remove_peer(wma, bssid.bytes,
-					 resp_event->vdev_id, true);
-		if (QDF_IS_STATUS_ERROR(status))
-			goto free_params;
-
-		vdev_stop_resp->status = status;
-		vdev_stop_resp->vdev_id = resp_event->vdev_id;
-		wma_send_vdev_down_req(wma, vdev_stop_resp);
-	} else if (vdev_stop_type == WMA_DELETE_BSS_REQ ||
-	    vdev_stop_type == WMA_SET_LINK_STATE) {
-		uint8_t type;
-
-		/* CCA is required only for sta interface */
-		if (iface->type == WMI_VDEV_TYPE_STA)
-			wma_get_cca_stats(wma, resp_event->vdev_id);
-		if (vdev_stop_type == WMA_DELETE_BSS_REQ)
-			type = WMA_DELETE_PEER_RSP;
-		else
-			type = WMA_SET_LINK_PEER_RSP;
-
-		vdev_stop_resp->vdev_id = resp_event->vdev_id;
-		vdev_stop_resp->status = status;
-		status = wma_remove_bss_peer(wma, resp_event->vdev_id,
-					     vdev_stop_resp, type);
-		if (status) {
-			wma_err("Del bss failed vdev:%d", resp_event->vdev_id);
-			wma_send_vdev_down_req(wma, vdev_stop_resp);
-			return status;
+	mode = wlan_vdev_mlme_get_opmode(iface->vdev);
+	if (mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE) {
+		status = wlan_vdev_get_bss_peer_mac(iface->vdev, &bssid);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wma_err("Failed to get bssid");
+			return QDF_STATUS_E_INVAL;
 		}
-
-		if (wmi_service_enabled(wma->wmi_handle,
-					wmi_service_sync_delete_cmds))
-			return status;
-
-		wma_send_vdev_down_req(wma, vdev_stop_resp);
+		/* initiate CM to delete bss peer */
+		return wlan_cm_bss_peer_delete_ind(iface->vdev,  &bssid);
 	}
 
-	return status;
+	return wma_delete_peer_on_vdev_stop(wma, resp_event->vdev_id);
+}
+#else
+QDF_STATUS
+__wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
 
-free_params:
-	qdf_mem_free(vdev_stop_resp);
-	return status;
+	if (!wma)
+		return QDF_STATUS_E_INVAL;
+
+	/* Ignore stop_response in Monitor mode */
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		return  QDF_STATUS_SUCCESS;
+
+	iface = &wma->interfaces[resp_event->vdev_id];
+
+	/* vdev in stopped state, no more waiting for key */
+	iface->is_waiting_for_key = false;
+
+	/*
+	 * Reset the rmfEnabled as there might be MGMT action frames
+	 * sent on this vdev before the next session is established.
+	 */
+	if (iface->rmfEnabled) {
+		iface->rmfEnabled = 0;
+		wma_debug("Reset rmfEnabled for vdev %d",
+			 resp_event->vdev_id);
+	}
+
+	return wma_delete_peer_on_vdev_stop(wma, resp_event->vdev_id);
 }
 
+#endif
 /**
  * wma_handle_vdev_stop_rsp() - handle vdev stop resp
  * @wma: wma handle
@@ -4900,7 +4990,7 @@ void wma_delete_bss(tp_wma_handle wma, uint8_t vdev_id)
 		goto out;
 	}
 
-	status = mlme_get_vdev_bss_peer_mac_addr(iface->vdev, &bssid);
+	status = wlan_vdev_get_bss_peer_mac(iface->vdev, &bssid);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("vdev id %d : failed to get bssid", vdev_id);
 		goto out;

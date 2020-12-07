@@ -297,6 +297,15 @@ struct mlme_legacy_priv {
 #endif
 };
 
+/**
+ * struct del_bss_resp - params required for del bss response
+ * @status: QDF status
+ * @vdev_id: vdev_id
+ */
+struct del_bss_resp {
+	QDF_STATUS status;
+	uint8_t vdev_id;
+};
 
 /**
  * mlme_init_rate_config() - initialize rate configuration of vdev

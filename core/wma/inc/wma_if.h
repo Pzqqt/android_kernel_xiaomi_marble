@@ -379,16 +379,6 @@ struct add_bss_rsp {
 	uint8_t smps_mode;
 };
 
-/**
- * struct del_bss_resp - params required for del bss response
- * @status: QDF status
- * @vdev_id: vdev_id
- */
-struct del_bss_resp {
-	QDF_STATUS status;
-	uint8_t vdev_id;
-};
-
 typedef enum eDelStaReasonCode {
 	HAL_DEL_STA_REASON_CODE_KEEP_ALIVE = 0x1,
 	HAL_DEL_STA_REASON_CODE_TIM_BASED = 0x2,
