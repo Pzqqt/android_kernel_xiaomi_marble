@@ -1511,6 +1511,25 @@ QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
 
 	return status;
 }
+
+QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
+{
+	struct cm_peer_create_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes);
+
+	qdf_mem_free(req);
+
+	return status;
+}
 #endif
 
 static bool lim_is_fast_roam_enabled(struct mac_context *mac_ctx,

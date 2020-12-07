@@ -43,6 +43,7 @@
 #include "../../core/src/vdev_mgr_ops.h"
 #include "wlan_pmo_ucfg_api.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include <wlan_cm_api.h>
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -386,21 +387,40 @@ failure:
 	lim_post_sme_message(mac, LIM_MLM_JOIN_CNF, (uint32_t *) &mlm_join_cnf);
 }
 
-/**
- * lim_process_mlm_post_join_suspend_link() - This function is called after the
- * suspend link while joining off channel.
- * @mac_ctx:    Pointer to Global MAC structure
- * @session:     session
- *
- * This function does following:
- *   Check for suspend state.
- *   If success, proceed with setting link state to receive the
- *   probe response/beacon from intended AP.
- *   Switch to the APs channel.
- *   On an error case, send the MLM_JOIN_CNF with error status.
- *
- * @Return None
- */
+#ifdef FEATURE_CM_ENABLE
+void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
+			       QDF_STATUS status, uint8_t *peer_mac)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
+						    vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	wlan_cm_bss_peer_create_rsp(vdev, status,
+				    (struct qdf_mac_addr *)peer_mac);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
+
+static void
+lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
+				       struct pe_session *session)
+{
+	lim_deactivate_and_change_timer(mac_ctx, eLIM_JOIN_FAIL_TIMER);
+
+	/* assign appropriate sessionId to the timer object */
+	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
+		session->peSessionId;
+
+	lim_post_join_set_link_state_callback(mac_ctx, session->vdev_id,
+					      QDF_STATUS_SUCCESS);
+}
+#else
+void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
+			       QDF_STATUS status, uint8_t *peer_mac)
+{
+	lim_post_join_set_link_state_callback(mac, vdev_id, status);
+}
+
 static void
 lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 				       struct pe_session *session)
@@ -413,6 +433,7 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 
 	wma_add_bss_peer_sta(session->vdev_id, session->bssId);
 }
+#endif
 
 /**
  * lim_process_mlm_join_req() - process mlm join request.

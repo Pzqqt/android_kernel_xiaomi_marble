@@ -1962,7 +1962,7 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 	return status;
 
 end:
-	lim_post_join_set_link_state_callback(mac, vdev_id, status);
+	lim_send_peer_create_resp(mac, vdev_id, status, peer_addr);
 
 	return status;
 }
@@ -3074,9 +3074,8 @@ fail:
 				(peer_create_rsp->status > 0) ? true : false);
 
 	if (mac)
-		lim_post_join_set_link_state_callback(mac,
-						      peer_create_rsp->vdev_id,
-						      status);
+		lim_send_peer_create_resp(mac, peer_create_rsp->vdev_id, status,
+					  peer_mac.bytes);
 
 	return ret;
 }
@@ -3329,8 +3328,9 @@ void wma_hold_req_timer(void *data)
 		if (!mac)
 			goto timer_destroy;
 
-		lim_post_join_set_link_state_callback(mac, tgt_req->vdev_id,
-						      QDF_STATUS_E_FAILURE);
+		lim_send_peer_create_resp(mac, tgt_req->vdev_id,
+					  QDF_STATUS_E_TIMEOUT,
+					  (uint8_t *)tgt_req->user_data);
 
 	} else {
 		wma_err("Unhandled timeout for msg_type:%d and type:%d",

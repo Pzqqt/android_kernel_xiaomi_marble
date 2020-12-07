@@ -1362,6 +1362,8 @@ void
 lim_post_join_set_link_state_callback(struct mac_context *mac, uint32_t vdev_id,
 				      QDF_STATUS status);
 
+void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
+			       QDF_STATUS status, uint8_t *peer_mac);
 /*
  * lim_process_mlm_deauth_req() - This function is called to process
  * MLM_DEAUTH_REQ message from SME

@@ -155,7 +155,33 @@ QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 			    struct qdf_mac_addr *peer_mac)
 {
-	return QDF_STATUS_SUCCESS;
+	struct scheduler_msg msg;
+	QDF_STATUS status;
+	struct cm_peer_create_req *req;
+
+	if (!vdev || !peer_mac)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	req = qdf_mem_malloc(sizeof(*req));
+
+	if (!req)
+		return QDF_STATUS_E_NOMEM;
+
+	req->vdev_id = wlan_vdev_get_id(vdev);
+	qdf_copy_macaddr(&req->peer_mac, peer_mac);
+
+	msg.bodyptr = req;
+	msg.callback = cm_process_peer_create;
+
+	status = scheduler_post_message(QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(req);
+
+	return status;
+
 }
 
 QDF_STATUS
