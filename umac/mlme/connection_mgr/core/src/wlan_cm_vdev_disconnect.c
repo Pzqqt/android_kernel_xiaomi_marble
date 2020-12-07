@@ -20,6 +20,7 @@
  */
 
 #include "wlan_cm_vdev_api.h"
+#include "wlan_mlme_main.h"
 
 QDF_STATUS
 cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
@@ -53,12 +54,6 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS
-cm_send_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
 cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_discon_rsp *rsp)
 {
@@ -67,5 +62,15 @@ cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS cm_send_vdev_down_req(struct wlan_objmgr_vdev *vdev)
 {
-	return QDF_STATUS_SUCCESS;
+	struct del_bss_resp *resp;
+
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp)
+		return QDF_STATUS_E_NOMEM;
+
+	resp->status = QDF_STATUS_SUCCESS;
+	resp->vdev_id = wlan_vdev_get_id(vdev);
+	return wlan_vdev_mlme_sm_deliver_evt(vdev,
+					     WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+					     sizeof(*resp), resp);
 }
