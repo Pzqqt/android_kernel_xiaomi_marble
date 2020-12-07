@@ -987,6 +987,8 @@ struct dp_soc_stats {
 			uint32_t dup_refill_link_desc;
 			/* Incorrect msdu continuation bit in MSDU desc */
 			uint32_t msdu_continuation_err;
+			/* REO OOR eapol drop count */
+			uint32_t reo_err_oor_eapol_drop;
 		} err;
 
 		/* packet count per core - per ring */
