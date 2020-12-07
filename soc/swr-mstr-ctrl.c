@@ -63,7 +63,6 @@
 
 #define SWRS_SCP_INT_STATUS_CLEAR_1 0x40
 #define SWRS_SCP_INT_STATUS_MASK_1 0x41
-#define SWRM_NUM_AUTO_ENUM_SLAVES    6
 
 #define SWRM_MCP_SLV_STATUS_MASK    0x03
 #define SWRM_ROW_CTRL_MASK    0xF8
@@ -120,7 +119,7 @@ enum {
 #define FALSE 0
 
 #define SWRM_MAX_PORT_REG    120
-#define SWRM_MAX_INIT_REG    11
+#define SWRM_MAX_INIT_REG    12
 
 #define MAX_FIFO_RD_FAIL_RETRY 3
 
@@ -771,6 +770,7 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 				bool dir, bool enable)
 {
 	u16 reg_addr = 0;
+	u32 reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL;
 
 	if (!port_num || port_num > 6) {
 		dev_err(swrm->dev, "%s: invalid port: %d\n",
@@ -781,10 +781,12 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 				SWRM_DOUT_DP_PCM_PORT_CTRL(port_num));
 	swr_master_write(swrm, reg_addr, enable);
 
+	if (swrm->version >= SWRM_VERSION_1_7)
+		reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL_V1P7;
+
 	if (enable)
-		swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, 0x1E);
-	else
-		swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, 0x6);
+		reg_val |= SWRM_COMP_FEATURE_CFG_PCM_EN_MASK;
+	swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, reg_val);
 	return 0;
 }
 
@@ -1913,7 +1915,7 @@ static int swrm_find_alert_slave(struct swr_mstr_ctrl *swrm,
 	int i;
 	bool found = false;
 
-	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+	for (i = 0; i < (swrm->num_dev + 1); i++) {
 		if ((status & SWRM_MCP_SLV_STATUS_MASK) == SWR_ALERT) {
 			*devnum = i;
 			found = true;
@@ -1940,7 +1942,7 @@ static void swrm_enable_slave_irq(struct swr_mstr_ctrl *swrm)
 		return;
 	}
 	dev_dbg(swrm->dev, "%s: slave status: 0x%x\n", __func__, status);
-	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+	for (i = 0; i < (swrm->num_dev + 1); i++) {
 		if (status & SWRM_MCP_SLV_STATUS_MASK) {
 			swrm_cmd_fifo_rd_cmd(swrm, &temp, i, 0x0,
 					SWRS_SCP_INT_STATUS_CLEAR_1, 1);
@@ -1961,7 +1963,7 @@ static int swrm_check_slave_change_status(struct swr_mstr_ctrl *swrm,
 	int ret = SWR_NOT_PRESENT;
 
 	if (status != swrm->slave_status) {
-		for (i = 0; i < (swrm->master.num_dev + 1); i++) {
+		for (i = 0; i < (swrm->num_dev + 1); i++) {
 			if ((status & SWRM_MCP_SLV_STATUS_MASK) !=
 			    (swrm->slave_status & SWRM_MCP_SLV_STATUS_MASK)) {
 				ret = (status & SWRM_MCP_SLV_STATUS_MASK);
@@ -2343,10 +2345,7 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 			__func__);
 		return ret;
 	}
-	if (swrm->num_dev)
-		num_dev = swrm->num_dev;
-	else
-		num_dev = mstr->num_dev;
+	num_dev = swrm->num_dev;
 
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
@@ -2489,8 +2488,15 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_CMD_FIFO_CFG;
 	value[len++] = val;
 
+	if (swrm->version >= SWRM_VERSION_1_7) {
+		reg[len] = SWRM_LINK_MANAGER_EE;
+		value[len++] = swrm->ee_val;
+	}
 	reg[len] = SWRM_MCP_BUS_CTRL;
-	value[len++] = 0x2;
+	if (swrm->version < SWRM_VERSION_1_7)
+		value[len++] = 0x2;
+	else
+		value[len++] = 0x2 << swrm->ee_val;
 
 	/* Set IRQ to PULSE */
 	reg[len] = SWRM_COMP_CFG;
@@ -2506,6 +2512,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	reg[len] = SWRM_CPU1_INTERRUPT_EN;
 	value[len++] = swrm->intr_mask;
+
 
 	reg[len] = SWRM_COMP_CFG;
 	value[len++] = 0x03;
@@ -2613,6 +2620,14 @@ static int swrm_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err_pdata_fail;
 	}
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr-master-ee-val",
+				&swrm->ee_val);
+	if (ret) {
+		dev_dbg(&pdev->dev,
+			"%s: ee_val not specified, initialize with default val\n",
+			__func__);
+		swrm->ee_val = 0x1;
+	}
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr_master_id",
 				&swrm->master_id);
 	if (ret) {
@@ -2683,23 +2698,6 @@ static int swrm_probe(struct platform_device *pdev)
 			"qcom,swr-clock-stop-mode0",
 			&swrm->clk_stop_mode0_supp)) {
 		swrm->clk_stop_mode0_supp = FALSE;
-	}
-
-	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
-				   &swrm->num_dev);
-	if (ret) {
-		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
-			__func__, "qcom,swr-num-dev");
-	} else {
-		if (swrm->num_dev > SWRM_NUM_AUTO_ENUM_SLAVES) {
-			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
-				__func__, swrm->num_dev,
-				SWRM_NUM_AUTO_ENUM_SLAVES);
-			ret = -EINVAL;
-			goto err_pdata_fail;
-		} else {
-			swrm->master.num_dev = swrm->num_dev;
-		}
 	}
 
 	/* Parse soundwire port mapping */
@@ -2883,6 +2881,34 @@ static int swrm_probe(struct platform_device *pdev)
 	mutex_lock(&swrm->mlock);
 	swrm_clk_request(swrm, true);
 	swrm->version = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
+
+	swrm->rd_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+				& SWRM_COMP_PARAMS_RD_FIFO_DEPTH) >> 15);
+	swrm->wr_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+				& SWRM_COMP_PARAMS_WR_FIFO_DEPTH) >> 10);
+
+	swrm->num_auto_enum = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+                                & SWRM_COMP_PARAMS_AUTO_ENUM_SLAVES) >> 20);
+	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
+				   &swrm->num_dev);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: Looking up %s property failed\n",
+			__func__, "qcom,swr-num-dev");
+		goto err_pdata_fail;
+	} else {
+		if (swrm->num_dev > swrm->num_auto_enum) {
+			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
+				__func__, swrm->num_dev,
+				swrm->num_auto_enum);
+			ret = -EINVAL;
+			goto err_pdata_fail;
+		} else {
+			dev_dbg(&pdev->dev,
+				"max swr devices expected to attach - %d, supported auto_enum - %d\n",
+				swrm->num_dev, swrm->num_auto_enum);
+		}
+	}
+
 	ret = swrm_master_init(swrm);
 	if (ret < 0) {
 		dev_err(&pdev->dev,
@@ -2898,11 +2924,6 @@ static int swrm_probe(struct platform_device *pdev)
 
 	if (pdev->dev.of_node)
 		of_register_swr_devices(&swrm->master);
-
-	swrm->rd_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
-				& SWRM_COMP_PARAMS_RD_FIFO_DEPTH) >> 15);
-	swrm->wr_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
-				& SWRM_COMP_PARAMS_WR_FIFO_DEPTH) >> 10);
 
 #ifdef CONFIG_DEBUG_FS
 	swrm->debugfs_swrm_dent = debugfs_create_dir(dev_name(&pdev->dev), 0);
@@ -3029,7 +3050,7 @@ static int swrm_runtime_resume(struct device *dev)
 	bool hw_core_err = false, aud_core_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
-	u32 temp = 0;
+	u32 temp = 0, val = 0;
 
 	dev_dbg(dev, "%s: pm_runtime: resume, state:%d\n",
 		__func__, swrm->state);
@@ -3120,8 +3141,12 @@ static int swrm_runtime_resume(struct device *dev)
 				temp &= 0xFFFFFFFD;
 				iowrite32(temp, swrm->swrm_hctl_reg);
 			}
+			if (swrm->version < SWRM_VERSION_1_7)
+				val = 0x2;
+			else
+				val = 0x2 << swrm->ee_val;
 			/*wake up from clock stop*/
-			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, 0x2);
+			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, val);
 			/* clear and enable bus clash interrupt */
 			swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x08);
 			swrm->intr_mask |= 0x08;

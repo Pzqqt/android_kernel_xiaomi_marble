@@ -13,6 +13,7 @@
 #define SWRM_COMP_POWER_CFG                       (SWRM_BASE+0x000C)
 #define SWRM_COMP_FEATURE_CFG                     (SWRM_BASE+0x0010)
 #define SWRM_COMP_STATUS                          (SWRM_BASE+0x0014)
+#define SWRM_LINK_MANAGER_EE                      (SWRM_BASE+0x0018)
 #define SWRM_COMP_PARAMS                          (SWRM_BASE+0x0100)
 #define SWRM_COMP_MASTER_ID                       (SWRM_BASE+0x0104)
 #define MM_SYNC_CONFIG                            (SWRM_BASE+0x0108)
@@ -111,4 +112,10 @@
 
 #define SWRM_COMP_PARAMS_WR_FIFO_DEPTH		0x00007C00
 #define SWRM_COMP_PARAMS_RD_FIFO_DEPTH		0x000F8000
+
+#define SWRM_COMP_FEATURE_CFG_DEFAULT_VAL	0x06
+#define SWRM_COMP_FEATURE_CFG_DEFAULT_VAL_V1P7	0x406
+#define SWRM_COMP_FEATURE_CFG_PCM_EN_MASK	0x18
+
+#define SWRM_COMP_PARAMS_AUTO_ENUM_SLAVES	0x00F00000
 #endif /* _SWRM_REGISTERS_H */

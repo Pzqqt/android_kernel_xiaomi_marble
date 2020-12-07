@@ -40,6 +40,7 @@
 #define SWRM_VERSION_1_5 0x01050000
 #define SWRM_VERSION_1_5_1 0x01050001
 #define SWRM_VERSION_1_6   0x01060000
+#define SWRM_VERSION_1_7   0x01070000
 
 #define SWR_MAX_CH_PER_PORT 8
 
@@ -139,6 +140,7 @@ struct swr_mstr_ctrl {
 	u8 rcmd_id;
 	u8 wcmd_id;
 	u32 master_id;
+	u32 ee_val;
 	u32 dynamic_port_map_supported;
 	void *handle; /* SWR Master handle from client for read and writes */
 	int (*read)(void *handle, int reg);
@@ -192,6 +194,7 @@ struct swr_mstr_ctrl {
 	u32 disable_div2_clk_switch;
 	u32 rd_fifo_depth;
 	u32 wr_fifo_depth;
+	u32 num_auto_enum;
 	bool enable_slave_irq;
 	u64 logical_dev[SWRM_NUM_AUTO_ENUM_SLAVES];
 	u32 is_always_on;
