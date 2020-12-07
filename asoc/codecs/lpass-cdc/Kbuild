@@ -30,6 +30,10 @@ ifeq ($(KERNEL_BUILD), 0)
 		include $(AUDIO_ROOT)/config/konaauto.conf
 		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_WAIPIO), y)
+		include $(AUDIO_ROOT)/config/waipioauto.conf
+		INCS    +=  -include $(AUDIO_ROOT)/config/waipioautoconf.h
+	endif
 	ifeq ($(CONFIG_ARCH_LITO), y)
 		include $(AUDIO_ROOT)/config/litoauto.conf
 		export
@@ -76,6 +80,7 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 # for LPASS_CDC Codec
 ifdef CONFIG_SND_SOC_LPASS_CDC
 	LPASS_CDC_OBJS += lpass-cdc.o
+	LPASS_CDC_OBJS += lpass-cdc-comp.o
 	LPASS_CDC_OBJS += lpass-cdc-utils.o
 	LPASS_CDC_OBJS += lpass-cdc-regmap.o
 	LPASS_CDC_OBJS += lpass-cdc-tables.o

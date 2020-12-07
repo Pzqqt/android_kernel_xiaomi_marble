@@ -25,7 +25,7 @@
 #define VA_AUTO_SUSPEND_DELAY          100 /* delay in msec */
 #define LPASS_CDC_VA_MACRO_MAX_OFFSET 0x1000
 
-#define LPASS_CDC_VA_MACRO_NUM_DECIMATORS 8
+#define LPASS_CDC_VA_MACRO_NUM_DECIMATORS 4
 
 #define LPASS_CDC_VA_MACRO_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
@@ -74,10 +74,6 @@ enum {
 	LPASS_CDC_VA_MACRO_DEC1,
 	LPASS_CDC_VA_MACRO_DEC2,
 	LPASS_CDC_VA_MACRO_DEC3,
-	LPASS_CDC_VA_MACRO_DEC4,
-	LPASS_CDC_VA_MACRO_DEC5,
-	LPASS_CDC_VA_MACRO_DEC6,
-	LPASS_CDC_VA_MACRO_DEC7,
 	LPASS_CDC_VA_MACRO_DEC_MAX,
 };
 
@@ -171,9 +167,8 @@ struct lpass_cdc_va_macro_priv {
 	int va_clk_status;
 	int tx_clk_status;
 	bool lpi_enable;
-	bool register_event_listener;
+	bool clk_div_switch;
 	int dec_mode[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
-	int disable_afe_wakeup_event_listener;
 };
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
@@ -205,10 +200,10 @@ static int lpass_cdc_va_macro_clk_div_get(struct snd_soc_component *component)
 					 &va_priv, __func__))
 		return -EINVAL;
 
-	if ((va_priv->version >= LPASS_CDC_VERSION_2_0)
-		&& !va_priv->lpi_enable
-		&& (va_priv->dmic_clk_div == LPASS_CDC_VA_MACRO_CLK_DIV_16))
-		return LPASS_CDC_VA_MACRO_CLK_DIV_8;
+	if (va_priv->clk_div_switch &&
+	    (va_priv->dmic_clk_div == LPASS_CDC_VA_MACRO_CLK_DIV_16))
+		return LPASS_CDC_VA_MACRO_CLK_DIV_4;
+
 
 	return va_priv->dmic_clk_div;
 }
@@ -350,7 +345,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 	return 0;
 }
 
-static int lpass_cdc_va_macro_swr_clk_event_v2(struct snd_soc_dapm_widget *w,
+static int lpass_cdc_va_macro_swr_clk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
 	struct snd_soc_component *component =
@@ -377,42 +372,6 @@ static int lpass_cdc_va_macro_swr_clk_event_v2(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static int lpass_cdc_va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
-			       struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component =
-			snd_soc_dapm_to_component(w->dapm);
-	int ret = 0;
-	struct device *va_dev = NULL;
-	struct lpass_cdc_va_macro_priv *va_priv = NULL;
-
-	if (!lpass_cdc_va_macro_get_data(component, &va_dev,
-					 &va_priv, __func__))
-		return -EINVAL;
-
-	dev_dbg(va_dev, "%s: event = %d, lpi_enable = %d\n",
-		__func__, event, va_priv->lpi_enable);
-
-	if (!va_priv->lpi_enable)
-		return ret;
-
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		msm_cdc_pinctrl_set_wakeup_capable(
-				va_priv->va_swr_gpio_p, false);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		msm_cdc_pinctrl_set_wakeup_capable(
-				va_priv->va_swr_gpio_p, true);
-		break;
-	default:
-		dev_err(va_priv->dev,
-			"%s: invalid DAPM event %d\n", __func__, event);
-		ret = -EINVAL;
-	}
-	return ret;
-}
-
 static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
@@ -434,28 +393,60 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		if (va_priv->lpass_audio_hw_vote) {
-			ret = digital_cdc_rsc_mgr_hw_vote_enable(
-					va_priv->lpass_audio_hw_vote);
-			if (ret)
-				dev_err(va_dev,
-					"%s: lpass audio hw enable failed\n",
+		if (va_priv->default_clk_id != VA_CORE_CLK) {
+			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					VA_CORE_CLK,
+					true);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock VA_CLK enable failed\n",
 					__func__);
-		}
-		if (va_priv->lpi_enable &&
-		    !va_priv->disable_afe_wakeup_event_listener) {
-			lpass_cdc_register_event_listener(component, true);
-			va_priv->register_event_listener = true;
+				break;
+			}
+			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					TX_CORE_CLK,
+					false);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock TX_CLK disable failed\n",
+					__func__);
+				lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					VA_CORE_CLK,
+					false);
+				break;
+			}
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (va_priv->register_event_listener) {
-			va_priv->register_event_listener = false;
-			lpass_cdc_register_event_listener(component, false);
+		if (va_priv->default_clk_id == TX_CORE_CLK) {
+			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					TX_CORE_CLK,
+					true);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock TX_CLK enable failed\n",
+					__func__);
+				break;
+			}
+			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					VA_CORE_CLK,
+					false);
+			if (ret) {
+				dev_dbg(component->dev,
+					"%s: request clock VA_CLK disable failed\n",
+					__func__);
+				lpass_cdc_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					TX_CORE_CLK,
+					false);
+				break;
+			}
 		}
-		if (va_priv->lpass_audio_hw_vote)
-			digital_cdc_rsc_mgr_hw_vote_disable(
-				va_priv->lpass_audio_hw_vote);
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -465,7 +456,7 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
-static int lpass_cdc_va_macro_tx_swr_clk_event_v2(struct snd_soc_dapm_widget *w,
+static int lpass_cdc_va_macro_tx_swr_clk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
 	struct device *va_dev = NULL;
@@ -548,9 +539,12 @@ static int lpass_cdc_va_macro_tx_va_mclk_enable(
 		(enable ? "enable" : "disable"), va_priv->va_mclk_users);
 
 	if (enable) {
-		if (va_priv->swr_clk_users == 0)
+		if (va_priv->swr_clk_users == 0) {
 			msm_cdc_pinctrl_select_active_state(
 						va_priv->va_swr_gpio_p);
+			msm_cdc_pinctrl_set_wakeup_capable(
+				va_priv->va_swr_gpio_p, false);
+		}
 		clk_tx_ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
@@ -643,9 +637,12 @@ static int lpass_cdc_va_macro_tx_va_mclk_enable(
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   false);
-		if (va_priv->swr_clk_users == 0)
+		if (va_priv->swr_clk_users == 0) {
 			msm_cdc_pinctrl_select_sleep_state(
 						va_priv->va_swr_gpio_p);
+			msm_cdc_pinctrl_set_wakeup_capable(
+				va_priv->va_swr_gpio_p, true);
+		}
 	}
 	return 0;
 
@@ -781,12 +778,10 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 
 	adc_mux_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
-		if (va_priv->version == LPASS_CDC_VERSION_2_1)
-			return true;
+	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 		adc_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				LPASS_CDC_VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		if (adc_n < LPASS_CDC_ADC_MAX)
 			return true;
@@ -824,7 +819,7 @@ static void lpass_cdc_va_macro_tx_hpf_corner_freq_callback(
 		adc_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET *
 			hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				LPASS_CDC_VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		lpass_cdc_clear_amic_tx_hold(component->dev, adc_n);
@@ -909,18 +904,6 @@ static int lpass_cdc_va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	case LPASS_CDC_VA_INP_MUX_ADC_MUX3_CFG0:
 		mic_sel_reg = LPASS_CDC_VA_TX3_TX_PATH_CFG0;
 		break;
-	case LPASS_CDC_VA_INP_MUX_ADC_MUX4_CFG0:
-		mic_sel_reg = LPASS_CDC_VA_TX4_TX_PATH_CFG0;
-		break;
-	case LPASS_CDC_VA_INP_MUX_ADC_MUX5_CFG0:
-		mic_sel_reg = LPASS_CDC_VA_TX5_TX_PATH_CFG0;
-		break;
-	case LPASS_CDC_VA_INP_MUX_ADC_MUX6_CFG0:
-		mic_sel_reg = LPASS_CDC_VA_TX6_TX_PATH_CFG0;
-		break;
-	case LPASS_CDC_VA_INP_MUX_ADC_MUX7_CFG0:
-		mic_sel_reg = LPASS_CDC_VA_TX7_TX_PATH_CFG0;
-		break;
 	default:
 		dev_err(component->dev, "%s: e->reg: 0x%x not expected\n",
 			__func__, e->reg);
@@ -940,7 +923,7 @@ static int lpass_cdc_va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 					LPASS_CDC_VA_TOP_CSR_DMIC_CFG,
 					0x80, 0x00);
 				dmic_clk_reg =
-					LPASS_CDC_TX_TOP_CSR_SWR_DMIC0_CTL +
+					LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL0 +
 						((val - 5)/2) * 4;
 				snd_soc_component_update_bits(component,
 					dmic_clk_reg,
@@ -1142,7 +1125,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		 	 */
 			usleep_range(1000, 1010);
 		}
-		hpf_cut_off_freq = (snd_soc_component_read32(
+		hpf_cut_off_freq = (snd_soc_component_read(
 					component, dec_cfg_reg) &
 				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
@@ -1185,9 +1168,9 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					msecs_to_jiffies(hpf_delay));
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
-			snd_soc_component_read32(component, tx_gain_ctl_reg));
+			snd_soc_component_read(component, tx_gain_ctl_reg));
 		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC) {
 				snd_soc_component_update_bits(component,
 					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
@@ -1246,7 +1229,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		cancel_delayed_work_sync(
 				&va_priv->va_mute_dwork[decimator].dwork);
 		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC)
 				snd_soc_component_update_bits(component,
 					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
@@ -1479,6 +1462,10 @@ static int lpass_cdc_va_macro_hw_params(struct snd_pcm_substream *substream,
 		params_channels(params));
 
 	sample_rate = params_rate(params);
+	if (sample_rate > 16000)
+		va_priv->clk_div_switch = true;
+	else
+		va_priv->clk_div_switch = false;
 	switch (sample_rate) {
 	case 8000:
 		tx_fs_rate = 0;
@@ -1627,14 +1614,6 @@ LPASS_CDC_VA_MACRO_DAPM_ENUM(va_dec2, LPASS_CDC_VA_INP_MUX_ADC_MUX2_CFG1,
 		   0, adc_mux_text);
 LPASS_CDC_VA_MACRO_DAPM_ENUM(va_dec3, LPASS_CDC_VA_INP_MUX_ADC_MUX3_CFG1,
 		   0, adc_mux_text);
-LPASS_CDC_VA_MACRO_DAPM_ENUM(va_dec4, LPASS_CDC_VA_INP_MUX_ADC_MUX4_CFG1,
-		   0, adc_mux_text);
-LPASS_CDC_VA_MACRO_DAPM_ENUM(va_dec5, LPASS_CDC_VA_INP_MUX_ADC_MUX5_CFG1,
-		   0, adc_mux_text);
-LPASS_CDC_VA_MACRO_DAPM_ENUM(va_dec6, LPASS_CDC_VA_INP_MUX_ADC_MUX6_CFG1,
-		   0, adc_mux_text);
-LPASS_CDC_VA_MACRO_DAPM_ENUM(va_dec7, LPASS_CDC_VA_INP_MUX_ADC_MUX7_CFG1,
-		   0, adc_mux_text);
 
 static const char * const dmic_mux_text[] = {
 	"ZERO", "DMIC0", "DMIC1", "DMIC2", "DMIC3",
@@ -1657,26 +1636,10 @@ LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_dmic3, LPASS_CDC_VA_INP_MUX_ADC_MUX3_CFG0,
 			4, dmic_mux_text, snd_soc_dapm_get_enum_double,
 			lpass_cdc_va_macro_put_dec_enum);
 
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_dmic4, LPASS_CDC_VA_INP_MUX_ADC_MUX4_CFG0,
-			4, dmic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_dmic5, LPASS_CDC_VA_INP_MUX_ADC_MUX5_CFG0,
-			4, dmic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_dmic6, LPASS_CDC_VA_INP_MUX_ADC_MUX6_CFG0,
-			4, dmic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_dmic7, LPASS_CDC_VA_INP_MUX_ADC_MUX7_CFG0,
-			4, dmic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
 static const char * const smic_mux_text[] = {
-	"ZERO", "ADC0", "ADC1", "ADC2", "ADC3",
-	"SWR_DMIC0", "SWR_DMIC1", "SWR_DMIC2", "SWR_DMIC3",
-	"SWR_DMIC4", "SWR_DMIC5", "SWR_DMIC6", "SWR_DMIC7"
+	"ZERO", "SWR_MIC0", "SWR_MIC1", "SWR_MIC2", "SWR_MIC3",
+	"SWR_MIC4", "SWR_MIC5", "SWR_MIC6", "SWR_MIC7",
+	"SWR_MIC8", "SWR_MIC9", "SWR_MIC10", "SWR_MIC11"
 };
 
 LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic0, LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0,
@@ -1695,44 +1658,6 @@ LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic3, LPASS_CDC_VA_INP_MUX_ADC_MUX3_CFG0,
 			0, smic_mux_text, snd_soc_dapm_get_enum_double,
 			lpass_cdc_va_macro_put_dec_enum);
 
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic4, LPASS_CDC_VA_INP_MUX_ADC_MUX4_CFG0,
-			0, smic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic5, LPASS_CDC_VA_INP_MUX_ADC_MUX5_CFG0,
-			0, smic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic6, LPASS_CDC_VA_INP_MUX_ADC_MUX6_CFG0,
-			0, smic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic7, LPASS_CDC_VA_INP_MUX_ADC_MUX7_CFG0,
-			0, smic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-static const char * const smic_mux_text_v2[] = {
-	"ZERO", "SWR_MIC0", "SWR_MIC1", "SWR_MIC2", "SWR_MIC3",
-	"SWR_MIC4", "SWR_MIC5", "SWR_MIC6", "SWR_MIC7",
-	"SWR_MIC8", "SWR_MIC9", "SWR_MIC10", "SWR_MIC11"
-};
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic0_v2, LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic1_v2, LPASS_CDC_VA_INP_MUX_ADC_MUX1_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic2_v3, LPASS_CDC_VA_INP_MUX_ADC_MUX2_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
-LPASS_CDC_VA_MACRO_DAPM_ENUM_EXT(va_smic3_v3, LPASS_CDC_VA_INP_MUX_ADC_MUX3_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_va_macro_put_dec_enum);
-
 static const struct snd_kcontrol_new va_aif1_cap_mixer[] = {
 	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
@@ -1741,14 +1666,6 @@ static const struct snd_kcontrol_new va_aif1_cap_mixer[] = {
 	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC2, 1, 0,
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
 	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC4", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC4, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC5", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC5, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC6", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC6, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC7", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC7, 1, 0,
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
 };
 
@@ -1761,14 +1678,6 @@ static const struct snd_kcontrol_new va_aif2_cap_mixer[] = {
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
 	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 1, 0,
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC4", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC4, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC5", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC5, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC6", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC6, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC7", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC7, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
 };
 
 static const struct snd_kcontrol_new va_aif3_cap_mixer[] = {
@@ -1780,203 +1689,6 @@ static const struct snd_kcontrol_new va_aif3_cap_mixer[] = {
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
 	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 1, 0,
 			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC4", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC4, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC5", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC5, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC6", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC6, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC7", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC7, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new va_aif1_cap_mixer_v2[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new va_aif2_cap_mixer_v2[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new va_aif3_cap_mixer_v2[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new va_aif1_cap_mixer_v3[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC2, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new va_aif2_cap_mixer_v3[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC2, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new va_aif3_cap_mixer_v3[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC2, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 1, 0,
-			lpass_cdc_va_macro_tx_mixer_get, lpass_cdc_va_macro_tx_mixer_put),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets_common[] = {
-	SND_SOC_DAPM_AIF_OUT_E("VA_AIF1 CAP", "VA_AIF1 Capture", 0,
-		SND_SOC_NOPM, LPASS_CDC_VA_MACRO_AIF1_CAP, 0,
-		lpass_cdc_va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
-		SND_SOC_DAPM_PRE_PMD),
-
-	SND_SOC_DAPM_AIF_OUT_E("VA_AIF2 CAP", "VA_AIF2 Capture", 0,
-		SND_SOC_NOPM, LPASS_CDC_VA_MACRO_AIF2_CAP, 0,
-		lpass_cdc_va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
-		SND_SOC_DAPM_PRE_PMD),
-
-	SND_SOC_DAPM_AIF_OUT_E("VA_AIF3 CAP", "VA_AIF3 Capture", 0,
-		SND_SOC_NOPM, LPASS_CDC_VA_MACRO_AIF3_CAP, 0,
-		lpass_cdc_va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
-		SND_SOC_DAPM_PRE_PMD),
-
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX0", 0, va_dmic0),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX1", 0, va_dmic1),
-
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX0", 0, va_smic0_v2),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX1", 0, va_smic1_v2),
-
-	SND_SOC_DAPM_INPUT("VA SWR_INPUT"),
-
-	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_micbias,
-		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC0", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC1", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC2", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC3", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC4", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC5", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC6", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("VA DMIC7", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("VA DEC0 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 0,
-			   &va_dec0_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("VA DEC1 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC1, 0,
-			   &va_dec1_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_mclk_event,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets_v2[] = {
-	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_VA_MACRO_AIF1_CAP, 0,
-		va_aif1_cap_mixer_v2, ARRAY_SIZE(va_aif1_cap_mixer_v2)),
-
-	SND_SOC_DAPM_MIXER("VA_AIF2_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_VA_MACRO_AIF2_CAP, 0,
-		va_aif2_cap_mixer_v2, ARRAY_SIZE(va_aif2_cap_mixer_v2)),
-
-	SND_SOC_DAPM_MIXER("VA_AIF3_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_VA_MACRO_AIF3_CAP, 0,
-		va_aif3_cap_mixer_v2, ARRAY_SIZE(va_aif3_cap_mixer_v2)),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_swr_pwr_event_v2,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_tx_swr_clk_event_v2,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_swr_clk_event_v2,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets_v3[] = {
-	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_VA_MACRO_AIF1_CAP, 0,
-		va_aif1_cap_mixer_v3, ARRAY_SIZE(va_aif1_cap_mixer_v3)),
-
-	SND_SOC_DAPM_MIXER("VA_AIF2_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_VA_MACRO_AIF2_CAP, 0,
-		va_aif2_cap_mixer_v3, ARRAY_SIZE(va_aif2_cap_mixer_v3)),
-
-	SND_SOC_DAPM_MIXER("VA_AIF3_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_VA_MACRO_AIF3_CAP, 0,
-		va_aif3_cap_mixer_v3, ARRAY_SIZE(va_aif3_cap_mixer_v3)),
-
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX2", 0, va_dmic2),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX3", 0, va_dmic3),
-
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX2", 0, va_smic2_v3),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX3", 0, va_smic3_v3),
-
-	SND_SOC_DAPM_MUX_E("VA DEC2 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC2, 0,
-			   &va_dec2_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("VA DEC3 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC3, 0,
-			   &va_dec3_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_swr_pwr_event,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets[] = {
@@ -2011,21 +1723,15 @@ static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets[] = {
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX1", 0, va_dmic1),
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX2", 0, va_dmic2),
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX3", 0, va_dmic3),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX4", 0, va_dmic4),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX5", 0, va_dmic5),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX6", 0, va_dmic6),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA DMIC MUX7", 0, va_dmic7),
 
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX0", 0, va_smic0),
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX1", 0, va_smic1),
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX2", 0, va_smic2),
 	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX3", 0, va_smic3),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX4", 0, va_smic4),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX5", 0, va_smic5),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX6", 0, va_smic6),
-	LPASS_CDC_VA_MACRO_DAPM_MUX("VA SMIC MUX7", 0, va_smic7),
 
-	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_INPUT("VA SWR_INPUT"),
+
+	SND_SOC_DAPM_SUPPLY("VA MIC BIAS", SND_SOC_NOPM, 0, 0,
 		lpass_cdc_va_macro_enable_micbias,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -2061,19 +1767,6 @@ static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets[] = {
 		lpass_cdc_va_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_INPUT("VA SWR_ADC0"),
-	SND_SOC_DAPM_INPUT("VA SWR_ADC1"),
-	SND_SOC_DAPM_INPUT("VA SWR_ADC2"),
-	SND_SOC_DAPM_INPUT("VA SWR_ADC3"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC0"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC1"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC2"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC3"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC4"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC5"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC6"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC7"),
-
 	SND_SOC_DAPM_MUX_E("VA DEC0 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC0, 0,
 			   &va_dec0_mux, lpass_cdc_va_macro_enable_dec,
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
@@ -2094,42 +1787,24 @@ static const struct snd_soc_dapm_widget lpass_cdc_va_macro_dapm_widgets[] = {
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_MUX_E("VA DEC4 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC4, 0,
-			   &va_dec4_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
+			      lpass_cdc_va_macro_mclk_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_MUX_E("VA DEC5 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC5, 0,
-			   &va_dec5_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("VA DEC6 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC6, 0,
-			   &va_dec6_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("VA DEC7 MUX", SND_SOC_NOPM, LPASS_CDC_VA_MACRO_DEC7, 0,
-			   &va_dec7_mux, lpass_cdc_va_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", 0, SND_SOC_NOPM, 0, 0,
 			      lpass_cdc_va_macro_swr_pwr_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_mclk_event,
+	SND_SOC_DAPM_SUPPLY_S("VA_TX_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
+			      lpass_cdc_va_macro_tx_swr_clk_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", -1, SND_SOC_NOPM, 0, 0,
+			      lpass_cdc_va_macro_swr_clk_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
-static const struct snd_soc_dapm_widget lpass_cdc_va_macro_wod_dapm_widgets[] = {
-	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_va_macro_mclk_event,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-};
-
-static const struct snd_soc_dapm_route va_audio_map_common[] = {
+static const struct snd_soc_dapm_route va_audio_map[] = {
 	{"VA_AIF1 CAP", NULL, "VA_MCLK"},
 	{"VA_AIF2 CAP", NULL, "VA_MCLK"},
 	{"VA_AIF3 CAP", NULL, "VA_MCLK"},
@@ -2140,12 +1815,18 @@ static const struct snd_soc_dapm_route va_audio_map_common[] = {
 
 	{"VA_AIF1_CAP Mixer", "DEC0", "VA DEC0 MUX"},
 	{"VA_AIF1_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+	{"VA_AIF1_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF1_CAP Mixer", "DEC3", "VA DEC3 MUX"},
 
 	{"VA_AIF2_CAP Mixer", "DEC0", "VA DEC0 MUX"},
 	{"VA_AIF2_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+	{"VA_AIF2_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF2_CAP Mixer", "DEC3", "VA DEC3 MUX"},
 
 	{"VA_AIF3_CAP Mixer", "DEC0", "VA DEC0 MUX"},
 	{"VA_AIF3_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC3", "VA DEC3 MUX"},
 
 	{"VA DEC0 MUX", "MSM_DMIC", "VA DMIC MUX0"},
 	{"VA DMIC MUX0", "DMIC0", "VA DMIC0"},
@@ -2195,31 +1876,6 @@ static const struct snd_soc_dapm_route va_audio_map_common[] = {
 	{"VA SMIC MUX1", "SWR_MIC10", "VA SWR_INPUT"},
 	{"VA SMIC MUX1", "SWR_MIC11", "VA SWR_INPUT"},
 
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
-
-};
-
-static const struct snd_soc_dapm_route va_audio_map_v3[] = {
-	{"VA_AIF1_CAP Mixer", "DEC2", "VA DEC2 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC3", "VA DEC3 MUX"},
-
-	{"VA_AIF2_CAP Mixer", "DEC2", "VA DEC2 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC3", "VA DEC3 MUX"},
-
-	{"VA_AIF3_CAP Mixer", "DEC2", "VA DEC2 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC3", "VA DEC3 MUX"},
-
 	{"VA DEC2 MUX", "MSM_DMIC", "VA DMIC MUX2"},
 	{"VA DMIC MUX2", "DMIC0", "VA DMIC0"},
 	{"VA DMIC MUX2", "DMIC1", "VA DMIC1"},
@@ -2267,254 +1923,12 @@ static const struct snd_soc_dapm_route va_audio_map_v3[] = {
 	{"VA SMIC MUX3", "SWR_MIC9", "VA SWR_INPUT"},
 	{"VA SMIC MUX3", "SWR_MIC10", "VA SWR_INPUT"},
 	{"VA SMIC MUX3", "SWR_MIC11", "VA SWR_INPUT"},
-};
 
-static const struct snd_soc_dapm_route va_audio_map_v2[] = {
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+
 	{"VA_AIF1 CAP", NULL, "VA_SWR_CLK"},
 	{"VA_AIF2 CAP", NULL, "VA_SWR_CLK"},
 	{"VA_AIF3 CAP", NULL, "VA_SWR_CLK"},
-};
-
-static const struct snd_soc_dapm_route va_audio_map[] = {
-	{"VA_AIF1 CAP", NULL, "VA_MCLK"},
-	{"VA_AIF2 CAP", NULL, "VA_MCLK"},
-	{"VA_AIF3 CAP", NULL, "VA_MCLK"},
-
-	{"VA_AIF1 CAP", NULL, "VA_AIF1_CAP Mixer"},
-	{"VA_AIF2 CAP", NULL, "VA_AIF2_CAP Mixer"},
-	{"VA_AIF3 CAP", NULL, "VA_AIF3_CAP Mixer"},
-
-	{"VA_AIF1_CAP Mixer", "DEC0", "VA DEC0 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC1", "VA DEC1 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC2", "VA DEC2 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC3", "VA DEC3 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC4", "VA DEC4 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC5", "VA DEC5 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC6", "VA DEC6 MUX"},
-	{"VA_AIF1_CAP Mixer", "DEC7", "VA DEC7 MUX"},
-
-	{"VA_AIF2_CAP Mixer", "DEC0", "VA DEC0 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC1", "VA DEC1 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC2", "VA DEC2 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC3", "VA DEC3 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC4", "VA DEC4 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC5", "VA DEC5 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC6", "VA DEC6 MUX"},
-	{"VA_AIF2_CAP Mixer", "DEC7", "VA DEC7 MUX"},
-
-	{"VA_AIF3_CAP Mixer", "DEC0", "VA DEC0 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC1", "VA DEC1 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC2", "VA DEC2 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC3", "VA DEC3 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC4", "VA DEC4 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC5", "VA DEC5 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC6", "VA DEC6 MUX"},
-	{"VA_AIF3_CAP Mixer", "DEC7", "VA DEC7 MUX"},
-
-	{"VA DEC0 MUX", "MSM_DMIC", "VA DMIC MUX0"},
-	{"VA DMIC MUX0", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX0", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX0", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX0", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX0", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX0", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX0", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX0", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC0 MUX", "SWR_MIC", "VA SMIC MUX0"},
-	{"VA SMIC MUX0", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX0", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX0", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX0", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX0", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX0", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX0", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX0", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX0", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX0", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX0", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX0", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC1 MUX", "MSM_DMIC", "VA DMIC MUX1"},
-	{"VA DMIC MUX1", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX1", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX1", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX1", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX1", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX1", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX1", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX1", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC1 MUX", "SWR_MIC", "VA SMIC MUX1"},
-	{"VA SMIC MUX1", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX1", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX1", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX1", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX1", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX1", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX1", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX1", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX1", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX1", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX1", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX1", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC2 MUX", "MSM_DMIC", "VA DMIC MUX2"},
-	{"VA DMIC MUX2", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX2", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX2", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX2", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX2", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX2", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX2", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX2", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC2 MUX", "SWR_MIC", "VA SMIC MUX2"},
-	{"VA SMIC MUX2", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX2", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX2", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX2", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX2", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX2", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX2", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX2", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX2", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX2", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX2", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX2", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC3 MUX", "MSM_DMIC", "VA DMIC MUX3"},
-	{"VA DMIC MUX3", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX3", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX3", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX3", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX3", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX3", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX3", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX3", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC3 MUX", "SWR_MIC", "VA SMIC MUX3"},
-	{"VA SMIC MUX3", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX3", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX3", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX3", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX3", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX3", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX3", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX3", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX3", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX3", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX3", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX3", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC4 MUX", "MSM_DMIC", "VA DMIC MUX4"},
-	{"VA DMIC MUX4", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX4", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX4", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX4", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX4", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX4", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX4", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX4", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC4 MUX", "SWR_MIC", "VA SMIC MUX4"},
-	{"VA SMIC MUX4", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX4", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX4", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX4", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX4", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX4", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX4", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX4", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX4", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX4", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX4", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX4", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC5 MUX", "MSM_DMIC", "VA DMIC MUX5"},
-	{"VA DMIC MUX5", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX5", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX5", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX5", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX5", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX5", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX5", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX5", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC5 MUX", "SWR_MIC", "VA SMIC MUX5"},
-	{"VA SMIC MUX5", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX5", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX5", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX5", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX5", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX5", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX5", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX5", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX5", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX5", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX5", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX5", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC6 MUX", "MSM_DMIC", "VA DMIC MUX6"},
-	{"VA DMIC MUX6", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX6", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX6", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX6", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX6", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX6", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX6", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX6", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC6 MUX", "SWR_MIC", "VA SMIC MUX6"},
-	{"VA SMIC MUX6", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX6", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX6", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX6", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX6", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX6", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX6", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX6", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX6", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX6", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX6", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX6", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA DEC7 MUX", "MSM_DMIC", "VA DMIC MUX7"},
-	{"VA DMIC MUX7", "DMIC0", "VA DMIC0"},
-	{"VA DMIC MUX7", "DMIC1", "VA DMIC1"},
-	{"VA DMIC MUX7", "DMIC2", "VA DMIC2"},
-	{"VA DMIC MUX7", "DMIC3", "VA DMIC3"},
-	{"VA DMIC MUX7", "DMIC4", "VA DMIC4"},
-	{"VA DMIC MUX7", "DMIC5", "VA DMIC5"},
-	{"VA DMIC MUX7", "DMIC6", "VA DMIC6"},
-	{"VA DMIC MUX7", "DMIC7", "VA DMIC7"},
-
-	{"VA DEC7 MUX", "SWR_MIC", "VA SMIC MUX7"},
-	{"VA SMIC MUX7", "ADC0", "VA SWR_ADC0"},
-	{"VA SMIC MUX7", "ADC1", "VA SWR_ADC1"},
-	{"VA SMIC MUX7", "ADC2", "VA SWR_ADC2"},
-	{"VA SMIC MUX7", "ADC3", "VA SWR_ADC3"},
-	{"VA SMIC MUX7", "SWR_DMIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX7", "SWR_DMIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX7", "SWR_DMIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX7", "SWR_DMIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX7", "SWR_DMIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX7", "SWR_DMIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX7", "SWR_DMIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX7", "SWR_DMIC7", "VA SWR_MIC7"},
-
-	{"VA SWR_ADC0", NULL, "VA_SWR_PWR"},
-	{"VA SWR_ADC1", NULL, "VA_SWR_PWR"},
-	{"VA SWR_ADC2", NULL, "VA_SWR_PWR"},
-	{"VA SWR_ADC3", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC0", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC1", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC2", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC3", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC4", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC5", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC6", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC7", NULL, "VA_SWR_PWR"},
 };
 
 static const char * const dec_mode_mux_text[] = {
@@ -2538,18 +1952,6 @@ static const struct snd_kcontrol_new lpass_cdc_va_macro_snd_controls[] = {
 	SOC_SINGLE_S8_TLV("VA_DEC3 Volume",
 			  LPASS_CDC_VA_TX3_TX_VOL_CTL,
 			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("VA_DEC4 Volume",
-			  LPASS_CDC_VA_TX4_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("VA_DEC5 Volume",
-			  LPASS_CDC_VA_TX5_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("VA_DEC6 Volume",
-			  LPASS_CDC_VA_TX6_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("VA_DEC7 Volume",
-			  LPASS_CDC_VA_TX7_TX_VOL_CTL,
-			  -84, 40, digital_gain),
 	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
 		lpass_cdc_va_macro_lpi_get, lpass_cdc_va_macro_lpi_put),
 
@@ -2564,27 +1966,6 @@ static const struct snd_kcontrol_new lpass_cdc_va_macro_snd_controls[] = {
 
 	SOC_ENUM_EXT("VA_DEC3 MODE", dec_mode_mux_enum,
 			lpass_cdc_va_macro_dec_mode_get, lpass_cdc_va_macro_dec_mode_put),
-};
-
-static const struct snd_kcontrol_new lpass_cdc_va_macro_snd_controls_common[] =
-{
-	SOC_SINGLE_S8_TLV("VA_DEC0 Volume",
-			  LPASS_CDC_VA_TX0_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("VA_DEC1 Volume",
-			  LPASS_CDC_VA_TX1_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
-		lpass_cdc_va_macro_lpi_get, lpass_cdc_va_macro_lpi_put),
-};
-
-static const struct snd_kcontrol_new lpass_cdc_va_macro_snd_controls_v3[] = {
-	SOC_SINGLE_S8_TLV("VA_DEC2 Volume",
-			  LPASS_CDC_VA_TX2_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("VA_DEC3 Volume",
-			  LPASS_CDC_VA_TX3_TX_VOL_CTL,
-			  -84, 40, digital_gain),
 };
 
 static int lpass_cdc_va_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,
@@ -2659,93 +2040,25 @@ static int lpass_cdc_va_macro_init(struct snd_soc_component *component)
 	}
 
 	va_priv->lpi_enable = false;
-	va_priv->register_event_listener = false;
-
-	if (va_priv->va_without_decimation) {
-		ret = snd_soc_dapm_new_controls(dapm,
-			lpass_cdc_va_macro_wod_dapm_widgets,
-			ARRAY_SIZE(lpass_cdc_va_macro_wod_dapm_widgets));
-		if (ret < 0) {
-			dev_err(va_dev,
-				"%s: Failed to add without dec controls\n",
-				__func__);
-			return ret;
-		}
-		va_priv->component = component;
-		return 0;
-	}
+	//va_priv->register_event_listener = false;
 
 	va_priv->version = lpass_cdc_get_version(va_dev);
-	if (va_priv->version >= LPASS_CDC_VERSION_2_0) {
-		ret = snd_soc_dapm_new_controls(dapm,
-			lpass_cdc_va_macro_dapm_widgets_common,
-			ARRAY_SIZE(lpass_cdc_va_macro_dapm_widgets_common));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add controls\n",
-				__func__);
-			return ret;
-		}
-		if (va_priv->version == LPASS_CDC_VERSION_2_1)
-			ret = snd_soc_dapm_new_controls(dapm,
-				lpass_cdc_va_macro_dapm_widgets_v2,
-				ARRAY_SIZE(lpass_cdc_va_macro_dapm_widgets_v2));
-		else if (va_priv->version == LPASS_CDC_VERSION_2_0)
-			ret = snd_soc_dapm_new_controls(dapm,
-				lpass_cdc_va_macro_dapm_widgets_v3,
-				ARRAY_SIZE(lpass_cdc_va_macro_dapm_widgets_v3));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add controls\n",
-				__func__);
-			return ret;
-		}
-	} else {
-		ret = snd_soc_dapm_new_controls(dapm,
-				lpass_cdc_va_macro_dapm_widgets,
-				ARRAY_SIZE(lpass_cdc_va_macro_dapm_widgets));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add controls\n",
-				__func__);
-			return ret;
-		}
+
+	ret = snd_soc_dapm_new_controls(dapm,
+			lpass_cdc_va_macro_dapm_widgets,
+			ARRAY_SIZE(lpass_cdc_va_macro_dapm_widgets));
+	if (ret < 0) {
+		dev_err(va_dev, "%s: Failed to add controls\n",
+			__func__);
+		return ret;
 	}
 
-	if (va_priv->version >= LPASS_CDC_VERSION_2_0) {
-		ret = snd_soc_dapm_add_routes(dapm,
-					va_audio_map_common,
-					ARRAY_SIZE(va_audio_map_common));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add routes\n",
-				__func__);
-			return ret;
-		}
-		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			ret = snd_soc_dapm_add_routes(dapm,
-					va_audio_map_v3,
-					ARRAY_SIZE(va_audio_map_v3));
-			if (ret < 0) {
-				dev_err(va_dev, "%s: Failed to add routes\n",
-					__func__);
-				return ret;
-			}
-		}
-		if (va_priv->version == LPASS_CDC_VERSION_2_1) {
-			ret = snd_soc_dapm_add_routes(dapm,
-					va_audio_map_v2,
-					ARRAY_SIZE(va_audio_map_v2));
-			if (ret < 0) {
-				dev_err(va_dev, "%s: Failed to add routes\n",
-					__func__);
-				return ret;
-			}
-		}
-	} else {
-		ret = snd_soc_dapm_add_routes(dapm, va_audio_map,
-					ARRAY_SIZE(va_audio_map));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add routes\n",
-				__func__);
-			return ret;
-		}
+	ret = snd_soc_dapm_add_routes(dapm, va_audio_map,
+				ARRAY_SIZE(va_audio_map));
+	if (ret < 0) {
+		dev_err(va_dev, "%s: Failed to add routes\n",
+			__func__);
+		return ret;
 	}
 
 	ret = snd_soc_dapm_new_widgets(dapm->card);
@@ -2753,54 +2066,20 @@ static int lpass_cdc_va_macro_init(struct snd_soc_component *component)
 		dev_err(va_dev, "%s: Failed to add widgets\n", __func__);
 		return ret;
 	}
-	if (va_priv->version >= LPASS_CDC_VERSION_2_0) {
-		ret = snd_soc_add_component_controls(component,
-			lpass_cdc_va_macro_snd_controls_common,
-			ARRAY_SIZE(lpass_cdc_va_macro_snd_controls_common));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add snd_ctls\n",
-				__func__);
-			return ret;
-		}
-		if (va_priv->version == LPASS_CDC_VERSION_2_0)
-			ret = snd_soc_add_component_controls(component,
-				lpass_cdc_va_macro_snd_controls_v3,
-				ARRAY_SIZE(lpass_cdc_va_macro_snd_controls_v3));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add snd_ctls\n",
-				__func__);
-			return ret;
-		}
-	} else {
-		ret = snd_soc_add_component_controls(component,
-				lpass_cdc_va_macro_snd_controls,
-				ARRAY_SIZE(lpass_cdc_va_macro_snd_controls));
-		if (ret < 0) {
-			dev_err(va_dev, "%s: Failed to add snd_ctls\n",
-				__func__);
-			return ret;
-		}
+
+	ret = snd_soc_add_component_controls(component,
+			lpass_cdc_va_macro_snd_controls,
+			ARRAY_SIZE(lpass_cdc_va_macro_snd_controls));
+	if (ret < 0) {
+		dev_err(va_dev, "%s: Failed to add snd_ctls\n",
+			__func__);
+		return ret;
 	}
 
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF1 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF2 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF3 Capture");
-	if (va_priv->version >= LPASS_CDC_VERSION_2_0) {
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_INPUT");
-	} else {
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC0");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC1");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC2");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC3");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC0");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC1");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC2");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC3");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC4");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC5");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC6");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC7");
-	}
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_INPUT");
 	snd_soc_dapm_sync(dapm);
 
 	for (i = 0; i < LPASS_CDC_VA_MACRO_NUM_DECIMATORS; i++) {
@@ -2818,14 +2097,12 @@ static int lpass_cdc_va_macro_init(struct snd_soc_component *component)
 	}
 	va_priv->component = component;
 
-	if (va_priv->version == LPASS_CDC_VERSION_2_1) {
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL0, 0xEE, 0xCC);
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL1, 0xEE, 0xCC);
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL2, 0xEE, 0xCC);
-	}
+	snd_soc_component_update_bits(component,
+		LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL0, 0xEE, 0xCC);
+	snd_soc_component_update_bits(component,
+		LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL1, 0xEE, 0xCC);
+	snd_soc_component_update_bits(component,
+		LPASS_CDC_VA_TOP_CSR_SWR_MIC_CTL2, 0xEE, 0xCC);
 
 	return 0;
 }
@@ -2996,17 +2273,11 @@ static int lpass_cdc_va_macro_reg_wake_irq(struct snd_soc_component *component,
 }
 
 static void lpass_cdc_va_macro_init_ops(struct macro_ops *ops,
-			      char __iomem *va_io_base,
-			      bool va_without_decimation)
+			      char __iomem *va_io_base)
 {
 	memset(ops, 0, sizeof(struct macro_ops));
-	if (!va_without_decimation) {
-		ops->dai_ptr = lpass_cdc_va_macro_dai;
-		ops->num_dais = ARRAY_SIZE(lpass_cdc_va_macro_dai);
-	} else {
-		ops->dai_ptr = NULL;
-		ops->num_dais = 0;
-	}
+	ops->dai_ptr = lpass_cdc_va_macro_dai;
+	ops->num_dais = ARRAY_SIZE(lpass_cdc_va_macro_dai);
 	ops->init = lpass_cdc_va_macro_init;
 	ops->exit = lpass_cdc_va_macro_deinit;
 	ops->io_base = va_io_base;
@@ -3022,7 +2293,6 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	struct lpass_cdc_va_macro_priv *va_priv;
 	u32 va_base_addr, sample_rate = 0;
 	char __iomem *va_io_base;
-	bool va_without_decimation = false;
 	const char *micb_supply_str = "va-vdd-micb-supply";
 	const char *micb_supply_str1 = "va-vdd-micb";
 	const char *micb_voltage_str = "qcom,va-vdd-micb-voltage";
@@ -3032,10 +2302,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
 	u32 is_used_va_swr_gpio = 0;
-	u32 disable_afe_wakeup_event_listener = 0;
 	const char *is_used_va_swr_gpio_dt = "qcom,is-used-swr-gpio";
-	const char *disable_afe_wakeup_event_listener_dt =
-			"qcom,disable-afe-wakeup-event-listener";
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct lpass_cdc_va_macro_priv),
 			    GFP_KERNEL);
@@ -3050,10 +2317,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 			__func__, "reg");
 		return ret;
 	}
-	va_without_decimation = of_property_read_bool(pdev->dev.parent->of_node,
-					"qcom,va-without-decimation");
 
-	va_priv->va_without_decimation = va_without_decimation;
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
@@ -3078,18 +2342,6 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 			is_used_va_swr_gpio = 0;
 		}
 	}
-
-	if (of_find_property(pdev->dev.of_node,
-			     disable_afe_wakeup_event_listener_dt, NULL)) {
-		ret = of_property_read_u32(pdev->dev.of_node,
-					   disable_afe_wakeup_event_listener_dt,
-					   &disable_afe_wakeup_event_listener);
-		if (ret)
-			dev_dbg(&pdev->dev, "%s: error reading %s in dt\n",
-				__func__, disable_afe_wakeup_event_listener_dt);
-	}
-	va_priv->disable_afe_wakeup_event_listener =
-			disable_afe_wakeup_event_listener;
 
 	va_priv->va_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					"qcom,va-swr-gpios", 0);
@@ -3181,7 +2433,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 
 	mutex_init(&va_priv->mclk_lock);
 	dev_set_drvdata(&pdev->dev, va_priv);
-	lpass_cdc_va_macro_init_ops(&ops, va_io_base, va_without_decimation);
+	lpass_cdc_va_macro_init_ops(&ops, va_io_base);
 	ops.clk_id_req = va_priv->default_clk_id;
 	ops.default_clk_id = va_priv->default_clk_id;
 	ret = lpass_cdc_register_macro(&pdev->dev, VA_MACRO, &ops);

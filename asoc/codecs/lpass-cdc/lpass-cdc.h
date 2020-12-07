@@ -20,6 +20,7 @@ enum {
 	RX_MACRO,
 	WSA_MACRO,
 	VA_MACRO,
+	WSA2_MACRO,
 	MAX_MACRO
 };
 

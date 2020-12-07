@@ -108,30 +108,9 @@ static int __lpass_cdc_reg_read(struct lpass_cdc_priv *priv,
 			goto ssr_err;
 	}
 
-	if (priv->version < LPASS_CDC_VERSION_2_0) {
-		/* Request Clk before register access */
-		ret = lpass_cdc_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
-				priv->macro_params[macro_id].default_clk_id,
-				priv->macro_params[macro_id].clk_id_req,
-				true);
-		if (ret < 0) {
-			dev_err_ratelimited(priv->dev,
-				"%s: Failed to enable clock, ret:%d\n",
-				__func__, ret);
-			goto err;
-		}
-	}
-
 	lpass_cdc_ahb_read_device(
 		priv->macro_params[macro_id].io_base, reg, val);
 
-	if (priv->version < LPASS_CDC_VERSION_2_0)
-		lpass_cdc_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
-				priv->macro_params[macro_id].default_clk_id,
-				priv->macro_params[macro_id].clk_id_req,
-				false);
-
-err:
 	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
 		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
@@ -159,30 +138,9 @@ static int __lpass_cdc_reg_write(struct lpass_cdc_priv *priv,
 			goto ssr_err;
 	}
 
-	if (priv->version < LPASS_CDC_VERSION_2_0) {
-		/* Request Clk before register access */
-		ret = lpass_cdc_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
-				priv->macro_params[macro_id].default_clk_id,
-				priv->macro_params[macro_id].clk_id_req,
-				true);
-		if (ret < 0) {
-			dev_err_ratelimited(priv->dev,
-				"%s: Failed to enable clock, ret:%d\n",
-				__func__, ret);
-			goto err;
-		}
-	}
-
 	lpass_cdc_ahb_write_device(
 			priv->macro_params[macro_id].io_base, reg, val);
 
-	if (priv->version < LPASS_CDC_VERSION_2_0)
-		lpass_cdc_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
-				priv->macro_params[macro_id].default_clk_id,
-				priv->macro_params[macro_id].clk_id_req,
-				false);
-
-err:
 	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
 		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
@@ -694,11 +652,9 @@ int lpass_cdc_register_macro(struct device *dev, u16 macro_id,
 	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
 		priv->macro_params[macro_id].clk_div_get = ops->clk_div_get;
 
-	if (priv->version == LPASS_CDC_VERSION_2_1) {
-		if (macro_id == VA_MACRO)
-			priv->macro_params[macro_id].reg_wake_irq =
+	if (macro_id == VA_MACRO)
+		priv->macro_params[macro_id].reg_wake_irq =
 						ops->reg_wake_irq;
-	}
 	priv->num_dais += ops->num_dais;
 	priv->num_macros_registered++;
 	priv->macros_supported[macro_id] = true;
@@ -1047,15 +1003,9 @@ int lpass_cdc_register_wake_irq(struct snd_soc_component *component,
 		return -EINVAL;
 	}
 
-	if (priv->version == LPASS_CDC_VERSION_2_1) {
-		if (priv->macro_params[VA_MACRO].reg_wake_irq)
-			priv->macro_params[VA_MACRO].reg_wake_irq(
-					component, ipc_wakeup);
-	} else {
-		if (priv->macro_params[TX_MACRO].reg_wake_irq)
-			priv->macro_params[TX_MACRO].reg_wake_irq(
-					component, ipc_wakeup);
-	}
+	if (priv->macro_params[VA_MACRO].reg_wake_irq)
+		priv->macro_params[VA_MACRO].reg_wake_irq(
+				component, ipc_wakeup);
 
 	return 0;
 }
@@ -1155,9 +1105,9 @@ static int lpass_cdc_soc_codec_probe(struct snd_soc_component *component)
 	}
 
 	/* Assign lpass_cdc version */
-	core_id_0 = snd_soc_component_read32(component,
+	core_id_0 = snd_soc_component_read(component,
 					LPASS_CDC_VA_TOP_CSR_CORE_ID_0);
-	core_id_1 = snd_soc_component_read32(component,
+	core_id_1 = snd_soc_component_read(component,
 					LPASS_CDC_VA_TOP_CSR_CORE_ID_1);
 	if ((core_id_0 == 0x01) && (core_id_1 == 0x0F))
 		priv->version = LPASS_CDC_VERSION_2_0;
@@ -1314,10 +1264,6 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 			__func__, priv->num_macros, MAX_MACRO);
 		return -EINVAL;
 	}
-	priv->va_without_decimation = of_property_read_bool(pdev->dev.of_node,
-						"qcom,va-without-decimation");
-	if (priv->va_without_decimation)
-		lpass_cdc_reg_access[VA_MACRO] = lpass_cdc_va_top_reg_access;
 
 	ret = of_property_read_u32(pdev->dev.of_node,
 				"qcom,lpass-cdc-version", &priv->version);
@@ -1325,12 +1271,6 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 		dev_dbg(&pdev->dev, "%s:lpass_cdc version not specified\n",
 			__func__);
 		ret = 0;
-	}
-	if (priv->version == LPASS_CDC_VERSION_2_1) {
-		lpass_cdc_reg_access[TX_MACRO] = lpass_cdc_tx_reg_access_v2;
-		lpass_cdc_reg_access[VA_MACRO] = lpass_cdc_va_reg_access_v2;
-	} else if (priv->version == LPASS_CDC_VERSION_2_0) {
-		lpass_cdc_reg_access[VA_MACRO] = lpass_cdc_va_reg_access_v3;
 	}
 
 	priv->dev = &pdev->dev;

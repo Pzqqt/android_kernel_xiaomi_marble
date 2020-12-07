@@ -12,8 +12,6 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
-#include <soc/swr-common.h>
-#include <soc/swr-wcd.h>
 #include <asoc/msm-cdc-pinctrl.h>
 #include "lpass-cdc.h"
 #include "lpass-cdc-registers.h"
@@ -63,25 +61,6 @@ static int lpass_cdc_tx_macro_get_channel_map(struct snd_soc_dai *dai,
 
 #define LPASS_CDC_TX_MACRO_SWR_STRING_LEN 80
 #define LPASS_CDC_TX_MACRO_CHILD_DEVICES_MAX 3
-
-/* Hold instance to soundwire platform device */
-struct lpass_cdc_tx_macro_swr_ctrl_data {
-	struct platform_device *tx_swr_pdev;
-};
-
-struct lpass_cdc_tx_macro_swr_ctrl_platform_data {
-	void *handle; /* holds codec private data */
-	int (*read)(void *handle, int reg);
-	int (*write)(void *handle, int reg, int val);
-	int (*bulk_write)(void *handle, u32 *reg, u32 *val, size_t len);
-	int (*clk)(void *handle, bool enable);
-	int (*core_vote)(void *handle, bool enable);
-	int (*handle_irq)(void *handle,
-			  irqreturn_t (*swrm_irq_handler)(int irq,
-							  void *data),
-			  void *swrm_handle,
-			  int action);
-};
 
 enum {
 	LPASS_CDC_TX_MACRO_AIF_INVALID = 0,
@@ -146,39 +125,25 @@ struct lpass_cdc_tx_macro_priv {
 	struct device *dev;
 	bool dec_active[NUM_DECIMATORS];
 	int tx_mclk_users;
-	int swr_clk_users;
 	bool dapm_mclk_enable;
-	bool reset_swr;
 	struct mutex mclk_lock;
-	struct mutex swr_clk_lock;
 	struct snd_soc_component *component;
-	struct device_node *tx_swr_gpio_p;
-	struct lpass_cdc_tx_macro_swr_ctrl_data *swr_ctrl_data;
-	struct lpass_cdc_tx_macro_swr_ctrl_platform_data swr_plat_data;
-	struct work_struct lpass_cdc_tx_macro_add_child_devices_work;
 	struct hpf_work tx_hpf_work[NUM_DECIMATORS];
 	struct tx_mute_work tx_mute_dwork[NUM_DECIMATORS];
 	u16 dmic_clk_div;
 	u32 version;
-	u32 is_used_tx_swr_gpio;
 	unsigned long active_ch_mask[LPASS_CDC_TX_MACRO_MAX_DAIS];
 	unsigned long active_ch_cnt[LPASS_CDC_TX_MACRO_MAX_DAIS];
 	char __iomem *tx_io_base;
 	struct platform_device *pdev_child_devices
 			[LPASS_CDC_TX_MACRO_CHILD_DEVICES_MAX];
 	int child_count;
-	int tx_swr_clk_cnt;
-	int va_swr_clk_cnt;
-	int va_clk_status;
-	int tx_clk_status;
 	bool bcs_enable;
 	int dec_mode[NUM_DECIMATORS];
 	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
 	int amic_sample_rate;
-	bool lpi_enable;
-	bool register_event_listener;
 };
 
 static bool lpass_cdc_tx_macro_get_data(struct snd_soc_component *component,
@@ -243,9 +208,6 @@ static int lpass_cdc_tx_macro_mclk_enable(
 				TX_START_OFFSET,
 				TX_MAX_OFFSET);
 		if (tx_priv->tx_mclk_users == 0) {
-			/* 9.6MHz MCLK, set value 0x00 if other frequency */
-			regmap_update_bits(regmap,
-				LPASS_CDC_TX_TOP_CSR_FREQ_MCLK, 0x01, 0x01);
 			regmap_update_bits(regmap,
 				LPASS_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x01);
@@ -295,83 +257,6 @@ static int __lpass_cdc_tx_macro_mclk_enable(struct snd_soc_component *component,
 	return lpass_cdc_tx_macro_mclk_enable(tx_priv, enable);
 }
 
-static int lpass_cdc_tx_macro_va_swr_clk_event(struct snd_soc_dapm_widget *w,
-			       struct snd_kcontrol *kcontrol, int event)
-{
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	struct snd_soc_component *component =
-				snd_soc_dapm_to_component(w->dapm);
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	if (SND_SOC_DAPM_EVENT_ON(event))
-		++tx_priv->va_swr_clk_cnt;
-	if (SND_SOC_DAPM_EVENT_OFF(event))
-		--tx_priv->va_swr_clk_cnt;
-
-	return 0;
-}
-
-static int lpass_cdc_tx_macro_tx_swr_clk_event(struct snd_soc_dapm_widget *w,
-			       struct snd_kcontrol *kcontrol, int event)
-{
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	struct snd_soc_component *component =
-				snd_soc_dapm_to_component(w->dapm);
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	if (SND_SOC_DAPM_EVENT_ON(event))
-		++tx_priv->tx_swr_clk_cnt;
-	if (SND_SOC_DAPM_EVENT_OFF(event))
-		--tx_priv->tx_swr_clk_cnt;
-
-	return 0;
-}
-
-static int lpass_cdc_tx_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
-			       struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component =
-			snd_soc_dapm_to_component(w->dapm);
-	int ret = 0;
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	dev_dbg(tx_dev, "%s: event = %d, lpi_enable = %d\n",
-		__func__, event, tx_priv->lpi_enable);
-
-	if (!tx_priv->lpi_enable)
-		return ret;
-
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		if (tx_priv->lpi_enable) {
-			lpass_cdc_register_event_listener(component, true);
-			tx_priv->register_event_listener = true;
-		}
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		if (tx_priv->register_event_listener) {
-			tx_priv->register_event_listener = false;
-			lpass_cdc_register_event_listener(component, false);
-		}
-		break;
-	default:
-		dev_err(tx_priv->dev,
-			"%s: invalid DAPM event %d\n", __func__, event);
-		ret = -EINVAL;
-	}
-	return ret;
-}
-
 static int lpass_cdc_tx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
@@ -418,11 +303,6 @@ static int lpass_cdc_tx_macro_event_handler(struct snd_soc_component *component,
 	switch (event) {
 	case LPASS_CDC_MACRO_EVT_SSR_DOWN:
 		trace_printk("%s, enter SSR down\n", __func__);
-		if (tx_priv->swr_ctrl_data) {
-			swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEVICE_SSR_DOWN, NULL);
-		}
 		if ((!pm_runtime_enabled(tx_dev) ||
 		     !pm_runtime_suspended(tx_dev))) {
 			ret = lpass_cdc_runtime_suspend(tx_dev);
@@ -435,12 +315,6 @@ static int lpass_cdc_tx_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
-		/* reset swr after ssr/pdr */
-		tx_priv->reset_swr = true;
-		if (tx_priv->swr_ctrl_data)
-			swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEVICE_SSR_UP, NULL);
 		break;
 	case LPASS_CDC_MACRO_EVT_CLK_RESET:
 		lpass_cdc_rsc_clk_reset(tx_dev, TX_CORE_CLK);
@@ -461,25 +335,6 @@ static int lpass_cdc_tx_macro_event_handler(struct snd_soc_component *component,
 	return 0;
 }
 
-static int lpass_cdc_tx_macro_reg_wake_irq(struct snd_soc_component *component,
-				 u32 data)
-{
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	u32 ipc_wakeup = data;
-	int ret = 0;
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	if (tx_priv->swr_ctrl_data)
-		ret = swrm_wcd_notify(
-			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_REGISTER_WAKE_IRQ, &ipc_wakeup);
-
-	return ret;
-}
-
 static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 {
 	u16 adc_mux_reg = 0, adc_reg = 0;
@@ -493,12 +348,11 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 
 	adc_mux_reg = LPASS_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
 			LPASS_CDC_TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
-		if (tx_priv->version == LPASS_CDC_VERSION_2_1)
-			return true;
+
+	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 		adc_reg = LPASS_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 			LPASS_CDC_TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				LPASS_CDC_TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 		if (adc_n < LPASS_CDC_ADC_MAX)
 			return true;
@@ -534,7 +388,7 @@ static void lpass_cdc_tx_macro_tx_hpf_corner_freq_callback(struct work_struct *w
 	if (is_amic_enabled(component, hpf_work->decimator)) {
 		adc_reg = LPASS_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 			LPASS_CDC_TX_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				LPASS_CDC_TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		lpass_cdc_clear_amic_tx_hold(component->dev, adc_n);
@@ -672,7 +526,7 @@ static int lpass_cdc_tx_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 					LPASS_CDC_VA_TOP_CSR_DMIC_CFG,
 					0x80, 0x00);
 				dmic_clk_reg =
-					LPASS_CDC_TX_TOP_CSR_SWR_DMIC0_CTL +
+					LPASS_CDC_TX_TOP_CSR_SWR_MIC0_CTL +
 						((val - 5)/2) * 4;
 				snd_soc_component_update_bits(component,
 					dmic_clk_reg,
@@ -828,38 +682,6 @@ static int lpass_cdc_tx_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int lpass_cdc_tx_macro_lpi_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	ucontrol->value.integer.value[0] = tx_priv->lpi_enable;
-
-	return 0;
-}
-
-static int lpass_cdc_tx_macro_lpi_put(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-			snd_soc_kcontrol_component(kcontrol);
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	tx_priv->lpi_enable = ucontrol->value.integer.value[0];
-
-	return 0;
-}
-
 static int lpass_cdc_tx_macro_bcs_ch_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
@@ -948,12 +770,12 @@ static int lpass_cdc_tx_macro_get_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
 		return -EINVAL;
 
-	if (tx_priv->version == LPASS_CDC_VERSION_2_1)
-		value = (snd_soc_component_read32(component,
+	//if (tx_priv->version == LPASS_CDC_VERSION_2_1)
+	value = (snd_soc_component_read(component,
 			LPASS_CDC_VA_TOP_CSR_SWR_CTRL)) & 0x0F;
-	else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-		value = (snd_soc_component_read32(component,
-			LPASS_CDC_TX_TOP_CSR_SWR_CTRL)) & 0x0F;
+	//else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
+	//	value = (snd_soc_component_read32(component,
+	//		LPASS_CDC_TX_TOP_CSR_SWR_CTRL)) & 0x0F;
 
 	ucontrol->value.integer.value[0] = value;
 	return 0;
@@ -976,12 +798,12 @@ static int lpass_cdc_tx_macro_put_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	value = ucontrol->value.integer.value[0];
-	if (tx_priv->version == LPASS_CDC_VERSION_2_1)
-		snd_soc_component_update_bits(component,
+	//if (tx_priv->version == LPASS_CDC_VERSION_2_1)
+	snd_soc_component_update_bits(component,
 			LPASS_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F, value);
-	else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0x0F, value);
+	//else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
+	//	snd_soc_component_update_bits(component,
+	//		LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0x0F, value);
 
 	return 0;
 }
@@ -1062,7 +884,7 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	tx_fs_reg = LPASS_CDC_TX0_TX_PATH_CTL +
 				LPASS_CDC_TX_MACRO_TX_PATH_OFFSET * decimator;
 
-	tx_priv->amic_sample_rate = (snd_soc_component_read32(component,
+	tx_priv->amic_sample_rate = (snd_soc_component_read(component,
 				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
@@ -1086,7 +908,7 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			usleep_range(1000, 1010);
 		}
 		hpf_cut_off_freq = (
-			snd_soc_component_read32(component, dec_cfg_reg) &
+			snd_soc_component_read(component, dec_cfg_reg) &
 				TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 
 		tx_priv->tx_hpf_work[decimator].hpf_cut_off_freq =
@@ -1126,7 +948,7 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
-			      snd_soc_component_read32(component,
+			      snd_soc_component_read(component,
 					tx_gain_ctl_reg));
 		if (tx_priv->bcs_enable) {
 			if (tx_priv->version == LPASS_CDC_VERSION_2_1)
@@ -1146,8 +968,8 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					LPASS_CDC_TX0_TX_PATH_SEC7, 0x40,
 					0x40);
 		}
-		if (tx_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+		//if (tx_priv->version == LPASS_CDC_VERSION_2_0) {
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC) {
 				snd_soc_component_update_bits(component,
 					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
@@ -1171,7 +993,7 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					LPASS_CDC_TX_TOP_CSR_SWR_MIC5_CTL,
 					0x0E, 0x00);
 			}
-		}
+		//}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1207,13 +1029,13 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		cancel_delayed_work_sync(
 				&tx_priv->tx_mute_dwork[decimator].dwork);
 
-		if (tx_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+		//if (tx_priv->version == LPASS_CDC_VERSION_2_0) {
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC)
 				snd_soc_component_update_bits(component,
 					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
 					0x01, 0x00);
-		}
+		//}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
@@ -1228,14 +1050,14 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component,
 				LPASS_CDC_TX0_TX_PATH_SEC7, 0x40, 0x00);
 			tx_priv->bcs_clk_en = false;
-			if (tx_priv->version == LPASS_CDC_VERSION_2_1)
-				snd_soc_component_update_bits(component,
+			//if (tx_priv->version == LPASS_CDC_VERSION_2_1)
+			snd_soc_component_update_bits(component,
 					LPASS_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F,
 					0x00);
-			else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0,
-					0x00);
+			//else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
+			//	snd_soc_component_update_bits(component,
+			//		LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0,
+			//		0x00);
 		}
 		break;
 	}
@@ -1485,9 +1307,9 @@ LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_dmic7, LPASS_CDC_TX_INP_MUX_ADC_MUX7_CFG0,
 			lpass_cdc_tx_macro_put_dec_enum);
 
 static const char * const smic_mux_text[] = {
-	"ZERO", "ADC0", "ADC1", "ADC2", "ADC3", "SWR_DMIC0",
-	"SWR_DMIC1", "SWR_DMIC2", "SWR_DMIC3", "SWR_DMIC4",
-	"SWR_DMIC5", "SWR_DMIC6", "SWR_DMIC7"
+	"ZERO", "SWR_MIC0", "SWR_MIC1", "SWR_MIC2", "SWR_MIC3",
+	"SWR_MIC4", "SWR_MIC5", "SWR_MIC6", "SWR_MIC7",
+	"SWR_MIC8", "SWR_MIC9", "SWR_MIC10", "SWR_MIC11"
 };
 
 LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic0, LPASS_CDC_TX_INP_MUX_ADC_MUX0_CFG0,
@@ -1520,44 +1342,6 @@ LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic6, LPASS_CDC_TX_INP_MUX_ADC_MUX6_CFG0,
 
 LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic7, LPASS_CDC_TX_INP_MUX_ADC_MUX7_CFG0,
 			0, smic_mux_text, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-static const char * const smic_mux_text_v2[] = {
-	"ZERO", "SWR_MIC0", "SWR_MIC1", "SWR_MIC2", "SWR_MIC3",
-	"SWR_MIC4", "SWR_MIC5", "SWR_MIC6", "SWR_MIC7",
-	"SWR_MIC8", "SWR_MIC9", "SWR_MIC10", "SWR_MIC11"
-};
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic0_v2, LPASS_CDC_TX_INP_MUX_ADC_MUX0_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic1_v2, LPASS_CDC_TX_INP_MUX_ADC_MUX1_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic2_v2, LPASS_CDC_TX_INP_MUX_ADC_MUX2_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic3_v2, LPASS_CDC_TX_INP_MUX_ADC_MUX3_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic4_v3, LPASS_CDC_TX_INP_MUX_ADC_MUX4_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic5_v3, LPASS_CDC_TX_INP_MUX_ADC_MUX5_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic6_v3, LPASS_CDC_TX_INP_MUX_ADC_MUX6_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
-			lpass_cdc_tx_macro_put_dec_enum);
-
-LPASS_CDC_TX_MACRO_DAPM_ENUM_EXT(tx_smic7_v3, LPASS_CDC_TX_INP_MUX_ADC_MUX7_CFG0,
-			0, smic_mux_text_v2, snd_soc_dapm_get_enum_double,
 			lpass_cdc_tx_macro_put_dec_enum);
 
 static const char * const dec_mode_mux_text[] = {
@@ -1634,40 +1418,7 @@ static const struct snd_kcontrol_new tx_aif3_cap_mixer[] = {
 			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
 };
 
-static const struct snd_kcontrol_new tx_aif1_cap_mixer_v2[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC0, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC1, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC2, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC3, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new tx_aif2_cap_mixer_v2[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC0, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC1, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC2, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC3, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-};
-
-static const struct snd_kcontrol_new tx_aif3_cap_mixer_v2[] = {
-	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC0, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC1, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC2, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_DEC3, 1, 0,
-			lpass_cdc_tx_macro_tx_mixer_get, lpass_cdc_tx_macro_tx_mixer_put),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets_common[] = {
+static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("TX_AIF1 CAP", "TX_AIF1 Capture", 0,
 		SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF1_CAP, 0),
 
@@ -1677,15 +1428,35 @@ static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets_common[]
 	SND_SOC_DAPM_AIF_OUT("TX_AIF3 CAP", "TX_AIF3 Capture", 0,
 		SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF3_CAP, 0),
 
+	SND_SOC_DAPM_MIXER("TX_AIF1_CAP Mixer", SND_SOC_NOPM,
+		LPASS_CDC_TX_MACRO_AIF1_CAP, 0,
+		tx_aif1_cap_mixer, ARRAY_SIZE(tx_aif1_cap_mixer)),
+
+	SND_SOC_DAPM_MIXER("TX_AIF2_CAP Mixer", SND_SOC_NOPM,
+		LPASS_CDC_TX_MACRO_AIF2_CAP, 0,
+		tx_aif2_cap_mixer, ARRAY_SIZE(tx_aif2_cap_mixer)),
+
+	SND_SOC_DAPM_MIXER("TX_AIF3_CAP Mixer", SND_SOC_NOPM,
+		LPASS_CDC_TX_MACRO_AIF3_CAP, 0,
+		tx_aif3_cap_mixer, ARRAY_SIZE(tx_aif3_cap_mixer)),
+
 	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX0", 0, tx_dmic0),
 	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX1", 0, tx_dmic1),
 	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX2", 0, tx_dmic2),
 	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX3", 0, tx_dmic3),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX4", 0, tx_dmic4),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX5", 0, tx_dmic5),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX6", 0, tx_dmic6),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX7", 0, tx_dmic7),
 
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX0", 0, tx_smic0_v2),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX1", 0, tx_smic1_v2),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX2", 0, tx_smic2_v2),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX3", 0, tx_smic3_v2),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX0", 0, tx_smic0),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX1", 0, tx_smic1),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX2", 0, tx_smic2),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX3", 0, tx_smic3),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX4", 0, tx_smic4),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX5", 0, tx_smic5),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX6", 0, tx_smic6),
+	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX7", 0, tx_smic7),
 
 	SND_SOC_DAPM_SUPPLY("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
 		lpass_cdc_tx_macro_enable_micbias,
@@ -1749,194 +1520,6 @@ static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets_common[]
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("TX_MCLK", 0, SND_SOC_NOPM, 0, 0,
-	lpass_cdc_tx_macro_mclk_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("TX_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
-			      lpass_cdc_tx_macro_swr_pwr_event,
-			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets_v2[] = {
-	SND_SOC_DAPM_MIXER("TX_AIF1_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_TX_MACRO_AIF1_CAP, 0,
-		tx_aif1_cap_mixer_v2, ARRAY_SIZE(tx_aif1_cap_mixer_v2)),
-
-	SND_SOC_DAPM_MIXER("TX_AIF2_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_TX_MACRO_AIF2_CAP, 0,
-		tx_aif2_cap_mixer_v2, ARRAY_SIZE(tx_aif2_cap_mixer_v2)),
-
-	SND_SOC_DAPM_MIXER("TX_AIF3_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_TX_MACRO_AIF3_CAP, 0,
-		tx_aif3_cap_mixer_v2, ARRAY_SIZE(tx_aif3_cap_mixer_v2)),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets_v3[] = {
-	SND_SOC_DAPM_MIXER("TX_AIF1_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_TX_MACRO_AIF1_CAP, 0,
-		tx_aif1_cap_mixer, ARRAY_SIZE(tx_aif1_cap_mixer)),
-
-	SND_SOC_DAPM_MIXER("TX_AIF2_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_TX_MACRO_AIF2_CAP, 0,
-		tx_aif2_cap_mixer, ARRAY_SIZE(tx_aif2_cap_mixer)),
-
-	SND_SOC_DAPM_MIXER("TX_AIF3_CAP Mixer", SND_SOC_NOPM,
-		LPASS_CDC_TX_MACRO_AIF3_CAP, 0,
-		tx_aif3_cap_mixer, ARRAY_SIZE(tx_aif3_cap_mixer)),
-
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX4", 0, tx_dmic4),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX5", 0, tx_dmic5),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX6", 0, tx_dmic6),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX7", 0, tx_dmic7),
-
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX4", 0, tx_smic4_v3),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX5", 0, tx_smic5_v3),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX6", 0, tx_smic6_v3),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX7", 0, tx_smic7_v3),
-
-	SND_SOC_DAPM_MUX_E("TX DEC4 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC4, 0,
-			   &tx_dec4_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("TX DEC5 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC5, 0,
-			   &tx_dec5_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("TX DEC6 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC6, 0,
-			   &tx_dec6_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("TX DEC7 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC7, 0,
-			   &tx_dec7_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			lpass_cdc_tx_macro_tx_swr_clk_event,
-			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			lpass_cdc_tx_macro_va_swr_clk_event,
-			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-};
-
-static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets[] = {
-	SND_SOC_DAPM_AIF_OUT("TX_AIF1 CAP", "TX_AIF1 Capture", 0,
-		SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF1_CAP, 0),
-
-	SND_SOC_DAPM_AIF_OUT("TX_AIF2 CAP", "TX_AIF2 Capture", 0,
-		SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF2_CAP, 0),
-
-	SND_SOC_DAPM_AIF_OUT("TX_AIF3 CAP", "TX_AIF3 Capture", 0,
-		SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF3_CAP, 0),
-
-	SND_SOC_DAPM_MIXER("TX_AIF1_CAP Mixer", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF1_CAP, 0,
-		tx_aif1_cap_mixer, ARRAY_SIZE(tx_aif1_cap_mixer)),
-
-	SND_SOC_DAPM_MIXER("TX_AIF2_CAP Mixer", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF2_CAP, 0,
-		tx_aif2_cap_mixer, ARRAY_SIZE(tx_aif2_cap_mixer)),
-
-	SND_SOC_DAPM_MIXER("TX_AIF3_CAP Mixer", SND_SOC_NOPM, LPASS_CDC_TX_MACRO_AIF3_CAP, 0,
-		tx_aif3_cap_mixer, ARRAY_SIZE(tx_aif3_cap_mixer)),
-
-
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX0", 0, tx_dmic0),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX1", 0, tx_dmic1),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX2", 0, tx_dmic2),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX3", 0, tx_dmic3),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX4", 0, tx_dmic4),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX5", 0, tx_dmic5),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX6", 0, tx_dmic6),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX DMIC MUX7", 0, tx_dmic7),
-
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX0", 0, tx_smic0),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX1", 0, tx_smic1),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX2", 0, tx_smic2),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX3", 0, tx_smic3),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX4", 0, tx_smic4),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX5", 0, tx_smic5),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX6", 0, tx_smic6),
-	LPASS_CDC_TX_MACRO_DAPM_MUX("TX SMIC MUX7", 0, tx_smic7),
-
-	SND_SOC_DAPM_SUPPLY("TX MIC BIAS1", SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_micbias,
-		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("TX DMIC0", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC1", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC2", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC3", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC4", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC5", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC6", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_ADC_E("TX DMIC7", NULL, SND_SOC_NOPM, 0, 0,
-		lpass_cdc_tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
-		SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_INPUT("TX SWR_ADC0"),
-	SND_SOC_DAPM_INPUT("TX SWR_ADC1"),
-	SND_SOC_DAPM_INPUT("TX SWR_ADC2"),
-	SND_SOC_DAPM_INPUT("TX SWR_ADC3"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC0"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC1"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC2"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC3"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC4"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC5"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC6"),
-	SND_SOC_DAPM_INPUT("TX SWR_DMIC7"),
-
-	SND_SOC_DAPM_MUX_E("TX DEC0 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC0, 0,
-			   &tx_dec0_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("TX DEC1 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC1, 0,
-			   &tx_dec1_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("TX DEC2 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC2, 0,
-			   &tx_dec2_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_MUX_E("TX DEC3 MUX", SND_SOC_NOPM,
-			   LPASS_CDC_TX_MACRO_DEC3, 0,
-			   &tx_dec3_mux, lpass_cdc_tx_macro_enable_dec,
-			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
-
 	SND_SOC_DAPM_MUX_E("TX DEC4 MUX", SND_SOC_NOPM,
 			   LPASS_CDC_TX_MACRO_DEC4, 0,
 			   &tx_dec4_mux, lpass_cdc_tx_macro_enable_dec,
@@ -1963,17 +1546,9 @@ static const struct snd_soc_dapm_widget lpass_cdc_tx_macro_dapm_widgets[] = {
 
 	SND_SOC_DAPM_SUPPLY_S("TX_MCLK", 0, SND_SOC_NOPM, 0, 0,
 	lpass_cdc_tx_macro_mclk_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			lpass_cdc_tx_macro_tx_swr_clk_event,
-			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
-	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
-			lpass_cdc_tx_macro_va_swr_clk_event,
-			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
-static const struct snd_soc_dapm_route tx_audio_map_common[] = {
+static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX_AIF1 CAP", NULL, "TX_MCLK"},
 	{"TX_AIF2 CAP", NULL, "TX_MCLK"},
 	{"TX_AIF3 CAP", NULL, "TX_MCLK"},
@@ -1986,21 +1561,37 @@ static const struct snd_soc_dapm_route tx_audio_map_common[] = {
 	{"TX_AIF1_CAP Mixer", "DEC1", "TX DEC1 MUX"},
 	{"TX_AIF1_CAP Mixer", "DEC2", "TX DEC2 MUX"},
 	{"TX_AIF1_CAP Mixer", "DEC3", "TX DEC3 MUX"},
+	{"TX_AIF1_CAP Mixer", "DEC4", "TX DEC4 MUX"},
+	{"TX_AIF1_CAP Mixer", "DEC5", "TX DEC5 MUX"},
+	{"TX_AIF1_CAP Mixer", "DEC6", "TX DEC6 MUX"},
+	{"TX_AIF1_CAP Mixer", "DEC7", "TX DEC7 MUX"},
 
 	{"TX_AIF2_CAP Mixer", "DEC0", "TX DEC0 MUX"},
 	{"TX_AIF2_CAP Mixer", "DEC1", "TX DEC1 MUX"},
 	{"TX_AIF2_CAP Mixer", "DEC2", "TX DEC2 MUX"},
 	{"TX_AIF2_CAP Mixer", "DEC3", "TX DEC3 MUX"},
+	{"TX_AIF2_CAP Mixer", "DEC4", "TX DEC4 MUX"},
+	{"TX_AIF2_CAP Mixer", "DEC5", "TX DEC5 MUX"},
+	{"TX_AIF2_CAP Mixer", "DEC6", "TX DEC6 MUX"},
+	{"TX_AIF2_CAP Mixer", "DEC7", "TX DEC7 MUX"},
 
 	{"TX_AIF3_CAP Mixer", "DEC0", "TX DEC0 MUX"},
 	{"TX_AIF3_CAP Mixer", "DEC1", "TX DEC1 MUX"},
 	{"TX_AIF3_CAP Mixer", "DEC2", "TX DEC2 MUX"},
 	{"TX_AIF3_CAP Mixer", "DEC3", "TX DEC3 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC4", "TX DEC4 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC5", "TX DEC5 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC6", "TX DEC6 MUX"},
+	{"TX_AIF3_CAP Mixer", "DEC7", "TX DEC7 MUX"},
 
 	{"TX DEC0 MUX", NULL, "TX_MCLK"},
 	{"TX DEC1 MUX", NULL, "TX_MCLK"},
 	{"TX DEC2 MUX", NULL, "TX_MCLK"},
 	{"TX DEC3 MUX", NULL, "TX_MCLK"},
+	{"TX DEC4 MUX", NULL, "TX_MCLK"},
+	{"TX DEC5 MUX", NULL, "TX_MCLK"},
+	{"TX DEC6 MUX", NULL, "TX_MCLK"},
+	{"TX DEC7 MUX", NULL, "TX_MCLK"},
 
 	{"TX DEC0 MUX", "MSM_DMIC", "TX DMIC MUX0"},
 	{"TX DMIC MUX0", "DMIC0", "TX DMIC0"},
@@ -2097,28 +1688,6 @@ static const struct snd_soc_dapm_route tx_audio_map_common[] = {
 	{"TX SMIC MUX3", "SWR_MIC9", "TX SWR_INPUT"},
 	{"TX SMIC MUX3", "SWR_MIC10", "TX SWR_INPUT"},
 	{"TX SMIC MUX3", "SWR_MIC11", "TX SWR_INPUT"},
-};
-
-static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
-	{"TX_AIF1_CAP Mixer", "DEC4", "TX DEC4 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC5", "TX DEC5 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC6", "TX DEC6 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC7", "TX DEC7 MUX"},
-
-	{"TX_AIF2_CAP Mixer", "DEC4", "TX DEC4 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC5", "TX DEC5 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC6", "TX DEC6 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC7", "TX DEC7 MUX"},
-
-	{"TX_AIF3_CAP Mixer", "DEC4", "TX DEC4 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC5", "TX DEC5 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC6", "TX DEC6 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC7", "TX DEC7 MUX"},
-
-	{"TX DEC4 MUX", NULL, "TX_MCLK"},
-	{"TX DEC5 MUX", NULL, "TX_MCLK"},
-	{"TX DEC6 MUX", NULL, "TX_MCLK"},
-	{"TX DEC7 MUX", NULL, "TX_MCLK"},
 
 	{"TX DEC4 MUX", "MSM_DMIC", "TX DMIC MUX4"},
 	{"TX DMIC MUX4", "DMIC0", "TX DMIC0"},
@@ -2215,340 +1784,6 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX SMIC MUX7", "SWR_MIC9", "TX SWR_INPUT"},
 	{"TX SMIC MUX7", "SWR_MIC10", "TX SWR_INPUT"},
 	{"TX SMIC MUX7", "SWR_MIC11", "TX SWR_INPUT"},
-
-	{"TX SMIC MUX0", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX1", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX2", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX3", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX4", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX5", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX6", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX7", NULL, "TX_SWR_CLK"},
-
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-	{"TX SWR_INPUT", NULL, "TX_SWR_PWR"},
-};
-
-static const struct snd_soc_dapm_route tx_audio_map[] = {
-	{"TX_AIF1 CAP", NULL, "TX_MCLK"},
-	{"TX_AIF2 CAP", NULL, "TX_MCLK"},
-	{"TX_AIF3 CAP", NULL, "TX_MCLK"},
-
-	{"TX_AIF1 CAP", NULL, "TX_AIF1_CAP Mixer"},
-	{"TX_AIF2 CAP", NULL, "TX_AIF2_CAP Mixer"},
-	{"TX_AIF3 CAP", NULL, "TX_AIF3_CAP Mixer"},
-
-	{"TX_AIF1_CAP Mixer", "DEC0", "TX DEC0 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC1", "TX DEC1 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC2", "TX DEC2 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC3", "TX DEC3 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC4", "TX DEC4 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC5", "TX DEC5 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC6", "TX DEC6 MUX"},
-	{"TX_AIF1_CAP Mixer", "DEC7", "TX DEC7 MUX"},
-
-	{"TX_AIF2_CAP Mixer", "DEC0", "TX DEC0 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC1", "TX DEC1 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC2", "TX DEC2 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC3", "TX DEC3 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC4", "TX DEC4 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC5", "TX DEC5 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC6", "TX DEC6 MUX"},
-	{"TX_AIF2_CAP Mixer", "DEC7", "TX DEC7 MUX"},
-
-	{"TX_AIF3_CAP Mixer", "DEC0", "TX DEC0 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC1", "TX DEC1 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC2", "TX DEC2 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC3", "TX DEC3 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC4", "TX DEC4 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC5", "TX DEC5 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC6", "TX DEC6 MUX"},
-	{"TX_AIF3_CAP Mixer", "DEC7", "TX DEC7 MUX"},
-
-	{"TX DEC0 MUX", NULL, "TX_MCLK"},
-	{"TX DEC1 MUX", NULL, "TX_MCLK"},
-	{"TX DEC2 MUX", NULL, "TX_MCLK"},
-	{"TX DEC3 MUX", NULL, "TX_MCLK"},
-	{"TX DEC4 MUX", NULL, "TX_MCLK"},
-	{"TX DEC5 MUX", NULL, "TX_MCLK"},
-	{"TX DEC6 MUX", NULL, "TX_MCLK"},
-	{"TX DEC7 MUX", NULL, "TX_MCLK"},
-
-	{"TX DEC0 MUX", "MSM_DMIC", "TX DMIC MUX0"},
-	{"TX DMIC MUX0", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX0", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX0", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX0", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX0", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX0", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX0", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX0", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC0 MUX", "SWR_MIC", "TX SMIC MUX0"},
-	{"TX SMIC MUX0", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX0", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX0", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX0", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX0", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX0", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX0", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX0", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX0", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX0", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX0", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX0", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX0", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC1 MUX", "MSM_DMIC", "TX DMIC MUX1"},
-	{"TX DMIC MUX1", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX1", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX1", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX1", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX1", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX1", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX1", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX1", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC1 MUX", "SWR_MIC", "TX SMIC MUX1"},
-	{"TX SMIC MUX1", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX1", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX1", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX1", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX1", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX1", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX1", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX1", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX1", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX1", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX1", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX1", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX1", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC2 MUX", "MSM_DMIC", "TX DMIC MUX2"},
-	{"TX DMIC MUX2", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX2", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX2", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX2", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX2", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX2", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX2", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX2", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC2 MUX", "SWR_MIC", "TX SMIC MUX2"},
-	{"TX SMIC MUX2", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX2", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX2", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX2", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX2", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX2", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX2", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX2", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX2", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX2", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX2", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX2", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX2", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC3 MUX", "MSM_DMIC", "TX DMIC MUX3"},
-	{"TX DMIC MUX3", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX3", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX3", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX3", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX3", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX3", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX3", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX3", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC3 MUX", "SWR_MIC", "TX SMIC MUX3"},
-	{"TX SMIC MUX3", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX3", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX3", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX3", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX3", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX3", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX3", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX3", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX3", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX3", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX3", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX3", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX3", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC4 MUX", "MSM_DMIC", "TX DMIC MUX4"},
-	{"TX DMIC MUX4", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX4", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX4", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX4", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX4", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX4", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX4", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX4", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC4 MUX", "SWR_MIC", "TX SMIC MUX4"},
-	{"TX SMIC MUX4", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX4", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX4", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX4", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX4", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX4", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX4", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX4", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX4", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX4", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX4", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX4", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX4", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC5 MUX", "MSM_DMIC", "TX DMIC MUX5"},
-	{"TX DMIC MUX5", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX5", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX5", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX5", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX5", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX5", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX5", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX5", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC5 MUX", "SWR_MIC", "TX SMIC MUX5"},
-	{"TX SMIC MUX5", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX5", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX5", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX5", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX5", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX5", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX5", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX5", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX5", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX5", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX5", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX5", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX5", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC6 MUX", "MSM_DMIC", "TX DMIC MUX6"},
-	{"TX DMIC MUX6", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX6", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX6", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX6", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX6", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX6", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX6", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX6", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC6 MUX", "SWR_MIC", "TX SMIC MUX6"},
-	{"TX SMIC MUX6", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX6", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX6", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX6", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX6", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX6", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX6", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX6", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX6", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX6", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX6", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX6", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX6", "SWR_DMIC7", "TX SWR_DMIC7"},
-
-	{"TX DEC7 MUX", "MSM_DMIC", "TX DMIC MUX7"},
-	{"TX DMIC MUX7", "DMIC0", "TX DMIC0"},
-	{"TX DMIC MUX7", "DMIC1", "TX DMIC1"},
-	{"TX DMIC MUX7", "DMIC2", "TX DMIC2"},
-	{"TX DMIC MUX7", "DMIC3", "TX DMIC3"},
-	{"TX DMIC MUX7", "DMIC4", "TX DMIC4"},
-	{"TX DMIC MUX7", "DMIC5", "TX DMIC5"},
-	{"TX DMIC MUX7", "DMIC6", "TX DMIC6"},
-	{"TX DMIC MUX7", "DMIC7", "TX DMIC7"},
-
-	{"TX DEC7 MUX", "SWR_MIC", "TX SMIC MUX7"},
-	{"TX SMIC MUX7", NULL, "TX_SWR_CLK"},
-	{"TX SMIC MUX7", "ADC0", "TX SWR_ADC0"},
-	{"TX SMIC MUX7", "ADC1", "TX SWR_ADC1"},
-	{"TX SMIC MUX7", "ADC2", "TX SWR_ADC2"},
-	{"TX SMIC MUX7", "ADC3", "TX SWR_ADC3"},
-	{"TX SMIC MUX7", "SWR_DMIC0", "TX SWR_DMIC0"},
-	{"TX SMIC MUX7", "SWR_DMIC1", "TX SWR_DMIC1"},
-	{"TX SMIC MUX7", "SWR_DMIC2", "TX SWR_DMIC2"},
-	{"TX SMIC MUX7", "SWR_DMIC3", "TX SWR_DMIC3"},
-	{"TX SMIC MUX7", "SWR_DMIC4", "TX SWR_DMIC4"},
-	{"TX SMIC MUX7", "SWR_DMIC5", "TX SWR_DMIC5"},
-	{"TX SMIC MUX7", "SWR_DMIC6", "TX SWR_DMIC6"},
-	{"TX SMIC MUX7", "SWR_DMIC7", "TX SWR_DMIC7"},
-};
-
-static const struct snd_kcontrol_new lpass_cdc_tx_macro_snd_controls_common[] = {
-	SOC_SINGLE_S8_TLV("TX_DEC0 Volume",
-			  LPASS_CDC_TX0_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("TX_DEC1 Volume",
-			  LPASS_CDC_TX1_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("TX_DEC2 Volume",
-			  LPASS_CDC_TX2_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("TX_DEC3 Volume",
-			  LPASS_CDC_TX3_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-
-	SOC_SINGLE_EXT("TX LPI Enable", 0, 0, 1, 0,
-		lpass_cdc_tx_macro_lpi_get, lpass_cdc_tx_macro_lpi_put),
-
-	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_ENUM_EXT("DEC1 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_ENUM_EXT("DEC2 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_ENUM_EXT("DEC3 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_SINGLE_EXT("DEC0_BCS Switch", SND_SOC_NOPM, 0, 1, 0,
-		       lpass_cdc_tx_macro_get_bcs, lpass_cdc_tx_macro_set_bcs),
-
-	SOC_ENUM_EXT("BCS Channel", bcs_ch_enum,
-			lpass_cdc_tx_macro_bcs_ch_get, lpass_cdc_tx_macro_bcs_ch_put),
-
-	SOC_ENUM_EXT("BCS CH_SEL", bcs_ch_sel_mux_enum,
-			lpass_cdc_tx_macro_get_bcs_ch_sel, lpass_cdc_tx_macro_put_bcs_ch_sel),
-};
-
-static const struct snd_kcontrol_new lpass_cdc_tx_macro_snd_controls_v3[] = {
-	SOC_SINGLE_S8_TLV("TX_DEC4 Volume",
-			  LPASS_CDC_TX4_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("TX_DEC5 Volume",
-			  LPASS_CDC_TX5_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("TX_DEC6 Volume",
-			  LPASS_CDC_TX6_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("TX_DEC7 Volume",
-			  LPASS_CDC_TX7_TX_VOL_CTL,
-			  -84, 40, digital_gain),
-
-	SOC_ENUM_EXT("DEC4 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_ENUM_EXT("DEC5 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_ENUM_EXT("DEC6 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
-
-	SOC_ENUM_EXT("DEC7 MODE", dec_mode_mux_enum,
-			lpass_cdc_tx_macro_dec_mode_get, lpass_cdc_tx_macro_dec_mode_put),
 };
 
 static const struct snd_kcontrol_new lpass_cdc_tx_macro_snd_controls[] = {
@@ -2618,226 +1853,13 @@ static const struct snd_kcontrol_new lpass_cdc_tx_macro_snd_controls[] = {
 
 	SOC_SINGLE_EXT("DEC0_BCS Switch", SND_SOC_NOPM, 0, 1, 0,
 		       lpass_cdc_tx_macro_get_bcs, lpass_cdc_tx_macro_set_bcs),
+
+	SOC_ENUM_EXT("BCS Channel", bcs_ch_enum,
+		     lpass_cdc_tx_macro_bcs_ch_get, lpass_cdc_tx_macro_bcs_ch_put),
+
+	SOC_ENUM_EXT("BCS CH_SEL", bcs_ch_sel_mux_enum,
+		     lpass_cdc_tx_macro_get_bcs_ch_sel, lpass_cdc_tx_macro_put_bcs_ch_sel),
 };
-
-static int lpass_cdc_tx_macro_register_event_listener(struct snd_soc_component *component,
-					    bool enable)
-{
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	int ret = 0;
-
-	if (!component)
-		return -EINVAL;
-
-	tx_dev = lpass_cdc_get_device_ptr(component->dev, TX_MACRO);
-	if (!tx_dev) {
-		dev_err(component->dev,
-			"%s: null device for macro!\n", __func__);
-		return -EINVAL;
-	}
-	tx_priv = dev_get_drvdata(tx_dev);
-	if (!tx_priv) {
-		dev_err(component->dev,
-			"%s: priv is null for macro!\n", __func__);
-		return -EINVAL;
-	}
-	if (tx_priv->swr_ctrl_data &&
-		(!tx_priv->tx_swr_clk_cnt || !tx_priv->va_swr_clk_cnt)) {
-		if (enable) {
-			ret = swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_REGISTER_WAKEUP, NULL);
-			msm_cdc_pinctrl_set_wakeup_capable(
-					tx_priv->tx_swr_gpio_p, false);
-		} else {
-			msm_cdc_pinctrl_set_wakeup_capable(
-					tx_priv->tx_swr_gpio_p, true);
-			ret = swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEREGISTER_WAKEUP, NULL);
-		}
-	}
-
-	return ret;
-}
-
-static int lpass_cdc_tx_macro_tx_va_mclk_enable(
-				struct lpass_cdc_tx_macro_priv *tx_priv,
-				struct regmap *regmap, int clk_type,
-				bool enable)
-{
-	int ret = 0, clk_tx_ret = 0;
-
-	trace_printk("%s: clock type %s, enable: %s tx_mclk_users: %d\n",
-		__func__, (clk_type ? "VA_MCLK" : "TX_MCLK"),
-		(enable ? "enable" : "disable"), tx_priv->tx_mclk_users);
-	dev_dbg(tx_priv->dev,
-		"%s: clock type %s, enable: %s tx_mclk_users: %d\n",
-		__func__, (clk_type ? "VA_MCLK" : "TX_MCLK"),
-		(enable ? "enable" : "disable"), tx_priv->tx_mclk_users);
-
-	if (enable) {
-		if (tx_priv->swr_clk_users == 0) {
-			trace_printk("%s: tx swr clk users 0\n", __func__);
-			ret = msm_cdc_pinctrl_select_active_state(
-						tx_priv->tx_swr_gpio_p);
-			if (ret < 0) {
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: tx swr pinctrl enable failed\n",
-					__func__);
-				goto exit;
-			}
-		}
-
-		clk_tx_ret = lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-						   TX_CORE_CLK,
-						   TX_CORE_CLK,
-						   true);
-		if (clk_type == TX_MCLK) {
-			trace_printk("%s: requesting TX_MCLK\n", __func__);
-			ret = lpass_cdc_tx_macro_mclk_enable(tx_priv, 1);
-			if (ret < 0) {
-				if (tx_priv->swr_clk_users == 0)
-					msm_cdc_pinctrl_select_sleep_state(
-							tx_priv->tx_swr_gpio_p);
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: request clock enable failed\n",
-					__func__);
-				goto done;
-			}
-		}
-		if (clk_type == VA_MCLK) {
-			trace_printk("%s: requesting VA_MCLK\n", __func__);
-			ret = lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-							   TX_CORE_CLK,
-							   VA_CORE_CLK,
-							   true);
-			if (ret < 0) {
-				if (tx_priv->swr_clk_users == 0)
-					msm_cdc_pinctrl_select_sleep_state(
-							tx_priv->tx_swr_gpio_p);
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: swr request clk failed\n",
-					__func__);
-				goto done;
-			}
-			lpass_cdc_clk_rsc_fs_gen_request(tx_priv->dev,
-						  true);
-			if (tx_priv->tx_mclk_users == 0) {
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_TOP_CSR_FREQ_MCLK,
-					0x01, 0x01);
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
-					0x01, 0x01);
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
-					0x01, 0x01);
-			}
-			tx_priv->tx_mclk_users++;
-		}
-		if (tx_priv->swr_clk_users == 0) {
-			dev_dbg(tx_priv->dev, "%s: reset_swr: %d\n",
-				__func__, tx_priv->reset_swr);
-			trace_printk("%s: reset_swr: %d\n",
-				__func__, tx_priv->reset_swr);
-			if (tx_priv->reset_swr)
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
-					0x02, 0x02);
-			regmap_update_bits(regmap,
-				LPASS_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
-				0x01, 0x01);
-			if (tx_priv->reset_swr)
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
-					0x02, 0x00);
-			tx_priv->reset_swr = false;
-		}
-		if (!clk_tx_ret)
-			ret = lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-						   TX_CORE_CLK,
-						   TX_CORE_CLK,
-						   false);
-		tx_priv->swr_clk_users++;
-	} else {
-		if (tx_priv->swr_clk_users <= 0) {
-			dev_err_ratelimited(tx_priv->dev,
-				"tx swrm clock users already 0\n");
-			tx_priv->swr_clk_users = 0;
-			return 0;
-		}
-		clk_tx_ret = lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-						   TX_CORE_CLK,
-						   TX_CORE_CLK,
-						   true);
-		tx_priv->swr_clk_users--;
-		if (tx_priv->swr_clk_users == 0)
-			regmap_update_bits(regmap,
-				LPASS_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
-				0x01, 0x00);
-		if (clk_type == TX_MCLK)
-			lpass_cdc_tx_macro_mclk_enable(tx_priv, 0);
-		if (clk_type == VA_MCLK) {
-			if (tx_priv->tx_mclk_users <= 0) {
-				dev_err(tx_priv->dev, "%s: clock already disabled\n",
-						__func__);
-				tx_priv->tx_mclk_users = 0;
-				goto tx_clk;
-			}
-			tx_priv->tx_mclk_users--;
-			if (tx_priv->tx_mclk_users == 0) {
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
-					0x01, 0x00);
-				regmap_update_bits(regmap,
-					LPASS_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
-					0x01, 0x00);
-			}
-
-			lpass_cdc_clk_rsc_fs_gen_request(tx_priv->dev,
-						false);
-			ret = lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-							   TX_CORE_CLK,
-							   VA_CORE_CLK,
-							   false);
-			if (ret < 0) {
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: swr request clk failed\n",
-					__func__);
-				goto done;
-			}
-		}
-tx_clk:
-		if (!clk_tx_ret)
-			ret = lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-						   TX_CORE_CLK,
-						   TX_CORE_CLK,
-						   false);
-		if (tx_priv->swr_clk_users == 0) {
-			ret = msm_cdc_pinctrl_select_sleep_state(
-						tx_priv->tx_swr_gpio_p);
-			if (ret < 0) {
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: tx swr pinctrl disable failed\n",
-					__func__);
-				goto exit;
-			}
-		}
-	}
-	return 0;
-
-done:
-	if (!clk_tx_ret)
-		lpass_cdc_clk_rsc_request_clock(tx_priv->dev,
-				TX_CORE_CLK,
-				TX_CORE_CLK,
-				false);
-exit:
-	trace_printk("%s: exit\n", __func__);
-	return ret;
-}
 
 static int lpass_cdc_tx_macro_clk_div_get(struct snd_soc_component *component)
 {
@@ -2848,116 +1870,6 @@ static int lpass_cdc_tx_macro_clk_div_get(struct snd_soc_component *component)
 		return -EINVAL;
 
 	return tx_priv->dmic_clk_div;
-}
-
-static int lpass_cdc_tx_macro_core_vote(void *handle, bool enable)
-{
-	struct lpass_cdc_tx_macro_priv *tx_priv = (struct lpass_cdc_tx_macro_priv *) handle;
-
-	if (tx_priv == NULL) {
-		pr_err("%s: tx priv data is NULL\n", __func__);
-		return -EINVAL;
-	}
-	if (enable) {
-		pm_runtime_get_sync(tx_priv->dev);
-		pm_runtime_put_autosuspend(tx_priv->dev);
-		pm_runtime_mark_last_busy(tx_priv->dev);
-	}
-
-	if (lpass_cdc_check_core_votes(tx_priv->dev))
-		return 0;
-	else
-		return -EINVAL;
-}
-
-static int lpass_cdc_tx_macro_swrm_clock(void *handle, bool enable)
-{
-	struct lpass_cdc_tx_macro_priv *tx_priv = (struct lpass_cdc_tx_macro_priv *) handle;
-	struct regmap *regmap = dev_get_regmap(tx_priv->dev->parent, NULL);
-	int ret = 0;
-
-	if (regmap == NULL) {
-		dev_err(tx_priv->dev, "%s: regmap is NULL\n", __func__);
-		return -EINVAL;
-	}
-
-	mutex_lock(&tx_priv->swr_clk_lock);
-	trace_printk("%s: swrm clock %s tx_swr_clk_cnt: %d va_swr_clk_cnt: %d\n",
-		__func__,
-		(enable ? "enable" : "disable"),
-		tx_priv->tx_swr_clk_cnt, tx_priv->va_swr_clk_cnt);
-	dev_dbg(tx_priv->dev,
-		"%s: swrm clock %s tx_swr_clk_cnt: %d va_swr_clk_cnt: %d\n",
-		__func__, (enable ? "enable" : "disable"),
-		tx_priv->tx_swr_clk_cnt, tx_priv->va_swr_clk_cnt);
-
-	if (enable) {
-		pm_runtime_get_sync(tx_priv->dev);
-		if (tx_priv->va_swr_clk_cnt && !tx_priv->tx_swr_clk_cnt) {
-			ret = lpass_cdc_tx_macro_tx_va_mclk_enable(tx_priv, regmap,
-							VA_MCLK, enable);
-			if (ret) {
-				pm_runtime_mark_last_busy(tx_priv->dev);
-				pm_runtime_put_autosuspend(tx_priv->dev);
-				goto done;
-			}
-			tx_priv->va_clk_status++;
-		} else {
-			ret = lpass_cdc_tx_macro_tx_va_mclk_enable(tx_priv, regmap,
-							TX_MCLK, enable);
-			if (ret) {
-				pm_runtime_mark_last_busy(tx_priv->dev);
-				pm_runtime_put_autosuspend(tx_priv->dev);
-				goto done;
-			}
-			tx_priv->tx_clk_status++;
-		}
-		pm_runtime_mark_last_busy(tx_priv->dev);
-		pm_runtime_put_autosuspend(tx_priv->dev);
-	} else {
-		if (tx_priv->va_clk_status && !tx_priv->tx_clk_status) {
-			ret = lpass_cdc_tx_macro_tx_va_mclk_enable(tx_priv, regmap,
-							VA_MCLK, enable);
-			if (ret)
-				goto done;
-			--tx_priv->va_clk_status;
-		} else if (!tx_priv->va_clk_status && tx_priv->tx_clk_status) {
-			ret = lpass_cdc_tx_macro_tx_va_mclk_enable(tx_priv, regmap,
-							TX_MCLK, enable);
-			if (ret)
-				goto done;
-			--tx_priv->tx_clk_status;
-		} else if (tx_priv->va_clk_status && tx_priv->tx_clk_status) {
-			if (!tx_priv->va_swr_clk_cnt && tx_priv->tx_swr_clk_cnt) {
-				ret = lpass_cdc_tx_macro_tx_va_mclk_enable(tx_priv, regmap,
-								VA_MCLK, enable);
-				if (ret)
-					goto done;
-				--tx_priv->va_clk_status;
-			} else {
-				ret = lpass_cdc_tx_macro_tx_va_mclk_enable(tx_priv, regmap,
-								TX_MCLK, enable);
-				if (ret)
-					goto done;
-				--tx_priv->tx_clk_status;
-			}
-
-		} else {
-			dev_dbg(tx_priv->dev,
-				"%s: Both clocks are disabled\n", __func__);
-		}
-	}
-
-	trace_printk("%s: swrm clock users %d tx_clk_sts_cnt: %d va_clk_sts_cnt: %d\n",
-		__func__, tx_priv->swr_clk_users, tx_priv->tx_clk_status,
-                tx_priv->va_clk_status);
-	dev_dbg(tx_priv->dev,
-		"%s: swrm clock users %d tx_clk_sts_cnt: %d va_clk_sts_cnt: %d\n",
-		__func__, tx_priv->swr_clk_users, tx_priv->tx_clk_status,
-		tx_priv->va_clk_status);
-done:
-	mutex_unlock(&tx_priv->swr_clk_lock);
-	return ret;
 }
 
 static int lpass_cdc_tx_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,
@@ -3035,67 +1947,21 @@ static int lpass_cdc_tx_macro_init(struct snd_soc_component *component)
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
-	tx_priv->lpi_enable = false;
-	tx_priv->register_event_listener = false;
 	tx_priv->version = lpass_cdc_get_version(tx_dev);
-	if (tx_priv->version >= LPASS_CDC_VERSION_2_0) {
-		ret = snd_soc_dapm_new_controls(dapm,
-				lpass_cdc_tx_macro_dapm_widgets_common,
-				ARRAY_SIZE(lpass_cdc_tx_macro_dapm_widgets_common));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add controls\n",
-				__func__);
-			return ret;
-		}
-		if (tx_priv->version == LPASS_CDC_VERSION_2_1)
-			ret = snd_soc_dapm_new_controls(dapm,
-				lpass_cdc_tx_macro_dapm_widgets_v2,
-				ARRAY_SIZE(lpass_cdc_tx_macro_dapm_widgets_v2));
-		else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-			ret = snd_soc_dapm_new_controls(dapm,
-				lpass_cdc_tx_macro_dapm_widgets_v3,
-				ARRAY_SIZE(lpass_cdc_tx_macro_dapm_widgets_v3));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add controls\n",
-				__func__);
-			return ret;
-		}
-	} else {
-		ret = snd_soc_dapm_new_controls(dapm, lpass_cdc_tx_macro_dapm_widgets,
-					ARRAY_SIZE(lpass_cdc_tx_macro_dapm_widgets));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add controls\n",
-				__func__);
-			return ret;
-		}
+	ret = snd_soc_dapm_new_controls(dapm, lpass_cdc_tx_macro_dapm_widgets,
+				ARRAY_SIZE(lpass_cdc_tx_macro_dapm_widgets));
+	if (ret < 0) {
+		dev_err(tx_dev, "%s: Failed to add controls\n",
+			__func__);
+		return ret;
 	}
 
-	if (tx_priv->version >= LPASS_CDC_VERSION_2_0) {
-		ret = snd_soc_dapm_add_routes(dapm,
-					tx_audio_map_common,
-					ARRAY_SIZE(tx_audio_map_common));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add routes\n",
-				__func__);
-			return ret;
-		}
-		if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-			ret = snd_soc_dapm_add_routes(dapm,
-					tx_audio_map_v3,
-					ARRAY_SIZE(tx_audio_map_v3));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add routes\n",
-				__func__);
-			return ret;
-		}
-	} else {
-		ret = snd_soc_dapm_add_routes(dapm, tx_audio_map,
-					ARRAY_SIZE(tx_audio_map));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add routes\n",
-				__func__);
-			return ret;
-		}
+	ret = snd_soc_dapm_add_routes(dapm, tx_audio_map,
+				ARRAY_SIZE(tx_audio_map));
+	if (ret < 0) {
+		dev_err(tx_dev, "%s: Failed to add routes\n",
+			__func__);
+		return ret;
 	}
 
 	ret = snd_soc_dapm_new_widgets(dapm->card);
@@ -3104,54 +1970,19 @@ static int lpass_cdc_tx_macro_init(struct snd_soc_component *component)
 		return ret;
 	}
 
-	if (tx_priv->version >= LPASS_CDC_VERSION_2_0) {
-		ret = snd_soc_add_component_controls(component,
-			lpass_cdc_tx_macro_snd_controls_common,
-			ARRAY_SIZE(lpass_cdc_tx_macro_snd_controls_common));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add snd_ctls\n",
-				__func__);
-			return ret;
-		}
-		if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-			ret = snd_soc_add_component_controls(component,
-				lpass_cdc_tx_macro_snd_controls_v3,
-				ARRAY_SIZE(lpass_cdc_tx_macro_snd_controls_v3));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add snd_ctls\n",
-				__func__);
-			return ret;
-		}
-	} else {
-		ret = snd_soc_add_component_controls(component,
-				lpass_cdc_tx_macro_snd_controls,
-				ARRAY_SIZE(lpass_cdc_tx_macro_snd_controls));
-		if (ret < 0) {
-			dev_err(tx_dev, "%s: Failed to add snd_ctls\n",
-				__func__);
-			return ret;
-		}
+	ret = snd_soc_add_component_controls(component,
+			lpass_cdc_tx_macro_snd_controls,
+			ARRAY_SIZE(lpass_cdc_tx_macro_snd_controls));
+	if (ret < 0) {
+		dev_err(tx_dev, "%s: Failed to add snd_ctls\n",
+			__func__);
+		return ret;
 	}
 
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF1 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF2 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF3 Capture");
-	if (tx_priv->version >= LPASS_CDC_VERSION_2_0) {
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_INPUT");
-	} else {
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC0");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC1");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC2");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC3");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC0");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC1");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC2");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC3");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC4");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC5");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC6");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC7");
-	}
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_INPUT");
 	snd_soc_dapm_sync(dapm);
 
 	for (i = 0; i < NUM_DECIMATORS; i++) {
@@ -3190,137 +2021,6 @@ static int lpass_cdc_tx_macro_deinit(struct snd_soc_component *component)
 	return 0;
 }
 
-static void lpass_cdc_tx_macro_add_child_devices(struct work_struct *work)
-{
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	struct platform_device *pdev = NULL;
-	struct device_node *node = NULL;
-	struct lpass_cdc_tx_macro_swr_ctrl_data *swr_ctrl_data = NULL, *temp = NULL;
-	int ret = 0;
-	u16 count = 0, ctrl_num = 0;
-	struct lpass_cdc_tx_macro_swr_ctrl_platform_data *platdata = NULL;
-	char plat_dev_name[LPASS_CDC_TX_MACRO_SWR_STRING_LEN] = "";
-	bool tx_swr_master_node = false;
-
-	tx_priv = container_of(work, struct lpass_cdc_tx_macro_priv,
-			     lpass_cdc_tx_macro_add_child_devices_work);
-	if (!tx_priv) {
-		pr_err("%s: Memory for tx_priv does not exist\n",
-			__func__);
-		return;
-	}
-
-	if (!tx_priv->dev) {
-		pr_err("%s: tx dev does not exist\n", __func__);
-		return;
-	}
-
-	if (!tx_priv->dev->of_node) {
-		dev_err(tx_priv->dev,
-			"%s: DT node for tx_priv does not exist\n", __func__);
-		return;
-	}
-
-	platdata = &tx_priv->swr_plat_data;
-	tx_priv->child_count = 0;
-
-	for_each_available_child_of_node(tx_priv->dev->of_node, node) {
-		tx_swr_master_node = false;
-		if (strnstr(node->name, "tx_swr_master",
-                                strlen("tx_swr_master")) != NULL)
-			tx_swr_master_node = true;
-
-		if (tx_swr_master_node)
-			strlcpy(plat_dev_name, "tx_swr_ctrl",
-				(LPASS_CDC_TX_MACRO_SWR_STRING_LEN - 1));
-		else
-			strlcpy(plat_dev_name, node->name,
-				(LPASS_CDC_TX_MACRO_SWR_STRING_LEN - 1));
-
-		pdev = platform_device_alloc(plat_dev_name, -1);
-		if (!pdev) {
-			dev_err(tx_priv->dev, "%s: pdev memory alloc failed\n",
-				__func__);
-			ret = -ENOMEM;
-			goto err;
-		}
-		pdev->dev.parent = tx_priv->dev;
-		pdev->dev.of_node = node;
-
-		if (tx_swr_master_node) {
-			ret = platform_device_add_data(pdev, platdata,
-						       sizeof(*platdata));
-			if (ret) {
-				dev_err(&pdev->dev,
-					"%s: cannot add plat data ctrl:%d\n",
-					__func__, ctrl_num);
-				goto fail_pdev_add;
-			}
-		}
-
-		ret = platform_device_add(pdev);
-		if (ret) {
-			dev_err(&pdev->dev,
-				"%s: Cannot add platform device\n",
-				__func__);
-			goto fail_pdev_add;
-		}
-
-		if (tx_swr_master_node) {
-			temp = krealloc(swr_ctrl_data,
-					(ctrl_num + 1) * sizeof(
-					struct lpass_cdc_tx_macro_swr_ctrl_data),
-					GFP_KERNEL);
-			if (!temp) {
-				ret = -ENOMEM;
-				goto fail_pdev_add;
-			}
-			swr_ctrl_data = temp;
-			swr_ctrl_data[ctrl_num].tx_swr_pdev = pdev;
-			ctrl_num++;
-			dev_dbg(&pdev->dev,
-				"%s: Added soundwire ctrl device(s)\n",
-				__func__);
-			tx_priv->swr_ctrl_data = swr_ctrl_data;
-		}
-		if (tx_priv->child_count < LPASS_CDC_TX_MACRO_CHILD_DEVICES_MAX)
-			tx_priv->pdev_child_devices[
-					tx_priv->child_count++] = pdev;
-		else
-			goto err;
-	}
-	return;
-fail_pdev_add:
-	for (count = 0; count < tx_priv->child_count; count++)
-		platform_device_put(tx_priv->pdev_child_devices[count]);
-err:
-	return;
-}
-
-static int lpass_cdc_tx_macro_set_port_map(struct snd_soc_component *component,
-				u32 usecase, u32 size, void *data)
-{
-	struct device *tx_dev = NULL;
-	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	struct swrm_port_config port_cfg;
-	int ret = 0;
-
-	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
-		return -EINVAL;
-
-	memset(&port_cfg, 0, sizeof(port_cfg));
-	port_cfg.uc = usecase;
-	port_cfg.size = size;
-	port_cfg.params = data;
-
-	if (tx_priv->swr_ctrl_data)
-		ret = swrm_wcd_notify(
-			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_SET_PORT_MAP, &port_cfg);
-
-	return ret;
-}
-
 static void lpass_cdc_tx_macro_init_ops(struct macro_ops *ops,
 			       char __iomem *tx_io_base)
 {
@@ -3331,10 +2031,7 @@ static void lpass_cdc_tx_macro_init_ops(struct macro_ops *ops,
 	ops->dai_ptr = lpass_cdc_tx_macro_dai;
 	ops->num_dais = ARRAY_SIZE(lpass_cdc_tx_macro_dai);
 	ops->event_handler = lpass_cdc_tx_macro_event_handler;
-	ops->reg_wake_irq = lpass_cdc_tx_macro_reg_wake_irq;
-	ops->set_port_map = lpass_cdc_tx_macro_set_port_map;
 	ops->clk_div_get = lpass_cdc_tx_macro_clk_div_get;
-	ops->reg_evt_listener = lpass_cdc_tx_macro_register_event_listener;
 	ops->clk_enable = __lpass_cdc_tx_macro_mclk_enable;
 }
 
@@ -3346,8 +2043,6 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	char __iomem *tx_io_base = NULL;
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
-	u32 is_used_tx_swr_gpio = 1;
-	const char *is_used_tx_swr_gpio_dt = "qcom,is-used-swr-gpio";
 
 	if (!lpass_cdc_is_va_macro_registered(&pdev->dev)) {
 		dev_err(&pdev->dev,
@@ -3370,30 +2065,6 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 		return ret;
 	}
 	dev_set_drvdata(&pdev->dev, tx_priv);
-	if (of_find_property(pdev->dev.of_node, is_used_tx_swr_gpio_dt,
-			     NULL)) {
-		ret = of_property_read_u32(pdev->dev.of_node,
-					   is_used_tx_swr_gpio_dt,
-					   &is_used_tx_swr_gpio);
-		if (ret) {
-			dev_err(&pdev->dev, "%s: error reading %s in dt\n",
-				__func__, is_used_tx_swr_gpio_dt);
-			is_used_tx_swr_gpio = 1;
-		}
-	}
-	tx_priv->tx_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
-					"qcom,tx-swr-gpios", 0);
-	if (!tx_priv->tx_swr_gpio_p && is_used_tx_swr_gpio) {
-		dev_err(&pdev->dev, "%s: swr_gpios handle not provided!\n",
-			__func__);
-		return -EINVAL;
-	}
-	if (msm_cdc_pinctrl_get_state(tx_priv->tx_swr_gpio_p) < 0 &&
-			is_used_tx_swr_gpio) {
-		dev_err(&pdev->dev, "%s: failed to get swr pin state\n",
-			__func__);
-		return -EPROBE_DEFER;
-	}
 
 	tx_io_base = devm_ioremap(&pdev->dev,
 				   tx_base_addr, LPASS_CDC_TX_MACRO_MAX_OFFSET);
@@ -3414,20 +2085,6 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 		sample_rate, tx_priv) == LPASS_CDC_TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
 	}
-	if (is_used_tx_swr_gpio) {
-		tx_priv->reset_swr = true;
-		INIT_WORK(&tx_priv->lpass_cdc_tx_macro_add_child_devices_work,
-			  lpass_cdc_tx_macro_add_child_devices);
-		tx_priv->swr_plat_data.handle = (void *) tx_priv;
-		tx_priv->swr_plat_data.read = NULL;
-		tx_priv->swr_plat_data.write = NULL;
-		tx_priv->swr_plat_data.bulk_write = NULL;
-		tx_priv->swr_plat_data.clk = lpass_cdc_tx_macro_swrm_clock;
-		tx_priv->swr_plat_data.core_vote = lpass_cdc_tx_macro_core_vote;
-		tx_priv->swr_plat_data.handle_irq = NULL;
-		mutex_init(&tx_priv->swr_clk_lock);
-	}
-	tx_priv->is_used_tx_swr_gpio = is_used_tx_swr_gpio;
 	mutex_init(&tx_priv->mclk_lock);
 	lpass_cdc_tx_macro_init_ops(&ops, tx_io_base);
 	ops.clk_id_req = TX_CORE_CLK;
@@ -3438,8 +2095,6 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 			"%s: register macro failed\n", __func__);
 		goto err_reg_macro;
 	}
-	if (is_used_tx_swr_gpio)
-		schedule_work(&tx_priv->lpass_cdc_tx_macro_add_child_devices_work);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
@@ -3449,35 +2104,21 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	return 0;
 err_reg_macro:
 	mutex_destroy(&tx_priv->mclk_lock);
-	if (is_used_tx_swr_gpio)
-		mutex_destroy(&tx_priv->swr_clk_lock);
 	return ret;
 }
 
 static int lpass_cdc_tx_macro_remove(struct platform_device *pdev)
 {
 	struct lpass_cdc_tx_macro_priv *tx_priv = NULL;
-	u16 count = 0;
 
 	tx_priv = platform_get_drvdata(pdev);
 
 	if (!tx_priv)
 		return -EINVAL;
 
-	if (tx_priv->is_used_tx_swr_gpio) {
-		if (tx_priv->swr_ctrl_data)
-			kfree(tx_priv->swr_ctrl_data);
-		for (count = 0; count < tx_priv->child_count &&
-			count < LPASS_CDC_TX_MACRO_CHILD_DEVICES_MAX; count++)
-			platform_device_unregister(
-				tx_priv->pdev_child_devices[count]);
-	}
-
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	mutex_destroy(&tx_priv->mclk_lock);
-	if (tx_priv->is_used_tx_swr_gpio)
-		mutex_destroy(&tx_priv->swr_clk_lock);
 	lpass_cdc_unregister_macro(&pdev->dev, TX_MACRO);
 	return 0;
 }

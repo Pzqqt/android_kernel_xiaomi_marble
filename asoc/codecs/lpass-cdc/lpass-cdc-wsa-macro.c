@@ -16,6 +16,7 @@
 
 #include <asoc/msm-cdc-pinctrl.h>
 #include "lpass-cdc.h"
+#include "lpass-cdc-comp.h"
 #include "lpass-cdc-registers.h"
 #include "lpass-cdc-wsa-macro.h"
 #include "lpass-cdc-clk-rsc.h"
@@ -107,6 +108,32 @@ enum {
 	INTn_2_INP_SEL_RX3,
 };
 
+enum {
+	WSA_MODE_21DB,
+	WSA_MODE_19P5DB,
+	WSA_MODE_18DB,
+	WSA_MODE_16P5DB,
+	WSA_MODE_15DB,
+	WSA_MODE_13P5DB,
+	WSA_MODE_12DB,
+	WSA_MODE_10P5DB,
+	WSA_MODE_9DB,
+	WSA_MODE_MAX
+};
+
+static u8 comp_setting_table[WSA_MODE_MAX][COMP_MAX_SETTING] =
+{
+	{0x00, 0x10, 0x06, 0x18, 0x24, 0x2A, 0x2A, 0x2A, 0x00, 0x2A, 0x2A, 0xB0}, /* WSA_MODE_21DB */
+	{0x00, 0x10, 0x06, 0x18, 0x24, 0x2A, 0x2A, 0x2A, 0xFD, 0x2A, 0x2A, 0xB0}, /* WSA_MODE_19PDB -1.5DB*/
+	{0x00, 0x10, 0x06, 0x12, 0x1E, 0x24, 0x24, 0x24, 0xFA, 0x24, 0x2A, 0xB0}, /* WSA_MODE_18DB -3DB*/
+	{0x00, 0x10, 0x06, 0x0C, 0x18, 0x21, 0x21, 0x21, 0xFA, 0x21, 0x2A, 0xB0}, /* WSA_MODE_16P5DB -3DB*/
+	{0x00, 0x10, 0x06, 0x0C, 0x18, 0x21, 0x21, 0x21, 0xFA, 0x21, 0x2A, 0xB0}, /* WSA_MODE_15DB -3DB -->TODO: NEED UPDATE ENTRIES */
+	{0x00, 0x10, 0x06, 0x12, 0x1B, 0x1B, 0x1B, 0x1B, 0xFA, 0x1B, 0x2A, 0xB0}, /* WSA_MODE_13P5DB -3DB */
+	{0x00, 0x10, 0x06, 0x12, 0x18, 0x18, 0x18, 0x18, 0xFA, 0x18, 0x2A, 0xB0}, /* WSA_MODE_12DB -3DB */
+	{0x00, 0x10, 0x06, 0x12, 0x18, 0x18, 0x18, 0x18, 0xFA, 0x18, 0x2A, 0xB0}, /* WSA_MODE_10P5DB -3DB --> NEED Update entries */
+	{0x00, 0x10, 0x06, 0x12, 0x18, 0x18, 0x18, 0x18, 0xFA, 0x18, 0x2A, 0xB0}, /* WSA_MODE_9DB -3DB --> NEED Update entries */
+};
+
 struct interp_sample_rate {
 	int sample_rate;
 	int rate_val;
@@ -148,7 +175,7 @@ static int lpass_cdc_wsa_macro_hw_params(struct snd_pcm_substream *substream,
 static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot);
-static int lpass_cdc_wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute);
+static int lpass_cdc_wsa_macro_mute_stream(struct snd_soc_dai *dai, int mute, int stream);
 /* Hold instance to soundwire platform device */
 struct lpass_cdc_wsa_macro_swr_ctrl_data {
 	struct platform_device *wsa_swr_pdev;
@@ -210,6 +237,7 @@ enum {
 struct lpass_cdc_wsa_macro_priv {
 	struct device *dev;
 	int comp_enabled[LPASS_CDC_WSA_MACRO_COMP_MAX];
+	int comp_mode[LPASS_CDC_WSA_MACRO_COMP_MAX];
 	int ec_hq[LPASS_CDC_WSA_MACRO_RX1 + 1];
 	u16 prim_int_users[LPASS_CDC_WSA_MACRO_RX1 + 1];
 	u16 wsa_mclk_users;
@@ -284,6 +312,11 @@ static const char * const lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_text[] = {
 	"OFF", "ON"
 };
 
+static const char * const lpass_cdc_wsa_macro_comp_mode_text[] = {
+	"G_21_DB", "G_19P5_DB", "G_18_DB", "G_16P5_DB", "G_15_DB",
+	"G_13P5_DB", "G_12_DB", "G_10P5_DB", "G_9_DB"
+};
+
 static const struct snd_kcontrol_new wsa_int0_vbat_mix_switch[] = {
 	SOC_DAPM_SINGLE("WSA RX0 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
 };
@@ -298,6 +331,8 @@ static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_spkr_boost_stage_enum,
 			lpass_cdc_wsa_macro_speaker_boost_stage_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_enum,
 			lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_text);
+static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_comp_mode_enum,
+			lpass_cdc_wsa_macro_comp_mode_text);
 
 /* RX INT0 */
 static const struct soc_enum rx0_prim_inp0_chain_enum =
@@ -380,7 +415,7 @@ static const struct snd_kcontrol_new rx_mix_ec1_mux =
 static struct snd_soc_dai_ops lpass_cdc_wsa_macro_dai_ops = {
 	.hw_params = lpass_cdc_wsa_macro_hw_params,
 	.get_channel_map = lpass_cdc_wsa_macro_get_channel_map,
-	.digital_mute = lpass_cdc_wsa_macro_digital_mute,
+	.mute_stream = lpass_cdc_wsa_macro_mute_stream,
 };
 
 static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
@@ -617,9 +652,9 @@ static int lpass_cdc_wsa_macro_set_prim_interpolator_rate(struct snd_soc_dai *da
 		for (j = 0; j < NUM_INTERPOLATORS; j++) {
 			int_mux_cfg1 = int_mux_cfg0 + LPASS_CDC_WSA_MACRO_MUX_CFG1_OFFSET;
 
-			int_mux_cfg0_val = snd_soc_component_read32(component,
+			int_mux_cfg0_val = snd_soc_component_read(component,
 							int_mux_cfg0);
-			int_mux_cfg1_val = snd_soc_component_read32(component,
+			int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1);
 			inp0_sel = int_mux_cfg0_val & LPASS_CDC_WSA_MACRO_MUX_INP_MASK1;
 			inp1_sel = (int_mux_cfg0_val >>
@@ -681,7 +716,7 @@ static int lpass_cdc_wsa_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai
 
 		int_mux_cfg1 = LPASS_CDC_WSA_RX_INP_MUX_RX_INT0_CFG1;
 		for (j = 0; j < NUM_INTERPOLATORS; j++) {
-			int_mux_cfg1_val = snd_soc_component_read32(component,
+			int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1) &
 							LPASS_CDC_WSA_MACRO_MUX_INP_MASK1;
 			if (int_mux_cfg1_val == int_2_inp +
@@ -820,7 +855,7 @@ static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 		*rx_num = cnt;
 		break;
 	case LPASS_CDC_WSA_MACRO_AIF_ECHO:
-		val = snd_soc_component_read32(component,
+		val = snd_soc_component_read(component,
 			LPASS_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0);
 		if (val & LPASS_CDC_WSA_MACRO_EC_MIX_TX1_MASK) {
 			mask |= 0x2;
@@ -840,7 +875,7 @@ static int lpass_cdc_wsa_macro_get_channel_map(struct snd_soc_dai *dai,
 	return 0;
 }
 
-static int lpass_cdc_wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
+static int lpass_cdc_wsa_macro_mute_stream(struct snd_soc_dai *dai, int mute, int stream)
 {
 	struct snd_soc_component *component = dai->component;
 	struct device *wsa_dev = NULL;
@@ -869,11 +904,11 @@ static int lpass_cdc_wsa_macro_digital_mute(struct snd_soc_dai *dai, int mute)
 				LPASS_CDC_WSA_MACRO_RX_PATH_DSMDEM_OFFSET;
 		int_mux_cfg0 = LPASS_CDC_WSA_RX_INP_MUX_RX_INT0_CFG0 + j * 8;
 		int_mux_cfg1 = int_mux_cfg0 + 4;
-		int_mux_cfg0_val = snd_soc_component_read32(component,
+		int_mux_cfg0_val = snd_soc_component_read(component,
 							int_mux_cfg0);
-		int_mux_cfg1_val = snd_soc_component_read32(component,
+		int_mux_cfg1_val = snd_soc_component_read(component,
 							int_mux_cfg1);
-		if (snd_soc_component_read32(component, dsm_reg) & 0x01) {
+		if (snd_soc_component_read(component, dsm_reg) & 0x01) {
 			if (int_mux_cfg0_val || (int_mux_cfg1_val & 0x38))
 				snd_soc_component_update_bits(component, reg,
 							0x20, 0x20);
@@ -1295,7 +1330,7 @@ static int lpass_cdc_wsa_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		lpass_cdc_wsa_macro_enable_swr(w, kcontrol, event);
-		val = snd_soc_component_read32(component, gain_reg);
+		val = snd_soc_component_read(component, gain_reg);
 		val += offset_val;
 		snd_soc_component_write(component, gain_reg, val);
 		break;
@@ -1312,9 +1347,10 @@ static int lpass_cdc_wsa_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 static int lpass_cdc_wsa_macro_config_compander(struct snd_soc_component *component,
 				int comp, int event)
 {
-	u16 comp_ctl0_reg, rx_path_cfg0_reg;
+	u16 comp_ctl0_reg, comp_ctl8_reg, rx_path_cfg0_reg;
 	struct device *wsa_dev = NULL;
 	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
+	u16 mode = 0;
 
 	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
@@ -1325,12 +1361,18 @@ static int lpass_cdc_wsa_macro_config_compander(struct snd_soc_component *compon
 	if (!wsa_priv->comp_enabled[comp])
 		return 0;
 
+	mode = wsa_priv->comp_mode[comp];
 	comp_ctl0_reg = LPASS_CDC_WSA_COMPANDER0_CTL0 +
+					(comp * LPASS_CDC_WSA_MACRO_RX_COMP_OFFSET);
+	comp_ctl8_reg = LPASS_CDC_WSA_COMPANDER0_CTL8 +
 					(comp * LPASS_CDC_WSA_MACRO_RX_COMP_OFFSET);
 	rx_path_cfg0_reg = LPASS_CDC_WSA_RX0_RX_PATH_CFG0 +
 					(comp * LPASS_CDC_WSA_MACRO_RX_PATH_OFFSET);
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
+		lpass_cdc_update_compander_setting(component,
+					comp_ctl8_reg,
+					comp_setting_table[mode]);
 		/* Enable Compander Clock */
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
 						0x01, 0x01);
@@ -1447,8 +1489,8 @@ static bool lpass_cdc_wsa_macro_adie_lb(struct snd_soc_component *component,
 
 	int_mux_cfg0 = LPASS_CDC_WSA_RX_INP_MUX_RX_INT0_CFG0 + interp_idx * 8;
 	int_mux_cfg1 = int_mux_cfg0 + 4;
-	int_mux_cfg0_val = snd_soc_component_read32(component, int_mux_cfg0);
-	int_mux_cfg1_val = snd_soc_component_read32(component, int_mux_cfg1);
+	int_mux_cfg0_val = snd_soc_component_read(component, int_mux_cfg0);
+	int_mux_cfg1_val = snd_soc_component_read(component, int_mux_cfg1);
 
 	int_n_inp0 = int_mux_cfg0_val & 0x0F;
 	if (int_n_inp0 == INTn_1_INP_SEL_DEC0 ||
@@ -1549,7 +1591,7 @@ static int lpass_cdc_wsa_macro_enable_prim_interpolator(
 				0x1, 0x1);
 		}
 		if ((reg != prim_int_reg) &&
-		    ((snd_soc_component_read32(
+		    ((snd_soc_component_read(
 				component, prim_int_reg)) & 0x10))
 			snd_soc_component_update_bits(component, reg,
 					0x10, 0x10);
@@ -1635,7 +1677,7 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 					0x01, 0x01);
 			offset_val = -2;
 		}
-		val = snd_soc_component_read32(component, gain_reg);
+		val = snd_soc_component_read(component, gain_reg);
 		val += offset_val;
 		snd_soc_component_write(component, gain_reg, val);
 		lpass_cdc_wsa_macro_config_ear_spkr_gain(component, wsa_priv,
@@ -1664,7 +1706,7 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 					LPASS_CDC_WSA_RX1_RX_PATH_MIX_SEC0,
 					0x01, 0x00);
 			offset_val = 2;
-			val = snd_soc_component_read32(component, gain_reg);
+			val = snd_soc_component_read(component, gain_reg);
 			val += offset_val;
 			snd_soc_component_write(component, gain_reg, val);
 		}
@@ -1759,7 +1801,7 @@ static int lpass_cdc_wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 						0x01, 0x01);
 		snd_soc_component_update_bits(component, boost_path_ctl,
 						0x10, 0x10);
-		if ((snd_soc_component_read32(component, reg_mix)) & 0x10)
+		if ((snd_soc_component_read(component, reg_mix)) & 0x10)
 			snd_soc_component_update_bits(component, reg_mix,
 						0x10, 0x00);
 		break;
@@ -1919,7 +1961,7 @@ static int lpass_cdc_wsa_macro_enable_echo(struct snd_soc_dapm_widget *w,
 
 	dev_dbg(wsa_dev, "%s %d %s\n", __func__, event, w->name);
 
-	val = snd_soc_component_read32(component,
+	val = snd_soc_component_read(component,
 				LPASS_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0);
 	if (!(strcmp(w->name, "WSA RX_MIX EC0_MUX")))
 		ec_tx = (val & 0x07) - 1;
@@ -2134,6 +2176,54 @@ static int lpass_cdc_wsa_macro_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontro
 	return 0;
 }
 
+static int lpass_cdc_wsa_macro_comp_mode_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
+	u16 idx = 0;
+
+	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	if (strnstr(kcontrol->id.name, "RX0", sizeof("WSA_RX0")))
+		idx = LPASS_CDC_WSA_MACRO_COMP1;
+	if (strnstr(kcontrol->id.name, "RX1", sizeof("WSA_RX1")))
+		idx = LPASS_CDC_WSA_MACRO_COMP2;
+	ucontrol->value.integer.value[0] = wsa_priv->comp_mode[idx];
+
+	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int lpass_cdc_wsa_macro_comp_mode_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
+	u16 idx = 0;
+
+	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	if (strnstr(kcontrol->id.name, "RX0", sizeof("WSA_RX0")))
+		idx = LPASS_CDC_WSA_MACRO_COMP1;
+	if (strnstr(kcontrol->id.name, "RX1", sizeof("WSA_RX1")))
+		idx = LPASS_CDC_WSA_MACRO_COMP2;
+	wsa_priv->comp_mode[idx] =  ucontrol->value.integer.value[0];
+
+	dev_dbg(component->dev, "%s: comp_mode = %d\n", __func__,
+		wsa_priv->comp_mode[idx]);
+
+	return 0;
+}
+
 static int lpass_cdc_wsa_macro_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol)
 {
@@ -2141,7 +2231,7 @@ static int lpass_cdc_wsa_macro_spkr_left_boost_stage_get(struct snd_kcontrol *kc
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
 
-	bst_state_max = snd_soc_component_read32(component,
+	bst_state_max = snd_soc_component_read(component,
 				LPASS_CDC_WSA_BOOST0_BOOST_CTL);
 	bst_state_max = (bst_state_max & 0x0c) >> 2;
 	ucontrol->value.integer.value[0] = bst_state_max;
@@ -2173,7 +2263,7 @@ static int lpass_cdc_wsa_macro_spkr_right_boost_stage_get(struct snd_kcontrol *k
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
 
-	bst_state_max = snd_soc_component_read32(component,
+	bst_state_max = snd_soc_component_read(component,
 				LPASS_CDC_WSA_BOOST1_BOOST_CTL);
 	bst_state_max = (bst_state_max & 0x0c) >> 2;
 	ucontrol->value.integer.value[0] = bst_state_max;
@@ -2286,7 +2376,7 @@ static int lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *k
 			snd_soc_kcontrol_component(kcontrol);
 
 	ucontrol->value.integer.value[0] =
-	    ((snd_soc_component_read32(
+	    ((snd_soc_component_read(
 		component, LPASS_CDC_WSA_VBAT_BCL_VBAT_CFG) & 0x04) ?
 	    1 : 0);
 
@@ -2375,6 +2465,12 @@ static const struct snd_kcontrol_new lpass_cdc_wsa_macro_snd_controls[] = {
 	SOC_ENUM_EXT("GSM mode Enable", lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_enum,
 		     lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_get,
 		     lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_put),
+	SOC_ENUM_EXT("WSA_RX0 comp_mode", lpass_cdc_wsa_macro_comp_mode_enum,
+		     lpass_cdc_wsa_macro_comp_mode_get,
+		     lpass_cdc_wsa_macro_comp_mode_put),
+	SOC_ENUM_EXT("WSA_RX1 comp_mode", lpass_cdc_wsa_macro_comp_mode_enum,
+		     lpass_cdc_wsa_macro_comp_mode_get,
+		     lpass_cdc_wsa_macro_comp_mode_put),
 	SOC_SINGLE_EXT("WSA_Softclip0 Enable", SND_SOC_NOPM,
 			LPASS_CDC_WSA_MACRO_SOFTCLIP0, 1, 0,
 			lpass_cdc_wsa_macro_soft_clip_enable_get,
@@ -2791,30 +2887,8 @@ static void lpass_cdc_wsa_macro_init_bcl_pmic_reg(struct snd_soc_component *comp
 
 	switch (wsa_priv->bcl_pmic_params.id) {
 	case 0:
-		/* Enable ID0 to listen to respective PMIC group interrupts */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_WSA_VBAT_BCL_VBAT_DECODE_CTL1, 0x02, 0x02);
-		/* Update MC_SID0 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG1, 0x0F,
-			wsa_priv->bcl_pmic_params.sid);
-		/* Update MC_PPID0 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG2, 0xFF,
-			wsa_priv->bcl_pmic_params.ppid);
 		break;
 	case 1:
-		/* Enable ID1 to listen to respective PMIC group interrupts */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_WSA_VBAT_BCL_VBAT_DECODE_CTL1, 0x01, 0x01);
-		/* Update MC_SID1 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG3, 0x0F,
-			wsa_priv->bcl_pmic_params.sid);
-		/* Update MC_PPID1 */
-		snd_soc_component_update_bits(component,
-			LPASS_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG4, 0xFF,
-			wsa_priv->bcl_pmic_params.ppid);
 		break;
 	default:
 		dev_err(wsa_dev, "%s: PMIC ID is invalid %d\n",
