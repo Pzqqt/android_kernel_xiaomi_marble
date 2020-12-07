@@ -60,6 +60,16 @@ struct cm_vdev_join_rsp {
 };
 
 /**
+ * struct cm_peer_create_req - bss peer create req
+ * @vdev_id: vdev_id
+ * @peer_mac: peer mac to create
+ */
+struct cm_peer_create_req {
+	uint8_t vdev_id;
+	struct qdf_mac_addr peer_mac;
+};
+
+/**
  * cm_handle_connect_req() - Connection manager ext connect request to start
  * vdev and peer assoc state machine
  * @vdev: VDEV object
@@ -155,6 +165,14 @@ void cm_free_join_req(struct cm_vdev_join_req *join_req);
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_process_join_req(struct scheduler_msg *msg);
+
+/**
+ * cm_process_peer_create() - Process bss peer create req
+ * @msg: scheduler message
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg);
 
 /**
  * cm_process_disconnect_req() - Process vdev disconnect request
