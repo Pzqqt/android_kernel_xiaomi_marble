@@ -1097,9 +1097,10 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	int i;
 	uint8_t *buf_ptr;
 	uint32_t *vdev_ids, *phymode;
+	uint32_t *preferred_tx_streams, *preferred_rx_streams;
 	wmi_channel *chan_info;
 	struct mlme_channel_param *tchan_info;
-	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	uint16_t len = sizeof(*cmd);
 
 	if (!param->num_vdevs) {
 		wmi_err("vdev's not found for MVR cmd");
@@ -1107,11 +1108,15 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 		goto end;
 	}
 	len += sizeof(wmi_channel);
-	if (param->num_vdevs) {
-		len += sizeof(uint32_t) * param->num_vdevs + WMI_TLV_HDR_SIZE;
-		/* for phymode */
-		len += sizeof(uint32_t) * param->num_vdevs;
-	}
+
+	/* Add length of num_vdevs + tlv_hdr_size for vdev_id */
+	len += sizeof(uint32_t) * param->num_vdevs + WMI_TLV_HDR_SIZE;
+	/* Add length of num_vdevs + tlv_hdr_size for phymode */
+	len += sizeof(uint32_t) * param->num_vdevs + WMI_TLV_HDR_SIZE;
+	/* Add length of num_vdevs + tlv_hdr_size for Preferred TX Streams */
+	len += sizeof(uint32_t) * param->num_vdevs + WMI_TLV_HDR_SIZE;
+	/* Add length of num_vdevs + tlv_hdr_size for Preferred RX Streams */
+	len += sizeof(uint32_t) * param->num_vdevs + WMI_TLV_HDR_SIZE;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -1205,6 +1210,23 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	for (i = 0; i < param->num_vdevs; i++)
 		WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_PHYMODE(
 				phymode[i], param->mvr_param[i].phymode);
+
+	buf_ptr += (sizeof(uint32_t) * param->num_vdevs) + WMI_TLV_HDR_SIZE;
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_UINT32,
+		       sizeof(uint32_t) * param->num_vdevs);
+	preferred_tx_streams = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < param->num_vdevs; i++)
+		preferred_tx_streams[i] = param->mvr_param[i].preferred_tx_streams;
+
+
+	buf_ptr += (sizeof(uint32_t) * param->num_vdevs) + WMI_TLV_HDR_SIZE;
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_UINT32,
+		       sizeof(uint32_t) * param->num_vdevs);
+	preferred_rx_streams = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < param->num_vdevs; i++)
+		preferred_rx_streams[i] = param->mvr_param[i].preferred_rx_streams;
 
 	/* Target expects flag for phymode processing */
 	WMI_MULTIPLE_VDEV_RESTART_FLAG_SET_PHYMODE_PRESENT(cmd->flags, 1);
