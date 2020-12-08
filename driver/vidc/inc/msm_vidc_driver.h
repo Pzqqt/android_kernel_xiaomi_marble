@@ -55,7 +55,8 @@ static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 		buffer_type == MSM_VIDC_BUF_NON_COMV ||
 		buffer_type == MSM_VIDC_BUF_LINE ||
 		buffer_type == MSM_VIDC_BUF_DPB ||
-		buffer_type == MSM_VIDC_BUF_PERSIST;
+		buffer_type == MSM_VIDC_BUF_PERSIST ||
+		buffer_type == MSM_VIDC_BUF_VPSS;
 }
 
 static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)

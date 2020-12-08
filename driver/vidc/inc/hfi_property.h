@@ -315,6 +315,8 @@ enum hfi_quality_mode {
     HFI_MODE_MAX_QUALITY = 0x1,
     HFI_MODE_POWER_SAVE  = 0x2,
 };
+
+// TODO (AS): Does not map to any V4l2 control
 #define HFI_PROP_QUALITY_MODE                                   0x03000148
 
 enum hfi_seq_header_mode {

@@ -129,6 +129,9 @@ static int msm_venc_set_resolution(struct msm_vidc_inst *inst,
 
 	resolution = inst->fmts[port].fmt.pix_mp.width << 16 |
 		inst->fmts[port].fmt.pix_mp.height;
+	s_vpr_h(inst->sid, "%s: width: %d height: %d\n", __func__,
+			inst->fmts[port].fmt.pix_mp.width,
+			inst->fmts[port].fmt.pix_mp.height);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_BITSTREAM_RESOLUTION,
 			HFI_HOST_FLAGS_NONE,
@@ -155,11 +158,14 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 	/* TODO: recheck later */
 	crop = inst->fmts[INPUT_PORT].fmt.pix_mp.width << 16 |
 		inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+	s_vpr_h(inst->sid, "%s: width: %d height: %d\n", __func__,
+			inst->fmts[INPUT_PORT].fmt.pix_mp.width,
+			inst->fmts[INPUT_PORT].fmt.pix_mp.height);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CROP_OFFSETS,
 			HFI_HOST_FLAGS_NONE,
 			get_hfi_port(inst, port),
-			HFI_PAYLOAD_32_PACKED,
+			HFI_PAYLOAD_64_PACKED,
 			&crop,
 			sizeof(u32));
 	if (rc)
@@ -301,17 +307,21 @@ static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	core = inst->core;
 
 	inst->buffers.arp.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_ARP);
+			inst, MSM_VIDC_BUF_ARP) + 100000000;
 	inst->buffers.bin.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_BIN);
-	/* inst->buffers.comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_COMV);
+			inst, MSM_VIDC_BUF_BIN) + 100000000;
+	inst->buffers.comv.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_COMV) + 100000000;
 	inst->buffers.non_comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_NON_COMV); */
+			inst, MSM_VIDC_BUF_NON_COMV) + 100000000;
 	inst->buffers.line.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_LINE);
+			inst, MSM_VIDC_BUF_LINE) + 100000000;
 	inst->buffers.dpb.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_DPB);
+			inst, MSM_VIDC_BUF_DPB) + 100000000;
+	//inst->buffers.vpss.size = call_session_op(core, buffer_size,
+			//inst, MSM_VIDC_BUF_VPSS) + 100000000;
+			//vpss is req - 100 mb
+
 	/* inst->buffers.persist.size = call_session_op(core, buffer_size,
 			inst, MSM_VIDC_BUF_PERSIST); */
 
@@ -319,10 +329,10 @@ static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 			inst, MSM_VIDC_BUF_ARP);
 	inst->buffers.bin.min_count = call_session_op(core, min_count,
 			inst, MSM_VIDC_BUF_BIN);
-	/* inst->buffers.comv.min_count = call_session_op(core, min_count,
+	inst->buffers.comv.min_count = call_session_op(core, min_count,
 			inst, MSM_VIDC_BUF_COMV);
 	inst->buffers.non_comv.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_NON_COMV); */
+			inst, MSM_VIDC_BUF_NON_COMV);
 	inst->buffers.line.min_count = call_session_op(core, min_count,
 			inst, MSM_VIDC_BUF_LINE);
 	inst->buffers.dpb.min_count = call_session_op(core, min_count,
@@ -337,12 +347,12 @@ static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	s_vpr_h(inst->sid, "bin  buffer: %d      %d\n",
 		inst->buffers.bin.min_count,
 		inst->buffers.bin.size);
-	/* s_vpr_h(inst->sid, "comv  buffer: %d      %d\n",
+	s_vpr_h(inst->sid, "comv  buffer: %d      %d\n",
 		inst->buffers.comv.min_count,
 		inst->buffers.comv.size);
 	s_vpr_h(inst->sid, "non_comv  buffer: %d      %d\n",
 		inst->buffers.non_comv.min_count,
-		inst->buffers.non_comv.size); */
+		inst->buffers.non_comv.size);
 	s_vpr_h(inst->sid, "line buffer: %d      %d\n",
 		inst->buffers.line.min_count,
 		inst->buffers.line.size);
@@ -372,12 +382,12 @@ static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
-	/* rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_COMV);
 	if (rc)
 		return rc;
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
 	if (rc)
-		return rc; */
+		return rc;
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_LINE);
 	if (rc)
 		return rc;
@@ -407,12 +417,12 @@ static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
-	/* rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_COMV);
 	if (rc)
 		return rc;
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
 	if (rc)
-		return rc; */
+		return rc;
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_LINE);
 	if (rc)
 		return rc;

@@ -31,7 +31,7 @@ static const char *const mpeg_video_rate_control[] = {
 	"MBR",
 	"MBR VFR",
 	"CQ",
-	NULL
+	NULL,
 };
 
 static const char *const mpeg_video_stream_format[] = {
@@ -56,6 +56,26 @@ static const char *const roi_map_type[] = {
 	"2-bit",
 	NULL,
 };
+
+static u32 msm_vidc_get_port_info(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
+
+	if (capability->cap[cap_id].flags & CAP_FLAG_INPUT_PORT &&
+		capability->cap[cap_id].flags & CAP_FLAG_OUTPUT_PORT) {
+		s_vpr_e(inst->sid,
+			"%s: both ports enabled. Default port set: BITSTREAM\n",
+			__func__);
+		return HFI_PORT_BITSTREAM;
+	}
+	if (capability->cap[cap_id].flags & CAP_FLAG_INPUT_PORT)
+		return get_hfi_port(inst, INPUT_PORT);
+	else if (capability->cap[cap_id].flags & CAP_FLAG_OUTPUT_PORT)
+		return get_hfi_port(inst, OUTPUT_PORT);
+	else
+		return HFI_PORT_NONE;
+}
 
 static const char * const * msm_vidc_get_qmenu_type(
 		struct msm_vidc_inst *inst, u32 control_id)
@@ -682,11 +702,11 @@ int msm_vidc_adjust_properties(struct msm_vidc_inst *inst)
 	struct msm_vidc_inst_cap_entry *curr_node = NULL, *tmp_node = NULL;
 	struct msm_vidc_inst_capability *capability;
 
+	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
 	capability = inst->capabilities;
 
 	for (i = 0; i < INST_CAP_MAX; i++) {
@@ -727,21 +747,28 @@ int msm_vidc_set_u32(void *instance,
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
-	u32 hfi_value;
+	u32 hfi_value, hfi_payload;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_v4l2_menu_to_hfi(inst, cap_id, &hfi_value);
-	if (rc)
-		return -EINVAL;
+	if (inst->capabilities->cap[cap_id].flags & CAP_FLAG_MENU) {
+		rc = msm_vidc_v4l2_menu_to_hfi(inst, cap_id, &hfi_value);
+		if (rc)
+			return -EINVAL;
+		hfi_payload = HFI_PAYLOAD_U32_ENUM;
+	} else {
+		hfi_value = inst->capabilities->cap[cap_id].value;
+		hfi_payload = HFI_PAYLOAD_U32;
+	}
 
 	rc = venus_hfi_session_property(inst,
 		inst->capabilities->cap[cap_id].hfi_id,
-		HFI_HOST_FLAGS_NONE, HFI_PORT_NONE,
-		HFI_PAYLOAD_U32_ENUM,
+		HFI_HOST_FLAGS_NONE,
+		msm_vidc_get_port_info(inst, cap_id),
+		hfi_payload,
 		&hfi_value,
 		sizeof(u32));
 	if (rc)
@@ -830,6 +857,7 @@ int msm_vidc_set_fw_list(struct msm_vidc_inst *inst)
 	struct msm_vidc_inst_capability *capability;
 	struct msm_vidc_inst_cap_entry *curr_node = NULL, *tmp_node = NULL;
 
+	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -862,6 +890,15 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 	struct msm_vidc_inst_capability *capability = inst->capabilities;
 
 	switch (capability->cap[cap_id].v4l2_id) {
+	case V4L2_CID_MPEG_VIDEO_HEVC_PROFILE:
+	case V4L2_CID_MPEG_VIDEO_H264_PROFILE:
+	case V4L2_CID_MPEG_VIDEO_VP9_PROFILE:
+	case V4L2_CID_MPEG_VIDEO_HEVC_LEVEL:
+	case V4L2_CID_MPEG_VIDEO_H264_LEVEL:
+	case V4L2_CID_MPEG_VIDEO_HEVC_TIER:
+	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
+		*value = capability->cap[cap_id].value;
+		return 0;
 	case V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE:
 		switch (capability->cap[cap_id].value) {
 		case V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC:
@@ -872,16 +909,64 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 			break;
 		default:
 			*value = 1;
-			s_vpr_e(inst->sid,
-				"%s: invalid ctrl %d value %d, default value %u\n",
-				__func__, capability->cap[cap_id].v4l2_id,
-				capability->cap[cap_id].value, *value);
+			goto set_default;
 		}
-		break;
+		return 0;
+	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
+		switch (capability->cap[cap_id].value) {
+		case V4L2_MPEG_VIDEO_BITRATE_MODE_VBR:
+			*value = HFI_RC_VBR_CFR;
+			break;
+		case V4L2_MPEG_VIDEO_BITRATE_MODE_CBR:
+			*value = HFI_RC_CBR_CFR;
+			break;
+		default:
+			*value = HFI_RC_VBR_CFR;
+			goto set_default;
+		}
+		return 0;
+	case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_TYPE:
+		switch (capability->cap[cap_id].value) {
+		case V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_B:
+			*value = HFI_HIER_B;
+			break;
+		case V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_P:
+			//TODO (AS): check if this is right mapping
+			*value = HFI_HIER_P_SLIDING_WINDOW;
+			break;
+		default:
+			*value = HFI_HIER_P_SLIDING_WINDOW;
+			goto set_default;
+		}
+		return 0;
+	case V4L2_CID_MPEG_VIDEO_HEADER_MODE:
+		switch (capability->cap[cap_id].value) {
+		case V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE:
+			*value = BIT(HFI_SEQ_HEADER_SEPERATE_FRAME);
+			break;
+		case V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME:
+			*value = BIT(HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME);
+			break;
+		/*
+		 * TODO (AS): other HFI values are missing corresponding
+		 * V4l2 values. Add them once available.
+		 */
+		default:
+			*value = HFI_SEQ_HEADER_SEPERATE_FRAME;
+			goto set_default;
+		}
+		return 0;
 	default:
 		s_vpr_e(inst->sid,
-			"%s: invalid ctrl with cap_id %d\n", __func__, cap_id);
+			"%s: mapping not specified for ctrl_id: %#x\n",
+			__func__, capability->cap[cap_id].v4l2_id);
 		return -EINVAL;
 	}
+
+set_default:
+	s_vpr_e(inst->sid,
+		"%s: invalid value %d for ctrl id: %#x. Set default: %u\n",
+		__func__, capability->cap[cap_id].value,
+		capability->cap[cap_id].v4l2_id, *value);
 	return 0;
 }

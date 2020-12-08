@@ -335,6 +335,8 @@ enum msm_vidc_inst_capability_flags {
 	CAP_FLAG_ROOT                    = BIT(0),
 	CAP_FLAG_DYNAMIC_ALLOWED         = BIT(1),
 	CAP_FLAG_MENU                    = BIT(2),
+	CAP_FLAG_INPUT_PORT              = BIT(3),
+	CAP_FLAG_OUTPUT_PORT             = BIT(4),
 };
 
 struct msm_vidc_inst_cap {

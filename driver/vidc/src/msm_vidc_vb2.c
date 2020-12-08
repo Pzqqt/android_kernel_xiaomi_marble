@@ -6,11 +6,11 @@
 #include "msm_vidc_vb2.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
-#include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
 #include "msm_venc.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_control.h"
 
 void *msm_vb2_get_userptr(struct device *dev, unsigned long vaddr,
 			unsigned long size, enum dma_data_direction dma_dir)
@@ -185,6 +185,19 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	}
 
 	/*
+	if ((inst->state == MSM_VIDC_OPEN && q->type == OUTPUT_MPLANE) ||
+		inst->state == MSM_VIDC_START_INPUT) {
+		s_vpr_h(inst->sid, "$s: msm_vidc_adjust_properties\n");
+		rc = msm_vidc_adjust_properties(inst);
+		if (rc)
+			return -EINVAL;
+
+		s_vpr_h(inst->sid, "$s: msm_vidc_set_fw_list\n");
+		rc = msm_vidc_set_fw_list(inst);
+		if (rc)
+			return -EINVAL;
+	}
+
 	if (inst->state == MSM_VIDC_START_INPUT ||
 		inst->state == MSM_VIDC_START_OUTPUT) {
 		rc = msm_vidc_adjust_properties(inst);
@@ -192,14 +205,25 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 			return -EINVAL;
 	}
 
-	if ((inst->state == MSM_VIDC_START_INPUT) ||
-		(inst->state == MSM_VIDC_START &&
+	if ((inst->state == MSM_VIDC_START_OUTPUT) ||
+		(inst->state == MSM_VIDC_OPEN &&
 		q->type == INPUT_MPLANE)) {
 		rc = msm_vidc_set_fw_list(inst);
 		if (rc)
 			return -EINVAL;
 	}
 	*/
+
+	if (inst->state == MSM_VIDC_START_INPUT ||
+		inst->state == MSM_VIDC_START_OUTPUT) {
+		rc = msm_vidc_adjust_properties(inst);
+		if (rc)
+			return -EINVAL;
+
+		rc = msm_vidc_set_fw_list(inst);
+		if (rc)
+			return -EINVAL;
+	}
 
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
