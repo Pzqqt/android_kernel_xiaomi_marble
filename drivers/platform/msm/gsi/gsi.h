@@ -920,6 +920,32 @@ struct __packed gsi_wdi3_channel_scratch {
 };
 
 /**
+ * gsi_qdss_channel_scratch - QDSS SW config area of
+ * channel scratch
+ *
+ * @bam_p_evt_dest_addr: equivalent to event_ring_doorbell_pa
+ *			physical address of the doorbell that IPA uC
+ *			will update the headpointer of the event ring.
+ *			QDSS should send BAM_P_EVNT_REG address in this var
+ *			Configured with the GSI Doorbell Address.
+ *			GSI sends Update RP by doing a write to this address
+ * @data_fifo_base_addr: Base address of the data FIFO used by BAM
+ * @data_fifo_size: Size of the data FIFO
+ * @bam_p_evt_threshold: Threshold level of how many bytes consumed
+ * @override_eot: if override EOT==1, it doesn't check the EOT bit in
+ *			the descriptor
+ */
+struct __packed gsi_qdss_channel_scratch {
+	uint32_t bam_p_evt_dest_addr;
+	uint32_t data_fifo_base_addr;
+	uint32_t data_fifo_size : 16;
+	uint32_t bam_p_evt_threshold : 16;
+	uint32_t reserved1 : 2;
+	uint32_t override_eot : 1;
+	uint32_t reserved2 : 29;
+};
+
+/**
  * gsi_wdi3_channel_scratch2 - WDI3 protocol SW config area of
  * channel scratch2
  *
@@ -1015,6 +1041,7 @@ union __packed gsi_channel_scratch {
 	struct __packed gsi_wdi2_channel_scratch_new wdi2_new;
 	struct __packed gsi_aqc_channel_scratch aqc;
 	struct __packed gsi_rtk_channel_scratch rtk;
+	struct __packed gsi_qdss_channel_scratch qdss;
 	struct __packed {
 		uint32_t word1;
 		uint32_t word2;

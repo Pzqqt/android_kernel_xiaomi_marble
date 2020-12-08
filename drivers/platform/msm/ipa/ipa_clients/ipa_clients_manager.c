@@ -30,6 +30,8 @@ static int __init ipa_clients_manager_init(void)
 
 	ipa3_notify_clients_registered();
 
+	ipa3_qdss_register();
+
 	return 0;
 }
 subsys_initcall(ipa_clients_manager_init);
