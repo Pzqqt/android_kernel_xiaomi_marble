@@ -6992,6 +6992,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISABLE_DATA_MGMT_RSP_TX]
 			= {.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD] = {
+			.type = NLA_U16},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX] = {
 			.type = NLA_FLAG},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_FT_REASSOCREQ_RSNXE_USED] = {
@@ -10396,6 +10398,13 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		cfg_val = nla_get_u8(tb[cmd_id]);
 		hdd_debug("pmf cfg: val %d", cfg_val);
 		sme_set_pmf_wep_cfg(hdd_ctx->mac_handle, cfg_val);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BSS_MAX_IDLE_PERIOD;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u16(tb[cmd_id]);
+		hdd_debug("bss max idle period %d", cfg_val);
+		sme_set_bss_max_idle_period(hdd_ctx->mac_handle, cfg_val);
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX;

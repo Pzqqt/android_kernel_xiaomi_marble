@@ -2311,6 +2311,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_qcn_ie(mac_ctx, pe_session,
 			       &frm->qcn_ie, QCN_IE_ATTR_ID_ALL);
 
+	populate_dot11f_bss_max_idle(mac_ctx, &frm->bss_max_idle_period);
+
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,

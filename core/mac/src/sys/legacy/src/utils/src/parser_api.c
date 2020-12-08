@@ -1583,6 +1583,17 @@ static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
 {}
 #endif /* WLAN_FEATURE_11AX */
 
+void populate_dot11f_bss_max_idle(struct mac_context *mac,
+				  tDot11fIEbss_max_idle_period *max_idle_ie)
+{
+	max_idle_ie->present = 0;
+	if (mac->mlme_cfg->sta.bss_max_idle_period) {
+		max_idle_ie->present = 1;
+		max_idle_ie->max_idle_period =
+			mac->mlme_cfg->sta.bss_max_idle_period;
+	}
+}
+
 void populate_dot11f_qcn_ie(struct mac_context *mac,
 			    struct pe_session *pe_session,
 			    tDot11fIEqcn_ie *qcn_ie,

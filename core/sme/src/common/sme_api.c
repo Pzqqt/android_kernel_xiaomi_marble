@@ -14639,6 +14639,12 @@ void sme_set_amsdu(mac_handle_t mac_handle, bool enable)
 	mac_ctx->is_usr_cfg_amsdu_enabled = enable;
 }
 
+void sme_set_bss_max_idle_period(mac_handle_t mac_handle, uint16_t cfg_val)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	mac_ctx->mlme_cfg->sta.bss_max_idle_period = cfg_val;
+}
+
 #ifdef WLAN_FEATURE_11AX
 void sme_check_enable_ru_242_tx(mac_handle_t mac_handle, uint8_t vdev_id)
 {
@@ -14737,6 +14743,7 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 			status);
 
 	mac_ctx->mlme_cfg->sta.usr_disabled_roaming = true;
+	mac_ctx->mlme_cfg->sta.bss_max_idle_period = 0;
 }
 
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
@@ -14769,6 +14776,8 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_err("Failed to set enable bcast probe resp in FW, %d",
 			status);
 	mac_ctx->is_usr_cfg_pmf_wep = PMF_CORRECT_KEY;
+	mac_ctx->mlme_cfg->sta.bss_max_idle_period =
+			mac_ctx->mlme_cfg->sta.sta_keep_alive_period;
 
 	if (mac_ctx->usr_cfg_disable_rsp_tx)
 		sme_set_cfg_disable_tx(mac_handle, vdev_id, 0);

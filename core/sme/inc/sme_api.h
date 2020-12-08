@@ -3509,6 +3509,15 @@ void sme_set_pmf_wep_cfg(mac_handle_t mac_handle, uint8_t pmf_wep_cfg);
  */
 void sme_set_cfg_disable_tx(mac_handle_t mac_handle, uint8_t vdev_id,
 			    uint8_t val);
+/**
+ * sme_set_bss_max_idle_period() - Configure the bss max idle period
+ * @mac_handle: Opaque handle to the global MAC context
+ * @cfg_val: bss max idle period
+ *
+ * Return: None
+ */
+void sme_set_bss_max_idle_period(mac_handle_t mac_handle, uint16_t cfg_val);
+
 #ifdef WLAN_FEATURE_11AX
 void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id);
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id);
