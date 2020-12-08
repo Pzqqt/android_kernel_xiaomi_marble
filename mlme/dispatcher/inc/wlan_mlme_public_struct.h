@@ -1557,6 +1557,7 @@ enum station_keepalive_method {
 /**
  * struct wlan_mlme_sta_cfg - MLME STA configuration items
  * @sta_keep_alive_period:          Sends NULL frame to AP period
+ * @bss_max_idle_period:            BSS max idle period
  * @tgt_gtx_usr_cfg:                Target gtx user config
  * @pmkid_modes:                    Enable PMKID modes
  * @wait_cnf_timeout:               Wait assoc cnf timeout
@@ -1578,6 +1579,7 @@ enum station_keepalive_method {
  */
 struct wlan_mlme_sta_cfg {
 	uint32_t sta_keep_alive_period;
+	uint32_t bss_max_idle_period;
 	uint32_t tgt_gtx_usr_cfg;
 	uint32_t pmkid_modes;
 	uint32_t wait_cnf_timeout;

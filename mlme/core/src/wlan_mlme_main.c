@@ -1460,6 +1460,8 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	sta->sta_keep_alive_period =
 		cfg_get(psoc, CFG_INFRA_STA_KEEP_ALIVE_PERIOD);
+	sta->bss_max_idle_period =
+		(uint32_t)cfg_default(CFG_STA_BSS_MAX_IDLE_PERIOD);
 	sta->tgt_gtx_usr_cfg =
 		cfg_get(psoc, CFG_TGT_GTX_USR_CFG);
 	sta->pmkid_modes =

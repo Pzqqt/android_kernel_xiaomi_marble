@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,6 +50,31 @@
 	30, \
 	CFG_VALUE_OR_DEFAULT, \
 	"send default NULL frame to AP")
+
+
+/*
+ * bss_max_idle_period - STA bss max period
+ *
+ * @Min: 0
+ * @Max: 100
+ * @Default: 0
+ *
+ * This ini is used to advertise the bss max idle period in assoc req.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ */
+#define CFG_STA_BSS_MAX_IDLE_PERIOD CFG_UINT( \
+	"bss_max_idle_period", \
+	0, \
+	100, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"advertise bss max idle period")
 
 /*
  * <ini>
@@ -484,6 +509,7 @@
 
 #define CFG_STA_ALL \
 	CFG(CFG_INFRA_STA_KEEP_ALIVE_PERIOD) \
+	CFG(CFG_STA_BSS_MAX_IDLE_PERIOD) \
 	CFG(CFG_TGT_GTX_USR_CFG) \
 	CFG(CFG_PMKID_MODES) \
 	CFG(CFG_IGNORE_PEER_ERP_INFO) \
