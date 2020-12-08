@@ -29,6 +29,8 @@
 
 #ifdef CONFIG_HOST_FIND_CHAN
 
+#define WLAN_CHAN_PASSIVE       0x0000000000000200 /* Passive channel flag */
+
 #define WLAN_CHAN_DFS              0x0002  /* DFS set on primary segment */
 #define WLAN_CHAN_DFS_CFREQ2       0x0004  /* DFS set on secondary segment */
 #define WLAN_CHAN_DISALLOW_ADHOC   0x0040  /* ad-hoc is not allowed */
@@ -111,13 +113,15 @@ void wlan_reg_get_txpow_ant_gain(struct wlan_objmgr_pdev *pdev,
  * @pdev: pdev pointer.
  * @freq1: Frequency in primary segment.
  * @freq2: Frequency in secondary segment.
- * @flags: Flags to be filled.
+ * @sec_flags: Secondary flags to be filled.
+ * @pri_flags: Primary flags to be filled.
  *
  */
 void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 			     qdf_freq_t freq1,
 			     qdf_freq_t freq2,
-			     uint16_t *flags);
+			     uint16_t *sec_flags,
+			     uint64_t *pri_flags);
 #else
 static inline
 void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
@@ -163,7 +167,8 @@ static inline void
 wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 			qdf_freq_t freq1,
 			qdf_freq_t freq2,
-			uint16_t *flags)
+			uint16_t *sec_flags,
+			uint64_t *pri_flags)
 {
 }
 #endif /* CONFIG_HOST_FIND_CHAN */

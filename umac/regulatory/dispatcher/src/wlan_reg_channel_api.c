@@ -29,7 +29,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <reg_priv_objs.h>
 #include <reg_services_common.h>
-#include <reg_channel.h>
+#include "../../core/reg_channel.h"
 #include <wlan_reg_services_api.h>
 
 #ifdef CONFIG_HOST_FIND_CHAN
@@ -99,7 +99,8 @@ void wlan_reg_get_txpow_ant_gain(struct wlan_objmgr_pdev *pdev,
 void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 			     qdf_freq_t freq1,
 			     qdf_freq_t freq2,
-			     uint16_t *flags)
+			     uint16_t *sec_flags,
+			     uint64_t *pri_flags)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	struct regulatory_channel *cur_chan_list;
@@ -115,21 +116,28 @@ void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 	cur_chan_list = pdev_priv_obj->cur_chan_list;
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (cur_chan_list[i].center_freq == freq1 &&
-		    cur_chan_list[i].chan_flags & REGULATORY_CHAN_RADAR) {
-			*flags |= WLAN_CHAN_DFS;
-			*flags |= WLAN_CHAN_DISALLOW_ADHOC;
+		if (cur_chan_list[i].center_freq == freq1) {
+			if (cur_chan_list[i].chan_flags &
+			    REGULATORY_CHAN_RADAR) {
+				*sec_flags |= WLAN_CHAN_DFS;
+				*pri_flags |= WLAN_CHAN_PASSIVE;
+				*sec_flags |= WLAN_CHAN_DISALLOW_ADHOC;
+			} else if (cur_chan_list[i].chan_flags &
+				   REGULATORY_CHAN_NO_IR) {
+				/* For 2Ghz passive channels. */
+				*pri_flags |= WLAN_CHAN_PASSIVE;
+			}
 		}
 
 		if (cur_chan_list[i].center_freq == freq2 &&
 		    cur_chan_list[i].chan_flags & REGULATORY_CHAN_RADAR) {
-			*flags |= WLAN_CHAN_DFS_CFREQ2;
-			*flags |= WLAN_CHAN_DISALLOW_ADHOC;
+			*sec_flags |= WLAN_CHAN_DFS_CFREQ2;
+			*sec_flags |= WLAN_CHAN_DISALLOW_ADHOC;
 		}
 	}
 
 	if (WLAN_REG_IS_6GHZ_PSC_CHAN_FREQ(freq1))
-		*flags |= WLAN_CHAN_PSC;
+		*sec_flags |= WLAN_CHAN_PSC;
 }
 
 void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev,
