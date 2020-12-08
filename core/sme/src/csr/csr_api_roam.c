@@ -8010,7 +8010,7 @@ bool csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
 					 profile->nAddIEAssocLength);
 
 	return wlan_cm_6ghz_allowed_for_akm(psoc, key_mgmt, rsn_caps,
-					    rsnxe, 0);
+					    rsnxe, 0, profile->bWPSAssociation);
 }
 #endif
 
