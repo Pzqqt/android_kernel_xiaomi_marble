@@ -3611,7 +3611,7 @@ static inline void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
  * sme_get_mcs_idx() - gets mcs index
  * @raw_rate: raw rate from fw
  * @rate_flags: rate flags
- * @he_mcs_12_13_map: he mcs12/13 map
+ * @is_he_mcs_12_13_supported: is he mcs12/13 supported
  * @nss: number of nss
  * @dcm: dcm will be calculated from rate
  * @guard_interval: guard interval info from rate
@@ -3620,7 +3620,7 @@ static inline void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
  * Return: return mcs index
  */
 uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
-			uint16_t he_mcs_12_13_map,
+			bool is_he_mcs_12_13_supported,
 			uint8_t *nss, uint8_t *dcm,
 			enum txrate_gi *guard_interval,
 			enum tx_rate_info *mcs_rate_flags);

@@ -346,7 +346,7 @@ static inline uint16_t wma_mcs_rate_match(uint16_t raw_rate,
  */
 static uint16_t wma_match_he_rate(uint16_t raw_rate,
 				  enum tx_rate_info rate_flags,
-				  uint16_t he_mcs_12_13_map,
+				  bool is_he_mcs_12_13_supported,
 				  uint8_t *nss, uint8_t *dcm,
 				  enum txrate_gi *guard_interval,
 				  enum tx_rate_info *mcs_rate_flag,
@@ -364,7 +364,7 @@ static uint16_t wma_match_he_rate(uint16_t raw_rate,
 		TX_RATE_HE20)))
 		return 0;
 
-	if (he_mcs_12_13_map)
+	if (is_he_mcs_12_13_supported)
 		max_he_mcs_idx = MAX_HE_MCS12_13_IDX;
 	else
 		max_he_mcs_idx = MAX_HE_MCS_IDX;
@@ -457,7 +457,7 @@ rate_found:
 #else
 static uint16_t wma_match_he_rate(uint16_t raw_rate,
 				  enum tx_rate_info rate_flags,
-				  uint16_t he_mcs_12_13_map,
+				  bool is_he_mcs_12_13_supported,
 				  uint8_t *nss, uint8_t *dcm,
 				  enum txrate_gi *guard_interval,
 				  enum tx_rate_info *mcs_rate_flag,
@@ -468,7 +468,7 @@ static uint16_t wma_match_he_rate(uint16_t raw_rate,
 #endif
 
 uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
-			uint16_t he_mcs_12_13_map,
+			bool is_he_mcs_12_13_supported,
 			uint8_t *nss, uint8_t *dcm,
 			enum txrate_gi *guard_interval,
 			enum tx_rate_info *mcs_rate_flag)
@@ -478,12 +478,13 @@ uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 	uint16_t *nss1_rate;
 	uint16_t *nss2_rate;
 
-	wma_debug("Rates from FW:  raw_rate:%d rate_flgs: 0x%x he_mcs_12_13_map: 0x%x nss: %d",
-		  raw_rate, rate_flags, he_mcs_12_13_map, *nss);
+	wma_debug("Rates from FW:  raw_rate:%d rate_flgs: 0x%x is_he_mcs_12_13_supported: %d nss: %d",
+		  raw_rate, rate_flags, is_he_mcs_12_13_supported, *nss);
 
 	*mcs_rate_flag = rate_flags;
 
-	match_rate = wma_match_he_rate(raw_rate, rate_flags, he_mcs_12_13_map,
+	match_rate = wma_match_he_rate(raw_rate, rate_flags,
+				       is_he_mcs_12_13_supported,
 				       nss, dcm, guard_interval,
 				       mcs_rate_flag, &index);
 	if (match_rate)

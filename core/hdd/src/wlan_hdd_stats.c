@@ -183,6 +183,21 @@ static int rssi_mcs_tbl[][14] = {
 	{-76, -73, -71, -68, -64, -60, -59, -58, -53, -51, -46, -42, -46, -36}
 };
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+static bool wlan_hdd_is_he_mcs_12_13_supported(uint16_t he_mcs_12_13_map)
+{
+	if (he_mcs_12_13_map)
+		return true;
+	else
+		return false;
+}
+#else
+static bool wlan_hdd_is_he_mcs_12_13_supported(uint16_t he_mcs_12_13_map)
+{
+	return false;
+}
+#endif
+
 static bool get_station_fw_request_needed = true;
 
 /*
@@ -200,6 +215,7 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 	uint32_t tx_nss, rx_nss;
 	struct wlan_objmgr_vdev *vdev;
 	uint16_t he_mcs_12_13_map;
+	bool is_he_mcs_12_13_supported;
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
@@ -280,9 +296,11 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 	adapter->hdd_stats.class_a_stat.tx_rx_rate_flags = stats->tx_rate_flags;
 
 	he_mcs_12_13_map = wlan_vdev_mlme_get_he_mcs_12_13_map(vdev);
+	is_he_mcs_12_13_supported =
+			wlan_hdd_is_he_mcs_12_13_supported(he_mcs_12_13_map);
 	adapter->hdd_stats.class_a_stat.tx_mcs_index =
 		sme_get_mcs_idx(stats->tx_rate, stats->tx_rate_flags,
-				he_mcs_12_13_map,
+				is_he_mcs_12_13_supported,
 				&adapter->hdd_stats.class_a_stat.tx_nss,
 				&adapter->hdd_stats.class_a_stat.tx_dcm,
 				&adapter->hdd_stats.class_a_stat.tx_gi,
@@ -290,7 +308,7 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 				tx_mcs_rate_flags);
 	adapter->hdd_stats.class_a_stat.rx_mcs_index =
 		sme_get_mcs_idx(stats->rx_rate, stats->tx_rate_flags,
-				he_mcs_12_13_map,
+				is_he_mcs_12_13_supported,
 				&adapter->hdd_stats.class_a_stat.rx_nss,
 				&adapter->hdd_stats.class_a_stat.rx_dcm,
 				&adapter->hdd_stats.class_a_stat.rx_gi,
