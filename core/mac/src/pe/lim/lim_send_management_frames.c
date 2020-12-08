@@ -5116,14 +5116,28 @@ static void
 lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
 		    tDot11fIEoci *oci)
 {
-	uint8_t country_code[CDS_COUNTRY_CODE_LEN + 1];
+	uint8_t ch_offset;
 	uint8_t prim_ch_num = wlan_reg_freq_to_chan(mac->pdev,
 						    session->curr_op_freq);
-
-	wlan_reg_read_current_country(mac->psoc, country_code);
-	oci->op_class = wlan_reg_dmn_get_opclass_from_channel(country_code,
-							     prim_ch_num,
-							     session->ch_width);
+	if (session->ch_width == CH_WIDTH_80MHZ) {
+		ch_offset = BW80;
+	} else {
+		switch (session->htSecondaryChannelOffset) {
+		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+			ch_offset = BW40_HIGH_PRIMARY;
+			break;
+		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+			ch_offset = BW40_LOW_PRIMARY;
+			break;
+		default:
+			ch_offset = BW20;
+			break;
+		}
+	}
+	oci->op_class = lim_op_class_from_bandwidth(mac,
+						    session->curr_op_freq,
+						    session->ch_width,
+						    ch_offset);
 	oci->prim_ch_num = prim_ch_num;
 	oci->freq_seg_1_ch_num = session->ch_center_freq_seg1;
 	oci->present = 1;
