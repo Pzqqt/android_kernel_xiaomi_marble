@@ -187,6 +187,7 @@ struct dsi_display_ext_bridge {
  * @is_active:        status of the display
  * @trusted_vm_env:   Set to true, it the executing VM is Trusted VM.
  *                    Set to false, otherwise.
+ * @hw_ownership:     Indicates if VM owns the hardware resources.
  * @tx_cmd_buf_ndx:   Index to the DSI debugfs TX CMD buffer.
  * @cmd_set:	      Debugfs TX cmd set.
  * @enabled:	      Boolean to indicate display enabled.
@@ -287,6 +288,7 @@ struct dsi_display {
 	bool is_active;
 
 	bool trusted_vm_env;
+	bool hw_ownership;
 
 	int tx_cmd_buf_ndx;
 	struct dsi_panel_cmd_set cmd_set;
