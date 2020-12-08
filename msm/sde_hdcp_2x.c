@@ -478,14 +478,14 @@ static void sde_hdcp_2x_msg_sent(struct sde_hdcp_2x_ctrl *hdcp)
 		HDCP_TRANSPORT_CMD_INVALID,
 		hdcp->client_data};
 
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated,
-					hdcp->app_data.response.data[0]);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated);
 
 	if (atomic_read(&hdcp->hdcp_off)) {
 		pr_debug("invalid state, hdcp off\n");
 		goto exit;
 	}
 
+	SDE_EVT32_EXTERNAL(hdcp->app_data.response.data[0]);
 	switch (hdcp->app_data.response.data[0]) {
 	case SKE_SEND_TYPE_ID:
 		if (!hdcp2_app_comm(hdcp->hdcp2_ctx,
