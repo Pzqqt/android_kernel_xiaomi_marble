@@ -7433,6 +7433,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		resource_p->ipa_holb_monitor_max_cnt_usb;
 	ipa3_ctx->uc_ctx.holb_monitor.max_cnt_11ad =
 		resource_p->ipa_holb_monitor_max_cnt_11ad;
+	ipa3_ctx->ipa_wan_aggr_pkt_cnt = resource_p->ipa_wan_aggr_pkt_cnt;
 	ipa3_ctx->stats.page_recycle_stats[0].total_replenished = 0;
 	ipa3_ctx->stats.page_recycle_stats[0].tmp_alloc = 0;
 	ipa3_ctx->stats.page_recycle_stats[1].total_replenished = 0;
@@ -8204,6 +8205,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	u32 ipa_holb_monitor_max_cnt_wlan;
 	u32 ipa_holb_monitor_max_cnt_usb;
 	u32 ipa_holb_monitor_max_cnt_11ad;
+	u32 ipa_wan_aggr_pkt_cnt;
 
 	/* initialize ipa3_res */
 	ipa_drv_res->ipa_pipe_mem_start_ofst = IPA_PIPE_MEM_START_OFST;
@@ -8767,6 +8769,19 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 
 	IPADBG(": secure-debug-check-action = %d\n",
 		   ipa_drv_res->secure_debug_check_action);
+
+
+	result = of_property_read_u32(
+		pdev->dev.of_node,
+		"qcom,ipa-wan-aggr-pkt-cnt",
+		&ipa_wan_aggr_pkt_cnt);
+	if (result) {
+		ipa_wan_aggr_pkt_cnt = IPA_WAN_AGGR_PKT_CNT;
+		IPADBG("ipa wan aggr pkt cnt = %u\n", ipa_wan_aggr_pkt_cnt);
+	} else
+		IPADBG("ipa wan aggr pkt cnt = %u\n", ipa_wan_aggr_pkt_cnt);
+
+	ipa_drv_res->ipa_wan_aggr_pkt_cnt = ipa_wan_aggr_pkt_cnt;
 
 	get_dts_tx_wrapper_cache_size(pdev, ipa_drv_res);
 
