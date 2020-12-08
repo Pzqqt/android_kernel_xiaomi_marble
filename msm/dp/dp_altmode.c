@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -212,7 +212,7 @@ static void dp_altmode_register(void *priv)
 
 	altmode->amclient = altmode_register_client(altmode->dev, &cd);
 	if (IS_ERR_OR_NULL(altmode->amclient))
-		DP_ERR("failed to register as client: %d\n",
+		DP_ERR("failed to register as client: %ld\n",
 				PTR_ERR(altmode->amclient));
 	else
 		DP_DEBUG("success\n");

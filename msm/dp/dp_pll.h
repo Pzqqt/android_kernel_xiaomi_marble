@@ -24,8 +24,8 @@
 })
 
 #define dp_pll_write(x, offset, data) ({ \
-		DP_DEBUG(#offset", addr=0x%x, val=0x%x\n", \
-				(dp_pll_get_base(x)) + (offset), (data)); \
+		DP_DEBUG(#offset", addr=0x%llx, val=0x%x\n", \
+				((u64)(dp_pll_get_base(x)) + (offset)), (data)); \
 		SDE_EVT32_VERBOSE((dp_pll_get_base(x)) + (offset), (data)); \
 		writel_relaxed((data), (dp_pll_get_base(x)) + (offset)); \
 })

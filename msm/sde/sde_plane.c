@@ -231,7 +231,7 @@ void sde_plane_set_sid(struct drm_plane *plane, u32 vm)
 	struct msm_drm_private *priv;
 
 	if (!plane || !plane->dev) {
-		SDE_ERROR("invalid plane %d\n");
+		SDE_ERROR("invalid plane\n");
 		return;
 	}
 
@@ -619,7 +619,7 @@ int sde_plane_wait_input_fence(struct drm_plane *plane, uint32_t wait_ms)
 
 			switch (rc) {
 			case 0:
-				SDE_ERROR_PLANE(psde, "%ums timeout on %08X fd %d\n",
+				SDE_ERROR_PLANE(psde, "%ums timeout on %08X fd %lld\n",
 						wait_ms, prefix, sde_plane_get_property(pstate,
 						PLANE_PROP_INPUT_FENCE));
 				psde->is_error = true;
@@ -2361,7 +2361,7 @@ static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
 	 * the source-width becomes the scaler's pre-downscaled source-height.
 	 **/
 	if (rotated) {
-		if (rt_client && has_predown) {
+		if (pd != NULL && rt_client && has_predown) {
 			if (default_scale)
 				pd->pre_downscale_x_0 = (src_h >
 					mult_frac(dst_h, 11, 5)) ? 2 : 0;

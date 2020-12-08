@@ -4258,7 +4258,7 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 			cfg->perf.danger_lut[i] =
 				PROP_VALUE_ACCESS(prop_value,
 						QOS_DANGER_LUT, i);
-			SDE_DEBUG("danger usage:%i lut:0x%x\n",
+			SDE_DEBUG("danger usage:%i lut:0x%llx\n",
 					i, cfg->perf.danger_lut[i]);
 		}
 	}
@@ -4269,7 +4269,7 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 			cfg->perf.safe_lut[i] =
 				PROP_VALUE_ACCESS(prop_value,
 					QOS_SAFE_LUT, i);
-			SDE_DEBUG("safe usage:%d lut:0x%x\n",
+			SDE_DEBUG("safe usage:%d lut:0x%llx\n",
 				i, cfg->perf.safe_lut[i]);
 		}
 	}
