@@ -8258,6 +8258,8 @@ typedef enum {
     WMI_CHAN_WIDTH_5     = 5,
     WMI_CHAN_WIDTH_10    = 6,
     WMI_CHAN_WIDTH_165   = 7,
+    WMI_CHAN_WIDTH_160P160 = 8,
+    WMI_CHAN_WIDTH_320   = 9,
 } wmi_channel_width;
 
 /*Clear stats*/
@@ -28512,6 +28514,8 @@ typedef struct {
     wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_NUDGE_TWT_STATUS_T */
+    A_UINT32 sp_tsf_us_lo;  /* SP resume TSF bits 31:0 */
+    A_UINT32 sp_tsf_us_hi;  /* SP resume TSF bits 63:32 */
 } wmi_twt_nudge_dialog_complete_event_fixed_param;
 
 typedef struct {
