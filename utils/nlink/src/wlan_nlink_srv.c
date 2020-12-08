@@ -283,7 +283,7 @@ struct sk_buff *
 cld80211_oem_rsp_alloc_skb(uint32_t portid, void **hdr, struct nlattr **nest,
 			   int *flags)
 {
-	static struct sk_buff *msg;
+	struct sk_buff *msg;
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		*flags = GFP_ATOMIC;
