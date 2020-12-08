@@ -1824,10 +1824,15 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 #ifdef CONFIG_BAND_6GHZ
 bool wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
 				  uint32_t key_mgmt, uint16_t rsn_caps,
-				  const uint8_t *rsnxe, uint8_t sae_pwe)
+				  const uint8_t *rsnxe, uint8_t sae_pwe,
+				  bool is_wps)
 {
 	struct psoc_mlme_obj *mlme_psoc_obj;
 	struct scoring_cfg *config;
+
+	/* Allow connection for WPS security */
+	if (is_wps)
+		return true;
 
 	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
 	if (!mlme_psoc_obj)

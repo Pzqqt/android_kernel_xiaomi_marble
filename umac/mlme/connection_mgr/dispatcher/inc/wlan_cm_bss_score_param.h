@@ -236,13 +236,15 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
  * @rsn_caps: rsn caps
  * @rsnxe: rsnxe pointer if present
  * @sae_pwe: support for SAE password
+ * @is_wps: if security is WPS
  *
  * Return: bool
  */
 #ifdef CONFIG_BAND_6GHZ
 bool wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
 				  uint32_t key_mgmt, uint16_t rsn_caps,
-				  const uint8_t *rsnxe, uint8_t sae_pwe);
+				  const uint8_t *rsnxe, uint8_t sae_pwe,
+				  bool is_wps);
 
 /**
  * wlan_cm_set_check_6ghz_security() - Set check 6Ghz security
@@ -293,7 +295,8 @@ uint32_t wlan_cm_get_6ghz_key_mgmt_mask(struct wlan_objmgr_psoc *psoc);
 static inline bool
 wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
 			     uint32_t key_mgmt, uint16_t rsn_caps,
-			     const uint8_t *rsnxe, uint8_t sae_pwe)
+			     const uint8_t *rsnxe, uint8_t sae_pwe,
+			     bool is_wps)
 {
 	return true;
 }
