@@ -352,12 +352,14 @@ struct hal_reg_write_q_elem {
  * @dequeues: writes dequeued from delayed work (not written yet)
  * @coalesces: writes not enqueued since srng is already queued up
  * @direct: writes not enqueued and written to register directly
+ * @dequeue_delay: dequeue operation be delayed
  */
 struct hal_reg_write_srng_stats {
 	uint32_t enqueues;
 	uint32_t dequeues;
 	uint32_t coalesces;
 	uint32_t direct;
+	uint32_t dequeue_delay;
 };
 
 /**
@@ -386,6 +388,7 @@ enum hal_reg_sched_delay {
  * @q_depth: current queue depth in delayed register write queue
  * @max_q_depth: maximum queue for delayed register write queue
  * @sched_delay: = kernel work sched delay + bus wakeup delay, histogram
+ * @dequeue_delay: dequeue operation be delayed
  */
 struct hal_reg_write_soc_stats {
 	qdf_atomic_t enqueues;
@@ -396,6 +399,7 @@ struct hal_reg_write_soc_stats {
 	qdf_atomic_t q_depth;
 	uint32_t max_q_depth;
 	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
+	uint32_t dequeue_delay;
 };
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
@@ -549,6 +553,9 @@ struct hal_srng {
 	uint32_t last_reg_wr_val;
 	/* flag to indicate whether srng is already queued for delayed write */
 	uint8_t reg_write_in_progress;
+	/* last dequeue elem time stamp */
+	qdf_time_t last_dequeue_time;
+
 	/* srng specific delayed write stats */
 	struct hal_reg_write_srng_stats wstats;
 #endif

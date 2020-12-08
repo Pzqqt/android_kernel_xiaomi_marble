@@ -328,9 +328,9 @@ void hal_get_shadow_config(void *hal_soc,
 qdf_export_symbol(hal_get_shadow_config);
 
 
-static void hal_validate_shadow_register(struct hal_soc *hal,
-				  uint32_t *destination,
-				  uint32_t *shadow_address)
+static bool hal_validate_shadow_register(struct hal_soc *hal,
+					 uint32_t *destination,
+					 uint32_t *shadow_address)
 {
 	unsigned int index;
 	uint32_t *shadow_0_offset = SHADOW_REGISTER(0) + hal->dev_base_addr;
@@ -350,13 +350,13 @@ static void hal_validate_shadow_register(struct hal_soc *hal,
 			hal->shadow_config[index].addr);
 		goto error;
 	}
-	return;
+	return true;
 error:
 	qdf_print("baddr %pK, desination %pK, shadow_address %pK s0offset %pK index %x",
 		  hal->dev_base_addr, destination, shadow_address,
 		  shadow_0_offset, index);
 	QDF_BUG(0);
-	return;
+	return false;
 }
 
 static void hal_target_based_configure(struct hal_soc *hal)
@@ -675,6 +675,7 @@ hal_process_reg_write_q_elem(struct hal_soc *hal,
 	}
 
 	q_elem->valid = 0;
+	srng->last_dequeue_time = q_elem->dequeue_time;
 	SRNG_UNLOCK(&srng->lock);
 
 	return write_val;
@@ -704,6 +705,57 @@ static inline void hal_reg_write_fill_sched_delay_hist(struct hal_soc *hal,
 	else
 		hist[REG_WRITE_SCHED_DELAY_GT_5000us]++;
 }
+
+#ifdef SHADOW_WRITE_DELAY
+
+#define SHADOW_WRITE_MIN_DELTA_US	5
+#define SHADOW_WRITE_DELAY_US		50
+
+/*
+ * Never add those srngs which are performance relate.
+ * The delay itself will hit performance heavily.
+ */
+#define IS_SRNG_MATCH(s)	((s)->ring_id == HAL_SRNG_CE_1_DST_STATUS || \
+				 (s)->ring_id == HAL_SRNG_CE_1_DST)
+
+static inline bool hal_reg_write_need_delay(struct hal_reg_write_q_elem *elem)
+{
+	struct hal_srng *srng = elem->srng;
+	struct hal_soc *hal = srng->hal_soc;
+	qdf_time_t now;
+	qdf_iomem_t real_addr;
+
+	/* Check if it is target srng, and valid shadow reg */
+	if (qdf_likely(!IS_SRNG_MATCH(srng)))
+		return false;
+
+	if (srng->ring_dir == HAL_SRNG_SRC_RING)
+		real_addr = SRNG_SRC_ADDR(srng, HP);
+	else
+		real_addr = SRNG_DST_ADDR(srng, TP);
+	if (!hal_validate_shadow_register(hal, real_addr, elem->addr))
+		return false;
+
+	/* Check the time delta from last write of same srng */
+	now = qdf_get_log_timestamp();
+	if (qdf_log_timestamp_to_usecs(now - srng->last_dequeue_time) >
+		SHADOW_WRITE_MIN_DELTA_US)
+		return false;
+
+	/* Delay dequeue, and record */
+	qdf_udelay(SHADOW_WRITE_DELAY_US);
+
+	srng->wstats.dequeue_delay++;
+	hal->stats.wstats.dequeue_delay++;
+
+	return true;
+}
+#else
+static inline bool hal_reg_write_need_delay(struct hal_reg_write_q_elem *elem)
+{
+	return false;
+}
+#endif
 
 /**
  * hal_reg_write_work() - Worker to process delayed writes
@@ -742,6 +794,10 @@ static void hal_reg_write_work(void *arg)
 		qdf_rmb();
 		if (!q_elem->valid)
 			break;
+
+		if (hal_reg_write_need_delay(q_elem))
+			hal_verbose_debug("Delay reg writer for srng 0x%x, addr 0x%pK",
+					  q_elem->srng->ring_id, q_elem->addr);
 
 		q_elem->dequeue_time = qdf_get_log_timestamp();
 		ring_id = q_elem->srng->ring_id;
