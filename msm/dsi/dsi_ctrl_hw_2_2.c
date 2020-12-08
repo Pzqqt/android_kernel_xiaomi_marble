@@ -202,9 +202,6 @@ void dsi_ctrl_hw_22_configure_cmddma_window(struct dsi_ctrl_hw *ctrl,
 {
 	u32 reg = 0;
 
-	if (!window)
-		return;
-
 	if (cmd->en_broadcast) {
 		reg = DSI_R32(ctrl, DSI_TRIG_CTRL);
 		if (cmd->is_master) {

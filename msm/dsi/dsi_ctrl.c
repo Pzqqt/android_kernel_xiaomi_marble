@@ -1319,17 +1319,16 @@ static void dsi_configure_command_scheduling(struct dsi_ctrl *dsi_ctrl,
 	}
 
 	/*
-	 * In case of command scheduling in command mode, the window size
-	 * is reset to zero, if the total scheduling window is greater
-	 * than the panel height.
+	 * In case of command scheduling in command mode, set the maximum
+	 * possible size of the DMA start window in case no schedule line and
+	 * window size properties are defined by the panel.
 	 */
 	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_CMD_MODE) &&
 			dsi_hw_ops.configure_cmddma_window) {
-		sched_line_no = line_no;
 
-		if ((sched_line_no + window) > timing->v_active)
-			window = 0;
-
+		sched_line_no = (line_no == 0) ? TEARCHECK_WINDOW_SIZE :
+					line_no;
+		window = (window == 0) ? timing->v_active : window;
 		sched_line_no += timing->v_active;
 
 		dsi_hw_ops.configure_cmddma_window(&dsi_ctrl->hw, cmd_mem,
