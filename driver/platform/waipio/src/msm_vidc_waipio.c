@@ -64,7 +64,7 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{SW_PC_DELAY, 1500}, /* 1500 ms */
 	{FW_UNLOAD, 0},
 	{FW_UNLOAD_DELAY, 1000}, /* 1000 ms */
-	{HW_RESPONSE_TIMEOUT, 3000}, /* 1000 ms */
+	{HW_RESPONSE_TIMEOUT, 5000}, /* 1000 ms */
 	{DEBUG_TIMEOUT, 0},
 	{PREFIX_BUF_COUNT_PIX, 18},
 	{PREFIX_BUF_SIZE_PIX, 13434880}, /* Calculated by VENUS_BUFFER_SIZE for 4096x2160 UBWC */

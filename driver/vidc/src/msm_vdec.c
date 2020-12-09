@@ -736,16 +736,20 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
+	/*
+	 * TODO: Remove the hack of sending bigger buffer sizes
+	 * once internal buffer calculations are finalised
+	 */
 	inst->buffers.bin.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_BIN);
+			inst, MSM_VIDC_BUF_BIN) + 100000000;
 	inst->buffers.comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_COMV);
+			inst, MSM_VIDC_BUF_COMV) + 100000000;
 	inst->buffers.non_comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_NON_COMV);
+			inst, MSM_VIDC_BUF_NON_COMV) + 100000000;
 	inst->buffers.line.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_LINE);
+			inst, MSM_VIDC_BUF_LINE) + 100000000;
 	inst->buffers.persist.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_PERSIST);
+			inst, MSM_VIDC_BUF_PERSIST) + 100000000;
 
 	inst->buffers.bin.min_count = call_session_op(core, min_count,
 			inst, MSM_VIDC_BUF_BIN);
@@ -866,7 +870,7 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-static int msm_vdec_subscribe_port_settings_change(struct msm_vidc_inst *inst,
+int msm_vdec_subscribe_port_settings_change(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
@@ -1212,10 +1216,6 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vdec_subscribe_port_settings_change(inst, INPUT_PORT);
-	if (rc)
-		return rc;
-
 	rc = msm_vdec_subscribe_property(inst, INPUT_PORT);
 	if (rc)
 		return rc;
@@ -1266,10 +1266,6 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 	rc = msm_vdec_set_output_properties(inst);
 	if (rc)
 		goto error;
-
-	rc = msm_vdec_subscribe_port_settings_change(inst, OUTPUT_PORT);
-	if (rc)
-		return rc;
 
 	rc = msm_vdec_subscribe_metadata(inst, OUTPUT_PORT);
 	if (rc)
