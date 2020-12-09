@@ -128,6 +128,7 @@ dp_tx_limit_check(struct dp_vdev *vdev)
 			pdev->num_tx_allowed) {
 		dp_tx_info("queued packets are more than max tx, drop the frame");
 		DP_STATS_INC(vdev, tx_i.dropped.desc_na.num, 1);
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na_exc_outstand.num, 1);
 		return true;
 	}
 	return false;
@@ -870,8 +871,10 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 
 	/* Allocate software Tx descriptor */
 	tx_desc = dp_tx_desc_alloc(soc, desc_pool_id);
+
 	if (qdf_unlikely(!tx_desc)) {
 		DP_STATS_INC(vdev, tx_i.dropped.desc_na.num, 1);
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na_exc_alloc_fail.num, 1);
 		return NULL;
 	}
 

@@ -6164,6 +6164,10 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		       pdev->stats.tx_i.dropped.desc_na.num);
 	DP_PRINT_STATS("	HW enqueue failed= %d",
 		       pdev->stats.tx_i.dropped.enqueue_fail);
+	DP_PRINT_STATS("        Descriptor alloc fail = %d",
+		       pdev->stats.tx_i.dropped.desc_na_exc_alloc_fail.num);
+	DP_PRINT_STATS("        Tx outstanding too many = %d",
+		       pdev->stats.tx_i.dropped.desc_na_exc_outstand.num);
 	DP_PRINT_STATS("	Pkt dropped in vdev-id check= %d",
 		       pdev->stats.tx_i.dropped.fail_per_pkt_vdev_id_check);
 	DP_PRINT_STATS("	Resources Full = %d",

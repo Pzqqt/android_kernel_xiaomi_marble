@@ -1245,6 +1245,8 @@ struct cdp_tx_ingress_stats {
 	struct {
 		struct cdp_pkt_info dropped_pkt;
 		struct cdp_pkt_info  desc_na;
+		struct cdp_pkt_info  desc_na_exc_alloc_fail;
+		struct cdp_pkt_info  desc_na_exc_outstand;
 		struct cdp_pkt_info  exc_desc_na;
 		uint32_t ring_full;
 		uint32_t enqueue_fail;
