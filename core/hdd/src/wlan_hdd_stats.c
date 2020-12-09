@@ -217,7 +217,7 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 	uint16_t he_mcs_12_13_map;
 	bool is_he_mcs_12_13_supported;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_STATS_ID);
 	if (!vdev)
 		return -EINVAL;
 
@@ -321,7 +321,7 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 		     sizeof(stats->vdev_chain_rssi[0].chain_rssi));
 	adapter->hdd_stats.bcn_protect_stats = stats->bcn_protect_stats;
 out:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
 	return ret;
 }
 

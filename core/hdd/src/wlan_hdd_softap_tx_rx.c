@@ -1489,10 +1489,10 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		sta_info->peer_state = OL_TXRX_PEER_STATE_AUTH;
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (vdev) {
 			p2p_peer_authorized(vdev, sta_mac->bytes);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		} else {
 			hdd_err("vdev is NULL");
 		}

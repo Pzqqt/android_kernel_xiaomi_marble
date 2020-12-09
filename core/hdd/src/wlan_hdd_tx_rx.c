@@ -879,12 +879,12 @@ static bool hdd_is_xmit_allowed_on_ndi(struct hdd_adapter *adapter)
 	enum nan_datapath_state state;
 	struct wlan_objmgr_vdev *vdev;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_NAN_ID);
 	if (!vdev)
 		return false;
 
 	state = ucfg_nan_get_ndi_state(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_NAN_ID);
 	return (state == NAN_DATA_NDI_CREATED_STATE ||
 		state == NAN_DATA_CONNECTED_STATE ||
 		state == NAN_DATA_CONNECTING_STATE ||
@@ -1209,10 +1209,10 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	adapter->stats.tx_bytes += skb->len;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_TDLS_ID);
 	if (vdev) {
 		ucfg_tdls_update_tx_pkt_cnt(vdev, &mac_addr);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_TDLS_ID);
 	}
 
 	if (qdf_nbuf_is_tso(skb)) {
@@ -2582,11 +2582,13 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
 
 		if (!hdd_is_current_high_throughput(hdd_ctx)) {
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_TDLS_ID);
 			if (vdev) {
 				ucfg_tdls_update_rx_pkt_cnt(vdev, mac_addr,
 							    dest_mac_addr);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(vdev,
+							    WLAN_OSIF_TDLS_ID);
 			}
 		}
 

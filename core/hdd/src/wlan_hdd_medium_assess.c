@@ -178,7 +178,7 @@ static int hdd_medium_assess_cca(struct hdd_context *hdd_ctx,
 	uint8_t pdev_id, dcs_enable;
 	int errno = 0;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_DCS_ID);
 	if (!vdev)
 		return -EINVAL;
 
@@ -211,7 +211,7 @@ static int hdd_medium_assess_cca(struct hdd_context *hdd_ctx,
 	ucfg_dcs_set_user_request(hdd_ctx->psoc, pdev_id, cca_period);
 
 out:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_DCS_ID);
 	return errno;
 }
 
@@ -295,7 +295,7 @@ static int hdd_medium_assess_congestion_report(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	int errno = 0;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_CP_STATS_ID);
 	if (!vdev)
 		return -EINVAL;
 
@@ -368,7 +368,7 @@ static int hdd_medium_assess_congestion_report(struct hdd_context *hdd_ctx,
 	}
 
 out:
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_CP_STATS_ID);
 	return errno;
 }
 
