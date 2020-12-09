@@ -88,6 +88,8 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	}
 	vdev_mlme->cnx_mgr_ctx->max_connect_attempts =
 					CM_MAX_CONNECT_ATTEMPTS;
+	vdev_mlme->cnx_mgr_ctx->connect_timeout =
+					CM_MAX_CONNECT_TIMEOUT;
 	qdf_list_create(&vdev_mlme->cnx_mgr_ctx->req_list, CM_MAX_REQ);
 	cm_req_lock_create(vdev_mlme->cnx_mgr_ctx);
 

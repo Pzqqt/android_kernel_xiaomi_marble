@@ -101,6 +101,12 @@ void wlan_cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 	cm_set_max_connect_attempts(vdev, max_connect_attempts);
 }
 
+void wlan_cm_set_max_connect_timeout(struct wlan_objmgr_vdev *vdev,
+				     uint32_t max_connect_timeout)
+{
+	cm_set_max_connect_timeout(vdev, max_connect_timeout);
+}
+
 bool wlan_cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev)
 {
 	return cm_is_vdev_connecting(vdev);

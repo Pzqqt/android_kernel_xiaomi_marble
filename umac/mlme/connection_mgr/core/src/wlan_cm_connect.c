@@ -233,8 +233,6 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 	return status;
 }
 
-#define CONNECT_TIMEOUT       30000
-
 static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 				     struct cnx_mgr *cm_ctx,
 				     struct cm_connect_req *cm_req)
@@ -256,7 +254,7 @@ static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 	cmd.cmd_cb = cm_ser_connect_cb;
 	cmd.source = WLAN_UMAC_COMP_MLME;
 	cmd.is_high_priority = false;
-	cmd.cmd_timeout_duration = CONNECT_TIMEOUT;
+	cmd.cmd_timeout_duration = cm_ctx->connect_timeout;
 	cmd.vdev = cm_ctx->vdev;
 	cmd.is_blocking = cm_ser_get_blocking_cmd();
 

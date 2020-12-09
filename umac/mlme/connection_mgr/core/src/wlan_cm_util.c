@@ -740,6 +740,18 @@ void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 		   cm_ctx->max_connect_attempts, max_connect_attempts);
 }
 
+void cm_set_max_connect_timeout(struct wlan_objmgr_vdev *vdev,
+				uint32_t max_connect_timeout)
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	cm_ctx->connect_timeout = max_connect_timeout;
+}
+
 QDF_STATUS
 cm_fill_disconnect_resp_from_cm_id(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
 				   struct wlan_cm_discon_rsp *resp)

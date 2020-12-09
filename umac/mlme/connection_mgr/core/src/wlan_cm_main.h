@@ -31,6 +31,7 @@
 
 /* Max candidate/attempts to be tried to connect */
 #define CM_MAX_CONNECT_ATTEMPTS 5
+#define CM_MAX_CONNECT_TIMEOUT 30000
 /*
  * Default max retry attempts to be tried for a candidate.
  * In SAE connection this value will be overwritten from the sae_connect_retries
@@ -177,6 +178,7 @@ struct connect_ies {
  * connect req
  * @global_cmd_id: global cmd id for getting cm id for connect/disconnect req
  * @max_connect_attempts: Max attempts to be tried for a connect req
+ * @connect_timeout: Connect timeout value in milliseconds
  * @scan_requester_id: scan requester id.
  * @disconnect_complete: disconnect completion wait event
  */
@@ -196,6 +198,7 @@ struct cnx_mgr {
 	struct connect_ies req_ie;
 	qdf_atomic_t global_cmd_id;
 	uint8_t max_connect_attempts;
+	uint32_t connect_timeout;
 	wlan_scan_requester scan_requester_id;
 	qdf_event_t disconnect_complete;
 };

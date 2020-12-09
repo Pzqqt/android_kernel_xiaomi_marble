@@ -733,6 +733,18 @@ void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 				 uint8_t max_connect_attempts);
 
 /**
+ * cm_set_max_connect_timeout() - Set max connect timeout
+ * @vdev: vdev pointer
+ * @max_connect_timeout: max connect timeout to be set.
+ *
+ * Set max connect timeout.
+ *
+ * Return: void
+ */
+void cm_set_max_connect_timeout(struct wlan_objmgr_vdev *vdev,
+				uint32_t max_connect_timeout);
+
+/**
  * cm_is_vdev_connecting() - check if vdev is in conneting state
  * @vdev: vdev pointer
  *
