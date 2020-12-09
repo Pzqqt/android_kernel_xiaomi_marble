@@ -27796,6 +27796,10 @@ typedef struct {
      *    each phymode value stored in bits 5:0 of the A_UINT32.
      *    Use the WMI_MULTIPLE_VDEV_RESTART_FLAG_GET/SET_PHYMODE macros
      *    to access the phymode value from within each A_UINT32 element.
+     * A_UINT32 preferred_tx_streams[]; <-- Array of preferred_tx_streams
+     *    with vdev ID as index.
+     * A_UINT32 preferred_rx_streams[]; <-- Array of preferred_rx_streams
+     *    with vdev ID as index.
      */
 } wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param;
 
