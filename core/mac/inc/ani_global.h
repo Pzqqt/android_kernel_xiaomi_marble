@@ -805,6 +805,7 @@ struct mac_context {
 	uint8_t he_om_ctrl_cfg_tx_nsts;
 	bool he_om_ctrl_ul_mu_data_dis;
 	uint8_t is_usr_cfg_pmf_wep;
+	uint8_t usr_cfg_ru_242_tone_tx;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;

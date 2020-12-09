@@ -14838,6 +14838,28 @@ void sme_set_amsdu(mac_handle_t mac_handle, bool enable)
 }
 
 #ifdef WLAN_FEATURE_11AX
+void sme_check_enable_ru_242_tx(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	int ret;
+
+	sme_debug("Config VDEV for RU 242 Tx, usr cfg %d",
+		  mac_ctx->usr_cfg_ru_242_tone_tx);
+	if (mac_ctx->usr_cfg_ru_242_tone_tx) {
+		ret = wma_cli_set_command(vdev_id, WMI_VDEV_PARAM_CHWIDTH,
+					  0, VDEV_CMD);
+		if (ret)
+			sme_err("Failed to set VDEV BW to 20MHz");
+	}
+}
+
+void sme_set_ru_242_tone_tx_cfg(mac_handle_t mac_handle, uint8_t cfg_val)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	mac_ctx->usr_cfg_ru_242_tone_tx = cfg_val;
+}
+
 void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);

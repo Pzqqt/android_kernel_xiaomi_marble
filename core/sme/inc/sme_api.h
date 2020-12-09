@@ -3603,6 +3603,7 @@ bool sme_is_sta_key_exchange_in_progress(mac_handle_t mac_handle,
 bool sme_validate_channel_list(mac_handle_t mac_handle,
 			       uint32_t *chan_freq_list,
 			       uint8_t num_channels);
+
 /**
  * sme_set_amsdu() - set amsdu enable/disable based on user cfg
  * @mac_handle: Opaque handle to the global MAC context
@@ -3624,12 +3625,40 @@ void sme_set_pmf_wep_cfg(mac_handle_t mac_handle, uint8_t pmf_wep_cfg);
 #ifdef WLAN_FEATURE_11AX
 void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id);
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id);
+/**
+ * sme_set_ru_242_tone_tx_cfg() - set ru 242 tone tx user cfg
+ * @mac_handle: Opaque handle to the global MAC context
+ * @cfg_val: enable or disable
+ *
+ * Return: None
+ */
+void sme_set_ru_242_tone_tx_cfg(mac_handle_t mac_handle, uint8_t cfg_val);
+
+/**
+ * sme_check_enable_ru_242_tx() - check usr cfg and enable ru 242 tone tx
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: VDEV id
+ *
+ * Return: None
+ */
+void sme_check_enable_ru_242_tx(mac_handle_t mac_handle, uint8_t vdev_id);
+
 #else
 static inline void sme_set_he_testbed_def(mac_handle_t mac_handle,
 					  uint8_t vdev_id)
 {
 }
 static inline void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+}
+
+static inline void sme_check_enable_ru_242_tx(mac_handle_t mac_handle,
+					      uint8_t vdev_id)
+{
+}
+
+static inline void sme_set_ru_242_tone_tx_cfg(mac_handle_t mac_handle,
+					      uint8_t cfg_val)
 {
 }
 #endif

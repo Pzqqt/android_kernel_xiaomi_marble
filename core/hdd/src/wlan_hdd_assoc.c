@@ -3039,6 +3039,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			ucfg_mlme_init_twt_context(hdd_ctx->psoc,
 						   &roam_info->bssid,
 						   WLAN_ALL_SESSIONS_DIALOG_ID);
+			sme_check_enable_ru_242_tx(hdd_ctx->mac_handle,
+						   adapter->vdev_id);
 		}
 
 		/*

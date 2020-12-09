@@ -4575,9 +4575,19 @@ static int hdd_we_set_dcm(struct hdd_adapter *adapter, int value)
 
 static int hdd_we_set_range_ext(struct hdd_adapter *adapter, int value)
 {
-	return hdd_we_set_vdev(adapter,
-			       WMI_VDEV_PARAM_HE_RANGE_EXT,
-			       value);
+	int status;
+
+	status = hdd_we_set_vdev(adapter, WMI_VDEV_PARAM_HE_RANGE_EXT, value);
+	if (status)
+		hdd_err("Failed to set HE_RANGE_EXT, errno %d", status);
+
+	status = hdd_we_set_vdev(adapter, WMI_VDEV_PARAM_NON_DATA_HE_RANGE_EXT,
+				 value);
+	if (status)
+		hdd_err("Failed to set NON_DATA_HE_RANGE_EXT, errno %d",
+			status);
+
+	return status;
 }
 
 static int hdd_we_set_dbg(struct hdd_adapter *adapter,
