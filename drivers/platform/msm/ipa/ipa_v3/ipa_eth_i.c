@@ -18,11 +18,14 @@
 #define IPA_ETH_AGGR_BYTE_LIMIT 2 /*2 Kbytes Agger hard byte limit*/
 
 #define IPA_ETH_MBOX_M (1)
-#define IPA_ETH_RX_MBOX_N (20)
-#define IPA_ETH_TX_MBOX_N (21)
 
-#define IPA_ETH_RX_MBOX_VAL (1)
-#define IPA_ETH_TX_MBOX_VAL (2)
+#define IPA_AQC_RX_MBOX_N (0)
+#define IPA_RTK_RX_MBOX_N (20)
+#define IPA_RTK_TX_MBOX_N (21)
+
+#define IPA_AQC_RX_MBOX_VAL (0x636f6d6d)
+#define IPA_RTK_RX_MBOX_VAL (1)
+#define IPA_RTK_TX_MBOX_VAL (2)
 
 #define IPA_ETH_PCIE_MASK BIT_ULL(40)
 #define IPA_ETH_PCIE_SET(val) (val | IPA_ETH_PCIE_MASK)
@@ -81,14 +84,15 @@ static void ipa3_eth_release_client_mapping(
 	}
 }
 
-static int ipa3_eth_uc_init_peripheral(bool init, u64 per_base)
+static int ipa3_eth_uc_init_peripheral(bool init,
+	u8 protocol, u64 per_base)
 {
 	struct ipa_mem_buffer cmd;
 	enum ipa_cpu_2_hw_offload_commands command;
 	int result;
 
 	if (init) {
-		struct IpaHwAQCInitCmdData_t *cmd_data;
+		struct IpaHwPeripheralInitCmdData_t *cmd_data;
 
 		cmd.size = sizeof(*cmd_data);
 		cmd.base = dma_alloc_coherent(ipa3_ctx->uc_pdev, cmd.size,
@@ -98,12 +102,17 @@ static int ipa3_eth_uc_init_peripheral(bool init, u64 per_base)
 			return -ENOMEM;
 		}
 		cmd_data =
-			(struct IpaHwAQCInitCmdData_t *)cmd.base;
-		cmd_data->periph_baddr_lsb = lower_32_bits(per_base);
-		cmd_data->periph_baddr_msb = upper_32_bits(per_base);
+			(struct IpaHwPeripheralInitCmdData_t *)cmd.base;
+		cmd_data->protocol = protocol;
+		if (protocol == IPA_HW_PROTOCOL_AQC) {
+			cmd_data->Init_params.AqcInit_params.periph_baddr_lsb =
+				lower_32_bits(per_base);
+			cmd_data->Init_params.AqcInit_params.periph_baddr_msb =
+				upper_32_bits(per_base);
+		}
 		command = IPA_CPU_2_HW_CMD_PERIPHERAL_INIT;
 	} else {
-		struct IpaHwAQCDeinitCmdData_t *cmd_data;
+		struct IpaHwPeripheralDeinitCmdData_t *cmd_data;
 
 		cmd.size = sizeof(*cmd_data);
 		cmd.base = dma_alloc_coherent(ipa3_ctx->uc_pdev, cmd.size,
@@ -113,8 +122,12 @@ static int ipa3_eth_uc_init_peripheral(bool init, u64 per_base)
 			return -ENOMEM;
 		}
 		cmd_data =
-			(struct IpaHwAQCDeinitCmdData_t *)cmd.base;
-		cmd_data->reserved = 0;
+			(struct IpaHwPeripheralDeinitCmdData_t *)cmd.base;
+		cmd_data->protocol = protocol;
+		if (protocol == IPA_HW_PROTOCOL_AQC) {
+			cmd_data->PeripheralDeinit_params.AqcDeinit_params.reserved =
+				0;
+		}
 		command = IPA_CPU_2_HW_CMD_PERIPHERAL_DEINIT;
 	}
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
@@ -777,20 +790,34 @@ int ipa3_eth_connect(
 	} else {
 		if (IPA_CLIENT_IS_PROD(client_type)) {
 			/* RX mailbox */
-			pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
-				ipahal_get_reg_base() +
-				ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
-					IPA_ETH_MBOX_M,
-					IPA_ETH_RX_MBOX_N);
-			pipe->info.db_val = IPA_ETH_RX_MBOX_VAL;
+			if (prot == IPA_HW_PROTOCOL_RTK) {
+				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
+					ipahal_get_reg_base() +
+					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
+						IPA_ETH_MBOX_M,
+						IPA_RTK_RX_MBOX_N);
+				pipe->info.db_val = IPA_RTK_RX_MBOX_VAL;
+			} else if (prot == IPA_HW_PROTOCOL_AQC) {
+				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
+					ipahal_get_reg_base() +
+					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
+						IPA_ETH_MBOX_M,
+						IPA_AQC_RX_MBOX_N);
+				pipe->info.db_val = IPA_AQC_RX_MBOX_VAL;
+			}
 		} else {
 			/* TX mailbox */
-			pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
-				ipahal_get_reg_base() +
-				ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
-					IPA_ETH_MBOX_M,
-					IPA_ETH_TX_MBOX_N);
-			pipe->info.db_val = IPA_ETH_TX_MBOX_VAL;
+			if (prot == IPA_HW_PROTOCOL_RTK) {
+				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
+					ipahal_get_reg_base() +
+					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
+						IPA_ETH_MBOX_M,
+						IPA_RTK_TX_MBOX_N);
+				pipe->info.db_val = IPA_RTK_TX_MBOX_VAL;
+			} else if (prot == IPA_HW_PROTOCOL_AQC) {
+				pipe->info.db_pa = gsi_db_addr_low;
+				pipe->info.db_val = 0;
+			}
 		}
 	}
 
@@ -835,7 +862,8 @@ int ipa3_eth_connect(
 		if (!eth_info->num_ch) {
 			bar_addr =
 				IPA_ETH_PCIE_SET(pipe->info.client_info.aqc.bar_addr);
-			result = ipa3_eth_uc_init_peripheral(true, bar_addr);
+			result = ipa3_eth_uc_init_peripheral(true,
+				IPA_HW_PROTOCOL_AQC, bar_addr);
 			if (result) {
 				IPAERR("failed to init peripheral from uc\n");
 				goto uc_init_peripheral_fail;
@@ -998,7 +1026,8 @@ int ipa3_eth_disconnect(
 		inst_id = pipe->client_info->inst_id;
 		eth_info = &ipa3_ctx->eth_info[type][inst_id];
 		if (!eth_info->num_ch) {
-			result = ipa3_eth_uc_init_peripheral(false, 0);
+			result = ipa3_eth_uc_init_peripheral(false,
+				IPA_HW_PROTOCOL_AQC, 0);
 			if (result) {
 				IPAERR("failed to de-init peripheral %d\n", result);
 				goto fail;
