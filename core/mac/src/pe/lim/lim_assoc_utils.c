@@ -441,9 +441,8 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 			 * Release our assigned AID back to the free pool
 			 */
 			if (LIM_IS_AP_ROLE(pe_session)) {
-				lim_del_sta(mac, sta, false, pe_session);
-				lim_release_peer_idx(mac, sta->assocId,
-						     pe_session);
+				lim_del_sta(mac, sta, true, pe_session);
+				return retCode;
 			}
 			lim_delete_dph_hash_entry(mac, sta->staAddr,
 						  sta->assocId, pe_session);
