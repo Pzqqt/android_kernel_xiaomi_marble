@@ -145,6 +145,7 @@ struct dp_pdev_tx_capture {
 	struct tx_cap_debug_log_info log_info;
 	struct dp_tx_cap_nbuf_list *last_nbuf_ppdu_list;
 	uint32_t last_nbuf_ppdu_list_arr_sz;
+	uint64_t peer_mismatch;
 };
 
 /* Tx TID */
