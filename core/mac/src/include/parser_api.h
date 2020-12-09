@@ -180,6 +180,19 @@ struct sir_fils_indication {
 };
 #endif
 
+enum operating_class_num {
+	OP_CLASS_131 = 131,
+	OP_CLASS_132,
+	OP_CLASS_133,
+	OP_CLASS_134,
+	OP_CLASS_135,
+	OP_CLASS_136,
+};
+
+enum operating_extension_identifier {
+	OP_CLASS_ID_200 = 200,
+};
+
 /* Structure common to Beacons & Probe Responses */
 typedef struct sSirProbeRespBeacon {
 	tSirMacTimeStamp timeStamp;

@@ -402,6 +402,7 @@ populate_dot11f_country(struct mac_context *mac,
 	uint8_t buffer_triplets[81][3];
 	uint8_t i,j, num_triplets = 0;
 	QDF_STATUS status;
+	bool six_gig_started = false;
 
 	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
 	if (!cur_chan_list)
@@ -422,24 +423,10 @@ populate_dot11f_country(struct mac_context *mac,
 
 	cur_triplet_valid = false;
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-		if (wlan_reg_is_6ghz_chan_freq(
-			    cur_chan_list[chan_enum].center_freq)) {
-			if (cur_triplet_valid) {
-				buffer_triplets[num_triplets][0] =
-					wlan_reg_freq_to_chan(mac->pdev,
-							      cur_triplet_freq);
-				buffer_triplets[num_triplets][1] =
-					cur_triplet_num_chans;
-				buffer_triplets[num_triplets][2] =
-					cur_triplet_tx_power;
-				num_triplets++;
-				cur_triplet_valid =  false;
-			}
-			break;
-		}
 
 		if (cur_chan_list[chan_enum].chan_flags &
-		    REGULATORY_CHAN_DISABLED) {
+		    REGULATORY_CHAN_DISABLED  ||
+		    (chan_enum == NUM_CHANNELS - 1)) {
 			if (cur_triplet_valid) {
 				buffer_triplets[num_triplets][0] =
 					wlan_reg_freq_to_chan(mac->pdev,
@@ -455,12 +442,13 @@ populate_dot11f_country(struct mac_context *mac,
 		}
 
 		if (cur_triplet_valid) {
-			if ((cur_chan_list[chan_enum].tx_power ==
-			     cur_triplet_tx_power) &&
-			    (cur_triplet_band ==
-			     wlan_reg_freq_to_band(cur_chan_list[chan_enum].center_freq)))
+			if (((cur_chan_list[chan_enum].tx_power ==
+			      cur_triplet_tx_power) &&
+			     (cur_triplet_band ==
+			      wlan_reg_freq_to_band(cur_chan_list[chan_enum].center_freq))) ||
+			    wlan_reg_freq_to_band(cur_chan_list[chan_enum].center_freq == REG_BAND_6G)) {
 				cur_triplet_num_chans++;
-			else {
+			} else {
 				buffer_triplets[num_triplets][0] =
 					wlan_reg_freq_to_chan(mac->pdev,
 							      cur_triplet_freq);
@@ -475,15 +463,40 @@ populate_dot11f_country(struct mac_context *mac,
 				cur_triplet_num_chans = 1;
 				cur_triplet_tx_power =
 					cur_chan_list[chan_enum].tx_power;
-				cur_triplet_band = wlan_reg_freq_to_band(cur_triplet_freq);
+				cur_triplet_band =
+					wlan_reg_freq_to_band(cur_triplet_freq);
 			}
 		} else {
+			if (wlan_reg_is_6ghz_chan_freq(cur_chan_list[chan_enum].
+								center_freq) &&
+			    (six_gig_started == false)) {
+				buffer_triplets[num_triplets][0] =
+								OP_CLASS_ID_200;
+				buffer_triplets[num_triplets][1] = OP_CLASS_131;
+				num_triplets++;
+				six_gig_started = true;
+			}
 			cur_triplet_freq = cur_chan_list[chan_enum].center_freq;
 			cur_triplet_num_chans = 1;
 			cur_triplet_tx_power =
 				cur_chan_list[chan_enum].tx_power;
-			cur_triplet_band = wlan_reg_freq_to_band(cur_triplet_freq);
+			cur_triplet_band =
+				wlan_reg_freq_to_band(cur_triplet_freq);
 			cur_triplet_valid = true;
+		}
+
+		if ((chan_enum == NUM_CHANNELS - 1) && (six_gig_started)) {
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_200;
+			buffer_triplets[num_triplets][1] = OP_CLASS_132;
+			num_triplets++;
+
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_200;
+			buffer_triplets[num_triplets][1] = OP_CLASS_133;
+			num_triplets++;
+
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_200;
+			buffer_triplets[num_triplets][1] = OP_CLASS_134;
+			num_triplets++;
 		}
 	}
 
