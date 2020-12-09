@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2006, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -412,12 +412,4 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 	WLAN_DFSQ_LOCK_DESTROY(dfs);
 	WLAN_ARQ_LOCK_DESTROY(dfs);
 	WLAN_DFSEVENTQ_LOCK_DESTROY(dfs);
-}
-
-int dfs_start_host_based_bangradar(struct wlan_dfs *dfs)
-{
-	dfs->wlan_radar_tasksched = 1;
-	qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
-
-	return 0;
 }

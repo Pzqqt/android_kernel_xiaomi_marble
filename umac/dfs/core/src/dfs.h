@@ -3032,6 +3032,23 @@ uint8_t dfs_find_dfs_sub_channels_for_freq(struct  wlan_dfs *dfs,
 					   struct dfs_channel *chan,
 					   uint16_t *subchan_arr);
 
+#ifdef QCA_DFS_BANGRADAR
+/**
+ * dfs_bangradar() - Handles all type of Bangradar.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @indata: reference to input data
+ * @insize:  input data size
+ *
+ */
+int dfs_bang_radar(struct wlan_dfs *dfs, void *indata, uint32_t insize);
+#else
+static inline int
+dfs_bang_radar(struct wlan_dfs *dfs, void *indata, uint32_t insize)
+{
+	return 0;
+}
+#endif
+
 #ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
 /**
  * dfs_set_postnol_freq() - DFS API to set postNOL frequency.

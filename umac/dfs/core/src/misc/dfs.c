@@ -28,7 +28,6 @@
 #include "wlan_dfs_tgt_api.h"
 #include "../dfs_internal.h"
 #include "../dfs_filter_init.h"
-#include "../dfs_full_offload.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
 #include "../dfs_process_radar_found_ind.h"
@@ -354,42 +353,6 @@ static inline bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs)
 }
 #endif
 
-static QDF_STATUS
-dfs_check_bangradar_sanity(struct wlan_dfs *dfs,
-			   struct dfs_bangradar_params *bangradar_params)
-{
-	if (!bangradar_params) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "bangradar params is NULL");
-		return -EINVAL;
-	}
-	if (dfs_is_true_160mhz_supported(dfs)) {
-		if (abs(bangradar_params->freq_offset) >
-		    FREQ_OFFSET_BOUNDARY_FOR_160MHZ) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				  "Frequency Offset out of bound");
-			return -EINVAL;
-		}
-	} else if (abs(bangradar_params->freq_offset) >
-		   FREQ_OFFSET_BOUNDARY_FOR_80MHZ) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "Frequency Offset out of bound");
-		return -EINVAL;
-	}
-	if (bangradar_params->seg_id > SEG_ID_SECONDARY) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "Invalid segment ID");
-		return -EINVAL;
-	}
-	if ((bangradar_params->detector_id > dfs_get_agile_detector_id(dfs)) ||
-	    ((bangradar_params->detector_id ==
-	      dfs_get_agile_detector_id(dfs)) &&
-	      !dfs->dfs_is_offload_enabled)) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "Invalid detector ID");
-		return -EINVAL;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 int dfs_control(struct wlan_dfs *dfs,
 		u_int id,
 		void *indata,
@@ -399,7 +362,6 @@ int dfs_control(struct wlan_dfs *dfs,
 {
 	struct wlan_dfs_phyerr_param peout;
 	struct dfs_ioctl_params *dfsparams;
-	struct dfs_bangradar_params *bangradar_params;
 	int error = 0;
 	uint32_t val = 0;
 	struct dfsreq_nolinfo *nol;
@@ -452,51 +414,7 @@ int dfs_control(struct wlan_dfs *dfs,
 			error = -EINVAL;
 		break;
 	case DFS_BANGRADAR:
-		/*
-		 * Handle all types of Bangradar here.
-		 * Bangradar arguments:
-		 * seg_id      : Segment ID where radar should be injected.
-		 * is_chirp    : Is chirp radar or non chirp radar.
-		 * freq_offset : Frequency offset from center frequency.
-		 *
-		 * Type 1 (DFS_BANGRADAR_FOR_ALL_SUBCHANS): To add all subchans.
-		 * Type 2 (DFS_BANGRADAR_FOR_ALL_SUBCHANS_OF_SEGID): To add all
-		 *               subchans of given segment_id.
-		 * Type 3 (DFS_BANGRADAR_FOR_SPECIFIC_SUBCHANS): To add specific
-		 *               subchans based on the arguments.
-		 *
-		 * The arguments will already be filled in the indata structure
-		 * based on the type.
-		 * If an argument is not specified by user, it will be set to
-		 * default (0) in the indata already and correspondingly,
-		 * the type will change.
-		 */
-		if (insize < sizeof(struct dfs_bangradar_params) ||
-		    !indata) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS1,
-				  "insize = %d, expected = %zu bytes, indata = %pK",
-				  insize,
-				  sizeof(struct dfs_bangradar_params),
-				  indata);
-			error = -EINVAL;
-			break;
-		}
-		bangradar_params = (struct dfs_bangradar_params *)indata;
-		error = dfs_check_bangradar_sanity(dfs, bangradar_params);
-		if (error != QDF_STATUS_SUCCESS)
-			break;
-		dfs->dfs_bangradar_type = bangradar_params->bangradar_type;
-		dfs->dfs_seg_id = bangradar_params->seg_id;
-		dfs->dfs_is_chirp = bangradar_params->is_chirp;
-		dfs->dfs_freq_offset = bangradar_params->freq_offset;
-
-		if (dfs->dfs_is_offload_enabled) {
-			error = dfs_fill_emulate_bang_radar_test(
-					dfs,
-					bangradar_params);
-		} else {
-			error = dfs_start_host_based_bangradar(dfs);
-		}
+		error = dfs_bang_radar(dfs, indata, insize);
 		break;
 	case DFS_GET_THRESH:
 		if (!outdata || !outsize ||

@@ -51,20 +51,6 @@ static inline void dfs_main_detach(struct wlan_dfs *dfs)
 #endif
 
 /**
- * dfs_start_host_based_bangradar() - Mark as bangradar and start
- * wlan_dfs_task_timer.
- * @dfs: Pointer to wlan_dfs structure.
- */
-#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
-int dfs_start_host_based_bangradar(struct wlan_dfs *dfs);
-#else
-static inline int dfs_start_host_based_bangradar(struct wlan_dfs *dfs)
-{
-	return 0;
-}
-#endif
-
-/**
  * dfs_main_timer_reset() - Stop dfs timers.
  * @dfs: Pointer to wlan_dfs structure.
  */
