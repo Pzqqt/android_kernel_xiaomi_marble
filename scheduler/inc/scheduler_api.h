@@ -220,6 +220,16 @@ QDF_STATUS scheduler_post_message_debug(QDF_MODULE_ID src_id,
 void scheduler_resume(void);
 
 /**
+ * scheduler_set_timeout() - set scheduler timeout for msg processing
+ *
+ * Configure the timeout for triggering the scheduler watchdog timer
+ * in milliseconds
+ *
+ * Return: none
+ */
+void scheduler_set_watchdog_timeout(uint32_t timeout);
+
+/**
  * scheduler_register_hdd_suspend_callback() - suspend callback to hdd
  * @callback: hdd callback to be called when controllred thread is suspended
  *

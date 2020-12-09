@@ -392,7 +392,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 
 			sched_history_start(msg);
 			qdf_timer_start(&sch_ctx->watchdog_timer,
-					SCHEDULER_WATCHDOG_TIMEOUT);
+					sch_ctx->timeout);
 			status = sch_ctx->queue_ctx.
 					scheduler_msg_process_fn[i](msg);
 			qdf_timer_stop(&sch_ctx->watchdog_timer);

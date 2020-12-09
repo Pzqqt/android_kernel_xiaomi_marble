@@ -169,6 +169,7 @@ QDF_STATUS scheduler_init(void)
 	qdf_spinlock_create(&sched_ctx->sch_thread_lock);
 	qdf_init_waitqueue_head(&sched_ctx->sch_wait_queue);
 	sched_ctx->sch_event_flag = 0;
+	sched_ctx->timeout = SCHEDULER_WATCHDOG_TIMEOUT;
 	qdf_timer_init(NULL,
 		       &sched_ctx->watchdog_timer,
 		       &scheduler_watchdog_timeout,
@@ -518,6 +519,17 @@ QDF_STATUS scheduler_scan_mq_handler(struct scheduler_msg *msg)
 	scan_q_msg_handler(msg);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void scheduler_set_watchdog_timeout(uint32_t timeout)
+{
+	struct scheduler_ctx *sched_ctx = scheduler_get_context();
+
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
+		return;
+
+	sched_ctx->timeout = timeout;
 }
 
 QDF_STATUS scheduler_register_wma_legacy_handler(scheduler_msg_process_fn_t
