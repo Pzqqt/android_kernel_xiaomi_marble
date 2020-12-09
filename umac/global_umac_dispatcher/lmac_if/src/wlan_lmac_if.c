@@ -49,6 +49,9 @@
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_dfs_utils_api.h>
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+#include <dfs_postnol_ucfg.h>
+#endif
 #endif
 
 #ifdef WLAN_SUPPORT_GREEN_AP

@@ -75,7 +75,7 @@ register_dfs_precac_auto_chan_callbacks_freq(struct dfs_to_mlme *mlme_callback)
 #endif
 
 /**
- * register_dfs_postnol_csa_callback - Register postNOL channel switch callbacks
+ * register_dfs_postnol_csa_callback - Register CSA callback
  * @mlme_callback: Pointer to dfs_to_mlme.
  */
 #ifndef QCA_MCL_DFS_SUPPORT

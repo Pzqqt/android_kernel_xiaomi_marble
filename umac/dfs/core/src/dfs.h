@@ -2076,6 +2076,23 @@ static inline void dfs_process_phyerr(struct wlan_dfs *dfs,
 }
 #endif
 
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+/**
+ * dfs_switch_to_postnol_chan_if_nol_expired() - Find if NOL is expired
+ * in the postNOL channel configured. If true, trigger channel change.
+ * @dfs: Pointer to DFS of wlan_dfs structure.
+ *
+ * Return: True, if channel change is triggered, else false.
+ */
+bool dfs_switch_to_postnol_chan_if_nol_expired(struct wlan_dfs *dfs);
+#else
+static inline bool
+dfs_switch_to_postnol_chan_if_nol_expired(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
+
 #ifdef QCA_MCL_DFS_SUPPORT
 /**
  * dfs_process_phyerr_filter_offload() - Process radar event.
@@ -3049,84 +3066,11 @@ dfs_bang_radar(struct wlan_dfs *dfs, void *indata, uint32_t insize)
 }
 #endif
 
-#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
-/**
- * dfs_set_postnol_freq() - DFS API to set postNOL frequency.
- * @dfs: Pointer to wlan_dfs object.
- * @postnol_freq: PostNOL frequency value configured by the user.
- */
-void dfs_set_postnol_freq(struct wlan_dfs *dfs, qdf_freq_t postnol_freq);
-
-/**
- * dfs_set_postnol_mode() - DFS API to set postNOL mode.
- * @dfs: Pointer to wlan_dfs object.
- * @postnol_mode: PostNOL frequency value configured by the user.
- */
-void dfs_set_postnol_mode(struct wlan_dfs *dfs, uint8_t postnol_mode);
-
-/**
- * dfs_set_postnol_cfreq2() - DFS API to set postNOL secondary center frequency.
- * @dfs: Pointer to wlan_dfs object.
- * @postnol_cfreq2: PostNOL secondary center frequency value configured by the
- * user.
- */
-void dfs_set_postnol_cfreq2(struct wlan_dfs *dfs, qdf_freq_t postnol_cfreq2);
-
-/**
- * dfs_get_postnol_freq() - DFS API to get postNOL frequency.
- * @dfs: Pointer to wlan_dfs object.
- * @postnol_freq: PostNOL frequency value configured by the user.
- */
-void dfs_get_postnol_freq(struct wlan_dfs *dfs, qdf_freq_t *postnol_freq);
-
-/**
- * dfs_get_postnol_mode() - DFS API to get postNOL mode.
- * @dfs: Pointer to wlan_dfs object.
- * @postnol_mode: PostNOL frequency value configured by the user.
- */
-void dfs_get_postnol_mode(struct wlan_dfs *dfs, uint8_t *postnol_mode);
-
-/**
- * dfs_get_postnol_cfreq2() - DFS API to get postNOL secondary center frequency.
- * @dfs: Pointer to wlan_dfs object.
- * @postnol_cfreq2: PostNOL secondary center frequency value configured by the
- * user.
- */
-void dfs_get_postnol_cfreq2(struct wlan_dfs *dfs, qdf_freq_t *postnol_cfreq2);
+#if defined(QCA_SUPPORT_DFS_CHAN_POSTNOL)
+void dfs_postnol_attach(struct wlan_dfs *dfs);
 #else
-static inline void
-dfs_set_postnol_freq(struct wlan_dfs *dfs, qdf_freq_t postnol_freq)
+static inline void dfs_postnol_attach(struct wlan_dfs *dfs)
 {
 }
-
-static inline void
-dfs_set_postnol_mode(struct wlan_dfs *dfs, uint8_t postnol_mode)
-{
-}
-
-static inline void
-dfs_set_postnol_cfreq2(struct wlan_dfs *dfs, qdf_freq_t postnol_cfreq2)
-{
-}
-
-static inline void
-dfs_get_postnol_freq(struct wlan_dfs *dfs, qdf_freq_t *postnol_freq)
-{
-	*postnol_freq = 0;
-}
-
-static inline void
-dfs_get_postnol_mode(struct wlan_dfs *dfs, uint8_t *postnol_mode)
-{
-	*postnol_mode = CH_WIDTH_INVALID;
-}
-
-static inline void
-dfs_get_postnol_cfreq2(struct wlan_dfs *dfs, qdf_freq_t *postnol_cfreq2)
-{
-	*postnol_cfreq2 = 0;
-}
-
-#endif /* QCA_SUPPORT_DFS_CHAN_POSTNOL */
-
+#endif
 #endif  /* _DFS_H_ */
