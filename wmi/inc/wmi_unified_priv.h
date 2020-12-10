@@ -2490,6 +2490,10 @@ QDF_STATUS (*send_lcr_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_lci_cmd)(wmi_unified_t wmi_handle,
 			   struct wifi_pos_lci_info *lci_info);
 #endif
+
+QDF_STATUS (*send_set_tpc_power_cmd)(wmi_unified_t wmi_handle,
+				     uint8_t vdev_id,
+				     struct reg_tpc_power_info *param);
 };
 
 /* Forward declartion for psoc*/

@@ -14517,6 +14517,72 @@ static QDF_STATUS extract_pdev_csa_switch_count_status_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_set_tpc_power_cmd_tlv() - Sends the set TPC power level to FW
+ * @wmi_handle: wmi handle
+ * @param: Pointer to hold TX power info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_set_tpc_power_cmd_tlv(wmi_unified_t wmi_handle,
+					     uint8_t vdev_id,
+					     struct reg_tpc_power_info *param)
+{
+	wmi_buf_t buf;
+	wmi_vdev_set_tpc_power_fixed_param *tpc_power_info_param;
+	wmi_vdev_ch_power_info *ch_power_info;
+	uint8_t *buf_ptr;
+	uint16_t idx;
+	uint32_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(wmi_vdev_set_tpc_power_fixed_param) + WMI_TLV_HDR_SIZE;
+	len += (sizeof(wmi_vdev_ch_power_info) * param->num_pwr_levels);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	tpc_power_info_param = (wmi_vdev_set_tpc_power_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&tpc_power_info_param->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_set_tpc_power_fixed_param));
+
+	tpc_power_info_param->vdev_id = vdev_id;
+	tpc_power_info_param->psd_power = param->is_psd_power;
+	tpc_power_info_param->eirp_power = param->eirp_power;
+	tpc_power_info_param->power_type_6ghz = param->power_type_6g;
+
+	buf_ptr += sizeof(wmi_vdev_set_tpc_power_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       param->num_pwr_levels * sizeof(wmi_vdev_ch_power_info));
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	ch_power_info = (wmi_vdev_ch_power_info *)buf_ptr;
+
+	for (idx = 0; idx < param->num_pwr_levels; ++idx) {
+		WMITLV_SET_HDR(&ch_power_info[idx].tlv_header,
+			WMITLV_TAG_STRUC_wmi_vdev_ch_power_info,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_ch_power_info));
+		ch_power_info[idx].chan_cfreq =
+			param->chan_power_info[idx].chan_cfreq;
+		ch_power_info[idx].tx_power =
+			param->chan_power_info[idx].tx_power;
+		buf_ptr += sizeof(wmi_vdev_ch_power_info);
+	}
+
+	wmi_mtrace(WMI_VDEV_SET_TPC_POWER_CMDID, vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_SET_TPC_POWER_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret))
+		wmi_buf_free(buf);
+
+
+	return ret;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -14879,6 +14945,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_vdev_tsf_report_event = extract_vdev_tsf_report_event_tlv,
 	.extract_pdev_csa_switch_count_status =
 		extract_pdev_csa_switch_count_status_tlv,
+	.send_set_tpc_power_cmd = send_set_tpc_power_cmd_tlv,
 };
 
 /**

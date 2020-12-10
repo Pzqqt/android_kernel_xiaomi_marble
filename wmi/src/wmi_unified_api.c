@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3390,6 +3390,18 @@ QDF_STATUS wmi_extract_pdev_csa_switch_count_status(
 				wmi_handle,
 				evt_buf,
 				param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_set_tpc_power_cmd(wmi_unified_t wmi_handle,
+					      uint8_t vdev_id,
+					      struct reg_tpc_power_info *param)
+{
+	if (wmi_handle->ops->send_set_tpc_power_cmd)
+		return wmi_handle->ops->send_set_tpc_power_cmd(wmi_handle,
+								   vdev_id,
+								   param);
 
 	return QDF_STATUS_E_FAILURE;
 }
