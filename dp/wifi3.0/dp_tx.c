@@ -2691,7 +2691,7 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		if (dp_tx_prepare_tso(vdev, nbuf, &msdu_info)) {
 			DP_STATS_INC_PKT(vdev->pdev, tso_stats.dropped_host, 1,
 					 qdf_nbuf_len(nbuf));
-			return nbuf;
+			goto fail;
 		}
 
 		goto send_multiple;
@@ -2703,7 +2703,7 @@ dp_tx_send_exception(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 		nbuf = dp_tx_prepare_sg(vdev, nbuf, &seg_info, &msdu_info);
 		if (!nbuf)
-			return NULL;
+			goto fail;
 
 		dp_verbose_debug("non-TSO SG frame %pK", vdev);
 
