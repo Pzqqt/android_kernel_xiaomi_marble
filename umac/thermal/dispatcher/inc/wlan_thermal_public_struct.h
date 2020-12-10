@@ -23,13 +23,15 @@
  * enum thermal_throttle_level - firmware offload throttle level
  * @THERMAL_FULLPERF: no any throtting
  * @THERMAL_MITIGATION: throtting tx to do mitigation
- * @THERMAL_SHUTOFF: shut down the tx completely
+ * @THERMAL_SHUTOFF: shut off the tx completely
+ * @THERMAL_SHUTDOWN_TARGET: target will be shutdown entirely
  * @THERMAL_UNKNOWN: unknown level from target.
  */
 enum thermal_throttle_level {
 	 THERMAL_FULLPERF,
 	 THERMAL_MITIGATION,
 	 THERMAL_SHUTOFF,
+	 THERMAL_SHUTDOWN_TARGET,
 	 THERMAL_UNKNOWN,
 };
 

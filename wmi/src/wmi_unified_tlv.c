@@ -11429,6 +11429,8 @@ wmi_tgt_thermal_level_to_host(uint32_t level)
 		return THERMAL_MITIGATION;
 	case WMI_THERMAL_SHUTOFF:
 		return THERMAL_SHUTOFF;
+	case WMI_THERMAL_SHUTDOWN_TGT:
+		return THERMAL_SHUTDOWN_TARGET;
 	default:
 		return THERMAL_UNKNOWN;
 	}
