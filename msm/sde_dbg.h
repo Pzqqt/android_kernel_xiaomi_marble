@@ -369,6 +369,12 @@ int sde_dbg_dsi_ctrl_register(void __iomem *base, const char *name);
 void sde_dbg_set_sde_top_offset(u32 blk_off);
 
 /**
+ * sde_dbg_set_hw_ownership_status - set the VM HW ownership status
+ * @enable:	flag to control HW ownership status
+ */
+void sde_dbg_set_hw_ownership_status(bool enable);
+
+/**
  * sde_evtlog_set_filter - update evtlog filtering
  * @evtlog:	pointer to evtlog
  * @filter:     pointer to optional function name filter, set to NULL to disable

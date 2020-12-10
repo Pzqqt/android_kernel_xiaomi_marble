@@ -1072,6 +1072,8 @@ int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
 	/* enable vblank events */
 	drm_crtc_vblank_on(crtc);
 
+	sde_dbg_set_hw_ownership_status(true);
+
 	/* handle non-SDE pre_acquire */
 	if (vm_ops->vm_client_post_acquire)
 		rc = vm_ops->vm_client_post_acquire(sde_kms);
@@ -1110,6 +1112,8 @@ int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
 		sde_plane_set_sid(plane, 1);
 
 	sde_hw_set_lutdma_sid(sde_kms->hw_sid, 1);
+
+	sde_dbg_set_hw_ownership_status(true);
 
 	return 0;
 }
@@ -1316,6 +1320,8 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 
 	sde_hw_set_lutdma_sid(sde_kms->hw_sid, 0);
 
+	sde_dbg_set_hw_ownership_status(false);
+
 	sde_vm_lock(sde_kms);
 
 	if (vm_ops->vm_release)
@@ -1368,6 +1374,8 @@ int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
 
 	/* reset sw state */
 	sde_crtc_reset_sw_state(crtc);
+
+	sde_dbg_set_hw_ownership_status(false);
 
 	return rc;
 }
@@ -4644,10 +4652,13 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	SDE_DEBUG("Registering for notification of irq_num: %d\n", irq_num);
 	irq_set_affinity_notifier(irq_num, &sde_kms->affinity_notify);
 
-	if (sde_in_trusted_vm(sde_kms))
+	if (sde_in_trusted_vm(sde_kms)) {
 		rc = sde_vm_trusted_init(sde_kms);
-	else
+		sde_dbg_set_hw_ownership_status(false);
+	} else {
 		rc = sde_vm_primary_init(sde_kms);
+		sde_dbg_set_hw_ownership_status(true);
+	}
 	if (rc) {
 		SDE_ERROR("failed to initialize VM ops, rc: %d\n", rc);
 		goto error;
