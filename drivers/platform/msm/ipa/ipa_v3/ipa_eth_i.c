@@ -778,14 +778,34 @@ int ipa3_eth_connect(
 	iowrite32(db_val, db_addr);
 	iounmap(db_addr);
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
-		if (IPA_CLIENT_IS_PROD(client_type)) {
-			if (gsi_query_aqc_msi_addr(ep->gsi_chan_hdl,
-				&pipe->info.db_pa)) {
-				result = -EFAULT;
-				goto query_msi_fail;
+		if (prot == IPA_HW_PROTOCOL_AQC) {
+			if (IPA_CLIENT_IS_PROD(client_type)) {
+				if (gsi_query_aqc_msi_addr(ep->gsi_chan_hdl,
+					&pipe->info.db_pa)) {
+					result = -EFAULT;
+					goto query_msi_fail;
+				}
+			} else {
+				pipe->info.db_pa = gsi_db_addr_low;
+				pipe->info.db_val = 0;
 			}
-		} else {
-			pipe->info.db_pa = 0;
+		} else if (prot == IPA_HW_PROTOCOL_RTK) {
+			/* SDX65 Phase 1, uC still doing doorbell fwd */
+			if (IPA_CLIENT_IS_PROD(client_type)) {
+				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
+					ipahal_get_reg_base() +
+					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
+						IPA_ETH_MBOX_M,
+						IPA_RTK_RX_MBOX_N);
+				pipe->info.db_val = IPA_RTK_RX_MBOX_VAL;
+			} else {
+				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
+					ipahal_get_reg_base() +
+					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
+						IPA_ETH_MBOX_M,
+						IPA_RTK_TX_MBOX_N);
+				pipe->info.db_val = IPA_RTK_TX_MBOX_VAL;
+			}
 		}
 	} else {
 		if (IPA_CLIENT_IS_PROD(client_type)) {
