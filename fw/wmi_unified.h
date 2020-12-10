@@ -266,6 +266,7 @@ typedef enum {
     WMI_GRP_CFR_CAPTURE,    /* 0x44 */
     WMI_GRP_ATM,            /* 0x45 ATM (Air Time Management group) */
     WMI_GRP_VENDOR,         /* 0x46 vendor specific group */
+    WMI_GRP_LATENCY,        /* 0x47 TID/AC level latency config */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1352,6 +1353,12 @@ typedef enum {
     WMI_VENDOR_VDEV_CMDID,
     WMI_VENDOR_PEER_CMDID,
     /** Further vendor cmd IDs can be added below **/
+
+    /** WMI commands specific to Tid level Latency config **/
+    /** VDEV Latency Config command */
+    WMI_VDEV_TID_LATENCY_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_LATENCY),
+    /** TID Latency Request command */
+    WMI_PEER_TID_LATENCY_CONFIG_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -7103,6 +7110,9 @@ typedef enum {
      *  1-31  | Reserved.
      */
     WMI_PDEV_PARAM_SET_MESH_PARAMS,
+
+    /* Param to enable low latency mode */
+    WMI_PDEV_PARAM_LOW_LATENCY_SCHED_MODE,
 
 } WMI_PDEV_PARAM;
 
@@ -24696,6 +24706,274 @@ typedef struct {
      */
 } wmi_atf_grp_wmm_ac_cfg_request_fixed_param;
 
+#define WMI_VDEV_LATENCY_TIDNUM_BIT_POS     0
+#define WMI_VDEV_LATENCY_TIDNUM_NUM_BITS    8
+
+#define WMI_VDEV_LATENCY_GET_TIDNUM(vdev_latency_info) \
+    WMI_GET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_TIDNUM_BIT_POS, WMI_VDEV_LATENCY_TIDNUM_NUM_BITS)
+
+#define WMI_VDEV_LATENCY_SET_TIDNUM(vdev_latency_info,val) \
+    WMI_SET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_TIDNUM_BIT_POS, WMI_VDEV_LATENCY_TIDNUM_NUM_BITS, val)
+
+#define WMI_VDEV_LATENCY_AC_BIT_POS     8
+#define WMI_VDEV_LATENCY_AC_NUM_BITS    2
+
+#define WMI_VDEV_LATENCY_GET_AC(vdev_latency_info) \
+    WMI_GET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_AC_BIT_POS, WMI_VDEV_LATENCY_AC_NUM_BITS)
+
+#define WMI_VDEV_LATENCY_SET_AC(vdev_latency_info,val) \
+    WMI_SET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_AC_BIT_POS, WMI_VDEV_LATENCY_AC_NUM_BITS, val)
+
+#define WMI_VDEV_LATENCY_DL_VALID_BIT_POS     10
+#define WMI_VDEV_LATENCY_DL_VALID_NUM_BITS    1
+
+#define WMI_VDEV_LATENCY_GET_DL_VALID(vdev_latency_info) \
+    WMI_GET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_DL_VALID_BIT_POS, WMI_VDEV_LATENCY_DL_VALID_NUM_BITS)
+
+#define WMI_VDEV_LATENCY_SET_DL_VALID(vdev_latency_info,val) \
+    WMI_SET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_DL_VALID_BIT_POS, WMI_VDEV_LATENCY_DL_VALID_NUM_BITS, val)
+
+#define WMI_VDEV_LATENCY_UL_VALID_BIT_POS     11
+#define WMI_VDEV_LATENCY_UL_VALID_NUM_BITS    1
+
+#define WMI_VDEV_LATENCY_GET_UL_VALID(vdev_latency_info) \
+    WMI_GET_BITS(vdev_latency_info,WMI_VDEV_LATENCY_UL_VALID_BIT_POS, WMI_VDEV_LATENCY_UL_VALID_NUM_BITS)
+
+#define WMI_VDEV_LATENCY_SET_UL_VALID(vdev_latency_info,val) \
+    WMI_SET_BITS(vdev_latency_info, WMI_VDEV_LATENCY_UL_VALID_BIT_POS, WMI_VDEV_LATENCY_UL_VALID_NUM_BITS, val)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_vdev_latency_info
+     */
+    A_UINT32 tlv_header;
+    /*
+     * Maximum expected average delay between 2 schedules in milliseconds
+     * of given TID type when it has active traffic.
+     * 0x0 is considered as invalid service interval.
+     */
+    A_UINT32 service_interval;
+    /* burst_size:
+     * The number of bytes transmitted (in DL TIDs) / received (in UL ACs)
+     * in service interval.
+     */
+    A_UINT32 burst_size;
+    /* max_latency:
+     * The maximum end to end latency expectation, in milliseconds.
+     * If this value is 0x0, it shall be ignored.
+     */
+    A_UINT32 max_latency;
+    /* max_per:
+     * The maximum PER (as a percent) for the peer-TID, in range 1 - 100.
+     * If this value is 0x0, it shall be ignored.
+     */
+    A_UINT32 max_per;
+    /* min_tput:
+     * The minimum guaranteed throughput to the peer-TID, in Kbps.
+     * If this value is 0x0, it shall be ignored.
+     */
+    A_UINT32 min_tput;
+    /* vdev_latency_info
+     *  Bits  12 - 31   - Reserved (Shall be zero)
+     *  Bit   11        - UL latency config indication.
+     *                    If this bit is set then this latency info will
+     *                    be used when triggering UL traffic.  Until the
+     *                    AC specified in bits 8-9 has transferred at least
+     *                    burst_size amount of UL data within the service
+     *                    period, the AP will continue sending UL triggers
+     *                    when the STA has data of the specified access
+     *                    category ready to transmit.
+     *                    Note that the TID specified in bits 0-7 does not
+     *                    apply to UL; the TID-to-AC mapping applied to DL
+     *                    data that can be adjusted by the TID specified
+     *                    in bits 0-7 and the AC specified in bits 8-9 is
+     *                    distinct from the TID-to-AC mapping applied to
+     *                    UL data.
+     *  Bit   10        - DL latency config indication. If the bit is set
+     *                    then DL TID will use this latency config.
+     *  Bits  8 - 9     - This bit has info on the custom AC of DL TID.
+     *                    Also if bit 11 is set, the AP will apply some
+     *                    of these latency specs (in particular, burst_size)
+     *                    to UL traffic for this AC, by sending UL triggers
+     *                    until the desired amount of data has been received
+     *                    within the service period.
+     *  Bits  0 - 7     - Specifies the TID of interest that corresponds
+     *                    to the AC specified in bits 8-9.  This can be
+     *                    used to adjust the TID-to-AC mapping applied to
+     *                    DL data (if bit 10 is set).
+     */
+    A_UINT32 vdev_latency_info;
+} wmi_vdev_latency_info;
+
+/*
+ * Currently wmi_vdev_tid_latency_config_fixed_param will be sent per
+ * data tid to map the AC.
+ * Also to configure VDEV level latency config to be used by all TIDs
+ * based on the mapping.
+ * VDEV restart is expected during this command
+ */
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_tid_latency_config_fixed_param  */
+    A_UINT32 pdev_id;
+    A_UINT32 vdev_id;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_vdev_latency_info vdev_latency_info[];
+     */
+} wmi_vdev_tid_latency_config_fixed_param ;
+
+#define WMI_TID_LATENCY_TIDNUM_BIT_POS     0
+#define WMI_TID_LATENCY_TIDNUM_NUM_BITS    8
+
+#define WMI_TID_LATENCY_GET_TIDNUM(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_TID_LATENCY_TIDNUM_BIT_POS, WMI_TID_LATENCY_TIDNUM_NUM_BITS)
+
+#define WMI_TID_LATENCY_SET_TIDNUM(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info, WMI_TID_LATENCY_TIDNUM_BIT_POS, WMI_TID_LATENCY_TIDNUM_NUM_BITS, val)
+
+#define WMI_TID_LATENCY_AC_BIT_POS     8
+#define WMI_TID_LATENCY_AC_NUM_BITS    2
+
+#define WMI_TID_LATENCY_GET_AC(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_TID_LATENCY_AC_BIT_POS ,  WMI_TID_LATENCY_AC_NUM_BITS)
+
+#define WMI_TID_LATENCY_SET_AC(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info, WMI_TID_LATENCY_AC_BIT_POS ,   WMI_TID_LATENCY_AC_NUM_BITS, val)
+
+#define WMI_TID_LATENCY_DL_ENABLE_BIT_POS     10
+#define WMI_TID_LATENCY_DL_ENABLE_NUM_BITS    1
+
+#define WMI_TID_LATENCY_GET_DL_ENABLE(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info,WMI_TID_LATENCY_DL_ENABLE_BIT_POS, WMI_TID_LATENCY_DL_ENABLE_NUM_BITS)
+
+#define WMI_TID_LATENCY_SET_DL_ENABLE(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info,WMI_TID_LATENCY_DL_ENABLE_BIT_POS, WMI_TID_LATENCY_DL_ENABLE_NUM_BITS, val)
+
+#define WMI_TID_LATENCY_UL_ENABLE_BIT_POS     11
+#define WMI_TID_LATENCY_UL_ENABLE_NUM_BITS    1
+
+#define WMI_TID_LATENCY_GET_UL_ENABLE(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info,WMI_TID_LATENCY_UL_ENABLE_BIT_POS, WMI_TID_LATENCY_UL_ENABLE_NUM_BITS)
+
+#define WMI_TID_LATENCY_SET_UL_ENABLE(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info,WMI_TID_LATENCY_UL_ENABLE_BIT_POS, WMI_TID_LATENCY_UL_ENABLE_NUM_BITS, val)
+
+#define WMI_LATENCY_BURST_SIZE_SUM_BIT_POS     12
+#define WMI_LATENCY_BURST_SIZE_SUM_NUM_BITS    2
+
+#define WMI_LATENCY_GET_BURST_SIZE_SUM(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_LATENCY_BURST_SIZE_SUM_BIT_POS, WMI_LATENCY_BURST_SIZE_SUM_NUM_BITS)
+
+#define WMI_LATENCY_SET_BURST_SIZE_SUM(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info, WMI_LATENCY_BURST_SIZE_SUM_BIT_POS, WMI_LATENCY_BURST_SIZE_SUM_NUM_BITS, val)
+
+#define WMI_LATENCY_MSDUQ_ID_BIT_POS     14
+#define WMI_LATENCY_MSDUQ_ID_NUM_BITS    4
+
+#define WMI_LATENCY_GET_MSDUQ_ID(latency_tid_info) \
+    WMI_GET_BITS(latency_tid_info, WMI_LATENCY_MSDUQ_ID_BIT_POS, WMI_LATENCY_MSDUQ_ID_NUM_BITS)
+
+#define WMI_LATENCY_SET_MSDUQ_ID(latency_tid_info,val) \
+    WMI_SET_BITS(latency_tid_info, WMI_LATENCY_MSDUQ_ID_BIT_POS, WMI_LATENCY_MSDUQ_ID_NUM_BITS, val)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_tid_latency_info
+     */
+    A_UINT32 tlv_header;
+    wmi_mac_addr dest_macaddr; /* Mac address of end client */
+    /*
+     * Maximum expected average delay between 2 schedules in milliseconds
+     * of given TID type when it has active traffic.
+     * 0x0 is considered as invalid service interval.
+     */
+    A_UINT32 service_interval;
+    /*
+     * Cumulative number of bytes are expected to be transmitted or
+     * received in the service interval when this specific Peer-TID
+     * has active traffic.
+     * If cumulative number of bytes is 0x0, it is considered as
+     * invalid burst size.  In that case, firmware would try to transmit
+     * and receive as many bytes as it can for this specific Peer-TID.
+     * This burst size will be added or subtracted from vdev burst size
+     * based on burst size sum bit in latency tid info.
+     * The VDEV burst size will be considered to be 0 when no VDEV latency
+     * command is received.
+     * If host needs to set burst size for a peer then they can use the
+     * peer cmd and set burst size sum bit to 1.
+     */
+    A_UINT32 burst_size_diff;
+    /* max_latency:
+     * The maximum end to end latency expectation, in milliseconds.
+     * If this value is 0x0, it shall be ignored.
+     */
+    A_UINT32 max_latency;
+    /* max_per:
+     * The maximum PER (as a percent) for the peer-TID, in range 1 - 100
+     * If this value is 0x0, it shall be ignored.
+     */
+    A_UINT32 max_per;
+    /* min_tput:
+     * The minimum guaranteed throughput to the peer-TID, in Kbps.
+     * If this value is 0x0, it shall be ignored.
+     */
+    A_UINT32 min_tput;
+    /* latency_tid_info
+     *  Bits 18-31      - Reserved (Shall be zero)
+     *  Bits 14-17      - MSDU queue flow id within the TID for configuring
+     *                    latency info per MSDU flow queue
+     *  Bit  12-13      - burst size sum. Bit to indicate whether to add or
+     *                    subtract burst_size_diff from vdev cmd burst size:
+     *                    1 -> addition
+     *                    2 -> subtraction
+     *  Bit   11        - UL latency config indication.
+     *                    If this bit is set then this latency info will
+     *                    be used when triggering UL traffic.  Until the
+     *                    AC specified in bits 8-9 has transferred at least
+     *                    burst_size amount of UL data within the service
+     *                    period, the AP will continue sending UL triggers
+     *                    when the STA has data of the specified access
+     *                    category ready to transmit.
+     *                    Note that the TID specified in bits 0-7 does not
+     *                    apply to UL; the TID-to-AC mapping applied to DL
+     *                    data that can be adjusted by the TID specified
+     *                    in bits 0-7 and the AC specified in bits 8-9 is
+     *                    distinct from the TID-to-AC mapping applied to
+     *                    UL data.
+     *  Bit   10        - DL latency config indication. If the bit is set
+     *                    then DL TID will use this latency config.
+     *  Bits  8 - 9     - This bit has info on the custom AC of DL TID.
+     *                    Also if bit 11 is set, the AP will apply some
+     *                    of these latency specs (in particular, burst_size)
+     *                    to UL traffic for this AC, by sending UL triggers
+     *                    until the desired amount of data has been received
+     *                    within the service period.
+     *  Bits  0 - 7     - Specifies the TID of interest that corresponds
+     *                    to the AC specified in bits 8-9.  This can be
+     *                    used to adjust the TID-to-AC mapping applied to
+     *                    DL data (if bit 10 is set).
+     */
+    A_UINT32 latency_tid_info;
+} wmi_tid_latency_info;
+
+/*
+ * Currently wmi_peer_tid_set_latency_request_fixed_param will be sent
+ * per TID per latency configured client.
+ * In future this command might come for multiple latency configured
+ * clients together.
+ * The clients are expected to be associated while receiving this command.
+ */
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_tid_latency_config_fixed_param */
+    A_UINT32 pdev_id;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_tid_latency_info latency_info[];
+     */
+} wmi_peer_tid_latency_config_fixed_param;
+
 #define WMI_ATF_GROUP_CFG_PEER_BIT_POS     0
 #define WMI_ATF_GROUP_CFG_PEER_NUM_BITS    1
 
@@ -27406,6 +27684,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID);
         WMI_RETURN_STRING(WMI_TWT_NUDGE_DIALOG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_TPC_POWER_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_TID_LATENCY_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_TID_LATENCY_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";

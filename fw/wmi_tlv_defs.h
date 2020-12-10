@@ -1126,6 +1126,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_msg_info_tlv_param,
     WMITLV_TAG_STRUC_wmi_vdev_set_tpc_power_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_ch_power_info,
+    WMITLV_TAG_STRUC_wmi_vdev_tid_latency_config_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_latency_info,
+    WMITLV_TAG_STRUC_wmi_peer_tid_latency_config_fixed_param,
+    WMITLV_TAG_STRUC_wmi_tid_latency_info,
 } WMITLV_TAG_ID;
 
 /*
@@ -1580,6 +1584,8 @@ typedef enum {
     OP(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID) \
     OP(WMI_TWT_NUDGE_DIALOG_CMDID) \
     OP(WMI_VDEV_SET_TPC_POWER_CMDID) \
+    OP(WMI_VDEV_TID_LATENCY_CONFIG_CMDID) \
+    OP(WMI_PEER_TID_LATENCY_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3976,6 +3982,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_FWTEST_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_atf_request_fixed_param, wmi_peer_atf_request_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_atf_peer_info, peer_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ATF_REQUEST_CMDID);
+
+#define WMITLV_TABLE_WMI_VDEV_TID_LATENCY_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_tid_latency_config_fixed_param, wmi_vdev_tid_latency_config_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_latency_info, vdev_latency_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_TID_LATENCY_CONFIG_CMDID);
+
+#define WMITLV_TABLE_WMI_PEER_TID_LATENCY_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tid_latency_config_fixed_param, wmi_peer_tid_latency_config_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tid_latency_info, latency_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TID_LATENCY_CONFIG_CMDID);
 
 /* ATF Group Request commands */
 #define WMITLV_TABLE_WMI_ATF_SSID_GROUPING_REQUEST_CMDID(id,op,buf,len) \
