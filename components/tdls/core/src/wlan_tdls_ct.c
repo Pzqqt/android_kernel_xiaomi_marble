@@ -1324,18 +1324,20 @@ void tdls_teardown_connections(struct tdls_link_teardown *tdls_teardown)
 	tdls_vdev = tdls_get_vdev(tdls_teardown->psoc, WLAN_TDLS_SB_ID);
 	if (!tdls_vdev) {
 		tdls_err("Unable get the vdev");
-		return;
+		goto fail_vdev;
 	}
 
 	tdls_vdev_obj = wlan_vdev_get_tdls_vdev_obj(tdls_vdev);
 	if (!tdls_vdev_obj) {
 		tdls_err("vdev priv is NULL");
-		return;
+		goto fail_tdls_vdev;
 	}
 
 	tdls_disable_offchan_and_teardown_links(tdls_vdev);
 	qdf_event_set(&tdls_vdev_obj->tdls_teardown_comp);
+fail_tdls_vdev:
 	wlan_objmgr_vdev_release_ref(tdls_vdev, WLAN_TDLS_SB_ID);
+fail_vdev:
 	wlan_objmgr_psoc_release_ref(tdls_teardown->psoc, WLAN_TDLS_SB_ID);
 	qdf_mem_free(tdls_teardown);
 }
