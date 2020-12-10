@@ -1314,4 +1314,42 @@ wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
 	return reg_get_cur_6g_client_type(pdev,
 					  reg_cur_6g_client_mobility_type);
 }
+
+bool wlan_reg_is_6g_psd_power(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_6g_psd_power(pdev);
+}
+
+QDF_STATUS wlan_reg_get_6g_chan_ap_power(struct wlan_objmgr_pdev *pdev,
+					 qdf_freq_t chan_freq, bool *is_psd,
+					 uint16_t *tx_power,
+					 uint16_t *eirp_psd_power)
+{
+	return reg_get_6g_chan_ap_power(pdev, chan_freq, is_psd,
+					tx_power, eirp_psd_power);
+}
+
+QDF_STATUS
+wlan_reg_get_client_power_for_connecting_ap(struct wlan_objmgr_pdev *pdev,
+					    enum reg_6g_ap_type ap_type,
+					    qdf_freq_t chan_freq,
+					    bool *is_psd, uint16_t *tx_power,
+					    uint16_t *eirp_psd_power)
+{
+	return reg_get_client_power_for_connecting_ap(pdev, ap_type, chan_freq,
+						      is_psd, tx_power,
+						      eirp_psd_power);
+}
+
+QDF_STATUS
+wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
+				      enum reg_6g_client_type client_type,
+				      qdf_freq_t chan_freq,
+				      bool *is_psd, uint16_t *tx_power,
+				      uint16_t *eirp_psd_power)
+{
+	return reg_get_client_power_for_6ghz_ap(pdev, client_type, chan_freq,
+						is_psd, tx_power,
+						eirp_psd_power);
+}
 #endif
