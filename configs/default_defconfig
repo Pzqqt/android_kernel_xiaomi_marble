@@ -840,6 +840,13 @@ CONFIG_SMMU_S1_UNMAP := y
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
+CONFIG_SMMU_S1_UNMAP := y
+endif
+endif
+
 ifeq ($(CONFIG_HELIUMPLUS), y)
 ifneq ($(CONFIG_ARCH_SDM630), y)
 ifneq ($(CONFIG_ARCH_SDM660), y)
