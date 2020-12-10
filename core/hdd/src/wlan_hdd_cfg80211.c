@@ -3996,7 +3996,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 			QCA_WLAN_VENDOR_FEATURE_P2P_LISTEN_OFFLOAD);
 
-	value = 0;
+	value = false;
 	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc, &value);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get OCE STA enable info");
@@ -4004,7 +4004,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					      QCA_WLAN_VENDOR_FEATURE_OCE_STA);
 
-	value = 0;
+	value = false;
 	status = ucfg_mlme_get_oce_sap_enabled_info(hdd_ctx->psoc, &value);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get OCE SAP enable info");
