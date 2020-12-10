@@ -12937,6 +12937,21 @@ QDF_STATUS sme_delete_mon_session(mac_handle_t mac_handle, uint8_t vdev_id)
 	return status;
 }
 
+void
+sme_set_del_peers_ind_callback(mac_handle_t mac_handle,
+			       void (*callback)(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id))
+{
+	struct mac_context *mac;
+
+	if (!mac_handle) {
+		QDF_ASSERT(0);
+		return;
+	}
+	mac = MAC_CONTEXT(mac_handle);
+	mac->del_peers_ind_cb = callback;
+}
+
 void sme_set_chan_info_callback(mac_handle_t mac_handle,
 			void (*callback)(struct scan_chan_info *chan_info))
 {

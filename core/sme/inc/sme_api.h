@@ -2373,6 +2373,20 @@ QDF_STATUS sme_set_nud_debug_stats_cb(mac_handle_t mac_handle,
 			void *context);
 
 /**
+ * sme_set_del_peers_ind_callback() - Register del peers ind callback
+ * @mac_handle - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to register its callback to mac
+ *
+ * Return: QDF_STATUS
+ */
+void
+sme_set_del_peers_ind_callback(mac_handle_t mac_handle,
+			       void (*callback)(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id));
+
+/**
  * sme_set_chan_info_callback() - Register chan info callback
  * @mac_handle - MAC global handle
  * @callback_routine - callback routine from HDD

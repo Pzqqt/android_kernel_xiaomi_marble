@@ -3524,6 +3524,25 @@ void hdd_sap_destroy_ctx_all(struct hdd_context *hdd_ctx, bool is_ssr)
 	}
 }
 
+static void
+hdd_indicate_peers_deleted(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct hdd_adapter *adapter;
+
+	if (!psoc) {
+		hdd_err("psoc obj is NULL");
+		return;
+	}
+
+	adapter = wlan_hdd_get_adapter_from_vdev(psoc, vdev_id);
+	if (hdd_validate_adapter(adapter)) {
+		hdd_err("invalid adapter");
+		return;
+	}
+
+	hdd_sap_indicate_disconnect_for_sta(adapter);
+}
+
 QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 {
 	struct hdd_hostapd_state *phostapdBuf;
@@ -3641,6 +3660,8 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 			     sizeof(struct sap_acs_cfg));
 	}
 
+	sme_set_del_peers_ind_callback(hdd_ctx->mac_handle,
+				       &hdd_indicate_peers_deleted);
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
 	hdd_exit();
