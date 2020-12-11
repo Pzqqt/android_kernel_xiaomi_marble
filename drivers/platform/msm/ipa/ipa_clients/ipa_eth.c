@@ -522,7 +522,7 @@ static int ipa_eth_commit_partial_hdr(
 		hdr->hdr[i].eth2_ofst = hdr_info[i].dst_mac_addr_offset;
 	}
 
-	if (ipa_add_hdr(hdr)) {
+	if (ipa3_add_hdr(hdr)) {
 		IPA_ETH_ERR("fail to add partial headers\n");
 		return -EFAULT;
 	}
