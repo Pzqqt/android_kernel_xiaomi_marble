@@ -299,9 +299,13 @@ struct mlme_channel_param {
 /**
  * struct vdev_mlme_mvr_param - Multiple vdev restart params
  * @phymode: phymode information
+ * @preferred_tx_streams: preferred tx streams for VAP
+ * @preferred_rx_streams: preferred rx streams for VAP
  */
 struct vdev_mlme_mvr_param {
 	uint32_t phymode;
+	uint32_t preferred_tx_streams;
+	uint32_t preferred_rx_streams;
 };
 
 /**

@@ -392,6 +392,12 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_MAX_GROUP_KEYS:
 		is_wmi_cmd = true;
 		break;
+	case WLAN_MLME_CFG_TX_STREAMS:
+		mlme_mgmt->chainmask_info.num_tx_chain = mlme_cfg.value;
+		break;
+	case WLAN_MLME_CFG_RX_STREAMS:
+		mlme_mgmt->chainmask_info.num_rx_chain = mlme_cfg.value;
+		break;
 	default:
 		break;
 	}
@@ -574,6 +580,12 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_BCN_TX_RATE:
 		*value = mlme_mgmt->rate_info.bcn_tx_rate;
+		break;
+	case WLAN_MLME_CFG_TX_STREAMS:
+		*value = mlme_mgmt->chainmask_info.num_tx_chain;
+		break;
+	case WLAN_MLME_CFG_RX_STREAMS:
+		*value = mlme_mgmt->chainmask_info.num_rx_chain;
 		break;
 	default:
 		break;
