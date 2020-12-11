@@ -35,6 +35,38 @@
 #define WLAN_CHAN_PSC              0x0400  /* 6GHz PSC frequency */
 
 /**
+ * wlan_reg_set_chan_blocked() - Set is_chan_hop_blocked to true for a frequency
+ * in the current chan list.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency in MHz.
+ *
+ * Return: void.
+ */
+void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev,
+			       qdf_freq_t freq);
+
+/**
+ * wlan_reg_is_chan_blocked() - Check if is_chan_hop_blocked to true for a
+ * frequency in the current chan list.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency in MHz.
+ *
+ * Return: true if is_chan_hop_blocked is true for the input frequency, else
+ * false.
+ */
+bool wlan_reg_is_chan_blocked(struct wlan_objmgr_pdev *pdev,
+			      qdf_freq_t freq);
+
+/**
+ * wlan_reg_is_chan_blocked() - Clear is_chan_hop_blocked for channel in the
+ * current chan list.
+ * @pdev: Pointer to pdev.
+ *
+ * Return: void.
+ */
+void wlan_reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_reg_is_phymode_chwidth_allowed() - Check if requested phymode is allowed
  * @pdev: pdev pointer.
  * @phy_in: phymode that the user requested.
@@ -87,6 +119,21 @@ void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 			     qdf_freq_t freq2,
 			     uint16_t *flags);
 #else
+static inline
+void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+}
+
+static inline
+bool wlan_reg_is_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	return false;
+}
+
+static inline void wlan_reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev)
+{
+}
+
 static inline bool
 wlan_reg_is_phymode_chwidth_allowed(struct wlan_objmgr_pdev *pdev,
 				    enum reg_phymode phy_in,
