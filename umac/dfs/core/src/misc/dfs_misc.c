@@ -208,7 +208,7 @@ bool dfs_switch_to_postnol_chan_if_nol_expired(struct wlan_dfs *dfs)
 			dfs->dfs_chan_postnol_cfreq2);
 		return false;
 	}
-	if (WLAN_IS_CHAN_RADAR(&chan))
+	if (WLAN_IS_CHAN_RADAR(dfs, &chan))
 		return false;
 
 	if (global_dfs_to_mlme.mlme_postnol_chan_switch)
@@ -388,3 +388,47 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 }
 #endif
 #endif
+
+#ifdef CONFIG_HOST_FIND_CHAN
+bool wlan_is_chan_radar(struct wlan_dfs *dfs, struct dfs_channel *chan)
+{
+	qdf_freq_t sub_freq_list[NUM_CHANNELS_160MHZ];
+	uint8_t n_subchans, i;
+
+	if (!chan || !WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))
+		return false;
+
+	n_subchans = dfs_get_bonding_channel_without_seg_info_for_freq(
+				chan,
+				sub_freq_list);
+
+	for (i = 0; i < n_subchans; i++) {
+		if (wlan_reg_is_nol_for_freq(dfs->dfs_pdev_obj,
+					     sub_freq_list[i]))
+			return true;
+	}
+
+	return false;
+}
+
+bool wlan_is_chan_history_radar(struct wlan_dfs *dfs, struct dfs_channel *chan)
+{
+	qdf_freq_t sub_freq_list[NUM_CHANNELS_160MHZ];
+	uint8_t n_subchans, i;
+
+	if (!chan || !WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))
+		return false;
+
+	n_subchans = dfs_get_bonding_channel_without_seg_info_for_freq(
+				chan,
+				sub_freq_list);
+
+	for (i = 0; i < n_subchans; i++) {
+		if (wlan_reg_is_nol_hist_for_freq(dfs->dfs_pdev_obj,
+						  sub_freq_list[i]))
+			return true;
+	}
+
+	return false;
+}
+#endif /* CONFIG_HOST_FIND_CHAN */

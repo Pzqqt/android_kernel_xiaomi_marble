@@ -23,6 +23,9 @@ e* copyright notice and this permission notice appear in all copies.
 #include "dfs.h"
 #include "wlan_dfs_ucfg_api.h"
 #include "wlan_lmac_if_def.h"
+#ifdef CONFIG_HOST_FIND_CHAN
+#include <wlan_reg_channel_api.h>
+#endif
 
 #ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
 /**

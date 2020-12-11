@@ -190,4 +190,22 @@ bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
 }
 #endif /* CONFIG_HOST_FIND_CHAN */
 
+/**
+ * wlan_reg_is_nol_freq() - Checks the channel is a nol chan or not
+ * @freq: Channel center frequency
+ *
+ * Return: true if channel is nol else false
+ */
+bool wlan_reg_is_nol_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
+/**
+ * wlan_reg_is_nol_hist_for_freq() - Checks the channel is a nol history channel
+ * or not.
+ * @freq: Channel center frequency
+ *
+ * Return: true if channel is nol else false
+ */
+bool wlan_reg_is_nol_hist_for_freq(struct wlan_objmgr_pdev *pdev,
+				   qdf_freq_t freq);
+
 #endif /* __WLAN_REG_CHANNEL_API_H */

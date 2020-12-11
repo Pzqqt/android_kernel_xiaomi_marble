@@ -165,3 +165,14 @@ bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_reg_is_band_present);
 #endif /* CONFIG_HOST_FIND_CHAN */
+
+bool wlan_reg_is_nol_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	   return reg_is_nol_for_freq(pdev, freq);
+}
+
+bool wlan_reg_is_nol_hist_for_freq(struct wlan_objmgr_pdev *pdev,
+				   qdf_freq_t freq)
+{
+	return reg_is_nol_hist_for_freq(pdev, freq);
+}
