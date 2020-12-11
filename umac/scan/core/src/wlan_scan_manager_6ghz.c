@@ -315,11 +315,10 @@ static bool scm_is_duty_cycle_scan(struct wlan_scan_obj *scan_obj)
 	bool duty_cycle = false;
 
 	scan_obj->duty_cycle_cnt_6ghz++;
-	if (scan_obj->duty_cycle_cnt_6ghz ==
-		scan_obj->scan_def.duty_cycle_6ghz) {
+	if (scan_obj->duty_cycle_cnt_6ghz == 1)
 		duty_cycle = true;
+	if (scan_obj->scan_def.duty_cycle_6ghz == scan_obj->duty_cycle_cnt_6ghz)
 		scan_obj->duty_cycle_cnt_6ghz = 0;
-	}
 
 	return duty_cycle;
 }
