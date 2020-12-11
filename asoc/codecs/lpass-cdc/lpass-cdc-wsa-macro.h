@@ -19,23 +19,4 @@ enum {
 	LPASS_CDC_WSA_MACRO_GAIN_OFFSET_0_DB,
 };
 
-
-#if IS_ENABLED(CONFIG_WSA_MACRO)
-extern int lpass_cdc_wsa_macro_set_spkr_mode(struct snd_soc_component *component,
-				   int mode);
-extern int lpass_cdc_wsa_macro_set_spkr_gain_offset(struct snd_soc_component *component,
-					  int offset);
-#else /* CONFIG_WSA_MACRO */
-static inline int lpass_cdc_wsa_macro_set_spkr_mode(struct snd_soc_component *component,
-					  int mode)
-{
-	return 0;
-}
-static inline int lpass_cdc_wsa_macro_set_spkr_gain_offset(
-				struct snd_soc_component *component,
-				int offset)
-{
-	return 0;
-}
-#endif /* CONFIG_WSA_MACRO */
 #endif

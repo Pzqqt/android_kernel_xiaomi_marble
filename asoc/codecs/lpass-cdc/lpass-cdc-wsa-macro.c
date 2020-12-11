@@ -278,9 +278,6 @@ struct lpass_cdc_wsa_macro_priv {
 	uint32_t thermal_max_state;
 };
 
-static int lpass_cdc_wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
-					struct lpass_cdc_wsa_macro_priv *wsa_priv,
-					int event, int gain_reg);
 static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[];
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 
@@ -304,15 +301,6 @@ static const char *const rx_sidetone_mix_text[] = {
 	"ZERO", "SRC0"
 };
 
-static const char * const lpass_cdc_wsa_macro_ear_spkr_pa_gain_text[] = {
-	"G_DEFAULT", "G_0_DB", "G_1_DB", "G_2_DB", "G_3_DB",
-	"G_4_DB", "G_5_DB", "G_6_DB"
-};
-
-static const char * const lpass_cdc_wsa_macro_speaker_boost_stage_text[] = {
-	"NO_MAX_STATE", "MAX_STATE_1", "MAX_STATE_2"
-};
-
 static const char * const lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_text[] = {
 	"OFF", "ON"
 };
@@ -330,10 +318,6 @@ static const struct snd_kcontrol_new wsa_int1_vbat_mix_switch[] = {
 	SOC_DAPM_SINGLE("WSA RX1 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
 };
 
-static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_ear_spkr_pa_gain_enum,
-				lpass_cdc_wsa_macro_ear_spkr_pa_gain_text);
-static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_spkr_boost_stage_enum,
-			lpass_cdc_wsa_macro_speaker_boost_stage_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_enum,
 			lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_text);
 static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa_macro_comp_mode_enum,
@@ -482,26 +466,6 @@ static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
 	},
 };
 
-static const struct lpass_cdc_wsa_macro_reg_mask_val
-				lpass_cdc_wsa_macro_spkr_default[] = {
-	{LPASS_CDC_WSA_COMPANDER0_CTL3, 0x80, 0x80},
-	{LPASS_CDC_WSA_COMPANDER1_CTL3, 0x80, 0x80},
-	{LPASS_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x01},
-	{LPASS_CDC_WSA_COMPANDER1_CTL7, 0x01, 0x01},
-	{LPASS_CDC_WSA_BOOST0_BOOST_CTL, 0x7C, 0x58},
-	{LPASS_CDC_WSA_BOOST1_BOOST_CTL, 0x7C, 0x58},
-};
-
-static const struct lpass_cdc_wsa_macro_reg_mask_val
-				lpass_cdc_wsa_macro_spkr_mode1[] = {
-	{LPASS_CDC_WSA_COMPANDER0_CTL3, 0x80, 0x00},
-	{LPASS_CDC_WSA_COMPANDER1_CTL3, 0x80, 0x00},
-	{LPASS_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x00},
-	{LPASS_CDC_WSA_COMPANDER1_CTL7, 0x01, 0x00},
-	{LPASS_CDC_WSA_BOOST0_BOOST_CTL, 0x7C, 0x44},
-	{LPASS_CDC_WSA_BOOST1_BOOST_CTL, 0x7C, 0x44},
-};
-
 static bool lpass_cdc_wsa_macro_get_data(struct snd_soc_component *component,
 			       struct device **wsa_dev,
 			       struct lpass_cdc_wsa_macro_priv **wsa_priv,
@@ -546,78 +510,6 @@ static int lpass_cdc_wsa_macro_set_port_map(struct snd_soc_component *component,
 
 	return ret;
 }
-
-/**
- * lpass_cdc_wsa_macro_set_spkr_gain_offset - offset the speaker path
- * gain with the given offset value.
- *
- * @component: codec instance
- * @offset: Indicates speaker path gain offset value.
- *
- * Returns 0 on success or -EINVAL on error.
- */
-int lpass_cdc_wsa_macro_set_spkr_gain_offset(struct snd_soc_component *component,
-				   int offset)
-{
-	struct device *wsa_dev = NULL;
-	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
-
-	if (!component) {
-		pr_err("%s: NULL component pointer!\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
-		return -EINVAL;
-
-	wsa_priv->spkr_gain_offset = offset;
-	return 0;
-}
-EXPORT_SYMBOL(lpass_cdc_wsa_macro_set_spkr_gain_offset);
-
-/**
- * lpass_cdc_wsa_macro_set_spkr_mode - Configures speaker compander and smartboost
- * settings based on speaker mode.
- *
- * @component: codec instance
- * @mode: Indicates speaker configuration mode.
- *
- * Returns 0 on success or -EINVAL on error.
- */
-int lpass_cdc_wsa_macro_set_spkr_mode(struct snd_soc_component *component, int mode)
-{
-	int i;
-	const struct lpass_cdc_wsa_macro_reg_mask_val *regs;
-	int size;
-	struct device *wsa_dev = NULL;
-	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
-
-	if (!component) {
-		pr_err("%s: NULL codec pointer!\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
-		return -EINVAL;
-
-	switch (mode) {
-	case LPASS_CDC_WSA_MACRO_SPKR_MODE_1:
-		regs = lpass_cdc_wsa_macro_spkr_mode1;
-		size = ARRAY_SIZE(lpass_cdc_wsa_macro_spkr_mode1);
-		break;
-	default:
-		regs = lpass_cdc_wsa_macro_spkr_default;
-		size = ARRAY_SIZE(lpass_cdc_wsa_macro_spkr_default);
-		break;
-	}
-
-	wsa_priv->spkr_mode = mode;
-	for (i = 0; i < size; i++)
-		snd_soc_component_update_bits(component, regs[i].reg,
-				    regs[i].mask, regs[i].val);
-	return 0;
-}
-EXPORT_SYMBOL(lpass_cdc_wsa_macro_set_spkr_mode);
 
 static int lpass_cdc_wsa_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 					    u8 int_prim_fs_rate_reg_val,
@@ -1629,24 +1521,14 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 {
 	struct snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
-	u16 gain_reg;
-	u16 reg;
-	int val;
-	int offset_val = 0;
-	struct device *wsa_dev = NULL;
-	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
-
-	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
-		return -EINVAL;
+	u16 reg = 0;
 
 	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
 	if (!(strcmp(w->name, "WSA_RX INT0 INTERP"))) {
 		reg = LPASS_CDC_WSA_RX0_RX_PATH_CTL;
-		gain_reg = LPASS_CDC_WSA_RX0_RX_VOL_CTL;
 	} else if (!(strcmp(w->name, "WSA_RX INT1 INTERP"))) {
 		reg = LPASS_CDC_WSA_RX1_RX_PATH_CTL;
-		gain_reg = LPASS_CDC_WSA_RX1_RX_VOL_CTL;
 	} else {
 		dev_err(component->dev, "%s: Interpolator reg not found\n",
 			__func__);
@@ -1661,112 +1543,11 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 	case SND_SOC_DAPM_POST_PMU:
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
-		/* apply gain after int clk is enabled */
-		if ((wsa_priv->spkr_gain_offset ==
-			LPASS_CDC_WSA_MACRO_GAIN_OFFSET_M1P5_DB) &&
-		    (wsa_priv->comp_enabled[LPASS_CDC_WSA_MACRO_COMP1] ||
-		     wsa_priv->comp_enabled[LPASS_CDC_WSA_MACRO_COMP2]) &&
-		    (gain_reg == LPASS_CDC_WSA_RX0_RX_VOL_CTL ||
-		     gain_reg == LPASS_CDC_WSA_RX1_RX_VOL_CTL)) {
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX0_RX_PATH_SEC1,
-					0x01, 0x01);
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX0_RX_PATH_MIX_SEC0,
-					0x01, 0x01);
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX1_RX_PATH_SEC1,
-					0x01, 0x01);
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX1_RX_PATH_MIX_SEC0,
-					0x01, 0x01);
-			offset_val = -2;
-		}
-		val = snd_soc_component_read(component, gain_reg);
-		val += offset_val;
-		snd_soc_component_write(component, gain_reg, val);
-		lpass_cdc_wsa_macro_config_ear_spkr_gain(component, wsa_priv,
-						event, gain_reg);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
 		lpass_cdc_wsa_macro_enable_prim_interpolator(component, reg, event);
-		if ((wsa_priv->spkr_gain_offset ==
-			LPASS_CDC_WSA_MACRO_GAIN_OFFSET_M1P5_DB) &&
-		    (wsa_priv->comp_enabled[LPASS_CDC_WSA_MACRO_COMP1] ||
-		     wsa_priv->comp_enabled[LPASS_CDC_WSA_MACRO_COMP2]) &&
-		    (gain_reg == LPASS_CDC_WSA_RX0_RX_VOL_CTL ||
-		     gain_reg == LPASS_CDC_WSA_RX1_RX_VOL_CTL)) {
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX0_RX_PATH_SEC1,
-					0x01, 0x00);
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX0_RX_PATH_MIX_SEC0,
-					0x01, 0x00);
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX1_RX_PATH_SEC1,
-					0x01, 0x00);
-			snd_soc_component_update_bits(component,
-					LPASS_CDC_WSA_RX1_RX_PATH_MIX_SEC0,
-					0x01, 0x00);
-			offset_val = 2;
-			val = snd_soc_component_read(component, gain_reg);
-			val += offset_val;
-			snd_soc_component_write(component, gain_reg, val);
-		}
-		lpass_cdc_wsa_macro_config_ear_spkr_gain(component, wsa_priv,
-						event, gain_reg);
-		break;
-	}
-
-	return 0;
-}
-
-static int lpass_cdc_wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
-					struct lpass_cdc_wsa_macro_priv *wsa_priv,
-					int event, int gain_reg)
-{
-	int comp_gain_offset, val;
-
-	switch (wsa_priv->spkr_mode) {
-	/* Compander gain in LPASS_CDC_WSA_MACRO_SPKR_MODE1 case is 12 dB */
-	case LPASS_CDC_WSA_MACRO_SPKR_MODE_1:
-		comp_gain_offset = -12;
-		break;
-	/* Default case compander gain is 15 dB */
-	default:
-		comp_gain_offset = -15;
-		break;
-	}
-
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
-		/* Apply ear spkr gain only if compander is enabled */
-		if (wsa_priv->comp_enabled[LPASS_CDC_WSA_MACRO_COMP1] &&
-		    (gain_reg == LPASS_CDC_WSA_RX0_RX_VOL_CTL) &&
-		    (wsa_priv->ear_spkr_gain != 0)) {
-			/* For example, val is -8(-12+5-1) for 4dB of gain */
-			val = comp_gain_offset + wsa_priv->ear_spkr_gain - 1;
-			snd_soc_component_write(component, gain_reg, val);
-
-			dev_dbg(wsa_priv->dev, "%s: RX0 Volume %d dB\n",
-				__func__, val);
-		}
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		/*
-		 * Reset RX0 volume to 0 dB if compander is enabled and
-		 * ear_spkr_gain is non-zero.
-		 */
-		if (wsa_priv->comp_enabled[LPASS_CDC_WSA_MACRO_COMP1] &&
-		    (gain_reg == LPASS_CDC_WSA_RX0_RX_VOL_CTL) &&
-		    (wsa_priv->ear_spkr_gain != 0)) {
-			snd_soc_component_write(component, gain_reg, 0x0);
-
-			dev_dbg(wsa_priv->dev, "%s: Reset RX0 Volume to 0 dB\n",
-				__func__);
-		}
 		break;
 	}
 
@@ -2143,44 +1924,6 @@ static int lpass_cdc_wsa_macro_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int lpass_cdc_wsa_macro_ear_spkr_pa_gain_get(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
-	struct device *wsa_dev = NULL;
-	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
-
-	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
-		return -EINVAL;
-
-	ucontrol->value.integer.value[0] = wsa_priv->ear_spkr_gain;
-
-	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-
-	return 0;
-}
-
-static int lpass_cdc_wsa_macro_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
-	struct device *wsa_dev = NULL;
-	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
-
-	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
-		return -EINVAL;
-
-	wsa_priv->ear_spkr_gain =  ucontrol->value.integer.value[0];
-
-	dev_dbg(component->dev, "%s: gain = %d\n", __func__,
-		wsa_priv->ear_spkr_gain);
-
-	return 0;
-}
-
 static int lpass_cdc_wsa_macro_comp_mode_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
@@ -2225,70 +1968,6 @@ static int lpass_cdc_wsa_macro_comp_mode_put(struct snd_kcontrol *kcontrol,
 
 	dev_dbg(component->dev, "%s: comp_mode = %d\n", __func__,
 		wsa_priv->comp_mode[idx]);
-
-	return 0;
-}
-
-static int lpass_cdc_wsa_macro_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	u8 bst_state_max = 0;
-	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
-
-	bst_state_max = snd_soc_component_read(component,
-				LPASS_CDC_WSA_BOOST0_BOOST_CTL);
-	bst_state_max = (bst_state_max & 0x0c) >> 2;
-	ucontrol->value.integer.value[0] = bst_state_max;
-	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-
-	return 0;
-}
-
-static int lpass_cdc_wsa_macro_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	u8 bst_state_max;
-	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
-
-	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-	bst_state_max =  ucontrol->value.integer.value[0] << 2;
-	/* lpass_cdc does not need to limit the boost levels */
-
-	return 0;
-}
-
-static int lpass_cdc_wsa_macro_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
-			struct snd_ctl_elem_value *ucontrol)
-{
-	u8 bst_state_max = 0;
-	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
-
-	bst_state_max = snd_soc_component_read(component,
-				LPASS_CDC_WSA_BOOST1_BOOST_CTL);
-	bst_state_max = (bst_state_max & 0x0c) >> 2;
-	ucontrol->value.integer.value[0] = bst_state_max;
-	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-
-	return 0;
-}
-
-static int lpass_cdc_wsa_macro_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_value *ucontrol)
-{
-	u8 bst_state_max;
-	struct snd_soc_component *component =
-				snd_soc_kcontrol_component(kcontrol);
-
-	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-	bst_state_max =  ucontrol->value.integer.value[0] << 2;
-	/* lpass_cdc does not need to limit the boost levels */
 
 	return 0;
 }
@@ -2456,17 +2135,6 @@ static int lpass_cdc_wsa_macro_soft_clip_enable_put(struct snd_kcontrol *kcontro
 }
 
 static const struct snd_kcontrol_new lpass_cdc_wsa_macro_snd_controls[] = {
-	SOC_ENUM_EXT("EAR SPKR PA Gain", lpass_cdc_wsa_macro_ear_spkr_pa_gain_enum,
-		     lpass_cdc_wsa_macro_ear_spkr_pa_gain_get,
-		     lpass_cdc_wsa_macro_ear_spkr_pa_gain_put),
-	SOC_ENUM_EXT("SPKR Left Boost Max State",
-		lpass_cdc_wsa_macro_spkr_boost_stage_enum,
-		lpass_cdc_wsa_macro_spkr_left_boost_stage_get,
-		lpass_cdc_wsa_macro_spkr_left_boost_stage_put),
-	SOC_ENUM_EXT("SPKR Right Boost Max State",
-		lpass_cdc_wsa_macro_spkr_boost_stage_enum,
-		lpass_cdc_wsa_macro_spkr_right_boost_stage_get,
-		lpass_cdc_wsa_macro_spkr_right_boost_stage_put),
 	SOC_ENUM_EXT("GSM mode Enable", lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_enum,
 		     lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_get,
 		     lpass_cdc_wsa_macro_vbat_bcl_gsm_mode_func_put),
