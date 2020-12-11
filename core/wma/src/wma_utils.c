@@ -67,6 +67,7 @@
 #include "cdp_txrx_misc.h"
 #include <cdp_txrx_host_stats.h>
 #include "wlan_mlme_ucfg_api.h"
+#include <wlan_cp_stats_mc_tgt_api.h>
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -4405,6 +4406,51 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return wma_vdev_send_start_resp(wma, add_bss_rsp);
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					    uint16_t data_len, void *data)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct request_info info = {0};
+	uint8_t interval = 1;
+	QDF_STATUS status;
+	int pdev;
+
+	if (!wma)
+		return QDF_STATUS_E_INVAL;
+
+	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
+		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
+
+	pdev = target_if_mc_cp_get_mac_id(vdev_mlme);
+
+	/* Cancel periodic pdev stats update if running for other mac */
+	status = wma_cli_set_command(vdev_mlme->vdev->vdev_objmgr.vdev_id,
+				     WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD,
+				     0, PDEV_CMD);
+	if (status != QDF_STATUS_SUCCESS)
+		pe_err("failed to clear fw stats request = %d", status);
+
+	/* send periodic fw stats to get chan noise floor for monitor mode */
+	info.vdev_id = vdev_mlme->vdev->vdev_objmgr.vdev_id;
+	info.pdev_id = pdev;
+	status = tgt_send_mc_cp_stats_req((wlan_vdev_get_psoc(vdev_mlme->vdev)),
+					  TYPE_STATION_STATS,
+					  &info);
+	if (status != QDF_STATUS_SUCCESS)
+		pe_err("failed to send fw stats request = %d", status);
+
+	status = wma_cli_set2_command(vdev_mlme->vdev->vdev_objmgr.vdev_id,
+				      WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD,
+				      interval * 2000, pdev, PDEV_CMD);
+	if (status != QDF_STATUS_SUCCESS)
+		pe_err("failed to send fw stats request = %d", status);
+
+	lim_process_switch_channel_rsp(wma->mac_context, data);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
 QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data)
 {
@@ -4420,6 +4466,7 @@ QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 QDF_STATUS wma_mon_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 				     uint16_t data_len, void *data)

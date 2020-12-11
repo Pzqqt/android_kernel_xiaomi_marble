@@ -901,7 +901,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		pdev_param.param_value = privcmd->param_value;
 		ret = wmi_unified_pdev_param_send(wma->wmi_handle,
 						 &pdev_param,
-						 WMA_WILDCARD_PDEV_ID);
+						 privcmd->param_sec_value);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			wma_err("wma_vdev_set_param failed ret %d", ret);
 			return;

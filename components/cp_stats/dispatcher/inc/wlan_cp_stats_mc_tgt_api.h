@@ -27,6 +27,22 @@
 #ifdef QCA_SUPPORT_CP_STATS
 #include "wlan_cp_stats_mc_defs.h"
 
+#ifdef QCA_WIFI_QCA6490
+#define TGT_MAC_ID_24G 2
+#define TGT_MAC_ID_5G 1
+#else
+#define TGT_MAC_ID_24G 0
+#define TGT_MAC_ID_5G 0
+#endif
+
+/**
+ * target_if_mc_cp_get_mac_id(): API to get mac id
+ * @vdev_mlme: vdev mlme pointer
+ *
+ * Return: mac id
+ */
+uint8_t target_if_mc_cp_get_mac_id(struct vdev_mlme_obj *vdev_mlme);
+
 /**
  * tgt_mc_cp_stats_process_stats_event(): API to process stats event
  * @psoc: pointer to psoc object
