@@ -877,6 +877,7 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 		return status;
 
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_DEINIT);
+	mlme_clear_operations_bitmap(psoc, vdev_id);
 
 	if (reason != REASON_SUPPLICANT_INIT_ROAMING)
 		wlan_cm_enable_roaming_on_connected_sta(pdev, vdev_id);
