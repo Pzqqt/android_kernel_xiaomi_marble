@@ -7070,7 +7070,7 @@ static uint8_t dp_get_mon_vdev_from_pdev_wifi3(struct cdp_soc_t *soc_hdl,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 
-	if (qdf_unlikely(!pdev))
+	if (qdf_unlikely(!pdev || !pdev->monitor_vdev))
 		return -EINVAL;
 
 	return pdev->monitor_vdev->vdev_id;
