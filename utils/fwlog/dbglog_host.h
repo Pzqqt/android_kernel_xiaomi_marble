@@ -69,6 +69,14 @@ extern "C" {
 #define DIAG_GET_PAYLEN16(arg) \
 	((arg & DIAG_PAYLEN_MASK16) >> DIAG_PAYLEN_OFFSET16)
 
+#define diag_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DIAG, params)
+#define diag_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DIAG, params)
+#define diag_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DIAG, params)
+#define diag_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_DIAG, params)
+#define diag_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DIAG, params)
+
+#define diag_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DIAG, params)
+
 #ifdef FEATURE_FW_LOG_PARSING
 /*
  * set the dbglog parser type

@@ -391,6 +391,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_IFMGR: Interface Manager feature ID
  * @QDF_MODULE_ID_MSCS: MSCS feature ID
  * @QDF_MODULE_ID_GPIO: GPIO configuration module ID
+ * @QDF_MODULE_ID_DIAG: Host diag module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
@@ -522,6 +523,7 @@ typedef enum {
 	QDF_MODULE_ID_IFMGR,
 	QDF_MODULE_ID_MSCS,
 	QDF_MODULE_ID_GPIO,
+	QDF_MODULE_ID_DIAG,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
