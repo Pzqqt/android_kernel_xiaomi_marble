@@ -9521,13 +9521,20 @@ typedef struct {
     /** TLV tag and len; tag equals
     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
     A_UINT32 tlv_header;
-    /** Request ID*/
+    /** Request ID */
     A_UINT32 request_id;
     /** more flag
      *  1 - More events sent after this event.
      *  0 - no more events after this event.
      */
     A_UINT32 more;
+    /** status:
+     * The status field's value shows whether the WMI_REQUEST_CTRL_PATH_STATS
+     * request was completed successfully,
+     *     0 - status is success
+     *     1 - status is failure
+     */
+    A_UINT32 status;
     /** This TLV is (optionally) followed by TLV arrays containing
      *  different types of stats:
      *  1.  wmi_ctrl_path_pdev_stats_struct ctrl_path_pdev_stats[];
@@ -24821,7 +24828,7 @@ typedef struct {
      * Following this structure is the TLV:
      * struct wmi_vdev_latency_info vdev_latency_info[];
      */
-} wmi_vdev_tid_latency_config_fixed_param ;
+} wmi_vdev_tid_latency_config_fixed_param;
 
 #define WMI_TID_LATENCY_TIDNUM_BIT_POS     0
 #define WMI_TID_LATENCY_TIDNUM_NUM_BITS    8
