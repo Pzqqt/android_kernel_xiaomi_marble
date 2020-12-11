@@ -158,6 +158,8 @@ convert_level_to_vendor_thermal_level(enum thermal_throttle_level level)
 		return QCA_WLAN_VENDOR_THERMAL_LEVEL_NONE;
 	else if (level == THERMAL_MITIGATION)
 		return QCA_WLAN_VENDOR_THERMAL_LEVEL_MODERATE;
+	else if (level == THERMAL_SHUTOFF)
+		return QCA_WLAN_VENDOR_THERMAL_LEVEL_CRITICAL;
 	else
 		return QCA_WLAN_VENDOR_THERMAL_LEVEL_EMERGENCY;
 }
