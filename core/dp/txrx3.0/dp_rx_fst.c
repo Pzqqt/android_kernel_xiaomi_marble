@@ -133,13 +133,24 @@ static void dp_fisa_fse_cache_flush_timer(void *arg)
  */
 static void dp_rx_fst_cmem_deinit(struct dp_rx_fst *fst)
 {
+	struct dp_fisa_rx_fst_update_elem *elem;
+	qdf_list_node_t *node;
 	int i;
 
 	qdf_cancel_work(&fst->fst_update_work);
 	qdf_flush_work(&fst->fst_update_work);
 	qdf_flush_workqueue(0, fst->fst_update_wq);
-
 	qdf_destroy_workqueue(0, fst->fst_update_wq);
+
+	qdf_spin_lock_bh(&fst->dp_rx_fst_lock);
+	while (qdf_list_peek_front(&fst->fst_update_list, &node) ==
+	       QDF_STATUS_SUCCESS) {
+		elem = (struct dp_fisa_rx_fst_update_elem *)node;
+		qdf_list_remove_front(&fst->fst_update_list, &node);
+		qdf_mem_free(elem);
+	}
+	qdf_spin_unlock_bh(&fst->dp_rx_fst_lock);
+
 	qdf_list_destroy(&fst->fst_update_list);
 	qdf_event_destroy(&fst->cmem_resp_event);
 
