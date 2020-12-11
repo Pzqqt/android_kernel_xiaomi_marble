@@ -249,7 +249,7 @@ ifeq ($(CONFIG_WLAN_FEATURE_TWT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_twt.o
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_FEATURE_MONITOR_MODE_SUPPORT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
 endif
 
