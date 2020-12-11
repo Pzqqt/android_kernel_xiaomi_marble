@@ -874,7 +874,6 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  */
 void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
 					 void *clist, uint32_t *num_chan);
-
 /**
  * utils_dfs_reg_update_nol_history_ch() - set nol history channel
  *

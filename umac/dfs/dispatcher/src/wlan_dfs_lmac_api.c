@@ -265,27 +265,3 @@ bool lmac_is_host_dfs_check_support_enabled(struct wlan_objmgr_pdev *pdev)
 	return enabled;
 }
 #endif
-
-bool lmac_dfs_is_hw_mode_switch_in_progress(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
-	bool is_hw_mode_switch_in_progress = false;
-	struct wlan_lmac_if_tx_ops *tx_ops;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
-	if (!tx_ops) {
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "tx_ops is null");
-		return is_hw_mode_switch_in_progress;
-	}
-
-	dfs_tx_ops = &tx_ops->dfs_tx_ops;
-
-	if (dfs_tx_ops->dfs_check_mode_switch_state)
-		dfs_tx_ops->dfs_check_mode_switch_state(
-			pdev,
-			&is_hw_mode_switch_in_progress);
-
-	return is_hw_mode_switch_in_progress;
-}

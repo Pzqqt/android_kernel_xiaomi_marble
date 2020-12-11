@@ -1643,9 +1643,19 @@ void dfs_get_nol(struct wlan_dfs *dfs,
  * @dfs_nol: Pointer to dfsreq_nolelem structure.
  * @nchan: Number of channels.
  */
+#ifdef QCA_RADARTOOL_CMD
 void dfs_set_nol(struct wlan_dfs *dfs,
-		struct dfsreq_nolelem *dfs_nol,
-		int nchan);
+		 struct dfsreq_nolelem *dfs_nol,
+		 int nchan);
+#else
+static inline
+void dfs_set_nol(struct wlan_dfs *dfs,
+		 struct dfsreq_nolelem *dfs_nol,
+		 int nchan)
+{
+}
+#endif
+
 
 /**
  * dfs_nol_update() - NOL update
@@ -2952,7 +2962,15 @@ void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs,
  *
  * Return: True if mode switch is in progress, else false.
  */
+#ifdef QCA_HW_MODE_SWITCH
 bool dfs_is_hw_mode_switch_in_progress(struct wlan_dfs *dfs);
+#else
+static inline
+bool dfs_is_hw_mode_switch_in_progress(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
 
 /**
  * dfs_start_mode_switch_defer_timer() - start mode switch defer timer.
@@ -3048,6 +3066,12 @@ bool dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
 uint8_t dfs_find_dfs_sub_channels_for_freq(struct  wlan_dfs *dfs,
 					   struct dfs_channel *chan,
 					   uint16_t *subchan_arr);
+
+/**
+ * dfs_clear_cac_started_chan() - Clear dfs cac started channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_clear_cac_started_chan(struct wlan_dfs *dfs);
 
 #ifdef QCA_DFS_BANGRADAR
 /**

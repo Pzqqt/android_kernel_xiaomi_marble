@@ -116,7 +116,7 @@ static os_timer_func(dfs_cac_valid_timeout)
  * dfs_clear_cac_started_chan() - Clear dfs cac started channel.
  * @dfs: Pointer to wlan_dfs structure.
  */
-static void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
+void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 {
 	qdf_mem_zero(&dfs->dfs_cac_started_chan,
 		     sizeof(dfs->dfs_cac_started_chan));

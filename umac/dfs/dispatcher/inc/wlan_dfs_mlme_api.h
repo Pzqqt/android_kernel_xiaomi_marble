@@ -442,7 +442,14 @@ bool dfs_mlme_is_inter_band_chan_switch_allowed(struct wlan_objmgr_pdev *pdev);
  *
  * Return: void.
  */
+#ifdef QCA_HW_MODE_SWITCH
 void dfs_mlme_acquire_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+void dfs_mlme_acquire_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 
 /**
  * dfs_mlme_release_radar_mode_switch_lock() - Release lock taken for radar
@@ -451,5 +458,12 @@ void dfs_mlme_acquire_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev);
  *
  * Return: void.
  */
+#ifdef QCA_HW_MODE_SWITCH
 void dfs_mlme_release_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+void dfs_mlme_release_radar_mode_switch_lock(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 #endif /* _WLAN_DFS_MLME_API_H_ */

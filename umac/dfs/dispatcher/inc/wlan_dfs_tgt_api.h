@@ -544,7 +544,14 @@ QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev)
  * @pdev: Pointer to DFS pdev object.
  * @val: input value.
  */
+#ifdef QCA_SUPPORT_STA_DFS
 void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val);
+#else
+static inline
+void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val)
+{
+}
+#endif
 
 /**
  * tgt_dfs_is_stadfs_enabled() - Get STADFS capability
@@ -552,7 +559,15 @@ void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val);
  *
  * Return: true if STADFS is enabled, else false.
  */
+#ifdef QCA_SUPPORT_STA_DFS
 bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+#endif
 
 /**
  * tgt_dfs_is_pdev_5ghz() - Check if the input pdev is 5GHZ.
@@ -617,6 +632,7 @@ void tgt_dfs_set_fw_adfs_support(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#ifdef QCA_HW_MODE_SWITCH
 /**
  * tgt_dfs_init_tmp_psoc_nol() - Init temporary psoc NOL structure.
  * @pdev: Pointer to pdev object.
@@ -689,4 +705,43 @@ void tgt_dfs_reinit_precac_lists(struct wlan_objmgr_pdev *src_pdev,
  * Return: void.
  */
 void tgt_dfs_complete_deferred_tasks(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+void tgt_dfs_init_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev,
+			       uint8_t num_radios)
+{
+}
+
+static inline
+void tgt_dfs_deinit_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev)
+{
+}
+
+static inline
+void tgt_dfs_save_dfs_nol_in_psoc(struct wlan_objmgr_pdev *pdev,
+				  uint8_t pdev_id)
+{
+}
+
+static inline
+void tgt_dfs_reinit_nol_from_psoc_copy(struct wlan_objmgr_pdev *pdev,
+				       uint8_t pdev_id,
+				       uint16_t low_5ghz_freq,
+				       uint16_t high_5ghz_freq)
+{
+}
+
+static inline
+void tgt_dfs_reinit_precac_lists(struct wlan_objmgr_pdev *src_pdev,
+				 struct wlan_objmgr_pdev *dest_pdev,
+				 uint16_t low_5g_freq,
+				 uint16_t high_5g_freq)
+{
+}
+
+static inline
+void tgt_dfs_complete_deferred_tasks(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 #endif /* _WLAN_DFS_TGT_API_H_ */

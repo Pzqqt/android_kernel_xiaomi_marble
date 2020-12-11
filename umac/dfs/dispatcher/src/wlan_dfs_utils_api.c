@@ -666,43 +666,6 @@ static void utils_dfs_get_max_sup_width(struct wlan_objmgr_pdev *pdev,
 }
 
 #ifndef QCA_DFS_USE_POLICY_MANAGER
-void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
-					 void *clist, uint32_t *num_chan)
-{
-	int i, j = 0;
-	struct regulatory_channel *cur_chan_list;
-	struct wlan_dfs *dfs;
-	struct dfs_channel *chan_list = (struct dfs_channel *)clist;
-
-	*num_chan = 0;
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs)
-		return;
-
-	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
-	if (!cur_chan_list)
-		return;
-
-	if (wlan_reg_get_current_chan_list(
-			pdev, cur_chan_list) != QDF_STATUS_SUCCESS) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "failed to get cur_chan list");
-		qdf_mem_free(cur_chan_list);
-		return;
-	}
-
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (cur_chan_list[i].nol_history) {
-			chan_list[j].dfs_ch_freq = cur_chan_list[i].center_freq;
-			j++;
-		}
-	}
-
-	*num_chan = j;
-	qdf_mem_free(cur_chan_list);
-}
-
 void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 			     void *clist, uint32_t *num_chan)
 {
@@ -910,7 +873,6 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 #endif
 
 #else
-
 void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
 					 void *clist, uint32_t *num_chan)
 {
