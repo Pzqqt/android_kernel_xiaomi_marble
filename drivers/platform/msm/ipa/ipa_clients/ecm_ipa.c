@@ -14,8 +14,9 @@
 #include <linux/sched.h>
 #include <linux/atomic.h>
 #include "ecm_ipa.h"
-#include "ipa_common_i.h"
-#include "ipa_pm.h"
+#include "../ipa_common_i.h"
+#include "../ipa_pm.h"
+#include "../ipa_v3/ipa_i.h"
 
 #define DRIVER_NAME "ecm_ipa"
 #define ECM_IPA_IPV4_HDR_NAME "ecm_eth_ipv4"
