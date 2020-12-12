@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,25 @@
 #include <linux/io.h>
 #include "hif.h"
 #include "hif_main.h"
+
+/* Device memory is 32MB but bar size is only 1MB.
+ * Register remapping logic is used to access 32MB device memory.
+ * 0-512KB : Fixed address, 512KB-1MB : remapped address.
+ * Use PCIE_REMAP_1M_BAR_CTRL register to set window
+ * for pcie based wifi chipsets.
+ */
+#define MAX_UNWINDOWED_ADDRESS 0x80000
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6750)
+#define WINDOW_ENABLE_BIT 0x40000000
+#else
+#define WINDOW_ENABLE_BIT 0x80000000
+#endif
+#define WINDOW_REG_ADDRESS 0x310C
+#define WINDOW_SHIFT 19
+#define WINDOW_VALUE_MASK 0x3F
+#define WINDOW_START MAX_UNWINDOWED_ADDRESS
+#define WINDOW_RANGE_MASK 0x7FFFF
 
 #if defined(HIF_REG_WINDOW_SUPPORT) && defined(HIF_PCI)
 
@@ -123,23 +142,27 @@ bool hif_target_access_allowed(struct hif_softc *scn)
 #include "qdf_lock.h"
 #include "qdf_util.h"
 
-/* Device memory is 32MB but bar size is only 1MB.
- * Register remapping logic is used to access 32MB device memory.
- * 0-512KB : Fixed address, 512KB-1MB : remapped address.
- * Use PCIE_REMAP_1M_BAR_CTRL register to set window.
- * Offset: 0x310C
- * Bits  : Field Name
- * 31      FUNCTION_ENABLE_V
- * 5:0     ADDR_24_19_V
+#ifdef PCIE_REG_WINDOW_LOCAL_NO_CACHE
+/**
+ * hif_select_window(): Update the register window
+ * @sc: HIF pci handle
+ * @offset: reg offset to read from or write to
+ *
+ * Calculate the window using the offset provided and update
+ * the window reg value accordingly for windowed read/write reg
+ * access.
+ *
+ * Return: None
  */
+static inline void hif_select_window(struct hif_pci_softc *sc, uint32_t offset)
+{
+	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
 
-#define MAX_UNWINDOWED_ADDRESS 0x80000 /* 512KB */
-#define WINDOW_ENABLE_BIT 0x80000000 /* 31st bit to enable window */
-#define WINDOW_REG_ADDRESS 0x310C /* PCIE_REMAP_1M_BAR_CTRL Reg offset */
-#define WINDOW_SHIFT 19
-#define WINDOW_VALUE_MASK 0x3F
-#define WINDOW_START MAX_UNWINDOWED_ADDRESS
-#define WINDOW_RANGE_MASK 0x7FFFF
+	qdf_iowrite32(sc->mem + WINDOW_REG_ADDRESS,
+		      WINDOW_ENABLE_BIT | window);
+	sc->register_window = window;
+}
+#else /* PCIE_REG_WINDOW_LOCAL_NO_CACHE */
 
 static inline void hif_select_window(struct hif_pci_softc *sc, uint32_t offset)
 {
@@ -151,6 +174,51 @@ static inline void hif_select_window(struct hif_pci_softc *sc, uint32_t offset)
 		sc->register_window = window;
 	}
 }
+#endif /* PCIE_REG_WINDOW_LOCAL_NO_CACHE */
+
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
+/**
+ * hif_lock_reg_access() - Lock window register access spinlock
+ * @sc: HIF handle
+ * @flags: variable pointer to save CPU states
+ *
+ * Lock register window spinlock
+ *
+ * Return: void
+ */
+static inline void hif_lock_reg_access(struct hif_pci_softc *sc,
+				       unsigned long *flags)
+{
+	qdf_spin_lock_irqsave(&sc->register_access_lock);
+}
+
+/**
+ * hif_unlock_reg_access() - Unlock window register access spinlock
+ * @sc: HIF handle
+ * @flags: variable pointer to save CPU states
+ *
+ * Unlock register window spinlock
+ *
+ * Return: void
+ */
+static inline void hif_unlock_reg_access(struct hif_pci_softc *sc,
+					 unsigned long *flags)
+{
+	qdf_spin_unlock_irqrestore(&sc->register_access_lock);
+}
+#else
+static inline void hif_lock_reg_access(struct hif_pci_softc *sc,
+				       unsigned long *flags)
+{
+	pld_lock_reg_window(sc->dev, flags);
+}
+
+static inline void hif_unlock_reg_access(struct hif_pci_softc *sc,
+					 unsigned long *flags)
+{
+	pld_unlock_reg_window(sc->dev, flags);
+}
+#endif
 
 /**
  * note1: WINDOW_RANGE_MASK = (1 << WINDOW_SHIFT) -1
@@ -163,16 +231,17 @@ static inline void hif_write32_mb_reg_window(void *scn,
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	uint32_t offset = addr - sc->mem;
+	unsigned long flags;
 
 	if (!sc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(addr, value);
 	} else {
-		qdf_spin_lock_irqsave(&sc->register_access_lock);
+		hif_lock_reg_access(sc, &flags);
 		hif_select_window(sc, offset);
 		qdf_iowrite32(sc->mem + WINDOW_START +
 			  (offset & WINDOW_RANGE_MASK), value);
-		qdf_spin_unlock_irqrestore(&sc->register_access_lock);
+		hif_unlock_reg_access(sc, &flags);
 	}
 }
 
@@ -181,17 +250,17 @@ static inline uint32_t hif_read32_mb_reg_window(void *scn, void __iomem *addr)
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	uint32_t ret;
 	uint32_t offset = addr - sc->mem;
+	unsigned long flags;
 
 	if (!sc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		return qdf_ioread32(addr);
 	}
-
-	qdf_spin_lock_irqsave(&sc->register_access_lock);
+	hif_lock_reg_access(sc, &flags);
 	hif_select_window(sc, offset);
 	ret = qdf_ioread32(sc->mem + WINDOW_START +
 		       (offset & WINDOW_RANGE_MASK));
-	qdf_spin_unlock_irqrestore(&sc->register_access_lock);
+	hif_unlock_reg_access(sc, &flags);
 
 	return ret;
 }

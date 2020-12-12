@@ -372,7 +372,6 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	case TARGET_TYPE_QCA6490:
 		hal->use_register_windowing = true;
 		hal_qca6490_attach(hal);
-		hal->init_phase = false;
 	break;
 #endif
 #ifdef QCA_WIFI_QCA6750
