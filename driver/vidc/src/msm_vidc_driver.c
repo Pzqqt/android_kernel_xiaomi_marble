@@ -26,27 +26,25 @@
 void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
 {
-	struct msm_vidc_buffer *mbuf;
-
 	if (!(tag & msm_vidc_debug) || !inst || !vbuf)
 		return;
 
-	mbuf = get_meta_buffer(inst, vbuf);
-	if (!mbuf)
+	if (vbuf->type == MSM_VIDC_BUF_INPUT || vbuf->type == MSM_VIDC_BUF_OUTPUT) {
 		dprintk(tag, inst->sid,
 			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
 			str, vbuf->type == MSM_VIDC_BUF_INPUT ? "INPUT" : "OUTPUT",
 			vbuf->index, vbuf->fd, vbuf->data_offset,
 			vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
 			vbuf->flags, vbuf->timestamp, vbuf->attr);
-	else
+	} else if (vbuf->type == MSM_VIDC_BUF_INPUT_META ||
+			   vbuf->type == MSM_VIDC_BUF_OUTPUT_META) {
 		dprintk(tag, inst->sid,
-			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x meta: fd %3d daddr %#llx size %d\n",
-			str, vbuf->type == MSM_VIDC_BUF_INPUT ? "INPUT" : "OUTPUT",
+			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
+			str, vbuf->type == MSM_VIDC_BUF_INPUT_META ? "INPUT_META" : "OUTPUT_META",
 			vbuf->index, vbuf->fd, vbuf->data_offset,
 			vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
-			vbuf->flags, vbuf->timestamp, vbuf->attr,
-			mbuf->fd, mbuf->device_addr, mbuf->buffer_size);
+			vbuf->flags, vbuf->timestamp, vbuf->attr);
+	}
 }
 
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
@@ -706,10 +704,7 @@ struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return NULL;
 	}
-	/*
-	 * do not call print_vidc_buffer() in this function to avoid recursion,
-	 * this function is called from print_vidc_buffer.
-	 */
+
 	if (buf->type == MSM_VIDC_BUF_INPUT) {
 		buffers = &inst->buffers.input_meta;
 	} else if (buf->type == MSM_VIDC_BUF_OUTPUT) {

@@ -349,6 +349,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	buf->data_offset = buffer->data_offset;
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
+	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
 	buf->flags = 0;
 	//todo:
 	/*if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT) {
@@ -362,8 +363,6 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	}*/
 
 	print_vidc_buffer(VIDC_HIGH, "EBD", inst, buf);
-	msm_vidc_vb2_buffer_done(inst, buf);
-	msm_vidc_put_driver_buf(inst, buf);
 
 	return rc;
 }
@@ -397,6 +396,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	buf->timestamp = buffer->timestamp;
 
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
+	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
 	if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
 		buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 	else
@@ -418,8 +418,6 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		buf->flags |= MSM_VIDC_BUF_FLAG_SUBFRAME;*/
 
 	print_vidc_buffer(VIDC_HIGH, "FBD", inst, buf);
-	msm_vidc_vb2_buffer_done(inst, buf);
-	msm_vidc_put_driver_buf(inst, buf);
 
 	return rc;
 }
@@ -443,17 +441,19 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 			break;
 		}
 	}
-	if (found) {
-		s_vpr_h(inst->sid,
-			"input metadata buffer done: idx %d fd %d daddr %#x\n",
-			buf->index, buf->fd, buf->device_addr);
-		msm_vidc_vb2_buffer_done(inst, buf);
-		msm_vidc_put_driver_buf(inst, buf);
-	} else {
+	if (!found) {
 		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
+	buf->data_size = buffer->data_size;
+	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
+	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
+	buf->flags = 0;
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
+		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
+
+	print_vidc_buffer(VIDC_HIGH, "EBD META", inst, buf);
 	return rc;
 }
 
@@ -476,17 +476,51 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 			break;
 		}
 	}
-	if (found) {
-		s_vpr_h(inst->sid,
-			"output metadata buffer done: idx %d fd %d daddr %#x\n",
-			buf->index, buf->fd, buf->device_addr);
-		msm_vidc_vb2_buffer_done(inst, buf);
-		msm_vidc_put_driver_buf(inst, buf);
-	} else {
+	if (!found) {
 		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
+
+	buf->data_size = buffer->data_size;
+	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
+	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
+	buf->flags = 0;
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
+		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
+
+	print_vidc_buffer(VIDC_HIGH, "FBD META", inst, buf);
+	return rc;
+}
+
+static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
+{
+	int rc = 0;
+	int i;
+	struct msm_vidc_buffers* buffers;
+	struct msm_vidc_buffer* buf;
+	struct msm_vidc_buffer* dummy;
+	enum msm_vidc_buffer_type buffer_type[] = {
+		MSM_VIDC_BUF_INPUT_META,
+		MSM_VIDC_BUF_INPUT,
+		MSM_VIDC_BUF_OUTPUT_META,
+		MSM_VIDC_BUF_OUTPUT,
+	};
+
+	for (i = 0; i < ARRAY_SIZE(buffer_type); i++) {
+		buffers = msm_vidc_get_buffers(inst, buffer_type[i], __func__);
+		if (!buffers)
+			return -EINVAL;
+
+		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
+			if (buf->attr & MSM_VIDC_ATTR_DEQUEUED) {
+				buf->attr &= ~MSM_VIDC_ATTR_DEQUEUED;
+				msm_vidc_vb2_buffer_done(inst, buf);
+				msm_vidc_put_driver_buf(inst, buf);
+			}
+		}
+	}
+
 	return rc;
 }
 
@@ -920,6 +954,8 @@ static int handle_session_response(struct msm_vidc_core *core,
 	struct msm_vidc_inst *inst;
 	struct hfi_packet *packet;
 	u8 *pkt;
+	u32 hfi_cmd_type = 0;
+	u32 hfi_port = 0;
 	int i;
 
 	inst = get_inst(core, hdr->session_id);
@@ -929,8 +965,8 @@ static int handle_session_response(struct msm_vidc_core *core,
 	}
 
 	mutex_lock(&inst->lock);
-	inst->hfi_cmd_type = 0;
-	inst->hfi_port = 0;
+	hfi_cmd_type = 0;
+	hfi_port = 0;
 	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	for (i = 0; i < hdr->num_packets; i++) {
@@ -942,15 +978,15 @@ static int handle_session_response(struct msm_vidc_core *core,
 		packet = (struct hfi_packet *)pkt;
 		if (packet->type > HFI_CMD_BEGIN &&
 		    packet->type < HFI_CMD_END) {
-			if (inst->hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
+			if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
 				s_vpr_e(inst->sid,
-					"%s: invalid cmd %d, port %d \n",
-					__func__, inst->hfi_cmd_type,
-					inst->hfi_port);
-				return -EINVAL;
+					"%s: invalid packet type %d in port settings change\n",
+					__func__, packet->type);
+				rc = -EINVAL;
+				goto exit;
 			}
-			inst->hfi_cmd_type = packet->type;
-			inst->hfi_port = packet->port;
+			hfi_cmd_type = packet->type;
+			hfi_port = packet->port;
 			rc = handle_session_command(inst, packet);
 		} else if (packet->type > HFI_PROP_BEGIN &&
 			   packet->type < HFI_PROP_END) {
@@ -970,11 +1006,22 @@ static int handle_session_response(struct msm_vidc_core *core,
 		pkt += packet->size;
 	}
 
-	if (inst->hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-		if (inst->hfi_port == HFI_PORT_BITSTREAM)
+	if (hfi_cmd_type == HFI_CMD_BUFFER) {
+		rc = handle_dequeue_buffers(inst);
+		if (rc)
+			goto exit;
+	}
+
+	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
+		if (hfi_port == HFI_PORT_BITSTREAM) {
 			rc = msm_vdec_input_port_settings_change(inst);
-		else if (inst->hfi_port == HFI_PORT_RAW)
+			if (rc)
+				goto exit;
+		} else if (hfi_port == HFI_PORT_RAW) {
 			rc = msm_vdec_output_port_settings_change(inst);
+			if (rc)
+				goto exit;
+		}
 	}
 
 exit:
