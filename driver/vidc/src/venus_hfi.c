@@ -2353,11 +2353,14 @@ static int __load_fw(struct msm_vidc_core *core)
 		}
 	}
 
+	// TODO: Prabhakar - revisit once hyp support is available.
+#ifdef WAIPIO_PRESIL_CP_ENABLE
 	rc = __protect_cp_mem(core);
 	if (rc) {
 		d_vpr_e("%s: protect memory failed\n", __func__);
 		goto fail_protect_mem;
 	}
+#endif
 	/*
 	* Hand off control of regulators to h/w _after_ loading fw.
 	* Note that the GDSC will turn off when switching from normal
