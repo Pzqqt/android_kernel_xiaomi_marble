@@ -35,6 +35,8 @@
 #include "dp_hist.h"
 #include "dp_rx_buffer_pool.h"
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 #ifdef ATH_RX_PRI_SAVE
 #define DP_RX_TID_SAVE(_nbuf, _tid) \
 	(qdf_nbuf_set_priority(_nbuf, _tid))
@@ -65,6 +67,8 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 	return vdev->ap_bridge_enabled;
 }
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 #ifdef DUP_RX_DESC_WAR
 void dp_rx_dump_info_and_assert(struct dp_soc *soc,
 				hal_ring_handle_t hal_ring,
@@ -91,6 +95,7 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc,
 }
 #endif
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 #ifdef RX_DESC_SANITY_WAR
 static inline
 QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
@@ -135,6 +140,8 @@ QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /**
  * dp_pdev_frag_alloc_and_map() - Allocate frag for desc buffer and map
@@ -483,6 +490,8 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 	vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 #ifndef FEATURE_WDS
 static void
 dp_rx_da_learn(struct dp_soc *soc,
@@ -651,6 +660,8 @@ end:
 	 */
 	return false;
 }
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 #ifdef MESH_MODE_SUPPORT
 
@@ -1090,6 +1101,8 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 }
 #endif
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 #ifdef RECEIVE_OFFLOAD
 /**
  * dp_rx_print_offload_info() - Print offload info from RX TLV
@@ -1287,6 +1300,8 @@ qdf_nbuf_t dp_rx_sg_create(struct dp_soc *soc, qdf_nbuf_t nbuf)
 	qdf_nbuf_pull_head(parent, RX_PKT_TLVS_LEN);
 	return parent;
 }
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 #ifdef QCA_PEER_EXT_STATS
 /*
@@ -1696,6 +1711,8 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 	dp_rx_check_delivery_to_stack(soc, vdev, peer, nbuf_head);
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /**
  * dp_rx_cksum_offload() - set the nbuf checksum as defined by hardware.
  * @nbuf: pointer to the first msdu of an amsdu.
@@ -2078,6 +2095,8 @@ uint32_t dp_rx_srng_get_num_pending(hal_soc_handle_t hal_soc,
 	return num_pending;
 }
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 #ifdef WLAN_SUPPORT_RX_FISA
 void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding)
 {
@@ -2108,6 +2127,8 @@ void dp_rx_set_hdr_pad(qdf_nbuf_t nbuf, uint32_t l3_padding)
 {
 }
 #endif
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 #ifdef DP_RX_DROP_RAW_FRM
 /**
@@ -2903,6 +2924,8 @@ done:
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev)
 {

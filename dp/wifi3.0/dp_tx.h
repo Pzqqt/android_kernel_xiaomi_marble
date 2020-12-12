@@ -21,7 +21,10 @@
 #include <qdf_types.h>
 #include <qdf_nbuf.h>
 #include "dp_types.h"
-
+#if defined(MESH_MODE_SUPPORT) || defined(FEATURE_PERPKT_INFO)
+#include "if_meta_hdr.h"
+#endif
+#include "dp_internal.h"
 
 #define DP_INVALID_VDEV_ID 0xFF
 
@@ -71,6 +74,8 @@ do {                                                           \
 /* number of dwords for htt_tx_msdu_desc_ext2_t */
 #define DP_TX_MSDU_INFO_META_DATA_DWORDS 7
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /**
  * struct dp_tx_frag_info_s
  * @vaddr: hlos vritual address for buffer
@@ -100,6 +105,8 @@ struct dp_tx_seg_info_s  {
 	struct dp_tx_frag_info_s frags[DP_TX_MAX_NUM_FRAGS];
 	struct dp_tx_seg_info_s *next;
 };
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /**
  * struct dp_tx_sg_info_s - Scatter Gather Descriptor
@@ -167,6 +174,7 @@ struct dp_tx_msdu_info_s {
 	uint16_t ppdu_cookie;
 };
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 /**
  * dp_tx_deinit_pair_by_index() - Deinit TX rings based on index
  * @soc: core txrx context
@@ -180,10 +188,8 @@ struct dp_tx_msdu_info_s {
  * Return: none
  */
 void dp_tx_deinit_pair_by_index(struct dp_soc *soc, int index);
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
-QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev);
-QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev);
-void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev);
 void dp_tx_tso_cmn_desc_pool_deinit(struct dp_soc *soc, uint8_t num_pool);
 void dp_tx_tso_cmn_desc_pool_free(struct dp_soc *soc, uint8_t num_pool);
 QDF_STATUS dp_tx_tso_cmn_desc_pool_alloc(struct dp_soc *soc,
@@ -195,17 +201,14 @@ QDF_STATUS dp_tx_tso_cmn_desc_pool_init(struct dp_soc *soc,
 
 void dp_tx_tso_cmn_desc_pool_deinit(struct dp_soc *soc, uint8_t num_pool);
 void dp_tx_tso_cmn_desc_pool_free(struct dp_soc *soc, uint8_t num_pool);
-void dp_soc_tx_desc_sw_pools_free(struct dp_soc *soc);
-void dp_soc_tx_desc_sw_pools_deinit(struct dp_soc *soc);
 QDF_STATUS dp_tx_tso_cmn_desc_pool_alloc(struct dp_soc *soc,
 					 uint8_t num_pool,
 					 uint16_t num_desc);
 QDF_STATUS dp_tx_tso_cmn_desc_pool_init(struct dp_soc *soc,
 					uint8_t num_pool,
 					uint16_t num_desc);
-QDF_STATUS dp_soc_tx_desc_sw_pools_alloc(struct dp_soc *soc);
-QDF_STATUS dp_soc_tx_desc_sw_pools_init(struct dp_soc *soc);
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 /**
  * dp_tso_attach() - TSO Attach handler
  * @txrx_soc: Opaque Dp handle
@@ -227,8 +230,6 @@ QDF_STATUS dp_tso_soc_attach(struct cdp_soc_t *txrx_soc);
  * QDF_STATUS_SUCCESS on success
  */
 QDF_STATUS dp_tso_soc_detach(struct cdp_soc_t *txrx_soc);
-
-QDF_STATUS dp_tx_pdev_init(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf);
 
@@ -299,15 +300,41 @@ dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 QDF_STATUS
 dp_tx_prepare_send_igmp_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 
-#ifndef FEATURE_WDS
-static inline void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
+#if defined(QCA_HOST_MODE_WIFI_DISABLED) || !defined(ATH_SUPPORT_IQUE)
+static inline void dp_tx_me_exit(struct dp_pdev *pdev)
 {
 	return;
 }
 #endif
 
-#ifndef ATH_SUPPORT_IQUE
-static inline void dp_tx_me_exit(struct dp_pdev *pdev)
+/**
+ * dp_tx_pdev_init() - dp tx pdev init
+ * @pdev: physical device instance
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+static inline QDF_STATUS dp_tx_pdev_init(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	/* Initialize Flow control counters */
+	qdf_atomic_init(&pdev->num_tx_outstanding);
+	pdev->tx_descs_max = 0;
+	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
+		/* Initialize descriptors in TCL Ring */
+		hal_tx_init_data_ring(soc->hal_soc,
+				soc->tcl_data_ring[pdev->pdev_id].hal_srng);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+#ifndef FEATURE_WDS
+static inline void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 {
 	return;
 }
@@ -356,6 +383,7 @@ static inline enum qdf_dp_tx_rx_status dp_tx_hw_to_qdf(uint16_t status)
 	}
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 /**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
  * @vdev: DP Virtual device handle
@@ -504,20 +532,6 @@ static inline void dp_tx_hal_ring_access_end_reap(struct dp_soc *soc,
 }
 #endif
 
-#ifdef FEATURE_PERPKT_INFO
-QDF_STATUS
-dp_get_completion_indication_for_stack(struct dp_soc *soc,
-				       struct dp_pdev *pdev,
-				       struct dp_peer *peer,
-				       struct hal_tx_completion_status *ts,
-				       qdf_nbuf_t netbuf,
-				       uint64_t time_latency);
-
-void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		uint16_t peer_id, uint32_t ppdu_id,
-		qdf_nbuf_t netbuf);
-#endif
-
 void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl);
 
 #ifdef ATH_TX_PRI_OVERRIDE
@@ -527,16 +541,100 @@ void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl);
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf)
 #endif
 
-void
-dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
-			     uint32_t buf_type);
-
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {
 	return;
 }
 /* TODO TX_FEATURE_NOT_YET */
+
+void dp_tx_desc_flush(struct dp_pdev *pdev, struct dp_vdev *vdev,
+		      bool force_free);
+QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev);
+QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev);
+void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev);
+QDF_STATUS dp_soc_tx_desc_sw_pools_alloc(struct dp_soc *soc);
+QDF_STATUS dp_soc_tx_desc_sw_pools_init(struct dp_soc *soc);
+void dp_soc_tx_desc_sw_pools_free(struct dp_soc *soc);
+void dp_soc_tx_desc_sw_pools_deinit(struct dp_soc *soc);
+void
+dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
+			     uint32_t buf_type);
+#else /* QCA_HOST_MODE_WIFI_DISABLED */
+
+static inline
+QDF_STATUS dp_soc_tx_desc_sw_pools_alloc(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS dp_soc_tx_desc_sw_pools_init(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void dp_soc_tx_desc_sw_pools_free(struct dp_soc *soc)
+{
+}
+
+static inline void dp_soc_tx_desc_sw_pools_deinit(struct dp_soc *soc)
+{
+}
+
+static inline
+void dp_tx_desc_flush(struct dp_pdev *pdev, struct dp_vdev *vdev,
+		      bool force_free)
+{
+}
+
+static inline QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
+{
+}
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
+#ifdef FEATURE_PERPKT_INFO
+QDF_STATUS
+dp_get_completion_indication_for_stack(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf,
+				       uint64_t time_latency);
+
+void dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
+			    uint16_t peer_id, uint32_t ppdu_id,
+			    qdf_nbuf_t netbuf);
+#else
+static inline
+QDF_STATUS dp_get_completion_indication_for_stack(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf,
+				       uint64_t time_latency)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+void dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
+			    uint16_t peer_id, uint32_t ppdu_id,
+			    qdf_nbuf_t netbuf)
+{
+}
+#endif
 
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
 static inline
@@ -547,6 +645,5 @@ QDF_STATUS dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-void dp_tx_desc_flush(struct dp_pdev *pdev, struct dp_vdev *vdev,
-		      bool force_free);
+
 #endif

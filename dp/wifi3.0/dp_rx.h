@@ -73,6 +73,7 @@ enum dp_rx_desc_state {
 	RX_DESC_IN_FREELIST,
 };
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 /**
  * struct dp_rx_desc_dbg_info
  *
@@ -90,6 +91,8 @@ struct dp_rx_desc_dbg_info {
 	char replenish_caller[QDF_MEM_FUNC_NAME_SIZE];
 	uint64_t replenish_ts;
 };
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /**
  * struct dp_rx_desc
@@ -127,6 +130,8 @@ struct dp_rx_desc {
 	in_err_state:1;
 };
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /* RX Descriptor Multi Page memory alloc related */
 #define DP_RX_DESC_OFFSET_NUM_BITS 8
 #define DP_RX_DESC_PAGE_ID_NUM_BITS 8
@@ -150,6 +155,8 @@ struct dp_rx_desc {
 			DP_RX_DESC_PAGE_ID_SHIFT)
 #define DP_RX_DESC_MULTI_PAGE_COOKIE_GET_OFFSET(_cookie)		\
 	((_cookie) & RX_DESC_MULTI_PAGE_COOKIE_OFFSET_MASK)
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 #define RX_DESC_COOKIE_INDEX_SHIFT		0
 #define RX_DESC_COOKIE_INDEX_MASK		0x3ffff /* 18 bits */
@@ -246,6 +253,8 @@ bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
  */
 #define DP_SKIP_VLAN		8
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /**
  * struct dp_rx_cached_buf - rx cached buffer
  * @list: linked list node
@@ -255,6 +264,8 @@ struct dp_rx_cached_buf {
 	qdf_list_node_t node;
 	qdf_nbuf_t buf;
 };
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /*
  *dp_rx_xor_block() - xor block of data
@@ -540,6 +551,8 @@ void *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc, uint32_t cookie)
 }
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 #ifdef DP_RX_DESC_COOKIE_INVALIDATE
 static inline QDF_STATUS
 dp_rx_cookie_check_and_invalidate(hal_ring_desc_t ring_desc)
@@ -557,6 +570,8 @@ dp_rx_cookie_check_and_invalidate(hal_ring_desc_t ring_desc)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool);
 QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
@@ -579,7 +594,6 @@ uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
 				uint16_t num_descs,
 				union dp_rx_desc_list_elem_t **desc_list,
 				union dp_rx_desc_list_elem_t **tail);
-
 
 QDF_STATUS dp_rx_pdev_desc_pool_alloc(struct dp_pdev *pdev);
 void dp_rx_pdev_desc_pool_free(struct dp_pdev *pdev);
@@ -605,6 +619,8 @@ void dp_print_napi_stats(struct dp_soc *soc);
  *         QDF_STATUS_E_RESOURCES: Error return
  */
 QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev);
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 uint32_t
 dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
@@ -668,6 +684,8 @@ qdf_nbuf_t dp_rx_sg_create(struct dp_soc *soc, qdf_nbuf_t nbuf);
  */
 void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
 				   struct rx_desc_pool *rx_desc_pool);
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /*
  * dp_rx_desc_nbuf_free() - free the sw rx desc nbufs called during
@@ -1017,6 +1035,8 @@ void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
 	return link_desc_va;
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /**
  * dp_rx_defrag_concat() - Concatenate the fragments
  *
@@ -1047,6 +1067,8 @@ static inline QDF_STATUS dp_rx_defrag_concat(qdf_nbuf_t dst, qdf_nbuf_t src)
 	return QDF_STATUS_E_DEFRAG_ERROR;
 }
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 #ifndef FEATURE_WDS
 static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_idx, bool is_active)
 {
@@ -1074,6 +1096,8 @@ static inline void dp_rx_desc_dump(struct dp_rx_desc *rx_desc)
 		rx_desc->nbuf, rx_desc->cookie, rx_desc->pool_id,
 		rx_desc->in_use, rx_desc->unmapped);
 }
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 /*
  * check_qwrap_multicast_loopback() - Check if rx packet is a loopback packet.
@@ -1119,6 +1143,8 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
 	return false;
 }
 #endif
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 #if defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) ||\
 	defined(WLAN_SUPPORT_RX_TAG_STATISTICS) ||\
@@ -1415,6 +1441,8 @@ bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf,
 			     uint8_t tid);
 #endif
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 #ifndef WLAN_RX_PKT_CAPTURE_ENH
 static inline
 QDF_STATUS dp_peer_set_rx_capture_enabled(struct dp_pdev *pdev,
@@ -1424,6 +1452,8 @@ QDF_STATUS dp_peer_set_rx_capture_enabled(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /**
  * dp_rx_deliver_to_stack() - deliver pkts to network stack
@@ -1441,6 +1471,8 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 			    struct dp_peer *peer,
 			    qdf_nbuf_t nbuf_head,
 			    qdf_nbuf_t nbuf_tail);
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 #ifdef QCA_OL_RX_LOCK_LESS_ACCESS
 /*
@@ -1488,6 +1520,8 @@ dp_rx_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *soc,
 }
 #endif
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 /*
  * dp_rx_wbm_sg_list_reset() - Initialize sg list
  *
@@ -1520,6 +1554,8 @@ static inline void dp_rx_wbm_sg_list_deinit(struct dp_soc *soc)
 	}
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 #ifdef WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL
 #define DP_RX_PROCESS_NBUF(soc, head, tail, ebuf_head, ebuf_tail, rx_desc) \
 	do {								   \
@@ -1541,6 +1577,8 @@ static inline void dp_rx_wbm_sg_list_deinit(struct dp_soc *soc)
 #define DP_RX_PROCESS_NBUF(soc, head, tail, ebuf_head, ebuf_tail, rx_desc) \
 	DP_RX_LIST_APPEND(head, tail, rx_desc->nbuf)
 #endif /* WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL */
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /*
  * dp_rx_link_desc_refill_duplicate_check() - check if link desc duplicate

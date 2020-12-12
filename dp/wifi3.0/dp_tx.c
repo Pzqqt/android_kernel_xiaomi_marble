@@ -310,6 +310,7 @@ static void dp_tx_tso_desc_release(struct dp_soc *soc,
 {
 }
 #endif
+
 /**
  * dp_tx_desc_release() - Release Tx Descriptor
  * @tx_desc : Tx Descriptor
@@ -3355,133 +3356,6 @@ static void dp_tx_inspect_handler(struct dp_soc *soc,
 	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 }
 
-#ifdef FEATURE_PERPKT_INFO
-/**
- * dp_get_completion_indication_for_stack() - send completion to stack
- * @soc : dp_soc handle
- * @pdev: dp_pdev handle
- * @peer: dp peer handle
- * @ts: transmit completion status structure
- * @netbuf: Buffer pointer for free
- *
- * This function is used for indication whether buffer needs to be
- * sent to stack for freeing or not
-*/
-QDF_STATUS
-dp_get_completion_indication_for_stack(struct dp_soc *soc,
-				       struct dp_pdev *pdev,
-				       struct dp_peer *peer,
-				       struct hal_tx_completion_status *ts,
-				       qdf_nbuf_t netbuf,
-				       uint64_t time_latency)
-{
-	struct tx_capture_hdr *ppdu_hdr;
-	uint16_t peer_id = ts->peer_id;
-	uint32_t ppdu_id = ts->ppdu_id;
-	uint8_t first_msdu = ts->first_msdu;
-	uint8_t last_msdu = ts->last_msdu;
-	uint32_t txcap_hdr_size = sizeof(struct tx_capture_hdr);
-
-	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
-			 !pdev->latency_capture_enable))
-		return QDF_STATUS_E_NOSUPPORT;
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("Peer Invalid"));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (pdev->mcopy_mode) {
-		/* If mcopy is enabled and mcopy_mode is M_COPY deliver 1st MSDU
-		 * per PPDU. If mcopy_mode is M_COPY_EXTENDED deliver 1st MSDU
-		 * for each MPDU
-		 */
-		if (pdev->mcopy_mode == M_COPY) {
-			if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
-			    (pdev->m_copy_id.tx_peer_id == peer_id)) {
-				return QDF_STATUS_E_INVAL;
-			}
-		}
-
-		if (!first_msdu)
-			return QDF_STATUS_E_INVAL;
-
-		pdev->m_copy_id.tx_ppdu_id = ppdu_id;
-		pdev->m_copy_id.tx_peer_id = peer_id;
-	}
-
-	if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
-		netbuf = qdf_nbuf_realloc_headroom(netbuf, txcap_hdr_size);
-		if (!netbuf) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL("No headroom"));
-			return QDF_STATUS_E_NOMEM;
-		}
-	}
-
-	if (!qdf_nbuf_push_head(netbuf, txcap_hdr_size)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("No headroom"));
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	ppdu_hdr = (struct tx_capture_hdr *)qdf_nbuf_data(netbuf);
-	qdf_mem_copy(ppdu_hdr->ta, peer->vdev->mac_addr.raw,
-		     QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
-		     QDF_MAC_ADDR_SIZE);
-	ppdu_hdr->ppdu_id = ppdu_id;
-	ppdu_hdr->peer_id = peer_id;
-	ppdu_hdr->first_msdu = first_msdu;
-	ppdu_hdr->last_msdu = last_msdu;
-	if (qdf_unlikely(pdev->latency_capture_enable)) {
-		ppdu_hdr->tsf = ts->tsf;
-		ppdu_hdr->time_latency = time_latency;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-
-/**
- * dp_send_completion_to_stack() - send completion to stack
- * @soc :  dp_soc handle
- * @pdev:  dp_pdev handle
- * @peer_id: peer_id of the peer for which completion came
- * @ppdu_id: ppdu_id
- * @netbuf: Buffer pointer for free
- *
- * This function is used to send completion to stack
- * to free buffer
-*/
-void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-					uint16_t peer_id, uint32_t ppdu_id,
-					qdf_nbuf_t netbuf)
-{
-	dp_wdi_event_handler(WDI_EVENT_TX_DATA, soc,
-				netbuf, peer_id,
-				WDI_NO_VAL, pdev->pdev_id);
-}
-#else
-static QDF_STATUS
-dp_get_completion_indication_for_stack(struct dp_soc *soc,
-				       struct dp_pdev *pdev,
-				       struct dp_peer *peer,
-				       struct hal_tx_completion_status *ts,
-				       qdf_nbuf_t netbuf,
-				       uint64_t time_latency)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static void
-dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-	uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf)
-{
-}
-#endif
-
 #ifdef MESH_MODE_SUPPORT
 /**
  * dp_tx_comp_fill_tx_completion_stats() - Fill per packet Tx completion stats
@@ -4178,6 +4052,7 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 out:
 	return;
 }
+
 /**
  * dp_tx_comp_process_desc_list() - Tx complete software descriptor handler
  * @soc: core txrx main context
@@ -4739,10 +4614,10 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	 * Fill HTT TCL Metadata with Vdev ID and MAC ID
 	 */
 	HTT_TX_TCL_METADATA_TYPE_SET(vdev->htt_tcl_metadata,
-			HTT_TCL_METADATA_TYPE_VDEV_BASED);
+				     HTT_TCL_METADATA_TYPE_VDEV_BASED);
 
 	HTT_TX_TCL_METADATA_VDEV_ID_SET(vdev->htt_tcl_metadata,
-			vdev->vdev_id);
+					vdev->vdev_id);
 
 	pdev_id =
 		dp_get_target_pdev_id_for_host_pdev_id(vdev->pdev->soc,
@@ -4989,29 +4864,6 @@ QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev)
 	/* Reset TX desc associated to this Vdev as NULL */
 	dp_tx_desc_flush(pdev, vdev, false);
 	dp_tx_vdev_multipass_deinit(vdev);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * dp_tx_pdev_attach() - attach pdev to dp tx
- * @pdev: physical device instance
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-QDF_STATUS dp_tx_pdev_init(struct dp_pdev *pdev)
-{
-	struct dp_soc *soc = pdev->soc;
-
-	/* Initialize Flow control counters */
-	qdf_atomic_init(&pdev->num_tx_outstanding);
-	pdev->tx_descs_max = 0;
-	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
-		/* Initialize descriptors in TCL Ring */
-		hal_tx_init_data_ring(soc->hal_soc,
-				soc->tcl_data_ring[pdev->pdev_id].hal_srng);
-	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5368,4 +5220,3 @@ QDF_STATUS dp_tso_soc_detach(struct cdp_soc_t *txrx_soc)
 
 	return QDF_STATUS_SUCCESS;
 }
-

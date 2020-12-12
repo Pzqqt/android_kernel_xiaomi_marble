@@ -1957,6 +1957,8 @@ budget_done:
 	return total_budget - budget;
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /*
  * dp_service_srngs() - Top level interrupt handler for DP Ring interrupts
  * @dp_ctx: DP SOC handle
@@ -2092,6 +2094,43 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 budget_done:
 	return dp_budget - budget;
 }
+
+#else /* QCA_HOST_MODE_WIFI_DISABLED */
+
+/*
+ * dp_service_srngs() - Top level handler for DP Monitor Ring interrupts
+ * @dp_ctx: DP SOC handle
+ * @budget: Number of frames/descriptors that can be processed in one shot
+ *
+ * Return: remaining budget/quota for the soc device
+ */
+static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
+{
+	struct dp_intr *int_ctx = (struct dp_intr *)dp_ctx;
+	struct dp_intr_stats *intr_stats = &int_ctx->intr_stats;
+	struct dp_soc *soc = int_ctx->soc;
+	uint32_t remaining_quota = dp_budget;
+	uint32_t work_done  = 0;
+	int budget = dp_budget;
+
+	if (qdf_unlikely(!(soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING))) {
+		work_done = dp_process_lmac_rings(int_ctx, remaining_quota);
+		if (work_done) {
+			budget -=  work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
+	}
+
+	qdf_lro_flush(int_ctx->lro_ctx);
+	intr_stats->num_masks++;
+
+budget_done:
+	return dp_budget - budget;
+}
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /* dp_mon_vdev_timer()- timer poll for interrupts
  *
@@ -5564,6 +5603,7 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 /**
  * dp_vdev_register_tx_handler() - Register Tx handler
  * @vdev: struct dp_vdev *
@@ -5575,7 +5615,6 @@ static inline void dp_vdev_register_tx_handler(struct dp_vdev *vdev,
 					       struct ol_txrx_ops *txrx_ops)
 {
 	/* Enable vdev_id check only for ap, if flag is enabled */
-
 	if (vdev->mesh_vdev)
 		txrx_ops->tx.tx = dp_tx_send_mesh;
 	else if ((wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx)) &&
@@ -5595,6 +5634,13 @@ static inline void dp_vdev_register_tx_handler(struct dp_vdev *vdev,
 		 wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx),
 		 vdev->opmode, vdev->vdev_id);
 }
+#else /* QCA_HOST_MODE_WIFI_DISABLED */
+static inline void dp_vdev_register_tx_handler(struct dp_vdev *vdev,
+					       struct dp_soc *soc,
+					       struct ol_txrx_ops *txrx_ops)
+{
+}
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /**
  * dp_vdev_register_wifi3() - Register VDEV operations from osif layer
@@ -11021,8 +11067,12 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_detach = dp_soc_detach_wifi3,
 	.txrx_soc_deinit = dp_soc_deinit_wifi3,
 	.txrx_soc_init = dp_soc_init_wifi3,
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 	.txrx_tso_soc_attach = dp_tso_soc_attach,
 	.txrx_tso_soc_detach = dp_tso_soc_detach,
+	.tx_send = dp_tx_send,
+	.tx_send_exc = dp_tx_send_exception,
+#endif
 	.txrx_pdev_init = dp_pdev_init_wifi3,
 	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,
 	.txrx_get_mon_vdev_from_pdev = dp_get_mon_vdev_from_pdev_wifi3,
@@ -11060,7 +11110,6 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_pdev_status_down = dp_soc_set_pdev_status_down,
 	.txrx_set_ba_aging_timeout = dp_set_ba_aging_timeout,
 	.txrx_get_ba_aging_timeout = dp_get_ba_aging_timeout,
-	.tx_send = dp_tx_send,
 	.txrx_peer_reset_ast = dp_wds_reset_ast_wifi3,
 	.txrx_peer_reset_ast_table = dp_wds_reset_ast_table_wifi3,
 	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
@@ -11085,7 +11134,6 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_vlan_groupkey = dp_set_vlan_groupkey,
 #endif
 	.get_peer_mac_list = dp_get_peer_mac_list,
-	.tx_send_exc = dp_tx_send_exception,
 #ifdef QCA_SUPPORT_WDS_EXTENDED
 	.get_wds_ext_peer_id = dp_wds_ext_get_peer_id,
 	.set_wds_ext_peer_rx = dp_wds_ext_set_peer_rx,
@@ -11156,10 +11204,12 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 };
 
 static struct cdp_me_ops dp_ops_me = {
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 #ifdef ATH_SUPPORT_IQUE
 	.tx_me_alloc_descriptor = dp_tx_me_alloc_descriptor,
 	.tx_me_free_descriptor = dp_tx_me_free_descriptor,
 	.tx_me_convert_ucast = dp_tx_me_send_convert_ucast,
+#endif
 #endif
 };
 

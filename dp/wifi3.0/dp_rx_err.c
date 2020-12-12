@@ -33,6 +33,8 @@
 #include "qdf_net_types.h"
 #include "dp_rx_buffer_pool.h"
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 /* Max buffer in invalid peer SG list*/
 #define DP_MAX_INVALID_BUFFERS 10
 
@@ -158,6 +160,8 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	return false;
 }
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 void dp_rx_link_desc_refill_duplicate_check(
 				struct dp_soc *soc,
 				struct hal_buf_info *buf_info,
@@ -267,6 +271,8 @@ dp_rx_link_desc_return(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 
 	return dp_rx_link_desc_return_by_addr(soc, buf_addr_info, bm_action);
 }
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 /**
  * dp_rx_msdus_drop() - Drops all MSDU's per MPDU
@@ -889,6 +895,8 @@ next:
 	qdf_nbuf_free(nbuf);
 }
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 /**
  * dp_2k_jump_handle() - Function to handle 2k jump exception
  *                        on WBM ring
@@ -1065,6 +1073,8 @@ bool dp_rx_check_pkt_len(struct dp_soc *soc, uint32_t pkt_len)
 }
 
 #endif
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 /**
  * dp_rx_null_q_desc_handle() - Function to handle NULL Queue
@@ -1296,6 +1306,8 @@ drop_nbuf:
 	qdf_nbuf_free(nbuf);
 	return QDF_STATUS_E_FAILURE;
 }
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 /**
  * dp_rx_process_rxdma_err() - Function to deliver rxdma unencrypted_err
@@ -1552,6 +1564,8 @@ fail:
 	qdf_nbuf_free(nbuf);
 	return;
 }
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 #ifdef DP_RX_DESC_COOKIE_INVALIDATE
 /**
@@ -2344,6 +2358,8 @@ done:
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
 
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
 /**
  * dup_desc_dbg() - dump and assert if duplicate rx desc found
  *
@@ -2588,6 +2604,8 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	return work_done;
 }
 
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
 static inline uint32_t
 dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			hal_rxdma_desc_t rxdma_dst_ring_desc,
@@ -2744,3 +2762,5 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 					&head, &tail);
 	}
 }
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
