@@ -3139,6 +3139,7 @@ void ipa3_eth_debugfs_init(void)
 fail:
 	debugfs_remove_recursive(dent_eth);
 }
+EXPORT_SYMBOL(ipa3_eth_debugfs_init);
 
 static ssize_t ipa3_eth_read_perf_status(struct file *file,
 	char __user *ubuf, size_t count, loff_t *ppos)
@@ -3398,6 +3399,7 @@ void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client)
 fail:
 	debugfs_remove_recursive(dent_eth);
 }
+EXPORT_SYMBOL(ipa3_eth_debugfs_add_node);
 
 #else /* !CONFIG_DEBUG_FS */
 #define INVALID_NO_OF_CHAR (-1)

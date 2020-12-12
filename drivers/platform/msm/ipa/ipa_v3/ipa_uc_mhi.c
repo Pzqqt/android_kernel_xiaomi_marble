@@ -955,3 +955,4 @@ int ipa3_uc_mhi_print_stats(char *dbg_buff, int size)
 
 	return nBytes;
 }
+EXPORT_SYMBOL(ipa3_uc_mhi_print_stats);
