@@ -63,6 +63,8 @@
 #define DP_NOACK_STOKEN_POS_SHIFT (2)
 #define DP_NDPA_TOKEN_POS (16)
 
+#define IEEE80211_FC1_SHIFT (8)
+
 /* Macros to handle sequence number bitmaps */
 
 /* HW generated rts frame flag */
@@ -2281,12 +2283,27 @@ void dp_ppdu_desc_debug_print(struct cdp_tx_completion_ppdu *ppdu_desc,
 static
 void dp_peer_tx_wds_addr_add(struct dp_peer *peer, uint8_t *addr4_mac_addr)
 {
-	struct ieee80211_frame_addr4 *ptr_wh;
+	struct ieee80211_frame_addr4 *ptr_wh = NULL;
+	struct dp_vdev *vdev = NULL;
 
-	if (!peer)
+	if (!peer) {
+		qdf_err("peer is NULL!");
 		return;
+	}
+
+	vdev = peer->vdev;
+	if (!vdev) {
+		qdf_err("vdev is NULL!");
+		return;
+	}
 
 	ptr_wh = &peer->tx_capture.tx_wifi_addr4_hdr;
+	qdf_mem_copy(ptr_wh->i_addr1,
+		     peer->mac_addr.raw,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(ptr_wh->i_addr2,
+		     vdev->mac_addr.raw,
+		     QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(ptr_wh->i_addr4,
 		     addr4_mac_addr,
 		     QDF_MAC_ADDR_SIZE);
@@ -2309,7 +2326,7 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 					   void *data,
 					   qdf_nbuf_t nbuf,
 					   uint16_t ether_type,
-					   uint8_t *src_addr,
+					   uint8_t *dst_addr,
 					   uint8_t usr_idx)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
@@ -2338,8 +2355,9 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 
 		ptr_wh->i_qos[1] = (user->qos_ctrl & 0xFF00) >> 8;
 		ptr_wh->i_qos[0] = (user->qos_ctrl & 0xFF);
-		/* Update Addr 3 (SA) with SA derived from ether packet */
-		qdf_mem_copy(ptr_wh->i_addr3, src_addr, QDF_MAC_ADDR_SIZE);
+
+		/* Update Addr 3 (DA) with DA derived from ether packet */
+		qdf_mem_copy(ptr_wh->i_addr3, dst_addr, QDF_MAC_ADDR_SIZE);
 
 		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
 	}
@@ -2522,8 +2540,9 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 
 		if ((qdf_likely((peer->vdev->tx_encap_type !=
 				 htt_cmn_pkt_type_raw))) &&
-		    ((ppdu_desc->frame_ctrl & IEEE80211_FC1_DIR_MASK) &&
-		     (IEEE80211_FC1_DIR_TODS | IEEE80211_FC1_DIR_FROMDS)))
+			(((ppdu_desc->frame_ctrl >> IEEE80211_FC1_SHIFT) &
+			  IEEE80211_FC1_DIR_MASK) ==
+			 (IEEE80211_FC1_DIR_TODS | IEEE80211_FC1_DIR_FROMDS)))
 			dp_peer_tx_wds_addr_add(peer, eh->ether_shost);
 
 		if (first_msdu && first_msdu_not_seen) {
@@ -2596,13 +2615,14 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 				goto free_ppdu_desc_mpdu_q;
 			}
 
-			if (((ppdu_desc->frame_ctrl & IEEE80211_FC1_DIR_MASK) &&
+			if (((ppdu_desc->frame_ctrl >> IEEE80211_FC1_SHIFT) &
+				 IEEE80211_FC1_DIR_MASK) ==
 			     (IEEE80211_FC1_DIR_TODS |
-			      IEEE80211_FC1_DIR_FROMDS))) {
+			      IEEE80211_FC1_DIR_FROMDS)) {
 				dp_tx_update_80211_wds_hdr(pdev, peer,
 							   ppdu_desc, mpdu_nbuf,
 							   ether_type,
-							   eh->ether_shost,
+							   eh->ether_dhost,
 							   usr_idx);
 			} else {
 				dp_tx_update_80211_hdr(pdev, peer,
