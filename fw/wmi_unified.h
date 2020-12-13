@@ -9517,6 +9517,29 @@ typedef struct {
     A_UINT32 allocated_bytes;   /* allocated bytes in each arena */
 } wmi_ctrl_path_mem_stats_struct;
 
+/* status code of Get stats TWT dialog */
+typedef enum _WMI_GET_STATS_TWT_STATUS_T {
+    WMI_GET_STATS_TWT_STATUS_OK,                 /* Get status TWT dialog successfully completed */
+    WMI_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST,/* TWT dialog ID does not exist */
+    WMI_GET_STATS_TWT_STATUS_INVALID_PARAM,      /* invalid parameters */
+} WMI_GET_STATS_TWT_STATUS_T;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 dialog_id;         /* TWT dialog ID */
+    A_UINT32 status;            /* refer to WMI_GET_STATS_TWT_STATUS_T */
+    A_UINT32 num_sp_cycles;     /* Number of TWT SP's*/
+    A_UINT32 avg_sp_dur_us;     /* Average SP time */
+    A_UINT32 min_sp_dur_us;     /* Minimum SP time */
+    A_UINT32 max_sp_dur_us;     /* Maximum SP time */
+    A_UINT32 tx_mpdu_per_sp;    /* Average pkts tx per SP */
+    A_UINT32 rx_mpdu_per_sp;    /* Average pkts rx per SP */
+    A_UINT32 tx_bytes_per_sp;   /* Average tx bytes per SP */
+    A_UINT32 rx_bytes_per_sp;   /* Average rx bytes per SP */
+} wmi_ctrl_path_twt_stats_struct;
+
 typedef struct {
     /** TLV tag and len; tag equals
     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
@@ -26062,6 +26085,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_PDEV_TX_STAT   = 1,
     WMI_REQUEST_CTRL_PATH_VDEV_EXTD_STAT = 2,
     WMI_REQUEST_CTRL_PATH_MEM_STAT       = 3,
+    WMI_REQUEST_CTRL_PATH_TWT_STAT       = 4,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
@@ -28469,24 +28493,49 @@ typedef struct {
 
 /*
  * The flags are used both in WMI_TWT_ENABLE_CMDID and WMI_TWT_DISABLE_CMDID.
+ *
+ * BIT4 represents whether the it is for REQUESTER or RESPONDER.
+ * BIT5 represents whether it is invidual or broadcast mode.
+ *
  * For instance, in WMI_TWT_ENABLE_CMDID if BIT4=0 and BIT5=0, then we will
  * enable only Requester, we will not change any configuration of RESPONDER.
  *
  * Same way in WMI_TWT_DISABLE_CMDID if BIT4=0 and BIT5=0, then we will only
- * disable REQUESTER, we will not alter any other configurations.
+ * disable Individual and Broadcast REQUESTER, we will not alter any RESPONDER
+ * configuration.
  *
  * If host is enabling or disabling both REQUESTER and RESPONDER host will
  * send two WMI commands, one for REQUESTER and one for RESPONDER.
  *
- * |----------------------------------------------------------|
- * |BIT4=0, BIT5=0  | Enable/Disable Individual TWT requester |
- * |----------------------------------------------------------|
- * |BIT4=0, BIT5=1  | Enable/Disable BCAST TWT requester      |
- * |----------------------------------------------------------|
- * |BIT4=1, BIT5=0  | Enable/Disable Individual TWT responder |
- * |----------------------------------------------------------|
- * |BIT4=1, BIT5=1  | Enable/Disable BCAST TWT responder      |
- * |----------------------------------------------------------|
+ * WMI_TWT_ENABLE_CMDID command flags description,
+ * |----------------------------------------------------------------------|
+ * |BIT4=0, BIT5=0  | Enable Individual TWT requester                     |
+ * |----------------------------------------------------------------------|
+ * |BIT4=0, BIT5=1  | Enable both Individual and Broadcast TWT requester  |
+ * |----------------------------------------------------------------------|
+ * |BIT4=1, BIT5=0  | Enable Individual TWT responder                     |
+ * |----------------------------------------------------------------------|
+ * |BIT4=1, BIT5=1  | Enable both Individual and Broadcast TWT responder  |
+ * |----------------------------------------------------------------------|
+ *
+ *
+ * WMI_TWT_DISABLE_CMDID command flags description,
+ * |----------------------------------------------------------------------|
+ * |BIT4=0, BIT5=0  | Disable both Individual and Broadcast TWT requester |
+ * |----------------------------------------------------------------------|
+ * |BIT4=0, BIT5=1  | Disable Broadcast TWT requester                     |
+ * |----------------------------------------------------------------------|
+ * |BIT4=1, BIT5=0  | Disable both Individual and broadcast TWT responder |
+ * |----------------------------------------------------------------------|
+ * |BIT4=1, BIT5=1  | Disable Broadcast TWT responder                     |
+ * |----------------------------------------------------------------------|
+ *
+ * If user has enabled only individual requester at any point and after
+ * sometime if user wants to enable broadcast requester then user cannot
+ * directly send another WMI_TWT_ENABLE_CMDID with broadcast configuration,
+ * user has to disable TWT requester first and then enable both individual
+ * requester and broadcast requester. Same way for RESPONDER.
+ *
  */
 #define TWT_EN_DIS_FLAGS_GET_REQ_RESP(flag)      WMI_GET_BITS(flag, 4, 1)
 #define TWT_EN_DIS_FLAGS_SET_REQ_RESP(flag, val) WMI_SET_BITS(flag, 4, 1, val)
