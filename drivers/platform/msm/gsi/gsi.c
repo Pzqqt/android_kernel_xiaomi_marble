@@ -4812,7 +4812,7 @@ static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 	return scr;
 }
 
-int gsi_query_aqc_msi_addr(unsigned long chan_hdl, u32 *addr)
+int gsi_query_aqc_msi_addr(unsigned long chan_hdl, phys_addr_t *addr)
 {
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -4830,8 +4830,9 @@ int gsi_query_aqc_msi_addr(unsigned long chan_hdl, u32 *addr)
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
-	*addr = gsihal_get_reg_nk_ofst(GSI_EE_n_GSI_CH_k_CNTXT_8,
-		gsi_ctx->per.ee, chan_hdl);
+	*addr = (phys_addr_t)(gsi_ctx->per.phys_addr +
+		gsihal_get_reg_nk_ofst(GSI_EE_n_GSI_CH_k_CNTXT_8,
+			gsi_ctx->per.ee, chan_hdl));
 
 	return 0;
 }

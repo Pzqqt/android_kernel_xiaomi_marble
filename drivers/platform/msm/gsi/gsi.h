@@ -2258,7 +2258,7 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 *
 * @Return gsi_status
 */
-int gsi_query_aqc_msi_addr(unsigned long chan_hdl, u32 *addr);
+int gsi_query_aqc_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
 
 /**
 * gsi_dump_ch_info - channel information.
