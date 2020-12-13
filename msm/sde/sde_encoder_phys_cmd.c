@@ -1345,6 +1345,7 @@ static void sde_encoder_phys_cmd_disable(struct sde_encoder_phys *phys_enc)
 		else if (phys_enc->hw_pp->ops.enable_tearcheck)
 			phys_enc->hw_pp->ops.enable_tearcheck(phys_enc->hw_pp,
 					false);
+		sde_encoder_helper_phys_disable(phys_enc, NULL);
 	}
 
 	phys_enc->enable_state = SDE_ENC_DISABLED;
