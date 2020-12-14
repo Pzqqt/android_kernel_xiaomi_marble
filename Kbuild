@@ -637,8 +637,7 @@ DFS_OBJS :=	$(DFS_CORE_SRC_DIR)/misc/dfs.o \
 		$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs.o
 
 ifeq ($(CONFIG_WLAN_FEATURE_DFS_OFFLOAD), y)
-DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_full_offload.o \
-		$(DFS_CORE_SRC_DIR)/misc/dfs_full_offload.o
+DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_full_offload.o
 else
 DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_partial_offload.o \
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_fcc_bin5.o \
