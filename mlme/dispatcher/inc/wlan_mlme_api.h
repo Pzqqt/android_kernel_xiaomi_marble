@@ -118,6 +118,18 @@ uint8_t wlan_mlme_get_tx_power(struct wlan_objmgr_psoc *psoc,
 char *wlan_mlme_get_power_usage(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * wlan_mlme_get_enable_deauth_to_disassoc_map() - Get the deauth to disassoc
+ * map
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_enable_deauth_to_disassoc_map(struct wlan_objmgr_psoc *psoc,
+					    bool *value);
+
+/**
  * wlan_mlme_get_ht_cap_info() - Get the HT cap info config
  * @psoc: pointer to psoc object
  * @value: pointer to the value which will be filled for the caller
