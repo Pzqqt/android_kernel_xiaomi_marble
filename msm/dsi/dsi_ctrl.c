@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_device.h>
@@ -1216,32 +1216,6 @@ static void dsi_ctrl_wait_for_video_done(struct dsi_ctrl *dsi_ctrl)
 	udelay(sleep_ms * 1000);
 }
 
-void dsi_message_setup_tx_mode(struct dsi_ctrl *dsi_ctrl,
-		u32 cmd_len,
-		u32 *flags)
-{
-	/**
-	 * Setup the mode of transmission
-	 * override cmd fetch mode during secure session
-	 */
-	if (dsi_ctrl->secure_mode) {
-		SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE1);
-		*flags &= ~DSI_CTRL_CMD_FETCH_MEMORY;
-		*flags |= DSI_CTRL_CMD_FIFO_STORE;
-		DSI_CTRL_DEBUG(dsi_ctrl,
-				"override to TPG during secure session\n");
-		return;
-	}
-
-	/* Check to see if cmd len plus header is greater than fifo size */
-	if ((cmd_len + 4) > DSI_EMBEDDED_MODE_DMA_MAX_SIZE_BYTES) {
-		*flags |= DSI_CTRL_CMD_NON_EMBEDDED_MODE;
-		DSI_CTRL_DEBUG(dsi_ctrl, "override to non-embedded mode,cmd len =%d\n",
-				cmd_len);
-		return;
-	}
-}
-
 int dsi_message_validate_tx_mode(struct dsi_ctrl *dsi_ctrl,
 		u32 cmd_len,
 		u32 *flags)
@@ -1395,8 +1369,7 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 	hw_flags |= (flags & DSI_CTRL_CMD_DEFER_TRIGGER) ?
 			DSI_CTRL_HW_CMD_WAIT_FOR_TRIGGER : 0;
 
-	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND) ||
-			(flags & DSI_CTRL_CMD_LAST_COMMAND))
+	if (flags & DSI_CTRL_CMD_LAST_COMMAND)
 		hw_flags |= DSI_CTRL_CMD_LAST_COMMAND;
 
 	if (flags & DSI_CTRL_CMD_DEFER_TRIGGER) {
@@ -1482,44 +1455,21 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 	}
 }
 
-static void dsi_ctrl_validate_msg_flags(struct dsi_ctrl *dsi_ctrl,
-				const struct mipi_dsi_msg *msg,
-				u32 *flags)
-{
-	/*
-	 * ASYNC command wait mode is not supported for
-	 *    - commands sent using DSI FIFO memory
-	 *    - DSI read commands
-	 *    - DCS commands sent in non-embedded mode
-	 *    - whenever an explicit wait time is specificed for the command
-	 *      since the wait time cannot be guaranteed in async mode
-	 *    - video mode panels
-	 * If async override is set, skip async flag reset
-	 */
-	if (((*flags & DSI_CTRL_CMD_FIFO_STORE) ||
-		*flags & DSI_CTRL_CMD_READ ||
-		*flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE ||
-		msg->wait_ms ||
-		(dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE)) &&
-		!(msg->flags & MIPI_DSI_MSG_ASYNC_OVERRIDE))
-		*flags &= ~DSI_CTRL_CMD_ASYNC_WAIT;
-}
-
-static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
-			  const struct mipi_dsi_msg *msg,
-			  u32 *flags)
+static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd_desc)
 {
 	int rc = 0;
 	struct mipi_dsi_packet packet;
 	struct dsi_ctrl_cmd_dma_fifo_info cmd;
 	struct dsi_ctrl_cmd_dma_info cmd_mem;
+	const struct mipi_dsi_msg *msg;
 	u32 length = 0;
 	u8 *buffer = NULL;
 	u32 cnt = 0;
 	u8 *cmdbuf;
+	u32 *flags;
 
-	/* Select the tx mode to transfer the command */
-	dsi_message_setup_tx_mode(dsi_ctrl, msg->tx_len, flags);
+	msg = &cmd_desc->msg;
+	flags = &cmd_desc->ctrl_flags;
 
 	/* Validate the mode before sending the command */
 	rc = dsi_message_validate_tx_mode(dsi_ctrl, msg->tx_len, flags);
@@ -1530,10 +1480,7 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	dsi_ctrl_validate_msg_flags(dsi_ctrl, msg, flags);
-
 	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags);
-
 	if (dsi_ctrl->dma_wait_queued)
 		dsi_ctrl_flush_cmd_dma_queue(dsi_ctrl);
 
@@ -1588,8 +1535,7 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 		}
 	}
 
-	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND) ||
-			(*flags & DSI_CTRL_CMD_LAST_COMMAND))
+	if (*flags & DSI_CTRL_CMD_LAST_COMMAND)
 		buffer[3] |= BIT(7);//set the last cmd bit in header.
 
 	if (*flags & DSI_CTRL_CMD_FETCH_MEMORY) {
@@ -1610,12 +1556,11 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 
 		dsi_ctrl->cmd_len += length;
 
-		if (!(msg->flags & MIPI_DSI_MSG_LASTCOMMAND) &&
-				!(*flags & DSI_CTRL_CMD_LAST_COMMAND)) {
-			goto error;
-		} else {
+		if (*flags & DSI_CTRL_CMD_LAST_COMMAND) {
 			cmd_mem.length = dsi_ctrl->cmd_len;
 			dsi_ctrl->cmd_len = 0;
+		} else {
+			goto error;
 		}
 
 	} else if (*flags & DSI_CTRL_CMD_FIFO_STORE) {
@@ -1637,28 +1582,26 @@ error:
 	return rc;
 }
 
-static int dsi_set_max_return_size(struct dsi_ctrl *dsi_ctrl,
-				   const struct mipi_dsi_msg *rx_msg,
-				   u32 size)
+static int dsi_set_max_return_size(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *rx_cmd, u32 size)
 {
 	int rc = 0;
+	const struct mipi_dsi_msg *rx_msg = &rx_cmd->msg;
 	u8 tx[2] = { (u8)(size & 0xFF), (u8)(size >> 8) };
-	u32 flags = DSI_CTRL_CMD_FETCH_MEMORY;
 	u16 dflags = rx_msg->flags;
 
-	struct mipi_dsi_msg msg = {
-		.channel = rx_msg->channel,
-		.type = MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE,
-		.tx_len = 2,
-		.tx_buf = tx,
-		.flags = rx_msg->flags,
+	struct dsi_cmd_desc cmd= {
+		.msg.channel = rx_msg->channel,
+		.msg.type = MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE,
+		.msg.tx_len = 2,
+		.msg.tx_buf = tx,
+		.msg.flags = rx_msg->flags,
 	};
 
 	/* remove last message flag to batch max packet cmd to read command */
 	dflags &= ~BIT(3);
-	msg.flags = dflags;
-
-	rc = dsi_message_tx(dsi_ctrl, &msg, &flags);
+	cmd.msg.flags = dflags;
+	cmd.ctrl_flags = DSI_CTRL_CMD_FETCH_MEMORY;
+	rc = dsi_message_tx(dsi_ctrl, &cmd);
 	if (rc)
 		DSI_CTRL_ERR(dsi_ctrl, "failed to send max return size packet, rc=%d\n",
 				rc);
@@ -1718,9 +1661,7 @@ static int dsi_parse_long_read_resp(const struct mipi_dsi_msg *msg,
 	return msg->rx_len;
 }
 
-static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
-			  const struct mipi_dsi_msg *msg,
-			  u32 *flags)
+static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd_desc)
 {
 	int rc = 0;
 	u32 rd_pkt_size, total_read_len, hw_read_cnt;
@@ -1730,13 +1671,15 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 	u32 dlen, diff, rlen;
 	unsigned char *buff;
 	char cmd;
+	const struct mipi_dsi_msg *msg;
 
-	if (!msg) {
-		DSI_CTRL_ERR(dsi_ctrl, "Invalid msg\n");
+	if (!cmd_desc) {
+		DSI_CTRL_ERR(dsi_ctrl, "Invalid command\n");
 		rc = -EINVAL;
 		goto error;
 	}
 
+	msg = &cmd_desc->msg;
 	rlen = msg->rx_len;
 	if (msg->rx_len <= 2) {
 		short_resp = true;
@@ -1755,7 +1698,7 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 	buff = msg->rx_buf;
 
 	while (!read_done) {
-		rc = dsi_set_max_return_size(dsi_ctrl, msg, rd_pkt_size);
+		rc = dsi_set_max_return_size(dsi_ctrl, cmd_desc, rd_pkt_size);
 		if (rc) {
 			DSI_CTRL_ERR(dsi_ctrl, "Failed to set max return packet size, rc=%d\n",
 			       rc);
@@ -1765,7 +1708,7 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 		/* clear RDBK_DATA registers before proceeding */
 		dsi_ctrl->hw.ops.clear_rdbk_register(&dsi_ctrl->hw);
 
-		rc = dsi_message_tx(dsi_ctrl, msg, flags);
+		rc = dsi_message_tx(dsi_ctrl, cmd_desc);
 		if (rc) {
 			DSI_CTRL_ERR(dsi_ctrl, "Message transmission failed, rc=%d\n",
 					rc);
@@ -1775,9 +1718,9 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 		 * wait before reading rdbk_data register, if any delay is
 		 * required after sending the read command.
 		 */
-		if (msg->wait_ms)
-			usleep_range(msg->wait_ms * 1000,
-				     ((msg->wait_ms * 1000) + 10));
+		if (cmd_desc->post_wait_ms)
+			usleep_range(cmd_desc->post_wait_ms * 1000,
+					((cmd_desc->post_wait_ms * 1000) + 10));
 
 		dlen = dsi_ctrl->hw.ops.get_cmd_read_data(&dsi_ctrl->hw,
 					buff, total_bytes_read,
@@ -3339,8 +3282,7 @@ int dsi_ctrl_validate_timing(struct dsi_ctrl *dsi_ctrl,
 /**
  * dsi_ctrl_cmd_transfer() - Transfer commands on DSI link
  * @dsi_ctrl:             DSI controller handle.
- * @msg:                  Message to transfer on DSI link.
- * @flags:                Modifiers for message transfer.
+ * @cmd:                  Command description to transfer on DSI link.
  *
  * Command transfer can be done only when command engine is enabled. The
  * transfer API will block until either the command transfer finishes or
@@ -3350,13 +3292,11 @@ int dsi_ctrl_validate_timing(struct dsi_ctrl *dsi_ctrl,
  *
  * Return: error code.
  */
-int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl,
-			  const struct mipi_dsi_msg *msg,
-			  u32 *flags)
+int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd)
 {
 	int rc = 0;
 
-	if (!dsi_ctrl || !msg) {
+	if (!dsi_ctrl || !cmd) {
 		DSI_CTRL_ERR(dsi_ctrl, "Invalid params\n");
 		return -EINVAL;
 	}
@@ -3370,13 +3310,13 @@ int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	if (*flags & DSI_CTRL_CMD_READ) {
-		rc = dsi_message_rx(dsi_ctrl, msg, flags);
+	if (cmd->ctrl_flags & DSI_CTRL_CMD_READ) {
+		rc = dsi_message_rx(dsi_ctrl, cmd);
 		if (rc <= 0)
 			DSI_CTRL_ERR(dsi_ctrl, "read message failed read length, rc=%d\n",
 					rc);
 	} else {
-		rc = dsi_message_tx(dsi_ctrl, msg, flags);
+		rc = dsi_message_tx(dsi_ctrl, cmd);
 		if (rc)
 			DSI_CTRL_ERR(dsi_ctrl, "command msg transfer failed, rc = %d\n",
 					rc);
