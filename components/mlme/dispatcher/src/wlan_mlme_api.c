@@ -90,6 +90,20 @@ char *wlan_mlme_get_power_usage(struct wlan_objmgr_psoc *psoc)
 	return mlme_obj->cfg.power.power_usage.data;
 }
 
+QDF_STATUS
+wlan_mlme_get_enable_deauth_to_disassoc_map(struct wlan_objmgr_psoc *psoc,
+					    bool *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	*value = mlme_obj->cfg.gen.enable_deauth_to_disassoc_map;
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     struct mlme_ht_capabilities_info
 				     *ht_cap_info)

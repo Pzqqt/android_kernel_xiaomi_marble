@@ -58,12 +58,20 @@
 #include "wma.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include <wlan_action_oui_ucfg_api.h>
+#include <wlan_cm_api.h>
+#include <wlan_mlme_api.h>
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
 static bool __lim_process_sme_start_bss_req(struct mac_context *,
 					    struct scheduler_msg *pMsg);
 static void __lim_process_sme_disassoc_req(struct mac_context *, uint32_t *);
+static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
+					 struct scheduler_msg *msg);
+static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
+				       struct scheduler_msg *msg);
+static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
+					 struct scheduler_msg *msg);
 static void __lim_process_sme_disassoc_cnf(struct mac_context *, uint32_t *);
 static void __lim_process_sme_deauth_req(struct mac_context *, uint32_t *);
 static bool __lim_process_sme_stop_bss_req(struct mac_context *,
@@ -1487,9 +1495,132 @@ QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
 	return status;
 }
 
+static void lim_process_sb_disconnect_req(struct mac_context *mac_ctx,
+					  struct pe_session *pe_session,
+					  struct wlan_cm_vdev_discon_req *req)
+{
+	struct scheduler_msg msg = {0};
+	struct disassoc_cnf disassoc_cnf = {0};
+
+	if (pe_session->limSmeState == eLIM_SME_WT_DEAUTH_STATE)
+		disassoc_cnf.messageType = eWNI_SME_DEAUTH_CNF;
+	else if (pe_session->limSmeState == eLIM_SME_WT_DISASSOC_STATE)
+		disassoc_cnf.messageType = eWNI_SME_DISASSOC_CNF;
+	disassoc_cnf.vdev_id = req->req.vdev_id;
+	disassoc_cnf.bssid = req->req.bssid;
+	disassoc_cnf.length = sizeof(disassoc_cnf);
+	disassoc_cnf.peer_macaddr = req->req.bssid;
+
+	msg.bodyptr = &disassoc_cnf;
+	msg.type = disassoc_cnf.messageType;
+	lim_process_sme_disassoc_cnf(mac_ctx, &msg);
+}
+
+static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
+					  struct wlan_cm_vdev_discon_req *req)
+{
+	struct pe_session *pe_session;
+	struct scheduler_msg msg = {0};
+	struct disassoc_req disassoc_req = {0};
+
+	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
+					      &req->req.vdev_id);
+	if (!pe_session)
+		return;
+
+	disassoc_req.messageType = eWNI_SME_DISASSOC_REQ;
+	disassoc_req.length = sizeof(disassoc_req);
+	disassoc_req.sessionId = req->req.vdev_id;
+	disassoc_req.bssid = req->req.bssid;
+	disassoc_req.peer_macaddr = req->req.bssid;
+	disassoc_req.reasonCode = req->req.reason_code;
+	if (req->req.reason_code == REASON_FW_TRIGGERED_ROAM_FAILURE) {
+		disassoc_req.process_ho_fail = true;
+		disassoc_req.doNotSendOverTheAir = 1;
+	} else if (wlan_cm_is_vdev_roaming(pe_session->vdev)) {
+		disassoc_req.doNotSendOverTheAir = 1;
+	}
+
+	msg.bodyptr = &disassoc_req;
+	msg.type = eWNI_SME_DISASSOC_REQ;
+	lim_process_sme_disassoc_req(mac_ctx, &msg);
+}
+
+static void lim_prepare_and_send_deauth(struct mac_context *mac_ctx,
+					struct wlan_cm_vdev_discon_req *req)
+{
+	struct scheduler_msg msg = {0};
+	struct deauth_req deauth_req = {0};
+
+	deauth_req.messageType = eWNI_SME_DEAUTH_REQ;
+	deauth_req.length = sizeof(deauth_req);
+	deauth_req.vdev_id = req->req.vdev_id;
+	deauth_req.bssid = req->req.bssid;
+	deauth_req.peer_macaddr = req->req.bssid;
+	deauth_req.reasonCode = req->req.reason_code;
+
+	msg.bodyptr = &deauth_req;
+	msg.type = eWNI_SME_DEAUTH_REQ;
+	lim_process_sme_deauth_req(mac_ctx, &msg);
+}
+
+static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
+					  struct wlan_cm_vdev_discon_req *req)
+{
+	enum wlan_reason_code reason_code;
+	bool enable_deauth_to_disassoc_map = false;
+
+	reason_code = req->req.reason_code;
+
+	switch (reason_code) {
+	case REASON_PREV_AUTH_NOT_VALID:
+	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
+		lim_prepare_and_send_deauth(mac_ctx, req);
+		break;
+	case REASON_DEAUTH_NETWORK_LEAVING:
+		wlan_mlme_get_enable_deauth_to_disassoc_map(
+					mac_ctx->psoc,
+					&enable_deauth_to_disassoc_map);
+		if (enable_deauth_to_disassoc_map) {
+			req->req.reason_code = REASON_DISASSOC_NETWORK_LEAVING;
+			return lim_prepare_and_send_disassoc(mac_ctx, req);
+		}
+		lim_prepare_and_send_deauth(mac_ctx, req);
+		break;
+	default:
+		lim_prepare_and_send_disassoc(mac_ctx, req);
+	}
+}
+
 static QDF_STATUS
 lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 {
+	struct mac_context *mac_ctx;
+	struct pe_session *pe_session;
+
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
+					      &req->req.vdev_id);
+	if (!pe_session) {
+		/*
+		 * TODO: Send disconnect resp from here while adding disconnect
+		 * resp handeling.
+		 */
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (req->req.source == CM_PEER_DISCONNECT ||
+	    req->req.source == CM_SB_DISCONNECT)
+		lim_process_sb_disconnect_req(mac_ctx, pe_session, req);
+	else
+		lim_process_nb_disconnect_req(mac_ctx, req);
+
 	return QDF_STATUS_SUCCESS;
 }
 
