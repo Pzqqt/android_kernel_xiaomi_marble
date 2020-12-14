@@ -34,7 +34,173 @@
 #include <wlan_logging_sock_svc.h>
 #include "wlan_hdd_ftm_time_sync.h"
 #include "wlan_hdd_bcn_recv.h"
+#include "wlan_hdd_assoc.h"
+#include "wlan_hdd_ipa.h"
+#include "wlan_hdd_green_ap.h"
+#include "wlan_hdd_lpass.h"
+#include "wlan_hdd_bootup_marker.h"
+#include "wlan_p2p_ucfg_api.h"
+#include "wlan_crypto_global_api.h"
 
+void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
+				     struct qdf_mac_addr *peer_macaddr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode, false);
+
+	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
+
+	if ((adapter->device_mode == QDF_STA_MODE) ||
+	    (adapter->device_mode == QDF_P2P_CLIENT_MODE))
+		/* send peer status indication to oem app */
+		hdd_send_peer_status_ind_to_app(peer_macaddr,
+						ePeerDisconnected, 0,
+						adapter->vdev_id, NULL,
+						adapter->device_mode);
+
+	hdd_lpass_notify_disconnect(adapter);
+	/* Update tdls module about the disconnection event */
+	hdd_notify_sta_disconnect(adapter->vdev_id, false, false,
+				  adapter->vdev);
+
+	hdd_del_latency_critical_client(
+		adapter,
+		hdd_convert_cfgdot11mode_to_80211mode(
+			sta_ctx->conn_info.dot11mode));
+	/* stop timer in sta/p2p_cli */
+	hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);
+	hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
+	cdp_display_txrx_hw_info(soc);
+}
+
+/**
+ * hdd_cm_print_bss_info() - print bss info
+ * @hdd_sta_ctx: pointer to hdd station context
+ *
+ * Return: None
+ */
+static void hdd_cm_print_bss_info(struct hdd_station_ctx *hdd_sta_ctx)
+{
+	uint32_t *ht_cap_info;
+	uint32_t *vht_cap_info;
+	struct hdd_connection_info *conn_info;
+
+	conn_info = &hdd_sta_ctx->conn_info;
+
+	hdd_nofl_debug("*********** WIFI DATA LOGGER **************");
+	hdd_nofl_debug("freq: %d dot11mode %d AKM %d ssid: \"%.*s\" ,roam_count %d nss %d legacy %d mcs %d signal %d noise: %d",
+		       conn_info->chan_freq, conn_info->dot11mode,
+		       conn_info->last_auth_type,
+		       conn_info->last_ssid.SSID.length,
+		       conn_info->last_ssid.SSID.ssId, conn_info->roam_count,
+		       conn_info->txrate.nss, conn_info->txrate.legacy,
+		       conn_info->txrate.mcs, conn_info->signal,
+		       conn_info->noise);
+	ht_cap_info = (uint32_t *)&conn_info->ht_caps;
+	vht_cap_info = (uint32_t *)&conn_info->vht_caps;
+	hdd_nofl_debug("HT 0x%x VHT 0x%x ht20 info 0x%x",
+		       conn_info->conn_flag.ht_present ? *ht_cap_info : 0,
+		       conn_info->conn_flag.vht_present ? *vht_cap_info : 0,
+		       conn_info->conn_flag.hs20_present ?
+		       conn_info->hs20vendor_ie.release_num : 0);
+}
+
+void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (ucfg_ipa_is_enabled() &&
+	    QDF_IS_STATUS_SUCCESS(wlan_hdd_validate_mac_address(
+				  &sta_ctx->conn_info.bssid)))
+		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
+				  adapter->device_mode,
+				  adapter->vdev_id,
+				  WLAN_IPA_STA_DISCONNECT,
+				  sta_ctx->conn_info.bssid.bytes);
+
+	hdd_periodic_sta_stats_stop(adapter);
+	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
+
+	DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
+		adapter->vdev_id,
+		QDF_TRACE_DEFAULT_PDEV_ID,
+		QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
+
+	hdd_clear_roam_profile_ie(adapter);
+	hdd_wmm_dscp_initial_state(adapter);
+	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
+
+	hdd_place_marker(adapter, "DISCONNECTED", NULL);
+}
+
+void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	mac_handle_t mac_handle;
+	struct wlan_objmgr_vdev *vdev;
+
+	/* update P2P connection status */
+	ucfg_p2p_status_disconnect(adapter->vdev);
+
+	hdd_wmm_adapter_clear(adapter);
+	mac_handle = hdd_ctx->mac_handle;
+	sme_ft_reset(mac_handle, adapter->vdev_id);
+	sme_reset_key(mac_handle, adapter->vdev_id);
+
+	if (adapter->device_mode == QDF_STA_MODE) {
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
+		if (vdev) {
+			wlan_crypto_free_vdev_key(vdev);
+			wlan_crypto_reset_vdev_params(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
+		}
+	}
+
+	hdd_remove_beacon_filter(adapter);
+
+	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
+		hdd_debug("Sending beacon pause indication to userspace");
+		hdd_beacon_recv_pause_indication((hdd_handle_t)hdd_ctx,
+						 adapter->vdev_id,
+						 SCAN_EVENT_TYPE_MAX, true);
+	}
+
+	/* Clear saved connection information in HDD */
+	hdd_conn_remove_connect_info(sta_ctx);
+
+	hdd_init_scan_reject_params(hdd_ctx);
+	ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
+
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
+		sme_ps_disable_auto_ps_timer(mac_handle,
+					     adapter->vdev_id);
+		adapter->send_mode_change = true;
+	}
+	wlan_hdd_clear_link_layer_stats(adapter);
+
+	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
+
+	/*
+	 * Reset hdd_reassoc_scenario to false here. After roaming in
+	 * 802.1x or WPA3 security, EAPOL is handled at supplicant and
+	 * the hdd_reassoc_scenario flag will not be reset if disconnection
+	 * happens before EAP/EAPOL at supplicant is complete.
+	 */
+	sta_ctx->hdd_reassoc_scenario = false;
+
+	hdd_nud_reset_tracking(adapter);
+	hdd_reset_limit_off_chan(adapter);
+
+	hdd_cm_print_bss_info(sta_ctx);
+}
+
+#ifdef FEATURE_CM_ENABLE
 int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 			   struct net_device *dev, u16 reason)
 {
@@ -85,70 +251,12 @@ hdd_cm_disconnect_complete_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 					wlan_vdev_get_id(vdev));
-	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 
-	if (ucfg_ipa_is_enabled() &&
-	    QDF_IS_STATUS_SUCCESS(wlan_hdd_validate_mac_address(
-				  &rsp->req.req.bssid)))
-		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
-				  adapter->device_mode,
-				  adapter->vdev_id,
-				  WLAN_IPA_STA_DISCONNECT,
-				  rsp->req.req.bssid.bytes);
+	__hdd_cm_disconnect_handler_pre_user_update(adapter);
 
-	hdd_periodic_sta_stats_stop(adapter);
+	hdd_handle_disassociation_event(adapter, &rsp->req.req.bssid);
 
-	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
-
-	DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
-				      adapter->vdev_id,
-				      QDF_TRACE_DEFAULT_PDEV_ID,
-				      QDF_PROTO_TYPE_MGMT,
-				      QDF_PROTO_MGMT_DISASSOC));
-
-	hdd_wmm_dscp_initial_state(adapter);
-	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
-
-	/*
-	 * indicate 'disconnect' status to wpa_supplicant.
-	 * hdd_send_association_event check this api and get the required code
-	 * hdd_bus_bw_compute_reset_prev_txrx_stats,
-	 * hdd_lpass_notify_disconnect, hdd_send_peer_status_ind_to_app,
-	 * hdd_bus_bw_compute_timer_try_stop, hdd_ipa_set_tx_flow_info,
-	 * update P2P connection status
-	 */
-
-	if (adapter->device_mode == QDF_STA_MODE) {
-	/* Inform FTM TIME SYNC about the disconnection with the AP */
-		hdd_ftm_time_sync_sta_state_notify(
-				adapter, FTM_TIME_SYNC_STA_DISCONNECTED);
-	}
-	hdd_wmm_adapter_clear(adapter);
-
-	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
-		hdd_debug("Sending beacon pause indication to userspace");
-		hdd_beacon_recv_pause_indication((hdd_handle_t)hdd_ctx,
-						 adapter->vdev_id,
-						 SCAN_EVENT_TYPE_MAX, true);
-	}
-	/*
-	 * Clear saved connection information in HDD
-	 * hdd_conn_remove_connect_info(sta_ctx);, this is an static api,
-	 * Move this api here once this path is enabled.
-	 */
-
-	hdd_init_scan_reject_params(hdd_ctx);
-	ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
-
-	if ((QDF_STA_MODE == adapter->device_mode) ||
-	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
-		sme_ps_disable_auto_ps_timer(mac_handle,
-					     adapter->vdev_id);
-		adapter->send_mode_change = true;
-	}
-	wlan_hdd_clear_link_layer_stats(adapter);
-
-	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
+	hdd_ipa_set_tx_flow_info();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -161,14 +269,14 @@ hdd_cm_disconnect_complete_post_user_update(struct wlan_objmgr_vdev *vdev,
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 					wlan_vdev_get_id(vdev));
 
-	hdd_nud_reset_tracking(adapter);
-	hdd_reset_limit_off_chan(adapter);
+	if (adapter->device_mode == QDF_STA_MODE) {
+	/* Inform FTM TIME SYNC about the disconnection with the AP */
+		hdd_ftm_time_sync_sta_state_notify(
+				adapter, FTM_TIME_SYNC_STA_DISCONNECTED);
+	}
 
-	/*
-	 * Print bss sta info
-	 * hdd_print_bss_info(sta_ctx); this is static function, enable this
-	 * once this path is enabled.
-	 */
+	__hdd_cm_disconnect_handler_post_user_update(adapter);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -194,4 +302,5 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 

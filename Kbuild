@@ -424,9 +424,10 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_gpio_wakeup.o
 endif
 
 ifeq ($(CONFIG_CM_ENABLE), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cm_connect.o \
-	    $(HDD_SRC_DIR)/wlan_hdd_cm_disconnect.o
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cm_connect.o
 endif
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cm_disconnect.o
+
 
 ifeq ($(CONFIG_WLAN_BOOTUP_MARKER), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_bootup_marker.o

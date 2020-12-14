@@ -511,4 +511,28 @@ static inline void hdd_cm_unregister_cb(void)
 }
 #endif
 
+/**
+ * hdd_conn_remove_connect_info() - remove connection info
+ * @sta_ctx: pointer to global HDD station context
+ *
+ * Return: none
+ */
+void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx);
+
+/**
+ * hdd_clear_roam_profile_ie() - Clear Roam Profile IEs
+ * @adapter: adapter who's IEs are to be cleared
+ *
+ * Return: None
+ */
+void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter);
+
+/**
+ * hdd_remove_beacon_filter() - remove beacon filter
+ * @adapter: Pointer to the hdd adapter
+ *
+ * Return: 0 on success and errno on failure
+ */
+int hdd_remove_beacon_filter(struct hdd_adapter *adapter);
+
 #endif
