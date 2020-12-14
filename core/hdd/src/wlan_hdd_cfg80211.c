@@ -21213,6 +21213,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 	return ret;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * __wlan_hdd_cfg80211_disconnect() - cfg80211 disconnect api
  * @wiphy: Pointer to wiphy
@@ -21223,8 +21224,8 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
  *
  * Return: 0 for success, non-zero for failure
  */
-int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
-				   struct net_device *dev, u16 reason)
+static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
+					  struct net_device *dev, u16 reason)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
@@ -21337,6 +21338,8 @@ int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 	return status;
 }
+#endif /* FEATURE_CM_ENABLE */
+
 
 #ifdef FEATURE_CM_ENABLE
 /**

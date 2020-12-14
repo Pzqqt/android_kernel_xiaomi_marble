@@ -869,6 +869,4 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
  */
 bool hdd_is_legacy_connection(struct hdd_adapter *adapter);
 
-int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
-				   struct net_device *dev, u16 reason);
 #endif
