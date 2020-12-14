@@ -2386,10 +2386,14 @@ int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
  * @vdev_id: vdev id
  * @bssid: AP bssid
  * @roam_sync: if roam sync is in progress
+ * @is_resp_required: Peer create response is expected from firmware.
+ * This flag will be set to true for initial connection and false for
+ * LFR2 case.
  *
  * Return: 0 on success, else error on failure
  */
-QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid);
+QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
+				bool is_resp_required);
 
 /**
  * wma_send_vdev_stop() - WMA api to send vdev stop to fw

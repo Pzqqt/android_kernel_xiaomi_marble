@@ -431,7 +431,7 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
-	wma_add_bss_peer_sta(session->vdev_id, session->bssId);
+	wma_add_bss_peer_sta(session->vdev_id, session->bssId, true);
 }
 #endif
 

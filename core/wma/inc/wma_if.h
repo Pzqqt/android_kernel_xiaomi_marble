@@ -729,6 +729,14 @@ struct send_peer_unmap_conf_params {
 };
 
 /**
+ * struct peer_create_rsp_params  - Peer create response parameters
+ * @peer_mac: Peer mac address
+ */
+struct peer_create_rsp_params {
+	struct qdf_mac_addr peer_mac;
+};
+
+/**
  * struct tDisableIntraBssFwd - intra bss forward parameters
  * @sessionId: session id
  * @disableintrabssfwd: disable intra bss forward flag

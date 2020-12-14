@@ -3700,7 +3700,7 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 
 	req = msg->bodyptr;
 
-	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes);
+	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true);
 
 	qdf_mem_free(req);
 

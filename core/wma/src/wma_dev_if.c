@@ -1903,6 +1903,7 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 {
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	struct wma_target_req *msg = NULL;
+	struct peer_create_rsp_params *peer_create_rsp = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	bool is_tgt_peer_conf_supported = false;
 
@@ -1923,6 +1924,10 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 		goto end;
 	}
 
+	peer_create_rsp = qdf_mem_malloc(sizeof(*peer_create_rsp));
+	if (!peer_create_rsp)
+		goto end;
+
 	wma_acquire_wakelock(&wma->wmi_cmd_rsp_wake_lock,
 			     WMA_PEER_CREATE_RESPONSE_TIMEOUT);
 
@@ -1933,9 +1938,12 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 	}
 
 	wma_increment_peer_count(wma, vdev_id);
+	qdf_mem_copy(peer_create_rsp->peer_mac.bytes, peer_addr,
+		     QDF_MAC_ADDR_SIZE);
 
 	msg = wma_fill_hold_req(wma, vdev_id, WMA_PEER_CREATE_REQ,
-				WMA_PEER_CREATE_RESPONSE, (void *)peer_addr,
+				WMA_PEER_CREATE_RESPONSE,
+				(void *)peer_create_rsp,
 				WMA_PEER_CREATE_RESPONSE_TIMEOUT);
 	if (!msg) {
 		wma_err("vdev:%d failed to fill peer create req", vdev_id);
@@ -1949,6 +1957,7 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 	return status;
 
 end:
+	qdf_mem_free(peer_create_rsp);
 	lim_send_peer_create_resp(mac, vdev_id, status, peer_addr);
 
 	return status;
@@ -3010,6 +3019,7 @@ int wma_peer_create_confirm_handler(void *handle, uint8_t *evt_param_info,
 	WMI_PEER_CREATE_CONF_EVENTID_param_tlvs *param_buf;
 	struct wma_target_req *req_msg = NULL;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct peer_create_rsp_params *rsp_data;
 	void *dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct qdf_mac_addr peer_mac;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -3044,8 +3054,11 @@ int wma_peer_create_confirm_handler(void *handle, uint8_t *evt_param_info,
 
 	wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
 
+	rsp_data = (struct peer_create_rsp_params *)req_msg->user_data;
+
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mem_free(rsp_data);
 	qdf_mem_free(req_msg);
 
 	if (!peer_create_rsp->status) {
@@ -3311,20 +3324,28 @@ void wma_hold_req_timer(void *data)
 					   resp, 0);
 	} else if ((tgt_req->msg_type == WMA_PEER_CREATE_REQ) &&
 		   (tgt_req->type == WMA_PEER_CREATE_RESPONSE)) {
+		struct peer_create_rsp_params *peer_create_rsp;
+		struct qdf_mac_addr *peer_mac;
+
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_PEER_CREATE_RESPONSE,
 				WMA_PEER_CREATE_RESPONSE_TIMEOUT);
 
-		wma_remove_peer(wma, (uint8_t *)tgt_req->user_data,
+		peer_create_rsp =
+			(struct peer_create_rsp_params *)tgt_req->user_data;
+		peer_mac = &peer_create_rsp->peer_mac;
+		wma_remove_peer(wma, peer_mac->bytes,
 				tgt_req->vdev_id, false);
-		if (!mac)
+		if (!mac) {
+			qdf_mem_free(tgt_req->user_data);
 			goto timer_destroy;
+		}
 
 		lim_send_peer_create_resp(mac, tgt_req->vdev_id,
 					  QDF_STATUS_E_TIMEOUT,
 					  (uint8_t *)tgt_req->user_data);
-
+		qdf_mem_free(tgt_req->user_data);
 	} else {
 		wma_err("Unhandled timeout for msg_type:%d and type:%d",
 				tgt_req->msg_type, tgt_req->type);
@@ -5363,7 +5384,8 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 	return ret;
 }
 
-QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid)
+QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
+				bool is_resp_required)
 {
 	tp_wma_handle wma;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -5372,8 +5394,13 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid)
 	if (!wma)
 		goto err;
 
-	status = wma_create_sta_mode_bss_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT,
-					      vdev_id);
+	if (is_resp_required)
+		status = wma_create_sta_mode_bss_peer(wma, bssid,
+						      WMI_PEER_TYPE_DEFAULT,
+						      vdev_id);
+	else
+		status = wma_add_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT,
+				      vdev_id);
 err:
 	return status;
 }
