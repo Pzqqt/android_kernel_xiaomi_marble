@@ -189,6 +189,16 @@ void (*twt_pause_dialog_cb)(void *context,
 			    struct wmi_twt_pause_dialog_complete_event_param *params);
 
 /**
+ * typedef twt_nudge_dialog_cb - TWT nudge dialog callback signature.
+ * @context: Opaque context that the client can use to associate the
+ *           callback with the request.
+ * @params: TWT nudge dialog complete event parameters.
+ */
+typedef
+void (*twt_nudge_dialog_cb)(void *context,
+		      struct wmi_twt_nudge_dialog_complete_event_param *params);
+
+/**
  * typedef twt_resume_dialog_cb - TWT resume dialog callback signature.
  * @context: Opaque context that the client can use to associate the
  *           callback with the request.
@@ -409,10 +419,12 @@ struct sme_context {
 	twt_add_dialog_cb twt_add_dialog_cb;
 	twt_del_dialog_cb twt_del_dialog_cb;
 	twt_pause_dialog_cb twt_pause_dialog_cb;
+	twt_nudge_dialog_cb twt_nudge_dialog_cb;
 	twt_resume_dialog_cb twt_resume_dialog_cb;
 	void *twt_add_dialog_context;
 	void *twt_del_dialog_context;
 	void *twt_pause_dialog_context;
+	void *twt_nudge_dialog_context;
 	void *twt_resume_dialog_context;
 #endif
 #ifdef FEATURE_WLAN_APF

@@ -118,6 +118,18 @@ wma_twt_process_pause_dialog(t_wma_handle *wma_handle,
 			     struct wmi_twt_pause_dialog_cmd_param *params);
 
 /**
+ * wma_twt_process_nudge_dialog() - Process nudge dialog command
+ * @wma_handle: wma handle
+ * @params: nudge dialog configuration parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS error code
+ * on failure
+ */
+QDF_STATUS
+wma_twt_process_nudge_dialog(t_wma_handle *wma_handle,
+			     struct wmi_twt_nudge_dialog_cmd_param *params);
+
+/**
  * wma_twt_process_resume_dialog() - Process resume dialog command
  * @wma_handle: wma handle
  * @params: resume dialog configuration parameters
@@ -189,6 +201,15 @@ QDF_STATUS wma_twt_process_del_dialog(t_wma_handle *wma_handle,
 static inline QDF_STATUS
 wma_twt_process_pause_dialog(t_wma_handle *wma_handle,
 			     struct wmi_twt_pause_dialog_cmd_param *params)
+{
+	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
+
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline QDF_STATUS
+wma_twt_process_nudge_dialog(t_wma_handle *wma_handle,
+			     struct wmi_twt_nudge_dialog_cmd_param *params)
 {
 	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
 

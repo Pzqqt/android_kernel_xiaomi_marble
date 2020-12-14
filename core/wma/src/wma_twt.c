@@ -303,6 +303,24 @@ wma_twt_process_pause_dialog(t_wma_handle *wma_handle,
 	return wmi_unified_twt_pause_dialog_cmd(wmi_handle, params);
 }
 
+QDF_STATUS
+wma_twt_process_nudge_dialog(t_wma_handle *wma_handle,
+			     struct wmi_twt_nudge_dialog_cmd_param *params)
+{
+	wmi_unified_t wmi_handle;
+
+	if (wma_validate_handle(wma_handle))
+		return QDF_STATUS_E_INVAL;
+
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		wma_err("Invalid wmi handle, twt nudge dialog failed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_twt_nudge_dialog_cmd(wmi_handle, params);
+}
+
 /**
  * wma_twt_pause_dialog_complete_event_handler - TWT pause dlg complete evt
  * handler
@@ -355,6 +373,59 @@ int wma_twt_pause_dialog_complete_event_handler(void *handle, uint8_t *event,
 	return status;
 }
 
+/**
+ * wma_twt_nudge_dialog_complete_event_handler - TWT nudge dlg complete evt
+ * handler
+ * @handle: wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static
+int wma_twt_nudge_dialog_complete_event_handler(void *handle, uint8_t *event,
+						uint32_t len)
+{
+	struct wmi_twt_nudge_dialog_complete_event_param *param;
+	struct scheduler_msg sme_msg = {0};
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	int status = -EINVAL;
+
+	if (!mac)
+		return status;
+
+	if (wma_validate_handle(wma_handle))
+		return status;
+
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		wma_err("Invalid wmi handle for TWT nudge dialog complete");
+		return status;
+	}
+
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param)
+		return -ENOMEM;
+
+	if (wmi_handle->ops->extract_twt_nudge_dialog_comp_event)
+		status = wmi_handle->ops->extract_twt_nudge_dialog_comp_event(
+						      wmi_handle, event, param);
+
+	wma_debug("TWT: Extract nudge dialog comp event status:%d", status);
+
+	sme_msg.type = eWNI_SME_TWT_NUDGE_DIALOG_EVENT;
+	sme_msg.bodyptr = param;
+	sme_msg.bodyval = 0;
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &sme_msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	return status;
+}
 QDF_STATUS
 wma_twt_process_resume_dialog(t_wma_handle *wma_handle,
 			      struct wmi_twt_resume_dialog_cmd_param *params)
@@ -484,5 +555,10 @@ void wma_register_twt_events(tp_wma_handle wma_handle)
 				(wma_handle->wmi_handle,
 				 wmi_twt_resume_dialog_complete_event_id,
 				 wma_twt_resume_dialog_complete_event_handler,
+				 WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler
+				(wma_handle->wmi_handle,
+				 wmi_twt_nudge_dialog_complete_event_id,
+				 wma_twt_nudge_dialog_complete_event_handler,
 				 WMA_RX_SERIALIZER_CTX);
 }

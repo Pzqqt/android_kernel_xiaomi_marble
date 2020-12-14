@@ -3738,6 +3738,23 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 		     void *context);
 
 /**
+ * sme_nudge_dialog_cmd() - Register callback and send TWT nudge dialog
+ * command to firmware
+ * @mac_handle: MAC handle
+ * @twt_nudge_dialog_cb: Function callback to handle nudge_dialog event
+ * @twt_params: TWT nudge dialog parameters
+ * @context: os_if_request cookie
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
+QDF_STATUS
+sme_nudge_dialog_cmd(mac_handle_t mac_handle,
+		     twt_nudge_dialog_cb nudge_dialog_cb,
+		     struct wmi_twt_nudge_dialog_cmd_param *twt_params,
+		     void *context);
+
+/**
  * sme_resume_dialog_cmd() - Register callback and send TWT resume dialog
  * command to firmware
  * @mac_handle: MAC handle

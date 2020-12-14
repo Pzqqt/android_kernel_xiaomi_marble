@@ -8988,6 +8988,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_twt_process_resume_dialog(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_TWT_NUDGE_DIALOG_REQUEST:
+		wma_twt_process_nudge_dialog(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	default:
 		wma_debug("Unhandled WMA message of type %d", msg->type);
 		if (msg->bodyptr)
