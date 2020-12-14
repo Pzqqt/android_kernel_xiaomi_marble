@@ -18600,6 +18600,7 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
 		hdd_mon_select_cbmode(adapter, oper_freq, ch_params);
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_handle_sap_sta_dfs_conc() - to handle SAP STA DFS conc
  * @adapter: STA adapter
@@ -19190,10 +19191,13 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 	roam_profile->AuthType.authType[0] = sta_ctx->conn_info.auth_type;
 	return 0;
 }
+#endif /* FEATURE_CM_ENABLE */
 
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
+
+#ifndef FEATURE_CM_ENABLE
 static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
 	struct wlan_fils_connection_info *fils_con_info;
@@ -19206,6 +19210,7 @@ static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 
 	return true;
 }
+#endif /* FEATURE_CM_ENABLE */
 
 static enum eAniAuthType wlan_hdd_get_fils_auth_type(
 		enum nl80211_auth_type auth)
@@ -19247,6 +19252,7 @@ static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
 	return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_cfg80211_set_fils_config() - set fils config params during connect
  * @adapter: Pointer to adapter
@@ -19400,7 +19406,7 @@ static bool wlan_hdd_is_conn_type_fils(struct cfg80211_connect_params *req)
 
 	return true;
 }
-
+#endif /* FEATURE_CM_ENABLE */
 #else
 static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
@@ -19424,6 +19430,7 @@ static bool wlan_hdd_is_conn_type_fils(struct cfg80211_connect_params *req)
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_set_akm_suite() - set key management type
  * @adapter: Pointer to adapter
@@ -19623,7 +19630,7 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 
 	return 0;
 }
-
+#endif /* FEATURE_CM_ENABLE */
 /**
  * wlan_hdd_add_assoc_ie() - Add Assoc IE to roamProfile
  * @adapter: Pointer to adapter
@@ -19705,6 +19712,7 @@ static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 {}
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_populate_crypto_auth_type() - populate auth type for crypto
  * @vdev: pointed to vdev obmgr
@@ -19852,6 +19860,7 @@ static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
 
 	hdd_populate_crypto_auth_type(vdev, req);
 }
+#endif /* FEATURE_CM_ENABLE */
 
 #ifdef FEATURE_WLAN_WAPI
 /**
@@ -20280,6 +20289,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 	return 0;
 }
 
+#ifndef FEATURE_CM_ENABLE
 static void wlan_hdd_cfg80211_store_wep_key(struct hdd_adapter *adapter,
 					    struct wlan_objmgr_vdev *vdev,
 					    struct cfg80211_connect_params *req)
@@ -20464,6 +20474,7 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 
 	wlan_hdd_clear_wapi_privacy(adapter);
 }
+#endif /* FEATURE_CM_ENABLE */
 
 static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 					struct hdd_adapter *adapter,
@@ -20602,6 +20613,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
 					    reason);
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_reassoc_bssid_hint() - Start reassociation if bssid is present
  * @adapter: Pointer to the HDD adapter
@@ -20772,7 +20784,7 @@ static inline void hdd_dump_connect_req(struct hdd_adapter *adapter,
  *
  * Return: 0 for success, non-zero for failure
  */
-int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
+static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 				struct net_device *ndev,
 				struct cfg80211_connect_params *req)
 {
@@ -20943,6 +20955,8 @@ int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	return status;
 }
+#endif
+
 #ifdef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_cfg80211_connect() - cfg80211 connect api
