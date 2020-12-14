@@ -165,7 +165,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 				      uint32_t chan_freq,
 				      struct hdd_adapter **out_adapter)
 {
-	uint8_t *mac_addr;
+	uint8_t *mac_addr = NULL;
 	uint32_t pre_cac_chan_freq = 0;
 	int ret;
 	struct hdd_adapter *ap_adapter, *pre_cac_adapter;
@@ -216,12 +216,6 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_SAP_MODE);
-	if (!mac_addr) {
-		hdd_err("can't add virtual intf: Not getting valid mac addr");
-		return -EINVAL;
-	}
-
 	hdd_debug("channel: %d", chan_freq);
 
 	ret = wlan_hdd_validate_and_get_pre_cac_ch(
@@ -233,28 +227,42 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 
 	hdd_debug("starting pre cac SAP  adapter");
 
-	/* Starting a SAP adapter:
-	 * Instead of opening an adapter, we could just do a SME open session
-	 * for AP type. But, start BSS would still need an adapter.
-	 * So, this option is not taken.
-	 *
-	 * hdd open adapter is going to register this precac interface with
-	 * user space. This interface though exposed to user space will be in
-	 * DOWN state. Consideration was done to avoid this registration to the
-	 * user space. But, as part of SAP operations multiple events are sent
-	 * to user space. Some of these events received from unregistered
-	 * interface was causing crashes. So, retaining the registration.
-	 *
-	 * So, this interface would remain registered and will remain in DOWN
-	 * state for the CAC duration. We will add notes in the feature
-	 * announcement to not use this temporary interface for any activity
-	 * from user space.
-	 */
-	pre_cac_adapter = hdd_open_adapter(hdd_ctx, QDF_SAP_MODE, "precac%d",
-					   mac_addr, NET_NAME_UNKNOWN, true);
+	pre_cac_adapter = hdd_get_adapter_by_iface_name(hdd_ctx,
+							SAP_PRE_CAC_IFNAME);
 	if (!pre_cac_adapter) {
-		hdd_err("error opening the pre cac adapter");
-		goto release_intf_addr_and_return_failure;
+		mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_SAP_MODE);
+		if (!mac_addr) {
+			hdd_err("can't add virtual intf: Not getting valid mac addr");
+			return -EINVAL;
+		}
+
+		/**
+		 * Starting a SAP adapter:
+		 * Instead of opening an adapter, we could just do a SME open
+		 * session for AP type. But, start BSS would still need an
+		 * adapter. So, this option is not taken.
+		 *
+		 * hdd open adapter is going to register this precac interface
+		 * with user space. This interface though exposed to user space
+		 * will be in DOWN state. Consideration was done to avoid this
+		 * registration to the user space. But, as part of SAP
+		 * operations multiple events are sent to user space. Some of
+		 * these events received from unregistered interface was
+		 * causing crashes. So, retaining the registration.
+		 *
+		 * So, this interface would remain registered and will remain
+		 * in DOWN state for the CAC duration. We will add notes in the
+		 * feature announcement to not use this temporary interface for
+		 * any activity from user space.
+		 */
+		pre_cac_adapter = hdd_open_adapter(hdd_ctx, QDF_SAP_MODE,
+						   SAP_PRE_CAC_IFNAME, mac_addr,
+						   NET_NAME_UNKNOWN, true);
+
+		if (!pre_cac_adapter) {
+			hdd_err("error opening the pre cac adapter");
+			goto release_intf_addr_and_return_failure;
+		}
 	}
 
 	/*
@@ -370,6 +378,7 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	}
 
 	ap_adapter->pre_cac_freq = pre_cac_chan_freq;
+	pre_cac_adapter->is_pre_cac_adapter = true;
 
 	*out_adapter = pre_cac_adapter;
 
@@ -388,7 +397,8 @@ release_intf_addr_and_return_failure:
 	 * adapter which is trying to come wouldn't get valid
 	 * mac address. Remember we have limited pool of mac addresses
 	 */
-	wlan_hdd_release_intf_addr(hdd_ctx, mac_addr);
+	if (mac_addr)
+		wlan_hdd_release_intf_addr(hdd_ctx, mac_addr);
 	return -EINVAL;
 }
 

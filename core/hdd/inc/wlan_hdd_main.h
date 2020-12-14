@@ -1521,6 +1521,8 @@ struct hdd_adapter {
 
 	qdf_work_t netdev_features_update_work;
 	uint8_t net_dev_hold_ref_count[NET_DEV_HOLD_ID_MAX];
+	/* Flag to indicate whether it is a pre cac adapter or not */
+	bool is_pre_cac_adapter;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
