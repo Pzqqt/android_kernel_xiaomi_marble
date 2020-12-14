@@ -752,8 +752,17 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 	uint16_t center_freq;
 	uint8_t nchannels = 0;
 
+	/*
+	 * For radar in agile detector, use the center of the channel
+	 * configured to the agile detector.
+	 * For radar on a 160MHz home channel, use the center of 160MHz.
+	 * For radar on all other bandwidths, use the center of the segment
+	 * affected.
+	 */
 	if (detector_id == dfs_get_agile_detector_id(dfs))
 		center_freq = dfs->dfs_agile_precac_freq_mhz;
+	else if (WLAN_IS_CHAN_MODE_160(curchan))
+		center_freq = curchan->dfs_ch_mhz_freq_seg2;
 	else if (!segment_id)
 		center_freq = curchan->dfs_ch_mhz_freq_seg1;
 	else {
