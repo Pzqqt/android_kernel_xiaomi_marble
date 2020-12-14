@@ -1275,6 +1275,9 @@ static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
 {
 	uint16_t mcs_12_13_supp;
 
+	/* To fix WAPI IoT issue.*/
+	if (pe_session->encryptType == eSIR_ED_WPI)
+		return;
 	if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq))
 		mcs_12_13_supp = mac->mlme_cfg->he_caps.he_mcs_12_13_supp_2g;
 	else
