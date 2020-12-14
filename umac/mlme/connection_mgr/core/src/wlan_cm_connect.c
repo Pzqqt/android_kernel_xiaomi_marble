@@ -1098,7 +1098,11 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	}
 
 	cm_inform_if_mgr_connect_start(cm_ctx->vdev);
-	mlme_cm_connect_start_ind(cm_ctx->vdev, &cm_req->req);
+	status = mlme_cm_connect_start_ind(cm_ctx->vdev, &cm_req->req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reason = CM_NO_CANDIDATE_FOUND;
+		goto connect_err;
+	}
 
 	status = cm_connect_get_candidates(pdev, cm_ctx, cm_req);
 	/* In case of status pending connect will continue after scan */
