@@ -854,7 +854,9 @@ struct cvp_internal_buf *cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
 		return NULL;
 
 	/* PERSIST buffer requires secure mapping */
-	smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
+	/* Disable and wait for hyp_assign available
+	 * smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
+	 */
 
 	buf = kmem_cache_zalloc(cvp_driver->buf_cache, GFP_KERNEL);
 	if (!buf) {
