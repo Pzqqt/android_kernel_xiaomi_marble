@@ -250,7 +250,7 @@ void sde_plane_set_sid(struct drm_plane *plane, u32 vm)
 	sde_hw_set_sspp_sid(sde_kms->hw_sid, psde->pipe, vm);
 }
 
-void _sde_plane_set_qos_lut(struct drm_plane *plane,
+static void _sde_plane_set_qos_lut(struct drm_plane *plane,
 		struct drm_crtc *crtc,
 		struct drm_framebuffer *fb)
 {
@@ -3310,7 +3310,7 @@ static int sde_plane_sspp_atomic_update(struct drm_plane *plane,
 	_sde_plane_set_scanout(plane, pstate, &psde->pipe_cfg, fb);
 
 	is_rt = sde_crtc_is_rt_client(crtc, crtc->state);
-	if (is_rt != psde->is_rt_pipe) {
+	if (is_rt != psde->is_rt_pipe || crtc->state->mode_changed) {
 		psde->is_rt_pipe = is_rt;
 		pstate->dirty |= SDE_PLANE_DIRTY_QOS;
 	}
