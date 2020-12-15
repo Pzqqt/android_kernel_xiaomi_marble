@@ -486,12 +486,11 @@ int sde_encoder_display_failure_notification(struct drm_encoder *enc,
 bool sde_encoder_recovery_events_enabled(struct drm_encoder *encoder);
 
 /**
- * sde_encoder_recovery_events_handler - handler to enable/disable the
- * sw recovery for this connector
+ * sde_encoder_enable_recovery_event - handler to enable the sw recovery
+ * for this connector
  * @drm_enc:    Pointer to drm encoder structure
  */
-void sde_encoder_recovery_events_handler(struct drm_encoder *encoder,
-		bool val);
+void sde_encoder_enable_recovery_event(struct drm_encoder *encoder);
 /**
  * sde_encoder_in_clone_mode - checks if underlying phys encoder is in clone
  *	mode or independent display mode. ref@ WB in Concurrent writeback mode.

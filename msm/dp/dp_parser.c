@@ -727,8 +727,13 @@ static void dp_parser_dsc(struct dp_parser *parser)
 	parser->dsc_feature_enable = of_property_read_bool(dev->of_node,
 			"qcom,dsc-feature-enable");
 
+	parser->dsc_continuous_pps = of_property_read_bool(dev->of_node,
+			"qcom,dsc-continuous-pps");
+
 	DP_DEBUG("dsc parsing successful. dsc:%d\n",
 			parser->dsc_feature_enable);
+	DP_DEBUG("cont_pps:%d\n",
+			parser->dsc_continuous_pps);
 }
 
 static void dp_parser_fec(struct dp_parser *parser)

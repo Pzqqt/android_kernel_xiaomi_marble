@@ -39,7 +39,7 @@ static u16 sde_dsc_rc_buf_thresh[DSC_NUM_BUF_RANGES - 1] =
  */
 static char sde_dsc_rc_range_min_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	/* DSC v1.1 */
-	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 12},
+	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 13},
 	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 17},
 	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
 	/* DSC v1.1 SCR and DSC v1.2 RGB 444 */
@@ -180,6 +180,36 @@ static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
 	return -EINVAL;
 }
 
+u8 _get_dsc_v1_2_bpg_offset(struct drm_dsc_config *dsc)
+{
+	u8 bpg_offset = 0;
+	u8 uncompressed_bpg_rate;
+	u8 bpp = DSC_BPP(*dsc);
+
+	if (dsc->slice_height < 8)
+		bpg_offset = 2 * (dsc->slice_height - 1);
+	else if (dsc->slice_height < 20)
+		bpg_offset = 12;
+	else if (dsc->slice_height <= 30)
+		bpg_offset = 13;
+	else if (dsc->slice_height < 42)
+		bpg_offset = 14;
+	else
+		bpg_offset = 15;
+
+	if (dsc->native_422)
+		uncompressed_bpg_rate = 3 * bpp * 4;
+	else if (dsc->native_420)
+		uncompressed_bpg_rate = 3 * bpp;
+	else
+		uncompressed_bpg_rate = (3 * bpp + 2) * 3;
+
+	if (bpg_offset < (uncompressed_bpg_rate - (3 * bpp)))
+		return bpg_offset;
+	else
+		return (uncompressed_bpg_rate - (3 * bpp));
+}
+
 int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	int bpp, bpc;
 	int groups_per_line, groups_total;
@@ -193,12 +223,15 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 
 	dsc->rc_model_size = 8192;
 
-	if (dsc->dsc_version_major == 0x1 && ((dsc->dsc_version_minor == 0x1 &&
-			scr_ver == 0x1) ||
-			(dsc->dsc_version_minor == 0x2)))
-		dsc->first_line_bpg_offset = 15;
-	else
-		dsc->first_line_bpg_offset = 12;
+	if ((dsc->dsc_version_major == 0x1) &&
+			(dsc->dsc_version_minor == 0x1)) {
+		if (scr_ver == 0x1)
+			dsc->first_line_bpg_offset = 15;
+		else
+			dsc->first_line_bpg_offset = 12;
+	} else if (dsc->dsc_version_minor == 0x2) {
+		dsc->first_line_bpg_offset = _get_dsc_v1_2_bpg_offset(dsc);
+	}
 
 	dsc->rc_edge_factor = 6;
 	dsc->rc_tgt_offset_high = 3;
@@ -499,7 +532,10 @@ int sde_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc_info,
 	}
 
 	if (dsc->dsc_version_minor == 0x2) {
-		data = dsc->native_422 | dsc->native_420 << 1;
+		if (dsc->native_422)
+			data = BIT(0);
+		else if (dsc->native_420)
+			data = BIT(1);
 		*bp++ = data;				/* pps88 */
 		*bp++ = dsc->second_line_bpg_offset;	/* pps89 */
 

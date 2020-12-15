@@ -283,7 +283,8 @@ void sde_setup_dspp_ltm_threshv1(struct sde_hw_dspp *ctx, void *cfg)
 	}
 
 	if (!hw_cfg->payload) {
-		DRM_ERROR("invalid payload parameters for ltm thresh param\n");
+		DRM_DEBUG_DRIVER("Disable LTM noise thresh feature\n");
+		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->ltm.base + 0x60, 0);
 		return;
 	}
 

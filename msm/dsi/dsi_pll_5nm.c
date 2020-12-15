@@ -1034,7 +1034,8 @@ static void shadow_dsi_pll_dynamic_refresh_5nm(struct dsi_pll_5nm *pll,
 	DSI_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL6,
 			   (PLL_CMODE_1 + offset),
 			   (PLL_CLOCK_INVERTERS_1 + offset),
-			   0x10, reg->pll_clock_inverters);
+			   pll->cphy_enabled ? 0x00 : 0x10,
+			   reg->pll_clock_inverters);
 	upper_addr |=
 		(upper_8_bit(PLL_CMODE_1 + offset) << 12);
 	upper_addr |= (upper_8_bit(PLL_CLOCK_INVERTERS_1 + offset) << 13);
@@ -1493,6 +1494,10 @@ static unsigned long vco_5nm_recalc_rate(struct clk_hw *hw,
 		return 0;
 	}
 
+	if (!pll->priv) {
+		pr_err("pll priv is null\n");
+		return 0;
+	}
 	/*
 	 * In the case when vco arte is set, the recalculation function should
 	 * return the current rate as to avoid trying to set the vco rate
@@ -1512,6 +1517,8 @@ static unsigned long vco_5nm_recalc_rate(struct clk_hw *hw,
 		pr_err("Hand_off_resources not needed since gdsc is off\n");
 		return 0;
 	}
+
+	dsi_pll_detect_phy_mode(pll->priv, pll);
 
 	if (dsi_pll_5nm_lock_status(pll)) {
 		pr_err("PLL not enabled\n");
@@ -1926,12 +1933,34 @@ static struct clk_fixed_factor dsi0pll_post_vco_div3_5 = {
 	},
 };
 
+static struct clk_fixed_factor dsi0pll_shadow_post_vco_div3_5 = {
+	.div = 7,
+	.mult = 2,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi0pll_shadow_post_vco_div3_5",
+		.parent_names = (const char *[]){"dsi0pll_shadow_pll_out_div"},
+		.num_parents = 1,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
 static struct clk_fixed_factor dsi1pll_post_vco_div3_5 = {
 	.div = 7,
 	.mult = 2,
 	.hw.init = &(struct clk_init_data){
 		.name = "dsi1pll_post_vco_div3_5",
 		.parent_names = (const char *[]){"dsi1pll_pll_out_div"},
+		.num_parents = 1,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor dsi1pll_shadow_post_vco_div3_5 = {
+	.div = 7,
+	.mult = 2,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi1pll_shadow_post_vco_div3_5",
+		.parent_names = (const char *[]){"dsi1pll_shadow_pll_out_div"},
 		.num_parents = 1,
 		.ops = &clk_fixed_factor_ops,
 	},
@@ -1996,12 +2025,36 @@ static struct clk_fixed_factor dsi0pll_cphy_byteclk_src = {
 	},
 };
 
+static struct clk_fixed_factor dsi0pll_shadow_cphy_byteclk_src = {
+	.div = 7,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi0pll_shadow_cphy_byteclk_src",
+		.parent_names = (const char *[]){"dsi0pll_shadow_bitclk_src"},
+		.num_parents = 1,
+		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
 static struct clk_fixed_factor dsi1pll_cphy_byteclk_src = {
 	.div = 7,
 	.mult = 1,
 	.hw.init = &(struct clk_init_data){
 		.name = "dsi1pll_cphy_byteclk_src",
 		.parent_names = (const char *[]){"dsi1pll_bitclk_src"},
+		.num_parents = 1,
+		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor dsi1pll_shadow_cphy_byteclk_src = {
+	.div = 7,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi1pll_shadow_cphy_byteclk_src",
+		.parent_names = (const char *[]){"dsi1pll_shadow_bitclk_src"},
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &clk_fixed_factor_ops,
@@ -2072,8 +2125,9 @@ static struct clk_regmap_mux dsi0pll_byteclk_mux = {
 			.name = "dsi0_phy_pll_out_byteclk",
 			.parent_names = (const char *[]){"dsi0pll_byteclk_src",
 				"dsi0pll_shadow_byteclk_src",
-				"dsi0pll_cphy_byteclk_src"},
-			.num_parents = 3,
+				"dsi0pll_cphy_byteclk_src",
+				"dsi0pll_shadow_cphy_byteclk_src"},
+			.num_parents = 4,
 			.flags = (CLK_SET_RATE_PARENT |
 					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
@@ -2089,8 +2143,9 @@ static struct clk_regmap_mux dsi1pll_byteclk_mux = {
 			.name = "dsi1_phy_pll_out_byteclk",
 			.parent_names = (const char *[]){"dsi1pll_byteclk_src",
 				"dsi1pll_shadow_byteclk_src",
-				"dsi1pll_cphy_byteclk_src"},
-			.num_parents = 3,
+				"dsi1pll_cphy_byteclk_src",
+				"dsi1pll_shadow_cphy_byteclk_src"},
+			.num_parents = 4,
 			.flags = (CLK_SET_RATE_PARENT |
 					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
@@ -2144,6 +2199,22 @@ static struct clk_regmap_mux dsi0pll_cphy_pclk_src_mux = {
 	},
 };
 
+static struct clk_regmap_mux dsi0pll_shadow_cphy_pclk_src_mux = {
+	.reg = PHY_CMN_CLK_CFG1,
+	.shift = 0,
+	.width = 2,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_cphy_pclk_src_mux",
+			.parent_names =
+				(const char *[]){
+					"dsi0pll_shadow_post_vco_div3_5"},
+			.num_parents = 1,
+			.ops = &clk_regmap_mux_closest_ops,
+		},
+	},
+};
+
 static struct clk_regmap_mux dsi1pll_pclk_src_mux = {
 	.reg = PHY_CMN_CLK_CFG1,
 	.shift = 0,
@@ -2154,6 +2225,22 @@ static struct clk_regmap_mux dsi1pll_pclk_src_mux = {
 			.parent_names = (const char *[]){"dsi1pll_bitclk_src",
 					"dsi1pll_post_bit_div"},
 			.num_parents = 2,
+			.ops = &clk_regmap_mux_closest_ops,
+		},
+	},
+};
+
+static struct clk_regmap_mux dsi1pll_shadow_cphy_pclk_src_mux = {
+	.reg = PHY_CMN_CLK_CFG1,
+	.shift = 0,
+	.width = 2,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_cphy_pclk_src_mux",
+			.parent_names =
+				(const char *[]){
+					"dsi1pll_shadow_post_vco_div3_5"},
+			.num_parents = 1,
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -2238,6 +2325,22 @@ static struct clk_regmap_div dsi0pll_cphy_pclk_src = {
 	},
 };
 
+static struct clk_regmap_div dsi0pll_shadow_cphy_pclk_src = {
+	.shift = 0,
+	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_cphy_pclk_src",
+			.parent_names = (const char *[]){
+				"dsi0pll_shadow_cphy_pclk_src_mux"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
 static struct clk_regmap_div dsi1pll_pclk_src = {
 	.shift = 0,
 	.width = 4,
@@ -2286,6 +2389,22 @@ static struct clk_regmap_div dsi1pll_cphy_pclk_src = {
 	},
 };
 
+static struct clk_regmap_div dsi1pll_shadow_cphy_pclk_src = {
+	.shift = 0,
+	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_cphy_pclk_src",
+			.parent_names = (const char *[]){
+				"dsi1pll_shadow_cphy_pclk_src_mux"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
 static struct clk_regmap_mux dsi0pll_pclk_mux = {
 	.shift = 0,
 	.width = 1,
@@ -2294,8 +2413,9 @@ static struct clk_regmap_mux dsi0pll_pclk_mux = {
 			.name = "dsi0_phy_pll_out_dsiclk",
 			.parent_names = (const char *[]){"dsi0pll_pclk_src",
 				"dsi0pll_shadow_pclk_src",
-				"dsi0pll_cphy_pclk_src"},
-			.num_parents = 3,
+				"dsi0pll_cphy_pclk_src",
+				"dsi0pll_shadow_cphy_pclk_src"},
+			.num_parents = 4,
 			.flags = (CLK_SET_RATE_PARENT |
 					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
@@ -2311,8 +2431,9 @@ static struct clk_regmap_mux dsi1pll_pclk_mux = {
 			.name = "dsi1_phy_pll_out_dsiclk",
 			.parent_names = (const char *[]){"dsi1pll_pclk_src",
 				"dsi1pll_shadow_pclk_src",
-				"dsi1pll_cphy_pclk_src"},
-			.num_parents = 3,
+				"dsi1pll_cphy_pclk_src",
+				"dsi1pll_shadow_cphy_pclk_src"},
+			.num_parents = 4,
 			.flags = (CLK_SET_RATE_PARENT |
 					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
@@ -2339,10 +2460,15 @@ static struct clk_hw *dsi_pllcc_5nm[] = {
 	[SHADOW_PLL_OUT_DIV_0_CLK] = &dsi0pll_shadow_pll_out_div.clkr.hw,
 	[SHADOW_BITCLK_SRC_0_CLK] = &dsi0pll_shadow_bitclk_src.clkr.hw,
 	[SHADOW_BYTECLK_SRC_0_CLK] = &dsi0pll_shadow_byteclk_src.hw,
+	[SHADOW_CPHY_BYTECLK_SRC_0_CLK] = &dsi0pll_shadow_cphy_byteclk_src.hw,
 	[SHADOW_POST_BIT_DIV_0_CLK] = &dsi0pll_shadow_post_bit_div.hw,
 	[SHADOW_POST_VCO_DIV_0_CLK] = &dsi0pll_shadow_post_vco_div.hw,
+	[SHADOW_POST_VCO_DIV3_5_0_CLK] = &dsi0pll_shadow_post_vco_div3_5.hw,
 	[SHADOW_PCLK_SRC_MUX_0_CLK] = &dsi0pll_shadow_pclk_src_mux.clkr.hw,
 	[SHADOW_PCLK_SRC_0_CLK] = &dsi0pll_shadow_pclk_src.clkr.hw,
+	[SHADOW_CPHY_PCLK_SRC_MUX_0_CLK] =
+			&dsi0pll_shadow_cphy_pclk_src_mux.clkr.hw,
+	[SHADOW_CPHY_PCLK_SRC_0_CLK] = &dsi0pll_shadow_cphy_pclk_src.clkr.hw,
 	[VCO_CLK_1] = &dsi1pll_vco_clk.hw,
 	[PLL_OUT_DIV_1_CLK] = &dsi1pll_pll_out_div.clkr.hw,
 	[BITCLK_SRC_1_CLK] = &dsi1pll_bitclk_src.clkr.hw,
@@ -2361,10 +2487,15 @@ static struct clk_hw *dsi_pllcc_5nm[] = {
 	[SHADOW_PLL_OUT_DIV_1_CLK] = &dsi1pll_shadow_pll_out_div.clkr.hw,
 	[SHADOW_BITCLK_SRC_1_CLK] = &dsi1pll_shadow_bitclk_src.clkr.hw,
 	[SHADOW_BYTECLK_SRC_1_CLK] = &dsi1pll_shadow_byteclk_src.hw,
+	[SHADOW_CPHY_BYTECLK_SRC_1_CLK] = &dsi1pll_shadow_cphy_byteclk_src.hw,
 	[SHADOW_POST_BIT_DIV_1_CLK] = &dsi1pll_shadow_post_bit_div.hw,
 	[SHADOW_POST_VCO_DIV_1_CLK] = &dsi1pll_shadow_post_vco_div.hw,
+	[SHADOW_POST_VCO_DIV3_5_1_CLK] = &dsi1pll_shadow_post_vco_div3_5.hw,
 	[SHADOW_PCLK_SRC_MUX_1_CLK] = &dsi1pll_shadow_pclk_src_mux.clkr.hw,
 	[SHADOW_PCLK_SRC_1_CLK] = &dsi1pll_shadow_pclk_src.clkr.hw,
+	[SHADOW_CPHY_PCLK_SRC_MUX_1_CLK] =
+			&dsi1pll_shadow_cphy_pclk_src_mux.clkr.hw,
+	[SHADOW_CPHY_PCLK_SRC_1_CLK] = &dsi1pll_shadow_cphy_pclk_src.clkr.hw,
 };
 
 int dsi_pll_clock_register_5nm(struct platform_device *pdev,
@@ -2432,6 +2563,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 		dsi0pll_pclk_src.clkr.regmap = rmap;
 		dsi0pll_cphy_pclk_src.clkr.regmap = rmap;
 		dsi0pll_shadow_pclk_src.clkr.regmap = rmap;
+		dsi0pll_shadow_cphy_pclk_src.clkr.regmap = rmap;
 
 		rmap_config->name = "pclk_mux";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
@@ -2449,6 +2581,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 				&cphy_pclk_src_mux_regmap_bus,
 				pll_res, rmap_config);
 		dsi0pll_cphy_pclk_src_mux.clkr.regmap = rmap;
+		dsi0pll_shadow_cphy_pclk_src_mux.clkr.regmap = rmap;
 
 		rmap_config->name = "byteclk_mux";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
@@ -2465,7 +2598,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 			dsi0pll_shadow_vco_clk.max_rate = 5000000000;
 		}
 
-		for (i = VCO_CLK_0; i <= CPHY_PCLK_SRC_0_CLK; i++) {
+		for (i = VCO_CLK_0; i <= SHADOW_CPHY_PCLK_SRC_0_CLK; i++) {
 			clk = devm_clk_register(&pdev->dev,
 						dsi_pllcc_5nm[i]);
 			if (IS_ERR(clk)) {
@@ -2499,6 +2632,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 		dsi1pll_pclk_src.clkr.regmap = rmap;
 		dsi1pll_cphy_pclk_src.clkr.regmap = rmap;
 		dsi1pll_shadow_pclk_src.clkr.regmap = rmap;
+		dsi1pll_shadow_cphy_pclk_src.clkr.regmap = rmap;
 
 		rmap_config->name = "pclk_mux";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
@@ -2510,6 +2644,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 				pll_res, rmap_config);
 		dsi1pll_pclk_src_mux.clkr.regmap = rmap;
 		dsi1pll_shadow_pclk_src_mux.clkr.regmap = rmap;
+		dsi1pll_shadow_cphy_pclk_src_mux.clkr.regmap = rmap;
 
 		rmap_config->name = "cphy_pclk_src_mux";
 		rmap = devm_regmap_init(&pdev->dev,
