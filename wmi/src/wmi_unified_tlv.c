@@ -8821,6 +8821,12 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 			(sizeof(wlan_host_memory_chunk) *
 			 param->num_mem_chunks));
 
+	wmi_info("num peers: %d , num offload peers: %d, num vdevs: %d, num tids: %d, num tdls conn tb entries: %d, num tdls vdevs: %d",
+		 resource_cfg->num_peers, resource_cfg->num_offload_peers,
+		 resource_cfg->num_vdevs, resource_cfg->num_tids,
+		 resource_cfg->num_tdls_conn_table_entries,
+		 resource_cfg->num_tdls_vdevs);
+
 	/* Fill hw mode id config */
 	buf_ptr = copy_hw_mode_in_init_cmd(wmi_handle, buf_ptr, &len, param);
 
