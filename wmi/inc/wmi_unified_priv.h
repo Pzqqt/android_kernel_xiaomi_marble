@@ -2532,6 +2532,7 @@ struct wmi_unified {
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 	qdf_atomic_t is_target_suspended;
+	qdf_atomic_t is_target_suspend_acked;
 #ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
 	bool is_qmi_stats_enabled;
 #endif

@@ -497,6 +497,13 @@ int wmi_get_pending_cmds(wmi_unified_t wmi_handle);
 void wmi_set_target_suspend(wmi_unified_t wmi_handle, bool val);
 
 /**
+ *  WMI API to set target suspend command acked flag
+ *  @param wmi_handle      : handle to WMI.
+ *  @param val             : suspend command acked flag boolean
+ */
+void wmi_set_target_suspend_acked(wmi_unified_t wmi_handle, bool val);
+
+/**
  * wmi_is_target_suspended() - WMI API to check target suspend state
  * @wmi_handle: handle to WMI.
  *
@@ -505,6 +512,17 @@ void wmi_set_target_suspend(wmi_unified_t wmi_handle, bool val);
  * Return: true if target is suspended, else false.
  */
 bool wmi_is_target_suspended(struct wmi_unified *wmi_handle);
+
+/**
+ * wmi_is_target_suspend_acked() - WMI API to check target suspend command is
+ *                                 acked or not
+ * @wmi_handle: handle to WMI.
+ *
+ * WMI API to check whether the target suspend command is acked or not
+ *
+ * Return: true if target suspend command is acked, else false.
+ */
+bool wmi_is_target_suspend_acked(struct wmi_unified *wmi_handle);
 
 #ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
 /**
