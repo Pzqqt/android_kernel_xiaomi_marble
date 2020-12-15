@@ -78,6 +78,17 @@ wmi_unified_twt_pause_dialog_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_unified_twt_nudge_dialog_cmd(wmi_unified_t wmi_handle,
+				 struct wmi_twt_nudge_dialog_cmd_param *params)
+{
+	if (wmi_handle->ops->send_twt_nudge_dialog_cmd)
+		return wmi_handle->ops->send_twt_nudge_dialog_cmd(
+				wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_twt_resume_dialog_cmd(
 			wmi_unified_t wmi_handle,
 			struct wmi_twt_resume_dialog_cmd_param *params)
@@ -182,6 +193,18 @@ QDF_STATUS wmi_extract_twt_pause_dialog_comp_event(
 {
 	if (wmi_handle->ops->extract_twt_pause_dialog_comp_event)
 		return wmi_handle->ops->extract_twt_pause_dialog_comp_event(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_twt_nudge_dialog_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_nudge_dialog_complete_event_param *params)
+{
+	if (wmi_handle->ops->extract_twt_nudge_dialog_comp_event)
+		return wmi_handle->ops->extract_twt_nudge_dialog_comp_event(
 				wmi_handle, evt_buf, params);
 
 	return QDF_STATUS_E_FAILURE;

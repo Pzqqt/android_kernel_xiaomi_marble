@@ -129,7 +129,8 @@ enum WMI_HOST_ENABLE_TWT_STATUS {
 	WMI_HOST_ENABLE_TWT_STATUS_UNKNOWN_ERROR,
 };
 
-/** struct wmi_twt_enable_complete_event_param:
+/**
+ * struct wmi_twt_enable_complete_event_param:
  * @pdev_is: pdev_id for identifying the MAC.
  * @status: From enum WMI_HOST_ENABLE_TWT_STATUS
  */
@@ -139,7 +140,7 @@ struct wmi_twt_enable_complete_event_param {
 };
 
 /**
- *struct wmi_twt_disable_param:
+ * struct wmi_twt_disable_param:
  * @pdev_id: pdev_id for identifying the MAC.
  * @ext_conf_present: If requestor/responder extend config is present.
  * @twt_role: values from enum WMI_TWT_ROLE.
@@ -152,7 +153,8 @@ struct wmi_twt_disable_param {
 	enum WMI_TWT_OPERATION twt_oper;
 };
 
-/** struct wmi_twt_disable_complete_event:
+/**
+ * struct wmi_twt_disable_complete_event:
  * @pdev_id: pdev_id for identifying the MAC.
  */
 struct wmi_twt_disable_complete_event {
@@ -204,7 +206,8 @@ struct wmi_host_twt_session_stats_info {
 	uint32_t sp_tsf_us_hi;
 };
 
-/** struct wmi_twt_session_stats_event:
+/**
+ * struct wmi_twt_session_stats_event:
  * @pdev_id: pdev_id for identifying the MAC.
  * @num_sessions: number of TWT sessions
  * @twt_sessions: received TWT sessions
@@ -226,7 +229,8 @@ enum WMI_HOST_TWT_COMMAND {
 	WMI_HOST_TWT_COMMAND_REJECT_TWT     = 7,
 };
 
-/** struct wmi_twt_add_dialog_param -
+/**
+ * struct wmi_twt_add_dialog_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: peer MAC address when vdev is AP VDEV
  * @dialog_id: diaglog_id (TWT dialog ID)
@@ -341,7 +345,8 @@ struct wmi_twt_add_dialog_additional_params {
 	uint32_t sp_tsf_us_hi;
 };
 
-/** struct wmi_twt_add_dialog_complete_param -
+/**
+ * struct wmi_twt_add_dialog_complete_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -356,7 +361,8 @@ struct wmi_twt_add_dialog_complete_event_param {
 	uint32_t num_additional_twt_params;
 };
 
-/** struct wmi_twt_del_dialog_param -
+/**
+ * struct wmi_twt_del_dialog_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -393,7 +399,8 @@ enum WMI_HOST_DEL_TWT_STATUS {
 	WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR,
 };
 
-/** struct wmi_twt_del_dialog_complete_event_param -
+/**
+ * struct wmi_twt_del_dialog_complete_event_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -410,7 +417,8 @@ struct wmi_twt_del_dialog_complete_event_param {
 	uint32_t status;
 };
 
-/** struct wmi_twt_pause_dialog_cmd_param -
+/**
+ * struct wmi_twt_pause_dialog_cmd_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -419,6 +427,22 @@ struct wmi_twt_pause_dialog_cmd_param {
 	uint32_t vdev_id;
 	uint8_t  peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t dialog_id;
+};
+
+/**
+ * struct wmi_twt_nudge_dialog_cmd_param -
+ * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
+ * @dialog_id: TWT dialog ID
+ * @suspend_duration: TWT suspend duration in microseconds
+ * @next_twt_size: next TWT size
+ */
+struct wmi_twt_nudge_dialog_cmd_param {
+	uint32_t vdev_id;
+	uint8_t  peer_macaddr[QDF_MAC_ADDR_SIZE];
+	uint32_t dialog_id;
+	uint32_t suspend_duration;
+	uint32_t next_twt_size;
 };
 
 /* enum WMI_HOST_PAUSE_TWT_STATUS - status code of pausing TWT dialog
@@ -445,7 +469,8 @@ enum WMI_HOST_PAUSE_TWT_STATUS {
 	WMI_HOST_PAUSE_TWT_STATUS_ALREADY_PAUSED,
 };
 
-/** struct wmi_twt_pause_dialog_complete_event_param -
+/**
+ * struct wmi_twt_pause_dialog_complete_event_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -455,10 +480,47 @@ struct wmi_twt_pause_dialog_complete_event_param {
 	uint32_t vdev_id;
 	uint8_t  peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t dialog_id;
-	uint32_t status;
+	enum WMI_HOST_PAUSE_TWT_STATUS status;
 };
 
-/** struct wmi_twt_resume_dialog_cmd_param -
+/* enum WMI_HOST_NUDGE_TWT_STATUS - status code of nudge TWT dialog
+ * WMI_HOST_NUDGE_TWT_STATUS_OK: nudge TWT dialog successfully completed
+ * WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_NOT_EXIST: TWT dialog ID not exists
+ * WMI_HOST_NUDGE_TWT_STATUS_INVALID_PARAM: invalid parameters
+ * WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_BUSY: FW is in the process of handling
+ *                          this dialog
+ * WMI_HOST_NUDGE_TWT_STATUS_NO_RESOURCE: FW resource exhausted
+ * WMI_HOST_NUDGE_TWT_STATUS_NO_ACK: peer AP/STA did not ACK the
+ *                          request/response frame
+ * WMI_HOST_NUDGE_TWT_STATUS_UNKNOWN_ERROR: nudge TWT dialog failed with an
+ *                          unknown reason
+ */
+enum WMI_HOST_NUDGE_TWT_STATUS {
+	WMI_HOST_NUDGE_TWT_STATUS_OK,
+	WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_NOT_EXIST,
+	WMI_HOST_NUDGE_TWT_STATUS_INVALID_PARAM,
+	WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_BUSY,
+	WMI_HOST_NUDGE_TWT_STATUS_NO_RESOURCE,
+	WMI_HOST_NUDGE_TWT_STATUS_NO_ACK,
+	WMI_HOST_NUDGE_TWT_STATUS_UNKNOWN_ERROR,
+};
+
+/**
+ * struct wmi_twt_nudge_dialog_complete_event_param -
+ * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
+ * @dialog_id: TWT dialog ID
+ * @status: refer to WMI_HOST_PAUSE_TWT_STATUS
+ */
+struct wmi_twt_nudge_dialog_complete_event_param {
+	uint32_t vdev_id;
+	uint8_t  peer_macaddr[QDF_MAC_ADDR_SIZE];
+	uint32_t dialog_id;
+	enum WMI_HOST_NUDGE_TWT_STATUS status;
+};
+
+/**
+ * struct wmi_twt_resume_dialog_cmd_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -498,7 +560,8 @@ enum WMI_HOST_RESUME_TWT_STATUS {
 	WMI_HOST_RESUME_TWT_STATUS_UNKNOWN_ERROR,
 };
 
-/** struct wmi_twt_resume_dialog_complete_event_param -
+/**
+ * struct wmi_twt_resume_dialog_complete_event_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -512,7 +575,8 @@ struct wmi_twt_resume_dialog_complete_event_param {
 };
 
 #ifdef WLAN_SUPPORT_BCAST_TWT
-/** struct wmi_twt_btwt_invite_sta_cmd_param -
+/**
+ * struct wmi_twt_btwt_invite_sta_cmd_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
@@ -548,7 +612,8 @@ enum WMI_HOST_INVITATION_TWT_BTWT_STATUS {
 	WMI_HOST_INVITATION_TWT_BTWT_STATUS_UNKNOWN_ERROR,
 };
 
-/** struct wmi_twt_btwt_invite_sta_complete_event_param -
+/**
+ * struct wmi_twt_btwt_invite_sta_complete_event_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: BTWT dialog ID
@@ -561,7 +626,8 @@ struct wmi_twt_btwt_invite_sta_complete_event_param {
 		uint32_t status;
 };
 
-/** struct wmi_twt_btwt_remove_sta_cmd_param -
+/**
+ * struct wmi_twt_btwt_remove_sta_cmd_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: BTWT dialog ID
@@ -597,7 +663,8 @@ enum WMI_HOST_KICKOFF_TWT_BTWT_STATUS {
 	WMI_HOST_KICKOFF_TWT_BTWT_STATUS_UNKNOWN_ERROR,
 };
 
-/** struct wmi_twt_btwt_remove_sta_complete_event_param -
+/**
+ * struct wmi_twt_btwt_remove_sta_complete_event_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
  * @dialog_id: BTWT dialog ID

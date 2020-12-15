@@ -82,6 +82,17 @@ wmi_unified_twt_pause_dialog_cmd(wmi_unified_t wmi_handle,
 				 struct wmi_twt_pause_dialog_cmd_param *params);
 
 /**
+ * wmi_unified_twt_nudge_dialog_cmd() - Send WMI command to nudge TWT dialog
+ * @wmi_handle: wmi handle
+ * @params: Parameters to be configured
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_twt_nudge_dialog_cmd(wmi_unified_t wmi_handle,
+				 struct wmi_twt_nudge_dialog_cmd_param *params);
+
+/**
  * wmi_unified_twt_resume_dialog_cmd() - Send WMI command to resume TWT dialog
  * @wmi_handle: wmi handle
  * @params: Parameters to be configured
@@ -202,6 +213,20 @@ QDF_STATUS wmi_extract_twt_pause_dialog_comp_event(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_pause_dialog_complete_event_param *params);
+
+/**
+ * wmi_extract_twt_nudge_dialog_comp_event() - Extract WMI event params for TWT
+ *                               nudge dialog completion event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_nudge_dialog_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_nudge_dialog_complete_event_param *params);
 
 /**
  * wmi_extract_twt_resume_dialog_comp_event() - Extract WMI event params for TWT

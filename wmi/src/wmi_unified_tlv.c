@@ -14829,6 +14829,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID;
 	event_ids[wmi_twt_resume_dialog_complete_event_id] =
 		WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID;
+	event_ids[wmi_twt_nudge_dialog_complete_event_id] =
+		WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID;
 	event_ids[wmi_twt_session_stats_event_id] =
 		WMI_TWT_SESSION_STATS_EVENTID;
 #endif

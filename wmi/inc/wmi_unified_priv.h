@@ -2205,6 +2205,9 @@ QDF_STATUS (*send_twt_del_dialog_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_twt_pause_dialog_cmd)(wmi_unified_t wmi_handle,
 			struct wmi_twt_pause_dialog_cmd_param *params);
 
+QDF_STATUS (*send_twt_nudge_dialog_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_nudge_dialog_cmd_param *params);
+
 QDF_STATUS (*send_twt_resume_dialog_cmd)(wmi_unified_t wmi_handle,
 			struct wmi_twt_resume_dialog_cmd_param *params);
 
@@ -2242,6 +2245,10 @@ QDF_STATUS (*extract_twt_del_dialog_comp_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_twt_pause_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_pause_dialog_complete_event_param *params);
+
+QDF_STATUS (*extract_twt_nudge_dialog_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_nudge_dialog_complete_event_param *params);
 
 QDF_STATUS (*extract_twt_resume_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,

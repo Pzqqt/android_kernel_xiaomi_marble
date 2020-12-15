@@ -276,6 +276,43 @@ send_twt_pause_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+static QDF_STATUS
+send_twt_nudge_dialog_cmd_tlv(wmi_unified_t wmi_handle,
+			      struct wmi_twt_nudge_dialog_cmd_param *params)
+{
+	wmi_twt_nudge_dialog_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS status;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf)
+		return QDF_STATUS_E_FAILURE;
+
+	cmd = (wmi_twt_nudge_dialog_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_twt_nudge_dialog_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_twt_nudge_dialog_cmd_fixed_param));
+
+	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->peer_macaddr, &cmd->peer_macaddr);
+	cmd->dialog_id = params->dialog_id;
+	cmd->suspend_duration_ms = params->suspend_duration / 1000;
+	cmd->next_twt_size = params->next_twt_size;
+
+	wmi_debug("vdev_id: %d dialog_id: %d duration(in ms): %u next_twt_size: %d "
+		  "peer_macaddr: "QDF_MAC_ADDR_FMT, cmd->vdev_id,
+		  cmd->dialog_id, cmd->suspend_duration_ms, cmd->next_twt_size,
+		  QDF_MAC_ADDR_REF(params->peer_macaddr));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+				      WMI_TWT_NUDGE_DIALOG_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_buf_free(buf);
+
+	return status;
+}
+
 static QDF_STATUS send_twt_resume_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 			struct wmi_twt_resume_dialog_cmd_param *params)
 {
@@ -570,6 +607,31 @@ static QDF_STATUS extract_twt_del_dialog_comp_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+static enum WMI_HOST_PAUSE_TWT_STATUS
+wmi_twt_pause_status_to_host_twt_status(WMI_PAUSE_TWT_STATUS_T status)
+{
+	switch (status) {
+	case WMI_PAUSE_TWT_STATUS_OK:
+		return WMI_HOST_PAUSE_TWT_STATUS_OK;
+	case WMI_PAUSE_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		return WMI_HOST_PAUSE_TWT_STATUS_DIALOG_ID_NOT_EXIST;
+	case WMI_PAUSE_TWT_STATUS_INVALID_PARAM:
+		return WMI_HOST_PAUSE_TWT_STATUS_INVALID_PARAM;
+	case WMI_PAUSE_TWT_STATUS_DIALOG_ID_BUSY:
+		return WMI_HOST_PAUSE_TWT_STATUS_DIALOG_ID_BUSY;
+	case WMI_PAUSE_TWT_STATUS_NO_RESOURCE:
+		return WMI_HOST_PAUSE_TWT_STATUS_NO_RESOURCE;
+	case WMI_PAUSE_TWT_STATUS_NO_ACK:
+		return WMI_HOST_PAUSE_TWT_STATUS_NO_ACK;
+	case WMI_PAUSE_TWT_STATUS_UNKNOWN_ERROR:
+		return WMI_HOST_PAUSE_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_PAUSE_TWT_STATUS_ALREADY_PAUSED:
+		return WMI_HOST_PAUSE_TWT_STATUS_ALREADY_PAUSED;
+	default:
+		return WMI_HOST_PAUSE_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
 static QDF_STATUS extract_twt_pause_dialog_comp_event_tlv(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
@@ -588,7 +650,54 @@ static QDF_STATUS extract_twt_pause_dialog_comp_event_tlv(
 
 	params->vdev_id = ev->vdev_id;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
-	params->status = ev->status;
+	params->status = wmi_twt_pause_status_to_host_twt_status(ev->status);
+	params->dialog_id = ev->dialog_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static enum WMI_HOST_NUDGE_TWT_STATUS
+wmi_twt_nudge_status_to_host_twt_status(WMI_TWT_NUDGE_STATUS_T status)
+{
+	switch (status) {
+	case WMI_NUDGE_TWT_STATUS_OK:
+		return WMI_HOST_NUDGE_TWT_STATUS_OK;
+	case WMI_NUDGE_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		return WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_NOT_EXIST;
+	case WMI_NUDGE_TWT_STATUS_INVALID_PARAM:
+		return WMI_HOST_NUDGE_TWT_STATUS_INVALID_PARAM;
+	case WMI_NUDGE_TWT_STATUS_DIALOG_ID_BUSY:
+		return WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_BUSY;
+	case WMI_NUDGE_TWT_STATUS_NO_RESOURCE:
+		return WMI_HOST_NUDGE_TWT_STATUS_NO_RESOURCE;
+	case WMI_NUDGE_TWT_STATUS_NO_ACK:
+		return WMI_HOST_NUDGE_TWT_STATUS_NO_ACK;
+	case WMI_NUDGE_TWT_STATUS_UNKNOWN_ERROR:
+		return WMI_HOST_NUDGE_TWT_STATUS_UNKNOWN_ERROR;
+	default:
+		return WMI_HOST_NUDGE_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
+static QDF_STATUS extract_twt_nudge_dialog_comp_event_tlv(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_nudge_dialog_complete_event_param *params)
+{
+	WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID_param_tlvs *param_buf;
+	wmi_twt_nudge_dialog_complete_event_fixed_param *ev;
+
+	param_buf = (WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = param_buf->fixed_param;
+
+	params->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
+	params->status = wmi_twt_nudge_status_to_host_twt_status(ev->status);
 	params->dialog_id = ev->dialog_id;
 
 	return QDF_STATUS_SUCCESS;
@@ -793,6 +902,7 @@ void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_twt_add_dialog_cmd = send_twt_add_dialog_cmd_tlv;
 	ops->send_twt_del_dialog_cmd = send_twt_del_dialog_cmd_tlv;
 	ops->send_twt_pause_dialog_cmd = send_twt_pause_dialog_cmd_tlv;
+	ops->send_twt_nudge_dialog_cmd = send_twt_nudge_dialog_cmd_tlv;
 	ops->send_twt_resume_dialog_cmd = send_twt_resume_dialog_cmd_tlv;
 	ops->extract_twt_enable_comp_event = extract_twt_enable_comp_event_tlv;
 	ops->extract_twt_disable_comp_event =
@@ -805,6 +915,8 @@ void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 				extract_twt_del_dialog_comp_event_tlv;
 	ops->extract_twt_pause_dialog_comp_event =
 				extract_twt_pause_dialog_comp_event_tlv;
+	ops->extract_twt_nudge_dialog_comp_event =
+				extract_twt_nudge_dialog_comp_event_tlv;
 	ops->extract_twt_resume_dialog_comp_event =
 				extract_twt_resume_dialog_comp_event_tlv;
 	ops->extract_twt_session_stats_event =

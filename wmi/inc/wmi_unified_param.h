@@ -4725,6 +4725,7 @@ typedef enum {
 	wmi_twt_del_dialog_complete_event_id,
 	wmi_twt_pause_dialog_complete_event_id,
 	wmi_twt_resume_dialog_complete_event_id,
+	wmi_twt_nudge_dialog_complete_event_id,
 	wmi_twt_session_stats_event_id,
 #endif
 	wmi_apf_get_vdev_work_memory_resp_event_id,
