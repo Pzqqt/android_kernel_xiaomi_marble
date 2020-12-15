@@ -5221,7 +5221,7 @@ static int __reg_dmav1_setup_demurav1_en(struct sde_hw_dspp *ctx,
 		return rc;
 	}
 
-	en = (dcfg->src_id) ? BIT(31) : 0;
+	en = (dcfg->src_id == BIT(3)) ? 0 : BIT(31);
 	en |= (dcfg->cfg1_high_idx & REG_MASK(3)) << 24;
 	en |= (dcfg->cfg1_low_idx & REG_MASK(3)) << 20;
 	en |= (dcfg->c2_depth & REG_MASK(4)) << 16;
@@ -5255,20 +5255,22 @@ static int __reg_dmav1_setup_demurav1_dual_pipe(struct sde_hw_dspp *ctx,
 
 	dspp = hw_cfg->dspp[0];
 
-	if (dspp->idx == ctx->idx)
-		return 0;
+	if (dspp->idx == ctx->idx) {
+		temp = 0;
+	} else {
+		if (hw_cfg->displayh < hw_cfg->displayv)
+			temp = (8 * (1 << 21)) / hw_cfg->displayh;
+		else
+			temp = (16 * (1 << 21)) / hw_cfg->displayh;
 
-	if (hw_cfg->displayh < hw_cfg->displayv)
-		temp = (8 * (1 << 21)) / hw_cfg->displayh;
-	else
-		temp = (16 * (1 << 21)) / hw_cfg->displayh;
-
-	temp = temp * (hw_cfg->displayh >> 1);
+		temp = temp * (hw_cfg->displayh >> 1);
+	}
 	REG_DMA_SETUP_OPS(*dma_write_cfg, demura_base + 0x58,
 		&temp, sizeof(temp), REG_SINGLE_WRITE, 0, 0, 0);
 	rc = dma_ops->setup_payload(dma_write_cfg);
 	if (rc)
 		DRM_ERROR("0x58: REG_SINGLE_WRITE failed ret %d\n", rc);
+	SDE_EVT32(0x58, temp, ctx->idx);
 
 	return rc;
 }
@@ -5354,7 +5356,7 @@ void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfx)
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
 			DEMURA_CFG);
 
-	DRM_DEBUG("enable demura buffer size %d\n",
+	DRM_DEBUG_DRIVER("enable demura buffer size %d\n",
 				dspp_buf[DEMURA_CFG][ctx->idx]->index);
 
 	rc = dma_ops->kick_off(&kick_off);
