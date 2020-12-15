@@ -101,9 +101,6 @@ static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 {
 	qdf_mem_info_t mem_map_table = {0};
 
-	if (!qdf_ipa_is_ready())
-		return QDF_STATUS_SUCCESS;
-
 	qdf_update_mem_map_table(soc->osdev, &mem_map_table,
 				 qdf_nbuf_get_frag_paddr(nbuf, 0),
 				 size);
@@ -202,6 +199,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	struct dp_rx_desc *rx_desc;
 	qdf_nbuf_t nbuf;
 
+	if (!qdf_ipa_is_ready())
+		return QDF_STATUS_SUCCESS;
+
 	if (!qdf_mem_smmu_s1_enabled(soc->osdev))
 		return QDF_STATUS_SUCCESS;
 
@@ -251,6 +251,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	uint8_t pdev_id;
 	qdf_nbuf_t nbuf;
 	int i;
+
+	if (!qdf_ipa_is_ready())
+		return QDF_STATUS_SUCCESS;
 
 	if (!qdf_mem_smmu_s1_enabled(soc->osdev))
 		return QDF_STATUS_SUCCESS;
