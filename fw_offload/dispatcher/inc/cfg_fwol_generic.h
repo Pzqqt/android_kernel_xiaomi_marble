@@ -816,6 +816,27 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"enable SHO config")
 
+/*
+ * <ini>
+ * g_disable_hw_assist - Flag to disable HW assist feature
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the HW assist feature in FW
+ *
+ * Related: none
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+
+#define CFG_DISABLE_HW_ASSIST CFG_INI_BOOL( \
+		"g_disable_hw_assist", \
+		0, \
+		"Disable HW assist feature in FW")
+
 #define CFG_FWOL_GENERIC_ALL \
 	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
@@ -845,6 +866,7 @@
 	CFG(CFG_SET_SAP_XLNA_BYPASS) \
 	CFG(CFG_SET_ENABLE_ILP) \
 	CFG(CFG_ENABLE_FW_WOW_MODULE_LOG_LEVEL) \
-	CFG(CFG_SAP_SHO_CONFIG)
+	CFG(CFG_SAP_SHO_CONFIG) \
+	CFG(CFG_DISABLE_HW_ASSIST)
 
 #endif
