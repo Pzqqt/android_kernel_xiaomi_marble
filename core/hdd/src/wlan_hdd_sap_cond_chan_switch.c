@@ -56,23 +56,25 @@ static int wlan_hdd_set_pre_cac_status(struct hdd_adapter *pre_cac_adapter,
 }
 
 /**
- * wlan_hdd_set_chan_before_pre_cac() - Save the channel before pre cac
+ * wlan_hdd_set_chan_freq_before_pre_cac() - Save the channel before pre cac
  * @ap_adapter: AP adapter
- * @chan_before_pre_cac: Channel
+ * @freq_before_pre_cac: Channel
  *
- * Saves the channel which the AP was beaconing on before moving to the pre
- * cac channel. If radar is detected on the pre cac channel, this saved
+ * Saves the channel frequency which the AP was beaconing on before moving to
+ * the pre cac channel. If radar is detected on the pre cac channel, this saved
  * channel will be used for AP operations.
  *
  * Return: Zero on success, non-zero on failure
  */
-static int wlan_hdd_set_chan_before_pre_cac(struct hdd_adapter *ap_adapter,
-					    uint8_t chan_before_pre_cac)
+static int
+wlan_hdd_set_chan_freq_before_pre_cac(struct hdd_adapter *ap_adapter,
+				      qdf_freq_t freq_before_pre_cac)
 {
 	QDF_STATUS ret;
+	struct sap_context *sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter);
 
-	ret = wlan_sap_set_chan_before_pre_cac(
-		WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), chan_before_pre_cac);
+	ret = wlan_sap_set_chan_freq_before_pre_cac(sap_ctx,
+						    freq_before_pre_cac);
 	if (QDF_IS_STATUS_ERROR(ret))
 		return -EINVAL;
 
@@ -367,11 +369,8 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		goto stop_close_pre_cac_adapter;
 	}
 
-	ret = wlan_hdd_set_chan_before_pre_cac(
-			ap_adapter,
-			wlan_reg_freq_to_chan(
-			hdd_ctx->pdev,
-			hdd_ap_ctx->operating_chan_freq));
+	ret = wlan_hdd_set_chan_freq_before_pre_cac(ap_adapter,
+						    hdd_ap_ctx->operating_chan_freq);
 	if (ret != 0) {
 		hdd_err("failed to set channel before pre cac");
 		goto stop_close_pre_cac_adapter;

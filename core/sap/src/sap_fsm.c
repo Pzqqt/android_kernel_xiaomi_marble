@@ -1119,7 +1119,7 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 	sapctx->sessionId = session_id;
 	sapctx->is_pre_cac_on = false;
 	sapctx->pre_cac_complete = false;
-	sapctx->chan_before_pre_cac = 0;
+	sapctx->freq_before_pre_cac = 0;
 
 	/* When SSR, SAP will restart, clear the old context,sessionId */
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
@@ -3538,10 +3538,10 @@ qdf_freq_t sap_indicate_radar(struct sap_context *sap_ctx)
 	/* set the Radar Found flag in SapDfsInfo */
 	mac->sap.SapDfsInfo.sap_radar_found_status = true;
 
-	if (sap_ctx->chan_before_pre_cac) {
-		sap_info("sapdfs: set chan before pre cac %d as target chan",
-			 sap_ctx->chan_before_pre_cac);
-		return sap_ctx->chan_before_pre_cac;
+	if (sap_ctx->freq_before_pre_cac) {
+		sap_info("sapdfs: set chan freq before pre cac %d as target chan",
+			 sap_ctx->freq_before_pre_cac);
+		return sap_ctx->freq_before_pre_cac;
 	}
 
 	if (sap_ctx->vendor_acs_dfs_lte_enabled && (QDF_STATUS_SUCCESS ==
