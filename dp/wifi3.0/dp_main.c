@@ -108,6 +108,20 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_INIT, ## params)
 #define dp_init_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_INIT, params)
 
+#define dp_cdp_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_CDP, params)
+#define dp_cdp_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_CDP, params)
+#define dp_cdp_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_CDP, params)
+#define dp_cdp_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_CDP, ## params)
+#define dp_cdp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_CDP, params)
+
+#define dp_vdev_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_VDEV, params)
+#define dp_vdev_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_VDEV, params)
+#define dp_vdev_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_VDEV, params)
+#define dp_vdev_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_VDEV, ## params)
+#define dp_vdev_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_VDEV, params)
+
 /*
  * The max size of cdp_peer_stats_param_t is limited to 16 bytes.
  * If the buffer size is exceeding this size limit,
@@ -5347,9 +5361,8 @@ static void dp_vdev_id_map_tbl_add(struct dp_soc *soc,
 
 	if (dp_vdev_get_ref(soc, vdev, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "unable to get vdev reference at MAP vdev %pK vdev_id %u",
-			  vdev, vdev_id);
+		dp_vdev_info("%pK: unable to get vdev reference at MAP vdev %pK vdev_id %u",
+			     soc, vdev, vdev_id);
 		qdf_spin_unlock_bh(&soc->vdev_map_lock);
 		return;
 	}
@@ -5395,9 +5408,8 @@ static void dp_vdev_pdev_list_add(struct dp_soc *soc,
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	if (dp_vdev_get_ref(soc, vdev, DP_MOD_ID_CONFIG) !=
 			QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "unable to get vdev reference at MAP vdev %pK",
-			  vdev);
+		dp_vdev_info("%pK: unable to get vdev reference at MAP vdev %pK",
+			     soc, vdev);
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 		return;
 	}
@@ -5433,9 +5445,8 @@ static void dp_vdev_pdev_list_remove(struct dp_soc *soc,
 		TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CONFIG);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "vdev:%pK not found in pdev:%pK vdevlist:%pK",
-			  vdev, pdev, &pdev->vdev_list);
+		dp_vdev_debug("%pK: vdev:%pK not found in pdev:%pK vdevlist:%pK",
+			      soc, vdev, pdev, &pdev->vdev_list);
 		QDF_ASSERT(0);
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
@@ -6521,8 +6532,8 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 				sizeof(*peer));
 
 		if (!peer) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("DP neighbour peer node memory allocation failed"));
+			dp_cdp_err("%pK: DP neighbour peer node memory allocation failed"
+				   , soc);
 			goto fail0;
 		}
 
@@ -6545,9 +6556,8 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 			dp_mon_filter_setup_smart_monitor(pdev);
 			status = dp_mon_filter_update(pdev);
 			if (status != QDF_STATUS_SUCCESS) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_ERROR,
-					  FL("smart mon filter setup failed"));
+				dp_cdp_err("%pK: smart mon filter setup failed",
+					   soc);
 				dp_mon_filter_reset_smart_monitor(pdev);
 				pdev->neighbour_peers_added = false;
 			}
@@ -6574,9 +6584,8 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 			dp_mon_filter_reset_smart_monitor(pdev);
 			status = dp_mon_filter_update(pdev);
 			if (status != QDF_STATUS_SUCCESS) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_ERROR,
-					  FL("smart mon filter clear failed"));
+				dp_cdp_err("%pK: smart mon filter clear failed",
+					   soc);
 			}
 
 		}
@@ -6682,8 +6691,7 @@ static int dp_get_sec_type(struct cdp_soc_t *soc, uint8_t vdev_id,
 						       DP_MOD_ID_CDP);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Peer is NULL!\n", __func__);
+		dp_cdp_err("%pK: Peer is NULL!\n", (struct dp_soc *)soc);
 		return sec_type;
 	}
 
@@ -6712,8 +6720,7 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 						      DP_MOD_ID_CDP);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Peer is NULL!\n", __func__);
+		dp_cdp_debug("%pK: Peer is NULL!\n", soc);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		peer->authorize = authorize ? 1 : 0;
@@ -7381,8 +7388,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc_hdl,
 	dp_mon_filter_setup_mon_mode(pdev);
 	status = dp_mon_filter_update(pdev);
 	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to reset monitor filters"));
+		dp_cdp_err("%pK: Failed to reset monitor filters", soc);
 		dp_mon_filter_reset_mon_mode(pdev);
 		pdev->monitor_configured = false;
 		pdev->monitor_vdev = NULL;
@@ -7544,8 +7550,7 @@ void dp_vdev_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		FL("val %d"), val);
+	dp_cdp_info("%pK: val %d", vdev->pdev->soc, val);
 	vdev->mesh_vdev = val;
 	if (val)
 		vdev->skip_sw_tid_classification |=
@@ -7567,8 +7572,7 @@ void dp_vdev_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		FL("val %d"), val);
+	dp_cdp_info("%pK: val %d", vdev->pdev->soc, val);
 	vdev->mesh_rx_filter = val;
 }
 #endif
@@ -7583,8 +7587,7 @@ void dp_vdev_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 static
 void dp_vdev_set_hlos_tid_override(struct dp_vdev *vdev, uint32_t val)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		FL("val %d"), val);
+	dp_cdp_info("%pK: val %d", vdev->pdev->soc, val);
 	if (val)
 		vdev->skip_sw_tid_classification |=
 			DP_TXRX_HLOS_TID_OVERRIDE_ENABLED;
@@ -7766,8 +7769,8 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			qdf_mem_malloc(sizeof(struct cdp_vdev_stats));
 
 	if (!vdev_stats) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "DP alloc failure - unable to get alloc vdev stats");
+		dp_cdp_err("%pK: DP alloc failure - unable to get alloc vdev stats",
+			   pdev->soc);
 		return;
 	}
 
@@ -7822,8 +7825,8 @@ static QDF_STATUS dp_vdev_getstats(struct cdp_vdev *vdev_handle,
 	vdev_stats = qdf_mem_malloc(sizeof(struct cdp_vdev_stats));
 
 	if (!vdev_stats) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "DP alloc failure - unable to get alloc vdev stats");
+		dp_cdp_err("%pK: DP alloc failure - unable to get alloc vdev stats",
+			   soc);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -8460,8 +8463,7 @@ dp_enable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 	dp_mon_filter_setup_enhanced_stats(pdev);
 	status = dp_mon_filter_update(pdev);
 	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to set enhanced mode filters"));
+		dp_cdp_err("%pK: Failed to set enhanced mode filters", soc);
 		dp_mon_filter_reset_enhanced_stats(pdev);
 		dp_cal_client_timer_stop(pdev->cal_client_ctx);
 		pdev->enhanced_stats_en = 0;
@@ -8666,8 +8668,7 @@ static QDF_STATUS dp_get_peer_param(struct cdp_soc_t *cdp_soc,  uint8_t vdev_id,
 static void dp_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
 {
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid pdev");
+		dp_cdp_err("Invalid pdev");
 		return;
 	}
 
@@ -8972,9 +8973,8 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 			    dp_vdev_get_hlos_tid_override((struct cdp_vdev *)vdev);
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "param value %d is wrong\n",
-			  param);
+		dp_cdp_err("%pk: param value %d is wrong\n",
+			   soc, param);
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -9006,21 +9006,18 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 
 	switch (param) {
 	case CDP_ENABLE_WDS:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "wds_enable %d for vdev(%pK) id(%d)\n",
-			  val.cdp_vdev_param_wds, vdev, vdev->vdev_id);
+		dp_cdp_err("%pK: wds_enable %d for vdev(%pK) id(%d)\n",
+			   dsoc, val.cdp_vdev_param_wds, vdev, vdev->vdev_id);
 		vdev->wds_enabled = val.cdp_vdev_param_wds;
 		break;
 	case CDP_ENABLE_MEC:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "mec_enable %d for vdev(%pK) id(%d)\n",
-			  val.cdp_vdev_param_mec, vdev, vdev->vdev_id);
+		dp_cdp_err("%pK: mec_enable %d for vdev(%pK) id(%d)\n",
+			   dsoc, val.cdp_vdev_param_mec, vdev, vdev->vdev_id);
 		vdev->mec_enabled = val.cdp_vdev_param_mec;
 		break;
 	case CDP_ENABLE_DA_WAR:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "da_war_enable %d for vdev(%pK) id(%d)\n",
-			  val.cdp_vdev_param_da_war, vdev, vdev->vdev_id);
+		dp_cdp_err("%pK: da_war_enable %d for vdev(%pK) id(%d)\n",
+			   dsoc, val.cdp_vdev_param_da_war, vdev, vdev->vdev_id);
 		vdev->pdev->soc->da_war_enabled = val.cdp_vdev_param_da_war;
 		dp_wds_flush_ast_table_wifi3(((struct cdp_soc_t *)
 					     vdev->pdev->soc));
@@ -9153,13 +9150,12 @@ dp_set_psoc_param(struct cdp_soc_t *cdp_soc,
 			wlan_cfg_set_num_tx_ext_desc(wlan_cfg_ctx, 0);
 			break;
 		default:
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "Invalid offload config %d",
-				  val.cdp_psoc_param_en_nss_cfg);
+			dp_cdp_err("%pK: Invalid offload config %d",
+				   soc, val.cdp_psoc_param_en_nss_cfg);
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  FL("nss-wifi<0> nss config is enabled"));
+			dp_cdp_err("%pK: nss-wifi<0> nss config is enabled"
+				   , soc);
 		break;
 	case CDP_SET_PREFERRED_HW_MODE:
 		soc->preferred_hw_mode = val.cdp_psoc_param_preferred_hw_mode;
@@ -9330,8 +9326,7 @@ static void dp_txrx_update_vdev_me_stats(struct dp_vdev *vdev,
 	struct cdp_tx_ingress_stats *host_stats = NULL;
 
 	if (!buf) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid host stats buf");
+		dp_cdp_err("%pK: Invalid host stats buf", vdev->pdev->soc);
 		return;
 	}
 	host_stats = (struct cdp_tx_ingress_stats *)buf;
@@ -9365,8 +9360,7 @@ static void dp_txrx_update_vdev_igmp_me_stats(struct dp_vdev *vdev,
 	struct cdp_tx_ingress_stats *host_stats = NULL;
 
 	if (!buf) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid host stats buf");
+		dp_cdp_err("%pK: Invalid host stats buf", vdev->pdev->soc);
 		return;
 	}
 	host_stats = (struct cdp_tx_ingress_stats *)buf;
@@ -9395,8 +9389,7 @@ static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc_hdl,
 						     DP_MOD_ID_CDP);
 
 	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid vdev handle");
+		dp_cdp_err("%pK: Invalid vdev handle", soc);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -9753,8 +9746,7 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
 	if (!vdev || !req) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"Invalid vdev/req instance");
+		dp_cdp_err("%pK: Invalid vdev/req instance", soc);
 		status = QDF_STATUS_E_INVAL;
 		goto fail0;
 	}
@@ -9781,8 +9773,7 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 	num_stats  = QDF_ARRAY_SIZE(dp_stats_mapping_table);
 
 	if (stats >= num_stats) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid stats option: %d", __func__, stats);
+		dp_cdp_err("%pK : Invalid stats option: %d", soc, stats);
 		status = QDF_STATUS_E_INVAL;
 		goto fail0;
 	}
@@ -9802,8 +9793,7 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 			(host_stats <= TXRX_HOST_STATS_MAX))
 		status = dp_print_host_stats(vdev, req, soc);
 	else
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"Wrong Input for TxRx Stats");
+		dp_cdp_info("%pK: Wrong Input for TxRx Stats", soc);
 fail0:
 	if (vdev)
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
@@ -9822,8 +9812,7 @@ static QDF_STATUS dp_txrx_dump_stats(struct cdp_soc_t *psoc, uint16_t value,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!soc) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: soc is NULL", __func__);
+		dp_cdp_err("%pK: soc is NULL", soc);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -9989,8 +9978,7 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 	struct dp_soc *soc = (struct dp_soc *)psoc;
 
 	if (!(soc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: Invalid handle", __func__);
+		dp_cdp_err("%pK: Invalid handle", soc);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -11335,15 +11323,13 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_soc_t *soc_hdl,
 						     DP_MOD_ID_CDP);
 
 	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid vdev id %d"), vdev_id);
+		dp_cdp_err("%pK: Invalid vdev id %d", soc, vdev_id);
 		return 0;
 	}
 
 	vdev_stats = qdf_mem_malloc_atomic(sizeof(struct cdp_vdev_stats));
 	if (!vdev_stats) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "DP alloc failure - unable to get alloc vdev stats");
+		dp_cdp_err("%pK: DP alloc failure - unable to get alloc vdev stats", soc);
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return 0;
 	}
@@ -12571,9 +12557,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				dp_mon_filter_setup_rx_pkt_log_full(pdev);
 				if (dp_mon_filter_update(pdev) !=
 						QDF_STATUS_SUCCESS) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_ERROR,
-						  FL("Pktlog full filters set failed"));
+					dp_cdp_err("%pK: Pktlog full filters set failed", soc);
 					dp_mon_filter_reset_rx_pkt_log_full(pdev);
 					pdev->rx_pktlog_mode = DP_RX_PKTLOG_DISABLED;
 					return 0;
@@ -12602,9 +12586,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				 */
 				dp_mon_filter_setup_rx_pkt_log_lite(pdev);
 				if (dp_mon_filter_update(pdev) != QDF_STATUS_SUCCESS) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_ERROR,
-						  FL("Pktlog lite filters set failed"));
+					dp_cdp_err("%pK: Pktlog lite filters set failed", soc);
 					dp_mon_filter_reset_rx_pkt_log_lite(pdev);
 					pdev->rx_pktlog_mode =
 						DP_RX_PKTLOG_DISABLED;
@@ -12650,18 +12632,14 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				dp_mon_filter_reset_rx_pkt_log_full(pdev);
 				if (dp_mon_filter_update(pdev) !=
 						QDF_STATUS_SUCCESS) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_ERROR,
-						  FL("Pktlog filters reset failed"));
+					dp_cdp_err("%pK: Pktlog filters reset failed", soc);
 					return 0;
 				}
 
 				dp_mon_filter_reset_rx_pkt_log_lite(pdev);
 				if (dp_mon_filter_update(pdev) !=
 						QDF_STATUS_SUCCESS) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_ERROR,
-						  FL("Pktlog filters reset failed"));
+					dp_cdp_err("%pK: Pktlog filters reset failed", soc);
 					return 0;
 				}
 
@@ -12906,8 +12884,7 @@ uint16_t dp_wds_ext_get_peer_id(ol_txrx_soc_handle soc,
 	uint16_t peer_id = HTT_INVALID_PEER;
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Peer is NULL!\n", __func__);
+		dp_cdp_debug("%pK: Peer is NULL!\n", (struct dp_soc *)soc);
 		return peer_id;
 	}
 
@@ -12928,8 +12905,7 @@ QDF_STATUS dp_wds_ext_set_peer_rx(ol_txrx_soc_handle soc,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Peer is NULL!\n", __func__);
+		dp_cdp_debug("%pK: Peer is NULL!\n", (struct dp_soc *)soc);
 		return status;
 	}
 
