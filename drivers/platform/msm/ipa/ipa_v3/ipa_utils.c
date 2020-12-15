@@ -10488,7 +10488,7 @@ bool ipa3_ctx_get_flag(enum ipa_flag flag)
 	case IPA_ENDP_DELAY_WA_EN:
 		return ipa3_ctx->ipa_endp_delay_wa;
 	case IPA_HW_STATS_EN:
-		return ipa3_ctx->hw_stats.enabled;
+		return (ipa3_ctx->hw_stats && ipa3_ctx->hw_stats->enabled);
 	case IPA_MHI_EN:
 		return ipa3_ctx->ipa_config_is_mhi;
 	case IPA_FLTRT_NOT_HASHABLE_EN:
