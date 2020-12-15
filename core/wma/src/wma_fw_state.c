@@ -31,10 +31,8 @@ QDF_STATUS wma_get_fw_state(tp_wma_handle wma_handle)
 	wmi_buf_t wmi_buf;
 	uint32_t len = sizeof(*cmd);
 
-	if (!wma_handle) {
-		wma_err("WMA is closed, can not issue cmd");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!wmi_buf)

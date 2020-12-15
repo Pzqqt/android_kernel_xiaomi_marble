@@ -4061,10 +4061,8 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 
 	wmi_handle = wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("NULL wmi_handle");
+	if (wmi_validate_handle(wmi_handle))
 		return -EINVAL;
-	}
 
 	status = wmi_extract_roam_scan_stats_res_evt(wmi_handle, event,
 						     &vdev_id,
@@ -4555,10 +4553,8 @@ int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,
 		return -EINVAL;
 
 	wmi_handle = wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle for wlm_stats_event_handler");
+	if (wmi_validate_handle(wmi_handle))
 		return -EINVAL;
-	}
 
 	if (!wmi_service_enabled(wmi_handle, wmi_service_wlm_stats_support)) {
 		wma_err("Feature not supported by firmware");

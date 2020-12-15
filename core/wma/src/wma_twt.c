@@ -69,11 +69,10 @@ int wma_twt_en_complete_event_handler(void *handle,
 	if (wma_validate_handle(wma_handle))
 		return status;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle for TWT complete");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return status;
-	}
+
 	if (!mac)
 		return status;
 
@@ -126,10 +125,8 @@ int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
 	struct mac_context *mac;
 
 	mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac) {
-		wma_err("Invalid MAC context");
+	if (!mac)
 		return -EINVAL;
-	}
 
 	wma_debug("TWT: Rcvd TWT disable comp event");
 
@@ -155,11 +152,9 @@ QDF_STATUS wma_twt_process_add_dialog(t_wma_handle *wma_handle,
 	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle, twt add dialog failed");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	return wmi_unified_twt_add_dialog_cmd(wmi_handle, params);
 }
@@ -190,11 +185,9 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 	if (!mac)
 		return -EINVAL;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wma handle for TWT add dialog complete");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return -EINVAL;
-	}
 
 	add_dialog_event = qdf_mem_malloc(sizeof(*add_dialog_event));
 	if (!add_dialog_event)
@@ -237,11 +230,9 @@ wma_twt_process_del_dialog(t_wma_handle *wma_handle,
 	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle, twt del dialog failed");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	return wmi_unified_twt_del_dialog_cmd(wmi_handle, params);
 }
@@ -269,11 +260,10 @@ int wma_twt_del_dialog_complete_event_handler(void *handle,
 	if (wma_validate_handle(wma_handle))
 		return status;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wma handle for TWT del dialog complete");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return status;
-	}
+
 	if (!mac)
 		return status;
 
@@ -306,11 +296,9 @@ wma_twt_process_pause_dialog(t_wma_handle *wma_handle,
 	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle, twt pause dialog failed");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	return wmi_unified_twt_pause_dialog_cmd(wmi_handle, params);
 }
@@ -341,11 +329,9 @@ int wma_twt_pause_dialog_complete_event_handler(void *handle, uint8_t *event,
 	if (wma_validate_handle(wma_handle))
 		return status;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle for TWT pause dialog complete");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return status;
-	}
 
 	param = qdf_mem_malloc(sizeof(*param));
 	if (!param)
@@ -378,11 +364,9 @@ wma_twt_process_resume_dialog(t_wma_handle *wma_handle,
 	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle, twt resume dialog failed");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	return wmi_unified_twt_resume_dialog_cmd(wmi_handle, params);
 }
@@ -413,11 +397,9 @@ int wma_twt_resume_dialog_complete_event_handler(void *handle, uint8_t *event,
 	if (wma_validate_handle(wma_handle))
 		return status;
 
-	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("Invalid wmi handle for TWT resume dialog complete");
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
 		return status;
-	}
 
 	param = qdf_mem_malloc(sizeof(*param));
 	if (!param)

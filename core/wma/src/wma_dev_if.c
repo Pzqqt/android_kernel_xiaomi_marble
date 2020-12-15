@@ -1295,10 +1295,8 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	    (ratemask_cfg->type < WLAN_MLME_RATEMASK_TYPE_MAX)) {
 		struct wmi_unified *wmi_handle = wma->wmi_handle;
 
-		if (!wmi_handle) {
-			wma_err(FL("wmi_handle is null"));
+		if (wmi_validate_handle(wmi_handle))
 			return QDF_STATUS_E_INVAL;
-		}
 
 		rparams.vdev_id = rsp->vdev_id;
 		status = wma_get_ratemask_type(ratemask_cfg->type,

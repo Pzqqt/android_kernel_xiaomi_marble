@@ -1087,11 +1087,15 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	uint32_t txpower_params2g = 0;
 	uint32_t txpower_params5g = 0;
 	struct pdev_params pdevparam;
+	struct wmi_unified *wmi_handle;
 
-	if (!wma || !wma->wmi_handle) {
-		wma_err("WMA is closed, can not issue tx power limit");
+	if (wma_validate_handle(wma))
 		return QDF_STATUS_E_INVAL;
-	}
+
+	wmi_handle = wma->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
+		return QDF_STATUS_E_INVAL;
+
 	/* Set value and reason code for 2g and 5g power limit */
 
 	SET_PDEV_PARAM_TXPOWER_REASON(txpower_params2g,
@@ -1107,7 +1111,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 
 	pdevparam.param_id = WMI_PDEV_PARAM_TXPOWER_LIMIT2G;
 	pdevparam.param_value = txpower_params2g;
-	ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+	ret = wmi_unified_pdev_param_send(wmi_handle,
 					 &pdevparam,
 					 WMA_WILDCARD_PDEV_ID);
 	if (ret) {
@@ -1116,7 +1120,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	}
 	pdevparam.param_id = WMI_PDEV_PARAM_TXPOWER_LIMIT5G;
 	pdevparam.param_value = txpower_params5g;
-	ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+	ret = wmi_unified_pdev_param_send(wmi_handle,
 					 &pdevparam,
 					 WMA_WILDCARD_PDEV_ID);
 	if (ret) {

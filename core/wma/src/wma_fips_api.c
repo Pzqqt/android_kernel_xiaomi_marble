@@ -39,16 +39,12 @@ wma_fips_event_handler(void *handle, uint8_t *event, uint32_t len)
 	QDF_STATUS status;
 
 	wma_handle = handle;
-	if (!wma_handle) {
-		wma_err("NULL wma_handle");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	wmi_handle = wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("NULL wmi_handle");
+	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	status = wmi_extract_fips_event_data(wmi_handle, event, &param);
 
@@ -76,16 +72,12 @@ QDF_STATUS wma_fips_request(WMA_HANDLE handle,
 	wmi_unified_t wmi_handle;
 	QDF_STATUS status;
 
-	if (!wma_handle) {
-		wma_err("NULL wma_handle");
+	if (wma_validate_handle(wma_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	wmi_handle = wma_handle->wmi_handle;
-	if (!wmi_handle) {
-		wma_err("NULL wmi_handle");
+	if (wmi_validate_handle(wmi_handle))
 		return QDF_STATUS_E_INVAL;
-	}
 
 	fips_callback = callback;
 	fips_context = context;
