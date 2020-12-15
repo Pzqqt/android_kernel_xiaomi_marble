@@ -54,6 +54,7 @@
 #include "wlan_tdls_tgt_api.h"
 #include "lim_process_fils.h"
 #include "wma.h"
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 		      tSirResultCodes result_code, uint8_t vdev_id)
@@ -641,6 +642,66 @@ void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 
+#ifdef FEATURE_CM_ENABLE
+static void lim_send_sta_disconnect_ind(struct mac_context *mac,
+					struct scheduler_msg *msg)
+{
+	struct cm_vdev_discon_ind *ind;
+	struct disassoc_ind *disassoc;
+	struct deauth_ind *deauth;
+	struct scheduler_msg ind_msg = {0};
+	QDF_STATUS status;
+
+	ind = qdf_mem_malloc(sizeof(*ind));
+	if (!ind) {
+		qdf_mem_free(msg->bodyptr);
+		return;
+	}
+
+	ind->psoc = mac->psoc;
+	if (msg->type == eWNI_SME_DISASSOC_IND) {
+		disassoc = (struct disassoc_ind *)msg->bodyptr;
+		ind->disconnect_param.vdev_id = disassoc->vdev_id;
+		ind->disconnect_param.bssid = disassoc->bssid;
+		ind->disconnect_param.reason_code = disassoc->reasonCode;
+		if (disassoc->from_ap)
+			ind->disconnect_param.source = CM_PEER_DISCONNECT;
+		else
+			ind->disconnect_param.source = CM_SB_DISCONNECT;
+	} else {
+		deauth = (struct deauth_ind *)msg->bodyptr;
+		ind->disconnect_param.vdev_id = deauth->vdev_id;
+		ind->disconnect_param.bssid = deauth->bssid;
+		ind->disconnect_param.reason_code = deauth->reasonCode;
+		if (deauth->from_ap)
+			ind->disconnect_param.source = CM_PEER_DISCONNECT;
+		else
+			ind->disconnect_param.source = CM_SB_DISCONNECT;
+	}
+	ind_msg.bodyptr = ind;
+	ind_msg.callback = cm_disconnect_indication;
+	ind_msg.type = msg->type;
+	qdf_mem_free(msg->bodyptr);
+
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &ind_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("vdev_id: %d, source %d, reason %d, type %d msg post fails",
+		       ind->disconnect_param.vdev_id,
+		       ind->disconnect_param.source,
+		       ind->disconnect_param.reason_code, ind_msg.type);
+		qdf_mem_free(ind);
+	}
+}
+#else
+static void lim_send_sta_disconnect_ind(struct mac_context *mac,
+					struct scheduler_msg *msg)
+{
+	lim_sys_process_mmh_msg_api(mac, msg);
+}
+#endif
+
 void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			       tSirMacAddr peerMacAddr,
 			       tSirResultCodes reasonCode,
@@ -650,13 +711,15 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			       struct pe_session *pe_session)
 {
 	struct disassoc_rsp *pSirSmeDisassocRsp;
-	struct disassoc_ind *pSirSmeDisassocInd;
+	struct disassoc_ind *pSirSmeDisassocInd = NULL;
 	uint32_t *pMsg = NULL;
 	bool failure = false;
 	struct pe_session *session = NULL;
 	uint16_t i, assoc_id;
 	tpDphHashNode sta_ds = NULL;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE opmode = QDF_MAX_NO_OF_MODE;
 
 	pe_debug("Disassoc Ntf with trigger : %d reasonCode: %d",
 		disassocTrigger, reasonCode);
@@ -777,9 +840,28 @@ error:
 	if ((pe_session) && LIM_IS_STA_ROLE(pe_session))
 		pe_delete_session(mac, pe_session);
 
-	if (false == failure)
-		lim_send_sme_disassoc_deauth_ntf(mac, QDF_STATUS_SUCCESS,
-						 (uint32_t *) pMsg);
+	if (failure)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, smesessionId,
+						    WLAN_LEGACY_MAC_ID);
+	if (vdev) {
+		opmode = wlan_vdev_mlme_get_opmode(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+	}
+	if ((opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE) &&
+	    pSirSmeDisassocInd &&
+	    pSirSmeDisassocInd->messageType == eWNI_SME_DISASSOC_IND) {
+		struct scheduler_msg msg = {0};
+
+		msg.type = pSirSmeDisassocInd->messageType;
+		msg.bodyptr = pSirSmeDisassocInd;
+
+		return lim_send_sta_disconnect_ind(mac, &msg);
+	}
+
+	lim_send_sme_disassoc_deauth_ntf(mac, QDF_STATUS_SUCCESS,
+					 (uint32_t *)pMsg);
 } /*** end lim_send_sme_disassoc_ntf() ***/
 
 static bool lim_is_disconnect_from_ap(enum eLimDisassocTrigger trigger)
@@ -790,6 +872,7 @@ static bool lim_is_disconnect_from_ap(enum eLimDisassocTrigger trigger)
 
 	return false;
 }
+
 /** -----------------------------------------------------------------
    \brief lim_send_sme_disassoc_ind() - sends SME_DISASSOC_IND
 
@@ -840,6 +923,9 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode sta,
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_IND_EVENT, pe_session,
 			      0, (uint16_t) sta->mlmStaContext.disassocReason);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
+	if (LIM_IS_STA_ROLE(pe_session))
+		return lim_send_sta_disconnect_ind(mac, &mmhMsg);
 
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
@@ -904,6 +990,9 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DEAUTH_IND_EVENT, pe_session,
 			      0, sta->mlmStaContext.cleanupTrigger);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
+	if (LIM_IS_STA_ROLE(pe_session))
+		return lim_send_sta_disconnect_ind(mac, &mmhMsg);
 
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return;
@@ -1045,11 +1134,13 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 {
 	uint8_t *pBuf;
 	struct deauth_rsp *pSirSmeDeauthRsp;
-	struct deauth_ind *pSirSmeDeauthInd;
+	struct deauth_ind *pSirSmeDeauthInd = NULL;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
 	uint32_t *pMsg = NULL;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE opmode = QDF_MAX_NO_OF_MODE;
 
 	pe_session = pe_find_session_by_bssid(mac, peerMacAddr, &sessionId);
 	switch (deauthTrigger) {
@@ -1124,6 +1215,22 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	/*Delete the PE session  created */
 	if (pe_session && LIM_IS_STA_ROLE(pe_session))
 		pe_delete_session(mac, pe_session);
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, smesessionId,
+						    WLAN_LEGACY_MAC_ID);
+	if (vdev) {
+		opmode = wlan_vdev_mlme_get_opmode(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+	}
+	if ((opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE) &&
+	    pSirSmeDeauthInd &&
+	    pSirSmeDeauthInd->messageType == eWNI_SME_DEAUTH_IND) {
+		struct scheduler_msg msg = {0};
+
+		msg.type = pSirSmeDeauthInd->messageType;
+		msg.bodyptr = pSirSmeDeauthInd;
+		return lim_send_sta_disconnect_ind(mac, &msg);
+	}
 
 	lim_send_sme_disassoc_deauth_ntf(mac, QDF_STATUS_SUCCESS,
 					 (uint32_t *) pMsg);

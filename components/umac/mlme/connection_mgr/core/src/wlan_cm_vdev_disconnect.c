@@ -21,6 +21,7 @@
 
 #include "wlan_cm_vdev_api.h"
 #include "wlan_mlme_main.h"
+#include "wlan_cm_api.h"
 
 QDF_STATUS
 cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
@@ -73,4 +74,34 @@ QDF_STATUS cm_send_vdev_down_req(struct wlan_objmgr_vdev *vdev)
 	return wlan_vdev_mlme_sm_deliver_evt(vdev,
 					     WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
 					     sizeof(*resp), resp);
+}
+
+QDF_STATUS cm_disconnect_indication(struct scheduler_msg *msg)
+{
+	struct cm_vdev_discon_ind *ind;
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_FAILURE;
+
+	ind = msg->bodyptr;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			ind->psoc, ind->disconnect_param.vdev_id,
+			WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d : vdev not found",
+			 ind->disconnect_param.vdev_id);
+		qdf_mem_free(ind);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_cm_disconnect(vdev, ind->disconnect_param.source,
+				    ind->disconnect_param.reason_code,
+				    &ind->disconnect_param.bssid);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	qdf_mem_free(ind);
+
+	return status;
 }
