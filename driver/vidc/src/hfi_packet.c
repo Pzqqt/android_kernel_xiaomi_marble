@@ -211,6 +211,26 @@ u32 get_hfi_colorformat(struct msm_vidc_inst *inst,
 	return hfi_colorformat;
 }
 
+u32 get_hfi_quality_mode(struct msm_vidc_inst *inst)
+{
+	u32 hfi_mode = HFI_MODE_POWER_SAVE;
+
+	switch(inst->quality_mode) {
+	case MSM_VIDC_MAX_QUALITY_MODE:
+		hfi_mode = HFI_MODE_MAX_QUALITY;
+		break;
+	case MSM_VIDC_POWER_SAVE_MODE:
+		hfi_mode = HFI_MODE_POWER_SAVE;
+		break;
+	default:
+		s_vpr_e(inst->sid, "%s: invalid qulity mode %d\n",
+			__func__, inst->quality_mode);
+		break;
+	}
+
+	return hfi_mode;
+}
+
 int get_hfi_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer, struct hfi_buffer *buf)
 {

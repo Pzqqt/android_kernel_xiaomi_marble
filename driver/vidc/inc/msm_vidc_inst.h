@@ -103,6 +103,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_properties         prop;
 	enum msm_vidc_stage_type           stage;
 	enum msm_vidc_pipe_type            pipe;
+	enum msm_vidc_quality_mode         quality_mode;
 	struct msm_vidc_power              power;
 	struct msm_vidc_buffers_info       buffers;
 	struct msm_vidc_mappings_info      mappings;

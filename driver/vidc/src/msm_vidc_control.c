@@ -551,7 +551,7 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		return 0;
 
 	/* Dynamic set control ASAP */
-	rc = msm_vidc_set_fw_list(inst);
+	rc = msm_vidc_set_v4l2_properties(inst);
 	if (rc) {
 		s_vpr_e(inst->sid, "%s: setting %s failed\n",
 			__func__, ctrl->name);
@@ -695,7 +695,7 @@ int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl)
  * - update instance firmware list with current capability id
  * Now, loop over child list and call its adjust function
  */
-int msm_vidc_adjust_properties(struct msm_vidc_inst *inst)
+int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	int i;
@@ -742,6 +742,38 @@ exit:
 	return rc;
 }
 
+int msm_vidc_set_q16(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
+	s_vpr_h(inst->sid,
+		"%s: hfi_id: %#x, value: %#x\n", __func__,
+		inst->capabilities->cap[cap_id].hfi_id,
+		hfi_value);
+	rc = venus_hfi_session_property(inst,
+		inst->capabilities->cap[cap_id].hfi_id,
+		HFI_HOST_FLAGS_NONE,
+		msm_vidc_get_port_info(inst, cap_id),
+		HFI_PAYLOAD_Q16,
+		&hfi_value,
+		sizeof(u32));
+	if (rc)
+		s_vpr_e(inst->sid,
+			"%s: failed to set cap_id: %d to fw\n",
+			__func__, cap_id);
+
+	return rc;
+}
+
 int msm_vidc_set_u32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
 {
@@ -764,6 +796,10 @@ int msm_vidc_set_u32(void *instance,
 		hfi_payload = HFI_PAYLOAD_U32;
 	}
 
+	s_vpr_h(inst->sid,
+		"%s: hfi_id: %#x, value: %u\n", __func__,
+		inst->capabilities->cap[cap_id].hfi_id,
+		hfi_value);
 	rc = venus_hfi_session_property(inst,
 		inst->capabilities->cap[cap_id].hfi_id,
 		HFI_HOST_FLAGS_NONE,
@@ -790,6 +826,10 @@ int msm_vidc_set_s32(void *instance,
 		return -EINVAL;
 	}
 
+	s_vpr_h(inst->sid,
+		"%s: hfi_id: %#x, value: %d\n", __func__,
+		inst->capabilities->cap[cap_id].hfi_id,
+		inst->capabilities->cap[cap_id].value);
 	rc = venus_hfi_session_property(inst,
 		inst->capabilities->cap[cap_id].hfi_id,
 		HFI_HOST_FLAGS_NONE, HFI_PORT_NONE,
@@ -851,7 +891,7 @@ int msm_vidc_set_array(void *instance,
 	return rc;
 }
 
-int msm_vidc_set_fw_list(struct msm_vidc_inst *inst)
+int msm_vidc_set_v4l2_properties(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct msm_vidc_inst_capability *capability;
@@ -942,10 +982,10 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 	case V4L2_CID_MPEG_VIDEO_HEADER_MODE:
 		switch (capability->cap[cap_id].value) {
 		case V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE:
-			*value = BIT(HFI_SEQ_HEADER_SEPERATE_FRAME);
+			*value = HFI_SEQ_HEADER_SEPERATE_FRAME;
 			break;
 		case V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME:
-			*value = BIT(HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME);
+			*value = HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME;
 			break;
 		/*
 		 * TODO (AS): other HFI values are missing corresponding

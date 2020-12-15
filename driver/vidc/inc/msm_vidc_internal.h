@@ -40,6 +40,10 @@
 #define DEFAULT_BSE_VPP_DELAY    2
 #define MAX_CAP_PARENTS          16
 #define MAX_CAP_CHILDREN         16
+#define DEFAULT_BITSTREM_ALIGNMENT  16
+#define H265_BITSTREM_ALIGNMENT     32
+#define DEFAULT_MAX_HOST_BUF_COUNT  32
+
 /* TODO
  * #define MAX_SUPERFRAME_COUNT     32
 */
@@ -180,6 +184,11 @@ enum msm_vidc_pipe_type {
 	MSM_VIDC_PIPE_1 = 1,
 	MSM_VIDC_PIPE_2 = 2,
 	MSM_VIDC_PIPE_4 = 4,
+};
+
+enum msm_vidc_quality_mode {
+	MSM_VIDC_MAX_QUALITY_MODE = 0x1,
+	MSM_VIDC_POWER_SAVE_MODE = 0x2,
 };
 
 enum msm_vidc_core_capability_type {

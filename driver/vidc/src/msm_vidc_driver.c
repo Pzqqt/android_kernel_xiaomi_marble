@@ -272,8 +272,10 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 {
 	u32 region = MSM_VIDC_NON_SECURE;
 
-	if (!is_secure_session(inst))
+	if (!is_secure_session(inst) &&
+		buffer_type != MSM_VIDC_BUF_ARP) {
 		return region;
+	}
 
 	switch (buffer_type) {
 	case MSM_VIDC_BUF_INPUT:
@@ -906,6 +908,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	alloc->region = msm_vidc_get_buffer_region(inst,
 		buffer_type, __func__);
 	alloc->size = buffer->buffer_size;
+	alloc->secure = (alloc->region > MSM_VIDC_NON_SECURE) ? 1 : 0;
 	rc = msm_vidc_memory_alloc(inst->core, alloc);
 	if (rc)
 		return -ENOMEM;

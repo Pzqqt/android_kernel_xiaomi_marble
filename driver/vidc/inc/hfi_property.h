@@ -70,8 +70,8 @@ enum hfi_color_format {
 #define HFI_BITMASK_BITSTREAM_HEIGHT                            0x0000ffff
 #define HFI_PROP_BITSTREAM_RESOLUTION                           0x03000103
 
-#define HFI_BITMASK_LINEAR_STRIDE            0xffff0000
-#define HFI_BITMASK_LINEAR_SCANLINE          0x0000ffff
+#define HFI_BITMASK_LINEAR_STRIDE                       0xffff0000
+#define HFI_BITMASK_LINEAR_SCANLINE                     0x0000ffff
 #define HFI_PROP_LINEAR_STRIDE_SCANLINE                         0x03000104
 
 #define HFI_BITMASK_CROP_RIGHT_OFFSET        0xffff0000
@@ -245,7 +245,7 @@ enum hfi_rate_control {
 
 #define HFI_PROP_CONTENT_ADAPTIVE_CODING                        0x0300012c
 
-#define HFI_PROP_CONST_QUALITY_BITRATE_BOOST                    0x0300012d
+#define HFI_PROP_BITRATE_BOOST                                  0x0300012d
 
 #define HFI_BITMASK_QP_I          0x000000ff
 #define HFI_BITMASK_QP_P          0x0000ff00
@@ -305,6 +305,11 @@ enum hfi_layer_encoding_type {
 
 #define HFI_PROP_HEIC_GRID_ENABLE                               0x03000144
 
+enum hfi_syncframe_request_mode {
+    HFI_SYNC_FRAME_REQUEST_WITHOUT_SEQ_HDR           = 0x00000001,
+    HFI_SYNC_FRAME_REQUEST_WITH_PREFIX_SEQ_HDR       = 0x00000002,
+};
+
 #define HFI_PROP_REQUEST_SYNC_FRAME                             0x03000145
 
 #define HFI_PROP_MAX_GOP_FRAMES                                 0x03000146
@@ -316,7 +321,6 @@ enum hfi_quality_mode {
     HFI_MODE_POWER_SAVE  = 0x2,
 };
 
-// TODO (AS): Does not map to any V4l2 control
 #define HFI_PROP_QUALITY_MODE                                   0x03000148
 
 enum hfi_seq_header_mode {
@@ -454,6 +458,19 @@ enum hfi_picture_type {
 
 #define HFI_PROP_ROI_INFO                                       0x03000173
 
+#define HFI_PROP_WORST_COMPRESSION_RATIO                        0x03000174
+
+#define HFI_PROP_WORST_COMPLEXITY_FACTOR                        0x03000175
+
+//TODO: Enable when firmware adds support for these
+//#define HFI_PROP_VBV_DELAY                                      0x03000176
+
+//#define HFI_PROP_SEQ_CHANGE_AT_SYNC_FRAME                       0x03000177
+
+#define HFI_BITMASK_RAW_WIDTH                           0xffff0000
+#define HFI_BITMASK_RAW_HEIGHT                          0x0000ffff
+#define HFI_PROP_RAW_RESOLUTION                                 0x03000178
+
 #define HFI_PROP_END                                            0x03FFFFFF
 
 #define HFI_SESSION_ERROR_BEGIN                                 0x04000000
@@ -487,6 +504,13 @@ enum hfi_picture_type {
 #define HFI_INFO_UNSUPPORTED                                    0x06000001
 
 #define HFI_INFO_DATA_CORRUPT                                   0x06000002
+
+//TODO: Enable when firmware adds support for these
+//#define HFI_INFO_NEGATIVE_TIMESTAMP                             0x06000003
+
+//#define HFI_INFO_BUFFER_OVERFLOW                                0x06000004
+
+//#define HFI_INFO_VCODEC_RESET                                   0x06000005
 
 #define HFI_INFORMATION_END                                     0x06FFFFFF
 

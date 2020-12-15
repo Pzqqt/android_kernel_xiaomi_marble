@@ -121,7 +121,15 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{MBPF, ENC|DEC, CODECS_ALL, 64, 138240, 1, 138240},
 	/* ((1920 * 1088) / 256) * 960 fps */
 	{MBPS, ENC|DEC, CODECS_ALL, 64, 7833600, 1, 7833600},
-	{FRAME_RATE, ENC|DEC, CODECS_ALL, 1, 960, 1, 30},
+
+	{FRAME_RATE, ENC, CODECS_ALL,
+		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+		1, (DEFAULT_FPS << 16),
+		0,
+		HFI_PROP_FRAME_RATE,
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		{0}, {0},
+		NULL, msm_vidc_set_q16},
 
 	{SCALE_X, ENC, CODECS_ALL, 8192, 65536, 1, 8192},
 	{SCALE_Y, ENC, CODECS_ALL, 8192, 65536, 1, 8192},
@@ -252,7 +260,9 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, MAX_GOP, 1, 2 * DEFAULT_FPS - 1,
 		V4L2_CID_MPEG_VIDEO_GOP_SIZE,
 		HFI_PROP_MAX_GOP_FRAMES,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		{0}, {0},
+		NULL, msm_vidc_set_u32},
 
 	{GOP_CLOSURE, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
@@ -284,9 +294,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_SECURE,
 		HFI_PROP_SECURE,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		CAP_FLAG_ROOT,
 		{0},
-		{0}},
+		{0},
+		NULL, msm_vidc_set_u32},
 
 	{BLUR_TYPES, ENC, CODECS_ALL,
 		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_NONE,
@@ -384,7 +395,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{BITRATE_BOOST, ENC, CODECS_ALL,
 		0, 100, 25, 25,
 		V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST,
-		HFI_PROP_CONST_QUALITY_BITRATE_BOOST,
+		HFI_PROP_BITRATE_BOOST,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
 	{ROTATION, ENC, CODECS_ALL,
