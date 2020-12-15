@@ -847,6 +847,8 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
+	pmo_tgt_update_target_suspend_acked_flag(psoc, true);
+
 	host_credits = pmo_tgt_psoc_get_host_credits(psoc);
 	wmi_pending_cmds = pmo_tgt_psoc_get_pending_cmnds(psoc);
 
@@ -895,6 +897,8 @@ QDF_STATUS pmo_core_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
 		pmo_tgt_update_target_suspend_flag(psoc, false);
 		if (!psoc_ctx->wow.target_suspend.force_set)
 			qdf_trigger_self_recovery(psoc, QDF_SUSPEND_TIMEOUT);
+	} else {
+		pmo_tgt_update_target_suspend_acked_flag(psoc, true);
 	}
 
 out:
@@ -1232,10 +1236,9 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 			qdf_trigger_self_recovery(psoc, QDF_RESUME_TIMEOUT);
 	} else {
 		pmo_debug("Host wakeup received");
-	}
-
-	if (status == QDF_STATUS_SUCCESS)
 		pmo_tgt_update_target_suspend_flag(psoc, false);
+		pmo_tgt_update_target_suspend_acked_flag(psoc, false);
+	}
 out:
 	pmo_exit();
 
@@ -1305,10 +1308,9 @@ QDF_STATUS pmo_core_psoc_resume_target(struct wlan_objmgr_psoc *psoc,
 			qdf_trigger_self_recovery(psoc, QDF_RESUME_TIMEOUT);
 	} else {
 		pmo_debug("Host wakeup received");
-	}
-
-	if (status == QDF_STATUS_SUCCESS)
 		pmo_tgt_update_target_suspend_flag(psoc, false);
+		pmo_tgt_update_target_suspend_acked_flag(psoc, false);
+	}
 out:
 	pmo_exit();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -382,10 +382,22 @@ int target_if_pmo_psoc_get_pending_cmnds(struct wlan_objmgr_psoc *psoc);
  * @psoc: objmgr psoc
  * @value: value
  *
- * Return: return wmi pending commands
+ * Return: None
  */
 void target_if_pmo_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
 		uint8_t value);
+
+/**
+ * target_if_pmo_update_target_suspend_acked_flag() - set wmi target suspend
+ *                                                    acked flag
+ * @psoc: objmgr psoc
+ * @value: value
+ *
+ * Return: None
+ */
+void target_if_pmo_update_target_suspend_acked_flag(
+						struct wlan_objmgr_psoc *psoc,
+						uint8_t value);
 
 /**
  * target_if_pmo_is_target_suspended() - get wmi target suspend flag
