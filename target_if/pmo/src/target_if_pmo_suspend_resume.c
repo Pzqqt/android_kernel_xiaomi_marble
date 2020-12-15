@@ -201,6 +201,21 @@ void target_if_pmo_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
 	wmi_set_target_suspend(wmi_handle, value);
 }
 
+void target_if_pmo_update_target_suspend_acked_flag(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t value)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return;
+	}
+
+	wmi_set_target_suspend_acked(wmi_handle, value);
+}
+
 bool target_if_pmo_is_target_suspended(struct wlan_objmgr_psoc *psoc)
 {
 	wmi_unified_t wmi_handle;
