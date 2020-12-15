@@ -114,7 +114,11 @@ static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX + 1];
  */
 void qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
 {
-	snprintf(str_buffer, size, str_format);
+	va_list args;
+
+	va_start(args, str_format);
+	vsnprintf(str_buffer, size, str_format, args);
+	va_end(args);
 }
 qdf_export_symbol(qdf_snprintf);
 
