@@ -57,7 +57,8 @@ struct dp_drm_mst_fw_helper_ops {
 	int (*find_vcpi_slots)(struct drm_dp_mst_topology_mgr *mgr, int pbn);
 	int (*atomic_find_vcpi_slots)(struct drm_atomic_state *state,
 				  struct drm_dp_mst_topology_mgr *mgr,
-				  struct drm_dp_mst_port *port, int pbn);
+				  struct drm_dp_mst_port *port,
+				  int pbn, int pbn_div);
 	bool (*allocate_vcpi)(struct drm_dp_mst_topology_mgr *mgr,
 			      struct drm_dp_mst_port *port,
 			      int pbn, int slots);
@@ -817,7 +818,7 @@ static int _dp_mst_compute_config(struct drm_atomic_state *state,
 	pbn = mst->mst_fw_cbs->calc_pbn_mode(mode);
 
 	slots = mst->mst_fw_cbs->atomic_find_vcpi_slots(state,
-			&mst->mst_mgr, c_conn->mst_port, pbn);
+			&mst->mst_mgr, c_conn->mst_port, pbn, 0);
 	if (slots < 0) {
 		DP_ERR("conn:%d failed to find vcpi slots. pbn:%d, slots:%d\n",
 				connector->base.id, pbn, slots);
