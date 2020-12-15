@@ -3639,3 +3639,13 @@ void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle,
 							       pdev_id_map,
 							       size);
 }
+
+int __wmi_validate_handle(wmi_unified_t wmi_handle, const char *func)
+{
+        if (!wmi_handle) {
+                wmi_err("Invalid WMI handle (via %s)", func);
+                return -EINVAL;
+        }
+
+        return 0;
+}

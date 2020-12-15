@@ -4249,4 +4249,17 @@ QDF_STATUS wmi_extract_pdev_csa_switch_count_status(
 		wmi_unified_t wmi_handle,
 		void *evt_buf,
 		struct pdev_csa_switch_count_status *param);
+
+/**
+ * wmi_validate_handle() - Validate WMI handle
+ * @wmi_handle: wmi handle
+ *
+ * This function will log on error and hence caller should not log on error
+ *
+ * Return: errno if WMI handle is NULL; 0 otherwise
+ */
+#define wmi_validate_handle(wmi_handle) \
+        __wmi_validate_handle(wmi_handle, __func__)
+int __wmi_validate_handle(wmi_unified_t wmi_handle, const char *func);
+
 #endif /* _WMI_UNIFIED_API_H_ */
