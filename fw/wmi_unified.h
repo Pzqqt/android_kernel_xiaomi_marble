@@ -31413,6 +31413,17 @@ typedef struct {
     A_UINT32 cfo_measurement_valid :1,
              cfo_measurement :14,
              reserved :17;
+
+    /* RX packet start timestamp.
+     * It reports the time the first L-STF ADC sample arrived at RX antenna
+     * It is in units of 480 MHz clock, i.e. number of clock cycles at 480 MHz.
+     */
+    A_UINT32 rx_start_ts;
+
+    /*
+     * The rx_ts_reset flag will be set to 1 upon every reset of rx_start_ts.
+     */
+    A_UINT32 rx_ts_reset;
 } wmi_peer_cfr_capture_event_fixed_param;
 
 #define WMI_UNIFIED_CHAIN_PHASE_MASK 0x0000ffff
@@ -31420,6 +31431,17 @@ typedef struct {
     ((A_UINT16) ((tlv)->chain_phase[chain_idx] & WMI_UNIFIED_CHAIN_PHASE_MASK))
 #define WMI_UNIFIED_CHAIN_PHASE_SET(tlv, chain_idx, value) \
     (tlv)->chain_phase[chain_idx] = (WMI_UNIFIED_CHAIN_PHASE_MASK & (value))
+
+#define WMI_CFR_AGC_GAIN_CHAINS_PER_U32 4
+#define WMI_UNIFIED_AGC_GAIN_MASK 0x000000ff
+#define WMI_UNIFIED_AGC_GAIN_GET(tlv, chain_idx) \
+    ((A_UINT8) ((tlv)->agc_gain_index[(chain_idx)/WMI_CFR_AGC_GAIN_CHAINS_PER_U32] >> \
+        ((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8) & WMI_UNIFIED_AGC_GAIN_MASK)
+#define WMI_UNIFIED_AGC_GAIN_SET(tlv, chain_idx, value) \
+    (tlv)->agc_gain_index[chain_idx/WMI_CFR_AGC_GAIN_CHAINS_PER_U32] = \
+        (tlv)->agc_gain_index[chain_idx/WMI_CFR_AGC_GAIN_CHAINS_PER_U32] & \
+            ~(0xff << (((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8)) | \
+            (((value)<<((chain_idx)%WMI_CFR_AGC_GAIN_CHAINS_PER_U32)*8))
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -31440,6 +31462,15 @@ typedef struct {
      * the valid portion of the 4-byte word containing the chain phase data.
      */
     A_UINT32 chain_phase[WMI_MAX_CHAINS];
+
+    /* agc_gain_index
+     * It shows an index in the AGC gain LUT.
+     * agc gain should be in range between 0 to 62.
+     * 4 AGC gain index values are packed into each A_UINT32 word;
+     * use the WMI_UNITIFED_AGC_GAIN_GET/SET macros to read/write
+     * the AGC gain indices for individual chains.
+     */
+    A_UINT32 agc_gain_index[WMI_MAX_CHAINS/WMI_CFR_AGC_GAIN_CHAINS_PER_U32];
 } wmi_peer_cfr_capture_event_phase_fixed_param;
 
 #define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK      0x80000000
