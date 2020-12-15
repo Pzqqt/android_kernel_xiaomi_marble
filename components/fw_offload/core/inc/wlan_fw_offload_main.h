@@ -216,6 +216,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @dwelltime_params: adaptive dwell time parameters
  * @enable_ilp: ILP HW block configuration
  * @sap_sho: SAP SHO HW offload configuration
+ * @disable_hw_assist: Flag to configure HW assist feature in FW
  */
 struct wlan_fwol_cfg {
 	/* Add CFG and INI items here */
@@ -270,6 +271,7 @@ struct wlan_fwol_cfg {
 	struct adaptive_dwelltime_params dwelltime_params;
 	bool enable_ilp;
 	uint32_t sap_sho;
+	bool disable_hw_assist;
 };
 
 /**
@@ -418,4 +420,15 @@ QDF_STATUS fwol_set_ilp_config(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS fwol_set_sap_sho(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			    uint32_t sap_sho);
+
+/**
+ * fwol_configure_hw_assist() - API to configure HW assist feature in FW
+ * @pdev: pointer to the pdev object
+ * @disable_he_assist: Flag to enable/disable HW assist feature
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS fwol_configure_hw_assist(struct wlan_objmgr_pdev *pdev,
+				    bool disable_hw_assist);
+
 #endif
