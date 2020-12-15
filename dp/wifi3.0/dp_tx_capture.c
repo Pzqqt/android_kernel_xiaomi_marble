@@ -515,18 +515,29 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 	struct dp_pdev_tx_capture *ptr_tx_cap;
 	uint8_t i = 0, j = 0;
+	uint32_t ppdu_stats_ms = 0;
+	uint32_t now_ms = 0;
 
 	ptr_tx_cap = &(pdev->tx_capture);
 
+	ppdu_stats_ms = ptr_tx_cap->ppdu_stats_ms;
+	now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
+
 	DP_PRINT_STATS("tx capture stats:");
-	DP_PRINT_STATS(" pending ppdu dropped: %u",
-		       ptr_tx_cap->pend_ppdu_dropped);
+	DP_PRINT_STATS(" Last recv ppdu stats: %u",
+		       now_ms - ppdu_stats_ms);
 	DP_PRINT_STATS(" ppdu stats queue depth: %u",
 		       ptr_tx_cap->ppdu_stats_queue_depth);
 	DP_PRINT_STATS(" ppdu stats defer queue depth: %u",
 		       ptr_tx_cap->ppdu_stats_defer_queue_depth);
+	DP_PRINT_STATS(" pending ppdu dropped: %u",
+		       ptr_tx_cap->pend_ppdu_dropped);
 	DP_PRINT_STATS(" peer mismatch: %llu",
 		       ptr_tx_cap->peer_mismatch);
+	DP_PRINT_STATS(" ppdu peer flush counter: %u",
+		       ptr_tx_cap->ppdu_flush_count);
+	DP_PRINT_STATS(" ppdu msdu threshold drop: %u",
+		       ptr_tx_cap->msdu_threshold_drop);
 	DP_PRINT_STATS(" mgmt control enqueue stats:");
 	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
 		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
@@ -723,22 +734,80 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 }
 
 /*
- * dp_peer_tx_cap_tid_queue_flush() – flush peer tx cap per TID
+ * dp_peer_tx_cap_tid_queue_flush() – flush inactive peer tx cap per
+ * @soc: Datapath SoC object
  * @peer: Datapath peer
+ * @arg: argument
  *
  * return: void
  */
 static
-void dp_peer_tx_cap_tid_queue_flush(struct dp_peer *peer)
+void dp_peer_tx_cap_tid_queue_flush(struct dp_soc *soc, struct dp_peer *peer,
+				    void *arg)
 {
+	struct dp_pdev *pdev = NULL;
+	struct dp_vdev *vdev = NULL;
+	struct dp_tx_tid *tx_tid = NULL;
+	struct dp_pdev_flush *flush = (struct dp_pdev_flush *)arg;
+	uint16_t peer_id = 0;
 	int tid;
-	struct dp_tx_tid *tx_tid;
+
+	/* sanity check vdev NULL */
+	vdev = peer->vdev;
+	if (qdf_unlikely(!vdev))
+		return;
+
+	/* sanity check pdev NULL */
+	pdev = vdev->pdev;
+	if (qdf_unlikely(!pdev))
+		return;
+
+	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer, peer->mac_addr.raw))
+		return;
+
+	if (!peer->tx_capture.is_tid_initialized)
+		return;
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+		struct cdp_tx_completion_ppdu *xretry_ppdu;
+		struct cdp_tx_completion_ppdu_user *xretry_user;
+		struct cdp_tx_completion_ppdu *ppdu_desc;
+		struct cdp_tx_completion_ppdu_user *user;
+		qdf_nbuf_t ppdu_nbuf = NULL;
+		uint32_t len = 0;
+		uint32_t actual_len = 0;
+		uint32_t delta_ms = 0;
+
 		tx_tid = &peer->tx_capture.tx_tid[tid];
+
+		/*
+		 * check whether the peer tid payload queue is inactive
+		 * now_ms will be always greater than last_deq_ms
+		 * if it is less than last_deq_ms then wrap
+		 * around happened
+		 */
+		if (flush->now_ms > tx_tid->last_deq_ms)
+			delta_ms = flush->now_ms - tx_tid->last_deq_ms;
+		else
+			delta_ms = (DP_TX_CAP_MAX_MS + flush->now_ms) -
+					tx_tid->last_deq_ms;
+
+		/* check whether we need to flush all peer */
+		if (!flush->flush_all && delta_ms < TX_CAPTURE_PEER_DEQ_MS)
+			continue;
+
+		xretry_ppdu = tx_tid->xretry_ppdu;
+		if (qdf_unlikely(!xretry_ppdu))
+			continue;
+
+		xretry_user = &xretry_ppdu->user[0];
 
 		qdf_spin_lock_bh(&tx_tid->tid_lock);
 		TX_CAP_NBUF_QUEUE_FREE(&tx_tid->defer_msdu_q);
+		/* update last dequeue time with current msec */
+		tx_tid->last_deq_ms = flush->now_ms;
+		/* update last processed time with current msec */
+		tx_tid->last_processed_ms = flush->now_ms;
 		qdf_spin_unlock_bh(&tx_tid->tid_lock);
 
 		qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
@@ -746,6 +815,45 @@ void dp_peer_tx_cap_tid_queue_flush(struct dp_peer *peer)
 		qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
 
 		tx_tid->max_ppdu_id = 0;
+		peer_id = tx_tid->peer_id;
+
+		len = qdf_nbuf_queue_len(&tx_tid->pending_ppdu_q);
+		actual_len = len;
+		/* free pending ppdu_q and xretry mpdu_q */
+		while ((ppdu_nbuf = qdf_nbuf_queue_remove(
+						&tx_tid->pending_ppdu_q))) {
+			uint64_t ppdu_start_timestamp;
+			uint8_t usr_idx = 0;
+
+			ppdu_desc = (struct cdp_tx_completion_ppdu *)
+					qdf_nbuf_data(ppdu_nbuf);
+
+			ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
+			dp_tx_capture_info("ppdu_id:%u tsf:%llu removed from pending ppdu q",
+					   ppdu_desc->ppdu_id,
+					   ppdu_start_timestamp);
+			/*
+			 * check if peer id is matching
+			 * the user peer_id
+			 */
+			usr_idx = dp_tx_find_usr_idx_from_peer_id(ppdu_desc,
+								  peer_id);
+			user = &ppdu_desc->user[usr_idx];
+
+			/* free all the mpdu_q and mpdus for usr_idx */
+			dp_ppdu_queue_free(ppdu_nbuf, usr_idx);
+			qdf_nbuf_free(ppdu_nbuf);
+			len--;
+		}
+
+		if (len) {
+			dp_tx_capture_alert("Actual_len: %d pending len:%d !!!",
+					    actual_len, len);
+			QDF_BUG(0);
+		}
+
+		/* free xretry ppdu user alone */
+		TX_CAP_NBUF_QUEUE_FREE(&xretry_user->mpdu_q);
 	}
 }
 
@@ -1362,9 +1470,10 @@ static void dp_tx_capture_work_q_timer_handler(void *arg)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)arg;
 
-	if (pdev->tx_capture.ppdu_stats_queue_depth > 0)
-		qdf_queue_work(0, pdev->tx_capture.ppdu_stats_workqueue,
-			       &pdev->tx_capture.ppdu_stats_work);
+	qdf_queue_work(0, pdev->tx_capture.ppdu_stats_workqueue,
+		       &pdev->tx_capture.ppdu_stats_work);
+	qdf_timer_mod(&pdev->tx_capture.work_q_timer,
+		      TX_CAPTURE_WORK_Q_TIMER_MS);
 }
 
 /**
@@ -1391,12 +1500,11 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 			dp_tx_ppdu_stats_process,
 			pdev);
 	pdev->tx_capture.ppdu_stats_workqueue =
-		qdf_create_singlethread_workqueue("ppdu_stats_work_queue");
+		qdf_alloc_unbound_workqueue("ppdu_stats_work_queue");
 	STAILQ_INIT(&pdev->tx_capture.ppdu_stats_queue);
 	STAILQ_INIT(&pdev->tx_capture.ppdu_stats_defer_queue);
 	qdf_spinlock_create(&pdev->tx_capture.ppdu_stats_lock);
 	pdev->tx_capture.ppdu_stats_queue_depth = 0;
-	pdev->tx_capture.ppdu_stats_next_sched = 0;
 	pdev->tx_capture.ppdu_stats_defer_queue_depth = 0;
 	pdev->tx_capture.ppdu_dropped = 0;
 
@@ -1529,7 +1637,8 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 /**
  * dp_drop_enq_msdu_on_thresh(): Function to drop msdu when exceed
  * storing threshold limit
- * @peer: dp_peer
+ * @pdev: Datapath pdev object
+ * @peer: Datapath peer object
  * @tx_tid: tx tid
  * @ptr_msdu_comp_q: pointer to skb queue, it can be either tasklet or WQ msdu q
  * @tsf: current timestamp
@@ -1537,7 +1646,8 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
  * return: status
  */
 QDF_STATUS
-dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
+dp_drop_enq_msdu_on_thresh(struct dp_pdev *pdev,
+			   struct dp_peer *peer,
 			   struct dp_tx_tid *tx_tid,
 			   qdf_nbuf_queue_t *ptr_msdu_comp_q,
 			   uint32_t tsf)
@@ -1546,7 +1656,11 @@ dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
 	qdf_nbuf_t nbuf;
 	qdf_nbuf_t head_msdu;
 	uint32_t tsf_delta;
-	uint32_t qlen;
+	uint32_t comp_qlen = 0;
+	uint32_t defer_msdu_qlen = 0;
+	uint32_t qlen = 0;
+	uint32_t ppdu_id = 0;
+	uint32_t cur_ppdu_id = 0;
 
 	/* take lock here */
 	qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
@@ -1559,6 +1673,7 @@ dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
 		else
 			tsf_delta = LOWER_32_MASK - ptr_msdu_info->tsf + tsf;
 
+		/* exit loop if time difference is less than 100 msec */
 		if (tsf_delta < MAX_MSDU_THRESHOLD_TSF)
 			break;
 
@@ -1571,51 +1686,54 @@ dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
 
 		qdf_nbuf_free(nbuf);
 		dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_DROP, 1);
+		pdev->tx_capture.msdu_threshold_drop++;
 	}
 
 	/* get queue length */
-	qlen = qdf_nbuf_queue_len(ptr_msdu_comp_q);
+	comp_qlen = qdf_nbuf_queue_len(ptr_msdu_comp_q);
 	/* release lock here */
 	qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
 
 	/* take lock here */
 	qdf_spin_lock_bh(&tx_tid->tid_lock);
-	qlen += qdf_nbuf_queue_len(&tx_tid->defer_msdu_q);
-	if (qlen > MAX_MSDU_ENQUEUE_THRESHOLD) {
-		qdf_nbuf_t nbuf = NULL;
+	defer_msdu_qlen = qdf_nbuf_queue_len(&tx_tid->defer_msdu_q);
+	qlen = defer_msdu_qlen + comp_qlen;
 
-		/* free head, nbuf will be NULL if queue empty */
-		nbuf = qdf_nbuf_queue_remove(&tx_tid->defer_msdu_q);
-		/* release lock here */
-		qdf_spin_unlock_bh(&tx_tid->tid_lock);
-		if (qdf_likely(nbuf)) {
-			qdf_nbuf_free(nbuf);
-			dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_DROP, 1);
-			return QDF_STATUS_SUCCESS;
-		}
+	/* Drop queued msdu when exceed threshold */
+	while (qlen > MAX_MSDU_ENQUEUE_THRESHOLD) {
+		/* get first msdu */
+		head_msdu = qdf_nbuf_queue_first(&tx_tid->defer_msdu_q);
+		if (qdf_unlikely(!head_msdu))
+			break;
+		ptr_msdu_info =
+			(struct msdu_completion_info *)qdf_nbuf_data(head_msdu);
+		ppdu_id = ptr_msdu_info->ppdu_id;
+		cur_ppdu_id = ppdu_id;
+		while (ppdu_id == cur_ppdu_id) {
+			qdf_nbuf_t nbuf = NULL;
 
-		/* take lock here */
-		qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
-		if (!qdf_nbuf_is_queue_empty(ptr_msdu_comp_q)) {
 			/* free head, nbuf will be NULL if queue empty */
-			nbuf = qdf_nbuf_queue_remove(ptr_msdu_comp_q);
-			/* release lock here */
-			qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
-			if (qdf_unlikely(!nbuf)) {
-				qdf_assert_always(0);
-				return QDF_STATUS_E_ABORTED;
+			nbuf = qdf_nbuf_queue_remove(&tx_tid->defer_msdu_q);
+			if (qdf_likely(nbuf)) {
+				qdf_nbuf_free(nbuf);
+				dp_tx_cap_stats_msdu_update(peer,
+							    PEER_MSDU_DROP, 1);
+				pdev->tx_capture.msdu_threshold_drop++;
 			}
 
-			qdf_nbuf_free(nbuf);
-			dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_DROP, 1);
-		} else {
-			/* release lock here */
-			qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
+			head_msdu = qdf_nbuf_queue_first(&tx_tid->defer_msdu_q);
+			if (qdf_unlikely(!head_msdu))
+				break;
+			ptr_msdu_info =
+			(struct msdu_completion_info *)qdf_nbuf_data(head_msdu);
+			cur_ppdu_id = ptr_msdu_info->ppdu_id;
 		}
-	} else {
-		/* release lock here */
-		qdf_spin_unlock_bh(&tx_tid->tid_lock);
+		/* get length again */
+		defer_msdu_qlen = qdf_nbuf_queue_len(&tx_tid->defer_msdu_q);
+		qlen = defer_msdu_qlen + comp_qlen;
 	}
+	/* release lock here */
+	qdf_spin_unlock_bh(&tx_tid->tid_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1679,14 +1797,16 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 	msdu_comp_info->status = ts->status;
 
 	if (tx_tid->max_ppdu_id != ts->ppdu_id)
-		dp_drop_enq_msdu_on_thresh(peer, tx_tid, &tx_tid->msdu_comp_q,
-					   ts->tsf);
+		dp_drop_enq_msdu_on_thresh(pdev, peer, tx_tid,
+					   &tx_tid->msdu_comp_q, ts->tsf);
 
 	/* lock here */
 	qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
 	/* add nbuf to tail queue per peer tid */
 	qdf_nbuf_queue_add(&tx_tid->msdu_comp_q, netbuf);
 	dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_ENQ, 1);
+	/* store last enqueue msec */
+	tx_tid->last_enq_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	/* unlock here */
 	qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
 
@@ -2075,13 +2195,14 @@ dp_enh_tx_capture_enable(struct dp_pdev *pdev, uint8_t user_mode)
 	dp_pdev_iterate_peer(pdev, dp_peer_init_msdu_q, NULL,
 			     DP_MOD_ID_TX_CAPTURE);
 
-	if (dp_soc_is_tx_capture_set_in_pdev(pdev->soc) == 1)
+	if (!dp_soc_is_tx_capture_set_in_pdev(pdev->soc))
 		dp_soc_set_txrx_ring_map_single(pdev->soc);
 
 	if (!pdev->pktlog_ppdu_stats)
 		dp_h2t_cfg_stats_msg_send(pdev,
 					  DP_PPDU_STATS_CFG_SNIFFER,
 					  pdev->pdev_id);
+	pdev->tx_capture.msdu_threshold_drop = 0;
 	pdev->tx_capture_enabled = user_mode;
 	dp_tx_capture_info("%pK: Mode change request done cur mode - %d user_mode - %d\n",
 			   pdev->soc, pdev->tx_capture_enabled, user_mode);
@@ -2781,6 +2902,7 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 	qdf_spin_lock_bh(&tx_tid->tid_lock);
 
 	if (qdf_nbuf_is_queue_empty(&tx_tid->defer_msdu_q)) {
+		/* release lock here */
 		qdf_spin_unlock_bh(&tx_tid->tid_lock);
 		return 0;
 	}
@@ -2851,6 +2973,9 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 
 	}
 
+	/* store last dequeue time in msec */
+	tx_tid->last_deq_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
+	/* release lock here */
 	qdf_spin_unlock_bh(&tx_tid->tid_lock);
 
 	return matched;
@@ -4966,6 +5091,8 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			}
 
 			tx_tid = &peer->tx_capture.tx_tid[user->tid];
+			tx_tid->last_processed_ms =
+				qdf_system_ticks_to_msecs(qdf_system_ticks());
 			ppdu_id = ppdu_desc->ppdu_id;
 
 			/* find mpdu tried is same as success mpdu */
@@ -5534,6 +5661,77 @@ free_nbuf_dec_ref:
 	return ppdu_desc_cnt;
 }
 
+/*
+ * dp_pdev_tx_cap_flush() - flush pdev queue and peer queue
+ * @pdev: Datapath pdev
+ * @is_stats_queue_empty: stats queue status
+ *
+ * return: void
+ */
+static void
+dp_pdev_tx_cap_flush(struct dp_pdev *pdev, bool is_stats_queue_empty)
+{
+	struct dp_pdev_tx_capture *ptr_tx_cap = &pdev->tx_capture;
+	struct dp_pdev_flush flush = {0};
+	uint32_t now_ms = 0;
+	uint32_t delta_ms = 0;
+	uint32_t i = 0, j = 0;
+
+	now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
+	delta_ms = now_ms - ptr_tx_cap->last_processed_ms;
+
+	/*
+	 * check difference is more than 3 sec and stats queue is empty
+	 * then invoke flush all else, check if difference is more
+	 * than 1.5 second invoke peer check to free unflushed queue
+	 */
+	if (delta_ms > TX_CAPTURE_NO_PPDU_DESC_MS && is_stats_queue_empty)
+		flush.flush_all = true;
+	else if (delta_ms > TX_CAPTURE_PEER_CHECK_MS && !is_stats_queue_empty)
+		flush.flush_all = false;
+	else
+		return;
+
+	/* update last process ppdu stats queue with current msec */
+	ptr_tx_cap->last_processed_ms = now_ms;
+	flush.now_ms = now_ms;
+
+	/*
+	 * iterate over peer and flush the unreleased queue
+	 * which is in queue without processing.
+	 */
+	dp_pdev_iterate_peer(pdev, dp_peer_tx_cap_tid_queue_flush,
+			     &flush, DP_MOD_ID_TX_CAPTURE);
+
+	/* free mgmt packet */
+	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
+		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
+			qdf_nbuf_queue_t *retries_q;
+
+			qdf_spin_lock_bh(
+				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+			TX_CAP_NBUF_QUEUE_FREE(
+				&pdev->tx_capture.ctl_mgmt_q[i][j]);
+			qdf_spin_unlock_bh(
+				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
+			/*
+			 * no lock required for retries ctrl mgmt queue
+			 * as it is used only in workqueue function.
+			 */
+			retries_q = &pdev->tx_capture.retries_ctl_mgmt_q[i][j];
+			if (!qdf_nbuf_is_queue_empty(retries_q))
+				TX_CAP_NBUF_QUEUE_FREE(retries_q);
+		}
+	}
+
+	/* increment flush counter */
+	pdev->tx_capture.ppdu_flush_count++;
+	dp_tx_capture_info("now_ms[%u] proc_ms[%u] delta[%u] stats_Q[%d]\n",
+			   now_ms,
+			   ptr_tx_cap->last_processed_ms,
+			   delta_ms, is_stats_queue_empty);
+}
+
 /**
  * dp_tx_ppdu_stats_process - Deferred PPDU stats handler
  * @context: Opaque work context (PDEV)
@@ -5548,7 +5746,6 @@ void dp_tx_ppdu_stats_process(void *context)
 	uint32_t ppdu_desc_cnt = 0;
 	struct dp_pdev *pdev = (struct dp_pdev *)context;
 	struct ppdu_info *ppdu_info, *tmp_ppdu_info = NULL;
-	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	struct ppdu_info *sched_ppdu_info = NULL;
 
 	STAILQ_HEAD(, ppdu_info) sched_ppdu_queue;
@@ -5561,6 +5758,7 @@ void dp_tx_ppdu_stats_process(void *context)
 	struct dp_pdev_tx_capture *ptr_tx_cap = &pdev->tx_capture;
 	size_t nbuf_list_sz;
 	uint8_t user_mode;
+	bool is_stats_queue_empty = false;
 
 	STAILQ_INIT(&sched_ppdu_queue);
 	/* Move the PPDU entries to defer list */
@@ -5571,6 +5769,31 @@ void dp_tx_ppdu_stats_process(void *context)
 		ptr_tx_cap->ppdu_stats_queue_depth;
 	ptr_tx_cap->ppdu_stats_queue_depth = 0;
 	qdf_spin_unlock_bh(&ptr_tx_cap->ppdu_stats_lock);
+
+	is_stats_queue_empty =
+		STAILQ_EMPTY(&ptr_tx_cap->ppdu_stats_defer_queue);
+	/*
+	 * if any chance defer queue is empty, mode change
+	 * check need to be done
+	 */
+	if (is_stats_queue_empty) {
+		/* get user mode */
+		user_mode = qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode);
+		/*
+		 * invoke mode change if user mode value is
+		 * different from driver mode value,
+		 * this was done to reduce config lock
+		 */
+		if (user_mode != pdev->tx_capture_enabled)
+			dp_enh_tx_cap_mode_change(pdev, user_mode);
+	}
+
+	/*
+	 * check and flush any pending queue and release queue if it
+	 * get build up
+	 */
+	if (pdev->tx_capture_enabled != CDP_TX_ENH_CAPTURE_DISABLED)
+		dp_pdev_tx_cap_flush(pdev, is_stats_queue_empty);
 
 	while (!STAILQ_EMPTY(&ptr_tx_cap->ppdu_stats_defer_queue)) {
 		ppdu_info =
@@ -5586,8 +5809,7 @@ void dp_tx_ppdu_stats_process(void *context)
 			sched_ppdu_list_last_ptr = ppdu_info;
 			ppdu_cnt++;
 		}
-		if (ppdu_info && (curr_sched_cmdid == ppdu_info->sched_cmdid) &&
-		    ptr_tx_cap->ppdu_stats_next_sched < now_ms)
+		if (ppdu_info && (curr_sched_cmdid == ppdu_info->sched_cmdid))
 			break;
 
 		last_ppdu_id = sched_ppdu_list_last_ptr->ppdu_id;
@@ -5630,6 +5852,8 @@ void dp_tx_ppdu_stats_process(void *context)
 		ptr_tx_cap->last_nbuf_ppdu_list = nbuf_ppdu_list;
 		ptr_tx_cap->last_nbuf_ppdu_list_arr_sz = ppdu_cnt;
 
+		ptr_tx_cap->last_processed_ms =
+			qdf_system_ticks_to_msecs(qdf_system_ticks());
 		ppdu_desc_cnt = 0;
 		STAILQ_FOREACH_SAFE(sched_ppdu_info,
 				    &sched_ppdu_queue,
@@ -5839,6 +6063,10 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		if (matched)
 			break;
 	}
+
+	/* update timestamp of last received ppdu stats tlv */
+	pdev->tx_capture.ppdu_stats_ms =
+				qdf_system_ticks_to_msecs(qdf_system_ticks());
 
 	if (pdev->tx_capture.ppdu_stats_queue_depth >
 		DP_TX_PPDU_PROC_THRESHOLD) {
