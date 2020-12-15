@@ -263,6 +263,12 @@ struct spectral_phyerr_fft_gen2 {
 #define SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3_V1      (1)
 #define SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_POS_GEN3_V2       (16)
 #define SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_SIZE_GEN3_V2      (1)
+#define SPECTRAL_REPORT_LTS_HDR_LENGTH_POS_GEN3                 (0)
+#define SPECTRAL_REPORT_LTS_HDR_LENGTH_SIZE_GEN3                (16)
+#define SPECTRAL_REPORT_LTS_TAG_POS_GEN3                        (16)
+#define SPECTRAL_REPORT_LTS_TAG_SIZE_GEN3                       (8)
+#define SPECTRAL_REPORT_LTS_SIGNATURE_POS_GEN3                  (24)
+#define SPECTRAL_REPORT_LTS_SIGNATURE_SIZE_GEN3                 (8)
 
 #define SPECTRAL_PHYERR_SIGNATURE_GEN3                          (0xFA)
 #define TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3                    (0x02)
@@ -276,10 +282,8 @@ struct spectral_phyerr_fft_gen2 {
 #define NUM_PADDING_BYTES_SSCAN_SUMARY_REPORT_GEN3_V1      (0)
 #define NUM_PADDING_BYTES_SSCAN_SUMARY_REPORT_GEN3_V2      (16)
 
-#define PHYERR_HDR_SIG_POS    \
-	(offsetof(struct spectral_phyerr_fft_report_gen3, fft_hdr_sig))
-#define PHYERR_HDR_TAG_POS    \
-	(offsetof(struct spectral_phyerr_fft_report_gen3, fft_hdr_tag))
+#define SPECTRAL_PHYERR_HDR_LTS_POS \
+	(offsetof(struct spectral_phyerr_fft_report_gen3, fft_hdr_lts))
 #define SPECTRAL_FFT_BINS_POS \
 	(offsetof(struct spectral_phyerr_fft_report_gen3, buf))
 
@@ -334,9 +338,7 @@ struct spectral_search_fft_info_gen3 {
 /**
  * struct spectral_phyerr_sfftreport_gen3 - fft info in phyerr event
  * @fft_timestamp:  Timestamp at which fft report was generated
- * @fft_hdr_sig:    signature
- * @fft_hdr_tag:    tag
- * @fft_hdr_length: length
+ * @fft_hdr_lts:    length, tag, signature fields
  * @hdr_a:          Header[0:31]
  * @hdr_b:          Header[32:63]
  * @hdr_c:          Header[64:95]
@@ -345,15 +347,7 @@ struct spectral_search_fft_info_gen3 {
  */
 struct spectral_phyerr_fft_report_gen3 {
 	uint32_t fft_timestamp;
-#ifdef BIG_ENDIAN_HOST
-	uint8_t  fft_hdr_sig;
-	uint8_t  fft_hdr_tag;
-	uint16_t fft_hdr_length;
-#else
-	uint16_t fft_hdr_length;
-	uint8_t  fft_hdr_tag;
-	uint8_t  fft_hdr_sig;
-#endif /* BIG_ENDIAN_HOST */
+	uint32_t fft_hdr_lts;
 	uint32_t hdr_a;
 	uint32_t hdr_b;
 	uint32_t hdr_c;
@@ -384,9 +378,7 @@ struct sscan_report_fields_gen3 {
  * struct spectral_sscan_summary_report_gen3 - Spectral summary report
  * event
  * @sscan_timestamp:  Timestamp at which fft report was generated
- * @sscan_hdr_sig:    signature
- * @sscan_hdr_tag:    tag
- * @sscan_hdr_length: length
+ * @sscan_hdr_lts:    length, tag, signature fields
  * @hdr_a:          Header[0:31]
  * @resv:           Header[32:63]
  * @hdr_b:          Header[64:95]
@@ -394,15 +386,7 @@ struct sscan_report_fields_gen3 {
  */
 struct spectral_sscan_summary_report_gen3 {
 	u_int32_t sscan_timestamp;
-#ifdef BIG_ENDIAN_HOST
-	u_int8_t  sscan_hdr_sig;
-	u_int8_t  sscan_hdr_tag;
-	u_int16_t sscan_hdr_length;
-#else
-	u_int16_t sscan_hdr_length;
-	u_int8_t  sscan_hdr_tag;
-	u_int8_t  sscan_hdr_sig;
-#endif /* BIG_ENDIAN_HOST */
+	u_int32_t sscan_hdr_lts;
 	u_int32_t hdr_a;
 	u_int32_t res1;
 	u_int32_t hdr_b;
@@ -654,6 +638,8 @@ struct target_if_spectral_rfqual_info {
  * @get_chain_noise_floor:   Get Channel noise floor
  * @spectral_process_phyerr: Process phyerr event
  * @process_spectral_report: Process spectral report
+ * @byte_swap_headers:       Apply byte-swap on report headers
+ * @byte_swap_fft_bins:      Apply byte-swap on FFT bins
  */
 struct target_if_spectral_ops {
 	uint64_t (*get_tsf64)(void *arg);
@@ -696,6 +682,12 @@ struct target_if_spectral_ops {
 			struct target_if_spectral_acs_stats *acs_stats);
 	int (*process_spectral_report)(struct wlan_objmgr_pdev *pdev,
 				       void *payload);
+	QDF_STATUS (*byte_swap_headers)(
+		struct target_if_spectral *spectral,
+		void *data);
+	QDF_STATUS (*byte_swap_fft_bins)(
+		struct spectral_fft_bin_len_adj_swar *swar,
+		void *bin_pwr_data, size_t num_fftbins);
 };
 
 /**
@@ -2323,6 +2315,47 @@ QDF_STATUS
 target_if_spectral_is_finite_scan(struct target_if_spectral *spectral,
 				  enum spectral_scan_mode smode,
 				  bool *finite_spectral_scan);
+
+#ifdef BIG_ENDIAN_HOST
+/**
+ * target_if_byte_swap_spectral_headers_gen3() - Apply byte-swap on headers
+ * @spectral: Pointer to Spectral target_if internal private data
+ * @data: Pointer to the start of Spectral Scan Summary report
+ *
+ * This API is only required for Big-endian Host platforms.
+ * It applies 32-bit byte-swap on Spectral Scan Summary and Search FFT reports
+ * and copies them back to the source location.
+ * Padding bytes that lie between the reports won't be touched.
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS target_if_byte_swap_spectral_headers_gen3(
+	 struct target_if_spectral *spectral,
+	 void *data);
+
+/**
+ * target_if_byte_swap_spectral_fft_bins_gen3() - Apply byte-swap on FFT bins
+ * @spectral: Pointer to Spectral FFT bin length adjustment WAR
+ * @bin_pwr_data: Pointer to the start of FFT bins
+ * @pwr_count: Number of FFT bins
+ *
+ * This API is only required for Big-endian Host platforms.
+ * It applies pack-mode-aware byte-swap on the FFT bins as below:
+ *   1. pack-mode 0 (i.e., 1 FFT bin per DWORD):
+ *        Reads the least significant 2 bytes of each DWORD, applies 16-bit
+ *        byte-swap on that value, and copies it back to the source location.
+ *   2. pack-mode 1 (i.e., 2 FFT bins per DWORD):
+ *        Reads each FFT bin, applies 16-bit byte-swap on that value,
+ *        and copies it back to the source location.
+ *   3. pack-mode 2 (4 FFT bins per DWORD):
+ *        Nothing
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
+	struct spectral_fft_bin_len_adj_swar *swar,
+	void *bin_pwr_data, size_t pwr_count);
+#endif /* BIG_ENDIAN_HOST */
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

@@ -1718,6 +1718,44 @@ target_if_init_spectral_ops_gen2(void)
 	p_sops->spectral_process_phyerr = target_if_process_phyerr_gen2;
 }
 
+#ifdef BIG_ENDIAN_HOST
+/**
+ * target_if_spectral_init_byte_swap_funcs_gen3() - Initialize byte-swap
+ * operations for Spectral chipset generation 3.
+ *
+ * @p_sops: Spectral function pointer table
+ *
+ * Return: None
+ */
+static void
+target_if_spectral_init_byte_swap_funcs_gen3(
+	struct target_if_spectral_ops *p_sops)
+{
+	qdf_assert_always(p_sops);
+
+	/* None of current Gen3 chipsets support byte-swap inside the target.
+	 * so, Host would have to implement the byte-swap for these chipsets.
+	 *
+	 * If a chipset supports byte-swap inside the target itself in future,
+	 * then, for that chipset, initialize these function pointers with
+	 * NULL based on the capability advertisement.
+	 */
+	p_sops->byte_swap_headers = target_if_byte_swap_spectral_headers_gen3;
+	p_sops->byte_swap_fft_bins = target_if_byte_swap_spectral_fft_bins_gen3;
+}
+#else
+static void
+target_if_spectral_init_byte_swap_funcs_gen3(
+	struct target_if_spectral_ops *p_sops)
+{
+	qdf_assert_always(p_sops);
+
+	/* Byte-swap is not required for little-endian Hosts */
+	p_sops->byte_swap_headers = NULL;
+	p_sops->byte_swap_fft_bins = NULL;
+}
+#endif /* BIG_ENDIAN_HOST */
+
 /**
  * target_if_init_spectral_ops_gen3() - Initialize Spectral target_if internal
  * operations specific to Spectral chipset generation 3.
@@ -1733,7 +1771,8 @@ target_if_init_spectral_ops_gen3(void)
 
 	p_sops->process_spectral_report =
 			target_if_spectral_process_report_gen3;
-	return;
+
+	target_if_spectral_init_byte_swap_funcs_gen3(p_sops);
 }
 
 /**
@@ -1973,26 +2012,7 @@ target_if_spectral_register_funcs(struct target_if_spectral *spectral,
 	struct target_if_spectral_ops *p_sops =
 		GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
-	p_sops->get_tsf64 = p->get_tsf64;
-	p_sops->get_capability = p->get_capability;
-	p_sops->set_rxfilter = p->set_rxfilter;
-	p_sops->get_rxfilter = p->get_rxfilter;
-	p_sops->is_spectral_enabled = p->is_spectral_enabled;
-	p_sops->is_spectral_active = p->is_spectral_active;
-	p_sops->start_spectral_scan = p->start_spectral_scan;
-	p_sops->stop_spectral_scan = p->stop_spectral_scan;
-	p_sops->get_extension_channel = p->get_extension_channel;
-	p_sops->get_ctl_noisefloor = p->get_ctl_noisefloor;
-	p_sops->get_ext_noisefloor = p->get_ext_noisefloor;
-	p_sops->configure_spectral = p->configure_spectral;
-	p_sops->get_spectral_config = p->get_spectral_config;
-	p_sops->get_ent_spectral_mask = p->get_ent_spectral_mask;
-	p_sops->get_mac_address = p->get_mac_address;
-	p_sops->get_current_channel = p->get_current_channel;
-	p_sops->reset_hw = p->reset_hw;
-	p_sops->get_chain_noise_floor = p->get_chain_noise_floor;
-	p_sops->spectral_process_phyerr = p->spectral_process_phyerr;
-	p_sops->process_spectral_report = p->process_spectral_report;
+	*p_sops = *p;
 }
 
 /**
