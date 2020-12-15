@@ -283,6 +283,12 @@ struct sde_hw_dspp_ops {
 	 * @status: Demura plane used by DSPP. demura_fetch_planes enum value.
 	 */
 	void (*demura_read_plane_status)(struct sde_hw_dspp *ctx, u32 *status);
+	/**
+	 * setup_demura_pu_config - function to configure demura hw block pu offsets
+	 * @ctx: Pointer to dspp context
+	 * @cfg: Pointer to configuration
+	 */
+	void (*setup_demura_pu_config)(struct sde_hw_dspp *ctx, void *cfg);
 };
 
 /**

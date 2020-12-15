@@ -121,4 +121,11 @@ void sde_setup_fp16_igcv1(struct sde_hw_pipe *ctx,
  */
 void sde_setup_fp16_unmultv1(struct sde_hw_pipe *ctx,
 		enum sde_sspp_multirect_index index, void *data);
+
+/**
+ * sde_demura_pu_cfg - api to set the partial update information for demura
+ * @ctx: pointer to dspp object.
+ * @cfg: partial update configuraton for the frame.
+*/
+void sde_demura_pu_cfg(struct sde_hw_dspp *ctx, void *cfg);
 #endif /* _SDE_HW_COLOR_PROC_V4_H_ */

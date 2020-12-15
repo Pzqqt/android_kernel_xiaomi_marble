@@ -4547,7 +4547,7 @@ void reg_dmav1_disable_spr(struct sde_hw_dspp *ctx, void *cfg)
 		DRM_ERROR("spr write decode select failed ret %d\n", rc);
 		return;
 	}
-
+	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
 	reg_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base + 0x04;
 	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, &reg,
 			sizeof(u32), REG_BLK_WRITE_SINGLE, 0, 0, 0);
@@ -4706,6 +4706,7 @@ void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
 		return;
 	}
+	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT);
 }
 
 void reg_dmav1_setup_spr_pu_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
@@ -4723,20 +4724,22 @@ void reg_dmav1_setup_spr_pu_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 
 	if (!hw_cfg->payload || hw_cfg->len != sizeof(struct sde_drm_roi_v1)) {
-		DRM_ERROR("invalid payload of pu rects\n");
-		return;
-	}
+		DRM_DEBUG("invalid payload of pu rects\n");
+		reg = 0;
+	} else {
+		roi_list = hw_cfg->payload;
+		if (roi_list->num_rects > 1) {
+			DRM_ERROR("multiple pu regions not supported with spr\n");
+			return;
+		}
 
-	roi_list = hw_cfg->payload;
-	if (roi_list->num_rects > 1) {
-		DRM_ERROR("multiple pu regions not supported with spr\n");
-		return;
-	}
-
-	if ((roi_list->roi[0].x2 - roi_list->roi[0].x1) != hw_cfg->displayh) {
-		DRM_ERROR("pu region not full width %d\n",
-				(roi_list->roi[0].x2 - roi_list->roi[0].x1));
-		return;
+		if ((roi_list->roi[0].x2 - roi_list->roi[0].x1) != hw_cfg->displayh) {
+			DRM_ERROR("pu region not full width %d\n",
+					(roi_list->roi[0].x2 - roi_list->roi[0].x1));
+			return;
+		}
+		reg = APPLY_MASK_AND_SHIFT(roi_list->roi[0].x1, 16, 0) |
+			APPLY_MASK_AND_SHIFT(roi_list->roi[0].y1, 16, 16);
 	}
 
 	dma_ops = sde_reg_dma_get_ops();
@@ -4753,8 +4756,6 @@ void reg_dmav1_setup_spr_pu_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 
 	base_off = ctx->hw.blk_off + ctx->cap->sblk->spr.base;
 	reg_off = base_off + 0x20;
-	reg = APPLY_MASK_AND_SHIFT(roi_list->roi[0].x1, 16, 0) |
-		APPLY_MASK_AND_SHIFT(roi_list->roi[0].y1, 16, 16);
 	REG_DMA_SETUP_OPS(dma_write_cfg, reg_off, &reg,
 			sizeof(__u32), REG_SINGLE_WRITE, 0, 0, 0);
 
@@ -4773,6 +4774,7 @@ void reg_dmav1_setup_spr_pu_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
 		return;
 	}
+	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT);
 }
 
 static void reg_dma_demura_off(struct sde_hw_dspp *ctx,
@@ -4805,7 +4807,7 @@ static void reg_dma_demura_off(struct sde_hw_dspp *ctx,
 		DRM_ERROR("off(0x4): REG_SINGLE_WRITE failed ret %d\n", rc);
 		return;
 	}
-
+	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			dspp_buf[DEMURA_CFG][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
@@ -4986,7 +4988,7 @@ static int __reg_dmav1_setup_demurav1_cfg0(struct sde_hw_dspp *ctx,
 			goto quit;
 	}
 
-	width = hw_cfg->displayh >> 1;
+	width = hw_cfg->panel_width >> 1;
 	DRM_DEBUG_DRIVER("0x80: value %x\n", width);
 	REG_DMA_SETUP_OPS(*dma_write_cfg, demura_base + 0x80,
 		&width, sizeof(width), REG_SINGLE_WRITE, 0, 0, 0);
@@ -5078,14 +5080,14 @@ static int __reg_dmav1_setup_demurav1_cfg1(struct sde_hw_dspp *ctx,
 		goto quit;
 	}
 
-	width = hw_cfg->displayh;
+	width = hw_cfg->panel_width;
 	DRM_DEBUG_DRIVER("width for LFC calculation is %d\n", width);
-	if (hw_cfg->displayh < hw_cfg->displayv) {
+	if (hw_cfg->panel_width < hw_cfg->panel_height) {
 		temp[0] = (8 * (1 << 21)) / width;
-		temp[1] = (16 * (1 << 21)) / hw_cfg->displayv;
+		temp[1] = (16 * (1 << 21)) / hw_cfg->panel_height;
 	} else {
 		temp[0] = (16 * (1 << 21)) / width;
-		temp[1] = (8 * (1 << 21)) / hw_cfg->displayv;
+		temp[1] = (8 * (1 << 21)) / hw_cfg->panel_height;
 	}
 	temp[0] = (dcfg->pentile) ? ((temp[0]) | BIT(31)) : temp[0];
 
@@ -5233,7 +5235,7 @@ static int __reg_dmav1_setup_demurav1_en(struct sde_hw_dspp *ctx,
 	en |= (dcfg->cfg0_en) ? BIT(2) : 0;
 	en |= (dcfg->cfg1_en) ? BIT(1) : 0;
 	DRM_DEBUG_DRIVER("demura en %x\n", en);
-
+	SDE_EVT32(en);
 	REG_DMA_SETUP_OPS(*dma_write_cfg, demura_base + 0x4,
 		&en, sizeof(en), REG_SINGLE_WRITE, 0, 0, 0);
 	rc = dma_ops->setup_payload(dma_write_cfg);
@@ -5258,12 +5260,12 @@ static int __reg_dmav1_setup_demurav1_dual_pipe(struct sde_hw_dspp *ctx,
 	if (dspp->idx == ctx->idx) {
 		temp = 0;
 	} else {
-		if (hw_cfg->displayh < hw_cfg->displayv)
-			temp = (8 * (1 << 21)) / hw_cfg->displayh;
+		if (hw_cfg->panel_width < hw_cfg->panel_height)
+			temp = (8 * (1 << 21)) / hw_cfg->panel_width;
 		else
-			temp = (16 * (1 << 21)) / hw_cfg->displayh;
+			temp = (16 * (1 << 21)) / hw_cfg->panel_width;
 
-		temp = temp * (hw_cfg->displayh >> 1);
+		temp = temp * (hw_cfg->panel_width >> 1);
 	}
 	REG_DMA_SETUP_OPS(*dma_write_cfg, demura_base + 0x58,
 		&temp, sizeof(temp), REG_SINGLE_WRITE, 0, 0, 0);

@@ -331,6 +331,7 @@ static void dspp_demura(struct sde_hw_dspp *c)
 					sde_demura_backlight_cfg;
 			c->ops.demura_read_plane_status =
 					sde_demura_read_plane_status;
+			c->ops.setup_demura_pu_config = sde_demura_pu_cfg;
 		}
 	}
 }

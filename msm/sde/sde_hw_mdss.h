@@ -582,6 +582,8 @@ struct sde_mdss_color {
  * @dspp[DSPP_MAX]: array of hw_dspp pointers associated with crtc.
  * @broadcast_disabled: flag indicating if broadcast should be avoided when
  *			using LUTDMA
+ * @panel_height: height of display panel in pixels.
+ * @panel_width: width of display panel in pixels.
  */
 struct sde_hw_cp_cfg {
 	void *payload;
@@ -594,6 +596,8 @@ struct sde_hw_cp_cfg {
 	u32 displayh;
 	struct sde_hw_dspp *dspp[DSPP_MAX];
 	bool broadcast_disabled;
+	u32 panel_height;
+	u32 panel_width;
 };
 
 /**
