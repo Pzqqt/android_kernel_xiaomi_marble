@@ -2580,7 +2580,7 @@ static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
 	uint32_t evt_id;
 	int wmi_msg_len;
 
-	if (!wmi_handle || !buf)
+	if (!wmi_handle || !buf || (len < WMI_MIN_HEAD_ROOM))
 		return -EINVAL;
 
 	/**
