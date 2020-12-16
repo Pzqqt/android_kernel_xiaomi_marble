@@ -654,9 +654,9 @@ static void csr_get_channel_power_info(struct mac_context *mac,
 static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 {
 	host_log_802_11d_pkt_type *p11dLog;
-	struct channel_power chnPwrInfo[CFG_VALID_CHANNEL_LIST_LEN];
-	uint32_t nChnInfo = CFG_VALID_CHANNEL_LIST_LEN, nTmp;
-	uint8_t i;
+	struct channel_power *chan_pwr_info;
+	uint32_t n_chan_info = CFG_VALID_CHANNEL_LIST_LEN;
+	uint32_t i;
 
 	WLAN_HOST_DIAG_LOG_ALLOC(p11dLog, host_log_802_11d_pkt_type,
 				 LOG_WLAN_80211D_C);
@@ -669,30 +669,39 @@ static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 	if (p11dLog->numChannel > HOST_LOG_MAX_NUM_CHANNEL)
 		goto diag_end;
 
+	chan_pwr_info = qdf_mem_malloc(sizeof(*chan_pwr_info) *
+				       CFG_VALID_CHANNEL_LIST_LEN);
+	if (!chan_pwr_info) {
+		sme_err("memory allocation failed for chan_pwr_info");
+		return;
+	}
+
 	for (i = 0; i < p11dLog->numChannel; i++)
 		p11dLog->Channels[i] =
 		wlan_reg_freq_to_chan(mac_ctx->pdev,
 				      mac_ctx->scan.channels11d.channel_freq_list[i]);
 	csr_get_channel_power_info(mac_ctx,
-				&mac_ctx->scan.channelPowerInfoList24,
-				&nChnInfo, chnPwrInfo);
-	nTmp = nChnInfo;
-	nChnInfo = CFG_VALID_CHANNEL_LIST_LEN - nTmp;
+				   &mac_ctx->scan.channelPowerInfoList24,
+				   &n_chan_info, chan_pwr_info);
+	n_chan_info = CFG_VALID_CHANNEL_LIST_LEN - n_chan_info;
 	csr_get_channel_power_info(mac_ctx,
-				&mac_ctx->scan.channelPowerInfoList5G,
-				&nChnInfo, &chnPwrInfo[nTmp]);
-	for (nTmp = 0; nTmp < p11dLog->numChannel; nTmp++) {
-		for (nChnInfo = 0;
-		     nChnInfo < CFG_VALID_CHANNEL_LIST_LEN;
-		     nChnInfo++) {
-			if (p11dLog->Channels[nTmp] ==
-			    chnPwrInfo[nChnInfo].chan_num) {
-				p11dLog->TxPwr[nTmp] =
-					chnPwrInfo[nChnInfo].tx_power;
+				   &mac_ctx->scan.channelPowerInfoList5G,
+				   &n_chan_info, &chan_pwr_info[n_chan_info]);
+	for (i = 0; i < p11dLog->numChannel; i++) {
+		for (n_chan_info = 0;
+		     n_chan_info < CFG_VALID_CHANNEL_LIST_LEN;
+		     n_chan_info++) {
+			if (p11dLog->Channels[i] ==
+			    chan_pwr_info[n_chan_info].chan_num) {
+				p11dLog->TxPwr[i] =
+					chan_pwr_info[n_chan_info].tx_power;
 				break;
 			}
 		}
 	}
+
+	qdf_mem_free(chan_pwr_info);
+
 diag_end:
 	if (!mac_ctx->mlme_cfg->gen.enabled_11d)
 		p11dLog->supportMultipleDomain = WLAN_80211D_DISABLED;
