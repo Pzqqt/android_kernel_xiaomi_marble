@@ -13049,6 +13049,17 @@ void sme_set_pdev_ht_vht_ies(mac_handle_t mac_handle, bool enable2x2)
 	}
 }
 
+void sme_get_sap_vdev_type_nss(mac_handle_t mac_handle, uint8_t *vdev_nss,
+			       enum band_info band)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	if (band == BAND_5G)
+		*vdev_nss = mac_ctx->vdev_type_nss_5g.sap;
+	else
+		*vdev_nss = mac_ctx->vdev_type_nss_2g.sap;
+}
+
 void sme_update_vdev_type_nss(mac_handle_t mac_handle, uint8_t max_supp_nss,
 			      enum nss_chains_band_info band)
 {

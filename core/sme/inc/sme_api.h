@@ -2123,6 +2123,19 @@ void sme_set_vdev_ies_per_band(mac_handle_t mac_handle, uint8_t vdev_id,
 void sme_set_pdev_ht_vht_ies(mac_handle_t mac_handle, bool enable2x2);
 
 /**
+ * sme_get_sap_vdev_type_nss() - get the sap nss per vdev type
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_nss: Pointer to vdev_nss
+ * @band: 5G or 2.4G band
+ *
+ * Get SAP vdev nss
+ *
+ * Return: None
+ */
+void sme_get_sap_vdev_type_nss(mac_handle_t mac_handle, uint8_t *vdev_nss,
+			       enum band_info band);
+
+/**
  * sme_update_vdev_type_nss() - sets the nss per vdev type
  * @mac_handle: Opaque handle to the global MAC context
  * @max_supp_nss: max_supported Nss
