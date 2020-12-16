@@ -128,46 +128,6 @@ void dp_soc_wds_detach(struct dp_soc *soc)
 }
 
 /**
- * dp_rx_da_learn() - Add AST entry based on DA lookup
- *			This is a WAR for HK 1.0 and will
- *			be removed in HK 2.0
- *
- * @soc: core txrx main context
- * @rx_tlv_hdr	: start address of rx tlvs
- * @ta_peer	: Transmitter peer entry
- * @nbuf	: nbuf to retrieve destination mac for which AST will be added
- *
- */
-void
-dp_rx_da_learn(struct dp_soc *soc,
-	       uint8_t *rx_tlv_hdr,
-	       struct dp_peer *ta_peer,
-	       qdf_nbuf_t nbuf)
-{
-	/* For HKv2 DA port learing is not needed */
-	if (qdf_likely(soc->ast_override_support))
-		return;
-
-	if (qdf_unlikely(!ta_peer))
-		return;
-
-	if (qdf_unlikely(ta_peer->vdev->opmode != wlan_op_mode_ap))
-		return;
-
-	if (!soc->da_war_enabled)
-		return;
-
-	if (qdf_unlikely(!qdf_nbuf_is_da_valid(nbuf) &&
-			 !qdf_nbuf_is_da_mcbc(nbuf))) {
-		dp_peer_add_ast(soc,
-				ta_peer,
-				qdf_nbuf_data(nbuf),
-				CDP_TXRX_AST_TYPE_DA,
-				IEEE80211_NODE_F_WDS_HM);
-	}
-}
-
-/**
  * dp_tx_mec_handler() - Tx  MEC Notify Handler
  * @vdev: pointer to dp dev handler
  * @status : Tx completion status from HTT descriptor
@@ -215,6 +175,48 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 				CDP_TXRX_AST_TYPE_MEC,
 				flags);
 	dp_peer_unref_delete(peer, DP_MOD_ID_AST);
+}
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+
+/**
+ * dp_rx_da_learn() - Add AST entry based on DA lookup
+ *			This is a WAR for HK 1.0 and will
+ *			be removed in HK 2.0
+ *
+ * @soc: core txrx main context
+ * @rx_tlv_hdr	: start address of rx tlvs
+ * @ta_peer	: Transmitter peer entry
+ * @nbuf	: nbuf to retrieve destination mac for which AST will be added
+ *
+ */
+void
+dp_rx_da_learn(struct dp_soc *soc,
+	       uint8_t *rx_tlv_hdr,
+	       struct dp_peer *ta_peer,
+	       qdf_nbuf_t nbuf)
+{
+	/* For HKv2 DA port learing is not needed */
+	if (qdf_likely(soc->ast_override_support))
+		return;
+
+	if (qdf_unlikely(!ta_peer))
+		return;
+
+	if (qdf_unlikely(ta_peer->vdev->opmode != wlan_op_mode_ap))
+		return;
+
+	if (!soc->da_war_enabled)
+		return;
+
+	if (qdf_unlikely(!qdf_nbuf_is_da_valid(nbuf) &&
+			 !qdf_nbuf_is_da_mcbc(nbuf))) {
+		dp_peer_add_ast(soc,
+				ta_peer,
+				qdf_nbuf_data(nbuf),
+				CDP_TXRX_AST_TYPE_DA,
+				IEEE80211_NODE_F_WDS_HM);
+	}
 }
 
 /**
@@ -610,6 +612,12 @@ bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf, uint8_t tid)
 	return true;
 }
 
+#endif /* QCA_MULTIPASS_SUPPORT */
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
+#ifdef QCA_MULTIPASS_SUPPORT
+
 /**
  * dp_peer_multipass_list_remove: remove peer from list
  * @peer: pointer to peer
@@ -795,7 +803,7 @@ void dp_peer_multipass_list_init(struct dp_vdev *vdev)
 	TAILQ_INIT(&vdev->mpass_peer_list);
 	qdf_spinlock_create(&vdev->mpass_peer_mutex);
 }
-#endif
+#endif /* QCA_MULTIPASS_SUPPORT */
 
 #ifdef QCA_PEER_MULTIQ_SUPPORT
 
@@ -1107,3 +1115,112 @@ void dp_hmwds_ast_add_notify(struct dp_peer *peer,
 			     WDI_NO_VAL, dp_pdev->pdev_id);
 #endif
 }
+
+#ifdef FEATURE_PERPKT_INFO
+/**
+ * dp_get_completion_indication_for_stack() - send completion to stack
+ * @soc : dp_soc handle
+ * @pdev: dp_pdev handle
+ * @peer: dp peer handle
+ * @ts: transmit completion status structure
+ * @netbuf: Buffer pointer for free
+ *
+ * This function is used for indication whether buffer needs to be
+ * sent to stack for freeing or not
+*/
+QDF_STATUS
+dp_get_completion_indication_for_stack(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf,
+				       uint64_t time_latency)
+{
+	struct tx_capture_hdr *ppdu_hdr;
+	uint16_t peer_id = ts->peer_id;
+	uint32_t ppdu_id = ts->ppdu_id;
+	uint8_t first_msdu = ts->first_msdu;
+	uint8_t last_msdu = ts->last_msdu;
+	uint32_t txcap_hdr_size = sizeof(struct tx_capture_hdr);
+
+	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
+			 !pdev->latency_capture_enable))
+		return QDF_STATUS_E_NOSUPPORT;
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Peer Invalid"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (pdev->mcopy_mode) {
+		/* If mcopy is enabled and mcopy_mode is M_COPY deliver 1st MSDU
+		 * per PPDU. If mcopy_mode is M_COPY_EXTENDED deliver 1st MSDU
+		 * for each MPDU
+		 */
+		if (pdev->mcopy_mode == M_COPY) {
+			if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
+			    (pdev->m_copy_id.tx_peer_id == peer_id)) {
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (!first_msdu)
+			return QDF_STATUS_E_INVAL;
+
+		pdev->m_copy_id.tx_ppdu_id = ppdu_id;
+		pdev->m_copy_id.tx_peer_id = peer_id;
+	}
+
+	if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
+		netbuf = qdf_nbuf_realloc_headroom(netbuf, txcap_hdr_size);
+		if (!netbuf) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  FL("No headroom"));
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+
+	if (!qdf_nbuf_push_head(netbuf, txcap_hdr_size)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("No headroom"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ppdu_hdr = (struct tx_capture_hdr *)qdf_nbuf_data(netbuf);
+	qdf_mem_copy(ppdu_hdr->ta, peer->vdev->mac_addr.raw,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
+		     QDF_MAC_ADDR_SIZE);
+	ppdu_hdr->ppdu_id = ppdu_id;
+	ppdu_hdr->peer_id = peer_id;
+	ppdu_hdr->first_msdu = first_msdu;
+	ppdu_hdr->last_msdu = last_msdu;
+	if (qdf_unlikely(pdev->latency_capture_enable)) {
+		ppdu_hdr->tsf = ts->tsf;
+		ppdu_hdr->time_latency = time_latency;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_send_completion_to_stack() - send completion to stack
+ * @soc :  dp_soc handle
+ * @pdev:  dp_pdev handle
+ * @peer_id: peer_id of the peer for which completion came
+ * @ppdu_id: ppdu_id
+ * @netbuf: Buffer pointer for free
+ *
+ * This function is used to send completion to stack
+ * to free buffer
+*/
+void dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
+				 uint16_t peer_id, uint32_t ppdu_id,
+				 qdf_nbuf_t netbuf)
+{
+	dp_wdi_event_handler(WDI_EVENT_TX_DATA, soc,
+			     netbuf, peer_id,
+			     WDI_NO_VAL, pdev->pdev_id);
+}
+#endif
