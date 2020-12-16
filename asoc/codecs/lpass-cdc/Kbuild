@@ -87,19 +87,23 @@ ifdef CONFIG_SND_SOC_LPASS_CDC
 	LPASS_CDC_OBJS += lpass-cdc-clk-rsc.o
 endif
 
-ifdef CONFIG_WSA_MACRO
+ifdef CONFIG_LPASS_CDC_WSA2_MACRO
+	WSA2_OBJS += lpass-cdc-wsa2-macro.o
+endif
+
+ifdef CONFIG_LPASS_CDC_WSA_MACRO
 	WSA_OBJS += lpass-cdc-wsa-macro.o
 endif
 
-ifdef CONFIG_VA_MACRO
+ifdef CONFIG_LPASS_CDC_VA_MACRO
 	VA_OBJS += lpass-cdc-va-macro.o
 endif
 
-ifdef CONFIG_TX_MACRO
+ifdef CONFIG_LPASS_CDC_TX_MACRO
 	TX_OBJS += lpass-cdc-tx-macro.o
 endif
 
-ifdef CONFIG_RX_MACRO
+ifdef CONFIG_LPASS_CDC_RX_MACRO
 	RX_OBJS += lpass-cdc-rx-macro.o
 endif
 
@@ -148,17 +152,20 @@ endif
 obj-$(CONFIG_SND_SOC_LPASS_CDC) += lpass_cdc_dlkm.o
 lpass_cdc_dlkm-y := $(LPASS_CDC_OBJS)
 
-obj-$(CONFIG_WSA_MACRO) += wsa_macro_dlkm.o
-wsa_macro_dlkm-y := $(WSA_OBJS)
+obj-$(CONFIG_LPASS_CDC_WSA2_MACRO) += lpass_cdc_wsa2_macro_dlkm.o
+lpass_cdc_wsa2_macro_dlkm-y := $(WSA2_OBJS)
 
-obj-$(CONFIG_VA_MACRO) += va_macro_dlkm.o
-va_macro_dlkm-y := $(VA_OBJS)
+obj-$(CONFIG_LPASS_CDC_WSA_MACRO) += lpass_cdc_wsa_macro_dlkm.o
+lpass_cdc_wsa_macro_dlkm-y := $(WSA_OBJS)
 
-obj-$(CONFIG_TX_MACRO) += tx_macro_dlkm.o
-tx_macro_dlkm-y := $(TX_OBJS)
+obj-$(CONFIG_LPASS_CDC_VA_MACRO) += lpass_cdc_va_macro_dlkm.o
+lpass_cdc_va_macro_dlkm-y := $(VA_OBJS)
 
-obj-$(CONFIG_RX_MACRO) += rx_macro_dlkm.o
-rx_macro_dlkm-y := $(RX_OBJS)
+obj-$(CONFIG_LPASS_CDC_TX_MACRO) += lpass_cdc_tx_macro_dlkm.o
+lpass_cdc_tx_macro_dlkm-y := $(TX_OBJS)
+
+obj-$(CONFIG_LPASS_CDC_RX_MACRO) += lpass_cdc_rx_macro_dlkm.o
+lpass_cdc_rx_macro_dlkm-y := $(RX_OBJS)
 
 # inject some build related information
 DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
