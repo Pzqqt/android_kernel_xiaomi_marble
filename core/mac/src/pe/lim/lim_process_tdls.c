@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -490,12 +490,12 @@ static QDF_STATUS lim_mgmt_tdls_tx_complete(void *context,
  * We are not differentiating it here, it will all depnds on peer MAC address,
  */
 static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
-						 struct qdf_mac_addr peer_mac,
-						 uint8_t dialog,
-						 struct pe_session *pe_session,
-						 enum wifi_traffic_ac ac)
+					      struct qdf_mac_addr peer_mac,
+					      uint8_t dialog,
+					      struct pe_session *pe_session,
+					      enum wifi_traffic_ac ac)
 {
-	tDot11fTDLSDisReq tdlsDisReq;
+	tDot11fTDLSDisReq *tdls_dis_req;
 	uint32_t status = 0;
 	uint32_t nPayload = 0;
 	uint32_t size = 0;
@@ -513,30 +513,38 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 		pe_err("pe_session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	tdls_dis_req = qdf_mem_malloc(sizeof(*tdls_dis_req));
+	if (!tdls_dis_req) {
+		pe_err("memory allocation failed for DisReq");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	smeSessionId = pe_session->smeSessionId;
 	/*
 	 * The scheme here is to fill out a 'tDot11fProbeRequest' structure
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
-	 * serialization).  We start by zero-initializing the structure:
+	 * serialization).
 	 */
-	qdf_mem_zero((uint8_t *) &tdlsDisReq, sizeof(tDot11fTDLSDisReq));
 
 	/*
 	 * setup Fixed fields,
 	 */
-	tdlsDisReq.Category.category = ACTION_CATEGORY_TDLS;
-	tdlsDisReq.Action.action = TDLS_DISCOVERY_REQUEST;
-	tdlsDisReq.DialogToken.token = dialog;
+	tdls_dis_req->Category.category = ACTION_CATEGORY_TDLS;
+	tdls_dis_req->Action.action = TDLS_DISCOVERY_REQUEST;
+	tdls_dis_req->DialogToken.token = dialog;
 
 	size = sizeof(tSirMacAddr);
 
-	populate_dot11f_link_iden(mac, pe_session, &tdlsDisReq.LinkIdentifier,
+	populate_dot11f_link_iden(mac, pe_session,
+				  &tdls_dis_req->LinkIdentifier,
 				  peer_mac, TDLS_INITIATOR);
 
 	/*
 	 * now we pack it.  First, how much space are we going to need?
 	 */
-	status = dot11f_get_packed_tdls_dis_req_size(mac, &tdlsDisReq, &nPayload);
+	status = dot11f_get_packed_tdls_dis_req_size(mac, tdls_dis_req,
+						     &nPayload);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to calculate the packed size for a discovery Request (0x%08x)",
 			status);
@@ -583,6 +591,7 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("Failed to allocate: %d bytes for a TDLS Discovery Request",
 			nBytes);
+		qdf_mem_free(tdls_dis_req);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -597,23 +606,25 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 	/* fill out the buffer descriptor */
 
 	header_offset = lim_prepare_tdls_frame_header(mac, pFrame,
-			      LINK_IDEN_ADDR_OFFSET(tdlsDisReq), TDLS_LINK_AP,
+			      &tdls_dis_req->LinkIdentifier, TDLS_LINK_AP,
 			      TDLS_INITIATOR,
 			      (ac == WIFI_AC_VI) ? TID_AC_VI : TID_AC_BK,
 			      pe_session);
 
-	status = dot11f_pack_tdls_dis_req(mac, &tdlsDisReq, pFrame
+	status = dot11f_pack_tdls_dis_req(mac, tdls_dis_req, pFrame
 					  + header_offset, nPayload, &nPayload);
 
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to pack a TDLS discovery req (0x%08x)",
 			status);
 		cds_packet_free((void *)pPacket);
+		qdf_mem_free(tdls_dis_req);
 		return QDF_STATUS_E_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		pe_warn("There were warnings while packing TDLS Discovery Request (0x%08x)",
 			status);
 	}
+	qdf_mem_free(tdls_dis_req);
 
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
 	if (padLen != 0) {
