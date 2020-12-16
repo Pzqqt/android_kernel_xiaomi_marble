@@ -1706,8 +1706,8 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	uint8_t inNumChannels = numChannels;
 	uint32_t *in_ptr = chan_freq_list;
 	uint8_t i = 0;
-	uint32_t csr_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint32_t tmp_chan_freq_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint32_t *csr_freq_list;
+	uint32_t *tmp_chan_freq_list;
 	uint8_t mergedOutputNumOfChannels = 0;
 	struct rso_chan_info *chan_lst;
 
@@ -1726,6 +1726,14 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 					&mergedOutputNumOfChannels);
 		inNumChannels = mergedOutputNumOfChannels;
 	}
+
+	csr_freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
+				       sizeof(uint32_t));
+	if (!csr_freq_list) {
+		sme_err("memory allocation failed for csr_freq_list");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	if (BAND_2G == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (WLAN_REG_IS_24GHZ_CH_FREQ(in_ptr[i]) &&
@@ -1753,8 +1761,18 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
 			  "Invalid band, No operation carried out (Band %d)",
 			  band);
+		qdf_mem_free(csr_freq_list);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	tmp_chan_freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
+					    sizeof(uint32_t));
+	if (!tmp_chan_freq_list) {
+		sme_err("memory allocation failed for tmp_chan_freq_list");
+		qdf_mem_free(csr_freq_list);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	/*
 	 * if roaming within band is enabled, then select only the
 	 * in band channels .
@@ -1783,13 +1801,18 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 			qdf_mem_malloc(out_num_chan * sizeof(qdf_freq_t));
 		if (!chan_lst->freq_list) {
 			chan_lst->num_chan = 0;
-			return QDF_STATUS_E_NOMEM;
+			status = QDF_STATUS_E_NOMEM;
+			goto error;
 		}
 		for (i = 0; i < out_num_chan; i++)
 			chan_lst->freq_list[i] = tmp_chan_freq_list[i];
 
 		chan_lst->num_chan = out_num_chan;
 	}
+
+error:
+	qdf_mem_free(tmp_chan_freq_list);
+	qdf_mem_free(csr_freq_list);
 
 	return status;
 }
