@@ -451,8 +451,21 @@ lim_fill_sme_assoc_ind_params(
 	struct mac_context *mac_ctx,
 	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
 	struct pe_session *session_entry, bool assoc_req_alloc);
-void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode sta,
-			    struct pe_session *pe_session);
+
+/**
+ * lim_send_mlm_assoc_ind() - Sends assoc indication to SME
+ * @mac_ctx: Global Mac context
+ * @sta_ds: Station DPH hash entry
+ * @session_entry: PE session entry
+ *
+ * This function sends either LIM_MLM_ASSOC_IND
+ * or LIM_MLM_REASSOC_IND to SME.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac,
+				  tpDphHashNode sta,
+				  struct pe_session *pe_session);
 
 #define ASSOC_FRAME_LEN 0
 /**
