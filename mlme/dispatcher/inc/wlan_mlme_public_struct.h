@@ -28,6 +28,7 @@
 #include <wmi_unified_param.h>
 #include <sir_api.h>
 #include "wlan_cm_roam_public_struct.h"
+#include "wlan_mlme_twt_public_struct.h"
 #include "cfg_mlme_generic.h"
 
 #define OWE_TRANSITION_OUI_TYPE "\x50\x6f\x9a\x1c"
