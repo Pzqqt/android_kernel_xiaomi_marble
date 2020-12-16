@@ -3182,6 +3182,7 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 						&soc->wmi_pdev[i]->event_queue);
 			}
 
+			qdf_flush_work(&soc->wmi_pdev[i]->rx_diag_event_work);
 			buf = qdf_nbuf_queue_remove(
 					&soc->wmi_pdev[i]->diag_event_queue);
 			while (buf) {
@@ -3253,6 +3254,16 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 		buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+
+	/* Remove diag events work */
+	qdf_flush_work(&wmi_handle->rx_diag_event_work);
+	qdf_spin_lock_bh(&wmi_handle->diag_eventq_lock);
+	buf = qdf_nbuf_queue_remove(&wmi_handle->diag_event_queue);
+	while (buf) {
+		qdf_nbuf_free(buf);
+		buf = qdf_nbuf_queue_remove(&wmi_handle->diag_event_queue);
+	}
+	qdf_spin_unlock_bh(&wmi_handle->diag_eventq_lock);
 }
 
 /**
