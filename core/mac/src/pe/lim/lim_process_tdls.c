@@ -120,7 +120,7 @@ enum tdls_peer_capability {
 	TDLS_PEER_WMM_CAP = 2
 } e_tdls_peer_capability;
 
-#define LINK_IDEN_ADDR_OFFSET(x) (&x.LinkIdentifier)
+#define LINK_IDEN_ADDR_OFFSET(x) (&(x)->LinkIdentifier)
 
 /* TODO, Move this parameters to configuration */
 #define PEER_PSM_SUPPORT          (0)
@@ -835,7 +835,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 	tdls_dis_rsp->DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
-				  &tdls_dis_rsp->LinkIdentifier,
+				  LINK_IDEN_ADDR_OFFSET(tdls_dis_rsp),
 				  peer_mac, TDLS_RESPONDER);
 
 	if (lim_get_capability_info(mac, &caps, pe_session) !=
@@ -1387,23 +1387,23 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
  */
 static
 QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
-					   struct qdf_mac_addr peer_mac,
-					   uint16_t reason,
-					   uint8_t responder,
-					   struct pe_session *pe_session,
-					   uint8_t *addIe, uint16_t addIeLen,
-					   enum wifi_traffic_ac ac)
+					struct qdf_mac_addr peer_mac,
+					uint16_t reason,
+					uint8_t responder,
+					struct pe_session *pe_session,
+					uint8_t *addIe, uint16_t addIeLen,
+					enum wifi_traffic_ac ac)
 {
-	tDot11fTDLSTeardown teardown;
+	tDot11fTDLSTeardown *teardown;
 	uint32_t status = 0;
-	uint32_t nPayload = 0;
-	uint32_t nBytes = 0;
+	uint32_t payload = 0;
+	uint32_t nbytes = 0;
 	uint32_t header_offset = 0;
-	uint8_t *pFrame;
-	void *pPacket;
+	uint8_t *frame;
+	void *packet;
 	QDF_STATUS qdf_status;
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
-	uint32_t padLen = 0;
+	uint32_t padlen = 0;
 #endif
 	uint8_t smeSessionId = 0;
 	tpDphHashNode sta_ds;
@@ -1415,18 +1415,25 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 		pe_err("pe_session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	teardown = qdf_mem_malloc(sizeof(*teardown));
+	if (!teardown) {
+		pe_err("memory allocation failed for teardown");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	smeSessionId = pe_session->smeSessionId;
 	/*
 	 * The scheme here is to fill out a 'tDot11fProbeRequest' structure
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
-	 * serialization).  We start by zero-initializing the structure:
+	 * serialization).
 	 */
-	qdf_mem_zero((uint8_t *) &teardown, sizeof(tDot11fTDLSTeardown));
-	teardown.Category.category = ACTION_CATEGORY_TDLS;
-	teardown.Action.action = TDLS_TEARDOWN;
-	teardown.Reason.code = reason;
+	teardown->Category.category = ACTION_CATEGORY_TDLS;
+	teardown->Action.action = TDLS_TEARDOWN;
+	teardown->Reason.code = reason;
 
-	populate_dot11f_link_iden(mac, pe_session, &teardown.LinkIdentifier,
+	populate_dot11f_link_iden(mac, pe_session,
+				  LINK_IDEN_ADDR_OFFSET(teardown),
 				  peer_mac,
 				  (responder ==
 				   true) ? TDLS_RESPONDER : TDLS_INITIATOR);
@@ -1434,12 +1441,12 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	/*
 	 * now we pack it.  First, how much space are we going to need?
 	 */
-	status = dot11f_get_packed_tdls_teardown_size(mac, &teardown, &nPayload);
+	status = dot11f_get_packed_tdls_teardown_size(mac, teardown, &payload);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to calculate the packed size for a discovery Request (0x%08x)",
 			status);
 		/* We'll fall back on the worst case scenario: */
-		nPayload = sizeof(tDot11fProbeRequest);
+		payload = sizeof(tDot11fProbeRequest);
 	} else if (DOT11F_WARNED(status)) {
 		pe_warn("There were warnings while calculating the packed size for a discovery Request (0x%08x)",
 			status);
@@ -1456,7 +1463,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 		qos_mode = sta_ds->qosMode;
 	tdls_link_type = (reason == REASON_TDLS_PEER_UNREACHABLE)
 				? TDLS_LINK_AP : TDLS_LINK_DIRECT;
-	nBytes = nPayload + (((IS_QOS_ENABLED(pe_session) &&
+	nbytes = payload + (((IS_QOS_ENABLED(pe_session) &&
 			     (tdls_link_type == TDLS_LINK_AP)) ||
 			     ((tdls_link_type == TDLS_LINK_DIRECT) && qos_mode))
 			     ? sizeof(tSirMacDataHdr3a) :
@@ -1469,29 +1476,33 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	   Hence AP itself padding some bytes, which caused teardown packet is dropped at
 	   receiver side. To avoid such IOT issue, we added some extra bytes to meet data frame size >= 64
 	 */
-	if (nPayload + PAYLOAD_TYPE_TDLS_SIZE < MIN_IEEE_8023_SIZE) {
-		padLen =
-			MIN_IEEE_8023_SIZE - (nPayload + PAYLOAD_TYPE_TDLS_SIZE);
+	if (payload + PAYLOAD_TYPE_TDLS_SIZE < MIN_IEEE_8023_SIZE) {
+		padlen =
+			MIN_IEEE_8023_SIZE - (payload + PAYLOAD_TYPE_TDLS_SIZE);
 
-		/* if padLen is less than minimum vendorSpecific (5), pad up to 5 */
-		if (padLen < MIN_VENDOR_SPECIFIC_IE_SIZE)
-			padLen = MIN_VENDOR_SPECIFIC_IE_SIZE;
+		/*
+		 * if padlen is less than minimum vendorSpecific (5),
+		 * pad up to 5
+		 */
+		if (padlen < MIN_VENDOR_SPECIFIC_IE_SIZE)
+			padlen = MIN_VENDOR_SPECIFIC_IE_SIZE;
 
-		nBytes += padLen;
+		nbytes += padlen;
 	}
 #endif
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
-	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
-			(void **)&pPacket);
+	qdf_status = cds_packet_alloc((uint16_t)nbytes, (void **)&frame,
+				      (void **)&packet);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("Failed to allocate %d bytes for a TDLS Teardown Frame.",
-			nBytes);
+			nbytes);
+		qdf_mem_free(teardown);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	/* zero out the memory */
-	qdf_mem_zero(pFrame, nBytes);
+	qdf_mem_zero(frame, nbytes);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -1500,7 +1511,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 
 	/* fill out the buffer descriptor */
 	pe_debug("Reason of TDLS Teardown: %d", reason);
-	header_offset = lim_prepare_tdls_frame_header(mac, pFrame,
+	header_offset = lim_prepare_tdls_frame_header(mac, frame,
 			LINK_IDEN_ADDR_OFFSET(teardown),
 			(reason == REASON_TDLS_PEER_UNREACHABLE) ?
 			TDLS_LINK_AP : TDLS_LINK_DIRECT,
@@ -1508,43 +1519,46 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 			(ac == WIFI_AC_VI) ? TID_AC_VI : TID_AC_BK,
 			pe_session);
 
-	status = dot11f_pack_tdls_teardown(mac, &teardown, pFrame
-					   + header_offset, nPayload, &nPayload);
+	status = dot11f_pack_tdls_teardown(mac, teardown, frame
+					   + header_offset, payload, &payload);
 
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to pack a TDLS Teardown frame (0x%08x)",
 			status);
-		cds_packet_free((void *)pPacket);
+		cds_packet_free((void *)packet);
+		qdf_mem_free(teardown);
 		return QDF_STATUS_E_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		pe_warn("There were warnings while packing TDLS Teardown frame (0x%08x)",
 			status);
 	}
 
+	qdf_mem_free(teardown);
+
 	if (addIeLen != 0) {
 		pe_debug("Copy Additional Ie Len = %d", addIeLen);
-		qdf_mem_copy(pFrame + header_offset + nPayload, addIe,
+		qdf_mem_copy(frame + header_offset + payload, addIe,
 			     addIeLen);
 	}
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
-	if (padLen != 0) {
+	if (padlen != 0) {
 		/* QCOM VENDOR OUI = { 0x00, 0xA0, 0xC6, type = 0x0000 }; */
 		uint8_t *padVendorSpecific =
-			pFrame + header_offset + nPayload + addIeLen;
+			frame + header_offset + payload + addIeLen;
 		/* make QCOM_VENDOR_OUI, and type = 0x0000, and all the payload to be zero */
 		padVendorSpecific[0] = 221;
-		padVendorSpecific[1] = padLen - 2;
+		padVendorSpecific[1] = padlen - 2;
 		padVendorSpecific[2] = 0x00;
 		padVendorSpecific[3] = 0xA0;
 		padVendorSpecific[4] = 0xC6;
 
-		pe_debug("Padding Vendor Specific Ie Len = %d", padLen);
+		pe_debug("Padding Vendor Specific Ie Len = %d", padlen);
 
 		/* padding zero if more than 5 bytes are required */
-		if (padLen > MIN_VENDOR_SPECIFIC_IE_SIZE)
-			qdf_mem_zero(pFrame + header_offset + nPayload +
+		if (padlen > MIN_VENDOR_SPECIFIC_IE_SIZE)
+			qdf_mem_zero(frame + header_offset + payload +
 				    addIeLen + MIN_VENDOR_SPECIFIC_IE_SIZE,
-				    padLen - MIN_VENDOR_SPECIFIC_IE_SIZE);
+				    padlen - MIN_VENDOR_SPECIFIC_IE_SIZE);
 	}
 #endif
 	pe_debug("[TDLS] action: %d (%s) -%s-> OTA peer="QDF_MAC_ADDR_FMT,
@@ -1555,17 +1569,17 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 		QDF_MAC_ADDR_REF(peer_mac.bytes));
 
 	mac->lim.tdls_frm_session_id = pe_session->smeSessionId;
-	lim_diag_mgmt_tx_event_report(mac, (tpSirMacMgmtHdr) pFrame,
+	lim_diag_mgmt_tx_event_report(mac, (tpSirMacMgmtHdr)frame,
 				      pe_session, QDF_STATUS_SUCCESS,
 				      QDF_STATUS_SUCCESS);
 
-	qdf_status = wma_tx_frame_with_tx_complete_send(mac, pPacket,
-						     (uint16_t) nBytes,
-						     TID_AC_VI,
-						     pFrame,
-						     smeSessionId,
-						     (reason == REASON_TDLS_PEER_UNREACHABLE)
-						     ? true : false);
+	qdf_status = wma_tx_frame_with_tx_complete_send(mac, packet,
+					(uint16_t)nbytes,
+					TID_AC_VI,
+					frame,
+					smeSessionId,
+					(reason == REASON_TDLS_PEER_UNREACHABLE)
+					? true : false);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		mac->lim.tdls_frm_session_id = NO_SESSION;
@@ -1635,7 +1649,7 @@ lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	setup_rsp->DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
-				  &setup_rsp->LinkIdentifier, peer_mac,
+				  LINK_IDEN_ADDR_OFFSET(setup_rsp), peer_mac,
 				  TDLS_RESPONDER);
 
 	if (lim_get_capability_info(mac, &caps, pe_session) !=
@@ -1785,7 +1799,7 @@ lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	/* fill out the buffer descriptor */
 
 	header_offset = lim_prepare_tdls_frame_header(mac, pFrame,
-			&setup_rsp->LinkIdentifier, TDLS_LINK_AP,
+			LINK_IDEN_ADDR_OFFSET(setup_rsp), TDLS_LINK_AP,
 			TDLS_RESPONDER,
 			(ac == WIFI_AC_VI) ? TID_AC_VI : TID_AC_BK,
 			pe_session);
@@ -1898,7 +1912,7 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 	setup_cnf->DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
-				  &setup_cnf->LinkIdentifier, peer_mac,
+				  LINK_IDEN_ADDR_OFFSET(setup_cnf), peer_mac,
 				  TDLS_INITIATOR);
 	/*
 	 * TODO: we need to see if we have to support conditions where we have
@@ -1990,7 +2004,7 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 	/* fill out the buffer descriptor */
 
 	header_offset = lim_prepare_tdls_frame_header(mac, pFrame,
-				&setup_cnf->LinkIdentifier,
+				LINK_IDEN_ADDR_OFFSET(setup_cnf),
 				TDLS_LINK_AP,
 				TDLS_INITIATOR,
 				(ac == WIFI_AC_VI) ? TID_AC_VI : TID_AC_BK,
