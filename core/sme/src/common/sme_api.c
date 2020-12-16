@@ -1796,8 +1796,9 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
-	uint8_t newChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
+	uint16_t channel_list_len = CFG_VALID_CHANNEL_LIST_LEN * 5;
+	uint8_t *old_ch_list;
+	uint8_t *new_ch_list;
 	uint8_t i = 0, j = 0;
 	enum band_info band = -1;
 	uint32_t band_bitmap;
@@ -1811,31 +1812,46 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	old_ch_list = qdf_mem_malloc(channel_list_len);
+	if (!old_ch_list) {
+		sme_err("memory alloc failed for channel list");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	new_ch_list = qdf_mem_malloc(channel_list_len);
+	if (!new_ch_list) {
+		sme_err("memory alloc failed for channel list");
+		qdf_mem_free(old_ch_list);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
+		goto error;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, sessionId,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("vdev object is NULL");
 		sme_release_global_lock(&mac->sme);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
 	}
 
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (!rso_cfg) {
 		sme_release_global_lock(&mac->sme);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
 	}
 
 	chan_lst = &rso_cfg->roam_scan_freq_lst;
 
 	if (chan_lst->freq_list) {
 		for (i = 0; i < chan_lst->num_chan; i++) {
-			j += snprintf(oldChannelList + j,
-				sizeof(oldChannelList) - j, "%d",
+			j += snprintf(old_ch_list + j,
+				channel_list_len - j, "%d",
 				chan_lst->freq_list[i]);
 		}
 	}
@@ -1848,13 +1864,13 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 		if (chan_lst->freq_list) {
 			j = 0;
 			for (i = 0; i < chan_lst->num_chan; i++) {
-				j += snprintf(newChannelList + j,
-					sizeof(newChannelList) - j, "%d",
+				j += snprintf(new_ch_list + j,
+					channel_list_len - j, "%d",
 					chan_lst->freq_list[i]);
 			}
 		}
 		sme_debug("ESE roam scan chnl list successfully set to %s-old value is %s",
-			  newChannelList, oldChannelList);
+			  new_ch_list, old_ch_list);
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
@@ -1863,6 +1879,11 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 				    REASON_CHANNEL_LIST_CHANGED);
 
 	sme_release_global_lock(&mac->sme);
+
+error:
+	qdf_mem_free(new_ch_list);
+	qdf_mem_free(old_ch_list);
+
 	return status;
 }
 
