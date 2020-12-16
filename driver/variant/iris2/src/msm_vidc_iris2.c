@@ -7,6 +7,7 @@
 
 #include "msm_vidc_iris2.h"
 #include "msm_vidc_buffer_iris2.h"
+#include "msm_vidc_power_iris2.h"
 #include "venus_hfi.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"

@@ -22,6 +22,7 @@ msm_video-objs += driver/vidc/src/msm_vidc_v4l2.o \
                   driver/vidc/src/msm_vidc_driver.o \
                   driver/vidc/src/msm_vidc_control.o \
                   driver/vidc/src/msm_vidc_buffer.o \
+                  driver/vidc/src/msm_vidc_power.o \
                   driver/vidc/src/msm_vidc_probe.o \
                   driver/vidc/src/msm_vidc_dt.o \
                   driver/vidc/src/msm_vidc_platform.o \
@@ -31,5 +32,6 @@ msm_video-objs += driver/vidc/src/msm_vidc_v4l2.o \
                   driver/vidc/src/hfi_packet.o \
                   driver/vidc/src/venus_hfi_response.o \
                   driver/variant/iris2/src/msm_vidc_buffer_iris2.o \
+                  driver/variant/iris2/src/msm_vidc_power_iris2.o \
                   driver/variant/iris2/src/msm_vidc_iris2.o \
                   driver/platform/waipio/src/msm_vidc_waipio.o

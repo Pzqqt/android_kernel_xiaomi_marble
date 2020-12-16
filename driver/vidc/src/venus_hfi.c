@@ -2970,3 +2970,45 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 
 	return rc;
 }
+
+int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq)
+{
+	int rc = 0;
+	struct msm_vidc_core* core;
+
+	if (!inst || inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	mutex_lock(&core->lock);
+	if (__resume(core)) {
+		s_vpr_e(inst->sid, "Resume from power collapse failed\n");
+		rc = -EINVAL;
+		goto exit;
+	}
+	rc = __set_clocks(core, freq);
+exit:
+	mutex_unlock(&core->lock);
+
+	return rc;
+}
+
+int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 freq)
+{
+	int rc = 0;
+	struct msm_vidc_core* core;
+
+	if (!inst || inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	mutex_lock(&core->lock);
+	rc = __vote_buses(core, freq, freq);
+	mutex_unlock(&core->lock);
+
+	return rc;
+}

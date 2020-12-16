@@ -15,8 +15,8 @@ struct msm_vidc_inst;
 	((c)->session_ops->op(__VA_ARGS__)) : 0)
 
 struct msm_vidc_session_ops {
-	int (*calc_freq)(struct msm_vidc_inst *inst, struct msm_vidc_buffer *mbuf);
-	int (*calc_bw)(struct msm_vidc_inst *inst, struct msm_vidc_buffer *mbuf);
+	u64 (*calc_freq)(struct msm_vidc_inst *inst);
+	u64 (*calc_bw)(struct msm_vidc_inst *inst);
 	int (*decide_work_route)(struct msm_vidc_inst *inst);
 	int (*decide_work_mode)(struct msm_vidc_inst *inst);
 	int (*decide_core_and_power_mode)(struct msm_vidc_inst *inst);
