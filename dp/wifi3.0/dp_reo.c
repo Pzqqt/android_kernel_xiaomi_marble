@@ -21,6 +21,13 @@
 #include "dp_internal.h"
 #include <qdf_time.h>
 
+#define dp_reo_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_REO, params)
+#define dp_reo_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_REO, params)
+#define dp_reo_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_REO, params)
+#define dp_reo_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_REO, ## params)
+#define dp_reo_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_REO, params)
+
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 /**
  * dp_reo_cmd_srng_event_record() - Record reo cmds posted
@@ -182,8 +189,7 @@ uint32_t dp_reo_status_ring_handler(struct dp_intr *int_ctx, struct dp_soc *soc)
 			num = reo_status.rx_queue_status.header.cmd_num;
 			break;
 		default:
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
-				"%s, no handler for TLV:%d", __func__, tlv);
+			dp_reo_warn("%pK: no handler for TLV:%d", soc, tlv);
 			goto next;
 		} /* switch */
 
