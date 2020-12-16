@@ -494,12 +494,12 @@ static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 
 	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+	if (snd_soc_component_read(component, adc_mux_reg) & SWR_MIC) {
 		if (tx_priv->version == BOLERO_VERSION_2_1)
 			return true;
 		adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 		if (adc_n < BOLERO_ADC_MAX)
 			return true;
@@ -535,7 +535,7 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	if (is_amic_enabled(component, hpf_work->decimator)) {
 		adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
+		adc_n = snd_soc_component_read(component, adc_reg) &
 				TX_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
@@ -948,10 +948,10 @@ static int tx_macro_get_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	if (tx_priv->version == BOLERO_VERSION_2_1)
-		value = (snd_soc_component_read32(component,
+		value = (snd_soc_component_read(component,
 			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL)) & 0x0F;
 	else if (tx_priv->version == BOLERO_VERSION_2_0)
-		value = (snd_soc_component_read32(component,
+		value = (snd_soc_component_read(component,
 			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL)) & 0x0F;
 
 	ucontrol->value.integer.value[0] = value;
@@ -1061,7 +1061,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	tx_fs_reg = BOLERO_CDC_TX0_TX_PATH_CTL +
 				TX_MACRO_TX_PATH_OFFSET * decimator;
 
-	tx_priv->amic_sample_rate = (snd_soc_component_read32(component,
+	tx_priv->amic_sample_rate = (snd_soc_component_read(component,
 				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
@@ -1085,7 +1085,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			usleep_range(1000, 1010);
 		}
 		hpf_cut_off_freq = (
-			snd_soc_component_read32(component, dec_cfg_reg) &
+			snd_soc_component_read(component, dec_cfg_reg) &
 				TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 
 		tx_priv->tx_hpf_work[decimator].hpf_cut_off_freq =
@@ -1125,7 +1125,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
-			      snd_soc_component_read32(component,
+			      snd_soc_component_read(component,
 					tx_gain_ctl_reg));
 		if (tx_priv->bcs_enable) {
 			if (tx_priv->version == BOLERO_VERSION_2_1)
@@ -1146,7 +1146,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					0x40);
 		}
 		if (tx_priv->version == BOLERO_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC) {
 				snd_soc_component_update_bits(component,
 					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL,
@@ -1207,7 +1207,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				&tx_priv->tx_mute_dwork[decimator].dwork);
 
 		if (tx_priv->version == BOLERO_VERSION_2_0) {
-			if (snd_soc_component_read32(component, adc_mux_reg)
+			if (snd_soc_component_read(component, adc_mux_reg)
 							& SWR_MIC)
 				snd_soc_component_update_bits(component,
 					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL,

@@ -1172,19 +1172,19 @@ static int32_t wsa883x_temp_reg_read(struct snd_soc_component *component,
 
 	snd_soc_component_update_bits(component, WSA883X_TADC_VALUE_CTL,
 				0x01, 0x00);
-	wsa_temp_reg->dmeas_msb = snd_soc_component_read32(
+	wsa_temp_reg->dmeas_msb = snd_soc_component_read(
 					component, WSA883X_TEMP_MSB);
-	wsa_temp_reg->dmeas_lsb = snd_soc_component_read32(
+	wsa_temp_reg->dmeas_lsb = snd_soc_component_read(
 					component, WSA883X_TEMP_LSB);
 	snd_soc_component_update_bits(component, WSA883X_TADC_VALUE_CTL,
 					0x01, 0x01);
-	wsa_temp_reg->d1_msb = snd_soc_component_read32(
+	wsa_temp_reg->d1_msb = snd_soc_component_read(
 					component, WSA883X_OTP_REG_1);
-	wsa_temp_reg->d1_lsb = snd_soc_component_read32(
+	wsa_temp_reg->d1_lsb = snd_soc_component_read(
 					component, WSA883X_OTP_REG_2);
-	wsa_temp_reg->d2_msb = snd_soc_component_read32(
+	wsa_temp_reg->d2_msb = snd_soc_component_read(
 					component, WSA883X_OTP_REG_3);
-	wsa_temp_reg->d2_lsb = snd_soc_component_read32(
+	wsa_temp_reg->d2_lsb = snd_soc_component_read(
 					component, WSA883X_OTP_REG_4);
 
 	snd_soc_component_update_bits(component, WSA883X_PA_FSM_BYP,
@@ -1283,11 +1283,11 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 	dev = wsa883x->swr_slave;
 	wsa883x->component = component;
 
-	variant = (snd_soc_component_read32(component, WSA883X_OTP_REG_0)
+	variant = (snd_soc_component_read(component, WSA883X_OTP_REG_0)
 					    & 0x0F);
 	wsa883x->variant = variant;
 
-	version = (snd_soc_component_read32(component, WSA883X_CHIP_ID0)
+	version = (snd_soc_component_read(component, WSA883X_CHIP_ID0)
 					    & 0xFF);
 	wsa883x->version = version;
 

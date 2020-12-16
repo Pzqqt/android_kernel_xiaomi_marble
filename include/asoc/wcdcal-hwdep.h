@@ -4,7 +4,7 @@
  */
 #ifndef __WCD9XXX_HWDEP_H__
 #define __WCD9XXX_HWDEP_H__
-#include <audio/sound/msmcal-hwdep.h>
+#include <sound/msmcal-hwdep.h>
 
 enum wcd_cal_states {
 	WCDCAL_UNINITIALISED,
