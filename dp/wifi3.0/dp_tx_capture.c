@@ -311,6 +311,83 @@ void dp_tx_capture_print_stats(struct dp_peer *peer)
 }
 #endif
 
+#define DP_TX_PEER_DEL_REF(peer) \
+	dp_tx_peer_del_ref(__func__, __LINE__, peer)
+
+#define DP_TX_PEER_GET_REF(pdev, peer_id) \
+	dp_tx_peer_get_ref(__func__, __LINE__, pdev, peer_id)
+
+/**
+ * dp_tx_peer_del_ref() - delete the reference held by peer
+ * @func: caller function name
+ * @line: caller line number
+ * @peer: DP PEER object
+ *
+ * Return: void
+ */
+static inline
+void dp_tx_peer_del_ref(const char *func, uint32_t line, struct dp_peer *peer)
+{
+	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+}
+
+/**
+ * dp_tx_peer_get_ref() - get the peer reference
+ * @func: caller function name
+ * @line: caller line number
+ * @cur_pdev: DP PDEV object
+ * @peer_id: peer id
+ *
+ * Return: DP PEER object
+ */
+static inline
+struct dp_peer *
+dp_tx_peer_get_ref(const char *func, uint32_t line, struct dp_pdev *cur_pdev,
+		   uint16_t peer_id)
+{
+	struct dp_peer *peer = NULL;
+	struct dp_vdev *vdev = NULL;
+	struct dp_pdev *pdev = NULL;
+
+	if (qdf_unlikely(!cur_pdev))
+		return NULL;
+
+	peer = dp_peer_get_ref_by_id(cur_pdev->soc, peer_id,
+				     DP_MOD_ID_TX_CAPTURE);
+
+	if (!peer)
+		return NULL;
+
+	/* sanity check vdev NULL */
+	vdev = peer->vdev;
+	if (qdf_unlikely(!vdev)) {
+		DP_TX_PEER_DEL_REF(peer);
+		return NULL;
+	}
+
+	/* sanity check pdev NULL */
+	pdev = vdev->pdev;
+	if (qdf_unlikely(!pdev)) {
+		DP_TX_PEER_DEL_REF(peer);
+		return NULL;
+	}
+
+	if (qdf_unlikely(pdev->pdev_id != cur_pdev->pdev_id)) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+			  QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: %d peer %p peer_id: %d mapped to pdev %p %d, cur_pdev %p %d",
+			  func, line,
+			  peer, peer_id,
+			  pdev, pdev->pdev_id,
+			  cur_pdev, cur_pdev->pdev_id);
+		DP_TX_PEER_DEL_REF(peer);
+		cur_pdev->tx_capture.peer_mismatch++;
+		return NULL;
+	}
+
+	return peer;
+}
+
 /*
  * dp_tx_capture_htt_frame_counter: increment counter for htt_frame_type
  * pdev: DP pdev handle
@@ -452,6 +529,8 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 		       ptr_tx_cap->ppdu_stats_queue_depth);
 	DP_PRINT_STATS(" ppdu stats defer queue depth: %u",
 		       ptr_tx_cap->ppdu_stats_defer_queue_depth);
+	DP_PRINT_STATS(" peer mismatch: %llu",
+		       ptr_tx_cap->peer_mismatch);
 	DP_PRINT_STATS(" mgmt control enqueue stats:");
 	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
 		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
@@ -3077,8 +3156,7 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 		struct dp_peer *peer;
 		struct dp_vdev *vdev = NULL;
 
-		peer = dp_peer_get_ref_by_id(pdev->soc, user->peer_id,
-					     DP_MOD_ID_TX_CAPTURE);
+		peer = DP_TX_PEER_GET_REF(pdev, user->peer_id);
 		if (peer) {
 			vdev = peer->vdev;
 
@@ -3086,7 +3164,7 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 				qdf_mem_copy(wh_min->i_addr2,
 					     vdev->mac_addr.raw,
 					     QDF_MAC_ADDR_SIZE);
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 		} else {
 			vdev =
 			dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id,
@@ -3194,15 +3272,14 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration -
 					 (RTS_INTERVAL + SIFS_INTERVAL);
 		ppdu_desc->user[usr_id].peer_id = peer_id;
-		peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-					     DP_MOD_ID_TX_CAPTURE);
+		peer = DP_TX_PEER_GET_REF(pdev, peer_id);
 		if (peer) {
 			vdev = peer->vdev;
 			if (vdev)
 				qdf_mem_copy(&ppdu_desc->user[usr_id].mac_addr,
 					     vdev->mac_addr.raw,
 					     QDF_MAC_ADDR_SIZE);
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 		} else {
 			uint8_t vdev_id;
 
@@ -3248,9 +3325,8 @@ static void dp_gen_ack_rx_frame(struct dp_pdev *pdev,
 			tx_capture_info->ppdu_desc->ppdu_end_timestamp;
 	ppdu_desc->user[0].peer_id =
 			tx_capture_info->ppdu_desc->user[0].peer_id;
-	peer = dp_peer_get_ref_by_id
-		(pdev->soc, tx_capture_info->ppdu_desc->user[0].peer_id,
-		 DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev,
+				  tx_capture_info->ppdu_desc->user[0].peer_id);
 	if (peer) {
 		struct dp_vdev *vdev = NULL;
 
@@ -3259,7 +3335,7 @@ static void dp_gen_ack_rx_frame(struct dp_pdev *pdev,
 			qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
 				     vdev->mac_addr.raw,
 				     QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 	}
 
 	dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, 0);
@@ -3295,8 +3371,7 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 	ppdu_id = ppdu_desc->ppdu_id;
 	user = &ppdu_desc->user[usr_idx];
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, user->peer_id,
-				     DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev, user->peer_id);
 	if (!peer) {
 		return;
 	}
@@ -3383,7 +3458,7 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 		dp_gen_ack_rx_frame(pdev, &tx_capture_info);
 
 return_send_to_stack:
-	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+	DP_TX_PEER_DEL_REF(peer);
 	return;
 }
 
@@ -3454,9 +3529,12 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 
 	if (mpdu_nbuf != qdf_nbuf_queue_first(&xretry_user->mpdu_q)) {
 		next_nbuf = qdf_nbuf_queue_next(mpdu_nbuf);
-		qdf_err("mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
-			mpdu_nbuf, next_nbuf, xretry_user->mpdu_q,
-			qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+			  QDF_TRACE_LEVEL_INFO_HIGH,
+			  "mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
+			  mpdu_nbuf, next_nbuf,
+			  &xretry_user->mpdu_q,
+			  qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
 		/* Initialize temp list */
 		qdf_nbuf_queue_init(&temp_xretries);
 		/* Move entries into temp list till the mpdu_nbuf is found */
@@ -3486,9 +3564,9 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 				  "peer id %d, tid: %p mpdu_nbuf %p xretry_user %p "
 				  "mpdu_q %p len %d temp_xretry %p",
 				  __func__, pdev, tx_tid->peer_id, tx_tid, mpdu_nbuf,
-				  xretry_user, xretry_user->mpdu_q,
+				  xretry_user, &xretry_user->mpdu_q,
 				  qdf_nbuf_queue_len(&xretry_user->mpdu_q),
-				  temp_xretries);
+				  &temp_xretries);
 			qdf_assert_always(0);
 		}
 	} else {
@@ -3930,14 +4008,11 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 				qdf_nbuf_copy_expand_fraglist(
 					mpdu_nbuf, MAX_MONITOR_HEADER, 0);
 
-				peer = dp_peer_get_ref_by_id
-					(pdev->soc, user->peer_id,
-					 DP_MOD_ID_TX_CAPTURE);
+				peer = DP_TX_PEER_GET_REF(pdev, user->peer_id);
 				if (peer) {
 					dp_tx_cap_stats_mpdu_update(peer,
 							PEER_MPDU_CLONE, 1);
-					dp_peer_unref_delete
-						(peer, DP_MOD_ID_TX_CAPTURE);
+					DP_TX_PEER_DEL_REF(peer);
 				}
 				user->failed_bitmap[k] |=
 				SEQ_SEG_MSK(user->failed_bitmap[k], i);
@@ -4221,21 +4296,20 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 		subtype = 0;
 	}
 
-	peer = dp_peer_get_ref_by_id(pdev->soc, ppdu_desc->user[0].peer_id,
-				     DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev, ppdu_desc->user[0].peer_id);
 	if (peer && !peer->bss_peer) {
 		if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer,
 						    ppdu_desc->user[0].mac_addr
 						    )) {
 			qdf_nbuf_free(nbuf_ppdu_desc);
 			status = 0;
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 			goto free_ppdu_desc;
 		}
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 	} else {
 		if (peer)
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 		if (!(type == IEEE80211_FC0_TYPE_MGT &&
 		    (subtype == MGMT_SUBTYPE_PROBE_RESP >> 4 ||
 		     subtype == MGMT_SUBTYPE_DISASSOC >> 4 ||
@@ -4628,10 +4702,10 @@ dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
 	qdf_nbuf_queue_t head_msdu;
 	uint32_t qlen = 0;
 	uint32_t qlen_curr = 0;
-	struct cdp_tx_completion_ppdu_user *xretry_user;
+	struct cdp_tx_completion_ppdu_user *user;
 
-	xretry_user = &ppdu_desc->user[usr_idx];
-	tid = xretry_user->tid;
+	user = &ppdu_desc->user[usr_idx];
+	tid = user->tid;
 	tx_tid = &peer->tx_capture.tx_tid[tid];
 
 	qdf_nbuf_queue_init(&head_msdu);
@@ -4650,9 +4724,27 @@ dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
 	dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_FLUSH,
 				    qdf_nbuf_queue_len(&head_xretries));
 	if (!qdf_nbuf_is_queue_empty(&head_xretries)) {
-		struct cdp_tx_completion_ppdu *xretry_ppdu =
-						tx_tid->xretry_ppdu;
+		struct cdp_tx_completion_ppdu *xretry_ppdu = NULL;
+		struct cdp_tx_completion_ppdu_user *xretry_user = NULL;
 		uint32_t xretry_qlen;
+
+		xretry_ppdu = tx_tid->xretry_ppdu;
+		if (!xretry_ppdu) {
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_FATAL,
+				  "%s: xretry_ppdu is NULL",
+				  __func__);
+			return;
+		}
+
+		xretry_user = &xretry_ppdu->user[0];
+		if (!xretry_user) {
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_FATAL,
+				  "%s: xretry_user is NULL",
+				  __func__);
+			return;
+		}
 
 		xretry_ppdu->ppdu_id = peer->tx_capture.tx_wifi_ppdu_id;
 
@@ -4696,8 +4788,7 @@ dp_tx_ppdu_stats_flush(struct dp_pdev *pdev,
 	struct cdp_tx_completion_ppdu_user *user;
 
 	user = &ppdu_desc->user[usr_idx];
-	peer = dp_peer_get_ref_by_id(pdev->soc, user->peer_id,
-				     DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev, user->peer_id);
 
 	if (!peer)
 		return;
@@ -4706,7 +4797,7 @@ dp_tx_ppdu_stats_flush(struct dp_pdev *pdev,
 		dp_peer_tx_cap_tid_queue_flush_tlv(pdev, peer, ppdu_desc, usr_idx);
 	}
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+	DP_TX_PEER_DEL_REF(peer);
 	return;
 }
 
@@ -4846,9 +4937,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			if (user->delayed_ba || user->skip == 1)
 				continue;
 
-			peer = dp_peer_get_ref_by_id(pdev->soc,
-						     user->peer_id,
-						     DP_MOD_ID_TX_CAPTURE);
+			peer = DP_TX_PEER_GET_REF(pdev, user->peer_id);
 			if (!peer) {
 				user->skip = 1;
 				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
@@ -4858,8 +4947,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			if (!peer->tx_capture.is_tid_initialized) {
 				user->skip = 1;
 				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
-				dp_peer_unref_delete(peer,
-						     DP_MOD_ID_TX_CAPTURE);
+				DP_TX_PEER_DEL_REF(peer);
 				continue;
 			}
 
@@ -4892,8 +4980,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 					  "%s: ppdu_desc->mpdus allocation failed",
 					  __func__);
 				dp_ppdu_desc_free_all(ptr_nbuf_list, num_users);
-				dp_peer_unref_delete(peer,
-						     DP_MOD_ID_TX_CAPTURE);
+				DP_TX_PEER_DEL_REF(peer);
 				dp_print_pdev_tx_capture_stats(pdev);
 				qdf_assert_always(0);
 				return;
@@ -4902,8 +4989,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			if (qdf_unlikely(user->ba_size >
 			    CDP_BA_256_BIT_MAP_SIZE_DWORDS *
 				SEQ_SEG_SZ_BITS(user->failed_bitmap))) {
-				dp_peer_unref_delete(peer,
-						     DP_MOD_ID_TX_CAPTURE);
+				DP_TX_PEER_DEL_REF(peer);
 				qdf_assert_always(0);
 				return;
 			}
@@ -5027,7 +5113,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				user->ba_size = seq_no - start_seq + 1;
 			}
 
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 		}
 	}
 
@@ -5062,8 +5148,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				continue;
 
 			peer_id = cur_ppdu_desc->user[usr_idx].peer_id;
-			peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
-						     DP_MOD_ID_TX_CAPTURE);
+			peer = DP_TX_PEER_GET_REF(pdev, peer_id);
 			if (!peer) {
 				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
 				continue;
@@ -5071,6 +5156,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 
 			if (!peer->tx_capture.is_tid_initialized) {
 				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
+				DP_TX_PEER_DEL_REF(peer);
 				continue;
 			}
 
@@ -5122,8 +5208,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				tmp_ppdu_q = &tx_tid->pending_ppdu_q;
 				tmp_nbuf = qdf_nbuf_queue_remove(tmp_ppdu_q);
 				if (qdf_unlikely(!tmp_nbuf)) {
-					dp_peer_unref_delete
-						(peer, DP_MOD_ID_TX_CAPTURE);
+					DP_TX_PEER_DEL_REF(peer);
 					qdf_assert_always(0);
 					return;
 				}
@@ -5139,7 +5224,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				qdf_nbuf_free(tmp_nbuf);
 				pdev->tx_capture.pend_ppdu_dropped++;
 			}
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 		}
 	}
 }
@@ -5236,9 +5321,7 @@ dp_tx_cap_proc_per_ppdu_info(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu,
 			}
 
 			peer_id = user->peer_id;
-			peer = dp_peer_get_ref_by_id(pdev->soc,
-						     peer_id,
-						     DP_MOD_ID_TX_CAPTURE);
+			peer = DP_TX_PEER_GET_REF(pdev, peer_id);
 			/**
 			 * peer can be NULL
 			 */
@@ -5400,7 +5483,7 @@ dequeue_msdu_again:
 			dp_tx_cap_stats_mpdu_update(peer, PEER_MPDU_TRI,
 						    mpdu_tri);
 nbuf_add_ref:
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 			/* get reference count */
 			ref_cnt = qdf_nbuf_get_users(nbuf_ppdu);
 			continue;
@@ -5410,8 +5493,7 @@ free_nbuf_dec_ref:
 			qdf_nbuf_free(nbuf_ppdu);
 			ref_cnt--;
 			if (peer)
-				dp_peer_unref_delete(peer,
-						     DP_MOD_ID_TX_CAPTURE);
+				DP_TX_PEER_DEL_REF(peer);
 			continue;
 		}
 
@@ -5967,12 +6049,12 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 	peer_id = ast_entry->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
-	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev, peer_id);
 	if (!peer)
 		return QDF_STATUS_E_FAILURE;
 
 	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL, peer->mac_addr.raw)) {
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -5988,7 +6070,7 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 			}
 		}
 		if (!match) {
-			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+			DP_TX_PEER_DEL_REF(peer);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -6006,13 +6088,13 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 			       4, FALSE);
 
 	if (!tx_capture_info.mpdu_nbuf) {
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	dp_gen_cts_frame(ppdu_info, peer,
 				 tx_capture_info.mpdu_nbuf);
-	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+	DP_TX_PEER_DEL_REF(peer);
 	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
 			     &tx_capture_info, HTT_INVALID_PEER,
 			     WDI_NO_VAL, pdev->pdev_id);
@@ -6103,13 +6185,13 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 	peer_id = ast_entry->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
-	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev, peer_id);
 	if (!peer)
 		return;
 
 	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer,
 					    peer->mac_addr.raw)) {
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 		return;
 	}
 
@@ -6124,7 +6206,7 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 			       4, FALSE);
 
 	if (!tx_capture_info.mpdu_nbuf) {
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 		return;
 	}
 
@@ -6142,7 +6224,7 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 				 tx_capture_info.mpdu_nbuf);
 	}
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+	DP_TX_PEER_DEL_REF(peer);
 	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
 			     &tx_capture_info, HTT_INVALID_PEER,
 			     WDI_NO_VAL, pdev->pdev_id);
@@ -6383,13 +6465,13 @@ QDF_STATUS dp_send_noack_frame_to_stack(struct dp_soc *soc,
 	peer_id = ast_entry->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
-	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX_CAPTURE);
+	peer = DP_TX_PEER_GET_REF(pdev, peer_id);
 	if (!peer) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer, peer->mac_addr.raw)) {
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -6410,14 +6492,14 @@ QDF_STATUS dp_send_noack_frame_to_stack(struct dp_soc *soc,
 			       4, FALSE);
 
 	if (!tx_capture_info.mpdu_nbuf) {
-		dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+		DP_TX_PEER_DEL_REF(peer);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	dp_gen_noack_frame(ppdu_info, peer,
 			   tx_capture_info.mpdu_nbuf, mon_mpdu);
 
-	dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
+	DP_TX_PEER_DEL_REF(peer);
 	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
 			     &tx_capture_info, HTT_INVALID_PEER,
 			     WDI_NO_VAL, pdev->pdev_id);
