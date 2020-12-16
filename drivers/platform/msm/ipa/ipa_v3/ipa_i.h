@@ -1977,6 +1977,7 @@ struct ipa3_eth_error_stats {
  * @gsi_fw_file_name: GSI IPA fw file name
  * @uc_fw_file_name: uC IPA fw file name
  * @eth_info: ethernet client mapping
+ * @max_num_smmu_cb: number of smmu s1 cb supported
  */
 struct ipa3_context {
 	struct ipa3_char_device_context cdev;
@@ -2173,6 +2174,8 @@ struct ipa3_context {
 		eth_info[IPA_ETH_CLIENT_MAX][IPA_ETH_INST_ID_MAX];
 	u32 ipa_wan_aggr_pkt_cnt;
 	bool ipa_mhi_proxy;
+	u32 num_smmu_cb_probed;
+	u32 max_num_smmu_cb;
 };
 
 struct ipa3_plat_drv_res {
@@ -2241,6 +2244,7 @@ struct ipa3_plat_drv_res {
 	u32 tx_wrapper_cache_max_size;
 	u32 ipa_wan_aggr_pkt_cnt;
 	bool ipa_mhi_proxy;
+	u32 max_num_smmu_cb;
 };
 
 /**
