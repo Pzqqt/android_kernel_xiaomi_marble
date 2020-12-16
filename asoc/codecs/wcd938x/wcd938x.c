@@ -3060,6 +3060,62 @@ static const struct snd_kcontrol_new adc4_switch[] = {
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
 };
 
+static const struct snd_kcontrol_new amic1_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new amic2_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new amic3_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new amic4_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new amic5_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new amic6_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new amic7_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic1_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic2_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic3_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic4_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic5_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic6_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new va_amic7_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
 static const struct snd_kcontrol_new dmic1_switch[] = {
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
 };
@@ -3184,6 +3240,13 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AMIC5"),
 	SND_SOC_DAPM_INPUT("AMIC6"),
 	SND_SOC_DAPM_INPUT("AMIC7"),
+	SND_SOC_DAPM_INPUT("VA AMIC1"),
+	SND_SOC_DAPM_INPUT("VA AMIC2"),
+	SND_SOC_DAPM_INPUT("VA AMIC3"),
+	SND_SOC_DAPM_INPUT("VA AMIC4"),
+	SND_SOC_DAPM_INPUT("VA AMIC5"),
+	SND_SOC_DAPM_INPUT("VA AMIC6"),
+	SND_SOC_DAPM_INPUT("VA AMIC7"),
 
 	SND_SOC_DAPM_INPUT("IN1_HPHL"),
 	SND_SOC_DAPM_INPUT("IN2_HPHR"),
@@ -3245,6 +3308,48 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_MIXER_E("ADC4 REQ", SND_SOC_NOPM, 3, 0,
 				NULL, 0, wcd938x_enable_req,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC1_MIXER", SND_SOC_NOPM, 0, 0,
+				amic1_switch, ARRAY_SIZE(amic1_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC2_MIXER", SND_SOC_NOPM, 0, 0,
+				amic2_switch, ARRAY_SIZE(amic2_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC3_MIXER", SND_SOC_NOPM, 0, 0,
+				amic3_switch, ARRAY_SIZE(amic3_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC4_MIXER", SND_SOC_NOPM, 0, 0,
+				amic4_switch, ARRAY_SIZE(amic4_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC5_MIXER", SND_SOC_NOPM, 0, 0,
+				amic5_switch, ARRAY_SIZE(amic5_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC6_MIXER", SND_SOC_NOPM, 0, 0,
+				amic6_switch, ARRAY_SIZE(amic6_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("AMIC7_MIXER", SND_SOC_NOPM, 0, 0,
+				amic7_switch, ARRAY_SIZE(amic7_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC1_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic1_switch, ARRAY_SIZE(va_amic1_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC2_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic2_switch, ARRAY_SIZE(va_amic2_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC3_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic3_switch, ARRAY_SIZE(va_amic3_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC4_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic4_switch, ARRAY_SIZE(va_amic4_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC5_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic5_switch, ARRAY_SIZE(va_amic5_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC6_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic6_switch, ARRAY_SIZE(va_amic6_switch), NULL,
+				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("VA_AMIC7_MIXER", SND_SOC_NOPM, 0, 0,
+				va_amic7_switch, ARRAY_SIZE(va_amic7_switch), NULL,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_MUX("ADC2 MUX", SND_SOC_NOPM, 0, 0,
@@ -3435,32 +3540,53 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"WCD_TX_OUTPUT", NULL, "ADC1_MIXER"},
 	{"ADC1_MIXER", "Switch", "ADC1 REQ"},
 	{"ADC1 REQ", NULL, "ADC1"},
-	{"ADC1", NULL, "AMIC1"},
+	{"ADC1", NULL, "AMIC1_MIXER"},
+	{"AMIC1_MIXER", "Switch", "AMIC1"},
+	{"AMIC1_MIXER", NULL, "VA_AMIC1_MIXER"},
+	{"VA_AMIC1_MIXER", "Switch", "VA AMIC1"},
 
 	{"WCD_TX_OUTPUT", NULL, "ADC2_MIXER"},
 	{"ADC2_MIXER", "Switch", "ADC2 REQ"},
 	{"ADC2 REQ", NULL, "ADC2"},
 	{"ADC2", NULL, "HDR12 MUX"},
 	{"HDR12 MUX", "NO_HDR12", "ADC2 MUX"},
-	{"HDR12 MUX", "HDR12", "AMIC1"},
-	{"ADC2 MUX", "INP3", "AMIC3"},
-	{"ADC2 MUX", "INP2", "AMIC2"},
+	{"HDR12 MUX", "HDR12", "AMIC1_MIXER"},
+	{"ADC2 MUX", "INP3", "AMIC3_MIXER"},
+	{"AMIC3_MIXER", "Switch", "AMIC3"},
+	{"AMIC3_MIXER", NULL, "VA_AMIC3_MIXER"},
+	{"VA_AMIC3_MIXER", "Switch", "VA AMIC3"},
+	{"ADC2 MUX", "INP2", "AMIC2_MIXER"},
+	{"AMIC2_MIXER", "Switch", "AMIC2"},
+	{"AMIC2_MIXER", NULL, "VA_AMIC2_MIXER"},
+	{"VA_AMIC2_MIXER", "Switch", "VA AMIC2"},
 
 	{"WCD_TX_OUTPUT", NULL, "ADC3_MIXER"},
 	{"ADC3_MIXER", "Switch", "ADC3 REQ"},
 	{"ADC3 REQ", NULL, "ADC3"},
 	{"ADC3", NULL, "HDR34 MUX"},
 	{"HDR34 MUX", "NO_HDR34", "ADC3 MUX"},
-	{"HDR34 MUX", "HDR34", "AMIC5"},
-	{"ADC3 MUX", "INP4", "AMIC4"},
-	{"ADC3 MUX", "INP6", "AMIC6"},
+	{"HDR34 MUX", "HDR34", "AMIC5_MIXER"},
+	{"ADC3 MUX", "INP4", "AMIC4_MIXER"},
+	{"AMIC4_MIXER", "Switch", "AMIC4"},
+	{"AMIC4_MIXER", NULL, "VA_AMIC4_MIXER"},
+	{"VA_AMIC4_MIXER", "Switch", "VA AMIC4"},
+	{"ADC3 MUX", "INP6", "AMIC6_MIXER"},
+	{"AMIC6_MIXER", "Switch", "AMIC6"},
+	{"AMIC6_MIXER", NULL, "VA_AMIC6_MIXER"},
+	{"VA_AMIC6_MIXER", "Switch", "VA AMIC6"},
 
 	{"WCD_TX_OUTPUT", NULL, "ADC4_MIXER"},
 	{"ADC4_MIXER", "Switch", "ADC4 REQ"},
 	{"ADC4 REQ", NULL, "ADC4"},
 	{"ADC4", NULL, "ADC4 MUX"},
-	{"ADC4 MUX", "INP5", "AMIC5"},
-	{"ADC4 MUX", "INP7", "AMIC7"},
+	{"ADC4 MUX", "INP5", "AMIC5_MIXER"},
+	{"AMIC5_MIXER", "Switch", "AMIC5"},
+	{"AMIC5_MIXER", NULL, "VA_AMIC5_MIXER"},
+	{"VA_AMIC5_MIXER", "Switch", "VA AMIC5"},
+	{"ADC4 MUX", "INP7", "AMIC7_MIXER"},
+	{"AMIC7_MIXER", "Switch", "AMIC7"},
+	{"AMIC7_MIXER", NULL, "VA_AMIC7_MIXER"},
+	{"VA_AMIC7_MIXER", "Switch", "VA AMIC7"},
 
 	{"WCD_TX_OUTPUT", NULL, "DMIC1_MIXER"},
 	{"DMIC1_MIXER", "Switch", "DMIC1"},
@@ -3789,6 +3915,13 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC5");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC6");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC7");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC1");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC2");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC3");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC4");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC5");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC6");
+	snd_soc_dapm_ignore_suspend(dapm, "VA AMIC7");
 	snd_soc_dapm_ignore_suspend(dapm, "WCD_TX_OUTPUT");
 	snd_soc_dapm_ignore_suspend(dapm, "IN1_HPHL");
 	snd_soc_dapm_ignore_suspend(dapm, "IN2_HPHR");
