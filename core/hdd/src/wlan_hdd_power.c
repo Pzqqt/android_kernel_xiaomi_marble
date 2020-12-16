@@ -2025,6 +2025,9 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (0 != rc)
 		return rc;
 
+	/* Wait for the stop module if already in progress */
+	hdd_psoc_idle_timer_stop(hdd_ctx);
+
 	if (hdd_ctx->config->is_wow_disabled) {
 		hdd_info_rl("wow is disabled");
 		return -EINVAL;
