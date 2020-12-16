@@ -123,9 +123,9 @@
 #include <wlan_hdd_ota_test.h>
 #include "wlan_policy_mgr_ucfg.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_twt_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"
-#include "wlan_mlme_ucfg_api.h"
 #include "wlan_pmo_cfg.h"
 #include "cfg_ucfg_api.h"
 

@@ -53,6 +53,30 @@ struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 	return &mlme_priv->dynamic_cfg;
 }
 
+uint32_t mlme_get_vdev_he_ops(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct vdev_mlme_obj *mlme_obj;
+	uint32_t he_ops = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return he_ops;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		mlme_legacy_err("Failed to get vdev MLME Obj");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return he_ops;
+	}
+
+	he_ops = mlme_obj->proto.he_ops_info.he_ops;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return he_ops;
+}
+
 struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 				struct wlan_objmgr_vdev *vdev)
 {

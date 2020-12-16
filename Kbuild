@@ -1291,6 +1291,11 @@ MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o \
 
 MLME_OBJS += $(MLME_DIR)/core/src/wlan_mlme_vdev_mgr_interface.o
 
+ifeq ($(CONFIG_WLAN_FEATURE_TWT), y)
+MLME_OBJS += $(MLME_DIR)/core/src/wlan_mlme_twt_api.o
+MLME_OBJS += $(MLME_DIR)/dispatcher/src/wlan_mlme_twt_ucfg_api.o
+endif
+
 CM_DIR := components/umac/mlme/connection_mgr
 CM_TGT_IF_DIR := components/target_if/connection_mgr
 

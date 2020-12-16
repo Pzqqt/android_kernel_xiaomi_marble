@@ -35,6 +35,7 @@
 #include "wlan_osif_request_manager.h"
 #include "cfg_ucfg_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
+#include <wlan_mlme_twt_ucfg_api.h>
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 4000
 #define TWT_NUDGE_COMPLETE_TIMEOUT 4000
@@ -669,6 +670,14 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 	else
 		params[0].dialog_id = 0;
 
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 params[0].dialog_id)) {
+		hdd_debug("vdev%d: TWT session %d setup incomplete",
+			  adapter->vdev_id, params[0].dialog_id);
+		return -EINVAL;
+	}
+
 	hdd_debug("TWT: get_params dialog_id %d", params[0].dialog_id);
 
 	if (params[0].dialog_id <= TWT_MAX_DIALOG_ID) {
@@ -1161,6 +1170,14 @@ hdd_twt_add_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 		  add_dialog_event->params.status, vdev_id,
 		  QDF_MAC_ADDR_REF(add_dialog_event->params.peer_macaddr));
 	hdd_send_twt_setup_response(adapter, add_dialog_event);
+
+	if (add_dialog_event->params.status)
+		return;
+
+	ucfg_mlme_set_twt_setup_done(
+		adapter->hdd_ctx->psoc,
+		(struct qdf_mac_addr *)add_dialog_event->params.peer_macaddr,
+		add_dialog_event->params.dialog_id, true);
 }
 
 /**
@@ -1253,7 +1270,30 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 		ucfg_mlme_set_twt_congestion_timeout(adapter->hdd_ctx->psoc, 0);
 		hdd_send_twt_enable_cmd(adapter->hdd_ctx);
 	}
+
+	if (ucfg_mlme_is_twt_setup_in_progress(adapter->hdd_ctx->psoc,
+					       &hdd_sta_ctx->conn_info.bssid,
+					       params.dialog_id) ||
+	    ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					&hdd_sta_ctx->conn_info.bssid,
+					params.dialog_id)) {
+		hdd_err_rl("TWT session exists for dialog:%d",
+			   params.dialog_id);
+		return -EALREADY;
+	}
+
 	ret = hdd_send_twt_add_dialog_cmd(adapter->hdd_ctx, &params);
+	if (ret < 0)
+		return ret;
+
+	/*
+	 * Add the dialog id to TWT context to drop back to back
+	 * commands
+	 */
+	ucfg_mlme_add_twt_session(adapter->hdd_ctx->psoc,
+				  &hdd_sta_ctx->conn_info.bssid,
+				  params.dialog_id);
+
 	return ret;
 }
 
@@ -1381,6 +1421,13 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+	ucfg_mlme_set_twt_setup_done(
+				adapter->hdd_ctx->psoc,
+				(struct qdf_mac_addr *)params->peer_macaddr,
+				params->dialog_id, false);
+	mlme_init_twt_context(hdd_ctx->psoc,
+			      (struct qdf_mac_addr *)params->peer_macaddr,
+			      params->dialog_id);
 
 	hdd_exit();
 
@@ -1463,6 +1510,14 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 	} else {
 		params.dialog_id = 0;
 		hdd_debug("TWT_TERMINATE_FLOW_ID not specified. set to zero");
+	}
+
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 params.dialog_id)) {
+		hdd_debug("vdev%d: TWT session %d setup incomplete",
+			  params.vdev_id, params.dialog_id);
+		return -EINVAL;
 	}
 
 	hdd_debug("twt_terminate: vdev_id %d dialog_id %d peer mac_addr "
@@ -1728,6 +1783,14 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 		hdd_debug("TWT: FLOW_ID not specified. set to zero");
 	}
 
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 params.dialog_id)) {
+		hdd_debug("vdev%d: TWT session %d setup incomplete",
+			  params.vdev_id, params.dialog_id);
+		return -EINVAL;
+	}
+
 	hdd_debug("twt_pause: vdev_id %d dialog_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
 		  QDF_MAC_ADDR_REF(params.peer_macaddr));
@@ -1885,6 +1948,14 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 	}
 	params.next_twt_size = nla_get_u32(tb[id]);
 
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 params.dialog_id)) {
+		hdd_debug("vdev%d: TWT session %d setup incomplete",
+			  params.vdev_id, params.dialog_id);
+		return -EINVAL;
+	}
+
 	hdd_debug("twt_nudge: vdev_id %d dialog_id %d ", params.vdev_id,
 		  params.dialog_id);
 	hdd_debug("twt_nudge: suspend_duration %d next_twt_size %d",
@@ -2037,12 +2108,15 @@ static QDF_STATUS
 hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct nlattr *config_attr;
 	struct sk_buff *reply_skb;
 	size_t skb_len = NLMSG_HDRLEN;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	uint8_t peer_cap = 0, self_cap = 0;
 	bool twt_req = false, twt_bcast_req = false;
+	bool enable_bcast_twt = false, bcast_tgt_cap;
 
 	/*
 	 * Length of attribute QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF &
@@ -2065,14 +2139,29 @@ hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
 		goto free_skb;
 	}
 
+	/* fill the self_capability bitmap  */
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
 	if (twt_req)
 		self_cap |= QCA_WLAN_TWT_CAPA_REQUESTOR;
 
+	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &enable_bcast_twt);
+	bcast_tgt_cap = ucfg_mlme_get_twt_bcast_requestor_tgt_cap(
+						hdd_ctx->psoc);
 	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc,
 					  &twt_bcast_req);
-	if (twt_bcast_req)
+	if (bcast_tgt_cap && enable_bcast_twt)
+		self_cap |= (twt_bcast_req ?
+			     QCA_WLAN_TWT_CAPA_BROADCAST : 0);
+	else if (twt_bcast_req)
 		self_cap |= QCA_WLAN_TWT_CAPA_BROADCAST;
+
+	if (ucfg_mlme_is_flexible_twt_enabled(hdd_ctx->psoc))
+		self_cap |= QCA_WLAN_TWT_CAPA_FLEXIBLE;
+
+	/* Fill the Peer capability bitmap */
+	peer_cap = ucfg_mlme_get_twt_peer_capabilities(
+		hdd_ctx->psoc,
+		(struct qdf_mac_addr *)sta_ctx->conn_info.bssid.bytes);
 
 	if (nla_put_u16(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF,
 			self_cap)) {
@@ -2194,6 +2283,14 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 	} else {
 		params.dialog_id = 0;
 		hdd_debug("TWT_RESUME_FLOW_ID not specified. set to zero");
+	}
+
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 params.dialog_id)) {
+		hdd_debug("vdev%d: TWT session %d setup incomplete",
+			  params.vdev_id, params.dialog_id);
+		return -EINVAL;
 	}
 
 	id = QCA_WLAN_VENDOR_ATTR_TWT_RESUME_NEXT_TWT;

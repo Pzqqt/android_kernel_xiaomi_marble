@@ -65,6 +65,7 @@
 #include "wlan_hdd_scan.h"
 #include "wlan_crypto_global_api.h"
 #include "wlan_hdd_bcn_recv.h"
+#include "wlan_mlme_twt_ucfg_api.h"
 
 #include "wlan_hdd_nud_tracking.h"
 #include <wlan_cfg80211_crypto.h>
@@ -3198,7 +3199,12 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			/* Inform FTM TIME SYNC about the connection with AP */
 			hdd_ftm_time_sync_sta_state_notify(
 					adapter, FTM_TIME_SYNC_STA_CONNECTED);
+
+			ucfg_mlme_init_twt_context(hdd_ctx->psoc,
+						   &roam_info->bssid,
+						   WLAN_ALL_SESSIONS_DIALOG_ID);
 		}
+
 		/*
 		 * Following code will be cleaned once the interface manager
 		 * module is enabled.

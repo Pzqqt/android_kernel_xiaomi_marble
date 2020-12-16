@@ -626,9 +626,8 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 			mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt);
 	mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt = value;
 
-	value = QDF_MIN(he_cap->flex_twt_sched,
-			mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched);
-	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched = value;
+	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched =
+			he_cap->flex_twt_sched;
 
 	mlme_obj->cfg.he_caps.dot11_he_cap.ba_32bit_bitmap =
 					he_cap->ba_32bit_bitmap;
@@ -4708,16 +4707,3 @@ bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
 
 	return false;
 }
-
-#ifdef WLAN_SUPPORT_TWT
-bool mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return cfg_default(CFG_ENABLE_TWT);
-
-	return mlme_obj->cfg.twt_cfg.is_twt_enabled;
-}
-#endif

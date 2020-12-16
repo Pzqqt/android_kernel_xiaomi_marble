@@ -160,6 +160,7 @@
 #include "wlan_tdls_cfg_api.h"
 #include <wlan_hdd_rssi_monitor.h>
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_twt_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
 #include "wlan_policy_mgr_ucfg.h"
 #include "qdf_func_tracker.h"
