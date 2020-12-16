@@ -9511,7 +9511,7 @@ static INLINE A_UINT8 *wmi_ctrl_path_fw_arena_id_to_name(A_UINT32 arena_id)
 
 typedef struct {
     /** TLV tag and len; tag equals
-     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
+     *  WMITLV_TAG_STRUC_wmi_ctrl_path_mem_stats_struct */
     A_UINT32 tlv_header;
     A_UINT32 arena_id;          /* see wmi_ctrl_path_fw_arena_ids */
     A_UINT32 total_bytes;       /* total bytes in each arena */
@@ -9527,7 +9527,7 @@ typedef enum _WMI_GET_STATS_TWT_STATUS_T {
 
 typedef struct {
     /** TLV tag and len; tag equals
-     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
+     *  WMITLV_TAG_STRUC_wmi_ctrl_path_twt_stats_struct */
     A_UINT32 tlv_header;
     A_UINT32 dialog_id;         /* TWT dialog ID */
     A_UINT32 status;            /* refer to WMI_GET_STATS_TWT_STATUS_T */
@@ -9540,6 +9540,172 @@ typedef struct {
     A_UINT32 tx_bytes_per_sp;   /* Average tx bytes per SP */
     A_UINT32 rx_bytes_per_sp;   /* Average rx bytes per SP */
 } wmi_ctrl_path_twt_stats_struct;
+
+typedef enum {
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_COLD_BOOT_CAL       = 0,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_FULL_CHAN_SWITCH    = 1,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_SCAN_CHAN_SWITCH    = 2,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_DPD_SPLIT_CAL       = 3,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_TEMP_TRIGEER_CAL    = 4,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_POWER_SAVE_WAKE_UP  = 5,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_TIMER_TRIGGER_CAL   = 6,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_FTM_TRIGGER_CAL     = 7,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_AGILE_OR_POWER_DOWN_DTIM = 8,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_NOISY_ENV_RXDO      = 9,
+} wmi_ctrl_path_stats_cal_profile_ids;
+
+typedef enum {
+    WMI_CTRL_PATH_STATS_CAL_TYPE_ADC                     = 0,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DAC                     = 1,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PROCESS                 = 2,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_NOISE_FLOOR             = 3,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO                   = 4,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_COMB_TXLO_TXIQ_RXIQ     = 5,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_TXLO                    = 6,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_TXIQ                    = 7,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXIQ                    = 8,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_IM2                     = 9,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_LNA                     = 10,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXDCO            = 11,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXIQ             = 12,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORYLESS          = 13,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORY              = 14,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_IBF                     = 15,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PDET_AND_PAL            = 16,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_IQ                = 17,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_DTIM              = 18,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_TPC_CAL                 = 19,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_TIMEREQ             = 20,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_BWFILTER                = 21,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PEF                     = 22,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PADROOP                 = 23,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_SELFCALTPC              = 24,
+} wmi_ctrl_path_stats_cal_type_ids;
+
+typedef enum {
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_NOISE_FLOOR    = 0,
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORYLESS = 1,
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORY     = 2,
+} wmi_ctrl_path_stats_periodic_cal_type_ids;
+
+/*
+ * Used by some hosts to print names of cal profile, based on
+ * wmi_ctrl_path_cal_profile_ids values specified in
+ * wmi_ctrl_path_calibration_stats_struct in ctrl_path_stats event msg.
+ */
+static INLINE
+A_UINT8 *wmi_ctrl_path_cal_profile_id_to_name(A_UINT32 cal_profile_id)
+{
+    switch (cal_profile_id)
+    {
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_COLD_BOOT_CAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_FULL_CHAN_SWITCH);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_SCAN_CHAN_SWITCH);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_DPD_SPLIT_CAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_TEMP_TRIGEER_CAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_POWER_SAVE_WAKE_UP);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_TIMER_TRIGGER_CAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_FTM_TRIGGER_CAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_AGILE_OR_POWER_DOWN_DTIM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_PROFILE_NOISY_ENV_RXDO);
+    }
+
+    return (A_UINT8 *) "WMI_CTRL_PATH_STATS_CAL_PROFILE_UNKNOWN";
+}
+
+/*
+ * Used by some hosts to print names of cal type, based on
+ * wmi_ctrl_path_cal_type_ids values specified in
+ * wmi_ctrl_path_calibration_stats_struct in ctrl_path_stats event msg.
+ */
+static INLINE A_UINT8 *wmi_ctrl_path_cal_type_id_to_name(A_UINT32 cal_type_id)
+{
+    switch (cal_type_id)
+    {
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_ADC);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_DAC);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_PROCESS);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_NOISE_FLOOR);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_COMB_TXLO_TXIQ_RXIQ);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_TXLO);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_TXIQ);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_RXIQ);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_IM2);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_LNA);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXDCO);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXIQ);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORYLESS);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORY);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_IBF);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_PDET_AND_PAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_IQ);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_DTIM);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_TPC_CAL);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_TIMEREQ);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_BWFILTER);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_PEF);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_PADROOP);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_CAL_TYPE_SELFCALTPC);
+    }
+
+    return (A_UINT8 *) "WMI_CTRL_PATH_STATS_CAL_TYPE_UNKNOWN";
+}
+
+/*
+ * Used by some hosts to print names of peridodic cal type, based on
+ * wmi_ctrl_path_periodic_cal_type_ids values specified in
+ * wmi_ctrl_path_calibration_stats_struct in ctrl_path_stats event msg.
+ */
+static INLINE A_UINT8 *wmi_ctrl_path_periodic_cal_type_id_to_name(A_UINT32 periodic_cal_type_id)
+{
+    switch (periodic_cal_type_id)
+    {
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_NOISE_FLOOR);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORYLESS);
+        WMI_RETURN_STRING(WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORY);
+    }
+
+    return (A_UINT8 *) "WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_UNKNOWN";
+}
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_ctrl_path_calibration_stats_struct*/
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC/PHY */
+    A_UINT32 pdev_id;
+    /** Bit 0 - 7  : cal type / periodic cal type
+      *              These bits hold either a wmi_ctrl_path_stats_cal_type_ids
+      *              value for generic cal (if bit 13 is cleared) or a
+      *              wmi_ctrl_path_stats_periodic_cal_type_ids value for
+      *              periodic cal (if bit 13 is set).
+      *              Signifies the type of calibration
+      *              cal_type       : 8
+      * Bit 8 - 12 : These bits hold a wmi_ctrl_path_stats_cal_profile_ids value.
+      *              Signifies the type of cal profile
+      *              cal_profile     : 5
+      * Bit 13     : Signifies whether stats is for generic cal or periodic cal
+      *              is_cal_periodic : 1
+      *              0 -> generic cal
+      *              1 -> periodic cal
+      * Bit 14 - 31: Reserved for future
+      */
+    A_UINT32 cal_info;
+    A_UINT32 cal_triggered_cnt;   /* Count of number of times calibration triggered */
+    A_UINT32 cal_fail_cnt;        /* Count of number of times calibration failed */
+    A_UINT32 cal_fcs_cnt;         /* Count of number of times FCS done for cal */
+    A_UINT32 cal_fcs_fail_cnt;    /* Count of number of times FCS failed for cal */
+} wmi_ctrl_path_calibration_stats_struct;
+
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_GET(value)             WMI_GET_BITS(value, 0, 8)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_SET(value, cal_type)   WMI_SET_BITS(value, 0, 8, cal_type)
+
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_PROFILE_GET(value)              WMI_GET_BITS(value, 8, 5)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_PROFILE_SET(value, cal_profile) WMI_SET_BITS(value, 8, 5, cal_profile)
+
+#define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_GET(value)              WMI_GET_BITS(value, 13, 1)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_SET(value, is_periodic) WMI_SET_BITS(value, 13, 1, is_periodic)
 
 typedef struct {
     /** TLV tag and len; tag equals
