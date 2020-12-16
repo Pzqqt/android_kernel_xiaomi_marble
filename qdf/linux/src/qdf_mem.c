@@ -1780,6 +1780,12 @@ void *qdf_mem_malloc_atomic_fl(size_t size, const char *func, uint32_t line)
 {
 	void *ptr;
 
+	if (!size || size > QDF_MEM_MAX_MALLOC) {
+		qdf_nofl_err("Cannot malloc %zu bytes @ %s:%d", size, func,
+			     line);
+		return NULL;
+	}
+
 	ptr = qdf_mem_prealloc_get(size);
 	if (ptr)
 		return ptr;
