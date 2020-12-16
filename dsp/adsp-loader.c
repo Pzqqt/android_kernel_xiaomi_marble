@@ -16,7 +16,9 @@
 #include <linux/workqueue.h>
 #include <linux/nvmem-consumer.h>
 #include <linux/slab.h>
-#include <soc/qcom/subsystem_restart.h>
+#include <linux/remoteproc.h>
+#include <linux/remoteproc/qcom_rproc.h>
+
 
 #define Q6_PIL_GET_DELAY_MS 100
 #define BOOT_CMD 1
@@ -24,11 +26,11 @@
 #define IMAGE_UNLOAD_CMD 0
 #define MAX_FW_IMAGES 4
 
-enum apr_subsys_state {
-        APR_SUBSYS_DOWN,
-        APR_SUBSYS_UP,
-        APR_SUBSYS_LOADED,
-	APR_SUBSYS_UNKNOWN,
+enum spf_subsys_state {
+	SPF_SUBSYS_DOWN,
+	SPF_SUBSYS_UP,
+	SPF_SUBSYS_LOADED,
+	SPF_SUBSYS_UNKNOWN,
 };
 
 static ssize_t adsp_boot_store(struct kobject *kobj,
@@ -62,52 +64,6 @@ static struct work_struct adsp_ldr_work;
 static struct platform_device *adsp_private;
 static void adsp_loader_unload(struct platform_device *pdev);
 
-static int adsp_restart_subsys(void)
-{
-	struct subsys_device *adsp_dev = NULL;
-	struct platform_device *pdev = adsp_private;
-	struct adsp_loader_private *priv = NULL;
-	int rc = -EINVAL;
-
-	priv = platform_get_drvdata(pdev);
-	if (!priv)
-		return rc;
-
-	adsp_dev = (struct subsys_device *)priv->pil_h;
-	if (!adsp_dev)
-		return rc;
-
-	/* subsystem_restart_dev has worker queue to handle */
-	rc = subsystem_restart_dev(adsp_dev);
-	if (rc) {
-		dev_err(&pdev->dev, "subsystem_restart_dev failed\n");
-		return rc;
-	}
-	pr_debug("%s :: Restart Success %d\n", __func__, rc);
-	return rc;
-}
-
-#if 0
-static void adsp_load_state_notify_cb(enum apr_subsys_state state,
-						void *phandle)
-{
-	struct platform_device *pdev = adsp_private;
-	struct adsp_loader_private *priv = NULL;
-
-	priv = platform_get_drvdata(pdev);
-	if (!priv)
-		return;
-	if (phandle != adsp_private) {
-		pr_err("%s:callback is not for adsp-loader client\n", __func__);
-		return;
-	}
-	pr_debug("%s:: Received cb for ADSP restart\n", __func__);
-	if (state == APR_SUBSYS_UNKNOWN)
-		adsp_restart_subsys();
-	else
-		pr_debug("%s:Ignore restart request for ADSP", __func__);
-}
-#endif
 
 static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 {
@@ -116,8 +72,10 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 	const char *adsp_dt = "qcom,adsp-state";
 	int rc = 0;
 	u32 adsp_state;
-	const char *img_name;
-//	void *padsp_restart_cb = &adsp_load_state_notify_cb;
+	struct property *prop;
+	int size;
+	phandle rproc_phandle;
+	struct rproc *rproc;
 
 	if (!pdev) {
 		dev_err(&pdev->dev, "%s: Platform device null\n", __func__);
@@ -130,6 +88,13 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 		goto fail;
 	}
 
+	priv = platform_get_drvdata(pdev);
+	if (!priv) {
+		dev_err(&pdev->dev,
+		" %s: Private data get failed\n", __func__);
+		goto fail;
+	}
+
 	rc = of_property_read_u32(pdev->dev.of_node, adsp_dt, &adsp_state);
 	if (rc) {
 		dev_err(&pdev->dev,
@@ -137,84 +102,68 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 		goto fail;
 	}
 
-	rc = of_property_read_string(pdev->dev.of_node,
-					"qcom,proc-img-to-load",
-					&img_name);
-
-	if (rc) {
+	prop = of_find_property(pdev->dev.of_node, "qcom,proc-img-to-load",
+					&size);
+	if (!prop) {
 		dev_dbg(&pdev->dev,
 			"%s: loading default image ADSP\n", __func__);
 		goto load_adsp;
 	}
-	if (!strcmp(img_name, "modem")) {
-		/* adsp_state always returns "0". So load modem image based on
-		 * apr_modem_state to prevent loading of image twice
-		 */
-		//adsp_state = apr_get_modem_state();
-		if (adsp_state == APR_SUBSYS_DOWN) {
-			priv = platform_get_drvdata(pdev);
-			if (!priv) {
-				dev_err(&pdev->dev,
-				" %s: Private data get failed\n", __func__);
-				goto fail;
-			}
 
-			priv->pil_h = subsystem_get("modem");
-			if (IS_ERR(priv->pil_h)) {
+	rproc_phandle = be32_to_cpup(prop->value);
+	priv->pil_h = rproc_get_by_phandle(rproc_phandle);
+	if (!priv->pil_h)
+		goto fail;
+
+	rproc = priv->pil_h;
+	if (!strcmp(rproc->name, "modem")) {
+		if (adsp_state == SPF_SUBSYS_DOWN) {
+			rc = rproc_boot(priv->pil_h);
+			if (IS_ERR(priv->pil_h) || rc) {
 				dev_err(&pdev->dev, "%s: pil get failed,\n",
 					__func__);
 				goto fail;
 			}
 
-			/* Set the state of the ADSP in APR driver */
-			//apr_set_modem_state(APR_SUBSYS_LOADED);
-		} else if (adsp_state == APR_SUBSYS_LOADED) {
+		} else if (adsp_state == SPF_SUBSYS_LOADED) {
 			dev_dbg(&pdev->dev,
 			"%s: MDSP state = %x\n", __func__, adsp_state);
 		}
 
 		dev_dbg(&pdev->dev, "%s: Q6/MDSP image is loaded\n", __func__);
-		goto success;
 	}
 
 load_adsp:
 	{
+		prop = of_find_property(pdev->dev.of_node, "qcom,rproc-handle",
+						&size);
+		if (!prop) {
+			dev_err(&pdev->dev, "Missing remotproc handle\n");
+			goto fail;
+		}
+		rproc_phandle = be32_to_cpup(prop->value);
+		priv->pil_h = rproc_get_by_phandle(rproc_phandle);
+		if (!priv->pil_h)
+			goto fail;
 		adsp_state = spf_core_is_apm_ready();
-		if (adsp_state == APR_SUBSYS_DOWN) {
-			priv = platform_get_drvdata(pdev);
-			if (!priv) {
-				dev_err(&pdev->dev,
-				" %s: Private data get failed\n", __func__);
-				goto fail;
-			}
-			if (!priv->adsp_fw_name) {
-				dev_dbg(&pdev->dev, "%s: Load default ADSP\n",
-					__func__);
-				priv->pil_h = subsystem_get("adsp");
-			} else {
-				dev_dbg(&pdev->dev, "%s: Load ADSP with fw name %s\n",
-					__func__, priv->adsp_fw_name);
-				priv->pil_h = subsystem_get_with_fwname("adsp", priv->adsp_fw_name);
-			}
-
-			if (IS_ERR(priv->pil_h)) {
+		if (adsp_state == SPF_SUBSYS_DOWN) {
+			rc = rproc_boot(priv->pil_h);
+			if (rc) {
 				dev_err(&pdev->dev, "%s: pil get failed,\n",
 					__func__);
 				goto fail;
 			}
-		} else if (adsp_state == APR_SUBSYS_LOADED) {
-			dev_dbg(&pdev->dev,
+		} else if (adsp_state == SPF_SUBSYS_LOADED) {
+		dev_dbg(&pdev->dev,
 			"%s: ADSP state = %x\n", __func__, adsp_state);
 		}
 
 		dev_dbg(&pdev->dev, "%s: Q6/ADSP image is loaded\n", __func__);
-//		apr_register_adsp_state_cb(padsp_restart_cb, adsp_private);
-		goto success;
+		return;
 	}
+
 fail:
 	dev_err(&pdev->dev, "%s: Q6 image loading failed\n", __func__);
-success:
-	return;
 }
 
 static void adsp_loader_do(struct platform_device *pdev)
@@ -228,15 +177,15 @@ static ssize_t adsp_ssr_store(struct kobject *kobj,
 	size_t count)
 {
 	int ssr_command = 0;
+	struct rproc *adsp_dev = NULL;
 	struct platform_device *pdev = adsp_private;
 	struct adsp_loader_private *priv = NULL;
-	int rc = -EINVAL;
 
 	dev_dbg(&pdev->dev, "%s: going to call adsp ssr\n ", __func__);
 
 	priv = platform_get_drvdata(pdev);
 	if (!priv)
-		return rc;
+		return -EINVAL;
 
 	if (kstrtoint(buf, 10, &ssr_command) < 0)
 		return -EINVAL;
@@ -244,7 +193,15 @@ static ssize_t adsp_ssr_store(struct kobject *kobj,
 	if (ssr_command != SSR_RESET_CMD)
 		return -EINVAL;
 
-	adsp_restart_subsys();
+	adsp_dev = (struct rproc *)priv->pil_h;
+	if (!adsp_dev)
+		return -EINVAL;
+
+	dev_err(&pdev->dev, "requesting for ADSP restart\n");
+
+	/* subsystem_restart_dev has worker queue to handle */
+	rproc_report_crash(adsp_dev, RPROC_FATAL_ERROR);
+
 	dev_dbg(&pdev->dev, "%s :: ADSP restarted\n", __func__);
 	return count;
 }
@@ -281,8 +238,7 @@ static void adsp_loader_unload(struct platform_device *pdev)
 		return;
 
 	if (priv->pil_h) {
-		dev_dbg(&pdev->dev, "%s: calling subsystem put\n", __func__);
-		subsystem_put(priv->pil_h);
+		rproc_shutdown(priv->pil_h);
 		priv->pil_h = NULL;
 	}
 }
@@ -352,7 +308,7 @@ static int adsp_loader_remove(struct platform_device *pdev)
 		return 0;
 
 	if (priv->pil_h) {
-		subsystem_put(priv->pil_h);
+		rproc_shutdown(priv->pil_h);
 		priv->pil_h = NULL;
 	}
 
