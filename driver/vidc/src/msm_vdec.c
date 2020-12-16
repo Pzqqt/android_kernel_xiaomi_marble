@@ -983,6 +983,10 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i;
 
+	//todo: (DP)
+	d_vpr_h("%s(): skip subscribe metadata\n", __func__);
+	return 0;
+
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1012,6 +1016,10 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
 	u32 i;
+
+	//todo: (DP)
+	d_vpr_h("%s(): skip delivery mode metadata\n", __func__);
+	return 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);

@@ -170,17 +170,14 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		if (rc)
 			return rc;
 		if (is_decode_session(inst)) {
-			if (q->type == INPUT_MPLANE) {
-				rc = msm_vdec_subscribe_port_settings_change(
-					inst, INPUT_PORT);
-				if (rc)
-					return rc;
-			} else if (q->type == OUTPUT_MPLANE) {
-				rc = msm_vdec_subscribe_port_settings_change(
-					inst, OUTPUT_PORT);
-				if (rc)
-					return rc;
-			}
+			rc = msm_vdec_subscribe_port_settings_change(
+				inst, INPUT_PORT);
+			if (rc)
+				return rc;
+			rc = msm_vdec_subscribe_port_settings_change(
+				inst, OUTPUT_PORT);
+			if (rc)
+				return rc;
 		}
 	}
 
