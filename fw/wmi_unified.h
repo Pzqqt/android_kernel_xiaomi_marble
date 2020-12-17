@@ -3108,6 +3108,17 @@ typedef struct {
      */
     A_UINT32 pktlog_defs_checksum;
 
+    /*
+     * max_onchip_ast_index - max AST index that Firmware can generate
+     * max_onchip_ast_index = (ast_table_size-1), where ast_table_size is
+     * dynamically chosen based on num_peers configutation from Host.
+     * Hence Host needs to know the max_onchip_ast_index that Firmware can
+     * generate.
+     * A 0x0 value for max_onchip_ast_index means the target has not specified
+     * a limit.
+     */
+    A_UINT32 max_onchip_ast_index;
+
 /*
  * This fixed_param TLV is followed by these additional TLVs:
  * mac_addr_list[num_extra_mac_addr];
@@ -3783,7 +3794,12 @@ typedef struct {
      *
      *      Refer to WMI_RSRC_CFG_HOST_SERVICE_FLAG_HOST_SUPPORT_MULTI_RADIO_EVTS_PER_RADIO_GET/SET
      *      macros defined below.
-     *  Bits 31:2 - Reserved
+     *  Bit 2
+     *      This bit will be set when host is able to handle split AST feature.
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_SPLIT_AST_FEATURE_HOST_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:3 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4046,6 +4062,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 1, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_HOST_SUPPORT_MULTI_RADIO_EVTS_PER_RADIO_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 1, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_SPLIT_AST_FEATURE_HOST_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 2, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_SPLIT_AST_FEATURE_HOST_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 2, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
