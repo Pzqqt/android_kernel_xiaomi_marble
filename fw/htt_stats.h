@@ -5008,6 +5008,7 @@ typedef struct {
     A_UINT32 tx_su_txbf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
     A_UINT32 tx_su_ibf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
     A_UINT32 tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    A_UINT32 tx_legacy_ofdm_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
 } htt_tx_pdev_txbf_rate_stats_tlv;
 
 /* NOTE:
