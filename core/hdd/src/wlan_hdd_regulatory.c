@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1632,6 +1632,12 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	wiphy = pdev_priv->wiphy;
 	hdd_ctx = wiphy_priv(wiphy);
 
+	if (avoid_freq_ind) {
+		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
+				 &avoid_freq_ind->freq_list);
+		return;
+	}
+
 	hdd_debug("process channel list update from regulatory");
 	hdd_regulatory_chanlist_dump(chan_list);
 
@@ -1652,14 +1658,8 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 		hdd_send_wiphy_regd_sync_event(hdd_ctx);
 #endif
 
-	if (avoid_freq_ind) {
-		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
-				&avoid_freq_ind->freq_list);
-	} else {
-		hdd_config_tdls_with_band_switch(hdd_ctx);
-
-		qdf_sched_work(0, &hdd_ctx->country_change_work);
-	}
+	hdd_config_tdls_with_band_switch(hdd_ctx);
+	qdf_sched_work(0, &hdd_ctx->country_change_work);
 }
 
 int hdd_update_regulatory_config(struct hdd_context *hdd_ctx)
