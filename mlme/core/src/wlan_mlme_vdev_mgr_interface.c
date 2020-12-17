@@ -1402,12 +1402,11 @@ QDF_STATUS psoc_mlme_ext_hdl_destroy(struct psoc_mlme_obj *psoc_mlme)
 }
 
 /**
- * vdevmgr_vdev_delete_rsp_handle() - callback to handle vdev delete response
+ * vdevmgr_vdev_start_rsp_handle() - callback to handle vdev start response
  * @vdev_mlme: vdev mlme object
- * @rsp: pointer to vdev delete response
+ * @rsp: pointer to vdev start response
  *
- * This function is called to handle vdev delete response and send result to
- * upper layer
+ * This function is called to handle vdev start response
  *
  * Return: QDF_STATUS
  */
@@ -1424,6 +1423,16 @@ vdevmgr_vdev_start_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
 	return status;
 }
 
+/**
+ * vdevmgr_vdev_delete_rsp_handle() - callback to handle vdev delete response
+ * @vdev_mlme: vdev mlme object
+ * @rsp: pointer to vdev delete response
+ *
+ * This function is called to handle vdev delete response and send result to
+ * upper layer
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS
 vdevmgr_vdev_peer_delete_all_rsp_handle(struct vdev_mlme_obj *vdev_mlme,
 					struct peer_delete_all_response *rsp)
