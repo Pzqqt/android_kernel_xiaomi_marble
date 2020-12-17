@@ -1239,6 +1239,19 @@ struct target_if_samp_msg_params {
 	uint32_t target_reset_count;
 };
 
+/**
+ * struct target_if_spectral_agile_mode_cap - Structure to hold agile
+ * Spetcral scan capability
+ * @agile_spectral_cap: agile Spectral scan capability for 20/40/80 MHz
+ * @agile_spectral_cap_160: agile Spectral scan capability for 160 MHz
+ * @agile_spectral_cap_80p80: agile Spectral scan capability for 80+80 MHz
+ */
+struct target_if_spectral_agile_mode_cap {
+	bool agile_spectral_cap;
+	bool agile_spectral_cap_160;
+	bool agile_spectral_cap_80p80;
+};
+
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 /**
  * target_if_spectral_dump_fft() - Dump Spectral FFT

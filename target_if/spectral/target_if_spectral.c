@@ -53,6 +53,7 @@ struct spectral_tgt_ops ops_tgt;
  *
  * Return: true or false
  */
+static
 bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
 					    wmi_unified_t wmi_handle,
 					    uint32_t service_id)
@@ -88,6 +89,7 @@ bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
  *
  * Return: true or false
  */
+static
 bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
 					    wmi_unified_t wmi_handle,
 					    uint32_t service_id)
@@ -95,6 +97,126 @@ bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
 	return wmi_service_enabled(wmi_handle, service_id);
 }
 #endif /* SPECTRAL_MODULIZED_ENABLE */
+
+/**
+ * target_if_spectral_get_normal_mode_cap() - API to get normal
+ * Spectral scan capability of a given pdev
+ * @pdev: pdev handle
+ * @normal_mode_disable: Pointer to caller variable
+ *
+ * API to get normal Spectral scan mode capability a given pdev.
+ * This information is derived from the WMI service
+ * "WMI_SERVICE_SPECTRAL_SCAN_DISABLED".
+ *
+ * Return: QDF_STATUS on success
+ */
+static QDF_STATUS
+target_if_spectral_get_normal_mode_cap(struct wlan_objmgr_pdev *pdev,
+				       bool *normal_mode_disable)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct target_if_psoc_spectral *psoc_spectral;
+
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_spectral = get_target_if_spectral_handle_from_psoc(psoc);
+	if (!psoc_spectral) {
+		spectral_err("psoc spectral object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle =  get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		spectral_err("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*normal_mode_disable = target_if_spectral_wmi_service_enabled(psoc,
+				wmi_handle, wmi_service_spectral_scan_disabled);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_spectral_get_agile_mode_cap() - API to check agile
+ * Spectral scan mode capability of a given pdev.
+ * @pdev: pdev handle
+ * @agile_cap: Pointer to caller variable
+ *
+ * API to check agile Spectral scan mode is disabled for a given pdev.
+ * This information is derived from the chain mask table entries.
+ *
+ * Return: QDF_STATUS on success
+ */
+static QDF_STATUS
+target_if_spectral_get_agile_mode_cap(
+			struct wlan_objmgr_pdev *pdev,
+			struct target_if_spectral_agile_mode_cap *agile_cap)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct target_psoc_info *tgt_psoc_info;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap_arr;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+	uint8_t pdev_id, i;
+	uint32_t table_id;
+	struct wlan_psoc_host_service_ext_param *ext_svc_param;
+	struct wlan_psoc_host_chainmask_table *table;
+
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_psoc_info) {
+		spectral_err("target_psoc_info is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mac_phy_cap_arr = target_psoc_get_mac_phy_cap(tgt_psoc_info);
+	if (!mac_phy_cap_arr) {
+		spectral_err("mac phy cap array is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	mac_phy_cap = &mac_phy_cap_arr[pdev_id];
+	table_id = mac_phy_cap->chainmask_table_id;
+	ext_svc_param = target_psoc_get_service_ext_param(tgt_psoc_info);
+	if (!ext_svc_param) {
+		spectral_err("Extended service ready params null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	table =  &ext_svc_param->chainmask_table[table_id];
+
+	for (i = 0; i < table->num_valid_chainmasks; i++) {
+		agile_cap->agile_spectral_cap |=
+			table->cap_list[i].supports_aSpectral;
+		agile_cap->agile_spectral_cap_160 |=
+			table->cap_list[i].supports_aSpectral_160;
+	}
+
+	agile_cap->agile_spectral_cap_80p80 = agile_cap->agile_spectral_cap_160;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 static void target_if_spectral_get_firstvdev_pdev(struct wlan_objmgr_pdev *pdev,
 						  void *obj, void *arg)
@@ -1569,11 +1691,6 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 	struct target_psoc_info *tgt_psoc_info;
 	struct wlan_psoc_host_service_ext_param *ext_svc_param;
 	struct spectral_caps *pcap = &spectral->capability;
-	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap_arr = NULL;
-	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap = NULL;
-	struct wlan_psoc_host_chainmask_table *table;
-	int j;
-	uint32_t table_id;
 
 	pdev = spectral->pdev_obj;
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -1601,32 +1718,19 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 	pcap->advncd_spectral_cap = 1;
 	pcap->hw_gen = spectral->spectral_gen;
 	if (spectral->spectral_gen >= SPECTRAL_GEN3) {
-		mac_phy_cap_arr = target_psoc_get_mac_phy_cap(tgt_psoc_info);
-		if (!mac_phy_cap_arr) {
-			spectral_err("mac phy cap array is null");
+		QDF_STATUS status;
+		struct target_if_spectral_agile_mode_cap agile_cap = { 0 };
+
+		status = target_if_spectral_get_agile_mode_cap(pdev,
+							       &agile_cap);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			spectral_err("Failed to get agile mode capability");
 			return QDF_STATUS_E_FAILURE;
 		}
-
-		mac_phy_cap = &mac_phy_cap_arr[pdev_id];
-		if (!mac_phy_cap) {
-			spectral_err("mac phy cap is null");
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		table_id = mac_phy_cap->chainmask_table_id;
-		table =  &ext_svc_param->chainmask_table[table_id];
-		if (!table) {
-			spectral_err("chainmask table not found");
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		for (j = 0; j < table->num_valid_chainmasks; j++) {
-			pcap->agile_spectral_cap |=
-				table->cap_list[j].supports_aSpectral;
-			pcap->agile_spectral_cap_160 |=
-				table->cap_list[j].supports_aSpectral_160;
-		}
-		pcap->agile_spectral_cap_80p80 = pcap->agile_spectral_cap_160;
+		pcap->agile_spectral_cap = agile_cap.agile_spectral_cap;
+		pcap->agile_spectral_cap_160 = agile_cap.agile_spectral_cap_160;
+		pcap->agile_spectral_cap_80p80 =
+					agile_cap.agile_spectral_cap_80p80;
 	} else {
 		pcap->agile_spectral_cap = false;
 		pcap->agile_spectral_cap_160 = false;
