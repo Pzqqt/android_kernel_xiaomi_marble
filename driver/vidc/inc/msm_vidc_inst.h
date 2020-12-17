@@ -119,6 +119,8 @@ struct msm_vidc_inst {
 	struct list_head                   enc_input_crs;
 	struct list_head                   decode_bitrate_data;
 	bool                               once_per_session_set;
+	bool                               ipsc_properties_set;
+	bool                               opsc_properties_set;
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
 	struct msm_vidc_inst_capability   *capabilities;

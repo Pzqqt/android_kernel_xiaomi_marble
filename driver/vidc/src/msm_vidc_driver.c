@@ -763,6 +763,12 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		return 0;
 	}
 
+	if (is_decode_session(inst) &&
+			inst->capabilities->cap[CODEC_CONFIG].value) {
+		buf->flags |= MSM_VIDC_BUF_FLAG_CODECCONFIG;
+		inst->capabilities->cap[CODEC_CONFIG].value = 0;
+	}
+
 	print_vidc_buffer(VIDC_HIGH, "qbuf", inst, buf);
 	meta = get_meta_buffer(inst, buf);
 	rc = venus_hfi_queue_buffer(inst, buf, meta);

@@ -10,6 +10,22 @@
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
 
+void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
+	struct msm_vidc_subscription_params subsc_params)
+{
+	if (!(tag & msm_vidc_debug) || !inst)
+		return;
+
+	dprintk(tag, inst->sid,
+		"%s: resolution %d, crop offsets %lld, bit depth %d, cabac %d, coded frames %d "
+		"fw min count %d, poc %d, color info %d, profile %d, level %d, tier %d ",
+		str, subsc_params.bitstream_resolution, subsc_params.crop_offsets,
+		subsc_params.bit_depth, subsc_params.cabac, subsc_params.coded_frames,
+		subsc_params.fw_min_count, subsc_params.pic_order_cnt,
+		subsc_params.color_info, subsc_params.profile, subsc_params.level,
+		subsc_params.tier);
+}
+
 u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 	enum hfi_packet_port_type hfi_port)
 {
@@ -1014,10 +1030,14 @@ static int handle_session_response(struct msm_vidc_core *core,
 
 	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
 		if (hfi_port == HFI_PORT_BITSTREAM) {
+			print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
+				inst->subcr_params[INPUT_PORT]);
 			rc = msm_vdec_input_port_settings_change(inst);
 			if (rc)
 				goto exit;
 		} else if (hfi_port == HFI_PORT_RAW) {
+			print_psc_properties(VIDC_HIGH, "OUTPUT_PSC", inst,
+				inst->subcr_params[OUTPUT_PORT]);
 			rc = msm_vdec_output_port_settings_change(inst);
 			if (rc)
 				goto exit;

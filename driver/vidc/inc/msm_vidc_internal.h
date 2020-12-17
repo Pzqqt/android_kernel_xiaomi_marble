@@ -141,7 +141,6 @@ enum msm_vidc_buffer_flags {
 	MSM_VIDC_BUF_FLAG_BFRAME           = 0x00000020,
 	MSM_VIDC_BUF_FLAG_ERROR            = 0x00000040,
 	MSM_VIDC_BUF_FLAG_LAST             = 0x00100000,
-	// TODO: remove below flags
 	MSM_VIDC_BUF_FLAG_CODECCONFIG      = 0x01000000,
 	MSM_VIDC_BUF_FLAG_SUBFRAME         = 0x02000000,
 };
@@ -328,6 +327,9 @@ enum msm_vidc_inst_capability_type {
 	STAGE,
 	PIPE,
 	POC,
+	CODED_FRAMES,
+	BIT_DEPTH,
+	CODEC_CONFIG,
 	INST_CAP_MAX,
 };
 

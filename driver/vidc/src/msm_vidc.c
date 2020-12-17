@@ -802,6 +802,8 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
 	inst->request = false;
+	inst->ipsc_properties_set = false;
+	inst->opsc_properties_set = false;
 	for (i = 0; i < MAX_SIGNAL; i++)
 		init_completion(&inst->completions[i]);
 

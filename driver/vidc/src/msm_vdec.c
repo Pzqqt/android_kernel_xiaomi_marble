@@ -190,6 +190,7 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 		bitdepth = 10 << 16 | 10;
 
 	inst->subcr_params[port].bit_depth = bitdepth;
+	inst->capabilities->cap[BIT_DEPTH].value = bitdepth;
 	s_vpr_h(inst->sid, "%s: bit depth: %d", __func__, bitdepth);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
@@ -215,10 +216,7 @@ static int msm_vdec_set_cabac(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_v4l2_menu_to_hfi(inst, ENTROPY_MODE, &cabac);
-	if (rc)
-		return rc;
-
+	cabac = inst->capabilities->cap[ENTROPY_MODE].value;
 	inst->subcr_params[port].cabac = cabac;
 	s_vpr_h(inst->sid, "%s: entropy mode: %d", __func__, cabac);
 	rc = venus_hfi_session_property(inst,
@@ -245,8 +243,7 @@ static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	/* (mb_adaptive_frame_field_flag << 1) | frame_mbs_only_flag */
-	coded_frames = 0;
+	coded_frames = inst->capabilities->cap[CODED_FRAMES].value;
 	inst->subcr_params[port].coded_frames = coded_frames;
 	s_vpr_h(inst->sid, "%s: coded frames: %d", __func__, coded_frames);
 	rc = venus_hfi_session_property(inst,
@@ -870,7 +867,7 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vdec_subscribe_port_settings_change(struct msm_vidc_inst *inst,
+static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
@@ -1064,7 +1061,7 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static msm_vdec_update_input_properties(struct msm_vidc_inst *inst)
+static int msm_vdec_update_input_properties(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_subscription_params subsc_params;
 	u32 width, height;
@@ -1110,6 +1107,8 @@ static msm_vdec_update_input_properties(struct msm_vidc_inst *inst)
 	inst->capabilities->cap[HEVC_TIER].value = subsc_params.tier;
 	inst->capabilities->cap[ENTROPY_MODE].value = subsc_params.cabac;
 	inst->capabilities->cap[POC].value = subsc_params.pic_order_cnt;
+	inst->capabilities->cap[BIT_DEPTH].value = subsc_params.bit_depth;
+	inst->capabilities->cap[CODED_FRAMES].value = subsc_params.coded_frames;
 
 	return 0;
 }
@@ -1224,6 +1223,14 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
+	if (!inst->ipsc_properties_set) {
+		rc = msm_vdec_subscribe_input_port_settings_change(
+			inst, INPUT_PORT);
+		if (rc)
+			return rc;
+		inst->ipsc_properties_set = true;
+	}
+
 	rc = msm_vdec_subscribe_property(inst, INPUT_PORT);
 	if (rc)
 		return rc;
@@ -1261,6 +1268,118 @@ int msm_vdec_stop_output(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 payload[32] = {0};
+	u32 prop_type, payload_size, payload_type;
+	u32 i;
+	struct msm_vidc_subscription_params subsc_params;
+
+	d_vpr_h("%s()\n", __func__);
+
+	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
+	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change);
+	     i++)
+		payload[i + 1] = msm_vdec_subscribe_for_port_settings_change[i];
+
+	rc = venus_hfi_session_command(inst,
+			HFI_CMD_SUBSCRIBE_MODE,
+			port,
+			HFI_PAYLOAD_U32_ARRAY,
+			&payload[0],
+			(ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change) + 1) *
+			sizeof(u32));
+
+	subsc_params = inst->subcr_params[port];
+	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change);
+		i++) {
+		payload[0] = 0;
+		payload[1] = 0;
+		payload_size = 0;
+		payload_type = 0;
+		prop_type = msm_vdec_subscribe_for_port_settings_change[i];
+		switch (prop_type) {
+		case HFI_PROP_BITSTREAM_RESOLUTION:
+			payload[0] = subsc_params.bitstream_resolution;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_CROP_OFFSETS:
+			payload[0] = subsc_params.crop_offsets >> 32;
+			payload[1] = subsc_params.crop_offsets;
+			payload_size = sizeof(u64);
+			payload_type = HFI_PAYLOAD_64_PACKED;
+			break;
+		case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
+			payload[0] = subsc_params.bit_depth;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_CABAC_SESSION:
+			payload[0] = subsc_params.cabac;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_CODED_FRAMES:
+			payload[0] = subsc_params.coded_frames;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT:
+			payload[0] = subsc_params.fw_min_count;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_PIC_ORDER_CNT_TYPE:
+			payload[0] = subsc_params.pic_order_cnt;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_SIGNAL_COLOR_INFO:
+			payload[0] = subsc_params.color_info;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_PROFILE:
+			payload[0] = subsc_params.profile;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_LEVEL:
+			payload[0] = subsc_params.level;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		case HFI_PROP_TIER:
+			payload[0] = subsc_params.tier;
+			payload_size = sizeof(u32);
+			payload_type = HFI_PAYLOAD_U32;
+			break;
+		default:
+			d_vpr_e("%s: unknown property %#x\n", __func__,
+				prop_type);
+			prop_type = 0;
+			rc = -EINVAL;
+			break;
+		}
+		if (prop_type) {
+			rc = venus_hfi_session_property(inst,
+					prop_type,
+					HFI_HOST_FLAGS_NONE,
+					get_hfi_port(inst, port),
+					payload_type,
+					&payload,
+					payload_size);
+			if (rc)
+				return rc;
+		}
+	}
+
+	return rc;
+}
+
 int msm_vdec_start_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -1274,6 +1393,15 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 	rc = msm_vdec_set_output_properties(inst);
 	if (rc)
 		goto error;
+
+	if (!inst->opsc_properties_set) {
+		memcpy(&inst->subcr_params[OUTPUT_PORT],
+			&inst->subcr_params[INPUT_PORT], sizeof(inst->subcr_params[INPUT_PORT]));
+		rc = msm_vdec_subscribe_output_port_settings_change(inst, OUTPUT_PORT);
+		if (rc)
+			return rc;
+		inst->opsc_properties_set = true;
+	}
 
 	rc = msm_vdec_subscribe_metadata(inst, OUTPUT_PORT);
 	if (rc)

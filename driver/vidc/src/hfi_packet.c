@@ -231,6 +231,8 @@ int get_hfi_buffer(struct msm_vidc_inst *inst,
 		buf->flags |= HFI_BUF_HOST_FLAG_READONLY;
 	if (buffer->attr & MSM_VIDC_ATTR_PENDING_RELEASE)
 		buf->flags |= HFI_BUF_HOST_FLAG_RELEASE;
+	if (buffer->flags & MSM_VIDC_BUF_FLAG_CODECCONFIG)
+		buf->flags |= HFI_BUF_HOST_FLAG_CODEC_CONFIG;
 	buf->timestamp = buffer->timestamp;
 
 	return 0;

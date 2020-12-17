@@ -169,16 +169,6 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		rc = msm_vidc_session_set_codec(inst);
 		if (rc)
 			return rc;
-		if (is_decode_session(inst)) {
-			rc = msm_vdec_subscribe_port_settings_change(
-				inst, INPUT_PORT);
-			if (rc)
-				return rc;
-			rc = msm_vdec_subscribe_port_settings_change(
-				inst, OUTPUT_PORT);
-			if (rc)
-				return rc;
-		}
 	}
 
 	/*
