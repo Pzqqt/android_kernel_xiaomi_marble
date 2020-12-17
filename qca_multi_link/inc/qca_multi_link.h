@@ -37,6 +37,8 @@
 
 #define QCA_MULTI_LINK_RADIO_LIST_SIZE 6
 
+typedef void (*qca_multi_link_set_loop_detection_fn_t)(void *context, bool val);
+
 /**
  * qca_multi_link_needs_enq - rptr return status
  * @QCA_MULTI_LINK_ALLOW_VAP_ENQ: Allow the packet to be enqueued
@@ -121,6 +123,8 @@ typedef struct qca_multi_link_parameters {
 	qdf_list_t radio_list;
 	qdf_spinlock_t radio_lock;
 	qca_ml_global_stats_t qca_ml_stats;
+	qca_multi_link_set_loop_detection_fn_t qca_ml_set_loop_detection;
+	void *qca_ml_loop_detection_context;
 } qca_multi_link_parameters_t;
 
 void qca_multi_link_deinit_module(void);
@@ -146,4 +150,6 @@ bool qca_multi_link_add_station_vap(struct wiphy *wiphy,
 bool qca_multi_link_ap_rx(struct net_device *net_dev, qdf_nbuf_t nbuf);
 bool qca_multi_link_sta_rx(struct net_device *net_dev, qdf_nbuf_t nbuf);
 bool qca_multi_link_sta_tx(struct net_device *net_dev, qdf_nbuf_t nbuf);
+void qca_multi_link_set_dbdc_loop_detection_cb(qca_multi_link_set_loop_detection_fn_t qca_ml_cb,
+			void *ctx);
 #endif
