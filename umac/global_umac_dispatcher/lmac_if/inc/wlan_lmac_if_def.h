@@ -1393,7 +1393,10 @@ struct wlan_lmac_if_cfr_rx_ops {
  * @sptrlro_get_psoc_target_handle: Get Spectral handle for psoc target
  * private data
  * @sptrlro_vdev_get_chan_freq_seg2: Get secondary 80 center frequency
- * @sptrlro_spectral_is_feature_disabled: Check if spectral feature is disabled
+ * @sptrlro_spectral_is_feature_disabled_pdev: Check if spectral feature is
+ * disabled for a given pdev
+ * @sptrlro_spectral_is_feature_disabled_psoc: Check if spectral feature is
+ * disabled for a given psoc
  */
 struct wlan_lmac_if_sptrl_rx_ops {
 	void * (*sptrlro_get_pdev_target_handle)(struct wlan_objmgr_pdev *pdev);
@@ -1406,7 +1409,9 @@ struct wlan_lmac_if_sptrl_rx_ops {
 	int (*sptrlro_vdev_get_sec20chan_freq_mhz)(
 			struct wlan_objmgr_vdev *vdev,
 			uint16_t *sec20chan_freq);
-	bool (*sptrlro_spectral_is_feature_disabled)(
+	bool (*sptrlro_spectral_is_feature_disabled_pdev)(
+			struct wlan_objmgr_pdev *pdev);
+	bool (*sptrlro_spectral_is_feature_disabled_psoc)(
 			struct wlan_objmgr_psoc *psoc);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */

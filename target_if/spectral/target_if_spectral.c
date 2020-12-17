@@ -231,12 +231,31 @@ static QDF_STATUS
 target_if_spectral_init_pdev_feature_cap_per_mode(struct wlan_objmgr_pdev *pdev,
 						  enum spectral_scan_mode smode)
 {
+	struct wlan_objmgr_psoc *psoc;
 	bool normal_mode_disable;
 	struct target_if_spectral_agile_mode_cap agile_cap = { 0 };
 	QDF_STATUS status;
 
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	switch (smode) {
 	case SPECTRAL_SCAN_MODE_NORMAL:
+		if (target_if_spectral_is_feature_disabled_psoc(psoc)) {
+			wlan_pdev_nif_feat_ext_cap_set(
+				pdev, WLAN_PDEV_FEXT_NORMAL_SPECTRAL_SCAN_DIS);
+
+			return QDF_STATUS_SUCCESS;
+		}
+
 		status = target_if_spectral_get_normal_mode_cap(
 				pdev, &normal_mode_disable);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -253,6 +272,16 @@ target_if_spectral_init_pdev_feature_cap_per_mode(struct wlan_objmgr_pdev *pdev,
 		break;
 
 	case SPECTRAL_SCAN_MODE_AGILE:
+		if (target_if_spectral_is_feature_disabled_psoc(psoc)) {
+			wlan_pdev_nif_feat_ext_cap_set(
+			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_DIS);
+			wlan_pdev_nif_feat_ext_cap_set(
+			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS);
+			wlan_pdev_nif_feat_ext_cap_set(
+			  pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
+
+			return QDF_STATUS_SUCCESS;
+		}
 		status = target_if_spectral_get_agile_mode_cap(
 				pdev, &agile_cap);
 		if (QDF_IS_STATUS_ERROR(status)) {

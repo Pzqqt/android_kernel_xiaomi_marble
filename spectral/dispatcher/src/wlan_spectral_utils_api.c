@@ -23,17 +23,79 @@
 #include <wlan_spectral_tgt_api.h>
 #include <cfg_ucfg_api.h>
 
-bool wlan_spectral_is_feature_disabled(struct wlan_objmgr_psoc *psoc)
+bool wlan_spectral_is_mode_disabled_pdev(struct wlan_objmgr_pdev *pdev,
+					 enum spectral_scan_mode smode)
+{
+	bool spectral_mode_disable;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return true;
+	}
+
+	switch (smode) {
+	case SPECTRAL_SCAN_MODE_NORMAL:
+		spectral_mode_disable = wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_NORMAL_SPECTRAL_SCAN_DIS);
+		break;
+
+	case SPECTRAL_SCAN_MODE_AGILE:
+		spectral_mode_disable = wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_DIS) &&
+					wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS) &&
+					wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
+		break;
+
+	default:
+		spectral_err("Invalid Spectral scan mode %d", smode);
+		spectral_mode_disable = true;
+		break;
+	}
+
+	return spectral_mode_disable;
+}
+
+bool
+wlan_spectral_is_feature_disabled_ini(struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc) {
 		spectral_err("PSOC is NULL!");
 		return true;
 	}
 
-	if (wlan_psoc_nif_feat_cap_get(psoc, WLAN_SOC_F_SPECTRAL_INI_DISABLE))
-		return true;
+	return wlan_psoc_nif_feat_cap_get(psoc,
+					  WLAN_SOC_F_SPECTRAL_INI_DISABLE);
+}
 
-	return false;
+bool
+wlan_spectral_is_feature_disabled_psoc(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is NULL!");
+		return true;
+	}
+
+	return wlan_spectral_is_feature_disabled_ini(psoc);
+}
+
+bool
+wlan_spectral_is_feature_disabled_pdev(struct wlan_objmgr_pdev *pdev)
+{
+	enum spectral_scan_mode smode;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return true;
+	}
+
+	smode = SPECTRAL_SCAN_MODE_NORMAL;
+	for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++)
+		if (!wlan_spectral_is_mode_disabled_pdev(pdev, smode))
+			return false;
+
+	return true;
 }
 
 QDF_STATUS
@@ -247,8 +309,10 @@ wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	sptrl_rx_ops->sptrlro_vdev_get_ch_width = spectral_vdev_get_ch_width;
 	sptrl_rx_ops->sptrlro_vdev_get_sec20chan_freq_mhz =
 	    spectral_vdev_get_sec20chan_freq_mhz;
-	sptrl_rx_ops->sptrlro_spectral_is_feature_disabled =
-		wlan_spectral_is_feature_disabled;
+	sptrl_rx_ops->sptrlro_spectral_is_feature_disabled_pdev =
+		wlan_spectral_is_feature_disabled_pdev;
+	sptrl_rx_ops->sptrlro_spectral_is_feature_disabled_psoc =
+		wlan_spectral_is_feature_disabled_psoc;
 }
 
 QDF_STATUS

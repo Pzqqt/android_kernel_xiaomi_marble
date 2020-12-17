@@ -29,12 +29,42 @@ struct spectral_wmi_ops;
 struct spectral_tgt_ops;
 
 /**
- * wlan_spectral_is_feature_disabled() - Check if spectral feature is disabled
- * @psoc - the physical device object.
+ * wlan_spectral_is_feature_disabled_pdev() - Check if spectral feature
+ * is disabled for a given pdev
+ * @pdev - pointer to pdev
  *
  * Return : true if spectral is disabled, else false.
  */
-bool wlan_spectral_is_feature_disabled(struct wlan_objmgr_psoc *psoc);
+bool wlan_spectral_is_feature_disabled_pdev(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_spectral_is_feature_disabled_ini() - Check if spectral feature
+ * is disabled in INI
+ * @psoc - pointer to psoc
+ *
+ * Return : true if spectral is disabled, else false.
+ */
+bool wlan_spectral_is_feature_disabled_ini(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_spectral_is_feature_disabled_psoc() - Check if spectral feature
+ * is disabled for a given psoc
+ * @psoc - pointer to psoc
+ *
+ * Return : true if spectral is disabled, else false.
+ */
+bool wlan_spectral_is_feature_disabled_psoc(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_spectral_is_mode_disabled_pdev() - Check if a given spectral mode
+ * is disabled for a given pdev
+ * @pdev - pointer to pdev
+ * @smode - spectral scan mode
+ *
+ * Return : true if spectral mode is disabled, else false.
+ */
+bool wlan_spectral_is_mode_disabled_pdev(struct wlan_objmgr_pdev *pdev,
+					 enum spectral_scan_mode smode);
 
 /**
  * wlan_spectral_init() - API to init spectral component
