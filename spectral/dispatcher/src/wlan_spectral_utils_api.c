@@ -37,6 +37,30 @@ bool wlan_spectral_is_feature_disabled(struct wlan_objmgr_psoc *psoc)
 }
 
 QDF_STATUS
+wlan_spectral_init_pdev_feature_caps(struct wlan_objmgr_pdev *pdev)
+{
+	return tgt_spectral_init_pdev_feature_caps(pdev);
+}
+
+QDF_STATUS
+wlan_spectral_init_psoc_feature_cap(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("PSOC is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (cfg_get(psoc, CFG_SPECTRAL_DISABLE))
+		wlan_psoc_nif_feat_cap_set(psoc,
+					   WLAN_SOC_F_SPECTRAL_INI_DISABLE);
+	else
+		wlan_psoc_nif_feat_cap_clear(psoc,
+					     WLAN_SOC_F_SPECTRAL_INI_DISABLE);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_spectral_init(void)
 {
 	if (wlan_objmgr_register_psoc_create_handler(
@@ -461,4 +485,30 @@ QDF_STATUS wlan_spectral_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return tgt_spectral_unregister_events(psoc);
+}
+
+struct wlan_lmac_if_sptrl_tx_ops *
+wlan_spectral_pdev_get_lmac_if_txops(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return NULL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL!");
+		return NULL;
+	}
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		spectral_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->sptrl_tx_ops;
 }

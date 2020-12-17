@@ -594,6 +594,7 @@ struct spectral_tgt_ops;
  *                                       on the previous state
  * @sptrlto_register_events: Registration of WMI events for Spectral
  * @sptrlto_unregister_events: Unregistration of WMI events for Spectral
+ * @sptrlto_init_pdev_feature_caps: Initialize spectral feature capabilities
  **/
 struct wlan_lmac_if_sptrl_tx_ops {
 	void *(*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
@@ -656,6 +657,8 @@ struct wlan_lmac_if_sptrl_tx_ops {
 		struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*sptrlto_register_events)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*sptrlto_unregister_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*sptrlto_init_pdev_feature_caps)(
+		struct wlan_objmgr_pdev *pdev);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 

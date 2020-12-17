@@ -245,6 +245,43 @@ QDF_STATUS spectral_register_dbr(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS spectral_unregister_dbr(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * wlan_spectral_init_pdev_feature_caps() - API to initialize
+ * spectral pdev feature caps
+ * @pdev:  pointer to pdev object
+ *
+ * API to initialize Spectral feature caps for a given pdev.
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful initialization,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS wlan_spectral_init_pdev_feature_caps(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_spectral_init_psoc_feature_cap() - API to initialize
+ * spectral psoc feature caps
+ * @psoc:  pointer to psoc object
+ *
+ * API to initialize Spectral feature caps for a given psoc.
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful initialization,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS wlan_spectral_init_psoc_feature_cap(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_spectral_pdev_get_lmac_if_txops() - API to get pointer
+ * to Spectral txops structure
+ * @pdev:  pointer to pdev object
+ *
+ * API to get pointer to Spectral txops structure
+ *
+ * Return: Pointer to Spectral txops structure, NULL in case of
+ *         error.
+ */
+struct wlan_lmac_if_sptrl_tx_ops *
+wlan_spectral_pdev_get_lmac_if_txops(struct wlan_objmgr_pdev *pdev);
+
 #ifdef DIRECT_BUF_RX_ENABLE
 /**
  * spectral_dbr_event_handler() - Spectral dbr event handler

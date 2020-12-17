@@ -661,3 +661,21 @@ tgt_spectral_unregister_events(struct wlan_objmgr_psoc *psoc)
 	return psptrl_tx_ops->sptrlto_unregister_events(psoc);
 }
 
+QDF_STATUS
+tgt_spectral_init_pdev_feature_caps(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_sptrl_tx_ops *spectral_tx_ops;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	spectral_tx_ops = wlan_spectral_pdev_get_lmac_if_txops(pdev);
+	if (!spectral_tx_ops) {
+		spectral_err("Spectral txops is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return spectral_tx_ops->sptrlto_init_pdev_feature_caps(pdev);
+}

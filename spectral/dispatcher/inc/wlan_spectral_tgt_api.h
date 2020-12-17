@@ -344,4 +344,13 @@ tgt_spectral_register_events(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS
 tgt_spectral_unregister_events(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_spectral_init_pdev_feature_caps() - Init pdev spectral feature caps
+ * @pdev: pdev handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_spectral_init_pdev_feature_caps(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_SPECTRAL_TGT_API_H_ */

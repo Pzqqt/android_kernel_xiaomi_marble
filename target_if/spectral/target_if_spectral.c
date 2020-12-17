@@ -6004,6 +6004,8 @@ target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_spectral_register_events;
 	tx_ops->sptrl_tx_ops.sptrlto_unregister_events =
 		target_if_spectral_unregister_events;
+	tx_ops->sptrl_tx_ops.sptrlto_init_pdev_feature_caps =
+		target_if_spectral_init_pdev_feature_caps;
 
 	target_if_sptrl_debug_register_tx_ops(tx_ops);
 }
