@@ -398,6 +398,12 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_RX_STREAMS:
 		mlme_mgmt->chainmask_info.num_rx_chain = mlme_cfg.value;
 		break;
+	case WLAN_MLME_CFG_ENABLE_DISABLE_RTT_RESPONDER_ROLE:
+		is_wmi_cmd = true;
+		break;
+	case WLAN_MLME_CFG_ENABLE_DISABLE_RTT_INITIATOR_ROLE:
+		is_wmi_cmd = true;
+		break;
 	default:
 		break;
 	}

@@ -5087,6 +5087,8 @@ typedef enum {
 	wmi_vdev_param_set_cmd_obss_pd_per_ac,
 	wmi_vdev_param_enable_srp,
 	wmi_vdev_param_nan_config_features,
+	wmi_vdev_param_enable_disable_rtt_responder_role,
+	wmi_vdev_param_enable_disable_rtt_initiator_role,
 } wmi_conv_vdev_param_id;
 
 /**
