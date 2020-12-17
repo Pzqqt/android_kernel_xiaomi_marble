@@ -956,7 +956,7 @@ void wma_update_rate_flags_after_vdev_restart(tp_wma_handle wma,
 						struct wma_txrx_node *iface)
 {
 	struct vdev_mlme_obj *vdev_mlme;
-	enum tx_rate_info *rate_flags;
+	uint32_t rate_flags = 0;
 	enum wlan_phymode bss_phymode;
 	struct wlan_channel *des_chan;
 
@@ -967,36 +967,36 @@ void wma_update_rate_flags_after_vdev_restart(tp_wma_handle wma,
 	if (!vdev_mlme)
 		return;
 
-	rate_flags = &vdev_mlme->mgmt.rate_info.rate_flags;
-
 	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
 	bss_phymode = des_chan->ch_phymode;
 
 	if (IS_WLAN_PHYMODE_HE(bss_phymode)) {
 		if (des_chan->ch_width == CH_WIDTH_160MHZ ||
 		    des_chan->ch_width == CH_WIDTH_80P80MHZ)
-			*rate_flags |= TX_RATE_HE160;
+			rate_flags |= TX_RATE_HE160;
 		else if (des_chan->ch_width == CH_WIDTH_80MHZ)
-			*rate_flags |= TX_RATE_HE80;
+			rate_flags |= TX_RATE_HE80;
 		else if (des_chan->ch_width)
-			*rate_flags |= TX_RATE_HE40;
+			rate_flags |= TX_RATE_HE40;
 		else
-			*rate_flags |= TX_RATE_HE20;
+			rate_flags |= TX_RATE_HE20;
 	} else if (IS_WLAN_PHYMODE_VHT(bss_phymode)) {
-		*rate_flags |= wma_get_vht_rate_flags(des_chan->ch_width);
+		rate_flags |= wma_get_vht_rate_flags(des_chan->ch_width);
 	} else if (IS_WLAN_PHYMODE_HT(bss_phymode)) {
 		if (des_chan->ch_width)
-			*rate_flags |= TX_RATE_HT40;
+			rate_flags |= TX_RATE_HT40;
 		else
-			*rate_flags |= TX_RATE_HT20;
+			rate_flags |= TX_RATE_HT20;
 	} else {
-		*rate_flags = TX_RATE_LEGACY;
+		rate_flags = TX_RATE_LEGACY;
 	}
 
-	wma_debug("bss phymode %d rate_flags %x, ch_width %d",
-		  bss_phymode, *rate_flags, des_chan->ch_width);
+	vdev_mlme->mgmt.rate_info.rate_flags = rate_flags;
 
-	ucfg_mc_cp_stats_set_rate_flags(iface->vdev, *rate_flags);
+	wma_debug("bss phymode %d rate_flags %x, ch_width %d",
+		  bss_phymode, rate_flags, des_chan->ch_width);
+
+	ucfg_mc_cp_stats_set_rate_flags(iface->vdev, rate_flags);
 }
 
 QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
