@@ -15282,6 +15282,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_twt_bcast_resp_support] =
 			WMI_SERVICE_BROADCAST_TWT_RESPONDER;
 #endif
+	wmi_service[wmi_service_spectral_scan_disabled] =
+			WMI_SERVICE_SPECTRAL_SCAN_DISABLED;
 	wmi_populate_service_get_sta_in_ll_stats_req(wmi_service);
 }
 

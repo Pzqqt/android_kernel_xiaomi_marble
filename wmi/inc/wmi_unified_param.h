@@ -5325,6 +5325,7 @@ typedef enum {
 	wmi_service_csa_beacon_template,
 	wmi_service_twt_bcast_req_support,
 	wmi_service_twt_bcast_resp_support,
+	wmi_service_spectral_scan_disabled,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
