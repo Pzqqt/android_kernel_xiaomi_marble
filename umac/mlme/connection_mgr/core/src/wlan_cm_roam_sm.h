@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,8 @@
 
 #ifndef __WLAN_CM_ROAM_SM_H__
 #define __WLAN_CM_ROAM_SM_H__
+
+#include "wlan_cm_roam.h"
 
 /**
  * cm_state_roaming_entry() - Entry API for roaming state for
@@ -59,7 +61,7 @@ void cm_state_roaming_exit(void *ctx);
 bool cm_state_roaming_event(void *ctx, uint16_t event, uint16_t data_len,
 			    void *data);
 
-#if defined(WLAN_FEATURE_HOST_ROAM) && defined(WLAN_FEATURE_PREAUTH_ENABLE)
+#if defined(WLAN_FEATURE_HOST_ROAM)
 /**
  * cm_subst_preauth_entry() - Entry API for preauth sub-state for
  * connection mgr
@@ -150,6 +152,7 @@ bool cm_subst_reassoc_event(void *ctx, uint16_t event, uint16_t data_len,
 
 static inline void cm_subst_reassoc_entry(void *ctx) {}
 static inline void cm_subst_reassoc_exit(void *ctx) {}
+
 static inline
 bool cm_subst_reassoc_event(void *ctx, uint16_t event, uint16_t data_len,
 			    void *data)
@@ -257,7 +260,5 @@ bool cm_subst_roam_sync_event(void *ctx, uint16_t event, uint16_t data_len,
 {
 	return true;
 }
-
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-
 #endif /* __WLAN_CM_ROAM_SM_H__ */

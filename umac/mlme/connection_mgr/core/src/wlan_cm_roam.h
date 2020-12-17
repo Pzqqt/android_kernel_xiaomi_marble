@@ -89,7 +89,9 @@ QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
 #else
 static inline QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
 					     struct wlan_cm_roam_resp *resp)
-{}
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**

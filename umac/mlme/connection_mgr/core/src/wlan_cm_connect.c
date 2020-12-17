@@ -19,7 +19,6 @@
  */
 
 #include "wlan_cm_main_api.h"
-#include "wlan_cm_bss_score_param.h"
 #include "wlan_scan_api.h"
 #include "wlan_cm_sm.h"
 #ifdef WLAN_POLICY_MGR_ENABLE
@@ -412,47 +411,7 @@ static QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
 						     connect_id);
 }
 
-static void
-cm_get_pcl_chan_weigtage_for_sta(struct wlan_objmgr_pdev *pdev,
-				 struct pcl_freq_weight_list *pcl_lst)
-{
-	enum QDF_OPMODE opmode = QDF_STA_MODE;
-	enum policy_mgr_con_mode pm_mode;
-	uint32_t num_entries = 0;
-	QDF_STATUS status;
 
-	if (!pcl_lst)
-		return;
-
-	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
-		status = policy_mgr_get_pcl(wlan_pdev_get_psoc(pdev), pm_mode,
-					    pcl_lst->pcl_freq_list,
-					    &num_entries,
-					    pcl_lst->pcl_weight_list,
-					    NUM_CHANNELS);
-		if (QDF_IS_STATUS_ERROR(status))
-			return;
-		pcl_lst->num_of_pcl_channels = num_entries;
-	}
-}
-
-static void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
-				struct scan_filter *filter, qdf_list_t *list)
-{
-	struct pcl_freq_weight_list *pcl_lst = NULL;
-
-	if (!filter->num_of_bssid) {
-		pcl_lst = qdf_mem_malloc(sizeof(*pcl_lst));
-		cm_get_pcl_chan_weigtage_for_sta(pdev, pcl_lst);
-		if (pcl_lst && !pcl_lst->num_of_pcl_channels) {
-			qdf_mem_free(pcl_lst);
-			pcl_lst = NULL;
-		}
-	}
-	wlan_cm_calculate_bss_score(pdev, pcl_lst, list, &filter->bssid_hint);
-	if (pcl_lst)
-		qdf_mem_free(pcl_lst);
-}
 #else
 
 static inline
@@ -463,12 +422,6 @@ QDF_STATUS cm_check_for_hw_mode_change(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_ALREADY;
 }
 
-static inline
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
-			 struct scan_filter *filter, qdf_list_t *list)
-{
-	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
-}
 #endif /* WLAN_POLICY_MGR_ENABLE */
 
 static inline void cm_delete_pmksa_for_bssid(struct cnx_mgr *cm_ctx,
@@ -808,6 +761,7 @@ static void cm_update_security_filter(struct scan_filter *filter,
 	filter->mgmtcipherset = req->crypto.mgmt_ciphers;
 	cm_set_pmf_caps(req, filter);
 }
+
 static inline void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 				       struct wlan_cm_connect_resp *resp)
 {}

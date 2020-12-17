@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -108,7 +108,8 @@ struct wlan_fils_con_info {
 /**
  * enum wlan_cm_source - connection manager req source
  * @CM_OSIF_CONNECT: Connect req initiated by OSIF or north bound
- * @CM_ROAMING: Roaming request
+ * @CM_ROAMING_HOST: Roaming request initiated by host
+ * @CM_ROAMING_FW: Roam req initiated by FW
  * @CM_OSIF_DISCONNECT: Disconnect req initiated by OSIF or north bound
  * @CM_PEER_DISCONNECT: Disconnect req initiated by peer sending deauth/disassoc
  * only for this localy generated will be false while indicating to kernel
@@ -126,7 +127,8 @@ struct wlan_fils_con_info {
  */
 enum wlan_cm_source {
 	CM_OSIF_CONNECT,
-	CM_ROAMING,
+	CM_ROAMING_HOST,
+	CM_ROAMING_FW,
 	CM_OSIF_DISCONNECT,
 	CM_PEER_DISCONNECT,
 	CM_SB_DISCONNECT,
@@ -223,6 +225,36 @@ struct wlan_cm_vdev_connect_req {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct wlan_fils_con_info *fils_info;
 #endif
+};
+
+/**
+ * struct wlan_cm_roam_req - roam req from requester
+ * @vdev_id: vdev id
+ * @source: source of the req
+ * @bssid: bssid given
+ * @prev_bssid: prev AP bssid, given in case supplican want to roam to new BSSID
+ * @chan_freq: channel of the AP
+ */
+struct wlan_cm_roam_req {
+	uint8_t vdev_id;
+	enum wlan_cm_source source;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr prev_bssid;
+	uint32_t chan_freq;
+};
+
+/**
+ * struct wlan_cm_vdev_reassoc_req - Reassoc req from connection manager to
+ * vdev mgr
+ * @vdev_id: vdev id
+ * @cm_id: Connect manager id
+ * @bss: scan entry for the candidate
+ */
+struct wlan_cm_vdev_reassoc_req {
+	uint8_t vdev_id;
+	wlan_cm_id cm_id;
+	struct qdf_mac_addr prev_bssid;
+	struct scan_cache_node *bss;
 };
 
 /**
@@ -379,6 +411,30 @@ struct wlan_cm_connect_resp {
 #endif
 };
 
+/**
+ * struct wlan_cm_roam_rsp - Roam resp from VDEV mgr and will be sent to
+ * OSIF
+ * @vdev_id: vdev id
+ * @cm_id: Connection manager id
+ * @bssid: BSSID of the ap
+ * @ssid: SSID of the connection
+ * @freq: Channel frequency
+ * @reassoc_status: Reassoc status success or failure
+ * @reason: connect fail reason, valid only in case of failure
+ * @status_code: protocol status code received in auth/assoc resp
+ * @connect_ies: connect related IE required by osif to send to kernel
+ */
+struct wlan_cm_roam_resp {
+	uint8_t vdev_id;
+	wlan_cm_id cm_id;
+	struct qdf_mac_addr bssid;
+	struct wlan_ssid ssid;
+	qdf_freq_t freq;
+	QDF_STATUS reassoc_status;
+	enum wlan_cm_connect_fail_reason reason;
+	enum wlan_status_code status_code;
+	struct wlan_connect_rsp_ies connect_ies;
+};
 
 /**
  * struct wlan_cm_discon_rsp - disconnect resp from VDEV mgr and will be sent to
@@ -396,11 +452,13 @@ struct wlan_cm_discon_rsp {
  * @CM_NONE: No active serialisation command
  * @CM_CONNECT_ACTIVE: Connect active in serialisation
  * @CM_DISCONNECT_ACTIVE: DicConnect active in serialisation
+ * @CM_ROAM_ACTIVE: Roam active in serialisation
  */
 enum wlan_cm_active_request_type {
 	CM_NONE,
 	CM_CONNECT_ACTIVE,
 	CM_DISCONNECT_ACTIVE,
+	CM_ROAM_ACTIVE,
 };
 
 #endif /* FEATURE_CM_ENABLE */

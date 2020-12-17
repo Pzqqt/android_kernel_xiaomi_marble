@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -355,7 +355,7 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
+void
 cm_update_scan_mlme_on_disconnect(struct wlan_objmgr_vdev *vdev,
 				  struct cm_disconnect_req *req)
 {

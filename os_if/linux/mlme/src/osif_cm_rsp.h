@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +55,19 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_resp *rsp);
+
+/**
+ * osif_reassoc_handler() - API to send reassoc response to kernel
+ * @vdev: vdev pointer
+ * @rsp: Connection manager reassoc response
+ *
+ * The API is used to send reassoc response to kernel
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_reassoc_handler(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_roam_resp *rsp);
 
 /**
  * osif_failed_candidate_handler() - API to indicate individual candidate

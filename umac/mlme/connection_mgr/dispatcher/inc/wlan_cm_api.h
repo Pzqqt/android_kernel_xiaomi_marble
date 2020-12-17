@@ -280,6 +280,28 @@ bool wlan_cm_is_vdev_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
 bool wlan_cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_vdev_connect_req *req);
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * wlan_cm_get_active_reassoc_req() - Get copy of active reassoc request
+ * @vdev: vdev pointer
+ * @req: pointer to the copy of the active reassoc request
+ * *
+ * Context: Should be called only in the conext of the
+ * cm request activation
+ *
+ * Return: true and reassoc req if any request is active
+ */
+bool wlan_cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_vdev_reassoc_req *req);
+#else
+static inline
+bool wlan_cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_vdev_reassoc_req *req)
+{
+	return false;
+}
+#endif
+
 /**
  * wlan_cm_get_active_disconnect_req() - Get copy of active disconnect request
  * @vdev: vdev pointer
@@ -314,6 +336,25 @@ const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason);
  */
 enum wlan_cm_active_request_type
 wlan_cm_get_active_req_type(struct wlan_objmgr_vdev *vdev);
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * wlan_cm_reassoc_rsp() - Connection manager reassoc response
+ * @vdev: vdev pointer
+ * @resp: Reassoc response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_roam_resp *resp);
+#else
+static inline
+QDF_STATUS wlan_cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_roam_resp *resp)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wlan_cm_hw_mode_change_resp() - HW mode change response

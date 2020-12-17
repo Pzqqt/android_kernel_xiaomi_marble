@@ -22,13 +22,16 @@
 #include "wlan_scan_api.h"
 #include "wlan_cm_public_struct.h"
 #include "wlan_serialization_api.h"
+#include "wlan_cm_bss_score_param.h"
 
 static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 	switch (source) {
 	case CM_OSIF_CONNECT:
-	case CM_ROAMING:
 	case CM_OSIF_CFG_CONNECT:
 		return CONNECT_REQ_PREFIX;
+	case CM_ROAMING_HOST:
+	case CM_ROAMING_FW:
+		return ROAM_REQ_PREFIX;
 	default:
 		return DISCONNECT_REQ_PREFIX;
 	}
@@ -104,7 +107,7 @@ void cm_reset_active_cm_id(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id)
  *
  * return: void
  */
-static inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
+inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
 {
 	qdf_spinlock_acquire(&cm_ctx->cm_req_lock);
 }
@@ -117,17 +120,17 @@ static inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
  *
  * return: void
  */
-static inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
+inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 {
 	qdf_spinlock_release(&cm_ctx->cm_req_lock);
 }
 #else
-static inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
+inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
 {
 	qdf_mutex_acquire(&cm_ctx->cm_req_lock);
 }
 
-static inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
+inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 {
 	qdf_mutex_release(&cm_ctx->cm_req_lock);
 }
@@ -459,6 +462,8 @@ static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
 
 	if (prefix == CONNECT_REQ_PREFIX)
 		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	else if (prefix == ROAM_REQ_PREFIX)
+		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_REASSOC;
 	else
 		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
 
@@ -613,8 +618,9 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	qdf_list_insert_front(&cm_ctx->req_list, &cm_req->node);
 	if (prefix == CONNECT_REQ_PREFIX)
 		cm_ctx->connect_count++;
-	else
+	else if (prefix == DISCONNECT_REQ_PREFIX)
 		cm_ctx->disconnect_count++;
+
 	cm_req_lock_release(cm_ctx);
 	mlme_debug(CM_PREFIX_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
@@ -654,6 +660,12 @@ void cm_free_connect_req_mem(struct cm_connect_req *connect_req)
 	qdf_mem_zero(connect_req, sizeof(*connect_req));
 }
 
+void cm_free_roam_req_mem(struct cm_roam_req *roam_req)
+{
+	if (roam_req->candidate_list)
+		wlan_scan_purge_results(roam_req->candidate_list);
+}
+
 QDF_STATUS
 cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
@@ -686,6 +698,8 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	if (prefix == CONNECT_REQ_PREFIX) {
 		cm_ctx->connect_count--;
 		cm_free_connect_req_mem(&cm_req->connect_req);
+	} else if (prefix == ROAM_REQ_PREFIX) {
+		cm_free_roam_req_mem(&cm_req->roam_req);
 	} else {
 		cm_ctx->disconnect_count--;
 	}
@@ -1048,6 +1062,8 @@ cm_get_active_req_type(struct wlan_objmgr_vdev *vdev)
 		return CM_CONNECT_ACTIVE;
 	else if (active_req_prefix == DISCONNECT_REQ_PREFIX)
 		return CM_DISCONNECT_ACTIVE;
+	else if (active_req_prefix == ROAM_REQ_PREFIX)
+		return CM_ROAM_ACTIVE;
 	else
 		return CM_NONE;
 }
@@ -1179,3 +1195,53 @@ wlan_cm_id cm_get_cm_id_by_scan_id(struct cnx_mgr *cm_ctx,
 	return CM_ID_INVALID;
 }
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+static void
+cm_get_pcl_chan_weigtage_for_sta(struct wlan_objmgr_pdev *pdev,
+				 struct pcl_freq_weight_list *pcl_lst)
+{
+	enum QDF_OPMODE opmode = QDF_STA_MODE;
+	enum policy_mgr_con_mode pm_mode;
+	uint32_t num_entries = 0;
+	QDF_STATUS status;
+
+	if (!pcl_lst)
+		return;
+
+	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
+		status = policy_mgr_get_pcl(wlan_pdev_get_psoc(pdev), pm_mode,
+					    pcl_lst->pcl_freq_list,
+					    &num_entries,
+					    pcl_lst->pcl_weight_list,
+					    NUM_CHANNELS);
+		if (QDF_IS_STATUS_ERROR(status))
+			return;
+		pcl_lst->num_of_pcl_channels = num_entries;
+	}
+}
+
+void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+			 struct scan_filter *filter, qdf_list_t *list)
+{
+	struct pcl_freq_weight_list *pcl_lst = NULL;
+
+	if (!filter->num_of_bssid) {
+		pcl_lst = qdf_mem_malloc(sizeof(*pcl_lst));
+		cm_get_pcl_chan_weigtage_for_sta(pdev, pcl_lst);
+		if (pcl_lst && !pcl_lst->num_of_pcl_channels) {
+			qdf_mem_free(pcl_lst);
+			pcl_lst = NULL;
+		}
+	}
+	wlan_cm_calculate_bss_score(pdev, pcl_lst, list, &filter->bssid_hint);
+	if (pcl_lst)
+		qdf_mem_free(pcl_lst);
+}
+#else
+inline
+void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+			 struct scan_filter *filter, qdf_list_t *list)
+{
+	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
+}
+#endif

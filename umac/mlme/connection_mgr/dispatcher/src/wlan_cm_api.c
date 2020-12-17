@@ -22,6 +22,7 @@
 
 #include <wlan_cm_api.h>
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
+#include "connection_mgr/core/src/wlan_cm_roam.h"
 
 QDF_STATUS wlan_cm_start_connect(struct wlan_objmgr_vdev *vdev,
 				 struct wlan_cm_connect_req *req)
@@ -68,7 +69,17 @@ QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 				       QDF_STATUS status,
 				       struct qdf_mac_addr *peer_mac)
 {
-	return cm_bss_peer_create_rsp(vdev, status, peer_mac);
+	uint32_t prefix;
+	struct cnx_mgr *cm_ctx = cm_get_cm_ctx(vdev);
+
+	if (!cm_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	prefix = CM_ID_GET_PREFIX(cm_ctx->active_cm_id);
+	if (prefix == ROAM_REQ_PREFIX)
+		return cm_roam_bss_peer_create_rsp(vdev, status, peer_mac);
+	else
+		return cm_bss_peer_create_rsp(vdev, status, peer_mac);
 }
 
 QDF_STATUS wlan_cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
@@ -92,8 +103,26 @@ QDF_STATUS wlan_cm_bss_peer_delete_rsp(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_discon_rsp *resp)
 {
-	return cm_disconnect_rsp(vdev, resp);
+	uint32_t prefix;
+	struct cnx_mgr *cm_ctx = cm_get_cm_ctx(vdev);
+
+	if (!cm_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	prefix = CM_ID_GET_PREFIX(cm_ctx->active_cm_id);
+	if (prefix == ROAM_REQ_PREFIX)
+		return cm_roam_disconnect_rsp(vdev, resp);
+	else
+		return cm_disconnect_rsp(vdev, resp);
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+QDF_STATUS wlan_cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_roam_resp *resp)
+{
+	return cm_reassoc_rsp(vdev, resp);
+}
+#endif
 
 void wlan_cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 				      uint8_t max_connect_attempts)
@@ -172,6 +201,14 @@ bool wlan_cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
 {
 	return cm_get_active_connect_req(vdev, req);
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+bool wlan_cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
+				    struct wlan_cm_vdev_reassoc_req *req)
+{
+	return cm_get_active_reassoc_req(vdev, req);
+}
+#endif
 
 bool wlan_cm_get_active_disconnect_req(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_cm_vdev_discon_req *req)

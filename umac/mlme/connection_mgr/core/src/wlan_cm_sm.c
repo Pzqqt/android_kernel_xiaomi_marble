@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -240,9 +240,34 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 	struct cnx_mgr *cm_ctx = ctx;
 	bool event_handled;
 	QDF_STATUS status;
+	struct cm_req *roam_cm_req;
 
 	switch (event) {
+	case WLAN_CM_SM_EV_ROAM_INVOKE:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
+		cm_sm_deliver_event_sync(cm_ctx,
+					 WLAN_CM_SM_EV_ROAM_INVOKE,
+					 data_len, data);
+		event_handled = true;
+		break;
+	case WLAN_CM_SM_EV_ROAM_REQ:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
+		cm_sm_deliver_event_sync(cm_ctx,
+					 WLAN_CM_SM_EV_ROAM_REQ,
+					 data_len, data);
+		event_handled = true;
+		break;
 	case WLAN_CM_SM_EV_CONNECT_REQ:
+		status = cm_check_and_prepare_roam_req(cm_ctx, data,
+						       &roam_cm_req);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			cm_sm_deliver_event_sync(cm_ctx,
+						 WLAN_CM_SM_EV_ROAM_REQ,
+						 sizeof(*roam_cm_req),
+						 roam_cm_req);
+			event_handled = true;
+			break;
+		}
 		status = cm_handle_connect_req_in_non_init_state(cm_ctx, data,
 							WLAN_CM_S_CONNECTED);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -273,6 +298,10 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_DISCONNECTING);
 		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_DISCONNECT_START,
 					 data_len, data);
+		event_handled = true;
+		break;
+	case WLAN_CM_SM_EV_REASSOC_DONE:
+		cm_reassoc_complete(cm_ctx, data);
 		event_handled = true;
 		break;
 	default:
@@ -958,9 +987,12 @@ static const char *cm_sm_event_names[] = {
 	"EV_GET_NEXT_PREAUTH_AP",
 	"EV_PREAUTH_FAIL",
 	"EV_START_REASSOC",
+	"EV_REASSOC_ACTIVE",
 	"EV_REASSOC_DONE",
 	"EV_REASSOC_FAILURE",
 	"EV_ROAM_COMPLETE",
+	"EV_ROAM_REQ",
+	"EV_ROAM_INVOKE",
 };
 
 enum wlan_cm_sm_state cm_get_state(struct cnx_mgr *cm_ctx)
