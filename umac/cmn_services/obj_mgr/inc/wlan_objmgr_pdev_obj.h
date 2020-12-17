@@ -101,6 +101,14 @@
 #define WLAN_PDEV_FEXT_SCAN_RADIO           0x00000004
 /* DFS disable, valid only for scan radio supported pdevs */
 #define WLAN_PDEV_FEXT_SCAN_RADIO_DFS_DIS   0x00000008
+/* normal Spectral scan support disable */
+#define WLAN_PDEV_FEXT_NORMAL_SPECTRAL_SCAN_DIS          0x00000010
+/* agile Spectral scan support disable for 20/40/80 MHz */
+#define WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_DIS           0x00000020
+/* agile Spectral scan support disable for 160 MHz */
+#define WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS       0x00000040
+/* agile Spectral scan support disable for 80+80 MHz */
+#define WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS     0x00000080
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */

@@ -198,8 +198,8 @@
 #define WLAN_SOC_F_BTCOEX_SUPPORT      0x00200000
 	/* HOST 80211 enable*/
 #define WLAN_SOC_F_HOST_80211_ENABLE   0x00400000
-	/* Spectral disable */
-#define WLAN_SOC_F_SPECTRAL_DISABLE    0x00800000
+	/* Spectral disable from INI */
+#define WLAN_SOC_F_SPECTRAL_INI_DISABLE    0x00800000
 	/* FTM testmode enable */
 #define WLAN_SOC_F_TESTMODE_ENABLE     0x01000000
 	/* Dynamic HW mode swithch enable */

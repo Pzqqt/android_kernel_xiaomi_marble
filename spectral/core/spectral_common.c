@@ -503,7 +503,8 @@ wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	}
 
 	if (cfg_get(psoc, CFG_SPECTRAL_DISABLE)) {
-		wlan_psoc_nif_feat_cap_set(psoc, WLAN_SOC_F_SPECTRAL_DISABLE);
+		wlan_psoc_nif_feat_cap_set(psoc,
+					   WLAN_SOC_F_SPECTRAL_INI_DISABLE);
 		spectral_info("Spectral is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}

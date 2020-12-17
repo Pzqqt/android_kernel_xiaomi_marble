@@ -30,7 +30,7 @@ bool wlan_spectral_is_feature_disabled(struct wlan_objmgr_psoc *psoc)
 		return true;
 	}
 
-	if (wlan_psoc_nif_feat_cap_get(psoc, WLAN_SOC_F_SPECTRAL_DISABLE))
+	if (wlan_psoc_nif_feat_cap_get(psoc, WLAN_SOC_F_SPECTRAL_INI_DISABLE))
 		return true;
 
 	return false;
