@@ -199,6 +199,7 @@ struct dsi_panel_ops {
 	int (*bl_register)(struct dsi_panel *panel);
 	int (*bl_unregister)(struct dsi_panel *panel);
 	int (*parse_gpios)(struct dsi_panel *panel);
+	int (*parse_power_cfg)(struct dsi_panel *panel);
 };
 
 struct dsi_panel {
