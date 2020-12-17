@@ -208,6 +208,8 @@ static inline void _check_and_set_comp_bit(struct sde_hw_intf *ctx,
 			(IS_SDE_MAJOR_SAME(ctx->mdss->hwversion,
 				SDE_HW_VER_600) && dsc_4hs_merge))
 		(*intf_cfg2) |= BIT(12);
+	else if (!compression_en)
+		(*intf_cfg2) &= ~BIT(12);
 }
 
 static void sde_hw_intf_reset_counter(struct sde_hw_intf *ctx)
