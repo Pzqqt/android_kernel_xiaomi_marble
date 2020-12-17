@@ -1347,6 +1347,7 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 	/* If target was not suspended, bail out */
 	if (qdf_is_fw_down() || !pmo_tgt_is_target_suspended(psoc)) {
 		pmo_psoc_put_ref(psoc);
+		status = QDF_STATUS_E_AGAIN;
 		goto out;
 	}
 
