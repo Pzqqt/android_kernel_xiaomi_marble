@@ -23,6 +23,37 @@
 #include <qdf_module.h>
 #include <cfg_ucfg_api.h>
 
+static bool
+ucfg_spectral_is_mode_specific_request(uint8_t spectral_cp_request_id)
+{
+	bool mode_specific_request;
+
+	switch (spectral_cp_request_id) {
+	case SPECTRAL_SET_CONFIG:
+	case SPECTRAL_GET_CONFIG:
+	case SPECTRAL_IS_ACTIVE:
+	case SPECTRAL_IS_ENABLED:
+	case SPECTRAL_ACTIVATE_SCAN:
+	case SPECTRAL_STOP_SCAN:
+		mode_specific_request = true;
+		break;
+	case SPECTRAL_SET_DEBUG_LEVEL:
+	case SPECTRAL_GET_DEBUG_LEVEL:
+	case SPECTRAL_GET_CAPABILITY_INFO:
+	case SPECTRAL_GET_DIAG_STATS:
+	case SPECTRAL_GET_CHAN_WIDTH:
+	case SPECTRAL_SET_DMA_DEBUG:
+		mode_specific_request = false;
+		break;
+	default:
+		spectral_err("Invalid spectral cp request id %u",
+			     spectral_cp_request_id);
+		mode_specific_request = false;
+	}
+
+	return mode_specific_request;
+}
+
 QDF_STATUS
 ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 		      struct spectral_cp_request *sscan_req)
@@ -34,9 +65,19 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 		return -EPERM;
 	}
 
-	if (wlan_spectral_is_feature_disabled(wlan_pdev_get_psoc(pdev))) {
-		spectral_info("Spectral is disabled");
+	if (wlan_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_info("Spectral feature is disabled");
 		return -EPERM;
+	}
+
+	/* For mode specific requests, check whether
+	 * Spectral mode in the cp request is disabaled
+	 */
+	if (ucfg_spectral_is_mode_specific_request(sscan_req->req_id) &&
+	    wlan_spectral_is_mode_disabled_pdev(pdev, sscan_req->ss_mode)) {
+		spectral_info("Spectral mode %d is disabled",
+			      sscan_req->ss_mode);
+		return -ENOTSUPP;
 	}
 
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);

@@ -1722,8 +1722,8 @@ void target_if_spectral_set_rxchainmask(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (rx_ops->sptrl_rx_ops.
-	    sptrlro_spectral_is_feature_disabled(psoc)) {
-		spectral_info("Spectral is disabled");
+	    sptrlro_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_info("Spectral feature is disabled");
 		return;
 	}
 

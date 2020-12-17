@@ -461,8 +461,8 @@ QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	if (wlan_spectral_is_feature_disabled(psoc)) {
-		spectral_info("Spectral is disabled");
+	if (wlan_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_err("Spectral feature is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}
 
@@ -498,8 +498,8 @@ QDF_STATUS wlan_spectral_psoc_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wlan_spectral_is_feature_disabled(psoc)) {
-		spectral_info("Spectral is disabled");
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}
 
@@ -513,8 +513,8 @@ QDF_STATUS wlan_spectral_psoc_close(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wlan_spectral_is_feature_disabled(psoc)) {
-		spectral_info("Spectral is disabled");
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}
 
@@ -528,8 +528,8 @@ QDF_STATUS wlan_spectral_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wlan_spectral_is_feature_disabled(psoc)) {
-		spectral_info("Spectral is disabled");
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}
 
@@ -543,8 +543,8 @@ QDF_STATUS wlan_spectral_psoc_disable(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wlan_spectral_is_feature_disabled(psoc)) {
-		spectral_info("Spectral is disabled");
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}
 

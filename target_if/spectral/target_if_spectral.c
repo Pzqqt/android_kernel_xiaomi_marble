@@ -1849,28 +1849,17 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 	pcap = &spectral->capability;
 	pcap->phydiag_cap = 1;
 	pcap->radar_cap = 1;
-	pcap->spectral_cap = 1;
-	pcap->advncd_spectral_cap = 1;
+	pcap->spectral_cap = wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_NORMAL_SPECTRAL_SCAN_DIS);
+	pcap->advncd_spectral_cap = pcap->spectral_cap;
 	pcap->hw_gen = spectral->spectral_gen;
-	if (spectral->spectral_gen >= SPECTRAL_GEN3) {
-		QDF_STATUS status;
-		struct target_if_spectral_agile_mode_cap agile_cap = { 0 };
 
-		status = target_if_spectral_get_agile_mode_cap(pdev,
-							       &agile_cap);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			spectral_err("Failed to get agile mode capability");
-			return QDF_STATUS_E_FAILURE;
-		}
-		pcap->agile_spectral_cap = agile_cap.agile_spectral_cap;
-		pcap->agile_spectral_cap_160 = agile_cap.agile_spectral_cap_160;
-		pcap->agile_spectral_cap_80p80 =
-					agile_cap.agile_spectral_cap_80p80;
-	} else {
-		pcap->agile_spectral_cap = false;
-		pcap->agile_spectral_cap_160 = false;
-		pcap->agile_spectral_cap_80p80 = false;
-	}
+	pcap->agile_spectral_cap = !wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_DIS);
+	pcap->agile_spectral_cap_160 = !wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_160_DIS);
+	pcap->agile_spectral_cap_80p80 = !wlan_pdev_nif_feat_ext_cap_get(
+			pdev, WLAN_PDEV_FEXT_AGILE_SPECTRAL_SCAN_80P80_DIS);
 
 	if (scaling_params) {
 		for (param_idx = 0; param_idx < num_bin_scaling_params;
