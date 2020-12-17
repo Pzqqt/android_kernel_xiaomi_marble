@@ -213,6 +213,17 @@ struct mscs_req_info {
 #endif
 
 /**
+ * struct mlme_connect_info - mlme connect information
+ * @timing_meas_cap: Timing meas cap
+ * @oem_channel_info: oem channel info
+ */
+
+struct mlme_connect_info {
+	uint8_t timing_meas_cap;
+	struct oem_channel_info chan_info;
+};
+
+/**
  * struct mlme_legacy_priv - VDEV MLME legacy priv object
  * @chan_switch_in_progress: flag to indicate that channel switch is in progress
  * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
@@ -275,6 +286,7 @@ struct mlme_legacy_priv {
 	tDot11fIEhe_cap he_config;
 	uint32_t he_sta_obsspd;
 #endif
+	struct mlme_connect_info connect_info;
 };
 
 /**
