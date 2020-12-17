@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -439,17 +439,25 @@ pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 pmo_clear_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 {
-	struct pmo_action_wakeup_set_params cmd = {0};
+	struct pmo_action_wakeup_set_params *cmd;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	cmd.vdev_id = pmo_vdev_get_id(vdev);
-	cmd.operation = pmo_action_wakeup_reset;
+	cmd = qdf_mem_malloc(sizeof(*cmd));
+	if (!cmd) {
+		pmo_err("memory allocation failed for wakeup set params");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd->vdev_id = pmo_vdev_get_id(vdev);
+	cmd->operation = pmo_action_wakeup_reset;
 
 	/*  clear action frame pattern */
-	status = pmo_tgt_send_action_frame_pattern_req(vdev, &cmd);
+	status = pmo_tgt_send_action_frame_pattern_req(vdev, cmd);
 	if (QDF_IS_STATUS_ERROR(status))
 		pmo_err("Failed to clear wow action frame map, ret %d",
 			status);
+
+	qdf_mem_free(cmd);
 
 	return status;
 }
