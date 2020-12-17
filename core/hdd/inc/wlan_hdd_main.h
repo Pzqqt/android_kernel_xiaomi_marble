@@ -1844,6 +1844,7 @@ struct hdd_adapter_ops_history {
  * @is_therm_cmd_supp: get temperature command enable or disable
  * @disconnect_for_sta_mon_conc: disconnect if sta monitor intf concurrency
  * @bbm_ctx: bus bandwidth manager context
+ * @is_dual_mac_cfg_updated: indicate whether dual mac cfg has been updated
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2190,6 +2191,7 @@ struct hdd_context {
 #ifdef FEATURE_BUS_BANDWIDTH_MGR
 	struct bbm_context *bbm_ctx;
 #endif
+	bool is_dual_mac_cfg_updated;
 };
 
 /**
