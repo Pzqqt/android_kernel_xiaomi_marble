@@ -257,6 +257,8 @@ static const char rmnet_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"Coalescing UDP frames",
 	"Coalescing UDP bytes",
 	"Uplink priority packets",
+	"TSO packets",
+	"TSO packets arriving incorrectly",
 };
 
 static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
@@ -390,8 +392,12 @@ int rmnet_vnd_newlink(u8 id, struct net_device *rmnet_dev,
 	rmnet_dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 	rmnet_dev->hw_features |= NETIF_F_SG;
 	rmnet_dev->hw_features |= NETIF_F_GRO_HW;
+	rmnet_dev->hw_features |= NETIF_F_GSO_UDP_L4;
+	rmnet_dev->hw_features |= NETIF_F_ALL_TSO;
 
 	priv->real_dev = real_dev;
+
+	rmnet_dev->gso_max_size = 64000;
 
 	rc = register_netdevice(rmnet_dev);
 	if (!rc) {

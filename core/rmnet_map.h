@@ -48,6 +48,7 @@ enum rmnet_map_v5_header_type {
 	RMNET_MAP_HEADER_TYPE_UNKNOWN,
 	RMNET_MAP_HEADER_TYPE_COALESCING = 0x1,
 	RMNET_MAP_HEADER_TYPE_CSUM_OFFLOAD = 0x2,
+	RMNET_MAP_HEADER_TYPE_TSO = 0x3,
 	RMNET_MAP_HEADER_TYPE_ENUM_LENGTH
 };
 
@@ -109,6 +110,16 @@ struct rmnet_map_v5_coal_header {
 	u8  virtual_channel_id:4;
 
 	struct rmnet_map_v5_nl_pair nl_pairs[RMNET_MAP_V5_MAX_NLOS];
+} __aligned(1);
+
+struct rmnet_map_v5_tso_header {
+	u8  next_hdr:1;
+	u8  header_type:7;
+	u8  hw_reserved:5;
+	u8  priority:1;
+	u8  zero_csum:1;
+	u8  ip_id_cfg:1;
+	__be16 segment_size;
 } __aligned(1);
 
 /* QMAP v4 headers */
@@ -280,4 +291,7 @@ int rmnet_map_dl_ind_register(struct rmnet_port *port,
 int rmnet_map_dl_ind_deregister(struct rmnet_port *port,
 				struct rmnet_map_dl_ind *dl_ind);
 void rmnet_map_cmd_exit(struct rmnet_port *port);
+void rmnet_map_send_agg_skb(struct rmnet_port *port, unsigned long flags);
+int rmnet_map_add_tso_header(struct sk_buff *skb, struct rmnet_port *port,
+			      struct net_device *orig_dev);
 #endif /* _RMNET_MAP_H_ */

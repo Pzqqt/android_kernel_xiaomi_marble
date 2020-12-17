@@ -1423,7 +1423,7 @@ static struct sk_buff *rmnet_map_build_skb(struct rmnet_port *port)
 	return skb;
 }
 
-static void rmnet_map_send_agg_skb(struct rmnet_port *port, unsigned long flags)
+void rmnet_map_send_agg_skb(struct rmnet_port *port, unsigned long flags)
 {
 	struct sk_buff *agg_skb;
 
@@ -1621,3 +1621,38 @@ void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb)
 	dev_queue_xmit(qmap_skb);
 }
 EXPORT_SYMBOL(rmnet_map_tx_qmap_cmd);
+
+int rmnet_map_add_tso_header(struct sk_buff *skb, struct rmnet_port *port,
+			      struct net_device *orig_dev)
+{
+	struct rmnet_priv *priv = netdev_priv(orig_dev);
+	struct rmnet_map_v5_tso_header *ul_header;
+
+	if (!(orig_dev->features & (NETIF_F_ALL_TSO | NETIF_F_GSO_UDP_L4))) {
+		priv->stats.tso_arriv_errs++;
+		return -EINVAL;
+	}
+
+	ul_header = (struct rmnet_map_v5_tso_header *)
+		    skb_push(skb, sizeof(*ul_header));
+	memset(ul_header, 0, sizeof(*ul_header));
+	ul_header->header_type = RMNET_MAP_HEADER_TYPE_TSO;
+
+	if (port->data_format & RMNET_EGRESS_FORMAT_PRIORITY)
+		rmnet_map_v5_check_priority(skb, orig_dev,
+					    (struct rmnet_map_v5_csum_header *)ul_header);
+
+	ul_header->segment_size = htons(skb_shinfo(skb)->gso_size);
+
+	if (skb_shinfo(skb)->gso_type & SKB_GSO_TCP_FIXEDID)
+		ul_header->ip_id_cfg = 1;
+
+	skb->ip_summed = CHECKSUM_NONE;
+	skb_shinfo(skb)->gso_size = 0;
+	skb_shinfo(skb)->gso_segs = 0;
+	skb_shinfo(skb)->gso_type = 0;
+
+	priv->stats.tso_pkts++;
+
+	return 0;
+}
