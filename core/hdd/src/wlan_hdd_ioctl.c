@@ -38,6 +38,7 @@
 #include "wma.h"
 #include "wlan_hdd_napi.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "target_type.h"
 #ifdef FEATURE_WLAN_ESE
 #include <sme_api.h>
 #include <sir_api.h>
@@ -2284,6 +2285,145 @@ static int hdd_conc_set_dwell_time(struct hdd_adapter *adapter,
 	}
 
 	return retval;
+}
+
+static int hdd_enable_unit_test_commands(struct hdd_adapter *adapter,
+					 struct hdd_context *hdd_ctx)
+{
+	enum pld_bus_type bus_type = pld_get_bus_type(hdd_ctx->parent_dev);
+	u32 arg[2];
+	QDF_STATUS status;
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+	    hdd_get_conparam() == QDF_GLOBAL_MISSION_MODE)
+		return -EPERM;
+
+	if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
+		hdd_err_rl("Invalid vdev id");
+		return -EINVAL;
+	}
+
+	if (bus_type == PLD_BUS_TYPE_PCIE) {
+		arg[0] = 360;
+		arg[1] = 3;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_TX,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+		arg[0] = 361;
+		arg[1] = 1;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_TX,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+		if (hdd_ctx->target_type == TARGET_TYPE_QCA6390) {
+			arg[0] = 37;
+			arg[1] = 3000;
+
+			status = sme_send_unit_test_cmd(adapter->vdev_id,
+							WLAN_MODULE_RX,
+							2,
+							arg);
+			if (status != QDF_STATUS_SUCCESS)
+				return qdf_status_to_os_return(status);
+		}
+
+		if (hdd_ctx->target_type == TARGET_TYPE_QCA6490) {
+			arg[0] = 39;
+			arg[1] = 3000;
+
+			status = sme_send_unit_test_cmd(adapter->vdev_id,
+							WLAN_MODULE_RX,
+							2,
+							arg);
+			if (status != QDF_STATUS_SUCCESS)
+				return qdf_status_to_os_return(status);
+		}
+	} else if (bus_type == PLD_BUS_TYPE_SNOC) {
+		arg[0] = 7;
+		arg[1] = 1;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						0x44,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+	} else {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int hdd_disable_unit_test_commands(struct hdd_adapter *adapter,
+					  struct hdd_context *hdd_ctx)
+{
+	enum pld_bus_type bus_type = pld_get_bus_type(hdd_ctx->parent_dev);
+	u32 arg[2];
+	QDF_STATUS status;
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+	    hdd_get_conparam() == QDF_GLOBAL_MISSION_MODE)
+		return -EPERM;
+
+	if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
+		hdd_err_rl("Invalid vdev id");
+		return -EINVAL;
+	}
+
+	if (bus_type == PLD_BUS_TYPE_PCIE) {
+		arg[0] = 360;
+		arg[1] = 0;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_TX,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+		arg[0] = 361;
+		arg[1] = 0;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_TX,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+		arg[0] = 39;
+		arg[1] = 0;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_RX,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+	} else if (bus_type == PLD_BUS_TYPE_SNOC) {
+		arg[0] = 7;
+		arg[1] = 0;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						0x44,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+	} else {
+		return -EINVAL;
+	}
+	return 0;
 }
 
 static void hdd_get_link_status_cb(uint8_t status, void *context)
@@ -4757,6 +4897,24 @@ exit:
 	return ret;
 }
 
+static int drv_cmd_tput_debug_mode_enable(struct hdd_adapter *adapter,
+					  struct hdd_context *hdd_ctx,
+					  u8 *command,
+					  u8 command_len,
+					  struct hdd_priv_data *priv_data)
+{
+	return hdd_enable_unit_test_commands(adapter, hdd_ctx);
+}
+
+static int drv_cmd_tput_debug_mode_disable(struct hdd_adapter *adapter,
+					   struct hdd_context *hdd_ctx,
+					   u8 *command,
+					   u8 command_len,
+					   struct hdd_priv_data *priv_data)
+{
+	return hdd_disable_unit_test_commands(adapter, hdd_ctx);
+}
+
 #ifdef FEATURE_WLAN_ESE
 static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 					      struct hdd_context *hdd_ctx,
@@ -7034,6 +7192,8 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"GETDWELLTIME",              drv_cmd_get_dwell_time, false},
 	{"SETDWELLTIME",              drv_cmd_set_dwell_time, true},
 	{"MIRACAST",                  drv_cmd_miracast, true},
+	{"TPUT_DEBUG_MODE_ENABLE",    drv_cmd_tput_debug_mode_enable, false},
+	{"TPUT_DEBUG_MODE_DISABLE",   drv_cmd_tput_debug_mode_disable, false},
 #ifdef FEATURE_WLAN_ESE
 	{"SETCCXROAMSCANCHANNELS",    drv_cmd_set_ccx_roam_scan_channels, true},
 	{"GETTSMSTATS",               drv_cmd_get_tsm_stats, true},
