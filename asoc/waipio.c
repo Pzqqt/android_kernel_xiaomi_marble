@@ -32,9 +32,9 @@
 #include "codecs/wcd938x/wcd938x-mbhc.h"
 #include "codecs/wsa883x/wsa883x.h"
 #include "codecs/wcd938x/wcd938x.h"
-#include "codecs/bolero/bolero-cdc.h"
+#include "codecs/lpass-cdc/lpass-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
-#include "codecs/bolero/wsa-macro.h"
+#include "codecs/lpass-cdc/lpass-cdc-wsa-macro.h"
 #include "waipio-port-config.h"
 #include "msm-audio-defs.h"
 #include "msm_common.h"
@@ -1018,9 +1018,9 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			component);
 	}
 
-	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
+	component = snd_soc_rtdcom_lookup(rtd, "lpass_cdc_codec");
 	if (!component) {
-		pr_err("%s: could not find component for bolero_codec\n",
+		pr_err("%s: could not find component for lpass_cdc_codec\n",
 			__func__);
 		return ret;
 	}
@@ -1052,7 +1052,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
-	bolero_set_port_map(component, ARRAY_SIZE(sm_port_map), sm_port_map);
+	lpass_cdc_set_port_map(component, ARRAY_SIZE(sm_port_map), sm_port_map);
 
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
@@ -1066,8 +1066,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		}
 		pdata->codec_root = entry;
 	}
-	bolero_info_create_codec_entry(pdata->codec_root, component);
-	bolero_register_wake_irq(component, false);
+	lpass_cdc_info_create_codec_entry(pdata->codec_root, component);
+	lpass_cdc_register_wake_irq(component, false);
 	codec_reg_done = true;
 	msm_common_dai_link_init(rtd);
 
