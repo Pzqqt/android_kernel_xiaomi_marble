@@ -85,6 +85,10 @@
 #include <wlan_cm_roam_public_struct.h>
 #endif
 
+#ifdef WMI_AP_SUPPORT
+#include <wmi_unified_ap_params.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_EXT_DBG
@@ -2464,6 +2468,10 @@ QDF_STATUS (*extract_vdev_tsf_report_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*set_radio_tx_mode_select_cmd)(
 				wmi_unified_t wmi,
 				struct wmi_pdev_enable_tx_mode_selection *param);
+QDF_STATUS (*send_lcr_cmd)(wmi_unified_t wmi_handle,
+			   struct wmi_wifi_pos_lcr_info *lcr_info);
+QDF_STATUS (*send_lci_cmd)(wmi_unified_t wmi_handle,
+			   struct wifi_pos_lci_info *lci_info);
 #endif
 };
 
