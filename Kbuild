@@ -423,9 +423,7 @@ ifeq ($(CONFIG_WLAN_ENABLE_GPIO_WAKEUP),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_gpio_wakeup.o
 endif
 
-ifeq ($(CONFIG_CM_ENABLE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cm_connect.o
-endif
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_cm_disconnect.o
 
 

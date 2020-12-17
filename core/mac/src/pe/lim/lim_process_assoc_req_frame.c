@@ -2739,6 +2739,8 @@ bool lim_fill_lim_assoc_ind_params(
 	const uint8_t *wpsie = NULL;
 	uint8_t maxidx, i;
 	bool wme_enable;
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *mlme_obj;
 
 	if (!session_entry->parsedAssocReq) {
 		pe_err(" Parsed Assoc req is NULL");
@@ -2951,6 +2953,20 @@ bool lim_fill_lim_assoc_ind_params(
 	if (wlan_reg_is_6ghz_chan_freq(session_entry->curr_op_freq))
 		assoc_ind->ch_width =
 			lim_convert_channel_width_enum(sta_ds->ch_width);
+
+	vdev = session_entry->vdev;
+	if (!vdev)
+		return true;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj)
+		pe_err("vdev component object is NULL");
+	else
+		qdf_mem_copy(
+			&mlme_obj->ext_vdev_ptr->connect_info.chan_info,
+			&assoc_ind->chan_info,
+			sizeof(mlme_obj->ext_vdev_ptr->connect_info.chan_info));
+
 	return true;
 }
 

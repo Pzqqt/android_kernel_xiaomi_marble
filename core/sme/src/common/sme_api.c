@@ -68,6 +68,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_cm_tgt_if_tx_api.h"
 #include "wlan_cm_api.h"
+#include "parser_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -14849,6 +14850,35 @@ uint32_t sme_unpack_rsn_ie(mac_handle_t mac_handle, uint8_t *buf,
 	return dot11f_unpack_ie_rsn(mac_ctx, buf, buf_len, rsn_ie, append_ie);
 }
 
+QDF_STATUS sme_unpack_assoc_rsp(mac_handle_t mac_handle,
+				uint8_t *frame, uint32_t frame_len,
+				struct sDot11fAssocResponse *assoc_resp)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	return dot11f_parse_assoc_response(mac_ctx, frame, frame_len,
+					   assoc_resp, false);
+}
+
+void sme_get_hs20vendor_ie(mac_handle_t mac_handle, uint8_t *frame,
+			   uint32_t frame_len,
+			   struct sDot11fIEhs20vendor_ie *hs20vendor_ie)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct sSirProbeRespBeacon *beacon_probe_resp =
+		qdf_mem_malloc(sizeof(struct sSirProbeRespBeacon));
+
+	if (!beacon_probe_resp)
+		return;
+
+	sir_parse_beacon_ie(mac_ctx, beacon_probe_resp, frame, frame_len);
+
+	qdf_mem_copy(hs20vendor_ie, &beacon_probe_resp->hs20vendor_ie,
+		     sizeof(struct sDot11fIEhs20vendor_ie));
+
+	qdf_mem_free(beacon_probe_resp);
+}
+
 void sme_add_qcn_ie(mac_handle_t mac_handle, uint8_t *ie_data,
 		    uint16_t *ie_len)
 {
@@ -16433,3 +16463,23 @@ sme_set_beacon_latency_event_cb(mac_handle_t mac_handle,
 	return qdf_status;
 }
 #endif
+
+void sme_fill_enc_type(eCsrEncryptionType *cipher_type,
+		       uint32_t cipherset)
+{
+	csr_fill_enc_type(cipher_type, cipherset);
+}
+
+void sme_fill_auth_type(enum csr_akm_type *auth_type,
+			uint32_t authmodeset, uint32_t akm,
+			uint32_t ucastcipherset)
+{
+	csr_fill_auth_type(auth_type, authmodeset,
+			   akm, ucastcipherset);
+}
+
+enum csr_cfgdot11mode sme_phy_mode_to_dot11mode(enum wlan_phymode phy_mode)
+{
+	return csr_phy_mode_to_dot11mode(phy_mode);
+}
+

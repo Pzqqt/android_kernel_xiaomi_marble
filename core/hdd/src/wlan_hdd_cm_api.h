@@ -111,4 +111,23 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter);
  */
 void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter);
 
+/**
+ * hdd_cm_update_rssi_snr_by_bssid() - update rsi and snr into adapter
+ * @adapter: Pointer to adapter
+ *
+ * Return: None
+ */
+void hdd_cm_update_rssi_snr_by_bssid(struct hdd_adapter *adapter);
+
+/**
+ *  hdd_cm_handle_assoc_event() - Send disassociation indication to oem
+ * app
+ * @vdev: Pointer to adapter
+ * @peer_mac: Pointer to peer mac address
+ *
+ * Return: None
+ */
+void hdd_cm_handle_assoc_event(struct wlan_objmgr_vdev *vdev,
+			       uint8_t *peer_mac);
+
 #endif

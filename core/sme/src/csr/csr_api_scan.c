@@ -1987,9 +1987,9 @@ static void csr_fill_wapi_auth_type(enum csr_akm_type *auth_type, uint32_t akm)
 		*auth_type = eCSR_AUTH_TYPE_NONE;
 }
 
-static void csr_fill_auth_type(enum csr_akm_type *auth_type,
-			       uint32_t authmodeset, uint32_t akm,
-			       uint32_t ucastcipherset)
+void csr_fill_auth_type(enum csr_akm_type *auth_type,
+			uint32_t authmodeset, uint32_t akm,
+			uint32_t ucastcipherset)
 {
 	if (!authmodeset) {
 		*auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
@@ -2040,8 +2040,7 @@ static void csr_fill_auth_type(enum csr_akm_type *auth_type,
 	*auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 }
 
-static void csr_fill_enc_type(eCsrEncryptionType *cipher_type,
-			      uint32_t cipherset)
+void csr_fill_enc_type(eCsrEncryptionType *cipher_type, uint32_t cipherset)
 {
 	if (!cipherset) {
 		*cipher_type = eCSR_ENCRYPT_TYPE_NONE;

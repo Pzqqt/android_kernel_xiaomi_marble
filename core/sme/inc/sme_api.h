@@ -2997,6 +2997,32 @@ uint32_t sme_unpack_rsn_ie(mac_handle_t mac_handle, uint8_t *buf,
 			   bool append_ie);
 
 /**
+ * sme_unpack_assoc_rsp() - wrapper to unpack assoc response
+ * @mac_handle: handle returned by mac_open
+ * @frame: assoc response buffer pointer
+ * @frame_len: assoc response buffer length
+ * @assoc_resp: output assoc response structure
+ *
+ * Return: parse status
+ */
+QDF_STATUS sme_unpack_assoc_rsp(mac_handle_t mac_handle,
+				uint8_t *frame, uint32_t frame_len,
+				struct sDot11fAssocResponse *assoc_resp);
+
+/**
+ * sme_get_hs20vendor_ie() - wrapper to unpack beacon/probe response
+ * @mac_handle: handle returned by mac_open
+ * @frame: beacon/probe response response buffer pointer
+ * @frame_len: beacone probe/ response buffer length
+ * @hs20vendor_ie: output hs20vendor_ie structure
+ *
+ * Return: None
+ */
+void sme_get_hs20vendor_ie(mac_handle_t mac_handle, uint8_t *frame,
+			   uint32_t frame_len,
+			   tDot11fIEhs20vendor_ie *hs20vendor_ie);
+
+/**
  * sme_add_qcn_ie: Adds QCN IE data to IE buffer
  * @mac_handle: handle returned by mac_open
  * @ie_data: ie buffer pointer
@@ -4359,5 +4385,37 @@ sme_set_beacon_latency_event_cb(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * sme_fill_enc_type() - converts crypto cipher set to csr specific cipher type
+ * @cipher_type: output csr cipher type
+ * @ cipherset:input cipher set
+ *
+ * Return: None
+ */
+
+void sme_fill_enc_type(eCsrEncryptionType *cipher_type,
+		       uint32_t cipherset);
+
+/**
+ * sme_fill_auth_type() - converts auth mode set to csr specific auth type
+ * @auth_type: output csr auth type
+ * @ authmodeset: authmode set
+ * @akm: akm
+ * @ucastcipherset: ucastcipherset
+ *
+ * Return: None
+ */
+void sme_fill_auth_type(enum csr_akm_type *auth_type,
+			uint32_t authmodeset, uint32_t akm,
+			uint32_t ucastcipherset);
+
+/**
+ * sme_phy_mode_to_dot11mode() - converts phy mode to dot11 mode
+ * @phy_mode: wlan phy mode
+ *
+ * Return: csr_cfgdot11mode
+ */
+enum csr_cfgdot11mode sme_phy_mode_to_dot11mode(enum wlan_phymode phy_mode);
 
 #endif /* #if !defined( __SME_API_H ) */

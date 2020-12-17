@@ -92,6 +92,7 @@ enum csr_cfgdot11mode {
 	eCSR_CFG_DOT11_MODE_AUTO,
 	eCSR_CFG_DOT11_MODE_11AX,
 	eCSR_CFG_DOT11_MODE_11AX_ONLY,
+	eCSR_CFG_DOT11_MODE_MAX,
 };
 
 enum csr_scan_reason {

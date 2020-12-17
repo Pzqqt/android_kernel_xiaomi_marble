@@ -19622,7 +19622,6 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 		roam_profile->EncryptionType.encryptionType[0] =
 			encryptionType;
 	} else {
-		sta_ctx->conn_info.mc_encrypt_type = encryptionType;
 		roam_profile->mcEncryptionType.numEntries = 1;
 		roam_profile->mcEncryptionType.encryptionType[0] =
 			encryptionType;
@@ -20471,7 +20470,6 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 
 	hdd_sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_sta_ctx->roam_profile.EncryptionType.numEntries = 0;
-	hdd_sta_ctx->conn_info.mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_sta_ctx->roam_profile.mcEncryptionType.numEntries = 0;
 
 	wlan_hdd_clear_wapi_privacy(adapter);

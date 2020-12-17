@@ -126,7 +126,6 @@ struct hdd_conn_flag {
  * @peer_macaddr:Peer Mac Address of the IBSS Stations
  * @auth_type: Auth Type
  * @uc_encrypt_type: Unicast Encryption Type
- * @mc_encrypt_type: Multicast Encryption Type
  * @is_authenticated: Remembers authenticated state
  * @dot11mode: dot11mode
  * @proxy_arp_service: proxy arp service
@@ -161,7 +160,6 @@ struct hdd_connection_info {
 	struct qdf_mac_addr peer_macaddr[MAX_PEERS];
 	enum csr_akm_type auth_type;
 	eCsrEncryptionType uc_encrypt_type;
-	eCsrEncryptionType mc_encrypt_type;
 	uint8_t is_authenticated;
 	uint32_t dot11mode;
 	uint8_t proxy_arp_service;
@@ -534,5 +532,55 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter);
  * Return: 0 on success and errno on failure
  */
 int hdd_remove_beacon_filter(struct hdd_adapter *adapter);
+
+/**
+ * hdd_copy_ht_operation()- copy HT operation element to
+ * hdd station context.
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @ht_ops: pointer to ht operation
+ *
+ * Return: None
+ */
+void hdd_copy_ht_operation(struct hdd_station_ctx *hdd_sta_ctx,
+			   tDot11fIEHTInfo *ht_ops);
+
+/**
+ * hdd_copy_vht_operation()- copy VHT operations element to
+ * hdd station context.
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @vht_ops: pointer to vht operation
+ *
+ * Return: None
+ */
+void hdd_copy_vht_operation(struct hdd_station_ctx *hdd_sta_ctx,
+			    tDot11fIEVHTOperation *vht_ops);
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
+     defined(WLAN_FEATURE_11AX)
+/**
+ * hdd_copy_he_operation()- copy HE operations element to
+ * hdd station context.
+ * @hdd_sta_ctx: pointer to hdd station context
+ * @he_operation: pointer to he operation
+ *
+ * Return: None
+ */
+void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+			   tDot11fIEhe_op *he_operation);
+#else
+static inline void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+					 tDot11fIEhe_op *he_operation)
+{
+}
+#endif
+
+/**
+ * hdd_is_roam_sync_in_progress()- Check if roam offloaded
+ * @hdd_ctx: Pointer to hdd context
+ * @vdev_id: Vdev id
+ *
+ * Return: roam sync status if roaming offloaded else false
+ */
+bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx, uint8_t vdev_id);
 
 #endif

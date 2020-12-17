@@ -837,47 +837,38 @@ void hdd_copy_vht_caps(struct ieee80211_vht_cap *hdd_vht_cap,
 /* stbc_param */
 #define HT_STBC_PARAM_MCS 0x007f
 
-/**
- * hdd_copy_ht_operation()- copy HT operation element from roam info to
- *  hdd station context.
- * @hdd_sta_ctx: pointer to hdd station context
- * @roam_info: pointer to roam info
- *
- * Return: None
- */
-static void hdd_copy_ht_operation(struct hdd_station_ctx *hdd_sta_ctx,
-					    struct csr_roam_info *roam_info)
+void hdd_copy_ht_operation(struct hdd_station_ctx *hdd_sta_ctx,
+			   tDot11fIEHTInfo *ht_ops)
 {
-	tDot11fIEHTInfo *roam_ht_ops = &roam_info->ht_operation;
 	struct ieee80211_ht_operation *hdd_ht_ops =
 		&hdd_sta_ctx->conn_info.ht_operation;
 	uint32_t i, temp_ht_ops;
 
 	qdf_mem_zero(hdd_ht_ops, sizeof(struct ieee80211_ht_operation));
 
-	hdd_ht_ops->primary_chan = roam_ht_ops->primaryChannel;
+	hdd_ht_ops->primary_chan = ht_ops->primaryChannel;
 
 	/* HT_PARAMS */
-	temp_ht_ops = roam_ht_ops->secondaryChannelOffset &
+	temp_ht_ops = ht_ops->secondaryChannelOffset &
 		IEEE80211_HT_PARAM_CHA_SEC_OFFSET;
 	if (temp_ht_ops)
 		hdd_ht_ops->ht_param |= temp_ht_ops;
 	else
 		hdd_ht_ops->ht_param = IEEE80211_HT_PARAM_CHA_SEC_NONE;
-	if (roam_ht_ops->recommendedTxWidthSet)
+	if (ht_ops->recommendedTxWidthSet)
 		hdd_ht_ops->ht_param |= IEEE80211_HT_PARAM_CHAN_WIDTH_ANY;
-	if (roam_ht_ops->rifsMode)
+	if (ht_ops->rifsMode)
 		hdd_ht_ops->ht_param |= IEEE80211_HT_PARAM_RIFS_MODE;
-	if (roam_ht_ops->controlledAccessOnly)
+	if (ht_ops->controlledAccessOnly)
 		hdd_ht_ops->ht_param |= HT_PARAM_CONTROLLED_ACCESS_ONLY;
-	temp_ht_ops = roam_ht_ops->serviceIntervalGranularity &
+	temp_ht_ops = ht_ops->serviceIntervalGranularity &
 		(HT_PARAM_SERVICE_INT_GRAN >> HT_PARAM_SERVICE_INT_GRAN_SHIFT);
 	if (temp_ht_ops)
 		hdd_ht_ops->ht_param |= temp_ht_ops <<
 			HT_PARAM_SERVICE_INT_GRAN_SHIFT;
 
 	/* operation mode */
-	temp_ht_ops = roam_ht_ops->opMode &
+	temp_ht_ops = ht_ops->opMode &
 			IEEE80211_HT_OP_MODE_PROTECTION;
 	switch (temp_ht_ops) {
 	case IEEE80211_HT_OP_MODE_PROTECTION_NONMEMBER:
@@ -897,41 +888,41 @@ static void hdd_copy_ht_operation(struct hdd_station_ctx *hdd_sta_ctx,
 		hdd_ht_ops->operation_mode |=
 			IEEE80211_HT_OP_MODE_PROTECTION_NONE;
 	}
-	if (roam_ht_ops->nonGFDevicesPresent)
+	if (ht_ops->nonGFDevicesPresent)
 		hdd_ht_ops->operation_mode |=
 			IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT;
-	if (roam_ht_ops->transmitBurstLimit)
+	if (ht_ops->transmitBurstLimit)
 		hdd_ht_ops->operation_mode |=
 			HT_OP_MODE_TX_BURST_LIMIT;
-	if (roam_ht_ops->obssNonHTStaPresent)
+	if (ht_ops->obssNonHTStaPresent)
 		hdd_ht_ops->operation_mode |=
 			IEEE80211_HT_OP_MODE_NON_HT_STA_PRSNT;
 
 	/* stbc_param */
-	temp_ht_ops = roam_ht_ops->basicSTBCMCS &
+	temp_ht_ops = ht_ops->basicSTBCMCS &
 			HT_STBC_PARAM_MCS;
 	if (temp_ht_ops)
 		hdd_ht_ops->stbc_param |= temp_ht_ops;
-	if (roam_ht_ops->dualCTSProtection)
+	if (ht_ops->dualCTSProtection)
 		hdd_ht_ops->stbc_param |=
 			IEEE80211_HT_STBC_PARAM_DUAL_CTS_PROT;
-	if (roam_ht_ops->secondaryBeacon)
+	if (ht_ops->secondaryBeacon)
 		hdd_ht_ops->stbc_param |=
 			IEEE80211_HT_STBC_PARAM_STBC_BEACON;
-	if (roam_ht_ops->lsigTXOPProtectionFullSupport)
+	if (ht_ops->lsigTXOPProtectionFullSupport)
 		hdd_ht_ops->stbc_param |=
 			IEEE80211_HT_STBC_PARAM_LSIG_TXOP_FULLPROT;
-	if (roam_ht_ops->pcoActive)
+	if (ht_ops->pcoActive)
 		hdd_ht_ops->stbc_param |=
 			IEEE80211_HT_STBC_PARAM_PCO_ACTIVE;
-	if (roam_ht_ops->pcoPhase)
+	if (ht_ops->pcoPhase)
 		hdd_ht_ops->stbc_param |=
 			IEEE80211_HT_STBC_PARAM_PCO_PHASE;
 
 	/* basic MCs set */
 	for (i = 0; i < 16; ++i)
 		hdd_ht_ops->basic_set[i] =
-			roam_ht_ops->basicMCSSet[i];
+			ht_ops->basicMCSSet[i];
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
@@ -950,47 +941,37 @@ static void hdd_copy_vht_center_freq(struct ieee80211_vht_operation *ieee_ops,
 }
 #endif /* KERNEL_VERSION(4, 12, 0) */
 
-/**
- * hdd_copy_vht_operation()- copy VHT operations element from roam info to
- *  hdd station context.
- * @hdd_sta_ctx: pointer to hdd station context
- * @roam_info: pointer to roam info
- *
- * Return: None
- */
-static void hdd_copy_vht_operation(struct hdd_station_ctx *hdd_sta_ctx,
-					      struct csr_roam_info *roam_info)
+void hdd_copy_vht_operation(struct hdd_station_ctx *hdd_sta_ctx,
+			    tDot11fIEVHTOperation *vht_ops)
 {
-	tDot11fIEVHTOperation *roam_vht_ops = &roam_info->vht_operation;
 	struct ieee80211_vht_operation *hdd_vht_ops =
 		&hdd_sta_ctx->conn_info.vht_operation;
 
 	qdf_mem_zero(hdd_vht_ops, sizeof(struct ieee80211_vht_operation));
 
-	hdd_vht_ops->chan_width = roam_vht_ops->chanWidth;
-	hdd_copy_vht_center_freq(hdd_vht_ops, roam_vht_ops);
-	hdd_vht_ops->basic_mcs_set = roam_vht_ops->basicMCSSet;
+	hdd_vht_ops->chan_width = vht_ops->chanWidth;
+	hdd_copy_vht_center_freq(hdd_vht_ops, vht_ops);
+	hdd_vht_ops->basic_mcs_set = vht_ops->basicMCSSet;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
      defined(WLAN_FEATURE_11AX)
-static void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
-				  struct csr_roam_info *roam_info)
+void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+			   tDot11fIEhe_op *he_operation)
 {
-	tDot11fIEhe_op *roam_he_operation = &roam_info->he_operation;
 	struct ieee80211_he_operation *hdd_he_operation;
 	uint32_t he_oper_params = 0;
 	uint32_t len = 0, filled = 0;
 	uint8_t he_oper_6g_params = 0;
 	uint32_t he_oper_len;
 
-	if (!roam_he_operation->present)
+	if (!he_operation->present)
 		return;
-	if (roam_he_operation->vht_oper_present)
+	if (he_operation->vht_oper_present)
 		len += 3;
-	if (roam_he_operation->co_located_bss)
+	if (he_operation->co_located_bss)
 		len += 1;
-	if (roam_he_operation->oper_info_6g_present)
+	if (he_operation->oper_info_6g_present)
 		len += 5;
 
 	he_oper_len = sizeof(struct ieee80211_he_operation) + len;
@@ -1000,67 +981,67 @@ static void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 		return;
 
 	/* Fill he_oper_params */
-	he_oper_params |= roam_he_operation->default_pe <<
+	he_oper_params |= he_operation->default_pe <<
 					HE_OPERATION_DFLT_PE_DURATION_POS;
-	he_oper_params |= roam_he_operation->twt_required <<
+	he_oper_params |= he_operation->twt_required <<
 					HE_OPERATION_TWT_REQUIRED_POS;
-	he_oper_params |= roam_he_operation->txop_rts_threshold <<
+	he_oper_params |= he_operation->txop_rts_threshold <<
 					HE_OPERATION_RTS_THRESHOLD_POS;
-	he_oper_params |= roam_he_operation->vht_oper_present <<
+	he_oper_params |= he_operation->vht_oper_present <<
 					HE_OPERATION_VHT_OPER_POS;
-	he_oper_params |= roam_he_operation->co_located_bss <<
+	he_oper_params |= he_operation->co_located_bss <<
 					HE_OPERATION_CO_LOCATED_BSS_POS;
-	he_oper_params |= roam_he_operation->er_su_disable <<
+	he_oper_params |= he_operation->er_su_disable <<
 					HE_OPERATION_ER_SU_DISABLE_POS;
-	he_oper_params |= roam_he_operation->oper_info_6g_present <<
+	he_oper_params |= he_operation->oper_info_6g_present <<
 					HE_OPERATION_OPER_INFO_6G_POS;
-	he_oper_params |= roam_he_operation->reserved2 <<
+	he_oper_params |= he_operation->reserved2 <<
 					HE_OPERATION_RESERVED_POS;
-	he_oper_params |= roam_he_operation->bss_color <<
+	he_oper_params |= he_operation->bss_color <<
 					HE_OPERATION_BSS_COLOR_POS;
-	he_oper_params |= roam_he_operation->partial_bss_col <<
+	he_oper_params |= he_operation->partial_bss_col <<
 					HE_OPERATION_PARTIAL_BSS_COLOR_POS;
-	he_oper_params |= roam_he_operation->bss_col_disabled <<
+	he_oper_params |= he_operation->bss_col_disabled <<
 					HE_OPERATION_BSS_COL_DISABLED_POS;
 
 	hdd_he_operation->he_oper_params = he_oper_params;
 
 	/* Fill he_mcs_nss set */
 	qdf_mem_copy(&hdd_he_operation->he_mcs_nss_set,
-		     roam_he_operation->basic_mcs_nss,
+		     he_operation->basic_mcs_nss,
 		     sizeof(hdd_he_operation->he_mcs_nss_set));
 
 	/* Fill he_params_optional fields */
 
-	if (roam_he_operation->vht_oper_present) {
+	if (he_operation->vht_oper_present) {
 		hdd_he_operation->optional[filled++] =
-			roam_he_operation->vht_oper.info.chan_width;
+			he_operation->vht_oper.info.chan_width;
 		hdd_he_operation->optional[filled++] =
-			roam_he_operation->vht_oper.info.center_freq_seg0;
+			he_operation->vht_oper.info.center_freq_seg0;
 		hdd_he_operation->optional[filled++] =
-			roam_he_operation->vht_oper.info.center_freq_seg1;
+			he_operation->vht_oper.info.center_freq_seg1;
 	}
-	if (roam_he_operation->co_located_bss)
+	if (he_operation->co_located_bss)
 		hdd_he_operation->optional[filled++] =
-				roam_he_operation->maxbssid_ind.info.data;
+				he_operation->maxbssid_ind.info.data;
 
-	if (roam_he_operation->oper_info_6g_present) {
+	if (he_operation->oper_info_6g_present) {
 		hdd_he_operation->optional[filled++] =
-			roam_he_operation->oper_info_6g.info.primary_ch;
+			he_operation->oper_info_6g.info.primary_ch;
 		he_oper_6g_params |=
-			roam_he_operation->oper_info_6g.info.ch_width << 0;
+			he_operation->oper_info_6g.info.ch_width << 0;
 		he_oper_6g_params |=
-			roam_he_operation->oper_info_6g.info.dup_bcon << 2;
+			he_operation->oper_info_6g.info.dup_bcon << 2;
 		he_oper_6g_params |=
-			roam_he_operation->oper_info_6g.info.reserved << 3;
+			he_operation->oper_info_6g.info.reserved << 3;
 
 		hdd_he_operation->optional[filled++] = he_oper_6g_params;
 		hdd_he_operation->optional[filled++] =
-			roam_he_operation->oper_info_6g.info.center_freq_seg0;
+			he_operation->oper_info_6g.info.center_freq_seg0;
 		hdd_he_operation->optional[filled++] =
-			roam_he_operation->oper_info_6g.info.center_freq_seg1;
+			he_operation->oper_info_6g.info.center_freq_seg1;
 		hdd_he_operation->optional[filled] =
-				roam_he_operation->oper_info_6g.info.min_rate;
+				he_operation->oper_info_6g.info.min_rate;
 	}
 
 	if (hdd_sta_ctx->cache_conn_info.he_operation) {
@@ -1072,22 +1053,20 @@ static void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 
 	hdd_sta_ctx->cache_conn_info.he_operation = hdd_he_operation;
 }
+
+static void __hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+				    struct csr_roam_info *roam_info)
+{
+	hdd_copy_he_operation(hdd_sta_ctx, &roam_info->he_operation);
+}
 #else
-static inline void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
-					 struct csr_roam_info *roam_info)
+static inline void __hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+					   struct csr_roam_info *roam_info)
 {
 }
 #endif
 
-/**
- * hdd_is_roam_sync_in_progress()- Check if roam offloaded
- * @hdd_ctx: Pointer to hdd context
- * @vdev_id: Vdev id
- *
- * Return: roam sync status if roaming offloaded else false
- */
-static bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx,
-					 uint8_t vdev_id)
+bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx, uint8_t vdev_id)
 {
 	return MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, vdev_id);
 }
@@ -1134,13 +1113,13 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
 	}
 	if (roam_info->ht_operation.present) {
 		hdd_sta_ctx->conn_info.conn_flag.ht_op_present = true;
-		hdd_copy_ht_operation(hdd_sta_ctx, roam_info);
+		hdd_copy_ht_operation(hdd_sta_ctx, &roam_info->ht_operation);
 	} else {
 		hdd_sta_ctx->conn_info.conn_flag.ht_op_present = false;
 	}
 	if (roam_info->vht_operation.present) {
 		hdd_sta_ctx->conn_info.conn_flag.vht_op_present = true;
-		hdd_copy_vht_operation(hdd_sta_ctx, roam_info);
+		hdd_copy_vht_operation(hdd_sta_ctx, &roam_info->vht_operation);
 	} else {
 		hdd_sta_ctx->conn_info.conn_flag.vht_op_present = false;
 	}
@@ -1152,7 +1131,7 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
 	qdf_mem_copy(&hdd_sta_ctx->cache_conn_info, &hdd_sta_ctx->conn_info,
 		     sizeof(hdd_sta_ctx->cache_conn_info));
 
-	hdd_copy_he_operation(hdd_sta_ctx, roam_info);
+	__hdd_copy_he_operation(hdd_sta_ctx, roam_info);
 }
 
 /**
@@ -1197,7 +1176,6 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			/* Get Multicast Encryption Type */
 			encrypt_type =
 			    roam_info->u.pConnectedProfile->mcEncryptionType;
-			sta_ctx->conn_info.mc_encrypt_type = encrypt_type;
 			/* Get Unicast Encryption Type */
 			encrypt_type =
 				roam_info->u.pConnectedProfile->EncryptionType;
@@ -1540,7 +1518,6 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 static void hdd_send_association_event(struct net_device *dev,
 				       struct csr_roam_info *roam_info)
 {
-	int ret;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -1577,8 +1554,6 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 		memcpy(wrqu.ap_addr.sa_data, roam_info->bss_desc->bssId,
 		       sizeof(roam_info->bss_desc->bssId));
-
-		ucfg_p2p_status_connect(adapter->vdev);
 
 		hdd_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT
 			      " connected to "
@@ -1624,12 +1599,6 @@ static void hdd_send_association_event(struct net_device *dev,
 		chan_info.reg_info_2 =
 			roam_info->chan_info.reg_info_2;
 
-		ret = hdd_objmgr_set_peer_mlme_state(adapter->vdev,
-						     WLAN_ASSOC_STATE);
-		if (ret)
-			hdd_err("Peer object "QDF_MAC_ADDR_FMT" fail to set associated state",
-				QDF_MAC_ADDR_REF(peer_macaddr.bytes));
-
 		/* send peer status indication to oem app */
 		hdd_send_peer_status_ind_to_app(&peer_macaddr,
 						ePeerConnected,
@@ -1645,16 +1614,7 @@ static void hdd_send_association_event(struct net_device *dev,
 				       adapter->vdev);
 #endif
 
-		hdd_add_latency_critical_client(
-			adapter,
-			hdd_convert_cfgdot11mode_to_80211mode(
-				sta_ctx->conn_info.dot11mode));
-		/* start timer in sta/p2p_cli */
-		hdd_bus_bw_compute_prev_txrx_stats(adapter);
-		hdd_bus_bw_compute_timer_start(hdd_ctx);
-
-		if (ucfg_pkt_capture_get_pktcap_mode(hdd_ctx->psoc))
-			ucfg_pkt_capture_record_channel(adapter->vdev);
+		hdd_cm_handle_assoc_event(adapter->vdev, peer_macaddr.bytes);
 	} else {                /* Not Associated */
 		hdd_nofl_info("%s(vdevid-%d): disconnected", dev->name,
 			      adapter->vdev_id);
@@ -1694,7 +1654,6 @@ void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 
 	/* Clear all security settings */
 	sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	sta_ctx->conn_info.mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 
 	sta_ctx->conn_info.proxy_arp_service = 0;
@@ -2721,7 +2680,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	struct net_device *dev = adapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	int8_t snr = 0;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t *reqRsnIe;
 	uint32_t reqRsnLength = DOT11F_IE_RSN_MAX_LEN, ie_len;
@@ -2748,22 +2706,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	hdd_get_rssi_snr_by_bssid(adapter, sta_ctx->conn_info.bssid.bytes,
-				  &adapter->rssi, &snr);
-
-	/* If RSSi is reported as positive then it is invalid */
-	if (adapter->rssi > 0) {
-		hdd_debug_rl("RSSI invalid %d", adapter->rssi);
-		adapter->rssi = 0;
-	}
-
-	hdd_debug("snr: %d, rssi: %d", snr, adapter->rssi);
-
-	sta_ctx->conn_info.signal = adapter->rssi;
-	sta_ctx->conn_info.noise =
-		sta_ctx->conn_info.signal - snr;
-	sta_ctx->cache_conn_info.signal = sta_ctx->conn_info.signal;
-	sta_ctx->cache_conn_info.noise = sta_ctx->conn_info.noise;
+	hdd_cm_update_rssi_snr_by_bssid(adapter);
 
 	hdd_save_connect_status(adapter, roam_info);
 	/*

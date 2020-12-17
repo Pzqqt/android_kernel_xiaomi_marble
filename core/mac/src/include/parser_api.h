@@ -1280,5 +1280,20 @@ wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
 uint16_t
 wlan_get_ielen_from_bss_description(struct bss_description *bss_desc);
 
+/**
+ * dot11f_parse_assoc_response() - API to parse Assoc IE buffer to struct
+ * @mac_ctx: MAC context
+ * @p_buf: Pointer to the assoc IE buffer
+ * @n_buf: length of the @p_buf
+ * @p_frm: Struct to populate the IE buffer after parsing
+ * @append_ie: Boolean to indicate whether to reset @p_frm or not. If @append_ie
+ *             is true, @p_frm struct is not reset to zeros.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dot11f_parse_assoc_response(struct mac_context *mac_ctx,
+				       uint8_t *p_buf, uint32_t n_buf,
+				       tDot11fAssocResponse *p_frm,
+				       bool append_ie);
 
 #endif /* __PARSE_H__ */

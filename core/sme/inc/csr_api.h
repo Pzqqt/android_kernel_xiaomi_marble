@@ -1460,4 +1460,35 @@ eCsrPhyMode csr_convert_from_reg_phy_mode(enum reg_phymode phymode);
  * Return: None
  */
 void csr_update_beacon(struct mac_context *mac);
+
+/**
+ * csr_fill_enc_type() - converts crypto cipher set to csr specific cipher type
+ * @cipher_type: output csr cipher type
+ * @ cipherset:input cipher set
+ *
+ * Return: None
+ */
+void csr_fill_enc_type(eCsrEncryptionType *cipher_type, uint32_t cipherset);
+
+/**
+ * csr_fill_auth_type() - auth mode set to csr specific auth type
+ * @auth_type: output csr auth type
+ * @ authmodeset: authmode set
+ * @akm: akm
+ * @ucastcipherset: ucastcipherset
+ *
+ * Return: None
+ */
+void csr_fill_auth_type(enum csr_akm_type *auth_type,
+			uint32_t authmodeset, uint32_t akm,
+			uint32_t ucastcipherset);
+
+/**
+ * csr_phy_mode_to_dot11mode() - converts phy mode to dot11 mode
+ * @phy_mode: wlan phy mode
+ *
+ * Return: csr_cfgdot11mode
+ */
+enum csr_cfgdot11mode csr_phy_mode_to_dot11mode(enum wlan_phymode phy_mode);
+
 #endif
