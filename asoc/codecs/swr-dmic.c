@@ -68,6 +68,8 @@ struct swr_dmic_priv {
 	bool is_wcd_supply;
 	int is_en_supply;
 	u8 tx_master_port_map[SWR_DMIC_MAX_PORTS];
+	struct swr_port_params tx_port_params[SWR_UC_MAX][SWR_DMIC_MAX_PORTS];
+	struct swr_dev_frame_config swr_tx_port_params[SWR_UC_MAX];
 	struct notifier_block nblock;
 };
 
@@ -253,6 +255,74 @@ static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 		break;
 	};
 
+	return ret;
+}
+
+/* qcom,swr-tx-port-params = <OFFSET1_VAL0 LANE1>, <OFFSET1_VAL5 LANE0>, *UC0*
+			<OFFSET1_VAL0 LANE1>, <OFFSET1_VAL2 LANE0>, *UC1*
+			<OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, *UC2*
+			<OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, *UC3 */
+static int swr_dmic_parse_port_params(struct device *dev,
+				      char *prop)
+{
+	int i, j;
+	u32 *dt_array, map_size, max_uc;
+	int ret = 0;
+	u32 cnt = 0;
+	struct swr_port_params (*map)[SWR_UC_MAX][SWR_DMIC_MAX_PORTS];
+	struct swr_dev_frame_config (*map_uc)[SWR_UC_MAX];
+	struct swr_dmic_priv *swr_dmic = dev_get_drvdata(dev);
+
+	map = &swr_dmic->tx_port_params;
+	map_uc = &swr_dmic->swr_tx_port_params;
+
+	if (!of_find_property(dev->of_node, prop,
+				&map_size)) {
+		dev_err(dev, "missing port mapping prop %s\n", prop);
+		ret = -EINVAL;
+		goto err_port_map;
+	}
+
+	max_uc = map_size / (SWR_DMIC_MAX_PORTS * SWR_PORT_PARAMS * sizeof(u32));
+
+	if (max_uc != SWR_UC_MAX) {
+		dev_err(dev,
+			"%s:port params not provided for all usecases\n",
+			__func__);
+		ret = -EINVAL;
+		goto err_port_map;
+	}
+	dt_array = kzalloc(map_size, GFP_KERNEL);
+
+	if (!dt_array) {
+		ret = -ENOMEM;
+		goto err_alloc;
+	}
+	ret = of_property_read_u32_array(dev->of_node, prop, dt_array,
+				SWR_DMIC_MAX_PORTS * SWR_PORT_PARAMS * max_uc);
+	if (ret) {
+		dev_err(dev, "%s: Failed to read  port mapping from prop %s\n",
+					__func__, prop);
+		goto err_pdata_fail;
+	}
+
+	for (i = 0; i < max_uc; i++) {
+		for (j = 0; j < SWR_DMIC_MAX_PORTS; j++) {
+			cnt = (i * SWR_DMIC_MAX_PORTS + j) * SWR_PORT_PARAMS;
+			(*map)[i][j].offset1 = dt_array[cnt];
+			(*map)[i][j].lane_ctrl = dt_array[cnt + 1];
+			dev_err(dev, "%s: port %d, uc: %d, offset1:%d, lane: %d\n",
+				__func__, j, i, dt_array[cnt], dt_array[cnt + 1]);
+		}
+		(*map_uc)[i].pp = &(*map)[i][0];
+	}
+	kfree(dt_array);
+	return 0;
+
+err_pdata_fail:
+	kfree(dt_array);
+err_alloc:
+err_port_map:
 	return ret;
 }
 
@@ -540,6 +610,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		pdev->dev.of_node->full_name);
 		goto dev_err;
 	}
+	swr_dmic_parse_port_params(&pdev->dev, "qcom,swr-tx-port-params");
 
 	/*
 	 * Add 5msec delay to provide sufficient time for
@@ -568,6 +639,8 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		goto err;
 	}
 	pdev->dev_num = swr_devnum;
+	swr_init_port_params(pdev, SWR_DMIC_MAX_PORTS,
+			     swr_dmic->swr_tx_port_params);
 
 	swr_dmic->driver = devm_kzalloc(&pdev->dev,
 			sizeof(struct snd_soc_component_driver), GFP_KERNEL);

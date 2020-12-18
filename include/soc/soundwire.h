@@ -11,6 +11,14 @@
 #include <linux/regmap.h>
 #include "audio_mod_devicetable.h"
 
+enum {
+	SWR_UC0 = 0,
+	SWR_UC1,
+	SWR_UC2,
+	SWR_UC3,
+	SWR_UC_MAX,
+};
+
 #define SWR_CLK_RATE_0P3MHZ       300000
 #define SWR_CLK_RATE_0P6MHZ       600000
 #define SWR_CLK_RATE_1P2MHZ      1200000
@@ -32,6 +40,8 @@ struct swr_device;
  * configurations of all devices
  */
 #define SWR_MAX_MSTR_PORT_NUM	(SWR_MAX_DEV_NUM * SWR_MAX_DEV_PORT_NUM)
+/* SWR slave port params count */
+#define SWR_PORT_PARAMS 2
 
 /* Regmap support for soundwire interface */
 struct regmap *__devm_regmap_init_swr(struct swr_device *dev,
@@ -121,6 +131,16 @@ struct swr_port_info {
 	u32 ch_rate;
 };
 
+struct swr_port_params {
+	u32 offset1;
+	u32 lane_ctrl;
+};
+
+struct swr_dev_frame_config {
+	struct swr_port_params *pp;
+};
+
+
 /*
  * struct swr_params - represent transfer of data from soundwire slave
  * to soundwire master
@@ -208,6 +228,8 @@ struct swr_master {
 			  const void *buf, size_t len);
 	int (*get_logical_dev_num)(struct swr_master *mstr, u64 dev_id,
 				u8 *dev_num);
+	int (*init_port_params)(struct swr_master *mstr, u32 dev_num,
+				u32 num_ports, struct swr_dev_frame_config *uc_arr);
 	int (*slvdev_datapath_control)(struct swr_master *mstr, bool enable);
 	bool (*remove_from_group)(struct swr_master *mstr);
 	void (*device_wakeup_vote)(struct swr_master *mstr);
@@ -331,6 +353,9 @@ extern void swr_port_response(struct swr_master *mstr, u8 tid);
 
 extern int swr_get_logical_dev_num(struct swr_device *dev, u64 dev_id,
 			u8 *dev_num);
+
+extern int swr_init_port_params(struct swr_device *dev,
+			u32 num_ports, struct swr_dev_frame_config *pp);
 
 extern int swr_read(struct swr_device *dev, u8 dev_num, u16 reg_addr,
 			void *buf, u32 len);

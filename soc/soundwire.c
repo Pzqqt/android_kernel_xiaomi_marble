@@ -477,6 +477,32 @@ int swr_get_logical_dev_num(struct swr_device *dev, u64 dev_id,
 EXPORT_SYMBOL(swr_get_logical_dev_num);
 
 /**
+ * swr_init_port_params - soundwire slave port params set
+ * @dev: pointer to soundwire slave device
+ * @num_ports: number of slave ports
+ * @pp: port params for all ports for all usecases
+ *
+ * This API will set soundwire port params from slave
+ */
+int swr_init_port_params(struct swr_device *dev,
+			 u32 num_ports, struct swr_dev_frame_config *pp)
+{
+	int ret = 0;
+	struct swr_master *master = dev->master;
+
+	if (!master) {
+		pr_err("%s: Master is NULL\n", __func__);
+		return -EINVAL;
+	}
+	mutex_lock(&master->mlock);
+	ret = master->init_port_params(master, dev->dev_num,
+				       num_ports, pp);
+	mutex_unlock(&master->mlock);
+	return ret;
+}
+EXPORT_SYMBOL(swr_init_port_params);
+
+/**
  * swr_device_wakeup_vote - Wakeup master and slave devices from clock stop
  * @dev: pointer to soundwire slave device
  *

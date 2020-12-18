@@ -9,6 +9,7 @@
 #include <asoc/wcd-mbhc-v2.h>
 #include <asoc/wcd-irq.h>
 #include <asoc/wcd-clsh.h>
+#include <soc/soundwire.h>
 #include "wcd938x-mbhc.h"
 #include "wcd938x.h"
 
@@ -21,6 +22,7 @@
 #define MAX_PORT 8
 #define MAX_CH_PER_PORT 8
 #define TX_ADC_MAX 4
+#define SWR_NUM_PORTS	4
 
 enum {
 	TX_HDR12 = 0,
@@ -88,6 +90,8 @@ struct wcd938x_priv {
 			tx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
 	struct codec_port_info
 			rx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
+	struct port_params tx_port_params[SWR_UC_MAX][SWR_NUM_PORTS];
+	struct swr_dev_frame_config swr_tx_port_params[SWR_UC_MAX];
 	struct regulator_bulk_data *supplies;
 	struct notifier_block nblock;
 	/* wcd callback to bolero */

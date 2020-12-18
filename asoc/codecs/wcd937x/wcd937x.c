@@ -229,6 +229,77 @@ found:
 	return 0;
 }
 
+/* qcom,swr-tx-port-params = <OFFSET1_VAL0 LANE1>, <OFFSET1_VAL5 LANE0>, <OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>,*UC0*
+			<OFFSET1_VAL0 LANE1>, <OFFSET1_VAL2 LANE0>, <OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, *UC1*
+			<OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>; *UC2*
+			<OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>, <OFFSET1_VAL1 LANE0>; *UC3 */
+static int wcd937x_parse_port_params(struct device *dev,
+			char *prop, u8 path)
+{
+	u32 *dt_array, map_size, max_uc;
+	int ret = 0;
+	u32 offset1, lane_ctrl, cnt = 0;
+	struct port_params (*map)[SWR_UC_MAX][SWR_NUM_PORTS];
+	struct swr_dev_frame_config (*map_uc)[SWR_UC_MAX];
+	struct wcd937x_priv *wcd937x = dev_get_drvdata(dev);
+
+	switch (path) {
+	case CODEC_TX:
+		map = &wcd937x->tx_port_params;
+		map_uc = &wcd937x->swr_tx_port_params;
+		break;
+	default:
+		ret = -EINVAL;
+		goto err_port_map;
+	}
+
+	if (!of_find_property(dev->of_node, prop,
+				&map_size)) {
+		dev_err(dev, "missing port mapping prop %s\n", prop);
+		ret = -EINVAL;
+		goto err_port_map;
+	}
+
+	max_uc = map_size / (SWR_NUM_PORTS * SWR_PORT_PARAMS * sizeof(u32));
+
+	if (max_uc != SWR_UC_MAX) {
+		dev_err(dev, "%s: port params not provided for all usecases\n",
+			__func__);
+		ret = -EINVAL;
+		goto err_port_map;
+	}
+	dt_array = kzalloc(map_size, GFP_KERNEL);
+
+	if (!dt_array) {
+		ret = -ENOMEM;
+		goto err_alloc;
+	}
+	ret = of_property_read_u32_array(dev->of_node, prop, dt_array,
+				SWR_NUM_PORTS * SWR_PORT_PARAMS * max_uc);
+	if (ret) {
+		dev_err(dev, "%s: Failed to read  port mapping from prop %s\n",
+					__func__, prop);
+		goto err_pdata_fail;
+	}
+
+	for (i = 0; i < max_uc; i++) {
+		for (j = 0; j < SWR_NUM_PORTS; j++) {
+			cnt = (i * SWR_NUM_PORTS + j) * SWR_PORT_PARAMS;
+			(*map)[i][j].offset1 = dt_array[cnt];
+			(*map)[i][j].lane_ctrl = dt_array[cnt + 1];
+		}
+		(*map_uc)[i] = &(*map)[i][0];
+	}
+	kfree(dt_array);
+	return 0;
+
+err_pdata_fail:
+	kfree(dt_array);
+err_alloc:
+err_port_map:
+	return ret;
+}
+
 static int wcd937x_parse_port_mapping(struct device *dev,
 			char *prop, u8 path)
 {
@@ -3186,6 +3257,13 @@ static int wcd937x_bind(struct device *dev)
 		dev_err(dev, "Failed to read port mapping\n");
 		goto err;
 	}
+	ret = wcd937x_parse_port_params(dev, "qcom,swr-tx-port-params",
+					CODEC_TX);
+	if (ret) {
+		dev_err(dev, "Failed to read port params\n");
+		goto err;
+	}
+
 
 	wcd937x->rx_swr_dev = get_matching_swr_slave_device(pdata->rx_slave);
 	if (!wcd937x->rx_swr_dev) {
@@ -3202,6 +3280,8 @@ static int wcd937x_bind(struct device *dev)
 		ret = -ENODEV;
 		goto err;
 	}
+	swr_init_port_params(wcd937x->tx_swr_dev, SWR_NUM_PORTS,
+			     wcd937x->swr_tx_port_params);
 
 	wcd937x->regmap = devm_regmap_init_swr(wcd937x->tx_swr_dev,
 					       &wcd937x_regmap_config);

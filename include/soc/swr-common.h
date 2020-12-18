@@ -10,13 +10,6 @@
 #include <linux/device.h>
 #include <linux/bitops.h>
 
-enum {
-	SWR_UC0 = 0,
-	SWR_UC1,
-	SWR_UC2,
-	SWR_UC_MAX,
-};
-
 struct port_params {
 	u16 si;
 	u8 off1;
