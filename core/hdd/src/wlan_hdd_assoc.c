@@ -1752,6 +1752,57 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 
 #ifndef FEATURE_CM_ENABLE
 /**
+ * hdd_pmkid_clear_on_ap_off() - clear pmkid cache when ap off
+ * @adapter: pointer to adapter
+ *
+ * In AP side power off/on case, AP security has been cleanup.
+ * The STA side might still cache PMK ID in driver and it will always use
+ * PMK cache to connect to AP and get continuously connect failure in SAE
+ * security. This function is to detect AP off based on FW reported BMISS
+ * event. Meanwhile judge FW reported last RSSI > roaming Low rssi
+ * and not less than 20db of host cached RSSI to avoid some false
+ * alarm such as normal DUT roll in/out roaming.
+ *
+ * Return: void
+ */
+static void hdd_pmkid_clear_on_ap_off(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	int8_t cache_rssi = 0;
+	int32_t bmiss_rssi;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t lookup_threshold = 0;
+	struct wlan_crypto_pmksa *pmksa;
+
+	if (sta_ctx->conn_info.auth_type != eCSR_AUTH_TYPE_SAE)
+		return;
+	hdd_get_rssi_snr_by_bssid(adapter, sta_ctx->conn_info.bssid.bytes,
+				  &cache_rssi, NULL);
+	sme_get_neighbor_lookup_rssi_threshold(hdd_ctx->mac_handle,
+					       adapter->vdev_id,
+					       &lookup_threshold);
+	bmiss_rssi = adapter->rssi_on_disconnect;
+	if (!bmiss_rssi || !lookup_threshold || !cache_rssi)
+		return;
+	hdd_nofl_debug("sta bmiss on rssi %d scan rssi %d th %d", bmiss_rssi,
+		       cache_rssi, lookup_threshold);
+	if (bmiss_rssi > (lookup_threshold * (-1))) {
+		if (bmiss_rssi + AP_OFF_RSSI_OFFSET > cache_rssi) {
+			pmksa = qdf_mem_malloc(sizeof(*pmksa));
+			if (!pmksa)
+				return;
+			qdf_mem_copy(pmksa->bssid.bytes,
+				     sta_ctx->conn_info.bssid.bytes,
+				     sizeof(tSirMacAddr));
+			sme_roam_del_pmkid_from_cache(hdd_ctx->mac_handle,
+						      adapter->vdev_id,
+						      pmksa, false);
+			qdf_mem_free(pmksa);
+		}
+	}
+}
+
+/**
  * hdd_dis_connect_handler() - disconnect event handler
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
@@ -1856,6 +1907,10 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 						disconnect_ies.ptr,
 						disconnect_ies.len);
 	}
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    roam_status == eCSR_ROAM_LOSTLINK &&
+	    reason_code == REASON_BEACON_MISSED)
+		hdd_pmkid_clear_on_ap_off(adapter);
 
 	if (adapter->device_mode == QDF_STA_MODE) {
 		/* Inform BLM about the disconnection with the AP */

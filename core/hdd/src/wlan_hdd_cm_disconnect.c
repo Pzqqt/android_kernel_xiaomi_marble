@@ -129,7 +129,6 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter)
 		QDF_TRACE_DEFAULT_PDEV_ID,
 		QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
-	hdd_clear_roam_profile_ie(adapter);
 	hdd_wmm_dscp_initial_state(adapter);
 	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 
@@ -150,6 +149,7 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	mac_handle = hdd_ctx->mac_handle;
 	sme_ft_reset(mac_handle, adapter->vdev_id);
 	sme_reset_key(mac_handle, adapter->vdev_id);
+	hdd_clear_roam_profile_ie(adapter);
 
 	if (adapter->device_mode == QDF_STA_MODE) {
 		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);

@@ -86,6 +86,13 @@
 #define CFG_VALID_CHANNEL_LIST_STRING_LEN (CFG_VALID_CHANNEL_LIST_LEN * 4)
 
 #define DEFAULT_ROAM_TRIGGER_BITMAP 0xFFFFFFFF
+
+/**
+ * detect AP off based FW reported last RSSI > roaming Low rssi
+ * and not less than 20db of host cached RSSI
+ */
+#define AP_OFF_RSSI_OFFSET 20
+
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
  *
