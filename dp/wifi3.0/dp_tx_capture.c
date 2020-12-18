@@ -127,9 +127,8 @@
 #define CHECK_MPDUS_NULL(ptr_val)					\
 	{								\
 		if (qdf_unlikely(ptr_val)) {				\
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,		\
-				  QDF_TRACE_LEVEL_FATAL,		\
-				  "already stored value over written");	\
+			dp_tx_capture_alert(				\
+					    "already stored value over written");	\
 			QDF_BUG(0);					\
 		}							\
 	}
@@ -148,9 +147,8 @@
 static inline void check_queue_empty(qdf_nbuf_queue_t *qhead)
 {
 	if (qdf_unlikely(!qdf_nbuf_is_queue_empty(qhead))) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_FATAL,
-			  "Queue is not empty len(%d) !!",
-			  qdf_nbuf_queue_len(qhead));
+		dp_tx_capture_alert("Queue is not empty len(%d) !!",
+				    qdf_nbuf_queue_len(qhead));
 		QDF_BUG(0);
 	}
 }
@@ -183,10 +181,8 @@ tx_cap_nbuf_queue_free_test(qdf_nbuf_queue_t *qhead,
 	}
 
 	if (len) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_FATAL,
-			  "Error actual len: [u], mem_free len: [%u]\n",
-			  actual_len, len);
+		dp_tx_capture_alert("Error actual len: [u], mem_free len: [%u]\n",
+				    actual_len, len);
 		QDF_BUG(0);
 	}
 
@@ -375,13 +371,11 @@ dp_tx_peer_get_ref(const char *func, uint32_t line, struct dp_pdev *cur_pdev,
 	}
 
 	if (qdf_unlikely(pdev->pdev_id != cur_pdev->pdev_id)) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: %d peer %p peer_id: %d mapped to pdev %p %d, cur_pdev %p %d",
-			  func, line,
-			  peer, peer_id,
-			  pdev, pdev->pdev_id,
-			  cur_pdev, cur_pdev->pdev_id);
+		dp_tx_capture_info_high("%pK: peer %p peer_id: %d mapped to pdev %p %d, cur_pdev %p %d",
+					pdev->soc,
+					peer, peer_id,
+					pdev, pdev->pdev_id,
+					cur_pdev, cur_pdev->pdev_id);
 		DP_TX_PEER_DEL_REF(peer);
 		cur_pdev->tx_capture.peer_mismatch++;
 		return NULL;
@@ -618,11 +612,8 @@ dp_tx_find_usr_idx_from_peer_id(struct cdp_tx_completion_ppdu *ppdu_desc,
 	}
 
 	if (!found) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_FATAL,
-			  "%s: %d peer_id: %d, ppdu_desc[%p][num_users: %d]\n",
-			  __func__, __LINE__, peer_id, ppdu_desc,
-			  ppdu_desc->num_users);
+		dp_tx_capture_alert("peer_id: %d, ppdu_desc[%p][num_users: %d]\n",
+				    peer_id, ppdu_desc, ppdu_desc->num_users);
 		qdf_assert_always(0);
 	}
 
@@ -675,9 +666,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 	    CDP_TX_ENH_CAPTURE_DISABLED)
 		return;
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-		  QDF_TRACE_LEVEL_INFO_LOW,
-		  "peer(%p) id:%d init!!", peer, peer->peer_id);
+	dp_tx_capture_info_low("%pK: peer(%p) id:%d init!!", pdev->soc, peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		struct cdp_tx_completion_ppdu *xretry_ppdu = NULL;
@@ -779,9 +768,8 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 	if (!peer->tx_capture.is_tid_initialized)
 		return;
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-		  QDF_TRACE_LEVEL_INFO_LOW,
-		  "peer(%p) id:%d cleanup!!", peer, peer->peer_id);
+	dp_tx_capture_info_low("peer(%p) id:%d cleanup!!",
+			       peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		uint32_t len = 0;
@@ -820,11 +808,9 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 			ppdu_desc = (struct cdp_tx_completion_ppdu *)
 					qdf_nbuf_data(ppdu_nbuf);
 
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_INFO_MED,
-				  "ppdu_id:%u tsf:%llu removed from pending ppdu q",
-				  ppdu_desc->ppdu_id,
-				  ppdu_desc->ppdu_start_timestamp);
+			dp_tx_capture_info("ppdu_id:%u tsf:%llu removed from pending ppdu q",
+					   ppdu_desc->ppdu_id,
+					   ppdu_desc->ppdu_start_timestamp);
 			/*
 			 * check if peer id is matching
 			 * the user peer_id
@@ -840,10 +826,8 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 		}
 
 		if (len) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "Actual_len: %d pending len:%d !!!",
-				  actual_len, len);
+			dp_tx_capture_alert("Actual_len: %d pending len:%d !!!",
+					    actual_len, len);
 			QDF_BUG(0);
 		}
 
@@ -1070,16 +1054,16 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			}
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
-			  "dlvr mgmt frm(%d 0x%08x): fc 0x%x %x, dur 0x%x%x tsf:%u, retries_count: %d, is_sgen: %d",
-			  ptr_mgmt_hdr->ppdu_id,
-			  ptr_mgmt_hdr->ppdu_id,
-			  wh->i_fc[1], wh->i_fc[0],
-			  wh->i_dur[1], wh->i_dur[0], ptr_mgmt_hdr->tx_tsf,
-			  ptr_mgmt_hdr->retries_count,
-			  ptr_mgmt_hdr->is_sgen_pkt);
+			dp_tx_capture_debug("%pK: dlvr mgmt frm(%d 0x%08x): fc 0x%x %x, dur 0x%x%x tsf:%u, retries_count: %d, is_sgen: %d",
+					    pdev->soc,
+					    ptr_mgmt_hdr->ppdu_id,
+					    ptr_mgmt_hdr->ppdu_id,
+					    wh->i_fc[1], wh->i_fc[0],
+					    wh->i_dur[1], wh->i_dur[0], ptr_mgmt_hdr->tx_tsf,
+					    ptr_mgmt_hdr->retries_count,
+					    ptr_mgmt_hdr->is_sgen_pkt);
 
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_TX_CAPTURE,
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP_TX_CAPTURE,
 				   QDF_TRACE_LEVEL_DEBUG,
 				   qdf_nbuf_data(nbuf), 64);
 
@@ -1161,9 +1145,8 @@ bool dp_peer_tx_cap_add_filter(struct dp_pdev *pdev,
 
 	if (dp_peer_tx_cap_search(pdev, peer_id, mac_addr)) {
 		/* mac address and peer_id already there */
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "%s: %d peer_id[%d] mac_addr[%pM] already there\n",
-			  __func__, __LINE__, peer_id, mac_addr);
+		dp_tx_capture_info_low("%pk: peer_id[%d] mac_addr[%pM] already there\n",
+				       pdev->soc, peer_id, mac_addr);
 		return status;
 	}
 
@@ -1241,9 +1224,8 @@ bool dp_peer_tx_cap_del_filter(struct dp_pdev *pdev,
 	}
 
 	if (!status)
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "unable to delete peer[%d] mac[%pM] filter list",
-			  peer_id, mac_addr);
+		dp_tx_capture_info_low("%pK: unable to delete peer[%d] mac[%pM] filter list",
+				       pdev->soc, peer_id, mac_addr);
 	return status;
 }
 
@@ -1265,15 +1247,14 @@ void dp_peer_tx_cap_print_mgmt_filter(struct dp_pdev *pdev,
 
 	tx_capture = &pdev->tx_capture;
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-		  "peer filter list:");
+	dp_tx_capture_info_low("%pK: peer filter list:", pdev->soc);
 	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
 		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "peer_id[%d] mac_addr[%pM] avail[%d]",
-			  ptr_peer_mgmt_list->peer_id,
-			  ptr_peer_mgmt_list->mac_addr,
-			  ptr_peer_mgmt_list->avail);
+		dp_tx_capture_info_low("%pK: peer_id[%d] mac_addr[%pM] avail[%d]",
+				       pdev->soc,
+				       ptr_peer_mgmt_list->peer_id,
+				       ptr_peer_mgmt_list->mac_addr,
+				       ptr_peer_mgmt_list->avail);
 	}
 }
 
@@ -1290,9 +1271,8 @@ bool is_dp_peer_mgmt_pkt_filter(struct dp_pdev *pdev,
 	bool found = false;
 
 	found = dp_peer_tx_cap_search(pdev, peer_id, mac_addr);
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-		  "%s: %d peer_id[%d] mac_addr[%pM] found[%d]!",
-		  __func__, __LINE__, peer_id, mac_addr, found);
+	dp_tx_capture_info_low("%pK: peer_id[%d] mac_addr[%pM] found[%d]!",
+			       pdev->soc, peer_id, mac_addr, found);
 
 	return found;
 }
@@ -1445,9 +1425,7 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 				 sizeof(struct cdp_tx_completion_ppdu_user));
 
 	if (qdf_unlikely(!pdev->tx_capture.dummy_ppdu_desc)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "Alloc failed");
+		dp_tx_capture_err("%pK: Alloc failed", pdev->soc);
 		QDF_ASSERT(0);
 		return;
 	}
@@ -1662,30 +1640,26 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 	struct msdu_completion_info *msdu_comp_info;
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d peer NULL !", __func__, __LINE__);
+		dp_tx_capture_err("%pK: peer NULL !", soc);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if ((ts->tid > DP_MAX_TIDS) ||
 	    (peer->bss_peer && ts->tid == DP_NON_QOS_TID)) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d peer_id %d, tid %d > NON_QOS_TID!",
-			  __func__, __LINE__, ts->peer_id, ts->tid);
+		dp_tx_capture_err("%pK: peer_id %d, tid %d > NON_QOS_TID!",
+				  soc, ts->peer_id, ts->tid);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	tx_tid = &peer->tx_capture.tx_tid[ts->tid];
 
 	if (!tx_tid) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d tid[%d] NULL !", __func__, __LINE__, ts->tid);
+		dp_tx_capture_err("%pK: tid[%d] NULL !", soc, ts->tid);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!qdf_nbuf_push_head(netbuf, sizeof(struct msdu_completion_info))) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("No headroom"));
+		dp_tx_capture_err("%pK: " FL("No headroom"), soc);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1721,11 +1695,10 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 	pdev->tx_capture.last_msdu_id = ts->ppdu_id;
 	pdev->tx_capture.last_peer_id = ts->peer_id;
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO,
-		  "msdu_completion: ppdu_id[%d] peer_id[%d] tid[%d] rel_src[%d] status[%d] tsf[%u] A[%d] CNT[%d]",
-		  ts->ppdu_id, ts->peer_id, ts->tid, ts->release_src,
-		  ts->status, ts->tsf, ts->msdu_part_of_amsdu,
-		  ts->transmit_cnt);
+	dp_tx_capture_info("%pK: msdu_completion: ppdu_id[%d] peer_id[%d] tid[%d] rel_src[%d] status[%d] tsf[%u] A[%d] CNT[%d]",
+			   soc, ts->ppdu_id, ts->peer_id, ts->tid, ts->release_src,
+			   ts->status, ts->tsf, ts->msdu_part_of_amsdu,
+			   ts->transmit_cnt);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1755,10 +1728,8 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 		if (qdf_unlikely(desc->pkt_offset != 0) &&
 		    (qdf_nbuf_pull_head(
 				desc->nbuf, desc->pkt_offset) == NULL)) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "netbuf %pK offset %d",
-				desc->nbuf, desc->pkt_offset);
+			dp_tx_capture_err("%pK: netbuf %pK offset %d",
+					  soc, desc->nbuf, desc->pkt_offset);
 			return ret;
 		}
 
@@ -1834,14 +1805,12 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 
 	/* assumption: number of mpdu will be less than 32 */
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO,
-		  "ppdu_id[%d] ba_seq_no[%d] start_seq_no[%d] mpdu_tried[%d]",
-		  ppdu_id, ba_seq_no, start_seq, mpdu_tried);
+	 dp_tx_capture_info("%pK: ppdu_id[%d] ba_seq_no[%d] start_seq_no[%d] mpdu_tried[%d]",
+			    pdev->soc, ppdu_id, ba_seq_no, start_seq, mpdu_tried);
 
 	for (i = 0; i < size; i++) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO,
-			  "ppdu_id[%d] ba_bitmap[%x] enqueue_bitmap[%x]",
-			  ppdu_id, user->ba_bitmap[i], user->enq_bitmap[i]);
+		dp_tx_capture_info("%pK: ppdu_id[%d] ba_bitmap[%x] enqueue_bitmap[%x]",
+				   pdev->soc, ppdu_id, user->ba_bitmap[i], user->enq_bitmap[i]);
 	}
 
 	/* Handle sequence no. wraparound */
@@ -1892,11 +1861,9 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 				if (extra_ba_mpdus) {
 					enq_ba_bitmap[i] =
 						user->failed_bitmap[i];
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_INFO_MED,
-						  "i=%d failed_bitmap[%d] = 0x%x last_ba_set_bit:%d\n",
-						  i, i, user->failed_bitmap[i],
-						  last_ba_set_bit);
+					dp_tx_capture_info("%pK: i=%d failed_bitmap[%d] = 0x%x last_ba_set_bit:%d\n",
+							   pdev->soc, i, i, user->failed_bitmap[i],
+							   last_ba_set_bit);
 				}
 			}
 
@@ -1933,11 +1900,9 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 				if (extra_ba_mpdus) {
 					enq_ba_bitmap[i] =
 						user->failed_bitmap[i];
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_INFO_MED,
-						  "i=%d failed_bitmap[%d] = 0x%x last_ba_set_bit:%d\n",
-						  i, i, user->failed_bitmap[i],
-						  last_ba_set_bit);
+					dp_tx_capture_info("%pK: i=%d failed_bitmap[%d] = 0x%x last_ba_set_bit:%d\n",
+							   pdev->soc, i, i, user->failed_bitmap[i],
+							   last_ba_set_bit);
 				}
 			}
 
@@ -1968,31 +1933,26 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 
 		if (user->mpdu_tried_ucast < mpdu_enq) {
 			for (i = 0; i < size; i++)
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO_MED,
-					  "ppdu_id[%d] ba_bitmap[%x] enqueue_bitmap[%x] failed_bitmap[%x]",
-					  ppdu_id, user->ba_bitmap[i],
-					  user->enq_bitmap[i],
-					  user->failed_bitmap[i]);
+				dp_tx_capture_info("%pK: ppdu_id[%d] ba_bitmap[%x] enqueue_bitmap[%x] failed_bitmap[%x]",
+						   pdev->soc, ppdu_id, user->ba_bitmap[i],
+						   user->enq_bitmap[i],
+						   user->failed_bitmap[i]);
 
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_INFO_MED,
-				   "last_set_bit:%d mpdu_tried_ucast %d mpdu_enq %d\n",
-				   last_set_bit, user->mpdu_tried_ucast,
-				   mpdu_enq);
+				dp_tx_capture_info("%pK: last_set_bit:%d mpdu_tried_ucast %d mpdu_enq %d\n",
+						   pdev->soc, last_set_bit,
+						   user->mpdu_tried_ucast, mpdu_enq);
 
 			user->mpdu_tried_ucast = mpdu_enq;
 		}
 	}
 
 	if (extra_ba_mpdus) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_INFO_MED,
-			  "ppdu_id:%u ba_size:%u modified_ba_size:%u last_ba_set_bit:%u start_seq: %u\n",
-			  ppdu_id,
-			  user->ba_size,
-			  last_ba_seq - user->start_seq + 1,
-			  last_ba_set_bit, user->start_seq);
+		dp_tx_capture_info("%pK: ppdu_id:%u ba_size:%u modified_ba_size:%u last_ba_set_bit:%u start_seq: %u\n",
+				   pdev->soc,
+				   ppdu_id,
+				   user->ba_size,
+				   last_ba_seq - user->start_seq + 1,
+				   last_ba_set_bit, user->start_seq);
 		user->ba_size = last_ba_seq - user->start_seq + 1;
 
 		user->last_enq_seq = last_ba_seq;
@@ -2098,9 +2058,8 @@ dp_enh_tx_capture_disable(struct dp_pdev *pdev)
 		}
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-		  "Mode change request done cur mode - %d user_mode - %d\n",
-		  pdev->tx_capture_enabled, CDP_TX_ENH_CAPTURE_DISABLED);
+	dp_tx_capture_info_low("%pK: Mode change request done cur mode - %d user_mode - %d\n",
+			       pdev->soc, pdev->tx_capture_enabled, CDP_TX_ENH_CAPTURE_DISABLED);
 }
 
 /*
@@ -2124,9 +2083,8 @@ dp_enh_tx_capture_enable(struct dp_pdev *pdev, uint8_t user_mode)
 					  DP_PPDU_STATS_CFG_SNIFFER,
 					  pdev->pdev_id);
 	pdev->tx_capture_enabled = user_mode;
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-		  "Mode change request done cur mode - %d user_mode - %d\n",
-		  pdev->tx_capture_enabled, user_mode);
+	dp_tx_capture_info_low("%pK: Mode change request done cur mode - %d user_mode - %d\n",
+			       pdev->soc, pdev->tx_capture_enabled, user_mode);
 }
 
 /*
@@ -2157,9 +2115,8 @@ QDF_STATUS
 dp_config_enh_tx_capture(struct dp_pdev *pdev, uint8_t val)
 {
 	qdf_atomic_set(&pdev->tx_capture.tx_cap_usr_mode, val);
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-		  "User mode change requested - %d\n",
-		  qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
+	dp_tx_capture_info_low("%pK: User mode change requested - %d\n",
+			       pdev->soc, qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2197,27 +2154,23 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 	num_mpdu = user->mpdu_success;
 
 	if (user->tid > DP_MAX_TIDS) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
-			  __func__, ppdu_id, user->peer_id, user->tid);
+		dp_tx_capture_err("%pK: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
+				  pdev->soc, ppdu_id, user->peer_id, user->tid);
 
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (mpdu_tried != num_mpdu) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO,
-			  "%s: ppdu[%d] peer[%d] tid[%d] ba[%d] start[%d] mpdu_tri[%d] num_mpdu[%d] is_mcast[%d]",
-			  __func__, ppdu_id, user->peer_id, user->tid,
-			  ba_seq_no, start_seq, mpdu_tried,
-			  num_mpdu, user->is_mcast);
+		dp_tx_capture_info("%pK: ppdu[%d] peer[%d] tid[%d] ba[%d] start[%d] mpdu_tri[%d] num_mpdu[%d] is_mcast[%d]",
+				   pdev->soc, ppdu_id, user->peer_id, user->tid,
+				   ba_seq_no, start_seq, mpdu_tried,
+				   num_mpdu, user->is_mcast);
 
 		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_INFO,
-				  "ppdu_id[%d] ba_bitmap[0x%x] enqueue_bitmap[0x%x] failed_bitmap[0x%x]",
-				  ppdu_id, user->ba_bitmap[i],
-				  user->enq_bitmap[i],
-				  user->failed_bitmap[i]);
+			dp_tx_capture_err("%pK: ppdu_id[%d] ba_bitmap[0x%x] enqueue_bitmap[0x%x] failed_bitmap[0x%x]",
+					  pdev->soc, ppdu_id, user->ba_bitmap[i],
+					  user->enq_bitmap[i],
+					  user->failed_bitmap[i]);
 
 			fail_num_mpdu +=
 				get_number_of_1s(user->failed_bitmap[i]);
@@ -2225,9 +2178,8 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 	}
 
 	if (fail_num_mpdu == num_mpdu && num_mpdu)
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: %d ppdu_id[%d] num_mpdu[%d, %d]",
-			  __func__, __LINE__, ppdu_id, num_mpdu, fail_num_mpdu);
+		dp_tx_capture_debug("%pK: ppdu_id[%d] num_mpdu[%d, %d]",
+				    pdev->soc, ppdu_id, num_mpdu, fail_num_mpdu);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2249,29 +2201,26 @@ void dp_ppdu_desc_debug_print(struct cdp_tx_completion_ppdu *ppdu_desc,
 
 	num_users = ppdu_desc->num_users;
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_MED,
-		  "%s: %d PID: %d, BPID: %d SCHED: %d usr_idx: %d TLV_BITMAP[0x%x] num_users:%d",
-		  func, line,
-		  ppdu_desc->ppdu_id, ppdu_desc->bar_ppdu_id,
-		  ppdu_desc->sched_cmdid,
-		  usr_idx, ppdu_desc->tlv_bitmap, ppdu_desc->num_users);
+	dp_tx_capture_info("PID: %d, BPID: %d SCHED: %d usr_idx: %d TLV_BITMAP[0x%x] num_users:%d",
+			   ppdu_desc->ppdu_id, ppdu_desc->bar_ppdu_id,
+			   ppdu_desc->sched_cmdid,
+			   usr_idx, ppdu_desc->tlv_bitmap, ppdu_desc->num_users);
 
 	user = &ppdu_desc->user[usr_idx];
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_MED,
-		  "%s: %d P[%d] CS:%d S_SEQ: %d L_ENQ_SEQ:%d BA_SEQ:%d BA_SZ:%d M[TRI: %d, SUC: %d] ENQ[%x:%x:%x:%x] BA[%x:%x:%x:%x] F[%x:%x:%x:%x] tlv[0x%x]",
-		  func, line, user->peer_id,
-		  user->completion_status,
-		  user->start_seq, user->last_enq_seq,
-		  user->ba_seq_no, user->ba_size,
-		  user->mpdu_tried_ucast + user->mpdu_tried_mcast,
-		  user->mpdu_success,
-		  user->enq_bitmap[0], user->enq_bitmap[1],
-		  user->enq_bitmap[2], user->enq_bitmap[3],
-		  user->ba_bitmap[0], user->ba_bitmap[1],
-		  user->ba_bitmap[2], user->ba_bitmap[3],
-		  user->failed_bitmap[0], user->failed_bitmap[1],
-		  user->failed_bitmap[2], user->failed_bitmap[3],
-		  user->tlv_bitmap);
+	dp_tx_capture_info("P[%d] CS:%d S_SEQ: %d L_ENQ_SEQ:%d BA_SEQ:%d BA_SZ:%d M[TRI: %d, SUC: %d] ENQ[%x:%x:%x:%x] BA[%x:%x:%x:%x] F[%x:%x:%x:%x] tlv[0x%x]",
+			   user->peer_id,
+			   user->completion_status,
+			   user->start_seq, user->last_enq_seq,
+			   user->ba_seq_no, user->ba_size,
+			   user->mpdu_tried_ucast + user->mpdu_tried_mcast,
+			   user->mpdu_success,
+			   user->enq_bitmap[0], user->enq_bitmap[1],
+			   user->enq_bitmap[2], user->enq_bitmap[3],
+			   user->ba_bitmap[0], user->ba_bitmap[1],
+			   user->ba_bitmap[2], user->ba_bitmap[3],
+			   user->failed_bitmap[0], user->failed_bitmap[1],
+			   user->failed_bitmap[2], user->failed_bitmap[3],
+			   user->tlv_bitmap);
 }
 
 /*
@@ -2372,8 +2321,7 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 
 	/* update ieee80211_frame header */
 	if (!qdf_nbuf_push_head(nbuf, mpdu_buf_len)) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  FL("No headroom"));
+		dp_tx_capture_err("%pK: " FL("No headroom"), pdev->soc);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -2458,8 +2406,7 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 
 	/* update ieee80211_frame header */
 	if (!qdf_nbuf_push_head(nbuf, mpdu_buf_len)) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  FL("No headroom"));
+		dp_tx_capture_err("%pK: " FL("No headroom"), pdev->soc);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -2532,9 +2479,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 		msdu_comp_info_sz = sizeof(struct msdu_completion_info);
 		/* pull msdu_completion_info added in pre header */
 		if (NULL == qdf_nbuf_pull_head(curr_nbuf, msdu_comp_info_sz)) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  " No Head space to pull !!\n");
+			dp_tx_capture_alert(" No Head space to pull !!\n");
 			qdf_assert_always(0);
 		}
 
@@ -2554,9 +2499,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			/* pull ethernet header from first MSDU alone */
 			if (NULL == qdf_nbuf_pull_head(curr_nbuf,
 						       ether_hdr_sz)) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_FATAL,
-					  " No Head space to pull !!\n");
+				dp_tx_capture_alert(" No Head space to pull !!\n");
 				qdf_assert_always(0);
 			}
 
@@ -2564,9 +2507,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			prev_nbuf = curr_nbuf;
 
 		} else if (first_msdu && !first_msdu_not_seen) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "!!!!! NO LAST MSDU\n");
+			dp_tx_capture_err("!!!!! NO LAST MSDU\n");
 			/*
 			 * no last msdu in a mpdu
 			 * handle this case
@@ -2578,9 +2519,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			 */
 			goto free_ppdu_desc_mpdu_q;
 		} else if (!first_msdu && first_msdu_not_seen) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "!!!!! NO FIRST MSDU\n");
+			dp_tx_capture_err("!!!!! NO FIRST MSDU\n");
 			/*
 			 * no first msdu in a mpdu
 			 * handle this case
@@ -2609,9 +2548,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 
 
 			if (!mpdu_nbuf) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "MPDU head allocation failed !!!");
+				dp_tx_capture_err("MPDU head allocation failed !!!");
 				goto free_ppdu_desc_mpdu_q;
 			}
 
@@ -2655,9 +2592,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 
 		if (!curr_nbuf) {
 			/* msdu missed in list */
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "!!!! WAITING for msdu but list empty !!!!");
+			dp_tx_capture_err("!!!! WAITING for msdu but list empty !!!!");
 
 			/* for incomplete list, free up the queue */
 			goto free_ppdu_desc_mpdu_q;
@@ -2923,18 +2858,16 @@ get_mpdu_clone_from_next_ppdu(struct dp_tx_cap_nbuf_list nbuf_list[],
 
 	if (found == 0) {
 		/* mpdu not found in sched cmd id */
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: peer_id[%d] missed seq_no[%d] ppdu_id[%d] [%d] not found!!!",
-			  __func__, peer_id,
-			  missed_seq_no, ppdu_id, ppdu_desc_cnt);
+		dp_tx_capture_debug("peer_id[%d] missed seq_no[%d] ppdu_id[%d] [%d] not found!!!",
+				    peer_id,
+				    missed_seq_no, ppdu_id, ppdu_desc_cnt);
 		return NULL;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: peer_id[%d] seq_no[%d] missed ppdu_id[%d] m[%d] found in ppdu_id[%d]!!",
-		  __func__, peer_id,
-		  missed_seq_no, ppdu_id,
-		  (missed_seq_no - seq_no), ppdu_desc->ppdu_id);
+	dp_tx_capture_debug("peer_id[%d] seq_no[%d] missed ppdu_id[%d] m[%d] found in ppdu_id[%d]!!",
+			    peer_id,
+			    missed_seq_no, ppdu_id,
+			    (missed_seq_no - seq_no), ppdu_desc->ppdu_id);
 
 	mpdu = qdf_nbuf_queue_first(&ppdu_desc->user[usr_idx].mpdu_q);
 	mpdu_q_len = qdf_nbuf_queue_len(&ppdu_desc->user[usr_idx].mpdu_q);
@@ -2942,9 +2875,8 @@ get_mpdu_clone_from_next_ppdu(struct dp_tx_cap_nbuf_list nbuf_list[],
 		/* bitmap shows it found  sequence number, but
 		 * MPDU not found in PPDU
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: missed seq_no[%d] ppdu_id[%d] [%d] found but queue empty!!!",
-			  __func__, missed_seq_no, ppdu_id, ppdu_desc_cnt);
+		dp_tx_capture_err("missed seq_no[%d] ppdu_id[%d] [%d] found but queue empty!!!",
+				  missed_seq_no, ppdu_id, ppdu_desc_cnt);
 		if (mpdu_q_len)
 			qdf_assert_always(0);
 
@@ -3200,12 +3132,10 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf, sizeof(*wh_min));
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-		QDF_TRACE_LEVEL_DEBUG,
-		"HTT_FTYPE[%d] frm(0x%08x): fc %x %x, dur 0x%x%x\n",
-		ppdu_desc->htt_frame_type, mpdu_info->ppdu_id,
-		wh_min->i_fc[1], wh_min->i_fc[0],
-		wh_min->i_aidordur[1], wh_min->i_aidordur[0]);
+	dp_tx_capture_debug("%pK: HTT_FTYPE[%d] frm(0x%08x): fc %x %x, dur 0x%x%x\n",
+			    pdev->soc, ppdu_desc->htt_frame_type, mpdu_info->ppdu_id,
+			    wh_min->i_fc[1], wh_min->i_fc[0],
+			    wh_min->i_aidordur[1], wh_min->i_aidordur[0]);
 	/*
 	 * send MPDU to osif layer
 	 */
@@ -3549,12 +3479,10 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 
 	if (mpdu_nbuf != qdf_nbuf_queue_first(&xretry_user->mpdu_q)) {
 		next_nbuf = qdf_nbuf_queue_next(mpdu_nbuf);
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_INFO_HIGH,
-			  "mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
-			  mpdu_nbuf, next_nbuf,
-			  &xretry_user->mpdu_q,
-			  qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
+		dp_tx_capture_info_high("%pK: mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
+					pdev->soc, mpdu_nbuf, next_nbuf,
+					&xretry_user->mpdu_q,
+					qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
 		/* Initialize temp list */
 		qdf_nbuf_queue_init(&temp_xretries);
 		/* Move entries into temp list till the mpdu_nbuf is found */
@@ -3578,15 +3506,13 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			qdf_nbuf_queue_append(&xretry_user->mpdu_q,
 					      &temp_xretries);
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: bug scenario, did not find nbuf in queue\npdev %p "
-				  "peer id %d, tid: %p mpdu_nbuf %p xretry_user %p "
-				  "mpdu_q %p len %d temp_xretry %p",
-				  __func__, pdev, tx_tid->peer_id, tx_tid, mpdu_nbuf,
-				  xretry_user, &xretry_user->mpdu_q,
-				  qdf_nbuf_queue_len(&xretry_user->mpdu_q),
-				  &temp_xretries);
+			dp_tx_capture_alert("%pK: bug scenario, did not find nbuf in queue\npdev %p "
+					    "peer id %d, tid: %p mpdu_nbuf %p xretry_user %p "
+					    "mpdu_q %p len %d temp_xretry %p",
+					    pdev->soc, pdev, tx_tid->peer_id, tx_tid, mpdu_nbuf,
+					    xretry_user, xretry_user->mpdu_q,
+					    qdf_nbuf_queue_len(&xretry_user->mpdu_q),
+					    &temp_xretries);
 			qdf_assert_always(0);
 		}
 	} else {
@@ -3615,19 +3541,15 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 
 	xretry_ppdu = tx_tid->xretry_ppdu;
 	if (!xretry_ppdu) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: xretry_ppdu is NULL",
-				  __func__);
+		dp_tx_capture_alert("%pK: xretry_ppdu is NULL",
+				    pdev->soc);
 		return;
 	}
 
 	xretry_user = &xretry_ppdu->user[0];
 	if (!xretry_user) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: xretry_user is NULL",
-				  __func__);
+		dp_tx_capture_alert("%pK: xretry_user is NULL",
+				    pdev->soc);
 		return;
 	}
 
@@ -3672,10 +3594,8 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 
 				if (SEQ_BIT(user->failed_bitmap, i))
 					continue;
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO,
-					"%s: fill seqno %d from xretries",
-					__func__, seq_no);
+				dp_tx_capture_info("%pK: fill seqno %d from xretries",
+						   pdev->soc, seq_no);
 
 				ptr_msdu_info = (struct msdu_completion_info *)
 					(qdf_nbuf_data(qdf_nbuf_get_ext_list(
@@ -4006,23 +3926,19 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			failed_seq ^= SEQ_SEG_MSK(failed_seq, i);
 
 			if (!cur_user->mpdus) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: %d peer_id:%d usr_idx:%d cur_usr_idx:%d cur_usr_peer_id:%d\n",
-					  __func__, __LINE__,
-					  peer_id, usr_idx,
-					  cur_usr_idx, cur_user->peer_id);
+				dp_tx_capture_info("%pK:  peer_id:%d usr_idx:%d cur_usr_idx:%d cur_usr_peer_id:%d\n",
+						   pdev->soc,
+						   peer_id, usr_idx,
+						   cur_usr_idx, cur_user->peer_id);
 				continue;
 			}
 			mpdu_nbuf = cur_user->mpdus[cur_index];
 			if (mpdu_nbuf) {
 				struct dp_peer *peer;
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO,
-					"%s: fill seqno %d (%d) from swretries",
-					__func__,
-					user->start_seq + i,
-					ppdu_desc->ppdu_id);
+				dp_tx_capture_info("%pK: fill seqno %d (%d) from swretries",
+						   pdev->soc,
+						   user->start_seq + i,
+						   ppdu_desc->ppdu_id);
 				CHECK_MPDUS_NULL(user->mpdus[i]);
 				user->mpdus[i] =
 				qdf_nbuf_copy_expand_fraglist(
@@ -4041,11 +3957,8 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 
 			cur_index++;
 			if (cur_index >= cur_user->ba_size) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: ba_size[%d] cur_index[%d]\n",
-					__func__,
-					cur_user->ba_size, cur_index);
+				dp_tx_capture_info("%pK: ba_size[%d] cur_index[%d]\n",
+						   pdev->soc, cur_user->ba_size, cur_index);
 				break;
 			}
 
@@ -4144,14 +4057,10 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 			wh->i_seq[1] = (seq_le & 0xFF00) >> 8;
 			wh->i_seq[0] = seq_le & 0xFF;
 		}
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_DEBUG,
-			  "ctrl/mgmt frm(0x%08x): fc 0x%x 0x%x\n",
-			  ptr_tx_cap_info->mpdu_info.ppdu_id,
-			  wh->i_fc[1], wh->i_fc[0]);
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_DEBUG,
-			  "desc->ppdu_id 0x%08x\n", ppdu_desc->ppdu_id);
+		dp_tx_capture_debug("%pK: ctrl/mgmt frm(0x%08x): fc 0x%x 0x%x\n",
+				    pdev->soc, ptr_tx_cap_info->mpdu_info.ppdu_id,
+				    wh->i_fc[1], wh->i_fc[0]);
+		dp_tx_capture_debug("%pK: desc->ppdu_id 0x%08x\n", pdev->soc, ppdu_desc->ppdu_id);
 
 		/* append ext list */
 		qdf_nbuf_append_ext_list(ptr_tx_cap_info->mpdu_nbuf,
@@ -4171,12 +4080,10 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 			     QDF_MAC_ADDR_SIZE);
 		qdf_nbuf_set_pktlen(ptr_tx_cap_info->mpdu_nbuf,
 				    sizeof(*wh_min));
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_DEBUG,
-			  "frm(0x%08x): fc %x %x, dur 0x%x%x\n",
-			  ptr_tx_cap_info->mpdu_info.ppdu_id,
-			  wh_min->i_fc[1], wh_min->i_fc[0],
-			  wh_min->i_dur[1], wh_min->i_dur[0]);
+		dp_tx_capture_debug("%pK: frm(0x%08x): fc %x %x, dur 0x%x%x\n",
+				    pdev->soc, ptr_tx_cap_info->mpdu_info.ppdu_id,
+				    wh_min->i_fc[1], wh_min->i_fc[0],
+				    wh_min->i_dur[1], wh_min->i_dur[0]);
 	}
 
 	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
@@ -4408,12 +4315,10 @@ get_mgmt_pkt_from_queue:
 						ptr_comp_info->tx_tsf +
 						start_tsf;
 
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: ppdu_id[m:%d desc:%d] start_tsf: %u mgmt_tsf:%u tsf_delta:%u bar_frm_with_data:%d",
-					  __func__, ppdu_id, desc_ppdu_id,
-					  start_tsf, ptr_comp_info->tx_tsf,
-					  tsf_delta, bar_frm_with_data);
+				dp_tx_capture_info("%pK: ppdu_id[m:%d desc:%d] start_tsf: %u mgmt_tsf:%u tsf_delta:%u bar_frm_with_data:%d",
+						   pdev->soc, ppdu_id, desc_ppdu_id,
+						   start_tsf, ptr_comp_info->tx_tsf,
+						   tsf_delta, bar_frm_with_data);
 
 				if (tsf_delta > MAX_MGMT_ENQ_DELAY) {
 					/*
@@ -4487,12 +4392,10 @@ insert_mgmt_buf_to_queue:
 			struct ieee80211_frame *wh;
 			uint32_t retry_len = 0;
 
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_INFO,
-				  "%s: ppdu_id[m:%d desc:%d] start_tsf: %u mgmt_tsf:%u bar_frm_with_data:%d is_sgen:%d",
-				  __func__, ppdu_id, desc_ppdu_id,
-				  start_tsf, ptr_comp_info->tx_tsf,
-				  bar_frm_with_data, is_sgen_pkt);
+			dp_tx_capture_info("%pK: ppdu_id[m:%d desc:%d] start_tsf: %u mgmt_tsf:%u bar_frm_with_data:%d is_sgen:%d",
+					   pdev->soc, ppdu_id, desc_ppdu_id,
+					   start_tsf, ptr_comp_info->tx_tsf,
+					   bar_frm_with_data, is_sgen_pkt);
 
 			/*
 			 * only for the packets send over the air are handled
@@ -4510,9 +4413,7 @@ insert_mgmt_buf_to_queue:
 			/* pull head based on sgen pkt or mgmt pkt */
 			if (NULL == qdf_nbuf_pull_head(mgmt_ctl_nbuf,
 						       head_size)) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_FATAL,
-					  " No Head space to pull !!\n");
+				dp_tx_capture_alert("%pK: No Head space to pull !!\n", pdev->soc);
 				qdf_assert_always(0);
 			}
 
@@ -4545,11 +4446,9 @@ insert_mgmt_buf_to_queue:
 
 				retry_len = qdf_nbuf_queue_len(retries_q);
 				if (!nbuf_retry_ppdu) {
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_FATAL,
-						  "%s: %d retry q type[%d][%d] retry q len = %d\n",
-						  __func__, __LINE__,
-						  type, subtype, retry_len);
+					dp_tx_capture_alert("%pK: retry q type[%d][%d] retry q len = %d\n",
+							    pdev->soc,
+							    type, subtype, retry_len);
 					qdf_assert_always(0);
 					break;
 				}
@@ -4561,9 +4460,7 @@ insert_mgmt_buf_to_queue:
 					qdf_nbuf_copy_expand(mgmt_ctl_nbuf,
 							0, 0);
 				if (qdf_unlikely(!tmp_mgmt_ctl_nbuf)) {
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_FATAL,
-						  "No memory to do copy!!");
+					dp_tx_capture_alert("%pK: No memory to do copy!!", pdev->soc);
 					qdf_assert_always(0);
 				}
 
@@ -4750,19 +4647,15 @@ dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
 
 		xretry_ppdu = tx_tid->xretry_ppdu;
 		if (!xretry_ppdu) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: xretry_ppdu is NULL",
-				  __func__);
+			dp_tx_capture_alert("%pK: xretry_ppdu is NULL",
+					    pdev->soc);
 			return;
 		}
 
 		xretry_user = &xretry_ppdu->user[0];
 		if (!xretry_user) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_FATAL,
-				  "%s: xretry_user is NULL",
-				  __func__);
+			dp_tx_capture_alert("%pK: xretry_user is NULL",
+					    pdev->soc);
 			return;
 		}
 
@@ -4785,10 +4678,8 @@ dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
 
 	dp_tx_mon_proc_xretries(pdev, peer, tid);
 
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-		  QDF_TRACE_LEVEL_INFO_MED,
-		  "peer_id [%d 0x%x] tid[%d] qlen[%d -> %d]",
-		  ppdu_desc->user[usr_idx].peer_id, peer, tid, qlen, qlen_curr);
+	dp_tx_capture_info("%pK: peer_id [%d 0x%x] tid[%d] qlen[%d -> %d]",
+			   pdev->soc, ppdu_desc->user[usr_idx].peer_id, peer, tid, qlen, qlen_curr);
 
 }
 
@@ -4995,10 +4886,8 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 						     user->ba_size);
 
 			if (qdf_unlikely(!user->mpdus)) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_FATAL,
-					  "%s: ppdu_desc->mpdus allocation failed",
-					  __func__);
+				dp_tx_capture_alert("%pK: ppdu_desc->mpdus allocation failed",
+						    pdev->soc);
 				dp_ppdu_desc_free_all(ptr_nbuf_list, num_users);
 				DP_TX_PEER_DEL_REF(peer);
 				dp_print_pdev_tx_capture_stats(pdev);
@@ -5038,11 +4927,9 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				    !(SEQ_BIT(user->failed_bitmap, i))) {
 					uint8_t seq_idx;
 
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  "%s:find seq %d in next ppdu %d",
-						  __func__, seq_no,
-						  ppdu_desc_cnt);
+					dp_tx_capture_debug("%pK:find seq %d in next ppdu %d",
+							    pdev->soc, seq_no,
+							    ppdu_desc_cnt);
 
 					mpdu_nbuf =
 						get_mpdu_clone_from_next_ppdu(
@@ -5220,11 +5107,9 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				uint8_t tmp_usr_idx;
 				qdf_nbuf_queue_t *tmp_ppdu_q;
 
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "pending ppdus (%d, %d) : %d\n",
-					  peer_id,
-					  tx_tid->tid, pending_ppdus);
+				dp_tx_capture_err("%pK: pending ppdus (%d, %d) : %d\n",
+						  pdev->soc, peer_id,
+						  tx_tid->tid, pending_ppdus);
 				tmp_ppdu_q = &tx_tid->pending_ppdu_q;
 				tmp_nbuf = qdf_nbuf_queue_remove(tmp_ppdu_q);
 				if (qdf_unlikely(!tmp_nbuf)) {
@@ -5373,13 +5258,11 @@ dp_tx_cap_proc_per_ppdu_info(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu,
 					   usr_idx,
 					   ppdu_desc->ppdu_id);
 			if (user->tid > DP_MAX_TIDS) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
-					  __func__,
-					  ppdu_desc->ppdu_id,
-					  user->peer_id,
-					  user->tid);
+				dp_tx_capture_err("%pK: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
+						  pdev->soc,
+						  ppdu_desc->ppdu_id,
+						  user->peer_id,
+						  user->tid);
 
 				user->skip = 1;
 				goto free_nbuf_dec_ref;
@@ -5480,23 +5363,21 @@ dequeue_msdu_again:
 				   user->mpdu_tried_mcast;
 
 			/* print ppdu_desc info for debugging purpose */
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_INFO,
-				  "%s: ppdu[%d] b_ppdu_id[%d] p_id[%d], tid[%d], n_mpdu[%d %d] n_msdu[%d] retr[%d] qlen[%d] tsf[%u - %u] b_tsf[%u - %u] dur[%u] seq[%d] ppdu_desc_cnt[%d]",
-				  __func__,
-				  ppdu_desc->ppdu_id,
-				  ppdu_desc->bar_ppdu_id,
-				  user->peer_id,
-				  user->tid,
-				  ppdu_desc->num_mpdu,
-				  mpdu_suc,
-				  ppdu_desc->num_msdu, retries,
-				  qlen,
-				  start_tsf, end_tsf,
-				  bar_start_tsf, bar_end_tsf,
-				  ppdu_desc->tx_duration,
-				  user->start_seq,
-				  ppdu_desc_cnt);
+			dp_tx_capture_info("%pK: ppdu[%d] b_ppdu_id[%d] p_id[%d], tid[%d], n_mpdu[%d %d] n_msdu[%d] retr[%d] qlen[%d] tsf[%u - %u] b_tsf[%u - %u] dur[%u] seq[%d] ppdu_desc_cnt[%d]",
+					   pdev->soc,
+					   ppdu_desc->ppdu_id,
+					   ppdu_desc->bar_ppdu_id,
+					   user->peer_id,
+					   user->tid,
+					   ppdu_desc->num_mpdu,
+					   mpdu_suc,
+					   ppdu_desc->num_msdu, retries,
+					   qlen,
+					   start_tsf, end_tsf,
+					   bar_start_tsf, bar_end_tsf,
+					   ppdu_desc->tx_duration,
+					   user->start_seq,
+					   ppdu_desc_cnt);
 
 			dp_tx_cap_stats_mpdu_update(peer, PEER_MPDU_SUCC,
 						    mpdu_suc);
@@ -5528,20 +5409,18 @@ free_nbuf_dec_ref:
 		 * descriptor list
 		 */
 		/* print ppdu_desc info for debugging purpose */
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_INFO_LOW,
-			  "%s: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%u b %u] dur[%u]",
-			  __func__, ppdu_desc->ppdu_id,
-			  ppdu_desc->user[0].peer_id,
-			  ppdu_desc->user[0].tid,
-			  ppdu_desc->frame_ctrl,
-			  ppdu_desc->user[0].frame_ctrl,
-			  ppdu_desc->frame_type,
-			  ppdu_desc->htt_frame_type,
-			  ppdu_desc->user[0].start_seq,
-			  ppdu_desc->ppdu_start_timestamp,
-			  ppdu_desc->bar_ppdu_start_timestamp,
-			  ppdu_desc->tx_duration);
+		dp_tx_capture_info_low("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%u b %u] dur[%u]",
+				       pdev->soc, ppdu_desc->ppdu_id,
+				       ppdu_desc->user[0].peer_id,
+				       ppdu_desc->user[0].tid,
+				       ppdu_desc->frame_ctrl,
+				       ppdu_desc->user[0].frame_ctrl,
+				       ppdu_desc->frame_type,
+				       ppdu_desc->htt_frame_type,
+				       ppdu_desc->user[0].start_seq,
+				       ppdu_desc->ppdu_start_timestamp,
+				       ppdu_desc->bar_ppdu_start_timestamp,
+				       ppdu_desc->tx_duration);
 
 		ptr_nbuf_list->nbuf_ppdu = nbuf_ppdu;
 		dp_tx_cap_nbuf_list_update_ref(ptr_nbuf_list,
@@ -5736,11 +5615,9 @@ void dp_tx_ppdu_stats_process(void *context)
 
 				if (dp_tx_cap_nbuf_list_get_ref(
 							ptr_nbuf_list)) {
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_FATAL,
-						  "%s: %d missing handling of ppdu_desc ref_cnt:%d ,i : %d ptr %p, ppdu_desc_cnt %d!!!\n",
-						  __func__, __LINE__,
-						  ptr_nbuf_list->ref_cnt, i, ptr_nbuf_list, ppdu_desc_cnt);
+					dp_tx_capture_alert("%pK: missing handling of ppdu_desc ref_cnt:%d ,i : %d ptr %p, ppdu_desc_cnt %d!!!\n",
+							    pdev->soc,
+							    ptr_nbuf_list->ref_cnt, i, ptr_nbuf_list, ppdu_desc_cnt);
 					QDF_BUG(0);
 				}
 			}
@@ -5795,14 +5672,12 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 
 		if (!s_ppdu_info->done && !recv_ack_ba_done) {
 			if (time_delta < MAX_SCHED_STARVE) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_INFO_MED,
-					  "pdev[%d] ppdu_id[0x%x %d] sched_cmdid[0x%x %d] TLV_B[0x%x] TSF[%u] D[%d]",
-					  pdev->pdev_id,
-					  s_ppdu_info->ppdu_id, s_ppdu_info->ppdu_id,
-					  s_ppdu_info->sched_cmdid, s_ppdu_info->sched_cmdid,
-					  s_ppdu_info->tlv_bitmap, s_ppdu_info->tsf_l32,
-					  s_ppdu_info->done);
+				dp_tx_capture_info("%pK: pdev[%d] ppdu_id[0x%x %d] sched_cmdid[0x%x %d] TLV_B[0x%x] TSF[%u] D[%d]",
+						   pdev->soc, pdev->pdev_id,
+						   s_ppdu_info->ppdu_id, s_ppdu_info->ppdu_id,
+						   s_ppdu_info->sched_cmdid, s_ppdu_info->sched_cmdid,
+						   s_ppdu_info->tlv_bitmap, s_ppdu_info->tsf_l32,
+						   s_ppdu_info->done);
 				break;
 			} else {
 				starved = 1;
@@ -5820,13 +5695,11 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		ppdu_desc->sched_cmdid = ppdu_info->sched_cmdid;
 
 		if (starved) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_INFO_MED,
-				  "ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
-				  ppdu_desc->frame_ctrl,
-				  ppdu_desc->htt_frame_type,
-				  ppdu_desc->tlv_bitmap,
-				  ppdu_desc->user[0].completion_status);
+			dp_tx_capture_info("%pK: ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
+					   pdev->soc, ppdu_desc->frame_ctrl,
+					   ppdu_desc->htt_frame_type,
+					   ppdu_desc->tlv_bitmap,
+					   ppdu_desc->user[0].completion_status);
 			starved = 0;
 		}
 
@@ -5834,17 +5707,15 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		    ppdu_info->sched_cmdid == s_ppdu_info->sched_cmdid)
 			matched = 1;
 
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-			  QDF_TRACE_LEVEL_INFO_MED,
-			  "pdev[%d] vdev[%d] ppdu_id[0x%x %d] sched_cmdid[0x%x %d] FC[0x%x] H_FTYPE[0x%x] TLV_B[0x%x] TSF[%u] cs[%d] M[%d] R_PID[%d S %d]",
-			  pdev->pdev_id, ppdu_desc->vdev_id,
-			  s_ppdu_info->ppdu_id, s_ppdu_info->ppdu_id,
-			  s_ppdu_info->sched_cmdid, s_ppdu_info->sched_cmdid,
-			  ppdu_desc->frame_ctrl,
-			  ppdu_desc->htt_frame_type,
-			  ppdu_desc->tlv_bitmap, s_ppdu_info->tsf_l32,
-			  ppdu_desc->user[0].completion_status, matched,
-			  ppdu_info->ppdu_id, ppdu_info->sched_cmdid);
+		dp_tx_capture_info("%pK: pdev[%d] vdev[%d] ppdu_id[0x%x %d] sched_cmdid[0x%x %d] FC[0x%x] H_FTYPE[0x%x] TLV_B[0x%x] TSF[%u] cs[%d] M[%d] R_PID[%d S %d]",
+				   pdev->soc, pdev->pdev_id, ppdu_desc->vdev_id,
+				   s_ppdu_info->ppdu_id, s_ppdu_info->ppdu_id,
+				   s_ppdu_info->sched_cmdid, s_ppdu_info->sched_cmdid,
+				   ppdu_desc->frame_ctrl,
+				   ppdu_desc->htt_frame_type,
+				   ppdu_desc->tlv_bitmap, s_ppdu_info->tsf_l32,
+				   ppdu_desc->user[0].completion_status, matched,
+				   ppdu_info->ppdu_id, ppdu_info->sched_cmdid);
 
 		qdf_spin_lock_bh(&pdev->tx_capture.ppdu_stats_lock);
 
@@ -6341,8 +6212,7 @@ dp_bar_send_ack_frm_to_stack(struct dp_soc *soc,
 	/* Get addr pointing to 80211 header */
 	addr = dp_rx_mon_get_nbuf_80211_hdr(nbuf);
 	if (qdf_unlikely(!addr)) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Unable to get 80211 header address", __func__);
+		dp_tx_capture_err("%pK: Unable to get 80211 header address", soc);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -6399,8 +6269,7 @@ static void dp_gen_noack_frame(struct hal_rx_ppdu_info *ppdu_info,
 	/* Get addr pointing to 80211 header */
 	ndpa_buf = dp_rx_mon_get_nbuf_80211_hdr(mon_mpdu);
 	if (qdf_unlikely(!ndpa_buf)) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Unable to get 80211 header address", __func__);
+		dp_tx_capture_err("Unable to get 80211 header address");
 		return;
 	}
 
@@ -6932,8 +6801,7 @@ void tx_cap_debugfs_log_ppdu_desc(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu)
 		return;
 
 	list_size = ppdu_desc_dbg_enqueue(ptr_log_info, ptr_dbg_ppdu);
-	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_MED,
-		  "%s: enqueue list_size:%d\n", __func__, list_size);
+	dp_tx_capture_info("%pK: enqueue list_size:%d\n", pdev->soc, list_size);
 
 	if (list_size >= ptr_log_info->ppdu_queue_size) {
 		ptr_tmp_ppdu = ppdu_desc_dbg_dequeue(ptr_log_info);
@@ -7016,8 +6884,7 @@ QDF_STATUS dp_tx_capture_debugfs_init(struct dp_pdev *pdev)
 	dentry = qdf_debugfs_create_dir(buf, NULL);
 
 	if (!dentry) {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
-			  "error while creating debugfs dir for %s", buf);
+		dp_tx_capture_err("%pK: error while creating debugfs dir for %s", pdev->soc, buf);
 		goto out;
 	}
 
@@ -7040,10 +6907,8 @@ QDF_STATUS dp_tx_capture_debugfs_init(struct dp_pdev *pdev)
 				&ptr_debugfs_info->ops);
 
 		if (!ptr_log_info->debugfs_de[i]) {
-			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "debug Entry creation failed[%s]!",
-				  ptr_debugfs_info->name);
+			dp_tx_capture_err("%pK: debug Entry creation failed[%s]!",
+					  pdev->soc, ptr_debugfs_info->name);
 			goto out;
 		}
 	}
