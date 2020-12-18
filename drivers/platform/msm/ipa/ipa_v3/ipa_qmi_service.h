@@ -287,8 +287,13 @@ int rmnet_ipa3_poll_tethering_stats(struct wan_ioctl_poll_tethering_stats
 
 int rmnet_ipa3_set_data_quota(struct wan_ioctl_set_data_quota *data);
 
+#ifdef IPA_DATA_WARNING_QUOTA
+int rmnet_ipa3_set_data_quota_warning(struct wan_ioctl_set_data_quota_warning
+		*data);
+#endif
+
 void ipa3_broadcast_quota_reach_ind(uint32_t mux_id,
-	enum ipa_upstream_type upstream_type);
+	enum ipa_upstream_type upstream_type, bool is_warning_limit);
 
 int rmnet_ipa3_set_tether_client_pipe(struct wan_ioctl_set_tether_client_pipe
 	*data);
@@ -328,7 +333,7 @@ int ipa3_qmi_set_data_quota(struct ipa_set_data_usage_quota_req_msg_v01 *req);
 int ipa3_qmi_set_aggr_info(
 	enum ipa_aggr_enum_type_v01 aggr_enum_type);
 
-int ipa3_qmi_stop_data_qouta(void);
+int ipa3_qmi_stop_data_quota(struct ipa_stop_data_usage_quota_req_msg_v01 *req);
 
 void ipa3_q6_handshake_complete(bool ssr_bootup);
 
@@ -456,8 +461,16 @@ static inline int rmnet_ipa3_set_data_quota(
 	return -EPERM;
 }
 
+#ifdef IPA_DATA_WARNING_QUOTA
+static inline int rmnet_ipa3_set_data_quota_warning(
+	struct wan_ioctl_set_data_quota_warning *data)
+{
+	return -EPERM;
+}
+#endif
+
 static inline void ipa3_broadcast_quota_reach_ind(uint32_t mux_id,
-	enum ipa_upstream_type upstream_type) { }
+	enum ipa_upstream_type upstream_type, bool is_warning_limit) { }
 
 static inline int ipa3_qmi_get_data_stats(
 	struct ipa_get_data_stats_req_msg_v01 *req,
@@ -479,7 +492,8 @@ static inline int ipa3_qmi_set_data_quota(
 	return -EPERM;
 }
 
-static inline int ipa3_qmi_stop_data_qouta(void)
+static inline int ipa3_qmi_stop_data_quota(
+struct ipa_stop_data_usage_quota_req_msg_v01 *req)
 {
 	return -EPERM;
 }

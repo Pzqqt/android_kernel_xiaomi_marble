@@ -3250,6 +3250,40 @@ struct qmi_elem_info ipa3_set_data_usage_quota_req_msg_data_v01_ei[] = {
 			apn_quota_list),
 		.ei_array	= ipa3_data_usage_quota_info_type_data_v01_ei,
 	},
+#ifdef IPA_DATA_WARNING_QUOTA
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_set_data_usage_quota_req_msg_v01,
+			apn_warning_list_valid),
+	},
+	{
+		.data_type	= QMI_DATA_LEN,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_set_data_usage_quota_req_msg_v01,
+			apn_warning_list_len),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= QMI_IPA_MAX_APN_V01,
+		.elem_size	= sizeof(struct
+					ipa_data_usage_quota_info_type_v01),
+		.array_type	= VAR_LEN_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_set_data_usage_quota_req_msg_v01,
+			apn_warning_list),
+		.ei_array	= ipa3_data_usage_quota_info_type_data_v01_ei,
+	},
+#endif
 	{
 		.data_type	= QMI_EOTI,
 		.array_type	= NO_ARRAY,
@@ -3289,6 +3323,28 @@ struct qmi_elem_info ipa3_data_usage_quota_reached_ind_msg_data_v01_ei[] = {
 			apn),
 		.ei_array	= ipa3_data_usage_quota_info_type_data_v01_ei,
 	},
+#ifdef IPA_DATA_WARNING_QUOTA
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x10,
+		.offset		= offsetof(
+			struct ipa_data_usage_quota_reached_ind_msg_v01,
+			is_warning_limit_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x10,
+		.offset		= offsetof(
+			struct ipa_data_usage_quota_reached_ind_msg_v01,
+			is_warning_limit),
+	},
+#endif
 	{
 		.data_type	= QMI_EOTI,
 		.array_type	= NO_ARRAY,
@@ -3297,7 +3353,48 @@ struct qmi_elem_info ipa3_data_usage_quota_reached_ind_msg_data_v01_ei[] = {
 };
 
 struct qmi_elem_info ipa3_stop_data_usage_quota_req_msg_data_v01_ei[] = {
-	/* ipa_stop_data_usage_quota_req_msg is empty */
+#ifdef IPA_DATA_WARNING_QUOTA
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x10,
+		.offset		= offsetof(
+			struct ipa_stop_data_usage_quota_req_msg_v01,
+			is_quota_limit_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x10,
+		.offset		= offsetof(
+			struct ipa_stop_data_usage_quota_req_msg_v01,
+			is_quota_limit),
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_stop_data_usage_quota_req_msg_v01,
+			is_warning_limit_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_stop_data_usage_quota_req_msg_v01,
+			is_warning_limit),
+	},
+#endif
 	{
 		.data_type	= QMI_EOTI,
 		.array_type	= NO_ARRAY,

@@ -3944,13 +3944,18 @@ static void rmnet_ipa_get_network_stats_and_update(void)
  * This function sends the quota_reach indication from the IPA Modem driver
  * via QMI, to user-space module
  */
-static void rmnet_ipa_send_quota_reach_ind(void)
+static void rmnet_ipa_send_quota_reach_ind(bool is_warning_limit)
 {
 	struct ipa_msg_meta msg_meta;
 	int rc;
 
 	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
-	msg_meta.msg_type = IPA_QUOTA_REACH;
+	if (!is_warning_limit)
+		msg_meta.msg_type = IPA_QUOTA_REACH;
+#ifdef IPA_DATA_WARNING_QUOTA
+	else
+		msg_meta.msg_type = IPA_WARNING_LIMIT_REACHED;
+#endif
 	rc = ipa_send_msg(&msg_meta, NULL, NULL);
 	if (rc) {
 		IPAWANERR("ipa_send_msg failed: %d\n", rc);
@@ -3972,12 +3977,22 @@ static void rmnet_ipa_send_quota_reach_ind(void)
  */
 int rmnet_ipa3_poll_tethering_stats(struct wan_ioctl_poll_tethering_stats *data)
 {
+	struct ipa_stop_data_usage_quota_req_msg_v01 stop_req;
+	memset(&stop_req, 0,
+		sizeof(struct ipa_stop_data_usage_quota_req_msg_v01));
+
 	ipa3_rmnet_ctx.polling_interval = data->polling_interval_secs;
 
 	cancel_delayed_work_sync(&ipa_tether_stats_poll_wakequeue_work);
 
 	if (ipa3_rmnet_ctx.polling_interval == 0) {
-		ipa3_qmi_stop_data_qouta();
+		/* stop quota */
+#ifdef IPA_DATA_WARNING_QUOTA
+		stop_req.is_quota_limit_valid = true;
+		stop_req.is_quota_limit = true;
+#endif
+		ipa3_qmi_stop_data_quota(&stop_req);
+
 		rmnet_ipa_get_network_stats_and_update();
 		rmnet_ipa_get_stats_and_update();
 		return 0;
@@ -4006,10 +4021,18 @@ static int rmnet_ipa3_set_data_quota_modem(
 	u32 mux_id;
 	int index;
 	struct ipa_set_data_usage_quota_req_msg_v01 req;
+	struct ipa_stop_data_usage_quota_req_msg_v01 stop_req;
 
 	/* stop quota */
-	if (!data->set_quota)
-		ipa3_qmi_stop_data_qouta();
+	memset(&stop_req, 0,
+		sizeof(struct ipa_stop_data_usage_quota_req_msg_v01));
+	if (!data->set_quota) {
+#ifdef IPA_DATA_WARNING_QUOTA
+		stop_req.is_quota_limit_valid = true;
+		stop_req.is_quota_limit = true;
+#endif
+		ipa3_qmi_stop_data_quota(&stop_req);
+	}
 
 	/* prevent string buffer overflows */
 	data->interface_name[IFNAMSIZ-1] = '\0';
@@ -4035,6 +4058,82 @@ static int rmnet_ipa3_set_data_quota_modem(
 
 	return ipa3_qmi_set_data_quota(&req);
 }
+
+#ifdef IPA_DATA_WARNING_QUOTA
+/**
+ * rmnet_ipa_set_data_quota_warning_modem() - Data quota and warning
+ * setting handler
+ * @data - IOCTL data
+ *
+ * This function handles WAN_IOC_SET_DATA_QUOTA_WARNING on modem interface.
+ * It translates the given interface name to the Modem MUX ID and
+ * sends the request of the quota to the IPA Modem driver via QMI.
+ *
+ * Return codes:
+ * 0: Success
+ * -EFAULT: Invalid interface name provided
+ * other: See ipa_qmi_set_data_quota_warning
+ */
+static int rmnet_ipa3_set_data_quota_warning_modem
+(
+	struct wan_ioctl_set_data_quota_warning *data
+)
+{
+	u32 mux_id;
+	int index;
+	struct ipa_set_data_usage_quota_req_msg_v01 req;
+	struct ipa_stop_data_usage_quota_req_msg_v01 stop_req;
+
+	/* prevent string buffer overflows */
+	data->interface_name[IFNAMSIZ-1] = '\0';
+
+	index = find_vchannel_name_index(data->interface_name);
+	IPAWANERR("iface name %s, quota %lu, warning %lu\n",
+		  data->interface_name, (unsigned long) data->quota_mbytes,
+		  (unsigned long) data->warning_mbytes);
+
+	if (index == MAX_NUM_OF_MUX_CHANNEL) {
+		IPAWANERR("%s is an invalid iface name\n",
+			  data->interface_name);
+		return -ENODEV;
+	}
+	/* stop quota or warning */
+	memset(&stop_req, 0,
+		sizeof(struct ipa_stop_data_usage_quota_req_msg_v01));
+	if (!data->set_quota || !data->set_warning) {
+
+		if (!data->set_quota) {
+			stop_req.is_quota_limit_valid = true;
+			stop_req.is_quota_limit = true;
+		}
+
+		if (!data->set_warning) {
+			stop_req.is_warning_limit_valid = true;
+			stop_req.is_warning_limit = true;
+		}
+		ipa3_qmi_stop_data_quota(&stop_req);
+	}
+
+	mux_id = rmnet_ipa3_ctx->mux_channel[index].mux_id;
+	ipa3_rmnet_ctx.metered_mux_id = mux_id;
+
+	memset(&req, 0, sizeof(struct ipa_set_data_usage_quota_req_msg_v01));
+	if (data->set_quota && (data->quota_mbytes != 0)) {
+		req.apn_quota_list_valid = true;
+		req.apn_quota_list_len = 1;
+		req.apn_quota_list[0].mux_id = mux_id;
+		req.apn_quota_list[0].num_Mbytes = data->quota_mbytes;
+	}
+
+	if (data->set_warning && (data->warning_mbytes != 0)) {
+		req.apn_warning_list_valid = true;
+		req.apn_warning_list_len = 1;
+		req.apn_warning_list[0].mux_id = mux_id;
+		req.apn_warning_list[0].num_Mbytes = data->warning_mbytes;
+	}
+	return ipa3_qmi_set_data_quota(&req);
+}
+#endif
 
 static int rmnet_ipa3_set_data_quota_wifi(struct wan_ioctl_set_data_quota *data)
 {
@@ -4102,6 +4201,59 @@ int rmnet_ipa3_set_data_quota(struct wan_ioctl_set_data_quota *data)
 	}
 	return rc;
 }
+
+#ifdef IPA_DATA_WARNING_QUOTA
+/**
+ * rmnet_ipa_set_data_quota_warning() - Data quota and warning setting handler
+ * @data - IOCTL data
+ *
+ * This function handles WAN_IOC_SET_DATA_QUOTA_WARNING.
+ * It translates the given interface name to the Modem MUX ID and
+ * sends the request of the quota and warning to the IPA Modem driver via QMI.
+ *
+ * Return codes:
+ * 0: Success
+ * -EFAULT: Invalid interface name provided
+ * other: See ipa_qmi_set_data_quota
+ */
+int rmnet_ipa3_set_data_quota_warning
+(
+	struct wan_ioctl_set_data_quota_warning *data
+)
+{
+	enum ipa_upstream_type upstream_type;
+	int rc = 0;
+
+	/* prevent string buffer overflows */
+	data->interface_name[IFNAMSIZ-1] = '\0';
+
+	/* get IPA backhaul type */
+	upstream_type = find_upstream_type(data->interface_name);
+
+	if (upstream_type == IPA_UPSTEAM_MAX) {
+		IPAWANERR("Wrong interface_name name %s\n",
+			data->interface_name);
+	} else if (upstream_type == IPA_UPSTEAM_WLAN) {
+		/* No support for Data Warning for WLAN backhaul.
+		 * Support only Data Quota.
+		 */
+		rc = rmnet_ipa3_set_data_quota_wifi(
+			(struct wan_ioctl_set_data_quota *)data);
+		if (rc) {
+			IPAWANERR("set quota and warning on wifi failed\n");
+			return rc;
+		}
+	} else {
+		rc = rmnet_ipa3_set_data_quota_warning_modem(data);
+		if (rc) {
+			IPAWANERR("set quota and warning on modem failed\n");
+			return rc;
+		}
+	}
+	return rc;
+}
+#endif
+
 /* rmnet_ipa_set_tether_client_pipe() -
  * @data - IOCTL data
  *
@@ -5019,7 +5171,7 @@ int rmnet_ipa3_reset_tethering_stats(struct wan_ioctl_reset_tether_stats *data)
  *
  */
 void ipa3_broadcast_quota_reach_ind(u32 mux_id,
-	enum ipa_upstream_type upstream_type)
+	enum ipa_upstream_type upstream_type, bool is_warning_limit)
 {
 	char alert_msg[IPA_QUOTA_REACH_ALERT_MAX_SIZE];
 	char iface_name_m[IPA_QUOTA_REACH_IF_NAME_MAX_SIZE];
@@ -5040,8 +5192,12 @@ void ipa3_broadcast_quota_reach_ind(u32 mux_id,
 			return;
 		}
 	}
-	res = snprintf(alert_msg, IPA_QUOTA_REACH_ALERT_MAX_SIZE,
+	if (!is_warning_limit)
+		res = snprintf(alert_msg, IPA_QUOTA_REACH_ALERT_MAX_SIZE,
 			"ALERT_NAME=%s", "quotaReachedAlert");
+	else
+		res = snprintf(alert_msg, IPA_QUOTA_REACH_ALERT_MAX_SIZE,
+			"ALERT_NAME=%s", "warningReachedAlert");
 	if (res >= IPA_QUOTA_REACH_ALERT_MAX_SIZE) {
 		IPAWANERR("message too long (%d)", res);
 		return;
@@ -5082,7 +5238,7 @@ void ipa3_broadcast_quota_reach_ind(u32 mux_id,
 	kobject_uevent_env(&(IPA_NETDEV()->dev.kobj),
 		KOBJ_CHANGE, envp);
 
-	rmnet_ipa_send_quota_reach_ind();
+	rmnet_ipa_send_quota_reach_ind(is_warning_limit);
 }
 
 /**
