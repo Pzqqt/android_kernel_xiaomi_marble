@@ -166,6 +166,14 @@ void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 		break;
 #endif /* QCA6490_HEADERS_DEF */
 
+#if defined(WCN7850_HEADERS_DEF)
+	case TARGET_TYPE_WCN7850:
+		scn->targetdef = WCN7850_TARGETdef;
+		scn->target_ce_def = WCN7850_CE_TARGETdef;
+		hif_info("TARGET_TYPE_WCN7850");
+		break;
+#endif /* WCN7850_HEADERS_DEF */
+
 #if defined(QCA6750_HEADERS_DEF)
 	case TARGET_TYPE_QCA6750:
 		scn->targetdef = QCA6750_TARGETdef;
@@ -290,6 +298,13 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		hif_info("HIF_TYPE_QCA6490");
 		break;
 #endif /* QCA6490_HEADERS_DEF */
+
+#if defined(WCN7850_HEADERS_DEF)
+	case HIF_TYPE_WCN7850:
+		scn->hostdef = WCN7850_HOSTdef;
+		hif_info("HIF_TYPE_WCN7850");
+		break;
+#endif /* WCN7850_HEADERS_DEF */
 
 #if defined(QCA6750_HEADERS_DEF)
 	case HIF_TYPE_QCA6750:

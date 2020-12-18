@@ -70,6 +70,11 @@ extern "C" {
 #define TARGET_TYPE_QCN6122   30
 #endif
 
+/* Hamilton */
+#ifndef TARGET_TYPE_WCN7850
+#define TARGET_TYPE_WCN7850 31
+#endif
+
 #ifdef __cplusplus
 }
 #endif

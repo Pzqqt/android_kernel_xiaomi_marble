@@ -43,7 +43,8 @@
 #include "mp_dev.h"
 #include "hif_debug.h"
 
-#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490))
+#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_WCN7850))
 #include "hal_api.h"
 #endif
 
@@ -3176,7 +3177,8 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	return 0;
 }
 
-#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490))
+#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_WCN7850))
 uint32_t hif_pci_reg_read32(struct hif_softc *hif_sc,
 			    uint32_t offset)
 {
@@ -3378,6 +3380,8 @@ static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
 	case QCA6490_DEVICE_ID:
 	case AR6320_DEVICE_ID:
 	case QCN7605_DEVICE_ID:
+	case WCN7850_DEVICE_ID:
+	case WCN7850_EMULATION_DEVICE_ID:
 		return true;
 	}
 	return false;
@@ -3622,7 +3626,8 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 	    tgt_info->target_type == TARGET_TYPE_QCA6390 ||
 	    tgt_info->target_type == TARGET_TYPE_QCA6490 ||
 	    tgt_info->target_type == TARGET_TYPE_QCN7605 ||
-	    tgt_info->target_type == TARGET_TYPE_QCA8074) {
+	    tgt_info->target_type == TARGET_TYPE_QCA8074 ||
+	    tgt_info->target_type == TARGET_TYPE_WCN7850) {
 		/*
 		 * Need to consider offset's memtype for QCA6290/QCA8074,
 		 * also mem_len and DRAM_BASE_ADDRESS/DRAM_SIZE need to be

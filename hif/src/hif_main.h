@@ -100,6 +100,10 @@
 #define QCA6750_EMULATION_DEVICE_ID (0x010c)
 #define QCA6750_DEVICE_ID (0x1105)
 
+/* TODO: change IDs for Hamilton */
+#define WCN7850_EMULATION_DEVICE_ID (0xfffa)
+#define WCN7850_DEVICE_ID (0x1107)
+
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
 #define AR9887_DEVICE_ID    (0x0050)
 #define AR900B_DEVICE_ID    (0x0040)
