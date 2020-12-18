@@ -181,6 +181,14 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	mac_handle_t mac_handle;
 	bool val;
 
+	pre_cac_adapter = hdd_get_adapter_by_iface_name(hdd_ctx,
+							SAP_PRE_CAC_IFNAME);
+	if (pre_cac_adapter) {
+		/* Flush existing pre_cac work */
+		if (hdd_ctx->sap_pre_cac_work.fn)
+			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+	}
+
 	if (policy_mgr_get_connection_count(hdd_ctx->psoc) > 1) {
 		hdd_err("pre cac not allowed in concurrency");
 		return -EINVAL;
@@ -229,8 +237,6 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 
 	hdd_debug("starting pre cac SAP  adapter");
 
-	pre_cac_adapter = hdd_get_adapter_by_iface_name(hdd_ctx,
-							SAP_PRE_CAC_IFNAME);
 	if (!pre_cac_adapter) {
 		mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_SAP_MODE);
 		if (!mac_addr) {
