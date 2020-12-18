@@ -67,6 +67,14 @@ struct wsa_temp_register {
 	u8 dmeas_lsb;
 };
 
+enum {
+	COMP_OFFSET0,
+	COMP_OFFSET1,
+	COMP_OFFSET2,
+	COMP_OFFSET3,
+	COMP_OFFSET4,
+};
+
 struct wsa_reg_mask_val {
 	u16 reg;
 	u8 mask;
@@ -852,6 +860,31 @@ static int wsa883x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa883x_get_comp_offset(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
+
+	ucontrol->value.integer.value[0] = wsa883x->comp_offset;
+	return 0;
+}
+
+static int wsa883x_set_comp_offset(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
+	int value = ucontrol->value.integer.value[0];
+
+	dev_dbg(component->dev, "%s: comp_offset %d\n",
+		__func__, wsa883x->comp_offset);
+	wsa883x->comp_offset = value;
+	return 0;
+}
+
 static int wsa883x_get_visense(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -916,6 +949,9 @@ static const struct snd_kcontrol_new wsa883x_snd_controls[] = {
 
 	SOC_ENUM_EXT("WSA MODE", wsa_dev_mode_enum,
 		     wsa_dev_mode_get, wsa_dev_mode_put),
+
+	SOC_SINGLE_EXT("COMP Offset", SND_SOC_NOPM, 0, 4, 0,
+		wsa883x_get_comp_offset, wsa883x_set_comp_offset),
 
 	SOC_SINGLE_EXT("COMP Switch", SND_SOC_NOPM, 0, 1, 0,
 		wsa883x_get_compander, wsa883x_set_compander),
@@ -1050,6 +1086,11 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 						0x01, 0x01);
 		/* Added delay as per HW sequence */
 		usleep_range(250, 300);
+		if (wsa883x->comp_enable)
+			snd_soc_component_update_bits(component,
+						WSA883X_DRE_CTL_0,
+						0x07,
+						wsa883x->comp_offset);
 		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
@@ -1140,9 +1181,11 @@ static void wsa883x_codec_init(struct snd_soc_component *component)
 		snd_soc_component_update_bits(component, reg_init[i].reg,
 					reg_init[i].mask, reg_init[i].val);
 
-	if (wsa883x->variant == WSA8830)
+	if (wsa883x->variant == WSA8830) {
 		snd_soc_component_update_bits(component, WSA883X_DRE_CTL_0,
 					0x07, 0x03);
+		wsa883x->comp_offset = COMP_OFFSET3;
+	}
 }
 
 static int32_t wsa883x_temp_reg_read(struct snd_soc_component *component,
@@ -1291,6 +1334,7 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 					    & 0xFF);
 	wsa883x->version = version;
 
+	wsa883x->comp_offset = COMP_OFFSET2;
 	wsa883x_codec_init(component);
 	wsa883x->global_pa_cnt = 0;
 

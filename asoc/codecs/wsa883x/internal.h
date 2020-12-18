@@ -93,6 +93,7 @@ struct wsa883x_priv {
 	struct swr_port port[WSA883X_MAX_SWR_PORTS];
 	int global_pa_cnt;
 	int dev_mode;
+	int comp_offset;
 	struct mutex res_lock;
 	struct snd_info_entry *entry;
 	struct snd_info_entry *version_entry;
