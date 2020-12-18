@@ -43,6 +43,59 @@ struct target_if_spectral_ops spectral_ops;
 int spectral_debug_level = DEBUG_SPECTRAL;
 struct spectral_tgt_ops ops_tgt;
 
+#ifdef SPECTRAL_MODULIZED_ENABLE
+/**
+ * target_if_spectral_wmi_service_enabled() - API to check whether a
+ * given WMI service is enabled
+ * @psoc: Pointer to psoc
+ * @wmi_handle: WMI handle
+ * @service_id: service id
+ *
+ * Return: true or false
+ */
+bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
+					    wmi_unified_t wmi_handle,
+					    uint32_t service_id)
+{
+	struct target_if_psoc_spectral *psoc_spectral;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return false;
+	}
+
+	if (!wmi_handle) {
+		spectral_err("wmi handle is null");
+		return false;
+	}
+
+	psoc_spectral = get_target_if_spectral_handle_from_psoc(psoc);
+	if (!psoc_spectral) {
+		spectral_err("psoc spectral object is null");
+		return false;
+	}
+
+	return psoc_spectral->wmi_ops.wmi_service_enabled(wmi_handle,
+							  service_id);
+}
+#else
+/**
+ * target_if_spectral_wmi_service_enabled() - API to check whether a
+ * given WMI service is enabled
+ * @psoc: Pointer to psoc
+ * @wmi_handle: WMI handle
+ * @service_id: service id
+ *
+ * Return: true or false
+ */
+bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
+					    wmi_unified_t wmi_handle,
+					    uint32_t service_id)
+{
+	return wmi_service_enabled(wmi_handle, service_id);
+}
+#endif /* SPECTRAL_MODULIZED_ENABLE */
+
 static void target_if_spectral_get_firstvdev_pdev(struct wlan_objmgr_pdev *pdev,
 						  void *obj, void *arg)
 {

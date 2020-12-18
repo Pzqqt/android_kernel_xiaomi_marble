@@ -829,6 +829,7 @@ struct vdev_spectral_enable_params;
  * bin indices from start scan response event
  * @wmi_unified_register_event_handler: Register WMI event handler
  * @wmi_unified_unregister_event_handler: Unregister WMI event handler
+ * @wmi_service_enabled: API to check whether a given WMI service is enabled
  */
 struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
@@ -853,6 +854,8 @@ struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_unified_unregister_event_handler)(
 				wmi_unified_t wmi_handle,
 				wmi_conv_event_id event_id);
+	bool (*wmi_service_enabled)(wmi_unified_t wmi_handle,
+				    uint32_t service_id);
 };
 
 /**
