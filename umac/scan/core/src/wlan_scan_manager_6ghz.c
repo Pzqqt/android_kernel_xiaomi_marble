@@ -66,7 +66,7 @@ scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 
 	for (i = 0; i < chan_list->num_chan; i++)
 		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_list->chan[i].freq))
-			temp_list[j++].freq = chan_list->chan[i].freq;
+			temp_list[j++] = chan_list->chan[i];
 
 	tmp_list_count = j;
 	scm_debug("Total 6ghz channels %d", tmp_list_count);
@@ -88,6 +88,8 @@ scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 			 channel->saved_profile_count * SAVED_PROFILE_WEIGHTAGE;
 		rnr_chan_info[j].weight = weight;
 		rnr_chan_info[j].chan_freq = temp_list[i].freq;
+		rnr_chan_info[j].phymode = temp_list[i].phymode;
+		rnr_chan_info[j].flags = temp_list[i].flags;
 		j++;
 		/*
 		 * Log the info only if weight or bss_beacon_probe_count are
@@ -119,8 +121,11 @@ scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 
 	/* update the 6g list based on the weightage */
 	for (i = 0, j = 0; (i < NUM_CHANNELS && j < tmp_list_count); i++)
-		if (wlan_reg_is_6ghz_chan_freq(chan_list->chan[i].freq))
-			chan_list->chan[i].freq = rnr_chan_info[j++].chan_freq;
+		if (wlan_reg_is_6ghz_chan_freq(chan_list->chan[i].freq)) {
+			chan_list->chan[i].freq = rnr_chan_info[j].chan_freq;
+			chan_list->chan[i].flags = rnr_chan_info[j].flags;
+			chan_list->chan[i].phymode = rnr_chan_info[j++].phymode;
+		}
 
 	qdf_mem_free(rnr_chan_info);
 }
