@@ -1237,7 +1237,7 @@ static enum ipa_client_type ipa3_mhi_get_client_by_chid(u32 chid)
 		break;
 	case IPA_MHI_CLIENT_IP_HW_1_OUT:
 	/* IPA4.5 non-auto, use mhi ch104 for qmap flow control */
-		if (ipa3_ctx->ipa_hw_type == IPA_HW_v4_5)
+		if (ipa_get_hw_type() == IPA_HW_v4_5)
 			client = IPA_CLIENT_MHI_LOW_LAT_PROD;
 		/* No auto use case in this branch */
 		else
@@ -1245,7 +1245,7 @@ static enum ipa_client_type ipa3_mhi_get_client_by_chid(u32 chid)
 		break;
 	case IPA_MHI_CLIENT_IP_HW_1_IN:
 	/* IPA4.5 non-auto, use mhi ch105 for qmap flow control */
-		if (ipa3_ctx->ipa_hw_type == IPA_HW_v4_5)
+		if (ipa_get_hw_type() == IPA_HW_v4_5)
 			client = IPA_CLIENT_MHI_LOW_LAT_CONS;
 		/* No auto use case in this branch */
 		else
