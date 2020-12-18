@@ -3738,6 +3738,212 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 }
 #else
 
+
+
+static uint8_t lim_get_num_tpe_octets(uint8_t max_transmit_power_count)
+{
+	if (!max_transmit_power_count)
+		return max_transmit_power_count;
+
+	return 1 << (max_transmit_power_count - 1);
+}
+
+void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
+		      tDot11fIEtransmit_power_env *tpe_ies, uint8_t num_tpe_ies,
+		      tDot11fIEhe_op *he_op, bool *has_tpe_updated)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	uint8_t i, local_tpe_count = 0, reg_tpe_count = 0, num_octets;
+	uint8_t psd_index = 0, non_psd_index = 0;
+	uint16_t bw_val, ch_width;
+	qdf_freq_t curr_op_freq, curr_freq;
+	enum reg_6g_client_type client_mobility_type;
+	struct ch_params ch_params = {0};
+	tDot11fIEtransmit_power_env single_tpe;
+	/*
+	 * PSD is power spectral density, incoming TPE could contain
+	 * non PSD info, or PSD info, or both, so need to keep track of them
+	 */
+	bool use_local_tpe, non_psd_set = false, psd_set = false;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
+	if (!vdev_mlme)
+		return;
+
+	vdev_mlme->reg_tpc_obj.num_pwr_levels = 0;
+	*has_tpe_updated = false;
+
+	wlan_reg_get_cur_6g_client_type(mac->pdev, &client_mobility_type);
+
+	for (i = 0; i < num_tpe_ies; i++) {
+		single_tpe = tpe_ies[i];
+		if (single_tpe.present &&
+		    (single_tpe.max_tx_pwr_category == client_mobility_type)) {
+			if (single_tpe.max_tx_pwr_interpret == LOCAL_EIRP ||
+			    single_tpe.max_tx_pwr_interpret == LOCAL_EIRP_PSD)
+				local_tpe_count++;
+			else if (single_tpe.max_tx_pwr_interpret ==
+				 REGULATORY_CLIENT_EIRP ||
+				 single_tpe.max_tx_pwr_interpret ==
+				 REGULATORY_CLIENT_EIRP_PSD)
+				reg_tpe_count++;
+		}
+	}
+
+	if (!reg_tpe_count && !local_tpe_count) {
+		pe_debug("No TPEs found in beacon IE");
+		return;
+	} else if (!reg_tpe_count) {
+		use_local_tpe = true;
+	} else if (!local_tpe_count) {
+		use_local_tpe = false;
+	} else {
+		use_local_tpe = wlan_mlme_is_local_tpe_pref(mac->psoc);
+	}
+
+	for (i = 0; i < num_tpe_ies; i++) {
+		single_tpe = tpe_ies[i];
+		if (single_tpe.present &&
+		    (single_tpe.max_tx_pwr_category == client_mobility_type)) {
+			if (use_local_tpe) {
+				if (single_tpe.max_tx_pwr_interpret ==
+				    LOCAL_EIRP) {
+					non_psd_index = i;
+					non_psd_set = true;
+				}
+				if (single_tpe.max_tx_pwr_interpret ==
+				    LOCAL_EIRP_PSD) {
+					psd_index = i;
+					psd_set = true;
+				}
+			} else {
+				if (single_tpe.max_tx_pwr_interpret ==
+				    REGULATORY_CLIENT_EIRP) {
+					non_psd_index = i;
+					non_psd_set = true;
+				}
+				if (single_tpe.max_tx_pwr_interpret ==
+				    REGULATORY_CLIENT_EIRP_PSD) {
+					psd_index = i;
+					psd_set = true;
+				}
+			}
+		}
+	}
+
+	curr_op_freq = session->curr_op_freq;
+	bw_val = wlan_reg_get_bw_value(session->ch_width);
+
+	if (non_psd_set && !psd_set) {
+		single_tpe = tpe_ies[non_psd_index];
+		vdev_mlme->reg_tpc_obj.is_psd_power = false;
+		vdev_mlme->reg_tpc_obj.eirp_power = 0;
+		vdev_mlme->reg_tpc_obj.num_pwr_levels =
+						single_tpe.max_tx_pwr_count;
+
+		ch_params.ch_width = CH_WIDTH_20MHZ;
+
+		for (i = 0; i < single_tpe.max_tx_pwr_count + 1; i++) {
+			wlan_reg_set_channel_params_for_freq(mac->pdev,
+							     curr_op_freq, 0,
+							     &ch_params);
+			if (vdev_mlme->reg_tpc_obj.tpe[i] !=
+			    single_tpe.tx_power[i] ||
+			    vdev_mlme->reg_tpc_obj.frequency[i] !=
+			    ch_params.mhz_freq_seg0)
+				*has_tpe_updated = true;
+			vdev_mlme->reg_tpc_obj.frequency[i] =
+							ch_params.mhz_freq_seg0;
+			vdev_mlme->reg_tpc_obj.tpe[i] = single_tpe.tx_power[i];
+			ch_params.ch_width =
+				get_next_higher_bw[ch_params.ch_width];
+		}
+	}
+
+	if (psd_set) {
+		single_tpe = tpe_ies[psd_index];
+		vdev_mlme->reg_tpc_obj.is_psd_power = true;
+		num_octets =
+			lim_get_num_tpe_octets(single_tpe.max_tx_pwr_count);
+		vdev_mlme->reg_tpc_obj.num_pwr_levels = num_octets;
+
+		wlan_reg_set_channel_params_for_freq(mac->pdev, curr_op_freq, 0,
+						     &ch_params);
+		curr_freq = ch_params.mhz_freq_seg0;
+
+		if (!num_octets) {
+			if (!he_op->oper_info_6g_present)
+				ch_width = session->ch_width;
+			else
+				ch_width = he_op->oper_info_6g.info.ch_width;
+			num_octets = lim_get_num_pwr_levels(true,
+							    session->ch_width);
+			vdev_mlme->reg_tpc_obj.num_pwr_levels = num_octets;
+			for (i = 0; i < num_octets; i++) {
+				if (vdev_mlme->reg_tpc_obj.tpe[i] !=
+				    single_tpe.tx_power[0] ||
+				    vdev_mlme->reg_tpc_obj.frequency[i] !=
+				    curr_freq)
+					*has_tpe_updated = true;
+				vdev_mlme->reg_tpc_obj.frequency[i] = curr_freq;
+				curr_freq += 20;
+				vdev_mlme->reg_tpc_obj.tpe[i] =
+							single_tpe.tx_power[0];
+			}
+		} else {
+			for (i = 0; i < num_octets; i++) {
+				if (vdev_mlme->reg_tpc_obj.tpe[i] !=
+				    single_tpe.tx_power[i] ||
+				    vdev_mlme->reg_tpc_obj.frequency[i] !=
+				    curr_freq)
+					*has_tpe_updated = true;
+				vdev_mlme->reg_tpc_obj.frequency[i] = curr_freq;
+				curr_freq += 20;
+				vdev_mlme->reg_tpc_obj.tpe[i] =
+							single_tpe.tx_power[i];
+			}
+		}
+	}
+
+	if (non_psd_set) {
+		single_tpe = tpe_ies[non_psd_index];
+		vdev_mlme->reg_tpc_obj.eirp_power =
+			single_tpe.tx_power[single_tpe.max_tx_pwr_count];
+	}
+}
+
+void lim_process_tpe_ie_from_beacon(struct mac_context *mac,
+				    struct pe_session *session,
+				    struct bss_description *bss_desc,
+				    bool *has_tpe_updated)
+{
+	tDot11fBeaconIEs *bcn_ie;
+	uint32_t buf_len;
+	uint8_t *buf;
+	int status;
+
+	bcn_ie = qdf_mem_malloc(sizeof(*bcn_ie));
+	if (!bcn_ie)
+		return;
+
+	buf_len = lim_get_ielen_from_bss_description(bss_desc);
+	buf = (uint8_t *)bss_desc->ieFields;
+	status = dot11f_unpack_beacon_i_es(mac, buf, buf_len, bcn_ie, false);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to parse Beacon IEs (0x%08x, %d bytes):",
+		       status, buf_len);
+		qdf_mem_free(bcn_ie);
+		return;
+	} else if (DOT11F_WARNED(status)) {
+		pe_debug("warnings (0x%08x, %d bytes):", status, buf_len);
+	}
+
+	lim_parse_tpe_ie(mac, session, bcn_ie->transmit_power_env,
+			 bcn_ie->num_transmit_power_env, &bcn_ie->he_op,
+			 has_tpe_updated);
+	qdf_mem_free(bcn_ie);
+}
+
 /**
  * __lim_process_sme_join_req() - process SME_JOIN_REQ message
  * @mac_ctx: Pointer to Global MAC structure

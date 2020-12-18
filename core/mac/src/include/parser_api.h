@@ -71,6 +71,8 @@
 #define SIZE_MASK 0x7FFF
 #define FIXED_MASK 0x8000
 
+#define MAX_TPE_IES 8
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #define QCOM_VENDOR_IE_MCC_AVOID_CH 0x01
 
@@ -288,6 +290,9 @@ typedef struct sSirProbeRespBeacon {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct sir_fils_indication fils_ind;
 #endif
+	uint8_t num_transmit_power_env;
+	tDot11fIEtransmit_power_env transmit_power_env[MAX_TPE_IES];
+	uint8_t ap_power_type;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */

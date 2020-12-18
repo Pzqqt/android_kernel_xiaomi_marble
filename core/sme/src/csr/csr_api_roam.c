@@ -70,6 +70,8 @@
 #include "cfg_nan_api.h"
 #include "nan_ucfg_api.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include "wlan_reg_ucfg_api.h"
+
 #include <ol_defines.h>
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "wlan_psoc_mlme_api.h"
@@ -13768,6 +13770,27 @@ rel_vdev_ref:
 	return status;
 }
 
+static QDF_STATUS csr_iterate_triplets(tDot11fIECountry country_ie)
+{
+	u_int8_t i;
+
+	if (country_ie.first_triplet[0] >= OP_CLASS_ID_200) {
+		if (country_ie.more_triplets[0][0] < OP_CLASS_ID_200)
+			return QDF_STATUS_SUCCESS;
+	}
+
+	for (i = 0; i < country_ie.num_more_triplets; i++) {
+		if ((country_ie.more_triplets[i][0] >= OP_CLASS_ID_200) &&
+		    (i < country_ie.num_more_triplets - 1)) {
+			if (country_ie.more_triplets[i + 1][0] <
+			    OP_CLASS_ID_200)
+				return QDF_STATUS_SUCCESS;
+		}
+	}
+	sme_err_rl("No operating class triplet followed by channel range triplet");
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "struct join_req".
@@ -13798,6 +13821,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	enum csr_akm_type akm;
+	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
 #ifdef FEATURE_WLAN_ESE
 	bool ese_config = false;
 #endif
@@ -14185,6 +14209,26 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			}
 		}
 #endif /* FEATURE_WLAN_ESE */
+
+		if (wlan_reg_is_6ghz_chan_freq(pBssDescription->chan_freq)) {
+			if (!pIes->Country.present)
+				sme_debug("Channel is 6G but not country IE present");
+			wlan_reg_read_current_country(mac->psoc,
+						      programmed_country);
+			if (!qdf_mem_cmp(pIes->Country.country,
+					 programmed_country,
+					 REG_ALPHA2_LEN + 1))
+				sme_debug("Country IE does not match country stored in regulatory");
+			status = csr_iterate_triplets(pIes->Country);
+			if (QDF_IS_STATUS_ERROR(status))
+				return status;
+		}
+
+		if (wlan_reg_is_6ghz_chan_freq(pBssDescription->chan_freq)) {
+			if (!pIes->num_transmit_power_env ||
+			    !pIes->transmit_power_env[0].present)
+				sme_debug("TPE not present for 6G channel");
+		}
 
 		if (pProfile->bOSENAssociation)
 			csr_join_req->isOSENConnection = true;

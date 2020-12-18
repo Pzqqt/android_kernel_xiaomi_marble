@@ -4715,6 +4715,14 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 			     sizeof(tDot11fIEhe_op));
 	}
 
+	pBeaconStruct->num_transmit_power_env = pBeacon->num_transmit_power_env;
+	if (pBeacon->num_transmit_power_env) {
+		qdf_mem_copy(pBeaconStruct->transmit_power_env,
+			     pBeacon->transmit_power_env,
+			     pBeacon->num_transmit_power_env *
+			     sizeof(tDot11fIEtransmit_power_env));
+	}
+
 	convert_bcon_bss_color_change_ie(pBeacon, pBeaconStruct);
 
 	qdf_mem_free(pBeacon);

@@ -2162,4 +2162,48 @@ static inline void lim_ap_check_6g_compatible_peer(
 	struct mac_context *mac_ctx, struct pe_session *session)
 {}
 #endif
+
+/**
+ * enum max_tx_power_interpretation
+ * @LOCAL_EIRP: Local power interpretation
+ * @LOCAL_EIRP_PSD: Local PSD power interpretation
+ * @REGULATORY_CLIENT_EIRP: Regulatory power interpretation
+ * @REGULATORY_CLIENT_EIRP_PSD: Regulatory PSD power interpretation
+ */
+enum max_tx_power_interpretation {
+	LOCAL_EIRP = 0,
+	LOCAL_EIRP_PSD,
+	REGULATORY_CLIENT_EIRP,
+	REGULATORY_CLIENT_EIRP_PSD,
+};
+
+/**
+ * lim_parse_tpe_ie() - get the power info from the TPE IE
+ * @mac_ctx: mac context
+ * @session: pe session
+ * @tpe_ies: list of TPE IEs
+ * @num_tpe_ies: number of TPE IEs in list
+ * @he_op: HE OP IE
+ * @has_tpe_updated: flag set to true only if the TPE values have changed
+ *
+ * Return: void
+ */
+void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
+		      tDot11fIEtransmit_power_env *tpe_ies,
+		      uint8_t num_tpe_ies, tDot11fIEhe_op *he_op,
+		      bool *has_tpe_updated);
+
+/**
+ * lim_process_tpe_ie_from_beacon() - get the TPE IE from the BSS descriptor
+ * @mac_ctx: mac context
+ * @session: pe session
+ * @bss_desc: pointer to BSS descriptor
+ * @has_tpe_updated: flag set to true only if the TPE values have changed
+ *
+ * Return: void
+ */
+void lim_process_tpe_ie_from_beacon(struct mac_context *mac,
+				    struct pe_session *session,
+				    struct bss_description *bss_desc,
+				    bool *has_tpe_updated);
 #endif /* __LIM_UTILS_H */
