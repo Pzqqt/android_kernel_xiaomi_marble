@@ -2952,6 +2952,11 @@ static inline int dfs_is_disable_radar_marking_set(struct wlan_dfs *dfs,
  */
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs)
+{
+	return false;
+}
 #endif
 
 /**
@@ -3161,4 +3166,37 @@ static inline void dfs_postnol_attach(struct wlan_dfs *dfs)
 {
 }
 #endif
+
+#ifdef CONFIG_HOST_FIND_CHAN
+/**
+ * wlan_is_chan_radar() - Checks if a given dfs channel is in NOL or not.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to the dfs channel structure.
+ *
+ * Return: True if the channel has detected radar, else false.
+ */
+bool wlan_is_chan_radar(struct wlan_dfs *dfs, struct dfs_channel *chan);
+
+/**
+ * wlan_is_chan_history_radar() - Checks if a given dfs channel is in NOL
+ * history or not.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to the dfs channel structure.
+ *
+ * Return: True if the channel is marked as radar history, else false.
+ */
+bool wlan_is_chan_history_radar(struct wlan_dfs *dfs, struct dfs_channel *chan);
+#else
+static inline bool
+wlan_is_chan_radar(struct wlan_dfs *dfs, struct dfs_channel *chan)
+{
+	return false;
+}
+
+static inline bool
+wlan_is_chan_history_radar(struct wlan_dfs *dfs, struct dfs_channel *chan)
+{
+	return false;
+}
+#endif /* CONFIG_HOST_FIND_CHAN */
 #endif  /* _DFS_H_ */

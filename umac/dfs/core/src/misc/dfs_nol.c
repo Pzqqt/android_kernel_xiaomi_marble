@@ -84,7 +84,7 @@ static os_timer_func(dfs_nol_timeout)
 			 &c->dfs_ch_mhz_freq_seg1,
 			 &c->dfs_ch_mhz_freq_seg2,
 			 i);
-		if (WLAN_IS_CHAN_RADAR(c)) {
+		if (WLAN_IS_CHAN_RADAR(dfs, c)) {
 			if (qdf_system_time_after_eq(now,
 						     dfs->dfs_nol_event[i] +
 						     dfs_get_nol_timeout(dfs))) {
@@ -137,7 +137,7 @@ static os_timer_func(dfs_nol_timeout)
 				&(c->dfs_ch_vhtop_ch_freq_seg1),
 				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
-		if (WLAN_IS_CHAN_RADAR(c)) {
+		if (WLAN_IS_CHAN_RADAR(dfs, c)) {
 			if (qdf_system_time_after_eq(now,
 						dfs->dfs_nol_event[i] +
 						dfs_get_nol_timeout(dfs))) {

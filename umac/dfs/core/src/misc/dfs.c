@@ -335,11 +335,6 @@ bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_disable_radar_marking;
 }
-#else
-static inline bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 int dfs_control(struct wlan_dfs *dfs,

@@ -282,13 +282,18 @@
 	 WLAN_IS_CHAN_11AXA_HE80_80(_c)) \
 	&& WLAN_IS_CHAN_DFS_CFREQ2(_c)))
 
-#define WLAN_IS_CHAN_RADAR(_c)    \
+#ifdef CONFIG_HOST_FIND_CHAN
+#define WLAN_IS_CHAN_RADAR wlan_is_chan_radar
+#define WLAN_IS_CHAN_HISTORY_RADAR wlan_is_chan_history_radar
+#else
+#define WLAN_IS_CHAN_RADAR(_dfs, _c)    \
 	(((_c)->dfs_ch_flags & WLAN_CHAN_DFS_RADAR) == \
 	 WLAN_CHAN_DFS_RADAR)
 
-#define WLAN_IS_CHAN_HISTORY_RADAR(_c)    \
+#define WLAN_IS_CHAN_HISTORY_RADAR(_dfs, _c)    \
 	(((_c)->dfs_ch_flagext & WLAN_CHAN_HISTORY_RADAR) == \
 	WLAN_CHAN_HISTORY_RADAR)
+#endif
 
 #define WLAN_CHAN_CLR_HISTORY_RADAR(_c)    \
 	((_c)->dfs_ch_flagext &= ~WLAN_CHAN_HISTORY_RADAR)

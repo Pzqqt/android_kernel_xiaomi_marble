@@ -195,15 +195,17 @@ dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
 	}
 	*num_channels = num_ch;
 
-	utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
-					     nol_freq_list, num_ch,
-					     DFS_NOL_SET);
+	if (!dfs_get_disable_radar_marking(dfs)) {
+		utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
+						       nol_freq_list, num_ch,
+						       DFS_NOL_SET);
 
-	if (dfs->dfs_is_stadfs_enabled)
-		if (dfs_mlme_is_opmode_sta(dfs->dfs_pdev_obj))
-			utils_dfs_reg_update_nol_history_chan_for_freq(
+		if (dfs->dfs_is_stadfs_enabled)
+			if (dfs_mlme_is_opmode_sta(dfs->dfs_pdev_obj))
+				utils_dfs_reg_update_nol_history_chan_for_freq(
 					dfs->dfs_pdev_obj, nol_freq_list,
 					num_ch, DFS_NOL_HISTORY_SET);
+	}
 
 	dfs_nol_update(dfs);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);

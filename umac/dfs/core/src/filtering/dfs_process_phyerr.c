@@ -571,7 +571,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS_PHYERR_PKT)
 		dfs_dump_phyerr_contents(buf, datalen);
 
-	if (WLAN_IS_CHAN_RADAR(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_RADAR(dfs, dfs->dfs_curchan)) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS1,
 			"Radar already found in the channel, do not queue radar data");
 		return;
@@ -878,7 +878,7 @@ void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 		return;
 	}
 
-	if (WLAN_IS_CHAN_RADAR(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_RADAR(dfs, dfs->dfs_curchan)) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS1,
 			"Radar already found in the channel, do not queue radar data");
 		return;
