@@ -174,11 +174,11 @@ enum {
 	RX_MODE_MAX
 };
 
-static u8 comp_setting_table[RX_MODE_MAX][COMP_MAX_SETTING] =
+static struct lpass_cdc_comp_setting comp_setting_table[RX_MODE_MAX] =
 {
-	{0x00, 0x10, 0x06, 0x12, 0x21, 0x30, 0x3F, 0x48, 0xC4, 0xC, 0xC, 0xB0}, /* ULP */
-	{0x00, 0x00, 0x06, 0x12, 0x1E, 0x2A, 0x36, 0x3C, 0xC4, 0x0, 0xC, 0xB0}, /* LOHIFI */
-	{0x00, 0x10, 0x06, 0x12, 0x1E, 0x2A, 0x30, 0x30, 0xDC, 0xC, 0xC, 0xB0}, /* EAR -36 max_attn */
+	{12, -60, 12},
+	{0, -60, 12},
+	{12, -36, 12},
 };
 
 struct lpass_cdc_rx_macro_reg_mask_val {
@@ -1853,7 +1853,7 @@ static int lpass_cdc_rx_macro_config_compander(struct snd_soc_component *compone
 
 		lpass_cdc_update_compander_setting(component,
 					comp_ctl8_reg,
-					comp_setting_table[mode]);
+					&comp_setting_table[mode]);
 
 		/* Enable Compander Clock */
 		snd_soc_component_update_bits(component, comp_ctl0_reg,

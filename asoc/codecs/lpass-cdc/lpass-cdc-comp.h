@@ -6,11 +6,15 @@
 
 #include <sound/soc.h>
 
-#define COMP_MAX_SETTING 12
-
 struct comp_coeff_val {
 	u8 lsb;
 	u8 msb;
+};
+
+struct lpass_cdc_comp_setting {
+	int upper_gain_int;
+	int lower_gain_int;
+	int ana_addr_map;
 };
 
 int lpass_cdc_load_compander_coeff(struct snd_soc_component *component,
@@ -18,6 +22,6 @@ int lpass_cdc_load_compander_coeff(struct snd_soc_component *component,
 				   struct comp_coeff_val *comp_coeff_table,
 				   u16 arr_size);
 int lpass_cdc_update_compander_setting(struct snd_soc_component *component,
-				       u16 start_addr, u8 *reg_val);
-
+				u16 start_addr,
+				struct lpass_cdc_comp_setting *comp_setting);
 #endif
