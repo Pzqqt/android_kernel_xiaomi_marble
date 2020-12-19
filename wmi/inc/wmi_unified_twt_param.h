@@ -586,6 +586,14 @@ struct wmi_twt_resume_dialog_complete_event_param {
 	uint32_t status;
 };
 
+/**
+ * struct wmi_twt_notify_event_param -
+ * @vdev_id: VDEV identifier
+ */
+struct wmi_twt_notify_event_param {
+	uint32_t vdev_id;
+};
+
 #ifdef WLAN_SUPPORT_BCAST_TWT
 /**
  * struct wmi_twt_btwt_invite_sta_cmd_param -

@@ -738,6 +738,28 @@ static QDF_STATUS extract_twt_resume_dialog_comp_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS extract_twt_notify_event_tlv(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_notify_event_param *params)
+{
+	WMI_TWT_NOTIFY_EVENTID_param_tlvs *param_buf;
+	wmi_twt_notify_event_fixed_param *ev;
+
+	param_buf =
+		(WMI_TWT_NOTIFY_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = param_buf->fixed_param;
+
+	params->vdev_id = ev->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_SUPPORT_BCAST_TWT
 static QDF_STATUS
 extract_twt_btwt_invite_sta_comp_event_tlv(
@@ -933,6 +955,7 @@ void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 				extract_twt_session_stats_event_tlv;
 	ops->extract_twt_session_stats_data =
 				extract_twt_session_stats_event_data;
-
+	ops->extract_twt_notify_event =
+				extract_twt_notify_event_tlv;
 	wmi_twt_attach_bcast_twt_tlv(ops);
 }

@@ -2273,6 +2273,9 @@ QDF_STATUS (*extract_twt_resume_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_resume_dialog_complete_event_param *params);
 
+QDF_STATUS (*extract_twt_notify_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_notify_event_param *params);
 #ifdef WLAN_SUPPORT_BCAST_TWT
 QDF_STATUS (*extract_twt_btwt_invite_sta_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,

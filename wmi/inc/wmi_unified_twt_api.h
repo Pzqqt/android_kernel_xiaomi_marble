@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -241,6 +240,20 @@ QDF_STATUS wmi_extract_twt_resume_dialog_comp_event(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_resume_dialog_complete_event_param *params);
+
+/**
+ * wmi_extract_twt_notify_event() - Extract WMI event params for TWT
+ *                                  notify event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_notify_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_notify_event_param *params);
 
 #ifdef WLAN_SUPPORT_BCAST_TWT
 /**
