@@ -2717,4 +2717,44 @@ void hal_flush_reg_write_work(hal_soc_handle_t hal_handle);
 static inline void hal_flush_reg_write_work(hal_soc_handle_t hal_handle) { }
 #endif
 
+/**
+ * hal_get_ring_usage - Calculate the ring usage percentage
+ * @hal_ring_hdl: Ring pointer
+ * @ring_type: Ring type
+ * @headp: pointer to head value
+ * @tailp: pointer to tail value
+ *
+ * Calculate the ring usage percentage for src and dest rings
+ *
+ * Return: Ring usage percentage
+ */
+static inline
+uint32_t hal_get_ring_usage(
+	hal_ring_handle_t hal_ring_hdl,
+	enum hal_ring_type ring_type, uint32_t *headp, uint32_t *tailp)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t num_avail, num_valid = 0;
+	uint32_t ring_usage;
+
+	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
+		if (*tailp > *headp)
+			num_avail =  ((*tailp - *headp) / srng->entry_size) - 1;
+		else
+			num_avail = ((srng->ring_size - *headp + *tailp) /
+				     srng->entry_size) - 1;
+		if (ring_type == WBM_IDLE_LINK)
+			num_valid = num_avail;
+		else
+			num_valid = srng->num_entries - num_avail;
+	} else {
+		if (*headp >= *tailp)
+			num_valid = ((*headp - *tailp) / srng->entry_size);
+		else
+			num_valid = ((srng->ring_size - *tailp + *headp) /
+				     srng->entry_size);
+	}
+	ring_usage = (100 * num_valid) / srng->num_entries;
+	return ring_usage;
+}
 #endif /* _HAL_APIH_ */
