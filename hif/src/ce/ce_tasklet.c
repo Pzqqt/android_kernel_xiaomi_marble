@@ -373,6 +373,14 @@ static void ce_tasklet(unsigned long data)
 		hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 				HIF_CE_TASKLET_RESCHEDULE, NULL, NULL, -1, 0);
 
+		if (test_bit(TASKLET_STATE_SCHED,
+			     &tasklet_entry->intr_tq.state)) {
+			hif_info("ce_id%d tasklet was scheduled, return",
+				 tasklet_entry->ce_id);
+			qdf_atomic_dec(&scn->active_tasklet_cnt);
+			return;
+		}
+
 		ce_schedule_tasklet(tasklet_entry);
 		return;
 	}
