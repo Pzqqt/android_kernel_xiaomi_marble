@@ -72,6 +72,7 @@
 #include "wlan_mlme_twt_api.h"
 #include "parser_api.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include <wlan_mlme_twt_api.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -2263,6 +2264,30 @@ sme_process_twt_resume_dialog_event(struct mac_context *mac,
 			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
 			param->dialog_id, WLAN_TWT_NONE);
 }
+
+/**
+ * sme_process_twt_notify_event() - Process twt ready for setup notification
+ * event from firmware
+ * @mac: Global MAC pointer
+ * @twt_notify_event: pointer to event buf containing twt notify parameters
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_notify_event(struct mac_context *mac,
+			     struct wmi_twt_notify_event_param *notify_event)
+{
+	twt_notify_cb callback;
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac, notify_event->vdev_id);
+	mlme_twt_set_wait_for_notify(mac->psoc,
+				     &session->connectedProfile.bssid,
+				     FALSE);
+	callback = mac->sme.twt_notify_cb;
+	if (callback)
+		callback(mac->psoc, notify_event);
+}
 #else
 static void
 sme_process_twt_add_dialog_event(struct mac_context *mac,
@@ -2291,6 +2316,12 @@ sme_process_twt_resume_dialog_event(struct mac_context *mac,
 static void
 sme_process_twt_nudge_dialog_event(struct mac_context *mac,
 				   struct wmi_twt_nudge_dialog_complete_event_param *param)
+{
+}
+
+static void
+sme_process_twt_notify_event(struct mac_context *mac,
+			     struct wmi_twt_notify_event_param *notify_event)
 {
 }
 #endif
@@ -2616,6 +2647,10 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		break;
 	case eWNI_SME_TWT_NUDGE_DIALOG_EVENT:
 		sme_process_twt_nudge_dialog_event(mac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
+	case eWNI_SME_TWT_NOTIFY_EVENT:
+		sme_process_twt_notify_event(mac, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	default:
@@ -13954,6 +13989,7 @@ QDF_STATUS sme_clear_twt_complete_cb(mac_handle_t mac_handle)
 		mac->sme.twt_del_dialog_cb = NULL;
 		mac->sme.twt_pause_dialog_cb = NULL;
 		mac->sme.twt_resume_dialog_cb = NULL;
+		mac->sme.twt_notify_cb = NULL;
 		sme_release_global_lock(&mac->sme);
 
 		sme_debug("TWT: callbacks Initialized");
@@ -13976,6 +14012,7 @@ QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
 		mac->sme.twt_pause_dialog_cb = twt_cb->twt_pause_dialog_cb;
 		mac->sme.twt_resume_dialog_cb = twt_cb->twt_resume_dialog_cb;
 		mac->sme.twt_disable_cb = twt_cb->twt_disable_cb;
+		mac->sme.twt_notify_cb = twt_cb->twt_notify_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("TWT: callbacks registered");
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -250,7 +250,8 @@ enum eWniMsgTypes {
 	eWNI_SME_TWT_PAUSE_DIALOG_EVENT = SIR_SME_MSG_TYPES_BEGIN + 167,
 	eWNI_SME_TWT_RESUME_DIALOG_EVENT = SIR_SME_MSG_TYPES_BEGIN + 168,
 	eWNI_SME_TWT_NUDGE_DIALOG_EVENT = SIR_SME_MSG_TYPES_BEGIN + 169,
-	eWNI_SME_MSG_TYPES_END = SIR_SME_MSG_TYPES_BEGIN + 170
+	eWNI_SME_TWT_NOTIFY_EVENT = SIR_SME_MSG_TYPES_BEGIN + 170,
+	eWNI_SME_MSG_TYPES_END = SIR_SME_MSG_TYPES_BEGIN + 171
 };
 
 typedef struct sAniCfgTxRateCtrs {

@@ -3675,7 +3675,8 @@ QDF_STATUS sme_clear_twt_complete_cb(mac_handle_t mac_handle);
  * @mac_handle: MAC handle
  * @twt_cb: TWT callbacks
  *
- * Return: QDF Status
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
  */
 QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
 				      struct twt_callbacks *twt_cb);

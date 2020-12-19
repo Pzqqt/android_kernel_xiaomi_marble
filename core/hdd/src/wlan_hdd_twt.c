@@ -2311,6 +2311,79 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_twt_notify_pack_nlmsg() - pack the skb with
+ * twt notify event from firmware
+ * @reply_skb: skb to store the response
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, QDF_STATUS_E_FAILURE
+ * on failure
+ */
+static QDF_STATUS
+hdd_twt_notify_pack_nlmsg(struct sk_buff *reply_skb)
+{
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_SETUP_READY_NOTIFY)) {
+		hdd_err("Failed to put TWT notify operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_twt_notify_cb() - callback function
+ * to get twt notify event
+ * @psoc: Pointer to global psoc
+ * @params: Pointer to notify param event buffer
+ *
+ * Return: None
+ */
+static void
+hdd_twt_notify_cb(struct wlan_objmgr_psoc *psoc,
+		  struct wmi_twt_notify_event_param *params)
+{
+	struct hdd_adapter *adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, params->vdev_id);
+	struct wireless_dev *wdev;
+	struct sk_buff *twt_vendor_event;
+	size_t data_len;
+	QDF_STATUS status;
+
+	hdd_enter();
+
+	if (hdd_validate_adapter(adapter))
+		return;
+
+	wdev = adapter->dev->ieee80211_ptr;
+
+	data_len = NLA_HDRLEN;
+	data_len += nla_total_size(sizeof(u8));
+
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+				adapter->wdev.wiphy, wdev,
+				data_len,
+				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+				GFP_KERNEL);
+	if (!twt_vendor_event) {
+		hdd_err("Notify skb alloc failed");
+		return;
+	}
+
+	hdd_debug("Notify vdev_id %d", params->vdev_id);
+
+	status = hdd_twt_notify_pack_nlmsg(twt_vendor_event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to pack nl notify event");
+		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
+		return;
+	}
+
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
+
+	hdd_exit();
+}
+
+/**
  * hdd_twt_configure - Process the TWT
  * operation in the received vendor command
  * @adapter: adapter pointer
@@ -2720,6 +2793,7 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 	twt_cb.twt_del_dialog_cb = hdd_twt_del_dialog_comp_cb;
 	twt_cb.twt_pause_dialog_cb = hdd_twt_pause_dialog_comp_cb;
 	twt_cb.twt_resume_dialog_cb = hdd_twt_resume_dialog_comp_cb;
+	twt_cb.twt_notify_cb = hdd_twt_notify_cb;
 	status = sme_register_twt_callbacks(hdd_ctx->mac_handle, &twt_cb);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Register twt enable complete failed");
