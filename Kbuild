@@ -253,7 +253,7 @@ ifeq ($(CONFIG_FEATURE_MONITOR_MODE_SUPPORT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 CONFIG_WLAN_FEATURE_DP_RX_THREADS := y
 CONFIG_WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT := y
 endif
@@ -930,6 +930,14 @@ QDF_OBJS +=     $(QDF_LINUX_OBJ_DIR)/qdf_lro.o
 endif
 
 $(call add-wlan-objs,qdf,$(QDF_OBJS))
+
+ifeq ($(CONFIG_LITHIUM), y)
+cppflags-y += -DCONFIG_LITHIUM
+endif
+
+ifeq ($(CONFIG_BERYLLIUM), y)
+cppflags-y += -DCONFIG_BERYLLIUM
+endif
 
 cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_DELAYED_WORK_TEST
@@ -1877,7 +1885,7 @@ ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 TXRX_OBJS += 	$(TXRX_DIR)/ol_txrx_event.o
 endif
 
-ifneq ($(CONFIG_LITHIUM), y)
+ifneq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 TXRX_OBJS += $(TXRX_DIR)/ol_txrx.o \
 		$(TXRX_DIR)/ol_cfg.o \
                 $(TXRX_DIR)/ol_rx.o \
@@ -1927,7 +1935,7 @@ endif
 ifeq ($(CONFIG_QCA_SUPPORT_TX_THROTTLE), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_throttle.o
 endif
-endif #LITHIUM
+endif #LITHIUM/BERYLLIUM
 
 $(call add-wlan-objs,txrx,$(TXRX_OBJS))
 
@@ -1935,7 +1943,7 @@ $(call add-wlan-objs,txrx,$(TXRX_OBJS))
 TXRX3.0_DIR :=     core/dp/txrx3.0
 TXRX3.0_INC :=     -I$(WLAN_ROOT)/$(TXRX3.0_DIR)
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 TXRX3.0_OBJS := $(TXRX3.0_DIR)/dp_txrx.o
 
 ifeq ($(CONFIG_WLAN_FEATURE_DP_RX_THREADS), y)
@@ -1955,7 +1963,7 @@ endif #LITHIUM
 
 $(call add-wlan-objs,txrx30,$(TXRX3.0_OBJS))
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
 	-I$(WLAN_COMMON_INC)/dp/wifi3.0 \
@@ -2006,7 +2014,7 @@ WCFG_DIR := wlan_cfg
 WCFG_INC := -I$(WLAN_COMMON_INC)/$(WCFG_DIR)
 WCFG_SRC := $(WLAN_COMMON_ROOT)/$(WCFG_DIR)
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 WCFG_OBJS := $(WCFG_SRC)/wlan_cfg.o
 endif
 
@@ -2043,7 +2051,7 @@ $(call add-wlan-objs,pktlog,$(PKTLOG_OBJS))
 HTT_DIR :=      core/dp/htt
 HTT_INC :=      -I$(WLAN_ROOT)/$(HTT_DIR)
 
-ifneq ($(CONFIG_LITHIUM), y)
+ifneq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 HTT_OBJS := $(HTT_DIR)/htt_tx.o \
             $(HTT_DIR)/htt.o \
             $(HTT_DIR)/htt_t2h.o \
@@ -2343,7 +2351,7 @@ HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
 		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_runtime_pm.o \
 		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
 
-ifneq ($(CONFIG_LITHIUM), y)
+ifneq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main_legacy.o
 endif
 
@@ -2377,6 +2385,12 @@ endif
 
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6750def.o
+endif
+
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
+else ifeq ($(CONFIG_BERYLLIUM), y)
+ifeq ($(CONFIG_CNSS_WCN7850), y)
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/wcn7850def.o
 endif
 
 HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
@@ -2457,8 +2471,8 @@ endif
 
 $(call add-wlan-objs,hif,$(HIF_OBJS))
 
-ifeq ($(CONFIG_LITHIUM), y)
 ############ HAL ############
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 HAL_DIR :=	hal
 HAL_INC :=	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/inc \
 		-I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0
@@ -2469,6 +2483,14 @@ HAL_OBJS :=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_srng.o \
 ifeq ($(CONFIG_RX_FISA), y)
 HAL_OBJS += $(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_rx_flow.o
 endif
+endif #### CONFIG LITHIUM/BERYLLIUM ####
+
+ifeq ($(CONFIG_LITHIUM), y)
+HAL_INC += 	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0/li
+
+HAL_OBJS +=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/li/hal_li_generic_api.o
+
+HAL_OBJS +=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/li/hal_li_reo.o
 
 ifeq ($(CONFIG_CNSS_QCA6290), y)
 HAL_INC += -I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0/qca6290
@@ -2487,6 +2509,22 @@ else
 endif
 
 endif #####CONFIG_LITHIUM####
+
+ifeq ($(CONFIG_BERYLLIUM), y)
+HAL_INC += 	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0/be
+
+HAL_OBJS +=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/be/hal_be_generic_api.o
+
+HAL_OBJS +=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/be/hal_be_reo.o \
+
+ifeq ($(CONFIG_CNSS_WCN7850), y)
+HAL_INC += -I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0/wcn7850
+HAL_OBJS += $(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/wcn7850/hal_7850.o
+else
+#error "Not Beryllium"
+endif
+
+endif #### CONFIG_BERYLLIUM ####
 
 $(call add-wlan-objs,hal,$(HAL_OBJS))
 
@@ -2611,6 +2649,14 @@ ifeq ($(CONFIG_CNSS_QCA6750), y)
 TARGET_INC +=	-I$(WLAN_FW_API)/hw/qca6750/v1
 endif
 
+ifeq ($(CONFIG_CNSS_WCN7850), y)
+ifeq ($(CONFIG_EMULATION_2_0), y)
+TARGET_INC +=	-I$(WLAN_FW_API)/hw/wcn7850/v1/E2.0/
+else
+TARGET_INC +=	-I$(WLAN_FW_API)/hw/wcn7850/v1/E1.5/
+endif
+endif
+
 LINUX_INC :=	-Iinclude
 
 INCS :=		$(HDD_INC) \
@@ -2657,7 +2703,7 @@ INCS +=		$(HIF_INC) \
 		$(BMI_INC) \
 		$(CMN_SYS_INC)
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 INCS += 	$(HAL_INC) \
 		$(DP_INC)
 endif
@@ -2821,6 +2867,7 @@ cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
 cppflags-$(CONFIG_WLAN_RESIDENT_DRIVER) += -DFEATURE_WLAN_RESIDENT_DRIVER
 cppflags-$(CONFIG_FEATURE_GPIO_CFG) += -DWLAN_FEATURE_GPIO_CFG
 cppflags-$(CONFIG_FEATURE_BUS_BANDWIDTH_MGR) += -DFEATURE_BUS_BANDWIDTH_MGR
+cppflags-$(CONFIG_DP_BE_WAR) += -DDP_BE_WAR
 
 ifeq ($(CONFIG_IPCIE_FW_SIM), y)
 cppflags-y += -DCONFIG_PLD_IPCIE_FW_SIM
@@ -2846,12 +2893,15 @@ cppflags-$(CONFIG_PLD_SDIO_CNSS2) += -DCONFIG_PLD_SDIO_CNSS2
 cppflags-$(CONFIG_WLAN_RECORD_RX_PADDR) += -DHIF_RECORD_RX_PADDR
 cppflags-$(CONFIG_FEATURE_WLAN_TIME_SYNC_FTM) += -DFEATURE_WLAN_TIME_SYNC_FTM
 
+cppflags-$(CONFIG_WLAN_FEATURE_LRO_CTX_IN_CB) += -DWLAN_FEATURE_LRO_CTX_IN_CB
+
 #For both legacy and lithium chip's monitor mode config
 ifeq ($(CONFIG_FEATURE_MONITOR_MODE_SUPPORT), y)
 cppflags-y += -DFEATURE_MONITOR_MODE_SUPPORT
 else
 cppflags-y += -DDISABLE_MON_CONFIG
 endif
+
 
 #Enable NL80211 test mode
 cppflags-$(CONFIG_NL80211_TESTMODE) += -DWLAN_NL80211_TESTMODE
@@ -2975,7 +3025,7 @@ endif
 
 #normally, TDLS negative behavior is not needed
 cppflags-$(CONFIG_QCOM_TDLS) += -DFEATURE_WLAN_TDLS
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 cppflags-$(CONFIG_QCOM_TDLS) += -DTDLS_WOW_ENABLED
 endif
 
@@ -3427,8 +3477,10 @@ cppflags-$(CONFIG_QCA6390_HEADERS_DEF) += -DQCA6390_HEADERS_DEF
 cppflags-$(CONFIG_QCA6750_HEADERS_DEF) += -DQCA6750_HEADERS_DEF
 cppflags-$(CONFIG_QCA_WIFI_QCA6390) += -DQCA_WIFI_QCA6390
 cppflags-$(CONFIG_QCA6490_HEADERS_DEF) += -DQCA6490_HEADERS_DEF
+cppflags-$(CONFIG_WCN7850_HEADERS_DEF) += -DWCN7850_HEADERS_DEF
 cppflags-$(CONFIG_QCA_WIFI_QCA6490) += -DQCA_WIFI_QCA6490
 cppflags-$(CONFIG_QCA_WIFI_QCA6750) += -DQCA_WIFI_QCA6750
+cppflags-$(CONFIG_QCA_WIFI_WCN7850) += -DQCA_WIFI_WCN7850
 cppflags-$(CONFIG_QCA_WIFI_QCA8074) += -DQCA_WIFI_QCA8074
 cppflags-$(CONFIG_SCALE_INCLUDES) += -DSCALE_INCLUDES
 cppflags-$(CONFIG_QCA_WIFI_QCA8074_VP) += -DQCA_WIFI_QCA8074_VP
@@ -3463,13 +3515,15 @@ ifeq ($(CONFIG_QCA6290_11AX), y)
 cppflags-y += -DQCA_WIFI_QCA6290_11AX -DQCA_WIFI_QCA6290_11AX_MU_UL
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 cppflags-$(CONFIG_WLAN_TX_FLOW_CONTROL_V2) += -DQCA_AC_BASED_FLOW_CONTROL
 cppflags-y += -DFEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
 cppflags-y += -DHAL_DISABLE_NON_BA_2K_JUMP_ERROR
 cppflags-y += -DENABLE_HAL_SOC_STATS
 cppflags-y += -DENABLE_HAL_REG_WR_HISTORY
+ifeq ($(CONFIG_LITHIUM), y)
 cppflags-y += -DDP_RX_DESC_COOKIE_INVALIDATE
+endif
 cppflags-y += -DMON_ENABLE_DROP_FOR_MAC
 cppflags-y += -DPCI_LINK_STATUS_SANITY
 cppflags-y += -DDP_MON_RSSI_IN_DBM
@@ -3497,15 +3551,17 @@ cppflags-$(CONFIG_WLAN_TRACE_HIDE_MAC_ADDRESS) += -DWLAN_TRACE_HIDE_MAC_ADDRESS
 cppflags-$(CONFIG_WLAN_FEATURE_11BE) += -DWLAN_FEATURE_11BE
 cppflags-$(CONFIG_WLAN_FEATURE_11BE_MLO) += -DWLAN_FEATURE_11BE_MLO
 
-cppflags-$(CONFIG_LITHIUM) += -DFIX_TXDMA_LIMITATION
-cppflags-$(CONFIG_LITHIUM) += -DFEATURE_AST
-cppflags-$(CONFIG_LITHIUM) += -DPEER_PROTECTED_ACCESS
-cppflags-$(CONFIG_LITHIUM) += -DSERIALIZE_QUEUE_SETUP
-cppflags-$(CONFIG_LITHIUM) += -DDP_RX_PKT_NO_PEER_DELIVER
-cppflags-$(CONFIG_LITHIUM) += -DDP_RX_DROP_RAW_FRM
-cppflags-$(CONFIG_LITHIUM) += -DFEATURE_ALIGN_STATS_FROM_DP
-cppflags-$(CONFIG_LITHIUM) += -DDP_RX_SPECIAL_FRAME_NEED
-cppflags-$(CONFIG_LITHIUM) += -DFEATURE_STATS_EXT_V2
+ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
+cppflags-y += -DFIX_TXDMA_LIMITATION
+cppflags-y += -DFEATURE_AST
+cppflags-y += -DPEER_PROTECTED_ACCESS
+cppflags-y += -DSERIALIZE_QUEUE_SETUP
+cppflags-y += -DDP_RX_PKT_NO_PEER_DELIVER
+cppflags-y += -DDP_RX_DROP_RAW_FRM
+cppflags-y += -DFEATURE_ALIGN_STATS_FROM_DP
+cppflags-y += -DDP_RX_SPECIAL_FRAME_NEED
+cppflags-y += -DFEATURE_STATS_EXT_V2
+endif
 cppflags-$(CONFIG_VERBOSE_DEBUG) += -DENABLE_VERBOSE_DEBUG
 cppflags-$(CONFIG_RX_DESC_DEBUG_CHECK) += -DRX_DESC_DEBUG_CHECK
 cppflags-$(CONFIG_REGISTER_OP_DEBUG) += -DHAL_REGISTER_WRITE_DEBUG
@@ -3670,6 +3726,8 @@ cppflags-$(CONFIG_WLAN_SUPPORT_TXRX_HL_BUNDLE) += -DWLAN_SUPPORT_TXRX_HL_BUNDLE
 cppflags-$(CONFIG_QCN7605_PCIE_SHADOW_REG_SUPPORT) += -DQCN7605_PCIE_SHADOW_REG_SUPPORT
 cppflags-$(CONFIG_QCN7605_PCIE_GOLBAL_RESET_SUPPORT) += -DQCN7605_PCIE_GOLBAL_RESET_SUPPORT
 cppflags-$(CONFIG_MARK_ICMP_REQ_TO_FW) += -DWLAN_DP_FEATURE_MARK_ICMP_REQ_TO_FW
+cppflags-$(CONFIG_EMULATION_2_0) += -DCONFIG_WCN7850_EMULATION_2_0
+cppflags-$(CONFIG_WORD_BASED_TLV) += -DCONFIG_WORD_BASED_TLV
 
 ifdef CONFIG_MAX_LOGS_PER_SEC
 ccflags-y += -DWLAN_MAX_LOGS_PER_SEC=$(CONFIG_MAX_LOGS_PER_SEC)

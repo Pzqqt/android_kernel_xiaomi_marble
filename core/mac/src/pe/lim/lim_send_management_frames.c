@@ -5333,8 +5333,7 @@ returnAfterError:
 	return nSirStatus;
 } /* End lim_send_sa_query_response_frame */
 
-#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
+#if defined(CONFIG_LITHIUM) || defined(CONFIG_BERYLLIUM)
 #ifdef WLAN_FEATURE_11AX
 #define IS_PE_SESSION_HE_MODE(_session) ((_session)->he_capable)
 #else
