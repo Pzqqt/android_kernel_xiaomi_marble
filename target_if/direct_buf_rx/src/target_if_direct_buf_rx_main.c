@@ -1744,6 +1744,7 @@ static void target_if_dbr_add_ring_debug_entry(
 		}
 		hal_get_sw_hptp(hal_soc, srng, &tp, &hp);
 		hal_srng_access_end(hal_soc, srng);
+		tp = qdf_le32_to_cpu(tp);
 		entry = &ring_debug->entries[ring_debug->ring_debug_idx];
 
 		entry->head_idx = hp;
@@ -2093,6 +2094,7 @@ QDF_STATUS target_if_direct_buf_rx_print_ring_stat(
 			}
 			srng = dbr_ring_cfg->srng;
 			hal_get_sw_hptp(hal_soc, srng, &tp, &hp);
+			tp = qdf_le32_to_cpu(tp);
 			direct_buf_rx_debug("|%11d|%14s|%10x|%10x|",
 					    mod_idx, g_dbr_module_name[mod_idx].
 					    module_name_str,
