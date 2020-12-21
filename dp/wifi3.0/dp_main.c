@@ -5259,6 +5259,14 @@ static QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 static void dp_rx_dump_fisa_table(struct dp_soc *soc)
 {
 }
+
+static void dp_suspend_fse_cache_flush(struct dp_soc *soc)
+{
+}
+
+static void dp_resume_fse_cache_flush(struct dp_soc *soc)
+{
+}
 #endif /* !WLAN_SUPPORT_RX_FISA */
 
 #ifndef WLAN_DP_FEATURE_SW_LATENCY_MGR
@@ -11721,6 +11729,8 @@ static QDF_STATUS dp_bus_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		dp_service_mon_rings(soc, DP_MON_REAP_BUDGET);
 	}
 
+	dp_suspend_fse_cache_flush(soc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -11743,6 +11753,8 @@ static QDF_STATUS dp_bus_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	    soc->reap_timer_init)
 		qdf_timer_mod(&soc->mon_reap_timer,
 			      DP_INTR_POLL_TIMER_MS);
+
+	dp_resume_fse_cache_flush(soc);
 
 	return QDF_STATUS_SUCCESS;
 }
