@@ -1439,7 +1439,7 @@ struct sde_hw_ctl *sde_hw_ctl_init(enum sde_ctl idx,
 	return c;
 
 blk_init_error:
-	kzfree(c);
+	kfree(c);
 
 	return ERR_PTR(rc);
 }

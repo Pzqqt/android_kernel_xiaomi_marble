@@ -716,7 +716,7 @@ struct sde_hw_mdp *sde_hw_mdptop_init(enum sde_mdp idx,
 	return mdp;
 
 blk_init_error:
-	kzfree(mdp);
+	kfree(mdp);
 
 	return ERR_PTR(rc);
 }

@@ -6286,7 +6286,6 @@ static void vblank_ctrl_worker(struct kthread_work *work)
 	struct vblank_work *cur_work = container_of(work,
 					struct vblank_work, work);
 	struct msm_drm_private *priv = cur_work->priv;
-	struct msm_kms *kms = priv->kms;
 
 	sde_crtc_vblank(priv->crtcs[cur_work->crtc_id], cur_work->enable);
 

@@ -175,7 +175,7 @@ int msm_dss_get_pmic_io_mem(struct platform_device *pdev,
 parse_fail:
 	msm_dss_clean_io_mem(&temp_head);
 end:
-	kzfree(res);
+	kfree(res);
 	return rc;
 }
 EXPORT_SYMBOL(msm_dss_get_pmic_io_mem);
@@ -260,7 +260,7 @@ void msm_dss_clean_io_mem(struct list_head *mem_list)
 
 	list_for_each_entry_safe(pos, tmp, mem_list, list) {
 		list_del(&pos->list);
-		kzfree(pos);
+		kfree(pos);
 	}
 }
 EXPORT_SYMBOL(msm_dss_clean_io_mem);
@@ -296,7 +296,7 @@ void msm_dss_clean_io_irq(struct list_head *irq_list)
 
 	list_for_each_entry_safe(pos, tmp, irq_list, list) {
 		list_del(&pos->list);
-		kzfree(pos);
+		kfree(pos);
 	}
 }
 EXPORT_SYMBOL(msm_dss_clean_io_irq);

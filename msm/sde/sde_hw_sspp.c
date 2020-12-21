@@ -1368,7 +1368,7 @@ struct sde_hw_pipe *sde_hw_sspp_init(enum sde_sspp idx,
 	return hw_pipe;
 
 blk_init_error:
-	kzfree(hw_pipe);
+	kfree(hw_pipe);
 
 	return ERR_PTR(rc);
 }

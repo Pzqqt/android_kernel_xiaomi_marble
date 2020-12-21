@@ -300,7 +300,7 @@ struct sde_hw_dsc *sde_hw_dsc_init(enum sde_dsc idx,
 	return c;
 
 blk_init_error:
-	kzfree(c);
+	kfree(c);
 
 	return ERR_PTR(rc);
 }

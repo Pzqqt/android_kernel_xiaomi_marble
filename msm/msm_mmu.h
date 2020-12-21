@@ -20,6 +20,7 @@
 
 #include <linux/iommu.h>
 #include <linux/dma-mapping.h>
+#include <linux/dma-map-ops.h>
 
 struct msm_mmu;
 

@@ -82,7 +82,7 @@ struct sde_hw_qdss *sde_hw_qdss_init(enum sde_qdss idx,
 	rc = sde_hw_blk_init(&c->base, SDE_HW_BLK_QDSS, idx, &sde_hw_ops);
 	if (rc) {
 		SDE_ERROR("failed to init hw blk %d\n", rc);
-		kzfree(c);
+		kfree(c);
 		return ERR_PTR(rc);
 	}
 

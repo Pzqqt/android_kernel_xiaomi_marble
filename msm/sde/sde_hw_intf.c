@@ -864,7 +864,7 @@ struct sde_hw_intf *sde_hw_intf_init(enum sde_intf idx,
 	return c;
 
 blk_init_error:
-	kzfree(c);
+	kfree(c);
 
 	return ERR_PTR(rc);
 }

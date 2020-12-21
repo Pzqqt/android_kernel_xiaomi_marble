@@ -453,7 +453,7 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 	return c;
 
 blk_init_error:
-	kzfree(c);
+	kfree(c);
 
 	return ERR_PTR(rc);
 }

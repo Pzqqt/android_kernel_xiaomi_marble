@@ -2176,7 +2176,7 @@ int dsi_panel_get_io_resources(struct dsi_panel *panel,
 parse_fail:
 	list_for_each_entry_safe(pos, tmp, &temp_head, list) {
 		list_del(&pos->list);
-		kzfree(pos);
+		kfree(pos);
 	}
 end:
 	return rc;
@@ -3563,15 +3563,11 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 			NULL, DRM_MODE_CONNECTOR_DSI);
 	panel->mipi_device.dev.of_node = of_node;
 
-	rc = drm_panel_add(&panel->drm_panel);
-	if (rc)
-		goto error_vreg_put;
+	drm_panel_add(&panel->drm_panel);
 
 	mutex_init(&panel->panel_lock);
 
 	return panel;
-error_vreg_put:
-	(void)dsi_panel_vreg_put(panel);
 error:
 	kfree(panel);
 	return ERR_PTR(rc);

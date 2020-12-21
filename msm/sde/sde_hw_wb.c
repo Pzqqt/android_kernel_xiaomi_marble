@@ -365,7 +365,7 @@ struct sde_hw_wb *sde_hw_wb_init(enum sde_wb idx,
 	return c;
 
 blk_init_error:
-	kzfree(c);
+	kfree(c);
 
 	return ERR_PTR(rc);
 }

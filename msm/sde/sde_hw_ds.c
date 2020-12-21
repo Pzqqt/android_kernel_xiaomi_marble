@@ -131,7 +131,7 @@ struct sde_hw_ds *sde_hw_ds_init(enum sde_ds idx,
 	return hw_ds;
 
 blk_init_error:
-	kzfree(hw_ds);
+	kfree(hw_ds);
 
 	return ERR_PTR(rc);
 
