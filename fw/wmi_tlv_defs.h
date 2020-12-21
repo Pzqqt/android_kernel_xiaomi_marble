@@ -1132,6 +1132,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_tid_latency_info,
     WMITLV_TAG_STRUC_wmi_ctrl_path_twt_stats_struct,
     WMITLV_TAG_STRUC_wmi_ctrl_path_calibration_stats_struct,
+    WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1848,6 +1849,7 @@ typedef enum {
     OP(WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID) \
     OP(WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID) \
     OP(WMI_REG_CHAN_LIST_CC_EXT_EVENTID) \
+    OP(WMI_TWT_NOTIFY_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6022,6 +6024,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TWT_BTWT_INVITE_STA_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_btwt_remove_sta_complete_event_fixed_param, wmi_twt_btwt_remove_sta_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID);
+
+/* TWT Notify Event - for host to start new TWT setup */
+#define WMITLV_TABLE_WMI_TWT_NOTIFY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param, wmi_twt_notify_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_NOTIFY_EVENTID);
 
 /* Event to send roam scan stats */
 #define WMITLV_TABLE_WMI_ROAM_SCAN_STATS_EVENTID(id,op,buf,len) \

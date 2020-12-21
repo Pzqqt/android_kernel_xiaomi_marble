@@ -2033,6 +2033,7 @@ typedef enum {
     WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID,
     WMI_TWT_SESSION_STATS_EVENTID,
     WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID,
+    WMI_TWT_NOTIFY_EVENTID,
 
     /** Events in Prototyping phase */
     WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PROTOTYPE),
@@ -28795,6 +28796,11 @@ typedef struct {
     A_UINT32 reserved0;     /* unused right now */
 } wmi_twt_disable_complete_event_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param */
+    A_UINT32 vdev_id;      /* vdev id of TWT notify event */
+} wmi_twt_notify_event_fixed_param;
+
 /* from IEEE 802.11ah section 9.4.2.200 */
 typedef enum _WMI_TWT_COMMAND_T {
     WMI_TWT_COMMAND_REQUEST_TWT    = 0,
@@ -28950,6 +28956,8 @@ typedef enum _WMI_DEL_TWT_STATUS_T {
     WMI_DEL_TWT_STATUS_NO_RESOURCE,         /* FW resource exhausted */
     WMI_DEL_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
     WMI_DEL_TWT_STATUS_UNKNOWN_ERROR,       /* deleting TWT dialog failed with an unknown reason */
+    WMI_DEL_TWT_STATUS_PEER_INIT_TEARDOWN,  /* Peer Initiated Teardown */
+    WMI_DEL_TWT_STATUS_ROAMING,             /* Reason Roaming Start*/
 } WMI_DEL_TWT_STATUS_T;
 
 typedef struct {
