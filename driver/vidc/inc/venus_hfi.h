@@ -67,7 +67,7 @@ int venus_hfi_core_init(struct msm_vidc_core *core);
 int venus_hfi_core_release(struct msm_vidc_core *core);
 int venus_hfi_suspend(struct msm_vidc_core *core);
 int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq);
-int venus_hfi_scale_buses(struct msm_vidc_inst* inst, u64 freq);
+int venus_hfi_scale_buses(struct msm_vidc_inst* inst, u64 bw_ddr, u64 bw_llcc);
 
 void venus_hfi_work_handler(struct work_struct *work);
 void venus_hfi_pm_work_handler(struct work_struct *work);

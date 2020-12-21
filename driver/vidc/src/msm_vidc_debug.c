@@ -15,3 +15,6 @@ EXPORT_SYMBOL(msm_vidc_lossless_encode);
 
 bool msm_vidc_syscache_disable = !true;
 EXPORT_SYMBOL(msm_vidc_syscache_disable);
+
+int msm_vidc_clock_voting = !1;
+

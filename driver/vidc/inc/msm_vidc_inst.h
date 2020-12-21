@@ -15,8 +15,9 @@ struct msm_vidc_inst;
 	((c)->session_ops->op(__VA_ARGS__)) : 0)
 
 struct msm_vidc_session_ops {
-	u64 (*calc_freq)(struct msm_vidc_inst *inst);
-	u64 (*calc_bw)(struct msm_vidc_inst *inst);
+	u64 (*calc_freq)(struct msm_vidc_inst *inst, u32 data_size);
+	int (*calc_bw)(struct msm_vidc_inst *inst,
+		struct vidc_bus_vote_data* vote_data);
 	int (*decide_work_route)(struct msm_vidc_inst *inst);
 	int (*decide_work_mode)(struct msm_vidc_inst *inst);
 	int (*decide_core_and_power_mode)(struct msm_vidc_inst *inst);
@@ -105,6 +106,8 @@ struct msm_vidc_inst {
 	enum msm_vidc_pipe_type            pipe;
 	enum msm_vidc_quality_mode         quality_mode;
 	struct msm_vidc_power              power;
+	enum msm_vidc_modes                flags;
+	struct vidc_bus_vote_data          bus_data;
 	struct msm_vidc_buffers_info       buffers;
 	struct msm_vidc_mappings_info      mappings;
 	struct msm_vidc_allocations_info   allocations;
@@ -126,6 +129,8 @@ struct msm_vidc_inst {
 	struct msm_vidc_debug              debug;
 	struct msm_vidc_inst_capability   *capabilities;
 	struct completion                  completions[MAX_SIGNAL];
+	bool                               active;
+	u64                                last_qbuf_time_ns;
 };
 
 #endif // _MSM_VIDC_INST_H_

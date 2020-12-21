@@ -80,6 +80,7 @@
 #define BUFFER_ALIGNMENT_SIZE(x) x
 #define NUM_MBS_720P (((1280 + 15) >> 4) * ((720 + 15) >> 4))
 #define NUM_MBS_4k (((4096 + 15) >> 4) * ((2304 + 15) >> 4))
+#define MB_SIZE_IN_PIXEL (16 * 16)
 
 #define DB_H264_DISABLE_SLICE_BOUNDARY \
 		V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED_AT_SLICE_BOUNDARY
@@ -554,6 +555,7 @@ struct msm_vidc_crop {
 struct msm_vidc_properties {
 	u32                    frame_rate;
 	u32                    operating_rate;
+	u32                    bitrate;
 };
 
 struct msm_vidc_subscription_params {
@@ -581,7 +583,48 @@ struct msm_vidc_decode_batch {
 	struct delayed_work    work;
 };
 
+enum msm_vidc_modes {
+	VIDC_SECURE            = BIT(0),
+	VIDC_TURBO             = BIT(1),
+	VIDC_THUMBNAIL         = BIT(2),
+	VIDC_LOW_POWER         = BIT(3),
+};
+
+enum load_calc_quirks {
+	LOAD_POWER = 0,
+	LOAD_ADMISSION_CONTROL = 1,
+};
+
+enum msm_vidc_power_mode {
+	VIDC_POWER_NORMAL = 0,
+	VIDC_POWER_LOW,
+	VIDC_POWER_TURBO,
+};
+
+struct vidc_bus_vote_data {
+	enum msm_vidc_domain_type domain;
+	enum msm_vidc_codec_type codec;
+	enum msm_vidc_power_mode power_mode;
+	u32 color_formats[2];
+	int num_formats; /* 1 = DPB-OPB unified; 2 = split */
+	int input_height, input_width, bitrate;
+	int output_height, output_width;
+	int rotation;
+	int compression_ratio;
+	int complexity_factor;
+	int input_cr;
+	u32 lcu_size;
+	u32 fps;
+	u32 work_mode;
+	bool use_sys_cache;
+	bool b_frames_enabled;
+	u64 calc_bw_ddr;
+	u64 calc_bw_llcc;
+	u32 num_vpp_pipes;
+};
+
 struct msm_vidc_power {
+	enum msm_vidc_power_mode power_mode;
 	u32                    buffer_counter;
 	u32                    min_threshold;
 	u32                    nom_threshold;

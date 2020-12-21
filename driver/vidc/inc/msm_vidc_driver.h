@@ -12,6 +12,8 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
 
+#define MSM_VIDC_SESSION_INACTIVE_THRESHOLD_MS 1000
+
 static inline is_decode_session(struct msm_vidc_inst *inst)
 {
 	return inst->domain == MSM_VIDC_DECODER;
@@ -59,14 +61,55 @@ static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 		buffer_type == MSM_VIDC_BUF_VPSS;
 }
 
+static inline bool is_linear_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return colorformat == MSM_VIDC_FMT_NV12 ||
+		colorformat == MSM_VIDC_FMT_NV21 ||
+		colorformat == MSM_VIDC_FMT_NV12_P010;
+}
+
+static inline bool is_10bit_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return colorformat == MSM_VIDC_FMT_NV12_P010 ||
+		colorformat == MSM_VIDC_FMT_NV12_TP10_UBWC;
+}
+
 static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
 {
 	return false; // TODO: inst->stream_output_mode == HAL_VIDEO_DECODER_SECONDARY;
 }
 
+static inline bool is_turbo_session(struct msm_vidc_inst *inst)
+{
+	return !!(inst->flags & VIDC_TURBO);
+}
+
 static inline bool is_thumbnail_session(struct msm_vidc_inst *inst)
 {
+	return !!(inst->flags & VIDC_THUMBNAIL);
+}
+
+static inline bool is_low_power_session(struct msm_vidc_inst *inst)
+{
+	return !!(inst->flags & VIDC_LOW_POWER);
+}
+
+static inline bool is_realtime_session(struct msm_vidc_inst *inst)
+{
 	return false; // TODO: fix it
+}
+
+static inline bool is_active_session(u64 prev, u64 curr)
+{
+	u64 ts_delta;
+
+	if (!prev || !curr)
+		return true;
+
+	ts_delta = (prev < curr) ? curr - prev : prev - curr;
+
+	return ((ts_delta / NSEC_PER_MSEC) <=
+			MSM_VIDC_SESSION_INACTIVE_THRESHOLD_MS);
 }
 
 void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
@@ -99,6 +142,8 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst);
 int msm_vidc_add_session(struct msm_vidc_inst *inst);
 int msm_vidc_session_open(struct msm_vidc_inst *inst);
 int msm_vidc_session_set_codec(struct msm_vidc_inst *inst);
+int msm_vidc_session_start(struct msm_vidc_inst* inst,
+		enum msm_vidc_port_type port);
 int msm_vidc_session_stop(struct msm_vidc_inst *inst,
 		enum msm_vidc_port_type port);
 int msm_vidc_session_close(struct msm_vidc_inst *inst);
@@ -140,6 +185,9 @@ struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
 		u32 session_id);
 void put_inst(struct msm_vidc_inst *inst);
+int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst* inst);
+int msm_vidc_get_fps(struct msm_vidc_inst* inst);
+int msm_vidc_num_queued_bufs(struct msm_vidc_inst* inst, u32 type);
 void core_lock(struct msm_vidc_core *core, const char *function);
 void core_unlock(struct msm_vidc_core *core, const char *function);
 void inst_lock(struct msm_vidc_inst *inst, const char *function);

@@ -14,6 +14,7 @@
 #include "msm_vidc_v4l2.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_control.h"
+#include "msm_vidc_power.h"
 
 #define MSM_VIDC_DRV_NAME "msm_vidc_driver"
 /* kernel/msm-4.19 */
@@ -801,6 +802,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->firmware.list);
 	inst->domain = session_type;
 	inst->state = MSM_VIDC_OPEN;
+	inst->active = true;
 	inst->request = false;
 	inst->ipsc_properties_set = false;
 	inst->opsc_properties_set = false;
@@ -828,8 +830,8 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	if (rc)
 		goto error;
 
-	//msm_power_setup(inst);
-	// send cmd to firmware here
+	msm_vidc_scale_power(inst, true);
+
 	rc = msm_vidc_session_open(inst);
 	if (rc)
 		goto error;
