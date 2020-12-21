@@ -4703,6 +4703,7 @@ typedef enum {
 	wmi_pdev_param_sr_trigger_margin,
 	wmi_pdev_param_pream_punct_bw,
 	wmi_pdev_param_enable_mbssid_ctrl_frame,
+	wmi_pdev_param_set_mesh_params,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
