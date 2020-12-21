@@ -2521,6 +2521,8 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
 	}
 
+	ppdu_user_desc->is_seq_num_valid =
+	HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_GET(*tag_buf);
 	tag_buf++;
 
 	ppdu_user_desc->qos_ctrl =
