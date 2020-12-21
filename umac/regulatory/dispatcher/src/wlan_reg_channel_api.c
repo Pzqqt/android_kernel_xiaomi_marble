@@ -132,4 +132,20 @@ void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 		*flags |= WLAN_CHAN_PSC;
 }
 
+void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev,
+			       qdf_freq_t freq)
+{
+	reg_set_chan_blocked(pdev, freq);
+}
+
+bool wlan_reg_is_chan_blocked(struct wlan_objmgr_pdev *pdev,
+			      qdf_freq_t freq)
+{
+	return reg_is_chan_blocked(pdev, freq);
+}
+
+void wlan_reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev)
+{
+	 reg_clear_allchan_blocked(pdev);
+}
 #endif /* CONFIG_HOST_FIND_CHAN */
