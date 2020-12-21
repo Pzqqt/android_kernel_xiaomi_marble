@@ -112,7 +112,6 @@ static void dp_fisa_fse_cache_flush_timer(void *arg)
 	dp_info("FSE cache flush for %d flows",
 		fse_cache_flush_rec->flows_added);
 
-	qdf_atomic_set(&fisa_hdl->fse_cache_flush_posted, 0);
 	status =
 	 dp_rx_flow_send_htt_operation_cmd(soc->pdev_list[0],
 					   DP_HTT_FST_CACHE_INVALIDATE_FULL,
@@ -123,6 +122,8 @@ static void dp_fisa_fse_cache_flush_timer(void *arg)
 		 * Not big impact cache entry gets updated later
 		 */
 	}
+
+	qdf_atomic_set(&fisa_hdl->fse_cache_flush_posted, 0);
 }
 
 /**
@@ -266,6 +267,7 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 
 	qdf_atomic_init(&fst->fse_cache_flush_posted);
 
+	fst->fse_cache_flush_allow = true;
 	fst->soc_hdl = soc;
 	soc->rx_fst = fst;
 	soc->fisa_enable = true;

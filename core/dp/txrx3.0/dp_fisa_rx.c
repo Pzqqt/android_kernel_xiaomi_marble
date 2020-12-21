@@ -510,6 +510,7 @@ dp_rx_fisa_add_ft_entry(struct dp_rx_fst *fisa_hdl,
 	 * reflect the flow update
 	 */
 	if (is_fst_updated &&
+	    fisa_hdl->fse_cache_flush_allow &&
 	    (qdf_atomic_inc_return(&fisa_hdl->fse_cache_flush_posted) == 1)) {
 		/* return 1 after increment implies FSE cache flush message
 		 * already posted. so start restart the timer
@@ -1913,4 +1914,31 @@ void dp_set_fisa_disallowed_for_vdev(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 
 	vdev->fisa_disallowed[rx_ctx_id] = val;
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_RX);
+}
+
+void dp_suspend_fse_cache_flush(struct dp_soc *soc)
+{
+	struct dp_rx_fst *dp_fst;
+
+	dp_fst = soc->rx_fst;
+	if (dp_fst) {
+		if (qdf_atomic_read(&dp_fst->fse_cache_flush_posted))
+			qdf_timer_sync_cancel(&dp_fst->fse_cache_flush_timer);
+		dp_fst->fse_cache_flush_allow = false;
+	}
+
+	dp_info("fse cache flush suspended");
+}
+
+void dp_resume_fse_cache_flush(struct dp_soc *soc)
+{
+	struct dp_rx_fst *dp_fst;
+
+	dp_fst = soc->rx_fst;
+	if (dp_fst) {
+		qdf_atomic_set(&dp_fst->fse_cache_flush_posted, 0);
+		dp_fst->fse_cache_flush_allow = true;
+	}
+
+	dp_info("fse cache flush resumed");
 }

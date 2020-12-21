@@ -125,6 +125,22 @@ void dp_set_fisa_disallowed_for_vdev(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
  * Return: None
  */
 void dp_fisa_rx_fst_update_work(void *arg);
+
+/**
+ * dp_suspend_fse_cache_flush() - Suspend FSE cache flush
+ * @soc: core txrx main context
+ *
+ * Return: None
+ */
+void dp_suspend_fse_cache_flush(struct dp_soc *soc);
+
+/**
+ * dp_resume_fse_cache_flush() - Resume FSE cache flush
+ * @soc: core txrx main context
+ *
+ * Return: None
+ */
+void dp_resume_fse_cache_flush(struct dp_soc *soc);
 #else
 static QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 {
