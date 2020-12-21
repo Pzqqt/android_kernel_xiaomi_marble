@@ -1202,6 +1202,27 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	return dp_srng_find_ring_in_mask(ring_num, grp_mask);
 }
 
+/**
+ * dp_is_msi_group_number_invalid() - check msi_group_number valid or not
+ * @msi_group_number: MSI group number.
+ * @msi_data_count: MSI data count.
+ *
+ * Return: true if msi_group_number is valid.
+ */
+#ifdef WLAN_ONE_MSI_VECTOR
+static bool dp_is_msi_group_number_invalid(int msi_group_number,
+					   int msi_data_count)
+{
+	return false;
+}
+#else
+static bool dp_is_msi_group_number_invalid(int msi_group_number,
+					   int msi_data_count)
+{
+	return msi_group_number > msi_data_count;
+}
+#endif
+
 static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 			      *ring_params, int ring_type, int ring_num)
 {
@@ -1227,7 +1248,7 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 		return;
 	}
 
-	if (msi_group_number > msi_data_count) {
+	if (dp_is_msi_group_number_invalid(msi_group_number, msi_data_count)) {
 		dp_init_warn("%pK: 2 msi_groups will share an msi; msi_group_num %d",
 			     soc, msi_group_number);
 
