@@ -2279,67 +2279,76 @@ sir_convert_probe_req_frame2_struct(struct mac_context *mac,
 				    uint32_t nFrame, tpSirProbeReq pProbeReq)
 {
 	uint32_t status;
-	tDot11fProbeRequest pr;
+	tDot11fProbeRequest *pr;
+
+	pr = qdf_mem_malloc(sizeof(*pr));
+	if (!pr) {
+		pe_err("malloc failed for probe request");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Ok, zero-init our [out] parameter, */
 	qdf_mem_zero((uint8_t *) pProbeReq, sizeof(tSirProbeReq));
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_probe_request(mac, pFrame, nFrame, &pr, false);
+	status = dot11f_unpack_probe_request(mac, pFrame, nFrame, pr, false);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to parse a Probe Request (0x%08x, %d bytes):",
 			status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				   pFrame, nFrame);
+		qdf_mem_free(pr);
 		return QDF_STATUS_E_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		pe_debug("There were warnings while unpacking a Probe Request (0x%08x, %d bytes):",
 			status, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fProbeRequestto' a 'tSirProbeReq'... */
-	if (!pr.SSID.present) {
+	if (!pr->SSID.present) {
 		pe_debug("Mandatory IE SSID not present!");
 	} else {
 		pProbeReq->ssidPresent = 1;
-		convert_ssid(mac, &pProbeReq->ssId, &pr.SSID);
+		convert_ssid(mac, &pProbeReq->ssId, &pr->SSID);
 	}
 
-	if (!pr.SuppRates.present) {
+	if (!pr->SuppRates.present) {
 		pe_debug_rl("Mandatory IE Supported Rates not present!");
+		qdf_mem_free(pr);
 		return QDF_STATUS_E_FAILURE;
 	} else {
 		pProbeReq->suppRatesPresent = 1;
 		convert_supp_rates(mac, &pProbeReq->supportedRates,
-				   &pr.SuppRates);
+				   &pr->SuppRates);
 	}
 
-	if (pr.ExtSuppRates.present) {
+	if (pr->ExtSuppRates.present) {
 		pProbeReq->extendedRatesPresent = 1;
 		convert_ext_supp_rates(mac, &pProbeReq->extendedRates,
-				       &pr.ExtSuppRates);
+				       &pr->ExtSuppRates);
 	}
 
-	if (pr.HTCaps.present) {
-		qdf_mem_copy(&pProbeReq->HTCaps, &pr.HTCaps,
+	if (pr->HTCaps.present)
+		qdf_mem_copy(&pProbeReq->HTCaps, &pr->HTCaps,
 			     sizeof(tDot11fIEHTCaps));
-	}
 
-	if (pr.WscProbeReq.present) {
+	if (pr->WscProbeReq.present) {
 		pProbeReq->wscIePresent = 1;
-		memcpy(&pProbeReq->probeReqWscIeInfo, &pr.WscProbeReq,
+		memcpy(&pProbeReq->probeReqWscIeInfo, &pr->WscProbeReq,
 		       sizeof(tDot11fIEWscProbeReq));
 	}
-	if (pr.VHTCaps.present) {
-		qdf_mem_copy(&pProbeReq->VHTCaps, &pr.VHTCaps,
+	if (pr->VHTCaps.present)
+		qdf_mem_copy(&pProbeReq->VHTCaps, &pr->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
-	}
-	if (pr.P2PProbeReq.present) {
+
+	if (pr->P2PProbeReq.present)
 		pProbeReq->p2pIePresent = 1;
-	}
-	if (pr.he_cap.present) {
-		qdf_mem_copy(&pProbeReq->he_cap, &pr.he_cap,
+
+	if (pr->he_cap.present)
+		qdf_mem_copy(&pProbeReq->he_cap, &pr->he_cap,
 			     sizeof(tDot11fIEhe_cap));
-	}
+
+	qdf_mem_free(pr);
+
 	return QDF_STATUS_SUCCESS;
 } /* End sir_convert_probe_req_frame2_struct. */
 
