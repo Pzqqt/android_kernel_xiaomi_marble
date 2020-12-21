@@ -21,6 +21,7 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_ap_api.h"
 #include <wlan_utility.h>
+#include "wmi_unified_rtt.h"
 
 /**
  * send_peer_add_wds_entry_cmd_tlv() - send peer add command to fw
@@ -2594,6 +2595,65 @@ set_radio_tx_mode_select_cmd_tlv(wmi_unified_t wmi,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS send_lcr_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct wmi_wifi_pos_lcr_info *lcr_info)
+{
+	struct wmi_rtt_oem_req_head *req_head;
+	struct wmi_rtt_oem_lcr_cfg_head *lcr_config;
+	uint8_t req_head_len = sizeof(struct wmi_rtt_oem_req_head);
+	uint32_t lcr_cfg_head_len = sizeof(struct wmi_rtt_oem_lcr_cfg_head);
+	uint8_t *buf;
+	uint32_t buf_len;
+	uint8_t *civic_info;
+	uint8_t lcr_info_len;
+
+	buf_len = req_head_len + lcr_cfg_head_len;
+
+	buf = qdf_mem_malloc(buf_len * sizeof(uint8_t));
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_zero(buf, buf_len);
+
+	/* Add the wmi_rtt_oem_req_head TLV */
+	req_head = (struct wmi_rtt_oem_req_head *)buf;
+	WMIRTT_TLV_SET_HDR(&req_head->tlv_header,
+			   WMIRTT_TLV_TAG_STRUC_wmi_rtt_oem_req_head,
+			   req_head_len);
+
+	req_head->sub_type = RTT_MSG_SUBTYPE_CONFIGURE_LCR;
+	req_head->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							wmi_handle,
+							lcr_info->pdev_id);
+	WMI_RTT_REQ_ID_SET((req_head->req_id), lcr_info->req_id);
+
+	lcr_config = (struct wmi_rtt_oem_lcr_cfg_head *)(buf + req_head_len);
+	WMIRTT_TLV_SET_HDR(&lcr_config->tlv_header,
+			   WMIRTT_TLV_TAG_STRUC_wmi_rtt_oem_lcr_cfg_head,
+			   lcr_cfg_head_len);
+
+	/* The following subtraction and addition of the value 2 to length is
+	 * being done because Country code which is 2 bytes comes separately
+	 * from the actual Civic Info string.
+	 */
+	lcr_info_len = (lcr_info->civic_len > (CIVIC_INFO_LEN - 2)) ?
+				   (CIVIC_INFO_LEN - 2) : lcr_info->civic_len;
+
+	WMI_RTT_LOC_CIVIC_LENGTH_SET(lcr_config->loc_civic_params,
+				     (lcr_info_len + 2));
+
+	civic_info = (uint8_t *)lcr_config->civic_info;
+	civic_info[0] = lcr_info->country_code[0];
+	civic_info[1] = lcr_info->country_code[1];
+	qdf_mem_copy(&civic_info[2], lcr_info->civic_info, lcr_info->civic_len);
+
+	if (wmi_handle->ops->send_start_oem_data_cmd)
+		return wmi_handle->ops->send_start_oem_data_cmd(wmi_handle,
+								buf_len, buf);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2665,4 +2725,5 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 				extract_multi_vdev_restart_resp_event_tlv;
 	ops->multisoc_tbtt_sync_cmd = send_multisoc_tbtt_sync_cmd_tlv;
 	ops->set_radio_tx_mode_select_cmd = set_radio_tx_mode_select_cmd_tlv;
+	ops->send_lcr_cmd = send_lcr_cmd_tlv;
 }

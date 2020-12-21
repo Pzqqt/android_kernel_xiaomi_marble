@@ -617,3 +617,11 @@ QDF_STATUS wmi_unified_set_radio_tx_mode_select_cmd_send(
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_send_lcr_cmd(wmi_unified_t wmi_handle,
+				    struct wmi_wifi_pos_lcr_info *lcr_info)
+{
+	if (wmi_handle->ops->send_lcr_cmd)
+		return wmi_handle->ops->send_lcr_cmd(wmi_handle, lcr_info);
+
+	return QDF_STATUS_E_FAILURE;
+}

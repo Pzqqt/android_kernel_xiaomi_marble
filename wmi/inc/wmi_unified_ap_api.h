@@ -24,6 +24,7 @@
 #define _WMI_UNIFIED_AP_API_H_
 
 #include "wmi_unified_param.h"
+#include <wmi_unified_ap_params.h>
 
 /**
  *  wmi_unified_beacon_send_cmd() - WMI beacon send function
@@ -770,4 +771,13 @@ QDF_STATUS wmi_unified_set_radio_tx_mode_select_cmd_send(
 		wmi_unified_t wmi_handle,
 		struct wmi_pdev_enable_tx_mode_selection *tx_mode_select_param);
 
+/**
+ * wmi_unified_send_lcr_cmd() - Send LCR command to FW
+ * @wmi_handle: WMI handle
+ * @lcr_info: Pointer to LCR structure
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS wmi_unified_send_lcr_cmd(wmi_unified_t wmi_handle,
+				    struct wmi_wifi_pos_lcr_info *lcr_info);
 #endif /* _WMI_UNIFIED_AP_API_H_ */
