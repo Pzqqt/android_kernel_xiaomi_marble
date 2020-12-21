@@ -3150,65 +3150,68 @@ uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac_ctx,
 
 static
 QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
-				      struct sme_qos_wmmtspecinfo *pTspec_Info,
-				      uint8_t *pRICBuffer, uint32_t *pRICLength,
-				      uint8_t *pRICIdentifier)
+				      struct sme_qos_wmmtspecinfo *tspec_info,
+				      uint8_t *ric_buffer, uint32_t *ric_length,
+				      uint8_t *ric_identifier)
 {
-	tDot11fIERICDataDesc ricIE;
-	uint32_t nStatus;
+	tDot11fIERICDataDesc *ric_ie;
+	uint32_t status;
 
-	if (!pRICBuffer || !pRICIdentifier || pRICLength ==
+	if (!ric_buffer || !ric_identifier || ric_length ==
 								NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("RIC data is NULL, %pK, %pK, %pK"),
-			pRICBuffer, pRICIdentifier, pRICLength);
+			ric_buffer, ric_identifier, ric_length);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&ricIE, sizeof(tDot11fIERICDataDesc));
+	ric_ie = qdf_mem_malloc(sizeof(*ric_ie));
+	if (!ric_ie) {
+		sme_err("malloc failed for ric IE");
+		return QDF_STATUS_E_NOMEM;
+	}
 
-	ricIE.present = 1;
-	ricIE.RICData.present = 1;
-	ricIE.RICData.resourceDescCount = 1;
-	ricIE.RICData.statusCode = 0;
-	ricIE.RICData.Identifier = sme_qos_assign_dialog_token();
+	ric_ie->present = 1;
+	ric_ie->RICData.present = 1;
+	ric_ie->RICData.resourceDescCount = 1;
+	ric_ie->RICData.statusCode = 0;
+	ric_ie->RICData.Identifier = sme_qos_assign_dialog_token();
 #ifndef USE_80211_WMMTSPEC_FOR_RIC
-	ricIE.TSPEC.present = 1;
-	ricIE.TSPEC.delay_bound = pTspec_Info->delay_bound;
-	ricIE.TSPEC.inactivity_int = pTspec_Info->inactivity_interval;
-	ricIE.TSPEC.burst_size = pTspec_Info->max_burst_size;
-	ricIE.TSPEC.max_msdu_size = pTspec_Info->maximum_msdu_size;
-	ricIE.TSPEC.max_service_int = pTspec_Info->max_service_interval;
-	ricIE.TSPEC.mean_data_rate = pTspec_Info->mean_data_rate;
-	ricIE.TSPEC.medium_time = 0;
-	ricIE.TSPEC.min_data_rate = pTspec_Info->min_data_rate;
-	ricIE.TSPEC.min_phy_rate = pTspec_Info->min_phy_rate;
-	ricIE.TSPEC.min_service_int = pTspec_Info->min_service_interval;
-	ricIE.TSPEC.size = pTspec_Info->nominal_msdu_size;
-	ricIE.TSPEC.peak_data_rate = pTspec_Info->peak_data_rate;
-	ricIE.TSPEC.surplus_bw_allowance = pTspec_Info->surplus_bw_allowance;
-	ricIE.TSPEC.suspension_int = pTspec_Info->suspension_interval;
-	ricIE.TSPEC.service_start_time = pTspec_Info->svc_start_time;
-	ricIE.TSPEC.direction = pTspec_Info->ts_info.direction;
+	ric_ie->TSPEC.present = 1;
+	ric_ie->TSPEC.delay_bound = tspec_info->delay_bound;
+	ric_ie->TSPEC.inactivity_int = tspec_info->inactivity_interval;
+	ric_ie->TSPEC.burst_size = tspec_info->max_burst_size;
+	ric_ie->TSPEC.max_msdu_size = tspec_info->maximum_msdu_size;
+	ric_ie->TSPEC.max_service_int = tspec_info->max_service_interval;
+	ric_ie->TSPEC.mean_data_rate = tspec_info->mean_data_rate;
+	ric_ie->TSPEC.medium_time = 0;
+	ric_ie->TSPEC.min_data_rate = tspec_info->min_data_rate;
+	ric_ie->TSPEC.min_phy_rate = tspec_info->min_phy_rate;
+	ric_ie->TSPEC.min_service_int = tspec_info->min_service_interval;
+	ric_ie->TSPEC.size = tspec_info->nominal_msdu_size;
+	ric_ie->TSPEC.peak_data_rate = tspec_info->peak_data_rate;
+	ric_ie->TSPEC.surplus_bw_allowance = tspec_info->surplus_bw_allowance;
+	ric_ie->TSPEC.suspension_int = tspec_info->suspension_interval;
+	ric_ie->TSPEC.service_start_time = tspec_info->svc_start_time;
+	ric_ie->TSPEC.direction = tspec_info->ts_info.direction;
 	/* Make sure UAPSD is allowed */
-	if (pTspec_Info->ts_info.psb)
-		ricIE.TSPEC.psb = pTspec_Info->ts_info.psb;
+	if (tspec_info->ts_info.psb)
+		ric_ie->TSPEC.psb = tspec_info->ts_info.psb;
 	else
-		ricIE.TSPEC.psb = 0;
+		ric_ie->TSPEC.psb = 0;
 
-	ricIE.TSPEC.tsid = pTspec_Info->ts_info.tid;
-	ricIE.TSPEC.user_priority = pTspec_Info->ts_info.up;
-	ricIE.TSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
+	ric_ie->TSPEC.tsid = tspec_info->ts_info.tid;
+	ric_ie->TSPEC.user_priority = tspec_info->ts_info.up;
+	ric_ie->TSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
 
-	*pRICIdentifier = ricIE.RICData.Identifier;
+	*ric_identifier = ric_ie->RICData.Identifier;
 
-	nStatus =
-		dot11f_pack_ie_ric_data_desc(mac, &ricIE, pRICBuffer,
-					sizeof(ricIE), pRICLength);
-	if (DOT11F_FAILED(nStatus)) {
+	status = dot11f_pack_ie_ric_data_desc(mac, ric_ie, ric_buffer,
+					      sizeof(*ric_ie), ric_length);
+	if (DOT11F_FAILED(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Packing of RIC Data of length %d failed with status %d",
-			  *pRICLength, nStatus);
+			  *ric_length, status);
 	}
 #else                           /* WMM TSPEC */
 	/* As per WMM_AC_testplan_v0.39 Minimum Service Interval, Maximum
@@ -3216,45 +3219,47 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 	 * Bound are all intended for HCCA operation and therefore must be set
 	 * to zero
 	 */
-	ricIE.WMMTSPEC.present = 1;
-	ricIE.WMMTSPEC.version = 1;
-	ricIE.WMMTSPEC.delay_bound = pTspec_Info->delay_bound;
-	ricIE.WMMTSPEC.inactivity_int = pTspec_Info->inactivity_interval;
-	ricIE.WMMTSPEC.burst_size = pTspec_Info->max_burst_size;
-	ricIE.WMMTSPEC.max_msdu_size = pTspec_Info->maximum_msdu_size;
-	ricIE.WMMTSPEC.max_service_int = pTspec_Info->max_service_interval;
-	ricIE.WMMTSPEC.mean_data_rate = pTspec_Info->mean_data_rate;
-	ricIE.WMMTSPEC.medium_time = 0;
-	ricIE.WMMTSPEC.min_data_rate = pTspec_Info->min_data_rate;
-	ricIE.WMMTSPEC.min_phy_rate = pTspec_Info->min_phy_rate;
-	ricIE.WMMTSPEC.min_service_int = pTspec_Info->min_service_interval;
-	ricIE.WMMTSPEC.size = pTspec_Info->nominal_msdu_size;
-	ricIE.WMMTSPEC.peak_data_rate = pTspec_Info->peak_data_rate;
-	ricIE.WMMTSPEC.surplus_bw_allowance = pTspec_Info->surplus_bw_allowance;
-	ricIE.WMMTSPEC.suspension_int = pTspec_Info->suspension_interval;
-	ricIE.WMMTSPEC.service_start_time = pTspec_Info->svc_start_time;
-	ricIE.WMMTSPEC.direction = pTspec_Info->ts_info.direction;
+	ric_ie->WMMTSPEC.present = 1;
+	ric_ie->WMMTSPEC.version = 1;
+	ric_ie->WMMTSPEC.delay_bound = tspec_info->delay_bound;
+	ric_ie->WMMTSPEC.inactivity_int = tspec_info->inactivity_interval;
+	ric_ie->WMMTSPEC.burst_size = tspec_info->max_burst_size;
+	ric_ie->WMMTSPEC.max_msdu_size = tspec_info->maximum_msdu_size;
+	ric_ie->WMMTSPEC.max_service_int = tspec_info->max_service_interval;
+	ric_ie->WMMTSPEC.mean_data_rate = tspec_info->mean_data_rate;
+	ric_ie->WMMTSPEC.medium_time = 0;
+	ric_ie->WMMTSPEC.min_data_rate = tspec_info->min_data_rate;
+	ric_ie->WMMTSPEC.min_phy_rate = tspec_info->min_phy_rate;
+	ric_ie->WMMTSPEC.min_service_int = tspec_info->min_service_interval;
+	ric_ie->WMMTSPEC.size = tspec_info->nominal_msdu_size;
+	ric_ie->WMMTSPEC.peak_data_rate = tspec_info->peak_data_rate;
+	ric_ie->WMMTSPEC.surplus_bw_allowance =
+				tspec_info->surplus_bw_allowance;
+	ric_ie->WMMTSPEC.suspension_int = tspec_info->suspension_interval;
+	ric_ie->WMMTSPEC.service_start_time = tspec_info->svc_start_time;
+	ric_ie->WMMTSPEC.direction = tspec_info->ts_info.direction;
 	/* Make sure UAPSD is allowed */
-	if (pTspec_Info->ts_info.psb)
-		ricIE.WMMTSPEC.psb = pTspec_Info->ts_info.psb;
+	if (tspec_info->ts_info.psb)
+		ric_ie->WMMTSPEC.psb = tspec_info->ts_info.psb;
 	else
-		ricIE.WMMTSPEC.psb = 0;
+		ric_ie->WMMTSPEC.psb = 0;
 
-	ricIE.WMMTSPEC.tsid = pTspec_Info->ts_info.tid;
-	ricIE.WMMTSPEC.user_priority = pTspec_Info->ts_info.up;
-	ricIE.WMMTSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
+	ric_ie->WMMTSPEC.tsid = tspec_info->ts_info.tid;
+	ric_ie->WMMTSPEC.user_priority = tspec_info->ts_info.up;
+	ric_ie->WMMTSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
 
-	nStatus =
-		dot11f_pack_ie_ric_data_desc(mac, &ricIE, pRICBuffer,
-					sizeof(ricIE), pRICLength);
-	if (DOT11F_FAILED(nStatus)) {
+	status = dot11f_pack_ie_ric_data_desc(mac, ric_ie, ric_buffer,
+					      sizeof(*ric_ie), ric_length);
+	if (DOT11F_FAILED(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Packing of RIC Data of length %d failed with status %d",
-			  *pRICLength, nStatus);
+			  *ric_length, status);
 	}
 #endif /* 80211_TSPEC */
-	*pRICIdentifier = ricIE.RICData.Identifier;
-	return nStatus;
+	*ric_identifier = ric_ie->RICData.Identifier;
+
+	qdf_mem_free(ric_ie);
+	return status;
 }
 /**
  * sme_qos_process_ft_reassoc_req_ev()- processes reassoc request
