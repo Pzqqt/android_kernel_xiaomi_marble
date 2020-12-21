@@ -20,7 +20,7 @@
 u32 msm_venc_input_set_prop[] = {
 	HFI_PROP_COLOR_FORMAT,
 	HFI_PROP_RAW_RESOLUTION,
-	HFI_PROP_LINEAR_STRIDE_SCANLINE,
+	HFI_PROP_LINEAR_ALIGNMENT_FACTOR,
 	HFI_PROP_BUFFER_HOST_MAX_COUNT,
 };
 
@@ -158,7 +158,7 @@ static int msm_venc_set_linear_alignment_factor(struct msm_vidc_inst *inst,
 	s_vpr_h(inst->sid, "%s: payload[0]: %u payload[1]: %u\n", __func__,
 		alignment_factor[0], alignment_factor[1]);
 	rc = venus_hfi_session_property(inst,
-			HFI_PROP_LINEAR_STRIDE_SCANLINE,
+			HFI_PROP_LINEAR_ALIGNMENT_FACTOR,
 			HFI_HOST_FLAGS_NONE,
 			get_hfi_port(inst, port),
 			HFI_PAYLOAD_64_PACKED,
@@ -380,7 +380,7 @@ static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
 		case HFI_PROP_RAW_RESOLUTION:
 			rc = msm_venc_set_raw_resolution(inst, INPUT_PORT);
 			break;
-		case HFI_PROP_LINEAR_STRIDE_SCANLINE:
+		case HFI_PROP_LINEAR_ALIGNMENT_FACTOR:
 			rc = msm_venc_set_linear_alignment_factor(inst, INPUT_PORT);
 			break;
 		case HFI_PROP_BUFFER_HOST_MAX_COUNT:

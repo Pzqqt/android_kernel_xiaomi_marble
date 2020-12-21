@@ -70,9 +70,9 @@ enum hfi_color_format {
 #define HFI_BITMASK_BITSTREAM_HEIGHT                            0x0000ffff
 #define HFI_PROP_BITSTREAM_RESOLUTION                           0x03000103
 
-#define HFI_BITMASK_LINEAR_STRIDE                       0xffff0000
-#define HFI_BITMASK_LINEAR_SCANLINE                     0x0000ffff
-#define HFI_PROP_LINEAR_STRIDE_SCANLINE                         0x03000104
+#define HFI_BITMASK_LINEAR_STRIDE_ALIGNMENT             0xffff0000
+#define HFI_BITMASK_LINEAR_SCANLINE_ALIGNMENT           0x0000ffff
+#define HFI_PROP_LINEAR_ALIGNMENT_FACTOR                        0x03000104
 
 #define HFI_BITMASK_CROP_RIGHT_OFFSET        0xffff0000
 #define HFI_BITMASK_CROP_BOTTOM_OFFSET       0x0000ffff
@@ -237,7 +237,6 @@ enum hfi_rate_control {
     HFI_RC_OFF            = 0x00000003,
     HFI_RC_CBR_VFR        = 0x00000004,
     HFI_RC_LOSSLESS       = 0x00000005,
-    HFI_RC_CBR_VFR_LEGACY = 0x00000006,
 };
 #define HFI_PROP_RATE_CONTROL                                   0x0300012a
 
@@ -462,10 +461,9 @@ enum hfi_picture_type {
 
 #define HFI_PROP_WORST_COMPLEXITY_FACTOR                        0x03000175
 
-//TODO: Enable when firmware adds support for these
-//#define HFI_PROP_VBV_DELAY                                      0x03000176
+#define HFI_PROP_VBV_DELAY                                      0x03000176
 
-//#define HFI_PROP_SEQ_CHANGE_AT_SYNC_FRAME                       0x03000177
+#define HFI_PROP_SEQ_CHANGE_AT_SYNC_FRAME                       0x03000177
 
 #define HFI_BITMASK_RAW_WIDTH                           0xffff0000
 #define HFI_BITMASK_RAW_HEIGHT                          0x0000ffff
@@ -505,12 +503,11 @@ enum hfi_picture_type {
 
 #define HFI_INFO_DATA_CORRUPT                                   0x06000002
 
-//TODO: Enable when firmware adds support for these
-//#define HFI_INFO_NEGATIVE_TIMESTAMP                             0x06000003
+#define HFI_INFO_NEGATIVE_TIMESTAMP                             0x06000003
 
-//#define HFI_INFO_BUFFER_OVERFLOW                                0x06000004
+#define HFI_INFO_BUFFER_OVERFLOW                                0x06000004
 
-//#define HFI_INFO_VCODEC_RESET                                   0x06000005
+#define HFI_INFO_VCODEC_RESET                                   0x06000005
 
 #define HFI_INFORMATION_END                                     0x06FFFFFF
 

@@ -161,13 +161,17 @@ enum hfi_property_mode_type {
 
 #define HFI_SSR_TYPE_SW_ERR_FATAL       0x1
 #define HFI_SSR_TYPE_SW_DIV_BY_ZERO     0x2
-#define HFI_SSR_TYPE_HW_WDOG_IRQ        0x3
+#define HFI_SSR_TYPE_CPU_WDOG_IRQ       0x3
 #define HFI_SSR_TYPE_NOC_ERROR          0x4
-#define HFI_SSR_TYPE_VCODEC_HUNG        0x5
 
-#define HFI_BITMASK_SSR_SUB_CLIENT_ID          0x000000f0
-#define HFI_BITMASK_SSR_TYPE                   0x0000000f
+#define HFI_BITMASK_HW_CLIENT_ID                        0x000000f0
+#define HFI_BITMASK_SSR_TYPE                            0x0000000f
 #define HFI_CMD_SSR                                             0x0100000D
+
+#define HFI_STABILITY_TYPE_VCODEC_HUNG        0x1
+#define HFI_STABILITY_TYPE_ENC_BUFFER_FULL    0x2
+#define HFI_BITMASK_STABILITY_TYPE                              0x0000000f
+#define HFI_CMD_STABILITY                                       0x0100000E
 
 #define HFI_CMD_END                                             0x01FFFFFF
 
