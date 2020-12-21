@@ -1094,6 +1094,7 @@ skip_power_off:
 
 static int __protect_cp_mem(struct msm_vidc_core *core)
 {
+#if 0
 	struct tzbsp_memprot memprot;
 	int rc = 0;
 	struct context_bank_info *cb;
@@ -1124,13 +1125,16 @@ static int __protect_cp_mem(struct msm_vidc_core *core)
 		}
 	}
 
-	rc = qcom_scm_mem_protect_video(memprot.cp_start, memprot.cp_size,
+	rc = qcom_scm_mem_protect_video_var(memprot.cp_start, memprot.cp_size,
 			memprot.cp_nonpixel_start, memprot.cp_nonpixel_size);
 
 	if (rc)
 		d_vpr_e("Failed to protect memory(%d)\n", rc);
 
 	return rc;
+#endif
+	// TODO: revert once SSG changes merged
+	return 0;
 }
 #if 0 // TODO
 static int __core_set_resource(struct msm_vidc_core *core,
@@ -2351,14 +2355,12 @@ static int __load_fw(struct msm_vidc_core *core)
 		}
 	}
 
-	// TODO: Prabhakar - revisit once hyp support is available.
-#ifdef WAIPIO_PRESIL_CP_ENABLE
 	rc = __protect_cp_mem(core);
 	if (rc) {
 		d_vpr_e("%s: protect memory failed\n", __func__);
 		goto fail_protect_mem;
 	}
-#endif
+
 	/*
 	* Hand off control of regulators to h/w _after_ loading fw.
 	* Note that the GDSC will turn off when switching from normal

@@ -191,7 +191,7 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 				(u32)core->sfr.align_device_addr);*/
 	/* update queues vaddr for debug purpose */
 	__write_register(core, CPU_CS_VCICMDARG0_IRIS2,
-		(u32)core->iface_q_table.align_virtual_addr);
+			(u32)((u64)core->iface_q_table.align_virtual_addr));
 	__write_register(core, CPU_CS_VCICMDARG1_IRIS2,
 		(u32)((u64)core->iface_q_table.align_virtual_addr >> 32));
 
