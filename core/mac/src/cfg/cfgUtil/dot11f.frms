@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007, 2014-2018, 2020 The Linux Foundation.
+ * Copyright (c) 2006-2007, 2014-2018, 2020-2021 The Linux Foundation.
  * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -3758,6 +3758,7 @@ FRAME BeaconIEs
     OPTIE  P2PBeaconProbeRes;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
+    OPTIE  transmit_power_env[0..8];
     OPTIE  VHTExtBssLoad;
     OPTIE  ExtCap;
     OPTIE  OperatingMode;
