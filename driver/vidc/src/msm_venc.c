@@ -729,6 +729,14 @@ int msm_venc_start_input(struct msm_vidc_inst *inst)
 	core = inst->core;
 	s_vpr_h(inst->sid, "%s()\n", __func__);
 
+	if (is_input_meta_enabled(inst) &&
+		!inst->vb2q[INPUT_META_PORT].streaming) {
+		s_vpr_e(inst->sid,
+			"%s: Meta port must be streamed on before data port\n",
+			__func__);
+		goto error;
+	}
+
 	//rc = msm_vidc_check_session_supported(inst);
 	if (rc)
 		goto error;
@@ -834,6 +842,14 @@ int msm_venc_start_output(struct msm_vidc_inst *inst)
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
+
+	if (is_output_meta_enabled(inst) &&
+		!inst->vb2q[OUTPUT_META_PORT].streaming) {
+		s_vpr_e(inst->sid,
+			"%s: Meta port must be streamed on before data port\n",
+			__func__);
+		goto error;
 	}
 
 	rc = msm_venc_set_output_properties(inst);
@@ -950,15 +966,23 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt = &inst->fmts[INPUT_META_PORT];
 		fmt->type = INPUT_META_PLANE;
 		fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
-		fmt->fmt.meta.buffersize = call_session_op(core, buffer_size,
-				inst, MSM_VIDC_BUF_INPUT_META);
-		inst->buffers.input_meta.min_count =
-				inst->buffers.input.min_count;
-		inst->buffers.input_meta.extra_count =
-				inst->buffers.input.extra_count;
-		inst->buffers.input_meta.actual_count =
-				inst->buffers.input.actual_count;
-		inst->buffers.input_meta.size = fmt->fmt.meta.buffersize;
+		if (is_input_meta_enabled(inst)) {
+			fmt->fmt.meta.buffersize = call_session_op(core,
+				buffer_size, inst, MSM_VIDC_BUF_OUTPUT_META);
+			inst->buffers.input_meta.min_count =
+					inst->buffers.input.min_count;
+			inst->buffers.input_meta.extra_count =
+					inst->buffers.input.extra_count;
+			inst->buffers.input_meta.actual_count =
+					inst->buffers.input.actual_count;
+			inst->buffers.input_meta.size = fmt->fmt.meta.buffersize;
+		} else {
+			fmt->fmt.meta.buffersize = 0;
+			inst->buffers.input_meta.min_count = 0;
+			inst->buffers.input_meta.extra_count = 0;
+			inst->buffers.input_meta.actual_count = 0;
+			inst->buffers.input_meta.size = 0;
+		}
 		s_vpr_h(inst->sid,
 			"%s: input meta: size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
@@ -1036,15 +1060,23 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt = &inst->fmts[OUTPUT_META_PORT];
 		fmt->type = OUTPUT_META_PLANE;
 		fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
-		fmt->fmt.meta.buffersize = call_session_op(core, buffer_size,
-				inst, MSM_VIDC_BUF_OUTPUT_META);
-		inst->buffers.output_meta.min_count =
-				inst->buffers.output.min_count;
-		inst->buffers.output_meta.extra_count =
-				inst->buffers.output.extra_count;
-		inst->buffers.output_meta.actual_count =
-				inst->buffers.output.actual_count;
-		inst->buffers.output_meta.size = fmt->fmt.meta.buffersize;
+		if (is_output_meta_enabled(inst)) {
+			fmt->fmt.meta.buffersize = call_session_op(core,
+				buffer_size, inst, MSM_VIDC_BUF_OUTPUT_META);
+			inst->buffers.output_meta.min_count =
+					inst->buffers.output.min_count;
+			inst->buffers.output_meta.extra_count =
+					inst->buffers.output.extra_count;
+			inst->buffers.output_meta.actual_count =
+					inst->buffers.output.actual_count;
+			inst->buffers.output_meta.size = fmt->fmt.meta.buffersize;
+		} else {
+			fmt->fmt.meta.buffersize = 0;
+			inst->buffers.output_meta.min_count = 0;
+			inst->buffers.output_meta.extra_count = 0;
+			inst->buffers.output_meta.actual_count = 0;
+			inst->buffers.output_meta.size = 0;
+		}
 		s_vpr_h(inst->sid,
 			"%s: output meta: size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,

@@ -133,14 +133,38 @@ static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 		return "Blur Resolution";
 	case V4L2_CID_MPEG_VIDC_VIDEO_VPE_CSC_CUSTOM_MATRIX:
 		return "CSC Custom Matrix";
-	case V4L2_CID_MPEG_VIDC_METADATA_ENABLE:
-		return "Metadata Enable";
-	case V4L2_CID_MPEG_VIDC_METADATA_DISABLE:
-		return "Metadata Disable";
 	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY:
 		return "H264 Display Delay";
 	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE:
 		return "H264 Display Delay Enable";
+	case V4L2_CID_MPEG_VIDC_METADATA_LTR_MARK_USE_DETAILS:
+		return "LTR Mark Use Details Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SEQ_HEADER_NAL:
+		return "Seq Header NAL Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_DPB_LUMA_CHROMA_MISR:
+		return "DPB Luma-Chroma MISR Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_OPB_LUMA_CHROMA_MISR:
+		return "OPB Luma-Chroma MISR Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_INTERLACE:
+		return "Interlace Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT:
+		return "Concealed MB Count Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO:
+		return "Historgram Info Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SEI_MASTERING_DISPLAY_COLOUR:
+		return "SEI Mastering Display Color Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SEI_CONTENT_LIGHT_LEVEL:
+		return "SEI Content Lighting Level Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS:
+		return "HDR10PLUS Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS:
+		return "EVA Stats Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG:
+		return "Buffer Tag Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT:
+		return "Subframe Output Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO:
+		return "ROI Info Metadata";
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);

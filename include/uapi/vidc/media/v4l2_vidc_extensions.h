@@ -71,10 +71,35 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x12)
 
 /* various Metadata - encoder & decoder */
-#define V4L2_CID_MPEG_VIDC_METADATA_ENABLE                                    \
+#define V4L2_CID_MPEG_VIDC_METADATA_LTR_MARK_USE_DETAILS                      \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x13)
-#define V4L2_CID_MPEG_VIDC_METADATA_DISABLE                                   \
+#define V4L2_CID_MPEG_VIDC_METADATA_SEQ_HEADER_NAL                            \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x14)
+#define V4L2_CID_MPEG_VIDC_METADATA_DPB_LUMA_CHROMA_MISR                      \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x15)
+#define V4L2_CID_MPEG_VIDC_METADATA_OPB_LUMA_CHROMA_MISR                      \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x16)
+#define V4L2_CID_MPEG_VIDC_METADATA_INTERLACE                                 \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x17)
+#define V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT                         \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x18)
+#define V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO                            \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x19)
+#define V4L2_CID_MPEG_VIDC_METADATA_SEI_MASTERING_DISPLAY_COLOUR              \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x1A)
+#define V4L2_CID_MPEG_VIDC_METADATA_SEI_CONTENT_LIGHT_LEVEL                   \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x1B)
+#define V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS                                 \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x1C)
+#define V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS                                 \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x1D)
+#define V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG                                \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x1E)
+#define V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT                           \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x1F)
+#define V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO                                  \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x20)
+
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,
 	METADATA_FLAGS_TOP_FIELD        = (1 << 0),
