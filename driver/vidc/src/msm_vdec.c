@@ -1239,7 +1239,7 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = venus_hfi_start(inst, INPUT_PORT);
+	rc = msm_vidc_session_start(inst, INPUT_PORT);
 	if (rc)
 		goto error;
 
@@ -1407,7 +1407,7 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = venus_hfi_start(inst, OUTPUT_PORT);
+	rc = msm_vidc_session_start(inst, OUTPUT_PORT);
 	if (rc)
 		goto error;
 

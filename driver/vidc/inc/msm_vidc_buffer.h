@@ -8,6 +8,15 @@
 
 #include "msm_vidc_inst.h"
 
+#define MIN_DEC_INPUT_BUFFERS 4
+#define MIN_DEC_OUTPUT_BUFFERS 4
+
+#define MIN_ENC_INPUT_BUFFERS 4
+#define MIN_ENC_OUTPUT_BUFFERS 4
+
+#define DCVS_ENC_EXTRA_INPUT_BUFFERS 4
+#define DCVS_DEC_EXTRA_OUTPUT_BUFFERS 4
+
 u32 msm_vidc_input_min_count(struct msm_vidc_inst *inst);
 u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst);
 u32 msm_vidc_input_extra_count(struct msm_vidc_inst *inst);

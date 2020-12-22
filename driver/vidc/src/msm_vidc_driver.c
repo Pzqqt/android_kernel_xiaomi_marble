@@ -13,6 +13,7 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_memory.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_power.h"
 #include "venus_hfi.h"
 #include "msm_vidc.h"
 
@@ -462,6 +463,65 @@ int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 	}
 
 	return rc;
+}
+
+int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst)
+{
+	int height, width;
+	struct v4l2_format *out_f;
+	struct v4l2_format *inp_f;
+
+	out_f = &inst->fmts[OUTPUT_PORT];
+	inp_f = &inst->fmts[INPUT_PORT];
+	height = max(out_f->fmt.pix_mp.height,
+			inp_f->fmt.pix_mp.height);
+	width = max(out_f->fmt.pix_mp.width,
+			inp_f->fmt.pix_mp.width);
+
+	return NUM_MBS_PER_FRAME(height, width);
+}
+
+int msm_vidc_get_fps(struct msm_vidc_inst *inst)
+{
+	int fps;
+
+	if (inst->prop.operating_rate > inst->prop.frame_rate)
+		fps = (inst->prop.operating_rate >> 16) ?
+			(inst->prop.operating_rate >> 16) : 1;
+	else
+		fps = inst->prop.frame_rate >> 16;
+
+	return fps;
+}
+
+int msm_vidc_num_queued_bufs(struct msm_vidc_inst *inst, u32 type)
+{
+	int count = 0;
+	struct msm_vidc_buffer *vbuf;
+	struct msm_vidc_buffers* buffers;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+	if (type == OUTPUT_MPLANE) {
+		buffers = &inst->buffers.output;
+	} else if (type == INPUT_MPLANE) {
+		buffers = &inst->buffers.input;
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid buffer type %#x\n", __func__, type);
+		return -EINVAL;
+	}
+
+	list_for_each_entry(vbuf, &buffers->list, list) {
+		if (vbuf->type != type)
+			continue;
+		if (!(vbuf->attr & MSM_VIDC_ATTR_QUEUED))
+			continue;
+		count++;
+	}
+
+	return count;
 }
 
 static int vb2_buffer_to_driver(struct vb2_buffer *vb2,
@@ -1262,6 +1322,25 @@ int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
 		return rc;
 
 	return 0;
+}
+
+int msm_vidc_session_start(struct msm_vidc_inst* inst,
+		enum msm_vidc_port_type port)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	msm_vidc_scale_power(inst, true);
+
+	rc = venus_hfi_start(inst, port);
+	if (rc)
+		return rc;
+
+	return rc;
 }
 
 int msm_vidc_session_stop(struct msm_vidc_inst *inst,

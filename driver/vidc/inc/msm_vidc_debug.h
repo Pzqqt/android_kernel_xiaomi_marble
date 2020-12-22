@@ -22,6 +22,7 @@
 extern int msm_vidc_debug;
 extern bool msm_vidc_lossless_encode;
 extern bool msm_vidc_syscache_disable;
+extern int msm_vidc_clock_voting;
 
 /* To enable messages OR these values and
  * echo the result to debugfs file.

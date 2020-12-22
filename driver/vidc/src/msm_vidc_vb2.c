@@ -6,6 +6,7 @@
 #include "msm_vidc_vb2.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
+#include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
 #include "msm_venc.h"

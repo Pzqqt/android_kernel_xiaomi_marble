@@ -11,10 +11,7 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
 
-#define MIN_INPUT_BUFFERS 4
-#define MIN_ENC_OUTPUT_BUFFERS 4
-
-u32 msm_vidc_input_min_count(struct msm_vidc_inst *inst)
+u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 {
 	u32 input_min_count = 0;
 	//struct v4l2_ctrl *max_layer = NULL;
@@ -24,10 +21,15 @@ u32 msm_vidc_input_min_count(struct msm_vidc_inst *inst)
 		return 0;
 	}
 
-	if (!is_decode_session(inst) && !is_encode_session(inst))
+	if (is_decode_session(inst)) {
+		input_min_count = MIN_DEC_INPUT_BUFFERS;
+	} else if (is_encode_session(inst)) {
+		input_min_count = MIN_ENC_INPUT_BUFFERS;
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid domain\n",
+			__func__, inst->domain);
 		return 0;
-
-	input_min_count = MIN_INPUT_BUFFERS;
+	}
 
 	if (is_thumbnail_session(inst))
 		input_min_count = 1;
@@ -90,7 +92,7 @@ u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst)
 
 u32 msm_vidc_input_extra_count(struct msm_vidc_inst *inst)
 {
-	u32 extra_input_count = 0;
+	u32 count = 0;
 	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
@@ -99,23 +101,36 @@ u32 msm_vidc_input_extra_count(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
+	/*
+	 * no extra buffers for thumbnail session because
+	 * neither dcvs nor batching will be enabled
+	 */
 	if (is_thumbnail_session(inst))
-		return extra_input_count;
+		return 0;
 
 	if (is_decode_session(inst)) {
-		/* add dcvs buffers */
-		/* add batching buffers */
-		extra_input_count = 6;
+		/*
+		 * if decode batching enabled, ensure minimum batch size
+		 * count of input buffers present on input port
+		 */
+		if (core->capabilities[DECODE_BATCH].value &&
+			inst->decode_batch.enable) {
+			if (inst->buffers.input.min_count < inst->decode_batch.size) {
+				count = inst->decode_batch.size -
+					inst->buffers.input.min_count;
+			}
+		}
 	} else if (is_encode_session(inst)) {
 		/* add dcvs buffers */
-		extra_input_count = 4;
+		count = DCVS_ENC_EXTRA_INPUT_BUFFERS;
 	}
-	return extra_input_count;
+
+	return count;
 }
 
 u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 {
-	u32 extra_output_count = 0;
+	u32 count = 0;
 	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
@@ -124,24 +139,94 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
+	/*
+	 * no extra buffers for thumbnail session because
+	 * neither dcvs nor batching will be enabled
+	 */
 	if (is_thumbnail_session(inst))
 		return 0;
 
 	if (is_decode_session(inst)) {
 		/* add dcvs buffers */
-		/* add batching buffers */
-		extra_output_count = 6;
+		count = DCVS_DEC_EXTRA_OUTPUT_BUFFERS;
+		/*
+		 * if decode batching enabled, ensure minimum batch size
+		 * count of extra output buffers added on output port
+		 */
+		if (core->capabilities[DECODE_BATCH].value &&
+			inst->decode_batch.enable &&
+			count < inst->decode_batch.size)
+			count = inst->decode_batch.size;
+
 	} else if (is_encode_session(inst)) {
 		/* add heif buffers */
-		//extra_output_count = 8
+		//count = 8
 	}
-	return extra_output_count;
+
+	return count;
 }
 
 u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 {
-	u32 size = ALIGN(1 * 1024 * 1024, SZ_4K);
-	return size;
+	u32 frame_size, num_mbs;
+	u32 div_factor = 1;
+	u32 base_res_mbs = NUM_MBS_4k;
+	struct v4l2_format *f;
+	u32 buffer_size_limit = 0; // TODO: fix me
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n");
+		return 0;
+	}
+
+	/*
+	 * Decoder input size calculation:
+	 * For 8k resolution, buffer size is calculated as 8k mbs / 4 and
+	 * for 8k cases we expect width/height to be set always.
+	 * In all other cases, buffer size is calculated as
+	 * 4k mbs for VP8/VP9 and 4k / 2 for remaining codecs.
+	 */
+	f = &inst->fmts[INPUT_PORT];
+	num_mbs = msm_vidc_get_mbs_per_frame(inst);
+	if (num_mbs > NUM_MBS_4k) {
+		div_factor = 4;
+		base_res_mbs = inst->capabilities->cap[MBPF].value;
+	} else {
+		base_res_mbs = NUM_MBS_4k;
+		if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_VP9)
+			div_factor = 1;
+		else
+			div_factor = 2;
+	}
+
+	if (is_secure_session(inst))
+		div_factor = div_factor << 1;
+
+	/* For HEIF image, use the actual resolution to calc buffer size */
+	/* TODO: fix me
+	if (is_heif_decoder(inst)) {
+		base_res_mbs = num_mbs;
+		div_factor = 1;
+	}
+	*/
+
+	frame_size = base_res_mbs * MB_SIZE_IN_PIXEL * 3 / 2 / div_factor;
+
+	 /* multiply by 10/8 (1.25) to get size for 10 bit case */
+	if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_VP9 ||
+		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
+		frame_size = frame_size + (frame_size >> 2);
+
+	if (buffer_size_limit && (buffer_size_limit < frame_size)) {
+		frame_size = buffer_size_limit;
+		s_vpr_h(inst->sid, "input buffer size limited to %d\n",
+			frame_size);
+	} else {
+		s_vpr_h(inst->sid, "set input buffer size to %d\n",
+			frame_size);
+	}
+
+	return ALIGN(frame_size, SZ_4K);
 }
 
 u32 msm_vidc_decoder_output_size(struct msm_vidc_inst *inst)

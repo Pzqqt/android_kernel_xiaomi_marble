@@ -20,7 +20,7 @@
 
 #include "venus_hfi.h"
 #include "msm_vidc_core.h"
-#include "msm_vidc_bus.h"
+#include "msm_vidc_power.h"
 #include "msm_vidc_dt.h"
 #include "msm_vidc_platform.h"
 #include "msm_vidc_memory.h"
@@ -2995,7 +2995,7 @@ exit:
 	return rc;
 }
 
-int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 freq)
+int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 bw_ddr, u64 bw_llcc)
 {
 	int rc = 0;
 	struct msm_vidc_core* core;
@@ -3007,7 +3007,7 @@ int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 freq)
 	core = inst->core;
 
 	mutex_lock(&core->lock);
-	rc = __vote_buses(core, freq, freq);
+	rc = __vote_buses(core, bw_ddr, bw_llcc);
 	mutex_unlock(&core->lock);
 
 	return rc;
