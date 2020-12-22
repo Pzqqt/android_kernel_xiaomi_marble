@@ -1001,6 +1001,9 @@ static inline void copy_channel_info(
 	if (req->channel.dfs_set_cfreq2)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS_CFREQ2);
 
+	if (req->channel.is_stadfs_en)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_STA_DFS);
+
 	/* According to firmware both reg power and max tx power
 	 * on set channel power is used and set it to max reg
 	 * power from regulatory.

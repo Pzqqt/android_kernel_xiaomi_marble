@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -50,6 +50,8 @@ wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
 
 	return &tx_ops->dfs_tx_ops;
 }
+
+qdf_export_symbol(wlan_psoc_get_dfs_txops);
 
 bool tgt_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev)
 {

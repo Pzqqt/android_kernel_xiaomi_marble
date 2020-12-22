@@ -121,7 +121,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 {
 	struct wlan_channel *des_chan;
 	uint32_t dfs_reg;
-	bool set_agile = false, dfs_set_cfreq2 = false;
+	bool set_agile = false, dfs_set_cfreq2 = false, is_stadfs_en = false;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	enum QDF_OPMODE op_mode;
@@ -174,6 +174,8 @@ static QDF_STATUS vdev_mgr_start_param_update(
 		utils_dfs_agile_sm_deliver_evt(pdev,
 					       DFS_AGILE_SM_EV_AGILE_STOP);
 
+	is_stadfs_en = tgt_dfs_is_stadfs_enabled(pdev);
+	param->channel.is_stadfs_en = is_stadfs_en;
 	param->beacon_interval = mlme_obj->proto.generic.beacon_interval;
 	param->dtim_period = mlme_obj->proto.generic.dtim_period;
 	param->disable_hw_ack = mlme_obj->mgmt.generic.disable_hw_ack;
