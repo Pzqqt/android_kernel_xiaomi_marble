@@ -43,14 +43,14 @@ void ucfg_dcs_register_cb(
 
 void
 ucfg_dcs_register_user_cb(struct wlan_objmgr_psoc *psoc,
-			  uint8_t pdev_id, uint8_t vdev_id,
+			  uint8_t mac_id, uint8_t vdev_id,
 			  void (*cb)(uint8_t vdev_id,
 				     struct wlan_host_dcs_im_user_stats *stats,
 				     int status))
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 
-	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
 		return;
@@ -62,19 +62,19 @@ ucfg_dcs_register_user_cb(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 ucfg_wlan_dcs_cmd(struct wlan_objmgr_psoc *psoc,
-		  uint32_t pdev_id,
+		  uint32_t mac_id,
 		  bool is_host_pdev_id)
 {
-	return wlan_dcs_cmd_send(psoc, pdev_id, is_host_pdev_id);
+	return wlan_dcs_cmd_send(psoc, mac_id, is_host_pdev_id);
 }
 
 void ucfg_config_dcs_enable(struct wlan_objmgr_psoc *psoc,
-			    uint32_t pdev_id,
+			    uint32_t mac_id,
 			    uint8_t interference_type)
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 
-	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
 		return;
@@ -84,12 +84,12 @@ void ucfg_config_dcs_enable(struct wlan_objmgr_psoc *psoc,
 }
 
 void ucfg_config_dcs_disable(struct wlan_objmgr_psoc *psoc,
-			     uint32_t pdev_id,
+			     uint32_t mac_id,
 			     uint8_t interference_type)
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 
-	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
 		return;
@@ -98,12 +98,12 @@ void ucfg_config_dcs_disable(struct wlan_objmgr_psoc *psoc,
 	dcs_pdev_priv->dcs_host_params.dcs_enable &= (~interference_type);
 }
 
-uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
+uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint8_t mac_id)
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 	uint8_t enable = 0;
 
-	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
 		return 0;
@@ -115,23 +115,23 @@ uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
 	return enable;
 }
 
-void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
+void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t mac_id)
 {
-	wlan_dcs_clear(psoc, pdev_id);
+	wlan_dcs_clear(psoc, mac_id);
 }
 
-void ucfg_config_dcs_event_data(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
+void ucfg_config_dcs_event_data(struct wlan_objmgr_psoc *psoc, uint32_t mac_id,
 				bool dcs_algorithm_process)
 {
-	wlan_dcs_set_algorithm_process(psoc, pdev_id, dcs_algorithm_process);
+	wlan_dcs_set_algorithm_process(psoc, mac_id, dcs_algorithm_process);
 }
 
-void ucfg_dcs_reset_user_stats(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
+void ucfg_dcs_reset_user_stats(struct wlan_objmgr_psoc *psoc, uint8_t mac_id)
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 	struct wlan_host_dcs_im_user_stats *user_stats;
 
-	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
 		return;
@@ -150,12 +150,12 @@ void ucfg_dcs_reset_user_stats(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id)
 	wlan_dcs_pdev_obj_unlock(dcs_pdev_priv);
 }
 
-void ucfg_dcs_set_user_request(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+void ucfg_dcs_set_user_request(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 			       uint32_t user_request_count)
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 
-	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
 		return;
