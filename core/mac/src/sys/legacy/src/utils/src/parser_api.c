@@ -3060,6 +3060,35 @@ QDF_STATUS wlan_parse_ftie_sha384(uint8_t *frame, uint32_t frame_len,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+sir_get_iot_aggr_sz(struct mac_context *mac, uint8_t *ie_ptr, uint32_t ie_len,
+		    uint32_t *amsdu_sz, uint32_t *ampdu_sz)
+{
+	const uint8_t *oui, *vendor_ie;
+	struct wlan_mlme_iot *iot;
+	uint32_t oui_len, aggr_num;
+	int i;
+
+	iot = &mac->mlme_cfg->iot;
+	aggr_num = iot->aggr_num;
+	if (!aggr_num)
+		return;
+
+	for (i = 0; i < aggr_num; i++) {
+		oui = iot->aggr[i].oui;
+		oui_len = iot->aggr[i].oui_len;
+		vendor_ie = wlan_get_vendor_ie_ptr_from_oui(oui, oui_len,
+							    ie_ptr, ie_len);
+		if (vendor_ie) {
+			*amsdu_sz = iot->aggr[i].amsdu_sz;
+			*ampdu_sz = iot->aggr[i].ampdu_sz;
+			pe_debug("Found oui[%s] amsdu %u, ampdu %u",
+				 oui, *amsdu_sz, *ampdu_sz);
+			break;
+		}
+	}
+}
+
 QDF_STATUS
 sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 				     struct pe_session *session_entry,
@@ -3195,9 +3224,9 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	 */
 	auth_type = session_entry->connected_akm;
 	sha384_akm = lim_is_sha384_akm(auth_type);
+	ie_ptr = frame + FIXED_PARAM_OFFSET_ASSOC_RSP;
+	ie_len = frame_len - FIXED_PARAM_OFFSET_ASSOC_RSP;
 	if (sha384_akm) {
-		ie_ptr = frame + FIXED_PARAM_OFFSET_ASSOC_RSP;
-		ie_len = frame_len - FIXED_PARAM_OFFSET_ASSOC_RSP;
 		qdf_status = wlan_parse_ftie_sha384(ie_ptr, ie_len, pAssocRsp);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			pe_err("FT IE parsing failed status:%d", status);
@@ -3217,6 +3246,10 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(&pAssocRsp->FTInfo, &ar->FTInfo,
 			     sizeof(tDot11fIEFTInfo));
 	}
+
+	sir_get_iot_aggr_sz(mac, ie_ptr, ie_len,
+			    &pAssocRsp->iot_amsdu_sz,
+			    &pAssocRsp->iot_ampdu_sz);
 
 	if (ar->num_RICDataDesc && ar->num_RICDataDesc <= 2) {
 		for (cnt = 0; cnt < ar->num_RICDataDesc; cnt++) {

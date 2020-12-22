@@ -43,6 +43,7 @@
 #include "lim_process_fils.h"
 #include "wlan_blm_api.h"
 #include "wlan_mlme_twt_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 /**
  * lim_update_stads_htcap() - Updates station Descriptor HT capability
@@ -676,6 +677,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	QDF_STATUS status;
 	enum ani_akm_type auth_type;
 	bool sha384_akm;
+	int ret;
+	uint8_t amsdu_sz;
 
 	assoc_cnf.resultCode = eSIR_SME_SUCCESS;
 	/* Update PE session Id */
@@ -1058,6 +1061,24 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	}
 	pe_debug("Successfully Associated with BSS " QDF_MAC_ADDR_FMT,
 		 QDF_MAC_ADDR_REF(hdr->sa));
+
+	/*
+	 * If fail to get the global max amsdu size, or the value is
+	 * 0 (which means FW automode selection), and it hits 'iot_amsdu_sz'
+	 * when parsing vendor IEs in assoc rsp frame, set this iot amsdu size.
+	 */
+	status = ucfg_mlme_get_max_amsdu_num(mac_ctx->psoc, &amsdu_sz);
+	if ((QDF_IS_STATUS_ERROR(status) || !amsdu_sz) &&
+	    assoc_rsp->iot_amsdu_sz) {
+		pe_debug("Try to set iot amsdu size: %u",
+			 assoc_rsp->iot_amsdu_sz);
+		ret = wma_cli_set_command(session_entry->smeSessionId,
+					  GEN_VDEV_PARAM_AMSDU,
+					  assoc_rsp->iot_amsdu_sz, GEN_CMD);
+		if (ret)
+			pe_err("Failed to set iot amsdu size: %d", ret);
+	}
+
 #ifdef FEATURE_WLAN_ESE
 	if (session_entry->eseContext.tsm.tsmInfo.state)
 		session_entry->eseContext.tsm.tsmMetrics.RoamingCount = 0;
