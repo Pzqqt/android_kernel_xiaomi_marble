@@ -642,7 +642,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 	uint32_t i, j;
 	QDF_STATUS status;
 	int32_t bcn_snr, dat_snr;
-	wmi_host_vdev_stats vdev_stats;
+	wmi_host_vdev_stats *vdev_stats;
 	bool db2dbm_enabled;
 
 	ev->num_summary_stats = stats_param->num_vdev_stats;
@@ -657,40 +657,47 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 
 	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
 					     wmi_service_hw_db2dbm_support);
+
+	vdev_stats = qdf_mem_malloc(sizeof(*vdev_stats));
+	if (!vdev_stats) {
+		cp_stats_err("malloc failed for vdev stats");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	for (i = 0; i < ev->num_summary_stats; i++) {
-		status = wmi_extract_vdev_stats(wmi_hdl, data, i, &vdev_stats);
+		status = wmi_extract_vdev_stats(wmi_hdl, data, i, vdev_stats);
 		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
-		bcn_snr = vdev_stats.vdev_snr.bcn_snr;
-		dat_snr = vdev_stats.vdev_snr.dat_snr;
-		ev->vdev_summary_stats[i].vdev_id = vdev_stats.vdev_id;
+		bcn_snr = vdev_stats->vdev_snr.bcn_snr;
+		dat_snr = vdev_stats->vdev_snr.dat_snr;
+		ev->vdev_summary_stats[i].vdev_id = vdev_stats->vdev_id;
 
 		cp_stats_debug("vdev %d SNR bcn: %d data: %d",
 			       ev->vdev_summary_stats[i].vdev_id, bcn_snr,
 			       dat_snr);
 
 		for (j = 0; j < 4; j++) {
-			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j]
-					= vdev_stats.tx_frm_cnt[j];
-			ev->vdev_summary_stats[i].stats.fail_cnt[j]
-					= vdev_stats.fail_cnt[j];
-			ev->vdev_summary_stats[i].stats.multiple_retry_cnt[j]
-					= vdev_stats.multiple_retry_cnt[j];
+			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j] =
+					vdev_stats->tx_frm_cnt[j];
+			ev->vdev_summary_stats[i].stats.fail_cnt[j] =
+					vdev_stats->fail_cnt[j];
+			ev->vdev_summary_stats[i].stats.multiple_retry_cnt[j] =
+					vdev_stats->multiple_retry_cnt[j];
 		}
 
 		ev->vdev_summary_stats[i].stats.rx_frm_cnt =
-						vdev_stats.rx_frm_cnt;
+						vdev_stats->rx_frm_cnt;
 		ev->vdev_summary_stats[i].stats.rx_error_cnt =
-						vdev_stats.rx_err_cnt;
+						vdev_stats->rx_err_cnt;
 		ev->vdev_summary_stats[i].stats.rx_discard_cnt =
-						vdev_stats.rx_discard_cnt;
+						vdev_stats->rx_discard_cnt;
 		ev->vdev_summary_stats[i].stats.ack_fail_cnt =
-						vdev_stats.ack_fail_cnt;
+						vdev_stats->ack_fail_cnt;
 		ev->vdev_summary_stats[i].stats.rts_succ_cnt =
-						vdev_stats.rts_succ_cnt;
+						vdev_stats->rts_succ_cnt;
 		ev->vdev_summary_stats[i].stats.rts_fail_cnt =
-						vdev_stats.rts_fail_cnt;
+						vdev_stats->rts_fail_cnt;
 		/* Update SNR and RSSI in SummaryStats */
 		wlan_util_stats_get_rssi(db2dbm_enabled, bcn_snr, dat_snr,
 					 &ev->vdev_summary_stats[i].stats.rssi);
@@ -698,6 +705,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 				ev->vdev_summary_stats[i].stats.rssi -
 				TGT_NOISE_FLOOR_DBM;
 	}
+	qdf_mem_free(vdev_stats);
 
 	return QDF_STATUS_SUCCESS;
 }
