@@ -189,12 +189,11 @@ void (*twt_pause_dialog_cb)(struct wlan_objmgr_psoc *psoc,
 
 /**
  * typedef twt_nudge_dialog_cb - TWT nudge dialog callback signature.
- * @context: Opaque context that the client can use to associate the
- *           callback with the request.
+ * @psoc: Pointer to global psoc
  * @params: TWT nudge dialog complete event parameters.
  */
 typedef
-void (*twt_nudge_dialog_cb)(void *context,
+void (*twt_nudge_dialog_cb)(struct wlan_objmgr_psoc *psoc,
 		      struct wmi_twt_nudge_dialog_complete_event_param *params);
 
 /**
@@ -223,6 +222,7 @@ void (*twt_notify_cb)(struct wlan_objmgr_psoc *psoc,
  * @twt_pause_dialog_cb: TWT pause dialog completion callback
  * @twt_resume_dialog_cb: TWT resume dialog completion callback
  * @twt_notify_cb: TWT notify event callback
+ * @twt_nudge_dialog_cb: TWT nudge dialog completion callback
  */
 struct twt_callbacks {
 	void (*twt_enable_cb)(hdd_handle_t hdd_handle,
@@ -238,6 +238,8 @@ struct twt_callbacks {
 				     struct wmi_twt_resume_dialog_complete_event_param *params);
 	void (*twt_notify_cb)(struct wlan_objmgr_psoc *psoc,
 			      struct wmi_twt_notify_event_param *params);
+	void (*twt_nudge_dialog_cb)(struct wlan_objmgr_psoc *psoc,
+		    struct wmi_twt_nudge_dialog_complete_event_param *params);
 };
 #endif
 
@@ -454,7 +456,6 @@ struct sme_context {
 	twt_nudge_dialog_cb twt_nudge_dialog_cb;
 	twt_resume_dialog_cb twt_resume_dialog_cb;
 	twt_notify_cb twt_notify_cb;
-	void *twt_nudge_dialog_context;
 #endif
 #ifdef FEATURE_WLAN_APF
 	apf_get_offload_cb apf_get_offload_cb;

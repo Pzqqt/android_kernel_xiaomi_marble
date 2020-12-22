@@ -38,7 +38,6 @@
 #include <wlan_mlme_twt_ucfg_api.h>
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 4000
-#define TWT_NUDGE_COMPLETE_TIMEOUT 4000
 
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
@@ -49,18 +48,6 @@
 #define TWT_WAKE_DURATION_MULTIPLICATION_FACTOR 256
 #define TWT_MAX_NEXT_TWT_SIZE                   3
 #define TWT_ALL_SESSIONS_DIALOG_ID              255
-
-/**
- * struct twt_nudge_dialog_comp_ev_priv - private struct for twt nudge dialog
- * @nudge_dialog_comp_ev_buf: buffer from TWT nudge dialog complete_event
- *
- * This TWT nudge dialog private structure is registered with os_if to
- * retrieve the TWT nudge dialog response event buffer.
- */
-struct twt_nudge_dialog_comp_ev_priv {
-	struct wmi_twt_nudge_dialog_complete_event_param
-						nudge_dialog_comp_ev_buf;
-};
 
 static const struct nla_policy
 qca_wlan_vendor_twt_add_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = {
@@ -1619,38 +1606,118 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_twt_nudge_pack_resp_nlmsg() - pack the skb with
+ * firmware response for twt nudge command
+ * @reply_skb: skb to store the response
+ * @params: Pointer to nudge dialog complete event buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, QDF_STATUS_E_FAILURE
+ * on failure
+ */
+static QDF_STATUS
+hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
+		      struct wmi_twt_nudge_dialog_complete_event_param *params)
+{
+	struct nlattr *config_attr;
+	int vendor_status;
+	uint64_t tsf_val;
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
+		       QCA_WLAN_TWT_NUDGE)) {
+		hdd_err("Failed to put TWT operation");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		hdd_err("nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_FLOW_ID,
+		       params->dialog_id)) {
+		hdd_debug("Failed to put dialog_id");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	tsf_val = params->next_twt_tsf_us_hi;
+	tsf_val = (tsf_val << 32) | params->next_twt_tsf_us_lo;
+	if (hdd_wlan_nla_put_u64(reply_skb,
+				 QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_WAKE_TIME_TSF,
+				 tsf_val)) {
+		hdd_err("get_params failed to put TSF Value");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vendor_status =
+		     wmi_twt_nudge_status_to_vendor_twt_status(params->status);
+	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
+		       vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_NUDGE status");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	nla_nest_end(reply_skb, config_attr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
  * hdd_twt_nudge_dialog_comp_cb() - callback function
  * to get twt nudge command complete event
- * @context: private context
+ * @psoc: Pointer to global psoc
  * @params: Pointer to nudge dialog complete event buffer
  *
  * Return: None
  */
-static void
-hdd_twt_nudge_dialog_comp_cb(void *context,
-		       struct wmi_twt_nudge_dialog_complete_event_param *params)
+static void hdd_twt_nudge_dialog_comp_cb(
+		struct wlan_objmgr_psoc *psoc,
+		struct wmi_twt_nudge_dialog_complete_event_param *params)
 {
-	struct osif_request *request;
-	struct twt_nudge_dialog_comp_ev_priv *priv;
+
+	struct hdd_adapter *adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, params->vdev_id);
+	struct wireless_dev *wdev;
+	struct hdd_context *hdd_ctx;
+	struct sk_buff *twt_vendor_event;
+	size_t data_len;
+	QDF_STATUS status;
 
 	hdd_enter();
-
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("Obsolete request");
+	if (hdd_validate_adapter(adapter))
 		return;
-	}
 
-	priv = osif_request_priv(request);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	priv->nudge_dialog_comp_ev_buf = *params;
-	osif_request_complete(request);
-	osif_request_put(request);
+	wdev = adapter->dev->ieee80211_ptr;
 
-	hdd_debug("TWT: nudge dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+	hdd_debug("Nudge dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
+
+	data_len = hdd_get_twt_event_len() + nla_total_size(sizeof(u8)) +
+		   nla_total_size(sizeof(u64));
+	data_len += NLA_HDRLEN;
+
+	twt_vendor_event = wlan_cfg80211_vendor_event_alloc(
+				hdd_ctx->wiphy, wdev,
+				data_len,
+				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
+				GFP_KERNEL);
+	if (!twt_vendor_event) {
+		hdd_err("Nudge dialog alloc skb failed");
+		return;
+	}
+
+	status = hdd_twt_nudge_pack_resp_nlmsg(twt_vendor_event, params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to pack nl nudge dialog response %d", status);
+		wlan_cfg80211_vendor_free_skb(twt_vendor_event);
+	}
+
+	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
 
 	hdd_exit();
 }
@@ -1698,38 +1765,6 @@ hdd_twt_pause_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	}
 
 	nla_nest_end(reply_skb, config_attr);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * hdd_twt_nudge_pack_resp_nlmsg() - pack the skb with
- * firmware response for twt nudge command
- * @reply_skb: skb to store the response
- * @params: Pointer to nudge dialog complete event buffer
- *
- * Return: QDF_STATUS_SUCCESS on Success, QDF_STATUS_E_FAILURE
- * on failure
- */
-static QDF_STATUS
-hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
-		      struct wmi_twt_nudge_dialog_complete_event_param *params)
-{
-	int vendor_status;
-
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_FLOW_ID,
-		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	vendor_status =
-		     wmi_twt_nudge_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_NUDGE status");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1908,72 +1943,13 @@ static
 int hdd_send_twt_nudge_dialog_cmd(struct hdd_context *hdd_ctx,
 			struct wmi_twt_nudge_dialog_cmd_param *twt_params)
 {
-	struct wmi_twt_nudge_dialog_complete_event_param *comp_ev_params;
-	struct twt_nudge_dialog_comp_ev_priv *priv;
-	static const struct osif_request_params osif_req_params = {
-		.priv_size = sizeof(*priv),
-		.timeout_ms = TWT_NUDGE_COMPLETE_TIMEOUT,
-		.dealloc = NULL,
-	};
-	struct osif_request *request;
-	struct sk_buff *reply_skb = NULL;
 	QDF_STATUS status;
-	void *cookie;
-	int skb_len;
-	int ret;
 
-	request = osif_request_alloc(&osif_req_params);
-	if (!request) {
-		hdd_err("twt osif request allocation failure");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	cookie = osif_request_cookie(request);
-
-	status = sme_nudge_dialog_cmd(hdd_ctx->mac_handle,
-				      hdd_twt_nudge_dialog_comp_cb,
-				      twt_params, cookie);
-	if (QDF_IS_STATUS_ERROR(status)) {
+	status = sme_nudge_dialog_cmd(hdd_ctx->mac_handle, twt_params);
+	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to send nudge dialog command");
-		ret = qdf_status_to_os_return(status);
-		goto err;
-	}
 
-	ret = osif_request_wait_for_response(request);
-	if (ret) {
-		hdd_err("twt: nudge dialog req timedout");
-		ret = -ETIMEDOUT;
-		goto err;
-	}
-
-	priv = osif_request_priv(request);
-	comp_ev_params = &priv->nudge_dialog_comp_ev_buf;
-
-	skb_len = hdd_get_twt_event_len();
-	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
-							     skb_len);
-	if (!reply_skb) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	status = hdd_twt_nudge_pack_resp_nlmsg(reply_skb, comp_ev_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to pack nl nudge dialog response");
-		ret = qdf_status_to_os_return(status);
-		goto err;
-	}
-
-	ret = wlan_cfg80211_vendor_cmd_reply(reply_skb);
-
-err:
-	if (request)
-		osif_request_put(request);
-	if (ret && reply_skb)
-		kfree_skb(reply_skb);
-	return ret;
+	return qdf_status_to_os_return(status);
 }
 
 /**
@@ -2928,6 +2904,8 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 	twt_cb.twt_pause_dialog_cb = hdd_twt_pause_dialog_comp_cb;
 	twt_cb.twt_resume_dialog_cb = hdd_twt_resume_dialog_comp_cb;
 	twt_cb.twt_notify_cb = hdd_twt_notify_cb;
+	twt_cb.twt_nudge_dialog_cb = hdd_twt_nudge_dialog_comp_cb;
+
 	status = sme_register_twt_callbacks(hdd_ctx->mac_handle, &twt_cb);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Register twt enable complete failed");

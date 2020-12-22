@@ -2226,7 +2226,6 @@ sme_process_twt_nudge_dialog_event(struct mac_context *mac,
 			struct wmi_twt_nudge_dialog_complete_event_param *param)
 {
 	twt_nudge_dialog_cb callback;
-	void *context;
 	bool is_evt_allowed;
 
 	is_evt_allowed = mlme_twt_is_command_in_progress(
@@ -2239,11 +2238,8 @@ sme_process_twt_nudge_dialog_event(struct mac_context *mac,
 	}
 
 	callback = mac->sme.twt_nudge_dialog_cb;
-	context = mac->sme.twt_nudge_dialog_context;
-	mac->sme.twt_nudge_dialog_cb = NULL;
 	if (callback)
-		callback(context, param);
-
+		callback(mac->psoc, param);
 	/* Reset the active TWT command to none */
 	mlme_set_twt_command_in_progress(
 			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
@@ -14004,6 +14000,7 @@ QDF_STATUS sme_clear_twt_complete_cb(mac_handle_t mac_handle)
 		mac->sme.twt_pause_dialog_cb = NULL;
 		mac->sme.twt_resume_dialog_cb = NULL;
 		mac->sme.twt_notify_cb = NULL;
+		mac->sme.twt_nudge_dialog_cb = NULL;
 		sme_release_global_lock(&mac->sme);
 
 		sme_debug("TWT: callbacks Initialized");
@@ -14027,6 +14024,7 @@ QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
 		mac->sme.twt_resume_dialog_cb = twt_cb->twt_resume_dialog_cb;
 		mac->sme.twt_disable_cb = twt_cb->twt_disable_cb;
 		mac->sme.twt_notify_cb = twt_cb->twt_notify_cb;
+		mac->sme.twt_nudge_dialog_cb = twt_cb->twt_nudge_dialog_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("TWT: callbacks registered");
 	}
@@ -14244,9 +14242,7 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 
 QDF_STATUS
 sme_nudge_dialog_cmd(mac_handle_t mac_handle,
-		     twt_nudge_dialog_cb nudge_dialog_cb,
-		     struct wmi_twt_nudge_dialog_cmd_param *twt_params,
-		     void *context)
+		     struct wmi_twt_nudge_dialog_cmd_param *twt_params)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct wmi_twt_nudge_dialog_cmd_param *cmd_params;
@@ -14285,16 +14281,7 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 		return status;
 	}
 
-	if (mac->sme.twt_nudge_dialog_cb) {
-		sme_release_global_lock(&mac->sme);
-		qdf_mem_free(cmd_params);
-		sme_err_rl("TWT: Command in progress - STATUS E_BUSY");
-		return QDF_STATUS_E_BUSY;
-	}
-
 	/* Serialize the req through MC thread */
-	mac->sme.twt_nudge_dialog_cb = nudge_dialog_cb;
-	mac->sme.twt_nudge_dialog_context = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_NUDGE_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);
