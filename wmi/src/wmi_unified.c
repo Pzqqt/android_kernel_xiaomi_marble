@@ -1646,7 +1646,7 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len,
 {
 	wmi_buf_t wmi_buf;
 
-	if (roundup(len + WMI_MIN_HEAD_ROOM, 4) > wmi_handle->max_msg_len) {
+	if (roundup(len + sizeof(WMI_CMD_HDR), 4) > wmi_handle->max_msg_len) {
 		QDF_ASSERT(0);
 		return NULL;
 	}
@@ -1687,7 +1687,7 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 {
 	wmi_buf_t wmi_buf;
 
-	if (roundup(len + WMI_MIN_HEAD_ROOM, 4) > wmi_handle->max_msg_len) {
+	if (roundup(len + sizeof(WMI_CMD_HDR), 4) > wmi_handle->max_msg_len) {
 		QDF_DEBUG_PANIC("Invalid length %u (via %s:%u)",
 				len, func, line);
 		return NULL;
@@ -2578,18 +2578,11 @@ static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
 	struct wmi_unified *wmi_handle = wmi_cb_ctx;
 	wmi_buf_t evt_buf;
 	uint32_t evt_id;
-	int wmi_msg_len;
 
-	if (!wmi_handle || !buf || (len < WMI_MIN_HEAD_ROOM))
+	if (!wmi_handle || !buf)
 		return -EINVAL;
 
-	/**
-	 * Subtract WMI_MIN_HEAD_ROOM from received QMI event length to get
-	 * wmi message length
-	 */
-	wmi_msg_len = len - WMI_MIN_HEAD_ROOM;
-
-	evt_buf = wmi_buf_alloc(wmi_handle, wmi_msg_len);
+	evt_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!evt_buf)
 		return -ENOMEM;
 
