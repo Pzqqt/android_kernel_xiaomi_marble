@@ -3606,7 +3606,7 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 	drm_for_each_encoder_mask(enc, crtc->dev, state->encoder_mask)
 		sde_rm_release(&sde_kms->rm, enc, true);
 
-	sde_cp_clear_state_info(state, true);
+	sde_cp_clear_state_info(state);
 	__drm_atomic_helper_crtc_destroy_state(state);
 
 	/* destroy value helper */
@@ -4024,7 +4024,7 @@ static struct drm_crtc_state *sde_crtc_duplicate_state(struct drm_crtc *crtc)
 	msm_property_duplicate_state(&sde_crtc->property_info,
 			old_cstate, cstate,
 			&cstate->property_state, cstate->property_values);
-	sde_cp_clear_state_info(&cstate->base, false);
+	sde_cp_duplicate_state_info(&old_cstate->base, &cstate->base);
 
 	/* duplicate base helper */
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &cstate->base);

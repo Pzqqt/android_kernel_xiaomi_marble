@@ -319,7 +319,15 @@ void sde_cp_crtc_disable(struct drm_crtc *crtc);
 /**
  * sde_cp_clear_state_info(): clear color processing info in the state.
  * @state:  Pointer to drm_crtc_state.
- * @free_mem: Boolean indicating if owned memory should be freed.
  */
-void sde_cp_clear_state_info(struct drm_crtc_state *state, bool free_mem);
+void sde_cp_clear_state_info(struct drm_crtc_state *state);
+
+/**
+ * sde_cp_duplicate_state_info(): duplicate the cp state information.
+ * Function should be called only from sde_crtc_duplicate_state.
+ * @old_state:  Pointer to old drm_crtc_state.
+ * @state: Pointer to current drm_crtc_state.
+ */
+void sde_cp_duplicate_state_info(struct drm_crtc_state *old_state,
+				struct drm_crtc_state *state);
 #endif /*_SDE_COLOR_PROCESSING_H */
