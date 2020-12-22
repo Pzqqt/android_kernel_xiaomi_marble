@@ -18169,7 +18169,7 @@ wlan_cm_roam_fill_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 						  &req->rso_config,
 						  NULL,
 						  ROAM_SCAN_OFFLOAD_STOP,
-						  reason);
+						  req->reason);
 
 	return status;
 }
