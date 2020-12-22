@@ -2024,6 +2024,13 @@ QDF_STATUS (*extract_reg_chan_list_update_event)(wmi_unified_t wmi_handle,
 						 struct cur_regulatory_info
 						 *reg_info,
 						 uint32_t len);
+#ifdef CONFIG_BAND_6GHZ
+QDF_STATUS (*extract_reg_chan_list_ext_update_event)(wmi_unified_t wmi_handle,
+						     uint8_t *evt_buf,
+						     struct cur_regulatory_info
+						     *reg_info,
+						     uint32_t len);
+#endif
 
 QDF_STATUS (*extract_reg_11d_new_country_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
