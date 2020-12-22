@@ -4,6 +4,7 @@
  */
 
 #include <linux/dma-buf.h>
+#include <linux/dma-heap.h>
 #include <linux/msm_ion.h>
 #include <linux/ion.h>
 
@@ -13,27 +14,6 @@
 #include "msm_vidc_dt.h"
 #include "msm_vidc_core.h"
 
-
-static int get_ion_secure_flag(enum msm_vidc_buffer_region region)
-{
-	u32 ion_flag = 0;
-
-	switch (region) {
-	case MSM_VIDC_SECURE_PIXEL:
-		ion_flag = ION_FLAG_CP_PIXEL;
-		break;
-	case MSM_VIDC_SECURE_NONPIXEL:
-		ion_flag = ION_FLAG_CP_NON_PIXEL;
-		break;
-	case MSM_VIDC_SECURE_BITSTREAM:
-		ion_flag = ION_FLAG_CP_BITSTREAM;
-		break;
-	default:
-		d_vpr_e("invalid secure region : %#x\n", region);
-	}
-
-	return ion_flag;
-}
 
 struct context_bank_info *get_context_bank(struct msm_vidc_core *core,
 		enum msm_vidc_buffer_region region)
@@ -92,7 +72,7 @@ void msm_vidc_memory_put_dmabuf(void *dmabuf)
 		return;
 	}
 
-	dma_buf_put((struct dma_buf *)dmabuf);
+	dma_heap_buffer_free((struct dma_buf *)dmabuf);
 }
 
 int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
@@ -205,10 +185,9 @@ exit:
 int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 {
 	int rc = 0;
-	int ion_flags = 0;
-	int ion_secure_flag = 0;
-	unsigned long heap_mask = 0;
 	int size = 0;
+	struct dma_heap *heap;
+	char *heap_name = NULL;
 
 	if (!mem) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -217,20 +196,28 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 
 	size = ALIGN(mem->size, SZ_4K);
 
-	if (mem->cached)
-		ion_flags |= ION_FLAG_CACHED;
-
+/* All dma-heap allocations are cached by default. */
 	if (mem->secure) {
-		ion_secure_flag = get_ion_secure_flag(mem->region);
-		ion_flags |= ION_FLAG_SECURE | ion_secure_flag;
-		heap_mask = ION_HEAP(ION_SECURE_HEAP_ID);
+		switch (mem->region) {
+		case MSM_VIDC_SECURE_PIXEL:
+			heap_name = "qcom,secure-pixel";
+			break;
+		case MSM_VIDC_SECURE_NONPIXEL:
+			heap_name = "qcom,secure-non-pixel";
+			break;
+		case MSM_VIDC_SECURE_BITSTREAM:
+		default:
+			d_vpr_e("invalid secure region : %#x\n", mem->region);
+			return -EINVAL;
+		}
 	} else {
-		heap_mask = ION_HEAP(ION_SYSTEM_HEAP_ID);
+		heap_name = "qcom,system";
 	}
 
-	mem->dmabuf = ion_alloc(size, heap_mask, ion_flags);
+	heap = dma_heap_find(heap_name);
+	mem->dmabuf = dma_heap_buffer_alloc(heap, size, 0, 0);
 	if (IS_ERR_OR_NULL(mem->dmabuf)) {
-		d_vpr_e("%s: ion alloc failed\n", __func__);
+		d_vpr_e("%s: dma heap %s alloc failed\n", __func__, heap_name);
 		mem->dmabuf = NULL;
 		rc = -ENOMEM;
 		goto error;
@@ -276,7 +263,7 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 	}
 
 	if (mem->dmabuf) {
-		dma_buf_put(mem->dmabuf);
+		dma_heap_buffer_free(mem->dmabuf);
 		mem->dmabuf = NULL;
 	}
 

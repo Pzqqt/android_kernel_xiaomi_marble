@@ -2119,7 +2119,6 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	alloc.type       = MSM_VIDC_BUF_QUEUE;
 	alloc.region     = MSM_VIDC_NON_SECURE;
 	alloc.size       = q_size;
-	alloc.cached     = false;
 	alloc.secure     = false;
 	alloc.map_kernel = true;
 	rc = msm_vidc_memory_alloc(core, &alloc);
@@ -2192,7 +2191,6 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	alloc.type       = MSM_VIDC_BUF_QUEUE;
 	alloc.region     = MSM_VIDC_NON_SECURE;
 	alloc.size       = ALIGNED_SFR_SIZE;
-	alloc.cached     = false;
 	alloc.secure     = false;
 	alloc.map_kernel = true;
 	rc = msm_vidc_memory_alloc(core, &alloc);

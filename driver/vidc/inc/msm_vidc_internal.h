@@ -643,7 +643,6 @@ struct msm_vidc_alloc {
 	enum msm_vidc_buffer_type   type;
 	enum msm_vidc_buffer_region region;
 	u32                         size;
-	u8                          cached:1;
 	u8                          secure:1;
 	u8                          map_kernel:1;
 	struct dma_buf             *dmabuf;
