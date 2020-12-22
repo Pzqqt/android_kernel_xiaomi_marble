@@ -71,24 +71,6 @@ bool utils_dfs_is_freq_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 	return dfs_is_freq_in_nol(dfs, freq);
 }
 
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
-		uint8_t prevchan_ieee,
-		uint32_t prevchan_flags)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	dfs_cac_valid_reset(dfs, prevchan_ieee, prevchan_flags);
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(utils_dfs_cac_valid_reset);
-#endif
-
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS utils_dfs_cac_valid_reset_for_freq(struct wlan_objmgr_pdev *pdev,
 					      uint16_t prevchan_freq,

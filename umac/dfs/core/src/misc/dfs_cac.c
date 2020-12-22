@@ -41,64 +41,6 @@
 #define CH100_START_FREQ                 5490
 #define CH100                            100
 
-int dfs_override_cac_timeout(struct wlan_dfs *dfs, int cac_timeout)
-{
-	if (!dfs)
-		return -EIO;
-
-	dfs->dfs_cac_timeout_override = cac_timeout;
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "CAC timeout is now %s %d",
-		(cac_timeout == -1) ? "default" : "overridden",
-		cac_timeout);
-
-	return 0;
-}
-
-int dfs_get_override_cac_timeout(struct wlan_dfs *dfs, int *cac_timeout)
-{
-	if (!dfs)
-		return -EIO;
-
-	(*cac_timeout) = dfs->dfs_cac_timeout_override;
-
-	return 0;
-}
-
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_cac_valid_reset(struct wlan_dfs *dfs,
-		uint8_t prevchan_ieee,
-		uint32_t prevchan_flags)
-{
-	if (dfs->dfs_cac_valid_time) {
-		if ((prevchan_ieee != dfs->dfs_curchan->dfs_ch_ieee) ||
-			(prevchan_flags != dfs->dfs_curchan->dfs_ch_flags)) {
-			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"Cancelling timer & clearing cac_valid"
-					);
-			qdf_timer_stop(&dfs->dfs_cac_valid_timer);
-			dfs->dfs_cac_valid = 0;
-		}
-	}
-}
-#endif
-
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_cac_valid_reset_for_freq(struct wlan_dfs *dfs,
-				  uint16_t prevchan_freq,
-				  uint32_t prevchan_flags)
-{
-	if (dfs->dfs_cac_valid_time) {
-		if ((prevchan_freq != dfs->dfs_curchan->dfs_ch_freq) ||
-		    (prevchan_flags != dfs->dfs_curchan->dfs_ch_flags)) {
-			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"Cancelling timer & clearing cac_valid");
-			qdf_timer_stop(&dfs->dfs_cac_valid_timer);
-			dfs->dfs_cac_valid = 0;
-		}
-	}
-}
-#endif
-
 /**
  * dfs_cac_valid_timeout() - Timeout function for dfs_cac_valid_timer
  *                           cac_valid bit will be reset in this function.
@@ -283,6 +225,7 @@ static os_timer_func(dfs_cac_timeout)
 #endif
 #endif
 
+#ifdef QCA_SUPPORT_DFS_CAC
 void dfs_cac_timer_attach(struct wlan_dfs *dfs)
 {
 	dfs->dfs_cac_timeout_override = -1;
@@ -344,30 +287,6 @@ void dfs_start_cac_timer(struct wlan_dfs *dfs)
 	qdf_timer_mod(&dfs->dfs_cac_timer, cac_timeout * 1000);
 	dfs->dfs_cac_aborted = 0;
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_start_cac_timer(struct wlan_dfs *dfs)
-{
-	int cac_timeout = 0;
-	struct dfs_channel *chan = dfs->dfs_curchan;
-
-	cac_timeout = dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
-					       chan->dfs_ch_freq,
-					       chan->dfs_ch_vhtop_ch_freq_seg2,
-					       chan->dfs_ch_flags);
-
-	dfs->dfs_cac_started_chan = *chan;
-
-	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		  "chan = %d cfreq2 = %d timeout = %d sec, curr_time = %d sec",
-		  chan->dfs_ch_ieee, chan->dfs_ch_vhtop_ch_freq_seg2,
-		  cac_timeout,
-		  qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000);
-
-	qdf_timer_mod(&dfs->dfs_cac_timer, cac_timeout * 1000);
-	dfs->dfs_cac_aborted = 0;
-}
-#endif
 #endif
 
 void dfs_cancel_cac_timer(struct wlan_dfs *dfs)
@@ -401,6 +320,47 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
 	dfs_clear_cac_started_chan(dfs);
 }
+
+int dfs_override_cac_timeout(struct wlan_dfs *dfs, int cac_timeout)
+{
+	if (!dfs)
+		return -EIO;
+
+	dfs->dfs_cac_timeout_override = cac_timeout;
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "CAC timeout is now %s %d",
+		 (cac_timeout == -1) ? "default" : "overridden",
+		 cac_timeout);
+
+	return 0;
+}
+
+int dfs_get_override_cac_timeout(struct wlan_dfs *dfs, int *cac_timeout)
+{
+	if (!dfs)
+		return -EIO;
+
+	(*cac_timeout) = dfs->dfs_cac_timeout_override;
+
+	return 0;
+}
+
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_cac_valid_reset_for_freq(struct wlan_dfs *dfs,
+				  uint16_t prevchan_freq,
+				  uint32_t prevchan_flags)
+{
+	if (dfs->dfs_cac_valid_time) {
+		if ((prevchan_freq != dfs->dfs_curchan->dfs_ch_freq) ||
+		    (prevchan_flags != dfs->dfs_curchan->dfs_ch_flags)) {
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Cancelling timer & clearing cac_valid");
+			qdf_timer_stop(&dfs->dfs_cac_valid_timer);
+			dfs->dfs_cac_valid = 0;
+		}
+	}
+}
+#endif
+#endif
 
 /*
  * dfs_is_subset_channel_for_freq() - Find out if prev channel and current
@@ -506,6 +466,7 @@ dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
 }
 #endif
 
+#ifdef QCA_SUPPORT_DFS_CAC
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
@@ -580,3 +541,4 @@ bool dfs_is_cac_required(struct wlan_dfs *dfs,
 
 	return true;
 }
+#endif
