@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -62,6 +62,14 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	peer_tx_event->counter = peer_tx_event_ev->counter;
 	qdf_mem_copy(peer_tx_event->chain_rssi, peer_tx_event_ev->chain_rssi,
 		     sizeof(peer_tx_event->chain_rssi));
+	if (peer_tx_event_ev->cfo_measurement_valid)
+		peer_tx_event->cfo_measurement =
+			peer_tx_event_ev->cfo_measurement;
+	else
+		peer_tx_event->cfo_measurement = 0;
+
+	peer_tx_event->rx_start_ts = peer_tx_event_ev->rx_start_ts;
+	peer_tx_event->rx_ts_reset = peer_tx_event_ev->rx_ts_reset;
 
 	chain_phase_ev = param_buf->phase_param;
 	if (chain_phase_ev) {
@@ -74,6 +82,8 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 			 */
 			peer_tx_event->chain_phase[idx] =
 				(0xffff & chain_phase_ev->chain_phase[idx]);
+			peer_tx_event->agc_gain[idx] =
+				WMI_UNIFIED_AGC_GAIN_GET(chain_phase_ev, idx);
 		}
 	}
 

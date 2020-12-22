@@ -7587,6 +7587,10 @@ typedef struct {
 	uint32_t counter;
 	uint32_t chain_rssi[WMI_HOST_MAX_CHAINS];
 	uint16_t chain_phase[WMI_HOST_MAX_CHAINS];
+	int32_t cfo_measurement;
+	uint8_t agc_gain[WMI_HOST_MAX_CHAINS];
+	uint32_t rx_start_ts;
+	uint32_t rx_ts_reset;
 } wmi_cfr_peer_tx_event_param;
 
 /**
