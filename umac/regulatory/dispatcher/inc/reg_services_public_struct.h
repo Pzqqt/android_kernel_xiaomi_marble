@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,6 +48,7 @@
 #define CH_AVOID_MAX_RANGE   4
 #define REG_ALPHA2_LEN 2
 #define MAX_REG_RULES 10
+#define MAX_6G_REG_RULES 5
 
 #define REGULATORY_CHAN_DISABLED     BIT(0)
 #define REGULATORY_CHAN_NO_IR        BIT(1)
@@ -538,6 +539,8 @@ enum channel_state {
  * enum reg_6g_ap_type - Regulatory AP type for regulatory info subfield.
  * @REG_INDOOR_AP: Indoor AP
  * @REG_STANDARD_POWER_AP: Standard Power AP
+ * @REG_VERY_LOW_POWER_AP: Very low power AP
+ * @REG_CURRENT_MAX_AP_TYPE: current maximum, used to determine array size
  * @REG_MAX_SUPP_AP_TYPE: Current maximum AP power typer supported in the IEEE
  * standard.
  * @REG_MAX_AP_TYPE: Maximum value possible for (3 bits) regulatory info
@@ -546,7 +549,9 @@ enum channel_state {
 enum reg_6g_ap_type {
 	REG_INDOOR_AP = 0,
 	REG_STANDARD_POWER_AP = 1,
-	REG_MAX_SUPP_AP_TYPE = REG_STANDARD_POWER_AP,
+	REG_VERY_LOW_POWER_AP = 2,
+	REG_CURRENT_MAX_AP_TYPE,
+	REG_MAX_SUPP_AP_TYPE = REG_VERY_LOW_POWER_AP,
 	REG_MAX_AP_TYPE = 7,
 };
 
@@ -560,7 +565,7 @@ enum reg_6g_ap_type {
 enum reg_6g_client_type {
 	REG_DEFAULT_CLIENT = 0,
 	REG_SUBORDINATE_CLIENT = 1,
-	REG_MAX_CLIENT_TYPE = 3,
+	REG_MAX_CLIENT_TYPE = 2,
 };
 
 /**
@@ -780,6 +785,8 @@ enum country_src {
  * @nol_chan: whether channel is nol
  * @nol_history: Set NOL-History when STA vap detects RADAR.
  * @is_chan_hop_blocked: Whether channel is blocked for ACS hopping.
+ * @psd_flag: is PSD channel or not
+ * @psd_eirp: PSD power level
  */
 struct regulatory_channel {
 	qdf_freq_t center_freq;
@@ -794,6 +801,10 @@ struct regulatory_channel {
 	bool nol_history;
 #ifdef CONFIG_HOST_FIND_CHAN
 	bool is_chan_hop_blocked;
+#endif
+#ifdef CONFIG_BAND_6GHZ
+	bool psd_flag;
+	uint16_t psd_eirp;
 #endif
 };
 
@@ -890,6 +901,8 @@ enum cc_setting_code {
  * @reg_power: regulatory power
  * @ant_gain: antenna gain
  * @flags: regulatory flags
+ * @psd_flag: is PSD power used
+ * @psd_eirp: maximum PSD EIRP value
  */
 struct cur_reg_rule {
 	uint16_t start_freq;
@@ -898,6 +911,8 @@ struct cur_reg_rule {
 	uint8_t reg_power;
 	uint8_t ant_gain;
 	uint16_t flags;
+	bool psd_flag;
+	uint16_t psd_eirp;
 };
 
 /**
@@ -921,6 +936,20 @@ struct cur_reg_rule {
  * @num_5g_reg_rules: number 5G  and 6G reg rules
  * @reg_rules_2g_ptr: ptr to 2G reg rules
  * @reg_rules_5g_ptr: ptr to 5G reg rules
+ * @super_dmn_id: 6G super domain ID
+ * @client_type: type of client
+ * @rnr_tpe_usable: if RNR TPE octet is usable for country
+ * @unspecified_ap_usable: if not set, AP usable for country
+ * @domain_code_6g_ap: domain code for 6G AP
+ * @domain_code_6g_client: domain code for 6G client in SP mode
+ * @min_bw_6g_ap: minimum 6G bw for AP
+ * @max_bw_6g_ap: maximum 6G bw for AP
+ * @min_bw_6g_client: list of minimum 6G bw for clients
+ * @max_bw_6g_client: list of maximum 6G bw for clients
+ * @num_6g_reg_rules_ap: number of 6G reg rules for AP
+ * @num_6g_reg_rules_client: list of number of 6G reg rules for client
+ * @reg_rules_6g_ap_ptr: ptr to 6G AP reg rules
+ * @reg_rules_6g_client_ptr: list of ptr to 6G client reg rules
  */
 struct cur_regulatory_info {
 	struct wlan_objmgr_psoc *psoc;
@@ -942,6 +971,21 @@ struct cur_regulatory_info {
 	uint32_t num_5g_reg_rules;
 	struct cur_reg_rule *reg_rules_2g_ptr;
 	struct cur_reg_rule *reg_rules_5g_ptr;
+	uint16_t super_dmn_id;
+	enum reg_6g_client_type client_type;
+	bool rnr_tpe_usable;
+	bool unspecified_ap_usable;
+	uint8_t domain_code_6g_ap[REG_CURRENT_MAX_AP_TYPE];
+	uint8_t domain_code_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
+	uint32_t domain_code_6g_super_id;
+	uint32_t min_bw_6g_ap[REG_CURRENT_MAX_AP_TYPE];
+	uint32_t max_bw_6g_ap[REG_CURRENT_MAX_AP_TYPE];
+	uint32_t min_bw_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
+	uint32_t max_bw_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
+	uint32_t num_6g_reg_rules_ap[REG_CURRENT_MAX_AP_TYPE];
+	uint32_t num_6g_reg_rules_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
+	struct cur_reg_rule *reg_rules_6g_ap_ptr[REG_CURRENT_MAX_AP_TYPE];
+	struct cur_reg_rule *reg_rules_6g_client_ptr[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
 };
 
 /**
@@ -950,12 +994,20 @@ struct cur_regulatory_info {
  * @dfs_region: dfs region
  * @num_of_reg_rules: number of reg rules
  * @reg_rules: regulatory rules array
+ * @num_of_6g_client_reg_rules: number of 6g reg rules
+ * @reg_rules_6g_client: reg rules for all 6g clients
  */
 struct reg_rule_info {
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 	enum dfs_reg dfs_region;
 	uint8_t num_of_reg_rules;
 	struct cur_reg_rule reg_rules[MAX_REG_RULES];
+#ifdef CONFIG_BAND_6GHZ
+	uint8_t num_of_6g_ap_reg_rules[REG_CURRENT_MAX_AP_TYPE];
+	struct cur_reg_rule reg_rules_6g_ap[REG_CURRENT_MAX_AP_TYPE][MAX_6G_REG_RULES];
+	uint8_t num_of_6g_client_reg_rules[REG_CURRENT_MAX_AP_TYPE];
+	struct cur_reg_rule reg_rules_6g_client[REG_CURRENT_MAX_AP_TYPE][MAX_6G_REG_RULES];
+#endif
 };
 
 /**
@@ -1085,7 +1137,9 @@ enum direction {
  * struct mas_chan_params
  * @dfs_region: dfs region
  * @phybitmap: phybitmap
- * @mas_chan_list: master chan list
+ * @mas_chan_list: master chan list for 2GHz and 5GHz channels
+ * @mas_chan_list_6g_ap: master chan list for 6GHz AP channels
+ * @mas_chan_list_6g_client: master chan list for 6GHz client
  * @default_country: default country
  * @current_country: current country
  * @def_region_domain: default reg domain
@@ -1093,11 +1147,19 @@ enum direction {
  * @reg_dmn_pair: reg domain pair
  * @ctry_code: country code
  * @reg_rules: regulatory rules
+ * @client_type: type of client
+ * @rnr_tpe_usable: if RNR TPE octet is usable for country
+ * @unspecified_ap_usable: if not set, AP usable for country
  */
 struct mas_chan_params {
 	enum dfs_reg dfs_region;
 	uint32_t phybitmap;
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
+#ifdef CONFIG_BAND_6GHZ
+	bool is_6g_channel_list_populated;
+	struct regulatory_channel mas_chan_list_6g_ap[REG_CURRENT_MAX_AP_TYPE][NUM_6GHZ_CHANNELS];
+	struct regulatory_channel mas_chan_list_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE][NUM_6GHZ_CHANNELS];
+#endif
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];
 	uint16_t def_region_domain;
@@ -1105,6 +1167,12 @@ struct mas_chan_params {
 	uint32_t reg_dmn_pair;
 	uint16_t ctry_code;
 	struct reg_rule_info reg_rules;
+#ifdef CONFIG_BAND_6GHZ
+	enum reg_6g_ap_type ap_pwr_type;
+	enum reg_6g_client_type client_type;
+	bool rnr_tpe_usable;
+	bool unspecified_ap_usable;
+#endif
 };
 
 /**
