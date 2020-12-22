@@ -826,23 +826,30 @@ enum wlan_status_code lim_check_rsn_ie(struct pe_session *session,
 				      bool *pmf_connection)
 {
 	struct wlan_objmgr_vdev *vdev;
-	tSirMacRsnInfo rsn_ie;
+	tSirMacRsnInfo *rsn_ie;
 	struct wlan_crypto_params peer_crypto_params;
 
-	rsn_ie.info[0] = WLAN_ELEMID_RSN;
-	rsn_ie.info[1] = assoc_req->rsn.length;
+	rsn_ie = qdf_mem_malloc(sizeof(*rsn_ie));
+	if (!rsn_ie) {
+		pe_err("malloc failed for rsn_ie");
+		return STATUS_UNSPECIFIED_FAILURE;
+	}
 
-	rsn_ie.length = assoc_req->rsn.length + 2;
-	qdf_mem_copy(&rsn_ie.info[2], assoc_req->rsn.info,
+	rsn_ie->info[0] = WLAN_ELEMID_RSN;
+	rsn_ie->info[1] = assoc_req->rsn.length;
+
+	rsn_ie->length = assoc_req->rsn.length + 2;
+	qdf_mem_copy(&rsn_ie->info[2], assoc_req->rsn.info,
 		     assoc_req->rsn.length);
 	if (wlan_crypto_check_rsn_match(mac_ctx->psoc, session->smeSessionId,
-					&rsn_ie.info[0], rsn_ie.length,
+					&rsn_ie->info[0], rsn_ie->length,
 					&peer_crypto_params)) {
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
 							session->smeSessionId,
 							WLAN_LEGACY_MAC_ID);
 		if (!vdev) {
 			pe_err("vdev is NULL");
+			qdf_mem_free(rsn_ie);
 			return STATUS_UNSPECIFIED_FAILURE;
 		}
 		if ((peer_crypto_params.rsn_caps &
@@ -851,12 +858,15 @@ enum wlan_status_code lim_check_rsn_ie(struct pe_session *session,
 			*pmf_connection = true;
 
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		qdf_mem_free(rsn_ie);
 		return lim_check_crypto_param(assoc_req, &peer_crypto_params);
 
 	} else {
+		qdf_mem_free(rsn_ie);
 		return STATUS_INVALID_IE;
 	}
 
+	qdf_mem_free(rsn_ie);
 	return STATUS_SUCCESS;
 }
 
