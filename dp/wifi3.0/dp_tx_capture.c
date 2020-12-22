@@ -2276,7 +2276,8 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 					   qdf_nbuf_t nbuf,
 					   uint16_t ether_type,
 					   uint8_t *dst_addr,
-					   uint8_t usr_idx)
+					   uint8_t usr_idx,
+					   bool is_amsdu)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *user;
@@ -2305,17 +2306,29 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 		ptr_wh->i_qos[1] = (user->qos_ctrl & 0xFF00) >> 8;
 		ptr_wh->i_qos[0] = (user->qos_ctrl & 0xFF);
 
+		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
+	}
+
+	if (is_amsdu) {
+		ptr_wh->i_qos[0] |=  IEEE80211_QOS_AMSDU;
+		/* update addr3 and addr4 with BSSID in an AMSDU frame */
+		qdf_mem_copy(ptr_wh->i_addr3, ptr_wh->i_addr2,
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(ptr_wh->i_addr4, ptr_wh->i_addr2,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
 		/* Update Addr 3 (DA) with DA derived from ether packet */
 		qdf_mem_copy(ptr_wh->i_addr3, dst_addr, QDF_MAC_ADDR_SIZE);
-
-		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
 	}
 
 	frame_size = (user->tid != DP_NON_QOS_TID) ?
 		      sizeof(struct ieee80211_qosframe_addr4) :
 		      sizeof(struct ieee80211_frame_addr4);
 
-	mpdu_buf_len = frame_size + LLC_SNAP_HDR_LEN;
+	if (is_amsdu)
+		mpdu_buf_len = frame_size;
+	else
+		mpdu_buf_len = frame_size + LLC_SNAP_HDR_LEN;
 
 	nbuf->protocol = qdf_htons(ETH_P_802_2);
 
@@ -2331,15 +2344,16 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 	ptr_hdr = ptr_hdr + frame_size;
 
 	/* update LLC */
-	*ptr_hdr =  LLC_SNAP_LSAP;
-	*(ptr_hdr + 1) = LLC_SNAP_LSAP;
-	*(ptr_hdr + 2) = LLC_UI;
-	*(ptr_hdr + 3) = 0x00;
-	*(ptr_hdr + 4) = 0x00;
-	*(ptr_hdr + 5) = 0x00;
-	*(ptr_hdr + 6) = (eth_type & 0xFF00) >> 8;
-	*(ptr_hdr + 7) = (eth_type & 0xFF);
-
+	if (!is_amsdu) {
+		*ptr_hdr =  LLC_SNAP_LSAP;
+		*(ptr_hdr + 1) = LLC_SNAP_LSAP;
+		*(ptr_hdr + 2) = LLC_UI;
+		*(ptr_hdr + 3) = 0x00;
+		*(ptr_hdr + 4) = 0x00;
+		*(ptr_hdr + 5) = 0x00;
+		*(ptr_hdr + 6) = (eth_type & 0xFF00) >> 8;
+		*(ptr_hdr + 7) = (eth_type & 0xFF);
+	}
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) - mpdu_buf_len);
 	return 0;
 }
@@ -2361,7 +2375,8 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 				       qdf_nbuf_t nbuf,
 				       uint16_t ether_type,
 				       uint8_t *src_addr,
-				       uint8_t usr_idx)
+				       uint8_t usr_idx,
+				       bool is_amsdu)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *user;
@@ -2390,17 +2405,28 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 
 		ptr_wh->i_qos[1] = (user->qos_ctrl & 0xFF00) >> 8;
 		ptr_wh->i_qos[0] = (user->qos_ctrl & 0xFF);
-		/* Update Addr 3 (SA) with SA derived from ether packet */
-		qdf_mem_copy(ptr_wh->i_addr3, src_addr, QDF_MAC_ADDR_SIZE);
 
 		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
+	}
+
+	if (is_amsdu) {
+		ptr_wh->i_qos[0] |=  IEEE80211_QOS_AMSDU;
+		/* update addr3 with BSSID in an AMSDU frame */
+		qdf_mem_copy(ptr_wh->i_addr3, ptr_wh->i_addr2,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		/* Update Addr 3 (SA) with SA derived from ether packet */
+		qdf_mem_copy(ptr_wh->i_addr3, src_addr, QDF_MAC_ADDR_SIZE);
 	}
 
 	frame_size = (user->tid != DP_NON_QOS_TID) ?
 		      sizeof(struct ieee80211_qosframe) :
 		      sizeof(struct ieee80211_frame);
 
-	mpdu_buf_len = frame_size + LLC_SNAP_HDR_LEN;
+	if (is_amsdu)
+		mpdu_buf_len = frame_size;
+	else
+		mpdu_buf_len = frame_size + LLC_SNAP_HDR_LEN;
 
 	nbuf->protocol = qdf_htons(ETH_P_802_2);
 
@@ -2413,23 +2439,88 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 	ptr_hdr = (void *)qdf_nbuf_data(nbuf);
 	qdf_mem_copy(ptr_hdr, ptr_wh, frame_size);
 
-	ptr_hdr = ptr_hdr + frame_size;
+	if (!is_amsdu) {
+		ptr_hdr = ptr_hdr + frame_size;
 
-	/* update LLC */
-	*ptr_hdr =  LLC_SNAP_LSAP;
-	*(ptr_hdr + 1) = LLC_SNAP_LSAP;
-	*(ptr_hdr + 2) = LLC_UI;
-	*(ptr_hdr + 3) = 0x00;
-	*(ptr_hdr + 4) = 0x00;
-	*(ptr_hdr + 5) = 0x00;
-	*(ptr_hdr + 6) = (eth_type & 0xFF00) >> 8;
-	*(ptr_hdr + 7) = (eth_type & 0xFF);
-
+		/* update LLC */
+		*ptr_hdr =  LLC_SNAP_LSAP;
+		*(ptr_hdr + 1) = LLC_SNAP_LSAP;
+		*(ptr_hdr + 2) = LLC_UI;
+		*(ptr_hdr + 3) = 0x00;
+		*(ptr_hdr + 4) = 0x00;
+		*(ptr_hdr + 5) = 0x00;
+		*(ptr_hdr + 6) = (eth_type & 0xFF00) >> 8;
+		*(ptr_hdr + 7) = (eth_type & 0xFF);
+	}
 
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) - mpdu_buf_len);
 	return 0;
 }
 
+static QDF_STATUS dp_tx_add_amsdu_llc_hdr(qdf_nbuf_t nbuf, bool is_last_msdu)
+{
+	qdf_ether_header_t *eh = NULL;
+	struct llc_snap_hdr_t *llchdr = NULL;
+	uint8_t *p_len = NULL;
+	uint16_t eth_type;
+	uint16_t nbuf_len = qdf_nbuf_len(nbuf);
+
+	/*
+	 * Steps-
+	 * 1.nbuf->data is pointing to beginning of ethernet header.
+	 * 2.push is done to create space for LLC header
+	 * 3.Move 14 bytes (size of ether_header_t) to nbuf->data
+	 * 4.update AMSDU subframe length
+	 * 5.populate LLC and add padding if needed
+	 *
+	 * AMSDU format: DA | SA | LEN | LLC_SNAP | TYPE | PAYLOAD
+	 */
+
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
+	eth_type = qdf_htons(eh->ether_type);
+
+	/* increase data area to include LLC header */
+	if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < LLC_SNAP_HDR_LEN)) {
+		dp_tx_capture_alert("No Head room to push %d bytes, avail:%d\n",
+				    LLC_SNAP_HDR_LEN,
+				    qdf_nbuf_headroom(nbuf));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_nbuf_push_head(nbuf, LLC_SNAP_HDR_LEN);
+
+	/* AMSDU subframe header */
+	qdf_mem_move(qdf_nbuf_data(nbuf), eh, sizeof(qdf_ether_header_t));
+	p_len = qdf_nbuf_data(nbuf) + (2 * QDF_NET_ETH_LEN);
+
+	/*
+	 * update AMSDU length field with size up to LLC not including the
+	 * subframe header
+	 */
+	nbuf_len -= sizeof(qdf_ether_header_t);
+	nbuf_len += LLC_SNAP_HDR_LEN;
+	p_len[0] = (nbuf_len >> 8);
+	p_len[1] = (nbuf_len & 0xFF);
+
+	/* LLC header */
+	llchdr = (struct llc_snap_hdr_t *)(qdf_nbuf_data(nbuf) +
+					   sizeof(qdf_ether_header_t));
+	llchdr->dsap = LLC_SNAP_LSAP;
+	llchdr->ssap = LLC_SNAP_LSAP;
+	llchdr->cntl = LLC_UI;
+	qdf_mem_set(llchdr->org_code, 3, 0);
+	llchdr->ethertype[0] = (eth_type & 0xFF00) >> 8;
+	llchdr->ethertype[1] = (eth_type & 0xFF);
+
+	/* add padding to end of A-MSDU except the last one (Spec requirement)*/
+	if (!is_last_msdu) {
+		nbuf_len = qdf_nbuf_len(nbuf);
+		if (nbuf_len & 0x3)
+			qdf_nbuf_put_tail(nbuf, 4 - (nbuf_len & 3));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * dp_tx_mon_restitch_mpdu(): Function to restitch msdu to mpdu
  * @pdev: dp_pdev
@@ -2459,6 +2550,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 	qdf_ether_header_t *eh = NULL;
 	size_t msdu_comp_info_sz;
 	size_t ether_hdr_sz;
+	bool is_amsdu = 0;
 
 	if (qdf_nbuf_is_queue_empty(head_msdu))
 		return 0;
@@ -2471,6 +2563,7 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 
 		first_msdu = ptr_msdu_info->first_msdu;
 		last_msdu = ptr_msdu_info->last_msdu;
+		is_amsdu = ptr_msdu_info->msdu_part_of_amsdu;
 
 		eh = (qdf_ether_header_t *)(curr_nbuf->data +
 					   sizeof(struct msdu_completion_info));
@@ -2495,14 +2588,15 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			frag_list_sum_len = 0;
 			first_msdu_not_seen = 0;
 
-			ether_hdr_sz = sizeof(qdf_ether_header_t);
-			/* pull ethernet header from first MSDU alone */
-			if (NULL == qdf_nbuf_pull_head(curr_nbuf,
-						       ether_hdr_sz)) {
-				dp_tx_capture_alert(" No Head space to pull !!\n");
-				qdf_assert_always(0);
+			if (!is_amsdu) {
+				ether_hdr_sz = sizeof(qdf_ether_header_t);
+				/* pull ethernet header from first MSDU alone */
+				if (NULL == qdf_nbuf_pull_head(curr_nbuf,
+							       ether_hdr_sz)) {
+					dp_tx_capture_alert(" No Head space to pull !!\n");
+					qdf_assert_always(0);
+				}
 			}
-
 			/* update first buffer to previous buffer */
 			prev_nbuf = curr_nbuf;
 
@@ -2537,6 +2631,13 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			prev_nbuf = prev_nbuf->next;
 		}
 
+		if (is_amsdu) {
+			if (dp_tx_add_amsdu_llc_hdr(curr_nbuf,
+						    last_msdu ? 1 : 0) !=
+			    QDF_STATUS_SUCCESS)
+				goto free_ppdu_desc_mpdu_q;
+		}
+
 		frag_list_sum_len += qdf_nbuf_len(curr_nbuf);
 
 		if (last_msdu) {
@@ -2560,13 +2661,15 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 							   ppdu_desc, mpdu_nbuf,
 							   ether_type,
 							   eh->ether_dhost,
-							   usr_idx);
+							   usr_idx,
+							   is_amsdu);
 			} else {
 				dp_tx_update_80211_hdr(pdev, peer,
 						       ppdu_desc, mpdu_nbuf,
 						       ether_type,
 						       eh->ether_shost,
-						       usr_idx);
+						       usr_idx,
+						       is_amsdu);
 			}
 
 			/*
