@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -865,26 +865,44 @@ static enum wlan_status_code lim_check_wpa_ie(struct pe_session *session,
 					     tpSirAssocReq assoc_req,
 					     tDot11fIEWPA *wpa)
 {
-	uint8_t buffer[WLAN_MAX_IE_LEN];
+	uint8_t *buffer;
 	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
-	tSirMacRsnInfo wpa_ie = {0};
+	tSirMacRsnInfo *wpa_ie;
 	struct wlan_crypto_params peer_crypto_params;
+
+	buffer = qdf_mem_malloc(WLAN_MAX_IE_LEN);
+	if (!buffer) {
+		pe_err("malloc failed for ie buffer");
+		return STATUS_INVALID_IE;
+	}
 
 	dot11f_status = dot11f_pack_ie_wpa(mac_ctx, wpa, buffer,
 					   nbuffer, &written);
 	if (DOT11F_FAILED(dot11f_status)) {
 		pe_err("Failed to re-pack the RSN IE (0x%0x8)", dot11f_status);
+		qdf_mem_free(buffer);
 		return STATUS_INVALID_IE;
 	}
 
-	wpa_ie.length = (uint8_t) written;
-	qdf_mem_copy(&wpa_ie.info[0], buffer, wpa_ie.length);
+	wpa_ie = qdf_mem_malloc(sizeof(*wpa_ie));
+	if (!wpa_ie) {
+		pe_err("malloc failed for wpa ie");
+		qdf_mem_free(buffer);
+		return STATUS_INVALID_IE;
+	}
+
+	wpa_ie->length = (uint8_t)written;
+	qdf_mem_copy(&wpa_ie->info[0], buffer, wpa_ie->length);
+	qdf_mem_free(buffer);
+
 	if (wlan_crypto_check_wpa_match(mac_ctx->psoc, session->smeSessionId,
-					&wpa_ie.info[0], wpa_ie.length,
+					&wpa_ie->info[0], wpa_ie->length,
 					&peer_crypto_params)) {
+		qdf_mem_free(wpa_ie);
 		return lim_check_crypto_param(assoc_req, &peer_crypto_params);
 	}
 
+	qdf_mem_free(wpa_ie);
 	return STATUS_INVALID_IE;
 }
 
