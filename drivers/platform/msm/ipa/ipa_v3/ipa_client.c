@@ -1200,7 +1200,7 @@ static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
 			goto exit;
 	}
 	/* if still stop_in_proc or not empty, activate force clear */
-	if (should_force_clear) {
+	if (should_force_clear && IPA_CLIENT_IS_PROD(ep->client)) {
 		result = ipa3_enable_force_clear(qmi_req_id, false,
 			source_pipe_bitmask, source_pipe_reg_idx);
 		if (result) {
