@@ -74,7 +74,7 @@ struct wcd937x_priv {
 			tx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
 	struct codec_port_info
 			rx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
-	struct port_params tx_port_params[SWR_UC_MAX][SWR_NUM_PORTS];
+	struct swr_port_params tx_port_params[SWR_UC_MAX][SWR_NUM_PORTS];
 	struct swr_dev_frame_config swr_tx_port_params[SWR_UC_MAX];
 	struct regulator_bulk_data *supplies;
 	struct notifier_block nblock;

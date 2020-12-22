@@ -238,8 +238,9 @@ static int wcd937x_parse_port_params(struct device *dev,
 {
 	u32 *dt_array, map_size, max_uc;
 	int ret = 0;
-	u32 offset1, lane_ctrl, cnt = 0;
-	struct port_params (*map)[SWR_UC_MAX][SWR_NUM_PORTS];
+	u32 cnt = 0;
+	u32 i, j;
+	struct swr_port_params (*map)[SWR_UC_MAX][SWR_NUM_PORTS];
 	struct swr_dev_frame_config (*map_uc)[SWR_UC_MAX];
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(dev);
 
@@ -288,7 +289,7 @@ static int wcd937x_parse_port_params(struct device *dev,
 			(*map)[i][j].offset1 = dt_array[cnt];
 			(*map)[i][j].lane_ctrl = dt_array[cnt + 1];
 		}
-		(*map_uc)[i] = &(*map)[i][0];
+		(*map_uc)[i].pp = &(*map)[i][0];
 	}
 	kfree(dt_array);
 	return 0;
