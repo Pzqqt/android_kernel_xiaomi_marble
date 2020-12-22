@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1838,8 +1838,7 @@ bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 {
 	struct pe_fils_session *fils_info = session_entry->fils_info;
 	tDot11fIEfils_session fils_session = assoc_rsp->fils_session;
-	tDot11fIEfils_key_confirmation fils_key_auth = assoc_rsp->fils_key_auth;
-	tDot11fIEfils_kde fils_kde = assoc_rsp->fils_kde;
+	tDot11fIEfils_key_confirmation *fils_key_auth;
 	QDF_STATUS status;
 
 	if (!lim_is_fils_connection(session_entry))
@@ -1862,28 +1861,41 @@ bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 		goto verify_fils_params_fails;
 	}
 
+	fils_key_auth = qdf_mem_malloc(sizeof(*fils_key_auth));
+	if (!fils_key_auth) {
+		pe_err("malloc failed for fils_key_auth");
+		goto verify_fils_params_fails;
+	}
+
+	*fils_key_auth = assoc_rsp->fils_key_auth;
+
 	/* Compare FILS key auth */
-	if ((fils_key_auth.num_key_auth != fils_info->key_auth_len) ||
-		qdf_mem_cmp(fils_info->ap_key_auth_data, fils_key_auth.key_auth,
-					 fils_info->ap_key_auth_len)) {
+	if (fils_key_auth->num_key_auth != fils_info->key_auth_len ||
+	    qdf_mem_cmp(fils_info->ap_key_auth_data,
+			fils_key_auth->key_auth,
+			fils_info->ap_key_auth_len)) {
 		lim_fils_data_dump("session keyauth",
 				   fils_info->ap_key_auth_data,
 				   fils_info->ap_key_auth_len);
 		lim_fils_data_dump("Pkt keyauth",
-				   fils_key_auth.key_auth,
-				   fils_key_auth.num_key_auth);
+				   fils_key_auth->key_auth,
+				   fils_key_auth->num_key_auth);
+		qdf_mem_free(fils_key_auth);
 		goto verify_fils_params_fails;
 	}
 
+	qdf_mem_free(fils_key_auth);
+
 	/* Verify the Key Delivery Element presence */
-	if (!fils_kde.num_kde_list) {
+	if (!assoc_rsp->fils_kde.num_kde_list) {
 		pe_err("FILS KDE list absent");
 		goto verify_fils_params_fails;
 	}
 
 	/* Derive KDE elements */
-	status = lim_parse_kde_elements(mac_ctx, fils_info, fils_kde.kde_list,
-					fils_kde.num_kde_list);
+	status = lim_parse_kde_elements(mac_ctx, fils_info,
+					assoc_rsp->fils_kde.kde_list,
+					assoc_rsp->fils_kde.num_kde_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		pe_err("KDE parsing fails");
 		goto verify_fils_params_fails;
