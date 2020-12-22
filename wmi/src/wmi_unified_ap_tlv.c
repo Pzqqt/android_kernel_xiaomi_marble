@@ -2654,6 +2654,65 @@ static QDF_STATUS send_lcr_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+static QDF_STATUS send_lci_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct wifi_pos_lci_info *lci_info)
+{
+	struct wmi_rtt_oem_req_head *req_head;
+	struct wmi_rtt_oem_lci_cfg_head *lci_config;
+	uint8_t req_head_len = sizeof(struct wmi_rtt_oem_req_head);
+	uint32_t lci_cfg_head_len = sizeof(struct wmi_rtt_oem_lci_cfg_head);
+	uint8_t *buf;
+	uint32_t buf_len;
+
+	buf_len = req_head_len + lci_cfg_head_len;
+
+	buf = qdf_mem_malloc(buf_len * sizeof(uint8_t));
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_zero(buf, buf_len);
+
+	/* Adding the wmi_rtt_oem_req_head TLV */
+	req_head = (struct wmi_rtt_oem_req_head *)buf;
+	WMIRTT_TLV_SET_HDR(&req_head->tlv_header,
+			   WMIRTT_TLV_TAG_STRUC_wmi_rtt_oem_req_head,
+			   sizeof(struct wmi_rtt_oem_req_head));
+	req_head->sub_type = RTT_MSG_SUBTYPE_CONFIGURE_LCI;
+	req_head->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+				wmi_handle, lci_info->pdev_id);
+	WMI_RTT_REQ_ID_SET((req_head->req_id), lci_info->req_id);
+
+	/* Adding the wmi_rtt_oem_lci_cfg_head TLV */
+	lci_config = (struct wmi_rtt_oem_lci_cfg_head *)(buf + req_head_len);
+	WMIRTT_TLV_SET_HDR(&lci_config->tlv_header,
+			   WMIRTT_TLV_TAG_STRUC_wmi_rtt_oem_lci_cfg_head,
+			   sizeof(struct wmi_rtt_oem_lci_cfg_head));
+
+	lci_config->latitude = lci_info->latitude;
+	lci_config->longitude = lci_info->longitude;
+	lci_config->altitude = lci_info->altitude;
+	WMI_RTT_LCI_LAT_UNC_SET(lci_config->lci_cfg_param_info,
+				lci_info->latitude_unc);
+	WMI_RTT_LCI_LON_UNC_SET(lci_config->lci_cfg_param_info,
+				lci_info->longitude_unc);
+	WMI_RTT_LCI_ALT_UNC_SET(lci_config->lci_cfg_param_info,
+				lci_info->altitude_unc);
+	WMI_RTT_LCI_Z_MOTION_PAT_SET(lci_config->lci_cfg_param_info,
+				     lci_info->motion_pattern);
+	lci_config->floor = lci_info->floor;
+	WMI_RTT_LCI_Z_HEIGHT_ABV_FLR_SET(lci_config->floor_param_info,
+					 lci_info->height_above_floor);
+	WMI_RTT_LCI_Z_HEIGHT_UNC_SET(lci_config->floor_param_info,
+				     lci_info->height_unc);
+	lci_config->usage_rules = lci_info->usage_rules;
+
+	if (wmi_handle->ops->send_start_oem_data_cmd)
+		return wmi_handle->ops->send_start_oem_data_cmd(wmi_handle,
+								buf_len, buf);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2726,4 +2785,5 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->multisoc_tbtt_sync_cmd = send_multisoc_tbtt_sync_cmd_tlv;
 	ops->set_radio_tx_mode_select_cmd = set_radio_tx_mode_select_cmd_tlv;
 	ops->send_lcr_cmd = send_lcr_cmd_tlv;
+	ops->send_lci_cmd = send_lci_cmd_tlv;
 }

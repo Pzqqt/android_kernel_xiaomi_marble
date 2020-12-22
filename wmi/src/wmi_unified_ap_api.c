@@ -625,3 +625,12 @@ QDF_STATUS wmi_unified_send_lcr_cmd(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_send_lci_cmd(wmi_unified_t wmi_handle,
+				    struct wifi_pos_lci_info *lci_info)
+{
+	if (wmi_handle->ops->send_lci_cmd)
+		return wmi_handle->ops->send_lci_cmd(wmi_handle, lci_info);
+
+	return QDF_STATUS_E_FAILURE;
+}

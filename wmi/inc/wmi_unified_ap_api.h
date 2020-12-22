@@ -780,4 +780,14 @@ QDF_STATUS wmi_unified_set_radio_tx_mode_select_cmd_send(
  */
 QDF_STATUS wmi_unified_send_lcr_cmd(wmi_unified_t wmi_handle,
 				    struct wmi_wifi_pos_lcr_info *lcr_info);
+
+/**
+ * wmi_unified_send_lci_cmd() - Send LCI command to FW
+ * @wmi_handle: WMI handle
+ * @lci_info: Pointer to LCI structure
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS wmi_unified_send_lci_cmd(wmi_unified_t wmi_handle,
+				    struct wifi_pos_lci_info *lci_info);
 #endif /* _WMI_UNIFIED_AP_API_H_ */
