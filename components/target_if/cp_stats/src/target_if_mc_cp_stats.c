@@ -850,7 +850,7 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 						     uint32_t datalen)
 {
 	QDF_STATUS status;
-	struct stats_event ev = {0};
+	struct stats_event *ev;
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_cp_stats_rx_ops *rx_ops;
@@ -877,16 +877,23 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 		return -EINVAL;
 	}
 
-	status = target_if_cp_stats_extract_event(wmi_handle, &ev, data);
+	ev = qdf_mem_malloc(sizeof(*ev));
+	if (!ev) {
+		cp_stats_err("");
+		return -EINVAL;
+	}
+
+	status = target_if_cp_stats_extract_event(wmi_handle, ev, data);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cp_stats_err("extract event failed");
 		goto end;
 	}
 
-	status = rx_ops->process_stats_event(psoc, &ev);
+	status = rx_ops->process_stats_event(psoc, ev);
 
 end:
-	target_if_cp_stats_free_stats_event(&ev);
+	target_if_cp_stats_free_stats_event(ev);
+	qdf_mem_free(ev);
 
 	return qdf_status_to_os_return(status);
 }
