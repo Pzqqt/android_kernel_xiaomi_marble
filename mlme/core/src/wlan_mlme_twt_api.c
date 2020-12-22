@@ -202,10 +202,14 @@ bool mlme_is_twt_setup_done(struct wlan_objmgr_psoc *psoc,
 	}
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
-		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id) {
+		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id ||
+		    dialog_id == WLAN_ALL_SESSIONS_DIALOG_ID) {
 			is_setup_done =
 				peer_priv->twt_ctx.session_info[i].setup_done;
-			break;
+
+			if (dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID ||
+			    is_setup_done)
+				break;
 		}
 	}
 
@@ -295,7 +299,8 @@ void mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
 
 	mlme_debug("set_state:%d for dialog_id:%d", state, dialog_id);
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
-		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id) {
+		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id ||
+		    dialog_id == WLAN_ALL_SESSIONS_DIALOG_ID) {
 			peer_priv->twt_ctx.session_info[i].state = state;
 			break;
 		}
@@ -508,14 +513,21 @@ bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
 		active_cmd = peer_priv->twt_ctx.session_info[i].active_cmd;
-		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id) {
+		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id ||
+		    dialog_id == WLAN_ALL_SESSIONS_DIALOG_ID) {
 			if (cmd == WLAN_TWT_ANY) {
 				is_command_in_progress =
 					(active_cmd != WLAN_TWT_NONE);
-				break;
+
+				if (dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID ||
+				    is_command_in_progress)
+					break;
 			} else {
 				is_command_in_progress = (active_cmd == cmd);
-				break;
+
+				if (dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID ||
+				    is_command_in_progress)
+					break;
 			}
 		}
 	}
