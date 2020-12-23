@@ -725,56 +725,53 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core) {
+	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	core = inst->core;
 
-	/*
-	 * TODO: Remove the hack of sending bigger buffer sizes
-	 * once internal buffer calculations are finalised
-	 */
-	inst->buffers.bin.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_BIN) + 100000000;
-	inst->buffers.comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_COMV) + 100000000;
-	inst->buffers.non_comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_NON_COMV) + 100000000;
-	inst->buffers.line.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_LINE) + 100000000;
-	inst->buffers.persist.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_PERSIST) + 100000000;
+	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_BIN);
+	if (rc)
+		return rc;
 
-	inst->buffers.bin.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_BIN);
-	inst->buffers.comv.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_COMV);
-	inst->buffers.non_comv.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_NON_COMV);
-	inst->buffers.line.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_LINE);
-	inst->buffers.persist.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_PERSIST);
+	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	if (rc)
+		return rc;
 
-	s_vpr_h(inst->sid, "internal buffer: min     size\n");
-	s_vpr_h(inst->sid, "bin  buffer: %d      %d\n",
+	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
+	if (rc)
+		return rc;
+
+	s_vpr_h(inst->sid, "internal buffer: min     size     reuse\n");
+	s_vpr_h(inst->sid, "bin  buffer: %d      %d      %d\n",
 		inst->buffers.bin.min_count,
-		inst->buffers.bin.size);
-	s_vpr_h(inst->sid, "comv  buffer: %d      %d\n",
+		inst->buffers.bin.size,
+		inst->buffers.bin.reuse);
+	s_vpr_h(inst->sid, "comv  buffer: %d      %d      %d\n",
 		inst->buffers.comv.min_count,
-		inst->buffers.comv.size);
-	s_vpr_h(inst->sid, "non_comv  buffer: %d      %d\n",
+		inst->buffers.comv.size,
+		inst->buffers.comv.reuse);
+	s_vpr_h(inst->sid, "non_comv  buffer: %d      %d      %d\n",
 		inst->buffers.non_comv.min_count,
-		inst->buffers.non_comv.size);
-	s_vpr_h(inst->sid, "line buffer: %d      %d\n",
+		inst->buffers.non_comv.size,
+		inst->buffers.non_comv.reuse);
+	s_vpr_h(inst->sid, "line buffer: %d      %d      %d\n",
 		inst->buffers.line.min_count,
-		inst->buffers.line.size);
-	s_vpr_h(inst->sid, "persist buffer: %d      %d\n",
+		inst->buffers.line.size,
+		inst->buffers.line.reuse);
+	s_vpr_h(inst->sid, "buffer: %d      %d      %d\n",
 		inst->buffers.persist.min_count,
-		inst->buffers.persist.size);
+		inst->buffers.persist.size,
+		inst->buffers.persist.reuse);
 
 	return rc;
 }
@@ -1821,4 +1818,3 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 
 	return rc;
 }
-

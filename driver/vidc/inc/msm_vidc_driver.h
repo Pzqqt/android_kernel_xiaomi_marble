@@ -130,6 +130,8 @@ int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_state state, const char *func);
+int msm_vidc_get_input_internal_buffers(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type);
 int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type);
 int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,

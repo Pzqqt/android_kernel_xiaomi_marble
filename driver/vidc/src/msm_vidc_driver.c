@@ -909,6 +909,45 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	return 0;
 }
 
+int msm_vidc_get_input_internal_buffers(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type)
+{
+	u32 buf_size;
+	u32 buf_count;
+	struct msm_vidc_core *core;
+	struct msm_vidc_buffers *buffers;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	/*
+	 * TODO: Remove the hack of sending bigger buffer sizes
+	 * once internal buffer calculations are finalised
+	 */
+	buf_size = call_session_op(core, buffer_size,
+		inst, buffer_type) + 100000000;
+
+	buf_count = call_session_op(core, min_count,
+		inst, buffer_type);
+
+	buffers = msm_vidc_get_buffers(inst, buffer_type, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	if (buf_size <= buffers->size &&
+		buf_count <= buffers->min_count) {
+		buffers->reuse = true;
+	} else {
+		buffers->reuse = false;
+		buffers->size = buf_size;
+		buffers->min_count = buf_count;
+	}
+	return 0;
+}
+
 int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type, u32 index)
 {
@@ -1015,6 +1054,12 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 	if (!buffers)
 		return -EINVAL;
 
+	if (buffers->reuse) {
+		s_vpr_l(inst->sid, "%s: reuse enabled for buffer type %#x\n",
+			__func__, buffer_type);
+		return 0;
+	}
+
 	for (i = 0; i < buffers->min_count; i++)
 		rc = msm_vidc_create_internal_buffer(inst, buffer_type, i);
 
@@ -1042,6 +1087,12 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 	buffers = msm_vidc_get_buffers(inst, buffer_type, __func__);
 	if (!buffers)
 		return -EINVAL;
+
+	if (buffers->reuse) {
+		s_vpr_l(inst->sid, "%s: reuse enabled for buffer type %#x\n",
+			__func__, buffer_type);
+		return 0;
+	}
 
 	list_for_each_entry_safe(buffer, dummy, &buffers->list, list) {
 		/* do not queue pending release buffers */
@@ -1084,6 +1135,12 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 	buffers = msm_vidc_get_buffers(inst, buffer_type, __func__);
 	if (!buffers)
 		return -EINVAL;
+
+	if (buffers->reuse) {
+		s_vpr_l(inst->sid, "%s: reuse enabled for buffer type %#x\n",
+			__func__, buffer_type);
+		return 0;
+	}
 
 	list_for_each_entry_safe(buffer, dummy, &buffers->list, list) {
 		/* do not release already pending release buffers */

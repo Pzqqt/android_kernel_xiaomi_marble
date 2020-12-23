@@ -691,6 +691,7 @@ struct msm_vidc_buffers {
 	u32                    extra_count;
 	u32                    actual_count;
 	u32                    size;
+	bool                   reuse;
 };
 
 struct msm_vidc_ssr {
