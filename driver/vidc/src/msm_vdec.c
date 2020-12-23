@@ -5,6 +5,7 @@
 
 #include <media/v4l2_vidc_extensions.h>
 #include <media/msm_media_info.h>
+#include <linux/v4l2-common.h>
 
 #include "msm_vdec.h"
 #include "msm_vidc_core.h"
@@ -1477,7 +1478,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	struct msm_vidc_core *core;
 	struct v4l2_format *fmt;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1652,7 +1652,6 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	int rc = 0;
 	int port;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1665,6 +1664,44 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	memcpy(f, &inst->fmts[port], sizeof(struct v4l2_format));
 
 	return rc;
+}
+
+int msm_vdec_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
+{
+	if (!inst || !s) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	s_vpr_e(inst->sid, "%s: unsupported\n", __func__);
+	return -EINVAL;
+}
+
+int msm_vdec_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
+{
+	if (!inst || !s) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (s->target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+	case V4L2_SEL_TGT_CROP:
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_PADDED:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	case V4L2_SEL_TGT_COMPOSE:
+	default:
+		s->r.left = inst->crop.left;
+		s->r.top = inst->crop.top;
+		s->r.width = inst->crop.width;
+		s->r.height = inst->crop.height;
+		break;
+	}
+	s_vpr_h(inst->sid, "%s: type %d target %d, r [%d, %d, %d, %d]\n",
+		__func__, s->type, s->target, s->r.top, s->r.left,
+		s->r.width, s->r.height);
+	return 0;
 }
 
 int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)

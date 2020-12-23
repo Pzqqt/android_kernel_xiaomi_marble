@@ -100,7 +100,8 @@ struct msm_vidc_inst {
 	struct msm_vidc_inst_cap_entry     firmware;
 	bool                               request;
 	struct vb2_queue                   vb2q[MAX_PORT];
-	struct msm_vidc_crop               crop;
+	struct msm_vidc_rectangle          crop;
+	struct msm_vidc_rectangle          compose;
 	struct msm_vidc_properties         prop;
 	enum msm_vidc_stage_type           stage;
 	enum msm_vidc_pipe_type            pipe;
