@@ -2591,13 +2591,14 @@ void sde_cp_crtc_resume(struct drm_crtc *crtc)
 	/* placeholder for operations needed during resume */
 }
 
-static void _sde_cp_disable_features(struct sde_crtc *sde_crtc)
+void sde_cp_disable_features(struct drm_crtc *crtc)
 {
 	struct sde_hw_cp_cfg hw_cfg;
 	struct sde_hw_mixer *hw_lm;
 	struct sde_hw_dspp *hw_dspp;
 	feature_wrapper set_feature;
 	int i = 0, ret = 0;
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 	u32 num_mixers = sde_crtc->num_mixers;
 
 	set_feature =
@@ -2606,6 +2607,7 @@ static void _sde_cp_disable_features(struct sde_crtc *sde_crtc)
 	if (!set_feature)
 		return;
 
+	mutex_lock(&sde_crtc->crtc_cp_lock);
 	memset(&hw_cfg, 0, sizeof(hw_cfg));
 
 	for (i = 0; i < num_mixers; i++) {
@@ -2633,6 +2635,7 @@ static void _sde_cp_disable_features(struct sde_crtc *sde_crtc)
 		if (ret)
 			break;
 	}
+	mutex_unlock(&sde_crtc->crtc_cp_lock);
 }
 
 void sde_cp_crtc_clear(struct drm_crtc *crtc)
@@ -2650,9 +2653,8 @@ void sde_cp_crtc_clear(struct drm_crtc *crtc)
 		DRM_ERROR("sde_crtc %pK\n", sde_crtc);
 		return;
 	}
-
+	sde_cp_disable_features(crtc);
 	mutex_lock(&sde_crtc->crtc_cp_lock);
-	_sde_cp_disable_features(sde_crtc);
 	list_del_init(&sde_crtc->cp_active_list);
 	list_del_init(&sde_crtc->cp_dirty_list);
 	list_del_init(&sde_crtc->ad_active);

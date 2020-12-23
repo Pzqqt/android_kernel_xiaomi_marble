@@ -7342,3 +7342,8 @@ static void sde_cp_crtc_apply_noise(struct drm_crtc *crtc,
 	if (!cstate->noise_layer_en)
 		clear_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty);
 }
+
+void sde_crtc_disable_cp_features(struct drm_crtc *crtc)
+{
+	sde_cp_disable_features(crtc);
+}

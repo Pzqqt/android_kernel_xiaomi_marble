@@ -954,4 +954,12 @@ int sde_crtc_get_num_datapath(struct drm_crtc *crtc,
  */
 void sde_crtc_reset_sw_state(struct drm_crtc *crtc);
 
+/**
+ * sde_crtc_disable_cp_features - api to disable cp features that depend on planes being active.
+ *	Encoder disables the planes during suspend and calls this api for the crtc to disable
+ *	any features that require planes to be active
+ * @crtc: Pointer to DRM crtc object
+*/
+void sde_crtc_disable_cp_features(struct drm_crtc *crtc);
+
 #endif /* _SDE_CRTC_H_ */

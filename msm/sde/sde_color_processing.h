@@ -330,4 +330,7 @@ void sde_cp_clear_state_info(struct drm_crtc_state *state);
  */
 void sde_cp_duplicate_state_info(struct drm_crtc_state *old_state,
 				struct drm_crtc_state *state);
+
+void sde_cp_disable_features(struct drm_crtc *crtc);
+
 #endif /*_SDE_COLOR_PROCESSING_H */
