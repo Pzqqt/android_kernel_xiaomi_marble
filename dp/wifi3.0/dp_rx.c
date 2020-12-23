@@ -2158,7 +2158,7 @@ dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
 	struct hal_buf_info hbi;
 	uint32_t idx;
 
-	if (qdf_unlikely(!&soc->rx_ring_history[ring_num]))
+	if (qdf_unlikely(!soc->rx_ring_history[ring_num]))
 		return;
 
 	hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
