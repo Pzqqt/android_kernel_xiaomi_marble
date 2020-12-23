@@ -365,7 +365,7 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 {
 	uint32_t i;
 	QDF_STATUS status;
-	wmi_host_pdev_stats pdev_stats;
+	wmi_host_pdev_stats *pdev_stats;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	cdp_config_param_type val;
 
@@ -382,20 +382,29 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 	if (!ev->pdev_stats)
 		return QDF_STATUS_E_NOMEM;
 
+	pdev_stats = qdf_mem_malloc(sizeof(*pdev_stats));
+
+	if (!pdev_stats) {
+		cp_stats_err("malloc failed for pdev_stats");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	for (i = 0; i < ev->num_pdev_stats; i++) {
-		status = wmi_extract_pdev_stats(wmi_hdl, data, i, &pdev_stats);
+		status = wmi_extract_pdev_stats(wmi_hdl, data, i, pdev_stats);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			cp_stats_err("wmi_extract_pdev_stats failed");
+			qdf_mem_free(pdev_stats);
 			return status;
 		}
-		ev->pdev_stats[i].max_pwr = pdev_stats.chan_tx_pwr;
+		ev->pdev_stats[i].max_pwr = pdev_stats->chan_tx_pwr;
 
 		target_if_cp_stats_extract_congestion(&ev->pdev_stats[i],
-						      &pdev_stats);
+						      pdev_stats);
 
-		val.cdp_pdev_param_chn_noise_flr = pdev_stats.chan_nf;
+		val.cdp_pdev_param_chn_noise_flr = pdev_stats->chan_nf;
 		cdp_txrx_set_pdev_param(soc, 0, CDP_CHAN_NOISE_FLOOR, val);
 	}
+	qdf_mem_free(pdev_stats);
 
 	return QDF_STATUS_SUCCESS;
 }
