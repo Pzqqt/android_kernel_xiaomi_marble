@@ -25,6 +25,15 @@ LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_SDXNIGHTJAR), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/sdx12dataipa.h
+include $(srctree)/techpack/dataipa/config/sdx12dataipa_QGKI.conf
+ifneq ($(CONFIG_LOCALVERSION), "-perf")
+include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
+endif
+endif
+
 DATAIPADRVTOP = $(srctree)/techpack/dataipa/drivers/platform/msm
 
 ifneq (,$(filter $(CONFIG_IPA3) $(CONFIG_GSI),y m))
