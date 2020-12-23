@@ -1228,6 +1228,10 @@ static inline void hal_mem_dma_cache_sync(struct hal_soc *soc, uint32_t *desc,
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
+ * This API doesn't implement any byte-order conversion on reading hp/tp.
+ * So, Use API only for those srngs for which the target writes hp/tp values to
+ * the DDR in the Host order.
+ *
  * Return: 0 on success; error on failire
  */
 static inline int
@@ -1244,6 +1248,54 @@ hal_srng_access_start_unlocked(hal_soc_handle_t hal_soc_hdl,
 	else {
 		srng->u.dst_ring.cached_hp =
 			*(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
+
+		if (srng->flags & HAL_SRNG_CACHED_DESC) {
+			desc = hal_srng_dst_peek(hal_soc_hdl, hal_ring_hdl);
+			if (qdf_likely(desc)) {
+				hal_mem_dma_cache_sync(soc, desc,
+						       srng->entry_size);
+				qdf_prefetch(desc);
+			}
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * hal_le_srng_access_start_unlocked_in_cpu_order - Start ring access
+ * (unlocked) with endianness correction.
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
+ *
+ * This API provides same functionally as hal_srng_access_start_unlocked()
+ * except that it converts the little-endian formatted hp/tp values to
+ * Host order on reading them. So, this API should only be used for those srngs
+ * for which the target always writes hp/tp values in little-endian order
+ * regardless of Host order.
+ *
+ * Also, this API doesn't take the lock. For locked access, use
+ * hal_srng_access_start/hal_le_srng_access_start_in_cpu_order.
+ *
+ * Return: 0 on success; error on failire
+ */
+static inline int
+hal_le_srng_access_start_unlocked_in_cpu_order(
+	hal_soc_handle_t hal_soc_hdl,
+	hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
+	uint32_t *desc;
+
+	if (srng->ring_dir == HAL_SRNG_SRC_RING)
+		srng->u.src_ring.cached_tp =
+			qdf_le32_to_cpu(*(volatile uint32_t *)
+					(srng->u.src_ring.tp_addr));
+	else {
+		srng->u.dst_ring.cached_hp =
+			qdf_le32_to_cpu(*(volatile uint32_t *)
+					(srng->u.dst_ring.hp_addr));
 
 		if (srng->flags & HAL_SRNG_CACHED_DESC) {
 			desc = hal_srng_dst_peek(hal_soc_hdl, hal_ring_hdl);
@@ -1288,6 +1340,10 @@ static inline int hal_srng_try_access_start(hal_soc_handle_t hal_soc_hdl,
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
+ * This API doesn't implement any byte-order conversion on reading hp/tp.
+ * So, Use API only for those srngs for which the target writes hp/tp values to
+ * the DDR in the Host order.
+ *
  * Return: 0 on success; error on failire
  */
 static inline int hal_srng_access_start(hal_soc_handle_t hal_soc_hdl,
@@ -1303,6 +1359,38 @@ static inline int hal_srng_access_start(hal_soc_handle_t hal_soc_hdl,
 	SRNG_LOCK(&(srng->lock));
 
 	return hal_srng_access_start_unlocked(hal_soc_hdl, hal_ring_hdl);
+}
+
+/**
+ * hal_le_srng_access_start_in_cpu_order - Start (locked) ring access with
+ * endianness correction
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
+ *
+ * This API provides same functionally as hal_srng_access_start()
+ * except that it converts the little-endian formatted hp/tp values to
+ * Host order on reading them. So, this API should only be used for those srngs
+ * for which the target always writes hp/tp values in little-endian order
+ * regardless of Host order.
+ *
+ * Return: 0 on success; error on failire
+ */
+static inline int
+hal_le_srng_access_start_in_cpu_order(
+	hal_soc_handle_t hal_soc_hdl,
+	hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+
+	if (qdf_unlikely(!hal_ring_hdl)) {
+		qdf_print("Error: Invalid hal_ring\n");
+		return -EINVAL;
+	}
+
+	SRNG_LOCK(&(srng->lock));
+
+	return hal_le_srng_access_start_unlocked_in_cpu_order(
+			hal_soc_hdl, hal_ring_hdl);
 }
 
 /**
@@ -1939,13 +2027,16 @@ hal_srng_src_num_avail(void *hal_soc,
 /**
  * hal_srng_access_end_unlocked - End ring access (unlocked) - update cached
  * ring head/tail pointers to HW.
- * This should be used only if hal_srng_access_start_unlocked to start ring
- * access
  *
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
- * Return: 0 on success; error on failire
+ * The target expects cached head/tail pointer to be updated to the
+ * shared location in the little-endian order, This API ensures that.
+ * This API should be used only if hal_srng_access_start_unlocked was used to
+ * start ring access
+ *
+ * Return: None
  */
 static inline void
 hal_srng_access_end_unlocked(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
@@ -1978,13 +2069,23 @@ hal_srng_access_end_unlocked(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 	}
 }
 
+/* hal_srng_access_end_unlocked already handles endianness conversion,
+ * use the same.
+ */
+#define hal_le_srng_access_end_unlocked_in_cpu_order \
+	hal_srng_access_end_unlocked
+
 /**
  * hal_srng_access_end - Unlock ring access and update cached ring head/tail
  * pointers to HW
- * This should be used only if hal_srng_access_start to start ring access
  *
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring_hdl: Ring pointer (Source or Destination ring)
+ *
+ * The target expects cached head/tail pointer to be updated to the
+ * shared location in the little-endian order, This API ensures that.
+ * This API should be used only if hal_srng_access_start was used to
+ * start ring access
  *
  * Return: 0 on success; error on failire
  */
@@ -2001,6 +2102,10 @@ hal_srng_access_end(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 	hal_srng_access_end_unlocked(hal_soc, hal_ring_hdl);
 	SRNG_UNLOCK(&(srng->lock));
 }
+
+/* hal_srng_access_end already handles endianness conversion, so use the same */
+#define hal_le_srng_access_end_in_cpu_order \
+	hal_srng_access_end
 
 /**
  * hal_srng_access_end_reap - Unlock ring access
