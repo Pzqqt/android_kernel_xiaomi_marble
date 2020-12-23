@@ -3343,6 +3343,16 @@ enum gpio_direction {
 };
 
 /**
+ * enum fw_gpio_direction - GPIO Direction
+ * @WMI_FW_GPIO_OUTPUT: set gpio as output mode
+ * @WMI_FW_GPIO_INPUT: set gpio as input mode
+ */
+enum fw_gpio_direction {
+	WMI_FW_GPIO_OUTPUT = 0,
+	WMI_FW_GPIO_INPUT = 1,
+};
+
+/**
  * enum qca_gpio_value - GPIO Value
  * @WLAN_GPIO_LEVEL_LOW: set gpio output level low
  * @WLAN_GPIO_LEVEL_HIGH: set gpio output level high
