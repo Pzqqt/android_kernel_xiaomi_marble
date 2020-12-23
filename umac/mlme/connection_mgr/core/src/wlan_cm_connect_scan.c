@@ -165,8 +165,8 @@ scan_err:
 
 		status = cm_sm_deliver_event_sync(cm_ctx,
 						  WLAN_CM_SM_EV_SCAN_FAILURE,
-						  sizeof(*cm_req),
-						  cm_req);
+						  sizeof(cm_req->scan_id),
+						  &cm_req->scan_id);
 		/*
 		 * Handle failure if posting fails, i.e. the SM state has
 		 * changed or head cm_id doesn't match the active cm_id.
