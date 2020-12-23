@@ -47,6 +47,12 @@
 #define MMSS_DSI_PHY_PLL_PLL_BKG_KVCO_CAL_EN	(0x002C)
 #define MMSS_DSI_PHY_PLL_PLLLOCK_CMP_EN		(0x009C)
 
+/* PLL codes magic id in header */
+#define DSI_PLL_TRIM_CODES_MAGIC_ID	(0x5643)
+
+/* PLL codes support version*/
+#define DSI_PLL_TRIM_CODES_VERSION	(0x1)
+
 struct lpfr_cfg {
 	unsigned long vco_rate;
 	u32 r;
@@ -57,6 +63,35 @@ enum {
 	DSI_PLL_10NM,
 	DSI_UNKNOWN_PLL,
 };
+
+enum {
+	DISPLAY_PLL_CODEID_DSI0 = 0,
+	DISPLAY_PLL_CODEID_DSI1 = 1,
+	DISPLAY_PLL_CODEID_MAX
+};
+
+#pragma pack(push)
+#pragma pack(1)
+struct pll_codes_header {
+	u16 magic_id;     /* Magic identifier */
+	u8  version;      /* Version ID, starting with 1 */
+	u8  num_entries;  /* Number of VCO rates in this structure */
+	u16 size;         /* Size of the entrie data structure, including header */
+	u8  reserved[4];  /* Reserved for future use */
+};
+
+struct pll_codes_entry {
+	u8  device_id;    /* The PLL ID for this entry, refer to DISPLAY_PLL_CODEID */
+	u32 vco_rate;     /* VCO rate of this entry in Hz */
+	u8  num_codes;    /* Number of codes stored for this entry */
+	u8  pll_codes[8]; /* List of PLL codes */
+};
+
+struct pll_codes_info {
+	struct pll_codes_header   header;         /* PLL code data header */
+	struct pll_codes_entry   *pll_code_data;  /* PLL code data */
+};
+#pragma pack(pop) // Restore the default packing
 
 struct dfps_pll_codes {
 	uint32_t pll_codes_1;

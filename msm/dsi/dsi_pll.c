@@ -113,6 +113,131 @@ node_err:
 		of_node_put(pnode);
 }
 
+static int dsi_pll_parse_dfps_from_dt(struct platform_device *pdev,
+				struct dsi_pll_resource *pll_res)
+{
+	int  property_len = 0, rc = 0;
+	u32 i = 0, code_size = 0, vco_rate_cnt = 0;
+	struct device_node     *pnode          = NULL;
+	struct pll_codes_info  *pll_codes_info = NULL;
+	struct pll_codes_entry *code_entry     = NULL;
+	struct dfps_codes_info *codes_dfps     = NULL;
+	struct pll_codes_header header         = {};
+
+	pnode = of_parse_phandle(pdev->dev.of_node, "pll_codes_region", 0);
+	if (IS_ERR_OR_NULL(pnode)) {
+		DSI_PLL_ERR(pll_res, "of_parse_phandle failed\n");
+		pnode = NULL;
+		rc = -EINVAL;
+		goto err;
+	}
+
+	of_get_property(pnode, "reg", &property_len);
+	if (property_len <= 0) {
+		DSI_PLL_ERR(pll_res, "invalid property length\n");
+		rc = -EINVAL;
+		goto err;
+	}
+
+	rc = of_property_read_u32_array(pnode, "reg", (u32 *)&header,
+			sizeof(header)/4);
+	if (rc) {
+		DSI_PLL_ERR(pll_res, "fail to get pll_codes data header\n");
+		goto err;
+	}
+
+	if (header.magic_id != DSI_PLL_TRIM_CODES_MAGIC_ID) {
+		DSI_PLL_ERR(pll_res, "pll codes magic id not match\n");
+		rc = -EINVAL;
+		goto err;
+	}
+
+	if (header.version < DSI_PLL_TRIM_CODES_VERSION) {
+		DSI_PLL_ERR(pll_res, "unsupported pll trim codes version:%d\n",
+				header.version);
+		rc = -EINVAL;
+		goto err;
+	}
+
+	if (header.size < sizeof(struct pll_codes_header)) {
+		DSI_PLL_ERR(pll_res, "invalid header size:%d\n", header.size);
+		rc = -EINVAL;
+		goto err;
+	}
+
+	if (header.size == sizeof(struct pll_codes_header)) {
+		DSI_PLL_WARN(pll_res, "zero entry detected\n");
+		rc = -EINVAL;
+		goto err;
+	}
+
+	if ((header.num_entries * sizeof(struct pll_codes_entry) +
+			sizeof(struct pll_codes_header)) != header.size) {
+		DSI_PLL_ERR(pll_res, "num_entries not match with size\n");
+		rc = -EINVAL;
+		goto err;
+	}
+
+	code_size = roundup(header.size, 4);
+
+	if (code_size > property_len) {
+		DSI_PLL_ERR(pll_res, "pll code bigger than node space\n");
+		rc = -EINVAL;
+		goto err;
+	}
+
+	pll_codes_info = kzalloc(code_size, GFP_KERNEL);
+	if (IS_ERR_OR_NULL(pll_codes_info)) {
+		DSI_PLL_ERR(pll_res, "fail to alloc memory for pll codes\n");
+		rc = -ENOMEM;
+		goto err;
+	}
+
+	rc = of_property_read_u32_array(pnode, "reg", (u32 *)pll_codes_info,
+			code_size/4);
+	if (rc) {
+		DSI_PLL_ERR(pll_res, "fail to get pll_codes data\n");
+		goto err;
+	}
+
+	pll_res->dfps = kzalloc(sizeof(struct dfps_info), GFP_KERNEL);
+	if (IS_ERR_OR_NULL(pll_res->dfps)) {
+		DSI_PLL_ERR(pll_res, "pll_res->dfps allocate failed\n");
+		rc = -ENOMEM;
+		goto err;
+	}
+
+	code_entry = (struct pll_codes_entry *)&pll_codes_info->pll_code_data;
+
+	for (i = 0; i < header.num_entries; i++) {
+		if (code_entry[i].device_id == DISPLAY_PLL_CODEID_DSI0) {
+			codes_dfps = &pll_res->dfps->codes_dfps[vco_rate_cnt];
+			codes_dfps->is_valid = 1;
+			codes_dfps->clk_rate = code_entry[i].vco_rate;
+			codes_dfps->pll_codes.pll_codes_1 =
+					code_entry[i].pll_codes[0];
+			codes_dfps->pll_codes.pll_codes_2 =
+					code_entry[i].pll_codes[1];
+			codes_dfps->pll_codes.pll_codes_3 =
+					code_entry[i].pll_codes[2];
+			vco_rate_cnt++;
+		}
+
+		if (vco_rate_cnt >= DFPS_MAX_NUM_OF_FRAME_RATES)
+			break;
+	}
+
+	pll_res->dfps->vco_rate_cnt = vco_rate_cnt;
+
+err:
+	kfree(pll_codes_info);
+
+	if (pnode)
+		of_node_put(pnode);
+
+	return rc;
+}
+
 int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 {
 	int rc = 0;
@@ -214,9 +339,10 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 		return -EINVAL;
 	}
 
-	if (!(pll_res->index))
-		dsi_pll_parse_dfps(pdev, pll_res);
+	if (!(pll_res->index)) {
+		if (dsi_pll_parse_dfps_from_dt(pdev, pll_res))
+			dsi_pll_parse_dfps(pdev, pll_res);
+	}
 
 	return rc;
-
 }
