@@ -8872,6 +8872,8 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 
 	mlme_obj->proto.ht_info.allow_ht = !!session->htCapability;
 	mlme_obj->proto.vht_info.allow_vht = !!session->vhtCapability;
+	mlme_obj->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask =
+						session->gUapsdPerAcBitmask;
 
 	if (cds_is_5_mhz_enabled())
 		mlme_obj->mgmt.rate_info.quarter_rate = 1;

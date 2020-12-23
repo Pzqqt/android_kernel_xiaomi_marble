@@ -2029,14 +2029,12 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 /**
  * hdd_conn_change_peer_state() - Change the state of the peer
  * @adapter: pointer to adapter
- * @roam_info: pointer to roam info
  * @mac_addr: peer mac address
  * @sta_state: peer state
  *
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
-					     struct csr_roam_info *roam_info,
 					     uint8_t *mac_addr,
 					     enum ol_txrx_peer_state sta_state)
 {
@@ -2065,31 +2063,19 @@ hdd_rx_register_fisa_ops(struct ol_txrx_ops *txrx_ops)
 }
 #endif
 
-/**
- * hdd_roam_register_sta() - register station
- * @adapter: pointer to adapter
- * @roam_info: pointer to roam info
- * @sta_id: station identifier
- * @bss_desc: pointer to BSS description
- *
- * Return: QDF_STATUS enumeration
- */
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
-					struct csr_roam_info *roam_info,
-					struct bss_description *bss_desc)
+				 struct qdf_mac_addr *bssid,
+				 bool is_auth_required)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type txrx_desc = {0};
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (!bss_desc)
-		return QDF_STATUS_E_FAILURE;
-
 	/* Get the Station ID from the one saved during the association */
-	if (!QDF_IS_ADDR_BROADCAST(roam_info->bssid.bytes))
+	if (!QDF_IS_ADDR_BROADCAST(bssid->bytes))
 		WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes,
-			       roam_info->bssid.bytes);
+			       bssid->bytes);
 	else
 		WLAN_ADDR_COPY(txrx_desc.peer_addr.bytes,
 			       adapter->mac_addr.bytes);
@@ -2149,13 +2135,13 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		return qdf_status;
 	}
 
-	if (!roam_info->fAuthRequired) {
+	if (!is_auth_required) {
 		/*
 		 * Connections that do not need Upper layer auth, transition
 		 * TLSHIM directly to 'Authenticated' state
 		 */
 		qdf_status = hdd_conn_change_peer_state(
-						adapter, roam_info,
+						adapter,
 						txrx_desc.peer_addr.bytes,
 						OL_TXRX_PEER_STATE_AUTH);
 
@@ -2167,7 +2153,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 			  QDF_MAC_ADDR_REF(txrx_desc.peer_addr.bytes));
 
 		qdf_status = hdd_conn_change_peer_state(
-						adapter, roam_info,
+						adapter,
 						txrx_desc.peer_addr.bytes,
 						OL_TXRX_PEER_STATE_CONN);
 
@@ -2605,46 +2591,8 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 }
 #endif
 
-/**
- * hdd_netif_queue_enable() - Enable the network queue for a
- *			      particular adapter.
- * @adapter: pointer to the adapter structure
- *
- * This function schedules a work to update the netdev features
- * and enable the network queue if the feature "disable checksum/tso
- * for legacy connections" is enabled via INI. If not, it will
- * retain the existing behavior by just enabling the network queues.
- *
- * Returns: none
- */
-static inline void hdd_netif_queue_enable(struct hdd_adapter *adapter)
-{
-	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	if (cdp_cfg_get(soc, cfg_dp_disable_legacy_mode_csum_offload)) {
-		hdd_adapter_ops_record_event(hdd_ctx,
-					     WLAN_HDD_ADAPTER_OPS_WORK_POST,
-					     adapter->vdev_id);
-		qdf_queue_work(0, hdd_ctx->adapter_ops_wq,
-			       &adapter->netdev_features_update_work);
-	} else {
-		wlan_hdd_netif_queue_control(adapter,
-					     WLAN_WAKE_ALL_NETIF_QUEUE,
-					     WLAN_CONTROL_PATH);
-	}
-}
 
 #ifndef FEATURE_CM_ENABLE
-static void hdd_save_connect_status(struct hdd_adapter *adapter,
-				    struct csr_roam_info *roam_info)
-{
-	if (!roam_info)
-		return;
-
-	adapter->connect_req_status = roam_info->reasonCode;
-}
-
 /**
  * hdd_association_completion_handler() - association completion handler
  * @adapter: pointer to adapter
@@ -2677,6 +2625,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	uint32_t conn_info_freq;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct if_mgr_event_data *connect_complete;
+	uint8_t uapsd_mask;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2689,9 +2638,16 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (!roam_info) {
+		hdd_err("roam_info is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	uapsd_mask =
+		roam_info->u.pConnectedProfile->modifyProfileFields.uapsd_mask;
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
 
-	hdd_save_connect_status(adapter, roam_info);
+	hdd_cm_save_connect_status(adapter, roam_info->reasonCode);
 	/*
 	 * reset scan reject params if connection is success or we received
 	 * final failure from CSR after trying with all APs.
@@ -2716,10 +2672,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 
 	if (eCSR_ROAM_RESULT_ASSOCIATED == roam_result) {
-		if (!roam_info) {
-			hdd_err("roam_info is NULL");
-			return QDF_STATUS_E_FAILURE;
-		}
 		if (!hddDisconInProgress) {
 			hdd_conn_set_connection_state(adapter,
 						   eConnectionState_Associated);
@@ -3089,17 +3041,17 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 * Perform any WMM-related association
 				 * processing.
 				 */
-				hdd_wmm_assoc(adapter, roam_info,
-					      eCSR_BSS_TYPE_INFRASTRUCTURE);
+				hdd_wmm_assoc(adapter, roam_info->fReassocReq,
+					      uapsd_mask);
 
 				/*
 				 * Register the Station with DP after associated
 				 */
 				qdf_status = hdd_roam_register_sta(adapter,
-						roam_info,
-						roam_info->bss_desc);
+						&roam_info->bssid,
+						roam_info->fAuthRequired);
 				hdd_debug("Enabling queues");
-				hdd_netif_queue_enable(adapter);
+				hdd_cm_netif_queue_enable(adapter);
 			}
 		} else {
 			/*
@@ -3146,13 +3098,13 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 * Perform any WMM-related association
 				 * processing
 				 */
-				hdd_wmm_assoc(adapter, roam_info,
-					      eCSR_BSS_TYPE_INFRASTRUCTURE);
+				hdd_wmm_assoc(adapter, roam_info->fReassocReq,
+					      uapsd_mask);
 			}
 
 			/* Start the tx queues */
 			hdd_debug("Enabling queues");
-			hdd_netif_queue_enable(adapter);
+			hdd_cm_netif_queue_enable(adapter);
 		}
 		qdf_mem_free(reqRsnIe);
 
@@ -3160,10 +3112,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_err("STA register with TL failed status: %d [%08X]",
 				qdf_status, qdf_status);
 		}
-#ifdef WLAN_FEATURE_11W
-		qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
-			     sizeof(adapter->hdd_stats.hdd_pmf_stats));
-#endif
+		hdd_cm_clear_pmf_stats(adapter);
+
 		if (adapter->device_mode == QDF_STA_MODE) {
 			ucfg_blm_update_bssid_connect_params(hdd_ctx->pdev,
 							     roam_info->bssid,

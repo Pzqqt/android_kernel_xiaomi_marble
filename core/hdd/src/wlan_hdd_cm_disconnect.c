@@ -327,6 +327,12 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 				      enum netif_action_type action,
 				      enum netif_reason_type reason)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+					wlan_vdev_get_id(vdev));
+
+	wlan_hdd_netif_queue_control(adapter, action, reason);
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif

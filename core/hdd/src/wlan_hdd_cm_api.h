@@ -148,4 +148,43 @@ void hdd_cm_update_rssi_snr_by_bssid(struct hdd_adapter *adapter);
 void hdd_cm_handle_assoc_event(struct wlan_objmgr_vdev *vdev,
 			       uint8_t *peer_mac);
 
+/**
+ * hdd_cm_netif_queue_enable() - Enable the network queue for a
+ *			      particular adapter.
+ * @adapter: pointer to the adapter structure
+ *
+ * This function schedules a work to update the netdev features
+ * and enable the network queue if the feature "disable checksum/tso
+ * for legacy connections" is enabled via INI. If not, it will
+ * retain the existing behavior by just enabling the network queues.
+ *
+ * Returns: none
+ */
+void hdd_cm_netif_queue_enable(struct hdd_adapter *adapter);
+
+#ifdef WLAN_FEATURE_11W
+/**
+ * hdd_cm_clear_pmf_stats() - Clear pmf stats
+ * @adapter: pointer to the adapter structure
+ *
+ * Returns: None
+ */
+
+void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter);
+#else
+static inline void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)
+{
+}
+#endif
+
+/**
+ * hdd_cm_save_connect_status() - Save connect status
+ * @adapter: pointer to the adapter structure
+ * @reason_code: IEE80211 wlan status code
+ *
+ * Returns: None
+ */
+void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
+				uint32_t reason_code);
+
 #endif

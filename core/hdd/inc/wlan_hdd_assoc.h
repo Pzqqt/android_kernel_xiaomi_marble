@@ -368,9 +368,17 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 				    uint32_t vdev_param,
 				    bool is_link_up);
 
+/**
+ * hdd_roam_register_sta() - register station
+ * @adapter: pointer to adapter
+ * @bssid: bssid of the connection
+ * @is_auth_required: is upper layer authenticatoin required
+ *
+ * Return: QDF_STATUS enumeration
+ */
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
-				 struct csr_roam_info *roam_info,
-				 struct bss_description *bss_desc);
+				 struct qdf_mac_addr *bssid,
+				 bool is_auth_required);
 
 /**
  * hdd_save_peer() - Save peer MAC address in adapter peer table.
