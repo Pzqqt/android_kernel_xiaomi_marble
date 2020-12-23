@@ -866,7 +866,8 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		 * Bandwidth-NSS map has sub-type & version.
 		 * hence copy data just after version byte
 		 */
-		scan_params->ie_list.bwnss_map = (((uint8_t *)ie) + 8);
+		if (ie->ie_len > WLAN_BWNSS_MAP_OFFSET)
+			scan_params->ie_list.bwnss_map = (((uint8_t *)ie) + 8);
 	} else if (is_mbo_oce_oui((uint8_t *)ie)) {
 		scan_params->ie_list.mbo_oce = (uint8_t *)ie;
 	} else if (is_extender_oui((uint8_t *)ie)) {

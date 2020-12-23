@@ -1831,6 +1831,8 @@ is_bwnss_oui(uint8_t *frm)
 		((ATH_OUI_BW_NSS_MAP_TYPE << 24) | ATH_OUI));
 }
 
+#define WLAN_BWNSS_MAP_OFFSET 6
+
 /**
  * is_he_cap_oui() - If vendor IE is HE CAP OUI
  * @frm: vendor IE pointer
