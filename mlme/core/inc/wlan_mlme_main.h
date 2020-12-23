@@ -218,6 +218,9 @@ struct mscs_req_info {
  * @oem_channel_info: oem channel info
  * @tdls_chan_swit_prohibited: if tdls chan switch is prohobited by AP
  * @tdls_prohibited: if tdls is prohobited by AP
+ * @uapsd_per_ac_bitmask: Used on STA, this is a static UAPSD mask setting
+ * derived from JOIN_REQ and REASSOC_REQ. If a particular AC bit is set, it
+ * means the AC is both trigger enabled and delivery enabled.
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -226,6 +229,7 @@ struct mlme_connect_info {
 	bool tdls_chan_swit_prohibited;
 	bool tdls_prohibited;
 #endif
+	uint8_t uapsd_per_ac_bitmask;
 };
 
 /**
@@ -257,6 +261,7 @@ struct mlme_connect_info {
  * @mscs_req_info: Information related to mscs request
  * @he_config: he config
  * @he_sta_obsspd: he_sta_obsspd
+ * @connect_info: mlme connect information
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
