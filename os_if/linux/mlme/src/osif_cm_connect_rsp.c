@@ -33,7 +33,7 @@
  * osif_validate_connect_and_reset_src_id() - Validate connect response and
  * resets source and id
  * @osif_priv: Pointer to vdev osif priv
- * @cm_id: Command id received in the connect response
+ * @rsp: Connection manager connect response
  *
  * This function validates connect response and if the connect
  * response is valid, resets the source and id of the command
@@ -43,19 +43,21 @@
  */
 static QDF_STATUS
 osif_validate_connect_and_reset_src_id(struct vdev_osif_priv *osif_priv,
-					    wlan_cm_id cm_id)
+				       struct wlan_cm_connect_resp *rsp)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	/*
-	 * Send to kernel only if last osif cmd type is connect and
-	 * cookie match else drop. If cookie match reset the cookie
-	 * and source.
+	 * Send to kernel only if last osif cookie match and
+	 * source is CM_OSIF_CONNECT or CM_OSIF_CFG_CONNECT with failure
+	 * else drop. If cookie match reset the cookie and source.
 	 */
 	qdf_spinlock_acquire(&osif_priv->cm_info.cmd_id_lock);
-	if (cm_id != osif_priv->cm_info.last_id ||
-	    osif_priv->cm_info.last_source != CM_OSIF_CONNECT) {
+	if (rsp->cm_id != osif_priv->cm_info.last_id ||
+	    (osif_priv->cm_info.last_source != CM_OSIF_CONNECT &&
+	    !(osif_priv->cm_info.last_source == CM_OSIF_CFG_CONNECT &&
+	    QDF_IS_STATUS_ERROR(rsp->connect_status)))) {
 		osif_debug("Ignore as cm_id(%d)/src(%d) didn't match stored cm_id(%d)/src(%d)",
-			   cm_id, CM_OSIF_CONNECT,
+			   rsp->cm_id, CM_OSIF_CONNECT,
 			   osif_priv->cm_info.last_id,
 			   osif_priv->cm_info.last_source);
 		status = QDF_STATUS_E_INVAL;
@@ -465,7 +467,7 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 		osif_cm_unlink_bss(vdev, osif_priv, &rsp->bssid, rsp->ssid.ssid,
 				   rsp->ssid.length);
 
-	status = osif_validate_connect_and_reset_src_id(osif_priv, rsp->cm_id);
+	status = osif_validate_connect_and_reset_src_id(osif_priv, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_cm_connect_comp_ind(vdev, rsp, OSIF_NOT_HANDLED);
 		return status;
