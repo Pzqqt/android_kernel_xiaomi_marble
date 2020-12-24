@@ -982,6 +982,11 @@ typedef struct {
     A_UINT32 qdepth_bytes;
     A_UINT32 full_aid : 12,
              reserved : 20;
+
+    /* data_frm_ppdu_id:
+     * Note - this is valid in case delayed BA processing specifically for
+     * BAR frames*/
+    A_UINT32 data_frm_ppdu_id;
 } htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
