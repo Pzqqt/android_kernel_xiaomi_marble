@@ -3711,9 +3711,9 @@ void mlme_get_converted_timestamp(uint32_t timestamp, char *time)
 	secs = timestamp / 1000;
 	mins = secs / 60;
 	hr = mins / 60;
-	qdf_snprintf(time, TIME_STRING_LEN, "[%02d:%02d:%02d.%06u]",
-		     (hr % 24), (mins % 60), (secs % 60),
-		     (timestamp % 1000) * 1000);
+	qdf_snprint(time, TIME_STRING_LEN, "[%02d:%02d:%02d.%06u]",
+		    (hr % 24), (mins % 60), (secs % 60),
+		    (timestamp % 1000) * 1000);
 }
 
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
