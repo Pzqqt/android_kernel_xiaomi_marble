@@ -61,6 +61,55 @@ static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 		buffer_type == MSM_VIDC_BUF_VPSS;
 }
 
+static inline bool is_input_meta_enabled(struct msm_vidc_inst *inst)
+{
+	bool enabled = false;
+
+	if (is_decode_session(inst)) {
+		enabled = inst->capabilities->cap[META_BUF_TAG].value ?
+			true : false;
+	} else if (is_encode_session(inst)) {
+		enabled = (inst->capabilities->cap[META_LTR_MARK_USE].value ||
+			inst->capabilities->cap[META_SEQ_HDR_NAL].value ||
+			inst->capabilities->cap[META_EVA_STATS].value ||
+			inst->capabilities->cap[META_BUF_TAG].value);
+	}
+	return enabled;
+}
+
+static inline bool is_output_meta_enabled(struct msm_vidc_inst *inst)
+{
+	bool enabled = false;
+
+	if (is_decode_session(inst)) {
+		enabled = (inst->capabilities->cap[META_DPB_MISR].value ||
+			inst->capabilities->cap[META_OPB_MISR].value ||
+			inst->capabilities->cap[META_INTERLACE].value ||
+			inst->capabilities->cap[META_CONCEALED_MB_CNT].value ||
+			inst->capabilities->cap[META_HIST_INFO].value ||
+			inst->capabilities->cap[META_SEI_MASTERING_DISP].value ||
+			inst->capabilities->cap[META_SEI_CLL].value ||
+			inst->capabilities->cap[META_BUF_TAG].value ||
+			inst->capabilities->cap[META_SUBFRAME_OUTPUT].value);
+	} else if (is_encode_session(inst)) {
+		enabled = inst->capabilities->cap[META_BUF_TAG].value ?
+			true : false;
+	}
+	return enabled;
+}
+
+static inline bool is_meta_enabled(struct msm_vidc_inst *inst, unsigned int type)
+{
+	bool enabled = false;
+
+	if (type == MSM_VIDC_BUF_INPUT)
+		enabled = is_input_meta_enabled(inst);
+	else if (type == MSM_VIDC_BUF_OUTPUT)
+		enabled = is_output_meta_enabled(inst);
+
+	return enabled;
+}
+
 static inline bool is_linear_colorformat(enum msm_vidc_colorformat_type colorformat)
 {
 	return colorformat == MSM_VIDC_FMT_NV12 ||

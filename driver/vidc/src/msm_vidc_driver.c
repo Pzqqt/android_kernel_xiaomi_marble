@@ -833,6 +833,13 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 
 	print_vidc_buffer(VIDC_HIGH, "qbuf", inst, buf);
 	meta = get_meta_buffer(inst, buf);
+	if (!meta) {
+		if (is_meta_enabled(inst, buf->type)) {
+			print_vidc_buffer(VIDC_ERR, "missing meta for",
+				inst, buf);
+			return -EINVAL;
+		}
+	}
 	rc = venus_hfi_queue_buffer(inst, buf, meta);
 	if (rc)
 		return rc;
