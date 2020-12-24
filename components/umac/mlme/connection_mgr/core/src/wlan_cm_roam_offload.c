@@ -556,6 +556,25 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	struct wlan_roam_stop_config *stop_req;
 	QDF_STATUS status;
 
+	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
+	stop_req = qdf_mem_malloc(sizeof(*stop_req));
+	if (!stop_req)
+		return QDF_STATUS_E_NOMEM;
+
+	stop_req->btm_config.vdev_id = vdev_id;
+	stop_req->disconnect_params.vdev_id = vdev_id;
+	stop_req->idle_params.vdev_id = vdev_id;
+	stop_req->roam_triggers.vdev_id = vdev_id;
+	stop_req->rssi_params.vdev_id = vdev_id;
+
+	/* do the filling as csr_post_rso_stop */
+	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_debug("fail to fill stop config req");
+		qdf_mem_free(stop_req);
+		return status;
+	}
+
 	/*
 	 * If roam synch propagation is in progress and an user space
 	 * disconnect is requested, then there is no need to send the
@@ -577,29 +596,11 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	 * and clean up.
 	 */
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) &&
-	    reason == REASON_ROAM_STOP_ALL) {
+	    stop_req->reason == REASON_ROAM_STOP_ALL) {
 		mlme_info("vdev_id:%d : Drop RSO stop during roam sync",
 			  vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
-
-	stop_req = qdf_mem_malloc(sizeof(*stop_req));
-	if (!stop_req)
-		return QDF_STATUS_E_NOMEM;
-
-	stop_req->btm_config.vdev_id = vdev_id;
-	stop_req->disconnect_params.vdev_id = vdev_id;
-	stop_req->idle_params.vdev_id = vdev_id;
-	stop_req->roam_triggers.vdev_id = vdev_id;
-	stop_req->rssi_params.vdev_id = vdev_id;
-
-	/* do the filling as csr_post_rso_stop */
-	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_debug("fail to fill stop config req");
-		return status;
+		qdf_mem_free(stop_req);
+		return QDF_STATUS_SUCCESS;
 	}
 
 	status = wlan_cm_tgt_send_roam_stop_req(psoc, vdev_id, stop_req);
@@ -613,7 +614,7 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	qdf_mem_free(stop_req);
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

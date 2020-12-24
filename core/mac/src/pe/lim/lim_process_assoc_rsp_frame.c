@@ -1017,8 +1017,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			session_entry->gUapsdPerAcDeliveryEnableMask = 0;
 			session_entry->gUapsdPerAcTriggerEnableMask = 0;
 
-			if (lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry)
-				!= QDF_STATUS_SUCCESS) {
+			if (lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry,
+						true) != QDF_STATUS_SUCCESS) {
 				pe_err("Could not cleanup the rx path");
 				goto assocReject;
 			}

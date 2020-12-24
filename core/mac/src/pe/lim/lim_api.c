@@ -2553,7 +2553,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
-	lim_cleanup_rx_path(mac_ctx, curr_sta_ds, session_ptr);
+	lim_cleanup_rx_path(mac_ctx, curr_sta_ds, session_ptr, false);
 	lim_delete_dph_hash_entry(mac_ctx, curr_sta_ds->staAddr, aid,
 				  session_ptr);
 	pe_delete_session(mac_ctx, session_ptr);

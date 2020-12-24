@@ -1107,7 +1107,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 		send_disassoc_frame = 1;
 		/* Receive path cleanup with dummy packet */
 		if (QDF_STATUS_SUCCESS !=
-		    lim_cleanup_rx_path(mac_ctx, stads, session)) {
+		    lim_cleanup_rx_path(mac_ctx, stads, session, true)) {
 			mlm_disassoccnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto end;

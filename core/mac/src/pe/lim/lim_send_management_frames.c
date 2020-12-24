@@ -3178,7 +3178,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 
 		/* / Receive path cleanup with dummy packet */
 		lim_ft_cleanup_pre_auth_info(mac_ctx, session_entry);
-		lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry);
+		lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry, true);
 		if ((session_entry->limSystemRole == eLIM_STA_ROLE) &&
 		    (
 #ifdef FEATURE_WLAN_ESE
@@ -3282,7 +3282,7 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 		}
 		/* Receive path cleanup with dummy packet */
 		if (QDF_STATUS_SUCCESS !=
-		    lim_cleanup_rx_path(mac_ctx, sta_ds, pe_session)) {
+		    lim_cleanup_rx_path(mac_ctx, sta_ds, pe_session, true)) {
 			disassoc_cnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			pe_err("cleanup_rx_path error");

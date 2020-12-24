@@ -3159,7 +3159,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 
 		/* Delete FT session if there exists one */
 		lim_ft_cleanup_pre_auth_info(mac, pe_session);
-		lim_cleanup_rx_path(mac, sta, pe_session);
+		lim_cleanup_rx_path(mac, sta, pe_session, true);
 
 		lim_clean_up_disassoc_deauth_req(mac,
 				 (char *)&smeDisassocCnf.peer_macaddr, 0);

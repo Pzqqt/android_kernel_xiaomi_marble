@@ -187,7 +187,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 				eLIM_JOIN_FAILURE;
 			sta->mlmStaContext.resultCode = resultCode;
 			sta->mlmStaContext.protStatusCode = protStatusCode;
-			lim_cleanup_rx_path(mac, sta, pe_session);
+			lim_cleanup_rx_path(mac, sta, pe_session, true);
 			/* Cleanup if add bss failed */
 			if (pe_session->add_bss_failed) {
 				dph_delete_hash_entry(mac,
