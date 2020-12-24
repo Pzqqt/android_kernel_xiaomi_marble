@@ -70,9 +70,8 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 
 	qdf_assert(mon_status_srng);
 	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s %d : HAL Monitor Status Ring Init Failed -- %pK",
-			  __func__, __LINE__, mon_status_srng);
+		dp_rx_mon_dest_debug("%pK: HAL Monitor Status Ring Init Failed -- %pK",
+				     soc, mon_status_srng);
 		QDF_ASSERT(0);
 		return status;
 	}
@@ -82,18 +81,16 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 	qdf_assert(hal_soc);
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_status_srng))) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s %d : HAL SRNG access Failed -- %pK",
-			  __func__, __LINE__, mon_status_srng);
+		 dp_rx_mon_dest_debug("%pK: HAL SRNG access Failed -- %pK",
+				      soc, mon_status_srng);
 		QDF_ASSERT(0);
 		return status;
 	}
 
 	ring_entry = hal_srng_src_peek_n_get_next(hal_soc, mon_status_srng);
 	if (!ring_entry) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s %d : HAL SRNG entry is NULL srng:-- %pK",
-			  __func__, __LINE__, mon_status_srng);
+		 dp_rx_mon_dest_debug("%pK: HAL SRNG entry is NULL srng:-- %pK",
+				      soc, mon_status_srng);
 		status = DP_MON_STATUS_REPLENISH;
 		goto done;
 	}
@@ -106,9 +103,8 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 		     ((uint64_t)(HAL_RX_BUFFER_ADDR_39_32_GET(ring_entry)) << 32));
 
 	if (!buf_paddr) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s %d : buf addr is NULL -- %pK",
-			  __func__, __LINE__, mon_status_srng);
+		dp_rx_mon_dest_debug("%pK : buf addr is NULL -- %pK",
+				     soc, mon_status_srng);
 		status = DP_MON_STATUS_REPLENISH;
 		goto done;
 	}
@@ -131,10 +127,9 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 	 * hold on to mon destination ring.
 	 */
 	if (buf_status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("Monitor status ring: DMA is not done "
-			     "for nbuf: %pK buf_addr: %llx"),
-			     status_nbuf, buf_paddr);
+		dp_rx_mon_dest_debug("%pK: Monitor status ring: DMA is not done "
+				     "for nbuf: %pK buf_addr: %llx",
+				     soc, status_nbuf, buf_paddr);
 		status = dp_rx_mon_handle_status_buf_done(pdev,
 							  mon_status_srng);
 
@@ -199,17 +194,16 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 
 	if ((pdev->mon_desc->status_buf.paddr != buf_paddr) ||
 	     (pdev->mon_desc->ppdu_id != pdev->mon_desc->status_ppdu_id)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("Monitor: PPDU id or status buf_addr mismatch "
-			     "status_ppdu_id: %d dest_ppdu_id: %d "
-			     "status_addr: %llx status_buf_cookie: %d "
-			     "dest_addr: %llx tlv_tag: %d"
-			     " status_nbuf: %pK pdev->hold_mon_dest: %d"),
-			      pdev->mon_desc->status_ppdu_id,
-			      pdev->mon_desc->ppdu_id, pdev->status_buf_addr,
-			      rx_buf_cookie,
-			      pdev->mon_desc->status_buf.paddr, tlv_tag,
-			      status_nbuf, pdev->hold_mon_dest_ring);
+		dp_rx_mon_dest_debug("%pK: Monitor: PPDU id or status buf_addr mismatch "
+				     "status_ppdu_id: %d dest_ppdu_id: %d "
+				     "status_addr: %llx status_buf_cookie: %d "
+				     "dest_addr: %llx tlv_tag: %d"
+				     " status_nbuf: %pK pdev->hold_mon_dest: %d",
+				     soc, pdev->mon_desc->status_ppdu_id,
+				     pdev->mon_desc->ppdu_id, pdev->status_buf_addr,
+				     rx_buf_cookie,
+				     pdev->mon_desc->status_buf.paddr, tlv_tag,
+				     status_nbuf, pdev->hold_mon_dest_ring);
 	}
 done:
 	hal_srng_access_end(hal_soc, mon_status_srng);
@@ -270,11 +264,8 @@ dp_rx_mon_drop_ppdu(struct dp_pdev *pdev, uint32_t mac_id)
 			while (mon_skb) {
 				skb_next = qdf_nbuf_next(mon_skb);
 
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  "[%s][%d] mon_skb=%pK len %u"
-					  " __func__, __LINE__",
-					  mon_skb, mon_skb->len);
+				dp_rx_mon_dest_debug("%pK: mon_skb=%pK len %u",
+						     pdev->soc, mon_skb, mon_skb->len);
 
 				qdf_nbuf_free(mon_skb);
 				mon_skb = skb_next;
@@ -536,10 +527,8 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, struct dp_pdev *pdev, uint32_t mac_id,
 						     replenish.nbuf_alloc_fail,
 						     1);
 					qdf_frag_free(rx_tlv_hdr);
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  "[%s] failed to allocate parent buffer to hold all frag",
-						  __func__);
+					dp_rx_mon_dest_debug("%pK: failed to allocate parent buffer to hold all frag",
+							     soc);
 					drop_mpdu = true;
 					desc_info->msdu_count--;
 					goto next_msdu;
@@ -609,11 +598,9 @@ next_msdu:
 						    tail_desc,
 						    rx_desc);
 
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_DEBUG,
-				  FL("%s total_len %u frag_len %u flags %u"),
-				  total_frag_len, frag_len,
-				  msdu_list.msdu_info[msdu_index].msdu_flags);
+			dp_rx_mon_dest_debug("%pK: %s total_len %u frag_len %u flags %u",
+					     soc, total_frag_len, frag_len,
+					     msdu_list.msdu_info[msdu_index].msdu_flags);
 		}
 
 		hal_rxdma_buff_addr_info_set(rx_link_buf_info,
@@ -631,8 +618,8 @@ next_msdu:
 						   mac_id,
 						   HAL_BM_ACTION_PUT_IN_IDLE_LIST)
 				!= QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "dp_rx_monitor_link_desc_return failed");
+			dp_rx_mon_dest_err("%pK: dp_rx_monitor_link_desc_return failed",
+					   soc);
 		}
 	}
 	pdev->rx_mon_stats.dest_mpdu_done++;
@@ -783,8 +770,8 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	uint32_t work_done = 0;
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for mac_id = %d", mac_id);
+		dp_rx_mon_dest_err("pdev is null for mac_id = %d",
+				     mac_id);
 		return work_done;
 	}
 
@@ -812,9 +799,8 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 
 	if (qdf_unlikely(!mon_dest_srng ||
 			 !hal_srng_initialized(mon_dest_srng))) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("HAL Monitor Destination Ring Init Failed -- %pK"),
-			  mon_dest_srng);
+		dp_rx_mon_dest_debug("%pK: HAL Monitor Destination Ring Init Failed -- %pK",
+				     soc, mon_dest_srng);
 		goto done1;
 	}
 
@@ -922,15 +908,14 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		 */
 
 		if (!desc_info->ppdu_id && !desc_info->status_buf.paddr) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  FL("ppdu_id: %d ring_entry: %pK"
-				     "status_buf_count: %d rxdma_push: %d"
-				     "rxdma_err: %d link_desc: %pK "),
-				  desc_info->ppdu_id, ring_desc,
-				  desc_info->status_buf_count,
-				  desc_info->rxdma_push_reason,
-				  desc_info->rxdma_error_code,
-				  desc_info->link_desc.paddr);
+			dp_rx_mon_dest_debug("%pK: ppdu_id: %d ring_entry: %pK"
+					     "status_buf_count: %d rxdma_push: %d"
+					     "rxdma_err: %d link_desc: %pK ",
+					     soc, desc_info->ppdu_id, ring_desc,
+					     desc_info->status_buf_count,
+					     desc_info->rxdma_push_reason,
+					     desc_info->rxdma_error_code,
+					     desc_info->link_desc.paddr);
 			goto next_entry;
 		}
 
