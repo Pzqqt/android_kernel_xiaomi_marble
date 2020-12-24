@@ -1055,7 +1055,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	QDF_ASSERT(!((uint64_t)paddr % dbr_ring_cap->min_buf_align));
 	dbr_buf_pool[cookie].paddr = paddr;
 
-	hal_srng_access_start(hal_soc, srng);
+	hal_le_srng_access_start_in_cpu_order(hal_soc, srng);
 	ring_entry = hal_srng_src_get_next(hal_soc, srng);
 
 	if (!ring_entry) {
@@ -1070,7 +1070,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	*ring_entry = qdf_cpu_to_le32(dw_lo);
 	ring_entry++;
 	*ring_entry = qdf_cpu_to_le32(dw_hi);
-	hal_srng_access_end(hal_soc, srng);
+	hal_le_srng_access_end_in_cpu_order(hal_soc, srng);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1737,13 +1737,13 @@ static void target_if_dbr_add_ring_debug_entry(
 	ring_debug = &mod_debug->dbr_ring_debug[srng_id];
 
 	if (ring_debug->entries) {
-		if (hal_srng_access_start(hal_soc, srng)) {
+		if (hal_le_srng_access_start_in_cpu_order(hal_soc, srng)) {
 			direct_buf_rx_err("module %d - HAL srng access failed",
 					  mod_id);
 			return;
 		}
 		hal_get_sw_hptp(hal_soc, srng, &tp, &hp);
-		hal_srng_access_end(hal_soc, srng);
+		hal_le_srng_access_end_in_cpu_order(hal_soc, srng);
 		tp = qdf_le32_to_cpu(tp);
 		entry = &ring_debug->entries[ring_debug->ring_debug_idx];
 
