@@ -601,9 +601,14 @@ enum monitor_mode_concurrency {
  * gRemoveTimeStampSyncCmd - Enable/Disable to remove time stamp sync cmd
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
- * This ini is used to enable/disable the removal of time stamp sync cmd
+ * This ini is used to enable/disable the removal of time stamp sync cmd.
+ * If we disable this periodic time sync update to firmware then roaming
+ * timestamp updates to kmsg will have invalid timestamp as firmware will
+ * use this timestamp to capture when roaming has happened with respect
+ * to host timestamp.
+ *
  *
  * Usage: External
  *
@@ -611,7 +616,7 @@ enum monitor_mode_concurrency {
  */
 #define CFG_REMOVE_TIME_STAMP_SYNC_CMD CFG_INI_BOOL( \
 	"gRemoveTimeStampSyncCmd", \
-	1, \
+	0, \
 	"Enable to remove time stamp sync cmd")
 
 /*
