@@ -160,6 +160,7 @@ struct wlan_srng_cfg {
  * @enable_force_rx_64_ba: flag to enable force 64 blockack in RX
  * @disable_intra_bss_fwd: flag to disable intra bss forwarding
  * @rxdma1_enable: flag to indicate if rxdma1 is enabled
+ * @delay_mon_replenish: delay monitor buffer replenish
  * @tx_desc_limit_0: tx_desc limit for 5G H
  * @tx_desc_limit_1: tx_desc limit for 2G
  * @tx_desc_limit_2: tx_desc limit for 5G L
@@ -273,6 +274,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool enable_force_rx_64_ba;
 	bool disable_intra_bss_fwd;
 	bool rxdma1_enable;
+	bool delay_mon_replenish;
 	int max_ast_idx;
 	int tx_desc_limit_0;
 	int tx_desc_limit_1;
@@ -1539,3 +1541,22 @@ uint8_t wlan_cfg_radio2_default_reo_get(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: .
  */
 void wlan_cfg_set_rxdma1_enable(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/**
+ * wlan_cfg_is_delay_mon_replenish() - Get if delayed monitor replenish
+ * is enabled
+ * @cfg: soc configuration context
+ *
+ * Return: .
+ */
+void
+wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
+/**
+ * wlan_cfg_set_delay_mon_replenish() - Set delayed monitor replenish
+ * @cfg: soc configuration context
+ * @val: val to set
+ *
+ * Return: .
+ */
+bool
+wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg);

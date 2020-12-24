@@ -1716,7 +1716,8 @@ dp_rx_pdev_mon_cmn_buffers_alloc(struct dp_pdev *pdev, int mac_id)
 		goto fail;
 	}
 
-	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+	if (!soc->wlan_cfg_ctx->rxdma1_enable ||
+	    !wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx))
 		return status;
 
 	status = dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
@@ -1734,7 +1735,7 @@ fail:
 	return status;
 }
 
-static void
+void
 dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 {
 	uint8_t pdev_id = pdev->pdev_id;
@@ -1750,6 +1751,10 @@ dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	num_entries = mon_buf_ring->num_entries;
 
 	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+
+	/* If descriptor pool is already initialized, do not initialize it */
+	if (rx_desc_pool->freelist)
+		return;
 
 	dp_debug("Mon RX Desc buf Pool[%d] init entries=%u",
 		 pdev_id, num_entries);
@@ -1782,7 +1787,8 @@ dp_rx_pdev_mon_cmn_desc_pool_init(struct dp_pdev *pdev, int mac_id)
 	mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev->pdev_id);
 	dp_rx_pdev_mon_status_desc_pool_init(pdev, mac_for_pdev);
 
-	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+	if (!soc->wlan_cfg_ctx->rxdma1_enable ||
+	    !wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx))
 		return;
 
 	dp_rx_pdev_mon_buf_desc_pool_init(pdev, mac_for_pdev);
@@ -1863,7 +1869,7 @@ void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id)
 		dp_rx_desc_nbuf_free(soc, rx_desc_pool);
 }
 
-static QDF_STATUS
+QDF_STATUS
 dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id)
 {
 	uint8_t pdev_id = pdev->pdev_id;
@@ -1886,6 +1892,9 @@ dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id)
 	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc_cfg_ctx) *
 		num_entries;
 
+	if (dp_rx_desc_pool_is_allocated(rx_desc_pool) == QDF_STATUS_SUCCESS)
+		return QDF_STATUS_SUCCESS;
+
 	return dp_rx_desc_pool_alloc(soc, rx_desc_pool_size, rx_desc_pool);
 }
 
@@ -1906,7 +1915,8 @@ dp_rx_pdev_mon_cmn_desc_pool_alloc(struct dp_pdev *pdev, int mac_id)
 		goto fail;
 	}
 
-	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+	if (!soc->wlan_cfg_ctx->rxdma1_enable ||
+	    !wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx))
 		return status;
 
 	/* Allocate sw rx descriptor pool for monitor RxDMA buffer ring */
@@ -2003,6 +2013,7 @@ dp_rx_pdev_mon_buffers_free(struct dp_pdev *pdev)
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
 		dp_rx_pdev_mon_cmn_buffers_free(pdev, mac_id);
+	pdev->pdev_mon_init = 0;
 }
 
 QDF_STATUS

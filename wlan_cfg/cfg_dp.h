@@ -1091,6 +1091,9 @@
 		CFG_INI_BOOL("wow_check_rx_pending_enable", \
 		false, \
 		"enable rx frame pending check in WoW mode")
+#define CFG_DP_DELAY_MON_REPLENISH \
+		CFG_INI_BOOL("delay_mon_replenish", \
+		true, "Delay Monitor Replenish")
 
 /*
  * <ini>
@@ -1203,5 +1206,6 @@
 		CFG(CFG_DP_RX_RADIO_1_DEFAULT_REO) \
 		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO) \
 		CFG(CFG_DP_WOW_CHECK_RX_PENDING) \
-		CFG(CFG_FORCE_RX_64_BA)
+		CFG(CFG_FORCE_RX_64_BA) \
+		CFG(CFG_DP_DELAY_MON_REPLENISH)
 #endif /* _CFG_DP_H_ */

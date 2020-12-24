@@ -2799,6 +2799,10 @@ QDF_STATUS dp_hw_link_desc_pool_banks_alloc(struct dp_soc *soc, uint32_t mac_id)
 			      MINIDUMP_STR_SIZE);
 	}
 
+	/* If link descriptor banks are allocated, return from here */
+	if (pages->num_pages)
+		return QDF_STATUS_SUCCESS;
+
 	/* Round up to power of 2 */
 	*total_link_descs = 1;
 	while (*total_link_descs < num_entries)
@@ -5056,7 +5060,8 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 			       hal_srng, RXDMA_BUF);
 #ifndef DISABLE_MON_CONFIG
 
-		if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		if (soc->wlan_cfg_ctx->rxdma1_enable &&
+		    wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx)) {
 			htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				       soc->rxdma_mon_buf_ring[lmac_id].hal_srng,
 				       RXDMA_MONITOR_BUF);
@@ -7319,17 +7324,103 @@ static QDF_STATUS dp_get_peer_mac_from_peer_id(struct cdp_soc_t *soc,
 }
 
 /**
+ * dp_vdev_set_monitor_mode_rings () - set monitor mode rings
+ *
+ * Allocate SW descriptor pool, buffers, link descriptor memory
+ * Initialize monitor related SRNGs
+ *
+ * @pdev: DP pdev object
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
+						 uint8_t delayed_replenish)
+{
+	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
+	uint32_t mac_id;
+	uint32_t mac_for_pdev;
+	struct dp_soc *soc = pdev->soc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct dp_srng *mon_buf_ring;
+	uint32_t num_entries;
+
+	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
+
+	/* If monitor rings are aleady initilized, return from here */
+	if (!pdev->pdev_mon_init)
+		return QDF_STATUS_SUCCESS;
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id,
+							  pdev->pdev_id);
+
+		/* Allocate sw rx descriptor pool for mon RxDMA buffer ring */
+		status = dp_rx_pdev_mon_buf_desc_pool_alloc(pdev, mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			dp_err("%s: dp_rx_pdev_mon_buf_desc_pool_alloc() failed\n",
+			       __func__);
+			goto fail0;
+		}
+
+		dp_rx_pdev_mon_buf_desc_pool_init(pdev, mac_for_pdev);
+
+		/* If monitor buffers are already allocated,
+		 * do not allocate.
+		 */
+		status = dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
+							  delayed_replenish);
+
+		mon_buf_ring = &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
+		/*
+		 * Configure low interrupt threshld when monitor mode is
+		 * configured.
+		 */
+		if (mon_buf_ring->hal_srng) {
+			num_entries = mon_buf_ring->num_entries;
+			hal_set_low_threshold(mon_buf_ring->hal_srng,
+					      num_entries >> 3);
+			htt_srng_setup(pdev->soc->htt_handle,
+				       pdev->pdev_id,
+				       mon_buf_ring->hal_srng,
+				       RXDMA_MONITOR_BUF);
+		}
+
+		/* Allocate link descriptors for the mon link descriptor ring */
+		status = dp_hw_link_desc_pool_banks_alloc(soc, mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			dp_err("%s: dp_hw_link_desc_pool_banks_alloc() failed",
+			       __func__);
+			goto fail0;
+		}
+		dp_link_desc_ring_replenish(soc, mac_for_pdev);
+
+		htt_srng_setup(soc->htt_handle, pdev->pdev_id,
+			       soc->rxdma_mon_desc_ring[mac_for_pdev].hal_srng,
+			       RXDMA_MONITOR_DESC);
+		htt_srng_setup(soc->htt_handle, pdev->pdev_id,
+			       soc->rxdma_mon_dst_ring[mac_for_pdev].hal_srng,
+			       RXDMA_MONITOR_DST);
+	}
+	pdev->pdev_mon_init = 1;
+
+	return QDF_STATUS_SUCCESS;
+
+fail0:
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
  * @vdev_handle: Datapath VDEV handle
  * @smart_monitor: Flag to denote if its smart monitor mode
  *
  * Return: 0 on success, not 0 on failure
  */
-static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc_hdl,
+static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 					   uint8_t vdev_id,
 					   uint8_t special_monitor)
 {
-	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_soc *soc = (struct dp_soc *)dp_soc;
 	uint32_t mac_id;
 	uint32_t mac_for_pdev;
 	struct dp_pdev *pdev;
@@ -7370,28 +7461,37 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc_hdl,
 
 	pdev->monitor_configured = true;
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id,
-							  pdev->pdev_id);
-		dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
-						 FALSE);
-		/*
-		 * Configure low interrupt threshld when monitor mode is
-		 * configured.
-		 */
-		mon_buf_ring = &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
-		if (mon_buf_ring->hal_srng) {
-			num_entries = mon_buf_ring->num_entries;
-			hal_set_low_threshold(mon_buf_ring->hal_srng,
-					      num_entries >> 3);
-			htt_srng_setup(pdev->soc->htt_handle,
-				       pdev->pdev_id,
-				       mon_buf_ring->hal_srng,
-				       RXDMA_MONITOR_BUF);
+	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
+
+	/* If delay monitor replenish is disabled, allocate link descriptor
+	 * monitor ring buffers of ring size.
+	 */
+	if (!wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx)) {
+		dp_vdev_set_monitor_mode_rings(pdev, false);
+	} else {
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc,
+								  mac_id,
+								  pdev->pdev_id);
+
+			dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
+							 FALSE);
+			mon_buf_ring = &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
+			/*
+			 * Configure low interrupt threshld when monitor mode is
+			 * configured.
+			 */
+			if (mon_buf_ring->hal_srng) {
+				num_entries = mon_buf_ring->num_entries;
+				hal_set_low_threshold(mon_buf_ring->hal_srng,
+						      num_entries >> 3);
+				htt_srng_setup(pdev->soc->htt_handle,
+					       pdev->pdev_id,
+					       mon_buf_ring->hal_srng,
+					       RXDMA_MONITOR_BUF);
+			}
 		}
 	}
-
-	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
 
 	dp_mon_filter_setup_mon_mode(pdev);
 	status = dp_mon_filter_update(pdev);
@@ -8414,6 +8514,9 @@ dp_config_debug_sniffer(struct dp_pdev *pdev, int val)
 		pdev->mcopy_mode = val;
 		pdev->tx_sniffer_enable = 0;
 		pdev->monitor_configured = true;
+
+		if (!wlan_cfg_is_delay_mon_replenish(pdev->soc->wlan_cfg_ctx))
+			dp_vdev_set_monitor_mode_rings(pdev, true);
 
 		/*
 		 * Setup the M copy mode filter.

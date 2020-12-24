@@ -638,7 +638,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			cfg_get(psoc, CFG_DP_RX_RADIO_2_DEFAULT_REO);
 	wlan_cfg_ctx->wow_check_rx_pending_enable =
 			cfg_get(psoc, CFG_DP_WOW_CHECK_RX_PENDING);
-
+	wlan_cfg_ctx->delay_mon_replenish = cfg_get(psoc,
+			CFG_DP_DELAY_MON_REPLENISH);
 	return wlan_cfg_ctx;
 }
 
@@ -1521,4 +1522,17 @@ void wlan_cfg_set_rxdma1_enable(struct wlan_cfg_dp_soc_ctxt *cfg)
 bool wlan_cfg_is_dp_force_rx_64_ba(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->enable_force_rx_64_ba;
+}
+
+void
+wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg,
+				 bool val)
+{
+	cfg->delay_mon_replenish = val;
+}
+
+bool
+wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->delay_mon_replenish;
 }
