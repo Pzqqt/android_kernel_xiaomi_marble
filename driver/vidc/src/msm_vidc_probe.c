@@ -214,15 +214,25 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 		goto exit;
 	}
 
+	core->inst_workq = create_singlethread_workqueue("inst_workq");
+	if (!core->inst_workq) {
+		d_vpr_e("%s: create workq failed\n", __func__);
+		destroy_workqueue(core->inst_workq);
+		rc = -EINVAL;
+		goto exit;
+	}
+
 	mutex_init(&core->lock);
 	INIT_LIST_HEAD(&core->instances);
 	INIT_LIST_HEAD(&core->dangling_instances);
+	INIT_LIST_HEAD(&core->inst_works);
 
 	INIT_WORK(&core->device_work, venus_hfi_work_handler);
 	INIT_DELAYED_WORK(&core->pm_work, venus_hfi_pm_work_handler);
 	INIT_DELAYED_WORK(&core->fw_unload_work, msm_vidc_fw_unload_handler);
 	INIT_DELAYED_WORK(&core->batch_work, msm_vidc_batch_handler);
 	INIT_WORK(&core->ssr_work, msm_vidc_ssr_handler);
+	INIT_DELAYED_WORK(&core->inst_work, venus_hfi_inst_work_handler);
 
 exit:
 	return rc;

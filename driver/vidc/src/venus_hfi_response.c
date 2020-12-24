@@ -124,8 +124,7 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 		return -EINVAL;
 	}
 
-	response_limit = core_resp_pkt + core_resp_pkt_size -
-		max(sizeof(struct hfi_header), sizeof(struct hfi_packet));
+	response_limit = core_resp_pkt + core_resp_pkt_size;
 
 	if (response_pkt < core_resp_pkt || response_pkt > response_limit) {
 		d_vpr_e("%s: invalid packet address\n", func);
@@ -963,6 +962,121 @@ exit:
 	return rc;
 }
 
+static int venus_hfi_input_psc(struct msm_vidc_core *core,
+	struct work_header *work_hdr)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst;
+	struct hfi_header *hdr = NULL;
+	struct hfi_packet *packet;
+	u8 *pkt, *temp_pkt;
+	u32 hfi_cmd_type = 0;
+	u32 hfi_port = 0;
+	int i;
+
+	if (!work_hdr) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	hdr = (struct hfi_header *)work_hdr->data;
+	if (!hdr) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	inst = get_inst(core, hdr->session_id);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	mutex_lock(&inst->lock);
+	hfi_cmd_type = 0;
+	hfi_port = 0;
+	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
+	temp_pkt = pkt;
+
+	for (i = 0; i < hdr->num_packets; i++) {
+		if (validate_packet(pkt, work_hdr->data,
+				work_hdr->data_size, __func__)) {
+			rc = -EINVAL;
+			goto exit;
+		}
+		packet = (struct hfi_packet *)pkt;
+		if (packet->type > HFI_CMD_BEGIN &&
+			packet->type < HFI_CMD_END) {
+			if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
+				s_vpr_e(inst->sid,
+					"%s: invalid packet type %d in port settings change\n",
+					__func__, packet->type);
+				rc = -EINVAL;
+				goto exit;
+			}
+			hfi_cmd_type = packet->type;
+			hfi_port = packet->port;
+			rc = handle_session_command(inst, packet);
+		} else if (packet->type > HFI_PROP_BEGIN &&
+			packet->type < HFI_PROP_END) {
+			rc = handle_session_property(inst, packet);
+		} else if (packet->type > HFI_SESSION_ERROR_BEGIN &&
+			packet->type < HFI_SESSION_ERROR_END) {
+			rc = handle_session_error(inst, packet);
+		} else if (packet->type > HFI_INFORMATION_BEGIN &&
+			packet->type < HFI_INFORMATION_END) {
+			rc = handle_session_info(inst, packet);
+		} else {
+			s_vpr_e(inst->sid, "%s: Unknown packet type: %#x\n",
+				__func__, packet->type);
+			rc = -EINVAL;
+			goto exit;
+		}
+		pkt += packet->size;
+	}
+
+	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
+		if (hfi_port == HFI_PORT_BITSTREAM) {
+			print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
+				inst->subcr_params[INPUT_PORT]);
+			rc = msm_vdec_input_port_settings_change(inst);
+			if (rc)
+				goto exit;
+		}
+	}
+
+exit:
+	mutex_unlock(&inst->lock);
+	put_inst(inst);
+	return rc;
+}
+
+void venus_hfi_inst_work_handler(struct work_struct *work)
+{
+	struct msm_vidc_core *core;
+	struct work_header *work_hdr, *dummy = NULL;
+
+	core = container_of(work, struct msm_vidc_core, inst_work.work);
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	list_for_each_entry_safe(work_hdr, dummy, &core->inst_works, list) {
+		switch (work_hdr->type) {
+		case MSM_VIDC_INST_WORK_PSC:
+			venus_hfi_input_psc(core, work_hdr);
+			break;
+		default:
+			d_vpr_e("%s(): invalid work type: %d\n", __func__,
+				work_hdr->type);
+			break;
+		}
+		list_del(&work_hdr->list);
+		kfree(work_hdr->data);
+		kfree(work_hdr);
+	}
+}
+
 static int handle_session_response(struct msm_vidc_core *core,
 	struct hfi_header *hdr)
 {
@@ -994,6 +1108,26 @@ static int handle_session_response(struct msm_vidc_core *core,
 		packet = (struct hfi_packet *)pkt;
 		if (packet->type > HFI_CMD_BEGIN &&
 		    packet->type < HFI_CMD_END) {
+			if (packet->type == HFI_CMD_SETTINGS_CHANGE &&
+				packet->port == HFI_PORT_BITSTREAM) {
+				struct work_header *work;
+
+				work = kzalloc(sizeof(struct work_header), GFP_KERNEL);
+				INIT_LIST_HEAD(&work->list);
+				work->type = MSM_VIDC_INST_WORK_PSC;
+				work->session_id = hdr->session_id;
+				work->data_size = hdr->size;
+				work->data = kzalloc(hdr->size, GFP_KERNEL);
+				if (!work->data) {
+					rc= -ENOMEM;
+					goto exit;
+				}
+				memcpy(work->data, (void *)hdr, hdr->size);
+				list_add_tail(&work->list, &core->inst_works);
+				queue_delayed_work(core->inst_workq,
+					&core->inst_work, msecs_to_jiffies(0));
+				goto exit;
+			}
 			if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
 				s_vpr_e(inst->sid,
 					"%s: invalid packet type %d in port settings change\n",
@@ -1029,18 +1163,15 @@ static int handle_session_response(struct msm_vidc_core *core,
 	}
 
 	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-		if (hfi_port == HFI_PORT_BITSTREAM) {
-			print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
-				inst->subcr_params[INPUT_PORT]);
-			rc = msm_vdec_input_port_settings_change(inst);
-			if (rc)
-				goto exit;
-		} else if (hfi_port == HFI_PORT_RAW) {
+		if (hfi_port == HFI_PORT_RAW) {
 			print_psc_properties(VIDC_HIGH, "OUTPUT_PSC", inst,
 				inst->subcr_params[OUTPUT_PORT]);
 			rc = msm_vdec_output_port_settings_change(inst);
 			if (rc)
 				goto exit;
+		} else {
+			s_vpr_e(inst->sid, "%s: invalid port type: %#x\n",
+				__func__, hfi_port);
 		}
 	}
 

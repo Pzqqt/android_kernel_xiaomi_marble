@@ -71,6 +71,7 @@ int venus_hfi_scale_buses(struct msm_vidc_inst* inst, u64 bw_ddr, u64 bw_llcc);
 
 void venus_hfi_work_handler(struct work_struct *work);
 void venus_hfi_pm_work_handler(struct work_struct *work);
+void venus_hfi_inst_work_handler(struct work_struct *work);
 irqreturn_t venus_hfi_isr(int irq, void *data);
 
 void __write_register(struct msm_vidc_core *core,
