@@ -557,6 +557,16 @@ QDF_STATUS wlan_mlme_set_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
 					 int value);
 
 /**
+ * wlan_mlme_get_assoc_sta_limit() - Get the assoc sta limit
+ * @psoc: pointer to psoc object
+ * @value: Pointer to value that needs to be filled by MLME
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
+					 int *value);
+
+/**
  * wlan_mlme_set_sap_get_peer_info() - get the sap get peer info
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
