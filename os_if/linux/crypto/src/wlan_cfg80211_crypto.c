@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,10 +23,15 @@
 #include <wlan_crypto_global_api.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_crypto_main_i.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
+#include <wlan_crypto_def_i.h>
+#include <wlan_crypto_obj_mgr_i.h>
 #include <net/cfg80211.h>
 #include <wlan_nl_to_crypto_params.h>
 #include "wlan_cfg80211_crypto.h"
 #include <wlan_cfg80211.h>
+#include <wlan_osif_request_manager.h>
 
 static void wlan_cfg80211_translate_key(struct wlan_objmgr_vdev *vdev,
 					uint8_t key_index,
@@ -134,19 +139,83 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
+#define WLAN_WAIT_TIME_ADD_KEY 100
+
+static void
+wlan_cfg80211_crypto_add_key_cb(void *context,
+				struct crypto_add_key_result *result)
+{
+	struct osif_request *request;
+	struct crypto_add_key_result *priv;
+
+	request = osif_request_get(context);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	qdf_mem_copy(priv, result, sizeof(*priv));
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
 int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev,
 				 enum wlan_crypto_key_type key_type,
-				 uint8_t key_index)
+				 uint8_t key_index, bool sync)
 {
 	struct wlan_crypto_key *crypto_key;
 	QDF_STATUS status;
+	struct osif_request *request;
+	struct crypto_add_key_result *result;
+	struct wlan_crypto_comp_priv *priv;
+	int ret;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*result),
+		.timeout_ms = WLAN_WAIT_TIME_ADD_KEY,
+	};
 
 	crypto_key = wlan_crypto_get_key(vdev, key_index);
 	if (!crypto_key) {
 		osif_err("Crypto KEY is NULL");
 		return -EINVAL;
 	}
-	status  = ucfg_crypto_set_key_req(vdev, crypto_key, key_type);
+
+	if (sync) {
+		priv = wlan_get_vdev_crypto_obj(vdev);
+		if (!priv) {
+			osif_err("Invalid crypto_priv");
+			return -EINVAL;
+		}
+
+		request = osif_request_alloc(&params);
+		if (!request) {
+			osif_err("Request allocation failure");
+			return -ENOMEM;
+		}
+
+		priv->add_key_ctx = osif_request_cookie(request);;
+		priv->add_key_cb = wlan_cfg80211_crypto_add_key_cb;
+
+		status  = ucfg_crypto_set_key_req(vdev, crypto_key, key_type);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			ret = osif_request_wait_for_response(request);
+			if (ret) {
+				osif_err("Target response timed out");
+			} else {
+				result = osif_request_priv(request);
+				osif_debug("complete, vdev_id %u, ix: %u, flags: %u, status: %u",
+					   result->vdev_id, result->key_ix,
+					   result->key_flags, result->status);
+			}
+		}
+
+		priv->add_key_ctx = NULL;
+		priv->add_key_cb = NULL;
+		osif_request_put(request);
+	} else {
+		status  = ucfg_crypto_set_key_req(vdev, crypto_key, key_type);
+	}
 
 	return qdf_status_to_os_return(status);
 }

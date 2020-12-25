@@ -173,6 +173,10 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 	((tx_ops)->crypto_tx_ops.set_key)
 #define WLAN_CRYPTO_TX_OPS_GETPN(tx_ops) \
 	((tx_ops)->crypto_tx_ops.getpn)
+#define WLAN_CRYPTO_TX_OPS_REGISTER_EVENTS(tx_ops) \
+	((tx_ops)->crypto_tx_ops.register_events)
+#define WLAN_CRYPTO_TX_OPS_DEREGISTER_EVENTS(tx_ops) \
+	((tx_ops)->crypto_tx_ops.deregister_events)
 
 /* unalligned little endian access */
 #ifndef LE_READ_2
@@ -422,6 +426,33 @@ struct wlan_crypto_mmie {
 } __packed;
 
 /**
+ * struct crypto_add_key_result - add key result structure
+ * @vdev_id: unique id identifying the VDEV
+ * @key_ix: key index
+ * @key_flags: key flags
+ * @status: status of add key
+ * @peer_macaddr: MAC address of the peer
+ *
+ * Structure used for add key result.
+ */
+struct crypto_add_key_result {
+	uint32_t vdev_id;
+	uint32_t key_ix;
+	uint32_t key_flags;
+	uint32_t status;
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
+};
+
+/**
+ * typedef crypto_add_key_callback - add key callback
+ * @context: opaque context that the client can use to associate the
+ *  callback with the request
+ * @result: result of add key
+ */
+typedef void (*crypto_add_key_callback)(void *context,
+					struct crypto_add_key_result *result);
+
+/**
  * struct wlan_crypto_comp_priv - crypto component private structure
  * @crypto_params:    crypto params for the peer
  * @key:              key buffers for this peer
@@ -432,6 +463,9 @@ struct wlan_crypto_mmie {
  * @def_igtk_tx_keyid default igtk key used for this peer
  * @def_bigtk_tx_keyid default bigtk key used for this peer
  * @fils_aead_set     fils params for this peer
+ * @add_key_ctx: Opaque context to be used by the caller to associate the
+ *  add key request with the response
+ * @add_key_cb: Callback function to be called with the add key result
  *
  */
 struct wlan_crypto_comp_priv {
@@ -444,6 +478,8 @@ struct wlan_crypto_comp_priv {
 	uint8_t def_igtk_tx_keyid;
 	uint8_t def_bigtk_tx_keyid;
 	uint8_t fils_aead_set;
+	void *add_key_ctx;
+	crypto_add_key_callback add_key_cb;
 };
 
 /**

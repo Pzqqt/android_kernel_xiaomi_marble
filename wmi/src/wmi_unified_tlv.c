@@ -15062,6 +15062,50 @@ extract_dpd_status_ev_param_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_install_key_comp_event_tlv() - extract install key complete event tlv
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @len: length of the event buffer
+ * @param: Pointer to hold install key complete event param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_install_key_comp_event_tlv(wmi_unified_t wmi_handle,
+				   void *evt_buf, uint32_t len,
+				   struct wmi_install_key_comp_event *param)
+{
+	WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_install_key_complete_event_fixed_param *key_fp;
+
+	if (len < sizeof(*param_buf)) {
+		wmi_err("invalid event buf len %d", len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param_buf = (WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("received null buf from target");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	key_fp = param_buf->fixed_param;
+	if (!key_fp) {
+		wmi_err("received null event data from target");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param->vdev_id = key_fp->vdev_id;
+	param->key_ix = key_fp->key_ix;
+	param->key_flags = key_fp->key_flags;
+	param->status = key_fp->status;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&key_fp->peer_macaddr,
+				   param->peer_macaddr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -15430,6 +15474,7 @@ struct wmi_ops tlv_ops =  {
 		extract_pdev_csa_switch_count_status_tlv,
 	.send_set_tpc_power_cmd = send_set_tpc_power_cmd_tlv,
 	.extract_dpd_status_ev_param = extract_dpd_status_ev_param_tlv,
+	.extract_install_key_comp_event = extract_install_key_comp_event_tlv,
 };
 
 /**

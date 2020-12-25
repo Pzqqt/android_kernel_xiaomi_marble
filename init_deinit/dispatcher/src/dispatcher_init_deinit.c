@@ -560,6 +560,16 @@ static QDF_STATUS dispatcher_deinit_crypto(void)
 {
 	return wlan_crypto_deinit();
 }
+
+static QDF_STATUS dispatcher_crypto_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_crypto_psoc_enable(psoc);
+}
+
+static QDF_STATUS dispatcher_crypto_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_crypto_psoc_disable(psoc);
+}
 #else
 static QDF_STATUS dispatcher_init_crypto(void)
 {
@@ -567,6 +577,16 @@ static QDF_STATUS dispatcher_init_crypto(void)
 }
 
 static QDF_STATUS dispatcher_deinit_crypto(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_crypto_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_crypto_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1280,6 +1300,9 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != dispatcher_dbr_psoc_enable(psoc))
 		goto dbr_psoc_enable_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_crypto_psoc_enable(psoc))
+		goto crypto_psoc_enable_fail;
+
 	if (QDF_STATUS_SUCCESS != wlan_mlme_psoc_enable(psoc))
 		goto mlme_psoc_enable_fail;
 
@@ -1292,6 +1315,8 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 spectral_psoc_enable_fail:
 	wlan_mlme_psoc_disable(psoc);
 mlme_psoc_enable_fail:
+	dispatcher_crypto_psoc_disable(psoc);
+crypto_psoc_enable_fail:
 	dispatcher_dbr_psoc_disable(psoc);
 dbr_psoc_enable_fail:
 	fd_psoc_disable(psoc);
@@ -1321,6 +1346,8 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status;
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mlme_psoc_disable(psoc));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_crypto_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_dbr_psoc_disable(psoc));
 

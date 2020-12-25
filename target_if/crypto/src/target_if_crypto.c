@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +36,10 @@
 #include <wmi_unified_api.h>
 #include <wmi_unified_crypto_api.h>
 #include <cdp_txrx_peer_ops.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
+#include "wlan_crypto_def_i.h"
+#include "wlan_crypto_obj_mgr_i.h"
 
 #ifdef FEATURE_WLAN_WAPI
 #ifdef FEATURE_WAPI_BIG_ENDIAN
@@ -232,14 +236,134 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	target_if_debug("vdev_id:%d, key: idx:%d,len:%d", params.vdev_id,
 			params.key_idx, params.key_len);
 	target_if_debug("peer mac "QDF_MAC_ADDR_FMT,
-			 QDF_MAC_ADDR_REF(params.peer_mac));
+			QDF_MAC_ADDR_REF(params.peer_mac));
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_DEBUG,
 			   &params.key_rsc_ctr, sizeof(uint64_t));
 	status = wmi_unified_setup_install_key_cmd(pdev_wmi_handle, &params);
 
 	/* Zero-out local key variables */
 	qdf_mem_zero(&params, sizeof(struct set_key_params));
+
 	return status;
+}
+
+/**
+ * target_if_crypto_install_key_comp_evt_handler() - install key complete
+ *   handler
+ * @handle: wma handle
+ * @event: event data
+ * @len: data length
+ *
+ * This event is sent by fw once WPA/WPA2 keys are installed in fw.
+ *
+ * Return: 0 for success or error code
+ */
+static int
+target_if_crypto_install_key_comp_evt_handler(void *handle, uint8_t *event,
+					      uint32_t len)
+{
+	struct wlan_crypto_comp_priv *priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	struct wmi_install_key_comp_event params;
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
+	struct crypto_add_key_result result;
+
+	if (!event || !handle) {
+		target_if_err("invalid param");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(handle);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("invalid wmi handle");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_install_key_comp_event(wmi_handle, event,
+						    len, &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("received invalid buf from target");
+		return -EINVAL;
+	}
+
+	target_if_debug("vdev %d mac " QDF_MAC_ADDR_FMT " ix %x flags %x status %d",
+			params.vdev_id,
+			QDF_MAC_ADDR_REF(params.peer_macaddr),
+			params.key_ix, params.key_flags, params.status);
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, params.vdev_id,
+						    WLAN_CRYPTO_ID);
+	if (!vdev) {
+		target_if_err("vdev %d is null", params.vdev_id);
+		return -EINVAL;
+	}
+
+	priv_obj = wlan_get_vdev_crypto_obj(vdev);
+	if (!priv_obj) {
+		target_if_err("priv_obj is null");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CRYPTO_ID);
+		return -EINVAL;
+	}
+
+	result.vdev_id = params.vdev_id;
+	result.key_ix = params.key_ix;
+	result.key_flags = params.key_flags;
+	result.status = params.status;
+	qdf_mem_copy(result.peer_macaddr, params.peer_macaddr,
+		     QDF_MAC_ADDR_SIZE);
+
+	if (priv_obj->add_key_cb)
+		priv_obj->add_key_cb(priv_obj->add_key_ctx, &result);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CRYPTO_ID);
+
+	return 0;
+}
+
+static QDF_STATUS
+target_if_crypto_register_events(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+
+	if (!psoc || !GET_WMI_HDL_FROM_PSOC(psoc)) {
+		target_if_err("psoc or psoc->tgt_if_handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_vdev_install_key_complete_event_id,
+			target_if_crypto_install_key_comp_evt_handler,
+			WMI_RX_WORK_CTX);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("register_event_handler failed: err %d", status);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+target_if_crypto_deregister_events(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc || !GET_WMI_HDL_FROM_PSOC(psoc)) {
+		target_if_err("psoc or psoc->tgt_if_handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_vdev_install_key_complete_event_id);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS target_if_crypto_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
@@ -253,6 +377,8 @@ QDF_STATUS target_if_crypto_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	crypto = &tx_ops->crypto_tx_ops;
 
 	crypto->set_key = target_if_crypto_set_key;
+	crypto->register_events = target_if_crypto_register_events;
+	crypto->deregister_events = target_if_crypto_deregister_events;
 
 	return QDF_STATUS_SUCCESS;
 }

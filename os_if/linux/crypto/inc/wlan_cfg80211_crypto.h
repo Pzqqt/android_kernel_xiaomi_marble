@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -65,10 +65,12 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
  * @vdev: vdev object
  * @key_type: denotes if the add key request is for pairwise or group key
  * @key_index: Index of the key that needs to be added
+ * @sync: flag to indicate whether or not to add key synchronously.
+ *  DO NOT set to true if it's in scheduler context.
  *
  * Return: Zero on Success, negative value on failure
  */
 int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev,
 				 enum wlan_crypto_key_type key_type,
-				 uint8_t key_index);
+				 uint8_t key_index, bool sync);
 #endif
