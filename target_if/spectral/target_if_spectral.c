@@ -4876,19 +4876,19 @@ target_if_is_spectral_active(struct wlan_objmgr_pdev *pdev,
 
 	if (!spectral) {
 		spectral_err("SPECTRAL : Module doesn't exist");
-		return QDF_STATUS_E_FAILURE;
+		return false;
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
 	if (!p_sops) {
 		spectral_err("p_sops is null");
-		return QDF_STATUS_E_FAILURE;
+		return false;
 	}
 
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err("Invalid Spectral mode %u", smode);
-		return QDF_STATUS_E_FAILURE;
+		return false;
 	}
 
 	return p_sops->is_spectral_active(spectral, smode);
@@ -4914,19 +4914,19 @@ target_if_is_spectral_enabled(struct wlan_objmgr_pdev *pdev,
 
 	if (!spectral) {
 		spectral_err("SPECTRAL : Module doesn't exist");
-		return QDF_STATUS_E_FAILURE;
+		return false;
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
 	if (!p_sops) {
 		spectral_err("p_sops is null");
-		return QDF_STATUS_E_FAILURE;
+		return false;
 	}
 
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err("Invalid Spectral mode %u", smode);
-		return QDF_STATUS_E_FAILURE;
+		return false;
 	}
 
 	return p_sops->is_spectral_enabled(spectral, smode);
