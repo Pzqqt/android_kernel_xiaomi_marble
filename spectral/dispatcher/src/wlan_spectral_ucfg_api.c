@@ -62,12 +62,12 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 
 	if (!pdev) {
 		spectral_err("PDEV is NULL!");
-		return -EPERM;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (wlan_spectral_is_feature_disabled_pdev(pdev)) {
 		spectral_info("Spectral feature is disabled");
-		return -EPERM;
+		return QDF_STATUS_COMP_DISABLED;
 	}
 
 	/* For mode specific requests, check whether
@@ -77,13 +77,13 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 	    wlan_spectral_is_mode_disabled_pdev(pdev, sscan_req->ss_mode)) {
 		spectral_info("Spectral mode %d is disabled",
 			      sscan_req->ss_mode);
-		return -ENOTSUPP;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
 		spectral_err("spectral context is NULL!");
-		return -EPERM;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	return sc->sptrlc_spectral_control(pdev, sscan_req);
