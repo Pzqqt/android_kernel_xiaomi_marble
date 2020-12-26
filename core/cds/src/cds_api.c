@@ -783,6 +783,9 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		  TARGET_TYPE_QCA6490,
 		  TARGET_TYPE_QCA6750);
 
+	/* Set default value to false */
+	hdd_ctx->is_wifi3_0_target = false;
+
 	if (TARGET_TYPE_QCA6290 == hdd_ctx->target_type ||
 	    TARGET_TYPE_QCA6390 == hdd_ctx->target_type ||
 	    TARGET_TYPE_QCA6490 == hdd_ctx->target_type ||
@@ -802,12 +805,32 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 				status = QDF_STATUS_E_FAILURE;
 				goto err_soc_detach;
 			}
-	}
-	else
+		hdd_ctx->is_wifi3_0_target = true;
+	} else if (hdd_ctx->target_type == TARGET_TYPE_WCN7850) {
+		gp_cds_context->dp_soc =
+			cdp_soc_attach(BERYLLIUM_DP,
+				       gp_cds_context->hif_context,
+				       htcInfo.target_psoc,
+				       gp_cds_context->htc_ctx,
+				       gp_cds_context->qdf_ctx,
+				       &dp_ol_if_ops);
+		if (gp_cds_context->dp_soc)
+			if (!cdp_soc_init(gp_cds_context->dp_soc, BERYLLIUM_DP,
+					  gp_cds_context->hif_context,
+					  htcInfo.target_psoc,
+					  gp_cds_context->htc_ctx,
+					  gp_cds_context->qdf_ctx,
+					  &dp_ol_if_ops)) {
+				status = QDF_STATUS_E_FAILURE;
+				goto err_soc_detach;
+			}
+		hdd_ctx->is_wifi3_0_target = true;
+	} else {
 		gp_cds_context->dp_soc = cdp_soc_attach(MOB_DRV_LEGACY_DP,
 			gp_cds_context->hif_context, htcInfo.target_psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops);
+	}
 
 	if (!gp_cds_context->dp_soc) {
 		status = QDF_STATUS_E_FAILURE;
@@ -926,7 +949,8 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	if (hdd_ctx->target_type == TARGET_TYPE_QCA6290 ||
 	    hdd_ctx->target_type == TARGET_TYPE_QCA6390 ||
 	    hdd_ctx->target_type == TARGET_TYPE_QCA6490 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6750) {
+	    hdd_ctx->target_type == TARGET_TYPE_QCA6750 ||
+	    hdd_ctx->target_type == TARGET_TYPE_WCN7850) {
 		qdf_status = cdp_pdev_init(cds_get_context(QDF_MODULE_ID_SOC),
 					   gp_cds_context->htc_ctx,
 					   gp_cds_context->qdf_ctx, 0);

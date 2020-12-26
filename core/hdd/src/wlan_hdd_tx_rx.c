@@ -1922,12 +1922,12 @@ static void hdd_qdf_lro_flush(void *data)
 /**
  * hdd_register_rx_ol() - Register LRO/GRO rx processing callbacks
  * @hdd_ctx: pointer to hdd_ctx
- * @lithium_based_target: whether its a lithium arch based target or not
+ * @wifi3_0_target: whether its a lithium/beryllium arch based target or not
  *
  * Return: none
  */
 static void hdd_register_rx_ol_cb(struct hdd_context *hdd_ctx,
-				  bool lithium_based_target)
+				  bool wifi3_0_target)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -1944,7 +1944,7 @@ static void hdd_register_rx_ol_cb(struct hdd_context *hdd_ctx,
 		hdd_debug("LRO is enabled");
 	} else if (hdd_ctx->ol_enable == CFG_GRO_ENABLED) {
 		qdf_atomic_set(&hdd_ctx->dp_agg_param.rx_aggregation, 1);
-		if (lithium_based_target) {
+		if (wifi3_0_target) {
 		/* no flush registration needed, it happens in DP thread */
 			hdd_ctx->receive_offload_cb = hdd_gro_rx_dp_thread;
 		} else {
@@ -2011,18 +2011,11 @@ static int hdd_rx_ol_send_config(struct hdd_context *hdd_ctx)
 int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 {
 	int ret = 0;
-	bool lithium_based_target = false;
-
-	if (hdd_ctx->target_type == TARGET_TYPE_QCA6290 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6390 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6490 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6750)
-		lithium_based_target = true;
 
 	hdd_resolve_rx_ol_mode(hdd_ctx);
-	hdd_register_rx_ol_cb(hdd_ctx, lithium_based_target);
+	hdd_register_rx_ol_cb(hdd_ctx, hdd_ctx->is_wifi3_0_target);
 
-	if (!lithium_based_target) {
+	if (!hdd_ctx->is_wifi3_0_target) {
 		ret = hdd_rx_ol_send_config(hdd_ctx);
 		if (ret) {
 			hdd_ctx->ol_enable = 0;

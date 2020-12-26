@@ -14460,11 +14460,11 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto cds_disable;
 
-	/* Donot disable rx offload on concurrency for lithium based targets */
-	if (!(hdd_ctx->target_type == TARGET_TYPE_QCA6290 ||
-	      hdd_ctx->target_type == TARGET_TYPE_QCA6390 ||
-	      hdd_ctx->target_type == TARGET_TYPE_QCA6490 ||
-	      hdd_ctx->target_type == TARGET_TYPE_QCA6750))
+	/*
+	 * Donot disable rx offload on concurrency for lithium and
+	 * beryllium based targets
+	 */
+	if (!hdd_ctx->is_wifi3_0_target)
 		if (hdd_ctx->ol_enable)
 			dp_cbs.hdd_disable_rx_ol_in_concurrency =
 					hdd_disable_rx_ol_in_concurrency;

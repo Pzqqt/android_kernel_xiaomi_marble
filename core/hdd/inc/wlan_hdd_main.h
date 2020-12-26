@@ -2215,6 +2215,7 @@ struct hdd_context {
 #ifdef WLAN_SUPPORT_TWT
 	qdf_work_t twt_en_dis_work;
 #endif
+	bool is_wifi3_0_target;
 };
 
 /**
