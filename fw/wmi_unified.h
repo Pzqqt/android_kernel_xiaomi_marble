@@ -3575,6 +3575,12 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_IPA_DISABLE_S 30
     #define WMI_RSRC_CFG_FLAG_IPA_DISABLE_M 0x40000000
 
+    /*
+     * If this bit is set, target should use the PCIe GEN switching feature.
+     */
+    #define WMI_RSRC_CFG_FLAG_PCIE_GEN_SWITCH_CAPABLITY_S 31
+    #define WMI_RSRC_CFG_FLAG_PCIE_GEN_SWITCH_CAPABLITY_M 0x80000000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -4043,6 +4049,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), IPA_DISABLE, (value))
 #define WMI_RSRC_CFG_FLAG_IPA_DISABLE_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), IPA_DISABLE)
+
+#define WMI_RSRC_CFG_FLAG_PCIE_GEN_SWITCH_CAPABLITY_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), PCIE_GEN_SWITCH_CAPABLITY, (value))
+#define WMI_RSRC_CFG_FLAG_PCIE_GEN_SWITCH_CAPABLITY_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), PCIE_GEN_SWITCH_CAPABLITY)
 
 #define WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_GET(flags2, pdev_id) \
     WMI_GET_BITS(flags2, pdev_id, 1)
