@@ -4813,6 +4813,16 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	struct target_if_spectral_ops *p_sops;
 	struct target_if_spectral *spectral;
 
+	if (!pdev) {
+		spectral_err("pdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (target_if_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_info("Spectral feature is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	if (!err) {
 		spectral_err("Error code argument is null");
 		QDF_ASSERT(0);
@@ -4826,10 +4836,6 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!pdev) {
-		spectral_err("pdev object is NUll ");
-		return QDF_STATUS_E_FAILURE;
-	}
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
 		spectral_err("Spectral LMAC object is NUll ");
@@ -4871,6 +4877,16 @@ target_if_is_spectral_active(struct wlan_objmgr_pdev *pdev,
 {
 	struct target_if_spectral *spectral = NULL;
 	struct target_if_spectral_ops *p_sops = NULL;
+
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return false;
+	}
+
+	if (target_if_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_info("Spectral feature is disabled");
+		return false;
+	}
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 

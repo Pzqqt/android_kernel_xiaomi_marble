@@ -197,6 +197,16 @@ spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
 {
 	struct spectral_context *sc;
 
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	sc = spectral_get_spectral_ctx_from_psoc(psoc);
 	if (!sc) {
 		spectral_err("Invalid Context");
@@ -326,6 +336,11 @@ wlan_register_spectral_wmi_ops(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	sc = spectral_get_spectral_ctx_from_psoc(psoc);
 	if (!sc) {
 		spectral_err("spectral context is NULL!");
@@ -346,6 +361,11 @@ wlan_register_spectral_tgt_ops(struct wlan_objmgr_psoc *psoc,
 	if (!psoc) {
 		spectral_err("psoc is NULL!");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_spectral_is_feature_disabled_psoc(psoc)) {
+		spectral_info("Spectral feature is disabled");
+		return QDF_STATUS_COMP_DISABLED;
 	}
 
 	sc = spectral_get_spectral_ctx_from_psoc(psoc);
@@ -462,19 +482,24 @@ QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 
 	if (wlan_spectral_is_feature_disabled_pdev(pdev)) {
-		spectral_err("Spectral feature is disabled");
+		spectral_info("Spectral feature is disabled");
 		return QDF_STATUS_COMP_DISABLED;
 	}
 
 	if (cfg_get(psoc, CFG_SPECTRAL_POISON_BUFS))
 		tgt_set_spectral_dma_debug(pdev, SPECTRAL_DMA_BUFFER_DEBUG, 1);
 
-	status = tgt_spectral_register_to_dbr(pdev);
+	status = spectral_register_dbr(pdev);
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS spectral_register_dbr(struct wlan_objmgr_pdev *pdev)
 {
+	if (wlan_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_info("spectral feature is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	return tgt_spectral_register_to_dbr(pdev);
 }
 
@@ -484,6 +509,10 @@ QDF_STATUS spectral_unregister_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
 
+	if (wlan_spectral_is_feature_disabled_pdev(pdev)) {
+		spectral_info("spectral feature is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
 	status = tgt_spectral_unregister_to_dbr(pdev);
 
 	return status;

@@ -1689,6 +1689,44 @@ bool target_if_spectral_is_feature_disabled_psoc(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
+ * target_if_spectral_is_feature_disabled_pdev() - Check if Spectral feature is
+ * disabled for a given pdev
+ * @pdev: Pointer to pdev
+ *
+ * Return: true or false
+ */
+static inline
+bool target_if_spectral_is_feature_disabled_pdev(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_rx_ops *rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!pdev) {
+		spectral_err("pdev is NULL");
+		return true;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL");
+		return true;
+	}
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return true;
+	}
+
+	if (rx_ops->sptrl_rx_ops.
+	    sptrlro_spectral_is_feature_disabled_pdev)
+		return rx_ops->sptrl_rx_ops.
+		       sptrlro_spectral_is_feature_disabled_pdev(pdev);
+
+	return true;
+}
+
+/**
  * target_if_spectral_set_rxchainmask() - Set Spectral Rx chainmask
  * @pdev: Pointer to pdev
  * @spectral_rx_chainmask: Spectral Rx chainmask
