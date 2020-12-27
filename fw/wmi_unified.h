@@ -9578,50 +9578,59 @@ typedef struct {
 } wmi_ctrl_path_twt_stats_struct;
 
 typedef enum {
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_COLD_BOOT_CAL       = 0,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_FULL_CHAN_SWITCH    = 1,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_SCAN_CHAN_SWITCH    = 2,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_DPD_SPLIT_CAL       = 3,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_TEMP_TRIGEER_CAL    = 4,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_POWER_SAVE_WAKE_UP  = 5,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_TIMER_TRIGGER_CAL   = 6,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_FTM_TRIGGER_CAL     = 7,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_AGILE_OR_POWER_DOWN_DTIM = 8,
-    WMI_CTRL_PATH_STATS_CAL_PROFILE_NOISY_ENV_RXDO      = 9,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_COLD_BOOT_CAL       = 0x0,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_FULL_CHAN_SWITCH    = 0x1,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_SCAN_CHAN_SWITCH    = 0x2,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_DPD_SPLIT_CAL       = 0x3,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_TEMP_TRIGEER_CAL    = 0x4,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_POWER_SAVE_WAKE_UP  = 0x5,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_TIMER_TRIGGER_CAL   = 0x6,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_FTM_TRIGGER_CAL     = 0x7,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_AGILE_OR_POWER_DOWN_DTIM = 0x8,
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_NOISY_ENV_RXDO      = 0x9,
+
+    /* add new cal profiles above this line */
+    WMI_CTRL_PATH_STATS_CAL_PROFILE_INVALID             = 0x1F
 } wmi_ctrl_path_stats_cal_profile_ids;
 
 typedef enum {
-    WMI_CTRL_PATH_STATS_CAL_TYPE_ADC                     = 0,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_DAC                     = 1,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_PROCESS                 = 2,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_NOISE_FLOOR             = 3,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO                   = 4,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_COMB_TXLO_TXIQ_RXIQ     = 5,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_TXLO                    = 6,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_TXIQ                    = 7,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_RXIQ                    = 8,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_IM2                     = 9,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_LNA                     = 10,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXDCO            = 11,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXIQ             = 12,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORYLESS          = 13,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORY              = 14,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_IBF                     = 15,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_PDET_AND_PAL            = 16,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_IQ                = 17,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_DTIM              = 18,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_TPC_CAL                 = 19,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_TIMEREQ             = 20,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_BWFILTER                = 21,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_PEF                     = 22,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_PADROOP                 = 23,
-    WMI_CTRL_PATH_STATS_CAL_TYPE_SELFCALTPC              = 24,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_ADC                     = 0x0,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DAC                     = 0x1,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PROCESS                 = 0x2,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_NOISE_FLOOR             = 0x3,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO                   = 0x4,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_COMB_TXLO_TXIQ_RXIQ     = 0x5,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_TXLO                    = 0x6,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_TXIQ                    = 0x7,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXIQ                    = 0x8,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_IM2                     = 0x9,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_LNA                     = 0xa,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXDCO            = 0xb,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_LP_RXIQ             = 0xc,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORYLESS          = 0xd,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_MEMORY              = 0xe,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_IBF                     = 0xf,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PDET_AND_PAL            = 0x10,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_IQ                = 0x11,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_RXDCO_DTIM              = 0x12,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_TPC_CAL                 = 0x13,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_DPD_TIMEREQ             = 0x14,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_BWFILTER                = 0x15,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PEF                     = 0x16,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_PADROOP                 = 0x17,
+    WMI_CTRL_PATH_STATS_CAL_TYPE_SELFCALTPC              = 0x18,
+
+    /* add new cal types above this line */
+    WMI_CTRL_PATH_STATS_CAL_TYPE_INVALID                 = 0xFF
 } wmi_ctrl_path_stats_cal_type_ids;
 
 typedef enum {
-    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_NOISE_FLOOR    = 0,
-    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORYLESS = 1,
-    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORY     = 2,
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_NOISE_FLOOR    = 0x0,
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORYLESS = 0x1,
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_DPD_MEMORY     = 0x2,
+
+    /* add new periodic cal types above this line */
+    WMI_CTRL_PATH_STATS_PERIODIC_CAL_TYPE_INVALID        = 0xFF
 } wmi_ctrl_path_stats_periodic_cal_type_ids;
 
 /*
@@ -9734,14 +9743,14 @@ typedef struct {
     A_UINT32 cal_fcs_fail_cnt;    /* Count of number of times FCS failed for cal */
 } wmi_ctrl_path_calibration_stats_struct;
 
-#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_GET(value)             WMI_GET_BITS(value, 0, 8)
-#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_SET(value, cal_type)   WMI_SET_BITS(value, 0, 8, cal_type)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_GET(cal_info)             WMI_GET_BITS(cal_info, 0, 8)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_TYPE_SET(cal_info, cal_type)   WMI_SET_BITS(cal_info, 0, 8, cal_type)
 
-#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_PROFILE_GET(value)              WMI_GET_BITS(value, 8, 5)
-#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_PROFILE_SET(value, cal_profile) WMI_SET_BITS(value, 8, 5, cal_profile)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_PROFILE_GET(cal_info)              WMI_GET_BITS(cal_info, 8, 5)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_CAL_PROFILE_SET(cal_info, cal_profile) WMI_SET_BITS(cal_info, 8, 5, cal_profile)
 
-#define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_GET(value)              WMI_GET_BITS(value, 13, 1)
-#define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_SET(value, is_periodic) WMI_SET_BITS(value, 13, 1, is_periodic)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_GET(cal_info)              WMI_GET_BITS(cal_info, 13, 1)
+#define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_SET(cal_info, is_periodic) WMI_SET_BITS(cal_info, 13, 1, is_periodic)
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -26348,10 +26357,11 @@ typedef enum {
      * within this enum represents a bit position within a stats bitmap.
      */
     /* bit 0 is currently unused / reserved */
-    WMI_REQUEST_CTRL_PATH_PDEV_TX_STAT   = 1,
-    WMI_REQUEST_CTRL_PATH_VDEV_EXTD_STAT = 2,
-    WMI_REQUEST_CTRL_PATH_MEM_STAT       = 3,
-    WMI_REQUEST_CTRL_PATH_TWT_STAT       = 4,
+    WMI_REQUEST_CTRL_PATH_PDEV_TX_STAT      = 1,
+    WMI_REQUEST_CTRL_PATH_VDEV_EXTD_STAT    = 2,
+    WMI_REQUEST_CTRL_PATH_MEM_STAT          = 3,
+    WMI_REQUEST_CTRL_PATH_TWT_STAT          = 4,
+    WMI_REQUEST_CTRL_PATH_CALIBRATION_STAT  = 5,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
