@@ -78,6 +78,7 @@ struct hif_runtime_pm_ctx {
 	struct hif_pci_pm_stats pm_stats;
 	struct work_struct pm_work;
 	spinlock_t runtime_lock;	/* Generic spinlock for Runtime PM */
+	qdf_spinlock_t runtime_suspend_lock;
 	qdf_timer_t runtime_timer;
 	struct list_head prevent_suspend_list;
 	unsigned long runtime_timer_expires;
