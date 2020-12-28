@@ -151,6 +151,22 @@ enum {
 			      | HOST_REGDMN_MODE_11AXA_HE160)
 
 /**
+ * REG_IS_CHAN_DISABLED() - In the regulatory channel list, a channel
+ * may be disabled by the regulatory/device or by radar. Radar is temporary
+ * and a radar disabled channel does not mean that the channel is permanently
+ * disabled. The API checks if the channel is disabled, but not due to radar.
+ * @chan - Regulatory channel object
+ *
+ * Return - True,  the channel is disabled, but not due to radar, else false.
+ */
+static bool reg_is_chan_disabled(struct regulatory_channel chan)
+{
+	return (((chan).chan_flags & REGULATORY_CHAN_DISABLED) &&
+		((chan).state == CHANNEL_STATE_DISABLE) &&
+		(!((chan).nol_chan)) && (!((chan).nol_history)));
+}
+
+/**
  * reg_is_phymode_chwidth_allowed() - Check if requested phymode is allowed
  * @pdev_priv_obj: Pointer to regulatory pdev private object.
  * @phy_in: phymode that the user requested.
@@ -195,6 +211,15 @@ bool reg_is_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
  */
 void reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev);
 
+/*
+ * reg_is_band_present() - Check if input band channels are present
+ * in the regulatory current channel list.
+ * @pdev: pdev pointer.
+ * @reg_band: regulatory band.
+ *
+ */
+bool reg_is_band_present(struct wlan_objmgr_pdev *pdev,
+			 enum reg_wifi_band reg_band);
 #else
 static inline bool reg_is_phymode_chwidth_allowed(
 		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj,
@@ -218,6 +243,12 @@ bool reg_is_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 
 static inline void reg_clear_allchan_blocked(struct wlan_objmgr_pdev *pdev)
 {
+}
+
+static inline bool
+reg_is_band_present(struct wlan_objmgr_pdev *pdev, enum reg_wifi_band reg_band)
+{
+	return false;
 }
 #endif /* CONFIG_HOST_FIND_CHAN */
 
