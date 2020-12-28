@@ -1961,8 +1961,8 @@ struct cdp_tx_completion_ppdu {
 	uint32_t usr_ru_tones_sum;
 	uint32_t bar_ppdu_id;
 	uint32_t bar_tx_duration;
-	uint32_t bar_ppdu_start_timestamp;
-	uint32_t bar_ppdu_end_timestamp;
+	uint64_t bar_ppdu_start_timestamp;
+	uint64_t bar_ppdu_end_timestamp;
 	uint32_t tlv_bitmap;
 	uint16_t sched_cmdid;
 	uint16_t phy_ppdu_tx_time_us;
