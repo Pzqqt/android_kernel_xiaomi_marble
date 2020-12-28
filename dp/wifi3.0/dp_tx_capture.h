@@ -57,11 +57,7 @@ struct dp_tx_desc_s;
 #define dp_tx_capture_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_TX_CAPTURE, params)
 #define dp_tx_capture_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_TX_CAPTURE, params)
 #define dp_tx_capture_info(params...) \
-	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO, QDF_MODULE_ID_DP_TX_CAPTURE, ## params)
-#define dp_tx_capture_info_high(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_TX_CAPTURE, ## params)
-#define dp_tx_capture_info_low(params...) \
-	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_LOW, QDF_MODULE_ID_DP_TX_CAPTURE, ## params)
 #define dp_tx_capture_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_TX_CAPTURE, params)
 
 /* stats */

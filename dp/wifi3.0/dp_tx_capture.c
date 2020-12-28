@@ -371,11 +371,11 @@ dp_tx_peer_get_ref(const char *func, uint32_t line, struct dp_pdev *cur_pdev,
 	}
 
 	if (qdf_unlikely(pdev->pdev_id != cur_pdev->pdev_id)) {
-		dp_tx_capture_info_high("%pK: peer %p peer_id: %d mapped to pdev %p %d, cur_pdev %p %d",
-					pdev->soc,
-					peer, peer_id,
-					pdev, pdev->pdev_id,
-					cur_pdev, cur_pdev->pdev_id);
+		dp_tx_capture_info("%pK: peer %p peer_id: %d mapped to pdev %p %d, cur_pdev %p %d",
+				   pdev->soc,
+				   peer, peer_id,
+				   pdev, pdev->pdev_id,
+				   cur_pdev, cur_pdev->pdev_id);
 		DP_TX_PEER_DEL_REF(peer);
 		cur_pdev->tx_capture.peer_mismatch++;
 		return NULL;
@@ -666,7 +666,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 	    CDP_TX_ENH_CAPTURE_DISABLED)
 		return;
 
-	dp_tx_capture_info_low("%pK: peer(%p) id:%d init!!", pdev->soc, peer, peer->peer_id);
+	dp_tx_capture_info("%pK: peer(%p) id:%d init!!", pdev->soc, peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		struct cdp_tx_completion_ppdu *xretry_ppdu = NULL;
@@ -768,8 +768,8 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 	if (!peer->tx_capture.is_tid_initialized)
 		return;
 
-	dp_tx_capture_info_low("peer(%p) id:%d cleanup!!",
-			       peer, peer->peer_id);
+	dp_tx_capture_info("peer(%p) id:%d cleanup!!",
+			   peer, peer->peer_id);
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		uint32_t len = 0;
@@ -1145,8 +1145,8 @@ bool dp_peer_tx_cap_add_filter(struct dp_pdev *pdev,
 
 	if (dp_peer_tx_cap_search(pdev, peer_id, mac_addr)) {
 		/* mac address and peer_id already there */
-		dp_tx_capture_info_low("%pk: peer_id[%d] mac_addr[%pM] already there\n",
-				       pdev->soc, peer_id, mac_addr);
+		dp_tx_capture_info("%pk: peer_id[%d] mac_addr[%pM] already there\n",
+				   pdev->soc, peer_id, mac_addr);
 		return status;
 	}
 
@@ -1224,8 +1224,8 @@ bool dp_peer_tx_cap_del_filter(struct dp_pdev *pdev,
 	}
 
 	if (!status)
-		dp_tx_capture_info_low("%pK: unable to delete peer[%d] mac[%pM] filter list",
-				       pdev->soc, peer_id, mac_addr);
+		dp_tx_capture_info("%pK: unable to delete peer[%d] mac[%pM] filter list",
+				   pdev->soc, peer_id, mac_addr);
 	return status;
 }
 
@@ -1247,14 +1247,14 @@ void dp_peer_tx_cap_print_mgmt_filter(struct dp_pdev *pdev,
 
 	tx_capture = &pdev->tx_capture;
 
-	dp_tx_capture_info_low("%pK: peer filter list:", pdev->soc);
+	dp_tx_capture_info("%pK: peer filter list:", pdev->soc);
 	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
 		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
-		dp_tx_capture_info_low("%pK: peer_id[%d] mac_addr[%pM] avail[%d]",
-				       pdev->soc,
-				       ptr_peer_mgmt_list->peer_id,
-				       ptr_peer_mgmt_list->mac_addr,
-				       ptr_peer_mgmt_list->avail);
+		dp_tx_capture_info("%pK: peer_id[%d] mac_addr[%pM] avail[%d]",
+				   pdev->soc,
+				   ptr_peer_mgmt_list->peer_id,
+				   ptr_peer_mgmt_list->mac_addr,
+				   ptr_peer_mgmt_list->avail);
 	}
 }
 
@@ -1271,8 +1271,8 @@ bool is_dp_peer_mgmt_pkt_filter(struct dp_pdev *pdev,
 	bool found = false;
 
 	found = dp_peer_tx_cap_search(pdev, peer_id, mac_addr);
-	dp_tx_capture_info_low("%pK: peer_id[%d] mac_addr[%pM] found[%d]!",
-			       pdev->soc, peer_id, mac_addr, found);
+	dp_tx_capture_info("%pK: peer_id[%d] mac_addr[%pM] found[%d]!",
+			   pdev->soc, peer_id, mac_addr, found);
 
 	return found;
 }
@@ -1659,7 +1659,7 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 	}
 
 	if (!qdf_nbuf_push_head(netbuf, sizeof(struct msdu_completion_info))) {
-		dp_tx_capture_err("%pK: " FL("No headroom"), soc);
+		dp_tx_capture_err("%pK: No headroom", soc);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -2058,8 +2058,8 @@ dp_enh_tx_capture_disable(struct dp_pdev *pdev)
 		}
 	}
 
-	dp_tx_capture_info_low("%pK: Mode change request done cur mode - %d user_mode - %d\n",
-			       pdev->soc, pdev->tx_capture_enabled, CDP_TX_ENH_CAPTURE_DISABLED);
+	dp_tx_capture_info("%pK: Mode change request done cur mode - %d user_mode - %d\n",
+			   pdev->soc, pdev->tx_capture_enabled, CDP_TX_ENH_CAPTURE_DISABLED);
 }
 
 /*
@@ -2083,8 +2083,8 @@ dp_enh_tx_capture_enable(struct dp_pdev *pdev, uint8_t user_mode)
 					  DP_PPDU_STATS_CFG_SNIFFER,
 					  pdev->pdev_id);
 	pdev->tx_capture_enabled = user_mode;
-	dp_tx_capture_info_low("%pK: Mode change request done cur mode - %d user_mode - %d\n",
-			       pdev->soc, pdev->tx_capture_enabled, user_mode);
+	dp_tx_capture_info("%pK: Mode change request done cur mode - %d user_mode - %d\n",
+			   pdev->soc, pdev->tx_capture_enabled, user_mode);
 }
 
 /*
@@ -2115,8 +2115,8 @@ QDF_STATUS
 dp_config_enh_tx_capture(struct dp_pdev *pdev, uint8_t val)
 {
 	qdf_atomic_set(&pdev->tx_capture.tx_cap_usr_mode, val);
-	dp_tx_capture_info_low("%pK: User mode change requested - %d\n",
-			       pdev->soc, qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
+	dp_tx_capture_info("%pK: User mode change requested - %d\n",
+			   pdev->soc, qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2321,7 +2321,7 @@ static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
 
 	/* update ieee80211_frame header */
 	if (!qdf_nbuf_push_head(nbuf, mpdu_buf_len)) {
-		dp_tx_capture_err("%pK: " FL("No headroom"), pdev->soc);
+		dp_tx_capture_err("%pK: No headroom", pdev->soc);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -2406,7 +2406,7 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 
 	/* update ieee80211_frame header */
 	if (!qdf_nbuf_push_head(nbuf, mpdu_buf_len)) {
-		dp_tx_capture_err("%pK: " FL("No headroom"), pdev->soc);
+		dp_tx_capture_err("%pK: No headroom", pdev->soc);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -3479,10 +3479,10 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 
 	if (mpdu_nbuf != qdf_nbuf_queue_first(&xretry_user->mpdu_q)) {
 		next_nbuf = qdf_nbuf_queue_next(mpdu_nbuf);
-		dp_tx_capture_info_high("%pK: mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
-					pdev->soc, mpdu_nbuf, next_nbuf,
-					&xretry_user->mpdu_q,
-					qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
+		dp_tx_capture_info("%pK: mpdu %p not head, next %p mpdu_q[%p L %d] ppdu %p",
+				   pdev->soc, mpdu_nbuf, next_nbuf,
+				   &xretry_user->mpdu_q,
+				   qdf_nbuf_queue_len(&xretry_user->mpdu_q), ppdu_nbuf);
 		/* Initialize temp list */
 		qdf_nbuf_queue_init(&temp_xretries);
 		/* Move entries into temp list till the mpdu_nbuf is found */
@@ -5409,18 +5409,18 @@ free_nbuf_dec_ref:
 		 * descriptor list
 		 */
 		/* print ppdu_desc info for debugging purpose */
-		dp_tx_capture_info_low("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%u b %u] dur[%u]",
-				       pdev->soc, ppdu_desc->ppdu_id,
-				       ppdu_desc->user[0].peer_id,
-				       ppdu_desc->user[0].tid,
-				       ppdu_desc->frame_ctrl,
-				       ppdu_desc->user[0].frame_ctrl,
-				       ppdu_desc->frame_type,
-				       ppdu_desc->htt_frame_type,
-				       ppdu_desc->user[0].start_seq,
-				       ppdu_desc->ppdu_start_timestamp,
-				       ppdu_desc->bar_ppdu_start_timestamp,
-				       ppdu_desc->tx_duration);
+		dp_tx_capture_info("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%u b %u] dur[%u]",
+				   pdev->soc, ppdu_desc->ppdu_id,
+				   ppdu_desc->user[0].peer_id,
+				   ppdu_desc->user[0].tid,
+				   ppdu_desc->frame_ctrl,
+				   ppdu_desc->user[0].frame_ctrl,
+				   ppdu_desc->frame_type,
+				   ppdu_desc->htt_frame_type,
+				   ppdu_desc->user[0].start_seq,
+				   ppdu_desc->ppdu_start_timestamp,
+				   ppdu_desc->bar_ppdu_start_timestamp,
+				   ppdu_desc->tx_duration);
 
 		ptr_nbuf_list->nbuf_ppdu = nbuf_ppdu;
 		dp_tx_cap_nbuf_list_update_ref(ptr_nbuf_list,
