@@ -216,7 +216,7 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
 	if (!vdev)
 		return -EINVAL;
 
@@ -239,7 +239,7 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 	status = osif_cm_disconnect(dev, vdev, reason);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
 
 	return status;
 }

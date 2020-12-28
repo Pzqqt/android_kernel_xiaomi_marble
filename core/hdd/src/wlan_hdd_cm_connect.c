@@ -195,7 +195,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
 
 	ucfg_pmo_flush_gtk_offload_req(vdev);
 
@@ -217,7 +217,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 	}
 
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
 	return status;
 }
 

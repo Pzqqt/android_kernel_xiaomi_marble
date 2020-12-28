@@ -1021,7 +1021,7 @@ static int __hdd_netdev_notifier_call(struct net_device *net_dev,
 		break;
 
 	case NETDEV_GOING_DOWN:
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SCAN_ID);
 		if (!vdev)
 			break;
 		if (ucfg_scan_get_vdev_status(vdev) !=
@@ -1030,7 +1030,7 @@ static int __hdd_netdev_notifier_call(struct net_device *net_dev,
 					adapter->vdev_id, INVALID_SCAN_ID,
 					true);
 		}
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SCAN_ID);
 		cds_flush_work(&adapter->scan_block_work);
 		/* Need to clean up blocked scan request */
 		wlan_hdd_cfg80211_scan_block(adapter);
@@ -2864,7 +2864,7 @@ static int __hdd_pktcapture_open(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	adapter->vdev = hdd_objmgr_get_vdev(sta_adapter);
+	adapter->vdev = hdd_objmgr_get_vdev_by_user(sta_adapter, WLAN_OSIF_ID);
 	if (!adapter->vdev) {
 		hdd_err("station interface is not up");
 		return -EINVAL;
@@ -2877,7 +2877,7 @@ static int __hdd_pktcapture_open(struct net_device *dev)
 						     adapter);
 	ret = qdf_status_to_os_return(status);
 	if (ret) {
-		hdd_objmgr_put_vdev(adapter->vdev);
+		hdd_objmgr_put_vdev_by_user(adapter->vdev, WLAN_OSIF_ID);
 		return ret;
 	}
 
@@ -4442,7 +4442,7 @@ static int __hdd_stop(struct net_device *dev)
 	    ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
 						PACKET_CAPTURE_MODE_DISABLE) {
 		ucfg_pkt_capture_deregister_callbacks(adapter->vdev);
-		hdd_objmgr_put_vdev(adapter->vdev);
+		hdd_objmgr_put_vdev_by_user(adapter->vdev, WLAN_OSIF_ID);
 		adapter->vdev = NULL;
 	}
 
@@ -5458,7 +5458,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	/* Check and wait for hw mode response */
 	hdd_check_wait_for_hw_mode_completion(hdd_ctx);
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	if (!vdev)
 		return -EINVAL;
 
@@ -5469,7 +5469,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, adapter->dev);
 	/* Disable serialization for vdev before sending vdev delete */
 	wlan_ser_vdev_queue_disable(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	adapter->vdev = NULL;
@@ -5517,11 +5517,11 @@ hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 				      adapter->device_mode,
 				      hdd_ctx->num_rf_chains);
 
-	vdev = hdd_objmgr_get_vdev(adapter);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 	/* Store the nss chain config into the vdev */
 	if (vdev) {
 		sme_store_nss_chains_cfg_in_vdev(vdev, &vdev_ini_cfg);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	} else {
 		hdd_err("Vdev is NULL");
 	}
@@ -5636,7 +5636,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (!vdev)
 			goto hdd_vdev_destroy_procedure;
 
@@ -5648,7 +5648,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		ucfg_mlme_get_bigtk_support(hdd_ctx->psoc, &target_bigtk_support);
 		if (target_bigtk_support)
 			mlme_set_bigtk_support(vdev, true);
-		hdd_objmgr_put_vdev(vdev);
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	}
 
 	if (QDF_NAN_DISC_MODE == adapter->device_mode) {
@@ -7149,10 +7149,12 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if (adapter->device_mode == QDF_STA_MODE) {
 			struct wlan_objmgr_vdev *vdev;
 
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_SCAN_ID);
 			if (vdev) {
 				wlan_cfg80211_sched_scan_stop(vdev);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(vdev,
+							    WLAN_OSIF_SCAN_ID);
 			}
 
 			ucfg_ipa_flush_pending_vdev_events(hdd_ctx->pdev,
@@ -7168,7 +7170,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		    ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
 						PACKET_CAPTURE_MODE_DISABLE) {
 			ucfg_pkt_capture_deregister_callbacks(adapter->vdev);
-			hdd_objmgr_put_vdev(adapter->vdev);
+			hdd_objmgr_put_vdev_by_user(adapter->vdev,
+						    WLAN_OSIF_ID);
 			adapter->vdev = NULL;
 		}
 		if (wlan_hdd_is_session_type_monitor(QDF_MONITOR_MODE) &&
@@ -7319,11 +7322,11 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		/*
 		 * If Do_Not_Break_Stream was enabled clear avoid channel list.
 		 */
-		vdev = hdd_objmgr_get_vdev(adapter);
+		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (vdev) {
 			if (policy_mgr_is_dnsc_set(vdev))
 				wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
-			hdd_objmgr_put_vdev(vdev);
+			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		}
 
 #ifdef WLAN_OPEN_SOURCE
@@ -7565,10 +7568,12 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			/* Stop tdls timers */
-			vdev = hdd_objmgr_get_vdev(adapter);
+			vdev = hdd_objmgr_get_vdev_by_user(adapter,
+							   WLAN_OSIF_TDLS_ID);
 			if (vdev) {
 				hdd_notify_tdls_reset_adapter(vdev);
-				hdd_objmgr_put_vdev(vdev);
+				hdd_objmgr_put_vdev_by_user(vdev,
+							    WLAN_OSIF_TDLS_ID);
 			}
 		}
 
@@ -8433,13 +8438,15 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			    QDF_MONITOR_MODE) &&
 			    ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
 						PACKET_CAPTURE_MODE_DISABLE) {
-				vdev = hdd_objmgr_get_vdev(adapter);
+				vdev = hdd_objmgr_get_vdev_by_user(
+							adapter, WLAN_OSIF_ID);
 				if (vdev) {
 					ucfg_pkt_capture_register_callbacks(
 						vdev,
 						hdd_mon_rx_packet_cbk,
 						adapter);
-					hdd_objmgr_put_vdev(vdev);
+					hdd_objmgr_put_vdev_by_user(
+							vdev, WLAN_OSIF_ID);
 				} else {
 					hdd_err("vdev is null");
 				}
@@ -18508,7 +18515,7 @@ void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
 	hdd_close_adapter(hdd_ctx, adapter, true);
 
 	if (adapter->vdev) {
-		hdd_objmgr_put_vdev(adapter->vdev);
+		hdd_objmgr_put_vdev_by_user(adapter->vdev, WLAN_OSIF_ID);
 		adapter->vdev = NULL;
 	}
 
