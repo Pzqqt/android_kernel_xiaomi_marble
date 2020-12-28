@@ -6,6 +6,9 @@
 #ifndef __H_HFI_PROPERTY_H__
 #define __H_HFI_PROPERTY_H__
 
+//todo: DP: remove below header
+#include <linux/types.h>
+
 #define HFI_PROP_BEGIN                                          0x03000000
 #define HFI_PROP_IMAGE_VERSION                                  0x03000001
 #define HFI_PROP_INTRA_FRAME_POWER_COLLAPSE                     0x03000002

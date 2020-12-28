@@ -6,6 +6,7 @@
 #ifndef __H_HFI_COMMAND_H__
 #define __H_HFI_COMMAND_H__
 
+//todo: DP: remove below headers
 #include <linux/types.h>
 #include <linux/bits.h>
 
