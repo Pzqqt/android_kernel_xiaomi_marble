@@ -27,7 +27,7 @@
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
 #include "scheduler_api.h"
-#include "connection_mgr/core/src/wlan_cm_main_api.h"
+#include "connection_mgr/core/src/wlan_cm_main.h"
 
 /**
  * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
@@ -104,6 +104,39 @@ struct cm_peer_create_req {
 	uint8_t vdev_id;
 	struct qdf_mac_addr peer_mac;
 };
+
+/**
+ * struct cm_connect_config - connect config to be used to send info in
+ * RSO. This is the info we dont have in VDEV or CM ctx
+ * @rsn_cap: original rsn caps from the connect req from supplicant
+ */
+struct cm_connect_config {
+	uint8_t rsn_cap;
+};
+
+/**
+ * struct cm_ext_obj - Connection manager legacy object
+ * @connect_config: connect info to be used in RSO.
+ */
+struct cm_ext_obj {
+	struct cm_connect_config connect_config;
+};
+
+static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
+{
+	cm_ctx->ext_cm_ptr = qdf_mem_malloc(sizeof(struct cm_ext_obj));
+	if (!cm_ctx->ext_cm_ptr)
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx)
+{
+	qdf_mem_free(cm_ctx->ext_cm_ptr);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * cm_connect_start_ind() - Connection manager ext connect start indication
