@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2533,6 +2533,17 @@ static inline uint32_t __qdf_nbuf_get_mark(__qdf_nbuf_t buf)
 static inline qdf_size_t __qdf_nbuf_get_data_len(__qdf_nbuf_t nbuf)
 {
 	return (skb_end_pointer(nbuf) - nbuf->data);
+}
+
+/**
+ * __qdf_nbuf_get_gso_segs() - Return the number of gso segments
+ * @skb: Pointer to network buffer
+ *
+ * Return: Return the number of gso segments
+ */
+static inline uint16_t __qdf_nbuf_get_gso_segs(struct sk_buff *skb)
+{
+	return skb_shinfo(skb)->gso_segs;
 }
 
 #ifdef CONFIG_NBUF_AP_PLATFORM
