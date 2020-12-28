@@ -274,8 +274,9 @@ static inline void
 osif_cm_set_prev_bssid(struct wlan_cm_connect_req *connect_req,
 		       const struct cfg80211_connect_params *req)
 {
-	qdf_mem_copy(connect_req->prev_bssid.bytes, req->prev_bssid,
-		     QDF_MAC_ADDR_SIZE);
+	if (req->prev_bssid)
+		qdf_mem_copy(connect_req->prev_bssid.bytes, req->prev_bssid,
+			     QDF_MAC_ADDR_SIZE);
 }
 
 static inline
