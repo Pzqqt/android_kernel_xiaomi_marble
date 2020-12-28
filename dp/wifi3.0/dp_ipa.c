@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -589,6 +589,9 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 						srng_params.ring_base_vaddr;
 	soc->ipa_uc_tx_rsc.ipa_wbm_ring_size =
 		(srng_params.num_entries * srng_params.entry_size) << 2;
+	soc->ipa_uc_tx_rsc.ipa_wbm_hp_shadow_paddr =
+		hal_srng_get_hp_addr(hal_soc_to_hal_soc_handle(hal_soc),
+				     hal_srng_to_hal_ring_handle(hal_srng));
 	addr_offset = (unsigned long)(hal_srng->u.dst_ring.tp_addr) -
 		      (unsigned long)(hal_soc->dev_base_addr);
 	soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr =
@@ -750,14 +753,33 @@ QDF_STATUS dp_ipa_get_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void dp_ipa_set_tx_doorbell_paddr(struct dp_soc *soc,
+					 struct dp_ipa_resources *ipa_res)
+{
+	struct hal_srng *wbm_srng = (struct hal_srng *)
+			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
+
+	hal_srng_dst_set_hp_paddr_confirm(wbm_srng,
+					  ipa_res->tx_comp_doorbell_paddr);
+
+	dp_info("paddr %pK vaddr %pK",
+		(void *)ipa_res->tx_comp_doorbell_paddr,
+		(void *)ipa_res->tx_comp_doorbell_vaddr);
+}
+
+#ifdef IPA_SET_RESET_TX_DB_PA
+#define DP_IPA_SET_TX_DB_PADDR(soc, ipa_res)
+#else
+#define DP_IPA_SET_TX_DB_PADDR(soc, ipa_res) \
+		dp_ipa_set_tx_doorbell_paddr(soc, ipa_res)
+#endif
+
 QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	struct dp_ipa_resources *ipa_res;
-	struct hal_srng *wbm_srng = (struct hal_srng *)
-			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
 	struct hal_srng *reo_srng = (struct hal_srng *)
 			soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
 	uint32_t tx_comp_doorbell_dmaaddr;
@@ -789,11 +811,7 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		ipa_res->rx_ready_doorbell_paddr = rx_ready_doorbell_dmaaddr;
 	}
 
-	hal_srng_dst_set_hp_paddr(wbm_srng, ipa_res->tx_comp_doorbell_paddr);
-
-	dp_info("paddr %pK vaddr %pK",
-		(void *)ipa_res->tx_comp_doorbell_paddr,
-		(void *)ipa_res->tx_comp_doorbell_vaddr);
+	DP_IPA_SET_TX_DB_PADDR(soc, ipa_res);
 
 	/*
 	 * For RX, REO module on Napier/Hastings does reordering on incoming
@@ -802,7 +820,8 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	 * to IPA.
 	 * Set the doorbell addr for the REO ring.
 	 */
-	hal_srng_dst_set_hp_paddr(reo_srng, ipa_res->rx_ready_doorbell_paddr);
+	hal_srng_dst_set_hp_paddr_confirm(reo_srng,
+					  ipa_res->rx_ready_doorbell_paddr);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1745,6 +1764,36 @@ QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef IPA_SET_RESET_TX_DB_PA
+static
+QDF_STATUS dp_ipa_reset_tx_doorbell_pa(struct dp_soc *soc,
+				       struct dp_ipa_resources *ipa_res)
+{
+	hal_ring_handle_t wbm_srng =
+			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
+	qdf_dma_addr_t hp_addr;
+
+	if (!wbm_srng)
+		return QDF_STATUS_E_FAILURE;
+
+	hp_addr = soc->ipa_uc_tx_rsc.ipa_wbm_hp_shadow_paddr;
+
+	hal_srng_dst_set_hp_paddr_confirm((struct hal_srng *)wbm_srng, hp_addr);
+
+	dp_info("Reset WBM HP addr paddr: %pK", (void *)hp_addr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#define DP_IPA_EP_SET_TX_DB_PA(soc, ipa_res) \
+				dp_ipa_set_tx_doorbell_paddr((soc), (ipa_res))
+#define DP_IPA_RESET_TX_DB_PA(soc, ipa_res) \
+				dp_ipa_reset_tx_doorbell_pa((soc), (ipa_res))
+#else
+#define DP_IPA_EP_SET_TX_DB_PA(soc, ipa_res)
+#define DP_IPA_RESET_TX_DB_PA(soc, ipa_res)
+#endif
+
 QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
@@ -1763,6 +1812,7 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	ipa_res = &pdev->ipa_resource;
 
 	qdf_atomic_set(&soc->ipa_pipes_enabled, 1);
+	DP_IPA_EP_SET_TX_DB_PA(soc, ipa_res);
 	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
 
 	result = qdf_ipa_wdi_enable_pipes();
@@ -1771,6 +1821,7 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 			  "%s: Enable WDI PIPE fail, code %d",
 			  __func__, result);
 		qdf_atomic_set(&soc->ipa_pipes_enabled, 0);
+		DP_IPA_RESET_TX_DB_PA(soc, ipa_res);
 		dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, false);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1785,69 +1836,28 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef DEVICE_FORCE_WAKE_ENABLED
-/*
- * dp_ipa_get_tx_comp_pending_check() - Check if tx completions are pending.
- * @soc: DP pdev Context
- *
- * Ring full condition is checked to find if buffers are left for
- * processing as host only allocates buffers in this ring and IPA HW processes
- * the buffer.
- *
- * Return: True if tx completions are pending
- */
-static bool dp_ipa_get_tx_comp_pending_check(struct dp_soc *soc)
-{
-	struct dp_srng *tx_comp_ring =
-				&soc->tx_comp_ring[IPA_TX_COMP_RING_IDX];
-	uint32_t hp, tp, entry_size, buf_cnt;
-
-	hal_get_hw_hptp(soc->hal_soc, tx_comp_ring->hal_srng, &hp, &tp,
-			WBM2SW_RELEASE);
-	entry_size = hal_srng_get_entrysize(soc->hal_soc, WBM2SW_RELEASE) >> 2;
-
-	if (hp > tp)
-		buf_cnt = (hp - tp) / entry_size;
-	else
-		buf_cnt = (tx_comp_ring->num_entries - tp + hp) / entry_size;
-
-	return (soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt != buf_cnt);
-}
-#endif
-
 QDF_STATUS dp_ipa_disable_pipes(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
-	int timeout = TX_COMP_DRAIN_WAIT_TIMEOUT_MS;
 	QDF_STATUS result;
+	struct dp_ipa_resources *ipa_res;
 
 	if (!pdev) {
 		dp_err("Invalid instance");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ipa_res = &pdev->ipa_resource;
+
+	qdf_sleep(TX_COMP_DRAIN_WAIT_TIMEOUT_MS);
 	/*
-	 * The tx completions pending check will trigger register read
-	 * for HP and TP of wbm2sw2 ring. There is a possibility for
-	 * these reg read to cause a NOC error if UMAC is in low power
-	 * state. The WAR is to sleep for the drain timeout without checking
-	 * for the pending tx completions. This WAR can be replaced with
-	 * poll logic for HP/TP difference once force wake is in place.
+	 * Reset the tx completion doorbell address before invoking IPA disable
+	 * pipes API to ensure that there is no access to IPA tx doorbell
+	 * address post disable pipes.
 	 */
-#ifdef DEVICE_FORCE_WAKE_ENABLED
-	while (dp_ipa_get_tx_comp_pending_check(soc)) {
-		qdf_sleep(TX_COMP_DRAIN_WAIT_MS);
-		timeout -= TX_COMP_DRAIN_WAIT_MS;
-		if (timeout <= 0) {
-			dp_err("Tx completions pending. Force Disabling pipes");
-			break;
-		}
-	}
-#else
-	qdf_sleep(timeout);
-#endif
+	DP_IPA_RESET_TX_DB_PA(soc, ipa_res);
 
 	result = qdf_ipa_wdi_disable_pipes();
 	if (result) {
