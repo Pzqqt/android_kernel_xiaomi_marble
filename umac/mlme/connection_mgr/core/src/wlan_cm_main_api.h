@@ -480,6 +480,18 @@ struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
 #define cm_get_cm_ctx(vdev) \
 	cm_get_cm_ctx_fl(vdev, __func__, __LINE__)
 
+cm_ext_t *cm_get_ext_hdl_fl(struct wlan_objmgr_vdev *vdev,
+			    const char *func, uint32_t line);
+
+/**
+ * cm_get_ext_hdl() - Get connection manager ext context from vdev
+ * @vdev: vdev object pointer
+ *
+ * Return: pointer to connection manager ext context
+ */
+#define cm_get_ext_hdl(vdev) \
+	cm_get_ext_hdl_fl(vdev, __func__, __LINE__)
+
 /**
  * cm_reset_active_cm_id() - Reset active cm_id from cm context, if its same as
  * passed cm_id

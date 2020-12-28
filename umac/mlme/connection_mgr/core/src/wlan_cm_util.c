@@ -65,6 +65,22 @@ struct cnx_mgr *cm_get_cm_ctx_fl(struct wlan_objmgr_vdev *vdev,
 	return cm_ctx;
 }
 
+cm_ext_t *cm_get_ext_hdl_fl(struct wlan_objmgr_vdev *vdev,
+			    const char *func, uint32_t line)
+{
+	struct cnx_mgr *cm_ctx;
+	cm_ext_t *ext_ctx = NULL;
+
+	cm_ctx = cm_get_cm_ctx_fl(vdev, func, line);
+	if (cm_ctx)
+		ext_ctx = cm_ctx->ext_cm_ptr;
+
+	if (!ext_ctx)
+		mlme_nofl_err("%s:%u: vdev %d cm ext ctx is NULL", func, line,
+			      wlan_vdev_get_id(vdev));
+	return ext_ctx;
+}
+
 void cm_reset_active_cm_id(struct wlan_objmgr_vdev *vdev, wlan_cm_id cm_id)
 {
 	struct cnx_mgr *cm_ctx;

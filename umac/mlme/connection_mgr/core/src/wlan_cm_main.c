@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,12 +79,20 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	if (!vdev_mlme->cnx_mgr_ctx)
 		return QDF_STATUS_E_NOMEM;
 
-	vdev_mlme->cnx_mgr_ctx->vdev = vdev;
-	status = cm_sm_create(vdev_mlme->cnx_mgr_ctx);
+	status = mlme_cm_ext_hdl_create(vdev_mlme->cnx_mgr_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
 		vdev_mlme->cnx_mgr_ctx = NULL;
-		return QDF_STATUS_E_NOMEM;
+		return status;
+	}
+
+	vdev_mlme->cnx_mgr_ctx->vdev = vdev;
+	status = cm_sm_create(vdev_mlme->cnx_mgr_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_cm_ext_hdl_destroy(vdev_mlme->cnx_mgr_ctx);
+		qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
+		vdev_mlme->cnx_mgr_ctx = NULL;
+		return status;
 	}
 	vdev_mlme->cnx_mgr_ctx->max_connect_attempts =
 					CM_MAX_CONNECT_ATTEMPTS;
@@ -120,6 +128,7 @@ QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 	cm_req_lock_destroy(vdev_mlme->cnx_mgr_ctx);
 	qdf_list_destroy(&vdev_mlme->cnx_mgr_ctx->req_list);
 	cm_sm_destroy(vdev_mlme->cnx_mgr_ctx);
+	mlme_cm_ext_hdl_destroy(vdev_mlme->cnx_mgr_ctx);
 	qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
 	vdev_mlme->cnx_mgr_ctx = NULL;
 

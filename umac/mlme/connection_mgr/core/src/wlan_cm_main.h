@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -181,6 +181,7 @@ struct connect_ies {
  * @connect_timeout: Connect timeout value in milliseconds
  * @scan_requester_id: scan requester id.
  * @disconnect_complete: disconnect completion wait event
+ * @ext_cm_ptr: connection manager ext pointer
  */
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -201,6 +202,7 @@ struct cnx_mgr {
 	uint32_t connect_timeout;
 	wlan_scan_requester scan_requester_id;
 	qdf_event_t disconnect_complete;
+	cm_ext_t *ext_cm_ptr;
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,6 +98,8 @@ struct mlme_cm_ops {
  *                                          required by serialization
  * @mlme_multi_vdev_restart_resp:           callback to process multivdev
  *                                          restart response
+ * @mlme_cm_ext_hdl_create_cb:              callback to create ext cm context
+ * @mlme_cm_ext_hdl_destroy_cb:             callback to destroy ext cm context
  * @mlme_cm_ext_connect_start_ind_cb:       callback to indicate connect start
  * @mlme_cm_ext_bss_select_ind_cb:          callback to indicate candidate
  *                                          select for connect
@@ -146,6 +148,8 @@ struct mlme_ext_ops {
 				struct wlan_objmgr_psoc *psoc,
 				struct multi_vdev_restart_resp *resp);
 #ifdef FEATURE_CM_ENABLE
+	QDF_STATUS (*mlme_cm_ext_hdl_create_cb)(struct cnx_mgr *cm_ctx);
+	QDF_STATUS (*mlme_cm_ext_hdl_destroy_cb)(struct cnx_mgr *cm_ctx);
 	QDF_STATUS (*mlme_cm_ext_connect_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req);
@@ -373,6 +377,24 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
 					    struct vdev_delete_response *rsp);
 
 #ifdef FEATURE_CM_ENABLE
+/**
+ * mlme_cm_ext_hdl_create() - Connection manager callback to create ext
+ * context
+ * @cm_ctx: common cm context object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_ext_hdl_create(struct cnx_mgr *cm_ctx);
+
+/**
+ * mlme_cm_ext_hdl_destroy() - Connection manager callback to destroy ext
+ * context
+ * @cm_ctx: common cm context object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx);
+
 /**
  * mlme_cm_connect_start_ind() - Connection manager ext Connect start indication
  * @vdev: VDEV object

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -247,6 +247,26 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_multivdev_restart_resp(
 }
 
 #ifdef FEATURE_CM_ENABLE
+QDF_STATUS mlme_cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_ops && glbl_ops->mlme_cm_ext_hdl_create_cb)
+		ret = glbl_ops->mlme_cm_ext_hdl_create_cb(cm_ctx);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_ops && glbl_ops->mlme_cm_ext_hdl_destroy_cb)
+		ret = glbl_ops->mlme_cm_ext_hdl_destroy_cb(cm_ctx);
+
+	return ret;
+}
+
 QDF_STATUS mlme_cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 				     struct wlan_cm_connect_req *req)
 {
