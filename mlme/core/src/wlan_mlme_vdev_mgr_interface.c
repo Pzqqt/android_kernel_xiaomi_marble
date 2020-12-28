@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1734,6 +1734,8 @@ static struct mlme_ext_ops ext_ops = {
 	.mlme_vdev_ext_hdl_post_create = vdevmgr_mlme_ext_post_hdl_create,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 #ifdef FEATURE_CM_ENABLE
+	.mlme_cm_ext_hdl_create_cb = cm_ext_hdl_create,
+        .mlme_cm_ext_hdl_destroy_cb = cm_ext_hdl_destroy,
 	.mlme_cm_ext_connect_start_ind_cb = cm_connect_start_ind,
 	.mlme_cm_ext_connect_req_cb = cm_handle_connect_req,
 	.mlme_cm_ext_bss_peer_create_req_cb = cm_send_bss_peer_create_req,

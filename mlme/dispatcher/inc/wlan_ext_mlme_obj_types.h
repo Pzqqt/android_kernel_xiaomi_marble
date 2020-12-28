@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,4 +46,9 @@ typedef struct mlme_legacy_priv mlme_vdev_ext_t;
  */
 typedef struct wlan_mlme_psoc_ext_obj mlme_psoc_ext_t;
 
+/**
+ * typedef cm_ext_t - Definition of connection manager ext pointer
+ * Define ext_cm_ptr from legacy umac/mlme component to use
+ */
+typedef struct cm_ext_obj cm_ext_t;
 #endif
