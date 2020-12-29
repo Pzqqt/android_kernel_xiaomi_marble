@@ -4837,8 +4837,13 @@ hdd_check_and_disconnect_sta_on_invalid_channel(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_err("chan %d not valid, issue disconnect", sta_chan_freq);
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	wlan_hdd_cm_issue_disconnect(sta_adapter, reason, false);
+#else
 	/* Issue Disconnect request */
 	wlan_hdd_disconnect(sta_adapter, eCSR_DISCONNECT_REASON_DEAUTH, reason);
+#endif
 }
 
 #ifdef DISABLE_CHANNEL_LIST

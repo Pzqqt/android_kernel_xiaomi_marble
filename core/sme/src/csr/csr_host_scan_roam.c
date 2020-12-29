@@ -568,6 +568,8 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 
 	sme_debug("csr_roamHandoffRequested: disassociating with current AP");
 
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	if (!QDF_IS_STATUS_SUCCESS(csr_roam_issue_disassociate_cmd(
 					mac_ctx,
 					session_id,
@@ -577,6 +579,7 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		qdf_mem_free(roam_info);
 		return;
 	}
+#endif
 	/* notify HDD for handoff, providing the BSSID too */
 	roam_info->reasonCode = eCsrRoamReasonBetterAP;
 

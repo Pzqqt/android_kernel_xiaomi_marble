@@ -104,18 +104,24 @@ enum csr_roam_reason {
 	eCsrNoConnection,
 	/* roaming because LIM reported a cap change in the associated AP. */
 	eCsrCapsChange,
+#ifndef FEATURE_CM_ENABLE
 	/* roaming because someone asked us to Disassoc & stay disassociated. */
 	eCsrForcedDisassoc,
+#endif
 	/* roaming because an 802.11 request was issued to the driver. */
 	eCsrHddIssued,
+#ifndef FEATURE_CM_ENABLE
 	/* roaming because we need to force a Disassoc due to MIC failure */
 	eCsrForcedDisassocMICFailure,
+#endif
 	eCsrHddIssuedReassocToSameAP,
 	eCsrSmeIssuedReassocToSameAP,
+#ifndef FEATURE_CM_ENABLE
 	/* roaming because someone asked us to deauth and stay disassociated. */
 	eCsrForcedDeauth,
 	/* will be issued by Handoff logic to disconect from current AP */
 	eCsrSmeIssuedDisassocForHandoff,
+#endif
 	/* will be issued by Handoff logic to join a new AP with same profile */
 	eCsrSmeIssuedAssocToSimilarAP,
 	eCsrStopBss,
@@ -602,7 +608,9 @@ struct csr_roam_session {
 	uint8_t nss;
 	bool disable_hi_rssi;
 	bool dhcp_done;
+#ifndef FEATURE_CM_ENABLE
 	enum wlan_reason_code disconnect_reason;
+#endif
 	uint8_t uapsd_mask;
 	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;

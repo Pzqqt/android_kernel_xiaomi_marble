@@ -20460,7 +20460,6 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 
 	wlan_hdd_clear_wapi_privacy(adapter);
 }
-#endif /* FEATURE_CM_ENABLE */
 
 static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 					struct hdd_adapter *adapter,
@@ -20593,7 +20592,6 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
 					    reason);
 }
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_reassoc_bssid_hint() - Start reassociation if bssid is present
  * @adapter: Pointer to the HDD adapter
@@ -21096,27 +21094,7 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 }
 #endif
 
-#ifdef WLAN_FEATURE_MSCS
-/**
- * reset_mscs_params() - Reset mscs parameters
- * @adapter: pointer to adapter structure
- *
- * Reset mscs parameters whils disconnection
- *
- * Return: None
- */
-static void reset_mscs_params(struct hdd_adapter *adapter)
-{
-	mlme_set_is_mscs_req_sent(adapter->vdev, false);
-	adapter->mscs_counter = 0;
-}
-#else
-static inline
-void reset_mscs_params(struct hdd_adapter *adapter)
-{
-	return;
-}
-#endif
+#ifndef FEATURE_CM_ENABLE
 
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 			enum wlan_reason_code mac_reason)
@@ -21148,7 +21126,6 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 	return ret;
 }
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * __wlan_hdd_cfg80211_disconnect() - cfg80211 disconnect api
  * @wiphy: Pointer to wiphy

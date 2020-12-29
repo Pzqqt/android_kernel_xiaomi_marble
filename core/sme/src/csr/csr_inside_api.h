@@ -112,6 +112,7 @@ struct scan_result_list {
 				     (eCSR_ENCRYPT_TYPE_WEP40 != (encType)) && \
 				       (eCSR_ENCRYPT_TYPE_WEP104 != (encType)))
 
+#ifndef FEATURE_CM_ENABLE
 #define CSR_IS_DISCONNECT_COMMAND(pCommand) ((eSmeCommandRoam == \
 		(pCommand)->command) && \
 		((eCsrForcedDisassoc == (pCommand)->u.roamCmd.roamReason) || \
@@ -120,6 +121,9 @@ struct scan_result_list {
 					(pCommand)->u.roamCmd.roamReason) || \
 					(eCsrForcedDisassocMICFailure == \
 					(pCommand)->u.roamCmd.roamReason)))
+#else
+#define CSR_IS_DISCONNECT_COMMAND(pCommand) false
+#endif
 
 enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
 					  enum csr_roam_state NewRoamState,
@@ -217,11 +221,12 @@ csr_issue_set_context_req_helper(struct mac_context *mac,
 				 bool unicast, tAniKeyDirection key_direction,
 				 uint8_t key_id, uint16_t key_length,
 				 uint8_t *key);
-
+/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 						tSmeCmd *pCommand,
 					    bool fDisassoc, bool fMICFailure);
-
+#endif
 QDF_STATUS
 csr_roam_save_connected_information(struct mac_context *mac,
 				    uint32_t sessionId,

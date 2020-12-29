@@ -41,6 +41,8 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
+#include "hif.h"
 
 void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
 				     struct qdf_mac_addr *peer_macaddr)
@@ -200,13 +202,54 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	hdd_cm_print_bss_info(sta_ctx);
 }
 
+#ifdef WLAN_FEATURE_MSCS
+void reset_mscs_params(struct hdd_adapter *adapter)
+{
+	mlme_set_is_mscs_req_sent(adapter->vdev, false);
+	adapter->mscs_counter = 0;
+}
+#endif
+
 #ifdef FEATURE_CM_ENABLE
+QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
+					enum wlan_reason_code reason,
+					bool sync)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	void *hif_ctx;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+	hdd_place_marker(adapter, "TRY TO DISCONNECT", NULL);
+	reset_mscs_params(adapter);
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
+				     WLAN_CONTROL_PATH);
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (hif_ctx)
+		/*
+		 * Trigger runtime sync resume before sending disconneciton
+		 */
+		hif_pm_runtime_sync_resume(hif_ctx);
+
+	if (sync)
+		status = osif_cm_disconnect_sync(vdev, reason);
+	else
+		status = osif_cm_disconnect(adapter->dev, vdev, reason);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return status;
+}
+
 int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 			   struct net_device *dev, u16 reason)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	int status;
-	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -214,10 +257,6 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 	}
 
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
-		return -EINVAL;
-
-	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
-	if (!vdev)
 		return -EINVAL;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
@@ -230,18 +269,9 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 		qdf_dp_trace_dump_all(
 				WLAN_DEAUTH_DPTRACE_DUMP_COUNT,
 				QDF_TRACE_DEFAULT_PDEV_ID);
+	status = wlan_hdd_cm_issue_disconnect(adapter, reason, false);
 
-	/* To-Do: This is static api move this api to this file
-	 * once this is removed from wlan_hdd_cfg80211.c file
-	 * reset_mscs_params(adapter);
-	 */
-	wlan_hdd_netif_queue_control(adapter,
-				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
-				     WLAN_CONTROL_PATH);
-	status = osif_cm_disconnect(dev, vdev, reason);
-	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
-
-	return status;
+	return qdf_status_to_os_return(status);
 }
 
 static QDF_STATUS

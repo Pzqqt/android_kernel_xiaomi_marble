@@ -488,10 +488,17 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *sta_adapter;
+#ifndef FEATURE_CM_ENABLE
 	QDF_STATUS status;
+#endif
 
 	sta_adapter = hdd_get_sta_connection_in_progress(hdd_ctx);
 	if (sta_adapter) {
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		wlan_hdd_cm_issue_disconnect(sta_adapter,
+					     REASON_UNSPEC_FAILURE, false);
+#else
 		hdd_debug("Disconnecting STA on vdev: %d",
 			  sta_adapter->vdev_id);
 		status = wlan_hdd_disconnect(sta_adapter,
@@ -501,6 +508,7 @@ void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx)
 			hdd_err("wlan_hdd_disconnect failed, status: %d",
 				status);
 		}
+#endif
 	}
 }
 
@@ -1051,22 +1059,28 @@ void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 	hdd_sta_ctx->cache_conn_info.he_operation = hdd_he_operation;
 }
 
+#ifndef FEATURE_CM_ENABLE
 static void __hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 				    struct csr_roam_info *roam_info)
 {
 	hdd_copy_he_operation(hdd_sta_ctx, &roam_info->he_operation);
 }
+#endif
 #else
+#ifndef FEATURE_CM_ENABLE
 static inline void __hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 					   struct csr_roam_info *roam_info)
 {
 }
+#endif
 #endif
 
 bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx, uint8_t vdev_id)
 {
 	return MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, vdev_id);
 }
+
+#ifndef FEATURE_CM_ENABLE
 
 /**
  * hdd_save_bss_info() - save connection info in hdd sta ctx
@@ -1274,6 +1288,8 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 	qdf_mem_free(buff);
 }
 
+#endif
+
 /**
  * hdd_send_ft_event() - send fast transition event
  * @adapter: pointer to adapter
@@ -1381,6 +1397,7 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 #endif
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_ESE
 /**
  * hdd_send_new_ap_channel_info() - send new ap channel info
@@ -1641,6 +1658,7 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 	}
 }
+#endif
 
 void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 {
@@ -1727,6 +1745,7 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	hdd_exit();
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_dis_connect_handler() - disconnect event handler
  * @adapter: pointer to adapter
@@ -1879,6 +1898,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	return status;
 }
+#endif
 
 /**
  * hdd_set_peer_authorized_event() - set peer_authorized_event
@@ -2152,6 +2172,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	return qdf_status;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_send_roamed_ind() - send roamed indication to cfg80211
  * @dev: network device
@@ -2189,6 +2210,7 @@ static inline void hdd_send_roamed_ind(struct net_device *dev,
 	cfg80211_roamed_bss(dev, bss, req_ie, req_ie_len, resp_ie, resp_ie_len,
 			    GFP_KERNEL);
 }
+#endif
 #endif
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -2239,6 +2261,7 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 #endif
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 static void hdd_roam_decr_conn_count(struct hdd_adapter *adapter,
 				     struct hdd_context *hdd_ctx)
 {
@@ -2251,6 +2274,7 @@ static void hdd_roam_decr_conn_count(struct hdd_adapter *adapter,
 						adapter->device_mode,
 						adapter->vdev_id);
 }
+
 /**
  * hdd_send_re_assoc_event() - send reassoc event
  * @dev: pointer to net device
@@ -2400,6 +2424,7 @@ done:
 	qdf_mem_free(rsp_rsn_ie);
 	qdf_mem_free(assoc_req_ies);
 }
+#endif
 
 /**
  * hdd_change_sta_state_authenticated()-
@@ -2605,6 +2630,7 @@ static inline void hdd_netif_queue_enable(struct hdd_adapter *adapter)
 	}
 }
 
+#ifndef FEATURE_CM_ENABLE
 static void hdd_save_connect_status(struct hdd_adapter *adapter,
 				    struct csr_roam_info *roam_info)
 {
@@ -3373,6 +3399,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
+
 
 bool hdd_save_peer(struct hdd_station_ctx *sta_ctx,
 		   struct qdf_mac_addr *peer_mac_addr)
@@ -4147,9 +4175,12 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 	case eCSR_ROAM_FT_REASSOC_FAILED:
 		hdd_err("Reassoc Failed with roam_status: %d roam_result: %d SessionID: %d",
 			 roam_status, roam_result, adapter->vdev_id);
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		qdf_ret_status =
 			hdd_dis_connect_handler(adapter, roam_info, roam_id,
 						roam_status, roam_result);
+#endif
 		sta_ctx->ft_carrier_on = false;
 		sta_ctx->hdd_reassoc_scenario = false;
 		hdd_debug("hdd_reassoc_scenario set to: %d, ReAssoc Failed, session: %d",
@@ -4224,9 +4255,12 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		 */
 		hdd_disable_and_flush_mc_addr_list(adapter,
 			pmo_peer_disconnect);
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		qdf_ret_status =
 			hdd_dis_connect_handler(adapter, roam_info, roam_id,
 						roam_status, roam_result);
+#endif
 	}
 	break;
 	case eCSR_ROAM_ASSOCIATION_COMPLETION:
@@ -4248,10 +4282,13 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				  sta_ctx->hdd_reassoc_scenario,
 				  adapter->vdev_id);
 		}
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		qdf_ret_status =
 			hdd_association_completion_handler(adapter, roam_info,
 							   roam_id, roam_status,
 							   roam_result);
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		if (roam_info)
 			roam_info->roamSynchInProgress = false;
@@ -4261,11 +4298,14 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		hdd_debug("****eCSR_ROAM_CANCELLED****");
 		/* fallthrough */
 	case eCSR_ROAM_ASSOCIATION_FAILURE:
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		qdf_ret_status = hdd_association_completion_handler(adapter,
 								    roam_info,
 								    roam_id,
 								    roam_status,
 								    roam_result);
+#endif
 		break;
 	case eCSR_ROAM_MIC_ERROR_IND:
 		hdd_roam_mic_error_indication_handler(adapter, roam_info);

@@ -76,10 +76,30 @@ QDF_STATUS cm_send_vdev_down_req(struct wlan_objmgr_vdev *vdev)
 					     sizeof(*resp), resp);
 }
 
+QDF_STATUS cm_disconnect(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			 enum wlan_cm_source source,
+			 enum wlan_reason_code reason_code,
+			 struct qdf_mac_addr *bssid)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_cm_disconnect(vdev, source, reason_code, bssid);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return status;
+}
+
 QDF_STATUS cm_disconnect_indication(struct scheduler_msg *msg)
 {
 	struct cm_vdev_discon_ind *ind;
-	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
 	if (!msg || !msg->bodyptr)
@@ -87,20 +107,10 @@ QDF_STATUS cm_disconnect_indication(struct scheduler_msg *msg)
 
 	ind = msg->bodyptr;
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-			ind->psoc, ind->disconnect_param.vdev_id,
-			WLAN_MLME_CM_ID);
-	if (!vdev) {
-		mlme_err("vdev_id: %d : vdev not found",
-			 ind->disconnect_param.vdev_id);
-		qdf_mem_free(ind);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = wlan_cm_disconnect(vdev, ind->disconnect_param.source,
-				    ind->disconnect_param.reason_code,
-				    &ind->disconnect_param.bssid);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	status = cm_disconnect(ind->psoc, ind->disconnect_param.vdev_id,
+			       ind->disconnect_param.source,
+			       ind->disconnect_param.reason_code,
+			       &ind->disconnect_param.bssid);
 	qdf_mem_free(ind);
 
 	return status;

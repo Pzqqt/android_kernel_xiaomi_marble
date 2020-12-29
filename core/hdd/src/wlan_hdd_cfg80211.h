@@ -684,6 +684,7 @@ void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw);
  */
 uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_try_disconnect() - try disconnnect from previous connection
  * @adapter: Pointer to adapter
@@ -708,7 +709,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
  */
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 			enum wlan_reason_code mac_reason);
-
+#endif
 /**
  * wlan_hdd_get_adjacent_chan(): Gets next/previous channel
  * to the channel passed.

@@ -265,6 +265,12 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 static void
 hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 {
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	wlan_hdd_cm_issue_disconnect(adapter,
+				     REASON_GATEWAY_REACHABILITY_FAILURE,
+				     false);
+#else
 	int status;
 
 	qdf_mutex_acquire(&adapter->disconnection_status_lock);
@@ -279,6 +285,7 @@ hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 
 	hdd_debug("Disconnecting vdev with vdev id: %d",
 		  adapter->vdev_id);
+
 	/* Issue Disconnect */
 	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH,
 				     REASON_GATEWAY_REACHABILITY_FAILURE);
@@ -287,6 +294,7 @@ hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 			status);
 		hdd_set_disconnect_status(adapter, false);
 	}
+#endif
 }
 
 #ifdef WLAN_NUD_TRACKING

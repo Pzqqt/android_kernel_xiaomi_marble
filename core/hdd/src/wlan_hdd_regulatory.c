@@ -1423,11 +1423,18 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 			phy_changed = (roam_profile->phyMode != csr_phy_mode);
 
 			if (phy_changed || freq_changed) {
+			/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+				wlan_hdd_cm_issue_disconnect(adapter,
+							 REASON_UNSPEC_FAILURE,
+							 false);
+#else
 				sme_roam_disconnect(
 					hdd_ctx->mac_handle,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
 					REASON_UNSPEC_FAILURE);
+#endif
 				roam_profile->phyMode = csr_phy_mode;
 			}
 			break;

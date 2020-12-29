@@ -7079,38 +7079,41 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_NDI_DELETE,
 					reason);
-			}
-			else if (adapter->device_mode == QDF_STA_MODE) {
+				if (QDF_IS_STATUS_SUCCESS(status)) {
+					rc = wait_for_completion_timeout(
+						&adapter->disconnect_comp_var,
+						msecs_to_jiffies
+						 (SME_DISCONNECT_TIMEOUT));
+					if (!rc)
+						hdd_warn("disconn_comp_var wait fail");
+					hdd_cleanup_ndi(hdd_ctx, adapter);
+				}
+			} else if (adapter->device_mode == QDF_STA_MODE ||
+				   adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+				/*
+				 * This is temp ifdef will be removed in near
+				 * future
+				 */
+#ifdef FEATURE_CM_ENABLE
+				status = wlan_hdd_cm_issue_disconnect(adapter,
+								      reason,
+								      true);
+#else
+				status = QDF_STATUS_SUCCESS;
 				rc = wlan_hdd_disconnect(
 						adapter,
 						eCSR_DISCONNECT_REASON_DEAUTH,
 						reason);
-				if (rc != 0 && ucfg_ipa_is_enabled()) {
+				if (rc != 0)
+					status = QDF_STATUS_E_TIMEOUT;
+#endif
+				if (QDF_IS_STATUS_ERROR(status) &&
+				    ucfg_ipa_is_enabled()) {
 					hdd_err("STA disconnect failed");
 					ucfg_ipa_uc_cleanup_sta(hdd_ctx->pdev,
 								adapter->dev);
 				}
-			} else {
-				status = sme_roam_disconnect(
-					mac_handle,
-					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					reason);
 			}
-			/* success implies disconnect is queued */
-			if (QDF_IS_STATUS_SUCCESS(status) &&
-			    adapter->device_mode != QDF_STA_MODE) {
-				rc = wait_for_completion_timeout(
-					&adapter->disconnect_comp_var,
-					msecs_to_jiffies
-						(SME_DISCONNECT_TIMEOUT));
-				if (!rc)
-					hdd_warn("disconn_comp_var wait fail");
-				if (adapter->device_mode == QDF_NDI_MODE)
-					hdd_cleanup_ndi(hdd_ctx, adapter);
-			}
-			if (QDF_IS_STATUS_ERROR(status))
-				hdd_warn("failed to post disconnect");
 
 			memset(&wrqu, '\0', sizeof(wrqu));
 			wrqu.ap_addr.sa_family = ARPHRD_ETHER;
@@ -18573,9 +18576,12 @@ wlan_hdd_add_monitor_check(struct hdd_context *hdd_ctx,
 {
 	struct hdd_adapter *sta_adapter;
 	struct hdd_adapter *mon_adapter;
-	int errno;
 	uint8_t num_open_session = 0;
 	QDF_STATUS status;
+#ifndef FEATURE_CM_ENABLE
+	int errno;
+#endif
+
 
 	/* if no interface is up do not add monitor mode */
 	if (!hdd_is_any_interface_open(hdd_ctx))
@@ -18605,12 +18611,18 @@ wlan_hdd_add_monitor_check(struct hdd_context *hdd_ctx,
 	if (num_open_session == 1) {
 		hdd_ctx->disconnect_for_sta_mon_conc = true;
 		/* Try disconnecting if already in connected state */
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		wlan_hdd_cm_issue_disconnect(sta_adapter, REASON_UNSPEC_FAILURE,
+					     true);
+#else
 		errno = wlan_hdd_try_disconnect(sta_adapter,
 						REASON_UNSPEC_FAILURE);
 		if (errno > 0) {
 			hdd_err("Failed to disconnect the existing connection");
 			return -EALREADY;
 		}
+#endif
 	}
 
 	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=

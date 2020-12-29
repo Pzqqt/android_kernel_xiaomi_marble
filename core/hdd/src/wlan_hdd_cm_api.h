@@ -44,6 +44,20 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 			struct cfg80211_connect_params *req);
 
 /**
+ * wlan_hdd_cm_issue_disconnect() - initiate disconnect from osif
+ * @adapter: Pointer to adapter
+ * @reason: Disconnect reason code
+ * @sync: true if wait for disconnect to complete is required.
+ *
+ * This function is used to issue disconnect request to conection manager
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
+					enum wlan_reason_code reason,
+					bool sync);
+
+/**
  * wlan_hdd_cm_disconnect() - cfg80211 disconnect api
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
@@ -67,19 +81,23 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_connect_resp *rsp,
 				   enum osif_cb_type type);
+#endif
 
+#ifdef WLAN_FEATURE_MSCS
+/**
+ * reset_mscs_params() - Reset mscs parameters
+ * @adapter: pointer to adapter structure
+ *
+ * Reset mscs parameters whils disconnection
+ *
+ * Return: None
+ */
+void reset_mscs_params(struct hdd_adapter *adapter);
 #else
-static inline int
-wlan_hdd_cm_connect(struct wiphy *wiphy, struct net_device *ndev,
-		    struct cfg80211_connect_params *req)
+static inline
+void reset_mscs_params(struct hdd_adapter *adapter)
 {
-	return 0;
-}
-
-static inline int
-wlan_hdd_cm_disconnect(struct wiphy *wiphy, struct net_device *dev, u16 reason)
-{
-	return 0;
+	return;
 }
 #endif
 

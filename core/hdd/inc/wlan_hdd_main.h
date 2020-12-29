@@ -118,6 +118,7 @@
 
 #include "wlan_hdd_sta_info.h"
 #include "wlan_hdd_bus_bandwidth.h"
+#include <wlan_hdd_cm_api.h>
 
 /*
  * Preprocessor definitions and constants

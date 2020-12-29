@@ -69,6 +69,7 @@
 #include "wlan_cm_tgt_if_tx_api.h"
 #include "wlan_cm_api.h"
 #include "parser_api.h"
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -5464,9 +5465,15 @@ static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
 		found = sme_search_in_base_ch_freq_lst(mac_ctx, chan_freq);
 		if (!found) {
 			sme_debug("Disconnect Session: %d", session_id);
+			/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+			cm_disconnect(mac_ctx->psoc, session_id,
+				      CM_MLME_DISCONNECT, reason, NULL);
+#else
 			csr_roam_disconnect(mac_ctx, session_id,
 					    eCSR_DISCONNECT_REASON_UNSPECIFIED,
 					    reason);
+#endif
 		}
 	}
 }

@@ -1573,6 +1573,16 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 	reason_code = req->req.reason_code;
 
 	switch (reason_code) {
+	case REASON_IFACE_DOWN:
+	case REASON_DEVICE_RECOVERY:
+	case REASON_OPER_CHANNEL_BAND_CHANGE:
+	case REASON_USER_TRIGGERED_ROAM_FAILURE:
+	case REASON_CHANNEL_SWITCH_FAILED:
+	case REASON_GATEWAY_REACHABILITY_FAILURE:
+	case REASON_OPER_CHANNEL_DISABLED_INDOOR:
+		/* Set reason REASON_DEAUTH_NETWORK_LEAVING for prop deauth */
+		req->req.reason_code = REASON_DEAUTH_NETWORK_LEAVING;
+		/* fallthrough */
 	case REASON_PREV_AUTH_NOT_VALID:
 	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
 		lim_prepare_and_send_deauth(mac_ctx, req);
@@ -1588,6 +1598,9 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 		lim_prepare_and_send_deauth(mac_ctx, req);
 		break;
 	default:
+		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
+		if (reason_code >= REASON_PROP_START)
+			req->req.reason_code = REASON_UNSPEC_FAILURE;
 		lim_prepare_and_send_disassoc(mac_ctx, req);
 	}
 }
