@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -971,22 +971,11 @@ void wma_update_rate_flags_after_vdev_restart(tp_wma_handle wma,
 	bss_phymode = des_chan->ch_phymode;
 
 	if (IS_WLAN_PHYMODE_HE(bss_phymode)) {
-		if (des_chan->ch_width == CH_WIDTH_160MHZ ||
-		    des_chan->ch_width == CH_WIDTH_80P80MHZ)
-			rate_flags |= TX_RATE_HE160;
-		else if (des_chan->ch_width == CH_WIDTH_80MHZ)
-			rate_flags |= TX_RATE_HE80;
-		else if (des_chan->ch_width)
-			rate_flags |= TX_RATE_HE40;
-		else
-			rate_flags |= TX_RATE_HE20;
+		rate_flags = wma_get_he_rate_flags(des_chan->ch_width);
 	} else if (IS_WLAN_PHYMODE_VHT(bss_phymode)) {
-		rate_flags |= wma_get_vht_rate_flags(des_chan->ch_width);
+		rate_flags = wma_get_vht_rate_flags(des_chan->ch_width);
 	} else if (IS_WLAN_PHYMODE_HT(bss_phymode)) {
-		if (des_chan->ch_width)
-			rate_flags |= TX_RATE_HT40;
-		else
-			rate_flags |= TX_RATE_HT20;
+		rate_flags = wma_get_ht_rate_flags(des_chan->ch_width);
 	} else {
 		rate_flags = TX_RATE_LEGACY;
 	}

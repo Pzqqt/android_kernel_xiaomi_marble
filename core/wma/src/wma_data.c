@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -771,16 +771,7 @@ static QDF_STATUS wma_set_bss_rate_flags_he(enum tx_rate_info *rate_flags,
 	if (!add_bss->he_capable)
 		return QDF_STATUS_E_NOSUPPORT;
 
-	/*extend TX_RATE_HE160 in future*/
-	if (add_bss->ch_width == CH_WIDTH_160MHZ ||
-	    add_bss->ch_width == CH_WIDTH_80P80MHZ)
-		*rate_flags |= TX_RATE_HE160;
-	else if (add_bss->ch_width == CH_WIDTH_80MHZ)
-		*rate_flags |= TX_RATE_HE80;
-	else if (add_bss->ch_width)
-		*rate_flags |= TX_RATE_HE40;
-	else
-		*rate_flags |= TX_RATE_HE20;
+	*rate_flags |= wma_get_he_rate_flags(add_bss->ch_width);
 
 	wma_debug("he_capable %d rate_flags 0x%x", add_bss->he_capable,
 		  *rate_flags);
@@ -823,6 +814,36 @@ enum tx_rate_info wma_get_vht_rate_flags(enum phy_ch_width ch_width)
 	return rate_flags;
 }
 
+enum tx_rate_info wma_get_ht_rate_flags(enum phy_ch_width ch_width)
+{
+	enum tx_rate_info rate_flags = 0;
+
+	if (ch_width)
+		rate_flags |= TX_RATE_HT40 | TX_RATE_HT20;
+	else
+		rate_flags |= TX_RATE_HT20;
+
+	return rate_flags;
+}
+
+enum tx_rate_info wma_get_he_rate_flags(enum phy_ch_width ch_width)
+{
+	enum tx_rate_info rate_flags = 0;
+
+	if (ch_width == CH_WIDTH_160MHZ ||
+	    ch_width == CH_WIDTH_80P80MHZ)
+		rate_flags |= TX_RATE_HE160 | TX_RATE_HE80 | TX_RATE_HE40 |
+				TX_RATE_HE20;
+	else if (ch_width == CH_WIDTH_80MHZ)
+		rate_flags |= TX_RATE_HE80 | TX_RATE_HE40 | TX_RATE_HE20;
+	else if (ch_width)
+		rate_flags |= TX_RATE_HE40 | TX_RATE_HE20;
+	else
+		rate_flags |= TX_RATE_HE20;
+
+	return rate_flags;
+}
+
 void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 			    struct bss_params *add_bss)
 {
@@ -846,10 +867,7 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 		}
 		/* avoid to conflict with htCapable flag */
 		else if (add_bss->htCapable) {
-			if (add_bss->ch_width)
-				*rate_flags |= TX_RATE_HT40;
-			else
-				*rate_flags |= TX_RATE_HT20;
+			*rate_flags |= wma_get_ht_rate_flags(add_bss->ch_width);
 		}
 	}
 

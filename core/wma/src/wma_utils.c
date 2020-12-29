@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -421,7 +421,8 @@ static uint16_t wma_match_he_rate(uint16_t raw_rate,
 								guard_interval);
 
 				if (match_rate) {
-					*mcs_rate_flag &= ~TX_RATE_HE80;
+					*mcs_rate_flag &= ~(TX_RATE_HE80 |
+							    TX_RATE_HE160);
 					goto rate_found;
 				}
 			}
