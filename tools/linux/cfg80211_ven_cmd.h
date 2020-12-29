@@ -792,6 +792,7 @@ enum {
 #endif
 	IEEE80211_PARAM_RTS                        = 728,   /* Vdev specific minimum packet size setting for which RTS/CTS is used */
 	IEEE80211_PARAM_SM_GAP_PS_ENABLE           = 729,   /* Enable SMPS-GAP power saving */
+	IEEE80211_PARAM_WLAN_PRINT_RL              = 730,   /* Configure threshold for ratelimiting the prints */
 };
 
 enum {
@@ -2070,6 +2071,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 #if WLAN_SER_DEBUG
 	{"ser_history",         IEEE80211_PARAM_WLAN_SER_HISTORY, SET_PARAM, 2},
 #endif
+	{"print_rl",            IEEE80211_PARAM_WLAN_PRINT_RL, SET_PARAM, 2},
 	{"da_wds_war",          IEEE80211_PARAM_DA_WAR_ENABLE, SET_PARAM, 1},
 	{"g_da_wds_war",        IEEE80211_PARAM_DA_WAR_ENABLE, GET_PARAM, 0},
 	{"advertise_sta_maxcap",    IEEE80211_PARAM_STA_MAX_CH_CAP, SET_PARAM, 1},
