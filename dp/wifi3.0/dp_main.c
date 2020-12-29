@@ -5661,9 +5661,9 @@ static inline void dp_vdev_register_tx_handler(struct dp_vdev *vdev,
 	else
 		txrx_ops->tx.tx_exception = dp_tx_send_exception;
 
-	dp_alert("Configure tx_vdev_id_chk_handler Feature Flag: %d and mode:%d for vdev_id:%d",
-		 wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx),
-		 vdev->opmode, vdev->vdev_id);
+	dp_info("Configure tx_vdev_id_chk_handler Feature Flag: %d and mode:%d for vdev_id:%d",
+		wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(soc->wlan_cfg_ctx),
+		vdev->opmode, vdev->vdev_id);
 }
 #else /* QCA_HOST_MODE_WIFI_DISABLED */
 static inline void dp_vdev_register_tx_handler(struct dp_vdev *vdev,
