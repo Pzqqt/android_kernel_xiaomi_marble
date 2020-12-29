@@ -13153,65 +13153,7 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
 
 int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq)
 {
-	uint32_t cfg_length = 0;
-	int8_t maxTxPwr = 0;
-	tSirMacChanInfo *pCountryInfo = NULL;
-	uint8_t count = 0;
-	uint8_t maxChannels;
-	int32_t rem_length = 0;
-
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
-		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
-	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
-		cfg_length = mac->mlme_cfg->power.max_tx_power_24.len;
-
-	} else if (wlan_reg_is_6ghz_chan_freq(ch_freq)) {
-		return wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
-							       ch_freq);
-	} else {
-		return maxTxPwr;
-	}
-
-	if (!cfg_length)
-		goto error;
-
-	pCountryInfo = qdf_mem_malloc(cfg_length);
-	if (!pCountryInfo)
-		goto error;
-
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
-		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
-			goto error;
-		qdf_mem_copy(pCountryInfo,
-			     mac->mlme_cfg->power.max_tx_power_5.data,
-			     cfg_length);
-	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
-		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
-			goto error;
-		qdf_mem_copy(pCountryInfo,
-			     mac->mlme_cfg->power.max_tx_power_24.data,
-			     cfg_length);
-	}
-
-	/* Identify the channel and maxtxpower */
-	rem_length = cfg_length;
-	while (rem_length >= (sizeof(tSirMacChanInfo))) {
-		maxChannels = pCountryInfo[count].numChannels;
-		maxTxPwr = pCountryInfo[count].maxTxPower;
-		count++;
-		rem_length -= (sizeof(tSirMacChanInfo));
-
-		if (ch_freq >= pCountryInfo[count].first_freq &&
-		    ch_freq < (pCountryInfo[count].first_freq + maxChannels)) {
-			break;
-		}
-	}
-
-error:
-	if (pCountryInfo)
-		qdf_mem_free(pCountryInfo);
-
-	return maxTxPwr;
+	return wlan_get_cfg_max_tx_power(mac, ch_freq);
 }
 
 bool csr_roam_is_channel_valid(struct mac_context *mac, uint32_t chan_freq)
@@ -14764,9 +14706,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	uint32_t dot11mode = 0;
 	uint8_t *wpaRsnIE = NULL;
 	struct join_req *csr_join_req;
-	tSirMacCapabilityInfo *pAP_capabilityInfo;
-	bool fTmp;
-	int8_t pwr_limit = 0;
 	struct ps_global_info *ps_global_info = &mac->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
@@ -14857,9 +14796,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		} else {
 			csr_join_req->ssId.length = 0;
 		}
-		qdf_mem_copy(&csr_join_req->self_mac_addr,
-			     &pSession->self_mac_addr,
-			     sizeof(tSirMacAddr));
+
 		sme_nofl_info("vdev-%d: Connecting to %.*s " QDF_MAC_ADDR_FMT
 			      " rssi: %d freq: %d akm %d cipher: uc %d mc %d, CC: %c%c",
 			      sessionId, csr_join_req->ssId.length,
@@ -14881,15 +14818,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		csr_update_sae_single_pmk_ap_cap(mac, pBssDescription,
 						 sessionId, akm);
-
-		csr_join_req->supported_nss_1x1 = pSession->supported_nss_1x1;
 		csr_join_req->dot11mode = (uint8_t)dot11mode;
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-		csr_join_req->cc_switch_mode =
-			mac->roam.configParam.cc_switch_mode;
-#endif
 		csr_join_req->wps_registration = pProfile->bWPSAssociation;
-		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
 		csr_join_req->force_24ghz_in_ht20 =
 			pProfile->force_24ghz_in_ht20;
 		pSession->uapsd_mask = pProfile->uapsd_mask;
@@ -15151,10 +15081,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			}
 		}
 
-		if (!CSR_IS_11n_ALLOWED(pProfile->negotiatedUCEncryptionType))
-			csr_join_req->he_with_wep_tkip =
-				mac->roam.configParam.wep_tkip_in_he;
-
 		csr_join_req->UCEncryptionType =
 				csr_translate_encrypt_type_to_ed_type
 					(pProfile->negotiatedUCEncryptionType);
@@ -15247,45 +15173,11 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		else
 			csr_join_req->isOSENConnection = false;
 
-		pAP_capabilityInfo =
-			(tSirMacCapabilityInfo *)
-				&pBssDescription->capabilityInfo;
-		/*
-		 * tell the target AP my 11H capability only if both AP and STA
-		 * support
-		 * 11H and the channel being used is 11a
-		 */
-		if (csr_is11h_supported(mac) && pAP_capabilityInfo->spectrumMgt
-			&& eSIR_11A_NW_TYPE == pBssDescription->nwType) {
-			fTmp = true;
-		} else
-			fTmp = false;
-
-		csr_join_req->spectrumMgtIndicator = fTmp;
-		csr_join_req->powerCap.minTxPower = MIN_TX_PWR_CAP;
-		/*
-		 * This is required for 11k test VoWiFi Ent: Test 2.
-		 * We need the power capabilities for Assoc Req.
-		 * This macro is provided by the halPhyCfg.h. We pick our
-		 * max and min capability by the halPhy provided macros
-		 * Any change in this power cap IE should also be done
-		 * in csr_update_driver_assoc_ies() which would send
-		 * assoc IE's to FW which is used for LFR3 roaming
-		 * ie. used in reassociation requests from FW.
-		 */
-		pwr_limit = csr_get_cfg_max_tx_power(mac, bss_freq);
-		if (0 != pwr_limit && pwr_limit < MAX_TX_PWR_CAP)
-			csr_join_req->powerCap.maxTxPower = pwr_limit;
-		else
-			csr_join_req->powerCap.maxTxPower = MAX_TX_PWR_CAP;
-
 		csr_add_supported_5Ghz_channels(mac,
 				csr_join_req->supportedChannels.channelList,
 				&csr_join_req->supportedChannels.numChnl,
 				false);
-		/* Enable UAPSD only if TWT is not supported */
-		if (!csr_enable_twt(mac, pIes))
-			csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;
+
 		/* Move the entire BssDescription into the join request. */
 		qdf_mem_copy(&csr_join_req->bssDescription, pBssDescription,
 				pBssDescription->length +
@@ -15339,8 +15231,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			break;
 		}
 
-		csr_join_req->enable_session_twt_support = csr_enable_twt(mac,
-									  pIes);
 		status = umac_send_mb_message_to_mac(csr_join_req);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			/*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,6 +108,5 @@ QDF_STATUS rrm_reject_req(tpSirMacRadioMeasureReport *radiomes_report,
 			  uint8_t *num_report, uint8_t index,
 			  uint8_t measurement_type);
 
-void lim_update_rrm_capability(struct mac_context *mac_ctx,
-			       struct join_req *join_req);
+void lim_update_rrm_capability(struct mac_context *mac_ctx);
 #endif

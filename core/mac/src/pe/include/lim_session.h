@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -317,6 +317,8 @@ struct pe_session {
 	uint32_t lim11hEnable;
 
 	int8_t maxTxPower;   /* MIN (Regulatory and local power constraint) */
+	int8_t min_11h_pwr;
+	int8_t max_11h_pwr;
 	enum QDF_OPMODE opmode;
 	int8_t txMgmtPower;
 	bool is11Rconnection;

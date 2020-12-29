@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1578,8 +1578,7 @@ void rrm_cleanup(struct mac_context *mac, uint8_t idx)
  *
  * Return: None
  */
-void lim_update_rrm_capability(struct mac_context *mac_ctx,
-			       struct join_req *join_req)
+void lim_update_rrm_capability(struct mac_context *mac_ctx)
 {
 	mac_ctx->rrm.rrmPEContext.rrmEnable =
 				mac_ctx->rrm.rrmConfig.rrm_enabled;

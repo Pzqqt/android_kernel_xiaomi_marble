@@ -2155,7 +2155,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		      LIM_BSS_CAPS_GET(WSM, pe_session->limCurrentBssQosCaps);
 
 	if (pe_session->lim11hEnable &&
-	    pe_session->lim_join_req->spectrumMgtIndicator == true) {
+	    pe_session->spectrumMgtEnabled == true) {
 		power_caps = true;
 
 		populate_dot11f_power_caps(mac_ctx, &frm->PowerCaps,

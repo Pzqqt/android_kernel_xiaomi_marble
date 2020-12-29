@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -908,21 +908,8 @@ struct join_req {
 	uint16_t length;
 	uint8_t vdev_id;
 	tSirMacSSid ssId;
-	tSirMacAddr self_mac_addr;        /* self Mac address */
 	uint8_t dot11mode;      /* to support BT-AMP */
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	uint8_t cc_switch_mode;
-#endif
 	bool wps_registration;
-	ePhyChanBondState cbMode;       /* Pass CB mode value in Join. */
-
-	/*This contains the UAPSD Flag for all 4 AC
-	 * B0: AC_VO UAPSD FLAG
-	 * B1: AC_VI UAPSD FLAG
-	 * B2: AC_BK UAPSD FLAG
-	 * B3: AC_BE UASPD FLAG
-	 */
-	uint8_t uapsdPerAcBitmask;
 
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
@@ -951,17 +938,12 @@ struct join_req {
 	bool isESEconnection;
 	tESETspecInfo eseTspecInfo;
 #endif
-	bool he_with_wep_tkip;
 	bool isOSENConnection;
-	bool spectrumMgtIndicator;
-	struct power_cap_info powerCap;
 	struct supported_channels supportedChannels;
 	bool sae_pmk_cached;
 	/* Pls make this as last variable in struct */
 	bool force_24ghz_in_ht20;
 	bool force_rsne_override;
-	bool supported_nss_1x1;
-	bool enable_session_twt_support;
 	struct bss_description bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct

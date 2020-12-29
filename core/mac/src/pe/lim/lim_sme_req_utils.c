@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -470,20 +470,6 @@ uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
 		/* / Received eWNI_SME_JOIN_REQ with invalid BSS Info */
 		/* Log the event */
 		pe_err("received SME_JOIN_REQ with invalid bssInfo");
-
-		valid = false;
-		goto end;
-	}
-
-	/*
-	   Reject Join Req if the Self Mac Address and
-	   the Ap's Mac Address is same
-	 */
-	if (!qdf_mem_cmp((uint8_t *)pJoinReq->self_mac_addr,
-			 (uint8_t *)pJoinReq->bssDescription.bssId,
-			 (uint8_t) (sizeof(tSirMacAddr)))) {
-		/* Log the event */
-		pe_err("received SME_JOIN_REQ with Self Mac and BSSID Same");
 
 		valid = false;
 		goto end;

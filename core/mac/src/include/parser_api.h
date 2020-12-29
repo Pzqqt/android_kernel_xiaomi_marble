@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1261,6 +1261,8 @@ QDF_STATUS
 wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 				    struct bss_description *bss_desc,
 				    tDot11fBeaconIEs **ie_struct);
+
+int8_t wlan_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
 
 QDF_STATUS
 wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
