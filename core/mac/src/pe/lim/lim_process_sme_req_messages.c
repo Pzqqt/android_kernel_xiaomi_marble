@@ -2061,6 +2061,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	struct bss_description *bss_desc;
 	QDF_STATUS status;
 	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
+	struct vdev_mlme_obj *mlme_obj;
 
 	if (!mac_ctx || !msg_buf) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
@@ -2196,6 +2197,15 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			session->limQosEnabled = true;
 		else
 			session->limQosEnabled = false;
+
+
+		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
+		if (!mlme_obj) {
+			pe_err("vdev component object is NULL");
+		} else {
+			mlme_obj->ext_vdev_ptr->connect_info.qos_enabled =
+							session->limQosEnabled;
+		}
 
 		session->wps_registration = sme_join_req->wps_registration;
 		session->he_with_wep_tkip = sme_join_req->he_with_wep_tkip;

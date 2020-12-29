@@ -58,6 +58,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_hdd_object_manager.h"
+#include "wlan_hdd_cm_api.h"
 
 #define HDD_WMM_UP_TO_AC_MAP_SIZE 8
 #define DSCP(x)	x
@@ -2342,13 +2343,6 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 	return QDF_STATUS_SUCCESS;
 }
-
-static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
-	0x4,                    /* SME_AC_BK */
-	0x8,                    /* SME_AC_BE */
-	0x2,                    /* SME_AC_VI */
-	0x1                     /* SME_AC_VO */
-};
 
 /**
  * hdd_wmm_connect() - Function which will handle the housekeeping

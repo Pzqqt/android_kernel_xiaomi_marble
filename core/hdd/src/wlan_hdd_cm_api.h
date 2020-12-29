@@ -101,6 +101,13 @@ void reset_mscs_params(struct hdd_adapter *adapter)
 }
 #endif
 
+static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
+	0x4,                    /* SME_AC_BK */
+	0x8,                    /* SME_AC_BE */
+	0x2,                    /* SME_AC_VI */
+	0x1                     /* SME_AC_VO */
+};
+
 /**
  * hdd_handle_disassociation_event() - Handle disassociation event
  * @adapter: Pointer to adapter

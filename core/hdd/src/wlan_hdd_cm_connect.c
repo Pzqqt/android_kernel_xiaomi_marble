@@ -39,6 +39,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_vdev_mgr_ucfg_api.h"
 #include "wlan_hdd_bootup_marker.h"
+#include "sme_qos_internal.h"
 
 void hdd_cm_update_rssi_snr_by_bssid(struct hdd_adapter *adapter)
 {
@@ -414,6 +415,105 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 	qdf_mem_free(assoc_resp);
 }
 
+#ifdef FEATURE_WLAN_ESE
+static bool hdd_is_ese_assoc(enum csr_akm_type auth_type,
+			     tDot11fBeaconIEs *bcn_ie,
+			     struct mac_context *mac_ctx)
+{
+	if ((csr_is_auth_type_ese(auth_type) ||
+	     (bcn_ie->ESEVersion.present &&
+	     auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM)) &&
+	    mac_ctx->mlme_cfg->lfr.ese_enabled) {
+		return true;
+	}
+
+	return false;
+}
+#else
+static bool hdd_is_ese_assoc(enum csr_akm_type auth_type,
+			     tDot11fBeaconIEs *bcn_ie,
+			     struct mac_context *mac_ctx)
+{
+	return false;
+}
+#endif
+
+static void hdd_wmm_cm_connect(struct wlan_objmgr_vdev *vdev,
+			       struct hdd_adapter *adapter,
+			       tDot11fBeaconIEs *bcn_ie,
+			       enum csr_akm_type auth_type)
+{
+	int ac;
+	bool qap;
+	bool qos_connection;
+	uint8_t acm_mask = 0;
+	struct vdev_mlme_obj *vdev_mlme;
+	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		hdd_err("vdev component object is NULL");
+		return;
+	}
+	if (CSR_IS_QOS_BSS(bcn_ie) || bcn_ie->HTCaps.present)
+		/* Some HT AP's dont send WMM IE so in that case we
+		 * assume all HT Ap's are Qos Enabled AP's
+		 */
+		qap = true;
+	else
+		qap = false;
+
+	qos_connection = vdev_mlme->ext_vdev_ptr->connect_info.qos_enabled;
+
+	acm_mask = sme_qos_get_acm_mask(mac_ctx, NULL, bcn_ie);
+
+	hdd_debug("qap is %d, qos_connection is %d, acm_mask is 0x%x",
+		  qap, qos_connection, acm_mask);
+
+	adapter->hdd_wmm_status.qap = qap;
+	adapter->hdd_wmm_status.qos_connection = qos_connection;
+
+	for (ac = 0; ac < WLAN_MAX_AC; ac++) {
+		if (qap && qos_connection && (acm_mask & acm_mask_bit[ac])) {
+			hdd_debug("ac %d on", ac);
+
+			/* admission is required */
+			adapter->hdd_wmm_status.ac_status[ac].
+			is_access_required = true;
+			adapter->hdd_wmm_status.ac_status[ac].
+			is_access_allowed = false;
+			adapter->hdd_wmm_status.ac_status[ac].
+			was_access_granted = false;
+			/* after reassoc if we have valid tspec, allow access */
+			if (adapter->hdd_wmm_status.ac_status[ac].
+			    is_tspec_valid &&
+			    (adapter->hdd_wmm_status.ac_status[ac].
+				tspec.ts_info.direction !=
+				SME_QOS_WMM_TS_DIR_DOWNLINK)) {
+				adapter->hdd_wmm_status.ac_status[ac].
+				is_access_allowed = true;
+			}
+			if (!sme_neighbor_roam_is11r_assoc(
+							mac_handle,
+							adapter->vdev_id) &&
+			    !hdd_is_ese_assoc(auth_type, bcn_ie, mac_ctx)) {
+				adapter->hdd_wmm_status.ac_status[ac].
+					is_tspec_valid = false;
+				adapter->hdd_wmm_status.ac_status[ac].
+					is_access_allowed = false;
+			}
+		} else {
+			hdd_debug("ac %d off", ac);
+			/* admission is not required so access is allowed */
+			adapter->hdd_wmm_status.ac_status[ac].
+			is_access_required = false;
+			adapter->hdd_wmm_status.ac_status[ac].
+			is_access_allowed = true;
+		}
+	}
+}
+
 static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 				     struct wlan_cm_connect_resp *rsp)
 {
@@ -442,8 +542,6 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 		return;
 
 	qdf_copy_macaddr(&sta_ctx->conn_info.bssid, &rsp->bssid);
-
-	/* hdd_wmm_connect(adapter, roam_info, bss_type); */
 
 	crypto_params = wlan_crypto_vdev_get_crypto_params(adapter->vdev);
 
@@ -501,6 +599,8 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 		sta_ctx->conn_info.nss = wlan_vdev_mlme_get_nss(vdev);
 		ucfg_wlan_vdev_mgr_get_param(vdev, WLAN_MLME_CFG_RATE_FLAGS,
 					     &sta_ctx->conn_info.rate_flags);
+		hdd_wmm_cm_connect(vdev, adapter, bcn_ie,
+				   sta_ctx->conn_info.auth_type);
 		hdd_objmgr_put_vdev(vdev);
 	}
 
