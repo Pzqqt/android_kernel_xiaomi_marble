@@ -629,21 +629,6 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 } /*** end lim_send_sme_start_bss_rsp() ***/
 
-void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
-				      QDF_STATUS status, uint32_t *pCtx)
-{
-	struct scheduler_msg mmhMsg = {0};
-	struct scheduler_msg *pMsg = (struct scheduler_msg *) pCtx;
-
-	mmhMsg.type = pMsg->type;
-	mmhMsg.bodyptr = pMsg;
-	mmhMsg.bodyval = 0;
-
-	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION, mmhMsg.type));
-
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
-}
-
 #ifdef FEATURE_CM_ENABLE
 static void lim_send_sta_disconnect_ind(struct mac_context *mac,
 					struct scheduler_msg *msg)
@@ -696,11 +681,84 @@ static void lim_send_sta_disconnect_ind(struct mac_context *mac,
 		qdf_mem_free(ind);
 	}
 }
+
+void lim_cm_send_disconnect_rsp(struct mac_context *mac_ctx, uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	struct scheduler_msg rsp_msg = {0};
+	struct cm_vdev_disconnect_rsp *rsp;
+
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp)
+		return;
+
+	rsp->vdev_id = vdev_id;
+	rsp->psoc = mac_ctx->psoc;
+
+	rsp_msg.bodyptr = rsp;
+	rsp_msg.callback = cm_handle_disconnect_resp;
+
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &rsp_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to post disconnect rsp to sme vdev_id %d",
+		       vdev_id);
+		qdf_mem_free(rsp);
+	}
+}
+
+void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
+				      QDF_STATUS status, uint32_t *pCtx)
+{
+	struct scheduler_msg *msg = (struct scheduler_msg *)pCtx;
+	struct disassoc_rsp *disassoc;
+	struct deauth_rsp *deauth;
+	struct sir_sme_discon_done_ind *discon;
+	uint8_t vdev_id;
+
+	switch (msg->type) {
+	case eWNI_SME_DISASSOC_RSP:
+		disassoc = (struct disassoc_rsp *)msg->bodyptr;
+		vdev_id = disassoc->sessionId;
+		break;
+	case eWNI_SME_DEAUTH_RSP:
+		deauth = (struct deauth_rsp *)msg->bodyptr;
+		vdev_id = deauth->sessionId;
+		break;
+	case eWNI_SME_DISCONNECT_DONE_IND:
+		discon = (struct sir_sme_discon_done_ind *)msg->bodyptr;
+		vdev_id = discon->session_id;
+		break;
+	default:
+		pe_err("Received invalid disconnect rsp type %d", msg->type);
+		qdf_mem_free(msg->bodyptr);
+		return;
+	}
+
+	lim_cm_send_disconnect_rsp(mac, vdev_id);
+	qdf_mem_free(msg->bodyptr);
+}
 #else
 static void lim_send_sta_disconnect_ind(struct mac_context *mac,
 					struct scheduler_msg *msg)
 {
 	lim_sys_process_mmh_msg_api(mac, msg);
+}
+
+void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
+				      QDF_STATUS status, uint32_t *pCtx)
+{
+	struct scheduler_msg mmhMsg = {0};
+	struct scheduler_msg *pMsg = (struct scheduler_msg *)pCtx;
+
+	mmhMsg.type = pMsg->type;
+	mmhMsg.bodyptr = pMsg;
+	mmhMsg.bodyval = 0;
+
+	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION, mmhMsg.type));
+
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 #endif
 

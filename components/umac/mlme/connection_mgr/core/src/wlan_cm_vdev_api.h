@@ -27,6 +27,7 @@
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
 #include "scheduler_api.h"
+#include "connection_mgr/core/src/wlan_cm_main_api.h"
 
 /**
  * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
@@ -72,6 +73,16 @@ struct wlan_cm_discon_ind {
 struct cm_vdev_discon_ind {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_cm_discon_ind disconnect_param;
+};
+
+/**
+ * struct cm_vdev_disconnect_rsp - disconnect rsp from vdev mgr to CM
+ * @vdev_id: vdev id
+ * @psoc: psoc object
+ */
+struct cm_vdev_disconnect_rsp {
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
 };
 
 /**
@@ -308,6 +319,16 @@ QDF_STATUS cm_disconnect(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_send_sb_disconnect_req(struct scheduler_msg *msg);
+
+/**
+ * cm_handle_disconnect_resp() - Process vdev discon rsp and send to CM
+ * @msg: scheduler message
+ *
+ * Process disconnect rsp and send it to CM SM.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg);
 
 /**
  * wlan_cm_send_connect_rsp() - Process vdev join rsp and send to CM

@@ -172,3 +172,57 @@ QDF_STATUS cm_send_sb_disconnect_req(struct scheduler_msg *msg)
 
 	return status;
 }
+
+static void cm_copy_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
+					struct element_info *ap_ie)
+{
+	struct wlan_ies *discon_ie;
+
+	discon_ie = mlme_get_peer_disconnect_ies(vdev);
+	if (!discon_ie)
+		return;
+
+	ap_ie->ptr = qdf_mem_malloc(discon_ie->len);
+	if (!ap_ie)
+		return;
+
+	ap_ie->len = discon_ie->len;
+	qdf_mem_copy(ap_ie->ptr, discon_ie->data, discon_ie->len);
+}
+
+QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
+{
+	QDF_STATUS status;
+	struct cm_vdev_disconnect_rsp *ind;
+	struct wlan_cm_discon_rsp resp = {0};
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_FAILURE;
+
+	ind = msg->bodyptr;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(ind->psoc, ind->vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d : vdev not found", ind->vdev_id);
+		qdf_mem_free(ind);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!cm_get_active_disconnect_req(vdev, &resp.req)) {
+		qdf_mem_free(ind);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (resp.req.req.source == CM_PEER_DISCONNECT)
+		cm_copy_peer_disconnect_ies(vdev, &resp.ap_discon_ie);
+
+	status = wlan_cm_disconnect_rsp(vdev, &resp);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	if (resp.ap_discon_ie.len)
+		qdf_mem_free(resp.ap_discon_ie.ptr);
+
+	qdf_mem_free(ind);
+
+	return QDF_STATUS_E_FAILURE;
+}
