@@ -221,6 +221,7 @@ struct mscs_req_info {
  * @uapsd_per_ac_bitmask: Used on STA, this is a static UAPSD mask setting
  * derived from JOIN_REQ and REASSOC_REQ. If a particular AC bit is set, it
  * means the AC is both trigger enabled and delivery enabled.
+ * @qos_enabled: is qos enabled
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -230,6 +231,7 @@ struct mlme_connect_info {
 	bool tdls_prohibited;
 #endif
 	uint8_t uapsd_per_ac_bitmask;
+	bool qos_enabled;
 };
 
 /**
