@@ -1233,7 +1233,7 @@ void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
 
 	/* Headroom must be double of PF_TAG_SIZE as we copy it 1stly to head */
 	if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < (DP_RX_MON_TOT_PF_TAG_LEN * 2))) {
-		dp_err("Nbuf avail Headroom[%d] < 2 * DP_RX_MON_PF_TAG_TOT_LEN[%d]",
+		dp_err("Nbuf avail Headroom[%d] < 2 * DP_RX_MON_PF_TAG_TOT_LEN[%lu]",
 		       qdf_nbuf_headroom(nbuf), DP_RX_MON_TOT_PF_TAG_LEN);
 		return;
 	}
@@ -1247,7 +1247,7 @@ void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
 	while (ext_list) {
 		/* Headroom must be double of PF_TAG_SIZE as we copy it 1stly to head */
 		if (qdf_unlikely(qdf_nbuf_headroom(ext_list) < (DP_RX_MON_TOT_PF_TAG_LEN * 2))) {
-			dp_err("Fraglist Nbuf avail Headroom[%d] < 2 * DP_RX_MON_PF_TAG_TOT_LEN[%d]",
+			dp_err("Fraglist Nbuf avail Headroom[%d] < 2 * DP_RX_MON_PF_TAG_TOT_LEN[%lu]",
 			       qdf_nbuf_headroom(ext_list), DP_RX_MON_TOT_PF_TAG_LEN);
 			ext_list = qdf_nbuf_queue_next(ext_list);
 			continue;

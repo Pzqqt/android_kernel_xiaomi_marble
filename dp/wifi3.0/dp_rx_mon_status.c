@@ -897,8 +897,7 @@ dp_rx_mcopy_handle_last_mpdu(struct dp_soc *soc, struct dp_pdev *pdev,
 			if (!nbuf_clone) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Failed to clone nbuf",
-					  __func__, __LINE__);
+					  "Failed to clone nbuf");
 				goto end1;
 			}
 
@@ -1025,8 +1024,7 @@ dp_rx_process_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 		nbuf_clone = qdf_nbuf_clone(status_nbuf);
 		if (!nbuf_clone) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				  "Failed to clone nbuf",
-				  __func__, __LINE__);
+				  "Failed to clone nbuf");
 			goto end;
 		}
 

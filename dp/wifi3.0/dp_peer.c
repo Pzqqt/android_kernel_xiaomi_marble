@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3714,7 +3714,7 @@ QDF_STATUS dp_peer_ext_stats_ctx_alloc(struct dp_soc *soc,
 	uint8_t tid, ctx_id;
 
 	if (!soc || !peer) {
-		dp_warn("Null soc%x or peer%x", soc, peer);
+		dp_warn("Null soc%pK or peer%pK", soc, peer);
 		return QDF_STATUS_E_INVAL;
 	}
 

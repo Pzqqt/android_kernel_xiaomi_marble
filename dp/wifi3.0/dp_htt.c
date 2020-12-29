@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3285,7 +3285,7 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 	if (pdev->tx_capture_enabled) {
 		head_size = sizeof(struct cdp_tx_mgmt_comp_info);
 		if (qdf_unlikely(qdf_nbuf_headroom(tag_buf) < head_size)) {
-			qdf_err("Fail to get headroom h_sz %d h_avail %d\n",
+			qdf_err("Fail to get headroom h_sz %zu h_avail %d\n",
 				head_size, qdf_nbuf_headroom(tag_buf));
 			qdf_assert_always(0);
 			return QDF_STATUS_E_NOMEM;

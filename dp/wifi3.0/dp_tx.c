@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3362,7 +3362,7 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 	}
 	if (qdf_nbuf_push_head(netbuf, sizeof(struct meta_hdr_s)) == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"netbuf %pK offset %lu", netbuf,
+			"netbuf %pK offset %zu", netbuf,
 			sizeof(struct meta_hdr_s));
 		return;
 	}
