@@ -2528,8 +2528,6 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 			&mac_ctx->scan.occupiedChannels[sessionId],
 			true);
 	list = ucfg_scan_get_result(pdev, filter);
-	if (list)
-		sme_debug("num_entries %d", qdf_list_size(list));
 	if (!list || (list && !qdf_list_size(list))) {
 		goto err;
 	}

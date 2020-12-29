@@ -2865,8 +2865,8 @@ hdd_add_latency_critical_client(struct hdd_adapter *adapter,
 		if (adapter->device_mode == QDF_STA_MODE)
 			qdf_atomic_inc(&hdd_ctx->num_latency_critical_clients);
 
-		hdd_info("Adding latency critical connection for vdev %d",
-			 adapter->vdev_id);
+		hdd_debug("Adding latency critical connection for vdev %d",
+			  adapter->vdev_id);
 		cdp_vdev_inform_ll_conn(cds_get_context(QDF_MODULE_ID_SOC),
 					adapter->vdev_id,
 					CDP_VDEV_LL_CONN_ADD);

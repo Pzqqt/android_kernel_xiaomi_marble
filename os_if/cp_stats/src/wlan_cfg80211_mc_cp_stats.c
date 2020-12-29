@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -429,7 +429,7 @@ wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 
 	*errno = osif_request_wait_for_response(request);
 	if (*errno) {
-		osif_err("wait failed or timed out ret: %d", *errno);
+		osif_debug("wait failed or timed out ret: %d", *errno);
 		goto get_peer_rssi_fail;
 	}
 

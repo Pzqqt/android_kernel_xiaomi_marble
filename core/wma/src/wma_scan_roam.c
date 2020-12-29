@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1877,7 +1877,7 @@ wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id)
 
 	wma_get_trigger_detail_str(data, buf);
 	mlme_get_converted_timestamp(data->timestamp, time);
-	wma_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
+	wma_nofl_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
 	qdf_mem_free(buf);
 }
@@ -1898,9 +1898,9 @@ wma_rso_print_btm_rsp_info(struct roam_btm_response_data *data,
 	char time[TIME_STRING_LEN];
 
 	mlme_get_converted_timestamp(data->timestamp, time);
-	wma_info("%s [BTM RSP]: VDEV[%d], Status: %d, VSIE reason: %d, BSSID: "QDF_MAC_ADDR_FMT,
-		 time, vdev_id, data->btm_status, data->vsie_reason,
-		 QDF_MAC_ADDR_REF(data->target_bssid.bytes));
+	wma_nofl_info("%s [BTM RSP]: VDEV[%d], Status: %d, VSIE reason: %d, BSSID: " QDF_MAC_ADDR_FMT,
+		      time, vdev_id, data->btm_status, data->vsie_reason,
+		      QDF_MAC_ADDR_REF(data->target_bssid.bytes));
 }
 
 /**
@@ -1917,9 +1917,9 @@ static void
 wma_rso_print_roam_initial_info(struct roam_initial_data *data,
 				uint8_t vdev_id)
 {
-	wma_info("[ROAM INIT INFO]: VDEV[%d], roam_full_scan_count: %d, rssi_th: %d, cu_th: %d, fw_cancel_timer_bitmap: %d",
-		 vdev_id, data->roam_full_scan_count, data->rssi_th,
-		 data->cu_th, data->fw_cancel_timer_bitmap);
+	wma_nofl_info("[ROAM INIT INFO]: VDEV[%d], roam_full_scan_count: %d, rssi_th: %d, cu_th: %d, fw_cancel_timer_bitmap: %d",
+		      vdev_id, data->roam_full_scan_count, data->rssi_th,
+		      data->cu_th, data->fw_cancel_timer_bitmap);
 }
 
 /**
@@ -2045,9 +2045,9 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 			    scan->next_rssi_threshold);
 
 	mlme_get_converted_timestamp(timestamp, time);
-	wma_info("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
-		 time, vdev_id, mlme_get_roam_scan_type_str(scan->type),
-		 buf1, buf);
+	wma_nofl_info("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
+		      time, vdev_id, mlme_get_roam_scan_type_str(scan->type),
+		      buf1, buf);
 	wma_log_roam_scan_candidates(scan->ap, scan->num_ap);
 
 	qdf_mem_free(buf);
@@ -2079,8 +2079,9 @@ wma_rso_print_roam_result(struct wmi_roam_result *res,
 			    mlme_get_roam_fail_reason_str(res->fail_reason));
 
 	mlme_get_converted_timestamp(res->timestamp, time);
-	wma_info("%s [ROAM_RESULT]: VDEV[%d] %s %s",
-		 time, vdev_id, mlme_get_roam_status_str(res->status), buf);
+	wma_nofl_info("%s [ROAM_RESULT]: VDEV[%d] %s %s",
+		      time, vdev_id, mlme_get_roam_status_str(res->status),
+		      buf);
 
 	qdf_mem_free(buf);
 }
@@ -2131,17 +2132,18 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 	}
 
 	mlme_get_converted_timestamp(neigh_rpt->req_time, time);
-	wma_info("%s [%s] VDEV[%d]", time,
-		 (type == 1) ? "BTM_QUERY" : "NEIGH_RPT_REQ", vdev_id);
+	wma_nofl_info("%s [%s] VDEV[%d]", time,
+		      (type == 1) ? "BTM_QUERY" : "NEIGH_RPT_REQ", vdev_id);
 
 	if (neigh_rpt->resp_time) {
 		mlme_get_converted_timestamp(neigh_rpt->resp_time, time1);
-		wma_info("%s [%s] VDEV[%d] %s", time1,
-			 (type == 1) ? "BTM_REQ" : "NEIGH_RPT_RSP", vdev_id,
-			 (num_ch > 0) ? buf : "NO Ch update");
+		wma_nofl_info("%s [%s] VDEV[%d] %s", time1,
+			      (type == 1) ? "BTM_REQ" : "NEIGH_RPT_RSP",
+			      vdev_id,
+			      (num_ch > 0) ? buf : "NO Ch update");
 	} else {
-		wma_info("%s No response received from AP",
-			 (type == 1) ? "BTM" : "NEIGH_RPT");
+		wma_nofl_info("%s No response received from AP",
+			      (type == 1) ? "BTM" : "NEIGH_RPT");
 	}
 	qdf_mem_free(buf);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -180,7 +180,7 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 
 	get_peer_rssi_cb = last_req->u.get_peer_rssi_cb;
 	if (!get_peer_rssi_cb) {
-		cp_stats_err("get_peer_rssi_cb is null");
+		cp_stats_debug("get_peer_rssi_cb is null");
 		return;
 	}
 
@@ -213,8 +213,8 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 		peer = wlan_objmgr_get_peer(psoc, last_req->pdev_id,
 					    mac_addr, WLAN_CP_STATS_ID);
 		if (!peer) {
-			cp_stats_err("peer["QDF_MAC_ADDR_FMT"] is null",
-				     QDF_MAC_ADDR_REF(mac_addr));
+			cp_stats_debug("peer[" QDF_MAC_ADDR_FMT "] is null",
+				       QDF_MAC_ADDR_REF(mac_addr));
 			goto end;
 		}
 
@@ -505,9 +505,8 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 
 	/* no matched peer */
 	if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
-	    selected == ev->num_peer_stats) {
-		cp_stats_rl_err("peer not found for stats");
-	}
+	    selected == ev->num_peer_stats)
+		cp_stats_debug("peer not found for stats");
 
 extd2_stats:
 
