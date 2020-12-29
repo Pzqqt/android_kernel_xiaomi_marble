@@ -14112,6 +14112,14 @@ typedef struct {
      */
     A_UINT32 bss_max_idle_option;
 
+    /*
+     * Connected AP auth mode values are from  WMI_AUTH_ enum.
+     * The target shall ignore an auth_mode value of 0 / WMI_AUTH_NONE,
+     * due to ambiguity whether a zero value was provided explicitly or
+     * simply as a default.
+     */
+    A_UINT32 auth_mode;
+
 /* Following this struct are the TLV's:
  *     A_UINT8 peer_legacy_rates[];
  *     A_UINT8 peer_ht_rates[];
