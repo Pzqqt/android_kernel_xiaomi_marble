@@ -210,6 +210,23 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg);
 QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg);
 
 /**
+ * cm_disconnect() - disconnect start request
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @source: disconnect source
+ * @reason_code: disconnect reason
+ * @bssid: bssid of AP to disconnect, can be null if not known
+ *
+ * Context: can be called from any context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_disconnect(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			 enum wlan_cm_source source,
+			 enum wlan_reason_code reason_code,
+			 struct qdf_mac_addr *bssid);
+
+/**
  * cm_disconnect_indication() - Process vdev discon ind and send to CM
  * @msg: scheduler message
  *
