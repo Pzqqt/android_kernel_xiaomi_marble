@@ -339,7 +339,7 @@ static void populate_dot11f_tdls_ext_capability(struct mac_context *mac,
 	 * IE in assoc/re-assoc response.
 	 */
 	if ((1 == mac->lim.gLimTDLSOffChannelEnabled) &&
-	    (!pe_session->tdls_chan_swit_prohibited)) {
+	    (!mlme_get_tdls_chan_switch_prohibited(pe_session->vdev))) {
 		p_ext_cap->tdls_channel_switching = 1;
 		p_ext_cap->tdls_chan_swit_prohibited = 0;
 	} else {
@@ -855,7 +855,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 	 * IE in assoc/re-assoc response.
 	 */
 	if ((1 == mac->lim.gLimTDLSOffChannelEnabled) &&
-	    (!pe_session->tdls_chan_swit_prohibited)) {
+	    (!mlme_get_tdls_chan_switch_prohibited(pe_session->vdev))) {
 		populate_dot11f_tdls_offchannel_params(mac, pe_session,
 						       &tdlsDisRsp.SuppChannels,
 						       &tdlsDisRsp.
@@ -867,7 +867,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 	} else {
 		pe_debug("TDLS offchan not enabled, or channel switch prohibited by AP, gLimTDLSOffChannelEnabled: %d tdls_chan_swit_prohibited: %d",
 			mac->lim.gLimTDLSOffChannelEnabled,
-			pe_session->tdls_chan_swit_prohibited);
+			mlme_get_tdls_chan_switch_prohibited(pe_session->vdev));
 	}
 	/*
 	 * now we pack it.  First, how much space are we going to need?
@@ -1081,9 +1081,9 @@ void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		   struct pe_session *ft_session_ptr)
 {
 	roam_sync_ind_ptr->join_rsp->tdls_prohibited =
-		ft_session_ptr->tdls_prohibited;
+		mlme_get_tdls_prohibited(ft_session_ptr->vdev);
 	roam_sync_ind_ptr->join_rsp->tdls_chan_swit_prohibited =
-		ft_session_ptr->tdls_chan_swit_prohibited;
+		mlme_get_tdls_chan_switch_prohibited(ft_session_ptr->vdev);
 }
 
 /*
@@ -1224,7 +1224,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 	 * IE in assoc/re-assoc response.
 	 */
 	if ((1 == mac->lim.gLimTDLSOffChannelEnabled) &&
-	    (!pe_session->tdls_chan_swit_prohibited)) {
+	    (!mlme_get_tdls_chan_switch_prohibited(pe_session->vdev))) {
 		populate_dot11f_tdls_offchannel_params(mac, pe_session,
 						     &tdlsSetupReq.SuppChannels,
 						     &tdlsSetupReq.
@@ -1236,7 +1236,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 	} else {
 		pe_debug("TDLS offchan not enabled, or channel switch prohibited by AP, gLimTDLSOffChannelEnabled: %d tdls_chan_swit_prohibited: %d",
 			mac->lim.gLimTDLSOffChannelEnabled,
-			pe_session->tdls_chan_swit_prohibited);
+			mlme_get_tdls_chan_switch_prohibited(pe_session->vdev));
 	}
 	/*
 	 * now we pack it.  First, how much space are we going to need?
@@ -1677,7 +1677,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	 * IE in assoc/re-assoc response.
 	 */
 	if ((1 == mac->lim.gLimTDLSOffChannelEnabled) &&
-	    (!pe_session->tdls_chan_swit_prohibited)) {
+	    (!mlme_get_tdls_chan_switch_prohibited(pe_session->vdev))) {
 		populate_dot11f_tdls_offchannel_params(mac, pe_session,
 						    &tdlsSetupRsp.SuppChannels,
 						    &tdlsSetupRsp.
@@ -1689,7 +1689,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	} else {
 		pe_debug("TDLS offchan not enabled, or channel switch prohibited by AP, gLimTDLSOffChannelEnabled: %d tdls_chan_swit_prohibited: %d",
 			mac->lim.gLimTDLSOffChannelEnabled,
-			pe_session->tdls_chan_swit_prohibited);
+			mlme_get_tdls_chan_switch_prohibited(pe_session->vdev));
 	}
 	tdlsSetupRsp.Status.status = setupStatus;
 	/*

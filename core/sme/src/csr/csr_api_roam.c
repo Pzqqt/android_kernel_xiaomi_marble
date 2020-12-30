@@ -14428,6 +14428,75 @@ static void csr_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
 		csr_populate_basic_rates(b_rates, true, true);
 }
 
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_cm_vdev_connect_req *req,
+				     struct cm_vdev_join_req *join_req)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	/* Fill join_req from legacy */
+	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINING, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	/* Fill legacy structures from resp */
+	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_csr_handle_diconnect_req(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_vdev_discon_req *req)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	/* Fill join_req from legacy */
+	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINING, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+cm_csr_diconnect_done_ind(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_cm_discon_rsp *rsp)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	/* Fill legacy structures from resp */
+	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_IDLE, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "struct join_req".

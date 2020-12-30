@@ -95,6 +95,31 @@ struct cm_peer_create_req {
 };
 
 /**
+ * cm_connect_start_ind() - Connection manager ext connect start indication
+ * vdev and peer assoc state machine
+ * @vdev: VDEV object
+ * @req: connect request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_req *req);
+
+/**
+ * cm_csr_handle_connect_req() - Connection manager cb to csr to fill csr
+ * session and update join req from legacy structures
+ * @vdev: VDEV object
+ * @req: Vdev connect request
+ * @join_req: join req to be sent to LIM
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_cm_vdev_connect_req *req,
+			  struct cm_vdev_join_req *join_req);
+
+/**
  * cm_handle_connect_req() - Connection manager ext connect request to start
  * vdev and peer assoc state machine
  * @vdev: VDEV object
@@ -119,7 +144,7 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 			    struct qdf_mac_addr *peer_mac);
 
 /**
- * cm_handle_connect_complete() - Connection manager ext connect complete
+ * cm_connect_complete_ind() - Connection manager ext connect complete
  * indication
  * @vdev: VDEV object
  * @rsp: Connection manager connect response
@@ -127,8 +152,32 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-cm_handle_connect_complete(struct wlan_objmgr_vdev *vdev,
-			   struct wlan_cm_connect_resp *rsp);
+cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp);
+
+/**
+ * cm_csr_connect_done_ind() - Connection manager call to csr to update
+ * legacy structures on connect complete
+ * @vdev: VDEV object
+ * @rsp: Connection manager connect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp);
+
+/**
+ * cm_disconnect_start_ind() - Connection manager ext disconnect start
+ * indication
+ * vdev and peer assoc state machine
+ * @vdev: VDEV object
+ * @req: disconnect request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_disconnect_req *req);
 
 /**
  * cm_handle_disconnect_req() - Connection manager ext disconnect
@@ -141,6 +190,18 @@ cm_handle_connect_complete(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 			 struct wlan_cm_vdev_discon_req *req);
+
+/**
+ * cm_csr_handle_diconnect_req() - Connection manager cb to csr to update legacy
+ * structures on disconnect
+ * @vdev: VDEV object
+ * @req: vdev disconnect request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_csr_handle_diconnect_req(struct wlan_objmgr_vdev *vdev,
+			    struct wlan_cm_vdev_discon_req *req);
 
 /**
  * cm_send_bss_peer_delete_req() - Connection manager ext bss peer delete
@@ -163,6 +224,18 @@ cm_send_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS
 cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_discon_rsp *rsp);
+
+/**
+ * cm_csr_diconnect_done_ind() - Connection manager call to csr to update
+ * legacy structures on disconnect complete
+ * @vdev: VDEV object
+ * @rsp: Connection manager disconnect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_csr_diconnect_done_ind(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_cm_discon_rsp *rsp);
 
 /**
  * cm_send_vdev_down_req() - Connection manager ext req to send vdev down
@@ -227,14 +300,14 @@ QDF_STATUS cm_disconnect(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			 struct qdf_mac_addr *bssid);
 
 /**
- * cm_disconnect_indication() - Process vdev discon ind and send to CM
+ * cm_send_sb_disconnect_req() - Process vdev discon ind from sb and send to CM
  * @msg: scheduler message
  *
  * Process disconnect indication and send it to CM SM.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_disconnect_indication(struct scheduler_msg *msg);
+QDF_STATUS cm_send_sb_disconnect_req(struct scheduler_msg *msg);
 
 /**
  * wlan_cm_send_connect_rsp() - Process vdev join rsp and send to CM

@@ -97,8 +97,6 @@ void hdd_cm_handle_assoc_event(struct wlan_objmgr_vdev *vdev, uint8_t *peer_mac)
 		return;
 	}
 
-	ucfg_p2p_status_connect(adapter->vdev);
-
 	ret = hdd_objmgr_set_peer_mlme_state(adapter->vdev,
 					     WLAN_ASSOC_STATE);
 	if (ret)
@@ -464,8 +462,6 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	 * FEATURE_WLAN_WAPI, hdd_send_association_event,
 	 */
 
-	policy_mgr_incr_active_session(hdd_ctx->psoc,
-				adapter->device_mode, adapter->vdev_id);
 	hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode, true);
 
 	hdd_cm_handle_assoc_event(vdev, rsp->bssid.bytes);

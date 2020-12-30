@@ -21229,8 +21229,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		/* First clean up the tdls peers if any */
-		hdd_notify_sta_disconnect(adapter->vdev_id,
-					  false, true, vdev);
+		ucfg_tdls_notify_sta_disconnect(adapter->vdev_id,
+						false, true, vdev);
 		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 		hdd_nofl_info("%s(vdevid-%d): Received Disconnect reason:%d %s",

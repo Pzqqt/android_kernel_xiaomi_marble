@@ -435,8 +435,9 @@ static void lim_update_stads_ext_cap(struct mac_context *mac_ctx,
 	if (!assoc_rsp->ExtCap.present) {
 		sta_ds->timingMeasCap = 0;
 #ifdef FEATURE_WLAN_TDLS
-		session_entry->tdls_prohibited = false;
-		session_entry->tdls_chan_swit_prohibited = false;
+		mlme_set_tdls_prohibited(session_entry->vdev, false);
+		mlme_set_tdls_chan_switch_prohibited(session_entry->vdev,
+						     false);
 #endif
 		pe_debug("ExtCap not present");
 		return;
@@ -456,9 +457,10 @@ static void lim_update_stads_ext_cap(struct mac_context *mac_ctx,
 	}
 
 #ifdef FEATURE_WLAN_TDLS
-	session_entry->tdls_prohibited = ext_cap->tdls_prohibited;
-	session_entry->tdls_chan_swit_prohibited =
-		ext_cap->tdls_chan_swit_prohibited;
+	mlme_set_tdls_prohibited(session_entry->vdev, ext_cap->tdls_prohibited);
+	mlme_set_tdls_chan_switch_prohibited(session_entry->vdev,
+					    ext_cap->tdls_chan_swit_prohibited);
+		;
 	pe_debug("ExtCap: tdls_prohibited: %d tdls_chan_swit_prohibited: %d",
 		ext_cap->tdls_prohibited,
 		ext_cap->tdls_chan_swit_prohibited);

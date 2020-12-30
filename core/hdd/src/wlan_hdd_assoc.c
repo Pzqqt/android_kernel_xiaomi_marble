@@ -1548,8 +1548,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 	/* Update tdls module about the disconnection event */
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, adapter->vdev_id))
-		hdd_notify_sta_disconnect(adapter->vdev_id, true, false,
-					  adapter->vdev);
+		ucfg_tdls_notify_sta_disconnect(adapter->vdev_id, true, false,
+						adapter->vdev);
 
 	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state) {
 		struct oem_channel_info chan_info = {0};
@@ -1622,13 +1622,15 @@ static void hdd_send_association_event(struct net_device *dev,
 
 #ifdef FEATURE_WLAN_TDLS
 		/* Update tdls module about connection event */
-		hdd_notify_sta_connect(adapter->vdev_id,
-				       roam_info->tdls_chan_swit_prohibited,
-				       roam_info->tdls_prohibited,
-				       adapter->vdev);
+		ucfg_tdls_notify_sta_connect(adapter->vdev_id,
+					     roam_info->tdls_chan_swit_prohibited,
+					     roam_info->tdls_prohibited,
+					     adapter->vdev);
 #endif
 
 		hdd_cm_handle_assoc_event(adapter->vdev, peer_macaddr.bytes);
+		ucfg_p2p_status_connect(adapter->vdev);
+
 	} else {                /* Not Associated */
 		hdd_nofl_info("%s(vdevid-%d): disconnected", dev->name,
 			      adapter->vdev_id);
@@ -1636,6 +1638,9 @@ static void hdd_send_association_event(struct net_device *dev,
 		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 				adapter->device_mode, adapter->vdev_id);
 		hdd_handle_disassociation_event(adapter, &peer_macaddr);
+		/* Update tdls module about the disconnection event */
+		ucfg_tdls_notify_sta_disconnect(adapter->vdev_id, false, false,
+						adapter->vdev);
 	}
 	hdd_ipa_set_tx_flow_info();
 

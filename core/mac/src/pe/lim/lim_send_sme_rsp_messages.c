@@ -459,9 +459,11 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 					sta_ds->timingMeasCap;
 #ifdef FEATURE_WLAN_TDLS
 				sme_join_rsp->tdls_prohibited =
-					session_entry->tdls_prohibited;
+					mlme_get_tdls_prohibited(
+							session_entry->vdev);
 				sme_join_rsp->tdls_chan_swit_prohibited =
-				   session_entry->tdls_chan_swit_prohibited;
+					mlme_get_tdls_chan_switch_prohibited(
+							session_entry->vdev);
 #endif
 				sme_join_rsp->nss = sta_ds->nss;
 				sme_join_rsp->max_rate_flags =
@@ -679,7 +681,7 @@ static void lim_send_sta_disconnect_ind(struct mac_context *mac,
 			ind->disconnect_param.source = CM_SB_DISCONNECT;
 	}
 	ind_msg.bodyptr = ind;
-	ind_msg.callback = cm_disconnect_indication;
+	ind_msg.callback = cm_send_sb_disconnect_req;
 	ind_msg.type = msg->type;
 	qdf_mem_free(msg->bodyptr);
 

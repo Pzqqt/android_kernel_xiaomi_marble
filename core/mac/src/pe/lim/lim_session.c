@@ -611,8 +611,6 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 #ifdef FEATURE_WLAN_TDLS
 	qdf_mem_zero(session_ptr->peerAIDBitmap,
 		    sizeof(session_ptr->peerAIDBitmap));
-	session_ptr->tdls_prohibited = false;
-	session_ptr->tdls_chan_swit_prohibited = false;
 #endif
 	lim_update_tdls_set_state_for_fw(session_ptr, true);
 	session_ptr->fWaitForProbeRsp = 0;
@@ -649,7 +647,8 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->vdev_id = vdev_id;
 	session_ptr->mac_ctx = mac;
 	session_ptr->opmode = wlan_vdev_mlme_get_opmode(vdev);
-
+	mlme_set_tdls_chan_switch_prohibited(vdev, false);
+	mlme_set_tdls_prohibited(vdev, false);
 	pe_debug("Create PE session: %d opmode %d vdev_id %d  BSSID: "QDF_MAC_ADDR_FMT" Max No of STA: %d",
 		 *sessionId, session_ptr->opmode, vdev_id,
 		 QDF_MAC_ADDR_REF(bssid), numSta);

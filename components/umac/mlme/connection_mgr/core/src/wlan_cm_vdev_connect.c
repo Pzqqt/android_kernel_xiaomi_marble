@@ -23,6 +23,33 @@
 #include "wlan_scan_utils_api.h"
 #include "wlan_mlme_dbg.h"
 #include "wlan_cm_api.h"
+#include "wlan_policy_mgr_api.h"
+#include "wlan_p2p_api.h"
+#include "wlan_tdls_api.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
+
+QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_req *req)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!vdev || !req) {
+		mlme_err("vdev or req is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("vdev_id: %d psoc not found", req->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (policy_mgr_is_sta_mon_concurrency(psoc))
+		return QDF_STATUS_E_NOSUPPORT;
+
+	/* Fill orig RSN caps in connect config to sent in RSO */
+
+	return QDF_STATUS_SUCCESS;
+}
 
 void cm_free_join_req(struct cm_vdev_join_req *join_req)
 {
@@ -138,6 +165,14 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	status = cm_csr_handle_connect_req(vdev, req, join_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("vdev_id: %d cm_id 0x%x : fail to fill params from legacy",
+			 req->vdev_id, req->cm_id);
+		cm_free_join_req(join_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	msg.bodyptr = join_req;
 	msg.callback = cm_process_join_req;
 	msg.flush_callback = cm_flush_join_req;
@@ -185,9 +220,36 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS
-cm_handle_connect_complete(struct wlan_objmgr_vdev *vdev,
-			   struct wlan_cm_connect_resp *rsp)
+cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
+			struct wlan_cm_connect_resp *rsp)
 {
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	enum QDF_OPMODE op_mode;
+
+	if (!vdev || !rsp) {
+		mlme_err("vdev or rsp is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("vdev_id: %d psoc not found", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cm_csr_connect_done_ind(vdev, rsp);
+	/* start wait for key timer */
+
+	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status))
+		policy_mgr_incr_active_session(psoc, op_mode, vdev_id);
+	wlan_tdls_notify_sta_connect(vdev_id,
+				     mlme_get_tdls_chan_switch_prohibited(vdev),
+				     mlme_get_tdls_prohibited(vdev), vdev);
+	wlan_p2p_status_connect(vdev);
+
 	return QDF_STATUS_SUCCESS;
 }
 

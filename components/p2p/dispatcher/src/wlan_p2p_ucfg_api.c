@@ -26,6 +26,7 @@
 #include <scheduler_api.h>
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_ucfg_api.h"
+#include "wlan_p2p_api.h"
 #include "../../core/src/wlan_p2p_main.h"
 #include "../../core/src/wlan_p2p_roc.h"
 #include "../../core/src/wlan_p2p_off_chan_tx.h"
@@ -226,30 +227,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 
 QDF_STATUS ucfg_p2p_cleanup_roc_by_vdev(struct wlan_objmgr_vdev *vdev)
 {
-	struct p2p_soc_priv_obj *p2p_soc_obj;
-	struct wlan_objmgr_psoc *psoc;
-
-	p2p_debug("vdev:%pK", vdev);
-
-	if (!vdev) {
-		p2p_debug("null vdev");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		p2p_err("null psoc");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
-			WLAN_UMAC_COMP_P2P);
-	if (!p2p_soc_obj) {
-		p2p_err("p2p soc context is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return p2p_cleanup_roc_sync(p2p_soc_obj, vdev);
+	return wlan_p2p_cleanup_roc_by_vdev(vdev);
 }
 
 QDF_STATUS ucfg_p2p_cleanup_roc_by_psoc(struct wlan_objmgr_psoc *psoc)
@@ -607,12 +585,7 @@ QDF_STATUS ucfg_p2p_status_scan(struct wlan_objmgr_vdev *vdev)
 
 QDF_STATUS ucfg_p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 {
-	if (!vdev) {
-		p2p_err("vdev is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return p2p_status_connect(vdev);
+	return wlan_p2p_status_connect(vdev);
 }
 
 QDF_STATUS ucfg_p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)

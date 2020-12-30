@@ -64,9 +64,6 @@ void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
 						adapter->device_mode);
 
 	hdd_lpass_notify_disconnect(adapter);
-	/* Update tdls module about the disconnection event */
-	hdd_notify_sta_disconnect(adapter->vdev_id, false, false,
-				  adapter->vdev);
 
 	hdd_del_latency_critical_client(
 		adapter,
