@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
 #define _WLAN_P2P_API_H_
 
 #include <qdf_types.h>
+#include <wlan_objmgr_vdev_obj.h>
 
 /**
  * wlan_p2p_check_oui_and_force_1x1() - Function to get P2P client device
@@ -38,4 +39,25 @@
  * Return: True if OUI is present, else false.
  */
 bool wlan_p2p_check_oui_and_force_1x1(uint8_t *assoc_ie, uint32_t ie_len);
+
+/**
+ * wlan_p2p_cleanup_roc_by_vdev() - Cleanup roc request by vdev
+ * @vdev: pointer to vdev object
+ *
+ * This function call P2P API to cleanup roc request by vdev
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_p2p_cleanup_roc_by_vdev(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_p2p_status_connect() - Update P2P connection status
+ * @vdev: vdev context
+ *
+ * Updates P2P connection status by up layer when connecting.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_p2p_status_connect(struct wlan_objmgr_vdev *vdev);
+
 #endif

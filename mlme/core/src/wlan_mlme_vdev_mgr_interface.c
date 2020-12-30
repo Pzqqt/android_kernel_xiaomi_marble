@@ -691,6 +691,64 @@ bool mlme_get_bigtk_support(struct wlan_objmgr_vdev *vdev)
 }
 
 QDF_STATUS
+mlme_set_tdls_chan_switch_prohibited(struct wlan_objmgr_vdev *vdev, bool val)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->connect_info.tdls_chan_swit_prohibited = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_get_tdls_chan_switch_prohibited(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	return mlme_priv->connect_info.tdls_chan_swit_prohibited;
+}
+
+QDF_STATUS
+mlme_set_tdls_prohibited(struct wlan_objmgr_vdev *vdev, bool val)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->connect_info.tdls_prohibited = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_get_tdls_prohibited(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	return mlme_priv->connect_info.tdls_prohibited;
+}
+
+QDF_STATUS
 mlme_set_roam_reason_better_ap(struct wlan_objmgr_vdev *vdev, bool val)
 {
 	struct mlme_legacy_priv *mlme_priv;
@@ -1676,9 +1734,11 @@ static struct mlme_ext_ops ext_ops = {
 	.mlme_vdev_ext_hdl_post_create = vdevmgr_mlme_ext_post_hdl_create,
 	.mlme_vdev_ext_delete_rsp = vdevmgr_vdev_delete_rsp_handle,
 #ifdef FEATURE_CM_ENABLE
+	.mlme_cm_ext_connect_start_ind_cb = cm_connect_start_ind,
 	.mlme_cm_ext_connect_req_cb = cm_handle_connect_req,
 	.mlme_cm_ext_bss_peer_create_req_cb = cm_send_bss_peer_create_req,
-	.mlme_cm_ext_connect_complete_ind_cb = cm_handle_connect_complete,
+	.mlme_cm_ext_connect_complete_ind_cb = cm_connect_complete_ind,
+	.mlme_cm_ext_disconnect_start_ind_cb = cm_disconnect_start_ind,
 	.mlme_cm_ext_disconnect_req_cb = cm_handle_disconnect_req,
 	.mlme_cm_ext_bss_peer_delete_req_cb = cm_send_bss_peer_delete_req,
 	.mlme_cm_ext_disconnect_complete_ind_cb = cm_disconnect_complete_ind,

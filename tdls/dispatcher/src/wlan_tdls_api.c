@@ -109,3 +109,145 @@ release_ref:
 	wlan_objmgr_vdev_release_ref(vdev,
 				     WLAN_TDLS_NB_ID);
 }
+
+static QDF_STATUS tdls_notify_flush_cb(struct scheduler_msg *msg)
+{
+	struct tdls_sta_notify_params *notify = msg->bodyptr;
+	struct wlan_objmgr_vdev *vdev = notify->vdev;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+	qdf_mem_free(notify);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+tdls_notify_disconnect(struct tdls_sta_notify_params *notify_info)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_sta_notify_params *notify;
+	QDF_STATUS status;
+
+	if (!notify_info || !notify_info->vdev) {
+		tdls_err("notify_info %pK", notify_info);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tdls_debug("Enter ");
+
+	notify = qdf_mem_malloc(sizeof(*notify));
+	if (!notify) {
+		wlan_objmgr_vdev_release_ref(notify_info->vdev, WLAN_TDLS_NB_ID);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	*notify = *notify_info;
+
+	msg.bodyptr = notify;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_NOTIFY_STA_DISCONNECTION;
+	msg.flush_callback = tdls_notify_flush_cb;
+	status = scheduler_post_message(QDF_MODULE_ID_HDD,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
+		qdf_mem_free(notify);
+	}
+
+	tdls_debug("Exit ");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void wlan_tdls_notify_sta_disconnect(uint8_t vdev_id,
+				     bool lfr_roam, bool user_disconnect,
+				     struct wlan_objmgr_vdev *vdev)
+{
+	struct tdls_sta_notify_params notify_info = {0};
+	QDF_STATUS status;
+
+	if (!vdev) {
+		tdls_err("vdev is NULL");
+		return;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev");
+		return;
+	}
+
+	notify_info.session_id = vdev_id;
+	notify_info.lfr_roam = lfr_roam;
+	notify_info.tdls_chan_swit_prohibited = false;
+	notify_info.tdls_prohibited = false;
+	notify_info.vdev = vdev;
+	notify_info.user_disconnect = user_disconnect;
+	tdls_notify_disconnect(&notify_info);
+}
+
+static QDF_STATUS
+tdls_notify_connect(struct tdls_sta_notify_params *notify_info)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_sta_notify_params *notify;
+	QDF_STATUS status;
+
+	if (!notify_info || !notify_info->vdev) {
+		tdls_err("notify_info %pK", notify_info);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tdls_debug("Enter ");
+
+	notify = qdf_mem_malloc(sizeof(*notify));
+	if (!notify) {
+		wlan_objmgr_vdev_release_ref(notify_info->vdev,
+					     WLAN_TDLS_NB_ID);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	*notify = *notify_info;
+
+	msg.bodyptr = notify;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_NOTIFY_STA_CONNECTION;
+	msg.flush_callback = tdls_notify_flush_cb;
+	status = scheduler_post_message(QDF_MODULE_ID_HDD,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
+		qdf_mem_free(notify);
+	}
+
+	tdls_debug("Exit ");
+	return status;
+}
+
+void
+wlan_tdls_notify_sta_connect(uint8_t session_id,
+			     bool tdls_chan_swit_prohibited,
+			     bool tdls_prohibited,
+			     struct wlan_objmgr_vdev *vdev)
+{
+	struct tdls_sta_notify_params notify_info = {0};
+	QDF_STATUS status;
+
+	if (!vdev) {
+		tdls_err("vdev is NULL");
+		return;
+	}
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev");
+		return;
+	}
+
+	notify_info.session_id = session_id;
+	notify_info.vdev = vdev;
+	notify_info.tdls_chan_swit_prohibited = tdls_chan_swit_prohibited;
+	notify_info.tdls_prohibited = tdls_prohibited;
+	tdls_notify_connect(&notify_info);
+}
+

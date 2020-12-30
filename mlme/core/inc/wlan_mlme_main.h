@@ -216,11 +216,16 @@ struct mscs_req_info {
  * struct mlme_connect_info - mlme connect information
  * @timing_meas_cap: Timing meas cap
  * @oem_channel_info: oem channel info
+ * @tdls_chan_swit_prohibited: if tdls chan switch is prohobited by AP
+ * @tdls_prohibited: if tdls is prohobited by AP
  */
-
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
 	struct oem_channel_info chan_info;
+#ifdef FEATURE_WLAN_TDLS
+	bool tdls_chan_swit_prohibited;
+	bool tdls_prohibited;
+#endif
 };
 
 /**
