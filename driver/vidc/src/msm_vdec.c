@@ -1158,7 +1158,7 @@ int msm_vdec_output_port_settings_change(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vdec_stop_input(struct msm_vidc_inst *inst)
+int msm_vdec_streamoff_input(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
@@ -1167,31 +1167,28 @@ int msm_vdec_stop_input(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_session_stop(inst, INPUT_PORT);
+	rc = msm_vidc_session_streamoff(inst, INPUT_PORT);
 	if (rc)
 		return rc;
 
 	return 0;
 }
 
-int msm_vdec_start_input(struct msm_vidc_inst *inst)
+int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	core = inst->core;
-	s_vpr_h(inst->sid, "%s()\n", __func__);
 
 	if (is_input_meta_enabled(inst) &&
 		!inst->vb2q[INPUT_META_PORT].streaming) {
 		s_vpr_e(inst->sid,
 			"%s: Meta port must be streamed on before data port\n",
 			__func__);
-		goto error;
+		return -EINVAL;
 	}
 
 	//rc = msm_vidc_check_session_supported(inst);
@@ -1244,20 +1241,19 @@ int msm_vdec_start_input(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_session_start(inst, INPUT_PORT);
+	rc = msm_vidc_session_streamon(inst, INPUT_PORT);
 	if (rc)
 		goto error;
 
-	s_vpr_h(inst->sid, "%s: done\n", __func__);
 	return 0;
 
 error:
 	s_vpr_e(inst->sid, "%s: failed\n", __func__);
-	msm_vdec_stop_input(inst);
+	msm_vdec_streamoff_input(inst);
 	return rc;
 }
 
-int msm_vdec_stop_output(struct msm_vidc_inst *inst)
+int msm_vdec_streamoff_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
@@ -1266,7 +1262,7 @@ int msm_vdec_stop_output(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_session_stop(inst, OUTPUT_PORT);
+	rc = msm_vidc_session_streamoff(inst, OUTPUT_PORT);
 	if (rc)
 		return rc;
 
@@ -1385,11 +1381,10 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 	return rc;
 }
 
-int msm_vdec_start_output(struct msm_vidc_inst *inst)
+int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1400,7 +1395,7 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 		s_vpr_e(inst->sid,
 			"%s: Meta port must be streamed on before data port\n",
 			__func__);
-		goto error;
+		return -EINVAL;
 	}
 
 	rc = msm_vdec_set_output_properties(inst);
@@ -1409,26 +1404,27 @@ int msm_vdec_start_output(struct msm_vidc_inst *inst)
 
 	if (!inst->opsc_properties_set) {
 		memcpy(&inst->subcr_params[OUTPUT_PORT],
-			&inst->subcr_params[INPUT_PORT], sizeof(inst->subcr_params[INPUT_PORT]));
+			   &inst->subcr_params[INPUT_PORT],
+			   sizeof(inst->subcr_params[INPUT_PORT]));
 		rc = msm_vdec_subscribe_output_port_settings_change(inst, OUTPUT_PORT);
 		if (rc)
-			return rc;
+			goto error;
 		inst->opsc_properties_set = true;
 	}
 
 	rc = msm_vdec_subscribe_metadata(inst, OUTPUT_PORT);
 	if (rc)
-		return rc;
+		goto error;
 
-	rc = msm_vidc_session_start(inst, OUTPUT_PORT);
+	rc = msm_vidc_session_streamon(inst, OUTPUT_PORT);
 	if (rc)
 		goto error;
 
-	d_vpr_h("%s: done\n", __func__);
 	return 0;
 
 error:
-	msm_vdec_stop_output(inst);
+	s_vpr_e(inst->sid, "%s: failed\n", __func__);
+	msm_vdec_streamoff_output(inst);
 	return rc;
 }
 
@@ -1468,9 +1464,28 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	}
 
 	if (cmd == V4L2_DEC_CMD_STOP) {
+		if (!msm_vidc_allow_stop(inst))
+			return -EBUSY;
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_DRAIN,
 				INPUT_PORT,
+				HFI_PAYLOAD_NONE,
+				NULL,
+				0);
+		if (rc)
+			return rc;
+		rc = msm_vidc_state_change_stop(inst);
+		if (rc)
+			return rc;
+	} else if (cmd == V4L2_DEC_CMD_START) {
+		if (!msm_vidc_allow_start(inst))
+			return -EBUSY;
+		rc = msm_vidc_state_change_start(inst);
+		if (rc)
+			return rc;
+		rc = venus_hfi_session_command(inst,
+				HFI_CMD_RESUME,
+				OUTPUT_PORT,
 				HFI_PAYLOAD_NONE,
 				NULL,
 				0);
@@ -1490,23 +1505,13 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	struct msm_vidc_core *core;
 	struct v4l2_format *fmt;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
 
-	if (inst->state == MSM_VIDC_START) {
-		d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
-		return -EINVAL;
-	}
-
 	if (f->type == INPUT_MPLANE) {
-		if (inst->state == MSM_VIDC_START_INPUT) {
-			d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
-			return -EINVAL;
-		}
 		if (inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat !=
 			f->fmt.pix_mp.pixelformat) {
 			s_vpr_e(inst->sid,
@@ -1562,10 +1567,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		//msm_vidc_update_batching(inst);
 
 	} else if (f->type == INPUT_META_PLANE) {
-		if (inst->state == MSM_VIDC_START_INPUT) {
-			d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
-			return -EINVAL;
-		}
 		fmt = &inst->fmts[INPUT_META_PORT];
 		fmt->type = INPUT_META_PLANE;
 		fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
@@ -1592,10 +1593,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			inst->buffers.input_meta.min_count,
 			inst->buffers.input_meta.extra_count);
 	} else if (f->type == OUTPUT_MPLANE) {
-		if (inst->state == MSM_VIDC_START_OUTPUT) {
-			d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
-			return -EINVAL;
-		}
 		fmt = &inst->fmts[OUTPUT_PORT];
 		fmt->type = OUTPUT_MPLANE;
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
@@ -1637,10 +1634,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			inst->buffers.output.min_count,
 			inst->buffers.output.extra_count);
 	} else if (f->type == OUTPUT_META_PLANE) {
-		if (inst->state == MSM_VIDC_START_OUTPUT) {
-			d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
-			return -EINVAL;
-		}
 		fmt = &inst->fmts[OUTPUT_META_PORT];
 		fmt->type = OUTPUT_META_PLANE;
 		fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
@@ -1681,7 +1674,6 @@ int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	int rc = 0;
 	int port;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1767,7 +1759,6 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	struct msm_vidc_core *core;
 	struct v4l2_format *f;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1847,6 +1838,19 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 
 	rc = msm_vdec_codec_change(inst,
 			inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat);
+
+	return rc;
+}
+
+int msm_vdec_inst_deinit(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	rc = msm_vidc_ctrl_deinit(inst);
 
 	return rc;
 }

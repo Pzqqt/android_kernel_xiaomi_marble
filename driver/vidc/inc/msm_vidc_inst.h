@@ -34,6 +34,7 @@ struct msm_vidc_allocations_info {
 	struct msm_vidc_allocations     line;
 	struct msm_vidc_allocations     dpb;
 	struct msm_vidc_allocations     persist;
+	struct msm_vidc_allocations     vpss;
 };
 
 struct msm_vidc_mappings_info {
@@ -48,6 +49,7 @@ struct msm_vidc_mappings_info {
 	struct msm_vidc_mappings        line;
 	struct msm_vidc_mappings        dpb;
 	struct msm_vidc_mappings        persist;
+	struct msm_vidc_mappings        vpss;
 };
 
 struct msm_vidc_buffers_info {
@@ -62,6 +64,7 @@ struct msm_vidc_buffers_info {
 	struct msm_vidc_buffers        line;
 	struct msm_vidc_buffers        dpb;
 	struct msm_vidc_buffers        persist;
+	struct msm_vidc_buffers        vpss;
 };
 
 enum msm_vidc_inst_state {
@@ -119,6 +122,9 @@ struct msm_vidc_inst {
 	struct msm_vidc_decode_batch       decode_batch;
 	struct msm_vidc_decode_vpp_delay   decode_vpp_delay;
 	struct msm_vidc_session_idle       session_idle;
+	struct delayed_work                input_psc_work;
+	struct workqueue_struct           *input_psc_workq;
+	struct list_head                   input_psc_works; /* list of struct input_psc_work */
 	struct list_head                   input_ts;
 	struct list_head                   enc_input_crs;
 	struct list_head                   decode_bitrate_data;

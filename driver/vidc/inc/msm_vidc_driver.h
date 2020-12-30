@@ -177,6 +177,7 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 	const char *func);
 int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func);
+const char *state_name(enum msm_vidc_inst_state state);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_state state, const char *func);
 int msm_vidc_get_input_internal_buffers(struct msm_vidc_inst *inst,
@@ -193,13 +194,14 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst);
 int msm_vidc_add_session(struct msm_vidc_inst *inst);
 int msm_vidc_session_open(struct msm_vidc_inst *inst);
 int msm_vidc_session_set_codec(struct msm_vidc_inst *inst);
-int msm_vidc_session_start(struct msm_vidc_inst* inst,
+int msm_vidc_session_streamon(struct msm_vidc_inst *inst,
 		enum msm_vidc_port_type port);
-int msm_vidc_session_stop(struct msm_vidc_inst *inst,
+int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		enum msm_vidc_port_type port);
 int msm_vidc_session_close(struct msm_vidc_inst *inst);
 int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst);
 int msm_vidc_core_init(struct msm_vidc_core *core);
+int msm_vidc_core_deinit(struct msm_vidc_core *core);
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *data);
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,
@@ -208,8 +210,10 @@ void msm_vidc_ssr_handler(struct work_struct *work);
 void msm_vidc_pm_work_handler(struct work_struct *work);
 void msm_vidc_fw_unload_handler(struct work_struct *work);
 void msm_vidc_batch_handler(struct work_struct *work);
-int msm_vidc_setup_event_queue(struct msm_vidc_inst *inst);
+int msm_vidc_event_queue_init(struct msm_vidc_inst *inst);
+int msm_vidc_event_queue_deinit(struct msm_vidc_inst *inst);
 int msm_vidc_vb2_queue_init(struct msm_vidc_inst *inst);
+int msm_vidc_vb2_queue_deinit(struct msm_vidc_inst *inst);
 int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl);
 u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type, const char *func);
@@ -231,14 +235,33 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer);
+void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst);
 struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *vbuf);
+struct msm_vidc_inst *get_inst_ref(struct msm_vidc_core *core,
+		struct msm_vidc_inst *instance);
 struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
 		u32 session_id);
 void put_inst(struct msm_vidc_inst *inst);
-int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst* inst);
-int msm_vidc_get_fps(struct msm_vidc_inst* inst);
-int msm_vidc_num_queued_bufs(struct msm_vidc_inst* inst, u32 type);
+bool msm_vidc_allow_s_fmt(struct msm_vidc_inst *inst, u32 type);
+bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id);
+bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type);
+bool msm_vidc_allow_stop(struct msm_vidc_inst *inst);
+bool msm_vidc_allow_start(struct msm_vidc_inst *inst);
+bool msm_vidc_allow_streamon(struct msm_vidc_inst *inst, u32 type);
+bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type);
+bool msm_vidc_allow_qbuf(struct msm_vidc_inst *inst);
+int msm_vidc_allow_input_psc(struct msm_vidc_inst *inst);
+bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst);
+int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type);
+int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type);
+int msm_vidc_state_change_stop(struct msm_vidc_inst *inst);
+int msm_vidc_state_change_start(struct msm_vidc_inst *inst);
+int msm_vidc_state_change_input_psc(struct msm_vidc_inst *inst);
+int msm_vidc_state_change_last_flag(struct msm_vidc_inst *inst);
+int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst);
+int msm_vidc_get_fps(struct msm_vidc_inst *inst);
+int msm_vidc_num_queued_bufs(struct msm_vidc_inst *inst, u32 type);
 void core_lock(struct msm_vidc_core *core, const char *function);
 void core_unlock(struct msm_vidc_core *core, const char *function);
 void inst_lock(struct msm_vidc_inst *inst, const char *function);

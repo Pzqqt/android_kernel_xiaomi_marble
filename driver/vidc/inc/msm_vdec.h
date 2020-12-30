@@ -9,19 +9,18 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
 
-int msm_vdec_stop_input(struct msm_vidc_inst *inst);
-int msm_vdec_start_input(struct msm_vidc_inst *inst);
-int msm_vdec_stop_output(struct msm_vidc_inst *inst);
-int msm_vdec_start_output(struct msm_vidc_inst *inst);
+int msm_vdec_streamoff_input(struct msm_vidc_inst *inst);
+int msm_vdec_streamon_input(struct msm_vidc_inst *inst);
+int msm_vdec_streamoff_output(struct msm_vidc_inst *inst);
+int msm_vdec_streamon_output(struct msm_vidc_inst *inst);
 int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
 int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
 int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f);
 int msm_vdec_inst_init(struct msm_vidc_inst *inst);
+int msm_vdec_inst_deinit(struct msm_vidc_inst *inst);
 int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_output_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd);
-int msm_vdec_subscribe_port_settings_change(struct msm_vidc_inst *inst,
-	enum msm_vidc_port_type port);
 
 #endif // _MSM_VDEC_H_

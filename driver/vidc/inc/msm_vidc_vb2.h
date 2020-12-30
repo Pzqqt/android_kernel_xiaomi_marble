@@ -8,6 +8,10 @@
 
 #include <media/videobuf2-core.h>
 #include <media/videobuf2-v4l2.h>
+#include "msm_vidc_inst.h"
+
+struct vb2_queue *msm_vidc_get_vb2q(struct msm_vidc_inst *inst,
+	u32 type, const char *func);
 
 /* vb2_mem_ops */
 void *msm_vb2_get_userptr(struct device *dev, unsigned long vaddr,

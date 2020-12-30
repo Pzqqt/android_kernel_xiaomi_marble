@@ -2080,7 +2080,7 @@ static void __set_queue_hdr_defaults(struct hfi_queue_header *q_hdr)
 	q_hdr->qhdr_write_idx = 0x0;
 }
 
-static void __interface_queues_release(struct msm_vidc_core *core)
+static void __interface_queues_deinit(struct msm_vidc_core *core)
 {
 	int i;
 
@@ -2394,7 +2394,7 @@ static void __unload_fw(struct msm_vidc_core *core)
 	qcom_scm_pas_shutdown(core->dt->fw_cookie);
 	core->dt->fw_cookie = 0;
 
-	__interface_queues_release(core);
+	__interface_queues_deinit(core);
 	call_venus_op(core, power_off, core);
 
 	__deinit_resources(core);
@@ -2425,7 +2425,7 @@ irqreturn_t venus_hfi_isr(int irq, void *data)
 {
 	struct msm_vidc_core *core = data;
 
-	d_vpr_e("%s()\n", __func__);
+	d_vpr_l("%s()\n", __func__);
 
 	disable_irq_nosync(irq);
 	queue_work(core->device_workq, &core->device_work);
@@ -2443,7 +2443,6 @@ void venus_hfi_work_handler(struct work_struct *work)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
-	d_vpr_e("%s(): core %pK\n", __func__, core);
 
 	mutex_lock(&core->lock);
 	if (__resume(core)) {
@@ -2546,12 +2545,11 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	d_vpr_h("%s(): core %p\n", __func__, core);
-
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	d_vpr_h("%s(): core %pK\n", __func__, core);
 
 	core->packet_size = 4096;
 	core->packet = kzalloc(core->packet_size, GFP_KERNEL);
@@ -2580,27 +2578,49 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	if (rc)
 		goto error;
 
-	__sys_init(core);
-	__sys_image_version(core);
-	__sys_set_debug(core, (msm_vidc_debug & FW_LOGMASK) >> FW_LOGSHIFT);
-	__enable_subcaches(core);
-	__set_subcaches(core);
+	rc = __enable_subcaches(core);
+	if (rc)
+		goto error;
+
+	rc = __sys_init(core);
+	if (rc)
+		goto error;
+
+	rc = __sys_image_version(core);
+	if (rc)
+		goto error;
+
+	rc = __sys_set_debug(core, (msm_vidc_debug & FW_LOGMASK) >> FW_LOGSHIFT);
+	if (rc)
+		goto error;
+
+	rc = __set_subcaches(core);
+	if (rc)
+		goto error;
 
 	d_vpr_h("%s(): successful\n", __func__);
 	return 0;
 
 error:
 	d_vpr_h("%s(): failed\n", __func__);
-	__unload_fw(core);
-	kfree(core->response_packet);
-	kfree(core->packet);
+	venus_hfi_core_deinit(core);
 	return rc;
 }
 
-int venus_hfi_core_release(struct msm_vidc_core *core)
+int venus_hfi_core_deinit(struct msm_vidc_core *core)
 {
-	d_vpr_h("%s(): core %p\n", __func__, core);
-
+	if (!core) {
+		d_vpr_h("%s(): invalid params\n", __func__);
+		return -EINVAL;
+	}
+	d_vpr_h("%s(): core %pK\n", __func__, core);
+	__disable_subcaches(core);
+	__interface_queues_deinit(core);
+	__unload_fw(core);
+	kfree(core->response_packet);
+	core->response_packet = NULL;
+	kfree(core->packet);
+	core->packet = NULL;
 	return 0;
 }
 
@@ -2867,7 +2887,6 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
 
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
 	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: Invalid params\n", __func__);
 		return -EINVAL;
@@ -2927,7 +2946,6 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
 
-	d_vpr_h("%s(): inst %p\n", __func__, inst);
 	if (!inst || !buffer) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;

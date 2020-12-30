@@ -13,6 +13,30 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_control.h"
 
+struct vb2_queue *msm_vidc_get_vb2q(struct msm_vidc_inst *inst,
+	u32 type, const char *func)
+{
+	struct vb2_queue *q = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid buffer type %d\n", func);
+		return NULL;
+	}
+	if (type == INPUT_MPLANE) {
+		q = &inst->vb2q[INPUT_PORT];
+	} else if (type == OUTPUT_MPLANE) {
+		q = &inst->vb2q[OUTPUT_PORT];
+	} else if (type == INPUT_META_PLANE) {
+		q = &inst->vb2q[INPUT_META_PORT];
+	} else if (type == OUTPUT_META_PLANE) {
+		q = &inst->vb2q[OUTPUT_META_PORT];
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+			__func__, type);
+	}
+	return q;
+}
+
 void *msm_vb2_get_userptr(struct device *dev, unsigned long vaddr,
 			unsigned long size, enum dma_data_direction dma_dir)
 {
@@ -72,12 +96,6 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		return -EINVAL;
 
 	if (port == INPUT_PORT) {
-		if (inst->state == MSM_VIDC_START_INPUT) {
-			d_vpr_e("%s: input invalid state %d\n",
-				__func__, inst->state);
-			return -EINVAL;
-		}
-
 		*num_planes = 1;
 		if (*num_buffers < inst->buffers.input.min_count +
 			inst->buffers.input.extra_count)
@@ -86,12 +104,6 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		inst->buffers.input.actual_count = *num_buffers;
 
 	} else if (port == INPUT_META_PORT) {
-		if (inst->state == MSM_VIDC_START_INPUT) {
-			d_vpr_e("%s: input_meta invalid state %d\n",
-				__func__, inst->state);
-			return -EINVAL;
-		}
-
 		*num_planes = 1;
 		if (*num_buffers < inst->buffers.input_meta.min_count +
 			inst->buffers.input_meta.extra_count)
@@ -100,12 +112,6 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		inst->buffers.input_meta.actual_count = *num_buffers;
 
 	} else if (port == OUTPUT_PORT) {
-		if (inst->state == MSM_VIDC_START_OUTPUT) {
-			d_vpr_e("%s: output invalid state %d\n",
-				__func__, inst->state);
-			return -EINVAL;
-		}
-
 		*num_planes = 1;
 		if (*num_buffers < inst->buffers.output.min_count +
 			inst->buffers.output.extra_count)
@@ -114,12 +120,6 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		inst->buffers.output.actual_count = *num_buffers;
 
 	} else if (port == OUTPUT_META_PORT) {
-		if (inst->state == MSM_VIDC_START_OUTPUT) {
-			d_vpr_e("%s: output_meta invalid state %d\n",
-				__func__, inst->state);
-			return -EINVAL;
-		}
-
 		*num_planes = 1;
 		if (*num_buffers < inst->buffers.output_meta.min_count +
 			inst->buffers.output_meta.extra_count)
@@ -174,26 +174,29 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
-			rc = msm_vdec_start_input(inst);
+			rc = msm_vdec_streamon_input(inst);
 		else if (is_encode_session(inst))
-			rc = msm_venc_start_input(inst);
+			rc = msm_venc_streamon_input(inst);
 		else
 			goto error;
 	} else if (q->type == OUTPUT_MPLANE) {
 		if (is_decode_session(inst))
-			rc = msm_vdec_start_output(inst);
+			rc = msm_vdec_streamon_output(inst);
 		else if (is_encode_session(inst))
-			rc = msm_venc_start_output(inst);
+			rc = msm_venc_streamon_output(inst);
 		else
 			goto error;
 	} else {
+		s_vpr_e(inst->sid, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
 
+	if (!rc)
+		s_vpr_h(inst->sid, "Streamon: %d successful\n", q->type);
 	return rc;
 
 error:
-	s_vpr_e(inst->sid, "%s: invalid session/qtype, qtype %d\n", __func__, q->type);
+	s_vpr_h(inst->sid, "Streamon: %d failed\n", q->type);
 	return -EINVAL;
 }
 
@@ -225,30 +228,29 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
-			rc = msm_vdec_stop_input(inst);
+			rc = msm_vdec_streamoff_input(inst);
 		else if (is_encode_session(inst))
-			rc = msm_venc_stop_input(inst);
+			rc = msm_venc_streamoff_input(inst);
 		else
 			goto error;
 	} else if (q->type == OUTPUT_MPLANE) {
 		if (is_decode_session(inst))
-			rc = msm_vdec_stop_output(inst);
+			rc = msm_vdec_streamoff_output(inst);
 		else if (is_encode_session(inst))
-			rc = msm_venc_stop_output(inst);
+			rc = msm_venc_streamoff_output(inst);
 		else
 			goto error;
 	} else {
+		s_vpr_e(inst->sid, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
 
-	if (rc)
-		s_vpr_e(inst->sid, "%s: stop failed for qtype: %d\n",
-			__func__, q->type);
+	if (!rc)
+		s_vpr_h(inst->sid, "Streamoff: %d successful\n", q->type);
 	return;
 
 error:
-	s_vpr_e(inst->sid, "%s: invalid session/qtype, qtype: %d\n",
-			__func__, q->type);
+	s_vpr_e(inst->sid, "Streamoff: %d failed\n", q->type);
 	return;
 }
 

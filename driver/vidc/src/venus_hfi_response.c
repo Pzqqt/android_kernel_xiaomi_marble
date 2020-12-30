@@ -10,6 +10,8 @@
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
 
+extern struct msm_vidc_core *g_core;
+
 void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
 	struct msm_vidc_subscription_params subsc_params)
 {
@@ -421,8 +423,6 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	//todo: moved to HFI_PROP_PICTURE_TYPE
 	/*if (buffer->flags & HFI_BUF_FW_FLAG_KEYFRAME)
 		buf->flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;*/
-	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
-		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 	//moved to HFI_INFO_DATA_CORRUPT
 	/*if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT)
 		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;*/
@@ -432,6 +432,12 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	/*if (buffer->flags & HFI_BUF_FW_FLAG_SUBFRAME)
 		buf->flags |= MSM_VIDC_BUF_FLAG_SUBFRAME;*/
 
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
+		if (msm_vidc_allow_last_flag(inst)) {
+			buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
+			msm_vidc_state_change_last_flag(inst);
+		}
+	}
 	print_vidc_buffer(VIDC_HIGH, "FBD", inst, buf);
 
 	return rc;
@@ -531,7 +537,9 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 			if (buf->attr & MSM_VIDC_ATTR_DEQUEUED) {
 				buf->attr &= ~MSM_VIDC_ATTR_DEQUEUED;
 				msm_vidc_vb2_buffer_done(inst, buf);
-				msm_vidc_put_driver_buf(inst, buf);
+				/* do not unmap / delete read only buffer */
+				if (!(buf->attr & MSM_VIDC_ATTR_READ_ONLY))
+					msm_vidc_put_driver_buf(inst, buf);
 			}
 		}
 	}
@@ -962,11 +970,10 @@ exit:
 	return rc;
 }
 
-static int venus_hfi_input_psc(struct msm_vidc_core *core,
-	struct work_header *work_hdr)
+int handle_session_input_psc(struct msm_vidc_inst *inst,
+		struct input_psc_work *psc_work)
 {
 	int rc = 0;
-	struct msm_vidc_inst *inst;
 	struct hfi_header *hdr = NULL;
 	struct hfi_packet *packet;
 	u8 *pkt, *temp_pkt;
@@ -974,32 +981,25 @@ static int venus_hfi_input_psc(struct msm_vidc_core *core,
 	u32 hfi_port = 0;
 	int i;
 
-	if (!work_hdr) {
+	if (!inst || !psc_work) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	hdr = (struct hfi_header *)work_hdr->data;
+	hdr = (struct hfi_header *)psc_work->data;
 	if (!hdr) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	inst = get_inst(core, hdr->session_id);
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	mutex_lock(&inst->lock);
 	hfi_cmd_type = 0;
 	hfi_port = 0;
 	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 	temp_pkt = pkt;
 
 	for (i = 0; i < hdr->num_packets; i++) {
-		if (validate_packet(pkt, work_hdr->data,
-				work_hdr->data_size, __func__)) {
+		if (validate_packet(pkt, psc_work->data,
+				psc_work->data_size, __func__)) {
 			rc = -EINVAL;
 			goto exit;
 		}
@@ -1034,47 +1034,48 @@ static int venus_hfi_input_psc(struct msm_vidc_core *core,
 		pkt += packet->size;
 	}
 
-	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-		if (hfi_port == HFI_PORT_BITSTREAM) {
-			print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
-				inst->subcr_params[INPUT_PORT]);
-			rc = msm_vdec_input_port_settings_change(inst);
-			if (rc)
-				goto exit;
-		}
-	}
+	print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
+		inst->subcr_params[INPUT_PORT]);
+	rc = msm_vdec_input_port_settings_change(inst);
+	if (rc)
+		goto exit;
 
 exit:
-	mutex_unlock(&inst->lock);
-	put_inst(inst);
 	return rc;
 }
 
-void venus_hfi_inst_work_handler(struct work_struct *work)
+void handle_session_input_psc_work_handler(struct work_struct *work)
 {
-	struct msm_vidc_core *core;
-	struct work_header *work_hdr, *dummy = NULL;
+	int rc = 0;
+	struct msm_vidc_inst *inst;
+	struct input_psc_work *psc_work, *dummy = NULL;
 
-	core = container_of(work, struct msm_vidc_core, inst_work.work);
-	if (!core) {
+	inst = container_of(work, struct msm_vidc_inst, input_psc_work.work);
+	inst = get_inst_ref(g_core, inst);
+	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
 
-	list_for_each_entry_safe(work_hdr, dummy, &core->inst_works, list) {
-		switch (work_hdr->type) {
-		case MSM_VIDC_INST_WORK_PSC:
-			venus_hfi_input_psc(core, work_hdr);
-			break;
-		default:
-			d_vpr_e("%s(): invalid work type: %d\n", __func__,
-				work_hdr->type);
-			break;
+	mutex_lock(&inst->lock);
+	list_for_each_entry_safe(psc_work, dummy, &inst->input_psc_works, list) {
+		rc = msm_vidc_allow_input_psc(inst);
+		if (!rc) {
+			rc = handle_session_input_psc(inst, psc_work);
+			if (!rc)
+				rc = msm_vidc_state_change_input_psc(inst);
+
+			/* either handle input psc or state change failed */
+			if (rc)
+				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		}
-		list_del(&work_hdr->list);
-		kfree(work_hdr->data);
-		kfree(work_hdr);
+		list_del(&psc_work->list);
+		kfree(psc_work->data);
+		kfree(psc_work);
 	}
+	mutex_unlock(&inst->lock);
+
+	put_inst(inst);
 }
 
 static int handle_session_response(struct msm_vidc_core *core,
@@ -1110,12 +1111,10 @@ static int handle_session_response(struct msm_vidc_core *core,
 		    packet->type < HFI_CMD_END) {
 			if (packet->type == HFI_CMD_SETTINGS_CHANGE &&
 				packet->port == HFI_PORT_BITSTREAM) {
-				struct work_header *work;
+				struct input_psc_work *work;
 
-				work = kzalloc(sizeof(struct work_header), GFP_KERNEL);
+				work = kzalloc(sizeof(struct input_psc_work), GFP_KERNEL);
 				INIT_LIST_HEAD(&work->list);
-				work->type = MSM_VIDC_INST_WORK_PSC;
-				work->session_id = hdr->session_id;
 				work->data_size = hdr->size;
 				work->data = kzalloc(hdr->size, GFP_KERNEL);
 				if (!work->data) {
@@ -1123,9 +1122,9 @@ static int handle_session_response(struct msm_vidc_core *core,
 					goto exit;
 				}
 				memcpy(work->data, (void *)hdr, hdr->size);
-				list_add_tail(&work->list, &core->inst_works);
-				queue_delayed_work(core->inst_workq,
-					&core->inst_work, msecs_to_jiffies(0));
+				list_add_tail(&work->list, &inst->input_psc_works);
+				queue_delayed_work(inst->input_psc_workq,
+						&inst->input_psc_work, msecs_to_jiffies(0));
 				goto exit;
 			}
 			if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {

@@ -60,18 +60,6 @@ enum msm_vidc_core_state {
 	MSM_VIDC_CORE_ERROR        = 2,
 };
 
-enum work_type {
-	MSM_VIDC_INST_WORK_PSC = 1,
-};
-
-struct work_header {
-	void *data;
-	struct list_head list;
-	enum work_type type;
-	u32 session_id;
-	u32 data_size;
-};
-
 struct msm_vidc_core {
 	struct platform_device                *pdev;
 	struct msm_video_device                vdev[2];
@@ -120,9 +108,6 @@ struct msm_vidc_core {
 	u32                                    header_id;
 	u32                                    packet_id;
 	struct completion                      init_done;
-	struct list_head                       inst_works; /* list of struct work_header */
-	struct delayed_work                    inst_work;
-	struct workqueue_struct               *inst_workq;
 };
 
 #endif // _MSM_VIDC_CORE_H_

@@ -708,6 +708,12 @@ struct msm_vidc_buffers {
 	bool                   reuse;
 };
 
+struct input_psc_work {
+	struct list_head list;
+	void *data;
+	u32 data_size;
+};
+
 struct msm_vidc_ssr {
 	bool                               trigger;
 	enum msm_vidc_ssr_trigger_type     ssr_type;

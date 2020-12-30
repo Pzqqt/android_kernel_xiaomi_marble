@@ -346,7 +346,7 @@ int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid parameters\n", __func__);
 		return -EINVAL;
 	}
-
+	s_vpr_h(inst->sid, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
 	v4l2_ctrl_handler_free(&inst->ctrl_handler);
 	kfree(inst->ctrls);
 
@@ -362,7 +362,6 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	struct v4l2_ctrl_config ctrl_cfg = {0};
 	int num_ctrls = 0, ctrl_idx = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -497,6 +496,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 		ctrl_idx++;
 	}
 	inst->num_ctrls = num_ctrls;
+	s_vpr_h(inst->sid, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
 
 	return rc;
 }
