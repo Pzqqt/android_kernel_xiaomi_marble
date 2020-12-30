@@ -296,11 +296,6 @@
  */
 #define CHANNEL_INTERFERENCE    0x01
 
-#define CHANNEL_2GHZ      0x00080 /* 2 GHz spectrum channel. */
-#define CHANNEL_OFDM      0x00040 /* OFDM channel */
-#define CHANNEL_TURBO     0x00010 /* Turbo Channel */
-#define CHANNEL_108G (CHANNEL_2GHZ|CHANNEL_OFDM|CHANNEL_TURBO)
-
 /* qdf_packed - denotes structure is packed. */
 #define qdf_packed __qdf_packed
 
