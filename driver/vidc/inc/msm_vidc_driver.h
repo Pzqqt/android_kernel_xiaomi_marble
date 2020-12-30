@@ -114,13 +114,13 @@ static inline bool is_linear_colorformat(enum msm_vidc_colorformat_type colorfor
 {
 	return colorformat == MSM_VIDC_FMT_NV12 ||
 		colorformat == MSM_VIDC_FMT_NV21 ||
-		colorformat == MSM_VIDC_FMT_NV12_P010;
+		colorformat == MSM_VIDC_FMT_P010;
 }
 
 static inline bool is_10bit_colorformat(enum msm_vidc_colorformat_type colorformat)
 {
-	return colorformat == MSM_VIDC_FMT_NV12_P010 ||
-		colorformat == MSM_VIDC_FMT_NV12_TP10_UBWC;
+	return colorformat == MSM_VIDC_FMT_P010 ||
+		colorformat == MSM_VIDC_FMT_TP10C;
 }
 
 static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)

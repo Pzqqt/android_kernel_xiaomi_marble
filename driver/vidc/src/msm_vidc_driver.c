@@ -129,9 +129,6 @@ enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec, const char *func)
 	case V4L2_PIX_FMT_VP9:
 		codec = MSM_VIDC_VP9;
 		break;
-	case V4L2_PIX_FMT_MPEG2:
-		codec = MSM_VIDC_MPEG2;
-		break;
 	default:
 		d_vpr_e("%s: invalid v4l2 codec %#x\n", func, v4l2_codec);
 		break;
@@ -153,9 +150,6 @@ u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec, const char *func)
 	case MSM_VIDC_VP9:
 		v4l2_codec = V4L2_PIX_FMT_VP9;
 		break;
-	case MSM_VIDC_MPEG2:
-		v4l2_codec = V4L2_PIX_FMT_MPEG2;
-		break;
 	default:
 		d_vpr_e("%s: invalid driver codec %#x\n", func, codec);
 		break;
@@ -176,16 +170,16 @@ enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 v4l2_colorformat,
 		colorformat = MSM_VIDC_FMT_NV21;
 		break;
 	case V4L2_PIX_FMT_VIDC_NV12C:
-		colorformat = MSM_VIDC_FMT_NV12_UBWC;
+		colorformat = MSM_VIDC_FMT_NV12C;
 		break;
 	case V4L2_PIX_FMT_VIDC_TP10C:
-		colorformat = MSM_VIDC_FMT_NV12_TP10_UBWC;
+		colorformat = MSM_VIDC_FMT_TP10C;
 		break;
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
-		colorformat = MSM_VIDC_FMT_RGBA8888_UBWC;
+		colorformat = MSM_VIDC_FMT_RGBA8888C;
 		break;
 	case V4L2_PIX_FMT_VIDC_P010:
-		colorformat = MSM_VIDC_FMT_NV12_P010;
+		colorformat = MSM_VIDC_FMT_P010;
 		break;
 	default:
 		d_vpr_e("%s: invalid v4l2 color format %#x\n",
@@ -207,16 +201,16 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 	case MSM_VIDC_FMT_NV21:
 		v4l2_colorformat = V4L2_PIX_FMT_NV21;
 		break;
-	case MSM_VIDC_FMT_NV12_UBWC:
+	case MSM_VIDC_FMT_NV12C:
 		v4l2_colorformat = V4L2_PIX_FMT_VIDC_NV12C;
 		break;
-	case MSM_VIDC_FMT_NV12_TP10_UBWC:
+	case MSM_VIDC_FMT_TP10C:
 		v4l2_colorformat = V4L2_PIX_FMT_VIDC_TP10C;
 		break;
-	case MSM_VIDC_FMT_RGBA8888_UBWC:
+	case MSM_VIDC_FMT_RGBA8888C:
 		v4l2_colorformat = V4L2_PIX_FMT_VIDC_ARGB32C;
 		break;
-	case MSM_VIDC_FMT_NV12_P010:
+	case MSM_VIDC_FMT_P010:
 		v4l2_colorformat = V4L2_PIX_FMT_VIDC_P010;
 		break;
 	default:

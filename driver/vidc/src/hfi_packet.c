@@ -166,8 +166,6 @@ u32 get_hfi_codec(struct msm_vidc_inst *inst)
 			return HFI_CODEC_DECODE_HEVC;
 	case MSM_VIDC_VP9:
 		return HFI_CODEC_DECODE_VP9;
-	case MSM_VIDC_MPEG2:
-		return HFI_CODEC_DECODE_MPEG2;
 	default:
 		d_vpr_e("invalid codec %d, domain %d\n",
 			inst->codec, inst->domain);
@@ -184,19 +182,19 @@ u32 get_hfi_colorformat(struct msm_vidc_inst *inst,
 	case MSM_VIDC_FMT_NV12:
 		hfi_colorformat = HFI_COLOR_FMT_NV12;
 		break;
-	case MSM_VIDC_FMT_NV12_UBWC:
+	case MSM_VIDC_FMT_NV12C:
 		hfi_colorformat = HFI_COLOR_FMT_NV12_UBWC;
 		break;
-	case MSM_VIDC_FMT_NV12_P010:
+	case MSM_VIDC_FMT_P010:
 		hfi_colorformat = HFI_COLOR_FMT_P010;
 		break;
-	case MSM_VIDC_FMT_NV12_TP10_UBWC:
+	case MSM_VIDC_FMT_TP10C:
 		hfi_colorformat = HFI_COLOR_FMT_TP10_UBWC;
 		break;
 	case MSM_VIDC_FMT_RGBA8888:
 		hfi_colorformat = HFI_COLOR_FMT_RGBA8888;
 		break;
-	case MSM_VIDC_FMT_RGBA8888_UBWC:
+	case MSM_VIDC_FMT_RGBA8888C:
 		hfi_colorformat = HFI_COLOR_FMT_RGBA8888_UBWC;
 		break;
 	case MSM_VIDC_FMT_NV21:

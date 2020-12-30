@@ -221,8 +221,8 @@ void __dump(struct dump dump[], int len);
 static inline bool __ubwc(enum msm_vidc_colorformat_type f)
 {
 	switch (f) {
-	case MSM_VIDC_FMT_NV12_UBWC:
-	case MSM_VIDC_FMT_NV12_TP10_UBWC:
+	case MSM_VIDC_FMT_NV12C:
+	case MSM_VIDC_FMT_TP10C:
 		return true;
 	default:
 		return false;
@@ -234,11 +234,11 @@ static inline int __bpp(enum msm_vidc_colorformat_type f)
 	switch (f) {
 	case MSM_VIDC_FMT_NV12:
 	case MSM_VIDC_FMT_NV21:
-	case MSM_VIDC_FMT_NV12_UBWC:
-	case MSM_VIDC_FMT_RGBA8888_UBWC:
+	case MSM_VIDC_FMT_NV12C:
+	case MSM_VIDC_FMT_RGBA8888C:
 		return 8;
-	case MSM_VIDC_FMT_NV12_P010:
-	case MSM_VIDC_FMT_NV12_TP10_UBWC:
+	case MSM_VIDC_FMT_P010:
+	case MSM_VIDC_FMT_TP10C:
 		return 10;
 	default:
 		d_vpr_e("Unsupported colorformat (%x)", f);
