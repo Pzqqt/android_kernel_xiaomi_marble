@@ -342,7 +342,6 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* disconnect TDLS, P2P roc cleanup */
 	cm_inform_if_mgr_disconnect_start(cm_ctx->vdev);
 	cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev), cm_ctx->vdev);
 	mlme_cm_osif_disconnect_start_ind(cm_ctx->vdev);

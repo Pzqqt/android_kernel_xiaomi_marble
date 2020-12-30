@@ -1006,6 +1006,7 @@ bool cm_get_active_disconnect_req(struct wlan_objmgr_vdev *vdev,
 			req->req.source = cm_req->discon_req.req.source;
 			req->req.reason_code =
 					cm_req->discon_req.req.reason_code;
+			req->req.bssid = cm_req->discon_req.req.bssid;
 			status = true;
 			cm_req_lock_release(cm_ctx);
 			return status;
