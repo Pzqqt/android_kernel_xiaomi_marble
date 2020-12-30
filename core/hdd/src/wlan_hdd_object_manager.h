@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,47 +108,6 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx);
  * Return: 0 for success, negative error code for failure
  */
 int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
-
-/**
- * hdd_objmgr_get_vdev() - Get reference of vdev from adapter
- * @adapter: hdd adapter
- *
- * This API gets vdev object reference from hdd adapter
- *
- * Return: pointer to vdev object for success, NULL for failure
- */
-#ifdef WLAN_OBJMGR_REF_ID_TRACE
-#define hdd_objmgr_get_vdev(adapter) \
-	__hdd_objmgr_get_vdev(adapter, __func__, __LINE__)
-struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
-					       const char *func,
-					       int line);
-#else
-#define hdd_objmgr_get_vdev(adapter) \
-	__hdd_objmgr_get_vdev(adapter, __func__)
-struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
-					       const char *func);
-#endif
-
-/**
- * hdd_objmgr_put_vdev() - Release reference of vdev object
- * @vdev: pointer to vdev object
- *
- * This API releases vdev object reference which was acquired using
- * hdd_objmgr_get_vdev().
- *
- * Return: void
- */
-#ifdef WLAN_OBJMGR_REF_ID_TRACE
-#define hdd_objmgr_put_vdev(vdev) \
-	__hdd_objmgr_put_vdev(vdev, __func__, __LINE__)
-void __hdd_objmgr_put_vdev(struct wlan_objmgr_vdev *vdev, const char *func,
-			   int line);
-#else
-#define hdd_objmgr_put_vdev(vdev) \
-	__hdd_objmgr_put_vdev(vdev, __func__)
-void __hdd_objmgr_put_vdev(struct wlan_objmgr_vdev *vdev, const char *func);
-#endif
 
 /**
  * hdd_objmgr_set_peer_mlme_auth_state() - set the peer mlme auth state
