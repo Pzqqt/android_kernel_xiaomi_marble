@@ -901,6 +901,7 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	int rc = 0;
 	struct msm_vidc_core *core;
 	struct v4l2_format *fmt;
+	u32 codec_align;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -913,12 +914,10 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt->type = INPUT_MPLANE;
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 		fmt->fmt.pix_mp.width = VENUS_Y_STRIDE(
-			v4l2_colorformat_to_media(fmt->fmt.pix_mp.pixelformat,
-			__func__),
+			v4l2_colorformat_to_media(fmt->fmt.pix_mp.pixelformat, __func__),
 			f->fmt.pix_mp.width);
 		fmt->fmt.pix_mp.height = VENUS_Y_SCANLINES(
-			v4l2_colorformat_to_media(fmt->fmt.pix_mp.pixelformat,
-			__func__),
+			v4l2_colorformat_to_media(fmt->fmt.pix_mp.pixelformat, __func__),
 			f->fmt.pix_mp.height);
 
 		fmt->fmt.pix_mp.num_planes = 1;
@@ -939,6 +938,33 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		}
 		inst->buffers.input.size =
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
+
+		codec_align = inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat ==
+			V4L2_PIX_FMT_HEVC ? 32 : 16;
+		/* check if resolution changed */
+		if (inst->fmts[OUTPUT_PORT].fmt.pix_mp.width !=
+				ALIGN(f->fmt.pix_mp.width, codec_align) ||
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.height !=
+				ALIGN(f->fmt.pix_mp.height, codec_align)) {
+			/* reset bitstream port with updated resolution */
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.width =
+				ALIGN(f->fmt.pix_mp.width, codec_align);
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.height =
+				ALIGN(f->fmt.pix_mp.height, codec_align);
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage =
+				call_session_op(core, buffer_size,
+					inst, MSM_VIDC_BUF_OUTPUT);
+
+			/* reset crop dimensions with updated resolution */
+			inst->crop.top = inst->crop.left = 0;
+			inst->crop.width = f->fmt.pix_mp.width;
+			inst->crop.height = f->fmt.pix_mp.height;
+
+			/* reset compose dimensions with updated resolution */
+			inst->compose.top = inst->crop.left = 0;
+			inst->compose.width = f->fmt.pix_mp.width;
+			inst->compose.height = f->fmt.pix_mp.height;
+		}
 
 		//rc = msm_vidc_check_session_supported(inst);
 		if (rc)
@@ -993,17 +1019,12 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 				goto err_invalid_fmt;
 		}
 		fmt->type = OUTPUT_MPLANE;
-		if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC) {
-			fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width,
-					H265_BITSTREM_ALIGNMENT);
-			fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height,
-					H265_BITSTREM_ALIGNMENT);
-		} else {
-			fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width,
-					DEFAULT_BITSTREM_ALIGNMENT);
-			fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height,
-					DEFAULT_BITSTREM_ALIGNMENT);
-		}
+
+		codec_align = f->fmt.pix_mp.pixelformat ==
+				V4L2_PIX_FMT_HEVC ? 32 : 16;
+		/* width, height is readonly for client */
+		fmt->fmt.pix_mp.width = ALIGN(inst->crop.width, codec_align);
+		fmt->fmt.pix_mp.height = ALIGN(inst->crop.height, codec_align);
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 		fmt->fmt.pix_mp.num_planes = 1;
 		fmt->fmt.pix_mp.plane_fmt[0].bytesperline = 0;
@@ -1026,11 +1047,6 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		//rc = msm_vidc_check_session_supported(inst);
 		if (rc)
 			goto err_invalid_fmt;
-
-		/* update crop dimensions */
-		inst->crop.left = inst->crop.top = 0;
-		inst->crop.width = f->fmt.pix_mp.width;
-		inst->crop.height = f->fmt.pix_mp.height;
 
 		//update_log_ctxt(inst->sid, inst->session_type,
 		//	mplane->pixelformat);
@@ -1094,6 +1110,150 @@ int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 
 	memcpy(f, &inst->fmts[port], sizeof(struct v4l2_format));
 
+	return rc;
+}
+
+int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
+{
+	int rc = 0;
+	u32 codec_align;
+
+	if (!inst || !s) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	if (s->type != INPUT_MPLANE && s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT) {
+		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, s->type);
+		return -EINVAL;
+	}
+
+	switch (s->target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+	case V4L2_SEL_TGT_CROP:
+		codec_align = inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat ==
+			V4L2_PIX_FMT_HEVC ? 32 : 16;
+		if (s->r.left || s->r.top) {
+			s_vpr_h(inst->sid, "%s: unsupported top %d or left %d\n",
+				__func__, s->r.left, s->r.top);
+			s->r.left = s->r.top = 0;
+		}
+		if (s->r.width > inst->fmts[OUTPUT_PORT].fmt.pix_mp.width ||
+			ALIGN(s->r.width, codec_align) != inst->fmts[OUTPUT_PORT].fmt.pix_mp.width) {
+			s_vpr_h(inst->sid, "%s: unsupported width %d, fmt width %d\n",
+				__func__, s->r.width,
+				inst->fmts[OUTPUT_PORT].fmt.pix_mp.width);
+			s->r.width = inst->fmts[OUTPUT_PORT].fmt.pix_mp.width;
+		}
+		if (s->r.height > inst->fmts[OUTPUT_PORT].fmt.pix_mp.height ||
+			ALIGN(s->r.height, codec_align) != inst->fmts[OUTPUT_PORT].fmt.pix_mp.height) {
+			s_vpr_h(inst->sid, "%s: unsupported height %d, fmt height %d\n",
+				__func__, s->r.height,
+				inst->fmts[OUTPUT_PORT].fmt.pix_mp.height);
+			s->r.height = inst->fmts[OUTPUT_PORT].fmt.pix_mp.height;
+		}
+
+		inst->crop.left = s->r.left;
+		inst->crop.top = s->r.top;
+		inst->crop.width = s->r.width;
+		inst->crop.height = s->r.height;
+		/* adjust compose such that it is within crop */
+		if (inst->compose.left < inst->crop.left)
+			inst->compose.left = inst->crop.left;
+		if (inst->compose.top < inst->crop.top)
+			inst->compose.top = inst->crop.top;
+		if (inst->compose.width > inst->crop.width)
+			inst->compose.width = inst->crop.width;
+		if (inst->compose.height > inst->crop.height)
+			inst->compose.height = inst->crop.height;
+		break;
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_PADDED:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	case V4L2_SEL_TGT_COMPOSE:
+		if (s->r.left < inst->crop.left) {
+			s_vpr_e(inst->sid,
+				"%s: compose left (%d) less than crop left (%d)\n",
+				__func__, s->r.left, inst->crop.left);
+			s->r.left = inst->crop.left;
+		}
+		if (s->r.top < inst->crop.top) {
+			s_vpr_e(inst->sid,
+				"%s: compose top (%d) less than crop top (%d)\n",
+				__func__, s->r.top, inst->crop.top);
+			s->r.top = inst->crop.top;
+		}
+		if (s->r.width > inst->crop.width) {
+			s_vpr_e(inst->sid,
+				"%s: compose width (%d) greate than crop width (%d)\n",
+				__func__, s->r.width, inst->crop.width);
+			s->r.width = inst->crop.width;
+		}
+		if (s->r.height > inst->crop.height) {
+			s_vpr_e(inst->sid,
+				"%s: compose height (%d) greate than crop height (%d)\n",
+				__func__, s->r.height, inst->crop.height);
+			s->r.height = inst->crop.height;
+		}
+		inst->compose.left = s->r.left;
+		inst->compose.top = s->r.top;
+		inst->compose.width = s->r.width;
+		inst->compose.height= s->r.height;
+		break;
+	default:
+		s_vpr_e(inst->sid, "%s: invalid target %d\n",
+				__func__, s->target);
+		rc = -EINVAL;
+		break;
+	}
+	if (!rc)
+		s_vpr_h(inst->sid, "%s: target %d, r [%d, %d, %d, %d]\n",
+			__func__, s->target, s->r.top, s->r.left,
+			s->r.width, s->r.height);
+	return rc;
+}
+
+int msm_venc_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
+{
+	int rc = 0;
+
+	if (!inst || !s) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	if (s->type != INPUT_MPLANE && s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT) {
+		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, s->type);
+		return -EINVAL;
+	}
+
+	switch (s->target) {
+	case V4L2_SEL_TGT_CROP_BOUNDS:
+	case V4L2_SEL_TGT_CROP_DEFAULT:
+	case V4L2_SEL_TGT_CROP:
+		s->r.left = inst->crop.left;
+		s->r.top = inst->crop.top;
+		s->r.width = inst->crop.width;
+		s->r.height = inst->crop.height;
+		break;
+	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	case V4L2_SEL_TGT_COMPOSE_PADDED:
+	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	case V4L2_SEL_TGT_COMPOSE:
+		s->r.left = inst->compose.left;
+		s->r.top = inst->compose.top;
+		s->r.width = inst->compose.width;
+		s->r.height = inst->compose.height;
+		break;
+	default:
+		s_vpr_e(inst->sid, "%s: invalid target %d\n",
+			__func__, s->target);
+		rc = -EINVAL;
+		break;
+	}
+	if (!rc)
+		s_vpr_h(inst->sid, "%s: target %d, r [%d, %d, %d, %d]\n",
+			__func__, s->target, s->r.top, s->r.left,
+			s->r.width, s->r.height);
 	return rc;
 }
 

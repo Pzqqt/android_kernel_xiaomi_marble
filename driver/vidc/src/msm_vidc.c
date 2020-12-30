@@ -265,6 +265,44 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 }
 EXPORT_SYMBOL(msm_vidc_g_fmt);
 
+int msm_vidc_s_selection(void* instance, struct v4l2_selection* s)
+{
+	int rc = 0;
+	struct msm_vidc_inst* inst = instance;
+
+	if (!inst || !s) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (is_decode_session(inst))
+		rc = msm_vdec_s_selection(inst, s);
+	if (is_encode_session(inst))
+		rc = msm_venc_s_selection(inst, s);
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_vidc_s_selection);
+
+int msm_vidc_g_selection(void* instance, struct v4l2_selection* s)
+{
+	int rc = 0;
+	struct msm_vidc_inst* inst = instance;
+
+	if (!inst || !s) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (is_decode_session(inst))
+		rc = msm_vdec_g_selection(inst, s);
+	if (is_encode_session(inst))
+		rc = msm_venc_g_selection(inst, s);
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_vidc_g_selection);
+
 int msm_vidc_s_ctrl(void *instance, struct v4l2_control *control)
 {
 	struct msm_vidc_inst *inst = instance;

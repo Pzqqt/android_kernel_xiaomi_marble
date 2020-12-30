@@ -88,6 +88,22 @@ int msm_v4l2_g_fmt(struct file *file, void *fh,
 	return msm_vidc_g_fmt((void *)vidc_inst, f);
 }
 
+int msm_v4l2_s_selection(struct file* file, void* fh,
+					struct v4l2_selection* s)
+{
+	struct msm_vidc_inst* vidc_inst = get_vidc_inst(file, fh);
+
+	return msm_vidc_s_selection((void*)vidc_inst, s);
+}
+
+int msm_v4l2_g_selection(struct file* file, void* fh,
+					struct v4l2_selection* s)
+{
+	struct msm_vidc_inst* vidc_inst = get_vidc_inst(file, fh);
+
+	return msm_vidc_g_selection((void*)vidc_inst, s);
+}
+
 int msm_v4l2_s_ctrl(struct file *file, void *fh,
 					struct v4l2_control *a)
 {

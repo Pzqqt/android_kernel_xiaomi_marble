@@ -559,7 +559,7 @@ struct msm_vidc_color_info {
 	u32 quantization;
 };
 
-struct msm_vidc_crop {
+struct msm_vidc_rectangle {
 	u32 left;
 	u32 top;
 	u32 width;

@@ -22,6 +22,10 @@ int msm_v4l2_s_fmt(struct file *file, void *fh,
 		struct v4l2_format *f);
 int msm_v4l2_g_fmt(struct file *file, void *fh,
 		struct v4l2_format *f);
+int msm_v4l2_s_selection(struct file* file, void* fh,
+		struct v4l2_selection* s);
+int msm_v4l2_g_selection(struct file* file, void* fh,
+		struct v4l2_selection* s);
 int msm_v4l2_s_ctrl(struct file *file, void *fh,
 		struct v4l2_control *a);
 int msm_v4l2_g_ctrl(struct file *file, void *fh,
