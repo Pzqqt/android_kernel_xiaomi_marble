@@ -72,7 +72,7 @@ void msm_vidc_memory_put_dmabuf(void *dmabuf)
 		return;
 	}
 
-	dma_heap_buffer_free((struct dma_buf *)dmabuf);
+	dma_buf_put((struct dma_buf *)dmabuf);
 }
 
 int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
