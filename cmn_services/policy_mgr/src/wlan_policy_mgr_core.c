@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1268,11 +1268,11 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 		if (pm_conc_connection_list[0].freq ==
 			pm_conc_connection_list[1].freq) {
 			strlcat(cc_mode, " SCC", sizeof(cc_mode));
-		} else if (pm_conc_connection_list[0].mac ==
-					pm_conc_connection_list[1].mac) {
-			strlcat(cc_mode, " MCC", sizeof(cc_mode));
-		} else
+		} else if (policy_mgr_is_dbs_enable(psoc)) {
 			strlcat(cc_mode, " DBS", sizeof(cc_mode));
+		} else {
+			strlcat(cc_mode, " MCC", sizeof(cc_mode));
+		}
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		policy_mgr_debug("%s", cc_mode);
 		break;
