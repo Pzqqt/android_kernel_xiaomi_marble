@@ -710,9 +710,6 @@ lim_fill_sme_assoc_ind_params(
 		sme_assoc_ind->assocReqPtr = assoc_ind->assocReqPtr;
 	}
 
-	sme_assoc_ind->beaconPtr = session_entry->beacon;
-	sme_assoc_ind->beaconLength = session_entry->bcnLen;
-
 	/* Fill in peerMacAddr */
 	qdf_mem_copy(sme_assoc_ind->peerMacAddr, assoc_ind->peerMacAddr,
 		sizeof(tSirMacAddr));

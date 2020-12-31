@@ -989,8 +989,6 @@ struct csr_roam_info {
 	bool tdls_chan_swit_prohibited; /* per ExtCap in Assoc/Reassoc resp */
 #endif
 	/* Required for indicating the frames to upper layer */
-	uint32_t beaconLength;
-	uint8_t *beaconPtr;
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
 	int8_t rxRssi;

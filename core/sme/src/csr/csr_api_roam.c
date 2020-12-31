@@ -11344,8 +11344,6 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	/* Required for indicating the frames to upper layer */
 	roam_info->assocReqLength = pAssocInd->assocReqLength;
 	roam_info->assocReqPtr = pAssocInd->assocReqPtr;
-	roam_info->beaconPtr = pAssocInd->beaconPtr;
-	roam_info->beaconLength = pAssocInd->beaconLength;
 	roam_info->status_code = eSIR_SME_SUCCESS;
 	roam_info->u.pConnectedProfile = &session->connectedProfile;
 	roam_info->staId = (uint8_t)pAssocInd->staId;

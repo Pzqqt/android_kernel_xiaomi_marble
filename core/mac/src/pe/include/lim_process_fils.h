@@ -123,6 +123,22 @@ static inline void lim_increase_fils_sequence_number(struct pe_session *session_
 		session_entry->fils_info->sequence_number++;
 }
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * populate_fils_connect_params() - Populate FILS connect params to join rsp
+ * @mac_ctx: Mac context
+ * @session: PE session
+ * @connect_rsp: connect join rsp
+ *
+ * This API copies the FILS connect params from PE session to SME join rsp
+ *
+ * Return: None
+ */
+void
+populate_fils_connect_params(struct mac_context *mac_ctx,
+			     struct pe_session *session,
+			     struct wlan_cm_connect_resp *connect_rsp);
+#else
 /**
  * populate_fils_connect_params() - Populate FILS connect params to join rsp
  * @mac_ctx: Mac context
@@ -136,7 +152,7 @@ static inline void lim_increase_fils_sequence_number(struct pe_session *session_
 void populate_fils_connect_params(struct mac_context *mac_ctx,
 				  struct pe_session *session,
 				  struct join_rsp *sme_join_rsp);
-
+#endif
 /**
  * lim_update_fils_hlp_data() - Update the hlp data from association
  * response frame to PE session.
@@ -259,10 +275,18 @@ static inline bool lim_is_fils_connection(struct pe_session *pe_session)
 	return false;
 }
 
+#ifdef FEATURE_CM_ENABLE
+static inline void
+populate_fils_connect_params(struct mac_context *mac_ctx,
+			     struct pe_session *session,
+			     struct wlan_cm_connect_resp *connect_rsp)
+{ }
+#else
 static inline void populate_fils_connect_params(struct mac_context *mac_ctx,
 						struct pe_session *session,
 						struct join_rsp *sme_join_rsp)
 { }
+#endif
 
 static inline
 void lim_update_fils_hlp_data(struct qdf_mac_addr *hlp_frm_src_mac,

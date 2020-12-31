@@ -166,18 +166,18 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 			session_entry->bcnLen = 0;
 		}
 		session_entry->bcnLen =
-			WMA_GET_RX_PAYLOAD_LEN(rx_Packet_info);
+			WMA_GET_RX_MPDU_LEN(rx_Packet_info);
 			session_entry->beacon =
 			qdf_mem_malloc(session_entry->bcnLen);
 		if (!session_entry->beacon) {
 			pe_err("No Memory to store beacon");
 		} else {
 			/*
-			 * Store the Beacon/ProbeRsp.
+			 * Store the whole ProbeRsp frame.
 			 * This is sent to csr/hdd in join cnf response.
 			 */
 			qdf_mem_copy(session_entry->beacon,
-				     WMA_GET_RX_MPDU_DATA
+				     WMA_GET_RX_MAC_HEADER
 					     (rx_Packet_info),
 				     session_entry->bcnLen);
 		}

@@ -115,22 +115,6 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	msgQ.bodyptr = beaconParams;
 	msgQ.bodyval = 0;
 
-	/* Keep a copy of recent beacon frame sent */
-
-	/* free previous copy of the beacon */
-	if (pe_session->beacon) {
-		qdf_mem_free(pe_session->beacon);
-	}
-
-	pe_session->bcnLen = 0;
-	pe_session->beacon = NULL;
-
-	pe_session->beacon = qdf_mem_malloc(size);
-	if (pe_session->beacon) {
-		qdf_mem_copy(pe_session->beacon, beaconPayload, size);
-		pe_session->bcnLen = size;
-	}
-
 	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode)

@@ -1074,8 +1074,6 @@ struct assoc_ind {
 	bool wmmEnabledSta; /* if present - STA is WMM enabled */
 	bool reassocReq;
 	/* Required for indicating the frames to upper layer */
-	uint32_t beaconLength;
-	uint8_t *beaconPtr;
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
 

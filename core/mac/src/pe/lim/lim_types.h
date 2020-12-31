@@ -223,8 +223,6 @@ typedef struct sLimMlmAssocInd {
 	bool WmmStaInfoPresent;
 
 	/* Required for indicating the frames to upper layer */
-	uint32_t beaconLength;
-	uint8_t *beaconPtr;
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
 	struct oem_channel_info chan_info;

@@ -1397,8 +1397,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		assoc_ind->staId = csr_roaminfo->staId;
 		assoc_ind->status = 0;
 		/* Required for indicating the frames to upper layer */
-		assoc_ind->beaconLength = csr_roaminfo->beaconLength;
-		assoc_ind->beaconPtr = csr_roaminfo->beaconPtr;
 		assoc_ind->assocReqLength = csr_roaminfo->assocReqLength;
 		assoc_ind->assocReqPtr = csr_roaminfo->assocReqPtr;
 		assoc_ind->fWmmEnabled = csr_roaminfo->wmmEnabledSta;

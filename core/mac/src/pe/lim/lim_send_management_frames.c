@@ -2333,9 +2333,12 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 				DOT11F_FF_CAPABILITIES_LEN;
 
 		qdf_mem_zero((uint8_t *)&bcn_ext_cap, sizeof(tDot11fIEExtCap));
-		if (pe_session->beacon && pe_session->bcnLen > ie_offset) {
-			bcn_ie = pe_session->beacon + ie_offset;
-			bcn_ie_len = pe_session->bcnLen - ie_offset;
+		if (pe_session->beacon && (pe_session->bcnLen >
+		    (ie_offset + sizeof(struct wlan_frame_hdr)))) {
+			bcn_ie = pe_session->beacon + ie_offset +
+						sizeof(struct wlan_frame_hdr);
+			bcn_ie_len = pe_session->bcnLen - ie_offset -
+						sizeof(struct wlan_frame_hdr);
 			p_ext_cap = (uint8_t *)wlan_get_ie_ptr_from_eid(
 							DOT11F_EID_EXTCAP,
 							bcn_ie, bcn_ie_len);

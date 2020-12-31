@@ -246,8 +246,6 @@ typedef struct sap_StationAssocIndication_s {
 	uint8_t staId;
 	uint8_t status;
 	/* Required for indicating the frames to upper layer */
-	uint32_t beaconLength;
-	uint8_t *beaconPtr;
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
 	bool fWmmEnabled;

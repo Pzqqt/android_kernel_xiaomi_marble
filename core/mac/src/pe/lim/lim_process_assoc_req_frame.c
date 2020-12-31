@@ -2871,8 +2871,6 @@ bool lim_fill_lim_assoc_ind_params(
 	/* Required for indicating the frames to upper layer */
 	assoc_ind->assocReqLength = assoc_req->assocReqFrameLength;
 	assoc_ind->assocReqPtr = assoc_req->assocReqFrame;
-	assoc_ind->beaconPtr = session_entry->beacon;
-	assoc_ind->beaconLength = session_entry->bcnLen;
 
 	assoc_ind->chan_info.mhz = session_entry->curr_op_freq;
 	assoc_ind->chan_info.band_center_freq1 =

@@ -1574,6 +1574,65 @@ QDF_STATUS lim_create_fils_auth_data(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_CM_ENABLE
+void populate_fils_connect_params(struct mac_context *mac_ctx,
+				  struct pe_session *session,
+				  struct wlan_cm_connect_resp *connect_rsp)
+{
+	struct pe_fils_session *fils_info = session->fils_info;
+	struct fils_connect_rsp_params *fils_ie;
+
+	if (!lim_is_fils_connection(session))
+		return;
+
+	if (!fils_info->fils_pmk_len ||
+	    !fils_info->tk_len || !fils_info->gtk_len ||
+	    !fils_info->fils_pmk || !fils_info->kek_len) {
+		pe_err("Invalid FILS info pmk len %d kek len %d tk len %d gtk len %d",
+		       fils_info->fils_pmk_len, fils_info->kek_len,
+		       fils_info->tk_len, fils_info->gtk_len);
+		return;
+	}
+
+	connect_rsp->connect_ies.fils_ie = qdf_mem_malloc(sizeof(*fils_ie));
+	if (!connect_rsp->connect_ies.fils_ie) {
+		pe_delete_fils_info(session);
+		return;
+	}
+
+	fils_ie = connect_rsp->connect_ies.fils_ie;
+	fils_ie->fils_pmk = qdf_mem_malloc(fils_info->fils_pmk_len);
+	if (!fils_ie->fils_pmk) {
+		qdf_mem_free(fils_ie);
+		connect_rsp->connect_ies.fils_ie = NULL;
+		pe_delete_fils_info(session);
+		return;
+	}
+	fils_ie->fils_seq_num = fils_info->sequence_number;
+	fils_ie->fils_pmk_len = fils_info->fils_pmk_len;
+	qdf_mem_copy(fils_ie->fils_pmk, fils_info->fils_pmk,
+		     fils_info->fils_pmk_len);
+
+	qdf_mem_copy(fils_ie->fils_pmkid, fils_info->fils_pmkid, PMKID_LEN);
+
+	fils_ie->kek_len = fils_info->kek_len;
+	qdf_mem_copy(fils_ie->kek, fils_info->kek, fils_info->kek_len);
+
+	fils_ie->tk_len = fils_info->tk_len;
+	qdf_mem_copy(fils_ie->tk, fils_info->tk, fils_info->tk_len);
+
+	fils_ie->gtk_len = fils_info->gtk_len;
+	qdf_mem_copy(fils_ie->gtk, fils_info->gtk, fils_info->gtk_len);
+
+	cds_copy_hlp_info(&fils_info->dst_mac, &fils_info->src_mac,
+			  fils_info->hlp_data_len, fils_info->hlp_data,
+			  &fils_ie->dst_mac, &fils_ie->src_mac,
+			  &fils_ie->hlp_data_len,
+			  fils_ie->hlp_data);
+
+	pe_debug("FILS connect params copied lim");
+}
+#else
 void populate_fils_connect_params(struct mac_context *mac_ctx,
 				  struct pe_session *session,
 				  struct join_rsp *sme_join_rsp)
@@ -1633,6 +1692,7 @@ void populate_fils_connect_params(struct mac_context *mac_ctx,
 
 	pe_debug("FILS connect params copied lim");
 }
+#endif
 
 /**
  * lim_parse_kde_elements() - Parse Key Delivery Elements
