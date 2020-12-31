@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4011,6 +4011,8 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 	if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 		cmd->enable_bitmap |= 0x04;
 
+		cmd->enable_bitmap |= (0x1 << 6);
+
 	wma_debug("tx aggr: %d rx aggr: %d vdev: %d enable_bitmap %d",
 		 cmd->tx_aggr_size, cmd->rx_aggr_size, cmd->vdev_id,
 		 cmd->enable_bitmap);
@@ -4073,6 +4075,8 @@ QDF_STATUS wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE handle,
 		/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 		if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 			cmd->enable_bitmap |= 0x04;
+
+			cmd->enable_bitmap |= (0x1 << 6);
 
 		wma_debug("queue_num: %d, tx aggr: %d rx aggr: %d vdev: %d, bitmap: %d",
 			 queue_num, cmd->tx_aggr_size,

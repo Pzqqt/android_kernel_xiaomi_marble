@@ -24,13 +24,20 @@
 #ifndef __CFG_MLME_QOS_H
 #define __CFG_MLME_QOS_H
 
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+	defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
+#define ADDBA_TXAGGR_SIZE 256
+#else
+#define ADDBA_TXAGGR_SIZE 64
+#endif
+
 /*
  * <ini>
  * gTxAggregationSize - Gives an option to configure Tx aggregation size
  * in no of MPDUs
  * @Min: 0
- * @Max: 64
- * @Default: 64
+ * @Max: ADDBA_TXAGGR_SIZE
+ * @Default: ADDBA_TXAGGR_SIZE
  *
  * gTxAggregationSize gives an option to configure Tx aggregation size
  * in no of MPDUs.This can be useful in debugging throughput issues
@@ -46,8 +53,8 @@
 #define CFG_TX_AGGREGATION_SIZE CFG_INI_UINT( \
 			"gTxAggregationSize", \
 			0, \
-			64, \
-			64, \
+			ADDBA_TXAGGR_SIZE, \
+			ADDBA_TXAGGR_SIZE, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx Aggregation size value")
 
@@ -56,7 +63,7 @@
  * gTxAggregationSizeBE - To configure Tx aggregation size for BE queue
  * in no of MPDUs
  * @Min: 0
- * @Max: 64
+ * @Max: ADDBA_TXAGGR_SIZE
  * @Default: 0
  *
  * gTxAggregationSizeBE gives an option to configure Tx aggregation size
@@ -74,7 +81,7 @@
 #define CFG_TX_AGGREGATION_SIZEBE CFG_INI_UINT( \
 			"gTxAggregationSizeBE", \
 			0, \
-			64, \
+			ADDBA_TXAGGR_SIZE, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx Aggregation size value BE")
@@ -84,7 +91,7 @@
  * gTxAggregationSizeBK - To configure Tx aggregation size for BK queue
  * in no of MPDUs
  * @Min: 0
- * @Max: 64
+ * @Max: ADDBA_TXAGGR_SIZE
  * @Default: 0
  *
  * gTxAggregationSizeBK gives an option to configure Tx aggregation size
@@ -102,7 +109,7 @@
 #define CFG_TX_AGGREGATION_SIZEBK CFG_INI_UINT( \
 			"gTxAggregationSizeBK", \
 			0, \
-			64, \
+			ADDBA_TXAGGR_SIZE, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx Aggregation size value BK")
@@ -112,7 +119,7 @@
  * gTxAggregationSizeVI - To configure Tx aggregation size for VI queue
  * in no of MPDUs
  * @Min: 0
- * @Max: 64
+ * @Max: ADDBA_TXAGGR_SIZE
  * @Default: 0
  *
  * gTxAggregationSizeVI gives an option to configure Tx aggregation size
@@ -130,7 +137,7 @@
 #define CFG_TX_AGGREGATION_SIZEVI CFG_INI_UINT( \
 			"gTxAggregationSizeVI", \
 			0, \
-			64, \
+			ADDBA_TXAGGR_SIZE, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx Aggregation size value for VI")
@@ -140,7 +147,7 @@
  * gTxAggregationSizeVO - To configure Tx aggregation size for VO queue
  * in no of MPDUs
  * @Min: 0
- * @Max: 64
+ * @Max: ADDBA_TXAGGR_SIZE
  * @Default: 0
  *
  * gTxAggregationSizeVO gives an option to configure Tx aggregation size
@@ -158,7 +165,7 @@
 #define CFG_TX_AGGREGATION_SIZEVO CFG_INI_UINT( \
 			"gTxAggregationSizeVO", \
 			0, \
-			64, \
+			ADDBA_TXAGGR_SIZE, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx Aggregation size value for VO")
