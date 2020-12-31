@@ -7151,6 +7151,9 @@ typedef enum {
     /* Param to enable per USERPD SSR - for MultiPD enabled chips */
     WMI_PDEV_PARAM_MPD_USERPD_SSR,
 
+    /* Param to disable Hardware Assist feature */
+    WMI_PDEV_PARAM_DISABLE_HW_ASSIST,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
