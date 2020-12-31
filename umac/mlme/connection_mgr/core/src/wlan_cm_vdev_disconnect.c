@@ -182,12 +182,8 @@ static void cm_copy_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 	if (!discon_ie)
 		return;
 
-	ap_ie->ptr = qdf_mem_malloc(discon_ie->len);
-	if (!ap_ie)
-		return;
-
 	ap_ie->len = discon_ie->len;
-	qdf_mem_copy(ap_ie->ptr, discon_ie->data, discon_ie->len);
+	ap_ie->ptr = discon_ie->data;
 }
 
 QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
@@ -218,9 +214,8 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 		cm_copy_peer_disconnect_ies(vdev, &resp.ap_discon_ie);
 
 	status = wlan_cm_disconnect_rsp(vdev, &resp);
+	mlme_free_peer_disconnect_ies(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
-	if (resp.ap_discon_ie.len)
-		qdf_mem_free(resp.ap_discon_ie.ptr);
 
 	qdf_mem_free(ind);
 
