@@ -139,7 +139,7 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 
 	pixelformat = inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat;
 	if (pixelformat == MSM_VIDC_FMT_NV12 ||
-		pixelformat == MSM_VIDC_FMT_NV12_P010)
+		pixelformat == MSM_VIDC_FMT_P010)
 		is_opb = true;
 	else
 		is_opb = false;
@@ -304,8 +304,8 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
 	pixelformat = f->fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_NV12_P010 ||
-		pixelformat == MSM_VIDC_FMT_NV12_TP10_UBWC)
+	if (pixelformat == MSM_VIDC_FMT_P010 ||
+		pixelformat == MSM_VIDC_FMT_TP10C)
 		is_tenbit = true;
 	else
 		is_tenbit = false;
@@ -335,8 +335,8 @@ static u32 msm_vidc_encoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
 	pixelformat = f->fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_NV12_P010 ||
-		pixelformat == MSM_VIDC_FMT_NV12_TP10_UBWC)
+	if (pixelformat == MSM_VIDC_FMT_P010 ||
+		pixelformat == MSM_VIDC_FMT_TP10C)
 		is_tenbit = true;
 	else
 		is_tenbit = false;
@@ -384,8 +384,8 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
 	pixelformat = f->fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_NV12_P010 ||
-		pixelformat == MSM_VIDC_FMT_NV12_TP10_UBWC)
+	if (pixelformat == MSM_VIDC_FMT_P010 ||
+		pixelformat == MSM_VIDC_FMT_TP10C)
 		is_tenbit = true;
 	else
 		is_tenbit = false;

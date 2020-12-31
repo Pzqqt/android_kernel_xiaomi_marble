@@ -283,7 +283,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 			 * 1 index - opb colorformat
 			 */
 			if (is_10bit_colorformat(color_format)) {
-				vote_data->color_formats[0] = MSM_VIDC_FMT_NV12_TP10_UBWC;
+				vote_data->color_formats[0] = MSM_VIDC_FMT_TP10C;
 			} else {
 				vote_data->color_formats[0] = MSM_VIDC_FMT_NV12;
 			}

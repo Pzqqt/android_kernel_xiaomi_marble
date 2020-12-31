@@ -172,6 +172,32 @@ static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 	}
 }
 
+static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_capability_type cap_id, u32 payload_type,
+	void *hfi_val, u32 payload_size, const char *func)
+{
+	int rc = 0;
+
+	s_vpr_l(inst->sid,
+		"%s: hfi_id: %#x, value: %#x\n", func,
+		inst->capabilities->cap[cap_id].hfi_id,
+		*(s64 *)hfi_val);
+
+	rc = venus_hfi_session_property(inst,
+		inst->capabilities->cap[cap_id].hfi_id,
+		HFI_HOST_FLAGS_NONE,
+		msm_vidc_get_port_info(inst, cap_id),
+		payload_type,
+		hfi_val,
+		sizeof(payload_size));
+	if (rc)
+		s_vpr_e(inst->sid,
+			"%s: failed to set cap_id: %d to fw\n",
+			__func__, cap_id);
+
+	return rc;
+}
+
 static enum msm_vidc_inst_capability_type msm_vidc_get_cap_id(
 	struct msm_vidc_inst *inst, u32 id)
 {
@@ -589,10 +615,8 @@ exit:
 int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
-	int i = 0;
 	struct msm_vidc_inst_capability *capability;
 	s32 adjusted_value;
-	enum msm_vidc_inst_capability_type parent_id;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 	s32 profile = -1;
 
@@ -609,12 +633,60 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 	else
 		adjusted_value = capability->cap[ENTROPY_MODE].value;
 
-	/* check parents and adjust cabac session value */
+	if (inst->codec != MSM_VIDC_H264) {
+		s_vpr_e(inst->sid,
+			"%s: incorrect entry in database. fix the database\n",
+			__func__);
+		return 0;
+	}
+
+	profile = capability->cap[PROFILE].value;
+
+	if (profile == V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE ||
+		profile == V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE)
+		adjusted_value = V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC;
+
+	if (capability->cap[ENTROPY_MODE].value != adjusted_value) {
+		s_vpr_h(inst->sid, "%s: updated from %#x to adjusted %#x\n", __func__,
+			capability->cap[ENTROPY_MODE].value, adjusted_value);
+		capability->cap[ENTROPY_MODE].value = adjusted_value;
+	}
+
+	return rc;
+}
+
+int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	int i = 0;
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	enum msm_vidc_inst_capability_type parent_id;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 pix_fmt = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	capability = inst->capabilities;
+
+	/* ctrl is always NULL in streamon case */
+	if (ctrl)
+		adjusted_value = ctrl->val;
+	else
+		adjusted_value = capability->cap[PROFILE].value;
+
+	/* TODO(AS): Create a utility for this while loop and add
+	 * detailed comments within for utility functionality
+	 */
 	while (i < MAX_CAP_PARENTS &&
-		capability->cap[ENTROPY_MODE].parents[i]) {
-		parent_id = capability->cap[ENTROPY_MODE].parents[i];
-		if (parent_id == PROFILE)
-			profile = capability->cap[PROFILE].value;
+		capability->cap[PROFILE].parents[i]) {
+		parent_id = capability->cap[PROFILE].parents[i];
+		if (parent_id == PIX_FMTS) {
+			pix_fmt = capability->cap[PIX_FMTS].value;
+		}
 		else
 			s_vpr_e(inst->sid,
 				"%s: invalid parent %d\n",
@@ -622,22 +694,32 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 		i++;
 	}
 
-	if (profile == -1) {
+	/* PIX_FMTS dependency is common across all chipsets.
+	 * Hence, PIX_FMTS must be specified as Parent for HEVC profile.
+	 * Otherwise it would be a database error that should be fixed.
+	 */
+	if (pix_fmt == -1) {
 		s_vpr_e(inst->sid,
-			"%s: missing parents %d %d\n",
-			__func__, profile);
-		return 0;
+			"%s: missing parent: %d, please correct database\n",
+			__func__, PIX_FMTS);
+		return -EINVAL;
 	}
 
-	if ((profile == V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE ||
-	    profile == V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE) &&
-	    adjusted_value == V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC)
-		adjusted_value = V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC;
+	/* 10 bit profile for 10 bit color format */
+	if (pix_fmt == MSM_VIDC_FMT_TP10C ||
+		pix_fmt == MSM_VIDC_FMT_P010) {
+		adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
+	} else {
+		/* 8 bit profile for 8 bit color format */
+		if (adjusted_value == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10)
+			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
+	}
 
-	if (capability->cap[ENTROPY_MODE].value != adjusted_value) {
-		s_vpr_h(inst->sid, "%s: updated from %#x to adjusted %#x\n", __func__,
-			capability->cap[ENTROPY_MODE].value, adjusted_value);
-		capability->cap[ENTROPY_MODE].value = adjusted_value;
+	if (capability->cap[PROFILE].value != adjusted_value) {
+		s_vpr_h(inst->sid,
+			"%s: updated from %#x to adjusted %#x\n", __func__,
+			capability->cap[PROFILE].value, adjusted_value);
+		capability->cap[PROFILE].value = adjusted_value;
 	}
 
 	return rc;
@@ -684,30 +766,6 @@ int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[LTR_COUNT].value = adjusted_value;
 	}
 
-	return rc;
-}
-
-int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl)
-{
-	int rc = 0;
-	// u32 cabac_max_bitrate;
-	struct msm_vidc_inst_capability *capability;
-	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 new_value;
-
-	if (!inst || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	capability = inst->capabilities;
-
-	if (ctrl)
-		new_value = ctrl->val;
-	else
-		new_value = capability->cap[BIT_RATE].value;
-
-	/* TO DO */
 	return rc;
 }
 
@@ -766,6 +824,93 @@ exit:
 	return rc;
 }
 
+int msm_vidc_set_bitrate_mode(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	int lossless, frame_rc, bitrate_mode, frame_skip;
+	u32 hfi_value;
+	struct msm_vidc_inst_capability *capability;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	bitrate_mode = capability->cap[cap_id].value;
+	lossless = capability->cap[LOSSLESS].value;
+	frame_rc = capability->cap[FRAME_RC_ENABLE].value;
+	frame_skip = capability->cap[FRAME_SKIP_MODE].value;
+
+	if (lossless) {
+		hfi_value = HFI_RC_LOSSLESS;
+		return rc;
+	}
+
+	if (!frame_rc) {
+		hfi_value = HFI_RC_OFF;
+		return rc;
+	}
+
+	if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR) {
+		hfi_value = HFI_RC_VBR_CFR;
+	} else if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR) {
+		if (frame_skip)
+			hfi_value = HFI_RC_CBR_VFR;
+		else
+			hfi_value = HFI_RC_CBR_CFR;
+	}/* TODO: CQ mode
+	else if (bitrate_mode == CQ) {
+		hfi_value = HFI_RC_CQ;
+	}
+	*/
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_header_mode(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	int header_mode, prepend_sps_pps, hdr_metadata;
+	u32 hfi_value = 0;
+	struct msm_vidc_inst_capability *capability;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	header_mode = capability->cap[cap_id].value;
+	prepend_sps_pps = capability->cap[PREPEND_SPSPPS_TO_IDR].value;
+	hdr_metadata = capability->cap[META_SEQ_HDR_NAL].value;
+
+	if (header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE)
+		hfi_value |= HFI_SEQ_HEADER_SEPERATE_FRAME;
+	else if (header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME)
+		hfi_value |= HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME;
+
+	if (prepend_sps_pps) {
+		hfi_value |= HFI_SEQ_HEADER_PREFIX_WITH_SYNC_FRAME;
+	}
+
+	if (hdr_metadata) {
+		hfi_value |= HFI_SEQ_HEADER_METADATA;
+	}
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
 int msm_vidc_set_q16(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
 {
@@ -779,21 +924,9 @@ int msm_vidc_set_q16(void *instance,
 	}
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
-	s_vpr_h(inst->sid,
-		"%s: hfi_id: %#x, value: %#x\n", __func__,
-		inst->capabilities->cap[cap_id].hfi_id,
-		hfi_value);
-	rc = venus_hfi_session_property(inst,
-		inst->capabilities->cap[cap_id].hfi_id,
-		HFI_HOST_FLAGS_NONE,
-		msm_vidc_get_port_info(inst, cap_id),
-		HFI_PAYLOAD_Q16,
-		&hfi_value,
-		sizeof(u32));
-	if (rc)
-		s_vpr_e(inst->sid,
-			"%s: failed to set cap_id: %d to fw\n",
-			__func__, cap_id);
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_Q16,
+		&hfi_value, sizeof(u32), __func__);
 
 	return rc;
 }
@@ -803,7 +936,7 @@ int msm_vidc_set_u32(void *instance,
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
-	u32 hfi_value, hfi_payload;
+	u32 hfi_value;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -814,27 +947,34 @@ int msm_vidc_set_u32(void *instance,
 		rc = msm_vidc_v4l2_menu_to_hfi(inst, cap_id, &hfi_value);
 		if (rc)
 			return -EINVAL;
-		hfi_payload = HFI_PAYLOAD_U32_ENUM;
 	} else {
 		hfi_value = inst->capabilities->cap[cap_id].value;
-		hfi_payload = HFI_PAYLOAD_U32;
 	}
 
-	s_vpr_h(inst->sid,
-		"%s: hfi_id: %#x, value: %u\n", __func__,
-		inst->capabilities->cap[cap_id].hfi_id,
-		hfi_value);
-	rc = venus_hfi_session_property(inst,
-		inst->capabilities->cap[cap_id].hfi_id,
-		HFI_HOST_FLAGS_NONE,
-		msm_vidc_get_port_info(inst, cap_id),
-		hfi_payload,
-		&hfi_value,
-		sizeof(u32));
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_u32_enum(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_v4l2_to_hfi_enum(inst, cap_id, &hfi_value);
 	if (rc)
-		s_vpr_e(inst->sid,
-			"%s: failed to set cap_id: %d to fw\n",
-			__func__, cap_id);
+		return -EINVAL;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
 
 	return rc;
 }
@@ -844,26 +984,16 @@ int msm_vidc_set_s32(void *instance,
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	s32 hfi_value = 0;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid,
-		"%s: hfi_id: %#x, value: %d\n", __func__,
-		inst->capabilities->cap[cap_id].hfi_id,
-		inst->capabilities->cap[cap_id].value);
-	rc = venus_hfi_session_property(inst,
-		inst->capabilities->cap[cap_id].hfi_id,
-		HFI_HOST_FLAGS_NONE, HFI_PORT_NONE,
-		HFI_PAYLOAD_S32,
-		&inst->capabilities->cap[cap_id].value,
-		sizeof(s32));
-	if (rc)
-		s_vpr_e(inst->sid,
-			"%s: failed to set cap_id: %d to fw\n",
-			__func__, cap_id);
+	hfi_value = inst->capabilities->cap[cap_id].value;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_S32,
+		&hfi_value, sizeof(u32), __func__);
 
 	return rc;
 }
@@ -954,15 +1084,6 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 	struct msm_vidc_inst_capability *capability = inst->capabilities;
 
 	switch (capability->cap[cap_id].v4l2_id) {
-	case V4L2_CID_MPEG_VIDEO_HEVC_PROFILE:
-	case V4L2_CID_MPEG_VIDEO_H264_PROFILE:
-	case V4L2_CID_MPEG_VIDEO_VP9_PROFILE:
-	case V4L2_CID_MPEG_VIDEO_HEVC_LEVEL:
-	case V4L2_CID_MPEG_VIDEO_H264_LEVEL:
-	case V4L2_CID_MPEG_VIDEO_HEVC_TIER:
-	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
-		*value = capability->cap[cap_id].value;
-		return 0;
 	case V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE:
 		switch (capability->cap[cap_id].value) {
 		case V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC:
@@ -976,18 +1097,35 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 			goto set_default;
 		}
 		return 0;
-	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
-		switch (capability->cap[cap_id].value) {
-		case V4L2_MPEG_VIDEO_BITRATE_MODE_VBR:
-			*value = HFI_RC_VBR_CFR;
-			break;
-		case V4L2_MPEG_VIDEO_BITRATE_MODE_CBR:
-			*value = HFI_RC_CBR_CFR;
-			break;
-		default:
-			*value = HFI_RC_VBR_CFR;
-			goto set_default;
-		}
+	default:
+		s_vpr_e(inst->sid,
+			"%s: mapping not specified for ctrl_id: %#x\n",
+			__func__, capability->cap[cap_id].v4l2_id);
+		return -EINVAL;
+	}
+
+set_default:
+	s_vpr_e(inst->sid,
+		"%s: invalid value %d for ctrl id: %#x. Set default: %u\n",
+		__func__, capability->cap[cap_id].value,
+		capability->cap[cap_id].v4l2_id, *value);
+	return 0;
+}
+
+int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_capability_type cap_id, u32 *value)
+{
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
+
+	switch (capability->cap[cap_id].v4l2_id) {
+	case V4L2_CID_MPEG_VIDEO_HEVC_PROFILE:
+	case V4L2_CID_MPEG_VIDEO_H264_PROFILE:
+	case V4L2_CID_MPEG_VIDEO_VP9_PROFILE:
+	case V4L2_CID_MPEG_VIDEO_HEVC_LEVEL:
+	case V4L2_CID_MPEG_VIDEO_H264_LEVEL:
+	case V4L2_CID_MPEG_VIDEO_HEVC_TIER:
+	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
+		*value = capability->cap[cap_id].value;
 		return 0;
 	case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_TYPE:
 		switch (capability->cap[cap_id].value) {
@@ -1000,23 +1138,6 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 			break;
 		default:
 			*value = HFI_HIER_P_SLIDING_WINDOW;
-			goto set_default;
-		}
-		return 0;
-	case V4L2_CID_MPEG_VIDEO_HEADER_MODE:
-		switch (capability->cap[cap_id].value) {
-		case V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE:
-			*value = HFI_SEQ_HEADER_SEPERATE_FRAME;
-			break;
-		case V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME:
-			*value = HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME;
-			break;
-		/*
-		 * TODO (AS): other HFI values are missing corresponding
-		 * V4l2 values. Add them once available.
-		 */
-		default:
-			*value = HFI_SEQ_HEADER_SEPERATE_FRAME;
 			goto set_default;
 		}
 		return 0;

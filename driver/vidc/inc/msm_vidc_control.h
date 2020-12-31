@@ -28,9 +28,16 @@ int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst);
 int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst);
+int msm_vidc_set_header_mode(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_bitrate_mode(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_u32(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_u32_enum(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_s32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
@@ -40,6 +47,8 @@ int msm_vidc_set_q16(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_v4l2_properties(struct msm_vidc_inst *inst);
 int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_capability_type cap_id, u32 *value);
+int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id, u32 *value);
 
 #endif

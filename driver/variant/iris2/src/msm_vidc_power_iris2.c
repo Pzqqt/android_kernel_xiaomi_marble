@@ -473,7 +473,7 @@ static u64 __calculate_encoder(struct vidc_bus_vote_data *d)
 
 	b_frames_enabled = d->b_frames_enabled;
 	original_color_format = d->num_formats >= 1 ?
-		d->color_formats[0] : MSM_VIDC_FMT_NV12_UBWC;
+		d->color_formats[0] : MSM_VIDC_FMT_NV12C;
 
 	original_compression_enabled = __ubwc(original_color_format);
 

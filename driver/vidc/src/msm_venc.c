@@ -896,6 +896,7 @@ error:
 	return rc;
 }
 
+// TODO: use PIX_FMTS caps to check supported color format
 int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 {
 	int rc = 0;
