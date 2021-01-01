@@ -491,6 +491,24 @@ typedef  enum  {
     WMI_SERVICE_TWT_ALL_DIALOG_ID = 271, /* Indicates that FW supports TWT ALL dialog ID(255) for all commands and events, except for TWT add dialog and TWT get stats */
     WMI_SERVICE_SPLIT_AST_SUPPORT = 272, /* Indicate that FW supports SPLIT AST table */
     WMI_SERVICE_SPECTRAL_SCAN_DISABLED = 273, /* Indicates that SKU does not support normal spectral scan capabilities */
+    /* WMI_SERVICE_UNIFIED_LL_GET_STA_OVER_QMI_SUPPORT:
+     * This service flag indicates that FW can support receiving a
+     * WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID command request from the host
+     * over the QMI communication link.
+     * If the target receives WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID over QMI,
+     * any of the event messages sent in response (WMI_UPDATE_STATS_EVENTID,
+     * WMI_IFACE_LINK_STATS_EVENTID, WMI_PEER_LINK_STATS_EVENTID,
+     * WMI_RADIO_LINK_STATS_EVENTID, WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID)
+     * will be delivered over the QMI communication link.
+     * Any such messages delivered over QMI will use the same message format
+     * as if they had been delivered over the usual WMI communication link.
+     * This service flag indicates QMI is supported for these stats messages
+     * in addition to WMI, not instead of WMI - if the host sends the
+     * WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID over the usual WMI communication
+     * link, the stats event messages sent by the target in response will
+     * be sent on the WMI communication link.
+     */
+    WMI_SERVICE_UNIFIED_LL_GET_STA_OVER_QMI_SUPPORT = 274,
 
 
     WMI_MAX_EXT2_SERVICE
