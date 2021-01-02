@@ -360,6 +360,11 @@ int ipa3_odl_pipe_open(void)
 	int ret = 0;
 	struct ipa_ep_cfg_holb holb_cfg;
 
+	if(ipa3_ctx->ipa_hw_type < IPA_HW_v4_1) {
+		IPADBG("ODL not supported\n");
+		return 0;
+	}
+
 	if (!ipa3_odl_ctx->odl_state.adpl_open) {
 		IPAERR("adpl pipe not configured\n");
 		return 0;
@@ -461,6 +466,11 @@ static int ipa_adpl_release(struct inode *inode, struct file *filp)
 void ipa3_odl_pipe_cleanup(bool is_ssr)
 {
 	bool ipa_odl_opened = false;
+
+	if(ipa3_ctx->ipa_hw_type < IPA_HW_v4_1) {
+		IPADBG("ODL not supported\n");
+		return;
+	}
 
 	if (!ipa3_odl_ctx->odl_state.adpl_open) {
 		IPAERR("adpl pipe not configured\n");

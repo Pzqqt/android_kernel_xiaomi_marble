@@ -3323,10 +3323,10 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 		ipareg_construct_rx_hps_clients_depth1, ipareg_parse_dummy,
 		0x000023D0, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_QSB_MAX_WRITES] = {
-		ipareg_construct_qsb_max_writes, ipareg_parse_dummy,
+		ipareg_construct_qsb_max_writes, ipareg_parse_qsb_max_writes,
 		0x00000074, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_QSB_MAX_READS] = {
-		ipareg_construct_qsb_max_reads, ipareg_parse_dummy,
+		ipareg_construct_qsb_max_reads, ipareg_parse_qsb_max_reads,
 		0x00000078, 0, 0, 0, 0, 0},
 	[IPA_HW_v3_0][IPA_DPS_SEQUENCER_FIRST] = {
 		ipareg_construct_dummy, ipareg_parse_dummy,
@@ -4757,7 +4757,7 @@ u32 ipahal_get_reg_nk_offset(enum ipahal_reg_name reg, u32 n, u32 k)
 
 u32 ipahal_get_reg_base(void)
 {
-	if (ipahal_ctx->ipa_cfg_offset == 0)
+	if (!ipahal_ctx || ipahal_ctx->ipa_cfg_offset == 0)
 		return 0x00040000;
 	else
 		return ipahal_ctx->ipa_cfg_offset;

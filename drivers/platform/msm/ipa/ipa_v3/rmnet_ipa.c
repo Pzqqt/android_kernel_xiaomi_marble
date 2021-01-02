@@ -2683,9 +2683,11 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 
 	IPAWANINFO("rmnet_ipa started deinitialization\n");
 	mutex_lock(&rmnet_ipa3_ctx->pipe_handle_guard);
-	ret = ipa3_teardown_apps_low_lat_pipes();
-	if (ret < 0)
-		IPAWANERR("Failed to teardown IPA->APPS qmap pipe\n");
+	if (ipa3_ctx->rmnet_ctl_enable) {
+		ret = ipa3_teardown_apps_low_lat_pipes();
+		if (ret < 0)
+			IPAWANERR("Failed to teardown IPA->APPS qmap pipe\n");
+	}
 	ret = ipa3_teardown_sys_pipe(rmnet_ipa3_ctx->ipa3_to_apps_hdl);
 	if (ret < 0)
 		IPAWANERR("Failed to teardown IPA->APPS pipe\n");
