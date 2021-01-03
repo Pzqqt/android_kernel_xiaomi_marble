@@ -376,6 +376,40 @@ ucfg_mlme_set_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val);
  */
 QDF_STATUS
 ucfg_mlme_get_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * ucfg_mlme_set_twt_session_state()  - Set TWT session state
+ * @psoc: Pointer to global psoc object
+ * @peer_mac:  Pointer to peer mac address
+ * @dialog_id: TWT session dialog id
+ * @state: TWT state
+ *
+ * Return: None
+ */
+static inline
+void ucfg_mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_session_state state)
+{
+	mlme_set_twt_session_state(psoc, peer_mac, dialog_id, state);
+}
+
+/**
+ * ucfg_mlme_get_twt_session_state()  - Get TWT session state
+ * @psoc: Pointer to global psoc object
+ * @peer_mac:  Pointer to peer mac address
+ * @dialog_id: TWT session dialog id
+ *
+ * Return: enum wlan_twt_session_state
+ */
+static inline enum wlan_twt_session_state
+ucfg_mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				struct qdf_mac_addr *peer_mac,
+				uint8_t dialog_id)
+{
+	return mlme_get_twt_session_state(psoc, peer_mac, dialog_id);
+}
 #else
 static inline QDF_STATUS
 ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
@@ -579,6 +613,21 @@ static inline QDF_STATUS
 ucfg_mlme_set_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val)
 {
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+void ucfg_mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_session_state state)
+{}
+
+static inline enum wlan_twt_session_state
+ucfg_mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				struct qdf_mac_addr *peer_mac,
+				uint8_t dialog_id)
+{
+	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
 }
 #endif /* defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) */
 #endif /* _WLAN_MLME_TWT_UCFG_API_H_ */

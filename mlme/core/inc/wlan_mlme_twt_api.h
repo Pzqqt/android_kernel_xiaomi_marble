@@ -85,23 +85,28 @@ bool mlme_is_twt_setup_done(struct wlan_objmgr_psoc *psoc,
  * mlme_set_twt_session_state() - Set the TWT session state for the given dialog
  * id in TWT context
  * @peer: Pointer to peer object
+ * @peer_mac: Pointer to peer mac address
  * @dialog_id: Dialog id
  * @state: TWT session state
  *
  * Return: None
  */
-void mlme_set_twt_session_state(struct wlan_objmgr_peer *peer,
+void mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				struct qdf_mac_addr *peer_mac,
 				uint8_t dialog_id,
 				enum wlan_twt_session_state state);
+
 /**
  * mlme_get_twt_session_state()  - Get TWT session state for given dialog id
- * @peer: Pointer to peer object
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
  * @dialog_id: Dialog id
  *
  * Return:  TWT session state.
  */
 enum wlan_twt_session_state
-mlme_get_twt_session_state(struct wlan_objmgr_peer *peer, uint8_t dialog_id);
+mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id);
 
 /**
  * mlme_get_twt_peer_capabilities  - Get TWT peer capabilities
