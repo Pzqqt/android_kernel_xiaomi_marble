@@ -458,21 +458,50 @@ static uint32_t hdd_twt_get_params_resp_len(void)
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF */
 	len += nla_total_size(sizeof(u64));
 
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATE */
+	len += nla_total_size(sizeof(u32));
+
 	return len;
 }
 
 /**
+ * hdd_get_converted_twt_state() - Convert the internal twt state
+ * to qca_wlan_twt_setup_state type.
+ * @state: Internal TWT state to be converted.
+ *
+ * Return: qca_wlan_twt_setup_state type state
+ */
+static enum qca_wlan_twt_setup_state
+hdd_get_converted_twt_state(enum wlan_twt_session_state state)
+{
+	switch (state) {
+	case WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED:
+		return QCA_WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	case WLAN_TWT_SETUP_STATE_ACTIVE:
+		return QCA_WLAN_TWT_SETUP_STATE_ACTIVE;
+	case WLAN_TWT_SETUP_STATE_SUSPEND:
+		return QCA_WLAN_TWT_SETUP_STATE_SUSPEND;
+	default:
+		return QCA_WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	}
+}
+
+/**
  * hdd_twt_pack_get_params_resp_nlmsg()- Packs and sends twt get_params response
+ * @psoc: Pointer to Global psoc
  * @reply_skb: pointer to response skb buffer
  * @params: Ponter to twt peer session parameters
  *
  * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
  */
 static QDF_STATUS
-hdd_twt_pack_get_params_resp_nlmsg(struct sk_buff *reply_skb,
+hdd_twt_pack_get_params_resp_nlmsg(struct wlan_objmgr_psoc *psoc,
+				   struct sk_buff *reply_skb,
 				   struct wmi_host_twt_session_stats_info *params)
 {
 	struct nlattr *config_attr, *nla_params;
+	enum wlan_twt_session_state state;
+	enum qca_wlan_twt_setup_state converted_state;
 	uint64_t tsf_val;
 	int i, attr;
 
@@ -579,6 +608,16 @@ hdd_twt_pack_get_params_resp_nlmsg(struct sk_buff *reply_skb,
 			return QDF_STATUS_E_INVAL;
 		}
 
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATE;
+		state = ucfg_mlme_get_twt_session_state(
+				psoc, (struct qdf_mac_addr *)params[i].peer_mac,
+				params[i].dialog_id);
+		converted_state = hdd_get_converted_twt_state(state);
+		if (nla_put_u32(reply_skb, attr, converted_state)) {
+			hdd_err("TWT: get_params failed to put TWT state");
+			return QDF_STATUS_E_INVAL;
+		}
+
 		nla_nest_end(reply_skb, nla_params);
 	}
 	nla_nest_end(reply_skb, config_attr);
@@ -619,7 +658,8 @@ hdd_twt_pack_get_params_resp(struct hdd_context *hdd_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_status = hdd_twt_pack_get_params_resp_nlmsg(reply_skb, params);
+	qdf_status = hdd_twt_pack_get_params_resp_nlmsg(hdd_ctx->psoc,
+							reply_skb, params);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		goto fail;
 
@@ -628,6 +668,25 @@ hdd_twt_pack_get_params_resp(struct hdd_context *hdd_ctx,
 fail:
 	if (QDF_IS_STATUS_ERROR(qdf_status) && reply_skb)
 		kfree_skb(reply_skb);
+
+	return qdf_status;
+}
+
+/**
+ * hdd_send_inactive_session_reply  -  Send session state as inactive for
+ * dialog ID for which setup is not done.
+ * @params: TWT session parameters
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+hdd_send_inactive_session_reply(struct hdd_adapter *adapter,
+				struct wmi_host_twt_session_stats_info *params)
+{
+	QDF_STATUS qdf_status;
+
+	params[0].event_type = HOST_TWT_SESSION_UPDATE;
+	qdf_status = hdd_twt_pack_get_params_resp(adapter->hdd_ctx, params);
 
 	return qdf_status;
 }
@@ -696,16 +755,6 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 	else
 		params[0].dialog_id = 0;
 
-	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
-					 &hdd_sta_ctx->conn_info.bssid,
-					 params[0].dialog_id)) {
-		hdd_debug("vdev%d: TWT session %d setup incomplete",
-			  adapter->vdev_id, params[0].dialog_id);
-		return -EINVAL;
-	}
-
-	hdd_debug("TWT: get_params dialog_id %d", params[0].dialog_id);
-
 	if (params[0].dialog_id <= TWT_MAX_DIALOG_ID) {
 		qdf_mem_copy(params[0].peer_mac,
 			     hdd_sta_ctx->conn_info.bssid.bytes,
@@ -713,6 +762,18 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 		hdd_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(params[0].peer_mac));
 	}
+
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 params[0].dialog_id)) {
+		hdd_debug("vdev%d: TWT session %d setup incomplete",
+			  adapter->vdev_id, params[0].dialog_id);
+		qdf_status = hdd_send_inactive_session_reply(adapter, params);
+
+		return qdf_status_to_os_return(qdf_status);
+	}
+
+	hdd_debug("TWT: get_params dialog_id %d", params[0].dialog_id);
 
 	qdf_status = hdd_twt_get_peer_session_params(adapter->hdd_ctx,
 						     &params[0]);
@@ -996,6 +1057,7 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	uint64_t sp_offset_tsf;
 	enum qca_wlan_vendor_twt_status vendor_status;
 	int response_type;
+	uint32_t wake_duration;
 
 	hdd_enter();
 
@@ -1049,8 +1111,10 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	wake_duration = (event->additional_params.wake_dur_us /
+			 TWT_WAKE_DURATION_MULTIPLICATION_FACTOR);
 	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION,
-			event->additional_params.wake_dur_us)) {
+			wake_duration)) {
 		hdd_err("TWT: Failed to put wake duration");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1446,7 +1510,6 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 	mlme_init_twt_context(hdd_ctx->psoc,
 			      (struct qdf_mac_addr *)params->peer_macaddr,
 			      params->dialog_id);
-
 	hdd_exit();
 
 	return;

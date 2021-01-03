@@ -269,16 +269,26 @@ bool mlme_twt_is_notify_done(struct wlan_objmgr_psoc *psoc,
 	return notify_done;
 }
 
-void mlme_set_twt_session_state(struct wlan_objmgr_peer *peer,
+void mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
+				struct qdf_mac_addr *peer_mac,
 				uint8_t dialog_id,
 				enum wlan_twt_session_state state)
 {
+	struct wlan_objmgr_peer *peer;
 	struct peer_mlme_priv_obj *peer_priv;
 	uint8_t i;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_MLME_NB_ID);
+	if (!peer) {
+		mlme_legacy_err("Peer object not found");
+		return;
+	}
 
 	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
 							  WLAN_UMAC_COMP_MLME);
 	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 		mlme_err(" peer mlme component object is NULL");
 		return;
 	}
@@ -290,26 +300,42 @@ void mlme_set_twt_session_state(struct wlan_objmgr_peer *peer,
 			break;
 		}
 	}
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 }
 
 enum wlan_twt_session_state
-mlme_get_twt_session_state(struct wlan_objmgr_peer *peer,
-			   uint8_t dialog_id)
+mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
+			   struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
 {
+	struct wlan_objmgr_peer *peer;
 	struct peer_mlme_priv_obj *peer_priv;
 	uint8_t i;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_MLME_NB_ID);
+	if (!peer) {
+		mlme_legacy_err("Peer object not found");
+		return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+	}
 
 	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
 							  WLAN_UMAC_COMP_MLME);
 	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 		mlme_legacy_err(" peer mlme object is NULL");
 		return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
 	}
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
-		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id)
+		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id &&
+		    dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) {
+			wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 			return peer_priv->twt_ctx.session_info[i].state;
+		}
 	}
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 
 	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
 }
