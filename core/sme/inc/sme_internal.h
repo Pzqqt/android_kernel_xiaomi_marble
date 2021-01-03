@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -162,11 +162,10 @@ typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
 
 /**
  * typedef twt_add_dialog_cb - TWT add dialog callback signature.
- * @context: Opaque context that the client can use to associate the
- *           callback with the request.
+ * @hdd_handle: Opaque handle to the HDD context
  * @add_dialog_event: pointer to event buf containing twt response parameters
  */
-typedef void (*twt_add_dialog_cb)(void *context,
+typedef void (*twt_add_dialog_cb)(hdd_handle_t hdd_handle,
 				  struct twt_add_dialog_complete_event *add_dialog_event);
 
 /**
@@ -421,7 +420,6 @@ struct sme_context {
 	twt_pause_dialog_cb twt_pause_dialog_cb;
 	twt_nudge_dialog_cb twt_nudge_dialog_cb;
 	twt_resume_dialog_cb twt_resume_dialog_cb;
-	void *twt_add_dialog_context;
 	void *twt_del_dialog_context;
 	void *twt_pause_dialog_context;
 	void *twt_nudge_dialog_context;

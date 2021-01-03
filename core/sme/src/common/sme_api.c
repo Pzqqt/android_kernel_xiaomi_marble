@@ -2092,13 +2092,11 @@ sme_process_twt_add_dialog_event(struct mac_context *mac,
 				 struct twt_add_dialog_complete_event *add_dialog_event)
 {
 	twt_add_dialog_cb callback;
-	void *context;
 
 	callback = mac->sme.twt_add_dialog_cb;
-	context = mac->sme.twt_add_dialog_context;
 	mac->sme.twt_add_dialog_cb = NULL;
 	if (callback)
-		callback(context, add_dialog_event);
+		callback(mac->hdd_handle, add_dialog_event);
 }
 
 /**
@@ -14415,8 +14413,7 @@ QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
 
 QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			      twt_add_dialog_cb twt_add_dialog_cb,
-			      struct wmi_twt_add_dialog_param *twt_params,
-			      void *context)
+			      struct wmi_twt_add_dialog_param *twt_params)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg twt_msg = {0};
@@ -14452,7 +14449,6 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 
 	/* Serialize the req through MC thread */
 	mac->sme.twt_add_dialog_cb = twt_add_dialog_cb;
-	mac->sme.twt_add_dialog_context = context;
 	twt_msg.bodyptr = cmd_params;
 	twt_msg.type = WMA_TWT_ADD_DIALOG_REQUEST;
 	sme_release_global_lock(&mac->sme);

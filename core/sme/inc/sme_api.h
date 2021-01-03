@@ -3731,14 +3731,12 @@ QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
  * @mac_handle: MAC handle
  * @twt_add_dialog_cb: Function callback to handle add_dialog event
  * @twt_params: TWT add dialog parameters
- * @context: os_if_request cookie
  *
  * Return: QDF Status
  */
 QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			      twt_add_dialog_cb twt_add_dialog_cb,
-			      struct wmi_twt_add_dialog_param *twt_params,
-			      void *context);
+			      struct wmi_twt_add_dialog_param *twt_params);
 
 /**
  * sme_del_dialog_cmd() - Register callback and send TWT del dialog
