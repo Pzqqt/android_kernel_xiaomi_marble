@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -177,6 +177,14 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp);
+
+/**
+ * cm_is_vdevid_connected() - check if vdev_id is in conneted state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 
 /**
  * cm_disconnect_start_ind() - Connection manager ext disconnect start
