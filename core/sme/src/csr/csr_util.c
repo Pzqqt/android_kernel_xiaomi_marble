@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,7 @@
 #include "wlan_reg_services_api.h"
 #include "wlan_crypto_global_api.h"
 #include "wlan_cm_roam_api.h"
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
 	{0x00, 0x50, 0xf2, 0x00}
@@ -245,7 +246,6 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_ROAMING_START);
 		CASE_RETURN_STR(eCSR_ROAM_ROAMING_COMPLETION);
 		CASE_RETURN_STR(eCSR_ROAM_CONNECT_COMPLETION);
-		CASE_RETURN_STR(eCSR_ROAM_ASSOCIATION_START);
 		CASE_RETURN_STR(eCSR_ROAM_ASSOCIATION_COMPLETION);
 		CASE_RETURN_STR(eCSR_ROAM_DISASSOCIATED);
 		CASE_RETURN_STR(eCSR_ROAM_ASSOCIATION_FAILURE);
@@ -540,6 +540,19 @@ static bool csr_is_conn_state(struct mac_context *mac_ctx, uint32_t session_id,
 	return mac_ctx->roam.roamSession[session_id].connectState == state;
 }
 
+bool csr_is_conn_state_connected(struct mac_context *mac, uint32_t sessionId)
+{
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	return cm_is_vdevid_connected(mac->pdev, sessionId) ||
+	       csr_is_conn_state_connected_wds(mac, sessionId);
+#else
+	return csr_is_conn_state_connected_infra(mac, sessionId) ||
+	       csr_is_conn_state_connected_wds(mac, sessionId);
+#endif
+}
+
+#ifndef FEATURE_CM_ENABLE
 bool csr_is_conn_state_connected_infra(struct mac_context *mac_ctx,
 				       uint32_t session_id)
 {
@@ -547,16 +560,11 @@ bool csr_is_conn_state_connected_infra(struct mac_context *mac_ctx,
 				 eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED);
 }
 
-bool csr_is_conn_state_connected(struct mac_context *mac, uint32_t sessionId)
-{
-	return csr_is_conn_state_connected_infra(mac, sessionId) ||
-	       csr_is_conn_state_connected_wds(mac, sessionId);
-}
-
 bool csr_is_conn_state_infra(struct mac_context *mac, uint32_t sessionId)
 {
 	return csr_is_conn_state_connected_infra(mac, sessionId);
 }
+#endif
 
 static tSirMacCapabilityInfo csr_get_bss_capabilities(struct bss_description *
 						      pSirBssDesc)
@@ -677,7 +685,12 @@ bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac, i) &&
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		    (cm_is_vdevid_connected(mac->pdev, i) ||
+#else
 		    (csr_is_conn_state_infra(mac, i) ||
+#endif
 		     csr_is_conn_state_ap(mac, i))) {
 			return true;
 		}
@@ -686,63 +699,54 @@ bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 	return false;
 }
 
-uint32_t csr_get_infra_operation_chan_freq(
-	struct mac_context *mac, uint8_t vdev_id)
+qdf_freq_t csr_get_operation_chan_freq(struct mac_context *mac,
+				       struct wlan_objmgr_vdev *vdev,
+				       uint8_t vdev_id)
 {
-	uint32_t chan_freq = 0;
-	struct csr_roam_session *session;
+	qdf_freq_t chan_freq = 0;
+	struct wlan_channel *chan;
 
-	session = CSR_GET_SESSION(mac, vdev_id);
-	if (!session)
+	if (!CSR_IS_SESSION_VALID(mac, vdev_id))
 		return chan_freq;
 
-	if (CSR_IS_SESSION_VALID(mac, vdev_id))
-		chan_freq = session->connectedProfile.op_freq;
+	if (wlan_vdev_mlme_is_active(vdev) != QDF_STATUS_SUCCESS)
+		return chan_freq;
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	if (chan)
+		chan_freq = chan->ch_freq;
 
 	return chan_freq;
 }
 
-bool csr_is_session_client_and_connected(struct mac_context *mac, uint8_t sessionId)
+qdf_freq_t csr_get_concurrent_operation_freq(struct mac_context *mac_ctx)
 {
-	struct csr_roam_session *pSession = NULL;
-
-	if (CSR_IS_SESSION_VALID(mac, sessionId)
-	    && csr_is_conn_state_infra(mac, sessionId)) {
-		pSession = CSR_GET_SESSION(mac, sessionId);
-		if (pSession->pCurRoamProfile) {
-			if ((pSession->pCurRoamProfile->csrPersona ==
-			     QDF_STA_MODE)
-			    || (pSession->pCurRoamProfile->csrPersona ==
-				QDF_P2P_CLIENT_MODE))
-				return true;
-		}
-	}
-	return false;
-}
-
-uint32_t csr_get_concurrent_operation_freq(struct mac_context *mac_ctx)
-{
-	struct csr_roam_session *session = NULL;
 	uint8_t i = 0;
-	enum QDF_OPMODE persona;
+	qdf_freq_t freq;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE op_mode;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
-		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+							    i,
+							    WLAN_LEGACY_MAC_ID);
+		if (!vdev)
 			continue;
-		session = CSR_GET_SESSION(mac_ctx, i);
-		if (!session->pCurRoamProfile)
+		op_mode = wlan_vdev_mlme_get_opmode(vdev);
+		/* check only for STA, CLI, GO and SAP */
+		if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE &&
+		    op_mode != QDF_P2P_GO_MODE && op_mode != QDF_SAP_MODE) {
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 			continue;
-		persona = session->pCurRoamProfile->csrPersona;
-		if ((((persona == QDF_STA_MODE) ||
-			(persona == QDF_P2P_CLIENT_MODE)) &&
-			(session->connectState ==
-				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) ||
-			(((persona == QDF_P2P_GO_MODE) ||
-				(persona == QDF_SAP_MODE))
-				 && (session->connectState !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
-			return session->connectedProfile.op_freq;
+		}
+		freq = csr_get_operation_chan_freq(mac_ctx, vdev, i);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		if (!freq)
+			continue;
+
+		return freq;
 	}
+
 	return 0;
 }
 
@@ -1149,22 +1153,6 @@ bool csr_is_all_session_disconnected(struct mac_context *mac)
 	}
 
 	return fRc;
-}
-
-uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
-{
-	uint32_t i;
-	uint8_t connected_session = WLAN_UMAC_VDEV_ID_MAX;
-
-	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, i)
-		    && csr_is_conn_state_connected_infra(mac_ctx, i)) {
-			connected_session = i;
-			break;
-		}
-	}
-
-	return connected_session;
 }
 
 bool csr_is_concurrent_session_running(struct mac_context *mac)
@@ -2376,7 +2364,12 @@ static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
 		    (conn_profile->beaconInterval == 0))
 			return false;
 
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		if (cm_is_vdevid_connected(mac_ctx->pdev, session_id) &&
+#else
 		if (csr_is_conn_state_connected_infra(mac_ctx, session_id) &&
+#endif
 		    conn_profile->op_freq != ch_freq &&
 		    conn_profile->beaconInterval != *bcn_interval) {
 			/*

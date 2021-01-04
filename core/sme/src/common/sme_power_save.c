@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -354,11 +354,20 @@ QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx,
 	 * also if command is power save disable  there is not need to check
 	 * for connected state as firmware can handle this
 	 */
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id)) {
+		sme_debug("STA not infra/connected state Session_id: %d",
+			  session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+#else
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
 		sme_debug("STA not infra/connected state Session_id: %d",
 			  session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+#endif
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -392,7 +401,12 @@ QDF_STATUS sme_ps_enable_disable(mac_handle_t mac_handle, uint32_t session_id,
 		 * But kernel expects return status success even
 		 * in the disconnected state.
 		 */
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id))
+#else
 		if (!csr_is_conn_state_connected_infra(mac_ctx, session_id))
+#endif
 			status = QDF_STATUS_SUCCESS;
 		return status;
 	}

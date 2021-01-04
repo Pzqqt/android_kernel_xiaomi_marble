@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,6 +38,7 @@
 #include <wlan_scan_utils_api.h>
 #include <wlan_reg_services_api.h>
 #include <wlan_utility.h>
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 /* Roam score for a neighbor AP will be calculated based on the below
  * definitions. The calculated roam score will be used to select the
@@ -579,14 +580,24 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	}
 
 	session = CSR_GET_SESSION(mac_ctx, session_id);
-	if ((!session) ||  (!csr_is_conn_state_connected_infra(
-	    mac_ctx, session_id)) ||
-	    (!session->pConnectBssDesc)) {
+
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	if (!session || !cm_is_vdevid_connected(mac_ctx->pdev, session_id) ||
+	    !session->pConnectBssDesc) {
 		sme_err("Invaild session");
 		status = QDF_STATUS_E_FAILURE;
 		goto rrm_send_scan_results_done;
 	}
-
+#else
+	if (!session ||
+	    !csr_is_conn_state_connected_infra(mac_ctx, session_id) ||
+	    !session->pConnectBssDesc) {
+		sme_err("Invaild session");
+		status = QDF_STATUS_E_FAILURE;
+		goto rrm_send_scan_results_done;
+	}
+#endif
 
 	while (scan_results) {
 		/*

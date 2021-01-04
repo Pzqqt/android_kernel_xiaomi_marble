@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5450,27 +5450,40 @@ static bool sme_search_in_base_ch_freq_lst(
 static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
 					      enum wlan_reason_code reason)
 {
-	uint8_t session_id, found = false;
-	uint32_t chan_freq;
+	uint8_t vdev_id, found = false;
+	qdf_freq_t chan_freq;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE op_mode;
 
-	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
-		if (!csr_is_session_client_and_connected(mac_ctx, session_id))
+	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+							    vdev_id,
+							    WLAN_LEGACY_MAC_ID);
+		if (!vdev)
+			continue;
+		op_mode = wlan_vdev_mlme_get_opmode(vdev);
+		/* check only for STA and CLI */
+		if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE) {
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+			continue;
+		}
+		chan_freq = csr_get_operation_chan_freq(mac_ctx, vdev, vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		if (!chan_freq)
 			continue;
 		found = false;
-		/* Session is connected.Check the channel */
-		chan_freq = csr_get_infra_operation_chan_freq(
-					mac_ctx, session_id);
-		sme_debug("Current Operating channel : %d, session :%d",
-			  chan_freq, session_id);
+		sme_debug("Current Operating channel : %d, vdev_id :%d",
+			  chan_freq, vdev_id);
 		found = sme_search_in_base_ch_freq_lst(mac_ctx, chan_freq);
 		if (!found) {
-			sme_debug("Disconnect Session: %d", session_id);
+			sme_debug("Disconnect Session: %d", vdev_id);
 			/* This is temp ifdef will be removed in near future */
 #ifdef FEATURE_CM_ENABLE
-			cm_disconnect(mac_ctx->psoc, session_id,
+			cm_disconnect(mac_ctx->psoc, vdev_id,
 				      CM_MLME_DISCONNECT, reason, NULL);
 #else
-			csr_roam_disconnect(mac_ctx, session_id,
+			sme_debug("Disconnect Session: %d", vdev_id);
+			csr_roam_disconnect(mac_ctx, vdev_id,
 					    eCSR_DISCONNECT_REASON_UNSPECIFIED,
 					    reason);
 #endif
@@ -5495,8 +5508,13 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 	/* Find the connected Infra / P2P_client connected session */
 	pSession = CSR_GET_SESSION(mac, sessionId);
 	if (!CSR_IS_SESSION_VALID(mac, sessionId) ||
-			(!csr_is_conn_state_infra(mac, sessionId) &&
-			 !csr_is_ndi_started(mac, sessionId))) {
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	    (!cm_is_vdevid_connected(mac->pdev, sessionId) &&
+#else
+	    (!csr_is_conn_state_infra(mac, sessionId) &&
+#endif
+	     !csr_is_ndi_started(mac, sessionId))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to find the session Id: %d", __func__,
 			  sessionId);
@@ -5507,14 +5525,24 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
 
-	if (!csr_is_conn_state_connected_infra(mac, sessionId) &&
-			!csr_is_ndi_started(mac, sessionId)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: Request ignored, session %d is not connected or started",
-			__func__, sessionId);
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	if (!cm_is_vdevid_connected(mac->pdev, sessionId) &&
+	    !csr_is_ndi_started(mac, sessionId)) {
+		sme_err("Request ignored, session %d is not connected or started",
+			sessionId);
 		qdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
+#else
+	if (!csr_is_conn_state_connected_infra(mac, sessionId) &&
+	    !csr_is_ndi_started(mac, sessionId)) {
+		sme_err("Request ignored, session %d is not connected or started",
+			sessionId);
+		qdf_mem_free(request_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+#endif
 
 	qdf_mem_copy(request_buf, pMulticastAddrs,
 		     sizeof(tSirRcvFltMcAddrList));
@@ -8364,11 +8392,20 @@ int sme_send_addba_req(mac_handle_t mac_handle, uint8_t session_id, uint8_t tid,
 	struct send_add_ba_req *send_ba_req;
 	struct csr_roam_session *csr_session = NULL;
 
-	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id)) {
 		sme_err("STA not infra/connected state session_id: %d",
-				session_id);
+			session_id);
 		return -EINVAL;
 	}
+#else
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+		sme_err("STA not infra/connected state session_id: %d",
+			session_id);
+		return -EINVAL;
+	}
+#endif
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!csr_session) {
 		sme_err("CSR session is NULL");
@@ -11554,10 +11591,18 @@ sme_validate_session_for_cap_update(struct mac_context *mac_ctx,
 		sme_err("Session does not exist, Session_id: %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id)) {
+		sme_debug("STA is not connected, Session_id: %d", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+#else
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
 		sme_debug("STA is not connected, Session_id: %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
+#endif
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -11708,12 +11753,18 @@ int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
 	struct scheduler_msg msg = {0};
 	struct sir_cfg_action_frm_tb_ppdu *cfg_msg;
 
-	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sme_debug("STA not in connected state Session_id: %d",
-			  session_id);
+	/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id)) {
+		sme_debug("STA is not connected, Session_id: %d", session_id);
 		return -EINVAL;
 	}
-
+#else
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+		sme_debug("STA is not connected, Session_id: %d", session_id);
+		return -EINVAL;
+	}
+#endif
 	cfg_msg = qdf_mem_malloc(sizeof(*cfg_msg));
 	if (!cfg_msg)
 		return -EIO;
@@ -15139,7 +15190,7 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 
-	return csr_get_infra_operation_chan_freq(mac_ctx, vdev_id);
+	return csr_get_operation_chan_freq(mac_ctx, vdev, vdev_id);
 }
 
 enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
