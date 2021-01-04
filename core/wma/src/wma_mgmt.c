@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1250,6 +1250,49 @@ static void wma_objmgr_set_peer_mlme_type(tp_wma_handle wma,
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
 }
 
+uint32_t wma_convert_crypto_akm_to_wmi_akm(uint32_t keymgmt)
+{
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
+		return WMI_AUTH_RSNA;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_PSK))
+		return WMI_AUTH_RSNA_PSK;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X))
+		return WMI_AUTH_FT_RSNA;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FT_PSK))
+		return WMI_AUTH_FT_RSNA_PSK;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SHA256))
+		return WMI_AUTH_RSNA_8021X_SHA256;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384))
+		return WMI_AUTH_FT_RSNA_SUITE_B_8021X_SHA384;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FT_SAE))
+		return WMI_AUTH_FT_RSNA_SAE;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B))
+		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA256;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192))
+		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA384;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256))
+		return WMI_AUTH_RSNA_FILS_SHA256;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA384))
+		return WMI_AUTH_RSNA_FILS_SHA384;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256))
+		return WMI_AUTH_FT_RSNA_FILS_SHA256;
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
+		return WMI_AUTH_FT_RSNA_FILS_SHA384;
+
+	return WMI_AUTH_NONE;
+}
 /**
  * wmi_unified_send_peer_assoc() - send peer assoc command to fw
  * @wma: wma handle
@@ -1278,6 +1321,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	QDF_STATUS status;
 	struct mac_context *mac = wma->mac_context;
 	struct wlan_channel *des_chan;
+	int32_t keymgmt;
 
 	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
 	if (!cmd) {
@@ -1602,6 +1646,12 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	/* Till conversion is not done in WMI we need to fill fw phy mode */
 	cmd->peer_phymode = wma_host_to_fw_phymode(phymode);
+
+	keymgmt = wlan_crypto_get_param(intr->vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0)
+		cmd->akm = WMI_AUTH_NONE;
+	else
+		cmd->akm = wma_convert_crypto_akm_to_wmi_akm(keymgmt);
 
 	status = wmi_unified_peer_assoc_send(wma->wmi_handle,
 					 cmd);
