@@ -5172,6 +5172,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool go_force_11n_for_11ac = 0;
 	bool bval = false;
 	bool enable_dfs_scan = true;
+	bool deliver_start_evt = true;
 	struct s_ext_cap *p_ext_cap;
 	enum reg_phymode reg_phy_mode, updated_phy_mode;
 
@@ -5189,12 +5190,18 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,
 					    &go_force_11n_for_11ac);
 
-	status = ucfg_if_mgr_deliver_event(adapter->vdev,
-				      WLAN_IF_MGR_EV_AP_START_BSS,
-				      NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("start bss failed!!");
-		return -EINVAL;
+	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
+		deliver_start_evt = false;
+
+	if (deliver_start_evt) {
+		status = ucfg_if_mgr_deliver_event(
+					adapter->vdev,
+					WLAN_IF_MGR_EV_AP_START_BSS,
+					NULL);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("start bss failed!!");
+			return -EINVAL;
+		}
 	}
 	/*
 	 * For STA+SAP concurrency support from GUI, first STA connection gets
@@ -5877,12 +5884,15 @@ error:
 	wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_ALL);
 
 free:
-	status = ucfg_if_mgr_deliver_event(adapter->vdev,
-				      WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE,
-				      NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("start bss complete failed!!");
-		ret = -EINVAL;
+	if (deliver_start_evt) {
+		status = ucfg_if_mgr_deliver_event(
+					adapter->vdev,
+					WLAN_IF_MGR_EV_AP_START_BSS_COMPLETE,
+					NULL);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("start bss complete failed!!");
+			ret = -EINVAL;
+		}
 	}
 	qdf_mem_free(sme_config);
 	return ret;
