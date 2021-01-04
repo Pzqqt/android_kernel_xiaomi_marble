@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2262,6 +2262,7 @@ static uint32_t qdf_net_buf_track_used_list_count;
 static uint32_t qdf_net_buf_track_max_used;
 static uint32_t qdf_net_buf_track_max_free;
 static uint32_t qdf_net_buf_track_max_allocated;
+static uint32_t qdf_net_buf_track_fail_count;
 
 /**
  * update_max_used() - update qdf_net_buf_track_max_used tracking variable
@@ -2667,10 +2668,12 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			qdf_mem_skb_inc(size);
 			p_node->p_next = gp_qdf_net_buf_track_tbl[i];
 			gp_qdf_net_buf_track_tbl[i] = p_node;
-		} else
+		} else {
+			qdf_net_buf_track_fail_count++;
 			qdf_print(
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
 				  func_name, line_num, size);
+		}
 	}
 
 	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
@@ -2802,8 +2805,12 @@ done:
 		qdf_mem_skb_dec(p_node->size);
 		qdf_nbuf_track_free(p_node);
 	} else {
-		QDF_MEMDEBUG_PANIC("Unallocated buffer ! Double free of net_buf %pK ?",
-				   net_buf);
+		if (qdf_net_buf_track_fail_count) {
+			qdf_print("Untracked net_buf free: %pK with tracking failures count: %u",
+				  net_buf, qdf_net_buf_track_fail_count);
+		} else
+			QDF_MEMDEBUG_PANIC("Unallocated buffer ! Double free of net_buf %pK ?",
+					   net_buf);
 	}
 }
 qdf_export_symbol(qdf_net_buf_debug_delete_node);
