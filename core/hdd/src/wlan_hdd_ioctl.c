@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2295,7 +2295,7 @@ static int hdd_enable_unit_test_commands(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
-	    hdd_get_conparam() == QDF_GLOBAL_MISSION_MODE)
+	    hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		return -EPERM;
 
 	if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
@@ -2371,7 +2371,7 @@ static int hdd_disable_unit_test_commands(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
-	    hdd_get_conparam() == QDF_GLOBAL_MISSION_MODE)
+	    hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		return -EPERM;
 
 	if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
