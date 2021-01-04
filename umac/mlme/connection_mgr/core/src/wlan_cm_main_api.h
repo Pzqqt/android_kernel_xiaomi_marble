@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -761,6 +761,15 @@ bool cm_is_vdev_connecting(struct wlan_objmgr_vdev *vdev);
 bool cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * cm_is_vdev_active() - check if vdev is in active state ie conneted or roaming
+ * state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_active(struct wlan_objmgr_vdev *vdev);
+
+/**
  * cm_is_vdev_disconnecting() - check if vdev is in disconneting state
  * @vdev: vdev pointer
  *
@@ -783,6 +792,46 @@ bool cm_is_vdev_disconnected(struct wlan_objmgr_vdev *vdev);
  * Return: bool
  */
 bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_is_vdev_roam_started() - check if vdev is in roaming state and
+ * roam started sub stated
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_roam_started(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_is_vdev_roam_sync_inprogress() - check if vdev is in roaming state
+ * and roam sync substate
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_roam_sync_inprogress(struct wlan_objmgr_vdev *vdev);
+#endif
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * cm_is_vdev_roam_preauth_state() - check if vdev is in roaming state and
+ * preauth is in progress
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_roam_preauth_state(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_is_vdev_roam_reassoc_state() - check if vdev is in roaming state
+ * and reassoc is in progress
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdev_roam_reassoc_state(struct wlan_objmgr_vdev *vdev);
+#endif
 
 /**
  * cm_get_active_req_type() - CM active req type

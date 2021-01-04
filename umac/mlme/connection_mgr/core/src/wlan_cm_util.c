@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -871,6 +871,23 @@ bool cm_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 	return false;
 }
 
+bool cm_is_vdev_active(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+
+	if (state == WLAN_CM_S_CONNECTED || state == WLAN_CM_S_ROAMING)
+		return true;
+
+	return false;
+}
+
 bool cm_is_vdev_disconnecting(struct wlan_objmgr_vdev *vdev)
 {
 	struct cnx_mgr *cm_ctx;
@@ -921,6 +938,82 @@ bool cm_is_vdev_roaming(struct wlan_objmgr_vdev *vdev)
 
 	return false;
 }
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+bool cm_is_vdev_roam_started(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+	enum wlan_cm_sm_state sub_state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+	sub_state = cm_get_sub_state(cm_ctx);
+	if (state == WLAN_CM_S_ROAMING && sub_state == WLAN_CM_SS_ROAM_STARTED)
+		return true;
+
+	return false;
+}
+
+bool cm_is_vdev_roam_sync_inprogress(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+	enum wlan_cm_sm_state sub_state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+	sub_state = cm_get_sub_state(cm_ctx);
+	if (state == WLAN_CM_S_ROAMING && sub_state == WLAN_CM_SS_ROAM_SYNC)
+		return true;
+
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+bool cm_is_vdev_roam_preauth_state(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+	enum wlan_cm_sm_state sub_state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+	sub_state = cm_get_sub_state(cm_ctx);
+	if (state == WLAN_CM_S_ROAMING && sub_state == WLAN_CM_SS_PREAUTH)
+		return true;
+
+	return false;
+}
+
+bool cm_is_vdev_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	enum wlan_cm_sm_state state;
+	enum wlan_cm_sm_state sub_state;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return false;
+
+	state = cm_get_state(cm_ctx);
+	sub_state = cm_get_sub_state(cm_ctx);
+	if (state == WLAN_CM_S_ROAMING && sub_state == WLAN_CM_SS_REASSOC)
+		return true;
+
+	return false;
+}
+#endif
 
 enum wlan_cm_active_request_type
 cm_get_active_req_type(struct wlan_objmgr_vdev *vdev)
