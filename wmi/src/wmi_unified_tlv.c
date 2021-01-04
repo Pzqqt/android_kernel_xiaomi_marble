@@ -14927,6 +14927,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_PEER_CREATE_CONF_EVENTID;
 	event_ids[wmi_pdev_cp_fwstats_eventid] =
 			WMI_CTRL_PATH_STATS_EVENTID;
+	event_ids[wmi_vdev_send_big_data_p2_eventid] =
+			WMI_VDEV_SEND_BIG_DATA_P2_EVENTID;
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
