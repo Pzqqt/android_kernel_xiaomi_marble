@@ -2625,7 +2625,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	uint32_t conn_info_freq;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct if_mgr_event_data *connect_complete;
-	uint8_t uapsd_mask;
+	uint8_t uapsd_mask = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2642,8 +2642,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		hdd_err("roam_info is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	uapsd_mask =
+	if (roam_info->u.pConnectedProfile)
+		uapsd_mask =
 		roam_info->u.pConnectedProfile->modifyProfileFields.uapsd_mask;
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
 
@@ -3041,7 +3041,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 * Perform any WMM-related association
 				 * processing.
 				 */
-				hdd_wmm_assoc(adapter, roam_info->fReassocReq,
+				hdd_wmm_assoc(adapter, false,
 					      uapsd_mask);
 
 				/*
@@ -3098,7 +3098,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 * Perform any WMM-related association
 				 * processing
 				 */
-				hdd_wmm_assoc(adapter, roam_info->fReassocReq,
+				hdd_wmm_assoc(adapter, true,
 					      uapsd_mask);
 			}
 
