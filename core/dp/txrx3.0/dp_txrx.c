@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -226,7 +226,22 @@ struct dp_prealloc_context {
 };
 
 static struct dp_prealloc_context g_dp_context_allocs[] = {
-	{DP_PDEV_TYPE, (sizeof(struct dp_pdev)), false,  NULL}
+	{DP_PDEV_TYPE, (sizeof(struct dp_pdev)), false,  NULL},
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
+	/* 4 Rx ring history */
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
+	/* 1 Rx error ring history */
+	{DP_RX_ERR_RING_HIST_TYPE, sizeof(struct dp_rx_err_history),
+	 false, NULL},
+#ifndef RX_DEFRAG_DO_NOT_REINJECT
+	/* 1 Rx reinject ring history */
+	{DP_RX_REINJECT_RING_HIST_TYPE, sizeof(struct dp_rx_reinject_history),
+	 false, NULL},
+#endif	/* RX_DEFRAG_DO_NOT_REINJECT */
+#endif	/* WLAN_FEATURE_DP_RX_RING_HISTORY */
 };
 
 static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
