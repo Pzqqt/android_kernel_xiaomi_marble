@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -306,6 +306,7 @@ osif_get_statuscode(enum wlan_status_code status)
  * @dev: network device
  * @bss: bss info
  * @connect_rsp: Connection manager connect response
+ * @vdev: pointer to vdev
  *
  * This API is used as wrapper to send FILS key/sequence number
  * params etc. to supplicant in case of FILS connection
@@ -314,7 +315,8 @@ osif_get_statuscode(enum wlan_status_code status)
  * Return: None
  */
 static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
-			      struct wlan_cm_connect_resp *rsp)
+			      struct wlan_cm_connect_resp *rsp,
+			      struct wlan_objmgr_vdev *vdev)
 {
 	struct cfg80211_connect_resp_params conn_rsp_params;
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
@@ -343,16 +345,18 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 		conn_rsp_params.bss = bss;
 		osif_populate_fils_params(&conn_rsp_params,
 					  rsp->connect_ies.fils_ie);
-		/* save GTK */
+		osif_cm_save_gtk(vdev, rsp);
 	}
 
 	cfg80211_connect_done(dev, &conn_rsp_params, GFP_KERNEL);
-	/* hlp data for DHCP */
+	if (rsp->connect_ies.fils_ie && rsp->connect_ies.fils_ie->hlp_data_len)
+		osif_cm_set_hlp_data(dev, vdev, rsp);
 }
 #else /* CFG80211_CONNECT_DONE */
 static inline void
 osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
-		  struct wlan_cm_connect_resp *rsp)
+		  struct wlan_cm_connect_resp *rsp,
+		  struct wlan_objmgr_vdev *vdev)
 { }
 #endif /* CFG80211_CONNECT_DONE */
 #endif /* WLAN_FEATURE_FILS_SK */
@@ -366,6 +370,7 @@ osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
  * @dev: network device
  * @bss: bss info
  * @connect_rsp: Connection manager connect response
+ * @vdev: pointer to vdev
  *
  * The API is a wrapper to send connection status to supplicant
  *
@@ -374,13 +379,14 @@ osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
  */
 static int osif_update_connect_results(struct net_device *dev,
 				       struct cfg80211_bss *bss,
-				       struct wlan_cm_connect_resp *rsp)
+				       struct wlan_cm_connect_resp *rsp,
+				       struct wlan_objmgr_vdev *vdev)
 {
 	if (!rsp->is_fils_connection) {
 		osif_debug("fils IE is NULL");
 		return -EINVAL;
 	}
-	osif_connect_done(dev, bss, rsp);
+	osif_connect_done(dev, bss, rsp, vdev);
 
 	return 0;
 }
@@ -388,7 +394,8 @@ static int osif_update_connect_results(struct net_device *dev,
 
 static inline int osif_update_connect_results(struct net_device *dev,
 					      struct cfg80211_bss *bss,
-					      struct wlan_cm_connect_resp *rsp)
+					      struct wlan_cm_connect_resp *rsp,
+					      struct wlan_objmgr_vdev *vdev)
 {
 	return -EINVAL;
 }
@@ -410,7 +417,8 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					    rsp->ssid.length);
 	}
 
-	if (osif_update_connect_results(osif_priv->wdev->netdev, bss, rsp))
+	if (osif_update_connect_results(osif_priv->wdev->netdev, bss,
+					rsp, vdev))
 		osif_connect_bss(osif_priv->wdev->netdev, bss, rsp);
 }
 #else  /* CFG80211_CONNECT_BSS */

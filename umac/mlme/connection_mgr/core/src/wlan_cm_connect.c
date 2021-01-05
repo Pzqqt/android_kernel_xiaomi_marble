@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -559,23 +559,9 @@ static void cm_update_fils_scan_filter(struct scan_filter *filter,
 		     REALM_HASH_LEN);
 }
 
-static inline bool cm_is_fils_connection(struct cnx_mgr *cm_ctx,
-					 struct wlan_cm_connect_resp *resp)
+static inline bool cm_is_fils_connection(struct wlan_cm_connect_resp *resp)
 {
-	int32_t key_mgmt;
-
-	key_mgmt = wlan_crypto_get_param(cm_ctx->vdev,
-					 WLAN_CRYPTO_PARAM_KEY_MGMT);
-
-	if (!(key_mgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256 |
-			  1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA384 |
-			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256 |
-			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384)))
-		return false;
-
-	resp->is_fils_connection = true;
-
-	return true;
+	return resp->is_fils_connection;
 }
 
 static QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
@@ -603,8 +589,7 @@ static inline void cm_update_fils_scan_filter(struct scan_filter *filter,
 					      struct cm_connect_req *cm_req)
 { }
 
-static inline bool cm_is_fils_connection(struct cnx_mgr *cm_ctx,
-					 struct wlan_cm_connect_resp *resp)
+static inline bool cm_is_fils_connection(struct wlan_cm_connect_resp *resp)
 {
 	return false;
 }
@@ -767,7 +752,7 @@ static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 	struct qdf_mac_addr broadcast_mac = QDF_MAC_ADDR_BCAST_INIT;
 
 	/* Check and set FILS keys */
-	if (cm_is_fils_connection(cm_ctx, resp)) {
+	if (cm_is_fils_connection(resp)) {
 		cm_set_fils_key(cm_ctx, resp);
 		return;
 	}
@@ -1440,9 +1425,31 @@ static void cm_copy_fils_info(struct wlan_cm_vdev_connect_req *req,
 {
 	req->fils_info = &cm_req->connect_req.req.fils_info;
 }
+
+static inline void cm_set_fils_connection(struct cnx_mgr *cm_ctx,
+					  struct wlan_cm_connect_resp *resp)
+{
+	int32_t key_mgmt;
+
+	key_mgmt = wlan_crypto_get_param(cm_ctx->vdev,
+					 WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	if (!(key_mgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256 |
+			  1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA384 |
+			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256 |
+			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384)))
+		resp->is_fils_connection = false;
+	else
+		resp->is_fils_connection = true;
+}
 #else
 static inline void cm_copy_fils_info(struct wlan_cm_vdev_connect_req *req,
 				     struct cm_req *cm_req)
+{
+}
+
+static inline void cm_set_fils_connection(struct cnx_mgr *cm_ctx,
+					  struct wlan_cm_connect_resp *resp)
 {
 }
 #endif
@@ -1580,6 +1587,7 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_SUCCESS;
 
 	sm_state = cm_get_state(cm_ctx);
+	cm_set_fils_connection(cm_ctx, resp);
 	if (QDF_IS_STATUS_SUCCESS(resp->connect_status) &&
 	    sm_state == WLAN_CM_S_CONNECTED) {
 		cm_update_scan_db_on_connect_success(cm_ctx, resp);
