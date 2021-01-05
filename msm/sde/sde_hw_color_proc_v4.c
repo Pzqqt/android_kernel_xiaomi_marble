@@ -410,10 +410,9 @@ void sde_demura_backlight_cfg(struct sde_hw_dspp *ctx, u64 val)
 	}
 
 	demura_base = ctx->cap->sblk->demura.base;
-	backlight = (val & REG_MASK(11));
-	backlight |= ((val & REG_MASK_SHIFT(11, 32)) >> 16);
-	SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->demura.base + 0x8,
-			backlight);
+	backlight = (val & REG_MASK_ULL(11));
+	backlight |= ((val & REG_MASK_SHIFT_ULL(11, 32)) >> 16);
+	SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->demura.base + 0x8, backlight);
 }
 
 void sde_setup_fp16_cscv1(struct sde_hw_pipe *ctx,

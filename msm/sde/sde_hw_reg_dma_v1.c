@@ -880,7 +880,8 @@ static int check_support_v1(enum sde_reg_dma_features feature,
 	if (!is_supported)
 		return -EINVAL;
 
-	if (feature >= REG_DMA_FEATURES_MAX || blk >= BIT(REG_DMA_BLK_MAX)) {
+	if (feature >= REG_DMA_FEATURES_MAX
+		|| blk >= BIT_ULL(REG_DMA_BLK_MAX)) {
 		*is_supported = false;
 		return ret;
 	}
