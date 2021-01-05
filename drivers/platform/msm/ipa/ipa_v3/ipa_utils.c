@@ -6056,12 +6056,15 @@ int ipa3_init_hw(void)
 
 	ipa3_cfg_qsb();
 
-	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_5) {
-		/* set aggr granularity for 0.5 msec*/
-		cnt_cfg.aggr_granularity = GRAN_VALUE_500_USEC;
-		ipahal_write_reg_fields(IPA_COUNTER_CFG, &cnt_cfg);
-	} else {
-		ipa_cfg_qtime();
+	/* IPA version  <3.5 IPA_COUNTER_CFG register config not required */
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v3_5) {
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_5) {
+			/* set aggr granularity for 0.5 msec*/
+			cnt_cfg.aggr_granularity = GRAN_VALUE_500_USEC;
+			ipahal_write_reg_fields(IPA_COUNTER_CFG, &cnt_cfg);
+		} else {
+			ipa_cfg_qtime();
+		}
 	}
 
 	ipa_comp_cfg();
