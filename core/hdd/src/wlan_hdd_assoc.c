@@ -2204,6 +2204,7 @@ static inline void hdd_send_roamed_ind(struct net_device *dev,
 #endif
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 #if defined(WLAN_FEATURE_FILS_SK)
 void hdd_save_gtk_params(struct hdd_adapter *adapter,
@@ -2252,7 +2253,6 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 #endif
 #endif
 
-#ifndef FEATURE_CM_ENABLE
 static void hdd_roam_decr_conn_count(struct hdd_adapter *adapter,
 				     struct hdd_context *hdd_ctx)
 {
@@ -5307,6 +5307,10 @@ struct osif_cm_ops osif_ops = {
 	.connect_complete_cb = hdd_cm_connect_complete,
 	.disconnect_complete_cb = hdd_cm_disconnect_complete,
 	.netif_queue_control_cb = hdd_cm_netif_queue_control,
+#ifdef WLAN_FEATURE_FILS_SK
+	.save_gtk_cb = hdd_cm_save_gtk,
+	.set_hlp_data_cb = hdd_cm_set_hlp_data,
+#endif
 };
 
 QDF_STATUS hdd_cm_register_cb(void)

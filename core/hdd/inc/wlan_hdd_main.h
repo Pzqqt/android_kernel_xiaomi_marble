@@ -4218,6 +4218,20 @@ int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
  */
 void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * hdd_update_hlp_info() - Update HLP packet received in FILS (re)assoc rsp
+ * @dev: net device
+ * @rsp: Pointer to connect response
+ *
+ * This API is used to send the received HLP packet in Assoc rsp(FILS AKM)
+ * to the network layer.
+ *
+ * Return: None
+ */
+void hdd_update_hlp_info(struct net_device *dev,
+			 struct wlan_cm_connect_resp *rsp);
+#else
 /**
  * hdd_update_hlp_info() - Update HLP packet received in FILS (re)assoc rsp
  * @dev: net device
@@ -4230,12 +4244,21 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
  */
 void hdd_update_hlp_info(struct net_device *dev,
 			 struct csr_roam_info *roam_info);
+#endif
 #else
 static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 { }
+#ifdef FEATURE_CM_ENABLE
+static inline
+void hdd_update_hlp_info(struct net_device *dev,
+			 struct wlan_cm_connect_resp *rsp)
+{
+}
+#else
 static inline void hdd_update_hlp_info(struct net_device *dev,
 				       struct csr_roam_info *roam_info)
 {}
+#endif
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)

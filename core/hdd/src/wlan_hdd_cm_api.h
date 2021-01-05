@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -81,6 +81,34 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_connect_resp *rsp,
 				   enum osif_cb_type type);
+
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * hdd_cm_save_gtk() - save gtk api
+ * @vdev: Pointer to vdev
+ * @rsp: Pointer to connect rsp
+ *
+ * This function is used to save gtk in legacy mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
+			   struct wlan_cm_connect_resp *rsp);
+
+/**
+ * hdd_cm_set_hlp_data() - api to set hlp data for dhcp
+ * @dev: pointer to net device
+ * @vdev: Pointer to vdev
+ * @rsp: Pointer to connect rsp
+ *
+ * This function is used to set hlp data for dhcp in legacy mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_cm_set_hlp_data(struct net_device *dev,
+			       struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_resp *rsp);
+#endif
 #endif
 
 #ifdef WLAN_FEATURE_MSCS

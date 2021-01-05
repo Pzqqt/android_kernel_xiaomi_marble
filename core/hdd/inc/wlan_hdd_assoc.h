@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -407,6 +407,8 @@ void hdd_delete_peer(struct hdd_station_ctx *sta_ctx,
 QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 			     const tSirMacAddr bssid, uint32_t ch_freq);
+
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_save_gtk_params() - Save GTK offload params
  * @adapter: HDD adapter
@@ -417,17 +419,23 @@ hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
  */
 void hdd_save_gtk_params(struct hdd_adapter *adapter,
 			 struct csr_roam_info *csr_roam_info, bool is_reassoc);
+#endif
+
 #else
+
+#ifndef FEATURE_CM_ENABLE
+static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
+				       struct csr_roam_info *csr_roam_info,
+				       bool is_reassoc)
+{
+}
+#endif
+
 static inline QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 			     const tSirMacAddr bssid, uint32_t ch_freq)
 {
 	return QDF_STATUS_SUCCESS;
-}
-static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
-				       struct csr_roam_info *csr_roam_info,
-				       bool is_reassoc)
-{
 }
 #endif
 

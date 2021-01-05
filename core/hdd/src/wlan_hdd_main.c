@@ -7892,6 +7892,70 @@ static void hdd_populate_fils_params(struct cfg80211_connect_resp_params
 #if defined(CFG80211_CONNECT_DONE) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 
+#ifdef FEATURE_CM_ENABLE
+void hdd_update_hlp_info(struct net_device *dev,
+			 struct wlan_cm_connect_resp *rsp)
+{
+	struct sk_buff *skb;
+	uint16_t skb_len;
+	struct llc_snap_hdr_t *llc_hdr;
+	QDF_STATUS status;
+	uint8_t *hlp_data;
+	uint16_t hlp_data_len;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	if (!rsp || !rsp->connect_ies.fils_ie) {
+		hdd_err("Connect resp/fils ie is NULL");
+		return;
+	}
+
+	if (!rsp->connect_ies.fils_ie->hlp_data_len) {
+		hdd_debug("FILS HLP Data NULL, len 0");
+		return;
+	}
+
+	hlp_data = rsp->connect_ies.fils_ie->hlp_data;
+	hlp_data_len = rsp->connect_ies.fils_ie->hlp_data_len;
+
+	/* Calculate skb length */
+	skb_len = (2 * ETH_ALEN) + hlp_data_len;
+	skb = qdf_nbuf_alloc(NULL, skb_len, 0, 4, false);
+	if (!skb) {
+		hdd_err("HLP packet nbuf alloc fails");
+		return;
+	}
+
+	qdf_mem_copy(skb_put(skb, ETH_ALEN),
+		     rsp->connect_ies.fils_ie->dst_mac.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(skb_put(skb, ETH_ALEN),
+		     rsp->connect_ies.fils_ie->src_mac.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	llc_hdr = (struct llc_snap_hdr_t *)hlp_data;
+	if (IS_SNAP(llc_hdr)) {
+		hlp_data += LLC_SNAP_HDR_OFFSET_ETHERTYPE;
+		hlp_data_len += LLC_SNAP_HDR_OFFSET_ETHERTYPE;
+	}
+
+	qdf_mem_copy(skb_put(skb, hlp_data_len), hlp_data, hlp_data_len);
+
+	/*
+	 * This HLP packet is formed from HLP info encapsulated
+	 * in assoc response frame which is AEAD encrypted.
+	 * Hence, this checksum validation can be set unnecessary.
+	 * i.e. network layer need not worry about checksum.
+	 */
+	skb->ip_summed = CHECKSUM_UNNECESSARY;
+
+	status = hdd_rx_packet_cbk(adapter, skb);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Sending HLP packet fails");
+		return;
+	}
+	hdd_debug("send HLP packet to netif successfully");
+}
+#else
 void hdd_update_hlp_info(struct net_device *dev,
 			 struct csr_roam_info *roam_info)
 {
@@ -7955,6 +8019,7 @@ void hdd_update_hlp_info(struct net_device *dev,
 	}
 	hdd_debug("send HLP packet to netif successfully");
 }
+#endif
 
 /**
  * hdd_connect_done() - Wrapper API to call cfg80211_connect_done
