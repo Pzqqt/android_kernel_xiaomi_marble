@@ -6473,7 +6473,10 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	session_entry->curr_op_freq = target_freq;
 	session_entry->limRFBand = lim_get_rf_band(
 		session_entry->curr_op_freq);
-	session_entry->cac_duration_ms = ch_change_req->cac_duration_ms;
+	if (mlme_get_cac_required(session_entry->vdev))
+		session_entry->cac_duration_ms = ch_change_req->cac_duration_ms;
+	else
+		session_entry->cac_duration_ms = 0;
 	session_entry->dfs_regdomain = ch_change_req->dfs_regdomain;
 	session_entry->maxTxPower = max_tx_pwr;
 
