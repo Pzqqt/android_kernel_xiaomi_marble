@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * RMNET Data Generic Netlink
  *
@@ -322,9 +322,9 @@ int rmnet_core_genl_pid_bps_req_hdlr(struct sk_buff *skb_2,
 		rmnet_core_userspace_connected = 1;
 
 	/* Copy to pid/byte list to the payload */
+	memset(&pid_bps_resp, 0x0,
+	       sizeof(pid_bps_resp));
 	if (is_req_valid) {
-		memset(&pid_bps_resp, 0x0,
-		       sizeof(pid_bps_resp));
 		rmnet_create_pid_bps_resp(&pid_bps_resp);
 	}
 	pid_bps_resp.valid = 1;
