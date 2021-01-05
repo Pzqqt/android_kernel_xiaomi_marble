@@ -1586,7 +1586,8 @@ void hdd_indicate_active_ndp_cnt(struct wlan_objmgr_psoc *psoc,
 
 	adapter = wlan_hdd_get_adapter_from_vdev(psoc, vdev_id);
 	if (adapter && cfg_nan_is_roam_config_disabled(psoc)) {
-		hdd_debug("vdev_id:%d ndp active sessions %d", vdev_id, cnt);
+		hdd_debug("vdev_id:%d%s active ndp sessions present", vdev_id,
+			  cnt ? "" : " no more");
 		if (!cnt)
 			wlan_hdd_enable_roaming(adapter, RSO_NDP_CON_ON_NDI);
 		else

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -949,6 +949,12 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 					adapter,
 					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
+		/*
+		 * This is called only for first peer. So, no.of NDP sessions
+		 * are always 1
+		 */
+		if (!NDI_CONCURRENCY_SUPPORTED(hdd_ctx->psoc))
+			hdd_indicate_active_ndp_cnt(hdd_ctx->psoc, vdev_id, 1);
 	}
 	qdf_mem_free(roam_info);
 	return 0;
@@ -1021,5 +1027,11 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 		hdd_debug("No more ndp peers.");
 		hdd_cleanup_ndi(hdd_ctx, adapter);
 		qdf_event_set(&adapter->peer_cleanup_done);
+		/*
+		 * This is called only for last peer. So, no.of NDP sessions
+		 * are always 0
+		 */
+		if (!NDI_CONCURRENCY_SUPPORTED(hdd_ctx->psoc))
+			hdd_indicate_active_ndp_cnt(hdd_ctx->psoc, vdev_id, 0);
 	}
 }
