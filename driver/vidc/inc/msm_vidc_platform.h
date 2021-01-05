@@ -50,17 +50,6 @@ struct msm_vidc_efuse_data {
 };
 
 struct msm_vidc_ubwc_config_data {
-	struct {
-		u32 max_channel_override : 1;
-		u32 mal_length_override : 1;
-		u32 hb_override : 1;
-		u32 bank_swzl_level_override : 1;
-		u32 bank_swz2_level_override : 1;
-		u32 bank_swz3_level_override : 1;
-		u32 bank_spreading_override : 1;
-		u32 reserved : 27;
-	} override_bit_info;
-
 	u32 max_channels;
 	u32 mal_length;
 	u32 highest_bank_bit;

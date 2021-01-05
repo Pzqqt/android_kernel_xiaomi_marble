@@ -19,18 +19,14 @@
 #define DDR_TYPE_LPDDR5X 0x9
 #define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
 
-#define UBWC_CONFIG(mco, mlo, hbo, bslo, bso, rs, mc, ml, hbb, bsl, bsp) \
+#define UBWC_CONFIG(mc, ml, hbb, bs1, bs2, bs3, bsp) \
 {	\
-	.override_bit_info.max_channel_override = mco,	\
-	.override_bit_info.mal_length_override = mlo,	\
-	.override_bit_info.hb_override = hbo,	\
-	.override_bit_info.bank_swzl_level_override = bslo,	\
-	.override_bit_info.bank_spreading_override = bso,	\
-	.override_bit_info.reserved = rs,	\
 	.max_channels = mc,	\
 	.mal_length = ml,	\
 	.highest_bank_bit = hbb,	\
-	.bank_swzl_level = bsl,	\
+	.bank_swzl_level = bs1,	\
+	.bank_swz2_level = bs2, \
+	.bank_swz3_level = bs3, \
 	.bank_spreading = bsp,	\
 }
 
@@ -1043,7 +1039,7 @@ static u32 vpe_csc_custom_limit_coeff[MAX_LIMIT_COEFFS] = {
 
 /* Default UBWC config for LPDDR5 */
 static struct msm_vidc_ubwc_config_data ubwc_config_waipio[] = {
-	UBWC_CONFIG(1, 1, 1, 0, 0, 0, 8, 32, 16, 0, 0),
+	UBWC_CONFIG(8, 32, 16, 0, 1, 1, 1),
 };
 
 static struct msm_vidc_platform_data waipio_data = {

@@ -334,6 +334,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_CMD_SYSTEM_INIT */
 	payload = HFI_VIDEO_ARCH_LX;
+	d_vpr_h("%s: arch %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_CMD_INIT,
 				   (HFI_HOST_FLAGS_RESPONSE_REQUIRED |
@@ -349,6 +350,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_INTRA_FRAME_POWER_COLLAPSE */
 	payload = 0;
+	d_vpr_h("%s: intra frame power collapse %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_INTRA_FRAME_POWER_COLLAPSE,
 				   HFI_HOST_FLAGS_NONE,
@@ -362,6 +364,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_MAX_CHANNELS */
 	payload = core->platform->data.ubwc_config->max_channels;
+	d_vpr_h("%s: ubwc max channels %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_MAX_CHANNELS,
 				   HFI_HOST_FLAGS_NONE,
@@ -375,6 +378,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_MAL_LENGTH */
 	payload = core->platform->data.ubwc_config->mal_length;
+	d_vpr_h("%s: ubwc mal length %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_MAL_LENGTH,
 				   HFI_HOST_FLAGS_NONE,
@@ -388,6 +392,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_HBB */
 	payload = core->platform->data.ubwc_config->highest_bank_bit;
+	d_vpr_h("%s: ubwc hbb %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_HBB,
 				   HFI_HOST_FLAGS_NONE,
@@ -401,6 +406,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_BANK_SWZL_LEVEL1 */
 	payload = core->platform->data.ubwc_config->bank_swzl_level;
+	d_vpr_h("%s: ubwc swzl1 %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_BANK_SWZL_LEVEL1,
 				   HFI_HOST_FLAGS_NONE,
@@ -414,6 +420,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_BANK_SWZL_LEVEL2 */
 	payload = core->platform->data.ubwc_config->bank_swz2_level;
+	d_vpr_h("%s: ubwc swzl2 %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_BANK_SWZL_LEVEL2,
 				   HFI_HOST_FLAGS_NONE,
@@ -427,6 +434,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_BANK_SWZL_LEVEL3 */
 	payload = core->platform->data.ubwc_config->bank_swz3_level;
+	d_vpr_h("%s: ubwc swzl3 %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_BANK_SWZL_LEVEL3,
 				   HFI_HOST_FLAGS_NONE,
@@ -440,6 +448,7 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 
 	/* HFI_PROP_UBWC_BANK_SPREADING */
 	payload = core->platform->data.ubwc_config->bank_spreading;
+	d_vpr_h("%s: ubwc bank spreading %d\n", __func__, payload);
 	rc = hfi_create_packet(pkt, pkt_size,
 				   HFI_PROP_UBWC_BANK_SPREADING,
 				   HFI_HOST_FLAGS_NONE,
