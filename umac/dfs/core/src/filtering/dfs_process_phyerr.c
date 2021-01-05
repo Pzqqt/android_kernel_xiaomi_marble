@@ -727,7 +727,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	 * If the channel is a turbo G channel, then the event is for the
 	 * adaptive radio (AR) pattern matching rather than radar detection.
 	 */
-	if ((dfs->dfs_curchan->dfs_ch_flags & CHANNEL_108G) == CHANNEL_108G) {
+	if (WLAN_IS_CHAN_108G(dfs->dfs_curchan)) {
 		if (!(dfs->dfs_proc_phyerr & DFS_AR_EN)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS2,
 				"DFS_AR_EN not enabled");
