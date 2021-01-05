@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3837,12 +3837,14 @@ void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);
  */
 bool hdd_is_interface_up(struct hdd_adapter *adapter);
 
+#ifndef FEATURE_CM_ENABLE
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			struct csr_roam_info *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout,
 			tSirResultCodes timeout_reason);
+#endif
 
 #ifdef WLAN_FEATURE_FASTPATH
 void hdd_enable_fastpath(struct hdd_context *hdd_ctx,
