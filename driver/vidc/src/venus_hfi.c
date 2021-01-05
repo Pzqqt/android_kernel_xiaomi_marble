@@ -33,6 +33,8 @@
 
 #define MAX_FIRMWARE_NAME_SIZE 128
 
+extern struct msm_vidc_core *g_core;
+
 static int __resume(struct msm_vidc_core *core);
 static int __suspend(struct msm_vidc_core *core);
 
@@ -161,12 +163,36 @@ static void __strict_check(struct msm_vidc_core *core)
 
 bool __core_in_valid_state(struct msm_vidc_core *core)
 {
-	return core->state != MSM_VIDC_CORE_ERROR;
+	return core->state == MSM_VIDC_CORE_INIT;
 }
 
 static bool is_sys_cache_present(struct msm_vidc_core *core)
 {
 	return core->dt->sys_cache_present;
+}
+
+static bool valdiate_session(struct msm_vidc_inst* inst, const char *func)
+{
+	bool valid = false;
+	struct msm_vidc_inst *temp;
+	struct msm_vidc_core *core = g_core;
+
+	if (!core)
+		return false;
+
+	mutex_lock(&core->lock);
+	list_for_each_entry(temp, &core->instances, list) {
+		if (temp == inst) {
+			valid = true;
+			break;
+		}
+	}
+	mutex_unlock(&core->lock);
+
+	if (!valid)
+		s_vpr_e(inst->sid, "%s: invalid session\n", func);
+
+	return valid;
 }
 
 void __write_register(struct msm_vidc_core *core,
@@ -879,8 +905,12 @@ int __iface_msgq_read(struct msm_vidc_core *core, void *pkt)
 	}
 
 	if (!__read_queue(q_info, (u8 *)pkt, &tx_req_is_set)) {
-		if (tx_req_is_set)
-			call_venus_op(core, raise_interrupt, core);
+		if (tx_req_is_set) {
+			//call_venus_op(core, raise_interrupt, core);
+			d_vpr_e("%s: queue is full\n", __func__);
+			rc = -EINVAL;
+			goto read_error_null;
+		}
 		rc = 0;
 	} else {
 		rc = -ENODATA;
@@ -911,11 +941,16 @@ int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt)
 	}
 
 	if (!__read_queue(q_info, (u8 *)pkt, &tx_req_is_set)) {
-		if (tx_req_is_set)
-			call_venus_op(core, raise_interrupt, core);
+		if (tx_req_is_set) {
+			d_vpr_e("%s: queue is full\n", __func__);
+			//call_venus_op(core, raise_interrupt, core);
+			rc = -EINVAL;
+			goto dbg_error_null;
+		}
 		rc = 0;
-	} else
+	} else {
 		rc = -ENODATA;
+	}
 
 dbg_error_null:
 	return rc;
@@ -1909,6 +1944,24 @@ static int __set_ubwc_config(struct msm_vidc_core *core)
 	return rc;
 }
 */
+
+static int __venus_power_off(struct msm_vidc_core* core)
+{
+	int rc = 0;
+
+	if (!core->power_enabled)
+		return 0;
+
+	rc = call_venus_op(core, power_off, core);
+	if (rc) {
+		d_vpr_e("Failed to power off, err: %d\n", rc);
+		return rc;
+	}
+	core->power_enabled = false;
+
+	return rc;
+}
+
 static int __venus_power_on(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -2009,7 +2062,7 @@ static int __resume(struct msm_vidc_core *core)
 	} else if (core->power_enabled) {
 		goto exit;
 	} else if (!__core_in_valid_state(core)) {
-		d_vpr_e("%s: core in deinit state\n", __func__);
+		d_vpr_e("%s: core not in valid state\n", __func__);
 		return -EINVAL;
 	}
 
@@ -2394,9 +2447,7 @@ static void __unload_fw(struct msm_vidc_core *core)
 	qcom_scm_pas_shutdown(core->dt->fw_cookie);
 	core->dt->fw_cookie = 0;
 
-	__interface_queues_deinit(core);
-	call_venus_op(core, power_off, core);
-
+	__venus_power_off(core);
 	__deinit_resources(core);
 
 	d_vpr_h("Firmware unloaded successfully\n");
@@ -2447,16 +2498,15 @@ void venus_hfi_work_handler(struct work_struct *work)
 	mutex_lock(&core->lock);
 	if (__resume(core)) {
 		d_vpr_e("%s: Power on failed\n", __func__);
+		mutex_unlock(&core->lock);
 		goto err_no_work;
 	}
-
 	call_venus_op(core, clear_interrupt, core);
 	mutex_unlock(&core->lock);
 
 	num_responses = __response_handler(core);
 
 err_no_work:
-	mutex_unlock(&core->lock);
 	if (!call_venus_op(core, watchdog, core, core->intr_status))
 		enable_irq(core->dt->irq);
 }
@@ -2614,6 +2664,7 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 		return -EINVAL;
 	}
 	d_vpr_h("%s(): core %pK\n", __func__, core);
+	__flush_debug_queue(core, core->packet, core->packet_size);
 	__disable_subcaches(core);
 	__interface_queues_deinit(core);
 	__unload_fw(core);
@@ -2655,13 +2706,6 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	inst->packet_size = 4096;
-	inst->packet = kzalloc(inst->packet_size, GFP_KERNEL);
-	if (!inst->packet) {
-		d_vpr_e("%s(): inst packet allocation failed\n", __func__);
-		return -ENOMEM;
-	}
-
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_OPEN,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
@@ -2672,13 +2716,13 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 				&inst->session_id, /* payload */
 				sizeof(u32));
 	if (rc)
-		goto error;
+		return rc;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		goto error;
-error:
-	return rc;
+		return rc;
+
+	return 0;
 }
 
 int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
@@ -2690,6 +2734,8 @@ int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
 
 	codec = get_hfi_codec(inst);
 	rc = venus_hfi_session_property(inst,
@@ -2718,6 +2764,9 @@ int venus_hfi_session_property(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	core = inst->core;
+
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 				inst->session_id, core->header_id++);
@@ -2753,6 +2802,8 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
 
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_CLOSE,
@@ -2767,8 +2818,6 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 	if (!rc)
 		__iface_cmdq_write(inst->core, inst->packet);
 
-	kfree(inst->packet);
-
 	return rc;
 }
 
@@ -2780,6 +2829,9 @@ int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
+
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
@@ -2812,6 +2864,9 @@ int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
+
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
@@ -2849,6 +2904,9 @@ int venus_hfi_session_command(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	core = inst->core;
+
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 			inst->session_id,
@@ -2891,6 +2949,9 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	core = inst->core;
+
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
 
 	rc = get_hfi_buffer(inst, buffer, &hfi_buffer);
 	if (rc)
@@ -2948,6 +3009,9 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (!valdiate_session(inst, __func__))
+		return -EINVAL;
+
 	if (!is_internal_buffer(buffer->type)) {
 		s_vpr_e(inst->sid, "release not allowed for buffer type %d\n",
 			buffer->type);

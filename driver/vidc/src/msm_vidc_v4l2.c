@@ -12,7 +12,7 @@
 
 static struct msm_vidc_inst *get_vidc_inst(struct file *filp, void *fh)
 {
-	if (!filp->private_data)
+	if (!filp || !filp->private_data)
 		return NULL;
 	return container_of(filp->private_data,
 					struct msm_vidc_inst, event_handler);

@@ -425,9 +425,11 @@ static int msm_vidc_apply_dcvs(struct msm_vidc_inst *inst)
 	power = &inst->power;
 
 	if (is_decode_session(inst)) {
-		bufs_with_fw = msm_vidc_num_queued_bufs(inst, OUTPUT_MPLANE);
+		bufs_with_fw = msm_vidc_num_buffers(inst,
+			MSM_VIDC_BUF_OUTPUT, MSM_VIDC_ATTR_QUEUED);
 	} else {
-		bufs_with_fw = msm_vidc_num_queued_bufs(inst, INPUT_MPLANE);
+		bufs_with_fw = msm_vidc_num_buffers(inst,
+			MSM_VIDC_BUF_INPUT, MSM_VIDC_ATTR_QUEUED);
 	}
 
 	/* +1 as one buffer is going to be queued after the function */

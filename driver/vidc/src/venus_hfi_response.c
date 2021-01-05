@@ -229,16 +229,8 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 static int handle_system_error(struct msm_vidc_core *core,
 	struct hfi_packet *pkt)
 {
-	mutex_lock(&core->lock);
-	if (core->state == MSM_VIDC_CORE_DEINIT) {
-		d_vpr_e("%s: core already deinitialized\n", __func__);
-		mutex_unlock(&core->lock);
-		return 0;
-	}
-
 	d_vpr_e("%s: system error received\n", __func__);
-	core->state = MSM_VIDC_CORE_DEINIT;
-	mutex_unlock(&core->lock);
+	msm_vidc_core_deinit(core);
 	return 0;
 }
 
@@ -264,6 +256,7 @@ static int handle_session_open(struct msm_vidc_inst *inst,
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
 		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		return 0;
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
@@ -293,6 +286,7 @@ static int handle_session_start(struct msm_vidc_inst *inst,
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
 		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		return 0;
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
@@ -351,6 +345,7 @@ static int handle_session_drain(struct msm_vidc_inst *inst,
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
 		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		return 0;
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)

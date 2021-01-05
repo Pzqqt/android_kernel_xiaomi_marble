@@ -114,13 +114,30 @@ static inline bool is_linear_colorformat(enum msm_vidc_colorformat_type colorfor
 {
 	return colorformat == MSM_VIDC_FMT_NV12 ||
 		colorformat == MSM_VIDC_FMT_NV21 ||
-		colorformat == MSM_VIDC_FMT_P010;
+		colorformat == MSM_VIDC_FMT_P010 ||
+		colorformat == MSM_VIDC_FMT_RGBA8888;
+}
+
+static inline bool is_ubwc_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return colorformat == MSM_VIDC_FMT_NV12C ||
+		colorformat == MSM_VIDC_FMT_TP10C ||
+		colorformat == MSM_VIDC_FMT_RGBA8888C;
 }
 
 static inline bool is_10bit_colorformat(enum msm_vidc_colorformat_type colorformat)
 {
 	return colorformat == MSM_VIDC_FMT_P010 ||
 		colorformat == MSM_VIDC_FMT_TP10C;
+}
+
+static inline bool is_8bit_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return colorformat == MSM_VIDC_FMT_NV12 ||
+		colorformat == MSM_VIDC_FMT_NV12C ||
+		colorformat == MSM_VIDC_FMT_NV21 ||
+		colorformat == MSM_VIDC_FMT_RGBA8888 ||
+		colorformat == MSM_VIDC_FMT_RGBA8888C;
 }
 
 static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
@@ -161,6 +178,11 @@ static inline bool is_active_session(u64 prev, u64 curr)
 			MSM_VIDC_SESSION_INACTIVE_THRESHOLD_MS);
 }
 
+static inline bool is_session_error(struct msm_vidc_inst* inst)
+{
+	return inst->state == MSM_VIDC_ERROR;
+}
+
 void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf);
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
@@ -179,7 +201,7 @@ int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func);
 const char *state_name(enum msm_vidc_inst_state state);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
-	enum msm_vidc_inst_state state, const char *func);
+	enum msm_vidc_inst_state request_state, const char *func);
 int msm_vidc_get_input_internal_buffers(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type);
 int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
@@ -199,9 +221,13 @@ int msm_vidc_session_streamon(struct msm_vidc_inst *inst,
 int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		enum msm_vidc_port_type port);
 int msm_vidc_session_close(struct msm_vidc_inst *inst);
+int msm_vidc_kill_session(struct msm_vidc_inst* inst);
 int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst);
+int msm_vidc_change_core_state(struct msm_vidc_core *core,
+	enum msm_vidc_core_state request_state, const char *func);
 int msm_vidc_core_init(struct msm_vidc_core *core);
 int msm_vidc_core_deinit(struct msm_vidc_core *core);
+int msm_vidc_core_timeout(struct msm_vidc_core *core);
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *data);
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,
@@ -236,6 +262,8 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer);
 void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst);
+int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
+	enum msm_vidc_buffer_type type);
 struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *vbuf);
 struct msm_vidc_inst *get_inst_ref(struct msm_vidc_core *core,
@@ -261,10 +289,13 @@ int msm_vidc_state_change_input_psc(struct msm_vidc_inst *inst);
 int msm_vidc_state_change_last_flag(struct msm_vidc_inst *inst);
 int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst);
 int msm_vidc_get_fps(struct msm_vidc_inst *inst);
-int msm_vidc_num_queued_bufs(struct msm_vidc_inst *inst, u32 type);
+int msm_vidc_num_buffers(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type type, enum msm_vidc_buffer_attributes attr);
 void core_lock(struct msm_vidc_core *core, const char *function);
 void core_unlock(struct msm_vidc_core *core, const char *function);
+bool core_lock_check(struct msm_vidc_core *core, const char *function);
 void inst_lock(struct msm_vidc_inst *inst, const char *function);
 void inst_unlock(struct msm_vidc_inst *inst, const char *function);
+bool inst_lock_check(struct msm_vidc_inst *inst, const char *function);
 #endif // _MSM_VIDC_DRIVER_H_
 
