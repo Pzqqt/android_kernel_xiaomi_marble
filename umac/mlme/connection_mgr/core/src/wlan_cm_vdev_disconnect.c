@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -176,14 +176,14 @@ QDF_STATUS cm_send_sb_disconnect_req(struct scheduler_msg *msg)
 static void cm_copy_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 					struct element_info *ap_ie)
 {
-	struct wlan_ies *discon_ie;
+	struct element_info *discon_ie;
 
 	discon_ie = mlme_get_peer_disconnect_ies(vdev);
 	if (!discon_ie)
 		return;
 
 	ap_ie->len = discon_ie->len;
-	ap_ie->ptr = discon_ie->data;
+	ap_ie->ptr = discon_ie->ptr;
 }
 
 QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,8 +59,8 @@ struct wlan_mlme_psoc_ext_obj {
  * @from_ap: True if the disconnection is initiated from AP
  */
 struct wlan_disconnect_info {
-	struct wlan_ies self_discon_ies;
-	struct wlan_ies peer_discon_ies;
+	struct element_info self_discon_ies;
+	struct element_info peer_discon_ies;
 	uint32_t discon_reason;
 	bool from_ap;
 };
@@ -72,7 +72,7 @@ struct wlan_disconnect_info {
  */
 struct sae_auth_retry {
 	uint8_t sae_auth_max_retry;
-	struct wlan_ies sae_auth;
+	struct element_info sae_auth;
 };
 
 /**
@@ -456,7 +456,7 @@ void mlme_free_sae_auth_retry(struct wlan_objmgr_vdev *vdev);
  * Return: None
  */
 void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_ies *ie);
+				  struct element_info *ie);
 
 /**
  * mlme_free_self_disconnect_ies() - Free the self diconnect IEs
@@ -472,7 +472,7 @@ void mlme_free_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
  *
  * Return: Returns a pointer to the self disconnect IEs present in vdev object
  */
-struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
+struct element_info *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_set_peer_disconnect_ies() - Cache disconnect IEs received from peer
@@ -482,7 +482,7 @@ struct wlan_ies *mlme_get_self_disconnect_ies(struct wlan_objmgr_vdev *vdev);
  * Return: None
  */
 void mlme_set_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_ies *ie);
+				  struct element_info *ie);
 
 /**
  * mlme_free_peer_disconnect_ies() - Free the peer diconnect IEs
@@ -538,7 +538,7 @@ bool mlme_get_reconn_after_assoc_timeout_flag(struct wlan_objmgr_psoc *psoc,
  *
  * Return: Returns a pointer to the peer disconnect IEs present in vdev object
  */
-struct wlan_ies *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev);
+struct element_info *mlme_get_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_set_peer_pmf_status() - set pmf status of peer
