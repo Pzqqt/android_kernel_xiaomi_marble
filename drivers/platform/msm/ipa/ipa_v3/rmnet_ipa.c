@@ -24,6 +24,7 @@
 #include <net/pkt_sched.h>
 #include <soc/qcom/subsystem_restart.h>
 #include <soc/qcom/subsystem_notif.h>
+#include <linux/remoteproc/qcom_rproc.h>
 #include "ipa_qmi_service.h"
 #include <linux/rmnet_ipa_fd_ioctl.h>
 #include <linux/ipa.h>
@@ -2886,7 +2887,11 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 	}
 
 	switch (code) {
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_BEFORE_SHUTDOWN:
+#else
 	case SUBSYS_BEFORE_SHUTDOWN:
+#endif
 		IPAWANINFO("IPA received MPSS BEFORE_SHUTDOWN\n");
 		/* send SSR before-shutdown notification to IPACM */
 		rmnet_ipa_send_ssr_notification(false);
@@ -2907,7 +2912,11 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		ipa3_odl_pipe_cleanup(true);
 		IPAWANINFO("IPA BEFORE_SHUTDOWN handling is complete\n");
 		break;
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_AFTER_SHUTDOWN:
+#else
 	case SUBSYS_AFTER_SHUTDOWN:
+#endif
 		IPAWANINFO("IPA Received MPSS AFTER_SHUTDOWN\n");
 		if (atomic_read(&rmnet_ipa3_ctx->is_ssr) &&
 			ipa3_ctx_get_type(IPA_HW_TYPE) < IPA_HW_v4_0)
@@ -2918,7 +2927,11 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 
 		IPAWANINFO("IPA AFTER_SHUTDOWN handling is complete\n");
 		break;
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_BEFORE_POWERUP:
+#else
 	case SUBSYS_BEFORE_POWERUP:
+#endif
 		IPAWANINFO("IPA received MPSS BEFORE_POWERUP\n");
 		if (atomic_read(&rmnet_ipa3_ctx->is_ssr)) {
 			/* clean up cached QMI msg/handlers */
@@ -2930,7 +2943,11 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		ipa3_reset_freeze_vote();
 		IPAWANINFO("IPA BEFORE_POWERUP handling is complete\n");
 		break;
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_AFTER_POWERUP:
+#else
 	case SUBSYS_AFTER_POWERUP:
+#endif
 		IPAWANINFO("IPA received MPSS AFTER_POWERUP\n");
 		if (!atomic_read(&rmnet_ipa3_ctx->is_initialized) &&
 		       atomic_read(&rmnet_ipa3_ctx->is_ssr))
@@ -2964,16 +2981,32 @@ static int ipa3_rmt_mdm_ssr_notifier_cb(struct notifier_block *this,
 	}
 
 	switch (code) {
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_BEFORE_SHUTDOWN:
+#else
 	case SUBSYS_BEFORE_SHUTDOWN:
+#endif
 		IPAWANINFO("IPA received RMT MPSS BEFORE_SHUTDOWN\n");
 		break;
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_AFTER_SHUTDOWN:
+#else
 	case SUBSYS_AFTER_SHUTDOWN:
+#endif
 		IPAWANINFO("IPA Received RMT MPSS AFTER_SHUTDOWN\n");
 		break;
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_BEFORE_POWERUP:
+#else
 	case SUBSYS_BEFORE_POWERUP:
+#endif
 		IPAWANINFO("IPA received RMT MPSS BEFORE_POWERUP\n");
 		break;
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	case QCOM_SSR_AFTER_POWERUP:
+#else
 	case SUBSYS_AFTER_POWERUP:
+#endif
 		IPAWANINFO("IPA received RMT MPSS AFTER_POWERUP\n");
 		break;
 	default:
@@ -4940,8 +4973,13 @@ int ipa3_wwan_init(void)
 	rmnet_ipa_debugfs_init();
 
 	/* Register for Local Modem SSR */
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+	ssr_hdl = qcom_register_ssr_notifier(SUBSYS_LOCAL_MODEM,
+		&ipa3_lcl_mdm_ssr_notifier);
+#else
 	ssr_hdl = subsys_notif_register_notifier(SUBSYS_LOCAL_MODEM,
 		&ipa3_lcl_mdm_ssr_notifier);
+#endif
 	if (!IS_ERR(ssr_hdl))
 		rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle = ssr_hdl;
 	else if (!rmnet_ipa3_ctx->ipa_config_is_apq) {
@@ -4952,8 +4990,13 @@ int ipa3_wwan_init(void)
 
 	if (rmnet_ipa3_ctx->ipa_config_is_apq) {
 		/* Register for Remote Modem SSR */
+	#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+		ssr_hdl = qcom_register_ssr_notifier(SUBSYS_REMOTE_MODEM,
+			&ipa3_rmt_mdm_ssr_notifier);
+	#else
 		ssr_hdl = subsys_notif_register_notifier(SUBSYS_REMOTE_MODEM,
 			&ipa3_rmt_mdm_ssr_notifier);
+	#endif
 		if (IS_ERR(ssr_hdl)) {
 			rc = PTR_ERR(ssr_hdl);
 			IPAWANERR_RL("remote modem ssr register fail rc=%d\n",
@@ -4969,9 +5012,15 @@ int ipa3_wwan_init(void)
 
 fail_unreg_lcl_mdm_ssr:
 	if (rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle) {
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+		qcom_unregister_ssr_notifier(
+			rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle,
+			&ipa3_lcl_mdm_ssr_notifier);
+#else
 		subsys_notif_unregister_notifier(
 			rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle,
 			&ipa3_lcl_mdm_ssr_notifier);
+#endif
 		rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle = NULL;
 	}
 fail_dbgfs_rm:
@@ -4985,18 +5034,30 @@ void ipa3_wwan_cleanup(void)
 
 	platform_driver_unregister(&rmnet_ipa_driver);
 	if (rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle) {
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+		ret = qcom_unregister_ssr_notifier(
+			rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle,
+			&ipa3_lcl_mdm_ssr_notifier);
+#else
 		ret = subsys_notif_unregister_notifier(
 			rmnet_ipa3_ctx->lcl_mdm_subsys_notify_handle,
 			&ipa3_lcl_mdm_ssr_notifier);
+#endif
 		if (ret)
 			IPAWANERR(
 			"Failed to unregister subsys %s notifier ret=%d\n",
 			SUBSYS_LOCAL_MODEM, ret);
 	}
 	if (rmnet_ipa3_ctx->rmt_mdm_subsys_notify_handle) {
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+		ret = qcom_unregister_ssr_notifier(
+			rmnet_ipa3_ctx->rmt_mdm_subsys_notify_handle,
+			&ipa3_rmt_mdm_ssr_notifier);
+#else
 		ret = subsys_notif_unregister_notifier(
 			rmnet_ipa3_ctx->rmt_mdm_subsys_notify_handle,
 			&ipa3_rmt_mdm_ssr_notifier);
+#endif
 		if (ret)
 			IPAWANERR(
 			"Failed to unregister subsys %s notifier ret=%d\n",
