@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1551,11 +1551,11 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 	/* Save assoc request IEs */
 	if (event->ies_len) {
-		qdf_mem_free(stainfo->assoc_req_ies.data);
+		qdf_mem_free(stainfo->assoc_req_ies.ptr);
 		stainfo->assoc_req_ies.len = 0;
-		stainfo->assoc_req_ies.data = qdf_mem_malloc(event->ies_len);
-		if (stainfo->assoc_req_ies.data) {
-			qdf_mem_copy(stainfo->assoc_req_ies.data, event->ies,
+		stainfo->assoc_req_ies.ptr = qdf_mem_malloc(event->ies_len);
+		if (stainfo->assoc_req_ies.ptr) {
+			qdf_mem_copy(stainfo->assoc_req_ies.ptr, event->ies,
 				     event->ies_len);
 			stainfo->assoc_req_ies.len = event->ies_len;
 		}
@@ -1573,10 +1573,10 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 		qdf_mem_copy(cache_sta_info, stainfo, sizeof(*cache_sta_info));
 		cache_sta_info->is_attached = 0;
-		cache_sta_info->assoc_req_ies.data =
+		cache_sta_info->assoc_req_ies.ptr =
 				qdf_mem_malloc(event->ies_len);
-		if (cache_sta_info->assoc_req_ies.data) {
-			qdf_mem_copy(cache_sta_info->assoc_req_ies.data,
+		if (cache_sta_info->assoc_req_ies.ptr) {
+			qdf_mem_copy(cache_sta_info->assoc_req_ies.ptr,
 				     event->ies, event->ies_len);
 			cache_sta_info->assoc_req_ies.len = event->ies_len;
 		}

@@ -16208,7 +16208,7 @@ QDF_STATUS sme_set_disconnect_ies(mac_handle_t mac_handle, uint8_t vdev_id,
 {
 	struct mac_context *mac_ctx;
 	struct wlan_objmgr_vdev *vdev;
-	struct wlan_ies ie;
+	struct element_info ie;
 
 	if (!ie_data || !ie_len) {
 		sme_debug("Got NULL disconnect IEs");
@@ -16224,7 +16224,7 @@ QDF_STATUS sme_set_disconnect_ies(mac_handle_t mac_handle, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	ie.data = ie_data;
+	ie.ptr = ie_data;
 	ie.len = ie_len;
 
 	mlme_set_self_disconnect_ies(vdev, &ie);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1319,7 +1319,7 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 
 	if (stainfo->assoc_req_ies.len) {
 		if (nla_put(skb, ASSOC_REQ_IES, stainfo->assoc_req_ies.len,
-			    stainfo->assoc_req_ies.data)) {
+			    stainfo->assoc_req_ies.ptr)) {
 			hdd_err("Failed to put assoc req IEs");
 			goto fail;
 		}

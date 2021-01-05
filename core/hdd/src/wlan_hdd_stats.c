@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4491,7 +4491,7 @@ static void wlan_hdd_fill_station_info(struct wlan_objmgr_psoc *psoc,
 	hdd_fill_rate_info(psoc, sinfo, stainfo, stats);
 
 	/* assoc req ies */
-	sinfo->assoc_req_ies = stainfo->assoc_req_ies.data;
+	sinfo->assoc_req_ies = stainfo->assoc_req_ies.ptr;
 	sinfo->assoc_req_ies_len = stainfo->assoc_req_ies.len;
 
 	/* dump sta info*/

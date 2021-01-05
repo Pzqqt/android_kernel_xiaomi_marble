@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -282,7 +282,7 @@ struct hdd_station_info {
 	uint32_t tx_retry_fw;
 	uint32_t tx_retry_exhaust_fw;
 	uint32_t rx_fcs_count;
-	struct wlan_ies assoc_req_ies;
+	struct element_info assoc_req_ies;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_cnt_dbgid[STA_INFO_ID_MAX];
 	unsigned long pending_eap_frm_type;

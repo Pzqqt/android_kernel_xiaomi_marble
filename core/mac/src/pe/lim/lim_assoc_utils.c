@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4386,7 +4386,7 @@ void lim_extract_ies_from_deauth_disassoc(struct pe_session *session,
 					  uint16_t deauth_disassoc_frame_len)
 {
 	uint16_t reason_code, ie_offset;
-	struct wlan_ies ie;
+	struct element_info ie;
 
 	if (!session) {
 		pe_err("NULL session");
@@ -4399,7 +4399,7 @@ void lim_extract_ies_from_deauth_disassoc(struct pe_session *session,
 	if (!deauth_disassoc_frame || deauth_disassoc_frame_len <= ie_offset)
 		return;
 
-	ie.data = deauth_disassoc_frame + ie_offset;
+	ie.ptr = deauth_disassoc_frame + ie_offset;
 	ie.len = deauth_disassoc_frame_len - ie_offset;
 
 	mlme_set_peer_disconnect_ies(session->vdev, &ie);

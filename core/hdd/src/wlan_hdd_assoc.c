@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1778,7 +1778,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	bool send_discon_ind = true;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-	struct wlan_ies disconnect_ies = {0};
+	struct element_info disconnect_ies = {0};
 	bool from_ap = false;
 	uint32_t reason_code = 0;
 	struct wlan_objmgr_vdev *vdev;
@@ -1831,8 +1831,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		int reason = WLAN_REASON_UNSPECIFIED;
 
 		if (roam_info && roam_info->disconnect_ies) {
-			disconnect_ies.data =
-				roam_info->disconnect_ies->data;
+			disconnect_ies.ptr =
+				roam_info->disconnect_ies->ptr;
 			disconnect_ies.len =
 				roam_info->disconnect_ies->len;
 		}
@@ -1853,7 +1853,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		wlan_hdd_cfg80211_indicate_disconnect(
 						adapter, !from_ap,
 						reason_code,
-						disconnect_ies.data,
+						disconnect_ies.ptr,
 						disconnect_ies.len);
 	}
 

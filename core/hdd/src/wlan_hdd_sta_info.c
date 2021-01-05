@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -253,8 +253,8 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 
 	qdf_copy_macaddr(&addr, &info->sta_mac);
 	if (info->assoc_req_ies.len) {
-		qdf_mem_free(info->assoc_req_ies.data);
-		info->assoc_req_ies.data = NULL;
+		qdf_mem_free(info->assoc_req_ies.ptr);
+		info->assoc_req_ies.ptr = NULL;
 		info->assoc_req_ies.len = 0;
 	}
 

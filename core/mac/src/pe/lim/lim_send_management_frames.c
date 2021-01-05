@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3435,11 +3435,11 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
  */
 static void
 lim_append_ies_to_frame(uint8_t *frame, uint32_t *frame_len,
-			struct wlan_ies *ie)
+			struct element_info *ie)
 {
-	if (!ie || !ie->len || !ie->data)
+	if (!ie || !ie->len || !ie->ptr)
 		return;
-	qdf_mem_copy(frame, ie->data, ie->len);
+	qdf_mem_copy(frame, ie->ptr, ie->len);
 	*frame_len += ie->len;
 	pe_debug("Appended IEs len: %u", ie->len);
 }
@@ -3474,7 +3474,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	uint8_t txFlag = 0;
 	uint32_t val = 0;
 	uint8_t smeSessionId = 0;
-	struct wlan_ies *discon_ie;
+	struct element_info *discon_ie;
 
 	if (!pe_session) {
 		return;
@@ -3675,7 +3675,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 	tpDphHashNode sta;
 #endif
 	uint8_t smeSessionId = 0;
-	struct wlan_ies *discon_ie;
+	struct element_info *discon_ie;
 
 	if (!pe_session) {
 		return;
@@ -5726,16 +5726,16 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		return;
 	}
 
-	if (sae_retry->sae_auth.data)
+	if (sae_retry->sae_auth.ptr)
 		lim_sae_auth_cleanup_retry(mac_ctx, vdev_id);
 
-	sae_retry->sae_auth.data = qdf_mem_malloc(frame_len);
-	if (!sae_retry->sae_auth.data)
+	sae_retry->sae_auth.ptr = qdf_mem_malloc(frame_len);
+	if (!sae_retry->sae_auth.ptr)
 		return;
 
 	pe_debug("SAE auth frame queued vdev_id %d seq_num %d",
 		 vdev_id, mac_ctx->mgmtSeqNum);
-	qdf_mem_copy(sae_retry->sae_auth.data, frame, frame_len);
+	qdf_mem_copy(sae_retry->sae_auth.ptr, frame, frame_len);
 	mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId =
 					session->peSessionId;
 	sae_retry->sae_auth.len = frame_len;

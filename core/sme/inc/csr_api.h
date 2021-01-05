@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1059,7 +1059,7 @@ struct csr_roam_info {
 #endif
 	struct assoc_ind *owe_pending_assoc_ind;
 	uint16_t roam_reason;
-	struct wlan_ies *disconnect_ies;
+	struct element_info *disconnect_ies;
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {

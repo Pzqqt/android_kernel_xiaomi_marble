@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -451,9 +451,9 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 
 	sae_retry = mlme_get_sae_auth_retry(pe_session->vdev);
 	if (LIM_IS_STA_ROLE(pe_session) && sae_retry &&
-	    sae_retry->sae_auth.data) {
+	    sae_retry->sae_auth.ptr) {
 		if (lim_is_sae_auth_algo_match(
-		    sae_retry->sae_auth.data, sae_retry->sae_auth.len,
+		    sae_retry->sae_auth.ptr, sae_retry->sae_auth.len,
 		     rx_pkt_info))
 			lim_sae_auth_cleanup_retry(mac_ctx,
 						   pe_session->vdev_id);

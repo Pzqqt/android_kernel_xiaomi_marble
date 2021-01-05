@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1681,7 +1681,7 @@ static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 	struct sae_auth_retry *sae_retry;
 
 	sae_retry = mlme_get_sae_auth_retry(session_entry->vdev);
-	if (!(sae_retry && sae_retry->sae_auth.data)) {
+	if (!(sae_retry && sae_retry->sae_auth.ptr)) {
 		pe_debug("sae auth frame is not buffered vdev id %d",
 			 session_entry->vdev_id);
 		return;
@@ -1690,7 +1690,7 @@ static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 	pe_debug("retry sae auth for seq num %d vdev id %d",
 		 mac_ctx->mgmtSeqNum, session_entry->vdev_id);
 	lim_send_frame(mac_ctx, session_entry->vdev_id,
-		       sae_retry->sae_auth.data, sae_retry->sae_auth.len);
+		       sae_retry->sae_auth.ptr, sae_retry->sae_auth.len);
 
 	sae_retry->sae_auth_max_retry--;
 	/* Activate Auth Retry timer if max_retries are not done */

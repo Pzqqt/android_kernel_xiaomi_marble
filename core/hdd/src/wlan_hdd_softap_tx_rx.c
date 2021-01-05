@@ -916,8 +916,8 @@ hdd_reset_sta_info_during_reattach(struct hdd_station_info *sta_info)
 	sta_info->rx_mc_bc_cnt = 0;
 
 	if (sta_info->assoc_req_ies.len) {
-		qdf_mem_free(sta_info->assoc_req_ies.data);
-		sta_info->assoc_req_ies.data = NULL;
+		qdf_mem_free(sta_info->assoc_req_ies.ptr);
+		sta_info->assoc_req_ies.ptr = NULL;
 		sta_info->assoc_req_ies.len = 0;
 	}
 
