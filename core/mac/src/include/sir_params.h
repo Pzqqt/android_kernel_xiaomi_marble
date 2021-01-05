@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,7 +83,6 @@ typedef enum {
  * MCC - indicate MCC
  * P2P - indicate P2P
  * DOT11AC - indicate 11AC
- * SLM_SESSIONIZATION - indicate SLM_SESSIONIZATION
  * DOT11AC_OPMODE - indicate 11ac opmode
  * SAP32STA - indicate SAP32STA
  * TDLS - indicate TDLS
@@ -108,7 +107,6 @@ enum cap_bitmap {
 	MCC = 0,
 	P2P = 1,
 	DOT11AC = 2,
-	SLM_SESSIONIZATION = 3,
 	DOT11AC_OPMODE = 4,
 	SAP32STA = 5,
 	TDLS = 6,

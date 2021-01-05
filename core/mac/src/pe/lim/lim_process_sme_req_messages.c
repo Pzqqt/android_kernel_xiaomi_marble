@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1489,9 +1489,9 @@ lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
 					      &req->req.vdev_id);
 	if (!pe_session) {
-		pe_err("Session not found for vdev_id %d, cm_id %d, bssid",
+		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid"
 		       QDF_MAC_ADDR_FMT, req->cm_id, req->req.vdev_id,
-		       req->req.bssid.bytes);
+		       QDF_MAC_ADDR_REF(req->req.bssid.bytes));
 		lim_cm_send_disconnect_rsp(mac_ctx, req->req.vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}

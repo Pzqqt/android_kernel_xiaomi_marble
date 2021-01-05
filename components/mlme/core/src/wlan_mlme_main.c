@@ -2678,6 +2678,63 @@ void mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
+enum QDF_OPMODE wlan_get_opmode_from_vdev_id(struct wlan_objmgr_pdev *pdev,
+					     uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE opmode = QDF_MAX_NO_OF_MODE;
+
+	if (!pdev)
+		return opmode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return opmode;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return opmode;
+}
+
+qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev)
+{
+	qdf_freq_t chan_freq = 0;
+	struct wlan_channel *chan;
+
+	if (!vdev)
+		return chan_freq;
+
+	if (wlan_vdev_mlme_is_active(vdev) != QDF_STATUS_SUCCESS)
+		return chan_freq;
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	if (chan)
+		chan_freq = chan->ch_freq;
+
+	return chan_freq;
+}
+
+qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
+						uint8_t vdev_id)
+{
+	qdf_freq_t chan_freq = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!pdev)
+		return chan_freq;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return chan_freq;
+	chan_freq = wlan_get_operation_chan_freq(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return chan_freq;
+}
+
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static
 const char *mlme_roam_state_to_string(enum roam_offload_state state)

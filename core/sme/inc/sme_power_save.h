@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,7 +88,6 @@ struct ps_params {
  */
 struct ps_global_info {
 	struct ps_params ps_params[WLAN_MAX_VDEVS];
-	bool remain_in_power_active_till_dhcp;
 };
 
 /**

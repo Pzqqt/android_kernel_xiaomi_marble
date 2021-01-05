@@ -190,7 +190,7 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
 	struct cm_vdev_disconnect_rsp *ind;
-	struct wlan_cm_discon_rsp resp = {0};
+	struct wlan_cm_discon_rsp resp;
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!msg || !msg->bodyptr)
@@ -205,6 +205,7 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	qdf_mem_zero(&resp, sizeof(resp));
 	if (!cm_get_active_disconnect_req(vdev, &resp.req)) {
 		qdf_mem_free(ind);
 		return QDF_STATUS_E_FAILURE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -607,8 +607,8 @@ void csr_roam_reset_roam_params(struct mac_context *mac_ctx)
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
-					    uint8_t vdev_id)
+void csr_roam_restore_default_config(struct mac_context *mac_ctx,
+				     uint8_t vdev_id)
 {
 	struct wlan_roam_triggers triggers;
 
@@ -620,11 +620,6 @@ static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 	wlan_cm_rso_set_roam_trigger(mac_ctx->pdev, vdev_id, &triggers);
 	sme_roam_control_restore_default_config(MAC_HANDLE(mac_ctx),
 						vdev_id);
-}
-#else
-static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
-					    uint8_t vdev_id)
-{
 }
 #endif
 
@@ -648,7 +643,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	tCsrRoamConnectedProfile *pPrevProfile =
 			&pNeighborRoamInfo->prevConnProfile;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	struct csr_roam_session *roam_session = NULL;
+	enum QDF_OPMODE opmode;
 
 	if (!pSession) {
 		sme_err("pSession is NULL");
@@ -667,12 +662,10 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	csr_roam_copy_connect_profile(mac, sessionId, pPrevProfile);
 
 	if (pSession) {
-		roam_session = &mac->roam.roamSession[sessionId];
-		if (pSession->pCurRoamProfile && (QDF_STA_MODE !=
-			roam_session->pCurRoamProfile->csrPersona)) {
-			sme_err("Ignore disconn ind rcvd from nonSTA persona sessionId: %d csrPersonna %d",
-				sessionId,
-				(int)roam_session->pCurRoamProfile->csrPersona);
+		opmode = wlan_get_opmode_from_vdev_id(mac->pdev, sessionId);
+		if (opmode != QDF_STA_MODE) {
+			sme_err("Ignore disconn ind rcvd from nonSTA persona vdev: %d opmode %d",
+				sessionId, opmode);
 			return QDF_STATUS_SUCCESS;
 		}
 #ifdef FEATURE_WLAN_ESE
@@ -904,10 +897,11 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 {
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
 		&mac->roam.neighborRoamInfo[session_id];
-	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 	struct csr_roam_info *roam_info;
 #endif
+	enum QDF_OPMODE opmode;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* if session id invalid then we need return failure */
@@ -919,13 +913,12 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	sme_debug("Connect ind, vdev id %d in state %s",
 		session_id, mac_trace_get_neighbour_roam_state(
 			ngbr_roam_info->neighborRoamState));
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, session_id);
 
-	/* Bail out if this is NOT a STA persona */
-	if (mac->roam.roamSession[session_id].pCurRoamProfile->csrPersona !=
-	QDF_STA_MODE) {
-		sme_debug("Ignoring Connect ind received from a non STA. session_id: %d, csrPersonna %d",
-			  session_id,
-			  (int)session->pCurRoamProfile->csrPersona);
+	/* Bail out if this is NOT a STA opmode */
+	if (opmode != QDF_STA_MODE) {
+		sme_debug("Ignoring Connect ind received from a non STA. vdev: %d, opmode %d",
+			  session_id, opmode);
 		return QDF_STATUS_SUCCESS;
 	}
 	/* if a concurrent session is running */
@@ -1394,10 +1387,13 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	if (roamable_ap_count) {
 		csr_neighbor_roam_trigger_handoff(mac_ctx, session_id);
 	} else {
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		status = csr_scan_for_ssid(mac_ctx, session_id, profile,
 					   roam_id, false);
 		if (status != QDF_STATUS_SUCCESS)
 			sme_err("SSID scan failed");
+#endif
 	}
 
 end:

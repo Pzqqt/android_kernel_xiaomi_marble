@@ -291,6 +291,7 @@ bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 	bool connected;
+	enum QDF_OPMODE opmode;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
 						    WLAN_MLME_CM_ID);
@@ -298,7 +299,11 @@ bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 		mlme_err("vdev_id: %d: vdev not found", vdev_id);
 		return false;
 	}
-
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
 	connected = cm_is_vdev_connected(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 

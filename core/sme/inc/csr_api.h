@@ -478,8 +478,10 @@ typedef enum {
 typedef enum {
 	/* Not associated in Infra or participating in an Ad-hoc */
 	eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED,
+#ifndef FEATURE_CM_ENABLE
 	/* Associated in an Infrastructure network. */
 	eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED,
+#endif
 	/* Participating in WDS network in AP/STA mode but not connected yet */
 	eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED,
 	/* Participating in a WDS network and connected peer to peer */
@@ -488,8 +490,6 @@ typedef enum {
 	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED,
 	/* Participating in a Infra network and connected to a peer */
 	eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED,
-	/* Disconnecting with AP or stop connecting process */
-	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING,
 	/* NAN Data interface not started */
 	eCSR_CONNECT_STATE_TYPE_NDI_NOT_STARTED,
 	/* NAN Data interface started */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5353,9 +5353,9 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	enum qca_wlan_ac_type ac, ac_index;
 	struct sme_qos_searchinfo search_key;
 	struct sme_qos_searchinfo search_key1;
-	struct csr_roam_session *csr_session;
 	uint8_t tspec_pending;
 	tListElem *pEntry = NULL;
+	enum QDF_OPMODE opmode;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	enum sme_qos_wmmuptype up =
 		(enum sme_qos_wmmuptype) pRsp->tspec.tsinfo.traffic.userPrio;
@@ -5578,9 +5578,8 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	sme_qos_state_transition(sessionId, ac, SME_QOS_QOS_ON);
 
 	/* Inform this TSPEC IE change to FW */
-	csr_session = CSR_GET_SESSION(mac, sessionId);
-	if ((csr_session) && (csr_session->pCurRoamProfile) &&
-	    (csr_session->pCurRoamProfile->csrPersona == QDF_STA_MODE))
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, sessionId);
+	if (opmode == QDF_STA_MODE)
 		csr_roam_update_cfg(mac, sessionId,
 				    REASON_CONNECT_IES_CHANGED);
 

@@ -350,12 +350,6 @@ struct csr_config {
 	uint8_t fAllowMCCGODiffBI;
 	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
 	bool nRoamScanControl;
-
-	/*
-	 * Remove this code once SLM_Sessionization is supported
-	 * BMPS_WORKAROUND_NOT_NEEDED
-	 */
-	bool doBMPSWorkaround;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -426,7 +420,9 @@ struct csr_scanstruct {
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
 	bool pending_channel_list_req;
+#ifndef FEATURE_CM_ENABLE
 	wlan_scan_requester requester_id;
+#endif
 };
 
 /*
@@ -597,8 +593,10 @@ struct csr_roam_session {
 	struct pmkid_mode_bits pmkid_modes;
 #endif
 	tftSMEContext ftSmeContext;
+#ifndef FEATURE_CM_ENABLE
 	/* This count represents the number of bssid's we try to join. */
 	uint8_t join_bssid_count;
+#endif
 	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
 	bool supported_nss_1x1;
@@ -612,8 +610,10 @@ struct csr_roam_session {
 	uint8_t uapsd_mask;
 	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;
+#ifndef FEATURE_CM_ENABLE
 	bool is_fils_connection;
 	uint16_t fils_seq_num;
+#endif
 	bool discon_in_progress;
 	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
@@ -851,7 +851,7 @@ QDF_STATUS csr_get_modify_profile_fields(struct mac_context *mac,
 void csr_set_global_cfgs(struct mac_context *mac);
 void csr_set_default_dot11_mode(struct mac_context *mac);
 bool csr_is_conn_state_disconnected(struct mac_context *mac,
-						   uint32_t sessionId);
+				    uint8_t vdev_id);
 bool csr_is_conn_state_connected(struct mac_context *mac,
 					       uint32_t sessionId);
 #ifndef FEATURE_CM_ENABLE
@@ -901,19 +901,6 @@ void csr_set_cfg_privacy(struct mac_context *mac,
 			 bool fPrivacy);
 
 /**
- * csr_get_operation_chan_freq() - get operating chan freq of
- * given vdev id
- * @mac_ctx: Pointer to mac context
- * @vdev: vdev
- * @vdev_id: vdev id
- *
- * Return: chan freq of given vdev id
- */
-qdf_freq_t csr_get_operation_chan_freq(struct mac_context *mac,
-				       struct wlan_objmgr_vdev *vdev,
-				       uint8_t vdev_id);
-
-/**
  * csr_get_concurrent_operation_freq() - To get concurrent operating freq
  * @mac_ctx: Pointer to mac context
  *
@@ -948,7 +935,6 @@ uint16_t csr_check_concurrent_channel_overlap(
 #endif
 QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
 		uint32_t sessionId, tCsrRoamConnectedProfile *pProfile);
-bool csr_is_set_key_allowed(struct mac_context *mac, uint32_t sessionId);
 
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId);
@@ -964,8 +950,7 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 #endif
 
 /* Returns whether "Legacy Fast Roaming" is enabled...or not */
-bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,
-						uint32_t sessionId);
+bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
 bool csr_is_channel_present_in_list(uint32_t *pChannelList,
@@ -986,7 +971,7 @@ static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);
-bool csr_roam_is_sta_mode(struct mac_context *mac, uint32_t sessionId);
+bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id);
 
 /* Post Channel Change Indication */
 QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
@@ -1097,8 +1082,7 @@ void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx);
 
 bool csr_wait_for_connection_update(struct mac_context *mac,
 		bool do_release_reacquire_lock);
-enum QDF_OPMODE csr_get_session_persona(struct mac_context *pmac,
-					uint32_t session_id);
+
 void csr_roam_substate_change(
 			struct mac_context *mac, enum csr_roam_substate
 					NewSubstate, uint32_t sessionId);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -160,6 +160,16 @@ typedef struct sCsrNeighborRoamControlInfo {
 /* All the necessary Function declarations are here */
 QDF_STATUS csr_neighbor_roam_indicate_connect(struct mac_context *mac,
 		uint8_t sessionId, QDF_STATUS status);
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void csr_roam_restore_default_config(struct mac_context *mac_ctx,
+				     uint8_t vdev_id);
+#else
+static inline void csr_roam_restore_default_config(struct mac_context *mac_ctx,
+						   uint8_t vdev_id)
+{
+}
+#endif
+
 QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 		uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId);

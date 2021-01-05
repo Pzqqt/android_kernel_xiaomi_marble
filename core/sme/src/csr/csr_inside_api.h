@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,15 +46,19 @@
 extern uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE];
 bool csr_is_supported_channel(struct mac_context *mac, uint32_t chan_freq);
 
+#ifndef FEATURE_CM_ENABLE
 enum csr_scancomplete_nextcommand {
 	eCsrNextScanNothing,
 	eCsrNexteScanForSsidSuccess,
 	eCsrNexteScanForSsidFailure,
 	eCsrNextCheckAllowConc,
 };
+#endif
 
 enum csr_roamcomplete_result {
+#ifndef FEATURE_CM_ENABLE
 	eCsrJoinSuccess,
+#endif
 	eCsrJoinFailure,
 	eCsrReassocSuccess,
 	eCsrReassocFailure,
@@ -131,8 +135,11 @@ enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
 void csr_roaming_state_msg_processor(struct mac_context *mac, void *msg_buf);
 void csr_roam_joined_state_msg_processor(struct mac_context *mac,
 					 void *msg_buf);
+
+#ifndef FEATURE_CM_ENABLE
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 				struct scan_event *event, void *arg);
+#endif
 void csr_release_command_roam(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_release_command_wm_status_change(struct mac_context *mac,
 					  tSmeCmd *pCommand);
@@ -155,9 +162,11 @@ bool
 csr_scan_append_bss_description(struct mac_context *mac,
 				struct bss_description *pSirBssDescription);
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_scan_for_ssid(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile, uint32_t roamId,
 			     bool notify);
+#endif
 /**
  * csr_scan_abort_mac_scan() - Generic API to abort scan request
  * @mac: pointer to pmac
@@ -260,10 +269,12 @@ void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t session
 				       tSmeCmd *pCommand,
 				       enum csr_roam_reason eRoamReason);
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				 struct bss_description *pBssDescription,
 				 struct csr_roam_profile *pProfile,
 				 tDot11fBeaconIEs *pIes, uint16_t messageType);
+#endif
 QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac, uint32_t sessionId,
 					tSirMacAddr bssId, uint16_t reasonCode);
 QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac, uint32_t sessionId,
@@ -676,6 +687,7 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 
 /* /////////////////////////////////////////Common Scan ends */
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * csr_connect_security_valid_for_6ghz() - check if profile is vlid fro 6Ghz
  * @psoc: psoc pointer
@@ -697,7 +709,7 @@ csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 #endif
-
+#endif
 /*
  * csr_roam_connect() -
  * To inititiate an association
@@ -970,12 +982,15 @@ QDF_STATUS csr_sta_continue_csa(struct mac_context *mac_ctx,
 QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 			       ePhyChanBondState cbMode, bool obssEnabled);
 #endif
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 					   uint32_t session_id);
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac,
 		uint32_t session_id);
 void csr_saved_scan_cmd_free_fields(struct mac_context *mac_ctx,
 				    struct csr_roam_session *session);
+#endif
+
 struct bss_description*
 csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 
@@ -1084,6 +1099,8 @@ static inline void csr_update_session_he_cap(struct mac_context *mac_ctx,
 {
 }
 #endif
+
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_get_channel_for_hw_mode_change() - This function to find
  *                                       out if HW mode change
@@ -1127,6 +1144,8 @@ uint32_t
 csr_scan_get_channel_for_hw_mode_change(
 	struct mac_context *mac_ctx, uint32_t session_id,
 	struct csr_roam_profile *profile);
+#endif
+
 /**
  * csr_setup_vdev_session() - API to setup vdev mac session
  * @vdev_mlme: vdev mlme private object

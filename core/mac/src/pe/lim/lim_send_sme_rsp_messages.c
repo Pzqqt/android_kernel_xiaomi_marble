@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1069,6 +1069,22 @@ void lim_cm_send_disconnect_rsp(struct mac_context *mac_ctx, uint8_t vdev_id)
 	}
 }
 
+static void lim_sap_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
+						 QDF_STATUS status,
+						 uint32_t *pCtx)
+{
+	struct scheduler_msg mmhMsg = {0};
+	struct scheduler_msg *pMsg = (struct scheduler_msg *)pCtx;
+
+	mmhMsg.type = pMsg->type;
+	mmhMsg.bodyptr = pMsg;
+	mmhMsg.bodyval = 0;
+
+	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION, mmhMsg.type));
+
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
+}
+
 void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
 				      QDF_STATUS status, uint32_t *pCtx)
 {
@@ -1077,28 +1093,36 @@ void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
 	struct deauth_rsp *deauth;
 	struct sir_sme_discon_done_ind *discon;
 	uint8_t vdev_id;
+	enum QDF_OPMODE opmode;
 
 	switch (msg->type) {
 	case eWNI_SME_DISASSOC_RSP:
-		disassoc = (struct disassoc_rsp *)msg->bodyptr;
+		disassoc = (struct disassoc_rsp *)pCtx;
 		vdev_id = disassoc->sessionId;
 		break;
 	case eWNI_SME_DEAUTH_RSP:
-		deauth = (struct deauth_rsp *)msg->bodyptr;
+		deauth = (struct deauth_rsp *)pCtx;
 		vdev_id = deauth->sessionId;
 		break;
 	case eWNI_SME_DISCONNECT_DONE_IND:
-		discon = (struct sir_sme_discon_done_ind *)msg->bodyptr;
+		discon = (struct sir_sme_discon_done_ind *)pCtx;
 		vdev_id = discon->session_id;
 		break;
 	default:
 		pe_err("Received invalid disconnect rsp type %d", msg->type);
-		qdf_mem_free(msg->bodyptr);
+		qdf_mem_free(pCtx);
 		return;
 	}
 
-	lim_cm_send_disconnect_rsp(mac, vdev_id);
-	qdf_mem_free(msg->bodyptr);
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, vdev_id);
+	/* Use connection manager for STA and CLI */
+	if (opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE) {
+		qdf_mem_free(pCtx);
+		lim_cm_send_disconnect_rsp(mac, vdev_id);
+		return;
+	}
+
+	lim_sap_send_sme_disassoc_deauth_ntf(mac, status, pCtx);
 }
 #else
 static void lim_send_sta_disconnect_ind(struct mac_context *mac,
@@ -1139,8 +1163,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 	uint16_t i, assoc_id;
 	tpDphHashNode sta_ds = NULL;
 	QDF_STATUS status;
-	struct wlan_objmgr_vdev *vdev;
-	enum QDF_OPMODE opmode = QDF_MAX_NO_OF_MODE;
+	enum QDF_OPMODE opmode;
 
 	pe_debug("Disassoc Ntf with trigger : %d reasonCode: %d",
 		disassocTrigger, reasonCode);
@@ -1264,12 +1287,7 @@ error:
 	if (failure)
 		return;
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, smesessionId,
-						    WLAN_LEGACY_MAC_ID);
-	if (vdev) {
-		opmode = wlan_vdev_mlme_get_opmode(vdev);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-	}
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, smesessionId);
 	if ((opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE) &&
 	    pSirSmeDisassocInd &&
 	    pSirSmeDisassocInd->messageType == eWNI_SME_DISASSOC_IND) {
@@ -1560,8 +1578,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	uint8_t sessionId;
 	uint32_t *pMsg = NULL;
 	QDF_STATUS status;
-	struct wlan_objmgr_vdev *vdev;
-	enum QDF_OPMODE opmode = QDF_MAX_NO_OF_MODE;
+	enum QDF_OPMODE opmode;
 
 	pe_session = pe_find_session_by_bssid(mac, peerMacAddr, &sessionId);
 	switch (deauthTrigger) {
@@ -1637,12 +1654,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	if (pe_session && LIM_IS_STA_ROLE(pe_session))
 		pe_delete_session(mac, pe_session);
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, smesessionId,
-						    WLAN_LEGACY_MAC_ID);
-	if (vdev) {
-		opmode = wlan_vdev_mlme_get_opmode(vdev);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-	}
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, smesessionId);
 	if ((opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE) &&
 	    pSirSmeDeauthInd &&
 	    pSirSmeDeauthInd->messageType == eWNI_SME_DEAUTH_IND) {

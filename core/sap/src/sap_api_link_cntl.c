@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -884,12 +884,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 					     eSAP_STA_SET_KEY_EVENT,
 					     (void *) eSAP_STATUS_FAILURE);
 		break;
-	case eCSR_ROAM_ASSOCIATION_COMPLETION:
-		if (roam_result == eCSR_ROAM_RESULT_FAILURE)
-			sap_signal_hdd_event(sap_ctx, csr_roam_info,
-					     eSAP_STA_REASSOC_EVENT,
-					     (void *) eSAP_STATUS_FAILURE);
-		break;
 	case eCSR_ROAM_DISASSOCIATED:
 		if (roam_result == eCSR_ROAM_RESULT_MIC_FAILURE)
 			sap_signal_hdd_event(sap_ctx, csr_roam_info,
@@ -1091,12 +1085,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 				  (void *) eSAP_STATUS_SUCCESS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			qdf_ret_status = QDF_STATUS_E_FAILURE;
-		break;
-	case eCSR_ROAM_RESULT_ASSOCIATED:
-		/* Fill in the event structure */
-		sap_signal_hdd_event(sap_ctx, csr_roam_info,
-				     eSAP_STA_REASSOC_EVENT,
-				     (void *) eSAP_STATUS_SUCCESS);
 		break;
 	case eCSR_ROAM_RESULT_INFRA_STARTED:
 		if (!csr_roam_info) {

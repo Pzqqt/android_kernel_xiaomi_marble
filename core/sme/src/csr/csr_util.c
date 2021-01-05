@@ -699,48 +699,20 @@ bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 	return false;
 }
 
-qdf_freq_t csr_get_operation_chan_freq(struct mac_context *mac,
-				       struct wlan_objmgr_vdev *vdev,
-				       uint8_t vdev_id)
-{
-	qdf_freq_t chan_freq = 0;
-	struct wlan_channel *chan;
-
-	if (!CSR_IS_SESSION_VALID(mac, vdev_id))
-		return chan_freq;
-
-	if (wlan_vdev_mlme_is_active(vdev) != QDF_STATUS_SUCCESS)
-		return chan_freq;
-
-	chan = wlan_vdev_get_active_channel(vdev);
-	if (chan)
-		chan_freq = chan->ch_freq;
-
-	return chan_freq;
-}
-
 qdf_freq_t csr_get_concurrent_operation_freq(struct mac_context *mac_ctx)
 {
 	uint8_t i = 0;
 	qdf_freq_t freq;
-	struct wlan_objmgr_vdev *vdev;
 	enum QDF_OPMODE op_mode;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
-		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
-							    i,
-							    WLAN_LEGACY_MAC_ID);
-		if (!vdev)
-			continue;
-		op_mode = wlan_vdev_mlme_get_opmode(vdev);
+		op_mode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, i);
 		/* check only for STA, CLI, GO and SAP */
 		if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE &&
-		    op_mode != QDF_P2P_GO_MODE && op_mode != QDF_SAP_MODE) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		    op_mode != QDF_P2P_GO_MODE && op_mode != QDF_SAP_MODE)
 			continue;
-		}
-		freq = csr_get_operation_chan_freq(mac_ctx, vdev, i);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+		freq = wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev, i);
 		if (!freq)
 			continue;
 
@@ -763,9 +735,7 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
 		session = CSR_GET_SESSION(mac_ctx, i);
-		if (!session->pCurRoamProfile)
-			continue;
-		persona = session->pCurRoamProfile->csrPersona;
+		persona = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, i);
 		if (((persona == QDF_P2P_GO_MODE) ||
 		     (persona == QDF_SAP_MODE)) &&
 		     (session->connectState !=
@@ -950,6 +920,7 @@ static void csr_calc_chb_for_sap_phymode(struct mac_context *mac_ctx,
  * @intf_ch_freq: concurrent SAP/GO operating channel frequency
  * @intf_hbw: concurrent SAP/GO half bw
  * @intf_cfreq: concurrent SAP/GO channel frequency
+ * @op_mode: opmode
  *
  * This routine is called to check if one SAP/GO channel is overlapping with
  * other SAP/GO channel
@@ -961,11 +932,12 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(
 		struct csr_roam_session *session,
 		uint32_t *sap_ch_freq, uint32_t *sap_hbw, uint32_t *sap_cfreq,
 		uint32_t *intf_ch_freq, uint32_t *intf_hbw,
-		uint32_t *intf_cfreq)
+		uint32_t *intf_cfreq, enum QDF_OPMODE op_mode)
 {
 	uint32_t op_chan_freq;
 
-	op_chan_freq = session->connectedProfile.op_freq;
+	op_chan_freq = wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev,
+							    session->vdev_id);
 	/*
 	 * if conc_custom_rule1 is defined then we don't
 	 * want p2pgo to follow SAP's channel or SAP to
@@ -984,9 +956,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(
 					&session->connectedProfile.ht_profile,
 					*intf_ch_freq, intf_cfreq, intf_hbw);
 		}
-	} else if (*sap_ch_freq == 0 &&
-			(session->pCurRoamProfile->csrPersona ==
-					QDF_SAP_MODE)) {
+	} else if (*sap_ch_freq == 0 && op_mode == QDF_SAP_MODE) {
 		*sap_ch_freq = op_chan_freq;
 		csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
@@ -1016,6 +986,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	uint32_t sap_cfreq = 0;
 	uint32_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq;
 	QDF_STATUS status;
+	enum QDF_OPMODE op_mode;
 
 	if (mac_ctx->roam.configParam.cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_DISABLE)
@@ -1044,32 +1015,37 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			continue;
 
 		session = CSR_GET_SESSION(mac_ctx, i);
-		if (!session->pCurRoamProfile)
-			continue;
-		if (((session->pCurRoamProfile->csrPersona == QDF_STA_MODE) ||
-			(session->pCurRoamProfile->csrPersona ==
-				QDF_P2P_CLIENT_MODE)) &&
-			(session->connectState ==
-				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) {
-			intf_ch_freq = session->connectedProfile.op_freq;
+		op_mode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, i);
+		if ((op_mode == QDF_STA_MODE ||
+		     op_mode == QDF_P2P_CLIENT_MODE) &&
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		    cm_is_vdevid_connected(mac_ctx->pdev, i)
+#else
+		    (session->connectState ==
+		     eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
+#endif
+		    ) {
+			intf_ch_freq =
+			     wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev,
+								  i);
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.ht_profile,
 				intf_ch_freq, &intf_cfreq, &intf_hbw);
 			sme_debug("%d: intf_ch:%d intf_cfreq:%d intf_hbw:%d",
 				i, intf_ch_freq, intf_cfreq, intf_hbw);
-		} else if (((session->pCurRoamProfile->csrPersona ==
-					QDF_P2P_GO_MODE) ||
-				(session->pCurRoamProfile->csrPersona ==
-					QDF_SAP_MODE)) &&
-				(session->connectState !=
-					eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
+		} else if ((op_mode == QDF_P2P_GO_MODE ||
+			    op_mode == QDF_SAP_MODE) &&
+			   (session->connectState !=
+			     eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
+
 			if (session->ch_switch_in_progress)
 				continue;
 
 			csr_handle_conc_chnl_overlap_for_sap_go(mac_ctx,
 					session, &sap_ch_freq, &sap_hbw,
 					&sap_cfreq, &intf_ch_freq, &intf_hbw,
-					&intf_cfreq);
+					&intf_cfreq, op_mode);
 		}
 		if (intf_ch_freq &&
 		    ((intf_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
@@ -1157,24 +1133,21 @@ bool csr_is_all_session_disconnected(struct mac_context *mac)
 
 bool csr_is_concurrent_session_running(struct mac_context *mac)
 {
-	uint32_t sessionId, noOfCocurrentSession = 0;
-	eCsrConnectState connectState;
-
+	uint8_t vdev_id, noOfCocurrentSession = 0;
 	bool fRc = false;
 
-	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId)) {
-			connectState =
-				mac->roam.roamSession[sessionId].connectState;
-			if ((eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED ==
-			     connectState)
-			    || (eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED ==
-				connectState)
-			    || (eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED ==
-				connectState)) {
-				++noOfCocurrentSession;
-			}
-		}
+	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
+		if (!CSR_IS_SESSION_VALID(mac, vdev_id))
+			continue;
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		if (csr_is_conn_state_connected_infra_ap(mac, vdev_id) ||
+		    cm_is_vdevid_connected(mac->pdev, vdev_id))
+#else
+		if (csr_is_conn_state_connected_infra_ap(mac, vdev_id) ||
+		    csr_is_conn_state_connected_infra(mac, vdev_id))
+#endif
+			++noOfCocurrentSession;
 	}
 
 	/* More than one session is Up and Running */
@@ -1201,11 +1174,26 @@ bool csr_is_infra_ap_started(struct mac_context *mac)
 
 }
 
-bool csr_is_conn_state_disconnected(struct mac_context *mac, uint32_t sessionId)
+#ifdef FEATURE_CM_ENABLE
+bool csr_is_conn_state_disconnected(struct mac_context *mac, uint8_t vdev_id)
+{
+	enum QDF_OPMODE opmode;
+
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, vdev_id);
+
+	if (opmode == QDF_STA_MODE || opmode == QDF_P2P_CLIENT_MODE)
+		return !cm_is_vdevid_connected(mac->pdev, vdev_id);
+
+	return eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED ==
+	       mac->roam.roamSession[vdev_id].connectState;
+}
+#else
+bool csr_is_conn_state_disconnected(struct mac_context *mac, uint8_t vdev_id)
 {
 	return eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED ==
-	       mac->roam.roamSession[sessionId].connectState;
+	       mac->roam.roamSession[vdev_id].connectState;
 }
+#endif
 
 /**
  * csr_is_valid_mc_concurrent_session() - To check concurren session is valid
@@ -1222,6 +1210,7 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 		struct bss_description *bss_descr)
 {
 	struct csr_roam_session *pSession = NULL;
+	enum QDF_OPMODE opmode;
 
 	/* Check for MCC support */
 	if (!mac_ctx->roam.configParam.fenableMCCMode)
@@ -1230,13 +1219,12 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 		return false;
 	/* Validate BeaconInterval */
 	pSession = CSR_GET_SESSION(mac_ctx, session_id);
-	if (!pSession->pCurRoamProfile)
-		return false;
+	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
 	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(
 				mac_ctx,
 				bss_descr->chan_freq,
 				&bss_descr->beaconInterval, session_id,
-				pSession->pCurRoamProfile->csrPersona))
+				opmode))
 		return true;
 	return false;
 }
@@ -2310,14 +2298,14 @@ static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
 		QDF_STATUS *status)
 {
 	struct csr_roam_session *roamsession;
+	enum QDF_OPMODE opmode;
 
+	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
 	roamsession = &mac_ctx->roam.roamSession[session_id];
-	if (roamsession->pCurRoamProfile &&
-		(roamsession->pCurRoamProfile->csrPersona ==
-			 QDF_STA_MODE)) {
+	if (opmode == QDF_STA_MODE) {
 		/* check for P2P client mode */
 		sme_debug("Ignore Beacon Interval Validation...");
-	} else if (roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE) {
+	} else if (opmode == QDF_P2P_GO_MODE) {
 		/* Check for P2P go scenario */
 		if (roamsession->bssParams.operation_chan_freq != ch_freq &&
 		    roamsession->bssParams.beaconInterval != *bcn_interval) {
@@ -2350,15 +2338,13 @@ static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
 	struct csr_config *cfg_param;
 	tCsrRoamConnectedProfile *conn_profile;
 	uint16_t new_bcn_interval;
+	enum QDF_OPMODE opmode;
 
 	roamsession = &mac_ctx->roam.roamSession[session_id];
 	cfg_param = &mac_ctx->roam.configParam;
 	conn_profile = &roamsession->connectedProfile;
-	if (roamsession->pCurRoamProfile &&
-		((roamsession->pCurRoamProfile->csrPersona ==
-			  QDF_P2P_CLIENT_MODE) ||
-		(roamsession->pCurRoamProfile->csrPersona ==
-			  QDF_STA_MODE))) {
+	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
+	if (opmode == QDF_P2P_CLIENT_MODE || opmode == QDF_STA_MODE) {
 		/* check for P2P_client scenario */
 		if ((conn_profile->op_freq == 0) &&
 		    (conn_profile->beaconInterval == 0))
@@ -2418,18 +2404,18 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 	struct csr_roam_session *roamsession;
 	struct csr_config *cfg_param;
 	uint16_t new_bcn_interval;
+	enum QDF_OPMODE opmode;
 
 	roamsession = &mac_ctx->roam.roamSession[session_id];
 	cfg_param = &mac_ctx->roam.configParam;
 
-	if (roamsession->pCurRoamProfile &&
-		(roamsession->pCurRoamProfile->csrPersona ==
-				QDF_P2P_CLIENT_MODE)) {
+	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
+	if (opmode == QDF_P2P_CLIENT_MODE) {
 		/* check for P2P client mode */
 		sme_debug("Bcn Intrvl validation not require for STA/CLIENT");
 		return false;
 	}
-	if (roamsession->bssParams.bssPersona == QDF_SAP_MODE &&
+	if (opmode == QDF_SAP_MODE &&
 	    roamsession->bssParams.operation_chan_freq != ch_freq) {
 		/*
 		 * IF SAP has started and STA wants to connect
@@ -2447,7 +2433,7 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 	 * beacon interval,
 	 * change the BI of the P2P-GO
 	 */
-	if (roamsession->bssParams.bssPersona == QDF_P2P_GO_MODE &&
+	if (opmode == QDF_P2P_GO_MODE &&
 	    roamsession->bssParams.operation_chan_freq != ch_freq &&
 	    roamsession->bssParams.beaconInterval != *bcn_interval) {
 		/* if GO in MCC support diff beacon interval, return success */
@@ -3803,35 +3789,6 @@ QDF_STATUS csr_set_modify_profile_fields(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-
-bool csr_is_set_key_allowed(struct mac_context *mac, uint32_t sessionId)
-{
-	bool fRet = true;
-	struct csr_roam_session *pSession;
-
-	pSession = CSR_GET_SESSION(mac, sessionId);
-
-	/*
-	 * This condition is not working for infra state. When infra is in
-	 * not-connected state the pSession->pCurRoamProfile is NULL, this
-	 * function returns true, that is incorrect.
-	 * Since SAP requires to set key without any BSS started, it needs
-	 * this condition to be met. In other words, this function is useless.
-	 * The current work-around is to process setcontext_rsp no matter
-	 * what the state is.
-	 */
-	sme_debug("is not what it intends to. Must be revisit or removed");
-	if ((!pSession)
-	    || (csr_is_conn_state_disconnected(mac, sessionId)
-		&& (pSession->pCurRoamProfile)
-		&& (!(CSR_IS_INFRA_AP(pSession->pCurRoamProfile))))
-	    ) {
-		fRet = false;
-	}
-
-	return fRet;
-}
-
 /* no need to acquire lock for this basic function */
 uint16_t sme_chn_to_freq(uint8_t chanNum)
 {
@@ -3975,27 +3932,6 @@ bool csr_wait_for_connection_update(struct mac_context *mac,
 }
 
 /**
- * csr_get_session_persona() - get persona of a session
- * @pmac: pointer to global MAC context
- * @session_id: session id
- *
- * This function is to return the persona of a session
- *
- * Reture: enum QDF_OPMODE persona
- */
-enum QDF_OPMODE csr_get_session_persona(struct mac_context *pmac,
-					uint32_t session_id)
-{
-	struct csr_roam_session *session = NULL;
-
-	session = CSR_GET_SESSION(pmac, session_id);
-	if (!session || !session->pCurRoamProfile)
-		return QDF_MAX_NO_OF_MODE;
-
-	return session->pCurRoamProfile->csrPersona;
-}
-
-/**
  * csr_is_ndi_started() - function to check if NDI is started
  * @mac_ctx: handle to mac context
  * @session_id: session identifier
@@ -4017,37 +3953,46 @@ bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint32_t chan_freq)
 	struct csr_roam_session *session;
 	enum QDF_OPMODE oper_mode;
 	uint32_t oper_chan_freq = 0;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	bool hw_dbs_capable, same_band_freqs;
 
 	if (chan_freq == 0)
 		return false;
 
 	hw_dbs_capable = policy_mgr_is_hw_dbs_capable(mac_ctx->psoc);
-	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			session = CSR_GET_SESSION(mac_ctx, session_id);
-			if (!session->pCurRoamProfile)
-				continue;
-			oper_mode = session->pCurRoamProfile->csrPersona;
-			if ((((oper_mode == QDF_STA_MODE) ||
-			    (oper_mode == QDF_P2P_CLIENT_MODE)) &&
-			    (session->connectState ==
-			    eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) ||
-			    (((oper_mode == QDF_P2P_GO_MODE) ||
-			    (oper_mode == QDF_SAP_MODE))
-			    && (session->connectState !=
-			    eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
-				oper_chan_freq =
-					session->connectedProfile.op_freq;
+	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
+		if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id))
+			continue;
 
-			same_band_freqs = WLAN_REG_IS_SAME_BAND_FREQS(
-				chan_freq, oper_chan_freq);
+		session = CSR_GET_SESSION(mac_ctx, vdev_id);
+		oper_mode =
+			wlan_get_opmode_from_vdev_id(mac_ctx->pdev, vdev_id);
+		if ((((oper_mode == QDF_STA_MODE) ||
+		     (oper_mode == QDF_P2P_CLIENT_MODE)) &&
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		    cm_is_vdevid_connected(mac_ctx->pdev, vdev_id)
+#else
+		    (session->connectState ==
+		    eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
+#endif
+		    ) ||
+		    (((oper_mode == QDF_P2P_GO_MODE) ||
+		      (oper_mode == QDF_SAP_MODE)) &&
+		     (session->connectState !=
+		      eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
+			oper_chan_freq =
+			    wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev,
+								 vdev_id);
 
-			if (oper_chan_freq && chan_freq != oper_chan_freq &&
-			    (!hw_dbs_capable || same_band_freqs))
-				return true;
-		}
+		if (!oper_chan_freq)
+			continue;
+		same_band_freqs = WLAN_REG_IS_SAME_BAND_FREQS(
+			chan_freq, oper_chan_freq);
+
+		if (oper_chan_freq && chan_freq != oper_chan_freq &&
+		    (!hw_dbs_capable || same_band_freqs))
+			return true;
 	}
 
 	return false;

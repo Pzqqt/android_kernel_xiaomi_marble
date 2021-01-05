@@ -157,7 +157,9 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 	policy_mgr_pdev_set_hw_mode_cback callback = NULL;
 	struct sir_set_hw_mode_resp *param;
 	enum policy_mgr_conn_update_reason reason;
+#ifndef FEATURE_CM_ENABLE
 	struct csr_roam_session *session;
+#endif
 	uint32_t session_id;
 	uint32_t request_id;
 
@@ -223,6 +225,8 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		sme_err("session %d is invalid", session_id);
 		goto end;
 	}
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	session = CSR_GET_SESSION(mac, session_id);
 	if (reason == POLICY_MGR_UPDATE_REASON_HIDDEN_STA) {
 		/* In the case of hidden SSID, connection update
@@ -243,6 +247,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		}
 		csr_saved_scan_cmd_free_fields(mac, session);
 	}
+#endif
 	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
 		sme_debug("Continue channel switch for STA on vdev %d",
 			  session_id);
@@ -672,12 +677,17 @@ static uint32_t sme_get_sessionid_from_activelist(struct mac_context *mac)
  */
 static void sme_state_info_dump(char **buf_ptr, uint16_t *size)
 {
-	uint32_t session_id, active_session_id;
+	uint8_t vdev_id, active_session_id;
 	mac_handle_t mac_handle;
 	struct mac_context *mac;
 	uint16_t len = 0;
 	char *buf = *buf_ptr;
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	eCsrConnectState connect_state;
+#else
+	enum QDF_OPMODE op_mode;
+#endif
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_handle) {
@@ -693,28 +703,40 @@ static void sme_state_info_dump(char **buf_ptr, uint16_t *size)
 			"\n active command sessionid %d", active_session_id);
 	}
 
-	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
-		if (CSR_IS_SESSION_VALID(mac, session_id)) {
+	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
+		if (CSR_IS_SESSION_VALID(mac, vdev_id)) {
+			/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+			op_mode = wlan_get_opmode_from_vdev_id(mac->pdev,
+							       vdev_id);
+			if (op_mode != QDF_STA_MODE &&
+			    op_mode != QDF_P2P_CLIENT_MODE)
+				continue;
+			if (cm_is_vdevid_connected(mac->pdev, vdev_id)) {
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n RoamState: %d", mac->roam.curState[vdev_id]);
+				len += qdf_scnprintf(buf + len, *size - len,
+					"\n RoamSubState: %d", mac->roam.curSubState[vdev_id]);
+			}
+#else
 			connect_state =
-				mac->roam.roamSession[session_id].connectState;
+				mac->roam.roamSession[vdev_id].connectState;
 			if ((eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED ==
 			     connect_state)
 			    || (eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED ==
 				connect_state)) {
 				len += qdf_scnprintf(buf + len, *size - len,
 					"\n NeighborRoamState: %d",
-					mac->roam.neighborRoamInfo[session_id].
-						neighborRoamState);
+					mac->roam.neighborRoamInfo[vdev_id].neighborRoamState);
 				len += qdf_scnprintf(buf + len, *size - len,
-					"\n RoamState: %d", mac->roam.
-						curState[session_id]);
+					"\n RoamState: %d", mac->roam.curState[vdev_id]);
 				len += qdf_scnprintf(buf + len, *size - len,
-					"\n RoamSubState: %d", mac->roam.
-						curSubState[session_id]);
+					"\n RoamSubState: %d", mac->roam.curSubState[vdev_id]);
 				len += qdf_scnprintf(buf + len, *size - len,
 					"\n ConnectState: %d",
 					connect_state);
 			}
+#endif
 		}
 	}
 
@@ -3244,6 +3266,7 @@ void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
 	csr_roam_free_connect_profile(profile);
 }
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
 					 uint8_t vdev_id,
 					 struct wlan_crypto_pmksa *pmksa,
@@ -3271,6 +3294,7 @@ QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	return status;
 }
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
@@ -5452,23 +5476,17 @@ static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
 {
 	uint8_t vdev_id, found = false;
 	qdf_freq_t chan_freq;
-	struct wlan_objmgr_vdev *vdev;
 	enum QDF_OPMODE op_mode;
 
 	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
-		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
-							    vdev_id,
-							    WLAN_LEGACY_MAC_ID);
-		if (!vdev)
-			continue;
-		op_mode = wlan_vdev_mlme_get_opmode(vdev);
+		op_mode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, vdev_id);
 		/* check only for STA and CLI */
-		if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
 			continue;
-		}
-		chan_freq = csr_get_operation_chan_freq(mac_ctx, vdev, vdev_id);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+		chan_freq =
+			wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev,
+							     vdev_id);
 		if (!chan_freq)
 			continue;
 		found = false;
@@ -15203,7 +15221,7 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 
-	return csr_get_operation_chan_freq(mac_ctx, vdev, vdev_id);
+	return wlan_get_operation_chan_freq(vdev);
 }
 
 enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
@@ -15261,6 +15279,7 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 	struct scheduler_msg sch_msg = {0};
 	struct wmi_roam_auth_status_params *params;
 	struct csr_roam_session *csr_session;
+	enum QDF_OPMODE opmode;
 
 	qdf_status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
@@ -15280,9 +15299,8 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 	 * If the device is in joined state, send the status to WMA which
 	 * is meant for roaming.
 	 */
-	if ((csr_session->pCurRoamProfile &&
-	     csr_session->pCurRoamProfile->csrPersona == QDF_SAP_MODE) ||
-	    !CSR_IS_ROAM_JOINED(mac, session_id)) {
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, session_id);
+	if ((opmode == QDF_SAP_MODE) || !CSR_IS_ROAM_JOINED(mac, session_id)) {
 		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
 		if (!sae_msg) {
 			qdf_status = QDF_STATUS_E_NOMEM;
