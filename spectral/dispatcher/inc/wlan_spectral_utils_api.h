@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -19,7 +19,7 @@
 
 #ifndef _WLAN_SPECTRAL_UTILS_API_H_
 #define _WLAN_SPECTRAL_UTILS_API_H_
-
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 #include <wlan_objmgr_cmn.h>
 #include <wlan_lmac_if_def.h>
 
@@ -325,4 +325,5 @@ wlan_spectral_pdev_get_lmac_if_txops(struct wlan_objmgr_pdev *pdev);
 bool spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 				struct direct_buf_rx_data *payload);
 #endif
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/
