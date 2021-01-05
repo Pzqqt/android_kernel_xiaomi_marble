@@ -592,6 +592,35 @@ void mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
 				      uint8_t vdev_id, bool *from_ap,
 				      uint32_t *reason_code);
 
+/**
+ * wlan_get_opmode_from_vdev_id() - Get opmode from vdevid
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ *
+ * Return: opmode
+ */
+enum QDF_OPMODE wlan_get_opmode_from_vdev_id(struct wlan_objmgr_pdev *pdev,
+					     uint8_t vdev_id);
+
+/**
+ * csr_get_operation_chan_freq() - get operating chan freq of
+ * given vdev
+ * @vdev: vdev
+ *
+ * Return: chan freq of given vdev id
+ */
+qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev);
+/**
+ * wlan_get_operation_chan_freq_vdev_id() - get operating chan freq of
+ * given vdev id
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: chan freq of given vdev id
+ */
+qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
+						uint8_t vdev_id);
+
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * mlme_get_supplicant_disabled_roaming() - Get supplicant disabled roaming
