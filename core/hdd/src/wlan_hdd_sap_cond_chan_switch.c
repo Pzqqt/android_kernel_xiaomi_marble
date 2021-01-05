@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -187,11 +187,11 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		/* Flush existing pre_cac work */
 		if (hdd_ctx->sap_pre_cac_work.fn)
 			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
-	}
-
-	if (policy_mgr_get_connection_count(hdd_ctx->psoc) > 1) {
-		hdd_err("pre cac not allowed in concurrency");
-		return -EINVAL;
+	} else {
+		if (policy_mgr_get_connection_count(hdd_ctx->psoc) > 1) {
+			hdd_err("pre cac not allowed in concurrency");
+			return -EINVAL;
+		}
 	}
 
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
