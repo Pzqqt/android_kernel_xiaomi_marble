@@ -78,6 +78,13 @@ do { \
 #define DP_MON_FILTER_PRINT(fmt, args ...) \
 	QDF_TRACE(QDF_MODULE_ID_MON_FILTER, QDF_TRACE_LEVEL_DEBUG, \
 		  fmt, ## args)
+
+#define dp_mon_filter_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MON_FILTER, params)
+#define dp_mon_filter_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MON_FILTER, params)
+#define dp_mon_filter_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_MON_FILTER, ## params)
+#define dp_mon_filter_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MON_FILTER, params)
+
 /**
  * struct dp_mon_filter - Monitor TLV filter
  * @valid: enable/disable TLV filter
