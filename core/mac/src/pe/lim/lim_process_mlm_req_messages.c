@@ -246,6 +246,15 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		lim_update_usr_he_cap(mac_ctx, session);
 	}
 
+#ifdef WLAN_FEATURE_11BE
+	if (lim_is_session_eht_capable(session)) {
+		lim_decide_eht_op(mac_ctx,
+				  &mlme_obj->proto.eht_ops_info.eht_ops,
+				  session);
+		lim_update_usr_eht_cap(mac_ctx, session);
+	}
+#endif
+
 	/* Set a new state for MLME */
 	session->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_STATE;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,

@@ -219,6 +219,8 @@ struct mlme_edca_ac_vo {
  * MLME_DOT11_MODE_11AC_ONLY: vdev just supports 11AC mode
  * MLME_DOT11_MODE_11AX: vdev supports 11AX mode, and modes above it
  * MLME_DOT11_MODE_11AX_ONLY: vdev just supports 11AX mode
+ * MLME_DOT11_MODE_11BE: vdev supports 11BE mode, and modes above it
+ * MLME_DOT11_MODE_11BE_ONLY: vdev just supports 11BE mode
  */
 enum mlme_dot11_mode {
 	MLME_DOT11_MODE_ALL,
@@ -231,7 +233,9 @@ enum mlme_dot11_mode {
 	MLME_DOT11_MODE_11AC,
 	MLME_DOT11_MODE_11AC_ONLY,
 	MLME_DOT11_MODE_11AX,
-	MLME_DOT11_MODE_11AX_ONLY
+	MLME_DOT11_MODE_11AX_ONLY,
+	MLME_DOT11_MODE_11BE,
+	MLME_DOT11_MODE_11BE_ONLY
 };
 
 /**
@@ -246,6 +250,7 @@ enum mlme_vdev_dot11_mode {
 	MLME_VDEV_DOT11_MODE_11N,
 	MLME_VDEV_DOT11_MODE_11AC,
 	MLME_VDEV_DOT11_MODE_11AX,
+	MLME_VDEV_DOT11_MODE_11BE,
 };
 
 /**

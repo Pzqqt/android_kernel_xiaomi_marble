@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011-2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2019, 2021 The Linux Foundation.
+ * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,6 +43,8 @@
 	  (dot11Mode ==  MLME_DOT11_MODE_11AC_ONLY) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_11AX) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE_ONLY) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_VHT(dot11Mode) \
@@ -49,11 +52,20 @@
 	  (dot11Mode ==  MLME_DOT11_MODE_11AC_ONLY) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_11AX) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE_ONLY) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_HE(dot11Mode) \
 	(((dot11Mode == MLME_DOT11_MODE_11AX) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
+
+#define IS_DOT11_MODE_EHT(dot11Mode) \
+	(((dot11Mode == MLME_DOT11_MODE_11BE) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11BE_ONLY) || \
 	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_11B(dot11Mode)  \

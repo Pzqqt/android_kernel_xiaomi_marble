@@ -79,6 +79,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 				      struct pe_session *pe_session,
 				      tDot11fIEVHTCaps *pVHTCaps,
 				      tDot11fIEhe_cap *he_caps,
+				      tDot11fIEeht_cap *eht_caps,
 				      struct sDphHashNode *sta_ds,
 				      struct bss_description *bss_desc);
 
@@ -92,6 +93,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
  * @session_entry: pe session entry
  * @vht_caps: pointer to vht capability
  * @he_caps: pointer to HE capability
+ * @eht_caps: pointer to EHT capability
  *
  * This function is called by limProcessAssocRsp() or
  * lim_add_staInIBSS()
@@ -111,7 +113,8 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 				     uint8_t basic_only,
 				     struct pe_session *session_entry,
 				     struct sDot11fIEVHTCaps *vht_caps,
-				     struct sDot11fIEhe_cap *he_caps);
+				     struct sDot11fIEhe_cap *he_caps,
+				     struct sDot11fIEeht_cap *eht_caps);
 
 QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 					  tpDphHashNode sta_ds,
@@ -120,7 +123,8 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 					  uint8_t *supported_mcs_set,
 					  struct pe_session *session_entry,
 					  tDot11fIEVHTCaps *vht_caps,
-					  tDot11fIEhe_cap *he_caps);
+					  tDot11fIEhe_cap *he_caps,
+					  tDot11fIEeht_cap *eht_caps);
 
 QDF_STATUS lim_add_sta(struct mac_context *, tpDphHashNode, uint8_t, struct pe_session *);
 QDF_STATUS lim_del_bss(struct mac_context *, tpDphHashNode, uint16_t, struct pe_session *);

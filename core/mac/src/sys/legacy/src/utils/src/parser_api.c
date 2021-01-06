@@ -6589,6 +6589,37 @@ populate_dot11f_he_bss_color_change(struct mac_context *mac_ctx,
 #endif /* WLAN_FEATURE_11AX_BSS_COLOR */
 #endif /* WLAN_FEATURE_11AX */
 
+#ifdef WLAN_FEATURE_11BE
+QDF_STATUS populate_dot11f_eht_caps(struct mac_context *mac_ctx,
+				    struct pe_session *session,
+				    tDot11fIEeht_cap *eht_cap)
+{
+	eht_cap->present = 1;
+
+	if (!session) {
+		qdf_mem_copy(eht_cap,
+			     &mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/** TODO: String items needs attention. **/
+	qdf_mem_copy(eht_cap, &session->eht_config, sizeof(*eht_cap));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS populate_dot11f_eht_operation(struct mac_context *mac_ctx,
+					 struct pe_session *session,
+					 tDot11fIEeht_op *eht_op)
+{
+	qdf_mem_copy(eht_op, &session->eht_op, sizeof(*eht_op));
+
+	eht_op->present = 1;
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 #if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
 QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 					     struct pe_session *pe_session,

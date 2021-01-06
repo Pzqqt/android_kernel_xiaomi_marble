@@ -473,7 +473,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		bss_desc = &pe_session->lim_join_req->bssDescription;
 
 	lim_populate_peer_rate_set(mac, &pAddStaParams->supportedRates, NULL,
-				   false, pe_session, NULL, NULL, NULL,
+				   false, pe_session, NULL, NULL, NULL, NULL,
 				   bss_desc);
 
 	if (pe_session->htCapability) {

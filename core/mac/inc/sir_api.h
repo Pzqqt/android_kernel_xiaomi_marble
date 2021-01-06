@@ -715,6 +715,7 @@ typedef enum eSirNwType {
 	eSIR_11N_NW_TYPE,
 	eSIR_11AC_NW_TYPE,
 	eSIR_11AX_NW_TYPE,
+	eSIR_11BE_NW_TYPE,
 	eSIR_DONOT_USE_NW_TYPE = SIR_MAX_ENUM_SIZE
 } tSirNwType;
 
@@ -1112,6 +1113,7 @@ struct join_rsp {
 	struct fils_join_rsp_params *fils_join_rsp;
 #endif
 	uint8_t frames[1];
+	tDot11fIEeht_op eht_operation;
 };
 #endif
 
@@ -2285,6 +2287,7 @@ typedef struct sSirUpdateChan {
 	uint8_t vht_en;
 	uint8_t vht_24_en;
 	bool he_en;
+	bool eht_en;
 	tSirUpdateChanParam chanParam[1];
 } tSirUpdateChanList, *tpSirUpdateChanList;
 
@@ -5074,6 +5077,12 @@ struct he_capability {
 	struct wlan_psoc_host_ppe_threshold ppet;
 };
 #endif
+
+#define EHT_CAP_OUI_TYPE "\xfd"
+#define EHT_CAP_OUI_SIZE 1
+
+#define EHT_OP_OUI_TYPE "\xfe"
+#define EHT_OP_OUI_SIZE 1
 
 #define HE_GET_NSS(mcs, nss)                                         \
 	do {                                                         \

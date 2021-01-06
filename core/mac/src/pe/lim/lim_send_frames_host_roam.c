@@ -323,6 +323,11 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 					    &frm->he_6ghz_band_cap);
 	}
 
+	if (lim_is_session_eht_capable(pe_session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
+	}
+
 	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, frm,
 			&payload);
 	if (DOT11F_FAILED(status)) {
@@ -700,6 +705,11 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 					&frm->he_cap);
 		populate_dot11f_he_6ghz_cap(mac, pe_session,
 					    &frm->he_6ghz_band_cap);
+	}
+
+	if (lim_is_session_eht_capable(pe_session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac, pe_session, &frm->eht_cap);
 	}
 
 	nStatus =

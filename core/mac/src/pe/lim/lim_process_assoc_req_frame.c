@@ -1715,8 +1715,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),
 			assoc_req->HTCaps.supportedMCSSet,
-			session, vht_caps,
-			&assoc_req->he_cap) != QDF_STATUS_SUCCESS) {
+			session, vht_caps, &assoc_req->he_cap,
+			&assoc_req->eht_cap) != QDF_STATUS_SUCCESS) {
 		/* Could not update hash table entry at DPH with rateset */
 		pe_err("Couldn't update hash entry for aid: %d MacAddr: "
 		       QDF_MAC_ADDR_FMT,
@@ -2736,6 +2736,10 @@ lim_convert_channel_width_enum(enum phy_ch_width ch_width)
 #endif
 	case CH_WIDTH_MAX:
 		return eHT_MAX_CHANNEL_WIDTH;
+#ifdef WLAN_FEATURE_11BE
+	case CH_WIDTH_320MHZ:
+		return eHT_CHANNEL_WIDTH_320MHZ;
+#endif
 	case CH_WIDTH_5MHZ:
 		break;
 	case CH_WIDTH_10MHZ:

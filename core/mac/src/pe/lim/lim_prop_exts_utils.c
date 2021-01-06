@@ -288,6 +288,23 @@ void lim_update_he_mcs_12_13_map(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void lim_extract_eht_op(struct pe_session *session,
+			       tSirProbeRespBeacon *beacon_struct)
+{
+}
+
+void lim_update_eht_bw_cap_mcs(struct pe_session *session,
+			       tSirProbeRespBeacon *beacon)
+{
+}
+#else
+static void lim_extract_eht_op(struct pe_session *session,
+			       tSirProbeRespBeacon *beacon_struct)
+{
+}
+#endif
+
 void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t nss)
 {
@@ -601,6 +618,8 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	lim_check_peer_ldpc_and_update(session, beacon_struct);
 	lim_extract_he_op(session, beacon_struct);
 	lim_update_he_bw_cap_mcs(session, beacon_struct);
+	lim_extract_eht_op(session, beacon_struct);
+	lim_update_eht_bw_cap_mcs(session, beacon_struct);
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)
 		*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;

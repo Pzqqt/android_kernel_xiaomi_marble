@@ -327,6 +327,11 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_he_6ghz_cap(mac_ctx, pesession,
 				    &pr->he_6ghz_band_cap);
 
+	if (IS_DOT11_MODE_EHT(dot11mode) && pesession)
+		lim_update_session_eht_capable(mac_ctx, pesession);
+
+	populate_dot11f_eht_caps(mac_ctx, pesession, &pr->eht_cap);
+
 	if (addn_ielen && additional_ie) {
 		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
 			sizeof(tDot11fIEExtCap));
@@ -734,6 +739,13 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 					     &frm->he_op);
 		populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
 					    &frm->he_6ghz_band_cap);
+	}
+
+	if (lim_is_session_eht_capable(pe_session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
+		populate_dot11f_eht_operation(mac_ctx, pe_session,
+					      &frm->eht_op);
 	}
 
 	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &frm->ExtCap,
@@ -1552,6 +1564,16 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
 						    &frm.he_6ghz_band_cap);
 		}
+
+		if (lim_is_sta_eht_capable(sta) &&
+		    lim_is_session_eht_capable(pe_session)) {
+			pe_debug("Populate EHT IEs");
+			populate_dot11f_eht_caps(mac_ctx, pe_session,
+						 &frm.eht_cap);
+			populate_dot11f_eht_operation(mac_ctx, pe_session,
+						      &frm.eht_op);
+		}
+
 		if (status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 			max_retries =
 			mac_ctx->mlme_cfg->gen.pmf_sa_query_max_retries;
@@ -2296,6 +2318,11 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_he_caps(mac_ctx, NULL, &frm->he_cap);
 		populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
 					    &frm->he_6ghz_band_cap);
+	}
+
+	if (lim_is_session_eht_capable(pe_session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
 	}
 
 	if (pe_session->is11Rconnection) {

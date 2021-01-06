@@ -285,6 +285,8 @@ typedef struct sSirProbeRespBeacon {
 	tDot11fIEqcn_ie qcn_ie;
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_op he_op;
+	tDot11fIEeht_cap eht_cap;
+	tDot11fIEeht_op eht_op;
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 	tDot11fIEbss_color_change vendor_he_bss_color_change;
 #endif
@@ -367,6 +369,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_6ghz_band_cap he_6ghz_band_cap;
 	tDot11fIEqcn_ie qcn_ie;
+	tDot11fIEeht_cap eht_cap;
 	bool is_sae_authenticated;
 } tSirAssocReq, *tpSirAssocReq;
 
@@ -468,6 +471,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_op he_op;
 	tDot11fIEhe_6ghz_band_cap he_6ghz_band_cap;
+	tDot11fIEeht_cap eht_cap;
 	bool mu_edca_present;
 	tSirMacEdcaParamSetIE mu_edca;
 	tDot11fIEbss_max_idle_period bss_max_idle_period;
@@ -1243,6 +1247,47 @@ static inline
 QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 					     struct pe_session *pe_session,
 					     tDot11fIEExtCap *dot11f)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+/**
+ * populate_dot11f_eht_caps() - pouldate EHT Capability IE
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @eht_cap: pointer to EHT capability IE
+ *
+ * Populate the EHT capability IE based on the session.
+ */
+QDF_STATUS populate_dot11f_eht_caps(struct mac_context *mac_ctx,
+				    struct pe_session *session,
+				    tDot11fIEeht_cap *eht_cap);
+
+/**
+ * populate_dot11f_eht_operation() - pouldate EHT Operation IE
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @eht_op: pointer to EHT Operation IE
+ *
+ * Populdate the EHT Operation IE based on the session.
+ */
+QDF_STATUS populate_dot11f_eht_operation(struct mac_context *mac_ctx,
+					 struct pe_session *session,
+					 tDot11fIEeht_op *eht_op);
+#else
+static inline QDF_STATUS
+populate_dot11f_eht_caps(struct mac_context *mac_ctx,
+			 struct pe_session *session, tDot11fIEeht_cap *eht_cap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+populate_dot11f_eht_operation(struct mac_context *mac_ctx,
+			      struct pe_session *session,
+			      tDot11fIEeht_op *eht_op)
 {
 	return QDF_STATUS_SUCCESS;
 }
