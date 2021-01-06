@@ -695,18 +695,18 @@ bool msm_vidc_allow_qbuf(struct msm_vidc_inst *inst)
 	}
 }
 
-int msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
+bool msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
+	bool allow = false;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+		return false;
 	}
 	if (inst->state == MSM_VIDC_START ||
 		inst->state == MSM_VIDC_START_INPUT ||
 		inst->state == MSM_VIDC_DRAIN) {
-		rc = 0;
+		allow = true;
 	} else if (inst->state == MSM_VIDC_DRC ||
 		inst->state == MSM_VIDC_DRC_LAST_FLAG ||
 		inst->state == MSM_VIDC_DRC_DRAIN ||
@@ -714,14 +714,14 @@ int msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
 		inst->state == MSM_VIDC_DRAIN_START_INPUT) {
 		s_vpr_h(inst->sid, "%s: input psc postponed, inst state %s\n",
 				__func__, state_name(inst->state));
-		rc = -EAGAIN;
+		allow = false;
 	} else {
 		s_vpr_e(inst->sid, "%s: input psc in wrong state %s\n",
 				__func__, state_name(inst->state));
-		rc = -EINVAL;
+		allow = false;
 	}
 
-	return rc;
+	return allow;
 }
 
 bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst)
@@ -744,7 +744,7 @@ int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct input_psc_work *psc_work;
+	struct response_work *resp_work;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -765,25 +765,26 @@ int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 			s_vpr_h(inst->sid,
 				"%s: streamon(output) in DRAIN_START_INPUT state\n",
 				__func__);
-			if (list_empty(&inst->input_psc_works)) {
-				new_state = MSM_VIDC_DRAIN;
-			} else {
-				s_vpr_h(inst->sid,
-					"%s: streamon(output) in DRAIN_START_INPUT state, input psc pending\n",
-					__func__);
-				psc_work = list_first_entry(&inst->input_psc_works,
-							struct input_psc_work, list);
-				rc = handle_session_input_psc(inst, psc_work);
-				if (rc) {
-					s_vpr_e(inst->sid,
-						"%s: handle input psc failed\n", __func__);
-					new_state = MSM_VIDC_ERROR;
-				} else {
-					new_state = MSM_VIDC_DRC_DRAIN;
+			new_state = MSM_VIDC_DRAIN;
+			if (!list_empty(&inst->response_works)) {
+				resp_work = list_first_entry(&inst->response_works,
+							struct response_work, list);
+				if (resp_work->type == RESP_WORK_INPUT_PSC) {
+					s_vpr_h(inst->sid,
+						"%s: streamon(output) in DRAIN_START_INPUT state, input psc pending\n",
+						__func__);
+					rc = handle_session_response_work(inst, resp_work);
+					if (rc) {
+						s_vpr_e(inst->sid,
+							"%s: handle input psc failed\n", __func__);
+						new_state = MSM_VIDC_ERROR;
+					} else {
+						new_state = MSM_VIDC_DRC_DRAIN;
+					}
+					list_del(&resp_work->list);
+					kfree(resp_work->data);
+					kfree(resp_work);
 				}
-				list_del(&psc_work->list);
-				kfree(psc_work->data);
-				kfree(psc_work);
 			}
 		}
 	}
@@ -798,7 +799,7 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct input_psc_work *psc_work, *dummy;
+	struct response_work *resp_work, *dummy;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -819,13 +820,15 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 				   inst->state == MSM_VIDC_DRAIN_START_INPUT) {
 			new_state = MSM_VIDC_START_OUTPUT;
 			/* discard pending port settings change if any */
-			list_for_each_entry_safe(psc_work, dummy,
-						&inst->input_psc_works, list) {
-				s_vpr_h(inst->sid,
-					"%s: discard pending input psc\n", __func__);
-				list_del(&psc_work->list);
-				kfree(psc_work->data);
-				kfree(psc_work);
+			list_for_each_entry_safe(resp_work, dummy,
+						&inst->response_works, list) {
+				if (resp_work->type == RESP_WORK_INPUT_PSC) {
+					s_vpr_h(inst->sid,
+						"%s: discard pending input psc\n", __func__);
+					list_del(&resp_work->list);
+					kfree(resp_work->data);
+					kfree(resp_work);
+				}
 			}
 		}
 	} else if (type == OUTPUT_MPLANE) {
@@ -884,7 +887,7 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct input_psc_work *psc_work;
+	struct response_work *resp_work;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -893,45 +896,47 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 
 	if (inst->state == MSM_VIDC_DRAIN_LAST_FLAG ||
 		inst->state == MSM_VIDC_DRC_LAST_FLAG) {
-		if (list_empty(&inst->input_psc_works)) {
 			new_state = MSM_VIDC_START;
-		} else {
-			s_vpr_h(inst->sid,
-				"%s: start in DRC(DRAIN)_LAST_FLAG state, input psc pending\n",
-				__func__);
-			psc_work = list_first_entry(&inst->input_psc_works,
-				struct input_psc_work, list);
-			rc = handle_session_input_psc(inst, psc_work);
-			if (rc) {
-				s_vpr_e(inst->sid,
-					"%s: handle input psc failed\n", __func__);
-				new_state = MSM_VIDC_ERROR;
-			} else {
-				new_state = MSM_VIDC_DRC;
+		if (!list_empty(&inst->response_works)) {
+			resp_work = list_first_entry(&inst->response_works,
+				struct response_work, list);
+			if (resp_work->type == RESP_WORK_INPUT_PSC) {
+				s_vpr_h(inst->sid,
+					"%s: start in DRC(DRAIN)_LAST_FLAG state, input psc pending\n",
+					__func__);
+				rc = handle_session_response_work(inst, resp_work);
+				if (rc) {
+					s_vpr_e(inst->sid,
+						"%s: handle input psc failed\n", __func__);
+					new_state = MSM_VIDC_ERROR;
+				} else {
+					new_state = MSM_VIDC_DRC;
+				}
+				list_del(&resp_work->list);
+				kfree(resp_work->data);
+				kfree(resp_work);
 			}
-			list_del(&psc_work->list);
-			kfree(psc_work->data);
-			kfree(psc_work);
 		}
 	} else if (inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG) {
-		if (list_empty(&inst->input_psc_works)) {
 			new_state = MSM_VIDC_DRAIN;
-		} else {
-			s_vpr_h(inst->sid,
-				"%s: start in DRC_DRAIN_LAST_FLAG state, input psc pending\n");
-			psc_work = list_first_entry(&inst->input_psc_works,
-				struct input_psc_work, list);
-			rc = handle_session_input_psc(inst, psc_work);
-			if (rc) {
-				s_vpr_e(inst->sid,
-					"%s: handle input psc failed\n", __func__);
-				new_state = MSM_VIDC_ERROR;
-			} else {
-				new_state = MSM_VIDC_DRC_DRAIN;
+		if (!list_empty(&inst->response_works)) {
+			resp_work = list_first_entry(&inst->response_works,
+				struct response_work, list);
+			if (resp_work->type == RESP_WORK_INPUT_PSC) {
+				s_vpr_h(inst->sid,
+					"%s: start in DRC_DRAIN_LAST_FLAG state, input psc pending\n");
+				rc = handle_session_response_work(inst, resp_work);
+				if (rc) {
+					s_vpr_e(inst->sid,
+						"%s: handle input psc failed\n", __func__);
+					new_state = MSM_VIDC_ERROR;
+				} else {
+					new_state = MSM_VIDC_DRC_DRAIN;
+				}
+				list_del(&resp_work->list);
+				kfree(resp_work->data);
+				kfree(resp_work);
 			}
-			list_del(&psc_work->list);
-			kfree(psc_work->data);
-			kfree(psc_work);
 		}
 	} else {
 		s_vpr_e(inst->sid, "%s: wrong state %s\n",
@@ -2480,8 +2485,8 @@ static void msm_vidc_close_helper(struct kref *kref)
 	else if (is_encode_session(inst))
 		msm_venc_inst_deinit(inst);
 	kfree(inst->capabilities);
-	if (inst->input_psc_workq)
-		destroy_workqueue(inst->input_psc_workq);
+	if (inst->response_workq)
+		destroy_workqueue(inst->response_workq);
 }
 
 struct msm_vidc_inst *get_inst_ref(struct msm_vidc_core *core,

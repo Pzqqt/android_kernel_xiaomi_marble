@@ -769,7 +769,7 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 		inst->buffers.line.min_count,
 		inst->buffers.line.size,
 		inst->buffers.line.reuse);
-	s_vpr_h(inst->sid, "buffer: %d      %d      %d\n",
+	s_vpr_h(inst->sid, "persist buffer: %d      %d      %d\n",
 		inst->buffers.persist.min_count,
 		inst->buffers.persist.size,
 		inst->buffers.persist.reuse);
@@ -1059,10 +1059,17 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static int msm_vdec_update_input_properties(struct msm_vidc_inst *inst)
+static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_subscription_params subsc_params;
+	struct msm_vidc_core *core;
 	u32 width, height;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
 
 	subsc_params = inst->subcr_params[INPUT_PORT];
 	width = (subsc_params.bitstream_resolution &
@@ -1081,8 +1088,11 @@ static int msm_vdec_update_input_properties(struct msm_vidc_inst *inst)
 		v4l2_colorformat_to_media(
 		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat,	__func__),
 		height);
-	//inst->fmts[OUTPUT_PORT].fmt.pix_mp.bytesperline =
-		//inst->fmts[OUTPUT_PORT].fmt.pix_mp.width;
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].bytesperline =
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.width;
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage =
+		call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
+	//inst->buffers.output.size = inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage;
 
 	inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace =
 		(subsc_params.color_info & 0xFF0000) >> 16;
@@ -1122,7 +1132,7 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst)
 		return 0;
 	}
 
-	rc = msm_vdec_update_input_properties(inst);
+	rc = msm_vdec_update_properties(inst);
 	if (rc)
 		return rc;
 
@@ -1130,11 +1140,11 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst)
 	event.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION;
 	v4l2_event_queue_fh(&inst->event_handler, &event);
 
-	rc = msm_vdec_release_input_internal_buffers(inst);
+	rc = msm_vdec_get_input_internal_buffers(inst);
 	if (rc)
 		return rc;
 
-	rc = msm_vdec_get_input_internal_buffers(inst);
+	rc = msm_vdec_release_input_internal_buffers(inst);
 	if (rc)
 		return rc;
 
@@ -1492,6 +1502,8 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 				0);
 		if (rc)
 			return rc;
+		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
+		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 	} else {
 		d_vpr_e("%s: unknown cmd %d\n", __func__, cmd);
 		return -EINVAL;

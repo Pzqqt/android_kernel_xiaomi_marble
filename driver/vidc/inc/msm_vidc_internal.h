@@ -706,10 +706,17 @@ struct msm_vidc_buffers {
 	bool                   reuse;
 };
 
-struct input_psc_work {
-	struct list_head list;
-	void *data;
-	u32 data_size;
+enum response_work_type {
+	RESP_WORK_INPUT_PSC = 1,
+	RESP_WORK_OUTPUT_PSC,
+	RESP_WORK_LAST_FLAG,
+};
+
+struct response_work {
+	struct list_head        list;
+	enum response_work_type type;
+	void                   *data;
+	u32                     data_size;
 };
 
 struct msm_vidc_ssr {

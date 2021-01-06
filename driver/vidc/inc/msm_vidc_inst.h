@@ -123,9 +123,9 @@ struct msm_vidc_inst {
 	struct msm_vidc_decode_batch       decode_batch;
 	struct msm_vidc_decode_vpp_delay   decode_vpp_delay;
 	struct msm_vidc_session_idle       session_idle;
-	struct delayed_work                input_psc_work;
-	struct workqueue_struct           *input_psc_workq;
-	struct list_head                   input_psc_works; /* list of struct input_psc_work */
+	struct delayed_work                response_work;
+	struct workqueue_struct           *response_workq;
+	struct list_head                   response_works; /* list of struct response_work */
 	struct list_head                   input_ts;
 	struct list_head                   enc_input_crs;
 	struct list_head                   decode_bitrate_data;

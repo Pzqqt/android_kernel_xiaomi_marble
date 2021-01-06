@@ -147,6 +147,25 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 	return 0;
 }
 
+static bool check_last_flag(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt)
+{
+	struct hfi_buffer *buffer;
+
+	if (!inst || !pkt) {
+		d_vpr_e("%s: invalid params %d\n", __func__);
+		return false;
+	}
+
+	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
+		s_vpr_h(inst->sid, "%s: received last flag on FBD, index: %d\n",
+			__func__, buffer->index);
+		return true;
+	}
+	return false;
+}
+
 static int handle_session_info(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -432,12 +451,8 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	/*if (buffer->flags & HFI_BUF_FW_FLAG_SUBFRAME)
 		buf->flags |= MSM_VIDC_BUF_FLAG_SUBFRAME;*/
 
-	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
-		if (msm_vidc_allow_last_flag(inst)) {
-			buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
-			msm_vidc_state_change_last_flag(inst);
-		}
-	}
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
+		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 	print_vidc_buffer(VIDC_HIGH, "FBD", inst, buf);
 
 	return rc;
@@ -970,8 +985,8 @@ exit:
 	return rc;
 }
 
-int handle_session_input_psc(struct msm_vidc_inst *inst,
-		struct input_psc_work *psc_work)
+int handle_session_response_work(struct msm_vidc_inst *inst,
+		struct response_work *resp_work)
 {
 	int rc = 0;
 	struct hfi_header *hdr = NULL;
@@ -981,12 +996,12 @@ int handle_session_input_psc(struct msm_vidc_inst *inst,
 	u32 hfi_port = 0;
 	int i;
 
-	if (!inst || !psc_work) {
+	if (!inst || !resp_work) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	hdr = (struct hfi_header *)psc_work->data;
+	hdr = (struct hfi_header *)resp_work->data;
 	if (!hdr) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -998,8 +1013,8 @@ int handle_session_input_psc(struct msm_vidc_inst *inst,
 	temp_pkt = pkt;
 
 	for (i = 0; i < hdr->num_packets; i++) {
-		if (validate_packet(pkt, psc_work->data,
-				psc_work->data_size, __func__)) {
+		if (validate_packet(pkt, resp_work->data,
+				resp_work->data_size, __func__)) {
 			rc = -EINVAL;
 			goto exit;
 		}
@@ -1034,23 +1049,44 @@ int handle_session_input_psc(struct msm_vidc_inst *inst,
 		pkt += packet->size;
 	}
 
-	print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
-		inst->subcr_params[INPUT_PORT]);
-	rc = msm_vdec_input_port_settings_change(inst);
-	if (rc)
-		goto exit;
+
+	if (hfi_cmd_type == HFI_CMD_BUFFER) {
+		rc = handle_dequeue_buffers(inst);
+		if (rc)
+			goto exit;
+	}
+
+	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
+		if (hfi_port == HFI_PORT_RAW) {
+			print_psc_properties(VIDC_HIGH, "OUTPUT_PSC", inst,
+				inst->subcr_params[OUTPUT_PORT]);
+			rc = msm_vdec_output_port_settings_change(inst);
+			if (rc)
+				goto exit;
+		} else if (hfi_port == HFI_PORT_BITSTREAM) {
+			print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
+				inst->subcr_params[INPUT_PORT]);
+			rc = msm_vdec_input_port_settings_change(inst);
+			if (rc)
+				goto exit;
+		} else {
+			s_vpr_e(inst->sid, "%s: invalid port type: %#x\n",
+				__func__, hfi_port);
+		}
+	}
 
 exit:
 	return rc;
 }
 
-void handle_session_input_psc_work_handler(struct work_struct *work)
+void handle_session_response_work_handler(struct work_struct *work)
 {
 	int rc = 0;
+	bool allow = false;
 	struct msm_vidc_inst *inst;
-	struct input_psc_work *psc_work, *dummy = NULL;
+	struct response_work *resp_work, *dummy = NULL;
 
-	inst = container_of(work, struct msm_vidc_inst, input_psc_work.work);
+	inst = container_of(work, struct msm_vidc_inst, response_work.work);
 	inst = get_inst_ref(g_core, inst);
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1058,24 +1094,72 @@ void handle_session_input_psc_work_handler(struct work_struct *work)
 	}
 
 	mutex_lock(&inst->lock);
-	list_for_each_entry_safe(psc_work, dummy, &inst->input_psc_works, list) {
-		rc = msm_vidc_allow_input_psc(inst);
-		if (!rc) {
-			rc = handle_session_input_psc(inst, psc_work);
+	list_for_each_entry_safe(resp_work, dummy, &inst->response_works, list) {
+		switch (resp_work->type) {
+		case RESP_WORK_INPUT_PSC:
+			allow = msm_vidc_allow_input_psc(inst);
+			if (!allow) {
+				s_vpr_e(inst->sid, "%s: input psc not allowed\n", __func__);
+				break;
+			}
+			rc = handle_session_response_work(inst, resp_work);
 			if (!rc)
 				rc = msm_vidc_state_change_input_psc(inst);
 
 			/* either handle input psc or state change failed */
 			if (rc)
 				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			break;
+		case RESP_WORK_OUTPUT_PSC:
+			rc = handle_session_response_work(inst, resp_work);
+			if (rc)
+				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			break;
+		case RESP_WORK_LAST_FLAG:
+			allow = msm_vidc_allow_last_flag(inst);
+			if (!allow) {
+				s_vpr_e(inst->sid, "%s: last flag not allowed\n", __func__);
+				break;
+			}
+			rc = handle_session_response_work(inst, resp_work);
+			if (!rc)
+				rc = msm_vidc_state_change_last_flag(inst);
+
+			/* either handle last flag or state change failed */
+			if (rc)
+				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			break;
+		default:
+			d_vpr_e("%s: invalid response work type %d\n", __func__,
+				resp_work->type);
+			break;
 		}
-		list_del(&psc_work->list);
-		kfree(psc_work->data);
-		kfree(psc_work);
+		list_del(&resp_work->list);
+		kfree(resp_work->data);
+		kfree(resp_work);
 	}
 	mutex_unlock(&inst->lock);
 
 	put_inst(inst);
+}
+
+static int queue_response_work(struct msm_vidc_inst *inst,
+	enum response_work_type type, void *hdr, u32 hdr_size)
+{
+	struct response_work *work;
+
+	work = kzalloc(sizeof(struct response_work), GFP_KERNEL);
+	INIT_LIST_HEAD(&work->list);
+	work->type = type;
+	work->data_size = hdr_size;
+	work->data = kzalloc(hdr_size, GFP_KERNEL);
+	if (!work->data)
+		return -ENOMEM;
+	memcpy(work->data, hdr, hdr_size);
+	list_add_tail(&work->list, &inst->response_works);
+	queue_delayed_work(inst->response_workq,
+			&inst->response_work, msecs_to_jiffies(0));
+	return 0;
 }
 
 static int handle_session_response(struct msm_vidc_core *core,
@@ -1109,29 +1193,19 @@ static int handle_session_response(struct msm_vidc_core *core,
 		packet = (struct hfi_packet *)pkt;
 		if (packet->type > HFI_CMD_BEGIN &&
 		    packet->type < HFI_CMD_END) {
-			if (packet->type == HFI_CMD_SETTINGS_CHANGE &&
-				packet->port == HFI_PORT_BITSTREAM) {
-				struct input_psc_work *work;
-
-				work = kzalloc(sizeof(struct input_psc_work), GFP_KERNEL);
-				INIT_LIST_HEAD(&work->list);
-				work->data_size = hdr->size;
-				work->data = kzalloc(hdr->size, GFP_KERNEL);
-				if (!work->data) {
-					rc= -ENOMEM;
+			if (packet->type == HFI_CMD_SETTINGS_CHANGE) {
+				if (packet->port == HFI_PORT_BITSTREAM)
+					rc = queue_response_work(inst, RESP_WORK_INPUT_PSC,
+						(void *)hdr, hdr->size);
+				else if (packet->port == HFI_PORT_RAW)
+					rc = queue_response_work(inst, RESP_WORK_OUTPUT_PSC,
+						(void *)hdr, hdr->size);
 					goto exit;
-				}
-				memcpy(work->data, (void *)hdr, hdr->size);
-				list_add_tail(&work->list, &inst->input_psc_works);
-				queue_delayed_work(inst->input_psc_workq,
-						&inst->input_psc_work, msecs_to_jiffies(0));
-				goto exit;
-			}
-			if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-				s_vpr_e(inst->sid,
-					"%s: invalid packet type %d in port settings change\n",
-					__func__, packet->type);
-				rc = -EINVAL;
+			} else if (packet->type == HFI_CMD_BUFFER &&
+						packet->port == HFI_PORT_RAW &&
+						check_last_flag(inst, packet)) {
+				rc = queue_response_work(inst, RESP_WORK_LAST_FLAG,
+					(void *)hdr, hdr->size);
 				goto exit;
 			}
 			hfi_cmd_type = packet->type;
@@ -1159,19 +1233,6 @@ static int handle_session_response(struct msm_vidc_core *core,
 		rc = handle_dequeue_buffers(inst);
 		if (rc)
 			goto exit;
-	}
-
-	if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-		if (hfi_port == HFI_PORT_RAW) {
-			print_psc_properties(VIDC_HIGH, "OUTPUT_PSC", inst,
-				inst->subcr_params[OUTPUT_PORT]);
-			rc = msm_vdec_output_port_settings_change(inst);
-			if (rc)
-				goto exit;
-		} else {
-			s_vpr_e(inst->sid, "%s: invalid port type: %#x\n",
-				__func__, hfi_port);
-		}
 	}
 
 exit:

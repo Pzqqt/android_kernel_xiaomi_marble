@@ -256,7 +256,7 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 	if (f->type == INPUT_MPLANE || f->type == OUTPUT_MPLANE)
 		s_vpr_h(inst->sid,
 			"%s: type %d format %#x width %d height %d size %d\n",
-			__func__, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
+			__func__, f->type, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
 			f->fmt.pix_mp.height, f->fmt.pix_mp.plane_fmt[0].sizeimage);
 	else if (f->type == INPUT_META_PLANE || f->type == OUTPUT_META_PLANE)
 		s_vpr_h(inst->sid, "%s: meta type %d size %d\n",
@@ -683,8 +683,8 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	}
 	s_vpr_i(inst->sid, "Opening video instance: %d\n", session_type);
 
-	inst->input_psc_workq = create_singlethread_workqueue("input_psc_workq");
-	if (!inst->input_psc_workq) {
+	inst->response_workq = create_singlethread_workqueue("response_workq");
+	if (!inst->response_workq) {
 		d_vpr_e("%s: create input_psc_workq failed\n", __func__);
 		goto error;
 	}
@@ -697,10 +697,10 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		goto error;
 	}
 
-	INIT_DELAYED_WORK(&inst->input_psc_work,
-			handle_session_input_psc_work_handler);
+	INIT_DELAYED_WORK(&inst->response_work,
+			handle_session_response_work_handler);
 
-	INIT_LIST_HEAD(&inst->input_psc_works);
+	INIT_LIST_HEAD(&inst->response_works);
 	INIT_LIST_HEAD(&inst->buffers.input.list);
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.output.list);
