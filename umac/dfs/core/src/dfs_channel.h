@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018,2020-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2008 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -407,6 +407,12 @@
 
 #define WLAN_IS_CHAN_11N_HT40MINUS(_c) \
 	(((_c)->dfs_ch_flags & WLAN_CHAN_HT40MINUS) != 0)
+
+#define WLAN_IS_CHAN_VHT40PLUS(_c) \
+	(((_c)->dfs_ch_flags & WLAN_CHAN_VHT40PLUS) != 0)
+
+#define WLAN_IS_CHAN_VHT40MINUS(_c) \
+	(((_c)->dfs_ch_flags & WLAN_CHAN_VHT40MINUS) != 0)
 
 #define WLAN_CHAN_A \
 	(WLAN_CHAN_5GHZ | WLAN_CHAN_OFDM)
