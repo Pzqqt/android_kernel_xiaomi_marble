@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2006, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -873,8 +873,8 @@ bool dfs_is_true_160mhz_supported(struct wlan_dfs *dfs)
 	    tgt_tx_ops->tgt_is_tgt_type_qcn9000(target_type))
 		return true;
 
-	if (tgt_tx_ops->tgt_is_tgt_type_qcn9100 &&
-	    tgt_tx_ops->tgt_is_tgt_type_qcn9100(target_type))
+	if (tgt_tx_ops->tgt_is_tgt_type_qcn6122 &&
+	    tgt_tx_ops->tgt_is_tgt_type_qcn6122(target_type))
 		return true;
 
 	return false;

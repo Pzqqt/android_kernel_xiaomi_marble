@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,11 +134,11 @@ void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 		break;
 #endif
 
-#if defined(QCN9100_HEADERS_DEF)
-	case TARGET_TYPE_QCN9100:
-		scn->targetdef = QCN9100_TARGETDEF;
-		scn->target_ce_def = QCN9100_CE_TARGETDEF;
-		hif_info("TARGET_TYPE_QCN9100");
+#if defined(QCN6122_HEADERS_DEF)
+	case TARGET_TYPE_QCN6122:
+		scn->targetdef = QCN6122_TARGETDEF;
+		scn->target_ce_def = QCN6122_CE_TARGETDEF;
+		hif_info("TARGET_TYPE_QCN6122");
 		break;
 #endif
 
@@ -266,9 +266,9 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		scn->hostdef = QCN9000_HOSTDEF;
 		break;
 #endif
-#if defined(QCN9100_HEADERS_DEF)
-	case HIF_TYPE_QCN9100:
-		scn->hostdef = QCN9100_HOSTDEF;
+#if defined(QCN6122_HEADERS_DEF)
+	case HIF_TYPE_QCN6122:
+		scn->hostdef = QCN6122_HOSTDEF;
 		break;
 #endif
 #if defined(QCA5018_HEADERS_DEF)

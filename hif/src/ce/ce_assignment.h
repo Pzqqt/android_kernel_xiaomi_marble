@@ -931,8 +931,8 @@ static struct CE_pipe_config target_ce_config_wlan_adrastea[] = {
 	{ /* CE11 */ 11, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 };
 
-#define QCN_9100_CE_COUNT 6
-static struct CE_attr host_ce_config_wlan_qcn9100[] = {
+#define QCN_6122_CE_COUNT 6
+static struct CE_attr host_ce_config_wlan_qcn6122[] = {
 	/* host->target HTC control and raw streams */
 	{/*CE0*/ (CE_ATTR_FLAGS), 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
@@ -958,7 +958,7 @@ static struct CE_attr host_ce_config_wlan_qcn9100[] = {
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
 
-static struct CE_pipe_config target_ce_config_wlan_qcn9100[] = {
+static struct CE_pipe_config target_ce_config_wlan_qcn6122[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */

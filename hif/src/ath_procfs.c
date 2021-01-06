@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,7 +105,7 @@ static ssize_t ath_procfs_diag_read_legacy(struct file *file,
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
-	     (tgt_info->target_type == TARGET_TYPE_QCN9100) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCN6122) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA5018) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA6018) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCN7605))) ||
@@ -184,7 +184,7 @@ static ssize_t ath_procfs_diag_write_legacy(struct file *file,
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
-	      (tgt_info->target_type == TARGET_TYPE_QCN9100) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCN6122) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA5018) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA6018) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCN7605))) ||

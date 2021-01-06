@@ -1179,10 +1179,10 @@ int hif_get_device_type(uint32_t device_id,
 		hif_info(" *********** QCN9000 *************");
 		break;
 
-	case QCN9100_DEVICE_ID:
-		*hif_type = HIF_TYPE_QCN9100;
-		*target_type = TARGET_TYPE_QCN9100;
-		hif_info(" *********** QCN9100 *************");
+	case QCN6122_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCN6122;
+		*target_type = TARGET_TYPE_QCN6122;
+		hif_info(" *********** QCN6122 *************");
 		break;
 
 	case QCN7605_DEVICE_ID:

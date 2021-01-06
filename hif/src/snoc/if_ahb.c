@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -519,7 +519,7 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
-		    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
+		    (tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 			hif_ahb_clk_enable_disable(&pdev->dev, 0);
 
@@ -583,7 +583,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (target_type == TARGET_TYPE_QCN9100) {
+	if (target_type == TARGET_TYPE_QCN6122) {
 		hif_ahb_get_soc_info_pld(sc, dev);
 		hif_update_irq_ops_with_pci(ol_sc);
 	} else {
@@ -664,7 +664,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA5018) &&
-			(tgt_info->target_type != TARGET_TYPE_QCN9100) &&
+			(tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			hif_err("error in enabling soc");
@@ -683,7 +683,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 err_target_sync:
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
-	    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		hif_err("Disabling target");

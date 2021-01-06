@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 
 #include "qdf_module.h"
 
-#if defined(QCN9100_HEADERS_DEF)
+#if defined(QCN6122_HEADERS_DEF)
 
 #undef UMAC
 #define WLAN_HEADERS 1
@@ -217,23 +217,23 @@
 #define A_WIFI_APB_3_A_WCMN_APPS_CE_INTR_ENABLES MISSING
 #define A_WIFI_APB_3_A_WCMN_APPS_CE_INTR_STATUS MISSING
 
-#define QCN9100_BOARD_DATA_SZ MISSING
-#define QCN9100_BOARD_EXT_DATA_SZ MISSING
+#define QCN6122_BOARD_DATA_SZ MISSING
+#define QCN6122_BOARD_EXT_DATA_SZ MISSING
 
-#define MY_TARGET_DEF QCN9100_TARGETDEF
-#define MY_HOST_DEF QCN9100_HOSTDEF
-#define MY_CEREG_DEF QCN9100_CE_TARGETDEF
-#define MY_TARGET_BOARD_DATA_SZ QCN9100_BOARD_DATA_SZ
-#define MY_TARGET_BOARD_EXT_DATA_SZ QCN9100_BOARD_EXT_DATA_SZ
+#define MY_TARGET_DEF QCN6122_TARGETDEF
+#define MY_HOST_DEF QCN6122_HOSTDEF
+#define MY_CEREG_DEF QCN6122_CE_TARGETDEF
+#define MY_TARGET_BOARD_DATA_SZ QCN6122_BOARD_DATA_SZ
+#define MY_TARGET_BOARD_EXT_DATA_SZ QCN6122_BOARD_EXT_DATA_SZ
 #include "targetdef.h"
 #include "hostdef.h"
-qdf_export_symbol(QCN9100_CE_TARGETDEF);
+qdf_export_symbol(QCN6122_CE_TARGETDEF);
 #else
 #include "common_drv.h"
 #include "targetdef.h"
 #include "hostdef.h"
-struct targetdef_s *QCN9100_TARGETDEF;
-struct hostdef_s *QCN9100_HOSTDEF;
-#endif /*QCN9100_HEADERS_DEF */
-qdf_export_symbol(QCN9100_TARGETDEF);
-qdf_export_symbol(QCN9100_HOSTDEF);
+struct targetdef_s *QCN6122_TARGETDEF;
+struct hostdef_s *QCN6122_HOSTDEF;
+#endif /*QCN6122_HEADERS_DEF */
+qdf_export_symbol(QCN6122_TARGETDEF);
+qdf_export_symbol(QCN6122_HOSTDEF);

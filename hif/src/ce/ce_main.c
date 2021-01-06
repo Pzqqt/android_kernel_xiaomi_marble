@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -919,7 +919,7 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 				sizeof(target_service_to_ce_map_qcn9000);
 			break;
 		case TARGET_TYPE_QCA5018:
-		case TARGET_TYPE_QCN9100:
+		case TARGET_TYPE_QCN6122:
 			*tgt_svc_map_to_use =
 				target_service_to_ce_map_qca5018;
 			*sz_tgt_svc_map_to_use =
@@ -1150,7 +1150,7 @@ bool ce_srng_based(struct hif_softc *scn)
 	case TARGET_TYPE_QCA6750:
 	case TARGET_TYPE_QCA6018:
 	case TARGET_TYPE_QCN9000:
-	case TARGET_TYPE_QCN9100:
+	case TARGET_TYPE_QCN6122:
 	case TARGET_TYPE_QCA5018:
 		return true;
 	default:
@@ -3355,12 +3355,12 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		scn->ce_count = QCN_9000_CE_COUNT;
 		scn->disable_wake_irq = 1;
 		break;
-	case TARGET_TYPE_QCN9100:
-		hif_state->host_ce_config = host_ce_config_wlan_qcn9100;
-		hif_state->target_ce_config = target_ce_config_wlan_qcn9100;
+	case TARGET_TYPE_QCN6122:
+		hif_state->host_ce_config = host_ce_config_wlan_qcn6122;
+		hif_state->target_ce_config = target_ce_config_wlan_qcn6122;
 		hif_state->target_ce_config_sz =
-					sizeof(target_ce_config_wlan_qcn9100);
-		scn->ce_count = QCN_9100_CE_COUNT;
+					sizeof(target_ce_config_wlan_qcn6122);
+		scn->ce_count = QCN_6122_CE_COUNT;
 		scn->disable_wake_irq = 1;
 		break;
 	case TARGET_TYPE_QCA5018:
