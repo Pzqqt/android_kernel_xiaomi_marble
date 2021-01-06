@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2017, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2020-2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -165,7 +165,7 @@ static bool audio_notifier_is_service_enabled(int service)
 static int audio_notifier_reg_service(int service, int domain)
 {
 	void *handle;
-	int ret = -EINVAL;
+	int ret = 0;
 	int curr_state = AUDIO_NOTIFIER_SERVICE_DOWN;
 	struct platform_device *pdev = adsp_private;
 	struct adsp_notify_private *priv = NULL;
