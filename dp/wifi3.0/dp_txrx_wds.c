@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -776,8 +776,8 @@ void dp_tx_vdev_multipass_deinit(struct dp_vdev *vdev)
 	struct dp_peer *peer = NULL;
 	qdf_spin_lock_bh(&vdev->mpass_peer_mutex);
 	TAILQ_FOREACH(peer, &vdev->mpass_peer_list, mpass_peer_list_elem)
-		qdf_err("Peers present in mpass list : %llx",
-			peer->mac_addr.raw);
+		qdf_err("Peers present in mpass list :" QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 	qdf_spin_unlock_bh(&vdev->mpass_peer_mutex);
 
 	if (vdev->iv_vlan_map) {

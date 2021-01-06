@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -457,7 +457,7 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 		dp_pdev_iterate_peer(pdev, dp_peer_print_tid_qlen, &c_tid_q_len,
 				     DP_MOD_ID_TX_CAPTURE);
 
-		DP_PRINT_STATS("consolidated: msdu_comp_q[%d] defer_msdu_q[%d] pending_ppdu_q[%d]",
+		DP_PRINT_STATS("consolidated: msdu_comp_q[%llu] defer_msdu_q[%llu] pending_ppdu_q[%llu]",
 			       c_tid_q_len.tasklet_msdu_len, c_tid_q_len.defer_msdu_len,
 			       c_tid_q_len.pending_q_len);
 	}
@@ -1054,14 +1054,14 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			}
 		}
 
-			dp_tx_capture_debug("%pK: dlvr mgmt frm(%d 0x%08x): fc 0x%x %x, dur 0x%x%x tsf:%u, retries_count: %d, is_sgen: %d",
-					    pdev->soc,
-					    ptr_mgmt_hdr->ppdu_id,
-					    ptr_mgmt_hdr->ppdu_id,
-					    wh->i_fc[1], wh->i_fc[0],
-					    wh->i_dur[1], wh->i_dur[0], ptr_mgmt_hdr->tx_tsf,
-					    ptr_mgmt_hdr->retries_count,
-					    ptr_mgmt_hdr->is_sgen_pkt);
+		dp_tx_capture_debug("%pK: dlvr mgmt frm(%d 0x%08x): fc 0x%x %x, dur 0x%x%x tsf:%llu, retries_count: %d, is_sgen: %d",
+				    pdev->soc,
+				    ptr_mgmt_hdr->ppdu_id,
+				    ptr_mgmt_hdr->ppdu_id,
+				    wh->i_fc[1], wh->i_fc[0],
+				    wh->i_dur[1], wh->i_dur[0], ptr_mgmt_hdr->tx_tsf,
+				    ptr_mgmt_hdr->retries_count,
+				    ptr_mgmt_hdr->is_sgen_pkt);
 
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP_TX_CAPTURE,
 				   QDF_TRACE_LEVEL_DEBUG,
@@ -2481,7 +2481,7 @@ static QDF_STATUS dp_tx_add_amsdu_llc_hdr(qdf_nbuf_t nbuf, bool is_last_msdu)
 
 	/* increase data area to include LLC header */
 	if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < LLC_SNAP_HDR_LEN)) {
-		dp_tx_capture_alert("No Head room to push %d bytes, avail:%d\n",
+		dp_tx_capture_alert("No Head room to push %zu bytes, avail:%d\n",
 				    LLC_SNAP_HDR_LEN,
 				    qdf_nbuf_headroom(nbuf));
 		return QDF_STATUS_E_NOMEM;
@@ -3613,7 +3613,7 @@ dp_tx_mon_get_next_mpdu(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 					    "peer id %d, tid: %p mpdu_nbuf %p xretry_user %p "
 					    "mpdu_q %p len %d temp_xretry %p",
 					    pdev->soc, pdev, tx_tid->peer_id, tx_tid, mpdu_nbuf,
-					    xretry_user, xretry_user->mpdu_q,
+					    xretry_user, &xretry_user->mpdu_q,
 					    qdf_nbuf_queue_len(&xretry_user->mpdu_q),
 					    &temp_xretries);
 			qdf_assert_always(0);
@@ -4275,7 +4275,7 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	uint32_t desc_ppdu_id;
 	size_t head_size;
 	uint32_t status = 1;
-	uint32_t tsf_delta;
+	uint64_t tsf_delta;
 	uint64_t start_tsf;
 	uint64_t end_tsf;
 	uint16_t ppdu_desc_frame_ctrl;
@@ -4418,7 +4418,7 @@ get_mgmt_pkt_from_queue:
 						ptr_comp_info->tx_tsf +
 						start_tsf;
 
-				dp_tx_capture_info("%pK: ppdu_id[m:%d desc:%d] start_tsf: %u mgmt_tsf:%u tsf_delta:%u bar_frm_with_data:%d",
+				dp_tx_capture_info("%pK: ppdu_id[m:%d desc:%d] start_tsf: %llu mgmt_tsf:%llu tsf_delta:%llu bar_frm_with_data:%d",
 						   pdev->soc, ppdu_id, desc_ppdu_id,
 						   start_tsf, ptr_comp_info->tx_tsf,
 						   tsf_delta, bar_frm_with_data);
@@ -4495,7 +4495,7 @@ insert_mgmt_buf_to_queue:
 			struct ieee80211_frame *wh;
 			uint32_t retry_len = 0;
 
-			dp_tx_capture_info("%pK: ppdu_id[m:%d desc:%d] start_tsf: %u mgmt_tsf:%u bar_frm_with_data:%d is_sgen:%d",
+			dp_tx_capture_info("%pK: ppdu_id[m:%d desc:%d] start_tsf: %llu mgmt_tsf:%llu bar_frm_with_data:%d is_sgen:%d",
 					   pdev->soc, ppdu_id, desc_ppdu_id,
 					   start_tsf, ptr_comp_info->tx_tsf,
 					   bar_frm_with_data, is_sgen_pkt);
@@ -4781,7 +4781,7 @@ dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
 
 	dp_tx_mon_proc_xretries(pdev, peer, tid);
 
-	dp_tx_capture_info("%pK: peer_id [%d 0x%x] tid[%d] qlen[%d -> %d]",
+	dp_tx_capture_info("%pK: peer_id [%d %pK] tid[%d] qlen[%d -> %d]",
 			   pdev->soc, ppdu_desc->user[usr_idx].peer_id, peer, tid, qlen, qlen_curr);
 
 }
@@ -5512,7 +5512,7 @@ free_nbuf_dec_ref:
 		 * descriptor list
 		 */
 		/* print ppdu_desc info for debugging purpose */
-		dp_tx_capture_info("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%u b %u] dur[%u]",
+		dp_tx_capture_info("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%llu b %u] dur[%u]",
 				   pdev->soc, ppdu_desc->ppdu_id,
 				   ppdu_desc->user[0].peer_id,
 				   ppdu_desc->user[0].tid,
