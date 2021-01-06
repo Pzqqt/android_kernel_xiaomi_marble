@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -733,6 +733,31 @@ void hif_process_runtime_suspend_failure(struct hif_opaque_softc *hif_ctx)
 	hif_runtime_pm_set_state_on(scn);
 }
 
+static void hif_pm_runtime_print_prevent_list(struct hif_softc *scn)
+{
+	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_pm_runtime_lock *ctx;
+
+	hif_info("prevent_suspend_cnt %u", rpm_ctx->prevent_suspend_cnt);
+	list_for_each_entry(ctx, &rpm_ctx->prevent_suspend_list, list)
+		hif_info("%s", ctx->name);
+}
+
+static bool hif_pm_runtime_is_suspend_allowed(struct hif_softc *scn)
+{
+	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	bool ret;
+
+	if (!scn->hif_config.enable_runtime_pm)
+		return 0;
+
+	spin_lock_bh(&rpm_ctx->runtime_lock);
+	ret = (rpm_ctx->prevent_suspend_cnt == 0);
+	spin_unlock_bh(&rpm_ctx->runtime_lock);
+
+	return ret;
+}
+
 /**
  * hif_pre_runtime_suspend() - bookkeeping before beginning runtime suspend
  *
@@ -754,6 +779,14 @@ int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_runtime_pm_set_state_suspending(scn);
+
+	/* keep this after set suspending */
+	if (!hif_pm_runtime_is_suspend_allowed(scn)) {
+		hif_info("Runtime PM not allowed now");
+		hif_pm_runtime_print_prevent_list(scn);
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
