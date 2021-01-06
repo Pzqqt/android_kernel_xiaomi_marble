@@ -69,6 +69,9 @@
 #include <lim_assoc_utils.h>
 #include "wlan_mlme_ucfg_api.h"
 #include "nan_ucfg_api.h"
+#ifdef WLAN_FEATURE_11BE
+#include "wma_eht.h"
+#endif
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -7688,6 +7691,135 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		 rates->rx_he_mcs_map_80_80, rates->tx_he_mcs_map_80_80);
 
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+QDF_STATUS lim_populate_eht_mcs_set(struct mac_context *mac_ctx,
+				    struct supported_rates *rates,
+				    tDot11fIEeht_cap *peer_eht_caps,
+				    struct pe_session *session_entry,
+				    uint8_t nss)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+void lim_add_self_eht_cap(tpAddStaParams add_sta_params,
+			  struct pe_session *session)
+{
+}
+
+/**
+ * lim_intersect_eht_caps() - Intersect peer capability and self capability
+ * @rcvd_eht: pointer to received peer capability
+ * @peer_eht: pointer to Intersected capability
+ * @session: A pointer to session entry.
+ *
+ * Return: None
+ */
+static void lim_intersect_eht_caps(tDot11fIEeht_cap *rcvd_eht,
+				   tDot11fIEeht_cap *peer_eht,
+				   struct pe_session *session)
+{
+}
+
+void lim_update_usr_eht_cap(struct mac_context *mac_ctx,
+			    struct pe_session *session)
+{
+}
+
+static void
+lim_revise_req_eht_cap_per_band(struct mlme_legacy_priv *mlme_priv,
+				struct pe_session *session)
+{
+}
+
+void lim_copy_bss_eht_cap(struct pe_session *session)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (!mlme_priv)
+		return;
+	lim_revise_req_eht_cap_per_band(mlme_priv, session);
+	qdf_mem_copy(&session->eht_config, &mlme_priv->eht_config,
+		     sizeof(session->eht_config));
+}
+
+void lim_copy_join_req_eht_cap(struct pe_session *session)
+{
+}
+
+void lim_add_eht_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
+		     tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
+{
+}
+
+void lim_intersect_ap_eht_caps(struct pe_session *session,
+			       struct bss_params *add_bss,
+			       tSchBeaconStruct *beacon,
+			       tpSirAssocRsp assoc_rsp)
+{
+}
+
+void lim_add_bss_eht_cap(struct bss_params *add_bss, tpSirAssocRsp assoc_rsp)
+{
+}
+
+void lim_intersect_sta_eht_caps(struct mac_context *mac_ctx,
+				tpSirAssocReq assoc_req,
+				struct pe_session *session,
+				tpDphHashNode sta_ds)
+{
+	tDot11fIEeht_cap *rcvd_eht = &assoc_req->eht_cap;
+	tDot11fIEeht_cap *peer_eht = &sta_ds->eht_config;
+
+	if (!sta_ds->mlmStaContext.eht_capable)
+		return;
+
+	/* If EHT is not supported, do not fill sta_ds and return */
+	if (!IS_DOT11_MODE_EHT(session->dot11mode))
+		return;
+
+	lim_intersect_eht_caps(rcvd_eht, peer_eht, session);
+}
+
+void lim_update_session_eht_capable(struct mac_context *mac,
+				    struct pe_session *session)
+{
+	session->eht_capable = true;
+	pe_debug("eht_capable: %d", session->eht_capable);
+}
+
+void lim_add_bss_eht_cfg(struct bss_params *add_bss, struct pe_session *session)
+{
+}
+
+void lim_decide_eht_op(struct mac_context *mac_ctx, uint32_t *mlme_eht_ops,
+		       struct pe_session *session)
+{
+	struct eht_ops_network_endian *eht_ops_from_ie;
+	tDot11fIEeht_op eht_ops = {0};
+	struct add_ie_params *add_ie = &session->add_ie_params;
+	uint8_t extracted_buff[DOT11F_IE_EHT_OP_MAX_LEN + 2];
+	QDF_STATUS status;
+
+	qdf_mem_zero(extracted_buff, sizeof(extracted_buff));
+	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
+			      &add_ie->probeRespBCNDataLen,
+			      DOT11F_EID_EHT_OP, ONE_BYTE,
+			      EHT_OP_OUI_TYPE, (uint8_t)EHT_OP_OUI_SIZE,
+			      extracted_buff, DOT11F_IE_EHT_OP_MAX_LEN);
+	if (QDF_STATUS_SUCCESS != status) {
+		pe_debug("Failed to strip EHT OP IE status: %d", status);
+		return;
+	}
+	eht_ops_from_ie = (struct eht_ops_network_endian *)
+					&extracted_buff[EHT_OP_OUI_SIZE + 2];
+
+	qdf_mem_copy(&session->eht_op, &eht_ops, sizeof(tDot11fIEeht_op));
+
+	wma_update_vdev_eht_ops(mlme_eht_ops, &eht_ops);
 }
 #endif
 
