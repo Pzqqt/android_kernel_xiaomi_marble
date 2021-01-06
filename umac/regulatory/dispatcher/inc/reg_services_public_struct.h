@@ -80,6 +80,8 @@
 #define BW_160_MHZ    160
 #define BW_40_MHZ     40
 
+#define MAX_NUM_PWR_LEVEL 16
+
 /**
  * enum dfs_reg - DFS region
  * @DFS_UNINIT_REGION: un-initialized region
@@ -1311,6 +1313,40 @@ enum reg_phymode {
 	REG_PHYMODE_11AC,
 	REG_PHYMODE_11AX,
 	REG_PHYMODE_MAX,
+};
+
+/**
+ * struct chan_power_info - TPE containing power info per channel chunk
+ * @chan_cfreq: channel center freq (MHz)
+ * @tx_power: transmit power (dBm)
+ */
+struct chan_power_info {
+	qdf_freq_t chan_cfreq;
+	uint8_t tx_power;
+};
+
+/**
+ * struct reg_tpc_power_info - regulatory TPC power info
+ * @is_psd_power: is PSD power or not
+ * @eirp_power: Maximum EIRP power (dBm), valid only if power is PSD
+ * @power_type_6g: type of power (SP/LPI/VLP)
+ * @num_pwr_levels: number of power levels
+ * @reg_max: Array of maximum TX power (dBm) per PSD value
+ * @ap_constraint_power: AP constraint power (dBm)
+ * @frequency: Array of operating frequency
+ * @tpe: TPE values processed from TPE IE
+ * @chan_power_info: power info to send to FW
+ */
+struct reg_tpc_power_info {
+	bool is_psd_power;
+	uint8_t eirp_power;
+	uint8_t power_type_6g;
+	uint8_t num_pwr_levels;
+	uint8_t reg_max[MAX_NUM_PWR_LEVEL];
+	uint8_t ap_constraint_power;
+	qdf_freq_t frequency[MAX_NUM_PWR_LEVEL];
+	uint8_t tpe[MAX_NUM_PWR_LEVEL];
+	struct chan_power_info chan_power_info[MAX_NUM_PWR_LEVEL];
 };
 
 #endif

@@ -822,6 +822,7 @@ struct wlan_lmac_if_ftm_rx_ops {
  * @register_11d_new_cc_handler: pointer to register 11d cc event handler
  * @unregister_11d_new_cc_handler:  pointer to unregister 11d cc event handler
  * @send_ctl_info: call-back function to send CTL info to firmware
+ * @set_tpc_power: send transmit power control info to firmware
  */
 struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*register_master_handler)(struct wlan_objmgr_psoc *psoc,
@@ -861,6 +862,9 @@ struct wlan_lmac_if_reg_tx_ops {
 					      uint8_t pdev_id, uint8_t *phy_id);
 	QDF_STATUS (*get_pdev_id_from_phy_id)(struct wlan_objmgr_psoc *psoc,
 					      uint8_t phy_id, uint8_t *pdev_id);
+	QDF_STATUS (*set_tpc_power)(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    struct reg_tpc_power_info *param);
 };
 
 /**

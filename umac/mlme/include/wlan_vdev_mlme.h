@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -553,6 +553,7 @@ struct vdev_mlme_ops {
  * @vdev: Pointer to vdev objmgr
  * @ops:                  VDEV MLME callback table
  * @ext_vdev_ptr:         VDEV MLME legacy pointer
+ * @reg_tpc_obj:          Regulatory transmit power info
  * @vdev_rt: VDEV response timer
  * @vdev_wakelock:  vdev wakelock sub structure
  */
@@ -570,6 +571,7 @@ struct vdev_mlme_obj {
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_ops *ops;
 	mlme_vdev_ext_t *ext_vdev_ptr;
+	struct reg_tpc_power_info reg_tpc_obj;
 };
 
 /**
