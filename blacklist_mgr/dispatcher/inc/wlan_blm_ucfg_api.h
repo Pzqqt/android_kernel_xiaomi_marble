@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -106,6 +106,16 @@ ucfg_blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 				  uint8_t num_of_bssid);
 
 /**
+ * ucfg_blm_dump_black_list_ap() - get blacklisted bssid.
+ * @pdev: pdev object
+ *
+ * This API dumps blacklist ap
+ *
+ * Return: None
+ */
+void ucfg_blm_dump_black_list_ap(struct wlan_objmgr_pdev *pdev);
+
+/**
  * ucfg_blm_update_bssid_connect_params() - Inform the BLM about connect or
  * disconnect with the current AP.
  * @pdev: pdev object
@@ -174,6 +184,10 @@ QDF_STATUS ucfg_blm_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline
+void ucfg_blm_dump_black_list_ap(struct wlan_objmgr_pdev *pdev)
+{}
 
 static inline
 QDF_STATUS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -731,6 +731,78 @@ blm_fill_rssi_reject_params(struct blm_reject_ap *blm_entry,
 		   blm_reject_list->original_timeout,
 		   blm_reject_list->received_time,
 		   blm_reject_list->reject_reason);
+}
+
+static enum blm_reject_ap_type
+blm_get_reject_ap_type(struct blm_reject_ap *blm_entry)
+{
+	if (BLM_IS_AP_AVOIDED_BY_USERSPACE(blm_entry))
+		return USERSPACE_AVOID_TYPE;
+	if (BLM_IS_AP_BLACKLISTED_BY_USERSPACE(blm_entry))
+		return USERSPACE_BLACKLIST_TYPE;
+	if (BLM_IS_AP_AVOIDED_BY_DRIVER(blm_entry))
+		return DRIVER_AVOID_TYPE;
+	if (BLM_IS_AP_BLACKLISTED_BY_DRIVER(blm_entry))
+		return DRIVER_BLACKLIST_TYPE;
+	if (BLM_IS_AP_IN_RSSI_REJECT_LIST(blm_entry))
+		return DRIVER_RSSI_REJECT_TYPE;
+	if (BLM_IS_AP_IN_MONITOR_LIST(blm_entry))
+		return DRIVER_MONITOR_TYPE;
+
+	return REJECT_REASON_UNKNOWN;
+}
+
+void blm_dump_blacklist_bssid(struct wlan_objmgr_pdev *pdev)
+{
+	struct blm_reject_ap *blm_entry = NULL;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	uint32_t reject_duration;
+	enum blm_reject_ap_type reject_ap_type;
+	qdf_list_t *reject_db_list;
+	QDF_STATUS status;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || !blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return;
+	}
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return;
+	}
+
+	reject_db_list = &blm_ctx->reject_ap_list;
+	qdf_list_peek_front(reject_db_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(reject_db_list, cur_node, &next_node);
+
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					     node);
+
+		reject_ap_type = blm_get_reject_ap_type(blm_entry);
+
+		reject_duration = blm_get_delta_of_bssid(
+						reject_ap_type, blm_entry,
+						&blm_psoc_obj->blm_cfg);
+
+			blm_nofl_debug("BLACKLIST BSSID "QDF_MAC_ADDR_FMT" type %d retry delay %d expected RSSI %d reject reason %d rejection source %d",
+				QDF_MAC_ADDR_REF(blm_entry->bssid.bytes),
+				reject_ap_type,
+				reject_duration,
+				blm_entry->rssi_reject_params.expected_rssi,
+				blm_entry->reject_ap_reason,
+				blm_entry->rssi_reject_params.source);
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 }
 
 static void blm_fill_reject_list(qdf_list_t *reject_db_list,
