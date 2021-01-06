@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4355,10 +4355,10 @@ QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 		return QDF_STATUS_E_FAULT;
 
 	qdf_mem_zero(&peer_stats_intf, sizeof(peer_stats_intf));
-	if (peer_stats->rx.last_rssi != peer_stats->rx.rssi)
+	if (peer_stats->rx.last_snr != peer_stats->rx.snr)
 		peer_stats_intf.rssi_changed = true;
 
-	if ((peer_stats->rx.rssi && peer_stats_intf.rssi_changed) ||
+	if ((peer_stats->rx.snr && peer_stats_intf.rssi_changed) ||
 	    (peer_stats->tx.tx_rate &&
 	     peer_stats->tx.tx_rate != peer_stats->tx.last_tx_rate)) {
 		qdf_mem_copy(peer_stats_intf.peer_mac, peer->mac_addr.raw,
@@ -4366,7 +4366,7 @@ QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 		peer_stats_intf.vdev_id = peer->vdev->vdev_id;
 		peer_stats_intf.last_peer_tx_rate = peer_stats->tx.last_tx_rate;
 		peer_stats_intf.peer_tx_rate = peer_stats->tx.tx_rate;
-		peer_stats_intf.peer_rssi = peer_stats->rx.rssi;
+		peer_stats_intf.peer_rssi = peer_stats->rx.snr;
 		peer_stats_intf.tx_packet_count = peer_stats->tx.ucast.num;
 		peer_stats_intf.rx_packet_count = peer_stats->rx.to_stack.num;
 		peer_stats_intf.tx_byte_count = peer_stats->tx.tx_success.bytes;

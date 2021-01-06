@@ -652,14 +652,14 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 					       soc, ppdu->u.bw);
 		}
 
-		DP_STATS_UPD(peer, rx.rssi, (ppdu->rssi + pkt_bw_offset));
+		DP_STATS_UPD(peer, rx.snr, (ppdu->rssi + pkt_bw_offset));
 
-		if (peer->stats.rx.avg_rssi == INVALID_RSSI)
-			peer->stats.rx.avg_rssi =
-				CDP_RSSI_IN(peer->stats.rx.rssi);
+		if (peer->stats.rx.avg_snr == CDP_INVALID_SNR)
+			peer->stats.rx.avg_snr =
+				CDP_SNR_IN(peer->stats.rx.snr);
 		else
-			CDP_RSSI_UPDATE_AVG(peer->stats.rx.avg_rssi,
-					    peer->stats.rx.rssi);
+			CDP_SNR_UPDATE_AVG(peer->stats.rx.avg_snr,
+					   peer->stats.rx.snr);
 
 		if ((preamble == DOT11_A) || (preamble == DOT11_B))
 			nss = 1;
@@ -776,7 +776,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		if (ppdu->tid != HAL_TID_INVALID)
 			DP_STATS_INC(peer, rx.wme_ac_type[ac], num_msdu);
 		dp_peer_stats_notify(pdev, peer);
-		DP_STATS_UPD(peer, rx.last_rssi, ppdu->rssi);
+		DP_STATS_UPD(peer, rx.last_snr, ppdu->rssi);
 
 		dp_peer_qos_stats_notify(pdev, ppdu_user);
 		if (peer == pdev->invalid_peer)

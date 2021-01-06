@@ -6022,7 +6022,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		dp_peer_rx_bufq_resources_init(peer);
 
 		DP_STATS_INIT(peer);
-		DP_STATS_UPD(peer, rx.avg_rssi, INVALID_RSSI);
+		DP_STATS_UPD(peer, rx.avg_snr, CDP_INVALID_SNR);
 
 		/*
 		 * In tx_monitor mode, filter may be set for unassociated peer
@@ -6137,7 +6137,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	peer->valid = 1;
 	dp_local_peer_id_alloc(pdev, peer);
 	DP_STATS_INIT(peer);
-	DP_STATS_UPD(peer, rx.avg_rssi, INVALID_RSSI);
+	DP_STATS_UPD(peer, rx.avg_snr, CDP_INVALID_SNR);
 
 	qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
 		     QDF_MAC_ADDR_SIZE);
@@ -9647,8 +9647,8 @@ dp_txrx_get_peer_stats_param(struct cdp_soc_t *soc, uint8_t vdev_id,
 		case cdp_peer_rx_flags:
 			buf->rx_flags = peer->stats.rx.rx_flags;
 			break;
-		case cdp_peer_rx_avg_rssi:
-			buf->rx_avg_rssi = peer->stats.rx.avg_rssi;
+		case cdp_peer_rx_avg_snr:
+			buf->rx_avg_snr = peer->stats.rx.avg_snr;
 			break;
 		default:
 			dp_peer_err("%pK: Invalid value", soc);

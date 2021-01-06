@@ -652,8 +652,8 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 			srcobj->tx.dropped.fw_reason3;
 	tgtobj->stats.tx.dropped.age_out += srcobj->tx.dropped.age_out;
 	tgtobj->stats.rx.err.mic_err += srcobj->rx.err.mic_err;
-	if (srcobj->rx.rssi != 0)
-		tgtobj->stats.rx.rssi = srcobj->rx.rssi;
+	if (srcobj->rx.snr != 0)
+		tgtobj->stats.rx.snr = srcobj->rx.snr;
 	tgtobj->stats.rx.rx_rate = srcobj->rx.rx_rate;
 	tgtobj->stats.rx.err.decrypt_err += srcobj->rx.err.decrypt_err;
 	tgtobj->stats.rx.non_ampdu_cnt += srcobj->rx.non_ampdu_cnt;
@@ -871,8 +871,8 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 			srcobj->stats.tx.dropped.fw_reason3;
 	tgtobj->tx.dropped.age_out += srcobj->stats.tx.dropped.age_out;
 	tgtobj->rx.err.mic_err += srcobj->stats.rx.err.mic_err;
-	if (srcobj->stats.rx.rssi != 0)
-		tgtobj->rx.rssi = srcobj->stats.rx.rssi;
+	if (srcobj->stats.rx.snr != 0)
+		tgtobj->rx.snr = srcobj->stats.rx.snr;
 	tgtobj->rx.rx_rate = srcobj->stats.rx.rx_rate;
 	tgtobj->rx.err.decrypt_err += srcobj->stats.rx.err.decrypt_err;
 	tgtobj->rx.non_ampdu_cnt += srcobj->stats.rx.non_ampdu_cnt;
@@ -983,8 +983,8 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.age_out); \
 								\
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.mic_err); \
-		if (_srcobj->stats.rx.rssi != 0) \
-			DP_STATS_UPD_STRUCT(_tgtobj, _srcobj, rx.rssi); \
+		if (_srcobj->stats.rx.snr != 0) \
+			DP_STATS_UPD_STRUCT(_tgtobj, _srcobj, rx.snr); \
 		DP_STATS_UPD_STRUCT(_tgtobj, _srcobj, rx.rx_rate); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.decrypt_err); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_ampdu_cnt); \

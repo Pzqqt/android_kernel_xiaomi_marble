@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -716,7 +716,8 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					rx_info->rs_keyix);
 	}
 
-	rx_info->rs_rssi = peer->stats.rx.rssi;
+	rx_info->rs_snr = peer->stats.rx.snr;
+	rx_info->rs_rssi = rx_info->rs_snr + DP_DEFAULT_NOISEFLOOR;
 
 	soc = vdev->pdev->soc;
 	primary_chan_num = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
@@ -739,12 +740,13 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	qdf_nbuf_set_rx_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_MED,
-		FL("Mesh rx stats: flags %x, rssi %x, chn %x, rate %x, kix %x"),
+		FL("Mesh rx stats: flags %x, rssi %x, chn %x, rate %x, kix %x, snr %x"),
 						rx_info->rs_flags,
 						rx_info->rs_rssi,
 						rx_info->rs_channel,
 						rx_info->rs_ratephy1,
-						rx_info->rs_keyix);
+						rx_info->rs_keyix,
+						rx_info->rs_snr);
 
 }
 
