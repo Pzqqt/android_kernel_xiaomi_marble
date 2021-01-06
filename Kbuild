@@ -1267,13 +1267,16 @@ UMAC_MLME_OBJS += $(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_disconnect.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_util.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/dispatcher/src/wlan_cm_ucfg_api.o \
-		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/dispatcher/src/wlan_cm_api.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/dispatcher/src/wlan_cm_api.o
 
 ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
 # Add LFR3/FW roam specific connection manager files here
+UMAC_MLME_OBJS += $(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_roam_util.o
 endif
 ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
 # Add LFR2/host roam specific connection manager files here
+UMAC_MLME_OBJS += $(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_roam_util.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_host_roam.o
 endif
 endif
 
