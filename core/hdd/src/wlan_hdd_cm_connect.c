@@ -40,6 +40,7 @@
 #include "wlan_vdev_mgr_ucfg_api.h"
 #include "wlan_hdd_bootup_marker.h"
 #include "sme_qos_internal.h"
+#include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_scan.h"
 #include <enet.h>
 
@@ -278,6 +279,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	if (status)
 		return status;
 
+	ucfg_blm_dump_black_list_ap(hdd_ctx->pdev);
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
 
 	ucfg_pmo_flush_gtk_offload_req(vdev);

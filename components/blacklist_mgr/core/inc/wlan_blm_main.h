@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,6 +37,8 @@
 		QDF_TRACE_INFO(QDF_MODULE_ID_BLACKLIST_MGR, params)
 #define blm_debug(params...)\
 		QDF_TRACE_DEBUG(QDF_MODULE_ID_BLACKLIST_MGR, params)
+#define blm_nofl_debug(params...)\
+		QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_BLACKLIST_MGR, params)
 
 /**
  * struct blm_pdev_priv_obj - Pdev priv struct to store list of blacklist mgr.

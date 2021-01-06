@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,6 +88,18 @@ wlan_blm_get_bssid_reject_list(struct wlan_objmgr_pdev *pdev,
 	return blm_get_bssid_reject_list(pdev, reject_list,
 					 max_bssid_to_be_filled,
 					 reject_ap_type);
+}
+
+/**
+ * wlan_blm_dump_blcklist_bssid() - dump the blacklisted BSSIDs from BLM
+ * @pdev: pdev object
+ *
+ * Return: None
+ */
+static inline void
+wlan_blm_dump_blcklist_bssid(struct wlan_objmgr_pdev *pdev)
+{
+	return blm_dump_blacklist_bssid(pdev);
 }
 
 /**

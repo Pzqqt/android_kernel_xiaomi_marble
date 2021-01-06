@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,6 +201,12 @@ ucfg_blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 {
 	return blm_add_userspace_black_list(pdev, bssid_black_list,
 					    num_of_bssid);
+}
+
+void
+ucfg_blm_dump_black_list_ap(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_blm_dump_blcklist_bssid(pdev);
 }
 
 void

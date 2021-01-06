@@ -20808,6 +20808,8 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	else if (bssid_hint)
 		bssid = bssid_hint;
 
+	ucfg_blm_dump_black_list_ap(hdd_ctx->pdev);
+
 	if (bssid && hdd_get_adapter_by_macaddr(hdd_ctx, (uint8_t *)bssid)) {
 		hdd_err("adapter exist with same mac address " QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(bssid));
