@@ -1400,7 +1400,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 
 	inst->prop.frame_rate = DEFAULT_FPS << 16;
 	inst->prop.operating_rate = DEFAULT_FPS << 16;
-	inst->stage = MSM_VIDC_STAGE_2;
+	inst->stage = MSM_VIDC_STAGE_1;
 	inst->pipe = MSM_VIDC_PIPE_4;
 	inst->quality_mode = MSM_VIDC_MAX_QUALITY_MODE;
 
