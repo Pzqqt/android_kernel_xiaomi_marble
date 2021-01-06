@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -740,7 +740,11 @@ enum mgmt_frame_type {
  * @rate: Rate kbps
  * @phy_mode: rx phy mode
  * @buf_len: length of the frame
- * @status: rx status
+ * @status: rx status. It is a bitfield being used based on below defines
+ *          WMI_HOST_RXERR_CRC = 0x01
+ *          WMI_HOST_RXERR_DECRYPT = 0x08
+ *          WMI_HOST_RXERR_MIC = 0x10
+ *          WMI_HOST_RXERR_KEY_CACHE_MISS = 0x20
  * @flags: information about the management frame e.g. can give a
  *         scan source for a scan result mgmt frame
  * @rssi: combined RSSI, i.e. the sum of the snr + noise floor (dBm units)
@@ -757,7 +761,7 @@ struct mgmt_rx_event_params {
 	uint32_t    rate;
 	enum wlan_phymode    phy_mode;
 	uint32_t    buf_len;
-	QDF_STATUS  status;
+	uint8_t     status;
 	uint32_t    flags;
 	int32_t     rssi;
 	uint32_t    tsf_delta;
