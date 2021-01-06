@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2123,9 +2123,9 @@ static bool wlan_get_connected_vdev_by_bssid(struct wlan_objmgr_pdev *pdev,
 	psoc = wlan_pdev_get_psoc(pdev);
 	qdf_mem_zero(&context, sizeof(struct wlan_check_bssid_context));
 	qdf_mem_copy(context.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
-	wlan_objmgr_iterate_obj_list_all(psoc, WLAN_VDEV_OP,
-					 wlan_get_connected_vdev_handler,
-					 &context, true, WLAN_OSIF_SCAN_ID);
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     wlan_get_connected_vdev_handler,
+				     &context, true, WLAN_OSIF_SCAN_ID);
 	if (context.connected)
 		*vdev_id = context.vdev_id;
 
