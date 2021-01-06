@@ -17,7 +17,7 @@
 #include "wlan_cm_main.h"
 #include "wlan_cm_roam_sm.h"
 #include "wlan_cm_sm.h"
-#include <wlan_mlme_cmn.h>
+#include <include/wlan_mlme_cmn.h>
 #include "wlan_cm_main_api.h"
 #include <wlan_scan_api.h>
 #include <wlan_serialization_api.h>
@@ -162,10 +162,9 @@ static void cm_connect_prepare_scan_filter_for_roam(
 		filter->pmf_cap = WLAN_PMF_DISABLED;
 }
 
-QDF_STATUS cm_roam_get_candidates(
-		struct wlan_objmgr_pdev *pdev,
-		struct cnx_mgr *cm_ctx,
-		struct cm_roam_req *cm_req)
+static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
+					 struct cnx_mgr *cm_ctx,
+					 struct cm_roam_req *cm_req)
 {
 	struct scan_filter *filter;
 	uint32_t num_bss = 0;
@@ -211,22 +210,6 @@ QDF_STATUS cm_roam_get_candidates(
 						 struct scan_cache_node,
 						 node);
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS cm_start_roam_req(struct cnx_mgr *cm_ctx,
-			     struct cm_req *cm_req)
-{
-	cm_req->roam_req.cm_id =
-		cm_get_cm_id(cm_ctx, cm_req->roam_req.req.source);
-	cm_req->cm_id = cm_req->roam_req.cm_id;
-	cm_req->roam_req.req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-	cm_add_req_to_list_and_indicate_osif(cm_ctx, cm_req,
-					     cm_req->roam_req.req.source);
-
-	cm_sm_transition_to(cm_ctx, WLAN_CM_SS_PREAUTH);
-
-	return cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_ROAM_START,
-					sizeof(*cm_req), cm_req);
 }
 
 QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
@@ -470,7 +453,7 @@ reassoc_fail:
 	return QDF_STATUS_SUCCESS;
 }
 
-void
+static void
 cm_reassoc_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
 	struct wlan_cm_roam_resp *resp;
@@ -740,6 +723,7 @@ QDF_STATUS cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS qdf_status;
 	wlan_cm_id cm_id;
 	uint32_t prefix;
+	enum wlan_cm_sm_evt event;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx)
@@ -765,12 +749,15 @@ QDF_STATUS cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
 		if (cm_is_cm_id_current_candidate_single_pmk(cm_ctx, cm_id))
 			wlan_crypto_selective_clear_sae_single_pmk_entries(
 					vdev, &resp->bssid);
-		qdf_status = cm_sm_deliver_event(vdev,
-						 WLAN_CM_SM_EV_REASSOC_DONE,
-						 sizeof(*resp), resp);
-		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			return qdf_status;
+		event = WLAN_CM_SM_EV_REASSOC_DONE;
+	} else {
+		event = WLAN_CM_SM_EV_REASSOC_FAILURE;
 	}
+
+	qdf_status = cm_sm_deliver_event(cm_ctx->vdev, event, sizeof(*resp),
+					 resp);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
 post_err:
 	cm_reassoc_complete(cm_ctx, resp);
 
@@ -855,12 +842,4 @@ QDF_STATUS cm_roam_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 disconnect_complete:
 	cm_reassoc_handle_event_post_fail(cm_ctx, cm_id);
 	return qdf_status;
-}
-
-void cm_start_roam_invoke(struct cnx_mgr *cm_ctx)
-{
-}
-
-void cm_fw_roam_start(struct cnx_mgr *cm_ctx)
-{
 }

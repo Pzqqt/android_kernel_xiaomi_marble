@@ -25,6 +25,12 @@
 #include "wlan_cm_roam.h"
 #include <wlan_scan_api.h>
 
+void cm_free_roam_req_mem(struct cm_roam_req *roam_req)
+{
+	if (roam_req->candidate_list)
+		wlan_scan_purge_results(roam_req->candidate_list);
+}
+
 QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 					 struct cm_connect_req *connect_req,
 					 struct cm_req **roam_req)
@@ -84,6 +90,22 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 	qdf_mem_free(cm_req);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_add_roam_req_to_list(struct cnx_mgr *cm_ctx,
+				   struct cm_req *cm_req)
+{
+	QDF_STATUS status;
+
+	cm_req->roam_req.cm_id =
+			cm_get_cm_id(cm_ctx, cm_req->roam_req.req.source);
+	cm_req->cm_id = cm_req->roam_req.cm_id;
+	cm_req->roam_req.req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	status =
+	    cm_add_req_to_list_and_indicate_osif(cm_ctx, cm_req,
+						 cm_req->roam_req.req.source);
+
+	return status;
 }
 
 #ifdef WLAN_FEATURE_HOST_ROAM

@@ -23,6 +23,10 @@
 #include "wlan_cm_public_struct.h"
 #include "wlan_serialization_api.h"
 #include "wlan_cm_bss_score_param.h"
+#ifdef WLAN_POLICY_MGR_ENABLE
+#include <wlan_policy_mgr_api.h>
+#endif
+#include "wlan_cm_roam.h"
 
 static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 	switch (source) {
@@ -658,12 +662,6 @@ void cm_free_connect_req_mem(struct cm_connect_req *connect_req)
 				req->crypto.wep_keys.seq_len);
 
 	qdf_mem_zero(connect_req, sizeof(*connect_req));
-}
-
-void cm_free_roam_req_mem(struct cm_roam_req *roam_req)
-{
-	if (roam_req->candidate_list)
-		wlan_scan_purge_results(roam_req->candidate_list);
 }
 
 QDF_STATUS

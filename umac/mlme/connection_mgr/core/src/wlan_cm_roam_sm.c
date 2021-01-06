@@ -40,18 +40,34 @@ bool cm_state_roaming_event(void *ctx, uint16_t event,
 {
 	struct cnx_mgr *cm_ctx = ctx;
 	bool event_handled = true;
+	struct wlan_objmgr_psoc *psoc;
 
 	switch (event) {
 	case WLAN_CM_SM_EV_ROAM_REQ:
-		cm_start_roam_req(cm_ctx, data);
+		psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
+		if (!psoc) {
+			event_handled = false;
+			break;
+		}
+		if (cm_roam_offload_enabled(psoc)) {
+			cm_sm_deliver_event_sync(cm_ctx,
+						 WLAN_CM_SM_EV_ROAM_INVOKE,
+						 data_len, data);
+		} else {
+			cm_add_roam_req_to_list(cm_ctx, data);
+			cm_sm_transition_to(cm_ctx, WLAN_CM_SS_PREAUTH);
+			cm_sm_deliver_event_sync(cm_ctx,
+						 WLAN_CM_SM_EV_ROAM_START,
+						 data_len, data);
+		}
 		break;
 	case WLAN_CM_SM_EV_ROAM_INVOKE:
-		cm_add_connect_req_to_list(cm_ctx, data);
-		cm_start_roam_invoke(cm_ctx);
+		cm_add_roam_req_to_list(cm_ctx, data);
+		/* cm_start_roam_invoke(cm_ctx); define in LFR3/FW roam file */
 		break;
 	case WLAN_CM_SM_EV_ROAM_START:
-		cm_add_connect_req_to_list(cm_ctx, data);
-		cm_fw_roam_start(cm_ctx);
+		cm_add_roam_req_to_list(cm_ctx, data);
+		/* cm_fw_roam_start(cm_ctx); define in LFR3/FW roam file */
 		break;
 	default:
 		event_handled = false;
