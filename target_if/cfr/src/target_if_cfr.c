@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -374,7 +374,7 @@ target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return cfr_wifi2_0_init_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000) ||
-		   (target_type == TARGET_TYPE_QCN9100) ||
+		   (target_type == TARGET_TYPE_QCN6122) ||
 		   (target_type == TARGET_TYPE_QCA5018)) {
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
 		return cfr_enh_init_pdev(psoc, pdev);
@@ -404,7 +404,7 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		return cfr_wifi2_0_deinit_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000) ||
-		   (target_type == TARGET_TYPE_QCN9100) ||
+		   (target_type == TARGET_TYPE_QCN6122) ||
 		   (target_type == TARGET_TYPE_QCA5018)) {
 		return cfr_enh_deinit_pdev(psoc, pdev);
 	} else

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -891,7 +891,7 @@ QDF_STATUS init_deinit_validate_160_80p80_fw_caps(
 
 	if ((tgt_hdl->info.target_type == TARGET_TYPE_QCA8074) ||
 	    (tgt_hdl->info.target_type == TARGET_TYPE_QCA8074V2) ||
-	    (tgt_hdl->info.target_type == TARGET_TYPE_QCN9100) ||
+	    (tgt_hdl->info.target_type == TARGET_TYPE_QCN6122) ||
 	    (tgt_hdl->info.target_type == TARGET_TYPE_QCA6290)) {
 		/**
 		 * Return true for now. This is not available in
