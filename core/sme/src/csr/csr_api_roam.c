@@ -1232,6 +1232,7 @@ QDF_STATUS csr_start(struct mac_context *mac)
 			break;
 
 		mac->roam.sPendingCommands = 0;
+
 		for (i = 0; i < WLAN_MAX_VDEVS; i++)
 			status = csr_neighbor_roam_init(mac, i);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1276,8 +1277,8 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 	 */
 	csr_purge_pdev_all_ser_cmd_list(mac);
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
-		csr_prepare_vdev_delete(mac, sessionId, true);
 
+		csr_prepare_vdev_delete(mac, sessionId, true);
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		csr_neighbor_roam_close(mac, sessionId);
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
@@ -1732,13 +1733,13 @@ static void init_config_param(struct mac_context *mac)
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
 }
 
-void csr_flush_cfg_bg_scan_roam_channel_list(tCsrChannelInfo *channel_info)
+void csr_flush_cfg_bg_scan_roam_channel_list(struct rso_chan_info *channel_info)
 {
 	/* Free up the memory first (if required) */
 	if (channel_info->freq_list) {
 		qdf_mem_free(channel_info->freq_list);
 		channel_info->freq_list = NULL;
-		channel_info->numOfChannels = 0;
+		channel_info->num_chan = 0;
 	}
 }
 
@@ -1754,34 +1755,25 @@ void csr_flush_cfg_bg_scan_roam_channel_list(tCsrChannelInfo *channel_info)
 static void
 csr_flush_roam_scan_chan_lists(struct mac_context *mac, uint8_t vdev_id)
 {
-	tCsrChannelInfo *chan_info;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
 
-	chan_info =
-	&mac->roam.neighborRoamInfo[vdev_id].cfgParams.pref_chan_info;
-	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev)
+		return;
 
-	chan_info =
-	&mac->roam.neighborRoamInfo[vdev_id].cfgParams.specific_chan_info;
-	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
-}
-
-QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
-						tCsrChannelInfo *channel_info,
-						const uint32_t *chan_freq_list,
-						const uint8_t num_chan)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t i;
-
-	channel_info->freq_list = qdf_mem_malloc(sizeof(uint32_t) * num_chan);
-	if (!channel_info->freq_list)
-		return QDF_STATUS_E_NOMEM;
-
-	channel_info->numOfChannels = num_chan;
-	for (i = 0; i < num_chan; i++)
-		channel_info->freq_list[i] = chan_freq_list[i];
-
-	return status;
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+	cfg_params = &rso_cfg->cfg_param;
+	csr_flush_cfg_bg_scan_roam_channel_list(&cfg_params->pref_chan_info);
+	csr_flush_cfg_bg_scan_roam_channel_list(
+					&cfg_params->specific_chan_info);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -2596,20 +2588,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
 	csr_set_channels(mac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
-	pParam->roam_dense_min_aps =
-			cfg_params->roam_params.dense_min_aps_cnt;
-
-	pParam->roam_bg_scan_bad_rssi_thresh =
-		cfg_params->roam_params.bg_scan_bad_rssi_thresh;
-	pParam->roam_bad_rssi_thresh_offset_2g =
-		cfg_params->roam_params.roam_bad_rssi_thresh_offset_2g;
-	pParam->roam_data_rssi_threshold_triggers =
-		cfg_params->roam_params.roam_data_rssi_threshold_triggers;
-	pParam->roam_data_rssi_threshold =
-		cfg_params->roam_params.roam_data_rssi_threshold;
-	pParam->rx_data_inactivity_time =
-		cfg_params->roam_params.rx_data_inactivity_time;
-
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
@@ -14727,11 +14705,11 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	bss_freq = pBssDescription->chan_freq;
 	if ((eWNI_SME_REASSOC_REQ == messageType) ||
 	    WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) {
-		pSession->disable_hi_rssi = true;
+		wlan_cm_set_disable_hi_rssi(mac->pdev, sessionId, true);
 		sme_debug("Disabling HI_RSSI, AP freq=%d, rssi=%d",
 			  pBssDescription->chan_freq, pBssDescription->rssi);
 	} else {
-		pSession->disable_hi_rssi = false;
+		wlan_cm_set_disable_hi_rssi(mac->pdev, sessionId, false);
 	}
 
 	do {
@@ -15938,10 +15916,6 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 				   QDF_TIMER_TYPE_SW,
 				   csr_roam_roaming_offload_timeout_handler,
 				   &session->roamingTimerInfo);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("mem fail for roaming timer");
-		return status;
-	}
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("timer init failed for join failure timer");
@@ -16791,7 +16765,7 @@ QDF_STATUS csr_update_fils_config(struct mac_context *mac, uint8_t session_id,
  */
 static void csr_update_score_params(struct mac_context *mac_ctx,
 				    struct scoring_param *req_score_params,
-				    tpCsrNeighborRoamControlInfo roam_info)
+				    struct rso_config *rso_cfg)
 {
 	struct wlan_mlme_roam_scoring_cfg *roam_score_params;
 	struct weight_cfg *weight_config;
@@ -16807,7 +16781,7 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 	roam_score_params = &mac_ctx->mlme_cfg->roam_scoring;
 	weight_config = &score_config->weight_config;
 
-	if (!roam_info->cfgParams.enable_scoring_for_roam)
+	if (!rso_cfg->cfg_param.enable_scoring_for_roam)
 		req_score_params->disable_bitmap =
 			WLAN_ROAM_SCORING_DISABLE_ALL;
 
@@ -17067,139 +17041,6 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 /**
- * csr_cm_roam_scan_offload_rssi_thresh() - set roam offload scan rssi
- * parameters
- * @mac_ctx: global mac ctx
- * @session: csr roam session
- * @params:  roam offload scan rssi related parameters
- *
- * This function is used to set roam offload scan rssi related parameters
- *
- * Return: None
- */
-static void
-csr_cm_roam_scan_offload_rssi_thresh(struct mac_context *mac_ctx,
-			struct csr_roam_session *session,
-			struct wlan_roam_offload_scan_rssi_params *params)
-{
-	struct roam_ext_params *roam_params;
-		tpCsrNeighborRoamControlInfo roam_info =
-		&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
-
-	roam_params = &mac_ctx->roam.configParam.roam_params;
-
-	if (roam_params->alert_rssi_threshold)
-		params->rssi_thresh = roam_params->alert_rssi_threshold;
-	else
-		params->rssi_thresh =
-			(int8_t)roam_info->cfgParams.neighborLookupThreshold *
-			(-1);
-
-	params->vdev_id = session->vdev_id;
-	params->rssi_thresh_diff =
-		roam_info->cfgParams.nOpportunisticThresholdDiff & 0x000000ff;
-	params->hi_rssi_scan_max_count =
-		roam_info->cfgParams.hi_rssi_scan_max_count;
-	/*
-	 * If the current operation channel is 5G frequency band, then
-	 * there is no need to enable the HI_RSSI feature. This feature
-	 * is useful only if we are connected to a 2.4 GHz AP and we wish
-	 * to connect to a better 5GHz AP is available.
-	 */
-	if (session->disable_hi_rssi)
-		params->hi_rssi_scan_rssi_delta = 0;
-	else
-		params->hi_rssi_scan_rssi_delta =
-			roam_info->cfgParams.hi_rssi_scan_rssi_delta;
-	params->hi_rssi_scan_rssi_ub =
-		roam_info->cfgParams.hi_rssi_scan_rssi_ub;
-	params->raise_rssi_thresh_5g =
-		mac_ctx->mlme_cfg->lfr.rssi_boost_threshold_5g;
-	params->dense_rssi_thresh_offset =
-		mac_ctx->mlme_cfg->lfr.roam_dense_rssi_thre_offset;
-	params->dense_min_aps_cnt = mac_ctx->mlme_cfg->lfr.roam_dense_min_aps;
-	params->traffic_threshold =
-			mac_ctx->mlme_cfg->lfr.roam_dense_traffic_threshold;
-
-	/* Set initial dense roam status */
-	if (mac_ctx->scan.roam_candidate_count[params->vdev_id] >
-	    params->dense_min_aps_cnt)
-		params->initial_dense_status = true;
-
-	params->bg_scan_bad_rssi_thresh =
-		mac_ctx->mlme_cfg->lfr.roam_bg_scan_bad_rssi_threshold;
-	params->bg_scan_client_bitmap =
-		mac_ctx->mlme_cfg->lfr.roam_bg_scan_client_bitmap;
-	params->roam_bad_rssi_thresh_offset_2g =
-			mac_ctx->mlme_cfg->lfr.roam_bg_scan_bad_rssi_offset_2g;
-	params->roam_data_rssi_threshold_triggers =
-		mac_ctx->mlme_cfg->lfr.roam_data_rssi_threshold_triggers;
-	params->roam_data_rssi_threshold =
-		mac_ctx->mlme_cfg->lfr.roam_data_rssi_threshold;
-	params->rx_data_inactivity_time =
-		mac_ctx->mlme_cfg->lfr.rx_data_inactivity_time;
-
-	params->drop_rssi_thresh_5g =
-		mac_ctx->mlme_cfg->lfr.rssi_penalize_threshold_5g;
-
-	params->raise_factor_5g = mac_ctx->mlme_cfg->lfr.rssi_boost_factor_5g;
-	params->drop_factor_5g = mac_ctx->mlme_cfg->lfr.rssi_penalize_factor_5g;
-	params->max_raise_rssi_5g = mac_ctx->mlme_cfg->lfr.max_rssi_boost_5g;
-	params->max_drop_rssi_5g = mac_ctx->mlme_cfg->lfr.max_rssi_penalize_5g;
-
-	if (roam_params->good_rssi_roam)
-		params->good_rssi_threshold = NOISE_FLOOR_DBM_DEFAULT;
-	else
-		params->good_rssi_threshold = 0;
-
-	params->early_stop_scan_enable =
-		mac_ctx->mlme_cfg->lfr.early_stop_scan_enable;
-	if (params->early_stop_scan_enable) {
-		params->roam_earlystop_thres_min =
-			mac_ctx->mlme_cfg->lfr.early_stop_scan_min_threshold;
-		params->roam_earlystop_thres_max =
-			mac_ctx->mlme_cfg->lfr.early_stop_scan_max_threshold;
-	}
-
-	params->rssi_thresh_offset_5g =
-		roam_info->cfgParams.rssi_thresh_offset_5g;
-}
-
-/**
- * csr_cm_roam_scan_offload_scan_period() - set roam offload scan period
- * parameters
- * @mac_ctx: global mac ctx
- * @vdev_id: vdev id
- * @params:  roam offload scan period related parameters
- *
- * This function is used to set roam offload scan period related parameters
- *
- * Return: None
- */
-static void
-csr_cm_roam_scan_offload_scan_period(struct mac_context *mac_ctx,
-				    uint8_t vdev_id,
-				    struct wlan_roam_scan_period_params *params)
-{
-	tpCsrNeighborRoamControlInfo roam_info =
-			&mac_ctx->roam.neighborRoamInfo[vdev_id];
-
-	params->vdev_id = vdev_id;
-	params->empty_scan_refresh_period =
-				roam_info->cfgParams.emptyScanRefreshPeriod;
-	params->scan_period = params->empty_scan_refresh_period;
-	params->scan_age = (3 * params->empty_scan_refresh_period);
-	params->roam_scan_inactivity_time =
-				roam_info->cfgParams.roam_scan_inactivity_time;
-	params->roam_inactive_data_packet_count =
-			roam_info->cfgParams.roam_inactive_data_packet_count;
-	params->roam_scan_period_after_inactivity =
-			roam_info->cfgParams.roam_scan_period_after_inactivity;
-	params->full_scan_period =
-			roam_info->cfgParams.full_roam_scan_period;
-}
-
-/**
  * csr_cm_roam_scan_offload_ap_profile() - set roam ap profile parameters
  * @mac_ctx: global mac ctx
  * @session: sme session
@@ -17217,8 +17058,21 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 	struct ap_profile *profile = &params->profile;
 	struct roam_ext_params *roam_params_src =
 			&mac_ctx->roam.configParam.roam_params;
-	tpCsrNeighborRoamControlInfo roam_info =
-			&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+						    session->vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", session->vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
 
 	csr_cm_roam_fill_11w_params(mac_ctx, session->vdev_id, params);
 	params->vdev_id = session->vdev_id;
@@ -17239,9 +17093,8 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 			session->connectedProfile.mcEncryptionType);
 	/* Group management cipher suite */
 
-	profile->rssi_threshold = roam_info->cfgParams.roam_rssi_diff;
-	profile->bg_rssi_threshold =
-			roam_info->cfgParams.bg_rssi_threshold;
+	profile->rssi_threshold = rso_cfg->cfg_param.roam_rssi_diff;
+	profile->bg_rssi_threshold = rso_cfg->cfg_param.bg_rssi_threshold;
 	/*
 	 * rssi_diff which is updated via framework is equivalent to the
 	 * INI RoamRssiDiff parameter and hence should be updated.
@@ -17252,7 +17105,7 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 	profile->rssi_abs_thresh =
 			mac_ctx->mlme_cfg->lfr.roam_rssi_abs_threshold;
 
-	csr_update_score_params(mac_ctx, &params->param, roam_info);
+	csr_update_score_params(mac_ctx, &params->param, rso_cfg);
 
 	params->min_rssi_params[DEAUTH_MIN_RSSI] =
 			mac_ctx->mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
@@ -17265,6 +17118,7 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->trig_score_delta[IDLE_ROAM_TRIGGER];
 	params->score_delta_param[BTM_ROAM_TRIGGER] =
 			mac_ctx->mlme_cfg->trig_score_delta[BTM_ROAM_TRIGGER];
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 /**
@@ -17279,7 +17133,7 @@ csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 static QDF_STATUS
 csr_cm_populate_roam_chan_list(struct mac_context *mac_ctx,
 			       struct wlan_roam_scan_channel_list *dst,
-			       tCsrChannelInfo *src)
+			       struct rso_chan_info *src)
 {
 	enum band_info band;
 	uint32_t band_cap;
@@ -17300,7 +17154,7 @@ csr_cm_populate_roam_chan_list(struct mac_context *mac_ctx,
 
 	band = wlan_reg_band_bitmap_to_band_info(band_cap);
 	num_channels = dst->chan_count;
-	for (i = 0; i < src->numOfChannels; i++) {
+	for (i = 0; i < src->num_chan; i++) {
 		if (csr_is_channel_present_in_list(dst->chan_freq_list,
 						   num_channels, *freq_lst)) {
 			freq_lst++;
@@ -17409,12 +17263,14 @@ static void csr_cm_fetch_ch_lst_from_occupied_lst(
 static QDF_STATUS csr_cm_add_ch_lst_from_roam_scan_list(
 			struct mac_context *mac_ctx,
 			struct wlan_roam_scan_channel_list *rso_chan_info,
-			tpCsrNeighborRoamControlInfo roam_info)
+			tpCsrNeighborRoamControlInfo roam_info,
+			struct rso_config *rso_cfg)
 {
 	QDF_STATUS status;
-	tCsrChannelInfo *pref_chan_info = &roam_info->cfgParams.pref_chan_info;
+	struct rso_chan_info *pref_chan_info =
+			&rso_cfg->cfg_param.pref_chan_info;
 
-	if (!pref_chan_info->numOfChannels)
+	if (!pref_chan_info->num_chan)
 		return QDF_STATUS_SUCCESS;
 
 	status = csr_cm_populate_roam_chan_list(mac_ctx,
@@ -17500,18 +17356,17 @@ csr_cm_fetch_valid_ch_lst(struct mac_context *mac_ctx,
  * @mac_ctx:      global mac ctx
  * @roam_info:    roam info struct
  * @rso_chan_info:
+ * @specific_chan_info: chan info
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS csr_cm_fetch_ch_lst_from_ini(
 			struct mac_context *mac_ctx,
 			tpCsrNeighborRoamControlInfo roam_info,
-			struct wlan_roam_scan_channel_list *rso_chan_info)
+			struct wlan_roam_scan_channel_list *rso_chan_info,
+			struct rso_chan_info *specific_chan_info)
 {
 	QDF_STATUS status;
-	tCsrChannelInfo *specific_chan_info;
-
-	specific_chan_info = &roam_info->cfgParams.specific_chan_info;
 
 	status = csr_cm_populate_roam_chan_list(mac_ctx, rso_chan_info,
 						specific_chan_info);
@@ -17531,15 +17386,28 @@ csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
 {
 	tpCsrNeighborRoamControlInfo roam_info =
 			&mac_ctx->roam.neighborRoamInfo[vdev_id];
-	tCsrChannelInfo *specific_chan_info =
-			&roam_info->cfgParams.specific_chan_info;
 	tpCsrChannelInfo curr_ch_lst_info =
 		&roam_info->roamChannelInfo.currentChannelListInfo;
 	QDF_STATUS status;
 	bool ese_neighbor_list_recvd = false;
 	uint8_t ch_cache_str[128] = {0};
 	uint8_t i, j;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_chan_info *specific_chan_info;
 
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+	specific_chan_info = &rso_cfg->cfg_param.specific_chan_info;
 #ifdef FEATURE_WLAN_ESE
 	/*
 	 * this flag will be true if connection is ESE and no neighbor
@@ -17559,13 +17427,14 @@ csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
 		 * channel list configured by the client.
 		 * Give Preference to INI Channels
 		 */
-		if (specific_chan_info->numOfChannels) {
+		if (specific_chan_info->num_chan) {
 			status = csr_cm_fetch_ch_lst_from_ini(mac_ctx,
 							      roam_info,
-							      rso_chan_info);
+							      rso_chan_info,
+							      specific_chan_info);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				sme_err("Fetch channel list from ini failed");
-				return;
+				goto rel_ref;
 			}
 		} else if (reason == REASON_FLUSH_CHANNEL_LIST) {
 			rso_chan_info->chan_cache_type = CHANNEL_LIST_STATIC;
@@ -17581,7 +17450,8 @@ csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
 			 */
 			csr_cm_add_ch_lst_from_roam_scan_list(mac_ctx,
 							      rso_chan_info,
-							      roam_info);
+							      roam_info,
+							      rso_cfg);
 		}
 	} else {
 		/*
@@ -17602,7 +17472,7 @@ csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
 						   vdev_id);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("Fetch channel list fail");
-			return;
+			goto rel_ref;
 		}
 	}
 
@@ -17618,6 +17488,8 @@ csr_cm_fill_rso_channel_list(struct mac_context *mac_ctx,
 	sme_debug("ChnlCacheType:%d, No of Chnls:%d,Channels: %s",
 		  rso_chan_info->chan_cache_type,
 		  rso_chan_info->chan_count, ch_cache_str);
+rel_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -17741,11 +17613,25 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 	uint16_t rsn_caps = 0;
 	tpCsrNeighborRoamControlInfo roam_info =
 		&mac->roam.neighborRoamInfo[vdev_id];
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
 
 	rso_config->roam_offload_enabled =
 		mac->mlme_cfg->lfr.lfr3_roaming_offload;
 	if (!rso_config->roam_offload_enabled)
 		return QDF_STATUS_SUCCESS;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* FILL LFR3 specific roam scan mode TLV parameters */
 	rso_config->rso_lfr3_params.roam_rssi_cat_gap =
@@ -17766,9 +17652,10 @@ static QDF_STATUS csr_cm_roam_scan_offload_fill_lfr3_config(
 		mac->mlme_cfg->btm.rct_validity_timer;
 	rso_config->rso_lfr3_params.disable_self_roam =
 		!mac->mlme_cfg->lfr.enable_self_bss_roam;
-	if (!roam_info->roam_control_enable &&
+	if (!rso_cfg->roam_control_enable &&
 	    mac->mlme_cfg->lfr.roam_force_rssi_trigger)
 		*mode |= WMI_ROAM_SCAN_MODE_RSSI_CHANGE;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	/* Fill LFR3 specific self capabilities for roam scan mode TLV */
 	self_caps.ess = 1;
@@ -17926,15 +17813,34 @@ csr_cm_roam_scan_offload_fill_scan_params(
 {
 	struct wlan_roam_scan_params *scan_params =
 			&rso_mode_cfg->rso_scan_params;
-	tpCsrNeighborRoamControlInfo roam_info =
-		&mac->roam.neighborRoamInfo[session->vdev_id];
 	uint8_t channels_per_burst = 0;
 	uint16_t roam_scan_home_away_time;
 	eSirDFSRoamScanMode allow_dfs_ch_roam;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
 	qdf_mem_zero(scan_params, sizeof(*scan_params));
 	if (command == ROAM_SCAN_OFFLOAD_STOP)
 		return;
+
+	mlme_obj = mlme_get_psoc_ext_obj(mac->psoc);
+	if (!mlme_obj)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, session->vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", session->vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+	cfg_params = &rso_cfg->cfg_param;
 
 	/* Parameters updated after association is complete */
 	wlan_scan_cfg_get_passive_dwelltime(mac->psoc,
@@ -17944,11 +17850,9 @@ csr_cm_roam_scan_offload_fill_scan_params(
 	 * T(HomeAway) = N * T(dwell) + (N+1) * T(cs)
 	 * where N is number of channels scanned in single burst
 	 */
-	scan_params->dwell_time_active =
-		roam_info->cfgParams.maxChannelScanTime;
+	scan_params->dwell_time_active = cfg_params->max_chan_scan_time;
 
-	roam_scan_home_away_time =
-		roam_info->cfgParams.roam_scan_home_away_time;
+	roam_scan_home_away_time = cfg_params->roam_scan_home_away_time;
 	if (roam_scan_home_away_time <
 	    (scan_params->dwell_time_active +
 	     (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME))) {
@@ -17985,7 +17889,7 @@ csr_cm_roam_scan_offload_fill_scan_params(
 	}
 
 	allow_dfs_ch_roam =
-		(eSirDFSRoamScanMode)mac->mlme_cfg->lfr.roaming_dfs_channel;
+		(eSirDFSRoamScanMode)mlme_obj->cfg.lfr.roaming_dfs_channel;
 	/* Roaming on DFS channels is supported and it is not
 	 * app channel list. It is ok to override homeAwayTime
 	 * to accommodate DFS dwell time in burst
@@ -17998,19 +17902,18 @@ csr_cm_roam_scan_offload_fill_scan_params(
 			QDF_MAX(scan_params->burst_duration,
 				scan_params->dwell_time_passive);
 
-	scan_params->min_rest_time =
-		roam_info->cfgParams.neighbor_scan_min_period;
-	scan_params->max_rest_time = roam_info->cfgParams.neighborScanPeriod;
+	scan_params->min_rest_time = cfg_params->neighbor_scan_min_period;
+	scan_params->max_rest_time = cfg_params->neighbor_scan_period;
 	scan_params->repeat_probe_time =
-		(roam_info->cfgParams.roam_scan_n_probes > 0) ?
+		(cfg_params->roam_scan_n_probes > 0) ?
 			QDF_MAX(scan_params->dwell_time_active /
-				roam_info->cfgParams.roam_scan_n_probes, 1) : 0;
+				cfg_params->roam_scan_n_probes, 1) : 0;
 	scan_params->probe_spacing_time = 0;
 	scan_params->probe_delay = 0;
 	/* 30 seconds for full scan cycle */
 	scan_params->max_scan_time = ROAM_SCAN_HW_DEF_SCAN_MAX_DURATION;
 	scan_params->idle_time = scan_params->min_rest_time;
-	scan_params->n_probes = roam_info->cfgParams.roam_scan_n_probes;
+	scan_params->n_probes = cfg_params->roam_scan_n_probes;
 
 	if (allow_dfs_ch_roam == SIR_ROAMING_DFS_CHANNEL_DISABLED) {
 		scan_params->scan_ctrl_flags |= WMI_SCAN_BYPASS_DFS_CHN;
@@ -18035,7 +17938,8 @@ csr_cm_roam_scan_offload_fill_scan_params(
 	}
 
 	scan_params->rso_adaptive_dwell_mode =
-		mac->mlme_cfg->lfr.adaptive_roamscan_dwell_mode;
+		mlme_obj->cfg.lfr.adaptive_roamscan_dwell_mode;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 /**
@@ -18053,9 +17957,21 @@ static void csr_cm_roam_scan_offload_fill_rso_configs(
 			uint8_t command, uint16_t reason)
 {
 	uint8_t vdev_id = session->vdev_id;
-	tpCsrNeighborRoamControlInfo roam_info =
-			&mac->roam.neighborRoamInfo[vdev_id];
 	uint32_t mode = 0;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
 
 	qdf_mem_zero(rso_mode_cfg, sizeof(*rso_mode_cfg));
 
@@ -18065,8 +17981,9 @@ static void csr_cm_roam_scan_offload_fill_rso_configs(
 		mac->mlme_cfg->lfr.roaming_scan_policy;
 
 	/* Fill ROAM SCAN mode TLV parameters */
-	if (roam_info->cfgParams.emptyScanRefreshPeriod)
+	if (rso_cfg->cfg_param.empty_scan_refresh_period)
 		mode |= WMI_ROAM_SCAN_MODE_PERIODIC;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	rso_mode_cfg->rso_mode_info.min_delay_btw_scans =
 			mac->mlme_cfg->lfr.min_delay_btw_roam_scans;
@@ -18319,12 +18236,6 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	csr_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
-					     &req->rssi_params);
-
-	csr_cm_roam_scan_offload_scan_period(mac_ctx, vdev_id,
-					     &req->scan_period_params);
-
 	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
 					    &req->profile_params);
 
@@ -18426,12 +18337,6 @@ wlan_cm_roam_fill_update_config_req(struct wlan_objmgr_psoc *psoc,
 
 	csr_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				reason, &req->scan_filter_params);
-
-	csr_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
-					     &req->rssi_params);
-
-	csr_cm_roam_scan_offload_scan_period(mac_ctx, vdev_id,
-					     &req->scan_period_params);
 
 	csr_cm_fill_rso_channel_list(mac_ctx, &req->rso_chan_info, vdev_id,
 				     reason);
@@ -20463,11 +20368,13 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			ucfg_pkt_capture_record_channel(vdev);
 
 		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
-			session->disable_hi_rssi = true;
+			wlan_cm_set_disable_hi_rssi(mac_ctx->pdev,
+						    session_id, true);
 			sme_debug("Disabling HI_RSSI, AP freq=%d, rssi=%d",
 				  bss_desc->chan_freq, bss_desc->rssi);
 		} else {
-			session->disable_hi_rssi = false;
+			wlan_cm_set_disable_hi_rssi(mac_ctx->pdev,
+						    session_id, false);
 		}
 
 		policy_mgr_check_n_start_opportunistic_timer(mac_ctx->psoc);

@@ -850,7 +850,6 @@ struct csr_neighbor_report_offload_params {
 struct csr_config_params {
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
 	uint32_t channelBondingMode24GHz;
-	uint8_t nud_fail_behaviour;
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
 	uint32_t HeartbeatThresh50;
@@ -875,11 +874,6 @@ struct csr_config_params {
 	 */
 	uint8_t fAllowMCCGODiffBI;
 	tCsr11dinfo Csr11dinfo;
-#ifdef FEATURE_WLAN_ESE
-	uint8_t isEseIniFeatureEnabled;
-#endif
-	uint8_t isFastRoamIniFeatureEnabled;
-	struct mawc_params csr_mawc_config;
 	/*
 	 * Customer wants to optimize the scan time. Avoiding scans(passive)
 	 * on DFS channels while swipping through both bands can save some time
@@ -891,7 +885,6 @@ struct csr_config_params {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	uint8_t allowDFSChannelRoam;
 	bool obssEnabled;
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
@@ -902,13 +895,6 @@ struct csr_config_params {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	uint32_t roam_dense_rssi_thresh_offset;
-	uint32_t roam_dense_min_aps;
-	int8_t roam_bg_scan_bad_rssi_thresh;
-	uint8_t roam_bad_rssi_thresh_offset_2g;
-	uint32_t roam_data_rssi_threshold_triggers;
-	int32_t roam_data_rssi_threshold;
-	uint32_t rx_data_inactivity_time;
 	struct csr_sta_roam_policy_params sta_roam_policy_params;
 	enum force_1x1_type is_force_1x1;
 	uint32_t offload_11k_enable_bitmask;

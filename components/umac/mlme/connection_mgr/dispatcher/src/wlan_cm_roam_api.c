@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include "wlan_mlme_main.h"
 #include "wlan_policy_mgr_api.h"
 #include <wmi_unified_priv.h>
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS
@@ -482,9 +483,14 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 				      struct cm_roam_values_copy *dst_config)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct mlme_legacy_priv *mlme_priv;
-	struct wlan_cm_rso_configs *src_config;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *src_cfg;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_NB_ID);
@@ -493,23 +499,55 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_err("vdev legacy private object is NULL");
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	src_config = &mlme_priv->cm_roam.vdev_rso_config;
+	src_cfg = &rso_cfg->cfg_param;
 	switch (roam_cfg_type) {
 	case RSSI_CHANGE_THRESHOLD:
-		dst_config->int_value = src_config->rescan_rssi_delta;
+		dst_config->int_value = rso_cfg->rescan_rssi_delta;
 		break;
 	case BEACON_RSSI_WEIGHT:
-		dst_config->uint_value = src_config->beacon_rssi_weight;
+		dst_config->uint_value = rso_cfg->beacon_rssi_weight;
 		break;
 	case HI_RSSI_DELAY_BTW_SCANS:
-		dst_config->uint_value = src_config->hi_rssi_scan_delay;
+		dst_config->uint_value = rso_cfg->hi_rssi_scan_delay;
+		break;
+	case EMPTY_SCAN_REFRESH_PERIOD:
+		dst_config->uint_value = src_cfg->empty_scan_refresh_period;
+		break;
+	case SCAN_MIN_CHAN_TIME:
+		dst_config->uint_value = src_cfg->min_chan_scan_time;
+		break;
+	case SCAN_MAX_CHAN_TIME:
+		dst_config->uint_value = src_cfg->max_chan_scan_time;
+		break;
+	case NEIGHBOR_SCAN_PERIOD:
+		dst_config->uint_value = src_cfg->neighbor_scan_period;
+		break;
+	case FULL_ROAM_SCAN_PERIOD:
+		dst_config->uint_value = src_cfg->full_roam_scan_period;
+		break;
+	case ROAM_RSSI_DIFF:
+		dst_config->uint_value = src_cfg->roam_rssi_diff;
+		break;
+	case NEIGHBOUR_LOOKUP_THRESHOLD:
+		dst_config->uint_value = src_cfg->neighbor_lookup_threshold;
+		break;
+	case SCAN_N_PROBE:
+		dst_config->uint_value = src_cfg->roam_scan_n_probes;
+		break;
+	case SCAN_HOME_AWAY:
+		dst_config->uint_value = src_cfg->roam_scan_home_away_time;
+		break;
+	case NEIGHBOUR_SCAN_REFRESH_PERIOD:
+		dst_config->uint_value =
+				src_cfg->neighbor_results_refresh_period;
+		break;
+	case ROAM_CONTROL_ENABLE:
+		dst_config->bool_value = rso_cfg->roam_control_enable;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
@@ -520,6 +558,150 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return status;
+}
+
+void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
+				 uint8_t vdev_id, bool value)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	rso_cfg->disable_hi_rssi = value;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+static QDF_STATUS
+cm_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		   uint8_t reason)
+{
+	QDF_STATUS status;
+
+	status = cm_roam_acquire_lock();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+		mlme_debug("Update cfg received while ROAM RSO not started");
+		cm_roam_release_lock();
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = cm_roam_send_rso_cmd(psoc, vdev_id,
+				      ROAM_SCAN_OFFLOAD_UPDATE_CFG, reason);
+	cm_roam_release_lock();
+
+	return status;
+}
+
+static void cm_dump_freq_list(struct rso_chan_info *chan_info)
+{
+	uint8_t *channel_list;
+	uint8_t i = 0, j = 0;
+	uint32_t buflen = CFG_VALID_CHANNEL_LIST_LEN * 4;
+
+	channel_list = qdf_mem_malloc(buflen);
+	if (!channel_list)
+		return;
+
+	if (chan_info->freq_list) {
+		for (i = 0; i < chan_info->num_chan; i++) {
+			if (j < buflen)
+				j += snprintf(channel_list + j, buflen - j,
+					      "%d ", chan_info->freq_list[i]);
+			else
+				break;
+		}
+	}
+
+	mlme_debug("frequency list [%u]: %s", i, channel_list);
+	qdf_mem_free(channel_list);
+}
+
+static uint8_t
+cm_append_pref_chan_list(struct rso_chan_info *chan_info, qdf_freq_t *freq_list,
+			 uint8_t num_chan)
+{
+	uint8_t i = 0, j = 0;
+
+	for (i = 0; i < chan_info->num_chan; i++) {
+		for (j = 0; j < num_chan; j++)
+			if (chan_info->freq_list[i] == freq_list[j])
+				break;
+
+		if (j < num_chan)
+			continue;
+		if (num_chan == ROAM_MAX_CHANNELS)
+			break;
+		freq_list[num_chan++] = chan_info->freq_list[i];
+	}
+
+	return num_chan;
+}
+
+static QDF_STATUS cm_create_bg_scan_roam_channel_list(struct rso_chan_info *chan_info,
+						const qdf_freq_t *chan_freq_lst,
+						const uint8_t num_chan)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t i;
+
+	chan_info->freq_list = qdf_mem_malloc(sizeof(qdf_freq_t) * num_chan);
+	if (!chan_info->freq_list)
+		return QDF_STATUS_E_NOMEM;
+
+	chan_info->num_chan = num_chan;
+	for (i = 0; i < num_chan; i++)
+		chan_info->freq_list[i] = chan_freq_lst[i];
+
+	return status;
+}
+
+static void cm_flush_roam_channel_list(struct rso_chan_info *channel_info)
+{
+	/* Free up the memory first (if required) */
+	if (channel_info->freq_list) {
+		qdf_mem_free(channel_info->freq_list);
+		channel_info->freq_list = NULL;
+		channel_info->num_chan = 0;
+	}
+}
+
+static QDF_STATUS
+cm_update_roam_scan_channel_list(uint8_t vdev_id,
+				 struct rso_chan_info *chan_info,
+				 qdf_freq_t *freq_list, uint8_t num_chan,
+				 bool update_preferred_chan)
+{
+	uint16_t pref_chan_cnt = 0;
+
+	if (chan_info->num_chan) {
+		mlme_debug("Current channels:");
+		cm_dump_freq_list(chan_info);
+	}
+
+	if (update_preferred_chan) {
+		pref_chan_cnt = cm_append_pref_chan_list(chan_info, freq_list,
+							 num_chan);
+		num_chan = pref_chan_cnt;
+	}
+	cm_flush_roam_channel_list(chan_info);
+	cm_create_bg_scan_roam_channel_list(chan_info, freq_list, num_chan);
+
+	mlme_debug("New channels:");
+	cm_dump_freq_list(chan_info);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
@@ -528,9 +710,14 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			   struct cm_roam_values_copy *src_config)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct mlme_legacy_priv *mlme_priv;
-	struct wlan_cm_rso_configs *dst_config;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *dst_cfg;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_NB_ID);
@@ -539,23 +726,127 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_err("vdev legacy private object is NULL");
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	dst_config = &mlme_priv->cm_roam.vdev_rso_config;
+	dst_cfg = &rso_cfg->cfg_param;
+	mlme_debug("roam_cfg_type %d, uint val %d int val %d bool val %d num chan %d",
+		   roam_cfg_type, src_config->uint_value, src_config->int_value,
+		   src_config->bool_value, src_config->chan_info.num_chan);
 	switch (roam_cfg_type) {
 	case RSSI_CHANGE_THRESHOLD:
-		dst_config->rescan_rssi_delta  = src_config->uint_value;
+		rso_cfg->rescan_rssi_delta  = src_config->uint_value;
 		break;
 	case BEACON_RSSI_WEIGHT:
-		dst_config->beacon_rssi_weight = src_config->uint_value;
+		rso_cfg->beacon_rssi_weight = src_config->uint_value;
 		break;
 	case HI_RSSI_DELAY_BTW_SCANS:
-		dst_config->hi_rssi_scan_delay = src_config->uint_value;
+		rso_cfg->hi_rssi_scan_delay = src_config->uint_value;
+		break;
+	case EMPTY_SCAN_REFRESH_PERIOD:
+		dst_cfg->empty_scan_refresh_period = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					  REASON_EMPTY_SCAN_REF_PERIOD_CHANGED);
+		break;
+	case FULL_ROAM_SCAN_PERIOD:
+		dst_cfg->full_roam_scan_period = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					  REASON_ROAM_FULL_SCAN_PERIOD_CHANGED);
+		break;
+	case ENABLE_SCORING_FOR_ROAM:
+		dst_cfg->enable_scoring_for_roam = src_config->bool_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_SCORING_CRITERIA_CHANGED);
+		break;
+	case SCAN_MIN_CHAN_TIME:
+		mlme_obj->cfg.lfr.neighbor_scan_min_chan_time =
+							src_config->uint_value;
+		dst_cfg->min_chan_scan_time = src_config->uint_value;
+		break;
+	case SCAN_MAX_CHAN_TIME:
+		dst_cfg->max_chan_scan_time = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_SCAN_CH_TIME_CHANGED);
+		break;
+	case NEIGHBOR_SCAN_PERIOD:
+		dst_cfg->neighbor_scan_period = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_SCAN_HOME_TIME_CHANGED);
+		break;
+	case ROAM_CONFIG_ENABLE:
+		rso_cfg->roam_control_enable = src_config->bool_value;
+		if (!rso_cfg->roam_control_enable)
+			break;
+		dst_cfg->roam_scan_period_after_inactivity = 0;
+		dst_cfg->roam_inactive_data_packet_count = 0;
+		dst_cfg->roam_scan_inactivity_time = 0;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_ROAM_CONTROL_CONFIG_ENABLED);
+		break;
+	case ROAM_PREFERRED_CHAN:
+		if (dst_cfg->specific_chan_info.num_chan) {
+			mlme_err("Specific channel list is already configured");
+			break;
+		}
+		status = cm_update_roam_scan_channel_list(vdev_id,
+					&dst_cfg->pref_chan_info,
+					src_config->chan_info.freq_list,
+					src_config->chan_info.num_chan,
+					true);
+		if (QDF_IS_STATUS_ERROR(status))
+			break;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_CHANNEL_LIST_CHANGED);
+		break;
+	case ROAM_SPECIFIC_CHAN:
+		cm_update_roam_scan_channel_list(vdev_id,
+					&dst_cfg->specific_chan_info,
+					src_config->chan_info.freq_list,
+					src_config->chan_info.num_chan,
+					false);
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_CHANNEL_LIST_CHANGED);
+		break;
+	case ROAM_RSSI_DIFF:
+		dst_cfg->roam_rssi_diff = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_RSSI_DIFF_CHANGED);
+		break;
+	case NEIGHBOUR_LOOKUP_THRESHOLD:
+		dst_cfg->neighbor_lookup_threshold = src_config->uint_value;
+		break;
+	case SCAN_N_PROBE:
+		dst_cfg->roam_scan_n_probes = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_NPROBES_CHANGED);
+		break;
+	case SCAN_HOME_AWAY:
+		dst_cfg->roam_scan_home_away_time = src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled &&
+		    src_config->bool_value)
+			cm_roam_update_cfg(psoc, vdev_id,
+					   REASON_HOME_AWAY_TIME_CHANGED);
+		break;
+	case NEIGHBOUR_SCAN_REFRESH_PERIOD:
+		dst_cfg->neighbor_results_refresh_period =
+						src_config->uint_value;
+		mlme_obj->cfg.lfr.neighbor_scan_results_refresh_period =
+				src_config->uint_value;
+		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+			cm_roam_update_cfg(psoc, vdev_id,
+				REASON_NEIGHBOR_SCAN_REFRESH_PERIOD_CHANGED);
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
@@ -567,6 +858,163 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	return status;
 }
+
+static void cm_rso_chan_to_freq_list(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t *freq_list,
+				     const uint8_t *chan_list,
+				     uint32_t chan_list_len)
+{
+	uint32_t count;
+
+	for (count = 0; count < chan_list_len; count++)
+		freq_list[count] =
+			wlan_reg_chan_to_freq(pdev, chan_list[count]);
+}
+
+QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev)
+{
+	struct rso_chan_info *chan_info;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_INVAL;
+	cfg_params = &rso_cfg->cfg_param;
+	cfg_params->max_chan_scan_time =
+		mlme_obj->cfg.lfr.neighbor_scan_max_chan_time;
+	cfg_params->min_chan_scan_time =
+		mlme_obj->cfg.lfr.neighbor_scan_min_chan_time;
+	cfg_params->neighbor_lookup_threshold =
+		mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
+	cfg_params->rssi_thresh_offset_5g =
+		mlme_obj->cfg.lfr.rssi_threshold_offset_5g;
+	cfg_params->opportunistic_threshold_diff =
+		mlme_obj->cfg.lfr.opportunistic_scan_threshold_diff;
+	cfg_params->roam_rescan_rssi_diff =
+		mlme_obj->cfg.lfr.roam_rescan_rssi_diff;
+
+	cfg_params->roam_bmiss_first_bcn_cnt =
+		mlme_obj->cfg.lfr.roam_bmiss_first_bcnt;
+	cfg_params->roam_bmiss_final_cnt =
+		mlme_obj->cfg.lfr.roam_bmiss_final_bcnt;
+
+	cfg_params->neighbor_scan_period =
+		mlme_obj->cfg.lfr.neighbor_scan_timer_period;
+	cfg_params->neighbor_scan_min_period =
+		mlme_obj->cfg.lfr.neighbor_scan_min_timer_period;
+	cfg_params->neighbor_results_refresh_period =
+		mlme_obj->cfg.lfr.neighbor_scan_results_refresh_period;
+	cfg_params->empty_scan_refresh_period =
+		mlme_obj->cfg.lfr.empty_scan_refresh_period;
+	cfg_params->full_roam_scan_period =
+		mlme_obj->cfg.lfr.roam_full_scan_period;
+	cfg_params->enable_scoring_for_roam =
+		mlme_obj->cfg.roam_scoring.enable_scoring_for_roam;
+	cfg_params->roam_scan_n_probes =
+		mlme_obj->cfg.lfr.roam_scan_n_probes;
+	cfg_params->roam_scan_home_away_time =
+		mlme_obj->cfg.lfr.roam_scan_home_away_time;
+	cfg_params->roam_scan_inactivity_time =
+		mlme_obj->cfg.lfr.roam_scan_inactivity_time;
+	cfg_params->roam_inactive_data_packet_count =
+		mlme_obj->cfg.lfr.roam_inactive_data_packet_count;
+	cfg_params->roam_scan_period_after_inactivity =
+		mlme_obj->cfg.lfr.roam_scan_period_after_inactivity;
+
+	chan_info = &cfg_params->specific_chan_info;
+	chan_info->num_chan =
+		mlme_obj->cfg.lfr.neighbor_scan_channel_list_num;
+	mlme_debug("number of channels: %u", chan_info->num_chan);
+	if (chan_info->num_chan) {
+		chan_info->freq_list =
+			qdf_mem_malloc(sizeof(qdf_freq_t) *
+				       chan_info->num_chan);
+		if (!chan_info->freq_list) {
+			chan_info->num_chan = 0;
+			return QDF_STATUS_E_NOMEM;
+		}
+		/* Update the roam global structure from CFG */
+		cm_rso_chan_to_freq_list(pdev, chan_info->freq_list,
+			mlme_obj->cfg.lfr.neighbor_scan_channel_list,
+			mlme_obj->cfg.lfr.neighbor_scan_channel_list_num);
+	} else {
+		chan_info->freq_list = NULL;
+	}
+
+	cfg_params->hi_rssi_scan_max_count =
+		mlme_obj->cfg.lfr.roam_scan_hi_rssi_maxcount;
+	cfg_params->hi_rssi_scan_rssi_delta =
+		mlme_obj->cfg.lfr.roam_scan_hi_rssi_delta;
+
+	cfg_params->hi_rssi_scan_delay =
+		mlme_obj->cfg.lfr.roam_scan_hi_rssi_delay;
+
+	cfg_params->hi_rssi_scan_rssi_ub =
+		mlme_obj->cfg.lfr.roam_scan_hi_rssi_ub;
+	cfg_params->roam_rssi_diff =
+		mlme_obj->cfg.lfr.roam_rssi_diff;
+	cfg_params->bg_rssi_threshold =
+		mlme_obj->cfg.lfr.bg_rssi_threshold;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev)
+{
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return;
+
+	cfg_params = &rso_cfg->cfg_param;
+
+	cm_flush_roam_channel_list(&cfg_params->specific_chan_info);
+	cm_flush_roam_channel_list(&cfg_params->pref_chan_info);
+}
+
+#ifdef FEATURE_CM_ENABLE
+struct rso_config *wlan_cm_get_rso_config(struct wlan_objmgr_vdev *vdev)
+{
+	struct cm_ext_obj *cm_ext_obj;
+
+	cm_ext_obj = cm_get_ext_hdl(vdev);
+	if (!cm_ext_obj)
+		return NULL;
+
+	return &cm_ext_obj->rso_cfg;
+}
+#else
+struct rso_config *wlan_cm_get_rso_config(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		return NULL;
+	}
+
+	return &mlme_priv->rso_cfg;
+}
+#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
@@ -688,7 +1136,7 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 				       uint32_t roam_scan_scheme_bitmap)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct mlme_legacy_priv *mlme_priv;
+	struct rso_config *rso_cfg;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_NB_ID);
@@ -698,15 +1146,12 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_err("vdev%d: vdev legacy private object is NULL", vdev_id);
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mlme_priv->cm_roam.vdev_rso_config.roam_scan_scheme_bitmap =
-						roam_scan_scheme_bitmap;
+	rso_cfg->roam_scan_scheme_bitmap = roam_scan_scheme_bitmap;
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return QDF_STATUS_SUCCESS;
@@ -716,8 +1161,8 @@ uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 					     uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct mlme_legacy_priv *mlme_priv;
 	uint32_t roam_scan_scheme_bitmap;
+	struct rso_config *rso_cfg;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_NB_ID);
@@ -727,15 +1172,13 @@ uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 		return 0;
 	}
 
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_err("vdev%d: vdev legacy private object is NULL", vdev_id);
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return 0;
 	}
 
-	roam_scan_scheme_bitmap =
-		mlme_priv->cm_roam.vdev_rso_config.roam_scan_scheme_bitmap;
+	roam_scan_scheme_bitmap = rso_cfg->roam_scan_scheme_bitmap;
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 

@@ -167,66 +167,77 @@ QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 	    &mac_ctx->roam.neighborRoamInfo[session_id];
-	tpCsrNeighborRoamCfgParams cfg_params;
 	struct cm_roam_values_copy src_cfg;
 	eCsrNeighborRoamState state;
 	uint8_t old_value;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
 
 	if (!pNeighborRoamInfo) {
 		sme_err("Invalid Session ID %d", session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cfg_params = &pNeighborRoamInfo->cfgParams;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cfg_params = &rso_cfg->cfg_param;
 	state = pNeighborRoamInfo->neighborRoamState;
 	if ((state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) ||
 			state == eCSR_NEIGHBOR_ROAM_STATE_INIT) {
 		switch (reason) {
 		case REASON_LOOKUP_THRESH_CHANGED:
-			old_value = cfg_params->neighborLookupThreshold;
-			cfg_params->neighborLookupThreshold = value;
-			pNeighborRoamInfo->currentNeighborLookupThreshold =
-				value;
+			old_value = cfg_params->neighbor_lookup_threshold;
+			cfg_params->neighbor_lookup_threshold = value;
 			break;
 		case REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED:
-			old_value = cfg_params->nOpportunisticThresholdDiff;
-			cfg_params->nOpportunisticThresholdDiff = value;
-			pNeighborRoamInfo->currentOpportunisticThresholdDiff =
-				value;
+			old_value = cfg_params->opportunistic_threshold_diff;
+			cfg_params->opportunistic_threshold_diff = value;
 			break;
 		case REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED:
-			old_value = cfg_params->nRoamRescanRssiDiff;
-			cfg_params->nRoamRescanRssiDiff = value;
-			pNeighborRoamInfo->currentRoamRescanRssiDiff = value;
+			old_value = cfg_params->roam_rescan_rssi_diff;
+			cfg_params->roam_rescan_rssi_diff = value;
 			src_cfg.uint_value = value;
 			wlan_cm_roam_cfg_set_value(mac_ctx->psoc, session_id,
 						   RSSI_CHANGE_THRESHOLD,
 						   &src_cfg);
 			break;
 		case REASON_ROAM_BMISS_FIRST_BCNT_CHANGED:
-			old_value = cfg_params->nRoamBmissFirstBcnt;
-			cfg_params->nRoamBmissFirstBcnt = value;
-			pNeighborRoamInfo->currentRoamBmissFirstBcnt = value;
+			old_value = cfg_params->roam_bmiss_first_bcn_cnt;
+			cfg_params->roam_bmiss_first_bcn_cnt = value;
 			break;
 		case REASON_ROAM_BMISS_FINAL_BCNT_CHANGED:
-			old_value = cfg_params->nRoamBmissFinalBcnt;
-			cfg_params->nRoamBmissFinalBcnt = value;
-			pNeighborRoamInfo->currentRoamBmissFinalBcnt = value;
+			old_value = cfg_params->roam_bmiss_final_cnt;
+			cfg_params->roam_bmiss_final_cnt = value;
 			break;
 		default:
 			sme_debug("Unknown update cfg reason");
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		sme_err("Unexpected state %s, return fail",
 			mac_trace_get_neighbour_roam_state(state));
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	if (state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) {
 		sme_debug("CONNECTED, send update cfg cmd");
 		csr_roam_update_cfg(mac_ctx, session_id, reason);
 	}
 	sme_debug("LFR config for %s changed from %d to %d",
-			lfr_get_config_item_string(reason), old_value, value);
+		  lfr_get_config_item_string(reason), old_value, value);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -791,17 +802,6 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 			&session->connectedProfile.bssid);
 	ngbr_roam_info->curr_ap_op_chan_freq =
 				      session->connectedProfile.op_freq;
-	ngbr_roam_info->currentNeighborLookupThreshold =
-		ngbr_roam_info->cfgParams.neighborLookupThreshold;
-	ngbr_roam_info->currentOpportunisticThresholdDiff =
-		ngbr_roam_info->cfgParams.nOpportunisticThresholdDiff;
-	ngbr_roam_info->currentRoamRescanRssiDiff =
-		ngbr_roam_info->cfgParams.nRoamRescanRssiDiff;
-	ngbr_roam_info->currentRoamBmissFirstBcnt =
-		ngbr_roam_info->cfgParams.nRoamBmissFirstBcnt;
-	ngbr_roam_info->currentRoamBmissFinalBcnt =
-		ngbr_roam_info->cfgParams.nRoamBmissFinalBcnt;
-
 	/*
 	 * Update RSSI change params to vdev
 	 */
@@ -1030,122 +1030,26 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(struct mac_context *mac)
 QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 {
 	QDF_STATUS status;
-	tCsrChannelInfo *specific_chan_info;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
 
 	pNeighborRoamInfo->neighborRoamState = eCSR_NEIGHBOR_ROAM_STATE_CLOSED;
 	pNeighborRoamInfo->prevNeighborRoamState =
 		eCSR_NEIGHBOR_ROAM_STATE_CLOSED;
-	pNeighborRoamInfo->cfgParams.maxChannelScanTime =
-		mac->mlme_cfg->lfr.neighbor_scan_max_chan_time;
-	pNeighborRoamInfo->cfgParams.minChannelScanTime =
-		mac->mlme_cfg->lfr.neighbor_scan_min_chan_time;
-	pNeighborRoamInfo->cfgParams.neighborLookupThreshold =
-		mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold;
-	pNeighborRoamInfo->cfgParams.rssi_thresh_offset_5g =
-		mac->mlme_cfg->lfr.rssi_threshold_offset_5g;
-	pNeighborRoamInfo->cfgParams.delay_before_vdev_stop =
-		mac->mlme_cfg->lfr.delay_before_vdev_stop;
-	pNeighborRoamInfo->cfgParams.nOpportunisticThresholdDiff =
-		mac->mlme_cfg->lfr.opportunistic_scan_threshold_diff;
-	pNeighborRoamInfo->cfgParams.nRoamRescanRssiDiff =
-		mac->mlme_cfg->lfr.roam_rescan_rssi_diff;
-
-	pNeighborRoamInfo->cfgParams.nRoamBmissFirstBcnt =
-		mac->mlme_cfg->lfr.roam_bmiss_first_bcnt;
-	pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt =
-		mac->mlme_cfg->lfr.roam_bmiss_final_bcnt;
-
-	pNeighborRoamInfo->cfgParams.neighborScanPeriod =
-		mac->mlme_cfg->lfr.neighbor_scan_timer_period;
-	pNeighborRoamInfo->cfgParams.neighbor_scan_min_period =
-		mac->mlme_cfg->lfr.neighbor_scan_min_timer_period;
-	pNeighborRoamInfo->cfgParams.neighborResultsRefreshPeriod =
-		mac->mlme_cfg->lfr.neighbor_scan_results_refresh_period;
-	pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
-		mac->mlme_cfg->lfr.empty_scan_refresh_period;
-	pNeighborRoamInfo->cfgParams.full_roam_scan_period =
-		mac->mlme_cfg->lfr.roam_full_scan_period;
-	pNeighborRoamInfo->cfgParams.enable_scoring_for_roam =
-		mac->mlme_cfg->roam_scoring.enable_scoring_for_roam;
-	pNeighborRoamInfo->cfgParams.roam_scan_n_probes =
-		mac->mlme_cfg->lfr.roam_scan_n_probes;
-	pNeighborRoamInfo->cfgParams.roam_scan_home_away_time =
-		mac->mlme_cfg->lfr.roam_scan_home_away_time;
-	pNeighborRoamInfo->cfgParams.roam_scan_inactivity_time =
-		mac->mlme_cfg->lfr.roam_scan_inactivity_time;
-	pNeighborRoamInfo->cfgParams.roam_inactive_data_packet_count =
-		mac->mlme_cfg->lfr.roam_inactive_data_packet_count;
-	pNeighborRoamInfo->cfgParams.roam_scan_period_after_inactivity =
-		mac->mlme_cfg->lfr.roam_scan_period_after_inactivity;
-
-	specific_chan_info = &pNeighborRoamInfo->cfgParams.specific_chan_info;
-	specific_chan_info->numOfChannels =
-		mac->mlme_cfg->lfr.neighbor_scan_channel_list_num;
-	sme_debug("number of channels: %u", specific_chan_info->numOfChannels);
-	if (specific_chan_info->numOfChannels != 0) {
-		specific_chan_info->freq_list =
-			qdf_mem_malloc(sizeof(uint32_t) *
-				       specific_chan_info->numOfChannels);
-		if (!specific_chan_info->freq_list) {
-			specific_chan_info->numOfChannels = 0;
-			return QDF_STATUS_E_NOMEM;
-		}
-
-	} else {
-		specific_chan_info->freq_list = NULL;
-	}
-
-	/* Update the roam global structure from CFG */
-	sme_chan_to_freq_list(mac->pdev,
-			      specific_chan_info->freq_list,
-			      mac->mlme_cfg->lfr.neighbor_scan_channel_list,
-			      mac->mlme_cfg->lfr.
-			      neighbor_scan_channel_list_num);
-
-	pNeighborRoamInfo->cfgParams.hi_rssi_scan_max_count =
-		mac->mlme_cfg->lfr.roam_scan_hi_rssi_maxcount;
-	pNeighborRoamInfo->cfgParams.hi_rssi_scan_rssi_delta =
-		mac->mlme_cfg->lfr.roam_scan_hi_rssi_delta;
-
-	pNeighborRoamInfo->cfgParams.hi_rssi_scan_delay =
-		mac->mlme_cfg->lfr.roam_scan_hi_rssi_delay;
-
-	pNeighborRoamInfo->cfgParams.hi_rssi_scan_rssi_ub =
-		mac->mlme_cfg->lfr.roam_scan_hi_rssi_ub;
-	pNeighborRoamInfo->cfgParams.roam_rssi_diff =
-		mac->mlme_cfg->lfr.roam_rssi_diff;
-	pNeighborRoamInfo->cfgParams.bg_rssi_threshold =
-		mac->mlme_cfg->lfr.bg_rssi_threshold;
 
 	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
-	pNeighborRoamInfo->currentNeighborLookupThreshold =
-		pNeighborRoamInfo->cfgParams.neighborLookupThreshold;
-	pNeighborRoamInfo->currentOpportunisticThresholdDiff =
-		pNeighborRoamInfo->cfgParams.nOpportunisticThresholdDiff;
-	pNeighborRoamInfo->currentRoamRescanRssiDiff =
-		pNeighborRoamInfo->cfgParams.nRoamRescanRssiDiff;
-	pNeighborRoamInfo->currentRoamBmissFirstBcnt =
-		pNeighborRoamInfo->cfgParams.nRoamBmissFirstBcnt;
-	pNeighborRoamInfo->currentRoamBmissFinalBcnt =
-		pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt;
 	qdf_mem_zero(&pNeighborRoamInfo->prevConnProfile,
 		    sizeof(tCsrRoamConnectedProfile));
 
 	status = csr_ll_open(&pNeighborRoamInfo->roamableAPList);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("LL Open of roam able AP List failed");
-		qdf_mem_free(specific_chan_info->freq_list);
-		specific_chan_info->freq_list = NULL;
-		specific_chan_info->numOfChannels = 0;
 		return QDF_STATUS_E_RESOURCES;
 	}
 
 	pNeighborRoamInfo->roamChannelInfo.currentChanIndex =
 		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-	numOfChannels = 0;
+	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.numOfChannels = 0;
 	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.freq_list =
 		NULL;
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
@@ -1153,9 +1057,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 	status = csr_neighbor_roam_init11r_assoc_info(mac);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("LL Open of roam able AP List failed");
-		specific_chan_info->freq_list = NULL;
-		specific_chan_info->numOfChannels = 0;
-		csr_ll_close(&pNeighborRoamInfo->roamableAPList);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -1180,7 +1081,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 {
 	tCsrChannelInfo *current_channel_list_info;
-	tCsrNeighborRoamCfgParams *cfg_params;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
 
@@ -1189,11 +1089,6 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 		sme_warn("Neighbor Roam Algorithm Already Closed");
 		return;
 	}
-	cfg_params = &pNeighborRoamInfo->cfgParams;
-	if (cfg_params->specific_chan_info.freq_list)
-		qdf_mem_free(cfg_params->specific_chan_info.freq_list);
-	pNeighborRoamInfo->cfgParams.specific_chan_info.freq_list = NULL;
-	pNeighborRoamInfo->cfgParams.specific_chan_info.numOfChannels = 0;
 
 	/* Should free up the nodes in the list before closing the
 	 * double Linked list

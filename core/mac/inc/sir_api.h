@@ -1826,7 +1826,6 @@ typedef struct sSirSmeProbeReqInd {
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 } tSirSmeProbeReqInd, *tpSirSmeProbeReqInd;
 
-#define SIR_ROAM_MAX_CHANNELS            80
 #define SIR_ROAM_SCAN_MAX_PB_REQ_SIZE    450
 /* Occupied channel list remains static */
 #define CHANNEL_LIST_STATIC                   1
@@ -1982,7 +1981,7 @@ typedef struct {
 	uint8_t mcencryption;
 	tAniEdType gp_mgmt_cipher_suite;
 	uint8_t ChannelCount;
-	uint32_t chan_freq_cache[SIR_ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_cache[ROAM_MAX_CHANNELS];
 #ifdef WLAN_FEATURE_11W
 	bool mfp_enabled;
 #endif
@@ -4434,7 +4433,7 @@ struct obss_ht40_scanind {
 	uint8_t bss_id;
 	uint8_t fortymhz_intolerent;
 	uint8_t channel_count;
-	uint32_t chan_freq_list[SIR_ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_list[ROAM_MAX_CHANNELS];
 	uint8_t current_operatingclass;
 	uint16_t iefield_len;
 	uint8_t  iefield[SIR_ROAM_SCAN_MAX_PB_REQ_SIZE];

@@ -602,7 +602,6 @@ struct csr_roam_session {
 	bool supported_nss_1x1;
 	uint8_t vdev_nss;
 	uint8_t nss;
-	bool disable_hi_rssi;
 	bool dhcp_done;
 #ifndef FEATURE_CM_ENABLE
 	enum wlan_reason_code disconnect_reason;
@@ -617,7 +616,6 @@ struct csr_roam_session {
 	bool discon_in_progress;
 	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
-	qdf_mc_timer_t join_retry_timer;
 };
 
 struct csr_roamstruct {

@@ -1207,7 +1207,7 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
  *
  * Return: None
  */
-void sme_dump_freq_list(tCsrChannelInfo *chan_info);
+void sme_dump_freq_list(struct rso_chan_info *chan_info);
 bool sme_get_is_ese_feature_enabled(mac_handle_t mac_handle);
 bool sme_get_wes_mode(mac_handle_t mac_handle);
 bool sme_get_roam_scan_control(mac_handle_t mac_handle);
@@ -4183,12 +4183,6 @@ QDF_STATUS sme_register_bcn_recv_pause_ind_cb(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_set_disconnect_ies(mac_handle_t mac_handle, uint8_t vdev_id,
 				  uint8_t *ie_data, uint16_t ie_len);
-
-void sme_chan_to_freq_list(
-			struct wlan_objmgr_pdev *pdev,
-			uint32_t *freq_list,
-			const uint8_t *chan_list,
-			uint32_t chan_list_len);
 
 /**
  * sme_set_roam_config_enable() - Cache roam config status in SME

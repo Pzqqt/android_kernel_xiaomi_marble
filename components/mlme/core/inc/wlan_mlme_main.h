@@ -263,6 +263,7 @@ struct mlme_connect_info {
  * @mscs_req_info: Information related to mscs request
  * @he_config: he config
  * @he_sta_obsspd: he_sta_obsspd
+ * @rso_cfg: per vdev RSO config to be sent to FW
  * @connect_info: mlme connect information
  */
 struct mlme_legacy_priv {
@@ -297,6 +298,9 @@ struct mlme_legacy_priv {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;
 	uint32_t he_sta_obsspd;
+#endif
+#ifndef FEATURE_CM_ENABLE
+	struct rso_config rso_cfg;
 #endif
 	struct mlme_connect_info connect_info;
 };

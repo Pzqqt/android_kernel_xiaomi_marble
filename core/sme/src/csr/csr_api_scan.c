@@ -2469,39 +2469,51 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	bool dual_sta_roam_active;
 	struct wlan_channel *chan;
 	struct wlan_objmgr_vdev *vdev;
-
-	tpCsrNeighborRoamControlInfo neighbor_roam_info =
-		&mac_ctx->roam.neighborRoamInfo[sessionId];
 	tCsrRoamConnectedProfile *profile = NULL;
 	QDF_STATUS status;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
 
 	if (!(mac_ctx && mac_ctx->roam.roamSession &&
 	      CSR_IS_SESSION_VALID(mac_ctx, sessionId))) {
 		sme_debug("Invalid session");
 		return;
 	}
-	if (neighbor_roam_info->cfgParams.specific_chan_info.numOfChannels) {
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", sessionId);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
+
+	cfg_params = &rso_cfg->cfg_param;
+
+	if (cfg_params->specific_chan_info.num_chan) {
 		/*
 		 * Ini file contains neighbor scan channel list, hence NO need
 		 * to build occupied channel list"
 		 */
 		sme_debug("Ini contains neighbor scan ch list");
-		return;
+		goto rel_vdev_ref;
 	}
 
 	profile = &mac_ctx->roam.roamSession[sessionId].connectedProfile;
 	if (!profile)
-		return;
+		goto rel_vdev_ref;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
-		return;
+		goto rel_vdev_ref;
 
 	status = csr_fill_filter_from_vdev_crypto(mac_ctx, filter, sessionId);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("fail to fill filter crypto");
 		qdf_mem_free(filter);
-		return;
+		goto rel_vdev_ref;
 	}
 	filter->num_of_ssid = 1;
 	filter->ssid_list[0].length = profile->SSID.length;
@@ -2514,7 +2526,7 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	if (!pdev) {
 		sme_err("pdev is NULL");
 		qdf_mem_free(filter);
-		return;
+		goto rel_vdev_ref;
 	}
 
 	/* Empty occupied channels here */
@@ -2529,18 +2541,12 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 			true);
 	list = ucfg_scan_get_result(pdev, filter);
 	if (!list || (list && !qdf_list_size(list))) {
-		goto err;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, sessionId,
-						    WLAN_LEGACY_MAC_ID);
-	if (!vdev) {
-		sme_err("vdev null");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		goto err;
 	}
 
 	chan = wlan_vdev_get_active_channel(vdev);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	if (!chan) {
 		sme_err("no active channel");
 		goto err;
@@ -2576,6 +2582,9 @@ err:
 		ucfg_scan_purge_results(list);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
 	return;
+
+rel_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 /**

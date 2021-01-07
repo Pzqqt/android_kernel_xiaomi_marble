@@ -42,39 +42,6 @@ typedef enum {
 	eNEIGHBOR_STATE_MAX
 } eCsrNeighborRoamState;
 
-/* Parameters that are obtained from CFG */
-typedef struct sCsrNeighborRoamCfgParams {
-	uint32_t neighborScanPeriod;
-	uint32_t neighbor_scan_min_period;
-	tCsrChannelInfo specific_chan_info;
-	uint8_t neighborLookupThreshold;
-	int8_t rssi_thresh_offset_5g;
-	uint8_t neighborReassocThreshold;
-	uint32_t minChannelScanTime;
-	uint32_t maxChannelScanTime;
-	uint16_t neighborResultsRefreshPeriod;
-	uint16_t emptyScanRefreshPeriod;
-	uint8_t nOpportunisticThresholdDiff;
-	uint8_t nRoamRescanRssiDiff;
-	uint8_t nRoamBmissFirstBcnt;
-	uint8_t nRoamBmissFinalBcnt;
-	uint8_t delay_before_vdev_stop;
-	uint32_t hi_rssi_scan_max_count;
-	uint32_t hi_rssi_scan_rssi_delta;
-	uint32_t hi_rssi_scan_delay;
-	int32_t hi_rssi_scan_rssi_ub;
-	tCsrChannelInfo pref_chan_info;
-	uint32_t full_roam_scan_period;
-	bool enable_scoring_for_roam;
-	uint8_t roam_rssi_diff;
-	uint8_t bg_rssi_threshold;
-	uint16_t roam_scan_home_away_time;
-	uint8_t roam_scan_n_probes;
-	uint32_t roam_scan_inactivity_time;
-	uint32_t roam_inactive_data_packet_count;
-	uint32_t roam_scan_period_after_inactivity;
-} tCsrNeighborRoamCfgParams, *tpCsrNeighborRoamCfgParams;
-
 #define CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX    255
 typedef struct sCsrNeighborRoamChannelInfo {
 	/* Flag to mark reception of IAPP Neighbor list */
@@ -114,23 +81,13 @@ typedef struct sCsr11rAssocNeighborInfo {
 
 /**
  * struct sCsr11rAssocNeighborInfo - Control info for neighbor roam algorithm
- * @roam_control_enable: Flag used to cache the status of roam control
- *			 configuration. This will be set only if the
- *			 corresponding vendor command data is configured to
- *			 driver/firmware successfully. The same shall be
- *			 returned to userspace whenever queried for roam
- *			 control config status.
  */
 typedef struct sCsrNeighborRoamControlInfo {
 	eCsrNeighborRoamState neighborRoamState;
 	eCsrNeighborRoamState prevNeighborRoamState;
-	tCsrNeighborRoamCfgParams cfgParams;
 	struct qdf_mac_addr currAPbssid;  /* current assoc AP */
 	uint32_t curr_ap_op_chan_freq; /* current assoc AP */
 	tCsrNeighborRoamChannelInfo roamChannelInfo;
-	uint8_t currentNeighborLookupThreshold;
-	uint8_t currentOpportunisticThresholdDiff;
-	uint8_t currentRoamRescanRssiDiff;
 	tDblLinkList roamableAPList;    /* List of current FT candidates */
 	struct csr_roam_profile csrNeighborRoamProfile;
 	bool is11rAssoc;
@@ -150,11 +107,8 @@ typedef struct sCsrNeighborRoamControlInfo {
 	uint8_t uOsRequestedHandoff;
 	/* handoff related info came with upper layer's req for reassoc */
 	tCsrHandoffRequest handoffReqInfo;
-	uint8_t currentRoamBmissFirstBcnt;
-	uint8_t currentRoamBmissFinalBcnt;
 	uint8_t last_sent_cmd;
 	struct scan_result_list *scan_res_lfr2_roam_ap;
-	bool roam_control_enable;
 } tCsrNeighborRoamControlInfo, *tpCsrNeighborRoamControlInfo;
 
 /* All the necessary Function declarations are here */

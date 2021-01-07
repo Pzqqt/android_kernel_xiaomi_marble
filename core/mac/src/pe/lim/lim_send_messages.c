@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -511,7 +511,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	/* Extract 24G channel list */
 	channel24gnum = 0;
 	for (count = 0; count < channelnum &&
-		(channel24gnum < SIR_ROAM_MAX_CHANNELS); count++) {
+		(channel24gnum < ROAM_MAX_CHANNELS); count++) {
 		chan_freq =
 			mac_ctx->mlme_cfg->reg.valid_channel_freq_list[count];
 		if (wlan_reg_is_24ghz_ch_freq(chan_freq)) {

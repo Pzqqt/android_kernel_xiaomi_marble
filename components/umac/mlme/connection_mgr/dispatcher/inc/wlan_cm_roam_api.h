@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -326,6 +326,41 @@ QDF_STATUS
 wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			   enum roam_cfg_param roam_cfg_type,
 			   struct cm_roam_values_copy *src_config);
+
+/**
+ * wlan_cm_get_rso_config  - get per vdev RSO config
+ * @vdev: vdev pointer
+ *
+ * Return: rso config pointer
+ */
+struct rso_config *wlan_cm_get_rso_config(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_cm_set_disable_hi_rssi  - set disable hi rssi config
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @value: value to set
+ *
+ * Return: void
+ */
+void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
+				 uint8_t vdev_id, bool value);
+
+/**
+ * wlan_cm_rso_config_init  - initialize RSO config
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_cm_rso_config_deinit  - deinit RSO config
+ * @vdev: vdev pointer
+ *
+ * Return: void
+ */
+void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev);
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**
