@@ -334,10 +334,30 @@ enum hif_event_type {
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 /* HIF_EVENT_HIST_MAX should always be power of 2 */
 #define HIF_EVENT_HIST_MAX		512
 #define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
-#define HIF_EVENT_HIST_DISABLE_MASK	0
+#define HIF_EVENT_HIST_ENABLE_MASK	0x3F
+
+static inline uint64_t hif_get_log_timestamp(void)
+{
+	return qdf_get_log_timestamp();
+}
+
+#else
+
+#define HIF_EVENT_HIST_MAX		32
+#define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
+/* Enable IRQ TRIGGER, NAPI SCHEDULE, SRNG ACCESS START */
+#define HIF_EVENT_HIST_ENABLE_MASK	0x19
+
+static inline uint64_t hif_get_log_timestamp(void)
+{
+	return qdf_sched_clock();
+}
+
+#endif
 
 /**
  * struct hif_event_record - an entry of the DP event history

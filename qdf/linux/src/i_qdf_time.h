@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,11 @@
 #include <linux/version.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+#include <linux/sched/clock.h>
+#else
+#include <linux/sched.h>
+#endif
 #include <linux/ktime.h>
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
 #include <linux/timekeeping.h>
@@ -248,6 +253,16 @@ static inline bool __qdf_system_time_before(__qdf_time_t a, __qdf_time_t b)
 static inline bool __qdf_system_time_after_eq(__qdf_time_t a, __qdf_time_t b)
 {
 	return (long)(a) - (long)(b) >= 0;
+}
+
+/**
+ * qdf_sched_clock() - use light weight timer to get timestamp
+ *
+ * Return: timestamp in ns
+ */
+static inline uint64_t __qdf_sched_clock(void)
+{
+	return sched_clock();
 }
 
 /**

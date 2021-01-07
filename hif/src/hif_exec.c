@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,7 +134,7 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 	struct hif_event_record *record;
 	int record_index;
 
-	if (scn->event_disable_mask & BIT(event->type))
+	if (!(scn->event_enable_mask & BIT(event->type)))
 		return;
 
 	if (qdf_unlikely(intr_grp_id >= HIF_NUM_INT_CONTEXTS)) {
@@ -156,14 +156,14 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 
 	if (event->type == HIF_EVENT_IRQ_TRIGGER) {
 		hist_ev->misc.last_irq_index = record_index;
-		hist_ev->misc.last_irq_ts = qdf_get_log_timestamp();
+		hist_ev->misc.last_irq_ts = hif_get_log_timestamp();
 	}
 
 	record->hal_ring_id = event->hal_ring_id;
 	record->hp = event->hp;
 	record->tp = event->tp;
 	record->cpu_id = qdf_get_cpu();
-	record->timestamp = qdf_get_log_timestamp();
+	record->timestamp = hif_get_log_timestamp();
 	record->type = event->type;
 }
 

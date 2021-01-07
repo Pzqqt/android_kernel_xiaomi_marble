@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -247,6 +247,16 @@ static inline bool qdf_system_time_before(qdf_time_t a, qdf_time_t b)
 static inline bool qdf_system_time_after_eq(qdf_time_t a, qdf_time_t b)
 {
 	return __qdf_system_time_after_eq(a, b);
+}
+
+/**
+ * qdf_sched_clock() - use light weight timer to get timestamp for logging
+ *
+ * Return: timestamp in ns
+ */
+static inline uint64_t qdf_sched_clock(void)
+{
+	return __qdf_sched_clock();
 }
 
 /**
