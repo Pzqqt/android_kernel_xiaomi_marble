@@ -1160,6 +1160,22 @@ static QDF_STATUS mlme_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
 	return status;
 }
 
+static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
+{
+	if (!vdev_mlme || !vdev_mlme->ext_vdev_ptr)
+		return;
+	mlme_free_self_disconnect_ies(vdev_mlme->vdev);
+	mlme_free_peer_disconnect_ies(vdev_mlme->vdev);
+	mlme_free_sae_auth_retry(vdev_mlme->vdev);
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
+	wlan_cm_rso_config_deinit(vdev_mlme->vdev);
+#endif
+	qdf_mem_free(vdev_mlme->ext_vdev_ptr->fils_con_info);
+	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
+	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
+	vdev_mlme->ext_vdev_ptr = NULL;
+}
 /**
  * vdevmgr_mlme_ext_hdl_create () - Create mlme legacy priv object
  * @vdev_mlme: vdev mlme object
@@ -1180,7 +1196,10 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 
 	mlme_init_rate_config(vdev_mlme);
 	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
-
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
+	wlan_cm_rso_config_init(vdev_mlme->vdev);
+#endif
 	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
 			      &vdev_mlme->proto.generic.nss_2g,
 			      &vdev_mlme->proto.generic.nss_5g);
@@ -1190,7 +1209,7 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 				     &vdev_mlme->mgmt.generic.subtype);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("Get vdev type failed; status:%d", status);
-		qdf_mem_free(vdev_mlme->ext_vdev_ptr);
+		mlme_ext_handler_destroy(vdev_mlme);
 		return status;
 	}
 
@@ -1198,7 +1217,7 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("Failed to create vdev for vdev id %d",
 			 wlan_vdev_get_id(vdev_mlme->vdev));
-		qdf_mem_free(vdev_mlme->ext_vdev_ptr);
+		mlme_ext_handler_destroy(vdev_mlme);
 		return status;
 	}
 
@@ -1232,15 +1251,7 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 		wma_vdev_detach_callback(&rsp);
 	}
 
-	mlme_free_self_disconnect_ies(vdev_mlme->vdev);
-	mlme_free_peer_disconnect_ies(vdev_mlme->vdev);
-	mlme_free_sae_auth_retry(vdev_mlme->vdev);
-
-	qdf_mem_free(vdev_mlme->ext_vdev_ptr->fils_con_info);
-	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
-
-	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
-	vdev_mlme->ext_vdev_ptr = NULL;
+	mlme_ext_handler_destroy(vdev_mlme);
 
 	return QDF_STATUS_SUCCESS;
 }

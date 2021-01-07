@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,16 +98,136 @@
 #define ROAM_MAX_CFG_VALUE 0xffffffff
 
 /**
+ * struct rso_chan_info - chan info
+ * @num_chan: number of channels
+ * @freq_list: freq list
+ */
+struct rso_chan_info {
+	uint8_t num_chan;
+	qdf_freq_t *freq_list;
+};
+
+/**
+ * struct rso_cfg_params - per vdev rso cfg
+ */
+struct rso_cfg_params {
+	uint32_t neighbor_scan_period;
+	uint32_t neighbor_scan_min_period;
+	struct rso_chan_info specific_chan_info;
+	uint8_t neighbor_lookup_threshold;
+	int8_t rssi_thresh_offset_5g;
+	uint32_t min_chan_scan_time;
+	uint32_t max_chan_scan_time;
+	uint16_t neighbor_results_refresh_period;
+	uint16_t empty_scan_refresh_period;
+	uint8_t opportunistic_threshold_diff;
+	uint8_t roam_rescan_rssi_diff;
+	uint8_t roam_bmiss_first_bcn_cnt;
+	uint8_t roam_bmiss_final_cnt;
+	uint32_t hi_rssi_scan_max_count;
+	uint32_t hi_rssi_scan_rssi_delta;
+	uint32_t hi_rssi_scan_delay;
+	int32_t hi_rssi_scan_rssi_ub;
+	struct rso_chan_info pref_chan_info;
+	uint32_t full_roam_scan_period;
+	bool enable_scoring_for_roam;
+	uint8_t roam_rssi_diff;
+	uint8_t bg_rssi_threshold;
+	uint16_t roam_scan_home_away_time;
+	uint8_t roam_scan_n_probes;
+	uint32_t roam_scan_inactivity_time;
+	uint32_t roam_inactive_data_packet_count;
+	uint32_t roam_scan_period_after_inactivity;
+};
+
+/**
+ * struct rso_config - connect config to be used to send info in
+ * RSO. This is the info we dont have in VDEV or CM ctx
+ * @rsn_cap: original rsn caps from the connect req from supplicant
+ * @disable_hi_rssi: disable high rssi
+ * @roam_candidate_count: roam candidate count
+ * @roam_control_enable: Flag used to cache the status of roam control
+ *			 configuration. This will be set only if the
+ *			 corresponding vendor command data is configured to
+ *			 driver/firmware successfully. The same shall be
+ *			 returned to userspace whenever queried for roam
+ *			 control config status.
+ * @rescan_rssi_delta: Roam scan rssi delta. Start new rssi triggered scan only
+ * if it changes by rescan_rssi_delta value.
+ * @beacon_rssi_weight: Number of beacons to be used to calculate the average
+ * rssi of the AP.
+ * @hi_rssi_scan_delay: Roam scan delay in ms for High RSSI roam trigger.
+ * @roam_scan_scheme_bitmap: Bitmap of roam triggers for which partial channel
+ * map scan scheme needs to be enabled. Each bit in the bitmap corresponds to
+ * the bit position in the order provided by the enum roam_trigger_reason
+ * Ex: roam_scan_scheme_bitmap - 0x00110 will enable partial scan for below
+ * triggers:
+ * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
+ * @cfg_param: per vdev config params
+ */
+struct rso_config {
+	uint8_t rsn_cap;
+	bool disable_hi_rssi;
+	int8_t roam_candidate_count;
+	bool roam_control_enable;
+	uint8_t rescan_rssi_delta;
+	uint8_t beacon_rssi_weight;
+	uint32_t hi_rssi_scan_delay;
+	uint32_t roam_scan_scheme_bitmap;
+	struct rso_cfg_params cfg_param;
+};
+
+/**
+ * struct rso_params - global RSO params
+ * @good_rssi_roam: Lazy Roam
+ * @alert_rssi_threshold: Alert RSSI
+ */
+struct rso_config_params {
+	int good_rssi_roam;
+	int alert_rssi_threshold;
+};
+
+/**
  * enum roam_cfg_param  - Type values for roaming parameters used as index
  * for get/set of roaming config values(pNeighborRoamInfo in legacy)
  * @RSSI_CHANGE_THRESHOLD: Rssi change threshold
  * @BEACON_RSSI_WEIGHT: Beacon Rssi weight parameter
  * @HI_RSSI_DELAY_BTW_SCANS: High Rssi delay between scans
+ * @EMPTY_SCAN_REFRESH_PERIOD: empty scan refresh period
+ * @FULL_ROAM_SCAN_PERIOD: Full roam scan period
+ * @ENABLE_SCORING_FOR_ROAM: enable scoring
+ * @SCAN_MIN_CHAN_TIME: scan min chan time
+ * @SCAN_MAX_CHAN_TIME: scan max chan time
+ * @NEIGHBOR_SCAN_PERIOD: neighbour scan period
+ * @ROAM_CONFIG_ENABLE: Roam config enable
+ * @ROAM_PREFERRED_CHAN: preferred channel list
+ * @ROAM_SPECIFIC_CHAN: spedific channel list
+ * @ROAM_RSSI_DIFF: rssi diff
+ * @NEIGHBOUR_LOOKUP_THRESHOLD: lookup threshold
+ * @SCAN_N_PROBE: scan n probe
+ * @SCAN_HOME_AWAY: scan and away
+ * @NEIGHBOUR_SCAN_REFRESH_PERIOD: scan refresh
+ * @ROAM_CONTROL_ENABLE: roam control enable
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
 	BEACON_RSSI_WEIGHT,
 	HI_RSSI_DELAY_BTW_SCANS,
+	EMPTY_SCAN_REFRESH_PERIOD,
+	FULL_ROAM_SCAN_PERIOD,
+	ENABLE_SCORING_FOR_ROAM,
+	SCAN_MIN_CHAN_TIME,
+	SCAN_MAX_CHAN_TIME,
+	NEIGHBOR_SCAN_PERIOD,
+	ROAM_CONFIG_ENABLE,
+	ROAM_PREFERRED_CHAN,
+	ROAM_SPECIFIC_CHAN,
+	ROAM_RSSI_DIFF,
+	NEIGHBOUR_LOOKUP_THRESHOLD,
+	SCAN_N_PROBE,
+	SCAN_HOME_AWAY,
+	NEIGHBOUR_SCAN_REFRESH_PERIOD,
+	ROAM_CONTROL_ENABLE,
 };
 
 /**
@@ -1325,40 +1445,15 @@ enum roam_scan_freq_scheme {
 };
 
 /**
- * struct wlan_cm_rso_configs  - Roam scan offload related per vdev
- * configuration parameters.
- * @rescan_rssi_delta: Roam scan rssi delta. Start new rssi triggered scan only
- * if it changes by rescan_rssi_delta value.
- * @beacon_rssi_weight: Number of beacons to be used to calculate the average
- * rssi of the AP.
- * @hi_rssi_scan_delay: Roam scan delay in ms for High RSSI roam trigger.
- * @roam_scan_scheme_bitmap: Bitmap of roam triggers for which partial channel
- * map scan scheme needs to be enabled. Each bit in the bitmap corresponds to
- * the bit position in the order provided by the enum roam_trigger_reason
- * Ex: roam_scan_scheme_bitmap - 0x00110 will enable partial scan for below
- * triggers:
- * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
- */
-struct wlan_cm_rso_configs {
-	uint8_t rescan_rssi_delta;
-	uint8_t beacon_rssi_weight;
-	uint32_t hi_rssi_scan_delay;
-	uint32_t roam_scan_scheme_bitmap;
-};
-
-/**
  * struct wlan_cm_roam  - Connection manager roam configs, state and roam
  * data related structure
  * @pcl_vdev_cmd_active:  Flag to check if vdev level pcl command needs to be
  * sent or PDEV level PCL command needs to be sent
  * @control_param: vendor configured roam control param
- * @vdev_rso_config: Roam scan offload related configurations. Equivalent to the
- * legacy tpCsrNeighborRoamControlInfo structure.
  */
 struct wlan_cm_roam {
 	bool pcl_vdev_cmd_active;
 	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
-	struct wlan_cm_rso_configs vdev_rso_config;
 };
 
 /**
@@ -1366,11 +1461,12 @@ struct wlan_cm_roam {
  * @uint_value: Unsigned integer value to be copied
  * @int_value: Integer value
  * @bool_value: boolean value
+ * @chan_info: chan info
  */
 struct cm_roam_values_copy {
 	uint32_t uint_value;
 	int32_t int_value;
 	bool bool_value;
-
+	struct rso_chan_info chan_info;
 };
 #endif

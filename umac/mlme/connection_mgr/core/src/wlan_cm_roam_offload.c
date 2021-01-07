@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -403,6 +403,137 @@ static void cm_roam_set_roam_reason_better_ap(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * cm_roam_scan_offload_rssi_thresh() - set roam offload scan rssi
+ * parameters
+ * @psoc: psoc ctx
+ * @vdev_id: vdev id
+ * @params:  roam offload scan rssi related parameters
+ * @rso_cfg: rso config
+ *
+ * This function is used to set roam offload scan rssi related parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_scan_offload_rssi_thresh(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			struct wlan_roam_offload_scan_rssi_params *params,
+			struct rso_config *rso_cfg)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_lfr_cfg *lfr_cfg;
+	struct rso_config_params *rso_config;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+	rso_config = &mlme_obj->cfg.lfr.rso_user_config;
+
+	lfr_cfg = &mlme_obj->cfg.lfr;
+
+	if (rso_config->alert_rssi_threshold)
+		params->rssi_thresh = rso_config->alert_rssi_threshold;
+	else
+		params->rssi_thresh =
+			(int8_t)rso_cfg->cfg_param.neighbor_lookup_threshold *
+			(-1);
+
+	params->vdev_id = vdev_id;
+	params->rssi_thresh_diff =
+		rso_cfg->cfg_param.opportunistic_threshold_diff & 0x000000ff;
+	params->hi_rssi_scan_max_count =
+		rso_cfg->cfg_param.hi_rssi_scan_max_count;
+	/*
+	 * If the current operation channel is 5G frequency band, then
+	 * there is no need to enable the HI_RSSI feature. This feature
+	 * is useful only if we are connected to a 2.4 GHz AP and we wish
+	 * to connect to a better 5GHz AP is available.
+	 */
+	if (rso_cfg->disable_hi_rssi)
+		params->hi_rssi_scan_rssi_delta = 0;
+	else
+		params->hi_rssi_scan_rssi_delta =
+			rso_cfg->cfg_param.hi_rssi_scan_rssi_delta;
+	params->hi_rssi_scan_rssi_ub =
+		rso_cfg->cfg_param.hi_rssi_scan_rssi_ub;
+	params->raise_rssi_thresh_5g = lfr_cfg->rssi_boost_threshold_5g;
+	params->dense_rssi_thresh_offset = lfr_cfg->roam_dense_rssi_thre_offset;
+	params->dense_min_aps_cnt = lfr_cfg->roam_dense_min_aps;
+	params->traffic_threshold = lfr_cfg->roam_dense_traffic_threshold;
+
+	/* Set initial dense roam status */
+	if (rso_cfg->roam_candidate_count > params->dense_min_aps_cnt)
+		params->initial_dense_status = true;
+
+	params->bg_scan_bad_rssi_thresh =
+			lfr_cfg->roam_bg_scan_bad_rssi_threshold;
+	params->bg_scan_client_bitmap = lfr_cfg->roam_bg_scan_client_bitmap;
+	params->roam_bad_rssi_thresh_offset_2g =
+			lfr_cfg->roam_bg_scan_bad_rssi_offset_2g;
+	params->roam_data_rssi_threshold_triggers =
+		lfr_cfg->roam_data_rssi_threshold_triggers;
+	params->roam_data_rssi_threshold = lfr_cfg->roam_data_rssi_threshold;
+	params->rx_data_inactivity_time = lfr_cfg->rx_data_inactivity_time;
+
+	params->drop_rssi_thresh_5g = lfr_cfg->rssi_penalize_threshold_5g;
+
+	params->raise_factor_5g = lfr_cfg->rssi_boost_factor_5g;
+	params->drop_factor_5g = lfr_cfg->rssi_penalize_factor_5g;
+	params->max_raise_rssi_5g = lfr_cfg->max_rssi_boost_5g;
+	params->max_drop_rssi_5g = lfr_cfg->max_rssi_penalize_5g;
+
+	if (rso_config->good_rssi_roam)
+		params->good_rssi_threshold = NOISE_FLOOR_DBM_DEFAULT;
+	else
+		params->good_rssi_threshold = 0;
+
+	params->early_stop_scan_enable = lfr_cfg->early_stop_scan_enable;
+	if (params->early_stop_scan_enable) {
+		params->roam_earlystop_thres_min =
+			lfr_cfg->early_stop_scan_min_threshold;
+		params->roam_earlystop_thres_max =
+			lfr_cfg->early_stop_scan_max_threshold;
+	}
+
+	params->rssi_thresh_offset_5g =
+		rso_cfg->cfg_param.rssi_thresh_offset_5g;
+}
+
+/**
+ * cm_roam_scan_offload_scan_period() - set roam offload scan period
+ * parameters
+ * @vdev_id: vdev id
+ * @params:  roam offload scan period related parameters
+ * @rso_cfg: rso config
+ *
+ * This function is used to set roam offload scan period related parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_scan_offload_scan_period(uint8_t vdev_id,
+				 struct wlan_roam_scan_period_params *params,
+				 struct rso_config *rso_cfg)
+{
+	struct rso_cfg_params *cfg_params;
+
+	cfg_params = &rso_cfg->cfg_param;
+
+	params->vdev_id = vdev_id;
+	params->empty_scan_refresh_period =
+				cfg_params->empty_scan_refresh_period;
+	params->scan_period = params->empty_scan_refresh_period;
+	params->scan_age = (3 * params->empty_scan_refresh_period);
+	params->roam_scan_inactivity_time =
+				cfg_params->roam_scan_inactivity_time;
+	params->roam_inactive_data_packet_count =
+			cfg_params->roam_inactive_data_packet_count;
+	params->roam_scan_period_after_inactivity =
+			cfg_params->roam_scan_period_after_inactivity;
+	params->full_scan_period =
+			cfg_params->full_roam_scan_period;
+}
+
+/**
  * cm_roam_start_req() - roam start request handling
  * @psoc: psoc pointer
  * @vdev_id: vdev id
@@ -415,11 +546,23 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		  uint8_t reason)
 {
 	struct wlan_roam_start_config *start_req;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
 
 	start_req = qdf_mem_malloc(sizeof(*start_req));
 	if (!start_req)
 		return QDF_STATUS_E_NOMEM;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		goto free_mem;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
 
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 	/* fill from mlme directly */
@@ -432,6 +575,11 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_roam_bss_load_config(psoc, vdev_id, &start_req->bss_load_config);
 	cm_roam_disconnect_params(psoc, vdev_id, &start_req->disconnect_params);
 	cm_roam_idle_params(psoc, vdev_id, &start_req->idle_params);
+	cm_roam_scan_offload_rssi_thresh(psoc, vdev_id,
+					 &start_req->rssi_params, rso_cfg);
+	cm_roam_scan_offload_scan_period(vdev_id,
+					 &start_req->scan_period_params,
+					 rso_cfg);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);
@@ -440,6 +588,9 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_debug("fail to send roam start");
 
+rel_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+free_mem:
 	qdf_mem_free(start_req);
 
 	return status;
@@ -458,13 +609,25 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			  uint8_t reason)
 {
 	struct wlan_roam_update_config *update_req;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
 
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 
 	update_req = qdf_mem_malloc(sizeof(*update_req));
 	if (!update_req)
 		return QDF_STATUS_E_NOMEM;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		goto free_mem;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
 
 	/* fill from mlme directly */
 	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &update_req->beacon_miss_cnt);
@@ -478,6 +641,11 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		cm_roam_triggers(psoc, vdev_id,
 				 &update_req->roam_triggers);
 	}
+	cm_roam_scan_offload_rssi_thresh(psoc, vdev_id,
+					 &update_req->rssi_params, rso_cfg);
+	cm_roam_scan_offload_scan_period(vdev_id,
+					 &update_req->scan_period_params,
+					 rso_cfg);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_update_config_req(psoc, vdev_id, update_req, reason);
@@ -486,6 +654,9 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_debug("fail to send update config");
 
+rel_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+free_mem:
 	qdf_mem_free(update_req);
 
 	return status;
