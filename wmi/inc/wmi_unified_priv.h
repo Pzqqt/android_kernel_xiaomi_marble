@@ -2499,6 +2499,17 @@ QDF_STATUS (*send_lcr_cmd)(wmi_unified_t wmi_handle,
 			   struct wmi_wifi_pos_lcr_info *lcr_info);
 QDF_STATUS (*send_lci_cmd)(wmi_unified_t wmi_handle,
 			   struct wifi_pos_lci_info *lci_info);
+
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+QDF_STATUS (*config_vdev_tid_latency_info_cmd)(
+				wmi_unified_t wmi,
+				struct wmi_vdev_tid_latency_config_params
+				*param);
+QDF_STATUS (*config_peer_latency_info_cmd)(
+				wmi_unified_t wmi,
+				struct wmi_peer_latency_config_params
+				*param);
+#endif
 #endif
 
 QDF_STATUS (*send_set_tpc_power_cmd)(wmi_unified_t wmi_handle,
