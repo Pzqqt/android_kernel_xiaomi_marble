@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -140,6 +140,8 @@ static int wsa883x_get_temperature(struct snd_soc_component *component,
 enum {
 	WSA8830 = 0,
 	WSA8835,
+	WSA8832,
+	WSA8835_V2 = 5,
 };
 
 enum {
@@ -699,7 +701,11 @@ static ssize_t wsa883x_variant_read(struct snd_info_entry *entry,
 		len = snprintf(buffer, sizeof(buffer), "WSA8830\n");
 		break;
 	case WSA8835:
+	case WSA8835_V2:
 		len = snprintf(buffer, sizeof(buffer), "WSA8835\n");
+		break;
+	case WSA8832:
+		len = snprintf(buffer, sizeof(buffer), "WSA8832\n");
 		break;
 	default:
 		len = snprintf(buffer, sizeof(buffer), "UNDEFINED\n");
