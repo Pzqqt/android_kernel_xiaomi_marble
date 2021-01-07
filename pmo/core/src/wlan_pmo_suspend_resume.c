@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -427,6 +427,8 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 			pmo_tgt_enable_wow_wakeup_event(vdev, enable_mask);
 		if (disable_configured)
 			pmo_tgt_disable_wow_wakeup_event(vdev, disable_mask);
+
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 	}
 
 }
