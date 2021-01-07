@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1098,7 +1098,7 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 }
 
 static QDF_STATUS
-target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
+target_if_mc_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS ret_val;
 	struct wmi_unified *wmi_handle;
@@ -1133,7 +1133,7 @@ target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 }
 
 static QDF_STATUS
-target_if_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
+target_if_mc_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 {
 	struct wmi_unified *wmi_handle;
 
@@ -1211,43 +1211,44 @@ static QDF_STATUS target_if_cp_stats_send_stats_req(
 }
 
 /**
- * target_if_cp_stats_unregister_handlers() - Un-registers wmi event handlers
+ * target_if_mc_cp_stats_unregister_handlers() - Unregisters wmi event handlers
  * of control plane stats & twt session stats info
  * @psoc: PSOC object
  *
  * Return: QDF_STATUS_SUCCESS on success or QDF error values on failure
  */
 static QDF_STATUS
-target_if_cp_stats_unregister_handlers(struct wlan_objmgr_psoc *psoc)
+target_if_mc_cp_stats_unregister_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
 
 	qdf_status = target_if_twt_session_params_unregister_evt_hdlr(psoc);
 	if (qdf_status == QDF_STATUS_SUCCESS)
-		qdf_status = target_if_cp_stats_unregister_event_handler(psoc);
+		qdf_status =
+			target_if_mc_cp_stats_unregister_event_handler(psoc);
 
 	return qdf_status;
 }
 
 /**
- * target_if_cp_stats_register_handlers() - Registers wmi event handlers for
+ * target_if_mc_cp_stats_register_handlers() - Registers wmi event handlers for
  * control plane stats & twt session stats info
  * @psoc: PSOC object
  *
  * Return: QDF_STATUS_SUCCESS on success or QDF error values on failure
  */
 static QDF_STATUS
-target_if_cp_stats_register_handlers(struct wlan_objmgr_psoc *psoc)
+target_if_mc_cp_stats_register_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
 
-	qdf_status = target_if_cp_stats_register_event_handler(psoc);
+	qdf_status = target_if_mc_cp_stats_register_event_handler(psoc);
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		return qdf_status;
 
 	qdf_status = target_if_twt_session_params_register_evt_hdlr(psoc);
 	if (qdf_status != QDF_STATUS_SUCCESS)
-		target_if_cp_stats_unregister_event_handler(psoc);
+		target_if_mc_cp_stats_unregister_event_handler(psoc);
 
 	return qdf_status;
 }
@@ -1282,8 +1283,8 @@ target_if_cp_stats_send_peer_stats_req(struct wlan_objmgr_psoc *psoc,
 	return wmi_unified_peer_stats_request_send(wmi_handle, &param);
 }
 
-QDF_STATUS
-target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+static QDF_STATUS
+target_if_mc_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	struct wlan_lmac_if_cp_stats_tx_ops *cp_stats_tx_ops;
 
@@ -1298,10 +1299,6 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cp_stats_tx_ops->cp_stats_attach =
-		target_if_cp_stats_register_handlers;
-	cp_stats_tx_ops->cp_stats_detach =
-		target_if_cp_stats_unregister_handlers;
 	cp_stats_tx_ops->inc_wake_lock_stats =
 		target_if_cp_stats_inc_wake_lock_stats;
 	cp_stats_tx_ops->send_req_stats = target_if_cp_stats_send_stats_req;
@@ -1311,3 +1308,66 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+target_if_mc_cp_stats_unregister_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	struct wlan_lmac_if_cp_stats_tx_ops *cp_stats_tx_ops;
+
+	if (!tx_ops) {
+		cp_stats_err("lmac tx ops is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cp_stats_tx_ops = &tx_ops->cp_stats_tx_ops;
+	if (!cp_stats_tx_ops) {
+		cp_stats_err("lmac tx ops is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cp_stats_tx_ops->inc_wake_lock_stats = NULL;
+	cp_stats_tx_ops->send_req_stats = NULL;
+	cp_stats_tx_ops->send_req_peer_stats = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef WLAN_SUPPORT_LEGACY_CP_STATS_HANDLERS
+QDF_STATUS
+target_if_cp_stats_register_legacy_event_handler(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("lmac tx ops is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = target_if_mc_cp_stats_register_tx_ops(tx_ops);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	return target_if_mc_cp_stats_register_handlers(psoc);
+}
+
+QDF_STATUS
+target_if_cp_stats_unregister_legacy_event_handler(
+						struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("lmac tx ops is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = target_if_mc_cp_stats_unregister_tx_ops(tx_ops);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	return target_if_mc_cp_stats_unregister_handlers(psoc);
+}
+#endif
