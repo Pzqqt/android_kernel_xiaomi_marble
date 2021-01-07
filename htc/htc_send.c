@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1103,7 +1103,7 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 				htc_send_pkts_rtpm_dbgid_get(
 					pEndpoint->service_id);
 			ret = hif_pm_runtime_get(target->hif_dev,
-						 rtpm_dbgid);
+						 rtpm_dbgid, false);
 			if (ret) {
 				/* bus suspended, runtime resume issued */
 				QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
@@ -1252,7 +1252,7 @@ static void get_htc_send_packets(HTC_TARGET *target,
 				htc_send_pkts_rtpm_dbgid_get(
 					pEndpoint->service_id);
 			ret = hif_pm_runtime_get(target->hif_dev,
-						 rtpm_dbgid);
+						 rtpm_dbgid, false);
 			if (ret) {
 				/* bus suspended, runtime resume issued */
 				QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
@@ -1932,7 +1932,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE htc_hdl, qdf_nbuf_t netbuf, int ep_id,
 
 	rtpm_dbgid =
 		htc_send_pkts_rtpm_dbgid_get(pEndpoint->service_id);
-	if (hif_pm_runtime_get(target->hif_dev, rtpm_dbgid))
+	if (hif_pm_runtime_get(target->hif_dev, rtpm_dbgid, false))
 		return QDF_STATUS_E_FAILURE;
 
 	p_htc_hdr = (HTC_FRAME_HDR *)qdf_nbuf_get_frag_vaddr(netbuf, 0);

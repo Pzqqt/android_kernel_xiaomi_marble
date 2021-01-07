@@ -1150,6 +1150,8 @@ void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
  * hif_pm_runtime_get() - do a get opperation on the device
  * @hif_ctx: pointer of HIF context
  * @rtpm_dbgid: dbgid to trace who use it
+ * @is_critical_ctx: Indication if this function called via a
+ *		     critical context
  *
  * A get opperation will prevent a runtime suspend until a
  * corresponding put is done.  This api should be used when sending
@@ -1162,7 +1164,8 @@ void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
  *   otherwise an error code.
  */
 int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
-		       wlan_rtpm_dbgid rtpm_dbgid)
+		       wlan_rtpm_dbgid rtpm_dbgid,
+		       bool is_critical_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_runtime_pm_ctx *rpm_ctx;
@@ -1207,8 +1210,11 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
 
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING) {
-		hif_info_high("Runtime PM resume is requested by %ps",
-			      (void *)_RET_IP_);
+		/* Do not log in performance path */
+		if (!is_critical_ctx) {
+			hif_info_high("Runtime PM resume is requested by %ps",
+				      (void *)_RET_IP_);
+		}
 		ret = -EAGAIN;
 	} else {
 		ret = -EBUSY;

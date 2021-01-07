@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -148,7 +148,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	 * sure there is no PCIe link access.
 	 */
 	if (hif_pm_runtime_get(hif_hdl,
-			       RTPM_ID_CE_SEND_FAST) != 0)
+			       RTPM_ID_CE_SEND_FAST, false) != 0)
 		ok_to_send = false;
 
 	if (ok_to_send) {

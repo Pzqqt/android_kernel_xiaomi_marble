@@ -1433,7 +1433,7 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 ring_access_fail:
 	if (hif_pm_runtime_get(soc->hif_handle,
-			       RTPM_ID_DW_TX_HW_ENQUEUE) == 0) {
+			       RTPM_ID_DW_TX_HW_ENQUEUE, true) == 0) {
 		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
 		hif_pm_runtime_put(soc->hif_handle,
 				   RTPM_ID_DW_TX_HW_ENQUEUE);
