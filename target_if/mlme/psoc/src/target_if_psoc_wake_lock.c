@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,27 +192,32 @@ target_if_vote_for_link_up(struct wlan_objmgr_psoc *psoc,
 }
 
 void target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
-				       uint32_t is_dfs)
+				       bool is_restart)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct psoc_mlme_wakelock *psoc_wakelock;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct wlan_channel *des_channel;
-	uint32_t ch_freq;
-	enum phy_ch_width ch_width;
+	struct wlan_channel *curr_channel, *prev_channel;
+	uint32_t ch_freq, prev_ch_freq;
+	enum phy_ch_width ch_width, prev_ch_width;
+	uint32_t is_dfs, prev_ch_is_dfs;
+	enum channel_state ch_state, prev_ch_state;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	des_channel = wlan_vdev_mlme_get_des_chan(vdev);
-	ch_freq = des_channel->ch_freq;
-	ch_width = des_channel->ch_width;
 
 	if (!pdev) {
 		mlme_err("pdev is NULL");
 		return;
 	}
 
+	curr_channel = wlan_vdev_mlme_get_des_chan(vdev);
+	ch_freq = curr_channel->ch_freq;
+	ch_width = curr_channel->ch_width;
+	is_dfs = wlan_reg_is_dfs_for_freq(pdev, ch_freq);
+	ch_state = wlan_reg_get_5g_bonded_channel_state_for_freq(pdev, ch_freq,
+								 ch_width);
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
 	if (!rx_ops || !rx_ops->psoc_get_wakelock_info) {
 		mlme_err("psoc_id:%d No Rx Ops",
@@ -222,22 +227,63 @@ void target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
 
 	psoc_wakelock = rx_ops->psoc_get_wakelock_info(psoc);
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
-		if (is_dfs ||
-		    (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev,
-			ch_freq, ch_width) == CHANNEL_STATE_DFS))
+		if (is_restart) {
+			prev_channel = wlan_vdev_mlme_get_bss_chan(vdev);
+			prev_ch_freq = prev_channel->ch_freq;
+			prev_ch_width = prev_channel->ch_width;
+			prev_ch_is_dfs = wlan_reg_is_dfs_for_freq(pdev,
+								  prev_ch_freq);
+			prev_ch_state =
+				wlan_reg_get_5g_bonded_channel_state_for_freq(pdev,
+						prev_ch_freq, prev_ch_width);
+			/*
+			 * In restart case, if SAP is on non DFS channel and
+			 * previously it was on DFS channel then vote for link
+			 * down.
+			 */
+			if ((prev_ch_is_dfs ||
+			     prev_ch_state == CHANNEL_STATE_DFS) &&
+			     !(is_dfs || ch_state == CHANNEL_STATE_DFS))
+				target_if_vote_for_link_down(psoc,
+							     psoc_wakelock);
+
+			/*
+			 * If SAP is on DFS channel and previously it was on
+			 * non DFS channel then vote for link up
+			 */
+			if (!(prev_ch_is_dfs ||
+			      prev_ch_state == CHANNEL_STATE_DFS) &&
+			     (is_dfs || ch_state == CHANNEL_STATE_DFS))
+				target_if_vote_for_link_up(psoc, psoc_wakelock);
+		} else if (is_dfs || ch_state == CHANNEL_STATE_DFS)
 			target_if_vote_for_link_up(psoc, psoc_wakelock);
-		else
-			target_if_vote_for_link_down(psoc, psoc_wakelock);
 	}
 }
 
 void target_if_vdev_stop_link_handler(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	struct psoc_mlme_wakelock *psoc_wakelock;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
+	struct wlan_channel *curr_channel;
+	uint32_t ch_freq;
+	enum phy_ch_width ch_width;
+	uint32_t is_dfs;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+
+	if (!pdev) {
+		mlme_err("pdev is NULL");
+		return;
+	}
+
+	curr_channel = wlan_vdev_mlme_get_bss_chan(vdev);
+	ch_freq = curr_channel->ch_freq;
+	ch_width = curr_channel->ch_width;
+	is_dfs = wlan_reg_is_dfs_for_freq(pdev, ch_freq);
+
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
 	if (!rx_ops || !rx_ops->psoc_get_wakelock_info) {
 		mlme_err("psoc_id:%d No Rx Ops",
@@ -247,6 +293,9 @@ void target_if_vdev_stop_link_handler(struct wlan_objmgr_vdev *vdev)
 
 	psoc_wakelock = rx_ops->psoc_get_wakelock_info(psoc);
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
-		target_if_vote_for_link_down(psoc, psoc_wakelock);
+		if (is_dfs ||
+		    (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev,
+			ch_freq, ch_width) == CHANNEL_STATE_DFS))
+			target_if_vote_for_link_down(psoc, psoc_wakelock);
 }
 

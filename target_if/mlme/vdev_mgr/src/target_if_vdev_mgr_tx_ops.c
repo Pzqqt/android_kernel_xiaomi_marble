@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -487,7 +487,7 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 							  START_RESPONSE_BIT);
 	} else {
 		target_if_vdev_start_link_handler(vdev,
-						  param->channel.dfs_set);
+						  param->is_restart);
 	}
 	return status;
 }
