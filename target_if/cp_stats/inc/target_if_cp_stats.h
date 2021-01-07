@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -80,6 +80,46 @@ target_if_cp_stats_get_tx_ops(struct wlan_objmgr_psoc *psoc)
  */
 QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+
+#ifdef WLAN_SUPPORT_LEGACY_CP_STATS_HANDLERS
+/**
+ * @target_if_cp_stats_register_legacy_event_handler() - Register handler
+ * specific to legacy components
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+target_if_cp_stats_register_legacy_event_handler(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * @target_if_cp_stats_unregister_legacy_event_handler() - Unregister handler
+ * specific to legacy components
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+target_if_cp_stats_unregister_legacy_event_handler(
+						struct wlan_objmgr_psoc *psoc);
+#else
+
+static inline QDF_STATUS
+target_if_cp_stats_register_legacy_event_handler(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_cp_stats_unregister_legacy_event_handler(
+						struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif  /* WLAN_SUPPORT_LEGACY_CP_STATS_HANDLERS */
+
 #else
 static inline QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,6 +129,10 @@ QDF_STATUS wlan_cp_stats_enable_ol(struct wlan_objmgr_psoc *psoc)
 	}
 
 	tx_ops->cp_stats_attach(psoc);
+
+	if (tx_ops->cp_stats_legacy_attach)
+		tx_ops->cp_stats_legacy_attach(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -147,12 +151,18 @@ QDF_STATUS wlan_cp_stats_disable_ol(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (!tx_ops->cp_stats_legacy_detach) {
+		cp_stats_err("cp_stats_legacy_detach function ptr is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tx_ops->cp_stats_legacy_detach(psoc);
+
 	if (!tx_ops->cp_stats_detach) {
 		cp_stats_err("cp_stats_detach function ptr is null!");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
 	tx_ops->cp_stats_detach(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -112,8 +112,12 @@ typedef struct wake_lock_stats stats_wake_lock;
 /**
  * struct wlan_lmac_if_cp_stats_tx_ops - defines southbound tx callbacks for
  * control plane statistics component
- * @cp_stats_attach:	function pointer to register events from FW
- * @cp_stats_detach:	function pointer to unregister events from FW
+ * @cp_stats_attach: function pointer to register events from FW
+ * @cp_stats_detach: function pointer to unregister events from FW
+ * @cp_stats_legacy_attach: function pointer to register legacy stats events
+ *                          from FW
+ * @cp_stats_legacy_detach: function pointer to unregister legacy stats events
+ *                          from FW
  * @inc_wake_lock_stats: function pointer to increase wake lock stats
  * @send_req_stats: function pointer to send request stats command to FW
  * @send_req_peer_stats: function pointer to send request peer stats command
@@ -124,6 +128,8 @@ typedef struct wake_lock_stats stats_wake_lock;
 struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*cp_stats_attach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*cp_stats_detach)(struct wlan_objmgr_psoc *posc);
+	QDF_STATUS (*cp_stats_legacy_attach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*cp_stats_legacy_detach)(struct wlan_objmgr_psoc *psoc);
 	void (*inc_wake_lock_stats)(uint32_t reason,
 				    stats_wake_lock *stats,
 				    uint32_t *unspecified_wake_count);

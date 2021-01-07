@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -75,7 +75,9 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_cp_stats_register_event_handler;
 	cp_stats_tx_ops->cp_stats_detach =
 		target_if_cp_stats_unregister_event_handler;
-
+	cp_stats_tx_ops->cp_stats_legacy_attach =
+		target_if_cp_stats_register_legacy_event_handler;
+	cp_stats_tx_ops->cp_stats_legacy_detach =
+		target_if_cp_stats_unregister_legacy_event_handler;
 	return QDF_STATUS_SUCCESS;
 }
-
