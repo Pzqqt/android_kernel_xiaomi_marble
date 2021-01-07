@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -205,21 +205,21 @@ static void wlan_cm_utf_bss_peer_delete_rsp(struct wlan_cm_utf *cm_utf)
  */
 static void wlan_cm_utf_connect_rsp(struct wlan_cm_utf *cm_utf)
 {
-	struct wlan_cm_connect_rsp *cm_conn_rsp;
+	struct wlan_cm_connect_resp *cm_conn_rsp;
 	struct wlan_cm_vdev_connect_req conn_req = cm_utf->utf_node.conn_req;
 
-	cm_conn_rsp = qdf_mem_malloc(sizeof(struct wlan_cm_connect_rsp));
+	cm_conn_rsp = qdf_mem_malloc(sizeof(struct wlan_cm_connect_resp));
 	if (!cm_conn_rsp) {
 		mlme_err("failed ta allocate memory");
 		return;
 	}
-	qdf_mem_zero(cm_conn_rsp, sizeof(struct wlan_cm_connect_rsp));
+	qdf_mem_zero(cm_conn_rsp, sizeof(struct wlan_cm_connect_resp));
 
 	cm_conn_rsp->vdev_id = conn_req.vdev_id;
 	cm_conn_rsp->cm_id = conn_req.cm_id;
 	cm_conn_rsp->aid = 1;
 	cm_conn_rsp->connect_status = QDF_STATUS_E_FAILURE;
-	cm_conn_rsp->reason_code = 0;
+	cm_conn_rsp->status_code = 0;
 	cm_conn_rsp->freq = conn_req.bss->entry->channel.chan_freq;
 	cm_conn_rsp->connect_ies.bcn_probe_rsp.ptr =
 				conn_req.bss->entry->raw_frame.ptr;
@@ -599,7 +599,7 @@ QDF_STATUS wlan_cm_utf_vdev_down(struct wlan_objmgr_vdev *vdev)
 
 static
 QDF_STATUS wlan_cm_utf_validate_test(struct wlan_cm_utf *cm_utf,
-				     struct wlan_cm_connect_rsp *cm_conn_rsp)
+				     struct wlan_cm_connect_resp *cm_conn_rsp)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -655,7 +655,7 @@ QDF_STATUS wlan_cm_utf_validate_test(struct wlan_cm_utf *cm_utf,
  */
 static QDF_STATUS
 wlan_cm_utf_osif_connect_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_connect_rsp *cm_conn_rsp)
+			    struct wlan_cm_connect_resp *cm_conn_rsp)
 {
 	struct wlan_cm_utf *cm_utf;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
