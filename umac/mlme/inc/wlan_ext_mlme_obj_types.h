@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,4 +43,9 @@ typedef struct ieee80211vap mlme_vdev_ext_t;
 struct soc_ext_ptr;
 typedef struct soc_ext_ptr mlme_psoc_ext_t;
 
+/**
+ * typedef cm_ext_t - Opaque Definition of connection manager ext pointer
+ */
+struct cm_ext_obj;
+typedef struct cm_ext_obj cm_ext_t;
 #endif /* __WLAN_EXT_MLME_OBJ_TYPE_H__ */
