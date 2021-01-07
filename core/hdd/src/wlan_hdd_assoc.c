@@ -4048,14 +4048,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 }
 
 #ifdef WLAN_FEATURE_HOST_ROAM
-/**
- * wlan_hdd_ft_set_key_delay() - hdd set key delayed for FT mode
- * @mac_handle: mac handler
- * @adapter: pointer to adapter context
- *
- * Return: void
- */
-static void
+void
 wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
 {
 	int errno = 0;
@@ -4076,11 +4069,6 @@ wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
 
 	if (errno)
 		hdd_err("ft set key failed");
-}
-#else
-static void
-wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
-{
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -191,6 +191,7 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	 * the hdd_reassoc_scenario flag will not be reset if disconnection
 	 * happens before EAP/EAPOL at supplicant is complete.
 	 */
+	sta_ctx->ft_carrier_on = false;
 	sta_ctx->hdd_reassoc_scenario = false;
 
 	hdd_nud_reset_tracking(adapter);

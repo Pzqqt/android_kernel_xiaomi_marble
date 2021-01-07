@@ -40,6 +40,7 @@
 #include "wlan_vdev_mgr_ucfg_api.h"
 #include "wlan_hdd_bootup_marker.h"
 #include "sme_qos_internal.h"
+#include "wlan_hdd_scan.h"
 
 void hdd_cm_update_rssi_snr_by_bssid(struct hdd_adapter *adapter)
 {
@@ -275,6 +276,7 @@ hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx is NULL");
@@ -287,6 +289,15 @@ hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_sta_ctx) {
+		hdd_err("hdd_sta_ctx is NULL");
+		return;
+	}
+
+	hdd_init_scan_reject_params(hdd_ctx);
+	hdd_cm_save_connect_status(adapter, rsp->status_code);
+	hdd_conn_remove_connect_info(hdd_sta_ctx);
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
 
 	hdd_debug("Invoking packetdump deregistration API");
@@ -303,6 +314,7 @@ hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
 
 	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
+	sme_reset_key(hdd_ctx->mac_handle, adapter->vdev_id);
 	hdd_wmm_dscp_initial_state(adapter);
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -618,6 +630,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	unsigned long rc;
 	uint32_t ie_len;
 	uint8_t *ie_field;
+	mac_handle_t mac_handle;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -637,8 +650,13 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
+	mac_handle = hdd_adapter_get_mac_handle(adapter);
+
+	wlan_hdd_ft_set_key_delay(mac_handle, adapter);
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
+
+	hdd_init_scan_reject_params(hdd_ctx);
 
 	hdd_cm_save_connect_info(adapter, rsp);
 
@@ -656,12 +674,13 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 				sizeof(struct wlan_frame_hdr) +
 				offsetof(struct wlan_bcn_frame, ie));
 
-	sta_ctx->ap_supports_immediate_power_save =
+	if (adapter->device_mode == QDF_STA_MODE) {
+		sta_ctx->ap_supports_immediate_power_save =
 				wlan_hdd_is_ap_supports_immediate_power_save(
 				     ie_field, ie_len);
-	hdd_debug("ap_supports_immediate_power_save flag [%d]",
-		  sta_ctx->ap_supports_immediate_power_save);
-
+		hdd_debug("ap_supports_immediate_power_save flag [%d]",
+			  sta_ctx->ap_supports_immediate_power_save);
+	}
 	hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode, true);
 
 	hdd_cm_handle_assoc_event(vdev, rsp->bssid.bytes);
@@ -762,9 +781,11 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 
 	hdd_cm_clear_pmf_stats(adapter);
 
-	/* Inform FTM TIME SYNC about the connection with AP */
-	hdd_ftm_time_sync_sta_state_notify(adapter,
-					   FTM_TIME_SYNC_STA_CONNECTED);
+	if (adapter->device_mode == QDF_STA_MODE) {
+		/* Inform FTM TIME SYNC about the connection with AP */
+		hdd_ftm_time_sync_sta_state_notify(adapter,
+						   FTM_TIME_SYNC_STA_CONNECTED);
+	}
 	hdd_periodic_sta_stats_start(adapter);
 }
 
