@@ -1065,16 +1065,25 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
-	hif_pm_runtime_suspend_lock(hif_ctx);
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	if (pmo_core_get_wow_initial_wake_up(psoc_ctx)) {
+	if (hif_pm_get_wake_irq_type(hif_ctx) == HIF_PM_CE_WAKE) {
+		/*
+		 * In moselle, there is no separate interrupt for wake_irq,
+		 * shares CE interrupt, there is a chance of wow wakeup
+		 * while suspend is in-progress, so handling such scenario
+		 */
+		hif_pm_runtime_suspend_lock(hif_ctx);
+		psoc_ctx = pmo_psoc_get_priv(psoc);
+		if (pmo_core_get_wow_initial_wake_up(psoc_ctx)) {
+			hif_pm_runtime_suspend_unlock(hif_ctx);
+			pmo_err("Target wake up received before suspend completion");
+			status = QDF_STATUS_E_BUSY;
+			goto resume_hif;
+		}
+		hif_process_runtime_suspend_success(hif_ctx);
 		hif_pm_runtime_suspend_unlock(hif_ctx);
-		pmo_err("Target wake up received before suspend completion");
-		status = QDF_STATUS_E_BUSY;
-		goto resume_hif;
+	} else {
+		hif_process_runtime_suspend_success(hif_ctx);
 	}
-	hif_process_runtime_suspend_success(hif_ctx);
-	hif_pm_runtime_suspend_unlock(hif_ctx);
 
 	goto dec_psoc_ref;
 
