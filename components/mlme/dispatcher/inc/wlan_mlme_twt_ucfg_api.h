@@ -224,22 +224,6 @@ ucfg_mlme_set_twt_bcast_responder_tgt_cap(struct wlan_objmgr_psoc *psoc,
 					  bool val);
 
 /**
- * ucfg_mlme_add_twt_session()  - Add the entry for the given dialog id in TWT
- * context once TWT setup command is received
- * @psoc: pointer to psoc object
- * @peer_mac: Pointer to peer mac
- * @dialog_id: TWT session dialog id
- *
- * Return: None
- */
-static inline
-void ucfg_mlme_add_twt_session(struct wlan_objmgr_psoc *psoc,
-			       struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
-{
-	mlme_add_twt_session(psoc, peer_mac, dialog_id);
-}
-
-/**
  * ucfg_mlme_is_twt_setup_in_progress() - Get TWT setup in progress for
  * given dialog id
  * @psoc: Pointer to global PSOC object
@@ -403,11 +387,6 @@ ucfg_mlme_set_enable_twt(struct wlan_objmgr_psoc *psoc,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-
-static inline
-void ucfg_mlme_add_twt_session(struct wlan_objmgr_psoc *psoc,
-			       struct qdf_mac_addr *peer_mac, uint8_t dialog_id)
-{}
 
 static inline bool
 ucfg_mlme_is_twt_setup_done(struct wlan_objmgr_psoc *psoc,

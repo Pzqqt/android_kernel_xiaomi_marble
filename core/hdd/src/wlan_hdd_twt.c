@@ -898,9 +898,9 @@ int wmi_twt_del_status_to_vendor_twt_status(enum WMI_HOST_DEL_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
 	case WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
-	case WMI_DEL_TWT_STATUS_PEER_INIT_TEARDOWN:
+	case WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN:
 		return QCA_WLAN_VENDOR_TWT_STATUS_PEER_INITIATED_TERMINATE;
-	case WMI_DEL_TWT_STATUS_ROAMING:
+	case WMI_HOST_DEL_TWT_STATUS_ROAMING:
 		return QCA_WLAN_VENDOR_TWT_STATUS_ROAM_INITIATED_TERMINATE;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
@@ -1285,14 +1285,6 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 	ret = hdd_send_twt_add_dialog_cmd(adapter->hdd_ctx, &params);
 	if (ret < 0)
 		return ret;
-
-	/*
-	 * Add the dialog id to TWT context to drop back to back
-	 * commands
-	 */
-	ucfg_mlme_add_twt_session(adapter->hdd_ctx->psoc,
-				  &hdd_sta_ctx->conn_info.bssid,
-				  params.dialog_id);
 
 	return ret;
 }
