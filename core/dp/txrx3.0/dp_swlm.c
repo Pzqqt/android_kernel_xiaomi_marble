@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -162,7 +162,8 @@ static void dp_swlm_tcl_flush_timer(void *arg)
 	if (hal_srng_try_access_start(soc->hal_soc, hal_ring_hdl) < 0)
 		goto fail;
 
-	if (hif_pm_runtime_get(soc->hif_handle, RTPM_ID_DW_TX_HW_ENQUEUE)) {
+	if (hif_pm_runtime_get(soc->hif_handle, RTPM_ID_DW_TX_HW_ENQUEUE,
+			       true)) {
 		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
 		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
 		hal_srng_inc_flush_cnt(hal_ring_hdl);
