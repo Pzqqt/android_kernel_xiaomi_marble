@@ -79,7 +79,6 @@
 #define CFG_MAX_TX_POWER_5_LEN      256
 #define CFG_POWER_USAGE_MAX_LEN      4
 #define CFG_MAX_STR_LEN       256
-#define MAX_VENDOR_IES_LEN 1532
 
 #define CFG_MAX_PMK_LEN       64
 
