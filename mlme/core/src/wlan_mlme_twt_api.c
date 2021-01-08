@@ -45,8 +45,8 @@ bool mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
 							  WLAN_UMAC_COMP_MLME);
 	if (!peer_priv) {
-		mlme_legacy_err("peer mlme component object is NULL");
 		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+		mlme_legacy_err("peer mlme component object is NULL");
 		return false;
 	}
 
@@ -164,6 +164,10 @@ QDF_STATUS mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
 			peer_priv->twt_ctx.session_info[i].setup_done = false;
 			peer_priv->twt_ctx.session_info[i].dialog_id =
 					WLAN_ALL_SESSIONS_DIALOG_ID;
+			mlme_set_twt_command_in_progress(
+				psoc, peer_mac,
+				peer_priv->twt_ctx.session_info[i].dialog_id,
+				WLAN_TWT_NONE);
 		}
 	}
 
@@ -410,4 +414,87 @@ bool mlme_get_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc)
 		return false;
 
 	return mlme_obj->cfg.twt_cfg.bcast_requestor_tgt_cap;
+}
+
+QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
+					    struct qdf_mac_addr *peer_mac,
+					    uint8_t dialog_id,
+					    enum wlan_twt_commands cmd)
+{
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+	uint8_t i = 0;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_MLME_NB_ID);
+	if (!peer) {
+		mlme_legacy_err("Peer object not found");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+		mlme_legacy_err(" peer mlme component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
+		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id ||
+		    dialog_id == WLAN_ALL_SESSIONS_DIALOG_ID) {
+			peer_priv->twt_ctx.session_info[i].active_cmd = cmd;
+			if (dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID)
+				break;
+		}
+	}
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_commands cmd)
+{
+	struct wlan_objmgr_peer *peer;
+	struct peer_mlme_priv_obj *peer_priv;
+	enum wlan_twt_commands active_cmd;
+	uint8_t i = 0;
+	bool is_command_in_progress = false;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_MLME_NB_ID);
+	if (!peer) {
+		mlme_legacy_err("Peer object not found");
+		return false;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+		mlme_legacy_err(" peer mlme component object is NULL");
+		return false;
+	}
+
+	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
+		active_cmd = peer_priv->twt_ctx.session_info[i].active_cmd;
+		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id) {
+			if (cmd == WLAN_TWT_ANY) {
+				is_command_in_progress =
+					(active_cmd != WLAN_TWT_NONE);
+				break;
+			} else {
+				is_command_in_progress = (active_cmd == cmd);
+				break;
+			}
+		}
+	}
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+
+	return is_command_in_progress;
 }

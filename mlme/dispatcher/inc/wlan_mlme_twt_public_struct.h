@@ -22,6 +22,26 @@
 #define _WLAN_MLME_TWT_STRUCT_H_
 
 /**
+ * enum wlan_twt_commands  - TWT commands
+ * @WLAN_TWT_NONE: Indicates none of the TWT commands are active.
+ * @WLAN_TWT_SETUP: TWT setup
+ * @WLAN_TWT_TERMINATE: TWT terminate
+ * @WLAN_TWT_SUSPEND: TWT suspend
+ * @WLAN_TWT_RESUME: TWT resume
+ * @WLAN_TWT_NUDGE: TWT nudge
+ * @WLAN_TWT_ANY: Indicates one of the commands is in progress.
+ */
+enum wlan_twt_commands {
+	WLAN_TWT_NONE       = 0,
+	WLAN_TWT_SETUP      = BIT(0),
+	WLAN_TWT_TERMINATE  = BIT(1),
+	WLAN_TWT_SUSPEND    = BIT(2),
+	WLAN_TWT_RESUME     = BIT(3),
+	WLAN_TWT_NUDGE      = BIT(4),
+	WLAN_TWT_ANY        = 0xFF,
+};
+
+/**
  * enum wlan_twt_capabilities  - Represents the Bitmap of TWT capabilities
  * supported by device and peer.
  * @WLAN_TWT_CAPA_REQUESTOR: TWT requestor support is advertised by TWT
@@ -64,11 +84,14 @@ enum wlan_twt_session_state {
  * @dialog_id: TWT session dialog id
  * @state: TWT session state
  * @setup_done: TWT session setup is complete
+ * @active_cmd: bitmap to indicate which command is
+ * in progress. Bits are provided by enum wlan_twt_commands.
  */
 struct twt_session_info {
 	uint8_t dialog_id;
 	uint8_t state;
 	bool setup_done;
+	enum wlan_twt_commands active_cmd;
 };
 
 /**
