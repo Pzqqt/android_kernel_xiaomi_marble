@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -1204,6 +1204,10 @@ static bool lpass_cdc_is_volatile_register(struct device *dev,
 	case LPASS_CDC_RX_EC_ASRC2_STATUS_FMAX_CNTR_LSB:
 	case LPASS_CDC_RX_EC_ASRC2_STATUS_FMAX_CNTR_MSB:
 	case LPASS_CDC_RX_EC_ASRC2_STATUS_FIFO:
+	case LPASS_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL:
+	case LPASS_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL:
+	case LPASS_CDC_RX_SIDETONE_IIR1_IIR_COEF_B1_CTL:
+	case LPASS_CDC_RX_SIDETONE_IIR1_IIR_COEF_B2_CTL:
 		return true;
 	}
 	return false;
