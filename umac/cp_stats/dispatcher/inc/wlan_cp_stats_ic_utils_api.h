@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,16 +91,16 @@ PEER_CP_STATS_GET_FUNCS(tx_dropblock);
 PEER_CP_STATS_GET_FUNCS(rx_decryptcrc);
 
 static inline void
-peer_cp_stats_rx_mgmt_rssi_update(struct wlan_objmgr_peer *peer,
-				  int8_t rssi)
+peer_cp_stats_rx_mgmt_snr_update(struct wlan_objmgr_peer *peer,
+				 int8_t snr)
 {
-	ucfg_peer_cp_stats_rx_mgmt_rssi_update(peer, rssi);
+	ucfg_peer_cp_stats_rx_mgmt_snr_update(peer, snr);
 }
 
 static inline int8_t
-peer_cp_stats_rx_mgmt_rssi_get(struct wlan_objmgr_peer *peer)
+peer_cp_stats_rx_mgmt_snr_get(struct wlan_objmgr_peer *peer)
 {
-	return ucfg_peer_cp_stats_rx_mgmt_rssi_get(peer);
+	return ucfg_peer_cp_stats_rx_mgmt_snr_get(peer);
 }
 
 #define VDEV_UCAST_CP_STATS_SET_FUNCS(field) \

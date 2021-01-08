@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -445,7 +445,7 @@ struct vdev_ic_cp_stats {
  * as interface structure with user space application
  * make sure to align this structure with ieee80211_nodestats always
  *
- *  @cs_rx_mgmt_rssi: rx mgmt rssi
+ *  @cs_rx_mgmt_snr: rx mgmt snr
  *  @cs_rx_mgmt: rx mgmt
  *  @cs_rx_noprivacy: rx no privacy
  *  @cs_rx_wepfail: rx wep failures
@@ -463,7 +463,7 @@ struct vdev_ic_cp_stats {
  *  @cs_rx_decryptcrc: rx decrypt errors
  */
 struct peer_ic_cp_stats {
-	int8_t   cs_rx_mgmt_rssi;
+	int8_t   cs_rx_mgmt_snr;
 	uint32_t cs_rx_mgmt;
 	uint32_t cs_rx_noprivacy;
 	uint32_t cs_rx_wepfail;
