@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -889,7 +889,7 @@ QDF_STATUS
 ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 			  uint32_t val);
 
-#ifdef WLAN_SUPPORT_TWT
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX)
 /**
  * ucfg_mlme_get_twt_requestor() - Get twt requestor
  * @psoc: pointer to psoc object
@@ -979,15 +979,16 @@ ucfg_mlme_set_twt_congestion_timeout(struct wlan_objmgr_psoc *psoc,
 				     uint32_t val);
 
 /**
- * ucfg_mlme_get_enable_twt() - Get global twt config support
+ * ucfg_mlme_is_twt_enabled() - Get global twt config support
  * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
  *
- * Return: QDF Status
+ * Return: True if TWT is enabled else false.
  */
-QDF_STATUS
-ucfg_mlme_get_enable_twt(struct wlan_objmgr_psoc *psoc,
-			 bool *val);
+static inline bool
+ucfg_mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return mlme_is_twt_enabled(psoc);
+}
 
 /**
  * ucfg_mlme_set_enable_twt() - Set global twt config support
@@ -1042,6 +1043,30 @@ ucfg_mlme_get_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_set_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
 				  bool val);
+
+/**
+ * ucfg_mlme_set_twt_bcast_requestor_tgt_cap() - Update the broadast requestor
+ * target capability
+ * @psoc: pointer to psoc object
+ * @val:  Value to be set to config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc,
+					  bool val);
+
+/**
+ * ucfg_mlme_set_twt_bcast_responder_tgt_cap() - Update the broadast responder
+ * target capability
+ * @psoc: pointer to psoc object
+ * @val:  Value to be set to config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_bcast_responder_tgt_cap(struct wlan_objmgr_psoc *psoc,
+					  bool val);
 #else
 static inline QDF_STATUS
 ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
@@ -1103,11 +1128,9 @@ ucfg_mlme_set_twt_congestion_timeout(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
-static inline QDF_STATUS
-ucfg_mlme_get_enable_twt(struct wlan_objmgr_psoc *psoc,
-			 bool *val)
+static inline bool
+ucfg_mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
 {
-	*val = false;
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
@@ -1147,7 +1170,22 @@ ucfg_mlme_set_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc,
+					  bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_bcast_responder_tgt_cap(struct wlan_objmgr_psoc *psoc,
+					  bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
+
 /**
  * ucfg_mlme_get_dot11p_mode() - Get the setting about 802.11p mode
  * @psoc: pointer to psoc object

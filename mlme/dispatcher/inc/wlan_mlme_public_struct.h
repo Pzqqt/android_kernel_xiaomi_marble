@@ -1399,21 +1399,19 @@ struct wlan_mlme_acs {
 
 /*
  * struct wlan_mlme_cfg_twt - All twt related cfg items
- * @is_twt_bcast_enabled: twt capability for the session
  * @is_twt_enabled: global twt configuration
- * @is_twt_responder_enabled: twt responder
- * @is_twt_requestor_enabled: twt requestor
+ * @bcast_requestor_tgt_cap: Broadcast requestor target capability
+ * @bcast_responder_tgt_cap: Broadcast responder target capability
  * @is_bcast_responder_enabled: bcast responder enable/disable
  * @is_bcast_requestor_enabled: bcast requestor enable/disable
  * @twt_congestion_timeout: congestion timeout value
  */
 struct wlan_mlme_cfg_twt {
-	bool is_twt_bcast_enabled;
 	bool is_twt_enabled;
-	bool is_twt_responder_enabled;
-	bool is_twt_requestor_enabled;
 	bool is_bcast_responder_enabled;
 	bool is_bcast_requestor_enabled;
+	bool bcast_requestor_tgt_cap;
+	bool bcast_responder_tgt_cap;
 	uint32_t twt_congestion_timeout;
 };
 
