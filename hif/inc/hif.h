@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -941,6 +941,26 @@ void hif_enable_ce_latency_stats(struct hif_opaque_softc *hif_ctx,
 #endif
 void hif_display_stats(struct hif_opaque_softc *hif_ctx);
 void hif_clear_stats(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * enum hif_pm_wake_irq_type - Wake interrupt type for Power Management
+ * HIF_PM_INVALID_WAKE: Wake irq is invalid or not configured
+ * HIF_PM_MSI_WAKE: Wake irq is MSI interrupt
+ * HIF_PM_CE_WAKE: Wake irq is CE interrupt
+ */
+typedef enum {
+	HIF_PM_INVALID_WAKE,
+	HIF_PM_MSI_WAKE,
+	HIF_PM_CE_WAKE,
+} hif_pm_wake_irq_type;
+
+/**
+ * hif_pm_get_wake_irq_type - Get wake irq type for Power Management
+ * @hif_ctx: HIF context
+ *
+ * Return: enum hif_pm_wake_irq_type
+ */
+hif_pm_wake_irq_type hif_pm_get_wake_irq_type(struct hif_opaque_softc *hif_ctx);
 
 /**
  * enum wlan_rtpm_dbgid - runtime pm put/get debug id

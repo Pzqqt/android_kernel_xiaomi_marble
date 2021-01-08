@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1708,6 +1708,13 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn)
 {
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_USB)
 		hif_usb_ramdump_handler(scn);
+}
+
+hif_pm_wake_irq_type hif_pm_get_wake_irq_type(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->wake_irq_type;
 }
 
 irqreturn_t hif_wake_interrupt_handler(int irq, void *context)

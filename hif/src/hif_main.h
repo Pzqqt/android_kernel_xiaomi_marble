@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -230,6 +230,7 @@ struct hif_softc {
 	uint32_t hif_attribute;
 	int wake_irq;
 	int disable_wake_irq;
+	hif_pm_wake_irq_type wake_irq_type;
 	void (*initial_wakeup_cb)(void *);
 	void *initial_wakeup_priv;
 #ifdef REMOVE_PKT_LOG

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -150,6 +150,7 @@ int hif_ipci_bus_configure(struct hif_softc *hif_sc)
 		goto unconfig_ce;
 
 	hif_sc->wake_irq = hif_ce_msi_map_ce_to_irq(hif_sc, wake_ce_id);
+	hif_sc->wake_irq_type = HIF_PM_CE_WAKE;
 
 	hif_info("expecting wake from ce %d, irq %d",
 		 wake_ce_id, hif_sc->wake_irq);

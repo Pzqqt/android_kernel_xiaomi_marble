@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2933,6 +2933,7 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 
 		scn->wake_irq = pld_get_msi_irq(scn->qdf_dev->dev,
 						msi_irq_start);
+		scn->wake_irq_type = HIF_PM_MSI_WAKE;
 
 		ret = pfrm_request_irq(scn->qdf_dev->dev, scn->wake_irq,
 				       hif_wake_interrupt_handler,
@@ -2994,6 +2995,7 @@ free_wake_irq:
 		pfrm_free_irq(scn->qdf_dev->dev,
 			      scn->wake_irq, scn->qdf_dev->dev);
 		scn->wake_irq = 0;
+		scn->wake_irq_type = HIF_PM_INVALID_WAKE;
 	}
 
 	return ret;
