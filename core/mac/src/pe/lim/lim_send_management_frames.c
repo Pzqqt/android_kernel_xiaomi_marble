@@ -2438,7 +2438,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 					  mbo_ie, DOT11F_IE_MBO_IE_MAX_LEN);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			pe_err("Failed to strip MBO IE");
-			goto free_mbo_ie;
+			goto end;
 		}
 
 		/* Include the EID and length fields */
@@ -2466,7 +2466,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 					      &adaptive_11r_ie_len);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		pe_err("Failed to fill adaptive 11r IE");
-		goto free_mbo_ie;
+		goto end;
 	}
 
 	/*
@@ -2572,8 +2572,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 						    frame, &payload);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_packet_free((void *)packet);
-			qdf_mem_free(frm);
-			return;
+			goto end;
 		}
 	}
 
@@ -2633,12 +2632,10 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 				pe_session, SENT_FAIL, QDF_STATUS_E_FAILURE);
 		/* Pkt will be freed up by the callback */
 	}
-free_mbo_ie:
-	if (mbo_ie)
-		qdf_mem_free(mbo_ie);
 
 end:
 	qdf_mem_free(rsnx_ie);
+	qdf_mem_free(mbo_ie);
 	qdf_mem_free(mscs_ext_ie);
 
 	/* Free up buffer allocated for mlm_assoc_req */
