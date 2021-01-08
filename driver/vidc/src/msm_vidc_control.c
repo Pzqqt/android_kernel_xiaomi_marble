@@ -165,6 +165,10 @@ static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 		return "Subframe Output Metadata";
 	case V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO:
 		return "ROI Info Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP:
+		return "Timestamp Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA:
+		return "Encoder QP Metadata";
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);

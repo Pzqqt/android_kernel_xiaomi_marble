@@ -37,14 +37,6 @@ u32 msm_vdec_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
 };
 
-u32 msm_vdec_subscribe_for_metadata[] = {
-	HFI_PROP_BUFFER_TAG,
-};
-
-u32 msm_vdec_deliver_as_metadata[] = {
-	HFI_PROP_BUFFER_TAG,
-};
-
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 {
 	int rc = 0;
@@ -976,11 +968,21 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
-	u32 i;
-
-	//todo: (DP)
-	d_vpr_h("%s(): skip subscribe metadata\n", __func__);
-	return 0;
+	u32 i, count = 0;
+	struct msm_vidc_inst_capability *capability;
+	u32 metadata_list[] = {
+		META_DPB_MISR,
+		META_OPB_MISR,
+		META_INTERLACE,
+		META_TIMESTAMP,
+		META_CONCEALED_MB_CNT,
+		META_HIST_INFO,
+		META_SEI_MASTERING_DISP,
+		META_SEI_CLL,
+		META_HDR10PLUS,
+		META_BUF_TAG,
+		META_SUBFRAME_OUTPUT,
+	};
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -989,17 +991,22 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 	core = inst->core;
 	d_vpr_h("%s()\n", __func__);
 
+	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_metadata); i++)
-		payload[i + 1] = msm_vdec_subscribe_for_metadata[i];
+	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
+		if (capability->cap[metadata_list[i]].value) {
+			payload[count + 1] =
+				capability->cap[metadata_list[i]].hfi_id;
+			count++;
+		}
+	};
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_vdec_subscribe_for_metadata) + 1) *
-			sizeof(u32));
+			(count + 1) * sizeof(u32));
 
 	return rc;
 }
@@ -1010,11 +1017,11 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
-	u32 i;
-
-	//todo: (DP)
-	d_vpr_h("%s(): skip delivery mode metadata\n", __func__);
-	return 0;
+	u32 i, count = 0;
+	struct msm_vidc_inst_capability *capability;
+	u32 metadata_list[] = {
+		META_BUF_TAG,
+	};
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1023,17 +1030,22 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 	core = inst->core;
 	d_vpr_h("%s()\n", __func__);
 
+	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_deliver_as_metadata); i++)
-		payload[i + 1] = msm_vdec_deliver_as_metadata[i];
+	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
+		if (capability->cap[metadata_list[i]].value) {
+			payload[count + 1] =
+				capability->cap[metadata_list[i]].hfi_id;
+			count++;
+		}
+	};
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_DELIVERY_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_vdec_deliver_as_metadata) + 1) *
-			sizeof(u32));
+			(count + 1) * sizeof(u32));
 
 	return rc;
 }

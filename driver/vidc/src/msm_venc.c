@@ -34,23 +34,6 @@ u32 msm_venc_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
 };
 
-u32 msm_venc_deliver_as_metadata[] = {
-	HFI_PROP_BUFFER_TAG,
-	HFI_PROP_SEI_MASTERING_DISPLAY_COLOUR,
-	HFI_PROP_SEI_CONTENT_LIGHT_LEVEL,
-	HFI_PROP_SEI_HDR10PLUS_USERDATA,
-	HFI_PROP_EVA_STAT_INFO,
-};
-
-u32 msm_venc_subscribe_for_metadata[] = {
-	HFI_PROP_BUFFER_TAG,
-	HFI_PROP_METADATA_SEQ_HEADER_NAL,
-	HFI_PROP_TIMESTAMP,
-	HFI_PROP_LTR_MARK_USE_DETAILS,
-	HFI_PROP_SUBFRAME_OUTPUT,
-	HFI_PROP_ENC_QP_METADATA,
-};
-
 u32 msm_venc_output_subscribe_for_properties[] = {
 	HFI_PROP_PICTURE_TYPE,
 	HFI_PROP_BUFFER_MARK,
@@ -645,7 +628,16 @@ static int msm_venc_metadata_delivery(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
-	u32 i;
+	u32 i, count = 0;
+	struct msm_vidc_inst_capability *capability;
+	u32 metadata_list[] = {
+		META_SEI_MASTERING_DISP,
+		META_SEI_CLL,
+		META_HDR10PLUS,
+		META_EVA_STATS,
+		META_BUF_TAG,
+		META_ROI_INFO,
+	};
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -654,17 +646,22 @@ static int msm_venc_metadata_delivery(struct msm_vidc_inst *inst,
 	core = inst->core;
 	d_vpr_h("%s()\n", __func__);
 
+	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
-	for (i = 0; i < ARRAY_SIZE(msm_venc_deliver_as_metadata); i++)
-		payload[i + 1] = msm_venc_deliver_as_metadata[i];
+	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
+		if (capability->cap[metadata_list[i]].value) {
+			payload[count + 1] =
+				capability->cap[metadata_list[i]].hfi_id;
+			count++;
+		}
+	};
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_DELIVERY_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_venc_deliver_as_metadata) + 1) *
-			sizeof(u32));
+			(count + 1) * sizeof(u32));
 
 	return rc;
 }
@@ -675,7 +672,16 @@ static int msm_venc_metadata_subscription(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
-	u32 i;
+	u32 i, count = 0;
+	struct msm_vidc_inst_capability *capability;
+	u32 metadata_list[] = {
+		META_LTR_MARK_USE,
+		META_SEQ_HDR_NAL,
+		META_TIMESTAMP,
+		META_BUF_TAG,
+		META_SUBFRAME_OUTPUT,
+		META_ENC_QP_METADATA,
+	};
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -684,17 +690,22 @@ static int msm_venc_metadata_subscription(struct msm_vidc_inst *inst,
 	core = inst->core;
 	d_vpr_h("%s()\n", __func__);
 
+	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
-	for (i = 0; i < ARRAY_SIZE(msm_venc_subscribe_for_metadata); i++)
-		payload[i + 1] = msm_venc_subscribe_for_metadata[i];
+	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
+		if (capability->cap[metadata_list[i]].value) {
+			payload[count + 1] =
+				capability->cap[metadata_list[i]].hfi_id;
+			count++;
+		}
+	};
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_venc_subscribe_for_metadata) + 1) *
-			sizeof(u32));
+			(count + 1) * sizeof(u32));
 
 	return rc;
 }

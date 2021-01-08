@@ -81,7 +81,7 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x16)
 #define V4L2_CID_MPEG_VIDC_METADATA_INTERLACE                                 \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x17)
-#define V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT                         \
+#define V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT                        \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x18)
 #define V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO                            \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x19)
@@ -99,6 +99,10 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x1F)
 #define V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO                                  \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x20)
+#define V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP                                 \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x21)
+#define V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA                           \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x22)
 
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,
@@ -121,11 +125,12 @@ struct msm_vidc_metapayload_header {
 };
 enum v4l2_mpeg_vidc_metadata {
 	METADATA_LTR_MARK_USE_DETAILS         = 0x03000137,
-	METADATA_METADATA_SEQ_HEADER_NAL      = 0x0300014a,
+	METADATA_SEQ_HEADER_NAL               = 0x0300014a,
 	METADATA_DPB_LUMA_CHROMA_MISR         = 0x03000153,
 	METADATA_OPB_LUMA_CHROMA_MISR         = 0x03000154,
 	METADATA_INTERLACE                    = 0x03000156,
-	METADATA_CONEALED_MB_COUNT            = 0x0300015f,
+	METADATA_TIMESTAMP                    = 0x0300015c,
+	METADATA_CONCEALED_MB_COUNT           = 0x0300015f,
 	METADATA_HISTOGRAM_INFO               = 0x03000161,
 	METADATA_SEI_MASTERING_DISPLAY_COLOUR = 0x03000163,
 	METADATA_SEI_CONTENT_LIGHT_LEVEL      = 0x03000164,
@@ -133,6 +138,7 @@ enum v4l2_mpeg_vidc_metadata {
 	METADATA_EVA_STATS                    = 0x03000167,
 	METADATA_BUFFER_TAG                   = 0x0300016b,
 	METADATA_SUBFRAME_OUTPUT              = 0x0300016d,
+	METADATA_ENC_QP_METADATA              = 0x0300016e,
 	METADATA_ROI_INFO                     = 0x03000173,
 };
 

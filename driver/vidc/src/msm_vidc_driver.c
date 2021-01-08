@@ -751,6 +751,9 @@ int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 		return -EINVAL;
 	}
 
+	if (type == INPUT_META_PLANE || type == OUTPUT_META_PLANE)
+		return 0;
+
 	if (type == INPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN)
 			new_state = MSM_VIDC_START_INPUT;
@@ -805,6 +808,9 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
+	if (type == INPUT_META_PLANE || type == OUTPUT_META_PLANE)
+		return 0;
 
 	if (type == INPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_START_INPUT) {
