@@ -155,7 +155,11 @@ else
     LOCAL_MODULE_PATH := $(TARGET_OUT)/lib/modules/$(WLAN_CHIPSET)
 endif
 
-include $(DLKM_DIR)/AndroidKernelModule.mk
+ifeq ($(TARGET_PRODUCT), taro)
+    include $(DLKM_DIR)/Build_external_kernelmodule.mk
+else
+    include $(DLKM_DIR)/AndroidKernelModule.mk
+endif
 ###########################################################
 
 # Create Symbolic link
