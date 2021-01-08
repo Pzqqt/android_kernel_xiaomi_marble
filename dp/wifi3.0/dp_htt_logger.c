@@ -969,12 +969,13 @@ static void htt_debugfs_remove(struct htt_logger *htt_logger_handle)
  * Return: init status
  */
 
-static QDF_STATUS htt_debugfs_init(struct htt_logger *htt_logger_handle)
+static QDF_STATUS htt_debugfs_init(struct htt_logger *htt_logger_handle,
+				   uint8_t psoc_id)
 {
 	char buf[32];
 	int i;
 
-	snprintf(buf, sizeof(buf), "HTT_SOC_LOGGER");
+	snprintf(buf, sizeof(buf), "HTT_SOC%d_LOGGER", psoc_id);
 
 	htt_logger_handle->log_info.htt_log_debugfs_dir =
 		qdf_debugfs_create_dir(buf, NULL);
@@ -1006,7 +1007,8 @@ out:
  * htt_interface_logging_init() - Initialize HTT tracer
  * @ htt_logger_handle: htt logger handler
  */
-void htt_interface_logging_init(struct htt_logger **phtt_logger_handle)
+void htt_interface_logging_init(struct htt_logger **phtt_logger_handle,
+				struct cdp_ctrl_objmgr_psoc *ctrl_psoc)
 {
 	QDF_STATUS ret;
 	struct htt_logger *htt_logger_handle;
@@ -1014,6 +1016,7 @@ void htt_interface_logging_init(struct htt_logger **phtt_logger_handle)
 	struct htt_log_buf_t *event_log_buf;
 	struct htt_log_buf_t *wbm_event_log_buf;
 	uint64_t htt_disable_mask;
+	struct wlan_objmgr_psoc *psoc;
 
 	*phtt_logger_handle = (struct htt_logger *)qdf_mem_malloc(
 				sizeof(struct htt_logger));
@@ -1064,7 +1067,8 @@ void htt_interface_logging_init(struct htt_logger **phtt_logger_handle)
 	/* Enable HTT logging */
 	enable_htt_logging(htt_logger_handle);
 
-	ret = htt_debugfs_init(*phtt_logger_handle);
+	psoc = (struct wlan_objmgr_psoc *)(ctrl_psoc);
+	ret = htt_debugfs_init(*phtt_logger_handle, wlan_psoc_get_id(psoc));
 	if (QDF_STATUS_SUCCESS != ret)
 		goto debugfs_init_failed;
 	return;

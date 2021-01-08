@@ -19,6 +19,8 @@
 #ifndef _HTT_EVENT_LOGGING__
 #define _HTT_EVENT_LOGGING__
 
+#include <cdp_txrx_handle.h>
+
 #ifndef HTT_EVENT_DEBUG_MAX_ENTRY
 #define HTT_EVENT_DEBUG_MAX_ENTRY (1024)
 #endif
@@ -38,6 +40,7 @@
 	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR, ## args)
 #define HTT_LOGP(args ...) \
 	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_FATAL, ## args)
+
 
 /**
  * struct htt_command_debug - HTT command log buffer data type
@@ -148,7 +151,8 @@ struct htt_logger {
  *
  * @ htt_logger_handle - Pointer for HTT tracer
  */
-void htt_interface_logging_init(struct htt_logger **htt_logger_handle);
+void htt_interface_logging_init(struct htt_logger **htt_logger_handle,
+				struct cdp_ctrl_objmgr_psoc *ctrl_psoc);
 
 /**
  * htt_interface_logging_deinit() - Deinitialize HTT event tracer
