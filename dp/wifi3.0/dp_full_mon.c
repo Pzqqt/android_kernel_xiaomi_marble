@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -598,7 +598,7 @@ next_msdu:
 						    tail_desc,
 						    rx_desc);
 
-			dp_rx_mon_dest_debug("%pK: %s total_len %u frag_len %u flags %u",
+			dp_rx_mon_dest_debug("%pK: total_len %u frag_len %u flags %u",
 					     soc, total_frag_len, frag_len,
 					     msdu_list.msdu_info[msdu_index].msdu_flags);
 		}
@@ -910,7 +910,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		if (!desc_info->ppdu_id && !desc_info->status_buf.paddr) {
 			dp_rx_mon_dest_debug("%pK: ppdu_id: %d ring_entry: %pK"
 					     "status_buf_count: %d rxdma_push: %d"
-					     "rxdma_err: %d link_desc: %pK ",
+					     "rxdma_err: %d link_desc: %llx ",
 					     soc, desc_info->ppdu_id, ring_desc,
 					     desc_info->status_buf_count,
 					     desc_info->rxdma_push_reason,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,7 +78,7 @@ dp_tx_me_init(struct dp_pdev *pdev)
 		p->next = NULL;
 		qdf_spin_unlock_bh(&pdev->tx_mutex);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "ME Pool successfully initialized vaddr - %x",
+			  "ME Pool successfully initialized vaddr - %pK",
 			  pdev->me_buf.vaddr);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "paddr - %x\n", (unsigned int)pdev->me_buf.paddr);
