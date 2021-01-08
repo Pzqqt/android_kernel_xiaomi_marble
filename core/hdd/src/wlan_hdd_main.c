@@ -3731,6 +3731,34 @@ static int hdd_wlan_register_ip6_notifier(struct hdd_context *hdd_ctx)
 #endif
 
 #ifdef FEATURE_RUNTIME_PM
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
+static int hdd_pm_qos_add_notifier(struct hdd_context *hdd_ctx)
+{
+	return dev_pm_qos_add_notifier(hdd_ctx->parent_dev,
+				       &hdd_ctx->pm_qos_notifier,
+				       DEV_PM_QOS_RESUME_LATENCY);
+}
+
+static int hdd_pm_qos_remove_notifier(struct hdd_context *hdd_ctx)
+{
+	return dev_pm_qos_remove_notifier(hdd_ctx->parent_dev,
+					  &hdd_ctx->pm_qos_notifier,
+					  DEV_PM_QOS_RESUME_LATENCY);
+}
+#else
+static int hdd_pm_qos_add_notifier(struct hdd_context *hdd_ctx)
+{
+	return pm_qos_add_notifier(PM_QOS_CPU_DMA_LATENCY,
+				   &hdd_ctx->pm_qos_notifier);
+}
+
+static int hdd_pm_qos_remove_notifier(struct hdd_context *hdd_ctx)
+{
+	return pm_qos_remove_notifier(PM_QOS_CPU_DMA_LATENCY,
+				      &hdd_ctx->pm_qos_notifier);
+}
+#endif
+
 /**
  * hdd_wlan_register_pm_qos_notifier() - register PM QOS notifier
  * @hdd_ctx: Pointer to hdd context
@@ -3751,8 +3779,7 @@ static int hdd_wlan_register_pm_qos_notifier(struct hdd_context *hdd_ctx)
 
 	qdf_spinlock_create(&hdd_ctx->pm_qos_lock);
 	hdd_ctx->pm_qos_notifier.notifier_call = wlan_hdd_pm_qos_notify;
-	ret = pm_qos_add_notifier(PM_QOS_CPU_DMA_LATENCY,
-				  &hdd_ctx->pm_qos_notifier);
+	ret = hdd_pm_qos_add_notifier(hdd_ctx);
 	if (ret)
 		hdd_err("Failed to register PM_QOS notifier: %d", ret);
 	else
@@ -3779,8 +3806,7 @@ static void hdd_wlan_unregister_pm_qos_notifier(struct hdd_context *hdd_ctx)
 		return;
 	}
 
-	ret = pm_qos_remove_notifier(PM_QOS_CPU_DMA_LATENCY,
-				     &hdd_ctx->pm_qos_notifier);
+	ret = hdd_pm_qos_remove_notifier(hdd_ctx);
 	if (ret)
 		hdd_warn("Failed to remove qos notifier, err = %d\n", ret);
 
