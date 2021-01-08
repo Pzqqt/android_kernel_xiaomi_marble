@@ -1212,7 +1212,7 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 }
 #endif
 
-#ifdef WLAN_SUPPORT_TWT
+#if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
 /**
  * populate_dot11f_twt_extended_caps() - populate TWT extended capabilities
  * @mac_ctx: Global MAC context.

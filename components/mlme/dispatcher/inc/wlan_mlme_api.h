@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3050,4 +3050,22 @@ QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
  * Return: True if supported
  */
 bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc);
+
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * mlme_is_twt_enabled() - Get if TWT is enabled via ini.
+ * @psoc: pointer to psoc object
+ * @val: pointer to the value to be filled
+ *
+ * Return: True if TWT is enabled else false.
+ */
+bool
+mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif /* WLAN_SUPPORT_TWT */
 #endif /* _WLAN_MLME_API_H_ */

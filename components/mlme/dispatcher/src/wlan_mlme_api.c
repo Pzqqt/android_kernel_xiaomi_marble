@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -591,10 +591,6 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 			mlme_obj->cfg.he_caps.dot11_he_cap.twt_request);
 	mlme_obj->cfg.he_caps.dot11_he_cap.twt_request = value;
 
-	value = QDF_MIN(he_cap->twt_responder,
-			mlme_obj->cfg.he_caps.dot11_he_cap.twt_responder);
-	mlme_obj->cfg.he_caps.dot11_he_cap.twt_responder = value;
-
 	value = QDF_MIN(he_cap->fragmentation,
 			mlme_obj->cfg.he_caps.he_dynamic_fragmentation);
 
@@ -625,8 +621,15 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_obj->cfg.he_caps.dot11_he_cap.trigd_rsp_sched =
 					he_cap->trigd_rsp_sched;
 	mlme_obj->cfg.he_caps.dot11_he_cap.a_bsr = he_cap->a_bsr;
-	mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt =
-					he_cap->broadcast_twt;
+
+	value = QDF_MIN(he_cap->broadcast_twt,
+			mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt);
+	mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt = value;
+
+	value = QDF_MIN(he_cap->flex_twt_sched,
+			mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched);
+	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched = value;
+
 	mlme_obj->cfg.he_caps.dot11_he_cap.ba_32bit_bitmap =
 					he_cap->ba_32bit_bitmap;
 	mlme_obj->cfg.he_caps.dot11_he_cap.mu_cascade = he_cap->mu_cascade;
@@ -638,8 +641,6 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 		mlme_obj->cfg.he_caps.dot11_he_cap.max_ampdu_len_exp_ext =
 					he_cap->max_ampdu_len_exp_ext;
 	mlme_obj->cfg.he_caps.dot11_he_cap.amsdu_frag = he_cap->amsdu_frag;
-	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched =
-					he_cap->flex_twt_sched;
 	mlme_obj->cfg.he_caps.dot11_he_cap.rx_ctrl_frame =
 					he_cap->rx_ctrl_frame;
 	mlme_obj->cfg.he_caps.dot11_he_cap.bsrp_ampdu_aggr =
@@ -4707,3 +4708,16 @@ bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
 
 	return false;
 }
+
+#ifdef WLAN_SUPPORT_TWT
+bool mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_ENABLE_TWT);
+
+	return mlme_obj->cfg.twt_cfg.is_twt_enabled;
+}
+#endif

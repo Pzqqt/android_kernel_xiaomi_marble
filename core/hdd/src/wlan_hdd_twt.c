@@ -2234,10 +2234,11 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	bool twt_bcast_req;
 	bool twt_bcast_res;
 	bool enable_twt;
+	bool bcast_twt;
 	bool twt_req;
 	bool twt_res;
 
-	ucfg_mlme_get_enable_twt(hdd_ctx->psoc, &enable_twt);
+	enable_twt = ucfg_mlme_is_twt_enabled(hdd_ctx->psoc);
 
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
 
@@ -2248,6 +2249,15 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 
 	ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc,
 					  &twt_bcast_res);
+
+	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &bcast_twt);
+	if (bcast_twt)
+		ucfg_mlme_set_bcast_twt(hdd_ctx->psoc,
+					QDF_MIN(cfg->bcast_twt_support,
+						enable_twt));
+	else
+		hdd_debug("bcast twt is disable in ini, fw cap %d",
+			  cfg->bcast_twt_support);
 
 	hdd_debug("ini: enable_twt=%d, bcast_req=%d, bcast_res=%d",
 		  enable_twt, twt_bcast_req, twt_bcast_res);
@@ -2265,11 +2275,15 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 					    (enable_twt && twt_res)));
 
 	twt_req = enable_twt && twt_bcast_req;
+	ucfg_mlme_set_twt_bcast_requestor_tgt_cap(hdd_ctx->psoc,
+						  cfg->twt_bcast_req_support);
 	ucfg_mlme_set_twt_bcast_requestor(hdd_ctx->psoc,
 					  QDF_MIN(cfg->twt_bcast_req_support,
 						  twt_req));
 
 	twt_res = enable_twt && twt_bcast_res;
+	ucfg_mlme_set_twt_bcast_responder_tgt_cap(hdd_ctx->psoc,
+						  cfg->twt_bcast_res_support);
 	ucfg_mlme_set_twt_bcast_responder(hdd_ctx->psoc,
 					  QDF_MIN(cfg->twt_bcast_res_support,
 						  twt_res));

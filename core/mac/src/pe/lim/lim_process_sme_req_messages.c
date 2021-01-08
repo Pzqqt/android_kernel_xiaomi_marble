@@ -2576,18 +2576,26 @@ static ePhyChanBondState lim_get_cb_mode(struct mac_context *mac,
 	return cb_mode;
 }
 
+#ifdef WLAN_FEATURE_11AX
 static bool lim_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 {
-	if (mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled && ie &&
+	if (mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request && ie &&
 	    (ie->qcn_ie.present || ie->he_cap.twt_responder)) {
 		pe_debug("TWT is supported, hence disable UAPSD; twt req supp: %d,twt respon supp: %d, QCN_IE: %d",
-			  mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled,
+			  mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request,
 			  ie->he_cap.twt_responder,
 			  ie->qcn_ie.present);
 		return true;
 	}
 	return false;
 }
+#else
+static inline bool
+lim_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
+{
+	return false;
+}
+#endif
 
 static int8_t lim_get_cfg_max_tx_power(struct mac_context *mac,
 				       uint32_t ch_freq)

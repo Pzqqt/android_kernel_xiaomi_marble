@@ -6061,6 +6061,45 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 }
 
 #ifdef WLAN_FEATURE_11AX
+#ifdef WLAN_SUPPORT_TWT
+static void
+populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
+				     struct pe_session *session,
+				     tDot11fIEhe_cap *he_cap)
+{
+	bool enable_bcast_twt =
+		mac->mlme_cfg->he_caps.dot11_he_cap.broadcast_twt;
+	bool requestor_tgt_cap =
+		mac->mlme_cfg->twt_cfg.bcast_requestor_tgt_cap;
+	bool responder_tgt_cap =
+		mac->mlme_cfg->twt_cfg.bcast_responder_tgt_cap;
+	bool requestor_cfg =
+		mac->mlme_cfg->twt_cfg.is_bcast_requestor_enabled;
+	bool responder_cfg =
+		mac->mlme_cfg->twt_cfg.is_bcast_responder_enabled;
+	he_cap->broadcast_twt = 0;
+	if (session->opmode == QDF_STA_MODE) {
+		if (enable_bcast_twt && requestor_tgt_cap)
+			he_cap->broadcast_twt = requestor_cfg;
+		else if (enable_bcast_twt)
+			he_cap->broadcast_twt = 1;
+	} else if (session->opmode == QDF_SAP_MODE) {
+		if (enable_bcast_twt && responder_tgt_cap)
+			he_cap->broadcast_twt = responder_cfg;
+		else if (enable_bcast_twt)
+			he_cap->broadcast_twt = 1;
+	}
+}
+#else
+static inline void
+populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac_ctx,
+				     struct pe_session *session,
+				     tDot11fIEhe_cap *he_cap)
+{
+	he_cap->broadcast_twt = 0;
+}
+#endif
+
 /**
  * populate_dot11f_he_caps() - pouldate HE Capability IE
  * @mac_ctx: Global MAC context
@@ -6082,6 +6121,7 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 			     sizeof(tDot11fIEhe_cap));
 		return QDF_STATUS_SUCCESS;
 	}
+
 	/** TODO: String items needs attention. **/
 	qdf_mem_copy(he_cap, &session->he_config, sizeof(*he_cap));
 	if (he_cap->ppet_present) {
@@ -6102,6 +6142,7 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 	} else {
 		he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 	}
+	populate_dot11f_broadcast_twt_he_cap(mac_ctx, session, he_cap);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6210,7 +6251,7 @@ populate_dot11f_he_bss_color_change(struct mac_context *mac_ctx,
 #endif /* WLAN_FEATURE_11AX_BSS_COLOR */
 #endif /* WLAN_FEATURE_11AX */
 
-#ifdef WLAN_SUPPORT_TWT
+#if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
 QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 					     struct pe_session *pe_session,
 					     tDot11fIEExtCap *dot11f)
@@ -6225,10 +6266,11 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 
 	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
-			mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled;
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request;
+
 	if (pe_session->opmode == QDF_SAP_MODE)
 		p_ext_cap->twt_responder_support =
-			mac_ctx->mlme_cfg->twt_cfg.is_twt_responder_enabled;
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder;
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 
