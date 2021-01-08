@@ -488,6 +488,7 @@ struct sde_connector {
 	int connector_type;
 
 	struct drm_encoder *encoder;
+	struct drm_panel *panel;
 	void *display;
 	void *drv_panel;
 	void *mst_port;
