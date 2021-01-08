@@ -2036,7 +2036,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t qos_enabled, wme_enabled, wsm_enabled;
 	void *packet;
 	QDF_STATUS qdf_status;
-	uint16_t add_ie_len, current_len = 0, vendor_ie_len = 0;
+	uint16_t add_ie_len;
 	uint8_t *add_ie = NULL, *mscs_ext_ie = NULL;
 	const uint8_t *wps_ie = NULL;
 	uint8_t power_caps = false;
@@ -2053,7 +2053,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	uint32_t bcn_ie_len = 0;
 	uint32_t aes_block_size_len = 0;
 	enum rateid min_rid = RATEID_DEFAULT;
-	uint8_t *mbo_ie = NULL, *adaptive_11r_ie = NULL, *vendor_ies = NULL;
+	uint8_t *mbo_ie = NULL, *adaptive_11r_ie = NULL;
 	uint8_t mbo_ie_len = 0, adaptive_11r_ie_len = 0, rsnx_ie_len = 0;
 	uint8_t mscs_ext_ie_len = 0;
 	bool bss_mfp_capable;
@@ -2438,7 +2438,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 					  mbo_ie, DOT11F_IE_MBO_IE_MAX_LEN);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			pe_err("Failed to strip MBO IE");
-			goto end;
+			goto free_mbo_ie;
 		}
 
 		/* Include the EID and length fields */
@@ -2462,37 +2462,11 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		}
 	}
 
-	/*
-	 * Strip rest of the vendor IEs and append to the assoc request frame.
-	 * Append the IEs just before MBO IEs as MBO IEs have to be at the
-	 * end of the frame.
-	 */
-	if (wlan_get_ie_ptr_from_eid(WLAN_ELEMID_VENDOR, add_ie, add_ie_len)) {
-		vendor_ies = qdf_mem_malloc(MAX_VENDOR_IES_LEN + 2);
-		if (vendor_ies) {
-			current_len = add_ie_len;
-			qdf_status = lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
-						  WLAN_ELEMID_VENDOR, ONE_BYTE,
-						  NULL,
-						  0,
-						  vendor_ies,
-						  MAX_VENDOR_IES_LEN);
-			if (QDF_IS_STATUS_ERROR(qdf_status)) {
-				pe_err("Failed to strip Vendor IEs");
-				goto end;
-			}
-
-			vendor_ie_len = current_len - add_ie_len;
-			pe_debug("Stripped vendor IEs of size: %u",
-				 current_len);
-		}
-	}
-
 	qdf_status = lim_fill_adaptive_11r_ie(pe_session, &adaptive_11r_ie,
 					      &adaptive_11r_ie_len);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		pe_err("Failed to fill adaptive 11r IE");
-		goto end;
+		goto free_mbo_ie;
 	}
 
 	/*
@@ -2522,7 +2496,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + aes_block_size_len +
 		rsnx_ie_len + mbo_ie_len + adaptive_11r_ie_len +
-		mscs_ext_ie_len + vendor_ie_len;
+		mscs_ext_ie_len;
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				(void **)&packet);
@@ -2574,11 +2548,6 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		payload = payload + mscs_ext_ie_len;
 	}
 
-	/* Copy the vendor IEs to the end of the frame */
-	qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
-		     vendor_ies, vendor_ie_len);
-	payload = payload + vendor_ie_len;
-
 	/* Copy the MBO IE to the end of the frame */
 	qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 		     mbo_ie, mbo_ie_len);
@@ -2603,7 +2572,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 						    frame, &payload);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_packet_free((void *)packet);
-			goto end;
+			qdf_mem_free(frm);
+			return;
 		}
 	}
 
@@ -2663,11 +2633,12 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 				pe_session, SENT_FAIL, QDF_STATUS_E_FAILURE);
 		/* Pkt will be freed up by the callback */
 	}
+free_mbo_ie:
+	if (mbo_ie)
+		qdf_mem_free(mbo_ie);
 
 end:
 	qdf_mem_free(rsnx_ie);
-	qdf_mem_free(vendor_ies);
-	qdf_mem_free(mbo_ie);
 	qdf_mem_free(mscs_ext_ie);
 
 	/* Free up buffer allocated for mlm_assoc_req */
