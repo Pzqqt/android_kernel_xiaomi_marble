@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,6 +15,8 @@
 #undef TRACE_INCLUDE_PATH
 #ifdef RMNET_LA_PLATFORM
 #define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
+#elif RMNET_TRACE_INCLUDE_LE
+#define TRACE_INCLUDE_PATH ../../../../../../../datarmnet/core
 #else
 #define TRACE_INCLUDE_PATH ../../../../../../../src/datarmnet/core
 #endif

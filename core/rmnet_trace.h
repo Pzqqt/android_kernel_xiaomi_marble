@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 #ifdef CONFIG_FTRACE
 #undef TRACE_SYSTEM
@@ -7,6 +7,8 @@
 #undef TRACE_INCLUDE_PATH
 #ifdef RMNET_LA_PLATFORM
 #define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
+#elif RMNET_TRACE_INCLUDE_LE
+#define TRACE_INCLUDE_PATH ../../../../../../../datarmnet/core
 #else
 #define TRACE_INCLUDE_PATH ../../../../../../../src/datarmnet/core
 #endif
