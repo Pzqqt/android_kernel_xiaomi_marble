@@ -17,9 +17,6 @@
 #include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/if_arp.h>
-#ifdef CONFIG_PCI_MSM
-#include <linux/msm_pcie.h>
-#endif
 #include "hif_io32.h"
 #include "if_ipci.h"
 #include "hif.h"
@@ -288,7 +285,7 @@ void hif_ipci_disable_bus(struct hif_softc *scn)
 	hif_info("X");
 }
 
-#if defined(CONFIG_PCI_MSM)
+#ifdef CONFIG_PLD_PCIE_CNSS
 void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	int errno;
@@ -303,8 +300,6 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #else
 void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
-	hif_info("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
-	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif
 

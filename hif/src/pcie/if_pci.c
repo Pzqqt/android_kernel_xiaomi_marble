@@ -21,9 +21,6 @@
 #include <linux/interrupt.h>
 #include <linux/if_arp.h>
 #include <linux/of_pci.h>
-#ifdef CONFIG_PCI_MSM
-#include <linux/msm_pcie.h>
-#endif
 #include <linux/version.h>
 #include "hif_io32.h"
 #include "if_pci.h"
@@ -2251,9 +2248,9 @@ struct device *hif_pci_get_dev(struct hif_softc *scn)
 
 #define OL_ATH_PCI_PM_CONTROL 0x44
 
-#if defined(CONFIG_PCI_MSM)
+#ifdef CONFIG_PLD_PCIE_CNSS
 /**
- * hif_bus_prevent_linkdown(): allow or permit linkdown
+ * hif_pci_prevent_linkdown(): allow or permit linkdown
  * @flag: true prevents linkdown, false allows
  *
  * Calls into the platform driver to vote against taking down the
@@ -2275,8 +2272,6 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #else
 void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
-	hif_info("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
-	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif
 
@@ -2502,16 +2497,6 @@ void hif_pci_reset_soc(struct hif_softc *hif_sc)
 #endif
 }
 
-#ifdef CONFIG_PCI_MSM
-static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc)
-{
-	msm_pcie_debug_info(sc->pdev, 13, 1, 0, 0, 0);
-	msm_pcie_debug_info(sc->pdev, 13, 2, 0, 0, 0);
-}
-#else
-static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc) {};
-#endif
-
 /**
  * hif_log_soc_wakeup_timeout() - API to log PCIe and SOC Info
  * @sc: HIF PCIe Context
@@ -2562,7 +2547,6 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 							RTC_STATE_ADDRESS));
 
 	hif_info("wakeup target");
-	hif_msm_pcie_debug_info(sc);
 
 	if (!cfg->enable_self_recovery)
 		QDF_BUG(0);
