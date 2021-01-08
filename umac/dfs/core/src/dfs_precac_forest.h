@@ -132,6 +132,8 @@ struct precac_tree_offset_for_different_bw default_offset = {0, 0};
 
 #define MAX_PREFIX_CHAR 28
 
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+#ifdef CONFIG_CHAN_FREQ_API
 /**
  * dfs_configure_deschan_for_precac() - API to prioritize user configured
  * channel for preCAC.
@@ -140,6 +142,14 @@ struct precac_tree_offset_for_different_bw default_offset = {0, 0};
  * Return: frequency of type qdf_freq_t if configured, else 0.
  */
 qdf_freq_t dfs_configure_deschan_for_precac(struct wlan_dfs *dfs);
+#endif
+#else
+static inline qdf_freq_t
+dfs_configure_deschan_for_precac(struct wlan_dfs *dfs)
+{
+	return 0;
+}
+#endif
 
 /**
  * dfs_is_pcac_required_for_freq() - Find if given frequency is preCAC required.
