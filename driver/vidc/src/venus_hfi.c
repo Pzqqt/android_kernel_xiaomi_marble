@@ -1094,7 +1094,7 @@ skip_power_off:
 
 static int __protect_cp_mem(struct msm_vidc_core *core)
 {
-#if 0
+
 	struct tzbsp_memprot memprot;
 	int rc = 0;
 	struct context_bank_info *cb;
@@ -1132,9 +1132,6 @@ static int __protect_cp_mem(struct msm_vidc_core *core)
 		d_vpr_e("Failed to protect memory(%d)\n", rc);
 
 	return rc;
-#endif
-	// TODO: revert once SSG changes merged
-	return 0;
 }
 #if 0 // TODO
 static int __core_set_resource(struct msm_vidc_core *core,
