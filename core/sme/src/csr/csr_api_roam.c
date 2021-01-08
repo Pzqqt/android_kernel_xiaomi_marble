@@ -3949,11 +3949,11 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		pBssConfig->qosType = eCSR_MEDIUM_ACCESS_DCF;
 	}
 
-	if (((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N)
-	    || (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC))
-		&& ((pBssConfig->qosType != eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP)
-		    || (pBssConfig->qosType != eCSR_MEDIUM_ACCESS_11e_HCF)
-		    || (pBssConfig->qosType != eCSR_MEDIUM_ACCESS_11e_eDCF))) {
+	if (((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N) ||
+	     (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC)) &&
+	     ((pBssConfig->qosType != eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP) &&
+	      (pBssConfig->qosType != eCSR_MEDIUM_ACCESS_11e_HCF) &&
+	      (pBssConfig->qosType != eCSR_MEDIUM_ACCESS_11e_eDCF))) {
 		/* Joining BSS is 11n capable and WMM is disabled on AP. */
 		/* Assume all HT AP's are QOS AP's and enable WMM */
 		pBssConfig->qosType = eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP;
