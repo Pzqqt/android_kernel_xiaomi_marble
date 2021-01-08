@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -241,7 +241,7 @@ util_scan_entry_reset_timestamp(struct scan_cache_entry *scan_entry)
 	} while (0)
 
 #define WLAN_SNR_EP_MULTIPLIER BIT(7) /* pow2 to optimize out * and / */
-#define WLAN_SNR_DUMMY_MARKER  0x127
+#define WLAN_SNR_DUMMY_MARKER  127
 #define SNR_LPF_THRESHOLD      0
 #define WLAN_SNR_LPF_LEN       10
 
