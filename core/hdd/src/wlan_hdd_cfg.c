@@ -51,6 +51,7 @@
 #include <wma_api.h>
 #include "wlan_hdd_object_manager.h"
 
+#ifndef WLAN_MAC_ADDR_UPDATE_DISABLE
 /**
  * get_next_line() - find and locate the new line pointer
  * @str: pointer to string
@@ -181,45 +182,6 @@ static QDF_STATUS update_mac_from_string(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_set_power_save_offload_config() - set power save offload configuration
- * @hdd_ctx: the pointer to hdd context
- *
- * Return: none
- */
-static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
-{
-	uint32_t listen_interval = 0;
-	char *power_usage = NULL;
-
-	power_usage = ucfg_mlme_get_power_usage(hdd_ctx->psoc);
-	if (!power_usage) {
-		hdd_err("invalid power usage");
-		return;
-	}
-
-	if (strcmp(power_usage, "Min") == 0)
-		ucfg_mlme_get_bmps_min_listen_interval(hdd_ctx->psoc,
-						       &listen_interval);
-	else if (strcmp(power_usage, "Max") == 0)
-		ucfg_mlme_get_bmps_max_listen_interval(hdd_ctx->psoc,
-						       &listen_interval);
-	/*
-	 * Based on Mode Set the LI
-	 * Otherwise default LI value of 1 will
-	 * be taken
-	 */
-	if (listen_interval) {
-		/*
-		 * setcfg for listenInterval.
-		 * Make sure CFG is updated because PE reads this
-		 * from CFG at the time of assoc or reassoc
-		 */
-		ucfg_mlme_set_sap_listen_interval(hdd_ctx->psoc,
-						  listen_interval);
-	}
-}
-
-/**
  * hdd_update_mac_config() - update MAC address from cfg file
  * @hdd_ctx: the pointer to hdd context
  *
@@ -337,6 +299,51 @@ config_exit:
 	qdf_mem_free(temp);
 	release_firmware(fw);
 	return qdf_status;
+}
+#else
+QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
+/**
+ * hdd_set_power_save_offload_config() - set power save offload configuration
+ * @hdd_ctx: the pointer to hdd context
+ *
+ * Return: none
+ */
+static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
+{
+	uint32_t listen_interval = 0;
+	char *power_usage = NULL;
+
+	power_usage = ucfg_mlme_get_power_usage(hdd_ctx->psoc);
+	if (!power_usage) {
+		hdd_err("invalid power usage");
+		return;
+	}
+
+	if (strcmp(power_usage, "Min") == 0)
+		ucfg_mlme_get_bmps_min_listen_interval(hdd_ctx->psoc,
+						       &listen_interval);
+	else if (strcmp(power_usage, "Max") == 0)
+		ucfg_mlme_get_bmps_max_listen_interval(hdd_ctx->psoc,
+						       &listen_interval);
+	/*
+	 * Based on Mode Set the LI
+	 * Otherwise default LI value of 1 will
+	 * be taken
+	 */
+	if (listen_interval) {
+		/*
+		 * setcfg for listenInterval.
+		 * Make sure CFG is updated because PE reads this
+		 * from CFG at the time of assoc or reassoc
+		 */
+		ucfg_mlme_set_sap_listen_interval(hdd_ctx->psoc,
+						  listen_interval);
+	}
 }
 
 #ifdef FEATURE_RUNTIME_PM
