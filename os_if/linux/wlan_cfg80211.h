@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -291,10 +291,16 @@ nla_fail:
 /* For kernel version <= 4.20, driver needs to provide policy */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0))
 #define VENDOR_NLA_POLICY_MAC_ADDR NLA_POLICY_ETH_ADDR
+#define VENDOR_NLA_POLICY_IPV4_ADDR NLA_POLICY_EXACT_LEN(QDF_IPV4_ADDR_SIZE)
+#define VENDOR_NLA_POLICY_IPV6_ADDR NLA_POLICY_EXACT_LEN(QDF_IPV6_ADDR_SIZE)
 #else
 #define VENDOR_NLA_POLICY_MAC_ADDR \
 	{.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE}
 #define NLA_EXACT_LEN NLA_UNSPEC
+#define VENDOR_NLA_POLICY_IPV4_ADDR \
+	{.type = NLA_EXACT_LEN, .len = QDF_IPV4_ADDR_SIZE}
+#define VENDOR_NLA_POLICY_IPV6_ADDR \
+	{.type = NLA_EXACT_LEN, .len = QDF_IPV6_ADDR_SIZE}
 #endif /*End of (LINUX_VERSION_CODE <= KERNEL_VERSION(4, 20, 0) */
 
 #if defined(NBUF_MEMORY_DEBUG) && defined(NETLINK_BUF_TRACK)
