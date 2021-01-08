@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -492,7 +492,7 @@ enum {
 	IEEE80211_PARAM_ACS_SUPPORT             = 451,
 	IEEE80211_PARAM_SSID_STATUS             = 452,
 	IEEE80211_PARAM_DL_QUEUE_PRIORITY_SUPPORT = 453,
-	IEEE80211_PARAM_CLEAR_MIN_MAX_RSSI        = 454,
+	IEEE80211_PARAM_CLEAR_MIN_MAX_SNR        = 454,
 	IEEE80211_PARAM_CLEAR_QOS            = 455,
 #if QCA_AIRTIME_FAIRNESS
 	IEEE80211_PARAM_ATF_OVERRIDE_AIRTIME_TPUT = 456, /* Override the airtime estimated */
@@ -550,7 +550,7 @@ enum {
 	IEEE80211_PARAM_ECSA_OPCLASS               = 498,   /* opClass to be announced in ECSA IE */
 #if DYNAMIC_BEACON_SUPPORT
 	IEEE80211_PARAM_DBEACON_EN                 = 499, /* Enable/disable the dynamic beacon feature */
-	IEEE80211_PARAM_DBEACON_RSSI_THR           = 500, /* Set/Get the rssi threshold */
+	IEEE80211_PARAM_DBEACON_SNR_THR            = 500, /* Set/Get the rssi threshold */
 	IEEE80211_PARAM_DBEACON_TIMEOUT            = 501, /* Set/Get the timeout of timer */
 #endif
 	IEEE80211_PARAM_TXPOW_MGMT                 = 502,   /* set/get the tx power per vap */
@@ -871,8 +871,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ACS_ENABLE_BK_SCANTIMEREN = 118,
 	/* ACS scan timer value in Seconds */
 	OL_ATH_PARAM_ACS_SCANTIME              = 119,
-	/* Negligence Delta RSSI between two channel */
-	OL_ATH_PARAM_ACS_RSSIVAR               = 120,
+	/* Negligence Delta SNR between two channel */
+	OL_ATH_PARAM_ACS_SNRVAR               = 120,
 	/* Negligence Delta Channel load between two channel*/
 	OL_ATH_PARAM_ACS_CHLOADVAR             = 121,
 	/* Enable Limited OBSS check */
@@ -967,10 +967,10 @@ enum _ol_ath_param_t {
 	/* firmware should intimate us about ps state change for node  */
 	OL_ATH_PARAM_PS_STATE_CHANGE = 200,
 	OL_ATH_PARAM_MCAST_BCAST_ECHO,
-	/* OBSS RSSI threshold for 20/40 coexistence */
-	OL_ATH_PARAM_OBSS_RSSI_THRESHOLD,
-	/* Link/node RX RSSI threshold  for 20/40 coexistence */
-	OL_ATH_PARAM_OBSS_RX_RSSI_THRESHOLD,
+	/* OBSS SNR threshold for 20/40 coexistence */
+	OL_ATH_PARAM_OBSS_SNR_THRESHOLD,
+	/* Link/node RX SNR threshold  for 20/40 coexistence */
+	OL_ATH_PARAM_OBSS_RX_SNR_THRESHOLD,
 #if ATH_CHANNEL_BLOCKING
 	OL_ATH_PARAM_ACS_BLOCK_MODE = 205,
 #endif
@@ -1042,8 +1042,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_CHAN_STATS_TH = 319,
 	/* Passive scan is enabled or disabled  */
 	OL_ATH_PARAM_PASSIVE_SCAN_ENABLE = 320,
-	OL_ATH_MIN_RSSI_ENABLE = 321,
-	OL_ATH_MIN_RSSI = 322,
+	OL_ATH_MIN_SNR_ENABLE = 321,
+	OL_ATH_MIN_SNR = 322,
 	OL_ATH_PARAM_ACS_2G_ALLCHAN = 323,
 #if DBDC_REPEATER_SUPPORT
 	OL_ATH_PARAM_DELAY_STAVAP_UP = 324,
@@ -1075,7 +1075,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_DUMP_CHAINMASK_TABLES = 350,
 	OL_ATH_PARAM_DUMP_OBJECTS = 351,
 	OL_ATH_PARAM_ACS_SRLOADVAR = 352,
-	OL_ATH_PARAM_MGMT_RSSI_THRESHOLD = 353,
+	OL_ATH_PARAM_MGMT_SNR_THRESHOLD = 353,
 	OL_ATH_PARAM_EXT_NSS_CAPABLE = 354,
 	OL_ATH_PARAM_MGMT_PDEV_STATS_TIMER = 355,
 	OL_ATH_PARAM_TXACKTIMEOUT = 356,
@@ -1843,7 +1843,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_ACS_support",     IEEE80211_PARAM_ACS_SUPPORT, GET_PARAM, 0},
 	{"get_SSID_status",     IEEE80211_PARAM_SSID_STATUS, GET_PARAM, 0},
 	{"get_DL_prisup",       IEEE80211_PARAM_DL_QUEUE_PRIORITY_SUPPORT, GET_PARAM, 0},
-	{"clear_mm_rssi",       IEEE80211_PARAM_CLEAR_MIN_MAX_RSSI, GET_PARAM, 0},
+	{"clear_mm_rssi",       IEEE80211_PARAM_CLEAR_MIN_MAX_SNR, GET_PARAM, 0},
 	{"clear_qos",           IEEE80211_PARAM_CLEAR_QOS, SET_PARAM, 1},
 #if QCA_AIRTIME_FAIRNESS
 	{"atf_tput_at",         IEEE80211_PARAM_ATF_OVERRIDE_AIRTIME_TPUT, SET_PARAM, 1},
@@ -1907,8 +1907,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 #if DYNAMIC_BEACON_SUPPORT
 	{"dynamicbeacon",       IEEE80211_PARAM_DBEACON_EN, SET_PARAM, 1},
 	{"g_dynamicbeacon",     IEEE80211_PARAM_DBEACON_EN, GET_PARAM, 0},
-	{"db_rssi_thr",         IEEE80211_PARAM_DBEACON_RSSI_THR, SET_PARAM, 1},
-	{"g_db_rssi_thr",       IEEE80211_PARAM_DBEACON_RSSI_THR, GET_PARAM, 0},
+	{"db_rssi_thr",         IEEE80211_PARAM_DBEACON_SNR_THR, SET_PARAM, 1},
+	{"g_db_rssi_thr",       IEEE80211_PARAM_DBEACON_SNR_THR, GET_PARAM, 0},
 	{"db_timeout",          IEEE80211_PARAM_DBEACON_TIMEOUT, SET_PARAM, 1},
 	{"g_db_timeout",        IEEE80211_PARAM_DBEACON_TIMEOUT, GET_PARAM, 0},
 #endif
@@ -2369,9 +2369,9 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"g_acsscanintvl",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_SCANTIME, GET_PARAM, 0},
 	{"acs_rssivar",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_RSSIVAR, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_SNRVAR, SET_PARAM, 1},
 	{"get_acs_rssivar",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_RSSIVAR, GET_PARAM, 0},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_SNRVAR, GET_PARAM, 0},
 	{"acs_chloadvar",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_CHLOADVAR, SET_PARAM, 1},
 	{"g_acschloadvar",
@@ -2577,13 +2577,13 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"g_mcast_echo",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MCAST_BCAST_ECHO, GET_PARAM, 0},
 	{"obss_rssi_th",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RSSI_THRESHOLD, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_SNR_THRESHOLD, SET_PARAM, 1},
 	{"gobss_rssi_th",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RSSI_THRESHOLD, GET_PARAM, 0},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_SNR_THRESHOLD, GET_PARAM, 0},
 	{"obss_rxrssi_th",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RX_RSSI_THRESHOLD, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RX_SNR_THRESHOLD, SET_PARAM, 1},
 	{"gobss_rxrssi_th",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RX_RSSI_THRESHOLD, GET_PARAM, 0},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RX_SNR_THRESHOLD, GET_PARAM, 0},
 #if ATH_CHANNEL_BLOCKING
 	{"acs_bmode",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_BLOCK_MODE, SET_PARAM, 1},
@@ -2745,13 +2745,13 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"g_pas_scanen",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PASSIVE_SCAN_ENABLE, GET_PARAM, 0},
 	{"set_min_snr_en",
-		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_RSSI_ENABLE, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_SNR_ENABLE, SET_PARAM, 1},
 	{"get_min_snr_en",
-		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_RSSI_ENABLE, GET_PARAM, 0},
+		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_SNR_ENABLE, GET_PARAM, 0},
 	{"set_min_snr",
-		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_RSSI, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_SNR, SET_PARAM, 1},
 	{"get_min_snr",
-		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_RSSI, GET_PARAM, 0},
+		OL_ATH_PARAM_SHIFT | OL_ATH_MIN_SNR, GET_PARAM, 0},
 	{"acs_2g_allch",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_2G_ALLCHAN, SET_PARAM, 1},
 	{"g_acs_2g_allch",
