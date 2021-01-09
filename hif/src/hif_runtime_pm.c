@@ -1775,4 +1775,18 @@ qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx)
 	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	return rpm_ctx->dp_last_busy_timestamp;
 }
+
+void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_handle);
+
+	qdf_atomic_set(&scn->pm_link_state, val);
+}
+
+uint8_t hif_pm_get_link_state(struct hif_opaque_softc *hif_handle)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_handle);
+
+	return qdf_atomic_read(&scn->pm_link_state);
+}
 #endif /* FEATURE_RUNTIME_PM */

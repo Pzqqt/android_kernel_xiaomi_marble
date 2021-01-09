@@ -1719,6 +1719,10 @@ struct dp_soc {
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 	struct dp_swlm swlm;
 #endif
+#ifdef FEATURE_RUNTIME_PM
+	/* Dp runtime refcount */
+	qdf_atomic_t dp_runtime_refcount;
+#endif
 };
 
 #ifdef IPA_OFFLOAD

@@ -265,6 +265,10 @@ struct hif_softc {
 	/* Flag to indicate whether bus is suspended */
 	bool bus_suspended;
 	bool pktlog_init;
+#ifdef FEATURE_RUNTIME_PM
+	/* Variable to track the link state change in RTPM */
+	qdf_atomic_t pm_link_state;
+#endif
 };
 
 static inline

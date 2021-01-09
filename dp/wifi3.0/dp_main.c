@@ -5375,6 +5375,8 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 
 	DP_STATS_INIT(soc);
 
+	dp_runtime_init(soc);
+
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
 
@@ -11422,6 +11424,12 @@ static QDF_STATUS dp_runtime_suspend(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		return QDF_STATUS_E_AGAIN;
 	}
 
+	if (dp_runtime_get_refcount(soc)) {
+		dp_init_info("refcount: %d", dp_runtime_get_refcount(soc));
+
+		return QDF_STATUS_E_AGAIN;
+	}
+
 	if (soc->intr_mode == DP_INTR_POLL)
 		qdf_timer_stop(&soc->int_timer);
 
@@ -11449,9 +11457,12 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 		hal_srng_access_end(soc->hal_soc, hal_srng);
 
 		hal_srng_set_flush_last_ts(hal_srng);
+		dp_debug("flushed");
 	}
 }
 
+#define DP_FLUSH_WAIT_CNT 10
+#define DP_RUNTIME_SUSPEND_WAIT_MS 10
 /**
  * dp_runtime_resume() - ensure DP is ready to runtime resume
  * @soc_hdl: Datapath soc handle
@@ -11464,10 +11475,20 @@ void dp_flush_ring_hptp(struct dp_soc *soc, hal_ring_handle_t hal_srng)
 static QDF_STATUS dp_runtime_resume(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	int i;
+	int i, suspend_wait = 0;
 
 	if (soc->intr_mode == DP_INTR_POLL)
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+
+	/*
+	 * Wait until dp runtime refcount becomes zero or time out, then flush
+	 * pending tx for runtime suspend.
+	 */
+	while (dp_runtime_get_refcount(soc) &&
+	       suspend_wait < DP_FLUSH_WAIT_CNT) {
+		qdf_sleep(DP_RUNTIME_SUSPEND_WAIT_MS);
+		suspend_wait++;
+	}
 
 	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
 		dp_flush_ring_hptp(soc, soc->tcl_data_ring[i].hal_srng);
