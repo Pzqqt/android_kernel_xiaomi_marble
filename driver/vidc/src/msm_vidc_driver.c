@@ -1061,12 +1061,21 @@ int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst)
 int msm_vidc_get_fps(struct msm_vidc_inst *inst)
 {
 	int fps;
+	u32 frame_rate, operating_rate;
 
-	if (inst->prop.operating_rate > inst->prop.frame_rate)
-		fps = (inst->prop.operating_rate >> 16) ?
-			(inst->prop.operating_rate >> 16) : 1;
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	frame_rate = inst->capabilities->cap[FRAME_RATE].value;
+	operating_rate = inst->capabilities->cap[OPERATING_RATE].value;
+
+	if (operating_rate > frame_rate)
+		fps = (operating_rate >> 16) ?
+			(operating_rate >> 16) : 1;
 	else
-		fps = inst->prop.frame_rate >> 16;
+		fps = frame_rate >> 16;
 
 	return fps;
 }

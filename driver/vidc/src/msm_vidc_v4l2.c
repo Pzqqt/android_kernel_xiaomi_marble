@@ -104,6 +104,22 @@ int msm_v4l2_g_selection(struct file* file, void* fh,
 	return msm_vidc_g_selection((void*)vidc_inst, s);
 }
 
+int msm_v4l2_s_parm(struct file *file, void *fh,
+					struct v4l2_streamparm *a)
+{
+	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
+
+	return msm_vidc_s_param((void *)vidc_inst, a);
+}
+
+int msm_v4l2_g_parm(struct file *file, void *fh,
+					struct v4l2_streamparm *a)
+{
+	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
+
+	return msm_vidc_g_param((void *)vidc_inst, a);
+}
+
 int msm_v4l2_s_ctrl(struct file *file, void *fh,
 					struct v4l2_control *a)
 {

@@ -272,6 +272,8 @@ static int msm_venc_set_stage(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct msm_vidc_core *core = inst->core;
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
+	u32 stage;
 
 	rc = call_session_op(core, decide_work_mode, inst);
 	if (rc) {
@@ -280,13 +282,14 @@ static int msm_venc_set_stage(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid, "%s: stage: %u\n", __func__, inst->stage);
+	stage = capability->cap[STAGE].value;
+	s_vpr_h(inst->sid, "%s: stage: %u\n", __func__, stage);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_STAGE,
 			HFI_HOST_FLAGS_NONE,
 			HFI_PORT_NONE,
 			HFI_PAYLOAD_U32,
-			&inst->stage,
+			&stage,
 			sizeof(u32));
 	if (rc)
 		return rc;
@@ -297,6 +300,8 @@ static int msm_venc_set_pipe(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	struct msm_vidc_core *core = inst->core;
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
+	u32 pipe;
 
 	rc = call_session_op(core, decide_work_route, inst);
 	if (rc) {
@@ -305,13 +310,14 @@ static int msm_venc_set_pipe(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid, "%s: pipe: %u\n", __func__, inst->pipe);
+	pipe = capability->cap[PIPE].value;
+	s_vpr_h(inst->sid, "%s: pipe: %u\n", __func__, pipe);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_PIPE,
 			HFI_HOST_FLAGS_NONE,
 			HFI_PORT_NONE,
 			HFI_PAYLOAD_U32,
-			&inst->pipe,
+			&pipe,
 			sizeof(u32));
 	if (rc)
 		return rc;
@@ -321,20 +327,17 @@ static int msm_venc_set_pipe(struct msm_vidc_inst *inst)
 static int msm_venc_set_quality_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
+	u32 mode;
 
-	if (!inst->quality_mode) {
-		s_vpr_e(inst->sid, "%s: invalid mode: %u\n",
-			__func__, inst->quality_mode);
-		return -EINVAL;
-	}
-
-	s_vpr_h(inst->sid, "%s: quality_mode: %u\n", __func__, inst->quality_mode);
+	mode = capability->cap[QUALITY_MODE].value;
+	s_vpr_h(inst->sid, "%s: quality_mode: %u\n", __func__, mode);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_QUALITY_MODE,
 			HFI_HOST_FLAGS_NONE,
 			HFI_PORT_BITSTREAM,
 			HFI_PAYLOAD_U32_ENUM,
-			&inst->quality_mode,
+			&mode,
 			sizeof(u32));
 	if (rc)
 		return rc;
@@ -1267,6 +1270,121 @@ int msm_venc_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 	return rc;
 }
 
+int msm_venc_s_param(struct msm_vidc_inst *inst,
+		struct v4l2_streamparm *s_parm)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability = NULL;
+	struct v4l2_fract *timeperframe = NULL;
+	u32 q16_rate, max_rate, default_rate;
+	u64 us_per_frame = 0, input_rate = 0;
+	bool is_frame_rate = false;
+
+	if (!inst || !s_parm) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		timeperframe = &s_parm->parm.output.timeperframe;
+		max_rate = capability->cap[OPERATING_RATE].max;
+		default_rate = capability->cap[OPERATING_RATE].value;
+	} else {
+		timeperframe = &s_parm->parm.capture.timeperframe;
+		is_frame_rate = true;
+		max_rate = capability->cap[FRAME_RATE].value;
+		default_rate = capability->cap[FRAME_RATE].value;
+	}
+
+	if (!timeperframe->denominator || !timeperframe->numerator) {
+		s_vpr_e(inst->sid,
+			"%s: invalid rate for type %u\n",
+			__func__, s_parm->type);
+		input_rate = default_rate >> 16;
+		goto set_default;
+	}
+
+	us_per_frame = timeperframe->numerator * (u64)USEC_PER_SEC;
+	do_div(us_per_frame, timeperframe->denominator);
+
+	if (!us_per_frame) {
+		s_vpr_e(inst->sid, "%s: us_per_frame is zero\n",
+			__func__);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	input_rate = (u64)USEC_PER_SEC;
+	do_div(input_rate, us_per_frame);
+
+	/* Check max allowed rate */
+	if (input_rate > max_rate) {
+		s_vpr_e(inst->sid,
+			"%s: Unsupported rate %u, max_fps %u, type: %u\n",
+			__func__, input_rate, max_rate, s_parm->type);
+		rc = -ENOTSUPP;
+		goto exit;
+	}
+
+set_default:
+	q16_rate = (u32)input_rate << 16;
+	s_vpr_h(inst->sid, "%s: type %u value %#x\n",
+		__func__, s_parm->type, q16_rate);
+
+	if (is_frame_rate) {
+		rc = venus_hfi_session_property(inst,
+			HFI_PROP_FRAME_RATE,
+			HFI_HOST_FLAGS_NONE,
+			HFI_PORT_BITSTREAM,
+			HFI_PAYLOAD_Q16,
+			&q16_rate,
+			sizeof(u32));
+		if (rc) {
+			s_vpr_e(inst->sid,
+				"%s: failed to set frame rate to fw\n",
+				__func__);
+			goto exit;
+		}
+		capability->cap[FRAME_RATE].value = q16_rate;
+	} else {
+		capability->cap[OPERATING_RATE].value = q16_rate;
+	}
+
+exit:
+	return rc;
+}
+
+int msm_venc_g_param(struct msm_vidc_inst *inst,
+		struct v4l2_streamparm *s_parm)
+{
+	struct msm_vidc_inst_capability *capability = NULL;
+	struct v4l2_fract *timeperframe = NULL;
+
+	if (!inst || !s_parm) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		timeperframe = &s_parm->parm.output.timeperframe;
+		timeperframe->numerator = 1;
+		timeperframe->denominator =
+			capability->cap[OPERATING_RATE].value >> 16;
+	} else {
+		timeperframe = &s_parm->parm.capture.timeperframe;
+		timeperframe->numerator = 1;
+		timeperframe->denominator =
+			capability->cap[FRAME_RATE].value >> 16;
+	}
+
+	s_vpr_h(inst->sid, "%s: type %u, num %u denom %u\n",
+		__func__, s_parm->type, timeperframe->numerator,
+		timeperframe->denominator);
+	return 0;
+}
+
 int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 {
 	int rc = 0;
@@ -1408,12 +1526,6 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	inst->buffers.input_meta.extra_count = inst->buffers.input.extra_count;
 	inst->buffers.input_meta.actual_count = inst->buffers.input.actual_count;
 	inst->buffers.input_meta.size = f->fmt.meta.buffersize;
-
-	inst->prop.frame_rate = DEFAULT_FPS << 16;
-	inst->prop.operating_rate = DEFAULT_FPS << 16;
-	inst->stage = MSM_VIDC_STAGE_1;
-	inst->pipe = MSM_VIDC_PIPE_4;
-	inst->quality_mode = MSM_VIDC_MAX_QUALITY_MODE;
 
 	rc = msm_venc_codec_change(inst,
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat);

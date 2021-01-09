@@ -194,10 +194,10 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
 	u32 size = 0;
-	u32 width, height, num_vpp_pipes;
+	u32 width, height, num_vpp_pipes, stage;
 	struct v4l2_format *f;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return size;
 	}
@@ -207,14 +207,15 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
+	stage = inst->capabilities->cap[STAGE].value;
 	f = &inst->fmts[OUTPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
 
 	if (inst->codec == MSM_VIDC_H264)
-		HFI_BUFFER_BIN_H264E(size, width, height, inst->stage, num_vpp_pipes);
+		HFI_BUFFER_BIN_H264E(size, width, height, stage, num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_HEVC)
-		HFI_BUFFER_BIN_H265E(size, width, height, inst->stage, num_vpp_pipes);
+		HFI_BUFFER_BIN_H265E(size, width, height, stage, num_vpp_pipes);
 
 	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
 	return size;

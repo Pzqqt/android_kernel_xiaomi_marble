@@ -449,6 +449,7 @@ static int msm_vdec_set_stage(struct msm_vidc_inst *inst)
 	int rc = 0;
 	u32 stage = 0;
 	struct msm_vidc_core *core = inst->core;
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
 
 	rc = call_session_op(core, decide_work_mode, inst);
 	if (rc) {
@@ -457,7 +458,7 @@ static int msm_vdec_set_stage(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	stage = inst->stage;
+	stage = capability->cap[STAGE].value;
 	s_vpr_h(inst->sid, "%s: stage: %d", __func__, stage);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_STAGE,
@@ -477,6 +478,7 @@ static int msm_vdec_set_pipe(struct msm_vidc_inst *inst)
 	int rc = 0;
 	u32 pipe;
 	struct msm_vidc_core *core = inst->core;
+	struct msm_vidc_inst_capability *capability = inst->capabilities;
 
 	rc = call_session_op(core, decide_work_route, inst);
 	if (rc) {
@@ -485,14 +487,14 @@ static int msm_vdec_set_pipe(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	pipe = inst->pipe;
+	pipe = capability->cap[PIPE].value;
 	s_vpr_h(inst->sid, "%s: pipe: %d", __func__, pipe);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_PIPE,
 			HFI_HOST_FLAGS_NONE,
 			HFI_PORT_NONE,
 			HFI_PAYLOAD_U32,
-			&inst->pipe,
+			&pipe,
 			sizeof(u32));
 	if (rc)
 		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
@@ -1751,6 +1753,108 @@ int msm_vdec_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 	return 0;
 }
 
+int msm_vdec_s_param(struct msm_vidc_inst *inst,
+		struct v4l2_streamparm *s_parm)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability = NULL;
+	struct v4l2_fract *timeperframe = NULL;
+	u32 q16_rate, max_rate, default_rate;
+	u64 us_per_frame = 0, input_rate = 0;
+	bool is_frame_rate = false;
+
+	if (!inst || !s_parm) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		timeperframe = &s_parm->parm.output.timeperframe;
+		max_rate = capability->cap[FRAME_RATE].max;
+		default_rate = capability->cap[FRAME_RATE].value;
+		is_frame_rate = true;
+	} else {
+		timeperframe = &s_parm->parm.capture.timeperframe;
+		max_rate = capability->cap[OPERATING_RATE].value;
+		default_rate = capability->cap[OPERATING_RATE].value;
+	}
+
+	if (!timeperframe->denominator || !timeperframe->numerator) {
+		s_vpr_e(inst->sid,
+			"%s: invalid rate for type %u\n",
+			__func__, s_parm->type);
+		input_rate = default_rate >> 16;
+		goto set_default;
+	}
+
+	us_per_frame = timeperframe->numerator * (u64)USEC_PER_SEC;
+	do_div(us_per_frame, timeperframe->denominator);
+
+	if (!us_per_frame) {
+		s_vpr_e(inst->sid, "%s: us_per_frame is zero\n",
+			__func__);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	input_rate = (u64)USEC_PER_SEC;
+	do_div(input_rate, us_per_frame);
+
+	/* Check max allowed rate */
+	if (input_rate > max_rate) {
+		s_vpr_e(inst->sid,
+			"%s: Unsupported rate %u, max_fps %u, type: %u\n",
+			__func__, input_rate, max_rate, s_parm->type);
+		rc = -ENOTSUPP;
+		goto exit;
+	}
+
+set_default:
+	q16_rate = (u32)input_rate << 16;
+	s_vpr_h(inst->sid, "%s: type %u value %#x\n",
+		__func__, s_parm->type, q16_rate);
+
+	if (is_frame_rate) {
+		capability->cap[FRAME_RATE].value = q16_rate;
+	} else {
+		capability->cap[OPERATING_RATE].value = q16_rate;
+	}
+
+exit:
+	return rc;
+}
+
+int msm_vdec_g_param(struct msm_vidc_inst *inst,
+		struct v4l2_streamparm *s_parm)
+{
+	struct msm_vidc_inst_capability *capability = NULL;
+	struct v4l2_fract *timeperframe = NULL;
+
+	if (!inst || !s_parm) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
+		timeperframe = &s_parm->parm.output.timeperframe;
+		timeperframe->numerator = 1;
+		timeperframe->denominator =
+			capability->cap[FRAME_RATE].value >> 16;
+	} else {
+		timeperframe = &s_parm->parm.capture.timeperframe;
+		timeperframe->numerator = 1;
+		timeperframe->denominator =
+			capability->cap[OPERATING_RATE].value >> 16;
+	}
+
+	s_vpr_h(inst->sid, "%s: type %u, num %u denom %u\n",
+		__func__, s_parm->type, timeperframe->numerator,
+		timeperframe->denominator);
+	return 0;
+}
+
 int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 {
 	int rc = 0;
@@ -1893,11 +1997,6 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	inst->buffers.output_meta.extra_count = inst->buffers.output.extra_count;
 	inst->buffers.output_meta.actual_count = inst->buffers.output.actual_count;
 	inst->buffers.output_meta.size = f->fmt.meta.buffersize;
-
-	inst->prop.frame_rate = DEFAULT_FPS << 16;
-	inst->prop.operating_rate = DEFAULT_FPS << 16;
-	inst->stage = MSM_VIDC_STAGE_2;
-	inst->pipe = MSM_VIDC_PIPE_4;
 
 	rc = msm_vdec_codec_change(inst,
 			inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat);

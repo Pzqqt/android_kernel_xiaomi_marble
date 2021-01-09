@@ -105,10 +105,6 @@ struct msm_vidc_inst {
 	struct vb2_queue                   vb2q[MAX_PORT];
 	struct msm_vidc_rectangle          crop;
 	struct msm_vidc_rectangle          compose;
-	struct msm_vidc_properties         prop;
-	enum msm_vidc_stage_type           stage;
-	enum msm_vidc_pipe_type            pipe;
-	enum msm_vidc_quality_mode         quality_mode;
 	struct msm_vidc_power              power;
 	enum msm_vidc_modes                flags;
 	struct vidc_bus_vote_data          bus_data;

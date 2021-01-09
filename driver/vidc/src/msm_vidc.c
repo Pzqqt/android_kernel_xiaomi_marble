@@ -303,6 +303,52 @@ int msm_vidc_g_selection(void* instance, struct v4l2_selection* s)
 }
 EXPORT_SYMBOL(msm_vidc_g_selection);
 
+int msm_vidc_s_param(void *instance, struct v4l2_streamparm *param)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+
+	if (!inst || !param) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (param->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+		param->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+		return -EINVAL;
+
+	if (is_decode_session(inst))
+		rc = msm_vdec_s_param(instance, param);
+	else if (is_encode_session(inst))
+		rc = msm_venc_s_param(instance, param);
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_vidc_s_param);
+
+int msm_vidc_g_param(void *instance, struct v4l2_streamparm *param)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+
+	if (!inst || !param) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (param->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+		param->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
+		return -EINVAL;
+
+	if (is_decode_session(inst))
+		rc = msm_vdec_g_param(instance, param);
+	else if (is_encode_session(inst))
+		rc = msm_venc_g_param(instance, param);
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_vidc_g_param);
+
 int msm_vidc_s_ctrl(void *instance, struct v4l2_control *control)
 {
 	struct msm_vidc_inst *inst = instance;

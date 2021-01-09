@@ -45,7 +45,7 @@ static int msm_vidc_get_mbps(struct msm_vidc_inst *inst,
 		enum load_calc_quirks quirks)
 {
 	int input_port_mbs, output_port_mbs;
-	int fps;
+	int fps, operating_rate, frame_rate;
 	struct v4l2_format *f;
 
 	f = &inst->fmts[INPUT_PORT];
@@ -56,11 +56,14 @@ static int msm_vidc_get_mbps(struct msm_vidc_inst *inst,
 	output_port_mbs = NUM_MBS_PER_FRAME(f->fmt.pix_mp.width,
 		f->fmt.pix_mp.height);
 
-	fps = inst->prop.frame_rate;
+	frame_rate = inst->capabilities->cap[FRAME_RATE].value;
+	operating_rate = inst->capabilities->cap[OPERATING_RATE].value;
+
+	fps = frame_rate;
 
 	/* For admission control operating rate is ignored */
 	if (quirks == LOAD_POWER)
-		fps = max(inst->prop.operating_rate, inst->prop.frame_rate);
+		fps = max(operating_rate, frame_rate);
 
 	/* In case of fps < 1 we assume 1 */
 	fps = max(fps >> 16, 1);
@@ -72,6 +75,11 @@ int msm_vidc_get_inst_load(struct msm_vidc_inst *inst,
 		enum load_calc_quirks quirks)
 {
 	int load = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	if (inst->state == MSM_VIDC_OPEN ||
 		inst->state == MSM_VIDC_ERROR)
@@ -205,7 +213,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	struct v4l2_format *inp_f;
 	struct msm_vidc_buffer *vbuf;
 	u32 data_size = 0;
-	int codec = 0;
+	int codec = 0, frame_rate;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params: %pK\n", __func__, inst);
@@ -247,6 +255,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		break;
 	}
 
+	frame_rate = inst->capabilities->cap[FRAME_RATE].value;
 	vote_data->codec = inst->codec;
 	vote_data->input_width = inp_f->fmt.pix_mp.width;
 	vote_data->input_height = inp_f->fmt.pix_mp.height;
@@ -262,10 +271,10 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		vote_data->b_frames_enabled =
 			inst->capabilities->cap[B_FRAME].value > 0;
 		/* scale bitrate if operating rate is larger than fps */
-		if (vote_data->fps > (inst->prop.frame_rate >> 16) &&
-			(inst->prop.frame_rate >> 16)) {
+		if (vote_data->fps > (frame_rate >> 16) &&
+			(frame_rate >> 16)) {
 			vote_data->bitrate = vote_data->bitrate /
-				(inst->prop.frame_rate >> 16) * vote_data->fps;
+				(frame_rate >> 16) * vote_data->fps;
 		}
 		vote_data->num_formats = 1;
 		vote_data->color_formats[0] = v4l2_colorformat_to_driver(
@@ -293,7 +302,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 			vote_data->color_formats[0] = color_format;
 		}
 	}
-	vote_data->work_mode = inst->stage;
+	vote_data->work_mode = inst->capabilities->cap[STAGE].value;
 	if (core->dt->sys_cache_res_set)
 		vote_data->use_sys_cache = true;
 	vote_data->num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;

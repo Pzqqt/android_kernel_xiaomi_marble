@@ -159,21 +159,15 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	/* ((4096 * 2304) / 256) * 60 fps */
 	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 2211840, 1, 2211840},
 
-	// TODO: Decide to store q16 or just int
-	{FRAME_RATE, ENC, CODECS_ALL,
+	{FRAME_RATE, ENC|DEC, CODECS_ALL,
 		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
 		1, (DEFAULT_FPS << 16),
 		0,
 		HFI_PROP_FRAME_RATE,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
-		{0}, {0},
-		NULL, msm_vidc_set_q16},
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
-	// Implement: Operating rate will accept any int value.
 	{OPERATING_RATE, ENC|DEC, CODECS_ALL,
-		1, INT_MAX, 1, (DEFAULT_FPS << 16),
-		0,
-		HFI_PROP_FRAME_RATE},
+		1, INT_MAX, 1, (DEFAULT_FPS << 16)},
 
 	{SCALE_X, ENC, CODECS_ALL, 8192, 65536, 1, 8192},
 	{SCALE_X, DEC, CODECS_ALL, 65536, 65536, 1, 65536},
@@ -922,9 +916,19 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
 	// TODO
-	{STAGE, DEC|ENC, CODECS_ALL, 1, 2, 1, 2},
-	{PIPE, DEC|ENC, CODECS_ALL, 1, 4, 1, 4},
-	{POC, DEC, H264, 0, 1, 1, 0},
+	{STAGE, DEC|ENC, CODECS_ALL,
+		MSM_VIDC_STAGE_1,
+		MSM_VIDC_STAGE_2, 1,
+		MSM_VIDC_STAGE_2},
+	{PIPE, DEC|ENC, CODECS_ALL,
+		MSM_VIDC_PIPE_1,
+		MSM_VIDC_PIPE_4, 1,
+		MSM_VIDC_PIPE_4},
+	{POC, DEC, H264, 0, 18, 1, 1},
+	{QUALITY_MODE, DEC|ENC, CODECS_ALL,
+		MSM_VIDC_MAX_QUALITY_MODE,
+		MSM_VIDC_POWER_SAVE_MODE, 1,
+		MSM_VIDC_MAX_QUALITY_MODE},
 
 	{CODED_FRAMES, DEC, CODECS_ALL, 0, 1, 1, 0,
 		0,

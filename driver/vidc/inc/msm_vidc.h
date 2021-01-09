@@ -23,6 +23,8 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f);
 int msm_vidc_g_fmt(void *instance, struct v4l2_format *f);
 int msm_vidc_s_selection(void* instance, struct v4l2_selection* s);
 int msm_vidc_g_selection(void* instance, struct v4l2_selection* s);
+int msm_vidc_s_param(void *instance, struct v4l2_streamparm *sp);
+int msm_vidc_g_param(void *instance, struct v4l2_streamparm *sp);
 int msm_vidc_s_ctrl(void *instance, struct v4l2_control *a);
 int msm_vidc_s_ext_ctrl(void *instance, struct v4l2_ext_controls *a);
 int msm_vidc_g_ext_ctrl(void *instance, struct v4l2_ext_controls *a);

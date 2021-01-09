@@ -850,12 +850,12 @@ int msm_vidc_set_bitrate_mode(void *instance,
 
 	if (lossless) {
 		hfi_value = HFI_RC_LOSSLESS;
-		return rc;
+		goto set;
 	}
 
 	if (!frame_rc) {
 		hfi_value = HFI_RC_OFF;
-		return rc;
+		goto set;
 	}
 
 	if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR) {
@@ -871,6 +871,7 @@ int msm_vidc_set_bitrate_mode(void *instance,
 	}
 	*/
 
+set:
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
 

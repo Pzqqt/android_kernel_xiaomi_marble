@@ -336,6 +336,7 @@ enum msm_vidc_inst_capability_type {
 	STAGE,
 	PIPE,
 	POC,
+	QUALITY_MODE,
 	CODED_FRAMES,
 	BIT_DEPTH,
 	CODEC_CONFIG,

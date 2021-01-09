@@ -213,7 +213,12 @@ u32 get_hfi_quality_mode(struct msm_vidc_inst *inst)
 {
 	u32 hfi_mode = HFI_MODE_POWER_SAVE;
 
-	switch(inst->quality_mode) {
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		goto exit;
+	}
+
+	switch(inst->capabilities->cap[QUALITY_MODE].value) {
 	case MSM_VIDC_MAX_QUALITY_MODE:
 		hfi_mode = HFI_MODE_MAX_QUALITY;
 		break;
@@ -221,11 +226,12 @@ u32 get_hfi_quality_mode(struct msm_vidc_inst *inst)
 		hfi_mode = HFI_MODE_POWER_SAVE;
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid qulity mode %d\n",
-			__func__, inst->quality_mode);
+		s_vpr_e(inst->sid, "%s: invalid qulity mode %d\n", __func__,
+			inst->capabilities->cap[QUALITY_MODE].value);
 		break;
 	}
 
+exit:
 	return hfi_mode;
 }
 

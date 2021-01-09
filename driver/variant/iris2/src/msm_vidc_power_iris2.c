@@ -65,13 +65,14 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 
 		/* VSP */
 		/* bitrate is based on fps, scale it using operating rate */
-		operating_rate = inst->prop.operating_rate >> 16;
-		if (operating_rate > (inst->prop.frame_rate >> 16) &&
-			(inst->prop.frame_rate >> 16)) {
+		operating_rate = inst->capabilities->cap[OPERATING_RATE].value >> 16;
+		if (operating_rate >
+			(inst->capabilities->cap[FRAME_RATE].value >> 16) &&
+			(inst->capabilities->cap[FRAME_RATE].value >> 16)) {
 			vsp_factor_num = operating_rate;
-			vsp_factor_den = inst->prop.frame_rate >> 16;
+			vsp_factor_den = inst->capabilities->cap[FRAME_RATE].value >> 16;
 		}
-		vsp_cycles = div_u64(((u64)inst->prop.bitrate *
+		vsp_cycles = div_u64(((u64)inst->capabilities->cap[BIT_RATE].value *
 					vsp_factor_num), vsp_factor_den);
 
 		base_cycles = core->capabilities[MB_CYCLES_VSP].value;
