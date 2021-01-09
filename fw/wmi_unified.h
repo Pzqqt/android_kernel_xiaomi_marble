@@ -3806,7 +3806,13 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_SPLIT_AST_FEATURE_HOST_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:3 - Reserved
+     *  Bit 3
+     *      This bit will be set when host is able to enable EAPOL offload to
+     *      FW for SAE roaming feature.
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_SAE_EAPOL_OFFLOAD_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:4 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4079,6 +4085,11 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 2, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_SPLIT_AST_FEATURE_HOST_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 2, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_SAE_EAPOL_OFFLOAD_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 3, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_SAE_EAPOL_OFFLOAD_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 3, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -12321,6 +12332,12 @@ WMI_VDEV_PARAM_ROAM_FW_OFFLOAD WMI_VDEV_PARAM **/
  * value = 1 --> Chanmap scan only
  */
 #define WMI_ROAM_BMISS_FINAL_SCAN_TYPE_FLAG                      0x8
+/* Bit 4:
+ * To enable/disable feature: EAPOL offload to FW while SAE roaming.
+ * param value = 0 --> Enable EAPOL offload to FW for SAE roaming
+ * param value = 1 --> Disable EAPOL offload to FW for SAE roaming
+ */
+#define WMI_VDEV_PARAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE              0x10
 
 /** slot time long */
 #define WMI_VDEV_SLOT_TIME_LONG                                  0x1
