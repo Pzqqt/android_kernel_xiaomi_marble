@@ -16311,6 +16311,7 @@ typedef enum wake_reason_e {
     WOW_REASON_DFS_CAC,
     WOW_REASON_VDEV_DISCONNECT,
     WOW_REASON_LOCAL_DATA_UC_DROP,
+    WOW_REASON_GENERIC_WAKE, /* A generic reason that host should be woken up */
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
