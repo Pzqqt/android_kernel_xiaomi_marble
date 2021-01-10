@@ -44,55 +44,79 @@ static void
 dp_peer_age_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 {
 	struct dp_ast_entry *ase, *temp_ase;
-	bool check_wds_ase = *(bool *)arg;
 
 	DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 		/*
 		 * Do not expire static ast entries and HM WDS entries
 		 */
 		if (ase->type != CDP_TXRX_AST_TYPE_WDS &&
-		    ase->type != CDP_TXRX_AST_TYPE_MEC &&
 		    ase->type != CDP_TXRX_AST_TYPE_DA)
 			continue;
 
-		/* Expire MEC entry every n sec. This needs to be expired in
-		 * case if STA backbone is made as AP backbone, In this case
-		 * it needs to be re-added as a WDS entry.
-		 */
-		if (ase->is_active && ase->type ==  CDP_TXRX_AST_TYPE_MEC) {
-			ase->is_active = FALSE;
-			continue;
-		} else if (ase->is_active &&  check_wds_ase) {
+		if (ase->is_active) {
 			ase->is_active = FALSE;
 			continue;
 		}
 
-		if (ase->type == CDP_TXRX_AST_TYPE_MEC) {
-			DP_STATS_INC(soc, ast.aged_out, 1);
-			dp_peer_del_ast(soc, ase);
-		} else if (check_wds_ase) {
-			DP_STATS_INC(soc, ast.aged_out, 1);
-			dp_peer_del_ast(soc, ase);
-		}
+		DP_STATS_INC(soc, ast.aged_out, 1);
+		dp_peer_del_ast(soc, ase);
 	}
+}
+
+static void
+dp_peer_age_mec_entries(struct dp_soc *soc)
+{
+	uint32_t index;
+	struct dp_mec_entry *mecentry, *mecentry_next;
+
+	TAILQ_HEAD(, dp_mec_entry) free_list;
+	TAILQ_INIT(&free_list);
+
+	for (index = 0; index <= soc->mec_hash.mask; index++) {
+		qdf_spin_lock_bh(&soc->mec_lock);
+		/*
+		 * Expire MEC entry every n sec.
+		 */
+		if (!TAILQ_EMPTY(&soc->mec_hash.bins[index])) {
+			TAILQ_FOREACH_SAFE(mecentry, &soc->mec_hash.bins[index],
+					   hash_list_elem, mecentry_next) {
+				if (mecentry->is_active) {
+					mecentry->is_active = FALSE;
+					continue;
+				}
+				dp_peer_mec_detach_entry(soc, mecentry,
+							 &free_list);
+			}
+		}
+		qdf_spin_unlock_bh(&soc->mec_lock);
+	}
+
+	dp_peer_mec_free_list(soc, &free_list);
 }
 
 static void dp_ast_aging_timer_fn(void *soc_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	bool check_wds_ase = false;
 
 	if (soc->wds_ast_aging_timer_cnt++ >= DP_WDS_AST_AGING_TIMER_CNT) {
 		soc->wds_ast_aging_timer_cnt = 0;
-		check_wds_ase = true;
+
+		/* AST list access lock */
+		qdf_spin_lock_bh(&soc->ast_lock);
+
+		dp_soc_iterate_peer(soc, dp_peer_age_ast_entries, NULL,
+				DP_MOD_ID_AST);
+		qdf_spin_unlock_bh(&soc->ast_lock);
+
 	}
 
-	/* AST list access lock */
-	qdf_spin_lock_bh(&soc->ast_lock);
-
-	dp_soc_iterate_peer(soc, dp_peer_age_ast_entries, (void *)&check_wds_ase,
-			    DP_MOD_ID_AST);
-	qdf_spin_unlock_bh(&soc->ast_lock);
+	/*
+	 * If NSS offload is enabled, the MEC timeout
+	 * will be managed by NSS.
+	 */
+	if (qdf_atomic_read(&soc->mec_cnt) &&
+	    !wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx))
+		dp_peer_age_mec_entries(soc);
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		qdf_timer_mod(&soc->ast_aging_timer,
@@ -139,8 +163,7 @@ void dp_soc_wds_detach(struct dp_soc *soc)
 void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 {
 	struct dp_soc *soc;
-	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
-	struct dp_peer *peer;
+	QDF_STATUS add_mec_status;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE], i;
 
 	if (!vdev->mec_enabled)
@@ -151,30 +174,18 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 		return;
 
 	soc = vdev->pdev->soc;
-	peer = dp_vdev_bss_peer_ref_n_get(soc, vdev,
-					  DP_MOD_ID_AST);
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("peer is NULL"));
-		return;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s Tx MEC Handler",
-		  __func__);
 
 	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
 		mac_addr[(QDF_MAC_ADDR_SIZE - 1) - i] =
 					status[(QDF_MAC_ADDR_SIZE - 2) + i];
 
-	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
-		dp_peer_add_ast(soc,
-				peer,
-				mac_addr,
-				CDP_TXRX_AST_TYPE_MEC,
-				flags);
-	dp_peer_unref_delete(peer, DP_MOD_ID_AST);
+	dp_peer_debug("%pK: MEC add for mac_addr "QDF_MAC_ADDR_FMT,
+		      soc, QDF_MAC_ADDR_REF(mac_addr));
+
+	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE)) {
+		add_mec_status = dp_peer_mec_add_entry(soc, vdev, mac_addr);
+		dp_peer_debug("%pK: MEC add status %d", vdev, add_mec_status);
+	}
 }
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
