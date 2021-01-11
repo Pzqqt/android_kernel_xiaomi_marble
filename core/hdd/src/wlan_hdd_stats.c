@@ -5538,7 +5538,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
-	if (adapter->device_mode == QDF_SAP_MODE) {
+	if (adapter->device_mode == QDF_SAP_MODE ||
+	    adapter->device_mode == QDF_P2P_GO_MODE) {
 		qdf_status = ucfg_mlme_get_sap_get_peer_info(
 				hdd_ctx->psoc, &get_peer_info_enable);
 		if (qdf_status == QDF_STATUS_SUCCESS && get_peer_info_enable) {
