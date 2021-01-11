@@ -502,6 +502,8 @@ struct csr_disconnect_stats {
  * @vdev_id: ID of the vdev for which this entry is applicable
  * @is_bcn_recv_start: Allow to process bcn recv indication
  * @beacon_report_do_not_resume: Do not resume the beacon reporting after scan
+ * @wait_for_key_timer: wait for key timer
+ * @wait_for_key_timer_info: CSR-specific timer info
  */
 struct csr_roam_session {
 	union {
@@ -595,6 +597,8 @@ struct csr_roam_session {
 	bool discon_in_progress;
 	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
+	qdf_mc_timer_t wait_for_key_timer;
+	struct csr_timer_info wait_for_key_timer_info;
 };
 
 struct csr_roamstruct {
@@ -607,8 +611,6 @@ struct csr_roamstruct {
 	 * used to get CFG_VALID_CHANNEL_LIST and not alloc mem all time
 	 */
 	int32_t sPendingCommands;
-	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
-	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
 	tCsrNeighborRoamControlInfo neighborRoamInfo[WLAN_MAX_VDEVS];
 	uint8_t isFastRoamIniFeatureEnabled;

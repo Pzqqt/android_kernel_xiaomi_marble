@@ -113,7 +113,7 @@ csr_roam_issue_reassociate_cmd(struct mac_context *mac,	uint32_t sessionId)
 		pCommand = tmp_command;
 		/* Change the substate in case it is wait-for-key */
 		if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
-			csr_roam_stop_wait_for_key_timer(mac);
+			csr_roam_stop_wait_for_key_timer(mac, sessionId);
 			csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 						 sessionId);
 		}

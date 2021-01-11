@@ -381,8 +381,19 @@ static void csr_roam_roaming_offload_timer_action(struct mac_context *mac_ctx,
 		uint32_t interval, uint8_t session_id, uint8_t action);
 #endif
 static void csr_roam_roaming_offload_timeout_handler(void *timer_data);
+
+/**
+ * csr_roam_start_wait_for_key_timer - Start wait_for_key timer
+ * @mac: MAC context
+ * @vdev_id: vdev id
+ *
+ * API called to start wait_for_key timer
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS csr_roam_start_wait_for_key_timer(struct mac_context *mac,
-						uint32_t interval);
+						    uint8_t vdev_id,
+						    uint32_t interval);
 static void csr_roam_wait_for_key_time_out_handler(void *pv);
 static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11dinfo);
 static QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
@@ -1468,47 +1479,57 @@ static QDF_STATUS csr_roam_open(struct mac_context *mac)
 	uint32_t i;
 	struct csr_roam_session *pSession;
 
-	do {
-		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
-			pSession = CSR_GET_SESSION(mac, i);
-			pSession->roamingTimerInfo.mac = mac;
-			pSession->roamingTimerInfo.vdev_id =
-						WLAN_UMAC_VDEV_ID_MAX;
-		}
-		mac->roam.WaitForKeyTimerInfo.mac = mac;
-		mac->roam.WaitForKeyTimerInfo.vdev_id =
-						WLAN_UMAC_VDEV_ID_MAX;
-		status = qdf_mc_timer_init(&mac->roam.hTimerWaitForKey,
-					  QDF_TIMER_TYPE_SW,
-					 csr_roam_wait_for_key_time_out_handler,
-					  &mac->roam.WaitForKeyTimerInfo);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("cannot allocate memory for WaitForKey time out timer");
-			break;
-		}
-		status = csr_packetdump_timer_init(mac);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			break;
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
+		pSession = CSR_GET_SESSION(mac, i);
 
-		spin_lock_init(&mac->roam.roam_state_lock);
-	} while (0);
+		if (!pSession)
+			continue;
+
+		pSession->roamingTimerInfo.mac = mac;
+		pSession->roamingTimerInfo.vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+
+		pSession->wait_for_key_timer_info.mac = mac;
+		pSession->wait_for_key_timer_info.vdev_id = i;
+
+		status = qdf_mc_timer_init(&pSession->wait_for_key_timer,
+					   QDF_TIMER_TYPE_SW,
+					   csr_roam_wait_for_key_time_out_handler,
+					   &pSession->wait_for_key_timer_info);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("cannot allocate memory for WaitForKey time out timer");
+			return status;
+		}
+	}
+
+	status = csr_packetdump_timer_init(mac);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	spin_lock_init(&mac->roam.roam_state_lock);
+
 	return status;
 }
 
 static QDF_STATUS csr_roam_close(struct mac_context *mac)
 {
 	uint32_t sessionId;
+	struct csr_roam_session *session;
 
 	/*
 	 * purge all serialization commnad if there are any pending to make
 	 * sure memory and vdev ref are freed.
 	 */
 	csr_purge_pdev_all_ser_cmd_list(mac);
-	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
-		csr_prepare_vdev_delete(mac, sessionId, true);
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
+		session = CSR_GET_SESSION(mac, sessionId);
+		if (!session)
+			continue;
 
-	qdf_mc_timer_stop(&mac->roam.hTimerWaitForKey);
-	qdf_mc_timer_destroy(&mac->roam.hTimerWaitForKey);
+		csr_prepare_vdev_delete(mac, sessionId, true);
+		qdf_mc_timer_stop(&session->wait_for_key_timer);
+		qdf_mc_timer_destroy(&session->wait_for_key_timer);
+	}
+
 	csr_packetdump_timer_deinit(mac);
 	return QDF_STATUS_SUCCESS;
 }
@@ -6761,16 +6782,14 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 				key_timeout_interval =
 					CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD;
 
-			/* Save session_id in case of timeout */
-			mac_ctx->roam.WaitForKeyTimerInfo.vdev_id =
-				(uint8_t) session_id;
 			/*
 			 * This time should be long enough for the rest
 			 * of the process plus setting key
 			 */
 			if (!QDF_IS_STATUS_SUCCESS
 					(csr_roam_start_wait_for_key_timer(
-					   mac_ctx, key_timeout_interval))
+						mac_ctx, session_id,
+						key_timeout_interval))
 			   ) {
 				/* Reset state so nothing is blocked. */
 				sme_err("Failed preauth timer start");
@@ -8000,7 +8019,7 @@ QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 
 	if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
 		sme_debug("Stop Wait for key timer and change substate to eCSR_ROAM_SUBSTATE_NONE");
-		csr_roam_stop_wait_for_key_timer(mac);
+		csr_roam_stop_wait_for_key_timer(mac, sessionId);
 		csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 					sessionId);
 	}
@@ -8105,7 +8124,7 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 #ifndef FEATURE_CM_ENABLE
 		/* Change the substate in case it is wait-for-key */
 		if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
-			csr_roam_stop_wait_for_key_timer(mac);
+			csr_roam_stop_wait_for_key_timer(mac, sessionId);
 			csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 						 sessionId);
 		}
@@ -8175,7 +8194,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t session
 	if (pCommand) {
 		/* Change the substate in case it is wait-for-key */
 		if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
-			csr_roam_stop_wait_for_key_timer(mac);
+			csr_roam_stop_wait_for_key_timer(mac, sessionId);
 			csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 						 sessionId);
 		}
@@ -9989,7 +10008,7 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	csr_roam_diag_set_ctx_rsp(mac_ctx, session, pRsp);
 
 	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sessionId)) {
-		csr_roam_stop_wait_for_key_timer(mac_ctx);
+		csr_roam_stop_wait_for_key_timer(mac_ctx, sessionId);
 		/* We are done with authentication, whethere succeed or not */
 		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
 					 sessionId);
@@ -10552,7 +10571,7 @@ bool csr_roam_issue_wm_status_change(struct mac_context *mac, uint32_t sessionId
 #ifndef FEATURE_CM_ENABLE
 		/* Change the substate in case it is waiting for key */
 		if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
-			csr_roam_stop_wait_for_key_timer(mac);
+			csr_roam_stop_wait_for_key_timer(mac, sessionId);
 			csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 						 sessionId);
 		}
@@ -12124,41 +12143,57 @@ void csr_roam_roaming_offload_timer_action(
 }
 #endif
 
-static QDF_STATUS csr_roam_start_wait_for_key_timer(
-		struct mac_context *mac, uint32_t interval)
+static QDF_STATUS csr_roam_start_wait_for_key_timer(struct mac_context *mac,
+						    uint8_t vdev_id,
+						    uint32_t interval)
 {
-	QDF_STATUS status;
-	uint8_t session_id = mac->roam.WaitForKeyTimerInfo.vdev_id;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-		&mac->roam.neighborRoamInfo[session_id];
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpCsrNeighborRoamControlInfo roam_info;
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
 
-	if (csr_neighbor_roam_is_handoff_in_progress(mac, session_id)) {
+	if (!session) {
+		sme_err("session not found for vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Save session_id in case of timeout */
+	session->wait_for_key_timer_info.vdev_id = vdev_id;
+
+	roam_info = &mac->roam.neighborRoamInfo[vdev_id];
+
+	if (csr_neighbor_roam_is_handoff_in_progress(mac, vdev_id)) {
 		/* Disable heartbeat timer when hand-off is in progress */
 		sme_debug("disabling HB timer in state: %s sub-state: %s",
 			mac_trace_get_neighbour_roam_state(
-				pNeighborRoamInfo->neighborRoamState),
+				roam_info->neighborRoamState),
 			mac_trace_getcsr_roam_sub_state(
-				mac->roam.curSubState[session_id]));
+				mac->roam.curSubState[vdev_id]));
 		mac->mlme_cfg->timeouts.heart_beat_threshold = 0;
 	}
-	sme_debug("csrScanStartWaitForKeyTimer");
-	status = qdf_mc_timer_start(&mac->roam.hTimerWaitForKey,
+	status = qdf_mc_timer_start(&session->wait_for_key_timer,
 				    interval / QDF_MC_TIMER_TO_MS_UNIT);
 
 	return status;
 }
 
-QDF_STATUS csr_roam_stop_wait_for_key_timer(struct mac_context *mac)
+QDF_STATUS csr_roam_stop_wait_for_key_timer(struct mac_context *mac,
+					    uint8_t vdev_id)
 {
-	uint8_t vdev_id = mac->roam.WaitForKeyTimerInfo.vdev_id;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-		&mac->roam.neighborRoamInfo[vdev_id];
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
+	tpCsrNeighborRoamControlInfo roam_info;
+
+	if (!session) {
+		sme_err("session not found for vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_info = &mac->roam.neighborRoamInfo[vdev_id];
 
 	sme_debug("WaitForKey timer stopped in state: %s sub-state: %s",
-		mac_trace_get_neighbour_roam_state(pNeighborRoamInfo->
-						   neighborRoamState),
-		mac_trace_getcsr_roam_sub_state(mac->roam.
-						curSubState[vdev_id]));
+		  mac_trace_get_neighbour_roam_state(
+					roam_info->neighborRoamState),
+		  mac_trace_getcsr_roam_sub_state(
+					mac->roam.curSubState[vdev_id]));
 	if (csr_neighbor_roam_is_handoff_in_progress(mac, vdev_id)) {
 		/*
 		 * Enable heartbeat timer when hand-off is in progress
@@ -12174,7 +12209,7 @@ QDF_STATUS csr_roam_stop_wait_for_key_timer(struct mac_context *mac)
 			mac->mlme_cfg->timeouts.heart_beat_threshold =
 				cfg_default(CFG_HEART_BEAT_THRESHOLD);
 	}
-	return qdf_mc_timer_stop(&mac->roam.hTimerWaitForKey);
+	return qdf_mc_timer_stop(&session->wait_for_key_timer);
 }
 
 void csr_roam_completion(struct mac_context *mac, uint32_t vdev_id,
@@ -15852,10 +15887,13 @@ QDF_STATUS csr_prepare_vdev_delete(struct mac_context *mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *session;
 
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session)
+		return QDF_STATUS_E_INVAL;
+
 	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id))
 		return QDF_STATUS_E_INVAL;
 
-	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 	/* Vdev going down stop roaming */
 	session->fCancelRoaming = true;
 	if (cleanup) {
@@ -15865,7 +15903,7 @@ QDF_STATUS csr_prepare_vdev_delete(struct mac_context *mac_ctx,
 
 	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, vdev_id)) {
 		sme_debug("Stop Wait for key timer and change substate to eCSR_ROAM_SUBSTATE_NONE");
-		csr_roam_stop_wait_for_key_timer(mac_ctx);
+		csr_roam_stop_wait_for_key_timer(mac_ctx, vdev_id);
 		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
 					 vdev_id);
 	}
@@ -19482,6 +19520,41 @@ csr_check_and_set_sae_single_pmk_cap(struct mac_context *mac_ctx,
 #define IS_ROAM_REASON_STA_KICKOUT(reason) ((reason & 0xF) == \
 	WMI_ROAM_TRIGGER_REASON_STA_KICKOUT)
 
+/**
+ * csr_roam_update_wait_for_key_timer_info() - API to update timer info
+ * @mac_ctx: MAC Context
+ * @vdev_id: Session on which the timer should be operated
+ *
+ * API to update wait_for_key timer information
+ *
+ * Return: None
+ */
+static QDF_STATUS
+csr_roam_update_wait_for_key_timer_info(struct mac_context *mac_ctx,
+					uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (!session) {
+		sme_err("session not found for vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY,
+				 vdev_id);
+
+	session->wait_for_key_timer_info.vdev_id = vdev_id;
+	if (!QDF_IS_STATUS_SUCCESS(csr_roam_start_wait_for_key_timer(mac_ctx,
+				   vdev_id, CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD))) {
+		sme_err("Failed wait for key timer start");
+		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
+					 vdev_id);
+	}
+
+	return status;
+}
+
 static QDF_STATUS
 csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			       struct roam_offload_synch_ind *roam_synch_data,
@@ -19916,19 +19989,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		qdf_mem_free(pmkid_cache);
 	} else {
 		roam_info->fAuthRequired = true;
-		csr_roam_substate_change(mac_ctx,
-				eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY,
-				session_id);
-
-		mac_ctx->roam.WaitForKeyTimerInfo.vdev_id = session_id;
-		if (!QDF_IS_STATUS_SUCCESS(csr_roam_start_wait_for_key_timer(
-				mac_ctx, CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD))
-		   ) {
-			sme_err("Failed wait for key timer start");
-			csr_roam_substate_change(mac_ctx,
-					eCSR_ROAM_SUBSTATE_NONE,
-					session_id);
-		}
+		csr_roam_update_wait_for_key_timer_info(mac_ctx, session_id);
 		csr_neighbor_roam_state_transition(mac_ctx,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
 	}
