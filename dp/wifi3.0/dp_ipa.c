@@ -1253,8 +1253,8 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	qdf_ipa_wdi_pipe_setup_info_t *tx = NULL;
 	qdf_ipa_wdi_pipe_setup_info_t *rx = NULL;
 	qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu;
-	qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu;
-	qdf_ipa_wdi_conn_in_params_t pipe_in;
+	qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu = NULL;
+	qdf_ipa_wdi_conn_in_params_t *pipe_in = NULL;
 	qdf_ipa_wdi_conn_out_params_t pipe_out;
 	int ret;
 
@@ -1267,22 +1267,25 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
-	qdf_mem_zero(&pipe_in, sizeof(pipe_in));
+	pipe_in = qdf_mem_malloc(sizeof(*pipe_in));
+	if (!pipe_in)
+		return QDF_STATUS_E_NOMEM;
+
 	qdf_mem_zero(&pipe_out, sizeof(pipe_out));
 
 	if (is_smmu_enabled)
-		QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in) = true;
+		QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(pipe_in) = true;
 	else
-		QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in) = false;
+		QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(pipe_in) = false;
 
-	dp_setup_mcc_sys_pipes(sys_in, &pipe_in);
+	dp_setup_mcc_sys_pipes(sys_in, pipe_in);
 
 	/* TX PIPE */
-	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in)) {
-		tx_smmu = &QDF_IPA_WDI_CONN_IN_PARAMS_TX_SMMU(&pipe_in);
+	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(pipe_in)) {
+		tx_smmu = &QDF_IPA_WDI_CONN_IN_PARAMS_TX_SMMU(pipe_in);
 		tx_cfg = &QDF_IPA_WDI_SETUP_INFO_SMMU_EP_CFG(tx_smmu);
 	} else {
-		tx = &QDF_IPA_WDI_CONN_IN_PARAMS_TX(&pipe_in);
+		tx = &QDF_IPA_WDI_CONN_IN_PARAMS_TX(pipe_in);
 		tx_cfg = &QDF_IPA_WDI_SETUP_INFO_EP_CFG(tx);
 	}
 
@@ -1306,11 +1309,11 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		dp_ipa_wdi_tx_params(soc, ipa_res, tx, over_gsi);
 
 	/* RX PIPE */
-	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in)) {
-		rx_smmu = &QDF_IPA_WDI_CONN_IN_PARAMS_RX_SMMU(&pipe_in);
+	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(pipe_in)) {
+		rx_smmu = &QDF_IPA_WDI_CONN_IN_PARAMS_RX_SMMU(pipe_in);
 		rx_cfg = &QDF_IPA_WDI_SETUP_INFO_SMMU_EP_CFG(rx_smmu);
 	} else {
-		rx = &QDF_IPA_WDI_CONN_IN_PARAMS_RX(&pipe_in);
+		rx = &QDF_IPA_WDI_CONN_IN_PARAMS_RX(pipe_in);
 		rx_cfg = &QDF_IPA_WDI_SETUP_INFO_EP_CFG(rx);
 	}
 
@@ -1335,16 +1338,17 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	else
 		dp_ipa_wdi_rx_params(soc, ipa_res, rx, over_gsi);
 
-	QDF_IPA_WDI_CONN_IN_PARAMS_NOTIFY(&pipe_in) = ipa_w2i_cb;
-	QDF_IPA_WDI_CONN_IN_PARAMS_PRIV(&pipe_in) = ipa_priv;
+	QDF_IPA_WDI_CONN_IN_PARAMS_NOTIFY(pipe_in) = ipa_w2i_cb;
+	QDF_IPA_WDI_CONN_IN_PARAMS_PRIV(pipe_in) = ipa_priv;
 
 	/* Connect WDI IPA PIPEs */
-	ret = qdf_ipa_wdi_conn_pipes(&pipe_in, &pipe_out);
+	ret = qdf_ipa_wdi_conn_pipes(pipe_in, &pipe_out);
 
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ipa_wdi_conn_pipes: IPA pipe setup failed: ret=%d",
 			  __func__, ret);
+		qdf_mem_free(pipe_in);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1362,6 +1366,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		QDF_IPA_WDI_CONN_OUT_PARAMS_IS_DB_DDR_MAPPED(&pipe_out);
 
 	soc->ipa_first_tx_db_access = true;
+	qdf_mem_free(pipe_in);
 
 	return QDF_STATUS_SUCCESS;
 }
