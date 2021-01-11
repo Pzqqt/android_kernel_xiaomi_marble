@@ -83,7 +83,8 @@ cm_reassoc_fail_disconnect(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   wlan_cm_id cm_id,
-			   enum wlan_cm_connect_fail_reason reason)
+			   enum wlan_cm_connect_fail_reason reason,
+			   bool sync)
 {
 	struct wlan_cm_roam_resp *resp;
 	QDF_STATUS status;
@@ -93,9 +94,15 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_E_NOMEM;
 
 	cm_fill_roam_fail_resp_from_cm_id(cm_ctx, resp, cm_id, reason);
-	status = cm_sm_deliver_event(cm_ctx->vdev,
-				     WLAN_CM_SM_EV_REASSOC_FAILURE,
-				     sizeof(*resp), resp);
+	if (sync)
+		status = cm_sm_deliver_event_sync(
+				cm_ctx, WLAN_CM_SM_EV_REASSOC_FAILURE,
+				sizeof(*resp), resp);
+	else
+		status = cm_sm_deliver_event(cm_ctx->vdev,
+					     WLAN_CM_SM_EV_REASSOC_FAILURE,
+					     sizeof(*resp), resp);
+
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_reassoc_complete(cm_ctx, resp);
 
@@ -244,7 +251,7 @@ QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
 		return status;
 
 roam_err:
-	return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id, reason);
+	return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id, reason, true);
 }
 
 bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
@@ -315,7 +322,8 @@ QDF_STATUS cm_reassoc_disconnect_complete(struct cnx_mgr *cm_ctx,
 		mlme_err(CM_PREFIX_FMT "Peer create request failed",
 			 CM_PREFIX_REF(vdev_id, cm_id));
 		status = cm_send_reassoc_start_fail(cm_ctx, cm_id,
-						    CM_PEER_CREATE_FAILED);
+						    CM_PEER_CREATE_FAILED,
+						    true);
 	}
 
 	return status;
@@ -342,7 +350,7 @@ cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 			 CM_PREFIX_REF(req.vdev_id, req.cm_id));
 		mlme_cm_bss_peer_delete_req(cm_ctx->vdev);
 		status = cm_send_reassoc_start_fail(cm_ctx, *cm_id,
-						    CM_JOIN_FAILED);
+						    CM_JOIN_FAILED, true);
 	}
 
 	return status;
@@ -710,7 +718,7 @@ QDF_STATUS cm_reassoc_start(struct cnx_mgr *cm_ctx,
 		mlme_err(CM_PREFIX_FMT "Serialization of reassoc failed",
 			 CM_PREFIX_REF(vdev_id, cm_req->cm_id));
 		return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id,
-						  CM_SER_FAILURE);
+						  CM_SER_FAILURE, true);
 	}
 
 	return status;
@@ -795,7 +803,7 @@ QDF_STATUS cm_roam_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 
 		return cm_send_reassoc_start_fail(
 				cm_ctx, cm_id,
-				CM_PEER_CREATE_FAILED);
+				CM_PEER_CREATE_FAILED, false);
 	}
 
 	qdf_status = cm_sm_deliver_event(
