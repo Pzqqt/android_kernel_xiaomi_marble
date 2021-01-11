@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -153,7 +153,6 @@ QDF_STATUS qca_multi_link_tbl_add_or_refresh_entry(struct net_device *net_dev, u
 	}
 #else
 	/* Use 5.4-specific API */
-	qdf_info("Needs alternative implementation");
 #endif
 	return QDF_STATUS_SUCCESS;
 }
@@ -201,7 +200,6 @@ QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *
 	}
 #else
 	/* Use 5.4-specific API */
-	qdf_info("Needs alternative implementation");
 #endif
 	return QDF_STATUS_SUCCESS;
 }
