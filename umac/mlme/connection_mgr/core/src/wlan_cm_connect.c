@@ -1471,6 +1471,8 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "connect request failed",
 			 CM_PREFIX_REF(req.vdev_id, req.cm_id));
+		/* try delete bss peer if req fails */
+		mlme_cm_bss_peer_delete_req(cm_ctx->vdev);
 		status = cm_send_connect_start_fail(cm_ctx,
 						    &cm_req->connect_req,
 						    CM_JOIN_FAILED);
