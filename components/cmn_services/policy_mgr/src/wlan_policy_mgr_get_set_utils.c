@@ -2226,26 +2226,40 @@ static bool policy_mgr_is_sub_20_mhz_enabled(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
- * policy_mgr_check_privacy_for_new_conn() - Check privacy mode concurrency
+ * policy_mgr_allow_wapi_concurrency() - Check if WAPI concurrency is allowed
  * @pm_ctx: policy_mgr_psoc_priv_obj policy mgr context
  *
  * This routine is called to check vdev security mode allowed in concurrency.
  * At present, WAPI security mode is not allowed to run concurrency with any
- * other vdev.
+ * other vdev if the hardware doesn't support WAPI concurrency.
  *
  * Return: true - allow
  */
-static bool policy_mgr_check_privacy_for_new_conn(
-	struct policy_mgr_psoc_priv_obj *pm_ctx)
+static bool
+policy_mgr_allow_wapi_concurrency(struct policy_mgr_psoc_priv_obj *pm_ctx)
 {
 	struct wlan_objmgr_pdev *pdev = pm_ctx->pdev;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!pdev) {
 		policy_mgr_debug("pdev is Null");
-		return true;
+		return false;
 	}
 
-	if (mlme_is_wapi_sta_active(pdev) &&
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return false;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		policy_mgr_debug("Invalid WMI handle");
+		return false;
+	}
+
+	if (!wmi_service_enabled(wmi_handle,
+				 wmi_service_wapi_concurrency_supported) &&
+	    mlme_is_wapi_sta_active(pdev) &&
 	    policy_mgr_get_connection_count(pm_ctx->psoc) > 0)
 		return false;
 
@@ -2547,7 +2561,7 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	}
 
-	if (!policy_mgr_check_privacy_for_new_conn(pm_ctx)) {
+	if (!policy_mgr_allow_wapi_concurrency(pm_ctx)) {
 		policy_mgr_rl_debug("Don't allow new conn when wapi security conn existing");
 		goto done;
 	}
