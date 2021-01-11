@@ -29162,6 +29162,7 @@ typedef enum _WMI_TWT_NUDGE_STATUS_T {
     WMI_NUDGE_TWT_STATUS_NO_RESOURCE,         /* FW resource exhausted */
     WMI_NUDGE_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
     WMI_NUDGE_TWT_STATUS_UNKNOWN_ERROR,       /* nudging TWT dialog failed with an unknown reason */
+    WMI_NUDGE_TWT_STATUS_ALREADY_PAUSED,      /* The TWT dialog is already paused */
 } WMI_TWT_NUDGE_STATUS_T;
 
 typedef struct {
