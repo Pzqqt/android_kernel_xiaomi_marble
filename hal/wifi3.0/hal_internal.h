@@ -25,8 +25,10 @@
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
 #include "pld_common.h"
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
+	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
 #include "qdf_defer.h"
+#include "qdf_timer.h"
 #endif
 
 #define hal_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_HAL, params)
@@ -193,6 +195,35 @@ enum hal_srng_ring_id {
 	HAL_SRNG_LMAC1_ID_END = 143
 };
 
+/* SRNG type to be passed in APIs hal_srng_get_entrysize and hal_srng_setup */
+enum hal_ring_type {
+	REO_DST = 0,
+	REO_EXCEPTION = 1,
+	REO_REINJECT = 2,
+	REO_CMD = 3,
+	REO_STATUS = 4,
+	TCL_DATA = 5,
+	TCL_CMD_CREDIT = 6,
+	TCL_STATUS = 7,
+	CE_SRC = 8,
+	CE_DST = 9,
+	CE_DST_STATUS = 10,
+	WBM_IDLE_LINK = 11,
+	SW2WBM_RELEASE = 12,
+	WBM2SW_RELEASE = 13,
+	RXDMA_BUF = 14,
+	RXDMA_DST = 15,
+	RXDMA_MONITOR_BUF = 16,
+	RXDMA_MONITOR_STATUS = 17,
+	RXDMA_MONITOR_DST = 18,
+	RXDMA_MONITOR_DESC = 19,
+	DIR_BUF_RX_DMA_SRC = 20,
+#ifdef WLAN_FEATURE_CIF_CFR
+	WIFI_POS_SRC,
+#endif
+	MAX_RING_TYPES
+};
+
 #define HAL_RXDMA_MAX_RING_SIZE 0xFFFF
 #define HAL_MAX_LMACS 3
 #define HAL_MAX_RINGS_PER_LMAC (HAL_SRNG_LMAC1_ID_END - HAL_SRNG_LMAC1_ID_START)
@@ -228,7 +259,8 @@ typedef struct hal_ring_handle *hal_ring_handle_t;
  */
 #define HAL_SRNG_FLUSH_EVENT BIT(0)
 
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
+	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
 
 /**
  * struct hal_reg_write_q_elem - delayed register write queue element
@@ -303,6 +335,21 @@ struct hal_reg_write_soc_stats {
 	uint32_t max_q_depth;
 	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
 };
+
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
+struct hal_reg_write_tcl_stats {
+	uint32_t wq_delayed;
+	uint32_t wq_direct;
+	uint32_t timer_enq;
+	uint32_t timer_direct;
+	uint32_t enq_timer_set;
+	uint32_t direct_timer_set;
+	uint32_t timer_reset;
+	qdf_time_t enq_time;
+	qdf_time_t deq_time;
+	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
+};
+#endif
 #endif
 
 /* Common SRNG ring structure for source and destination rings */
@@ -361,6 +408,9 @@ struct hal_srng {
 	 */
 	void *hwreg_base[MAX_SRNG_REG_GROUPS];
 
+	/* Ring type/name */
+	enum hal_ring_type ring_type;
+
 	/* Source or Destination ring */
 	enum hal_srng_dir ring_dir;
 
@@ -418,10 +468,12 @@ struct hal_srng {
 	unsigned long srng_event;
 	/* last flushed time stamp */
 	uint64_t last_flush_ts;
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
+	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
+	/* Previous hp/tp (based on ring dir) value written to the reg */
+	uint32_t last_reg_wr_val;
 	/* flag to indicate whether srng is already queued for delayed write */
 	uint8_t reg_write_in_progress;
-
 	/* srng specific delayed write stats */
 	struct hal_reg_write_srng_stats wstats;
 #endif
@@ -658,7 +710,8 @@ struct hal_hw_txrx_ops {
  */
 struct hal_soc_stats {
 	uint32_t reg_write_fail;
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
+	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
 	struct hal_reg_write_soc_stats wstats;
 #endif
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
@@ -773,7 +826,21 @@ struct hal_soc {
 	qdf_atomic_t write_idx;
 	/* read index used by worker thread to dequeue/write registers */
 	uint32_t read_idx;
-#endif
+#endif /*FEATURE_HAL_DELAYED_REG_WRITE */
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
+	/* delayed work for TCL reg write to be queued into workqueue */
+	qdf_work_t tcl_reg_write_work;
+	/* workqueue for TCL delayed register writes */
+	qdf_workqueue_t *tcl_reg_write_wq;
+	/* flag denotes whether TCL delayed write work is active */
+	qdf_atomic_t tcl_work_active;
+	/* flag indiactes TCL write happening from direct context */
+	bool tcl_direct;
+	/* timer to handle the pending TCL reg writes */
+	qdf_timer_t tcl_reg_write_timer;
+	/* stats related to TCL reg write */
+	struct hal_reg_write_tcl_stats tcl_stats;
+#endif /* FEATURE_HAL_DELAYED_REG_WRITE_V2 */
 	qdf_atomic_t active_work_cnt;
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
 	struct shadow_reg_config
@@ -782,7 +849,8 @@ struct hal_soc {
 #endif
 };
 
-#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
+	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
 /**
  *  hal_delayed_reg_write() - delayed regiter write
  * @hal_soc: HAL soc handle
