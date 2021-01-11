@@ -25,6 +25,11 @@
 #if !defined(WLAN_HDD_EHT_H)
 #define WLAN_HDD_EHT_H
 
+struct hdd_context;
+struct wma_tgt_cfg;
+struct hdd_beacon_data;
+struct sap_config;
+
 #ifdef WLAN_FEATURE_11BE
 /**
  * hdd_update_tgt_eht_cap() - Update EHT related capabilities
@@ -50,6 +55,25 @@ void hdd_update_tgt_eht_cap(struct hdd_context *hdd_ctx,
  * Return: 0 on success and errno on failure
  */
 int hdd_update_eht_cap_in_cfg(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_check_11be_support() - check if beacon IE and update hw mode
+ * @beacon: beacon IE buffer
+ * @config: pointer to sap config
+ *
+ * Check if EHT cap IE is present in beacon IE, if present update hw mode
+ * to 11be.
+ *
+ * Return: None
+ */
+void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
+				 struct sap_config *config);
+#else
+
+static inline void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
+					       struct sap_config *config)
+{
+}
 
 #endif
 #endif /* if !defined(WLAN_HDD_EHT_H)*/

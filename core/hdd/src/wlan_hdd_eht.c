@@ -24,9 +24,22 @@
 
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_eht.h"
+#include "osif_sync.h"
+#include "wlan_utility.h"
 #include "wlan_mlme_ucfg_api.h"
 
 void hdd_update_tgt_eht_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg)
 {
+}
+
+void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
+				 struct sap_config *config)
+{
+	const uint8_t *ie;
+
+	ie = wlan_get_ext_ie_ptr_from_ext_id(EHT_CAP_OUI_TYPE, EHT_CAP_OUI_SIZE,
+					     beacon->tail, beacon->tail_len);
+	if (ie)
+		config->SapHw_mode = eCSR_DOT11_MODE_11be;
 }
