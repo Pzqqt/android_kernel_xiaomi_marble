@@ -7400,7 +7400,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 
 	/* If monitor rings are aleady initilized, return from here */
-	if (!pdev->pdev_mon_init)
+	if (pdev->pdev_mon_init)
 		return QDF_STATUS_SUCCESS;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
