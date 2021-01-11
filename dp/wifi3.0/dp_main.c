@@ -5868,6 +5868,8 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	}
 	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
+	dp_tx_vdev_multipass_deinit(vdev);
+
 	if (vdev->vdev_dp_ext_handle) {
 		qdf_mem_free(vdev->vdev_dp_ext_handle);
 		vdev->vdev_dp_ext_handle = NULL;

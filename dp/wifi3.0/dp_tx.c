@@ -4858,7 +4858,6 @@ QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev)
 
 	/* Reset TX desc associated to this Vdev as NULL */
 	dp_tx_desc_flush(pdev, vdev, false);
-	dp_tx_vdev_multipass_deinit(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
