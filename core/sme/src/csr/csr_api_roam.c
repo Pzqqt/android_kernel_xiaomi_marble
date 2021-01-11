@@ -76,6 +76,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_if_mgr_public_struct.h"
 #include "wlan_if_mgr_ucfg_api.h"
+#include "wlan_roam_debug.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -14841,6 +14842,10 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			      pProfile->negotiatedMCEncryptionType,
 			      mac->scan.countryCodeCurrent[0],
 			      mac->scan.countryCodeCurrent[1]);
+		wlan_rec_conn_info(sessionId, DEBUG_CONN_CONNECTING,
+				   pBssDescription->bssId,
+				   pProfile->negotiatedAuthType,
+				   pBssDescription->chan_freq);
 		/* dot11mode */
 		dot11mode =
 			csr_translate_to_wni_cfg_dot11_mode(mac,
@@ -20263,7 +20268,10 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	sme_debug("LFR3: reason: %d roam invoke in progress %d, source %d",
 		  reason, vdev_roam_params->roam_invoke_in_progress,
 		  vdev_roam_params->source);
-
+	if (reason == SIR_ROAM_SYNCH_PROPAGATION)
+		wlan_rec_conn_info(session_id, DEBUG_CONN_ROAMING,
+				   bss_desc ? bss_desc->bssId : NULL,
+				   reason, session->connectState);
 	switch (reason) {
 	case SIR_ROAMING_DEREGISTER_STA:
 		/*

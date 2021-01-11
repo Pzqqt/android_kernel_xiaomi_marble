@@ -8218,6 +8218,9 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			roam_info->u.pConnectedProfile->SSID.ssId,
 			roam_info->u.pConnectedProfile->SSID.length);
 	}
+	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_CONNECT_RESULT,
+			   bssid ? bssid : NULL,
+			   status << 16 | connect_timeout, timeout_reason);
 
 	if (hdd_fils_update_connect_results(dev, bssid, bss,
 			roam_info, req_ie, req_ie_len, resp_ie,

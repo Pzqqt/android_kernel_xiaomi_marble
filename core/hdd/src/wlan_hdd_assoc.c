@@ -84,6 +84,7 @@
 #include "wlan_hdd_cm_api.h"
 
 #include "wlan_hdd_bootup_marker.h"
+#include "wlan_roam_debug.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1872,6 +1873,14 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	/* indicate 'disconnect' status to wpa_supplicant... */
 	hdd_send_association_event(dev, roam_info);
 
+	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT_HANDLER,
+			   sta_ctx->conn_info.bssid.bytes,
+			   (roam_result << 24) | (roam_status << 16) |
+			   (sta_ctx->conn_info.conn_state << 8) |
+			    send_discon_ind,
+			   (roam_info ? roam_info->status_code : 0) << 16 |
+			   (roam_info ? roam_info->disassoc_reason : 0));
+
 	/* indicate disconnected event to nl80211 */
 	/*
 	 * Only send indication to kernel if not initiated
@@ -2441,6 +2450,12 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	hdd_debug("Req RSN IE:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
+	wlan_rec_conn_info(adapter->vdev_id,
+			   DEBUG_CONN_ROAMED_IND,
+			   bss ? bss->bssid : NULL,
+			   roam_info->u.pConnectedProfile->AuthType,
+			   0);
+
 	hdd_send_roamed_ind(dev, bss, final_req_ie,
 			    (ssid_ie_len + reqRsnLength), rsp_rsn_ie,
 			    rsp_rsn_lemgth);
@@ -2733,6 +2748,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		/* Save the connection info from CSR... */
 		hdd_conn_save_connect_info(adapter, roam_info,
 					   eCSR_BSS_TYPE_INFRASTRUCTURE);
+		wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_ASSOCIATION,
+				   sta_ctx->conn_info.bssid.bytes,
+				   (roam_result << 16) | roam_status,
+				   (sta_ctx->conn_info.conn_state << 16) |
+				   (roam_info ? roam_info->status_code : 0));
 
 		if (hdd_add_beacon_filter(adapter) != 0)
 			hdd_err("hdd_add_beacon_filter() failed");
@@ -3010,7 +3030,14 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						cdp_hl_fc_set_td_limit(soc,
 							adapter->vdev_id,
 							conn_info_freq);
-
+						wlan_rec_conn_info(
+						adapter->vdev_id,
+						DEBUG_CONN_ROAMED,
+						roam_bss ? roam_bss->bssid :
+						NULL,
+						roam_info->u.
+						pConnectedProfile->AuthType,
+						0);
 						hdd_send_roamed_ind(
 								dev,
 								roam_bss,
@@ -3210,6 +3237,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 adapter->vdev_id,
 				 QDF_MAC_ADDR_REF(sta_ctx->requested_bssid.bytes),
 				 roam_result, roam_status);
+		wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_ASSOCIATION,
+				   sta_ctx->conn_info.bssid.bytes,
+				   (roam_result << 16) | roam_status,
+				   (sta_ctx->conn_info.conn_state << 16) |
+				   (roam_info ? roam_info->status_code : 0));
 
 		if ((eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roam_result) ||
 		   (roam_info &&
