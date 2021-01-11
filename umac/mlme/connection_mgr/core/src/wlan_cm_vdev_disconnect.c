@@ -64,9 +64,19 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	struct wlan_cm_vdev_discon_req *discon_req;
 	struct scheduler_msg msg;
 	QDF_STATUS status;
+	enum QDF_OPMODE opmode;
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t vdev_id;
 
 	if (!vdev || !req)
 		return QDF_STATUS_E_FAILURE;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("vdev_id: %d pdev not found", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev);
 
 	qdf_mem_zero(&msg, sizeof(msg));
 
@@ -74,6 +84,12 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 
 	if (!discon_req)
 		return QDF_STATUS_E_NOMEM;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode == QDF_STA_MODE)
+		wlan_cm_roam_state_change(pdev, vdev_id,
+					  WLAN_ROAM_DEINIT,
+					  REASON_DISCONNECTED);
 
 	cm_csr_handle_diconnect_req(vdev, req);
 

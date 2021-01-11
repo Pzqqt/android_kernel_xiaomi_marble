@@ -32,6 +32,7 @@ QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct rso_config *rso_cfg;
 
 	if (!vdev || !req) {
 		mlme_err("vdev or req is NULL");
@@ -46,7 +47,9 @@ QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 	if (policy_mgr_is_sta_mon_concurrency(psoc))
 		return QDF_STATUS_E_NOSUPPORT;
 
-	/* Fill orig RSN caps in connect config to sent in RSO */
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (rso_cfg)
+		rso_cfg->rsn_cap = req->crypto.rsn_caps;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -133,6 +136,7 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	cm_csr_connect_rsp(vdev, rsp);
 	status = wlan_cm_connect_rsp(vdev, &rsp->connect_rsp);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
@@ -224,6 +228,7 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp)
 {
 	uint8_t vdev_id;
+	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_psoc *psoc;
 	enum QDF_OPMODE op_mode;
 
@@ -234,7 +239,12 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	psoc = wlan_vdev_get_psoc(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("vdev_id: %d pdev not found", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
 		mlme_err("vdev_id: %d psoc not found", vdev_id);
 		return QDF_STATUS_E_INVAL;
@@ -249,12 +259,15 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 				     mlme_get_tdls_chan_switch_prohibited(vdev),
 				     mlme_get_tdls_prohibited(vdev), vdev);
 	wlan_p2p_status_connect(vdev);
+	if (op_mode == QDF_STA_MODE)
+		wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_INIT,
+					  REASON_CONNECT);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static inline void wlan_cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
+static inline void cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
 {
 	if (!connect_ie->fils_ie)
 		return;
@@ -268,9 +281,22 @@ static inline void wlan_cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
 	qdf_mem_free(connect_ie->fils_ie);
 }
 #else
-static inline void wlan_cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
+static inline void cm_free_fils_ie(struct wlan_connect_rsp_ies *connect_ie)
 {
 }
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+static void cm_free_tspec_ie(struct cm_vdev_join_rsp *rsp)
+{
+	qdf_mem_free(rsp->tspec_ie.ptr);
+	rsp->tspec_ie.ptr = NULL;
+	rsp->tspec_ie.len = 0;
+}
+
+#else
+static void cm_free_tspec_ie(struct cm_vdev_join_rsp *rsp)
+{}
 #endif
 
 void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
@@ -281,8 +307,9 @@ void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
 	qdf_mem_free(connect_ie->assoc_req.ptr);
 	qdf_mem_free(connect_ie->bcn_probe_rsp.ptr);
 	qdf_mem_free(connect_ie->assoc_rsp.ptr);
-	qdf_mem_free(connect_ie->ric_resp_ie.ptr);
-	wlan_cm_free_fils_ie(connect_ie);
+	cm_free_fils_ie(connect_ie);
+	cm_free_tspec_ie(rsp);
+	qdf_mem_free(rsp->ric_resp_ie.ptr);
 	qdf_mem_zero(rsp, sizeof(*rsp));
 	qdf_mem_free(rsp);
 }
