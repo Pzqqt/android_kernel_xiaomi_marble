@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -502,10 +502,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	enable_connected_scan = ucfg_scan_is_connected_scan_enabled(
 							hdd_ctx->psoc);
-	if ((eConnectionState_Associated ==
-			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-						conn_info.conn_state) &&
-	    (!enable_connected_scan)) {
+	if (hdd_cm_is_vdev_associated(adapter) && !enable_connected_scan) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		if (wlan_hdd_enqueue_blocked_scan_request(dev, request, source))
 			return -EAGAIN;
@@ -1323,10 +1320,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 	enable_connected_scan = ucfg_scan_is_connected_scan_enabled(
 							hdd_ctx->psoc);
-	if ((eConnectionState_Associated ==
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-							conn_info.conn_state) &&
-	    (!enable_connected_scan)) {
+	if (hdd_cm_is_vdev_associated(adapter) && !enable_connected_scan) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		return -EBUSY;
 	}

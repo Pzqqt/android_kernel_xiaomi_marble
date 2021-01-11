@@ -42,6 +42,39 @@
 #include "sme_qos_internal.h"
 #include "wlan_hdd_scan.h"
 
+#ifdef FEATURE_CM_ENABLE
+bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_active;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", adapter->vdev_id);
+		return false;
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
+	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_active = ucfg_cm_is_vdev_active(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_active;
+}
+#else
+bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	return (sta_ctx->conn_info.conn_state == eConnectionState_Associated);
+}
+#endif
+
 void hdd_cm_update_rssi_snr_by_bssid(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx;
@@ -657,6 +690,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
 
 	hdd_init_scan_reject_params(hdd_ctx);
+	hdd_start_tsf_sync(adapter);
 
 	hdd_cm_save_connect_info(adapter, rsp);
 

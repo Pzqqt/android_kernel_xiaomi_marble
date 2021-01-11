@@ -401,11 +401,12 @@ bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter)
 	}
 }
 
-enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
+enum band_info hdd_conn_get_connected_band(struct hdd_adapter *adapter)
 {
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint32_t sta_freq = 0;
 
-	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
+	if (hdd_cm_is_vdev_associated(adapter))
 		sta_freq = sta_ctx->conn_info.chan_freq;
 
 	if (wlan_reg_is_24ghz_ch_freq(sta_freq))
@@ -466,8 +467,7 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 					hdd_adapter_dev_put_debug(next_adapter,
 								  dbgid);
 				return adapter;
-			} else if ((eConnectionState_Associated ==
-				   hdd_sta_ctx->conn_info.conn_state) &&
+			} else if (hdd_cm_is_vdev_associated(adapter) &&
 				   sme_is_sta_key_exchange_in_progress(
 							hdd_ctx->mac_handle,
 							adapter->vdev_id)) {
@@ -1551,7 +1551,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		ucfg_tdls_notify_sta_disconnect(adapter->vdev_id, true, false,
 						adapter->vdev);
 
-	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state) {
+	if (hdd_cm_is_vdev_associated(adapter)) {
 		struct oem_channel_info chan_info = {0};
 
 		if (!roam_info || !roam_info->bss_desc) {
@@ -1651,8 +1651,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_wext_send_event(dev, we_event, &wrqu, msg);
 #ifdef FEATURE_WLAN_ESE
-		if (eConnectionState_Associated ==
-			 sta_ctx->conn_info.conn_state) {
+		if (hdd_cm_is_vdev_associated(adapter)) {
 			if ((roam_profile->AuthType.authType[0] ==
 			     eCSR_AUTH_TYPE_CCKM_RSN) ||
 			    (roam_profile->AuthType.authType[0] ==
@@ -3481,10 +3480,9 @@ static void
 hdd_roam_mic_error_indication_handler(struct hdd_adapter *adapter,
 				      struct csr_roam_info *roam_info)
 {
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	tSirMicFailureInfo *mic_failure_info;
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state)
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	mic_failure_info = roam_info->u.pMICFailureInfo;

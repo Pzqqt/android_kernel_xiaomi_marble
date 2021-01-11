@@ -308,7 +308,7 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
@@ -366,7 +366,7 @@ int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
@@ -1205,7 +1205,7 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
@@ -1426,7 +1426,7 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
@@ -1690,7 +1690,7 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
@@ -1829,7 +1829,7 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
@@ -2039,7 +2039,7 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);

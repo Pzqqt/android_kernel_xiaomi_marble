@@ -222,4 +222,12 @@ static inline void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)
 void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 				uint32_t reason_code);
 
+/**
+ * hdd_cm_is_vdev_associated() - Checks if vdev is associated or not
+ * @adapter: pointer to the adapter structure
+ *
+ * Returns: True if vdev is associated else false
+ */
+bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter);
+
 #endif

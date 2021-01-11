@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -324,7 +324,6 @@ hdd_is_roam_after_nud_enabled(struct hdd_config *config)
 static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
-	eConnectionState conn_state;
 	int status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -339,10 +338,7 @@ static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 	if (0 != status)
 		return;
 
-	conn_state = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
-		      ->conn_info.conn_state;
-
-	if (eConnectionState_Associated != conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Not in Connected State");
 		return;
 	}
@@ -453,7 +449,6 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 	int status;
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
-	eConnectionState conn_state;
 	const struct net_device *netdev = neigh->dev;
 
 	hdd_enter();
@@ -483,10 +478,7 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 	if (adapter->device_mode != QDF_STA_MODE)
 		return;
 
-	conn_state = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
-		->conn_info.conn_state;
-
-	if (eConnectionState_Associated != conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Not in Connected State");
 		return;
 	}

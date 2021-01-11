@@ -598,7 +598,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * So check both the HDD state and SME state here.
 	 * If not associated, no need to proceed with reassoc
 	 */
-	if ((eConnectionState_Associated != sta_ctx->conn_info.conn_state) ||
+	if (!hdd_cm_is_vdev_associated(adapter) ||
 	    (!sme_is_conn_state_connected(hdd_ctx->mac_handle,
 	    adapter->vdev_id))) {
 		hdd_warn("Not associated");
@@ -833,7 +833,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* if not associated, no need to send action frame */
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_warn("Not associated");
 		ret = -EINVAL;
 		goto exit;
@@ -2483,7 +2483,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		/* If not associated, then expected link status return
 		 * value is 0
 		 */
@@ -4561,7 +4561,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* if not associated, no need to proceed with reassoc */
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_warn("Not associated!");
 		ret = -EINVAL;
 		goto exit;
@@ -4996,7 +4996,7 @@ static int drv_cmd_get_tsm_stats(struct hdd_adapter *adapter,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* if not associated, return error */
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("Not associated!");
 		ret = -EINVAL;
 		goto exit;

@@ -267,7 +267,7 @@ static int copy_station_stats_to_adapter(struct hdd_adapter *adapter,
 		goto out;
 	}
 
-	switch (hdd_conn_get_connected_band(&adapter->session.station)) {
+	switch (hdd_conn_get_connected_band(adapter)) {
 	case BAND_2G:
 		tx_nss = dynamic_cfg->tx_nss[NSS_CHAINS_BAND_2GHZ];
 		rx_nss = dynamic_cfg->rx_nss[NSS_CHAINS_BAND_2GHZ];
@@ -760,16 +760,14 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 				  adapter->vdev_id);
 			info->state = WIFI_ASSOCIATING;
 		}
-		if ((eConnectionState_Associated ==
-		     sta_ctx->conn_info.conn_state) &&
-		    (!sta_ctx->conn_info.is_authenticated)) {
+		if (hdd_cm_is_vdev_associated(adapter) &&
+		    !sta_ctx->conn_info.is_authenticated) {
 			hdd_err("client " QDF_MAC_ADDR_FMT
 				" is in the middle of WPS/EAPOL exchange.",
 				QDF_MAC_ADDR_REF(adapter->mac_addr.bytes));
 			info->state = WIFI_AUTHENTICATING;
 		}
-		if (eConnectionState_Associated ==
-		    sta_ctx->conn_info.conn_state) {
+		if (hdd_cm_is_vdev_associated(adapter)) {
 			info->state = WIFI_ASSOCIATED;
 			qdf_copy_macaddr(&info->bssid,
 					 &sta_ctx->conn_info.bssid);
@@ -5284,7 +5282,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		   TRACE_CODE_HDD_CFG80211_GET_STA,
 		   adapter->vdev_id, 0);
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Not associated");
 		/*To keep GUI happy */
 		return 0;
@@ -5943,8 +5941,7 @@ static bool hdd_is_rcpi_applicable(struct hdd_adapter *adapter,
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (hdd_sta_ctx->conn_info.conn_state !=
-		    eConnectionState_Associated)
+		if (!hdd_cm_is_vdev_associated(adapter))
 			return false;
 
 		if (hdd_sta_ctx->hdd_reassoc_scenario) {
@@ -6192,7 +6189,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Not associated!, rssi on disconnect %d",
 			  adapter->rssi_on_disconnect);
 		*rssi_value = adapter->rssi_on_disconnect;
@@ -6441,7 +6438,7 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed)
 		return -ENOTSUPP;
 	}
 
-	if (eConnectionState_Associated != hdd_stactx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		/* we are not connected so we don't have a classAstats */
 		*link_speed = 0;
 	} else {

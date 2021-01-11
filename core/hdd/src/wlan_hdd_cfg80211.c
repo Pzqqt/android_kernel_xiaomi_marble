@@ -11796,8 +11796,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if ((hdd_sta_ctx->conn_info.conn_state !=
-			eConnectionState_Associated) ||
+		if (!hdd_cm_is_vdev_associated(adapter) ||
 		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssid.bytes,
 			peer_mac, QDF_MAC_ADDR_SIZE)) {
 			hdd_err("Not Associated to mac "QDF_MAC_ADDR_FMT,
@@ -13524,8 +13523,6 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	int ret;
 	QDF_STATUS qdf_status;
 	unsigned long rc;
-	struct hdd_station_ctx *hdd_sta_ctx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	mac_handle_t mac_handle;
 
 	hdd_enter_dev(dev);
@@ -13568,7 +13565,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 
 	ret = qdf_status_to_os_return(qdf_status);
 
-	if (eConnectionState_Associated == hdd_sta_ctx->conn_info.conn_state &&
+	if (hdd_cm_is_vdev_associated(adapter) &&
 	    QDF_IS_STATUS_SUCCESS(qdf_status) && !is_fast_roam_enabled) {
 		INIT_COMPLETION(adapter->lfr_fw_status.disable_lfr_event);
 		/*
@@ -14059,7 +14056,6 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 	struct nlattr *tb[STATS_SET_MAX + 1];
 	struct net_device   *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct set_arp_stats_params arp_stats_params = {0};
 	int err = 0;
@@ -14086,7 +14082,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Not Associated");
 		return 0;
 	}
@@ -20544,7 +20540,6 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 {
 	struct hdd_context *hdd_ctx;
 	unsigned long rc;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	QDF_STATUS status;
 
 	if (adapter->device_mode != QDF_STA_MODE)
@@ -20553,7 +20548,7 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* Return if not in connected state */
-	if (sta_ctx->conn_info.conn_state != eConnectionState_Associated)
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	ucfg_if_mgr_deliver_event(adapter->vdev,
@@ -21183,7 +21178,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 	qdf_mutex_release(&adapter->disconnection_status_lock);
 
 	/* Issue disconnect request to SME, if station is in connected state */
-	if ((sta_ctx->conn_info.conn_state == eConnectionState_Associated) ||
+	if (hdd_cm_is_vdev_associated(adapter) ||
 	    (sta_ctx->conn_info.conn_state == eConnectionState_Connecting)) {
 		eCsrRoamDisconnectReason reasonCode =
 			eCSR_DISCONNECT_REASON_UNSPECIFIED;
@@ -22475,7 +22470,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 		   adapter->vdev_id, sta_ctx->conn_info.conn_state);
 
 	/* Added for debug on reception of Re-assoc Req. */
-	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("Called with Ie of length = %zu when not associated",
 		       ftie->ie_len);
 		hdd_err("Should be Re-assoc Req IEs");
@@ -24503,7 +24498,7 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 
 	vdev_id = adapter->vdev_id;
 
-	connected_band = hdd_conn_get_connected_band(&adapter->session.station);
+	connected_band = hdd_conn_get_connected_band(adapter);
 
 	switch (connected_band) {
 	case BAND_2G:

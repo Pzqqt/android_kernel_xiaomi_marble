@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1285,7 +1285,7 @@ static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
 
 	conn_state = sta_ctx->conn_info.conn_state;
 
-	if (conn_state == eConnectionState_Associated)
+	if (hdd_cm_is_vdev_associated(adapter))
 		*conn_state_mask |= (1 << adapter->vdev_id);
 }
 
@@ -2463,8 +2463,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-		if (eConnectionState_Associated ==
-		    sta_ctx->conn_info.conn_state)
+		if (hdd_cm_is_vdev_associated(adapter))
 			qdf_copy_macaddr(&bssid, &sta_ctx->conn_info.bssid);
 	}
 
@@ -2707,8 +2706,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 			hdd_debug("Roaming is in progress, rej this req");
 			return -EINVAL;
 		}
-		if (sta_ctx->conn_info.conn_state !=
-		    eConnectionState_Associated) {
+		if (!hdd_cm_is_vdev_associated(adapter)) {
 			hdd_debug("Not associated");
 			return 0;
 		}

@@ -112,6 +112,7 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
+	hdd_stop_tsf_sync(adapter);
 	if (ucfg_ipa_is_enabled() &&
 	    QDF_IS_STATUS_SUCCESS(wlan_hdd_validate_mac_address(
 				  &sta_ctx->conn_info.bssid)))

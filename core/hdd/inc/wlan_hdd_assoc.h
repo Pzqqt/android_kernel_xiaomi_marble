@@ -244,12 +244,12 @@ bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter);
 
 /**
  * hdd_conn_get_connected_band() - get current connection radio band
- * @sta_ctx:    pointer to global HDD Station context
+ * @adapter: HDD adapter
  *
  * Return: BAND_2G or BAND_5G based on current AP connection
  *      BAND_ALL if not connected
  */
-enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx);
+enum band_info hdd_conn_get_connected_band(struct hdd_adapter *adapter);
 
 /**
  * hdd_get_sta_connection_in_progress() - get STA for which connection

@@ -515,8 +515,7 @@ hdd_process_sta_mic_error(struct hdd_adapter *adapter)
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	if (eConnectionState_Associated !=
-	    sta_ctx->conn_info.conn_state)
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	info = adapter->mic_work.info;
@@ -932,8 +931,7 @@ uint32_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 		home_chan_freq = adapter->session.ap.operating_chan_freq;
 	} else if ((adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
-		   adapter->session.station.conn_info.conn_state ==
-		   eConnectionState_Associated) {
+		   hdd_cm_is_vdev_associated(adapter)) {
 		home_chan_freq = adapter->session.station.conn_info.chan_freq;
 	}
 
@@ -10395,8 +10393,7 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 
 		if ((adapter->device_mode == QDF_STA_MODE ||
 		     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
-		    WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.conn_state
-		    != eConnectionState_Associated) {
+		    !hdd_cm_is_vdev_associated(adapter)) {
 			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
@@ -15656,9 +15653,7 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 		hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter,
 						   next_adapter, dbgid) {
 			if (adapter->device_mode == QDF_STA_MODE) {
-				if (WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-				    conn_info.conn_state ==
-				    eConnectionState_Associated) {
+				if (hdd_cm_is_vdev_associated(adapter)) {
 					sta_connected = true;
 					hdd_adapter_dev_put_debug(adapter,
 								  dbgid);
@@ -15764,8 +15759,7 @@ bool hdd_is_any_adapter_connected(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
 		if (hdd_adapter_is_sta(adapter) &&
-		    WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-			conn_info.conn_state == eConnectionState_Associated) {
+		    hdd_cm_is_vdev_associated(adapter)) {
 			hdd_adapter_dev_put_debug(adapter, dbgid);
 			if (next_adapter)
 				hdd_adapter_dev_put_debug(next_adapter,
@@ -18145,8 +18139,7 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 		(QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 		hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if ((eConnectionState_Associated ==
-		    hdd_sta_ctx->conn_info.conn_state)
+		if (hdd_cm_is_vdev_associated(adapter)
 		    && sme_is_sta_key_exchange_in_progress(
 		    mac_handle, adapter->vdev_id)) {
 			sta_mac = (uint8_t *)&(adapter->mac_addr.bytes[0]);

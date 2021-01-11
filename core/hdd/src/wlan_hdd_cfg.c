@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1366,8 +1366,7 @@ static QDF_STATUS hdd_get_sta_tx_nss(struct hdd_adapter *adapter,
 			hdd_debug("nss chain dynamic config NULL");
 			return QDF_STATUS_E_INVAL;
 		}
-		operating_band = hdd_conn_get_connected_band(
-						&adapter->session.station);
+		operating_band = hdd_conn_get_connected_band(adapter);
 		switch (operating_band) {
 		case BAND_2G:
 			*tx_nss = dynamic_cfg->tx_nss[NSS_CHAINS_BAND_2GHZ];
@@ -1485,8 +1484,7 @@ static QDF_STATUS hdd_get_sta_rx_nss(struct hdd_adapter *adapter,
 			hdd_debug("nss chain dynamic config NULL");
 			return QDF_STATUS_E_INVAL;
 		}
-		operating_band = hdd_conn_get_connected_band(
-						&adapter->session.station);
+		operating_band = hdd_conn_get_connected_band(adapter);
 		switch (operating_band) {
 		case BAND_2G:
 			*rx_nss = dynamic_cfg->rx_nss[NSS_CHAINS_BAND_2GHZ];
