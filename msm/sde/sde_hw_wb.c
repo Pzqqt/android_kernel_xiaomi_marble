@@ -126,6 +126,38 @@ static void _sde_hw_dcwb_ctrl_init(struct sde_mdss_cfg *m,
 	}
 }
 
+static void _sde_hw_dcwb_pp_ctrl_init(struct sde_mdss_cfg *m,
+		void __iomem *addr, struct sde_hw_wb *hw_wb)
+{
+	int i = 0, dcwb_pp_count = 0;
+	struct sde_pingpong_cfg *pp_blk = NULL;
+
+	if (!hw_wb) {
+		DRM_ERROR("hw_wb is null\n");
+		return;
+	}
+
+	for (i = 0; i < m->pingpong_count; i++) {
+		pp_blk = &m->pingpong[i];
+		if (test_bit(SDE_PINGPONG_CWB_DITHER, &pp_blk->features)) {
+			if (dcwb_pp_count < DCWB_MAX - DCWB_0) {
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].caps = pp_blk;
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].idx = pp_blk->id;
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].hw.base_off = addr;
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].hw.blk_off = pp_blk->base;
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].hw.length = pp_blk->len;
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].hw.hwversion = m->hwversion;
+				hw_wb->dcwb_pp_hw[dcwb_pp_count].hw.log_mask = SDE_DBG_MASK_WB;
+			} else {
+				DRM_ERROR("Invalid dcwb pp count %d more than %d",
+					dcwb_pp_count, DCWB_MAX - DCWB_0);
+				return;
+			}
+			++dcwb_pp_count;
+		}
+	}
+}
+
 static void sde_hw_wb_setup_outaddress(struct sde_hw_wb *ctx,
 		struct sde_hw_wb_cfg *data)
 {
@@ -374,6 +406,102 @@ static void sde_hw_wb_program_cwb_ctrl(struct sde_hw_wb *ctx,
 	}
 }
 
+static void sde_hw_wb_program_cwb_dither_ctrl(struct sde_hw_wb *ctx,
+		const enum sde_dcwb dcwb_idx, void *cfg, size_t len, bool enable)
+{
+	struct sde_hw_pingpong *pp = NULL;
+	struct sde_hw_blk_reg_map *c = NULL;
+	struct drm_msm_dither *dither_data = NULL;
+	enum sde_pingpong pp_id = PINGPONG_MAX;
+	u32 dither_base = 0, offset = 0, data = 0, idx = 0;
+	bool found = false;
+
+	if (!ctx) {
+		DRM_ERROR("Invalid pointer ctx is null\n");
+		return;
+	}
+
+	/* map to pp_id from dcwb id */
+	if (dcwb_idx == DCWB_0) {
+		pp_id = PINGPONG_CWB_0;
+	} else if (dcwb_idx == DCWB_1) {
+		pp_id = PINGPONG_CWB_1;
+	} else {
+		DRM_ERROR("Invalid dcwb_idx %d\n", dcwb_idx);
+		return;
+	}
+
+	/* find pp blk with pp_id */
+	for (idx = 0; idx < DCWB_MAX - DCWB_0; ++idx) {
+		pp = &ctx->dcwb_pp_hw[idx];
+		if (pp && pp->idx == pp_id) {
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		DRM_ERROR("Not found pp id %d\n", pp_id);
+		return;
+	}
+
+	if (!test_bit(SDE_PINGPONG_CWB_DITHER, &pp->caps->features)) {
+		DRM_ERROR("Invalid ping-pong cwb config dcwb idx %d pp id %d\n",
+			dcwb_idx, pp_id);
+		return;
+	}
+
+	c = &pp->hw;
+	dither_base = pp->caps->sblk->dither.base;
+	dither_data = (struct drm_msm_dither *)cfg;
+	if (!dither_data || !enable) {
+		SDE_REG_WRITE(c, dither_base, 0);
+		SDE_DEBUG("cwb dither disabled, dcwb_idx %u pp_id %u\n", dcwb_idx, pp_id);
+		return;
+	}
+
+	if (len != sizeof(struct drm_msm_dither)) {
+		SDE_ERROR("input len %zu, expected len %zu\n", len,
+			sizeof(struct drm_msm_dither));
+		return;
+	}
+
+	if (dither_data->c0_bitdepth >= DITHER_DEPTH_MAP_INDEX ||
+		dither_data->c1_bitdepth >= DITHER_DEPTH_MAP_INDEX ||
+		dither_data->c2_bitdepth >= DITHER_DEPTH_MAP_INDEX ||
+		dither_data->c3_bitdepth >= DITHER_DEPTH_MAP_INDEX) {
+		SDE_ERROR("Invalid bitdepth [c0, c1, c2, c3] = [%u, %u, %u, %u]\n",
+			dither_data->c0_bitdepth, dither_data->c1_bitdepth,
+			dither_data->c2_bitdepth, dither_data->c3_bitdepth);
+		return;
+	}
+
+	offset += 4;
+	data = dither_depth_map[dither_data->c0_bitdepth] & REG_MASK(2);
+	data |= (dither_depth_map[dither_data->c1_bitdepth] & REG_MASK(2)) << 2;
+	data |= (dither_depth_map[dither_data->c2_bitdepth] & REG_MASK(2)) << 4;
+	data |= (dither_depth_map[dither_data->c3_bitdepth] & REG_MASK(2)) << 6;
+	data |= (dither_data->temporal_en) ? (1 << 8) : 0;
+	SDE_REG_WRITE(c, dither_base + offset, data);
+
+	for (idx = 0; idx < DITHER_MATRIX_SZ - 3; idx += 4) {
+		offset += 4;
+		data = (dither_data->matrix[idx] & REG_MASK(4)) |
+			((dither_data->matrix[idx + 1] & REG_MASK(4)) << 4) |
+			((dither_data->matrix[idx + 2] & REG_MASK(4)) << 8) |
+			((dither_data->matrix[idx + 3] & REG_MASK(4)) << 12);
+		SDE_REG_WRITE(c, dither_base + offset, data);
+	}
+
+	/* Enable dither */
+	if (test_bit(SDE_PINGPONG_DITHER_LUMA, &pp->caps->features)
+			&& (dither_data->flags & DITHER_LUMA_MODE))
+		SDE_REG_WRITE(c, dither_base, 0x11);
+	else
+		SDE_REG_WRITE(c, dither_base, 1);
+	SDE_DEBUG("cwb dither enabled, dcwb_idx %u pp_id %u\n", dcwb_idx, pp_id);
+}
+
 static void _setup_wb_ops(struct sde_hw_wb_ops *ops,
 	unsigned long features)
 {
@@ -402,6 +530,9 @@ static void _setup_wb_ops(struct sde_hw_wb_ops *ops,
 		ops->program_dcwb_ctrl = sde_hw_wb_program_dcwb_ctrl;
 		ops->bind_dcwb_pp_blk = sde_hw_wb_bind_dcwb_pp_blk;
 	}
+
+	if (test_bit(SDE_WB_CWB_DITHER_CTRL, &features))
+		ops->program_cwb_dither_ctrl = sde_hw_wb_program_cwb_dither_ctrl;
 }
 
 static struct sde_hw_blk_ops sde_hw_ops = {
@@ -452,8 +583,10 @@ struct sde_hw_wb *sde_hw_wb_init(enum sde_wb idx,
 	if (test_bit(SDE_WB_CWB_CTRL, &cfg->features))
 		_sde_hw_cwb_ctrl_init(m, addr, &c->cwb_hw);
 
-	if (test_bit(SDE_WB_DCWB_CTRL, &cfg->features))
+	if (test_bit(SDE_WB_DCWB_CTRL, &cfg->features)) {
 		_sde_hw_dcwb_ctrl_init(m, addr, &c->dcwb_hw);
+		_sde_hw_dcwb_pp_ctrl_init(m, addr, c);
+	}
 
 	return c;
 

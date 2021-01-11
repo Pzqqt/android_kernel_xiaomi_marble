@@ -421,6 +421,7 @@ enum {
  * @SDE_PINGPONG_DITHER_LUMA,    Dither sub-blocks and features
  * @SDE_PINGPONG_MERGE_3D,  Separate MERGE_3D block exists
  * @SDE_PINGPONG_CWB,           PP block supports CWB
+ * @SDE_PINGPONG_CWB_DITHER,    PP block supports CWB dither
  * @SDE_PINGPONG_MAX
  */
 enum {
@@ -433,6 +434,7 @@ enum {
 	SDE_PINGPONG_DITHER_LUMA,
 	SDE_PINGPONG_MERGE_3D,
 	SDE_PINGPONG_CWB,
+	SDE_PINGPONG_CWB_DITHER,
 	SDE_PINGPONG_MAX
 };
 
@@ -535,6 +537,7 @@ enum {
  * @SDE_WB_CROP             CWB supports cropping
  * @SDE_WB_CWB_CTRL         Separate CWB control is available for configuring
  * @SDE_WB_DCWB_CTRL        Separate DCWB control is available for configuring
+ * @SDE_WB_CWB_DITHER_CTRL  CWB dither is available for configuring
  * @SDE_WB_MAX              maximum value
  */
 enum {
@@ -559,6 +562,7 @@ enum {
 	SDE_WB_CROP,
 	SDE_WB_CWB_CTRL,
 	SDE_WB_DCWB_CTRL,
+	SDE_WB_CWB_DITHER_CTRL,
 	SDE_WB_MAX
 };
 
@@ -1458,6 +1462,7 @@ struct sde_perf_cfg {
  * @has_cwb_crop       CWB cropping is supported
  * @has_cwb_support    indicates if device supports primary capture through CWB
  * @has_dedicated_cwb_support    indicates if device supports dedicated path for CWB capture
+ * @has_cwb_dither     indicates if device supports cwb dither feature
  * @cwb_blk_off        CWB offset address
  * @cwb_blk_stride     offset between each CWB blk
  * @ubwc_version       UBWC feature version (0x0 for not supported)
@@ -1543,6 +1548,7 @@ struct sde_mdss_cfg {
 	bool has_cwb_crop;
 	bool has_cwb_support;
 	bool has_dedicated_cwb_support;
+	bool has_cwb_dither;
 	u32 cwb_blk_off;
 	u32 cwb_blk_stride;
 	u32 ubwc_version;

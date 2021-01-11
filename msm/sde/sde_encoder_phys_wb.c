@@ -919,6 +919,10 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 	enum sde_cwb src_pp_idx = 0;
 	bool dspp_out = false;
 	bool need_merge = false;
+	struct sde_connector *c_conn = NULL;
+	struct sde_connector_state *c_state = NULL;
+	void *dither_cfg = NULL;
+	size_t dither_sz = 0;
 
 	if (!phys_enc->in_clone_mode) {
 		SDE_DEBUG("not in CWB mode. early return\n");
@@ -973,11 +977,30 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 
 	if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features) ||
 			test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
+		if (test_bit(SDE_WB_CWB_DITHER_CTRL, &hw_wb->caps->features)) {
+			if (cwb_capture_mode) {
+				c_conn = to_sde_connector(phys_enc->connector);
+				c_state = to_sde_connector_state(phys_enc->connector->state);
+				dither_cfg = msm_property_get_blob(&c_conn->property_info,
+						&c_state->property_state, &dither_sz,
+						CONNECTOR_PROP_PP_CWB_DITHER);
+				SDE_DEBUG("Read cwb dither setting from blob %pK\n", dither_cfg);
+			} else {
+				/* disable case: tap is lm */
+				dither_cfg = NULL;
+			}
+		}
+
 		for (i = 0; i < crtc->num_mixers; i++) {
 			src_pp_idx = (enum sde_cwb) (src_pp_idx + i);
 
 			if (test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
 				dcwb_idx = (enum sde_dcwb) ((hw_pp->idx % 2) + i);
+				if (test_bit(SDE_WB_CWB_DITHER_CTRL, &hw_wb->caps->features)) {
+					if (hw_wb->ops.program_cwb_dither_ctrl)
+						hw_wb->ops.program_cwb_dither_ctrl(hw_wb,
+							dcwb_idx, dither_cfg, dither_sz, enable);
+				}
 				if (hw_wb->ops.program_dcwb_ctrl)
 					hw_wb->ops.program_dcwb_ctrl(hw_wb, dcwb_idx,
 						src_pp_idx, cwb_capture_mode,
