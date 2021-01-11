@@ -385,17 +385,20 @@ struct wmi_twt_del_dialog_param {
 #endif
 };
 
-/* status code of deleting TWT dialog
- * WMI_HOST_DEL_TWT_STATUS_OK: deleting TWT dialog successfully completed
- * WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_NOT_EXIST: TWT dialog ID not exists
- * WMI_HOST_DEL_TWT_STATUS_INVALID_PARAM: invalid parameters
- * WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_BUSY: FW is in the process of handling
- *                                    this dialog
- * WMI_HOST_DEL_TWT_STATUS_NO_RESOURCE: FW resource exhausted
- * WMI_HOST_DEL_TWT_STATUS_NO_ACK: peer AP/STA did not ACK the request/response
- *                            frame
- * WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR: deleting TWT dialog failed with an
- *                            unknown reason
+/**
+ * enum WMI_HOST_DEL_TWT_STATUS - status code of deleting TWT dialog
+ * @WMI_HOST_DEL_TWT_STATUS_OK: deleting TWT dialog successfully completed
+ * @WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_NOT_EXIST: TWT dialog ID not exists
+ * @WMI_HOST_DEL_TWT_STATUS_INVALID_PARAM: invalid parameters
+ * @WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_BUSY: FW is in the process of handling
+ * this dialog
+ * @WMI_HOST_DEL_TWT_STATUS_NO_RESOURCE: FW resource exhausted
+ * @WMI_HOST_DEL_TWT_STATUS_NO_ACK: peer AP/STA did not ACK the request/response
+ * frame
+ * @WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR: deleting TWT dialog failed with an
+ * unknown reason
+ * @WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN: Peer initiated TWT teardown
+ * @WMI_HOST_DEL_TWT_STATUS_ROAMING: TWT teardown due to roaming.
  */
 enum WMI_HOST_DEL_TWT_STATUS {
 	WMI_HOST_DEL_TWT_STATUS_OK,
@@ -405,6 +408,8 @@ enum WMI_HOST_DEL_TWT_STATUS {
 	WMI_HOST_DEL_TWT_STATUS_NO_RESOURCE,
 	WMI_HOST_DEL_TWT_STATUS_NO_ACK,
 	WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR,
+	WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN,
+	WMI_HOST_DEL_TWT_STATUS_ROAMING,
 };
 
 /**

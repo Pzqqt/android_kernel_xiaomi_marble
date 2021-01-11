@@ -587,6 +587,35 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 	return QDF_STATUS_SUCCESS;
 }
 
+static enum WMI_HOST_DEL_TWT_STATUS
+wmi_get_converted_twt_del_dialog_status(WMI_DEL_TWT_STATUS_T tgt_status)
+{
+	switch (tgt_status) {
+	case WMI_DEL_TWT_STATUS_OK:
+		return WMI_HOST_DEL_TWT_STATUS_OK;
+	case WMI_DEL_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		return WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_NOT_EXIST;
+	case WMI_DEL_TWT_STATUS_INVALID_PARAM:
+		return WMI_HOST_DEL_TWT_STATUS_INVALID_PARAM;
+	case WMI_DEL_TWT_STATUS_DIALOG_ID_BUSY:
+		return WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_BUSY;
+	case WMI_DEL_TWT_STATUS_NO_RESOURCE:
+		return WMI_HOST_DEL_TWT_STATUS_NO_RESOURCE;
+	case WMI_DEL_TWT_STATUS_NO_ACK:
+		return WMI_HOST_DEL_TWT_STATUS_NO_ACK;
+	case WMI_DEL_TWT_STATUS_UNKNOWN_ERROR:
+		return WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_DEL_TWT_STATUS_PEER_INIT_TEARDOWN:
+		return WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN;
+	case WMI_DEL_TWT_STATUS_ROAMING:
+		return WMI_HOST_DEL_TWT_STATUS_ROAMING;
+	default:
+		return WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR;
+	}
+
+	return WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR;
+}
+
 static QDF_STATUS extract_twt_del_dialog_comp_event_tlv(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
@@ -606,7 +635,7 @@ static QDF_STATUS extract_twt_del_dialog_comp_event_tlv(
 	params->vdev_id = ev->vdev_id;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->dialog_id = ev->dialog_id;
-	params->status = ev->status;
+	params->status = wmi_get_converted_twt_del_dialog_status(ev->status);
 
 	return QDF_STATUS_SUCCESS;
 }
