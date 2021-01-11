@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,13 +46,9 @@ static qdf_spinlock_t __osif_driver_sync_lock;
 	qdf_spinlock_destroy(&__osif_driver_sync_lock)
 #define osif_driver_sync_lock() qdf_spin_lock_bh(&__osif_driver_sync_lock)
 #define osif_driver_sync_unlock() qdf_spin_unlock_bh(&__osif_driver_sync_lock)
-#define osif_driver_sync_lock_assert() \
-	QDF_BUG(qdf_spin_is_locked(&__osif_driver_sync_lock))
 
 static struct osif_driver_sync *osif_driver_sync_lookup(void)
 {
-	osif_driver_sync_lock_assert();
-
 	if (!__osif_driver_sync.is_registered)
 		return NULL;
 
@@ -61,8 +57,6 @@ static struct osif_driver_sync *osif_driver_sync_lookup(void)
 
 static struct osif_driver_sync *osif_driver_sync_get(void)
 {
-	osif_driver_sync_lock_assert();
-
 	if (__osif_driver_sync.in_use)
 		return NULL;
 
@@ -73,8 +67,6 @@ static struct osif_driver_sync *osif_driver_sync_get(void)
 
 static void osif_driver_sync_put(struct osif_driver_sync *driver_sync)
 {
-	osif_driver_sync_lock_assert();
-
 	qdf_mem_zero(driver_sync, sizeof(*driver_sync));
 }
 
@@ -181,8 +173,6 @@ __osif_driver_sync_start_callback(struct osif_driver_sync **out_driver_sync,
 {
 	QDF_STATUS status;
 	struct osif_driver_sync *driver_sync;
-
-	osif_driver_sync_lock_assert();
 
 	*out_driver_sync = NULL;
 
@@ -307,8 +297,6 @@ static QDF_STATUS
 __osif_driver_sync_dsc_psoc_create(struct dsc_psoc **out_dsc_psoc)
 {
 	struct osif_driver_sync *driver_sync;
-
-	osif_driver_sync_lock_assert();
 
 	driver_sync = osif_driver_sync_lookup();
 	if (!driver_sync)

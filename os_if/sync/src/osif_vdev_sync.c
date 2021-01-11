@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,14 +45,10 @@ static qdf_spinlock_t __osif_vdev_sync_lock;
 	qdf_spinlock_destroy(&__osif_vdev_sync_lock)
 #define osif_vdev_sync_lock() qdf_spin_lock_bh(&__osif_vdev_sync_lock)
 #define osif_vdev_sync_unlock() qdf_spin_unlock_bh(&__osif_vdev_sync_lock)
-#define osif_vdev_sync_lock_assert() \
-	QDF_BUG(qdf_spin_is_locked(&__osif_vdev_sync_lock))
 
 static struct osif_vdev_sync *osif_vdev_sync_lookup(struct net_device *net_dev)
 {
 	int i;
-
-	osif_vdev_sync_lock_assert();
 
 	for (i = 0; i < QDF_ARRAY_SIZE(__osif_vdev_sync_arr); i++) {
 		struct osif_vdev_sync *vdev_sync = __osif_vdev_sync_arr + i;
@@ -71,8 +67,6 @@ static struct osif_vdev_sync *osif_vdev_sync_get(void)
 {
 	int i;
 
-	osif_vdev_sync_lock_assert();
-
 	for (i = 0; i < QDF_ARRAY_SIZE(__osif_vdev_sync_arr); i++) {
 		struct osif_vdev_sync *vdev_sync = __osif_vdev_sync_arr + i;
 
@@ -87,8 +81,6 @@ static struct osif_vdev_sync *osif_vdev_sync_get(void)
 
 static void osif_vdev_sync_put(struct osif_vdev_sync *vdev_sync)
 {
-	osif_vdev_sync_lock_assert();
-
 	qdf_mem_zero(vdev_sync, sizeof(*vdev_sync));
 }
 
@@ -207,8 +199,6 @@ __osif_vdev_sync_start_callback(struct net_device *net_dev,
 {
 	QDF_STATUS status;
 	struct osif_vdev_sync *vdev_sync;
-
-	osif_vdev_sync_lock_assert();
 
 	*out_vdev_sync = NULL;
 
