@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -310,7 +310,6 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 	sap_ctx->csr_roamProfile.SSIDs.numOfSSIDs = 1;   /* This is true for now. */
 	sap_ctx->csr_roamProfile.SSIDs.SSIDList = sap_ctx->SSIDList;     /* Array of two */
 	sap_ctx->csr_roamProfile.SSIDs.SSIDList[0].SSID.length = 0;
-	sap_ctx->csr_roamProfile.SSIDs.SSIDList[0].handoffPermitted = false;
 	sap_ctx->csr_roamProfile.SSIDs.SSIDList[0].ssidHidden =
 		sap_ctx->SSIDList[0].ssidHidden;
 

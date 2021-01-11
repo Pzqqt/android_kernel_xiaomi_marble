@@ -752,7 +752,7 @@ static void wma_send_start_resp(tp_wma_handle wma,
 		return;
 	}
 
-	wma_remove_bss_peer_on_vdev_start_failure(wma, rsp->vdev_id);
+	wma_remove_bss_peer_on_failure(wma, rsp->vdev_id);
 
 	wma_debug("Sending add bss rsp to umac(vdev %d status %d)",
 		 rsp->vdev_id, add_bss_rsp->status);
@@ -2316,11 +2316,17 @@ QDF_STATUS
 cm_send_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 
 	if (!wma)
 		return QDF_STATUS_E_INVAL;
 
-	return wma_delete_peer_on_vdev_stop(wma, wlan_vdev_get_id(vdev));
+	if (wlan_vdev_mlme_is_init_state(vdev)) {
+		wma_remove_bss_peer_on_failure(wma, vdev_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return wma_delete_peer_on_vdev_stop(wma, vdev_id);
 }
 
 QDF_STATUS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2495,8 +2495,8 @@ QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id);
 QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart);
 
 /**
- * wma_remove_bss_peer_on_vdev_start_failure() - remove the bss peers in case of
- * vdev start request failure
+ * wma_remove_bss_peer_on_failure() - remove the bss peers in case of
+ * failure
  * @wma: wma handle.
  * @vdev_id: vdev id
  *
@@ -2505,8 +2505,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart);
  *
  * Return: None;
  */
-void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
-					       uint8_t vdev_id);
+void wma_remove_bss_peer_on_failure(tp_wma_handle wma, uint8_t vdev_id);
 
 /**
  * wma_send_add_bss_resp() - send add bss failure

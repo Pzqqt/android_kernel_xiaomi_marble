@@ -65,7 +65,9 @@ enum csr_roamcomplete_result {
 	eCsrNothingToJoin,
 	eCsrStartBssSuccess,
 	eCsrStartBssFailure,
+#ifndef FEATURE_CM_ENABLE
 	eCsrSilentlyStopRoamingSaveState,
+#endif
 	eCsrJoinFailureDueToConcurrency,
 	eCsrStopBssSuccess,
 	eCsrStopBssFailure,
@@ -364,7 +366,6 @@ void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
 			 eCsrRoamResult roamResult, bool fSuccess);
 void csr_roam_cancel_roaming(struct mac_context *mac, uint32_t sessionId);
 void csr_apply_channel_power_info_wrapper(struct mac_context *mac);
-void csr_reset_pmkid_candidate_list(struct mac_context *mac, uint32_t sessionId);
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					uint32_t tableSize, tSirMacChanInfo
 					*channelTable);
@@ -757,14 +758,14 @@ void csr_get_pmk_info(struct mac_context *mac_ctx, uint8_t session_id,
  * csr_roam_set_psk_pmk() - store PSK/PMK in CSR session
  *
  * @mac  - pointer to global structure for MAC
- * @sessionId - Sme session id
+ * @vdev_id - vdev id
  * @psk_pmk - pointer to an array of PSK/PMK
  * @update_to_fw - Send RSO update config command to firmware to update
  * PMK
  *
  * Return QDF_STATUS - usually it succeed unless sessionId is not found
  */
-QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint32_t sessionId,
+QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
 				uint8_t *psk_pmk, size_t pmk_len,
 				bool update_to_fw);
 

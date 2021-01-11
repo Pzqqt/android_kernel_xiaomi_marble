@@ -165,9 +165,10 @@ enum csr_roam_state {
 enum csr_join_state {
 	eCsrContinueRoaming,
 	eCsrStopRoaming,
+#ifndef FEATURE_CM_ENABLE
 	eCsrReassocToSelfNoCapChange,
 	eCsrStopRoamingDueToConcurrency,
-
+#endif
 };
 
 enum csr_roaming_reason {
@@ -529,10 +530,6 @@ struct csr_roam_session {
 	tPmkidCacheInfo PmkidCacheInfo[CSR_MAX_PMKID_ALLOWED];
 	uint8_t cJoinAttemps;
 	int32_t sPendingCommands;   /* 0 means CSR is ok to low power */
-#ifdef FEATURE_WLAN_WAPI
-	uint16_t NumBkidCache;
-	tBkidCacheInfo BkidCacheInfo[CSR_MAX_BKID_ALLOWED];
-#endif /* FEATURE_WLAN_WAPI */
 	/*
 	 * indicate whether CSR is roaming
 	 * (either via lostlink or dynamic roaming)
@@ -572,8 +569,6 @@ struct csr_roam_session {
 	struct csr_roam_joinstatus joinFailStatusCode;
 	/* status from PE for deauth/disassoc(lostlink) or our own dyn roam */
 	uint32_t roamingStatusCode;
-	uint16_t NumPmkidCandidate;
-	tPmkidCandidateInfo PmkidCandidateInfo[CSR_MAX_PMKID_ALLOWED];
 	bool fWMMConnection;
 	bool fQOSConnection;
 #ifdef FEATURE_WLAN_ESE

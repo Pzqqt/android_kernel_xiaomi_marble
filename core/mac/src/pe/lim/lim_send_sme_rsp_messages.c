@@ -187,6 +187,54 @@ void lim_set_fils_connection(struct wlan_cm_connect_resp *connect_rsp,
 {}
 #endif
 
+#ifdef FEATURE_WLAN_ESE
+static void lim_copy_tspec_ie(struct pe_session *pe_session,
+			      struct cm_vdev_join_rsp *rsp)
+{
+	if (pe_session->tspecIes) {
+		rsp->tspec_ie.len = pe_session->tspecLen;
+		rsp->tspec_ie.ptr =
+		    qdf_mem_malloc(sizeof(rsp->tspec_ie.len));
+		if (!rsp->tspec_ie.ptr)
+			return;
+
+		qdf_mem_copy(rsp->tspec_ie.ptr, pe_session->tspecIes,
+			     rsp->tspec_ie.len);
+		pe_debug("ESE-TspecLen: %d", rsp->tspec_ie.len);
+	}
+}
+
+static void lim_free_tspec_ie(struct pe_session *pe_session)
+{
+	if (pe_session->tspecIes) {
+		qdf_mem_free(pe_session->tspecIes);
+		pe_session->tspecIes = NULL;
+		pe_session->tspecLen = 0;
+	}
+}
+#else
+static inline void lim_copy_tspec_ie(struct pe_session *pe_session,
+				     struct cm_vdev_join_rsp *rsp)
+{}
+static inline void lim_free_tspec_ie(struct pe_session *pe_session)
+{}
+#endif
+
+static void lim_cm_fill_rsp_from_stads(struct mac_context *mac_ctx,
+				       struct pe_session *pe_session,
+				       struct cm_vdev_join_rsp *rsp)
+{
+	tpDphHashNode sta_ds;
+
+	sta_ds = dph_get_hash_entry(mac_ctx,
+				    DPH_STA_HASH_INDEX_PEER,
+				    &pe_session->dph.dphHashTable);
+	if (!sta_ds)
+		return;
+
+	rsp->nss = sta_ds->nss;
+}
+
 static QDF_STATUS
 lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 					struct pe_session *pe_session,
@@ -256,20 +304,22 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 
 		/* move ric date to cm_vdev_join_rsp to fill in csr session */
 		if (pe_session->ricData) {
-			connect_ie->ric_resp_ie.len = pe_session->RICDataLen;
-			connect_ie->ric_resp_ie.ptr =
-			    qdf_mem_malloc(sizeof(connect_ie->ric_resp_ie.len));
-			if (!connect_ie->ric_resp_ie.ptr)
+			rsp->ric_resp_ie.len = pe_session->RICDataLen;
+			rsp->ric_resp_ie.ptr =
+			    qdf_mem_malloc(sizeof(rsp->ric_resp_ie.len));
+			if (!rsp->ric_resp_ie.ptr)
 				return QDF_STATUS_E_NOMEM;
 
-			qdf_mem_copy(connect_ie->ric_resp_ie.ptr,
-				     pe_session->ricData,
-				     connect_ie->ric_resp_ie.len);
+			qdf_mem_copy(rsp->ric_resp_ie.ptr, pe_session->ricData,
+				     rsp->ric_resp_ie.len);
 		}
 
-		/* copy tspec ie to fil lin csr */
+		lim_copy_tspec_ie(pe_session, rsp);
 
 		lim_send_smps_intolerent(mac_ctx, pe_session, bcn_len, bcn_ptr);
+		rsp->supported_nss_1x1 = pe_session->supported_nss_1x1;
+		lim_cm_fill_rsp_from_stads(mac_ctx, pe_session, rsp);
+		rsp->uapsd_mask = pe_session->gUapsdPerAcBitmask;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -303,20 +353,6 @@ static QDF_STATUS lim_cm_flush_connect_rsp(struct scheduler_msg *msg)
 
 	return QDF_STATUS_SUCCESS;
 }
-
-#ifdef FEATURE_WLAN_ESE
-static void lim_free_tspec_ie(struct pe_session *pe_session)
-{
-	if (pe_session->tspecIes) {
-		qdf_mem_free(pe_session->tspecIes);
-		pe_session->tspecIes = NULL;
-		pe_session->tspecLen = 0;
-	}
-}
-#else
-static inline void lim_free_tspec_ie(struct pe_session *pe_session)
-{}
-#endif
 
 static void lim_free_pession_ies(struct pe_session *pe_session)
 {

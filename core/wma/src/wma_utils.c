@@ -4150,8 +4150,7 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
-					       uint8_t vdev_id)
+void wma_remove_bss_peer_on_failure(tp_wma_handle wma, uint8_t vdev_id)
 {
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -4162,12 +4161,10 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 	iface = &wma->interfaces[vdev_id];
 
 	status = wlan_vdev_get_bss_peer_mac(iface->vdev, &bss_peer);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		wma_err("Failed to get bssid");
+	if (QDF_IS_STATUS_ERROR(status))
 		return;
-	}
 
-	wma_err("ADD BSS failure for vdev %d", vdev_id);
+	wma_err("connect failure for vdev %d", vdev_id);
 
 	if (!cdp_find_peer_exist(soc, pdev_id, bss_peer.bytes)) {
 		wma_err("Failed to find peer "QDF_MAC_ADDR_FMT,
@@ -4400,7 +4397,7 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 		wma_err("Failed to send vdev stop for vdev id %d",
 			 add_bss_rsp->vdev_id);
 
-	wma_remove_bss_peer_on_vdev_start_failure(wma, add_bss_rsp->vdev_id);
+	wma_remove_bss_peer_on_failure(wma, add_bss_rsp->vdev_id);
 
 	return wma_vdev_send_start_resp(wma, add_bss_rsp);
 }

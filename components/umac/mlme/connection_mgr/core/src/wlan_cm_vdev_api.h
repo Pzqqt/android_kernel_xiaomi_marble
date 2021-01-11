@@ -91,10 +91,22 @@ struct cm_vdev_disconnect_rsp {
  * struct cm_vdev_join_rsp - connect rsp from vdev mgr to connection mgr
  * @psoc: psoc object
  * @connect_rsp: Connect response to be sent to CM
+ * @ric_resp_ie: ric ie data
+ * @tspec_ie: tspec ie
+ * @supported_nss_1x1: if 1x1 is supported
+ * @nss: used nss
+ * @uapsd_mask: uapsd mask
  */
 struct cm_vdev_join_rsp {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_cm_connect_resp connect_rsp;
+	struct element_info ric_resp_ie;
+#ifdef FEATURE_WLAN_ESE
+	struct element_info tspec_ie;
+#endif
+	bool supported_nss_1x1;
+	uint8_t nss;
+	uint8_t uapsd_mask;
 };
 
 /**
@@ -182,6 +194,16 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 			    struct qdf_mac_addr *peer_mac);
+
+/**
+ * cm_csr_connect_rsp() - Connection manager ext connect resp indication
+ * @vdev: VDEV object
+ * @rsp: Connection vdev response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
+			      struct cm_vdev_join_rsp *rsp);
 
 /**
  * cm_connect_complete_ind() - Connection manager ext connect complete

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,14 +92,10 @@ void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 	connect_profile = &roam_session->connectedProfile;
 	qdf_mem_zero(connect_profile, sizeof(*connect_profile));
 	connect_profile->AuthType = roam_profile->negotiatedAuthType;
-		connect_profile->AuthInfo = roam_profile->AuthType;
 	connect_profile->EncryptionType =
 		roam_profile->negotiatedUCEncryptionType;
-		connect_profile->EncryptionInfo = roam_profile->EncryptionType;
 	connect_profile->mcEncryptionType =
 		roam_profile->negotiatedMCEncryptionType;
-		connect_profile->mcEncryptionInfo =
-			roam_profile->mcEncryptionType;
 	connect_profile->BSSType = roam_profile->BSSType;
 	connect_profile->modifyProfileFields.uapsd_mask =
 		roam_profile->uapsd_mask;

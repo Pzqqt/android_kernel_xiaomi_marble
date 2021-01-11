@@ -377,8 +377,8 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 			      &hdd_sta_ctx->conn_info.hs20vendor_ie);
 
 	status = sme_unpack_assoc_rsp(mac_handle,
-				      rsp->connect_ies.assoc_req.ptr,
-				      rsp->connect_ies.assoc_req.len,
+				      rsp->connect_ies.assoc_rsp.ptr,
+				      rsp->connect_ies.assoc_rsp.len,
 				      assoc_resp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("could not parse assoc response");

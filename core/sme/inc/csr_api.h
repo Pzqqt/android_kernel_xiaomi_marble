@@ -203,7 +203,6 @@ typedef enum {
 
 typedef struct tagCsrSSIDInfo {
 	tSirMacSSid SSID;
-	bool handoffPermitted;
 	tHiddenssId ssidHidden;
 } tCsrSSIDInfo;
 
@@ -631,8 +630,6 @@ typedef struct tagCsrRoamModifyProfileFields {
 	 * SME-QoS might need to modify this field
 	 */
 	uint8_t uapsd_mask;
-	/* HDD might ask to modify this field */
-	uint16_t listen_interval;
 } tCsrRoamModifyProfileFields;
 
 struct csr_roam_profile {
@@ -744,19 +741,13 @@ typedef struct tagCsrRoamHTProfile {
 
 typedef struct tagCsrRoamConnectedProfile {
 	tSirMacSSid SSID;
-	bool handoffPermitted;
-	bool ssidHidden;
 	uint32_t op_freq;
 	struct qdf_mac_addr bssid;
 	uint16_t beaconInterval;
 	eCsrRoamBssType BSSType;
 	enum csr_akm_type AuthType;
-	tCsrAuthList AuthInfo;
-	tCsrAuthList akm_list;
 	eCsrEncryptionType EncryptionType;
-	tCsrEncryptionList EncryptionInfo;
 	eCsrEncryptionType mcEncryptionType;
-	tCsrEncryptionList mcEncryptionInfo;
 	uint8_t country_code[WNI_CFG_COUNTRY_CODE_LEN];
 	uint32_t vht_channel_width;
 	tCsrKeys Keys;
@@ -769,21 +760,16 @@ typedef struct tagCsrRoamConnectedProfile {
 	uint8_t acm_mask;
 	tCsrRoamModifyProfileFields modifyProfileFields;
 	bool qosConnection;     /* A connection is QoS enabled */
-	uint32_t nAddIEAssocLength;
-	/*
-	 * If not null,it's IE byte stream for additional IE,
-	 * which can be WSC IE and/or P2P IE
-	 */
-	uint8_t *pAddIEAssoc;
 	struct bss_description *bss_desc;
 	bool qap;               /* AP supports QoS */
 	struct mobility_domain_info mdid;
 #ifdef FEATURE_WLAN_ESE
-	tCsrEseCckmInfo eseCckmInfo;
 	bool isESEAssoc;
 #endif
 	uint32_t dot11Mode;
+#ifndef FEATURE_CM_ENABLE
 	uint8_t proxy_arp_service;
+#endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tCsrRoamHTProfile ht_profile;
 #endif

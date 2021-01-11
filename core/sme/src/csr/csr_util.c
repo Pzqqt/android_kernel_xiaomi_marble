@@ -2800,6 +2800,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	int32_t rsn_val;
 	struct wlan_crypto_pmksa pmksa, *pmksa_peer;
 	struct csr_roam_session *session = &mac->roam.roamSession[sessionId];
+	struct rso_config *rso_cfg;
 
 	if (!local_ap_ie &&
 	    (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies
@@ -2877,6 +2878,14 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	if (pmksa_peer) {
 		csr_update_session_pmk(session, pmksa_peer);
 		csr_update_pmksa_to_profile(pProfile, pmksa_peer);
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (rso_cfg) {
+		rso_cfg->rsn_cap = 0;
+		if (pProfile->MFPRequired)
+			rso_cfg->rsn_cap |= WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+		if (pProfile->MFPCapable)
+			rso_cfg->rsn_cap |= WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
 	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);

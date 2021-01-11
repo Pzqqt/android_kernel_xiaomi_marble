@@ -293,7 +293,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	return eSIR_SME_SUCCESS;
 
 peer_cleanup:
-	wma_remove_bss_peer_on_vdev_start_failure(wma, vdev_id);
+	wma_remove_bss_peer_on_failure(wma, vdev_id);
 send_fail_resp:
 	wma_send_add_bss_resp(wma, vdev_id, QDF_STATUS_E_FAILURE);
 
