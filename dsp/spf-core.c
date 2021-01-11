@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -356,13 +356,13 @@ static int spf_core_platform_driver_probe(struct platform_device *pdev)
 
 	INIT_WORK(&spf_core_priv->add_chld_dev_work, spf_core_add_child_devices);
 
-        ret = gpr_driver_register(&qcom_spf_core_driver);
-        if (ret) {
+	spf_core_priv->is_initial_boot = true;
+	ret = gpr_driver_register(&qcom_spf_core_driver);
+	if (ret) {
 		pr_err("%s: gpr driver register failed = %d\n",
 			__func__, ret);
 		ret = 0;
 	}
-        spf_core_priv->is_initial_boot = true;
 
 #if 0
 	ret = snd_event_client_register(&pdev->dev, &gpr_ssr_ops, NULL);
