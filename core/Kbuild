@@ -1,3 +1,7 @@
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
+ccflags-y	+= -DRMNET_LA_PLATFORM
+endif
+
 obj-m += rmnet_core.o
 obj-m += rmnet_ctl.o
 rmnet_core-y := rmnet_config.o rmnet_handlers.o rmnet_descriptor.o \

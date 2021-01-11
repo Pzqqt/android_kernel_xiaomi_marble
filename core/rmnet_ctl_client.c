@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * RMNET_CTL client handlers
  *
@@ -7,6 +7,7 @@
 
 #include <linux/debugfs.h>
 #include <linux/ipc_logging.h>
+#include <linux/version.h>
 #include "rmnet_ctl.h"
 #include "rmnet_ctl_client.h"
 
@@ -47,9 +48,17 @@ void rmnet_ctl_set_dbgfs(bool enable)
 				RMNET_CTL_LOG_NAME, NULL);
 
 		if (!IS_ERR_OR_NULL(ctl_ep.dbgfs_dir))
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
 			ctl_ep.dbgfs_loglvl = debugfs_create_u8(
 				RMNET_CTL_LOG_LVL, 0644, ctl_ep.dbgfs_dir,
 				&ipc_log_lvl);
+#else
+			debugfs_create_u8((const char *) RMNET_CTL_LOG_LVL,
+					  (umode_t) 0644,
+					  (struct dentry *) ctl_ep.dbgfs_dir,
+					  (u8 *) &ipc_log_lvl);
+#endif
+
 
 		if (!ctl_ep.ipc_log)
 			ctl_ep.ipc_log = ipc_log_context_create(
