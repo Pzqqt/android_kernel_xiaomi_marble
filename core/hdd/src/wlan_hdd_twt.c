@@ -147,6 +147,10 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
 	if (tb[cmd_id]) {
 		params->dialog_id = nla_get_u8(tb[cmd_id]);
+		if (params->dialog_id > TWT_MAX_DIALOG_ID) {
+			hdd_err_rl("Flow id (%u) invalid", params->dialog_id);
+			return -EINVAL;
+		}
 	} else {
 		params->dialog_id = 0;
 		hdd_debug("TWT_SETUP_FLOW_ID not specified. set to zero");
