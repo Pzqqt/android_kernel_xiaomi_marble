@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -740,13 +740,14 @@ enum monitor_mode_concurrency {
  * timeout to same AP and auth retries during roaming
  * @Min: 0x0
  * @Max: 0x53
- * @Default: 0x49
+ * @Default: 0x52
  *
  * This ini is used to set max auth retry in auth phase of roaming and initial
  * connection and max connection retry in case of assoc timeout. MAX Auth
  * retries are capped to 3, connection retries are capped to 2 and roam Auth
  * retry is capped to 1.
- * Default is 0x49 i.e. 1 retry each.
+ * Default is 0x52 i.e. 1 roam auth retry, 2 auth retry and 2 full connection
+ * retry.
  *
  * Bits       Retry Type
  * BIT[0:2]   AUTH retries
@@ -774,7 +775,7 @@ enum monitor_mode_concurrency {
  * </ini>
  */
 #define CFG_SAE_CONNECION_RETRIES CFG_INI_UINT("sae_connect_retries", \
-				0, 0x53, 0x49, CFG_VALUE_OR_DEFAULT, \
+				0, 0x53, 0x52, CFG_VALUE_OR_DEFAULT, \
 				"Bit mask to retry Auth and full connection on assoc timeout to same AP for SAE connection")
 
 /*
