@@ -729,8 +729,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
 	buf_type = buffer->type;
 	if (!is_valid_hfi_buffer_type(inst, buf_type, __func__)) {
-		/* TODO */
-		//msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 

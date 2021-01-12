@@ -821,9 +821,15 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 				0);
 		if (rc)
 			return rc;
+		rc = msm_vidc_state_change_stop(inst);
+		if (rc)
+			return rc;
 	} else if (cmd == V4L2_ENC_CMD_START) {
 		if (!msm_vidc_allow_start(inst))
 			return -EBUSY;
+		rc = msm_vidc_state_change_start(inst);
+		if (rc)
+			return rc;
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_RESUME,
 				INPUT_PORT,
@@ -1332,7 +1338,20 @@ set_default:
 	s_vpr_h(inst->sid, "%s: type %u value %#x\n",
 		__func__, s_parm->type, q16_rate);
 
-	if (is_frame_rate) {
+	if (!is_frame_rate) {
+		capability->cap[OPERATING_RATE].value = q16_rate;
+		goto exit;
+	} else {
+		capability->cap[FRAME_RATE].value = q16_rate;
+	}
+
+	/*
+	 * In static case, frame rate is set during via
+	 * inst database set function mentioned in
+	 * FRAME_RATE cap id.
+	 * In dynamic case, frame rate is set like below.
+	 */
+	if (inst->vb2q[OUTPUT_PORT].streaming) {
 		rc = venus_hfi_session_property(inst,
 			HFI_PROP_FRAME_RATE,
 			HFI_HOST_FLAGS_NONE,
@@ -1346,9 +1365,6 @@ set_default:
 				__func__);
 			goto exit;
 		}
-		capability->cap[FRAME_RATE].value = q16_rate;
-	} else {
-		capability->cap[OPERATING_RATE].value = q16_rate;
 	}
 
 exit:

@@ -159,7 +159,16 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	/* ((4096 * 2304) / 256) * 60 fps */
 	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 2211840, 1, 2211840},
 
-	{FRAME_RATE, ENC|DEC, CODECS_ALL,
+	{FRAME_RATE, ENC, CODECS_ALL,
+		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+		1, (DEFAULT_FPS << 16),
+		0,
+		HFI_PROP_FRAME_RATE,
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		{0}, {0},
+		NULL, msm_vidc_set_q16},
+
+	{FRAME_RATE, DEC, CODECS_ALL,
 		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
 		1, (DEFAULT_FPS << 16),
 		0,
