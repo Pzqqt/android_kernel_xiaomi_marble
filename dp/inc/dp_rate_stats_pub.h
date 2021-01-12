@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,9 +32,9 @@
 #define WLANSTATS_MAX_BW 8
 #define WLAN_DATA_TID_MAX 8
 #define WLAN_MAC_ADDR_LEN 6
-#define WLANSTATS_RSSI_OFFSET 8
-#define WLANSTATS_RSSI_MASK 0xff
-#define WLANSTATS_RSSI_MAX 0x80
+#define WLANSTATS_SNR_OFFSET 8
+#define WLANSTATS_SNR_MASK 0xff
+#define WLANSTATS_SNR_MAX 0x80
 #define INVALID_CACHE_IDX (-1)
 #define WLANSTATS_PEER_COOKIE_LSB 32
 #define WLANSTATS_COOKIE_PLATFORM_OFFSET 0xFFFFFFFF00000000
