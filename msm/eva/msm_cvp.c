@@ -211,7 +211,9 @@ static int msm_cvp_session_process_hfi(
 	}
 	pkt_type = in_pkt->pkt_data[1];
 	if (pkt_type == HFI_CMD_SESSION_CVP_SET_PERSIST_BUFFERS ||
-		pkt_type == HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS)
+		pkt_type == HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS ||
+		pkt_type == HFI_CMD_SESSION_CVP_DMM_PARAMS ||
+		pkt_type == HFI_CMD_SESSION_CVP_WARP_DS_PARAMS)
 		rc = msm_cvp_map_user_persist(inst, in_pkt, offset, buf_num);
 	else if (pkt_type == HFI_CMD_SESSION_CVP_RELEASE_PERSIST_BUFFERS)
 		rc = msm_cvp_mark_user_persist(inst, in_pkt, offset, buf_num);
@@ -651,7 +653,7 @@ static int msm_cvp_session_process_hfi_fence(struct msm_cvp_inst *inst,
 	pkt = (struct cvp_hfi_cmd_session_hdr *)&fence_pkt->pkt_data;
 	idx = get_pkt_index((struct cvp_hal_session_cmd_pkt *)pkt);
 
-	if (idx < 0 || pkt->size > MAX_HFI_FENCE_OFFSET) {
+	if (idx < 0 || (pkt->size > MAX_HFI_FENCE_OFFSET * sizeof(unsigned int))) {
 		dprintk(CVP_ERR, "%s incorrect packet %d %#x\n", __func__,
 				pkt->size, pkt->packet_type);
 		goto exit;
@@ -1883,7 +1885,7 @@ int msm_cvp_session_init(struct msm_cvp_inst *inst)
 
 	inst->prop.type = HFI_SESSION_CV;
 	if (inst->session_type == MSM_CVP_KERNEL)
-		inst->prop.type = HFI_SESSION_DME;
+		inst->prop.type = HFI_SESSION_DMM;
 
 	inst->prop.kernel_mask = 0xFFFFFFFF;
 	inst->prop.priority = 0;

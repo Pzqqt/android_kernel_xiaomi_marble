@@ -429,6 +429,12 @@ static int hfi_process_session_cvp_operation_config(u32 device_id,
 	else if (pkt->packet_type == HFI_MSG_SESSION_CVP_SET_MODEL_BUFFERS)
 		signal = get_signal_from_pkt_type(
 				HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS);
+	else if (pkt->packet_type == HFI_MSG_SESSION_CVP_DMM_PARAMS)
+		signal = get_signal_from_pkt_type(
+				HFI_CMD_SESSION_CVP_DMM_PARAMS);
+	else if (pkt->packet_type == HFI_MSG_SESSION_CVP_WARP_DS_PARAMS)
+		signal = get_signal_from_pkt_type(
+				HFI_CMD_SESSION_CVP_WARP_DS_PARAMS);
 	else
 		signal = get_signal_from_pkt_type(conf_id);
 
@@ -657,12 +663,16 @@ int cvp_hfi_process_msg_packet(u32 device_id, void *hdr,
 	case HFI_MSG_SESSION_CVP_SET_PERSIST_BUFFERS:
 	case HFI_MSG_SESSION_CVP_RELEASE_PERSIST_BUFFERS:
 	case HFI_MSG_SESSION_CVP_SET_MODEL_BUFFERS:
+	case HFI_MSG_SESSION_CVP_DMM_PARAMS:
+	case HFI_MSG_SESSION_CVP_WARP_DS_PARAMS:
 		pkt_func =
 			(pkt_func_def)hfi_process_session_cvp_operation_config;
 		break;
 	case HFI_MSG_SESSION_CVP_DS:
 	case HFI_MSG_SESSION_CVP_DFS:
-	case HFI_MSG_SESSION_CVP_DME:
+	case HFI_MSG_SESSION_CVP_DMM:
+	case HFI_MSG_SESSION_CVP_WARP:
+	case HFI_MSG_SESSION_CVP_WARP_NCC:
 	case HFI_MSG_SESSION_CVP_FD:
 		pkt_func = (pkt_func_def)hfi_process_session_cvp_msg;
 		break;

@@ -15,7 +15,7 @@
 #include <linux/refcount.h>
 #include <media/msm_eva_private.h>
 
-#define MAX_FRAME_BUFFER_NUMS 30
+#define MAX_FRAME_BUFFER_NUMS 48
 #define MAX_DMABUF_NUMS 64
 
 struct msm_cvp_inst;

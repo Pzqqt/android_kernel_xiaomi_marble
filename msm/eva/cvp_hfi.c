@@ -51,24 +51,59 @@ const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
 		.resp = HAL_NO_RESP,
 	},
 	{
-		.size = HFI_DME_CONFIG_CMD_SIZE,
-		.type = HFI_CMD_SESSION_CVP_DME_CONFIG,
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_NCC_CONFIG,
 		.buf_offset = 0,
 		.buf_num = 0,
-		.resp = HAL_SESSION_DME_CONFIG_CMD_DONE,
+		.resp = HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE,
 	},
 	{
-		.size = HFI_DME_BASIC_CONFIG_CMD_SIZE,
-		.type = HFI_CMD_SESSION_CVP_DME_BASIC_CONFIG,
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_NCC_FRAME,
 		.buf_offset = 0,
 		.buf_num = 0,
-		.resp = HAL_SESSION_DME_BASIC_CONFIG_CMD_DONE,
+		.resp = HAL_NO_RESP,
 	},
 	{
-		.size = HFI_DME_FRAME_CMD_SIZE,
-		.type = HFI_CMD_SESSION_CVP_DME_FRAME,
-		.buf_offset = HFI_DME_FRAME_BUFFERS_OFFSET,
-		.buf_num = HFI_DME_BUF_NUM,
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_CONFIG,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_SESSION_WARP_CONFIG_CMD_DONE,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_DS_PARAMS,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_SESSION_WARP_DS_PARAMS_CMD_DONE,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_FRAME,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DMM_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DMM_CONFIG,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_SESSION_DMM_CONFIG_CMD_DONE,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_DMM_PARAMS,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_SESSION_DMM_PARAMS_CMD_DONE,
+	},
+	{
+		.size = HFI_DMM_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DMM_FRAME,
+		.buf_offset = HFI_DMM_FRAME_BUFFERS_OFFSET,
+		.buf_num = HFI_DMM_BUF_NUM,
 		.resp = HAL_NO_RESP,
 	},
 	{
@@ -2909,7 +2944,9 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_REGISTER_BUFFER_DONE:
 	case HAL_SESSION_UNREGISTER_BUFFER_DONE:
 	case HAL_SESSION_DFS_CONFIG_CMD_DONE:
-	case HAL_SESSION_DME_CONFIG_CMD_DONE:
+	case HAL_SESSION_DMM_CONFIG_CMD_DONE:
+	case HAL_SESSION_WARP_CONFIG_CMD_DONE:
+	case HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE:
 	case HAL_SESSION_TME_CONFIG_CMD_DONE:
 	case HAL_SESSION_ODT_CONFIG_CMD_DONE:
 	case HAL_SESSION_OD_CONFIG_CMD_DONE:
@@ -2919,9 +2956,12 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_DCM_CONFIG_CMD_DONE:
 	case HAL_SESSION_DC_CONFIG_CMD_DONE:
 	case HAL_SESSION_PYS_HCD_CONFIG_CMD_DONE:
-	case HAL_SESSION_DME_BASIC_CONFIG_CMD_DONE:
+	case HAL_SESSION_DMM_PARAMS_CMD_DONE:
+	case HAL_SESSION_WARP_DS_PARAMS_CMD_DONE:
 	case HAL_SESSION_DFS_FRAME_CMD_DONE:
-	case HAL_SESSION_DME_FRAME_CMD_DONE:
+	case HAL_SESSION_DMM_FRAME_CMD_DONE:
+	case HAL_SESSION_WARP_FRAME_CMD_DONE:
+	case HAL_SESSION_WARP_NCC_FRAME_CMD_DONE:
 	case HAL_SESSION_ICA_FRAME_CMD_DONE:
 	case HAL_SESSION_FD_FRAME_CMD_DONE:
 	case HAL_SESSION_PERSIST_SET_DONE:
