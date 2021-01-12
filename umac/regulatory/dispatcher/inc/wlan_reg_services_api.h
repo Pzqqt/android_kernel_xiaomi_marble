@@ -926,15 +926,6 @@ uint8_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 			      qdf_freq_t freq);
 
 /**
- * wlan_reg_chan_to_freq () - convert channel number to frequency
- * @chan: channel number
- *
- * Return: true or false
- */
-qdf_freq_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-				 uint8_t chan);
-
-/**
  * wlan_reg_legacy_chan_to_freq () - convert chan to freq, for 2G and 5G
  * @chan: channel number
  *

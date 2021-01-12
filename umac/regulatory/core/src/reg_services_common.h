@@ -360,15 +360,6 @@ bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 uint8_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
 /**
- * reg_chan_to_freq() - Get frequency from channel number
- * @pdev: Pointer to pdev
- * @chan_num: Channel number
- *
- * Return: Channel frequency if success, otherwise 0
- */
-qdf_freq_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint8_t chan_num);
-
-/**
  * reg_legacy_chan_to_freq() - Get freq from chan noumber, for 2G and 5G
  * @pdev: Pointer to pdev
  * @chan_num: Channel number

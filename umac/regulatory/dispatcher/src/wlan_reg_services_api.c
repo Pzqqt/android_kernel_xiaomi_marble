@@ -584,14 +584,6 @@ uint8_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_reg_freq_to_chan);
 
-qdf_freq_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-				 uint8_t chan_num)
-{
-	return reg_chan_to_freq(pdev, chan_num);
-}
-
-qdf_export_symbol(wlan_reg_chan_to_freq);
-
 qdf_freq_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 					uint8_t chan_num)
 {

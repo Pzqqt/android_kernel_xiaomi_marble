@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -369,7 +369,7 @@ bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan)
 	if (!REG_IS_5GHZ_CH(chan))
 		return false;
 
-	freq = reg_chan_to_freq(pdev, chan);
+	freq = reg_legacy_chan_to_freq(pdev, chan);
 
 	if (!(freq >= REG_DSRC_START_FREQ && freq <= REG_DSRC_END_FREQ))
 		return false;
@@ -425,7 +425,7 @@ bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan)
 	if (!REG_IS_5GHZ_CH(chan))
 		return false;
 
-	freq = reg_chan_to_freq(pdev, chan);
+	freq = reg_legacy_chan_to_freq(pdev, chan);
 
 	if (!(freq >= REG_ETSI13_SRD_START_FREQ &&
 	      freq <= REG_ETSI13_SRD_END_FREQ))

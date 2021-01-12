@@ -1806,48 +1806,12 @@ uint16_t reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 					max_chan_range);
 }
 
-qdf_freq_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-			    uint8_t chan_num)
-{
-	uint32_t count;
-	struct regulatory_channel *chan_list;
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-
-	if (chan_num == 0) {
-		reg_err_rl("Invalid channel %d", chan_num);
-		return 0;
-	}
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev priv obj is NULL");
-		return 0;
-	}
-
-	chan_list = pdev_priv_obj->cur_chan_list;
-	for (count = 0; count < NUM_CHANNELS; count++)
-		if (chan_list[count].chan_num == chan_num) {
-			if (reg_chan_in_range(chan_list,
-					      pdev_priv_obj->range_2g_low,
-					      pdev_priv_obj->range_2g_high,
-					      pdev_priv_obj->range_5g_low,
-					      pdev_priv_obj->range_5g_high,
-					      count)) {
-				return chan_list[count].center_freq;
-			}
-		}
-
-	reg_debug_rl("invalid channel %d", chan_num);
-	return 0;
-}
-
 #ifdef CONFIG_CHAN_NUM_API
 bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
 {
 	qdf_freq_t freq = 0;
 
-	freq = reg_chan_to_freq(pdev, chan_num);
+	freq = reg_legacy_chan_to_freq(pdev, chan_num);
 
 	return REG_IS_49GHZ_FREQ(freq) ? true : false;
 }
