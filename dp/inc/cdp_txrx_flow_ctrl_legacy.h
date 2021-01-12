@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,7 +25,7 @@
 #define _CDP_TXRX_FC_LEG_H_
 #include <cdp_txrx_mob_def.h>
 #include "cdp_txrx_handle.h"
-
+#include <cdp_txrx_cmn.h>
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 
 /**
@@ -43,8 +43,7 @@ cdp_hl_fc_register(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		   tx_pause_callback flowcontrol)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return -EINVAL;
 	}
@@ -120,8 +119,7 @@ cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return 0;
 	}
@@ -156,8 +154,7 @@ static inline int
 cdp_fc_deregister(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return 0;
 	}
@@ -190,8 +187,7 @@ cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		       unsigned int high_watermark_offset)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return false;
 	}
@@ -220,8 +216,7 @@ cdp_fc_ll_set_tx_pause_q_depth(ol_txrx_soc_handle soc,
 		uint8_t vdev_id, int pause_q_depth)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return 0;
 	}
@@ -248,8 +243,7 @@ static inline void
 cdp_fc_vdev_flush(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return;
 	}
@@ -277,8 +271,7 @@ cdp_fc_vdev_pause(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		  uint32_t reason, uint32_t pause_type)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		QDF_BUG(0);
 		return;
 	}
@@ -306,8 +299,7 @@ cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		    uint32_t reason, uint32_t pause_type)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		return;
 	}
 

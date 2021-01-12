@@ -26,6 +26,7 @@
 
 #include "cdp_txrx_handle.h"
 #include "cdp_txrx_ops.h"
+#include <cdp_txrx_cmn.h>
 
 /**
  * @brief finds the ast entry for the packet
@@ -46,8 +47,7 @@ cdp_rawsim_get_astentry(ol_txrx_soc_handle soc, uint8_t vdev_id,
 {
 
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance", __func__);
+		dp_cdp_debug("Invalid Instance");
 		QDF_BUG(0);
 		return QDF_STATUS_E_FAILURE;
 	}

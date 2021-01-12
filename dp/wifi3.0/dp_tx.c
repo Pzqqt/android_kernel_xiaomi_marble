@@ -3000,9 +3000,7 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 			 * dropped in case of intra bss forwarding
 			 */
 			if (sa_peer_id == peer->peer_id) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  " %s: multicast packet",  __func__);
+				dp_tx_debug("multicast packet");
 				DP_STATS_INC(peer, tx.nawds_mcast_drop, 1);
 				continue;
 			}
@@ -3020,9 +3018,7 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 							    NULL);
 
 			if (nbuf_clone) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  FL("pkt send failed"));
+				dp_tx_debug("pkt send failed");
 				qdf_nbuf_free(nbuf_clone);
 			} else {
 				if (peer_id != DP_INVALID_PEER)
@@ -3279,8 +3275,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s Tx reinject path", __func__);
+	dp_tx_debug("Tx reinject path");
 
 	DP_STATS_INC_PKT(vdev, tx_i.reinject_pkts, 1,
 			qdf_nbuf_len(tx_desc->nbuf));
@@ -3339,9 +3334,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 				nbuf_copy = qdf_nbuf_copy(nbuf);
 
 				if (!nbuf_copy) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_DEBUG,
-						FL("nbuf copy failed"));
+					dp_tx_debug("nbuf copy failed");
 					break;
 				}
 
@@ -3352,9 +3345,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 						NULL);
 
 				if (nbuf_copy) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_DEBUG,
-						FL("pkt send failed"));
+					dp_tx_debug("pkt send failed");
 					qdf_nbuf_free(nbuf_copy);
 				}
 			}
@@ -4031,34 +4022,33 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 				 sizeof(qdf_nbuf_data(nbuf)),
 				 tx_desc->id, ts->status, dp_status));
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"-------------------- \n"
-				"Tx Completion Stats: \n"
-				"-------------------- \n"
-				"ack_frame_rssi = %d \n"
-				"first_msdu = %d \n"
-				"last_msdu = %d \n"
-				"msdu_part_of_amsdu = %d \n"
-				"rate_stats valid = %d \n"
-				"bw = %d \n"
-				"pkt_type = %d \n"
-				"stbc = %d \n"
-				"ldpc = %d \n"
-				"sgi = %d \n"
-				"mcs = %d \n"
-				"ofdma = %d \n"
-				"tones_in_ru = %d \n"
-				"tsf = %d \n"
-				"ppdu_id = %d \n"
-				"transmit_cnt = %d \n"
-				"tid = %d \n"
-				"peer_id = %d\n",
-				ts->ack_frame_rssi, ts->first_msdu,
-				ts->last_msdu, ts->msdu_part_of_amsdu,
-				ts->valid, ts->bw, ts->pkt_type, ts->stbc,
-				ts->ldpc, ts->sgi, ts->mcs, ts->ofdma,
-				ts->tones_in_ru, ts->tsf, ts->ppdu_id,
-				ts->transmit_cnt, ts->tid, ts->peer_id);
+	dp_tx_comp_debug("-------------------- \n"
+			 "Tx Completion Stats: \n"
+			 "-------------------- \n"
+			 "ack_frame_rssi = %d \n"
+			 "first_msdu = %d \n"
+			 "last_msdu = %d \n"
+			 "msdu_part_of_amsdu = %d \n"
+			 "rate_stats valid = %d \n"
+			 "bw = %d \n"
+			 "pkt_type = %d \n"
+			 "stbc = %d \n"
+			 "ldpc = %d \n"
+			 "sgi = %d \n"
+			 "mcs = %d \n"
+			 "ofdma = %d \n"
+			 "tones_in_ru = %d \n"
+			 "tsf = %d \n"
+			 "ppdu_id = %d \n"
+			 "transmit_cnt = %d \n"
+			 "tid = %d \n"
+			 "peer_id = %d\n",
+			 ts->ack_frame_rssi, ts->first_msdu,
+			 ts->last_msdu, ts->msdu_part_of_amsdu,
+			 ts->valid, ts->bw, ts->pkt_type, ts->stbc,
+			 ts->ldpc, ts->sgi, ts->mcs, ts->ofdma,
+			 ts->tones_in_ru, ts->tsf, ts->ppdu_id,
+			 ts->transmit_cnt, ts->tid, ts->peer_id);
 
 	/* Update SoC level stats */
 	DP_STATS_INCC(soc, tx.dropped_fw_removed, 1,
@@ -4351,9 +4341,8 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 		break;
 	}
 	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s Invalid HTT tx_status %d\n",
-			  __func__, tx_status);
+		dp_tx_comp_debug("Invalid HTT tx_status %d\n",
+				 tx_status);
 		break;
 	}
 

@@ -354,10 +354,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						     replenish.nbuf_alloc_fail,
 						     1);
 					qdf_frag_free(rx_desc_tlv);
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  "[%s] failed to allocate parent buffer to hold all frag",
-						  __func__);
+					dp_rx_mon_dest_debug("failed to allocate parent buffer to hold all frag");
 					drop_mpdu = true;
 					goto next_msdu;
 				}
@@ -380,10 +377,9 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			if (!is_frag)
 				msdu_cnt--;
 
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "%s total_len %u frag_len %u flags %u",
-				  __func__, total_frag_len, frag_len,
-				  msdu_list.msdu_info[i].msdu_flags);
+			dp_rx_mon_dest_debug("total_len %u frag_len %u flags %u",
+					     total_frag_len, frag_len,
+				      msdu_list.msdu_info[i].msdu_flags);
 
 			rx_pkt_offset = SIZE_OF_MONITOR_TLV;
 

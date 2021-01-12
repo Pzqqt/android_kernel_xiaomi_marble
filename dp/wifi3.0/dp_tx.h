@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -424,9 +424,8 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	queue->desc_pool_id = queue_offset;
 	queue->ring_id = qdf_get_cpu();
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s, pool_id:%d ring_id: %d",
-		  __func__, queue->desc_pool_id, queue->ring_id);
+	dp_tx_debug("pool_id:%d ring_id: %d",
+		    queue->desc_pool_id, queue->ring_id);
 }
 
 /*
@@ -467,9 +466,8 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
 	queue->ring_id = DP_TX_GET_RING_ID(vdev);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s, pool_id:%d ring_id: %d",
-		  __func__, queue->desc_pool_id, queue->ring_id);
+	dp_tx_debug("pool_id:%d ring_id: %d",
+		    queue->desc_pool_id, queue->ring_id);
 }
 
 static inline hal_ring_handle_t dp_tx_get_hal_ring_hdl(struct dp_soc *soc,

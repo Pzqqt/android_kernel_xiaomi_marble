@@ -111,13 +111,6 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_INIT, ## params)
 #define dp_init_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_INIT, params)
 
-#define dp_cdp_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_CDP, params)
-#define dp_cdp_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_CDP, params)
-#define dp_cdp_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_CDP, params)
-#define dp_cdp_info(params...) \
-	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_CDP, ## params)
-#define dp_cdp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_CDP, params)
-
 #define dp_vdev_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_VDEV, params)
 #define dp_vdev_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_VDEV, params)
 #define dp_vdev_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_VDEV, params)
@@ -465,9 +458,8 @@ static void dp_service_mon_rings(struct  dp_soc *soc, uint32_t quota)
 			continue;
 		work_done = dp_mon_process(soc, NULL, ring, quota);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("Reaped %d descs from Monitor rings"),
-			  work_done);
+		dp_rx_mon_dest_debug("Reaped %d descs from Monitor rings",
+				     work_done);
 	}
 }
 
@@ -671,8 +663,7 @@ static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 						       DP_MOD_ID_CDP);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Peer is NULL!\n", __func__);
+		dp_peer_debug("Peer is NULL!");
 		return ret;
 	}
 
@@ -708,8 +699,7 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 						       DP_MOD_ID_CDP);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Peer is NULL!\n", __func__);
+		dp_peer_debug("Peer is NULL!");
 		return status;
 	}
 
@@ -7040,9 +7030,8 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 		 */
 		QDF_ASSERT(peer_id == HTT_INVALID_PEER);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "Deleting peer %pK ("QDF_MAC_ADDR_FMT")", peer,
-			  QDF_MAC_ADDR_REF(peer->mac_addr.raw));
+		dp_peer_debug("Deleting peer %pK ("QDF_MAC_ADDR_FMT")", peer,
+			      QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 
 		/*
 		 * Deallocate the extended stats contenxt
@@ -13146,8 +13135,7 @@ dp_fill_delay_buckets(struct dp_pdev *pdev, uint32_t delay,
 		rstats->to_stack_delay.delay_bucket[delay_index]++;
 		return &rstats->to_stack_delay;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s Incorrect delay mode: %d", __func__, mode);
+		dp_debug("Incorrect delay mode: %d", mode);
 	}
 
 	return NULL;
