@@ -682,13 +682,19 @@ bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return false;
 	}
-	if (type == INPUT_MPLANE || type == INPUT_META_PLANE) {
+	if (type == INPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN ||
 			inst->state == MSM_VIDC_START_OUTPUT)
 			allow = false;
-	} else if (type == OUTPUT_MPLANE || type == OUTPUT_META_PLANE) {
+	} else if (type == INPUT_META_PLANE) {
+		if (inst->state == MSM_VIDC_START_INPUT)
+			allow = false;
+	} else if (type == OUTPUT_MPLANE) {
 		if (inst->state == MSM_VIDC_OPEN ||
 			inst->state == MSM_VIDC_START_INPUT)
+			allow = false;
+	} else if (type == OUTPUT_META_PLANE) {
+		if (inst->state == MSM_VIDC_START_OUTPUT)
 			allow = false;
 	}
 	if (!allow)
