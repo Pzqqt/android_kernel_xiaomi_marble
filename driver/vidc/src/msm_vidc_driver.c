@@ -1557,7 +1557,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	return 0;
 }
 
-int msm_vidc_get_input_internal_buffers(struct msm_vidc_inst *inst,
+int msm_vidc_get_internal_buffers(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type)
 {
 	u32 buf_size;
@@ -2660,7 +2660,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 		if (!buffers)
 			continue;
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
-			s_vpr_e(inst->sid,
+			s_vpr_h(inst->sid,
 				"destroying buffer: type %d idx %d fd %d addr %#x size %d\n",
 				buf->type, buf->index, buf->fd, buf->device_addr, buf->buffer_size);
 			if (is_internal_buffer(buf->type))

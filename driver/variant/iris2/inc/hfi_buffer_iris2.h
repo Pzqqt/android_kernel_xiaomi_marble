@@ -155,8 +155,8 @@ typedef HFI_U32 HFI_BOOL;
  * frame dimensions NV12_UBWC format (including interlace UBWC)
  * (calculation includes all data & metadata planes)
  */
-#define HFI_NV12_UBWC_IL_CALC_BUF_SIZE_V2 \
-	(buf_size, frame_width, frame_height, y_stride_multiple,\
+#define HFI_NV12_UBWC_IL_CALC_BUF_SIZE_V2(buf_size,\
+	frame_width, frame_height, y_stride_multiple,\
 	y_buffer_height_multiple, uv_stride_multiple, \
 	uv_buffer_height_multiple, y_metadata_stride_multiple, \
 	y_metadata_buffer_height_multiple, \
@@ -164,35 +164,35 @@ typedef HFI_U32 HFI_BOOL;
 	do \
 	{ \
 		HFI_U32 y_buf_size, uv_buf_size, y_meta_size, uv_meta_size;   \
-		HFI_U32 stride, height; \
-		HFI_U32 halfHeight = (frame_height + 1) >> 1; \
+		HFI_U32 stride, _height; \
+		HFI_U32 half_height = (frame_height + 1) >> 1; \
 		HFI_NV12_IL_CALC_Y_STRIDE(stride, frame_width,\
 					y_stride_multiple); \
-		HFI_NV12_IL_CALC_Y_BUFHEIGHT(height, half_height,\
+		HFI_NV12_IL_CALC_Y_BUFHEIGHT(_height, half_height,\
 					y_buffer_height_multiple); \
-		HFI_NV12_UBWC_IL_CALC_Y_BUF_SIZE(y_buf_size, stride, height);\
+		HFI_NV12_UBWC_IL_CALC_Y_BUF_SIZE(y_buf_size, stride, _height);\
 		HFI_NV12_IL_CALC_UV_STRIDE(stride, frame_width, \
 					uv_stride_multiple); \
-		HFI_NV12_IL_CALC_UV_BUFHEIGHT(height, half_height, \
+		HFI_NV12_IL_CALC_UV_BUFHEIGHT(_height, half_height, \
 					uv_buffer_height_multiple); \
-		HFI_NV12_UBWC_IL_CALC_UV_BUF_SIZE(uv_buf_size, stride, height);\
+		HFI_NV12_UBWC_IL_CALC_UV_BUF_SIZE(uv_buf_size, stride, _height);\
 		HFI_UBWC_CALC_METADATA_PLANE_STRIDE(stride, frame_width,\
 				y_metadata_stride_multiple, \
 			HFI_COLOR_FORMAT_YUV420_NV12_UBWC_Y_TILE_WIDTH);\
-		HFI_UBWC_METADATA_PLANE_BUFHEIGHT(height, half_height, \
+		HFI_UBWC_METADATA_PLANE_BUFHEIGHT(_height, half_height, \
 				y_metadata_buffer_height_multiple,\
 			HFI_COLOR_FORMAT_YUV420_NV12_UBWC_Y_TILE_HEIGHT);\
 		HFI_UBWC_METADATA_PLANE_BUFFER_SIZE(y_meta_size, stride, \
-				height);    \
+				_height);    \
 		HFI_UBWC_UV_METADATA_PLANE_STRIDE(stride, frame_width,\
 				uv_metadata_stride_multiple, \
 			HFI_COLOR_FORMAT_YUV420_NV12_UBWC_UV_TILE_WIDTH); \
-		HFI_UBWC_UV_METADATA_PLANE_BUFHEIGHT(height, half_height,\
+		HFI_UBWC_UV_METADATA_PLANE_BUFHEIGHT(_height, half_height,\
 				uv_metadata_buffer_height_multiple,\
 			HFI_COLOR_FORMAT_YUV420_NV12_UBWC_UV_TILE_HEIGHT);\
 		HFI_UBWC_METADATA_PLANE_BUFFER_SIZE(uv_meta_size, stride, \
-				 height); \
-		bufSize = (y_buf_size + uv_buf_size + y_meta_size + \
+				 _height); \
+		buf_size = (y_buf_size + uv_buf_size + y_meta_size + \
 			uv_meta_size) << 1;\
 	} while (0)
 

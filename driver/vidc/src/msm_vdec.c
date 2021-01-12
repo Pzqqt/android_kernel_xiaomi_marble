@@ -726,27 +726,27 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_BIN);
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_COMV);
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_LINE);
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_get_input_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
 	if (rc)
 		return rc;
 
-	s_vpr_h(inst->sid, "internal buffer: min     size     reuse\n");
+	s_vpr_h(inst->sid, "input internal buffer: min     size     reuse\n");
 	s_vpr_h(inst->sid, "bin  buffer: %d      %d      %d\n",
 		inst->buffers.bin.min_count,
 		inst->buffers.bin.size,
@@ -771,11 +771,32 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	return rc;
 }
 
+static int msm_vdec_get_output_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+
+	s_vpr_h(inst->sid, "output internal buffer: min     size     reuse\n");
+	s_vpr_h(inst->sid, "dpb  buffer: %d      %d      %d\n",
+		inst->buffers.bin.min_count,
+		inst->buffers.bin.size,
+		inst->buffers.bin.reuse);
+
+	return rc;
+}
+
 static int msm_vdec_create_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -800,11 +821,26 @@ static int msm_vdec_create_input_internal_buffers(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+static int msm_vdec_create_output_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
 static int msm_vdec_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -829,16 +865,31 @@ static int msm_vdec_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+static int msm_vdec_queue_output_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
+
+	return 0;
+}
 
 static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	s_vpr_h(inst->sid, "%s()\n",__func__);
 
 	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
@@ -853,6 +904,23 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+static int msm_vdec_release_output_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	s_vpr_h(inst->sid, "%s()\n",__func__);
+
+	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
 		return rc;
 
@@ -1444,6 +1512,22 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	}
 
 	rc = msm_vdec_subscribe_metadata(inst, OUTPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = msm_vdec_get_output_internal_buffers(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_vdec_release_output_internal_buffers(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_vdec_create_output_internal_buffers(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_vdec_queue_output_internal_buffers(inst);
 	if (rc)
 		goto error;
 

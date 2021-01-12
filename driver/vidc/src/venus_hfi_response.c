@@ -557,6 +557,35 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 	return rc;
 }
 
+static int handle_dpb_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_DPB, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
 static int handle_persist_buffer(struct msm_vidc_inst *inst,
 	struct hfi_buffer *buffer)
 {
@@ -734,11 +763,17 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 				rc = handle_output_metadata_buffer(inst, buffer);
 			else if (buf_type == HFI_BUFFER_BITSTREAM)
 				rc = handle_output_buffer(inst, buffer);
+			else
+				s_vpr_e(inst->sid, "%s: unknown bitstream port buffer type %#x\n",
+					__func__, buf_type);
 		} else if (port_type == HFI_PORT_RAW) {
 			if (buf_type == HFI_BUFFER_METADATA)
 				rc = handle_input_metadata_buffer(inst, buffer);
 			else if (buf_type == HFI_BUFFER_RAW)
 				rc = handle_input_buffer(inst, buffer);
+			else
+				s_vpr_e(inst->sid, "%s: unknown raw port buffer type %#x\n",
+					__func__, buf_type);
 		}
 	} else if (is_decode_session(inst)) {
 		if (port_type == HFI_PORT_BITSTREAM) {
@@ -756,11 +791,19 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 				rc = handle_line_buffer(inst, buffer);
 			else if (buf_type == HFI_BUFFER_PERSIST)
 				rc = handle_persist_buffer(inst, buffer);
+			else
+				s_vpr_e(inst->sid, "%s: unknown bitstream port buffer type %#x\n",
+					__func__, buf_type);
 		} else if (port_type == HFI_PORT_RAW) {
 			if (buf_type == HFI_BUFFER_METADATA)
 				rc = handle_output_metadata_buffer(inst, buffer);
 			else if (buf_type == HFI_BUFFER_RAW)
 				rc = handle_output_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_DPB)
+				rc = handle_dpb_buffer(inst, buffer);
+			else
+				s_vpr_e(inst->sid, "%s: unknown raw port buffer type %#x\n",
+					__func__, buf_type);
 		}
 	} else {
 		s_vpr_e(inst->sid, "%s: invalid session %d\n",

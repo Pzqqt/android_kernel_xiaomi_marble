@@ -12,6 +12,7 @@
 #include "msm_vidc_platform.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
+#include "msm_media_info.h"
 
 static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 {
@@ -184,6 +185,51 @@ static u32 msm_vidc_decoder_persist_size_iris2(struct msm_vidc_inst *inst)
 		HFI_BUFFER_PERSIST_H265D(size);
 	else if (inst->codec == MSM_VIDC_VP9)
 		HFI_BUFFER_PERSIST_VP9D(size);
+
+	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	return size;
+}
+
+static u32 msm_vidc_decoder_dpb_size_iris2(struct msm_vidc_inst *inst)
+{
+
+	u32 size = 0;
+	u32 color_fmt, media_fmt;
+	u32 width, height;
+	struct v4l2_format *f;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return size;
+	}
+
+	color_fmt = inst->capabilities->cap[PIX_FMTS].value;
+	if (!is_linear_colorformat(color_fmt))
+		return size;
+
+	f = &inst->fmts[OUTPUT_PORT];
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
+
+	if (color_fmt == MSM_VIDC_FMT_NV12) {
+		media_fmt = COLOR_FMT_NV12_UBWC;
+		HFI_NV12_UBWC_IL_CALC_BUF_SIZE_V2(size, width, height,
+			VENUS_Y_STRIDE(media_fmt, width), VENUS_Y_SCANLINES(media_fmt, height),
+			VENUS_UV_STRIDE(media_fmt, width), VENUS_UV_SCANLINES(media_fmt, height),
+			VENUS_Y_META_STRIDE(media_fmt, width), VENUS_Y_META_SCANLINES(media_fmt,
+				height),
+			VENUS_UV_META_STRIDE(media_fmt, width), VENUS_UV_META_SCANLINES(media_fmt,
+				height));
+	} else if (color_fmt == MSM_VIDC_FMT_P010) {
+		media_fmt = COLOR_FMT_P010_UBWC;
+		HFI_YUV420_TP10_UBWC_CALC_BUF_SIZE(size,
+			VENUS_Y_STRIDE(media_fmt, width), VENUS_Y_SCANLINES(media_fmt, height),
+			VENUS_UV_STRIDE(media_fmt, width), VENUS_UV_SCANLINES(media_fmt, height),
+			VENUS_Y_META_STRIDE(media_fmt, width), VENUS_Y_META_SCANLINES(media_fmt,
+				height),
+			VENUS_UV_META_STRIDE(media_fmt, width), VENUS_UV_META_SCANLINES(media_fmt,
+				height));
+	}
 
 	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
 	return size;
@@ -436,6 +482,9 @@ int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_PERSIST:
 			size = msm_vidc_decoder_persist_size_iris2(inst);
 			break;
+		case MSM_VIDC_BUF_DPB:
+			size = msm_vidc_decoder_dpb_size_iris2(inst);
+			break;
 		default:
 			break;
 		}
@@ -482,6 +531,44 @@ int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 	return size;
 }
 
+static int msm_buffer_encoder_dpb_count(struct msm_vidc_inst *inst)
+{
+	int count = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+
+	if (inst->codec == MSM_VIDC_H264) {
+		// TODO: replace zeros with appropriate variables
+		HFI_IRIS2_ENC_RECON_BUF_COUNT(count, 0, 0, 0, 0, 0,
+			HFI_CODEC_ENCODE_AVC);
+	} else if (inst->codec == MSM_VIDC_HEVC) {
+		// TODO: replace zeros with appropriate variables
+		HFI_IRIS2_ENC_RECON_BUF_COUNT(count, 0, 0, 0, 0, 0,
+			HFI_CODEC_ENCODE_HEVC);
+	}
+	return count;
+}
+
+static int msm_buffer_decoder_dpb_count(struct msm_vidc_inst *inst)
+{
+	int count = 0;
+	u32 color_fmt;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+
+	color_fmt = inst->capabilities->cap[PIX_FMTS].value;
+	if (is_linear_colorformat(color_fmt))
+		count = inst->buffers.output.min_count;
+
+	return count;
+}
+
 int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type)
 {
@@ -489,7 +576,7 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+		return 0;
 	}
 
 	if (is_decode_session(inst)) {
@@ -509,7 +596,9 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_PERSIST:
 			count = 1;
 			break;
-		//todo: add DPB
+		case MSM_VIDC_BUF_DPB:
+			count = msm_buffer_decoder_dpb_count(inst);
+			break;
 		default:
 			break;
 		}
@@ -527,12 +616,12 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_COMV:
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
-		case MSM_VIDC_BUF_DPB:
-		//todo: add DPB count
 		case MSM_VIDC_BUF_ARP:
 		case MSM_VIDC_BUF_VPSS:
 			count = 1;
 			break;
+		case MSM_VIDC_BUF_DPB:
+			count = msm_buffer_encoder_dpb_count(inst);
 		default:
 			break;
 		}
@@ -548,7 +637,7 @@ int msm_buffer_extra_count_iris2(struct msm_vidc_inst *inst,
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+		return 0;
 	}
 
 	switch (buffer_type) {
