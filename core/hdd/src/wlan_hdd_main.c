@@ -7087,7 +7087,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE
 #else
 		    hdd_conn_is_connected(sta_ctx) ||
-		    hdd_is_connecting(sta_ctx)
+		    hdd_cm_is_connecting(adapter)
 #endif
 		    ) {
 			INIT_COMPLETION(adapter->disconnect_comp_var);
@@ -18046,9 +18046,7 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 	if (((QDF_STA_MODE == adapter->device_mode)
 		|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
 		|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
-		&& (eConnectionState_Connecting ==
-			(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
-				conn_info.conn_state)) {
+		&& hdd_cm_is_connecting(adapter)) {
 		hdd_debug("%pK(%d) mode %d Connection is in progress",
 			  WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 			  adapter->vdev_id, adapter->device_mode);

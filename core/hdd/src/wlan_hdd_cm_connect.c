@@ -68,12 +68,106 @@ bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 
 	return is_vdev_active;
 }
+
+bool hdd_cm_is_connecting(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_connecting;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", adapter->vdev_id);
+		return false;
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
+	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_connecting = ucfg_cm_is_vdev_connecting(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_connecting;
+}
+
+bool hdd_cm_is_disconnected(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_disconnected;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", adapter->vdev_id);
+		return false;
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
+	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_disconnected = ucfg_cm_is_vdev_disconnected(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_disconnected;
+}
+
+bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_disconnecting;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", adapter->vdev_id);
+		return false;
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
+	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_disconnecting = ucfg_cm_is_vdev_disconnecting(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_disconnecting;
+}
+
 #else
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	return (sta_ctx->conn_info.conn_state == eConnectionState_Associated);
+}
+
+bool hdd_cm_is_connecting(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	return sta_ctx->conn_info.conn_state == eConnectionState_Connecting;
+}
+
+bool hdd_cm_is_disconnected(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	return sta_ctx->conn_info.conn_state == eConnectionState_NotConnected;
+}
+
+bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	return sta_ctx->conn_info.conn_state == eConnectionState_Disconnecting;
 }
 #endif
 

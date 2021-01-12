@@ -750,12 +750,10 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	     (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 	     (QDF_P2P_DEVICE_MODE == adapter->device_mode))) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (eConnectionState_NotConnected ==
-		    sta_ctx->conn_info.conn_state) {
+		if (hdd_cm_is_disconnected(adapter)) {
 			info->state = WIFI_DISCONNECTED;
 		}
-		if (eConnectionState_Connecting ==
-		    sta_ctx->conn_info.conn_state) {
+		if (hdd_cm_is_connecting(adapter)) {
 			hdd_debug("Session ID %d, Connection is in progress",
 				  adapter->vdev_id);
 			info->state = WIFI_ASSOCIATING;

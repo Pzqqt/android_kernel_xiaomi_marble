@@ -20466,11 +20466,11 @@ static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 	void *hif_ctx;
 
 	/* Return if already disconnected */
-	if (sta_ctx->conn_info.conn_state == eConnectionState_NotConnected)
+	if (hdd_cm_is_disconnected(adapter))
 		return 0;
 
 	/* If already in disconnecting state just wait for its completion */
-	if (sta_ctx->conn_info.conn_state == eConnectionState_Disconnecting)
+	if (hdd_cm_is_disconnecting(adapter))
 		goto wait_for_disconnect;
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
@@ -21170,7 +21170,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 	/* Issue disconnect request to SME, if station is in connected state */
 	if (hdd_cm_is_vdev_associated(adapter) ||
-	    (sta_ctx->conn_info.conn_state == eConnectionState_Connecting)) {
+	    hdd_cm_is_connecting(adapter)) {
 		eCsrRoamDisconnectReason reasonCode =
 			eCSR_DISCONNECT_REASON_UNSPECIFIED;
 

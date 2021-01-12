@@ -198,14 +198,6 @@ struct hdd_adapter;
 struct hdd_station_ctx;
 struct hdd_context;
 
-/**
- * hdd_is_connecting() - Function to check connection progress
- * @hdd_sta_ctx:    pointer to global HDD Station context
- *
- * Return: true if connecting, false otherwise
- */
-bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx);
-
 /*
  * hdd_is_fils_connection: API to determine if connection is FILS
  * @adapter: hdd adapter

@@ -380,12 +380,6 @@ hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
 	}
 }
 
-bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx)
-{
-	return hdd_sta_ctx->conn_info.conn_state ==
-		eConnectionState_Connecting;
-}
-
 bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx)
 {
 	return hdd_conn_get_connection_state(sta_ctx, NULL);
@@ -460,8 +454,7 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 		if ((QDF_STA_MODE == adapter->device_mode) ||
 		    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 		    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
-			if (eConnectionState_Connecting ==
-			    hdd_sta_ctx->conn_info.conn_state) {
+			if (hdd_cm_is_connecting(adapter)) {
 				hdd_debug("vdev_id %d: Connection is in progress",
 					  adapter->vdev_id);
 				hdd_adapter_dev_put_debug(adapter, dbgid);
@@ -1850,12 +1843,9 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	 * initiated disconnect will be handled by disconnect handler call
 	 * to cfg80211_disconnected.
 	 */
-	if ((eConnectionState_Disconnecting ==
-	    sta_ctx->conn_info.conn_state) ||
-	    (eConnectionState_NotConnected ==
-	    sta_ctx->conn_info.conn_state) ||
-	    (eConnectionState_Connecting ==
-	    sta_ctx->conn_info.conn_state)) {
+	if (hdd_cm_is_disconnecting(adapter) ||
+	    hdd_cm_is_disconnected(adapter) ||
+	    hdd_cm_is_connecting(adapter)) {
 		if (hdd_ctx->disconnect_for_sta_mon_conc) {
 			hdd_debug("Disconnect triggered by HDD to add monitor intf notify kernel");
 			hdd_ctx->disconnect_for_sta_mon_conc = false;
@@ -1947,7 +1937,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	* eConnectionState_Connecting state mean that connection is in
 	* progress so no need to set state to eConnectionState_NotConnected
 	*/
-	if ((eConnectionState_Connecting != sta_ctx->conn_info.conn_state))
+	if (!hdd_cm_is_connecting(adapter))
 		hdd_conn_set_connection_state(adapter,
 					       eConnectionState_NotConnected);
 
@@ -2722,10 +2712,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	/* HDD has initiated disconnect, do not send connect result indication
 	 * to kernel as it will be handled by __cfg80211_disconnect.
 	 */
-	if (((eConnectionState_Disconnecting ==
-	    sta_ctx->conn_info.conn_state) ||
-	    (eConnectionState_NotConnected ==
-	    sta_ctx->conn_info.conn_state)) &&
+	if ((hdd_cm_is_disconnecting(adapter) ||
+	     hdd_cm_is_disconnected(adapter)) &&
 	    ((eCSR_ROAM_RESULT_ASSOCIATED == roam_result) ||
 	    (eCSR_ROAM_ASSOCIATION_FAILURE == roam_status))) {
 		hdd_info("hddDisconInProgress state=%d, result=%d, status=%d",

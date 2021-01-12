@@ -142,7 +142,7 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (hdd_conn_is_connected(sta_ctx) ||
-			    hdd_is_connecting(sta_ctx)) {
+			    hdd_cm_is_connecting(adapter)) {
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
 					hdd_adapter_dev_put_debug(next_adapter,
@@ -182,7 +182,7 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (hdd_conn_is_connected(sta_ctx) ||
-			    hdd_is_connecting(sta_ctx)) {
+			    hdd_cm_is_connecting(adapter)) {
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
 					hdd_adapter_dev_put_debug(next_adapter,

@@ -2959,10 +2959,8 @@ static bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
 					   dbgid) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((adapter->device_mode == QDF_STA_MODE) ||
-		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
-		    (adapter->device_mode == QDF_P2P_DEVICE_MODE)) {
-			if (sta_ctx->conn_info.conn_state ==
-			    eConnectionState_Connecting) {
+		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+			if (hdd_cm_is_connecting(adapter)) {
 				hdd_debug("vdev_id %d: connecting",
 					  adapter->vdev_id);
 				hdd_adapter_dev_put_debug(adapter, dbgid);
