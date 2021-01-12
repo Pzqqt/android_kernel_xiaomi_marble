@@ -31,6 +31,9 @@
 
 #include "../dfs_precac_forest.h"
 #include "wlan_reg_services_api.h"
+#ifdef QCA_SUPPORT_AGILE_DFS
+#include <wlan_sm_engine.h> /* for struct wlan_sm */
+#endif
 
 #ifdef QCA_SUPPORT_AGILE_DFS
 /* dfs_start_agile_engine() - Prepare ADFS params and program the agile
