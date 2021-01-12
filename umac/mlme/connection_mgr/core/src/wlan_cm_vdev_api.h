@@ -133,14 +133,14 @@ static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
 	if (!cm_ctx->ext_cm_ptr)
 		return QDF_STATUS_E_NOMEM;
 
-	wlan_cm_rso_config_init(cm_ctx->vdev);
+	wlan_cm_rso_config_init(cm_ctx->vdev, &cm_ctx->ext_cm_ptr->rso_cfg);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx)
 {
-	wlan_cm_rso_config_deinit(cm_ctx->vdev);
+	wlan_cm_rso_config_deinit(cm_ctx->vdev, &cm_ctx->ext_cm_ptr->rso_cfg);
 	qdf_mem_free(cm_ctx->ext_cm_ptr);
 
 	return QDF_STATUS_SUCCESS;
@@ -163,6 +163,10 @@ QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
  * @vdev: VDEV object
  * @req: Vdev connect request
  * @join_req: join req to be sent to LIM
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
  *
  * Return: QDF_STATUS
  */
@@ -200,6 +204,10 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
  * @vdev: VDEV object
  * @rsp: Connection vdev response
  *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
+ *
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
@@ -222,6 +230,10 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
  * legacy structures on connect complete
  * @vdev: VDEV object
  * @rsp: Connection manager connect response
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
  *
  * Return: QDF_STATUS
  */
@@ -250,6 +262,22 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req);
 
 /**
+ * cm_csr_disconnect_start_ind() - Connection manager disconnect start
+ * indication to CSR
+ * vdev and peer assoc state machine
+ * @vdev: VDEV object
+ * @req: disconnect request
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_csr_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_disconnect_req *req);
+
+/**
  * cm_handle_disconnect_req() - Connection manager ext disconnect
  * req to vdev and peer sm
  * @vdev: VDEV object
@@ -266,6 +294,10 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
  * structures on disconnect
  * @vdev: VDEV object
  * @req: vdev disconnect request
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
  *
  * Return: QDF_STATUS
  */
@@ -300,6 +332,10 @@ cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
  * legacy structures on disconnect complete
  * @vdev: VDEV object
  * @rsp: Connection manager disconnect response
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
  *
  * Return: QDF_STATUS
  */

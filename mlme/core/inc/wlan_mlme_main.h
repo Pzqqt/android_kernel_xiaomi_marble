@@ -37,6 +37,11 @@
 #define mlme_legacy_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MLME, params)
 
+enum size_of_len_field {
+	ONE_BYTE = 1,
+	TWO_BYTE = 2
+};
+
 /**
  * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
@@ -607,6 +612,39 @@ enum QDF_OPMODE wlan_get_opmode_from_vdev_id(struct wlan_objmgr_pdev *pdev,
 					     uint8_t vdev_id);
 
 /**
+ * wlan_mlme_get_ssid_vdev_id() - get ssid
+ * @pdev: pdev object
+ * @vdev_id: vdev id
+ * @ssid: SSID
+ * @ssid_len: Length of SSID
+ *
+ * API to get the SSID of vdev id, it updates the SSID and its length
+ * in @ssid, @ssid_len respectively
+ *
+ * Return: SUCCESS, if update is done
+ *          FAILURE, if ssid length is > max ssid len
+ */
+QDF_STATUS wlan_mlme_get_ssid_vdev_id(struct wlan_objmgr_pdev *pdev,
+				      uint8_t vdev_id,
+				      uint8_t *ssid, uint8_t *ssid_len);
+
+/**
+ * wlan_vdev_get_bss_peer_mac() - get bss peer mac address(BSSID) using vdev id
+ * @pdev: pdev
+ * @vdev_id: vdev_id
+ * @bss_peer_mac: pointer to bss_peer_mac_address
+ *
+ * This API is used to get mac address of bss peer/bssid.
+ *
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS wlan_mlme_get_bssid_vdev_id(struct wlan_objmgr_pdev *pdev,
+				       uint8_t vdev_id,
+				       struct qdf_mac_addr *bss_peer_mac);
+
+/**
  * csr_get_operation_chan_freq() - get operating chan freq of
  * given vdev
  * @vdev: vdev
@@ -624,6 +662,32 @@ qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev);
  */
 qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
 						uint8_t vdev_id);
+
+QDF_STATUS
+wlan_get_op_chan_freq_info_vdev_id(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id, qdf_freq_t *op_freq,
+				   qdf_freq_t *freq_seg_0,
+				   enum phy_ch_width *ch_width);
+
+/**
+ * wlan_strip_ie() - strip requested IE from IE buffer
+ * @addn_ie: Additional IE buffer
+ * @addn_ielen: Length of additional IE
+ * @eid: EID of IE to strip
+ * @size_of_len_field: length of IE length field
+ * @oui: if present matches OUI also
+ * @oui_length: if previous present, this is length of oui
+ * @extracted_ie: if not NULL, copy the stripped IE to this buffer
+ *
+ * This utility function is used to strip of the requested IE if present
+ * in IE buffer.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
+			 uint8_t eid, enum size_of_len_field size_of_len_field,
+			 uint8_t *oui, uint8_t oui_length,
+			 uint8_t *extracted_ie, uint32_t eid_max_len);
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**

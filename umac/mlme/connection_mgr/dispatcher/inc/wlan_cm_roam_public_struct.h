@@ -164,6 +164,7 @@ struct rso_cfg_params {
  * triggers:
  * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
  * @cfg_param: per vdev config params
+ * @assoc_ie: assoc IE
  */
 struct rso_config {
 	uint8_t rsn_cap;
@@ -175,6 +176,7 @@ struct rso_config {
 	uint32_t hi_rssi_scan_delay;
 	uint32_t roam_scan_scheme_bitmap;
 	struct rso_cfg_params cfg_param;
+	struct element_info assoc_ie;
 };
 
 /**

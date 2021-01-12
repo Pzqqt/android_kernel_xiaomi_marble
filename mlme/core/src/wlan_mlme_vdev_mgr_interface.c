@@ -1169,7 +1169,8 @@ static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
 	mlme_free_sae_auth_retry(vdev_mlme->vdev);
 	/* This is temp ifdef will be removed in near future */
 #ifndef FEATURE_CM_ENABLE
-	wlan_cm_rso_config_deinit(vdev_mlme->vdev);
+	wlan_cm_rso_config_deinit(vdev_mlme->vdev,
+				  &vdev_mlme->ext_vdev_ptr->rso_cfg);
 #endif
 	qdf_mem_free(vdev_mlme->ext_vdev_ptr->fils_con_info);
 	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
@@ -1198,7 +1199,8 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
 	/* This is temp ifdef will be removed in near future */
 #ifndef FEATURE_CM_ENABLE
-	wlan_cm_rso_config_init(vdev_mlme->vdev);
+	wlan_cm_rso_config_init(vdev_mlme->vdev,
+				&vdev_mlme->ext_vdev_ptr->rso_cfg);
 #endif
 	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
 			      &vdev_mlme->proto.generic.nss_2g,
