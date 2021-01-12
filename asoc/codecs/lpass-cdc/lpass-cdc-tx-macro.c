@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1190,7 +1190,7 @@ static struct snd_soc_dai_ops lpass_cdc_tx_macro_dai_ops = {
 
 static struct snd_soc_dai_driver lpass_cdc_tx_macro_dai[] = {
 	{
-		.name = "lpass_cdc_tx_macro_tx1",
+		.name = "tx_macro_tx1",
 		.id = LPASS_CDC_TX_MACRO_AIF1_CAP,
 		.capture = {
 			.stream_name = "TX_AIF1 Capture",
@@ -1204,7 +1204,7 @@ static struct snd_soc_dai_driver lpass_cdc_tx_macro_dai[] = {
 		.ops = &lpass_cdc_tx_macro_dai_ops,
 	},
 	{
-		.name = "lpass_cdc_tx_macro_tx2",
+		.name = "tx_macro_tx2",
 		.id = LPASS_CDC_TX_MACRO_AIF2_CAP,
 		.capture = {
 			.stream_name = "TX_AIF2 Capture",
@@ -1218,7 +1218,7 @@ static struct snd_soc_dai_driver lpass_cdc_tx_macro_dai[] = {
 		.ops = &lpass_cdc_tx_macro_dai_ops,
 	},
 	{
-		.name = "lpass_cdc_tx_macro_tx3",
+		.name = "tx_macro_tx3",
 		.id = LPASS_CDC_TX_MACRO_AIF3_CAP,
 		.capture = {
 			.stream_name = "TX_AIF3 Capture",
