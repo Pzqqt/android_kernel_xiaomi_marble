@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2020 The Linux Foundation.  All rights reserved.
+ * Copyright (c) 2013, 2016-2021 The Linux Foundation.  All rights reserved.
  * Copyright (c) 2005-2006 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,9 +42,6 @@
 #include <osdep.h>
 #include <wlan_cmn.h>
 #include "target_type.h"
-#ifdef QCA_SUPPORT_AGILE_DFS
-#include <wlan_sm_engine.h> /* for struct wlan_sm */
-#endif
 #include <wlan_dfs_public_struct.h>
 #include <reg_services_public_struct.h>
 
