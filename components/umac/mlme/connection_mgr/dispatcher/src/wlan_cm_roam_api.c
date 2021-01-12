@@ -871,10 +871,10 @@ static void cm_rso_chan_to_freq_list(struct wlan_objmgr_pdev *pdev,
 			wlan_reg_chan_to_freq(pdev, chan_list[count]);
 }
 
-QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev)
+QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
+				   struct rso_config *rso_cfg)
 {
 	struct rso_chan_info *chan_info;
-	struct rso_config *rso_cfg;
 	struct rso_cfg_params *cfg_params;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct wlan_objmgr_pdev *pdev;
@@ -892,9 +892,6 @@ QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev)
 	if (!mlme_obj)
 		return QDF_STATUS_E_INVAL;
 
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg)
-		return QDF_STATUS_E_INVAL;
 	cfg_params = &rso_cfg->cfg_param;
 	cfg_params->max_chan_scan_time =
 		mlme_obj->cfg.lfr.neighbor_scan_max_chan_time;
@@ -975,40 +972,45 @@ QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev)
+void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
+			       struct rso_config *rso_cfg)
 {
-	struct rso_config *rso_cfg;
 	struct rso_cfg_params *cfg_params;
 
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg)
-		return;
-
 	cfg_params = &rso_cfg->cfg_param;
+	if (rso_cfg->assoc_ie.ptr) {
+		qdf_mem_free(rso_cfg->assoc_ie.ptr);
+		rso_cfg->assoc_ie.ptr = NULL;
+		rso_cfg->assoc_ie.len = 0;
+	}
 
 	cm_flush_roam_channel_list(&cfg_params->specific_chan_info);
 	cm_flush_roam_channel_list(&cfg_params->pref_chan_info);
 }
 
 #ifdef FEATURE_CM_ENABLE
-struct rso_config *wlan_cm_get_rso_config(struct wlan_objmgr_vdev *vdev)
+struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
+					     const char *func, uint32_t line)
+
 {
 	struct cm_ext_obj *cm_ext_obj;
 
-	cm_ext_obj = cm_get_ext_hdl(vdev);
+	cm_ext_obj = cm_get_ext_hdl_fl(vdev, func, line);
 	if (!cm_ext_obj)
 		return NULL;
 
 	return &cm_ext_obj->rso_cfg;
 }
 #else
-struct rso_config *wlan_cm_get_rso_config(struct wlan_objmgr_vdev *vdev)
+struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
+					     const char *func, uint32_t line)
 {
 	struct mlme_legacy_priv *mlme_priv;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
-		mlme_err("vdev legacy private object is NULL");
+		mlme_nofl_err("%s:%u: vdev %d legacy private object is NULL",
+			      func, line, wlan_vdev_get_id(vdev));
 		return NULL;
 	}
 

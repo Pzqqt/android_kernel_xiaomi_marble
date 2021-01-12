@@ -3209,54 +3209,30 @@ QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 	return status;
 }
 
-/*
- * sme_roam_get_connect_profile() -
- * A wrapper function to request CSR to return the current connect
- * profile. Caller must call csr_roam_free_connect_profile after it is done
- * and before reuse for another csr_roam_get_connect_profile call.
- * This is a synchronous call.
- *
- * pProfile - pointer to a caller allocated structure
- *		      tCsrRoamConnectedProfile
- * eturn QDF_STATUS. Failure if not connected
- */
-QDF_STATUS sme_roam_get_connect_profile(mac_handle_t mac_handle,
-					uint8_t sessionId,
-					tCsrRoamConnectedProfile *pProfile)
+struct bss_description *sme_roam_get_connect_bss_desc(mac_handle_t mac_handle,
+						      uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+	struct bss_description *bss_desc = NULL;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_ROAM_GET_CONNECTPROFILE,
-			 sessionId, 0));
+			 vdev_id, 0));
+	if (!CSR_IS_SESSION_VALID(mac, vdev_id))
+		return NULL;
+
 	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_get_connect_profile(mac, sessionId,
-							pProfile);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		return NULL;
 
-	return status;
-}
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (session && csr_is_conn_state_connected(mac, vdev_id))
+		bss_desc = session->pConnectBssDesc;
+	sme_release_global_lock(&mac->sme);
 
-/**
- * sme_roam_free_connect_profile - a wrapper function to request CSR to free and
- * reinitialize the profile returned previously by csr_roam_get_connect_profile.
- *
- * @profile - pointer to a caller allocated structure tCsrRoamConnectedProfile
- *
- * Return: none
- */
-void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
-{
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_ROAM_FREE_CONNECTPROFILE,
-			 NO_SESSION, 0));
-	csr_roam_free_connect_profile(profile);
+	return bss_desc;
 }
 
 #ifndef FEATURE_CM_ENABLE
@@ -3340,6 +3316,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t mac_handle,
 				       uint8_t session_id,
 				       uint32_t *len, uint8_t *buf)
@@ -3359,6 +3336,7 @@ QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t mac_handle,
 
 	return status;
 }
+#endif
 
 /*
  * sme_get_config_param() -
@@ -4805,19 +4783,13 @@ QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
 				     uint8_t sessionId)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession;
 
 	if (CSR_IS_SESSION_VALID(mac, sessionId)) {
-		pSession = CSR_GET_SESSION(mac, sessionId);
-
-		if ((pSession->connectedProfile.BSSType ==
-		     eCSR_BSS_TYPE_INFRASTRUCTURE)
-		    || (pSession->connectedProfile.BSSType ==
-			eCSR_BSS_TYPE_INFRA_AP)) {
-			*chan_freq = pSession->connectedProfile.op_freq;
-			return QDF_STATUS_SUCCESS;
-		}
+		*chan_freq = wlan_get_operation_chan_freq_vdev_id(mac->pdev,
+								  sessionId);
+		return QDF_STATUS_SUCCESS;
 	}
+
 	return QDF_STATUS_E_FAILURE;
 } /* sme_get_operation_channel ends here */
 
@@ -5949,32 +5921,39 @@ QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
 
 void sme_update_session_assoc_ie(mac_handle_t mac_handle,
 				 uint8_t vdev_id,
-				 struct csr_roam_profile *src_profile)
+				 struct element_info *assoc_ie)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
 
-	if (!session) {
-		sme_err("Session: %d not found", vdev_id);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
 		return;
 	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
 
-	qdf_mem_free(session->pAddIEAssoc);
-	session->pAddIEAssoc = NULL;
-	session->nAddIEAssocLength = 0;
-
-	if (!src_profile->nAddIEAssocLength) {
+	if (rso_cfg->assoc_ie.ptr) {
+		qdf_mem_free(rso_cfg->assoc_ie.ptr);
+		rso_cfg->assoc_ie.ptr = NULL;
+		rso_cfg->assoc_ie.len = 0;
+	}
+	if (!assoc_ie->len) {
 		sme_debug("Assoc IE len 0");
-		return;
+		goto rel_vdev_ref;
 	}
+	rso_cfg->assoc_ie.ptr = qdf_mem_malloc(assoc_ie->len);
+	if (!rso_cfg->assoc_ie.ptr)
+		goto rel_vdev_ref;
 
-	session->pAddIEAssoc = qdf_mem_malloc(src_profile->nAddIEAssocLength);
-	if (!session->pAddIEAssoc)
-		return;
-
-	session->nAddIEAssocLength = src_profile->nAddIEAssocLength;
-	qdf_mem_copy(session->pAddIEAssoc, src_profile->pAddIEAssoc,
-		     src_profile->nAddIEAssocLength);
+	rso_cfg->assoc_ie.len = assoc_ie->len;
+	qdf_mem_copy(rso_cfg->assoc_ie.ptr, assoc_ie->ptr, assoc_ie->len);
+rel_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
 QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,

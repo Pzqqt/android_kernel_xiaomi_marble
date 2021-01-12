@@ -6494,8 +6494,7 @@ static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 	qdf_mem_copy(bss_desc, pAssoc_info->bss_desc, bssLen);
 	pSession->assocInfo.bss_desc = bss_desc;
 	/* save the apsd info from assoc */
-	if (pAssoc_info->pProfile)
-		pSession->apsdMask |= pAssoc_info->pProfile->uapsd_mask;
+	pSession->apsdMask |= pAssoc_info->uapsd_mask;
 
 	/* [TODO] Do we need to update the global APSD bitmap? */
 	return QDF_STATUS_SUCCESS;

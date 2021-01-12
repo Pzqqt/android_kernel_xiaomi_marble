@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1738,46 +1738,6 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 	lim_send_heart_beat_timeout_ind(mac, pe_session);
 }
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-/**
- * lim_fill_join_rsp_ht_caps() - Fill the HT caps in join response
- * @session: PE Session
- * @join_rsp: Join response buffer to be filled up.
- *
- * Return: None
- */
-void lim_fill_join_rsp_ht_caps(struct pe_session *session,
-			       struct join_rsp *join_rsp)
-{
-	struct ht_profile *ht_profile;
-
-	if (!session) {
-		pe_err("Invalid Session");
-		return;
-	}
-	if (!join_rsp) {
-		pe_err("Invalid Join Response");
-		return;
-	}
-
-	if (session->cc_switch_mode == QDF_MCC_TO_SCC_SWITCH_DISABLE)
-		return;
-
-	ht_profile = &join_rsp->ht_profile;
-	ht_profile->htSupportedChannelWidthSet =
-		session->htSupportedChannelWidthSet;
-	ht_profile->htRecommendedTxWidthSet =
-		session->htRecommendedTxWidthSet;
-	ht_profile->htSecondaryChannelOffset =
-		session->htSecondaryChannelOffset;
-	ht_profile->dot11mode = session->dot11mode;
-	ht_profile->htCapability = session->htCapability;
-	ht_profile->vhtCapability = session->vhtCapability;
-	ht_profile->apCenterChan = session->ch_center_freq_seg0;
-	ht_profile->apChanWidth = session->ch_width;
-}
-#endif
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #ifdef WLAN_FEATURE_11W
 static void pe_set_rmf_caps(struct mac_context *mac_ctx,
@@ -2642,7 +2602,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 			lim_get_max_rate_flags(mac_ctx, curr_sta_ds);
 	lim_set_tdls_flags(roam_sync_ind_ptr, ft_session_ptr);
 	roam_sync_ind_ptr->join_rsp->aid = ft_session_ptr->limAID;
-	lim_fill_join_rsp_ht_caps(ft_session_ptr, roam_sync_ind_ptr->join_rsp);
 	ft_session_ptr->limSmeState = eLIM_SME_LINK_EST_STATE;
 	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
 	ft_session_ptr->bRoamSynchInProgress = false;

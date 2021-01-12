@@ -2353,10 +2353,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	uint8_t *buf_ptr, ssid_ie_len;
 	struct cfg80211_bss *bss = NULL;
 	uint8_t *final_req_ie = NULL;
-	tCsrRoamConnectedProfile roam_profile;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
+	struct wlan_ssid ssid;
 
 	if (!rsp_rsn_ie) {
 		hdd_err("Unable to allocate RSN IE");
@@ -2416,24 +2414,22 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	chan = ieee80211_get_channel(adapter->wdev.wiphy,
 				     roam_info->bss_desc->chan_freq);
 
-	sme_roam_get_connect_profile(hdd_ctx->mac_handle, adapter->vdev_id,
-				     &roam_profile);
+	wlan_vdev_mlme_get_ssid(adapter->vdev, &ssid.ssid[0], &ssid.length);
 
 	bss = wlan_cfg80211_get_bss(adapter->wdev.wiphy,
 				    chan, roam_info->bssid.bytes,
-				    &roam_profile.SSID.ssId[0],
-				    roam_profile.SSID.length);
+				    ssid.length ? &ssid.ssid[0] : NULL,
+				    ssid.length);
 
 	if (!bss)
 		hdd_warn("Get BSS returned NULL");
 	buf_ptr = buf_ssid_ie;
 	*buf_ptr = WLAN_ELEMID_SSID;
 	buf_ptr++;
-	*buf_ptr = roam_profile.SSID.length; /*len of ssid*/
+	*buf_ptr = ssid.length; /*len of ssid*/
 	buf_ptr++;
-	qdf_mem_copy(buf_ptr, &roam_profile.SSID.ssId[0],
-			roam_profile.SSID.length);
-	ssid_ie_len = 2 + roam_profile.SSID.length;
+	qdf_mem_copy(buf_ptr, &ssid.ssid[0], ssid.length);
+	ssid_ie_len = 2 + ssid.length;
 	final_req_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	if (!final_req_ie) {
 		if (bss)
@@ -2478,7 +2474,6 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	hdd_update_hlp_info(dev, roam_info);
 
 done:
-	sme_roam_free_connect_profile(&roam_profile);
 	if (final_req_ie)
 		qdf_mem_free(final_req_ie);
 	qdf_mem_free(rsp_rsn_ie);

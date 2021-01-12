@@ -724,19 +724,6 @@ struct csr_roam_profile {
 	bool is_hs_20_ap;
 };
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-typedef struct tagCsrRoamHTProfile {
-	uint8_t phymode;
-	uint8_t htCapability;
-	uint8_t htSupportedChannelWidthSet;
-	uint8_t htRecommendedTxWidthSet;
-	ePhyChanBondState htSecondaryChannelOffset;
-	uint8_t vhtCapability;
-	uint8_t apCenterChan;
-	uint8_t apChanWidth;
-} tCsrRoamHTProfile;
-#endif
-
 typedef struct tagCsrRoamConnectedProfile {
 	tSirMacSSid SSID;
 	uint32_t op_freq;
@@ -758,7 +745,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	uint8_t acm_mask;
 	tCsrRoamModifyProfileFields modifyProfileFields;
 	bool qosConnection;     /* A connection is QoS enabled */
-	struct bss_description *bss_desc;
 	bool qap;               /* AP supports QoS */
 	struct mobility_domain_info mdid;
 #ifdef FEATURE_WLAN_ESE
@@ -767,15 +753,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	uint32_t dot11Mode;
 #ifndef FEATURE_CM_ENABLE
 	uint8_t proxy_arp_service;
-#endif
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tCsrRoamHTProfile ht_profile;
-#endif
-#ifdef WLAN_FEATURE_11W
-	/* Management Frame Protection */
-	bool MFPEnabled;
-	uint8_t MFPRequired;
-	uint8_t MFPCapable;
 #endif
 } tCsrRoamConnectedProfile;
 
@@ -1385,17 +1362,20 @@ typedef void (*csr_ani_callback)(int8_t *ani, void *context);
 #ifdef WLAN_FEATURE_11W
 /**
  * csr_update_pmf_cap_from_connected_profile() - Update pmf cap from profile
- * @profile: connected profile
+ * @mac: mac
+ * @vdev_id: vdev id
  * @filter: scan filter
  *
  * Return: None
  */
 void
-csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
+csr_update_pmf_cap_from_connected_profile(struct mac_context *mac,
+					  uint8_t vdev_id,
 					  struct scan_filter *filter);
 #else
 void
-csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
+csr_update_pmf_cap_from_connected_profile(struct mac_context *mac,
+					  uint8_t vdev_id,
 					  struct scan_filter *filter);
 #endif
 

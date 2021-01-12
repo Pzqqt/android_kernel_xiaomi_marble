@@ -327,13 +327,18 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			   enum roam_cfg_param roam_cfg_type,
 			   struct cm_roam_values_copy *src_config);
 
+
+struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
+					     const char *func, uint32_t line);
+
 /**
  * wlan_cm_get_rso_config  - get per vdev RSO config
  * @vdev: vdev pointer
  *
  * Return: rso config pointer
  */
-struct rso_config *wlan_cm_get_rso_config(struct wlan_objmgr_vdev *vdev);
+#define wlan_cm_get_rso_config(vdev) \
+	wlan_cm_get_rso_config_fl(vdev, __func__, __LINE__)
 
 /**
  * wlan_cm_set_disable_hi_rssi  - set disable hi rssi config
@@ -349,18 +354,22 @@ void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 /**
  * wlan_cm_rso_config_init  - initialize RSO config
  * @vdev: vdev pointer
+ * @rso_cfg: rso config to init
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
+				   struct rso_config *rso_cfg);
 
 /**
  * wlan_cm_rso_config_deinit  - deinit RSO config
  * @vdev: vdev pointer
+ * @rso_cfg: rso config to deinit
  *
  * Return: void
  */
-void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev);
+void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
+			       struct rso_config *rso_cfg);
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**

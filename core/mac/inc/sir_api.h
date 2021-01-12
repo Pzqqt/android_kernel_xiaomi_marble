@@ -722,18 +722,6 @@ struct bss_description {
 	uint32_t ieFields[1];
 };
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-struct ht_profile {
-	uint8_t dot11mode;
-	uint8_t htCapability;
-	uint8_t htSupportedChannelWidthSet;
-	uint8_t htRecommendedTxWidthSet;
-	ePhyChanBondState htSecondaryChannelOffset;
-	uint8_t vhtCapability;
-	uint8_t apCenterChan;
-	uint8_t apChanWidth;
-};
-#endif
 /* / Definition for response message to previously */
 /* / issued start BSS request */
 /* / MAC ---> */
@@ -745,9 +733,6 @@ struct start_bss_rsp {
 	enum bss_type bssType;    /* Add new type for WDS mode */
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
 	uint32_t staId;         /* Station ID for Self */
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	struct ht_profile ht_profile;
-#endif
 	struct bss_description bssDescription;      /* Peer BSS description */
 };
 
@@ -988,10 +973,6 @@ struct join_rsp {
 #endif
 	uint8_t nss;
 	uint32_t max_rate_flags;
-
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	struct ht_profile ht_profile;
-#endif
 	bool supported_nss_1x1;
 	tDot11fIEHTCaps ht_caps;
 	tDot11fIEVHTCaps vht_caps;

@@ -588,11 +588,8 @@ QDF_STATUS sme_roam_disconnect_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *pDelStaParams);
-QDF_STATUS sme_roam_get_connect_profile(mac_handle_t mac_handle,
-					uint8_t sessionId,
-					tCsrRoamConnectedProfile *pProfile);
-void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
-
+struct bss_description *sme_roam_get_connect_bss_desc(mac_handle_t mac_handle,
+						       uint8_t vdev_id);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_set_roam_scan_ch_event_cb() - Register roam scan ch callback
@@ -663,6 +660,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * sme_roam_get_wpa_rsn_req_ie() - Retrieve WPA/RSN Request IE
  * @mac_handle: Opaque handle to the global MAC context
@@ -682,6 +680,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t mac_handle,
 				       uint8_t session_id,
 				       uint32_t *len, uint8_t *buf);
+#endif
 
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 				struct sme_config_params *pParam);
@@ -2864,7 +2863,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
  * sme_update_session_assoc_ie() - Updates the assoc IEs to csr_roam_session
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id
- * @src_profile: Pointer to Roam profile in HDD
+ * @assoc_ie: assoc ie
  *
  * This API is used to copy the assoc IE sent from user space to
  * csr_roam_session
@@ -2873,7 +2872,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
  */
 void sme_update_session_assoc_ie(mac_handle_t mac_handle,
 				 uint8_t vdev_id,
-				 struct csr_roam_profile *src_profile);
+				 struct element_info *assoc_ie);
 
 /**
  * sme_send_rso_connect_params() - Updates the assoc IEs to csr_roam_session

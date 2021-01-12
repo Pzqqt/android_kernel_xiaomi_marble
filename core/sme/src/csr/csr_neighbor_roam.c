@@ -336,13 +336,29 @@ static void csr_neighbor_roam_reset_init_state_control_info(struct mac_context *
 
 #ifdef WLAN_FEATURE_11W
 void
-csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
+csr_update_pmf_cap_from_connected_profile(struct mac_context *mac,
+					  uint8_t vdev_id,
 					  struct scan_filter *filter)
 {
-	if (profile->MFPCapable || profile->MFPEnabled)
-		filter->pmf_cap = WLAN_PMF_CAPABLE;
-	if (profile->MFPRequired)
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_ref;
+
+	if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
 		filter->pmf_cap = WLAN_PMF_REQUIRED;
+	else if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+rel_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 #else
 void
@@ -425,7 +441,7 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 		 */
 		filter->mobility_domain = profile->mdid.mobility_domain;
 
-	csr_update_pmf_cap_from_connected_profile(profile, filter);
+	csr_update_pmf_cap_from_connected_profile(mac, vdev_id, filter);
 
 	filter->enable_adaptive_11r =
 		wlan_mlme_adaptive_11r_enabled(mac->psoc);
@@ -651,45 +667,31 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 			&mac->roam.neighborRoamInfo[sessionId];
-	tCsrRoamConnectedProfile *pPrevProfile =
-			&pNeighborRoamInfo->prevConnProfile;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
+	struct wlan_objmgr_vdev *vdev;
 	enum QDF_OPMODE opmode;
 
 	if (!pSession) {
 		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, sessionId);
+	if (opmode != QDF_STA_MODE) {
+		sme_debug("Ignore disconn ind rcvd from nonSTA persona vdev: %d opmode %d",
+			  sessionId, opmode);
+		return QDF_STATUS_SUCCESS;
+	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Disconn ind on session %d in state %d from bss :"
 			QDF_MAC_ADDR_FMT), sessionId,
 			pNeighborRoamInfo->neighborRoamState,
 			QDF_MAC_ADDR_REF(pSession->connectedProfile.bssid.bytes));
-	/*
-	 * Free the current previous profile and move
-	 * the current profile to prev profile.
-	 */
-	csr_roam_free_connect_profile(pPrevProfile);
-	csr_roam_copy_connect_profile(mac, sessionId, pPrevProfile);
 
-	if (pSession) {
-		opmode = wlan_get_opmode_from_vdev_id(mac->pdev, sessionId);
-		if (opmode != QDF_STA_MODE) {
-			sme_err("Ignore disconn ind rcvd from nonSTA persona vdev: %d opmode %d",
-				sessionId, opmode);
-			return QDF_STATUS_SUCCESS;
-		}
-#ifdef FEATURE_WLAN_ESE
-		if (pSession->connectedProfile.isESEAssoc) {
-			qdf_mem_copy(&pSession->prevApSSID,
-				&pSession->connectedProfile.SSID,
-				sizeof(tSirMacSSid));
-			qdf_copy_macaddr(&pSession->prevApBssid,
-					&pSession->connectedProfile.bssid);
-			pSession->isPrevApInfoValid = true;
-			pSession->roamTS1 = qdf_mc_timer_get_system_time();
-		}
-#endif
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (vdev) {
+		csr_update_prev_ap_info(pSession, vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	}
 
 	switch (pNeighborRoamInfo->neighborRoamState) {
@@ -1038,8 +1040,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 		eCSR_NEIGHBOR_ROAM_STATE_CLOSED;
 
 	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
-	qdf_mem_zero(&pNeighborRoamInfo->prevConnProfile,
-		    sizeof(tCsrRoamConnectedProfile));
 
 	status = csr_ll_open(&pNeighborRoamInfo->roamableAPList);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -1110,7 +1110,6 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 
 	/* Free the profile.. */
 	csr_release_profile(mac, &pNeighborRoamInfo->csrNeighborRoamProfile);
-	csr_roam_free_connect_profile(&pNeighborRoamInfo->prevConnProfile);
 	pNeighborRoamInfo->FTRoamInfo.currentNeighborRptRetryNum = 0;
 	csr_neighbor_roam_free_roamable_bss_list(mac,
 						 &pNeighborRoamInfo->FTRoamInfo.

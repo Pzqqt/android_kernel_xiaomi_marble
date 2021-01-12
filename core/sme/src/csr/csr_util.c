@@ -761,86 +761,6 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 #define CSR_GET_HT80_MINUS_HH_CCH(och) ((och) - 30)
 
 /**
- * csr_get_ch_from_ht_profile() - to get channel from HT profile
- * @mac: pointer to Mac context
- * @htp: pointer to HT profile
- * @och_freq: operating channel frequency
- * @cfreq: channel frequency
- * @hbw: half bandwidth
- *
- * This function will fill half bandwidth and channel frequency based
- * on the HT profile
- *
- * Return: none
- */
-static void csr_get_ch_from_ht_profile(struct mac_context *mac,
-				       tCsrRoamHTProfile *htp,
-				       uint32_t och_freq, uint32_t *cfreq,
-				       uint32_t *hbw)
-{
-	uint32_t ch_bond;
-	struct ch_params chan_params = {0};
-
-	if (!WLAN_REG_IS_24GHZ_CH_FREQ(och_freq))
-		ch_bond = mac->roam.configParam.channelBondingMode5GHz;
-	else
-		ch_bond = mac->roam.configParam.channelBondingMode24GHz;
-
-	*hbw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
-
-	if (!ch_bond)
-		goto ret;
-
-	sme_debug("HTC: %d scbw: %d rcbw: %d sco: %d VHTC: %d apc: %d apbw: %d",
-			htp->htCapability, htp->htSupportedChannelWidthSet,
-			htp->htRecommendedTxWidthSet,
-			htp->htSecondaryChannelOffset,
-			htp->vhtCapability, htp->apCenterChan, htp->apChanWidth
-	       );
-
-	if (htp->vhtCapability) {
-		if (htp->apChanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ)
-			*hbw = HALF_BW_OF(eCSR_BW_80MHz_VAL);
-		else if (htp->apChanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
-			*hbw = HALF_BW_OF(eCSR_BW_160MHz_VAL);
-
-		if (!*hbw && htp->htCapability) {
-			if (htp->htSupportedChannelWidthSet ==
-				eHT_CHANNEL_WIDTH_40MHZ)
-				*hbw = HALF_BW_OF(eCSR_BW_40MHz_VAL);
-			else
-				*hbw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
-		}
-	} else if (htp->htCapability) {
-		if (htp->htSupportedChannelWidthSet ==
-					eHT_CHANNEL_WIDTH_40MHZ) {
-			*hbw = HALF_BW_OF(eCSR_BW_40MHz_VAL);
-		} else {
-			*hbw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
-		}
-	}
-ret:
-	switch (*hbw * 2) {
-	case eCSR_BW_40MHz_VAL:
-		chan_params.ch_width = CH_WIDTH_40MHZ;
-		break;
-	case eCSR_BW_80MHz_VAL:
-		chan_params.ch_width = CH_WIDTH_80MHZ;
-		break;
-	case eCSR_BW_160MHz_VAL:
-		chan_params.ch_width = CH_WIDTH_160MHZ;
-		break;
-	default:
-		chan_params.ch_width = CH_WIDTH_20MHZ;
-		break;
-	}
-	wlan_reg_set_channel_params_for_freq(mac->pdev, och_freq, 0,
-					     &chan_params);
-
-	*cfreq = chan_params.mhz_freq_seg0;
-}
-
-/**
  * csr_calc_chb_for_sap_phymode() - to calc channel bandwidth for sap phymode
  * @mac_ctx: pointer to mac context
  * @sap_ch: SAP operating channel
@@ -910,6 +830,28 @@ static void csr_calc_chb_for_sap_phymode(struct mac_context *mac_ctx,
 	}
 }
 
+static eCSR_BW_Val csr_get_half_bw(enum phy_ch_width ch_width)
+{
+	eCSR_BW_Val hw_bw = HALF_BW_OF(eCSR_BW_20MHz_VAL);
+
+	switch (ch_width) {
+	case CH_WIDTH_40MHZ:
+		hw_bw = HALF_BW_OF(eCSR_BW_40MHz_VAL);
+		break;
+	case CH_WIDTH_80MHZ:
+		hw_bw = HALF_BW_OF(eCSR_BW_80MHz_VAL);
+		break;
+	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_80P80MHZ:
+		hw_bw = HALF_BW_OF(eCSR_BW_160MHz_VAL);
+		break;
+	default:
+		break;
+	}
+
+	return hw_bw;
+}
+
 /**
  * csr_handle_conc_chnl_overlap_for_sap_go - To handle overlap for AP+AP
  * @mac_ctx: pointer to mac context
@@ -934,10 +876,15 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(
 		uint32_t *intf_ch_freq, uint32_t *intf_hbw,
 		uint32_t *intf_cfreq, enum QDF_OPMODE op_mode)
 {
-	uint32_t op_chan_freq;
+	qdf_freq_t op_chan_freq;
+	qdf_freq_t freq_seg_0;
+	enum phy_ch_width ch_width;
 
-	op_chan_freq = wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev,
-							    session->vdev_id);
+	wlan_get_op_chan_freq_info_vdev_id(mac_ctx->pdev, session->vdev_id,
+					   &op_chan_freq, &freq_seg_0,
+					   &ch_width);
+	sme_debug("op_chan_freq:%d freq_seg_0:%d ch_width:%d",
+		  op_chan_freq, freq_seg_0, ch_width);
 	/*
 	 * if conc_custom_rule1 is defined then we don't
 	 * want p2pgo to follow SAP's channel or SAP to
@@ -947,20 +894,17 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(
 		0 == mac_ctx->roam.configParam.conc_custom_rule2) {
 		if (*sap_ch_freq == 0) {
 			*sap_ch_freq = op_chan_freq;
-			csr_get_ch_from_ht_profile(mac_ctx,
-				&session->connectedProfile.ht_profile,
-				*sap_ch_freq, sap_cfreq, sap_hbw);
+			*sap_cfreq = freq_seg_0;
+			*sap_hbw = csr_get_half_bw(ch_width);
 		} else if (*sap_ch_freq != op_chan_freq) {
 			*intf_ch_freq = op_chan_freq;
-			csr_get_ch_from_ht_profile(mac_ctx,
-					&session->connectedProfile.ht_profile,
-					*intf_ch_freq, intf_cfreq, intf_hbw);
+			*intf_cfreq = freq_seg_0;
+			*intf_hbw = csr_get_half_bw(ch_width);
 		}
 	} else if (*sap_ch_freq == 0 && op_mode == QDF_SAP_MODE) {
 		*sap_ch_freq = op_chan_freq;
-		csr_get_ch_from_ht_profile(mac_ctx,
-				&session->connectedProfile.ht_profile,
-				*sap_ch_freq, sap_cfreq, sap_hbw);
+		*sap_cfreq = freq_seg_0;
+		*sap_hbw = csr_get_half_bw(ch_width);
 	}
 }
 
@@ -987,6 +931,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	uint32_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq;
 	QDF_STATUS status;
 	enum QDF_OPMODE op_mode;
+	enum phy_ch_width ch_width;
 
 	if (mac_ctx->roam.configParam.cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_DISABLE)
@@ -1026,14 +971,14 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 		     eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
 #endif
 		    ) {
-			intf_ch_freq =
-			     wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev,
-								  i);
-			csr_get_ch_from_ht_profile(mac_ctx,
-				&session->connectedProfile.ht_profile,
-				intf_ch_freq, &intf_cfreq, &intf_hbw);
-			sme_debug("%d: intf_ch:%d intf_cfreq:%d intf_hbw:%d",
-				i, intf_ch_freq, intf_cfreq, intf_hbw);
+			wlan_get_op_chan_freq_info_vdev_id(mac_ctx->pdev,
+					   session->vdev_id,
+					   &intf_ch_freq, &intf_cfreq,
+					   &ch_width);
+			intf_hbw = csr_get_half_bw(ch_width);
+			sme_debug("%d: intf_ch:%d intf_cfreq:%d intf_hbw:%d ch_width %d",
+				  i, intf_ch_freq, intf_cfreq, intf_hbw,
+				  ch_width);
 		} else if ((op_mode == QDF_P2P_GO_MODE ||
 			    op_mode == QDF_SAP_MODE) &&
 			   (session->connectState !=

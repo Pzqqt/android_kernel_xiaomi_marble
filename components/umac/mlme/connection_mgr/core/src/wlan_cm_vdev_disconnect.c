@@ -47,12 +47,13 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	cm_csr_disconnect_start_ind(vdev, req);
+
 	user_disconnect = req->source == CM_OSIF_CONNECT ? true : false;
 	wlan_p2p_cleanup_roc_by_vdev(vdev);
 	wlan_tdls_notify_sta_disconnect(req->vdev_id, false, user_disconnect,
 					vdev);
 	wlan_cm_abort_rso(pdev, req->vdev_id);
-	/* stop wait for key timer */
 
 	return QDF_STATUS_SUCCESS;
 }

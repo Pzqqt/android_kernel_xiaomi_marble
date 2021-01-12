@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,11 +38,6 @@
 #include "include/wlan_vdev_mlme.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "wlan_qct_sys.h"
-
-typedef enum {
-	ONE_BYTE = 1,
-	TWO_BYTE = 2
-} eSizeOfLenField;
 
 #define LIM_AID_MASK                              0xC000
 #define LIM_SPECTRUM_MANAGEMENT_BIT_MASK          0x0100
@@ -1039,7 +1034,7 @@ void lim_send_set_dtim_period(struct mac_context *mac_ctx, uint8_t dtim_period,
 
 QDF_STATUS lim_strip_ie(struct mac_context *mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,
-		uint8_t eid, eSizeOfLenField size_of_len_field,
+		uint8_t eid, enum size_of_len_field size_of_len_field,
 		uint8_t *oui, uint8_t out_len, uint8_t *extracted_ie,
 		uint32_t eid_max_len);
 

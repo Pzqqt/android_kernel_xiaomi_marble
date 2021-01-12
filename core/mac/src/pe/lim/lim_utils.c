@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5753,95 +5753,14 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * lim_strip_ie() - strip requested IE from IE buffer
- * @mac_ctx: global MAC context
- * @addn_ie: Additional IE buffer
- * @addn_ielen: Length of additional IE
- * @eid: EID of IE to strip
- * @size_of_len_field: length of IE length field
- * @oui: if present matches OUI also
- * @oui_length: if previous present, this is length of oui
- * @extracted_ie: if not NULL, copy the stripped IE to this buffer
- *
- * This utility function is used to strip of the requested IE if present
- * in IE buffer.
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS lim_strip_ie(struct mac_context *mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,
-		uint8_t eid, eSizeOfLenField size_of_len_field,
+		uint8_t eid, enum size_of_len_field size_of_len_field,
 		uint8_t *oui, uint8_t oui_length, uint8_t *extracted_ie,
 		uint32_t eid_max_len)
 {
-	uint8_t *tempbuf = NULL;
-	uint16_t templen = 0;
-	int left = *addn_ielen;
-	uint8_t *ptr = addn_ie;
-	uint8_t elem_id;
-	uint16_t elem_len, ie_len, extracted_ie_len = 0;
-
-	if (!addn_ie) {
-		pe_debug("NULL addn_ie pointer");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	tempbuf = qdf_mem_malloc(left);
-	if (!tempbuf)
-		return QDF_STATUS_E_NOMEM;
-
-	if (extracted_ie)
-		qdf_mem_zero(extracted_ie, eid_max_len + size_of_len_field + 1);
-
-	while (left >= 2) {
-		elem_id  = ptr[0];
-		left -= 1;
-		if (size_of_len_field == TWO_BYTE) {
-			elem_len = *((uint16_t *)&ptr[1]);
-			left -= 2;
-		} else {
-			elem_len = ptr[1];
-			left -= 1;
-		}
-		if (elem_len > left) {
-			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
-				elem_id, elem_len, left);
-			qdf_mem_free(tempbuf);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		if (eid != elem_id ||
-				(oui && qdf_mem_cmp(oui,
-						&ptr[size_of_len_field + 1],
-						oui_length))) {
-			qdf_mem_copy(tempbuf + templen, &ptr[0],
-				     elem_len + size_of_len_field + 1);
-			templen += (elem_len + size_of_len_field + 1);
-		} else {
-			/*
-			 * eid matched and if provided OUI also matched
-			 * take oui IE and store in provided buffer.
-			 */
-			if (extracted_ie) {
-				ie_len = elem_len + size_of_len_field + 1;
-				if (ie_len <= eid_max_len - extracted_ie_len) {
-					qdf_mem_copy(
-					extracted_ie + extracted_ie_len,
-					&ptr[0], ie_len);
-					extracted_ie_len += ie_len;
-				}
-			}
-		}
-		left -= elem_len;
-		ptr += (elem_len + size_of_len_field + 1);
-	}
-	qdf_mem_copy(addn_ie, tempbuf, templen);
-
-	*addn_ielen = templen;
-	qdf_mem_free(tempbuf);
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_strip_ie(addn_ie, addn_ielen, eid, size_of_len_field,
+			     oui, oui_length, extracted_ie, eid_max_len);
 }
 
 #ifdef WLAN_FEATURE_11W

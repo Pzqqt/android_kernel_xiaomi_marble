@@ -575,9 +575,6 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	bool is_vendor_ap_1_present;
 	struct join_req *join_reassoc_req = NULL;
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	struct ht_profile *ht_profile;
-#endif
 	if (session_entry->beacon &&
 	    session_entry->bcnLen > sizeof(struct wlan_frame_hdr)) {
 		sme_join_rsp->beaconLength = session_entry->bcnLen -
@@ -656,24 +653,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 		sme_join_rsp->aid = session_entry->limAID;
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-		if (session_entry->cc_switch_mode !=
-				QDF_MCC_TO_SCC_SWITCH_DISABLE) {
-			ht_profile = &sme_join_rsp->ht_profile;
-			ht_profile->htSupportedChannelWidthSet =
-				session_entry->htSupportedChannelWidthSet;
-			ht_profile->htRecommendedTxWidthSet =
-				session_entry->htRecommendedTxWidthSet;
-			ht_profile->htSecondaryChannelOffset =
-				session_entry->htSecondaryChannelOffset;
-			ht_profile->dot11mode = session_entry->dot11mode;
-			ht_profile->htCapability = session_entry->htCapability;
-			ht_profile->vhtCapability =
-				session_entry->vhtCapability;
-			ht_profile->apCenterChan = session_entry->ch_center_freq_seg0;
-			ht_profile->apChanWidth = session_entry->ch_width;
-		}
-#endif
+
 		pe_debug("lim_join_req:%pK, pLimReAssocReq:%pK",
 			 session_entry->lim_join_req,
 			 session_entry->pLimReAssocReq);
@@ -979,28 +959,6 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 			/* This is the size of the message, subtracting the size of the pointer to ieFields */
 			size += ieLen - sizeof(uint32_t);
 		}
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-			if (pe_session->cc_switch_mode
-			    != QDF_MCC_TO_SCC_SWITCH_DISABLE) {
-				pSirSmeRsp->ht_profile.
-				htSupportedChannelWidthSet =
-					pe_session->htSupportedChannelWidthSet;
-				pSirSmeRsp->ht_profile.htRecommendedTxWidthSet =
-					pe_session->htRecommendedTxWidthSet;
-				pSirSmeRsp->ht_profile.htSecondaryChannelOffset =
-					pe_session->htSecondaryChannelOffset;
-				pSirSmeRsp->ht_profile.dot11mode =
-					pe_session->dot11mode;
-				pSirSmeRsp->ht_profile.htCapability =
-					pe_session->htCapability;
-				pSirSmeRsp->ht_profile.vhtCapability =
-					pe_session->vhtCapability;
-				pSirSmeRsp->ht_profile.apCenterChan =
-					pe_session->ch_center_freq_seg0;
-				pSirSmeRsp->ht_profile.apChanWidth =
-					pe_session->ch_width;
-			}
-#endif
 		}
 	}
 	pSirSmeRsp->messageType = msgType;

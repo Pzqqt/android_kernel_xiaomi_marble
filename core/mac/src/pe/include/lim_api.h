@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -464,15 +464,6 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *, uint32_t, uint32_t *)
  * Return: None
  */
 void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param);
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void lim_fill_join_rsp_ht_caps(struct pe_session *session,
-			       struct join_rsp *rsp);
-#else
-static inline
-void lim_fill_join_rsp_ht_caps(struct pe_session *session,
-			       struct join_rsp *rsp)
-{}
-#endif
 QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx, uint8_t *ie_data,
 				 uint8_t *local_ie_buf, uint16_t *local_ie_len,
 				 struct pe_session *session);

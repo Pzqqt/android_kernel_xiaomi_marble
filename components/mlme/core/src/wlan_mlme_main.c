@@ -2698,6 +2698,48 @@ enum QDF_OPMODE wlan_get_opmode_from_vdev_id(struct wlan_objmgr_pdev *pdev,
 	return opmode;
 }
 
+QDF_STATUS wlan_mlme_get_ssid_vdev_id(struct wlan_objmgr_pdev *pdev,
+				      uint8_t vdev_id,
+				      uint8_t *ssid, uint8_t *ssid_len)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	status = wlan_vdev_mlme_get_ssid(vdev, ssid, ssid_len);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return status;
+}
+
+QDF_STATUS wlan_mlme_get_bssid_vdev_id(struct wlan_objmgr_pdev *pdev,
+				       uint8_t vdev_id,
+				       struct qdf_mac_addr *bss_peer_mac)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	status = wlan_vdev_get_bss_peer_mac(vdev, bss_peer_mac);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return status;
+}
+
 qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev)
 {
 	qdf_freq_t chan_freq = 0;
@@ -2733,6 +2775,118 @@ qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
 	return chan_freq;
+}
+
+QDF_STATUS
+wlan_get_op_chan_freq_info_vdev_id(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id, qdf_freq_t *op_freq,
+				   qdf_freq_t *freq_seg_0,
+				   enum phy_ch_width *ch_width)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_channel *chan;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	*op_freq = 0;
+	*freq_seg_0 = 0;
+	*ch_width = 0;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		goto rel_ref;
+	if (wlan_vdev_mlme_is_active(vdev) != QDF_STATUS_SUCCESS)
+		goto rel_ref;
+	chan = wlan_vdev_get_active_channel(vdev);
+	if (!chan)
+		goto rel_ref;
+
+	*op_freq = chan->ch_freq;
+	*freq_seg_0 = chan->ch_cfreq1;
+	*ch_width = chan->ch_width;
+	status = QDF_STATUS_SUCCESS;
+
+rel_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return status;
+}
+
+QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
+			 uint8_t eid, enum size_of_len_field size_of_len_field,
+			 uint8_t *oui, uint8_t oui_length,
+			 uint8_t *extracted_ie, uint32_t eid_max_len)
+{
+	uint8_t *tmp_buf = NULL;
+	uint16_t tmp_len = 0;
+	int left = *addn_ielen;
+	uint8_t *ptr = addn_ie;
+	uint8_t elem_id;
+	uint16_t elem_len, ie_len, extracted_ie_len = 0;
+
+	if (!addn_ie) {
+		mlme_debug("NULL addn_ie pointer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tmp_buf = qdf_mem_malloc(left);
+	if (!tmp_buf)
+		return QDF_STATUS_E_NOMEM;
+
+	if (extracted_ie)
+		qdf_mem_zero(extracted_ie, eid_max_len + size_of_len_field + 1);
+
+	while (left >= 2) {
+		elem_id  = ptr[0];
+		left -= 1;
+		if (size_of_len_field == TWO_BYTE) {
+			elem_len = *((uint16_t *)&ptr[1]);
+			left -= 2;
+		} else {
+			elem_len = ptr[1];
+			left -= 1;
+		}
+		if (elem_len > left) {
+			mlme_err("Invalid IEs eid: %d elem_len: %d left: %d",
+				 elem_id, elem_len, left);
+			qdf_mem_free(tmp_buf);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (eid != elem_id ||
+				(oui && qdf_mem_cmp(oui,
+						&ptr[size_of_len_field + 1],
+						oui_length))) {
+			qdf_mem_copy(tmp_buf + tmp_len, &ptr[0],
+				     elem_len + size_of_len_field + 1);
+			tmp_len += (elem_len + size_of_len_field + 1);
+		} else {
+			/*
+			 * eid matched and if provided OUI also matched
+			 * take oui IE and store in provided buffer.
+			 */
+			if (extracted_ie) {
+				ie_len = elem_len + size_of_len_field + 1;
+				if (ie_len <= eid_max_len - extracted_ie_len) {
+					qdf_mem_copy(
+					extracted_ie + extracted_ie_len,
+					&ptr[0], ie_len);
+					extracted_ie_len += ie_len;
+				}
+			}
+		}
+		left -= elem_len;
+		ptr += (elem_len + size_of_len_field + 1);
+	}
+	qdf_mem_copy(addn_ie, tmp_buf, tmp_len);
+
+	*addn_ielen = tmp_len;
+	qdf_mem_free(tmp_buf);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)

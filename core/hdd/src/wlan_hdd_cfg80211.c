@@ -18316,21 +18316,17 @@ struct cfg80211_bss *
 wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 				struct csr_roam_info *roam_info)
 {
-	tCsrRoamConnectedProfile roamProfile;
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	struct cfg80211_bss *bss = NULL;
+	struct bss_description *bss_desc = NULL;
 
-	memset(&roamProfile, 0, sizeof(tCsrRoamConnectedProfile));
-	sme_roam_get_connect_profile(mac_handle, adapter->vdev_id,
-				     &roamProfile);
+	bss_desc = sme_roam_get_connect_bss_desc(mac_handle, adapter->vdev_id);
 
-	if (roamProfile.bss_desc) {
-		bss = wlan_hdd_inform_bss_frame(adapter, roamProfile.bss_desc);
+	if (bss_desc) {
+		bss = wlan_hdd_inform_bss_frame(adapter, bss_desc);
 
 		if (!bss)
 			hdd_debug("wlan_hdd_inform_bss_frame returned NULL");
-
-		sme_roam_free_connect_profile(&roamProfile);
 	} else {
 		hdd_err("roamProfile.bss_desc is NULL");
 	}
@@ -19182,13 +19178,11 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 	roam_profile->AuthType.authType[0] = sta_ctx->conn_info.auth_type;
 	return 0;
 }
-#endif /* FEATURE_CM_ENABLE */
 
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 
-#ifndef FEATURE_CM_ENABLE
 static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
 	struct wlan_fils_connection_info *fils_con_info;
@@ -19201,7 +19195,6 @@ static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 
 	return true;
 }
-#endif /* FEATURE_CM_ENABLE */
 
 static enum eAniAuthType wlan_hdd_get_fils_auth_type(
 		enum nl80211_auth_type auth)
@@ -19243,7 +19236,6 @@ static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
 	return true;
 }
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_cfg80211_set_fils_config() - set fils config params during connect
  * @adapter: Pointer to adapter
@@ -19397,13 +19389,11 @@ static bool wlan_hdd_is_conn_type_fils(struct cfg80211_connect_params *req)
 
 	return true;
 }
-#endif /* FEATURE_CM_ENABLE */
 #else
 static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
 	return true;
 }
-
 static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 					 struct cfg80211_connect_params *req)
 {
@@ -19421,7 +19411,6 @@ static bool wlan_hdd_is_conn_type_fils(struct cfg80211_connect_params *req)
 }
 #endif
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_set_akm_suite() - set key management type
  * @adapter: Pointer to adapter
@@ -19620,7 +19609,7 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 
 	return 0;
 }
-#endif /* FEATURE_CM_ENABLE */
+
 /**
  * wlan_hdd_add_assoc_ie() - Add Assoc IE to roamProfile
  * @adapter: Pointer to adapter
@@ -19702,7 +19691,6 @@ static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 {}
 #endif
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_populate_crypto_auth_type() - populate auth type for crypto
  * @vdev: pointed to vdev obmgr
@@ -19850,7 +19838,6 @@ static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
 
 	hdd_populate_crypto_auth_type(vdev, req);
 }
-#endif /* FEATURE_CM_ENABLE */
 
 #ifdef FEATURE_WLAN_WAPI
 /**
@@ -20281,7 +20268,6 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 	return 0;
 }
 
-#ifndef FEATURE_CM_ENABLE
 static void wlan_hdd_cfg80211_store_wep_key(struct hdd_adapter *adapter,
 					    struct wlan_objmgr_vdev *vdev,
 					    struct cfg80211_connect_params *req)
@@ -20892,7 +20878,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	return status;
 }
-#endif
+#endif /* ndef FEATURE_CM_ENABLE */
 
 #ifdef FEATURE_CM_ENABLE
 /**
@@ -23572,6 +23558,7 @@ static void hdd_update_chan_info(struct hdd_context *hdd_ctx,
 	(defined(CFG80211_UPDATE_CONNECT_PARAMS) ||\
 		(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)))
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_update_connect_params_fils_info() - Update fils parameters based on
  * the update_connect_params received from userspace
@@ -23670,6 +23657,17 @@ hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
 	return 0;
 }
 #else
+static inline int
+hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
+				    struct hdd_context *hdd_ctx,
+				    struct cfg80211_connect_params *req,
+				    uint32_t changed)
+{
+	/* handle for connection manager */
+	return 0;
+}
+#endif
+#else
 
 static inline int
 hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
@@ -23714,6 +23712,7 @@ __wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
+	struct element_info assoc_ie;
 
 	hdd_enter_dev(dev);
 
@@ -23728,19 +23727,26 @@ __wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 	roam_profile = hdd_roam_profile(adapter);
 
 	if (changed & UPDATE_ASSOC_IE) {
+#ifndef FEATURE_CM_ENABLE
 		/*
 		 * Validate the elements of the IE and copy it to
 		 * roam_profile in adapter
 		 */
 		wlan_hdd_cfg80211_set_ie(adapter, req->ie, req->ie_len);
+		assoc_ie.len = roam_profile->nAddIEAssocLength;
+		assoc_ie.ptr = roam_profile->pAddIEAssoc;
 
+#else
+		assoc_ie.len = req->ie_len;
+		assoc_ie.ptr = (uint8_t *)req->ie;
+#endif
 		/*
 		 * Update this assoc IE received from user space to
-		 * csr_session. RSO command will pick up the assoc
-		 * IEs to be sent to firmware from the csr_session.
+		 * umac. RSO command will pick up the assoc
+		 * IEs to be sent to firmware from the umac.
 		 */
 		sme_update_session_assoc_ie(mac_handle, adapter->vdev_id,
-					    roam_profile);
+					    &assoc_ie);
 	}
 
 	if ((changed & UPDATE_FILS_ERP_INFO) ||

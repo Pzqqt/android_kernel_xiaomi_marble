@@ -97,12 +97,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	bool isVOAdmitted;
 	uint16_t MinQBssLoadRequired;
 #endif
-	/*
-	 * Previous connected profile.
-	 * If the new profile does not match previous we re-initialize
-	 * occupied channel list
-	 */
-	tCsrRoamConnectedProfile prevConnProfile;
 	/* upper layer requested a reassoc */
 	uint8_t uOsRequestedHandoff;
 	/* handoff related info came with upper layer's req for reassoc */

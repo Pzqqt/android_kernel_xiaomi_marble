@@ -445,7 +445,6 @@ struct csr_roam_connectedinfo {
 	 * nAssocRspLength to desice where each frame starts and ends.
 	 */
 	uint8_t *pbFrames;
-	uint8_t staId;
 };
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -525,21 +524,12 @@ struct csr_roam_session {
 	struct csr_roam_connectedinfo prev_assoc_ap_info;
 	struct csr_roam_profile *pCurRoamProfile;
 	struct bss_description *pConnectBssDesc;
-	uint16_t NumPmkidCache; /* valid number of pmkid in the cache*/
-	uint16_t curr_cache_idx; /* the index in pmkidcache to write next to */
-	tPmkidCacheInfo PmkidCacheInfo[CSR_MAX_PMKID_ALLOWED];
-	uint8_t cJoinAttemps;
-	int32_t sPendingCommands;   /* 0 means CSR is ok to low power */
-	/*
-	 * indicate whether CSR is roaming
-	 * (either via lostlink or dynamic roaming)
-	 */
-	bool fRoaming;
 	/*
 	 * to remember some parameters needed for START_BSS.
 	 * All member must be set every time we try to join
 	 */
 	struct csr_roamstart_bssparams bssParams;
+#ifndef FEATURE_CM_ENABLE
 	/* the byte count of pWpaRsnIE; */
 	uint32_t nWpaRsnReqIeLength;
 	/* contain the WPA/RSN IE in assoc req */
@@ -553,8 +543,7 @@ struct csr_roam_session {
 	uint32_t nAddIEScanLength;      /* the byte count of pAddIeScanIE; */
 	/* contains the additional IE in (unicast) probe req at time of join */
 	uint8_t *pAddIEScan;
-	uint32_t nAddIEAssocLength;     /* the byte count for pAddIeAssocIE */
-	uint8_t *pAddIEAssoc;
+#endif
 	struct csr_timer_info roamingTimerInfo;
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
@@ -926,8 +915,6 @@ uint16_t csr_check_concurrent_channel_overlap(
 		uint32_t sap_ch_freq, eCsrPhyMode sap_phymode,
 		uint8_t cc_switch_mode);
 #endif
-QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
-		uint32_t sessionId, tCsrRoamConnectedProfile *pProfile);
 
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId);

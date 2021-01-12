@@ -251,7 +251,6 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 	}
 
 	cm_csr_connect_done_ind(vdev, rsp);
-	/* start wait for key timer */
 
 	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status))
 		policy_mgr_incr_active_session(psoc, op_mode, vdev_id);

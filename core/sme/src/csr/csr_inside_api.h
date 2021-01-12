@@ -773,6 +773,8 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
 					 uint32_t session_id,
 					 struct pmkid_mode_bits *pmkid_modes);
 #endif
+
+#ifndef FEATURE_CM_ENABLE
 /*
  * csr_roam_get_wpa_rsn_req_ie() -
  * Return the WPA or RSN IE CSR passes to PE to JOIN request or START_BSS
@@ -785,21 +787,7 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
  */
 QDF_STATUS csr_roam_get_wpa_rsn_req_ie(struct mac_context *mac, uint32_t sessionId,
 				       uint32_t *pLen, uint8_t *pBuf);
-
-/**
- * csr_roam_get_connect_profile() - To return the current connect profile,
- * caller must call csr_roam_free_connect_profile after it is done and before
- * reuse for another csr_roam_get_connect_profile call.
- *
- * @mac:          pointer to global adapter context
- * @sessionId:     session ID
- * @pProfile:      pointer to a caller allocated structure
- *                 tCsrRoamConnectedProfile
- *
- * Return: QDF_STATUS. Failure if not connected, success otherwise
- */
-QDF_STATUS csr_roam_get_connect_profile(struct mac_context *mac, uint32_t sessionId,
-					tCsrRoamConnectedProfile *pProfile);
+#endif
 
 void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 
@@ -893,9 +881,15 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 {}
 #endif
 
-#if defined(FEATURE_WLAN_ESE)
+#ifdef FEATURE_WLAN_ESE
 void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
 		    uint64_t *incr);
+void csr_update_prev_ap_info(struct csr_roam_session *session,
+			     struct wlan_objmgr_vdev *vdev);
+
+#else
+static inline void csr_update_prev_ap_info(struct csr_roam_session *session,
+					   struct wlan_objmgr_vdev *vdev) {}
 #endif
 
 QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac, uint32_t sessionId,
@@ -913,10 +907,6 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 						uint32_t ch_freq);
 
 QDF_STATUS csr_update_channel_list(struct mac_context *mac);
-QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
-					 uint32_t sessionId,
-					 tPmkidCacheInfo *pmksa,
-					 bool flush_cache);
 
 /**
  * csr_update_pmk_cache_ft - API to update MDID in PMKSA cache entry
