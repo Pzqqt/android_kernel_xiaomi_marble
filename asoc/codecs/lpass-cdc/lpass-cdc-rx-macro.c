@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -724,7 +724,7 @@ static struct snd_soc_dai_driver lpass_cdc_rx_macro_dai[] = {
 		.ops = &lpass_cdc_rx_macro_dai_ops,
 	},
 	{
-		.name = "lpass_cdc_rx_macro_echo",
+		.name = "rx_macro_echo",
 		.id = RX_MACRO_AIF_ECHO,
 		.capture = {
 			.stream_name = "RX_AIF_ECHO Capture",

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -409,7 +409,7 @@ static struct snd_soc_dai_ops lpass_cdc_wsa_macro_dai_ops = {
 
 static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
 	{
-		.name = "lpass_cdc_wsa_macro_rx1",
+		.name = "wsa_macro_rx1",
 		.id = LPASS_CDC_WSA_MACRO_AIF1_PB,
 		.playback = {
 			.stream_name = "WSA_AIF1 Playback",
@@ -423,7 +423,7 @@ static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
 		.ops = &lpass_cdc_wsa_macro_dai_ops,
 	},
 	{
-		.name = "lpass_cdc_wsa_macro_rx_mix",
+		.name = "wsa_macro_rx_mix",
 		.id = LPASS_CDC_WSA_MACRO_AIF_MIX1_PB,
 		.playback = {
 			.stream_name = "WSA_AIF_MIX1 Playback",
@@ -437,7 +437,7 @@ static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
 		.ops = &lpass_cdc_wsa_macro_dai_ops,
 	},
 	{
-		.name = "lpass_cdc_wsa_macro_vifeedback",
+		.name = "wsa_macro_vifeedback",
 		.id = LPASS_CDC_WSA_MACRO_AIF_VI,
 		.capture = {
 			.stream_name = "WSA_AIF_VI Capture",
@@ -451,7 +451,7 @@ static struct snd_soc_dai_driver lpass_cdc_wsa_macro_dai[] = {
 		.ops = &lpass_cdc_wsa_macro_dai_ops,
 	},
 	{
-		.name = "lpass_cdc_wsa_macro_echo",
+		.name = "wsa_macro_echo",
 		.id = LPASS_CDC_WSA_MACRO_AIF_ECHO,
 		.capture = {
 			.stream_name = "WSA_AIF_ECHO Capture",
