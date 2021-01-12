@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -987,8 +987,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			&ch_rate[0], &spkleft_port_types[0]);
 
 		if (dapm->component) {
-		snd_soc_dapm_ignore_suspend(dapm, "spkrLeft IN");
-		snd_soc_dapm_ignore_suspend(dapm, "spkrLeft SPKR");
+			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft IN");
+			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft SPKR");
 		}
 
 		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
@@ -1018,9 +1018,9 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			component);
 	}
 
-	component = snd_soc_rtdcom_lookup(rtd, "lpass_cdc_codec");
+	component = snd_soc_rtdcom_lookup(rtd, "lpass-cdc");
 	if (!component) {
-		pr_err("%s: could not find component for lpass_cdc_codec\n",
+		pr_err("%s: could not find component for lpass-cdc\n",
 			__func__);
 		return ret;
 	}

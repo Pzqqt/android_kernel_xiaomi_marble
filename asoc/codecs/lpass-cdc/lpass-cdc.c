@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_platform.h>
@@ -19,7 +19,7 @@
 #include "internal.h"
 #include "lpass-cdc-clk-rsc.h"
 
-#define DRV_NAME "lpass_cdc"
+#define DRV_NAME "lpass-cdc"
 
 #define LPASS_CDC_VERSION_ENTRY_SIZE 32
 #define LPASS_CDC_STRING_LEN 80
