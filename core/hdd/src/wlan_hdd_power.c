@@ -2819,7 +2819,16 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 					struct net_device *dev)
 {
 	struct hif_opaque_softc *hif_ctx;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	qdf_device_t qdf_dev;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	if (!hdd_ctx->config->is_unit_test_framework_enabled) {
+		hdd_warn_rl("UT framework is disabled");
+		return;
+	}
 
 	hdd_info("Unit-test resume WLAN");
 
@@ -2856,6 +2865,9 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
 	hdd_alert("Unit-test resume succeeded");
+
+	hdd_info("allow rtpm wow for wow unit test");
+	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.wow_unit_test);
 }
 
 /**
@@ -2928,6 +2940,9 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 		return 0;
 	}
 
+	hdd_info("prevent rtpm wow for wow unit test");
+	qdf_runtime_pm_prevent_suspend(&hdd_ctx->runtime_context.wow_unit_test);
+
 	/* pci link is needed to wakeup from HTC wakeup trigger */
 	if (resume_setting == WOW_RESUME_TRIGGER_HTC_WAKEUP)
 		hif_vote_link_up(hif_ctx);
@@ -2987,6 +3002,9 @@ link_down:
 
 	clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state);
 	hdd_err("Unit-test suspend failed: %d", errno);
+
+	hdd_info("allow rtpm wow for wow unit test");
+	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.wow_unit_test);
 
 	return errno;
 }
