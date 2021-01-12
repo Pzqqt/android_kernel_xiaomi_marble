@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -158,7 +158,7 @@ QDF_STATUS wlan_vdev_allow_connect_n_tx(struct wlan_objmgr_vdev *vdev)
 
 	state = wlan_vdev_mlme_get_state(vdev);
 	substate = wlan_vdev_mlme_get_substate(vdev);
-	if ((state == WLAN_VDEV_S_UP) ||
+	if ((state == WLAN_VDEV_S_UP && substate == WLAN_VDEV_SS_UP_ACTIVE) ||
 	    ((state == WLAN_VDEV_S_SUSPEND) &&
 	     (substate == WLAN_VDEV_SS_SUSPEND_CSA_RESTART)))
 		return QDF_STATUS_SUCCESS;
@@ -275,9 +275,12 @@ void wlan_vdev_mlme_cmd_unlock(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev)
 {
 	enum wlan_vdev_state state;
+	enum wlan_vdev_state substate;
 
 	state = wlan_vdev_mlme_get_state(vdev);
-	if ((state == WLAN_VDEV_S_INIT) ||  (state == WLAN_VDEV_S_UP) ||
+	substate = wlan_vdev_mlme_get_substate(vdev);
+	if ((state == WLAN_VDEV_S_INIT) ||
+	    (state == WLAN_VDEV_S_UP && substate == WLAN_VDEV_SS_UP_ACTIVE) ||
 	    (state == WLAN_VDEV_S_STOP))
 		return QDF_STATUS_SUCCESS;
 

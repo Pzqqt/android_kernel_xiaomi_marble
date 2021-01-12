@@ -622,6 +622,23 @@ static inline QDF_STATUS mlme_vdev_dfs_cac_wait_notify(
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * mlme_vdev_up_notify_mlo_mgr - notify mlo link is ready to up
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * Return: VOID.
+ */
+static inline void mlme_vdev_up_notify_mlo_mgr(struct vdev_mlme_obj *vdev_mlme)
+{
+	mlo_handle_link_up(vdev_mlme->vdev);
+}
+#else
+static inline void mlme_vdev_up_notify_mlo_mgr(struct vdev_mlme_obj *vdev_mlme)
+{
+}
+#endif
+
 #ifdef VDEV_SM_LOCK_SUPPORT
 /**
  * mlme_vdev_sm_spinlock_create - Create VDEV MLME spinlock
