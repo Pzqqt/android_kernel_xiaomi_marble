@@ -1019,8 +1019,9 @@ static int sde_encoder_virt_atomic_check(
 
 	SDE_EVT32(DRMID(drm_enc), adj_mode->flags,
 		sde_conn_state->msm_mode.private_flags,
-		old_top, adj_mode->vrefresh, adj_mode->hdisplay,
+		old_top, drm_mode_vrefresh(adj_mode), adj_mode->hdisplay,
 		adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal);
+
 	return ret;
 }
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -947,7 +947,7 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc)
 
 	if (mode && (qsync_mode == SDE_RM_QSYNC_CONTINUOUS_MODE)) {
 		u32 qsync_min_fps = 0;
-		u32 default_fps = mode->vrefresh;
+		u32 default_fps = drm_mode_vrefresh(mode);
 		u32 yres = mode->vtotal;
 		u32 slow_time_ns;
 		u32 default_time_ns;
@@ -1013,6 +1013,7 @@ static void sde_encoder_phys_cmd_tearcheck_config(
 	struct drm_display_mode *mode;
 	bool tc_enable = true;
 	u32 vsync_hz;
+	int vrefresh;
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 
@@ -1047,6 +1048,7 @@ static void sde_encoder_phys_cmd_tearcheck_config(
 	}
 	priv = sde_kms->dev->dev_private;
 
+	vrefresh = drm_mode_vrefresh(mode);
 	/*
 	 * TE default: dsi byte clock calculated base on 70 fps;
 	 * around 14 ms to complete a kickoff cycle if te disabled;
@@ -1057,14 +1059,14 @@ static void sde_encoder_phys_cmd_tearcheck_config(
 	 * frequency divided by the no. of rows (lines) in the LCDpanel.
 	 */
 	vsync_hz = sde_power_clk_get_rate(&priv->phandle, "vsync_clk");
-	if (!vsync_hz || !mode->vtotal || !mode->vrefresh) {
+	if (!vsync_hz || !mode->vtotal || vrefresh) {
 		SDE_DEBUG_CMDENC(cmd_enc,
 			"invalid params - vsync_hz %u vtot %u vrefresh %u\n",
-			vsync_hz, mode->vtotal, mode->vrefresh);
+			vsync_hz, mode->vtotal, vrefresh);
 		return;
 	}
 
-	tc_cfg.vsync_count = vsync_hz / (mode->vtotal * mode->vrefresh);
+	tc_cfg.vsync_count = vsync_hz / (mode->vtotal * vrefresh);
 
 	/* enable external TE after kickoff to avoid premature autorefresh */
 	tc_cfg.hw_vsync_mode = 0;
@@ -1086,7 +1088,7 @@ static void sde_encoder_phys_cmd_tearcheck_config(
 	  "tc %d intf %d vsync_clk_speed_hz %u vtotal %u vrefresh %u\n",
 		phys_enc->hw_pp->idx - PINGPONG_0,
 		phys_enc->hw_intf->idx - INTF_0,
-		vsync_hz, mode->vtotal, mode->vrefresh);
+		vsync_hz, mode->vtotal, vrefresh);
 	SDE_DEBUG_CMDENC(cmd_enc,
 	  "tc %d intf %d enable %u start_pos %u rd_ptr_irq %u wr_ptr_irq %u\n",
 		phys_enc->hw_pp->idx - PINGPONG_0,

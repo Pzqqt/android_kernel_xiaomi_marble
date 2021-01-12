@@ -92,7 +92,7 @@ static void drm_mode_to_intf_timing_params(
 	timing->underflow_clr = 0xff;
 	timing->hsync_skew = mode->hskew;
 	timing->v_front_porch_fixed = vid_enc->base.vfp_cached;
-	timing->vrefresh = mode->vrefresh;
+	timing->vrefresh = drm_mode_vrefresh(mode);
 
 	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE) {
 		timing->compression_en = true;
@@ -328,13 +328,11 @@ static void _sde_encoder_phys_vid_setup_avr(
 		struct sde_encoder_phys *phys_enc, u32 qsync_min_fps)
 {
 	struct sde_encoder_phys_vid *vid_enc;
-	struct drm_display_mode mode;
 
 	vid_enc = to_sde_encoder_phys_vid(phys_enc);
-	mode = phys_enc->cached_mode;
 	if (vid_enc->base.hw_intf->ops.avr_setup) {
 		struct intf_avr_params avr_params = {0};
-		u32 default_fps = mode.vrefresh;
+		u32 default_fps = drm_mode_vrefresh(&phys_enc->cached_mode);
 		int ret;
 
 		if (!default_fps) {
@@ -473,7 +471,8 @@ static void sde_encoder_phys_vid_setup_timing_engine(
 exit:
 	if (phys_enc->parent_ops.get_qsync_fps)
 		phys_enc->parent_ops.get_qsync_fps(
-			phys_enc->parent, &qsync_min_fps, mode.vrefresh);
+			phys_enc->parent, &qsync_min_fps,
+			drm_mode_vrefresh(&phys_enc->cached_mode));
 
 	/* only panels which support qsync will have a non-zero min fps */
 	if (qsync_min_fps) {

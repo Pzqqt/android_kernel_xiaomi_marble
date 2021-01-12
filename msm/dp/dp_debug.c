@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -994,7 +994,7 @@ static ssize_t dp_debug_read_edid_modes(struct file *file,
 	list_for_each_entry(mode, &connector->modes, head) {
 		ret = snprintf(buf + len, max_size,
 		"%s %d %d %d %d %d 0x%x\n",
-		mode->name, mode->vrefresh, mode->picture_aspect_ratio,
+		mode->name, drm_mode_vrefresh(mode), mode->picture_aspect_ratio,
 		mode->htotal, mode->vtotal, mode->clock, mode->flags);
 		if (dp_debug_check_buffer_overflow(ret, &max_size, &len))
 			break;
@@ -1069,7 +1069,7 @@ static ssize_t dp_debug_read_edid_modes_mst(struct file *file,
 	list_for_each_entry(mode, &connector->modes, head) {
 		ret = snprintf(buf + len, max_size,
 				"%s %d %d %d %d %d 0x%x\n",
-				mode->name, mode->vrefresh,
+				mode->name, drm_mode_vrefresh(mode),
 				mode->picture_aspect_ratio, mode->htotal,
 				mode->vtotal, mode->clock, mode->flags);
 		if (dp_debug_check_buffer_overflow(ret, &max_size, &len))
