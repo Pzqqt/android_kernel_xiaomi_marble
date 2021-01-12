@@ -6239,6 +6239,8 @@ static inline void copy_custom_aggr_bitmap(
 					   param->rx_aggr_size_disable);
 	WMI_VDEV_CUSTOM_TX_AC_EN_SET(cmd->enable_bitmap,
 				     param->tx_ac_enable);
+	WMI_VDEV_CUSTOM_AGGR_256_BA_EN_SET(cmd->enable_bitmap,
+					   param->aggr_ba_enable);
 }
 
 /**
