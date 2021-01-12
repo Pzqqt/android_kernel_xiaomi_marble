@@ -1003,6 +1003,9 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 		}
 	};
 
+	if (!count)
+		return 0;
+
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
 			port,
@@ -1041,6 +1044,9 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 			count++;
 		}
 	};
+
+	if (!count)
+		return 0;
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_DELIVERY_MODE,
