@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/iopoll.h>
@@ -685,8 +685,14 @@ static int write_kick_off_v1(struct sde_reg_dma_kickoff_cfg *cfg)
 		}
 	}
 
-	SDE_EVT32(cfg->feature, cfg->dma_type, cfg->dma_buf, cfg->op,
-			cfg->queue_select, cfg->ctl->idx);
+	SDE_EVT32(cfg->feature, cfg->dma_type,
+			((uint64_t)cfg->dma_buf) >> 32,
+			((uint64_t)cfg->dma_buf) & 0xFFFFFFFF,
+			(cfg->dma_buf->iova) >> 32,
+			(cfg->dma_buf->iova) & 0xFFFFFFFF,
+			cfg->op,
+			cfg->queue_select, cfg->ctl->idx,
+			SIZE_DWORD(cfg->dma_buf->index));
 	return 0;
 }
 

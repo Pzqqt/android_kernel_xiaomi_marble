@@ -113,6 +113,9 @@
 
 #define REG_DMA_DSPP_GAMUT_OP_MASK 0xFFFFFFE0
 
+#define LOG_FEATURE_OFF SDE_EVT32(ctx->idx, 0)
+#define LOG_FEATURE_ON SDE_EVT32(ctx->idx, 1)
+
 enum ltm_vlut_ops_bitmask {
 	ltm_unsharp = BIT(0),
 	ltm_dither = BIT(1),
@@ -493,6 +496,7 @@ void reg_dmav1_setup_dspp_vlutv18(struct sde_hw_dspp *ctx, void *cfg)
 		struct sde_hw_dspp *dspp;
 
 		DRM_DEBUG_DRIVER("Disable vlut feature\n");
+		LOG_FEATURE_OFF;
 		for (index = 0; index < num_of_mixers; index++) {
 			dspp = hw_cfg->dspp[index];
 			SDE_REG_WRITE(&dspp->hw, dspp->cap->sblk->hist.base +
@@ -559,6 +563,7 @@ void reg_dmav1_setup_dspp_vlutv18(struct sde_hw_dspp *ctx, void *cfg)
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[VLUT][ctx->idx],
 	    REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, VLUT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -706,6 +711,7 @@ static void reg_dmav1_setup_dspp_3d_gamutv4_common(struct sde_hw_dspp *ctx,
 	op_mode = SDE_REG_READ(&ctx->hw, ctx->cap->sblk->gamut.base);
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable gamut feature\n");
+		LOG_FEATURE_OFF;
 		dspp_3d_gamutv4_off(ctx, cfg);
 		return;
 	}
@@ -798,6 +804,7 @@ static void reg_dmav1_setup_dspp_3d_gamutv4_common(struct sde_hw_dspp *ctx,
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[GAMUT][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, GAMUT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -874,6 +881,7 @@ void reg_dmav1_setup_dspp_gcv18(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable pgc feature\n");
+		LOG_FEATURE_OFF;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->gc.base, 0);
 		return;
 	}
@@ -956,6 +964,7 @@ void reg_dmav1_setup_dspp_gcv18(struct sde_hw_dspp *ctx, void *cfg)
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[GC][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, GC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -1031,6 +1040,7 @@ void reg_dmav1_setup_dspp_igcv31(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
+		LOG_FEATURE_OFF;
 		_dspp_igcv31_off(ctx, cfg);
 		return;
 	}
@@ -1133,6 +1143,7 @@ void reg_dmav1_setup_dspp_igcv31(struct sde_hw_dspp *ctx, void *cfg)
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[IGC][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, IGC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -1210,6 +1221,7 @@ int reg_dmav1_setup_rc_datav1(struct sde_hw_dspp *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 		dspp_buf[RC_DATA][ctx->idx], REG_DMA_WRITE,
 		DMA_CTL_QUEUE0, WRITE_TRIGGER, RC_DATA);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -1288,6 +1300,7 @@ void reg_dmav1_setup_dspp_pcc_common(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable pcc feature\n");
+		LOG_FEATURE_OFF;
 		_dspp_pcc_common_off(ctx, cfg);
 		return;
 	}
@@ -1385,6 +1398,7 @@ void reg_dmav1_setup_dspp_pcc_common(struct sde_hw_dspp *ctx, void *cfg)
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[PCC][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, PCC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -1443,6 +1457,7 @@ void reg_dmav1_setup_dspp_pa_hsicv17(struct sde_hw_dspp *ctx, void *cfg)
 		if (PA_DISABLE_REQUIRED(opcode))
 			opcode &= ~PA_EN;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->hsic.base, opcode);
+		LOG_FEATURE_OFF;
 		return;
 	}
 
@@ -1569,6 +1584,7 @@ void reg_dmav1_setup_dspp_pa_hsicv17(struct sde_hw_dspp *ctx, void *cfg)
 
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, dspp_buf[HSIC][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, HSIC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -1600,6 +1616,7 @@ void reg_dmav1_setup_dspp_sixzonev17(struct sde_hw_dspp *ctx, void *cfg)
 		if (PA_DISABLE_REQUIRED(opcode))
 			opcode &= ~PA_EN;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->hsic.base, opcode);
+		LOG_FEATURE_OFF;
 		return;
 	}
 
@@ -1724,6 +1741,7 @@ void reg_dmav1_setup_dspp_sixzonev17(struct sde_hw_dspp *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 		dspp_buf[SIX_ZONE][ctx->idx],
 		REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE, SIX_ZONE);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -1920,6 +1938,7 @@ void reg_dmav1_setup_dspp_memcol_skinv17(struct sde_hw_dspp *ctx, void *cfg)
 		if (PA_DISABLE_REQUIRED(opcode))
 			opcode &= ~PA_EN;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->hsic.base, opcode);
+		LOG_FEATURE_OFF;
 		return;
 	}
 
@@ -1929,6 +1948,7 @@ void reg_dmav1_setup_dspp_memcol_skinv17(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 	}
 
+	LOG_FEATURE_ON;
 	__setup_dspp_memcol(ctx, MEMC_SKIN, hw_cfg);
 }
 
@@ -1955,6 +1975,7 @@ void reg_dmav1_setup_dspp_memcol_skyv17(struct sde_hw_dspp *ctx, void *cfg)
 		if (PA_DISABLE_REQUIRED(opcode))
 			opcode &= ~PA_EN;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->hsic.base, opcode);
+		LOG_FEATURE_OFF;
 		return;
 	}
 
@@ -1964,6 +1985,7 @@ void reg_dmav1_setup_dspp_memcol_skyv17(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 	}
 
+	LOG_FEATURE_ON;
 	__setup_dspp_memcol(ctx, MEMC_SKY, hw_cfg);
 }
 
@@ -1990,6 +2012,7 @@ void reg_dmav1_setup_dspp_memcol_folv17(struct sde_hw_dspp *ctx, void *cfg)
 		if (PA_DISABLE_REQUIRED(opcode))
 			opcode &= ~PA_EN;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->hsic.base, opcode);
+		LOG_FEATURE_OFF;
 		return;
 	}
 
@@ -1999,6 +2022,7 @@ void reg_dmav1_setup_dspp_memcol_folv17(struct sde_hw_dspp *ctx, void *cfg)
 		return;
 	}
 
+	LOG_FEATURE_ON;
 	__setup_dspp_memcol(ctx, MEMC_FOLIAGE, hw_cfg);
 }
 
@@ -2029,6 +2053,7 @@ void reg_dmav1_setup_dspp_memcol_protv17(struct sde_hw_dspp *ctx, void *cfg)
 		if (PA_DISABLE_REQUIRED(opcode))
 			opcode &= ~PA_EN;
 		SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->hsic.base, opcode);
+		LOG_FEATURE_OFF;
 		return;
 	}
 
@@ -2087,6 +2112,7 @@ void reg_dmav1_setup_dspp_memcol_protv17(struct sde_hw_dspp *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			dspp_buf[MEMC_PROT][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, MEMC_PROT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -2235,6 +2261,7 @@ void reg_dmav1_setup_vig_gamutv5(struct sde_hw_pipe *ctx, void *cfg)
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable gamut feature\n");
 		/* v5 and v6 call the same off version */
+		LOG_FEATURE_OFF;
 		vig_gamutv5_off(ctx, cfg);
 		return;
 	}
@@ -2321,6 +2348,7 @@ void reg_dmav1_setup_vig_gamutv5(struct sde_hw_pipe *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			sspp_buf[idx][GAMUT][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, GAMUT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -2473,6 +2501,7 @@ void reg_dmav1_setup_vig_igcv5(struct sde_hw_pipe *ctx, void *cfg)
 	igc_lut = hw_cfg->payload;
 	if (!igc_lut) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
+		LOG_FEATURE_OFF;
 		vig_igcv5_off(ctx, hw_cfg);
 		return;
 	}
@@ -2500,6 +2529,7 @@ void reg_dmav1_setup_vig_igcv5(struct sde_hw_pipe *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			sspp_buf[idx][IGC][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, IGC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -2523,6 +2553,7 @@ void reg_dmav1_setup_vig_igcv6(struct sde_hw_pipe *ctx, void *cfg)
 	igc_lut = hw_cfg->payload;
 	if (!igc_lut) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
+		LOG_FEATURE_OFF;
 		/* Both v5 and v6 call same igcv5_off */
 		vig_igcv5_off(ctx, hw_cfg);
 		return;
@@ -2560,6 +2591,7 @@ void reg_dmav1_setup_vig_igcv6(struct sde_hw_pipe *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			sspp_buf[idx][IGC][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, IGC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -2631,6 +2663,7 @@ void reg_dmav1_setup_dma_igcv5(struct sde_hw_pipe *ctx, void *cfg,
 	igc_lut = hw_cfg->payload;
 	if (!igc_lut) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
+		LOG_FEATURE_OFF;
 		dma_igcv5_off(ctx, cfg, idx);
 		return;
 	}
@@ -2709,6 +2742,7 @@ void reg_dmav1_setup_dma_igcv5(struct sde_hw_pipe *ctx, void *cfg,
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			sspp_buf[idx][IGC][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, IGC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -2781,6 +2815,7 @@ void reg_dmav1_setup_dma_gcv5(struct sde_hw_pipe *ctx, void *cfg,
 	gc_lut = hw_cfg->payload;
 	if (!gc_lut) {
 		DRM_DEBUG_DRIVER("disable gc feature\n");
+		LOG_FEATURE_OFF;
 		dma_gcv5_off(ctx, cfg, idx);
 		return;
 	}
@@ -2836,6 +2871,7 @@ void reg_dmav1_setup_dma_gcv5(struct sde_hw_pipe *ctx, void *cfg,
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			sspp_buf[idx][GC][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, GC);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -3102,8 +3138,12 @@ void reg_dmav1_setup_vig_qseed3(struct sde_hw_pipe *ctx,
 		return;
 	}
 
-	if (!scaler3_cfg->enable)
+	if (!scaler3_cfg->enable) {
+		LOG_FEATURE_OFF;
 		goto end;
+	} else {
+		LOG_FEATURE_ON;
+	}
 
 	op_mode = BIT(0);
 	op_mode |= (scaler3_cfg->y_rgb_filter_cfg & 0x3) << 16;
@@ -3448,6 +3488,7 @@ void reg_dmav1_setup_ltm_initv1(struct sde_hw_dspp *ctx, void *cfg)
 	/* disable case */
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("Disable LTM init feature\n");
+		LOG_FEATURE_OFF;
 		ltm_initv1_disable(ctx, cfg, num_mixers, dspp_idx);
 		return;
 	}
@@ -3551,6 +3592,7 @@ void reg_dmav1_setup_ltm_initv1(struct sde_hw_dspp *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, ltm_buf[LTM_INIT][idx],
 				REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
 				LTM_INIT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -3641,6 +3683,7 @@ void reg_dmav1_setup_ltm_roiv1(struct sde_hw_dspp *ctx, void *cfg)
 	/* disable case */
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("Disable LTM roi feature\n");
+		LOG_FEATURE_OFF;
 		ltm_roiv1_disable(ctx, cfg, num_mixers, dspp_idx);
 		return;
 	}
@@ -3727,6 +3770,7 @@ void reg_dmav1_setup_ltm_roiv1(struct sde_hw_dspp *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, ltm_buf[LTM_ROI][idx],
 				REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
 				LTM_ROI);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -3776,6 +3820,7 @@ void reg_dmav1_setup_ltm_vlutv1(struct sde_hw_dspp *ctx, void *cfg)
 	/* disable case */
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("Disable LTM vlut feature\n");
+		LOG_FEATURE_OFF;
 		ltm_vlutv1_disable(ctx);
 		return;
 	}
@@ -3877,6 +3922,7 @@ void reg_dmav1_setup_ltm_vlutv1(struct sde_hw_dspp *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl, ltm_buf[LTM_VLUT][idx],
 				REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
 				LTM_VLUT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -4020,6 +4066,7 @@ void reg_dmav2_setup_dspp_igcv4(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
+		LOG_FEATURE_OFF;
 		_dspp_igcv4_off(ctx, cfg);
 		return;
 	}
@@ -4107,6 +4154,7 @@ void reg_dmav2_setup_dspp_igcv4(struct sde_hw_dspp *ctx, void *cfg)
 		goto exit;
 	}
 
+	LOG_FEATURE_ON;
 	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, IGC);
 
 exit:
@@ -4173,6 +4221,7 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable gamut feature\n");
+		LOG_FEATURE_OFF;
 		dspp_3d_gamutv43_off(ctx, cfg);
 		return;
 	}
@@ -4301,6 +4350,7 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 		goto exit;
 	}
 
+	LOG_FEATURE_ON;
 	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, GAMUT);
 
 exit:
@@ -4329,6 +4379,7 @@ void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg)
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable gamut feature\n");
 		/* v5 and v6 call the same off version */
+		LOG_FEATURE_OFF;
 		vig_gamutv5_off(ctx, cfg);
 		return;
 	}
@@ -4440,6 +4491,7 @@ void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg)
 	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
 			sspp_buf[idx][GAMUT][ctx->idx], REG_DMA_WRITE,
 			DMA_CTL_QUEUE0, WRITE_IMMEDIATE, GAMUT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -4583,8 +4635,10 @@ void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 	if (rc)
 		return;
 
-	if (!hw_cfg->payload)
+	if (!hw_cfg->payload) {
+		LOG_FEATURE_OFF;
 		return reg_dmav1_disable_spr(ctx, cfg);
+	}
 
 	if (hw_cfg->len != sizeof(struct drm_msm_spr_init_cfg)) {
 		DRM_ERROR("invalid payload size len %d exp %zd\n", hw_cfg->len,
@@ -4701,6 +4755,7 @@ void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 			dspp_buf[SPR_INIT][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
 			SPR_INIT);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -4769,6 +4824,7 @@ void reg_dmav1_setup_spr_pu_cfgv1(struct sde_hw_dspp *ctx, void *cfg)
 			dspp_buf[SPR_PU_CFG][ctx->idx],
 			REG_DMA_WRITE, DMA_CTL_QUEUE0, WRITE_IMMEDIATE,
 			SPR_PU_CFG);
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc) {
 		DRM_ERROR("failed to kick off ret %d\n", rc);
@@ -5291,6 +5347,7 @@ void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfx)
 		return;
 
 	if (!hw_cfg->payload) {
+		LOG_FEATURE_OFF;
 		reg_dma_demura_off(ctx, hw_cfg);
 		return;
 	}
@@ -5360,7 +5417,7 @@ void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfx)
 
 	DRM_DEBUG_DRIVER("enable demura buffer size %d\n",
 				dspp_buf[DEMURA_CFG][ctx->idx]->index);
-
+	LOG_FEATURE_ON;
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
