@@ -1972,6 +1972,7 @@ DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
 DP_SRC := $(WLAN_COMMON_ROOT)/dp/wifi3.0
 DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_tx.o \
+		$(DP_SRC)/dp_arch_ops.o \
 		$(DP_SRC)/dp_tx_desc.o \
 		$(DP_SRC)/dp_rx.o \
 		$(DP_SRC)/dp_rx_err.o \
@@ -1985,6 +1986,17 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_mon_filter.o \
 		$(DP_SRC)/dp_stats.o \
 		$(WLAN_COMMON_ROOT)/target_if/dp/src/target_if_dp.o
+
+ifeq ($(CONFIG_BERYLLIUM), y)
+DP_OBJS += $(DP_SRC)/be/dp_be.o
+DP_OBJS += $(DP_SRC)/be/dp_be_tx.o
+endif
+
+ifeq ($(CONFIG_LITHIUM), y)
+DP_OBJS += $(DP_SRC)/li/dp_li.o
+DP_OBJS += $(DP_SRC)/li/dp_li_tx.o
+endif
+
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 DP_OBJS += $(DP_SRC)/dp_tx_flow_control.o
 endif
@@ -2043,7 +2055,9 @@ ifeq ($(CONFIG_PKTLOG_LEGACY), y)
 else
 	PKTLOG_OBJS  += $(PKTLOG_DIR)/pktlog_wifi3.o
 endif
+
 endif
+
 
 $(call add-wlan-objs,pktlog,$(PKTLOG_OBJS))
 
