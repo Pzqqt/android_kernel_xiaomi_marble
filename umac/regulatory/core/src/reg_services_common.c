@@ -3371,7 +3371,7 @@ reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 
 	if (bw > CH_WIDTH_80P80MHZ) {
-		reg_err("bw passed is not good");
+		reg_err_rl("bw passed is not good");
 		return CHANNEL_STATE_INVALID;
 	}
 
