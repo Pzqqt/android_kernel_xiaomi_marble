@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -643,8 +643,8 @@ UCFG_PEER_CP_STATS_SET_FUNCS(twt_wake_intvl_us);
 UCFG_PEER_CP_STATS_SET_FUNCS(twt_sp_offset_us);
 
 static inline
-void ucfg_peer_cp_stats_rx_mgmt_rssi_update(struct wlan_objmgr_peer *peer,
-					    int8_t rssi)
+void ucfg_peer_cp_stats_rx_mgmt_snr_update(struct wlan_objmgr_peer *peer,
+					   int8_t snr)
 {
 	struct peer_cp_stats *peer_cs;
 	struct peer_ic_cp_stats *peer_cps;
@@ -658,11 +658,11 @@ void ucfg_peer_cp_stats_rx_mgmt_rssi_update(struct wlan_objmgr_peer *peer,
 
 	peer_cps = peer_cs->peer_stats;
 	if (peer_cps)
-		peer_cps->cs_rx_mgmt_rssi = rssi;
+		peer_cps->cs_rx_mgmt_snr = snr;
 }
 
 static inline
-int8_t ucfg_peer_cp_stats_rx_mgmt_rssi_get(struct wlan_objmgr_peer *peer)
+int8_t ucfg_peer_cp_stats_rx_mgmt_snr_get(struct wlan_objmgr_peer *peer)
 {
 	struct peer_cp_stats *peer_cs;
 	struct peer_ic_cp_stats *peer_cps;
@@ -677,7 +677,7 @@ int8_t ucfg_peer_cp_stats_rx_mgmt_rssi_get(struct wlan_objmgr_peer *peer)
 
 	peer_cps = peer_cs->peer_stats;
 	if (peer_cps)
-		val = peer_cps->cs_rx_mgmt_rssi;
+		val = peer_cps->cs_rx_mgmt_snr;
 
 	return val;
 }
