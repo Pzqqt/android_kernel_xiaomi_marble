@@ -1052,16 +1052,21 @@ error_ctrl:
 	return rc;
 }
 
-static void dp_display_host_ready(struct dp_display_private *dp)
+static int dp_display_host_ready(struct dp_display_private *dp)
 {
+	int rc = 0;
+
 	if (!dp_display_state_is(DP_STATE_INITIALIZED)) {
-		dp_display_state_show("[not initialized]");
-		return;
+		rc = dp_display_host_init(dp);
+		if (rc) {
+			dp_display_state_show("[not initialized]");
+			return rc;
+		}
 	}
 
 	if (dp_display_state_is(DP_STATE_READY)) {
 		dp_display_state_log("[already ready]");
-		return;
+		return rc;
 	}
 
 	/*
@@ -1089,6 +1094,7 @@ static void dp_display_host_ready(struct dp_display_private *dp)
 	dp_display_state_add(DP_STATE_READY);
 	/* log this as it results from user action of cable connection */
 	DP_INFO("[OK]\n");
+	return rc;
 }
 
 static void dp_display_host_unready(struct dp_display_private *dp)
@@ -1191,7 +1197,11 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 		dp_display_state_remove(DP_STATE_SRC_PWRDN);
 	}
 
-	dp_display_host_ready(dp);
+	rc = dp_display_host_ready(dp);
+	if (rc) {
+		dp_display_state_show("[ready failed]");
+		goto end;
+	}
 
 	dp->link->psm_config(dp->link, &dp->panel->link_info, false);
 	dp->debug->psm_enabled = false;
@@ -2354,7 +2364,11 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	}
 
 	/* For supporting DP_PANEL_SRC_INITIATED_POWER_DOWN case */
-	dp_display_host_ready(dp);
+	rc = dp_display_host_ready(dp);
+	if (rc) {
+		dp_display_state_show("[ready failed]");
+		goto end;
+	}
 
 	if (dp->debug->psm_enabled) {
 		dp->link->psm_config(dp->link, &dp->panel->link_info, false);
