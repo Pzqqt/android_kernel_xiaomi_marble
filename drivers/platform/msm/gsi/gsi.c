@@ -21,6 +21,7 @@
 #include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/delay.h>
+#include <linux/version.h>
 
 #define GSI_CMD_TIMEOUT (5*HZ)
 #define GSI_START_CMD_TIMEOUT_MS 1000
@@ -1342,7 +1343,11 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 		gsi_ctx->intcntrlr_mem_size =
 		    props->emulator_intcntrlr_size;
 		gsi_ctx->intcntrlr_base =
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+		    devm_ioremap(
+#else
 		    devm_ioremap_nocache(
+#endif
 			gsi_ctx->dev,
 			props->emulator_intcntrlr_addr,
 			props->emulator_intcntrlr_size);
