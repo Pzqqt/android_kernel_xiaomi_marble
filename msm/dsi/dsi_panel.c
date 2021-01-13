@@ -442,7 +442,7 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 		if (cmds->last_command)
 			cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
 
-		if (type == DSI_CMD_SET_VID_TO_CMD_SWITCH)
+		if (type == DSI_CMD_SET_VID_SWITCH_OUT)
 			cmds->msg.flags |= MIPI_DSI_MSG_ASYNC_OVERRIDE;
 
 		len = ops->transfer(panel->host, &cmds->msg);
@@ -1704,6 +1704,8 @@ error:
 const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-on-command",
 	"qcom,mdss-dsi-on-command",
+	"qcom,vid-on-commands",
+	"qcom,cmd-on-commands",
 	"qcom,mdss-dsi-post-panel-on-command",
 	"qcom,mdss-dsi-pre-off-command",
 	"qcom,mdss-dsi-off-command",
@@ -1711,10 +1713,10 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-res-switch",
 	"qcom,mdss-dsi-res-switch",
 	"qcom,mdss-dsi-post-res-switch",
-	"qcom,cmd-to-video-mode-switch-commands",
-	"qcom,cmd-to-video-mode-post-switch-commands",
-	"qcom,video-to-cmd-mode-switch-commands",
-	"qcom,video-to-cmd-mode-post-switch-commands",
+	"qcom,video-mode-switch-in-commands",
+	"qcom,video-mode-switch-out-commands",
+	"qcom,cmd-mode-switch-in-commands",
+	"qcom,cmd-mode-switch-out-commands",
 	"qcom,mdss-dsi-panel-status-command",
 	"qcom,mdss-dsi-lp1-command",
 	"qcom,mdss-dsi-lp2-command",
@@ -1730,6 +1732,8 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-on-command-state",
 	"qcom,mdss-dsi-on-command-state",
+	"qcom,vid-on-commands-state",
+	"qcom,cmd-on-commands-state",
 	"qcom,mdss-dsi-post-on-command-state",
 	"qcom,mdss-dsi-pre-off-command-state",
 	"qcom,mdss-dsi-off-command-state",
@@ -1737,10 +1741,10 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-res-switch-state",
 	"qcom,mdss-dsi-res-switch-state",
 	"qcom,mdss-dsi-post-res-switch-state",
-	"qcom,cmd-to-video-mode-switch-commands-state",
-	"qcom,cmd-to-video-mode-post-switch-commands-state",
-	"qcom,video-to-cmd-mode-switch-commands-state",
-	"qcom,video-to-cmd-mode-post-switch-commands-state",
+	"qcom,video-mode-switch-in-commands-state",
+	"qcom,video-mode-switch-out-commands-state",
+	"qcom,cmd-mode-switch-in-commands-state",
+	"qcom,cmd-mode-switch-out-commands-state",
 	"qcom,mdss-dsi-panel-status-command-state",
 	"qcom,mdss-dsi-lp1-command-state",
 	"qcom,mdss-dsi-lp2-command-state",
@@ -4479,7 +4483,7 @@ int dsi_panel_send_roi_dcs(struct dsi_panel *panel, int ctrl_idx,
 	return rc;
 }
 
-int dsi_panel_pre_mode_switch_to_video(struct dsi_panel *panel)
+int dsi_panel_switch_cmd_mode_out(struct dsi_panel *panel)
 {
 	int rc = 0;
 
@@ -4490,16 +4494,16 @@ int dsi_panel_pre_mode_switch_to_video(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
-	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_CMD_TO_VID_SWITCH);
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_CMD_SWITCH_OUT);
 	if (rc)
-		DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_TO_VID_SWITCH cmds, rc=%d\n",
+		DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_SWITCH_OUT cmds, rc=%d\n",
 		       panel->name, rc);
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
 
-int dsi_panel_pre_mode_switch_to_cmd(struct dsi_panel *panel)
+int dsi_panel_switch_video_mode_out(struct dsi_panel *panel)
 {
 	int rc = 0;
 
@@ -4510,16 +4514,16 @@ int dsi_panel_pre_mode_switch_to_cmd(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
-	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_VID_TO_CMD_SWITCH);
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_VID_SWITCH_OUT);
 	if (rc)
-		DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_TO_VID_SWITCH cmds, rc=%d\n",
+		DSI_ERR("[%s] failed to send DSI_CMD_SET_VID_SWITCH_OUT cmds, rc=%d\n",
 		       panel->name, rc);
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
 
-int dsi_panel_mode_switch_to_cmd(struct dsi_panel *panel)
+int dsi_panel_switch_video_mode_in(struct dsi_panel *panel)
 {
 	int rc = 0;
 
@@ -4530,16 +4534,16 @@ int dsi_panel_mode_switch_to_cmd(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
-	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_POST_VID_TO_CMD_SWITCH);
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_VID_SWITCH_IN);
 	if (rc)
-		DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_TO_VID_SWITCH cmds, rc=%d\n",
+		DSI_ERR("[%s] failed to send DSI_CMD_SET_VID_SWITCH_IN cmds, rc=%d\n",
 		       panel->name, rc);
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
 
-int dsi_panel_mode_switch_to_vid(struct dsi_panel *panel)
+int dsi_panel_switch_cmd_mode_in(struct dsi_panel *panel)
 {
 	int rc = 0;
 
@@ -4550,9 +4554,9 @@ int dsi_panel_mode_switch_to_vid(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
-	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_POST_CMD_TO_VID_SWITCH);
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_CMD_SWITCH_IN);
 	if (rc)
-		DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_TO_VID_SWITCH cmds, rc=%d\n",
+		DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_SWITCH_IN cmds, rc=%d\n",
 		       panel->name, rc);
 
 	mutex_unlock(&panel->panel_lock);
@@ -4611,11 +4615,30 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	mutex_lock(&panel->panel_lock);
 
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_ON);
-	if (rc)
+	if (rc) {
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_ON cmds, rc=%d\n",
 		       panel->name, rc);
-	else
-		panel->panel_initialized = true;
+		goto error;
+	}
+
+	if (panel->panel_mode == DSI_OP_CMD_MODE) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_CMD_ON);
+		if (rc) {
+			DSI_ERR("[%s] failed to send DSI_CMD_SET_CMD_ON cmds, rc=%d\n",
+			       panel->name, rc);
+			goto error;
+		}
+	} else if (panel->panel_mode == DSI_OP_VIDEO_MODE) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_VID_ON);
+		if (rc) {
+			DSI_ERR("[%s] failed to send DSI_CMD_SET_VID_ON cmds, rc=%d\n",
+			       panel->name, rc);
+			goto error;
+		}
+	}
+	panel->panel_initialized = true;
+
+error:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
