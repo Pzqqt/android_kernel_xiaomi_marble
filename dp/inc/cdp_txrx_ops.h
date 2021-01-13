@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -952,8 +952,6 @@ struct cdp_wds_ops {
 };
 
 struct cdp_raw_ops {
-	int (*txrx_get_nwifi_mode)(struct cdp_soc_t *soc, uint8_t vdev_id);
-
 	QDF_STATUS
 	(*rsim_get_astentry)(struct cdp_soc_t *soc, uint8_t vdev_id,
 			     qdf_nbuf_t *pnbuf, struct cdp_raw_ast *raw_ast);
