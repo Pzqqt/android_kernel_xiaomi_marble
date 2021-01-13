@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/drm_edid.h>
@@ -102,63 +102,6 @@ static bool sde_cea_db_is_hdmi_hf_vsdb(const u8 *db)
 	return hdmi_id == HDMI_FORUM_IEEE_OUI;
 }
 
-static u8 *sde_edid_find_extended_tag_block(struct edid *edid, int blk_id)
-{
-	u8 *db = NULL;
-	u8 *cea = NULL;
-
-	if (!edid) {
-		SDE_ERROR("%s: invalid input\n", __func__);
-		return NULL;
-	}
-
-	cea = sde_find_cea_extension(edid);
-
-	if (cea && sde_cea_revision(cea) >= 3) {
-		int i, start, end;
-
-		if (sde_cea_db_offsets(cea, &start, &end))
-			return NULL;
-
-		sde_for_each_cea_db(cea, i, start, end) {
-			db = &cea[i];
-			if ((sde_cea_db_tag(db) == SDE_EXTENDED_TAG) &&
-				(db[1] == blk_id))
-				return db;
-		}
-	}
-	return NULL;
-}
-
-static u8 *
-sde_edid_find_block(struct edid *edid, int blk_id)
-{
-	u8 *db = NULL;
-	u8 *cea = NULL;
-
-	if (!edid) {
-		SDE_ERROR("%s: invalid input\n", __func__);
-		return NULL;
-	}
-
-	cea = sde_find_cea_extension(edid);
-
-	if (cea && sde_cea_revision(cea) >= 3) {
-		int i, start, end;
-
-		if (sde_cea_db_offsets(cea, &start, &end))
-			return NULL;
-
-		sde_for_each_cea_db(cea, i, start, end) {
-			db = &cea[i];
-			if (sde_cea_db_tag(db) == blk_id)
-				return db;
-		}
-	}
-	return NULL;
-}
-
-
 static const u8 *_sde_edid_find_block(const u8 *in_buf, u32 start_offset,
 	u8 type, u8 *len)
 {
@@ -217,145 +160,6 @@ static void sde_edid_extract_vendor_id(struct sde_edid_ctrl *edid_ctrl)
 	vendor_id[3] = 0;
 	SDE_EDID_DEBUG("vendor id is %s ", vendor_id);
 	SDE_EDID_DEBUG("%s -", __func__);
-}
-
-static void sde_edid_set_y420_support(struct drm_connector *connector,
-u32 video_format)
-{
-	u8 cea_mode = 0;
-	struct drm_display_mode *mode;
-	u32 mode_fmt_flags = 0;
-
-	/* Need to add Y420 support flag to the modes */
-	list_for_each_entry(mode, &connector->probed_modes, head) {
-		/* Cache the format flags before clearing */
-		mode_fmt_flags = mode->flags;
-		/* Clear the RGB/YUV format flags before calling upstream API */
-		mode->flags &= ~SDE_DRM_MODE_FLAG_FMT_MASK;
-		cea_mode = drm_match_cea_mode(mode);
-		/* Restore the format flags */
-		mode->flags = mode_fmt_flags;
-		if ((cea_mode != 0) && (cea_mode == video_format)) {
-			SDE_EDID_DEBUG("%s found match for %d ", __func__,
-			video_format);
-			mode->flags |= DRM_MODE_FLAG_SUPPORTS_YUV;
-		}
-	}
-}
-
-static void sde_edid_parse_Y420CMDB(
-struct drm_connector *connector, struct sde_edid_ctrl *edid_ctrl,
-const u8 *db)
-{
-	u32 offset = 0;
-	u8 cmdb_len = 0;
-	u8 svd_len = 0;
-	const u8 *svd = NULL;
-	u32 i = 0, j = 0;
-	u32 video_format = 0;
-
-	if (!edid_ctrl) {
-		SDE_ERROR("%s: edid_ctrl is NULL\n", __func__);
-		return;
-	}
-
-	if (!db) {
-		SDE_ERROR("%s: invalid input\n", __func__);
-		return;
-	}
-	SDE_EDID_DEBUG("%s +\n", __func__);
-	cmdb_len = db[0] & 0x1f;
-
-	/* Byte 3 to L+1 contain SVDs */
-	offset += 2;
-
-	svd = sde_edid_find_block(edid_ctrl->edid, VIDEO_DATA_BLOCK);
-
-	if (svd) {
-		/*moving to the next byte as vic info begins there*/
-		svd_len = svd[0] & 0x1f;
-		++svd;
-	}
-
-	for (i = 0; i < svd_len; i++, j++) {
-		video_format = *(svd + i) & 0x7F;
-		if (cmdb_len == 1) {
-			/* If cmdb_len is 1, it means all SVDs support YUV */
-			sde_edid_set_y420_support(connector, video_format);
-		} else if (db[offset] & (1 << j)) {
-			sde_edid_set_y420_support(connector, video_format);
-
-			if (j & 0x80) {
-				j = j/8;
-				offset++;
-				if (offset >= cmdb_len)
-					break;
-			}
-		}
-	}
-
-	SDE_EDID_DEBUG("%s -\n", __func__);
-
-}
-
-static void sde_edid_parse_Y420VDB(
-struct drm_connector *connector, struct sde_edid_ctrl *edid_ctrl,
-const u8 *db)
-{
-	u8 len = db[0] & 0x1f;
-	u32 i = 0;
-	u32 video_format = 0;
-
-	if (!edid_ctrl) {
-		SDE_ERROR("%s: invalid input\n", __func__);
-		return;
-	}
-
-	SDE_EDID_DEBUG("%s +\n", __func__);
-
-	/* Offset to byte 3 */
-	db += 2;
-	for (i = 0; i < len - 1; i++) {
-		video_format = *(db + i) & 0x7F;
-		/*
-		 * mode was already added in get_modes()
-		 * only need to set the Y420 support flag
-		 */
-		sde_edid_set_y420_support(connector, video_format);
-	}
-	SDE_EDID_DEBUG("%s -", __func__);
-}
-
-static void sde_edid_set_mode_format(
-struct drm_connector *connector, struct sde_edid_ctrl *edid_ctrl)
-{
-	const u8 *db = NULL;
-	struct drm_display_mode *mode;
-
-	SDE_EDID_DEBUG("%s +\n", __func__);
-	/* Set YUV mode support flags for YCbcr420VDB */
-	db = sde_edid_find_extended_tag_block(edid_ctrl->edid,
-			Y420_VIDEO_DATA_BLOCK);
-	if (db)
-		sde_edid_parse_Y420VDB(connector, edid_ctrl, db);
-	else
-		SDE_EDID_DEBUG("YCbCr420 VDB is not present\n");
-
-	/* Set RGB supported on all modes where YUV is not set */
-	list_for_each_entry(mode, &connector->probed_modes, head) {
-		if (!(mode->flags & DRM_MODE_FLAG_SUPPORTS_YUV))
-			mode->flags |= DRM_MODE_FLAG_SUPPORTS_RGB;
-	}
-
-
-	db = sde_edid_find_extended_tag_block(edid_ctrl->edid,
-			Y420_CAPABILITY_MAP_DATA_BLOCK);
-	if (db)
-		sde_edid_parse_Y420CMDB(connector, edid_ctrl, db);
-	else
-		SDE_EDID_DEBUG("YCbCr420 CMDB is not present\n");
-
-	SDE_EDID_DEBUG("%s -\n", __func__);
 }
 
 static void _sde_edid_update_dc_modes(
@@ -729,7 +533,6 @@ int _sde_edid_update_modes(struct drm_connector *connector,
 			edid_ctrl->edid);
 
 		rc = drm_add_edid_modes(connector, edid_ctrl->edid);
-		sde_edid_set_mode_format(connector, edid_ctrl);
 		_sde_edid_update_dc_modes(connector, edid_ctrl);
 		sde_edid_parse_extended_blk_info(connector,
 				edid_ctrl->edid);
