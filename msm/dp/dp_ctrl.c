@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -62,6 +62,7 @@ struct dp_ctrl_private {
 	struct dp_power *power;
 	struct dp_parser *parser;
 	struct dp_catalog_ctrl *catalog;
+	struct dp_pll *pll;
 
 	struct completion idle_comp;
 	struct completion video_comp;
@@ -642,6 +643,22 @@ static int dp_ctrl_enable_link_clock(struct dp_ctrl_private *ctrl)
 
 	dp_ctrl_set_clock_rate(ctrl, "link_clk", type, rate);
 
+	if (ctrl->pll->pll_cfg) {
+		ret = ctrl->pll->pll_cfg(ctrl->pll, rate);
+		if (ret < 0) {
+			DP_ERR("DP pll cfg failed\n");
+			return ret;
+		}
+	}
+
+	if (ctrl->pll->pll_prepare) {
+		ret = ctrl->pll->pll_prepare(ctrl->pll);
+		if (ret < 0) {
+			DP_ERR("DP pll prepare failed\n");
+			return ret;
+		}
+	}
+
 	ret = ctrl->power->clk_enable(ctrl->power, type, true);
 	if (ret) {
 		DP_ERR("Unabled to start link clocks\n");
@@ -653,7 +670,14 @@ static int dp_ctrl_enable_link_clock(struct dp_ctrl_private *ctrl)
 
 static void dp_ctrl_disable_link_clock(struct dp_ctrl_private *ctrl)
 {
+	int rc = 0;
+
 	ctrl->power->clk_enable(ctrl->power, DP_LINK_PM, false);
+	if (ctrl->pll->pll_unprepare) {
+		rc = ctrl->pll->pll_unprepare(ctrl->pll);
+		if (rc < 0)
+			DP_ERR("pll unprepare failed\n");
+	}
 }
 
 static void dp_ctrl_select_training_pattern(struct dp_ctrl_private *ctrl,
@@ -1470,6 +1494,7 @@ struct dp_ctrl *dp_ctrl_get(struct dp_ctrl_in *in)
 	ctrl->aux      = in->aux;
 	ctrl->link     = in->link;
 	ctrl->catalog  = in->catalog;
+	ctrl->pll  = in->pll;
 	ctrl->dev  = in->dev;
 	ctrl->mst_mode = false;
 	ctrl->fec_mode = false;

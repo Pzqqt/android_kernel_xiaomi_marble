@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1969,6 +1969,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	ctrl_in.power = dp->power;
 	ctrl_in.catalog = &dp->catalog->ctrl;
 	ctrl_in.parser = dp->parser;
+	ctrl_in.pll = dp->pll;
 
 	dp->ctrl = dp_ctrl_get(&ctrl_in);
 	if (IS_ERR(dp->ctrl)) {

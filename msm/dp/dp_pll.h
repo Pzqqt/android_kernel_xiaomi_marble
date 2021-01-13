@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __DP_PLL_H
@@ -56,24 +56,14 @@ struct dp_pll_io {
 
 struct dp_pll_vco_clk {
 	struct clk_hw hw;
-	unsigned long	rate;		/* current vco rate */
-	u64		min_rate;	/* min vco rate */
-	u64		max_rate;	/* max vco rate */
 	void		*priv;
 };
 
 struct dp_pll {
-	/*
-	 * target pll revision information
-	 */
-	u32		revision;
-
-	/*
-	 * Certain plls needs to update the same vco rate after resume in
-	 * suspend/resume scenario. Cached the vco rate for such plls.
-	 */
-	unsigned long	vco_cached_rate;
-
+	/* target pll revision information */
+	u32 revision;
+	/* save vco current rate */
+	unsigned long vco_rate;
 	/*
 	 * PLL index if multiple index are available. Eg. in case of
 	 * DSI we have 2 plls.
@@ -90,6 +80,10 @@ struct dp_pll {
 	struct dp_aux *aux;
 	struct dp_pll_io io;
 	struct clk_onecell_data *clk_data;
+
+	int (*pll_cfg)(struct dp_pll *pll, unsigned long rate);
+	int (*pll_prepare)(struct dp_pll *pll);
+	int (*pll_unprepare)(struct dp_pll *pll);
 };
 
 struct dp_pll_db {
@@ -116,7 +110,6 @@ struct dp_pll_db {
 	/* PHY vco divider */
 	u32 phy_vco_div;
 };
-
 
 static inline struct dp_pll_vco_clk *to_dp_vco_hw(struct clk_hw *hw)
 {
