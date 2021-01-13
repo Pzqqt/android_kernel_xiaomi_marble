@@ -338,6 +338,27 @@ enum {
 	BAND_MAX,
 };
 
+#define LPASS_CDC_RX_MACRO_IIR_FILTER_SIZE (sizeof(u32) * BAND_MAX)
+
+struct lpass_cdc_rx_macro_iir_filter_ctl {
+	unsigned int iir_idx;
+	unsigned int band_idx;
+	struct soc_bytes_ext bytes_ext;
+};
+
+#define LPASS_CDC_RX_MACRO_IIR_FILTER_CTL(xname, iidx, bidx) \
+{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.info = lpass_cdc_rx_macro_iir_filter_info, \
+	.get = lpass_cdc_rx_macro_iir_band_audio_mixer_get, \
+	.put = lpass_cdc_rx_macro_iir_band_audio_mixer_put, \
+	.private_value = (unsigned long)&(struct lpass_cdc_rx_macro_iir_filter_ctl) { \
+		.iir_idx = iidx, \
+		.band_idx = bidx, \
+		.bytes_ext = {.max = LPASS_CDC_RX_MACRO_IIR_FILTER_SIZE, }, \
+	} \
+}
+
+
 struct lpass_cdc_rx_macro_idle_detect_config {
 	u8 hph_idle_thr;
 	u8 hph_idle_detect_en;
@@ -2898,42 +2919,49 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 	return value;
 }
 
+static int lpass_cdc_rx_macro_iir_filter_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *ucontrol)
+{
+	struct lpass_cdc_rx_macro_iir_filter_ctl *ctl =
+		(struct lpass_cdc_rx_macro_iir_filter_ctl *)kcontrol->private_value;
+	struct soc_bytes_ext *params = &ctl->bytes_ext;
+
+	ucontrol->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	ucontrol->count = params->max;
+
+	return 0;
+}
 static int lpass_cdc_rx_macro_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	int iir_idx = ((struct soc_multi_mixer_control *)
-					kcontrol->private_value)->reg;
-	int band_idx = ((struct soc_multi_mixer_control *)
-					kcontrol->private_value)->shift;
+	struct lpass_cdc_rx_macro_iir_filter_ctl *ctl =
+		(struct lpass_cdc_rx_macro_iir_filter_ctl *)kcontrol->private_value;
+	struct soc_bytes_ext *params = &ctl->bytes_ext;
+	int iir_idx = ctl->iir_idx;
+	int band_idx = ctl->band_idx;
+	u32 coeff[BAND_MAX];
+	int coeff_idx = 0;
 
-	ucontrol->value.integer.value[0] =
-		get_iir_band_coeff(component, iir_idx, band_idx, 0);
-	ucontrol->value.integer.value[1] =
-		get_iir_band_coeff(component, iir_idx, band_idx, 1);
-	ucontrol->value.integer.value[2] =
-		get_iir_band_coeff(component, iir_idx, band_idx, 2);
-	ucontrol->value.integer.value[3] =
-		get_iir_band_coeff(component, iir_idx, band_idx, 3);
-	ucontrol->value.integer.value[4] =
-		get_iir_band_coeff(component, iir_idx, band_idx, 4);
+	for (coeff_idx = 0; coeff_idx < LPASS_CDC_RX_MACRO_SIDETONE_IIR_COEFF_MAX;
+			coeff_idx++) {
+		coeff[coeff_idx] =
+			get_iir_band_coeff(component, iir_idx, band_idx, coeff_idx);
+	}
+
+	memcpy(ucontrol->value.bytes.data, &coeff[0], params->max);
 
 	dev_dbg(component->dev, "%s: IIR #%d band #%d b0 = 0x%x\n"
 		"%s: IIR #%d band #%d b1 = 0x%x\n"
 		"%s: IIR #%d band #%d b2 = 0x%x\n"
 		"%s: IIR #%d band #%d a1 = 0x%x\n"
 		"%s: IIR #%d band #%d a2 = 0x%x\n",
-		__func__, iir_idx, band_idx,
-		(uint32_t)ucontrol->value.integer.value[0],
-		__func__, iir_idx, band_idx,
-		(uint32_t)ucontrol->value.integer.value[1],
-		__func__, iir_idx, band_idx,
-		(uint32_t)ucontrol->value.integer.value[2],
-		__func__, iir_idx, band_idx,
-		(uint32_t)ucontrol->value.integer.value[3],
-		__func__, iir_idx, band_idx,
-		(uint32_t)ucontrol->value.integer.value[4]);
+		__func__, iir_idx, band_idx, coeff[0],
+		__func__, iir_idx, band_idx, coeff[1],
+		__func__, iir_idx, band_idx, coeff[2],
+		__func__, iir_idx, band_idx, coeff[3],
+		__func__, iir_idx, band_idx, coeff[4]);
 	return 0;
 }
 
@@ -2964,16 +2992,20 @@ static int lpass_cdc_rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcon
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	int iir_idx = ((struct soc_multi_mixer_control *)
-					kcontrol->private_value)->reg;
-	int band_idx = ((struct soc_multi_mixer_control *)
-					kcontrol->private_value)->shift;
+	struct lpass_cdc_rx_macro_iir_filter_ctl *ctl =
+			(struct lpass_cdc_rx_macro_iir_filter_ctl *)kcontrol->private_value;
+	struct soc_bytes_ext *params = &ctl->bytes_ext;
+	int iir_idx = ctl->iir_idx;
+	int band_idx = ctl->band_idx;
+	u32 coeff[BAND_MAX];
 	int coeff_idx, idx = 0;
 	struct device *rx_dev = NULL;
 	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
 
 	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
+
+	memcpy(&coeff[0], ucontrol->value.bytes.data, params->max);
 
 	/*
 	 * Mask top bit it is reserved
@@ -2986,7 +3018,7 @@ static int lpass_cdc_rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcon
 	/* Store the coefficients in sidetone coeff array */
 	for (coeff_idx = 0; coeff_idx < LPASS_CDC_RX_MACRO_SIDETONE_IIR_COEFF_MAX;
 		coeff_idx++) {
-		uint32_t value = ucontrol->value.integer.value[coeff_idx];
+		uint32_t value = coeff[coeff_idx];
 
 		set_iir_band_coeff(component, iir_idx, band_idx, value);
 
@@ -3173,36 +3205,16 @@ static const struct snd_kcontrol_new lpass_cdc_rx_macro_snd_controls[] = {
 		lpass_cdc_rx_macro_iir_enable_audio_mixer_get,
 		lpass_cdc_rx_macro_iir_enable_audio_mixer_put),
 
-	SOC_SINGLE_MULTI_EXT("IIR0 Band1", IIR0, BAND1, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR0 Band2", IIR0, BAND2, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR0 Band3", IIR0, BAND3, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR0 Band4", IIR0, BAND4, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR0 Band5", IIR0, BAND5, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR1 Band1", IIR1, BAND1, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR1 Band2", IIR1, BAND2, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR1 Band3", IIR1, BAND3, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR1 Band4", IIR1, BAND4, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
-	SOC_SINGLE_MULTI_EXT("IIR1 Band5", IIR1, BAND5, 255, 0, 5,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_get,
-		lpass_cdc_rx_macro_iir_band_audio_mixer_put),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR0 Band1", IIR0, BAND1),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR0 Band2", IIR0, BAND2),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR0 Band3", IIR0, BAND3),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR0 Band4", IIR0, BAND4),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR0 Band5", IIR0, BAND5),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band1", IIR1, BAND1),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band2", IIR1, BAND2),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band3", IIR1, BAND3),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band4", IIR1, BAND4),
+	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band5", IIR1, BAND5),
 };
 
 static int lpass_cdc_rx_macro_enable_echo(struct snd_soc_dapm_widget *w,
