@@ -1253,8 +1253,7 @@ static int sde_encoder_phys_vid_wait_for_active(
 	struct drm_display_mode mode;
 	struct sde_encoder_phys_vid *vid_enc;
 	u32 ln_cnt, min_ln_cnt, active_lns_cnt;
-	u32 clk_period, time_of_line;
-	u32 delay, retry = MAX_POLL_CNT;
+	u32 retry = MAX_POLL_CNT;
 
 	vid_enc =  to_sde_encoder_phys_vid(phys_enc);
 
@@ -1265,32 +1264,9 @@ static int sde_encoder_phys_vid_wait_for_active(
 
 	mode = phys_enc->cached_mode;
 
-	/*
-	 * calculate clk_period as pico second to maintain good
-	 * accuracy with high pclk rate and this number is in 17 bit
-	 * range.
-	 */
-	clk_period = DIV_ROUND_UP_ULL(1000000000, mode.clock);
-	if (!clk_period) {
-		SDE_ERROR_VIDENC(vid_enc, "Unable to calculate clock period\n");
-		return -EINVAL;
-	}
-
 	min_ln_cnt = (mode.vtotal - mode.vsync_start) +
 		(mode.vsync_end - mode.vsync_start);
 	active_lns_cnt = mode.vdisplay;
-	time_of_line = mode.htotal * clk_period;
-
-	/* delay in micro seconds */
-	delay = (time_of_line * (min_ln_cnt +
-		(mode.vsync_start - mode.vdisplay))) / 1000000;
-
-	/*
-	 * Wait for max delay before
-	 * polling to check active region
-	 */
-	if (delay > POLL_TIME_USEC_FOR_LN_CNT)
-		delay = POLL_TIME_USEC_FOR_LN_CNT;
 
 	while (retry) {
 		ln_cnt = phys_enc->hw_intf->ops.get_line_count(
@@ -1304,10 +1280,8 @@ static int sde_encoder_phys_vid_wait_for_active(
 			return 0;
 		}
 
-		SDE_ERROR_VIDENC(vid_enc, "line count is less. line_cnt = %d\n",
-				ln_cnt);
-		/* Add delay so that line count is in active region */
-		udelay(delay);
+		SDE_ERROR_VIDENC(vid_enc, "line count is less. line_cnt = %d\n", ln_cnt);
+		udelay(POLL_TIME_USEC_FOR_LN_CNT);
 		retry--;
 	}
 
