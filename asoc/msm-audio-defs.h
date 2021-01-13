@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -85,6 +85,12 @@
 #define LPASS_BE_WSA_CDC_DMA_RX_1 "CODEC_DMA-LPAIF_WSA-RX-1"
 #define LPASS_BE_WSA_CDC_DMA_TX_1 "CODEC_DMA-LPAIF_WSA-TX-1"
 #define LPASS_BE_WSA_CDC_DMA_TX_2 "CODEC_DMA-LPAIF_WSA-TX-2"
+
+#define LPASS_BE_WSA2_CDC_DMA_RX_0 "CODEC_DMA-LPAIF_WSA2-RX-0"
+#define LPASS_BE_WSA2_CDC_DMA_TX_0 "CODEC_DMA-LPAIF_WSA2-TX-0"
+#define LPASS_BE_WSA2_CDC_DMA_RX_1 "CODEC_DMA-LPAIF_WSA2-RX-1"
+#define LPASS_BE_WSA2_CDC_DMA_TX_1 "CODEC_DMA-LPAIF_WSA2-TX-1"
+#define LPASS_BE_WSA2_CDC_DMA_TX_2 "CODEC_DMA-LPAIF_WSA2-TX-2"
 
 #define LPASS_BE_VA_CDC_DMA_TX_0 "CODEC_DMA-LPAIF_VA-TX-0"
 #define LPASS_BE_VA_CDC_DMA_TX_1 "CODEC_DMA-LPAIF_VA-TX-1"
