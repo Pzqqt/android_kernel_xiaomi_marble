@@ -2156,6 +2156,7 @@ struct mlme_power_usage {
  * @tx_power_5g: limit tx power in 5 ghz
  * @current_tx_power_level: current tx power level
  * @local_power_constraint: local power constraint
+ * @use_local_tpe: preference to use local or regulatory TPE
  */
 struct wlan_mlme_power {
 	struct mlme_max_tx_power_24 max_tx_power_24;
@@ -2167,6 +2168,7 @@ struct wlan_mlme_power {
 	uint8_t tx_power_5g;
 	uint8_t current_tx_power_level;
 	uint8_t local_power_constraint;
+	bool use_local_tpe;
 };
 
 /*
