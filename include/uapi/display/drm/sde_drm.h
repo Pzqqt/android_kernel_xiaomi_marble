@@ -693,6 +693,13 @@ struct drm_msm_display_hint {
 #define DRM_EVENT_LTM_OFF 0X8000000A
 #define DRM_EVENT_MMRM_CB 0X8000000B
 
+#ifndef DRM_MODE_FLAG_VID_MODE_PANEL
+#define DRM_MODE_FLAG_VID_MODE_PANEL        0x01
+#endif
+#ifndef DRM_MODE_FLAG_CMD_MODE_PANEL
+#define DRM_MODE_FLAG_CMD_MODE_PANEL        0x02
+#endif
+
 /* display hint flags*/
 #define DRM_MSM_DISPLAY_EARLY_WAKEUP_HINT         0x01
 #define DRM_MSM_DISPLAY_POWER_COLLAPSE_HINT       0x02

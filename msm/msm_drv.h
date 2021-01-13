@@ -214,6 +214,7 @@ enum msm_mdp_conn_property {
 	CONNECTOR_PROP_FB_TRANSLATION_MODE,
 	CONNECTOR_PROP_QSYNC_MODE,
 	CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE,
+	CONNECTOR_PROP_SET_PANEL_MODE,
 
 	/* total # of properties */
 	CONNECTOR_PROP_COUNT
@@ -290,9 +291,9 @@ enum msm_display_caps {
  * @MODE_MAX:
  */
 enum panel_op_mode {
-	MSM_DISPLAY_VIDEO_MODE = 0,
-	MSM_DISPLAY_CMD_MODE,
-	MSM_DISPLAY_MODE_MAX,
+	MSM_DISPLAY_VIDEO_MODE = BIT(0),
+	MSM_DISPLAY_CMD_MODE = BIT(1),
+	MSM_DISPLAY_MODE_MAX = BIT(2)
 };
 
 /**
@@ -429,7 +430,6 @@ struct msm_display_dsc_info {
  * @flatqp_sw_nbls:             flatness qp somewhat flat NBLs
  * @chroma_samples:             number of chroma samples
  * @split_panel_enable:         indicates whether split panel is enabled
- * @panel_mode:                 indicates panel is in video or cmd mode
  * @traffic_mode:               indicates burst/non-burst mode
  * @flatness_qp_lut:            LUT used to determine flatness QP
  * @max_qp_lut:                 LUT used to determine maximum QP
@@ -539,7 +539,6 @@ struct msm_display_vdc_info {
 	u8 flatqp_sw_nbls;
 	u8 chroma_samples;
 	u8 split_panel_enable;
-	u8 panel_mode;
 	u8 traffic_mode;
 
 	u16 flatness_qp_lut[8];
@@ -693,6 +692,7 @@ struct msm_display_topology {
  * @comp_info:       compression info supported
  * @roi_caps:        panel roi capabilities
  * @wide_bus_en:	wide-bus mode cfg for interface module
+ * @panel_mode_caps   panel mode capabilities
  * @mdp_transfer_time_us   Specifies the mdp transfer time for command mode
  *                         panels in microseconds.
  * @allowed_mode_switches: bit mask to indicate supported mode switch.
@@ -709,6 +709,7 @@ struct msm_mode_info {
 	struct msm_compression_info comp_info;
 	struct msm_roi_caps roi_caps;
 	bool wide_bus_en;
+	u32 panel_mode_caps;
 	u32 mdp_transfer_time_us;
 	u32 allowed_mode_switches;
 };

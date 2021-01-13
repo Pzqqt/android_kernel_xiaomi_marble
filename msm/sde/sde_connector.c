@@ -71,6 +71,11 @@ static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_SERIALIZE, "serialize_frame_trigger"},
 	{FRAME_DONE_WAIT_POSTED_START, "posted_start"},
 };
+static const struct drm_prop_enum_list e_panel_mode[] = {
+	{MSM_DISPLAY_VIDEO_MODE, "video_mode"},
+	{MSM_DISPLAY_CMD_MODE, "command_mode"},
+	{MSM_DISPLAY_MODE_MAX, "none"},
+};
 
 static inline struct sde_kms *_sde_connector_get_kms(struct drm_connector *conn)
 {
@@ -1553,6 +1558,14 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		msm_property_set_dirty(&c_conn->property_info,
 				&c_state->property_state, idx);
 		break;
+	case CONNECTOR_PROP_SET_PANEL_MODE:
+		if (val == DRM_MODE_FLAG_VID_MODE_PANEL)
+			c_conn->expected_panel_mode =
+				MSM_DISPLAY_VIDEO_MODE;
+		else if (val == DRM_MODE_FLAG_CMD_MODE_PANEL)
+			c_conn->expected_panel_mode =
+				MSM_DISPLAY_CMD_MODE;
+		break;
 	default:
 		break;
 	}
@@ -2554,6 +2567,7 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 	list_for_each_entry(mode, &conn->modes, head) {
 		int topology_idx = 0;
+		u32 panel_mode_caps = 0;
 
 		memset(&mode_info, 0, sizeof(mode_info));
 
@@ -2586,6 +2600,14 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 		sde_kms_info_add_keyint(info, "allowed_mode_switch",
 			mode_info.allowed_mode_switches);
+
+		if (mode_info.panel_mode_caps & DSI_OP_CMD_MODE)
+			panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
+		if (mode_info.panel_mode_caps & DSI_OP_VIDEO_MODE)
+			panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
+
+		sde_kms_info_add_keyint(info, "panel_mode_capabilities",
+			panel_mode_caps);
 
 		if (!mode_info.roi_caps.num_roi)
 			continue;
@@ -2791,6 +2813,14 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 				e_frame_trigger_mode,
 				ARRAY_SIZE(e_frame_trigger_mode), 0,
 				CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE);
+
+		if (display_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE &&
+			display_info->capabilities & MSM_DISPLAY_CAP_VID_MODE)
+			msm_property_install_enum(&c_conn->property_info,
+			"panel_mode", 0, 0,
+			e_panel_mode,
+			ARRAY_SIZE(e_panel_mode), 0,
+			CONNECTOR_PROP_SET_PANEL_MODE);
 
 		if (sde_kms->catalog->has_demura) {
 			msm_property_install_blob(&c_conn->property_info,

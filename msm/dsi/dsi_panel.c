@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -2481,7 +2481,7 @@ static int dsi_panel_parse_phy_timing(struct dsi_display_mode *mode,
 		priv_info->phy_timing_len = len;
 	}
 
-	if (mode->panel_mode == DSI_OP_VIDEO_MODE) {
+	if (mode->panel_mode_caps & DSI_OP_VIDEO_MODE) {
 		/*
 		 *  For command mode we update the pclk as part of
 		 *  function dsi_panel_calc_dsi_transfer_time( )
@@ -2677,7 +2677,7 @@ error:
 }
 
 static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
-	struct dsi_parser_utils *utils, int traffic_mode, int panel_mode)
+	struct dsi_parser_utils *utils, int traffic_mode)
 {
 	u32 data;
 	int rc = -EINVAL;
@@ -2701,7 +2701,6 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 		return 0;
 	}
 
-	priv_info->vdc.panel_mode = panel_mode;
 	priv_info->vdc.traffic_mode = traffic_mode;
 
 	rc = utils->read_u32(utils->data, "qcom,vdc-version", &data);
@@ -3090,32 +3089,25 @@ static int dsi_panel_parse_partial_update_caps(struct dsi_display_mode *mode,
 	return rc;
 }
 
-static int dsi_panel_parse_panel_mode_caps(struct dsi_display_mode *mode,
+static bool dsi_panel_parse_panel_mode_caps(struct dsi_display_mode *mode,
 				struct dsi_parser_utils *utils)
 {
-	bool vid_mode_support, cmd_mode_support;
-
 	if (!mode || !mode->priv_info) {
 		DSI_ERR("invalid arguments\n");
-		return -EINVAL;
+		return false;
 	}
 
-	vid_mode_support = utils->read_bool(utils->data,
-				"qcom,mdss-dsi-video-mode");
+	if (utils->read_bool(utils->data, "qcom,mdss-dsi-video-mode"))
+		mode->panel_mode_caps |= DSI_OP_VIDEO_MODE;
 
-	cmd_mode_support = utils->read_bool(utils->data,
-				"qcom,mdss-dsi-cmd-mode");
+	if (utils->read_bool(utils->data, "qcom,mdss-dsi-cmd-mode"))
+		mode->panel_mode_caps |= DSI_OP_CMD_MODE;
 
-	if (cmd_mode_support)
-		mode->panel_mode = DSI_OP_CMD_MODE;
-	else if (vid_mode_support)
-		mode->panel_mode = DSI_OP_VIDEO_MODE;
-	else
-		return -EINVAL;
+	if (!mode->panel_mode_caps)
+		return false;
 
-	return 0;
+	return true;
 };
-
 
 static int dsi_panel_parse_dms_info(struct dsi_panel *panel)
 {
@@ -3980,7 +3972,6 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 	u32 child_idx = 0;
 	int rc = 0, num_timings;
 	int traffic_mode;
-	int panel_mode;
 	void *utils_data = NULL;
 
 	if (!panel || !mode) {
@@ -4016,13 +4007,22 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 
 	utils_data = utils->data;
 	traffic_mode = panel->video_config.traffic_mode;
-	panel_mode = panel->panel_mode;
 
 	dsi_for_each_child_node(timings_np, child_np) {
 		if (index != child_idx++)
 			continue;
 
 		utils->data = child_np;
+
+		if (panel->panel_mode_switch_enabled) {
+			if (!dsi_panel_parse_panel_mode_caps(mode, utils)) {
+				mode->panel_mode_caps = panel->panel_mode;
+				DSI_INFO("panel mode isn't specified in timing[%d]\n",
+				child_idx);
+			}
+		} else {
+			mode->panel_mode_caps = panel->panel_mode;
+		}
 
 		rc = dsi_panel_parse_timing(&mode->timing, utils);
 		if (rc) {
@@ -4036,8 +4036,7 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 			goto parse_fail;
 		}
 
-		rc = dsi_panel_parse_vdc_params(mode, utils, traffic_mode,
-			panel_mode);
+		rc = dsi_panel_parse_vdc_params(mode, utils, traffic_mode);
 		if (rc) {
 			DSI_ERR("failed to parse vdc params, rc=%d\n", rc);
 			goto parse_fail;
@@ -4071,19 +4070,6 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 		rc = dsi_panel_parse_partial_update_caps(mode, utils);
 		if (rc)
 			DSI_ERR("failed to partial update caps, rc=%d\n", rc);
-
-		if (panel->panel_mode_switch_enabled) {
-			rc = dsi_panel_parse_panel_mode_caps(mode, utils);
-			if (rc) {
-				rc = 0;
-				mode->panel_mode = panel->panel_mode;
-				DSI_INFO(
-				"POMS: panel mode isn't specified in timing[%d]\n",
-				child_idx);
-			}
-		} else {
-			mode->panel_mode = panel->panel_mode;
-		}
 	}
 	goto done;
 

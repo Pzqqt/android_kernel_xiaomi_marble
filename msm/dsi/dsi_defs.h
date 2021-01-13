@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DEFS_H_
@@ -59,9 +59,9 @@ enum dsi_pixel_format {
  * @DSI_OP_MODE_MAX:
  */
 enum dsi_op_mode {
-	DSI_OP_VIDEO_MODE = 0,
-	DSI_OP_CMD_MODE,
-	DSI_OP_MODE_MAX
+	DSI_OP_VIDEO_MODE = BIT(0),
+	DSI_OP_CMD_MODE   = BIT(1),
+	DSI_OP_MODE_MAX   = BIT(2),
 };
 
 /**
@@ -72,10 +72,12 @@ enum dsi_op_mode {
  * @DSI_MODE_FLAG_DMS: Seamless transition is dynamic mode switch
  * @DSI_MODE_FLAG_VRR: Seamless transition is DynamicFPS.
  *                     New timing values are sent from DAL.
- * @DSI_MODE_FLAG_POMS:
- *         Seamless transition is dynamic panel operating mode switch
  * @DSI_MODE_FLAG_DYN_CLK: Seamless transition is dynamic clock change
  * @DSI_MODE_FLAG_DMS_FPS: Seamless fps only transition in Dynamic Mode Switch
+ * @DSI_MODE_FLAG_POMS_TO_VID:
+ *         Seamless transition is dynamic panel operating mode switch to video
+ * @DSI_MODE_FLAG_POMS_TO_CMD:
+ *         Seamless transition is dynamic panel operating mode switch to cmd
  */
 enum dsi_mode_flags {
 	DSI_MODE_FLAG_SEAMLESS			= BIT(0),
@@ -83,9 +85,10 @@ enum dsi_mode_flags {
 	DSI_MODE_FLAG_VBLANK_PRE_MODESET	= BIT(2),
 	DSI_MODE_FLAG_DMS			= BIT(3),
 	DSI_MODE_FLAG_VRR			= BIT(4),
-	DSI_MODE_FLAG_POMS			= BIT(5),
-	DSI_MODE_FLAG_DYN_CLK			= BIT(6),
-	DSI_MODE_FLAG_DMS_FPS                   = BIT(7),
+	DSI_MODE_FLAG_DYN_CLK			= BIT(5),
+	DSI_MODE_FLAG_DMS_FPS                   = BIT(6),
+	DSI_MODE_FLAG_POMS_TO_VID		= BIT(7),
+	DSI_MODE_FLAG_POMS_TO_CMD		= BIT(8)
 };
 
 /**
@@ -629,7 +632,7 @@ struct dsi_display_mode_priv_info {
  * @timing:         Timing parameters for the panel.
  * @pixel_clk_khz:  Pixel clock in Khz.
  * @dsi_mode_flags: Flags to signal other drm components via private flags
- * @panel_mode:      Panel mode
+ * @panel_mode_caps: panel mode capabilities.
  * @is_preferred:   Is mode preferred
  * @priv_info:      Mode private info
  */
@@ -637,7 +640,7 @@ struct dsi_display_mode {
 	struct dsi_mode_info timing;
 	u32 pixel_clk_khz;
 	u32 dsi_mode_flags;
-	enum dsi_op_mode panel_mode;
+	u32 panel_mode_caps;
 	bool is_preferred;
 	struct dsi_display_mode_priv_info *priv_info;
 };

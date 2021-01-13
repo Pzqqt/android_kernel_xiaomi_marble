@@ -180,7 +180,7 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 							old_conn_state->crtc);
 
 		if (!old_crtc_state->active ||
-		    !drm_atomic_crtc_needs_modeset(old_conn_state->crtc->state))
+		    !msm_atomic_needs_modeset(old_conn_state->crtc->state))
 			continue;
 
 		encoder = old_conn_state->best_encoder;
@@ -221,7 +221,7 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		const struct drm_crtc_helper_funcs *funcs;
 
 		/* Shut down everything that needs a full modeset. */
-		if (!drm_atomic_crtc_needs_modeset(crtc->state))
+		if (!msm_atomic_needs_modeset(crtc->state))
 			continue;
 
 		if (!old_crtc_state->active)
@@ -294,7 +294,8 @@ msm_crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 					old_conn_state, false))
 				continue;
 		} else if (!new_crtc_state->mode_changed) {
-			continue;
+			if (!msm_is_private_mode_changed(old_conn_state->crtc->state))
+				continue;
 		}
 
 		DRM_DEBUG_ATOMIC("modeset on [ENCODER:%d:%s]\n",
@@ -372,7 +373,7 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 		struct msm_display_mode *msm_mode;
 
 		/* Need to filter out CRTCs where only planes change. */
-		if (!drm_atomic_crtc_needs_modeset(new_crtc_state))
+		if (!msm_atomic_needs_modeset(new_crtc_state))
 			continue;
 
 		if (!new_crtc_state->active)
@@ -416,8 +417,7 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 			continue;
 
 		if (!new_conn_state->crtc->state->active ||
-				!drm_atomic_crtc_needs_modeset(
-					new_conn_state->crtc->state))
+				!msm_atomic_needs_modeset(new_conn_state->crtc->state))
 			continue;
 
 		old_conn_state = drm_atomic_get_old_connector_state(
@@ -466,8 +466,7 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 			continue;
 
 		if (!new_conn_state->crtc->state->active ||
-		    !drm_atomic_crtc_needs_modeset(
-				    new_conn_state->crtc->state))
+		    !msm_atomic_needs_modeset(new_conn_state->crtc->state))
 			continue;
 
 		old_conn_state = drm_atomic_get_old_connector_state(

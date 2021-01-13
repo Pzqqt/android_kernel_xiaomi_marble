@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/list.h>
@@ -5001,9 +5001,13 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 		return -EINVAL;
 	}
 
-	SDE_EVT32(mode->dsi_mode_flags, mode->panel_mode);
+	SDE_EVT32(mode->dsi_mode_flags, display->panel->panel_mode);
 
-	display->panel->panel_mode = mode->panel_mode;
+	if (mode->dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_VID)
+		display->panel->panel_mode = DSI_OP_VIDEO_MODE;
+	else if (mode->dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_CMD)
+		display->panel->panel_mode = DSI_OP_CMD_MODE;
+
 	rc = dsi_panel_get_host_cfg_for_mode(display->panel,
 					     mode,
 					     &display->config);
@@ -6602,7 +6606,7 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 
 	/* Constant FPS is not supported on command mode */
-	if (dsi_mode->panel_mode == DSI_OP_CMD_MODE)
+	if (!(dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE))
 		return;
 
 	if (!dyn_clk_caps->maintain_const_fps)
@@ -6728,7 +6732,7 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 
 			dsi_display_adjust_mode_timing(display, dst, lanes,
 									bpp);
-
+			dst->panel_mode_caps = DSI_OP_VIDEO_MODE;
 			dst->pixel_clk_khz =
 				div_u64(dst->timing.clk_rate_hz * lanes, bpp);
 			dst->pixel_clk_khz /= 1000;
@@ -6750,7 +6754,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 	struct dsi_dfps_capabilities dfps_caps;
 	struct dsi_display_ctrl *ctrl;
 	struct dsi_host_common_cfg *host = &display->panel->host_config;
-	bool is_split_link, is_cmd_mode;
+	bool is_split_link, support_cmd_mode, support_video_mode;
 	u32 num_dfps_rates, timing_mode_count, display_mode_count;
 	u32 sublinks_count, mode_idx, array_idx = 0;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
@@ -6816,16 +6820,17 @@ int dsi_display_get_modes(struct dsi_display *display,
 			goto error;
 		}
 
-		is_cmd_mode = (display_mode.panel_mode == DSI_OP_CMD_MODE);
+		support_cmd_mode = display_mode.panel_mode_caps & DSI_OP_CMD_MODE;
+		support_video_mode = display_mode.panel_mode_caps & DSI_OP_VIDEO_MODE;
 
 		/* Setup widebus support */
 		display_mode.priv_info->widebus_support =
 				ctrl->ctrl->hw.widebus_support;
 		num_dfps_rates = ((!dfps_caps.dfps_support ||
-			is_cmd_mode) ? 1 : dfps_caps.dfps_list_len);
+			!support_video_mode) ? 1 : dfps_caps.dfps_list_len);
 
 		/* Calculate dsi frame transfer time */
-		if (is_cmd_mode) {
+		if (support_cmd_mode) {
 			dsi_panel_calc_dsi_transfer_time(
 					&display->panel->host_config,
 					&display_mode, frame_threshold_us);
@@ -6874,7 +6879,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 			memcpy(sub_mode, &display_mode, sizeof(display_mode));
 			array_idx++;
 
-			if (!dfps_caps.dfps_support || is_cmd_mode)
+			if (!dfps_caps.dfps_support || !support_video_mode)
 				continue;
 
 			curr_refresh_rate = sub_mode->timing.refresh_rate;
@@ -6882,18 +6887,9 @@ int dsi_display_get_modes(struct dsi_display *display,
 
 			dsi_display_get_dfps_timing(display, sub_mode,
 					curr_refresh_rate);
+			sub_mode->panel_mode_caps = DSI_OP_VIDEO_MODE;
 		}
 		end = array_idx;
-		/*
-		 * if POMS is enabled and boot up mode is video mode,
-		 * skip bit clk rates update for command mode,
-		 * else if dynamic clk switch is supported then update all
-		 * the bit clk rates.
-		 */
-
-		if (is_cmd_mode &&
-			(display->panel->panel_mode == DSI_OP_VIDEO_MODE))
-			continue;
 
 		_dsi_display_populate_bit_clks(display, start, end, &array_idx);
 		if (is_preferred) {
@@ -7045,7 +7041,6 @@ int dsi_display_find_mode(struct dsi_display *display,
 		if (cmp->timing.v_active == m->timing.v_active &&
 			cmp->timing.h_active == m->timing.h_active &&
 			cmp->timing.refresh_rate == m->timing.refresh_rate &&
-			cmp->panel_mode == m->panel_mode &&
 			cmp->pixel_clk_khz == m->pixel_clk_khz) {
 			*out_mode = m;
 			rc = 0;
@@ -7098,8 +7093,9 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 	int rc = 0;
 	struct dsi_dfps_capabilities dfps_caps;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
+	struct sde_connector *sde_conn;
 
-	if (!display || !adj_mode) {
+	if (!display || !adj_mode || !display->drm_conn) {
 		DSI_ERR("Invalid params\n");
 		return -EINVAL;
 	}
@@ -7109,11 +7105,26 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 		return rc;
 	}
 
+	if ((cur_mode->timing.v_active != adj_mode->timing.v_active) ||
+		(cur_mode->timing.h_active != adj_mode->timing.h_active)) {
+		DSI_DEBUG("Avoid VRR and POMS when resolution is changed\n");
+		return rc;
+	}
+
+	sde_conn = to_sde_connector(display->drm_conn);
+
 	mutex_lock(&display->display_lock);
-	dyn_clk_caps = &(display->panel->dyn_clk_caps);
-	if ((cur_mode->timing.v_active == adj_mode->timing.v_active) &&
-		(cur_mode->timing.h_active == adj_mode->timing.h_active) &&
-		(cur_mode->panel_mode == adj_mode->panel_mode)) {
+
+	if (sde_conn->expected_panel_mode == MSM_DISPLAY_VIDEO_MODE &&
+		display->config.panel_mode == DSI_OP_CMD_MODE) {
+		adj_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS_TO_VID;
+		DSI_DEBUG("Panel operating mode change to video detected\n");
+	} else if (sde_conn->expected_panel_mode == MSM_DISPLAY_CMD_MODE &&
+		display->config.panel_mode == DSI_OP_VIDEO_MODE) {
+		adj_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS_TO_CMD;
+		DSI_DEBUG("Panel operating mode change to command detected\n");
+	} else {
+		dyn_clk_caps = &(display->panel->dyn_clk_caps);
 		/* dfps and dynamic clock with const fps use case */
 		if (dsi_display_mode_switch_dfps(cur_mode, adj_mode)) {
 			dsi_panel_get_dfps_caps(display->panel, &dfps_caps);
@@ -7679,7 +7690,7 @@ int dsi_display_prepare(struct dsi_display *display)
 		}
 	}
 
-	if (!(mode->dsi_mode_flags & DSI_MODE_FLAG_POMS) &&
+	if (!display->poms_pending &&
 		(!is_skip_op_required(display))) {
 		/*
 		 * For continuous splash/trusted vm, we skip panel
@@ -7772,7 +7783,7 @@ int dsi_display_prepare(struct dsi_display *display)
 			goto error_ctrl_link_off;
 		}
 
-		if (!(mode->dsi_mode_flags & DSI_MODE_FLAG_POMS)) {
+		if (!display->poms_pending) {
 			rc = dsi_panel_prepare(display->panel);
 			if (rc) {
 				DSI_ERR("[%s] panel prepare failed, rc=%d\n",
@@ -8123,8 +8134,7 @@ int dsi_display_enable(struct dsi_display *display)
 				   display->name, rc);
 			goto error;
 		}
-	} else if (!(display->panel->cur_mode->dsi_mode_flags &
-			DSI_MODE_FLAG_POMS)){
+	} else if (!display->poms_pending) {
 		rc = dsi_panel_enable(display->panel);
 		if (rc) {
 			DSI_ERR("[%s] failed to enable DSI panel, rc=%d\n",
@@ -8197,13 +8207,13 @@ int dsi_display_post_enable(struct dsi_display *display)
 
 	mutex_lock(&display->display_lock);
 
-	if (display->panel->cur_mode->dsi_mode_flags & DSI_MODE_FLAG_POMS) {
-		if (display->config.panel_mode == DSI_OP_CMD_MODE)
-			dsi_panel_mode_switch_to_cmd(display->panel);
-
-		if (display->config.panel_mode == DSI_OP_VIDEO_MODE)
-			dsi_panel_mode_switch_to_vid(display->panel);
-	} else {
+	if (display->panel->cur_mode->dsi_mode_flags &
+			DSI_MODE_FLAG_POMS_TO_CMD) {
+		dsi_panel_mode_switch_to_cmd(display->panel);
+	} else if (display->panel->cur_mode->dsi_mode_flags &
+			DSI_MODE_FLAG_POMS_TO_VID)
+		dsi_panel_mode_switch_to_vid(display->panel);
+	else {
 		rc = dsi_panel_post_enable(display->panel);
 		if (rc)
 			DSI_ERR("[%s] panel post-enable failed, rc=%d\n",

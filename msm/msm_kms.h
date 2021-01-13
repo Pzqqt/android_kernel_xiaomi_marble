@@ -38,12 +38,14 @@
 #define MSM_MODE_FLAG_SEAMLESS_DMS			(1<<2)
 /* Request to switch the fps */
 #define MSM_MODE_FLAG_SEAMLESS_VRR			(1<<3)
-/* Request to switch the panel mode */
-#define MSM_MODE_FLAG_SEAMLESS_POMS			(1<<4)
 /* Request to switch the bit clk */
-#define MSM_MODE_FLAG_SEAMLESS_DYN_CLK			(1<<5)
+#define MSM_MODE_FLAG_SEAMLESS_DYN_CLK			(1<<4)
 /* Request to make the seamless switch */
-#define DRM_MODE_FLAG_SEAMLESS				(1<<6)
+#define DRM_MODE_FLAG_SEAMLESS				(1<<5)
+/* Request to switch the panel mode to video */
+#define MSM_MODE_FLAG_SEAMLESS_POMS_VID			(1<<6)
+/* Request to switch the panel mode to command */
+#define MSM_MODE_FLAG_SEAMLESS_POMS_CMD			(1<<7)
 
 /* As there are different display controller blocks depending on the
  * snapdragon version, the kms support is split out and the appropriate
@@ -231,11 +233,25 @@ static inline bool msm_is_mode_seamless_vrr(const struct msm_display_mode *mode)
 		: false;
 }
 
-static inline bool msm_is_mode_seamless_poms(
+static inline bool msm_is_mode_seamless_poms_to_vid(
 		const struct msm_display_mode *mode)
 {
-	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_POMS)
+	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_POMS_VID)
 		: false;
+}
+
+static inline bool msm_is_mode_seamless_poms_to_cmd(
+		const struct msm_display_mode *mode)
+{
+	return mode ? (mode->private_flags & MSM_MODE_FLAG_SEAMLESS_POMS_CMD)
+		: false;
+}
+
+static inline bool msm_is_mode_seamless_poms(
+			const struct msm_display_mode *mode)
+{
+	return (msm_is_mode_seamless_poms_to_vid(mode) ||
+		msm_is_mode_seamless_poms_to_cmd(mode));
 }
 
 static inline bool msm_is_mode_seamless_dyn_clk(
@@ -249,5 +265,43 @@ static inline bool msm_needs_vblank_pre_modeset(
 		const struct msm_display_mode *mode)
 {
 	return (mode->private_flags & MSM_MODE_FLAG_VBLANK_PRE_MODESET);
+}
+
+static inline bool msm_is_private_mode_changed(
+		struct drm_crtc_state *state)
+{
+	struct msm_display_mode *msm_mode = NULL;
+	struct msm_drm_private *priv = NULL;
+	struct msm_kms *kms;
+
+	if (!state || !state->crtc)
+		return false;
+
+	priv = state->crtc->dev->dev_private;
+	if (!priv)
+		return false;
+
+	kms = priv->kms;
+	if (!kms || !kms->funcs->get_msm_mode)
+		return false;
+
+	msm_mode = kms->funcs->get_msm_mode(state);
+	if (!msm_mode)
+		return false;
+
+	if (msm_is_mode_seamless_poms(msm_mode))
+		return true;
+
+	return false;
+}
+
+static inline bool msm_atomic_needs_modeset(struct drm_crtc_state *state)
+{
+	if (drm_atomic_crtc_needs_modeset(state))
+		return true;
+
+	if (msm_is_private_mode_changed(state))
+		return true;
+	return false;
 }
 #endif /* __MSM_KMS_H__ */
