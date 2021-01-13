@@ -1969,6 +1969,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	ctrl_in.power = dp->power;
 	ctrl_in.catalog = &dp->catalog->ctrl;
 	ctrl_in.parser = dp->parser;
+	ctrl_in.pll = dp->pll;
 
 	dp->ctrl = dp_ctrl_get(&ctrl_in);
 	if (IS_ERR(dp->ctrl)) {

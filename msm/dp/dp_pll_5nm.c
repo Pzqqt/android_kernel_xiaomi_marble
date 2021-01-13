@@ -1,56 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 /*
  * Display Port PLL driver block diagram for branch clocks
  *
- *		+------------------------------+
- *		|         DP_VCO_CLK           |
- *		|                              |
- *		|    +-------------------+     |
- *		|    |   (DP PLL/VCO)    |     |
- *		|    +---------+---------+     |
- *		|              v               |
- *		|   +----------+-----------+   |
- *		|   | hsclk_divsel_clk_src |   |
- *		|   +----------+-----------+   |
- *		+------------------------------+
- *				|
- *	 +------------<---------v------------>----------+
- *	 |                                              |
- * +-----v------------+                                 |
- * | dp_link_clk_src  |                                 |
- * |    divsel_ten    |                                 |
- * +---------+--------+                                 |
- *	|                                               |
- *	|                                               |
- *	v                                               v
- * Input to DISPCC block                                |
- * for link clk, crypto clk                             |
- * and interface clock                                  |
- *							|
- *							|
- *	+--------<------------+-----------------+---<---+
- *	|                     |                 |
- * +-------v------+  +--------v-----+  +--------v------+
- * | vco_divided  |  | vco_divided  |  | vco_divided   |
- * |    _clk_src  |  |    _clk_src  |  |    _clk_src   |
- * |              |  |              |  |               |
- * |divsel_six    |  |  divsel_two  |  |  divsel_four  |
- * +-------+------+  +-----+--------+  +--------+------+
- *         |	           |		        |
- *	v------->----------v-------------<------v
- *                         |
- *		+----------+---------+
- *		|   vco_divided_clk  |
- *		|       _src_mux     |
- *		+---------+----------+
- *                        |
- *                        v
- *              Input to DISPCC block
- *              for DP pixel clock
+ * +------------------------+       +------------------------+
+ * |   dp_phy_pll_link_clk  |       | dp_phy_pll_vco_div_clk |
+ * +------------------------+       +------------------------+
+ *             |                               |
+ *             |                               |
+ *             V                               V
+ *        dp_link_clk                     dp_pixel_clk
+ *
  *
  */
 
@@ -241,17 +204,16 @@ static int dp_vco_pll_init_db_5nm(struct dp_pll_db *pdb,
 	return 0;
 }
 
-static int dp_config_vco_rate_5nm(struct dp_pll_vco_clk *vco,
+static int dp_config_vco_rate_5nm(struct dp_pll *pll,
 		unsigned long rate)
 {
-	int res = 0;
-	struct dp_pll *pll = vco->priv;
+	int rc = 0;
 	struct dp_pll_db *pdb = (struct dp_pll_db *)pll->priv;
 
-	res = dp_vco_pll_init_db_5nm(pdb, rate);
-	if (res) {
+	rc = dp_vco_pll_init_db_5nm(pdb, rate);
+	if (rc < 0) {
 		DP_ERR("VCO Init DB failed\n");
-		return res;
+		return rc;
 	}
 
 	dp_pll_write(dp_phy, DP_PHY_CFG_1, 0x0F);
@@ -372,7 +334,7 @@ static int dp_config_vco_rate_5nm(struct dp_pll_vco_clk *vco,
 	/* Make sure the PHY register writes are done */
 	wmb();
 
-	return res;
+	return rc;
 }
 
 enum dp_5nm_pll_status {
@@ -451,11 +413,9 @@ static bool dp_5nm_pll_get_status(struct dp_pll *pll,
 	return success;
 }
 
-static int dp_pll_enable_5nm(struct clk_hw *hw)
+static int dp_pll_enable_5nm(struct dp_pll *pll)
 {
 	int rc = 0;
-	struct dp_pll_vco_clk *vco = to_dp_vco_hw(hw);
-	struct dp_pll *pll = vco->priv;
 
 	pll->aux->state &= ~DP_STATE_PLL_LOCKED;
 
@@ -497,15 +457,13 @@ static int dp_pll_enable_5nm(struct clk_hw *hw)
 
 	pll->aux->state |= DP_STATE_PLL_LOCKED;
 	DP_DEBUG("PLL is locked\n");
+
 lock_err:
 	return rc;
 }
 
-static int dp_pll_disable_5nm(struct clk_hw *hw)
+static void dp_pll_disable_5nm(struct dp_pll *pll)
 {
-	struct dp_pll_vco_clk *vco = to_dp_vco_hw(hw);
-	struct dp_pll *pll = vco->priv;
-
 	/* Assert DP PHY power down */
 	dp_pll_write(dp_phy, DP_PHY_PD_CTL, 0x2);
 	/*
@@ -513,103 +471,68 @@ static int dp_pll_disable_5nm(struct clk_hw *hw)
 	 * completed before doing any other operation
 	 */
 	wmb();
-
-	return 0;
 }
 
-static struct clk_ops mux_clk_ops;
-static struct regmap_config dp_pll_5nm_cfg = {
-	.reg_bits	= 32,
-	.reg_stride	= 4,
-	.val_bits	= 32,
-	.max_register = 0x910,
-};
-
-int dp_mux_set_parent_5nm(void *context, unsigned int reg, unsigned int val)
+static int dp_vco_clk_set_div(struct dp_pll *pll, unsigned int div)
 {
-	struct dp_pll *pll = context;
-	u32 auxclk_div;
+	u32 val = 0;
 
-	if (!context) {
-		DP_ERR("invalid input parameters\n");
-		return -EINVAL;
-	}
-
-	auxclk_div = dp_pll_read(dp_phy, DP_PHY_VCO_DIV);
-	auxclk_div &= ~0x03;
-
-	if (val == 0)
-		auxclk_div |= 1;
-	else if (val == 1)
-		auxclk_div |= 2;
-	else if (val == 2)
-		auxclk_div |= 0;
-
-	dp_pll_write(dp_phy, DP_PHY_VCO_DIV, auxclk_div);
-	/* Make sure the PHY registers writes are done */
-	wmb();
-	DP_DEBUG("mux=%d auxclk_div=%x\n", val, auxclk_div);
-
-	return 0;
-}
-
-int dp_mux_get_parent_5nm(void *context, unsigned int reg, unsigned int *val)
-{
-	u32 auxclk_div = 0;
-	struct dp_pll *pll = context;
-
-	if (!context || !val) {
+	if (!pll) {
 		DP_ERR("invalid input parameters\n");
 		return -EINVAL;
 	}
 
 	if (is_gdsc_disabled(pll))
-		return 0;
+		return -EINVAL;
 
-	auxclk_div = dp_pll_read(dp_phy, DP_PHY_VCO_DIV);
-	auxclk_div &= 0x03;
+	val = dp_pll_read(dp_phy, DP_PHY_VCO_DIV);
+	val &= ~0x03;
 
-	if (auxclk_div == 1) /* Default divider */
-		*val = 0;
-	else if (auxclk_div == 2)
-		*val = 1;
-	else if (auxclk_div == 0)
-		*val = 2;
+	switch (div) {
+	case 2:
+		val |= 1;
+		break;
+	case 4:
+		val |= 2;
+		break;
+	case 6:
+	/* When div = 6, val is 0, so do nothing here */
+		;
+		break;
+	case 8:
+		val |= 3;
+		break;
+	default:
+		DP_DEBUG("unsupported div value %d\n", div);
+		return -EINVAL;
+	}
 
-	DP_DEBUG("auxclk_div=%d, val=%d\n", auxclk_div, *val);
+	dp_pll_write(dp_phy, DP_PHY_VCO_DIV, val);
+	/* Make sure the PHY registers writes are done */
+	wmb();
 
+	DP_DEBUG("val=%d div=%x\n", val, div);
 	return 0;
 }
 
-static struct regmap_bus dp_pixel_mux_regmap_ops = {
-	.reg_write = dp_mux_set_parent_5nm,
-	.reg_read = dp_mux_get_parent_5nm,
-};
-
-static int dp_vco_set_rate_5nm(struct clk_hw *hw, unsigned long rate,
-					unsigned long parent_rate)
+static int dp_vco_set_rate_5nm(struct dp_pll *pll, unsigned long rate)
 {
-	struct dp_pll_vco_clk *vco;
-	int rc;
-	struct dp_pll *pll;
+	int rc = 0;
 
-	if (!hw) {
+	if (!pll) {
 		DP_ERR("invalid input parameters\n");
 		return -EINVAL;
 	}
 
-	vco = to_dp_vco_hw(hw);
-	pll = vco->priv;
-
 	DP_DEBUG("DP lane CLK rate=%ld\n", rate);
 
-	rc = dp_config_vco_rate_5nm(vco, rate);
-	if (rc)
+	rc = dp_config_vco_rate_5nm(pll, rate);
+	if (rc < 0) {
 		DP_ERR("Failed to set clk rate\n");
+		return rc;
+	}
 
-	vco->rate = rate;
-
-	return 0;
+	return rc;
 }
 
 static int dp_regulator_enable_5nm(struct dp_parser *parser,
@@ -638,21 +561,45 @@ static int dp_regulator_enable_5nm(struct dp_parser *parser,
 	return rc;
 }
 
-static int dp_vco_prepare_5nm(struct clk_hw *hw)
+static int dp_pll_configure(struct dp_pll *pll, unsigned long rate)
 {
 	int rc = 0;
-	struct dp_pll_vco_clk *vco;
-	struct dp_pll *pll;
 
-	if (!hw) {
-		DP_ERR("invalid input parameters\n");
+	if (!pll || !rate) {
+		DP_ERR("invalid input parameters rate = %lu\n", rate);
 		return -EINVAL;
 	}
 
-	vco = to_dp_vco_hw(hw);
-	pll = vco->priv;
+	rate = rate * 10;
 
-	DP_DEBUG("rate=%ld\n", vco->rate);
+	if (rate <= DP_VCO_HSCLK_RATE_1620MHZDIV1000)
+		rate = DP_VCO_HSCLK_RATE_1620MHZDIV1000;
+	else if (rate <= DP_VCO_HSCLK_RATE_2700MHZDIV1000)
+		rate = DP_VCO_HSCLK_RATE_2700MHZDIV1000;
+	else if (rate <= DP_VCO_HSCLK_RATE_5400MHZDIV1000)
+		rate = DP_VCO_HSCLK_RATE_5400MHZDIV1000;
+	else
+		rate = DP_VCO_HSCLK_RATE_8100MHZDIV1000;
+
+	rc = dp_vco_set_rate_5nm(pll, rate);
+	if (rc < 0) {
+		DP_ERR("pll rate %s set failed\n", rate);
+		return rc;
+	}
+
+	pll->vco_rate = rate;
+	DP_DEBUG("pll rate %lu set success\n", rate);
+	return rc;
+}
+
+static int dp_pll_prepare(struct dp_pll *pll)
+{
+	int rc = 0;
+
+	if (!pll) {
+		DP_ERR("invalid input parameters\n");
+		return -EINVAL;
+	}
 
 	/*
 	 * Enable DP_PM_PLL regulator if the PLL revision is 5nm-V1 and the
@@ -660,91 +607,77 @@ static int dp_vco_prepare_5nm(struct clk_hw *hw)
 	 * turbo as required for V1 hardware PLL functionality.
 	 */
 	if (pll->revision == DP_PLL_5NM_V1 &&
-			vco->rate == DP_VCO_HSCLK_RATE_8100MHZDIV1000)
-		dp_regulator_enable_5nm(pll->parser, DP_PLL_PM, true);
-
-	if ((pll->vco_cached_rate != 0)
-		&& (pll->vco_cached_rate == vco->rate)) {
-		rc = dp_vco_set_rate_5nm(hw, pll->vco_cached_rate,
-				pll->vco_cached_rate);
-		if (rc) {
-			DP_ERR("index=%d vco_set_rate failed. rc=%d\n",
-				rc, pll->index);
-			goto error;
+	    pll->vco_rate == DP_VCO_HSCLK_RATE_8100MHZDIV1000) {
+		rc = dp_regulator_enable_5nm(pll->parser, DP_PLL_PM, true);
+		if (rc < 0) {
+			DP_ERR("enable pll power failed\n");
+			return rc;
 		}
 	}
 
-	rc = dp_pll_enable_5nm(hw);
-	if (rc) {
+	rc = dp_pll_enable_5nm(pll);
+	if (rc < 0)
 		DP_ERR("ndx=%d failed to enable dp pll\n", pll->index);
-		goto error;
-	}
 
-error:
 	return rc;
 }
 
-static void dp_vco_unprepare_5nm(struct clk_hw *hw)
+static int  dp_pll_unprepare(struct dp_pll *pll)
 {
-	struct dp_pll_vco_clk *vco;
-	struct dp_pll *pll;
-
-	if (!hw) {
-		DP_ERR("invalid input parameters\n");
-		return;
-	}
-
-	vco = to_dp_vco_hw(hw);
-	pll = vco->priv;
+	int rc = 0;
 
 	if (!pll) {
 		DP_ERR("invalid input parameter\n");
-		return;
+		return -EINVAL;
 	}
 
 	if (pll->revision == DP_PLL_5NM_V1 &&
-			vco->rate == DP_VCO_HSCLK_RATE_8100MHZDIV1000)
-		dp_regulator_enable_5nm(pll->parser, DP_PLL_PM, false);
-
-	pll->vco_cached_rate = vco->rate;
-	dp_pll_disable_5nm(hw);
-}
-
-static unsigned long dp_vco_recalc_rate_5nm(struct clk_hw *hw,
-					unsigned long parent_rate)
-{
-	struct dp_pll_vco_clk *vco;
-	u32 hsclk_sel, link_clk_divsel, hsclk_div, link_clk_div = 0;
-	unsigned long vco_rate;
-	struct dp_pll *pll;
-
-	if (!hw) {
-		DP_ERR("invalid input parameters\n");
-		return 0;
+			pll->vco_rate == DP_VCO_HSCLK_RATE_8100MHZDIV1000) {
+		rc = dp_regulator_enable_5nm(pll->parser, DP_PLL_PM, false);
+		if (rc < 0) {
+			DP_ERR("disable pll power failed\n");
+			return rc;
+		}
 	}
 
-	vco = to_dp_vco_hw(hw);
-	pll = vco->priv;
+	dp_pll_disable_5nm(pll);
+
+	return rc;
+}
+
+unsigned long dp_vco_recalc_rate_5nm(struct dp_pll *pll)
+{
+	u32 hsclk_sel, link_clk_divsel, hsclk_div, link_clk_div = 0;
+	unsigned long vco_rate = 0;
+
+	if (!pll) {
+		DP_ERR("invalid input parameters\n");
+		return -EINVAL;
+	}
 
 	if (is_gdsc_disabled(pll))
 		return 0;
 
-	DP_DEBUG("input rates: parent=%lu, vco=%lu\n", parent_rate, vco->rate);
-
 	hsclk_sel = dp_pll_read(dp_pll, QSERDES_COM_HSCLK_SEL);
 	hsclk_sel &= 0x0f;
 
-	if (hsclk_sel == 5)
+	switch (hsclk_sel) {
+	case 5:
 		hsclk_div = 5;
-	else if (hsclk_sel == 3)
+		break;
+	case 3:
 		hsclk_div = 3;
-	else if (hsclk_sel == 1)
+		break;
+	case 1:
 		hsclk_div = 2;
-	else if (hsclk_sel == 0)
+		break;
+	case 0:
 		hsclk_div = 1;
-	else {
+		break;
+	default:
 		DP_DEBUG("unknown divider. forcing to default\n");
 		hsclk_div = 5;
+		break;
 	}
 
 	link_clk_divsel = dp_pll_read(dp_phy, DP_PHY_AUX_CFG2);
@@ -776,201 +709,144 @@ static unsigned long dp_vco_recalc_rate_5nm(struct clk_hw *hw,
 	DP_DEBUG("hsclk: sel=0x%x, div=0x%x; lclk: sel=%u, div=%u, rate=%lu\n",
 		hsclk_sel, hsclk_div, link_clk_divsel, link_clk_div, vco_rate);
 
-	pll->vco_cached_rate = vco->rate = vco_rate;
-
 	return vco_rate;
 }
 
-static long dp_vco_round_rate_5nm(struct clk_hw *hw, unsigned long rate,
-			unsigned long *parent_rate)
+static unsigned long dp_pll_link_clk_recalc_rate(struct clk_hw *hw,
+						 unsigned long parent_rate)
 {
-	unsigned long rrate = rate;
-	struct dp_pll_vco_clk *vco;
+	struct dp_pll *pll = NULL;
+	struct dp_pll_vco_clk *pll_link = NULL;
+	unsigned long rate = 0;
 
 	if (!hw) {
 		DP_ERR("invalid input parameters\n");
-		return 0;
-	}
-
-	vco = to_dp_vco_hw(hw);
-	if (rate <= vco->min_rate)
-		rrate = vco->min_rate;
-	else if (rate <= DP_VCO_HSCLK_RATE_2700MHZDIV1000)
-		rrate = DP_VCO_HSCLK_RATE_2700MHZDIV1000;
-	else if (rate <= DP_VCO_HSCLK_RATE_5400MHZDIV1000)
-		rrate = DP_VCO_HSCLK_RATE_5400MHZDIV1000;
-	else
-		rrate = vco->max_rate;
-
-	DP_DEBUG("rrate=%ld\n", rrate);
-
-	if (parent_rate)
-		*parent_rate = rrate;
-	return rrate;
-}
-
-/* Op structures */
-static const struct clk_ops dp_5nm_vco_clk_ops = {
-	.recalc_rate = dp_vco_recalc_rate_5nm,
-	.set_rate = dp_vco_set_rate_5nm,
-	.round_rate = dp_vco_round_rate_5nm,
-	.prepare = dp_vco_prepare_5nm,
-	.unprepare = dp_vco_unprepare_5nm,
-};
-
-static struct dp_pll_vco_clk dp_vco_clk = {
-	.min_rate = DP_VCO_HSCLK_RATE_1620MHZDIV1000,
-	.max_rate = DP_VCO_HSCLK_RATE_8100MHZDIV1000,
-	.hw.init = &(struct clk_init_data){
-		.name = "dp_vco_clk",
-		.parent_names = (const char *[]){ "bi_tcxo" },
-		.num_parents = 1,
-		.ops = &dp_5nm_vco_clk_ops,
-	},
-};
-
-static struct clk_fixed_factor dp_phy_pll_link_clk = {
-	.div = 10,
-	.mult = 1,
-
-	.hw.init = &(struct clk_init_data){
-		.name = "dp_phy_pll_link_clk",
-		.parent_names =
-			(const char *[]){ "dp_vco_clk" },
-		.num_parents = 1,
-		.flags = CLK_SET_RATE_PARENT,
-		.ops = &clk_fixed_factor_ops,
-	},
-};
-
-static struct clk_fixed_factor dp_vco_divsel_two_clk_src = {
-	.div = 2,
-	.mult = 1,
-
-	.hw.init = &(struct clk_init_data){
-		.name = "dp_vco_divsel_two_clk_src",
-		.parent_names =
-			(const char *[]){ "dp_vco_clk" },
-		.num_parents = 1,
-		.ops = &clk_fixed_factor_ops,
-	},
-};
-
-static struct clk_fixed_factor dp_vco_divsel_four_clk_src = {
-	.div = 4,
-	.mult = 1,
-
-	.hw.init = &(struct clk_init_data){
-		.name = "dp_vco_divsel_four_clk_src",
-		.parent_names =
-			(const char *[]){ "dp_vco_clk" },
-		.num_parents = 1,
-		.ops = &clk_fixed_factor_ops,
-	},
-};
-
-static struct clk_fixed_factor dp_vco_divsel_six_clk_src = {
-	.div = 6,
-	.mult = 1,
-
-	.hw.init = &(struct clk_init_data){
-		.name = "dp_vco_divsel_six_clk_src",
-		.parent_names =
-			(const char *[]){ "dp_vco_clk" },
-		.num_parents = 1,
-		.ops = &clk_fixed_factor_ops,
-	},
-};
-
-static struct clk_regmap_mux dp_phy_pll_vco_div_clk = {
-	.reg = 0x64,
-	.shift = 0,
-	.width = 2,
-
-	.clkr = {
-		.hw.init = &(struct clk_init_data){
-			.name = "dp_phy_pll_vco_div_clk",
-			.parent_names =
-				(const char *[]){"dp_vco_divsel_two_clk_src",
-					"dp_vco_divsel_four_clk_src",
-					"dp_vco_divsel_six_clk_src"},
-			.num_parents = 3,
-			.ops = &mux_clk_ops,
-			.flags = CLK_SET_RATE_PARENT,
-		},
-	},
-};
-
-static int clk_mux_determine_rate(struct clk_hw *hw,
-				  struct clk_rate_request *req)
-{
-	int ret = 0;
-
-	if (!hw || !req) {
-		DP_ERR("Invalid input parameters\n");
 		return -EINVAL;
 	}
 
-	ret = __clk_mux_determine_rate_closest(hw, req);
-	if (ret)
-		return ret;
+	pll_link = to_dp_vco_hw(hw);
+	pll = pll_link->priv;
 
-	/* Set the new parent of mux if there is a new valid parent */
-	if (hw->clk && req->best_parent_hw->clk)
-		clk_set_parent(hw->clk, req->best_parent_hw->clk);
+	rate = pll->vco_rate;
+	rate = pll->vco_rate / 10;
 
+	return rate;
+}
+
+static long dp_pll_link_clk_round(struct clk_hw *hw, unsigned long rate,
+			unsigned long *parent_rate)
+{
+	struct dp_pll *pll = NULL;
+	struct dp_pll_vco_clk *pll_link = NULL;
+
+	if (!hw) {
+		DP_ERR("invalid input parameters\n");
+		return -EINVAL;
+	}
+
+	pll_link = to_dp_vco_hw(hw);
+	pll = pll_link->priv;
+
+	rate = pll->vco_rate / 10;
+
+	return rate;
+}
+
+static unsigned long dp_pll_vco_div_clk_get_rate(struct dp_pll *pll)
+{
+	if (pll->vco_rate == DP_VCO_HSCLK_RATE_8100MHZDIV1000)
+		return (pll->vco_rate / 6);
+	else if (pll->vco_rate == DP_VCO_HSCLK_RATE_5400MHZDIV1000)
+		return (pll->vco_rate / 4);
+	else
+		return (pll->vco_rate / 2);
+}
+
+static unsigned long dp_pll_vco_div_clk_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct dp_pll *pll = NULL;
+	struct dp_pll_vco_clk *pll_link = NULL;
+
+	if (!hw) {
+		DP_ERR("invalid input parameters\n");
+		return -EINVAL;
+	}
+
+	pll_link = to_dp_vco_hw(hw);
+	pll = pll_link->priv;
+
+	return dp_pll_vco_div_clk_get_rate(pll);
+}
+
+static long dp_pll_vco_div_clk_round(struct clk_hw *hw, unsigned long rate,
+			unsigned long *parent_rate)
+{
+	return dp_pll_vco_div_clk_recalc_rate(hw, *parent_rate);
+}
+
+static int dp_pll_vco_div_clk_set_rate(struct clk_hw *hw, unsigned long rate,
+				       unsigned long parent_rate)
+{
+	struct dp_pll *pll = NULL;
+	struct dp_pll_vco_clk *pll_link = NULL;
+	int rc = 0;
+
+	if (!hw) {
+		DP_ERR("invalid input parameters\n");
+		return -EINVAL;
+	}
+
+	pll_link = to_dp_vco_hw(hw);
+	pll = pll_link->priv;
+
+	if (rate != dp_pll_vco_div_clk_get_rate(pll)) {
+		DP_ERR("unsupported rate %lu failed\n", rate);
+		return rc;
+	}
+
+	rc = dp_vco_clk_set_div(pll, pll->vco_rate / rate);
+	if (rc < 0) {
+		DP_DEBUG("set rate %lu failed\n", rate);
+		return rc;
+	}
+
+	DP_DEBUG("set rate %lu success\n", rate);
 	return 0;
 }
 
-static unsigned long mux_recalc_rate(struct clk_hw *hw,
-					unsigned long parent_rate)
-{
-	struct clk *div_clk = NULL, *vco_clk = NULL;
-	struct dp_pll_vco_clk *vco = NULL;
+static const struct clk_ops pll_link_clk_ops = {
+	.recalc_rate = dp_pll_link_clk_recalc_rate,
+	.round_rate = dp_pll_link_clk_round,
+};
 
-	if (!hw) {
-		DP_ERR("Invalid input parameter\n");
-		return 0;
-	}
+static const struct clk_ops pll_vco_div_clk_ops = {
+	.recalc_rate = dp_pll_vco_div_clk_recalc_rate,
+	.round_rate = dp_pll_vco_div_clk_round,
+	.set_rate = dp_pll_vco_div_clk_set_rate,
+};
 
-	div_clk = clk_get_parent(hw->clk);
-	if (!div_clk)
-		return 0;
+static struct dp_pll_vco_clk dp_phy_pll_link_clk = {
+	.hw.init = &(struct clk_init_data) {
+		.name = "dp_phy_pll_link_clk",
+		.ops = &pll_link_clk_ops,
+	},
+};
 
-	vco_clk = clk_get_parent(div_clk);
-	if (!vco_clk)
-		return 0;
-
-	vco = to_dp_vco_hw(__clk_get_hw(vco_clk));
-	if (!vco)
-		return 0;
-
-	if (vco->rate == DP_VCO_HSCLK_RATE_8100MHZDIV1000)
-		return (vco->rate / 6);
-	else if (vco->rate == DP_VCO_HSCLK_RATE_5400MHZDIV1000)
-		return (vco->rate / 4);
-	else
-		return (vco->rate / 2);
-}
-
-static struct clk_hw *mdss_dp_pllcc_5nm[] = {
-	[DP_VCO_CLK] = &dp_vco_clk.hw,
-	[DP_LINK_CLK_DIVSEL_TEN] = &dp_phy_pll_link_clk.hw,
-	[DP_VCO_DIVIDED_TWO_CLK_SRC] = &dp_vco_divsel_two_clk_src.hw,
-	[DP_VCO_DIVIDED_FOUR_CLK_SRC] = &dp_vco_divsel_four_clk_src.hw,
-	[DP_VCO_DIVIDED_SIX_CLK_SRC] = &dp_vco_divsel_six_clk_src.hw,
-	[DP_PHY_PLL_VCO_DIV_CLK] = &dp_phy_pll_vco_div_clk.clkr.hw,
+static struct dp_pll_vco_clk dp_phy_pll_vco_div_clk = {
+	.hw.init = &(struct clk_init_data) {
+		.name = "dp_phy_pll_vco_div_clk",
+		.ops = &pll_vco_div_clk_ops,
+	},
 };
 
 static struct dp_pll_db dp_pdb;
 
 int dp_pll_clock_register_5nm(struct dp_pll *pll)
 {
-	int rc = -ENOTSUPP, i = 0;
+	int rc = 0, num_clks = 2;
 	struct platform_device *pdev;
 	struct clk *clk;
-	struct regmap *regmap;
-	int num_clks = ARRAY_SIZE(mdss_dp_pllcc_5nm);
 
 	if (!pll) {
 		DP_ERR("pll data not initialized\n");
@@ -990,42 +866,44 @@ int dp_pll_clock_register_5nm(struct dp_pll *pll)
 	}
 
 	pll->clk_data->clk_num = num_clks;
-
 	pll->priv = &dp_pdb;
 	dp_pdb.pll = pll;
 
-	/* Set client data for vco, mux and div clocks */
-	regmap = regmap_init(&pdev->dev, &dp_pixel_mux_regmap_ops,
-			pll, &dp_pll_5nm_cfg);
-	mux_clk_ops = clk_regmap_mux_closest_ops;
-	mux_clk_ops.determine_rate = clk_mux_determine_rate;
-	mux_clk_ops.recalc_rate = mux_recalc_rate;
+	dp_phy_pll_link_clk.priv = pll;
+	dp_phy_pll_vco_div_clk.priv = pll;
 
-	dp_vco_clk.priv = pll;
-	dp_phy_pll_vco_div_clk.clkr.regmap = regmap;
+	pll->pll_cfg = dp_pll_configure;
+	pll->pll_prepare = dp_pll_prepare;
+	pll->pll_unprepare = dp_pll_unprepare;
 
-	for (i = DP_VCO_CLK; i <= DP_PHY_PLL_VCO_DIV_CLK; i++) {
-		DP_DEBUG("reg clk: %d index: %d\n", i, pll->index);
-		clk = clk_register(&pdev->dev, mdss_dp_pllcc_5nm[i]);
-		if (IS_ERR(clk)) {
-			DP_ERR("clk registration failed for DP: %d\n",
-					pll->index);
-			rc = -EINVAL;
-			goto clk_reg_fail;
-		}
-		pll->clk_data->clks[i] = clk;
+	clk = clk_register(&pdev->dev, &dp_phy_pll_link_clk.hw);
+	if (IS_ERR(clk)) {
+		DP_ERR("%s registration failed for DP: %d\n",
+		       clk_hw_get_name(&dp_phy_pll_link_clk.hw), pll->index);
+		rc = -EINVAL;
+		goto clk_reg_fail;
 	}
+	pll->clk_data->clks[0] = clk;
+
+	clk = clk_register(&pdev->dev, &dp_phy_pll_vco_div_clk.hw);
+	if (IS_ERR(clk)) {
+		DP_ERR("%s registration failed for DP: %d\n",
+		       clk_hw_get_name(&dp_phy_pll_vco_div_clk.hw), pll->index);
+		rc = -EINVAL;
+		goto clk_reg_fail;
+	}
+	pll->clk_data->clks[1] = clk;
 
 	rc = of_clk_add_provider(pdev->dev.of_node,
 			of_clk_src_onecell_get, pll->clk_data);
 	if (rc) {
 		DP_ERR("Clock register failed rc=%d\n", rc);
-		rc = -EPROBE_DEFER;
 		goto clk_reg_fail;
-	} else {
-		DP_DEBUG("success\n");
 	}
+
+	DP_DEBUG("success\n");
 	return rc;
+
 clk_reg_fail:
 	dp_pll_clock_unregister_5nm(pll);
 	return rc;
