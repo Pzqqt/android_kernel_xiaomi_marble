@@ -6149,7 +6149,7 @@ static int dsi_display_ext_get_mode_info(struct drm_connector *connector,
 		return -EINVAL;
 
 	memset(mode_info, 0, sizeof(*mode_info));
-	mode_info->frame_rate = drm_mode->vrefresh;
+	mode_info->frame_rate = drm_mode_vrefresh(drm_mode);
 	mode_info->vtotal = drm_mode->vtotal;
 
 	topology = &mode_info->topology;
@@ -7040,8 +7040,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 
 		if (cmp->timing.v_active == m->timing.v_active &&
 			cmp->timing.h_active == m->timing.h_active &&
-			cmp->timing.refresh_rate == m->timing.refresh_rate &&
-			cmp->pixel_clk_khz == m->pixel_clk_khz) {
+			cmp->timing.refresh_rate == m->timing.refresh_rate) {
 			*out_mode = m;
 			rc = 0;
 			break;

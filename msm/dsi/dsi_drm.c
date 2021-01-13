@@ -51,9 +51,7 @@ static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 	dsi_mode->timing.v_front_porch = drm_mode->vsync_start -
 					 drm_mode->vdisplay;
 
-	dsi_mode->timing.refresh_rate = drm_mode->vrefresh;
-
-	dsi_mode->pixel_clk_khz = drm_mode->clock;
+	dsi_mode->timing.refresh_rate = drm_mode_vrefresh(drm_mode);
 
 	dsi_mode->timing.h_sync_polarity =
 			!!(drm_mode->flags & DRM_MODE_FLAG_PHSYNC);
@@ -123,8 +121,8 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 			      dsi_mode->timing.v_sync_width;
 	drm_mode->vtotal = drm_mode->vsync_end + dsi_mode->timing.v_back_porch;
 
-	drm_mode->vrefresh = dsi_mode->timing.refresh_rate;
-	drm_mode->clock = dsi_mode->pixel_clk_khz;
+	drm_mode->clock = drm_mode->htotal * drm_mode->vtotal * dsi_mode->timing.refresh_rate;
+	drm_mode->clock /= 1000;
 
 	if (dsi_mode->timing.h_sync_polarity)
 		drm_mode->flags |= DRM_MODE_FLAG_PHSYNC;
@@ -132,9 +130,9 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 		drm_mode->flags |= DRM_MODE_FLAG_PVSYNC;
 
 	/* set mode name */
-	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%dx%d%s",
+	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%dx%u%s",
 			drm_mode->hdisplay, drm_mode->vdisplay,
-			drm_mode->vrefresh, drm_mode->clock,
+			drm_mode_vrefresh(drm_mode), dsi_mode->pixel_clk_khz,
 			panel_caps);
 }
 
@@ -421,6 +419,7 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	}
 
 	convert_to_dsi_mode(mode, &dsi_mode);
+	msm_parse_mode_priv_info(&conn_state->msm_mode, &dsi_mode);
 
 	/*
 	 * retrieve dsi mode from dsi driver's cache since not safe to take
@@ -536,7 +535,7 @@ u64 dsi_drm_find_bit_clk_rate(void *display,
 		if ((dsi_mode->timing.v_active == drm_mode->vdisplay) &&
 		    (dsi_mode->timing.h_active == drm_mode->hdisplay) &&
 		    (dsi_mode->pixel_clk_khz == drm_mode->clock) &&
-		    (dsi_mode->timing.refresh_rate == drm_mode->vrefresh)) {
+		    (dsi_mode->timing.refresh_rate == drm_mode_vrefresh(drm_mode))) {
 			bit_clk_rate = dsi_mode->timing.clk_rate_hz;
 			break;
 		}
@@ -571,7 +570,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	mode_info->jitter_numer = dsi_mode->priv_info->panel_jitter_numer;
 	mode_info->jitter_denom = dsi_mode->priv_info->panel_jitter_denom;
 	mode_info->dfps_maxfps = dsi_drm_get_dfps_maxfps(display);
-	mode_info->clk_rate = dsi_drm_find_bit_clk_rate(display, drm_mode);
+	mode_info->clk_rate = dsi_mode->timing.clk_rate_hz;
 	mode_info->panel_mode_caps = dsi_mode->panel_mode_caps;
 	mode_info->mdp_transfer_time_us =
 		dsi_mode->priv_info->mdp_transfer_time_us;
@@ -1004,6 +1003,7 @@ enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
 {
 	struct dsi_display_mode dsi_mode;
 	struct dsi_display_mode *full_dsi_mode = NULL;
+	struct sde_connector_state *conn_state;
 	int rc;
 
 	if (!connector || !mode) {
@@ -1012,6 +1012,11 @@ enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
 	}
 
 	convert_to_dsi_mode(mode, &dsi_mode);
+
+	conn_state = to_sde_connector_state(connector->state);
+	if (conn_state)
+		msm_parse_mode_priv_info(&conn_state->msm_mode, &dsi_mode);
+
 	rc = dsi_display_find_mode(display, &dsi_mode, &full_dsi_mode);
 	if (rc) {
 		DSI_ERR("could not find mode %s\n", mode->name);

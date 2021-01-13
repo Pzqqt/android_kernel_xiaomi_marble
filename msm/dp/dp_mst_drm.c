@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 /*
@@ -1074,7 +1074,7 @@ static void dp_mst_bridge_pre_enable(struct drm_bridge *drm_bridge)
 
 	DP_MST_INFO("conn:%d mode:%s fps:%d dsc:%d vcpi:%d slots:%d to %d\n",
 			DP_MST_CONN_ID(bridge), bridge->drm_mode.name,
-			bridge->drm_mode.vrefresh,
+			drm_mode_vrefresh(&bridge->drm_mode),
 			bridge->dp_mode.timing.comp_info.comp_ratio,
 			bridge->vcpi, bridge->start_slot,
 			bridge->start_slot + bridge->num_slots);

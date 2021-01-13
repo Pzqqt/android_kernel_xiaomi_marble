@@ -927,13 +927,13 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 		if (!crtc)
 			continue;
 
-		new_fps = crtc->state->mode.vrefresh;
+		new_fps = drm_mode_vrefresh(&crtc->state->mode);
 		new_mode = _sde_kms_get_blank(crtc->state, connector->state);
 		if (old_conn_state->crtc) {
 			old_crtc_state = drm_atomic_get_existing_crtc_state(
 					old_state, old_conn_state->crtc);
 
-			old_fps = old_crtc_state->mode.vrefresh;
+			old_fps = drm_mode_vrefresh(&old_crtc_state->mode);
 			old_mode = _sde_kms_get_blank(old_crtc_state,
 							old_conn_state);
 		} else {
@@ -3283,7 +3283,7 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 	hdisplay_fp = drm_int2fixp(mode->hdisplay);
 	htotal_fp = drm_int2fixp(mode->htotal);
 	vtotal_fp = drm_int2fixp(mode->vtotal);
-	vrefresh_fp = drm_int2fixp(mode->vrefresh);
+	vrefresh_fp = drm_int2fixp(drm_mode_vrefresh(mode));
 	mdp_fudge_factor = drm_fixp_from_fraction(105, 100);
 
 	/* mode clock = [(h * v * fps * 1.05) / (num_lm)] */
@@ -3311,7 +3311,7 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 		mode_clock_hz = lm_clk_fp;
 	}
 	SDE_DEBUG("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%llu max_clk=%llu\n",
-			mode->name, mode->htotal, mode->vtotal, mode->vrefresh,
+			mode->name, mode->htotal, mode->vtotal, drm_mode_vrefresh(mode),
 			*num_lm, drm_fixp2int(mode_clock_hz),
 			sde_kms->perf.max_core_clk_rate);
 	return 0;
@@ -3319,7 +3319,7 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 error:
 	SDE_ERROR("required mode clk exceeds max mdp clk\n");
 	SDE_ERROR("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%llu max_clk=%llu\n",
-			mode->name, mode->htotal, mode->vtotal, mode->vrefresh,
+			mode->name, mode->htotal, mode->vtotal, drm_mode_vrefresh(mode),
 			*num_lm, drm_fixp2int(mode_clock_hz),
 			sde_kms->perf.max_core_clk_rate);
 	return rc;

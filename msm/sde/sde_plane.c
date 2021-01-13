@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -279,7 +279,7 @@ void _sde_plane_set_qos_lut(struct drm_plane *plane,
 		return;
 	}
 
-	frame_rate = crtc->mode.vrefresh;
+	frame_rate = drm_mode_vrefresh(&crtc->mode);
 	perf = &psde->catalog->perf;
 	qos_count = perf->qos_refresh_count;
 	while ((fps_index < qos_count) && perf->qos_refresh_rate) {
@@ -470,7 +470,7 @@ static void _sde_plane_set_ot_limit(struct drm_plane *plane,
 	ot_params.width = psde->pipe_cfg.src_rect.w;
 	ot_params.height = psde->pipe_cfg.src_rect.h;
 	ot_params.is_wfd = !psde->is_rt_pipe;
-	ot_params.frame_rate = crtc->mode.vrefresh;
+	ot_params.frame_rate = drm_mode_vrefresh(&crtc->mode);
 	ot_params.vbif_idx = VBIF_RT;
 	ot_params.clk_ctrl = psde->pipe_hw->cap->clk_ctrl;
 	ot_params.rd = true;
