@@ -917,6 +917,7 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 	struct drm_connector_state *old_conn_state;
 	struct drm_crtc_state *old_crtc_state;
 	struct drm_crtc *crtc;
+	struct sde_connector *c_conn;
 	int i, old_mode, new_mode, old_fps, new_fps;
 
 	for_each_old_connector_in_state(old_state, connector,
@@ -941,10 +942,9 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 		}
 
 		if ((old_mode != new_mode) || (old_fps != new_fps)) {
-			struct drm_panel_notifier notifier_data;
-
+			c_conn = to_sde_connector(connector);
 			SDE_EVT32(old_mode, new_mode, old_fps, new_fps,
-				connector->panel, crtc->state->active,
+				c_conn->panel, crtc->state->active,
 				old_conn_state->crtc, event);
 			pr_debug("change detected (power mode %d->%d, fps %d->%d)\n",
 				old_mode, new_mode, old_fps, new_fps);
@@ -956,14 +956,6 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 
 			if ((old_mode == new_mode) && (old_fps != new_fps))
 				new_mode = DRM_PANEL_BLANK_FPS_CHANGE;
-
-			notifier_data.data = &new_mode;
-			notifier_data.refresh_rate = new_fps;
-			notifier_data.id = connector->base.id;
-
-			if (connector->panel)
-				drm_panel_notifier_call_chain(connector->panel,
-							event, &notifier_data);
 		}
 	}
 
