@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DISPLAY_H_
@@ -104,17 +104,10 @@ struct dsi_display_boot_param {
 
 /**
  * struct dsi_display_clk_info - dsi display clock source information
- * @src_clks:          Source clocks for DSI display.
- * @mux_clks:          Mux clocks used for DFPS.
- * @shadow_clks:       Used for D-phy clock switch.
- * @shadow_cphy_clks:  Used for C-phy clock switch.
+ * @pll_clks:  PLL clocks for DSI.
  */
 struct dsi_display_clk_info {
-	struct dsi_clk_link_set src_clks;
-	struct dsi_clk_link_set mux_clks;
-	struct dsi_clk_link_set cphy_clks;
-	struct dsi_clk_link_set shadow_clks;
-	struct dsi_clk_link_set shadow_cphy_clks;
+	struct dsi_clk_link_set pll_clks;
 };
 
 /**

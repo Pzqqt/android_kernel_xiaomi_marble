@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __DSI_PLL_H
@@ -87,20 +87,11 @@ struct dsi_pll_resource {
 	void __iomem	*dyn_pll_base;
 
 	s64	vco_current_rate;
-	s64	vco_locking_rate;
 	s64	vco_ref_clk_rate;
-
-	/*
-	 * Certain pll's needs to update the same vco rate after resume in
-	 * suspend/resume scenario. Cached the vco rate for such plls.
-	 */
-	unsigned long	vco_cached_rate;
-	u32		cached_cfg0;
-	u32		cached_cfg1;
-	u32		cached_outdiv;
-
-	u32		cached_postdiv1;
-	u32		cached_postdiv3;
+	s64	vco_min_rate;
+	s64	vco_rate;
+	s64	byteclk_rate;
+	s64	pclk_rate;
 
 	u32		pll_revision;
 
@@ -116,22 +107,9 @@ struct dsi_pll_resource {
 	bool		pll_on;
 
 	/*
-	 * handoff_status is true of pll is already enabled by bootloader with
-	 * continuous splash enable case. Clock API will call the handoff API
-	 * to enable the status. It is disabled if continuous splash
-	 * feature is disabled.
-	 */
-	bool		handoff_resources;
-
-	/*
 	 * caching the pll trim codes in the case of dynamic refresh
 	 */
 	int		cache_pll_trim_codes[3];
-
-	/*
-	 * for maintaining the status of saving trim codes
-	 */
-	bool		reg_upd;
 
 
 	/*
@@ -147,11 +125,6 @@ struct dsi_pll_resource {
 
 	struct dsi_pll_resource *slave;
 
-	/*
-	 * target pll revision information
-	 */
-	int		revision;
-
 	void *priv;
 
 	/*
@@ -160,24 +133,20 @@ struct dsi_pll_resource {
 	struct dfps_info *dfps;
 
 	/*
-	 * for cases where dfps trigger happens before first
-	 * suspend/resume and handoff is not finished.
+	 * DSI pixel depth and lane information
 	 */
-	bool dfps_trigger;
+	int bpp;
+	int lanes;
+
+	/*
+	 * DSI PHY type DPHY/CPHY
+	 */
+	enum dsi_phy_type type;
 };
 
-struct dsi_pll_vco_clk {
-	struct clk_hw	hw;
-	unsigned long	ref_clk_rate;
-	u64	min_rate;
-	u64	max_rate;
-	u32		pll_en_seq_cnt;
-	struct lpfr_cfg *lpfr_lut;
-	u32		lpfr_lut_size;
-	void		*priv;
-
-	int (*pll_enable_seqs[MAX_DSI_PLL_EN_SEQS])
-			(struct dsi_pll_resource *pll_res);
+struct dsi_pll_clk {
+	struct clk_hw hw;
+	void *priv;
 };
 
 struct dsi_pll_vco_calc {
@@ -191,45 +160,19 @@ struct dsi_pll_vco_calc {
 	s64 pll_plllock_cmp3;
 };
 
-static inline bool is_gdsc_disabled(struct dsi_pll_resource *pll_res)
-{
-	if (!pll_res->gdsc_base) {
-		WARN(1, "gdsc_base register is not defined\n");
-		return true;
-	}
-	return readl_relaxed(pll_res->gdsc_base) & BIT(31) ? false : true;
-}
+struct dsi_pll_div_table {
+	u32 min_hz;
+	u32 max_hz;
+	int pll_div;
+	int phy_div;
+};
 
-static inline int dsi_pll_div_prepare(struct clk_hw *hw)
+static inline struct dsi_pll_clk *to_pll_clk_hw(struct clk_hw *hw)
 {
-	struct clk_hw *parent_hw = clk_hw_get_parent(hw);
-	/* Restore the divider's value */
-	return hw->init->ops->set_rate(hw, clk_hw_get_rate(hw),
-				clk_hw_get_rate(parent_hw));
-}
-
-static inline int dsi_set_mux_sel(void *context, unsigned int reg,
-					unsigned int val)
-{
-	return 0;
-}
-
-static inline int dsi_get_mux_sel(void *context, unsigned int reg,
-					unsigned int *val)
-{
-	*val = 0;
-	return 0;
-}
-
-static inline struct dsi_pll_vco_clk *to_vco_clk_hw(struct clk_hw *hw)
-{
-	return container_of(hw, struct dsi_pll_vco_clk, hw);
+	return container_of(hw, struct dsi_pll_clk, hw);
 }
 
 int dsi_pll_clock_register_5nm(struct platform_device *pdev,
-				  struct dsi_pll_resource *pll_res);
-
-int dsi_pll_clock_register_10nm(struct platform_device *pdev,
 				  struct dsi_pll_resource *pll_res);
 
 int dsi_pll_init(struct platform_device *pdev,

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_CATALOG_H_
@@ -284,4 +284,10 @@ void dsi_ctrl_hw_22_configure_cmddma_window(struct dsi_ctrl_hw *ctrl,
 void dsi_ctrl_hw_22_reset_trigger_controls(struct dsi_ctrl_hw *ctrl,
 				       struct dsi_host_common_cfg *cfg);
 u32 dsi_ctrl_hw_22_log_line_count(struct dsi_ctrl_hw *ctrl, bool cmd_mode);
+
+/* PLL specific functions */
+int dsi_catalog_phy_pll_setup(struct dsi_phy_hw *phy, u32 pll_ver);
+int dsi_pll_5nm_configure(void *pll, bool commit);
+int dsi_pll_5nm_toggle(void *pll, bool prepare);
+
 #endif /* _DSI_CATALOG_H_ */
