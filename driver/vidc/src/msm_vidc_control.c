@@ -274,6 +274,57 @@ static int msm_vidc_add_children(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static bool is_parent_available(struct msm_vidc_inst* inst,
+	u32 cap, u32 check_parent)
+{
+	int i = 0;
+	u32 cap_parent;
+
+	while (i < MAX_CAP_PARENTS &&
+		inst->capabilities->cap[cap].parents[i]) {
+		cap_parent = inst->capabilities->cap[cap].parents[i];
+		if (cap_parent == check_parent) {
+			return true;
+		}
+		i++;
+	}
+	return false;
+}
+
+static int msm_vidc_update_cap_value(struct msm_vidc_inst* inst, u32 cap,
+	s32 adjusted_val, const char *func)
+{
+	if (inst->capabilities->cap[cap].value != adjusted_val)
+		s_vpr_h(inst->sid,
+			"%s: updated database value from %#x to %#x\n",
+			func, inst->capabilities->cap[cap].value,
+			adjusted_val);
+
+	inst->capabilities->cap[cap].value = adjusted_val;
+
+	return 0;
+}
+
+static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
+	u32 cap, u32 parent, s32 *value, const char *func)
+{
+	int rc = 0;
+
+	if (is_parent_available(inst, cap, parent)) {
+		if (parent == BITRATE_MODE)
+			*value = inst->hfi_rc_type;
+		else
+			*value = inst->capabilities->cap[parent].value;
+	} else {
+		s_vpr_e(inst->sid,
+			"%s: missing parent %d, please correct database\n",
+			func, parent);
+		rc = -EINVAL;
+	}
+
+	return rc;
+}
+
 static int msm_vidc_adjust_property(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id)
 {
@@ -319,7 +370,6 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 	s32 prev_value;
 
 	capability = inst->capabilities;
-
 	/*
 	 * ctrl is NULL for children adjustment calls
 	 * When a dynamic control having children is adjusted, check if dynamic
@@ -343,7 +393,6 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 			__func__, capability->cap[cap_id].cap);
 		return -EINVAL;
 	}
-
 	prev_value = capability->cap[cap_id].value;
 
 	if (capability->cap[cap_id].adjust) {
@@ -572,6 +621,7 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		return -EINVAL;
 	}
 
+	capability->cap[cap_id].flags |= CAP_FLAG_CLIENT_SET;
 	/* Static setting */
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		capability->cap[cap_id].value = ctrl->val;
@@ -620,7 +670,6 @@ exit:
 
 int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 {
-	int rc = 0;
 	struct msm_vidc_inst_capability *capability;
 	s32 adjusted_value;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
@@ -630,14 +679,11 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
 	capability = inst->capabilities;
 
 	/* ctrl is always NULL in streamon case */
-	if (ctrl)
-		adjusted_value = ctrl->val;
-	else
-		adjusted_value = capability->cap[ENTROPY_MODE].value;
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[ENTROPY_MODE].value;
 
 	if (inst->codec != MSM_VIDC_H264) {
 		s_vpr_e(inst->sid,
@@ -646,28 +692,73 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 		return 0;
 	}
 
-	profile = capability->cap[PROFILE].value;
+	if (msm_vidc_get_parent_value(inst, ENTROPY_MODE,
+		PROFILE, &profile, __func__))
+		return -EINVAL;
 
 	if (profile == V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE ||
 		profile == V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE)
 		adjusted_value = V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC;
 
-	if (capability->cap[ENTROPY_MODE].value != adjusted_value) {
-		s_vpr_h(inst->sid, "%s: updated from %#x to adjusted %#x\n", __func__,
-			capability->cap[ENTROPY_MODE].value, adjusted_value);
-		capability->cap[ENTROPY_MODE].value = adjusted_value;
+	msm_vidc_update_cap_value(inst, ENTROPY_MODE,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_bitrate_mode(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	int lossless, frame_rc, bitrate_mode, frame_skip;
+	u32 hfi_value = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	bitrate_mode = capability->cap[BITRATE_MODE].value;
+	lossless = capability->cap[LOSSLESS].value;
+	frame_rc = capability->cap[FRAME_RC_ENABLE].value;
+	frame_skip = capability->cap[FRAME_SKIP_MODE].value;
+
+	if (lossless) {
+		hfi_value = HFI_RC_LOSSLESS;
+		goto update;
 	}
 
-	return rc;
+	if (!frame_rc) {
+		hfi_value = HFI_RC_OFF;
+		goto update;
+	}
+
+	if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR) {
+		hfi_value = HFI_RC_VBR_CFR;
+	} else if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR) {
+		if (frame_skip)
+			hfi_value = HFI_RC_CBR_VFR;
+		else
+			hfi_value = HFI_RC_CBR_CFR;
+	}/* TODO: CQ mode
+	else if (bitrate_mode == CQ) {
+		hfi_value = HFI_RC_CQ;
+	}
+	*/
+
+update:
+	inst->hfi_rc_type = hfi_value;
+	s_vpr_h(inst->sid, "%s: hfi rc type: %#x\n",
+		__func__, inst->hfi_rc_type);
+
+	return 0;
 }
 
 int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
 {
-	int rc = 0;
-	int i = 0;
 	struct msm_vidc_inst_capability *capability;
 	s32 adjusted_value;
-	enum msm_vidc_inst_capability_type parent_id;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 	s32 pix_fmt = -1;
 
@@ -675,41 +766,17 @@ int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
 	capability = inst->capabilities;
 
-	/* ctrl is always NULL in streamon case */
-	if (ctrl)
-		adjusted_value = ctrl->val;
-	else
-		adjusted_value = capability->cap[PROFILE].value;
-
-	/* TODO(AS): Create a utility for this while loop and add
-	 * detailed comments within for utility functionality
-	 */
-	while (i < MAX_CAP_PARENTS &&
-		capability->cap[PROFILE].parents[i]) {
-		parent_id = capability->cap[PROFILE].parents[i];
-		if (parent_id == PIX_FMTS) {
-			pix_fmt = capability->cap[PIX_FMTS].value;
-		}
-		else
-			s_vpr_e(inst->sid,
-				"%s: invalid parent %d\n",
-				__func__, parent_id);
-		i++;
-	}
+	adjusted_value = ctrl ? ctrl->val : capability->cap[PROFILE].value;
 
 	/* PIX_FMTS dependency is common across all chipsets.
 	 * Hence, PIX_FMTS must be specified as Parent for HEVC profile.
 	 * Otherwise it would be a database error that should be fixed.
 	 */
-	if (pix_fmt == -1) {
-		s_vpr_e(inst->sid,
-			"%s: missing parent: %d, please correct database\n",
-			__func__, PIX_FMTS);
+	if (msm_vidc_get_parent_value(inst, PROFILE, PIX_FMTS,
+		&pix_fmt, __func__))
 		return -EINVAL;
-	}
 
 	/* 10 bit profile for 10 bit color format */
 	if (pix_fmt == MSM_VIDC_FMT_TP10C ||
@@ -721,23 +788,16 @@ int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
 			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
 	}
 
-	if (capability->cap[PROFILE].value != adjusted_value) {
-		s_vpr_h(inst->sid,
-			"%s: updated from %#x to adjusted %#x\n", __func__,
-			capability->cap[PROFILE].value, adjusted_value);
-		capability->cap[PROFILE].value = adjusted_value;
-	}
+	msm_vidc_update_cap_value(inst, PROFILE,
+		adjusted_value, __func__);
 
-	return rc;
+	return 0;
 }
 
 int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
 {
-	int rc = 0;
-	int i = 0;
 	struct msm_vidc_inst_capability *capability;
 	s32 adjusted_value;
-	enum msm_vidc_inst_capability_type parent_id;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 	s32 rc_type = -1;
 
@@ -747,32 +807,188 @@ int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
 	}
 	capability = inst->capabilities;
 
-	if (ctrl)
-		adjusted_value = ctrl->val;
-	else
-		adjusted_value = capability->cap[LTR_COUNT].value;
+	adjusted_value = ctrl ? ctrl->val : capability->cap[LTR_COUNT].value;
 
-	/* check parents and adjust cabac session value */
-	while (i < MAX_CAP_PARENTS &&
-		capability->cap[LTR_COUNT].parents[i]) {
-		parent_id = capability->cap[LTR_COUNT].parents[i];
-		i++;
-	}
+	if (msm_vidc_get_parent_value(inst, LTR_COUNT, BITRATE_MODE,
+		&rc_type, __func__))
+		return -EINVAL;
 
-	if (!(rc_type == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR
-		/* TODO(AS): remove comment after below rc modes are upstreamed
-		|| rc_type == RATE_CONTROL_OFF ||
-		|| rc_tpe == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR_VFR
-		*/))
+	if (rc_type != HFI_RC_OFF &&
+		rc_type != HFI_RC_CBR_CFR &&
+		rc_type != HFI_RC_CBR_VFR)
 		adjusted_value = 0;
 
-	if (capability->cap[LTR_COUNT].value != adjusted_value) {
-		s_vpr_h(inst->sid, "%s: adjusted from %#x to %#x\n", __func__,
-			capability->cap[LTR_COUNT].value, adjusted_value);
-		capability->cap[LTR_COUNT].value = adjusted_value;
+	msm_vidc_update_cap_value(inst, LTR_COUNT,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_use_ltr(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 ltr_count = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[USE_LTR].value;
+
+	if (msm_vidc_get_parent_value(inst, USE_LTR, LTR_COUNT,
+		&ltr_count, __func__))
+		return -EINVAL;
+
+	if (!ltr_count) {
+		adjusted_value = 0;
+	} else if (adjusted_value <= 0 ||
+		adjusted_value >= (1 << ltr_count)) {
+		/* USE_LTR value should be > 0 and < (2 ^ LTR_COUNT) */
+		s_vpr_e(inst->sid, "%s: invalid value %d\n",
+			__func__, adjusted_value);
+		return -EINVAL;
 	}
 
-	return rc;
+	/* USE_LTR value is a bitmask value */
+	msm_vidc_update_cap_value(inst, USE_LTR,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 ltr_count = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[MARK_LTR].value;
+
+	if (msm_vidc_get_parent_value(inst, MARK_LTR, LTR_COUNT,
+		&ltr_count, __func__))
+		return -EINVAL;
+
+	if (!ltr_count) {
+		adjusted_value = 0;
+	} else if (adjusted_value < 0 ||
+		adjusted_value > (ltr_count - 1)) {
+		/* MARK_LTR value should be > 0 and <= (LTR_COUNT - 1) */
+		s_vpr_e(inst->sid, "%s: invalid value %d\n",
+			__func__, adjusted_value);
+		return -EINVAL;
+	}
+
+	msm_vidc_update_cap_value(inst, MARK_LTR,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[IR_RANDOM].value;
+
+	/*
+	 * BITRATE_MODE dependency is NOT common across all chipsets.
+	 * Hence, do not return error if not specified as one of the parent.
+	 */
+	if (is_parent_available(inst, IR_RANDOM, BITRATE_MODE) &&
+		inst->hfi_rc_type != HFI_RC_CBR_CFR &&
+		inst->hfi_rc_type != HFI_RC_CBR_VFR)
+		adjusted_value = 0;
+
+	msm_vidc_update_cap_value(inst, IR_RANDOM,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_delta_based_rc(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[TIME_DELTA_BASED_RC].value;
+
+	if (msm_vidc_get_parent_value(inst, TIME_DELTA_BASED_RC,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (rc_type == HFI_RC_OFF ||
+		rc_type == HFI_RC_CQ)
+		adjusted_value = 0;
+
+	msm_vidc_update_cap_value(inst, TIME_DELTA_BASED_RC,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 profile = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[TRANSFORM_8X8].value;
+
+	if (inst->codec != MSM_VIDC_H264) {
+		s_vpr_e(inst->sid,
+			"%s: incorrect entry in database. fix the database\n",
+			__func__);
+		return 0;
+	}
+
+	if (msm_vidc_get_parent_value(inst, TRANSFORM_8X8,
+		PROFILE, &profile, __func__))
+		return -EINVAL;
+
+	if (profile != V4L2_MPEG_VIDEO_H264_PROFILE_HIGH &&
+		profile != V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_HIGH)
+		adjusted_value = V4L2_MPEG_MSM_VIDC_DISABLE;
+
+	msm_vidc_update_cap_value(inst, TRANSFORM_8X8,
+		adjusted_value, __func__);
+
+	return 0;
 }
 
 /*
@@ -830,56 +1046,6 @@ exit:
 	return rc;
 }
 
-int msm_vidc_set_bitrate_mode(void *instance,
-	enum msm_vidc_inst_capability_type cap_id)
-{
-	int rc = 0;
-	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	int lossless, frame_rc, bitrate_mode, frame_skip;
-	u32 hfi_value;
-	struct msm_vidc_inst_capability *capability;
-
-	if (!inst || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-	capability = inst->capabilities;
-
-	bitrate_mode = capability->cap[cap_id].value;
-	lossless = capability->cap[LOSSLESS].value;
-	frame_rc = capability->cap[FRAME_RC_ENABLE].value;
-	frame_skip = capability->cap[FRAME_SKIP_MODE].value;
-
-	if (lossless) {
-		hfi_value = HFI_RC_LOSSLESS;
-		goto set;
-	}
-
-	if (!frame_rc) {
-		hfi_value = HFI_RC_OFF;
-		goto set;
-	}
-
-	if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_VBR) {
-		hfi_value = HFI_RC_VBR_CFR;
-	} else if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CBR) {
-		if (frame_skip)
-			hfi_value = HFI_RC_CBR_VFR;
-		else
-			hfi_value = HFI_RC_CBR_CFR;
-	}/* TODO: CQ mode
-	else if (bitrate_mode == CQ) {
-		hfi_value = HFI_RC_CQ;
-	}
-	*/
-
-set:
-	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
-		&hfi_value, sizeof(u32), __func__);
-
-	return rc;
-}
-
 int msm_vidc_set_header_mode(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
 {
@@ -917,6 +1083,92 @@ int msm_vidc_set_header_mode(void *instance,
 
 	return rc;
 }
+
+int msm_vidc_set_deblock_mode(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 alpha = 0, beta = 0;
+	u32 lf_mode, hfi_value = 0, lf_offset = 12;
+	struct msm_vidc_inst_capability *capability;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	rc = msm_vidc_v4l2_to_hfi_enum(inst, LF_MODE, &lf_mode);
+	if (rc)
+		return -EINVAL;
+
+	/*
+	 * TODO: Revisit once s32 packing problem is fixed in hfi interface.
+	 * For now, using offset value as 6 to shift alpha, beta ranges
+	 * to (0 to 12) from (-6 to 6)
+	 */
+	beta = inst->capabilities->cap[LF_BETA].value + lf_offset;
+	alpha = inst->capabilities->cap[LF_ALPHA].value + lf_offset;
+
+	hfi_value = (alpha << 16) | (beta << 8) | lf_mode;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_use_and_mark_ltr(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!inst->capabilities->cap[LTR_COUNT].value)
+		return 0;
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+/* TODO
+int msm_vidc_set_flip(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	u32 hflip, vflip, hfi_value = HFI_DISABLE_FLIP;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	hflip = inst->capabilities->cap[HFLIP].value;
+	vflip = inst->capabilities->cap[VFLIP].value;
+
+	if (hflip)
+		hfi_value |= HFI_HORIZONTAL_FLIP;
+
+	if (vflip)
+		hfi_value |= HFI_VERTICAL_FLIP;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+*/
 
 int msm_vidc_set_q16(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
@@ -1000,7 +1252,7 @@ int msm_vidc_set_s32(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_S32,
-		&hfi_value, sizeof(u32), __func__);
+		&hfi_value, sizeof(s32), __func__);
 
 	return rc;
 }
@@ -1125,6 +1377,9 @@ int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 	struct msm_vidc_inst_capability *capability = inst->capabilities;
 
 	switch (capability->cap[cap_id].v4l2_id) {
+	case V4L2_CID_MPEG_VIDEO_BITRATE_MODE:
+		*value = inst->hfi_rc_type;
+		return 0;
 	case V4L2_CID_MPEG_VIDEO_HEVC_PROFILE:
 	case V4L2_CID_MPEG_VIDEO_H264_PROFILE:
 	case V4L2_CID_MPEG_VIDEO_VP9_PROFILE:
@@ -1145,6 +1400,57 @@ int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 			break;
 		default:
 			*value = HFI_HIER_P_SLIDING_WINDOW;
+			goto set_default;
+		}
+		return 0;
+	case V4L2_CID_ROTATE:
+		switch (capability->cap[cap_id].value) {
+		case 0:
+			*value = HFI_ROTATION_NONE;
+			break;
+		case 90:
+			*value = HFI_ROTATION_90;
+			break;
+		case 180:
+			*value = HFI_ROTATION_180;
+			break;
+		case 270:
+			*value = HFI_ROTATION_270;
+			break;
+		default:
+			*value = HFI_ROTATION_NONE;
+			goto set_default;
+		}
+		return 0;
+	case V4L2_CID_MPEG_VIDEO_HEVC_LOOP_FILTER_MODE:
+		switch (capability->cap[cap_id].value) {
+		case V4L2_MPEG_VIDEO_HEVC_LOOP_FILTER_MODE_ENABLED:
+			*value = HFI_DEBLOCK_ALL_BOUNDARY;
+			break;
+		case V4L2_MPEG_VIDEO_HEVC_LOOP_FILTER_MODE_DISABLED:
+			*value = HFI_DEBLOCK_DISABLE;
+			break;
+		case DB_HEVC_DISABLE_SLICE_BOUNDARY:
+			*value = HFI_DEBLOCK_DISABLE_AT_SLICE_BOUNDARY;
+			break;
+		default:
+			*value = HFI_DEBLOCK_ALL_BOUNDARY;
+			goto set_default;
+		}
+		return 0;
+	case V4L2_CID_MPEG_VIDEO_H264_LOOP_FILTER_MODE:
+		switch (capability->cap[cap_id].value) {
+		case V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_ENABLED:
+			*value = HFI_DEBLOCK_ALL_BOUNDARY;
+			break;
+		case V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED:
+			*value = HFI_DEBLOCK_DISABLE;
+			break;
+		case DB_H264_DISABLE_SLICE_BOUNDARY:
+			*value = HFI_DEBLOCK_DISABLE_AT_SLICE_BOUNDARY;
+			break;
+		default:
+			*value = HFI_DEBLOCK_ALL_BOUNDARY;
 			goto set_default;
 		}
 		return 0;

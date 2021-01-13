@@ -1549,6 +1549,8 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	inst->buffers.input_meta.actual_count = inst->buffers.input.actual_count;
 	inst->buffers.input_meta.size = f->fmt.meta.buffersize;
 
+	inst->hfi_rc_type = HFI_RC_VBR_CFR;
+
 	rc = msm_venc_codec_change(inst,
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat);
 

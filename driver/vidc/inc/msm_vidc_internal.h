@@ -322,7 +322,6 @@ enum msm_vidc_inst_capability_type {
 	LF_MODE,
 	LF_ALPHA,
 	LF_BETA,
-	LF_TC,
 	SLICE_MAX_BYTES,
 	SLICE_MAX_MB,
 	SLICE_MODE,
@@ -366,6 +365,7 @@ enum msm_vidc_inst_capability_flags {
 	CAP_FLAG_MENU                    = BIT(2),
 	CAP_FLAG_INPUT_PORT              = BIT(3),
 	CAP_FLAG_OUTPUT_PORT             = BIT(4),
+	CAP_FLAG_CLIENT_SET              = BIT(5),
 };
 
 struct msm_vidc_inst_cap {

@@ -7,6 +7,7 @@
 #define _MSM_VIDC_INST_H_
 
 #include "msm_vidc_internal.h"
+#include "hfi_property.h"
 
 struct msm_vidc_inst;
 
@@ -101,6 +102,7 @@ struct msm_vidc_inst {
 	u32                                num_ctrls;
 	struct msm_vidc_inst_cap_entry     children;
 	struct msm_vidc_inst_cap_entry     firmware;
+	enum hfi_rate_control              hfi_rc_type;
 	bool                               request;
 	struct vb2_queue                   vb2q[MAX_PORT];
 	struct msm_vidc_rectangle          crop;
