@@ -582,6 +582,55 @@ void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
+#ifdef FEATURE_WLAN_ESE
+void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
+			   uint8_t vdev_id, bool value)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	rso_cfg->is_ese_assoc = value;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
+			   uint8_t vdev_id)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+	bool ese_assoc;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return false;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
+
+	ese_assoc = rso_cfg->is_ese_assoc;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return ese_assoc;
+}
+#endif
+
 static QDF_STATUS
 cm_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		   uint8_t reason)
@@ -604,7 +653,7 @@ cm_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return status;
 }
 
-static void cm_dump_freq_list(struct rso_chan_info *chan_info)
+void cm_dump_freq_list(struct rso_chan_info *chan_info)
 {
 	uint8_t *channel_list;
 	uint8_t i = 0, j = 0;
@@ -983,6 +1032,10 @@ void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
 		rso_cfg->assoc_ie.ptr = NULL;
 		rso_cfg->assoc_ie.len = 0;
 	}
+	if (rso_cfg->roam_scan_freq_lst.freq_list)
+		qdf_mem_free(rso_cfg->roam_scan_freq_lst.freq_list);
+	rso_cfg->roam_scan_freq_lst.freq_list = NULL;
+	rso_cfg->roam_scan_freq_lst.num_chan = 0;
 
 	cm_flush_roam_channel_list(&cfg_params->specific_chan_info);
 	cm_flush_roam_channel_list(&cfg_params->pref_chan_info);

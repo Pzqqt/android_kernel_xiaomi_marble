@@ -351,6 +351,38 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 				 uint8_t vdev_id, bool value);
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * wlan_cm_set_ese_assoc  - set ese assoc
+ * @pdev: pdev pointer
+ * @vdev_id: vdev
+ * @value: value to set
+ *
+ * Return: void
+ */
+void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
+			   uint8_t vdev_id, bool value);
+
+/**
+ * wlan_cm_get_ese_assoc  - get ese assoc
+ * @pdev: pdev pointer
+ * @vdev_id: vdev
+ *
+ * Return: value
+ */
+bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
+			   uint8_t vdev_id);
+#else
+static inline void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
+					 uint8_t vdev_id, bool value) {}
+static inline
+bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
+			   uint8_t vdev_id)
+{
+	return false;
+}
+#endif
+
 /**
  * wlan_cm_rso_config_init  - initialize RSO config
  * @vdev: vdev pointer

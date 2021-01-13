@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +87,6 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 	qdf_mc_timer_stop(&session->ftSmeContext.preAuthReassocIntvlTimer);
 	csr_neighbor_roam_state_transition(mac_ctx,
 		eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
-	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 	pNeighborRoamInfo->uOsRequestedHandoff = 0;
 }
 

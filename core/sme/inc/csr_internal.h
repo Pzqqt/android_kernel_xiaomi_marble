@@ -361,7 +361,6 @@ struct csr_config {
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
-	struct csr_sta_roam_policy_params sta_roam_policy;
 	enum force_1x1_type is_force_1x1;
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
@@ -414,10 +413,6 @@ struct csr_scanstruct {
 	 */
 	uint8_t fEnableDFSChnlScan;
 	bool fDropScanCmd;      /* true means we don't accept scan commands */
-
-	/* This includes all channels on which candidate APs are found */
-	struct csr_channel occupiedChannels[WLAN_MAX_VDEVS];
-	int8_t roam_candidate_count[WLAN_MAX_VDEVS];
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
 	bool pending_channel_list_req;
@@ -611,8 +606,6 @@ struct csr_roamstruct {
 	 * This may or may not have the up-to-date valid channel list. It is
 	 * used to get CFG_VALID_CHANNEL_LIST and not alloc mem all time
 	 */
-	uint32_t valid_ch_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
-	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
 	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
 	struct csr_timer_info WaitForKeyTimerInfo;
@@ -933,8 +926,6 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
-bool csr_is_channel_present_in_list(uint32_t *pChannelList,
-				    int numChannels, uint32_t chan_freq);
 QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
 					 int numChannels, uint32_t chan_freq);
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)

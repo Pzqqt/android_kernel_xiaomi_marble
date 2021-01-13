@@ -3887,9 +3887,6 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 	tSirAddtsReq *pMsg = NULL;
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-#ifdef FEATURE_WLAN_ESE
-	struct csr_roam_session *pCsrSession = CSR_GET_SESSION(mac, sessionId);
-#endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
@@ -3970,7 +3967,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 		  __func__, __LINE__,
 		  pTspec_Info->ts_info.up, pTspec_Info->ts_info.tid);
 #ifdef FEATURE_WLAN_ESE
-	if (pCsrSession->connectedProfile.isESEAssoc) {
+	if (wlan_cm_get_ese_assoc(mac->pdev, sessionId)) {
 		pMsg->req.tsrsIE.tsid = pTspec_Info->ts_info.up;
 		pMsg->req.tsrsPresent = 1;
 	}

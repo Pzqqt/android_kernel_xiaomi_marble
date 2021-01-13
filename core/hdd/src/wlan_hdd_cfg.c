@@ -878,6 +878,11 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	bool ese_enabled;
 #endif
 	struct hdd_config *config = hdd_ctx->config;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(hdd_ctx->psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
 	if (!sme_config)
@@ -944,9 +949,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	sme_config->csr_config.sta_roam_policy_params.dfs_mode =
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.dfs_mode =
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
-	sme_config->csr_config.sta_roam_policy_params.skip_unsafe_channels = 0;
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.skip_unsafe_channels = 0;
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))

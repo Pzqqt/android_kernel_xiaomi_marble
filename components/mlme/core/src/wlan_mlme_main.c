@@ -2889,6 +2889,25 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
+				     uint32_t num_chan, qdf_freq_t chan_freq)
+{
+	int i = 0;
+
+	/* Check for NULL pointer */
+	if (!freq_lst || (num_chan == 0))
+		return false;
+
+	/* Look for the channel in the list */
+	for (i = 0; (i < num_chan) && (i < CFG_VALID_CHANNEL_LIST_LEN); i++) {
+		if (freq_lst[i] == chan_freq)
+			return true;
+	}
+
+	return false;
+}
+
+
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static
 const char *mlme_roam_state_to_string(enum roam_offload_state state)

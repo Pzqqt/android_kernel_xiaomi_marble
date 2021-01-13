@@ -42,16 +42,6 @@ typedef enum {
 	eNEIGHBOR_STATE_MAX
 } eCsrNeighborRoamState;
 
-#define CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX    255
-typedef struct sCsrNeighborRoamChannelInfo {
-	/* Flag to mark reception of IAPP Neighbor list */
-	bool IAPPNeighborListReceived;
-	/* Current channel index that is being scanned */
-	uint8_t currentChanIndex;
-	/* Max number of channels in channel list and the list of channels */
-	tCsrChannelInfo currentChannelListInfo;
-} tCsrNeighborRoamChannelInfo, *tpCsrNeighborRoamChannelInfo;
-
 typedef struct sCsrNeighborRoamBSSInfo {
 	tListElem List;
 	uint8_t apPreferenceVal;
@@ -87,13 +77,11 @@ typedef struct sCsrNeighborRoamControlInfo {
 	eCsrNeighborRoamState prevNeighborRoamState;
 	struct qdf_mac_addr currAPbssid;  /* current assoc AP */
 	uint32_t curr_ap_op_chan_freq; /* current assoc AP */
-	tCsrNeighborRoamChannelInfo roamChannelInfo;
 	tDblLinkList roamableAPList;    /* List of current FT candidates */
 	struct csr_roam_profile csrNeighborRoamProfile;
 	bool is11rAssoc;
 	tCsr11rAssocNeighborInfo FTRoamInfo;
 #ifdef FEATURE_WLAN_ESE
-	bool isESEAssoc;
 	bool isVOAdmitted;
 	uint16_t MinQBssLoadRequired;
 #endif

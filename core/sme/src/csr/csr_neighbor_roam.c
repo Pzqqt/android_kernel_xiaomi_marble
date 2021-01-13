@@ -49,9 +49,6 @@ static const char *lfr_get_config_item_string(uint8_t reason)
 	}
 }
 
-static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
-						 rChInfo);
-
 void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,
 		uint8_t newstate, uint8_t session)
 {
@@ -241,23 +238,6 @@ QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*CleanUP Routines*/
-static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
-						 rChInfo)
-{
-	if ((rChInfo->IAPPNeighborListReceived == false) &&
-	    (rChInfo->currentChannelListInfo.numOfChannels)) {
-		rChInfo->currentChanIndex =
-			CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
-		rChInfo->currentChannelListInfo.numOfChannels = 0;
-		if (rChInfo->currentChannelListInfo.freq_list)
-			qdf_mem_free(rChInfo->currentChannelListInfo.freq_list);
-		rChInfo->currentChannelListInfo.freq_list = NULL;
-	} else {
-		rChInfo->currentChanIndex = 0;
-	}
-}
-
 /**
  * csr_neighbor_roam_reset_connected_state_control_info()
  *
@@ -276,9 +256,30 @@ static void csr_neighbor_roam_reset_connected_state_control_info(
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_chan_info *chan_lst;
 
-	csr_neighbor_roam_reset_channel_info(&pNeighborRoamInfo->
-					roamChannelInfo);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL");
+		return;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+
+	chan_lst = &rso_cfg->roam_scan_freq_lst;
+	if (chan_lst->freq_list)
+		qdf_mem_free(chan_lst->freq_list);
+	chan_lst->freq_list = NULL;
+	chan_lst->num_chan = 0;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	csr_neighbor_roam_free_roamable_bss_list(mac,
 					&pNeighborRoamInfo->roamableAPList);
 
@@ -301,7 +302,7 @@ static void csr_neighbor_roam_reset_report_scan_state_control_info(
 
 	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
 #ifdef FEATURE_WLAN_ESE
-	pNeighborRoamInfo->isESEAssoc = false;
+	wlan_cm_set_ese_assoc(mac->pdev, sessionId, false);
 	pNeighborRoamInfo->isVOAdmitted = false;
 	pNeighborRoamInfo->MinQBssLoadRequired = 0;
 #endif
@@ -375,9 +376,11 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	tpCsrNeighborRoamControlInfo nbr_roam_info;
 	tCsrRoamConnectedProfile *profile;
 	struct roam_ext_params *roam_params;
-	tCsrChannelInfo *chan_info;
 	uint8_t num_ch = 0;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_chan_info *chan_lst;
 
 	if (!filter)
 		return QDF_STATUS_E_FAILURE;
@@ -423,16 +426,29 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	chan_info = &nbr_roam_info->roamChannelInfo.currentChannelListInfo;
-	num_ch = chan_info->numOfChannels;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+	chan_lst = &rso_cfg->roam_scan_freq_lst;
+	num_ch = chan_lst->num_chan;
 	if (num_ch) {
 		filter->num_of_channels = num_ch;
 		if (filter->num_of_channels > NUM_CHANNELS)
 			filter->num_of_channels = NUM_CHANNELS;
-		qdf_mem_copy(filter->chan_freq_list, chan_info->freq_list,
+		qdf_mem_copy(filter->chan_freq_list, chan_lst->freq_list,
 			     filter->num_of_channels *
 			     sizeof(filter->chan_freq_list[0]));
 	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	if (nbr_roam_info->is11rAssoc)
 		/*
@@ -713,8 +729,6 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 			 */
 		csr_neighbor_roam_state_transition(mac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
-			pNeighborRoamInfo->roamChannelInfo.
-				IAPPNeighborListReceived = false;
 			pNeighborRoamInfo->uOsRequestedHandoff = 0;
 		}
 		break;
@@ -727,8 +741,6 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
 		csr_neighbor_roam_state_transition(mac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
-		pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived =
-				false;
 		csr_neighbor_roam_reset_connected_state_control_info(mac,
 				sessionId);
 		break;
@@ -741,8 +753,6 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	case eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING:
 		csr_neighbor_roam_state_transition(mac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
-		pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived =
-				false;
 		csr_neighbor_roam_reset_preauth_control_info(mac, sessionId);
 		csr_neighbor_roam_reset_report_scan_state_control_info(mac,
 				sessionId);
@@ -754,8 +764,6 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 		sme_debug("Transit to INIT state");
 		csr_neighbor_roam_state_transition(mac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
-			pNeighborRoamInfo->roamChannelInfo.
-			IAPPNeighborListReceived = false;
 			pNeighborRoamInfo->uOsRequestedHandoff = 0;
 		break;
 	}
@@ -837,12 +845,10 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 
 #ifdef FEATURE_WLAN_ESE
 	/* Based on the auth scheme tell if we are 11r */
-	if (session->connectedProfile.isESEAssoc) {
+	if (wlan_cm_get_ese_assoc(mac->pdev, session_id)) {
 		if (mac->mlme_cfg->lfr.fast_transition_enabled)
 			init_ft_flag = true;
-		ngbr_roam_info->isESEAssoc = true;
-	} else
-		ngbr_roam_info->isESEAssoc = false;
+	}
 #endif
 	/* If "FastRoamEnabled" ini is enabled */
 	if (csr_roam_is_fast_roam_enabled(mac, session_id))
@@ -961,8 +967,6 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 			 */
 			csr_neighbor_roam_state_transition(mac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
-			ngbr_roam_info->roamChannelInfo.
-					IAPPNeighborListReceived = false;
 			ngbr_roam_info->uOsRequestedHandoff = 0;
 			break;
 		}
@@ -1047,13 +1051,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	pNeighborRoamInfo->roamChannelInfo.currentChanIndex =
-		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.numOfChannels = 0;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.freq_list =
-		NULL;
-	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
-
 	status = csr_neighbor_roam_init11r_assoc_info(mac);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("LL Open of roam able AP List failed");
@@ -1062,7 +1059,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 
 	csr_neighbor_roam_state_transition(mac,
 			eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
-	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 	pNeighborRoamInfo->uOsRequestedHandoff = 0;
 	/* Set the Last Sent Cmd as RSO_STOP */
 	pNeighborRoamInfo->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
@@ -1080,7 +1076,6 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
  */
 void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 {
-	tCsrChannelInfo *current_channel_list_info;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
 
@@ -1096,17 +1091,6 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 	csr_neighbor_roam_free_roamable_bss_list(mac,
 					&pNeighborRoamInfo->roamableAPList);
 	csr_ll_close(&pNeighborRoamInfo->roamableAPList);
-
-	current_channel_list_info =
-		&pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
-	if (current_channel_list_info->freq_list)
-		qdf_mem_free(current_channel_list_info->freq_list);
-
-	current_channel_list_info->freq_list = NULL;
-	pNeighborRoamInfo->roamChannelInfo.currentChanIndex =
-		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
-	current_channel_list_info->numOfChannels = 0;
-	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 
 	/* Free the profile.. */
 	csr_release_profile(mac, &pNeighborRoamInfo->csrNeighborRoamProfile);

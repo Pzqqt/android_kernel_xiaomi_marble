@@ -319,27 +319,27 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 static void csr_add_to_occupied_channels(struct mac_context *mac,
 					 uint32_t ch_freq,
 					 uint8_t sessionId,
-					 struct csr_channel *occupied_ch,
+					 struct rso_config *rso_cfg,
 					 bool is_init_list)
 {
 	QDF_STATUS status;
-	uint8_t num_occupied_ch = occupied_ch->numChannels;
-	uint32_t *occupied_ch_lst = occupied_ch->channel_freq_list;
+	uint8_t num_occupied_ch = rso_cfg->occupied_chan_lst.num_chan;
+	uint32_t *occupied_ch_lst = rso_cfg->occupied_chan_lst.freq_list;
 
 	if (is_init_list)
-		mac->scan.roam_candidate_count[sessionId]++;
+		rso_cfg->roam_candidate_count++;
 
-	if (csr_is_channel_present_in_list(occupied_ch_lst,
-					   num_occupied_ch, ch_freq))
+	if (wlan_is_channel_present_in_list(occupied_ch_lst,
+					    num_occupied_ch, ch_freq))
 		return;
 
 	status = csr_add_to_channel_list_front(occupied_ch_lst,
 					       num_occupied_ch, ch_freq);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		occupied_ch->numChannels++;
-		if (occupied_ch->numChannels >
+		rso_cfg->occupied_chan_lst.num_chan++;
+		if (rso_cfg->occupied_chan_lst.num_chan >
 		    CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN)
-			occupied_ch->numChannels =
+			rso_cfg->occupied_chan_lst.num_chan =
 				CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN;
 	}
 }
@@ -1621,10 +1621,11 @@ bool csr_roam_is_valid_channel(struct mac_context *mac, uint32_t ch_freq)
 {
 	bool fValid = false;
 	uint32_t idx_valid_ch;
-	uint32_t len = mac->roam.numValidChannels;
+	uint32_t num_chan = mac->mlme_cfg->reg.valid_channel_list_num;
+	uint32_t *freq_lst = mac->mlme_cfg->reg.valid_channel_freq_list;
 
-	for (idx_valid_ch = 0; (idx_valid_ch < len); idx_valid_ch++) {
-		if (ch_freq == mac->roam.valid_ch_freq_list[idx_valid_ch]) {
+	for (idx_valid_ch = 0; (idx_valid_ch < num_chan); idx_valid_ch++) {
+		if (ch_freq == freq_lst[idx_valid_ch]) {
 			fValid = true;
 			break;
 		}
@@ -2403,24 +2404,24 @@ void csr_remove_bssid_from_scan_list(struct mac_context *mac_ctx,
 	csr_flush_bssid(mac_ctx, bssid);
 }
 
-static void csr_dump_occupied_chan_list(struct csr_channel *occupied_ch)
+static void csr_dump_occupied_chan_list(struct wlan_chan_list *occupied_ch)
 {
 	uint8_t idx;
 	uint32_t buff_len;
 	char *chan_buff;
 	uint32_t len = 0;
 
-	buff_len = (occupied_ch->numChannels * 5) + 1;
+	buff_len = (occupied_ch->num_chan * 5) + 1;
 	chan_buff = qdf_mem_malloc(buff_len);
 	if (!chan_buff)
 		return;
 
-	for (idx = 0; idx < occupied_ch->numChannels; idx++)
+	for (idx = 0; idx < occupied_ch->num_chan; idx++)
 		len += qdf_scnprintf(chan_buff + len, buff_len - len, " %d",
-				     occupied_ch->channel_freq_list[idx]);
+				     occupied_ch->freq_list[idx]);
 
 	sme_nofl_debug("Occupied chan list[%d]:%s",
-		       occupied_ch->numChannels, chan_buff);
+		       occupied_ch->num_chan, chan_buff);
 
 	qdf_mem_free(chan_buff);
 }
@@ -2530,15 +2531,11 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	}
 
 	/* Empty occupied channels here */
-	mac_ctx->scan.occupiedChannels[sessionId].numChannels = 0;
-	mac_ctx->scan.roam_candidate_count[sessionId] = 0;
+	rso_cfg->occupied_chan_lst.num_chan = 0;
+	rso_cfg->roam_candidate_count = 0;
 
-	csr_add_to_occupied_channels(
-			mac_ctx,
-			profile->op_freq,
-			sessionId,
-			&mac_ctx->scan.occupiedChannels[sessionId],
-			true);
+	csr_add_to_occupied_channels(mac_ctx, profile->op_freq, sessionId,
+				     rso_cfg, true);
 	list = ucfg_scan_get_result(pdev, filter);
 	if (!list || (list && !qdf_list_size(list))) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
@@ -2546,7 +2543,6 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	}
 
 	chan = wlan_vdev_get_active_channel(vdev);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	if (!chan) {
 		sme_err("no active channel");
 		goto err;
@@ -2567,16 +2563,15 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 
 			csr_add_to_occupied_channels
 				   (mac_ctx, cur_node->entry->channel.chan_freq,
-				    sessionId,
-				    &mac_ctx->scan.occupiedChannels[sessionId],
-				    true);
+				    sessionId, rso_cfg, true);
 
 		qdf_list_peek_next(list, cur_lst, &next_lst);
 		cur_lst = next_lst;
 		next_lst = NULL;
 	}
 err:
-	csr_dump_occupied_chan_list(&mac_ctx->scan.occupiedChannels[sessionId]);
+	csr_dump_occupied_chan_list(&rso_cfg->occupied_chan_lst);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	qdf_mem_free(filter);
 	if (list)
 		ucfg_scan_purge_results(list);
@@ -2600,10 +2595,9 @@ rel_vdev_ref:
  */
 QDF_STATUS csr_scan_filter_results(struct mac_context *mac_ctx)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t len = sizeof(mac_ctx->roam.valid_ch_freq_list);
+	uint32_t len = mac_ctx->mlme_cfg->reg.valid_channel_list_num;
 	struct wlan_objmgr_pdev *pdev = NULL;
-	uint32_t i;
+	uint32_t i, valid_chan_len = 0;
 	uint32_t ch_freq;
 	uint32_t valid_ch_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 
@@ -2613,28 +2607,22 @@ QDF_STATUS csr_scan_filter_results(struct mac_context *mac_ctx)
 		sme_err("pdev is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
-	status = csr_get_cfg_valid_channels(mac_ctx,
-			  mac_ctx->roam.valid_ch_freq_list,
-			  &len);
-
-	/* Get valid channels list from CFG */
-	if (QDF_IS_STATUS_ERROR(status)) {
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
-		sme_err("Failed to get Channel list from CFG");
-		return status;
-	}
-	sme_debug("No of valid channel %d", len);
 
 	/* This is a temporary conversion till the scm handles freq */
-
 	for (i = 0; i < len; i++) {
-		ch_freq = mac_ctx->roam.valid_ch_freq_list[i];
-		valid_ch_freq_list[i] = ch_freq;
+		if (wlan_reg_is_dsrc_freq(
+			mac_ctx->mlme_cfg->reg.valid_channel_freq_list[i]))
+			continue;
+		ch_freq = mac_ctx->mlme_cfg->reg.valid_channel_freq_list[i];
+		valid_ch_freq_list[valid_chan_len++] = ch_freq;
 	}
+	sme_debug("No of valid channel %d", valid_chan_len);
 
-	ucfg_scan_filter_valid_channel(pdev, valid_ch_freq_list, len);
+	ucfg_scan_filter_valid_channel(pdev, valid_ch_freq_list,
+				       valid_chan_len);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+
 	return QDF_STATUS_SUCCESS;
 }
 

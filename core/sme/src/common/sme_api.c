@@ -1817,13 +1817,14 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
-	tpCsrChannelInfo curchnl_list_info = NULL;
 	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
 	uint8_t newChannelList[CFG_VALID_CHANNEL_LIST_LEN * 5] = { 0 };
 	uint8_t i = 0, j = 0;
 	enum band_info band = -1;
 	uint32_t band_bitmap;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_chan_info *chan_lst;
 
 	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -1831,40 +1832,52 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
-	curchnl_list_info =
-		&pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
-
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
 
-	if (curchnl_list_info->freq_list) {
-		for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL");
+		sme_release_global_lock(&mac->sme);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		sme_release_global_lock(&mac->sme);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	chan_lst = &rso_cfg->roam_scan_freq_lst;
+
+	if (chan_lst->freq_list) {
+		for (i = 0; i < chan_lst->num_chan; i++) {
 			j += snprintf(oldChannelList + j,
 				sizeof(oldChannelList) - j, "%d",
-				curchnl_list_info->freq_list[i]);
+				chan_lst->freq_list[i]);
 		}
 	}
 	ucfg_reg_get_band(mac->pdev, &band_bitmap);
 	band = wlan_reg_band_bitmap_to_band_info(band_bitmap);
-	status = csr_create_roam_scan_channel_list(mac, sessionId,
+	status = csr_create_roam_scan_channel_list(mac, rso_cfg, sessionId,
 				chan_freq_list, numChannels,
 				band);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (curchnl_list_info->freq_list) {
+		if (chan_lst->freq_list) {
 			j = 0;
-			for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
+			for (i = 0; i < chan_lst->num_chan; i++) {
 				j += snprintf(newChannelList + j,
 					sizeof(newChannelList) - j, "%d",
-					curchnl_list_info->freq_list[i]);
+					chan_lst->freq_list[i]);
 			}
 		}
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"ESE roam scan chnl list successfully set to %s-old value is %s-roam state is %d",
-			newChannelList, oldChannelList,
-			pNeighborRoamInfo->neighborRoamState);
+		sme_debug("ESE roam scan chnl list successfully set to %s-old value is %s",
+			  newChannelList, oldChannelList);
 	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
 		csr_roam_update_cfg(mac, sessionId,
@@ -7094,30 +7107,6 @@ QDF_STATUS sme_get_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-void sme_dump_freq_list(struct rso_chan_info *chan_info)
-{
-	uint8_t *channel_list;
-	uint8_t i = 0, j = 0;
-	uint32_t buflen = CFG_VALID_CHANNEL_LIST_LEN * 4;
-
-	channel_list = qdf_mem_malloc(buflen);
-	if (!channel_list)
-		return;
-
-	if (chan_info->freq_list) {
-		for (i = 0; i < chan_info->num_chan; i++) {
-			if (j < buflen)
-				j += snprintf(channel_list + j, buflen - j,
-					      "%d ", chan_info->freq_list[i]);
-			else
-				break;
-		}
-	}
-
-	sme_debug("frequency list [%u]: %s", i, channel_list);
-	qdf_mem_free(channel_list);
-}
-
 static bool sme_validate_freq_list(mac_handle_t mac_handle,
 				   uint32_t *freq_list,
 				   uint8_t num_channels)
@@ -7227,8 +7216,6 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct rso_chan_info *chan_info;
-	struct csr_channel *occupied_ch_lst =
-		&mac->scan.occupiedChannels[sessionId];
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
 	struct rso_cfg_params *cfg_params;
@@ -7276,16 +7263,16 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 					chan_info->freq_list[chan_cnt];
 		}
 
-		if (occupied_ch_lst->numChannels) {
-			for (i = 0; i < occupied_ch_lst->numChannels &&
-			     chan_cnt < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++)
+		if (rso_cfg->occupied_chan_lst.num_chan) {
+			for (i = 0; i < rso_cfg->occupied_chan_lst.num_chan &&
+			     chan_cnt < CFG_VALID_CHANNEL_LIST_LEN; i++)
 				freq_list[chan_cnt++] =
-					occupied_ch_lst->channel_freq_list[i];
+				     rso_cfg->occupied_chan_lst.freq_list[i];
 		}
 
 		*pNumChannels = chan_cnt;
 		if (!(chan_info->num_chan ||
-		      occupied_ch_lst->numChannels)) {
+		      rso_cfg->occupied_chan_lst.num_chan)) {
 			sme_err("Roam Scan channel list is NOT yet initialized");
 			*pNumChannels = 0;
 			status = QDF_STATUS_E_INVAL;
@@ -12983,7 +12970,7 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct sme_config_params *sme_config;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
@@ -12991,21 +12978,16 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config)
+	mlme_obj = mlme_get_psoc_ext_obj(mac_ctx->psoc);
+	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_mem_zero(sme_config, sizeof(*sme_config));
-	sme_get_config_param(mac_handle, sme_config);
-
-	sme_config->csr_config.sta_roam_policy_params.dfs_mode =
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.dfs_mode =
 		dfs_mode;
-	sme_config->csr_config.sta_roam_policy_params.skip_unsafe_channels =
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.skip_unsafe_channels =
 		skip_unsafe_channels;
-	sme_config->csr_config.sta_roam_policy_params.sap_operating_band =
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.sap_operating_band =
 		sap_operating_band;
-
-	sme_update_config(mac_handle, sme_config);
 
 	status = csr_update_channel_list(mac_ctx);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -13021,7 +13003,7 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 			sme_release_global_lock(&mac_ctx->sme);
 		}
 	}
-	qdf_mem_free(sme_config);
+
 	return status;
 }
 

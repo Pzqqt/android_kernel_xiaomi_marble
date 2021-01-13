@@ -1197,16 +1197,6 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 					  uint8_t *pNumChannels,
 					  uint8_t sessionId);
 
-/**
- * sme_dump_freq_list() - Dump the frequencies from given chan info
- * @chan_info: Contains the frequency list and number of frequencies
- *
- * Extract number of frequencies and frequency list from chan_info and print
- * to the logs.
- *
- * Return: None
- */
-void sme_dump_freq_list(struct rso_chan_info *chan_info);
 bool sme_get_is_ese_feature_enabled(mac_handle_t mac_handle);
 bool sme_get_wes_mode(mac_handle_t mac_handle);
 bool sme_get_roam_scan_control(mac_handle_t mac_handle);

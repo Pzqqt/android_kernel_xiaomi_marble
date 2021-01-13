@@ -235,7 +235,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 
 #ifdef FEATURE_WLAN_ESE
 			if (!csr_roam_is_roam_offload_scan_enabled(mac_ctx) &&
-			    (n_roam_info->isESEAssoc) &&
+			    (wlan_cm_get_ese_assoc(mac_ctx->pdev, sessionid)) &&
 			    !csr_neighbor_roam_is_preauth_candidate(mac_ctx,
 				sessionid, descr->bssId)) {
 				sme_err("BSSID in preauth faillist. Ignore");
@@ -620,7 +620,7 @@ csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 				ngbr_roam_info->FTRoamInfo.preAuthDoneList));
 	} else
 #ifdef FEATURE_WLAN_ESE
-	if (ngbr_roam_info->isESEAssoc) {
+	if (wlan_cm_get_ese_assoc(mac->pdev, session_id)) {
 		/* Always the BSS info in the head is the handoff candidate */
 		bss_node =
 			csr_neighbor_roam_next_roamable_ap(mac,

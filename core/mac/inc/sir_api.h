@@ -54,7 +54,6 @@ struct mac_context;
 
 /* / Max supported channel list */
 #define SIR_MAX_SUPPORTED_CHANNEL_LIST      96
-#define CFG_VALID_CHANNEL_LIST_LEN              100
 
 #define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */
 

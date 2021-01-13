@@ -3790,25 +3790,6 @@ void csr_clear_channel_status(struct mac_context *mac)
 	return;
 }
 
-bool csr_is_channel_present_in_list(uint32_t *pChannelList,
-				    int numChannels, uint32_t chan_freq)
-{
-	int i = 0;
-
-	/* Check for NULL pointer */
-	if (!pChannelList || (numChannels == 0))
-		return false;
-
-	/* Look for the channel in the list */
-	for (i = 0; (i < numChannels) &&
-	     (i < CFG_VALID_CHANNEL_LIST_LEN); i++) {
-		if (pChannelList[i] == chan_freq)
-			return true;
-	}
-
-	return false;
-}
-
 /**
  * sme_bsstype_to_string() - converts bss type to string.
  * @bss_type: bss type enum
