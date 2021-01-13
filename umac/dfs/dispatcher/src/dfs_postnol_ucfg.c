@@ -291,11 +291,27 @@ void tgt_dfs_complete_deferred_tasks(struct wlan_objmgr_pdev *pdev)
 void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val)
 {
 	struct wlan_dfs *dfs;
+	uint32_t dfs_reg = 0;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
 		return;
+	}
+
+	if (val == dfs->dfs_is_stadfs_enabled) {
+	    dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		    "STA DFS enable already set to %d", val);
+	    return;
+	}
+
+	wlan_reg_get_dfs_region(pdev, &dfs_reg);
+
+	if ((dfs_reg != DFS_ETSI_DOMAIN) && val) {
+	    dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		    "Cannot enable STA DFS on non ETSI Domain %d", dfs_reg);
+	    dfs->dfs_is_stadfs_enabled = 0;
+	    return;
 	}
 
 	dfs->dfs_is_stadfs_enabled = val;
