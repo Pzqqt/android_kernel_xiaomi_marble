@@ -202,6 +202,10 @@ typedef struct sDphHashNode {
 	 * end of the structure.
 	 */
 	struct sDphHashNode *next;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool recv_assoc_frm;
+	uint8_t mld_addr[QDF_MAC_ADDR_SIZE];
+#endif
 } tDphHashNode, *tpDphHashNode;
 
 #include "dph_hash_table.h"

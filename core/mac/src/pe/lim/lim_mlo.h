@@ -78,5 +78,96 @@ struct pe_session *pe_find_partner_session_by_link_id(
  */
 void lim_get_mlo_vdev_list(struct pe_session *session, uint16_t *vdev_count,
 			   struct wlan_objmgr_vdev **wlan_vdev_list);
+
+/**
+ * lim_mlo_notify_peer_disconn - trigger mlo to delete partner peer
+ * @pe_session: pe session
+ * @sta_ds: Pointer to internal STA Datastructure
+ *
+ * Return: void
+ */
+void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
+				 tpDphHashNode sta_ds);
+
+/**
+ * lim_mlo_cleanup_partner_peer() - cleanup given peer which is partner peer
+ *                                  of mlo connection.
+ *
+ * This function is triggered from mlo mgr.
+ *
+ * @peer: pointer to peer to be cleanup
+ *
+ * Return: void
+ */
+void lim_mlo_cleanup_partner_peer(struct wlan_objmgr_peer *peer);
+
+/**
+ * lim_mlo_set_mld_mac_peer() - set mld mac
+ * @sta_ds: Pointer to internal STA Datastructure
+ * @peer_mld_addr: peer mld mac addr
+ *
+ * Return: void
+ */
+void lim_mlo_set_mld_mac_peer(tpDphHashNode sta_ds,
+			      uint8_t peer_mld_addr[QDF_MAC_ADDR_SIZE]);
+
+/**
+ * lim_is_mlo_conn() - whether it is mlo connection
+ * @session: pe session
+ * @sta_ds: Pointer to internal STA Datastructure
+ *
+ * Return: true if it is mlo connection
+ */
+bool lim_is_mlo_conn(struct pe_session *session, tpDphHashNode sta_ds);
+
+/**
+ * lim_is_mlo_recv_assoc() - whether it received assoc frame or not
+ * @sta_ds: Pointer to internal STA Datastructure
+ *
+ * Return: true if this peer corresponding link received assoc frame
+ */
+bool lim_is_mlo_recv_assoc(tpDphHashNode sta_ds);
+
+/**
+ * lim_set_mlo_recv_assoc() - set received assoc frame flag
+ * @sta_ds: Pointer to internal STA Datastructure
+ * @mlo_recv_assoc_frm: true if it received assoc frame
+ *
+ * Return: void
+ */
+void lim_set_mlo_recv_assoc(tpDphHashNode sta_ds, bool mlo_recv_assoc_frm);
+#else
+
+static inline void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
+					       tpDphHashNode sta_ds)
+{
+}
+
+static inline void lim_mlo_set_mld_mac_peer(
+				tpDphHashNode sta_ds,
+				uint8_t peer_mld_addr[QDF_MAC_ADDR_SIZE])
+{
+}
+
+static inline void lim_mlo_cleanup_partner_peer(struct vdev_mlme_obj *vdev_mlme,
+						struct wlan_objmgr_peer *peer)
+{
+}
+
+static inline bool lim_is_mlo_conn(struct pe_session *session,
+				   tpDphHashNode sta_ds)
+{
+	return false;
+}
+
+static inline bool lim_is_mlo_recv_assoc(tpDphHashNode sta_ds)
+{
+	return false;
+}
+
+static inline void lim_set_mlo_recv_assoc(tpDphHashNode sta_ds,
+					  bool mlo_recv_assoc_frm)
+{
+}
 #endif
 #endif
