@@ -286,6 +286,7 @@ struct sde_frame_data {
  * @ad_active     : list containing ad properties that are active
  * @crtc_lock     : crtc lock around create, destroy and access.
  * @frame_pending : Whether or not an update is pending
+ * @kickoff_in_progress : boolean entry to check if kickoff is in progress
  * @frame_events  : static allocation of in-flight frame events
  * @frame_event_list : available frame event list
  * @spin_lock     : spin lock for transaction status, etc...
@@ -379,6 +380,7 @@ struct sde_crtc {
 	struct list_head frame_event_list;
 	spinlock_t spin_lock;
 	spinlock_t fevent_spin_lock;
+	bool kickoff_in_progress;
 
 	/* for handling internal event thread */
 	struct sde_crtc_event event_cache[SDE_CRTC_MAX_EVENT_COUNT];

@@ -2091,7 +2091,8 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 				sw_event, sde_enc->rc_state);
 		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state, SDE_EVTLOG_ERROR);
 		goto end;
-	} else if (sde_crtc_frame_pending(sde_enc->crtc)) {
+	} else if (sde_crtc_frame_pending(sde_enc->crtc) ||
+			sde_crtc->kickoff_in_progress) {
 		SDE_DEBUG_ENC(sde_enc, "skip idle entry");
 		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
 			sde_crtc_frame_pending(sde_enc->crtc), SDE_EVTLOG_ERROR);
