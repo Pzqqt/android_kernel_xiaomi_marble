@@ -2180,10 +2180,14 @@ typedef struct {
     A_UINT32 ax_mu_bar_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
     /* 11AX HE MU BAR scheduler error code */
     A_UINT32 ax_mu_bar_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
-    /* 11AX HE Basic Trigger scheduler completion status reason code */
+    /* 11AX HE UL OFDMA Basic Trigger scheduler completion status reason code */
     A_UINT32 ax_basic_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
-    /* 11AX HE Basic Trigger scheduler error code */
+    /* 11AX HE UL OFDMA Basic Trigger scheduler error code */
     A_UINT32 ax_basic_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AX HE UL MUMIMO Basic Trigger scheduler completion status reason code */
+    A_UINT32 ax_ulmumimo_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE UL MUMIMO Basic Trigger scheduler error code */
+    A_UINT32 ax_ulmumimo_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
 } htt_tx_selfgen_ax_sched_status_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SELFGEN_INFO
