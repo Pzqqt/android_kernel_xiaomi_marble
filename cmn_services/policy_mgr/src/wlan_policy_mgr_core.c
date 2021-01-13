@@ -2824,17 +2824,8 @@ bool policy_mgr_allow_new_home_channel(
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
 		) && (pm_conc_connection_list[0].mac ==
 			pm_conc_connection_list[1].mac)) {
-			if (!policy_mgr_is_hw_dbs_capable(psoc) &&
-			    policy_mgr_is_interband_mcc_supported(psoc)) {
-				if (ch_freq !=
-				    pm_conc_connection_list[0].freq &&
-				    ch_freq !=
-				    pm_conc_connection_list[1].freq) {
-					policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
-					status = false;
-				}
-			} else if ((pm_conc_connection_list[0].mode ==
-							    PM_NAN_DISC_MODE &&
+			if ((pm_conc_connection_list[0].mode ==
+							PM_NAN_DISC_MODE &&
 				    pm_conc_connection_list[1].mode ==
 								PM_NDI_MODE) ||
 				   (pm_conc_connection_list[0].mode ==
@@ -2848,6 +2839,15 @@ bool policy_mgr_allow_new_home_channel(
 				 * same MAC is possible.
 				 */
 				status = true;
+			} else if (!policy_mgr_is_hw_dbs_capable(psoc) &&
+				   policy_mgr_is_interband_mcc_supported(psoc)) {
+				if (ch_freq !=
+				    pm_conc_connection_list[0].freq &&
+				    ch_freq !=
+				    pm_conc_connection_list[1].freq) {
+					policy_mgr_rl_debug("don't allow 3rd home channel on same MAC");
+					status = false;
+				}
 			} else if (((WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) &&
 				   (WLAN_REG_IS_24GHZ_CH_FREQ
 				   (pm_conc_connection_list[0].freq)) &&
