@@ -652,6 +652,7 @@ QDF_STATUS wlan_mlme_get_bssid_vdev_id(struct wlan_objmgr_pdev *pdev,
  * Return: chan freq of given vdev id
  */
 qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev);
+
 /**
  * wlan_get_operation_chan_freq_vdev_id() - get operating chan freq of
  * given vdev id
@@ -688,6 +689,18 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 			 uint8_t eid, enum size_of_len_field size_of_len_field,
 			 uint8_t *oui, uint8_t oui_length,
 			 uint8_t *extracted_ie, uint32_t eid_max_len);
+
+/**
+ * wlan_is_channel_present_in_list() - check if rfeq is present in the list
+ * given vdev id
+ * @freq_lst: given freq list
+ * @num_chan: num of chan freq
+ * @chan_freq: chan freq to check
+ *
+ * Return: chan freq of given vdev id
+ */
+bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
+				     uint32_t num_chan, qdf_freq_t chan_freq);
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**

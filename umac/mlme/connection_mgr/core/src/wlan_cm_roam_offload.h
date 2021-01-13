@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,6 +100,14 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 QDF_STATUS
 cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				struct wlan_roam_rssi_change_params *params);
+
+/**
+ * cm_dump_freq_list() - dump chan list
+ * @chan_info: chan info to dump
+ *
+ * Return: void
+ */
+void cm_dump_freq_list(struct rso_chan_info *chan_info);
 #endif
 
 /**

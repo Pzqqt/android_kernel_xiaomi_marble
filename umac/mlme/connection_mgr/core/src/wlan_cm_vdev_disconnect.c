@@ -68,6 +68,7 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	enum QDF_OPMODE opmode;
 	struct wlan_objmgr_pdev *pdev;
 	uint8_t vdev_id;
+	struct rso_config *rso_cfg;
 
 	if (!vdev || !req)
 		return QDF_STATUS_E_FAILURE;
@@ -77,12 +78,14 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 		mlme_err("vdev_id: %d pdev not found", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_INVAL;
 	vdev_id = wlan_vdev_get_id(vdev);
 
 	qdf_mem_zero(&msg, sizeof(msg));
 
 	discon_req = qdf_mem_malloc(sizeof(*discon_req));
-
 	if (!discon_req)
 		return QDF_STATUS_E_NOMEM;
 
@@ -93,6 +96,10 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 					  REASON_DISCONNECTED);
 
 	cm_csr_handle_diconnect_req(vdev, req);
+	if (rso_cfg->roam_scan_freq_lst.freq_list)
+		qdf_mem_free(rso_cfg->roam_scan_freq_lst.freq_list);
+	rso_cfg->roam_scan_freq_lst.freq_list = NULL;
+	rso_cfg->roam_scan_freq_lst.num_chan = 0;
 
 	qdf_mem_copy(discon_req, req, sizeof(*req));
 	msg.bodyptr = discon_req;

@@ -97,6 +97,8 @@
 #define DEFAULT_ROAM_SCAN_SCHEME_BITMAP 0
 #define ROAM_MAX_CFG_VALUE 0xffffffff
 
+#define CFG_VALID_CHANNEL_LIST_LEN 100
+
 /**
  * struct rso_chan_info - chan info
  * @num_chan: number of channels
@@ -141,11 +143,20 @@ struct rso_cfg_params {
 };
 
 /**
+ * struct wlan_chan_list - channel list
+ * @num_chan: number of channels
+ * @freq_list: freq list
+ */
+struct wlan_chan_list {
+	uint8_t num_chan;
+	qdf_freq_t freq_list[CFG_VALID_CHANNEL_LIST_LEN];
+};
+
+/**
  * struct rso_config - connect config to be used to send info in
  * RSO. This is the info we dont have in VDEV or CM ctx
  * @rsn_cap: original rsn caps from the connect req from supplicant
  * @disable_hi_rssi: disable high rssi
- * @roam_candidate_count: roam candidate count
  * @roam_control_enable: Flag used to cache the status of roam control
  *			 configuration. This will be set only if the
  *			 corresponding vendor command data is configured to
@@ -165,11 +176,13 @@ struct rso_cfg_params {
  * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
  * @cfg_param: per vdev config params
  * @assoc_ie: assoc IE
+ * @occupied_chan_lst: occupied channel list
+ * @roam_candidate_count: candidate count
+ * @is_ese_assoc: is ese assoc
  */
 struct rso_config {
 	uint8_t rsn_cap;
 	bool disable_hi_rssi;
-	int8_t roam_candidate_count;
 	bool roam_control_enable;
 	uint8_t rescan_rssi_delta;
 	uint8_t beacon_rssi_weight;
@@ -177,16 +190,52 @@ struct rso_config {
 	uint32_t roam_scan_scheme_bitmap;
 	struct rso_cfg_params cfg_param;
 	struct element_info assoc_ie;
+	struct wlan_chan_list occupied_chan_lst;
+	int8_t roam_candidate_count;
+#ifdef FEATURE_WLAN_ESE
+	bool is_ese_assoc;
+#endif
+	struct rso_chan_info roam_scan_freq_lst;
+};
+
+/**
+ * enum sta_roam_policy_dfs_mode - state of DFS mode for STA ROME policy
+ * @CSR_STA_ROAM_POLICY_NONE: DFS mode attribute is not valid
+ * @CSR_STA_ROAM_POLICY_DFS_ENABLED:  DFS mode is enabled
+ * @CSR_STA_ROAM_POLICY_DFS_DISABLED: DFS mode is disabled
+ * @CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE: Deprioritize DFS channels in scanning
+ */
+enum sta_roam_policy_dfs_mode {
+	CSR_STA_ROAM_POLICY_NONE,
+	CSR_STA_ROAM_POLICY_DFS_ENABLED,
+	CSR_STA_ROAM_POLICY_DFS_DISABLED,
+	CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE
+};
+
+/**
+ * struct rso_roam_policy_params - sta roam policy params for station
+ * @dfs_mode: tell is DFS channels needs to be skipped while scanning
+ * @skip_unsafe_channels: tells if unsafe channels needs to be skip in scanning
+ * @sap_operating_band: Opearting band for SAP
+ */
+struct rso_roam_policy_params {
+	enum sta_roam_policy_dfs_mode dfs_mode;
+	bool skip_unsafe_channels;
+	uint8_t sap_operating_band;
 };
 
 /**
  * struct rso_params - global RSO params
  * @good_rssi_roam: Lazy Roam
  * @alert_rssi_threshold: Alert RSSI
+ * @rssi: rssi diff
+ * @policy_params: roam policy params
  */
 struct rso_config_params {
 	int good_rssi_roam;
 	int alert_rssi_threshold;
+	int rssi_diff;
+	struct rso_roam_policy_params policy_params;
 };
 
 /**
