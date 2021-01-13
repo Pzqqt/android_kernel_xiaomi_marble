@@ -1006,6 +1006,14 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 	    (mac->roam.configParam.uCfgDot11Mode ==
 	     eCSR_CFG_DOT11_MODE_11AX_ONLY))
 		pChanList->he_en = true;
+#ifdef WLAN_FEATURE_11BE
+	if ((mac->roam.configParam.uCfgDot11Mode == eCSR_CFG_DOT11_MODE_AUTO) ||
+	    CSR_IS_CFG_DOT11_PHY_MODE_11BE(
+		mac->roam.configParam.uCfgDot11Mode) ||
+	    CSR_IS_CFG_DOT11_PHY_MODE_11BE_ONLY(
+		mac->roam.configParam.uCfgDot11Mode))
+		pChanList->eht_en = true;
+#endif
 
 	pChanList->numChan = num_channel;
 	mlme_store_fw_scan_channels(mac->psoc, pChanList);
@@ -2966,6 +2974,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		} else if (band == REG_BAND_5G) {
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
 		} else if (band == REG_BAND_6G) {
+			// Still use 11AX even 11BE is supported
 			pBssConfig->uCfgDot11Mode =
 						eCSR_CFG_DOT11_MODE_11AX_ONLY;
 		}
@@ -10334,6 +10343,10 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	else if (IS_WLAN_PHYMODE_VHT(pSwitchChnInd->ch_phymode) ||
 		 IS_WLAN_PHYMODE_HE(pSwitchChnInd->ch_phymode))
 		roam_info->mode = SIR_SME_PHY_MODE_VHT;
+#ifdef WLAN_FEATURE_11BE
+	else if (IS_WLAN_PHYMODE_EHT(pSwitchChnInd->ch_phymode))
+		roam_info->mode = SIR_SME_PHY_MODE_VHT;
+#endif
 	else
 		roam_info->mode = SIR_SME_PHY_MODE_LEGACY;
 
@@ -11183,7 +11196,36 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 		}
 		*band = wlan_reg_freq_to_band(opr_ch_freq);
 		break;
+#ifdef WLAN_FEATURE_11BE
+	case eCSR_CFG_DOT11_MODE_11BE:
+	case eCSR_CFG_DOT11_MODE_11BE_ONLY:
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11BE)) {
+			*dot11_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
+		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
+			*dot11_mode = eCSR_CFG_DOT11_MODE_11AX;
+		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
+			/*
+			 * If the operating channel is in 2.4 GHz band, check
+			 * for INI item to disable VHT operation in 2.4 GHz band
+			 */
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq) &&
+			    !vht_24_ghz)
+				/* Disable 11AC operation */
+				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
+			else
+				*dot11_mode = eCSR_CFG_DOT11_MODE_11AC;
+		} else {
+			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
+		}
+		*band = wlan_reg_freq_to_band(opr_ch_freq);
+		break;
+#endif
 	case eCSR_CFG_DOT11_MODE_AUTO:
+#ifdef WLAN_FEATURE_11BE
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11BE)) {
+			*dot11_mode = eCSR_CFG_DOT11_MODE_11BE;
+		} else
+#endif
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11AX;
 		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -11310,7 +11352,8 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 		eCSR_ENCRYPT_TYPE_NONE)))
 		&& ((eCSR_CFG_DOT11_MODE_11N == cfg_dot11_mode) ||
 		    (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode) ||
-		    (eCSR_CFG_DOT11_MODE_11AX == cfg_dot11_mode))) {
+		    (eCSR_CFG_DOT11_MODE_11AX == cfg_dot11_mode) ||
+		    CSR_IS_CFG_DOT11_PHY_MODE_11BE(cfg_dot11_mode))) {
 		/* We cannot do 11n here */
 		if (wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq))
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
@@ -11319,6 +11362,9 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 	}
 	sme_debug("dot11mode: %d phyMode %d fw sup AX %d", cfg_dot11_mode,
 		  profile->phyMode, IS_FEATURE_SUPPORTED_BY_FW(DOT11AX));
+#ifdef WLAN_FEATURE_11BE
+	sme_debug("BE :%d", IS_FEATURE_SUPPORTED_BY_FW(DOT11BE));
+#endif
 	return cfg_dot11_mode;
 }
 

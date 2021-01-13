@@ -86,6 +86,8 @@ enum csr_cfgdot11mode {
 	eCSR_CFG_DOT11_MODE_AUTO,
 	eCSR_CFG_DOT11_MODE_11AX,
 	eCSR_CFG_DOT11_MODE_11AX_ONLY,
+	eCSR_CFG_DOT11_MODE_11BE,
+	eCSR_CFG_DOT11_MODE_11BE_ONLY,
 	eCSR_CFG_DOT11_MODE_MAX,
 };
 
@@ -633,6 +635,7 @@ struct csr_roamstruct {
 	 (eCSR_DOT11_MODE_11n & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11ac & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11ax & (phyMode)) || \
+	 (eCSR_DOT11_MODE_11be & (phyMode)) || \
 	 (eCSR_DOT11_MODE_AUTO & (phyMode)))
 
 #define CSR_IS_PHY_MODE_11n(phy_mode) \
@@ -652,19 +655,41 @@ struct csr_roamstruct {
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11N_ONLY) || \
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC_ONLY) || \
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX) || \
-	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11BE) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11BE_ONLY))
 
 #define CSR_IS_DOT11_MODE_11AC(dot11mode) \
 	((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) || \
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC) || \
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11AC_ONLY) || \
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX) || \
-	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11BE) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11BE_ONLY))
 
 #define CSR_IS_DOT11_MODE_11AX(dot11mode) \
 	((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) || \
 	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX) || \
-	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11AX_ONLY) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11BE) || \
+	 (dot11mode == eCSR_CFG_DOT11_MODE_11BE_ONLY))
+
+#define CSR_IS_DOT11_MODE_11BE(dot11mode) \
+	(((dot11mode) == eCSR_CFG_DOT11_MODE_AUTO) || \
+	 ((dot11mode) == eCSR_CFG_DOT11_MODE_11BE) || \
+	 ((dot11mode) == eCSR_CFG_DOT11_MODE_11BE_ONLY))
+
+#ifdef WLAN_FEATURE_11BE
+#define CSR_IS_CFG_DOT11_PHY_MODE_11BE(dot11mode) \
+	((dot11mode) == eCSR_CFG_DOT11_MODE_11BE)
+
+#define CSR_IS_CFG_DOT11_PHY_MODE_11BE_ONLY(dot11mode) \
+	((dot11mode) == eCSR_CFG_DOT11_MODE_11BE_ONLY)
+#else
+#define CSR_IS_CFG_DOT11_PHY_MODE_11BE(dot11mode) 0
+#define CSR_IS_CFG_DOT11_PHY_MODE_11BE_ONLY(dot11mode) 0
+#endif
 /*
  * this function returns true if the NIC is operating exclusively in
  * the 2.4 GHz band, meaning. it is NOT operating in the 5.0 GHz band.

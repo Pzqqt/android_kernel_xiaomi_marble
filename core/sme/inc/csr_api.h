@@ -122,10 +122,22 @@ typedef enum {
 	eCSR_DOT11_MODE_AUTO = 0x0400,
 	eCSR_DOT11_MODE_11ax = 0x0800,
 	eCSR_DOT11_MODE_11ax_ONLY = 0x1000,
+	eCSR_DOT11_MODE_11be = 0x2000,
+	eCSR_DOT11_MODE_11be_ONLY = 0x4000,
 
 	/* specify the number of maximum bits for phyMode */
-	eCSR_NUM_PHY_MODE = 16,
+	eCSR_NUM_PHY_MODE = 18,
 } eCsrPhyMode;
+
+#ifdef WLAN_FEATURE_11BE
+#define CSR_IS_DOT11_PHY_MODE_11BE(dot11mode) \
+	((dot11mode) == eCSR_DOT11_MODE_11be)
+#define CSR_IS_DOT11_PHY_MODE_11BE_ONLY(dot11mode) \
+	((dot11mode) == eCSR_DOT11_MODE_11be_ONLY)
+#else
+#define CSR_IS_DOT11_PHY_MODE_11BE(dot11mode) 0
+#define CSR_IS_DOT11_PHY_MODE_11BE_ONLY(dot11mode) 0
+#endif
 
 /**
  * enum eCsrRoamBssType - BSS type in CSR operations
