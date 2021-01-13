@@ -1399,10 +1399,13 @@ struct wlan_mlme_acs {
 /*
  * struct wlan_mlme_cfg_twt - All twt related cfg items
  * @is_twt_enabled: global twt configuration
- * @bcast_requestor_tgt_cap: Broadcast requestor target capability
- * @bcast_responder_tgt_cap: Broadcast responder target capability
  * @is_bcast_responder_enabled: bcast responder enable/disable
  * @is_bcast_requestor_enabled: bcast requestor enable/disable
+ * @bcast_requestor_tgt_cap: Broadcast requestor target capability
+ * @bcast_responder_tgt_cap: Broadcast responder target capability
+ * @is_twt_nudge_tgt_cap_enabled: support for nudge request enable/disable
+ * @is_all_twt_tgt_cap_enabled: support for all twt enable/disable
+ * @is_twt_statistics_tgt_cap_enabled: support for twt statistics
  * @twt_congestion_timeout: congestion timeout value
  */
 struct wlan_mlme_cfg_twt {
@@ -1411,6 +1414,9 @@ struct wlan_mlme_cfg_twt {
 	bool is_bcast_requestor_enabled;
 	bool bcast_requestor_tgt_cap;
 	bool bcast_responder_tgt_cap;
+	bool is_twt_nudge_tgt_cap_enabled;
+	bool is_all_twt_tgt_cap_enabled;
+	bool is_twt_statistics_tgt_cap_enabled;
 	uint32_t twt_congestion_timeout;
 };
 

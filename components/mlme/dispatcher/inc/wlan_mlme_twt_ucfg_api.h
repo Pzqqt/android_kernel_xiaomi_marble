@@ -314,6 +314,68 @@ QDF_STATUS ucfg_mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
 {
 	return mlme_init_twt_context(psoc, peer_mac, dialog_id);
 }
+
+/**
+ * ucfg_mlme_set_twt_nudge_tgt_cap() - Set TWT nudge target capability.
+ * @psoc: Pointer to global psoc object
+ * @val: Value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_nudge_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_get_twt_nudge_tgt_cap() - Get TWT Nudge target capability
+ * @psoc: Pointer to global psoc object
+ * @val: Value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_nudge_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * ucfg_mlme_set_twt_all_twt_tgt_cap() - Set TWT all dialog support target
+ * @psoc: Pointer to global psoc object
+ * @val: Value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_all_twt_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_get_twt_all_twt_tgt_cap()  - Get TWT all dialog support target
+ * capability
+ * @psoc: Pointer to global psoc object
+ * @val: Value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_all_twt_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * ucfg_mlme_set_twt_statistics_tgt_cap()  - Set TWT statistics target
+ * capability
+ * @psoc: Pointer to global psoc object
+ * @val: Value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_get_twt_statistics_tgt_cap() - Get TWT statistics target capability
+ * @psoc: Pointer to global psoc object
+ * @val: Value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val);
 #else
 static inline QDF_STATUS
 ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
@@ -476,6 +538,45 @@ static inline
 QDF_STATUS ucfg_mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
 				      struct qdf_mac_addr *peer_mac,
 				      uint8_t dialog_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_nudge_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_all_twt_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_nudge_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_all_twt_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_statistics_tgt_cap(struct wlan_objmgr_psoc *psoc, bool val)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

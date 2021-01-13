@@ -577,6 +577,18 @@ void wma_update_bcast_twt_support(tp_wma_handle wh,
 		tgt_cfg->twt_bcast_res_support = false;
 }
 
+void wma_update_twt_tgt_cap(tp_wma_handle wh, struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_twt_nudge))
+		tgt_cfg->twt_nudge_enabled = true;
+
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_all_twt))
+		tgt_cfg->all_twt_enabled = true;
+
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_twt_statistics))
+		tgt_cfg->twt_stats_enabled = true;
+}
+
 void wma_register_twt_events(tp_wma_handle wma_handle)
 {
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

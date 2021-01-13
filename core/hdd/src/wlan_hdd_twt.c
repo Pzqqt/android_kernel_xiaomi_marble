@@ -48,6 +48,7 @@
 #define TWT_SETUP_WAKE_INTVL_EXP_MAX            31
 #define TWT_WAKE_DURATION_MULTIPLICATION_FACTOR 256
 #define TWT_MAX_NEXT_TWT_SIZE                   3
+#define TWT_ALL_SESSIONS_DIALOG_ID              255
 
 /**
  * struct twt_nudge_dialog_comp_ev_priv - private struct for twt nudge dialog
@@ -387,6 +388,31 @@ int hdd_test_config_twt_terminate_session(struct hdd_adapter *adapter,
 
 	ret_val = qdf_status_to_os_return(sme_test_config_twt_terminate(&params));
 	return ret_val;
+}
+
+static
+QDF_STATUS hdd_twt_check_all_twt_support(struct wlan_objmgr_psoc *psoc,
+					 uint32_t dialog_id)
+{
+	bool is_all_twt_tgt_cap_enabled = false;
+	QDF_STATUS status;
+
+	/* Cap check is check NOT required if id is for a single session*/
+	if (dialog_id != TWT_ALL_SESSIONS_DIALOG_ID)
+		return QDF_STATUS_SUCCESS;
+
+	status = ucfg_mlme_get_twt_all_twt_tgt_cap(
+						psoc,
+						&is_all_twt_tgt_cap_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
+	if (!is_all_twt_tgt_cap_enabled) {
+		hdd_debug("All TWT sessions not supported by target");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1468,6 +1494,7 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	struct wmi_twt_del_dialog_param params = {0};
+	QDF_STATUS status;
 	int id;
 	int ret;
 
@@ -1502,6 +1529,13 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 	} else {
 		params.dialog_id = 0;
 		hdd_debug("TWT_TERMINATE_FLOW_ID not specified. set to zero");
+	}
+
+	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
+					       params.dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("All TWT sessions not supported by target");
+		return -EINVAL;
 	}
 
 	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
@@ -1740,6 +1774,7 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	struct wmi_twt_pause_dialog_cmd_param params = {0};
+	QDF_STATUS status;
 	int id;
 	int ret;
 
@@ -1773,6 +1808,13 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 	} else {
 		params.dialog_id = 0;
 		hdd_debug("TWT: FLOW_ID not specified. set to zero");
+	}
+
+	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
+					       params.dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("All TWT sessions not supported by target");
+		return -EINVAL;
 	}
 
 	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
@@ -1887,8 +1929,10 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX + 1];
 	struct wmi_twt_nudge_dialog_cmd_param params = {0};
+	QDF_STATUS status;
 	int id;
 	int ret;
+	bool is_nudge_tgt_cap_enabled;
 
 	if (adapter->device_mode != QDF_STA_MODE &&
 	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
@@ -1900,6 +1944,13 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
+		return -EINVAL;
+	}
+
+	ucfg_mlme_get_twt_nudge_tgt_cap(adapter->hdd_ctx->psoc,
+					&is_nudge_tgt_cap_enabled);
+	if (!is_nudge_tgt_cap_enabled) {
+		hdd_debug("Nudge not supported by target");
 		return -EINVAL;
 	}
 
@@ -1925,6 +1976,13 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 	params.dialog_id = nla_get_u8(tb[id]);
+
+	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
+					       params.dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("All TWT sessions not supported by target");
+		return -EINVAL;
+	}
 
 	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_WAKE_TIME;
 	if (!tb[id]) {
@@ -2239,6 +2297,7 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAX + 1];
 	struct wmi_twt_resume_dialog_cmd_param params = {0};
+	QDF_STATUS status;
 	int id, id2;
 	int ret;
 
@@ -2272,6 +2331,13 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 	} else {
 		params.dialog_id = 0;
 		hdd_debug("TWT_RESUME_FLOW_ID not specified. set to zero");
+	}
+
+	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
+					       params.dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("All TWT sessions not supported by target");
+		return -EINVAL;
 	}
 
 	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
@@ -2582,6 +2648,11 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	ucfg_mlme_set_twt_bcast_responder(hdd_ctx->psoc,
 					  QDF_MIN(cfg->twt_bcast_res_support,
 						  twt_res));
+	ucfg_mlme_set_twt_nudge_tgt_cap(hdd_ctx->psoc, cfg->twt_nudge_enabled);
+	ucfg_mlme_set_twt_all_twt_tgt_cap(hdd_ctx->psoc,
+					  cfg->all_twt_enabled);
+	ucfg_mlme_set_twt_statistics_tgt_cap(hdd_ctx->psoc,
+					     cfg->twt_stats_enabled);
 }
 
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
