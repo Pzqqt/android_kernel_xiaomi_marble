@@ -534,32 +534,49 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 		allow = true;
 		goto exit;
 	}
-	if (inst->state == MSM_VIDC_START || inst->state == MSM_VIDC_START_OUTPUT) {
-		switch (id) {
-		case V4L2_CID_MPEG_VIDEO_BITRATE:
-		case V4L2_CID_MPEG_VIDEO_GOP_SIZE:
-		case V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME:
-		case V4L2_CID_HFLIP:
-		case V4L2_CID_VFLIP:
-		case V4L2_CID_MPEG_VIDEO_HEVC_I_FRAME_QP:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L1_BR:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L2_BR:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L3_BR:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L4_BR:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L5_BR:
-		case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L6_BR:
-		case V4L2_CID_MPEG_VIDC_BASELAYER_PRIORITY:
-		case V4L2_CID_MPEG_VIDC_USELTRFRAME:
-		case V4L2_CID_MPEG_VIDC_MARKLTRFRAME:
-		case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
-		case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION:
+	if (is_decode_session(inst)) {
+		if (!inst->vb2q[INPUT_PORT].streaming) {
 			allow = true;
-			break;
-		default:
-			allow = false;
-			break;
+			goto exit;
+		}
+		if (inst->vb2q[INPUT_PORT].streaming) {
+			switch (id) {
+			case V4L2_CID_MPEG_VIDC_CODEC_CONFIG:
+				allow = true;
+				break;
+			default:
+				allow = false;
+				break;
+			}
+		}
+	} else if (is_encode_session(inst)) {
+		if (inst->state == MSM_VIDC_START || inst->state == MSM_VIDC_START_OUTPUT) {
+			switch (id) {
+			case V4L2_CID_MPEG_VIDEO_BITRATE:
+			case V4L2_CID_MPEG_VIDEO_GOP_SIZE:
+			case V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME:
+			case V4L2_CID_HFLIP:
+			case V4L2_CID_VFLIP:
+			case V4L2_CID_MPEG_VIDEO_HEVC_I_FRAME_QP:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L1_BR:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L2_BR:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L3_BR:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L4_BR:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L5_BR:
+			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L6_BR:
+			case V4L2_CID_MPEG_VIDC_BASELAYER_PRIORITY:
+			case V4L2_CID_MPEG_VIDC_USELTRFRAME:
+			case V4L2_CID_MPEG_VIDC_MARKLTRFRAME:
+			case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
+			case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION:
+				allow = true;
+				break;
+			default:
+				allow = false;
+				break;
+			}
 		}
 	}
 
