@@ -1122,6 +1122,9 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 						ctrl->ctrl);
 				if (rc)
 					DSI_ERR("wait4dfps refresh failed\n");
+
+				dsi_phy_dynamic_refresh_clear(ctrl->phy);
+				dsi_clk_disable_unprepare(&display->clock_info.pll_clks);
 			}
 		}
 
