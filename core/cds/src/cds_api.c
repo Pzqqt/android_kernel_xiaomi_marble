@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1956,9 +1956,9 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 		return;
 	}
 
-	/* ignore recovery if we are unloading; it would be a waste anyway */
 	if (cds_is_driver_unloading()) {
-		cds_info("WLAN is unloading; ignore recovery");
+		QDF_DEBUG_PANIC("WLAN is unloading recovery not expected(via %s:%d)",
+				func, line);
 		return;
 	}
 
