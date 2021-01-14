@@ -1199,7 +1199,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 				else if (packet->port == HFI_PORT_RAW)
 					rc = queue_response_work(inst, RESP_WORK_OUTPUT_PSC,
 						(void *)hdr, hdr->size);
-					goto exit;
+				goto exit;
 			} else if (packet->type == HFI_CMD_BUFFER &&
 						packet->port == HFI_PORT_RAW &&
 						check_last_flag(inst, packet)) {
