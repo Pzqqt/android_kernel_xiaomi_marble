@@ -5912,7 +5912,9 @@ void dp_tx_ppdu_stats_process(void *context)
 					if (ppdu_desc->num_mpdu != 0 &&
 					    ppdu_desc->num_users != 0 &&
 					    (ppdu_desc->frame_ctrl &
-					     HTT_FRAMECTRL_DATATYPE)) {
+					     HTT_FRAMECTRL_DATATYPE) &&
+					    (ppdu_info->tlv_bitmap & 1 <<
+					     HTT_PPDU_STATS_USR_RATE_TLV)) {
 						dp_wdi_event_handler(
 							WDI_EVENT_TX_PPDU_DESC,
 							pdev->soc,
