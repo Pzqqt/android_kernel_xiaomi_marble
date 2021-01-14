@@ -52,6 +52,11 @@ struct dp_tx_desc_s;
 #define PPDU_LOG_DISPLAY_LIST 2
 
 #define TX_CAPTURE_WORK_Q_TIMER_MS 10
+#define TX_CAPTURE_NO_PPDU_DESC_MS 3000
+#define TX_CAPTURE_PEER_CHECK_MS 1500
+#define TX_CAPTURE_PEER_DEQ_MS 1500
+
+#define DP_TX_CAP_MAX_MS 0xFFFFFFFF
 
 #define dp_tx_capture_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_TX_CAPTURE, params)
 #define dp_tx_capture_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_TX_CAPTURE, params)
@@ -89,6 +94,11 @@ struct dp_peer_tx_capture_stats {
 	uint32_t msdu[PEER_MSDU_DESC_MAX];
 };
 #endif
+
+struct dp_pdev_flush {
+	bool flush_all;
+	uint32_t now_ms;
+};
 
 struct dp_peer_mgmt_list {
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
@@ -133,7 +143,6 @@ struct dp_pdev_tx_capture {
 
 	uint32_t ppdu_stats_queue_depth;
 	uint32_t ppdu_stats_defer_queue_depth;
-	uint32_t ppdu_stats_next_sched;
 	qdf_spinlock_t msdu_comp_q_list_lock;
 	qdf_timer_t work_q_timer;
 	uint32_t missed_ppdu_id;
@@ -153,6 +162,10 @@ struct dp_pdev_tx_capture {
 	struct dp_tx_cap_nbuf_list *last_nbuf_ppdu_list;
 	uint32_t last_nbuf_ppdu_list_arr_sz;
 	uint64_t peer_mismatch;
+	uint32_t ppdu_flush_count;
+	uint32_t last_processed_ms;
+	uint32_t msdu_threshold_drop;
+	uint32_t ppdu_stats_ms;
 };
 
 /* Tx TID */
@@ -174,6 +187,9 @@ struct dp_tx_tid {
 	uint32_t mpdu_cnt;
 	uint32_t mpdu_fcs_ok_bitmap[QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS];
 	unsigned long tid_flags;
+	uint32_t last_enq_ms;
+	uint32_t last_deq_ms;
+	uint32_t last_processed_ms;
 };
 
 struct dp_peer_tx_capture {
