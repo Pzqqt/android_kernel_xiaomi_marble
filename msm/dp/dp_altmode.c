@@ -127,7 +127,7 @@ static int dp_altmode_notify(void *priv, void *data, size_t len)
 	altmode->dp_altmode.base.hpd_high = !!hpd_state;
 	altmode->dp_altmode.base.hpd_irq = !!hpd_irq;
 	altmode->dp_altmode.base.multi_func = force_multi_func ? true :
-		!(pin == DPAM_HPD_C || pin == DPAM_HPD_E);
+		!(pin == DPAM_HPD_C || pin == DPAM_HPD_E || pin == DPAM_HPD_OUT);
 
 	DP_DEBUG("payload=0x%x\n", dp_data);
 	DP_DEBUG("port_index=%d, orientation=%d, pin=%d, hpd_state=%d\n",
