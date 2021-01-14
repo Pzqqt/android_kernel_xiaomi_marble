@@ -383,11 +383,11 @@ int dp_wrap_mat_tx(struct dp_wrap_vdev *wvdev, wbuf_t buf)
 				if (pktlen < contig_len)
 					return -EINVAL;
 
-					/*replace the HW address with the VMA*/
-					phwaddr = (eth_icmp6_lladdr_t *)
-							((u8 *)(p_icmp6 + 1));
-					break;
-				}
+				/*replace the HW address with the VMA*/
+				phwaddr = (eth_icmp6_lladdr_t *)
+						((u8 *)(p_icmp6 + 1));
+				break;
+			}
 			default:
 				change_packet = 0;
 				break;
