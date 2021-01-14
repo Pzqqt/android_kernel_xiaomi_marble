@@ -4331,6 +4331,8 @@ reg_find_txpower_from_6g_list(qdf_freq_t freq,
 {
 	enum channel_enum chan_enum;
 
+	*txpower = 0;
+
 	for (chan_enum = 0; chan_enum < NUM_6GHZ_CHANNELS; chan_enum++) {
 		if (chan_list[chan_enum].center_freq == freq) {
 			*txpower = chan_list[chan_enum].tx_power;
