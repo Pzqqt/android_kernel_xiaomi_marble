@@ -883,6 +883,9 @@ struct csr_roam_info {
 	struct assoc_ind *owe_pending_assoc_ind;
 	uint16_t roam_reason;
 	struct element_info *disconnect_ies;
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_op eht_operation;
+#endif
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {

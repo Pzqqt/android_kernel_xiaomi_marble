@@ -10774,6 +10774,20 @@ int sme_update_tx_bfee_nsts(mac_handle_t mac_handle, uint8_t session_id,
 
 	return sme_update_he_tx_bfee_nsts(mac_handle, session_id, nsts_set_val);
 }
+
+#ifdef WLAN_FEATURE_11BE
+void sme_update_tgt_eht_cap(mac_handle_t mac_handle,
+			    struct wma_tgt_cfg *cfg,
+			    tDot11fIEeht_cap *eht_cap_ini)
+{
+}
+
+void sme_update_eht_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
+			    uint8_t nss)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 void sme_update_tgt_he_cap(mac_handle_t mac_handle,
 			   struct wma_tgt_cfg *cfg,
@@ -15066,6 +15080,44 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 
 	if (mac_ctx->usr_cfg_disable_rsp_tx)
 		sme_set_cfg_disable_tx(mac_handle, vdev_id, 0);
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+void sme_set_eht_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+}
+
+void sme_reset_eht_caps(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+	QDF_STATUS status;
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (!session) {
+		sme_err("No session for id %d", vdev_id);
+		return;
+	}
+	sme_debug("reset EHT caps");
+	mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap =
+		mac_ctx->mlme_cfg->eht_caps.eht_cap_orig;
+	csr_update_session_eht_cap(mac_ctx, session);
+
+	wlan_cm_reset_check_6ghz_security(mac_ctx->psoc);
+	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, true);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed not set enable bcast probe resp info, %d",
+			status);
+
+	status = wma_cli_set_command(vdev_id,
+				     WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				     1, VDEV_CMD);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed to set enable bcast probe resp in FW, %d",
+			status);
+	mac_ctx->is_usr_cfg_pmf_wep = PMF_CORRECT_KEY;
 }
 #endif
 

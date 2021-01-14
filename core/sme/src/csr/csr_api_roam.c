@@ -1796,6 +1796,13 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 	return cbIniValue;
 }
 
+#ifdef WLAN_FEATURE_11BE
+void csr_update_session_eht_cap(struct mac_context *mac_ctx,
+				struct csr_roam_session *session)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 void csr_update_session_he_cap(struct mac_context *mac_ctx,
 			       struct csr_roam_session *session)
@@ -5404,6 +5411,19 @@ static inline void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void csr_roam_process_eht_info(struct join_rsp *sme_join_rsp,
+				      struct csr_roam_info *roam_info)
+{
+	roam_info->eht_operation = sme_join_rsp->eht_operation;
+}
+#else
+static inline void csr_roam_process_eht_info(struct join_rsp *sme_join_rsp,
+					     struct csr_roam_info *roam_info)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 static void csr_roam_process_he_info(struct join_rsp *sme_join_rsp,
 				     struct csr_roam_info *roam_info)
@@ -5727,6 +5747,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 			roam_info->ht_operation = join_rsp->ht_operation;
 			roam_info->vht_operation = join_rsp->vht_operation;
 			csr_roam_process_he_info(join_rsp, roam_info);
+			csr_roam_process_eht_info(join_rsp, roam_info);
 		} else {
 			if (cmd->u.roamCmd.fReassoc) {
 				roam_info->fReassocReq =
@@ -14075,6 +14096,7 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 			vht_cap_info->ampdu_len_exponent;
 	vdev_mlme->proto.vht_info.caps = vht_config.caps;
 	csr_update_session_he_cap(mac_ctx, session);
+	csr_update_session_eht_cap(mac_ctx, session);
 
 	csr_send_set_ie(vdev_mlme->mgmt.generic.type,
 			vdev_mlme->mgmt.generic.subtype,

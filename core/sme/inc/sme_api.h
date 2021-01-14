@@ -3168,6 +3168,42 @@ int sme_set_auto_rate_ldpc(mac_handle_t mac_handle, uint8_t session_id,
 int sme_set_auto_rate_he_ltf(mac_handle_t mac_handle, uint8_t session_id,
 			     uint8_t cfg_val);
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * sme_update_tgt_eht_cap() - sets the EHT caps to pmac
+ * @mac_handle: Pointer to MAC handle
+ * @cfg: Pointer to WMA target CFG
+ * @eht_cap_ini: Pointer to EHT CAP configured by INI
+ *
+ * Return: None
+ */
+void sme_update_tgt_eht_cap(mac_handle_t mac_handle,
+			    struct wma_tgt_cfg *cfg,
+			    tDot11fIEeht_cap *eht_cap_ini);
+
+/**
+ * sme_update_eht_cap_nss() - sets the nss based on user request
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ * @nss: no.of spatial streams value
+ *
+ * Return: None
+ */
+void sme_update_eht_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
+			    uint8_t nss);
+
+#else
+static inline void sme_update_tgt_eht_cap(mac_handle_t mac_handle,
+					  struct wma_tgt_cfg *cfg,
+					  tDot11fIEeht_cap *eht_cap_ini)
+{}
+
+static inline void sme_update_eht_cap_nss(mac_handle_t mac_handle,
+					  uint8_t session_id,
+					  uint8_t nss)
+{}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * sme_update_tgt_he_cap() - sets the HE caps to pmac
@@ -3669,6 +3705,36 @@ static inline void sme_check_enable_ru_242_tx(mac_handle_t mac_handle,
 
 static inline void sme_set_ru_242_tone_tx_cfg(mac_handle_t mac_handle,
 					      uint8_t cfg_val)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+
+/**
+ * sme_set_eht_testbed_def() - set eht testbed default
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: VDEV id
+ *
+ * Return: None
+ */
+void sme_set_eht_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id);
+
+/**
+ * sme_reset_eht_caps() - reset eht capabilities
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: VDEV id
+ *
+ * Return: None
+ */
+void sme_reset_eht_caps(mac_handle_t mac_handle, uint8_t vdev_id);
+#else
+static inline void sme_set_eht_testbed_def(mac_handle_t mac_handle,
+					   uint8_t vdev_id)
+{
+}
+
+static inline void sme_reset_eht_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 }
 #endif

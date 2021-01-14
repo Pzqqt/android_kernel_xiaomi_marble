@@ -958,6 +958,24 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 				 struct csr_roam_session *session,
 				 tSirMacAddr peer_mac_addr,
 				 uint8_t *pmkid, uint16_t pmkid_count);
+#ifdef WLAN_FEATURE_11BE
+
+/**
+ * csr_update_session_eht_cap() - update sme session eht capabilities
+ * @mac_ctx: pointer to mac
+ * @session: sme session pointer
+ *
+ * Return: None
+ */
+void csr_update_session_eht_cap(struct mac_context *mac_ctx,
+				struct csr_roam_session *session);
+#else
+static inline void csr_update_session_eht_cap(struct mac_context *mac_ctx,
+					      struct csr_roam_session *session)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 void csr_update_session_he_cap(struct mac_context *mac_ctx,
 			struct csr_roam_session *session);
