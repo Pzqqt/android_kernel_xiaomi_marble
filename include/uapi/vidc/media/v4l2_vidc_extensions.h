@@ -103,6 +103,8 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x21)
 #define V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA                           \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x22)
+#define V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE                       \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x23)
 
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,

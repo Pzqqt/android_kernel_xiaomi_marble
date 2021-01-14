@@ -169,6 +169,8 @@ static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 		return "Timestamp Metadata";
 	case V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA:
 		return "Encoder QP Metadata";
+	case V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE:
+		return "Bitstream Size Overwrite";
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);
