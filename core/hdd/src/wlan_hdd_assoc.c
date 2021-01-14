@@ -4079,6 +4079,8 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	struct hdd_station_ctx *sta_ctx;
+	uint8_t connected_vdev;
+	bool notify = true;
 
 	/* Enable Roaming on STA interface which was disabled before CSA */
 	if (adapter->device_mode == QDF_STA_MODE)
@@ -4107,12 +4109,28 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		hdd_err("%s: unable to create BSS entry", adapter->dev->name);
 	else
 		cfg80211_put_bss(wiphy, bss);
-
-	status = hdd_chan_change_notify(adapter, adapter->dev, chan_change,
-				roam_info->mode == SIR_SME_PHY_MODE_LEGACY);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("channel change notification failed");
-
+	if ((adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		if (!wlan_get_connected_vdev_by_bssid(
+				hdd_ctx->pdev, sta_ctx->conn_info.bssid.bytes,
+				&connected_vdev))
+			notify = false;
+		else if (adapter->vdev_id != connected_vdev)
+			notify = false;
+	}
+	if (notify) {
+		status = hdd_chan_change_notify(adapter, adapter->dev,
+						chan_change,
+						roam_info->mode ==
+						SIR_SME_PHY_MODE_LEGACY,
+						true);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("channel change notification failed");
+	} else {
+		hdd_err("BSS "QDF_MAC_ADDR_FMT" no connected with vdev %d (%d)",
+			QDF_MAC_ADDR_REF(sta_ctx->conn_info.bssid.bytes),
+			adapter->vdev_id, connected_vdev);
+	}
 	status = policy_mgr_set_hw_mode_on_channel_switch(hdd_ctx->psoc,
 		adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
