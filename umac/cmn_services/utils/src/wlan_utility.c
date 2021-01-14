@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -401,6 +401,74 @@ struct wlan_channel *wlan_vdev_get_active_channel(struct wlan_objmgr_vdev *vdev)
 
 	return comp_vdev_chan;
 }
+
+/**
+ * struct wlan_check_bssid_context - bssid check context
+ * @bssid: bssid to be checked
+ * @connected: connected by vdev or not
+ * @vdev_id: vdev id of connected vdev
+ */
+struct wlan_check_bssid_context {
+	struct qdf_mac_addr bssid;
+	bool connected;
+	uint8_t vdev_id;
+};
+
+/**
+ * wlan_get_connected_vdev_handler() - check vdev connected on bssid
+ * @psoc: psoc object
+ * @obj: vdev object
+ * @args: handler context
+ *
+ * This function will check whether vdev is connected on bssid or not and
+ * update the result to handler context accordingly.
+ *
+ * Return: void
+ */
+static void wlan_get_connected_vdev_handler(struct wlan_objmgr_psoc *psoc,
+					    void *obj, void *args)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
+	struct wlan_check_bssid_context *context =
+				(struct wlan_check_bssid_context *)args;
+	struct qdf_mac_addr bss_peer_mac;
+	enum QDF_OPMODE op_mode;
+
+	if (context->connected)
+		return;
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
+		return;
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS)
+		return;
+	if (wlan_vdev_get_bss_peer_mac(vdev, &bss_peer_mac) !=
+	    QDF_STATUS_SUCCESS)
+		return;
+	if (qdf_is_macaddr_equal(&bss_peer_mac, &context->bssid)) {
+		context->connected = true;
+		context->vdev_id = wlan_vdev_get_id(vdev);
+	}
+}
+
+bool wlan_get_connected_vdev_by_bssid(struct wlan_objmgr_pdev *pdev,
+				      uint8_t *bssid, uint8_t *vdev_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_check_bssid_context context;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	qdf_mem_zero(&context, sizeof(struct wlan_check_bssid_context));
+	qdf_mem_copy(context.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     wlan_get_connected_vdev_handler,
+				     &context, true, WLAN_OSIF_SCAN_ID);
+	if (context.connected)
+		*vdev_id = context.vdev_id;
+
+	return context.connected;
+}
+
+qdf_export_symbol(wlan_get_connected_vdev_by_bssid);
 
 static void wlan_pdev_chan_match(struct wlan_objmgr_pdev *pdev, void *object,
 				 void *arg)
