@@ -442,11 +442,6 @@ int msm_vidc_change_core_state(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 
-	if (!request_state) {
-		d_vpr_e("%s: invalid core request state\n", func);
-		return -EINVAL;
-	}
-
 	d_vpr_h("%s: core state changed from %s to %s\n",
 		func, core_state_name(core->state),
 		core_state_name(request_state));
@@ -2457,7 +2452,7 @@ error:
 	return rc;
 }
 
-int msm_vidc_core_deinit(struct msm_vidc_core *core)
+int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst, *dummy;
@@ -2466,10 +2461,14 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
 	mutex_lock(&core->lock);
 	d_vpr_h("%s()\n", __func__);
 	if (core->state == MSM_VIDC_CORE_DEINIT)
 		goto unlock;
+	if (!force)
+		if (!list_empty(&core->instances))
+			goto unlock;
 
 	venus_hfi_core_deinit(core);
 	msm_vidc_deinit_instance_caps(core);
@@ -2542,7 +2541,7 @@ unlock:
 
 int msm_vidc_core_timeout(struct msm_vidc_core *core)
 {
-	return msm_vidc_core_deinit(core);
+	return msm_vidc_core_deinit(core, true);
 }
 
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
@@ -2567,6 +2566,20 @@ void msm_vidc_pm_work_handler(struct work_struct *work)
 
 void msm_vidc_fw_unload_handler(struct work_struct *work)
 {
+	struct msm_vidc_core *core = NULL;
+	int rc = 0;
+
+	core = container_of(work, struct msm_vidc_core, fw_unload_work.work);
+	if (!core) {
+		d_vpr_e("%s: invalid work or core handle\n", __func__);
+		return;
+	}
+
+	d_vpr_h("%s: deinitializing video core\n",__func__);
+	rc = msm_vidc_core_deinit(core, false);
+	if (rc)
+		d_vpr_e("%s: Failed to deinit core\n", __func__);
+
 }
 
 void msm_vidc_batch_handler(struct work_struct *work)
@@ -2811,3 +2824,23 @@ int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst)
 	}
 	return 0;
 }
+
+void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core)
+{
+	if (!core)
+		return;
+
+	if (!core->capabilities[FW_UNLOAD].value)
+		return;
+
+	cancel_delayed_work(&core->fw_unload_work);
+
+	schedule_delayed_work(&core->fw_unload_work,
+		msecs_to_jiffies(core->capabilities[FW_UNLOAD_DELAY].value));
+
+	d_vpr_h("firmware unload delayed by %u ms\n",
+		core->capabilities[FW_UNLOAD_DELAY].value);
+
+	return;
+}
+

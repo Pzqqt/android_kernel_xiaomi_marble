@@ -817,11 +817,15 @@ int msm_vidc_close(void *instance)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
+	struct msm_vidc_core *core;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
+	core = inst->core;
+
 	s_vpr_h(inst->sid, "%s()\n", __func__);
 	mutex_lock(&inst->lock);
 	msm_vidc_session_close(inst);
@@ -829,6 +833,8 @@ int msm_vidc_close(void *instance)
 	msm_vidc_destroy_buffers(inst);
 	mutex_unlock(&inst->lock);
 	put_inst(inst);
+	msm_vidc_schedule_core_deinit(core);
+
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_close);
