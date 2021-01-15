@@ -6,7 +6,7 @@
 #include <linux/iommu.h>
 #include <linux/workqueue.h>
 #include <media/v4l2_vidc_extensions.h>
-#include <media/msm_media_info.h>
+#include "msm_media_info.h"
 
 #include "msm_vidc_driver.h"
 #include "msm_vidc_platform.h"
@@ -1529,12 +1529,8 @@ int msm_vidc_get_input_internal_buffers(struct msm_vidc_inst *inst,
 	}
 	core = inst->core;
 
-	/*
-	 * TODO: Remove the hack of sending bigger buffer sizes
-	 * once internal buffer calculations are finalised
-	 */
 	buf_size = call_session_op(core, buffer_size,
-		inst, buffer_type) + 100000000;
+		inst, buffer_type);
 
 	buf_count = call_session_op(core, min_count,
 		inst, buffer_type);

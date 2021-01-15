@@ -4,7 +4,7 @@
  */
 
 #include <media/v4l2_vidc_extensions.h>
-#include <media/msm_media_info.h>
+#include "msm_media_info.h"
 
 #include "msm_venc.h"
 #include "msm_vidc_core.h"
