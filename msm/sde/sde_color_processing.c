@@ -1990,6 +1990,8 @@ static int _sde_cp_crtc_update_pu_features(struct drm_crtc *crtc, bool *need_flu
 	hw_cfg.payload = (sde_crtc_state->user_roi_list.num_rects) ?
 		&sde_crtc_state->user_roi_list : NULL;
 	hw_cfg.len = sizeof(sde_crtc_state->user_roi_list);
+	hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
+	hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
 	for (i = 0; i < hw_cfg.num_of_mixers; i++)
 		hw_cfg.dspp[i] = sde_crtc->mixers[i].hw_dspp;
 
@@ -2634,6 +2636,7 @@ void sde_cp_disable_features(struct drm_crtc *crtc)
 		ret = set_feature(hw_dspp, &hw_cfg, sde_crtc);
 		if (ret)
 			break;
+		_sde_cp_dspp_flush_helper(sde_crtc, SDE_CP_CRTC_DSPP_DEMURA_INIT);
 	}
 	mutex_unlock(&sde_crtc->crtc_cp_lock);
 }
