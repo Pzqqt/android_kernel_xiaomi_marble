@@ -811,6 +811,8 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	if (type == QDF_SYSTEM_SUSPEND) {
 		pmo_info("system suspend wow");
 		param.flags |= WMI_WOW_FLAG_SYSTEM_SUSPEND_WOW;
+	} else if (type == QDF_UNIT_TEST_WOW_SUSPEND) {
+		pmo_info("unit test wow suspend");
 	} else {
 		pmo_info("RTPM wow");
 	}
