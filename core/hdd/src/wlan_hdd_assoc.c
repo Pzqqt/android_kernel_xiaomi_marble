@@ -4074,12 +4074,11 @@ wlan_hdd_ft_set_key_delay(mac_handle_t mac_handle, struct hdd_adapter *adapter)
 	if (!vdev)
 		return;
 
-	if (sme_ft_key_ready_for_install(mac_handle, session_id)) {
-		errno = wlan_cfg80211_crypto_add_key(
-				vdev,
-				WLAN_CRYPTO_KEY_TYPE_UNICAST,
-				0);
-	}
+	if (sme_ft_key_ready_for_install(mac_handle, session_id))
+		errno =
+		wlan_cfg80211_crypto_add_key(vdev,
+					     WLAN_CRYPTO_KEY_TYPE_UNICAST,
+					     0, false);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	if (errno)

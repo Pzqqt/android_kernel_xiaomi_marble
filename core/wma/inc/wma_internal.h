@@ -766,10 +766,6 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 				   uint8_t *hostv4addr, uint8_t *destv4addr,
 				   uint8_t *destmac);
 
-int wma_vdev_install_key_complete_event_handler(void *handle,
-						uint8_t *event,
-						uint32_t len);
-
 /**
  * wma_objmgr_set_peer_mlme_phymode() - set phymode to peer object
  * @wma:      wma handle

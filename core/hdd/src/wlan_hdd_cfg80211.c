@@ -18683,10 +18683,11 @@ static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
 
 	if (hostapd_state->bss_state == BSS_START) {
 		errno =
-		wlan_cfg80211_crypto_add_key(vdev, (pairwise ?
-					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
-					     WLAN_CRYPTO_KEY_TYPE_GROUP),
-					     key_index);
+		wlan_cfg80211_crypto_add_key(vdev,
+					     (pairwise ?
+					      WLAN_CRYPTO_KEY_TYPE_UNICAST :
+					      WLAN_CRYPTO_KEY_TYPE_GROUP),
+					     key_index, true);
 		if (!errno)
 			wma_update_set_key(adapter->vdev_id, pairwise,
 					   key_index, cipher);
@@ -18719,7 +18720,7 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 	errno = wlan_cfg80211_crypto_add_key(vdev, (pairwise ?
 					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					     WLAN_CRYPTO_KEY_TYPE_GROUP),
-					     key_index);
+					     key_index, true);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	if (!errno && adapter->send_mode_change) {
 		wlan_hdd_send_mode_change_event();
@@ -19108,10 +19109,11 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		ret =
-		wlan_cfg80211_crypto_add_key(vdev, (unicast ?
-					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
-					     WLAN_CRYPTO_KEY_TYPE_GROUP),
-					     key_index);
+		wlan_cfg80211_crypto_add_key(vdev,
+					     (unicast ?
+					      WLAN_CRYPTO_KEY_TYPE_UNICAST :
+					      WLAN_CRYPTO_KEY_TYPE_GROUP),
+					     key_index, true);
 		wma_update_set_key(adapter->vdev_id, unicast, key_index,
 				   crypto_key->cipher_type);
 	}
