@@ -1311,6 +1311,9 @@ struct proto {
 	atomic_t		socks;
 #endif
 	int			(*diag_destroy)(struct sock *sk, int err);
+
+	bool			(*bpf_bypass_getsockopt)(int level,
+							 int optname);
 } __randomize_layout;
 
 int proto_register(struct proto *prot, int alloc_slab);
