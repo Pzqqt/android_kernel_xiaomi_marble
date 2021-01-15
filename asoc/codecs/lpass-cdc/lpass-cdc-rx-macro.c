@@ -54,6 +54,13 @@
 
 #define LPASS_CDC_RX_MACRO_INTERP_MUX_NUM_INPUTS 3
 #define LPASS_CDC_RX_MACRO_SIDETONE_IIR_COEFF_MAX 5
+#define LPASS_CDC_RX_MACRO_FIR_COEFF_MAX 100
+#define LPASS_CDC_RX_MACRO_FIR_COEFF_ARRAY_MAX \
+	(LPASS_CDC_RX_MACRO_FIR_COEFF_MAX + 1)
+/* first value represent number of coefficients in each 100 integer group */
+#define LPASS_CDC_RX_MACRO_FIR_FILTER_BYTES \
+	(sizeof(u32) * LPASS_CDC_RX_MACRO_FIR_COEFF_ARRAY_MAX)
+
 
 #define STRING(name) #name
 #define LPASS_CDC_RX_MACRO_DAPM_ENUM(name, reg, offset, text) \
@@ -360,6 +367,37 @@ struct lpass_cdc_rx_macro_iir_filter_ctl {
 	} \
 }
 
+/* Codec supports 2 FIR filters Path */
+enum {
+	RX0_PATH = 0,
+	RX1_PATH,
+	FIR_PATH_MAX,
+};
+
+/* Each RX Path has 2 group of coefficients */
+enum {
+	GRP0 = 0,
+	GRP1,
+	GRP_MAX,
+};
+
+struct lpass_cdc_rx_macro_fir_filter_ctl {
+	unsigned int path_idx;
+	unsigned int grp_idx;
+	struct soc_bytes_ext bytes_ext;
+};
+
+#define LPASS_CDC_RX_MACRO_FIR_FILTER_CTL(xname, pidx, gidx) \
+{	 .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	 .info = lpass_cdc_rx_macro_fir_filter_info, \
+	 .get = lpass_cdc_rx_macro_fir_audio_mixer_get, \
+	 .put = lpass_cdc_rx_macro_fir_audio_mixer_put, \
+	 .private_value = (unsigned long)&(struct lpass_cdc_rx_macro_fir_filter_ctl) { \
+		.path_idx = pidx, \
+		.grp_idx = gidx, \
+		.bytes_ext = {.max = LPASS_CDC_RX_MACRO_FIR_FILTER_BYTES, }, \
+	} \
+}
 
 struct lpass_cdc_rx_macro_idle_detect_config {
 	u8 hph_idle_thr;
@@ -459,6 +497,9 @@ struct lpass_cdc_rx_macro_priv {
 	int rx_mclk_cnt;
 	bool is_native_on;
 	bool is_ear_mode_on;
+	bool is_fir_filter_on;
+	bool is_fir_coeff_ready[FIR_PATH_MAX][GRP_MAX];
+	bool is_fir_capable;
 	bool dev_up;
 	bool hph_pwr_mode;
 	bool hph_hd2_mode;
@@ -477,7 +518,9 @@ struct lpass_cdc_rx_macro_priv {
 	struct lpass_cdc_rx_macro_idle_detect_config idle_det_cfg;
 	u8 sidetone_coeff_array[IIR_MAX][BAND_MAX]
 		[LPASS_CDC_RX_MACRO_SIDETONE_IIR_COEFF_MAX * 4];
-
+	u32 fir_coeff_array[FIR_PATH_MAX][GRP_MAX]
+		[LPASS_CDC_RX_MACRO_FIR_COEFF_MAX];
+	u32 num_fir_coeff[FIR_PATH_MAX][GRP_MAX];
 	struct platform_device *pdev_child_devices
 			[LPASS_CDC_RX_MACRO_CHILD_DEVICES_MAX];
 	int child_count;
@@ -486,6 +529,7 @@ struct lpass_cdc_rx_macro_priv {
 	int softclip_clk_users;
 	u16 clk_id;
 	u16 default_clk_id;
+	struct clk *hifi_fir_clk;
 	int8_t rx0_gain_val;
 	int8_t rx1_gain_val;
 };
@@ -558,6 +602,10 @@ static const struct soc_enum lpass_cdc_rx_macro_hph_pwr_mode_enum =
 static const char * const lpass_cdc_rx_macro_vbat_bcl_gsm_mode_text[] = {"OFF", "ON"};
 static const struct soc_enum lpass_cdc_rx_macro_vbat_bcl_gsm_mode_enum =
 	SOC_ENUM_SINGLE_EXT(2, lpass_cdc_rx_macro_vbat_bcl_gsm_mode_text);
+
+static const char *const lpass_cdc_rx_macro_fir_filter_text[] = {"OFF", "ON"};
+static const struct soc_enum lpass_cdc_rx_macro_fir_filter_enum =
+	SOC_ENUM_SINGLE_EXT(2, lpass_cdc_rx_macro_fir_filter_text);
 
 static const struct snd_kcontrol_new rx_int2_1_vbat_mix_switch[] = {
 	SOC_DAPM_SINGLE("RX AUX VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
@@ -3119,6 +3167,405 @@ static int lpass_cdc_rx_macro_set_iir_gain(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+static int lpass_cdc_rx_macro_fir_filter_enable_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.bytes.data[0] = (unsigned char)rx_priv->is_fir_filter_on;
+	return 0;
+}
+
+static int lpass_cdc_rx_macro_fir_filter_enable_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+	int ret = 0;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	if (!rx_priv->hifi_fir_clk) {
+		dev_dbg(rx_priv->dev, "%s: Undefined HIFI FIR Clock.\n",
+				__func__);
+		return 0;
+	}
+
+	if (!rx_priv->is_fir_capable) {
+		dev_dbg(rx_priv->dev, "%s: HIFI FIR is not supported.\n",
+				__func__);
+		return 0;
+	}
+
+	rx_priv->is_fir_filter_on =
+			(!ucontrol->value.bytes.data[0] ? false : true);
+
+	dev_dbg(rx_priv->dev, "%s:is_fir_filter_on=%d\n",
+				__func__, rx_priv->is_fir_filter_on);
+
+	if (rx_priv->is_fir_filter_on) {
+		ret = clk_prepare_enable(rx_priv->hifi_fir_clk);
+		if (ret < 0) {
+			dev_err_ratelimited(rx_priv->dev, "%s:hifi_fir_clk enable failed\n",
+						__func__);
+			return ret;
+		}
+
+		/* Enable HIFI_FEAT_EN bit */
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_TOP_TOP_CFG1, 0x01, 0x01);
+		/* Enable FIR_CLK_EN */
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX0_RX_PATH_CTL, 0x80, 0x80);
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX1_RX_PATH_CTL, 0x80, 0x80);
+		/* Start the FIR filter */
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX0_RX_FIR_CTL, 0x0D, 0x05);
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX1_RX_FIR_CTL, 0x0D, 0x05);
+	} else {
+		/* Stop the FIR filter */
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX0_RX_FIR_CTL, 0x0D, 0x00);
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX1_RX_FIR_CTL, 0x0D, 0x00);
+		/* Disable FIR_CLK_EN */
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX0_RX_PATH_CTL, 0x80, 0x00);
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_RX1_RX_PATH_CTL, 0x80, 0x00);
+		/* Disable HIFI_FEAT_EN bit */
+		snd_soc_component_update_bits(component, LPASS_CDC_RX_TOP_TOP_CFG1, 0x01, 0x00);
+
+		clk_disable_unprepare(rx_priv->hifi_fir_clk);
+	}
+
+	return 0;
+}
+
+static int lpass_cdc_rx_macro_fir_filter_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *ucontrol)
+{
+	struct lpass_cdc_rx_macro_fir_filter_ctl *ctl =
+		(struct lpass_cdc_rx_macro_fir_filter_ctl *)kcontrol->private_value;
+	struct soc_bytes_ext *params = &ctl->bytes_ext;
+
+	ucontrol->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	ucontrol->count = params->max;
+	return 0;
+}
+
+static int lpass_cdc_rx_macro_fir_audio_mixer_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct lpass_cdc_rx_macro_fir_filter_ctl *ctl =
+		(struct lpass_cdc_rx_macro_fir_filter_ctl *)kcontrol->private_value;
+	unsigned int path_idx = ctl->path_idx;
+	unsigned int grp_idx = ctl->grp_idx;
+	u32 num_coeff_grp = 0;
+	u32 readArray[LPASS_CDC_RX_MACRO_FIR_COEFF_ARRAY_MAX];
+
+	unsigned int coeff_idx = 0, array_idx = 0;
+	unsigned int copy_size;
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	num_coeff_grp = rx_priv->num_fir_coeff[path_idx][grp_idx];
+	readArray[array_idx++] = num_coeff_grp;
+
+	for (coeff_idx = 0; coeff_idx < num_coeff_grp; coeff_idx++) {
+		readArray[array_idx++] =
+				rx_priv->fir_coeff_array[path_idx][grp_idx][coeff_idx];
+	}
+	copy_size = array_idx;
+
+	memcpy(ucontrol->value.bytes.data, &readArray[0], sizeof(readArray[0]) * copy_size);
+
+	return 0;
+}
+
+static int set_fir_filter_coeff(struct snd_soc_component *component,
+				struct lpass_cdc_rx_macro_priv *rx_priv,
+				unsigned int path_idx)
+{
+	int grp_idx = 0, coeff_idx = 0;
+	unsigned int ret = 0;
+	unsigned int sum_num_coeff, max_coeff_num, num_coeff_grp;
+	unsigned int path_ctl_addr, wdata0_addr, coeff_addr;
+	unsigned int fir_ctl_addr, num_coeff_addr;
+
+	switch (path_idx) {
+	case RX0_PATH:
+		path_ctl_addr = LPASS_CDC_RX_RX0_RX_PATH_CTL;
+		wdata0_addr = LPASS_CDC_RX_RX0_RX_FIR_COEFF_WDATA0;
+		coeff_addr = LPASS_CDC_RX_RX0_RX_FIR_COEFF_ADDR;
+		fir_ctl_addr = LPASS_CDC_RX_RX0_RX_FIR_CTL;
+		num_coeff_addr = LPASS_CDC_RX_RX0_RX_FIR_CFG;
+		break;
+	case RX1_PATH:
+		path_ctl_addr = LPASS_CDC_RX_RX1_RX_PATH_CTL;
+		wdata0_addr = LPASS_CDC_RX_RX1_RX_FIR_COEFF_WDATA0;
+		coeff_addr = LPASS_CDC_RX_RX1_RX_FIR_COEFF_ADDR;
+		fir_ctl_addr = LPASS_CDC_RX_RX1_RX_FIR_CTL;
+		num_coeff_addr = LPASS_CDC_RX_RX1_RX_FIR_CFG;
+		break;
+	default:
+		dev_err(rx_priv->dev,
+			"%s: inavlid FIR ID: %d\n", __func__, path_idx);
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	max_coeff_num = LPASS_CDC_RX_MACRO_FIR_COEFF_MAX;
+	sum_num_coeff = 0;
+	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++) {
+		sum_num_coeff += rx_priv->num_fir_coeff[path_idx][grp_idx];
+	}
+
+	ret = lpass_cdc_rx_macro_mclk_enable(rx_priv, 1, false);
+	if (ret < 0) {
+		dev_err_ratelimited(rx_priv->dev, "%s:rx_macro_mclk enable failed\n",
+					__func__);
+		goto exit;
+	}
+
+	ret = clk_prepare_enable(rx_priv->hifi_fir_clk);
+	if (ret < 0) {
+		dev_err_ratelimited(rx_priv->dev, "%s:hifi_fir_clk enable failed\n",
+					__func__);
+		goto disable_mclk_block;
+	}
+
+	/* Enable HIFI_FEAT_EN bit */
+	snd_soc_component_update_bits(component, LPASS_CDC_RX_TOP_TOP_CFG1, 0x01, 0x01);
+	/* Enable FIR_CLK_EN, datapath reset */
+	snd_soc_component_update_bits(component, path_ctl_addr, 0xC0, 0xC0);
+	/* Enable FIR_CLK_EN, Release Reset */
+	snd_soc_component_update_bits(component, path_ctl_addr, 0xC0, 0x80);
+
+	/* wait for data ram initialization after enabling clock  */
+	usleep_range(10, 11);
+	snd_soc_component_write(component, num_coeff_addr, sum_num_coeff);
+	dev_dbg(rx_priv->dev, "TEST: %s: sum_num_coeff:0x%x\n",
+				__func__, sum_num_coeff);
+
+	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++) {
+		unsigned int coeff_idx_start = 0, array_idx = 0;
+
+		num_coeff_grp = rx_priv->num_fir_coeff[path_idx][grp_idx];
+		if (num_coeff_grp > max_coeff_num) {
+			dev_err(rx_priv->dev,
+				"%s: inavlid number of RX_FIR coefficients:%d"
+				" in path:%d, group:%d\n",
+				__func__, num_coeff_grp, path_idx, grp_idx);
+			ret = -EINVAL;
+			goto disable_FIR;
+		}
+		coeff_idx_start = grp_idx * max_coeff_num;
+
+		for (coeff_idx = coeff_idx_start;
+			coeff_idx < coeff_idx_start + num_coeff_grp / 2 * 2;
+			coeff_idx += 2) {
+
+			unsigned int addr_offset = coeff_idx / 2;
+
+			/* First coefficient in pair */
+			u32 value = rx_priv->fir_coeff_array[path_idx][grp_idx][array_idx++];
+			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+						__func__, coeff_idx, value);
+			snd_soc_component_write(component, wdata0_addr,
+					value & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x4,
+					(value >> 8) & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x8,
+					(value >> 16) & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0xC,
+					(value >> 24) & 0xFF);
+
+			/* Second coefficient in pair */
+			value = rx_priv->fir_coeff_array[path_idx][grp_idx][array_idx++];
+			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+						__func__, coeff_idx, value);
+			snd_soc_component_write(component, wdata0_addr + 0x10,
+					value & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x14,
+					(value >> 8) & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x18,
+					(value >> 16) & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x1C,
+					(value >> 24) & 0xFF);
+
+			snd_soc_component_write(component, coeff_addr, addr_offset);
+			snd_soc_component_update_bits(component, fir_ctl_addr, 0x02, 0x02);
+			usleep_range(13, 15);
+			snd_soc_component_update_bits(component, fir_ctl_addr, 0x02, 0x00);
+		}
+
+		/* odd number of coefficients in this group, handle last one */
+		if (num_coeff_grp % 2 != 0) {
+			int addr_offset = coeff_idx / 2;
+
+			/* First coefficient in pair */
+			u32 value = rx_priv->fir_coeff_array[path_idx][grp_idx][array_idx++];
+			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+						__func__, coeff_idx, value);
+			snd_soc_component_write(component, wdata0_addr,
+					value & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x4,
+					(value >> 8) & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0x8,
+					(value >> 16) & 0xFF);
+			snd_soc_component_write(component, wdata0_addr + 0xC,
+					(value >> 24) & 0xFF);
+
+			/* Second coefficient in pair */
+			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+						__func__, coeff_idx, 0x0);
+			snd_soc_component_write(component, wdata0_addr + 0x10, 0x0);
+			snd_soc_component_write(component, wdata0_addr + 0x14, 0x0);
+			snd_soc_component_write(component, wdata0_addr + 0x18, 0x0);
+			snd_soc_component_write(component, wdata0_addr + 0x1C, 0x0);
+
+			snd_soc_component_write(component, coeff_addr, addr_offset);
+			snd_soc_component_update_bits(component, fir_ctl_addr, 0x02, 0x02);
+			usleep_range(13, 15);
+			snd_soc_component_update_bits(component, fir_ctl_addr, 0x02, 0x00);
+		}
+
+	}
+
+disable_FIR:
+	/* disable FIR_CLK_EN */
+	snd_soc_component_update_bits(component, path_ctl_addr, 0x80, 0x00);
+
+	/* Disable HIFI_FEAT_EN bit */
+	snd_soc_component_update_bits(component, LPASS_CDC_RX_TOP_TOP_CFG1, 0x01, 0x00);
+
+	clk_disable_unprepare(rx_priv->hifi_fir_clk);
+
+disable_mclk_block:
+	ret = lpass_cdc_rx_macro_mclk_enable(rx_priv, 0, false);
+
+exit:
+	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++) {
+		rx_priv->is_fir_coeff_ready[path_idx][grp_idx] = false;
+	}
+	return ret;
+}
+
+static int lpass_cdc_rx_macro_fir_audio_mixer_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct lpass_cdc_rx_macro_fir_filter_ctl *ctl =
+		(struct lpass_cdc_rx_macro_fir_filter_ctl *)kcontrol->private_value;
+	unsigned int path_idx = ctl->path_idx;
+	unsigned int grp_idx = ctl->grp_idx;
+	u32 ele_size = 0, num_coeff_grp = 0;
+	u32 coeff[LPASS_CDC_RX_MACRO_FIR_COEFF_ARRAY_MAX];
+
+	int ret = 0;
+	bool coeff_ready = true;
+	unsigned int grp_iidx = 0, coeff_idx = 0, array_idx = 0;
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	if (!rx_priv->hifi_fir_clk) {
+		dev_dbg(rx_priv->dev, "%s: Undefined HIFI FIR Clock.\n",
+				__func__);
+		return 0;
+	}
+
+	if (!rx_priv->is_fir_capable) {
+		dev_dbg(rx_priv->dev, "%s: HIFI FIR is not supported.\n",
+				__func__);
+		return 0;
+	}
+
+	ele_size = sizeof(coeff[0]);
+	memcpy(&coeff[0], ucontrol->value.bytes.data, ele_size);
+	num_coeff_grp = coeff[0];
+
+	dev_dbg(rx_priv->dev, "%s: bytes.data: path:%d, grp:%d, num_coeff_grp:%d\n",
+		__func__, path_idx, grp_idx, num_coeff_grp);
+
+	if (num_coeff_grp > LPASS_CDC_RX_MACRO_FIR_COEFF_MAX) {
+		dev_err(rx_priv->dev,
+			"%s: inavlid number of RX_FIR coefficients:%d in path:%d, group:%d\n",
+				 __func__, num_coeff_grp, path_idx, grp_idx);
+		rx_priv->num_fir_coeff[path_idx][grp_idx] = 0;
+		return -EINVAL;
+	} else {
+		rx_priv->num_fir_coeff[path_idx][grp_idx] = num_coeff_grp;
+	}
+
+	memcpy(&coeff[1], &(ucontrol->value.bytes.data[ele_size]), ele_size * num_coeff_grp);
+
+	/* Store the coefficients in FIR coeff array */
+	array_idx = 1;
+	for (coeff_idx = 0; coeff_idx < num_coeff_grp; coeff_idx++)
+		rx_priv->fir_coeff_array[path_idx][grp_idx][coeff_idx] = coeff[array_idx++];
+
+	/*
+	 * Set all of followed groups flag to ready if one group is not full(last group)
+	 * to ensure all followed groups ready flag set even all-zero group presents
+	 * Only last group is expected to have unfilled coefficients
+	 */
+	if (num_coeff_grp < LPASS_CDC_RX_MACRO_FIR_COEFF_MAX) {
+		for (grp_iidx = grp_idx; grp_iidx < GRP_MAX; grp_iidx++) {
+			rx_priv->is_fir_coeff_ready[path_idx][grp_iidx] = true;
+			if (grp_iidx != grp_idx)
+				rx_priv->num_fir_coeff[path_idx][grp_iidx] = 0;
+		}
+	} else {
+		rx_priv->is_fir_coeff_ready[path_idx][grp_idx] = true;
+	}
+
+	for (grp_iidx = 0; grp_iidx < GRP_MAX; grp_iidx++) {
+		coeff_ready &= rx_priv->is_fir_coeff_ready[path_idx][grp_iidx];
+	}
+
+	if (coeff_ready) {
+		ret = set_fir_filter_coeff(component, rx_priv, path_idx);
+		if (ret < 0) {
+			rx_priv->num_fir_coeff[path_idx][grp_idx] = 0;
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
 static const struct snd_kcontrol_new lpass_cdc_rx_macro_snd_controls[] = {
 	SOC_SINGLE_S8_TLV("RX_RX0 Digital Volume",
 			  LPASS_CDC_RX_RX0_RX_VOL_CTL,
@@ -3149,6 +3596,9 @@ static const struct snd_kcontrol_new lpass_cdc_rx_macro_snd_controls[] = {
 
 	SOC_ENUM_EXT("RX_EAR Mode", lpass_cdc_rx_macro_ear_mode_enum,
 		lpass_cdc_rx_macro_get_ear_mode, lpass_cdc_rx_macro_put_ear_mode),
+
+	SOC_ENUM_EXT("RX_FIR Filter", lpass_cdc_rx_macro_fir_filter_enum,
+		lpass_cdc_rx_macro_fir_filter_enable_get, lpass_cdc_rx_macro_fir_filter_enable_put),
 
 	SOC_ENUM_EXT("RX_HPH HD2 Mode", lpass_cdc_rx_macro_hph_hd2_mode_enum,
 		lpass_cdc_rx_macro_get_hph_hd2_mode, lpass_cdc_rx_macro_put_hph_hd2_mode),
@@ -3232,6 +3682,11 @@ static const struct snd_kcontrol_new lpass_cdc_rx_macro_snd_controls[] = {
 	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band3", IIR1, BAND3),
 	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band4", IIR1, BAND4),
 	LPASS_CDC_RX_MACRO_IIR_FILTER_CTL("IIR1 Band5", IIR1, BAND5),
+
+	LPASS_CDC_RX_MACRO_FIR_FILTER_CTL("RX0 FIR Coeff Group0", RX0_PATH, GRP0),
+	LPASS_CDC_RX_MACRO_FIR_FILTER_CTL("RX0 FIR Coeff Group1", RX0_PATH, GRP1),
+	LPASS_CDC_RX_MACRO_FIR_FILTER_CTL("RX1 FIR Coeff Group0", RX1_PATH, GRP0),
+	LPASS_CDC_RX_MACRO_FIR_FILTER_CTL("RX1 FIR Coeff Group1", RX1_PATH, GRP1),
 };
 
 static int lpass_cdc_rx_macro_enable_echo(struct snd_soc_dapm_widget *w,
@@ -3863,6 +4318,33 @@ exit:
 	return ret;
 }
 
+/**
+ * lpass_cdc_rx_set_fir_capability - Set RX HIFI FIR Filter capability
+ *
+ * @component: Codec component ptr.
+ * @capable: if the target have RX HIFI FIR available.
+ *
+ * Set RX HIFI FIR capability, stored the capability into RX macro private data.
+ */
+int lpass_cdc_rx_set_fir_capability(struct snd_soc_component *component, bool capable)
+{
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	rx_priv->is_fir_capable = capable;
+
+	return 0;
+}
+EXPORT_SYMBOL(lpass_cdc_rx_set_fir_capability);
+
 static const struct lpass_cdc_rx_macro_reg_mask_val
 				lpass_cdc_rx_macro_reg_init[] = {
 	{LPASS_CDC_RX_RX0_RX_PATH_SEC7, 0x07, 0x02},
@@ -4088,6 +4570,7 @@ static int lpass_cdc_rx_macro_probe(struct platform_device *pdev)
 	char __iomem *rx_io_base = NULL, *muxsel_io = NULL;
 	int ret = 0;
 	u32 default_clk_id = 0;
+	struct clk *hifi_fir_clk = NULL;
 	u32 is_used_rx_swr_gpio = 1;
 	const char *is_used_rx_swr_gpio_dt = "qcom,is-used-swr-gpio";
 
@@ -4180,6 +4663,15 @@ static int lpass_cdc_rx_macro_probe(struct platform_device *pdev)
 	rx_priv->default_clk_id  = default_clk_id;
 	ops.clk_id_req = rx_priv->clk_id;
 	ops.default_clk_id = default_clk_id;
+
+	hifi_fir_clk = devm_clk_get(&pdev->dev, "rx_mclk2_2x_clk");
+	if (IS_ERR(hifi_fir_clk)) {
+		ret = PTR_ERR(hifi_fir_clk);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "rx_mclk2_2x_clk", ret);
+		hifi_fir_clk = NULL;
+	}
+	rx_priv->hifi_fir_clk = hifi_fir_clk;
 
 	rx_priv->is_aux_hpf_on = 1;
 
