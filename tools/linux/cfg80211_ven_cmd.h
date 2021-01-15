@@ -793,6 +793,9 @@ enum {
 	IEEE80211_PARAM_RTS                        = 728,   /* Vdev specific minimum packet size setting for which RTS/CTS is used */
 	IEEE80211_PARAM_SM_GAP_PS_ENABLE           = 729,   /* Enable SMPS-GAP power saving */
 	IEEE80211_PARAM_WLAN_PRINT_RL              = 730,   /* Configure threshold for ratelimiting the prints */
+	IEEE80211_PARAM_VAP_MESH_LATENCY_CONFIG    = 731,   /* Configure TID latency  */
+	IEEE80211_PARAM_VAP_MESH_TID_CONFIG     = 732,   /* Configure TID latency  */
+	IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE    = 733,   /* Enable per peer tid latency  */
 };
 
 enum {
@@ -1266,6 +1269,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ENABLE_TX_MODE_SELECT = 465,
 	/* enable/disable user RNR in frame */
 	OL_ATH_PARAM_USER_RNR_FRM_CTRL = 466,
+	/* enable low latency mode  */
+	OL_ATH_PARAM_ENABLE_LOW_LATENCY_MODE = 467,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -2280,6 +2285,10 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_rts",                   IEEE80211_PARAM_RTS, GET_PARAM, 0},
 	{"sm_gap_ps",                 IEEE80211_PARAM_SM_GAP_PS_ENABLE, SET_PARAM, 1},
 	{"g_sm_gap_ps",               IEEE80211_PARAM_SM_GAP_PS_ENABLE, GET_PARAM, 0},
+	{"config_mesh_latency ",     IEEE80211_PARAM_VAP_MESH_LATENCY_CONFIG, SET_PARAM, 2},
+	{"config_mesh_tid ",     IEEE80211_PARAM_VAP_MESH_TID_CONFIG, SET_PARAM, 1},
+	{"enable_peer_tidlatency ", IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE, SET_PARAM, 1},
+	{"g_peer_tidlatency ",     IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
@@ -3275,6 +3284,8 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_USER_RNR_FRM_CTRL, SET_PARAM, 1},
 	{"g_user_rnr_frame_sel",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_USER_RNR_FRM_CTRL, GET_PARAM, 1},
+	{"low_latency_mode",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_LOW_LATENCY_MODE, SET_PARAM, 1},
 };
 #endif
 #endif
