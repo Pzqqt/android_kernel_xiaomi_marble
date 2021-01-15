@@ -346,6 +346,15 @@ static int audio_prm_probe(struct gpr_device *adev)
 {
 	int ret = 0;
 
+	ret = audio_notifier_register("audio_prm", AUDIO_NOTIFIER_ADSP_DOMAIN,
+				      &service_nb);
+	if (ret < 0) {
+		if (ret != -EPROBE_DEFER)
+			pr_err("%s: Audio notifier register failed ret = %d\n",
+			       __func__, ret);
+		return ret;
+	}
+
 	dev_set_drvdata(&adev->dev, &g_prm);
 
 	mutex_init(&g_prm.lock);
@@ -364,6 +373,7 @@ static int audio_prm_remove(struct gpr_device *adev)
 	mutex_lock(&g_prm.lock);
 	g_prm.is_adsp_up = false;
 	g_prm.adev = NULL;
+	audio_notifier_deregister("audio_prm");
 	mutex_unlock(&g_prm.lock);
 	return ret;
 }
@@ -388,23 +398,15 @@ static int __init audio_prm_module_init(void)
 {
 	int ret;
 	ret = gpr_driver_register(&qcom_audio_prm_driver);
-	if (ret) {
+
+	if (ret)
 		pr_err("%s: gpr driver register failed = %d\n", __func__, ret);
-		return ret;
-	}
-	ret = audio_notifier_register("audio_prm", AUDIO_NOTIFIER_ADSP_DOMAIN,
-					&service_nb);
-	if (ret < 0) {
-		pr_err("%s: Audio notifier register failed ret = %d\n",
-			__func__, ret);
-		return ret;
-	}
+
 	return ret;
 }
 
 static void __exit audio_prm_module_exit(void)
 {
-	audio_notifier_deregister("audio_prm");
 	gpr_driver_unregister(&qcom_audio_prm_driver);
 }
 
