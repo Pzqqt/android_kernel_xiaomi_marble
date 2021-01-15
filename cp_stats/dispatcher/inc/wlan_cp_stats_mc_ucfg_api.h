@@ -154,6 +154,21 @@ QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 					       struct request_info *info);
 
 /**
+ * wlan_cfg80211_mc_twt_clear_infra_cp_stats() - send request to reset
+ * control path statistics
+ * @vdev: pointer to vdev object
+ * @dialog_id: dialod id of the twt session
+ * @twt_peer_mac: mac address of the peer
+ *
+ * Return: 0 for success or error code for failure
+ */
+int
+wlan_cfg80211_mc_twt_clear_infra_cp_stats(
+				struct wlan_objmgr_vdev *vdev,
+				uint32_t dialog_id,
+				uint8_t twt_peer_mac[QDF_MAC_ADDR_SIZE]);
+
+/**
  * wlan_cfg80211_mc_twt_get_infra_cp_stats() - send twt get statistic request
  * @vdev: pointer to vdev object
  * @dialog_id: TWT session dialog id
