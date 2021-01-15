@@ -3795,8 +3795,8 @@ static bool wlan_hdd_get_sap_obss(struct hdd_adapter *adapter)
 	mac_handle = hdd_ctx->mac_handle;
 	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
 				      beacon->tail, beacon->tail_len);
-	if (ie && ie[1]) {
-		qdf_mem_copy(ht_cap_ie, &ie[2], DOT11F_IE_HTCAPS_MAX_LEN);
+	if (ie && ie[1] && (ie[1] <= DOT11F_IE_HTCAPS_MAX_LEN)) {
+		qdf_mem_copy(ht_cap_ie, &ie[2], ie[1]);
 		ret = dot11f_unpack_ie_ht_caps(MAC_CONTEXT(mac_handle),
 					       ht_cap_ie, ie[1],
 					       &dot11_ht_cap_ie, false);
