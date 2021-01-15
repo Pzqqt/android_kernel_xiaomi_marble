@@ -2556,6 +2556,52 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct sk_buff *reply_skb,
 }
 
 /**
+ * hdd_twt_clear_session_traffic_stats() - Parses twt nl attrributes and
+ * sends clear twt stats request for a single or all sessions
+ * @adapter: hdd_adapter
+ * @twt_param_attr: twt nl attributes
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_clear_session_traffic_stats(struct hdd_adapter *adapter,
+					       struct nlattr *twt_param_attr)
+{
+	struct hdd_station_ctx *hdd_sta_ctx =
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX + 1];
+	int ret, id;
+	uint32_t dialog_id;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+
+	ret = wlan_cfg80211_nla_parse_nested(
+				tb,
+				QCA_WLAN_VENDOR_ATTR_TWT_STATS_MAX,
+				twt_param_attr,
+				qca_wlan_vendor_twt_stats_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_STATS_FLOW_ID;
+	if (!tb[id]) {
+		hdd_err_rl("TWT Clear stats - dialog id param is must");
+		return -EINVAL;
+	}
+
+	dialog_id = (uint32_t)nla_get_u8(tb[id]);
+
+	qdf_mem_copy(peer_mac,
+		     hdd_sta_ctx->conn_info.bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	hdd_debug("dialog_id %d peer mac_addr " QDF_MAC_ADDR_FMT,
+		  dialog_id, QDF_MAC_ADDR_REF(peer_mac));
+
+	ret = wlan_cfg80211_mc_twt_clear_infra_cp_stats(adapter->vdev,
+							dialog_id, peer_mac);
+
+	return ret;
+}
+
+/**
  * hdd_twt_get_session_traffic_stats() - Obtains twt session traffic statistics
  * and sends response to the user space
  * @adapter: hdd_adapter
@@ -2790,6 +2836,10 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 	case QCA_WLAN_TWT_GET_STATS:
 		ret = hdd_twt_get_session_traffic_stats(adapter,
 							twt_param_attr);
+		break;
+	case QCA_WLAN_TWT_CLEAR_STATS:
+		ret = hdd_twt_clear_session_traffic_stats(adapter,
+							  twt_param_attr);
 		break;
 	default:
 		hdd_err("Invalid TWT Operation");
