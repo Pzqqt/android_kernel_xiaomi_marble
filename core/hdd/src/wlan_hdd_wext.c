@@ -4013,7 +4013,7 @@ static int hdd_we_set_11n_rate(struct hdd_adapter *adapter, int rate_code)
 
 	hdd_debug("Rate code %d", rate_code);
 
-	if (rate_code != 0xff) {
+	if (rate_code != 0xffff) {
 		rix = RC_2_RATE_IDX(rate_code);
 		if (rate_code & 0x80) {
 			preamble = WMI_RATE_PREAMBLE_HT;
@@ -4066,7 +4066,7 @@ static int hdd_we_set_vht_rate(struct hdd_adapter *adapter, int rate_code)
 
 	hdd_debug("Rate code %d", rate_code);
 
-	if (rate_code != 0xff) {
+	if (rate_code != 0xffff) {
 		rix = RC_2_RATE_IDX_11AC(rate_code);
 		preamble = WMI_RATE_PREAMBLE_VHT;
 		nss = HT_RC_2_STREAMS_11AC(rate_code) - 1;
