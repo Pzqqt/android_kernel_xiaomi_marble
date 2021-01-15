@@ -6920,6 +6920,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	else
 		wlan_res_cfg->pktcapture_support = false;
 
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_sae_eapol_offload_support))
+		wlan_res_cfg->sae_eapol_offload = true;
+	else
+		wlan_res_cfg->sae_eapol_offload = false;
+
 	wma_debug("num_vdevs: %u", wlan_res_cfg->num_vdevs);
 
 	wma_init_dbr_params(wma_handle);

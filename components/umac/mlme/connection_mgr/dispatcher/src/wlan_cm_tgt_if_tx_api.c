@@ -164,7 +164,8 @@ QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
 	struct wlan_cm_roam_tx_ops *roam_tx_ops;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_roam_offload_init_params init_msg = {0};
-	bool disable_4way_hs_offload, bmiss_skip_full_scan;
+	uint32_t disable_4way_hs_offload;
+	bool bmiss_skip_full_scan;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_NB_ID);
@@ -190,9 +191,14 @@ QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
 				 WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE;
 
 		wlan_mlme_get_4way_hs_offload(psoc, &disable_4way_hs_offload);
-		if (disable_4way_hs_offload)
+		if (!disable_4way_hs_offload)
 			init_msg.roam_offload_flag |=
-				WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE;
+				WLAN_ROAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE;
+		if (disable_4way_hs_offload &
+		    CFG_DISABLE_4WAY_HS_OFFLOAD_DEFAULT)
+			init_msg.roam_offload_flag |=
+				(WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE |
+				 WLAN_ROAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE);
 
 		wlan_mlme_get_bmiss_skip_full_scan_value(psoc,
 							 &bmiss_skip_full_scan);
