@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,9 @@
 #include <linux/kallsyms.h>
 #ifdef CONFIG_QCA_MINIDUMP
 #include <linux/minidump_tlv.h>
+#endif
+#ifdef CONFIG_QCOM_MINIDUMP
+#include <soc/qcom/minidump.h>
 #endif
 
 #if !defined(__printf)
@@ -468,14 +471,48 @@ __qdf_minidump_log(void *start_addr, size_t size, const char *name)
 }
 
 static inline void
-__qdf_minidump_remove(void *addr)
+__qdf_minidump_remove(void *addr, size_t size, const char *name)
 {
 	minidump_remove_segments((const uintptr_t)addr);
 }
+#elif defined(CONFIG_QCOM_MINIDUMP)
+static inline void
+__qdf_minidump_log(void *start_addr, const size_t size,
+		   const char *name)
+{
+	struct md_region md_entry;
+	int ret;
+
+	snprintf(md_entry.name, sizeof(md_entry.name), name);
+	md_entry.virt_addr = (uintptr_t)start_addr;
+	md_entry.phys_addr = virt_to_phys(start_addr);
+	md_entry.size = size;
+	ret = msm_minidump_add_region(&md_entry);
+	if (ret < 0) {
+		QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_QDF,
+				      "%s: failed to log %pK (%s)\n",
+				      __func__, start_addr, name);
+	}
+}
+
+static inline void
+__qdf_minidump_remove(void *start_addr, const size_t size,
+		      const char *name)
+{
+	struct md_region md_entry;
+
+	snprintf(md_entry.name, sizeof(md_entry.name), name);
+	md_entry.virt_addr = (uintptr_t)start_addr;
+	md_entry.phys_addr = virt_to_phys(start_addr);
+	md_entry.size = size;
+	msm_minidump_remove_region(&md_entry);
+}
 #else
 static inline void
-__qdf_minidump_log(void *start_addr, size_t size, const char *name) {}
+__qdf_minidump_log(void *start_addr,
+		   const size_t size, const char *name) {}
 static inline void
-__qdf_minidump_remove(void *addr) {}
+__qdf_minidump_remove(void *start_addr,
+		      const size_t size, const char *name) {}
 #endif
 #endif /* __I_QDF_TRACE_H */
