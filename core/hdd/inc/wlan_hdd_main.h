@@ -1216,7 +1216,10 @@ struct hdd_context;
  * @handle_feature_update: Handle feature update only if it is triggered
  *			   by hdd_netdev_feature_update
  * @netdev_features_update_work: work for handling the netdev features update
-				 for the adapter.
+ *				 for the adapter.
+ * @delete_in_progress: Flag to indicate that the adapter delete is in
+ *			progress, and any operation using rtnl lock inside
+ *			the driver can be avoided/skipped.
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1527,6 +1530,7 @@ struct hdd_adapter {
 	uint8_t net_dev_hold_ref_count[NET_DEV_HOLD_ID_MAX];
 	/* Flag to indicate whether it is a pre cac adapter or not */
 	bool is_pre_cac_adapter;
+	bool delete_in_progress;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)

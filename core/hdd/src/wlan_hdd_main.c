@@ -5081,11 +5081,15 @@ static int hdd_set_features(struct net_device *net_dev,
 	return errno;
 }
 
+#define HDD_NETDEV_FEATURES_UPDATE_MAX_WAIT_COUNT	10
+#define HDD_NETDEV_FEATURES_UPDATE_WAIT_INTERVAL_MS	20
+
 void hdd_netdev_update_features(struct hdd_adapter *adapter)
 {
 	struct net_device *net_dev = adapter->dev;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	bool request_feature_update = false;
+	int wait_count = HDD_NETDEV_FEATURES_UPDATE_MAX_WAIT_COUNT;
 
 	if (!soc)
 		return;
@@ -5105,11 +5109,31 @@ void hdd_netdev_update_features(struct hdd_adapter *adapter)
 	if (request_feature_update) {
 		hdd_debug("Update net_dev features for device mode %d",
 			  adapter->device_mode);
-		rtnl_lock();
-		adapter->handle_feature_update = true;
-		netdev_update_features(net_dev);
-		adapter->handle_feature_update = false;
-		rtnl_unlock();
+		while (!adapter->delete_in_progress) {
+			if (rtnl_trylock()) {
+				adapter->handle_feature_update = true;
+				netdev_update_features(net_dev);
+				adapter->handle_feature_update = false;
+				rtnl_unlock();
+				break;
+			}
+
+			if (wait_count--) {
+				qdf_sleep(
+				HDD_NETDEV_FEATURES_UPDATE_WAIT_INTERVAL_MS);
+			} else {
+				/*
+				 * We have failed to updated the netdev
+				 * features for very long, so enable the queues
+				 * now. The impact of not being able to update
+				 * the netdev feature is lower TPUT when
+				 * switching from legacy to non-legacy mode.
+				 */
+				hdd_err("Failed to update netdev features for device mode %d",
+					adapter->device_mode);
+				break;
+			}
+		}
 	}
 }
 
