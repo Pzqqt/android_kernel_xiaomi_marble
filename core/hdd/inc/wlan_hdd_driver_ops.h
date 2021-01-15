@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017, 2019, 2021 The Linux Foundation.
+ * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,12 +77,14 @@ int wlan_hdd_bus_suspend_noirq(void);
 /**
  * wlan_hdd_bus_resume() - wake up the bus
  *
+ * @type: WoW suspend type
+ *
  * This function is called by the platform driver to resume wlan
  * bus
  *
  * Return: 0 for success and negative errno if failure
  */
-int wlan_hdd_bus_resume(void);
+int wlan_hdd_bus_resume(enum qdf_suspend_type type);
 
 /**
  * wlan_hdd_bus_resume_noirq() - handle bus resume no irq

@@ -2855,7 +2855,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	/* simulate kernel enable irqs */
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 
-	QDF_BUG(!wlan_hdd_bus_resume());
+	QDF_BUG(!wlan_hdd_bus_resume(QDF_UNIT_TEST_WOW_SUSPEND));
 
 	QDF_BUG(!wlan_hdd_cfg80211_resume_wlan(wiphy));
 
@@ -2992,7 +2992,7 @@ enable_irqs:
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 
 bus_resume:
-	QDF_BUG(!wlan_hdd_bus_resume());
+	QDF_BUG(!wlan_hdd_bus_resume(QDF_UNIT_TEST_WOW_SUSPEND));
 
 cfg80211_resume:
 	QDF_BUG(!wlan_hdd_cfg80211_resume_wlan(wiphy));
