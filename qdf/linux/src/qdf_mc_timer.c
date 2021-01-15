@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,11 +45,19 @@ inline void qdf_timer_set_multiplier(uint32_t multiplier)
 }
 qdf_export_symbol(qdf_timer_set_multiplier);
 
+#ifdef QDF_TIMER_MULTIPLIER_FRAC
+inline uint32_t qdf_timer_get_multiplier(void)
+{
+	return QDF_TIMER_MULTIPLIER_FRAC;
+}
+qdf_export_symbol(qdf_timer_get_multiplier);
+#else
 inline uint32_t qdf_timer_get_multiplier(void)
 {
 	return g_qdf_timer_multiplier;
 }
 qdf_export_symbol(qdf_timer_get_multiplier);
+#endif
 
 /* Type declarations */
 

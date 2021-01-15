@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -320,9 +320,8 @@ QDF_STATUS qdf_wait_for_event_completion(qdf_event_t *event, uint32_t timeout)
 		long ret;
 
 		/* update the timeout if it's on an emulation platform */
-		timeout *= qdf_timer_get_multiplier();
 		ret = wait_for_completion_timeout(&event->complete,
-						  msecs_to_jiffies(timeout));
+						  __qdf_scaled_msecs_to_jiffies(timeout));
 
 		if (ret <= 0) {
 			status = QDF_STATUS_E_TIMEOUT;
