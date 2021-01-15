@@ -1,6 +1,3 @@
-#rmnet_shs needs the symbols from the core driver module
-KBUILD_EXTRA_SYMBOLS := $(shell pwd)/../../$(RMNET_CORE_PATH)/Module.symvers
-
 obj-m += rmnet_shs.o
 #Need core headers
 ccflags-y := -I$(RMNET_CORE_INC_DIR) \
