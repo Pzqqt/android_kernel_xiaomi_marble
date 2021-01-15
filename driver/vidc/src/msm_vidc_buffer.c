@@ -169,11 +169,20 @@ u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 	u32 div_factor = 1;
 	u32 base_res_mbs = NUM_MBS_4k;
 	struct v4l2_format *f;
-	u32 buffer_size_limit = 0; // TODO: fix me
+	u32 bitstream_size_overwrite = 0;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n");
 		return 0;
+	}
+
+	bitstream_size_overwrite =
+		inst->capabilities->cap[BITSTREAM_SIZE_OVERWRITE].value;
+	if (bitstream_size_overwrite) {
+		frame_size = bitstream_size_overwrite;
+		s_vpr_h(inst->sid, "client configured bitstream buffer size %d\n",
+			frame_size);
+		return frame_size;
 	}
 
 	/*
@@ -214,14 +223,7 @@ u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
 		frame_size = frame_size + (frame_size >> 2);
 
-	if (buffer_size_limit && (buffer_size_limit < frame_size)) {
-		frame_size = buffer_size_limit;
-		s_vpr_h(inst->sid, "input buffer size limited to %d\n",
-			frame_size);
-	} else {
-		s_vpr_h(inst->sid, "set input buffer size to %d\n",
-			frame_size);
-	}
+	s_vpr_h(inst->sid, "set input buffer size to %d\n", frame_size);
 
 	return ALIGN(frame_size, SZ_4K);
 }
