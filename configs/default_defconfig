@@ -1035,6 +1035,11 @@ endif
 CONFIG_RX_OL := y
 endif
 
+ifeq ($(CONFIG_CNSS_EMULATION), y)
+#on emulation platform, increase host timeouts by 1000 times
+CONFIG_QDF_TIMER_MULTIPLIER_FRAC := 1000
+endif
+
 ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 	CONFIG_DSC_DEBUG := y
 	CONFIG_DESC_TIMESTAMP_DEBUG_INFO := y
