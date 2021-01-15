@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -132,13 +132,13 @@ DATARMNETb7ddf3c5dd,
 DATARMNET14ed771dfb,ulong,NULL,(0xcb7+5769-0x221c));MODULE_PARM_DESC(
 DATARMNET14ed771dfb,
 "\x72\x6d\x6e\x65\x74\x20\x73\x68\x73\x20\x73\x6b\x62\x20\x66\x6c\x75\x73\x68\x20\x74\x72\x69\x67\x67\x65\x72\x20\x74\x79\x70\x65"
-);unsigned int DATARMNETea75c7b6f6 __read_mostly=271800*(0xeb7+710-0x112d);
-module_param(DATARMNETea75c7b6f6,uint,(0xdb7+6665-0x261c));MODULE_PARM_DESC(
+);unsigned int DATARMNETea75c7b6f6 __read_mostly=30144000;module_param(
+DATARMNETea75c7b6f6,uint,(0xdb7+6665-0x261c));MODULE_PARM_DESC(
 DATARMNETea75c7b6f6,
 "\x4d\x61\x78\x69\x6d\x75\x6d\x20\x62\x79\x74\x65\x20\x6d\x6f\x64\x75\x6c\x65\x20\x77\x69\x6c\x6c\x20\x70\x61\x72\x6b"
-);unsigned int DATARMNET7d18c0bcf8 __read_mostly=(0xa58+3472-0xfb4)*
-(0xd35+210-0xdff);module_param(DATARMNET7d18c0bcf8,uint,(0xdb7+6665-0x261c));
-MODULE_PARM_DESC(DATARMNET7d18c0bcf8,
+);unsigned int DATARMNET7d18c0bcf8 __read_mostly=24000;module_param(
+DATARMNET7d18c0bcf8,uint,(0xdb7+6665-0x261c));MODULE_PARM_DESC(
+DATARMNET7d18c0bcf8,
 "\x4d\x61\x78\x69\x6d\x75\x6d\x20\x70\x6b\x74\x73\x20\x6d\x6f\x64\x75\x6c\x65\x20\x77\x69\x6c\x6c\x20\x70\x61\x72\x6b"
 );unsigned int DATARMNET227d2ff866 __read_mostly=(0xec7+1131-0x1305);
 module_param(DATARMNET227d2ff866,uint,(0xdb7+6665-0x261c));MODULE_PARM_DESC(
