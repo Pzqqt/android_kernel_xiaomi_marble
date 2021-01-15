@@ -375,12 +375,6 @@ static struct interp_sample_rate sr_val_tbl[] = {
 	{176400, 0xB}, {352800, 0xC},
 };
 
-struct lpass_cdc_rx_macro_bcl_pmic_params {
-	u8 id;
-	u8 sid;
-	u8 ppid;
-};
-
 static int lpass_cdc_rx_macro_hw_params(struct snd_pcm_substream *substream,
 			       struct snd_pcm_hw_params *params,
 			       struct snd_soc_dai *dai);
@@ -487,7 +481,6 @@ struct lpass_cdc_rx_macro_priv {
 	int is_softclip_on;
 	int is_aux_hpf_on;
 	int softclip_clk_users;
-	struct lpass_cdc_rx_macro_bcl_pmic_params bcl_pmic_params;
 	u16 clk_id;
 	u16 default_clk_id;
 	int8_t rx0_gain_val;
@@ -2514,9 +2507,24 @@ static int lpass_cdc_rx_macro_enable_vbat(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 			LPASS_CDC_RX_BCL_VBAT_BCL_GAIN_UPD9,
 			0xFF, 0x00);
+                /* Enable CB decode block clock */
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_RX_CB_DECODE_CB_DECODE_CTL1, 0x01, 0x01);
+                /* Enable BCL path */
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_RX_CB_DECODE_CB_DECODE_CTL2, 0x01, 0x01);
+                /* Request for BCL data */
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_RX_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x01);
 		break;
 
 	case SND_SOC_DAPM_POST_PMD:
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_RX_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x00);
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_RX_CB_DECODE_CB_DECODE_CTL2, 0x01, 0x00);
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_RX_CB_DECODE_CB_DECODE_CTL1, 0x01, 0x00);
 		snd_soc_component_update_bits(component,
 				LPASS_CDC_RX_RX2_RX_PATH_CFG1,
 				0x80, 0x00);
@@ -3854,31 +3862,6 @@ static const struct lpass_cdc_rx_macro_reg_mask_val
 	{LPASS_CDC_RX_RX2_RX_PATH_CFG3, 0x03, 0x02},
 };
 
-static void lpass_cdc_rx_macro_init_bcl_pmic_reg(struct snd_soc_component *component)
-{
-	struct device *rx_dev = NULL;
-	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
-
-	if (!component) {
-		pr_err("%s: NULL component pointer!\n", __func__);
-		return;
-	}
-
-	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
-		return;
-
-	switch (rx_priv->bcl_pmic_params.id) {
-	case 0:
-		break;
-	case 1:
-		break;
-	default:
-		dev_err(rx_dev, "%s: PMIC ID is invalid %d\n",
-		       __func__, rx_priv->bcl_pmic_params.id);
-		break;
-	}
-}
-
 static int lpass_cdc_rx_macro_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm =
@@ -3950,7 +3933,6 @@ static int lpass_cdc_rx_macro_init(struct snd_soc_component *component)
 				lpass_cdc_rx_macro_reg_init[i].val);
 
 	rx_priv->component = component;
-	lpass_cdc_rx_macro_init_bcl_pmic_reg(component);
 
 	return 0;
 }
@@ -4094,7 +4076,6 @@ static int lpass_cdc_rx_macro_probe(struct platform_device *pdev)
 	u32 rx_base_addr = 0, muxsel = 0;
 	char __iomem *rx_io_base = NULL, *muxsel_io = NULL;
 	int ret = 0;
-	u8 bcl_pmic_params[3];
 	u32 default_clk_id = 0;
 	u32 is_used_rx_swr_gpio = 1;
 	const char *is_used_rx_swr_gpio_dt = "qcom,is-used-swr-gpio";
@@ -4184,17 +4165,6 @@ static int lpass_cdc_rx_macro_probe(struct platform_device *pdev)
 	rx_priv->swr_plat_data.core_vote = lpass_cdc_rx_macro_core_vote;
 	rx_priv->swr_plat_data.handle_irq = NULL;
 
-	ret = of_property_read_u8_array(pdev->dev.of_node,
-				"qcom,rx-bcl-pmic-params", bcl_pmic_params,
-				sizeof(bcl_pmic_params));
-	if (ret) {
-		dev_dbg(&pdev->dev, "%s: could not find %s entry in dt\n",
-			__func__, "qcom,rx-bcl-pmic-params");
-	} else {
-		rx_priv->bcl_pmic_params.id = bcl_pmic_params[0];
-		rx_priv->bcl_pmic_params.sid = bcl_pmic_params[1];
-		rx_priv->bcl_pmic_params.ppid = bcl_pmic_params[2];
-	}
 	rx_priv->clk_id = default_clk_id;
 	rx_priv->default_clk_id  = default_clk_id;
 	ops.clk_id_req = rx_priv->clk_id;

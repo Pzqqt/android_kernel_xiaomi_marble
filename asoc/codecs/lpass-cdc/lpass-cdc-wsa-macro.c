@@ -197,12 +197,6 @@ struct lpass_cdc_wsa_macro_swr_ctrl_platform_data {
 			  int action);
 };
 
-struct lpass_cdc_wsa_macro_bcl_pmic_params {
-	u8 id;
-	u8 sid;
-	u8 ppid;
-};
-
 enum {
 	LPASS_CDC_WSA_MACRO_AIF_INVALID = 0,
 	LPASS_CDC_WSA_MACRO_AIF1_PB,
@@ -268,7 +262,6 @@ struct lpass_cdc_wsa_macro_priv {
 	int spkr_mode;
 	int is_softclip_on[LPASS_CDC_WSA_MACRO_SOFTCLIP_MAX];
 	int softclip_clk_users[LPASS_CDC_WSA_MACRO_SOFTCLIP_MAX];
-	struct lpass_cdc_wsa_macro_bcl_pmic_params bcl_pmic_params;
 	char __iomem *mclk_mode_muxsel;
 	u16 default_clk_id;
 	u32 pcm_rate_vi;
@@ -1681,9 +1674,24 @@ static int lpass_cdc_wsa_macro_enable_vbat(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 			LPASS_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD9,
 			0xFF, 0x00);
+                /* Enable CB decode block clock */
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL1, 0x01, 0x01);
+                /* Enable BCL path */
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x01);
+                /* Request for BCL data */
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x01);
 		break;
 
 	case SND_SOC_DAPM_POST_PMD:
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL3, 0x01, 0x00);
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL2, 0x01, 0x00);
+                snd_soc_component_update_bits(component,
+                        LPASS_CDC_WSA_CB_DECODE_CB_DECODE_CTL1, 0x01, 0x00);
 		snd_soc_component_update_bits(component, vbat_path_cfg,
 			0x80, 0x00);
 		snd_soc_component_update_bits(component,
@@ -2545,31 +2553,6 @@ static const struct lpass_cdc_wsa_macro_reg_mask_val
 	{LPASS_CDC_WSA_RX1_RX_PATH_MIX_CFG, 0x01, 0x01},
 };
 
-static void lpass_cdc_wsa_macro_init_bcl_pmic_reg(struct snd_soc_component *component)
-{
-	struct device *wsa_dev = NULL;
-	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
-
-	if (!component) {
-		pr_err("%s: NULL component pointer!\n", __func__);
-		return;
-	}
-
-	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
-		return;
-
-	switch (wsa_priv->bcl_pmic_params.id) {
-	case 0:
-		break;
-	case 1:
-		break;
-	default:
-		dev_err(wsa_dev, "%s: PMIC ID is invalid %d\n",
-		       __func__, wsa_priv->bcl_pmic_params.id);
-		break;
-	}
-}
-
 static void lpass_cdc_wsa_macro_init_reg(struct snd_soc_component *component)
 {
 	int i;
@@ -2579,8 +2562,6 @@ static void lpass_cdc_wsa_macro_init_reg(struct snd_soc_component *component)
 				lpass_cdc_wsa_macro_reg_init[i].reg,
 				lpass_cdc_wsa_macro_reg_init[i].mask,
 				lpass_cdc_wsa_macro_reg_init[i].val);
-
-	lpass_cdc_wsa_macro_init_bcl_pmic_reg(component);
 }
 
 static int lpass_cdc_wsa_macro_core_vote(void *handle, bool enable)
@@ -2965,7 +2946,6 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 	u32 wsa_base_addr, default_clk_id, thermal_max_state;
 	char __iomem *wsa_io_base;
 	int ret = 0;
-	u8 bcl_pmic_params[3];
 	u32 is_used_wsa_swr_gpio = 1;
 	const char *is_used_wsa_swr_gpio_dt = "qcom,is-used-swr-gpio";
 
@@ -3041,17 +3021,6 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 		default_clk_id = WSA_CORE_CLK;
 	}
 
-	ret = of_property_read_u8_array(pdev->dev.of_node,
-				"qcom,wsa-bcl-pmic-params", bcl_pmic_params,
-				sizeof(bcl_pmic_params));
-	if (ret) {
-		dev_dbg(&pdev->dev, "%s: could not find %s entry in dt\n",
-			__func__, "qcom,wsa-bcl-pmic-params");
-	} else {
-		wsa_priv->bcl_pmic_params.id = bcl_pmic_params[0];
-		wsa_priv->bcl_pmic_params.sid = bcl_pmic_params[1];
-		wsa_priv->bcl_pmic_params.ppid = bcl_pmic_params[2];
-	}
 	wsa_priv->default_clk_id  = default_clk_id;
 
 	dev_set_drvdata(&pdev->dev, wsa_priv);
