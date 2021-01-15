@@ -216,7 +216,8 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 					PKT_CAPTURE_MODE_DATA_ONLY))
 			return;
 
-		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc);
+		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc,
+					      status);
 		break;
 	}
 

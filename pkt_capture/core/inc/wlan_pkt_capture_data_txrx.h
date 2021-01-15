@@ -89,13 +89,13 @@ void pkt_capture_msdu_process_pkts(
 			uint8_t *bssid,
 			qdf_nbuf_t head_msdu,
 			uint8_t vdev_id,
-			htt_pdev_handle pdev);
+			htt_pdev_handle pdev, uint16_t status);
 #else
 void pkt_capture_msdu_process_pkts(
 			uint8_t *bssid,
 			qdf_nbuf_t head_msdu,
 			uint8_t vdev_id,
-			void *psoc);
+			void *psoc, uint16_t status);
 #endif
 
 /**
