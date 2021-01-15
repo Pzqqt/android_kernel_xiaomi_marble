@@ -799,6 +799,10 @@ target_if_get_wmi_roam_offload_flag(uint32_t flag)
 	if (flag & WLAN_ROAM_BMISS_FINAL_SCAN_TYPE)
 		roam_offload_flag |= WMI_ROAM_BMISS_FINAL_SCAN_TYPE_FLAG;
 
+	if (flag & WLAN_ROAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE)
+		roam_offload_flag |=
+			WMI_VDEV_PARAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE;
+
 	return roam_offload_flag;
 }
 
