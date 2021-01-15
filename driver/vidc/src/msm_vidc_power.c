@@ -231,7 +231,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	if (!data_size)
 		return 0;
 
-	vote_data->power_mode = VIDC_POWER_NORMAL;
+	vote_data->power_mode = VIDC_POWER_TURBO;
 	if (inst->power.buffer_counter < DCVS_FTB_WINDOW)
 		vote_data->power_mode = VIDC_POWER_TURBO;
 	if (msm_vidc_clock_voting)
