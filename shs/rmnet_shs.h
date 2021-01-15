@@ -63,9 +63,9 @@
 #define DATARMNET3a9bca9cba 20000
 #define DATARMNETcdee526004 (DATARMNET243c638e7d / (0xd1f+216-0xdf5))
 struct DATARMNETa6f2d499b2{struct hrtimer DATARMNET758a55f103;struct work_struct
- DATARMNET33110a3ff5;struct timespec DATARMNET251b97a380;int DATARMNETe61d62310f
-;u8 DATARMNET42c3ecbd5e;};struct DATARMNETa6b20d7e8b{struct hrtimer 
-DATARMNET6fd692fc7a;struct rmnet_map_dl_ind DATARMNET08dbb5ab35;struct 
+ DATARMNET33110a3ff5;struct timespec64 DATARMNET251b97a380;int 
+DATARMNETe61d62310f;u8 DATARMNET42c3ecbd5e;};struct DATARMNETa6b20d7e8b{struct 
+hrtimer DATARMNET6fd692fc7a;struct rmnet_map_dl_ind DATARMNET08dbb5ab35;struct 
 qmi_rmnet_ps_ind rmnet_idl_ind_cb;struct rmnet_port*port;struct 
 DATARMNETa6f2d499b2 DATARMNET132b9c7dc4[DATARMNETc6782fed88];u64 
 DATARMNETbd3a0ee74e[DATARMNETc6782fed88];long DATARMNETc252a1f55d;long 
