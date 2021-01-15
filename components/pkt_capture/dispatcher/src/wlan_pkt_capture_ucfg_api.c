@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -243,7 +243,7 @@ void ucfg_pkt_capture_rx_msdu_process(
 				uint8_t vdev_id, htt_pdev_handle pdev)
 {
 		pkt_capture_msdu_process_pkts(bssid, head_msdu,
-					      vdev_id, pdev);
+					      vdev_id, pdev, 0);
 }
 
 bool ucfg_pkt_capture_rx_offloaded_pkt(qdf_nbuf_t rx_ind_msg)
