@@ -671,6 +671,8 @@ static void reg_propagate_6g_mas_channel_list(
 				mas_chan_params->unspecified_ap_usable;
 	pdev_priv_obj->is_6g_channel_list_populated =
 		mas_chan_params->is_6g_channel_list_populated;
+	pdev_priv_obj->reg_6g_superid =
+		mas_chan_params->reg_6g_superid;
 }
 #else
 static inline void reg_propagate_6g_mas_channel_list(
@@ -1456,6 +1458,8 @@ static void reg_store_regulatory_ext_info_to_socpriv(
 	soc_reg->mas_chan_params[phy_id].ctry_code = regulat_info->ctry_code;
 	soc_reg->mas_chan_params[phy_id].reg_dmn_pair =
 		regulat_info->reg_dmn_pair;
+	soc_reg->mas_chan_params[phy_id].reg_6g_superid =
+		regulat_info->domain_code_6g_super_id;
 	qdf_mem_copy(soc_reg->mas_chan_params[phy_id].current_country,
 		     regulat_info->alpha2,
 		     REG_ALPHA2_LEN + 1);

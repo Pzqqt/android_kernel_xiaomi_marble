@@ -924,7 +924,6 @@ struct cur_reg_rule {
  * @num_phy: number of phy
  * @phy_id: phy id
  * @reg_dmn_pair: reg domain pair
- * @reg_6g_superid: 6G super domain id
  * @ctry_code: country code
  * @alpha2: country alpha2
  * @offload_enabled: offload enabled
@@ -938,12 +937,12 @@ struct cur_reg_rule {
  * @num_5g_reg_rules: number 5G  and 6G reg rules
  * @reg_rules_2g_ptr: ptr to 2G reg rules
  * @reg_rules_5g_ptr: ptr to 5G reg rules
- * @super_dmn_id: 6G super domain ID
  * @client_type: type of client
  * @rnr_tpe_usable: if RNR TPE octet is usable for country
  * @unspecified_ap_usable: if not set, AP usable for country
  * @domain_code_6g_ap: domain code for 6G AP
  * @domain_code_6g_client: domain code for 6G client in SP mode
+ * @domain_code_6g_super_id: 6G super domain ID
  * @min_bw_6g_ap: minimum 6G bw for AP
  * @max_bw_6g_ap: maximum 6G bw for AP
  * @min_bw_6g_client: list of minimum 6G bw for clients
@@ -959,7 +958,6 @@ struct cur_regulatory_info {
 	uint8_t num_phy;
 	uint8_t phy_id;
 	uint16_t reg_dmn_pair;
-	uint16_t reg_6g_superid;
 	uint16_t ctry_code;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 	bool offload_enabled;
@@ -973,7 +971,6 @@ struct cur_regulatory_info {
 	uint32_t num_5g_reg_rules;
 	struct cur_reg_rule *reg_rules_2g_ptr;
 	struct cur_reg_rule *reg_rules_5g_ptr;
-	uint16_t super_dmn_id;
 	enum reg_6g_client_type client_type;
 	bool rnr_tpe_usable;
 	bool unspecified_ap_usable;
@@ -1147,6 +1144,7 @@ enum direction {
  * @def_region_domain: default reg domain
  * @def_country_code: default country code
  * @reg_dmn_pair: reg domain pair
+ * @reg_6g_superid: 6G super domain ID
  * @ctry_code: country code
  * @reg_rules: regulatory rules
  * @client_type: type of client
@@ -1167,6 +1165,7 @@ struct mas_chan_params {
 	uint16_t def_region_domain;
 	uint16_t def_country_code;
 	uint32_t reg_dmn_pair;
+	uint16_t reg_6g_superid;
 	uint16_t ctry_code;
 	struct reg_rule_info reg_rules;
 #ifdef CONFIG_BAND_6GHZ
