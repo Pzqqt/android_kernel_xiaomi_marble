@@ -51,6 +51,9 @@
 #define DP_PEER_METADATA_PEER_ID_SHIFT	0
 #define DP_PEER_METADATA_VDEV_ID_MASK	0x003f0000
 #define DP_PEER_METADATA_VDEV_ID_SHIFT	16
+#define DP_PEER_METADATA_OFFLOAD_MASK	0x01000000
+#define DP_PEER_METADATA_OFFLOAD_SHIFT	24
+
 
 #define DP_DEFAULT_NOISEFLOOR	(-96)
 
@@ -61,6 +64,10 @@
 #define DP_PEER_METADATA_VDEV_ID_GET(_peer_metadata)		\
 	(((_peer_metadata) & DP_PEER_METADATA_VDEV_ID_MASK)	\
 			>> DP_PEER_METADATA_VDEV_ID_SHIFT)
+
+#define DP_PEER_METADATA_OFFLOAD_GET(_peer_metadata)		\
+	(((_peer_metadata) & DP_PEER_METADATA_OFFLOAD_MASK)	\
+			>> DP_PEER_METADATA_OFFLOAD_SHIFT)
 
 #define DP_RX_DESC_MAGIC 0xdec0de
 
@@ -1625,13 +1632,21 @@ void dp_rx_link_desc_refill_duplicate_check(
  * This function is used to deliver rx packet to packet capture
  */
 void dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
-				  uint16_t peer_id, uint32_t ppdu_id,
+				  uint16_t peer_id, uint32_t is_offload,
 				  qdf_nbuf_t netbuf);
+void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
+					  uint32_t is_offload);
 #else
 static inline void
 dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
-			     uint16_t peer_id, uint32_t ppdu_id,
+			     uint16_t peer_id, uint32_t is_offload,
 			     qdf_nbuf_t netbuf)
+{
+}
+
+static inline void
+dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
+				     uint32_t is_offload)
 {
 }
 #endif

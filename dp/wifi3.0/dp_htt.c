@@ -4466,7 +4466,7 @@ dp_offload_ind_handler(struct htt_soc *soc, uint32_t *msg_word)
 	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc->dp_soc,
 							 target_pdev_id);
 	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA, soc->dp_soc,
-			     msg_word, HTT_INVALID_PEER, WDI_NO_VAL,
+			     msg_word, HTT_INVALID_VDEV, WDI_NO_VAL,
 			     pdev_id);
 }
 #else
