@@ -573,8 +573,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->rx_status.chan_freq =
 			(HAL_RX_GET(rx_tlv, RX_PPDU_START_1,
 				SW_PHY_META_DATA) & 0xFFFF0000)>>16;
-		if (ppdu_info->rx_status.chan_num &&
-		    ppdu_info->rx_status.chan_freq) {
+		if (ppdu_info->rx_status.chan_num) {
 			ppdu_info->rx_status.chan_freq =
 				hal_rx_radiotap_num_to_freq(
 				ppdu_info->rx_status.chan_num,
