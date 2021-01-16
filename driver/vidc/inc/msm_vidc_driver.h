@@ -297,5 +297,6 @@ bool core_lock_check(struct msm_vidc_core *core, const char *function);
 void inst_lock(struct msm_vidc_inst *inst, const char *function);
 void inst_unlock(struct msm_vidc_inst *inst, const char *function);
 bool inst_lock_check(struct msm_vidc_inst *inst, const char *function);
+int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst);
 #endif // _MSM_VIDC_DRIVER_H_
 

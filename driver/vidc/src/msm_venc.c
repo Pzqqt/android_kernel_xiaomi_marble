@@ -1510,12 +1510,11 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	f = &inst->fmts[OUTPUT_META_PORT];
 	f->type = OUTPUT_META_PLANE;
 	f->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
-	f->fmt.meta.buffersize = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_OUTPUT_META);
-	inst->buffers.output_meta.min_count = inst->buffers.output.min_count;
-	inst->buffers.output_meta.extra_count = inst->buffers.output.extra_count;
-	inst->buffers.output_meta.actual_count = inst->buffers.output.actual_count;
-	inst->buffers.output_meta.size = f->fmt.meta.buffersize;
+	f->fmt.meta.buffersize = 0;
+	inst->buffers.output_meta.min_count = 0;
+	inst->buffers.output_meta.extra_count = 0;
+	inst->buffers.output_meta.actual_count = 0;
+	inst->buffers.output_meta.size = 0;
 
 	f = &inst->fmts[INPUT_PORT];
 	f->type = INPUT_MPLANE;
@@ -1542,12 +1541,11 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	f = &inst->fmts[INPUT_META_PORT];
 	f->type = INPUT_META_PLANE;
 	f->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
-	f->fmt.meta.buffersize = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_INPUT_META);
-	inst->buffers.input_meta.min_count = inst->buffers.input.min_count;
-	inst->buffers.input_meta.extra_count = inst->buffers.input.extra_count;
-	inst->buffers.input_meta.actual_count = inst->buffers.input.actual_count;
-	inst->buffers.input_meta.size = f->fmt.meta.buffersize;
+	f->fmt.meta.buffersize = 0;
+	inst->buffers.input_meta.min_count = 0;
+	inst->buffers.input_meta.extra_count = 0;
+	inst->buffers.input_meta.actual_count = 0;
+	inst->buffers.input_meta.size = 0;
 
 	inst->hfi_rc_type = HFI_RC_VBR_CFR;
 

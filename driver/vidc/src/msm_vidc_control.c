@@ -24,6 +24,26 @@ static bool is_priv_ctrl(u32 id)
 	return false;
 }
 
+static bool is_meta_ctrl(u32 id)
+{
+	return (id == V4L2_CID_MPEG_VIDC_METADATA_LTR_MARK_USE_DETAILS ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_SEQ_HEADER_NAL ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_DPB_LUMA_CHROMA_MISR ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_OPB_LUMA_CHROMA_MISR ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_INTERLACE ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_SEI_MASTERING_DISPLAY_COLOUR ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_SEI_CONTENT_LIGHT_LEVEL ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA);
+}
+
 static const char *const mpeg_video_rate_control[] = {
 	"VBR",
 	"CBR",
@@ -625,6 +645,10 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	/* Static setting */
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		capability->cap[cap_id].value = ctrl->val;
+
+		if (is_meta_ctrl(ctrl->id))
+			msm_vidc_update_meta_port_settings(inst);
+
 		return 0;
 	}
 
