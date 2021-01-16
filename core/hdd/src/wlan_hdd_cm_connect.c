@@ -43,6 +43,7 @@
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_scan.h"
 #include <enet.h>
+#include <wlan_mlme_twt_ucfg_api.h>
 
 #ifdef FEATURE_CM_ENABLE
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
@@ -897,6 +898,7 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 	struct vdev_mlme_obj *mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	uint8_t uapsd_mask =
 		mlme_obj->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask;
+	bool is_auth_required = true;
 
 	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
@@ -905,7 +907,16 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 			       sta_ctx->conn_info.chan_freq);
 	hdd_wmm_assoc(adapter, false, uapsd_mask);
 
-	hdd_roam_register_sta(adapter, &rsp->bssid, false);
+	if (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
+	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
+	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
+	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA256 ||
+	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA384 ||
+	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA256 ||
+	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA384)
+		is_auth_required = false;
+
+	hdd_roam_register_sta(adapter, &rsp->bssid, is_auth_required);
 
 	hdd_debug("Enabling queues");
 	hdd_cm_netif_queue_enable(adapter);
@@ -916,6 +927,9 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 		/* Inform FTM TIME SYNC about the connection with AP */
 		hdd_ftm_time_sync_sta_state_notify(adapter,
 						   FTM_TIME_SYNC_STA_CONNECTED);
+		ucfg_mlme_init_twt_context(hdd_ctx->psoc,
+					   &rsp->bssid,
+					   WLAN_ALL_SESSIONS_DIALOG_ID);
 	}
 	hdd_periodic_sta_stats_start(adapter);
 }

@@ -1250,295 +1250,9 @@ lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 }
 #endif
 
-#ifdef FEATURE_CM_ENABLE
-static struct pe_session *
-lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
-{
-	struct pe_session *pe_session;
-	uint8_t session_id;
-	struct wlan_objmgr_vdev *vdev;
-
-	pe_session = pe_find_session_by_bssid(mac_ctx, req->entry->bssid.bytes,
-					      &session_id);
-
-	if (pe_session) {
-		pe_err("vdev_id: %d cm_id 0x%x :pe-session(%d (vdev %d)) already exists for BSSID: "
-		       QDF_MAC_ADDR_FMT " in lim_sme_state = %X",
-		       req->vdev_id, req->cm_id, session_id,
-		       pe_session->vdev_id,
-		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes),
-		       pe_session->limSmeState);
-		return NULL;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
-						    req->vdev_id,
-						    WLAN_MLME_CM_ID);
-	if (!vdev) {
-		pe_err("vdev_id: %d cm_id 0x%x : vdev not found", req->vdev_id,
-		       req->cm_id);
-		return NULL;
-	}
-
-	pe_session = pe_create_session(mac_ctx, req->entry->bssid.bytes,
-			&session_id,
-			mac_ctx->lim.max_sta_of_pe_session,
-			eSIR_INFRASTRUCTURE_MODE,
-			req->vdev_id);
-	if (!pe_session)
-		pe_err("vdev_id: %d cm_id 0x%x : pe_session create failed BSSID"
-		       QDF_MAC_ADDR_FMT, req->vdev_id, req->cm_id,
-		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes));
-
-	pe_session->cm_id = req->cm_id;
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
-
-	return pe_session;
-}
-
-static QDF_STATUS
-lim_fill_session_params(struct mac_context *mac_ctx,
-			struct pe_session *pe_session,
-			struct cm_vdev_join_req *req)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS
-lim_cm_handle_join_req(struct cm_vdev_join_req *req)
-{
-	struct mac_context *mac_ctx;
-	struct pe_session *pe_session;
-	QDF_STATUS status;
-
-	if (!req)
-		return QDF_STATUS_E_INVAL;
-
-	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (!mac_ctx)
-		return QDF_STATUS_E_INVAL;
-
-	pe_session = lim_cm_create_session(mac_ctx, req);
-
-	if (!pe_session)
-		goto fail;
-
-	status = lim_fill_session_params(mac_ctx, pe_session, req);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		goto fail;
-
-	return QDF_STATUS_SUCCESS;
-
-fail:
-	lim_cm_send_connect_rsp(mac_ctx, pe_session, req, CM_GENERIC_FAILURE,
-			        QDF_STATUS_E_FAILURE, 0);
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
-{
-	struct cm_vdev_join_req *req;
-	QDF_STATUS status;
-
-	if (!msg || !msg->bodyptr) {
-		mlme_err("msg or msg->bodyptr is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	req = msg->bodyptr;
-
-	status = lim_cm_handle_join_req(req);
-
-	cm_free_join_req(req);
-
-	return status;
-}
-
-static void lim_process_sb_disconnect_req(struct mac_context *mac_ctx,
-					  struct pe_session *pe_session,
-					  struct wlan_cm_vdev_discon_req *req)
-{
-	struct scheduler_msg msg = {0};
-	struct disassoc_cnf disassoc_cnf = {0};
-
-	if (pe_session->limSmeState == eLIM_SME_WT_DEAUTH_STATE)
-		disassoc_cnf.messageType = eWNI_SME_DEAUTH_CNF;
-	else if (pe_session->limSmeState == eLIM_SME_WT_DISASSOC_STATE)
-		disassoc_cnf.messageType = eWNI_SME_DISASSOC_CNF;
-	disassoc_cnf.vdev_id = req->req.vdev_id;
-	disassoc_cnf.bssid = req->req.bssid;
-	disassoc_cnf.length = sizeof(disassoc_cnf);
-	disassoc_cnf.peer_macaddr = req->req.bssid;
-
-	msg.bodyptr = &disassoc_cnf;
-	msg.type = disassoc_cnf.messageType;
-	lim_process_sme_disassoc_cnf(mac_ctx, &msg);
-}
-
-static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
-					  struct wlan_cm_vdev_discon_req *req)
-{
-	struct pe_session *pe_session;
-	struct scheduler_msg msg = {0};
-	struct disassoc_req disassoc_req = {0};
-
-	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
-					      &req->req.vdev_id);
-	if (!pe_session)
-		return;
-
-	disassoc_req.messageType = eWNI_SME_DISASSOC_REQ;
-	disassoc_req.length = sizeof(disassoc_req);
-	disassoc_req.sessionId = req->req.vdev_id;
-	disassoc_req.bssid = req->req.bssid;
-	disassoc_req.peer_macaddr = req->req.bssid;
-	disassoc_req.reasonCode = req->req.reason_code;
-	if (req->req.reason_code == REASON_FW_TRIGGERED_ROAM_FAILURE) {
-		disassoc_req.process_ho_fail = true;
-		disassoc_req.doNotSendOverTheAir = 1;
-	} else if (wlan_cm_is_vdev_roaming(pe_session->vdev)) {
-		disassoc_req.doNotSendOverTheAir = 1;
-	}
-
-	msg.bodyptr = &disassoc_req;
-	msg.type = eWNI_SME_DISASSOC_REQ;
-	lim_process_sme_disassoc_req(mac_ctx, &msg);
-}
-
-static void lim_prepare_and_send_deauth(struct mac_context *mac_ctx,
-					struct wlan_cm_vdev_discon_req *req)
-{
-	struct scheduler_msg msg = {0};
-	struct deauth_req deauth_req = {0};
-
-	deauth_req.messageType = eWNI_SME_DEAUTH_REQ;
-	deauth_req.length = sizeof(deauth_req);
-	deauth_req.vdev_id = req->req.vdev_id;
-	deauth_req.bssid = req->req.bssid;
-	deauth_req.peer_macaddr = req->req.bssid;
-	deauth_req.reasonCode = req->req.reason_code;
-
-	msg.bodyptr = &deauth_req;
-	msg.type = eWNI_SME_DEAUTH_REQ;
-	lim_process_sme_deauth_req(mac_ctx, &msg);
-}
-
-static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
-					  struct wlan_cm_vdev_discon_req *req)
-{
-	enum wlan_reason_code reason_code;
-	bool enable_deauth_to_disassoc_map = false;
-
-	reason_code = req->req.reason_code;
-
-	switch (reason_code) {
-	case REASON_IFACE_DOWN:
-	case REASON_DEVICE_RECOVERY:
-	case REASON_OPER_CHANNEL_BAND_CHANGE:
-	case REASON_USER_TRIGGERED_ROAM_FAILURE:
-	case REASON_CHANNEL_SWITCH_FAILED:
-	case REASON_GATEWAY_REACHABILITY_FAILURE:
-	case REASON_OPER_CHANNEL_DISABLED_INDOOR:
-		/* Set reason REASON_DEAUTH_NETWORK_LEAVING for prop deauth */
-		req->req.reason_code = REASON_DEAUTH_NETWORK_LEAVING;
-		/* fallthrough */
-	case REASON_PREV_AUTH_NOT_VALID:
-	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
-		lim_prepare_and_send_deauth(mac_ctx, req);
-		break;
-	case REASON_DEAUTH_NETWORK_LEAVING:
-		wlan_mlme_get_enable_deauth_to_disassoc_map(
-					mac_ctx->psoc,
-					&enable_deauth_to_disassoc_map);
-		if (enable_deauth_to_disassoc_map) {
-			req->req.reason_code = REASON_DISASSOC_NETWORK_LEAVING;
-			return lim_prepare_and_send_disassoc(mac_ctx, req);
-		}
-		lim_prepare_and_send_deauth(mac_ctx, req);
-		break;
-	default:
-		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
-		if (reason_code >= REASON_PROP_START)
-			req->req.reason_code = REASON_UNSPEC_FAILURE;
-		lim_prepare_and_send_disassoc(mac_ctx, req);
-	}
-}
-
-static QDF_STATUS
-lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
-{
-	struct mac_context *mac_ctx;
-	struct pe_session *pe_session;
-
-	if (!req)
-		return QDF_STATUS_E_INVAL;
-
-	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac_ctx)
-		return QDF_STATUS_E_INVAL;
-
-	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
-					      &req->req.vdev_id);
-	if (!pe_session) {
-		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid"
-		       QDF_MAC_ADDR_FMT, req->cm_id, req->req.vdev_id,
-		       QDF_MAC_ADDR_REF(req->req.bssid.bytes));
-		lim_cm_send_disconnect_rsp(mac_ctx, req->req.vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (req->req.source == CM_PEER_DISCONNECT ||
-	    req->req.source == CM_SB_DISCONNECT)
-		lim_process_sb_disconnect_req(mac_ctx, pe_session, req);
-	else
-		lim_process_nb_disconnect_req(mac_ctx, req);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
-{
-	struct wlan_cm_vdev_discon_req *req;
-	QDF_STATUS status;
-
-	if (!msg || !msg->bodyptr) {
-		mlme_err("msg or msg->bodyptr is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	req = msg->bodyptr;
-
-	status = lim_cm_handle_disconnect_req(req);
-
-	qdf_mem_free(req);
-
-	return status;
-}
-
-QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
-{
-	struct cm_peer_create_req *req;
-	QDF_STATUS status;
-
-	if (!msg || !msg->bodyptr) {
-		mlme_err("msg or msg->bodyptr is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	req = msg->bodyptr;
-
-	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes);
-
-	qdf_mem_free(req);
-
-	return status;
-}
-#endif
-
 static bool lim_is_fast_roam_enabled(struct mac_context *mac_ctx,
-				     struct wlan_objmgr_vdev *vdev) {
+				     struct wlan_objmgr_vdev *vdev)
+{
 
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
 		return false;
@@ -1943,7 +1657,7 @@ lim_get_bss_dot11_mode(struct bss_description *bss_desc,
 	case eSIR_11G_NW_TYPE:
 		bss_dot11_mode = MLME_DOT11_MODE_11G;
 		break;
-	default :
+	default:
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq))
 			bss_dot11_mode = MLME_DOT11_MODE_11G;
 		else
@@ -2099,11 +1813,10 @@ lim_handle_11n_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 			*intersected_mode = MLME_DOT11_MODE_11N;
 			break;
 		}
-		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq))
 			*intersected_mode = MLME_DOT11_MODE_11A;
-		} else {
+		else
 			*intersected_mode = MLME_DOT11_MODE_11G;
-		}
 		break;
 	case MLME_DOT11_MODE_11G:
 		*intersected_mode = MLME_DOT11_MODE_11G;
@@ -2156,11 +1869,10 @@ lim_handle_11ac_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 			*intersected_mode = MLME_DOT11_MODE_11N;
 			break;
 		}
-		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq))
 			*intersected_mode = MLME_DOT11_MODE_11A;
-		} else {
+		else
 			*intersected_mode = MLME_DOT11_MODE_11G;
-		}
 		break;
 	case MLME_DOT11_MODE_11G:
 		*intersected_mode = MLME_DOT11_MODE_11G;
@@ -2289,9 +2001,9 @@ lim_handle_11n_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 static QDF_STATUS
 lim_handle_11ac_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
-			        enum mlme_dot11_mode *intersected_mode,
-			        tDot11fBeaconIEs *ie_struct,
-			        struct bss_description *bss_desc)
+				enum mlme_dot11_mode *intersected_mode,
+				tDot11fBeaconIEs *ie_struct,
+				struct bss_description *bss_desc)
 {
 	bool vht_capable = false;
 
@@ -2336,7 +2048,7 @@ lim_handle_11ac_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
 
 static QDF_STATUS
 lim_handle_11ax_only_dot11_mode(enum mlme_dot11_mode bss_dot11_mode,
-			        enum mlme_dot11_mode *intersected_mode)
+				enum mlme_dot11_mode *intersected_mode)
 {
 	switch (bss_dot11_mode) {
 	case MLME_DOT11_MODE_11AX:
@@ -2417,6 +2129,104 @@ lim_get_intersected_dot11_mode_sta_ap(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 }
+
+#if 0
+/* This is temp will be removed in next gerrit */
+static bool
+lim_is_wap_profile(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return false;
+
+	if (!QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_WPA))
+		return false;
+
+	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_OCB)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256))))
+		return true;
+
+	return false;
+}
+
+static bool
+lim_is_wapi_profile(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return false;
+
+	if (!QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_WAPI))
+		return false;
+
+	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WAPI_GCM4)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WAPI_SMS4))))
+		return true;
+
+	return false;
+}
+
+static bool
+lim_is_rsn_profile(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+	bool is_rsn = false;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return false;
+
+	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_8021X) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_RSNA) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_CCKM) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_SAE) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_FILS_SK))
+		is_rsn = true;
+
+	if (!is_rsn)
+		return false;
+
+	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_OCB)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM_256)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM))))
+		return true;
+
+	return false;
+}
+#endif
 
 static void
 lim_verify_dot11_mode_with_crypto(struct pe_session *session)
@@ -2750,12 +2560,12 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		session->htSupportedChannelWidthSet;
 	session->htSecondaryChannelOffset = cb_mode;
 
-	if (PHY_DOUBLE_CHANNEL_HIGH_PRIMARY == cb_mode) {
+	if (cb_mode == PHY_DOUBLE_CHANNEL_HIGH_PRIMARY) {
 		session->ch_center_freq_seg0 =
 			wlan_reg_freq_to_chan(
 			mac_ctx->pdev, session->curr_op_freq) - 2;
 		session->ch_width = CH_WIDTH_40MHZ;
-	} else if (PHY_DOUBLE_CHANNEL_LOW_PRIMARY == cb_mode) {
+	} else if (cb_mode == PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
 		session->ch_center_freq_seg0 =
 			wlan_reg_freq_to_chan(
 			mac_ctx->pdev, session->curr_op_freq) + 2;
@@ -2903,6 +2713,406 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef FEATURE_CM_ENABLE
+static struct pe_session *
+lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
+{
+	struct pe_session *pe_session;
+	uint8_t session_id;
+	struct wlan_objmgr_vdev *vdev;
+
+	pe_session = pe_find_session_by_bssid(mac_ctx, req->entry->bssid.bytes,
+					      &session_id);
+
+	if (pe_session) {
+		pe_err("vdev_id: %d cm_id 0x%x :pe-session(%d (vdev %d)) already exists for BSSID: "
+		       QDF_MAC_ADDR_FMT " in lim_sme_state = %X",
+		       req->vdev_id, req->cm_id, session_id,
+		       pe_session->vdev_id,
+		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes),
+		       pe_session->limSmeState);
+		return NULL;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+						    req->vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		pe_err("vdev_id: %d cm_id 0x%x : vdev not found", req->vdev_id,
+		       req->cm_id);
+		return NULL;
+	}
+
+	pe_session = pe_create_session(mac_ctx, req->entry->bssid.bytes,
+			&session_id,
+			mac_ctx->lim.max_sta_of_pe_session,
+			eSIR_INFRASTRUCTURE_MODE,
+			req->vdev_id);
+	if (!pe_session)
+		pe_err("vdev_id: %d cm_id 0x%x : pe_session create failed BSSID"
+		       QDF_MAC_ADDR_FMT, req->vdev_id, req->cm_id,
+		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes));
+
+	pe_session->cm_id = req->cm_id;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return pe_session;
+}
+
+static QDF_STATUS
+lim_send_connect_req_to_mlm(struct pe_session *session)
+{
+	tLimMlmJoinReq *mlm_join_req;
+	uint32_t len;
+	QDF_STATUS status;
+
+	len = sizeof(tLimMlmJoinReq) +
+			session->lim_join_req->bssDescription.length + 2;
+	mlm_join_req = qdf_mem_malloc(len);
+	if (!mlm_join_req)
+		return QDF_STATUS_E_FAILURE;
+
+	/* PE SessionId is stored as a part of JoinReq */
+	mlm_join_req->sessionId = session->peSessionId;
+
+	mlm_join_req->bssDescription.length =
+		session->lim_join_req->bssDescription.length;
+
+	qdf_mem_copy((uint8_t *) &mlm_join_req->bssDescription.bssId,
+		(uint8_t *)
+		&session->lim_join_req->bssDescription.bssId,
+		session->lim_join_req->bssDescription.length + 2);
+
+	/* Issue LIM_MLM_JOIN_REQ to MLM */
+	status = lim_send_join_req(session, mlm_join_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(mlm_join_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+lim_fill_session_params(struct mac_context *mac_ctx,
+			struct pe_session *session,
+			struct cm_vdev_join_req *req)
+{
+	QDF_STATUS status;
+	struct bss_description *bss_desc;
+	uint32_t ie_len;
+	uint32_t bss_len;
+	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
+	struct join_req *pe_join_req;
+	qdf_size_t op_rate_len, ext_rate_len;
+
+	ie_len = util_scan_entry_ie_len(req->entry);
+	bss_len = (uint16_t)(offsetof(struct bss_description,
+			   ieFields[0]) + ie_len);
+
+	session->lim_join_req = qdf_mem_malloc(sizeof(*session->lim_join_req) +
+					       bss_len);
+	if (!session->lim_join_req)
+		return QDF_STATUS_E_NOMEM;
+
+	pe_join_req = session->lim_join_req;
+	bss_desc = &session->lim_join_req->bssDescription;
+
+	status = wlan_fill_bss_desc_from_scan_entry(mac_ctx, bss_desc,
+						    req->entry);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(session->lim_join_req);
+		session->lim_join_req = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Copy the SSID from req to session entry  */
+	session->ssId.length = req->entry->ssid.length;
+	qdf_mem_copy(session->ssId.ssId, req->entry->ssid.ssid,
+		     session->ssId.length);
+
+	status = lim_fill_pe_session(mac_ctx, session, bss_desc,
+				     &ret_code);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to fill pe session vdev id %d",
+		       session->vdev_id);
+		qdf_mem_free(session->lim_join_req);
+		session->lim_join_req = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = mlme_get_opr_rate(session->vdev, session->rateSet.rate,
+				   &op_rate_len);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(session->lim_join_req);
+		session->lim_join_req = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = mlme_get_ext_opr_rate(session->vdev, session->extRateSet.rate,
+				       &ext_rate_len);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(session->lim_join_req);
+		session->lim_join_req = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	session->rateSet.numRates = op_rate_len;
+	session->extRateSet.numRates = ext_rate_len;
+
+	qdf_mem_copy(pe_join_req->addIEAssoc.addIEdata,
+		     req->assoc_ie.ptr, req->assoc_ie.len);
+
+	qdf_mem_copy(pe_join_req->addIEScan.addIEdata,
+		     req->scan_ie.ptr, req->scan_ie.len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+lim_cm_handle_join_req(struct cm_vdev_join_req *req)
+{
+	struct mac_context *mac_ctx;
+	struct pe_session *pe_session;
+	QDF_STATUS status;
+
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	pe_session = lim_cm_create_session(mac_ctx, req);
+
+	if (!pe_session)
+		goto fail;
+
+	status = lim_fill_session_params(mac_ctx, pe_session, req);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		goto fail;
+
+	status = lim_send_connect_req_to_mlm(pe_session);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to send mlm req vdev id %d",
+		       pe_session->vdev_id);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+fail:
+	if (pe_session)
+		pe_delete_session(mac_ctx, pe_session);
+
+	lim_cm_send_connect_rsp(mac_ctx, NULL, req, CM_GENERIC_FAILURE,
+				QDF_STATUS_E_FAILURE, 0);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS cm_process_join_req(struct scheduler_msg *msg)
+{
+	struct cm_vdev_join_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = lim_cm_handle_join_req(req);
+
+	cm_free_join_req(req);
+
+	return status;
+}
+
+static void lim_prepare_and_send_deauth(struct mac_context *mac_ctx,
+					struct wlan_cm_vdev_discon_req *req)
+{
+	struct scheduler_msg msg = {0};
+	struct deauth_req deauth_req = {0};
+
+	deauth_req.messageType = eWNI_SME_DEAUTH_REQ;
+	deauth_req.length = sizeof(deauth_req);
+	deauth_req.vdev_id = req->req.vdev_id;
+	deauth_req.bssid = req->req.bssid;
+	deauth_req.peer_macaddr = req->req.bssid;
+	deauth_req.reasonCode = req->req.reason_code;
+
+	msg.bodyptr = &deauth_req;
+	msg.type = eWNI_SME_DEAUTH_REQ;
+	lim_process_sme_deauth_req(mac_ctx, &msg);
+}
+
+static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
+					  struct wlan_cm_vdev_discon_req *req)
+{
+	struct pe_session *pe_session;
+	struct scheduler_msg msg = {0};
+	struct disassoc_req disassoc_req = {0};
+
+	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
+					      &req->req.vdev_id);
+	if (!pe_session)
+		return;
+
+	disassoc_req.messageType = eWNI_SME_DISASSOC_REQ;
+	disassoc_req.length = sizeof(disassoc_req);
+	disassoc_req.sessionId = req->req.vdev_id;
+	disassoc_req.bssid = req->req.bssid;
+	disassoc_req.peer_macaddr = req->req.bssid;
+	disassoc_req.reasonCode = req->req.reason_code;
+	if (req->req.reason_code == REASON_FW_TRIGGERED_ROAM_FAILURE) {
+		disassoc_req.process_ho_fail = true;
+		disassoc_req.doNotSendOverTheAir = 1;
+	} else if (wlan_cm_is_vdev_roaming(pe_session->vdev)) {
+		disassoc_req.doNotSendOverTheAir = 1;
+	}
+
+	msg.bodyptr = &disassoc_req;
+	msg.type = eWNI_SME_DISASSOC_REQ;
+	lim_process_sme_disassoc_req(mac_ctx, &msg);
+}
+
+static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
+					  struct wlan_cm_vdev_discon_req *req)
+{
+	enum wlan_reason_code reason_code;
+	bool enable_deauth_to_disassoc_map = false;
+
+	reason_code = req->req.reason_code;
+
+	switch (reason_code) {
+	case REASON_IFACE_DOWN:
+	case REASON_DEVICE_RECOVERY:
+	case REASON_OPER_CHANNEL_BAND_CHANGE:
+	case REASON_USER_TRIGGERED_ROAM_FAILURE:
+	case REASON_CHANNEL_SWITCH_FAILED:
+	case REASON_GATEWAY_REACHABILITY_FAILURE:
+	case REASON_OPER_CHANNEL_DISABLED_INDOOR:
+		/* Set reason REASON_DEAUTH_NETWORK_LEAVING for prop deauth */
+		req->req.reason_code = REASON_DEAUTH_NETWORK_LEAVING;
+		/* fallthrough */
+	case REASON_PREV_AUTH_NOT_VALID:
+	case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
+		lim_prepare_and_send_deauth(mac_ctx, req);
+		break;
+	case REASON_DEAUTH_NETWORK_LEAVING:
+		wlan_mlme_get_enable_deauth_to_disassoc_map(
+					mac_ctx->psoc,
+					&enable_deauth_to_disassoc_map);
+		if (enable_deauth_to_disassoc_map) {
+			req->req.reason_code = REASON_DISASSOC_NETWORK_LEAVING;
+			return lim_prepare_and_send_disassoc(mac_ctx, req);
+		}
+		lim_prepare_and_send_deauth(mac_ctx, req);
+		break;
+	default:
+		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
+		if (reason_code >= REASON_PROP_START)
+			req->req.reason_code = REASON_UNSPEC_FAILURE;
+		lim_prepare_and_send_disassoc(mac_ctx, req);
+	}
+}
+
+static void lim_process_sb_disconnect_req(struct mac_context *mac_ctx,
+					  struct pe_session *pe_session,
+					  struct wlan_cm_vdev_discon_req *req)
+{
+	struct scheduler_msg msg = {0};
+	struct disassoc_cnf disassoc_cnf = {0};
+
+	if (pe_session->limSmeState == eLIM_SME_WT_DEAUTH_STATE)
+		disassoc_cnf.messageType = eWNI_SME_DEAUTH_CNF;
+	else if (pe_session->limSmeState == eLIM_SME_WT_DISASSOC_STATE)
+		disassoc_cnf.messageType = eWNI_SME_DISASSOC_CNF;
+	disassoc_cnf.vdev_id = req->req.vdev_id;
+	disassoc_cnf.bssid = req->req.bssid;
+	disassoc_cnf.length = sizeof(disassoc_cnf);
+	disassoc_cnf.peer_macaddr = req->req.bssid;
+
+	msg.bodyptr = &disassoc_cnf;
+	msg.type = disassoc_cnf.messageType;
+	lim_process_sme_disassoc_cnf(mac_ctx, &msg);
+}
+
+static QDF_STATUS
+lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
+{
+	struct mac_context *mac_ctx;
+	struct pe_session *pe_session;
+
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
+					      &req->req.vdev_id);
+	if (!pe_session) {
+		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid"
+		       QDF_MAC_ADDR_FMT, req->cm_id, req->req.vdev_id,
+		       QDF_MAC_ADDR_REF(req->req.bssid.bytes));
+		lim_cm_send_disconnect_rsp(mac_ctx, req->req.vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (req->req.source == CM_PEER_DISCONNECT ||
+	    req->req.source == CM_SB_DISCONNECT)
+		lim_process_sb_disconnect_req(mac_ctx, pe_session, req);
+	else
+		lim_process_nb_disconnect_req(mac_ctx, req);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
+{
+	struct wlan_cm_vdev_discon_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = lim_cm_handle_disconnect_req(req);
+
+	qdf_mem_free(req);
+	return status;
+}
+
+QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
+{
+	struct cm_peer_create_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes);
+
+	qdf_mem_free(req);
+
+	return status;
+}
+#endif
 
 /**
  * __lim_process_sme_join_req() - process SME_JOIN_REQ message
@@ -3086,13 +3296,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			sizeof(tSirMacRateSet));
 		qdf_mem_copy((void *)&session->extRateSet,
 			(void *)&sme_join_req->extendedRateSet,
-			sizeof(tSirMacRateSet));
-		/*
-		 * this may not be needed anymore now, as rateSet is now
-		 * included in the session entry and MLM has session context.
-		 */
-		qdf_mem_copy((void *)&mlm_join_req->operationalRateSet,
-			(void *)&session->rateSet,
 			sizeof(tSirMacRateSet));
 
 		mlm_join_req->bssDescription.length =

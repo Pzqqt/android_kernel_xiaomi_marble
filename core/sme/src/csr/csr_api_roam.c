@@ -4254,18 +4254,13 @@ static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId
 	return status;
 }
 
-#ifndef FEATURE_CM_ENABLE
 static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
-				   struct csr_roam_profile *pProfile,
-				   eCsrPhyMode phyMode,
-				   struct bss_description *bss_desc,
 				   tDot11fBeaconIEs *pIes,
 				   tSirMacRateSet *pOpRateSet,
 				   tSirMacRateSet *pExRateSet)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
-	enum csr_cfgdot11mode cfgDot11Mode;
 	uint8_t *pDstRate;
 	uint16_t rateBitmap = 0;
 
@@ -4278,8 +4273,6 @@ static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
 		return status;
 	}
 
-	csr_is_phy_mode_match(mac, phyMode, bss_desc, pProfile,
-			      &cfgDot11Mode, pIes);
 	/*
 	 * Originally, we thought that for 11a networks, the 11a rates
 	 * are always in the Operational Rate set & for 11b and 11g
@@ -4329,7 +4322,6 @@ static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
 		status = QDF_STATUS_SUCCESS;
 	return status;
 }
-#endif
 
 static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 				 struct csr_roam_profile *pProfile,
@@ -13821,6 +13813,12 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 {
 	struct mac_context *mac_ctx;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	tSirMacRateSet op_rate_set;
+	tSirMacRateSet ext_rate_set;
+	QDF_STATUS status;
+	tDot11fBeaconIEs *ie_struct;
+	struct bss_description *bss_desc;
+	uint32_t ie_len, bss_len;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -13831,6 +13829,46 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
+
+	ie_len = util_scan_entry_ie_len(join_req->entry);
+	bss_len = (uint16_t)(offsetof(struct bss_description,
+			   ieFields[0]) + ie_len);
+
+	bss_desc = qdf_mem_malloc(sizeof(*bss_desc) + bss_len);
+	if (!bss_desc)
+		return QDF_STATUS_E_NOMEM;
+
+	status = wlan_fill_bss_desc_from_scan_entry(mac_ctx, bss_desc,
+						    join_req->entry);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(bss_desc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc,
+						     &ie_struct);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("IE parsing failed vdev id %d", wlan_vdev_get_id(vdev));
+		qdf_mem_free(bss_desc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = csr_get_rate_set(mac_ctx, ie_struct, &op_rate_set,
+				  &ext_rate_set);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Rates parsing failed vdev id %d",
+			wlan_vdev_get_id(vdev));
+		qdf_mem_free(ie_struct);
+		qdf_mem_free(bss_desc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_free(ie_struct);
+	qdf_mem_free(bss_desc);
+
+	mlme_set_opr_rate(vdev, op_rate_set.rate, op_rate_set.numRates);
+	mlme_set_ext_opr_rate(vdev, ext_rate_set.rate, ext_rate_set.numRates);
 
 	/* Fill join_req from legacy */
 	mac_ctx->mlme_cfg->sta.current_rssi = join_req->entry->rssi_raw;
@@ -14082,6 +14120,18 @@ purge_list:
 
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+static inline bool csr_cm_is_fils_connection(struct wlan_cm_connect_resp *resp)
+{
+	return resp->is_fils_connection;
+}
+#else
+static inline bool csr_cm_is_fils_connection(struct wlan_cm_connect_resp *resp)
+{
+	return false;
+}
+#endif
+
 QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 			      struct cm_vdev_join_rsp *rsp)
 {
@@ -14103,7 +14153,7 @@ QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session || CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+	if (!session || !CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
 		sme_err("session not found for vdev_id %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -14117,6 +14167,11 @@ QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 	csr_fill_connected_profile(mac_ctx, session, vdev, rsp);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool cm_is_fils_connection(struct wlan_cm_connect_resp *resp)
+{
+	return resp->is_fils_connection;
 }
 
 QDF_STATUS
@@ -14141,7 +14196,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session || CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+	if (!session || !CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
 		sme_err("session not found for vdev_id %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -14156,7 +14211,6 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 
 		return QDF_STATUS_SUCCESS;
 	}
-	/* start wait for key timer */
 	/*
 	 * For open mode authentication, send dummy install key response to
 	 * send OBSS scan and QOS event.
@@ -14187,6 +14241,21 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 				vdev_id);
 	}
 	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED, vdev_id);
+
+	if (csr_cm_is_fils_connection(rsp) || !ucast_cipher ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+			  ucast_cipher ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104) ||
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP)) {
+		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
+					 vdev_id);
+	} else {
+		csr_roam_substate_change(mac_ctx,
+					 eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY,
+					 vdev_id);
+		/* start wait for key timer. */
+	}
 	/* Fill legacy structures from resp for success */
 
 	return QDF_STATUS_SUCCESS;
@@ -14209,13 +14278,19 @@ QDF_STATUS cm_csr_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session || CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+	if (!session || !CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
 		sme_err("session not found for vdev_id %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, vdev_id)) {
+		sme_debug("Stop Wait for key timer and change substate to eCSR_ROAM_SUBSTATE_NONE");
+		/* stop wait for key timer */
+		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
+					 vdev_id);
+	}
+
 	/* Fill join_req from legacy */
-	/* stop wait for key timer */
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -14237,7 +14312,7 @@ QDF_STATUS cm_csr_handle_diconnect_req(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session || CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+	if (!session || !CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
 		sme_err("session not found for vdev_id %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -14718,9 +14793,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			pProfile->force_24ghz_in_ht20;
 		pSession->uapsd_mask = pProfile->uapsd_mask;
 		status =
-			csr_get_rate_set(mac, pProfile,
-					 (eCsrPhyMode) pProfile->phyMode,
-					 pBssDescription, pIes, &OpRateSet,
+			csr_get_rate_set(mac, pIes, &OpRateSet,
 					 &ExRateSet);
 		if (!csr_enable_twt(mac, pIes))
 			ps_param->uapsd_per_ac_bit_mask = pProfile->uapsd_mask;

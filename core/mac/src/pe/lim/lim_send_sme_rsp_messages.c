@@ -426,8 +426,8 @@ void lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
 	msg.flush_callback = lim_cm_flush_connect_rsp;
 
 	status = scheduler_post_message(QDF_MODULE_ID_PE,
-					QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &msg);
+					QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &msg);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("vdev_id: %d cm_id 0x%x : msg post fails",
@@ -1025,8 +1025,8 @@ static void lim_send_sta_disconnect_ind(struct mac_context *mac,
 	ind_msg.type = msg->type;
 	qdf_mem_free(msg->bodyptr);
 
-	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &ind_msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &ind_msg);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("vdev_id: %d, source %d, reason %d, type %d msg post fails",
@@ -1053,8 +1053,8 @@ void lim_cm_send_disconnect_rsp(struct mac_context *mac_ctx, uint8_t vdev_id)
 	rsp_msg.bodyptr = rsp;
 	rsp_msg.callback = cm_handle_disconnect_resp;
 
-	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &rsp_msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &rsp_msg);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("Failed to post disconnect rsp to sme vdev_id %d",
