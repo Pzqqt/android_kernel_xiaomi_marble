@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/math64.h>
@@ -60,6 +60,7 @@
 #define DSIPHY_CMN_PHY_STATUS						0x140
 #define DSIPHY_CMN_LANE_STATUS0						0x148
 #define DSIPHY_CMN_LANE_STATUS1						0x14C
+#define DSIPHY_CMN_GLBL_DIGTOP_SPARE10                                  0x1AC
 
 /* n = 0..3 for data lanes and n = 4 for clock lane */
 #define DSIPHY_LNX_CFG0(n)                         (0x200 + (0x80 * (n)))
@@ -156,8 +157,7 @@ static void dsi_phy_hw_v4_0_lane_settings(struct dsi_phy_hw *phy,
 	u8 tx_dctrl_v4_1[] = {0x40, 0x40, 0x40, 0x46, 0x41};
 	u8 *tx_dctrl;
 
-	if ((phy->version == DSI_PHY_VERSION_4_1) ||
-			(phy->version == DSI_PHY_VERSION_4_2))
+	if (phy->version >= DSI_PHY_VERSION_4_1)
 		tx_dctrl = &tx_dctrl_v4_1[0];
 	else
 		tx_dctrl = &tx_dctrl_v4[0];
@@ -435,6 +435,12 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 
 	if (dsi_phy_hw_v4_0_is_pll_on(phy))
 		pr_warn("PLL turned on before configuring PHY\n");
+
+	/* Request for REFGEN ready */
+	if (phy->version == DSI_PHY_VERSION_4_3) {
+		DSI_W32(phy, DSIPHY_CMN_GLBL_DIGTOP_SPARE10, 0x1);
+		udelay(500);
+	}
 
 	/* wait for REFGEN READY */
 	rc = readl_poll_timeout_atomic(phy->base + DSIPHY_CMN_PHY_STATUS,
