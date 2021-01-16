@@ -26648,6 +26648,36 @@ typedef enum wmi_hw_mode_config_type {
     WMI_HW_MODE_2G_PHYB     = 7, /* Ony PhyB 2G active */
 } WMI_HW_MODE_CONFIG_TYPE;
 
+/*
+ * Per HW mode MLO capability flags
+ * use bits 31:28 of A_UINT32 hw_mode_config_type for Per HW mode MLO
+ * capability flags...
+ * WMI_MLO_CAP_FLAG_NONE:           Do not support MLO for the specific HW mode
+ * WMI_MLO_CAP_FLAG_NON_STR_IN_DBS: Support STR MLO when DBS for the specific
+ *                                  HW mode
+ * WMI_MLO_CAP_FLAG_STR_IN_DBS:     Support Non-STR MLO when DBS for the
+ *                                  specific HW mode
+ * WMI_MLO_CAP_FLAG_NON_STR_IN_SBS: Support STR MLO when SBS for the specific
+ *                                  HW mode
+ * WMI_MLO_CAP_FLAG_STR_IN_SBS:     Support Non-STR MLO when SBS for the
+ *                                  specific HW mode
+ */
+#define WMI_MLO_CAP_FLAG_NONE           0x0
+#define WMI_MLO_CAP_FLAG_NON_STR_IN_DBS 0x1
+#define WMI_MLO_CAP_FLAG_STR_IN_DBS     0x2
+#define WMI_MLO_CAP_FLAG_NON_STR_IN_SBS 0x4
+#define WMI_MLO_CAP_FLAG_STR_IN_SBS     0x8
+
+/*
+ * hw_mode_config_type sub-fields for chips that support 802.11BE/MLO:
+ * bits 28:0  - hw_mode_config
+ * bits 31:28 - per HW mode MLO capability flags
+ */
+#define WMI_BECAP_PHY_GET_HW_MODE_CFG(hw_mode_config_type) WMI_GET_BITS(hw_mode_config_type, 0, 28)
+#define WMI_BECAP_PHY_SET_HW_MODE_CFG(hw_mode_config_type, value) WMI_SET_BITS(hw_mode_config_type, 0, 28, value)
+#define WMI_BECAP_PHY_GET_MLO_CAP(hw_mode_config_type) WMI_GET_BITS(hw_mode_config_type, 28, 4)
+#define WMI_BECAP_PHY_SET_MLO_CAP(hw_mode_config_type, value) WMI_SET_BITS(hw_mode_config_type, 28, 4, value)
+
 #define WMI_SUPPORT_11B_GET(flags) WMI_GET_BITS(flags, 0, 1)
 #define WMI_SUPPORT_11B_SET(flags, value) WMI_SET_BITS(flags, 0, 1, value)
 
@@ -26665,6 +26695,9 @@ typedef enum wmi_hw_mode_config_type {
 
 #define WMI_SUPPORT_11AX_GET(flags) WMI_GET_BITS(flags, 5, 1)
 #define WMI_SUPPORT_11AX_SET(flags, value) WMI_SET_BITS(flags, 5, 1, value)
+
+#define WMI_SUPPORT_11BE_GET(flags) WMI_GET_BITS(flags, 6, 1)
+#define WMI_SUPPORT_11BE_SET(flags, value) WMI_SET_BITS(flags, 6, 1, value)
 
 #define WMI_MAX_MUBFEE_GET(flags) WMI_GET_BITS(flags, 28, 4)
 #define WMI_MAX_MUBFEE_SET(flags, value) WMI_SET_BITS(flags, 28, 4, value)
@@ -26758,8 +26791,9 @@ typedef struct {
                      supports_11n:1,
                      supports_11ac:1,
                      supports_11ax:1,
+                     supports_11be:1,
 
-                     unused: 22,
+                     unused: 21,
 
                      max_mubfee: 4; /* max MU beamformees supported per MAC */
         };
@@ -26941,8 +26975,20 @@ typedef struct {
     /* hw_mode_config_type
      * Identify a particular type of HW mode such as SBS, DBS etc.
      * Refer to WMI_HW_MODE_CONFIG_TYPE values.
+     *
+     * Use bits 31:28 of hw_mode_config_type for Per HW mode MLO capability
+     * flags.
+     * Refer to WMI_MLO_CAP_FLAG_XXX. For legacy chips which do not support
+     * MLO, these top bits will always be set to 0, so it won't impact the
+     * legacy chips which treat hw_mode_config_type as 32 bits.
      */
-    A_UINT32 hw_mode_config_type;
+    union {
+        struct {
+            A_UINT32 hw_mode_config   :28,
+                     mlo_cap_flag     :4; /* see WMI_MLO_CAP_FLAG_ defs */
+        };
+        A_UINT32 hw_mode_config_type;
+    };
 
     /**************************************************************************
      * DON'T ADD ANY FURTHER FIELDS HERE -
