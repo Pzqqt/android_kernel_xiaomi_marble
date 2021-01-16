@@ -23064,6 +23064,7 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int retval = 0;
+	enum nl80211_channel_type channel_type;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -23086,12 +23087,14 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	hdd_debug("Channel width changed to %d ",
-		  cfg80211_get_chandef_type(chandef));
+	if (chandef->width < NL80211_CHAN_WIDTH_80)
+		channel_type = cfg80211_get_chandef_type(chandef);
+	else
+		channel_type = NL80211_CHAN_HT40PLUS;
+	hdd_debug("Channel width changed to %d ", channel_type);
 
 	/* Change SAP ht2040 mode */
-	status = hdd_set_sap_ht2040_mode(adapter,
-					 cfg80211_get_chandef_type(chandef));
+	status = hdd_set_sap_ht2040_mode(adapter, channel_type);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Cannot set SAP HT20/40 mode!");
 		retval = -EINVAL;
