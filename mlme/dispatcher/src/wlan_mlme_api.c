@@ -4591,12 +4591,6 @@ QDF_STATUS mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (*len < mlme_priv->opr_rate_set.len) {
-		mlme_legacy_err("Invalid len %zd, opr_rate len %zd",
-				*len, mlme_priv->opr_rate_set.len);
-		return QDF_STATUS_E_INVAL;
-	}
-
 	*len = mlme_priv->opr_rate_set.len;
 	qdf_mem_copy(dst, mlme_priv->opr_rate_set.data, *len);
 
@@ -4645,12 +4639,6 @@ QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (*len < mlme_priv->ext_opr_rate_set.len) {
-		mlme_legacy_err("Invalid len %zd, ext_opr_rate len %zd",
-				*len, mlme_priv->ext_opr_rate_set.len);
-		return QDF_STATUS_E_INVAL;
 	}
 
 	*len = mlme_priv->ext_opr_rate_set.len;

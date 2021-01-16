@@ -75,7 +75,7 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		mlme_err("vdev_id: %d pdev not found", vdev_id);
+		mlme_err("vdev_id: %d pdev not found", req->req.vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 	rso_cfg = wlan_cm_get_rso_config(vdev);
