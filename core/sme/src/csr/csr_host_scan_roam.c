@@ -48,6 +48,8 @@ QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac, uint32_t vdev_id,
 	/* attempt to Join this BSS... */
 	return csr_send_join_req_msg(mac, vdev_id, bss_desc, roam_profile, ies,
 				     eWNI_SME_REASSOC_REQ);
+#else
+	return QDF_STATUS_SUCCESS;
 #endif
 }
 

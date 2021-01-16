@@ -120,6 +120,7 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 	struct cm_vdev_join_rsp *rsp;
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
+	struct wlan_objmgr_peer *peer;
 
 	if (!msg || !msg->bodyptr)
 		return QDF_STATUS_E_FAILURE;
@@ -136,6 +137,15 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	/*  check and delete bss peer in case of failure */
+	if (QDF_IS_STATUS_ERROR(rsp->connect_rsp.connect_status)) {
+		peer = wlan_objmgr_vdev_try_get_bsspeer(vdev,
+							WLAN_MLME_CM_ID);
+		if (peer) {
+			cm_send_bss_peer_delete_req(vdev);
+			wlan_objmgr_peer_release_ref(peer, WLAN_MLME_CM_ID);
+		}
+	}
 	cm_csr_connect_rsp(vdev, rsp);
 	status = wlan_cm_connect_rsp(vdev, &rsp->connect_rsp);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);

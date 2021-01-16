@@ -382,18 +382,6 @@ static void csr_roam_roaming_offload_timer_action(struct mac_context *mac_ctx,
 #endif
 static void csr_roam_roaming_offload_timeout_handler(void *timer_data);
 
-/**
- * csr_roam_start_wait_for_key_timer - Start wait_for_key timer
- * @mac: MAC context
- * @vdev_id: vdev id
- *
- * API called to start wait_for_key timer
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS csr_roam_start_wait_for_key_timer(struct mac_context *mac,
-						    uint8_t vdev_id,
-						    uint32_t interval);
 static void csr_roam_wait_for_key_time_out_handler(void *pv);
 static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11dinfo);
 static QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
@@ -3180,12 +3168,13 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 			     ((hw_mode != 0) ? "yes" : "no"));
 }
 #else
+#ifndef FEATURE_CM_ENABLE
 static void csr_connect_info(struct mac_context *mac_ctx,
 			     struct csr_roam_session *session,
 			     struct csr_roam_info *roam_info,
 			     eCsrRoamResult u2)
 {}
-
+#endif
 #endif
 
 QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
@@ -9219,7 +9208,7 @@ csr_post_roam_failure(struct mac_context *mac_ctx,
 		csr_roam_complete(mac_ctx, eCsrJoinFailure, NULL, session_id);
 	}
 }
-#endif
+
 /**
  * csr_check_profile_in_scan_cache() - finds if roam profile is present in scan
  * cache or not
@@ -9262,6 +9251,7 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 	}
 	return true;
 }
+#endif
 
 static
 QDF_STATUS csr_roam_lfr2_issue_connect(struct mac_context *mac,
@@ -12135,9 +12125,9 @@ void csr_roam_roaming_offload_timer_action(
 }
 #endif
 
-static QDF_STATUS csr_roam_start_wait_for_key_timer(struct mac_context *mac,
-						    uint8_t vdev_id,
-						    uint32_t interval)
+QDF_STATUS csr_roam_start_wait_for_key_timer(struct mac_context *mac,
+					     uint8_t vdev_id,
+					     uint32_t interval)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo roam_info;
@@ -13977,7 +13967,8 @@ static inline void csr_set_ese_assoc(struct mac_context *mac_ctx,
 #else
 static inline void csr_set_ese_assoc(struct mac_context *mac_ctx,
 				     tDot11fBeaconIEs *bcn_ies,
-				     tCsrRoamConnectedProfile *conn_profile)
+				     tCsrRoamConnectedProfile *conn_profile,
+				     uint8_t vdev_id)
 {}
 #endif
 
