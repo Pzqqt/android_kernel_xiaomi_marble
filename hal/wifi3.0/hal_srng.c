@@ -1357,7 +1357,7 @@ extern void hal_detach(void *hal_soc)
 	qdf_mem_free_consistent(hal->qdf_dev, hal->qdf_dev->dev,
 		sizeof(*(hal->shadow_wrptr_mem_vaddr)) * HAL_MAX_LMAC_RINGS,
 		hal->shadow_wrptr_mem_vaddr, hal->shadow_wrptr_mem_paddr, 0);
-	qdf_minidump_remove(hal);
+	qdf_minidump_remove(hal, sizeof(*hal), "hal_soc");
 	qdf_mem_free(hal);
 
 	return;

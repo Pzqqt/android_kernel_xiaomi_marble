@@ -664,7 +664,9 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 
 	wlan_psoc_set_tgt_if_handle(psoc, NULL);
 
-	wlan_minidump_remove(tgt_psoc_info);
+	wlan_minidump_remove(tgt_psoc_info,
+			     sizeof(*tgt_psoc_info), psoc,
+			     WLAN_MD_OBJMGR_PSOC_TGT_INFO, "target_psoc_info");
 	qdf_mem_free(tgt_psoc_info);
 
 	return QDF_STATUS_SUCCESS;

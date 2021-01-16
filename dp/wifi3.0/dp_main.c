@@ -2846,7 +2846,11 @@ void dp_hw_link_desc_pool_banks_free(struct dp_soc *soc, uint32_t mac_id)
 
 	if (pages->dma_pages) {
 		wlan_minidump_remove((void *)
-				     pages->dma_pages->page_v_addr_start);
+				     pages->dma_pages->page_v_addr_start,
+				     pages->num_pages * pages->page_size,
+				     soc->ctrl_psoc,
+				     WLAN_MD_DP_SRNG_WBM_IDLE_LINK,
+				     "hw_link_desc_bank");
 		dp_desc_multi_pages_mem_free(soc, DP_HW_LINK_DESC_TYPE,
 					     pages, 0, false);
 	}
@@ -2986,7 +2990,11 @@ static void dp_hw_link_desc_ring_free(struct dp_soc *soc)
 			}
 		}
 	} else {
-		wlan_minidump_remove(vaddr);
+		wlan_minidump_remove(soc->wbm_idle_link_ring.base_vaddr_unaligned,
+				     soc->wbm_idle_link_ring.alloc_size,
+				     soc->ctrl_psoc,
+				     WLAN_MD_DP_SRNG_WBM_IDLE_LINK,
+				     "wbm_idle_link_ring");
 		dp_srng_free(soc, &soc->wbm_idle_link_ring);
 	}
 }
@@ -3786,10 +3794,18 @@ static inline void dp_create_ext_stats_event(struct dp_soc *soc)
 
 static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 {
-	wlan_minidump_remove(soc->tcl_data_ring[index].base_vaddr_unaligned);
+	wlan_minidump_remove(soc->tcl_data_ring[index].base_vaddr_unaligned,
+			     soc->tcl_data_ring[index].alloc_size,
+			     soc->ctrl_psoc,
+			     WLAN_MD_DP_SRNG_TCL_DATA,
+			     "tcl_data_ring");
 	dp_srng_deinit(soc, &soc->tcl_data_ring[index], TCL_DATA, index);
 
-	wlan_minidump_remove(soc->tx_comp_ring[index].base_vaddr_unaligned);
+	wlan_minidump_remove(soc->tx_comp_ring[index].base_vaddr_unaligned,
+			     soc->tx_comp_ring[index].alloc_size,
+			     soc->ctrl_psoc,
+			     WLAN_MD_DP_SRNG_TX_COMP,
+			     "tcl_comp_ring");
 	dp_srng_deinit(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE, index);
 }
 
@@ -4779,7 +4795,8 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	soc->pdev_list[pdev->pdev_id] = NULL;
 
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
-	wlan_minidump_remove(pdev);
+	wlan_minidump_remove(pdev, sizeof(*pdev), soc->ctrl_psoc,
+			     WLAN_MD_DP_PDEV, "dp_pdev");
 	dp_context_free_mem(soc, DP_PDEV_TYPE, pdev);
 }
 
@@ -4949,7 +4966,8 @@ static void dp_soc_deinit(void *txrx_soc)
 	/* Free wbm sg list and reset flags in down path */
 	dp_rx_wbm_sg_list_deinit(soc);
 
-	wlan_minidump_remove(soc);
+	wlan_minidump_remove(soc, sizeof(*soc), soc->ctrl_psoc,
+			     WLAN_MD_DP_SOC, "dp_soc");
 }
 
 /**
@@ -7110,7 +7128,8 @@ free_vdev:
 
 	dp_info("deleting vdev object %pK ("QDF_MAC_ADDR_FMT")",
 		vdev, QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
-	wlan_minidump_remove(vdev);
+	wlan_minidump_remove(vdev, sizeof(*vdev), soc->ctrl_psoc,
+			     WLAN_MD_DP_VDEV, "dp_vdev");
 	qdf_mem_free(vdev);
 	vdev = NULL;
 
@@ -7180,7 +7199,8 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 				     pdev->pdev_id);
 #endif
 		peer->rdkstats_ctx = NULL;
-		wlan_minidump_remove(peer);
+		wlan_minidump_remove(peer, sizeof(*peer), soc->ctrl_psoc,
+				     WLAN_MD_DP_PEER, "dp_peer");
 
 		qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
 		TAILQ_FOREACH(tmp_peer, &soc->inactive_peer_list,
@@ -13440,7 +13460,11 @@ static void dp_pdev_srng_deinit(struct dp_pdev *pdev)
 	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
 		int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i, pdev->pdev_id);
 
-		wlan_minidump_remove(soc->rxdma_err_dst_ring[lmac_id].base_vaddr_unaligned);
+		wlan_minidump_remove(soc->rxdma_err_dst_ring[lmac_id].base_vaddr_unaligned,
+				     soc->rxdma_err_dst_ring[lmac_id].alloc_size,
+				     soc->ctrl_psoc,
+				     WLAN_MD_DP_SRNG_RXDMA_ERR_DST,
+				     "rxdma_err_dst");
 		dp_srng_deinit(soc, &soc->rxdma_err_dst_ring[lmac_id],
 			       RXDMA_DST, lmac_id);
 	}
@@ -13601,7 +13625,10 @@ static void dp_soc_srng_deinit(struct dp_soc *soc)
 	uint32_t i;
 	/* Free the ring memories */
 	/* Common rings */
-	wlan_minidump_remove(soc->wbm_desc_rel_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->wbm_desc_rel_ring.base_vaddr_unaligned,
+			     soc->wbm_desc_rel_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_WBM_DESC_REL,
+			     "wbm_desc_rel_ring");
 	dp_srng_deinit(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
 
 	/* Tx data rings */
@@ -13610,41 +13637,65 @@ static void dp_soc_srng_deinit(struct dp_soc *soc)
 
 	/* TCL command and status rings */
 	if (soc->init_tcl_cmd_cred_ring) {
-		wlan_minidump_remove(soc->tcl_cmd_credit_ring.base_vaddr_unaligned);
+		wlan_minidump_remove(soc->tcl_cmd_credit_ring.base_vaddr_unaligned,
+				     soc->tcl_cmd_credit_ring.alloc_size,
+				     soc->ctrl_psoc, WLAN_MD_DP_SRNG_TCL_CMD,
+				     "wbm_desc_rel_ring");
 		dp_srng_deinit(soc, &soc->tcl_cmd_credit_ring,
 			       TCL_CMD_CREDIT, 0);
 	}
 
-	wlan_minidump_remove(soc->tcl_status_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->tcl_status_ring.base_vaddr_unaligned,
+			     soc->tcl_status_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_TCL_STATUS,
+			     "wbm_desc_rel_ring");
 	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
 
 	for (i = 0; i < soc->num_reo_dest_rings; i++) {
 		/* TODO: Get number of rings and ring sizes
 		 * from wlan_cfg
 		 */
-		wlan_minidump_remove(soc->reo_dest_ring[i].base_vaddr_unaligned);
+		wlan_minidump_remove(soc->reo_dest_ring[i].base_vaddr_unaligned,
+				     soc->reo_dest_ring[i].alloc_size,
+				     soc->ctrl_psoc, WLAN_MD_DP_SRNG_REO_DEST,
+				     "reo_dest_ring");
 		dp_srng_deinit(soc, &soc->reo_dest_ring[i], REO_DST, i);
 	}
 
 	/* REO reinjection ring */
-	wlan_minidump_remove(soc->reo_reinject_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->reo_reinject_ring.base_vaddr_unaligned,
+			     soc->reo_reinject_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_REO_REINJECT,
+			     "reo_reinject_ring");
 	dp_srng_deinit(soc, &soc->reo_reinject_ring, REO_REINJECT, 0);
 
 	/* Rx release ring */
-	wlan_minidump_remove(soc->rx_rel_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->rx_rel_ring.base_vaddr_unaligned,
+			     soc->rx_rel_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_RX_REL,
+			     "reo_release_ring");
 	dp_srng_deinit(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 0);
 
 	/* Rx exception ring */
 	/* TODO: Better to store ring_type and ring_num in
 	 * dp_srng during setup
 	 */
-	wlan_minidump_remove(soc->reo_exception_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->reo_exception_ring.base_vaddr_unaligned,
+			     soc->reo_exception_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_REO_EXCEPTION,
+			     "reo_exception_ring");
 	dp_srng_deinit(soc, &soc->reo_exception_ring, REO_EXCEPTION, 0);
 
 	/* REO command and status rings */
-	wlan_minidump_remove(soc->reo_cmd_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->reo_cmd_ring.base_vaddr_unaligned,
+			     soc->reo_cmd_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_REO_CMD,
+			     "reo_cmd_ring");
 	dp_srng_deinit(soc, &soc->reo_cmd_ring, REO_CMD, 0);
-	wlan_minidump_remove(soc->reo_status_ring.base_vaddr_unaligned);
+	wlan_minidump_remove(soc->reo_status_ring.base_vaddr_unaligned,
+			     soc->reo_status_ring.alloc_size,
+			     soc->ctrl_psoc, WLAN_MD_DP_SRNG_REO_STATUS,
+			     "reo_status_ring");
 	dp_srng_deinit(soc, &soc->reo_status_ring, REO_STATUS, 0);
 }
 
