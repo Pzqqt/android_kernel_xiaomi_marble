@@ -21,7 +21,7 @@ struct msm_vidc_session_ops {
 		struct vidc_bus_vote_data* vote_data);
 	int (*decide_work_route)(struct msm_vidc_inst *inst);
 	int (*decide_work_mode)(struct msm_vidc_inst *inst);
-	int (*decide_core_and_power_mode)(struct msm_vidc_inst *inst);
+	int (*decide_quality_mode)(struct msm_vidc_inst *inst);
 	int (*buffer_size)(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type type);
 	int (*min_count)(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type type);
 	int (*extra_count)(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type type);

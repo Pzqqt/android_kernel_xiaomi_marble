@@ -327,8 +327,16 @@ static int msm_venc_set_pipe(struct msm_vidc_inst *inst)
 static int msm_venc_set_quality_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_core* core = inst->core;
 	struct msm_vidc_inst_capability *capability = inst->capabilities;
 	u32 mode;
+
+	rc = call_session_op(core, decide_quality_mode, inst);
+	if (rc) {
+		s_vpr_e(inst->sid, "%s: decide_work_route failed\n",
+			__func__);
+		return -EINVAL;
+	}
 
 	mode = capability->cap[QUALITY_MODE].value;
 	s_vpr_h(inst->sid, "%s: quality_mode: %u\n", __func__, mode);

@@ -17,7 +17,6 @@
 #include "msm_vidc_buffer.h"
 #include "msm_vidc_debug.h"
 
-
 #define VBIF_BASE_OFFS_IRIS2                   0x00080000
 #define CPU_BASE_OFFS_IRIS2                    0x000A0000
 #define AON_BASE_OFFS			               0x000E0000
@@ -484,6 +483,170 @@ static int __boot_firmware_iris2(struct msm_vidc_core *vidc_core)
 	return rc;
 }
 
+bool res_is_greater_than(u32 width, u32 height,
+	u32 ref_width, u32 ref_height)
+{
+	u32 num_mbs = NUM_MBS_PER_FRAME(height, width);
+	u32 max_side = max(ref_width, ref_height);
+
+	if (num_mbs > NUM_MBS_PER_FRAME(ref_height, ref_width) ||
+		width > max_side ||
+		height > max_side)
+		return true;
+	else
+		return false;
+}
+
+bool res_is_less_than_or_equal_to(u32 width, u32 height,
+	u32 ref_width, u32 ref_height)
+{
+	u32 num_mbs = NUM_MBS_PER_FRAME(height, width);
+	u32 max_side = max(ref_width, ref_height);
+
+	if (num_mbs <= NUM_MBS_PER_FRAME(ref_height, ref_width) &&
+		width <= max_side &&
+		height <= max_side)
+		return true;
+	else
+		return false;
+}
+
+int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
+{
+	u32 work_mode;
+	struct v4l2_format* out_f;
+	struct v4l2_format* inp_f;
+	u32 width, height;
+	bool res_ok = false;
+	bool lowlatency = false;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	work_mode = MSM_VIDC_STAGE_2;
+	out_f = &inst->fmts[OUTPUT_PORT];
+	inp_f = &inst->fmts[INPUT_PORT];
+
+	if (is_decode_session(inst)) {
+		height = out_f->fmt.pix_mp.height;
+		width = out_f->fmt.pix_mp.width;
+		res_ok = res_is_less_than_or_equal_to(width, height, 1280, 720);
+		if (inst->capabilities->cap[CODED_FRAMES].value ==
+				CODED_FRAMES_ADAPTIVE_FIELDS ||
+			inst->capabilities->cap[LOWLATENCY_MODE].value ||
+			res_ok) {
+			work_mode = MSM_VIDC_STAGE_1;
+		}
+	} else if (is_encode_session(inst)) {
+		height = inp_f->fmt.pix_mp.height;
+		width = inp_f->fmt.pix_mp.width;
+		res_ok = !res_is_greater_than(width, height, 4096, 2160);
+		if (res_ok &&
+			(inst->capabilities->cap[LOWLATENCY_MODE].value)) {
+			work_mode = MSM_VIDC_STAGE_1;
+			/* For WORK_MODE_1, set Low Latency mode by default */
+			lowlatency = true;
+		}
+		if (inst->capabilities->cap[LOSSLESS].value) {
+			/*TODO Set 2 stage in case of ALL INTRA */
+			work_mode = MSM_VIDC_STAGE_2;
+			lowlatency = false;
+		}
+	}
+	else {
+		d_vpr_e("%s: invalid session type\n", __func__);
+		return -EINVAL;
+	}
+
+	s_vpr_h(inst->sid, "Configuring work mode = %u low latency = %u",
+		work_mode, lowlatency);
+	inst->capabilities->cap[STAGE].value = work_mode;
+
+	/* TODO If Encode then Set Low Latency (Enable/Disable)
+	 * and Update internal cap struct
+	*/
+
+	return 0;
+}
+
+int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
+{
+	u32 work_route;
+	struct msm_vidc_core* core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	core = inst->core;
+	work_route = core->capabilities[NUM_VPP_PIPE].value;
+
+	if (is_decode_session(inst)) {
+		if (inst->capabilities->cap[CODED_FRAMES].value ==
+				CODED_FRAMES_ADAPTIVE_FIELDS)
+			work_route = MSM_VIDC_PIPE_1;
+	} else if (is_encode_session(inst)) {
+		u32 slice_mode, width, height;
+		struct v4l2_format* f;
+
+		f = &inst->fmts[INPUT_PORT];
+		height = f->fmt.pix_mp.height;
+		width = f->fmt.pix_mp.width;
+		slice_mode = inst->capabilities->cap[SLICE_MODE].value;
+
+		/*TODO Pipe=1 for legacy CBR*/
+		if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_BYTES)
+			work_route = MSM_VIDC_PIPE_1;
+
+	} else {
+		d_vpr_e("%s: invalid session type\n", __func__);
+		return -EINVAL;
+	}
+
+	s_vpr_h(inst->sid, "Configuring work route = %u", work_route);
+	inst->capabilities->cap[PIPE].value = work_route;
+
+	return 0;
+}
+
+int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
+{
+	struct msm_vidc_inst_capability* capability = inst->capabilities;
+	struct msm_vidc_core *core;
+	u32 mbpf, mbps, max_hq_mbpf, max_hq_mbps;
+	u32 mode;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!is_encode_session(inst))
+		return 0;
+
+	mode = MSM_VIDC_POWER_SAVE_MODE;
+	mbpf = msm_vidc_get_mbs_per_frame(inst);
+	mbps = mbpf * msm_vidc_get_fps(inst);
+	core = inst->core;
+	max_hq_mbpf = core->capabilities[MAX_MBPF_HQ].value;;
+	max_hq_mbps = core->capabilities[MAX_MBPS_HQ].value;;
+
+	/* Power saving always disabled for CQ and LOSSLESS RC modes. */
+	if (inst->capabilities->cap[LOSSLESS].value ||
+		(mbpf <= max_hq_mbpf && mbps <= max_hq_mbps))
+		mode = MSM_VIDC_MAX_QUALITY_MODE;
+
+	inst->flags = mode == MSM_VIDC_POWER_SAVE_MODE ?
+		inst->flags | VIDC_LOW_POWER :
+		inst->flags & ~VIDC_LOW_POWER;
+	capability->cap[QUALITY_MODE].value = mode;
+
+	return 0;
+}
+
 static struct msm_vidc_venus_ops iris2_ops = {
 	.boot_firmware = __boot_firmware_iris2,
 	.interrupt_init = __interrupt_init_iris2,
@@ -504,9 +667,9 @@ static struct msm_vidc_session_ops msm_session_ops = {
 	.extra_count = msm_buffer_extra_count_iris2,
 	.calc_freq = msm_vidc_calc_freq_iris2,
 	.calc_bw = msm_vidc_calc_bw_iris2,
-	.decide_work_route = NULL,
-	.decide_work_mode = NULL,
-	.decide_core_and_power_mode = NULL,
+	.decide_work_route = msm_vidc_decide_work_route_iris2,
+	.decide_work_mode = msm_vidc_decide_work_mode_iris2,
+	.decide_quality_mode = msm_vidc_decide_quality_mode_iris2,
 };
 
 int msm_vidc_init_iris2(struct msm_vidc_core *core)
