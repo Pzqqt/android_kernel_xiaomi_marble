@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,6 +29,7 @@
 #include "wlan_cp_stats_ol_api.h"
 #include <wlan_cp_stats_ucfg_api.h>
 #include "wlan_cp_stats_utils_api.h"
+#include <target_if_cp_stats.h>
 
 QDF_STATUS
 wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
@@ -400,3 +401,66 @@ wlan_cp_stats_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 	cp_stats_debug("peer cp stats object dettached");
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+QDF_STATUS
+wlan_cp_stats_infra_cp_register_resp_cb(struct wlan_objmgr_psoc *psoc,
+					struct infra_cp_stats_cmd_info *req)
+{
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_cp_stats_priv->get_infra_cp_stats = req->infra_cp_stats_resp_cb;
+	psoc_cp_stats_priv->infra_cp_stats_req_context = req->request_cookie;
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_cp_stats_infra_cp_get_context(struct wlan_objmgr_psoc *psoc,
+				   get_infra_cp_stats_cb *resp_cb,
+				   void **context)
+{
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	*resp_cb = psoc_cp_stats_priv->get_infra_cp_stats;
+	*context = psoc_cp_stats_priv->infra_cp_stats_req_context;
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_cp_stats_send_infra_cp_req(struct wlan_objmgr_psoc *psoc,
+				struct infra_cp_stats_cmd_info *req)
+{
+	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
+
+	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("could not get tx_ops");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!tx_ops->send_req_infra_cp_stats) {
+		cp_stats_err("could not get send_req_infra_twt_stats");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	return tx_ops->send_req_infra_cp_stats(psoc, req);
+}
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,6 +124,47 @@ QDF_STATUS wlan_cp_stats_peer_obj_create_handler(
 QDF_STATUS wlan_cp_stats_peer_obj_destroy_handler(
 		struct wlan_objmgr_peer *peer, void *data);
 
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+/**
+ * wlan_cp_stats_infra_cp_register_resp_cb() - Register the response callback
+ * and cookie in the psoc mc_stats object
+ * @psoc: pointer to psoc object
+ * @req: pointer to request parameter structure
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+wlan_cp_stats_infra_cp_register_resp_cb(struct wlan_objmgr_psoc *psoc,
+					struct infra_cp_stats_cmd_info *req);
 
+/**
+ * wlan_cp_stats_infra_cp_get_context() - get the context and callback
+ * for sending response
+ * @psoc: pointer to psoc object
+ * @resp_cb: pointer to store the response callback
+ * @context: pointer to store context
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+wlan_cp_stats_infra_cp_get_context(struct wlan_objmgr_psoc *psoc,
+				   get_infra_cp_stats_cb *resp_cb,
+				   void **context);
+/**
+ * wlan_cp_stats_send_infra_cp_req() - API to send infra cp stats request to
+ * lmac
+ * @psoc: pointer to psoc object
+ * @req: pointer to infra cp stats request
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+wlan_cp_stats_send_infra_cp_req(struct wlan_objmgr_psoc *psoc,
+				struct infra_cp_stats_cmd_info *req);
+
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_OBJ_MGR_HANDLER_H__ */
