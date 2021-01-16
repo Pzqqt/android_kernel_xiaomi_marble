@@ -2474,6 +2474,16 @@ QDF_STATUS (*send_cp_stats_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_cp_stats_more_pending)(wmi_unified_t wmi_handle,
 					    void *evt_buf,
 					    uint32_t *more_flag);
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+QDF_STATUS
+(*extract_infra_cp_stats)(wmi_unified_t wmi_handle,
+			  void *evt_buf, uint32_t evt_buf_len,
+			  struct infra_cp_stats_event *params);
+
+QDF_STATUS
+(*send_infra_cp_stats_request_cmd)(wmi_unified_t wmi_handle,
+				   struct infra_cp_stats_cmd_info *param);
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 QDF_STATUS (*send_vdev_tsf_tstamp_action_cmd)(wmi_unified_t wmi,
 					      uint8_t vdev_id);

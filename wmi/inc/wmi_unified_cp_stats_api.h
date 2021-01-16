@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,22 @@
 #ifdef QCA_SUPPORT_MC_CP_STATS
 #include <wmi_unified_mc_cp_stats_api.h>
 #endif
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+/**
+ * wmi_unified_infra_cp_stats_request_send() - WMI request infra_cp_stats
+ * function
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold infra_cp_stats request parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error
+ *         codes on failure
+ */
+QDF_STATUS
+wmi_unified_infra_cp_stats_request_send(
+				wmi_unified_t wmi_handle,
+				struct infra_cp_stats_cmd_info *param);
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 /**
  * wmi_unified_stats_request_send() - WMI request stats function
