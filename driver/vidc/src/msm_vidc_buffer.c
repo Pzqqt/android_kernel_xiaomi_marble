@@ -3,7 +3,7 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#include <media/msm_media_info.h>
+#include "msm_media_info.h"
 #include "msm_vidc_buffer.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
