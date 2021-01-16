@@ -194,7 +194,7 @@ static void lim_copy_tspec_ie(struct pe_session *pe_session,
 	if (pe_session->tspecIes) {
 		rsp->tspec_ie.len = pe_session->tspecLen;
 		rsp->tspec_ie.ptr =
-		    qdf_mem_malloc(sizeof(rsp->tspec_ie.len));
+		    qdf_mem_malloc(rsp->tspec_ie.len);
 		if (!rsp->tspec_ie.ptr)
 			return;
 
@@ -266,7 +266,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	if (pe_session->beacon) {
 		connect_ie->bcn_probe_rsp.len = pe_session->bcnLen;
 		connect_ie->bcn_probe_rsp.ptr =
-			qdf_mem_malloc(sizeof(connect_ie->bcn_probe_rsp.len));
+			qdf_mem_malloc(connect_ie->bcn_probe_rsp.len);
 		if (!connect_ie->bcn_probe_rsp.ptr)
 			return QDF_STATUS_E_NOMEM;
 
@@ -279,7 +279,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	if (pe_session->assoc_req) {
 		connect_ie->assoc_req.len = pe_session->assocReqLen;
 		connect_ie->assoc_req.ptr =
-			qdf_mem_malloc(sizeof(connect_ie->assoc_req.len));
+				qdf_mem_malloc(connect_ie->assoc_req.len);
 		if (!connect_ie->assoc_req.ptr)
 			return QDF_STATUS_E_NOMEM;
 
@@ -290,7 +290,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	if (pe_session->assocRsp) {
 		connect_ie->assoc_rsp.len = pe_session->assocRspLen;
 		connect_ie->assoc_rsp.ptr =
-			qdf_mem_malloc(sizeof(connect_ie->assoc_rsp.len));
+			qdf_mem_malloc(connect_ie->assoc_rsp.len);
 		if (!connect_ie->assoc_rsp.ptr)
 			return QDF_STATUS_E_NOMEM;
 
@@ -306,7 +306,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 		if (pe_session->ricData) {
 			rsp->ric_resp_ie.len = pe_session->RICDataLen;
 			rsp->ric_resp_ie.ptr =
-			    qdf_mem_malloc(sizeof(rsp->ric_resp_ie.len));
+			    qdf_mem_malloc(rsp->ric_resp_ie.len);
 			if (!rsp->ric_resp_ie.ptr)
 				return QDF_STATUS_E_NOMEM;
 

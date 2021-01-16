@@ -2203,7 +2203,6 @@ static int hdd_twt_get_capabilities(struct hdd_adapter *adapter,
 				    struct nlattr *twt_param_attr)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_station_ctx *hdd_sta_ctx;
 	QDF_STATUS status;
 	int ret = 0;
 
@@ -2216,11 +2215,9 @@ static int hdd_twt_get_capabilities(struct hdd_adapter *adapter,
 		return -EOPNOTSUPP;
 	}
 
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+	if (!hdd_cm_is_vdev_associated(adapter)) {
+		hdd_err_rl("vdev %d not in connected state, mode %d",
+			   adapter->vdev_id, adapter->device_mode);
 		return -EINVAL;
 	}
 

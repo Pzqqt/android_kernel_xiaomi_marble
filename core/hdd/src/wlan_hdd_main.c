@@ -7083,8 +7083,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 
 		if (adapter->device_mode == QDF_NDI_MODE ||
 #ifdef FEATURE_CM_ENABLE
-		    adapter->device_mode == QDF_STA_MODE ||
-		    adapter->device_mode == QDF_P2P_CLIENT_MODE
+		    ((adapter->device_mode == QDF_STA_MODE ||
+		      adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+		      !hdd_cm_is_disconnected(adapter))
 #else
 		    hdd_conn_is_connected(sta_ctx) ||
 		    hdd_cm_is_connecting(adapter)

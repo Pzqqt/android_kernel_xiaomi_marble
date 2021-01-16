@@ -2321,7 +2321,7 @@ cm_send_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev)
 	if (!wma)
 		return QDF_STATUS_E_INVAL;
 
-	if (wlan_vdev_mlme_is_init_state(vdev)) {
+	if (wlan_vdev_mlme_is_init_state(vdev) == QDF_STATUS_SUCCESS) {
 		wma_remove_bss_peer_on_failure(wma, vdev_id);
 		return QDF_STATUS_SUCCESS;
 	}

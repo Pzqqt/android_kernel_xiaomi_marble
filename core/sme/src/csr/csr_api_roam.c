@@ -14073,6 +14073,7 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	}
 	/* update bss desc */
 	session->pConnectBssDesc = bss_desc;
+	conn_profile = &session->connectedProfile;
 	csr_fill_enc_type(&conn_profile->EncryptionType,
 			  cur_node->entry->neg_sec_info.ucastcipherset);
 	csr_fill_enc_type(&conn_profile->mcEncryptionType,
@@ -14082,7 +14083,6 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 			   cur_node->entry->neg_sec_info.key_mgmt,
 			   cur_node->entry->neg_sec_info.ucastcipherset);
 
-	conn_profile = &session->connectedProfile;
 	conn_profile->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
 	conn_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
 	conn_profile->op_freq = rsp->connect_rsp.freq;

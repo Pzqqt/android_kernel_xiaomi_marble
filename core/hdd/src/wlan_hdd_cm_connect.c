@@ -746,6 +746,7 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 				   sta_ctx->conn_info.auth_type);
 		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
 	}
+	qdf_mem_free(bcn_ie);
 
 	hdd_cm_save_bss_info(adapter, rsp);
 }
