@@ -764,7 +764,7 @@ int dp_wrap_rx_bridge(struct wlan_objmgr_vdev *vdev, struct net_device **dev,
 }
 
 int dp_wrap_rx_process(struct net_device **dev, struct wlan_objmgr_vdev *vdev,
-		       struct sk_buff *skb, int *nwifi)
+		       struct sk_buff *skb)
 {
 	struct dp_wrap_vdev *wvdev;
 	int rv = 0;
@@ -772,10 +772,6 @@ int dp_wrap_rx_process(struct net_device **dev, struct wlan_objmgr_vdev *vdev,
 	wvdev = dp_wrap_get_vdev_handle(vdev);
 
 	if (qdf_unlikely(dp_wrap_vdev_is_psta(vdev) || dp_wrap_vdev_is_wrap(vdev))) {
-		if (*nwifi) {
-			transcap_nwifi_to_8023(skb);
-			*nwifi = 0;
-		}
 		dp_wrap_mat_rx(wvdev, (wbuf_t)skb);
 		rv = dp_wrap_rx_bridge(vdev, dev, wvdev, skb);
 	}

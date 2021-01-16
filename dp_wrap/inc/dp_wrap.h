@@ -377,7 +377,7 @@ void dp_wrap_vdev_clear_wrap(struct wlan_objmgr_vdev *vdev);
 void dp_wrap_dev_remove(struct wlan_objmgr_vdev *vdev);
 void dp_wrap_dev_remove_vma(struct wlan_objmgr_vdev *vdev);
 int dp_wrap_rx_process(struct net_device **dev, struct wlan_objmgr_vdev *vdev,
-		       struct sk_buff *skb, int *nwifi);
+		       struct sk_buff *skb);
 int dp_wrap_tx_process(struct net_device **dev, struct wlan_objmgr_vdev *vdev,
 		       struct sk_buff **skb);
 int dp_wrap_mat_tx(struct dp_wrap_vdev *wvdev, wbuf_t buf);
