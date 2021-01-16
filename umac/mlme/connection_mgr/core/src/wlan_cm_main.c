@@ -79,6 +79,7 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	if (!vdev_mlme->cnx_mgr_ctx)
 		return QDF_STATUS_E_NOMEM;
 
+	vdev_mlme->cnx_mgr_ctx->vdev = vdev;
 	status = mlme_cm_ext_hdl_create(vdev_mlme->cnx_mgr_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
@@ -86,7 +87,6 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 		return status;
 	}
 
-	vdev_mlme->cnx_mgr_ctx->vdev = vdev;
 	status = cm_sm_create(vdev_mlme->cnx_mgr_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_cm_ext_hdl_destroy(vdev_mlme->cnx_mgr_ctx);

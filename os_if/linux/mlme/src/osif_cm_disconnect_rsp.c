@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -61,7 +61,7 @@ osif_validate_disconnect_and_reset_src_id(struct vdev_osif_priv *osif_priv,
 	 */
 	if (rsp->req.cm_id != osif_priv->cm_info.last_id ||
 	    rsp->req.req.source != osif_priv->cm_info.last_source) {
-		osif_debug("Ignore as cm_id(%d)/src(%d) didn't match stored cm_id(%d)/src(%d)",
+		osif_debug("Ignore as cm_id(0x%x)/src(%d) didn't match stored cm_id(0x%x)/src(%d)",
 			   rsp->req.cm_id, rsp->req.req.source,
 			   osif_priv->cm_info.last_id,
 			   osif_priv->cm_info.last_source);
@@ -127,8 +127,10 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 	ieee80211_reason =
 		osif_cm_get_disconnect_reason(osif_priv,
 					      rsp->req.req.reason_code);
+	if (rsp->req.req.source == CM_PEER_DISCONNECT)
+		locally_generated = false;
 
-	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " %sdisconnect " QDF_MAC_ADDR_FMT " cm_id %d source %d reason:%u %s vendor:%u %s",
+	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " %sdisconnect " QDF_MAC_ADDR_FMT " cm_id 0x%x source %d reason:%u %s vendor:%u %s",
 		       osif_priv->wdev->netdev->name,
 		       rsp->req.req.vdev_id,
 		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
@@ -150,9 +152,6 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 		osif_cm_disconnect_comp_ind(vdev, rsp, OSIF_NOT_HANDLED);
 		return status;
 	}
-
-	if (rsp->req.req.source == CM_PEER_DISCONNECT)
-		locally_generated = false;
 
 	osif_cm_disconnect_comp_ind(vdev, rsp, OSIF_PRE_USERSPACE_UPDATE);
 	osif_cm_indicate_disconnect(osif_priv->wdev->netdev, ieee80211_reason,
