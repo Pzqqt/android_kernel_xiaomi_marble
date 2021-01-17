@@ -972,7 +972,6 @@ struct join_rsp {
 #endif
 	uint8_t nss;
 	uint32_t max_rate_flags;
-	bool supported_nss_1x1;
 	tDot11fIEHTCaps ht_caps;
 	tDot11fIEVHTCaps vht_caps;
 	tDot11fIEHTInfo ht_operation;

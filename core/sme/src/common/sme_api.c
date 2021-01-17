@@ -1275,9 +1275,6 @@ QDF_STATUS sme_start(mac_handle_t mac_handle)
 			sme_soc_set_dual_mac_config;
 		sme_cbacks.sme_change_mcc_beacon_interval =
 			sme_change_mcc_beacon_interval;
-		sme_cbacks.sme_get_ap_channel_from_scan =
-			sme_get_ap_channel_from_scan;
-		sme_cbacks.sme_scan_result_purge = sme_scan_result_purge;
 		sme_cbacks.sme_rso_start_cb = sme_start_roaming;
 		sme_cbacks.sme_rso_stop_cb = sme_stop_roaming;
 		status = policy_mgr_register_sme_cb(mac->psoc, &sme_cbacks);
@@ -2793,20 +2790,7 @@ QDF_STATUS sme_scan_get_result_for_bssid(mac_handle_t mac_handle,
 	return status;
 }
 
-QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
-					tScanResultHandle *scan_cache,
-					uint32_t *ap_ch_freq,
-					uint8_t vdev_id)
-{
-	QDF_STATUS status;
-
-	status = sme_get_ap_channel_from_scan_cache((struct csr_roam_profile *)
-						  profile,
-						  scan_cache,
-						  ap_ch_freq, vdev_id);
-	return status;
-}
-
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	struct csr_roam_profile *profile, tScanResultHandle *scan_cache,
 	uint32_t *ap_ch_freq, uint8_t vdev_id)
@@ -2828,7 +2812,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 
 	qdf_mem_zero(&first_ap_profile, sizeof(struct bss_description));
 	if (!profile) {
-		csr_set_open_mode_in_scan_filter(scan_filter);
+		QDF_SET_PARAM(scan_filter->authmodeset, WLAN_CRYPTO_AUTH_OPEN);
 	} else {
 		/* Here is the profile we need to connect to */
 		status = csr_roam_get_scan_filter_from_profile(mac_ctx, profile,
@@ -2880,6 +2864,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 
 	return status;
 }
+#endif
 
 /*
  * sme_scan_result_get_first() -
@@ -10231,39 +10216,6 @@ QDF_STATUS sme_beacon_debug_stats_req(
 }
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * sme_update_roam_key_mgmt_offload_enabled() - enable/disable key mgmt offload
- * This is a synchronous call
- * @mac_handle: The handle returned by mac_open.
- * @session_id: Session Identifier
- * @pmkid_modes: PMKID modes of PMKSA caching and OKC
- * Return: QDF_STATUS_SUCCESS - SME updated config successfully.
- * Other status means SME is failed to update.
- */
-
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
-					uint8_t session_id,
-					struct pmkid_mode_bits *pmkid_modes)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			status = csr_roam_set_key_mgmt_offload(mac_ctx,
-						session_id,
-						pmkid_modes);
-		} else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac_ctx->sme);
-	}
-
-	return status;
-}
-#endif
-
 /**
  * sme_get_temperature() - SME API to get the pdev temperature
  * @mac_handle: Handle to global MAC context
@@ -13264,6 +13216,61 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 }
 #endif
 
+QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
+				     const uint8_t *bssid,
+				     int8_t *rssi, int8_t *snr)
+{
+	struct bss_description *bss_descp;
+	struct scan_filter *scan_filter;
+	struct scan_result_list *bss_list;
+	tScanResultHandle result_handle = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
+	if (!scan_filter) {
+		status = QDF_STATUS_E_NOMEM;
+		goto exit;
+	}
+
+	/* update filter to get scan result with just target BSSID */
+	scan_filter->num_of_bssid = 1;
+	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
+		     bssid, sizeof(struct qdf_mac_addr));
+	scan_filter->ignore_auth_enc_type = true;
+
+	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle,
+				     false);
+	qdf_mem_free(scan_filter);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_debug("parse_scan_result failed");
+		goto exit;
+	}
+
+	bss_list = (struct scan_result_list *)result_handle;
+	bss_descp = csr_get_fst_bssdescr_ptr(bss_list);
+	if (!bss_descp) {
+		sme_err("unable to fetch bss descriptor");
+		status = QDF_STATUS_E_FAULT;
+		goto exit;
+	}
+
+	sme_debug("snr: %d, rssi: %d, raw_rssi: %d",
+		bss_descp->sinr, bss_descp->rssi, bss_descp->rssi_raw);
+
+	if (rssi)
+		*rssi = bss_descp->rssi;
+	if (snr)
+		*snr = bss_descp->sinr;
+
+exit:
+	if (result_handle)
+		csr_scan_result_purge(mac_ctx, result_handle);
+
+	return status;
+}
+
+#ifndef FEATURE_CM_ENABLE
 /**
  * sme_prepare_beacon_from_bss_descp() - prepares beacon frame by populating
  * different fields and IEs from bss descriptor.
@@ -13309,70 +13316,6 @@ static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
 	qdf_mem_copy(frame_buf + SIR_MAC_HDR_LEN_3A
 		     + SIR_MAC_B_PR_SSID_OFFSET,
 		     &bss_descp->ieFields, ie_len);
-}
-
-QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
-				     struct csr_roam_profile *profile,
-				     const uint8_t *bssid,
-				     int8_t *rssi, int8_t *snr,
-				     uint8_t vdev_id)
-{
-	struct bss_description *bss_descp;
-	struct scan_filter *scan_filter;
-	struct scan_result_list *bss_list;
-	tScanResultHandle result_handle = NULL;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-
-	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
-	if (!scan_filter) {
-		status = QDF_STATUS_E_NOMEM;
-		goto exit;
-	}
-
-	status = csr_roam_get_scan_filter_from_profile(mac_ctx,
-						       profile, scan_filter,
-						       false, vdev_id);
-	if (QDF_STATUS_SUCCESS != status) {
-		sme_err("prepare_filter failed");
-		qdf_mem_free(scan_filter);
-		goto exit;
-	}
-
-	/* update filter to get scan result with just target BSSID */
-	scan_filter->num_of_bssid = 1;
-	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
-		     bssid, sizeof(struct qdf_mac_addr));
-
-	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle,
-				     false);
-	qdf_mem_free(scan_filter);
-	if (QDF_STATUS_SUCCESS != status) {
-		sme_debug("parse_scan_result failed");
-		goto exit;
-	}
-
-	bss_list = (struct scan_result_list *)result_handle;
-	bss_descp = csr_get_fst_bssdescr_ptr(bss_list);
-	if (!bss_descp) {
-		sme_err("unable to fetch bss descriptor");
-		status = QDF_STATUS_E_FAULT;
-		goto exit;
-	}
-
-	sme_debug("snr: %d, rssi: %d, raw_rssi: %d",
-		bss_descp->sinr, bss_descp->rssi, bss_descp->rssi_raw);
-
-	if (rssi)
-		*rssi = bss_descp->rssi;
-	if (snr)
-		*snr = bss_descp->sinr;
-
-exit:
-	if (result_handle)
-		csr_scan_result_purge(mac_ctx, result_handle);
-
-	return status;
 }
 
 QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
@@ -13460,7 +13403,7 @@ exit:
 
 	return status;
 }
-
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 {
@@ -13572,9 +13515,10 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_ERROR(sme_acquire_global_lock(&mac->sme)))
 		return QDF_STATUS_E_FAILURE;
 
+#ifndef FEATURE_CM_ENABLE
 	status = csr_fast_reassoc(mac_handle, profile, bssid, ch_freq, vdev_id,
 				  connected_bssid);
-
+#endif
 	sme_release_global_lock(&mac->sme);
 
 	return status;

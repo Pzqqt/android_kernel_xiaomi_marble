@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -471,22 +471,6 @@ uint32_t policy_mgr_get_connection_count(struct wlan_objmgr_psoc *psoc);
  * Return: uint32_t value of concurrency mask
  */
 uint32_t policy_mgr_get_concurrency_mode(struct wlan_objmgr_psoc *psoc);
-
-/**
- * policy_mgr_search_and_check_for_session_conc() - Checks if
- * concurrecy is allowed
- * @psoc: PSOC object information
- * @session_id: Session id
- * @roam_profile: Pointer to the roam profile
- *
- * Searches and gets the channel number from the scan results and checks if
- * concurrency is allowed for the given session ID
- *
- * Return: Non zero channel frequency value if concurrency is allowed else  0
- */
-uint32_t policy_mgr_search_and_check_for_session_conc(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t session_id, void *roam_profile);
 
 /**
  * policy_mgr_is_chnl_in_diff_band() - to check that given channel
@@ -1437,12 +1421,6 @@ struct policy_mgr_sme_cbacks {
 		enum policy_mgr_conn_update_reason reason,
 		uint32_t original_vdev_id);
 	QDF_STATUS (*sme_change_mcc_beacon_interval)(uint8_t session_id);
-	QDF_STATUS (*sme_get_ap_channel_from_scan)(
-		void *roam_profile,
-		void **scan_cache,
-		uint32_t *ch_freq, uint8_t vdev_id);
-	QDF_STATUS (*sme_scan_result_purge)(
-				void *scan_result);
 	QDF_STATUS (*sme_rso_start_cb)(
 		mac_handle_t mac_handle, uint8_t vdev_id,
 		uint8_t reason, enum wlan_cm_rso_control_requestor requestor);
@@ -1665,23 +1643,6 @@ void policy_mgr_soc_set_dual_mac_cfg_cb(struct wlan_objmgr_psoc *psoc,
  */
 bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
 				     enum policy_mgr_con_mode *new_mode);
-
-/**
- * policy_mgr_get_channel_from_scan_result() - to get channel from scan result
- * @psoc: PSOC object information
- * @roam_profile: pointer to roam profile
- * @ch_freq: channel frequency to be filled
- * @vdev_id: vdev id
- *
- * This routine gets channel which most likely a candidate to which STA
- * will make connection.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-policy_mgr_get_channel_from_scan_result(struct wlan_objmgr_psoc *psoc,
-					void *roam_profile,
-					uint32_t *ch_freq, uint8_t vdev_id);
 
 /**
  * policy_mgr_mode_specific_num_open_sessions() - to get number of open sessions

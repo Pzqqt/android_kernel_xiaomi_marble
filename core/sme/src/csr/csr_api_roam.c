@@ -559,11 +559,7 @@ static void csr_roam_de_init_globals(struct mac_context *mac)
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (mac->roam.roamSession[i].pCurRoamProfile)
 			csr_release_profile(mac,
-					    mac->roam.roamSession[i].
-					    pCurRoamProfile);
-		csr_release_profile(mac,
-				    &mac->roam.roamSession[i].
-				    stored_roam_profile.profile);
+					    mac->roam.roamSession[i].pCurRoamProfile);
 	}
 	csr_roam_free_globals();
 	mac->roam.roamSession = NULL;
@@ -3043,9 +3039,7 @@ csr_connect_info(struct mac_context *mac_ctx,
 	qdf_mem_copy(conn_stats.ssid, conn_profile->SSID.ssId,
 		     conn_stats.ssid_len);
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
-				  session->pCurRoamProfile,
-				  &conn_stats.bssid[0],
-				  &conn_stats.rssi, NULL, session->vdev_id);
+				  &conn_stats.bssid[0], &conn_stats.rssi, NULL);
 	conn_stats.est_link_speed = 0;
 	conn_stats.chnl_bw =
 		diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
@@ -3078,7 +3072,7 @@ csr_connect_info(struct mac_context *mac_ctx,
 	sme_nofl_debug("AKM: %s Encry-type: %s",
 		       csr_get_akm_str(conn_profile->AuthType),
 		       csr_get_encr_type_str(conn_stats.encryption_type));
-	sme_nofl_debug("DUT_NSS: %d | Intersected NSS:%d", session->vdev_nss,
+	sme_nofl_debug("DUT_NSS: %d | Intersected NSS:%d", session->nss,
 		  csr_get_sta_ap_intersected_nss(mac_ctx, session->vdev_id));
 	sme_nofl_debug("Qos enable: %d | Associated: %s",
 		       conn_stats.qos_capability,
@@ -3118,9 +3112,7 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 			     "\n\tssid: %.*s", conn_profile->SSID.length,
 			     conn_profile->SSID.ssId);
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
-				  session->pCurRoamProfile,
-				  conn_profile->bssid.bytes,
-				  &rssi, NULL, session->vdev_id);
+				  conn_profile->bssid.bytes, &rssi, NULL);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\trssi: %d", rssi);
 	ch_width = diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
@@ -6188,7 +6180,7 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 		csr_roam_completion(mac_ctx, session_id, NULL, cmd,
 			eCSR_ROAM_RESULT_FAILURE, false);
 		break;
-#endif
+#endif  /* ndef FEATURE_CM_ENABLE */
 	case eCsrHddIssuedReassocToSameAP:
 	case eCsrSmeIssuedReassocToSameAP:
 		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_IDLE,
@@ -7054,7 +7046,7 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 		csr_roam_completion(mac_ctx, session_id, NULL, cmd,
 				eCSR_ROAM_RESULT_ASSOCIATED, true);
 		break;
-#endif
+#endif /* ndef FEATURE_CM_ENABLE */
 	case eCsrReassocFailure:
 		/*
 		 * Currently Reassoc failure is handled through eCsrJoinFailure
@@ -7609,42 +7601,6 @@ static bool csr_is_fils_connection(struct csr_roam_profile *pProfile)
 }
 #endif
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * csr_roam_print_candidate_aps() - print all candidate AP in sorted
- * score.
- * @results: scan result
- *
- * Return : void
- */
-static void csr_roam_print_candidate_aps(tScanResultHandle results)
-{
-	tListElem *entry;
-	struct tag_csrscan_result *bss_desc = NULL;
-	struct scan_result_list *bss_list = NULL;
-
-	if (!results)
-		return;
-	bss_list = (struct scan_result_list *)results;
-	entry = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
-	while (entry) {
-		bss_desc = GET_BASE_ADDR(entry,
-				struct tag_csrscan_result, Link);
-		sme_nofl_debug(QDF_MAC_ADDR_FMT " score: %d",
-			QDF_MAC_ADDR_REF(bss_desc->Result.BssDescriptor.bssId),
-			bss_desc->bss_score);
-
-		entry = csr_ll_next(&bss_list->List, entry,
-				LL_ACCESS_NOLOCK);
-	}
-}
-#endif
-
-void csr_set_open_mode_in_scan_filter(struct scan_filter *filter)
-{
-	QDF_SET_PARAM(filter->authmodeset, WLAN_CRYPTO_AUTH_OPEN);
-}
-
 #ifdef FEATURE_CM_ENABLE
 QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t vdev_id,
 		struct csr_roam_profile *profile,
@@ -7686,8 +7642,36 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t vdev_id,
 
 	return status;
 }
-
 #else
+
+/**
+ * csr_roam_print_candidate_aps() - print all candidate AP in sorted
+ * score.
+ * @results: scan result
+ *
+ * Return : void
+ */
+static void csr_roam_print_candidate_aps(tScanResultHandle results)
+{
+	tListElem *entry;
+	struct tag_csrscan_result *bss_desc = NULL;
+	struct scan_result_list *bss_list = NULL;
+
+	if (!results)
+		return;
+	bss_list = (struct scan_result_list *)results;
+	entry = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
+	while (entry) {
+		bss_desc = GET_BASE_ADDR(entry,
+				struct tag_csrscan_result, Link);
+		sme_nofl_debug(QDF_MAC_ADDR_FMT " score: %d",
+			QDF_MAC_ADDR_REF(bss_desc->Result.BssDescriptor.bssId),
+			bss_desc->bss_score);
+
+		entry = csr_ll_next(&bss_list->List, entry,
+				LL_ACCESS_NOLOCK);
+	}
+}
 
 #ifdef CONFIG_BAND_6GHZ
 bool csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
@@ -8522,10 +8506,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 		}
 
 		session_ptr->nss = pSmeJoinRsp->nss;
-		session_ptr->vdev_nss = pSmeJoinRsp->nss;
-
-		session_ptr->supported_nss_1x1 = pSmeJoinRsp->supported_nss_1x1;
-
 		/*
 		 * The join bssid count can be reset as soon as
 		 * we are done with the join requests and returning
@@ -8997,14 +8977,8 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(struct mac_context *mac
 			 "CSR SmeReassocReq Successful");
 		result = eCsrReassocSuccess;
 		csr_session = CSR_GET_SESSION(mac, pSmeJoinRsp->vdev_id);
-		if (csr_session) {
+		if (csr_session)
 			csr_session->nss = pSmeJoinRsp->nss;
-			csr_session->vdev_nss = pSmeJoinRsp->nss;
-			csr_session->supported_nss_1x1 =
-				pSmeJoinRsp->supported_nss_1x1;
-			sme_debug("SME session supported nss: %d",
-				csr_session->supported_nss_1x1);
-		}
 		/*
 		 * Since the neighbor roam algorithm uses reassoc req for
 		 * handoff instead of join, we need the response contents while
@@ -10258,6 +10232,7 @@ csr_issue_set_context_req_helper(struct mac_context *mac_ctx,
 					      (struct qdf_mac_addr *)bssid);
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 /*
  * csr_create_fils_realm_hash: API to create hash using realm
@@ -10313,6 +10288,7 @@ static void csr_update_fils_scan_filter(struct scan_filter *filter,
 					struct csr_roam_profile *profile)
 { }
 #endif
+#endif
 
 static inline void csr_copy_ssids(struct wlan_ssid *ssid, tSirMacSSid *from)
 {
@@ -10338,6 +10314,20 @@ void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
 			       &roam_params->ssid_allowed_list[i]);
 }
 
+void csr_update_scan_filter_dot11mode(struct mac_context *mac_ctx,
+				      struct scan_filter *filter)
+{
+	eCsrPhyMode phymode = mac_ctx->roam.configParam.phyMode;
+
+	if (phymode == eCSR_DOT11_MODE_11n_ONLY)
+		filter->dot11mode = ALLOW_11N_ONLY;
+	else if (phymode == eCSR_DOT11_MODE_11ac_ONLY)
+		filter->dot11mode = ALLOW_11AC_ONLY;
+	else if (phymode == eCSR_DOT11_MODE_11ax_ONLY)
+		filter->dot11mode = ALLOW_11AX_ONLY;
+}
+
+#ifndef FEATURE_CM_ENABLE
 static void csr_copy_ssids_from_profile(tCsrSSIDs *ssid_list,
 					struct scan_filter *filter)
 {
@@ -10351,31 +10341,7 @@ static void csr_copy_ssids_from_profile(tCsrSSIDs *ssid_list,
 			       &ssid_list->SSIDList[i].SSID);
 }
 
-#ifdef WLAN_FEATURE_11W
-
-/**
- * csr_update_pmf_cap_from_profile: Updates PMF cap
- * @profile: Source profile
- * @filter: scan filter
- *
- * Return: None
- */
-static void csr_update_pmf_cap_from_profile(struct csr_roam_profile *profile,
-					    struct scan_filter *filter)
-{
-	if (profile->MFPCapable || profile->MFPEnabled)
-		filter->pmf_cap = WLAN_PMF_CAPABLE;
-	if (profile->MFPRequired)
-		filter->pmf_cap = WLAN_PMF_REQUIRED;
-}
-#else
-static inline
-void csr_update_pmf_cap_from_profile(struct csr_roam_profile *profile,
-				     struct scan_filter *filter)
-{}
-#endif
-
-QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
+static QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
 					    struct scan_filter *filter,
 					    uint8_t vdev_id)
 {
@@ -10388,16 +10354,7 @@ QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	filter->authmodeset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
-	filter->mcastcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
-	filter->ucastcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	filter->key_mgmt =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
-	filter->mgmtcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+	wlan_cm_fill_crypto_filter_from_vdev(vdev, filter);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
@@ -10416,19 +10373,6 @@ static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
 	}
 
 	return csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
-}
-
-void csr_update_scan_filter_dot11mode(struct mac_context *mac_ctx,
-				      struct scan_filter *filter)
-{
-	eCsrPhyMode phymode = mac_ctx->roam.configParam.phyMode;
-
-	if (phymode == eCSR_DOT11_MODE_11n_ONLY)
-		filter->dot11mode = ALLOW_11N_ONLY;
-	else if (phymode == eCSR_DOT11_MODE_11ac_ONLY)
-		filter->dot11mode = ALLOW_11AC_ONLY;
-	else if (phymode == eCSR_DOT11_MODE_11ax_ONLY)
-		filter->dot11mode = ALLOW_11AX_ONLY;
 }
 
 QDF_STATUS
@@ -10514,8 +10458,6 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 	qdf_mem_copy(filter->bssid_hint.bytes, profile->bssid_hint.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
-	csr_update_pmf_cap_from_profile(profile, filter);
-
 	csr_update_fils_scan_filter(filter, profile);
 
 	filter->enable_adaptive_11r =
@@ -10524,6 +10466,7 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 static
 bool csr_roam_issue_wm_status_change(struct mac_context *mac, uint32_t sessionId,
@@ -11369,7 +11312,8 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	session->connectedProfile.op_freq = pSwitchChnInd->freq;
 
 	/* Update the occupied channel list with the new switched channel */
-	csr_init_occupied_channels_list(mac_ctx, sessionId);
+	wlan_cm_init_occupied_ch_freq_list(mac_ctx->pdev, mac_ctx->psoc,
+					   sessionId);
 
 	if (session->pConnectBssDesc) {
 		session->pConnectBssDesc->chan_freq = pSwitchChnInd->freq;
@@ -13767,7 +13711,6 @@ void csr_update_prev_ap_info(struct csr_roam_session *session,
 {
 	struct wlan_ssid ssid;
 	QDF_STATUS status;
-	struct qdf_mac_addr bssid;
 	enum QDF_OPMODE opmode;
 	struct rso_config *rso_cfg;
 
@@ -13783,14 +13726,8 @@ void csr_update_prev_ap_info(struct csr_roam_session *session,
 		sme_err(" failed to find SSID for vdev %d", session->vdev_id);
 		return;
 	}
-	status = wlan_vdev_get_bss_peer_mac(vdev, &bssid);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err(" failed to find BSSID for vdev %d", session->vdev_id);
-		return;
-	}
 	session->prevApSSID.length = ssid.length;
 	qdf_mem_copy(&session->prevApSSID.ssId, &ssid.ssid, ssid.length);
-	qdf_copy_macaddr(&session->prevApBssid, &bssid);
 	session->isPrevApInfoValid = true;
 	session->roamTS1 = qdf_mc_timer_get_system_time();
 }
@@ -14022,20 +13959,13 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	if (!filter)
 		return;
 
-	status = csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("fail to fill filter crypto");
-		qdf_mem_free(filter);
-		return;
-	}
-
+	wlan_cm_fill_crypto_filter_from_vdev(vdev, filter);
 	filter->num_of_ssid = 1;
 	filter->ssid_list[0].length = rsp->connect_rsp.ssid.length;
 	qdf_mem_copy(filter->ssid_list[0].ssid, rsp->connect_rsp.ssid.ssid,
 		     rsp->connect_rsp.ssid.length);
 	filter->num_of_bssid = 1;
 	qdf_copy_macaddr(&filter->bssid_list[0], &rsp->connect_rsp.bssid);
-	csr_update_pmf_cap_from_connected_profile(mac_ctx, vdev_id, filter);
 
 	list = ucfg_scan_get_result(mac_ctx->pdev, filter);
 	qdf_mem_free(filter);
@@ -14150,8 +14080,6 @@ QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 
 	session->nss = rsp->nss;
-	session->vdev_nss = rsp->nss;
-	session->supported_nss_1x1 = rsp->supported_nss_1x1;
 	if (rsp->uapsd_mask)
 		sme_ps_start_uapsd(MAC_HANDLE(mac_ctx), vdev_id);
 	csr_fill_connected_info(mac_ctx, session, rsp);
@@ -16137,31 +16065,6 @@ QDF_STATUS csr_get_snr(struct mac_context *mac,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * csr_roam_set_key_mgmt_offload() - enable/disable key mgmt offload
- * @mac_ctx: mac context.
- * @session_id: Session Identifier
- * @pmkid_modes: PMKID modes of PMKSA caching and OKC
- *
- * Return: QDF_STATUS_SUCCESS - CSR updated config successfully.
- * Other status means CSR is failed to update.
- */
-
-QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
-					 uint32_t session_id,
-					 struct pmkid_mode_bits *pmkid_modes)
-{
-	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
-
-	if (!session) {
-		sme_err("session %d not found", session_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-	session->pmkid_modes.fw_okc = pmkid_modes->fw_okc;
-	session->pmkid_modes.fw_pmksa_cache = pmkid_modes->fw_pmksa_cache;
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef WLAN_FEATURE_FIPS
 QDF_STATUS
 csr_process_roam_pmkid_req_callback(struct mac_context *mac_ctx,
@@ -19322,6 +19225,7 @@ void csr_update_fils_erp_seq_num(struct csr_roam_profile *roam_profile,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, uint32_t ch_freq,
@@ -19450,6 +19354,8 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 
 	return status;
 }
+#endif
+
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_is_sae_single_pmk_vsie_ap() - check if the Roamed AP supports sae
@@ -19681,13 +19587,15 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
 
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		if (session->discon_in_progress) {
 			sme_err("LFR3: vdev:%d Disconnect is in progress roam_synch is not allowed",
 				session_id);
 			status = QDF_STATUS_E_FAILURE;
 			goto end;
 		}
-
+#endif
 		status = csr_post_roam_state_change(mac_ctx, session_id,
 						    WLAN_ROAM_SYNCH_IN_PROG,
 						    REASON_ROAM_HANDOFF_DONE);

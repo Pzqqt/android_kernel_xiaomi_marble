@@ -285,6 +285,7 @@ csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
 			       uint8_t vdev_id,
 			       struct qdf_mac_addr bssid);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_fast_reassoc() - invokes FAST REASSOC command
  * @mac_handle: handle returned by mac_open
@@ -300,7 +301,7 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, uint32_t ch_freq,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
-
+#endif
 #ifdef WLAN_FEATURE_FIPS
 /**
  * csr_roam_pmkid_req_callback() - Registered CSR Callback function to handle
@@ -351,6 +352,7 @@ csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
+#ifndef FEATURE_CM_ENABLE
 static inline
 QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
@@ -359,7 +361,7 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 {
 	return QDF_STATUS_SUCCESS;
 }
-
+#endif
 static inline QDF_STATUS
 csr_roam_pmkid_req_callback(uint8_t vdev_id,
 			    struct roam_pmkid_req_event *bss_list)

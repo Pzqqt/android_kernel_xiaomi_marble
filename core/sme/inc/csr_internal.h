@@ -74,8 +74,6 @@
 	)
 #define CSR_IS_CHANNEL_24GHZ(chnNum) \
 	(((chnNum) > 0) && ((chnNum) <= 14))
-/* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
-#define CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
 
 /* Used to determine what to set to the MLME_DOT11_MODE */
 enum csr_cfgdot11mode {
@@ -540,7 +538,14 @@ struct csr_roam_session {
 	uint32_t nAddIEScanLength;      /* the byte count of pAddIeScanIE; */
 	/* contains the additional IE in (unicast) probe req at time of join */
 	uint8_t *pAddIEScan;
-#endif
+	/* This count represents the number of bssid's we try to join. */
+	uint8_t join_bssid_count;
+	enum wlan_reason_code disconnect_reason;
+	struct scan_cmd_info scan_info;
+	bool is_fils_connection;
+	uint16_t fils_seq_num;
+	bool discon_in_progress;
+#endif /* ndef FEATURE_CM_ENABLE */
 	struct csr_timer_info roamingTimerInfo;
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
@@ -561,8 +566,6 @@ struct csr_roam_session {
 	tCsrEseCckmInfo eseCckmInfo;
 	bool isPrevApInfoValid;
 	tSirMacSSid prevApSSID;
-	struct qdf_mac_addr prevApBssid;
-	uint16_t clientDissSecs;
 	uint32_t roamTS1;
 	tCsrEseCckmIe suppCckmIeInfo;
 #endif
@@ -571,30 +574,13 @@ struct csr_roam_session {
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
 	size_t pmk_len;
 	struct roam_offload_synch_ind *roam_synch_data;
-	struct pmkid_mode_bits pmkid_modes;
 #endif
 	tftSMEContext ftSmeContext;
-#ifndef FEATURE_CM_ENABLE
-	/* This count represents the number of bssid's we try to join. */
-	uint8_t join_bssid_count;
-#endif
-	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
-	bool supported_nss_1x1;
-	uint8_t vdev_nss;
 	uint8_t nss;
 	bool dhcp_done;
-#ifndef FEATURE_CM_ENABLE
-	enum wlan_reason_code disconnect_reason;
-#endif
 	uint8_t uapsd_mask;
-	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;
-#ifndef FEATURE_CM_ENABLE
-	bool is_fils_connection;
-	uint16_t fils_seq_num;
-#endif
-	bool discon_in_progress;
 	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
 	qdf_mc_timer_t wait_for_key_timer;
@@ -928,8 +914,6 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
-QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
-					 int numChannels, uint32_t chan_freq);
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
 		struct roam_offload_scan_rsp *scanOffloadRsp);

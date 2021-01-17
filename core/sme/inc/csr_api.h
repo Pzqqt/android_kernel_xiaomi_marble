@@ -1329,26 +1329,6 @@ QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 
 typedef void (*csr_ani_callback)(int8_t *ani, void *context);
 
-#ifdef WLAN_FEATURE_11W
-/**
- * csr_update_pmf_cap_from_connected_profile() - Update pmf cap from profile
- * @mac: mac
- * @vdev_id: vdev id
- * @filter: scan filter
- *
- * Return: None
- */
-void
-csr_update_pmf_cap_from_connected_profile(struct mac_context *mac,
-					  uint8_t vdev_id,
-					  struct scan_filter *filter);
-#else
-void
-csr_update_pmf_cap_from_connected_profile(struct mac_context *mac,
-					  uint8_t vdev_id,
-					  struct scan_filter *filter);
-#endif
-
 /*
  * csr_convert_to_reg_phy_mode() - CSR API to convert CSR phymode into
  * regulatory phymode

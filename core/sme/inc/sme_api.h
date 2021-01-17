@@ -522,6 +522,7 @@ QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t vdev_id,
 			       struct scan_filter *filter,
 			       tScanResultHandle *phResult);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * sme_get_ap_channel_from_scan_cache() - a wrapper function to get AP's channel
  * from CSR by filtering the result which matches our roam profile.
@@ -539,24 +540,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(struct csr_roam_profile *profile,
 					      tScanResultHandle *scan_cache,
 					      uint32_t *ap_ch_freq,
 					      uint8_t vdev_id);
-/**
- * sme_get_ap_channel_from_scan() - a wrapper function to get AP's channel id
- * from CSR by filtering the result which matches our roam profile.
- * @profile: SAP profile
- * @ap_ch_freq: pointer to channel id of SAP. Fill the value after finding the
- *              best ap from scan cache.
- * @vdev_id: vdev id
- *
- * This function is written to get AP's channel id from CSR by filtering
- * the result which matches our roam profile. This is a synchronous call.
- *
- * Return: QDF_STATUS.
- */
-QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
-					tScanResultHandle *scan_cache,
-					uint32_t *ap_ch_freq,
-					uint8_t vdev_id);
-
+#endif
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 		tScanResultHandle hScanResult);
 tCsrScanResultInfo *sme_scan_result_get_next(mac_handle_t,
@@ -1677,12 +1661,6 @@ sme_reset_link_layer_stats_ind_cb(mac_handle_t mac_handle)
 
 QDF_STATUS sme_set_wisa_params(mac_handle_t mac_handle,
 			       struct sir_wisa_params *wisa_params);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS
-sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
-					 uint8_t session_id,
-					 struct pmkid_mode_bits *pmkid_modes);
-#endif
 QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 			       csr_link_status_callback callback,
 			       void *context, uint8_t session_id);
@@ -2412,19 +2390,17 @@ void sme_set_chan_info_callback(mac_handle_t mac_handle,
 /**
  * sme_get_rssi_snr_by_bssid() - gets the rssi and snr by bssid from scan cache
  * @mac_handle: handle returned by mac_open
- * @profile: current connected profile
  * @bssid: bssid to look for in scan cache
  * @rssi: rssi value found
  * @snr: snr value found
- * @vdev_id: vdev id
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
-				     struct csr_roam_profile *profile,
 				     const uint8_t *bssid, int8_t *rssi,
-				     int8_t *snr, uint8_t vdev_id);
+				     int8_t *snr);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * sme_get_beacon_frm() - gets the bss descriptor from scan cache and prepares
  * beacon frame
@@ -2443,7 +2419,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
 			      uint32_t *ch_freq, uint8_t vdev_id);
-
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_fast_reassoc() - invokes FAST REASSOC command

@@ -317,7 +317,6 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 		lim_copy_tspec_ie(pe_session, rsp);
 
 		lim_send_smps_intolerent(mac_ctx, pe_session, bcn_len, bcn_ptr);
-		rsp->supported_nss_1x1 = pe_session->supported_nss_1x1;
 		lim_cm_fill_rsp_from_stads(mac_ctx, pe_session, rsp);
 		rsp->uapsd_mask = pe_session->gUapsdPerAcBitmask;
 	}
@@ -862,11 +861,6 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 		lim_handle_join_rsp_status(mac_ctx, session_entry, result_code,
 			sme_join_rsp);
 		sme_join_rsp->uapsd_mask = session_entry->gUapsdPerAcBitmask;
-		/* Send supported NSS 1x1 to SME */
-		sme_join_rsp->supported_nss_1x1 =
-			session_entry->supported_nss_1x1;
-		pe_debug("SME Join Rsp is supported NSS 1X1: %d",
-		       sme_join_rsp->supported_nss_1x1);
 	}
 
 	sme_join_rsp->messageType = msg_type;

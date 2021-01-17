@@ -6200,7 +6200,6 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	struct hdd_adapter *hdd_adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	int status;
-	struct pmkid_mode_bits pmkid_modes;
 	mac_handle_t mac_handle;
 
 	hdd_enter_dev(dev);
@@ -6226,12 +6225,7 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	hdd_get_pmkid_modes(hdd_ctx, &pmkid_modes);
-
 	mac_handle = hdd_ctx->mac_handle;
-	sme_update_roam_key_mgmt_offload_enabled(mac_handle,
-						 hdd_adapter->vdev_id,
-						 &pmkid_modes);
 	qdf_mem_zero(&local_pmk, SIR_ROAM_SCAN_PSK_SIZE);
 	qdf_mem_copy(local_pmk, data, data_len);
 	sme_roam_set_psk_pmk(mac_handle, hdd_adapter->vdev_id,
@@ -18599,124 +18593,6 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
 }
 
 #ifndef FEATURE_CM_ENABLE
-/**
- * wlan_hdd_handle_sap_sta_dfs_conc() - to handle SAP STA DFS conc
- * @adapter: STA adapter
- * @roam_profile: STA roam profile
- *
- * This routine will move SAP from dfs to non-dfs, if sta is coming up.
- *
- * Return: false if sta-sap conc is not allowed, else return true
- */
-static
-bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
-				      struct csr_roam_profile *roam_profile)
-{
-	struct hdd_context *hdd_ctx;
-	struct hdd_adapter *ap_adapter;
-	struct hdd_ap_ctx *hdd_ap_ctx;
-	struct hdd_hostapd_state *hostapd_state;
-	QDF_STATUS status;
-	uint32_t ch_freq = 0;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx)
-		return true;
-
-	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
-	/* probably no sap running, no handling required */
-	if (!ap_adapter)
-		return true;
-
-	/*
-	 * sap is not in started state, so it is fine to go ahead with sta.
-	 * if sap is currently doing CAC then don't allow sta to go further.
-	 */
-	if (!test_bit(SOFTAP_BSS_STARTED, &(ap_adapter)->event_flags) &&
-	    (hdd_ctx->dev_dfs_cac_status != DFS_CAC_IN_PROGRESS))
-		return true;
-
-	if (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS) {
-		hdd_err("Concurrent SAP is in CAC state, STA is not allowed");
-		return false;
-	}
-
-	/*
-	 * log and return error, if we allow STA to go through, we don't
-	 * know what is going to happen better stop sta connection
-	 */
-	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
-	if (!hdd_ap_ctx) {
-		hdd_err("AP context not found");
-		return false;
-	}
-
-	/* sap is on non-dfs channel, nothing to handle */
-	if (!wlan_reg_is_dfs_for_freq(hdd_ctx->pdev,
-				      hdd_ap_ctx->operating_chan_freq)) {
-		hdd_debug("sap is on non-dfs channel, sta is allowed");
-		return true;
-	}
-	/*
-	 * find out by looking in to scan cache where sta is going to
-	 * connect by passing its roam_profile.
-	 */
-	status = policy_mgr_get_channel_from_scan_result(
-			hdd_ctx->psoc, roam_profile, &ch_freq,
-			adapter->vdev_id);
-
-	/*
-	 * If the STA's channel is 2.4 GHz, then set pcl with only 2.4 GHz
-	 * channels for roaming case.
-	 */
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
-		hdd_info("sap is on dfs, new sta conn on 2.4 is allowed");
-		return true;
-	}
-
-	/*
-	 * If channel is 0 or DFS or LTE unsafe then better to call pcl and
-	 * find out the best channel. If channel is non-dfs 5 GHz then
-	 * better move SAP to STA's channel to make scc, so we have room
-	 * for 3port MCC scenario.
-	 */
-	if (!ch_freq || wlan_reg_is_dfs_for_freq(hdd_ctx->pdev, ch_freq) ||
-	    !policy_mgr_is_safe_channel(hdd_ctx->psoc, ch_freq))
-		ch_freq = policy_mgr_get_nondfs_preferred_channel(
-			hdd_ctx->psoc, PM_SAP_MODE, true);
-
-	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
-	qdf_event_reset(&hostapd_state->qdf_event);
-	wlan_hdd_set_sap_csa_reason(hdd_ctx->psoc, ap_adapter->vdev_id,
-				    CSA_REASON_STA_CONNECT_DFS_TO_NON_DFS);
-
-	status = wlansap_set_channel_change_with_csa(
-			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), ch_freq,
-			hdd_ap_ctx->sap_config.ch_width_orig, false);
-
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Set channel with CSA IE failed, can't allow STA");
-		return false;
-	}
-
-	/*
-	 * wait here for SAP to finish the channel switch. When channel
-	 * switch happens, SAP sends few beacons with CSA_IE. After
-	 * successfully Transmission of those beacons, it will move its
-	 * state from started to disconnected and move to new channel.
-	 * once it moves to new channel, sap again moves its state
-	 * machine from disconnected to started and set this event.
-	 * wait for 10 secs to finish this.
-	 */
-	status = qdf_wait_for_event_completion(&hostapd_state->qdf_event, 10000);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("wait for qdf_event failed, STA not allowed!!");
-		return false;
-	}
-
-	return true;
-}
-
 #ifdef WLAN_FEATURE_11W
 /**
  * wlan_hdd_cfg80211_check_pmf_valid() - check if pmf status is ok
@@ -19011,16 +18887,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 						    REG_PHYMODE_MAX,
 						    oper_freq);
 		roam_profile->phyMode = csr_convert_from_reg_phy_mode(phy_mode);
-
-		if ((policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) == true)
-			&& (false == wlan_hdd_handle_sap_sta_dfs_conc(adapter,
-				roam_profile))) {
-			hdd_err("sap-sta conc will fail, can't allow sta");
-			hdd_conn_set_connection_state(adapter,
-					eConnectionState_NotConnected);
-			status = -ENOMEM;
-			goto conn_failure;
-		}
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {

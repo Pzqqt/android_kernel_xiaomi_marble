@@ -26,6 +26,10 @@
 #include "wlan_policy_mgr_api.h"
 #include <wmi_unified_priv.h>
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include "wlan_crypto_global_api.h"
+
+/* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
+#define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS
@@ -1070,6 +1074,222 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 	return &mlme_priv->rso_cfg;
 }
 #endif
+
+void wlan_cm_fill_crypto_filter_from_vdev(struct wlan_objmgr_vdev *vdev,
+					  struct scan_filter *filter)
+{
+	struct rso_config *rso_cfg;
+
+	filter->authmodeset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
+	filter->mcastcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+	filter->ucastcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	filter->key_mgmt =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	filter->mgmtcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return;
+
+	if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
+		filter->pmf_cap = WLAN_PMF_REQUIRED;
+	else if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+}
+
+static void cm_dump_occupied_chan_list(struct wlan_chan_list *occupied_ch)
+{
+	uint8_t idx;
+	uint32_t buff_len;
+	char *chan_buff;
+	uint32_t len = 0;
+
+	buff_len = (occupied_ch->num_chan * 5) + 1;
+	chan_buff = qdf_mem_malloc(buff_len);
+	if (!chan_buff)
+		return;
+
+	for (idx = 0; idx < occupied_ch->num_chan; idx++)
+		len += qdf_scnprintf(chan_buff + len, buff_len - len, " %d",
+				     occupied_ch->freq_list[idx]);
+
+	mlme_nofl_debug("Occupied chan list[%d]:%s",
+			occupied_ch->num_chan, chan_buff);
+
+	qdf_mem_free(chan_buff);
+}
+
+/**
+ * cm_should_add_to_occupied_channels() - validates bands of active_ch_freq and
+ * curr node freq before addition of curr node freq to occupied channels
+ *
+ * @active_ch_freq: active channel frequency
+ * @cur_node_chan_freq: curr channel frequency
+ * @dual_sta_roam_active: dual sta roam active
+ *
+ * Return: True if active_ch_freq and cur_node_chan_freq belongs to same
+ * bands else false
+ **/
+static bool cm_should_add_to_occupied_channels(qdf_freq_t active_ch_freq,
+					       qdf_freq_t cur_node_chan_freq,
+					       bool dual_sta_roam_active)
+{
+	/* all channels can be added if dual STA roam is not active */
+	if (!dual_sta_roam_active)
+		return true;
+
+	/* when dual STA roam is active, channels must be in the same band */
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(active_ch_freq) &&
+	    WLAN_REG_IS_24GHZ_CH_FREQ(cur_node_chan_freq))
+		return true;
+
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(active_ch_freq) &&
+	    !WLAN_REG_IS_24GHZ_CH_FREQ(cur_node_chan_freq))
+		return true;
+
+	/* not in same band */
+	return false;
+}
+
+static QDF_STATUS cm_add_to_freq_list_front(qdf_freq_t *ch_freq_lst,
+					    int num_chan, qdf_freq_t chan_freq)
+{
+	int i = 0;
+
+	/* Check for NULL pointer */
+	if (!ch_freq_lst)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	/* Make room for the addition.  (Start moving from the back.) */
+	for (i = num_chan; i > 0; i--)
+		ch_freq_lst[i] = ch_freq_lst[i - 1];
+
+	/* Now add the NEW channel...at the front */
+	ch_freq_lst[0] = chan_freq;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/* Add the channel to the occupied channels array */
+static void cm_add_to_occupied_channels(qdf_freq_t ch_freq,
+					struct rso_config *rso_cfg,
+					bool is_init_list)
+{
+	QDF_STATUS status;
+	uint8_t num_occupied_ch = rso_cfg->occupied_chan_lst.num_chan;
+	qdf_freq_t *occupied_ch_lst = rso_cfg->occupied_chan_lst.freq_list;
+
+	if (is_init_list)
+		rso_cfg->roam_candidate_count++;
+
+	if (wlan_is_channel_present_in_list(occupied_ch_lst,
+					    num_occupied_ch, ch_freq))
+		return;
+
+	status = cm_add_to_freq_list_front(occupied_ch_lst,
+					   num_occupied_ch, ch_freq);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		rso_cfg->occupied_chan_lst.num_chan++;
+		if (rso_cfg->occupied_chan_lst.num_chan >
+		    BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN)
+			rso_cfg->occupied_chan_lst.num_chan =
+				BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN;
+	}
+}
+
+void wlan_cm_init_occupied_ch_freq_list(struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id)
+{
+	qdf_list_t *list = NULL;
+	qdf_list_node_t *cur_lst = NULL;
+	qdf_list_node_t *next_lst = NULL;
+	struct scan_cache_node *cur_node = NULL;
+	struct scan_filter *filter;
+	bool dual_sta_roam_active;
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+	struct wlan_ssid ssid;
+	qdf_freq_t op_freq, freq;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
+	op_freq = wlan_get_operation_chan_freq(vdev);
+	if (!op_freq) {
+		mlme_debug("failed to get op freq");
+		goto rel_vdev_ref;
+	}
+	status = wlan_vdev_mlme_get_ssid(vdev, ssid.ssid, &ssid.length);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("failed to find SSID for vdev %d", vdev_id);
+		goto rel_vdev_ref;
+	}
+
+	cfg_params = &rso_cfg->cfg_param;
+
+	if (cfg_params->specific_chan_info.num_chan) {
+		/*
+		 * Ini file contains neighbor scan channel list, hence NO need
+		 * to build occupied channel list"
+		 */
+		mlme_debug("Ini contains neighbor scan ch list");
+		goto rel_vdev_ref;
+	}
+
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter)
+		goto rel_vdev_ref;
+
+	wlan_cm_fill_crypto_filter_from_vdev(vdev, filter);
+	filter->num_of_ssid = 1;
+	qdf_mem_copy(&filter->ssid_list[0], &ssid, sizeof(ssid));
+
+	/* Empty occupied channels here */
+	rso_cfg->occupied_chan_lst.num_chan = 0;
+	rso_cfg->roam_candidate_count = 0;
+
+	cm_add_to_occupied_channels(op_freq, rso_cfg, true);
+	list = wlan_scan_get_result(pdev, filter);
+	qdf_mem_free(filter);
+	if (!list || (list && !qdf_list_size(list)))
+		goto err;
+
+	dual_sta_roam_active =
+			wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+
+	qdf_list_peek_front(list, &cur_lst);
+	while (cur_lst) {
+		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
+					    node);
+		freq = cur_node->entry->channel.chan_freq;
+		if (cm_should_add_to_occupied_channels(op_freq, freq,
+						       dual_sta_roam_active))
+			cm_add_to_occupied_channels(freq, rso_cfg, true);
+
+		qdf_list_peek_next(list, cur_lst, &next_lst);
+		cur_lst = next_lst;
+		next_lst = NULL;
+	}
+err:
+	cm_dump_occupied_chan_list(&rso_cfg->occupied_chan_lst);
+	if (list)
+		wlan_scan_purge_results(list);
+rel_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
 
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS wlan_cm_update_mlme_fils_connection_info(

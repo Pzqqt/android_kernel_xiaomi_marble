@@ -410,18 +410,6 @@ void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
 				     struct scan_filter *filter);
 
 /*
- * csr_fill_filter_from_vdev_crypto() - fill scan filter crypto from vdev crypto
- * @mac_ctx: csr auth type
- * @filter: scan filter
- * @vdev_id: vdev
- *
- * Return QDF_STATUS
- */
-QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
-					    struct scan_filter *filter,
-					    uint8_t vdev_id);
-
-/*
  * csr_update_scan_filter_dot11mode() - update dot11mode for scan filter
  * @mac_ctx: csr auth type
  * @filter: scan filter
@@ -431,14 +419,7 @@ QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
 void csr_update_scan_filter_dot11mode(struct mac_context *mac_ctx,
 				      struct scan_filter *filter);
 
-/*
- * csr_set_open_mode_in_scan_filter() - set open mode in scan filter
- * @filter: scan filter
- *
- * Return void
- */
-void csr_set_open_mode_in_scan_filter(struct scan_filter *filter);
-
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_roam_get_scan_filter_from_profile() - prepare scan filter from
  * given roam profile
@@ -458,7 +439,7 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				      struct csr_roam_profile *profile,
 				      struct scan_filter *filter,
 				      bool is_roam, uint8_t vdev_id);
-
+#endif
 /**
  * csr_neighbor_roam_get_scan_filter_from_profile() - prepare scan filter from
  * connected profile
@@ -768,10 +749,6 @@ void csr_get_pmk_info(struct mac_context *mac_ctx, uint8_t session_id,
 QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
 				uint8_t *psk_pmk, size_t pmk_len,
 				bool update_to_fw);
-
-QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
-					 uint32_t session_id,
-					 struct pmkid_mode_bits *pmkid_modes);
 #endif
 
 #ifndef FEATURE_CM_ENABLE
@@ -899,8 +876,6 @@ QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS csr_dequeue_roam_command(struct mac_context *mac,
 				enum csr_roam_reason reason,
 				uint8_t session_id);
-void csr_init_occupied_channels_list(struct mac_context *mac, uint8_t sessionId);
-
 QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 						uint32_t sessionId,
 						struct qdf_mac_addr bssid,
@@ -985,10 +960,11 @@ void csr_saved_scan_cmd_free_fields(struct mac_context *mac_ctx,
 struct bss_description*
 csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 
+#ifndef FEATURE_CM_ENABLE
 struct bss_description*
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  struct bss_description *bss_descr);
-
+#endif
 bool is_disconnect_pending(struct mac_context *mac_ctx,
 				   uint8_t sessionid);
 

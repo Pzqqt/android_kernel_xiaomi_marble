@@ -2931,7 +2931,6 @@ bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
 	return false;
 }
 
-
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static
 const char *mlme_roam_state_to_string(enum roam_offload_state state)

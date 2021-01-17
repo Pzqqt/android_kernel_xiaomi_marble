@@ -3807,25 +3807,6 @@ const char *sme_bss_type_to_string(const uint8_t bss_type)
 	}
 }
 
-QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
-					 int numChannels, uint32_t chan_freq)
-{
-	int i = 0;
-
-	/* Check for NULL pointer */
-	if (!pChannelList)
-		return QDF_STATUS_E_NULL_VALUE;
-
-	/* Make room for the addition.  (Start moving from the back.) */
-	for (i = numChannels; i > 0; i--)
-		pChannelList[i] = pChannelList[i - 1];
-
-	/* Now add the NEW channel...at the front */
-	pChannelList[0] = chan_freq;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * csr_wait_for_connection_update() - Wait for hw mode update
  * @mac: Pointer to the MAC context

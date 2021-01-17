@@ -93,7 +93,6 @@ struct cm_vdev_disconnect_rsp {
  * @connect_rsp: Connect response to be sent to CM
  * @ric_resp_ie: ric ie data
  * @tspec_ie: tspec ie
- * @supported_nss_1x1: if 1x1 is supported
  * @nss: used nss
  * @uapsd_mask: uapsd mask
  */
@@ -104,7 +103,6 @@ struct cm_vdev_join_rsp {
 #ifdef FEATURE_WLAN_ESE
 	struct element_info tspec_ie;
 #endif
-	bool supported_nss_1x1;
 	uint8_t nss;
 	uint8_t uapsd_mask;
 };

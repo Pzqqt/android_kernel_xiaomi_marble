@@ -335,39 +335,6 @@ static void csr_neighbor_roam_reset_init_state_control_info(struct mac_context *
 	csr_neighbor_roam_reset_report_scan_state_control_info(mac, sessionId);
 }
 
-#ifdef WLAN_FEATURE_11W
-void
-csr_update_pmf_cap_from_connected_profile(struct mac_context *mac,
-					  uint8_t vdev_id,
-					  struct scan_filter *filter)
-{
-	struct rso_config *rso_cfg;
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("Invalid vdev");
-		return;
-	}
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg)
-		goto rel_ref;
-
-	if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
-		filter->pmf_cap = WLAN_PMF_REQUIRED;
-	else if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
-		filter->pmf_cap = WLAN_PMF_CAPABLE;
-rel_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-}
-#else
-void
-csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
-					  struct scan_filter *filter)
-{}
-#endif
-
 QDF_STATUS
 csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 					       struct scan_filter *filter,
@@ -377,7 +344,6 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	tCsrRoamConnectedProfile *profile;
 	struct roam_ext_params *roam_params;
 	uint8_t num_ch = 0;
-	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
 	struct rso_chan_info *chan_lst;
@@ -421,17 +387,13 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 			  filter->ssid_list[0].length);
 	}
 
-	status = csr_fill_filter_from_vdev_crypto(mac, filter, vdev_id);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("vdev object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_cm_fill_crypto_filter_from_vdev(vdev, filter);
 
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (!rso_cfg) {
@@ -456,8 +418,6 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 		 * added as a part of filter as well
 		 */
 		filter->mobility_domain = profile->mdid.mobility_domain;
-
-	csr_update_pmf_cap_from_connected_profile(mac, vdev_id, filter);
 
 	filter->enable_adaptive_11r =
 		wlan_mlme_adaptive_11r_enabled(mac->psoc);
@@ -804,7 +764,7 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 	int init_ft_flag = false;
 
-	csr_init_occupied_channels_list(mac, session_id);
+	wlan_cm_init_occupied_ch_freq_list(mac->pdev, mac->psoc, session_id);
 	csr_neighbor_roam_state_transition(mac,
 			eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 
