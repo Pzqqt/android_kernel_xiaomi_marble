@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2683,45 +2683,6 @@ uint32_t policy_mgr_get_concurrency_mode(struct wlan_objmgr_psoc *psoc)
 	return pm_ctx->concurrency_mode;
 }
 
-QDF_STATUS policy_mgr_get_channel_from_scan_result(
-		struct wlan_objmgr_psoc *psoc,
-		void *roam_profile, uint32_t *ch_freq, uint8_t vdev_id)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	void *scan_cache = NULL;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid context");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (!roam_profile || !ch_freq) {
-		policy_mgr_err("Invalid input parameters");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan) {
-		status = pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan
-			(roam_profile, &scan_cache, ch_freq, vdev_id);
-		if (status != QDF_STATUS_SUCCESS) {
-			policy_mgr_err("Get AP channel failed");
-			return status;
-		}
-	} else {
-		policy_mgr_err("sme_get_ap_channel_from_scan_cache NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pm_ctx->sme_cbacks.sme_scan_result_purge)
-		status = pm_ctx->sme_cbacks.sme_scan_result_purge(scan_cache);
-	else
-		policy_mgr_err("sme_scan_result_purge NULL");
-
-	return status;
-}
-
 QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 				struct policy_mgr_user_cfg *user_cfg)
 {
@@ -2746,51 +2707,6 @@ QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 	pm_ctx->cur_conc_system_pref = pm_ctx->cfg.sys_pref;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-uint32_t policy_mgr_search_and_check_for_session_conc(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t session_id,
-		void *roam_profile)
-{
-	uint32_t ch_freq = 0;
-	QDF_STATUS status;
-	enum policy_mgr_con_mode mode;
-	bool ret;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return ch_freq;
-	}
-
-	if (pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev) {
-		mode = pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev(
-			psoc, session_id);
-		if (PM_MAX_NUM_OF_MODE == mode) {
-			policy_mgr_err("Invalid mode");
-			return ch_freq;
-		}
-	} else
-		return ch_freq;
-
-	status = policy_mgr_get_channel_from_scan_result(
-			psoc, roam_profile, &ch_freq, session_id);
-	if (QDF_STATUS_SUCCESS != status || ch_freq == 0) {
-		policy_mgr_err("status: %d ch_freq: %d", status, ch_freq);
-		return 0;
-	}
-
-	/* Take care of 160MHz and 80+80Mhz later */
-	ret = policy_mgr_allow_concurrency(psoc, mode, ch_freq,
-					   HW_MODE_20_MHZ);
-	if (false == ret) {
-		policy_mgr_err("Connection failed due to conc check fail");
-		return 0;
-	}
-
-	return ch_freq;
 }
 
 /**

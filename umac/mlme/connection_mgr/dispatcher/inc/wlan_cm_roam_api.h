@@ -403,6 +403,29 @@ QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
 void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
 			       struct rso_config *rso_cfg);
 
+/**
+ * wlan_cm_fill_crypto_filter_from_vdev() - fill scan filter crypto from vdev
+ * given vdev id
+ * @vdev: vdev
+ * @filter: filetr to fill
+ *
+ * Return: void
+ */
+void wlan_cm_fill_crypto_filter_from_vdev(struct wlan_objmgr_vdev *vdev,
+					  struct scan_filter *filter);
+
+/**
+ * wlan_cm_init_occupied_ch_freq_list  - init occupied chan freq list
+ * @pdev: pdev pointer
+ * @psoc: psoc
+ * @vdev_id: vdev_id of vdev for which init is required
+ *
+ * Return: void
+ */
+void wlan_cm_init_occupied_ch_freq_list(struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id);
+
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * wlan_cm_get_fils_connection_info  - Copy fils connection information from
