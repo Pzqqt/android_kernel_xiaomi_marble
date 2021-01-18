@@ -121,20 +121,4 @@ void cm_dump_freq_list(struct rso_chan_info *chan_info);
 QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
-
-#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FILS_SK)
-QDF_STATUS cm_roam_scan_offload_add_fils_params(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_roam_scan_offload_params *rso_cfg,
-		uint8_t vdev_id);
-#else
-static inline
-QDF_STATUS cm_roam_scan_offload_add_fils_params(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_roam_scan_offload_params *rso_cfg,
-		uint8_t vdev_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* FEATURE_ROAM_OFFLOAD && WLAN_FEATURE_FILS_SK */
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */

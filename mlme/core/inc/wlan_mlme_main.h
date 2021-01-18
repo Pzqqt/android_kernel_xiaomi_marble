@@ -31,6 +31,22 @@
 #include "wlan_cm_roam_public_struct.h"
 #include "wlan_wfa_config_public_struct.h"
 
+#define MAC_MAX_ADD_IE_LENGTH       2048
+
+/* QCN IE definitions */
+#define QCN_IE_HDR_LEN     6
+
+#define QCN_IE_VERSION_SUBATTR_ID        1
+#define QCN_IE_VERSION_SUBATTR_DATA_LEN  2
+#define QCN_IE_VERSION_SUBATTR_LEN       4
+#define QCN_IE_VERSION_SUPPORTED    1
+#define QCN_IE_SUBVERSION_SUPPORTED 0
+
+#define QCN_IE_ATTR_ID_VERSION 1
+#define QCN_IE_ATTR_ID_VHT_MCS11 2
+#define QCN_IE_ATTR_ID_ALL 0xFF
+
+
 #define mlme_legacy_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MLME, params)
@@ -40,6 +56,12 @@
 enum size_of_len_field {
 	ONE_BYTE = 1,
 	TWO_BYTE = 2
+};
+
+struct pwr_channel_info {
+	uint32_t first_freq;
+	uint8_t num_chan;
+	int8_t max_tx_pwr;
 };
 
 /**
@@ -714,6 +736,10 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
  */
 bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
 				     uint32_t num_chan, qdf_freq_t chan_freq);
+
+int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_pdev *pdev,
+				 uint32_t ch_freq);
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
