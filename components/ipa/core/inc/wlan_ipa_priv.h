@@ -334,6 +334,9 @@ struct wlan_ipa_iface_context {
 	uint8_t iface_id;       /* This iface ID */
 	qdf_netdev_t dev;
 	enum QDF_OPMODE device_mode;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+	qdf_atomic_t conn_count;
+	qdf_atomic_t disconn_count;
 	uint8_t session_id;
 	qdf_spinlock_t interface_lock;
 	uint32_t ifa_address;
