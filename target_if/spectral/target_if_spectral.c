@@ -171,6 +171,7 @@ target_if_spectral_get_agile_mode_cap(
 	uint32_t table_id;
 	struct wlan_psoc_host_service_ext_param *ext_svc_param;
 	struct wlan_psoc_host_chainmask_table *table;
+	struct wmi_unified *wmi_handle;
 
 	if (!pdev) {
 		spectral_err("pdev is null");
@@ -181,6 +182,21 @@ target_if_spectral_get_agile_mode_cap(
 	if (!psoc) {
 		spectral_err("psoc is null");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_handle =  get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		spectral_err("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Agile Spectral is disabled for legacy targets */
+	if (!target_if_spectral_wmi_service_enabled(psoc, wmi_handle,
+						    wmi_service_ext_msg)) {
+		agile_cap->agile_spectral_cap  = false;
+		agile_cap->agile_spectral_cap_160 = false;
+		agile_cap->agile_spectral_cap_80p80 = false;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
