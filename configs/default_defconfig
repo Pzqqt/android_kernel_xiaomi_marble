@@ -202,6 +202,12 @@ else
 	CONFIG_QCACLD_WLAN_LFR2 := y
 endif
 
+#SDX65 attach HSP but enable LFR2
+ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+	CONFIG_QCACLD_WLAN_LFR3 := n
+	CONFIG_QCACLD_WLAN_LFR2 := y
+endif
+
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
 #Flag to enable TDLS feature
 CONFIG_QCOM_TDLS := y
