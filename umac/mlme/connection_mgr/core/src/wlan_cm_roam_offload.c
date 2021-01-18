@@ -30,6 +30,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_psoc_mlme_api.h"
 #include "pld_common.h"
+#include "wlan_blm_api.h"
 
 /**
  * cm_roam_scan_bmiss_cnt() - set roam beacon miss count
@@ -1262,6 +1263,174 @@ cm_fill_rso_channel_list(struct wlan_objmgr_psoc *psoc,
 		   chan_info->chan_count, ch_cache_str);
 }
 
+static void
+cm_add_blacklist_ap_list(struct wlan_objmgr_pdev *pdev,
+			 struct roam_scan_filter_params *params)
+{
+	int i = 0;
+	struct reject_ap_config_params *reject_list;
+
+	reject_list = qdf_mem_malloc(sizeof(*reject_list) *
+				     MAX_RSSI_AVOID_BSSID_LIST);
+	if (!reject_list)
+		return;
+
+	params->num_bssid_black_list =
+		wlan_blm_get_bssid_reject_list(pdev, reject_list,
+					       MAX_RSSI_AVOID_BSSID_LIST,
+					       USERSPACE_BLACKLIST_TYPE);
+	if (!params->num_bssid_black_list) {
+		qdf_mem_free(reject_list);
+		return;
+	}
+
+	for (i = 0; i < params->num_bssid_black_list; i++) {
+		qdf_copy_macaddr(&params->bssid_avoid_list[i],
+				 &reject_list[i].bssid);
+		mlme_debug("Blacklist bssid[%d]:" QDF_MAC_ADDR_FMT, i,
+			   QDF_MAC_ADDR_REF(params->bssid_avoid_list[i].bytes));
+	}
+
+	qdf_mem_free(reject_list);
+}
+
+/**
+ * cm_roam_scan_filter() - set roam scan filter parameters
+ * @psoc: psoc
+ * @pdev: pdev
+ * @vdev_id: vdev id
+ * @command: rso command
+ * @reason:  reason to roam
+ * @scan_filter_params:  roam scan filter related parameters
+ *
+ * There are filters such as whitelist, blacklist and preferred
+ * list that need to be applied to the scan results to form the
+ * probable candidates for roaming.
+ *
+ * Return: None
+ */
+static void
+cm_roam_scan_filter(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_pdev *pdev,
+		    uint8_t vdev_id, uint8_t command, uint8_t reason,
+		    struct wlan_roam_scan_filter_params *scan_filter_params)
+{
+	int i;
+	uint32_t num_ssid_white_list = 0, num_bssid_preferred_list = 0;
+	uint32_t op_bitmap = 0;
+	struct roam_scan_filter_params *params;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct rso_config_params *rso_usr_cfg;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	scan_filter_params->reason = reason;
+	params = &scan_filter_params->filter_params;
+	rso_usr_cfg = &mlme_obj->cfg.lfr.rso_user_config;
+	if (command != ROAM_SCAN_OFFLOAD_STOP) {
+		switch (reason) {
+		case REASON_ROAM_SET_BLACKLIST_BSSID:
+			op_bitmap |= 0x1;
+			cm_add_blacklist_ap_list(pdev, params);
+			break;
+		case REASON_ROAM_SET_SSID_ALLOWED:
+			op_bitmap |= 0x2;
+			num_ssid_white_list =
+				rso_usr_cfg->num_ssid_allowed_list;
+			break;
+		case REASON_ROAM_SET_FAVORED_BSSID:
+			op_bitmap |= 0x4;
+			num_bssid_preferred_list =
+				rso_usr_cfg->num_bssid_favored;
+			break;
+		case REASON_CTX_INIT:
+			if (command == ROAM_SCAN_OFFLOAD_START) {
+				params->lca_disallow_config_present = true;
+				/*
+				 * If rssi disallow bssid list have any member
+				 * fill it and send it to firmware so that
+				 * firmware does not try to roam to these BSS
+				 * until RSSI OR time condition are matched.
+				 */
+				params->num_rssi_rejection_ap =
+					wlan_blm_get_bssid_reject_list(pdev,
+						params->rssi_rejection_ap,
+						MAX_RSSI_AVOID_BSSID_LIST,
+						DRIVER_RSSI_REJECT_TYPE);
+			} else {
+				mlme_debug("Roam Filter need not be sent, no need to fill parameters");
+				return;
+			}
+			break;
+		default:
+			mlme_debug("Roam Filter need not be sent, no need to fill parameters");
+			return;
+		}
+	} else {
+		/* In case of STOP command, reset all the variables
+		 * except for blacklist BSSID which should be retained
+		 * across connections.
+		 */
+		op_bitmap = 0x2 | 0x4;
+		if (reason == REASON_ROAM_SET_SSID_ALLOWED)
+			num_ssid_white_list =
+					rso_usr_cfg->num_ssid_allowed_list;
+		num_bssid_preferred_list = rso_usr_cfg->num_bssid_favored;
+	}
+
+	/* fill in fixed values */
+	params->vdev_id = vdev_id;
+	params->op_bitmap = op_bitmap;
+	params->num_ssid_white_list = num_ssid_white_list;
+	params->num_bssid_preferred_list = num_bssid_preferred_list;
+	params->delta_rssi =
+		wlan_blm_get_rssi_blacklist_threshold(pdev);
+
+	for (i = 0; i < num_ssid_white_list; i++) {
+		qdf_mem_copy(params->ssid_allowed_list[i].ssid,
+			     rso_usr_cfg->ssid_allowed_list[i].ssid,
+			     rso_usr_cfg->ssid_allowed_list[i].length);
+		params->ssid_allowed_list[i].length =
+				rso_usr_cfg->ssid_allowed_list[i].length;
+		mlme_debug("SSID %d: %.*s", i,
+			   params->ssid_allowed_list[i].length,
+			   params->ssid_allowed_list[i].ssid);
+	}
+
+	if (params->num_bssid_preferred_list) {
+		qdf_mem_copy(params->bssid_favored, rso_usr_cfg->bssid_favored,
+			     MAX_BSSID_FAVORED * sizeof(struct qdf_mac_addr));
+		qdf_mem_copy(params->bssid_favored_factor,
+			     rso_usr_cfg->bssid_favored_factor,
+			     MAX_BSSID_FAVORED);
+	}
+	for (i = 0; i < params->num_rssi_rejection_ap; i++)
+		mlme_debug("RSSI reject BSSID "QDF_MAC_ADDR_FMT" expected rssi %d remaining duration %d",
+			   QDF_MAC_ADDR_REF(params->rssi_rejection_ap[i].bssid.bytes),
+			   params->rssi_rejection_ap[i].expected_rssi,
+			   params->rssi_rejection_ap[i].reject_duration);
+
+	for (i = 0; i < params->num_bssid_preferred_list; i++)
+		mlme_debug("Preferred Bssid[%d]:"QDF_MAC_ADDR_FMT" score: %d", i,
+			   QDF_MAC_ADDR_REF(params->bssid_favored[i].bytes),
+			   params->bssid_favored_factor[i]);
+
+	if (params->lca_disallow_config_present) {
+		params->disallow_duration
+				= mlme_obj->cfg.lfr.lfr3_disallow_duration;
+		params->rssi_channel_penalization
+			= mlme_obj->cfg.lfr.lfr3_rssi_channel_penalization;
+		params->num_disallowed_aps
+			= mlme_obj->cfg.lfr.lfr3_num_disallowed_aps;
+		mlme_debug("disallow_dur %d rssi_chan_pen %d num_disallowed_aps %d",
+			   params->disallow_duration,
+			   params->rssi_channel_penalization,
+			   params->num_disallowed_aps);
+	}
+}
+
 /**
  * cm_roam_start_req() - roam start request handling
  * @psoc: psoc pointer
@@ -1278,6 +1447,7 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct rso_config *rso_cfg;
 	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
 
 	start_req = qdf_mem_malloc(sizeof(*start_req));
 	if (!start_req)
@@ -1291,6 +1461,10 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	}
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (!rso_cfg)
+		goto rel_vdev_ref;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
 		goto rel_vdev_ref;
 
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
@@ -1313,6 +1487,8 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					&start_req->profile_params);
 	cm_fill_rso_channel_list(psoc, vdev, rso_cfg, &start_req->rso_chan_info,
 				 reason);
+	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_START,
+			    reason, &start_req->scan_filter_params);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);
@@ -1345,6 +1521,7 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct rso_config *rso_cfg;
 	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
 
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 
@@ -1360,6 +1537,10 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	}
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (!rso_cfg)
+		goto rel_vdev_ref;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
 		goto rel_vdev_ref;
 
 	/* fill from mlme directly */
@@ -1383,6 +1564,8 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					&update_req->profile_params);
 	cm_fill_rso_channel_list(psoc, vdev, rso_cfg,
 				 &update_req->rso_chan_info, reason);
+	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+			    reason, &update_req->scan_filter_params);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_update_config_req(psoc, vdev_id, update_req, reason);
@@ -1457,32 +1640,63 @@ cm_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return status;
 }
 
+static void cm_fill_stop_reason(struct wlan_roam_stop_config *stop_req,
+				uint8_t reason)
+{
+	if (reason == REASON_ROAM_SYNCH_FAILED)
+		stop_req->reason = REASON_ROAM_SYNCH_FAILED;
+	else if (reason == REASON_DRIVER_DISABLED)
+		stop_req->reason = REASON_ROAM_STOP_ALL;
+	else if (reason == REASON_SUPPLICANT_DISABLED_ROAMING)
+		stop_req->reason = REASON_SUPPLICANT_DISABLED_ROAMING;
+	else if (reason == REASON_DISCONNECTED)
+		stop_req->reason = REASON_DISCONNECTED;
+	else if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
+		stop_req->reason = REASON_OS_REQUESTED_ROAMING_NOW;
+	else
+		stop_req->reason = REASON_SME_ISSUED;
+}
+
 QDF_STATUS
 cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		 uint8_t reason)
 {
 	struct wlan_roam_stop_config *stop_req;
 	QDF_STATUS status;
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
 
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 	stop_req = qdf_mem_malloc(sizeof(*stop_req));
 	if (!stop_req)
 		return QDF_STATUS_E_NOMEM;
 
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		goto free_mem;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		goto rel_vdev_ref;
+
 	stop_req->btm_config.vdev_id = vdev_id;
 	stop_req->disconnect_params.vdev_id = vdev_id;
 	stop_req->idle_params.vdev_id = vdev_id;
 	stop_req->roam_triggers.vdev_id = vdev_id;
 	stop_req->rssi_params.vdev_id = vdev_id;
-
-	/* do the filling as csr_post_rso_stop */
-	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_debug("fail to fill stop config req");
-		qdf_mem_free(stop_req);
-		return status;
-	}
-
+	stop_req->roam_11k_params.vdev_id = vdev_id;
+	cm_fill_stop_reason(stop_req, reason);
+	if (wlan_cm_host_roam_in_progress(psoc, vdev_id))
+		stop_req->middle_of_roaming = 1;
+	else
+		wlan_roam_reset_roam_params(psoc);
 	/*
 	 * If roam synch propagation is in progress and an user space
 	 * disconnect is requested, then there is no need to send the
@@ -1507,8 +1721,17 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	    stop_req->reason == REASON_ROAM_STOP_ALL) {
 		mlme_info("vdev_id:%d : Drop RSO stop during roam sync",
 			  vdev_id);
-		qdf_mem_free(stop_req);
-		return QDF_STATUS_SUCCESS;
+		goto rel_vdev_ref;
+	}
+
+	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_STOP,
+			    reason, &stop_req->scan_filter_params);
+
+	/* do the filling as csr_post_rso_stop */
+	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_debug("fail to fill stop config req");
+		goto rel_vdev_ref;
 	}
 
 	status = wlan_cm_tgt_send_roam_stop_req(psoc, vdev_id, stop_req);
@@ -1520,6 +1743,9 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			mlme_debug("fail to send rso rsp msg");
 	}
 
+rel_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+free_mem:
 	qdf_mem_free(stop_req);
 
 	return QDF_STATUS_SUCCESS;
