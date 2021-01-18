@@ -1473,26 +1473,48 @@ static int wlan_ipa_get_ifaceid(struct wlan_ipa_priv *ipa_ctx,
  *
  * Return: None
  */
-static void wlan_ipa_cleanup_iface(struct wlan_ipa_iface_context *iface_context)
+static void wlan_ipa_cleanup_iface(struct wlan_ipa_iface_context *iface_context,
+				   uint8_t *mac_addr)
 {
 	struct wlan_ipa_priv *ipa_ctx = iface_context->ipa_ctx;
 
 	ipa_debug("enter");
+	ipa_err("net:%pK mode:%d MAC:"QDF_MAC_ADDR_FMT" id:%d",
+		iface_context->dev, iface_context->device_mode,
+		QDF_MAC_ADDR_REF(mac_addr), iface_context->session_id);
 
 	if (iface_context->session_id == WLAN_IPA_MAX_SESSION)
 		return;
 
-	cdp_ipa_cleanup_iface(ipa_ctx->dp_soc,
-			      iface_context->dev->name,
-			      wlan_ipa_is_ipv6_enabled(ipa_ctx->config));
+	if (mac_addr && qdf_mem_cmp(iface_context->mac_addr,
+				    mac_addr, QDF_MAC_ADDR_SIZE)) {
+		ipa_err("MAC mismatch "QDF_MAC_ADDR_FMT":"QDF_MAC_ADDR_FMT"",
+			QDF_MAC_ADDR_REF(mac_addr),
+			QDF_MAC_ADDR_REF(iface_context->mac_addr));
+	}
+
+	if (cdp_ipa_cleanup_iface(ipa_ctx->dp_soc,
+				  iface_context->dev->name,
+				  wlan_ipa_is_ipv6_enabled(ipa_ctx->config))) {
+		ipa_err("ipa_cleanup_iface failed");
+	}
 
 	if (iface_context->device_mode == QDF_SAP_MODE)
 		ipa_ctx->num_sap_connected--;
 
 	qdf_spin_lock_bh(&iface_context->interface_lock);
+	if (qdf_atomic_read(&iface_context->disconn_count) ==
+			qdf_atomic_read(&iface_context->conn_count) - 1) {
+		qdf_atomic_inc(&iface_context->disconn_count);
+	} else {
+		ipa_err("connect/disconnect out of sync");
+		QDF_BUG(0);
+	}
+
 	iface_context->dev = NULL;
 	iface_context->device_mode = QDF_MAX_NO_OF_MODE;
 	iface_context->session_id = WLAN_IPA_MAX_SESSION;
+	qdf_mem_set(iface_context->mac_addr, QDF_MAC_ADDR_SIZE, 0);
 	qdf_spin_unlock_bh(&iface_context->interface_lock);
 	iface_context->ifa_address = 0;
 	if (!iface_context->ipa_ctx->num_iface) {
@@ -1589,42 +1611,55 @@ static void wlan_ipa_nbuf_cb(qdf_nbuf_t skb)
  * @device_mode: Net interface device mode
  * @adapter: Interface upon which IPA is being setup
  * @session_id: Station ID of the API instance
+ * @mac_addr: MAC addr of the API instance
  *
  * Return: QDF STATUS
  */
 static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 				       qdf_netdev_t net_dev,
 				       uint8_t device_mode,
-				       uint8_t session_id)
+				       uint8_t session_id,
+				       uint8_t *mac_addr)
 {
 	struct wlan_ipa_iface_context *iface_context = NULL;
 	int i;
 	QDF_STATUS status;
 
-	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
-	 * channel change indication. Since these indications are sent by lower
-	 * layer as SAP updates and IPA doesn't have to do anything for these
-	 * updates so ignoring!
-	 */
-	if (device_mode == QDF_SAP_MODE) {
-		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
-			iface_context = &(ipa_ctx->iface_context[i]);
-			if (iface_context->dev == net_dev) {
-				if (iface_context->device_mode ==
-				    device_mode) {
+	ipa_err("net:%pK mode:%d MAC:"QDF_MAC_ADDR_FMT" id:%d",
+		net_dev, device_mode, QDF_MAC_ADDR_REF(mac_addr), session_id);
+
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+		iface_context = &(ipa_ctx->iface_context[i]);
+		if (iface_context->dev == net_dev) {
+			if (iface_context->device_mode == device_mode) {
+				/**
+				 * Lower layer may send multiple START_BSS_EVENT
+				 * in DFS mode or during channel change.
+				 * Since these indications are sent by lower
+				 * layer as SAP updates and IPA doesn't have to
+				 * do anything for these updates so ignoring!
+				 */
+				if (device_mode == QDF_SAP_MODE) {
 					ipa_debug("found iface %u device_mode %u",
 						  i, device_mode);
 					return QDF_STATUS_SUCCESS;
+				} else if (device_mode == QDF_STA_MODE &&
+					   qdf_mem_cmp(
+						   iface_context->mac_addr,
+						   mac_addr,
+						   QDF_MAC_ADDR_SIZE) == 0) {
+					ipa_err("same STA iface already connected");
 				}
 
-				ipa_err("Obsolete iface %u found, device_mode %u, will remove it.",
-					i, iface_context->device_mode);
-				wlan_ipa_cleanup_iface(iface_context);
-			} else if (iface_context->session_id == session_id) {
-				ipa_err("Obsolete iface %u found, net_dev %pK, will remove it.",
-					i, iface_context->dev);
-				wlan_ipa_cleanup_iface(iface_context);
 			}
+
+			ipa_err("Obsolete iface %u found, device_mode %u, will remove it.",
+				i, iface_context->device_mode);
+			wlan_ipa_cleanup_iface(iface_context, NULL);
+		} else if (iface_context->session_id == session_id) {
+			ipa_err("Obsolete iface %u found, net_dev %pK, will remove it.",
+				i, iface_context->dev);
+			wlan_ipa_cleanup_iface(iface_context, NULL);
 		}
 	}
 
@@ -1650,9 +1685,20 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 		goto end;
 	}
 
+	qdf_spin_lock_bh(&iface_context->interface_lock);
+	if (qdf_atomic_read(&iface_context->conn_count) ==
+			qdf_atomic_read(&iface_context->disconn_count)) {
+		qdf_atomic_inc(&iface_context->conn_count);
+	} else {
+		ipa_err("connect/disconnect out of sync");
+		QDF_BUG(0);
+	}
+
 	iface_context->dev = net_dev;
 	iface_context->device_mode = device_mode;
 	iface_context->session_id = session_id;
+	qdf_mem_copy(iface_context->mac_addr, mac_addr, QDF_MAC_ADDR_SIZE);
+	qdf_spin_unlock_bh(&iface_context->interface_lock);
 
 	status = cdp_ipa_setup_iface(ipa_ctx->dp_soc, net_dev->name,
 				     net_dev->dev_addr,
@@ -1677,7 +1723,7 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 
 end:
 	if (iface_context)
-		wlan_ipa_cleanup_iface(iface_context);
+		wlan_ipa_cleanup_iface(iface_context, mac_addr);
 
 	return status;
 }
@@ -2262,7 +2308,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					iface_ctx = &ipa_ctx->iface_context[i];
 					if (iface_ctx->dev == net_dev) {
 						wlan_ipa_cleanup_iface(
-								iface_ctx);
+								iface_ctx,
+								mac_addr);
 						break;
 					}
 				}
@@ -2298,7 +2345,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					ipa_ctx, net_dev, QDF_STA_MODE);
 			if (iface_ctx) {
 				ipa_ctx->sta_connected--;
-				wlan_ipa_cleanup_iface(iface_ctx);
+				wlan_ipa_cleanup_iface(iface_ctx, NULL);
 			}
 			status = wlan_ipa_send_msg(net_dev,
 						   QDF_IPA_STA_DISCONNECT,
@@ -2312,7 +2359,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		status = wlan_ipa_setup_iface(ipa_ctx, net_dev, device_mode,
-					   session_id);
+					      session_id, mac_addr);
 		if (status != QDF_STATUS_SUCCESS) {
 			ipa_err("wlan_ipa_setup_iface failed %u", status);
 			qdf_mutex_release(&ipa_ctx->event_lock);
@@ -2383,7 +2430,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		status = wlan_ipa_setup_iface(ipa_ctx, net_dev, device_mode,
-					   session_id);
+					      session_id, mac_addr);
 		if (status != QDF_STATUS_SUCCESS) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			ipa_err("%s: Evt: %d, Interface setup failed",
@@ -2427,7 +2474,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 								  net_dev,
 								  QDF_STA_MODE);
 			if (iface)
-				wlan_ipa_cleanup_iface(iface);
+				wlan_ipa_cleanup_iface(iface, mac_addr);
 
 			return QDF_STATUS_E_INVAL;
 		}
@@ -2484,7 +2531,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 							      net_dev,
 							      QDF_STA_MODE);
 		if (iface_ctx)
-			wlan_ipa_cleanup_iface(iface_ctx);
+			wlan_ipa_cleanup_iface(iface_ctx, mac_addr);
 
 		if (qdf_ipa_get_lan_rx_napi() && ipa_ctx->sap_num_connected_sta)
 			ipa_set_rps_per_vdev(ipa_ctx, session_id, false);
@@ -2535,7 +2582,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 			iface_ctx = &ipa_ctx->iface_context[i];
 			if (iface_ctx->dev == net_dev) {
-				wlan_ipa_cleanup_iface(iface_ctx);
+				wlan_ipa_cleanup_iface(iface_ctx, mac_addr);
 				break;
 			}
 		}
@@ -3317,6 +3364,8 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 		iface_context->dev = NULL;
 		iface_context->device_mode = QDF_MAX_NO_OF_MODE;
 		iface_context->session_id = WLAN_IPA_MAX_SESSION;
+		qdf_atomic_init(&iface_context->conn_count);
+		qdf_atomic_init(&iface_context->disconn_count);
 		qdf_spinlock_create(&iface_context->interface_lock);
 	}
 
@@ -3974,7 +4023,7 @@ void wlan_ipa_uc_cleanup_sta(struct wlan_ipa_priv *ipa_ctx,
 		    iface_ctx->dev && iface_ctx->dev == net_dev) {
 			wlan_ipa_uc_send_evt(net_dev, QDF_IPA_STA_DISCONNECT,
 					     net_dev->dev_addr);
-			wlan_ipa_cleanup_iface(iface_ctx);
+			wlan_ipa_cleanup_iface(iface_ctx, NULL);
 		}
 	}
 
@@ -4010,7 +4059,7 @@ void wlan_ipa_cleanup_dev_iface(struct wlan_ipa_priv *ipa_ctx,
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 		iface_ctx = &ipa_ctx->iface_context[i];
 		if (iface_ctx->dev == net_dev) {
-			wlan_ipa_cleanup_iface(iface_ctx);
+			wlan_ipa_cleanup_iface(iface_ctx, NULL);
 			break;
 		}
 	}
@@ -4034,7 +4083,7 @@ void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx)
 				wlan_ipa_uc_send_evt(iface->dev,
 						     QDF_IPA_STA_DISCONNECT,
 						     iface->dev->dev_addr);
-			wlan_ipa_cleanup_iface(iface);
+			wlan_ipa_cleanup_iface(iface, NULL);
 		}
 	}
 }
