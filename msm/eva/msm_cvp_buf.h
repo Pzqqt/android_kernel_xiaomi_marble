@@ -15,7 +15,7 @@
 #include <linux/refcount.h>
 #include <media/msm_eva_private.h>
 
-#define MAX_FRAME_BUFFER_NUMS 48
+#define MAX_FRAME_BUFFER_NUMS 30
 #define MAX_DMABUF_NUMS 64
 
 struct msm_cvp_inst;
@@ -33,7 +33,8 @@ enum smem_prop {
 	SMEM_CACHED = 0x2,
 	SMEM_SECURE = 0x4,
 	SMEM_ADSP = 0x8,
-	SMEM_NON_PIXEL = 0x10
+	SMEM_NON_PIXEL = 0x10,
+	SMEM_PIXEL = 0x20
 };
 
 struct msm_cvp_list {
@@ -177,6 +178,12 @@ int msm_cvp_map_buf_dsp(struct msm_cvp_inst *inst,
 			struct eva_kmd_buffer *buf);
 int msm_cvp_unmap_buf_dsp(struct msm_cvp_inst *inst,
 			struct eva_kmd_buffer *buf);
+int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
+			struct eva_kmd_buffer *buf,
+			int32_t pid,
+			uint32_t *iova);
+int msm_cvp_unmap_buf_dsp_new(struct msm_cvp_inst *inst,
+			struct eva_kmd_buffer *buf);
 void msm_cvp_cache_operations(struct msm_cvp_smem *smem,
 			u32 type, u32 offset, u32 size);
 u32 msm_cvp_map_frame_buf(struct msm_cvp_inst *inst,
@@ -197,4 +204,10 @@ int msm_cvp_map_frame(struct msm_cvp_inst *inst,
 void msm_cvp_unmap_frame(struct msm_cvp_inst *inst, u64 ktid);
 int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst);
 void msm_cvp_print_inst_bufs(struct msm_cvp_inst *inst);
+int cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
+			struct cvp_internal_buf *buf,
+			u32 buffer_size,
+			u32 secure_type);
+int cvp_release_dsp_buffers(struct msm_cvp_inst *inst,
+			struct cvp_internal_buf *buf);
 #endif

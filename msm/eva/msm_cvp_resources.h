@@ -158,6 +158,7 @@ struct msm_cvp_platform_resources {
 	bool use_non_secure_pil;
 	bool sw_power_collapsible;
 	bool auto_pil;
+	bool dsp_enabled;
 	struct list_head context_banks;
 	bool thermal_mitigable;
 	const char *fw_name;

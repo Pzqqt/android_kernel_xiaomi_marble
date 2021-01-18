@@ -3,6 +3,12 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/pid.h>
+#include <linux/fdtable.h>
+#include <linux/rcupdate.h>
+#include <linux/fs.h>
+#include <linux/dma-buf.h>
+#include <linux/sched/task.h>
 #include "msm_cvp_common.h"
 #include "cvp_hfi_api.h"
 #include "msm_cvp_debug.h"
@@ -235,6 +241,232 @@ int msm_cvp_unmap_buf_dsp(struct msm_cvp_inst *inst, struct eva_kmd_buffer *buf)
 				__func__, buf->fd, rc);
 			return rc;
 		}
+	}
+
+	if (cbuf->smem->device_addr) {
+		msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
+		msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
+	}
+
+	mutex_lock(&inst->cvpdspbufs.lock);
+	list_del(&cbuf->list);
+	mutex_unlock(&inst->cvpdspbufs.lock);
+
+	kmem_cache_free(cvp_driver->smem_cache, cbuf->smem);
+	kmem_cache_free(cvp_driver->buf_cache, cbuf);
+	return rc;
+}
+
+static struct file *msm_cvp_fget(unsigned int fd, struct task_struct *task,
+			fmode_t mask, unsigned int refs)
+{
+	struct files_struct *files = task->files;
+	struct file *file;
+
+	rcu_read_lock();
+loop:
+	file = fcheck_files(files, fd);
+	if (file) {
+		/* File object ref couldn't be taken.
+		 * dup2() atomicity guarantee is the reason
+		 * we loop to catch the new file (or NULL pointer)
+		 */
+		if (file->f_mode & mask)
+			file = NULL;
+		else if (!get_file_rcu_many(file, refs))
+			goto loop;
+	}
+	rcu_read_unlock();
+
+	return file;
+}
+
+static struct dma_buf *cvp_dma_buf_get(struct file *file, int fd,
+			struct task_struct *task)
+{
+	if (file->f_op != gfa_cv.dmabuf_f_op) {
+		dprintk(CVP_WARN, "fd doesn't refer to dma_buf\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	return file->private_data;
+}
+
+int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
+			struct eva_kmd_buffer *buf,
+			int32_t pid, uint32_t *iova)
+{
+	int rc = 0;
+	bool found = false;
+	struct cvp_internal_buf *cbuf;
+	struct msm_cvp_smem *smem = NULL;
+	struct cvp_hal_session *session;
+	struct dma_buf *dma_buf = NULL;
+
+	struct pid *pid_s;
+	struct task_struct *task;
+	struct file *file;
+
+	if (!inst || !inst->core || !buf) {
+		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (buf->fd < 0) {
+		dprintk(CVP_ERR, "%s: Invalid fd = %d", __func__, buf->fd);
+		return 0;
+	}
+
+	if (buf->offset) {
+		dprintk(CVP_ERR,
+			"%s: offset is deprecated, set to 0.\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	session = (struct cvp_hal_session *)inst->session;
+
+	mutex_lock(&inst->cvpdspbufs.lock);
+	list_for_each_entry(cbuf, &inst->cvpdspbufs.list, list) {
+		if (cbuf->fd == buf->fd) {
+			if (cbuf->size != buf->size) {
+				dprintk(CVP_ERR, "%s: buf size mismatch\n",
+					__func__);
+				mutex_unlock(&inst->cvpdspbufs.lock);
+				return -EINVAL;
+			}
+			found = true;
+			break;
+		}
+	}
+	mutex_unlock(&inst->cvpdspbufs.lock);
+	if (found) {
+		print_internal_buffer(CVP_ERR, "duplicate", inst, cbuf);
+		return -EINVAL;
+	}
+
+	pid_s = find_get_pid(pid);
+	if (pid_s == NULL) {
+		dprintk(CVP_WARN, "%s incorrect pid\n", __func__);
+		return -EINVAL;
+	}
+	dprintk(CVP_WARN, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
+	/* task = get_pid_task(pid, PIDTYPE_PID); */
+	task = get_pid_task(pid_s, PIDTYPE_TGID);
+
+	if (!task)
+		dprintk(CVP_WARN, "%s task doesn't exist\n", __func__);
+	file = msm_cvp_fget(buf->fd, task, FMODE_PATH, 1);
+	if (file == NULL) {
+		dprintk(CVP_WARN, "%s fail to get file from fd\n", __func__);
+		put_task_struct(task);
+		return -EINVAL;
+	}
+
+	//entry->file = file;
+	dma_buf = cvp_dma_buf_get(
+			file,
+			buf->fd,
+			task);
+	if (dma_buf == ERR_PTR(-EINVAL)) {
+		dprintk(CVP_ERR, "%s: Invalid fd = %d", __func__, buf->fd);
+		fput(file);
+		put_task_struct(task);
+		return -EINVAL;
+	}
+
+	dprintk(CVP_WARN, "dma_buf from internal %llu\n", dma_buf);
+	/* to unmap dsp buf, below sequence is required
+	 * fput(file);
+	 * dma_buf_put(dma_buf);
+	 * put_task_struct(task);
+	 */
+
+	if (!dma_buf) {
+		dprintk(CVP_ERR, "%s: Invalid fd = %d", __func__, buf->fd);
+		return 0;
+	}
+
+	cbuf = kmem_cache_zalloc(cvp_driver->buf_cache, GFP_KERNEL);
+	if (!cbuf)
+		return -ENOMEM;
+
+	smem = kmem_cache_zalloc(cvp_driver->smem_cache, GFP_KERNEL);
+	if (!smem) {
+		kmem_cache_free(cvp_driver->buf_cache, cbuf);
+		return -ENOMEM;
+	}
+
+	smem->dma_buf = dma_buf;
+	smem->bitmap_index = MAX_DMABUF_NUMS;
+	dprintk(CVP_DSP, "%s: dma_buf = %llx\n", __func__, dma_buf);
+	rc = msm_cvp_map_smem(inst, smem, "map dsp");
+	if (rc) {
+		print_client_buffer(CVP_ERR, "map failed", inst, buf);
+		goto exit;
+	}
+
+	cbuf->smem = smem;
+	cbuf->fd = buf->fd;
+	cbuf->size = buf->size;
+	cbuf->offset = buf->offset;
+	cbuf->ownership = CLIENT;
+	cbuf->index = buf->index;
+
+	*iova = (uint32_t)smem->device_addr;
+
+	dprintk(CVP_DSP, "%s: buf->fd %d, device_addr = %llx\n",
+		__func__, buf->fd, (uint32_t)smem->device_addr);
+
+	mutex_lock(&inst->cvpdspbufs.lock);
+	list_add_tail(&cbuf->list, &inst->cvpdspbufs.list);
+	mutex_unlock(&inst->cvpdspbufs.lock);
+
+	return rc;
+
+exit:
+	if (smem->device_addr) {
+		msm_cvp_unmap_smem(inst, smem, "unmap dsp");
+		msm_cvp_smem_put_dma_buf(smem->dma_buf);
+	}
+	kmem_cache_free(cvp_driver->buf_cache, cbuf);
+	cbuf = NULL;
+	kmem_cache_free(cvp_driver->smem_cache, smem);
+	smem = NULL;
+	return rc;
+}
+
+int msm_cvp_unmap_buf_dsp_new(struct msm_cvp_inst *inst,
+		struct eva_kmd_buffer *buf)
+{
+	int rc = 0;
+	bool found;
+	struct cvp_internal_buf *cbuf;
+	struct cvp_hal_session *session;
+
+	if (!inst || !inst->core || !buf) {
+		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	session = (struct cvp_hal_session *)inst->session;
+	if (!session) {
+		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
+		return -EINVAL;
+	}
+
+	mutex_lock(&inst->cvpdspbufs.lock);
+	found = false;
+	list_for_each_entry(cbuf, &inst->cvpdspbufs.list, list) {
+		if (cbuf->fd == buf->fd) {
+			found = true;
+			break;
+		}
+	}
+	mutex_unlock(&inst->cvpdspbufs.lock);
+	if (!found) {
+		print_client_buffer(CVP_ERR, "invalid", inst, buf);
+		return -EINVAL;
 	}
 
 	if (cbuf->smem->device_addr) {
@@ -964,3 +1196,98 @@ int cvp_release_arp_buffers(struct msm_cvp_inst *inst)
 	return rc;
 }
 
+int cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
+			struct cvp_internal_buf *buf,
+			u32 buffer_size,
+			u32 secure_type)
+{
+	u32 smem_flags = SMEM_UNCACHED;
+	int rc = 0;
+
+	if (!inst) {
+		dprintk(CVP_ERR, "%s Invalid input\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!buf)
+		return -EINVAL;
+
+	if (!buffer_size)
+		return -EINVAL;
+
+	switch (secure_type) {
+	case 0:
+		break;
+	case 1:
+		smem_flags |= SMEM_SECURE | SMEM_PIXEL;
+		break;
+	case 2:
+		smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
+		break;
+	default:
+		dprintk(CVP_ERR, "%s Invalid secure_type %d\n",
+			__func__, secure_type);
+		return -EINVAL;
+	}
+
+	dprintk(CVP_ERR, "%s smem_flags 0x%x\n", __func__, smem_flags);
+	buf->smem = kmem_cache_zalloc(cvp_driver->smem_cache, GFP_KERNEL);
+	if (!buf->smem) {
+		dprintk(CVP_ERR, "%s Out of memory\n", __func__);
+		goto fail_kzalloc_smem_cache;
+	}
+
+	rc = msm_cvp_smem_alloc(buffer_size, 1, smem_flags, 0,
+			&(inst->core->resources), buf->smem);
+	if (rc) {
+		dprintk(CVP_ERR, "Failed to allocate ARP memory\n");
+		goto err_no_mem;
+	}
+
+	dprintk(CVP_ERR, "%s dma_buf %pK\n", __func__, buf->smem->dma_buf);
+
+	buf->size = buf->smem->size;
+	buf->type = HFI_BUFFER_INTERNAL_PERSIST_1;
+	buf->ownership = CLIENT;
+
+	return rc;
+
+err_no_mem:
+	kmem_cache_free(cvp_driver->smem_cache, buf->smem);
+fail_kzalloc_smem_cache:
+	return rc;
+}
+
+int cvp_release_dsp_buffers(struct msm_cvp_inst *inst,
+			struct cvp_internal_buf *buf)
+{
+	struct msm_cvp_smem *smem;
+	int rc = 0;
+
+	if (!inst) {
+		dprintk(CVP_ERR, "Invalid instance pointer = %pK\n", inst);
+		return -EINVAL;
+	}
+
+	if (!buf) {
+		dprintk(CVP_ERR, "Invalid buffer pointer = %pK\n", inst);
+		return -EINVAL;
+	}
+
+	smem = buf->smem;
+	if (!smem) {
+		dprintk(CVP_ERR, "%s invalid smem\n", __func__);
+		return -EINVAL;
+	}
+
+	if (buf->ownership == CLIENT) {
+		dprintk(CVP_MEM,
+		"%s: %x : fd %x %s size %d",
+		"free dsp buf", hash32_ptr(inst->session), buf->fd,
+			smem->dma_buf->name, buf->size);
+		msm_cvp_smem_free(smem);
+		kmem_cache_free(cvp_driver->smem_cache, smem);
+	}
+
+	return rc;
+}

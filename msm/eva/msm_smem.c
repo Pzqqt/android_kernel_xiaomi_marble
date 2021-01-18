@@ -16,6 +16,7 @@
 #include "msm_cvp_debug.h"
 #include "msm_cvp_resources.h"
 #include "cvp_core_hfi.h"
+#include "msm_cvp_dsp.h"
 
 
 static int msm_dma_get_device_address(struct dma_buf *dbuf, u32 align,
@@ -277,6 +278,9 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 	if (flags & SMEM_NON_PIXEL)
 		ion_flags |= ION_FLAG_CP_NON_PIXEL;
 
+	if (flags & SMEM_PIXEL)
+		ion_flags |= ION_FLAG_CP_PIXEL;
+
 	if (flags & SMEM_SECURE) {
 		ion_flags |= ION_FLAG_SECURE;
 		heap_mask = ION_HEAP(ION_SECURE_HEAP_ID);
@@ -291,6 +295,9 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 		rc = -ENOMEM;
 		goto fail_shared_mem_alloc;
 	}
+
+	if (!gfa_cv.dmabuf_f_op)
+		gfa_cv.dmabuf_f_op = (const struct file_operations *)dbuf->file->f_op;
 
 	mem->flags = flags;
 	mem->ion_flags = ion_flags;

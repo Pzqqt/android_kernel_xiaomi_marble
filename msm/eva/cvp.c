@@ -37,7 +37,7 @@ static int cvp_open(struct inode *inode, struct file *filp)
 		struct msm_cvp_core, cdev);
 	struct msm_cvp_inst *inst;
 
-	dprintk(CVP_SESS, "%s: Enter\n", __func__);
+	dprintk(CVP_SESS, "%s: core->id: %d\n", __func__, core->id);
 
 	inst = msm_cvp_open(core->id, MSM_CVP_USER);
 	if (!inst) {
@@ -416,9 +416,13 @@ static int msm_probe_cvp_device(struct platform_device *pdev)
 
 	atomic64_set(&core->kernel_trans_id, 0);
 
-	rc = cvp_dsp_device_init();
-	if (rc)
-		dprintk(CVP_WARN, "Failed to initialize DSP driver\n");
+	if (core->resources.dsp_enabled) {
+		rc = cvp_dsp_device_init();
+		if (rc)
+			dprintk(CVP_WARN, "Failed to initialize DSP driver\n");
+	} else {
+		dprintk(CVP_DSP, "DSP interface not enabled\n");
+	}
 
 	return rc;
 

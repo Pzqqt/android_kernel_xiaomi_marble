@@ -93,10 +93,14 @@ static struct msm_cvp_common_data sm8450_common_data[] = {
 	},
 	{
 		.key = "qcom,dsp-resp-timeout",
-		.value = 1000
+		.value = 1000,
 	},
 	{
 		.key = "qcom,debug-timeout",
+		.value = 0,
+	},
+	{
+		.key = "qcom,dsp-enabled",
 		.value = 0,
 	}
 };
