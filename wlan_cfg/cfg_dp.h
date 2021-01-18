@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1048,6 +1048,10 @@
 	CFG_INI_BOOL("dp_rx_buff_prealloc_pool", false, \
 		     "Enable/Disable DP RX emergency buffer pool support")
 
+#define CFG_DP_RX_REFILL_BUFF_POOL_ENABLE \
+	CFG_INI_BOOL("dp_rx_refill_buff_pool", false, \
+		     "Enable/Disable DP RX refill buffer pool support")
+
 #define CFG_DP_POLL_MODE_ENABLE \
 		CFG_INI_BOOL("dp_poll_mode_enable", false, \
 		"Enable/Disable Polling mode for data path")
@@ -1195,6 +1199,7 @@
 		CFG(CFG_DP_REO_RINGS_MAP) \
 		CFG(CFG_DP_PEER_EXT_STATS) \
 		CFG(CFG_DP_RX_BUFF_POOL_ENABLE) \
+		CFG(CFG_DP_RX_REFILL_BUFF_POOL_ENABLE) \
 		CFG(CFG_DP_RX_PENDING_HL_THRESHOLD) \
 		CFG(CFG_DP_RX_PENDING_LO_THRESHOLD) \
 		CFG(CFG_DP_LEGACY_MODE_CSUM_DISABLE) \
