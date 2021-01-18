@@ -342,11 +342,18 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 {
 	tpCsrNeighborRoamControlInfo nbr_roam_info;
 	tCsrRoamConnectedProfile *profile;
-	struct roam_ext_params *roam_params;
 	uint8_t num_ch = 0;
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
 	struct rso_chan_info *chan_lst;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct rso_config_params *rso_usr_cfg;
+
+	mlme_obj = mlme_get_psoc_ext_obj(mac->psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	rso_usr_cfg = &mlme_obj->cfg.lfr.rso_user_config;
 
 	if (!filter)
 		return QDF_STATUS_E_FAILURE;
@@ -356,7 +363,6 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	qdf_mem_zero(filter, sizeof(*filter));
 	nbr_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
 	profile = &mac->roam.roamSession[vdev_id].connectedProfile;
-	roam_params = &mac->roam.configParam.roam_params;
 
 	/* only for HDD requested handoff fill in the BSSID in the filter */
 	if (nbr_roam_info->uOsRequestedHandoff) {
@@ -367,10 +373,10 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 			     QDF_MAC_ADDR_SIZE);
 	}
 	sme_debug("No of Allowed SSID List:%d",
-		  roam_params->num_ssid_allowed_list);
+		  rso_usr_cfg->num_ssid_allowed_list);
 
-	if (roam_params->num_ssid_allowed_list) {
-		csr_copy_ssids_from_roam_params(roam_params, filter);
+	if (rso_usr_cfg->num_ssid_allowed_list) {
+		csr_copy_ssids_from_roam_params(rso_usr_cfg, filter);
 	} else {
 		filter->num_of_ssid = 1;
 
@@ -585,30 +591,6 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * csr_roam_reset_roam_params - API to reset the roaming parameters
- * @mac_ctx:          Pointer to the global MAC structure
- *
- * The BSSID blacklist should not be cleared since it has to
- * be used across connections. These parameters will be cleared
- * and sent to firmware with with the roaming STOP command.
- *
- * Return: VOID
- */
-void csr_roam_reset_roam_params(struct mac_context *mac_ctx)
-{
-	struct roam_ext_params *roam_params = NULL;
-
-	/*
-	 * clear all the whitelist parameters and remaining
-	 * needs to be retained across connections.
-	 */
-	roam_params = &mac_ctx->roam.configParam.roam_params;
-	roam_params->num_ssid_allowed_list = 0;
-	qdf_mem_zero(&roam_params->ssid_allowed_list,
-			sizeof(tSirMacSSid) * MAX_SSID_ALLOWED_LIST);
-}
-
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 				     uint8_t vdev_id)
@@ -733,7 +715,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	 * For a new connection, they have to be programmed again.
 	 */
 	if (!csr_neighbor_middle_of_roaming(mac, sessionId)) {
-		csr_roam_reset_roam_params(mac);
+		wlan_roam_reset_roam_params(mac->psoc);
 		csr_roam_restore_default_config(mac, sessionId);
 	}
 
@@ -1099,9 +1081,10 @@ bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId)
 	return val;
 }
 
+#ifndef FEATURE_CM_ENABLE
 bool
-wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
-				  uint8_t vdev_id)
+wlan_cm_host_roam_in_progress(struct wlan_objmgr_psoc *psoc,
+			      uint8_t vdev_id)
 {
 	struct csr_roam_session *session;
 	struct mac_context *mac_ctx;
@@ -1120,7 +1103,7 @@ wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	return csr_neighbor_middle_of_roaming(mac_ctx, vdev_id);
 }
-
+#endif
 /**
  * csr_neighbor_roam_process_handoff_req - Processes handoff request
  *

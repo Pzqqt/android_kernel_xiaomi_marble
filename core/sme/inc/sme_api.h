@@ -440,9 +440,18 @@ void sme_set_curr_device_mode(mac_handle_t mac_handle,
  */
 void sme_update_nud_config(mac_handle_t mac_handle, uint8_t nud_fail_behavior);
 
+/**
+ * sme_update_roam_params() - Store/Update the roaming params
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id:                  vdev ID
+ * @src_rso_config:           The source to copy
+ * @update_param:             Type of parameter to be updated
+ *
+ * Return: Return the status of the updation.
+ */
 QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
-				  uint8_t session_id,
-				  struct roam_ext_params *roam_params_src,
+				  uint8_t vdev_id,
+				  struct rso_config_params *src_rso_config,
 				  int update_param);
 QDF_STATUS sme_update_config(mac_handle_t mac_handle,
 			     struct sme_config_params *pSmeConfigParams);

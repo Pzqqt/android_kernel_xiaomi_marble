@@ -166,6 +166,30 @@ QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	return status;
 }
 
+#ifdef FEATURE_CM_ENABLE
+bool wlan_cm_host_roam_in_progress(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool host_roam_in_progress = false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return host_roam_in_progress;
+	}
+
+	if (wlan_cm_is_vdev_roam_preauth_state(vdev) ||
+	    wlan_cm_is_vdev_roam_reassoc_state(vdev))
+		host_roam_in_progress = true;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return host_roam_in_progress;
+}
+#endif
+
 QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
@@ -176,7 +200,7 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 		return QDF_STATUS_E_FAILURE;
 
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) ||
-	    wlan_cm_neighbor_roam_in_progress(psoc, vdev_id)) {
+	    wlan_cm_host_roam_in_progress(psoc, vdev_id)) {
 		cm_roam_release_lock();
 		return QDF_STATUS_E_BUSY;
 	}
@@ -203,7 +227,7 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) ||
 	    MLME_IS_ROAMING_IN_PROG(psoc, vdev_id) ||
 	    mlme_is_roam_invoke_in_progress(psoc, vdev_id) ||
-	    wlan_cm_neighbor_roam_in_progress(psoc, vdev_id)) {
+	    wlan_cm_host_roam_in_progress(psoc, vdev_id)) {
 		cm_roam_release_lock();
 		return true;
 	}
@@ -910,6 +934,26 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return status;
+}
+
+void wlan_roam_reset_roam_params(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct rso_config_params *rso_usr_cfg;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	rso_usr_cfg = &mlme_obj->cfg.lfr.rso_user_config;
+
+	/*
+	 * clear all the whitelist parameters and remaining
+	 * needs to be retained across connections.
+	 */
+	rso_usr_cfg->num_ssid_allowed_list = 0;
+	qdf_mem_zero(&rso_usr_cfg->ssid_allowed_list,
+		     sizeof(struct wlan_ssid) * MAX_SSID_ALLOWED_LIST);
 }
 
 static void cm_rso_chan_to_freq_list(struct wlan_objmgr_pdev *pdev,

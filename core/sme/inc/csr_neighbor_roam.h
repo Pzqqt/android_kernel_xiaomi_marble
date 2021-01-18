@@ -154,7 +154,6 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 		uint32_t *out_chan_freq_list,
 		uint8_t outputNumOfChannels,
 		uint8_t *pMergedOutputNumOfChannels);
-void csr_roam_reset_roam_params(struct mac_context *mac_ptr);
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(struct mac_context *mac, uint8_t sessionId,

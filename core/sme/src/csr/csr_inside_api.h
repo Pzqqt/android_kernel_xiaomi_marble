@@ -401,12 +401,12 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 
 /*
  * csr_copy_ssids_from_roam_params() - copy SSID from roam_params to scan filter
- * @roam_params: roam params
+ * @rso_usr_cfg: rso user config
  * @filter: scan filter
  *
  * Return void
  */
-void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
+void csr_copy_ssids_from_roam_params(struct rso_config_params *rso_usr_cfg,
 				     struct scan_filter *filter);
 
 /*

@@ -4215,14 +4215,14 @@ const struct nla_policy wlan_hdd_set_roam_param_policy[
 /**
  * hdd_set_white_list() - parse white list
  * @hdd_ctx:        HDD context
- * @roam_params:   roam params
+ * @rso_config: rso config
  * @tb:            list of attributes
  * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_white_list(struct hdd_context *hdd_ctx,
-			      struct roam_ext_params *roam_params,
+			      struct rso_config_params *rso_config,
 			      struct nlattr **tb, uint8_t vdev_id)
 {
 	int rem, i;
@@ -4269,14 +4269,14 @@ static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 			 */
 			if (buf_len > 1 &&
 			    ((buf_len - 1) <= WLAN_SSID_MAX_LEN)) {
-				nla_memcpy(roam_params->ssid_allowed_list[i].ssId,
+				nla_memcpy(rso_config->ssid_allowed_list[i].ssid,
 					tb2[PARAM_LIST_SSID], buf_len - 1);
-				roam_params->ssid_allowed_list[i].length = buf_len - 1;
+				rso_config->ssid_allowed_list[i].length = buf_len - 1;
 				hdd_debug("SSID[%d]: %.*s,length = %d",
 					i,
-					roam_params->ssid_allowed_list[i].length,
-					roam_params->ssid_allowed_list[i].ssId,
-					roam_params->ssid_allowed_list[i].length);
+					rso_config->ssid_allowed_list[i].length,
+					rso_config->ssid_allowed_list[i].ssid,
+					rso_config->ssid_allowed_list[i].length);
 					i++;
 			} else {
 				hdd_err("Invalid buffer length");
@@ -4289,11 +4289,11 @@ static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 		goto fail;
 	}
 
-	roam_params->num_ssid_allowed_list = i;
-	hdd_debug("Num of Allowed SSID %d", roam_params->num_ssid_allowed_list);
+	rso_config->num_ssid_allowed_list = i;
+	hdd_debug("Num of Allowed SSID %d", rso_config->num_ssid_allowed_list);
 	mac_handle = hdd_ctx->mac_handle;
-	sme_update_roam_params(mac_handle, vdev_id,
-			       roam_params, REASON_ROAM_SET_SSID_ALLOWED);
+	sme_update_roam_params(mac_handle, vdev_id, rso_config,
+			       REASON_ROAM_SET_SSID_ALLOWED);
 	return 0;
 
 fail:
@@ -4303,14 +4303,14 @@ fail:
 /**
  * hdd_set_bssid_prefs() - parse set bssid prefs
  * @hdd_ctx:        HDD context
- * @roam_params:   roam params
+ * @rso_config: rso config
  * @tb:            list of attributes
  * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_bssid_prefs(struct hdd_context *hdd_ctx,
-			       struct roam_ext_params *roam_params,
+			       struct rso_config_params *rso_config,
 			       struct nlattr **tb, uint8_t vdev_id)
 {
 	int rem, i;
@@ -4358,30 +4358,30 @@ static int hdd_set_bssid_prefs(struct hdd_context *hdd_ctx,
 			hdd_err("attr mac address failed");
 			goto fail;
 		}
-		nla_memcpy(roam_params->bssid_favored[i].bytes,
+		nla_memcpy(rso_config->bssid_favored[i].bytes,
 			  tb2[PARAM_ROAM_BSSID],
 			  QDF_MAC_ADDR_SIZE);
 		hdd_debug(QDF_MAC_ADDR_FMT,
-			  QDF_MAC_ADDR_REF(roam_params->bssid_favored[i].bytes));
+			  QDF_MAC_ADDR_REF(rso_config->bssid_favored[i].bytes));
 		/* Parse and fetch preference factor*/
 		if (!tb2[PARAM_RSSI_MODIFIER]) {
 			hdd_err("BSSID Preference score failed");
 			goto fail;
 		}
-		roam_params->bssid_favored_factor[i] = nla_get_u32(
+		rso_config->bssid_favored_factor[i] = nla_get_u32(
 			tb2[PARAM_RSSI_MODIFIER]);
 		hdd_debug("BSSID Preference score (%d)",
-			  roam_params->bssid_favored_factor[i]);
+			  rso_config->bssid_favored_factor[i]);
 		i++;
 	}
 	if (i < count)
 		hdd_warn("Num Preferred BSSID %u less than expected %u",
 				 i, count);
 
-	roam_params->num_bssid_favored = i;
+	rso_config->num_bssid_favored = i;
 	mac_handle = hdd_ctx->mac_handle;
 	sme_update_roam_params(mac_handle, vdev_id,
-			       roam_params, REASON_ROAM_SET_FAVORED_BSSID);
+			       rso_config, REASON_ROAM_SET_FAVORED_BSSID);
 
 	return 0;
 
@@ -4392,14 +4392,14 @@ fail:
 /**
  * hdd_set_blacklist_bssid() - parse set blacklist bssid
  * @hdd_ctx:        HDD context
- * @roam_params:   roam params
+ * @rso_config:   roam params
  * @tb:            list of attributes
  * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
-				   struct roam_ext_params *roam_params,
+				   struct rso_config_params *rso_config,
 				   struct nlattr **tb,
 				   uint8_t vdev_id)
 {
@@ -4408,6 +4408,7 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 	uint8_t j = 0;
 	struct nlattr *tb2[MAX_ROAMING_PARAM + 1];
 	struct nlattr *curr_attr = NULL;
+	struct qdf_mac_addr *black_list_bssid;
 	mac_handle_t mac_handle;
 
 	/* Parse and fetch number of blacklist BSSID */
@@ -4422,6 +4423,10 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 		goto fail;
 	}
 	hdd_debug("Num of blacklist BSSID (%d)", count);
+	black_list_bssid = qdf_mem_malloc(sizeof(*black_list_bssid) *
+					  MAX_BSSID_AVOID_LIST);
+	if (!black_list_bssid)
+		goto fail;
 
 	i = 0;
 	if (count && tb[PARAM_BSSID_PARAMS]) {
@@ -4439,11 +4444,13 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 					 nla_len(curr_attr),
 					 wlan_hdd_set_roam_param_policy)) {
 				hdd_err("nla_parse failed");
+				qdf_mem_free(black_list_bssid);
 				goto fail;
 			}
 			/* Parse and fetch MAC address */
 			if (!tb2[PARAM_SET_BSSID]) {
 				hdd_err("attr blacklist addr failed");
+				qdf_mem_free(black_list_bssid);
 				goto fail;
 			}
 			if (tb2[PARAM_SET_BSSID_HINT]) {
@@ -4463,11 +4470,10 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 				i++;
 				continue;
 			}
-			nla_memcpy(roam_params->bssid_avoid_list[j].bytes,
+			nla_memcpy(black_list_bssid[j].bytes,
 				   tb2[PARAM_SET_BSSID], QDF_MAC_ADDR_SIZE);
 			hdd_debug(QDF_MAC_ADDR_FMT,
-				  QDF_MAC_ADDR_REF(roam_params->
-						    bssid_avoid_list[j].bytes));
+				  QDF_MAC_ADDR_REF(black_list_bssid[j].bytes));
 			i++;
 			j++;
 		}
@@ -4477,15 +4483,12 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 		hdd_warn("Num Blacklist BSSID %u less than expected %u",
 			 i, count);
 
-	roam_params->num_bssid_avoid_list = j;
 	/* Send the blacklist to the blacklist mgr component */
-	ucfg_blm_add_userspace_black_list(hdd_ctx->pdev,
-					  roam_params->bssid_avoid_list,
-					  roam_params->num_bssid_avoid_list);
-
+	ucfg_blm_add_userspace_black_list(hdd_ctx->pdev, black_list_bssid, j);
+	qdf_mem_free(black_list_bssid);
 	mac_handle = hdd_ctx->mac_handle;
 	sme_update_roam_params(mac_handle, vdev_id,
-			       roam_params, REASON_ROAM_SET_BLACKLIST_BSSID);
+			       rso_config, REASON_ROAM_SET_BLACKLIST_BSSID);
 
 	return 0;
 fail:
@@ -5437,16 +5440,16 @@ static int hdd_get_roam_control_config(struct hdd_context *hdd_ctx,
 /**
  * hdd_set_ext_roam_params() - parse ext roam params
  * @hdd_ctx:        HDD context
- * @roam_params:   roam params
  * @tb:            list of attributes
- * @vdev_id:    vdev id
+ * @vdev_id:       vdev id
+ * @rso_config:    roam params
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 				   const void *data, int data_len,
 				   uint8_t vdev_id,
-				   struct roam_ext_params *roam_params)
+				   struct rso_config_params *rso_config)
 {
 	uint32_t cmd_type, req_id;
 	struct nlattr *tb[MAX_ROAMING_PARAM + 1];
@@ -5475,7 +5478,7 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 	hdd_debug("Req Id: %u Cmd Type: %u", req_id, cmd_type);
 	switch (cmd_type) {
 	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_SSID_WHITE_LIST:
-		ret = hdd_set_white_list(hdd_ctx, roam_params, tb, vdev_id);
+		ret = hdd_set_white_list(hdd_ctx, rso_config, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;
@@ -5486,66 +5489,65 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 			hdd_err("5G boost threshold failed");
 			goto fail;
 		}
-		roam_params->raise_rssi_thresh_5g = nla_get_s32(
+		rso_config->raise_rssi_thresh_5g = nla_get_s32(
 			tb[PARAM_A_BAND_BOOST_THLD]);
 		hdd_debug("5G Boost Threshold (%d)",
-			roam_params->raise_rssi_thresh_5g);
+			rso_config->raise_rssi_thresh_5g);
 		/* Parse and fetch 5G Penalty Threshold */
 		if (!tb[PARAM_A_BAND_PELT_THLD]) {
 			hdd_err("5G penalty threshold failed");
 			goto fail;
 		}
-		roam_params->drop_rssi_thresh_5g = nla_get_s32(
+		rso_config->drop_rssi_thresh_5g = nla_get_s32(
 			tb[PARAM_A_BAND_PELT_THLD]);
 		hdd_debug("5G Penalty Threshold (%d)",
-			roam_params->drop_rssi_thresh_5g);
+			rso_config->drop_rssi_thresh_5g);
 		/* Parse and fetch 5G Boost Factor */
 		if (!tb[PARAM_A_BAND_BOOST_FACTOR]) {
 			hdd_err("5G boost Factor failed");
 			goto fail;
 		}
-		roam_params->raise_factor_5g = nla_get_u32(
+		rso_config->raise_factor_5g = nla_get_u32(
 			tb[PARAM_A_BAND_BOOST_FACTOR]);
 		hdd_debug("5G Boost Factor (%d)",
-			roam_params->raise_factor_5g);
+			rso_config->raise_factor_5g);
 		/* Parse and fetch 5G Penalty factor */
 		if (!tb[PARAM_A_BAND_PELT_FACTOR]) {
 			hdd_err("5G Penalty Factor failed");
 			goto fail;
 		}
-		roam_params->drop_factor_5g = nla_get_u32(
+		rso_config->drop_factor_5g = nla_get_u32(
 			tb[PARAM_A_BAND_PELT_FACTOR]);
 		hdd_debug("5G Penalty factor (%d)",
-			roam_params->drop_factor_5g);
+			rso_config->drop_factor_5g);
 		/* Parse and fetch 5G Max Boost */
 		if (!tb[PARAM_A_BAND_MAX_BOOST]) {
 			hdd_err("5G Max Boost failed");
 			goto fail;
 		}
-		roam_params->max_raise_rssi_5g = nla_get_u32(
+		rso_config->max_raise_rssi_5g = nla_get_u32(
 			tb[PARAM_A_BAND_MAX_BOOST]);
 		hdd_debug("5G Max Boost (%d)",
-			roam_params->max_raise_rssi_5g);
+			rso_config->max_raise_rssi_5g);
 		/* Parse and fetch Rssi Diff */
 		if (!tb[PARAM_ROAM_HISTERESYS]) {
 			hdd_err("Rssi Diff failed");
 			goto fail;
 		}
-		roam_params->rssi_diff = nla_get_s32(
+		rso_config->rssi_diff = nla_get_s32(
 			tb[PARAM_ROAM_HISTERESYS]);
 		hdd_debug("RSSI Diff (%d)",
-			roam_params->rssi_diff);
+			rso_config->rssi_diff);
 		/* Parse and fetch Alert Rssi Threshold */
 		if (!tb[PARAM_RSSI_TRIGGER]) {
 			hdd_err("Alert Rssi Threshold failed");
 			goto fail;
 		}
-		roam_params->alert_rssi_threshold = nla_get_u32(
+		rso_config->alert_rssi_threshold = nla_get_u32(
 			tb[PARAM_RSSI_TRIGGER]);
 		hdd_debug("Alert RSSI Threshold (%d)",
-			roam_params->alert_rssi_threshold);
-		sme_update_roam_params(mac_handle, vdev_id,
-				       roam_params,
+			rso_config->alert_rssi_threshold);
+		sme_update_roam_params(mac_handle, vdev_id, rso_config,
 				       REASON_ROAM_EXT_SCAN_PARAMS_CHANGED);
 		break;
 	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_SET_LAZY_ROAM:
@@ -5554,22 +5556,20 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 			hdd_err("Activate Good Rssi Roam failed");
 			goto fail;
 		}
-		roam_params->good_rssi_roam = nla_get_s32(
+		rso_config->good_rssi_roam = nla_get_s32(
 			tb[PARAM_ROAM_ENABLE]);
 		hdd_debug("Activate Good Rssi Roam (%d)",
-			  roam_params->good_rssi_roam);
-		sme_update_roam_params(mac_handle, vdev_id,
-				       roam_params,
+			  rso_config->good_rssi_roam);
+		sme_update_roam_params(mac_handle, vdev_id, rso_config,
 				       REASON_ROAM_GOOD_RSSI_CHANGED);
 		break;
 	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_SET_BSSID_PREFS:
-		ret = hdd_set_bssid_prefs(hdd_ctx, roam_params, tb, vdev_id);
+		ret = hdd_set_bssid_prefs(hdd_ctx, rso_config, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;
 	case QCA_WLAN_VENDOR_ROAMING_SUBCMD_SET_BLACKLIST_BSSID:
-		ret = hdd_set_blacklist_bssid(hdd_ctx, roam_params,
-					      tb, vdev_id);
+		ret = hdd_set_blacklist_bssid(hdd_ctx, rso_config, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;
@@ -5615,7 +5615,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct roam_ext_params *roam_params = NULL;
+	struct rso_config_params *rso_config;
 	int ret;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -5632,22 +5632,18 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	roam_params = qdf_mem_malloc(sizeof(*roam_params));
-	if (!roam_params)
+	rso_config = qdf_mem_malloc(sizeof(*rso_config));
+	if (!rso_config)
 		return -ENOMEM;
 
 	ret = hdd_set_ext_roam_params(hdd_ctx, data, data_len,
-				      adapter->vdev_id, roam_params);
+				      adapter->vdev_id, rso_config);
+	qdf_mem_free(rso_config);
 	if (ret)
 		goto fail;
 
-	if (roam_params)
-		qdf_mem_free(roam_params);
 	return 0;
 fail:
-	if (roam_params)
-		qdf_mem_free(roam_params);
-
 	return ret;
 }
 #undef PARAM_NUM_NW

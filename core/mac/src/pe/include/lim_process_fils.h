@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -319,8 +319,4 @@ static inline bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 {
 	return true;
 }
-
-static inline void lim_update_fils_rik(struct pe_session *pe_session,
-				       struct roam_offload_scan_req *req_buffer)
-{ }
 #endif

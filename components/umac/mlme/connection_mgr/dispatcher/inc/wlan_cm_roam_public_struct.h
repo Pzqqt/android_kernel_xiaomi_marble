@@ -98,6 +98,9 @@
 #define ROAM_MAX_CFG_VALUE 0xffffffff
 
 #define CFG_VALID_CHANNEL_LIST_LEN 100
+#define MAX_SSID_ALLOWED_LIST    4
+#define MAX_BSSID_AVOID_LIST     16
+#define MAX_BSSID_FAVORED      16
 
 /**
  * struct rso_chan_info - chan info
@@ -226,15 +229,40 @@ struct rso_roam_policy_params {
 
 /**
  * struct rso_params - global RSO params
+ * @num_ssid_allowed_list: The number of SSID profiles that are
+ *                         in the Whitelist. When roaming, we
+ *                         consider the BSSID's with this SSID
+ *                         also for roaming apart from the connected one's
+ * @ssid_allowed_list: Whitelist SSID's
+ * @num_bssid_favored: Number of BSSID's which have a preference over others
+ * @bssid_favored: Favorable BSSID's
+ * @bssid_favored_factor: RSSI to be added to this BSSID to prefer it
  * @good_rssi_roam: Lazy Roam
  * @alert_rssi_threshold: Alert RSSI
  * @rssi: rssi diff
+ * @raise_rssi_thresh_5g: The RSSI threshold below which the
+ *                        raise_factor_5g (boost factor) should be applied.
+ * @drop_rssi_thresh_5g: The RSSI threshold beyond which the
+ *                       drop_factor_5g (penalty factor) should be applied
+ * @raise_factor_5g: Boost factor
+ * @drop_factor_5g: Penalty factor
+ * @max_raise_rssi_5g: Maximum amount of Boost that can added
  * @policy_params: roam policy params
  */
 struct rso_config_params {
+	uint8_t num_ssid_allowed_list;
+	struct wlan_ssid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
+	uint8_t num_bssid_favored;
+	struct qdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
+	uint8_t bssid_favored_factor[MAX_BSSID_FAVORED];
 	int good_rssi_roam;
 	int alert_rssi_threshold;
 	int rssi_diff;
+	int raise_rssi_thresh_5g;
+	int drop_rssi_thresh_5g;
+	uint8_t raise_factor_5g;
+	uint8_t drop_factor_5g;
+	int max_raise_rssi_5g;
 	struct rso_roam_policy_params policy_params;
 };
 
@@ -575,10 +603,6 @@ struct wlan_roam_mawc_params {
 	uint8_t rssi_stationary_high_adjust;
 	uint8_t rssi_stationary_low_adjust;
 };
-
-#define MAX_SSID_ALLOWED_LIST    4
-#define MAX_BSSID_AVOID_LIST     16
-#define MAX_BSSID_FAVORED      16
 
 /**
  * struct roam_scan_filter_params - Structure holding roaming scan

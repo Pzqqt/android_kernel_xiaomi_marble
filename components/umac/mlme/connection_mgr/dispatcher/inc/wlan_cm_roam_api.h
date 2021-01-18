@@ -165,8 +165,8 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
  *
  * Return: True or False
  */
-bool wlan_cm_neighbor_roam_in_progress(struct wlan_objmgr_psoc *psoc,
-				       uint8_t vdev_id);
+bool wlan_cm_host_roam_in_progress(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id);
 
 /**
  * cm_roam_acquire_lock() - Wrapper for sme_acquire_global_lock.
@@ -382,6 +382,14 @@ bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
 	return false;
 }
 #endif
+
+/**
+ * wlan_roam_reset_roam_params  - reset_roam params
+ * @psoc: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+void wlan_roam_reset_roam_params(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_cm_rso_config_init  - initialize RSO config

@@ -999,88 +999,67 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle,
 	return status;
 }
 
-/**
- * sme_update_roam_params() - Store/Update the roaming params
- * @mac_handle: Opaque handle to the global MAC context
- * @session_id:               SME Session ID
- * @roam_params_src:          The source buffer to copy
- * @update_param:             Type of parameter to be updated
- *
- * Return: Return the status of the updation.
- */
 QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
-				  uint8_t session_id,
-				  struct roam_ext_params *roam_params_src,
+				  uint8_t vdev_id,
+				  struct rso_config_params *src_rso_config,
 				  int update_param)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct roam_ext_params *roam_params_dst;
 	QDF_STATUS status;
 	uint8_t i;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct rso_config_params *dst_rso_usr_cfg;
 
 	mlme_obj = mlme_get_psoc_ext_obj(mac_ctx->psoc);
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	roam_params_dst = &mac_ctx->roam.configParam.roam_params;
+	dst_rso_usr_cfg = &mlme_obj->cfg.lfr.rso_user_config;
 	switch (update_param) {
 	case REASON_ROAM_EXT_SCAN_PARAMS_CHANGED:
 		mac_ctx->mlme_cfg->lfr.rssi_boost_threshold_5g =
-			roam_params_src->raise_rssi_thresh_5g;
+			src_rso_config->raise_rssi_thresh_5g;
 		mac_ctx->mlme_cfg->lfr.rssi_penalize_threshold_5g =
-			roam_params_src->drop_rssi_thresh_5g;
+			src_rso_config->drop_rssi_thresh_5g;
 		mac_ctx->mlme_cfg->lfr.rssi_boost_factor_5g =
-			roam_params_src->raise_factor_5g;
+			src_rso_config->raise_factor_5g;
 		mac_ctx->mlme_cfg->lfr.rssi_penalize_factor_5g =
-			roam_params_src->drop_factor_5g;
+			src_rso_config->drop_factor_5g;
 		mac_ctx->mlme_cfg->lfr.max_rssi_boost_5g =
-			roam_params_src->max_raise_rssi_5g;
-		mac_ctx->mlme_cfg->lfr.max_rssi_penalize_5g =
-			roam_params_src->max_drop_rssi_5g;
-		mlme_obj->cfg.lfr.rso_user_config.alert_rssi_threshold =
-			roam_params_src->alert_rssi_threshold;
+			src_rso_config->max_raise_rssi_5g;
+		dst_rso_usr_cfg->alert_rssi_threshold =
+			src_rso_config->alert_rssi_threshold;
+		dst_rso_usr_cfg->rssi_diff = src_rso_config->rssi_diff;
 		mac_ctx->mlme_cfg->lfr.enable_5g_band_pref = true;
 		break;
 	case REASON_ROAM_SET_SSID_ALLOWED:
-		qdf_mem_zero(&roam_params_dst->ssid_allowed_list,
-				sizeof(tSirMacSSid) * MAX_SSID_ALLOWED_LIST);
-		roam_params_dst->num_ssid_allowed_list =
-			roam_params_src->num_ssid_allowed_list;
-		for (i = 0; i < roam_params_dst->num_ssid_allowed_list; i++) {
-			roam_params_dst->ssid_allowed_list[i].length =
-				roam_params_src->ssid_allowed_list[i].length;
-			qdf_mem_copy(roam_params_dst->ssid_allowed_list[i].ssId,
-				roam_params_src->ssid_allowed_list[i].ssId,
-				roam_params_dst->ssid_allowed_list[i].length);
+		qdf_mem_zero(&dst_rso_usr_cfg->ssid_allowed_list,
+			     sizeof(struct wlan_ssid) * MAX_SSID_ALLOWED_LIST);
+		dst_rso_usr_cfg->num_ssid_allowed_list =
+			src_rso_config->num_ssid_allowed_list;
+		for (i = 0; i < dst_rso_usr_cfg->num_ssid_allowed_list; i++) {
+			dst_rso_usr_cfg->ssid_allowed_list[i].length =
+				src_rso_config->ssid_allowed_list[i].length;
+			qdf_mem_copy(dst_rso_usr_cfg->ssid_allowed_list[i].ssid,
+				src_rso_config->ssid_allowed_list[i].ssid,
+				dst_rso_usr_cfg->ssid_allowed_list[i].length);
 		}
 		break;
 	case REASON_ROAM_SET_FAVORED_BSSID:
-		qdf_mem_zero(&roam_params_dst->bssid_favored,
-			sizeof(tSirMacAddr) * MAX_BSSID_FAVORED);
-		roam_params_dst->num_bssid_favored =
-			roam_params_src->num_bssid_favored;
-		for (i = 0; i < roam_params_dst->num_bssid_favored; i++) {
-			qdf_mem_copy(&roam_params_dst->bssid_favored[i],
-				&roam_params_src->bssid_favored[i],
-				sizeof(tSirMacAddr));
-			roam_params_dst->bssid_favored_factor[i] =
-				roam_params_src->bssid_favored_factor[i];
-		}
-		break;
-	case REASON_ROAM_SET_BLACKLIST_BSSID:
-		qdf_mem_zero(&roam_params_dst->bssid_avoid_list,
-			QDF_MAC_ADDR_SIZE * MAX_BSSID_AVOID_LIST);
-		roam_params_dst->num_bssid_avoid_list =
-			roam_params_src->num_bssid_avoid_list;
-		for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
-			qdf_copy_macaddr(&roam_params_dst->bssid_avoid_list[i],
-					&roam_params_src->bssid_avoid_list[i]);
+		qdf_mem_zero(&dst_rso_usr_cfg->bssid_favored,
+			sizeof(struct qdf_mac_addr) * MAX_BSSID_FAVORED);
+		dst_rso_usr_cfg->num_bssid_favored =
+			src_rso_config->num_bssid_favored;
+		for (i = 0; i < dst_rso_usr_cfg->num_bssid_favored; i++) {
+			qdf_copy_macaddr(&dst_rso_usr_cfg->bssid_favored[i],
+					 &src_rso_config->bssid_favored[i]);
+			dst_rso_usr_cfg->bssid_favored_factor[i] =
+				src_rso_config->bssid_favored_factor[i];
 		}
 		break;
 	case REASON_ROAM_GOOD_RSSI_CHANGED:
-		mlme_obj->cfg.lfr.rso_user_config.good_rssi_roam =
-			roam_params_src->good_rssi_roam;
+		dst_rso_usr_cfg->good_rssi_roam =
+					src_rso_config->good_rssi_roam;
 		break;
 	default:
 		break;
@@ -1088,7 +1067,7 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_roam_update_cfg(mac_ctx, session_id, update_param);
+		csr_roam_update_cfg(mac_ctx, vdev_id, update_param);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 

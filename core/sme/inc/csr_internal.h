@@ -358,7 +358,6 @@ struct csr_config {
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
-	struct roam_ext_params roam_params;
 	enum force_1x1_type is_force_1x1;
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
