@@ -317,7 +317,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
-	eh = (qdf_ether_header_t *)nbuf;
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 	qdf_mem_copy(srcmac, eh->ether_shost, QDF_MAC_ADDR_SIZE);
 
 	len = qdf_nbuf_len(nbuf);
