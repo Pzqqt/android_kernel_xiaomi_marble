@@ -25,6 +25,11 @@
 #include <qdf_types.h>
 #include <osdep.h>
 
+/* Assoc resp IE offset Capability(2) + AID(2) + Status Code(2) */
+#define WLAN_ASSOC_RSP_IES_OFFSET 6
+/* Assoc req IE offset - Capability(2) + LI(2) */
+#define WLAN_ASSOC_REQ_IES_OFFSET 4
+
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_HT_CTRL_LEN       4
 #define IEEE80211_CCMP_MICLEN       8
