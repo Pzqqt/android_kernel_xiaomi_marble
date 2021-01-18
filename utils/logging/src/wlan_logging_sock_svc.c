@@ -318,6 +318,19 @@ static inline void wlan_panic_on_excessive_logging(void)
 static inline void wlan_panic_on_excessive_logging(void) {}
 #endif /* WLAN_MAX_LOGS_PER_SEC */
 
+#ifdef QDF_TRACE_PRINT_ENABLE
+static inline void
+log_to_console(QDF_TRACE_LEVEL level, const char *timestamp, const char *msg)
+{
+	if (qdf_detected_excessive_logging()) {
+		qdf_rl_print_supressed_inc();
+		return;
+	}
+
+	qdf_rl_print_supressed_log();
+	pr_err("%s %s\n", timestamp, msg);
+}
+#else
 static inline void
 log_to_console(QDF_TRACE_LEVEL level, const char *timestamp, const char *msg)
 {
@@ -347,6 +360,7 @@ log_to_console(QDF_TRACE_LEVEL level, const char *timestamp, const char *msg)
 		break;
 	}
 }
+#endif
 
 int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 {

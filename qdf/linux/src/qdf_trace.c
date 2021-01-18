@@ -3284,7 +3284,7 @@ void qdf_rl_print_time_set(uint32_t rl_print_time)
 
 qdf_export_symbol(qdf_rl_print_time_set);
 
-static inline void qdf_rl_print_supressed_log(void)
+void qdf_rl_print_supressed_log(void)
 {
 	if (qdf_rl_print_supressed) {
 		pr_err("QDF Ratelimiting: %d prints supressed",
@@ -3293,7 +3293,7 @@ static inline void qdf_rl_print_supressed_log(void)
 	}
 }
 
-static inline void qdf_rl_print_supressed_inc(void)
+void qdf_rl_print_supressed_inc(void)
 {
 	qdf_rl_print_supressed++;
 }
