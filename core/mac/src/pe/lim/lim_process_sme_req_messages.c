@@ -2410,7 +2410,7 @@ lim_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 static int8_t lim_get_cfg_max_tx_power(struct mac_context *mac,
 				       uint32_t ch_freq)
 {
-	return wlan_get_cfg_max_tx_power(mac, ch_freq);
+	return wlan_get_cfg_max_tx_power(mac->psoc, mac->pdev, ch_freq);
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

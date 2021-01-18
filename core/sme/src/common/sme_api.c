@@ -6066,7 +6066,7 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 		return QDF_STATUS_E_PERM;
 	}
 
-	if (csr_is_roam_offload_enabled(mac)) {
+	if (wlan_is_roam_offload_enabled(mac->mlme_cfg->lfr)) {
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			sme_debug("Updating fils config to fw");

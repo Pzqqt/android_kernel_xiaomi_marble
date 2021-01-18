@@ -75,39 +75,6 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			    struct wlan_roam_start_config *req, uint8_t reason);
 
 /**
- * wlan_cm_roam_fill_stop_req() - fill stop request structure content
- * @psoc: pointer to psoc object
- * @vdev_id: vdev id
- * @req: roam stop config pointer
- * @reason: reason to roam
- *
- * This function gets called to fill stop request structure content
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_fill_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			   struct wlan_roam_stop_config *req, uint8_t reason);
-
-/**
- * wlan_cm_roam_fill_update_config_req() - fill update config request
- * structure content
- * @psoc: pointer to psoc object
- * @vdev_id: vdev id
- * @req: roam update config pointer
- * @reason: reason to roam
- *
- * This function gets called to fill update config request structure content
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_fill_update_config_req(struct wlan_objmgr_psoc *psoc,
-				    uint8_t vdev_id,
-				    struct wlan_roam_update_config *req,
-				    uint8_t reason);
-
-/**
  * wlan_cm_roam_scan_offload_rsp() - send roam scan offload response message
  * @vdev_id: vdev id
  * @reason: reason to roam
@@ -155,6 +122,13 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+#endif
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#define wlan_is_roam_offload_enabled(lfr) \
+	(lfr.lfr3_roaming_offload)
+#else
+#define wlan_is_roam_offload_enabled(lfr)  false
 #endif
 
 /**
@@ -372,6 +346,10 @@ void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
  */
 bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
 			   uint8_t vdev_id);
+void wlan_cm_ese_populate_addtional_ies(struct wlan_objmgr_pdev *pdev,
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			uint8_t vdev_id,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg);
 #else
 static inline void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
 					 uint8_t vdev_id, bool value) {}
@@ -381,6 +359,12 @@ bool wlan_cm_get_ese_assoc(struct wlan_objmgr_pdev *pdev,
 {
 	return false;
 }
+static inline void wlan_cm_ese_populate_addtional_ies(
+		struct wlan_objmgr_pdev *pdev,
+		struct wlan_mlme_psoc_ext_obj *mlme_obj,
+		uint8_t vdev_id,
+		struct wlan_roam_scan_offload_params *rso_mode_cfg)
+{}
 #endif
 
 /**
@@ -434,6 +418,44 @@ void wlan_cm_init_occupied_ch_freq_list(struct wlan_objmgr_pdev *pdev,
 					struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id);
 
+uint32_t cm_crpto_authmode_to_wmi_authmode(int32_t authmodeset,
+					   int32_t akm, int32_t ucastcipherset);
+uint8_t *wlan_cm_get_rrm_cap_ie_data(void);
+
+/**
+ * wlan_cm_append_assoc_ies() - Append specific IE to assoc IE's buffer
+ * @req_buf: Pointer to Roam offload scan request
+ * @ie_id: IE ID to be appended
+ * @ie_len: IE length to be appended
+ * @ie_data: IE data to be appended
+ *
+ * Return: None
+ */
+void wlan_cm_append_assoc_ies(struct wlan_roam_scan_offload_params *rso_mode_cfg,
+			      uint8_t ie_id, uint8_t ie_len,
+			      const uint8_t *ie_data);
+/**
+ * wlan_add_supported_5Ghz_channels()- Add valid 5Ghz channels
+ * in Join req.
+ * @psoc: psoc ptr
+ * @pdev: pdev
+ * @chan_list: Pointer to channel list buffer to populate
+ * @num_chan: Pointer to number of channels value to update
+ * @supp_chan_ie: Boolean to check if we need to populate as IE
+ *
+ * This function is called to update valid 5Ghz channels
+ * in Join req. If @supp_chan_ie is true, supported channels IE
+ * format[chan num 1, num of channels 1, chan num 2, num of
+ * channels 2, ..] is populated. Else, @chan_list would be a list
+ * of supported channels[chan num 1, chan num 2..]
+ *
+ * Return: void
+ */
+void wlan_add_supported_5Ghz_channels(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_objmgr_pdev *pdev,
+				      uint8_t *chan_list,
+				      uint8_t *num_chnl,
+				      bool supp_chan_ie);
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * wlan_cm_get_fils_connection_info  - Copy fils connection information from
@@ -485,6 +507,12 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+wlan_cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
+			struct rso_config *rso_cfg,
+			struct wlan_roam_scan_offload_params *rso_config,
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			uint8_t command, uint32_t *mode);
 /**
  * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
  * @wmi:       wmi handle

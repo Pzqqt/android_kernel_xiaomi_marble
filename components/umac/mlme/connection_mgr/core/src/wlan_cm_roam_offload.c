@@ -31,6 +31,7 @@
 #include "wlan_psoc_mlme_api.h"
 #include "pld_common.h"
 #include "wlan_blm_api.h"
+#include "wlan_scan_api.h"
 
 /**
  * cm_roam_scan_bmiss_cnt() - set roam beacon miss count
@@ -218,13 +219,25 @@ cm_roam_idle_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		    struct wlan_roam_idle_params *params)
 {
 }
+static inline QDF_STATUS
+wlan_cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
+			struct rso_config *rso_cfg,
+			struct wlan_roam_scan_offload_params *rso_config,
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			uint8_t command, uint32_t *mode)
+{
+	if (mlme_obj->cfg.lfr.roam_force_rssi_trigger)
+		*mode |= WMI_ROAM_SCAN_MODE_RSSI_CHANGE;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FILS_SK)
-QDF_STATUS cm_roam_scan_offload_add_fils_params(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_roam_scan_offload_params *rso_cfg,
-		uint8_t vdev_id)
+static QDF_STATUS
+cm_roam_scan_offload_add_fils_params(struct wlan_objmgr_psoc *psoc,
+				struct wlan_roam_scan_offload_params *rso_cfg,
+				uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	uint32_t usr_name_len;
@@ -294,6 +307,14 @@ QDF_STATUS cm_roam_scan_offload_add_fils_params(
 		     fils_info->fils_ft_len);
 
 	return status;
+}
+#else
+static inline
+QDF_STATUS cm_roam_scan_offload_add_fils_params(struct wlan_objmgr_psoc *psoc,
+			struct wlan_roam_scan_offload_params *rso_cfg,
+			uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -746,9 +767,8 @@ static uint32_t cm_get_wapi_wmi_auth_type(int32_t akm)
 		return WMI_AUTH_NONE;
 }
 
-static uint32_t cm_crpto_authmode_to_wmi_authmode(int32_t authmodeset,
-						  int32_t akm,
-						  int32_t ucastcipherset)
+uint32_t cm_crpto_authmode_to_wmi_authmode(int32_t authmodeset,
+					   int32_t akm, int32_t ucastcipherset)
 {
 	if (!authmodeset || authmodeset < 0)
 		return WMI_AUTH_OPEN;
@@ -1119,6 +1139,18 @@ static inline bool cm_is_ese_assoc(struct rso_config *rso_cfg)
 {
 	return rso_cfg->is_ese_assoc;
 }
+static void cm_esr_populate_version_ie(
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg)
+{
+	static const uint8_t ese_ie[] = {0x0, 0x40, 0x96, 0x3,
+					 ESE_VERSION_SUPPORTED};
+
+	/* Append ESE version IE if isEseIniFeatureEnabled INI is enabled */
+	if (mlme_obj->cfg.lfr.ese_enabled)
+		wlan_cm_append_assoc_ies(rso_mode_cfg, WLAN_ELEMID_VENDOR,
+					 sizeof(ese_ie), ese_ie);
+}
 
 #else
 static inline void
@@ -1131,6 +1163,10 @@ static inline bool cm_is_ese_assoc(struct rso_config *rso_cfg)
 {
 	return false;
 }
+static inline void cm_esr_populate_version_ie(
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg)
+{}
 #endif
 
 /**
@@ -1431,6 +1467,322 @@ cm_roam_scan_filter(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+static void
+cm_roam_scan_offload_fill_scan_params(struct wlan_objmgr_psoc *psoc,
+			struct rso_config *rso_cfg,
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg,
+			struct wlan_roam_scan_channel_list *rso_chan_info,
+			uint8_t command)
+{
+	struct wlan_roam_scan_params *scan_params =
+			&rso_mode_cfg->rso_scan_params;
+	uint8_t channels_per_burst = 0;
+	uint16_t roam_scan_home_away_time;
+	enum roaming_dfs_channel_type allow_dfs_ch_roam;
+	struct rso_cfg_params *cfg_params;
+
+	qdf_mem_zero(scan_params, sizeof(*scan_params));
+	if (command == ROAM_SCAN_OFFLOAD_STOP)
+		return;
+
+	cfg_params = &rso_cfg->cfg_param;
+
+	/* Parameters updated after association is complete */
+	wlan_scan_cfg_get_passive_dwelltime(psoc,
+					    &scan_params->dwell_time_passive);
+	/*
+	 * Here is the formula,
+	 * T(HomeAway) = N * T(dwell) + (N+1) * T(cs)
+	 * where N is number of channels scanned in single burst
+	 */
+	scan_params->dwell_time_active = cfg_params->max_chan_scan_time;
+
+	roam_scan_home_away_time = cfg_params->roam_scan_home_away_time;
+	if (roam_scan_home_away_time <
+	    (scan_params->dwell_time_active +
+	     (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME))) {
+		mlme_debug("Disable Home away time(%d) as it is less than (2*RF switching time + channel max time)(%d)",
+			  roam_scan_home_away_time,
+			  (scan_params->dwell_time_active +
+			   (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME)));
+		roam_scan_home_away_time = 0;
+	}
+
+	if (roam_scan_home_away_time < (2 * ROAM_SCAN_CHANNEL_SWITCH_TIME)) {
+		/* clearly we can't follow home away time.
+		 * Make it a split scan.
+		 */
+		scan_params->burst_duration = 0;
+	} else {
+		channels_per_burst =
+		  (roam_scan_home_away_time - ROAM_SCAN_CHANNEL_SWITCH_TIME) /
+		  (scan_params->dwell_time_active + ROAM_SCAN_CHANNEL_SWITCH_TIME);
+
+		if (channels_per_burst < 1) {
+			/* dwell time and home away time conflicts */
+			/* we will override dwell time */
+			scan_params->dwell_time_active =
+				roam_scan_home_away_time -
+				(2 * ROAM_SCAN_CHANNEL_SWITCH_TIME);
+			scan_params->burst_duration =
+				scan_params->dwell_time_active;
+		} else {
+			scan_params->burst_duration =
+				channels_per_burst *
+				scan_params->dwell_time_active;
+		}
+	}
+
+	allow_dfs_ch_roam = mlme_obj->cfg.lfr.roaming_dfs_channel;
+	/* Roaming on DFS channels is supported and it is not
+	 * app channel list. It is ok to override homeAwayTime
+	 * to accommodate DFS dwell time in burst
+	 * duration.
+	 */
+	if (allow_dfs_ch_roam == ROAMING_DFS_CHANNEL_ENABLED_NORMAL &&
+	    roam_scan_home_away_time > 0  &&
+	    rso_chan_info->chan_cache_type != CHANNEL_LIST_STATIC)
+		scan_params->burst_duration =
+			QDF_MAX(scan_params->burst_duration,
+				scan_params->dwell_time_passive);
+
+	scan_params->min_rest_time = cfg_params->neighbor_scan_min_period;
+	scan_params->max_rest_time = cfg_params->neighbor_scan_period;
+	scan_params->repeat_probe_time =
+		(cfg_params->roam_scan_n_probes > 0) ?
+			QDF_MAX(scan_params->dwell_time_active /
+				cfg_params->roam_scan_n_probes, 1) : 0;
+	scan_params->probe_spacing_time = 0;
+	scan_params->probe_delay = 0;
+	/* 30 seconds for full scan cycle */
+	scan_params->max_scan_time = ROAM_SCAN_HW_DEF_SCAN_MAX_DURATION;
+	scan_params->idle_time = scan_params->min_rest_time;
+	scan_params->n_probes = cfg_params->roam_scan_n_probes;
+
+	if (allow_dfs_ch_roam == ROAMING_DFS_CHANNEL_DISABLED) {
+		scan_params->scan_ctrl_flags |= WMI_SCAN_BYPASS_DFS_CHN;
+	} else {
+		/* Roaming scan on DFS channel is allowed.
+		 * No need to change any flags for default
+		 * allowDFSChannelRoam = 1.
+		 * Special case where static channel list is given by\
+		 * application that contains DFS channels.
+		 * Assume that the application has knowledge of matching
+		 * APs being active and that probe request transmission
+		 * is permitted on those channel.
+		 * Force active scans on those channels.
+		 */
+
+		if (allow_dfs_ch_roam ==
+		    ROAMING_DFS_CHANNEL_ENABLED_ACTIVE &&
+		    rso_chan_info->chan_cache_type == CHANNEL_LIST_STATIC &&
+		    rso_chan_info->chan_count)
+			scan_params->scan_ctrl_flags |=
+				WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS;
+	}
+
+	scan_params->rso_adaptive_dwell_mode =
+		mlme_obj->cfg.lfr.adaptive_roamscan_dwell_mode;
+}
+
+void wlan_cm_append_assoc_ies(struct wlan_roam_scan_offload_params *rso_mode_cfg,
+			      uint8_t ie_id, uint8_t ie_len,
+			      const uint8_t *ie_data)
+{
+	uint32_t curr_length = rso_mode_cfg->assoc_ie_length;
+
+	if ((MAC_MAX_ADD_IE_LENGTH - curr_length) < ie_len) {
+		mlme_err("Appending IE id: %d failed", ie_id);
+		return;
+	}
+
+	rso_mode_cfg->assoc_ie[curr_length] = ie_id;
+	rso_mode_cfg->assoc_ie[curr_length + 1] = ie_len;
+	qdf_mem_copy(&rso_mode_cfg->assoc_ie[curr_length + 2], ie_data, ie_len);
+	rso_mode_cfg->assoc_ie_length += (ie_len + 2);
+}
+
+void wlan_add_supported_5Ghz_channels(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_objmgr_pdev *pdev,
+				      uint8_t *chan_list,
+				      uint8_t *num_chnl,
+				      bool supp_chan_ie)
+{
+	uint16_t i, j = 0;
+	uint32_t size = 0;
+	uint32_t *freq_list;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	if (!chan_list) {
+		mlme_err("chan_list buffer NULL");
+		*num_chnl = 0;
+		return;
+	}
+	size = mlme_obj->cfg.reg.valid_channel_list_num;
+	freq_list = mlme_obj->cfg.reg.valid_channel_freq_list;
+	for (i = 0, j = 0; i < size; i++) {
+		if (wlan_reg_is_dsrc_freq(freq_list[i]))
+			continue;
+		/* Only add 5ghz channels.*/
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(freq_list[i])) {
+			chan_list[j] =
+				wlan_reg_freq_to_chan(pdev,
+						      freq_list[i]);
+				j++;
+
+			if (supp_chan_ie) {
+				chan_list[j] = 1;
+				j++;
+			}
+		}
+	}
+	*num_chnl = (uint8_t)j;
+}
+
+static void cm_update_driver_assoc_ies(struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_vdev *vdev,
+			struct rso_config *rso_cfg,
+			struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg)
+{
+	bool power_caps_populated = false;
+	uint8_t *rrm_cap_ie_data;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	uint8_t power_cap_ie_data[DOT11F_IE_POWERCAPS_MAX_LEN] = {
+		MIN_TX_PWR_CAP, MAX_TX_PWR_CAP};
+	uint8_t max_tx_pwr_cap = 0;
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
+	static const uint8_t qcn_ie[] = {0x8C, 0xFD, 0xF0, 0x1,
+					 QCN_IE_VERSION_SUBATTR_ID,
+					 QCN_IE_VERSION_SUBATTR_DATA_LEN,
+					 QCN_IE_VERSION_SUPPORTED,
+					 QCN_IE_SUBVERSION_SUPPORTED};
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return;
+
+	rrm_cap_ie_data = wlan_cm_get_rrm_cap_ie_data();
+	/* Re-Assoc IE TLV parameters */
+	rso_mode_cfg->assoc_ie_length = rso_cfg->assoc_ie.len;
+	qdf_mem_copy(rso_mode_cfg->assoc_ie, rso_cfg->assoc_ie.ptr,
+		     rso_mode_cfg->assoc_ie_length);
+
+	max_tx_pwr_cap = wlan_get_cfg_max_tx_power(psoc, pdev,
+					wlan_get_operation_chan_freq(vdev));
+
+	if (max_tx_pwr_cap && max_tx_pwr_cap < MAX_TX_PWR_CAP)
+		power_cap_ie_data[1] = max_tx_pwr_cap;
+	else
+		power_cap_ie_data[1] = MAX_TX_PWR_CAP;
+
+	if (mlme_obj->cfg.gen.enabled_11h) {
+		/* Append power cap IE */
+		wlan_cm_append_assoc_ies(rso_mode_cfg, WLAN_ELEMID_PWRCAP,
+					 DOT11F_IE_POWERCAPS_MAX_LEN,
+					 power_cap_ie_data);
+		power_caps_populated = true;
+
+		/* Append Supported channels IE */
+		wlan_add_supported_5Ghz_channels(psoc, pdev, supp_chan_ie,
+						&supp_chan_ie_len, true);
+
+		wlan_cm_append_assoc_ies(rso_mode_cfg,
+					 WLAN_ELEMID_SUPPCHAN,
+					 supp_chan_ie_len, supp_chan_ie);
+	}
+
+	cm_esr_populate_version_ie(mlme_obj, rso_mode_cfg);
+
+	if (mlme_obj->cfg.rrm_config.rrm_enabled) {
+		/* Append RRM IE */
+		if (rrm_cap_ie_data)
+			wlan_cm_append_assoc_ies(rso_mode_cfg, WLAN_ELEMID_RRM,
+						 DOT11F_IE_RRMENABLEDCAP_MAX_LEN,
+						 rrm_cap_ie_data);
+
+		/* Append Power cap IE if not appended already */
+		if (!power_caps_populated)
+			wlan_cm_append_assoc_ies(rso_mode_cfg,
+						 WLAN_ELEMID_PWRCAP,
+						 DOT11F_IE_POWERCAPS_MAX_LEN,
+						  power_cap_ie_data);
+	}
+
+	wlan_cm_ese_populate_addtional_ies(pdev, mlme_obj, vdev_id,
+					  rso_mode_cfg);
+
+	/* Append QCN IE if g_support_qcn_ie INI is enabled */
+	if (mlme_obj->cfg.sta.qcn_ie_support)
+		wlan_cm_append_assoc_ies(rso_mode_cfg, WLAN_ELEMID_VENDOR,
+					 sizeof(qcn_ie), qcn_ie);
+}
+
+static void
+cm_roam_scan_offload_fill_rso_configs(struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_vdev *vdev,
+			struct rso_config *rso_cfg,
+			struct wlan_roam_scan_offload_params *rso_mode_cfg,
+			struct wlan_roam_scan_channel_list *rso_chan_info,
+			uint8_t command, uint16_t reason)
+{
+	uint32_t mode = 0;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	qdf_mem_zero(rso_mode_cfg, sizeof(*rso_mode_cfg));
+	rso_mode_cfg->vdev_id = vdev_id;
+	rso_mode_cfg->is_rso_stop = (command == ROAM_SCAN_OFFLOAD_STOP);
+	rso_mode_cfg->roaming_scan_policy =
+		mlme_obj->cfg.lfr.roaming_scan_policy;
+
+	/* Fill ROAM SCAN mode TLV parameters */
+	if (rso_cfg->cfg_param.empty_scan_refresh_period)
+		mode |= WMI_ROAM_SCAN_MODE_PERIODIC;
+
+	rso_mode_cfg->rso_mode_info.min_delay_btw_scans =
+			mlme_obj->cfg.lfr.min_delay_btw_roam_scans;
+	rso_mode_cfg->rso_mode_info.min_delay_roam_trigger_bitmask =
+			mlme_obj->cfg.lfr.roam_trigger_reason_bitmask;
+
+	if (command == ROAM_SCAN_OFFLOAD_STOP) {
+		if (reason == REASON_ROAM_STOP_ALL ||
+		    reason == REASON_DISCONNECTED ||
+		    reason == REASON_ROAM_SYNCH_FAILED) {
+			mode = WMI_ROAM_SCAN_MODE_NONE;
+		} else {
+			if (wlan_is_roam_offload_enabled(mlme_obj->cfg.lfr))
+				mode = WMI_ROAM_SCAN_MODE_NONE |
+					WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
+			else
+				mode = WMI_ROAM_SCAN_MODE_NONE;
+		}
+	}
+
+	rso_mode_cfg->rso_mode_info.roam_scan_mode = mode;
+	if (command == ROAM_SCAN_OFFLOAD_STOP)
+		return;
+
+	wlan_cm_roam_scan_offload_fill_lfr3_config(vdev, rso_cfg, rso_mode_cfg,
+						   mlme_obj, command, &mode);
+	rso_mode_cfg->rso_mode_info.roam_scan_mode = mode;
+	cm_roam_scan_offload_fill_scan_params(psoc, rso_cfg, mlme_obj,
+					      rso_mode_cfg, rso_chan_info,
+					      command);
+	cm_update_driver_assoc_ies(psoc, vdev, rso_cfg, mlme_obj, rso_mode_cfg);
+	cm_roam_scan_offload_add_fils_params(psoc, rso_mode_cfg, vdev_id);
+}
+
 /**
  * cm_roam_start_req() - roam start request handling
  * @psoc: psoc pointer
@@ -1489,6 +1841,11 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				 reason);
 	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_START,
 			    reason, &start_req->scan_filter_params);
+	cm_roam_scan_offload_fill_rso_configs(psoc, vdev, rso_cfg,
+					      &start_req->rso_config,
+					      &start_req->rso_chan_info,
+					      ROAM_SCAN_OFFLOAD_START,
+					      reason);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);
@@ -1566,9 +1923,11 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				 &update_req->rso_chan_info, reason);
 	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 			    reason, &update_req->scan_filter_params);
-
-	/* fill from legacy through this API */
-	wlan_cm_roam_fill_update_config_req(psoc, vdev_id, update_req, reason);
+	cm_roam_scan_offload_fill_rso_configs(psoc, vdev, rso_cfg,
+					      &update_req->rso_config,
+					      &update_req->rso_chan_info,
+					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+					      reason);
 
 	status = wlan_cm_tgt_send_roam_update_req(psoc, vdev_id, update_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -1726,13 +2085,10 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	cm_roam_scan_filter(psoc, pdev, vdev_id, ROAM_SCAN_OFFLOAD_STOP,
 			    reason, &stop_req->scan_filter_params);
-
-	/* do the filling as csr_post_rso_stop */
-	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_debug("fail to fill stop config req");
-		goto rel_vdev_ref;
-	}
+	cm_roam_scan_offload_fill_rso_configs(psoc, vdev, rso_cfg,
+					      &stop_req->rso_config,
+					      NULL, ROAM_SCAN_OFFLOAD_STOP,
+					      stop_req->reason);
 
 	status = wlan_cm_tgt_send_roam_stop_req(psoc, vdev_id, stop_req);
 	if (QDF_IS_STATUS_ERROR(status)) {

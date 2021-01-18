@@ -1828,6 +1828,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_bss_load_trigger_params(psoc, &lfr->bss_load_trig);
 	mlme_init_adaptive_11r_cfg(psoc, lfr);
 	mlme_init_subnet_detection(psoc, lfr);
+	lfr->rso_user_config.cat_rssi_offset = DEFAULT_RSSI_DB_GAP;
 }
 
 static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
@@ -2929,6 +2930,76 @@ bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
 	}
 
 	return false;
+}
+
+int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_pdev *pdev,
+				 uint32_t ch_freq)
+{
+	uint32_t cfg_length = 0;
+	int8_t max_tx_pwr = 0;
+	struct pwr_channel_info *country_info = NULL;
+	uint8_t count = 0;
+	uint8_t maxChannels;
+	int32_t rem_length = 0;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return max_tx_pwr;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
+		cfg_length = mlme_obj->cfg.power.max_tx_power_5.len;
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
+		cfg_length = mlme_obj->cfg.power.max_tx_power_24.len;
+
+	} else if (wlan_reg_is_6ghz_chan_freq(ch_freq)) {
+		return wlan_reg_get_channel_reg_power_for_freq(pdev,
+							       ch_freq);
+	} else {
+		return max_tx_pwr;
+	}
+
+	if (!cfg_length)
+		goto error;
+
+	country_info = qdf_mem_malloc(cfg_length);
+	if (!country_info)
+		goto error;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
+		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
+			goto error;
+		qdf_mem_copy(country_info,
+			     mlme_obj->cfg.power.max_tx_power_5.data,
+			     cfg_length);
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
+		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
+			goto error;
+		qdf_mem_copy(country_info,
+			     mlme_obj->cfg.power.max_tx_power_24.data,
+			     cfg_length);
+	}
+
+	/* Identify the channel and maxtxpower */
+	rem_length = cfg_length;
+	while (rem_length >= (sizeof(tSirMacChanInfo))) {
+		maxChannels = country_info[count].num_chan;
+		max_tx_pwr = country_info[count].max_tx_pwr;
+		count++;
+		rem_length -= (sizeof(tSirMacChanInfo));
+
+		if (ch_freq >= country_info[count].first_freq &&
+		    ch_freq < (country_info[count].first_freq + maxChannels)) {
+			break;
+		}
+	}
+
+error:
+	if (country_info)
+		qdf_mem_free(country_info);
+
+	return max_tx_pwr;
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)

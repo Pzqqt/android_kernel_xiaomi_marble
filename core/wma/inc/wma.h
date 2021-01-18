@@ -1431,10 +1431,6 @@ struct wma_roam_invoke_cmd {
 	bool forced_roaming;
 };
 
-A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
-					 eCsrEncryptionType encr);
-A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
-
 /**
  * wma_trigger_uapsd_params() - set trigger uapsd parameter
  * @wmi_handle: wma handle

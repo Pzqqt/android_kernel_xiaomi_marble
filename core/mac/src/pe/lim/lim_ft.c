@@ -476,7 +476,7 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			       enum wlan_phymode bss_phymode)
 {
 	if (pe_session->ftPEContext.pFTPreAuthReq &&
-	    !csr_is_roam_offload_enabled(mac_ctx)) {
+	    !wlan_is_roam_offload_enabled(mac_ctx->mlme_cfg->lfr)) {
 		ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
 		return;

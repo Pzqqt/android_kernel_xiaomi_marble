@@ -6343,69 +6343,6 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 	return status;
 }
 
-int8_t wlan_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq)
-{
-	uint32_t cfg_length = 0;
-	int8_t maxTxPwr = 0;
-	tSirMacChanInfo *pCountryInfo = NULL;
-	uint8_t count = 0;
-	uint8_t maxChannels;
-	int32_t rem_length = 0;
-
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
-		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
-	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
-		cfg_length = mac->mlme_cfg->power.max_tx_power_24.len;
-
-	} else if (wlan_reg_is_6ghz_chan_freq(ch_freq)) {
-		return wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
-							       ch_freq);
-	} else {
-		return maxTxPwr;
-	}
-
-	if (!cfg_length)
-		goto error;
-
-	pCountryInfo = qdf_mem_malloc(cfg_length);
-	if (!pCountryInfo)
-		goto error;
-
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
-		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
-			goto error;
-		qdf_mem_copy(pCountryInfo,
-			     mac->mlme_cfg->power.max_tx_power_5.data,
-			     cfg_length);
-	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
-		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
-			goto error;
-		qdf_mem_copy(pCountryInfo,
-			     mac->mlme_cfg->power.max_tx_power_24.data,
-			     cfg_length);
-	}
-
-	/* Identify the channel and maxtxpower */
-	rem_length = cfg_length;
-	while (rem_length >= (sizeof(tSirMacChanInfo))) {
-		maxChannels = pCountryInfo[count].numChannels;
-		maxTxPwr = pCountryInfo[count].maxTxPower;
-		count++;
-		rem_length -= (sizeof(tSirMacChanInfo));
-
-		if (ch_freq >= pCountryInfo[count].first_freq &&
-		    ch_freq < (pCountryInfo[count].first_freq + maxChannels)) {
-			break;
-		}
-	}
-
-error:
-	if (pCountryInfo)
-		qdf_mem_free(pCountryInfo);
-
-	return maxTxPwr;
-}
-
 #ifdef FEATURE_WLAN_ESE
 static void wlan_fill_qbss_load_param(tDot11fBeaconIEs *bcn_ies,
 				      struct bss_description *bss_desc)

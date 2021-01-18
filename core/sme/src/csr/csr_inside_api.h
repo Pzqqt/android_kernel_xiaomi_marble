@@ -29,8 +29,6 @@
 #include "cds_reg_service.h"
 #include "wlan_objmgr_vdev_obj.h"
 
-#define CSR_DEFAULT_RSSI_DB_GAP     30  /* every 30 dbm for one category */
-
 #ifdef QCA_WIFI_3_0_EMU
 #define CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT (1000*30*20)
 #else

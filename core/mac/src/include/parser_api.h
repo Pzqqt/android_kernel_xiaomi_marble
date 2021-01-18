@@ -61,19 +61,6 @@
 #define NSS_4x4_MODE 4
 #define MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID 0x04
 
-/* QCN IE definitions */
-#define QCN_IE_HDR_LEN     6
-
-#define QCN_IE_VERSION_SUBATTR_ID        1
-#define QCN_IE_VERSION_SUBATTR_DATA_LEN  2
-#define QCN_IE_VERSION_SUBATTR_LEN       4
-#define QCN_IE_VERSION_SUPPORTED    1
-#define QCN_IE_SUBVERSION_SUPPORTED 0
-
-#define QCN_IE_ATTR_ID_VERSION 1
-#define QCN_IE_ATTR_ID_VHT_MCS11 2
-#define QCN_IE_ATTR_ID_ALL 0xFF
-
 #define SIZE_OF_FIXED_PARAM 12
 #define SIZE_OF_TAG_PARAM_NUM 1
 #define SIZE_OF_TAG_PARAM_LEN 1
@@ -1261,8 +1248,6 @@ QDF_STATUS
 wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 				    struct bss_description *bss_desc,
 				    tDot11fBeaconIEs **ie_struct);
-
-int8_t wlan_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
 
 QDF_STATUS
 wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,

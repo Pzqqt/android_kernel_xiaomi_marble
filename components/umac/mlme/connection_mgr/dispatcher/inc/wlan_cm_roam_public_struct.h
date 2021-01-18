@@ -227,6 +227,8 @@ struct rso_roam_policy_params {
 	uint8_t sap_operating_band;
 };
 
+#define DEFAULT_RSSI_DB_GAP     30  /* every 30 dbm for one category */
+
 /**
  * struct rso_params - global RSO params
  * @num_ssid_allowed_list: The number of SSID profiles that are
@@ -263,6 +265,7 @@ struct rso_config_params {
 	uint8_t raise_factor_5g;
 	uint8_t drop_factor_5g;
 	int max_raise_rssi_5g;
+	uint8_t cat_rssi_offset;
 	struct rso_roam_policy_params policy_params;
 };
 

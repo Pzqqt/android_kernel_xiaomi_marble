@@ -347,7 +347,6 @@ struct csr_config {
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
 	uint8_t fAllowMCCGODiffBI;
-	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
 	bool nRoamScanControl;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;

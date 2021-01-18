@@ -788,12 +788,6 @@ struct csr_config_params {
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
-	/*
-	 * this number minus one is the number of times a scan doesn't find it
-	 * before it is removed
-	 */
-	/* to set the RSSI difference for each category */
-	uint8_t bCatRssiOffset;
 	/* to set MCC Enable/Disable mode */
 	uint8_t fEnableMCCMode;
 	bool mcc_rts_cts_prot_enable;
@@ -834,11 +828,7 @@ struct csr_config_params {
 };
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define csr_is_roam_offload_enabled(mac) \
-	(mac->mlme_cfg->lfr.lfr3_roaming_offload)
 #define DEFAULT_REASSOC_FAILURE_TIMEOUT 1000
-#else
-#define csr_is_roam_offload_enabled(mac)  false
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

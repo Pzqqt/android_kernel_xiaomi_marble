@@ -27,6 +27,7 @@
 #include <wmi_unified_priv.h>
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include "wlan_crypto_global_api.h"
+#include <wlan_cm_api.h>
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15

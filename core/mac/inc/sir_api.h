@@ -1941,12 +1941,6 @@ typedef struct {
 } tSirAcUapsd, *tpSirAcUapsd;
 #endif
 
-typedef enum {
-	SIR_ROAMING_DFS_CHANNEL_DISABLED = 0,
-	SIR_ROAMING_DFS_CHANNEL_ENABLED_NORMAL = 1,
-	SIR_ROAMING_DFS_CHANNEL_ENABLED_ACTIVE = 2
-} eSirDFSRoamScanMode;
-
 /**
  * struct pmkid_mode_bits - Bit flags for PMKID usage in RSN IE
  * @fw_okc: Opportunistic key caching enable in firmware
