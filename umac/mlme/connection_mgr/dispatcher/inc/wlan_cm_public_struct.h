@@ -83,6 +83,20 @@ struct wlan_cm_connect_crypto_info {
 #define WLAN_CM_FILS_MAX_RRK_LENGTH 64
 
 /**
+ * enum wlan_fils_auth_type - fils auth type info
+ * @FILS_SK_WITHOUT_PFS: without pfs
+ * @FILS_SK_WITH_PFS: with pfs
+ * @FILS_PK_AUTH: fils auth
+ * @FILS_PK_MAX: max value
+ */
+enum wlan_fils_auth_type {
+	FILS_SK_WITHOUT_PFS,
+	FILS_SK_WITH_PFS,
+	FILS_PK_AUTH,
+	FILS_PK_MAX,
+};
+
+/**
  * struct wlan_fils_con_info - fils connect req info
  * @is_fils_connection: is fils connection
  * @username_len: username length
@@ -102,6 +116,7 @@ struct wlan_fils_con_info {
 	uint16_t next_seq_num;
 	uint32_t rrk_len;
 	uint8_t rrk[WLAN_CM_FILS_MAX_RRK_LENGTH];
+	enum wlan_fils_auth_type auth_type;
 };
 #endif
 

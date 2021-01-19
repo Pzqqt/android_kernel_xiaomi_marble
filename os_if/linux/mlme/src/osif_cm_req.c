@@ -218,6 +218,21 @@ static bool osif_cm_is_conn_type_fils(const struct cfg80211_connect_params *req)
 	return true;
 }
 
+enum wlan_fils_auth_type
+osif_cm_get_fils_auth_type(enum nl80211_auth_type auth)
+{
+	switch (auth) {
+	case NL80211_AUTHTYPE_FILS_SK:
+		return FILS_SK_WITHOUT_PFS;
+	case NL80211_AUTHTYPE_FILS_SK_PFS:
+		return FILS_SK_WITH_PFS;
+	case NL80211_AUTHTYPE_FILS_PK:
+		return FILS_PK_AUTH;
+	default:
+		return FILS_PK_MAX;
+	}
+}
+
 static QDF_STATUS
 osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
 		      const struct cfg80211_connect_params *req)
@@ -257,6 +272,8 @@ osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
 	qdf_mem_zero(connect_req->fils_info.rrk, WLAN_CM_FILS_MAX_RRK_LENGTH);
 	qdf_mem_copy(connect_req->fils_info.rrk, req->fils_erp_rrk,
 		     connect_req->fils_info.rrk_len);
+	connect_req->fils_info.auth_type =
+		osif_cm_get_fils_auth_type(req->auth_type);
 
 	return QDF_STATUS_SUCCESS;
 }

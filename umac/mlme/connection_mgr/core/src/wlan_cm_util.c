@@ -274,6 +274,16 @@ void cm_store_fils_key(struct cnx_mgr *cm_ctx, bool unicast,
 		   crypto_key->cipher_type, crypto_key->keylen,
 		   crypto_key->keyix, QDF_MAC_ADDR_REF(crypto_key->macaddr));
 }
+static void cm_set_fils_connection_from_req(struct wlan_cm_connect_req *req,
+					    struct wlan_cm_connect_resp *resp)
+{
+	resp->is_fils_connection = req->fils_info.is_fils_connection;
+}
+#else
+static inline
+void cm_set_fils_connection_from_req(struct wlan_cm_connect_req *req,
+				     struct wlan_cm_connect_resp *resp)
+{}
 #endif
 
 bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
@@ -399,6 +409,8 @@ cm_fill_connect_resp_from_req(struct wlan_cm_connect_resp *resp,
 		resp->freq = req->chan_freq;
 
 	resp->ssid = req->ssid;
+
+	cm_set_fils_connection_from_req(req, resp);
 }
 
 /**

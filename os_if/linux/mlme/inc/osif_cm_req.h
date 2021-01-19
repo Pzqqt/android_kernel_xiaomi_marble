@@ -54,6 +54,19 @@ struct osif_connect_params {
 	struct qdf_mac_addr prev_bssid;
 };
 
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
+/**
+ * osif_cm_get_fils_auth_type() - get fils auth type
+ * @auth: nl auth type
+ *
+ * Return: enum wlan_fils_auth_type
+ */
+enum wlan_fils_auth_type
+osif_cm_get_fils_auth_type(enum nl80211_auth_type auth);
+#endif
+
 /**
  * osif_cm_connect() - Connect start request
  * @dev: net dev

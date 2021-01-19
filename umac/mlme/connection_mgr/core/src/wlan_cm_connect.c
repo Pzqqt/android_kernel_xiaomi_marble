@@ -1385,6 +1385,9 @@ static inline void cm_set_fils_connection(struct cnx_mgr *cm_ctx,
 {
 	int32_t key_mgmt;
 
+	/* return if already set */
+	if (resp->is_fils_connection)
+		return;
 	key_mgmt = wlan_crypto_get_param(cm_ctx->vdev,
 					 WLAN_CRYPTO_PARAM_KEY_MGMT);
 
