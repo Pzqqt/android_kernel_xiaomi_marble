@@ -399,7 +399,6 @@ static void dp_peer_avg_rate_stats_print(uint8_t *peer_mac,
 		      avg_snr, stats->tx[type].num_snr,
 		      psr);
 	}
-	PRINT("");
 
 	PRINT("Avg rx stats: ");
 	for (type = 0; type < WLAN_RATE_MAX; type++) {
@@ -426,9 +425,6 @@ static void dp_peer_avg_rate_stats_print(uint8_t *peer_mac,
 		       avg_snr, stats->rx[type].num_snr,
 		       psr);
 	}
-	PRINT("");
-
-	PRINT("");
 }
 
 static void dp_peer_tx_link_stats_print(uint8_t *peer_mac,
