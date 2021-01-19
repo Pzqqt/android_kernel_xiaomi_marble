@@ -2674,6 +2674,9 @@ hdd_twt_request_session_traffic_stats(struct hdd_adapter *adapter,
 		return qdf_status_to_os_return(status);
 	}
 
+	qdf_mem_free(event->twt_infra_cp_stats);
+	qdf_mem_free(event);
+
 	return wlan_cfg80211_vendor_cmd_reply(reply_skb);
 }
 
