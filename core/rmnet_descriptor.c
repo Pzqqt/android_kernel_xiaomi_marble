@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -340,7 +340,6 @@ int rmnet_frag_ipv6_skip_exthdr(struct rmnet_frag_descriptor *frag_desc,
 		if (!hp)
 			return -EINVAL;
 
-		hp = rmnet_frag_data_ptr(frag_desc) + start;
 		if (nexthdr == NEXTHDR_FRAGMENT) {
 			u32 off = offsetof(struct frag_hdr, frag_off);
 			__be16 *fp, __fp;
@@ -559,20 +558,36 @@ int rmnet_frag_flow_command(struct rmnet_frag_descriptor *frag_desc,
 }
 EXPORT_SYMBOL(rmnet_frag_flow_command);
 
-static int rmnet_frag_deaggregate_one(struct skb_shared_info *shinfo,
+static int rmnet_frag_deaggregate_one(struct sk_buff *skb,
 				      struct rmnet_port *port,
 				      struct list_head *list,
 				      u32 start_frag)
 {
+	struct skb_shared_info *shinfo = skb_shinfo(skb);
 	struct rmnet_frag_descriptor *frag_desc;
-	struct rmnet_map_header *maph;
+	struct rmnet_map_header *maph, __maph;
 	skb_frag_t *frag;
 	u32 i;
 	u32 pkt_len;
 	int rc;
 
 	frag = &shinfo->frags[start_frag];
-	maph = skb_frag_address(frag);
+	/* Grab the QMAP header. Careful, as there's no guarantee that it's
+	 * continugous!
+	 */
+	if (likely(skb_frag_size(frag) >= sizeof(*maph))) {
+		maph = skb_frag_address(frag);
+	} else {
+		/* The header's split across pages. We can rebuild it.
+		 * Probably not faster or stronger than before. But certainly
+		 * more linear.
+		 */
+		if (skb_copy_bits(skb, 0, &__maph, sizeof(__maph)) < 0)
+			return -1;
+
+		maph = &__maph;
+	}
+
 	pkt_len = ntohs(maph->pkt_len);
 	/* Catch empty frames */
 	if (!pkt_len)
@@ -591,9 +606,19 @@ static int rmnet_frag_deaggregate_one(struct skb_shared_info *shinfo,
 		u32 hsize = 0;
 		u8 type;
 
-		type = ((struct rmnet_map_v5_coal_header *)
-			(maph + 1))->header_type;
-		switch (type) {
+		/* Check the type. This seems like should be overkill for less
+		 * than a single byte, doesn't it?
+		 */
+		if (likely(skb_frag_size(frag) >= sizeof(*maph) + 1)) {
+			type = *((u8 *)maph + sizeof(*maph));
+		} else {
+			if (skb_copy_bits(skb, sizeof(*maph), &type,
+					  sizeof(type)) < 0)
+				return -1;
+		}
+
+		/* Type only uses the first 7 bits */
+		switch ((type & 0xFE) >> 1) {
 		case RMNET_MAP_HEADER_TYPE_COALESCING:
 			hsize = sizeof(struct rmnet_map_v5_coal_header);
 			break;
@@ -648,7 +673,7 @@ void rmnet_frag_deaggregate(struct sk_buff *skb, struct rmnet_port *port,
 	int rc;
 
 	while (i < shinfo->nr_frags) {
-		rc = rmnet_frag_deaggregate_one(shinfo, port, list, i);
+		rc = rmnet_frag_deaggregate_one(skb, port, list, i);
 		if (rc < 0)
 			return;
 
@@ -824,6 +849,16 @@ skip_frags:
 		th->seq = frag_desc->tcp_seq;
 	}
 
+	if (frag_desc->tcp_flags_set) {
+		struct tcphdr *th;
+		__be16 *flags;
+
+		th = (struct tcphdr *)
+		     (rmnet_map_data_ptr(head_skb) + frag_desc->ip_len);
+		flags = (__be16 *)&tcp_flag_word(th);
+		*flags = frag_desc->tcp_flags;
+	}
+
 	/* Handle csum offloading */
 	if (frag_desc->csum_valid && frag_desc->hdrs_valid) {
 		/* Set the partial checksum information */
@@ -959,6 +994,24 @@ static void __rmnet_frag_segment_data(struct rmnet_frag_descriptor *coal_desc,
 		new_desc->tcp_seq_set = 1;
 		new_desc->tcp_seq = htonl(ntohl(th->seq) +
 					  coal_desc->data_offset);
+
+		/* Don't allow any dangerous flags to appear in any segments
+		 * other than the last.
+		 */
+		if (th->fin || th->psh) {
+			if (offset + dlen < coal_desc->len) {
+				__be32 flag_word = tcp_flag_word(th);
+
+				/* Clear the FIN and PSH flags from this
+				 * segment.
+				 */
+				flag_word &= ~TCP_FLAG_FIN;
+				flag_word &= ~TCP_FLAG_PSH;
+
+				new_desc->tcp_flags_set = 1;
+				new_desc->tcp_flags = *((__be16 *)&flag_word);
+			}
+		}
 	} else if (coal_desc->trans_proto == IPPROTO_UDP) {
 		struct udphdr *uh, __uh;
 
@@ -1004,6 +1057,13 @@ static bool rmnet_frag_validate_csum(struct rmnet_frag_descriptor *frag_desc)
 	unsigned int datagram_len;
 	__wsum csum;
 	__sum16 pseudo;
+
+	/* Keep analysis tools happy, since they will see that
+	 * rmnet_frag_data_ptr() could return NULL. It can't in this case,
+	 * since we can't get this far otherwise...
+	 */
+	if (unlikely(!data))
+		return false;
 
 	datagram_len = frag_desc->len - frag_desc->ip_len;
 	if (frag_desc->ip_proto == 4) {
@@ -1061,6 +1121,9 @@ rmnet_frag_segment_coal_data(struct rmnet_frag_descriptor *coal_desc,
 	 * for it.
 	*/
 	version = rmnet_frag_data_ptr(coal_desc);
+	if (unlikely(!version))
+		return;
+
 	if ((*version & 0xF0) == 0x40) {
 		struct iphdr *iph, __iph;
 

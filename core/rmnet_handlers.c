@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -32,8 +32,6 @@
 
 #define RMNET_IP_VERSION_4 0x40
 #define RMNET_IP_VERSION_6 0x60
-
-#ifdef CONFIG_FTRACE
 #define CREATE_TRACE_POINTS
 #include "rmnet_trace.h"
 
@@ -52,7 +50,8 @@ EXPORT_TRACEPOINT_SYMBOL(rmnet_err);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_update);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_reset);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_boost);
-#endif
+
+
 
 /* Helper Functions */
 
@@ -89,12 +88,17 @@ EXPORT_SYMBOL(rmnet_slow_start_on);
 
 /* Shs hook handler */
 int (*rmnet_shs_skb_entry)(struct sk_buff *skb,
-			   struct rmnet_port *port) __rcu __read_mostly;
+			   struct rmnet_shs_clnt_s *cfg) __rcu __read_mostly;
 EXPORT_SYMBOL(rmnet_shs_skb_entry);
+
+int (*rmnet_shs_switch)(struct sk_buff *skb,
+			   struct rmnet_shs_clnt_s *cfg) __rcu __read_mostly;
+EXPORT_SYMBOL(rmnet_shs_switch);
+
 
 /* Shs hook handler for work queue*/
 int (*rmnet_shs_skb_entry_wq)(struct sk_buff *skb,
-			      struct rmnet_port *port) __rcu __read_mostly;
+			      struct rmnet_shs_clnt_s *cfg) __rcu __read_mostly;
 EXPORT_SYMBOL(rmnet_shs_skb_entry_wq);
 
 /* Generic handler */
@@ -102,12 +106,11 @@ EXPORT_SYMBOL(rmnet_shs_skb_entry_wq);
 void
 rmnet_deliver_skb(struct sk_buff *skb, struct rmnet_port *port)
 {
-	int (*rmnet_shs_stamp)(struct sk_buff *skb, struct rmnet_port *port);
+	int (*rmnet_shs_stamp)(struct sk_buff *skb,
+			       struct rmnet_shs_clnt_s *cfg);
 
-#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_DLVR_SKB, 0xDEF, 0xDEF,
 			0xDEF, 0xDEF, (void *)skb, NULL);
-#endif
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
 	rmnet_vnd_rx_fixup(skb->dev, skb->len);
@@ -118,7 +121,7 @@ rmnet_deliver_skb(struct sk_buff *skb, struct rmnet_port *port)
 	rcu_read_lock();
 	rmnet_shs_stamp = rcu_dereference(rmnet_shs_skb_entry);
 	if (rmnet_shs_stamp) {
-		rmnet_shs_stamp(skb, port);
+		rmnet_shs_stamp(skb, &port->shs_cfg);
 		rcu_read_unlock();
 		return;
 	}
@@ -133,13 +136,12 @@ void
 rmnet_deliver_skb_wq(struct sk_buff *skb, struct rmnet_port *port,
 		     enum rmnet_packet_context ctx)
 {
-	int (*rmnet_shs_stamp)(struct sk_buff *skb, struct rmnet_port *port);
+	int (*rmnet_shs_stamp)(struct sk_buff *skb,
+			       struct rmnet_shs_clnt_s *cfg);
 	struct rmnet_priv *priv = netdev_priv(skb->dev);
 
-#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_DLVR_SKB, 0xDEF, 0xDEF,
 			0xDEF, 0xDEF, (void *)skb, NULL);
-#endif
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
 	rmnet_vnd_rx_fixup(skb->dev, skb->len);
@@ -154,7 +156,7 @@ rmnet_deliver_skb_wq(struct sk_buff *skb, struct rmnet_port *port,
 	rmnet_shs_stamp = (!ctx) ? rcu_dereference(rmnet_shs_skb_entry) :
 				   rcu_dereference(rmnet_shs_skb_entry_wq);
 	if (rmnet_shs_stamp) {
-		rmnet_shs_stamp(skb, port);
+		rmnet_shs_stamp(skb, &port->shs_cfg);
 		rcu_read_unlock();
 		return;
 	}
@@ -393,6 +395,8 @@ rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
 	struct sk_buff *skb = *pskb;
 	struct rmnet_port *port;
 	struct net_device *dev;
+	int (*rmnet_core_shs_switch)(struct sk_buff *skb,
+				     struct rmnet_shs_clnt_s *cfg);
 
 	if (!skb)
 		goto done;
@@ -400,15 +404,29 @@ rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
 	if (skb->pkt_type == PACKET_LOOPBACK)
 		return RX_HANDLER_PASS;
 
-#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_RCV_FROM_PND, 0xDEF,
 			0xDEF, 0xDEF, 0xDEF, NULL, NULL);
-#endif
 	dev = skb->dev;
 	port = rmnet_get_port(dev);
+	if (unlikely(!port)) {
+		atomic_long_inc(&skb->dev->rx_nohandler);
+		kfree_skb(skb);
+		goto done;
+	}
 
 	switch (port->rmnet_mode) {
 	case RMNET_EPMODE_VND:
+
+		rcu_read_lock();
+		rmnet_core_shs_switch = rcu_dereference(rmnet_shs_switch);
+		if (rmnet_core_shs_switch && !skb->cb[1]) {
+			skb->cb[1] = 1;
+			rmnet_core_shs_switch(skb, &port->phy_shs_cfg);
+			rcu_read_unlock();
+			return RX_HANDLER_CONSUMED;
+		}
+		rcu_read_unlock();
+
 		rmnet_map_ingress_handler(skb, port);
 		break;
 	case RMNET_EPMODE_BRIDGE:
@@ -434,10 +452,8 @@ void rmnet_egress_handler(struct sk_buff *skb)
 	int err;
 	u32 skb_len;
 
-#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_TX_UL_PKT, 0xDEF, 0xDEF, 0xDEF,
 			0xDEF, (void *)skb, NULL);
-#endif
 	sk_pacing_shift_update(skb->sk, 8);
 
 	orig_dev = skb->dev;

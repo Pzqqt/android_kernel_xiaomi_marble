@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,10 +29,7 @@
 
 #include "qmi_rmnet.h"
 #include "rmnet_qmi.h"
-
-#ifdef CONFIG_FTRACE
 #include "rmnet_trace.h"
-#endif
 
 /* RX/TX Fixup */
 
@@ -78,9 +75,7 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 					AF_INET : AF_INET6;
 		mark = skb->mark;
 		len = skb->len;
-#ifdef CONFIG_FTRACE
 		trace_rmnet_xmit_skb(skb);
-#endif
 		rmnet_egress_handler(skb);
 		qmi_rmnet_burst_fc_check(dev, ip_type, mark, len);
 		qmi_rmnet_work_maybe_restart(rmnet_get_rmnet_port(dev));
@@ -178,7 +173,6 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	int boost_trigger = 0;
 	int txq = 0;
 
-#ifdef CONFIG_FTRACE
 	if (trace_print_skb_gso_enabled()) {
 		if (!skb_shinfo(skb)->gso_size)
 			goto skip_trace;
@@ -198,7 +192,6 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	}
 
 skip_trace:
-#endif
 	if (priv->real_dev)
 		txq = qmi_rmnet_get_queue(dev, skb);
 
@@ -364,7 +357,7 @@ void rmnet_vnd_setup(struct net_device *rmnet_dev)
 	rmnet_dev->netdev_ops = &rmnet_vnd_ops;
 	rmnet_dev->mtu = RMNET_DFLT_PACKET_SIZE;
 	rmnet_dev->needed_headroom = RMNET_NEEDED_HEADROOM;
-	random_ether_addr(rmnet_dev->dev_addr);
+	random_ether_addr(rmnet_dev->perm_addr);
 	rmnet_dev->tx_queue_len = RMNET_TX_QUEUE_LEN;
 
 	/* Raw IP mode */
@@ -450,4 +443,12 @@ int rmnet_vnd_do_flow_control(struct net_device *rmnet_dev, int enable)
 		netif_stop_queue(rmnet_dev);
 
 	return 0;
+}
+
+void rmnet_vnd_reset_mac_addr(struct net_device *dev)
+{
+	if (dev->netdev_ops != &rmnet_vnd_ops)
+		return;
+
+	random_ether_addr(dev->perm_addr);
 }

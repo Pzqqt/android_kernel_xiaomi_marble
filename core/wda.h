@@ -5,6 +5,7 @@
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM wda
 #undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
 #ifdef RMNET_LA_PLATFORM
 #define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
 #elif RMNET_TRACE_INCLUDE_LE
