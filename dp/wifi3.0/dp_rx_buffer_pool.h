@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,6 +83,32 @@ void dp_rx_buffer_pool_nbuf_free(struct dp_soc *soc, qdf_nbuf_t nbuf,
 qdf_nbuf_t dp_rx_buffer_pool_nbuf_alloc(struct dp_soc *soc, uint32_t mac_id,
 					struct rx_desc_pool *rx_desc_pool,
 					uint32_t num_available_buffers);
+
+/**
+ * dp_rx_buffer_pool_nbuf_map() - Map nbuff for buffer replenish
+ * @soc: SoC handle
+ * @rx_desc_pool: RX descriptor pool
+ * @nbuf_frag_info_t: nbuf frag info
+ *
+ * Return: nbuf
+ */
+QDF_STATUS
+dp_rx_buffer_pool_nbuf_map(struct dp_soc *soc,
+			   struct rx_desc_pool *rx_desc_pool,
+			   struct dp_rx_nbuf_frag_info *nbuf_frag_info_t);
+
+/**
+ * dp_rx_schedule_refill_thread() - Schedule RX refill thread to enqueue
+ * buffers in refill pool
+ * @soc: SoC handle
+ *
+ */
+static inline void dp_rx_schedule_refill_thread(struct dp_soc *soc)
+{
+	if (soc->cdp_soc.ol_ops->dp_rx_sched_refill_thread)
+		soc->cdp_soc.ol_ops->dp_rx_sched_refill_thread(dp_soc_to_cdp_soc_t(soc));
+}
+
 #else
 /**
  * dp_rx_buffer_pool_init() - Initialize emergency buffer pool
@@ -159,5 +185,26 @@ dp_rx_buffer_pool_nbuf_alloc(struct dp_soc *soc, uint32_t mac_id,
 			      RX_BUFFER_RESERVATION,
 			      rx_desc_pool->buf_alignment, FALSE);
 }
+
+/**
+ * dp_rx_buffer_pool_nbuf_map() - Map nbuff for buffer replenish
+ * @soc: SoC handle
+ * @rx_desc_pool: RX descriptor pool
+ * @nbuf_frag_info_t: nbuf frag info
+ *
+ * Return: nbuf
+ */
+static inline QDF_STATUS
+dp_rx_buffer_pool_nbuf_map(struct dp_soc *soc,
+			   struct rx_desc_pool *rx_desc_pool,
+			   struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
+{
+	return qdf_nbuf_map_nbytes_single(soc->osdev,
+					 (nbuf_frag_info_t->virt_addr).nbuf,
+					 QDF_DMA_FROM_DEVICE,
+					 rx_desc_pool->buf_size);
+}
+
+static inline void dp_rx_schedule_refill_thread(struct dp_soc *soc) { }
 #endif /* WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL */
 #endif /* _DP_RX_BUFFER_POOL_H_ */

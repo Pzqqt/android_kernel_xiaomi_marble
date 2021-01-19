@@ -230,11 +230,8 @@ dp_pdev_nbuf_alloc_and_map_replenish(struct dp_soc *dp_soc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev,
-					 (nbuf_frag_info_t->virt_addr).nbuf,
-					 QDF_DMA_FROM_DEVICE,
-					 rx_desc_pool->buf_size);
-
+	ret = dp_rx_buffer_pool_nbuf_map(dp_soc, rx_desc_pool,
+					 nbuf_frag_info_t);
 	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 		dp_rx_buffer_pool_nbuf_free(dp_soc,
 			(nbuf_frag_info_t->virt_addr).nbuf, mac_id);
@@ -245,11 +242,6 @@ dp_pdev_nbuf_alloc_and_map_replenish(struct dp_soc *dp_soc,
 
 	nbuf_frag_info_t->paddr =
 		qdf_nbuf_get_frag_paddr((nbuf_frag_info_t->virt_addr).nbuf, 0);
-
-	dp_ipa_handle_rx_buf_smmu_mapping(dp_soc,
-			(qdf_nbuf_t)((nbuf_frag_info_t->virt_addr).nbuf),
-					  rx_desc_pool->buf_size,
-					  true);
 
 	ret = dp_check_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
 			     &nbuf_frag_info_t->paddr,
@@ -414,6 +406,8 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	}
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
+
+	dp_rx_schedule_refill_thread(dp_soc);
 
 	dp_verbose_debug("replenished buffers %d, rx desc added back to free list %u",
 			 count, num_desc_to_free);

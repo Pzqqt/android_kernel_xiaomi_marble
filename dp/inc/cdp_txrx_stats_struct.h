@@ -1968,6 +1968,11 @@ struct cdp_pdev_stats {
 		uint64_t num_pool_bufs_replenish;
 		uint64_t num_bufs_alloc_success;
 	} rx_buffer_pool;
+
+	struct {
+		uint64_t num_bufs_refilled;
+		uint64_t num_bufs_allocated;
+	} rx_refill_buff_pool;
 };
 
 /* struct cdp_peer_hmwds_ast_add_status - hmwds peer ast add status
