@@ -514,6 +514,11 @@ typedef  enum  {
      * candidate AP is present in FW.
      */
     WMI_SERVICE_SAE_EAPOL_OFFLOAD_SUPPORT = 275,
+    /*
+     * Indicates FW supports sending events to host during Thermal Throttling
+     * every duty cycle on detecting temperature change when dc_per_event is 0.
+     */
+    WMI_SERVICE_THERM_THROT_TEMP_CHANGE_DYNAMIC_EVENT_SUPPORT = 276,
 
 
     WMI_MAX_EXT2_SERVICE
