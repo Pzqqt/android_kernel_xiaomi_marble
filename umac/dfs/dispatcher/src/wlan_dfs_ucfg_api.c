@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -175,8 +175,9 @@ QDF_STATUS ucfg_dfs_get_agile_precac_enable(struct wlan_objmgr_pdev *pdev,
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
-		return QDF_STATUS_E_FAILURE;
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		*buff = false;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	*buff = dfs_is_agile_precac_enabled(dfs);
