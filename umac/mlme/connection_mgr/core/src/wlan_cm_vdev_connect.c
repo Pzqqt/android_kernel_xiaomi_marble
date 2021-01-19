@@ -27,6 +27,7 @@
 #include "wlan_p2p_api.h"
 #include "wlan_tdls_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "wni_api.h"
 
 QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
@@ -94,12 +95,13 @@ cm_copy_join_params(struct cm_vdev_join_req *join_req,
 
 	qdf_mem_copy(join_req->assoc_ie.ptr, req->assoc_ie.ptr,
 		     req->assoc_ie.len);
+	join_req->assoc_ie.len = req->assoc_ie.len;
 
 	join_req->scan_ie.ptr = qdf_mem_malloc(req->scan_ie.len);
 
 	if (!join_req->scan_ie.ptr)
 		return QDF_STATUS_E_NOMEM;
-
+	join_req->scan_ie.len = req->scan_ie.len;
 	qdf_mem_copy(join_req->scan_ie.ptr, req->scan_ie.ptr,
 		     req->scan_ie.len);
 
@@ -188,7 +190,7 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	}
 
 	msg.bodyptr = join_req;
-	msg.callback = cm_process_join_req;
+	msg.type = CM_CONNECT_REQ;
 	msg.flush_callback = cm_flush_join_req;
 
 	status = scheduler_post_message(QDF_MODULE_ID_MLME,
@@ -221,7 +223,7 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 	qdf_copy_macaddr(&req->peer_mac, peer_mac);
 
 	msg.bodyptr = req;
-	msg.callback = cm_process_peer_create;
+	msg.type = CM_BSS_PEER_CREATE_REQ;
 
 	status = scheduler_post_message(QDF_MODULE_ID_MLME,
 					QDF_MODULE_ID_PE,

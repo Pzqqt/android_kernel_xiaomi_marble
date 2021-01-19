@@ -514,10 +514,9 @@ void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
 						    WLAN_MLME_CM_ID);
-	if (!vdev) {
-		mlme_err("vdev object is NULL");
+	if (!vdev)
 		return;
-	}
+
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (!rso_cfg) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
