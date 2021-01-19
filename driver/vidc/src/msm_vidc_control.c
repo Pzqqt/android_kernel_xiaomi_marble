@@ -11,6 +11,11 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
 
+#define CAP_TO_8BIT_QP(a) {          \
+	if ((a) < 0)                 \
+		(a) = 0;             \
+}
+
 static bool is_priv_ctrl(u32 id)
 {
 	if (IS_PRIV_CTRL(id))
@@ -191,6 +196,14 @@ static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 		return "Encoder QP Metadata";
 	case V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE:
 		return "Bitstream Size Overwrite";
+	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MIN_QP:
+		return "HEVC I Frame Min QP";
+	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MIN_QP:
+		return "HEVC P Frame Min QP";
+	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MAX_QP:
+		return "HEVC I Frame Max QP";
+	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP:
+		return "HEVC P Frame Max QP";
 	default:
 		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);
@@ -337,12 +350,52 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 			*value = inst->capabilities->cap[parent].value;
 	} else {
 		s_vpr_e(inst->sid,
-			"%s: missing parent %d, please correct database\n",
-			func, parent);
+			"%s: missing parent %d for cap %d, please correct database\n",
+			func, parent, cap);
 		rc = -EINVAL;
 	}
 
 	return rc;
+}
+
+static int msm_vidc_adjust_hevc_qp(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 pix_fmt = -1;
+
+	capability = inst->capabilities;
+
+	if (inst->codec != MSM_VIDC_HEVC) {
+		s_vpr_e(inst->sid,
+			"%s: incorrect entry in database for cap %d. fix the database\n",
+			__func__, cap_id);
+		return -EINVAL;
+	}
+
+	if (msm_vidc_get_parent_value(inst, cap_id,
+		PIX_FMTS, &pix_fmt, __func__))
+		return -EINVAL;
+
+	if (pix_fmt == MSM_VIDC_FMT_P010 || pix_fmt == MSM_VIDC_FMT_TP10C)
+		goto exit;
+
+	CAP_TO_8BIT_QP(capability->cap[cap_id].value);
+	if (cap_id == MIN_FRAME_QP) {
+		CAP_TO_8BIT_QP(capability->cap[I_FRAME_MIN_QP].value);
+		CAP_TO_8BIT_QP(capability->cap[P_FRAME_MIN_QP].value);
+		CAP_TO_8BIT_QP(capability->cap[B_FRAME_MIN_QP].value);
+	} else if (cap_id == MAX_FRAME_QP) {
+		CAP_TO_8BIT_QP(capability->cap[I_FRAME_MAX_QP].value);
+		CAP_TO_8BIT_QP(capability->cap[P_FRAME_MAX_QP].value);
+		CAP_TO_8BIT_QP(capability->cap[B_FRAME_MAX_QP].value);
+	} else if (cap_id == I_FRAME_QP) {
+		CAP_TO_8BIT_QP(capability->cap[P_FRAME_QP].value);
+		CAP_TO_8BIT_QP(capability->cap[B_FRAME_QP].value);
+	}
+
+exit:
+	return 0;
 }
 
 static int msm_vidc_adjust_property(struct msm_vidc_inst *inst,
@@ -1015,6 +1068,57 @@ int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl)
 	return 0;
 }
 
+int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	rc = msm_vidc_adjust_hevc_qp(inst, MIN_FRAME_QP);
+
+	return rc;
+}
+
+int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	rc = msm_vidc_adjust_hevc_qp(inst, MAX_FRAME_QP);
+
+	return rc;
+}
+
+int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	rc = msm_vidc_adjust_hevc_qp(inst, I_FRAME_QP);
+
+	return rc;
+}
+
 /*
  * Loop over instance capabilities with CAP_FLAG_ROOT
  * and call adjust function, where
@@ -1114,7 +1218,7 @@ int msm_vidc_set_deblock_mode(void *instance,
 	int rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 	s32 alpha = 0, beta = 0;
-	u32 lf_mode, hfi_value = 0, lf_offset = 12;
+	u32 lf_mode, hfi_value = 0, lf_offset = 6;
 	struct msm_vidc_inst_capability *capability;
 
 	if (!inst || !inst->capabilities) {
@@ -1127,11 +1231,6 @@ int msm_vidc_set_deblock_mode(void *instance,
 	if (rc)
 		return -EINVAL;
 
-	/*
-	 * TODO: Revisit once s32 packing problem is fixed in hfi interface.
-	 * For now, using offset value as 6 to shift alpha, beta ranges
-	 * to (0 to 12) from (-6 to 6)
-	 */
 	beta = inst->capabilities->cap[LF_BETA].value + lf_offset;
 	alpha = inst->capabilities->cap[LF_ALPHA].value + lf_offset;
 
@@ -1160,6 +1259,169 @@ int msm_vidc_set_use_and_mark_ltr(void *instance,
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_min_qp(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	struct msm_vidc_inst_capability *capability;
+	s32 i_frame_qp = 0, p_frame_qp = 0, b_frame_qp = 0, min_qp_enable = 0;
+	u32 i_qp_enable = 0, p_qp_enable = 0, b_qp_enable = 0;
+	u32 client_qp_enable = 0, hfi_value = 0, offset = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	min_qp_enable =
+		capability->cap[MIN_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+
+	i_qp_enable = min_qp_enable ||
+		capability->cap[I_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+	p_qp_enable = min_qp_enable ||
+		capability->cap[P_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+	b_qp_enable = min_qp_enable ||
+		capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+
+	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
+	if (!client_qp_enable)
+		return 0;
+
+	if (is_10bit_colorformat(capability->cap[PIX_FMTS].value))
+		offset = 12;
+
+	/*
+	 * I_FRAME_MIN_QP, P_FRAME_MIN_QP, B_FRAME_MIN_QP,
+	 * MIN_FRAME_QP caps have default value as MIN_QP_10BIT values.
+	 * Hence, if client sets either one among MIN_FRAME_QP
+	 * and (I_FRAME_MIN_QP or P_FRAME_MIN_QP or B_FRAME_MIN_QP),
+	 * max of both caps will result into client set value.
+	 */
+	i_frame_qp = max(capability->cap[I_FRAME_MIN_QP].value,
+			capability->cap[MIN_FRAME_QP].value) + offset;
+	p_frame_qp = max(capability->cap[P_FRAME_MIN_QP].value,
+			capability->cap[MIN_FRAME_QP].value) + offset;
+	b_frame_qp = max(capability->cap[B_FRAME_MIN_QP].value,
+			capability->cap[MIN_FRAME_QP].value) + offset;
+
+	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
+		client_qp_enable << 24;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_max_qp(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	struct msm_vidc_inst_capability *capability;
+	s32 i_frame_qp = 0, p_frame_qp = 0, b_frame_qp = 0, max_qp_enable = 0;
+	u32 i_qp_enable = 0, p_qp_enable = 0, b_qp_enable = 0;
+	u32 client_qp_enable = 0, hfi_value = 0, offset = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	max_qp_enable =
+		capability->cap[MAX_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+
+	i_qp_enable = max_qp_enable ||
+		capability->cap[I_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+	p_qp_enable = max_qp_enable ||
+		capability->cap[P_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+	b_qp_enable = max_qp_enable ||
+		capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+
+	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
+	if (!client_qp_enable)
+		return 0;
+
+	if (is_10bit_colorformat(capability->cap[PIX_FMTS].value))
+		offset = 12;
+
+	/*
+	 * I_FRAME_MAX_QP, P_FRAME_MAX_QP, B_FRAME_MAX_QP,
+	 * MAX_FRAME_QP caps have default value as MAX_QP values.
+	 * Hence, if client sets either one among MAX_FRAME_QP
+	 * and (I_FRAME_MAX_QP or P_FRAME_MAX_QP or B_FRAME_MAX_QP),
+	 * min of both caps will result into client set value.
+	 */
+	i_frame_qp = min(capability->cap[I_FRAME_MAX_QP].value,
+			capability->cap[MAX_FRAME_QP].value) + offset;
+	p_frame_qp = min(capability->cap[P_FRAME_MAX_QP].value,
+			capability->cap[MAX_FRAME_QP].value) + offset;
+	b_frame_qp = min(capability->cap[B_FRAME_MAX_QP].value,
+			capability->cap[MAX_FRAME_QP].value) + offset;
+
+	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
+		client_qp_enable << 24;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_frame_qp(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	struct msm_vidc_inst_capability *capab;
+	s32 i_frame_qp = 0, p_frame_qp = 0, b_frame_qp = 0;
+	u32 i_qp_enable = 0, p_qp_enable = 0, b_qp_enable = 0;
+	u32 client_qp_enable = 0, hfi_value = 0, offset = 0;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capab = inst->capabilities;
+
+	if (msm_vidc_get_parent_value(inst, I_FRAME_QP,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (rc_type == HFI_RC_OFF) {
+		/* Mandatorily set for rc off case */
+		i_qp_enable = p_qp_enable = b_qp_enable = 1;
+	} else {
+		/* Set only if client has set for NON rc off case */
+		i_qp_enable =
+			capab->cap[I_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+		p_qp_enable =
+			capab->cap[P_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+		b_qp_enable =
+			capab->cap[B_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+	}
+
+	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
+	if (!client_qp_enable)
+		return 0;
+
+	if (is_10bit_colorformat(capab->cap[PIX_FMTS].value))
+		offset = 12;
+
+	i_frame_qp = capab->cap[I_FRAME_QP].value + offset;
+	p_frame_qp = capab->cap[P_FRAME_QP].value + offset;
+	b_frame_qp = capab->cap[B_FRAME_QP].value + offset;
+
+	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
+		client_qp_enable << 24;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
 
 	return rc;

@@ -106,6 +106,16 @@ enum v4l2_mpeg_vidc_blur_types {
 #define V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE                       \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x23)
 
+/* Deprecate below controls once they are available in upstream */
+#define V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MIN_QP                               \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x24)
+#define V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MIN_QP                               \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x25)
+#define V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MAX_QP                               \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x26)
+#define V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP                               \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x27)
+
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,
 	METADATA_FLAGS_TOP_FIELD        = (1 << 0),
