@@ -1800,10 +1800,6 @@ typedef struct sSirSmeProbeReqInd {
 /* Occupied channel list can be dynamic */
 #define CHANNEL_LIST_DYNAMIC                  2
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define SIR_ROAM_SCAN_PSK_SIZE    48
-#define SIR_ROAM_R0KH_ID_MAX_LEN  48
-#endif
 /* SME -> HAL - This is the host offload request. */
 #define SIR_IPV6_NS_OFFLOAD                         2
 #define SIR_OFFLOAD_DISABLE                         0

@@ -611,6 +611,36 @@ static void clean_up_ft_sha384(tpSirAssocRsp assoc_rsp, bool sha384_akm)
 	}
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void lim_set_r0kh(tpSirAssocRsp assoc_rsp, struct pe_session *session)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (!mlme_priv)
+		return;
+	if (assoc_rsp->sha384_ft_subelem.r0kh_id.present) {
+		mlme_priv->connect_info.ft_info.r0kh_id_len =
+			assoc_rsp->sha384_ft_subelem.r0kh_id.num_PMK_R0_ID;
+		qdf_mem_copy(mlme_priv->connect_info.ft_info.r0kh_id,
+			     assoc_rsp->sha384_ft_subelem.r0kh_id.PMK_R0_ID,
+			     mlme_priv->connect_info.ft_info.r0kh_id_len);
+	} else if (assoc_rsp->FTInfo.R0KH_ID.present) {
+		mlme_priv->connect_info.ft_info.r0kh_id_len =
+			assoc_rsp->FTInfo.R0KH_ID.num_PMK_R0_ID;
+		qdf_mem_copy(mlme_priv->connect_info.ft_info.r0kh_id,
+			assoc_rsp->FTInfo.R0KH_ID.PMK_R0_ID,
+			mlme_priv->connect_info.ft_info.r0kh_id_len);
+	} else {
+		mlme_priv->connect_info.ft_info.r0kh_id_len = 0;
+		qdf_mem_zero(mlme_priv->connect_info.ft_info.r0kh_id,
+			     ROAM_R0KH_ID_MAX_LEN);
+	}
+}
+#else
+static inline
+void lim_set_r0kh(tpSirAssocRsp assoc_rsp, struct pe_session *session) {}
+#endif
 /**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
@@ -641,9 +671,6 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	tLimMlmAssocCnf assoc_cnf;
 	tSchBeaconStruct *beacon;
 	uint8_t vdev_id = session_entry->vdev_id;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	struct csr_roam_session *roam_session;
-#endif
 	uint8_t ap_nss;
 	int8_t rssi;
 	QDF_STATUS status;
@@ -793,27 +820,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 	lim_update_ric_data(mac_ctx, session_entry, assoc_rsp);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	roam_session =
-		&mac_ctx->roam.roamSession[vdev_id];
-	if (assoc_rsp->sha384_ft_subelem.r0kh_id.present) {
-		roam_session->ftSmeContext.r0kh_id_len =
-			assoc_rsp->sha384_ft_subelem.r0kh_id.num_PMK_R0_ID;
-		qdf_mem_copy(roam_session->ftSmeContext.r0kh_id,
-			     assoc_rsp->sha384_ft_subelem.r0kh_id.PMK_R0_ID,
-			     roam_session->ftSmeContext.r0kh_id_len);
-	} else if (assoc_rsp->FTInfo.R0KH_ID.present) {
-		roam_session->ftSmeContext.r0kh_id_len =
-			assoc_rsp->FTInfo.R0KH_ID.num_PMK_R0_ID;
-		qdf_mem_copy(roam_session->ftSmeContext.r0kh_id,
-			assoc_rsp->FTInfo.R0KH_ID.PMK_R0_ID,
-			roam_session->ftSmeContext.r0kh_id_len);
-	} else {
-		roam_session->ftSmeContext.r0kh_id_len = 0;
-		qdf_mem_zero(roam_session->ftSmeContext.r0kh_id,
-			     SIR_ROAM_R0KH_ID_MAX_LEN);
-	}
-#endif
+	lim_set_r0kh(assoc_rsp, session_entry);
 
 #ifdef FEATURE_WLAN_ESE
 	lim_update_ese_tspec(mac_ctx, session_entry, assoc_rsp);

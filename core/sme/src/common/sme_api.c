@@ -6106,6 +6106,7 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 				  struct csr_roam_profile *src_profile)
 {
@@ -6116,7 +6117,7 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 
 	return status;
 }
-
+#endif
 void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 			  struct csr_roam_profile *profile, uint32_t if_addr)
 {

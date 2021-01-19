@@ -569,17 +569,13 @@ struct csr_roam_session {
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
-	size_t pmk_len;
 	struct roam_offload_synch_ind *roam_synch_data;
 #endif
 	tftSMEContext ftSmeContext;
 	bool ch_switch_in_progress;
 	uint8_t nss;
 	bool dhcp_done;
-	uint8_t uapsd_mask;
 	qdf_mc_timer_t roaming_offload_timer;
-	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
 	qdf_mc_timer_t wait_for_key_timer;
 	struct csr_timer_info wait_for_key_timer_info;

@@ -416,15 +416,14 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 			     filter->num_of_channels *
 			     sizeof(filter->chan_freq_list[0]));
 	}
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
-	if (nbr_roam_info->is11rAssoc)
+	if (rso_cfg->is_11r_assoc)
 		/*
 		 * MDIE should be added as a part of profile. This should be
 		 * added as a part of filter as well
 		 */
-		filter->mobility_domain = profile->mdid.mobility_domain;
-
+		filter->mobility_domain = rso_cfg->mdid.mobility_domain;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	filter->enable_adaptive_11r =
 		wlan_mlme_adaptive_11r_enabled(mac->psoc);
 	csr_update_scan_filter_dot11mode(mac, filter);
@@ -745,6 +744,7 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 	struct cm_roam_values_copy src_cfg;
 	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 	int init_ft_flag = false;
+	bool mdie_present;
 
 	wlan_cm_init_occupied_ch_freq_list(mac->pdev, mac->psoc, session_id);
 	csr_neighbor_roam_state_transition(mac,
@@ -774,17 +774,19 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 	 */
 	csr_neighbor_roam_free_roamable_bss_list(mac,
 		&ngbr_roam_info->FTRoamInfo.preAuthDoneList);
-
+	wlan_cm_roam_cfg_get_value(mac->psoc, session_id,
+				   MOBILITY_DOMAIN, &src_cfg);
+	mdie_present = src_cfg.bool_value;
 	/* Based on the auth scheme tell if we are 11r */
 	if (csr_is_auth_type11r
-		(mac, session->connectedProfile.AuthType,
-		session->connectedProfile.mdid.mdie_present)) {
+		(mac, session->connectedProfile.AuthType, mdie_present)) {
 		if (mac->mlme_cfg->lfr.fast_transition_enabled)
 			init_ft_flag = true;
-		ngbr_roam_info->is11rAssoc = true;
+		src_cfg.bool_value = true;
 	} else
-		ngbr_roam_info->is11rAssoc = false;
-
+		src_cfg.bool_value = false;
+	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
+				   IS_11R_CONNECTION, &src_cfg);
 #ifdef FEATURE_WLAN_ESE
 	/* Based on the auth scheme tell if we are 11r */
 	if (wlan_cm_get_ese_assoc(mac->pdev, session_id)) {
@@ -948,8 +950,6 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(struct mac_context *mac)
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[i];
 		pFTRoamInfo = &pNeighborRoamInfo->FTRoamInfo;
 
-		pNeighborRoamInfo->is11rAssoc = false;
-
 		pFTRoamInfo->neighborReportTimeout =
 			CSR_NEIGHBOR_ROAM_REPORT_QUERY_TIMEOUT;
 		pFTRoamInfo->neighborRptPending = false;
@@ -1056,7 +1056,11 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
  */
 bool csr_neighbor_roam_is11r_assoc(struct mac_context *mac_ctx, uint8_t session_id)
 {
-	return mac_ctx->roam.neighborRoamInfo[session_id].is11rAssoc;
+	struct cm_roam_values_copy config;
+
+	wlan_cm_roam_cfg_get_value(mac_ctx->psoc, session_id, IS_11R_CONNECTION,
+				   &config);
+	return config.bool_value;
 }
 
 /*

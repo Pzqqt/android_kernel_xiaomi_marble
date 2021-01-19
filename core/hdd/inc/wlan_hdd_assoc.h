@@ -279,6 +279,7 @@ QDF_STATUS hdd_sme_roam_callback(void *context,
 				 eRoamCmdStatus roam_status,
 				 eCsrRoamResult roam_result);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
@@ -289,6 +290,7 @@ QDF_STATUS hdd_sme_roam_callback(void *context,
 int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 			 enum csr_akm_type *rsn_auth_type);
 
+
 /**
  * hdd_set_csr_auth_type() - set csr auth type
  * @adapter: pointer to adapter
@@ -298,7 +300,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
  */
 int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			  enum csr_akm_type rsn_auth_type);
-
+#endif
 #ifdef FEATURE_WLAN_TDLS
 /**
  * hdd_roam_register_tdlssta() - register new TDLS station

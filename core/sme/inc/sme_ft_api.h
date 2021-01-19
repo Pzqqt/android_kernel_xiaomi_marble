@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018, 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018, 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,10 +61,6 @@ typedef struct sFTSMEContext {
 	/* Time to trigger reassoc once pre-auth is successful */
 	qdf_mc_timer_t preAuthReassocIntvlTimer;
 	bool addMDIE;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint32_t r0kh_id_len;
-	uint8_t r0kh_id[SIR_ROAM_R0KH_ID_MAX_LEN];
-#endif
 	/* User context for the timer callback */
 	tpFTRoamCallbackUsrCtx pUsrCtx;
 } tftSMEContext, *tpftSMEContext;

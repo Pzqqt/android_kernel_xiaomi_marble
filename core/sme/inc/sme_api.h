@@ -2866,6 +2866,7 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 				       struct csr_roam_profile *src_profile);
 
 #if defined(WLAN_FEATURE_FILS_SK)
+#ifndef FEATURE_CM_ENABLE
 /**
  * sme_update_fils_config - Update FILS config to CSR roam session
  * @mac_handle: Opaque handle to the global MAC context
@@ -2878,7 +2879,7 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 				  struct csr_roam_profile *src_profile);
-
+#endif
 /**
  * sme_free_join_rsp_fils_params - free fils params
  * @roam_info: roam info
@@ -2887,13 +2888,14 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
  */
 void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info);
 #else
+#ifndef FEATURE_CM_ENABLE
 static inline
 QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 				  struct csr_roam_profile *src_profile)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
+#endif
 static inline
 void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
 {}

@@ -6191,7 +6191,7 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 					       struct wireless_dev *wdev,
 					       const void *data, int data_len)
 {
-	uint8_t local_pmk[SIR_ROAM_SCAN_PSK_SIZE];
+	uint8_t local_pmk[ROAM_SCAN_PSK_SIZE];
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *hdd_adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
@@ -6206,7 +6206,7 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	}
 
 	if ((!data) || (data_len <= 0) ||
-	    (data_len > SIR_ROAM_SCAN_PSK_SIZE)) {
+	    (data_len > ROAM_SCAN_PSK_SIZE)) {
 		hdd_err("Invalid data");
 		return -EINVAL;
 	}
@@ -6222,11 +6222,11 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 		return status;
 
 	mac_handle = hdd_ctx->mac_handle;
-	qdf_mem_zero(&local_pmk, SIR_ROAM_SCAN_PSK_SIZE);
+	qdf_mem_zero(&local_pmk, ROAM_SCAN_PSK_SIZE);
 	qdf_mem_copy(local_pmk, data, data_len);
 	sme_roam_set_psk_pmk(mac_handle, hdd_adapter->vdev_id,
 			     local_pmk, data_len, true);
-	qdf_mem_zero(&local_pmk, SIR_ROAM_SCAN_PSK_SIZE);
+	qdf_mem_zero(&local_pmk, ROAM_SCAN_PSK_SIZE);
 	return 0;
 }
 

@@ -253,8 +253,6 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 					uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
-bool csr_is_same_profile(struct mac_context *mac, tCsrRoamConnectedProfile
-			*pProfile1, struct csr_roam_profile *pProfile2);
 bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 					uint32_t sessionId);
 eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
@@ -270,6 +268,9 @@ void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t session
 				       enum csr_roam_reason eRoamReason);
 
 #ifndef FEATURE_CM_ENABLE
+bool csr_is_same_profile(struct mac_context *mac, tCsrRoamConnectedProfile
+			*pProfile1, struct csr_roam_profile *pProfile2,
+			uint8_t vdev_id);
 QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				 struct bss_description *pBssDescription,
 				 struct csr_roam_profile *pProfile,
@@ -365,8 +366,8 @@ void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
 void csr_roam_cancel_roaming(struct mac_context *mac, uint32_t sessionId);
 void csr_apply_channel_power_info_wrapper(struct mac_context *mac);
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
-					uint32_t tableSize, tSirMacChanInfo
-					*channelTable);
+					uint32_t tableSize,
+					struct pwr_channel_info *channelTable);
 
 /*
  * csr_prepare_vdev_delete() - CSR api to delete vdev

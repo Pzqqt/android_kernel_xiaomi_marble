@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -417,11 +417,10 @@ void sme_reset_key(mac_handle_t mac_handle, uint32_t vdev_id)
 		return;
 	}
 
+	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, NULL, 0);
 	session = CSR_GET_SESSION(mac, vdev_id);
 	if (!session)
 		return;
-	qdf_mem_zero(&session->psk_pmk, sizeof(session->psk_pmk));
-	session->pmk_len = 0;
 	sme_reset_esecckm_info(session);
 }
 #endif

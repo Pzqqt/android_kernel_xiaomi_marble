@@ -456,6 +456,27 @@ void wlan_add_supported_5Ghz_channels(struct wlan_objmgr_psoc *psoc,
 				      uint8_t *chan_list,
 				      uint8_t *num_chnl,
 				      bool supp_chan_ie);
+#ifdef WLAN_ADAPTIVE_11R
+/**
+ * wlan_get_adaptive_11r_enabled() - Function to check if adaptive 11r
+ * ini is enabled or disabled
+ * @mac: pointer to mac context
+ *
+ * Return: true if adaptive 11r is enabled
+ */
+static inline bool
+wlan_get_adaptive_11r_enabled(struct wlan_mlme_lfr_cfg *lfr_cfg)
+{
+	return lfr_cfg->enable_adaptive_11r;
+}
+#else
+static inline bool
+wlan_get_adaptive_11r_enabled(struct wlan_mlme_lfr_cfg *lfr_cfg)
+{
+	return false;
+}
+#endif
+
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * wlan_cm_get_fils_connection_info  - Copy fils connection information from
@@ -507,12 +528,6 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS
-wlan_cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
-			struct rso_config *rso_cfg,
-			struct wlan_roam_scan_offload_params *rso_config,
-			struct wlan_mlme_psoc_ext_obj *mlme_obj,
-			uint8_t command, uint32_t *mode);
 /**
  * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
  * @wmi:       wmi handle
@@ -676,6 +691,13 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
  */
 uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 					     uint8_t vdev_id);
+void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
+			 uint8_t vdev_id, uint8_t *psk_pmk,
+			 uint8_t pmk_len);
+
+void wlan_cm_get_psk_pmk(struct wlan_objmgr_pdev *pdev,
+			 uint8_t vdev_id, uint8_t *psk_pmk,
+			 uint8_t *pmk_len);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -755,5 +777,9 @@ uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 {
 	return 0;
 }
+static inline void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
+				       uint8_t vdev_id, uint8_t *psk_pmk,
+				       uint8_t pmk_len)
+{}
 #endif  /* FEATURE_ROAM_OFFLOAD */
 #endif  /* WLAN_CM_ROAM_API_H__ */

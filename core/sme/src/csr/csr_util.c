@@ -2681,28 +2681,6 @@ bool csr_lookup_fils_pmkid(struct mac_context *mac,
 	return true;
 }
 
-/**
- * csr_update_session_pmk() - Update the pmk len and pmk in the roam session
- * @session: pointer to the CSR Roam session
- * @pmkid_cache: pointer to the pmkid cache
- *
- * Return: None
- */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static void csr_update_session_pmk(struct csr_roam_session *session,
-				   struct wlan_crypto_pmksa *pmksa)
-{
-	session->pmk_len = pmksa->pmk_len;
-	qdf_mem_zero(session->psk_pmk, sizeof(session->psk_pmk));
-	qdf_mem_copy(session->psk_pmk, pmksa->pmk, session->pmk_len);
-}
-#else
-static inline void csr_update_session_pmk(struct csr_roam_session *session,
-					  struct wlan_crypto_pmksa *pmksa)
-{
-}
-#endif
-
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * csr_update_pmksa_to_profile() - update pmk and pmkid to profile which will be
@@ -2744,7 +2722,6 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	uint16_t rsn_cap = 0, self_rsn_cap;
 	int32_t rsn_val;
 	struct wlan_crypto_pmksa pmksa, *pmksa_peer;
-	struct csr_roam_session *session = &mac->roam.roamSession[sessionId];
 	struct rso_config *rso_cfg;
 
 	if (!local_ap_ie &&
@@ -2821,7 +2798,8 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	 * will be sent to the FW during RSO.
 	 */
 	if (pmksa_peer) {
-		csr_update_session_pmk(session, pmksa_peer);
+		wlan_cm_set_psk_pmk(mac->pdev, sessionId,
+				    pmksa_peer->pmk, pmksa_peer->pmk_len);
 		csr_update_pmksa_to_profile(pProfile, pmksa_peer);
 	}
 	rso_cfg = wlan_cm_get_rso_config(vdev);
@@ -3467,6 +3445,7 @@ bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate
 	return csr_is_aggregate_rate_supported(mac_ctx, n);
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 static inline
 void csr_free_fils_profile_info(struct mac_context *mac,
@@ -3487,6 +3466,7 @@ void csr_free_fils_profile_info(struct mac_context *mac,
 static inline void csr_free_fils_profile_info(struct mac_context *mac,
 					      struct csr_roam_profile *profile)
 { }
+#endif
 #endif
 
 void csr_release_profile(struct mac_context *mac,
@@ -3529,7 +3509,9 @@ void csr_release_profile(struct mac_context *mac,
 			qdf_mem_free(pProfile->ChannelInfo.freq_list);
 			pProfile->ChannelInfo.freq_list = NULL;
 		}
+#ifndef FEATURE_CM_ENABLE
 		csr_free_fils_profile_info(mac, pProfile);
+#endif
 		qdf_mem_zero(pProfile, sizeof(struct csr_roam_profile));
 	}
 }

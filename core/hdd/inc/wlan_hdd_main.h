@@ -4226,6 +4226,7 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
  */
 int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
 
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
@@ -4238,7 +4239,6 @@ int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
  */
 void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_update_hlp_info() - Update HLP packet received in FILS (re)assoc rsp
  * @dev: net device
@@ -4251,11 +4251,9 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
  */
 void hdd_update_hlp_info(struct net_device *dev,
 			 struct csr_roam_info *roam_info);
-#endif
 #else
 static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 { }
-#ifndef FEATURE_CM_ENABLE
 static inline void hdd_update_hlp_info(struct net_device *dev,
 				       struct csr_roam_info *roam_info)
 {}

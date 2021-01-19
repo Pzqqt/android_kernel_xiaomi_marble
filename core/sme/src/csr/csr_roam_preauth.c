@@ -166,10 +166,13 @@ void csr_neighbor_roam_purge_preauth_failed_list(struct mac_context *mac_ctx)
 void csr_neighbor_roam_reset_preauth_control_info(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
+	struct cm_roam_values_copy src_cfg;
 	tpCsrNeighborRoamControlInfo neigh_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 
-	neigh_roam_info->is11rAssoc = false;
+	src_cfg.bool_value = false;
+	wlan_cm_roam_cfg_set_value(mac_ctx->psoc, session_id,
+				   IS_11R_CONNECTION, &src_cfg);
 	csr_neighbor_roam_purge_preauth_failed_list(mac_ctx);
 
 	neigh_roam_info->FTRoamInfo.preauthRspPending = false;

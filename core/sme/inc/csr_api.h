@@ -746,7 +746,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	tCsrRoamModifyProfileFields modifyProfileFields;
 	bool qosConnection;     /* A connection is QoS enabled */
 	bool qap;               /* AP supports QoS */
-	struct mobility_domain_info mdid;
 	uint32_t dot11Mode;
 #ifndef FEATURE_CM_ENABLE
 	uint8_t proxy_arp_service;

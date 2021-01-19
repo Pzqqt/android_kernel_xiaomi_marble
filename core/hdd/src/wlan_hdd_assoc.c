@@ -1740,7 +1740,9 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	sta_ctx->auth_key_mgmt = 0;
 	qdf_zero_macaddr(&sta_ctx->requested_bssid);
+#ifndef FEATURE_CM_ENABLE
 	hdd_clear_fils_connection_info(adapter);
+#endif
 	hdd_exit();
 }
 
@@ -2621,6 +2623,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
@@ -2646,8 +2649,6 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 }
 #endif
 
-
-#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_association_completion_handler() - association completion handler
  * @adapter: pointer to adapter
@@ -4747,6 +4748,7 @@ bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 	return false;
 }
 #endif
+#ifndef FEATURE_CM_ENABLE
 
 /**
  * hdd_process_genie() - process gen ie
@@ -5320,7 +5322,9 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 
 	return 0;
 }
+#endif
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 {
@@ -5334,6 +5338,7 @@ static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 #else
 static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 { }
+#endif
 #endif
 
 void hdd_roam_profile_init(struct hdd_adapter *adapter)
@@ -5376,9 +5381,9 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 	adapter->scan_info.scan_mode = eSIR_ACTIVE_SCAN;
 
 	hdd_clear_roam_profile_ie(adapter);
-
+#ifndef FEATURE_CM_ENABLE
 	hdd_initialize_fils_info(adapter);
-
+#endif
 	hdd_exit();
 }
 

@@ -441,10 +441,10 @@ static void csr_purge_channel_power(struct mac_context *mac,
  */
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					    uint32_t tableSize,
-					    tSirMacChanInfo *channelTable)
+					    struct pwr_channel_info *channelTable)
 {
-	uint32_t i = tableSize / sizeof(tSirMacChanInfo);
-	tSirMacChanInfo *pChannelInfo;
+	uint32_t i = tableSize / sizeof(struct pwr_channel_info);
+	struct pwr_channel_info *pChannelInfo;
 	struct csr_channel_powerinfo *pChannelSet;
 	bool f2GHzInfoFound = false;
 	bool f2GListPurged = false, f5GListPurged = false;
@@ -458,7 +458,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 			continue;
 		}
 		pChannelSet->first_chan_freq = pChannelInfo->first_freq;
-		pChannelSet->numChannels = pChannelInfo->numChannels;
+		pChannelSet->numChannels = pChannelInfo->num_chan;
 		/*
 		 * Now set the inter-channel offset based on the frequency band
 		 * the channel set lies in
@@ -479,7 +479,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 			qdf_mem_free(pChannelSet);
 			return QDF_STATUS_E_FAILURE;
 		}
-		pChannelSet->txPower = pChannelInfo->maxTxPower;
+		pChannelSet->txPower = pChannelInfo->max_tx_pwr;
 		if (f2GHzInfoFound) {
 			if (!f2GListPurged) {
 				/* purge previous results if found new */
@@ -743,8 +743,8 @@ void csr_apply_country_information(struct mac_context *mac)
 void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 {
 	uint32_t idx, count = 0;
-	tSirMacChanInfo *chan_info;
-	tSirMacChanInfo *ch_info_start;
+	struct pwr_channel_info *chan_info;
+	struct pwr_channel_info *ch_info_start;
 	int32_t max_ch_idx;
 	bool tmp_bool;
 	uint32_t ch_freq = 0;
@@ -755,7 +755,7 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 		mac->scan.base_channels.numChannels :
 		CFG_VALID_CHANNEL_LIST_LEN;
 
-	chan_info = qdf_mem_malloc(sizeof(tSirMacChanInfo) *
+	chan_info = qdf_mem_malloc(sizeof(struct pwr_channel_info) *
 				   CFG_VALID_CHANNEL_LIST_LEN);
 	if (!chan_info)
 		return;
@@ -775,15 +775,16 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 
 		chan_info->first_freq =
 			mac->scan.defaultPowerTable[idx].center_freq;
-		chan_info->numChannels = 1;
-		chan_info->maxTxPower =
+		chan_info->num_chan = 1;
+		chan_info->max_tx_pwr =
 			mac->scan.defaultPowerTable[idx].tx_power;
 		chan_info++;
 		count++;
 	}
 	if (count) {
 		csr_save_to_channel_power2_g_5_g(mac,
-				count * sizeof(tSirMacChanInfo), ch_info_start);
+				count * sizeof(struct pwr_channel_info),
+				ch_info_start);
 	}
 	qdf_mem_free(ch_info_start);
 }
@@ -1446,16 +1447,16 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	uint32_t cbLen = 0, dataLen, tmp_len;
 	struct csr_channel_powerinfo *ch_set;
 	uint32_t idx, count = 0;
-	tSirMacChanInfo *ch_pwr_set;
+	struct pwr_channel_info *ch_pwr_set;
 	uint8_t *p_buf = NULL;
 
 	/* allocate maximum space for all channels */
-	dataLen = CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
+	dataLen = CFG_VALID_CHANNEL_LIST_LEN * sizeof(struct pwr_channel_info);
 	p_buf = qdf_mem_malloc(dataLen);
 	if (!p_buf)
 		return;
 
-	ch_pwr_set = (tSirMacChanInfo *)(p_buf);
+	ch_pwr_set = (struct pwr_channel_info *)(p_buf);
 	csr_ll_lock(pList);
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
 	/*
@@ -1473,7 +1474,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 			 * for the triplets that 11d advertises.
 			 */
 			tmp_len = cbLen + (ch_set->numChannels *
-						sizeof(tSirMacChanInfo));
+						sizeof(struct pwr_channel_info));
 			if (tmp_len >= dataLen) {
 				/*
 				 * expanding this entry will overflow our
@@ -1490,14 +1491,14 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 			for (idx = 0; idx < ch_set->numChannels; idx++) {
 				ch_pwr_set->first_freq =
 					ch_set->first_chan_freq;
-				ch_pwr_set->numChannels = 1;
-				ch_pwr_set->maxTxPower = ch_set->txPower;
-				cbLen += sizeof(tSirMacChanInfo);
+				ch_pwr_set->num_chan = 1;
+				ch_pwr_set->max_tx_pwr = ch_set->txPower;
+				cbLen += sizeof(struct pwr_channel_info);
 				ch_pwr_set++;
 				count++;
 			}
 		} else {
-			if (cbLen + sizeof(tSirMacChanInfo) >= dataLen) {
+			if (cbLen + sizeof(struct pwr_channel_info) >= dataLen) {
 				/* this entry will overflow our allocation */
 				sme_err(
 					"Buffer overflow, start freq %d, num %d, offset %d",
@@ -1507,9 +1508,9 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				break;
 			}
 			ch_pwr_set->first_freq = ch_set->first_chan_freq;
-			ch_pwr_set->numChannels = ch_set->numChannels;
-			ch_pwr_set->maxTxPower = ch_set->txPower;
-			cbLen += sizeof(tSirMacChanInfo);
+			ch_pwr_set->num_chan = ch_set->numChannels;
+			ch_pwr_set->max_tx_pwr = ch_set->txPower;
+			cbLen += sizeof(struct pwr_channel_info);
 			ch_pwr_set++;
 			count++;
 		}
@@ -1518,7 +1519,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	csr_ll_unlock(pList);
 	if (band == BAND_2G) {
 		mac->mlme_cfg->power.max_tx_power_24.len =
-					sizeof(tSirMacChanInfo) * count;
+					sizeof(struct pwr_channel_info) * count;
 		if (mac->mlme_cfg->power.max_tx_power_24.len >
 						CFG_MAX_TX_POWER_2_4_LEN)
 			mac->mlme_cfg->power.max_tx_power_24.len =
@@ -1529,7 +1530,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	}
 	if (band == BAND_5G) {
 		mac->mlme_cfg->power.max_tx_power_5.len =
-					sizeof(tSirMacChanInfo) * count;
+					sizeof(struct pwr_channel_info) * count;
 		if (mac->mlme_cfg->power.max_tx_power_5.len >
 							CFG_MAX_TX_POWER_5_LEN)
 			mac->mlme_cfg->power.max_tx_power_5.len =

@@ -79,7 +79,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	uint32_t curr_ap_op_chan_freq; /* current assoc AP */
 	tDblLinkList roamableAPList;    /* List of current FT candidates */
 	struct csr_roam_profile csrNeighborRoamProfile;
-	bool is11rAssoc;
 	tCsr11rAssocNeighborInfo FTRoamInfo;
 #ifdef FEATURE_WLAN_ESE
 	bool isVOAdmitted;
@@ -238,6 +237,7 @@ csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
 uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx,
 					   uint8_t vdev_id);
 
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK)
 /**
  * csr_update_fils_config - Update FILS config to CSR roam session
@@ -251,6 +251,7 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx,
  */
 QDF_STATUS csr_update_fils_config(struct mac_context *mac, uint8_t session_id,
 				  struct csr_roam_profile *src_profile);
+#endif
 #endif
 
 QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(struct mac_context *mac, void *pMsg);

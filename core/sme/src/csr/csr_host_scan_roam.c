@@ -141,6 +141,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 	uint32_t bss_chan_freq;
 	uint8_t num_candidates = 0;
 	uint8_t num_dropped = 0;
+	struct cm_roam_values_copy config;
 	/*
 	 * first iteration of scan list should consider
 	 * age constraint for candidates
@@ -227,8 +228,10 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 					  "SKIP-not a candidate AP for OS requested roam");
 				continue;
 			}
-
-			if ((n_roam_info->is11rAssoc) &&
+			wlan_cm_roam_cfg_get_value(mac_ctx->psoc, sessionid,
+						   IS_11R_CONNECTION,
+						   &config);
+			if ((config.bool_value) &&
 			    (!csr_neighbor_roam_is_preauth_candidate(mac_ctx,
 					sessionid, descr->bssId))) {
 				sme_err("BSSID in preauth fail list. Ignore");
@@ -606,12 +609,15 @@ csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
 		&mac->roam.neighborRoamInfo[session_id];
 	tpCsrNeighborRoamBSSInfo bss_node = NULL;
+	struct cm_roam_values_copy config;
 
 	if (!hand_off_node) {
 		QDF_ASSERT(hand_off_node);
 		return false;
 	}
-	if (ngbr_roam_info->is11rAssoc) {
+	wlan_cm_roam_cfg_get_value(mac->psoc, session_id, IS_11R_CONNECTION,
+				   &config);
+	if (config.bool_value) {
 		/* Always the BSS info in the head is the handoff candidate */
 		bss_node = csr_neighbor_roam_next_roamable_ap(
 			mac,

@@ -2983,11 +2983,11 @@ int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
 
 	/* Identify the channel and maxtxpower */
 	rem_length = cfg_length;
-	while (rem_length >= (sizeof(tSirMacChanInfo))) {
+	while (rem_length >= (sizeof(struct pwr_channel_info))) {
 		maxChannels = country_info[count].num_chan;
 		max_tx_pwr = country_info[count].max_tx_pwr;
 		count++;
-		rem_length -= (sizeof(tSirMacChanInfo));
+		rem_length -= (sizeof(struct pwr_channel_info));
 
 		if (ch_freq >= country_info[count].first_freq &&
 		    ch_freq < (country_info[count].first_freq + maxChannels)) {
