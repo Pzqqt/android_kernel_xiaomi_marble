@@ -132,6 +132,17 @@ void wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
  */
 bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
 			      enum reg_wifi_band reg_band);
+
+/**
+ * wlan_reg_is_chan_disabled() - In the regulatory channel list, a channel
+ * may be disabled by the regulatory/device or by radar. Radar is temporary
+ * and a radar disabled channel does not mean that the channel is permanently
+ * disabled. The API checks if the channel is disabled, but not due to radar.
+ * @chan - Regulatory channel object
+ *
+ * Return - True,  the channel is disabled, but not due to radar, else false.
+ */
+bool wlan_reg_is_chan_disabled(struct regulatory_channel *chan);
 #else
 static inline
 void wlan_reg_set_chan_blocked(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
@@ -185,6 +196,11 @@ wlan_reg_get_chan_flags(struct wlan_objmgr_pdev *pdev,
 static inline
 bool wlan_reg_is_band_present(struct wlan_objmgr_pdev *pdev,
 			      enum reg_wifi_band reg_band)
+{
+	return false;
+}
+
+static inline bool wlan_reg_is_chan_disabled(struct regulatory_channel *chan)
 {
 	return false;
 }

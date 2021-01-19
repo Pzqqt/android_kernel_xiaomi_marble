@@ -294,7 +294,7 @@ static bool reg_is_band_found_internal(enum channel_enum start_idx,
 	uint8_t i;
 
 	for (i = start_idx; i <= end_idx; i++)
-		if (!(reg_is_chan_disabled(cur_chan_list[i])))
+		if (!(reg_is_chan_disabled(&cur_chan_list[i])))
 			return true;
 
 	return false;
@@ -336,6 +336,14 @@ bool reg_is_band_present(struct wlan_objmgr_pdev *pdev,
 	return reg_is_band_found_internal(min_chan_idx, max_chan_idx,
 					  cur_chan_list);
 }
+
+bool reg_is_chan_disabled(struct regulatory_channel *chan)
+{
+	return ((chan->chan_flags & REGULATORY_CHAN_DISABLED) &&
+		(chan->state == CHANNEL_STATE_DISABLE) &&
+		(!chan->nol_chan) && (!chan->nol_history));
+}
+
 #endif /* CONFIG_HOST_FIND_CHAN */
 
 bool reg_is_nol_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
