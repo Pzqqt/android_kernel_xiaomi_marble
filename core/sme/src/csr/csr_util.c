@@ -1034,17 +1034,20 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 		} else if (cc_switch_mode ==
 			   QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 			status = policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc,
+					mac_ctx->psoc, sap_ch_freq,
 					&intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
-				sme_err("no mandatory channel");
+				sme_err("no mandatory channels (%d, %d)",
+					sap_ch_freq, intf_ch_freq);
 		}
 	} else if ((intf_ch_freq == sap_ch_freq) && (cc_switch_mode ==
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
-		if (WLAN_REG_IS_24GHZ_CH_FREQ(intf_ch_freq)) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(intf_ch_freq) ||
+		    WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq)) {
 			status =
 				policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc, &intf_ch_freq);
+					mac_ctx->psoc, sap_ch_freq,
+					&intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
 		}
@@ -1053,7 +1056,8 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	if (intf_ch_freq == sap_ch_freq)
 		intf_ch_freq = 0;
 
-	sme_debug("##Concurrent Channels %s Interfering",
+	sme_debug("##Concurrent Channels (%d, %d) %s Interfering", sap_ch_freq,
+		  intf_ch_freq,
 		  intf_ch_freq == 0 ? "Not" : "Are");
 
 	return intf_ch_freq;

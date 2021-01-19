@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2367,11 +2367,15 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
-						uint32_t *ch_freq)
+QDF_STATUS
+policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
+				     uint32_t sap_ch_freq,
+				     uint32_t *intf_ch_freq)
 {
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
+	uint32_t i;
+	uint32_t sap_new_freq;
 
 	qdf_mem_zero(&pcl, sizeof(pcl));
 
@@ -2417,8 +2421,19 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*ch_freq = pcl.pcl_list[0];
-	policy_mgr_debug("mandatory channel:%d", *ch_freq);
+	sap_new_freq = pcl.pcl_list[0];
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq)) {
+		for (i = 0; i < pcl.pcl_len; i++) {
+			if (pcl.pcl_list[i] == *intf_ch_freq) {
+				sap_new_freq = pcl.pcl_list[i];
+				break;
+			}
+		}
+	}
+
+	*intf_ch_freq = sap_new_freq;
+	policy_mgr_debug("mandatory channel:%d org sap ch %d", *intf_ch_freq,
+			 sap_ch_freq);
 
 	return QDF_STATUS_SUCCESS;
 }
