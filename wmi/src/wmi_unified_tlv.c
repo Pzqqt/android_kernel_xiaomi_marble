@@ -7320,6 +7320,9 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			resource_cfg->flag1, 1);
 	if (tgt_res_cfg->cce_disable)
 		WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_SET(resource_cfg->flag1, 1);
+	if (tgt_res_cfg->enable_pci_gen)
+		WMI_RSRC_CFG_FLAG_PCIE_GEN_SWITCH_CAPABLITY_SET(
+			resource_cfg->flag1, 1);
 	if (tgt_res_cfg->eapol_minrate_set) {
 		WMI_RSRC_CFG_FLAG_EAPOL_REKEY_MINRATE_SUPPORT_ENABLE_SET(
 			resource_cfg->flag1, 1);
