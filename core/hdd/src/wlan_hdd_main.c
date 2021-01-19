@@ -18554,13 +18554,16 @@ wlan_hdd_del_p2p_interface(struct hdd_context *hdd_ctx)
 			if (vdev_sync)
 				osif_vdev_sync_wait_for_ops(vdev_sync);
 
+			hdd_adapter_dev_put_debug(
+				adapter, NET_DEV_HOLD_DEL_P2P_INTERFACE);
+
 			hdd_clean_up_interface(hdd_ctx, adapter);
 
 			if (vdev_sync)
 				osif_vdev_sync_destroy(vdev_sync);
-		}
-		hdd_adapter_dev_put_debug(adapter,
-					  NET_DEV_HOLD_DEL_P2P_INTERFACE);
+		} else
+			hdd_adapter_dev_put_debug(
+				adapter, NET_DEV_HOLD_DEL_P2P_INTERFACE);
 	}
 }
 
