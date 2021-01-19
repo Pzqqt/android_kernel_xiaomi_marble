@@ -1414,6 +1414,7 @@ rel_vdev_ref:
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_fils_connection_info *src_fils_info,
@@ -1462,7 +1463,58 @@ QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS
+wlan_cm_update_mlme_fils_info(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_fils_con_info *src_fils_info)
+{
+	struct mlme_legacy_priv *mlme_priv;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct wlan_fils_connection_info *tgt_info;
 
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL fro vdev %d",
+			 vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!src_fils_info) {
+		mlme_debug("FILS: vdev:%d Clear fils info", vdev_id);
+		qdf_mem_free(mlme_priv->fils_con_info);
+		mlme_priv->fils_con_info = NULL;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (mlme_priv->fils_con_info)
+		qdf_mem_free(mlme_priv->fils_con_info);
+
+	mlme_priv->fils_con_info =
+		qdf_mem_malloc(sizeof(struct wlan_fils_connection_info));
+	if (!mlme_priv->fils_con_info)
+		return QDF_STATUS_E_NOMEM;
+
+	tgt_info = mlme_priv->fils_con_info;
+	mlme_debug("FILS: vdev:%d update fils info", vdev_id);
+	tgt_info->is_fils_connection = src_fils_info->is_fils_connection;
+	tgt_info->key_nai_length = src_fils_info->username_len;
+	qdf_mem_copy(tgt_info->keyname_nai, src_fils_info->username,
+		     tgt_info->key_nai_length);
+
+	tgt_info->realm_len = src_fils_info->realm_len;
+	qdf_mem_copy(tgt_info->realm, src_fils_info->realm,
+		     tgt_info->realm_len);
+
+	tgt_info->r_rk_length = src_fils_info->rrk_len;
+	qdf_mem_copy(tgt_info->r_rk, src_fils_info->rrk,
+		     tgt_info->r_rk_length);
+	tgt_info->erp_sequence_number = src_fils_info->next_seq_num;
+	tgt_info->auth_type = src_fils_info->auth_type;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
 struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id)

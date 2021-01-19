@@ -27,6 +27,7 @@
 #include "wlan_blm_public_struct.h"
 #include "wmi_unified_param.h"
 #include "wmi_unified_sta_param.h"
+#include "wlan_cm_public_struct.h"
 
 #define ROAM_SCAN_OFFLOAD_START                     1
 #define ROAM_SCAN_OFFLOAD_STOP                      2
@@ -87,9 +88,16 @@
 #define REASON_ROAM_HANDOFF_DONE                    52
 #define REASON_ROAM_ABORT                           53
 
+#ifdef FEATURE_CM_ENABLE
+#define FILS_MAX_KEYNAME_NAI_LENGTH WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH
+#define WLAN_FILS_MAX_REALM_LEN WLAN_CM_FILS_MAX_REALM_LEN
+#define WLAN_FILS_MAX_RRK_LENGTH WLAN_CM_FILS_MAX_RRK_LENGTH
+#else
 #define FILS_MAX_KEYNAME_NAI_LENGTH 253
 #define WLAN_FILS_MAX_REALM_LEN 255
 #define WLAN_FILS_MAX_RRK_LENGTH 64
+#endif
+
 #define WLAN_FILS_MAX_RIK_LENGTH WLAN_FILS_MAX_RRK_LENGTH
 #define WLAN_FILS_FT_MAX_LEN          48
 
