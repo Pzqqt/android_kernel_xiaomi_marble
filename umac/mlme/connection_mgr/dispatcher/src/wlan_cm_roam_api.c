@@ -642,6 +642,12 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 	case ADAPTIVE_11R_CONNECTION:
 		dst_config->bool_value = rso_cfg->is_adaptive_11r_connection;
 		break;
+	case HS_20_AP:
+		dst_config->bool_value = rso_cfg->hs_20_ap;
+		break;
+	case MBO_OCE_ENABLED_AP:
+		dst_config->uint_value = rso_cfg->mbo_oce_enabled_ap;
+		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
 		status = QDF_STATUS_E_FAILURE;
@@ -1002,6 +1008,12 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		break;
 	case ADAPTIVE_11R_CONNECTION:
 		rso_cfg->is_adaptive_11r_connection = src_config->bool_value;
+		break;
+	case HS_20_AP:
+		rso_cfg->hs_20_ap  = src_config->bool_value;
+		break;
+	case MBO_OCE_ENABLED_AP:
+		rso_cfg->mbo_oce_enabled_ap  = src_config->uint_value;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);

@@ -32,6 +32,7 @@
 #include "pld_common.h"
 #include "wlan_blm_api.h"
 #include "wlan_scan_api.h"
+#include "wlan_vdev_mgr_ucfg_api.h"
 
 /**
  * cm_roam_scan_bmiss_cnt() - set roam beacon miss count
@@ -2047,6 +2048,121 @@ cm_roam_scan_offload_fill_rso_configs(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * cm_update_btm_offload_config() - Update btm config param to fw
+ * @psoc: psoc
+ * @vdev: vdev
+ * @command: Roam offload command
+ * @btm_offload_config: btm offload config
+ *
+ * Return: None
+ */
+static void
+cm_update_btm_offload_config(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_vdev *vdev,
+			     uint8_t command, uint32_t *btm_offload_config)
+
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_btm *btm_cfg;
+	struct wlan_objmgr_peer *peer;
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
+	struct cm_roam_values_copy temp;
+	bool is_hs_20_ap, is_pmf_enabled, is_open_connection = false;
+	int32_t cipher;
+	uint8_t vdev_id;
+	uint32_t mbo_oce_enabled_ap;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	btm_cfg = &mlme_obj->cfg.btm;
+	*btm_offload_config = btm_cfg->btm_offload_config;
+
+	/* Return if INI is disabled */
+	if (!(*btm_offload_config))
+		return;
+	vdev_id = wlan_vdev_get_id(vdev);
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, HS_20_AP, &temp);
+	is_hs_20_ap = temp.bool_value;
+	/* For RSO Stop Disable BTM offload to firmware */
+	if (command == ROAM_SCAN_OFFLOAD_STOP || is_hs_20_ap) {
+		mlme_debug("RSO cmd: %d", command);
+		*btm_offload_config = 0;
+		return;
+	}
+
+	ucfg_wlan_vdev_mgr_get_param_bssid(vdev, bssid);
+	peer = wlan_objmgr_get_peer(psoc,
+				    wlan_objmgr_pdev_get_pdev_id(
+					wlan_vdev_get_pdev(vdev)),
+				    bssid,
+				    WLAN_MLME_CM_ID);
+	if (!peer) {
+		mlme_debug("Peer of peer_mac "QDF_MAC_ADDR_FMT" not found",
+			   QDF_MAC_ADDR_REF(bssid));
+		return;
+	}
+
+	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_CM_ID);
+
+	cipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (!cipher || QDF_HAS_PARAM(cipher, WLAN_CRYPTO_CIPHER_NONE))
+		is_open_connection = true;
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, MBO_OCE_ENABLED_AP, &temp);
+	mbo_oce_enabled_ap = temp.uint_value;
+	/*
+	 * If peer does not support PMF in case of OCE/MBO
+	 * Connection, Disable BTM offload to firmware.
+	 */
+	if (mbo_oce_enabled_ap && (!is_pmf_enabled && !is_open_connection))
+		*btm_offload_config = 0;
+
+	mlme_debug("is_open:%d is_pmf_enabled %d btm_offload_cfg:%d for "QDF_MAC_ADDR_FMT,
+		   is_open_connection, is_pmf_enabled, *btm_offload_config,
+		   QDF_MAC_ADDR_REF(bssid));
+}
+
+/**
+ * cm_roam_scan_btm_offload() - set roam scan btm offload parameters
+ * @psoc: psoc ctx
+ * @vdev: vdev
+ * @params:  roam scan btm offload parameters
+ * @rso_cfg: rso config
+ *
+ * This function is used to set roam scan btm offload related parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_scan_btm_offload(struct wlan_objmgr_psoc *psoc,
+			 struct wlan_objmgr_vdev *vdev,
+			 struct wlan_roam_btm_config *params,
+			 struct rso_config *rso_cfg)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_btm *btm_cfg;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	btm_cfg = &mlme_obj->cfg.btm;
+	params->vdev_id = wlan_vdev_get_id(vdev);
+	cm_update_btm_offload_config(psoc, vdev, ROAM_SCAN_OFFLOAD_START,
+				     &params->btm_offload_config);
+	params->btm_solicited_timeout = btm_cfg->btm_solicited_timeout;
+	params->btm_max_attempt_cnt = btm_cfg->btm_max_attempt_cnt;
+	params->btm_sticky_time = btm_cfg->btm_sticky_time;
+	params->disassoc_timer_threshold = btm_cfg->disassoc_timer_threshold;
+	params->btm_query_bitmask = btm_cfg->btm_query_bitmask;
+	params->btm_candidate_min_score = btm_cfg->btm_trig_min_candidate_score;
+}
+
+/**
  * cm_roam_start_req() - roam start request handling
  * @psoc: psoc pointer
  * @vdev_id: vdev id
@@ -2109,6 +2225,7 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					      &start_req->rso_chan_info,
 					      ROAM_SCAN_OFFLOAD_START,
 					      reason);
+	cm_roam_scan_btm_offload(psoc, vdev, &start_req->btm_config, rso_cfg);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);

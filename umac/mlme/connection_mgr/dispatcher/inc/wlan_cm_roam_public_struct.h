@@ -200,6 +200,8 @@ struct wlan_chan_list {
  * @mdid: mdid info
  * @is_11r_assoc: is 11r assoc
  * @is_adaptive_11r_connection: is adaptive 11r connection
+ * @hs_20_ap: Hotspot 2.0 AP
+ * @mbo_oce_enabled_ap: MBO/OCE enabled network
  * @roam_scan_freq_lst: roam freq list
  */
 struct rso_config {
@@ -225,6 +227,8 @@ struct rso_config {
 	struct mobility_domain_info mdid;
 	bool is_11r_assoc;
 	bool is_adaptive_11r_connection;
+	bool hs_20_ap;
+	uint32_t mbo_oce_enabled_ap;
 	struct rso_chan_info roam_scan_freq_lst;
 };
 
@@ -321,6 +325,8 @@ struct rso_config_params {
  * @MOBILITY_DOMAIN: mobility domain
  * @IS_11R_CONNECTION: is 11r connection
  * @ADAPTIVE_11R_CONNECTION: adaptive 11r
+ * @HS_20_AP: Hotspot 2.0 AP
+ * @MBO_OCE_ENABLED_AP: MBO/OCE enabled network
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
@@ -345,6 +351,8 @@ enum roam_cfg_param {
 	MOBILITY_DOMAIN,
 	IS_11R_CONNECTION,
 	ADAPTIVE_11R_CONNECTION,
+	HS_20_AP,
+	MBO_OCE_ENABLED_AP,
 };
 
 /**
