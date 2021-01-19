@@ -1750,8 +1750,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->vhtSupportedRxNss = assoc_req->operMode.rxNSS + 1;
 	} else {
 		sta_ds->vhtSupportedRxNss =
-			((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
-				== MCSMAPMASK2x2) ? 1 : 2;
+			 ((sta_ds->supportedRates.vhtTxMCSMap & MCSMAPMASK2x2)
+			  == MCSMAPMASK2x2) ? 1 : 2;
 	}
 	lim_update_stads_he_6ghz_op(session, sta_ds);
 	lim_update_sta_ds_op_classes(assoc_req, sta_ds);

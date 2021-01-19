@@ -1596,13 +1596,14 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		cmd->rx_mcs_set = params->supportedRates.vhtRxMCSMap;
 		cmd->tx_max_rate = params->supportedRates.vhtTxHighestDataRate;
 		cmd->tx_mcs_set = params->supportedRates.vhtTxMCSMap;
-
-		if (params->vhtSupportedRxNss) {
+		/*
+		 *  tx_mcs_set is intersection of self tx NSS and peer rx mcs map
+		 */
+		if (params->vhtSupportedRxNss)
 			cmd->peer_nss = params->vhtSupportedRxNss;
-		} else {
-			cmd->peer_nss = ((cmd->rx_mcs_set & VHT2x2MCSMASK)
-					 == VHT2x2MCSMASK) ? 1 : 2;
-		}
+		else
+			cmd->peer_nss = ((cmd->tx_mcs_set & VHT2x2MCSMASK)
+					== VHT2x2MCSMASK) ? 1 : 2;
 
 		if (params->vht_mcs_10_11_supp) {
 			WMI_SET_BITS(cmd->tx_mcs_set, 16, cmd->peer_nss,

@@ -207,7 +207,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 		return;
 	}
 	sta_ds->vhtSupportedRxNss =
-		((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
+		((sta_ds->supportedRates.vhtTxMCSMap & MCSMAPMASK2x2)
 		 == MCSMAPMASK2x2) ? 1 : 2;
 
 	/* If one of the rates is 11g rates, set the ERP mode. */
