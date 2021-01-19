@@ -504,6 +504,57 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 }
+
+void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
+			 uint8_t vdev_id, uint8_t *psk_pmk,
+			 uint8_t pmk_len)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+	qdf_mem_zero(rso_cfg->psk_pmk, sizeof(rso_cfg->psk_pmk));
+	if (psk_pmk)
+		qdf_mem_copy(rso_cfg->psk_pmk, psk_pmk, pmk_len);
+	rso_cfg->pmk_len = pmk_len;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+void wlan_cm_get_psk_pmk(struct wlan_objmgr_pdev *pdev,
+			 uint8_t vdev_id, uint8_t *psk_pmk,
+			 uint8_t *pmk_len)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!psk_pmk || !pmk_len)
+		return;
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+	qdf_mem_copy(psk_pmk, rso_cfg->psk_pmk, rso_cfg->pmk_len);
+	*pmk_len = rso_cfg->pmk_len;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
 #endif
 
 QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
@@ -577,6 +628,19 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 		break;
 	case ROAM_CONTROL_ENABLE:
 		dst_config->bool_value = rso_cfg->roam_control_enable;
+		break;
+	case UAPSD_MASK:
+		dst_config->uint_value = rso_cfg->uapsd_mask;
+		break;
+	case MOBILITY_DOMAIN:
+		dst_config->bool_value = rso_cfg->mdid.mdie_present;
+		dst_config->uint_value = rso_cfg->mdid.mobility_domain;
+		break;
+	case IS_11R_CONNECTION:
+		dst_config->bool_value = rso_cfg->is_11r_assoc;
+		break;
+	case ADAPTIVE_11R_CONNECTION:
+		dst_config->bool_value = rso_cfg->is_adaptive_11r_connection;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
@@ -925,6 +989,19 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
 			cm_roam_update_cfg(psoc, vdev_id,
 				REASON_NEIGHBOR_SCAN_REFRESH_PERIOD_CHANGED);
+		break;
+	case UAPSD_MASK:
+		rso_cfg->uapsd_mask = src_config->uint_value;
+		break;
+	case MOBILITY_DOMAIN:
+		rso_cfg->mdid.mdie_present = src_config->bool_value;
+		rso_cfg->mdid.mobility_domain = src_config->uint_value;
+		break;
+	case IS_11R_CONNECTION:
+		rso_cfg->is_11r_assoc = src_config->bool_value;
+		break;
+	case ADAPTIVE_11R_CONNECTION:
+		rso_cfg->is_adaptive_11r_connection = src_config->bool_value;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);

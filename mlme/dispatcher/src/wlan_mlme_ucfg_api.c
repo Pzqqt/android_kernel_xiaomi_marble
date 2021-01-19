@@ -150,7 +150,7 @@ static uint32_t ucfg_mlme_convert_power_cfg_chan_to_freq(
 						uint8_t *power_freq_data)
 {
 	uint32_t count = 0, rem_length = length, copied_length = 0, i = 0;
-	tSirMacChanInfo *pwr_cfg_data;
+	struct pwr_channel_info *pwr_cfg_data;
 
 	pwr_cfg_data = qdf_mem_malloc(max_length);
 	if (!pwr_cfg_data)
@@ -158,18 +158,18 @@ static uint32_t ucfg_mlme_convert_power_cfg_chan_to_freq(
 
 	mlme_legacy_debug("max_length %d length %zu", max_length, length);
 	while ((rem_length >= 3) &&
-	       (copied_length <= (max_length - (sizeof(tSirMacChanInfo))))) {
+	       (copied_length <= (max_length - (sizeof(struct pwr_channel_info))))) {
 		pwr_cfg_data[i].first_freq = wlan_reg_chan_to_freq(
 						pdev,
 						power_chan_data[count++]);
-		pwr_cfg_data[i].numChannels = power_chan_data[count++];
-		pwr_cfg_data[i].maxTxPower = power_chan_data[count++];
-		copied_length += sizeof(tSirMacChanInfo);
+		pwr_cfg_data[i].num_chan = power_chan_data[count++];
+		pwr_cfg_data[i].max_tx_pwr = power_chan_data[count++];
+		copied_length += sizeof(struct pwr_channel_info);
 		rem_length -= 3;
 		mlme_legacy_debug("First freq %d num channels %d max tx power %d",
 				  pwr_cfg_data[i].first_freq,
-				  pwr_cfg_data[i].numChannels,
-				  pwr_cfg_data[i].maxTxPower);
+				  pwr_cfg_data[i].num_chan,
+				  pwr_cfg_data[i].max_tx_pwr);
 		i++;
 	}
 

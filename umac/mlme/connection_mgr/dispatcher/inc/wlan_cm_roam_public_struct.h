@@ -102,6 +102,11 @@
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#define ROAM_SCAN_PSK_SIZE    48
+#define ROAM_R0KH_ID_MAX_LEN  48
+#endif
+
 /**
  * struct rso_chan_info - chan info
  * @num_chan: number of channels
@@ -182,6 +187,12 @@ struct wlan_chan_list {
  * @occupied_chan_lst: occupied channel list
  * @roam_candidate_count: candidate count
  * @is_ese_assoc: is ese assoc
+ * @psk_pmk: pmk
+ * @pmk_len: length of pmk
+ * @mdid: mdid info
+ * @is_11r_assoc: is 11r assoc
+ * @is_adaptive_11r_connection: is adaptive 11r connection
+ * @roam_scan_freq_lst: roam freq list
  */
 struct rso_config {
 	uint8_t rsn_cap;
@@ -195,9 +206,17 @@ struct rso_config {
 	struct element_info assoc_ie;
 	struct wlan_chan_list occupied_chan_lst;
 	int8_t roam_candidate_count;
+	uint8_t uapsd_mask;
 #ifdef FEATURE_WLAN_ESE
 	bool is_ese_assoc;
 #endif
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	uint8_t psk_pmk[ROAM_SCAN_PSK_SIZE];
+	uint8_t pmk_len;
+#endif
+	struct mobility_domain_info mdid;
+	bool is_11r_assoc;
+	bool is_adaptive_11r_connection;
 	struct rso_chan_info roam_scan_freq_lst;
 };
 
@@ -290,6 +309,10 @@ struct rso_config_params {
  * @SCAN_HOME_AWAY: scan and away
  * @NEIGHBOUR_SCAN_REFRESH_PERIOD: scan refresh
  * @ROAM_CONTROL_ENABLE: roam control enable
+ * @UAPSD_MASK: uapsd mask
+ * @MOBILITY_DOMAIN: mobility domain
+ * @IS_11R_CONNECTION: is 11r connection
+ * @ADAPTIVE_11R_CONNECTION: adaptive 11r
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
@@ -310,6 +333,10 @@ enum roam_cfg_param {
 	SCAN_HOME_AWAY,
 	NEIGHBOUR_SCAN_REFRESH_PERIOD,
 	ROAM_CONTROL_ENABLE,
+	UAPSD_MASK,
+	MOBILITY_DOMAIN,
+	IS_11R_CONNECTION,
+	ADAPTIVE_11R_CONNECTION,
 };
 
 /**
@@ -1027,7 +1054,7 @@ struct wlan_rso_11i_params {
 	bool fw_pmksa_cache;
 	bool is_sae_same_pmk;
 	uint8_t psk_pmk[WMI_ROAM_SCAN_PSK_SIZE];
-	uint32_t pmk_len;
+	uint8_t pmk_len;
 };
 
 /**

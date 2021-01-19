@@ -243,6 +243,13 @@ struct mscs_req_info {
 };
 #endif
 
+struct ft_context {
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	uint32_t r0kh_id_len;
+	uint8_t r0kh_id[ROAM_R0KH_ID_MAX_LEN];
+#endif
+};
+
 /**
  * struct mlme_connect_info - mlme connect information
  * @timing_meas_cap: Timing meas cap
@@ -263,6 +270,7 @@ struct mlme_connect_info {
 #endif
 	uint8_t uapsd_per_ac_bitmask;
 	bool qos_enabled;
+	struct ft_context ft_info;
 };
 
 /**
