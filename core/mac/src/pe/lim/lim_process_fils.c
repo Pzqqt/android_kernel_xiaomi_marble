@@ -1445,17 +1445,16 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 {
 	struct pe_fils_session *pe_fils_info;
 	struct wlan_fils_connection_info *fils_info = NULL;
-/*
 	tDot11fIERSN dot11f_ie_rsn = {0};
 	uint32_t ret;
-*/
 	struct mlme_legacy_priv *mlme_priv;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
 	if (!mlme_priv)
 		return;
 	fils_info = mlme_priv->fils_con_info;
-
+	if (!fils_info)
+		return;
 	pe_fils_info = session->fils_info;
 	if (!pe_fils_info)
 		return;
@@ -1504,13 +1503,11 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 
 	qdf_mem_copy(pe_fils_info->fils_pmkid, fils_info->pmkid,
 		     PMKID_LEN);
-
-/*
-	pe_fils_info->rsn_ie_len = sme_join_req->rsnIE.length;
+	pe_fils_info->rsn_ie_len = session->lim_join_req->rsnIE.length;
 	qdf_mem_copy(pe_fils_info->rsn_ie,
-		     sme_join_req->rsnIE.rsnIEdata,
-		     sme_join_req->rsnIE.length);
-*/
+		     session->lim_join_req->rsnIE.rsnIEdata,
+		     session->lim_join_req->rsnIE.length);
+
 	/*
 	 * When AP is MFP capable and STA is also MFP capable,
 	 * the supplicant fills the RSN IE with PMKID count as 0
@@ -1522,7 +1519,6 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 	 * suite is present and based on this RSN IE will be constructed in
 	 * lim_generate_fils_pmkr1_name() for FT-FILS connection.
 	 */
-/*
 	ret = dot11f_unpack_ie_rsn(mac_ctx, pe_fils_info->rsn_ie + 2,
 				   pe_fils_info->rsn_ie_len - 2,
 				   &dot11f_ie_rsn, 0);
@@ -1531,7 +1527,7 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 			dot11f_ie_rsn.gp_mgmt_cipher_suite_present;
 	else
 		pe_err("FT-FILS: Invalid RSN IE");
-*/
+
 	pe_fils_info->fils_pmk_len = fils_info->pmk_len;
 	if (fils_info->pmk_len) {
 		pe_fils_info->fils_pmk =

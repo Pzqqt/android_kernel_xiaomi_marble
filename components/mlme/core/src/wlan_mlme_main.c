@@ -2856,6 +2856,8 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 		mlme_debug("NULL addn_ie pointer");
 		return QDF_STATUS_E_INVAL;
 	}
+	if (!left)
+		return QDF_STATUS_E_INVAL;
 
 	tmp_buf = qdf_mem_malloc(left);
 	if (!tmp_buf)

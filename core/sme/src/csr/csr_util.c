@@ -1206,6 +1206,7 @@ bool csr_is_wmm_supported(struct mac_context *mac)
 		return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /* pIes is the IEs for pSirBssDesc2 */
 bool csr_is_ssid_equal(struct mac_context *mac,
 		       struct bss_description *pSirBssDesc1,
@@ -1253,7 +1254,7 @@ bool csr_is_ssid_equal(struct mac_context *mac,
 
 	return fEqual;
 }
-
+#endif
 /* pIes can be passed in as NULL if the caller doesn't have one prepared */
 static bool csr_is_bss_description_wme(struct mac_context *mac,
 				       struct bss_description *pSirBssDesc,
@@ -2017,6 +2018,7 @@ uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
 	return localPowerConstraint;
 }
 
+#ifndef FEATURE_CM_ENABLE
 bool csr_is_profile_wpa(struct csr_roam_profile *pProfile)
 {
 	bool fWpaProfile = false;
@@ -2116,7 +2118,7 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 	}
 	return fRSNProfile;
 }
-
+#endif
 /**
  * csr_update_mcc_p2p_beacon_interval() - update p2p beacon interval
  * @mac_ctx: pointer to mac context
@@ -2681,7 +2683,7 @@ bool csr_lookup_fils_pmkid(struct mac_context *mac,
 
 	return true;
 }
-#endif
+
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * csr_update_pmksa_to_profile() - update pmk and pmkid to profile which will be
@@ -2979,6 +2981,7 @@ uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 	return cbWapiIe;
 }
 #endif /* FEATURE_WLAN_WAPI */
+#endif
 
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate)
 {
@@ -3124,6 +3127,7 @@ bool csr_is_ssid_match(struct mac_context *mac, uint8_t *ssid1, uint8_t ssid1Len
 	return fMatch;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /* Null ssid means match */
 bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList)
 {
@@ -3149,7 +3153,7 @@ bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList)
 
 	return fMatch;
 }
-
+#endif
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid)
 {

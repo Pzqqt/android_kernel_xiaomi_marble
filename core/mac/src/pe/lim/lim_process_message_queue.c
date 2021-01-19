@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2100,6 +2100,17 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
 		break;
+#ifdef FEATURE_CM_ENABLE
+	case CM_BSS_PEER_CREATE_REQ:
+		cm_process_peer_create(msg);
+		break;
+	case CM_CONNECT_REQ:
+		cm_process_join_req(msg);
+		break;
+	case CM_DISCONNECT_REQ:
+		cm_process_disconnect_req(msg);
+		break;
+#endif
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

@@ -7925,8 +7925,9 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool fCallCallback = true;
 	uint32_t roamId = 0;
+#ifndef FEATURE_CM_ENABLE
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
-
+#endif
 	if (!profile) {
 		sme_err("No profile specified");
 		return QDF_STATUS_E_FAILURE;
@@ -7940,6 +7941,7 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 	csr_scan_abort_mac_scan(mac_ctx, session_id, INVAL_SCAN_ID);
 	csr_roam_remove_duplicate_command(mac_ctx, session_id, NULL,
 					  eCsrHddIssuedReassocToSameAP);
+#ifndef FEATURE_CM_ENABLE
 	if (csr_is_conn_state_connected(mac_ctx, session_id)) {
 		if (profile) {
 			if (profile->SSIDs.numOfSSIDs &&
@@ -7969,6 +7971,7 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 	} else {
 		sme_debug("Not connected! No need to reassoc");
 	}
+#endif
 	if (!fCallCallback) {
 		roamId = GET_NEXT_ROAM_ID(&mac_ctx->roam);
 		if (roam_id)

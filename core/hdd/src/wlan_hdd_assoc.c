@@ -303,7 +303,7 @@ hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 
 	/* save the new connection state */
 	hdd_debug("Authenticated state Changed from oldState:%d to State:%d",
-		   sta_ctx->conn_info.is_authenticated, auth_state);
+		  sta_ctx->conn_info.is_authenticated, auth_state);
 	sta_ctx->conn_info.is_authenticated = auth_state;
 
 	auth_time = sta_ctx->conn_info.auth_time;
@@ -422,12 +422,13 @@ enum band_info hdd_conn_get_connected_band(struct hdd_adapter *adapter)
  * Return: false if any errors encountered, true otherwise
  */
 static inline bool
-hdd_conn_get_connected_cipher_algo(struct hdd_station_ctx *sta_ctx,
+hdd_conn_get_connected_cipher_algo(struct hdd_adapter *adapter,
+				   struct hdd_station_ctx *sta_ctx,
 				   eCsrEncryptionType *pConnectedCipherAlgo)
 {
 	bool connected = false;
 
-	connected = hdd_conn_get_connection_state(sta_ctx, NULL);
+	connected = hdd_cm_is_vdev_associated(adapter);
 
 	if (pConnectedCipherAlgo)
 		*pConnectedCipherAlgo = sta_ctx->conn_info.uc_encrypt_type;
@@ -2606,7 +2607,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 		  QDF_MAC_ADDR_FMT, roam_status, roam_result,
 		  QDF_MAC_ADDR_REF(roam_info->peerMac.bytes));
 
-	connected = hdd_conn_get_connected_cipher_algo(sta_ctx,
+	connected = hdd_conn_get_connected_cipher_algo(adapter, sta_ctx,
 						       &algorithm);
 	if (connected) {
 		hdd_change_peer_state_after_set_key(adapter, roam_info,

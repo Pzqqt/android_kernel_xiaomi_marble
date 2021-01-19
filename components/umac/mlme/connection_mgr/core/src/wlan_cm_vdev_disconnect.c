@@ -29,6 +29,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_cm_roam_api.h>
+#include "wni_api.h"
 
 QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req)
@@ -103,7 +104,7 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 
 	qdf_mem_copy(discon_req, req, sizeof(*req));
 	msg.bodyptr = discon_req;
-	msg.callback = cm_process_disconnect_req;
+	msg.type = CM_DISCONNECT_REQ;
 
 	status = scheduler_post_message(QDF_MODULE_ID_MLME,
 					QDF_MODULE_ID_PE,

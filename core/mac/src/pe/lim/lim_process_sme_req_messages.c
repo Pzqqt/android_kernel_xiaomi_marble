@@ -2132,104 +2132,6 @@ lim_get_intersected_dot11_mode_sta_ap(struct mac_context *mac_ctx,
 	}
 }
 
-#if 0
-/* This is temp will be removed in next gerrit */
-static bool
-lim_is_wap_profile(struct pe_session *session)
-{
-	int32_t ucast_cipher;
-	int32_t auth_mode;
-
-	ucast_cipher = wlan_crypto_get_param(session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	auth_mode = wlan_crypto_get_param(session->vdev,
-					  WLAN_CRYPTO_PARAM_AUTH_MODE);
-
-	if (auth_mode == -1 || ucast_cipher == -1)
-		return false;
-
-	if (!QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_WPA))
-		return false;
-
-	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_OCB)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256))))
-		return true;
-
-	return false;
-}
-
-static bool
-lim_is_wapi_profile(struct pe_session *session)
-{
-	int32_t ucast_cipher;
-	int32_t auth_mode;
-
-	ucast_cipher = wlan_crypto_get_param(session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	auth_mode = wlan_crypto_get_param(session->vdev,
-					  WLAN_CRYPTO_PARAM_AUTH_MODE);
-
-	if (auth_mode == -1 || ucast_cipher == -1)
-		return false;
-
-	if (!QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_WAPI))
-		return false;
-
-	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WAPI_GCM4)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WAPI_SMS4))))
-		return true;
-
-	return false;
-}
-
-static bool
-lim_is_rsn_profile(struct pe_session *session)
-{
-	int32_t ucast_cipher;
-	int32_t auth_mode;
-	bool is_rsn = false;
-
-	ucast_cipher = wlan_crypto_get_param(session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	auth_mode = wlan_crypto_get_param(session->vdev,
-					  WLAN_CRYPTO_PARAM_AUTH_MODE);
-
-	if (auth_mode == -1 || ucast_cipher == -1)
-		return false;
-
-	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_8021X) ||
-	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_RSNA) ||
-	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_CCKM) ||
-	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_SAE) ||
-	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_FILS_SK))
-		is_rsn = true;
-
-	if (!is_rsn)
-		return false;
-
-	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_OCB)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM_256)) ||
-	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM))))
-		return true;
-
-	return false;
-}
-#endif
-
 static void
 lim_verify_dot11_mode_with_crypto(struct pe_session *session)
 {
@@ -2796,6 +2698,348 @@ lim_send_connect_req_to_mlm(struct pe_session *session)
 	return QDF_STATUS_SUCCESS;
 }
 
+static bool
+lim_is_wpa_profile(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return false;
+
+	if (!QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_WPA))
+		return false;
+
+	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_OCB)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256))))
+		return true;
+
+	return false;
+}
+
+static bool
+lim_is_wapi_profile(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return false;
+
+	if (!QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_WAPI))
+		return false;
+
+	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WAPI_GCM4)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WAPI_SMS4))))
+		return true;
+
+	return false;
+}
+
+static bool
+lim_is_rsn_profile(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+	bool is_rsn = false;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return false;
+
+	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_8021X) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_RSNA) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_CCKM) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_SAE) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_FILS_SK))
+		is_rsn = true;
+
+	if (!is_rsn)
+		return false;
+
+	if (((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_OCB)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM_256)) ||
+	     (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM))))
+		return true;
+
+	return false;
+}
+
+static tAniEdType
+lim_get_encrypt_ed_type(struct pe_session *session)
+{
+	int32_t ucast_cipher;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	if (ucast_cipher == -1)
+		return eSIR_ED_NONE;
+
+	if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_GCM_256))
+		return eSIR_ED_GCMP_256;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_GCM))
+		return eSIR_ED_GCMP;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CCM) ||
+		 QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_OCB) ||
+		 QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CCM_256))
+		return eSIR_ED_CCMP;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP))
+		return eSIR_ED_TKIP;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CMAC) ||
+		 QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CMAC_256))
+		return eSIR_ED_AES_128_CMAC;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WAPI_GCM4) ||
+		 QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WAPI_SMS4))
+		return eSIR_ED_WPI;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_GMAC))
+		return eSIR_ED_AES_GMAC_128;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_GMAC_256))
+		return eSIR_ED_AES_GMAC_256;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP))
+		return eSIR_ED_WEP40;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40))
+		return eSIR_ED_WEP40;
+	else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104))
+		return eSIR_ED_WEP104;
+
+	return eSIR_ED_NONE;
+}
+
+static enum ani_akm_type
+lim_get_wpa_akm(uint32_t akm)
+{
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
+		return ANI_AKM_TYPE_WPA;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_PSK))
+		return ANI_AKM_TYPE_WPA_PSK;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM))
+		return ANI_AKM_TYPE_CCKM;
+	else
+		return ANI_AKM_TYPE_UNKNOWN;
+}
+
+static enum ani_akm_type
+lim_get_rsn_akm(uint32_t akm)
+{
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
+		return ANI_AKM_TYPE_FT_FILS_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256))
+		return ANI_AKM_TYPE_FT_FILS_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384))
+		return ANI_AKM_TYPE_FILS_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256))
+		return ANI_AKM_TYPE_FILS_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE))
+		return ANI_AKM_TYPE_FT_SAE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
+		return ANI_AKM_TYPE_SAE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_DPP))
+		return ANI_AKM_TYPE_DPP_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OSEN))
+		return ANI_AKM_TYPE_OSEN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE))
+		return ANI_AKM_TYPE_OWE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X))
+		return ANI_AKM_TYPE_FT_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_PSK))
+		return ANI_AKM_TYPE_FT_RSN_PSK;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
+		return ANI_AKM_TYPE_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_PSK))
+		return ANI_AKM_TYPE_RSN_PSK;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM))
+		return ANI_AKM_TYPE_CCKM;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_PSK_SHA256))
+		return ANI_AKM_TYPE_RSN_PSK_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SHA256))
+		return ANI_AKM_TYPE_RSN_8021X_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B))
+		return ANI_AKM_TYPE_SUITEB_EAP_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192))
+		return ANI_AKM_TYPE_SUITEB_EAP_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384))
+		return ANI_AKM_TYPE_FT_SUITEB_EAP_SHA384;
+	else
+		return ANI_AKM_TYPE_NONE;
+}
+
+static enum ani_akm_type
+lim_get_connected_akm(struct pe_session *session,
+		      struct scan_cache_entry *entry)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (auth_mode == -1 || ucast_cipher == -1)
+		return ANI_AKM_TYPE_NONE;
+
+	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_NONE) ||
+	    QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_OPEN))
+		return ANI_AKM_TYPE_NONE;
+
+	if (lim_is_rsn_profile(session))
+		return lim_get_rsn_akm(entry->neg_sec_info.key_mgmt);
+
+	if (lim_is_wpa_profile(session))
+		return lim_get_wpa_akm(entry->neg_sec_info.key_mgmt);
+
+	if (lim_is_wapi_profile(session))
+		return ANI_AKM_TYPE_UNKNOWN;
+
+	return ANI_AKM_TYPE_NONE;
+}
+
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * lim_update_pmksa_to_profile() - update pmk and pmkid to profile which will be
+ * used in case of fils session
+ * @vdev: vdev
+ * @pmkid_cache: pmksa cache
+ *
+ * Return: None
+ */
+static inline void lim_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
+					       struct wlan_crypto_pmksa *pmksa)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		pe_err("vdev legacy private object is NULL");
+		return;
+	}
+	if (!mlme_priv->fils_con_info)
+		return;
+	mlme_priv->fils_con_info->pmk_len = pmksa->pmk_len;
+	qdf_mem_copy(mlme_priv->fils_con_info->pmk,
+		     pmksa->pmk, pmksa->pmk_len);
+	qdf_mem_copy(mlme_priv->fils_con_info->pmkid,
+		     pmksa->pmkid, PMKID_LEN);
+}
+#else
+static inline void lim_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
+					       struct wlan_crypto_pmksa *pmksa)
+{
+}
+#endif
+
+static QDF_STATUS
+lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
+		struct cm_vdev_join_req *req)
+{
+	QDF_STATUS status;
+	uint8_t *rsn_ie;
+	uint8_t rsn_ie_len = 0;
+	uint8_t *rsn_ie_end = NULL;
+	struct wlan_crypto_pmksa pmksa, *pmksa_peer;
+	struct bss_description *bss_desc;
+
+	if (!lim_is_rsn_profile(session))
+		return QDF_STATUS_SUCCESS;
+
+	rsn_ie = qdf_mem_malloc(DOT11F_IE_RSN_MAX_LEN + 2);
+	if (!rsn_ie)
+		return QDF_STATUS_E_NOMEM;
+
+	status = lim_strip_ie(mac_ctx, req->assoc_ie.ptr,
+			      (uint16_t *)&req->assoc_ie.len,
+			      WLAN_ELEMID_RSN, ONE_BYTE,
+			      NULL, 0, rsn_ie, DOT11F_IE_RSN_MAX_LEN);
+
+	if (session->lim_join_req->force_rsne_override &&
+	    QDF_IS_STATUS_SUCCESS(status)) {
+		rsn_ie_len = rsn_ie[1];
+		if (rsn_ie_len < DOT11F_IE_RSN_MIN_LEN ||
+		    rsn_ie_len > DOT11F_IE_RSN_MAX_LEN) {
+			pe_err("RSN length %d not within limits", rsn_ie_len);
+			qdf_mem_free(rsn_ie);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		session->lim_join_req->rsnIE.length = rsn_ie_len;
+		qdf_mem_copy(session->lim_join_req->rsnIE.rsnIEdata,
+			     rsn_ie, rsn_ie_len + 2);
+
+		qdf_mem_free(rsn_ie);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	bss_desc = &session->lim_join_req->bssDescription;
+
+	qdf_mem_zero(&pmksa, sizeof(pmksa));
+	if (bss_desc->fils_info_element.is_cache_id_present) {
+		pmksa.ssid_len = session->ssId.length;
+		qdf_mem_copy(pmksa.ssid, session->ssId.ssId,
+			     session->ssId.length);
+		qdf_mem_copy(pmksa.cache_id,
+			     bss_desc->fils_info_element.cache_id,
+			     CACHE_ID_LEN);
+		qdf_mem_copy(&pmksa.bssid, session->bssId, QDF_MAC_ADDR_SIZE);
+	} else {
+		qdf_mem_copy(&pmksa.bssid, session->bssId, QDF_MAC_ADDR_SIZE);
+	}
+	pmksa_peer = wlan_crypto_get_peer_pmksa(session->vdev, &pmksa);
+
+	/* TODO: Add support for Adaptive 11r connection */
+	rsn_ie_end = wlan_crypto_build_rsnie_with_pmksa(session->vdev, rsn_ie,
+							pmksa_peer);
+	if (rsn_ie_end)
+		rsn_ie_len = rsn_ie_end - rsn_ie;
+
+	session->lim_join_req->rsnIE.length = rsn_ie_len;
+	qdf_mem_copy(session->lim_join_req->rsnIE.rsnIEdata,
+		     rsn_ie, rsn_ie_len);
+
+	qdf_mem_free(rsn_ie);
+	/*
+	 * If a PMK cache is found for the BSSID, then
+	 * update the PMK in CSR session also as this
+	 * will be sent to the FW during RSO.
+	 */
+	if (pmksa_peer) {
+		wlan_cm_set_psk_pmk(mac_ctx->pdev, session->vdev_id,
+				    pmksa_peer->pmk, pmksa_peer->pmk_len);
+		lim_update_pmksa_to_profile(session->vdev, pmksa_peer);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS
 lim_fill_session_params(struct mac_context *mac_ctx,
 			struct pe_session *session,
@@ -2820,6 +3064,10 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 
 	pe_join_req = session->lim_join_req;
 	bss_desc = &session->lim_join_req->bssDescription;
+	pe_debug("Beacon/probe frame received:");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   util_scan_entry_frame_ptr(req->entry),
+			   util_scan_entry_frame_len(req->entry));
 
 	status = wlan_fill_bss_desc_from_scan_entry(mac_ctx, bss_desc,
 						    req->entry);
@@ -2864,10 +3112,22 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 
 	session->rateSet.numRates = op_rate_len;
 	session->extRateSet.numRates = ext_rate_len;
-	lim_update_fils_config(mac_ctx, session, req);
 
+	session->encryptType = lim_get_encrypt_ed_type(session);
+	session->connected_akm = lim_get_connected_akm(session, req->entry);
+	pe_debug("Assoc IE len: %d", req->assoc_ie.len);
+	if (req->assoc_ie.len)
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   req->assoc_ie.ptr, req->assoc_ie.len);
+
+	lim_fill_rsn_ie(mac_ctx, session, req);
+	lim_update_fils_config(mac_ctx, session, req);
 	qdf_mem_copy(pe_join_req->addIEAssoc.addIEdata,
 		     req->assoc_ie.ptr, req->assoc_ie.len);
+	pe_debug("After stripping Assoc IE len: %d", req->assoc_ie.len);
+	if (req->assoc_ie.len)
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   req->assoc_ie.ptr, req->assoc_ie.len);
 
 	qdf_mem_copy(pe_join_req->addIEScan.addIEdata,
 		     req->scan_ie.ptr, req->scan_ie.len);
