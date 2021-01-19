@@ -67,6 +67,14 @@ dp_peer_ast_free_in_unmap_supported(struct dp_soc *soc,
 {
 	return false;
 }
+
+static void dp_soc_wds_attach(struct dp_soc *soc)
+{
+}
+
+static void dp_soc_wds_detach(struct dp_soc *soc)
+{
+}
 #endif
 
 static inline void
@@ -1831,6 +1839,7 @@ int dp_peer_find_attach(struct dp_soc *soc)
 		return 1;
 	}
 
+	dp_soc_wds_attach(soc);
 	return 0; /* success */
 }
 
@@ -2166,6 +2175,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 void
 dp_peer_find_detach(struct dp_soc *soc)
 {
+	dp_soc_wds_detach(soc);
 	dp_peer_find_map_detach(soc);
 	dp_peer_find_hash_detach(soc);
 	dp_peer_ast_hash_detach(soc);

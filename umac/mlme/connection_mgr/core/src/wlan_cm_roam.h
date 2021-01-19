@@ -155,13 +155,15 @@ bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
  * @cm_ctx: connection manager context
  * @cm_id: active command id
  * @reason: failure reason
+ * @sync: Indicate if the event has to be dispatched in sync or async mode
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   wlan_cm_id cm_id,
-			   enum wlan_cm_connect_fail_reason reason);
+			   enum wlan_cm_connect_fail_reason reason,
+			   bool sync);
 
 #else
 static inline QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,

@@ -3150,15 +3150,6 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 #endif /* CONFIG_WIFI_EMULATION_WIFI_3_0 */
 #endif /* IPA_OFFLOAD */
 
-#ifndef FEATURE_WDS
-static void dp_soc_wds_attach(struct dp_soc *soc)
-{
-}
-
-static void dp_soc_wds_detach(struct dp_soc *soc)
-{
-}
-#endif
 /*
  * dp_soc_reset_ring_map() - Reset cpu ring map
  * @soc: Datapath soc handler
@@ -4386,6 +4377,7 @@ fail3:
 fail2:
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
 fail1:
+	soc->pdev_list[pdev_id] = NULL;
 	qdf_mem_free(pdev);
 fail0:
 	return QDF_STATUS_E_FAILURE;
@@ -4815,8 +4807,6 @@ static void dp_soc_deinit(void *txrx_soc)
 	qdf_spinlock_destroy(&soc->ast_lock);
 
 	qdf_nbuf_queue_free(&soc->htt_stats.msg);
-
-	dp_soc_wds_detach(soc);
 
 	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
 
@@ -12391,8 +12381,6 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	hal_reo_set_err_dst_remap(soc->hal_soc);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
-
-	dp_soc_wds_attach(soc);
 
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);
 
