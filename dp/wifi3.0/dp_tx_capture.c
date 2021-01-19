@@ -1781,8 +1781,6 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_nbuf_unmap(soc->osdev, netbuf, QDF_DMA_TO_DEVICE);
-
 	msdu_comp_info = (struct msdu_completion_info *)qdf_nbuf_data(netbuf);
 
 	/* copy msdu_completion_info to control buffer */
