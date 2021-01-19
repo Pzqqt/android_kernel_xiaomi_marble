@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -288,7 +288,7 @@ static QDF_STATUS hdd_print_acl(struct hdd_adapter *adapter)
 {
 	eSapMacAddrACL acl_mode;
 	struct qdf_mac_addr maclist[MAX_ACL_MAC_ADDRESS];
-	uint8_t listnum;
+	uint16_t listnum;
 	struct sap_context *sap_ctx;
 
 	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);

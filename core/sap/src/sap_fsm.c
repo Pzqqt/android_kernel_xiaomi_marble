@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3024,9 +3024,9 @@ void sap_free_roam_profile(struct csr_roam_profile *profile)
 	}
 }
 
-void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
+void sap_sort_mac_list(struct qdf_mac_addr *macList, uint16_t size)
 {
-	uint8_t outer, inner;
+	uint16_t outer, inner;
 	struct qdf_mac_addr temp;
 	int32_t nRes = -1;
 
@@ -3057,11 +3057,10 @@ void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 
 bool
 sap_search_mac_list(struct qdf_mac_addr *macList,
-		    uint8_t num_mac, uint8_t *peerMac,
-		    uint8_t *index)
+		    uint16_t num_mac, uint8_t *peerMac,
+		    uint16_t *index)
 {
-	int32_t nRes = -1;
-	int8_t nStart = 0, nEnd, nMiddle;
+	int32_t nRes = -1, nStart = 0, nEnd, nMiddle;
 
 	nEnd = num_mac - 1;
 
@@ -3081,7 +3080,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 			/* "index equals NULL" means the caller does not need the */
 			/* index value of the peerMac being searched */
 			if (index) {
-				*index = (uint8_t) nMiddle;
+				*index = (uint16_t)nMiddle;
 				sap_debug("index %d", *index);
 			}
 			return true;
@@ -3097,7 +3096,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 }
 
 void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
-			uint8_t *size, uint8_t *peerMac)
+			uint16_t *size, uint8_t *peerMac)
 {
 	int32_t nRes = -1;
 	int i;
@@ -3129,7 +3128,7 @@ void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
 }
 
 void sap_remove_mac_from_acl(struct qdf_mac_addr *macList,
-			     uint8_t *size, uint8_t index)
+			     uint16_t *size, uint16_t index)
 {
 	int i;
 
@@ -3158,9 +3157,9 @@ void sap_remove_mac_from_acl(struct qdf_mac_addr *macList,
 	(*size)--;
 }
 
-void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
+void sap_print_acl(struct qdf_mac_addr *macList, uint16_t size)
 {
-	int i;
+	uint16_t i;
 	uint8_t *macArray;
 
 	sap_debug("print acl entered");
