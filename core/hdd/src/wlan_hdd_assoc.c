@@ -4732,18 +4732,21 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4])
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-bool hdd_is_fils_connection(struct hdd_adapter *adapter)
+bool hdd_is_fils_connection(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter)
 {
-	struct csr_roam_profile *roam_profile;
+	struct wlan_fils_connection_info *fils_info;
 
-	roam_profile = hdd_roam_profile(adapter);
-	if (roam_profile->fils_con_info)
-		return roam_profile->fils_con_info->is_fils_connection;
+	fils_info = wlan_cm_get_fils_connection_info(hdd_ctx->psoc,
+						     adapter->vdev_id);
+	if (fils_info)
+		return fils_info->is_fils_connection;
 
 	return false;
 }
 #else
-bool hdd_is_fils_connection(struct hdd_adapter *adapter)
+bool hdd_is_fils_connection(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter)
 {
 	return false;
 }

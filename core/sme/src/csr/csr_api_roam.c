@@ -13705,6 +13705,50 @@ void csr_update_prev_ap_info(struct csr_roam_session *session,
 #endif
 
 #ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_FEATURE_FILS_SK
+static QDF_STATUS csr_cm_update_fils_info(struct wlan_objmgr_vdev *vdev,
+					  struct bss_description *bss_desc,
+					  struct wlan_cm_vdev_connect_req *req)
+{
+	uint8_t cache_id[CACHE_ID_LEN] = {0};
+	struct scan_cache_entry *entry;
+	struct wlan_crypto_pmksa *fils_ssid_pmksa, *bssid_lookup_pmksa;
+
+	if (!req->fils_info || !req->fils_info->is_fils_connection) {
+		wlan_cm_update_mlme_fils_info(vdev, NULL);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (bss_desc->fils_info_element.is_cache_id_present) {
+		qdf_mem_copy(cache_id, bss_desc->fils_info_element.cache_id,
+			     CACHE_ID_LEN);
+		sme_debug("FILS_PMKSA: cache_id[0]:%d, cache_id[1]:%d",
+			  cache_id[0], cache_id[1]);
+	}
+	entry = req->bss->entry;
+	bssid_lookup_pmksa = wlan_crypto_get_pmksa(vdev, &entry->bssid);
+	fils_ssid_pmksa =
+			wlan_crypto_get_fils_pmksa(vdev, cache_id,
+						   entry->ssid.ssid,
+						   entry->ssid.length);
+
+	if ((!req->fils_info->rrk_len ||
+	     !req->fils_info->username_len) &&
+	     !bss_desc->fils_info_element.is_cache_id_present &&
+	     !bssid_lookup_pmksa && !fils_ssid_pmksa)
+		return QDF_STATUS_E_FAILURE;
+
+	return wlan_cm_update_mlme_fils_info(vdev, req->fils_info);
+}
+#else
+static inline
+QDF_STATUS csr_cm_update_fils_info(struct wlan_objmgr_vdev *vdev,
+				   struct bss_description *bss_desc,
+				   struct wlan_cm_vdev_connect_req *req)
+{
+}
+#endif
+
 QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 				     struct wlan_cm_vdev_connect_req *req,
 				     struct cm_vdev_join_req *join_req)
@@ -13746,7 +13790,13 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	status = wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc,
 						     &ie_struct);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("IE parsing failed vdev id %d", wlan_vdev_get_id(vdev));
+		sme_err("IE parsing failed vdev id %d", vdev_id);
+		qdf_mem_free(bss_desc);
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = csr_cm_update_fils_info(vdev, bss_desc, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("failed to update fils info vdev id %d", vdev_id);
 		qdf_mem_free(bss_desc);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -13755,8 +13805,7 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 				  &ext_rate_set);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Rates parsing failed vdev id %d",
-			wlan_vdev_get_id(vdev));
+		sme_err("Rates parsing failed vdev id %d", vdev_id);
 		qdf_mem_free(ie_struct);
 		qdf_mem_free(bss_desc);
 		return QDF_STATUS_E_FAILURE;
@@ -19123,6 +19172,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	roam_info->update_erp_next_seq_num =
 			roam_synch_data->update_erp_next_seq_num;
 	roam_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;
+	/* for cm enable copy to reassoc/connect resp */
 #ifndef FEATURE_CM_ENABLE
 	csr_update_fils_erp_seq_num(session->pCurRoamProfile,
 				    roam_info->next_erp_seq_num);
@@ -19143,6 +19193,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	roam_info->roam_reason = roam_synch_data->roamReason &
 				 ROAM_REASON_MASK;
 	sme_debug("Update roam reason : %d", roam_info->roam_reason);
+	/* for cm enable copy to reassoc/connect resp */
 #ifndef FEATURE_CM_ENABLE
 	csr_copy_fils_join_rsp_roam_info(roam_info, roam_synch_data);
 #endif

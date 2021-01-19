@@ -1023,6 +1023,7 @@ void lim_get_random_bssid(struct mac_context *mac, uint8_t *data)
 	qdf_mem_copy(data, random, sizeof(tSirMacAddr));
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_SAE
 
 /**
@@ -1046,6 +1047,7 @@ static void lim_update_sae_config(struct pe_session *session,
 static inline void lim_update_sae_config(struct pe_session *session,
 					 struct join_req *sme_join_req)
 {}
+#endif
 #endif
 
 /**
@@ -2862,6 +2864,7 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 
 	session->rateSet.numRates = op_rate_len;
 	session->extRateSet.numRates = ext_rate_len;
+	lim_update_fils_config(mac_ctx, session, req);
 
 	qdf_mem_copy(pe_join_req->addIEAssoc.addIEdata,
 		     req->assoc_ie.ptr, req->assoc_ie.len);
@@ -2896,6 +2899,20 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 
 	if (QDF_IS_STATUS_ERROR(status))
 		goto fail;
+
+	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d",
+		 pe_session->curr_op_freq, pe_session->ch_width,
+		 pe_session->ch_center_freq_seg0,
+		 pe_session->ch_center_freq_seg1,
+		 pe_session->enableHtSmps, pe_session->htSmpsvalue,
+		 pe_session->send_smps_action, pe_session->supported_nss_1x1,
+		 pe_session->vdev_nss, pe_session->nss,
+		 pe_session->htSupportedChannelWidthSet,
+		 pe_session->dot11mode,
+		 pe_session->vht_config.su_beam_former,
+		 pe_session->vht_config.su_beam_formee,
+		 pe_session->vht_config.csnof_beamformer_antSup,
+		 pe_session->isCiscoVendorAP);
 
 	status = lim_send_connect_req_to_mlm(pe_session);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3112,7 +3129,7 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 
 	return status;
 }
-#endif
+#else
 
 /**
  * __lim_process_sme_join_req() - process SME_JOIN_REQ message
@@ -3360,6 +3377,7 @@ end:
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, ret_code,
 		STATUS_UNSPECIFIED_FAILURE, session, vdev_id);
 }
+#endif
 
 uint8_t lim_get_max_tx_power(struct mac_context *mac,
 			     struct lim_max_tx_pwr_attr *attr)
@@ -6292,11 +6310,11 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	case eWNI_SME_START_BSS_REQ:
 		bufConsumed = __lim_process_sme_start_bss_req(mac, pMsg);
 		break;
-
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_JOIN_REQ:
 		__lim_process_sme_join_req(mac, msg_buf);
 		break;
-
+#endif
 	case eWNI_SME_REASSOC_REQ:
 		__lim_process_sme_reassoc_req(mac, msg_buf);
 		break;

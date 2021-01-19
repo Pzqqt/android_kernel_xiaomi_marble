@@ -491,6 +491,7 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_cm_update_mlme_fils_connection_info  - Update FILS connection info
  * to mlme vdev private object
@@ -504,7 +505,19 @@ QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_fils_connection_info *src_fils_info,
 		uint8_t vdev_id);
-
+#else
+/**
+ * wlan_cm_update_mlme_fils_info  - Update FILS connection info
+ * to mlme vdev private object
+ * @vdev: Pointer to pdev object
+ * @src_fils_info: Current profile FILS connection information
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_update_mlme_fils_info(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_fils_con_info *src_fils_info);
+#endif
 /**
  * wlan_cm_update_fils_ft - Update the FILS FT derived to mlme
  * @psoc: Psoc pointer

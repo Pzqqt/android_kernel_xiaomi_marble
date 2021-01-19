@@ -2653,6 +2653,7 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 	return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 bool csr_lookup_fils_pmkid(struct mac_context *mac,
 			   uint8_t vdev_id, uint8_t *cache_id,
 			   uint8_t *ssid, uint8_t ssid_len,
@@ -2680,7 +2681,7 @@ bool csr_lookup_fils_pmkid(struct mac_context *mac,
 
 	return true;
 }
-
+#endif
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * csr_update_pmksa_to_profile() - update pmk and pmkid to profile which will be
@@ -2690,20 +2691,26 @@ bool csr_lookup_fils_pmkid(struct mac_context *mac,
  *
  * Return: None
  */
-static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
+static inline void csr_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
 					       struct wlan_crypto_pmksa *pmksa)
 {
-	if (!profile->fils_con_info)
-		return;
+	struct mlme_legacy_priv *mlme_priv;
 
-	profile->fils_con_info->pmk_len = pmksa->pmk_len;
-	qdf_mem_copy(profile->fils_con_info->pmk,
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		return;
+	}
+	if (!mlme_priv->fils_con_info)
+		return;
+	mlme_priv->fils_con_info->pmk_len = pmksa->pmk_len;
+	qdf_mem_copy(mlme_priv->fils_con_info->pmk,
 		     pmksa->pmk, pmksa->pmk_len);
-	qdf_mem_copy(profile->fils_con_info->pmkid,
+	qdf_mem_copy(mlme_priv->fils_con_info->pmkid,
 		     pmksa->pmkid, PMKID_LEN);
 }
 #else
-static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
+static inline void csr_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
 					       struct wlan_crypto_pmksa *pmksa)
 {
 }
@@ -2800,7 +2807,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	if (pmksa_peer) {
 		wlan_cm_set_psk_pmk(mac->pdev, sessionId,
 				    pmksa_peer->pmk, pmksa_peer->pmk_len);
-		csr_update_pmksa_to_profile(pProfile, pmksa_peer);
+		csr_update_pmksa_to_profile(vdev, pmksa_peer);
 	}
 	rso_cfg = wlan_cm_get_rso_config(vdev);
 	if (rso_cfg) {

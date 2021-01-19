@@ -200,11 +200,13 @@ struct hdd_context;
 
 /*
  * hdd_is_fils_connection: API to determine if connection is FILS
+ * @hdd_ctx: hdd context
  * @adapter: hdd adapter
  *
  * Return: true if fils connection else false
  */
-bool hdd_is_fils_connection(struct hdd_adapter *adapter);
+bool hdd_is_fils_connection(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter);
 
 /**
  * hdd_conn_set_connection_state() - set connection state

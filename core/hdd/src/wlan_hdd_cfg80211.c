@@ -6526,6 +6526,7 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	struct pmo_gtk_req *gtk_req = NULL;
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct hdd_context *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
 
 	gtk_req = qdf_mem_malloc(sizeof(*gtk_req));
 	if (!gtk_req)
@@ -6553,7 +6554,7 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	qdf_copy_macaddr(&gtk_req->bssid, &hdd_sta_ctx->conn_info.bssid);
 
 	gtk_req->kek_len = kek_len;
-	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
+	gtk_req->is_fils_connection = hdd_is_fils_connection(hdd_ctx, adapter);
 
 	/* convert big to little endian since driver work on little endian */
 	buf = (uint8_t *)&gtk_req->replay_counter;
@@ -22576,7 +22577,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 		qdf_mem_copy(gtk_req->kck, data->kck, NL80211_KCK_LEN);
 		gtk_req->kck_len = NL80211_KCK_LEN;
 	}
-	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
+	gtk_req->is_fils_connection = hdd_is_fils_connection(hdd_ctx, adapter);
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
 	if (!vdev) {
 		result = -EINVAL;
