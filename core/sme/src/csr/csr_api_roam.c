@@ -8327,7 +8327,9 @@ csr_roam_save_connected_information(struct mac_context *mac,
 		/* Save the bss desc */
 		status = csr_roam_save_connected_bss_desc(mac, sessionId,
 								pSirBssDesc);
-
+		src_cfg.uint_value = pSirBssDesc->mbo_oce_enabled_ap;
+		wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
+					   MBO_OCE_ENABLED_AP, &src_cfg);
 		if (CSR_IS_QOS_BSS(pIesTemp) || pIesTemp->HTCaps.present)
 			/* Some HT AP's dont send WMM IE so in that case we
 			 * assume all HT Ap's are Qos Enabled AP's
@@ -14007,6 +14009,11 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 
 	wlan_fill_bss_desc_from_scan_entry(mac_ctx, bss_desc, cur_node->entry);
 	csr_free_connect_bss_desc(mac_ctx, vdev_id);
+
+	src_cfg.uint_value = bss_desc->mbo_oce_enabled_ap;
+	wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id, MBO_OCE_ENABLED_AP,
+				   &src_cfg);
+
 	status = wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc,
 						     &bcn_ies);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -16146,88 +16153,6 @@ csr_roam_pmkid_req_callback(uint8_t vdev_id,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-
-/**
- * csr_update_btm_offload_config() - Update btm config param to fw
- * @mac_ctx: Global mac ctx
- * @command: Roam offload command
- * @btm_offload_config: btm offload config
- * @session: roam session
- *
- * Return: None
- */
-static void csr_update_btm_offload_config(struct mac_context *mac_ctx,
-					  uint8_t command,
-					  uint32_t *btm_offload_config,
-					  struct csr_roam_session *session)
-{
-	struct wlan_objmgr_peer *peer;
-	struct wlan_objmgr_vdev *vdev;
-	bool is_pmf_enabled, is_open_connection = false;
-	int32_t cipher;
-
-	*btm_offload_config =
-			mac_ctx->mlme_cfg->btm.btm_offload_config;
-
-	/* Return if INI is disabled */
-	if (!(*btm_offload_config))
-		return;
-
-	/* For RSO Stop Disable BTM offload to firmware */
-	if (command == ROAM_SCAN_OFFLOAD_STOP ||
-	    session->pCurRoamProfile->is_hs_20_ap) {
-		sme_debug("RSO cmd: %d", command);
-		*btm_offload_config = 0;
-		return;
-	}
-
-	if (!session->pConnectBssDesc) {
-		sme_err("Connected Bss Desc is NULL");
-		return;
-	}
-
-	peer = wlan_objmgr_get_peer(mac_ctx->psoc,
-				    wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev),
-				    session->pConnectBssDesc->bssId,
-				    WLAN_LEGACY_SME_ID);
-	if (!peer) {
-		sme_debug("Peer of peer_mac "QDF_MAC_ADDR_FMT" not found",
-			  QDF_MAC_ADDR_REF(session->pConnectBssDesc->bssId));
-		return;
-	}
-
-	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
-
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_SME_ID);
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
-						    session->vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("vdev:%d is NULL", session->vdev_id);
-		return;
-	}
-
-	cipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!cipher || QDF_HAS_PARAM(cipher, WLAN_CRYPTO_CIPHER_NONE))
-		is_open_connection = true;
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
-	/*
-	 * If peer does not support PMF in case of OCE/MBO
-	 * Connection, Disable BTM offload to firmware.
-	 */
-	if (session->pConnectBssDesc->mbo_oce_enabled_ap &&
-	    (!is_pmf_enabled && !is_open_connection))
-		*btm_offload_config = 0;
-
-	sme_debug("is_open:%d is_pmf_enabled %d btm_offload_cfg:%d for "QDF_MAC_ADDR_FMT,
-		  is_open_connection, is_pmf_enabled,
-		  *btm_offload_config,
-		  QDF_MAC_ADDR_REF(session->pConnectBssDesc->bssId));
-}
-
 /**
  * csr_update_11k_offload_params - Update 11K offload params
  * @mac_ctx: MAC context
@@ -16676,38 +16601,6 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 /**
- * csr_cm_roam_scan_btm_offload() - set roam scan btm offload parameters
- * @mac_ctx: global mac ctx
- * @session: sme session
- * @params:  roam scan btm offload parameters
- *
- * This function is used to set roam scan btm offload related parameters
- *
- * Return: None
- */
-static void
-csr_cm_roam_scan_btm_offload(struct mac_context *mac_ctx,
-			     struct csr_roam_session *session,
-			     struct wlan_roam_btm_config *params)
-{
-	params->vdev_id = session->vdev_id;
-	csr_update_btm_offload_config(mac_ctx, ROAM_SCAN_OFFLOAD_START,
-				      &params->btm_offload_config, session);
-	params->btm_solicited_timeout =
-			mac_ctx->mlme_cfg->btm.btm_solicited_timeout;
-	params->btm_max_attempt_cnt =
-			mac_ctx->mlme_cfg->btm.btm_max_attempt_cnt;
-	params->btm_sticky_time =
-			mac_ctx->mlme_cfg->btm.btm_sticky_time;
-	params->disassoc_timer_threshold =
-			mac_ctx->mlme_cfg->btm.disassoc_timer_threshold;
-	params->btm_query_bitmask =
-			mac_ctx->mlme_cfg->btm.btm_query_bitmask;
-	params->btm_candidate_min_score =
-			mac_ctx->mlme_cfg->btm.btm_trig_min_candidate_score;
-}
-
-/**
  * csr_cm_roam_offload_11k_params() - set roam 11k offload parameters
  * @mac_ctx: global mac ctx
  * @session: sme session
@@ -16750,8 +16643,6 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		sme_err("session is null %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	csr_cm_roam_scan_btm_offload(mac_ctx, session, &req->btm_config);
 
 	/* 11k offload is enabled during RSO Start after connect indication */
 	csr_cm_roam_offload_11k_params(mac_ctx, session,

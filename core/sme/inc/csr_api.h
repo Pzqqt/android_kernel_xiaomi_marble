@@ -721,7 +721,6 @@ struct csr_roam_profile {
 	struct wlan_fils_connection_info *fils_con_info;
 #endif
 	bool force_rsne_override;
-	bool is_hs_20_ap;
 };
 
 typedef struct tagCsrRoamConnectedProfile {

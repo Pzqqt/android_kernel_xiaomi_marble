@@ -19892,6 +19892,8 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					      HS20_OUI_TYPE_SIZE))) {
 				uint16_t curAddIELen =
 					assoc_add_ie->length;
+				struct cm_roam_values_copy src_cfg;
+
 				hdd_debug("HS20 IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
@@ -19908,7 +19910,11 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					assoc_add_ie->addIEdata;
 				roam_profile->nAddIEAssocLength =
 					assoc_add_ie->length;
-				roam_profile->is_hs_20_ap = true;
+				src_cfg.bool_value = true;
+				wlan_cm_roam_cfg_set_value(wlan_vdev_get_psoc(
+								adapter->vdev),
+							   adapter->vdev_id,
+							   HS_20_AP, &src_cfg);
 			}
 			/* Appending OSEN Information  Element in Assiciation Request */
 			else if ((0 == memcmp(&genie[0], OSEN_OUI_TYPE,
