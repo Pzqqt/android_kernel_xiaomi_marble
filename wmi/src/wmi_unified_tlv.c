@@ -2648,6 +2648,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_vht_rate_set,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
+	cmd->auth_mode = param->akm;
 	cmd->peer_nss = param->peer_nss;
 
 	/* Update bandwidth-NSS mapping */
