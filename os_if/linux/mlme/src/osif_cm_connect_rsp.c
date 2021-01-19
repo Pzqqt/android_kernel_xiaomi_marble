@@ -29,51 +29,6 @@
 #include "wlan_cfg80211.h"
 #include "wlan_cfg80211_scan.h"
 
-
-/**
- * osif_cm_get_assoc_req_ie_data() - Get the assoc req IE offset and length
- * if valid assoc req is present
- * @assoc_req: assoc req info
- * @ie_data_len: IE date length to be calculated
- * @ie_data_ptr: IE data pointer to be calculated
- *
- * Return: void
- */
-static void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
-					  size_t *ie_data_len,
-					  const uint8_t **ie_data_ptr)
-{
-	/* Validate IE and length */
-	if (!assoc_req->len || !assoc_req->ptr ||
-	    assoc_req->len <= WLAN_ASSOC_REQ_IES_OFFSET)
-		return;
-
-	*ie_data_len = assoc_req->len - WLAN_ASSOC_REQ_IES_OFFSET;
-	*ie_data_ptr = assoc_req->ptr + WLAN_ASSOC_REQ_IES_OFFSET;
-}
-
-/**
- * osif_cm_get_assoc_rsp_ie_data() - Get the assoc resp IE offset and length
- * if valid assoc req is present
- * @assoc_req: assoc req info
- * @ie_data_len: IE date length to be calculated
- * @ie_data_ptr: IE data pointer to be calculated
- *
- * Return: void
- */
-static void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
-					  size_t *ie_data_len,
-					  const uint8_t **ie_data_ptr)
-{
-	/* Validate IE and length */
-	if (!assoc_rsp->len || !assoc_rsp->ptr ||
-	    assoc_rsp->len <= WLAN_ASSOC_RSP_IES_OFFSET)
-		return;
-
-	*ie_data_len = assoc_rsp->len - WLAN_ASSOC_RSP_IES_OFFSET;
-	*ie_data_ptr = assoc_rsp->ptr + WLAN_ASSOC_RSP_IES_OFFSET;
-}
-
 /**
  * osif_validate_connect_and_reset_src_id() - Validate connect response and
  * resets source and id
@@ -187,23 +142,18 @@ static void __osif_connect_bss(struct net_device *dev,
 			       enum ieee80211_statuscode status)
 {
 	enum nl80211_timeout_reason nl_timeout_reason;
-	size_t req_len = 0;
-	const uint8_t *req_ptr = NULL;
-	size_t rsp_len = 0;
-	const uint8_t *rsp_ptr = NULL;
 
 	nl_timeout_reason = osif_convert_timeout_reason(rsp->reason);
 
 	osif_debug("nl_timeout_reason %d", nl_timeout_reason);
 
-	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
-				      &req_len, &req_ptr);
-	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
-				      &rsp_len, &rsp_ptr);
-
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
-			     req_ptr, req_len, rsp_ptr, rsp_len, status,
-			     GFP_KERNEL, nl_timeout_reason);
+			     rsp->connect_ies.assoc_req.ptr,
+			     rsp->connect_ies.assoc_req.len,
+			     rsp->connect_ies.assoc_rsp.ptr,
+			     rsp->connect_ies.assoc_rsp.len,
+			     status, GFP_KERNEL,
+			     nl_timeout_reason);
 }
 #else /* CFG80211_CONNECT_TIMEOUT_REASON_CODE */
 
@@ -223,18 +173,11 @@ static void __osif_connect_bss(struct net_device *dev,
 			       struct wlan_cm_connect_resp *rsp,
 			       ieee80211_statuscode status)
 {
-	size_t req_len = 0;
-	const uint8_t *req_ptr = NULL;
-	size_t rsp_len = 0;
-	const uint8_t *rsp_ptr = NULL;
-
-	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
-				      &req_len, &req_ptr);
-	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
-				      &rsp_len, &rsp_ptr);
-
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
-			     req_ptr, req_len, rsp_ptr, rsp_len,
+			     rsp->connect_ies.assoc_req.ptr,
+			     rsp->connect_ies.assoc_req.len,
+			     rsp->connect_ies.assoc_rsp.ptr,
+			     rsp->connect_ies.assoc_rsp.len,
 			     status, GFP_KERNEL);
 }
 #endif /* CFG80211_CONNECT_TIMEOUT_REASON_CODE */
@@ -395,12 +338,10 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 		conn_rsp_params.bssid = rsp->bssid.bytes;
 		conn_rsp_params.timeout_reason =
 			osif_convert_timeout_reason(rsp->reason);
-		osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
-					&conn_rsp_params.req_ie_len,
-					&conn_rsp_params.req_ie);
-		osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
-				&conn_rsp_params.resp_ie_len,
-				&conn_rsp_params.resp_ie);
+		conn_rsp_params.req_ie = rsp->connect_ies.assoc_req.ptr;
+		conn_rsp_params.req_ie_len = rsp->connect_ies.assoc_req.len;
+		conn_rsp_params.resp_ie = rsp->connect_ies.assoc_rsp.ptr;
+		conn_rsp_params.resp_ie_len = rsp->connect_ies.assoc_rsp.len;
 		conn_rsp_params.bss = bss;
 		osif_populate_fils_params(&conn_rsp_params,
 					  rsp->connect_ies.fils_ie);
@@ -486,10 +427,6 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					 struct wlan_cm_connect_resp *rsp)
 {
 	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
-	size_t req_len = 0;
-	const uint8_t *req_ptr = NULL;
-	size_t rsp_len = 0;
-	const uint8_t *rsp_ptr = NULL;
 
 	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
 		if (rsp->status_code)
@@ -498,13 +435,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
 	}
 
-	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
-				      &req_len, &req_ptr);
-	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
-				      &rsp_len, &rsp_ptr);
 	cfg80211_connect_result(osif_priv->wdev->netdev,
-				rsp->bssid.bytes, req_ptr, req_len,
-				rsp_ptr, rsp_len, status, GFP_KERNEL);
+				rsp->bssid.bytes,
+				rsp->connect_ies.assoc_req.ptr,
+				rsp->connect_ies.assoc_req.len,
+				rsp->connect_ies.assoc_rsp.ptr,
+				rsp->connect_ies.assoc_rsp.len,
+				status, GFP_KERNEL);
 }
 #endif /* CFG80211_CONNECT_BSS */
 
