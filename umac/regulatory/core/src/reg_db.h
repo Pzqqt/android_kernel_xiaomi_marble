@@ -163,39 +163,39 @@ struct reg_domain_pair {
 #if defined(CONFIG_BAND_6GHZ)
 /**
  * enum reg_super_domain_6g - 6G Super Domain enumeration
- * @FCC1_6G: Super domain FCC1_6G for US
- * @ETSI1_6G: Super domain ETSI1_6G
- * @ETSI2_6G: Super domain ETSI2_6G
- * @APL1_6G: Super domain APL1_6G
- * @FCC1_6G_CL: Super domain FCC1_6G for Chile
+ * @FCC1_6G_01: Super domain FCC1_6G_01 for US
+ * @ETSI1_6G_02: Super domain ETSI1_6G_02 for EU
+ * @ETSI2_6G_03: Super domain ETSI2_6G_03 for UK
+ * @APL1_6G_04: Super domain APL1_6G_04 for Korea
+ * @FCC1_6G_05: Super domain FCC1_6G_05 for Chile
  */
 enum reg_super_domain_6g {
-	FCC1_6G = 0x01,
-	ETSI1_6G = 0x02,
-	ETSI2_6G = 0x03,
-	APL1_6G = 0x04,
-	FCC1_6G_CL = 0x05,
+	FCC1_6G_01 = 0x01,
+	ETSI1_6G_02 = 0x02,
+	ETSI2_6G_03 = 0x03,
+	APL1_6G_04 = 0x04,
+	FCC1_6G_05 = 0x05,
 };
 
 #if defined(COMPILE_REGDB_6G)
 /**
  * struct sixghz_super_to_subdomains
  * @reg_6ghz_super_dmn_id: 6G super domain id.
- * @reg_domain_6g_id_ap_sp: 6G domain id for SP AP.
  * @reg_domain_6g_id_ap_lpi: 6G domain id for LPI AP.
+ * @reg_domain_6g_id_ap_sp: 6G domain id for SP AP.
  * @reg_domain_6g_id_ap_vlp: 6G domain id for VLP AP.
- * @reg_domain_6g_id_client_sp: 6G domain id for clients of the SP AP.
  * @reg_domain_6g_id_client_lpi: 6G domain id for clients of the LPI AP.
+ * @reg_domain_6g_id_client_sp: 6G domain id for clients of the SP AP.
  * @reg_domain_6g_id_client_vlp: 6G domain id for clients of the VLP AP.
  */
 struct sixghz_super_to_subdomains {
 	uint16_t reg_6ghz_super_dmn_id;
-	uint8_t reg_domain_6g_id_ap_sp;
 	uint8_t reg_domain_6g_id_ap_lpi;
+	uint8_t reg_domain_6g_id_ap_sp;
 	uint8_t reg_domain_6g_id_ap_vlp;
-	uint8_t reg_domain_6g_id_client_sp[REG_MAX_CLIENT_TYPE - 1];
-	uint8_t reg_domain_6g_id_client_lpi[REG_MAX_CLIENT_TYPE - 1];
-	uint8_t reg_domain_6g_id_client_vlp[REG_MAX_CLIENT_TYPE - 1];
+	uint8_t reg_domain_6g_id_client_lpi[REG_MAX_CLIENT_TYPE];
+	uint8_t reg_domain_6g_id_client_sp[REG_MAX_CLIENT_TYPE];
+	uint8_t reg_domain_6g_id_client_vlp[REG_MAX_CLIENT_TYPE];
 };
 #endif
 #endif

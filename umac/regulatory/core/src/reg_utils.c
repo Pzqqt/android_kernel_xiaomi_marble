@@ -751,8 +751,8 @@ enum reg_6g_ap_type reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
 
 	if (reg_is_afc_available(pdev))
 		ap_pwr_type = REG_STANDARD_POWER_AP;
-	else if (pdev_priv_obj->reg_6g_superid != FCC1_6G &&
-		 pdev_priv_obj->reg_6g_superid != FCC1_6G_CL)
+	else if (pdev_priv_obj->reg_6g_superid != FCC1_6G_01 &&
+		 pdev_priv_obj->reg_6g_superid != FCC1_6G_05)
 		ap_pwr_type = REG_VERY_LOW_POWER_AP;
 
 	reg_set_ap_pwr_and_update_chan_list(pdev, ap_pwr_type);
