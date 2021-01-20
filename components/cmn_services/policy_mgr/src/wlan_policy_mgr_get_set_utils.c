@@ -704,15 +704,18 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
 		if ((hw_config_type == WMI_HW_MODE_DBS) ||
-			(hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-			(hw_config_type == WMI_HW_MODE_SBS)) {
+		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
+		    (hw_config_type == WMI_HW_MODE_SBS) ||
+		    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS)) {
 			/* Update for MAC1 */
 			tmp = &info->mac_phy_cap[j++];
 			policy_mgr_get_hw_mode_params(tmp, &mac1_ss_bw_info);
-			if (hw_config_type == WMI_HW_MODE_DBS)
+			if (hw_config_type == WMI_HW_MODE_DBS ||
+			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
 			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-				(hw_config_type == WMI_HW_MODE_SBS))
+			    (hw_config_type == WMI_HW_MODE_SBS) ||
+			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS))
 				sbs_mode = HW_MODE_SBS;
 		}
 
@@ -3800,6 +3803,38 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
+				  struct dbs_bw *bw_dbs)
+{
+	uint32_t dbs, sbs, i, param;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
+		param = pm_ctx->hw_mode.hw_mode_list[i];
+		dbs = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
+		sbs = POLICY_MGR_HW_MODE_SBS_MODE_GET(param);
+
+		if (!dbs && !sbs)
+			bw_dbs->mac0_bw =
+				POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param);
+
+		if (dbs) {
+			bw_dbs->mac0_bw =
+				POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param);
+			bw_dbs->mac1_bw =
+				POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param);
+		} else {
+			continue;
+		}
+	}
 }
 
 uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,

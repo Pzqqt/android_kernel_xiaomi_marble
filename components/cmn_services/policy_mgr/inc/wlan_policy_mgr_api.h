@@ -3638,4 +3638,15 @@ bool policy_mgr_is_sta_mon_concurrency(struct wlan_objmgr_psoc *psoc);
  *
  */
 QDF_STATUS policy_mgr_check_mon_concurrency(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_get_hw_max_dbs_bw() - Computes DBS BW
+ * @psoc: PSOC object information
+ * @dbs_bw: BW info of both MAC0 and MAC1
+ * This function computes BW info of both MAC0 and MAC1
+ *
+ * Return: void
+ */
+void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
+				  struct dbs_bw *bw_dbs);
 #endif /* __WLAN_POLICY_MGR_API_H */

@@ -6519,14 +6519,17 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
 		if ((hw_config_type == WMI_HW_MODE_DBS) ||
 		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-		    (hw_config_type == WMI_HW_MODE_SBS)) {
+		    (hw_config_type == WMI_HW_MODE_SBS) ||
+		    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS)) {
 			/* Update for MAC1 */
 			tmp = &mac_phy_cap[j++];
 			wma_get_hw_mode_params(tmp, &mac1_ss_bw_info);
-			if (hw_config_type == WMI_HW_MODE_DBS)
+			if (hw_config_type == WMI_HW_MODE_DBS ||
+			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
 			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-			    (hw_config_type == WMI_HW_MODE_SBS))
+			    (hw_config_type == WMI_HW_MODE_SBS) ||
+			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS))
 				sbs_mode = HW_MODE_SBS;
 			if (QDF_STATUS_SUCCESS !=
 			wma_update_supported_bands(tmp->supported_bands,

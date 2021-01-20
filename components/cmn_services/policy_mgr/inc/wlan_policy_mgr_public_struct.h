@@ -1249,6 +1249,16 @@ struct policy_mgr_user_cfg {
 };
 
 /**
+ * struct dbs_bw - Max BW supported in DBS mode
+ * @mac0_bw: BW of MAC0
+ * @mac1_bw: BW of MAC1
+ */
+struct dbs_bw {
+	enum hw_mode_bandwidth mac0_bw;
+	enum hw_mode_bandwidth mac1_bw;
+};
+
+/**
  * struct dbs_nss - Number of spatial streams in DBS mode
  * @mac0_ss: Number of spatial streams on MAC0
  * @mac1_ss: Number of spatial streams on MAC1
