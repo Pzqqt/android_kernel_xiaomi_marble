@@ -200,6 +200,11 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
+	if (qdf_atomic_read(&ap_adapter->ch_switch_in_progress)) {
+		hdd_err("pre cac not allowed during CSA");
+		return -EINVAL;
+	}
+
 	mac_handle = hdd_ctx->mac_handle;
 	val = wlan_sap_is_pre_cac_active(mac_handle);
 	if (val) {
