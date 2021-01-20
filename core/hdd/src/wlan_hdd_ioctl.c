@@ -1341,7 +1341,8 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 			ret = -EINVAL;
 			goto exit;
 		}
-		channel_freq_list[i] = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+		channel_freq_list[i] = wlan_reg_legacy_chan_to_freq(
+							     hdd_ctx->pdev,
 							     channel);
 	}
 
@@ -2637,7 +2638,7 @@ static int hdd_parse_ese_beacon_req(struct wlan_objmgr_pdev *pdev,
 					return -EINVAL;
 				}
 				req->bcnReq[j].ch_freq =
-				wlan_reg_chan_to_freq(pdev, temp_int);
+				wlan_reg_legacy_chan_to_freq(pdev, temp_int);
 				break;
 
 			case 2: /* Scan mode */

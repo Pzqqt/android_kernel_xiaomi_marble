@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,10 +29,10 @@ struct hdd_config;
 struct hdd_adapter;
 struct wireless_dev;
 
-/* NAN Social channels */
-#define NAN_SOCIAL_CHANNEL_2_4GHZ 6
-#define NAN_SOCIAL_CHANNEL_5GHZ_LOWER_BAND 44
-#define NAN_SOCIAL_CHANNEL_5GHZ_UPPER_BAND 149
+/* NAN Social frequencies */
+#define NAN_SOCIAL_FREQ_2_4GHZ 2437
+#define NAN_SOCIAL_FREQ_5GHZ_LOWER_BAND 5220
+#define NAN_SOCIAL_FREQ_5GHZ_UPPER_BAND 5745
 
 #define NDP_BROADCAST_STAID           (0)
 

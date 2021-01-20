@@ -1054,7 +1054,7 @@ static void cm_rso_chan_to_freq_list(struct wlan_objmgr_pdev *pdev,
 
 	for (count = 0; count < chan_list_len; count++)
 		freq_list[count] =
-			wlan_reg_chan_to_freq(pdev, chan_list[count]);
+			wlan_reg_legacy_chan_to_freq(pdev, chan_list[count]);
 }
 
 QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
