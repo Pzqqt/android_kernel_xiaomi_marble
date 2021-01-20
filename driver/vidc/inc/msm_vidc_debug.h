@@ -56,11 +56,13 @@ enum vidc_msg_prio {
 
 #define dprintk(__level, sid, __fmt, ...)	\
 	do { \
-		pr_err(VIDC_DBG_TAG __fmt, \
-			"level", \
-			sid, \
-			"codec", \
-			##__VA_ARGS__); \
+		if (msm_vidc_debug & __level) { \
+			pr_err(VIDC_DBG_TAG __fmt, \
+				level_str(__level), \
+				sid, \
+				"codec", \
+				##__VA_ARGS__); \
+		} \
 	} while (0)
 
 #define s_vpr_e(sid, __fmt, ...) dprintk(VIDC_ERR, sid, __fmt, ##__VA_ARGS__)
@@ -99,4 +101,7 @@ enum vidc_msg_prio {
 	do {	if (value)					\
 			d_vpr_e("BugOn");		\
 	} while (0)
+
+const char *level_str(u32 level);
+
 #endif

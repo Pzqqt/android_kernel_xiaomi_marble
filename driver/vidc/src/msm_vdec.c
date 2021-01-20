@@ -1861,6 +1861,34 @@ int msm_vdec_g_param(struct msm_vidc_inst *inst,
 	return 0;
 }
 
+static int msm_vdec_check_colorformat_supported(struct msm_vidc_inst* inst,
+		enum msm_vidc_colorformat_type colorformat)
+{
+	bool supported = true;
+
+	/* do not reject coloformats before streamon */
+	if (!inst->vb2q[INPUT_PORT].streaming)
+		return true;
+
+	/*
+	 * bit_depth 8 bit supports 8 bit colorformats only
+	 * bit_depth 10 bit supports 10 bit colorformats only
+	 * interlace supports ubwc colorformats only
+	 */
+	if (inst->capabilities->cap[BIT_DEPTH].value == BIT_DEPTH_8 &&
+		!is_8bit_colorformat(colorformat))
+		supported = false;
+	if (inst->capabilities->cap[BIT_DEPTH].value == BIT_DEPTH_10 &&
+		!is_10bit_colorformat(colorformat))
+		supported = false;
+	if (inst->capabilities->cap[CODED_FRAMES].value ==
+		CODED_FRAMES_ADAPTIVE_FIELDS &&
+		!is_ubwc_colorformat(colorformat))
+		supported = false;
+
+	return supported;
+}
+
 int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 {
 	int rc = 0;
@@ -1900,8 +1928,11 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 			if (idx > 31)
 				break;
 			if (formats & BIT(i)) {
-				array[idx] = formats & BIT(i);
-				idx++;
+				if (msm_vdec_check_colorformat_supported(inst,
+						formats & BIT(i))) {
+					array[idx] = formats & BIT(i);
+					idx++;
+				}
 			}
 			i++;
 			formats >>= 1;

@@ -415,6 +415,45 @@ struct msm_vidc_allocations *msm_vidc_get_allocations(
 	}
 }
 
+const char *core_state_name(enum msm_vidc_core_state state)
+{
+	const char* name = "UNKNOWN";
+
+	switch (state) {
+	case MSM_VIDC_CORE_INIT:
+		name = "CORE_INIT";
+		break;
+	case MSM_VIDC_CORE_DEINIT:
+		name = "CORE_DEINIT";
+		break;
+	default:
+		name = "UNKNOWN";
+		break;
+	}
+
+	return name;
+}
+
+int msm_vidc_change_core_state(struct msm_vidc_core *core,
+	enum msm_vidc_core_state request_state, const char *func)
+{
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!request_state) {
+		d_vpr_e("%s: invalid core request state\n", func);
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s: core state changed from %s to %s\n",
+		func, core_state_name(core->state),
+		core_state_name(request_state));
+	core->state = request_state;
+	return 0;
+}
+
 const char *state_name(enum msm_vidc_inst_state state)
 {
 	const char *name = "UNKNOWN";
@@ -1097,29 +1136,31 @@ int msm_vidc_get_fps(struct msm_vidc_inst *inst)
 	return fps;
 }
 
-int msm_vidc_num_queued_bufs(struct msm_vidc_inst *inst, u32 type)
+int msm_vidc_num_buffers(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type type, enum msm_vidc_buffer_attributes attr)
 {
 	int count = 0;
 	struct msm_vidc_buffer *vbuf;
-	struct msm_vidc_buffers* buffers;
+	struct msm_vidc_buffers *buffers;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return 0;
+		return count;
 	}
-	if (type == OUTPUT_MPLANE) {
+	if (type == MSM_VIDC_BUF_OUTPUT) {
 		buffers = &inst->buffers.output;
-	} else if (type == INPUT_MPLANE) {
+	} else if (type == MSM_VIDC_BUF_INPUT) {
 		buffers = &inst->buffers.input;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid buffer type %#x\n", __func__, type);
-		return -EINVAL;
+		s_vpr_e(inst->sid, "%s: invalid buffer type %#x\n",
+				__func__, type);
+		return count;
 	}
 
 	list_for_each_entry(vbuf, &buffers->list, list) {
 		if (vbuf->type != type)
 			continue;
-		if (!(vbuf->attr & MSM_VIDC_ATTR_QUEUED))
+		if (!(vbuf->attr & attr))
 			continue;
 		count++;
 	}
@@ -1561,7 +1602,6 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_alloc *alloc;
 	struct msm_vidc_map *map;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1646,7 +1686,6 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffers *buffers;
 	int i;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1675,7 +1714,6 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buffer, *dummy;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1723,7 +1761,6 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buffer, *dummy;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -1995,8 +2032,22 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = venus_hfi_session_open(inst);
+	inst->packet_size = 4096;
+	inst->packet = kzalloc(inst->packet_size, GFP_KERNEL);
+	if (!inst->packet) {
+		s_vpr_e(inst->sid, "%s(): inst packet allocation failed\n", __func__);
+		return -ENOMEM;
+	}
 
+	rc = venus_hfi_session_open(inst);
+	if (rc)
+		goto error;
+
+	return 0;
+error:
+	s_vpr_e(inst->sid, "%s(): session open failed\n", __func__);
+	kfree(inst->packet);
+	inst->packet = NULL;
 	return rc;
 }
 
@@ -2039,8 +2090,10 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
+	int count = 0;
 	struct msm_vidc_core *core;
 	enum signal_session_response signal_type;
+	enum msm_vidc_buffer_type buffer_type;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2049,8 +2102,10 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 
 	if (port == INPUT_PORT) {
 		signal_type = SIGNAL_CMD_STOP_INPUT;
+		buffer_type = MSM_VIDC_BUF_INPUT;
 	} else if (port == OUTPUT_PORT) {
 		signal_type = SIGNAL_CMD_STOP_OUTPUT;
+		buffer_type = MSM_VIDC_BUF_OUTPUT;
 	} else {
 		s_vpr_e(inst->sid, "%s: invalid port: %d\n", __func__, port);
 		return -EINVAL;
@@ -2068,19 +2123,31 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 			&inst->completions[signal_type],
 			msecs_to_jiffies(
 			core->capabilities[HW_RESPONSE_TIMEOUT].value));
-	mutex_lock(&inst->lock);
 	if (!rc) {
 		s_vpr_e(inst->sid, "%s: session stop timed out for port: %d\n",
 				__func__, port);
-		//msm_comm_kill_session(inst);
-		rc = -EIO;
+		rc = -ETIMEDOUT;
+		msm_vidc_core_timeout(inst->core);
 	} else {
 		rc = 0;
-		s_vpr_h(inst->sid, "%s: stop successful on port: %d\n",
-			__func__, port);
 	}
+	mutex_lock(&inst->lock);
 
-	return rc;
+	/* no more queued buffers after streamoff */
+	count = msm_vidc_num_buffers(inst, buffer_type, MSM_VIDC_ATTR_QUEUED);
+	if (count) {
+		s_vpr_e(inst->sid, "%s: %d buffers pending on port: %d\n",
+			__func__, count, port);
+		msm_vidc_kill_session(inst);
+	}
+	rc = msm_vidc_flush_buffers(inst, buffer_type);
+	if (rc)
+		return rc;
+
+	s_vpr_h(inst->sid, "%s: stop successful on port: %d\n",
+		__func__, port);
+
+	return 0;
 }
 
 int msm_vidc_session_close(struct msm_vidc_inst *inst)
@@ -2105,17 +2172,41 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 			&inst->completions[SIGNAL_CMD_CLOSE],
 			msecs_to_jiffies(
 			core->capabilities[HW_RESPONSE_TIMEOUT].value));
-	mutex_lock(&inst->lock);
 	if (!rc) {
 		s_vpr_e(inst->sid, "%s: session close timed out\n", __func__);
-		//msm_comm_kill_session(inst);
-		rc = -EIO;
+		rc = -ETIMEDOUT;
+		msm_vidc_core_timeout(inst->core);
 	} else {
 		rc = 0;
 		s_vpr_h(inst->sid, "%s: close successful\n", __func__);
 	}
+	mutex_lock(&inst->lock);
+
+	msm_vidc_remove_session(inst);
+
+	s_vpr_h(inst->sid, "%s: free session packet data\n", __func__);
+	kfree(inst->packet);
+	inst->packet = NULL;
 
 	return rc;
+}
+
+int msm_vidc_kill_session(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	if (!inst->session_id) {
+		s_vpr_e(inst->sid, "%s: already killed\n", __func__);
+		return 0;
+	}
+
+	s_vpr_e(inst->sid, "%s: killing session\n", __func__);
+	msm_vidc_session_close(inst);
+	msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+
+	return 0;
 }
 
 int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
@@ -2363,16 +2454,28 @@ error:
 int msm_vidc_core_deinit(struct msm_vidc_core *core)
 {
 	int rc = 0;
+	struct msm_vidc_inst *inst, *dummy;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	mutex_lock(&core->lock);
+	d_vpr_h("%s()\n", __func__);
+	if (core->state == MSM_VIDC_CORE_DEINIT)
+		goto unlock;
+
 	venus_hfi_core_deinit(core);
 	msm_vidc_deinit_instance_caps(core);
 	msm_vidc_deinit_core_caps(core);
+	/* unlink all sessions from core, if any */
+	list_for_each_entry_safe(inst, dummy, &core->instances, list) {
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		list_del(&inst->list);
+	}
+	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
+
+unlock:
 	mutex_unlock(&core->lock);
 	return rc;
 }
@@ -2381,18 +2484,12 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!core || !core->platform) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
 	mutex_lock(&core->lock);
-	if (core->state == MSM_VIDC_CORE_ERROR) {
-		d_vpr_e("%s: core invalid state\n", __func__);
-		rc = -EINVAL;
-		goto unlock;
-	}
 	if (core->state == MSM_VIDC_CORE_INIT) {
 		rc = 0;
 		goto unlock;
@@ -2405,7 +2502,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	if (rc)
 		goto unlock;
 
-	core->state = MSM_VIDC_CORE_INIT;
+	msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT, __func__);
 	init_completion(&core->init_done);
 	core->smmu_fault_handled = false;
 	core->ssr.trigger = false;
@@ -2413,7 +2510,6 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	rc = venus_hfi_core_init(core);
 	if (rc) {
 		d_vpr_e("%s: core init failed\n", __func__);
-		core->state = MSM_VIDC_CORE_DEINIT;
 		goto unlock;
 	}
 
@@ -2422,18 +2518,25 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	mutex_unlock(&core->lock);
 	rc = wait_for_completion_timeout(&core->init_done, msecs_to_jiffies(
 			core->capabilities[HW_RESPONSE_TIMEOUT].value));
+	mutex_lock(&core->lock);
 	if (!rc) {
-		d_vpr_e("%s: system init timed out\n", __func__);
+		d_vpr_e("%s: core init timed out\n", __func__);
 		rc = -ETIMEDOUT;
 	} else {
 		d_vpr_h("%s: system init wait completed\n", __func__);
 		rc = 0;
 	}
-	mutex_lock(&core->lock);
 
 unlock:
 	mutex_unlock(&core->lock);
+	if (rc)
+		msm_vidc_core_init(core);
 	return rc;
+}
+
+int msm_vidc_core_timeout(struct msm_vidc_core *core)
+{
+	return msm_vidc_core_deinit(core);
 }
 
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
@@ -2464,6 +2567,50 @@ void msm_vidc_batch_handler(struct work_struct *work)
 {
 }
 
+int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
+		enum msm_vidc_buffer_type type)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf, *dummy;
+	enum msm_vidc_buffer_type buffer_type[2];
+	int i;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (type == MSM_VIDC_BUF_INPUT) {
+		buffer_type[0] = MSM_VIDC_BUF_INPUT_META;
+		buffer_type[1] = MSM_VIDC_BUF_INPUT;
+	} else if (type == MSM_VIDC_BUF_OUTPUT) {
+		buffer_type[0] = MSM_VIDC_BUF_OUTPUT_META;
+		buffer_type[1] = MSM_VIDC_BUF_OUTPUT;
+	} else {
+		s_vpr_h(inst->sid, "%s: invalid buffer type %d\n",
+				__func__, type);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(buffer_type); i++) {
+		buffers = msm_vidc_get_buffers(inst, buffer_type[i], __func__);
+		if (!buffers)
+			return -EINVAL;
+
+		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
+			if (buf->attr & MSM_VIDC_ATTR_QUEUED ||
+				buf->attr & MSM_VIDC_ATTR_DEFERRED) {
+				print_vidc_buffer(VIDC_ERR, "flushing buffer", inst, buf);
+				msm_vidc_vb2_buffer_done(inst, buf);
+				msm_vidc_put_driver_buf(inst, buf);
+			}
+		}
+	}
+
+	return rc;
+}
+
 void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffers *buffers;
@@ -2483,6 +2630,11 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 		MSM_VIDC_BUF_VPSS,
 	};
 	int i;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
 
 	for (i = 0; i < ARRAY_SIZE(buf_types); i++) {
 		buffers = msm_vidc_get_buffers(inst, buf_types[i], __func__);
@@ -2573,6 +2725,11 @@ void put_inst(struct msm_vidc_inst *inst)
 	kref_put(&inst->kref, msm_vidc_close_helper);
 }
 
+bool core_lock_check(struct msm_vidc_core *core, const char* func)
+{
+	return mutex_is_locked(&core->lock);
+}
+
 void core_lock(struct msm_vidc_core *core, const char *function)
 {
 	mutex_lock(&core->lock);
@@ -2581,6 +2738,11 @@ void core_lock(struct msm_vidc_core *core, const char *function)
 void core_unlock(struct msm_vidc_core *core, const char *function)
 {
 	mutex_unlock(&core->lock);
+}
+
+bool inst_lock_check(struct msm_vidc_inst *inst, const char* func)
+{
+	return mutex_is_locked(&inst->lock);
 }
 
 void inst_lock(struct msm_vidc_inst *inst, const char *function)

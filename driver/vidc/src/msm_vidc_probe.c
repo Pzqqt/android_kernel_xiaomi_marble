@@ -178,7 +178,7 @@ static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 	d_vpr_h("%s()\n", __func__);
 
 	mutex_destroy(&core->lock);
-	core->state = MSM_VIDC_CORE_DEINIT;
+	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
 	if (core->pm_workq)
 		destroy_workqueue(core->pm_workq);
@@ -199,7 +199,7 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	}
 	d_vpr_h("%s()\n", __func__);
 
-	core->state = MSM_VIDC_CORE_DEINIT;
+	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
 	core->device_workq = create_singlethread_workqueue("device_workq");
 	if (!core->device_workq) {

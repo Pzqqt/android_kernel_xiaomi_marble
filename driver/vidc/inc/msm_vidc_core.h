@@ -57,7 +57,6 @@ struct msm_vidc_core_power {
 enum msm_vidc_core_state {
 	MSM_VIDC_CORE_DEINIT       = 0,
 	MSM_VIDC_CORE_INIT         = 1,
-	MSM_VIDC_CORE_ERROR        = 2,
 };
 
 struct msm_vidc_core {

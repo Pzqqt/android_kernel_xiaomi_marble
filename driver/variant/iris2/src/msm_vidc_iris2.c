@@ -367,8 +367,10 @@ static int __watchdog_iris2(struct msm_vidc_core *vidc_core, u32 intr_status)
 		return -EINVAL;
 	}
 
-	if (intr_status & WRAPPER_INTR_STATUS_A2HWD_BMSK_IRIS2)
+	if (intr_status & WRAPPER_INTR_STATUS_A2HWD_BMSK_IRIS2) {
+		d_vpr_e("%s: received watchdog interrupt\n", __func__);
 		rc = 1;
+	}
 
 	return rc;
 }

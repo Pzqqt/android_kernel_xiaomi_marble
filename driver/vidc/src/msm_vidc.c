@@ -700,18 +700,9 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		return NULL;
 	}
 
-	if (core->state == MSM_VIDC_CORE_ERROR) {
-		d_vpr_e("%s: core invalid state\n", __func__);
+	rc = msm_vidc_core_init(core);
+	if (rc)
 		return NULL;
-	}
-
-	if (core->state == MSM_VIDC_CORE_DEINIT) {
-		rc = msm_vidc_core_init(core);
-		if (rc) {
-			msm_vidc_core_deinit(core);
-			return NULL;
-		}
-	}
 
 	inst = kzalloc(sizeof(*inst), GFP_KERNEL);
 	if (!inst) {
