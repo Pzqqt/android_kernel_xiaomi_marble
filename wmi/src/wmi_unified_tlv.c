@@ -1613,7 +1613,8 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 			       (chunk_len + sizeof(segHdrInfo)));
 		cmd += WMI_TLV_HDR_SIZE;
 		memcpy(cmd, &segHdrInfo, sizeof(segHdrInfo));   /* 4 bytes */
-		memcpy(&cmd[sizeof(segHdrInfo)], bufpos, chunk_len);
+		WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(&cmd[sizeof(segHdrInfo)],
+						bufpos, chunk_len);
 
 		wmi_mtrace(WMI_PDEV_UTF_CMDID, NO_SESSION, 0);
 		ret = wmi_unified_cmd_send(wmi_handle, buf,
