@@ -995,6 +995,101 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 	return ret;
 }
 
+static void _sde_encoder_get_qsync_fps_callback(
+		struct drm_encoder *drm_enc, u32 *qsync_fps, u32 vrr_fps)
+{
+	struct msm_display_info *disp_info;
+	struct sde_encoder_virt *sde_enc;
+	int rc = 0;
+	struct sde_connector *sde_conn;
+
+	if (!qsync_fps)
+		return;
+
+	*qsync_fps = 0;
+	if (!drm_enc) {
+		SDE_ERROR("invalid drm encoder\n");
+		return;
+	}
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	disp_info = &sde_enc->disp_info;
+	*qsync_fps = disp_info->qsync_min_fps;
+
+	if (!disp_info->has_qsync_min_fps_list) {
+		return;
+	} else if (!sde_enc->cur_master || !(disp_info->capabilities & MSM_DISPLAY_CAP_VID_MODE)) {
+		SDE_ERROR("invalid qsync settings %d\n", !sde_enc->cur_master);
+		return;
+	}
+
+	/*
+	 * If "dsi-supported-qsync-min-fps-list" is defined, get
+	 * the qsync min fps corresponding to the fps in dfps list
+	 */
+	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
+	if (sde_conn->ops.get_qsync_min_fps)
+		rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display, vrr_fps);
+
+	if (rc <= 0) {
+		SDE_ERROR("invalid qsync min fps %d\n", rc);
+		return;
+	}
+
+	*qsync_fps = rc;
+}
+
+static int _sde_encoder_avr_step_check(struct sde_connector *sde_conn,
+		struct sde_connector_state *sde_conn_state, u32 step)
+{
+	u32 nom_fps = drm_mode_vrefresh(sde_conn_state->msm_mode.base);
+	u32 min_fps;
+	u32 vtotal = sde_conn_state->msm_mode.base->vtotal;
+
+	if (!step)
+		return 0;
+
+	_sde_encoder_get_qsync_fps_callback(sde_conn_state->base.best_encoder, &min_fps, nom_fps);
+	if (!min_fps || !nom_fps || step % nom_fps || step % min_fps || step < nom_fps ||
+			(vtotal * nom_fps) % step) {
+		SDE_ERROR("invalid avr_step rate! nom:%u min:%u step:%u vtotal:%u\n", nom_fps,
+				min_fps, step, vtotal);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int _sde_encoder_atomic_check_qsync(struct sde_connector *sde_conn,
+		struct sde_connector_state *sde_conn_state)
+{
+	int rc = 0;
+	u32 avr_step;
+	bool qsync_dirty, has_modeset;
+	struct drm_connector_state *conn_state = &sde_conn_state->base;
+	u32 qsync_mode = sde_connector_get_property(&sde_conn_state->base,
+						CONNECTOR_PROP_QSYNC_MODE);
+
+	has_modeset = sde_crtc_atomic_check_has_modeset(conn_state->state, conn_state->crtc);
+	qsync_dirty = msm_property_is_dirty(&sde_conn->property_info,
+			&sde_conn_state->property_state, CONNECTOR_PROP_QSYNC_MODE);
+
+	if (has_modeset && qsync_dirty &&
+			(msm_is_mode_seamless_poms(&sde_conn_state->msm_mode) ||
+			 msm_is_mode_seamless_dms(&sde_conn_state->msm_mode) ||
+			 msm_is_mode_seamless_dyn_clk(&sde_conn_state->msm_mode))) {
+		SDE_ERROR("invalid qsync update during modeset priv flag:%x\n",
+				sde_conn_state->msm_mode.private_flags);
+		return -EINVAL;
+	}
+
+	avr_step = sde_connector_get_property(conn_state, CONNECTOR_PROP_AVR_STEP);
+	if (qsync_dirty || (avr_step != sde_conn->avr_step) || (qsync_mode && has_modeset))
+		rc = _sde_encoder_avr_step_check(sde_conn, sde_conn_state, avr_step);
+
+	return rc;
+}
+
 static int sde_encoder_virt_atomic_check(
 	struct drm_encoder *drm_enc, struct drm_crtc_state *crtc_state,
 	struct drm_connector_state *conn_state)
@@ -1010,7 +1105,6 @@ static int sde_encoder_virt_atomic_check(
 	enum sde_rm_topology_name top_name;
 	struct msm_display_info *disp_info;
 	int ret = 0;
-	bool qsync_dirty = false, has_modeset = false;
 
 	if (!drm_enc || !crtc_state || !conn_state) {
 		SDE_ERROR("invalid arg(s), drm_enc %d, crtc/conn state %d/%d\n",
@@ -1083,25 +1177,12 @@ static int sde_encoder_virt_atomic_check(
 
 	drm_mode_set_crtcinfo(adj_mode, 0);
 
-	has_modeset = sde_crtc_atomic_check_has_modeset(conn_state->state,
-				conn_state->crtc);
-	qsync_dirty = msm_property_is_dirty(&sde_conn->property_info,
-				&sde_conn_state->property_state,
-				CONNECTOR_PROP_QSYNC_MODE);
-
-	if (has_modeset && qsync_dirty &&
-		(msm_is_mode_seamless_poms(&sde_conn_state->msm_mode) ||
-		msm_is_mode_seamless_dms(&sde_conn_state->msm_mode) ||
-		msm_is_mode_seamless_dyn_clk(&sde_conn_state->msm_mode))) {
-		SDE_ERROR("invalid qsync update during modeset priv flag:%x\n",
-			sde_conn_state->msm_mode.private_flags);
-		return -EINVAL;
-	}
+	ret = _sde_encoder_atomic_check_qsync(sde_conn, sde_conn_state);
 
 	SDE_EVT32(DRMID(drm_enc), adj_mode->flags,
 		sde_conn_state->msm_mode.private_flags,
 		old_top, drm_mode_vrefresh(adj_mode), adj_mode->hdisplay,
-		adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal);
+		adj_mode->vdisplay, adj_mode->htotal, adj_mode->vtotal, ret);
 
 	return ret;
 }
@@ -3342,54 +3423,6 @@ static void sde_encoder_frame_done_callback(
 	}
 }
 
-static void sde_encoder_get_qsync_fps_callback(
-	struct drm_encoder *drm_enc,
-	u32 *qsync_fps, u32 vrr_fps)
-{
-	struct msm_display_info *disp_info;
-	struct sde_encoder_virt *sde_enc;
-	int rc = 0;
-	struct sde_connector *sde_conn;
-
-	if (!qsync_fps)
-		return;
-
-	*qsync_fps = 0;
-	if (!drm_enc) {
-		SDE_ERROR("invalid drm encoder\n");
-		return;
-	}
-
-	sde_enc = to_sde_encoder_virt(drm_enc);
-	disp_info = &sde_enc->disp_info;
-	*qsync_fps = disp_info->qsync_min_fps;
-
-	/**
-	 * If "dsi-supported-qsync-min-fps-list" is defined, get
-	 * the qsync min fps corresponding to the fps in dfps list
-	 */
-	if (disp_info->has_qsync_min_fps_list) {
-
-		if (!sde_enc->cur_master ||
-			!(sde_enc->disp_info.capabilities &
-				MSM_DISPLAY_CAP_VID_MODE)) {
-			SDE_ERROR("invalid qsync settings %d\n",
-				!sde_enc->cur_master);
-			return;
-		}
-		sde_conn = to_sde_connector(sde_enc->cur_master->connector);
-
-		if (sde_conn->ops.get_qsync_min_fps)
-			rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display,
-				vrr_fps);
-		if (rc <= 0) {
-			SDE_ERROR("invalid qsync min fps %d\n", rc);
-			return;
-		}
-		*qsync_fps = rc;
-	}
-}
-
 int sde_encoder_idle_request(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc;
@@ -4905,7 +4938,7 @@ static int sde_encoder_setup_display(struct sde_encoder_virt *sde_enc,
 		sde_encoder_vblank_callback,
 		sde_encoder_underrun_callback,
 		sde_encoder_frame_done_callback,
-		sde_encoder_get_qsync_fps_callback,
+		_sde_encoder_get_qsync_fps_callback,
 	};
 	struct sde_enc_phys_init_params phys_params;
 

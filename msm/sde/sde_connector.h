@@ -484,6 +484,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @allow_bl_update: Flag to indicate if BL update is allowed currently or not
  * @qsync_mode: Cached Qsync mode, 0=disabled, 1=continuous mode
  * @qsync_updated: Qsync settings were updated
+ * @avr_step: fps rate for fixed steps in AVR mode; 0 means step is disabled
  * @colorspace_updated: Colorspace property was updated
  * @last_cmd_tx_sts: status of the last command transfer
  * @hdr_capable: external hdr support present
@@ -553,6 +554,7 @@ struct sde_connector {
 	u8 hdr_plus_app_ver;
 	u32 qsync_mode;
 	bool qsync_updated;
+	u32 avr_step;
 
 	bool colorspace_updated;
 
@@ -603,6 +605,13 @@ struct sde_connector {
  */
 #define sde_connector_get_qsync_mode(C) \
 	((C) ? to_sde_connector((C))->qsync_mode : 0)
+
+/**
+ * sde_connector_get_avr_step - get sde connector's avr_step
+ * @C: Pointer to drm connector structure
+ * Returns: Current cached avr_step value for given connector
+ */
+#define sde_connector_get_avr_step(C) ((C) ? to_sde_connector((C))->avr_step : 0)
 
 /**
  * sde_connector_get_propinfo - get sde connector's property info pointer
