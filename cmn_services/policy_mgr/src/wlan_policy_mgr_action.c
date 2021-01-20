@@ -1184,8 +1184,11 @@ QDF_STATUS policy_mgr_next_actions(
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct dbs_nss nss_dbs = {0};
+	struct dbs_bw bw_dbs = {0};
 	struct policy_mgr_hw_mode_params hw_mode;
 	enum policy_mgr_conc_next_action next_action;
+	bool is_sbs_supported;
+	enum hw_mode_sbs_capab sbs_capab;
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_rl_debug("driver isn't dbs capable, no further action needed");
@@ -1213,16 +1216,18 @@ QDF_STATUS policy_mgr_next_actions(
 		break;
 	case PM_DBS:
 		(void)policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs);
-
+		policy_mgr_get_hw_dbs_max_bw(psoc, &bw_dbs);
+		is_sbs_supported = policy_mgr_is_hw_sbs_capable(psoc);
+		sbs_capab = is_sbs_supported ? HW_MODE_SBS : HW_MODE_SBS_NONE;
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
 						     nss_dbs.mac0_ss,
-						     HW_MODE_80_MHZ,
+						     bw_dbs.mac0_bw,
 						     nss_dbs.mac1_ss,
-						     HW_MODE_40_MHZ,
+						     bw_dbs.mac1_bw,
 						     HW_MODE_MAC_BAND_NONE,
 						     HW_MODE_DBS,
 						     HW_MODE_AGILE_DFS_NONE,
-						     HW_MODE_SBS_NONE,
+						     sbs_capab,
 						     reason, PM_NOP, PM_DBS,
 						     request_id);
 		break;
