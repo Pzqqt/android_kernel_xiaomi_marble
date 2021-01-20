@@ -1672,8 +1672,13 @@ FWLOG_OBJS := $(FWLOG_DIR)/dbglog_host.o
 TXRX_DIR :=     core/dp/txrx
 TXRX_INC :=     -I$(WLAN_ROOT)/$(TXRX_DIR)
 
+TXRX_OBJS :=
+ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
+TXRX_OBJS += 	$(TXRX_DIR)/ol_txrx_event.o
+endif
+
 ifneq ($(CONFIG_LITHIUM), y)
-TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
+TXRX_OBJS += $(TXRX_DIR)/ol_txrx.o \
 		$(TXRX_DIR)/ol_cfg.o \
                 $(TXRX_DIR)/ol_rx.o \
                 $(TXRX_DIR)/ol_rx_fwd.o \
@@ -1687,10 +1692,6 @@ TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
                 $(TXRX_DIR)/ol_txrx_peer_find.o \
                 $(TXRX_DIR)/ol_txrx_encap.o \
                 $(TXRX_DIR)/ol_tx_send.o
-
-ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
-TXRX_OBJS +=	$(TXRX_DIR)/ol_txrx_event.o
-endif
 
 ifeq ($(CONFIG_LL_DP_SUPPORT), y)
 
@@ -2505,9 +2506,6 @@ endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)
-ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
-OBJS += 	$(TXRX_DIR)/ol_txrx_event.o
-endif
 endif
 
 ifeq ($(CONFIG_FEATURE_FW_LOG_PARSING), y)
