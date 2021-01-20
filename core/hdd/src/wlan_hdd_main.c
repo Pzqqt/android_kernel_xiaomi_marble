@@ -4345,7 +4345,7 @@ static int __hdd_open(struct net_device *dev)
 	}
 
 	set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
-	if (hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Enabling Tx Queues");
 		/* Enable TX queues only when we are connected */
 		wlan_hdd_netif_queue_control(adapter,
@@ -5576,8 +5576,7 @@ bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
-		return hdd_conn_is_connected(
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter));
+		return hdd_cm_is_vdev_associated(adapter);
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
 		return (test_bit(SOFTAP_BSS_STARTED,
@@ -7111,7 +7110,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		      adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
 		      !hdd_cm_is_disconnected(adapter))
 #else
-		    hdd_conn_is_connected(sta_ctx) ||
+		    hdd_cm_is_vdev_associated(adapter) ||
 		    hdd_cm_is_connecting(adapter)
 #endif
 		    ) {
@@ -10377,7 +10376,7 @@ static void __hdd_bus_bw_work_handler(struct hdd_context *hdd_ctx)
 					   adapter->prev_tx_bytes);
 
 		if (adapter->device_mode == QDF_STA_MODE &&
-		   hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter)))
+		   hdd_cm_is_vdev_associated(adapter))
 			hdd_send_mscs_action_frame(hdd_ctx, adapter);
 
 		if (adapter->device_mode == QDF_SAP_MODE ||
@@ -10528,7 +10527,7 @@ __hdd_adapter_param_update_work(struct hdd_adapter *adapter)
 	 * done at multiple places or entry points, instead its preferred to
 	 * check the connection state and skip the operation here.
 	 */
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	hdd_netdev_update_features(adapter);
@@ -15432,7 +15431,7 @@ wlan_hdd_disable_roaming(struct hdd_adapter *cur_adapter,
 
 		if (cur_adapter->vdev_id != adapter->vdev_id &&
 		    adapter->device_mode == QDF_STA_MODE &&
-		    hdd_conn_is_connected(sta_ctx)) {
+		    hdd_cm_is_vdev_associated(adapter)) {
 			hdd_debug("%d Disable roaming", adapter->vdev_id);
 			sme_stop_roaming(hdd_ctx->mac_handle,
 					 adapter->vdev_id,
@@ -15461,7 +15460,7 @@ wlan_hdd_enable_roaming(struct hdd_adapter *cur_adapter,
 
 		if (cur_adapter->vdev_id != adapter->vdev_id &&
 		    adapter->device_mode == QDF_STA_MODE &&
-		    hdd_conn_is_connected(sta_ctx)) {
+		    hdd_cm_is_vdev_associated(adapter)) {
 			hdd_debug("%d Enable roaming", adapter->vdev_id);
 			sme_start_roaming(hdd_ctx->mac_handle,
 					  adapter->vdev_id,

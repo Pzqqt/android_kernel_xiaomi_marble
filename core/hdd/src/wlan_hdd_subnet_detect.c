@@ -96,7 +96,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 		return -ENOTSUPP;
 	}
 
-	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Received GW param update in disconnected state!");
 		return -ENOTSUPP;
 	}

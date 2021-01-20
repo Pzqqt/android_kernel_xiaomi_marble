@@ -5801,7 +5801,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			 *  if STA is already connected on DFS channel,
 			 *  do not disable scan on dfs channels
 			 */
-			if (hdd_conn_is_connected(sta_ctx) &&
+			if (hdd_cm_is_vdev_associated(adapter) &&
 			    (CHANNEL_STATE_DFS ==
 			     wlan_reg_get_channel_state_for_freq(
 				hdd_ctx->pdev,
@@ -10928,7 +10928,7 @@ wlan_hdd_add_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 	uint16_t eth_type = htons(ETH_P_IP);
 	mac_handle_t mac_handle;
 
-	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("Not in Connected state!");
 		return -ENOTSUPP;
 	}
@@ -24232,7 +24232,7 @@ static int __wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		struct hdd_station_ctx *sta_ctx;
 
-		if (!hdd_adapter_is_connected_sta(adapter))
+		if (!hdd_cm_is_vdev_associated(adapter))
 			return -EINVAL;
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);

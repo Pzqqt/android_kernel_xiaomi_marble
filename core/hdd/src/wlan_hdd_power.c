@@ -1204,7 +1204,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	status = ucfg_pmo_enable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
@@ -1224,7 +1224,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	status = ucfg_pmo_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
@@ -1249,7 +1249,7 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		goto flush_mc_list;
 
 	/* disable mc list first because the mc list is cached in PMO */
@@ -2374,7 +2374,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	status = wlan_hdd_set_powersave(adapter, allow_power_save, timeout);
 
-	if (hdd_adapter_is_connected_sta(adapter)) {
+	if (hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("vdev mode %d enable dhcp protection",
 			  adapter->device_mode);
 		allow_power_save ? hdd_stop_dhcp_ind(adapter) :

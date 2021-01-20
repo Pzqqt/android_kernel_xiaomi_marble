@@ -351,52 +351,6 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 
 }
 
-/**
- * hdd_conn_get_connection_state() - get connection state
- * @adapter: pointer to the adapter
- * @pConnState: pointer to connection state
- *
- * This function updates the global HDD station context connection state.
- *
- * Return: true if (Infra Associated)
- *	and sets output parameter pConnState;
- *	false otherwise
- */
-static inline bool
-hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
-			      eConnectionState *out_state)
-{
-	eConnectionState state = sta_ctx->conn_info.conn_state;
-
-	if (out_state)
-		*out_state = state;
-
-	switch (state) {
-	case eConnectionState_Associated:
-	case eConnectionState_NdiConnected:
-		return true;
-	default:
-		return false;
-	}
-}
-
-bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx)
-{
-	return hdd_conn_get_connection_state(sta_ctx, NULL);
-}
-
-bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter)
-{
-	switch (adapter->device_mode) {
-	case QDF_STA_MODE:
-	case QDF_P2P_CLIENT_MODE:
-	case QDF_NDI_MODE:
-		return hdd_conn_is_connected(&adapter->session.station);
-	default:
-		return false;
-	}
-}
-
 enum band_info hdd_conn_get_connected_band(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);

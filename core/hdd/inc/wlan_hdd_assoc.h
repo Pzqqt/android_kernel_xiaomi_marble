@@ -221,22 +221,6 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 				   eConnectionState conn_state);
 
 /**
- * hdd_conn_is_connected() - Function to check connection status
- * @sta_ctx:    pointer to global HDD Station context
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx);
-
-/**
- * hdd_adapter_is_connected_sta() - check if @adapter is a connected station
- * @adapter: the adapter to check
- *
- * Return: true if @adapter is a connected station
- */
-bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter);
-
-/**
  * hdd_conn_get_connected_band() - get current connection radio band
  * @adapter: HDD adapter
  *

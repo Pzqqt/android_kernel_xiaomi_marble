@@ -376,11 +376,12 @@ static int hdd_convert_dot11mode(uint32_t dot11mode)
  * Return: Success(0) or reason code for failure
  */
 static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
-				  struct hdd_station_ctx *hdd_sta_ctx,
+				  struct hdd_adapter *adapter,
 				  int idx)
 {
 	struct nlattr *nla_attr;
 	uint32_t bitrate, bitrate_compat;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	nla_attr = nla_nest_start(skb, idx);
 	if (!nla_attr) {
@@ -389,12 +390,12 @@ static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
 	}
 
 	/* cfg80211_calculate_bitrate will return 0 for mcs >= 32 */
-	if (hdd_conn_is_connected(hdd_sta_ctx))
+	if (hdd_cm_is_vdev_associated(adapter))
 		bitrate = cfg80211_calculate_bitrate(
-				&hdd_sta_ctx->cache_conn_info.max_tx_bitrate);
+				&sta_ctx->cache_conn_info.max_tx_bitrate);
 	else
 		bitrate = cfg80211_calculate_bitrate(
-					&hdd_sta_ctx->cache_conn_info.txrate);
+					&sta_ctx->cache_conn_info.txrate);
 	/* report 16-bit bitrate only if we can */
 	bitrate_compat = bitrate < (1UL << 16) ? bitrate : 0;
 
@@ -418,7 +419,7 @@ static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
 	}
 
 	if (nla_put_u8(skb, NL80211_RATE_INFO_VHT_NSS,
-		       hdd_sta_ctx->cache_conn_info.txrate.nss)) {
+		      sta_ctx->cache_conn_info.txrate.nss)) {
 		hdd_err("put fail");
 		goto fail;
 	}
@@ -427,7 +428,7 @@ static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
 	hdd_nofl_debug(
 		"STA Tx rate info:: bitrate:%d, bitrate_compat:%d, NSS:%d",
 		bitrate, bitrate_compat,
-		hdd_sta_ctx->cache_conn_info.txrate.nss);
+		sta_ctx->cache_conn_info.txrate.nss);
 
 	return 0;
 fail:
@@ -526,10 +527,10 @@ static int32_t hdd_add_sta_info(struct sk_buff *skb,
 		hdd_err("put fail");
 		goto fail;
 	}
-	if (hdd_conn_is_connected(hdd_sta_ctx))
+	if (hdd_cm_is_vdev_associated(adapter))
 		hdd_get_max_tx_bitrate(hdd_ctx, adapter);
 
-	if (hdd_add_tx_bitrate(skb, hdd_sta_ctx, NL80211_STA_INFO_TX_BITRATE)) {
+	if (hdd_add_tx_bitrate(skb, adapter, NL80211_STA_INFO_TX_BITRATE)) {
 		hdd_err("hdd_add_tx_bitrate failed");
 		goto fail;
 	}

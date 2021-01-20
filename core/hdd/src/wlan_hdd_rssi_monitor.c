@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,7 +84,7 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("Not in Connected state!");
 		return -ENOTSUPP;
 	}

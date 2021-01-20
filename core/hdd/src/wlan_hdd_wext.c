@@ -7924,7 +7924,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("dev is not in CONNECTED state, ignore!!!");
 		return -EINVAL;
 	}
@@ -8178,7 +8178,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		return -ENOTSUPP;
 	}
 
-	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("Packet filter not supported in disconnected state");
 		return -ENOTSUPP;
 	}

@@ -5138,7 +5138,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("Not associated");
 
 		if (!req.numBcnReqIe)
@@ -5768,7 +5768,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 	if (((adapter->device_mode == QDF_STA_MODE) ||
 		(adapter->device_mode == QDF_P2P_CLIENT_MODE)) &&
 		adapter->mc_addr_list.mc_cnt &&
-		hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+		hdd_cm_is_vdev_associated(adapter)) {
 
 
 		filter = qdf_mem_malloc(sizeof(*filter));

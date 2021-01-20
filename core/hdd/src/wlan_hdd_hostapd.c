@@ -3023,7 +3023,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	 */
 	if (sta_adapter && conc_rule1) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
-		if (hdd_conn_is_connected(sta_ctx)) {
+		if (hdd_cm_is_vdev_associated(sta_adapter)) {
 			hdd_err("Channel switch not allowed after STA connection with conc_custom_rule1 enabled");
 			return -EBUSY;
 		}
