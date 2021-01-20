@@ -126,10 +126,14 @@ struct dsi_backlight_config {
 	u32 bl_min_level;
 	u32 bl_max_level;
 	u32 brightness_max_level;
+	/* current brightness value */
+	u32 brightness;
 	u32 bl_level;
 	u32 bl_scale;
 	u32 bl_scale_sv;
 	bool bl_inverted_dbv;
+	/* digital dimming backlight LUT */
+	struct drm_msm_dimming_bl_lut *dimming_bl_lut;
 
 	int en_gpio;
 	/* PWM params */

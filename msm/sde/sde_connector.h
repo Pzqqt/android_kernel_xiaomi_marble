@@ -502,6 +502,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @hdr_supported: does the sink support HDR content
  * @color_enc_fmt: Colorimetry encoding formats of sink
  * @allow_bl_update: Flag to indicate if BL update is allowed currently or not
+ * @dimming_bl_notify_enabled: Flag to indicate if dimming bl notify is enabled or not
  * @qsync_mode: Cached Qsync mode, 0=disabled, 1=continuous mode
  * @qsync_updated: Qsync settings were updated
  * @avr_step: fps rate for fixed steps in AVR mode; 0 means step is disabled
@@ -561,6 +562,7 @@ struct sde_connector {
 	u32 bl_scale_sv;
 	u32 unset_bl_level;
 	bool allow_bl_update;
+	bool dimming_bl_notify_enabled;
 
 	u32 hdr_eotf;
 	bool hdr_metadata_type_one;

@@ -99,6 +99,29 @@ static inline struct sde_kms *_sde_connector_get_kms(struct drm_connector *conn)
 	return to_sde_kms(priv->kms);
 }
 
+static void sde_dimming_bl_notify(struct sde_connector *conn, struct dsi_backlight_config *config)
+{
+	struct drm_event event;
+	struct drm_msm_backlight_info bl_info;
+
+	if (!conn || !config)
+		return;
+	if (!conn->dimming_bl_notify_enabled)
+		return;
+
+	bl_info.brightness_max = config->brightness_max_level;
+	bl_info.brightness = config->brightness;
+	bl_info.bl_level_max = config->bl_max_level;
+	bl_info.bl_level = config->bl_level;
+	bl_info.bl_scale = config->bl_scale;
+	bl_info.bl_scale_sv = config->bl_scale_sv;
+	event.type = DRM_EVENT_DIMMING_BL;
+	event.length = sizeof(bl_info);
+	SDE_DEBUG("dimming BL event bl_level %d bl_scale %d, bl_scale_sv = %d\n",
+		  bl_info.bl_level, bl_info.bl_scale, bl_info.bl_scale_sv);
+	msm_mode_object_event_notify(&conn->base.base, conn->base.dev, &event, (u8 *)&bl_info);
+}
+
 static int sde_backlight_device_update_status(struct backlight_device *bd)
 {
 	int brightness;
@@ -129,6 +152,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	if (brightness > c_conn->thermal_max_brightness)
 		brightness = c_conn->thermal_max_brightness;
 
+	display->panel->bl_config.brightness = brightness;
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 			display->panel->bl_config.brightness_max_level);
@@ -159,6 +183,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		}
 		rc = c_conn->ops.set_backlight(&c_conn->base,
 				c_conn->display, bl_lvl);
+		sde_dimming_bl_notify(c_conn, &display->panel->bl_config);
 		c_conn->unset_bl_level = 0;
 	}
 
@@ -649,6 +674,39 @@ static int _sde_connector_update_power_locked(struct sde_connector *c_conn)
 	return rc;
 }
 
+static int _sde_connector_update_dimming_bl_lut(struct sde_connector *c_conn,
+		struct sde_connector_state *c_state)
+{
+	bool is_dirty;
+	size_t sz = 0;
+	struct dsi_display *dsi_display;
+	struct dsi_backlight_config *bl_config;
+
+	if (!c_conn || !c_state) {
+		SDE_ERROR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	dsi_display = c_conn->display;
+	if (!dsi_display || !dsi_display->panel) {
+		SDE_ERROR("Invalid params(s) dsi_display %pK, panel %pK\n",
+			dsi_display,
+			((dsi_display) ? dsi_display->panel : NULL));
+		return -EINVAL;
+	}
+
+	is_dirty = msm_property_is_dirty(&c_conn->property_info,
+			&c_state->property_state,
+			CONNECTOR_PROP_DIMMING_BL_LUT);
+	if (!is_dirty)
+		return -ENODATA;
+
+	bl_config = &dsi_display->panel->bl_config;
+	bl_config->dimming_bl_lut = msm_property_get_blob(&c_conn->property_info,
+			&c_state->property_state, &sz, CONNECTOR_PROP_DIMMING_BL_LUT);
+	return 0;
+}
+
 static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 {
 	struct dsi_display *dsi_display;
@@ -687,6 +745,8 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 		bl_config->bl_level);
 	rc = c_conn->ops.set_backlight(&c_conn->base,
 			dsi_display, bl_config->bl_level);
+	if (!rc)
+		sde_dimming_bl_notify(c_conn, bl_config);
 	c_conn->unset_bl_level = 0;
 
 	return rc;
@@ -1594,6 +1654,9 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	case CONNECTOR_PROP_SV_BL_SCALE:
 		c_conn->bl_scale_sv = val;
 		c_conn->bl_scale_dirty = true;
+		break;
+	case CONNECTOR_PROP_DIMMING_BL_LUT:
+		rc = _sde_connector_update_dimming_bl_lut(c_conn, c_state);
 		break;
 	case CONNECTOR_PROP_HDR_METADATA:
 		rc = _sde_connector_set_ext_hdr_info(c_conn,
@@ -2829,6 +2892,11 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 
 	if (connector_type == DRM_MODE_CONNECTOR_DSI) {
 		dsi_display = (struct dsi_display *)(display);
+		if (dsi_display && dsi_display->panel)
+			msm_property_install_blob(&c_conn->property_info,
+				"dimming_bl_lut", DRM_MODE_PROP_BLOB,
+				CONNECTOR_PROP_DIMMING_BL_LUT);
+
 		if (dsi_display && dsi_display->panel &&
 			dsi_display->panel->hdr_props.hdr_enabled == true) {
 			msm_property_install_blob(&c_conn->property_info,
@@ -3176,9 +3244,19 @@ int sde_connector_register_custom_event(struct sde_kms *kms,
 		struct drm_connector *conn_drm, u32 event, bool val)
 {
 	int ret = -EINVAL;
+	struct sde_connector *c_conn;
 
 	switch (event) {
 	case DRM_EVENT_SYS_BACKLIGHT:
+		ret = 0;
+		break;
+	case DRM_EVENT_DIMMING_BL:
+		if (!conn_drm) {
+			SDE_ERROR("invalid connector\n");
+			return -EINVAL;
+		}
+		c_conn = to_sde_connector(conn_drm);
+		c_conn->dimming_bl_notify_enabled = val;
 		ret = 0;
 		break;
 	case DRM_EVENT_PANEL_DEAD:
@@ -3206,6 +3284,7 @@ int sde_connector_event_notify(struct drm_connector *connector, uint32_t type,
 
 	switch (type) {
 	case DRM_EVENT_SYS_BACKLIGHT:
+	case DRM_EVENT_DIMMING_BL:
 	case DRM_EVENT_PANEL_DEAD:
 	case DRM_EVENT_SDE_HW_RECOVERY:
 		ret = 0;
