@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2585,11 +2585,6 @@ static int __wmi_process_qmi_fw_event(void *wmi_cb_ctx, void *buf, int len)
 	evt_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!evt_buf)
 		return -ENOMEM;
-
-	/*
-	 * Set the length of the buffer to match the allocation size.
-	 */
-	qdf_nbuf_set_pktlen(evt_buf, len);
 
 	qdf_mem_copy(qdf_nbuf_data(evt_buf), buf, len);
 	evt_id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
