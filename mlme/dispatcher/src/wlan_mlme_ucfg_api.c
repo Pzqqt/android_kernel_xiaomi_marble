@@ -159,7 +159,7 @@ static uint32_t ucfg_mlme_convert_power_cfg_chan_to_freq(
 	mlme_legacy_debug("max_length %d length %zu", max_length, length);
 	while ((rem_length >= 3) &&
 	       (copied_length <= (max_length - (sizeof(struct pwr_channel_info))))) {
-		pwr_cfg_data[i].first_freq = wlan_reg_chan_to_freq(
+		pwr_cfg_data[i].first_freq = wlan_reg_legacy_chan_to_freq(
 						pdev,
 						power_chan_data[count++]);
 		pwr_cfg_data[i].num_chan = power_chan_data[count++];
