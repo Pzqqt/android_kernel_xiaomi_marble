@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -288,6 +288,28 @@
 		"gEnableEdcaParams", \
 		0, \
 		"Enable edca parameter")
+
+/*
+ * <ini>
+ * enable_wmm_txop - Enable WMM based txop feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable the WMM based txop feature in FW
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_WMM_TXOP CFG_INI_BOOL( \
+		"enable_wmm_txop", \
+		1, \
+		"Enable WMM TXOP")
 
 /*
  * <ini>
@@ -646,6 +668,7 @@
 	CFG(CFG_EDCA_BK_AIFS) \
 	CFG(CFG_EDCA_BE_CWMIN) \
 	CFG(CFG_EDCA_BE_CWMAX) \
+	CFG(CFG_ENABLE_WMM_TXOP) \
 	CFG(CFG_EDCA_BE_AIFS)
 
 #endif  /* __CFG_MLME_EDCA__PARAM_H */
