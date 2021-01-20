@@ -268,7 +268,7 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 		qdf_dp_trace_dump_all(
 				WLAN_DEAUTH_DPTRACE_DUMP_COUNT,
 				QDF_TRACE_DEFAULT_PDEV_ID);
-	status = wlan_hdd_cm_issue_disconnect(adapter, reason, false);
+	status = wlan_hdd_cm_issue_disconnect(adapter, reason, true);
 
 	return qdf_status_to_os_return(status);
 }

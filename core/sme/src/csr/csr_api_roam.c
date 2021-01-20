@@ -14003,23 +14003,29 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	tDot11fBeaconIEs *bcn_ies;
 	sme_QosAssocInfo assoc_info;
 	struct cm_roam_values_copy src_cfg;
+	int32_t ucast_cipher, mcast_cipher;
+	int32_t auth_mode;
+	int32_t akm;
+
+	conn_profile = &session->connectedProfile;
+	conn_profile->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
+	conn_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
+	conn_profile->op_freq = rsp->connect_rsp.freq;
+	qdf_copy_macaddr(&conn_profile->bssid, &rsp->connect_rsp.bssid);
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
 		return;
 
-	wlan_cm_fill_crypto_filter_from_vdev(vdev, filter);
-	filter->num_of_ssid = 1;
-	filter->ssid_list[0].length = rsp->connect_rsp.ssid.length;
-	qdf_mem_copy(filter->ssid_list[0].ssid, rsp->connect_rsp.ssid.ssid,
-		     rsp->connect_rsp.ssid.length);
 	filter->num_of_bssid = 1;
 	qdf_copy_macaddr(&filter->bssid_list[0], &rsp->connect_rsp.bssid);
+	filter->ignore_auth_enc_type = true;
 
-	list = ucfg_scan_get_result(mac_ctx->pdev, filter);
+	list = wlan_scan_get_result(mac_ctx->pdev, filter);
 	qdf_mem_free(filter);
 	if (!list || (list && !qdf_list_size(list)))
 		goto purge_list;
+
 
 	qdf_list_peek_front(list, &cur_lst);
 	if (!cur_lst)
@@ -14048,24 +14054,23 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	}
 	/* update bss desc */
 	session->pConnectBssDesc = bss_desc;
-	conn_profile = &session->connectedProfile;
-	csr_fill_enc_type(&conn_profile->EncryptionType,
-			  cur_node->entry->neg_sec_info.ucastcipherset);
-	csr_fill_enc_type(&conn_profile->mcEncryptionType,
-			  cur_node->entry->neg_sec_info.mcastcipherset);
-	csr_fill_auth_type(&conn_profile->AuthType,
-			   cur_node->entry->neg_sec_info.authmodeset,
-			   cur_node->entry->neg_sec_info.key_mgmt,
-			   cur_node->entry->neg_sec_info.ucastcipherset);
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	auth_mode = wlan_crypto_get_param(vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+	mcast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+	csr_fill_enc_type(&conn_profile->EncryptionType, ucast_cipher);
+	csr_fill_enc_type(&conn_profile->mcEncryptionType, mcast_cipher);
+	csr_fill_auth_type(&conn_profile->AuthType, auth_mode,
+			   akm, ucast_cipher);
 
-	conn_profile->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
-	conn_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
-	conn_profile->op_freq = rsp->connect_rsp.freq;
 	conn_profile->beaconInterval = bss_desc->beaconInterval;
 	if (!conn_profile->beaconInterval)
 		sme_err("ERROR: Beacon interval is ZERO");
 
-	qdf_copy_macaddr(&conn_profile->bssid, &rsp->connect_rsp.bssid);
 	if (bss_desc->mdiePresent) {
 		src_cfg.bool_value = true;
 		src_cfg.uint_value =
@@ -14096,7 +14101,7 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 
 purge_list:
 	if (list)
-		ucfg_scan_purge_results(list);
+		wlan_scan_purge_results(list);
 
 }
 
@@ -14166,6 +14171,8 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	struct set_context_rsp install_key_rsp;
 	struct csr_roam_session *session;
 	int32_t rsn_cap;
+	struct mlme_legacy_priv *mlme_priv;
+	bool is_wps = false;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -14193,14 +14200,17 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 
 		return QDF_STATUS_SUCCESS;
 	}
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (mlme_priv)
+		is_wps = mlme_priv->connect_info.is_wps;
 	/*
 	 * For open mode authentication, send dummy install key response to
 	 * send OBSS scan and QOS event.
 	 */
 	ucast_cipher = wlan_crypto_get_param(vdev,
 					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!ucast_cipher ||
-	    (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_NONE)) == ucast_cipher) {
+	if (!is_wps && (!ucast_cipher ||
+	    (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_NONE)) == ucast_cipher)) {
 		install_key_rsp.length = sizeof(install_key_rsp);
 		install_key_rsp.status_code = eSIR_SME_SUCCESS;
 		install_key_rsp.sessionId = vdev_id;
@@ -14224,12 +14234,12 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	}
 	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED, vdev_id);
 
-	if (csr_cm_is_fils_connection(rsp) || !ucast_cipher ||
+	if (!is_wps && (csr_cm_is_fils_connection(rsp) || !ucast_cipher ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
 			  ucast_cipher ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104) ||
-	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP)) {
+	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP))) {
 		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
 					 vdev_id);
 	} else {

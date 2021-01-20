@@ -2793,14 +2793,8 @@ lim_is_rsn_profile(struct pe_session *session)
 	return false;
 }
 
-static tAniEdType
-lim_get_encrypt_ed_type(struct pe_session *session)
+static tAniEdType lim_get_encrypt_ed_type(int32_t ucast_cipher)
 {
-	int32_t ucast_cipher;
-
-	ucast_cipher = wlan_crypto_get_param(session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
 	if (ucast_cipher == -1)
 		return eSIR_ED_NONE;
 
@@ -2893,19 +2887,10 @@ lim_get_rsn_akm(uint32_t akm)
 }
 
 static enum ani_akm_type
-lim_get_connected_akm(struct pe_session *session,
-		      struct scan_cache_entry *entry)
+lim_get_connected_akm(struct pe_session *session, int32_t ucast_cipher,
+		      int32_t auth_mode, int32_t akm)
 {
-	int32_t ucast_cipher;
-	int32_t auth_mode;
-
-	ucast_cipher = wlan_crypto_get_param(session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	auth_mode = wlan_crypto_get_param(session->vdev,
-					  WLAN_CRYPTO_PARAM_AUTH_MODE);
-
-	if (auth_mode == -1 || ucast_cipher == -1)
+	if (auth_mode == -1 || ucast_cipher == -1 || akm == -1)
 		return ANI_AKM_TYPE_NONE;
 
 	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_NONE) ||
@@ -2913,10 +2898,10 @@ lim_get_connected_akm(struct pe_session *session,
 		return ANI_AKM_TYPE_NONE;
 
 	if (lim_is_rsn_profile(session))
-		return lim_get_rsn_akm(entry->neg_sec_info.key_mgmt);
+		return lim_get_rsn_akm(akm);
 
 	if (lim_is_wpa_profile(session))
-		return lim_get_wpa_akm(entry->neg_sec_info.key_mgmt);
+		return lim_get_wpa_akm(akm);
 
 	if (lim_is_wapi_profile(session))
 		return ANI_AKM_TYPE_UNKNOWN;
@@ -3040,6 +3025,66 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void lim_fill_crypto_params(struct mac_context *mac_ctx,
+				   struct pe_session *session,
+				   struct cm_vdev_join_req *req)
+{
+	int32_t ucast_cipher;
+	int32_t auth_mode;
+	int32_t akm;
+	uint8_t wsc_oui[OUI_LENGTH];
+	uint32_t oui_cpu;
+	struct mlme_legacy_priv *mlme_priv;
+
+	ucast_cipher = wlan_crypto_get_param(session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	auth_mode = wlan_crypto_get_param(session->vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+	akm = wlan_crypto_get_param(session->vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	/* set default to open */
+	mac_ctx->mlme_cfg->wep_params.auth_type = eSIR_OPEN_SYSTEM;
+
+	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_AUTO) &&
+	    (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
+	     QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	     QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104)))
+		mac_ctx->mlme_cfg->wep_params.auth_type = eSIR_AUTO_SWITCH;
+	else if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_SHARED))
+		mac_ctx->mlme_cfg->wep_params.auth_type = eSIR_SHARED_KEY;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE) ||
+	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
+		mac_ctx->mlme_cfg->wep_params.auth_type = eSIR_AUTH_TYPE_SAE;
+
+	session->encryptType = lim_get_encrypt_ed_type(ucast_cipher);
+	session->connected_akm = lim_get_connected_akm(session, ucast_cipher,
+						       auth_mode, akm);
+
+	/* check for WPS */
+	oui_cpu = qdf_be32_to_cpu(WSC_OUI);
+	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
+	if (wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len))
+		session->wps_registration = true;
+
+	/* check for OSEN */
+	oui_cpu = qdf_be32_to_cpu(OSEN_OUI);
+	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
+	if (wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len))
+		session->isOSENConnection = true;
+
+	lim_fill_rsn_ie(mac_ctx, session, req);
+	lim_update_fils_config(mac_ctx, session, req);
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (!mlme_priv)
+		return;
+	mlme_priv->connect_info.is_wps = session->wps_registration;
+}
+
 static QDF_STATUS
 lim_fill_session_params(struct mac_context *mac_ctx,
 			struct pe_session *session,
@@ -3112,25 +3157,22 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 
 	session->rateSet.numRates = op_rate_len;
 	session->extRateSet.numRates = ext_rate_len;
-
-	session->encryptType = lim_get_encrypt_ed_type(session);
-	session->connected_akm = lim_get_connected_akm(session, req->entry);
 	pe_debug("Assoc IE len: %d", req->assoc_ie.len);
 	if (req->assoc_ie.len)
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				   req->assoc_ie.ptr, req->assoc_ie.len);
+	lim_fill_crypto_params(mac_ctx, session, req);
 
-	lim_fill_rsn_ie(mac_ctx, session, req);
-	lim_update_fils_config(mac_ctx, session, req);
-	qdf_mem_copy(pe_join_req->addIEAssoc.addIEdata,
-		     req->assoc_ie.ptr, req->assoc_ie.len);
 	pe_debug("After stripping Assoc IE len: %d", req->assoc_ie.len);
 	if (req->assoc_ie.len)
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				   req->assoc_ie.ptr, req->assoc_ie.len);
-
+	qdf_mem_copy(pe_join_req->addIEAssoc.addIEdata,
+		     req->assoc_ie.ptr, req->assoc_ie.len);
+	pe_join_req->addIEAssoc.length = req->assoc_ie.len;
 	qdf_mem_copy(pe_join_req->addIEScan.addIEdata,
 		     req->scan_ie.ptr, req->scan_ie.len);
+	pe_join_req->addIEScan.length = req->scan_ie.len;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3160,7 +3202,7 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto fail;
 
-	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d",
+	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d",
 		 pe_session->curr_op_freq, pe_session->ch_width,
 		 pe_session->ch_center_freq_seg0,
 		 pe_session->ch_center_freq_seg1,
@@ -3172,7 +3214,9 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 		 pe_session->vht_config.su_beam_former,
 		 pe_session->vht_config.su_beam_formee,
 		 pe_session->vht_config.csnof_beamformer_antSup,
-		 pe_session->isCiscoVendorAP);
+		 pe_session->isCiscoVendorAP,
+		 pe_session->wps_registration,
+		 pe_session->isOSENConnection);
 
 	status = lim_send_connect_req_to_mlm(pe_session);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3235,9 +3279,10 @@ static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
 	struct pe_session *pe_session;
 	struct scheduler_msg msg = {0};
 	struct disassoc_req disassoc_req = {0};
+	uint8_t pe_session_id;
 
 	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
-					      &req->req.vdev_id);
+					      &pe_session_id);
 	if (!pe_session)
 		return;
 
@@ -3326,6 +3371,7 @@ lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 {
 	struct mac_context *mac_ctx;
 	struct pe_session *pe_session;
+	uint8_t pe_session_id;
 
 	if (!req)
 		return QDF_STATUS_E_INVAL;
@@ -3335,10 +3381,10 @@ lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 		return QDF_STATUS_E_INVAL;
 
 	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
-					      &req->req.vdev_id);
+					      &pe_session_id);
 	if (!pe_session) {
 		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid"
-		       QDF_MAC_ADDR_FMT, req->cm_id, req->req.vdev_id,
+		       QDF_MAC_ADDR_FMT, req->req.vdev_id, req->cm_id,
 		       QDF_MAC_ADDR_REF(req->req.bssid.bytes));
 		lim_cm_send_disconnect_rsp(mac_ctx, req->req.vdev_id);
 		return QDF_STATUS_E_INVAL;

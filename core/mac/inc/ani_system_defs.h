@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,10 +71,8 @@ enum ani_akm_type {
 	ANI_AKM_TYPE_FT_RSN_PSK,
 	ANI_AKM_TYPE_RSN_PSK_SHA256,
 	ANI_AKM_TYPE_RSN_8021X_SHA256,
-#ifdef WLAN_FEATURE_SAE
 	ANI_AKM_TYPE_SAE,
 	ANI_AKM_TYPE_FT_SAE,
-#endif
 	ANI_AKM_TYPE_SUITEB_EAP_SHA256,
 	ANI_AKM_TYPE_SUITEB_EAP_SHA384,
 	ANI_AKM_TYPE_FT_SUITEB_EAP_SHA384,
@@ -83,9 +81,7 @@ enum ani_akm_type {
 	ANI_AKM_TYPE_FT_FILS_SHA256,
 	ANI_AKM_TYPE_FT_FILS_SHA384,
 	ANI_AKM_TYPE_OWE,
-#ifdef FEATURE_WLAN_ESE
 	ANI_AKM_TYPE_CCKM,
-#endif
 	ANI_AKM_TYPE_OSEN,
 	ANI_AKM_TYPE_DPP_RSN,
 	ANI_AKM_TYPE_WPA,

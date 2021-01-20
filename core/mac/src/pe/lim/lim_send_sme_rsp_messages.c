@@ -299,6 +299,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	}
 
 	if (QDF_IS_STATUS_SUCCESS(connect_status)) {
+		connect_rsp->status_code = STATUS_SUCCESS;
 		populate_fils_connect_params(mac_ctx, pe_session, connect_rsp);
 		connect_rsp->aid = pe_session->limAID;
 

@@ -724,7 +724,7 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 	status = dot11f_unpack_beacon_i_es(MAC_CONTEXT(mac_handle), ie_field,
 					   ie_len, bcn_ie, false);
 
-	if (!DOT11F_SUCCEEDED(status)) {
+	if (DOT11F_FAILED(status)) {
 		hdd_err("Failed to parse beacon ie");
 		qdf_mem_free(bcn_ie);
 		return;
@@ -907,13 +907,14 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 			       sta_ctx->conn_info.chan_freq);
 	hdd_wmm_assoc(adapter, false, uapsd_mask);
 
-	if (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA256 ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA384 ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA256 ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA384)
+	if (!wlan_is_wps_connection(hdd_ctx->pdev, adapter->vdev_id) &&
+	    (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
+	      sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA256 ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA384 ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA256 ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA384))
 		is_auth_required = false;
 
 	hdd_roam_register_sta(adapter, &rsp->bssid, is_auth_required);
