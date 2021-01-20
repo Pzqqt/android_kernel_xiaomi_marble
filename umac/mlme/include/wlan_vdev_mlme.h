@@ -461,8 +461,7 @@ enum vdev_start_resp_type {
  * @mlme_vdev_is_newchan_no_cac:        callback to check CAC is required
  * @mlme_vdev_ext_peer_delete_all_rsp:  callback to initiate actions for
  *                                      vdev mlme peer delete all response
- * @mlme_vdev_replace_csa_with_stop_start: callback to replace CSA restart
- *                                      request with stop-start
+ * @mlme_vdev_dfs_cac_wait_notify:      callback to notify about CAC state
  * @mlme_vdev_csa_complete:             callback to indicate CSA complete
  */
 struct vdev_mlme_ops {
@@ -535,7 +534,7 @@ struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_ext_peer_delete_all_rsp)(
 				struct vdev_mlme_obj *vdev_mlme,
 				struct peer_delete_all_response *rsp);
-	QDF_STATUS (*mlme_vdev_replace_csa_with_stop_start)(
+	QDF_STATUS (*mlme_vdev_dfs_cac_wait_notify)(
 				struct vdev_mlme_obj *vdev_mlme);
 	QDF_STATUS (*mlme_vdev_csa_complete)(
 				struct vdev_mlme_obj *vdev_mlme);
