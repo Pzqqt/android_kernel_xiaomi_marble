@@ -5075,7 +5075,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
 		sde_cfg->has_vig_p010 = true;
 		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_0;
-		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_1;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
