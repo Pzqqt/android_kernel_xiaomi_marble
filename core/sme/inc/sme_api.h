@@ -2316,6 +2316,24 @@ QDF_STATUS sme_set_lost_link_info_cb(mac_handle_t mac_handle,
 QDF_STATUS sme_update_new_channel_event(mac_handle_t mac_handle,
 					uint8_t session_id);
 #ifdef WLAN_POWER_DEBUG
+/**
+ * sme_reset_power_debug_stats_cb() - SME API to reset Power debug stats cb
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * Resets the power stats callback and context to NULL
+ *
+ * Return: None
+ */
+void sme_reset_power_debug_stats_cb(mac_handle_t mac_handle);
+
+/**
+ * sme_power_debug_stats_req() - SME API to collect Power debug stats
+ * @mac_handle: Opaque handle to the global MAC context
+ * @callback_fn: Pointer to the callback function for Power stats event
+ * @power_stats_context: Pointer to context
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS sme_power_debug_stats_req(
 		mac_handle_t mac_handle,
 		void (*callback_fn)(struct power_stats_response *response,
