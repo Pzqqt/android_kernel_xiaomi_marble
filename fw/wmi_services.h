@@ -519,6 +519,7 @@ typedef  enum  {
      * every duty cycle on detecting temperature change when dc_per_event is 0.
      */
     WMI_SERVICE_THERM_THROT_TEMP_CHANGE_DYNAMIC_EVENT_SUPPORT = 276,
+    WMI_SERVICE_WAPI_CONCURRENCY_SUPPORTED = 277, /* Indicates FW support for WAPI concurrency */
 
 
     WMI_MAX_EXT2_SERVICE
