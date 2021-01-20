@@ -2824,6 +2824,33 @@ void mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
+bool wlan_is_wps_connection(struct wlan_objmgr_pdev *pdev,
+			    uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	bool wps;
+
+	if (!pdev)
+		return false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return false;
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		return false;
+	}
+
+	wps = mlme_priv->connect_info.is_wps;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return wps;
+}
+
 enum QDF_OPMODE wlan_get_opmode_from_vdev_id(struct wlan_objmgr_pdev *pdev,
 					     uint8_t vdev_id)
 {

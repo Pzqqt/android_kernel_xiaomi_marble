@@ -260,6 +260,8 @@ struct ft_context {
  * derived from JOIN_REQ and REASSOC_REQ. If a particular AC bit is set, it
  * means the AC is both trigger enabled and delivery enabled.
  * @qos_enabled: is qos enabled
+ * @is_wps is wps connection
+ * @ft_info: ft related info
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -270,6 +272,7 @@ struct mlme_connect_info {
 #endif
 	uint8_t uapsd_per_ac_bitmask;
 	bool qos_enabled;
+	bool is_wps;
 	struct ft_context ft_info;
 };
 
@@ -643,6 +646,9 @@ void mlme_set_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
 void mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
 				      uint8_t vdev_id, bool *from_ap,
 				      uint32_t *reason_code);
+
+bool wlan_is_wps_connection(struct wlan_objmgr_pdev *pdev,
+			    uint8_t vdev_id);
 
 /**
  * wlan_get_opmode_from_vdev_id() - Get opmode from vdevid
