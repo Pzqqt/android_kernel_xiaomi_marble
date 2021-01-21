@@ -963,4 +963,73 @@ void cm_req_lock_acquire(struct cnx_mgr *cm_ctx);
  * Return: void
  */
 void cm_req_lock_release(struct cnx_mgr *cm_ctx);
+
+#ifdef SM_ENG_HIST_ENABLE
+/**
+ * cm_req_history_add() - Save request history
+ * @cm_ctx: Connection manager context
+ * @cm_req: Connection manager request
+ *
+ * Return: void
+ */
+void cm_req_history_add(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req);
+/**
+ * cm_req_history_del() - Update history on request deletion
+ * @cm_ctx: Connection manager context
+ * @cm_req: Connection manager request
+ * @del_type: Context in which the request is deleted
+ *
+ * Return: void
+ */
+void cm_req_history_del(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req,
+			enum cm_req_del_type del_type);
+
+/**
+ * cm_history_init() - Initialize the history data struct
+ * @cm_ctx: Connection manager context
+ *
+ * Return: void
+ */
+void cm_req_history_init(struct cnx_mgr *cm_ctx);
+
+/**
+ * cm_history_deinit() - Deinitialize the history data struct
+ * @cm_ctx: Connection manager context
+ *
+ * Return: void
+ */
+void cm_req_history_deinit(struct cnx_mgr *cm_ctx);
+
+/**
+ * cm_history_print() - Print the history data struct
+ * @cm_ctx: Connection manager context
+ *
+ * Return: void
+ */
+void cm_req_history_print(struct cnx_mgr *cm_ctx);
+extern struct wlan_sm_state_info cm_sm_info[];
+#else
+static inline
+void cm_req_history_add(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req)
+{}
+
+static inline
+void cm_req_history_del(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req,
+			enum cm_req_del_type del_type)
+{}
+
+static inline void cm_req_history_init(struct cnx_mgr *cm_ctx)
+{}
+
+static inline void cm_req_history_deinit(struct cnx_mgr *cm_ctx)
+{}
+
+static inline void cm_req_history_print(struct cnx_mgr *cm_ctx)
+{}
+#endif
+
 #endif /* __WLAN_CM_MAIN_API_H__ */

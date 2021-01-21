@@ -534,6 +534,8 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 			cm_handle_disconnect_flush(cm_ctx, cm_req);
 			cm_ctx->disconnect_count--;
 		}
+
+		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_FLUSH);
 		mlme_debug(CM_PREFIX_FMT,
 			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
 					 cm_req->cm_id));
@@ -638,6 +640,7 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	else if (prefix == DISCONNECT_REQ_PREFIX)
 		cm_ctx->disconnect_count++;
 
+	cm_req_history_add(cm_ctx, cm_req);
 	cm_req_lock_release(cm_ctx);
 	mlme_debug(CM_PREFIX_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
@@ -714,6 +717,12 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	} else {
 		cm_ctx->disconnect_count--;
 	}
+
+	if (cm_id == cm_ctx->active_cm_id)
+		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_ACTIVE);
+	else
+		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_PENDING);
+
 	mlme_debug(CM_PREFIX_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
 				 cm_req->cm_id));
@@ -1258,5 +1267,113 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
 {
 	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
+}
+#endif
+
+#ifdef SM_ENG_HIST_ENABLE
+static const char *cm_id_to_string(wlan_cm_id cm_id)
+{
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+
+	switch (prefix) {
+	case CONNECT_REQ_PREFIX:
+		return "CONNECT";
+	case DISCONNECT_REQ_PREFIX:
+		return "DISCONNECT";
+	case ROAM_REQ_PREFIX:
+		return "ROAM";
+	default:
+		return "INVALID";
+	}
+}
+
+void cm_req_history_add(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req)
+{
+	struct cm_req_history *history = &cm_ctx->req_history;
+	struct cm_req_history_info *data;
+
+	qdf_spin_lock_bh(&history->cm_req_hist_lock);
+	data = &history->data[history->index];
+	history->index++;
+	history->index %= CM_REQ_HISTORY_SIZE;
+
+	qdf_mem_zero(data, sizeof(*data));
+	data->cm_id = cm_req->cm_id;
+	data->add_time = qdf_get_log_timestamp();
+	data->add_cm_state = cm_get_state(cm_ctx);
+	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
+}
+
+void cm_req_history_del(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req,
+			enum cm_req_del_type del_type)
+{
+	uint8_t i, idx;
+	struct cm_req_history_info *data;
+	struct cm_req_history *history = &cm_ctx->req_history;
+
+	qdf_spin_lock_bh(&history->cm_req_hist_lock);
+	for (i = 0; i < CM_REQ_HISTORY_SIZE; i++) {
+		if (history->index < i)
+			idx = CM_REQ_HISTORY_SIZE + history->index - i;
+		else
+			idx = history->index - i;
+
+		data = &history->data[idx];
+		if (data->cm_id == cm_req->cm_id) {
+			data->del_time = qdf_get_log_timestamp();
+			data->del_cm_state = cm_get_state(cm_ctx);
+			data->del_type = del_type;
+			break;
+		}
+
+		if (!data->cm_id)
+			break;
+	}
+	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
+}
+
+void cm_req_history_init(struct cnx_mgr *cm_ctx)
+{
+	qdf_spinlock_create(&cm_ctx->req_history.cm_req_hist_lock);
+	qdf_mem_zero(&cm_ctx->req_history, sizeof(struct cm_req_history));
+}
+
+void cm_req_history_deinit(struct cnx_mgr *cm_ctx)
+{
+	qdf_spinlock_destroy(&cm_ctx->req_history.cm_req_hist_lock);
+}
+
+static inline void cm_req_history_print_entry(uint16_t idx,
+					      struct cm_req_history_info *data)
+{
+	if (!data->cm_id)
+		return;
+
+	mlme_nofl_err("    |%6u | 0x%016llx | 0x%016llx |%12s | 0x%08x |%15s |%15s |%8u",
+		      idx, data->add_time, data->del_time,
+		      cm_id_to_string(data->cm_id), data->cm_id,
+		      cm_sm_info[data->add_cm_state].name,
+		      cm_sm_info[data->del_cm_state].name,
+		      data->del_type);
+}
+
+void cm_req_history_print(struct cnx_mgr *cm_ctx)
+{
+	struct cm_req_history *history = &cm_ctx->req_history;
+	uint8_t i, idx;
+
+	mlme_nofl_err("CM Request history is as below");
+	mlme_nofl_err("|%6s |%19s |%19s |%12s |%11s |%15s |%15s |%8s",
+		      "Index", "Add Time", "Del Time", "Req type",
+		      "Cm Id", "Add State", "Del State", "Del Type");
+
+	qdf_spin_lock_bh(&history->cm_req_hist_lock);
+	for (i = 0; i < CM_REQ_HISTORY_SIZE; i++) {
+		idx = (history->index + i) % CM_REQ_HISTORY_SIZE;
+		cm_req_history_print_entry(idx, &history->data[idx]);
+	}
+	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
 }
 #endif
