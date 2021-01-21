@@ -128,7 +128,8 @@ QDF_STATUS osif_cm_set_crypto_params(struct wlan_cm_connect_req *connect_req,
 	osif_cm_set_auth_type(connect_req, req);
 
 	if (req->crypto.cipher_group)
-		cipher = osif_nl_to_crypto_cipher_type(cipher);
+		cipher =
+			osif_nl_to_crypto_cipher_type(req->crypto.cipher_group);
 
 	QDF_SET_PARAM(connect_req->crypto.group_cipher, cipher);
 
