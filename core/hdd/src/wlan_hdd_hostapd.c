@@ -6533,8 +6533,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	adapter->session.ap.sap_config.ch_params.mhz_freq_seg1 =
 							chandef->center_freq2;
 
-	status = policy_mgr_is_sap_allowed_on_dfs_chan(hdd_ctx->pdev,
-						adapter->vdev_id, channel);
+	status = policy_mgr_is_sap_allowed_on_dfs_freq(
+						hdd_ctx->pdev,
+						adapter->vdev_id,
+						chandef->chan->center_freq);
 	if (!status)
 		return -EINVAL;
 

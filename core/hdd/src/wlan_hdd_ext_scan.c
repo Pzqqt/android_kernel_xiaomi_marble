@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2538,10 +2538,9 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 
 				channel->channel = chan_list[j];
 				channel->channel_class = 0;
-				if ((wlan_reg_get_channel_state(
-					hdd_ctx->pdev,
-					cds_freq_to_chan(chan_list[j]))) !=
-						CHANNEL_STATE_ENABLE) {
+				if ((wlan_reg_get_channel_state_for_freq(
+				     hdd_ctx->pdev, chan_list[j])) !=
+				    CHANNEL_STATE_ENABLE) {
 					channel->passive = 1;
 					channel->dwell_time_ms =
 						max_dwell_time_passive_bucket;
@@ -2677,11 +2676,9 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 				hdd_debug("WiFi band is unspecified, dwellTime:%d",
 						channel->dwell_time_ms);
 
-				if ((wlan_reg_get_channel_state(
-					hdd_ctx->pdev,
-					cds_freq_to_chan(
-					channel->channel)))
-						!= CHANNEL_STATE_ENABLE) {
+				if ((wlan_reg_get_channel_state_for_freq(
+				     hdd_ctx->pdev, channel->channel)) !=
+				    CHANNEL_STATE_ENABLE) {
 					channel->dwell_time_ms =
 						max_dwell_time_passive_bucket;
 				} else {
@@ -2693,10 +2690,9 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			hdd_debug("New Dwell time %u ms",
 				channel->dwell_time_ms);
 
-			if ((wlan_reg_get_channel_state(hdd_ctx->pdev,
-					cds_freq_to_chan(
-					channel->channel)))
-					!= CHANNEL_STATE_ENABLE) {
+			if ((wlan_reg_get_channel_state_for_freq(
+			     hdd_ctx->pdev, channel->channel)) !=
+			    CHANNEL_STATE_ENABLE) {
 				if (min_dwell_time_passive_bucket >
 						channel->dwell_time_ms) {
 					min_dwell_time_passive_bucket =
@@ -2732,10 +2728,10 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			hdd_debug("Chnl spec passive %u",
 				channel->passive);
 			/* Override scan type if required */
-			if ((wlan_reg_get_channel_state(hdd_ctx->pdev,
-					cds_freq_to_chan(
-					channel->channel)))
-					!= CHANNEL_STATE_ENABLE) {
+			if ((wlan_reg_get_channel_state_for_freq(
+							hdd_ctx->pdev,
+							channel->channel))
+			    != CHANNEL_STATE_ENABLE) {
 				channel->passive = true;
 			} else {
 				channel->passive = false;

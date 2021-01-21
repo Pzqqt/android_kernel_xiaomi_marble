@@ -15846,9 +15846,9 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];
 
-			channel_state = wlan_reg_get_channel_state(
+			channel_state = wlan_reg_get_channel_state_for_freq(
 					hdd_ctx->pdev,
-					band->channels[j].hw_value);
+					band->channels[j].center_freq);
 
 			if (HDD_NL80211_BAND_2GHZ == i &&
 			    BAND_5G == new_band) {
@@ -23041,7 +23041,7 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	int ret, channel;
+	int ret;
 	enum phy_ch_width ch_width;
 	bool status;
 
@@ -23058,11 +23058,10 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 		(QDF_SAP_MODE != adapter->device_mode))
 		return -ENOTSUPP;
 
-	channel = ieee80211_frequency_to_channel(
-			csa_params->chandef.chan->center_freq);
-
-	status = policy_mgr_is_sap_allowed_on_dfs_chan(hdd_ctx->pdev,
-						adapter->vdev_id, channel);
+	status = policy_mgr_is_sap_allowed_on_dfs_freq(
+					hdd_ctx->pdev,
+					adapter->vdev_id,
+					csa_params->chandef.chan->center_freq);
 	if (!status)
 		return -EINVAL;
 

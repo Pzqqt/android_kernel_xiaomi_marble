@@ -3179,18 +3179,18 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 		struct wlan_objmgr_psoc *psoc, uint32_t *pcl,
 		uint32_t *len, uint8_t *weight_list, uint32_t weight_len);
 /**
- * policy_mgr_is_sap_allowed_on_dfs_chan() - check if sap allowed on dfs channel
+ * policy_mgr_is_sap_allowed_on_dfs_freq() - check if sap allowed on dfs freq
  * @pdev: id of objmgr pdev
  * @vdev_id: vdev id
- * @channel: channel number
+ * @ch_freq: channel freq
  * This function is used to check if sta_sap_scc_on_dfs_chan ini is set,
  * DFS master capability is assumed disabled in the driver.
  *
- * Return: true if sap is allowed on dfs channel,
+ * Return: true if sap is allowed on dfs freq,
  * otherwise false
  */
-bool policy_mgr_is_sap_allowed_on_dfs_chan(struct wlan_objmgr_pdev *pdev,
-					   uint8_t vdev_id, uint8_t channel);
+bool policy_mgr_is_sap_allowed_on_dfs_freq(struct wlan_objmgr_pdev *pdev,
+					   uint8_t vdev_id, qdf_freq_t ch_freq);
 /**
  * policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan() - check if sta+sap scc
  * allowed on dfs chan

@@ -3873,8 +3873,8 @@ bool policy_mgr_is_force_scc(struct wlan_objmgr_psoc *psoc)
 		QDF_MCC_TO_SCC_WITH_PREFERRED_BAND));
 }
 
-bool policy_mgr_is_sap_allowed_on_dfs_chan(struct wlan_objmgr_pdev *pdev,
-					   uint8_t vdev_id, uint8_t channel)
+bool policy_mgr_is_sap_allowed_on_dfs_freq(struct wlan_objmgr_pdev *pdev,
+					   uint8_t vdev_id, qdf_freq_t ch_freq)
 {
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t sta_sap_scc_on_dfs_chan;
@@ -3892,12 +3892,13 @@ bool policy_mgr_is_sap_allowed_on_dfs_chan(struct wlan_objmgr_pdev *pdev,
 						PM_P2P_CLIENT_MODE, NULL);
 
 	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sta_cnt %u, gc_cnt %u",
-		  sta_sap_scc_on_dfs_chan, sta_cnt, gc_cnt);
+			 sta_sap_scc_on_dfs_chan, sta_cnt, gc_cnt);
 
 	/* if sta_sap_scc_on_dfs_chan ini is set, DFS master capability is
 	 * assumed disabled in the driver.
 	 */
-	if ((wlan_reg_get_channel_state(pdev, channel) == CHANNEL_STATE_DFS) &&
+	if ((wlan_reg_get_channel_state_for_freq(pdev, ch_freq) ==
+	    CHANNEL_STATE_DFS) &&
 	    !sta_cnt && !gc_cnt && sta_sap_scc_on_dfs_chan &&
 	    !policy_mgr_get_dfs_master_dynamic_enabled(psoc, vdev_id)) {
 		policy_mgr_err("SAP not allowed on DFS channel if no dfs master capability!!");
