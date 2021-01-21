@@ -32,6 +32,7 @@
 #include "wlan_mlme_api.h"
 #include "wlan_cm_roam_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_cm_api.h"
 
 #define POLICY_MGR_MAX_CON_STRING_LEN   100
 
@@ -2971,10 +2972,17 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		uint8_t next_action,
 		enum policy_mgr_conn_update_reason reason,
-		uint32_t original_vdev_id)
+		uint32_t original_vdev_id, uint32_t request_id)
 {
 	uint32_t conn_index = 0;
 	QDF_STATUS ret;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
 
 	if (QDF_STATUS_SUCCESS != tx_status)
 		policy_mgr_err("nss update failed(%d) for vdev %d",
@@ -2994,12 +3002,19 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 	if (PM_NOP != next_action) {
 		if (reason == POLICY_MGR_UPDATE_REASON_AFTER_CHANNEL_SWITCH)
 			policy_mgr_next_actions(psoc, vdev_id, next_action,
-						reason, POLICY_MGR_DEF_REQ_ID);
+						reason, request_id);
 		else
 			policy_mgr_next_actions(psoc, original_vdev_id,
 						next_action, reason,
-						POLICY_MGR_DEF_REQ_ID);
+						request_id);
 	} else {
+		if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT) {
+			sme_debug("Continue connect on vdev %d request_id %x",
+				  vdev_id, request_id);
+			wlan_cm_hw_mode_change_resp(pm_ctx->pdev, vdev_id,
+						    request_id,
+						    QDF_STATUS_SUCCESS);
+		}
 		policy_mgr_debug("No action needed right now");
 		ret = policy_mgr_set_opportunistic_update(psoc);
 		if (!QDF_IS_STATUS_SUCCESS(ret))
@@ -3013,7 +3028,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
 		enum policy_mgr_band band,
 		enum policy_mgr_conn_update_reason reason,
-		uint32_t original_vdev_id)
+		uint32_t original_vdev_id, uint32_t request_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t index, count;
@@ -3059,7 +3074,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 					vdev_id, new_nss, ch_width,
 					policy_mgr_nss_update_cb,
 					next_action, psoc, reason,
-					original_vdev_id);
+					original_vdev_id, request_id);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				policy_mgr_err("sme_nss_update_request() failed for vdev %d",
 				vdev_id);
@@ -3093,7 +3108,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 					vdev_id, new_nss, ch_width,
 					policy_mgr_nss_update_cb,
 					next_action, psoc, reason,
-					original_vdev_id);
+					original_vdev_id, request_id);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				policy_mgr_err("sme_nss_update_request() failed for vdev %d",
 				vdev_id);
@@ -3104,26 +3119,10 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-/**
- * policy_mgr_complete_action() - initiates actions needed on
- * current connections once channel has been decided for the new
- * connection
- * @new_nss: the new nss value
- * @next_action: next action to happen at policy mgr after
- *		beacon update
- * @reason: Reason for connection update
- * @session_id: Session id
- *
- * This function initiates initiates actions
- * needed on current connections once channel has been decided
- * for the new connection. Notifies UMAC & FW as well
- *
- * Return: QDF_STATUS enum
- */
 QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 				uint8_t  new_nss, uint8_t next_action,
 				enum policy_mgr_conn_update_reason reason,
-				uint32_t session_id)
+				uint32_t session_id, uint32_t request_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	enum policy_mgr_band downgrade_band;
@@ -3147,11 +3146,11 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 
 	status = policy_mgr_nss_update(psoc, new_nss, next_action,
 				       downgrade_band, reason,
-				       session_id);
+				       session_id, request_id);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		status = policy_mgr_next_actions(psoc, session_id,
 						 next_action, reason,
-						 POLICY_MGR_DEF_REQ_ID);
+						 request_id);
 
 	return status;
 }

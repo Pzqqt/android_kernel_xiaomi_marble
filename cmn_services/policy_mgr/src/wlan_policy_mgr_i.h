@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -622,10 +622,27 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 				uint32_t ch_freq, uint32_t *list,
 				enum policy_mgr_con_mode mode);
 
+/**
+ * policy_mgr_complete_action() - initiates actions needed on
+ * current connections once channel has been decided for the new
+ * connection
+ * @new_nss: the new nss value
+ * @next_action: next action to happen at policy mgr after
+ *		beacon update
+ * @reason: Reason for connection update
+ * @session_id: Session id
+ * @request_id: connection manager req id
+ *
+ * This function initiates actions
+ * needed on current connections once channel has been decided
+ * for the new connection. Notifies UMAC & FW as well
+ *
+ * Return: QDF_STATUS enum
+ */
 QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 				uint8_t  new_nss, uint8_t next_action,
 				enum policy_mgr_conn_update_reason reason,
-				uint32_t session_id);
+				uint32_t session_id, uint32_t request_id);
 enum policy_mgr_con_mode policy_mgr_get_mode_by_vdev_id(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id);
@@ -681,6 +698,7 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  * @band: update AP vdev on the Band.
  * @reason: action reason
  * @original_vdev_id: original request hwmode change vdev id
+ * @request_id: request id
  *
  * The function will update AP vdevs on specific band.
  *  eg. band = POLICY_MGR_ANY will request to update all band (2g and 5g)
@@ -691,7 +709,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
 		enum policy_mgr_band band,
 		enum policy_mgr_conn_update_reason reason,
-		uint32_t original_vdev_id);
+		uint32_t original_vdev_id, uint32_t request_id);
 
 /**
  * policy_mgr_is_concurrency_allowed() - Check for allowed

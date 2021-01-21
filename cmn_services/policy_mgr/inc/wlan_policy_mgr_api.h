@@ -1382,6 +1382,7 @@ typedef void (*policy_mgr_pdev_set_hw_mode_cback)(uint32_t status,
  *		beacon update
  * @reason: Reason for nss update
  * @original_vdev_id: original request hwmode change vdev id
+ * @request_id: cm req id
  *
  * This function is the callback registered with SME at nss
  * update request time
@@ -1393,7 +1394,7 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		uint8_t next_action,
 		enum policy_mgr_conn_update_reason reason,
-		uint32_t original_vdev_id);
+		uint32_t original_vdev_id, uint32_t request_id);
 
 /**
  * struct policy_mgr_sme_cbacks - SME Callbacks to be invoked
@@ -1419,7 +1420,7 @@ struct policy_mgr_sme_cbacks {
 		policy_mgr_nss_update_cback cback,
 		uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason,
-		uint32_t original_vdev_id);
+		uint32_t original_vdev_id, uint32_t request_id);
 	QDF_STATUS (*sme_change_mcc_beacon_interval)(uint8_t session_id);
 	QDF_STATUS (*sme_rso_start_cb)(
 		mac_handle_t mac_handle, uint8_t vdev_id,
