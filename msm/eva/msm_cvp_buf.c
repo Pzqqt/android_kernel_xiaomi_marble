@@ -303,8 +303,8 @@ int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 	struct cvp_hal_session *session;
 	struct dma_buf *dma_buf = NULL;
 
-	struct pid *pid_s;
-	struct task_struct *task;
+	struct pid *pid_s = NULL;
+	struct task_struct *task = NULL;
 	struct file *file;
 
 	if (!inst || !inst->core || !buf) {
@@ -345,14 +345,18 @@ int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 		return -EINVAL;
 	}
 
-	pid_s = find_get_pid(pid);
+	// Temp workaround :  commented for passing compilation due to missing dependency in AU whitelist
+//	pid_s = find_get_pid(pid);
+
+
 	if (pid_s == NULL) {
 		dprintk(CVP_WARN, "%s incorrect pid\n", __func__);
 		return -EINVAL;
 	}
 	dprintk(CVP_WARN, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
 	/* task = get_pid_task(pid, PIDTYPE_PID); */
-	task = get_pid_task(pid_s, PIDTYPE_TGID);
+	// Temp workaround :  commented for passing compilation due to missing dependency in AU whitelist
+//	task = get_pid_task(pid_s, PIDTYPE_TGID);
 
 	if (!task)
 		dprintk(CVP_WARN, "%s task doesn't exist\n", __func__);
