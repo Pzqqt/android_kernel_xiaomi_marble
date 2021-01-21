@@ -1818,13 +1818,30 @@ void sme_update_user_configured_nss(mac_handle_t mac_handle, uint8_t nss);
 bool sme_is_any_session_in_connected_state(mac_handle_t mac_handle);
 
 QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg);
+
+/**
+ * sme_nss_update_request() - Send beacon templete update to FW with new
+ * nss value
+ * @mac_handle: Handle returned by macOpen
+ * @vdev_id: the session id
+ * @new_nss: the new nss value
+ * @ch_width: channel width, optional value
+ * @cback: hdd callback
+ * @next_action: next action to happen at policy mgr after beacon update
+ * @original_vdev_id: original request hwmode change vdev id
+ * @request_id: request id
+ *
+ * Sends the command to CSR to send to PE
+ * Return: QDF_STATUS_SUCCESS on successful posting
+ */
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 				  uint8_t  new_nss, uint8_t ch_width,
 				  policy_mgr_nss_update_cback cback,
 				  uint8_t next_action,
 				  struct wlan_objmgr_psoc *psoc,
 				  enum policy_mgr_conn_update_reason reason,
-				  uint32_t original_vdev_id);
+				  uint32_t original_vdev_id,
+				  uint32_t request_id);
 
 typedef void (*sme_peer_authorized_fp) (uint32_t vdev_id);
 QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,

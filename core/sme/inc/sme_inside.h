@@ -68,6 +68,7 @@ typedef struct sGenericQosCmd {
  * @next_action: Action to be taken after nss update
  * @reason: reason for nss update
  * @original_vdev_id: original request hwmode change vdev id
+ * @request_id: request id for connection manager
  */
 struct s_nss_update_cmd {
 	uint32_t new_nss;
@@ -78,6 +79,7 @@ struct s_nss_update_cmd {
 	uint8_t next_action;
 	enum policy_mgr_conn_update_reason reason;
 	uint32_t original_vdev_id;
+	uint32_t request_id;
 };
 
 /**

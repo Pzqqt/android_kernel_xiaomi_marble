@@ -2749,7 +2749,8 @@ static QDF_STATUS sme_process_nss_update_resp(struct mac_context *mac, uint8_t *
 				param->vdev_id,
 				command->u.nss_update_cmd.next_action,
 				command->u.nss_update_cmd.reason,
-				command->u.nss_update_cmd.original_vdev_id);
+				command->u.nss_update_cmd.original_vdev_id,
+				command->u.nss_update_cmd.request_id);
 	} else {
 		sme_err("Callback does not exisit");
 	}
@@ -11900,7 +11901,7 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	cmd->u.set_hw_mode_cmd.context = msg.context;
 	cmd->u.set_hw_mode_cmd.request_id = msg.request_id;
 
-	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d request_id: %d",
+	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d request_id: %x",
 		  cmd->u.set_hw_mode_cmd.session_id,
 		  cmd->u.set_hw_mode_cmd.reason,
 		  cmd->u.set_hw_mode_cmd.request_id);
@@ -11910,26 +11911,12 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_nss_update_request() - Send beacon templete update to FW with new
- * nss value
- * @mac_handle: Handle returned by macOpen
- * @vdev_id: the session id
- * @new_nss: the new nss value
- * @ch_width: channel width, optional value
- * @cback: hdd callback
- * @next_action: next action to happen at policy mgr after beacon update
- * @original_vdev_id: original request hwmode change vdev id
- *
- * Sends the command to CSR to send to PE
- * Return: QDF_STATUS_SUCCESS on successful posting
- */
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 				uint8_t  new_nss, uint8_t ch_width,
 				policy_mgr_nss_update_cback cback,
 				uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_conn_update_reason reason,
-				uint32_t original_vdev_id)
+				uint32_t original_vdev_id, uint32_t request_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = sme_get_mac_context();
@@ -11958,9 +11945,10 @@ QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 		cmd->u.nss_update_cmd.next_action = next_action;
 		cmd->u.nss_update_cmd.reason = reason;
 		cmd->u.nss_update_cmd.original_vdev_id = original_vdev_id;
+		cmd->u.nss_update_cmd.request_id = request_id;
 
-		sme_debug("Queuing e_sme_command_nss_update to CSR:vdev (%d %d) ss %d r %d",
-			  vdev_id, original_vdev_id, new_nss, reason);
+		sme_debug("Queuing e_sme_command_nss_update to CSR:vdev (%d %d) ss %d r %d req id %x",
+			  vdev_id, original_vdev_id, new_nss, reason, request_id);
 		csr_queue_sme_command(mac, cmd, false);
 		sme_release_global_lock(&mac->sme);
 	}
