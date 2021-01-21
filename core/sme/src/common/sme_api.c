@@ -2120,8 +2120,8 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 		param->dialog_id, WLAN_TWT_TERMINATE);
 	if (!is_evt_allowed &&
 	    param->dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
-	    (param->status != WMI_HOST_DEL_TWT_STATUS_ROAMING ||
-	     param->status != WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN)) {
+	    param->status != WMI_HOST_DEL_TWT_STATUS_ROAMING &&
+	    param->status != WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN) {
 		sme_debug("add dialog event dropped");
 		return;
 	}

@@ -495,6 +495,7 @@ hdd_twt_pack_get_params_resp_nlmsg(struct wlan_objmgr_psoc *psoc,
 	enum wlan_twt_session_state state;
 	enum qca_wlan_twt_setup_state converted_state;
 	uint64_t tsf_val;
+	uint32_t wake_duration;
 	int i, attr;
 
 	config_attr = nla_nest_start(reply_skb,
@@ -571,7 +572,9 @@ hdd_twt_pack_get_params_resp_nlmsg(struct wlan_objmgr_psoc *psoc,
 		}
 
 		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
-		if (nla_put_u32(reply_skb, attr, params[i].wake_dura_us)) {
+		wake_duration = (params[i].wake_intvl_us /
+				 TWT_WAKE_DURATION_MULTIPLICATION_FACTOR);
+		if (nla_put_u32(reply_skb, attr, wake_duration)) {
 			hdd_err("TWT: get_params failed to put Wake duration");
 			return QDF_STATUS_E_INVAL;
 		}
