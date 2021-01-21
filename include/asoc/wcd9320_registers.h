@@ -1,7 +1,12 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ */
+
 #ifndef WCD9320_REGISTERS_H
 #define WCD9320_REGISTERS_H
 
-#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
+#include <asoc/wcd9xxx_registers.h>
 
 #define TAIKO_A_CHIP_CTL			WCD9XXX_A_CHIP_CTL
 #define TAIKO_A_CHIP_CTL__POR			WCD9XXX_A_CHIP_CTL__POR

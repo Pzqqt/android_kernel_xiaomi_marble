@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -12,7 +12,6 @@
 #include <linux/gpio.h>
 #include <linux/delay.h>
 #include <linux/regmap.h>
-#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
@@ -26,6 +25,7 @@
 #include <asoc/wcd9xxx-irq.h>
 #include <asoc/wcdcal-hwdep.h>
 #include <asoc/wcd-mbhc-v2-api.h>
+#include <asoc/wcd9xxx_registers.h>
 
 #define TAVIL_ZDET_SUPPORTED          true
 /* Z value defined in milliohm */

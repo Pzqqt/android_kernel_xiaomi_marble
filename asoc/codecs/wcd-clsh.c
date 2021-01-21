@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -8,7 +8,6 @@
 #include <sound/soc.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
-#include <asoc/wcd9xxx_registers.h>
 #include <asoc/wcd-clsh.h>
 
 #define WCD_USLEEP_RANGE 50
