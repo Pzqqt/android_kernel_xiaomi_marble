@@ -1047,11 +1047,17 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 		goto connect_err;
 	}
 
-	cm_inform_if_mgr_connect_start(cm_ctx->vdev);
-	status = mlme_cm_connect_start_ind(cm_ctx->vdev, &cm_req->req);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		reason = CM_NO_CANDIDATE_FOUND;
-		goto connect_err;
+	/*
+	 * Do not initiate the duplicate ifmanager and connect start ind if
+	 * this is called from Scan for ssid
+	 */
+	if (!cm_req->scan_id) {
+		cm_inform_if_mgr_connect_start(cm_ctx->vdev);
+		status = mlme_cm_connect_start_ind(cm_ctx->vdev, &cm_req->req);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			reason = CM_NO_CANDIDATE_FOUND;
+			goto connect_err;
+		}
 	}
 
 	status = cm_connect_get_candidates(pdev, cm_ctx, cm_req);
