@@ -173,6 +173,8 @@ enum wlan_cm_source {
  * used with out validation, used for the scenarios where the device is used
  * as a testbed device with special functionality and not recommended
  * for production.
+ * @is_wps_connection: if its wps connection
+ * @is_osen_connection: if its osen connection
  * @dot11mode_filter: dot11mode filter used to restrict connection to
  * 11n/11ac/11ax.
  * @sae_pwe: SAE mechanism for PWE derivation
@@ -196,7 +198,9 @@ struct wlan_cm_connect_req {
 	struct wlan_cm_connect_crypto_info crypto;
 	struct element_info assoc_ie;
 	struct element_info scan_ie;
-	bool force_rsne_override;
+	uint8_t force_rsne_override:1,
+		is_wps_connection:1,
+		is_osen_connection:1;
 	enum dot11_mode_filter dot11mode_filter;
 	uint8_t sae_pwe;
 	uint16_t ht_caps;
@@ -217,6 +221,8 @@ struct wlan_cm_connect_req {
  * used with out validation, used for the scenarios where the device is used
  * as a testbed device with special functionality and not recommended
  * for production.
+ * @is_wps_connection: if its wps connection
+ * @is_osen_connection: if its osen connection
  * @ht_caps: ht capability
  * @ht_caps_mask: mask of valid ht caps
  * @vht_caps: vht capability
@@ -229,7 +235,9 @@ struct wlan_cm_connect_req {
 struct wlan_cm_vdev_connect_req {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
-	bool force_rsne_override;
+	uint8_t force_rsne_override:1,
+		is_wps_connection:1,
+		is_osen_connection:1;
 	uint16_t ht_caps;
 	uint16_t ht_caps_mask;
 	uint32_t vht_caps;
@@ -397,6 +405,8 @@ struct wlan_connect_rsp_ies {
  * struct wlan_cm_connect_rsp - connect resp from VDEV mgr and will be sent to
  * OSIF
  * @vdev_id: vdev id
+ * @is_wps_connection: if its wps connection
+ * @is_osen_connection: if its osen connection
  * @cm_id: Connect manager id
  * @bssid: BSSID of the ap
  * @ssid: SSID of the connection
@@ -410,6 +420,8 @@ struct wlan_connect_rsp_ies {
  */
 struct wlan_cm_connect_resp {
 	uint8_t vdev_id;
+	uint8_t is_wps_connection:1,
+		is_osen_connection:1;
 	wlan_cm_id cm_id;
 	struct qdf_mac_addr bssid;
 	struct wlan_ssid ssid;

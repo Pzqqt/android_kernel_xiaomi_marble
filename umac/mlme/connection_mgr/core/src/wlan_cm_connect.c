@@ -303,17 +303,7 @@ cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
 	if (!resp)
 		return QDF_STATUS_E_NOMEM;
 
-	resp->connect_status = QDF_STATUS_E_FAILURE;
-	resp->cm_id = req->cm_id;
-	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-	resp->reason = reason;
-	resp->ssid.length = req->req.ssid.length;
-	qdf_mem_copy(resp->ssid.ssid, req->req.ssid.ssid, resp->ssid.length);
-	if (req->cur_candidate) {
-		qdf_copy_macaddr(&resp->bssid,
-				 &req->cur_candidate->entry->bssid);
-		resp->freq = req->cur_candidate->entry->channel.chan_freq;
-	}
+	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, req->cm_id, reason);
 
 	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
 					  sizeof(*resp), resp);
@@ -661,23 +651,9 @@ static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 static void cm_update_security_filter(struct scan_filter *filter,
 				      struct wlan_cm_connect_req *req)
 {
-	uint8_t wsc_oui[OUI_LENGTH];
-	uint8_t osen_oui[OUI_LENGTH];
-	uint32_t oui_cpu;
-
-	oui_cpu = qdf_be32_to_cpu(WSC_OUI);
-	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
-	oui_cpu = qdf_be32_to_cpu(OSEN_OUI);
-	qdf_mem_copy(osen_oui, &oui_cpu, OUI_LENGTH);
-
 	/* Ignore security match for rsn override, OSEN and WPS connection */
-	if (req->force_rsne_override ||
-	    wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
-					    req->assoc_ie.ptr,
-					    req->assoc_ie.len) ||
-	    wlan_get_vendor_ie_ptr_from_oui(osen_oui, OUI_LENGTH,
-					    req->assoc_ie.ptr,
-					    req->assoc_ie.len)) {
+	if (req->force_rsne_override || req->is_wps_connection ||
+	    req->is_osen_connection) {
 		filter->ignore_auth_enc_type = 1;
 		return;
 	}
@@ -808,20 +784,10 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	bool security_valid_for_6ghz;
 	const uint8_t *rsnxe;
-	uint8_t wsc_oui[OUI_LENGTH];
-	uint32_t oui_cpu;
-	bool is_wps = false;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
 		return QDF_STATUS_E_NOMEM;
-
-	oui_cpu = qdf_be32_to_cpu(WSC_OUI);
-	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
-	if (wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
-					    cm_req->req.assoc_ie.ptr,
-					    cm_req->req.assoc_ie.len))
-		is_wps = true;
 
 	rsnxe = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSNXE,
 					 cm_req->req.assoc_ie.ptr,
@@ -831,7 +797,7 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 					     cm_req->req.crypto.akm_suites,
 					     cm_req->req.crypto.rsn_caps,
 					     rsnxe, cm_req->req.sae_pwe,
-					     is_wps);
+					     cm_req->req.is_wps_connection);
 
 	/*
 	 * Ignore connect req if the freq is provided and its 6Ghz and
@@ -1458,6 +1424,8 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	req.cm_id = *cm_id;
 	req.force_rsne_override = cm_req->connect_req.req.force_rsne_override;
+	req.is_wps_connection = cm_req->connect_req.req.is_wps_connection;
+	req.is_osen_connection = cm_req->connect_req.req.is_osen_connection;
 	req.assoc_ie = cm_req->connect_req.req.assoc_ie;
 	req.scan_ie = cm_req->connect_req.req.scan_ie;
 	req.bss = cm_req->connect_req.cur_candidate;
@@ -1468,7 +1436,7 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.vht_caps_mask = cm_req->connect_req.req.vht_caps_mask;
 
 	wlan_reg_get_cc_and_src(psoc, country_code);
-	mlme_nofl_info(CM_PREFIX_FMT "Connecting to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d akm 0x%x cipher: uc 0x%x mc 0x%x, CC: %c%c",
+	mlme_nofl_info(CM_PREFIX_FMT "Connecting to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d akm 0x%x cipher: uc 0x%x mc 0x%x, wps %d osen %d force RSN %d CC: %c%c",
 		       CM_PREFIX_REF(req.vdev_id, req.cm_id),
 		       cm_req->connect_req.req.ssid.length,
 		       cm_req->connect_req.req.ssid.ssid,
@@ -1476,7 +1444,9 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 		       req.bss->entry->rssi_raw,
 		       req.bss->entry->channel.chan_freq,
 		       neg_sec_info->key_mgmt, neg_sec_info->ucastcipherset,
-		       neg_sec_info->mcastcipherset, country_code[0],
+		       neg_sec_info->mcastcipherset, req.is_wps_connection,
+		       req.is_osen_connection, req.force_rsne_override,
+		       country_code[0],
 		       country_code[1]);
 
 	status = mlme_cm_connect_req(cm_ctx->vdev, &req);
@@ -1825,9 +1795,26 @@ cm_set_crypto_params_from_ie(struct wlan_cm_connect_req *req)
 {
 	struct wlan_crypto_params crypto_params;
 	QDF_STATUS status;
+	uint8_t wsc_oui[OUI_LENGTH];
+	uint8_t osen_oui[OUI_LENGTH];
+	uint32_t oui_cpu;
 
 	if (!req->assoc_ie.ptr)
 		return;
+
+	oui_cpu = qdf_be32_to_cpu(WSC_OUI);
+	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
+	oui_cpu = qdf_be32_to_cpu(OSEN_OUI);
+	qdf_mem_copy(osen_oui, &oui_cpu, OUI_LENGTH);
+	if (wlan_get_vendor_ie_ptr_from_oui(osen_oui, OUI_LENGTH,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len))
+		req->is_osen_connection = true;
+
+	if (wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
+					    req->assoc_ie.ptr,
+					    req->assoc_ie.len))
+		req->is_wps_connection = true;
 
 	status = wlan_get_crypto_params_from_rsn_ie(&crypto_params,
 						    req->assoc_ie.ptr,

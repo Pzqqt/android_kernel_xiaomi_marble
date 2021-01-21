@@ -409,7 +409,8 @@ cm_fill_connect_resp_from_req(struct wlan_cm_connect_resp *resp,
 		resp->freq = req->chan_freq;
 
 	resp->ssid = req->ssid;
-
+	resp->is_wps_connection = req->is_wps_connection;
+	resp->is_osen_connection = req->is_osen_connection;
 	cm_set_fils_connection_from_req(req, resp);
 }
 
@@ -1102,6 +1103,10 @@ bool cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
 			req->vdev_id = wlan_vdev_get_id(vdev);
 			req->cm_id = cm_req->connect_req.cm_id;
 			req->bss =  cm_req->connect_req.cur_candidate;
+			req->is_wps_connection =
+				cm_req->connect_req.req.is_wps_connection;
+			req->is_osen_connection =
+				cm_req->connect_req.req.is_osen_connection;
 			status = true;
 			cm_req_lock_release(cm_ctx);
 			return status;
