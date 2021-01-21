@@ -341,9 +341,9 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 		cm_send_disconnect_resp(cm_ctx, req->cm_id);
 		return QDF_STATUS_E_INVAL;
 	}
-
+	cm_vdev_scan_cancel(pdev, cm_ctx->vdev);
+	mlme_cm_disconnect_start_ind(cm_ctx->vdev, &req->req);
 	cm_inform_if_mgr_disconnect_start(cm_ctx->vdev);
-	cm_vdev_scan_cancel(wlan_vdev_get_pdev(cm_ctx->vdev), cm_ctx->vdev);
 	mlme_cm_osif_disconnect_start_ind(cm_ctx->vdev);
 
 	/* Serialize disconnect req, Handle failure status */
@@ -400,7 +400,7 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct wlan_cm_vdev_discon_req *req;
 	struct cm_req *cm_req;
-	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_ZERO_INIT;
 	QDF_STATUS status;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
@@ -412,8 +412,15 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 		return QDF_STATUS_E_NOMEM;
 
 	cm_ctx->active_cm_id = *cm_id;
-
 	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &bssid);
+	/*
+	 * for northbound req, bssid is not provided so update it from vdev
+	 * in case bssid is not present
+	 */
+	if (qdf_is_macaddr_zero(&cm_req->discon_req.req.bssid) ||
+	    qdf_is_macaddr_broadcast(&cm_req->discon_req.req.bssid))
+		qdf_copy_macaddr(&cm_req->discon_req.req.bssid, &bssid);
+
 	qdf_copy_macaddr(&req->req.bssid, &bssid);
 
 	req->cm_id = *cm_id;
