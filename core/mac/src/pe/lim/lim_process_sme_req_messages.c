@@ -3035,6 +3035,8 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 	uint8_t wsc_oui[OUI_LENGTH];
 	uint32_t oui_cpu;
 	struct mlme_legacy_priv *mlme_priv;
+	tSirMacCapabilityInfo *ap_cap_info;
+	bool rsn_enabled, privacy;
 
 	ucast_cipher = wlan_crypto_get_param(session->vdev,
 					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
@@ -3045,6 +3047,8 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 
 	/* set default to open */
 	mac_ctx->mlme_cfg->wep_params.auth_type = eSIR_OPEN_SYSTEM;
+	ap_cap_info = (tSirMacCapabilityInfo *)
+		&session->lim_join_req->bssDescription.capabilityInfo;
 
 	if (QDF_HAS_PARAM(auth_mode, WLAN_CRYPTO_AUTH_AUTO) &&
 	    (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
@@ -3057,6 +3061,31 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
 		mac_ctx->mlme_cfg->wep_params.auth_type = eSIR_AUTH_TYPE_SAE;
 
+	if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP) ||
+	     QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	     QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_104)) {
+		privacy = true;
+		rsn_enabled = false;
+	} else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CMAC) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_OCB) ||
+		   QDF_HAS_PARAM(ucast_cipher,
+				 WLAN_CRYPTO_CIPHER_AES_CCM_256) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_GCM) ||
+		   QDF_HAS_PARAM(ucast_cipher,
+				 WLAN_CRYPTO_CIPHER_AES_GCM_256) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WAPI_GCM4) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WAPI_SMS4)) {
+		privacy = ap_cap_info->privacy;
+		rsn_enabled = true;
+	} else {
+		rsn_enabled = false;
+		privacy = false;
+	}
+
+	mac_ctx->mlme_cfg->feature_flags.enable_rsn = rsn_enabled;
+	mac_ctx->mlme_cfg->wep_params.is_privacy_enabled = privacy;
+	mac_ctx->mlme_cfg->wep_params.wep_default_key_id = 0;
 	session->encryptType = lim_get_encrypt_ed_type(ucast_cipher);
 	session->connected_akm = lim_get_connected_akm(session, ucast_cipher,
 						       auth_mode, akm);
