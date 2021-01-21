@@ -1732,8 +1732,13 @@ endif #LITHIUM
 ############ TXRX 3.0 ############
 TXRX3.0_DIR :=     core/dp/txrx3.0
 TXRX3.0_INC :=     -I$(WLAN_ROOT)/$(TXRX3.0_DIR)
-TXRX3.0_OBJS := $(TXRX3.0_DIR)/dp_txrx.o \
-		$(TXRX3.0_DIR)/dp_rx_thread.o
+
+ifeq ($(CONFIG_LITHIUM), y)
+TXRX3.0_OBJS := $(TXRX3.0_DIR)/dp_txrx.o
+
+ifeq ($(CONFIG_WLAN_FEATURE_DP_RX_THREADS), y)
+TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_rx_thread.o
+endif
 
 ifeq ($(CONFIG_RX_FISA), y)
 TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_fisa_rx.o
@@ -1743,6 +1748,8 @@ endif
 ifeq ($(CONFIG_DP_SWLM), y)
 TXRX3.0_OBJS += $(TXRX3.0_DIR)/dp_swlm.o
 endif
+
+endif #LITHIUM
 
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
@@ -2599,10 +2606,7 @@ OBJS +=		$(DP_OBJS)
 endif
 
 OBJS += 	$(UMAC_INTERFACE_MGR_OBJS)
-
-ifeq ($(CONFIG_WLAN_FEATURE_DP_RX_THREADS), y)
-OBJS += $(TXRX3.0_OBJS)
-endif
+OBJS +=		$(TXRX3.0_OBJS)
 
 ccflags-y += $(INCS)
 
