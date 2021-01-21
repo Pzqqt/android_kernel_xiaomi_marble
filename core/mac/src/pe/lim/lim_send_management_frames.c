@@ -5267,8 +5267,10 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 			nStatus);
 	}
 
-	pe_debug("Sending a SA Query Response to");
-	lim_print_mac_addr(mac, peer, LOGD);
+	pe_debug("Sending SA Query Response to "QDF_MAC_ADDR_FMT" op_class %d prim_ch_num %d freq_seg_1_ch_num %d oci_present %d",
+		 QDF_MAC_ADDR_REF(peer), frm.oci.op_class,
+		 frm.oci.prim_ch_num, frm.oci.freq_seg_1_ch_num,
+		 frm.oci.present);
 
 	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
