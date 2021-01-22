@@ -79,6 +79,35 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 				    WLAN_ROAM_RSO_ENABLED,
 				    REASON_CTX_INIT);
 }
+
+QDF_STATUS wlan_cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     enum roam_offload_state requested_state,
+				     uint8_t reason)
+{
+	return cm_roam_state_change(pdev, vdev_id, requested_state, reason);
+}
+
+QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id, uint8_t rso_command,
+				     uint8_t reason)
+{
+	return cm_roam_send_rso_cmd(psoc, vdev_id, rso_command, reason);
+}
+
+QDF_STATUS
+wlan_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		     uint8_t reason)
+{
+	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+		mlme_debug("Update cfg received while ROAM RSO not started");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return cm_roam_send_rso_cmd(psoc, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				    reason);
+}
+
 #endif
 
 char *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor)
@@ -236,21 +265,6 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	cm_roam_release_lock();
 
 	return false;
-}
-
-QDF_STATUS wlan_cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
-				     uint8_t vdev_id,
-				     enum roam_offload_state requested_state,
-				     uint8_t reason)
-{
-	return cm_roam_state_change(pdev, vdev_id, requested_state, reason);
-}
-
-QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id, uint8_t rso_command,
-				     uint8_t reason)
-{
-	return cm_roam_send_rso_cmd(psoc, vdev_id, rso_command, reason);
 }
 
 QDF_STATUS wlan_cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,

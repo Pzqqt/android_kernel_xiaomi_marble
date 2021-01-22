@@ -2178,6 +2178,107 @@ cm_roam_scan_btm_offload(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * cm_roam_offload_11k_params() - set roam 11k offload parameters
+ * @psoc: psoc ctx
+ * @vdev: vdev
+ * @params:  roam 11k offload parameters
+ * @enabled: 11k offload enabled/disabled
+ *
+ * This function is used to set roam 11k offload related parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_offload_11k_params(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_objmgr_vdev *vdev,
+			   struct wlan_roam_11k_offload_params *params,
+			   bool enabled)
+{
+	struct cm_roam_neighbor_report_offload_params *neighbor_report_offload;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	neighbor_report_offload =
+		&mlme_obj->cfg.lfr.rso_user_config.neighbor_report_offload;
+
+	params->vdev_id = wlan_vdev_get_id(vdev);
+
+	if (enabled) {
+		params->offload_11k_bitmask =
+			neighbor_report_offload->offload_11k_enable_bitmask;
+	} else {
+		params->offload_11k_bitmask = 0;
+		return;
+	}
+
+	/*
+	 * If none of the parameters are enabled, then set the
+	 * offload_11k_bitmask to 0, so that we don't send the command
+	 * to the FW and drop it in WMA
+	 */
+	if ((neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_ALL) == 0) {
+		mlme_err("No valid neighbor report offload params %x",
+			 neighbor_report_offload->params_bitmask);
+		params->offload_11k_bitmask = 0;
+		return;
+	}
+
+	/*
+	 * First initialize all params to NEIGHBOR_REPORT_PARAM_INVALID
+	 * Then set the values that are enabled
+	 */
+	params->neighbor_report_params.time_offset =
+		NEIGHBOR_REPORT_PARAM_INVALID;
+	params->neighbor_report_params.low_rssi_offset =
+		NEIGHBOR_REPORT_PARAM_INVALID;
+	params->neighbor_report_params.bmiss_count_trigger =
+		NEIGHBOR_REPORT_PARAM_INVALID;
+	params->neighbor_report_params.per_threshold_offset =
+		NEIGHBOR_REPORT_PARAM_INVALID;
+	params->neighbor_report_params.neighbor_report_cache_timeout =
+		NEIGHBOR_REPORT_PARAM_INVALID;
+	params->neighbor_report_params.max_neighbor_report_req_cap =
+		NEIGHBOR_REPORT_PARAM_INVALID;
+
+	if (neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_TIME_OFFSET)
+		params->neighbor_report_params.time_offset =
+			neighbor_report_offload->time_offset;
+
+	if (neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_LOW_RSSI_OFFSET)
+		params->neighbor_report_params.low_rssi_offset =
+			neighbor_report_offload->low_rssi_offset;
+
+	if (neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_BMISS_COUNT_TRIGGER)
+		params->neighbor_report_params.bmiss_count_trigger =
+			neighbor_report_offload->bmiss_count_trigger;
+
+	if (neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_PER_THRESHOLD_OFFSET)
+		params->neighbor_report_params.per_threshold_offset =
+			neighbor_report_offload->per_threshold_offset;
+
+	if (neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_CACHE_TIMEOUT)
+		params->neighbor_report_params.neighbor_report_cache_timeout =
+			neighbor_report_offload->neighbor_report_cache_timeout;
+
+	if (neighbor_report_offload->params_bitmask &
+	    NEIGHBOR_REPORT_PARAMS_MAX_REQ_CAP)
+		params->neighbor_report_params.max_neighbor_report_req_cap =
+			neighbor_report_offload->max_neighbor_report_req_cap;
+
+	wlan_vdev_mlme_get_ssid(vdev, params->neighbor_report_params.ssid.ssid,
+				&params->neighbor_report_params.ssid.length);
+}
+
+/**
  * cm_roam_start_req() - roam start request handling
  * @psoc: psoc pointer
  * @vdev_id: vdev id
@@ -2241,9 +2342,8 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					      ROAM_SCAN_OFFLOAD_START,
 					      reason);
 	cm_roam_scan_btm_offload(psoc, vdev, &start_req->btm_config, rso_cfg);
-
-	/* fill from legacy through this API */
-	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);
+	cm_roam_offload_11k_params(psoc, vdev, &start_req->roam_11k_params,
+				   true);
 
 	status = wlan_cm_tgt_send_roam_start_req(psoc, vdev_id, start_req);
 	if (QDF_IS_STATUS_ERROR(status))
