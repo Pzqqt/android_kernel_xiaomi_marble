@@ -33,6 +33,21 @@
 #include "wlan_blm_api.h"
 #include "wlan_scan_api.h"
 #include "wlan_vdev_mgr_ucfg_api.h"
+#include "wlan_p2p_cfg_api.h"
+#include "wlan_cm_vdev_api.h"
+#include "cfg_nan_api.h"
+
+#ifdef WLAN_FEATURE_SAE
+#define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
+	(((fw_akm_bitmap) & (1 << AKM_FT_SAE)) ? true : false)
+
+#define CM_IS_FW_SAE_ROAM_SUPPORTED(fw_akm_bitmap) \
+	(((fw_akm_bitmap) & (1 << AKM_SAE)) ? true : false)
+#else
+#define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) (false)
+
+#define CM_IS_FW_SAE_ROAM_SUPPORTED(fw_akm_bitmap) (false)
+#endif
 
 /**
  * cm_roam_scan_bmiss_cnt() - set roam beacon miss count
@@ -2572,6 +2587,185 @@ cm_roam_offload_per_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	return status;
 }
 
+#ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_ADAPTIVE_11R
+static bool
+cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				  struct rso_config *rso_cfg)
+{
+	if (rso_cfg->is_adaptive_11r_connection)
+		return mlme_obj->cfg.lfr.tgt_adaptive_11r_cap;
+
+	return true;
+}
+#else
+static bool
+cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				  struct rso_config *rso_cfg)
+
+{
+	return true;
+}
+#endif
+
+static QDF_STATUS
+cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev,
+		    uint8_t command, uint8_t reason)
+{
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	int32_t akm;
+	struct rso_config *rso_cfg;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	uint32_t fw_akm_bitmap;
+	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	mlme_debug("RSO Command %d, vdev %d, Reason %d AKM %x",
+		   command, vdev_id, reason, akm);
+
+	if (!cm_is_vdev_connected(vdev) &&
+	    (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG ||
+	     command == ROAM_SCAN_OFFLOAD_START ||
+	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
+		mlme_debug("vdev not in connected state and command %d ",
+			   command);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384) ||
+	     QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256)) &&
+	    !mlme_obj->cfg.lfr.rso_user_config.is_fils_roaming_supported) {
+		mlme_info("FILS Roaming not suppprted by fw, akm %x", akm);
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if (!cm_is_adaptive_11r_roam_supported(mlme_obj, rso_cfg)) {
+		mlme_info("Adaptive 11r Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	fw_akm_bitmap = mlme_obj->cfg.lfr.fw_akm_bitmap;
+	/* Roaming is not supported currently for OWE akm */
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE) &&
+	    !(fw_akm_bitmap & (1 << AKM_OWE))) {
+		mlme_info("OWE Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/* Roaming is not supported for SAE authentication */
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE) &&
+	    !CM_IS_FW_SAE_ROAM_SUPPORTED(fw_akm_bitmap)) {
+		mlme_info("Roaming not suppprted for SAE connection");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if ((QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B) ||
+	     QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192)) &&
+	     !(fw_akm_bitmap & (1 << AKM_SUITEB))) {
+		mlme_info("Roaming not supported for SUITEB connection");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/*
+	 * If fw doesn't advertise FT SAE, FT-FILS or FT-Suite-B capability,
+	 * don't support roaming to that profile
+	 */
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE) &&
+	    !CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap)) {
+		mlme_info("Roaming not suppprted for FT SAE akm");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384) &&
+	    !(fw_akm_bitmap & (1 << AKM_FT_SUITEB_SHA384))) {
+		mlme_info("Roaming not suppprted for FT Suite-B akm");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if ((QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384) ||
+	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256)) &&
+	    !(fw_akm_bitmap & (1 << AKM_FT_FILS))) {
+		mlme_info("Roaming not suppprted for FT FILS akm");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	p2p_disable_sta_roaming =
+		(cfg_p2p_is_roam_config_disabled(psoc) &&
+		(policy_mgr_mode_specific_connection_count(
+					psoc, PM_P2P_CLIENT_MODE, NULL) ||
+		policy_mgr_mode_specific_connection_count(
+					psoc, PM_P2P_GO_MODE, NULL)));
+	nan_disable_sta_roaming =
+	    (cfg_nan_is_roam_config_disabled(psoc) &&
+	    policy_mgr_mode_specific_connection_count(psoc, PM_NDI_MODE, NULL));
+
+	if ((command == ROAM_SCAN_OFFLOAD_START ||
+	     command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
+	     (p2p_disable_sta_roaming || nan_disable_sta_roaming)) {
+		mlme_info("roaming not supported for active %s connection",
+			 p2p_disable_sta_roaming ? "p2p" : "ndi");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * The Dynamic Config Items Update may happen even if the state is in
+	 * INIT. It is important to ensure that the command is passed down to
+	 * the FW only if the Infra Station is in a connected state. A connected
+	 * station could also be in a PREAUTH or REASSOC states.
+	 * 1) Block all CMDs that are not STOP in INIT State. For STOP always
+	 *    inform firmware irrespective of state.
+	 * 2) Block update cfg CMD if its for REASON_ROAM_SET_BLACKLIST_BSSID,
+	 *    because we need to inform firmware of blacklisted AP for PNO in
+	 *    all states.
+	 */
+	if ((cm_is_vdev_disconnecting(vdev) ||
+	     cm_is_vdev_disconnected(vdev)) &&
+	    (command != ROAM_SCAN_OFFLOAD_STOP) &&
+	    (reason != REASON_ROAM_SET_BLACKLIST_BSSID)) {
+		mlme_info("Scan Command not sent to FW and cmd=%d", command);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS cm_is_rso_allowed(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id, uint8_t command,
+				    uint8_t reason)
+{
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = cm_roam_cmd_allowed(psoc, vdev, command, reason);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return status;
+}
+#else
+static QDF_STATUS cm_is_rso_allowed(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id, uint8_t command,
+				    uint8_t reason)
+{
+	return wlan_cm_roam_cmd_allowed(psoc, vdev_id, command, reason);
+}
+#endif
 /*
  * similar to csr_roam_offload_scan, will be used from many legacy
  * process directly, generate a new function wlan_cm_roam_send_rso_cmd
@@ -2583,7 +2777,7 @@ QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	status = wlan_cm_roam_cmd_allowed(psoc, vdev_id, rso_command, reason);
+	status = cm_is_rso_allowed(psoc, vdev_id, rso_command, reason);
 
 	if (status == QDF_STATUS_E_NOSUPPORT)
 		return QDF_STATUS_SUCCESS;
@@ -3148,3 +3342,153 @@ cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 
 	return status;
 }
+
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void
+cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_pmk_info *pmk_info;
+	struct cm_roam_values_copy src_cfg;
+	struct qdf_mac_addr bssid;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   IS_SINGLE_PMK, &src_cfg);
+	if (!src_cfg.bool_value)
+		return;
+	/*
+	 * Mark the AP as single PMK capable in Crypto Table
+	 */
+	wlan_vdev_get_bss_peer_mac(vdev, &bssid);
+	wlan_crypto_set_sae_single_pmk_bss_cap(vdev, &bssid, true);
+
+	pmk_info = qdf_mem_malloc(sizeof(*pmk_info));
+	if (!pmk_info)
+		return;
+
+	wlan_cm_get_psk_pmk(pdev, vdev_id, pmk_info->pmk, &pmk_info->pmk_len);
+
+	wlan_mlme_update_sae_single_pmk(vdev, pmk_info);
+
+	qdf_mem_zero(pmk_info, sizeof(*pmk_info));
+	qdf_mem_free(pmk_info);
+}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
+
+static bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				struct wlan_objmgr_vdev *vdev,
+				bool mdie_present)
+{
+	int32_t akm, ucast_cipher;
+
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	if (!ucast_cipher ||
+	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+	      ucast_cipher))) {
+		if (mdie_present && mlme_obj->cfg.lfr.enable_ftopen)
+			return true;
+	} else if (QDF_HAS_PARAM(ucast_cipher,
+				 WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384) ||
+		   QDF_HAS_PARAM(ucast_cipher,
+				 WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_KEY_MGMT_FT_SAE) ||
+		   QDF_HAS_PARAM(ucast_cipher,
+				 WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_KEY_MGMT_FT_PSK) ||
+		   QDF_HAS_PARAM(ucast_cipher,
+				 WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384)) {
+		return true;
+	}
+
+	return false;
+}
+
+static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev,
+			       struct wlan_objmgr_vdev *vdev)
+{
+	struct cm_roam_values_copy src_cfg;
+	bool mdie_present;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	enum QDF_OPMODE opmode;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE) {
+		sme_debug("Wrong opmode %d", opmode);
+		return;
+	}
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	wlan_cm_init_occupied_ch_freq_list(pdev, psoc, vdev_id);
+
+	/*
+	 * Update RSSI change params to vdev
+	 */
+	src_cfg.uint_value = mlme_obj->cfg.lfr.roam_rescan_rssi_diff;
+	wlan_cm_roam_cfg_set_value(psoc, vdev_id,
+				   RSSI_CHANGE_THRESHOLD, &src_cfg);
+
+	src_cfg.uint_value = mlme_obj->cfg.lfr.roam_scan_hi_rssi_delay;
+	wlan_cm_roam_cfg_set_value(psoc, vdev_id,
+				   HI_RSSI_DELAY_BTW_SCANS, &src_cfg);
+
+	wlan_cm_update_roam_scan_scheme_bitmap(psoc, vdev_id,
+					       DEFAULT_ROAM_SCAN_SCHEME_BITMAP);
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   MOBILITY_DOMAIN, &src_cfg);
+	mdie_present = src_cfg.bool_value;
+	/* Based on the auth scheme tell if we are 11r */
+	if (cm_is_auth_type_11r(mlme_obj, vdev, mdie_present)) {
+		src_cfg.bool_value = true;
+	} else {
+		src_cfg.bool_value = false;
+	}
+	wlan_cm_roam_cfg_set_value(psoc, vdev_id,
+				   IS_11R_CONNECTION, &src_cfg);
+
+	if (!mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+		return;
+	/*
+	 * Store the current PMK info of the AP
+	 * to the single pmk global cache if the BSS allows
+	 * single pmk roaming capable.
+	 */
+	cm_store_sae_single_pmk_to_global_cache(psoc, pdev, vdev);
+
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id))
+		wlan_cm_roam_state_change(pdev, vdev_id,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_CTX_INIT);
+}
+
+void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d: vdev not found", vdev_id);
+		return;
+	}
+	cm_roam_start_init(psoc, pdev, vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+#endif

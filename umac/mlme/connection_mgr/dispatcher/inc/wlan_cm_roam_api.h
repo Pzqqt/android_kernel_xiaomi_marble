@@ -44,6 +44,7 @@ QDF_STATUS
 wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 					uint8_t vdev_id);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_cm_roam_cmd_allowed() - check roam cmd is allowed or not
  * @psoc: pointer to psoc object
@@ -58,6 +59,7 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			 uint8_t rso_command, uint8_t reason);
+#endif
 
 /**
  * wlan_cm_roam_fill_start_req() - fill start request structure content
@@ -538,6 +540,31 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 {
 	return NULL;
 }
+#endif
+
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void
+cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_vdev *vdev);
+#else
+static inline void
+cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_vdev *vdev)
+{}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
+/**
+ * cm_roam_start_init_on_connect() - init roaming
+ * @pdev: pdev pointer
+ * @vdev_id: vdev_id
+ *
+ * Return: void
+ */
+void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id);
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

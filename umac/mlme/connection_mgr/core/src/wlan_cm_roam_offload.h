@@ -121,4 +121,5 @@ void cm_dump_freq_list(struct rso_chan_info *chan_info);
 QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
+
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */
