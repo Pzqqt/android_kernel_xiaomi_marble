@@ -1016,7 +1016,13 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.multipass_rx_pkt_drop); \
 	}  while (0)
 
-extern int dp_peer_find_attach(struct dp_soc *soc);
+/**
+ * dp_peer_find_attach() - Allocates memory for peer objects
+ * @soc: SoC handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_peer_find_attach(struct dp_soc *soc);
 extern void dp_peer_find_detach(struct dp_soc *soc);
 extern void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer);

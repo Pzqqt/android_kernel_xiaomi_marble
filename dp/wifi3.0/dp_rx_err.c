@@ -45,6 +45,7 @@
 /* Max buffer in invalid peer SG list*/
 #define DP_MAX_INVALID_BUFFERS 10
 
+#ifdef FEATURE_MEC
 /**
  * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
  *			      back on same vap or a different vap.
@@ -58,13 +59,13 @@
  *
  */
 static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
-					struct dp_peer *peer,
-					uint8_t *rx_tlv_hdr,
-					qdf_nbuf_t nbuf)
+					  struct dp_peer *peer,
+					  uint8_t *rx_tlv_hdr,
+					  qdf_nbuf_t nbuf)
 {
 	struct dp_vdev *vdev = peer->vdev;
-	struct dp_ast_entry *ase = NULL;
-	uint16_t sa_idx = 0;
+	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_mec_entry *mecentry = NULL;
 	uint8_t *data;
 
 	/*
@@ -102,67 +103,30 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 * wireless STAs MAC addr which are behind the Repeater,
 	 * then drop the pkt as it is looped back
 	 */
-	qdf_spin_lock_bh(&soc->ast_lock);
-	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
-		sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
+	qdf_spin_lock_bh(&soc->mec_lock);
 
-		if ((sa_idx < 0) ||
-		    (sa_idx >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					"invalid sa_idx: %d", sa_idx);
-			qdf_assert_always(0);
-		}
-
-		ase = soc->ast_table[sa_idx];
-		if (!ase) {
-			/* We do not get a peer map event for STA and without
-			 * this event we don't know what is STA's sa_idx.
-			 * For this reason the AST is still not associated to
-			 * any index postion in ast_table.
-			 * In these kind of scenarios where sa is valid but
-			 * ast is not in ast_table, we use the below API to get
-			 * AST entry for STA's own mac_address.
-			 */
-			ase = dp_peer_ast_hash_find_by_vdevid
-				(soc, &data[QDF_MAC_ADDR_SIZE],
-				 peer->vdev->vdev_id);
-			if (ase) {
-				ase->ast_idx = sa_idx;
-				soc->ast_table[sa_idx] = ase;
-				ase->is_mapped = TRUE;
-			}
-		}
-	} else {
-		ase = dp_peer_ast_hash_find_by_pdevid(soc,
-						      &data[QDF_MAC_ADDR_SIZE],
-						      vdev->pdev->pdev_id);
+	mecentry = dp_peer_mec_hash_find_by_pdevid(soc, pdev->pdev_id,
+						   &data[QDF_MAC_ADDR_SIZE]);
+	if (!mecentry) {
+		qdf_spin_unlock_bh(&soc->mec_lock);
+		return false;
 	}
 
-	if (ase) {
+	qdf_spin_unlock_bh(&soc->mec_lock);
 
-		if (ase->pdev_id != vdev->pdev->pdev_id) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			dp_rx_err_info("%pK: Detected DBDC Root AP "QDF_MAC_ADDR_FMT", %d %d",
-				       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]),
-				       vdev->pdev->pdev_id,
-				       ase->pdev_id);
-			return false;
-		}
-
-		if ((ase->type == CDP_TXRX_AST_TYPE_MEC) ||
-				(ase->peer_id != peer->peer_id)) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			dp_rx_err_info("%pK: received pkt with same src mac "QDF_MAC_ADDR_FMT,
-				       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]));
-
-			return true;
-		}
-	}
-	qdf_spin_unlock_bh(&soc->ast_lock);
+	dp_rx_err_info("%pK: received pkt with same src mac " QDF_MAC_ADDR_FMT,
+		       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]));
+	return true;
+}
+#else
+static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
+					  struct dp_peer *peer,
+					  uint8_t *rx_tlv_hdr,
+					  qdf_nbuf_t nbuf)
+{
 	return false;
 }
-
+#endif
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 void dp_rx_link_desc_refill_duplicate_check(

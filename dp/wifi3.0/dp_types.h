@@ -851,6 +851,11 @@ struct dp_soc_stats {
 		uint32_t ast_mismatch;
 	} ast;
 
+	struct {
+		uint32_t added;
+		uint32_t deleted;
+	} mec;
+
 	/* SOC level TX stats */
 	struct {
 		/* Total packets transmitted */
@@ -1083,6 +1088,25 @@ struct dp_ast_entry {
 	void *cookie;
 	TAILQ_ENTRY(dp_ast_entry) ase_list_elem;
 	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;
+};
+
+/*
+ * dp_mec_entry
+ *
+ * @mac_addr:  MAC Address for this MEC entry
+ * @is_active: flag to indicate active data traffic on this node
+ *             (used for aging out/expiry)
+ * @pdev_id: pdev ID
+ * @vdev_id: vdev ID
+ * @hash_list_elem: node in soc MEC hash list (mac address used as hash)
+ */
+struct dp_mec_entry {
+	union dp_align_mac_addr mac_addr;
+	bool is_active;
+	uint8_t pdev_id;
+	uint8_t vdev_id;
+
+	TAILQ_ENTRY(dp_mec_entry) hash_list_elem;
 };
 
 /* SOC level htt stats */
@@ -1545,7 +1569,6 @@ struct dp_soc {
 		unsigned idx_bits;
 		TAILQ_HEAD(, dp_ast_entry) * bins;
 	} ast_hash;
-
 	struct dp_rx_history *rx_ring_history[MAX_REO_DEST_RINGS];
 	struct dp_rx_err_history *rx_err_ring_history;
 	struct dp_rx_reinject_history *rx_reinject_ring_history;
@@ -1725,6 +1748,21 @@ struct dp_soc {
 #endif
 	/* Invalid buffer that allocated for RX buffer */
 	qdf_nbuf_queue_t invalid_buf_queue;
+
+#ifdef FEATURE_MEC
+	/** @mec_lock: spinlock for MEC table */
+	qdf_spinlock_t mec_lock;
+	/** @mec_cnt: number of active mec entries */
+	qdf_atomic_t mec_cnt;
+	struct {
+		/** @mask: mask bits */
+		uint32_t mask;
+		/** @idx_bits: index to shift bits */
+		uint32_t idx_bits;
+		/** @bins: MEC table */
+		TAILQ_HEAD(, dp_mec_entry) * bins;
+	} mec_hash;
+#endif
 };
 
 #ifdef IPA_OFFLOAD

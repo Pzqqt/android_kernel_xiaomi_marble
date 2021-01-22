@@ -652,6 +652,103 @@ static void dp_service_lmac_rings(void *arg)
 
 #endif
 
+#ifdef FEATURE_MEC
+void dp_peer_mec_flush_entries(struct dp_soc *soc)
+{
+	unsigned int index;
+	struct dp_mec_entry *mecentry, *mecentry_next;
+
+	TAILQ_HEAD(, dp_mec_entry) free_list;
+	TAILQ_INIT(&free_list);
+
+	if (!soc->mec_hash.mask)
+		return;
+
+	if (!soc->mec_hash.bins)
+		return;
+
+	if (!qdf_atomic_read(&soc->mec_cnt))
+		return;
+
+	qdf_spin_lock_bh(&soc->mec_lock);
+	for (index = 0; index <= soc->mec_hash.mask; index++) {
+		if (!TAILQ_EMPTY(&soc->mec_hash.bins[index])) {
+			TAILQ_FOREACH_SAFE(mecentry, &soc->mec_hash.bins[index],
+					   hash_list_elem, mecentry_next) {
+			    dp_peer_mec_detach_entry(soc, mecentry, &free_list);
+			}
+		}
+	}
+	qdf_spin_unlock_bh(&soc->mec_lock);
+
+	dp_peer_mec_free_list(soc, &free_list);
+}
+
+/**
+ * dp_print_mec_entries() - Dump MEC entries in table
+ * @soc: Datapath soc handle
+ *
+ * Return: none
+ */
+static void dp_print_mec_stats(struct dp_soc *soc)
+{
+	int i;
+	uint32_t index;
+	struct dp_mec_entry *mecentry = NULL, *mec_list;
+	uint32_t num_entries = 0;
+
+	DP_PRINT_STATS("MEC Stats:");
+	DP_PRINT_STATS("   Entries Added   = %d", soc->stats.mec.added);
+	DP_PRINT_STATS("   Entries Deleted = %d", soc->stats.mec.deleted);
+
+	if (!qdf_atomic_read(&soc->mec_cnt))
+		return;
+
+	mec_list = qdf_mem_malloc(sizeof(*mecentry) * DP_PEER_MAX_MEC_ENTRY);
+	if (!mec_list) {
+		dp_peer_warn("%pK: failed to allocate mec_list", soc);
+		return;
+	}
+
+	DP_PRINT_STATS("MEC Table:");
+	for (index = 0; index <= soc->mec_hash.mask; index++) {
+		qdf_spin_lock_bh(&soc->mec_lock);
+		if (TAILQ_EMPTY(&soc->mec_hash.bins[index])) {
+			qdf_spin_unlock_bh(&soc->mec_lock);
+			continue;
+		}
+
+		TAILQ_FOREACH(mecentry, &soc->mec_hash.bins[index],
+			      hash_list_elem) {
+			qdf_mem_copy(&mec_list[num_entries], mecentry,
+				     sizeof(*mecentry));
+			num_entries++;
+		}
+		qdf_spin_unlock_bh(&soc->mec_lock);
+	}
+
+	if (!num_entries) {
+		qdf_mem_free(mec_list);
+		return;
+	}
+
+	for (i = 0; i < num_entries; i++) {
+		DP_PRINT_STATS("%6d mac_addr = " QDF_MAC_ADDR_FMT
+			       " is_active = %d pdev_id = %d vdev_id = %d",
+			       i,
+			       QDF_MAC_ADDR_REF(mec_list[i].mac_addr.raw),
+			       mec_list[i].is_active,
+			       mec_list[i].pdev_id,
+			       mec_list[i].vdev_id);
+	}
+	qdf_mem_free(mec_list);
+}
+#else
+static void dp_print_mec_stats(struct dp_soc *soc)
+{
+}
+#endif
+
 static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 				 uint8_t vdev_id,
 				 uint8_t *peer_mac,
@@ -862,6 +959,7 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 			    DP_MOD_ID_CDP);
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
+	dp_peer_mec_flush_entries(soc);
 }
 
 /**
@@ -1275,7 +1373,7 @@ dp_print_peer_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 	struct dp_ast_entry *ase, *tmp_ase;
 	uint32_t num_entries = 0;
 	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
-			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS",
+			"NONE", "STATIC", "SELF", "WDS", "HMWDS", "BSS",
 			"DA", "HMWDS_SEC"};
 
 	DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
@@ -4802,6 +4900,8 @@ static void dp_soc_deinit(void *txrx_soc)
 	DEINIT_RX_HW_STATS_LOCK(soc);
 
 	qdf_spinlock_destroy(&soc->ast_lock);
+
+	dp_peer_mec_spinlock_destroy(soc);
 
 	qdf_nbuf_queue_free(&soc->htt_stats.msg);
 
@@ -8459,6 +8559,7 @@ dp_print_host_stats(struct dp_vdev *vdev,
 		break;
 	case TXRX_AST_STATS:
 		dp_print_ast_stats(pdev->soc);
+		dp_print_mec_stats(pdev->soc);
 		dp_print_peer_table(vdev);
 		break;
 	case TXRX_SRNG_PTR_STATS:
@@ -12526,6 +12627,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);
 
 	qdf_spinlock_create(&soc->ast_lock);
+	dp_peer_mec_spinlock_create(soc);
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
 	qdf_list_create(&soc->reo_desc_freelist, REO_DESC_FREELIST_SIZE);

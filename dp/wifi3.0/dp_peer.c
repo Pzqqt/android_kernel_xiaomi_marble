@@ -103,7 +103,7 @@ static inline int dp_peer_find_mac_addr_cmp(
 		 & (mac_addr1->align4.bytes_ef == mac_addr2->align4.bytes_ef));
 }
 
-static int dp_peer_ast_table_attach(struct dp_soc *soc)
+static QDF_STATUS dp_peer_ast_table_attach(struct dp_soc *soc)
 {
 	uint32_t max_ast_index;
 
@@ -116,16 +116,16 @@ static int dp_peer_ast_table_attach(struct dp_soc *soc)
 		dp_peer_err("%pK: ast_table memory allocation failed", soc);
 		return QDF_STATUS_E_NOMEM;
 	}
-	return 0; /* success */
+	return QDF_STATUS_SUCCESS; /* success */
 }
 
 /*
  * dp_peer_find_map_attach() - allocate memory for peer_id_to_obj_map
  * @soc: soc handle
  *
- * return: none
+ * return: QDF_STATUS
  */
-static int dp_peer_find_map_attach(struct dp_soc *soc)
+static QDF_STATUS dp_peer_find_map_attach(struct dp_soc *soc)
 {
 	uint32_t max_peers, peer_map_size;
 
@@ -149,7 +149,7 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 	qdf_mem_zero(soc->peer_id_to_obj_map, peer_map_size);
 
 	qdf_spinlock_create(&soc->peer_map_lock);
-	return 0; /* success */
+	return QDF_STATUS_SUCCESS; /* success */
 }
 
 static int dp_log2_ceil(unsigned int value)
@@ -176,9 +176,9 @@ static int dp_log2_ceil(unsigned int value)
  * dp_peer_find_hash_attach() - allocate memory for peer_hash table
  * @soc: soc handle
  *
- * return: none
+ * return: QDF_STATUS
  */
-static int dp_peer_find_hash_attach(struct dp_soc *soc)
+static QDF_STATUS dp_peer_find_hash_attach(struct dp_soc *soc)
 {
 	int i, hash_elems, log2;
 
@@ -201,7 +201,7 @@ static int dp_peer_find_hash_attach(struct dp_soc *soc)
 		TAILQ_INIT(&soc->peer_hash.bins[i]);
 
 	qdf_spinlock_create(&soc->peer_hash_lock);
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -425,14 +425,228 @@ static bool dp_peer_exist_on_pdev(struct dp_soc *soc,
 	return found;
 }
 
+#ifdef FEATURE_MEC
+/**
+ * dp_peer_mec_hash_attach() - Allocate and initialize MEC Hash Table
+ * @soc: SoC handle
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dp_peer_mec_hash_attach(struct dp_soc *soc)
+{
+	int log2, hash_elems, i;
+
+	log2 = dp_log2_ceil(DP_PEER_MAX_MEC_IDX);
+	hash_elems = 1 << log2;
+
+	soc->mec_hash.mask = hash_elems - 1;
+	soc->mec_hash.idx_bits = log2;
+
+	dp_peer_info("%pK: max mec index: %d",
+		     soc, DP_PEER_MAX_MEC_IDX);
+
+	/* allocate an array of TAILQ mec object lists */
+	soc->mec_hash.bins = qdf_mem_malloc(hash_elems *
+					    sizeof(TAILQ_HEAD(anonymous_tail_q,
+							      dp_mec_entry)));
+
+	if (!soc->mec_hash.bins)
+		return QDF_STATUS_E_NOMEM;
+
+	for (i = 0; i < hash_elems; i++)
+		TAILQ_INIT(&soc->mec_hash.bins[i]);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_peer_mec_hash_index() - Compute the MEC hash from MAC address
+ * @soc: SoC handle
+ *
+ * Return: MEC hash
+ */
+static inline uint32_t dp_peer_mec_hash_index(struct dp_soc *soc,
+					      union dp_align_mac_addr *mac_addr)
+{
+	uint32_t index;
+
+	index =
+		mac_addr->align2.bytes_ab ^
+		mac_addr->align2.bytes_cd ^
+		mac_addr->align2.bytes_ef;
+	index ^= index >> soc->mec_hash.idx_bits;
+	index &= soc->mec_hash.mask;
+	return index;
+}
+
+struct dp_mec_entry *dp_peer_mec_hash_find_by_pdevid(struct dp_soc *soc,
+						     uint8_t pdev_id,
+						     uint8_t *mec_mac_addr)
+{
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	uint32_t index;
+	struct dp_mec_entry *mecentry;
+
+	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
+		     mec_mac_addr, QDF_MAC_ADDR_SIZE);
+	mac_addr = &local_mac_addr_aligned;
+
+	index = dp_peer_mec_hash_index(soc, mac_addr);
+	TAILQ_FOREACH(mecentry, &soc->mec_hash.bins[index], hash_list_elem) {
+		if ((pdev_id == mecentry->pdev_id) &&
+		    !dp_peer_find_mac_addr_cmp(mac_addr, &mecentry->mac_addr))
+			return mecentry;
+	}
+
+	return NULL;
+}
+
+/**
+ * dp_peer_mec_hash_add() - Add MEC entry into hash table
+ * @soc: SoC handle
+ *
+ * This function adds the MEC entry into SoC MEC hash table
+ *
+ * Return: None
+ */
+static inline void dp_peer_mec_hash_add(struct dp_soc *soc,
+					struct dp_mec_entry *mecentry)
+{
+	uint32_t index;
+
+	index = dp_peer_mec_hash_index(soc, &mecentry->mac_addr);
+	qdf_spin_lock_bh(&soc->mec_lock);
+	TAILQ_INSERT_TAIL(&soc->mec_hash.bins[index], mecentry, hash_list_elem);
+	qdf_spin_unlock_bh(&soc->mec_lock);
+}
+
+QDF_STATUS dp_peer_mec_add_entry(struct dp_soc *soc,
+				 struct dp_vdev *vdev,
+				 uint8_t *mac_addr)
+{
+	struct dp_mec_entry *mecentry = NULL;
+	struct dp_pdev *pdev = NULL;
+
+	if (!vdev) {
+		dp_peer_err("%pK: Peers vdev is NULL", soc);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = vdev->pdev;
+
+	if (qdf_unlikely(qdf_atomic_read(&soc->mec_cnt) >=
+					 DP_PEER_MAX_MEC_ENTRY)) {
+		dp_peer_warn("%pK: max MEC entry limit reached mac_addr: "
+			     QDF_MAC_ADDR_FMT, soc, QDF_MAC_ADDR_REF(mac_addr));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_spin_lock_bh(&soc->mec_lock);
+	mecentry = dp_peer_mec_hash_find_by_pdevid(soc, pdev->pdev_id,
+						   mac_addr);
+	if (qdf_likely(mecentry)) {
+		mecentry->is_active = TRUE;
+		qdf_spin_unlock_bh(&soc->mec_lock);
+		return QDF_STATUS_E_ALREADY;
+	}
+
+	qdf_spin_unlock_bh(&soc->mec_lock);
+
+	dp_peer_debug("%pK: pdevid: %u vdev: %u type: MEC mac_addr: "
+		      QDF_MAC_ADDR_FMT,
+		      soc, pdev->pdev_id, vdev->vdev_id,
+		      QDF_MAC_ADDR_REF(mac_addr));
+
+	mecentry = (struct dp_mec_entry *)
+			qdf_mem_malloc(sizeof(struct dp_mec_entry));
+
+	if (qdf_unlikely(!mecentry)) {
+		dp_peer_err("%pK: fail to allocate mecentry", soc);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_copy_macaddr((struct qdf_mac_addr *)&mecentry->mac_addr.raw[0],
+			 (struct qdf_mac_addr *)mac_addr);
+	mecentry->pdev_id = pdev->pdev_id;
+	mecentry->vdev_id = vdev->vdev_id;
+	mecentry->is_active = TRUE;
+	dp_peer_mec_hash_add(soc, mecentry);
+
+	qdf_atomic_inc(&soc->mec_cnt);
+	DP_STATS_INC(soc, mec.added, 1);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_peer_mec_detach_entry(struct dp_soc *soc, struct dp_mec_entry *mecentry,
+			      void *ptr)
+{
+	uint32_t index = dp_peer_mec_hash_index(soc, &mecentry->mac_addr);
+
+	TAILQ_HEAD(, dp_mec_entry) * free_list = ptr;
+
+	TAILQ_REMOVE(&soc->mec_hash.bins[index], mecentry,
+		     hash_list_elem);
+	TAILQ_INSERT_TAIL(free_list, mecentry, hash_list_elem);
+}
+
+void dp_peer_mec_free_list(struct dp_soc *soc, void *ptr)
+{
+	struct dp_mec_entry *mecentry, *mecentry_next;
+
+	TAILQ_HEAD(, dp_mec_entry) * free_list = ptr;
+
+	TAILQ_FOREACH_SAFE(mecentry, free_list, hash_list_elem,
+			   mecentry_next) {
+		dp_peer_debug("%pK: MEC delete for mac_addr " QDF_MAC_ADDR_FMT,
+			      soc, QDF_MAC_ADDR_REF(&mecentry->mac_addr));
+		qdf_mem_free(mecentry);
+		qdf_atomic_dec(&soc->mec_cnt);
+		DP_STATS_INC(soc, mec.deleted, 1);
+	}
+}
+
+/**
+ * dp_peer_mec_hash_detach() - Free MEC Hash table
+ * @soc: SoC handle
+ *
+ * Return: None
+ */
+static void dp_peer_mec_hash_detach(struct dp_soc *soc)
+{
+	dp_peer_mec_flush_entries(soc);
+	qdf_mem_free(soc->mec_hash.bins);
+	soc->mec_hash.bins = NULL;
+}
+
+void dp_peer_mec_spinlock_destroy(struct dp_soc *soc)
+{
+	qdf_spinlock_destroy(&soc->mec_lock);
+}
+
+void dp_peer_mec_spinlock_create(struct dp_soc *soc)
+{
+	qdf_spinlock_create(&soc->mec_lock);
+}
+#else
+static QDF_STATUS dp_peer_mec_hash_attach(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_peer_mec_hash_detach(struct dp_soc *soc)
+{
+}
+#endif
+
 #ifdef FEATURE_AST
 /*
  * dp_peer_ast_hash_attach() - Allocate and initialize AST Hash Table
  * @soc: SoC handle
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static int dp_peer_ast_hash_attach(struct dp_soc *soc)
+static QDF_STATUS dp_peer_ast_hash_attach(struct dp_soc *soc)
 {
 	int i, hash_elems, log2;
 	unsigned int max_ast_idx = wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx);
@@ -460,7 +674,7 @@ static int dp_peer_ast_hash_attach(struct dp_soc *soc)
 	for (i = 0; i < hash_elems; i++)
 		TAILQ_INIT(&soc->ast_hash.bins[i]);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -911,13 +1125,10 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 		ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, mac_addr,
 							    pdev->pdev_id);
 		if (ast_entry) {
-			if ((type == CDP_TXRX_AST_TYPE_MEC) &&
-			    (ast_entry->type == CDP_TXRX_AST_TYPE_MEC))
-				ast_entry->is_active = TRUE;
-
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return QDF_STATUS_E_ALREADY;
 		}
+
 		if (is_peer_found) {
 			/* During WDS to static roaming, peer is added
 			 * to the list before static AST entry create.
@@ -939,10 +1150,6 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 		ast_entry = dp_peer_ast_hash_find_soc(soc, mac_addr);
 
 		if (ast_entry) {
-			if ((type == CDP_TXRX_AST_TYPE_MEC) &&
-			    (ast_entry->type == CDP_TXRX_AST_TYPE_MEC))
-				ast_entry->is_active = TRUE;
-
 			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) &&
 			    !ast_entry->delete_in_progress) {
 				qdf_spin_unlock_bh(&soc->ast_lock);
@@ -1006,22 +1213,6 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 				return QDF_STATUS_E_AGAIN;
 			}
 
-			/* Modify an already existing AST entry from type
-			 * WDS to MEC on promption. This serves as a fix when
-			 * backbone of interfaces are interchanged wherein
-			 * wds entr becomes its own MEC. The entry should be
-			 * replaced only when the ast_entry peer matches the
-			 * peer received in mec event. This additional check
-			 * is needed in wds repeater cases where a multicast
-			 * packet from station to the root via the repeater
-			 * should not remove the wds entry.
-			 */
-			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
-			    (type == CDP_TXRX_AST_TYPE_MEC) &&
-			    (ast_entry->peer_id == peer->peer_id)) {
-				ast_entry->is_active = FALSE;
-				dp_peer_del_ast(soc, ast_entry);
-			}
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return QDF_STATUS_E_ALREADY;
 		}
@@ -1072,10 +1263,6 @@ add_ast_entry:
 		TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry,
 				  ase_list_elem);
 		break;
-	case CDP_TXRX_AST_TYPE_MEC:
-		ast_entry->next_hop = 1;
-		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
-		break;
 	case CDP_TXRX_AST_TYPE_DA:
 		vap_bss_peer = dp_vdev_bss_peer_ref_n_get(soc, vdev,
 							  DP_MOD_ID_AST);
@@ -1097,10 +1284,8 @@ add_ast_entry:
 	soc->num_ast_entries++;
 	dp_peer_ast_hash_add(soc, ast_entry);
 
-	if (type == CDP_TXRX_AST_TYPE_MEC)
-		qdf_mem_copy(next_node_mac, peer->vdev->mac_addr.raw, 6);
-	else
-		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
+	qdf_copy_macaddr((struct qdf_mac_addr *)next_node_mac,
+			 (struct qdf_mac_addr *)peer->mac_addr.raw);
 
 	if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
 	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
@@ -1431,9 +1616,9 @@ struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
 	return NULL;
 }
 
-static int dp_peer_ast_hash_attach(struct dp_soc *soc)
+static QDF_STATUS dp_peer_ast_hash_attach(struct dp_soc *soc)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
@@ -1816,31 +2001,41 @@ static void dp_peer_find_map_detach(struct dp_soc *soc)
 	}
 }
 
-int dp_peer_find_attach(struct dp_soc *soc)
+QDF_STATUS dp_peer_find_attach(struct dp_soc *soc)
 {
-	if (dp_peer_find_map_attach(soc))
-		return 1;
+	QDF_STATUS status;
 
-	if (dp_peer_find_hash_attach(soc)) {
-		dp_peer_find_map_detach(soc);
-		return 1;
+	status = dp_peer_find_map_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return status;
+
+	status = dp_peer_find_hash_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto map_detach;
+
+	status = dp_peer_ast_table_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto hash_detach;
+
+	status = dp_peer_ast_hash_attach(soc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto ast_table_detach;
+
+	status = dp_peer_mec_hash_attach(soc);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		dp_soc_wds_attach(soc);
+		return status;
 	}
 
-	if (dp_peer_ast_table_attach(soc)) {
-		dp_peer_find_hash_detach(soc);
-		dp_peer_find_map_detach(soc);
-		return 1;
-	}
+	dp_peer_ast_hash_detach(soc);
+ast_table_detach:
+	dp_peer_ast_table_detach(soc);
+hash_detach:
+	dp_peer_find_hash_detach(soc);
+map_detach:
+	dp_peer_find_map_detach(soc);
 
-	if (dp_peer_ast_hash_attach(soc)) {
-		dp_peer_ast_table_detach(soc);
-		dp_peer_find_hash_detach(soc);
-		dp_peer_find_map_detach(soc);
-		return 1;
-	}
-
-	dp_soc_wds_attach(soc);
-	return 0; /* success */
+	return status;
 }
 
 void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
@@ -2180,6 +2375,7 @@ dp_peer_find_detach(struct dp_soc *soc)
 	dp_peer_find_hash_detach(soc);
 	dp_peer_ast_hash_detach(soc);
 	dp_peer_ast_table_detach(soc);
+	dp_peer_mec_hash_detach(soc);
 }
 
 static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
