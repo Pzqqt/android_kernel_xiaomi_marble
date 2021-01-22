@@ -28,11 +28,20 @@ int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_delta_based_rc(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst);
 
 int msm_vidc_set_header_mode(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_deblock_mode(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_min_qp(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_max_qp(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_frame_qp(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_u32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
