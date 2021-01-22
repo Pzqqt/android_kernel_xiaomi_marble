@@ -659,17 +659,12 @@ typedef HFI_U32 HFI_BOOL;
 		_size = HFI_ALIGN(_size_bse, VENUS_DMA_ALIGNMENT) + \
 			HFI_ALIGN(_size_vpp, VENUS_DMA_ALIGNMENT) + \
 			HFI_ALIGN(SIZE_HW_PIC(SIZE_H264D_HW_PIC_T), \
-			VENUS_DMA_ALIGNMENT)+ HFI_ALIGN(SIZE_H264D_QP\
-			(frame_width, frame_height), VENUS_DMA_ALIGNMENT); \
+			VENUS_DMA_ALIGNMENT); \
 		_size = HFI_ALIGN(_size, VENUS_DMA_ALIGNMENT); \
 	} while (0)
 
-/*
- * _yuv_bufcount_min = MAX(Min YUV Buffer count,
- * (HFI_PROPERTY_PARAM_VDEC_VPP_DELAY + 1))
- */
 #define HFI_BUFFER_LINE_H264D(_size, frame_width, frame_height, \
-				_yuv_bufcount_min, is_opb, num_vpp_pipes) \
+                              is_opb, num_vpp_pipes)            \
 	do \
 	{ \
 		HFI_U32 vpss_lb_size = 0; \
@@ -690,7 +685,8 @@ typedef HFI_U32 HFI_BOOL;
 			frame_height), VENUS_DMA_ALIGNMENT) + \
 			HFI_ALIGN(SIZE_H264D_LB_RECON_DMA_METADATA_WR\
 			(frame_width, frame_height), \
-			VENUS_DMA_ALIGNMENT) * 2;   \
+			VENUS_DMA_ALIGNMENT) * 2 + HFI_ALIGN(SIZE_H264D_QP\
+			(frame_width, frame_height), VENUS_DMA_ALIGNMENT); \
 		_size = HFI_ALIGN(_size, VENUS_DMA_ALIGNMENT); \
 		if (is_opb) \
 		{ \

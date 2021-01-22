@@ -156,8 +156,8 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 	out_min_count = max(vpp_delay + 1, out_min_count);
 
 	if (inst->codec == MSM_VIDC_H264)
-		HFI_BUFFER_LINE_H264D(size, width, height, out_min_count,
-			is_opb, num_vpp_pipes);
+		HFI_BUFFER_LINE_H264D(size, width, height, is_opb,
+			num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_LINE_H265D(size, width, height, is_opb,
 			num_vpp_pipes);
