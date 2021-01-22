@@ -3494,6 +3494,17 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		wlan_cfg_set_rx_err_ring_mask(soc->wlan_cfg_ctx,
 					      group_number, 0);
 	}
+
+	/* reset interrupt mask for offloaded rxdma2host ring
+	 * for IPQ5018 platform.
+	 * disable_mac1_intr is set only for IPQ5018 target.
+	 */
+	if (soc->disable_mac1_intr) {
+		grp_mask = &soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[0];
+		group_number = dp_srng_find_ring_in_mask(0x0, grp_mask);
+		wlan_cfg_set_rxdma2host_ring_mask(soc->wlan_cfg_ctx,
+						  group_number, 0x0);
+	}
 }
 
 #ifdef IPA_OFFLOAD
