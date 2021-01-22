@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2027,4 +2027,15 @@ ucfg_pmo_get_runtime_pm_delay(struct wlan_objmgr_psoc *psoc)
  */
 bool
 ucfg_pmo_get_enable_sap_suspend(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_beacoing_mode_bus_suspend() - get PMO config for PCIe bus
+ * suspend in beaconing mode (SAP/P2PGO/NDP) with one or more clients
+ * @psoc: pointer to psoc object
+ *
+ * Return: bool
+ */
+bool
+ucfg_pmo_get_beaconing_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
+
 #endif /* end  of _WLAN_PMO_UCFG_API_H_ */

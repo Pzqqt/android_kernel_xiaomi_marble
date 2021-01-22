@@ -4735,6 +4735,8 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
 	void *htc_handle;
+	bool is_bus_suspend_allowed_in_beaconing_mode =
+		ucfg_pmo_get_beaconing_mode_bus_suspend(wma->psoc);
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -4763,9 +4765,17 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		break;
 	}
 
-	/* handle wow for sap and nan with 1 or more peer in same way */
-	if (BSS_OPERATIONAL_MODE_AP == oper_mode ||
-	    BSS_OPERATIONAL_MODE_NDI == oper_mode) {
+	/* handle wow for sap/p2pgo with 1 or more peer in same way */
+	if (BSS_OPERATIONAL_MODE_AP == oper_mode) {
+		wma_debug("disable runtime pm and bus suspend: %d",
+			  is_bus_suspend_allowed_in_beaconing_mode);
+		if (!is_bus_suspend_allowed_in_beaconing_mode)
+			htc_vote_link_up(htc_handle);
+		wma_sap_prevent_runtime_pm(wma);
+	}
+
+	/* handle wow for nan with 1 or more peer in same way */
+	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("disable runtime pm and vote for link up");
 		htc_vote_link_up(htc_handle);
 		wma_sap_prevent_runtime_pm(wma);
@@ -4781,6 +4791,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	uint8_t smesession_id = del_sta->smesessionId;
 	bool rsp_requested = del_sta->respReqd;
 	void *htc_handle;
+	bool is_bus_suspend_allowed_in_beaconing_mode =
+		ucfg_pmo_get_beaconing_mode_bus_suspend(wma->psoc);
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -4828,8 +4840,15 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		qdf_mem_free(del_sta);
 	}
 
-	if (BSS_OPERATIONAL_MODE_AP == oper_mode ||
-	    BSS_OPERATIONAL_MODE_NDI == oper_mode) {
+	if (BSS_OPERATIONAL_MODE_AP == oper_mode) {
+		wma_debug("allow runtime pm and bus suspend: %d",
+			  is_bus_suspend_allowed_in_beaconing_mode);
+		if (!is_bus_suspend_allowed_in_beaconing_mode)
+			htc_vote_link_down(htc_handle);
+		wma_sap_allow_runtime_pm(wma);
+	}
+
+	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("allow runtime pm and vote for link down");
 		htc_vote_link_down(htc_handle);
 		wma_sap_allow_runtime_pm(wma);
