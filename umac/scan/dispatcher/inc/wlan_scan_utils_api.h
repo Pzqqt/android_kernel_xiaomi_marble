@@ -1419,7 +1419,7 @@ util_scan_entry_get_extcap(struct scan_cache_entry *scan_entry,
 	if (!ext_cap)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	if (ext_cap->ext_cap_len < ext_caps_byte)
+	if (ext_cap->ext_cap_len <= ext_caps_byte)
 		return QDF_STATUS_E_NULL_VALUE;
 
 	*extcap_value =
