@@ -54,6 +54,7 @@
 #include "sde_vm.h"
 
 #include <linux/qcom_scm.h>
+#include <linux/qcom-iommu-util.h>
 #include "soc/qcom/secure_buffer.h"
 #include <linux/qtee_shmbridge.h>
 #include <linux/haven/hh_irq_lend.h>
