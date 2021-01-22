@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -104,7 +104,6 @@ static QDF_STATUS wlan_objmgr_psoc_obj_free(struct wlan_objmgr_psoc *psoc)
 	wlan_objmgr_psoc_peer_list_deinit(&psoc->soc_objmgr.peer_list);
 
 	qdf_spinlock_destroy(&psoc->psoc_lock);
-	wlan_minidump_remove(psoc);
 	qdf_mem_free(psoc);
 
 	return QDF_STATUS_SUCCESS;
@@ -214,6 +213,9 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 			    psoc->obj_state);
 		WLAN_OBJMGR_BUG(0);
 	}
+
+	wlan_minidump_remove(psoc, sizeof(*psoc), psoc,
+			     WLAN_MD_OBJMGR_PSOC, "wlan_objmgr_psoc");
 
 	/* Invoke registered create handlers */
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {

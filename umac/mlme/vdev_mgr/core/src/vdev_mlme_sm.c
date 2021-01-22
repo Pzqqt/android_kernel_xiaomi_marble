@@ -1950,11 +1950,17 @@ QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 
 QDF_STATUS mlme_vdev_sm_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
+	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
+
 	mlme_vdev_cmd_mutex_destroy(vdev_mlme);
 
 	mlme_vdev_sm_spinlock_destroy(vdev_mlme);
 
-	wlan_minidump_remove(vdev_mlme->sm_hdl);
+	wlan_minidump_remove(vdev_mlme->sm_hdl,
+			     sizeof(*vdev_mlme->sm_hdl),
+			     wlan_vdev_get_psoc(vdev),
+			     WLAN_MD_OBJMGR_VDEV_SM, "wlan_sm");
+
 	wlan_sm_delete(vdev_mlme->sm_hdl);
 
 	return QDF_STATUS_SUCCESS;
