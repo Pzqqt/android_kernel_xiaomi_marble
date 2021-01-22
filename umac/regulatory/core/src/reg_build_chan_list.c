@@ -1072,7 +1072,15 @@ void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
 	qdf_mem_zero(reg_rules, sizeof(*reg_rules));
 }
 
+#ifdef CONFIG_REG_CLIENT
 #ifdef CONFIG_BAND_6GHZ
+/**
+ * reg_copy_6g_reg_rules() - Copy the 6G reg rules from PSOC to PDEV
+ * @pdev_reg_rules: Pointer to pdev reg rules
+ * @psoc_reg_rules: Pointer to psoc reg rules
+ *
+ * Return: void
+ */
 static void reg_copy_6g_reg_rules(struct reg_rule_info *pdev_reg_rules,
 				  struct reg_rule_info *psoc_reg_rules)
 {
@@ -1098,12 +1106,45 @@ static void reg_copy_6g_reg_rules(struct reg_rule_info *pdev_reg_rules,
 			     reg_rule_len_6g_client);
 	}
 }
-#else
+
+/**
+ * reg_append_6g_reg_rules_in_pdev() - Append the 6G reg rules to the reg rules
+ * list in pdev so that all currently used reg rules are in one common list
+ * @pdev_priv_obj: Pointer to pdev private object
+ *
+ * Return: void
+ */
+static void reg_append_6g_reg_rules_in_pdev(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	struct reg_rule_info *pdev_reg_rules;
+	enum reg_6g_ap_type cur_pwr_type;
+	uint8_t num_reg_rules;
+
+	pdev_reg_rules = &pdev_priv_obj->reg_rules;
+	cur_pwr_type = pdev_priv_obj->reg_cur_6g_ap_pwr_type;
+
+	num_reg_rules = pdev_reg_rules->num_of_reg_rules;
+	pdev_reg_rules->num_of_reg_rules +=
+		pdev_reg_rules->num_of_6g_client_reg_rules[cur_pwr_type];
+
+	qdf_mem_copy(&pdev_reg_rules->reg_rules[num_reg_rules],
+		     pdev_reg_rules->reg_rules_6g_client[cur_pwr_type],
+		     pdev_reg_rules->num_of_6g_client_reg_rules[cur_pwr_type] *
+		     sizeof(struct cur_reg_rule));
+}
+
+#else /* CONFIG_BAND_6GHZ */
 static inline void reg_copy_6g_reg_rules(struct reg_rule_info *pdev_reg_rules,
 					 struct reg_rule_info *psoc_reg_rules)
 {
 }
-#endif
+
+static inline void reg_append_6g_reg_rules_in_pdev(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif /* CONFIG_BAND_6GHZ */
 
 void reg_save_reg_rules_to_pdev(
 		struct reg_rule_info *psoc_reg_rules,
@@ -1130,6 +1171,7 @@ void reg_save_reg_rules_to_pdev(
 		     reg_rule_len);
 
 	reg_copy_6g_reg_rules(pdev_reg_rules, psoc_reg_rules);
+	reg_append_6g_reg_rules_in_pdev(pdev_priv_obj);
 
 	qdf_mem_copy(pdev_reg_rules->alpha2, pdev_priv_obj->current_country,
 		     REG_ALPHA2_LEN + 1);
@@ -1137,6 +1179,7 @@ void reg_save_reg_rules_to_pdev(
 
 	qdf_spin_unlock_bh(&pdev_priv_obj->reg_rules_lock);
 }
+#endif /* CONFIG_REG_CLIENT */
 
 void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 					 void *object, void *arg)
