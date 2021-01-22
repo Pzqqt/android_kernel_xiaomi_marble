@@ -2867,7 +2867,6 @@ static const char *csr_get_encr_type_str(uint8_t encr_type)
 	}
 }
 
-#ifndef FEATURE_CM_ENABLE
 static const uint8_t *csr_get_akm_str(uint8_t akm)
 {
 	switch (akm) {
@@ -2955,56 +2954,104 @@ csr_get_sta_ap_intersected_nss(struct mac_context *mac_ctx, uint8_t vdev_id)
 }
 
 static void
-csr_connect_info(struct mac_context *mac_ctx,
-		 struct csr_roam_session *session,
-		 struct csr_roam_info *roam_info,
-		 eCsrRoamResult u2)
+csr_cm_connect_info(struct mac_context *mac_ctx, uint8_t vdev_id,
+		    bool connect_success)
 {
-	struct tagCsrRoamConnectedProfile *conn_profile;
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr bss_peer_mac;
+	struct sSirMacSSid ssid;
+	qdf_freq_t oper_freq;
+	QDF_STATUS status;
+	struct wlan_channel *des_chan;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_crypto_params *crypto_params;
+	eCsrEncryptionType uc_encrypt_type;
+	enum csr_akm_type auth_type;
+	uint8_t max_supported_nss;
 	enum QDF_OPMODE opmode;
 	WLAN_HOST_DIAG_EVENT_DEF(conn_stats,
 				 struct host_event_wlan_connection_stats);
 
-	if (!session || !session->pCurRoamProfile || !roam_info)
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", vdev_id);
 		return;
+	}
 
-	conn_profile = roam_info->u.pConnectedProfile;
-	if (!conn_profile)
-		return;
 	qdf_mem_zero(&conn_stats,
 		    sizeof(struct host_event_wlan_connection_stats));
-	qdf_mem_copy(conn_stats.bssid, conn_profile->bssid.bytes,
+
+	status = wlan_vdev_get_bss_peer_mac(vdev, &bss_peer_mac);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto connect_info_failed;
+	qdf_mem_copy(conn_stats.bssid, bss_peer_mac.bytes,
 		     QDF_MAC_ADDR_SIZE);
-	conn_stats.ssid_len = conn_profile->SSID.length;
+
+	status = wlan_vdev_mlme_get_ssid(vdev, ssid.ssId, &ssid.length);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto connect_info_failed;
+	conn_stats.ssid_len = ssid.length;
 	if (conn_stats.ssid_len > WLAN_SSID_MAX_LEN)
 		conn_stats.ssid_len = WLAN_SSID_MAX_LEN;
-	qdf_mem_copy(conn_stats.ssid, conn_profile->SSID.ssId,
+	qdf_mem_copy(conn_stats.ssid, ssid.ssId,
 		     conn_stats.ssid_len);
+
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
 				  &conn_stats.bssid[0], &conn_stats.rssi, NULL);
 	conn_stats.est_link_speed = 0;
-	conn_stats.chnl_bw =
-		diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
-	conn_stats.dot11mode =
-		diag_dot11_mode_from_csr_type(conn_profile->dot11Mode);
-	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session->vdev_id);
-	conn_stats.bss_type = diag_persona_from_csr_type(opmode);
-	if (conn_profile->op_freq)
-		conn_stats.operating_channel =
-			wlan_reg_freq_to_chan(mac_ctx->pdev,
-					      conn_profile->op_freq);
 
-	conn_stats.qos_capability = conn_profile->qosConnection;
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+
+	conn_stats.chnl_bw =
+		diag_ch_width_from_csr_type(des_chan->ch_width);
+	conn_stats.dot11mode =
+		diag_dot11_mode_from_csr_type(
+			sme_phy_mode_to_dot11mode(des_chan->ch_phymode));
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	conn_stats.bss_type = diag_persona_from_csr_type(opmode);
+
+	oper_freq = wlan_get_operation_chan_freq(vdev);
+	if (oper_freq)
+		conn_stats.operating_channel =
+			wlan_reg_freq_to_chan(mac_ctx->pdev, oper_freq);
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("vdev component object is NULL");
+		goto connect_info_failed;
+	}
+	conn_stats.qos_capability =
+			vdev_mlme->ext_vdev_ptr->connect_info.qos_enabled;
+
+	crypto_params = wlan_crypto_vdev_get_crypto_params(vdev);
+
+	if (!crypto_params) {
+		sme_err("crypto params is null");
+		goto connect_info_failed;
+	}
+
+	csr_fill_auth_type(&auth_type,
+			   crypto_params->authmodeset,
+			   crypto_params->key_mgmt,
+			   crypto_params->ucastcipherset);
 	conn_stats.auth_type =
-	     diag_auth_type_from_csr_type(conn_profile->AuthType);
+	     diag_auth_type_from_csr_type(auth_type);
+
+	csr_fill_enc_type(&uc_encrypt_type, crypto_params->ucastcipherset);
 	conn_stats.encryption_type =
-	     diag_enc_type_from_csr_type(conn_profile->EncryptionType);
-	conn_stats.result_code = (u2 == eCSR_ROAM_RESULT_ASSOCIATED) ? 1 : 0;
+	     diag_enc_type_from_csr_type(uc_encrypt_type);
+
+	conn_stats.result_code = connect_success;
 	conn_stats.reason_code = 0;
-	conn_stats.op_freq = conn_profile->op_freq;
+	conn_stats.op_freq = oper_freq;
+
+	max_supported_nss = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2 ?
+			    MAX_VDEV_NSS : 1;
 	sme_nofl_debug("+---------CONNECTION INFO START------------+");
-	sme_nofl_debug("VDEV-ID: %d self_mac:"QDF_MAC_ADDR_FMT, session->vdev_id,
-		       QDF_MAC_ADDR_REF(session->self_mac_addr.bytes));
+	sme_nofl_debug("VDEV-ID: %d self_mac:"QDF_MAC_ADDR_FMT, vdev_id,
+		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)));
 	sme_nofl_debug("ssid: %.*s bssid: "QDF_MAC_ADDR_FMT" RSSI: %d dBm",
 		       conn_stats.ssid_len, conn_stats.ssid,
 		       QDF_MAC_ADDR_REF(conn_stats.bssid), conn_stats.rssi);
@@ -3012,24 +3059,35 @@ csr_connect_info(struct mac_context *mac_ctx,
 		       csr_get_ch_width_str(conn_stats.chnl_bw),
 		       csr_get_dot11_mode_str(conn_stats.dot11mode));
 	sme_nofl_debug("AKM: %s Encry-type: %s",
-		       csr_get_akm_str(conn_profile->AuthType),
+		       csr_get_akm_str(auth_type),
 		       csr_get_encr_type_str(conn_stats.encryption_type));
-	sme_nofl_debug("DUT_NSS: %d | Intersected NSS:%d", session->nss,
-		  csr_get_sta_ap_intersected_nss(mac_ctx, session->vdev_id));
+	sme_nofl_debug("DUT_NSS: %d | Intersected NSS:%d",
+		       max_supported_nss,
+		       csr_get_sta_ap_intersected_nss(mac_ctx, vdev_id));
 	sme_nofl_debug("Qos enable: %d | Associated: %s",
 		       conn_stats.qos_capability,
 		       (conn_stats.result_code ? "yes" : "no"));
 	sme_nofl_debug("+---------CONNECTION INFO END------------+");
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&conn_stats, EVENT_WLAN_CONN_STATS_V2);
-}
-#endif
 
-void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
-			  struct csr_roam_session *session,
-			  struct tagCsrRoamConnectedProfile *conn_profile,
-			  char *buf, uint32_t buf_sz)
+connect_info_failed:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
+
+void csr_cm_get_sta_cxn_info(struct mac_context *mac_ctx, uint8_t vdev_id,
+			     char *buf, uint32_t buf_sz)
 {
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr bss_peer_mac;
+	struct sSirMacSSid ssid;
+	QDF_STATUS status;
+	struct wlan_channel *des_chan;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_crypto_params *crypto_params;
+	eCsrEncryptionType uc_encrypt_type;
+	enum csr_akm_type auth_type;
+	qdf_freq_t oper_freq;
 	int8_t rssi = 0;
 	uint32_t nss, hw_mode;
 	struct policy_mgr_conc_connection_info *conn_info;
@@ -3042,52 +3100,94 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 	enum mgmt_encrypt_type enctype;
 	enum QDF_OPMODE opmode;
 
-	if (!session || !session->pCurRoamProfile || !conn_profile)
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", vdev_id);
 		return;
-	if (!conn_profile->op_freq)
-		return;
+	}
+
 	qdf_mem_set(buf, buf_sz, '\0');
+
+	status = wlan_vdev_get_bss_peer_mac(vdev, &bss_peer_mac);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto cm_get_sta_cxn_info_failed;
+
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tbssid: "QDF_MAC_ADDR_FMT,
-			     QDF_MAC_ADDR_REF(conn_profile->bssid.bytes));
+			     QDF_MAC_ADDR_REF(bss_peer_mac.bytes));
+
+	status = wlan_vdev_mlme_get_ssid(vdev, ssid.ssId, &ssid.length);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto cm_get_sta_cxn_info_failed;
+	if (ssid.length > WLAN_SSID_MAX_LEN)
+		ssid.length = WLAN_SSID_MAX_LEN;
 	len += qdf_scnprintf(buf + len, buf_sz - len,
-			     "\n\tssid: %.*s", conn_profile->SSID.length,
-			     conn_profile->SSID.ssId);
+			     "\n\tssid: %.*s", ssid.length,
+			     ssid.ssId);
+
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
-				  conn_profile->bssid.bytes, &rssi, NULL);
+				  bss_peer_mac.bytes, &rssi, NULL);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\trssi: %d", rssi);
-	ch_width = diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
+
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+	ch_width = diag_ch_width_from_csr_type(des_chan->ch_width);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tbw: %s", csr_get_ch_width_str(ch_width));
-	dot11mode = diag_dot11_mode_from_csr_type(conn_profile->dot11Mode);
+	dot11mode = diag_dot11_mode_from_csr_type(
+			sme_phy_mode_to_dot11mode(des_chan->ch_phymode));
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tdot11mode: %s",
 			     csr_get_dot11_mode_str(dot11mode));
-	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session->vdev_id);
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	type = diag_persona_from_csr_type(opmode);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tbss_type: %s", csr_get_persona(type));
+
+	oper_freq = wlan_get_operation_chan_freq(vdev);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
-			     "\n\tch_freq: %d", conn_profile->op_freq);
+			     "\n\tch_freq: %d", oper_freq);
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("vdev component object is NULL");
+		goto cm_get_sta_cxn_info_failed;
+	}
 	len += qdf_scnprintf(buf + len, buf_sz - len,
-			     "\n\tQoS: %d", conn_profile->qosConnection);
-	authtype = diag_auth_type_from_csr_type(conn_profile->AuthType);
+			     "\n\tQoS: %d",
+			     vdev_mlme->ext_vdev_ptr->connect_info.qos_enabled);
+
+	crypto_params = wlan_crypto_vdev_get_crypto_params(vdev);
+
+	if (!crypto_params) {
+		sme_err("crypto params is null");
+		goto cm_get_sta_cxn_info_failed;
+	}
+
+	csr_fill_auth_type(&auth_type, crypto_params->authmodeset,
+			   crypto_params->key_mgmt,
+			   crypto_params->ucastcipherset);
+	authtype = diag_auth_type_from_csr_type(auth_type);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tauth_type: %s",
 			     csr_get_auth_type_str(authtype));
-	enctype = diag_enc_type_from_csr_type(conn_profile->EncryptionType);
+
+	csr_fill_enc_type(&uc_encrypt_type, crypto_params->ucastcipherset);
+	enctype = diag_enc_type_from_csr_type(uc_encrypt_type);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tencry_type: %s",
 			     csr_get_encr_type_str(enctype));
+
 	conn_info = policy_mgr_get_conn_info(&max_cxn);
 	for (i = 0; i < max_cxn; i++)
-		if ((conn_info->vdev_id == session->sessionId) &&
+		if ((conn_info->vdev_id == vdev_id) &&
 		    (conn_info->in_use))
 			break;
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tmac: %d", conn_info->mac);
-	wma_conn_table_entry = wma_get_interface_by_vdev_id(session->sessionId);
+	wma_conn_table_entry = wma_get_interface_by_vdev_id(vdev_id);
 	if (wma_conn_table_entry)
 		nss = wma_conn_table_entry->nss;
 	else
@@ -3100,15 +3200,17 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\tis_current_hw_mode_dbs: %s",
 			     ((hw_mode != 0) ? "yes" : "no"));
+
+cm_get_sta_cxn_info_failed:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
 }
 #else
-#ifndef FEATURE_CM_ENABLE
-static void csr_connect_info(struct mac_context *mac_ctx,
-			     struct csr_roam_session *session,
-			     struct csr_roam_info *roam_info,
-			     eCsrRoamResult u2)
-{}
-#endif
+static void
+csr_cm_connect_info(struct mac_context *mac_ctx, uint8_t vdev_id,
+		    bool connect_success)
+{
+}
 #endif
 
 QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
@@ -3199,8 +3301,11 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 
 	/* This is temp ifdef will be removed in near future */
 #ifndef FEATURE_CM_ENABLE
+
 	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1)
-		csr_connect_info(mac, pSession, roam_info, u2);
+		csr_cm_connect_info(
+			mac, sessionId,
+			(u2 == eCSR_ROAM_RESULT_ASSOCIATED) ? true : false);
 #endif
 
 	if (mac->session_roam_complete_cb) {
@@ -14131,7 +14236,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 				      SME_QOS_CSR_DISCONNECT_IND, NULL);
 		/* Fill legacy structures from resp for failure */
 
-		return QDF_STATUS_SUCCESS;
+		goto cm_connect_info;
 	}
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (mlme_priv)
@@ -14183,6 +14288,11 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 			sme_err("Failed to update WMI_VDEV_PARAM_RSN_CAPABILITY for vdev id %d",
 				vdev_id);
 	}
+
+cm_connect_info:
+	csr_cm_connect_info(
+			mac_ctx, vdev_id,
+			rsp->connect_status == STATUS_SUCCESS ? true : false);
 
 	return QDF_STATUS_SUCCESS;
 }
