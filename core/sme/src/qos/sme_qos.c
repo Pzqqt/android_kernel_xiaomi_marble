@@ -5596,7 +5596,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	/* Inform this TSPEC IE change to FW */
 	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, sessionId);
 	if (opmode == QDF_STA_MODE)
-		csr_roam_update_cfg(mac, sessionId,
+		wlan_roam_update_cfg(mac->psoc, sessionId,
 				    REASON_CONNECT_IES_CHANGED);
 
 	(void)sme_qos_process_buffered_cmd(sessionId);

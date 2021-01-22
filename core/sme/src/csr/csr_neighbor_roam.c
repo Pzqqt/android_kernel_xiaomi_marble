@@ -136,13 +136,13 @@ QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(struct mac_context *mac
 		mlme_set_supplicant_disabled_roaming(mac_ctx->psoc, session_id,
 						     !fast_roam_enabled);
 		if (fast_roam_enabled) {
-			csr_post_roam_state_change(mac_ctx, session_id,
-						   WLAN_ROAM_RSO_ENABLED,
-						   REASON_CONNECT);
+			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
+						  WLAN_ROAM_RSO_ENABLED,
+						  REASON_CONNECT);
 		} else {
-			csr_post_roam_state_change(mac_ctx, session_id,
-					    WLAN_ROAM_RSO_STOPPED,
-					    REASON_SUPPLICANT_DISABLED_ROAMING);
+			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
+					WLAN_ROAM_RSO_STOPPED,
+					REASON_SUPPLICANT_DISABLED_ROAMING);
 		}
 		sme_release_global_lock(&mac_ctx->sme);
 		break;
@@ -230,7 +230,7 @@ QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	if (state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) {
 		sme_debug("CONNECTED, send update cfg cmd");
-		csr_roam_update_cfg(mac_ctx, session_id, reason);
+		wlan_roam_update_cfg(mac_ctx->psoc, session_id, reason);
 	}
 	sme_debug("LFR config for %s changed from %d to %d",
 		  lfr_get_config_item_string(reason), old_value, value);
@@ -720,8 +720,9 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 
 	/*Inform the Firmware to STOP Scanning as the host has a disconnect. */
 	if (csr_roam_is_sta_mode(mac, sessionId))
-		csr_post_roam_state_change(mac, sessionId, WLAN_ROAM_DEINIT,
-					   REASON_DISCONNECTED);
+		wlan_cm_roam_state_change(mac->pdev, sessionId,
+					  WLAN_ROAM_DEINIT,
+					  REASON_DISCONNECTED);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -826,9 +827,9 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 
 	ngbr_roam_info->uOsRequestedHandoff = 0;
 	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id))
-		csr_post_roam_state_change(mac, session_id,
-					   WLAN_ROAM_RSO_ENABLED,
-					   REASON_CTX_INIT);
+		wlan_cm_roam_state_change(mac->pdev, session_id,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_CTX_INIT);
 }
 
 /**
@@ -1331,9 +1332,9 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
 			&handoff_req->bssid, QDF_MAC_ADDR_SIZE);
 	roam_ctrl_info->uOsRequestedHandoff = 1;
 
-	status = csr_post_roam_state_change(mac_ctx, session_id,
-					    WLAN_ROAM_RSO_STOPPED,
-					    REASON_OS_REQUESTED_ROAMING_NOW);
+	status = wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
+					   WLAN_ROAM_RSO_STOPPED,
+					   REASON_OS_REQUESTED_ROAMING_NOW);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("ROAM: RSO stop failed");
 		roam_ctrl_info->uOsRequestedHandoff = 0;
@@ -1397,8 +1398,8 @@ QDF_STATUS csr_neighbor_roam_start_lfr_scan(struct mac_context *mac,
 	/* There is no candidate or We are not roaming Now.
 	 * Inform the FW to restart Roam Offload Scan
 	 */
-	csr_post_roam_state_change(mac, sessionId, WLAN_ROAM_RSO_ENABLED,
-				   REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
+	wlan_cm_roam_state_change(mac->pdev, sessionId, WLAN_ROAM_RSO_ENABLED,
+				  REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
 
 	return QDF_STATUS_SUCCESS;
 

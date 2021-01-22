@@ -115,6 +115,52 @@
 #define ROAM_R0KH_ID_MAX_LEN  48
 #endif
 
+/*
+ * Neighbor Report Params Bitmask
+ */
+#define NEIGHBOR_REPORT_PARAMS_TIME_OFFSET            0x01
+#define NEIGHBOR_REPORT_PARAMS_LOW_RSSI_OFFSET        0x02
+#define NEIGHBOR_REPORT_PARAMS_BMISS_COUNT_TRIGGER    0x04
+#define NEIGHBOR_REPORT_PARAMS_PER_THRESHOLD_OFFSET   0x08
+#define NEIGHBOR_REPORT_PARAMS_CACHE_TIMEOUT          0x10
+#define NEIGHBOR_REPORT_PARAMS_MAX_REQ_CAP            0x20
+#define NEIGHBOR_REPORT_PARAMS_ALL                    0x3F
+
+/*
+ * Neighbor report offload needs to send 0xFFFFFFFF if a particular
+ * parameter is disabled from the ini
+ */
+#define NEIGHBOR_REPORT_PARAM_INVALID (0xFFFFFFFFU)
+
+/**
+ * struct cm_roam_neighbor_report_offload_params - neighbor report offload
+ *                                                 parameters
+ * @offload_11k_enable_bitmask: neighbor report offload bitmask control
+ * @params_bitmask: bitmask to specify which of the below are enabled
+ * @time_offset: time offset after 11k offload command to trigger a neighbor
+ *              report request (in seconds)
+ * @low_rssi_offset: Offset from rssi threshold to trigger neighbor
+ *      report request (in dBm)
+ * @bmiss_count_trigger: Number of beacon miss events to trigger neighbor
+ *              report request
+ * @per_threshold_offset: offset from PER threshold to trigger neighbor
+ *              report request (in %)
+ * @neighbor_report_cache_timeout: timeout after which new trigger can enable
+ *              sending of a neighbor report request (in seconds)
+ * @max_neighbor_report_req_cap: max number of neighbor report requests that
+ *              can be sent to the peer in the current session
+ */
+struct cm_roam_neighbor_report_offload_params {
+	uint32_t offload_11k_enable_bitmask;
+	uint8_t params_bitmask;
+	uint32_t time_offset;
+	uint32_t low_rssi_offset;
+	uint32_t bmiss_count_trigger;
+	uint32_t per_threshold_offset;
+	uint32_t neighbor_report_cache_timeout;
+	uint32_t max_neighbor_report_req_cap;
+};
+
 /**
  * struct rso_chan_info - chan info
  * @num_chan: number of channels
@@ -284,6 +330,7 @@ struct rso_roam_policy_params {
  * @max_raise_rssi_5g: Maximum amount of Boost that can added
  * @is_fils_roaming_supported: fils roaming supported
  * @policy_params: roam policy params
+ * @neighbor_report_offload: neighbor report offload params
  */
 struct rso_config_params {
 	uint8_t num_ssid_allowed_list;
@@ -302,6 +349,7 @@ struct rso_config_params {
 	uint8_t cat_rssi_offset;
 	bool is_fils_roaming_supported;
 	struct rso_roam_policy_params policy_params;
+	struct cm_roam_neighbor_report_offload_params neighbor_report_offload;
 };
 
 /**

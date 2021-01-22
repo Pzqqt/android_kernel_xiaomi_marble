@@ -906,8 +906,8 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
 	/* Inform this RRM IE change to FW */
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_roam_update_cfg(mac_ctx, session_id,
-				    REASON_CONNECT_IES_CHANGED);
+		wlan_roam_update_cfg(mac_ctx->psoc, session_id,
+				     REASON_CONNECT_IES_CHANGED);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 }
@@ -917,44 +917,6 @@ void sme_update_nud_config(mac_handle_t mac_handle, uint8_t nud_fail_behavior)
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	mac->nud_fail_behaviour = nud_fail_behavior;
-}
-
-/**
- * sme_update_neighbor_report_config() - Update CSR config for 11k params
- * @mac_handle: Pointer to MAC context
- * @csr_config: Pointer to CSR config data structure
- *
- * Return: None
- */
-static void
-sme_update_neighbor_report_config(struct mac_context *mac,
-				  struct csr_config_params *csr_config)
-{
-	struct wlan_fwol_neighbor_report_cfg fwol_neighbor_report_cfg = {0};
-	QDF_STATUS status;
-
-	status = ucfg_fwol_get_neighbor_report_cfg(mac->psoc,
-						   &fwol_neighbor_report_cfg);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("Using defaults for 11K offload params: Error: %d",
-			status);
-
-	csr_config->offload_11k_enable_bitmask =
-				fwol_neighbor_report_cfg.enable_bitmask;
-	csr_config->neighbor_report_offload.params_bitmask =
-				fwol_neighbor_report_cfg.params_bitmask;
-	csr_config->neighbor_report_offload.time_offset =
-				fwol_neighbor_report_cfg.time_offset;
-	csr_config->neighbor_report_offload.low_rssi_offset =
-				fwol_neighbor_report_cfg.low_rssi_offset;
-	csr_config->neighbor_report_offload.bmiss_count_trigger =
-				fwol_neighbor_report_cfg.bmiss_count_trigger;
-	csr_config->neighbor_report_offload.per_threshold_offset =
-				fwol_neighbor_report_cfg.per_threshold_offset;
-	csr_config->neighbor_report_offload.neighbor_report_cache_timeout =
-				fwol_neighbor_report_cfg.cache_timeout;
-	csr_config->neighbor_report_offload.max_neighbor_report_req_cap =
-				fwol_neighbor_report_cfg.max_req_cap;
 }
 
 /*
@@ -983,10 +945,9 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle,
 		sme_err("SME config params empty");
 		return status;
 	}
-	sme_update_neighbor_report_config(mac, &pSmeConfigParams->csr_config);
+
 	status = csr_change_default_config_param(mac, &pSmeConfigParams->
 						csr_config);
-
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("csr_change_default_config_param failed status: %d",
 			status);
@@ -1068,7 +1029,7 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_roam_update_cfg(mac_ctx, vdev_id, update_param);
+		wlan_roam_update_cfg(mac_ctx->psoc, vdev_id, update_param);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 
@@ -1504,7 +1465,7 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			csr_roam_update_cfg(mac, sessionId,
+			wlan_roam_update_cfg(mac->psoc, sessionId,
 					    REASON_ESE_INI_CFG_CHANGED);
 			sme_release_global_lock(&mac->sme);
 		} else {
@@ -1876,7 +1837,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
-		csr_roam_update_cfg(mac, sessionId,
+		wlan_roam_update_cfg(mac->psoc, sessionId,
 				    REASON_CHANNEL_LIST_CHANGED);
 
 	sme_release_global_lock(&mac->sme);
@@ -6096,7 +6057,7 @@ QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			sme_debug("Updating fils config to fw");
-			csr_roam_update_cfg(mac, vdev_id,
+			wlan_roam_update_cfg(mac->psoc, vdev_id,
 					    REASON_FILS_PARAMS_CHANGED);
 			sme_release_global_lock(&mac->sme);
 		} else {
@@ -6322,10 +6283,10 @@ QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
 		 *  and then append channel list with dynamic channels in the FW
 		 *  using REASON_CHANNEL_LIST_CHANGED.
 		 */
-			csr_roam_update_cfg(mac, sessionId,
+			wlan_roam_update_cfg(mac->psoc, sessionId,
 					    REASON_FLUSH_CHANNEL_LIST);
 
-			csr_roam_update_cfg(mac, sessionId,
+			wlan_roam_update_cfg(mac->psoc, sessionId,
 					    REASON_CHANNEL_LIST_CHANGED);
 		}
 	}
@@ -6426,7 +6387,7 @@ int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 	 * KRK and BTK are updated by upper layer back to back. Send
 	 * updated KRK and BTK together to FW here.
 	 */
-	csr_roam_update_cfg(mac_ctx, session_id, REASON_ROAM_PSK_PMK_CHANGED);
+	wlan_roam_update_cfg(mac_ctx->psoc, session_id, REASON_ROAM_PSK_PMK_CHANGED);
 
 	return 0;
 }
@@ -6915,8 +6876,8 @@ QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
 	sme_restore_default_roaming_params(mac, vdev_id);
 
 	/* Flush static and dynamic channels in ROAM scan list in firmware */
-	csr_roam_update_cfg(mac, vdev_id, REASON_FLUSH_CHANNEL_LIST);
-	csr_roam_update_cfg(mac, vdev_id, REASON_SCORING_CRITERIA_CHANGED);
+	wlan_roam_update_cfg(mac->psoc, vdev_id, REASON_FLUSH_CHANNEL_LIST);
+	wlan_roam_update_cfg(mac->psoc, vdev_id, REASON_SCORING_CRITERIA_CHANGED);
 
 out:
 	sme_release_global_lock(&mac->sme);
@@ -9200,7 +9161,7 @@ QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle, uint8_t sessionId,
 		mac->mlme_cfg->lfr.roaming_dfs_channel =
 			allowDFSChannelRoam;
 		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
-			csr_roam_update_cfg(mac, sessionId,
+			wlan_roam_update_cfg(mac->psoc, sessionId,
 					    REASON_ROAM_DFS_SCAN_MODE_CHANGED);
 
 		sme_release_global_lock(&mac->sme);
@@ -13065,7 +13026,7 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 	if (mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled) {
 		status = sme_acquire_global_lock(&mac_ctx->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			csr_roam_update_cfg(mac_ctx, vdev_id,
+			wlan_roam_update_cfg(mac_ctx->psoc, vdev_id,
 				      REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED);
 			sme_release_global_lock(&mac_ctx->sme);
 		}
@@ -15923,7 +15884,7 @@ sme_send_vendor_btm_params(mac_handle_t mac_handle, uint8_t vdev_id)
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
-			csr_roam_update_cfg(mac, vdev_id,
+			wlan_roam_update_cfg(mac->psoc, vdev_id,
 					    REASON_ROAM_CONTROL_CONFIG_CHANGED);
 		sme_release_global_lock(&mac->sme);
 	}

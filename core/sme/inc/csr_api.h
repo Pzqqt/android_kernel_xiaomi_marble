@@ -751,32 +751,6 @@ typedef struct tagCsrRoamConnectedProfile {
 #endif
 } tCsrRoamConnectedProfile;
 
-/**
- * struct csr_neighbor_report_offload_params - neighbor report offload params
- * @params_bitmask: bitmask to specify which of the below are enabled
- * @time_offset: time offset after 11k offload command to trigger a neighbor
- *		report request (in seconds)
- * @low_rssi_offset: Offset from rssi threshold to trigger neighbor
- *	report request (in dBm)
- * @bmiss_count_trigger: Number of beacon miss events to trigger neighbor
- *		report request
- * @per_threshold_offset: offset from PER threshold to trigger neighbor
- *		report request (in %)
- * @neighbor_report_cache_timeout: timeout after which new trigger can enable
- *		sending of a neighbor report request (in seconds)
- * @max_neighbor_report_req_cap: max number of neighbor report requests that
- *		can be sent to the peer in the current session
- */
-struct csr_neighbor_report_offload_params {
-	uint8_t params_bitmask;
-	uint32_t time_offset;
-	uint32_t low_rssi_offset;
-	uint32_t bmiss_count_trigger;
-	uint32_t per_threshold_offset;
-	uint32_t neighbor_report_cache_timeout;
-	uint32_t max_neighbor_report_req_cap;
-};
-
 struct csr_config_params {
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
 	uint32_t channelBondingMode24GHz;
@@ -820,9 +794,7 @@ struct csr_config_params {
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	enum force_1x1_type is_force_1x1;
-	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
-	struct csr_neighbor_report_offload_params neighbor_report_offload;
 };
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

@@ -401,7 +401,7 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
 
 	if (csr_roam_is_roam_offload_scan_enabled(mac)) {
 		if (pNeighborRoamInfo->uOsRequestedHandoff) {
-			csr_roam_offload_scan(mac, sessionId,
+			wlan_cm_roam_send_rso_cmd(mac->psoc, sessionId,
 				ROAM_SCAN_OFFLOAD_START,
 				REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
 			pNeighborRoamInfo->uOsRequestedHandoff = 0;
@@ -409,7 +409,7 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
 			/* There is no candidate or We are not roaming Now.
 			 * Inform the FW to restart Roam Offload Scan
 			 */
-			csr_roam_offload_scan(mac, sessionId,
+			wlan_cm_roam_send_rso_cmd(mac->psoc, sessionId,
 				ROAM_SCAN_OFFLOAD_RESTART,
 				REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
 		}

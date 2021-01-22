@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -249,29 +249,6 @@ ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
 	*thermal_info = fwol_obj->cfg.thermal_temp_cfg;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-ucfg_fwol_get_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
-				  struct wlan_fwol_neighbor_report_cfg
-				  *fwol_neighbor_report_cfg)
-{
-	struct wlan_fwol_psoc_obj *fwol_obj;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (!fwol_neighbor_report_cfg)
-		return QDF_STATUS_E_FAILURE;
-
-	fwol_obj = fwol_get_psoc_obj(psoc);
-	if (!fwol_obj) {
-		fwol_err("Failed to get fwol obj");
-		fwol_init_neighbor_report_cfg(psoc, fwol_neighbor_report_cfg);
-		status =  QDF_STATUS_E_FAILURE;
-	} else {
-		*fwol_neighbor_report_cfg = fwol_obj->cfg.neighbor_report_cfg;
-	}
-
-	return status;
 }
 
 QDF_STATUS

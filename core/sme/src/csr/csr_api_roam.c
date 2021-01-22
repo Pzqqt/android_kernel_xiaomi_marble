@@ -115,12 +115,6 @@
 #define CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
 
 /*
- * Neighbor report offload needs to send 0xFFFFFFFF if a particular
- * parameter is disabled from the ini
- */
-#define NEIGHBOR_REPORT_PARAM_INVALID (0xFFFFFFFFU)
-
-/*
  * To get 4 LSB of roam reason of roam_synch_data
  * received from firmware
  */
@@ -2221,40 +2215,6 @@ void csr_update_session_he_cap(struct mac_context *mac_ctx,
 }
 #endif
 
-/**
- * csr_set_11k_offload_config_param() - Update 11k neighbor report config
- *
- * @csr_config: pointer to csr_config in MAC context
- * @pParam: pointer to config params from HDD
- *
- * Return: none
- */
-static
-void csr_set_11k_offload_config_param(struct csr_config *csr_config,
-					struct csr_config_params *param)
-{
-	csr_config->offload_11k_enable_bitmask =
-		param->offload_11k_enable_bitmask;
-	csr_config->neighbor_report_offload.params_bitmask =
-		param->neighbor_report_offload.params_bitmask;
-	csr_config->neighbor_report_offload.time_offset =
-		param->neighbor_report_offload.time_offset;
-	csr_config->neighbor_report_offload.low_rssi_offset =
-		param->neighbor_report_offload.low_rssi_offset;
-	csr_config->neighbor_report_offload.bmiss_count_trigger =
-		param->neighbor_report_offload.bmiss_count_trigger;
-	csr_config->neighbor_report_offload.per_threshold_offset =
-		param->neighbor_report_offload.per_threshold_offset;
-	csr_config->neighbor_report_offload.
-		neighbor_report_cache_timeout =
-		param->neighbor_report_offload.
-		neighbor_report_cache_timeout;
-	csr_config->neighbor_report_offload.
-		max_neighbor_report_req_cap =
-		param->neighbor_report_offload.
-		max_neighbor_report_req_cap;
-}
-
 QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 					   struct csr_config_params *pParam)
 {
@@ -2350,42 +2310,8 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->sap.sap_channel_avoidance =
 			pParam->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-		csr_set_11k_offload_config_param(&mac->roam.configParam,
-						 pParam);
 	}
 	return status;
-}
-
-/**
- * csr_get_11k_offload_config_param() - Get 11k neighbor report config
- *
- * @csr_config: pointer to csr_config in MAC context
- * @pParam: pointer to config params from HDD
- *
- * Return: none
- */
-static
-void csr_get_11k_offload_config_param(struct csr_config *csr_config,
-					struct csr_config_params *param)
-{
-	param->offload_11k_enable_bitmask =
-		csr_config->offload_11k_enable_bitmask;
-	param->neighbor_report_offload.params_bitmask =
-		csr_config->neighbor_report_offload.params_bitmask;
-	param->neighbor_report_offload.time_offset =
-		csr_config->neighbor_report_offload.time_offset;
-	param->neighbor_report_offload.low_rssi_offset =
-		csr_config->neighbor_report_offload.low_rssi_offset;
-	param->neighbor_report_offload.bmiss_count_trigger =
-		csr_config->neighbor_report_offload.bmiss_count_trigger;
-	param->neighbor_report_offload.per_threshold_offset =
-		csr_config->neighbor_report_offload.per_threshold_offset;
-	param->neighbor_report_offload.neighbor_report_cache_timeout =
-		csr_config->neighbor_report_offload.
-		neighbor_report_cache_timeout;
-	param->neighbor_report_offload.max_neighbor_report_req_cap =
-		csr_config->neighbor_report_offload.
-		max_neighbor_report_req_cap;
 }
 
 QDF_STATUS csr_get_config_param(struct mac_context *mac,
@@ -2427,8 +2353,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		mac->f_sta_miracast_mcc_rest_time_val;
 	pParam->send_smps_action = mac->roam.configParam.send_smps_action;
-
-	csr_get_11k_offload_config_param(&mac->roam.configParam, pParam);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6948,8 +6872,9 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	}
 
 	if (csr_roam_is_sta_mode(mac_ctx, session_id))
-		csr_post_roam_state_change(mac_ctx, session_id, WLAN_ROAM_INIT,
-					   REASON_CONNECT);
+		wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
+					  WLAN_ROAM_INIT,
+					  REASON_CONNECT);
 
 	/* Not to signal link up because keys are yet to be set.
 	 * The linkup function will overwrite the sub-state that
@@ -13493,7 +13418,8 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
 	}
 
 	if (update_to_fw)
-		csr_roam_update_cfg(mac, vdev_id, REASON_ROAM_PSK_PMK_CHANGED);
+		wlan_roam_update_cfg(mac->psoc, vdev_id,
+				     REASON_ROAM_PSK_PMK_CHANGED);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16197,104 +16123,6 @@ csr_roam_pmkid_req_callback(uint8_t vdev_id,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * csr_update_11k_offload_params - Update 11K offload params
- * @mac_ctx: MAC context
- * @session: Pointer to the CSR Roam Session
- * @params: Pointer to the roam 11k offload params
- * @enabled: 11k offload enabled/disabled.
- *
- * API to update 11k offload params
- *
- * Return: none
- */
-static void
-csr_update_11k_offload_params(struct mac_context *mac_ctx,
-			      struct csr_roam_session *session,
-			      struct wlan_roam_11k_offload_params *params,
-			      bool enabled)
-{
-	struct csr_config *csr_config = &mac_ctx->roam.configParam;
-	struct csr_neighbor_report_offload_params *neighbor_report_offload =
-		&csr_config->neighbor_report_offload;
-
-	params->vdev_id = session->sessionId;
-
-	if (enabled) {
-		params->offload_11k_bitmask =
-				csr_config->offload_11k_enable_bitmask;
-	} else {
-		params->offload_11k_bitmask = 0;
-		return;
-	}
-
-	/*
-	 * If none of the parameters are enabled, then set the
-	 * offload_11k_bitmask to 0, so that we don't send the command
-	 * to the FW and drop it in WMA
-	 */
-	if ((neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_ALL) == 0) {
-		sme_err("No valid neighbor report offload params %x",
-			neighbor_report_offload->params_bitmask);
-		params->offload_11k_bitmask = 0;
-		return;
-	}
-
-	/*
-	 * First initialize all params to NEIGHBOR_REPORT_PARAM_INVALID
-	 * Then set the values that are enabled
-	 */
-	params->neighbor_report_params.time_offset =
-		NEIGHBOR_REPORT_PARAM_INVALID;
-	params->neighbor_report_params.low_rssi_offset =
-		NEIGHBOR_REPORT_PARAM_INVALID;
-	params->neighbor_report_params.bmiss_count_trigger =
-		NEIGHBOR_REPORT_PARAM_INVALID;
-	params->neighbor_report_params.per_threshold_offset =
-		NEIGHBOR_REPORT_PARAM_INVALID;
-	params->neighbor_report_params.neighbor_report_cache_timeout =
-		NEIGHBOR_REPORT_PARAM_INVALID;
-	params->neighbor_report_params.max_neighbor_report_req_cap =
-		NEIGHBOR_REPORT_PARAM_INVALID;
-
-	if (neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_TIME_OFFSET)
-		params->neighbor_report_params.time_offset =
-			neighbor_report_offload->time_offset;
-
-	if (neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_LOW_RSSI_OFFSET)
-		params->neighbor_report_params.low_rssi_offset =
-			neighbor_report_offload->low_rssi_offset;
-
-	if (neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_BMISS_COUNT_TRIGGER)
-		params->neighbor_report_params.bmiss_count_trigger =
-			neighbor_report_offload->bmiss_count_trigger;
-
-	if (neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_PER_THRESHOLD_OFFSET)
-		params->neighbor_report_params.per_threshold_offset =
-			neighbor_report_offload->per_threshold_offset;
-
-	if (neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_CACHE_TIMEOUT)
-		params->neighbor_report_params.neighbor_report_cache_timeout =
-			neighbor_report_offload->neighbor_report_cache_timeout;
-
-	if (neighbor_report_offload->params_bitmask &
-	    NEIGHBOR_REPORT_PARAMS_MAX_REQ_CAP)
-		params->neighbor_report_params.max_neighbor_report_req_cap =
-			neighbor_report_offload->max_neighbor_report_req_cap;
-
-	params->neighbor_report_params.ssid.length =
-		session->connectedProfile.SSID.length;
-	qdf_mem_copy(params->neighbor_report_params.ssid.ssid,
-			session->connectedProfile.SSID.ssId,
-			session->connectedProfile.SSID.length);
-}
-
 QDF_STATUS csr_invoke_neighbor_report_request(
 				uint8_t session_id,
 				struct sRrmNeighborReq *neighbor_report_req,
@@ -16427,48 +16255,6 @@ QDF_STATUS csr_update_fils_config(struct mac_context *mac, uint8_t session_id,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-#endif
-
-uint8_t
-csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx, uint8_t vdev_id)
-{
-	struct csr_roam_session *session;
-	uint8_t i;
-
-	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
-		session = CSR_GET_SESSION(mac_ctx, i);
-		if (!session || !CSR_IS_SESSION_VALID(mac_ctx, i))
-			continue;
-		if (wlan_get_opmode_from_vdev_id(mac_ctx->pdev, vdev_id) !=
-		    QDF_STA_MODE)
-			continue;
-
-		if (vdev_id == i)
-			continue;
-
-		if (MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, i))
-			return i;
-	}
-
-	return WLAN_UMAC_VDEV_ID_MAX;
-}
-
-QDF_STATUS
-csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
-			   enum roam_offload_state state, uint8_t reason)
-{
-	return wlan_cm_roam_state_change(mac->pdev, vdev_id, state, reason);
-}
-
-QDF_STATUS
-csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
-		      uint8_t command, uint8_t reason)
-{
-	return wlan_cm_roam_send_rso_cmd(mac_ctx->psoc, session_id, command,
-					 reason);
-}
-
-#ifndef FEATURE_CM_ENABLE
 
 #ifdef WLAN_ADAPTIVE_11R
 static bool
@@ -16651,58 +16437,6 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-/**
- * csr_cm_roam_offload_11k_params() - set roam 11k offload parameters
- * @mac_ctx: global mac ctx
- * @session: sme session
- * @params:  roam 11k offload parameters
- * @enabled: 11k offload enabled/disabled
- *
- * This function is used to set roam 11k offload related parameters
- *
- * Return: None
- */
-static void
-csr_cm_roam_offload_11k_params(struct mac_context *mac_ctx,
-			       struct csr_roam_session *session,
-			       struct wlan_roam_11k_offload_params *params,
-			       bool enabled)
-{
-	csr_update_11k_offload_params(mac_ctx, session, params, enabled);
-}
-
-/*
- * Below wlan_cm_roam_* and all csr_cm_roam_* APIs will move to component once
- * conenction manager is converged.
- */
-
-QDF_STATUS
-wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			    struct wlan_roam_start_config *req, uint8_t reason)
-{
-	struct csr_roam_session *session;
-	struct mac_context *mac_ctx;
-
-	mac_ctx = sme_get_mac_context();
-	if (!mac_ctx) {
-		sme_err("mac_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session) {
-		sme_err("session is null %d", vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* 11k offload is enabled during RSO Start after connect indication */
-	csr_cm_roam_offload_11k_params(mac_ctx, session,
-				       &req->roam_11k_params, TRUE);
-	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS
 wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason)
 {
@@ -18617,7 +18351,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			goto end;
 		}
 #endif
-		status = csr_post_roam_state_change(mac_ctx, session_id,
+		status = wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 						    WLAN_ROAM_SYNCH_IN_PROG,
 						    REASON_ROAM_HANDOFF_DONE);
 		if (QDF_IS_STATUS_ERROR(status))
@@ -18627,8 +18361,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				eCSR_ROAM_FT_START, eCSR_ROAM_RESULT_SUCCESS);
 		goto end;
 	case SIR_ROAMING_START:
-		status = csr_post_roam_state_change(
-					mac_ctx, session_id,
+		status = wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 					WLAN_ROAMING_IN_PROG,
 					REASON_ROAM_CANDIDATE_FOUND);
 		if (QDF_IS_STATUS_ERROR(status))
@@ -18673,7 +18406,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		 * Connection to the previous AP is still valid in this
 		 * case. So move to RSO_ENABLED state.
 		 */
-		csr_post_roam_state_change(mac_ctx, session_id,
+		wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 					   WLAN_ROAM_RSO_ENABLED,
 					   REASON_ROAM_ABORT);
 		csr_roam_roaming_offload_timer_action(mac_ctx,
@@ -18778,7 +18511,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 
 		if (roam_synch_data->authStatus ==
 		    CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
-			csr_post_roam_state_change(mac_ctx, session_id,
+			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 						   WLAN_ROAM_RSO_ENABLED,
 						   REASON_CONNECT);
 		} else {
@@ -18788,9 +18521,9 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			 * user-space and after set key response
 			 * is received.
 			 */
-			csr_post_roam_state_change(mac_ctx, session_id,
-						   WLAN_ROAM_INIT,
-						   REASON_CONNECT);
+			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
+						  WLAN_ROAM_INIT,
+						  REASON_CONNECT);
 		}
 		goto end;
 	case SIR_ROAMING_DEAUTH:
@@ -19309,16 +19042,4 @@ QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 								   session_id);
 
 	return status;
-}
-
-QDF_STATUS
-csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
-{
-	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(mac->psoc, vdev_id)) {
-		sme_debug("Update cfg received while ROAM RSO not started");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return csr_roam_offload_scan(mac, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				     reason);
 }

@@ -322,17 +322,6 @@ struct delstafor_sessionCmd {
 	void *context;
 };
 
-/*
- * Neighbor Report Params Bitmask
- */
-#define NEIGHBOR_REPORT_PARAMS_TIME_OFFSET            0x01
-#define NEIGHBOR_REPORT_PARAMS_LOW_RSSI_OFFSET        0x02
-#define NEIGHBOR_REPORT_PARAMS_BMISS_COUNT_TRIGGER    0x04
-#define NEIGHBOR_REPORT_PARAMS_PER_THRESHOLD_OFFSET   0x08
-#define NEIGHBOR_REPORT_PARAMS_CACHE_TIMEOUT          0x10
-#define NEIGHBOR_REPORT_PARAMS_MAX_REQ_CAP            0x20
-#define NEIGHBOR_REPORT_PARAMS_ALL                    0x3F
-
 struct csr_config {
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
@@ -358,9 +347,7 @@ struct csr_config {
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	enum force_1x1_type is_force_1x1;
-	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
-	struct csr_neighbor_report_offload_params neighbor_report_offload;
 };
 
 struct csr_channel_powerinfo {
