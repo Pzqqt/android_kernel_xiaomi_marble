@@ -1472,6 +1472,11 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		inst->capabilities->cap[CODEC_CONFIG].value = 0;
 	}
 
+	if (buf->type == MSM_VIDC_BUF_INPUT) {
+		inst->power.buffer_counter++;
+		msm_vidc_scale_power(inst, true);
+	}
+
 	print_vidc_buffer(VIDC_HIGH, "qbuf", inst, buf);
 	meta = get_meta_buffer(inst, buf);
 	if (!meta) {

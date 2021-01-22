@@ -506,10 +506,14 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 
 int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 {
+	struct msm_vidc_core *core;
+
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
+
+	core = inst->core;
 
 	if (!inst->active) {
 		/* scale buses for inactive -> active session */
@@ -525,6 +529,12 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 			s_vpr_e(inst->sid, "failed to scale bus\n");
 	}
 
+	s_vpr_h(inst->sid,
+		"power: inst: clk %lld ddr %d llcc %d dcvs flags %#x, core: clk %lld ddr %lld llcc %lld\n",
+		inst->power.curr_freq, inst->power.ddr_bw,
+		inst->power.sys_cache_bw, inst->power.dcvs_flags,
+		core->power.clk_freq, core->power.bw_ddr,
+		core->power.bw_llcc);
 	return 0;
 }
 

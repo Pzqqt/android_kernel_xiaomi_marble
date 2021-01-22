@@ -507,7 +507,7 @@ static int __vote_buses(struct msm_vidc_core *core,
 				bus->range[0], bus->range[1]);
 
 			if (TRIVIAL_BW_CHANGE(bw_kbps, bw_prev) && bw_prev) {
-				d_vpr_l("Skip voting bus %s to %llu bps",
+				d_vpr_l("Skip voting bus %s to %llu bps\n",
 					bus->name, bw_kbps * 1000);
 				continue;
 			}
@@ -656,7 +656,7 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	if (write_ptr < (u32 *)qinfo->q_array.align_virtual_addr ||
 	    write_ptr > (u32 *)(qinfo->q_array.align_virtual_addr +
 	    qinfo->q_array.mem_size)) {
-		d_vpr_e("Invalid write index");
+		d_vpr_e("Invalid write index\n");
 		return -ENODATA;
 	}
 
@@ -1457,8 +1457,10 @@ static int __init_bus(struct msm_vidc_core *core)
 	struct bus_info *bus = NULL;
 	int rc = 0;
 
-	if (!core)
+	if (!core) {
+		d_vpr_e("%s: invalid param\n", __func__);
 		return -EINVAL;
+	}
 
 	venus_hfi_for_each_bus(core, bus) {
 		if (!strcmp(bus->name, "venus-llcc")) {
@@ -1962,8 +1964,10 @@ static int __venus_power_on(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	if (core->power_enabled)
+	if (core->power_enabled) {
+		d_vpr_e("%s: Skip power on, core already enabled.\n", __func__);
 		return 0;
+	}
 
 	core->power_enabled = true;
 	/* Vote for all hardware resources */
@@ -3117,7 +3121,7 @@ int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq)
 	int rc = 0;
 	struct msm_vidc_core* core;
 
-	if (!inst || inst->core) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3141,7 +3145,7 @@ int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 bw_ddr, u64 bw_llcc)
 	int rc = 0;
 	struct msm_vidc_core* core;
 
-	if (!inst || inst->core) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
