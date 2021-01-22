@@ -202,6 +202,7 @@ struct wlan_chan_list {
  * @is_adaptive_11r_connection: is adaptive 11r connection
  * @hs_20_ap: Hotspot 2.0 AP
  * @mbo_oce_enabled_ap: MBO/OCE enabled network
+ * @is_single_pmk: is single pmk
  * @roam_scan_freq_lst: roam freq list
  */
 struct rso_config {
@@ -228,6 +229,7 @@ struct rso_config {
 	bool is_11r_assoc;
 	bool is_adaptive_11r_connection;
 	bool hs_20_ap;
+	bool is_single_pmk;
 	uint32_t mbo_oce_enabled_ap;
 	struct rso_chan_info roam_scan_freq_lst;
 };
@@ -280,6 +282,7 @@ struct rso_roam_policy_params {
  * @raise_factor_5g: Boost factor
  * @drop_factor_5g: Penalty factor
  * @max_raise_rssi_5g: Maximum amount of Boost that can added
+ * @is_fils_roaming_supported: fils roaming supported
  * @policy_params: roam policy params
  */
 struct rso_config_params {
@@ -297,6 +300,7 @@ struct rso_config_params {
 	uint8_t drop_factor_5g;
 	int max_raise_rssi_5g;
 	uint8_t cat_rssi_offset;
+	bool is_fils_roaming_supported;
 	struct rso_roam_policy_params policy_params;
 };
 
@@ -353,6 +357,7 @@ enum roam_cfg_param {
 	ADAPTIVE_11R_CONNECTION,
 	HS_20_AP,
 	MBO_OCE_ENABLED_AP,
+	IS_SINGLE_PMK,
 };
 
 /**

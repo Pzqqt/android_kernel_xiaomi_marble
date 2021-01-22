@@ -8265,6 +8265,23 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 	return status;
 }
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+static void csr_fill_single_pmk(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				struct bss_description *bss_desc)
+{
+	struct cm_roam_values_copy src_cfg;
+
+	src_cfg.bool_value = bss_desc->is_single_pmk;
+	wlan_cm_roam_cfg_set_value(psoc, vdev_id,
+				   IS_SINGLE_PMK, &src_cfg);
+}
+#else
+static inline void
+csr_fill_single_pmk(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    struct bss_description *bss_desc)
+{}
+#endif
+
 QDF_STATUS
 csr_roam_save_connected_information(struct mac_context *mac,
 				    uint32_t sessionId,
@@ -8356,6 +8373,7 @@ csr_roam_save_connected_information(struct mac_context *mac,
 		src_cfg.uint_value = pSirBssDesc->mbo_oce_enabled_ap;
 		wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
 					   MBO_OCE_ENABLED_AP, &src_cfg);
+		csr_fill_single_pmk(mac->psoc, sessionId, pSirBssDesc);
 		if (CSR_IS_QOS_BSS(pIesTemp) || pIesTemp->HTCaps.present)
 			/* Some HT AP's dont send WMM IE so in that case we
 			 * assume all HT Ap's are Qos Enabled AP's
@@ -8430,8 +8448,11 @@ csr_clear_other_bss_sae_single_pmk_entry(struct mac_context *mac,
 					 uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
+	struct cm_roam_values_copy src_cfg;
 
-	if (!bss_desc->is_single_pmk)
+	wlan_cm_roam_cfg_get_value(mac->psoc, vdev_id,
+				   IS_SINGLE_PMK, &src_cfg);
+	if (!src_cfg.bool_value)
 		return;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
@@ -8454,8 +8475,12 @@ csr_delete_current_bss_sae_single_pmk_entry(struct mac_context *mac,
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_crypto_pmksa pmksa;
+	struct cm_roam_values_copy src_cfg;
 
-	if (!bss_desc->is_single_pmk)
+	wlan_cm_roam_cfg_get_value(mac->psoc, vdev_id,
+				   IS_SINGLE_PMK, &src_cfg);
+
+	if (!src_cfg.bool_value)
 		return;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
@@ -10023,6 +10048,8 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		if (csr_is_conn_state_connected_infra(mac_ctx, sessionId))
 			csr_roam_link_up(mac_ctx,
 					 session->connectedProfile.bssid);
+#else
+		cm_roam_start_init_on_connect(mac_ctx->pdev, sessionId);
 #endif
 	}
 	if (eSIR_SME_SUCCESS == pRsp->status_code) {
@@ -13514,13 +13541,6 @@ csr_store_sae_single_pmk_to_global_cache(struct mac_context *mac,
 					 uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct mlme_pmk_info *pmk_info;
-
-	if (!session->pConnectBssDesc)
-		return;
-
-	if (!session->pConnectBssDesc->is_single_pmk)
-		return;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
 						    WLAN_LEGACY_SME_ID);
@@ -13528,28 +13548,8 @@ csr_store_sae_single_pmk_to_global_cache(struct mac_context *mac,
 		sme_err("vdev is NULL");
 		return;
 	}
-
-	/*
-	 * Mark the AP as single PMK capable in Crypto Table
-	 */
-	wlan_crypto_set_sae_single_pmk_bss_cap(vdev,
-			(struct qdf_mac_addr *)session->pConnectBssDesc->bssId,
-			true);
-
-	pmk_info = qdf_mem_malloc(sizeof(*pmk_info));
-	if (!pmk_info) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return;
-	}
-
-	wlan_cm_get_psk_pmk(mac->pdev, vdev_id, pmk_info->pmk,
-			    &pmk_info->pmk_len);
-
-	wlan_mlme_update_sae_single_pmk(vdev, pmk_info);
-
+	cm_store_sae_single_pmk_to_global_cache(mac->psoc, mac->pdev, vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-	qdf_mem_zero(pmk_info, sizeof(*pmk_info));
-	qdf_mem_free(pmk_info);
 }
 #endif
 
@@ -14045,7 +14045,7 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	src_cfg.uint_value = bss_desc->mbo_oce_enabled_ap;
 	wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id, MBO_OCE_ENABLED_AP,
 				   &src_cfg);
-
+	csr_fill_single_pmk(mac_ctx->psoc, vdev_id, bss_desc);
 	status = wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc,
 						     &bcn_ies);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -14225,13 +14225,6 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 		csr_update_pmk_cache_ft(mac_ctx, vdev_id, session);
 	}
 
-	rsn_cap = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
-	if (rsn_cap >= 0) {
-		if (wma_cli_set2_command(vdev_id, WMI_VDEV_PARAM_RSN_CAPABILITY,
-					 rsn_cap, 0, VDEV_CMD))
-			sme_err("Failed to update WMI_VDEV_PARAM_RSN_CAPABILITY for vdev id %d",
-				vdev_id);
-	}
 	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED, vdev_id);
 
 	if (!is_wps && (csr_cm_is_fils_connection(rsp) || !ucast_cipher ||
@@ -14242,13 +14235,21 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP))) {
 		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
 					 vdev_id);
+		cm_roam_start_init_on_connect(mac_ctx->pdev, vdev_id);
 	} else {
 		csr_roam_substate_change(mac_ctx,
 					 eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY,
 					 vdev_id);
 		/* start wait for key timer. */
 	}
-	/* Fill legacy structures from resp for success */
+
+	rsn_cap = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (rsn_cap >= 0) {
+		if (wma_cli_set2_command(vdev_id, WMI_VDEV_PARAM_RSN_CAPABILITY,
+					 rsn_cap, 0, VDEV_CMD))
+			sme_err("Failed to update WMI_VDEV_PARAM_RSN_CAPABILITY for vdev id %d",
+				vdev_id);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16445,6 +16446,23 @@ csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx, uint8_t vdev_id)
 	return WLAN_UMAC_VDEV_ID_MAX;
 }
 
+QDF_STATUS
+csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
+			   enum roam_offload_state state, uint8_t reason)
+{
+	return wlan_cm_roam_state_change(mac->pdev, vdev_id, state, reason);
+}
+
+QDF_STATUS
+csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
+		      uint8_t command, uint8_t reason)
+{
+	return wlan_cm_roam_send_rso_cmd(mac_ctx->psoc, session_id, command,
+					 reason);
+}
+
+#ifndef FEATURE_CM_ENABLE
+
 #ifdef WLAN_ADAPTIVE_11R
 static bool
 csr_is_adaptive_11r_roam_supported(struct wlan_objmgr_psoc *psoc,
@@ -16476,21 +16494,6 @@ csr_is_adaptive_11r_roam_supported(struct wlan_objmgr_psoc *psoc,
 #endif
 
 QDF_STATUS
-csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
-			   enum roam_offload_state state, uint8_t reason)
-{
-	return wlan_cm_roam_state_change(mac->pdev, vdev_id, state, reason);
-}
-
-QDF_STATUS
-csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
-		      uint8_t command, uint8_t reason)
-{
-	return wlan_cm_roam_send_rso_cmd(mac_ctx->psoc, session_id, command,
-					 reason);
-}
-
-QDF_STATUS
 wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			 uint8_t command, uint8_t reason)
 {
@@ -16501,6 +16504,11 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
 	uint32_t fw_akm_bitmap;
 	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	mac_ctx = sme_get_mac_context();
 	if (!mac_ctx) {
@@ -16536,7 +16544,7 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		sme_info("Roam profile is NULL");
 
 	if (CSR_IS_AKM_FILS(roam_profile_akm) &&
-	    !mac_ctx->is_fils_roaming_supported) {
+	    !mlme_obj->cfg.lfr.rso_user_config.is_fils_roaming_supported) {
 		sme_info("FILS Roaming not suppprted by fw");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
@@ -16635,7 +16643,7 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 	return QDF_STATUS_SUCCESS;
 }
-
+#endif
 /**
  * csr_cm_roam_offload_11k_params() - set roam 11k offload parameters
  * @mac_ctx: global mac ctx
@@ -19306,51 +19314,4 @@ csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
 
 	return csr_roam_offload_scan(mac, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				     reason);
-}
-
-QDF_STATUS
-csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
-{
-	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint32_t sta_vdev_id = WLAN_INVALID_VDEV_ID;
-	struct csr_roam_session *session;
-	uint32_t count;
-	uint32_t idx;
-
-	sta_vdev_id = csr_get_roam_enabled_sta_sessionid(mac, vdev_id);
-	if (sta_vdev_id != WLAN_UMAC_VDEV_ID_MAX)
-		return QDF_STATUS_E_FAILURE;
-
-	count = policy_mgr_get_mode_specific_conn_info(mac->psoc,
-						       op_ch_freq_list,
-						       vdev_id_list,
-						       PM_STA_MODE);
-
-	if (!count)
-		return QDF_STATUS_E_FAILURE;
-
-	/*
-	 * Loop through all connected STA vdevs and roaming will be enabled
-	 * on the STA that has a different vdev id from the one passed as
-	 * input and has non zero roam trigger value.
-	 */
-	for (idx = 0; idx < count; idx++) {
-		session = CSR_GET_SESSION(mac, vdev_id_list[idx]);
-		if (vdev_id_list[idx] != vdev_id &&
-		    mlme_get_roam_trigger_bitmap(mac->psoc,
-						 vdev_id_list[idx])) {
-			sta_vdev_id = vdev_id_list[idx];
-			break;
-		}
-	}
-
-	if (sta_vdev_id == WLAN_INVALID_VDEV_ID)
-		return QDF_STATUS_E_FAILURE;
-
-	sme_debug("ROAM: Enabling roaming on vdev[%d]", sta_vdev_id);
-
-	return csr_post_roam_state_change(mac, sta_vdev_id,
-					  WLAN_ROAM_RSO_ENABLED,
-					  REASON_CTX_INIT);
 }

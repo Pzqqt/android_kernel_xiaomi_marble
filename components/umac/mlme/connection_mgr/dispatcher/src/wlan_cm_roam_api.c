@@ -567,6 +567,7 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 	struct rso_cfg_params *src_cfg;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
+	qdf_mem_zero(dst_config, sizeof(*dst_config));
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
@@ -646,6 +647,9 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 		break;
 	case MBO_OCE_ENABLED_AP:
 		dst_config->uint_value = rso_cfg->mbo_oce_enabled_ap;
+		break;
+	case IS_SINGLE_PMK:
+		dst_config->bool_value = rso_cfg->is_single_pmk;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
@@ -1013,6 +1017,9 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		break;
 	case MBO_OCE_ENABLED_AP:
 		rso_cfg->mbo_oce_enabled_ap  = src_config->uint_value;
+		break;
+	case IS_SINGLE_PMK:
+		rso_cfg->is_single_pmk = src_config->bool_value;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);

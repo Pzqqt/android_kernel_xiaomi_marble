@@ -172,18 +172,6 @@ QDF_STATUS csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 				      uint8_t reason);
 
 /**
- * csr_enable_roaming_on_connected_sta() - Enable roaming on other connected
- *  sta vdev
- * @mac: mac context
- * @vdev_id: vdev id on which roaming should not be enabled
- * @reason: reason for enabling roaming on connected sta vdev
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id);
-
-/**
  * csr_roam_update_cfg() - Process RSO update cfg request
  * @mac: mac context
  * @vdev_id: vdev id
@@ -204,12 +192,6 @@ static inline
 QDF_STATUS csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 				      enum roam_offload_state state,
 				      uint8_t reason)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static inline QDF_STATUS
-csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

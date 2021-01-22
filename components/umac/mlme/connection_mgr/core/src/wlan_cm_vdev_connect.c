@@ -262,6 +262,9 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (op_mode == QDF_STA_MODE)
+		wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_INIT,
+					  REASON_CONNECT);
 	cm_csr_connect_done_ind(vdev, rsp);
 
 	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status))
@@ -270,9 +273,6 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 				     mlme_get_tdls_chan_switch_prohibited(vdev),
 				     mlme_get_tdls_prohibited(vdev), vdev);
 	wlan_p2p_status_connect(vdev);
-	if (op_mode == QDF_STA_MODE)
-		wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_INIT,
-					  REASON_CONNECT);
 
 	return QDF_STATUS_SUCCESS;
 }

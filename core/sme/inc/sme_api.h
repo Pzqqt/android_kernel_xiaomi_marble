@@ -3062,19 +3062,6 @@ int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
 						uint16_t *sec20chan_freq);
 
 /**
- * sme_enable_roaming_on_connected_sta() - Enable roaming on an connected sta
- * @mac_handle: handle returned by mac_open
- * @vdev_id: vdev id
- *
- * The function check if any connected STA is present on which roaming is not
- * enabled and if present enabled roaming on that STA.
- *
- * Return: none
- */
-void sme_enable_roaming_on_connected_sta(mac_handle_t mac_handle,
-					 uint8_t vdev_id);
-
-/**
  * sme_send_mgmt_tx() - Sends mgmt frame from CSR to LIM
  * @mac_handle: The handle returned by mac_open
  * @session_id: session id

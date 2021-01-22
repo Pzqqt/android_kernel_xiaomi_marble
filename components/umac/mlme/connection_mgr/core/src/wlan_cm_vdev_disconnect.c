@@ -50,11 +50,13 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 
 	cm_csr_disconnect_start_ind(vdev, req);
 
-	user_disconnect = req->source == CM_OSIF_CONNECT ? true : false;
+	user_disconnect = req->source == CM_OSIF_DISCONNECT ? true : false;
 	wlan_p2p_cleanup_roc_by_vdev(vdev);
 	wlan_tdls_notify_sta_disconnect(req->vdev_id, false, user_disconnect,
 					vdev);
-	wlan_cm_abort_rso(pdev, req->vdev_id);
+	if (user_disconnect)
+		cm_roam_state_change(pdev, req->vdev_id, WLAN_ROAM_RSO_STOPPED,
+				     REASON_DRIVER_DISABLED);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -90,13 +92,12 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	if (!discon_req)
 		return QDF_STATUS_E_NOMEM;
 
+	cm_csr_handle_diconnect_req(vdev, req);
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	if (opmode == QDF_STA_MODE)
 		wlan_cm_roam_state_change(pdev, vdev_id,
 					  WLAN_ROAM_DEINIT,
 					  REASON_DISCONNECTED);
-
-	cm_csr_handle_diconnect_req(vdev, req);
 	if (rso_cfg->roam_scan_freq_lst.freq_list)
 		qdf_mem_free(rso_cfg->roam_scan_freq_lst.freq_list);
 	rso_cfg->roam_scan_freq_lst.freq_list = NULL;
