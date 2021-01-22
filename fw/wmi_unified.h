@@ -12058,6 +12058,12 @@ typedef enum {
     /** Prohibit data & mgmt except keepalive pkt */
     WMI_VDEV_PARAM_PROHIBIT_DATA_MGMT,       /* 0xA6 */
 
+    /**  Enable or disable Txop requirement feature
+     *   0 - Disable feature
+     *   1 - Enable feature
+     */
+    WMI_VDEV_PARAM_WMM_TXOP_ENABLE,          /* 0xA7 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
