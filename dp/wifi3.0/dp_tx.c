@@ -2314,7 +2314,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 						.curr_seg->next;
 					nbuf = msdu_info->u.sg_info
 					       .curr_seg->nbuf;
-				}
+				} else
+					break;
 				i++;
 				continue;
 			}
@@ -2356,7 +2357,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				msdu_info->u.sg_info.curr_seg =
 					msdu_info->u.sg_info.curr_seg->next;
 				nbuf = msdu_info->u.sg_info.curr_seg->nbuf;
-			}
+			} else
+				break;
 		}
 		i++;
 	}
