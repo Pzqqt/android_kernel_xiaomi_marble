@@ -25,6 +25,7 @@
 #include "cvp_private.h"
 #include "msm_cvp_clocks.h"
 #include "msm_cvp_dsp.h"
+#include "msm_cvp.h"
 
 #define CLASS_NAME              "cvp"
 #define DRIVER_NAME             "cvp"
@@ -270,6 +271,25 @@ static ssize_t boot_store(struct device *dev,
 		if (rc) {
 			dprintk(CVP_ERR,
 			"Failed to close cvp instance\n");
+			return rc;
+		}
+	} else if ((val == 2) && booted) {
+		struct msm_cvp_inst *inst;
+
+		inst = msm_cvp_open(MSM_CORE_CVP, MSM_CVP_USER);
+		if (!inst) {
+			dprintk(CVP_ERR,
+			"Failed to create eva instance\n");
+			return -ENOMEM;
+		}
+		rc = msm_cvp_session_create(inst);
+		if (rc)
+			dprintk(CVP_ERR, "Failed to create eva session\n");
+
+		rc = msm_cvp_close(inst);
+		if (rc) {
+			dprintk(CVP_ERR,
+			"Failed to close eva instance\n");
 			return rc;
 		}
 	}

@@ -1053,7 +1053,7 @@ static int msm_cvp_unregister_buffer(struct msm_cvp_inst *inst,
 	return rc;
 }
 
-static int msm_cvp_session_create(struct msm_cvp_inst *inst)
+int msm_cvp_session_create(struct msm_cvp_inst *inst)
 {
 	int rc = 0;
 	struct synx_initialization_params params;
@@ -1884,9 +1884,6 @@ int msm_cvp_session_init(struct msm_cvp_inst *inst)
 	inst->clk_data.sys_cache_bw = 1000;
 
 	inst->prop.type = HFI_SESSION_CV;
-	if (inst->session_type == MSM_CVP_KERNEL)
-		inst->prop.type = HFI_SESSION_DMM;
-
 	inst->prop.kernel_mask = 0xFFFFFFFF;
 	inst->prop.priority = 0;
 	inst->prop.is_secure = 0;
