@@ -2954,9 +2954,6 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 	struct wlan_crypto_pmksa pmksa, *pmksa_peer;
 	struct bss_description *bss_desc;
 
-	if (!lim_is_rsn_profile(session))
-		return QDF_STATUS_SUCCESS;
-
 	rsn_ie = qdf_mem_malloc(DOT11F_IE_RSN_MAX_LEN + 2);
 	if (!rsn_ie)
 		return QDF_STATUS_E_NOMEM;
@@ -3024,6 +3021,78 @@ lim_fill_rsn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS
+lim_fill_wpa_ie(struct mac_context *mac_ctx, struct pe_session *session,
+		struct cm_vdev_join_req *req)
+{
+	QDF_STATUS status;
+	uint8_t *wpa_ie;
+	uint8_t ie_len = 0;
+	uint8_t *wpa_ie_end = NULL;
+
+	wpa_ie = qdf_mem_malloc(DOT11F_IE_WPA_MAX_LEN + 2);
+	if (!wpa_ie)
+		return QDF_STATUS_E_NOMEM;
+
+	status = lim_strip_ie(mac_ctx, req->assoc_ie.ptr,
+			      (uint16_t *)&req->assoc_ie.len,
+			      DOT11F_EID_WPA, ONE_BYTE,
+			      "\x00\x50\xf2", 3, NULL, 0);
+
+	wpa_ie_end = wlan_crypto_build_wpaie(session->vdev, wpa_ie);
+	if (wpa_ie_end)
+		ie_len = wpa_ie_end - wpa_ie;
+
+	session->lim_join_req->rsnIE.length = ie_len;
+	qdf_mem_copy(session->lim_join_req->rsnIE.rsnIEdata,
+		     wpa_ie, ie_len);
+
+	qdf_mem_free(wpa_ie);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef FEATURE_WLAN_WAPI
+static QDF_STATUS
+lim_fill_wapi_ie(struct mac_context *mac_ctx, struct pe_session *session,
+		 struct cm_vdev_join_req *req)
+{
+	QDF_STATUS status;
+	uint8_t *wapi_ie;
+	uint8_t ie_len = 0;
+	uint8_t *wapi_ie_end = NULL;
+
+	wapi_ie = qdf_mem_malloc(DOT11F_IE_WAPI_MAX_LEN + 2);
+	if (!wapi_ie)
+		return QDF_STATUS_E_NOMEM;
+
+	status = lim_strip_ie(mac_ctx, req->assoc_ie.ptr,
+			      (uint16_t *)&req->assoc_ie.len,
+			      WLAN_ELEMID_WAPI, ONE_BYTE,
+			      NULL, 0, NULL, 0);
+
+	wapi_ie_end = wlan_crypto_build_wapiie(session->vdev, wapi_ie);
+	if (wapi_ie_end)
+		ie_len = wapi_ie_end - wapi_ie;
+
+	session->lim_join_req->rsnIE.length = ie_len;
+	qdf_mem_copy(session->lim_join_req->rsnIE.rsnIEdata,
+		     wapi_ie, ie_len);
+
+	qdf_mem_free(wapi_ie);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+lim_fill_wapi_ie(struct mac_context *mac_ctx, struct pe_session *session,
+		 struct cm_vdev_join_req *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 
 static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 				   struct pe_session *session,
@@ -3106,7 +3175,13 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 					    req->assoc_ie.len))
 		session->isOSENConnection = true;
 
-	lim_fill_rsn_ie(mac_ctx, session, req);
+	if (lim_is_rsn_profile(session))
+		lim_fill_rsn_ie(mac_ctx, session, req);
+	else if (lim_is_wpa_profile(session))
+		lim_fill_wpa_ie(mac_ctx, session, req);
+	else if (lim_is_wapi_profile(session))
+		lim_fill_wapi_ie(mac_ctx, session, req);
+
 	lim_update_fils_config(mac_ctx, session, req);
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
 	if (!mlme_priv)
