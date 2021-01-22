@@ -14006,12 +14006,19 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	int32_t ucast_cipher, mcast_cipher;
 	int32_t auth_mode;
 	int32_t akm;
+	struct wlan_channel *chan;
 
 	conn_profile = &session->connectedProfile;
 	conn_profile->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
 	conn_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
 	conn_profile->op_freq = rsp->connect_rsp.freq;
 	qdf_copy_macaddr(&conn_profile->bssid, &rsp->connect_rsp.bssid);
+	conn_profile->SSID.length = rsp->connect_rsp.ssid.length;
+	qdf_mem_copy(&conn_profile->SSID.ssId, &rsp->connect_rsp.ssid.ssid,
+		     conn_profile->SSID.length);
+	chan = wlan_vdev_get_active_channel(vdev);
+	if (chan)
+		conn_profile->vht_channel_width = chan->ch_width;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
