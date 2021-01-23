@@ -18,6 +18,8 @@
 #include "qca_multi_link.h"
 #include "qdf_module.h"
 #include "qdf_trace.h"
+#include "qal_vbus_dev.h"
+#include "qal_bridge.h"
 
 int qca_multi_link_tbl_get_eth_entries(struct net_device *net_dev,
 					void *fill_buff, int buff_size)
@@ -44,7 +46,7 @@ int qca_multi_link_tbl_get_eth_entries(struct net_device *net_dev,
 	/*
 	 * Traverse the bridge hah to get all ethernet interface entries.
 	 */
-	rcu_read_lock();
+	qal_vbus_rcu_read_lock();
 	for (i = 0; i < BR_HASH_SIZE ; i++) {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
 		hlist_for_each_entry_rcu(search_fdb, &p->br->hash[i], hlist) {
@@ -68,13 +70,13 @@ int qca_multi_link_tbl_get_eth_entries(struct net_device *net_dev,
 				qfdb += 1;
 				buff_size -= fdb_entry_size;
 				if (buff_size < fdb_entry_size) {
-					rcu_read_unlock();
+					qal_vbus_rcu_read_unlock();
 					return num_of_entries;
 				}
 			}
 		}
 	}
-	rcu_read_unlock();
+	qal_vbus_rcu_read_unlock();
 
 	return num_of_entries;
 }
@@ -99,7 +101,7 @@ struct net_device *qca_multi_link_tbl_find_sta_or_ap(struct net_device *net_dev,
 	else
 		search_if_type = NL80211_IFTYPE_STATION;
 
-	rcu_read_lock();
+	qal_vbus_rcu_read_lock();
 	for (i = 0; i < BR_HASH_SIZE; i++) {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
 		hlist_for_each_entry_rcu(search_fdb, &p->br->hash[i], hlist) {
@@ -118,13 +120,13 @@ struct net_device *qca_multi_link_tbl_find_sta_or_ap(struct net_device *net_dev,
 			if (ieee80211_ptr
 		&& (ieee80211_ptr->iftype == search_if_type)
 		&& (ieee80211_ptr->wiphy == net_dev->ieee80211_ptr->wiphy)) {
-				rcu_read_unlock();
+				qal_vbus_rcu_read_unlock();
 				return search_dev;
 			}
 		}
 	}
 
-	rcu_read_unlock();
+	qal_vbus_rcu_read_unlock();
 	return NULL;
 }
 
@@ -162,7 +164,7 @@ qdf_export_symbol(qca_multi_link_tbl_add_or_refresh_entry);
 QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *addr)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
-	int status;
+	QDF_STATUS status;
 #endif
 	struct net_bridge_fdb_entry *fdb_entry = NULL;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
@@ -170,7 +172,7 @@ QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *
 	struct net_bridge *br = NULL;
 #endif
 
-	fdb_entry = br_fdb_has_entry(net_dev, addr, 0);
+	fdb_entry = qal_bridge_fdb_has_entry(net_dev, addr, 0);
 	if (!fdb_entry) {
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -194,13 +196,14 @@ QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
-	status = br_fdb_delete_by_netdev(net_dev, addr, 0);
-	if (status < 0) {
+	status = qal_bridge_fdb_delete_by_netdev(net_dev, addr, 0);
+	if (status != QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;
 	}
 #else
 	/* Use 5.4-specific API */
 #endif
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -217,7 +220,7 @@ QDF_STATUS qca_multi_link_tbl_has_entry(struct net_device *net_dev,
 	if (!qca_ml_entry)
 		return QDF_STATUS_E_FAILURE;
 
-	fdb_entry = br_fdb_has_entry(net_dev, addr, vlan_id);
+	fdb_entry = qal_bridge_fdb_has_entry(net_dev, addr, vlan_id);
 	if (!fdb_entry)
 		return QDF_STATUS_E_FAILURE;
 
@@ -250,7 +253,7 @@ QDF_STATUS qca_multi_link_tbl_register_update_notifier(void *nb)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	br_fdb_update_register_notify(notifier);
+	qal_bridge_fdb_update_register_notify(notifier);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -266,7 +269,7 @@ QDF_STATUS qca_multi_link_tbl_unregister_update_notifier(void *nb)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	br_fdb_update_unregister_notify(notifier);
+	qal_bridge_fdb_update_unregister_notify(notifier);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -282,7 +285,7 @@ QDF_STATUS qca_multi_link_tbl_register_notifier(void *nb)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	br_fdb_register_notify(notifier);
+	qal_bridge_fdb_register_notify(notifier);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -298,7 +301,7 @@ QDF_STATUS qca_multi_link_tbl_unregister_notifier(void *nb)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	br_fdb_unregister_notify(notifier);
+	qal_bridge_fdb_unregister_notify(notifier);
 
 	return QDF_STATUS_SUCCESS;
 }

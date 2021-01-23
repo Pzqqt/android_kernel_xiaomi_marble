@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -271,3 +271,43 @@ qal_vbus_deregister_driver(struct qdf_pfm_drv *pfdev)
 }
 
 qdf_export_symbol(qal_vbus_deregister_driver);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
+QDF_STATUS
+qal_vbus_gpio_set_value_cansleep(unsigned int gpio, int value)
+{
+	gpio_set_value_cansleep(gpio, value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qal_vbus_gpio_set_value_cansleep);
+#else
+QDF_STATUS
+qal_vbus_gpio_set_value_cansleep(unsigned int gpio, int value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qal_vbus_gpio_set_value_cansleep);
+#endif
+
+QDF_STATUS
+qal_vbus_rcu_read_lock(void)
+{
+	rcu_read_lock();
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qal_vbus_rcu_read_lock);
+
+QDF_STATUS
+qal_vbus_rcu_read_unlock(void)
+{
+	rcu_read_unlock();
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qal_vbus_rcu_read_unlock);
