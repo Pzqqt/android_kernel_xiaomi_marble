@@ -226,7 +226,7 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst);
 int msm_vidc_change_core_state(struct msm_vidc_core *core,
 	enum msm_vidc_core_state request_state, const char *func);
 int msm_vidc_core_init(struct msm_vidc_core *core);
-int msm_vidc_core_deinit(struct msm_vidc_core *core);
+int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force);
 int msm_vidc_core_timeout(struct msm_vidc_core *core);
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *data);
@@ -298,5 +298,6 @@ void inst_lock(struct msm_vidc_inst *inst, const char *function);
 void inst_unlock(struct msm_vidc_inst *inst, const char *function);
 bool inst_lock_check(struct msm_vidc_inst *inst, const char *function);
 int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst);
+void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core);
 #endif // _MSM_VIDC_DRIVER_H_
 

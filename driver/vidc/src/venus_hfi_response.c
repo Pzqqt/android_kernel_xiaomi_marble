@@ -230,7 +230,7 @@ static int handle_system_error(struct msm_vidc_core *core,
 	struct hfi_packet *pkt)
 {
 	d_vpr_e("%s: system error received\n", __func__);
-	msm_vidc_core_deinit(core);
+	msm_vidc_core_deinit(core, true);
 	return 0;
 }
 

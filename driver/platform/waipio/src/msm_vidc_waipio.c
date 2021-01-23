@@ -65,10 +65,10 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{MAX_MBPF_B_FRAME, 32640}, /* 3840x2176/256 */
 	{MAX_MBPS_B_FRAME, 1958400}, /* 3840x2176/256 MBs@60fps */
 	{NUM_VPP_PIPE, 4},
-	{SW_PC, 0},
-	{SW_PC_DELAY, 1500}, /* 1500 ms */
+	{SW_PC, 1},
+	{SW_PC_DELAY, 20000}, /* 20000 ms (>HW_RESPONSE_TIMEOUT)*/
 	{FW_UNLOAD, 0},
-	{FW_UNLOAD_DELAY, 1000}, /* 1000 ms */
+	{FW_UNLOAD_DELAY, 25000}, /* 25000 ms (>PC_DELAY)*/
 	{HW_RESPONSE_TIMEOUT, 15000}, /* 1000 ms */
 	{DEBUG_TIMEOUT, 0},
 	// TODO: review below entries, and if required rename as PREFETCH
