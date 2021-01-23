@@ -1452,8 +1452,7 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	if (buf->type == MSM_VIDC_BUF_INPUT_META ||
 	    buf->type == MSM_VIDC_BUF_OUTPUT_META) {
 		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
-		s_vpr_l(inst->sid, "metabuf fd %3d daddr %#x deferred\n",
-			buf->fd, buf->device_addr);
+		print_vidc_buffer(VIDC_HIGH, "qbuf deferred", inst, buf);
 		return 0;
 	}
 
