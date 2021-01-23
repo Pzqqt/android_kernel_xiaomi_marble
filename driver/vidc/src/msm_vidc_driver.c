@@ -5,6 +5,7 @@
 
 #include <linux/iommu.h>
 #include <linux/workqueue.h>
+#include <linux/hash.h>
 #include <media/v4l2_vidc_extensions.h>
 #include "msm_media_info.h"
 
@@ -1994,7 +1995,7 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	mutex_unlock(&core->lock);
 
 	/* assign session_id */
-	inst->session_id = count + 1;
+	inst->session_id = hash32_ptr(inst);
 	inst->sid = inst->session_id;
 
 	return rc;
