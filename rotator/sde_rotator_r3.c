@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s:%d: " fmt, __func__, __LINE__
@@ -16,6 +16,7 @@
 #include <linux/dma-buf.h>
 #include <linux/clk.h>
 #include <linux/clk/qcom.h>
+#include <linux/msm_rtb.h>
 
 #include "sde_rotator_core.h"
 #include "sde_rotator_util.h"
