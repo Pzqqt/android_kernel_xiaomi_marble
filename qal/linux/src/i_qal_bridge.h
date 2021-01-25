@@ -58,8 +58,6 @@ __qal_bridge_fdb_delete_by_netdev(__qal_netdev_t dev,
 				  const unsigned char *addr, uint16_t vid)
 {
 	/* Use 5.4-specific API */
-	qdf_info("Needs alternative implementation");
-
 	return QDF_STATUS_SUCCESS;
 }
 #else
