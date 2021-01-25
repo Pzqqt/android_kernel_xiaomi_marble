@@ -2616,7 +2616,7 @@ static int dsi_display_parse_boot_display_selection(void)
 		strlcpy(disp_buf, boot_displays[i].boot_param,
 			MAX_CMDLINE_PARAM_LEN);
 
-		pos = strnstr(disp_buf, ":", MAX_CMDLINE_PARAM_LEN);
+		pos = strnstr(disp_buf, ":", strlen(disp_buf));
 
 		/* Use ':' as a delimiter to retrieve the display name */
 		if (!pos) {
