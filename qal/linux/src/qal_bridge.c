@@ -65,12 +65,10 @@ qdf_export_symbol(qal_bridge_fdb_has_entry);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
 QDF_STATUS
-__qal_bridge_fdb_delete_by_netdev(__qal_netdev_t dev,
+qal_bridge_fdb_delete_by_netdev(__qal_netdev_t dev,
 				  const unsigned char *addr, uint16_t vid)
 {
 	/* Use 5.4-specific API */
-	qdf_info("Needs alternative implementation");
-
 	return QDF_STATUS_SUCCESS;
 }
 #else
