@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPA3_I_H_
@@ -20,6 +20,10 @@
 #include <linux/ipa.h>
 #include <linux/ipa_usb.h>
 #include <linux/iommu.h>
+#include <linux/version.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0))
+#include <linux/qcom-iommu-util.h>
+#endif
 #include <linux/platform_device.h>
 #include <linux/firmware.h>
 #include "ipa_qmi_service.h"
