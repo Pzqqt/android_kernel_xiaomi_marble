@@ -1779,6 +1779,10 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 	tmp_new = util_scan_find_ie(WLAN_ELEMID_SSID, sub_copy, subie_len);
 	if (tmp_new) {
 		scm_debug(" SSID %.*s", tmp_new[1], &tmp_new[2]);
+		if ((pos - new_ie + tmp_new[1] + 2) > MAX_IE_LEN) {
+			qdf_mem_free(sub_copy);
+			return 0;
+		}
 		qdf_mem_copy(pos, tmp_new, tmp_new[1] + 2);
 		pos += (tmp_new[1] + 2);
 	}
@@ -1796,10 +1800,15 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 		}
 
 		tmp = (uint8_t *)util_scan_find_ie(tmp_old[0], sub_copy,
-				subie_len);
+						   subie_len);
 		if (!tmp) {
 			/* ie in old ie but not in subelement */
 			if (tmp_old[0] != WLAN_ELEMID_MULTIPLE_BSSID) {
+				if ((pos - new_ie + tmp_old[1] + 2) >
+				    MAX_IE_LEN) {
+					qdf_mem_free(sub_copy);
+					return 0;
+				}
 				qdf_mem_copy(pos, tmp_old, tmp_old[1] + 2);
 				pos += tmp_old[1] + 2;
 			}
@@ -1815,10 +1824,20 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 					/* same vendor ie, copy from
 					 * subelement
 					 */
+					if ((pos - new_ie + tmp[1] + 2) >
+					    MAX_IE_LEN) {
+						qdf_mem_free(sub_copy);
+						return 0;
+					}
 					qdf_mem_copy(pos, tmp, tmp[1] + 2);
 					pos += tmp[1] + 2;
 					tmp[0] = 0;
 				} else {
+					if ((pos - new_ie + tmp_old[1] + 2) >
+					    MAX_IE_LEN) {
+						qdf_mem_free(sub_copy);
+						return 0;
+					}
 					qdf_mem_copy(pos, tmp_old,
 						     tmp_old[1] + 2);
 					pos += tmp_old[1] + 2;
@@ -1826,16 +1845,30 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 			} else if (tmp_old[0] == WLAN_ELEMID_EXTN_ELEM) {
 				if (tmp_old[2] == tmp[2]) {
 					/* same ie, copy from subelement */
+					if ((pos - new_ie + tmp[1] + 2) >
+					    MAX_IE_LEN) {
+						qdf_mem_free(sub_copy);
+						return 0;
+					}
 					qdf_mem_copy(pos, tmp, tmp[1] + 2);
 					pos += tmp[1] + 2;
 					tmp[0] = 0;
 				} else {
+					if ((pos - new_ie + tmp_old[1] + 2) >
+					    MAX_IE_LEN) {
+						qdf_mem_free(sub_copy);
+						return 0;
+					}
 					qdf_mem_copy(pos, tmp_old,
 						     tmp_old[1] + 2);
 					pos += tmp_old[1] + 2;
 				}
 			} else {
 				/* copy ie from subelement into new ie */
+				if ((pos - new_ie + tmp[1] + 2) > MAX_IE_LEN) {
+					qdf_mem_free(sub_copy);
+					return 0;
+				}
 				qdf_mem_copy(pos, tmp, tmp[1] + 2);
 				pos += tmp[1] + 2;
 				tmp[0] = 0;
@@ -1856,6 +1889,10 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 		if (!(tmp_new[0] == WLAN_ELEMID_NONTX_BSSID_CAP ||
 		      tmp_new[0] == WLAN_ELEMID_SSID ||
 		      tmp_new[0] == WLAN_ELEMID_MULTI_BSSID_IDX)) {
+			if ((pos - new_ie + tmp_new[1] + 2) > MAX_IE_LEN) {
+				qdf_mem_free(sub_copy);
+				return 0;
+			}
 			qdf_mem_copy(pos, tmp_new, tmp_new[1] + 2);
 			pos += tmp_new[1] + 2;
 		}
@@ -1884,11 +1921,11 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	uint8_t *pos, *subelement, *mbssid_end_pos;
 	uint8_t *tmp, *mbssid_index_ie;
-	uint32_t subie_len, new_ie_len;
+	uint32_t subie_len, new_ie_len, ielen;
 	uint8_t new_bssid[QDF_MAC_ADDR_SIZE], bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t *new_ie;
 	uint8_t *ie, *new_frame = NULL;
-	uint64_t ielen, new_frame_len;
+	int new_frame_len;
 
 	hdr = (struct wlan_frame_hdr *)frame;
 	bcn = (struct wlan_bcn_frame *)(frame + sizeof(struct wlan_frame_hdr));
@@ -1957,6 +1994,15 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 				continue;
 
 			new_frame_len = frame_len - ielen + new_ie_len;
+
+			if (new_frame_len < 0) {
+				qdf_mem_free(new_ie);
+				scm_err("Invalid frame:Stop MBSSIE parsing");
+				scm_err("Frame_len: %zu,ielen:%u,new_ie_len:%u",
+					frame_len, ielen, new_ie_len);
+				return QDF_STATUS_E_INVAL;
+			}
+
 			new_frame = qdf_mem_malloc(new_frame_len);
 			if (!new_frame) {
 				qdf_mem_free(new_ie);
