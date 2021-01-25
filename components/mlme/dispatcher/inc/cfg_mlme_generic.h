@@ -23,13 +23,8 @@
 #ifndef __CFG_MLME_GENERIC_H
 #define __CFG_MLME_GENERIC_H
 
-#ifdef WLAN_FEATURE_11W
 #define CFG_PMF_SA_QUERY_MAX_RETRIES_TYPE	CFG_INI_UINT
 #define CFG_PMF_SA_QUERY_RETRY_INTERVAL_TYPE	CFG_INI_UINT
-#else
-#define CFG_PMF_SA_QUERY_MAX_RETRIES_TYPE	CFG_UINT
-#define CFG_PMF_SA_QUERY_RETRY_INTERVAL_TYPE	CFG_UINT
-#endif /*WLAN_FEATURE_11W*/
 
 /**
  * enum monitor_mode_concurrency - Monitor mode concurrency

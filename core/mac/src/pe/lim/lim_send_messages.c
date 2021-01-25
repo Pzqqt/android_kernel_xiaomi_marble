@@ -413,7 +413,6 @@ QDF_STATUS lim_set_user_pos(struct mac_context *mac,
 	return retCode;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * lim_send_exclude_unencrypt_ind() - sends WMA_EXCLUDE_UNENCRYPTED_IND to HAL
  * @mac:          mac global context
@@ -457,7 +456,6 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(struct mac_context *mac,
 
 	return retCode;
 }
-#endif
 
 /**
  * lim_send_ht40_obss_scanind() - send ht40 obss start scan request

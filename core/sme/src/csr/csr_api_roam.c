@@ -6130,11 +6130,9 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->negotiatedMCEncryptionType =
 		pSrcProfile->negotiatedMCEncryptionType;
 	pDstProfile->negotiatedAuthType = pSrcProfile->negotiatedAuthType;
-#ifdef WLAN_FEATURE_11W
 	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
 	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
 	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
-#endif
 	pDstProfile->BSSType = pSrcProfile->BSSType;
 	pDstProfile->phyMode = pSrcProfile->phyMode;
 	pDstProfile->csrPersona = pSrcProfile->csrPersona;
@@ -6171,11 +6169,9 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
-#ifdef WLAN_FEATURE_11W
 	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
 	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
 	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
-#endif
 	pDstProfile->mdid = pSrcProfile->mdid;
 	pDstProfile->add_ie_params = pSrcProfile->add_ie_params;
 
@@ -11833,10 +11829,8 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 						   &band);
 	pParam->bssPersona = pProfile->csrPersona;
 
-#ifdef WLAN_FEATURE_11W
 	pParam->mfpCapable = (0 != pProfile->MFPCapable);
 	pParam->mfpRequired = (0 != pProfile->MFPRequired);
-#endif
 
 	pParam->add_ie_params.probeRespDataLen =
 		pProfile->add_ie_params.probeRespDataLen;
@@ -13627,10 +13621,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = mac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
-#ifdef WLAN_FEATURE_11W
 	pMsg->pmfCapable = pParam->mfpCapable;
 	pMsg->pmfRequired = pParam->mfpRequired;
-#endif
 
 	if (pParam->nRSNIELength > sizeof(pMsg->rsnIE.rsnIEdata)) {
 		qdf_mem_free(pMsg);

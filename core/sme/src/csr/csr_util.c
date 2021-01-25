@@ -196,9 +196,7 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 #endif
 		CASE_RETURN_STR(eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS);
 		CASE_RETURN_STR(eCSR_ROAM_SEND_P2P_STOP_BSS);
-#ifdef WLAN_FEATURE_11W
 		CASE_RETURN_STR(eCSR_ROAM_UNPROT_MGMT_FRAME_IND);
-#endif
 #ifdef FEATURE_WLAN_ESE
 		CASE_RETURN_STR(eCSR_ROAM_TSM_IE_IND);
 #ifndef FEATURE_CM_ENABLE
@@ -1945,10 +1943,8 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_AUTH_TYPE_CCKM_RSN:
 #endif
-#ifdef WLAN_FEATURE_11W
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
 	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
-#endif
 	/* fallthrough */
 	case eCSR_AUTH_TYPE_FILS_SHA256:
 	case eCSR_AUTH_TYPE_FILS_SHA384:
@@ -2486,7 +2482,6 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
 		edType = eSIR_ED_WPI;
 		break;
 #endif
-#ifdef WLAN_FEATURE_11W
 	/* 11w BIP */
 	case eCSR_ENCRYPT_TYPE_AES_CMAC:
 		edType = eSIR_ED_AES_128_CMAC;
@@ -2503,7 +2498,6 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
 	case eCSR_ENCRYPT_TYPE_AES_GMAC_256:
 		edType = eSIR_ED_AES_GMAC_256;
 		break;
-#endif
 	}
 
 	return edType;

@@ -1230,7 +1230,6 @@ __lim_process_neighbor_report(struct mac_context *mac, uint8_t *pRxPacketInfo,
 }
 
 
-#ifdef WLAN_FEATURE_11W
 /**
  * limProcessSAQueryRequestActionFrame
  *
@@ -1390,9 +1389,7 @@ static void __lim_process_sa_query_response_action_frame(struct mac_context *mac
 			break;
 		}
 }
-#endif
 
-#ifdef WLAN_FEATURE_11W
 /**
  * lim_drop_unprotected_action_frame
  *
@@ -1435,7 +1432,6 @@ lim_drop_unprotected_action_frame(struct mac_context *mac, struct pe_session *pe
 
 	return false;
 }
-#endif
 
 /**
  * lim_process_addba_req() - process ADDBA Request
@@ -1612,9 +1608,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 {
 	uint8_t *body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	tpSirMacActionFrameHdr action_hdr = (tpSirMacActionFrameHdr) body_ptr;
-#ifdef WLAN_FEATURE_11W
 	tpSirMacMgmtHdr mac_hdr_11w = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-#endif
 	tpSirMacMgmtHdr mac_hdr = NULL;
 	int8_t rssi;
 	uint32_t frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
@@ -1629,12 +1623,10 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-#ifdef WLAN_FEATURE_11W
 	if (lim_is_robust_mgmt_action_frame(action_hdr->category) &&
 	   lim_drop_unprotected_action_frame(mac_ctx, session,
 			mac_hdr_11w, action_hdr->category))
 		return;
-#endif
 
 	switch (action_hdr->category) {
 	case ACTION_CATEGORY_QOS:
@@ -1932,7 +1924,6 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 
-#ifdef WLAN_FEATURE_11W
 	case ACTION_CATEGORY_SA_QUERY:
 		pe_debug("SA Query Action category: %d action: %d",
 			action_hdr->category, action_hdr->actionID);
@@ -1955,7 +1946,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			break;
 		}
 		break;
-#endif
+
 	case ACTION_CATEGORY_VHT:
 		if (!session->vhtCapability)
 			break;

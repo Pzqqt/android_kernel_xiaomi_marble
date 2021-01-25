@@ -1990,7 +1990,6 @@
  */
 #define WE_GET_TDLS_PEERS    8
 #endif
-#ifdef WLAN_FEATURE_11W
 /*
  * <ioctl>
  * getPMFInfo - get the PMF info of the connected session
@@ -2015,7 +2014,6 @@
  * </ioctl>
  */
 #define WE_GET_11W_INFO      9
-#endif
 #define WE_GET_STATES        10
 /*
  * <ioctl>
@@ -6357,7 +6355,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 #endif
-#ifdef WLAN_FEATURE_11W
 	case WE_GET_11W_INFO:
 	{
 		struct csr_roam_profile *roam_profile =
@@ -6385,7 +6382,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		wrqu->data.length = strlen(extra) + 1;
 		break;
 	}
-#endif
 	case WE_GET_PHYMODE:
 	{
 		bool ch_bond24 = false, ch_bond5g = false;
@@ -9891,12 +9887,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getTdlsPeers"},
 #endif
-#ifdef WLAN_FEATURE_11W
 	{WE_GET_11W_INFO,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getPMFInfo"},
-#endif
+
 	{WE_GET_STA_CXN_INFO,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,

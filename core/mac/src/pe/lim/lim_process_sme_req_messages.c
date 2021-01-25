@@ -812,10 +812,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
-#ifdef WLAN_FEATURE_11W
 		session->limRmfEnabled = sme_start_bss_req->pmfCapable ? 1 : 0;
 		pe_debug("RMF enabled: %d", session->limRmfEnabled);
-#endif
 
 		qdf_mem_copy((void *)&session->rateSet,
 			     (void *)&sme_start_bss_req->operationalRateSet,
@@ -1280,7 +1278,6 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 					     reassoc_req);
 }
 
-#ifdef WLAN_FEATURE_11W
 bool
 lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 {
@@ -1317,7 +1314,6 @@ lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 
 	return peer_rmf_capable;
 }
-#endif
 
 static bool lim_is_fast_roam_enabled(struct mac_context *mac_ctx,
 				     struct wlan_objmgr_vdev *vdev)

@@ -230,8 +230,6 @@ CONFIG_SAE_SINGLE_PMK := y
 CONFIG_WLAN_FEATURE_FILS := y
 ifneq ($(CONFIG_QCA_CLD_WLAN),)
 	ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)$(CONFIG_ICNSS2)))
-	#Flag to enable Protected Management Frames (11w) feature
-	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
 	CONFIG_QCOM_LTE_COEX := y
 		ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -241,8 +239,6 @@ ifneq ($(CONFIG_QCA_CLD_WLAN),)
 	endif
 
 	ifeq (m,$(findstring m,$(CONFIG_CNSS2) $(CONFIG_ICNSS2)))
-	#Flag to enable Protected Management Frames (11w) feature
-	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
 	CONFIG_QCOM_LTE_COEX := y
 		ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -250,14 +246,6 @@ ifneq ($(CONFIG_QCA_CLD_WLAN),)
 		CONFIG_WLAN_FEATURE_LPSS := y
 		endif
 	endif
-endif
-
-#Flag to enable Protected Management Frames (11w) feature
-ifeq ($(CONFIG_ROME_IF),usb)
-	CONFIG_WLAN_FEATURE_11W := y
-endif
-ifeq ($(CONFIG_ROME_IF),sdio)
-	CONFIG_WLAN_FEATURE_11W := y
 endif
 
 #Flag to enable the tx desc sanity check

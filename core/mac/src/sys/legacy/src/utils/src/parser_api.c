@@ -3438,7 +3438,7 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 
 	pAssocRsp->status_code = ar->Status.status;
 	pAssocRsp->aid = ar->AID.associd;
-#ifdef WLAN_FEATURE_11W
+
 	if (ar->TimeoutInterval.present) {
 		pAssocRsp->TimeoutInterval.present = 1;
 		pAssocRsp->TimeoutInterval.timeoutType =
@@ -3446,7 +3446,6 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 		pAssocRsp->TimeoutInterval.timeoutValue =
 			ar->TimeoutInterval.timeoutValue;
 	}
-#endif
 
 	if (!ar->SuppRates.present) {
 		pAssocRsp->suppRatesPresent = 0;

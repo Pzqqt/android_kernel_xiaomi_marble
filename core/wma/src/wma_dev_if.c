@@ -3510,7 +3510,6 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 
 }
 
-#ifdef WLAN_FEATURE_11W
 static void wma_set_mgmt_frame_protection(tp_wma_handle wma)
 {
 	struct pdev_params param = {0};
@@ -3560,18 +3559,6 @@ wma_set_peer_pmf_status(tp_wma_handle wma, uint8_t *peer_mac,
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static inline void wma_set_mgmt_frame_protection(tp_wma_handle wma)
-{
-}
-
-static QDF_STATUS
-wma_set_peer_pmf_status(tp_wma_handle wma, uint8_t *peer_mac,
-			bool is_pmf_enabled)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_11W */
 
 QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 				    struct bss_params *add_bss)

@@ -202,18 +202,11 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 	} /* switch (msg->type) */
 }
 
-#ifdef WLAN_FEATURE_11W
 static void update_rmfEnabled(struct bss_params *addbss_param,
 			      struct pe_session *session)
 {
 	addbss_param->rmfEnabled = session->limRmfEnabled;
 }
-#else
-static void update_rmfEnabled(struct bss_params *addbss_param,
-			      struct pe_session *session)
-{
-}
-#endif
 
 /**
  * lim_mlm_add_bss() - HAL interface for WMA_ADD_BSS_REQ
@@ -850,7 +843,6 @@ end:
 			     (uint32_t *) &mlm_auth_cnf);
 }
 
-#ifdef WLAN_FEATURE_11W
 static void lim_store_pmfcomeback_timerinfo(struct pe_session *session_entry)
 {
 	if (session_entry->opmode != QDF_STA_MODE ||
@@ -865,11 +857,6 @@ static void lim_store_pmfcomeback_timerinfo(struct pe_session *session_entry)
 	session_entry->pmf_retry_timer_info.lim_mlm_state =
 		session_entry->limMlmState;
 }
-#else
-static void lim_store_pmfcomeback_timerinfo(struct pe_session *session_entry)
-{
-}
-#endif /* WLAN_FEATURE_11W */
 
 /**
  * lim_process_mlm_assoc_req() - This function is called to process

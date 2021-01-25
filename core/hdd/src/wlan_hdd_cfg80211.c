@@ -244,12 +244,10 @@ static const u32 hdd_cipher_suites[] = {
 #ifdef FEATURE_WLAN_WAPI
 	WLAN_CIPHER_SUITE_SMS4,
 #endif
-#ifdef WLAN_FEATURE_11W
 	WLAN_CIPHER_SUITE_AES_CMAC,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 	WLAN_CIPHER_SUITE_BIP_GMAC_128,
 	WLAN_CIPHER_SUITE_BIP_GMAC_256,
-#endif
 #endif
 };
 
@@ -18645,7 +18643,6 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
 }
 
 #ifndef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_11W
 /**
  * wlan_hdd_cfg80211_check_pmf_valid() - check if pmf status is ok
  * @roam_profile: pointer to roam profile
@@ -18669,13 +18666,6 @@ int wlan_hdd_cfg80211_check_pmf_valid(struct csr_roam_profile *roam_profile)
 	}
 	return 0;
 }
-#else
-static inline
-int wlan_hdd_cfg80211_check_pmf_valid(struct csr_roam_profile *roam_profile)
-{
-	return 0;
-}
-#endif
 
 /**
  * wlan_hdd_cfg80211_connect_start() - to start the association process
@@ -20241,9 +20231,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 		hdd_err("Failed to set mcast cipher type");
 		goto release_vdev_ref;
 	}
-#ifdef WLAN_FEATURE_11W
 	roam_profile->MFPEnabled = (req->mfp == NL80211_MFP_REQUIRED);
-#endif
 
 	/*parse WPA/RSN IE, and set the correspoing fileds in Roam profile */
 	if (req->ie_len) {

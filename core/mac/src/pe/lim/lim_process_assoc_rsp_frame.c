@@ -276,10 +276,8 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 		sta_ds->qosMode = 1;
 		sta_ds->wmeEnabled = 1;
 	}
-#ifdef WLAN_FEATURE_11W
 	if (session_entry->limRmfEnabled)
 		sta_ds->rmfEnabled = 1;
-#endif
 }
 
 /**
@@ -540,8 +538,6 @@ static inline void lim_process_he_info(tpSirProbeRespBeacon beacon,
 }
 #endif
 
-#ifdef WLAN_FEATURE_11W
-
 #define MAX_RETRY_TIMER 1500
 static QDF_STATUS
 lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
@@ -594,14 +590,6 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS
-lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
-			     tpSirAssocRsp assoc_rsp)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 static void clean_up_ft_sha384(tpSirAssocRsp assoc_rsp, bool sha384_akm)
 {

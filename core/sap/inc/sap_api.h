@@ -501,10 +501,8 @@ struct sap_config {
 	uint32_t beacon_int;            /* Beacon Interval */
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
 	bool enOverLapCh;
-#ifdef WLAN_FEATURE_11W
 	bool mfpRequired;
 	bool mfpCapable;
-#endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif

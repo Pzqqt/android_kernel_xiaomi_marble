@@ -1325,8 +1325,6 @@ static QDF_STATUS dfs_msg_processor(struct mac_context *mac,
 	return status;
 }
 
-
-#ifdef WLAN_FEATURE_11W
 /*
  * Handle the unprotected management frame indication from LIM and
  * forward it to HDD.
@@ -1355,7 +1353,6 @@ sme_unprotected_mgmt_frm_ind(struct mac_context *mac,
 
 	return status;
 }
-#endif
 
 QDF_STATUS sme_update_new_channel_event(mac_handle_t mac_handle,
 					uint8_t session_id)
@@ -2276,7 +2273,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-#ifdef WLAN_FEATURE_11W
 	case eWNI_SME_UNPROT_MGMT_FRM_IND:
 		if (pMsg->bodyptr) {
 			sme_unprotected_mgmt_frm_ind(mac, pMsg->bodyptr);
@@ -2285,7 +2281,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_TSM_IE_IND:
 		if (pMsg->bodyptr) {

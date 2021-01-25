@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,7 +70,6 @@
    Function Definitions and Documentation
  * -------------------------------------------------------------------------*/
 
-#ifdef WLAN_FEATURE_11W
 uint8_t cds_get_mmie_size(void)
 {
 	return sizeof(struct ieee80211_mmie);
@@ -87,8 +86,6 @@ uint8_t cds_get_gmac_mmie_size(void)
 	return 0;
 }
 #endif
-
-#endif /* WLAN_FEATURE_11W */
 
 uint32_t cds_chan_to_freq(uint8_t chan)
 {

@@ -66,22 +66,18 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	tpSirMacMgmtHdr pHdr;
 	struct pe_session *pRoamSessionEntry = NULL;
 	uint8_t roamSessionId;
-#ifdef WLAN_FEATURE_11W
 	uint32_t frameLen;
-#endif
 	int32_t frame_rssi;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frame_rssi = (int32_t)WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
-#ifdef WLAN_FEATURE_11W
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 	if (frameLen < sizeof(reasonCode)) {
 		pe_err("Deauth Frame length invalid %d", frameLen);
 		return ;
 	}
-#endif
 
 	if (LIM_IS_STA_ROLE(pe_session) &&
 	    ((eLIM_SME_WT_DISASSOC_STATE == pe_session->limSmeState) ||
@@ -117,7 +113,6 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		pe_err("rx frame doesn't have valid a1 address, drop it");
 		return;
 	}
-#ifdef WLAN_FEATURE_11W
 	/* PMF: If this session is a PMF session, then ensure that this frame was protected */
 	if (pe_session->limRmfEnabled &&
 	    pe_session->is_key_installed &&
@@ -145,7 +140,6 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 							pe_session);
 		return;
 	}
-#endif
 
 	/* Get reasonCode from Deauthentication frame body */
 	reasonCode = sir_read_u16(pBody);

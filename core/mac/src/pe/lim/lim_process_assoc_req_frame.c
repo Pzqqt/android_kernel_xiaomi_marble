@@ -158,10 +158,8 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 			sta_ds = dph_lookup_hash_entry(mac_ctx, hdr->sa,
 					&assoc_id, &session->dph.dphHashTable);
 			if (sta_ds
-#ifdef WLAN_FEATURE_11W
 				&& (!sta_ds->rmfEnabled ||
 				    (sessionid != session->peSessionId))
-#endif
 			    ) {
 				if (sta_ds->mlmStaContext.mlmState ==
 				    eLIM_MLM_WT_DEL_STA_RSP_STATE ||
@@ -928,7 +926,7 @@ static enum wlan_status_code lim_check_wpa_ie(struct pe_session *session,
   *
   * Return: wlan_status_code
   */
-#if defined(WLAN_FEATURE_SAE) && defined(WLAN_FEATURE_11W)
+#if defined(WLAN_FEATURE_SAE)
 static enum wlan_status_code lim_check_sae_pmf_cap(struct pe_session *session,
 						  tDot11fIERSN *rsn,
 						  enum ani_akm_type akm_type)
@@ -1231,7 +1229,6 @@ static inline void
 lim_update_assoc_drop_count(struct mac_context *mac_ctx, uint8_t sub_type) {}
 #endif
 
-#ifdef WLAN_FEATURE_11W
 static inline void
 lim_delete_pmf_query_timer(tpDphHashNode sta_ds)
 {
@@ -1242,10 +1239,6 @@ lim_delete_pmf_query_timer(tpDphHashNode sta_ds)
 		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
 	tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 }
-#else
-static inline void
-lim_delete_pmf_query_timer(tpDphHashNode sta_ds) {}
-#endif
 
 /**
  * lim_process_assoc_req_sta_ctx() - process assoc req for sta context present
@@ -1287,7 +1280,6 @@ static bool lim_process_assoc_req_sta_ctx(struct mac_context *mac_ctx,
 
 	/* STA sent assoc req frame while already in 'associated' state */
 
-#ifdef WLAN_FEATURE_11W
 	pe_debug("Re/Assoc request from station that is already associated");
 	pe_debug("PMF enabled: %d, SA Query state: %d",
 		sta_ds->rmfEnabled, sta_ds->pmfSaQueryState);
@@ -1341,7 +1333,6 @@ static bool lim_process_assoc_req_sta_ctx(struct mac_context *mac_ctx,
 			break;
 		}
 	}
-#endif
 
 	/* no change in the capability so drop the frame */
 	if ((sub_type == LIM_ASSOC) &&
@@ -1506,10 +1497,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 {
 	tHalBitVal wme_mode, wsm_mode;
 	uint8_t *ht_cap_ie = NULL;
-#ifdef WLAN_FEATURE_11W
 	tPmfSaQueryTimerId timer_id;
 	uint16_t retry_interval;
-#endif
 	tDot11fIEVHTCaps *vht_caps;
 	tpSirAssocReq tmp_assoc_req;
 
@@ -1814,7 +1803,6 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	/* Re/Assoc Response frame to requesting STA */
 	sta_ds->mlmStaContext.subType = sub_type;
 
-#ifdef WLAN_FEATURE_11W
 	sta_ds->rmfEnabled = (pmf_connection) ? 1 : 0;
 	sta_ds->pmfSaQueryState = DPH_SA_QUERY_NOT_IN_PROGRESS;
 	timer_id.fields.sessionId = session->peSessionId;
@@ -1843,7 +1831,6 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		pe_debug("Created pmf timer assoc-id:%d sta mac" QDF_MAC_ADDR_FMT,
 			 sta_ds->assocId, QDF_MAC_ADDR_REF(sta_ds->staAddr));
 	}
-#endif
 
 	if (assoc_req->ExtCap.present) {
 		lim_set_stads_rtt_cap(sta_ds,

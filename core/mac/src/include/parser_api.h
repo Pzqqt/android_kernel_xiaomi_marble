@@ -458,9 +458,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEVHTOperation VHTOperation;
 	tDot11fIEExtCap ExtCap;
 	struct qos_map_set QosMapSet;
-#ifdef WLAN_FEATURE_11W
 	tDot11fIETimeoutInterval TimeoutInterval;
-#endif
 	tDot11fIERRMEnabledCap rrm_caps;
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;

@@ -2433,10 +2433,8 @@ lim_add_sta(struct mac_context *mac_ctx,
 		pe_debug("uAPSD = 0x%x, maxSpLen = %d",
 			add_sta_params->uAPSD, add_sta_params->maxSPLen);
 	}
-#ifdef WLAN_FEATURE_11W
 	add_sta_params->rmfEnabled = sta_ds->rmfEnabled;
 	pe_debug("PMF enabled %d", add_sta_params->rmfEnabled);
-#endif
 
 	pe_debug("htLdpcCapable: %d vhtLdpcCapable: %d "
 			"p2pCapableSta: %d",
@@ -2967,14 +2965,12 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 
 		lim_obss_send_detection_cfg(mac_ctx, session_entry, false);
 
-#ifdef WLAN_FEATURE_11W
 		if (sta_ds->rmfEnabled) {
 			pe_debug("delete pmf timer assoc-id:%d sta mac "
 				 QDF_MAC_ADDR_FMT, sta_ds->assocId,
 				 QDF_MAC_ADDR_REF(sta_ds->staAddr));
 			tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 		}
-#endif
 	}
 
 	if (dph_delete_hash_entry(mac_ctx, sta_addr, sta_id,
@@ -3767,12 +3763,10 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	if (QDF_P2P_CLIENT_MODE == pe_session->opmode)
 		pAddBssParams->staContext.p2pCapableSta = 1;
 
-#ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {
 		pAddBssParams->rmfEnabled = 1;
 		pAddBssParams->staContext.rmfEnabled = 1;
 	}
-#endif
 
 	/* Set a new state for MLME */
 	if (eLIM_MLM_WT_ASSOC_RSP_STATE == pe_session->limMlmState)
@@ -4079,12 +4073,10 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 	pAddBssParams->staContext.smesessionId = pe_session->smeSessionId;
 	pAddBssParams->staContext.sessionId = pe_session->peSessionId;
 
-#ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {
 		pAddBssParams->rmfEnabled = 1;
 		pAddBssParams->staContext.rmfEnabled = 1;
 	}
-#endif
 	/* Set a new state for MLME */
 	pe_session->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_PREASSOC_STATE;
 
@@ -4342,7 +4334,6 @@ void lim_fill_rx_highest_supported_rate(struct mac_context *mac,
 	return;
 }
 
-#ifdef WLAN_FEATURE_11W
 /** -------------------------------------------------------------
    \fn     lim_send_sme_unprotected_mgmt_frame_ind
    \brief  Forwards the unprotected management frame to SME.
@@ -4381,7 +4372,6 @@ void lim_send_sme_unprotected_mgmt_frame_ind(struct mac_context *mac, uint8_t fr
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return;
 }
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 void lim_send_sme_tsm_ie_ind(struct mac_context *mac,

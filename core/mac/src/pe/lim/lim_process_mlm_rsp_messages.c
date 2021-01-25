@@ -421,7 +421,6 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 		(uint32_t *) assoc_req);
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * lim_pmf_comeback_timer_callback() -PMF callback handler
  * @context: Timer context
@@ -451,7 +450,6 @@ void lim_pmf_comeback_timer_callback(void *context)
 	session->limMlmState = info->lim_mlm_state;
 	lim_send_mlm_assoc_req(mac_ctx, session);
 }
-#endif /* WLAN_FEATURE_11W */
 
 /**
  * lim_process_mlm_auth_cnf()-Process Auth confirmation
@@ -1564,14 +1562,12 @@ void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
 	}
 	lim_process_sta_mlm_del_bss_rsp(mac, vdev_stop_rsp, pe_session);
 
-#ifdef WLAN_FEATURE_11W
 	if (pe_session->limRmfEnabled) {
 		if (QDF_STATUS_SUCCESS !=
 		    lim_send_exclude_unencrypt_ind(mac, true, pe_session)) {
 			pe_err("Could not send down Exclude Unencrypted Indication!");
 		}
 	}
-#endif
 }
 
 void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
@@ -2343,7 +2339,6 @@ void lim_handle_add_bss_rsp(struct mac_context *mac_ctx,
 		}
 	}
 
-#ifdef WLAN_FEATURE_11W
 	if (session_entry->limRmfEnabled) {
 		if (QDF_STATUS_SUCCESS !=
 			lim_send_exclude_unencrypt_ind(mac_ctx, false,
@@ -2351,7 +2346,6 @@ void lim_handle_add_bss_rsp(struct mac_context *mac_ctx,
 			pe_err("Failed to send Exclude Unencrypted Ind");
 		}
 	}
-#endif
 err:
 	qdf_mem_free(add_bss_rsp);
 }

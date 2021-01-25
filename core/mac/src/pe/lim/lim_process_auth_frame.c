@@ -532,11 +532,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 		 * SA-Query procedure determines that the original SA is
 		 * invalid.
 		 */
-		if (is_connected
-#ifdef WLAN_FEATURE_11W
-			&& !sta_ds_ptr->rmfEnabled
-#endif
-		   ) {
+		if (is_connected && !sta_ds_ptr->rmfEnabled) {
 			pe_err("STA is already connected but received auth frame"
 			       "Send the Deauth and lim Delete Station Context"
 			       "(associd: %d) sta mac" QDF_MAC_ADDR_FMT,
@@ -597,11 +593,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			sta_ds_ptr = NULL;
 		}
 
-		if (sta_ds_ptr
-#ifdef WLAN_FEATURE_11W
-			&& !sta_ds_ptr->rmfEnabled
-#endif
-		   ) {
+		if (sta_ds_ptr && !sta_ds_ptr->rmfEnabled) {
 			pe_debug("lim Del Sta Ctx associd: %d sta mac"
 				 QDF_MAC_ADDR_FMT, associd,
 				 QDF_MAC_ADDR_REF(sta_ds_ptr->staAddr));

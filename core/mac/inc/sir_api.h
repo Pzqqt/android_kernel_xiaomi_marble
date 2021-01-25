@@ -779,10 +779,8 @@ struct start_bss_req {
 	tSirNwType nwType;      /* Indicates 11a/b/g */
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
-#ifdef WLAN_FEATURE_11W
 	bool pmfCapable;
 	bool pmfRequired;
-#endif
 
 	struct add_ie_params add_ie_params;
 
@@ -1950,14 +1948,12 @@ struct sir_sme_mgmt_frame_cb_req {
 	sir_mgmt_frame_ind_callback callback;
 };
 
-#ifdef WLAN_FEATURE_11W
 typedef struct sSirSmeUnprotMgmtFrameInd {
 	uint8_t sessionId;
 	uint8_t frameType;
 	uint8_t frameLen;
 	uint8_t frameBuf[1];    /* variable */
 } tSirSmeUnprotMgmtFrameInd, *tpSirSmeUnprotMgmtFrameInd;
-#endif
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 
@@ -2220,12 +2216,10 @@ typedef struct sSirSmeCandidateFoundInd {
 } tSirSmeCandidateFoundInd, *tpSirSmeCandidateFoundInd;
 #endif
 
-#ifdef WLAN_FEATURE_11W
 typedef struct sSirWlanExcludeUnencryptParam {
 	bool excludeUnencrypt;
 	struct qdf_mac_addr bssid;
 } tSirWlanExcludeUnencryptParam, *tpSirWlanExcludeUnencryptParam;
-#endif
 
 typedef enum {
 	P2P_SCAN_TYPE_SEARCH = 1,       /* P2P Search */

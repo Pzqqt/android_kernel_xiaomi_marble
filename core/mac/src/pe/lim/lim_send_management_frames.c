@@ -37,9 +37,7 @@
 #include "lim_send_messages.h"
 #include "lim_assoc_utils.h"
 #include "lim_ft.h"
-#ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
-#endif
 
 #include "lim_ft_defs.h"
 #include "lim_session.h"
@@ -1399,10 +1397,8 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	uint16_t stripoff_len = 0;
 	tDot11fIEExtCap extracted_ext_cap;
 	bool extracted_flag = false;
-#ifdef WLAN_FEATURE_11W
 	uint8_t retry_int;
 	uint16_t max_retries;
-#endif
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -1556,7 +1552,6 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
 						    &frm.he_6ghz_band_cap);
 		}
-#ifdef WLAN_FEATURE_11W
 		if (status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 			max_retries =
 			mac_ctx->mlme_cfg->gen.pmf_sa_query_max_retries;
@@ -1569,7 +1564,6 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 						sta->pmfSaQueryRetryCount)
 						* retry_int);
 		}
-#endif
 
 		if (LIM_IS_AP_ROLE(pe_session)  && sta->non_ecsa_capable)
 			pe_session->lim_non_ecsa_cap_num++;
@@ -4996,7 +4990,6 @@ returnAfterError:
 	return status_code;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * \brief Send SA query request action frame to peer
  *
@@ -5309,7 +5302,6 @@ returnAfterError:
 	cds_packet_free((void *)pPacket);
 	return nSirStatus;
 } /* End lim_send_sa_query_response_frame */
-#endif
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
     defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)

@@ -57,9 +57,7 @@
 #endif
 #include "wlan_utility.h"
 
-#ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
-#endif
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_ucfg_api.h"
 #include "lim_ft.h"
@@ -4835,7 +4833,6 @@ bool lim_isconnected_on_dfs_freq(struct mac_context *mac_ctx,
 	}
 }
 
-#ifdef WLAN_FEATURE_11W
 void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct mac_context *mac = (struct mac_context *) pMacGlobal;
@@ -4890,7 +4887,6 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 		pSta->pmfSaQueryState = DPH_SA_QUERY_NOT_IN_PROGRESS;
 	}
 }
-#endif
 
 bool lim_check_vht_op_mode_change(struct mac_context *mac,
 				  struct pe_session *pe_session,
@@ -5004,7 +5000,6 @@ void lim_get_short_slot_from_phy_mode(struct mac_context *mac, struct pe_session
 	*pShortSlotEnabled = val;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  *
  * \brief This function is called by various LIM modules to correctly set
@@ -5048,7 +5043,6 @@ lim_set_protected_bit(struct mac_context *mac,
 			 sta->rmfEnabled, sta->is_key_installed);
 	}
 } /*** end lim_set_protected_bit() ***/
-#endif
 
 void lim_set_ht_caps(struct mac_context *p_mac, struct pe_session *p_session_entry,
 		uint8_t *p_ie_start, uint32_t num_bytes)
@@ -5780,7 +5774,6 @@ QDF_STATUS lim_strip_ie(struct mac_context *mac_ctx,
 			     oui, oui_length, extracted_ie, eid_max_len);
 }
 
-#ifdef WLAN_FEATURE_11W
 void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *pe_session)
 {
 	uint32_t associated_sta;
@@ -5808,7 +5801,6 @@ void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *
 		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 	}
 }
-#endif
 
 QDF_STATUS lim_strip_supp_op_class_update_struct(struct mac_context *mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,

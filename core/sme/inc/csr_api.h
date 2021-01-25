@@ -314,9 +314,7 @@ typedef enum {
 	/* Stopbss triggered from SME due to different */
 	eCSR_ROAM_SEND_P2P_STOP_BSS = 32,
 	/* beacon interval */
-#ifdef WLAN_FEATURE_11W
 	eCSR_ROAM_UNPROT_MGMT_FRAME_IND = 33,
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	eCSR_ROAM_TSM_IE_IND = 34,
@@ -602,12 +600,10 @@ struct csr_roam_profile {
 	tCsrEncryptionList mcEncryptionType;
 	/* This field is for output only, not for input */
 	eCsrEncryptionType negotiatedMCEncryptionType;
-#ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */
 	bool MFPEnabled;
 	uint8_t MFPRequired;
 	uint8_t MFPCapable;
-#endif
 	tCsrKeys Keys;
 	tCsrChannelInfo ChannelInfo;
 	uint32_t op_freq;

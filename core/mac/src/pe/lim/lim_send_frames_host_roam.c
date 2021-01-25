@@ -34,9 +34,7 @@
 #include "lim_send_messages.h"
 #include "lim_assoc_utils.h"
 #include "lim_ft.h"
-#ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
-#endif
 
 #include "lim_ft_defs.h"
 #include "lim_session.h"

@@ -1519,12 +1519,10 @@ struct ol_txrx_peer_t {
 	/* Bit to indicate if PN check is done in fw */
 	qdf_atomic_t fw_pn_check;
 
-#ifdef WLAN_FEATURE_11W
 	/* PN counter for Robust Management Frames */
 	uint64_t last_rmf_pn;
 	uint32_t rmf_pn_replays;
 	uint8_t last_rmf_pn_valid;
-#endif
 
 	/* Properties of the last received PPDU */
 	int16_t last_pkt_rssi_cmb;

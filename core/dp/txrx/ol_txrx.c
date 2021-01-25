@@ -2626,7 +2626,6 @@ ol_txrx_peer_get_peer_mac_addr(void *ppeer)
 	return peer->mac_addr.raw;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * ol_txrx_get_pn_info() - Returns pn info from peer
  * @soc_hdl: soc handle
@@ -2664,14 +2663,6 @@ ol_txrx_get_pn_info(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
 
 	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 }
-#else
-static void
-ol_txrx_get_pn_info(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
-		    uint8_t vdev_id, uint8_t **last_pn_valid,
-		    uint64_t **last_pn, uint32_t **rmf_pn_replays)
-{
-}
-#endif
 
 /**
  * ol_txrx_get_opmode() - Return operation mode of vdev

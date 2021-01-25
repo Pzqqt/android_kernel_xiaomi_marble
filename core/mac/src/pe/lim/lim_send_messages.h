@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,11 +105,9 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
 #define DS_PARAM_CHANNEL_MASK   0x0
 #define VHTOP_CHWIDTH_MASK      0xFC
 
-#ifdef WLAN_FEATURE_11W
 QDF_STATUS lim_send_exclude_unencrypt_ind(struct mac_context *mac,
 					     bool excludeUnenc,
 					     struct pe_session *pe_session);
-#endif
 QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 						struct pe_session *session);
 void lim_handle_sme_join_result(struct mac_context *,

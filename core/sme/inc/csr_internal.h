@@ -229,10 +229,8 @@ struct csr_roamstart_bssparams {
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
 	bool updatebeaconInterval;
-#ifdef WLAN_FEATURE_11W
 	bool mfpCapable;
 	bool mfpRequired;
-#endif
 	struct add_ie_params add_ie_params;
 	uint8_t sap_dot11mc;
 	uint16_t beacon_tx_rate;

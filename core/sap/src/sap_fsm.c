@@ -2975,11 +2975,9 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	/* wps config info */
 	profile->wps_state = config->wps_state;
 
-#ifdef WLAN_FEATURE_11W
 	/* MFP capable/required */
 	profile->MFPCapable = config->mfpCapable ? 1 : 0;
 	profile->MFPRequired = config->mfpRequired ? 1 : 0;
-#endif
 
 	if (config->probeRespIEsBufferLen > 0 &&
 	    config->pProbeRespIEsBuffer) {

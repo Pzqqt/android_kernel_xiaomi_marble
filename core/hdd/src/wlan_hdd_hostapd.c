@@ -5717,12 +5717,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto error;
 	}
 
-#ifdef WLAN_FEATURE_11W
 	config->mfpCapable = mfp_capable;
 	config->mfpRequired = mfp_required;
 	hdd_debug("Soft AP MFP capable %d, MFP required %d",
 		  config->mfpCapable, config->mfpRequired);
-#endif
 
 	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_FMT " SSID: %.*s BCNINTV:%d Freq:%d freq_seg0:%d freq_seg1:%d ch_width:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d",
 		       QDF_MAC_ADDR_REF(adapter->mac_addr.bytes),

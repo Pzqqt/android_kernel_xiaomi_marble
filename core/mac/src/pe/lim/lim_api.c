@@ -594,7 +594,6 @@ static inline void lim_nan_register_callbacks(struct mac_context *mac_ctx)
 }
 #endif
 
-#ifdef WLAN_FEATURE_11W
 void lim_stop_pmfcomeback_timer(struct pe_session *session)
 {
 	if (session->opmode != QDF_STA_MODE)
@@ -603,7 +602,6 @@ void lim_stop_pmfcomeback_timer(struct pe_session *session)
 	qdf_mc_timer_stop(&session->pmf_retry_timer);
 	session->pmf_retry_timer_info.retried = false;
 }
-#endif
 
 /*
  * pe_shutdown_notifier_cb - Shutdown notifier callback
@@ -629,7 +627,6 @@ static void pe_shutdown_notifier_cb(void *ctx)
 	}
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * is_mgmt_protected - check RMF enabled for the peer
  * @vdev_id: vdev id
@@ -675,24 +672,6 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 
 	return protected;
 }
-
-#else
-/**
- * is_mgmt_protected - check RMF enabled for the peer
- * @vdev_id: vdev id
- * @peer_mac_addr: peer mac address
- *
- * The function check the mgmt frame protection enabled or not
- * for station mode and AP mode
- *
- * Return: true, if the connection is RMF enabled.
- */
-static bool is_mgmt_protected(uint32_t vdev_id,
-				  const uint8_t *peer_mac_addr)
-{
-	return false;
-}
-#endif
 
 static void p2p_register_callbacks(struct mac_context *mac_ctx)
 {
@@ -1738,7 +1717,6 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifdef WLAN_FEATURE_11W
 static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 			    struct pe_session *ft_session,
 			    struct roam_offload_synch_ind *roam_synch)
@@ -1805,13 +1783,6 @@ static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 	ft_session->limRmfEnabled =
 		lim_get_vdev_rmf_capable(mac_ctx, ft_session);
 }
-#else
-static inline void pe_set_rmf_caps(struct mac_context *mac_ctx,
-				   struct pe_session *ft_session,
-				   struct roam_offload_synch_ind *roam_synch)
-{
-}
-#endif
 
 /**
  * sir_parse_bcn_fixed_fields() - Parse fixed fields in Beacon IE's

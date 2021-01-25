@@ -337,7 +337,6 @@ static void mlme_init_ratemask_cfg(struct wlan_objmgr_psoc *psoc,
 			  ratemask_cfg->higher32_2);
 }
 
-#ifdef WLAN_FEATURE_11W
 static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_generic *gen)
 {
@@ -346,16 +345,6 @@ static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->pmf_sa_query_retry_interval =
 		cfg_get(psoc, CFG_PMF_SA_QUERY_RETRY_INTERVAL);
 }
-#else
-static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_mlme_generic *gen)
-{
-	gen->pmf_sa_query_max_retries =
-		cfg_default(CFG_PMF_SA_QUERY_MAX_RETRIES);
-	gen->pmf_sa_query_retry_interval =
-		cfg_default(CFG_PMF_SA_QUERY_RETRY_INTERVAL);
-}
-#endif /*WLAN_FEATURE_11W*/
 
 #ifdef WLAN_FEATURE_LPSS
 static inline void

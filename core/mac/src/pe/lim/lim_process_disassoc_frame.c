@@ -111,7 +111,6 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		}
 		return;
 	}
-#ifdef WLAN_FEATURE_11W
 	/* PMF: If this session is a PMF session, then ensure that this frame was protected */
 	if (pe_session->limRmfEnabled
 	    && (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
@@ -137,7 +136,6 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 							pe_session);
 		return;
 	}
-#endif
 
 	if (frame_len < 2) {
 		pe_err("frame len less than 2");

@@ -279,13 +279,11 @@ void hdd_cm_netif_queue_enable(struct hdd_adapter *adapter)
 	}
 }
 
-#ifdef WLAN_FEATURE_11W
 void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)
 {
 	qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
 		     sizeof(adapter->hdd_stats.hdd_pmf_stats));
 }
-#endif
 
 void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 				uint32_t reason_code)

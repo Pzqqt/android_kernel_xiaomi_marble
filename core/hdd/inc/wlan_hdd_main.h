@@ -596,7 +596,6 @@ struct hdd_tx_rx_stats {
 	u64 jiffies_last_txtimeout;
 };
 
-#ifdef WLAN_FEATURE_11W
 /**
  * struct hdd_pmf_stats - Protected Management Frame statistics
  * @num_unprot_deauth_rx: Number of unprotected deauth frames received
@@ -606,7 +605,6 @@ struct hdd_pmf_stats {
 	uint8_t num_unprot_deauth_rx;
 	uint8_t num_unprot_disassoc_rx;
 };
-#endif
 
 /**
  * struct hdd_arp_stats_s - arp debug stats count
@@ -785,9 +783,7 @@ struct hdd_stats {
 	struct hdd_tcp_stats_s hdd_tcp_stats;
 	struct hdd_icmpv4_stats_s hdd_icmpv4_stats;
 	struct hdd_peer_stats peer_stats;
-#ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hdd_pmf_stats;
-#endif
 	struct hdd_eapol_stats_s hdd_eapol_stats;
 	struct hdd_dhcp_stats_s hdd_dhcp_stats;
 	struct pmf_bcn_protect_stats bcn_protect_stats;

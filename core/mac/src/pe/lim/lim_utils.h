@@ -99,7 +99,6 @@
 #define MAX_WAIT_FOR_BCN_TX_COMPLETE 4000
 #define MAX_WAKELOCK_FOR_CSA         5000
 
-#ifdef WLAN_FEATURE_11W
 typedef union uPmfSaQueryTimerId {
 	struct {
 		uint8_t sessionId;
@@ -107,7 +106,6 @@ typedef union uPmfSaQueryTimerId {
 	} fields;
 	uint32_t value;
 } tPmfSaQueryTimerId, *tpPmfSaQueryTimerId;
-#endif
 
 typedef struct last_processed_frame {
 	tSirMacAddr sa;
@@ -853,17 +851,11 @@ void lim_clean_up_disassoc_deauth_req(struct mac_context *mac, uint8_t *staMac,
 bool lim_check_disassoc_deauth_ack_pending(struct mac_context *mac,
 		uint8_t *staMac);
 
-#ifdef WLAN_FEATURE_11W
 void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param);
 void lim_pmf_comeback_timer_callback(void *context);
 void lim_set_protected_bit(struct mac_context *mac,
 	struct pe_session *pe_session,
 	tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr);
-#else
-static inline void lim_set_protected_bit(struct mac_context *mac,
-	struct pe_session *pe_session,
-	tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr) {}
-#endif /* WLAN_FEATURE_11W */
 
 void lim_set_ht_caps(struct mac_context *p_mac,
 		struct pe_session *p_session_ntry,
@@ -936,7 +928,6 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src,
 void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
 				   struct pe_session *session);
 
-#ifdef WLAN_FEATURE_11W
 /**
  * lim_del_pmf_sa_query_timer() - This function deletes SA query timer
  * @mac_ctx: pointer to mac context
@@ -960,28 +951,6 @@ void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *
  */
 bool lim_get_vdev_rmf_capable(struct mac_context *mac,
 			      struct pe_session *session);
-#else
-/**
- * lim_del_pmf_sa_query_timer() - This function deletes SA query timer
- * @mac_ctx: pointer to mac context
- * @pe_session: pointer to PE session
- *
- * This API is to delete the PMF SA query timer created for each associated STA
- *
- * Return: none
- */
-static inline void
-lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *pe_session)
-{
-}
-
-static inline
-bool lim_get_vdev_rmf_capable(struct mac_context *mac,
-			      struct pe_session *session)
-{
-	return false;
-}
-#endif
 
 /**
  * lim_add_bssid_to_reject_list:- Add rssi reject Ap info to blacklist mgr.
