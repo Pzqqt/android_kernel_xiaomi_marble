@@ -2622,6 +2622,7 @@ static inline bool dp_tx_mcast_enhance(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
 	    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
 		dp_verbose_debug("Mcast frm for ME %pK", vdev);
+		qdf_nbuf_set_next(nbuf, NULL);
 
 		DP_STATS_INC_PKT(vdev, tx_i.mcast_en.mcast_pkt, 1,
 				 qdf_nbuf_len(nbuf));
