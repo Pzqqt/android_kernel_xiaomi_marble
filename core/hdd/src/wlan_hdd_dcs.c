@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -205,6 +205,8 @@ void hdd_dcs_chan_select_complete(struct hdd_adapter *adapter)
 		hdd_dcs_hostapd_enable_wlan_interference_mitigation(
 							hdd_ctx,
 							adapter->vdev_id);
+
+	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 }
 
 void hdd_dcs_clear(struct hdd_adapter *adapter)
