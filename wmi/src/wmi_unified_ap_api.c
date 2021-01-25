@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -598,7 +598,7 @@ QDF_STATUS wmi_extract_muedca_params_handler(
 }
 
 /**
- * wmi_unified_set_radio_tx_mode_select_cmd_send() - WMI ant switch tbl cmd function
+ * wmi_unified_set_radio_tx_mode_select_cmd_send() - WMI tx mode select cmd function
  * @wmi_handle: wmi handle
  * @param: pointer to hold tx mode selection param
  *
@@ -634,3 +634,45 @@ QDF_STATUS wmi_unified_send_lci_cmd(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+/**
+ * wmi_unified_config_vdev_tid_latency_info_cmd_send() - WMI vdev tid latency
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold vdev latency config param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_config_vdev_tid_latency_info_cmd_send(
+		wmi_unified_t wmi_hdl,
+		struct wmi_vdev_tid_latency_config_params
+		*vdev_latency_config_param)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->config_vdev_tid_latency_info_cmd)
+		return wmi_handle->ops->config_vdev_tid_latency_info_cmd(
+				wmi_handle, vdev_latency_config_param);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_config_peer_latency_info_cmd_send() - WMI vdev tid latency
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold peer latency config param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_config_peer_latency_info_cmd_send(
+		wmi_unified_t wmi_hdl,
+		struct wmi_peer_latency_config_params
+		*param)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->config_peer_latency_info_cmd)
+		return wmi_handle->ops->config_peer_latency_info_cmd(
+				wmi_handle, param);
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
