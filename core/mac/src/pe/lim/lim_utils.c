@@ -5847,11 +5847,10 @@ uint8_t lim_op_class_from_bandwidth(struct mac_context *mac_ctx,
 	} else if (ch_bandwidth == CH_WIDTH_80P80MHZ) {
 		ch_behav_limit = BEHAV_BW80_PLUS;
 	}
-	wlan_reg_freq_width_to_chan_op_class_auto
-		(mac_ctx->pdev, channel_freq,
-		 ch_width_in_mhz(ch_bandwidth),
-		 true, BIT(ch_behav_limit), &op_class,
-		 &channel);
+	wlan_reg_freq_width_to_chan_op_class(mac_ctx->pdev, channel_freq,
+					     ch_width_in_mhz(ch_bandwidth),
+					     true, BIT(ch_behav_limit),
+					     &op_class, &channel);
 
 	return op_class;
 }
