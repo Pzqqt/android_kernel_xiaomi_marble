@@ -4115,6 +4115,20 @@ error:
 	return rc;
 }
 
+static bool dsi_display_validate_panel_resources(struct dsi_display *display)
+{
+	if (!display->panel->te_using_watchdog_timer) {
+		if (!gpio_is_valid(display->panel->reset_config.reset_gpio)) {
+			DSI_ERR("invalid reset gpio for the panel\n");
+			return false;
+		}
+	} else {
+		display->panel->power_info.count = 0;
+		DSI_DEBUG("no dir set and no request for gpios in sim panel\n");
+	}
+	return true;
+}
+
 static int dsi_display_res_init(struct dsi_display *display)
 {
 	int rc = 0;
@@ -4153,6 +4167,11 @@ static int dsi_display_res_init(struct dsi_display *display)
 		display->panel = NULL;
 		goto error_ctrl_put;
 	}
+
+	display->panel->te_using_watchdog_timer |= display->sw_te_using_wd;
+
+	if (!dsi_display_validate_panel_resources(display))
+		goto error_ctrl_put;
 
 	display_for_each_ctrl(i, display) {
 		struct msm_dsi_phy *phy = display->ctrl[i].phy;
