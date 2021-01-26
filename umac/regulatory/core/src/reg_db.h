@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -160,7 +160,24 @@ struct reg_domain_pair {
 	uint8_t dmn_id_2g;
 };
 
-#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
+#if defined(CONFIG_BAND_6GHZ)
+/**
+ * enum reg_super_domain_6g - 6G Super Domain enumeration
+ * @FCC1_6G: Super domain FCC1_6G for US
+ * @ETSI1_6G: Super domain ETSI1_6G
+ * @ETSI2_6G: Super domain ETSI2_6G
+ * @APL1_6G: Super domain APL1_6G
+ * @FCC1_6G_CL: Super domain FCC1_6G for Chile
+ */
+enum reg_super_domain_6g {
+	FCC1_6G = 0x01,
+	ETSI1_6G = 0x02,
+	ETSI2_6G = 0x03,
+	APL1_6G = 0x04,
+	FCC1_6G_CL = 0x05,
+};
+
+#if defined(COMPILE_REGDB_6G)
 /**
  * struct sixghz_super_to_subdomains
  * @reg_6ghz_super_dmn_id: 6G super domain id.
@@ -180,6 +197,7 @@ struct sixghz_super_to_subdomains {
 	uint8_t reg_domain_6g_id_client_lpi[REG_MAX_CLIENT_TYPE - 1];
 	uint8_t reg_domain_6g_id_client_vlp[REG_MAX_CLIENT_TYPE - 1];
 };
+#endif
 #endif
 
 QDF_STATUS reg_get_num_countries(int *num_countries);

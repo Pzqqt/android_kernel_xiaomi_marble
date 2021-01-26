@@ -1344,4 +1344,10 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 						is_psd, tx_power,
 						eirp_psd_power);
 }
+
+enum reg_6g_ap_type
+wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_decide_6g_ap_pwr_type(pdev);
+}
 #endif

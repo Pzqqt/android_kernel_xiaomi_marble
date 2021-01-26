@@ -1705,6 +1705,17 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 				      qdf_freq_t chan_freq,
 				      bool *is_psd, uint16_t *tx_power,
 				      uint16_t *eirp_psd_power);
+
+/**
+ * wlan_reg_decide_6g_ap_pwr_type() - Decide which power mode AP should operate
+ * in
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: AP power type
+ */
+enum reg_6g_ap_type
+wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev);
 #else
 static inline QDF_STATUS
 wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
@@ -1773,6 +1784,13 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 	*tx_power = 0;
 	*eirp_psd_power = 0;
 	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+enum reg_6g_ap_type
+wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
+{
+	return REG_INDOOR_AP;
 }
 #endif
 #endif

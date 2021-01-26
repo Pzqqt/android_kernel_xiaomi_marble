@@ -1619,20 +1619,6 @@ const struct regdomain regdomains_5g[] = {
 
 #if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 /**
- * enum reg_super_domain_6g - 6G Super Domain enumeration
- * @FCC1_6G: Super domain FCC1_6G
- * @ETSI1_6G: Super domain ETSI1_6G
- * @ETSI2_6G: Super domain ETSI2_6G
- * @APL1_6G: Super domain APL1_6G
- */
-enum reg_super_domain_6g {
-	FCC1_6G = 0x01,
-	ETSI1_6G = 0x02,
-	ETSI2_6G = 0x03,
-	APL1_6G = 0x04,
-};
-
-/**
  * List of 6G Sub Domains.
  *
  * Note - If not specified in the naming, then above 6G subdomains are for
