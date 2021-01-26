@@ -563,9 +563,23 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 				addts.tspec.tsinfo.traffic.userPrio);
 		}
 	}
+
 	pe_debug("Recv AddTsRsp: tsid: %d UP: %d status: %d",
 		addts.tspec.tsinfo.traffic.tsid,
 		addts.tspec.tsinfo.traffic.userPrio, addts.status);
+
+	/*
+	 * If AP sends ADD TS response for an AC with medium time as 0
+	 * treat it as ADD TS failure.
+	 */
+	if (!addts.tspec.mediumTime) {
+		pe_err("Medium Time 0! Add TS failed");
+		/*
+		 * Change the status to failure and fallthrough to send response
+		 * to SME to cleanup the flow.
+		 */
+		addts.status = STATUS_UNSPECIFIED_FAILURE;
+	}
 
 	/* deactivate the response timer */
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_ADDTS_RSP_TIMER);
