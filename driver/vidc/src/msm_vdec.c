@@ -1623,7 +1623,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	if (f->type == INPUT_MPLANE) {
 		if (inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat !=
 			f->fmt.pix_mp.pixelformat) {
-			s_vpr_e(inst->sid,
+			s_vpr_h(inst->sid,
 				"%s: codec changed from %#x to %#x\n", __func__,
 				inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat,
 				f->fmt.pix_mp.pixelformat);
