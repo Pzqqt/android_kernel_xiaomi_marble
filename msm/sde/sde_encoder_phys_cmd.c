@@ -1059,7 +1059,7 @@ static void sde_encoder_phys_cmd_tearcheck_config(
 	 * frequency divided by the no. of rows (lines) in the LCDpanel.
 	 */
 	vsync_hz = sde_power_clk_get_rate(&priv->phandle, "vsync_clk");
-	if (!vsync_hz || !mode->vtotal || vrefresh) {
+	if (!vsync_hz || !mode->vtotal || !vrefresh) {
 		SDE_DEBUG_CMDENC(cmd_enc,
 			"invalid params - vsync_hz %u vtot %u vrefresh %u\n",
 			vsync_hz, mode->vtotal, vrefresh);
