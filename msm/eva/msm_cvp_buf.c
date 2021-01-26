@@ -345,8 +345,7 @@ int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 		return -EINVAL;
 	}
 
-	// Temp workaround :  commented for passing compilation due to missing dependency in AU whitelist
-//	pid_s = find_get_pid(pid);
+	pid_s = find_get_pid(pid);
 
 
 	if (pid_s == NULL) {
@@ -355,8 +354,7 @@ int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 	}
 	dprintk(CVP_WARN, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
 	/* task = get_pid_task(pid, PIDTYPE_PID); */
-	// Temp workaround :  commented for passing compilation due to missing dependency in AU whitelist
-//	task = get_pid_task(pid_s, PIDTYPE_TGID);
+	task = get_pid_task(pid_s, PIDTYPE_TGID);
 
 	if (!task)
 		dprintk(CVP_WARN, "%s task doesn't exist\n", __func__);
@@ -1089,10 +1087,10 @@ struct cvp_internal_buf *cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
 	if (!buffer_size)
 		return NULL;
 
-	/* PERSIST buffer requires secure mapping */
-	/* Disable and wait for hyp_assign available
-	 * smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
+	/* PERSIST buffer requires secure mapping
+	 * Disable and wait for hyp_assign available
 	 */
+	 smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
 
 	buf = kmem_cache_zalloc(cvp_driver->buf_cache, GFP_KERNEL);
 	if (!buf) {

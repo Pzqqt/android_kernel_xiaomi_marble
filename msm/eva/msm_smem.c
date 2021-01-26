@@ -244,7 +244,6 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 	struct msm_cvp_platform_resources *res, struct msm_cvp_smem *mem)
 {
 	dma_addr_t iova = 0;
-	unsigned long heap_mask = 0;
 	int rc = 0;
 	int ion_flags = 0;
 	struct dma_buf *dbuf = NULL;
@@ -259,39 +258,31 @@ static int alloc_dma_mem(size_t size, u32 align, u32 flags, int map_kernel,
 	size = ALIGN(size, SZ_4K);
 
 	if (is_iommu_present(res)) {
-		if (flags & SMEM_ADSP) {
-			dprintk(CVP_MEM, "Allocating from ADSP heap\n");
-			heap_mask = ION_HEAP(ION_ADSP_HEAP_ID);
-		} else {
-			heap_mask = ION_HEAP(ION_SYSTEM_HEAP_ID);
-		}
+		heap = dma_heap_find("qcom,system");
+		dprintk(CVP_MEM, "%s size %zx align %d flag %d\n",
+		__func__, size, align, flags);
 	} else {
-		dprintk(CVP_MEM,
-		"allocate shared memory from adsp heap size %zx align %d\n",
+		dprintk(CVP_ERR,
+		"No IOMMU CB: allocate shared memory heap size %zx align %d\n",
 		size, align);
-		heap_mask = ION_HEAP(ION_ADSP_HEAP_ID);
 	}
 
 	if (flags & SMEM_CACHED)
 		ion_flags |= ION_FLAG_CACHED;
 
-	if (flags & SMEM_NON_PIXEL)
+	if (flags & SMEM_NON_PIXEL) {
+		heap = dma_heap_find("qcom,secure-non-pixel");
 		ion_flags |= ION_FLAG_CP_NON_PIXEL;
-
-	if (flags & SMEM_PIXEL)
+	} else if (flags & SMEM_PIXEL) {
+		heap = dma_heap_find("qcom,secure-pixel");
 		ion_flags |= ION_FLAG_CP_PIXEL;
-
-	if (flags & SMEM_SECURE) {
-		ion_flags |= ION_FLAG_SECURE;
-		heap_mask = ION_HEAP(ION_SECURE_HEAP_ID);
 	}
 
-	heap = dma_heap_find("qcom,system");
 	dbuf = dma_heap_buffer_alloc(heap, size, 0, 0);
 	if (IS_ERR_OR_NULL(dbuf)) {
 		dprintk(CVP_ERR,
-		"Failed to allocate shared memory = %x bytes, %llx, %x %x\n",
-		size, heap_mask, ion_flags, PTR_ERR(dbuf));
+		"Failed to allocate shared memory = %x bytes, %x %x\n",
+		size, ion_flags, PTR_ERR(dbuf));
 		rc = -ENOMEM;
 		goto fail_shared_mem_alloc;
 	}
