@@ -3646,6 +3646,7 @@ int hif_config_ce_by_id(struct hif_softc *scn, int pipe_num)
 	ce_state = scn->ce_id_to_state[pipe_num];
 	if (!ce_state) {
 		A_TARGET_ACCESS_UNLIKELY(scn);
+		rv = QDF_STATUS_E_FAILURE;
 		goto err;
 	}
 	qdf_spinlock_create(&pipe_info->recv_bufs_needed_lock);
