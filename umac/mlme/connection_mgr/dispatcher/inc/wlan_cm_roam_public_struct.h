@@ -1678,6 +1678,15 @@ struct wlan_cm_roam_tx_ops {
 };
 
 /**
+ * wlan_cm_roam_rx_ops  - structure of tx function pointers for
+ * roaming related commands
+ * @roam_sync_event_rx: RX ops function pointer for roam sync event
+ */
+struct wlan_cm_roam_rx_ops {
+	QDF_STATUS (*roam_sync_event_rx)(struct wlan_objmgr_vdev *vdev);
+};
+
+/**
  * enum roam_scan_freq_scheme - Scan mode for triggering roam
  * ROAM_SCAN_FREQ_SCHEME_NO_SCAN: Indicates the fw to not scan.
  * ROAM_SCAN_FREQ_SCHEME_PARTIAL_SCAN: Indicates the firmware to
