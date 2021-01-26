@@ -1491,6 +1491,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "VDEV_DISCONNECT";
 	case WOW_REASON_LOCAL_DATA_UC_DROP:
 		return "LOCAL_DATA_UC_DROP";
+	case WOW_REASON_GENERIC_WAKE:
+		return "GENERIC_WAKE";
 	default:
 		return "unknown";
 	}
@@ -2456,6 +2458,11 @@ static int wma_wake_event_no_payload(
 
 	case WOW_REASON_NLOD:
 		return wma_wake_reason_nlod(wma, wake_info->vdev_id);
+
+	case WOW_REASON_GENERIC_WAKE:
+		wma_info("Wake reason %s",
+			 wma_wow_wake_reason_str(wake_info->wake_reason));
+		return 0;
 
 	default:
 		return 0;
