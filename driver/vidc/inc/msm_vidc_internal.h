@@ -582,7 +582,6 @@ struct msm_vidc_subscription_params {
 	u32                    bitstream_resolution;
 	u64                    crop_offsets;
 	u32                    bit_depth;
-	u32                    cabac;
 	u32                    coded_frames;
 	u32                    fw_min_count;
 	u32                    pic_order_cnt;

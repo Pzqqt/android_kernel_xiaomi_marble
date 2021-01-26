@@ -23,7 +23,6 @@ u32 msm_vdec_subscribe_for_port_settings_change[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
 	HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
-	HFI_PROP_CABAC_SESSION,
 	HFI_PROP_CODED_FRAMES,
 	HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
 	HFI_PROP_PIC_ORDER_CNT_TYPE,
@@ -35,6 +34,7 @@ u32 msm_vdec_subscribe_for_port_settings_change[] = {
 
 u32 msm_vdec_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
+	HFI_PROP_CABAC_SESSION,
 };
 
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
@@ -197,7 +197,8 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 
 	return rc;
 }
-
+//todo: enable when needed
+/*
 static int msm_vdec_set_cabac(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -224,7 +225,7 @@ static int msm_vdec_set_cabac(struct msm_vidc_inst *inst,
 
 	return rc;
 }
-
+*/
 static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -967,9 +968,6 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 		case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
 			rc = msm_vdec_set_bit_depth(inst, port);
 			break;
-		case HFI_PROP_CABAC_SESSION:
-			rc = msm_vdec_set_cabac(inst, port);
-			break;
 		case HFI_PROP_CODED_FRAMES:
 			rc = msm_vdec_set_coded_frames(inst, port);
 			break;
@@ -1201,7 +1199,6 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 	inst->capabilities->cap[PROFILE].value = subsc_params.profile;
 	inst->capabilities->cap[LEVEL].value = subsc_params.level;
 	inst->capabilities->cap[HEVC_TIER].value = subsc_params.tier;
-	inst->capabilities->cap[ENTROPY_MODE].value = subsc_params.cabac;
 	inst->capabilities->cap[POC].value = subsc_params.pic_order_cnt;
 	inst->capabilities->cap[BIT_DEPTH].value = subsc_params.bit_depth;
 	inst->capabilities->cap[CODED_FRAMES].value = subsc_params.coded_frames;
@@ -1414,11 +1411,6 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 			break;
 		case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
 			payload[0] = subsc_params.bit_depth;
-			payload_size = sizeof(u32);
-			payload_type = HFI_PAYLOAD_U32;
-			break;
-		case HFI_PROP_CABAC_SESSION:
-			payload[0] = subsc_params.cabac;
 			payload_size = sizeof(u32);
 			payload_type = HFI_PAYLOAD_U32;
 			break;

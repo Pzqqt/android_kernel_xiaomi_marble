@@ -19,10 +19,10 @@ void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		return;
 
 	dprintk(tag, inst->sid,
-		"%s: resolution %d, crop offsets %lld, bit depth %d, cabac %d, coded frames %d "
+		"%s: resolution %#x, crop offsets %#llx, bit depth %d, coded frames %d "
 		"fw min count %d, poc %d, color info %d, profile %d, level %d, tier %d ",
 		str, subsc_params.bitstream_resolution, subsc_params.crop_offsets,
-		subsc_params.bit_depth, subsc_params.cabac, subsc_params.coded_frames,
+		subsc_params.bit_depth, subsc_params.coded_frames,
 		subsc_params.fw_min_count, subsc_params.pic_order_cnt,
 		subsc_params.color_info, subsc_params.profile, subsc_params.level,
 		subsc_params.tier);
@@ -899,9 +899,6 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		break;
 	case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
 		inst->subcr_params[port].bit_depth = payload_ptr[0];
-		break;
-	case HFI_PROP_CABAC_SESSION:
-		inst->subcr_params[port].cabac = payload_ptr[0];
 		break;
 	case HFI_PROP_CODED_FRAMES:
 		inst->subcr_params[port].coded_frames = payload_ptr[0];
