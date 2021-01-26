@@ -1846,6 +1846,33 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	bool force);
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
+#ifdef QCA_OL_DP_SRNG_LOCK_LESS_ACCESS
+static inline int
+dp_hal_srng_access_start(hal_soc_handle_t soc, hal_ring_handle_t hal_ring_hdl)
+{
+	return hal_srng_access_start_unlocked(soc, hal_ring_hdl);
+}
+
+static inline void
+dp_hal_srng_access_end(hal_soc_handle_t soc, hal_ring_handle_t hal_ring_hdl)
+{
+	hal_srng_access_end_unlocked(soc, hal_ring_hdl);
+}
+
+#else
+static inline int
+dp_hal_srng_access_start(hal_soc_handle_t soc, hal_ring_handle_t hal_ring_hdl)
+{
+	return hal_srng_access_start(soc, hal_ring_hdl);
+}
+
+static inline void
+dp_hal_srng_access_end(hal_soc_handle_t soc, hal_ring_handle_t hal_ring_hdl)
+{
+	hal_srng_access_end(soc, hal_ring_hdl);
+}
+#endif
+
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 /**
  * dp_srng_access_start() - Wrapper function to log access start of a hal ring
@@ -1870,14 +1897,13 @@ void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 			hal_ring_handle_t hal_ring_hdl);
 
 #else
-
 static inline int dp_srng_access_start(struct dp_intr *int_ctx,
 				       struct dp_soc *dp_soc,
 				       hal_ring_handle_t hal_ring_hdl)
 {
 	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 
-	return hal_srng_access_start(hal_soc, hal_ring_hdl);
+	return dp_hal_srng_access_start(hal_soc, hal_ring_hdl);
 }
 
 static inline void dp_srng_access_end(struct dp_intr *int_ctx,
@@ -1886,7 +1912,7 @@ static inline void dp_srng_access_end(struct dp_intr *int_ctx,
 {
 	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 
-	return hal_srng_access_end(hal_soc, hal_ring_hdl);
+	return dp_hal_srng_access_end(hal_soc, hal_ring_hdl);
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
