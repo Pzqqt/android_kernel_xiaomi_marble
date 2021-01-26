@@ -3564,7 +3564,6 @@ int hdd_update_components_config(struct hdd_context *hdd_ctx);
  * @dev:		Net device structure
  * @chan_change:	New channel change parameters
  * @legacy_phymode:	is the phymode legacy
- * @lock_wdev:  need wdev lock or not
  *
  * This function is used to notify hostapd about the channel change
  *
@@ -3574,8 +3573,7 @@ int hdd_update_components_config(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		struct net_device *dev,
 		struct hdd_chan_change_params chan_change,
-		bool legacy_phymode,
-		bool lock_wdev);
+		bool legacy_phymode);
 int wlan_hdd_set_channel(struct wiphy *wiphy,
 		struct net_device *dev,
 		struct cfg80211_chan_def *chandef,

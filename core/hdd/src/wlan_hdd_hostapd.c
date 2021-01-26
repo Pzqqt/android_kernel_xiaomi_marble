@@ -824,15 +824,13 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		struct net_device *dev,
 		struct hdd_chan_change_params chan_change,
-		bool legacy_phymode,
-		bool lock_wdev)
+		bool legacy_phymode)
 {
 	struct ieee80211_channel *chan;
 	struct cfg80211_chan_def chandef;
 	enum nl80211_channel_type channel_type;
 	uint32_t freq;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
 	if (!mac_handle) {
 		hdd_err("mac_handle is NULL");
@@ -901,15 +899,10 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 				chan_change.chan_params.mhz_freq_seg0;
 	}
 
-	hdd_debug("notify: chan:%d width:%d freq1:%d freq2:%d locked %d",
+	hdd_debug("notify: chan:%d width:%d freq1:%d freq2:%d",
 		  chandef.chan->center_freq, chandef.width,
-		  chandef.center_freq1, chandef.center_freq2, lock_wdev);
-	if (lock_wdev)
-		mutex_lock(&wdev->mtx);
-
+		  chandef.center_freq1, chandef.center_freq2);
 	cfg80211_ch_switch_notify(dev, &chandef);
-	if (lock_wdev)
-		mutex_unlock(&wdev->mtx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1799,7 +1792,7 @@ static QDF_STATUS hdd_hostapd_chan_change(struct hdd_adapter *adapter,
 			sap_chan_selected->vht_seg1_center_ch_freq;
 
 	return hdd_chan_change_notify(adapter, adapter->dev,
-				      chan_change, legacy_phymode, false);
+				      chan_change, legacy_phymode);
 }
 
 QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,

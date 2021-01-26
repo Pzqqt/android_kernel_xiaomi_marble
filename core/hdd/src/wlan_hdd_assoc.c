@@ -4101,8 +4101,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		status = hdd_chan_change_notify(adapter, adapter->dev,
 						chan_change,
 						roam_info->mode ==
-						SIR_SME_PHY_MODE_LEGACY,
-						true);
+						SIR_SME_PHY_MODE_LEGACY);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("channel change notification failed");
 	} else {
