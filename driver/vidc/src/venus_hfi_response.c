@@ -28,6 +28,29 @@ void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		subsc_params.tier);
 }
 
+static void print_sfr_message(struct msm_vidc_core *core)
+{
+	struct msm_vidc_sfr *vsfr = NULL;
+	u32 vsfr_size = 0;
+	void *p = NULL;
+
+	vsfr = (struct msm_vidc_sfr *)core->sfr.align_virtual_addr;
+	if (vsfr) {
+		if (vsfr->bufSize != core->sfr.mem_size) {
+			d_vpr_e("Invalid SFR buf size %d actual %d\n",
+				vsfr->bufSize, core->sfr.mem_size);
+			return;
+		}
+		vsfr_size = vsfr->bufSize - sizeof(u32);
+		p = memchr(vsfr->rg_data, '\0', vsfr_size);
+		/* SFR isn't guaranteed to be NULL terminated */
+		if (p == NULL)
+			vsfr->rg_data[vsfr_size - 1] = '\0';
+
+		d_vpr_e("SFR Message from FW: %s\n", vsfr->rg_data);
+	}
+}
+
 u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 	enum hfi_packet_port_type hfi_port)
 {
@@ -239,6 +262,7 @@ static int handle_system_error(struct msm_vidc_core *core,
 	struct hfi_packet *pkt)
 {
 	d_vpr_e("%s: system error received\n", __func__);
+	print_sfr_message(core);
 	msm_vidc_core_deinit(core, true);
 	return 0;
 }

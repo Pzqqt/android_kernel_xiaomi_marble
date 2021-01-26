@@ -731,6 +731,11 @@ struct msm_vidc_ssr {
 	enum msm_vidc_ssr_trigger_type     ssr_type;
 };
 
+struct msm_vidc_sfr {
+	u32 bufSize;
+	u8 rg_data[1];
+};
+
 #define call_mem_op(c, op, ...)			\
 	(((c) && (c)->mem_ops && (c)->mem_ops->op) ? \
 	((c)->mem_ops->op(__VA_ARGS__)) : 0)
