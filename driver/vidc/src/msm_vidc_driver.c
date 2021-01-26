@@ -1975,7 +1975,7 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 
@@ -1986,7 +1986,7 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 			__func__, count, MAX_SUPPORTED_INSTANCES);
 		rc = -EINVAL;
 	}
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 
 	/* assign session_id */
 	inst->session_id = hash32_ptr(inst);
@@ -2007,7 +2007,7 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	list_for_each_entry_safe(i, temp, &core->instances, list) {
 		if (i->session_id == inst->session_id) {
 			list_del_init(&i->list);
@@ -2019,7 +2019,7 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst)
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 	d_vpr_h("%s: remaining sessions %d\n", __func__, count);
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 
 	return 0;
 }
@@ -2249,8 +2249,9 @@ static int msm_vidc_deinit_core_caps(struct msm_vidc_core *core)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	kfree(core->capabilities);
-	core->capabilities = NULL;
+	d_vpr_h("%s: skip freeing core capabilities\n", __func__);
+	//kfree(core->capabilities);
+	//core->capabilities = NULL;
 
 	return rc;
 }
@@ -2286,7 +2287,7 @@ static int msm_vidc_init_core_caps(struct msm_vidc_core *core)
 			goto exit;
 		}
 	} else {
-		d_vpr_e("%s: capabilities memory is expected to be freed\n",
+		d_vpr_h("%s: capabilities memory is expected to be freed\n",
 			__func__);
 	}
 
@@ -2341,8 +2342,9 @@ static int msm_vidc_deinit_instance_caps(struct msm_vidc_core *core)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	kfree(core->inst_caps);
-	core->inst_caps = NULL;
+	d_vpr_h("%s: skip freeing core->instance capabilities\n", __func__);
+	//kfree(core->inst_caps);
+	//core->inst_caps = NULL;
 
 	return rc;
 }
@@ -2392,7 +2394,7 @@ static int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
 			goto error;
 		}
 	} else {
-		d_vpr_e("%s: capabilities memory is expected to be freed\n",
+		d_vpr_h("%s: capabilities memory is expected to be freed\n",
 			__func__);
 	}
 
@@ -2462,7 +2464,7 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 		return -EINVAL;
 	}
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	d_vpr_h("%s()\n", __func__);
 	if (core->state == MSM_VIDC_CORE_DEINIT)
 		goto unlock;
@@ -2481,7 +2483,7 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
 unlock:
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 	return rc;
 }
 
@@ -2494,7 +2496,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 		return -EINVAL;
 	}
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	if (core->state == MSM_VIDC_CORE_INIT) {
 		rc = 0;
 		goto unlock;
@@ -2520,10 +2522,10 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 
 	d_vpr_h("%s(): waiting for sys init done, %d ms\n", __func__,
 		core->capabilities[HW_RESPONSE_TIMEOUT].value);
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 	rc = wait_for_completion_timeout(&core->init_done, msecs_to_jiffies(
 			core->capabilities[HW_RESPONSE_TIMEOUT].value));
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	if (!rc) {
 		d_vpr_e("%s: core init timed out\n", __func__);
 		rc = -ETIMEDOUT;
@@ -2533,9 +2535,9 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	}
 
 unlock:
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 	if (rc)
-		msm_vidc_core_init(core);
+		msm_vidc_core_deinit(core, true);
 	return rc;
 }
 

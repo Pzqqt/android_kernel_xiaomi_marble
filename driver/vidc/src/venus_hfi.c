@@ -171,24 +171,23 @@ static bool is_sys_cache_present(struct msm_vidc_core *core)
 	return core->dt->sys_cache_present;
 }
 
-static bool valdiate_session(struct msm_vidc_inst* inst, const char *func)
+static bool __valdiate_session(struct msm_vidc_core *core,
+		struct msm_vidc_inst *inst, const char *func)
 {
 	bool valid = false;
 	struct msm_vidc_inst *temp;
-	struct msm_vidc_core *core = g_core;
 
 	if (!core)
 		return false;
 
-	mutex_lock(&core->lock);
+	__strict_check(core);
+
 	list_for_each_entry(temp, &core->instances, list) {
 		if (temp == inst) {
 			valid = true;
 			break;
 		}
 	}
-	mutex_unlock(&core->lock);
-
 	if (!valid)
 		s_vpr_e(inst->sid, "%s: invalid session\n", func);
 
@@ -2492,14 +2491,14 @@ void venus_hfi_work_handler(struct work_struct *work)
 		return;
 	}
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	if (__resume(core)) {
 		d_vpr_e("%s: Power on failed\n", __func__);
-		mutex_unlock(&core->lock);
+		core_unlock(core, __func__);
 		goto err_no_work;
 	}
 	call_venus_op(core, clear_interrupt, core);
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 
 	num_responses = __response_handler(core);
 
@@ -2531,7 +2530,7 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		return;
 	}
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	rc = __power_collapse(core, false);
 	switch (rc) {
 	case 0:
@@ -2555,7 +2554,7 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		d_vpr_e("%s: power collapse failed\n", __func__);
 		break;
 	}
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 }
 
 static int __sys_init(struct msm_vidc_core *core)
@@ -2597,6 +2596,8 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 		return -EINVAL;
 	}
 	d_vpr_h("%s(): core %pK\n", __func__, core);
+
+	__strict_check(core);
 
 	core->packet_size = 4096;
 	core->packet = kzalloc(core->packet_size, GFP_KERNEL);
@@ -2661,6 +2662,7 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 		return -EINVAL;
 	}
 	d_vpr_h("%s(): core %pK\n", __func__, core);
+	__strict_check(core);
 	__flush_debug_queue(core, core->packet, core->packet_size);
 	__disable_subcaches(core);
 	__interface_queues_deinit(core);
@@ -2680,7 +2682,7 @@ int venus_hfi_suspend(struct msm_vidc_core *core)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
+	core_lock(core, __func__);
 	d_vpr_h("Suspending Venus\n");
 	rc = __power_collapse(core, true);
 	if (!rc) {
@@ -2690,17 +2692,25 @@ int venus_hfi_suspend(struct msm_vidc_core *core)
 		d_vpr_e("%s: Venus is busy\n", __func__);
 		rc = -EBUSY;
 	}
-
+	core_unlock(core, __func__);
 	return rc;
 }
 
 int venus_hfi_session_open(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_core *core;
 
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
 	}
 
 	rc = hfi_packet_session_command(inst,
@@ -2713,39 +2723,58 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 				&inst->session_id, /* payload */
 				sizeof(u32));
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		return rc;
+		goto unlock;
 
+unlock:
+	core_unlock(core, __func__);
 	return 0;
 }
 
 int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_core *core;
 	u32 codec;
 
-	if (!inst || !inst->packet) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	rc = hfi_create_header(inst->packet, inst->packet_size,
+			inst->session_id, core->header_id++);
+	if (rc)
+		goto unlock;
 
 	codec = get_hfi_codec(inst);
-	rc = venus_hfi_session_property(inst,
-				HFI_PROP_CODEC,
-				HFI_HOST_FLAGS_NONE,
-				HFI_PORT_NONE,
-				HFI_PAYLOAD_U32_ENUM,
-				&codec,
-				sizeof(u32));
+	rc = hfi_create_packet(inst->packet, inst->packet_size,
+			HFI_PROP_CODEC,
+			HFI_HOST_FLAGS_NONE,
+			HFI_PAYLOAD_U32_ENUM,
+			HFI_PORT_NONE,
+			core->packet_id++,
+			&codec,
+			sizeof(u32));
 	if (rc)
-		goto error;
+		goto unlock;
 
-error:
+	rc = __iface_cmdq_write(inst->core, inst->packet);
+	if (rc)
+		goto unlock;
+
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
@@ -2756,19 +2785,22 @@ int venus_hfi_session_property(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core || !inst->packet) {
-		d_vpr_e("%s: Invalid params\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
+	core_lock(core, __func__);
 
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 				inst->session_id, core->header_id++);
 	if (rc)
-		goto err_prop;
+		goto unlock;
 	rc = hfi_create_packet(inst->packet, inst->packet_size,
 				pkt_type,
 				flags,
@@ -2778,28 +2810,31 @@ int venus_hfi_session_property(struct msm_vidc_inst *inst,
 				payload,
 				payload_size);
 	if (rc)
-		goto err_prop;
+		goto unlock;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		goto err_prop;
+		goto unlock;
 
-	return rc;
-
-err_prop:
-	d_vpr_e("%s: create packet failed\n", __func__);
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
 int venus_hfi_session_close(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_core* core;
 
 	if (!inst || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	if (!valdiate_session(inst, __func__))
+	core = inst->core;
+
+	__strict_check(core);
+
+	if (!__valdiate_session(core, inst, __func__))
 		return -EINVAL;
 
 	rc = hfi_packet_session_command(inst,
@@ -2821,17 +2856,23 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 {
 	int rc = 0;
+	struct msm_vidc_core* core;
 
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
-		return -EINVAL;
+		goto unlock;
 	}
 
 	rc = hfi_packet_session_command(inst,
@@ -2844,29 +2885,37 @@ int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 				NULL,
 				0);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		return rc;
+		goto unlock;
 
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
 int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 {
 	int rc = 0;
+	struct msm_vidc_core* core;
 
-	if (!inst) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
-		return -EINVAL;
+		goto unlock;
 	}
 
 	rc = hfi_packet_session_command(inst,
@@ -2880,12 +2929,14 @@ int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 				NULL,
 				0);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		return rc;
+		goto unlock;
 
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
@@ -2896,20 +2947,23 @@ int venus_hfi_session_command(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->packet || !inst->core) {
+	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
+	core_lock(core, __func__);
 
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 			inst->session_id,
 			core->header_id++);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = hfi_create_packet(inst->packet, inst->packet_size,
 			cmd,
@@ -2920,18 +2974,15 @@ int venus_hfi_session_command(struct msm_vidc_inst *inst,
 			core->packet_id++,
 			payload,
 			payload_size);
-
 	if (rc)
-		goto err_cmd;
+		goto unlock;
 
-	s_vpr_h(inst->sid, "Command packet 0x%x created\n", cmd);
-	__iface_cmdq_write(inst->core, inst->packet);
+	rc = __iface_cmdq_write(inst->core, inst->packet);
+	if (rc)
+		goto unlock;
 
-	return rc;
-
-err_cmd:
-	s_vpr_e(inst->sid, "%s: create packet failed for cmd: %d\n",
-		__func__, cmd);
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
@@ -2942,23 +2993,26 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
 
-	if (!inst || !inst->core || !inst->packet) {
-		d_vpr_e("%s: Invalid params\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
+	core_lock(core, __func__);
 
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	rc = get_hfi_buffer(inst, buffer, &hfi_buffer);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 			   inst->session_id, core->header_id++);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = hfi_create_packet(inst->packet,
 			inst->packet_size,
@@ -2970,12 +3024,12 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 			&hfi_buffer,
 			sizeof(hfi_buffer));
 	if (rc)
-		return rc;
+		goto unlock;
 
 	if (metabuf) {
 		rc = get_hfi_buffer(inst, metabuf, &hfi_buffer);
 		if (rc)
-			return rc;
+			goto unlock;
 		rc = hfi_create_packet(inst->packet,
 			inst->packet_size,
 			HFI_CMD_BUFFER,
@@ -2986,13 +3040,15 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 			&hfi_buffer,
 			sizeof(hfi_buffer));
 		if (rc)
-			return rc;
+			goto unlock;
 	}
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		return rc;
+		goto unlock;
 
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
@@ -3003,23 +3059,28 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
 
-	if (!inst || !buffer) {
+	if (!inst || !inst->core || !buffer) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	if (!valdiate_session(inst, __func__))
-		return -EINVAL;
+	core = inst->core;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	if (!is_internal_buffer(buffer->type)) {
 		s_vpr_e(inst->sid, "release not allowed for buffer type %d\n",
 			buffer->type);
-		return 0;
+		goto unlock;
 	}
 	core = inst->core;
 
 	rc = get_hfi_buffer(inst, buffer, &hfi_buffer);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	/* add pending release flag */
 	hfi_buffer.flags |= HFI_BUF_HOST_FLAG_RELEASE;
@@ -3027,7 +3088,7 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 			   inst->session_id, core->header_id++);
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = hfi_create_packet(inst->packet,
 			inst->packet_size,
@@ -3040,12 +3101,14 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 			&hfi_buffer,
 			sizeof(hfi_buffer));
 	if (rc)
-		return rc;
+		goto unlock;
 
 	rc = __iface_cmdq_write(inst->core, inst->packet);
 	if (rc)
-		return rc;
+		goto unlock;
 
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 
@@ -3060,7 +3123,7 @@ int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq)
 	}
 	core = inst->core;
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	if (__resume(core)) {
 		s_vpr_e(inst->sid, "Resume from power collapse failed\n");
 		rc = -EINVAL;
@@ -3068,7 +3131,7 @@ int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq)
 	}
 	rc = __set_clocks(core, freq);
 exit:
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 
 	return rc;
 }
@@ -3084,9 +3147,9 @@ int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 bw_ddr, u64 bw_llcc)
 	}
 	core = inst->core;
 
-	mutex_lock(&core->lock);
+	core_lock(core, __func__);
 	rc = __vote_buses(core, bw_ddr, bw_llcc);
-	mutex_unlock(&core->lock);
+	core_unlock(core, __func__);
 
 	return rc;
 }
