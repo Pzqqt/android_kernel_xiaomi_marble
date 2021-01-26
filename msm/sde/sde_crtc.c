@@ -5875,6 +5875,33 @@ exit:
 	return ret;
 }
 
+static void sde_crtc_update_line_time(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct drm_encoder *encoder;
+	u32 min_transfer_time = 0, updated_fps = 0;
+
+	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask) {
+		if (sde_encoder_check_curr_mode(encoder, MSM_DISPLAY_CMD_MODE))
+			sde_encoder_get_transfer_time(encoder, &min_transfer_time);
+	}
+
+	if (min_transfer_time) {
+		/* get fps by doing 1000 ms / transfer_time */
+		updated_fps = DIV_ROUND_UP(1000000, min_transfer_time);
+		/* get line time by doing 1000ns / (fps * vactive) */
+		sde_crtc->line_time_in_ns = DIV_ROUND_UP(1000000000,
+				updated_fps * crtc->mode.vdisplay);
+	} else {
+		/* get line time by doing 1000ns / (fps * vtotal) */
+		sde_crtc->line_time_in_ns = DIV_ROUND_UP(1000000000,
+				drm_mode_vrefresh(&crtc->mode) * crtc->mode.vtotal);
+	}
+
+	SDE_EVT32(min_transfer_time, updated_fps, crtc->mode.vdisplay, crtc->mode.vtotal,
+		drm_mode_vrefresh(&crtc->mode), sde_crtc->line_time_in_ns);
+}
+
 void sde_crtc_set_qos_dirty(struct drm_crtc *crtc)
 {
 	struct drm_plane *plane;
@@ -5890,6 +5917,7 @@ void sde_crtc_set_qos_dirty(struct drm_crtc *crtc)
 
 		pstate->dirty |= SDE_PLANE_DIRTY_QOS;
 	}
+	sde_crtc_update_line_time(crtc);
 }
 
 /**

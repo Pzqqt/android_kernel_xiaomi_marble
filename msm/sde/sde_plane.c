@@ -2909,11 +2909,9 @@ static void _sde_plane_setup_uidle(struct drm_crtc *crtc,
 	struct sde_rect *src, struct sde_rect *dst)
 {
 	struct sde_hw_pipe_uidle_cfg cfg;
-	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 	u32 fal1_threshold_max = 15;
 
-	u32 line_time = sde_get_linetime(&crtc->mode,
-			sde_crtc->src_bpp, sde_crtc->target_bpp); /* nS */
+	u32 line_time = sde_crtc_get_line_time(crtc);
 	u32 fal1_target_idle_time_ns =
 		psde->catalog->uidle_cfg.fal1_target_idle_time * 1000; /* nS */
 	u32 fal10_target_idle_time_ns =
