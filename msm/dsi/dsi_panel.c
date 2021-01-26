@@ -417,7 +417,6 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 	u32 count;
 	enum dsi_cmd_set_state state;
 	struct dsi_display_mode *mode;
-	const struct mipi_dsi_host_ops *ops = panel->host->ops;
 
 	if (!panel || !panel->cur_mode)
 		return -EINVAL;
@@ -439,13 +438,10 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 		if (state == DSI_CMD_SET_STATE_LP)
 			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
 
-		if (cmds->last_command)
-			cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
-
 		if (type == DSI_CMD_SET_VID_SWITCH_OUT)
 			cmds->msg.flags |= MIPI_DSI_MSG_ASYNC_OVERRIDE;
 
-		len = ops->transfer(panel->host, &cmds->msg);
+		len = dsi_host_transfer_sub(panel->host, cmds);
 		if (len < 0) {
 			rc = len;
 			DSI_ERR("failed to set cmds(%d), rc=%d\n", type, rc);
@@ -1794,12 +1790,16 @@ int dsi_panel_create_cmd_packets(const char *data,
 		u32 size;
 
 		cmd[i].msg.type = data[0];
-		cmd[i].last_command = (data[1] == 1);
 		cmd[i].msg.channel = data[2];
 		cmd[i].msg.flags |= data[3];
-		cmd[i].msg.ctrl = 0;
-		cmd[i].post_wait_ms = cmd[i].msg.wait_ms = data[4];
+		cmd[i].ctrl = 0;
+		cmd[i].post_wait_ms = data[4];
 		cmd[i].msg.tx_len = ((data[5] << 8) | (data[6]));
+
+		if (cmd[i].msg.flags & MIPI_DSI_MSG_BATCH_COMMAND)
+			cmd[i].last_command = false;
+		else
+			cmd[i].last_command = true;
 
 		size = cmd[i].msg.tx_len * sizeof(u8);
 
@@ -1874,11 +1874,9 @@ static int dsi_panel_parse_cmd_sets_sub(struct dsi_panel_cmd_set *cmd,
 		goto error;
 	}
 
-	DSI_DEBUG("type=%d, name=%s, length=%d\n", type,
-		cmd_set_prop_map[type], length);
+	DSI_DEBUG("type=%d, name=%s, length=%d\n", type, cmd_set_prop_map[type], length);
 
-	print_hex_dump_debug("", DUMP_PREFIX_NONE,
-		       8, 1, data, length, false);
+	print_hex_dump_debug("", DUMP_PREFIX_NONE, 8, 1, data, length, false);
 
 	rc = dsi_panel_get_cmd_pkt_count(data, length, &packet_count);
 	if (rc) {
@@ -4366,27 +4364,25 @@ static int dsi_panel_roi_prepare_dcs_cmds(struct dsi_panel_cmd_set *set,
 	}
 	set->cmds[0].msg.channel = 0;
 	set->cmds[0].msg.type = MIPI_DSI_DCS_LONG_WRITE;
-	set->cmds[0].msg.flags = unicast ? MIPI_DSI_MSG_UNICAST : 0;
-	set->cmds[0].msg.ctrl = unicast ? ctrl_idx : 0;
+	set->cmds[0].msg.flags = unicast ? MIPI_DSI_MSG_UNICAST_COMMAND : 0;
 	set->cmds[0].msg.tx_len = ROI_CMD_LEN;
 	set->cmds[0].msg.tx_buf = caset;
 	set->cmds[0].msg.rx_len = 0;
 	set->cmds[0].msg.rx_buf = 0;
-	set->cmds[0].msg.wait_ms = 0;
 	set->cmds[0].last_command = 0;
 	set->cmds[0].post_wait_ms = 0;
+	set->cmds[0].ctrl = unicast ? ctrl_idx : 0;
 
 	set->cmds[1].msg.channel = 0;
 	set->cmds[1].msg.type = MIPI_DSI_DCS_LONG_WRITE;
-	set->cmds[1].msg.flags = unicast ? MIPI_DSI_MSG_UNICAST : 0;
-	set->cmds[1].msg.ctrl = unicast ? ctrl_idx : 0;
+	set->cmds[1].msg.flags = unicast ? MIPI_DSI_MSG_UNICAST_COMMAND : 0;
 	set->cmds[1].msg.tx_len = ROI_CMD_LEN;
 	set->cmds[1].msg.tx_buf = paset;
 	set->cmds[1].msg.rx_len = 0;
 	set->cmds[1].msg.rx_buf = 0;
-	set->cmds[1].msg.wait_ms = 0;
 	set->cmds[1].last_command = 1;
 	set->cmds[1].post_wait_ms = 0;
+	set->cmds[1].ctrl = unicast ? ctrl_idx : 0;
 
 	goto exit;
 

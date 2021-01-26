@@ -30,12 +30,14 @@
 #define DSI_MODE_MAX 32
 
 /*
- * Defining custom dsi msg flag,
- * continued from drm_mipi_dsi.h
- * Override to use async transfer
+ * Defining custom dsi msg flag.
+ * Using upper byte of flag field for custom DSI flags.
+ * Lower byte flags specified in drm_mipi_dsi.h.
  */
 #define MIPI_DSI_MSG_ASYNC_OVERRIDE BIT(4)
 #define MIPI_DSI_MSG_CMD_DMA_SCHED BIT(5)
+#define MIPI_DSI_MSG_BATCH_COMMAND BIT(6)
+#define MIPI_DSI_MSG_UNICAST_COMMAND BIT(7)
 
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,

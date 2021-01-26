@@ -653,16 +653,97 @@ static void dsi_display_parse_te_data(struct dsi_display *display)
 	display->te_source = val;
 }
 
+static void dsi_display_set_cmd_tx_ctrl_flags(struct dsi_display *display,
+		struct dsi_cmd_desc *cmd)
+{
+	struct dsi_display_ctrl *ctrl, *m_ctrl;
+	struct mipi_dsi_msg *msg = &cmd->msg;
+	u32 flags = 0;
+	int i = 0;
+
+	m_ctrl = &display->ctrl[display->clk_master_idx];
+	display_for_each_ctrl(i, display) {
+		ctrl = &display->ctrl[i];
+		if (!ctrl->ctrl)
+			continue;
+
+		/*
+		 * Set cmd transfer mode flags.
+		 * 1) Default selection is CMD fetch from memory.
+		 * 2) In secure session override and use FIFO rather than
+		 *    memory.
+		 * 3) If cmd_len is greater than FIFO size non embedded mode of
+		 *    tx is used.
+		 */
+		flags = DSI_CTRL_CMD_FETCH_MEMORY;
+		if (ctrl->ctrl->secure_mode) {
+			flags &= ~DSI_CTRL_CMD_FETCH_MEMORY;
+			flags |= DSI_CTRL_CMD_FIFO_STORE;
+		} else if (msg->tx_len > DSI_EMBEDDED_MODE_DMA_MAX_SIZE_BYTES) {
+			flags |= DSI_CTRL_CMD_NON_EMBEDDED_MODE;
+		}
+
+		/* Set flags needed for broadcast. Read commands are always unicast */
+		if (!(msg->flags & MIPI_DSI_MSG_UNICAST_COMMAND) && (display->ctrl_count > 1))
+			flags |= DSI_CTRL_CMD_BROADCAST | DSI_CTRL_CMD_DEFER_TRIGGER;
+
+		/*
+		 * Set flags for command scheduling.
+		 * 1) In video mode command DMA scheduling is default.
+		 * 2) In command mode command DMA scheduling depends on message
+		 * flag and TE needs to be running.
+		 */
+		if (display->panel->panel_mode == DSI_OP_VIDEO_MODE) {
+			flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
+		} else {
+			if (msg->flags & MIPI_DSI_MSG_CMD_DMA_SCHED)
+				flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
+			if (!display->enabled)
+				flags &= ~DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
+		}
+
+		/* Set flags for last command */
+		if (!(msg->flags & MIPI_DSI_MSG_BATCH_COMMAND))
+			flags |= DSI_CTRL_CMD_LAST_COMMAND;
+
+		/*
+		 * Set flags for asynchronous wait.
+		 * Asynchronous wait is supported in the following scenarios
+		 * 1) queue_cmd_waits is set by connector and
+		 *	- commands are not sent using DSI FIFO memory
+		 *	- commands are not sent in non-embedded mode
+		 *	- not a video mode panel
+		 *	- no explicit msg post_wait_ms is specified
+		 *	- not a read command
+		 * 2) if async override msg flag is present
+		 */
+		if (display->queue_cmd_waits)
+			if (!(flags & DSI_CTRL_CMD_FIFO_STORE) &&
+					!(flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) &&
+					!(display->panel->panel_mode == DSI_OP_VIDEO_MODE) &&
+					(cmd->post_wait_ms == 0) &&
+					!(cmd->ctrl_flags & DSI_CTRL_CMD_READ))
+				flags |= DSI_CTRL_CMD_ASYNC_WAIT;
+		if (msg->flags & MIPI_DSI_MSG_ASYNC_OVERRIDE)
+				flags |= DSI_CTRL_CMD_ASYNC_WAIT;
+	}
+
+	cmd->ctrl_flags |= flags;
+}
+
 static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
-		struct dsi_panel *panel)
+		struct dsi_display *display)
 {
 	int i, rc = 0, count = 0, start = 0, *lenp;
 	struct drm_panel_esd_config *config;
 	struct dsi_cmd_desc *cmds;
+	struct dsi_panel *panel;
 	u32 flags = 0;
 
-	if (!panel || !ctrl || !ctrl->ctrl)
+	if (!display->panel || !ctrl || !ctrl->ctrl)
 		return -EINVAL;
+
+	panel = display->panel;
 
 	/*
 	 * When DSI controller is not in initialized state, we do not want to
@@ -676,26 +757,20 @@ static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
 	lenp = config->status_valid_params ?: config->status_cmds_rlen;
 	count = config->status_cmd.count;
 	cmds = config->status_cmd.cmds;
-	flags |= (DSI_CTRL_CMD_FETCH_MEMORY | DSI_CTRL_CMD_READ);
-
-	if (ctrl->ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE)
-		flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
+	flags = DSI_CTRL_CMD_READ;
 
 	for (i = 0; i < count; ++i) {
 		memset(config->status_buf, 0x0, SZ_4K);
-		if (cmds[i].last_command) {
-			cmds[i].msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
-			flags |= DSI_CTRL_CMD_LAST_COMMAND;
-		}
-		if ((cmds[i].msg.flags & MIPI_DSI_MSG_CMD_DMA_SCHED) &&
-			 (panel->panel_initialized))
-			flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
 
 		if (config->status_cmd.state == DSI_CMD_SET_STATE_LP)
 			cmds[i].msg.flags |= MIPI_DSI_MSG_USE_LPM;
+
+		cmds[i].msg.flags |= MIPI_DSI_MSG_UNICAST_COMMAND;
 		cmds[i].msg.rx_buf = config->status_buf;
 		cmds[i].msg.rx_len = config->status_cmds_rlen[i];
-		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds[i].msg, &flags);
+		cmds[i].ctrl_flags = flags;
+		dsi_display_set_cmd_tx_ctrl_flags(display,&cmds[i]);
+		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds[i]);
 		if (rc <= 0) {
 			DSI_ERR("rx cmd transfer failed rc=%d\n", rc);
 			return rc;
@@ -710,11 +785,11 @@ static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
 }
 
 static int dsi_display_validate_status(struct dsi_display_ctrl *ctrl,
-		struct dsi_panel *panel)
+		struct dsi_display *display)
 {
 	int rc = 0;
 
-	rc = dsi_display_read_status(ctrl, panel);
+	rc = dsi_display_read_status(ctrl, display);
 	if (rc <= 0) {
 		goto exit;
 	} else {
@@ -722,7 +797,7 @@ static int dsi_display_validate_status(struct dsi_display_ctrl *ctrl,
 		 * panel status read successfully.
 		 * check for validity of the data read back.
 		 */
-		rc = dsi_display_validate_reg_read(panel);
+		rc = dsi_display_validate_reg_read(display->panel);
 		if (!rc) {
 			rc = -EINVAL;
 			goto exit;
@@ -756,7 +831,7 @@ static int dsi_display_status_reg_read(struct dsi_display *display)
 		return -EPERM;
 	}
 
-	rc = dsi_display_validate_status(m_ctrl, display->panel);
+	rc = dsi_display_validate_status(m_ctrl, display);
 	if (rc <= 0) {
 		DSI_ERR("[%s] read status failed on master,rc=%d\n",
 		       display->name, rc);
@@ -771,7 +846,7 @@ static int dsi_display_status_reg_read(struct dsi_display *display)
 		if (ctrl == m_ctrl)
 			continue;
 
-		rc = dsi_display_validate_status(ctrl, display->panel);
+		rc = dsi_display_validate_status(ctrl, display);
 		if (rc <= 0) {
 			DSI_ERR("[%s] read status failed on slave,rc=%d\n",
 			       display->name, rc);
@@ -913,36 +988,6 @@ release_panel_lock:
 	return rc;
 }
 
-static int dsi_display_cmd_prepare(const char *cmd_buf, u32 cmd_buf_len,
-		struct dsi_cmd_desc *cmd, u8 *payload, u32 payload_len)
-{
-	int i;
-
-	memset(cmd, 0x00, sizeof(*cmd));
-	cmd->msg.type = cmd_buf[0];
-	cmd->last_command = (cmd_buf[1] == 1);
-	cmd->msg.channel = cmd_buf[2];
-	cmd->msg.flags = cmd_buf[3];
-	cmd->msg.ctrl = 0;
-	cmd->post_wait_ms = cmd->msg.wait_ms = cmd_buf[4];
-	cmd->msg.tx_len = ((cmd_buf[5] << 8) | (cmd_buf[6]));
-
-	if (cmd->msg.tx_len > payload_len) {
-		DSI_ERR("Incorrect payload length tx_len %zu, payload_len %d\n",
-		       cmd->msg.tx_len, payload_len);
-		return -EINVAL;
-	}
-
-	if (cmd->last_command)
-		cmd->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
-
-	for (i = 0; i < cmd->msg.tx_len; i++)
-		payload[i] = cmd_buf[7 + i];
-
-	cmd->msg.tx_buf = payload;
-	return 0;
-}
-
 static int dsi_display_ctrl_get_host_init_state(struct dsi_display *dsi_display,
 		bool *state)
 {
@@ -992,13 +1037,11 @@ static int dsi_display_cmd_rx(struct dsi_display *display,
 		goto error;
 	}
 
-	flags |= (DSI_CTRL_CMD_FETCH_MEMORY | DSI_CTRL_CMD_READ);
-	if ((m_ctrl->ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) ||
-			((cmd->msg.flags & MIPI_DSI_MSG_CMD_DMA_SCHED) &&
-			 (display->enabled)))
-		flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
+	flags = DSI_CTRL_CMD_READ;
 
-	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, &cmd->msg, &flags);
+	cmd->ctrl_flags = flags;
+	dsi_display_set_cmd_tx_ctrl_flags(display, cmd);
+	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, cmd);
 	if (rc <= 0)
 		DSI_ERR("rx cmd transfer failed rc = %d\n", rc);
 
@@ -1030,7 +1073,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 
 	DSI_DEBUG("[DSI] Display command transfer\n");
 
-	if ((cmd_buf[1]) || (cmd_buf[3] & MIPI_DSI_MSG_LASTCOMMAND))
+	if (!(cmd_buf[3] & MIPI_DSI_MSG_BATCH_COMMAND))
 		transfer = true;
 
 	mutex_lock(&dsi_display->display_lock);
@@ -1087,10 +1130,7 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		dsi_display->tx_cmd_buf_ndx = 0;
 
 		for (i = 0; i < cnt; i++) {
-			if (cmds->last_command)
-				cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
-			rc = dsi_display->host.ops->transfer(&dsi_display->host,
-					&cmds->msg);
+			rc = dsi_host_transfer_sub(&dsi_display->host, cmds);
 			if (rc < 0) {
 				DSI_ERR("failed to send command, rc=%d\n", rc);
 				break;
@@ -1143,7 +1183,6 @@ int dsi_display_cmd_receive(void *display, const char *cmd_buf,
 {
 	struct dsi_display *dsi_display = display;
 	struct dsi_cmd_desc cmd = {};
-	u8 cmd_payload[MAX_CMD_PAYLOAD_SIZE] = {0};
 	bool state = false;
 	int rc = -1;
 
@@ -1152,15 +1191,15 @@ int dsi_display_cmd_receive(void *display, const char *cmd_buf,
 		return -EINVAL;
 	}
 
-	rc = dsi_display_cmd_prepare(cmd_buf, cmd_buf_len,
-			&cmd, cmd_payload, MAX_CMD_PAYLOAD_SIZE);
+	rc = dsi_panel_create_cmd_packets(cmd_buf, cmd_buf_len, 1, &cmd);
 	if (rc) {
-		DSI_ERR("[DSI] command prepare failed, rc = %d\n", rc);
+		DSI_ERR("[DSI] command packet create failed, rc = %d\n", rc);
 		return rc;
 	}
 
 	cmd.msg.rx_buf = recv_buf;
 	cmd.msg.rx_len = recv_buf_len;
+	cmd.msg.flags |= MIPI_DSI_MSG_UNICAST_COMMAND;
 
 	mutex_lock(&dsi_display->display_lock);
 	rc = dsi_display_ctrl_get_host_init_state(dsi_display, &state);
@@ -3096,66 +3135,41 @@ static void dsi_display_mask_overflow(struct dsi_display *display, u32 flags,
 	}
 }
 
-static int dsi_display_broadcast_cmd(struct dsi_display *display,
-				     const struct mipi_dsi_msg *msg)
+static int dsi_display_broadcast_cmd(struct dsi_display *display, struct dsi_cmd_desc *cmd)
 {
 	int rc = 0;
-	u32 flags, m_flags;
 	struct dsi_display_ctrl *ctrl, *m_ctrl;
 	int i;
-
-	m_flags = (DSI_CTRL_CMD_BROADCAST | DSI_CTRL_CMD_BROADCAST_MASTER |
-		   DSI_CTRL_CMD_DEFER_TRIGGER | DSI_CTRL_CMD_FETCH_MEMORY);
-	flags = (DSI_CTRL_CMD_BROADCAST | DSI_CTRL_CMD_DEFER_TRIGGER |
-		 DSI_CTRL_CMD_FETCH_MEMORY);
-
-	if ((msg->flags & MIPI_DSI_MSG_LASTCOMMAND)) {
-		flags |= DSI_CTRL_CMD_LAST_COMMAND;
-		m_flags |= DSI_CTRL_CMD_LAST_COMMAND;
-	}
-
-	/*
-	 * During broadcast command dma scheduling is always recommended.
-	 * As long as the display is enabled and TE is running the
-	 * DSI_CTRL_CMD_CUSTOM_DMA_SCHED flag should be set.
-	 */
-	if (display->enabled) {
-		flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
-		m_flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
-	}
-
-	if (display->queue_cmd_waits ||
-			msg->flags & MIPI_DSI_MSG_ASYNC_OVERRIDE) {
-		flags |= DSI_CTRL_CMD_ASYNC_WAIT;
-		m_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
-	}
 
 	/*
 	 * 1. Setup commands in FIFO
 	 * 2. Trigger commands
 	 */
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
-	dsi_display_mask_overflow(display, m_flags, true);
-	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, msg, &m_flags);
+	dsi_display_mask_overflow(display, cmd->ctrl_flags, true);
+
+	cmd->ctrl_flags |= DSI_CTRL_CMD_BROADCAST_MASTER;
+	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, cmd);
 	if (rc) {
 		DSI_ERR("[%s] cmd transfer failed on master,rc=%d\n",
 		       display->name, rc);
 		goto error;
 	}
+	cmd->ctrl_flags &= ~DSI_CTRL_CMD_BROADCAST_MASTER;
 
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
 		if (ctrl == m_ctrl)
 			continue;
 
-		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, msg, &flags);
+		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, cmd);
 		if (rc) {
 			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
 			       display->name, rc);
 			goto error;
 		}
 
-		rc = dsi_ctrl_cmd_tx_trigger(ctrl->ctrl, flags);
+		rc = dsi_ctrl_cmd_tx_trigger(ctrl->ctrl, cmd->ctrl_flags);
 		if (rc) {
 			DSI_ERR("[%s] cmd trigger failed, rc=%d\n",
 			       display->name, rc);
@@ -3163,7 +3177,7 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display,
 		}
 	}
 
-	rc = dsi_ctrl_cmd_tx_trigger(m_ctrl->ctrl, m_flags);
+	rc = dsi_ctrl_cmd_tx_trigger(m_ctrl->ctrl, cmd->ctrl_flags | DSI_CTRL_CMD_BROADCAST_MASTER);
 	if (rc) {
 		DSI_ERR("[%s] cmd trigger failed for master, rc=%d\n",
 		       display->name, rc);
@@ -3171,7 +3185,7 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display,
 	}
 
 error:
-	dsi_display_mask_overflow(display, m_flags, false);
+	dsi_display_mask_overflow(display, cmd->ctrl_flags, false);
 	return rc;
 }
 
@@ -3229,13 +3243,12 @@ static int dsi_host_detach(struct mipi_dsi_host *host,
 	return 0;
 }
 
-static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
-				 const struct mipi_dsi_msg *msg)
+int dsi_host_transfer_sub(struct mipi_dsi_host *host, struct dsi_cmd_desc *cmd)
 {
 	struct dsi_display *display;
 	int rc = 0, ret = 0;
 
-	if (!host || !msg) {
+	if (!host || !cmd) {
 		DSI_ERR("Invalid params\n");
 		return 0;
 	}
@@ -3278,28 +3291,18 @@ static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 		}
 	}
 
-	if (display->ctrl_count > 1 && !(msg->flags & MIPI_DSI_MSG_UNICAST)) {
-		rc = dsi_display_broadcast_cmd(display, msg);
+	dsi_display_set_cmd_tx_ctrl_flags(display, cmd);
+
+	if (cmd->ctrl_flags & DSI_CTRL_CMD_BROADCAST) {
+		rc = dsi_display_broadcast_cmd(display, cmd);
 		if (rc) {
-			DSI_ERR("[%s] cmd broadcast failed, rc=%d\n",
-			       display->name, rc);
+			DSI_ERR("[%s] cmd broadcast failed, rc=%d\n", display->name, rc);
 			goto error_disable_cmd_engine;
 		}
 	} else {
-		int ctrl_idx = (msg->flags & MIPI_DSI_MSG_UNICAST) ?
-				msg->ctrl : 0;
-		u32 cmd_flags = DSI_CTRL_CMD_FETCH_MEMORY;
+		int idx = cmd->ctrl;
 
-		if (display->queue_cmd_waits ||
-				msg->flags & MIPI_DSI_MSG_ASYNC_OVERRIDE)
-			cmd_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
-
-		if ((msg->flags & MIPI_DSI_MSG_CMD_DMA_SCHED) &&
-				(display->enabled))
-			cmd_flags |= DSI_CTRL_CMD_CUSTOM_DMA_SCHED;
-
-		rc = dsi_ctrl_cmd_transfer(display->ctrl[ctrl_idx].ctrl, msg,
-				&cmd_flags);
+		rc = dsi_ctrl_cmd_transfer(display->ctrl[idx].ctrl, cmd);
 		if (rc) {
 			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
 			       display->name, rc);
@@ -3321,6 +3324,26 @@ error_disable_clks:
 		       display->name, ret);
 	}
 error:
+	return rc;
+}
+
+static ssize_t dsi_host_transfer(struct mipi_dsi_host *host, const struct mipi_dsi_msg *msg)
+{
+	int rc = 0;
+	struct dsi_cmd_desc cmd;
+
+	if (!msg) {
+		DSI_ERR("Invalid params\n");
+		return 0;
+	}
+
+	memcpy(&cmd.msg, msg, sizeof(*msg));
+	cmd.ctrl = 0;
+	cmd.post_wait_ms = 0;
+	cmd.ctrl_flags = 0;
+
+	rc = dsi_host_transfer_sub(host, &cmd);
+
 	return rc;
 }
 
@@ -6223,10 +6246,6 @@ static int dsi_host_ext_attach(struct mipi_dsi_host *host,
 			dsi->mode_flags & MIPI_DSI_MODE_VIDEO_HFP;
 		panel->video_config.pulse_mode_hsa_he =
 			dsi->mode_flags & MIPI_DSI_MODE_VIDEO_HSE;
-		panel->video_config.bllp_lp11_en =
-			dsi->mode_flags & MIPI_DSI_MODE_VIDEO_BLLP;
-		panel->video_config.eof_bllp_lp11_en =
-			dsi->mode_flags & MIPI_DSI_MODE_VIDEO_EOF_BLLP;
 	} else {
 		panel->panel_mode = DSI_OP_CMD_MODE;
 		DSI_ERR("command mode not supported by ext bridge\n");

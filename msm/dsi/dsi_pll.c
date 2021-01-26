@@ -197,10 +197,8 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 		return -ENOMEM;
 	}
 
-	if (dsi_pll_get_ioresources(pdev, &pll_res->gdsc_base, "gdsc_base")) {
-		DSI_PLL_ERR(pll_res, "Unable to remap gdsc base resources\n");
-		return -ENOMEM;
-	}
+	if (dsi_pll_get_ioresources(pdev, &pll_res->gdsc_base, "gdsc_base"))
+		DSI_PLL_DBG(pll_res, "Unable to remap gdsc base resources\n");
 
 	in_trusted_vm = of_property_read_bool(pdev->dev.of_node,
 						"qcom,dsi-pll-in-trusted-vm");

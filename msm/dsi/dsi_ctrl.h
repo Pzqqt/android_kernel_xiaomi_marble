@@ -565,8 +565,7 @@ int dsi_ctrl_set_tpg_state(struct dsi_ctrl *dsi_ctrl, bool on);
 /**
  * dsi_ctrl_cmd_transfer() - Transfer commands on DSI link
  * @dsi_ctrl:             DSI controller handle.
- * @msg:                  Message to transfer on DSI link.
- * @flags:                Modifiers for message transfer.
+ * @cmd:                  Description of the cmd to be sent.
  *
  * Command transfer can be done only when command engine is enabled. The
  * transfer API will until either the command transfer finishes or the timeout
@@ -575,9 +574,7 @@ int dsi_ctrl_set_tpg_state(struct dsi_ctrl *dsi_ctrl, bool on);
  *
  * Return: error code.
  */
-int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl,
-			  const struct mipi_dsi_msg *msg,
-			  u32 *flags);
+int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd);
 
 /**
  * dsi_ctrl_cmd_tx_trigger() - Trigger a deferred command.

@@ -358,14 +358,18 @@ enum dsi_video_traffic_mode {
 
 /**
  * struct dsi_cmd_desc - description of a dsi command
- * @msg:		dsi mipi msg packet
- * @last_command:   indicates whether the cmd is the last one to send
- * @post_wait_ms:   post wait duration
+ * @msg:                 dsi mipi msg packet
+ * @last_command:        indicates whether the cmd is the last one to send
+ * @post_wait_ms:        post wait duration
+ * @ctrl:                index of DSI controller
+ * @ctrl_flags:          controller flags
  */
 struct dsi_cmd_desc {
 	struct mipi_dsi_msg msg;
 	bool last_command;
 	u32  post_wait_ms;
+	u32 ctrl;
+	u32 ctrl_flags;
 };
 
 /**
@@ -785,5 +789,14 @@ static inline u64 dsi_h_total_dce(struct dsi_mode_info *mode)
 			mode->h_sync_width;
 	return h_total;
 }
+
+/**
+ * dsi_host_transfer_sub() - transfers DSI commands from host to panel
+ * @host:    pointer to the DSI mipi host device
+ * @cmd:     DSI command to be transferred
+ *
+ * Return: error code.
+ */
+int dsi_host_transfer_sub(struct mipi_dsi_host *host, struct dsi_cmd_desc *cmd);
 
 #endif /* _DSI_DEFS_H_ */
