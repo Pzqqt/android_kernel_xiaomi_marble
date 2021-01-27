@@ -26,6 +26,35 @@
 #include <dp_rx.h>
 #include <ce_api.h>
 #include <ce_internal.h>
+#include <wlan_cfg.h>
+
+/**
+ * dp_rx_refill_thread_schedule() - Schedule rx refill thread
+ * @soc: ol_txrx_soc_handle object
+ *
+ */
+#ifdef WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL
+static void dp_rx_refill_thread_schedule(ol_txrx_soc_handle soc)
+{
+	struct dp_rx_refill_thread *rx_thread;
+	struct dp_txrx_handle *dp_ext_hdl;
+
+	if (!soc)
+		return;
+
+	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
+	if (!dp_ext_hdl)
+		return;
+
+	rx_thread = &dp_ext_hdl->refill_thread;
+	qdf_set_bit(RX_REFILL_POST_EVENT, &rx_thread->event_flag);
+	qdf_wake_up_interruptible(&rx_thread->wait_q);
+}
+#else
+static void dp_rx_refill_thread_schedule(ol_txrx_soc_handle soc)
+{
+}
+#endif
 
 QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 			struct dp_txrx_config *config)
@@ -34,6 +63,7 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	uint8_t num_dp_rx_threads;
 	struct dp_pdev *pdev;
+	struct dp_soc *dp_soc;
 
 	if (qdf_unlikely(!soc)) {
 		dp_err("soc is NULL");
@@ -61,6 +91,21 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	dp_ext_hdl->rx_tm_hdl.txrx_handle_cmn =
 				dp_txrx_get_cmn_hdl_frm_ext_hdl(dp_ext_hdl);
 
+	dp_soc = cdp_soc_t_to_dp_soc(soc);
+	if (wlan_cfg_is_rx_refill_buffer_pool_enabled(dp_soc->wlan_cfg_ctx)) {
+		dp_ext_hdl->refill_thread.soc = soc;
+		dp_ext_hdl->refill_thread.enabled = true;
+		qdf_status =
+			dp_rx_refill_thread_init(&dp_ext_hdl->refill_thread);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to initialize RX refill thread status:%d",
+			       qdf_status);
+			return qdf_status;
+		}
+		cdp_register_rx_refill_thread_sched_handler(soc,
+						dp_rx_refill_thread_schedule);
+	}
+
 	num_dp_rx_threads = cdp_get_num_rx_contexts(soc);
 
 	if (dp_ext_hdl->config.enable_rx_threads) {
@@ -74,6 +119,7 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 QDF_STATUS dp_txrx_deinit(ol_txrx_soc_handle soc)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
+	struct dp_soc *dp_soc;
 
 	if (!soc)
 		return QDF_STATUS_E_INVAL;
@@ -81,6 +127,13 @@ QDF_STATUS dp_txrx_deinit(ol_txrx_soc_handle soc)
 	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
 	if (!dp_ext_hdl)
 		return QDF_STATUS_E_FAULT;
+
+	dp_soc = cdp_soc_t_to_dp_soc(soc);
+	if (wlan_cfg_is_rx_refill_buffer_pool_enabled(dp_soc->wlan_cfg_ctx)) {
+		dp_rx_refill_thread_deinit(&dp_ext_hdl->refill_thread);
+		dp_ext_hdl->refill_thread.soc = NULL;
+		dp_ext_hdl->refill_thread.enabled = false;
+	}
 
 	if (dp_ext_hdl->config.enable_rx_threads)
 		dp_rx_tm_deinit(&dp_ext_hdl->rx_tm_hdl);

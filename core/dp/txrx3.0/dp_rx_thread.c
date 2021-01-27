@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,6 +19,7 @@
 #include <dp_txrx.h>
 #include "dp_peer.h"
 #include "dp_internal.h"
+#include "dp_types.h"
 #include <cdp_txrx_cmn_struct.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cds_sched.h>
@@ -599,6 +600,86 @@ static int dp_rx_thread_loop(void *arg)
 	return 0;
 }
 
+static int dp_rx_refill_thread_sub_loop(struct dp_rx_refill_thread *rx_thread,
+					bool *shutdown)
+{
+	while (true) {
+		if (qdf_atomic_test_and_clear_bit(RX_REFILL_SHUTDOWN_EVENT,
+						  &rx_thread->event_flag)) {
+			if (qdf_atomic_test_and_clear_bit(RX_REFILL_SUSPEND_EVENT,
+							  &rx_thread->event_flag)) {
+				qdf_event_set(&rx_thread->suspend_event);
+			}
+			dp_debug("shutting down (%s) pid %d",
+				 qdf_get_current_comm(), qdf_get_current_pid());
+			*shutdown = true;
+			break;
+		}
+
+		dp_rx_refill_buff_pool_enqueue((struct dp_soc *)rx_thread->soc);
+
+		if (qdf_atomic_test_and_clear_bit(RX_REFILL_SUSPEND_EVENT,
+						  &rx_thread->event_flag)) {
+			dp_debug("refill thread received suspend ind (%s) pid %d",
+				 qdf_get_current_comm(),
+				 qdf_get_current_pid());
+			qdf_event_set(&rx_thread->suspend_event);
+			dp_debug("refill thread waiting for resume (%s) pid %d",
+				 qdf_get_current_comm(),
+				 qdf_get_current_pid());
+			qdf_wait_single_event(&rx_thread->resume_event, 0);
+		}
+		break;
+	}
+	return 0;
+}
+
+static int dp_rx_refill_thread_loop(void *arg)
+{
+	struct dp_rx_refill_thread *rx_thread = arg;
+	bool shutdown = false;
+	int status;
+
+	if (!arg) {
+		dp_err("bad Args passed");
+		return 0;
+	}
+
+	qdf_set_user_nice(qdf_get_current_task(), -1);
+	qdf_set_wake_up_idle(true);
+
+	qdf_event_set(&rx_thread->start_event);
+	dp_info("starting rx_refill_thread (%s) pid %d", qdf_get_current_comm(),
+		qdf_get_current_pid());
+	while (!shutdown) {
+		/* This implements the execution model algorithm */
+		dp_debug("refill thread sleeping");
+		status =
+		    qdf_wait_queue_interruptible
+				(rx_thread->wait_q,
+				 qdf_atomic_test_bit(RX_REFILL_POST_EVENT,
+						     &rx_thread->event_flag) ||
+				 qdf_atomic_test_bit(RX_REFILL_SUSPEND_EVENT,
+						     &rx_thread->event_flag));
+		dp_debug("refill thread woken up");
+
+		if (status == -ERESTARTSYS) {
+			QDF_DEBUG_PANIC("wait_event_interruptible returned -ERESTARTSYS");
+			break;
+		}
+		dp_rx_refill_thread_sub_loop(rx_thread, &shutdown);
+		qdf_atomic_clear_bit(RX_REFILL_POST_EVENT, &rx_thread->event_flag);
+	}
+
+	/* If we get here the scheduler thread must exit */
+	dp_info("exiting (%s) pid %d", qdf_get_current_comm(),
+		qdf_get_current_pid());
+	qdf_event_set(&rx_thread->shutdown_event);
+	qdf_exit_thread(QDF_STATUS_SUCCESS);
+
+	return 0;
+}
+
 /**
  * dp_rx_tm_thread_napi_poll() - dummy napi poll for rx_thread NAPI
  * @napi: pointer to DP rx_thread NAPI
@@ -715,6 +796,60 @@ static QDF_STATUS dp_rx_tm_thread_deinit(struct dp_rx_thread *rx_thread)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS dp_rx_refill_thread_init(struct dp_rx_refill_thread *refill_thread)
+{
+	char refill_thread_name[20] = {0};
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	qdf_scnprintf(refill_thread_name, sizeof(refill_thread_name),
+		      "dp_refill_thread");
+	dp_info("Initializing %s", refill_thread_name);
+
+	refill_thread->state = DP_RX_REFILL_THREAD_INVALID;
+	refill_thread->event_flag = 0;
+	qdf_event_create(&refill_thread->start_event);
+	qdf_event_create(&refill_thread->suspend_event);
+	qdf_event_create(&refill_thread->resume_event);
+	qdf_event_create(&refill_thread->shutdown_event);
+	qdf_init_waitqueue_head(&refill_thread->wait_q);
+	refill_thread->task = qdf_create_thread(dp_rx_refill_thread_loop,
+						refill_thread,
+						refill_thread_name);
+	if (!refill_thread->task) {
+		dp_err("could not create dp_rx_refill_thread");
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_wake_up_process(refill_thread->task);
+	qdf_status = qdf_wait_single_event(&refill_thread->start_event,
+					   0);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		dp_err("failed waiting for refill thread creation status: %d",
+		       qdf_status);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	refill_thread->state = DP_RX_REFILL_THREAD_RUNNING;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_rx_refill_thread_deinit(struct dp_rx_refill_thread *refill_thread)
+{
+	qdf_set_bit(RX_REFILL_SHUTDOWN_EVENT,
+		    &refill_thread->event_flag);
+	qdf_set_bit(RX_REFILL_POST_EVENT,
+		    &refill_thread->event_flag);
+	qdf_wake_up_interruptible(&refill_thread->wait_q);
+	qdf_wait_single_event(&refill_thread->shutdown_event, 0);
+
+	qdf_event_destroy(&refill_thread->start_event);
+	qdf_event_destroy(&refill_thread->suspend_event);
+	qdf_event_destroy(&refill_thread->resume_event);
+	qdf_event_destroy(&refill_thread->shutdown_event);
+
+	refill_thread->state = DP_RX_REFILL_THREAD_INVALID;
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS dp_rx_tm_init(struct dp_rx_tm_handle *rx_tm_hdl,
 			 uint8_t num_dp_rx_threads)
 {
@@ -819,6 +954,50 @@ suspend_fail:
 	       qdf_status);
 
 	dp_rx_tm_resume(rx_tm_hdl);
+
+	return qdf_status;
+}
+
+/**
+ * dp_rx_refill_thread_suspend() - Suspend DP RX refill threads
+ * @refill_thread: containing the overall refill thread infrastructure
+ *
+ * Return: Success/Failure
+ */
+QDF_STATUS
+dp_rx_refill_thread_suspend(struct dp_rx_refill_thread *refill_thread)
+{
+	QDF_STATUS qdf_status;
+
+	if (refill_thread->state == DP_RX_REFILL_THREAD_SUSPENDED) {
+		dp_info("already in suspend state! Ignoring.");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	refill_thread->state = DP_RX_REFILL_THREAD_SUSPENDING;
+
+	qdf_event_reset(&refill_thread->resume_event);
+	qdf_event_reset(&refill_thread->suspend_event);
+	qdf_set_bit(RX_REFILL_SUSPEND_EVENT,
+		    &refill_thread->event_flag);
+	qdf_wake_up_interruptible(&refill_thread->wait_q);
+
+	qdf_status = qdf_wait_single_event(&refill_thread->suspend_event,
+					   DP_RX_THREAD_WAIT_TIMEOUT);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		dp_debug("Refill thread  suspended");
+	else
+		goto suspend_fail;
+
+	refill_thread->state = DP_RX_REFILL_THREAD_SUSPENDED;
+	return QDF_STATUS_SUCCESS;
+
+suspend_fail:
+	dp_err("Refill thread %s(%d) while waiting for suspend",
+	       qdf_status == QDF_STATUS_E_TIMEOUT ? "timeout out" : "failed",
+	       qdf_status);
+
+	dp_rx_refill_thread_resume(refill_thread);
 
 	return qdf_status;
 }
@@ -934,6 +1113,35 @@ QDF_STATUS dp_rx_tm_resume(struct dp_rx_tm_handle *rx_tm_hdl)
 	}
 
 	rx_tm_hdl->state = DP_RX_THREADS_RUNNING;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_rx_refill_thread_resume() - Resume DP RX refill threads
+ * @refill_thread: refill_thread containing the overall thread infrastructure
+ *
+ * Return: QDF_STATUS_SUCCESS on resume success. QDF error otherwise.
+ */
+QDF_STATUS dp_rx_refill_thread_resume(struct dp_rx_refill_thread *refill_thread)
+{
+	dp_debug("calling refill thread to resume");
+
+	if (refill_thread->state != DP_RX_REFILL_THREAD_SUSPENDED &&
+	    refill_thread->state != DP_RX_REFILL_THREAD_SUSPENDING) {
+		dp_info("resume callback received in %d state ! Ignoring.",
+			refill_thread->state);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* postively reset event_flag for DP_RX_REFILL_THREAD_SUSPENDING
+	 * state
+	 */
+	qdf_clear_bit(RX_REFILL_SUSPEND_EVENT,
+		      &refill_thread->event_flag);
+	qdf_event_set(&refill_thread->resume_event);
+
+	refill_thread->state = DP_RX_REFILL_THREAD_RUNNING;
 
 	return QDF_STATUS_SUCCESS;
 }
