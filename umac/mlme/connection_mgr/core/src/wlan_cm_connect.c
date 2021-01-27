@@ -1391,18 +1391,21 @@ static inline void cm_set_fils_connection(struct cnx_mgr *cm_ctx,
 {
 	int32_t key_mgmt;
 
-	/* return if already set */
-	if (resp->is_fils_connection)
+	/*
+	 * Check and set only in case of failure and when
+	 * resp->is_fils_connection is not alredy set, else return.
+	 */
+	if (QDF_IS_STATUS_SUCCESS(resp->connect_status) ||
+	    resp->is_fils_connection)
 		return;
+
 	key_mgmt = wlan_crypto_get_param(cm_ctx->vdev,
 					 WLAN_CRYPTO_PARAM_KEY_MGMT);
 
-	if (!(key_mgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256 |
+	if (key_mgmt & (1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA256 |
 			  1 << WLAN_CRYPTO_KEY_MGMT_FILS_SHA384 |
 			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256 |
-			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384)))
-		resp->is_fils_connection = false;
-	else
+			  1 << WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
 		resp->is_fils_connection = true;
 }
 #else

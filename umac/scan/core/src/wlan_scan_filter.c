@@ -571,15 +571,15 @@ static bool scm_is_fils_config_match(struct scan_filter *filter,
 	data = indication_ie->variable_data;
 
 	if (indication_ie->is_cache_id_present &&
-	    (data + CACHE_IDENTIFIER_LEN) < end_ptr)
+	    (data + CACHE_IDENTIFIER_LEN) <= end_ptr)
 		data += CACHE_IDENTIFIER_LEN;
 
 	if (indication_ie->is_hessid_present &&
-	    (data + HESSID_LEN) < end_ptr)
+	    (data + HESSID_LEN) <= end_ptr)
 		data += HESSID_LEN;
 
 	for (i = 1; i <= indication_ie->realm_identifiers_cnt &&
-	     (data + REALM_HASH_LEN) < end_ptr; i++) {
+	     (data + REALM_HASH_LEN) <= end_ptr; i++) {
 		if (!qdf_mem_cmp(filter->fils_scan_filter.fils_realm,
 				 data, REALM_HASH_LEN))
 			return true;

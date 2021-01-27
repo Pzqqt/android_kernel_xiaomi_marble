@@ -427,6 +427,7 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 		osif_cm_save_gtk(vdev, rsp);
 	}
 
+	osif_debug("Connect resp status  %d", conn_rsp_params.status);
 	cfg80211_connect_done(dev, &conn_rsp_params, GFP_KERNEL);
 	if (rsp->connect_ies.fils_ie && rsp->connect_ies.fils_ie->hlp_data_len)
 		osif_cm_set_hlp_data(dev, vdev, rsp);
