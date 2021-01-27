@@ -9525,6 +9525,12 @@ typedef struct {
     A_UINT32 total_peer_delete_resp_cnt;
     /** sched algo FIFO full count */
     A_UINT32 vdev_pause_fail_rt_to_sched_algo_fifo_full_cnt;
+    /** total number of qos null tx frame queued over WMI */
+    A_UINT32 qos_null_tx_over_wmi;
+    /** total qos null tx frame completion received count */
+    A_UINT32 qos_null_tx_send_compl_over_wmi;
+    /** total event alloc failure count for qos null tx send */
+    A_UINT32 qos_null_tx_send_event_alloc_failed;
 } wmi_ctrl_path_pdev_stats_struct;
 
 typedef enum {
