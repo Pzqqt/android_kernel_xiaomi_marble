@@ -1238,13 +1238,13 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
  * Here: _total_hp_layers = HFI_PROPERTY_PARAM_VENC_HIER_P_MAX_NUM_ENH_LAYER + 1
  * Here: _total_hb_layers = HFI_PROPERTY_PARAM_VENC_HIER_B_MAX_NUM_ENH_LAYER + 1
  */
-#define HFI_IRIS2_ENC_RECON_BUF_COUNT(num_ref, n_bframe, ltr_count, \
+#define HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, n_bframe, ltr_count, \
 		_total_hp_layers, _total_hb_layers, hybrid_hp, codec_standard) \
 	do \
 	{ \
-		num_ref = 1; \
+		HFI_U32 num_ref = 1; \
 		if (n_bframe) \
-			num_ref = n_bframe + 1; \
+			num_ref = 2; \
 		if (ltr_count) \
 			/* B and LTR can't be at same time */\
 			num_ref = num_ref + ltr_count; \
@@ -1270,6 +1270,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		{ \
 			num_ref = (2 ^ (_total_hb_layers - 1)) / 2 + 1; \
 		} \
+        num_recon = num_ref + 1; \
 	} while (0)
 
 #define SIZE_BIN_BITSTREAM_ENC(_size, frame_width, frame_height, \
@@ -1521,14 +1522,14 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 #define SIZE_LAMBDA_LUT (256 * 11)
 #define SIZE_OVERRIDE_BUF(num_lcumb) (HFI_ALIGN(((16 * (((num_lcumb) + 7)\
 		>> 3))), VENUS_DMA_ALIGNMENT) * 2)
-#define SIZE_IR_BUF(num_lcu_in_frame) (((((num_lcu_in_frame) << 1) + 7) &\
-		(~7)) * 3)
+#define SIZE_IR_BUF(num_lcu_in_frame) HFI_ALIGN((((((num_lcu_in_frame) << 1) + 7) &\
+    (~7)) * 3), VENUS_DMA_ALIGNMENT)
 
 #define SIZE_VPSS_LINE_BUF(num_vpp_pipes_enc, frame_height_coded, \
 			frame_width_coded) \
-	((((((8192) >> 2) << 5) * (num_vpp_pipes_enc)) + 64) + \
+	(HFI_ALIGN(((((((8192) >> 2) << 5) * (num_vpp_pipes_enc)) + 64) + \
 	(((((MAX((frame_width_coded), (frame_height_coded)) + 3) >> 2) << 5) +\
-	256) * 16))
+    256) * 16)), VENUS_DMA_ALIGNMENT))
 
 #define SIZE_TOP_LINE_BUF_FIRST_STG_SAO(frame_width_coded) \
 	HFI_ALIGN((16 * ((frame_width_coded) >> 5)), VENUS_DMA_ALIGNMENT)

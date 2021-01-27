@@ -1579,10 +1579,6 @@ int msm_vidc_get_internal_buffers(struct msm_vidc_inst *inst,
 	buf_size = call_session_op(core, buffer_size,
 		inst, buffer_type);
 
-	/* TODO: remove below hack to increase enc inter buf size by 100MB */
-	if (is_encode_session(inst))
-		buf_size += 100000000;
-
 	buf_count = call_session_op(core, min_count,
 		inst, buffer_type);
 
