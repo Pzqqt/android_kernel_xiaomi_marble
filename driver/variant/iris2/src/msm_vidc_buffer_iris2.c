@@ -125,7 +125,7 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 	u32 width, height, out_min_count, num_vpp_pipes, vpp_delay;
 	struct v4l2_format *f;
 	bool is_opb;
-	u32 pixelformat;
+	u32 color_fmt;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -138,12 +138,17 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
 
-	pixelformat = inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_NV12 ||
-		pixelformat == MSM_VIDC_FMT_P010)
+	color_fmt = v4l2_colorformat_to_driver(
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, __func__);
+	if (is_linear_colorformat(color_fmt))
 		is_opb = true;
 	else
 		is_opb = false;
+	/*
+	 * assume worst case, since color format is unknown at this
+	 * time
+	 */
+	is_opb = true;
 
 	if (inst->decode_vpp_delay.enable)
 		vpp_delay = inst->decode_vpp_delay.size;
@@ -155,7 +160,6 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 	height = f->fmt.pix_mp.height;
 	out_min_count = inst->buffers.output.min_count;
 	out_min_count = max(vpp_delay + 1, out_min_count);
-
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_LINE_H264D(size, width, height, is_opb,
 			num_vpp_pipes);

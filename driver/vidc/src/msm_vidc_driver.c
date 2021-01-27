@@ -1707,8 +1707,11 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
-	for (i = 0; i < buffers->min_count; i++)
+	for (i = 0; i < buffers->min_count; i++) {
 		rc = msm_vidc_create_internal_buffer(inst, buffer_type, i);
+		if (rc)
+			return rc;
+	}
 
 	return rc;
 }

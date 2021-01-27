@@ -66,7 +66,6 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_COMV:
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
-		case MSM_VIDC_BUF_DPB:
 			hfi_port = HFI_PORT_BITSTREAM;
 			break;
 		case MSM_VIDC_BUF_PERSIST:
@@ -75,6 +74,7 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 			break;
 		case MSM_VIDC_BUF_OUTPUT:
 		case MSM_VIDC_BUF_OUTPUT_META:
+		case MSM_VIDC_BUF_DPB:
 			hfi_port = HFI_PORT_RAW;
 			break;
 		default:

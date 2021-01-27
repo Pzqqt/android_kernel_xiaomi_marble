@@ -787,9 +787,9 @@ static int msm_vdec_get_output_internal_buffers(struct msm_vidc_inst *inst)
 
 	s_vpr_h(inst->sid, "output internal buffer: min     size     reuse\n");
 	s_vpr_h(inst->sid, "dpb  buffer: %d      %d      %d\n",
-		inst->buffers.bin.min_count,
-		inst->buffers.bin.size,
-		inst->buffers.bin.reuse);
+		inst->buffers.dpb.min_count,
+		inst->buffers.dpb.size,
+		inst->buffers.dpb.reuse);
 
 	return rc;
 }
@@ -1519,11 +1519,11 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vdec_queue_output_internal_buffers(inst);
+	rc = msm_vidc_session_streamon(inst, OUTPUT_PORT);
 	if (rc)
 		goto error;
 
-	rc = msm_vidc_session_streamon(inst, OUTPUT_PORT);
+	rc = msm_vdec_queue_output_internal_buffers(inst);
 	if (rc)
 		goto error;
 
@@ -1704,6 +1704,10 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	} else if (f->type == OUTPUT_MPLANE) {
 		fmt = &inst->fmts[OUTPUT_PORT];
 		fmt->type = OUTPUT_MPLANE;
+		if (inst->vb2q[INPUT_PORT].streaming) {
+			f->fmt.pix_mp.height = fmt->fmt.pix_mp.height;
+			f->fmt.pix_mp.width = fmt->fmt.pix_mp.width;
+		}
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 		fmt->fmt.pix_mp.width = VENUS_Y_STRIDE(
 			v4l2_colorformat_to_media(
@@ -1718,8 +1722,10 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			fmt->fmt.pix_mp.width;
 		fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
 			buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
-		inst->buffers.output.min_count = call_session_op(core,
-			min_count, inst, MSM_VIDC_BUF_OUTPUT);
+
+		if (!inst->vb2q[INPUT_PORT].streaming)
+			inst->buffers.output.min_count = call_session_op(core,
+				min_count, inst, MSM_VIDC_BUF_OUTPUT);
 		inst->buffers.output.extra_count = call_session_op(core,
 			extra_count, inst, MSM_VIDC_BUF_OUTPUT);
 		if (inst->buffers.output.actual_count <
@@ -1731,7 +1737,8 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		}
 		inst->buffers.output.size =
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
-
+		inst->capabilities->cap[PIX_FMTS].value =
+			v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
 		//rc = msm_vidc_check_session_supported(inst);
 		if (rc)
 			goto err_invalid_fmt;
@@ -1982,14 +1989,13 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 		u32 codecs = core->capabilities[DEC_CODECS].value;
 
 		while (codecs) {
-			if (idx > 31)
+			if (i > 31)
 				break;
 			if (codecs & BIT(i)) {
 				array[idx] = codecs & BIT(i);
 				idx++;
 			}
 			i++;
-			codecs >>= 1;
 		}
 		f->pixelformat = v4l2_codec_from_driver(array[f->index],
 				__func__);
@@ -2001,7 +2007,7 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 		u32 formats = inst->capabilities->cap[PIX_FMTS].step_or_mask;
 
 		while (formats) {
-			if (idx > 31)
+			if (i > 31)
 				break;
 			if (formats & BIT(i)) {
 				if (msm_vdec_check_colorformat_supported(inst,
@@ -2011,7 +2017,6 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 				}
 			}
 			i++;
-			formats >>= 1;
 		}
 		f->pixelformat = v4l2_colorformat_from_driver(array[f->index],
 				__func__);
@@ -2028,8 +2033,9 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	}
 	memset(f->reserved, 0, sizeof(f->reserved));
 
-	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x\n",
-		__func__, f->index, f->description, f->pixelformat, f->flags);
+	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x, driver colorfmt %#x\n",
+		__func__, f->index, f->description, f->pixelformat, f->flags,
+		v4l2_colorformat_to_driver(f->pixelformat, __func__));
 	return rc;
 }
 

@@ -1463,14 +1463,13 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 		u32 codecs = core->capabilities[DEC_CODECS].value;
 
 		while (codecs) {
-			if (idx > 31)
+			if (i > 31)
 				break;
 			if (codecs & BIT(i)) {
 				array[idx] = codecs & BIT(i);
 				idx++;
 			}
 			i++;
-			codecs >>= 1;
 		}
 		f->pixelformat = v4l2_codec_from_driver(array[f->index],
 				__func__);
@@ -1489,7 +1488,6 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 				idx++;
 			}
 			i++;
-			formats >>= 1;
 		}
 		f->pixelformat = v4l2_colorformat_from_driver(array[f->index],
 				__func__);
@@ -1506,8 +1504,9 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	}
 	memset(f->reserved, 0, sizeof(f->reserved));
 
-	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x\n",
-		__func__, f->index, f->description, f->pixelformat, f->flags);
+	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x, driver colorfmt %#x\n",
+		__func__, f->index, f->description, f->pixelformat, f->flags,
+		v4l2_colorformat_to_driver(f->pixelformat, __func__));
 	return rc;
 }
 
