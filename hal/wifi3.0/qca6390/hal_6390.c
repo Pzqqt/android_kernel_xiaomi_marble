@@ -1593,7 +1593,11 @@ struct hal_hw_srng_config hw_srng_table_6390[] = {
 	},
 	{ /* DIR_BUF_RX_DMA_SRC */
 		.start_ring_id = HAL_SRNG_DIR_BUF_RX_SRC_DMA_RING,
-		.max_rings = 1,
+		/*
+		 * one ring is for spectral scan
+		 * the other one is for cfr
+		 */
+		.max_rings = 2,
 		.entry_size = 2,
 		.lmac_ring = TRUE,
 		.ring_dir = HAL_SRNG_SRC_RING,
