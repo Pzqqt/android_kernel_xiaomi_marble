@@ -1268,8 +1268,10 @@ struct hdd_adapter {
 #endif
 
 	struct hdd_mic_work mic_work;
+#ifndef FEATURE_CM_ENABLE
 	bool disconnection_in_progress;
 	qdf_mutex_t disconnection_status_lock;
+#endif
 	unsigned long event_flags;
 
 	/**Device TX/RX statistics*/
@@ -4392,6 +4394,8 @@ static inline void hdd_driver_mem_cleanup(void)
 {
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
+
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_set_disconnect_status() - set adapter disconnection status
  * @hdd_adapter: Pointer to hdd adapter
@@ -4400,6 +4404,7 @@ static inline void hdd_driver_mem_cleanup(void)
  * Return: None
  */
 void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
+#endif
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**

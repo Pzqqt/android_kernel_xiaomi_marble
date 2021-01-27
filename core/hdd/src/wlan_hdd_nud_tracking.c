@@ -235,6 +235,8 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 	struct reject_ap_info ap_info;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	qdf_mutex_acquire(&adapter->disconnection_status_lock);
 	if (adapter->disconnection_in_progress) {
 		qdf_mutex_release(&adapter->disconnection_status_lock);
@@ -242,7 +244,7 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 		return;
 	}
 	qdf_mutex_release(&adapter->disconnection_status_lock);
-
+#endif
 	if (hdd_is_roaming_in_progress(hdd_ctx)) {
 		hdd_debug("Roaming already in progress, cannot trigger roam.");
 		return;

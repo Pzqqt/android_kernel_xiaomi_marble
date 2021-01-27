@@ -886,6 +886,20 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	 /* hdd_objmgr_set_peer_mlme_auth_state */
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+static bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
+{
+	return rsp->is_fils_connection;
+}
+#else
+static inline
+bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
+{
+	return false;
+}
+#endif
+
+
 static void
 hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 					struct wlan_cm_connect_resp *rsp)
@@ -910,11 +924,8 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 	if (!wlan_is_wps_connection(hdd_ctx->pdev, adapter->vdev_id) &&
 	    (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
 	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
-	      sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
-	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA256 ||
-	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FILS_SHA384 ||
-	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA256 ||
-	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA384))
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
+	     hdd_cm_is_fils_connection(rsp)))
 		is_auth_required = false;
 
 	hdd_roam_register_sta(adapter, &rsp->bssid, is_auth_required);

@@ -5288,7 +5288,10 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 
 	adapter->offloads_configured = false;
 	adapter->is_link_up_service_needed = false;
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	adapter->disconnection_in_progress = false;
+#endif
 	adapter->send_mode_change = true;
 
 	/* Cache station count initialize to zero */
@@ -6028,7 +6031,10 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 
 	hdd_nud_deinit_tracking(adapter);
 	hdd_mic_deinit_work(adapter);
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	qdf_mutex_destroy(&adapter->disconnection_status_lock);
+#endif
 	hdd_periodic_sta_stats_mutex_destroy(adapter);
 	hdd_apf_context_destroy(adapter);
 	qdf_spinlock_destroy(&adapter->vdev_lock);
@@ -6703,7 +6709,10 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		hdd_nud_init_tracking(adapter);
 		hdd_mic_init_work(adapter);
 
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		qdf_mutex_create(&adapter->disconnection_status_lock);
+#endif
 		hdd_periodic_sta_stats_mutex_create(adapter);
 
 		break;
@@ -7663,10 +7672,13 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 		}
 
+		/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 		if (adapter->device_mode != QDF_SAP_MODE &&
 		    adapter->device_mode != QDF_P2P_GO_MODE &&
 		    adapter->device_mode != QDF_FTM_MODE)
 			hdd_set_disconnect_status(adapter, false);
+#endif
 		hdd_debug("Flush any mgmt references held by peer");
 		hdd_stop_adapter(hdd_ctx, adapter);
 		hdd_adapter_dev_put_debug(adapter,
@@ -9011,12 +9023,15 @@ static QDF_STATUS hdd_abort_sched_scan_all_adapters(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef FEATURE_CM_ENABLE
 void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool status)
 {
 	qdf_mutex_acquire(&adapter->disconnection_status_lock);
 	adapter->disconnection_in_progress = status;
 	qdf_mutex_release(&adapter->disconnection_status_lock);
 }
+#endif
+
 
 /**
  * hdd_unregister_notifiers - Unregister netdev notifiers.

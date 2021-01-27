@@ -179,6 +179,7 @@ static void lim_set_fils_connection(struct wlan_cm_connect_resp *connect_rsp,
 {
 	if (lim_is_fils_connection(session_entry))
 		connect_rsp->is_fils_connection = true;
+	pe_debug("is_fils_connection %d", connect_rsp->is_fils_connection);
 }
 #else
 static inline

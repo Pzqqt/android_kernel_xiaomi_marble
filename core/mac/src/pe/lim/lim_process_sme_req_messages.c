@@ -3306,7 +3306,7 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto fail;
 
-	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d",
+	pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d WPS %d OSEN %d fils %d",
 		 pe_session->curr_op_freq, pe_session->ch_width,
 		 pe_session->ch_center_freq_seg0,
 		 pe_session->ch_center_freq_seg1,
@@ -3320,7 +3320,8 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 		 pe_session->vht_config.csnof_beamformer_antSup,
 		 pe_session->isCiscoVendorAP,
 		 pe_session->wps_registration,
-		 pe_session->isOSENConnection);
+		 pe_session->isOSENConnection,
+		 lim_is_fils_connection(pe_session));
 
 	status = lim_send_connect_req_to_mlm(pe_session);
 	if (QDF_IS_STATUS_ERROR(status)) {
