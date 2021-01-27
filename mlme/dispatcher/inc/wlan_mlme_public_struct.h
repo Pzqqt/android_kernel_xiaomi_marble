@@ -30,6 +30,7 @@
 #include "wlan_cm_roam_public_struct.h"
 #include "wlan_mlme_twt_public_struct.h"
 #include "cfg_mlme_generic.h"
+#include "host_diag_core_event.h"
 
 #define OWE_TRANSITION_OUI_TYPE "\x50\x6f\x9a\x1c"
 #define OWE_TRANSITION_OUI_SIZE 4
@@ -91,6 +92,23 @@
  * and not less than 20db of host cached RSSI
  */
 #define AP_OFF_RSSI_OFFSET 20
+
+enum diagwlan_status_eventsubtype {
+	DIAG_WLAN_STATUS_CONNECT = 0,
+	DIAG_WLAN_STATUS_DISCONNECT
+};
+
+enum diagwlan_status_eventreason {
+	DIAG_REASON_UNSPECIFIED = 0,
+	DIAG_REASON_USER_REQUESTED,
+	DIAG_REASON_MIC_ERROR,
+	DIAG_REASON_DISASSOC,
+	DIAG_REASON_DEAUTH,
+	DIAG_REASON_HANDOFF,
+	DIAG_REASON_ROAM_SYNCH_IND,
+	DIAG_REASON_ROAM_SYNCH_CNF,
+	DIAG_REASON_ROAM_HO_FAIL,
+};
 
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
@@ -1542,6 +1560,9 @@ struct wlan_mlme_sta_cfg {
 	bool allow_tpc_from_ap;
 	enum station_keepalive_method sta_keepalive_method;
 	bool usr_disabled_roaming;
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+	host_event_wlan_status_payload_type event_payload;
+#endif
 };
 
 /**
