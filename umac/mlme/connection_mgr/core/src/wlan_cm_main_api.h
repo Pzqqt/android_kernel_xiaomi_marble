@@ -30,6 +30,9 @@
 #ifdef WLAN_FEATURE_INTERFACE_MGR
 #include <wlan_if_mgr_api.h>
 #endif
+#ifdef WLAN_CM_USE_SPINLOCK
+#include <scheduler_api.h>
+#endif
 
 #define CONNECT_REQ_PREFIX          0x00C00000
 #define DISCONNECT_REQ_PREFIX       0x00D00000
@@ -1046,4 +1049,13 @@ static inline void cm_req_history_print(struct cnx_mgr *cm_ctx)
 {}
 #endif
 
+#ifdef WLAN_CM_USE_SPINLOCK
+/**
+ * cm_activate_cmd_req_flush_cb() - Callback when the scheduler msg is flushed
+ * @msg: scheduler message
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_activate_cmd_req_flush_cb(struct scheduler_msg *msg);
+#endif
 #endif /* __WLAN_CM_MAIN_API_H__ */

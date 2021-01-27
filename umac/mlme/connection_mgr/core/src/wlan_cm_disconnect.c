@@ -39,19 +39,6 @@ void cm_send_disconnect_resp(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 }
 
 #ifdef WLAN_CM_USE_SPINLOCK
-static QDF_STATUS cm_activate_disconnect_req_flush_cb(struct scheduler_msg *msg)
-{
-	struct wlan_serialization_command *cmd = msg->bodyptr;
-
-	if (!cmd || !cmd->vdev) {
-		mlme_err("Null input cmd:%pK", cmd);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	wlan_objmgr_vdev_release_ref(cmd->vdev, WLAN_MLME_CM_ID);
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS cm_activate_disconnect_req_sched_cb(struct scheduler_msg *msg)
 {
 	struct wlan_serialization_command *cmd = msg->bodyptr;
@@ -104,7 +91,7 @@ cm_activate_disconnect_req(struct wlan_serialization_command *cmd)
 
 	msg.bodyptr = cmd;
 	msg.callback = cm_activate_disconnect_req_sched_cb;
-	msg.flush_callback = cm_activate_disconnect_req_flush_cb;
+	msg.flush_callback = cm_activate_cmd_req_flush_cb;
 
 	ret = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_MLME_CM_ID);
 	if (QDF_IS_STATUS_ERROR(ret))

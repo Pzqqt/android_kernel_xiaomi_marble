@@ -128,6 +128,20 @@ inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 {
 	qdf_spinlock_release(&cm_ctx->cm_req_lock);
 }
+
+QDF_STATUS cm_activate_cmd_req_flush_cb(struct scheduler_msg *msg)
+{
+	struct wlan_serialization_command *cmd = msg->bodyptr;
+
+	if (!cmd || !cmd->vdev) {
+		mlme_err("Null input cmd:%pK", cmd);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_objmgr_vdev_release_ref(cmd->vdev, WLAN_MLME_CM_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
 {
