@@ -4731,12 +4731,44 @@ static bool wma_add_sta_allow_sta_mode_vote_link(uint8_t oper_mode)
 }
 #endif /* FEATURE_STA_MODE_VOTE_LINK */
 
+static bool wma_is_vdev_in_sap_mode(tp_wma_handle wma, uint8_t vdev_id)
+{
+	struct wma_txrx_node *intf = wma->interfaces;
+
+	if (vdev_id >= wma->max_bssid) {
+		wma_err("Invalid vdev_id %hu", vdev_id);
+		QDF_ASSERT(0);
+		return false;
+	}
+
+	if ((intf[vdev_id].type == WMI_VDEV_TYPE_AP) &&
+	    (intf[vdev_id].sub_type == 0))
+		return true;
+
+	return false;
+}
+
+static bool wma_is_vdev_in_go_mode(tp_wma_handle wma, uint8_t vdev_id)
+{
+	struct wma_txrx_node *intf = wma->interfaces;
+
+	if (vdev_id >= wma->max_bssid) {
+		wma_err("Invalid vdev_id %hu", vdev_id);
+		QDF_ASSERT(0);
+		return false;
+	}
+
+	if ((intf[vdev_id].type == WMI_VDEV_TYPE_AP) &&
+	    (intf[vdev_id].sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO))
+		return true;
+
+	return false;
+}
+
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
 	void *htc_handle;
-	bool is_bus_suspend_allowed_in_beaconing_mode =
-		ucfg_pmo_get_beaconing_mode_bus_suspend(wma->psoc);
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -4765,13 +4797,30 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		break;
 	}
 
-	/* handle wow for sap/p2pgo with 1 or more peer in same way */
-	if (BSS_OPERATIONAL_MODE_AP == oper_mode) {
-		wma_debug("disable runtime pm and bus suspend: %d",
-			  is_bus_suspend_allowed_in_beaconing_mode);
-		if (!is_bus_suspend_allowed_in_beaconing_mode)
+	/* handle wow for sap with 1 or more peer in same way */
+	if (wma_is_vdev_in_sap_mode(wma, add_sta->smesessionId)) {
+		bool is_bus_suspend_allowed_in_sap_mode =
+			ucfg_pmo_get_sap_mode_bus_suspend(wma->psoc);
+		wma_info("sap mode: disable runtime pm and bus suspend: %d",
+			 is_bus_suspend_allowed_in_sap_mode);
+		if (!is_bus_suspend_allowed_in_sap_mode)
 			htc_vote_link_up(htc_handle);
 		wma_sap_prevent_runtime_pm(wma);
+
+		return;
+	}
+
+	/* handle wow for p2pgo with 1 or more peer in same way */
+	if (wma_is_vdev_in_go_mode(wma, add_sta->smesessionId)) {
+		bool is_bus_suspend_allowed_in_go_mode =
+			ucfg_pmo_get_go_mode_bus_suspend(wma->psoc);
+		wma_info("p2pgo mode: disable runtime pm and bus suspend: %d",
+			 is_bus_suspend_allowed_in_go_mode);
+		if (!is_bus_suspend_allowed_in_go_mode)
+			htc_vote_link_up(htc_handle);
+		wma_sap_prevent_runtime_pm(wma);
+
+		return;
 	}
 
 	/* handle wow for nan with 1 or more peer in same way */
@@ -4791,8 +4840,6 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	uint8_t smesession_id = del_sta->smesessionId;
 	bool rsp_requested = del_sta->respReqd;
 	void *htc_handle;
-	bool is_bus_suspend_allowed_in_beaconing_mode =
-		ucfg_pmo_get_beaconing_mode_bus_suspend(wma->psoc);
 
 	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
@@ -4840,12 +4887,28 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		qdf_mem_free(del_sta);
 	}
 
-	if (BSS_OPERATIONAL_MODE_AP == oper_mode) {
-		wma_debug("allow runtime pm and bus suspend: %d",
-			  is_bus_suspend_allowed_in_beaconing_mode);
-		if (!is_bus_suspend_allowed_in_beaconing_mode)
+	if (wma_is_vdev_in_sap_mode(wma, del_sta->smesessionId)) {
+		bool is_bus_suspend_allowed_in_sap_mode =
+			ucfg_pmo_get_sap_mode_bus_suspend(wma->psoc);
+		wma_info("sap mode: allow runtime pm and bus suspend: %d",
+			 is_bus_suspend_allowed_in_sap_mode);
+		if (!is_bus_suspend_allowed_in_sap_mode)
 			htc_vote_link_down(htc_handle);
 		wma_sap_allow_runtime_pm(wma);
+
+		return;
+	}
+
+	if (wma_is_vdev_in_go_mode(wma, del_sta->smesessionId)) {
+		bool is_bus_suspend_allowed_in_go_mode =
+			ucfg_pmo_get_go_mode_bus_suspend(wma->psoc);
+		wma_info("p2pgo mode: allow runtime pm and bus suspend: %d",
+			 is_bus_suspend_allowed_in_go_mode);
+		if (!is_bus_suspend_allowed_in_go_mode)
+			htc_vote_link_down(htc_handle);
+		wma_sap_allow_runtime_pm(wma);
+
+		return;
 	}
 
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
