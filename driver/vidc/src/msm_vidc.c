@@ -718,7 +718,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		d_vpr_e("%s: failed to get session id\n", __func__);
 		goto error;
 	}
-	s_vpr_i(inst->sid, "Opening video instance: %d\n", session_type);
+	s_vpr_e(inst->sid, "Opening video instance: %d\n", session_type);
 
 	inst->response_workq = create_singlethread_workqueue("response_workq");
 	if (!inst->response_workq) {

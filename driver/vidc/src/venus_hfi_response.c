@@ -68,18 +68,27 @@ u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 }
 
 bool is_valid_hfi_port(struct msm_vidc_inst *inst, u32 port,
-	const char *func)
+	u32 buffer_type, const char *func)
 {
 	if (!inst) {
 		s_vpr_e(inst->sid, "%s: invalid params\n", func);
 		return false;
 	}
 
-	if (port != HFI_PORT_BITSTREAM && port != HFI_PORT_RAW) {
-		s_vpr_e(inst->sid, "%s: invalid port %#x\n", func, port);
-		return false;
-	}
+	if (port == HFI_PORT_NONE &&
+		buffer_type != HFI_BUFFER_ARP &&
+		buffer_type != HFI_BUFFER_PERSIST)
+		goto invalid;
+
+	if (port != HFI_PORT_BITSTREAM && port != HFI_PORT_RAW)
+		goto invalid;
+
 	return true;
+
+invalid:
+	s_vpr_e(inst->sid, "%s: invalid port %#x buffer_type %u\n",
+			func, port, buffer_type);
+	return false;
 }
 
 bool is_valid_hfi_buffer_type(struct msm_vidc_inst *inst,
@@ -731,6 +740,35 @@ static int handle_bin_buffer(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static int handle_arp_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_ARP, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	} else {
+		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	return rc;
+}
+
 static int handle_session_buffer(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -745,14 +783,15 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 	}
 
 	port_type = pkt->port;
-	if (!is_valid_hfi_port(inst, port_type, __func__)) {
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return 0;
-	}
 
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
 	buf_type = buffer->type;
 	if (!is_valid_hfi_buffer_type(inst, buf_type, __func__)) {
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		return 0;
+	}
+
+	if (!is_valid_hfi_port(inst, port_type, buf_type, __func__)) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
@@ -763,6 +802,18 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 				rc = handle_output_metadata_buffer(inst, buffer);
 			else if (buf_type == HFI_BUFFER_BITSTREAM)
 				rc = handle_output_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_BIN)
+				rc = handle_bin_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_COMV)
+				rc = handle_comv_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_NON_COMV)
+				rc = handle_non_comv_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_LINE)
+				rc = handle_line_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_ARP)
+				rc = handle_arp_buffer(inst, buffer);
+			else if (buf_type == HFI_BUFFER_DPB)
+				rc = handle_dpb_buffer(inst, buffer);
 			else
 				s_vpr_e(inst->sid, "%s: unknown bitstream port buffer type %#x\n",
 					__func__, buf_type);

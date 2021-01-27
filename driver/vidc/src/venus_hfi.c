@@ -2457,6 +2457,7 @@ static int __response_handler(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
+	memset(core->response_packet, 0, core->packet_size);
 	while (!__iface_msgq_read(core, core->response_packet)) {
 		rc = handle_response(core, core->response_packet);
 		if (rc)
@@ -2464,6 +2465,7 @@ static int __response_handler(struct msm_vidc_core *core)
 		/* check for system error */
 		if (core->state != MSM_VIDC_CORE_INIT)
 			break;
+		memset(core->response_packet, 0, core->packet_size);
 	}
 
 	__schedule_power_collapse_work(core);

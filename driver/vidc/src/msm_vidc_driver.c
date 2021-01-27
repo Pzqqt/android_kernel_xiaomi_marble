@@ -1579,6 +1579,10 @@ int msm_vidc_get_internal_buffers(struct msm_vidc_inst *inst,
 	buf_size = call_session_op(core, buffer_size,
 		inst, buffer_type);
 
+	/* TODO: remove below hack to increase enc inter buf size by 100MB */
+	if (is_encode_session(inst))
+		buf_size += 100000000;
+
 	buf_count = call_session_op(core, min_count,
 		inst, buffer_type);
 
@@ -1758,6 +1762,40 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 	}
 
 	return 0;
+}
+
+int msm_vidc_alloc_and_queue_session_internal_buffers(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type buffer_type)
+{
+	int rc = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (buffer_type != MSM_VIDC_BUF_ARP &&
+		buffer_type != MSM_VIDC_BUF_PERSIST) {
+		s_vpr_e(inst->sid, "%s: invalid buffer type: %d\n",
+			__func__, buffer_type);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	rc = msm_vidc_get_internal_buffers(inst, buffer_type);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_create_internal_buffers(inst, buffer_type);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_queue_internal_buffers(inst, buffer_type);
+	if (rc)
+		goto exit;
+
+exit:
+	return rc;
 }
 
 int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,

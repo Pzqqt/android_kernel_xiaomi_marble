@@ -70,6 +70,7 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 			hfi_port = HFI_PORT_BITSTREAM;
 			break;
 		case MSM_VIDC_BUF_PERSIST:
+			/* TODO: change to HFI_PORT_NONE */
 			hfi_port = HFI_PORT_BITSTREAM | HFI_PORT_RAW;
 			break;
 		case MSM_VIDC_BUF_OUTPUT:
@@ -85,20 +86,20 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 		switch (buffer_type) {
 		case MSM_VIDC_BUF_INPUT:
 		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_VPSS:
+			hfi_port = HFI_PORT_RAW;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+		case MSM_VIDC_BUF_OUTPUT_META:
 		case MSM_VIDC_BUF_BIN:
-		case MSM_VIDC_BUF_ARP:
 		case MSM_VIDC_BUF_COMV:
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
 		case MSM_VIDC_BUF_DPB:
-			hfi_port = HFI_PORT_RAW;
-			break;
-		case MSM_VIDC_BUF_PERSIST:
-			hfi_port = HFI_PORT_BITSTREAM | HFI_PORT_RAW;
-			break;
-		case MSM_VIDC_BUF_OUTPUT:
-		case MSM_VIDC_BUF_OUTPUT_META:
 			hfi_port = HFI_PORT_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_ARP:
+			hfi_port = HFI_PORT_NONE;
 			break;
 		default:
 			s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",

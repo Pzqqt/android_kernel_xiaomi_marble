@@ -32,7 +32,6 @@ extern int msm_vidc_clock_voting;
 
 enum vidc_msg_prio {
 	VIDC_ERR        = 0x00000001,
-	VIDC_INFO       = 0x00000001,
 	VIDC_HIGH       = 0x00000002,
 	VIDC_LOW        = 0x00000004,
 	VIDC_PERF       = 0x00000008,

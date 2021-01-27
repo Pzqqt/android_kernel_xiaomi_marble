@@ -170,6 +170,26 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		rc = msm_vidc_session_set_codec(inst);
 		if (rc)
 			return rc;
+
+		if (is_encode_session(inst)) {
+			rc = msm_vidc_alloc_and_queue_session_internal_buffers(inst,
+				MSM_VIDC_BUF_ARP);
+			if (rc)
+				goto error;
+			s_vpr_h(inst->sid, "arp  buffer: %d      %d\n",
+				inst->buffers.arp.min_count,
+				inst->buffers.arp.size);
+		} else if(is_decode_session(inst)) {
+		/* TODO: move persist buf from msm_vdec_streamon_input to here
+			rc = msm_vidc_alloc_and_queue_session_internal_buffers(inst,
+				MSM_VIDC_BUF_PERSIST);
+			if (rc)
+				goto error;
+			s_vpr_h(inst->sid, "persist  buffer: %d      %d\n",
+				inst->buffers.persist.min_count,
+				inst->buffers.persist.size);
+		*/
+		}
 	}
 
 	if (q->type == INPUT_MPLANE) {

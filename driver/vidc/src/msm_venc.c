@@ -452,6 +452,7 @@ static int msm_venc_set_internal_properties(struct msm_vidc_inst *inst)
 static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+/* TODO: VPSS
 	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
@@ -460,44 +461,87 @@ static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	inst->buffers.arp.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_ARP) + 100000000;
-	inst->buffers.bin.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_BIN) + 100000000;
-	inst->buffers.comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_COMV) + 100000000;
-	inst->buffers.non_comv.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_NON_COMV) + 100000000;
-	inst->buffers.line.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_LINE) + 100000000;
-	inst->buffers.dpb.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_DPB) + 100000000;
-	//inst->buffers.vpss.size = call_session_op(core, buffer_size,
-			//inst, MSM_VIDC_BUF_VPSS) + 100000000;
-			//vpss is req - 100 mb
+	inst->buffers.vpss.size = call_session_op(core, buffer_size,
+			inst, MSM_VIDC_BUF_VPSS) + 100000000;
 
-	/* inst->buffers.persist.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_PERSIST); */
-
-	inst->buffers.arp.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_ARP);
-	inst->buffers.bin.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_BIN);
-	inst->buffers.comv.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_COMV);
-	inst->buffers.non_comv.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_NON_COMV);
-	inst->buffers.line.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_LINE);
 	inst->buffers.dpb.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_DPB);
-	/* inst->buffers.persist.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_PERSIST); */
+			inst, MSM_VIDC_BUF_VPSS);
+
+	s_vpr_h(inst->sid, "%s: internal buffer: min     size\n", __func__);
+	s_vpr_h(inst->sid, "vpss  buffer: %d      %d\n",
+		inst->buffers.vpss.min_count,
+		inst->buffers.vpss.size);
+*/
+	return rc;
+}
+
+static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+/* TODO: VPSS
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_VPSS);
+	if (rc)
+		return rc;
+*/
+	return rc;
+}
+
+static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+/* TODO: VPSS
+	d_vpr_h("%s()\n", __func__);
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_VPSS);
+	if (rc)
+		return rc;
+*/
+	return rc;
+}
+
+static int msm_venc_get_output_internal_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_BIN);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_COMV);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_LINE);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_DPB);
+	if (rc)
+		return rc;
 
 	s_vpr_h(inst->sid, "internal buffer: min     size\n");
-	s_vpr_h(inst->sid, "arp  buffer: %d      %d\n",
-		inst->buffers.arp.min_count,
-		inst->buffers.arp.size);
 	s_vpr_h(inst->sid, "bin  buffer: %d      %d\n",
 		inst->buffers.bin.min_count,
 		inst->buffers.bin.size);
@@ -513,14 +557,11 @@ static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	s_vpr_h(inst->sid, "dpb buffer: %d      %d\n",
 		inst->buffers.dpb.min_count,
 		inst->buffers.dpb.size);
-	/* s_vpr_h(inst->sid, "persist buffer: %d      %d\n",
-		inst->buffers.persist.min_count,
-		inst->buffers.persist.size); */
 
 	return rc;
 }
 
-static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
+static int msm_venc_create_output_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
@@ -530,9 +571,6 @@ static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_ARP);
-	if (rc)
-		return rc;
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
@@ -548,14 +586,11 @@ static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
 		return rc;
-	/* rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
-	if (rc)
-		return rc; */
 
 	return 0;
 }
 
-static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
+static int msm_venc_queue_output_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
@@ -565,9 +600,6 @@ static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_ARP);
-	if (rc)
-		return rc;
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
 		return rc;
@@ -581,10 +613,6 @@ static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_DPB);
-	if (rc)
-		return rc;
-	// TODO: fw is not accepting persist buffer and returning session error.
-	//rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
 	if (rc)
 		return rc;
 
@@ -777,21 +805,12 @@ int msm_venc_streamon_input(struct msm_vidc_inst *inst)
 	rc = msm_venc_get_input_internal_buffers(inst);
 	if (rc)
 		goto error;
-	/* check for memory after all buffers calculation */
-	//rc = msm_vidc_check_memory_supported(inst);
-	if (rc)
-		goto error;
-
-	//msm_vidc_update_dcvs(inst);
-	//msm_vidc_update_batching(inst);
-	//msm_vidc_scale_power(inst);
 
 	rc = msm_venc_create_input_internal_buffers(inst);
-	rc = 0; // TODO
 	if (rc)
 		goto error;
+
 	rc = msm_venc_queue_input_internal_buffers(inst);
-	rc = 0; // TODO
 	if (rc)
 		goto error;
 
@@ -893,6 +912,18 @@ int msm_venc_streamon_output(struct msm_vidc_inst *inst)
 	}
 
 	rc = msm_venc_set_output_properties(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_venc_get_output_internal_buffers(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_venc_create_output_internal_buffers(inst);
+	if (rc)
+		goto error;
+
+	rc = msm_venc_queue_output_internal_buffers(inst);
 	if (rc)
 		goto error;
 
@@ -1044,7 +1075,7 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	} else if (f->type == OUTPUT_MPLANE) {
 		fmt = &inst->fmts[OUTPUT_PORT];
 		if (fmt->fmt.pix_mp.pixelformat != f->fmt.pix_mp.pixelformat) {
-			s_vpr_e(inst->sid,
+			s_vpr_h(inst->sid,
 				"%s: codec changed from %#x to %#x\n", __func__,
 				fmt->fmt.pix_mp.pixelformat, f->fmt.pix_mp.pixelformat);
 			rc = msm_venc_codec_change(inst, f->fmt.pix_mp.pixelformat);
