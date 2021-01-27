@@ -713,6 +713,13 @@ struct msm_vidc_buffers {
 	bool                   reuse;
 };
 
+enum msm_vidc_allow {
+	MSM_VIDC_DISALLOW = 0,
+	MSM_VIDC_ALLOW,
+	MSM_VIDC_DEFER,
+	MSM_VIDC_IGNORE,
+};
+
 enum response_work_type {
 	RESP_WORK_INPUT_PSC = 1,
 	RESP_WORK_OUTPUT_PSC,

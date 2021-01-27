@@ -1191,7 +1191,6 @@ exit:
 void handle_session_response_work_handler(struct work_struct *work)
 {
 	int rc = 0;
-	bool allow = false;
 	struct msm_vidc_inst *inst;
 	struct response_work *resp_work, *dummy = NULL;
 
@@ -1206,37 +1205,42 @@ void handle_session_response_work_handler(struct work_struct *work)
 	list_for_each_entry_safe(resp_work, dummy, &inst->response_works, list) {
 		switch (resp_work->type) {
 		case RESP_WORK_INPUT_PSC:
-			allow = msm_vidc_allow_input_psc(inst);
-			if (!allow) {
-				s_vpr_e(inst->sid, "%s: input psc not allowed\n", __func__);
-				break;
-			}
-			rc = handle_session_response_work(inst, resp_work);
-			if (!rc)
-				rc = msm_vidc_state_change_input_psc(inst);
+		{
+			enum msm_vidc_allow allow = MSM_VIDC_DISALLOW;
 
-			/* either handle input psc or state change failed */
-			if (rc)
+			allow = msm_vidc_allow_input_psc(inst);
+			if (allow == MSM_VIDC_DISALLOW) {
 				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+				break;
+			} else if (allow == MSM_VIDC_DEFER) {
+				/* continue to next entry processing */
+				continue;
+			} else if (allow == MSM_VIDC_ALLOW) {
+				rc = handle_session_response_work(inst, resp_work);
+				if (!rc)
+					rc = msm_vidc_state_change_input_psc(inst);
+				/* either handle input psc or state change failed */
+				if (rc)
+					msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			}
 			break;
+		}
 		case RESP_WORK_OUTPUT_PSC:
 			rc = handle_session_response_work(inst, resp_work);
 			if (rc)
 				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 			break;
 		case RESP_WORK_LAST_FLAG:
-			allow = msm_vidc_allow_last_flag(inst);
-			if (!allow) {
-				s_vpr_e(inst->sid, "%s: last flag not allowed\n", __func__);
+			rc = handle_session_response_work(inst, resp_work);
+			if (rc) {
+				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 				break;
 			}
-			rc = handle_session_response_work(inst, resp_work);
-			if (!rc)
+			if (msm_vidc_allow_last_flag(inst)) {
 				rc = msm_vidc_state_change_last_flag(inst);
-
-			/* either handle last flag or state change failed */
-			if (rc)
-				msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+				if (rc)
+					msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			}
 			break;
 		default:
 			d_vpr_e("%s: invalid response work type %d\n", __func__,

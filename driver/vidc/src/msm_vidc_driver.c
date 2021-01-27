@@ -654,21 +654,29 @@ exit:
 	return allow;
 }
 
-bool msm_vidc_allow_stop(struct msm_vidc_inst *inst)
+enum msm_vidc_allow msm_vidc_allow_stop(struct msm_vidc_inst *inst)
 {
+	enum msm_vidc_allow allow = MSM_VIDC_DISALLOW;
+
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return false;
+		return allow;
 	}
 	if (inst->state == MSM_VIDC_START ||
 		inst->state == MSM_VIDC_DRC ||
 		inst->state == MSM_VIDC_DRC_LAST_FLAG ||
-		inst->state == MSM_VIDC_DRC_DRAIN)
-		return true;
-
-	s_vpr_e(inst->sid, "%s: not allowed in state %s\n",
+		inst->state == MSM_VIDC_DRC_DRAIN) {
+		allow = MSM_VIDC_ALLOW;
+	} else if (inst->state == MSM_VIDC_START_INPUT) {
+		allow = MSM_VIDC_IGNORE;
+		s_vpr_e(inst->sid, "%s: stop ignored in state %s\n",
 			__func__, state_name(inst->state));
-	return false;
+	} else {
+		s_vpr_e(inst->sid, "%s: stop not allowed in state %s\n",
+			__func__, state_name(inst->state));
+	}
+
+	return allow;
 }
 
 bool msm_vidc_allow_start(struct msm_vidc_inst *inst)
@@ -753,30 +761,30 @@ bool msm_vidc_allow_qbuf(struct msm_vidc_inst *inst)
 	}
 }
 
-bool msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
+enum msm_vidc_allow msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
 {
-	bool allow = false;
+	enum msm_vidc_allow allow = MSM_VIDC_DISALLOW;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return false;
+		return MSM_VIDC_DISALLOW;
 	}
 	if (inst->state == MSM_VIDC_START ||
 		inst->state == MSM_VIDC_START_INPUT ||
 		inst->state == MSM_VIDC_DRAIN) {
-		allow = true;
+		allow = MSM_VIDC_ALLOW;
 	} else if (inst->state == MSM_VIDC_DRC ||
 		inst->state == MSM_VIDC_DRC_LAST_FLAG ||
 		inst->state == MSM_VIDC_DRC_DRAIN ||
 		inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG ||
 		inst->state == MSM_VIDC_DRAIN_START_INPUT) {
-		s_vpr_h(inst->sid, "%s: input psc postponed, inst state %s\n",
+		s_vpr_h(inst->sid, "%s: defer input psc, inst state %s\n",
 				__func__, state_name(inst->state));
-		allow = false;
+		allow = MSM_VIDC_DEFER;
 	} else {
 		s_vpr_e(inst->sid, "%s: input psc in wrong state %s\n",
 				__func__, state_name(inst->state));
-		allow = false;
+		allow = MSM_VIDC_DISALLOW;
 	}
 
 	return allow;

@@ -1564,6 +1564,7 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 {
 	int rc = 0;
+	enum msm_vidc_allow allow = MSM_VIDC_DISALLOW;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1571,8 +1572,13 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	}
 
 	if (cmd == V4L2_DEC_CMD_STOP) {
-		if (!msm_vidc_allow_stop(inst))
+		allow = msm_vidc_allow_stop(inst);
+		if (allow == MSM_VIDC_DISALLOW)
 			return -EBUSY;
+		else if (allow == MSM_VIDC_IGNORE)
+			return 0;
+		else if (allow != MSM_VIDC_ALLOW)
+			return -EINVAL;
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_DRAIN,
 				INPUT_PORT,
