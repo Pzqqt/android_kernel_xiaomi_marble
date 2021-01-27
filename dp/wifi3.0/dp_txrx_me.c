@@ -302,6 +302,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	qdf_dma_addr_t paddr_mcbuf = 0;
 	uint8_t empty_entry_mac[QDF_MAC_ADDR_SIZE] = {0};
 	QDF_STATUS status;
+	uint8_t curr_mac_cnt = 0;
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 						     DP_MOD_ID_MCAST2UCAST);
 
@@ -419,6 +420,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		seg_info_new->total_len = len;
 
 		seg_info_new->next = NULL;
+		curr_mac_cnt++;
 
 		if (!seg_info_head)
 			seg_info_head = seg_info_new;
@@ -433,7 +435,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	}
 
 	msdu_info.u.sg_info.curr_seg = seg_info_head;
-	msdu_info.num_seg = new_mac_cnt;
+	msdu_info.num_seg = curr_mac_cnt;
 	msdu_info.frm_type = dp_tx_frm_me;
 
 	if (tid == HTT_INVALID_TID) {
@@ -447,9 +449,9 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	if (is_igmp) {
 		DP_STATS_INC(vdev, tx_i.igmp_mcast_en.igmp_ucast_converted,
-			     new_mac_cnt);
+			     curr_mac_cnt);
 	} else {
-		DP_STATS_INC(vdev, tx_i.mcast_en.ucast, new_mac_cnt);
+		DP_STATS_INC(vdev, tx_i.mcast_en.ucast, curr_mac_cnt);
 	}
 
 	dp_tx_send_msdu_multiple(vdev, nbuf, &msdu_info);
