@@ -2043,6 +2043,7 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 		pSirSmeSwitchChInd->chan_params.mhz_freq_seg1 =
 							des_chan->ch_cfreq2;
 	}
+	pSirSmeSwitchChInd->ch_phymode = des_chan->ch_phymode;
 
 	pSirSmeSwitchChInd->status = status;
 	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, pe_session->bssId,

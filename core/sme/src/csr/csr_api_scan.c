@@ -2165,6 +2165,7 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef FEATURE_CM_ENABLE
 static void csr_get_pcl_chan_weigtage_for_sta(struct mac_context *mac_ctx,
 					struct pcl_freq_weight_list *pcl_lst)
 {
@@ -2206,6 +2207,7 @@ static void csr_calculate_scores(struct mac_context *mac_ctx,
 	if (pcl_lst)
 		qdf_mem_free(pcl_lst);
 }
+#endif
 
 QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 			       struct scan_filter *filter,
@@ -2234,9 +2236,10 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		sme_debug("num_entries %d", num_bss);
 	}
 
+#ifndef FEATURE_CM_ENABLE
 	if (num_bss && filter && scoring_required)
 		csr_calculate_scores(mac_ctx, filter, list);
-
+#endif
 	if (!list || (list && !qdf_list_size(list))) {
 		sme_debug("scan list empty");
 		if (num_bss)

@@ -182,23 +182,6 @@ enum csr_roam_wmstatus_changetypes {
 	eCsrDeauthenticated
 };
 
-enum csr_diagwlan_status_eventsubtype {
-	eCSR_WLAN_STATUS_CONNECT = 0,
-	eCSR_WLAN_STATUS_DISCONNECT
-};
-
-enum csr_diagwlan_status_eventreason {
-	eCSR_REASON_UNSPECIFIED = 0,
-	eCSR_REASON_USER_REQUESTED,
-	eCSR_REASON_MIC_ERROR,
-	eCSR_REASON_DISASSOC,
-	eCSR_REASON_DEAUTH,
-	eCSR_REASON_HANDOFF,
-	eCSR_REASON_ROAM_SYNCH_IND,
-	eCSR_REASON_ROAM_SYNCH_CNF,
-	eCSR_REASON_ROAM_HO_FAIL,
-};
-
 struct csr_channel {
 	uint8_t numChannels;
 	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
@@ -963,12 +946,12 @@ void csr_process_ho_fail_ind(struct mac_context *mac, void *msg_buf);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_ind_ptr,
-		enum csr_diagwlan_status_eventreason reason);
+		enum diagwlan_status_eventreason reason);
 #else
 static inline void csr_roaming_report_diag_event(
 		struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_ind_ptr,
-		enum csr_diagwlan_status_eventreason reason)
+		enum diagwlan_status_eventreason reason)
 {}
 #endif
 

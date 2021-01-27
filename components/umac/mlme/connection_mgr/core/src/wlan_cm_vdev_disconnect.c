@@ -117,6 +117,60 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+static void cm_disconnect_diag_event(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_cm_discon_rsp *rsp)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	WLAN_HOST_DIAG_EVENT_DEF(connect_status,
+				 host_event_wlan_status_payload_type);
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+	qdf_mem_zero(&connect_status,
+		     sizeof(host_event_wlan_status_payload_type));
+	qdf_mem_copy(&connect_status,
+		     &mlme_obj->cfg.sta.event_payload,
+		     sizeof(host_event_wlan_status_payload_type));
+
+	connect_status.rssi = mlme_obj->cfg.sta.current_rssi;
+	connect_status.eventId = DIAG_WLAN_STATUS_DISCONNECT;
+	if (rsp->req.req.reason_code == REASON_MIC_FAILURE) {
+		connect_status.reason = DIAG_REASON_MIC_ERROR;
+	} else if (rsp->req.req.source == CM_PEER_DISCONNECT) {
+		switch (rsp->req.req.reason_code) {
+		case REASON_PREV_AUTH_NOT_VALID:
+		case REASON_CLASS2_FRAME_FROM_NON_AUTH_STA:
+		case REASON_DEAUTH_NETWORK_LEAVING:
+			connect_status.reason = DIAG_REASON_DEAUTH;
+			break;
+		default:
+			connect_status.reason = DIAG_REASON_DISASSOC;
+			break;
+		}
+		connect_status.reasonDisconnect = rsp->req.req.reason_code;
+	} else if (rsp->req.req.source == CM_SB_DISCONNECT) {
+		connect_status.reason = DIAG_REASON_DEAUTH;
+		connect_status.reasonDisconnect = rsp->req.req.reason_code;
+	} else {
+		connect_status.reason = DIAG_REASON_USER_REQUESTED;
+	}
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&connect_status,
+				    EVENT_WLAN_STATUS_V2);
+}
+#else
+static inline void cm_disconnect_diag_event(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_cm_discon_rsp *rsp)
+{}
+#endif
+
 QDF_STATUS
 cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_discon_rsp *rsp)
@@ -138,7 +192,7 @@ cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 		mlme_err("vdev_id: %d psoc not found", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
-
+	cm_disconnect_diag_event(vdev, rsp);
 	wlan_tdls_notify_sta_disconnect(vdev_id, false, false, vdev);
 	policy_mgr_decr_session_set_pcl(psoc, op_mode, vdev_id);
 

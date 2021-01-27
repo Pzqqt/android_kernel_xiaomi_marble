@@ -149,6 +149,61 @@ static inline void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
 {}
 #endif
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+/**
+ * cm_get_diag_enc_type - get diag enc type
+ * @cipherset: enc type to convert
+ *
+ * Return: diag enc type
+ */
+enum mgmt_encrypt_type cm_get_diag_enc_type(uint32_t cipherset);
+
+/**
+ * cm_diag_get_auth_type - get auth type
+ * @auth_type: diag auth type to fill
+ * @authmodeset: authmode to calculate diag auth type
+ * @akm: akm  to calculate diag auth type
+ * @ucastcipherset: cipher to calculate diag auth type
+ *
+ * Return: none
+ */
+void cm_diag_get_auth_type(uint8_t *auth_type,
+			   uint32_t authmodeset, uint32_t akm,
+			   uint32_t ucastcipherset);
+
+/**
+ * cm_connect_info - send connect info to diag
+ * @vdev: vdev ptr
+ * @connect_success: if connect was success
+ * @bssid: bssid
+ * @ssid: ssid
+ * @freq: freq
+ *
+ * Return: none
+ */
+void cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
+		     struct qdf_mac_addr *bssid, struct wlan_ssid *ssid,
+		     qdf_freq_t freq);
+
+#ifdef WLAN_UNIT_TEST
+/**
+ * cm_get_sta_cxn_info - fill sta context info in buffer
+ * @buf: buffer to fill
+ * @buf_sz: buf size
+ *
+ * Return: none
+ */
+void cm_get_sta_cxn_info(struct wlan_objmgr_vdev *vdev,
+			 char *buf, uint32_t buf_sz);
+#endif
+#else
+static inline void
+cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
+		struct qdf_mac_addr *bssid, struct wlan_ssid *ssid,
+		qdf_freq_t freq)
+{}
+#endif
+
 #ifdef FEATURE_CM_ENABLE
 static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
 {

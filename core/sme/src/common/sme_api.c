@@ -15183,6 +15183,7 @@ uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 			       nss, dcm, guard_interval, mcs_rate_flags);
 }
 
+#ifdef WLAN_UNIT_TEST
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 QDF_STATUS sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 				char *buf, uint32_t buf_sz)
@@ -15197,6 +15198,8 @@ QDF_STATUS sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 	return status;
 }
 #endif
+#endif
+
 QDF_STATUS
 sme_get_roam_scan_stats(mac_handle_t mac_handle,
 			roam_scan_stats_cb cb, void *context,

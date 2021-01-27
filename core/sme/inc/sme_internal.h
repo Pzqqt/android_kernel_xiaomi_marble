@@ -378,9 +378,6 @@ struct sme_context {
 	void **sme_cmd_buf_addr;
 	tDblLinkList sme_cmd_freelist;    /* preallocated roam cmd list */
 	enum QDF_OPMODE curr_device_mode;
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-	host_event_wlan_status_payload_type eventPayload;
-#endif
 	void *ll_stats_context;
 	link_layer_stats_cb link_layer_stats_cb;
 	void (*link_layer_stats_ext_cb)(hdd_handle_t callback_ctx,

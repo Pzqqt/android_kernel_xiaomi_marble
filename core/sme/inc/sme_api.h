@@ -3792,6 +3792,7 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
 }
 #endif
 
+#ifdef WLAN_UNIT_TEST
 /**
  * sme_get_sta_cxn_info() - This function populates all the connection
  *			    information which is formed by DUT-STA to AP
@@ -3816,6 +3817,7 @@ sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 		      "\nDiag macro disable, ask vendor to enable");
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 #endif
 
 #if defined(FEATURE_WLAN_ESE) && defined(WLAN_FEATURE_ROAM_OFFLOAD)

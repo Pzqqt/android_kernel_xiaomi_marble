@@ -1278,6 +1278,7 @@ struct switch_channel_ind {
 	struct ch_params chan_params;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	QDF_STATUS status;
+	enum wlan_phymode ch_phymode;
 };
 
 /* / Definition for MIC failure indication */
