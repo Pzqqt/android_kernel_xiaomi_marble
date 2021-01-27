@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +56,6 @@
 #define IPN_LEN 6
 #define FILS_SESSION_LENGTH 8
 #define FILS_MAX_KDE_LIST_LEN 255
-#define FILS_MAX_HLP_DATA_LEN 2048
 
 /* 12.12.2.5.3 80211-ai draft */
 #define FILS_SHA384_KEK_LEN 64

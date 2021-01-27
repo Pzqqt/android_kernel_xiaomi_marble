@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -133,8 +133,6 @@ ucfg_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	return wlan_cm_roaming_in_progress(pdev, vdev_id);
 }
 
-#endif
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static inline QDF_STATUS
 ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
@@ -153,3 +151,22 @@ ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS
+ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
+			   uint8_t vdev_id,
+			   struct wlan_fils_con_info *fils_info);
+#else
+static inline QDF_STATUS
+ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
+			   uint8_t vdev_id,
+			   struct wlan_fils_con_info *fils_info)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+#endif
+
+#endif /* _WLAN_CM_ROAM_UCFG_API_H_ */

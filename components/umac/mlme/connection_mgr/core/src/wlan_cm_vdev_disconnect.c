@@ -31,6 +31,7 @@
 #include <wlan_cm_roam_api.h>
 #include "wni_api.h"
 
+#ifdef FEATURE_CM_ENABLE
 QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req)
 {
@@ -248,3 +249,4 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif

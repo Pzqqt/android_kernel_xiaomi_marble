@@ -29,6 +29,49 @@
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "wni_api.h"
 
+#ifdef WLAN_FEATURE_FILS_SK
+void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
+			const uint8_t *gen_ie, uint16_t len,
+			bool flush)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	if (flush) {
+		mlme_priv->connect_info.hlp_ie_len = 0;
+		if (mlme_priv->connect_info.hlp_ie) {
+			qdf_mem_free(mlme_priv->connect_info.hlp_ie);
+			mlme_priv->connect_info.hlp_ie = NULL;
+		}
+	}
+
+	if (!len || !gen_ie)
+		return;
+
+	if ((mlme_priv->connect_info.hlp_ie_len + len) >
+	    FILS_MAX_HLP_DATA_LEN) {
+		mlme_err("HLP len exceeds: hlp_ie_len %d len %d",
+			 mlme_priv->connect_info.hlp_ie_len, len);
+		return;
+	}
+
+	if (!mlme_priv->connect_info.hlp_ie) {
+		mlme_priv->connect_info.hlp_ie =
+				qdf_mem_malloc(FILS_MAX_HLP_DATA_LEN);
+		if (!mlme_priv->connect_info.hlp_ie)
+			return;
+	}
+
+	qdf_mem_copy(mlme_priv->connect_info.hlp_ie +
+		     mlme_priv->connect_info.hlp_ie_len, gen_ie, len);
+	mlme_priv->connect_info.hlp_ie_len += len;
+}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
 QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
 {
@@ -157,6 +200,16 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 	return status;
 }
 
+static void
+cm_update_hlp_data_from_assoc_ie(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_vdev_connect_req *req)
+{
+	/*
+	 * loop through req->assoc IE and fill hld date from
+	 * DOT11F_EID_FRAGMENT_IE and SIR_FILS_HLP_EXT_EID
+	 */
+}
+
 QDF_STATUS
 cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_cm_vdev_connect_req *req)
@@ -180,6 +233,8 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		cm_free_join_req(join_req);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	cm_update_hlp_data_from_assoc_ie(vdev, req);
 
 	status = cm_csr_handle_connect_req(vdev, req, join_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -347,3 +402,4 @@ bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 
 	return connected;
 }
+#endif

@@ -1452,7 +1452,7 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
 	if (!mlme_priv)
 		return;
-	fils_info = mlme_priv->fils_con_info;
+	fils_info = mlme_priv->connect_info.fils_con_info;
 	if (!fils_info)
 		return;
 	pe_fils_info = session->fils_info;

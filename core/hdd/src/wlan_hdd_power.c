@@ -917,7 +917,6 @@ static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
 	int errno;
-	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
 	enum station_keepalive_method val;
 	QDF_STATUS status;
@@ -944,12 +943,11 @@ static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 
 	hdd_debug("FILS Roaming support: %d",
 		  hdd_ctx->is_fils_roaming_supported);
-	roam_profile = hdd_roam_profile(adapter);
 
 	ifa = hdd_lookup_ifaddr(adapter);
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
 		sme_send_hlp_ie_info(hdd_ctx->mac_handle, adapter->vdev_id,
-				     roam_profile, ifa->ifa_local);
+				     ifa->ifa_local);
 	hdd_send_ps_config_to_fw(adapter);
 exit:
 	hdd_exit();

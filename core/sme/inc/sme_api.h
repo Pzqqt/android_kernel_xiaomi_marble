@@ -2858,7 +2858,6 @@ void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
  * sme_send_hlp_ie_info() - API to send HLP IE info to fw
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id
- * @profile: CSR Roam profile
  * @if_addr: IP address
  *
  * This API is used to send HLP IE info along with IP address
@@ -2867,7 +2866,7 @@ void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
-			  struct csr_roam_profile *profile, uint32_t if_addr);
+			  uint32_t if_addr);
 
 /**
  * sme_update_session_assoc_ie() - Updates the assoc IEs to csr_roam_session

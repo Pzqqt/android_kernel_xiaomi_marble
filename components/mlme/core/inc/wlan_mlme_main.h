@@ -262,6 +262,9 @@ struct ft_context {
  * @qos_enabled: is qos enabled
  * @is_wps is wps connection
  * @ft_info: ft related info
+ * @hlp_ie: hldp ie
+ * @hlp_ie_len: hlp ie length
+ * @fils_con_info: Pointer to fils connection info from connect req
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -274,6 +277,11 @@ struct mlme_connect_info {
 	bool qos_enabled;
 	bool is_wps;
 	struct ft_context ft_info;
+#ifdef WLAN_FEATURE_FILS_SK
+	uint8_t *hlp_ie;
+	uint32_t hlp_ie_len;
+	struct wlan_fils_connection_info *fils_con_info;
+#endif
 };
 
 /**
@@ -299,7 +307,6 @@ struct mlme_connect_info {
  * @sae_auth_retry: SAE auth retry information
  * @roam_reason_better_ap: roam due to better AP found
  * @hb_failure_rssi: heartbeat failure AP RSSI
- * @fils_con_info: Pointer to fils connection info from csr roam profile
  * @opr_rate_set: operational rates set
  * @ext_opr_rate_set: extended operational rates set
  * @mscs_req_info: Information related to mscs request
@@ -329,9 +336,6 @@ struct mlme_legacy_priv {
 	struct sae_auth_retry sae_retry;
 	bool roam_reason_better_ap;
 	uint32_t hb_failure_rssi;
-#ifdef WLAN_FEATURE_FILS_SK
-	struct wlan_fils_connection_info *fils_con_info;
-#endif
 	struct mlme_cfg_str opr_rate_set;
 	struct mlme_cfg_str ext_opr_rate_set;
 #ifdef WLAN_FEATURE_MSCS

@@ -19129,7 +19129,8 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	hdd_clear_fils_connection_info(adapter);
+	wlan_cm_update_hlp_info(hdd_ctx->psoc, NULL, 0, adapter->vdev_id,
+				true);
 	roam_profile->fils_con_info =
 		qdf_mem_malloc(sizeof(*roam_profile->fils_con_info));
 
@@ -19508,55 +19509,6 @@ static int wlan_hdd_add_assoc_ie(struct hdd_adapter *adapter,
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_FILS_SK
-/**
- * wlan_hdd_save_hlp_ie - API to save HLP IE
- * @roam_profile: Pointer to roam profile
- * @gen_ie: IE buffer to store
- * @len: length of the IE buffer @gen_ie
- * @flush: Flush the older saved HLP if any
- *
- * Return: None
- */
-static void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
-				 const uint8_t *gen_ie, uint16_t len,
-				 bool flush)
-{
-	uint8_t *hlp_ie = roam_profile->hlp_ie;
-
-	if (flush) {
-		roam_profile->hlp_ie_len = 0;
-		if (hlp_ie) {
-			qdf_mem_free(hlp_ie);
-			roam_profile->hlp_ie = NULL;
-		}
-	}
-
-	if ((roam_profile->hlp_ie_len +
-			len) > FILS_MAX_HLP_DATA_LEN) {
-		hdd_err("HLP len exceeds: hlp_ie_len %d len %d",
-			roam_profile->hlp_ie_len, len);
-		return;
-	}
-
-	if (!roam_profile->hlp_ie) {
-		roam_profile->hlp_ie =
-				qdf_mem_malloc(FILS_MAX_HLP_DATA_LEN);
-		hlp_ie = roam_profile->hlp_ie;
-		if (!hlp_ie)
-			return;
-	}
-
-	qdf_mem_copy(hlp_ie + roam_profile->hlp_ie_len, gen_ie, len);
-	roam_profile->hlp_ie_len += len;
-}
-#else
-static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
-					const uint8_t *gen_ie, uint16_t len,
-					bool flush)
-{}
-#endif
-
 /**
  * hdd_populate_crypto_auth_type() - populate auth type for crypto
  * @vdev: pointed to vdev obmgr
@@ -19773,6 +19725,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 #endif
 	int status;
 	uint8_t *security_ie;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	roam_profile = hdd_roam_profile(adapter);
 
@@ -20077,8 +20030,9 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				if (genie[0] == SIR_FILS_HLP_EXT_EID) {
 					hdd_debug("HLP EXT IE(len %d)",
 							eLen + 2);
-					wlan_hdd_save_hlp_ie(roam_profile,
+					wlan_cm_update_hlp_info(hdd_ctx->psoc,
 							genie - 2, eLen + 2,
+							adapter->vdev_id,
 							true);
 					status = wlan_hdd_add_assoc_ie(
 							adapter, genie - 2,
@@ -20111,8 +20065,9 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 		case DOT11F_EID_FRAGMENT_IE:
 			{
 				hdd_debug("Fragment IE(len %d)", eLen + 2);
-				wlan_hdd_save_hlp_ie(roam_profile,
+				wlan_cm_update_hlp_info(hdd_ctx->psoc,
 							genie - 2, eLen + 2,
+							adapter->vdev_id,
 							false);
 				status = wlan_hdd_add_assoc_ie(adapter,
 							genie - 2, eLen + 2);
@@ -23541,8 +23496,91 @@ hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
 				    struct cfg80211_connect_params *req,
 				    uint32_t changed)
 {
-	/* handle for connection manager */
-	return 0;
+	uint8_t *buf;
+	QDF_STATUS status;
+	enum wlan_fils_auth_type auth_type;
+	struct wlan_fils_con_info *fils_info;
+	int ret = 0;
+
+	fils_info = qdf_mem_malloc(sizeof(*fils_info));
+	if (!fils_info)
+		return -EINVAL;
+
+	fils_info->is_fils_connection = true;
+	if (changed & UPDATE_FILS_ERP_INFO) {
+		fils_info->username_len = req->fils_erp_username_len +
+					    sizeof(char) +
+					    req->fils_erp_realm_len;
+		if (fils_info->username_len >
+		    WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH) {
+			hdd_err("Key NAI Length %d",
+				fils_info->username_len);
+			ret = -EINVAL;
+			goto free_mem;
+		}
+		if (req->fils_erp_username_len && req->fils_erp_username) {
+			buf = fils_info->username;
+			qdf_mem_copy(buf, req->fils_erp_username,
+				     req->fils_erp_username_len);
+			buf += req->fils_erp_username_len;
+			*buf++ = '@';
+			qdf_mem_copy(buf, req->fils_erp_realm,
+				     req->fils_erp_realm_len);
+		}
+
+		fils_info->next_seq_num = req->fils_erp_next_seq_num + 1;
+		fils_info->rrk_len = req->fils_erp_rrk_len;
+
+		if (fils_info->rrk_len > WLAN_CM_FILS_MAX_RRK_LENGTH) {
+			hdd_err("r_rk_length is invalid %d",
+				fils_info->rrk_len);
+			ret = -EINVAL;
+			goto free_mem;
+		}
+
+		if (req->fils_erp_rrk_len && req->fils_erp_rrk)
+			qdf_mem_copy(fils_info->rrk, req->fils_erp_rrk,
+				     fils_info->rrk_len);
+
+		fils_info->realm_len = req->fils_erp_realm_len;
+		if (fils_info->realm_len > WLAN_CM_FILS_MAX_REALM_LEN) {
+			hdd_err("Invalid fils realm len %d",
+				fils_info->realm_len);
+			ret = -EINVAL;
+			goto free_mem;
+		}
+		if (req->fils_erp_realm_len && req->fils_erp_realm)
+			qdf_mem_copy(fils_info->realm, req->fils_erp_realm,
+				     fils_info->realm_len);
+	}
+
+	if (changed & UPDATE_FILS_AUTH_TYPE) {
+		auth_type = osif_cm_get_fils_auth_type(req->auth_type);
+		if (auth_type == FILS_PK_MAX) {
+			hdd_err("invalid auth type for fils %d",
+				req->auth_type);
+			ret = -EINVAL;
+			goto free_mem;
+		}
+
+		fils_info->auth_type = auth_type;
+	}
+
+	hdd_debug("fils conn update: changed %x is_fils %d keyname nai len %d",
+		  changed, fils_info->is_fils_connection,
+		  fils_info->username_len);
+	/*
+	 * Update the FILS config from adapter->roam_profile to
+	 * csr_session
+	 */
+	status = ucfg_cm_update_fils_config(hdd_ctx->psoc, adapter->vdev_id,
+					    fils_info);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Update FILS connect params failed %d", status);
+free_mem:
+	qdf_mem_free(fils_info);
+
+	return ret;
 }
 #endif
 #else

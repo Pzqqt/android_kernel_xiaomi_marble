@@ -2928,12 +2928,12 @@ static inline void lim_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
 		pe_err("vdev legacy private object is NULL");
 		return;
 	}
-	if (!mlme_priv->fils_con_info)
+	if (!mlme_priv->connect_info.fils_con_info)
 		return;
-	mlme_priv->fils_con_info->pmk_len = pmksa->pmk_len;
-	qdf_mem_copy(mlme_priv->fils_con_info->pmk,
+	mlme_priv->connect_info.fils_con_info->pmk_len = pmksa->pmk_len;
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->pmk,
 		     pmksa->pmk, pmksa->pmk_len);
-	qdf_mem_copy(mlme_priv->fils_con_info->pmkid,
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->pmkid,
 		     pmksa->pmkid, PMKID_LEN);
 }
 #else

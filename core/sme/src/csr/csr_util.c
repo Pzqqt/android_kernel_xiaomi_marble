@@ -2703,12 +2703,12 @@ static inline void csr_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
 		mlme_err("vdev legacy private object is NULL");
 		return;
 	}
-	if (!mlme_priv->fils_con_info)
+	if (!mlme_priv->connect_info.fils_con_info)
 		return;
-	mlme_priv->fils_con_info->pmk_len = pmksa->pmk_len;
-	qdf_mem_copy(mlme_priv->fils_con_info->pmk,
+	mlme_priv->connect_info.fils_con_info->pmk_len = pmksa->pmk_len;
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->pmk,
 		     pmksa->pmk, pmksa->pmk_len);
-	qdf_mem_copy(mlme_priv->fils_con_info->pmkid,
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->pmkid,
 		     pmksa->pmkid, PMKID_LEN);
 }
 #else
@@ -3465,12 +3465,6 @@ void csr_free_fils_profile_info(struct mac_context *mac,
 	if (profile->fils_con_info) {
 		qdf_mem_free(profile->fils_con_info);
 		profile->fils_con_info = NULL;
-	}
-
-	if (profile->hlp_ie) {
-		qdf_mem_free(profile->hlp_ie);
-		profile->hlp_ie = NULL;
-		profile->hlp_ie_len = 0;
 	}
 }
 #else

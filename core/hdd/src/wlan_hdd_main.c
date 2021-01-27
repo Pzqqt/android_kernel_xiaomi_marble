@@ -7190,9 +7190,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		wlan_hdd_scan_abort(adapter);
 		wlan_hdd_cleanup_actionframe(adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
-#ifndef FEATURE_CM_ENABLE
-		hdd_clear_fils_connection_info(adapter);
-#endif
 		status = wlan_hdd_flush_pmksa_cache(adapter);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_debug("Cannot flush PMKIDCache");

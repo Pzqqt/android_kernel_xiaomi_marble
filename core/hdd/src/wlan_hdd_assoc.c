@@ -1695,9 +1695,6 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	sta_ctx->auth_key_mgmt = 0;
 	qdf_zero_macaddr(&sta_ctx->requested_bssid);
-#ifndef FEATURE_CM_ENABLE
-	hdd_clear_fils_connection_info(adapter);
-#endif
 	hdd_exit();
 }
 
@@ -2579,31 +2576,6 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 }
 
 #ifndef FEATURE_CM_ENABLE
-#if defined(WLAN_FEATURE_FILS_SK) && \
-	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
-		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
-void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
-{
-	struct csr_roam_profile *roam_profile;
-
-	if ((adapter->device_mode == QDF_SAP_MODE) ||
-	    (adapter->device_mode == QDF_P2P_GO_MODE))
-		return;
-
-	roam_profile = hdd_roam_profile(adapter);
-	if (roam_profile->fils_con_info) {
-		qdf_mem_free(roam_profile->fils_con_info);
-		roam_profile->fils_con_info = NULL;
-	}
-
-	if (roam_profile->hlp_ie) {
-		qdf_mem_free(roam_profile->hlp_ie);
-		roam_profile->hlp_ie = NULL;
-		roam_profile->hlp_ie_len = 0;
-	}
-}
-#endif
-
 /**
  * hdd_association_completion_handler() - association completion handler
  * @adapter: pointer to adapter
@@ -5312,8 +5284,6 @@ static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 
 	roam_profile = hdd_roam_profile(adapter);
 	roam_profile->fils_con_info = NULL;
-	roam_profile->hlp_ie = NULL;
-	roam_profile->hlp_ie_len = 0;
 }
 #else
 static void hdd_initialize_fils_info(struct hdd_adapter *adapter)

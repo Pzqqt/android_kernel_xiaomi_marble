@@ -6085,7 +6085,7 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 }
 #endif
 void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
-			  struct csr_roam_profile *profile, uint32_t if_addr)
+			  uint32_t if_addr)
 {
 	int i;
 	struct scheduler_msg msg;
@@ -6093,6 +6093,8 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 	struct hlp_params *params;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
+	struct mlme_legacy_priv *mlme_priv;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!session) {
 		sme_err("session NULL");
@@ -6112,22 +6114,39 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 	if (!params)
 		return;
 
-	if ((profile->hlp_ie_len +
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev_id %d", vdev_id);
+		qdf_mem_free(params);
+		return;
+	}
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		qdf_mem_free(params);
+		return;
+	}
+	if ((mlme_priv->connect_info.hlp_ie_len +
 	     QDF_IPV4_ADDR_SIZE) > FILS_MAX_HLP_DATA_LEN) {
 		sme_err("HLP IE len exceeds %d",
-				profile->hlp_ie_len);
+			mlme_priv->connect_info.hlp_ie_len);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		qdf_mem_free(params);
 		return;
 	}
 
 	params->vdev_id = vdev_id;
-	params->hlp_ie_len = profile->hlp_ie_len + QDF_IPV4_ADDR_SIZE;
+	params->hlp_ie_len =
+		mlme_priv->connect_info.hlp_ie_len + QDF_IPV4_ADDR_SIZE;
 
 	for (i = 0; i < QDF_IPV4_ADDR_SIZE; i++)
 		params->hlp_ie[i] = (if_addr >> (i * 8)) & 0xFF;
 
 	qdf_mem_copy(params->hlp_ie + QDF_IPV4_ADDR_SIZE,
-		     profile->hlp_ie, profile->hlp_ie_len);
+		     mlme_priv->connect_info.hlp_ie,
+		     mlme_priv->connect_info.hlp_ie_len);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	msg.type = SIR_HAL_HLP_IE_INFO;
 	msg.reserved = 0;

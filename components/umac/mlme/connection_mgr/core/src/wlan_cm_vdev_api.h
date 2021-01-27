@@ -24,13 +24,15 @@
 #ifndef __WLAN_CM_VDEV_API_H__
 #define __WLAN_CM_VDEV_API_H__
 
-#ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
 #include "scheduler_api.h"
+#ifdef FEATURE_CM_ENABLE
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
+#endif
 #include <wlan_cm_roam_api.h>
 
+#ifdef FEATURE_CM_ENABLE
 /**
  * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
  * @vdev_id: vdev id
@@ -124,7 +126,30 @@ struct cm_peer_create_req {
 struct cm_ext_obj {
 	struct rso_config rso_cfg;
 };
+#endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * cm_update_hlp_info - API to save HLP IE
+ * @psoc: Pointer to psoc
+ * @gen_ie: IE buffer to store
+ * @len: length of the IE buffer @gen_ie
+ * @vdev_id: vdev id
+ * @flush: Flush the older saved HLP if any
+ *
+ * Return: None
+ */
+void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
+			const uint8_t *gen_ie, uint16_t len,
+			bool flush);
+#else
+static inline void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
+				      const uint8_t *gen_ie, uint16_t len,
+				      bool flush)
+{}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
 static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
 {
 	cm_ctx->ext_cm_ptr = qdf_mem_malloc(sizeof(struct cm_ext_obj));
