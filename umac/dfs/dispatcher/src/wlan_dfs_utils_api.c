@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1107,56 +1107,6 @@ QDF_STATUS utils_dfs_get_random_channel_for_freq(
 }
 
 qdf_export_symbol(utils_dfs_get_random_channel_for_freq);
-#endif
-
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_bw_reduced_channel(
-	struct wlan_objmgr_pdev *pdev,
-	struct ch_params *ch_params,
-	uint32_t *hw_mode,
-	uint8_t *target_chan)
-{
-	struct wlan_dfs *dfs = NULL;
-	struct wlan_objmgr_psoc *psoc;
-	enum channel_state ch_state;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	*target_chan = 0;
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null psoc");
-		return status;
-	}
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
-		return status;
-	}
-
-	ch_state = wlan_reg_get_channel_state(pdev,
-					      dfs->dfs_curchan->dfs_ch_ieee);
-
-	if (ch_state == CHANNEL_STATE_DFS ||
-	    ch_state == CHANNEL_STATE_ENABLE) {
-		ch_params->center_freq_seg0 =
-			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1;
-		ch_params->center_freq_seg1 =
-			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2;
-		wlan_reg_set_channel_params(pdev,
-					    dfs->dfs_curchan->dfs_ch_ieee,
-					    0, ch_params);
-
-		*target_chan = dfs->dfs_curchan->dfs_ch_ieee;
-		utils_dfs_get_max_phy_mode(pdev, hw_mode);
-
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return status;
-}
-
-qdf_export_symbol(utils_dfs_bw_reduced_channel);
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
