@@ -5639,7 +5639,7 @@ free_nbuf_dec_ref:
 		 * descriptor list
 		 */
 		/* print ppdu_desc info for debugging purpose */
-		dp_tx_capture_info("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%llu b %u] dur[%u]",
+		dp_tx_capture_info("%pK: ppdu[%d], p_id[%d], tid[%d], fctrl[0x%x 0x%x] ftype[%d] h_frm_t[%d] seq[%d] tsf[%llu b %llu] dur[%u]",
 				   pdev->soc, ppdu_desc->ppdu_id,
 				   ppdu_desc->user[0].peer_id,
 				   ppdu_desc->user[0].tid,
