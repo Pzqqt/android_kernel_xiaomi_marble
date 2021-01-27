@@ -422,7 +422,7 @@ static inline
 qdf_dentry_t qdf_debugfs_create_entry(const char *name, uint16_t mode,
 				      qdf_dentry_t parent,
 				      qdf_entry_t data,
-				      const qdf_file_ops_t *fops)
+				      const qdf_file_ops_t fops)
 {
 	return NULL;
 }
