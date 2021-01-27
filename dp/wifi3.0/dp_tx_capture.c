@@ -133,6 +133,15 @@
 		}							\
 	}
 
+#define TX_CAP_WDI_EVENT_HANDLER(_soc_, _pdev_id_, payload)		\
+	{								\
+		dp_wdi_event_handler(WDI_EVENT_TX_PKT_CAPTURE,		\
+				     _soc_,				\
+				     payload, HTT_INVALID_PEER,		\
+				     WDI_NO_VAL,			\
+				     _pdev_id_);			\
+	}
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH_DEBUG
 
 #define TX_CAP_NBUF_QUEUE_FREE(q_head)					\
@@ -2238,6 +2247,7 @@ QDF_STATUS
 dp_config_enh_tx_capture(struct dp_pdev *pdev, uint8_t val)
 {
 	qdf_atomic_set(&pdev->tx_capture.tx_cap_usr_mode, val);
+
 	dp_tx_capture_info("%pK: User mode change requested - %d\n",
 			   pdev->soc, qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
 
@@ -3369,9 +3379,7 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 	/*
 	 * send MPDU to osif layer
 	 */
-	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-			     &tx_capture_info, HTT_INVALID_PEER,
-			     WDI_NO_VAL, pdev->pdev_id);
+	TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id, &tx_capture_info);
 
 	if (tx_capture_info.mpdu_nbuf)
 		qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
@@ -3623,10 +3631,8 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 		 * do we need to update mpdu_info before tranmit
 		 * get current mpdu_nbuf
 		 */
-		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-				     &tx_capture_info,
-				     HTT_INVALID_PEER,
-				     WDI_NO_VAL, pdev->pdev_id);
+		TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id,
+					 &tx_capture_info);
 
 		if (tx_capture_info.mpdu_nbuf)
 			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
@@ -4316,9 +4322,7 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 				    wh_min->i_dur[1], wh_min->i_dur[0]);
 	}
 
-	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-			     ptr_tx_cap_info, HTT_INVALID_PEER,
-			     WDI_NO_VAL, pdev->pdev_id);
+	TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id, ptr_tx_cap_info);
 
 	if (ptr_tx_cap_info->mpdu_nbuf)
 		qdf_nbuf_free(ptr_tx_cap_info->mpdu_nbuf);
@@ -6324,9 +6328,7 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 	dp_gen_cts_frame(ppdu_info, peer,
 				 tx_capture_info.mpdu_nbuf);
 	DP_TX_PEER_DEL_REF(peer);
-	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-			     &tx_capture_info, HTT_INVALID_PEER,
-			     WDI_NO_VAL, pdev->pdev_id);
+	TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id, &tx_capture_info);
 
 	if (tx_capture_info.mpdu_nbuf)
 		qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
@@ -6395,9 +6397,8 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 			return;
 		dp_gen_ack_frame(ppdu_info, NULL,
 				 tx_capture_info.mpdu_nbuf);
-		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-				     &tx_capture_info, HTT_INVALID_PEER,
-				     WDI_NO_VAL, pdev->pdev_id);
+		TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id,
+					 &tx_capture_info);
 
 		if (tx_capture_info.mpdu_nbuf)
 			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
@@ -6454,9 +6455,8 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 	}
 
 	DP_TX_PEER_DEL_REF(peer);
-	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-			     &tx_capture_info, HTT_INVALID_PEER,
-			     WDI_NO_VAL, pdev->pdev_id);
+	TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id,
+				 &tx_capture_info);
 
 	if (tx_capture_info.mpdu_nbuf)
 		qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
@@ -6727,9 +6727,7 @@ QDF_STATUS dp_send_noack_frame_to_stack(struct dp_soc *soc,
 			   tx_capture_info.mpdu_nbuf, mon_mpdu);
 
 	DP_TX_PEER_DEL_REF(peer);
-	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-			     &tx_capture_info, HTT_INVALID_PEER,
-			     WDI_NO_VAL, pdev->pdev_id);
+	TX_CAP_WDI_EVENT_HANDLER(pdev->soc, pdev->pdev_id, &tx_capture_info);
 
 	if (tx_capture_info.mpdu_nbuf)
 		qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
