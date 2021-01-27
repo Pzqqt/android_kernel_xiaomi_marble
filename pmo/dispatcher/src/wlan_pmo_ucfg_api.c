@@ -895,10 +895,17 @@ ucfg_pmo_get_gpio_wakeup_mode(struct wlan_objmgr_psoc *psoc)
 #endif
 
 bool
-ucfg_pmo_get_beaconing_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
+ucfg_pmo_get_sap_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
 
-	return pmo_psoc_ctx->psoc_cfg.is_bus_suspend_enabled_in_beaconing_mode;
+	return pmo_psoc_ctx->psoc_cfg.is_bus_suspend_enabled_in_sap_mode;
 }
 
+bool
+ucfg_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.is_bus_suspend_enabled_in_go_mode;
+}
