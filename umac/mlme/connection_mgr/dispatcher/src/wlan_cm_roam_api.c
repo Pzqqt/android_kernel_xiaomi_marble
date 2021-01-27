@@ -1471,24 +1471,24 @@ QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
 
 	if (!src_fils_info) {
 		mlme_debug("FILS: vdev:%d Clear fils info", vdev_id);
-		qdf_mem_free(mlme_priv->fils_con_info);
-		mlme_priv->fils_con_info = NULL;
+		qdf_mem_free(mlme_priv->connect_info.fils_con_info);
+		mlme_priv->connect_info.fils_con_info = NULL;
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (mlme_priv->fils_con_info)
-		qdf_mem_free(mlme_priv->fils_con_info);
+	if (mlme_priv->connect_info.fils_con_info)
+		qdf_mem_free(mlme_priv->connect_info.fils_con_info);
 
-	mlme_priv->fils_con_info =
+	mlme_priv->connect_info.fils_con_info =
 		qdf_mem_malloc(sizeof(struct wlan_fils_connection_info));
-	if (!mlme_priv->fils_con_info) {
+	if (!mlme_priv->connect_info.fils_con_info) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	mlme_debug("FILS: vdev:%d update fils info", vdev_id);
-	qdf_mem_copy(mlme_priv->fils_con_info, src_fils_info,
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info, src_fils_info,
 		     sizeof(struct wlan_fils_connection_info));
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
@@ -1513,20 +1513,20 @@ wlan_cm_update_mlme_fils_info(struct wlan_objmgr_vdev *vdev,
 
 	if (!src_fils_info) {
 		mlme_debug("FILS: vdev:%d Clear fils info", vdev_id);
-		qdf_mem_free(mlme_priv->fils_con_info);
-		mlme_priv->fils_con_info = NULL;
+		qdf_mem_free(mlme_priv->connect_info.fils_con_info);
+		mlme_priv->connect_info.fils_con_info = NULL;
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (mlme_priv->fils_con_info)
-		qdf_mem_free(mlme_priv->fils_con_info);
+	if (mlme_priv->connect_info.fils_con_info)
+		qdf_mem_free(mlme_priv->connect_info.fils_con_info);
 
-	mlme_priv->fils_con_info =
+	mlme_priv->connect_info.fils_con_info =
 		qdf_mem_malloc(sizeof(struct wlan_fils_connection_info));
-	if (!mlme_priv->fils_con_info)
+	if (!mlme_priv->connect_info.fils_con_info)
 		return QDF_STATUS_E_NOMEM;
 
-	tgt_info = mlme_priv->fils_con_info;
+	tgt_info = mlme_priv->connect_info.fils_con_info;
 	mlme_debug("FILS: vdev:%d update fils info", vdev_id);
 	tgt_info->is_fils_connection = src_fils_info->is_fils_connection;
 	tgt_info->key_nai_length = src_fils_info->username_len;
@@ -1545,8 +1545,26 @@ wlan_cm_update_mlme_fils_info(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-
 #endif
+
+void wlan_cm_update_hlp_info(struct wlan_objmgr_psoc *psoc,
+			     const uint8_t *gen_ie, uint16_t len,
+			     uint8_t vdev_id, bool flush)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev_id %d", vdev_id);
+		return;
+	}
+
+	cm_update_hlp_info(vdev, gen_ie, len, flush);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
+
 struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id)
@@ -1569,7 +1587,7 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 		return NULL;
 	}
 
-	fils_info = mlme_priv->fils_con_info;
+	fils_info = mlme_priv->connect_info.fils_con_info;
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return fils_info;
@@ -1596,14 +1614,16 @@ QDF_STATUS wlan_cm_update_fils_ft(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!mlme_priv->fils_con_info || !fils_ft || !fils_ft_len ||
-	    !mlme_priv->fils_con_info->is_fils_connection) {
+	if (!mlme_priv->connect_info.fils_con_info || !fils_ft ||
+	    !fils_ft_len ||
+	    !mlme_priv->connect_info.fils_con_info->is_fils_connection) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv->fils_con_info->fils_ft_len = fils_ft_len;
-	qdf_mem_copy(mlme_priv->fils_con_info->fils_ft, fils_ft, fils_ft_len);
+	mlme_priv->connect_info.fils_con_info->fils_ft_len = fils_ft_len;
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->fils_ft, fils_ft,
+		     fils_ft_len);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return QDF_STATUS_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -113,3 +113,28 @@ QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 
 	return status;
 }
+
+#ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS
+ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
+			   uint8_t vdev_id,
+			   struct wlan_fils_con_info *fils_info)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_cm_update_mlme_fils_info(vdev, fils_info);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return status;
+}
+#endif
+#endif

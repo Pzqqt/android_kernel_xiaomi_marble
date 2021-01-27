@@ -553,6 +553,20 @@ wlan_cm_update_mlme_fils_info(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_cm_update_fils_ft(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id, uint8_t *fils_ft,
 				  uint8_t fils_ft_len);
+
+/**
+ * wlan_cm_update_hlp_info - API to save HLP IE
+ * @psoc: Pointer to psoc
+ * @gen_ie: IE buffer to store
+ * @len: length of the IE buffer @gen_ie
+ * @vdev_id: vdev id
+ * @flush: Flush the older saved HLP if any
+ *
+ * Return: None
+ */
+void wlan_cm_update_hlp_info(struct wlan_objmgr_psoc *psoc,
+			     const uint8_t *gen_ie, uint16_t len,
+			     uint8_t vdev_id, bool flush);
 #else
 static inline
 struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
@@ -561,6 +575,11 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 {
 	return NULL;
 }
+
+static inline void wlan_cm_update_hlp_info(struct wlan_objmgr_psoc *psoc,
+					   const uint8_t *gen_ie, uint16_t len,
+					   uint8_t vdev_id, bool flush)
+{}
 #endif
 
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
