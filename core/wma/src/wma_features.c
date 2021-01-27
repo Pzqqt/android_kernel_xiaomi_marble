@@ -2304,6 +2304,11 @@ static void wma_acquire_wow_wakelock(t_wma_handle *wma, int wake_reason)
 	case WOW_REASON_ROAM_PREAUTH_START:
 		wl = &wma->roam_preauth_wl;
 		ms = WMA_ROAM_PREAUTH_WAKE_LOCK_DURATION;
+		break;
+	case WOW_REASON_PROBE_REQ_WPS_IE_RECV:
+		wl = &wma->probe_req_wps_wl;
+		ms = WMA_REASON_PROBE_REQ_WPS_IE_RECV_DURATION;
+		break;
 	default:
 		return;
 	}
