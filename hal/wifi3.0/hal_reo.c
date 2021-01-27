@@ -455,7 +455,7 @@ inline int hal_reo_cmd_queue_stats(hal_ring_handle_t  hal_ring_hdl,
 			      cmd->u.stats_params.clear);
 
 	if (hif_pm_runtime_get(hal_soc->hif_handle,
-			       RTPM_ID_HAL_REO_CMD, false) == 0) {
+			       RTPM_ID_HAL_REO_CMD, true) == 0) {
 		hal_srng_access_end(hal_soc_hdl, hal_ring_hdl);
 		hif_pm_runtime_put(hal_soc->hif_handle,
 				   RTPM_ID_HAL_REO_CMD);
@@ -592,7 +592,7 @@ inline int hal_reo_cmd_flush_cache(hal_ring_handle_t hal_ring_hdl,
 		cp->flush_all);
 
 	if (hif_pm_runtime_get(hal_soc->hif_handle,
-			       RTPM_ID_HAL_REO_CMD, false) == 0) {
+			       RTPM_ID_HAL_REO_CMD, true) == 0) {
 		hal_srng_access_end(hal_soc_hdl, hal_ring_hdl);
 		hif_pm_runtime_put(hal_soc->hif_handle,
 				   RTPM_ID_HAL_REO_CMD);
