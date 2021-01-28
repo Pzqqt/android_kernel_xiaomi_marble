@@ -34,6 +34,9 @@
 #include <linux/soc/qcom/smem_state.h>
 #include <linux/of_irq.h>
 #include <linux/ctype.h>
+#include <linux/of_address.h>
+#include <linux/qcom_scm.h>
+#include <linux/soc/qcom/mdt_loader.h>
 #include "gsi.h"
 
 #ifdef CONFIG_ARM64
@@ -6975,6 +6978,90 @@ static int ipa3_manual_load_ipa_fws(void)
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
+static int ipa_firmware_load(const char *sub_sys)
+{
+	const struct firmware *fw;
+	char fw_name[32];
+	struct device_node *node;
+	struct resource res;
+	phys_addr_t phys;
+	ssize_t size;
+	void *virt;
+	int ret, index, pas_id;
+	struct device *dev = &ipa3_ctx->master_pdev->dev;
+
+	index = of_property_match_string(dev->of_node, "firmware-names",
+					 sub_sys);
+	if (index < 0) {
+		pr_err("#####Not able to match firmware names prorperty\n");
+		return -EINVAL;
+	}
+
+	node = of_parse_phandle(dev->of_node, "memory-regions", index);
+	if (!node) {
+		dev_err(dev, "DT error getting \"memory-region\" property\n");
+		return -EINVAL;
+	}
+
+	ret = of_address_to_resource(node, 0, &res);
+	if (ret) {
+		dev_err(dev, "error %d getting \"memory-region\" resource\n",
+			ret);
+		return ret;
+	}
+
+	scnprintf(fw_name, ARRAY_SIZE(fw_name), "%s.mdt", sub_sys);
+	ret = of_property_read_u32_index(dev->of_node, "pas-ids", index,
+					  &pas_id);
+
+	ret = request_firmware(&fw, fw_name, dev);
+	if (ret) {
+		dev_err(dev, "error %d requesting \"%s\"\n", ret, fw_name);
+		return ret;
+	}
+
+	phys = res.start;
+	size = (size_t)resource_size(&res);
+	virt = memremap(phys, size, MEMREMAP_WC);
+	if (!virt) {
+		dev_err(dev, "unable to remap firmware memory\n");
+		ret = -ENOMEM;
+		goto out_release_firmware;
+	}
+
+	ret = qcom_mdt_load(dev, fw, fw_name, pas_id, virt, phys, size, NULL);
+	if (ret)
+		dev_err(dev, "error %d loading \"%s\"\n", ret, fw_name);
+	else if ((ret = qcom_scm_pas_auth_and_reset(pas_id)))
+		dev_err(dev, "error %d authenticating \"%s\"\n", ret, fw_name);
+
+	memunmap(virt);
+
+out_release_firmware:
+	release_firmware(fw);
+
+	return ret;
+}
+
+static int ipa3_mdt_load_ipa_fws(const char *sub_sys)
+{
+	int ret;
+
+	IPADBG("MDT FW loading process initiated sub_sys=%s\n",
+		sub_sys);
+
+	ret = ipa_firmware_load(sub_sys);
+	if (ret < 0) {
+		IPAERR("Unable to MDT load FW for sub_sys=%s\n", sub_sys);
+		return -EINVAL;
+	}
+
+	IPADBG("MDT FW loading process is complete sub_sys=%s\n", sub_sys);
+	return 0;
+}
+#else /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
+
 static int ipa3_pil_load_ipa_fws(const char *sub_sys)
 {
 	void *subsystem_get_retval = NULL;
@@ -6991,6 +7078,7 @@ static int ipa3_pil_load_ipa_fws(const char *sub_sys)
 	IPADBG("PIL FW loading process is complete sub_sys=%s\n", sub_sys);
 	return 0;
 }
+#endif /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 
 static void ipa3_load_ipa_fw(struct work_struct *work)
 {
@@ -7014,11 +7102,19 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		 * using different signing images, adding support to
 		 * load specific FW image to based on dt entry.
 		 */
+#if IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
+		if (ipa3_ctx->gsi_fw_file_name)
+			result = ipa3_mdt_load_ipa_fws(
+						ipa3_ctx->gsi_fw_file_name);
+		else
+			result = ipa3_mdt_load_ipa_fws(IPA_SUBSYSTEM_NAME);
+#else /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 		if (ipa3_ctx->gsi_fw_file_name)
 			result = ipa3_pil_load_ipa_fws(
 						ipa3_ctx->gsi_fw_file_name);
 		else
 			result = ipa3_pil_load_ipa_fws(IPA_SUBSYSTEM_NAME);
+#endif /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 	} else {
 		result = ipa3_manual_load_ipa_fws();
 	}
@@ -7050,17 +7146,25 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		/* Unvoting will happen when uC loaded event received. */
 		ipa3_proxy_clk_vote(false);
 
+#if IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
+		if (ipa3_ctx->uc_fw_file_name)
+			result = ipa3_mdt_load_ipa_fws(
+						ipa3_ctx->uc_fw_file_name);
+		else
+			result = ipa3_mdt_load_ipa_fws(IPA_UC_SUBSYSTEM_NAME);
+#else /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 		if (ipa3_ctx->uc_fw_file_name)
 			result = ipa3_pil_load_ipa_fws(
 						ipa3_ctx->uc_fw_file_name);
 		else
 			result = ipa3_pil_load_ipa_fws(IPA_UC_SUBSYSTEM_NAME);
+#endif /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 		if (result) {
 			IPAERR("IPA uC loading process has failed result=%d\n",
 				result);
 			return;
 		}
-		IPADBG("IPA uC PIL loading succeeded\n");
+		IPADBG("IPA uC loading succeeded\n");
 	}
 }
 
