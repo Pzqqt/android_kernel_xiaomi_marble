@@ -226,6 +226,12 @@ static void gsi_channel_state_change_wait(unsigned long chan_hdl,
 				GSI_EE_n_CNTXT_SRC_GSI_CH_IRQ, ee);
 		}
 
+		if (gsi_ctx->per.ver == GSI_VER_1_0) {
+			gsihal_read_reg_nk_fields(GSI_EE_n_GSI_CH_k_CNTXT_0,
+				ee, chan_hdl, &ch_k_cntxt_0);
+			curr_state = ch_k_cntxt_0.chstate;
+		}
+
 		/* Update the channel state only if interrupt was raised
 		 * on particular channel and also checking global interrupt
 		 * is raised for channel control.
