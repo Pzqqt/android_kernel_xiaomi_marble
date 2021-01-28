@@ -70,6 +70,8 @@ void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(mlme_priv->connect_info.hlp_ie +
 		     mlme_priv->connect_info.hlp_ie_len, gen_ie, len);
 	mlme_priv->connect_info.hlp_ie_len += len;
+	mlme_debug("hlp_ie_len %d len %d", mlme_priv->connect_info.hlp_ie_len,
+		   len);
 }
 #endif
 
@@ -842,14 +844,32 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 	return status;
 }
 
+#define FILS_HLP_OUI_TYPE "\x5"
+#define FILS_HLP_OUI_LEN 1
+
 static void
 cm_update_hlp_data_from_assoc_ie(struct wlan_objmgr_vdev *vdev,
 				 struct wlan_cm_vdev_connect_req *req)
 {
-	/*
-	 * loop through req->assoc IE and fill hld date from
-	 * DOT11F_EID_FRAGMENT_IE and SIR_FILS_HLP_EXT_EID
-	 */
+	const uint8_t *hlp_ext_ie;
+	const uint8_t *fragment_ie;
+
+	/* clear hlp IE */
+	cm_update_hlp_info(vdev, NULL, 0, true);
+
+	hlp_ext_ie = wlan_get_ext_ie_ptr_from_ext_id(FILS_HLP_OUI_TYPE,
+						     FILS_HLP_OUI_LEN,
+						     req->assoc_ie.ptr,
+						     req->assoc_ie.len);
+	if (hlp_ext_ie)
+		cm_update_hlp_info(vdev, hlp_ext_ie, hlp_ext_ie[1] + 2, false);
+
+	fragment_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_FRAGMENT_IE,
+					       req->assoc_ie.ptr,
+					       req->assoc_ie.len);
+	if (fragment_ie)
+		cm_update_hlp_info(vdev, fragment_ie,
+				   fragment_ie[1] + 2, false);
 }
 
 QDF_STATUS

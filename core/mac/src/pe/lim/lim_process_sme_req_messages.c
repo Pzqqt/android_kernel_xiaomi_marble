@@ -3136,7 +3136,7 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 		privacy = true;
 		rsn_enabled = false;
 	} else if (QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_TKIP) ||
-		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CMAC) ||
+		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_CCM) ||
 		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_AES_OCB) ||
 		   QDF_HAS_PARAM(ucast_cipher,
 				 WLAN_CRYPTO_CIPHER_AES_CCM_256) ||
@@ -3155,6 +3155,9 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 	mac_ctx->mlme_cfg->feature_flags.enable_rsn = rsn_enabled;
 	mac_ctx->mlme_cfg->wep_params.is_privacy_enabled = privacy;
 	mac_ctx->mlme_cfg->wep_params.wep_default_key_id = 0;
+	pe_debug("rsn_enabled %d privacy %d ucast_cipher %x auth_mode %x akm %x auth_type %d",
+		 rsn_enabled, privacy, ucast_cipher, auth_mode, akm,
+		 mac_ctx->mlme_cfg->wep_params.auth_type);
 	session->encryptType = lim_get_encrypt_ed_type(ucast_cipher);
 	session->connected_akm = lim_get_connected_akm(session, ucast_cipher,
 						       auth_mode, akm);

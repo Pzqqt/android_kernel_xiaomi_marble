@@ -714,6 +714,10 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 		 * Unexpected auth request.
 		 * Return Auth confirm with Invalid parameters code.
 		 */
+		pe_err("Auth req not expected is_privacy_enabled %d is_auth_open_system %d auth type %d",
+			mac_ctx->mlme_cfg->wep_params.is_privacy_enabled,
+			mac_ctx->mlme_cfg->wep_params.is_auth_open_system,
+			mac_ctx->lim.gpLimMlmAuthReq->authType);
 		mlm_auth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	}
