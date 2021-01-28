@@ -463,7 +463,7 @@ exit:
 
 #ifdef WLAN_ENH_CFR_ENABLE
 
-static inline
+static
 QDF_STATUS dev_sanity_check(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_objmgr_pdev **ppdev,
 			    struct pdev_cfr **ppcfr)
