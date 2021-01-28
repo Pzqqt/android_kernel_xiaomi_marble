@@ -1380,7 +1380,9 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 	DP_MST_INFO("conn:%d status:%d\n", connector->base.id, status);
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, status);
 
+	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
+
 	return status;
 }
 
