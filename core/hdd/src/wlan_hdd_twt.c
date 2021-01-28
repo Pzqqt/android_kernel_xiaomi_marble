@@ -45,6 +45,7 @@
 #define TWT_SETUP_WAKE_INTVL_MANTISSA_MAX       0xFFFF
 #define TWT_SETUP_WAKE_DURATION_MAX             0xFFFF
 #define TWT_SETUP_WAKE_INTVL_EXP_MAX            31
+#define TWT_WAKE_INTVL_MULTIPLICATION_FACTOR    1024
 #define TWT_WAKE_DURATION_MULTIPLICATION_FACTOR 256
 #define TWT_MAX_NEXT_TWT_SIZE                   3
 #define TWT_ALL_SESSIONS_DIALOG_ID              255
@@ -137,6 +138,7 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 	uint32_t wake_intvl_exp, result;
 	int cmd_id;
 	QDF_STATUS qdf_status;
+	uint32_t wake_intvl_mantis_tu;
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
 	if (tb[cmd_id]) {
@@ -229,11 +231,13 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		hdd_err_rl("SETUP_WAKE_INTVL_MANTISSA is must");
 		return -EINVAL;
 	}
-	params->wake_intvl_mantis = nla_get_u32(tb[cmd_id]);
+	wake_intvl_mantis_tu = nla_get_u32(tb[cmd_id]);
+	params->wake_intvl_mantis = wake_intvl_mantis_tu *
+				    TWT_WAKE_INTVL_MULTIPLICATION_FACTOR;
 	if (params->wake_intvl_mantis >
 	    TWT_SETUP_WAKE_INTVL_MANTISSA_MAX) {
 		hdd_err_rl("Invalid wake_intvl_mantis %u",
-			   params->wake_dura_us);
+			   params->wake_intvl_mantis);
 		return -EINVAL;
 	}
 
@@ -1053,6 +1057,7 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	enum qca_wlan_vendor_twt_status vendor_status;
 	int response_type;
 	uint32_t wake_duration;
+	uint32_t wake_intvl_mantissa_tu;
 
 	hdd_enter();
 
@@ -1106,6 +1111,7 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	hdd_debug("wake_dur_us %d", event->additional_params.wake_dur_us);
 	wake_duration = (event->additional_params.wake_dur_us /
 			 TWT_WAKE_DURATION_MULTIPLICATION_FACTOR);
 	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION,
@@ -1114,12 +1120,15 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	wake_intvl_mantissa_tu = (event->additional_params.wake_intvl_us /
+				 TWT_WAKE_INTVL_MULTIPLICATION_FACTOR);
 	if (nla_put_u32(reply_skb,
 			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA,
-			event->additional_params.wake_intvl_us)) {
+			wake_intvl_mantissa_tu)) {
 		hdd_err("TWT: Failed to put wake interval us");
 		return QDF_STATUS_E_FAILURE;
 	}
+	hdd_debug("wake_intvl_mantissa in TU %d", wake_intvl_mantissa_tu);
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP,
 		       0)) {
@@ -2493,15 +2502,15 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct sk_buff *reply_skb,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		hdd_debug("%d wake duration %d num sp cycles %d",
-			  params[i].dialog_id, wake_duration,
-			  params[i].num_sp_cycles);
 		wake_duration = get_session_wake_duration(params[i].dialog_id);
 		attr = QCA_WLAN_VENDOR_ATTR_TWT_STATS_SESSION_WAKE_DURATION;
 		if (nla_put_u32(reply_skb, attr, wake_duration)) {
 			hdd_err("get_params failed to put Wake duration");
 			return QDF_STATUS_E_INVAL;
 		}
+		hdd_debug("%d wake duration %d num sp cycles %d",
+			  params[i].dialog_id, wake_duration,
+			  params[i].num_sp_cycles);
 
 		attr = QCA_WLAN_VENDOR_ATTR_TWT_STATS_NUM_SP_ITERATIONS;
 		if (nla_put_u32(reply_skb, attr, params[i].num_sp_cycles)) {
