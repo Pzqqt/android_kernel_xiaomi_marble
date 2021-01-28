@@ -22,6 +22,7 @@ WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 WLAN_FW_API ?= $(WLAN_ROOT)/../fw-api/
 WLAN_PROFILE ?= default
 CONFIG_QCA_CLD_WLAN_PROFILE ?= $(WLAN_PROFILE)
+DEVNAME ?= wlan
 
 ifeq ($(KERNEL_BUILD), n)
 ifneq ($(ANDROID_BUILD_TOP),)
@@ -3849,9 +3850,8 @@ CMN_IDS = $(shell cd "$(WLAN_COMMON_INC)" && \
 	git log -50 $(CMN_CHECKOUT)~..HEAD | \
 		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
 		paste -sd "," -)
-BUILD_TAG = "cld:$(CLD_IDS); cmn:$(CMN_IDS);"
-# It's assumed that BUILD_TAG is used only in wlan_hdd_main.c
-CFLAGS_wlan_hdd_main.o += -DBUILD_TAG=\"$(BUILD_TAG)\"
+BUILD_TAG = "cld:$(CLD_IDS); cmn:$(CMN_IDS); dev:$(DEVNAME)"
+ccflags-y += -DBUILD_TAG=\"$(BUILD_TAG)\"
 endif
 
 # Module information used by KBuild framework
