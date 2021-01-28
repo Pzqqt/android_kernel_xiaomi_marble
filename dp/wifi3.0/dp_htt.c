@@ -606,6 +606,15 @@ htt_htc_pkt_pool_free(struct htt_soc *soc)
 	soc->htt_htc_pkt_freelist = NULL;
 }
 
+#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
+
+static void
+htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
+{
+}
+
+#else  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+
 /*
  * htt_htc_misc_pkt_list_trim() - trim misc list
  * @htt_soc: HTT SOC handle
@@ -667,6 +676,8 @@ htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
 	 */
 	htt_htc_misc_pkt_list_trim(soc, misclist_trim_level);
 }
+
+#endif  /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
 
 /**
  * DP_HTT_SEND_HTC_PKT() - Send htt packet from host
@@ -778,6 +789,7 @@ dp_htt_h2t_send_complete_free_netbuf(
 	qdf_nbuf_free(netbuf);
 }
 
+#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
 /*
  * dp_htt_h2t_send_complete() - H2T completion handler
  * @context:	Opaque context (HTT SOC handle)
@@ -786,8 +798,35 @@ dp_htt_h2t_send_complete_free_netbuf(
 static void
 dp_htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
+	struct htt_soc *soc =  (struct htt_soc *) context;
+	struct dp_htt_htc_pkt *htt_pkt;
+	qdf_nbuf_t netbuf;
+
+	htt_pkt = container_of(htc_pkt, struct dp_htt_htc_pkt, htc_pkt);
+
+	/* process (free or keep) the netbuf that held the message */
+	netbuf = (qdf_nbuf_t) htc_pkt->pNetBufContext;
+	/*
+	 * adf sendcomplete is required for windows only
+	 */
+	/* qdf_nbuf_set_sendcompleteflag(netbuf, TRUE); */
+	/* free the htt_htc_pkt / HTC_PACKET object */
+	qdf_nbuf_free(netbuf);
+	htt_htc_pkt_free(soc, htt_pkt);
+}
+
+#else /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+
+/*
+ *  * dp_htt_h2t_send_complete() - H2T completion handler
+ *   * @context:    Opaque context (HTT SOC handle)
+ *    * @htc_pkt:    HTC packet
+ *     */
+static void
+dp_htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
+{
 	void (*send_complete_part2)(
-		void *soc, QDF_STATUS status, qdf_nbuf_t msdu);
+	     void *soc, QDF_STATUS status, qdf_nbuf_t msdu);
 	struct htt_soc *soc =  (struct htt_soc *) context;
 	struct dp_htt_htc_pkt *htt_pkt;
 	qdf_nbuf_t netbuf;
@@ -800,15 +839,17 @@ dp_htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 	netbuf = (qdf_nbuf_t) htc_pkt->pNetBufContext;
 	/*
 	 * adf sendcomplete is required for windows only
-	 */
+	*/
 	/* qdf_nbuf_set_sendcompleteflag(netbuf, TRUE); */
-	if (send_complete_part2) {
+	if (send_complete_part2){
 		send_complete_part2(
-			htt_pkt->soc_ctxt, htc_pkt->Status, netbuf);
+		    htt_pkt->soc_ctxt, htc_pkt->Status, netbuf);
 	}
 	/* free the htt_htc_pkt / HTC_PACKET object */
 	htt_htc_pkt_free(soc, htt_pkt);
 }
+
+#endif /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
 
 /*
  * htt_h2t_ver_req_msg() - Send HTT version request message to target

@@ -923,6 +923,27 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 
 #endif /*ATH_11AC_TXCOMPACT */
 
+#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
+static inline bool check_ce_id_and_epping_enabled(int CE_id, uint32_t mode)
+{
+	// QDF_IS_EPPING_ENABLED is pre lithium feature
+	// CE4 completion is enabled only lithium and later
+	// so no need to check for EPPING
+	return true;
+}
+
+#else /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+
+static inline bool check_ce_id_and_epping_enabled(int CE_id, uint32_t mode)
+{
+	if (CE_id != CE_HTT_H2T_MSG || QDF_IS_EPPING_ENABLED(mode))
+		return true;
+	else
+		return false;
+}
+
+#endif /* ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST */
+
 /*
  * ce_engine_service_reg:
  *
@@ -1006,8 +1027,7 @@ more_completions:
 			 &id, &sw_idx, &hw_idx,
 			 &toeplitz_hash_result) == QDF_STATUS_SUCCESS) {
 
-			if (CE_id != CE_HTT_H2T_MSG ||
-			    QDF_IS_EPPING_ENABLED(mode)) {
+			if (check_ce_id_and_epping_enabled(CE_id, mode)) {
 				qdf_spin_unlock(&CE_state->ce_index_lock);
 				CE_state->send_cb((struct CE_handle *)CE_state,
 						  CE_context, transfer_context,
