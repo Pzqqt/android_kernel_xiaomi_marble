@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1016,6 +1016,7 @@ int ol_tx_distribute_descs_to_deficient_pools_from_global_pool(void)
 				desc_move_count : dst_pool->deficient_desc;
 
 			desc_move_count -= temp_count;
+			dst_pool->deficient_desc -= temp_count;
 			for (i = 0; i < temp_count; i++) {
 				tx_desc = &temp_list->tx_desc;
 				temp_list = temp_list->next;
