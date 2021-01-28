@@ -1114,8 +1114,16 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 			return -EINVAL;
 		}
 
+		/*
+		 * When both DFPS and dynamic clock switch with constant
+		 * fps features are enabled, wait for dynamic refresh done
+		 * only in case of clock switch.
+		 * In case where only fps changes, clock remains same.
+		 * So, wait for dynamic refresh done is not required.
+		 */
 		if ((ctrl_version >= DSI_CTRL_VERSION_2_5) &&
-				(dyn_clk_caps->maintain_const_fps)) {
+			(dyn_clk_caps->maintain_const_fps) &&
+			(adj_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)) {
 			display_for_each_ctrl(i, display) {
 				ctrl = &display->ctrl[i];
 				rc = dsi_ctrl_wait4dynamic_refresh_done(
