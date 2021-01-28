@@ -30,6 +30,18 @@
 #define IPA_ETH_PCIE_MASK BIT_ULL(40)
 #define IPA_ETH_PCIE_SET(val) (val | IPA_ETH_PCIE_MASK)
 
+#define IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client) \
+	((client) == IPA_CLIENT_AQC_ETHERNET_PROD || \
+	(client) == IPA_CLIENT_AQC_ETHERNET_CONS || \
+	(client) == IPA_CLIENT_RTK_ETHERNET_PROD || \
+	(client) == IPA_CLIENT_RTK_ETHERNET_CONS || \
+	(client) == IPA_CLIENT_ETHERNET_PROD || \
+	(client) == IPA_CLIENT_ETHERNET_CONS)
+
+#define IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client) \
+	((client) == IPA_CLIENT_ETHERNET2_PROD || \
+	(client) == IPA_CLIENT_ETHERNET2_CONS)
+
 enum ipa_eth_dir {
 	IPA_ETH_RX = 0,
 	IPA_ETH_TX = 1,
@@ -426,8 +438,32 @@ fail_get_gsi_ep_info:
 	return result;
 }
 
+static struct iommu_domain *ipa_eth_get_smmu_domain(
+	enum ipa_client_type client_type)
+{
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+		return ipa3_get_smmu_domain();
+	if (IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client_type))
+		return ipa3_get_eth_smmu_domain();
+	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
+		return ipa3_get_eth1_smmu_domain();
+	return NULL;
+}
+
+static bool ipa_eth_is_smmu_buff_cb_bypass(
+	enum ipa_client_type client_type)
+{
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+		return ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_AP];
+	if (IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client_type))
+		return ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_ETH];
+	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
+		return ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_ETH1];
+	return false;
+}
+
 static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
-	bool map)
+	enum ipa_client_type client_type, bool map)
 {
 	struct iommu_domain *smmu_domain;
 	int result;
@@ -445,13 +481,7 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 
 	if (ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_AP]) {
 		IPADBG("AP SMMU is set to s1 bypass\n");
-		return 0;
-	}
-
-	smmu_domain = ipa3_get_smmu_domain();
-	if (!smmu_domain) {
-		IPAERR("invalid smmu domain\n");
-		return -EINVAL;
+		goto map_buffer;
 	}
 
 	result = ipa3_smmu_map_peer_buff(
@@ -464,6 +494,19 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 		IPAERR("failed to %s ntn ring %d\n",
 			map ? "map" : "unmap", result);
 		return -EINVAL;
+	}
+
+map_buffer:
+	if (ipa_eth_is_smmu_buff_cb_bypass(client_type)) {
+		IPADBG("SMMU cb for buffer is set to s1 bypass\n");
+		return 0;
+	}
+
+	smmu_domain = ipa_eth_get_smmu_domain(client_type);
+	if (!smmu_domain) {
+		IPAERR("invalid smmu domain\n");
+		result = -EINVAL;
+		goto fail_map_buffer_smmu_enabled;
 	}
 
 	for (i = 0; i < pipe->info.data_buff_list_size; i++) {
@@ -482,7 +525,6 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 			result = iommu_unmap(smmu_domain, iova_p, size_p);
 			if (result != size_p) {
 				IPAERR("Fail to unmap 0x%llx\n", iova);
-				goto fail_map_buffer_smmu_enabled;
 			}
 		}
 	}
@@ -684,7 +726,7 @@ int ipa3_eth_connect(
 		return -EFAULT;
 	}
 
-	result = ipa3_smmu_map_eth_pipes(pipe, true);
+	result = ipa3_smmu_map_eth_pipes(pipe, client_type, true);
 	if (result) {
 		IPAERR("failed to map SMMU %d\n", result);
 		return result;
@@ -930,7 +972,7 @@ query_ch_db_fail:
 setup_gsi_ch_fail:
 cfg_ep_fail:
 disable_data_path_fail:
-	ipa3_smmu_map_eth_pipes(pipe, false);
+	ipa3_smmu_map_eth_pipes(pipe, client_type, false);
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
@@ -1031,7 +1073,7 @@ int ipa3_eth_disconnect(
 	if (IPA_CLIENT_IS_PROD(client_type))
 		ipa3_delete_dflt_flt_rules(ep_idx);
 	/* unmap th pipe */
-	result = ipa3_smmu_map_eth_pipes(pipe, false);
+	result = ipa3_smmu_map_eth_pipes(pipe, client_type, false);
 	if (result)
 		IPAERR("failed to unmap SMMU %d\n", result);
 	ipa3_eth_release_client_mapping(pipe, id);
