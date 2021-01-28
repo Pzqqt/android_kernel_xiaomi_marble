@@ -22,7 +22,7 @@
 #ifdef FISA_DEBUG_ENABLE
 #define dp_fisa_debug dp_info
 #else
-#define dp_fisa_debug dp_debug
+#define dp_fisa_debug(params...)
 #endif
 
 #if defined(WLAN_SUPPORT_RX_FISA)
