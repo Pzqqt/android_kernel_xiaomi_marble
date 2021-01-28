@@ -64,7 +64,7 @@ static int msm_iommu_map(struct msm_mmu *mmu, uint64_t iova,
 	size_t ret;
 
 //	pm_runtime_get_sync(mmu->dev);
-	ret = iommu_map_sg(iommu->domain, iova, sgt->sgl, sgt->nents, prot);
+	ret = iommu_map_sg(iommu->domain, iova, sgt->sgl, sgt->orig_nents, prot);
 //	pm_runtime_put_sync(mmu->dev);
 	WARN_ON(!ret);
 

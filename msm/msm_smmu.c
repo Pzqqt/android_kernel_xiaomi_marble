@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -185,7 +185,7 @@ static int msm_smmu_map(struct msm_mmu *mmu, uint64_t iova,
 
 	if (sgt && sgt->sgl) {
 		ret = iommu_map_sg(client->domain, iova, sgt->sgl,
-				sgt->nents, prot);
+				sgt->orig_nents, prot);
 		WARN_ON((int)ret < 0);
 		DRM_DEBUG("%pad/0x%x/0x%x/\n", &sgt->sgl->dma_address,
 				sgt->sgl->dma_length, prot);
