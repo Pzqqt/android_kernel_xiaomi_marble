@@ -93,13 +93,12 @@ int target_if_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev,
 /**
  * target_if_cfr_pdev_set_param() - Function to set params for cfr config
  * @pdev: pointer to pdev object
- * @param_id: param id which has to be set
  * @param_value: value of param being set
  *
  * Return: success/failure of setting param
  */
-int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
-				 uint32_t param_id, uint32_t param_value);
+int target_if_cfr_periodic_peer_cfr_enable(struct wlan_objmgr_pdev *pdev,
+					   uint32_t param_value);
 /**
  * target_if_cfr_start_capture() - Function to start cfr capture for a peer
  * @pdev: pointer to pdev object
