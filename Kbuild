@@ -1088,6 +1088,9 @@ endif
 ifeq ($(CONFIG_WLAN_CFR_ADRASTEA),y)
 WLAN_CFR_OBJS += $(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_adrastea.o
 endif
+ifeq ($(CONFIG_WLAN_CFR_DBR),y)
+WLAN_CFR_OBJS += $(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_dbr.o
+endif
 endif
 
 $(call add-wlan-objs,wlan_cfr,$(WLAN_CFR_OBJS))
@@ -2855,6 +2858,7 @@ cppflags-$(CONFIG_WLAN_CFR_ENABLE) += -DWLAN_CFR_ENABLE
 cppflags-$(CONFIG_WLAN_ENH_CFR_ENABLE) += -DWLAN_ENH_CFR_ENABLE
 cppflags-$(CONFIG_WLAN_ENH_CFR_ENABLE) += -DWLAN_CFR_PM
 cppflags-$(CONFIG_WLAN_CFR_ADRASTEA) += -DWLAN_CFR_ADRASTEA
+cppflags-$(CONFIG_WLAN_CFR_DBR) += -DWLAN_CFR_DBR
 cppflags-$(CONFIG_WLAN_CFR_ENABLE) += -DCFR_USE_FIXED_FOLDER
 cppflags-$(CONFIG_WLAN_FEATURE_MEDIUM_ASSESS) += -DWLAN_FEATURE_MEDIUM_ASSESS
 cppflags-$(CONFIG_FEATURE_RADAR_HISTORY) += -DFEATURE_RADAR_HISTORY
