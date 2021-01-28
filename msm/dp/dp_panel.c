@@ -2968,6 +2968,21 @@ static void dp_panel_convert_to_dp_mode(struct dp_panel *dp_panel,
 	comp_info->comp_ratio = DP_COMPRESSION_RATIO_NONE;
 	comp_info->comp_type = MSM_DISPLAY_COMPRESSION_NONE;
 
+	/* As YUV was not supported now, so set the default format to RGB */
+	dp_mode->output_format = DP_OUTPUT_FORMAT_RGB;
+	/*
+	 * If a given videomode can be only supported in YCBCR420, set
+	 * the output format to YUV420. While now our driver did not
+	 * support YUV display over DP, so just place this flag here.
+	 * When we want to support YUV, we can use this flag to do
+	 * a lot of settings, like CDM, CSC and pixel_clock.
+	 */
+	if (drm_mode_is_420_only(&dp_panel->connector->display_info,
+			drm_mode)) {
+		dp_mode->output_format = DP_OUTPUT_FORMAT_YCBCR420;
+		DP_DEBUG("YCBCR420 was not supported");
+	}
+
 	if (dp_panel->dsc_en && dsc_cap) {
 		if (dp_panel_dsc_prepare_basic_params(comp_info,
 					dp_mode, dp_panel)) {

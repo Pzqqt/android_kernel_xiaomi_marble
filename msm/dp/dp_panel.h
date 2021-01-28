@@ -35,6 +35,14 @@ enum dp_lane_count {
 	DP_LANE_COUNT_4	= 4,
 };
 
+enum dp_output_format {
+	DP_OUTPUT_FORMAT_RGB,
+	DP_OUTPUT_FORMAT_YCBCR420,
+	DP_OUTPUT_FORMAT_YCBCR422,
+	DP_OUTPUT_FORMAT_YCBCR444,
+	DP_OUTPUT_FORMAT_INVALID,
+};
+
 #define DP_MAX_DOWNSTREAM_PORTS 0x10
 
 struct dp_panel_info {
@@ -62,6 +70,13 @@ struct dp_display_mode {
 	u32 capabilities;
 	s64 fec_overhead_fp;
 	s64 dsc_overhead_fp;
+	/**
+	 * @output_format:
+	 *
+	 * This is used to indicate DP output format.
+	 * The output format can be read from drm_mode.
+	 */
+	enum dp_output_format output_format;
 };
 
 struct dp_panel;
