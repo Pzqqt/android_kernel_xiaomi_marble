@@ -195,14 +195,17 @@ uint8_t *hdd_auth_type_str(uint32_t auth_type)
 		return "OPEN SYSTEM";
 	case eCSR_AUTH_TYPE_SHARED_KEY:
 		return "SHARED KEY";
+	case eCSR_AUTH_TYPE_SAE:
+		return "SAE";
+	case eCSR_AUTH_TYPE_AUTOSWITCH:
+		return "AUTO SWITCH";
 	case eCSR_AUTH_TYPE_WPA:
 		return "WPA";
 	case eCSR_AUTH_TYPE_WPA_PSK:
 		return "WPA PSK";
-	case eCSR_AUTH_TYPE_AUTOSWITCH:
-		return "AUTO SWITCH";
 	case eCSR_AUTH_TYPE_WPA_NONE:
 		return "WPA NONE";
+
 	case eCSR_AUTH_TYPE_RSN:
 		return "RSN";
 	case eCSR_AUTH_TYPE_RSN_PSK:
@@ -211,10 +214,12 @@ uint8_t *hdd_auth_type_str(uint32_t auth_type)
 		return "FT RSN";
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
 		return "FT RSN PSK";
+#ifdef FEATURE_WLAN_WAPI
 	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
 		return "WAPI WAI CERTIFICATE";
 	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
 		return "WAPI WAI PSK";
+#endif /* FEATURE_WLAN_WAPI */
 	case eCSR_AUTH_TYPE_CCKM_WPA:
 		return "CCKM WPA";
 	case eCSR_AUTH_TYPE_CCKM_RSN:
@@ -223,6 +228,24 @@ uint8_t *hdd_auth_type_str(uint32_t auth_type)
 		return "RSN PSK SHA256";
 	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
 		return "RSN 8021X SHA256";
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+		return "FILS SHA256";
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+		return "FILS SHA384";
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		return "FT FILS SHA256";
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return "FT FILS SHA384";
+	case eCSR_AUTH_TYPE_DPP_RSN:
+		return "DPP RSN";
+	case eCSR_AUTH_TYPE_OWE:
+		return "OWE";
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
+		return "SUITEB EAP SHA256";
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
+		return "SUITEB EAP SHA384";
+	case eCSR_AUTH_TYPE_OSEN:
+		return "OSEN";
 	case eCSR_AUTH_TYPE_FT_SAE:
 		return "FT SAE";
 	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
