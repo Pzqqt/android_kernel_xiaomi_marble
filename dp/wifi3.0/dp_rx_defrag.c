@@ -877,9 +877,9 @@ static int dp_rx_defrag_pn_check(qdf_nbuf_t msdu,
 		((uint64_t)rx_mpdu_info_details->pn_127_96 << 32);
 
 	if (cur_pn128[1] == prev_pn128[1])
-		out_of_order = (cur_pn128[0] <= prev_pn128[0]);
+		out_of_order = (cur_pn128[0] - prev_pn128[0] != 1);
 	else
-		out_of_order = (cur_pn128[1] < prev_pn128[1]);
+		out_of_order = (cur_pn128[1] - prev_pn128[1] != 1);
 
 	return out_of_order;
 }
