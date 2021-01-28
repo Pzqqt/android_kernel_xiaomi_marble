@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-* Copyright (c) 2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
 */
 
 #include "gsihal_i.h"
@@ -1904,7 +1904,7 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	0x00025244, 0x12000, 0 },
 	[GSI_VER_3_0][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x00024500, 0x12000, 0},
+	0x00025400, 0x12000, 0},
 	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_GSI_CH_IRQ_k] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x0000c018, 0x1000, 0x18 },
