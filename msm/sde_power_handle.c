@@ -479,9 +479,24 @@ static int sde_power_mnoc_bus_parse(struct platform_device *pdev,
 static int sde_power_bus_parse(struct platform_device *pdev,
 	struct sde_power_handle *phandle)
 {
-	int i, j, rc = 0;
+	int i, j, ib_quota_count, rc = 0;
 	bool active_only = false;
 	struct sde_power_data_bus_handle *pdbus = phandle->data_bus_handle;
+	u32 ib_quota[SDE_POWER_HANDLE_DBUS_ID_MAX];
+
+	ib_quota_count = of_property_count_u32_elems(pdev->dev.of_node, "qcom,sde-ib-bw-vote");
+	if (ib_quota_count > 0) {
+		if (ib_quota_count != SDE_POWER_HANDLE_DBUS_ID_MAX) {
+			pr_err("wrong size for qcom,sde-ib-bw-vote\n");
+			return -EINVAL;
+		}
+
+		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; ++i) {
+			of_property_read_u32_index(pdev->dev.of_node,
+				"qcom,sde-ib-bw-vote", i, &ib_quota[i]);
+			phandle->ib_quota[i] = ib_quota[i]*1000;
+		}
+	}
 
 	/* reg bus */
 	rc = sde_power_reg_bus_parse(pdev, &phandle->reg_bus_handle);
@@ -833,16 +848,17 @@ int sde_power_resource_enable(struct sde_power_handle *phandle, bool enable)
 		sde_power_event_trigger_locked(phandle,
 				SDE_POWER_EVENT_PRE_ENABLE);
 
-		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX &&
-			phandle->data_bus_handle[i].data_paths_cnt > 0; i++) {
-			rc = _sde_power_data_bus_set_quota(
-				&phandle->data_bus_handle[i],
-				SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
-				SDE_POWER_HANDLE_ENABLE_BUS_IB_QUOTA);
-			if (rc) {
-				pr_err("failed to set data bus vote id=%d rc=%d\n",
-						i, rc);
-				goto vreg_err;
+		for (i = SDE_POWER_HANDLE_DBUS_ID_MNOC; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
+			if (phandle->data_bus_handle[i].data_paths_cnt > 0) {
+				rc = _sde_power_data_bus_set_quota(
+					&phandle->data_bus_handle[i],
+					SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
+					phandle->ib_quota[i]);
+				if (rc) {
+					pr_err("failed to set data bus vote id=%d rc=%d\n",
+							i, rc);
+					goto vreg_err;
+				}
 			}
 		}
 		rc = msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg,

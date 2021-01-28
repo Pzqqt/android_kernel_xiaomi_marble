@@ -158,6 +158,7 @@ struct sde_power_event {
  * @rsc_client: sde rsc client pointer
  * @rsc_client_init: boolean to control rsc client create
  * @mmrm_enable: boolean to indicate if mmrm is enabled
+ * @ib_quota: ib quota of the given bus
  */
 struct sde_power_handle {
 	struct dss_module_power mp;
@@ -171,6 +172,7 @@ struct sde_power_handle {
 	struct sde_rsc_client *rsc_client;
 	bool rsc_client_init;
 	bool mmrm_enable;
+	u64 ib_quota[SDE_POWER_HANDLE_DBUS_ID_MAX];
 };
 
 /**
