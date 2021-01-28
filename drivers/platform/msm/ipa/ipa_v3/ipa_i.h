@@ -1782,8 +1782,11 @@ struct ipa_cne_evt {
 enum ipa_smmu_cb_type {
 	IPA_SMMU_CB_AP,
 	IPA_SMMU_CB_WLAN,
+	IPA_SMMU_CB_WLAN1,
 	IPA_SMMU_CB_UC,
 	IPA_SMMU_CB_11AD,
+	IPA_SMMU_CB_ETH,
+	IPA_SMMU_CB_ETH1,
 	IPA_SMMU_CB_MAX
 };
 
@@ -3091,6 +3094,9 @@ struct ipa_smmu_cb_ctx *ipa3_get_smmu_ctx(enum ipa_smmu_cb_type);
 struct iommu_domain *ipa3_get_smmu_domain(void);
 struct iommu_domain *ipa3_get_uc_smmu_domain(void);
 struct iommu_domain *ipa3_get_wlan_smmu_domain(void);
+struct iommu_domain *ipa3_get_wlan1_smmu_domain(void);
+struct iommu_domain *ipa3_get_eth_smmu_domain(void);
+struct iommu_domain *ipa3_get_eth1_smmu_domain(void);
 struct iommu_domain *ipa3_get_smmu_domain_by_type
 	(enum ipa_smmu_cb_type cb_type);
 int ipa3_iommu_map(struct iommu_domain *domain, unsigned long iova,
