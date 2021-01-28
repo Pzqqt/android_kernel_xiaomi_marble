@@ -2133,7 +2133,7 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	int retval = 0;
 	u32 pyld_sz;
-	u8 header[128] = { 0 };
+	u8 header[256] = { 0 };
 	u8 *param = NULL;
 	bool is_vlan_mode;
 	struct ipa_ioc_nat_alloc_mem nat_mem;
