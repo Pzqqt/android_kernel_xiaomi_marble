@@ -553,7 +553,15 @@ static inline uint64_t qdf_get_log_timestamp_lightweight(void)
 {
 	uint64_t timestamp_us;
 
-	timestamp_us = __qdf_system_ticks_to_msecs(qdf_system_ticks()) * 1000;
+	/* explicitly change to uint64_t, otherwise it will assign
+	 * uint32_t to timestamp_us, which lose high 32bits.
+	 * on 64bit platform, it will only use low 32bits jiffies in
+	 * jiffies_to_msecs.
+	 * eg: HZ=250, it will overflow every (0xffff ffff<<2==0x3fff ffff)
+	 * ticks. it is 1193 hours.
+	 */
+	timestamp_us =
+	(uint64_t)__qdf_system_ticks_to_msecs(qdf_system_ticks()) * 1000;
 	return timestamp_us;
 }
 #endif /* end of MSM_PLATFORM */
