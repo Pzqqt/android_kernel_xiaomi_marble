@@ -1023,6 +1023,8 @@ struct dp_soc_stats {
 			uint32_t ssn_update_count;
 			/* count of bar handling fail */
 			uint32_t bar_handle_fail_count;
+			/* EAPOL drop count in intrabss scenario */
+			uint32_t intrabss_eapol_drop;
 		} err;
 
 		/* packet count per core - per ring */

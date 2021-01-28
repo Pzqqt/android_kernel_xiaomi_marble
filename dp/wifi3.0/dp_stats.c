@@ -5990,6 +5990,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.rx.intra_bss.fail.bytes);
 		DP_PRINT_STATS("intra-bss no mdns fwds %u msdus",
 			       pdev->stats.rx.intra_bss.mdns_no_fwd);
+		DP_PRINT_STATS("intra-bss EAPOL drops: %u",
+			       soc->stats.rx.err.intrabss_eapol_drop);
 
 		DP_PRINT_STATS("raw packets %u msdus ( %llu bytes),",
 			       pdev->stats.rx.raw.num,
