@@ -660,7 +660,7 @@ static u64 __calculate(struct msm_vidc_inst* inst, struct vidc_bus_vote_data *d)
 		value = __calculate_decoder(d);
 		break;
 	default:
-		s_vpr_e(inst->sid, "Unknown Domain %#x", d->domain);
+		s_vpr_e(inst->sid, "%s: Unknown Domain %#x", __func__, d->domain);
 	}
 
 	return value;
