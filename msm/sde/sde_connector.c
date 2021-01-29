@@ -219,8 +219,8 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 	props.brightness = bl_config->brightness_max_level;
 	snprintf(bl_node_name, BL_NODE_NAME_SIZE, "panel%u-backlight",
 							display_count);
-	c_conn->bl_device = devm_backlight_device_register(dev->dev, bl_node_name, dev->dev,
-			c_conn, &sde_backlight_device_ops, &props);
+	c_conn->bl_device = backlight_device_register(bl_node_name, dev->dev, c_conn,
+			&sde_backlight_device_ops, &props);
 	if (IS_ERR_OR_NULL(c_conn->bl_device)) {
 		SDE_ERROR("Failed to register backlight: %ld\n",
 				    PTR_ERR(c_conn->bl_device));
