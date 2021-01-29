@@ -14008,7 +14008,7 @@ static inline  void dp_pdev_set_default_reo(struct dp_pdev *pdev)
 	}
 }
 
-static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
+static QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 				      HTC_HANDLE htc_handle,
 				      qdf_device_t qdf_osdev,
 				      uint8_t pdev_id)
