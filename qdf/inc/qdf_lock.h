@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -138,8 +138,15 @@ do { \
 /* max_hold_time in US */
 #define BEFORE_UNLOCK(lock, max_hold_time) \
 do {\
-	uint64_t held_time = qdf_get_log_timestamp_lightweight() - \
-		lock->stats.last_acquired; \
+	uint64_t BEFORE_UNLOCK_time;  \
+	uint64_t held_time;  \
+	BEFORE_UNLOCK_time = qdf_get_log_timestamp_lightweight(); \
+\
+	if (unlikely(BEFORE_UNLOCK_time < lock->stats.last_acquired)) \
+		held_time = 0; \
+	else \
+		held_time = BEFORE_UNLOCK_time - lock->stats.last_acquired; \
+\
 	lock->stats.held_time += held_time; \
 \
 	if (held_time > lock->stats.max_held_time) \
