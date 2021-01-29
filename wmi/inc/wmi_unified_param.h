@@ -5248,6 +5248,8 @@ struct wmi_host_fw_abi_ver {
  * @max_ndp_sessions: Max ndp sessions support
  * @max_ndi: max number of ndi host supports
  * @carrier_vow_optmization: configure vow-optimization for carrier-usecase
+ * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
+ * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5353,6 +5355,8 @@ typedef struct {
 	uint32_t max_ndp_sessions;
 	uint32_t max_ndi;
 	bool carrier_vow_optimization;
+	uint32_t is_sap_connected_d3wow_enabled;
+	uint32_t is_go_connected_d3wow_enabled;
 } target_resource_config;
 
 /**
