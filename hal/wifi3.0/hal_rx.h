@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3979,6 +3979,20 @@ uint32_t hal_rx_mpdu_start_offset_get(hal_soc_handle_t hal_soc_hdl)
 	}
 
 	return hal_soc->ops->hal_rx_mpdu_start_offset_get();
+}
+
+static inline
+uint32_t hal_rx_pkt_tlv_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_pkt_tlv_offset_get();
 }
 
 /**
