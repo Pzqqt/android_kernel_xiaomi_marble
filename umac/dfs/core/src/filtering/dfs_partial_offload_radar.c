@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2011, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -703,9 +703,9 @@ static void dfs_action_on_spoof_success(struct wlan_dfs *dfs)
 	if (dfs->dfs_radar_found_chan.dfs_ch_freq ==
 			dfs->dfs_curchan->dfs_ch_freq) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "cac timer started for channel %d",
+			  "Handling spoof success on chan: %d",
 			  dfs->dfs_curchan->dfs_ch_ieee);
-		dfs_start_cac_timer(dfs);
+		dfs_mlme_proc_spoof_success(dfs->dfs_pdev_obj);
 	} else {
 		dfs_remove_spoof_channel_from_nol(dfs);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -169,6 +169,8 @@ void register_dfs_callbacks(void)
 		mlme_release_radar_mode_switch_lock;
 	tmp_dfs_to_mlme->mlme_mark_dfs =
 		mlme_dfs_mark_dfs;
+	tmp_dfs_to_mlme->mlme_proc_spoof_success =
+		mlme_dfs_proc_spoof_success;
 	/*
 	 * Register precac auto channel switch feature related callbacks
 	 */

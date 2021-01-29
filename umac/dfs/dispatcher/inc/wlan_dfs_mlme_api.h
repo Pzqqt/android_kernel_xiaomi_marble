@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -51,6 +51,19 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 			uint16_t freq,
 			uint16_t vhtop_ch_freq_seg2,
 			uint64_t flags);
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+/**
+ * dfs_mlme_proc_spoof_success() - Process Spoof Completion status
+ * @pdev: Pointer to DFS pdev object.
+ */
+void dfs_mlme_proc_spoof_success(struct wlan_objmgr_pdev *pdev);
+#else
+static inline void
+dfs_mlme_proc_spoof_success(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 
 /**
  * dfs_mlme_start_csa() - Sends CSA in ieeeChan
