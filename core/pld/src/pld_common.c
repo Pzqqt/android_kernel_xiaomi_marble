@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1903,7 +1903,7 @@ void *pld_smmu_get_domain(struct device *dev)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
-		pld_ipci_smmu_get_domain(dev);
+		ptr = pld_ipci_smmu_get_domain(dev);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
