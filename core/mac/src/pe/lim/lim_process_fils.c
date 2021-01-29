@@ -2366,6 +2366,11 @@ QDF_STATUS aead_decrypt_assoc_rsp(struct mac_context *mac_ctx,
 	uint8_t *fils_ies;
 	struct pe_fils_session *fils_info = session->fils_info;
 
+	if (*n_frame < FIXED_PARAM_OFFSET_ASSOC_RSP) {
+		pe_debug("payload len is less than ASSOC RES offset");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	status = find_ie_data_after_fils_session_ie(mac_ctx, p_frame +
 					      FIXED_PARAM_OFFSET_ASSOC_RSP,
 					      ((*n_frame) -
