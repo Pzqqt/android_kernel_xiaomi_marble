@@ -188,12 +188,12 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 			continue;
 		}
 
-		if (temp->bus_data.power_mode == VIDC_POWER_TURBO) {
+		if (temp->power.power_mode == VIDC_POWER_TURBO) {
 			total_bw_ddr = total_bw_llcc = INT_MAX;
 			break;
 		}
-		total_bw_ddr += temp->bus_data.calc_bw_ddr;
-		total_bw_llcc += temp->bus_data.calc_bw_llcc;
+		total_bw_ddr += temp->power.ddr_bw;
+		total_bw_llcc += temp->power.sys_cache_bw;
 	}
 	mutex_unlock(&core->lock);
 
@@ -231,7 +231,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	if (!data_size)
 		return 0;
 
-	vote_data->power_mode = VIDC_POWER_TURBO;
+	vote_data->power_mode = VIDC_POWER_NORMAL;
 	if (inst->power.buffer_counter < DCVS_FTB_WINDOW)
 		vote_data->power_mode = VIDC_POWER_TURBO;
 	if (msm_vidc_clock_voting)
@@ -266,6 +266,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	vote_data->fps = msm_vidc_get_fps(inst);
 
 	if (inst->domain == MSM_VIDC_ENCODER) {
+		vote_data->domain = MSM_VIDC_ENCODER;
 		vote_data->bitrate = inst->capabilities->cap[BIT_RATE].value;
 		vote_data->rotation = inst->capabilities->cap[ROTATION].value;
 		vote_data->b_frames_enabled =
@@ -282,6 +283,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	} else if (inst->domain == MSM_VIDC_DECODER) {
 		u32 color_format;
 
+		vote_data->domain = MSM_VIDC_DECODER;
 		vote_data->bitrate = data_size * vote_data->fps * 8;
 		color_format = v4l2_colorformat_to_driver(
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, __func__);
@@ -309,6 +311,10 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	fill_dynamic_stats(inst, vote_data);
 
 	call_session_op(core, calc_bw, inst, vote_data);
+
+	inst->power.power_mode = vote_data->power_mode;
+	inst->power.ddr_bw = vote_data->calc_bw_ddr;
+	inst->power.sys_cache_bw = vote_data->calc_bw_llcc;
 
 set_buses:
 	rc = msm_vidc_set_buses(inst);
@@ -499,6 +505,7 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 			call_session_op(core, calc_freq, inst, data_size);
 		msm_vidc_apply_dcvs(inst);
 	}
+	inst->power.curr_freq = inst->power.min_freq;
 	msm_vidc_set_clocks(inst);
 
 	return 0;
