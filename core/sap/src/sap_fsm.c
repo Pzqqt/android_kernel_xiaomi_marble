@@ -607,8 +607,8 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 		ch_state = wlan_reg_get_channel_state(pdev, channels[i]);
 		if (CHANNEL_STATE_ENABLE != ch_state &&
 		    CHANNEL_STATE_DFS != ch_state) {
-			sap_err("Invalid ch num=%d, ch state=%d",
-				  channels[i], ch_state);
+			sap_err_rl("Invalid ch num=%d, ch state=%d",
+				   channels[i], ch_state);
 			return true;
 		}
 	} /* loop for bonded channels */
