@@ -29,6 +29,11 @@
 #include "wlan_cfg.h"
 #include "dp_internal.h"
 #include "dp_rx_buffer_pool.h"
+
+#ifndef IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK
+#define IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK 0xe0
+#endif
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_rx_mon_feature.h"
 
@@ -1412,6 +1417,62 @@ void dp_rx_mon_rssi_convert(struct mon_rx_status *rx_status)
 #endif
 
 /*
+ * dp_rx_mon_process_dest_pktlog(): function to log packet contents to
+ * pktlog buffer and send to pktlog module
+ * @soc: DP soc
+ * @mac_id: MAC ID
+ * @mpdu: MPDU buf
+ * Return: status: 0 - Success, non-zero: Failure
+ */
+static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
+						uint32_t mac_id,
+						qdf_nbuf_t mpdu)
+{
+	uint32_t event, msdu_timestamp;
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+	void *data;
+	struct ieee80211_frame *wh;
+	uint8_t type, subtype;
+#ifdef NO_RX_PKT_HDR_TLV
+	struct rx_mon_pkt_tlvs *rx_tlv;
+#else
+	struct rx_pkt_tlvs *rx_tlv;
+#endif
+	struct rx_msdu_start_tlv *msdu_start_tlv;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	if (pdev->rx_pktlog_cbf) {
+		data = qdf_nbuf_data(mpdu);
+		rx_tlv = data - SIZE_OF_MONITOR_TLV;
+
+		/* CBF logging required, doesn't matter if it is a full mode
+		 * or lite mode.
+		 * Need to look for mpdu with:
+		 * TYPE = ACTION, SUBTYPE = NO ACK in the header
+		 */
+		event = WDI_EVENT_RX_CBF;
+
+		msdu_start_tlv = &rx_tlv->msdu_start_tlv;
+		msdu_timestamp =
+			msdu_start_tlv->rx_msdu_start.ppdu_start_timestamp;
+
+		wh = (struct ieee80211_frame *)data;
+
+		type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+		subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+		if (type == IEEE80211_FC0_TYPE_MGT &&
+		    subtype == IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK)
+			dp_rx_populate_cbf_hdr(soc,
+					       mac_id, event,
+					       mpdu,
+					       msdu_timestamp);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
  * dp_rx_mon_deliver(): function to deliver packets to stack
  * @soc: DP soc
  * @mac_id: MAC ID
@@ -1440,6 +1501,8 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 		dp_info("MPDU restitch failed, free buffers");
 		goto mon_deliver_fail;
 	}
+
+	dp_rx_mon_process_dest_pktlog(soc, mac_id, mon_mpdu);
 
 	/* monitor vap cannot be present when mcopy is enabled
 	 * hence same skb can be consumed

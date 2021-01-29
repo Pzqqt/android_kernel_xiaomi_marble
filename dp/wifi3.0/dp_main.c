@@ -7547,6 +7547,59 @@ fail0:
 }
 
 /**
+ * dp_vdev_set_monitor_mode_buf_rings () - set monitor mode buf rings
+ *
+ * Allocate SW descriptor pool, buffers, link descriptor memory
+ * Initialize monitor related SRNGs
+ *
+ * @pdev: DP pdev object
+ *
+ * Return: void
+ */
+static void dp_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
+{
+	uint32_t mac_id;
+	uint32_t mac_for_pdev;
+	struct dp_srng *mon_buf_ring;
+	uint32_t num_entries;
+	struct dp_soc *soc = pdev->soc;
+
+	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
+
+	/* If delay monitor replenish is disabled, allocate link descriptor
+	 * monitor ring buffers of ring size.
+	 */
+	if (!wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx)) {
+		dp_vdev_set_monitor_mode_rings(pdev, false);
+	} else {
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			mac_for_pdev =
+				dp_get_lmac_id_for_pdev_id(pdev->soc,
+							   mac_id,
+							   pdev->pdev_id);
+
+			dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
+							 FALSE);
+			mon_buf_ring =
+				&pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
+			/*
+			 * Configure low interrupt threshld when monitor mode is
+			 * configured.
+			 */
+			if (mon_buf_ring->hal_srng) {
+				num_entries = mon_buf_ring->num_entries;
+				hal_set_low_threshold(mon_buf_ring->hal_srng,
+						      num_entries >> 3);
+				htt_srng_setup(pdev->soc->htt_handle,
+					       pdev->pdev_id,
+					       mon_buf_ring->hal_srng,
+					       RXDMA_MONITOR_BUF);
+			}
+		}
+	}
+}
+
+/**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
  * @vdev_handle: Datapath VDEV handle
  * @smart_monitor: Flag to denote if its smart monitor mode
@@ -7558,11 +7611,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 					   uint8_t special_monitor)
 {
 	struct dp_soc *soc = (struct dp_soc *)dp_soc;
-	uint32_t mac_id;
-	uint32_t mac_for_pdev;
 	struct dp_pdev *pdev;
-	uint32_t num_entries;
-	struct dp_srng *mon_buf_ring;
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 						     DP_MOD_ID_CDP);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -7597,38 +7646,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 	}
 
 	pdev->monitor_configured = true;
-
-	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
-
-	/* If delay monitor replenish is disabled, allocate link descriptor
-	 * monitor ring buffers of ring size.
-	 */
-	if (!wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx)) {
-		dp_vdev_set_monitor_mode_rings(pdev, false);
-	} else {
-		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc,
-								  mac_id,
-								  pdev->pdev_id);
-
-			dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
-							 FALSE);
-			mon_buf_ring = &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
-			/*
-			 * Configure low interrupt threshld when monitor mode is
-			 * configured.
-			 */
-			if (mon_buf_ring->hal_srng) {
-				num_entries = mon_buf_ring->num_entries;
-				hal_set_low_threshold(mon_buf_ring->hal_srng,
-						      num_entries >> 3);
-				htt_srng_setup(pdev->soc->htt_handle,
-					       pdev->pdev_id,
-					       mon_buf_ring->hal_srng,
-					       RXDMA_MONITOR_BUF);
-			}
-		}
-	}
+	dp_vdev_set_monitor_mode_buf_rings(pdev);
 
 	dp_mon_filter_setup_mon_mode(pdev);
 	status = dp_mon_filter_update(pdev);
@@ -12922,6 +12940,40 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				dp_h2t_cfg_stats_msg_send(pdev,
 					DP_PPDU_TXLITE_STATS_BITMASK_CFG,
 					mac_for_pdev);
+			}
+			break;
+
+		case WDI_EVENT_RX_CBF:
+			if (pdev->monitor_vdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				dp_info("Monitor mode, CBF setting filters");
+				pdev->rx_pktlog_cbf = true;
+				return 0;
+			}
+			if (!pdev->rx_pktlog_cbf) {
+				pdev->rx_pktlog_cbf = true;
+
+				dp_vdev_set_monitor_mode_buf_rings(pdev);
+				/*
+				 * Set the packet log lite mode filter.
+				 */
+				qdf_info("Non monitor mode: Enable destination ring");
+				dp_mon_filter_setup_rx_pkt_log_cbf(pdev);
+				if (dp_mon_filter_update(pdev) !=
+				    QDF_STATUS_SUCCESS) {
+					dp_err("Pktlog set CBF filters failed");
+					dp_mon_filter_reset_rx_pktlog_cbf(pdev);
+					pdev->rx_pktlog_mode =
+						DP_RX_PKTLOG_DISABLED;
+					return 0;
+				}
+
+				if (soc->reap_timer_init &&
+				    !dp_is_enable_reap_timer_non_pkt(pdev))
+					qdf_timer_mod(&soc->mon_reap_timer,
+						      DP_INTR_POLL_TIMER_MS);
 			}
 			break;
 

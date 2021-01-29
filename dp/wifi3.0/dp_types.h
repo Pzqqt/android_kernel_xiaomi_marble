@@ -2163,6 +2163,8 @@ struct dp_pdev {
 
 	/* Packet log mode */
 	uint8_t rx_pktlog_mode;
+	/* Enable pktlog logging cbf */
+	bool rx_pktlog_cbf;
 
 	/* WDI event handlers */
 	struct wdi_event_subscribe_t **wdi_event_list;

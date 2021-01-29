@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +36,21 @@
 #define IEEE80211_FC0_TYPE_MASK             0x0c
 #define IEEE80211_FC0_SUBTYPE_MASK          0xf0
 #define IEEE80211_FC0_TYPE_MGT              0x00
+
+/* for TYPE_MGT */
+#define IEEE80211_FC0_SUBTYPE_ASSOC_REQ     0x00
+#define IEEE80211_FC0_SUBTYPE_ASSOC_RESP    0x10
+#define IEEE80211_FC0_SUBTYPE_REASSOC_REQ   0x20
+#define IEEE80211_FC0_SUBTYPE_REASSOC_RESP  0x30
+#define IEEE80211_FC0_SUBTYPE_PROBE_REQ     0x40
+#define IEEE80211_FC0_SUBTYPE_PROBE_RESP    0x50
+#define IEEE80211_FC0_SUBTYPE_BEACON        0x80
+#define IEEE80211_FC0_SUBTYPE_ATIM          0x90
+#define IEEE80211_FC0_SUBTYPE_DISASSOC      0xa0
+#define IEEE80211_FC0_SUBTYPE_AUTH          0xb0
+#define IEEE80211_FC0_SUBTYPE_DEAUTH        0xc0
+#define IEEE80211_FC0_SUBTYPE_ACTION        0xd0
+#define IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK 0xe0
 
 /**
  * mgmt_wakelock_reason - reasons mgmt_txrx might hold a wakelock
