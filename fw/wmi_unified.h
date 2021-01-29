@@ -267,6 +267,7 @@ typedef enum {
     WMI_GRP_ATM,            /* 0x45 ATM (Air Time Management group) */
     WMI_GRP_VENDOR,         /* 0x46 vendor specific group */
     WMI_GRP_LATENCY,        /* 0x47 TID/AC level latency config */
+    WMI_GRP_MLO,            /* 0x48 MLO(Multiple Link Operation) management */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1359,6 +1360,10 @@ typedef enum {
     WMI_VDEV_TID_LATENCY_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_LATENCY),
     /** TID Latency Request command */
     WMI_PEER_TID_LATENCY_CONFIG_CMDID,
+
+    /** WMI commands specific to MLO **/
+    /** MLO link active / inactive Request command */
+    WMI_MLO_LINK_SET_ACTIVE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MLO),
 } WMI_CMD_ID;
 
 typedef enum {
@@ -2063,6 +2068,10 @@ typedef enum {
     WMI_VENDOR_VDEV_EVENTID,
     WMI_VENDOR_PEER_EVENTID,
     /** Further vendor event IDs can be added below **/
+
+    /** WMI event specific to MLO **/
+    /** MLO link active / inactive response event */
+    WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MLO),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -8174,6 +8183,14 @@ typedef struct {
 /*
  * This TLV is (optionally) followed by other TLVs:
  *     wmi_inst_rssi_stats_params inst_rssi_params;
+ *     A_UINT32 vdev_id_bitmap[];
+ *         This array is present and non-zero length in MLO case, stats should
+ *         only be provided from the vdev_id_bitmap in the bitmap when it is
+ *         present.
+ *     wmi_mac_addr mld_macaddr[];
+ *         This array is present and non-zero length in MLO case, stats should
+ *         only be provided from the peers with the MLD MAC addresses specified
+ *         in the array.
  */
 } wmi_request_stats_cmd_fixed_param;
 
@@ -8381,6 +8398,16 @@ typedef struct {
     A_UINT32 request_id;
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
+/*
+ * This TLV is (optionally) followed by other TLVs:
+ * A_UINT32 vdev_id_bitmap[];
+ *     This array is present and non-zero length in MLO case, stats should only
+ *     be provided from the vdev_id_bitmap in the bitmap when it is present.
+ * wmi_mac_addr mld_macaddr[];
+ *     This array is present and non-zero length in MLO case, stats should only
+ *     be provided from the peers with the MLD MAC addresses specified
+ *     in the array.
+ */
 } wmi_request_link_stats_cmd_fixed_param;
 
 typedef struct {
@@ -8397,6 +8424,16 @@ typedef struct {
     A_UINT32 get_sta_stats_id;
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0. */
     A_UINT32 pdev_id;
+/*
+ * This TLV is (optionally) followed by other TLVs:
+ * A_UINT32 vdev_id_bitmap[];
+ *     This array is present and non-zero length in MLO case, stats should only
+ *     be provided from the vdev_id_bitmap in the bitmap when it is present.
+ * wmi_mac_addr mld_macaddr[];
+ *     This array is present and non-zero length in MLO case, stats should only
+ *     be provided from the peers with the MLD MAC addresses specified
+ *     in the array.
+ */
 } wmi_request_unified_ll_get_sta_cmd_fixed_param;
 
 #define WLM_STATS_REQ_LINK          0x00000001
@@ -10221,6 +10258,9 @@ typedef struct {
     A_UINT32 vdevid_trans;
 /* This TLV is followed by another TLV of array of structures
  *   wmi_vdev_txrx_streams cfg_txrx_streams[];
+ *   wmi_vdev_create_mlo_params mlo_params[0,1];
+ *       optional TLV, only present for MLO vdev;
+ *       if the vdev is not MLO the array length should be 0.
  */
 } wmi_vdev_create_cmd_fixed_param;
 
@@ -10242,6 +10282,45 @@ typedef struct {
     A_UINT32 interval; /** Absent period interval in micro seconds */
     A_UINT32 start_time; /** 32 bit tsf time when in starts */
 } wmi_p2p_noa_descriptor;
+
+/*
+ * mlo_flags sub-fields:
+ * bits 0    - mlo enable flag;
+ * bits 1    - assoc link flag;
+ * bits 2    - primary_umac flag;
+ */
+#define WMI_MLO_FLAGS_GET_ENABLED(mlo_flags)                WMI_GET_BITS(mlo_flags, 0, 1)
+#define WMI_MLO_FLAGS_SET_ENABLED(mlo_flags, value)         WMI_SET_BITS(mlo_flags, 0, 1, value)
+#define WMI_MLO_FLAGS_GET_ASSOC_LINK(mlo_flags)             WMI_GET_BITS(mlo_flags, 1, 1)
+#define WMI_MLO_FLAGS_SET_ASSOC_LINK(mlo_flags, value)      WMI_SET_BITS(mlo_flags, 1, 1, value)
+#define WMI_MLO_FLAGS_GET_PRIMARY_UMAC(mlo_flags)           WMI_GET_BITS(mlo_flags, 2, 1)
+#define WMI_MLO_FLAGS_SET_PRIMARY_UMAC(mlo_flags, value)    WMI_SET_BITS(mlo_flags, 2, 1, value)
+
+/* this structure used for pass mlo flags*/
+typedef struct {
+    union {
+        struct {
+            A_UINT32 mlo_enabled:1, /* indicate is MLO enabled */
+                     mlo_assoc_link:1, /* indicate is the link used to initialize the association of mlo connection */
+                     mlo_primary_umac:1, /* indicate is the link on primary UMAC, WIN only flag */
+                     unused: 29;
+        };
+        A_UINT32 mlo_flags;
+    };
+} wmi_mlo_flags;
+
+/* this TLV structure used for pass mlo parameters on vdev create*/
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; */
+    /** MLD MAC address */
+    wmi_mac_addr mld_macaddr;
+} wmi_vdev_create_mlo_params;
+
+/* this TLV structure used for pass mlo parameters on vdev start*/
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; */
+    wmi_mlo_flags mlo_flags; /*only mlo enable and assoc link flag need by vdev start*/
+} wmi_vdev_start_mlo_params;
 
 /** values for vdev_type */
 #define WMI_VDEV_TYPE_AP         0x1
@@ -11001,6 +11080,9 @@ typedef struct {
 /* The TLVs follows this structure:
  *     wmi_channel chan; <-- WMI channel
  *     wmi_p2p_noa_descriptor  noa_descriptors[]; <-- actual p2p NOA descriptor from scan entry
+ *     wmi_vdev_start_mlo_params  mlo_params[0,1]; <-- vdev start MLO parameters
+ *         optional TLV, only present for MLO vdevs,
+ *         If the vdev is non-MLO the array length should be 0.
  */
 } wmi_vdev_start_request_cmd_fixed_param;
 
@@ -13451,6 +13533,12 @@ enum wmi_peer_type {
     WMI_PEER_TYPE_ROAMOFFLOAD_TEMP = 128, /* Temporarily created during offload roam */
 };
 
+/* this TLV structure used for providing mlo parameters on peer create */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len */
+    wmi_mlo_flags mlo_flags; /* only mlo enable flag need by STA mode peer create */
+} wmi_peer_create_mlo_params;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_create_cmd_fixed_param */
     /** unique id identifying the VDEV, generated by the caller */
@@ -13459,6 +13547,12 @@ typedef struct {
     wmi_mac_addr peer_macaddr;
     /** peer type: see enum values above */
     A_UINT32 peer_type;
+/* The TLVs follows this structure:
+ * wmi_peer_create_mlo_params mlo_params[]; <-- MLO flags on peer_create
+ *     Optional TLV, only present for MLO peers.
+ *     If the peer is non-MLO, the array length should be 0.
+ *     Only mlo_enable flag required by MCC to decide MAC address to be used.
+ */
 } wmi_peer_create_cmd_fixed_param;
 
 typedef struct {
@@ -14062,6 +14156,15 @@ enum WMI_PEER_STA_TYPE {
 #define WMI_PEER_ASSOC_GET_BSS_MAX_IDLE_PERIOD(_dword) \
     WMI_GET_BITS(_dword, WMI_PEER_ASSOC_BSS_MAX_IDLE_PERIOD_BITPOS, 16)
 
+/* This TLV structure used to pass mlo Parameters on peer assoc, only apply for mlo-peers */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; */
+    /** MLO flags */
+    wmi_mlo_flags mlo_flags;
+    /** MLD MAC address */
+    wmi_mac_addr vdev_macaddr;
+} wmi_peer_assoc_mlo_params;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
     /** peer MAC address */
@@ -14186,6 +14289,9 @@ typedef struct {
  *     A_UINT8 peer_ht_rates[];
  *     wmi_vht_rate_set peer_vht_rates; <-- VHT capabilties of the peer
  *     WMI_he_rate_set_peer_he_rates; <-- HE capabilities of the peer
+ *     wmi_peer_assoc_mlo_params  mlo_params[0,1]; <-- MLO parameters opt. TLV
+ *         Only present for MLO peers.
+ *         For non-MLO peers the array length should be 0.
  */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
@@ -21404,11 +21510,15 @@ typedef struct {
     /* vdev ID */
     A_UINT32 vdev_id;
     A_UINT32 data_len; /** length in byte of data[]. */
-    /* This structure is used to send REQ binary blobs
-* from application/service to firmware where Host drv is pass through .
-* Following this structure is the TLV:
-*     A_UINT8 data[]; <-- length in byte given by field data_len.
-*/
+/* This structure is used to send REQ binary blobs
+ * from application/service to firmware where Host drv is pass through .
+ * Following this structure is the TLV:
+ *     A_UINT8 data[]; <-- length in byte given by field data_len.
+ *     A_UINT32 vdev_id_bitmap[];
+ *         This array is present and non-zero length in MLO case, stats should
+ *         only be provided from the vdev_id_bitmap in the bitmap when it is
+ *         present.
+ */
 } wmi_req_stats_ext_cmd_fixed_param;
 
 typedef struct {
@@ -28114,6 +28224,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_TPC_POWER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_TID_LATENCY_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TID_LATENCY_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_LINK_SET_ACTIVE_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -33432,6 +33543,73 @@ typedef struct wmi_peer_vendor_cmd
      * would change, causing backwards incompatibilities.
      */
 } wmi_peer_vendor_cmd_fixed_param;
+
+typedef enum {
+    WMI_MLO_LINK_FORCE_ACTIVE                 = 1, /* Force specific links active */
+    WMI_MLO_LINK_FORCE_INACTIVE               = 2, /* Force specific links inactive */
+    WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM        = 3, /* Force active a number of links, firmware to decide which links to inactive */
+    WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM      = 4, /* Force inactive a number of links, firmware to decide which links to inactive */
+    WMI_MLO_LINK_NO_FORCE                     = 5, /* Cancel the force operation of specific links, allow firmware to decide */
+} WMI_MLO_LINK_FORCE_MODE;
+
+typedef enum {
+    WMI_MLO_LINK_FORCE_REASON_NEW_CONNECT      = 1, /* Set force specific links because of new connection */
+    WMI_MLO_LINK_FORCE_REASON_NEW_DISCONNECT   = 2, /* Set force specific links because of new dis-connection */
+} WMI_MLO_LINK_FORCE_REASON;
+
+typedef struct wmi_mlo_link_set_active_cmd
+{
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_link_set_active_cmd_fixed_param; */
+    A_UINT32 tlv_header;
+    /** enum WMI_MLO_LINK_FORCE_MODE */
+    A_UINT32 force_mode;
+    /** reason of force link active / inactive, enum WMI_MLO_LINK_FORCE_REASON */
+    A_UINT32 reason;
+/* The TLVs follows this structure:
+ * wmi_mlo_set_active_link_number_param link_number_param[];
+ *     Link number parameters, optional TLV.
+ *     Present when force type is WMI_MLO_LINK_FORCE_ACTIVE_LINK_NUM or
+ *     WMI_MLO_LINK_FORCE_INACTIVE_LINK_NUM.
+ *     In other cases the length of array should be 0.
+ * A_UINT32 vdev_id_bitmap[];
+ *     Optional TLV, present when force type is WMI_MLO_LINK_FORCE_ACTIVE
+ *     or WMI_MLO_LINK_FORCE_INACTIVE or WMI_MLO_LINK_NO_FORCE,
+ *     to specific the vdevs to configure.
+ *     In other cases the length of the array should be 0.
+ */
+} wmi_mlo_link_set_active_cmd_fixed_param;
+
+typedef struct wmi_mlo_set_active_link_number_param
+{
+    /** TLV tag and len; */
+    A_UINT32 tlv_header;
+    /** number of link to be config */
+    A_UINT32 num_of_link;
+    /** VDEV type, see values for vdev_type (WMI_VDEV_TYPE_AP,WMI_VDEV_TYPE_STA,
+     *  WMI_VDEV_TYPE_IBSS, WMI_VDEV_TYPE_MONITOR,WMI_VDEV_TYPE_NAN,WMI_VDEV_TYPE_NDI ...)
+     */
+    A_UINT32 vdev_type;
+    /** VDEV subtype, see values for vdev_subtype (WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE,
+     *  WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT, WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO ...)*/
+    A_UINT32 vdev_subtype;
+    /** home channel frequency in MHz of the vdev*/
+    A_UINT32 home_freq;
+
+} wmi_mlo_set_active_link_number_param;
+
+typedef struct wmi_mlo_link_set_active_resp_event
+{
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_link_set_active_resp_event_fixed_param; */
+    A_UINT32 tlv_header;
+
+    /** Return status. 0 for success, non-zero otherwise */
+    A_UINT32 status;
+
+/* The TLVs follows this structure:
+ *     A_UINT32 force_active_vdev_bitmap[]; <-- current force active vdev.
+ *     A_UINT32 force_inactive_vdev_bitmap[]; <-- current force inactive vdevs
+ */
+} wmi_mlo_link_set_active_resp_event_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
