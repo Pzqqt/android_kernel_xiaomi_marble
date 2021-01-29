@@ -536,6 +536,17 @@ static void ucfg_fwol_fetch_ra_filter(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+static void fwol_thermal_init(struct wlan_fwol_psoc_obj *fwol_obj)
+{
+	fwol_obj->thermal_throttle.level = THERMAL_FULLPERF;
+}
+#else
+static void fwol_thermal_init(struct wlan_fwol_psoc_obj *fwol_obj)
+{
+}
+#endif
+
 QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -602,6 +613,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_cfg->enable_ilp = cfg_get(psoc, CFG_SET_ENABLE_ILP);
 	fwol_cfg->sap_sho = cfg_get(psoc, CFG_SAP_SHO_CONFIG);
 	fwol_cfg->disable_hw_assist = cfg_get(psoc, CFG_DISABLE_HW_ASSIST);
+	fwol_thermal_init(fwol_obj);
 
 	return status;
 }
