@@ -349,6 +349,10 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 
 	tgt_cfg->mgmt_comp_evt_bundle_support = true;
 	tgt_cfg->tx_msdu_new_partition_id_support = true;
+	tgt_cfg->is_sap_connected_d3wow_enabled =
+		ucfg_pmo_get_sap_mode_bus_suspend(wma_handle->psoc);
+	tgt_cfg->is_go_connected_d3wow_enabled =
+		ucfg_pmo_get_go_mode_bus_suspend(wma_handle->psoc);
 
 	cfg_nan_get_max_ndi(wma_handle->psoc,
 			    &tgt_cfg->max_ndi);
