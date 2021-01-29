@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -214,7 +214,7 @@ sspp_reg_cfg_tbl[SSPP_MAX][CTL_SSPP_MAX_RECTS] = {
 	/* SSPP_DMA2 */{ {2, 0, 4, 0}, {2, 16, 4, 0} },
 	/* SSPP_DMA3 */{ {2, 4, 4, 0}, {2, 20, 4, 0} },
 	/* SSPP_CURSOR0 */{ {1, 20, 4, 0}, {0, 0, 0, 0} },
-	/* SSPP_CURSOR1 */{ {0, 26, 4, 0}, {0, 0, 0, 0} }
+	/* SSPP_CURSOR1 */{ {1, 26, 4, 0}, {0, 0, 0, 0} }
 };
 
 /**
@@ -264,13 +264,6 @@ static const struct ctl_hw_flush_cfg
 			intf_flush_tbl }, /* SDE_HW_FLUSH_PERIPH */
 	{INTF_MAX, CTL_INTF_FLUSH, INTF_IDX, SDE_HW_FLUSH_INTF,
 			intf_flush_tbl } /* SDE_HW_FLUSH_INTF */
-};
-
-struct sde_ctl_mixer_cfg {
-	u32 cfg;
-	u32 ext;
-	u32 ext2;
-	u32 ext3;
 };
 
 static struct sde_ctl_cfg *_ctl_offset(enum sde_ctl ctl,
@@ -831,11 +824,10 @@ static void sde_hw_ctl_clear_all_blendstages(struct sde_hw_ctl *ctx)
 }
 
 static void _sde_hw_ctl_get_mixer_cfg(struct sde_hw_ctl *ctx,
-		struct sde_hw_stage_cfg *stage_cfg, int stages,
-		struct sde_ctl_mixer_cfg *cfg)
+		struct sde_hw_stage_cfg *stage_cfg, int stages, u32 *cfg)
 {
 	int i, j, pipes_per_stage;
-	u32 mix, ext;
+	const struct ctl_sspp_stage_reg_map *reg_map;
 
 	if (test_bit(SDE_MIXER_SOURCESPLIT, &ctx->mixer_hw_caps->features))
 		pipes_per_stage = PIPES_PER_STAGE;
@@ -844,103 +836,26 @@ static void _sde_hw_ctl_get_mixer_cfg(struct sde_hw_ctl *ctx,
 
 	for (i = 0; i <= stages; i++) {
 		/* overflow to ext register if 'i + 1 > 7' */
-		mix = (i + 1) & 0x7;
-		ext = i >= 7;
-
 		for (j = 0 ; j < pipes_per_stage; j++) {
 			enum sde_sspp pipe = stage_cfg->stage[i][j];
 			enum sde_sspp_multirect_index rect_index =
 				stage_cfg->multirect_index[i][j];
-			switch (pipe) {
-			case SSPP_VIG0:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext3 |= ((i + 1) & 0xF) << 0;
-				} else {
-					cfg->cfg |= mix << 0;
-					cfg->ext |= ext << 0;
-				}
-				break;
-			case SSPP_VIG1:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext3 |= ((i + 1) & 0xF) << 4;
-				} else {
-					cfg->cfg |= mix << 3;
-					cfg->ext |= ext << 2;
-				}
-				break;
-			case SSPP_VIG2:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext3 |= ((i + 1) & 0xF) << 8;
-				} else {
-					cfg->cfg |= mix << 6;
-					cfg->ext |= ext << 4;
-				}
-				break;
-			case SSPP_VIG3:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext3 |= ((i + 1) & 0xF) << 12;
-				} else {
-					cfg->cfg |= mix << 26;
-					cfg->ext |= ext << 6;
-				}
-				break;
-			case SSPP_RGB0:
-				cfg->cfg |= mix << 9;
-				cfg->ext |= ext << 8;
-				break;
-			case SSPP_RGB1:
-				cfg->cfg |= mix << 12;
-				cfg->ext |= ext << 10;
-				break;
-			case SSPP_RGB2:
-				cfg->cfg |= mix << 15;
-				cfg->ext |= ext << 12;
-				break;
-			case SSPP_RGB3:
-				cfg->cfg |= mix << 29;
-				cfg->ext |= ext << 14;
-				break;
-			case SSPP_DMA0:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext2 |= ((i + 1) & 0xF) << 8;
-				} else {
-					cfg->cfg |= mix << 18;
-					cfg->ext |= ext << 16;
-				}
-				break;
-			case SSPP_DMA1:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext2 |= ((i + 1) & 0xF) << 12;
-				} else {
-					cfg->cfg |= mix << 21;
-					cfg->ext |= ext << 18;
-				}
-				break;
-			case SSPP_DMA2:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext2 |= ((i + 1) & 0xF) << 16;
-				} else {
-					mix |= (i + 1) & 0xF;
-					cfg->ext2 |= mix << 0;
-				}
-				break;
-			case SSPP_DMA3:
-				if (rect_index == SDE_SSPP_RECT_1) {
-					cfg->ext2 |= ((i + 1) & 0xF) << 20;
-				} else {
-					mix |= (i + 1) & 0xF;
-					cfg->ext2 |= mix << 4;
-				}
-				break;
-			case SSPP_CURSOR0:
-				cfg->ext |= ((i + 1) & 0xF) << 20;
-				break;
-			case SSPP_CURSOR1:
-				cfg->ext |= ((i + 1) & 0xF) << 26;
-				break;
-			default:
-				break;
-			}
+			u32 mixer_value;
+
+			if (!pipe || pipe >= SSPP_MAX || rect_index >= SDE_SSPP_RECT_MAX)
+				continue;
+			/* Handle multi rect enums */
+			if (rect_index == SDE_SSPP_RECT_SOLO)
+				rect_index = SDE_SSPP_RECT_0;
+
+			reg_map = &sspp_reg_cfg_tbl[pipe][rect_index-1];
+			if (!reg_map->bits)
+				continue;
+
+			mixer_value = (i + 1) & (BIT(reg_map->bits) - 1);
+			cfg[reg_map->ext] |= (mixer_value << reg_map->start);
+			if ((i + 1) > mixer_value)
+				cfg[1] |= reg_map->sec_bit_mask;
 		}
 	}
 }
@@ -950,7 +865,7 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 	bool disable_border)
 {
 	struct sde_hw_blk_reg_map *c;
-	struct sde_ctl_mixer_cfg cfg = { 0 };
+	u32 cfg[CTL_NUM_EXT] = { 0 };
 	int stages;
 
 	if (!ctx)
@@ -963,17 +878,17 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 	c = &ctx->hw;
 
 	if (stage_cfg)
-		_sde_hw_ctl_get_mixer_cfg(ctx, stage_cfg, stages, &cfg);
+		_sde_hw_ctl_get_mixer_cfg(ctx, stage_cfg, stages, cfg);
 
 	if (!disable_border &&
-			((!cfg.cfg && !cfg.ext && !cfg.ext2 && !cfg.ext3) ||
+			((!cfg[0] && !cfg[1] && !cfg[2] && !cfg[3]) ||
 			(stage_cfg && !stage_cfg->stage[0][0])))
-		cfg.cfg |= CTL_MIXER_BORDER_OUT;
+		cfg[0] |= CTL_MIXER_BORDER_OUT;
 
-	SDE_REG_WRITE(c, CTL_LAYER(lm), cfg.cfg);
-	SDE_REG_WRITE(c, CTL_LAYER_EXT(lm), cfg.ext);
-	SDE_REG_WRITE(c, CTL_LAYER_EXT2(lm), cfg.ext2);
-	SDE_REG_WRITE(c, CTL_LAYER_EXT3(lm), cfg.ext3);
+	SDE_REG_WRITE(c, CTL_LAYER(lm), cfg[0]);
+	SDE_REG_WRITE(c, CTL_LAYER_EXT(lm), cfg[1]);
+	SDE_REG_WRITE(c, CTL_LAYER_EXT2(lm), cfg[2]);
+	SDE_REG_WRITE(c, CTL_LAYER_EXT3(lm), cfg[3]);
 }
 
 static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
