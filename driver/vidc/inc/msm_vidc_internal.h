@@ -17,6 +17,7 @@
 #include <media/videobuf2-v4l2.h>
 
 #define MAX_NAME_LENGTH   128
+#define VENUS_VERSION_LENGTH 128
 #define MAX_MATRIX_COEFFS 9
 #define MAX_BIAS_COEFFS   3
 #define MAX_LIMIT_COEFFS  6
@@ -404,6 +405,13 @@ struct msm_vidc_inst_cap_entry {
 	/* list of struct msm_vidc_inst_cap_entry */
 	struct list_head list;
 	enum msm_vidc_inst_capability_type cap_id;
+};
+
+struct debug_buf_count {
+	int etb;
+	int ftb;
+	int fbd;
+	int ebd;
 };
 
 enum efuse_purpose {

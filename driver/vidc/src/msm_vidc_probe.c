@@ -243,6 +243,10 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 		return -ENOMEM;
 	g_core = core;
 
+	core->debugfs_parent = msm_vidc_debugfs_init_drv();
+	if (!core->debugfs_parent)
+		d_vpr_h("Failed to create debugfs for msm_vidc\n");
+
 	core->pdev = pdev;
 	dev_set_drvdata(&pdev->dev, core);
 
@@ -294,7 +298,9 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 		goto exit;
 	}
 
-	//rc = msm_vidc_debugfs_init_core(core);
+	core->debugfs_root = msm_vidc_debugfs_init_core(core);
+	if (!core->debugfs_root)
+		d_vpr_h("Failed to init debugfs core\n");
 
 	d_vpr_h("populating sub devices\n");
 	/*
@@ -311,6 +317,9 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 	}
 
 exit:
+	if (rc)
+		debugfs_remove_recursive(core->debugfs_parent);
+
 	return rc;
 }
 
@@ -371,6 +380,7 @@ static int msm_vidc_remove(struct platform_device *pdev)
 	msm_vidc_deinit_dt(pdev);
 	msm_vidc_deinitialize_core(core);
 	dev_set_drvdata(&pdev->dev, NULL);
+	debugfs_remove_recursive(core->debugfs_parent);
 	kfree(core);
 	g_core = NULL;
 	return 0;

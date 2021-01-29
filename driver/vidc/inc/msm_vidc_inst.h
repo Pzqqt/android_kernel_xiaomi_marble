@@ -132,6 +132,7 @@ struct msm_vidc_inst {
 	bool                               opsc_properties_set;
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
+	struct debug_buf_count             debug_count;
 	struct msm_vidc_inst_capability   *capabilities;
 	struct completion                  completions[MAX_SIGNAL];
 	bool                               active;

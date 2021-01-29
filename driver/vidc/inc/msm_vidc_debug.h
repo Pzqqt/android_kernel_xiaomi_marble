@@ -11,6 +11,8 @@
 #include <linux/types.h>
 #include <linux/time.h>
 
+void do_gettimeofday(struct timeval *__ddl_tv);
+
 #ifndef VIDC_DBG_LABEL
 #define VIDC_DBG_LABEL "msm_vidc"
 #endif
@@ -102,5 +104,20 @@ enum vidc_msg_prio {
 	} while (0)
 
 const char *level_str(u32 level);
+
+enum msm_vidc_debugfs_event {
+	MSM_VIDC_DEBUGFS_EVENT_ETB,
+	MSM_VIDC_DEBUGFS_EVENT_EBD,
+	MSM_VIDC_DEBUGFS_EVENT_FTB,
+	MSM_VIDC_DEBUGFS_EVENT_FBD,
+};
+
+struct dentry *msm_vidc_debugfs_init_drv(void);
+struct dentry *msm_vidc_debugfs_init_core(void *core);
+struct dentry *msm_vidc_debugfs_init_inst(void *inst,
+		struct dentry *parent);
+void msm_vidc_debugfs_deinit_inst(void *inst);
+void msm_vidc_debugfs_update(void *inst,
+		enum msm_vidc_debugfs_event e);
 
 #endif
