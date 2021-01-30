@@ -293,9 +293,10 @@ osif_cm_set_fils_info(struct wlan_objmgr_vdev *vdev,
 
 	connect_req->fils_info.username_len = req->fils_erp_username_len +
 					sizeof(char) + req->fils_erp_realm_len;
-	osif_debug("usrname len %d = usrname recv len %d + realm len %d + 1",
+	osif_debug("usrname len %d = usrname recv len %zu + realm len %d + %zu",
 		   connect_req->fils_info.username_len,
-		   req->fils_erp_username_len, req->fils_erp_realm_len);
+		   req->fils_erp_username_len,
+		   connect_req->fils_info.realm_len, sizeof(char));
 
 	if (connect_req->fils_info.username_len >
 					WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH) {
