@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -141,6 +141,20 @@ QDF_STATUS
 dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id);
 void
 dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id);
+
+/*
+ * dp_rx_populate_cbf_hdr - Send CBF frame with htt header
+ * @soc: Datapath soc handle
+ * @mac_id: Datapath mac id
+ * @event: WDI event
+ * @mpdu: mpdu buffer
+ * @msdu_timesstamp: time stamp
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
+				  uint32_t mac_id, uint32_t event,
+				  qdf_nbuf_t data, uint32_t msdu_timestamp);
 
 /**
  * dp_rx_mon_handle_status_buf_done () - Handle DMA not done case for
