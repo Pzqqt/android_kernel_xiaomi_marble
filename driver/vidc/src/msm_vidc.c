@@ -781,9 +781,6 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	for (i = 0; i < MAX_SIGNAL; i++)
 		init_completion(&inst->completions[i]);
 
-	//inst->debugfs_root =
-	//	msm_vidc_debugfs_init_inst(inst, core->debugfs_root);
-
 	if (is_decode_session(inst))
 		rc = msm_vdec_inst_init(inst);
 	else if (is_encode_session(inst))
@@ -804,6 +801,11 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	rc = msm_vidc_session_open(inst);
 	if (rc)
 		goto error;
+
+	inst->debugfs_root =
+		msm_vidc_debugfs_init_inst(inst, core->debugfs_root);
+	if (!inst->debugfs_root)
+		s_vpr_h(inst->sid, "%s: debugfs not available\n", __func__);
 
 	return inst;
 

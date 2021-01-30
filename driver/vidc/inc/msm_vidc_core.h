@@ -65,7 +65,9 @@ struct msm_vidc_core {
 	struct v4l2_device                     v4l2_dev;
 	struct list_head                       instances;
 	struct list_head                       dangling_instances;
+	struct dentry                         *debugfs_parent;
 	struct dentry                         *debugfs_root;
+	char                                   fw_version[MAX_NAME_LENGTH];
 	enum msm_vidc_core_state               state;
 	struct mutex                           lock;
 	struct msm_vidc_dt                    *dt;

@@ -427,6 +427,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	}*/
 
 	print_vidc_buffer(VIDC_HIGH, "EBD", inst, buf);
+	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_EBD);
 
 	return rc;
 }
@@ -482,6 +483,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 	print_vidc_buffer(VIDC_HIGH, "FBD", inst, buf);
+	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FBD);
 
 	return rc;
 }
@@ -1004,16 +1006,15 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 	return 0;
 }
 
-static int handle_image_version_property(struct hfi_packet *pkt)
+static int handle_image_version_property(struct msm_vidc_core *core,
+	struct hfi_packet *pkt)
 {
 	u32 i = 0;
-	char version[256];
-	const u32 version_string_size = 128;
 	u8 *str_image_version;
 	u32 req_bytes;
 
 	req_bytes = pkt->size - sizeof(*pkt);
-	if (req_bytes < version_string_size) {
+	if (req_bytes < VENUS_VERSION_LENGTH - 1) {
 		d_vpr_e("%s: bad_pkt: %d\n", __func__, req_bytes);
 		return -EINVAL;
 	}
@@ -1023,14 +1024,15 @@ static int handle_image_version_property(struct hfi_packet *pkt)
 	 * characters at the start and in between. Replace the null
 	 * characters with space, to print the version info.
 	 */
-	for (i = 0; i < version_string_size; i++) {
+	for (i = 0; i < VENUS_VERSION_LENGTH - 1; i++) {
 		if (str_image_version[i] != '\0')
-			version[i] = str_image_version[i];
+			core->fw_version[i] = str_image_version[i];
 		else
-			version[i] = ' ';
+			core->fw_version[i] = ' ';
 	}
-	version[i] = '\0';
-	d_vpr_h("%s: F/W version: %s\n", __func__, version);
+	core->fw_version[i] = '\0';
+
+	d_vpr_h("%s: F/W version: %s\n", __func__, core->fw_version);
 	return 0;
 }
 
@@ -1047,7 +1049,7 @@ static int handle_system_property(struct msm_vidc_core *core,
 
 	switch (pkt->type) {
 	case HFI_PROP_IMAGE_VERSION:
-		rc = handle_image_version_property(pkt);
+		rc = handle_image_version_property(core, pkt);
 		break;
 	default:
 		d_vpr_h("%s: property type %#x successful\n",

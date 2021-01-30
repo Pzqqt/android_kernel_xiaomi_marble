@@ -1505,6 +1505,11 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		meta->attr |= MSM_VIDC_ATTR_QUEUED;
 	}
 
+	if (buf->type == MSM_VIDC_BUF_INPUT)
+		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_ETB);
+	else if (buf->type == MSM_VIDC_BUF_OUTPUT)
+		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FTB);
+
 	return rc;
 }
 
@@ -2731,6 +2736,7 @@ static void msm_vidc_close_helper(struct kref *kref)
 	s_vpr_h(inst->sid, "%s()\n", __func__);
 	msm_vidc_event_queue_deinit(inst);
 	msm_vidc_vb2_queue_deinit(inst);
+	msm_vidc_debugfs_deinit_inst(inst);
 	if (is_decode_session(inst))
 		msm_vdec_inst_deinit(inst);
 	else if (is_encode_session(inst))
