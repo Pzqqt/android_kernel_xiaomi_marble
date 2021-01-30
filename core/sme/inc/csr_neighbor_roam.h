@@ -309,20 +309,6 @@ static inline void csr_neighbor_roam_send_lfr_metric_event(
 {}
 #endif
 
-QDF_STATUS csr_roam_start_wait_for_key_timer(struct mac_context *mac,
-					     uint8_t vdev_id,
-					     uint32_t interval);
-/**
- * csr_roam_stop_wait_for_key_timer - Stop wait_for_key timer
- * @mac: MAC context
- * @vdev_id: vdev id
- *
- * API called to stop wait_for_key timer
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS csr_roam_stop_wait_for_key_timer(struct mac_context *mac,
-					    uint8_t vdev_id);
 QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
 		uint32_t sessionId, struct csr_roam_profile *pDstProfile);
 

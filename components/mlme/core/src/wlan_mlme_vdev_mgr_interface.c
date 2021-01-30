@@ -1174,6 +1174,32 @@ static inline void mlme_free_fils_info(struct mlme_connect_info *connect_info)
 {}
 #endif
 
+static
+void mlme_init_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
+				  struct wait_for_key_timer *wait_key_timer)
+{
+	QDF_STATUS status;
+
+	if (!vdev || !wait_key_timer) {
+		mlme_err("vdev or wait for key is NULL");
+		return;
+	}
+
+	wait_key_timer->vdev = vdev;
+	status = qdf_mc_timer_init(&wait_key_timer->timer, QDF_TIMER_TYPE_SW,
+				   cm_wait_for_key_time_out_handler,
+				   wait_key_timer);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("cannot allocate memory for WaitForKey time out timer");
+}
+
+static
+void mlme_deinit_wait_for_key_timer(struct wait_for_key_timer *wait_key_timer)
+{
+	qdf_mc_timer_stop(&wait_key_timer->timer);
+	qdf_mc_timer_destroy(&wait_key_timer->timer);
+}
+
 static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
 	if (!vdev_mlme || !vdev_mlme->ext_vdev_ptr)
@@ -1186,6 +1212,7 @@ static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
 	wlan_cm_rso_config_deinit(vdev_mlme->vdev,
 				  &vdev_mlme->ext_vdev_ptr->rso_cfg);
 #endif
+	mlme_deinit_wait_for_key_timer(&vdev_mlme->ext_vdev_ptr->wait_key_timer);
 	mlme_free_fils_info(&vdev_mlme->ext_vdev_ptr->connect_info);
 	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
 	vdev_mlme->ext_vdev_ptr = NULL;
@@ -1215,6 +1242,9 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 	wlan_cm_rso_config_init(vdev_mlme->vdev,
 				&vdev_mlme->ext_vdev_ptr->rso_cfg);
 #endif
+	mlme_init_wait_for_key_timer(vdev_mlme->vdev,
+				     &vdev_mlme->ext_vdev_ptr->wait_key_timer);
+
 	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
 			      &vdev_mlme->proto.generic.nss_2g,
 			      &vdev_mlme->proto.generic.nss_5g);

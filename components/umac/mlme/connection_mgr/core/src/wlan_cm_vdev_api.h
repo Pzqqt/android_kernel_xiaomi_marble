@@ -210,6 +210,65 @@ cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
 {}
 #endif
 
+/**
+ * cm_wait_for_key_time_out_handler() - Wait key time out handler API
+ * @data: Pointer to wait key timer data
+ *
+ * Return: none
+ */
+void cm_wait_for_key_time_out_handler(void *data);
+
+/**
+ * cm_start_wait_for_key_timer() - Wait for key start API
+ * @vdev: Pointer to vdev
+ * @interval: timer trigger interval
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS cm_start_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
+				       uint32_t interval);
+
+/**
+ * cm_stop_wait_for_key_timer() - Wait key stop API
+ * @psoc: Pointer to psoc
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void cm_stop_wait_for_key_timer(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id);
+
+/**
+ * cm_csr_is_wait_for_key_n_change_state() - CM CSR API to check roam substate
+ * @vdev_id: vdev_id
+ *
+ * This CM CSR API checks CSR roam substate state is WAIT FOR KEY OR not, if
+ * yes then changes to NONE and returns true.
+ *
+ * Return: true if roam current substate is wait for key, else false
+ */
+bool cm_csr_is_wait_for_key_n_change_state(uint8_t vdev_id);
+
+#ifndef FEATURE_CM_ENABLE
+/**
+ * cm_csr_is_handoff_in_progress() - CM CSR API to check handoff in progress
+ * @vdev_id: vdev_id
+ *
+ * Return: true if handoff is in progress, else false
+ */
+bool cm_csr_is_handoff_in_progress(uint8_t vdev_id);
+
+/**
+ * cm_csr_disconnect_on_wait_key_timeout() - CM CSR API to issue disconnect on
+ * wait for key timeout
+ * @vdev_id: vdev_id
+ *
+ * Return: None
+ */
+void cm_csr_disconnect_on_wait_key_timeout(uint8_t vdev_id);
+#endif
+
 #ifdef FEATURE_CM_ENABLE
 static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
 {

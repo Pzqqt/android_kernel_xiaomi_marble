@@ -33,6 +33,7 @@
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
 #include "wlan_policy_mgr_api.h"
+#include <../../core/src/wlan_cm_vdev_api.h>
 
 QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac, uint32_t vdev_id,
 				      struct bss_description *bss_desc,
@@ -115,7 +116,7 @@ csr_roam_issue_reassociate_cmd(struct mac_context *mac,	uint32_t sessionId)
 		pCommand = tmp_command;
 		/* Change the substate in case it is wait-for-key */
 		if (CSR_IS_WAIT_FOR_KEY(mac, sessionId)) {
-			csr_roam_stop_wait_for_key_timer(mac, sessionId);
+			cm_stop_wait_for_key_timer(mac->psoc, sessionId);
 			csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 						 sessionId);
 		}

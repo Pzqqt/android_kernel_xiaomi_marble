@@ -311,7 +311,6 @@ struct csr_config {
 	eCsrPhyMode phyMode;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	uint32_t HeartbeatThresh50;
-	uint32_t HeartbeatThresh24;
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
@@ -547,8 +546,6 @@ struct csr_roam_session {
 	bool dhcp_done;
 	qdf_mc_timer_t roaming_offload_timer;
 	struct csr_disconnect_stats disconnect_stats;
-	qdf_mc_timer_t wait_for_key_timer;
-	struct csr_timer_info wait_for_key_timer_info;
 };
 
 struct csr_roamstruct {
