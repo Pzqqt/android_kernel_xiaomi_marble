@@ -2169,7 +2169,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 
 	rc = venus_hfi_stop(inst, port);
 	if (rc)
-		return rc;
+		goto error;
 
 	core = inst->core;
 	s_vpr_h(inst->sid, "%s: wait on port: %d for time: %d ms\n",
@@ -2191,19 +2191,22 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 
 	/* no more queued buffers after streamoff */
 	count = msm_vidc_num_buffers(inst, buffer_type, MSM_VIDC_ATTR_QUEUED);
-	if (count) {
-		s_vpr_e(inst->sid, "%s: %d buffers pending on port: %d\n",
+	if (!count) {
+		s_vpr_h(inst->sid, "%s: stop successful on port: %d\n",
+			__func__, port);
+	} else {
+		s_vpr_e(inst->sid,
+			"%s: %d buffers pending with firmware on port: %d\n",
 			__func__, count, port);
-		msm_vidc_kill_session(inst);
+		rc = -EINVAL;
+		goto error;
 	}
-	rc = msm_vidc_flush_buffers(inst, buffer_type);
-	if (rc)
-		return rc;
-
-	s_vpr_h(inst->sid, "%s: stop successful on port: %d\n",
-		__func__, port);
-
 	return 0;
+
+error:
+	msm_vidc_kill_session(inst);
+	msm_vidc_flush_buffers(inst, buffer_type);
+	return rc;
 }
 
 int msm_vidc_session_close(struct msm_vidc_inst *inst)
@@ -2744,6 +2747,7 @@ static void msm_vidc_close_helper(struct kref *kref)
 	kfree(inst->capabilities);
 	if (inst->response_workq)
 		destroy_workqueue(inst->response_workq);
+	kfree(inst);
 }
 
 struct msm_vidc_inst *get_inst_ref(struct msm_vidc_core *core,
