@@ -31,6 +31,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_scan_api.h"
 #include "wlan_logging_sock_svc.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
@@ -75,6 +76,134 @@ void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
 		   len);
 }
 #endif
+
+#ifdef FEATURE_CM_ENABLE
+static bool wlan_cm_is_vdev_id_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
+{
+	return wlan_cm_is_vdev_roam_reassoc_state(vdev);
+}
+
+static void
+wlan_cm_disconnect_on_wait_key_timeout(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_objmgr_vdev *vdev)
+{
+	cm_disconnect(psoc, vdev->vdev_objmgr.vdev_id, CM_MLME_DISCONNECT,
+		      REASON_KEY_TIMEOUT, NULL);
+}
+#else
+static bool wlan_cm_is_vdev_id_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
+{
+	return cm_csr_is_handoff_in_progress(vdev->vdev_objmgr.vdev_id);
+}
+
+static void
+wlan_cm_disconnect_on_wait_key_timeout(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_objmgr_vdev *vdev)
+{
+	cm_csr_disconnect_on_wait_key_timeout(vdev->vdev_objmgr.vdev_id);
+}
+#endif
+
+void cm_wait_for_key_time_out_handler(void *data)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wait_for_key_timer *wait_key_timer =
+				(struct wait_for_key_timer *)data;
+
+	vdev = wait_key_timer->vdev;
+	vdev_id = vdev->vdev_objmgr.vdev_id;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("psoc obj is NULL for vdev id %d", vdev_id);
+		return;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("psoc mlme obj is NULL for vdev id %d", vdev_id);
+		return;
+	}
+
+	if (cm_csr_is_wait_for_key_n_change_state(vdev_id)) {
+		if (wlan_cm_is_vdev_id_roam_reassoc_state(vdev))
+			mlme_obj->cfg.timeouts.heart_beat_threshold =
+					cfg_default(CFG_HEART_BEAT_THRESHOLD);
+
+		wlan_cm_disconnect_on_wait_key_timeout(psoc, vdev);
+	}
+}
+
+QDF_STATUS cm_start_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
+				       uint32_t interval)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev priv mlme obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = vdev->vdev_objmgr.vdev_id;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("psoc obj is NULL for vdev id %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("psoc mlme obj is NULL for vdev id %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_cm_is_vdev_id_roam_reassoc_state(vdev))
+		mlme_obj->cfg.timeouts.heart_beat_threshold = 0;
+
+	return qdf_mc_timer_start(&vdev_mlme->ext_vdev_ptr->wait_key_timer.timer,
+				  interval / QDF_MC_TIMER_TO_MS_UNIT);
+}
+
+void cm_stop_wait_for_key_timer(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL for vdev id %d", vdev_id);
+		return;
+	}
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev priv mlme obj is NULL");
+		goto end;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("psoc mlme obj is NULL for vdev id %d", vdev_id);
+		goto end;
+	}
+
+	if (wlan_cm_is_vdev_id_roam_reassoc_state(vdev))
+		mlme_obj->cfg.timeouts.heart_beat_threshold =
+					cfg_default(CFG_HEART_BEAT_THRESHOLD);
+
+	qdf_mc_timer_stop(&vdev_mlme->ext_vdev_ptr->wait_key_timer.timer);
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 static const char *cm_diag_get_ch_width_str(uint8_t ch_width)

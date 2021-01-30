@@ -282,6 +282,15 @@ struct mlme_connect_info {
 #endif
 };
 
+/** struct wait_for_key_timer - wait for key timer object
+ * @vdev: Pointer to vdev
+ * @timer: timer for wati for key
+ */
+struct wait_for_key_timer {
+	struct wlan_objmgr_vdev *vdev;
+	qdf_mc_timer_t timer;
+};
+
 /**
  * struct mlme_legacy_priv - VDEV MLME legacy priv object
  * @chan_switch_in_progress: flag to indicate that channel switch is in progress
@@ -312,6 +321,7 @@ struct mlme_connect_info {
  * @he_sta_obsspd: he_sta_obsspd
  * @rso_cfg: per vdev RSO config to be sent to FW
  * @connect_info: mlme connect information
+ * @wait_key_timer: wait key timer
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -347,6 +357,7 @@ struct mlme_legacy_priv {
 	struct rso_config rso_cfg;
 #endif
 	struct mlme_connect_info connect_info;
+	struct wait_for_key_timer wait_key_timer;
 };
 
 /**
