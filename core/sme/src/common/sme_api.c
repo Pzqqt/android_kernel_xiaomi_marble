@@ -2121,6 +2121,24 @@ sme_process_twt_add_dialog_event(struct mac_context *mac,
 		WLAN_TWT_SETUP_STATE_ACTIVE);
 }
 
+static bool
+sme_is_twt_teardown_failed(enum WMI_HOST_DEL_TWT_STATUS teardown_status)
+{
+	switch (teardown_status) {
+	case WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+	case WMI_HOST_DEL_TWT_STATUS_INVALID_PARAM:
+	case WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_BUSY:
+	case WMI_HOST_DEL_TWT_STATUS_NO_RESOURCE:
+	case WMI_HOST_DEL_TWT_STATUS_NO_ACK:
+	case WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR:
+		return true;
+	default:
+		return false;
+	}
+
+	return false;
+}
+
 /**
  * sme_process_twt_del_dialog_event() - Process twt del dialog event
  * response from firmware
@@ -2158,14 +2176,25 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
 			true);
 
-	ucfg_mlme_set_twt_session_state(
-			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
-			param->dialog_id, WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED);
-
 	/* Reset the active TWT command to none */
 	mlme_set_twt_command_in_progress(
 			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
 			param->dialog_id, WLAN_TWT_NONE);
+
+	if (sme_is_twt_teardown_failed(param->status))
+		return;
+
+	ucfg_mlme_set_twt_setup_done(mac->psoc, (struct qdf_mac_addr *)
+				     param->peer_macaddr,
+				     param->dialog_id, false);
+
+	ucfg_mlme_set_twt_session_state(
+			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
+			param->dialog_id, WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED);
+
+	mlme_init_twt_context(mac->psoc, (struct qdf_mac_addr *)
+			      param->peer_macaddr,
+			      param->dialog_id);
 }
 
 /**

@@ -1523,13 +1523,7 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	wlan_cfg80211_vendor_event(twt_vendor_event, GFP_KERNEL);
-	ucfg_mlme_set_twt_setup_done(
-				adapter->hdd_ctx->psoc,
-				(struct qdf_mac_addr *)params->peer_macaddr,
-				params->dialog_id, false);
-	mlme_init_twt_context(hdd_ctx->psoc,
-			      (struct qdf_mac_addr *)params->peer_macaddr,
-			      params->dialog_id);
+
 	hdd_exit();
 
 	return;
