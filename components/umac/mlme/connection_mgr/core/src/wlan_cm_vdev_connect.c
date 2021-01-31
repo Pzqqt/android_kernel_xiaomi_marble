@@ -30,6 +30,7 @@
 #include "wni_api.h"
 #include "wlan_crypto_global_api.h"
 #include "wlan_scan_api.h"
+#include "wlan_logging_sock_svc.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
@@ -879,9 +880,21 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	struct cm_vdev_join_req *join_req;
 	struct scheduler_msg msg;
 	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
 	if (!vdev || !req)
 		return QDF_STATUS_E_FAILURE;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("vdev_id: %d psoc not found", req->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
 
 	qdf_mem_zero(&msg, sizeof(msg));
 	join_req = qdf_mem_malloc(sizeof(*join_req));
@@ -905,6 +918,10 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		cm_free_join_req(join_req);
 		return QDF_STATUS_E_FAILURE;
 	}
+	mlme_debug("HT cap %x", req->ht_caps);
+	if (mlme_obj->cfg.obss_ht40.is_override_ht20_40_24g &&
+	    !(req->ht_caps & WLAN_HTCAP_C_CHWIDTH40))
+		join_req->force_24ghz_in_ht20 = true;
 
 	msg.bodyptr = join_req;
 	msg.type = CM_CONNECT_REQ;
@@ -915,6 +932,9 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 					QDF_MODULE_ID_PE, &msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_free_join_req(join_req);
+
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
+		wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
 
 	return status;
 }

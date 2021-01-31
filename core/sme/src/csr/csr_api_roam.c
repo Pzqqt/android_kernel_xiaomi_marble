@@ -13387,29 +13387,6 @@ static void csr_fill_connected_info(struct mac_context *mac_ctx,
 	csr_copy_tspec_ie_len(session, frame_ptr, rsp);
 }
 
-#ifdef FEATURE_WLAN_ESE
-static inline void csr_set_ese_assoc(struct mac_context *mac_ctx,
-				     tDot11fBeaconIEs *bcn_ies,
-				     tCsrRoamConnectedProfile *conn_profile,
-				     uint8_t vdev_id)
-{
-	if ((conn_profile->AuthType == eCSR_AUTH_TYPE_CCKM_WPA &&
-	     conn_profile->AuthType == eCSR_AUTH_TYPE_CCKM_RSN) ||
-	    (bcn_ies->ESEVersion.present &&
-	     mac_ctx->mlme_cfg->lfr.ese_enabled &&
-	     conn_profile->AuthType == eCSR_AUTH_TYPE_OPEN_SYSTEM))
-		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, true);
-	else
-		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, false);
-}
-#else
-static inline void csr_set_ese_assoc(struct mac_context *mac_ctx,
-				     tDot11fBeaconIEs *bcn_ies,
-				     tCsrRoamConnectedProfile *conn_profile,
-				     uint8_t vdev_id)
-{}
-#endif
-
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 static inline void csr_qos_send_disconnect_ind(struct mac_context *mac_ctx,
 					       uint8_t vdev_id)
@@ -13552,7 +13529,6 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 			  conn_profile->country_code[1],
 			  conn_profile->country_code[2]);
 	}
-	csr_set_ese_assoc(mac_ctx, bcn_ies, conn_profile, vdev_id);
 	assoc_info.bss_desc = bss_desc;
 	assoc_info.uapsd_mask = rsp->uapsd_mask;
 	csr_qos_send_assoc_ind(mac_ctx, vdev_id, &assoc_info);
@@ -13897,45 +13873,6 @@ csr_validate_and_update_fils_info(struct mac_context *mac,
 }
 #endif
 
-#ifdef WLAN_FEATURE_SAE
-/*
- * csr_update_sae_config() - Copy SAE info to join request
- * @csr_join_req: csr join request
- * @mac: mac context
- * @session: sme session
- *
- * Return: None
- */
-static void csr_update_sae_config(struct join_req *csr_join_req,
-	struct mac_context *mac, struct csr_roam_session *session)
-{
-	tPmkidCacheInfo *pmkid_cache;
-
-	pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
-	if (!pmkid_cache)
-		return;
-
-	qdf_mem_copy(pmkid_cache->BSSID.bytes,
-		     csr_join_req->bssDescription.bssId,
-		     QDF_MAC_ADDR_SIZE);
-
-	csr_join_req->sae_pmk_cached =
-	       csr_lookup_pmkid_using_bssid(mac, session, pmkid_cache);
-
-	qdf_mem_free(pmkid_cache);
-
-	if (!csr_join_req->sae_pmk_cached)
-		return;
-
-	sme_debug("Found for BSSID=" QDF_MAC_ADDR_FMT,
-		  QDF_MAC_ADDR_REF(csr_join_req->bssDescription.bssId));
-}
-#else
-static inline void csr_update_sae_config(struct join_req *csr_join_req,
-	struct mac_context *mac, struct csr_roam_session *session)
-{ }
-#endif
-
 #if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
 /**
  * csr_enable_twt() - Check if its allowed to enable twt for this session
@@ -13962,54 +13899,6 @@ static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 {
 	return false;
-}
-#endif
-
-static QDF_STATUS csr_check_and_validate_6g_ap(struct mac_context *mac_ctx,
-					       struct bss_description *bss,
-					       struct join_req *csr_join_req,
-					       tDot11fBeaconIEs *ie)
-{
-	tDot11fIEhe_op *he_op = &ie->he_op;
-
-	if (!wlan_reg_is_6ghz_chan_freq(bss->chan_freq))
-		return QDF_STATUS_SUCCESS;
-
-	if (!he_op->oper_info_6g_present) {
-		sme_err(QDF_MAC_ADDR_FMT" Invalid 6GHZ AP BSS description IE",
-			QDF_MAC_ADDR_REF(bss->bssId));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * csr_update_sae_single_pmk_ap_cap() - Function to update sae single pmk ap ie
- * @mac: pointer to mac context
- * @bss_desc: BSS Descriptor
- * @vdev_id: Vdev id
- * @akm: Akm type
- *
- * Return: true if sae single pmk feature is enabled
- */
-static void
-csr_update_sae_single_pmk_ap_cap(struct mac_context *mac,
-				 struct bss_description *bss_desc,
-				 uint8_t vdev_id, enum csr_akm_type akm)
-{
-	if (akm == eCSR_AUTH_TYPE_SAE &&
-	    mac->mlme_cfg->lfr.sae_single_pmk_feature_enabled)
-		wlan_mlme_set_sae_single_pmk_bss_cap(mac->psoc, vdev_id,
-						     bss_desc->is_single_pmk);
-}
-#else
-static inline void
-csr_update_sae_single_pmk_ap_cap(struct mac_context *mac,
-				 struct bss_description *bss_desc,
-				 uint8_t vdev_id, enum csr_akm_type akm)
-{
 }
 #endif
 
@@ -14123,13 +14012,10 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	}
 	neigh_roam_info = &mac->roam.neighborRoamInfo[sessionId];
 	bss_freq = pBssDescription->chan_freq;
-	if ((eWNI_SME_REASSOC_REQ == messageType) ||
-	    WLAN_REG_IS_5GHZ_CH_FREQ(bss_freq)) {
+	if ((eWNI_SME_REASSOC_REQ == messageType)) {
 		wlan_cm_set_disable_hi_rssi(mac->pdev, sessionId, true);
 		sme_debug("Disabling HI_RSSI, AP freq=%d, rssi=%d",
 			  pBssDescription->chan_freq, pBssDescription->rssi);
-	} else {
-		wlan_cm_set_disable_hi_rssi(mac->pdev, sessionId, false);
 	}
 
 	do {
@@ -14168,11 +14054,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (!wpaRsnIE)
 			status = QDF_STATUS_E_NOMEM;
 
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			break;
-
-		status = csr_check_and_validate_6g_ap(mac, pBssDescription,
-						      csr_join_req, pIes);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 
@@ -14218,8 +14099,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		akm = pProfile->negotiatedAuthType;
 		csr_join_req->akm = csr_convert_csr_to_ani_akm_type(akm);
 
-		csr_update_sae_single_pmk_ap_cap(mac, pBssDescription,
-						 sessionId, akm);
 		csr_join_req->dot11mode = (uint8_t)dot11mode;
 		csr_join_req->wps_registration = pProfile->bWPSAssociation;
 		csr_join_req->force_24ghz_in_ht20 =
@@ -14268,17 +14147,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			csr_join_req->extendedRateSet.numRates = 0;
 		}
 
-		if (pBssDescription->adaptive_11r_ap)
-			src_config.bool_value =
-				wlan_get_adaptive_11r_enabled(&mac->mlme_cfg->lfr);
-		else
-			src_config.bool_value = false;
-
-		csr_join_req->is_adaptive_11r_connection =
-					src_config.bool_value;
-		wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
-					   ADAPTIVE_11R_CONNECTION,
-					   &src_config);
 		/* rsnIE */
 		if (csr_is_profile_wpa(pProfile)) {
 			/* Insert the Wpa IE into the join request */
@@ -14467,39 +14335,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  mac->mlme_cfg->lfr.ese_enabled;
 #endif
-		pProfile->mdid.mdie_present = pBssDescription->mdiePresent;
-		if (csr_is_profile11r(mac, pProfile)
-#ifdef FEATURE_WLAN_ESE
-		    &&
-		    !((pProfile->negotiatedAuthType ==
-		       eCSR_AUTH_TYPE_OPEN_SYSTEM) && (pIes->ESEVersion.present)
-		      && (ese_config))
-#endif
-			)
-			csr_join_req->is11Rconnection = true;
-		else
-			csr_join_req->is11Rconnection = false;
-#ifdef FEATURE_WLAN_ESE
-		if (true == ese_config)
-			csr_join_req->isESEFeatureIniEnabled = true;
-		else
-			csr_join_req->isESEFeatureIniEnabled = false;
 
-		/* A profile can not be both ESE and 11R. But an 802.11R AP
-		 * may be advertising support for ESE as well. So if we are
-		 * associating Open or explicitly ESE then we will get ESE.
-		 * If we are associating explicitly 11R only then we will get
-		 * 11R.
-		 */
-		if ((csr_is_profile_ese(pProfile) ||
-			((pIes->ESEVersion.present) &&
-			(pProfile->negotiatedAuthType ==
-				eCSR_AUTH_TYPE_OPEN_SYSTEM)))
-			&& (ese_config))
-			csr_join_req->isESEconnection = true;
-		else
-			csr_join_req->isESEconnection = false;
-
+#ifdef FEATURE_WLAN_ESE
 		if (eWNI_SME_JOIN_REQ == messageType) {
 			tESETspecInfo eseTspec;
 			/*
@@ -14552,11 +14389,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		else
 			csr_join_req->isOSENConnection = false;
 
-		wlan_add_supported_5Ghz_channels(mac->psoc, mac->pdev,
-				csr_join_req->supportedChannels.channelList,
-				&csr_join_req->supportedChannels.numChnl,
-				false);
-
 		/* Move the entire BssDescription into the join request. */
 		qdf_mem_copy(&csr_join_req->bssDescription, pBssDescription,
 				pBssDescription->length +
@@ -14569,7 +14401,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (QDF_IS_STATUS_ERROR(status))
 			return status;
 
-		csr_update_sae_config(csr_join_req, mac, pSession);
 		/*
 		 * conc_custom_rule1:
 		 * If SAP comes up first and STA comes up later then SAP

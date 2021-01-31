@@ -2299,7 +2299,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 					    &frm->he_6ghz_band_cap);
 	}
 
-	if (pe_session->lim_join_req->is11Rconnection) {
+	if (pe_session->is11Rconnection) {
 		struct bss_description *bssdescr;
 
 		bssdescr = &pe_session->lim_join_req->bssDescription;
@@ -2334,7 +2334,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_ese_version(&frm->ESEVersion);
 	/* For ESE Associations fill the ESE IEs */
 	if (pe_session->isESEconnection &&
-	    pe_session->lim_join_req->isESEFeatureIniEnabled) {
+	    mac_ctx->mlme_cfg->lfr.ese_enabled) {
 #ifndef FEATURE_DISABLE_RM
 		populate_dot11f_ese_rad_mgmt_cap(&frm->ESERadMgmtCap);
 #endif
@@ -2921,7 +2921,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 
 		/* include MDIE in FILS authentication frame */
 		if (session->lim_join_req &&
-		    session->lim_join_req->is11Rconnection &&
+		    session->is11Rconnection &&
 		    auth_frame->authAlgoNumber == SIR_FILS_SK_WITHOUT_PFS &&
 		    session->lim_join_req->bssDescription.mdiePresent)
 			frame_len += (2 + SIR_MDIE_SIZE);

@@ -904,16 +904,11 @@ struct join_req {
 	tAniEdType UCEncryptionType;
 	enum ani_akm_type akm;
 
-	bool is11Rconnection;
-	bool is_adaptive_11r_connection;
 #ifdef FEATURE_WLAN_ESE
-	bool isESEFeatureIniEnabled;
-	bool isESEconnection;
 	tESETspecInfo eseTspecInfo;
 #endif
 	bool isOSENConnection;
 	struct supported_channels supportedChannels;
-	bool sae_pmk_cached;
 	/* Pls make this as last variable in struct */
 	bool force_24ghz_in_ht20;
 	bool force_rsne_override;

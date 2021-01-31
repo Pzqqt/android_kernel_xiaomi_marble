@@ -1025,7 +1025,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	 * MDIE to be sent in auth frame during initial
 	 * mobility domain association
 	 */
-	if (session->lim_join_req->is11Rconnection) {
+	if (session->is11Rconnection) {
 		struct bss_description *bss_desc;
 
 		bss_desc = &session->lim_join_req->bssDescription;

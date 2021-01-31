@@ -3477,11 +3477,9 @@ cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-#ifdef FEATURE_CM_ENABLE
-
-static bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
-				struct wlan_objmgr_vdev *vdev,
-				bool mdie_present)
+bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			 struct wlan_objmgr_vdev *vdev,
+			 bool mdie_present)
 {
 	int32_t akm, ucast_cipher;
 
@@ -3495,15 +3493,12 @@ static bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	      ucast_cipher))) {
 		if (mdie_present && mlme_obj->cfg.lfr.enable_ftopen)
 			return true;
-	} else if (QDF_HAS_PARAM(ucast_cipher,
-				 WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384) ||
-		   QDF_HAS_PARAM(ucast_cipher,
-				 WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256) ||
-		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_KEY_MGMT_FT_SAE) ||
-		   QDF_HAS_PARAM(ucast_cipher,
-				 WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X) ||
-		   QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_KEY_MGMT_FT_PSK) ||
-		   QDF_HAS_PARAM(ucast_cipher,
+	} else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384) ||
+		   QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256) ||
+		   QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE) ||
+		   QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X) ||
+		   QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_PSK) ||
+		   QDF_HAS_PARAM(akm,
 				 WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384)) {
 		return true;
 	}
@@ -3511,6 +3506,7 @@ static bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return false;
 }
 
+#ifdef FEATURE_CM_ENABLE
 static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 			       struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_vdev *vdev)
