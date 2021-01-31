@@ -37,6 +37,7 @@
  * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
  * @vdev_id: vdev id
  * @cm_id: Connect manager id
+ * @force_24ghz_in_ht20: force 24ghz_in ht20
  * @force_rsne_override: force the arbitrary rsne received in connect req to be
  * used with out validation, used for the scenarios where the device is used
  * as a testbed device with special functionality and not recommended
@@ -48,6 +49,7 @@
 struct cm_vdev_join_req {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
+	bool force_24ghz_in_ht20;
 	bool force_rsne_override;
 	struct element_info assoc_ie;
 	struct element_info scan_ie;

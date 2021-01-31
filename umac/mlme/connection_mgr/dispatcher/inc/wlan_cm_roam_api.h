@@ -595,6 +595,14 @@ cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
 {}
 #endif
 
+static inline
+bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			      struct wlan_objmgr_vdev *vdev,
+			      bool mdie_present)
+{
+	return cm_is_auth_type_11r(mlme_obj, vdev, mdie_present);
+}
+
 #ifdef FEATURE_CM_ENABLE
 /**
  * cm_roam_start_init_on_connect() - init roaming

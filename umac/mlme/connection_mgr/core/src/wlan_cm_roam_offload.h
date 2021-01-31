@@ -122,4 +122,7 @@ QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
 
+bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+			 struct wlan_objmgr_vdev *vdev,
+			 bool mdie_present);
 #endif /* _WLAN_CM_ROAM_OFFLOAD_H_ */
