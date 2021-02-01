@@ -1820,6 +1820,7 @@ CDP_INC := -I$(WLAN_COMMON_INC)/$(CDP_INC_DIR)
 PKTLOG_DIR :=      $(WLAN_COMMON_ROOT)/utils/pktlog
 PKTLOG_INC :=      -I$(WLAN_ROOT)/$(PKTLOG_DIR)/include
 
+ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 PKTLOG_OBJS :=	$(PKTLOG_DIR)/pktlog_ac.o \
 		$(PKTLOG_DIR)/pktlog_internal.o \
 		$(PKTLOG_DIR)/linux_ac.o
@@ -1828,6 +1829,7 @@ ifeq ($(CONFIG_PKTLOG_LEGACY), y)
 	PKTLOG_OBJS  += $(PKTLOG_DIR)/pktlog_wifi2.o
 else
 	PKTLOG_OBJS  += $(PKTLOG_DIR)/pktlog_wifi3.o
+endif
 endif
 
 ############ HTT ############
@@ -2568,10 +2570,7 @@ ifeq ($(CONFIG_IPA_OFFLOAD), y)
 OBJS +=		$(IPA_OBJS)
 endif
 
-ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 OBJS +=		$(PKTLOG_OBJS)
-endif
-
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
 OBJS +=		$(DISA_OBJS)
 OBJS +=		$(ACTION_OUI_OBJS)
