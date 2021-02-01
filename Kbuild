@@ -625,6 +625,8 @@ DFS_INC :=	-I$(WLAN_ROOT)/$(DFS_DISP_INC_DIR) \
 		-I$(WLAN_ROOT)/$(DFS_TARGET_INC_DIR) \
 		-I$(WLAN_ROOT)/$(DFS_CMN_SERVICES_INC_DIR)
 
+ifeq ($(CONFIG_WLAN_DFS_MASTER_ENABLE), y)
+
 DFS_OBJS :=	$(DFS_CORE_SRC_DIR)/misc/dfs.o \
 		$(DFS_CORE_SRC_DIR)/misc/dfs_nol.o \
 		$(DFS_CORE_SRC_DIR)/misc/dfs_random_chan_sel.o \
@@ -654,6 +656,7 @@ DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_partial_offload.
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_radar.o \
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_partial_offload_radar.o \
 		$(DFS_CORE_SRC_DIR)/misc/dfs_filter_init.o
+endif
 endif
 
 ############ SME ############
@@ -2535,10 +2538,7 @@ ifeq ($(CONFIG_FEATURE_EPPING), y)
 OBJS += 	$(EPPING_OBJS)
 endif
 
-ifeq ($(CONFIG_WLAN_DFS_MASTER_ENABLE), y)
 OBJS +=		$(DFS_OBJS)
-endif
-
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
 OBJS +=		$(CP_STATS_OBJS)
