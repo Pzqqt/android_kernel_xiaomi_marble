@@ -496,11 +496,13 @@ EPPING_SRC_DIR :=	$(EPPING_DIR)/src
 
 EPPING_INC := 	-I$(WLAN_ROOT)/$(EPPING_INC_DIR)
 
+ifeq ($(CONFIG_FEATURE_EPPING), y)
 EPPING_OBJS := $(EPPING_SRC_DIR)/epping_main.o \
 		$(EPPING_SRC_DIR)/epping_txrx.o \
 		$(EPPING_SRC_DIR)/epping_tx.o \
 		$(EPPING_SRC_DIR)/epping_rx.o \
 		$(EPPING_SRC_DIR)/epping_helper.o
+endif
 
 ############ SYS ############
 CMN_SYS_DIR :=	$(WLAN_COMMON_ROOT)/utils/sys
@@ -2534,10 +2536,7 @@ ifeq ($(CONFIG_FEATURE_FW_LOG_PARSING), y)
 OBJS +=        $(FWLOG_OBJS)
 endif
 
-ifeq ($(CONFIG_FEATURE_EPPING), y)
 OBJS += 	$(EPPING_OBJS)
-endif
-
 OBJS +=		$(DFS_OBJS)
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
