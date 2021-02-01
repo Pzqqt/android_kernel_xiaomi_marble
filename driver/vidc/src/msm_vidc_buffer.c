@@ -259,8 +259,8 @@ u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 
 	f = &inst->fmts[INPUT_PORT];
 	format = v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__);
-	size = VENUS_BUFFER_SIZE(format, f->fmt.pix_mp.width,
-			f->fmt.pix_mp.height);
+	size = VENUS_BUFFER_SIZE_USED(format, f->fmt.pix_mp.width,
+			f->fmt.pix_mp.height, false);
 	return size;
 }
 
