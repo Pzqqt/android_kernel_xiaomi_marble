@@ -574,6 +574,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret = 0;
 	QDF_STATUS status;
+	uint8_t connected_vdev;
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid hdd ctx");
@@ -620,6 +621,14 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	    wlan_hdd_validate_operation_channel(adapter, ch_freq)) {
 		hdd_err("Invalid Ch freq: %d", ch_freq);
 		ret = -EINVAL;
+		goto exit;
+	}
+	if (wlan_get_connected_vdev_by_bssid(hdd_ctx->pdev, (uint8_t *)bssid,
+					     &connected_vdev) &&
+	    connected_vdev != adapter->vdev_id) {
+		hdd_err("bssid "QDF_MAC_ADDR_FMT" connected by other vdev %d",
+			QDF_MAC_ADDR_REF(bssid), connected_vdev);
+		ret = -EPERM;
 		goto exit;
 	}
 
