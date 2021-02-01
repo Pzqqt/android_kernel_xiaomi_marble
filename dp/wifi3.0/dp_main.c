@@ -263,6 +263,9 @@ dp_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev);
 static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    enum hal_ring_type ring_type,
 					    int ring_num);
+static QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
+						 uint8_t delayed_replenish);
+
 #define DP_INTR_POLL_TIMER_MS	5
 
 #define MON_VDEV_TIMER_INIT 0x1
@@ -6693,6 +6696,9 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 			QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 			pdev->neighbour_peers_added = true;
+			if (!wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx))
+				dp_vdev_set_monitor_mode_rings(pdev, true);
+
 			dp_mon_filter_setup_smart_monitor(pdev);
 			status = dp_mon_filter_update(pdev);
 			if (status != QDF_STATUS_SUCCESS) {
