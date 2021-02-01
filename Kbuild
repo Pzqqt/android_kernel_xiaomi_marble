@@ -1017,11 +1017,13 @@ UMAC_CRYPTO_DIR := umac/cmn_services/crypto
 UMAC_CRYPTO_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_CRYPTO_DIR)/src
 UMAC_CRYPTO_INC := -I$(WLAN_COMMON_INC)/$(UMAC_CRYPTO_DIR)/inc \
 		-I$(WLAN_COMMON_INC)/$(UMAC_CRYPTO_DIR)/src
+ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
 UMAC_CRYPTO_OBJS := $(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_global_api.o \
 		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_ucfg_api.o \
 		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_main.o \
 		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_obj_mgr.o \
 		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_param_handling.o
+endif
 
 ############# FTM CORE ############
 FTM_CORE_DIR := ftm
@@ -2598,10 +2600,7 @@ ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
 OBJS +=		$(UMAC_GREEN_AP_OBJS)
 endif
 
-ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
 OBJS +=		$(UMAC_CRYPTO_OBJS)
-endif
-
 OBJS +=		$(DP_OBJS)
 OBJS += 	$(UMAC_INTERFACE_MGR_OBJS)
 OBJS +=		$(TXRX3.0_OBJS)
