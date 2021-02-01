@@ -5103,6 +5103,8 @@ typedef enum {
 	wmi_service_twt_statistics,
 #endif
 	wmi_service_wapi_concurrency_supported,
+	wmi_service_sap_connected_d3_wow,
+	wmi_service_go_connected_d3_wow,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
