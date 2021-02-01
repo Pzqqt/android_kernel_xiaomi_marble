@@ -2561,11 +2561,7 @@ OBJS +=		$(FWOL_OBJS)
 endif
 OBJS +=		$(BLM_OBJS)
 OBJS +=		$(COEX_OBJS)
-
-ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
-endif
-
 OBJS +=		$(IPA_OBJS)
 OBJS +=		$(PKTLOG_OBJS)
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
