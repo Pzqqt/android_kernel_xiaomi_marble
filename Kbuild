@@ -1007,10 +1007,13 @@ UMAC_GREEN_AP_DISP_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_GREEN_AP_DIR)/dispatcher/sr
 UMAC_TARGET_GREEN_AP_INC := -I$(WLAN_COMMON_INC)/target_if/green_ap/inc
 
 UMAC_GREEN_AP_INC := -I$(WLAN_COMMON_INC)/$(UMAC_GREEN_AP_DISP_INC_DIR)
+
+ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
 UMAC_GREEN_AP_OBJS := $(UMAC_GREEN_AP_CORE_DIR)/wlan_green_ap_main.o \
 		$(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_api.o \
                 $(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_ucfg_api.o \
                 $(WLAN_COMMON_ROOT)/target_if/green_ap/src/target_if_green_ap.o
+endif
 
 ############# WLAN_CONV_CRYPTO_SUPPORTED ############
 UMAC_CRYPTO_DIR := umac/cmn_services/crypto
@@ -2596,10 +2599,7 @@ OBJS +=		$(UMAC_SPECTRAL_OBJS)
 OBJS +=		$(UMAC_DBR_OBJS)
 OBJS +=		$(WLAN_CFR_OBJS)
 OBJS +=		$(UMAC_GPIO_OBJS)
-ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
 OBJS +=		$(UMAC_GREEN_AP_OBJS)
-endif
-
 OBJS +=		$(UMAC_CRYPTO_OBJS)
 OBJS +=		$(DP_OBJS)
 OBJS += 	$(UMAC_INTERFACE_MGR_OBJS)
