@@ -1780,7 +1780,6 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_RX_BUFFER_POOL), y)
 DP_OBJS += $(DP_SRC)/dp_rx_buffer_pool.o
 endif
-endif
 
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 DP_OBJS +=     $(DP_SRC)/dp_ipa.o
@@ -1789,6 +1788,8 @@ endif
 ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 DP_OBJS +=     $(DP_SRC)/dp_wdi_event.o
 endif
+
+endif #LITHIUM
 
 ############ CFG ############
 WCFG_DIR := wlan_cfg
@@ -2601,10 +2602,7 @@ ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
 OBJS +=		$(UMAC_CRYPTO_OBJS)
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
 OBJS +=		$(DP_OBJS)
-endif
-
 OBJS += 	$(UMAC_INTERFACE_MGR_OBJS)
 OBJS +=		$(TXRX3.0_OBJS)
 
