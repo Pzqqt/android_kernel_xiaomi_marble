@@ -1680,7 +1680,9 @@ FWLOG_DIR := $(WLAN_COMMON_ROOT)/utils/fwlog
 
 FWLOG_INC := -I$(WLAN_ROOT)/$(FWLOG_DIR)
 
+ifeq ($(CONFIG_FEATURE_FW_LOG_PARSING), y)
 FWLOG_OBJS := $(FWLOG_DIR)/dbglog_host.o
+endif
 
 ############ TXRX ############
 TXRX_DIR :=     core/dp/txrx
@@ -2532,10 +2534,7 @@ ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)
 endif
 
-ifeq ($(CONFIG_FEATURE_FW_LOG_PARSING), y)
-OBJS +=        $(FWLOG_OBJS)
-endif
-
+OBJS +=		$(FWLOG_OBJS)
 OBJS += 	$(EPPING_OBJS)
 OBJS +=		$(DFS_OBJS)
 OBJS +=		$(UMAC_OBJMGR_OBJS)
