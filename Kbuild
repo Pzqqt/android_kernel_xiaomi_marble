@@ -2287,16 +2287,6 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o\
 		$(WMA_NDP_OBJS)
 
-#######DIRECT_BUFFER_RX#########
-ifeq ($(CONFIG_DIRECT_BUF_RX_ENABLE), y)
-DBR_DIR = $(WLAN_COMMON_ROOT)/target_if/direct_buf_rx
-UMAC_DBR_INC := -I$(WLAN_COMMON_INC)/target_if/direct_buf_tx/inc
-UMAC_DBR_OBJS := $(DBR_DIR)/src/target_if_direct_buf_rx_api.o \
-		 $(DBR_DIR)/src/target_if_direct_buf_rx_main.o \
-		 $(WLAN_COMMON_ROOT)/wmi/src/wmi_unified_dbr_api.o \
-		 $(WLAN_COMMON_ROOT)/wmi/src/wmi_unified_dbr_tlv.o
-endif
-
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 WMA_OBJS+=	$(WMA_SRC_DIR)/wma_ocb.o
 endif
@@ -2318,6 +2308,17 @@ endif
 ifeq ($(CONFIG_WLAN_MWS_INFO_DEBUGFS), y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_coex.o
 endif
+
+#######DIRECT_BUFFER_RX#########
+ifeq ($(CONFIG_DIRECT_BUF_RX_ENABLE), y)
+DBR_DIR = $(WLAN_COMMON_ROOT)/target_if/direct_buf_rx
+UMAC_DBR_INC := -I$(WLAN_COMMON_INC)/target_if/direct_buf_tx/inc
+UMAC_DBR_OBJS := $(DBR_DIR)/src/target_if_direct_buf_rx_api.o \
+		 $(DBR_DIR)/src/target_if_direct_buf_rx_main.o \
+		 $(WLAN_COMMON_ROOT)/wmi/src/wmi_unified_dbr_api.o \
+		 $(WLAN_COMMON_ROOT)/wmi/src/wmi_unified_dbr_tlv.o
+endif
+
 ############## PLD ##########
 PLD_DIR := core/pld
 PLD_INC_DIR := $(PLD_DIR)/inc
