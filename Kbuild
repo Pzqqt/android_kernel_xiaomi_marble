@@ -485,7 +485,9 @@ HOST_DIAG_LOG_SRC_DIR :=	$(HOST_DIAG_LOG_DIR)/src
 HOST_DIAG_LOG_INC :=	-I$(WLAN_ROOT)/$(HOST_DIAG_LOG_INC_DIR) \
 			-I$(WLAN_ROOT)/$(HOST_DIAG_LOG_SRC_DIR)
 
+ifeq ($(BUILD_DIAG_VERSION), y)
 HOST_DIAG_LOG_OBJS +=	$(HOST_DIAG_LOG_SRC_DIR)/host_diag_log.o
+endif
 
 ############ EPPING ############
 EPPING_DIR :=	$(WLAN_COMMON_ROOT)/utils/epping
@@ -2570,10 +2572,7 @@ ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 OBJS +=		$(PKTLOG_OBJS)
 endif
 
-ifeq ($(BUILD_DIAG_VERSION), y)
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
-endif
-
 OBJS +=		$(DISA_OBJS)
 OBJS +=		$(ACTION_OUI_OBJS)
 OBJS +=		$(PKT_CAPTURE_OBJS)
