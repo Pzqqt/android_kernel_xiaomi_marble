@@ -10250,6 +10250,7 @@ QDF_STATUS sme_power_debug_stats_req(
 		if (mac_ctx->sme.power_debug_stats_context ||
 		    mac_ctx->sme.power_stats_resp_callback) {
 			sme_err("Already one power stats req in progress");
+			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_ALREADY;
 		}
 		mac_ctx->sme.power_debug_stats_context = power_stats_context;
