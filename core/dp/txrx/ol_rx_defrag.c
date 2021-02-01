@@ -700,7 +700,13 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 	while (cur) {
 		tmp_next = qdf_nbuf_next(cur);
 		qdf_nbuf_set_next(cur, NULL);
-		if (!ol_rx_pn_check_base(vdev, peer, tid, cur)) {
+		/*
+		 * Strict PN check between the first fragment of the current
+		 * frame and the last fragment of the previous frame is not
+		 * necessary.
+		 */
+		if (!ol_rx_pn_check_base(vdev, peer, tid, cur,
+					 (cur == frag_list) ? false : true)) {
 			/* PN check failed,discard frags */
 			if (prev) {
 				qdf_nbuf_set_next(prev, NULL);

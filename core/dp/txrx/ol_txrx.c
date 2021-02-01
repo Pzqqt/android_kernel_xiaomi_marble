@@ -1437,13 +1437,31 @@ ol_txrx_pdev_post_attach(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	 */
 	qdf_mem_zero(&pdev->rx_pn[0], sizeof(pdev->rx_pn));
 
+	/* WEP: 24-bit PN */
+	pdev->rx_pn[htt_sec_type_wep40].len =
+		pdev->rx_pn[htt_sec_type_wep104].len =
+			pdev->rx_pn[htt_sec_type_wep128].len = 24;
+
+	pdev->rx_pn[htt_sec_type_wep40].cmp =
+		pdev->rx_pn[htt_sec_type_wep104].cmp =
+			pdev->rx_pn[htt_sec_type_wep128].cmp = ol_rx_pn_cmp24;
+
 	/* TKIP: 48-bit TSC, CCMP: 48-bit PN */
 	pdev->rx_pn[htt_sec_type_tkip].len =
 		pdev->rx_pn[htt_sec_type_tkip_nomic].len =
 			pdev->rx_pn[htt_sec_type_aes_ccmp].len = 48;
+
+	pdev->rx_pn[htt_sec_type_aes_ccmp_256].len =
+		pdev->rx_pn[htt_sec_type_aes_gcmp].len =
+			pdev->rx_pn[htt_sec_type_aes_gcmp_256].len = 48;
+
 	pdev->rx_pn[htt_sec_type_tkip].cmp =
 		pdev->rx_pn[htt_sec_type_tkip_nomic].cmp =
 			pdev->rx_pn[htt_sec_type_aes_ccmp].cmp = ol_rx_pn_cmp48;
+
+	pdev->rx_pn[htt_sec_type_aes_ccmp_256].cmp =
+		pdev->rx_pn[htt_sec_type_aes_gcmp].cmp =
+		    pdev->rx_pn[htt_sec_type_aes_gcmp_256].cmp = ol_rx_pn_cmp48;
 
 	/* WAPI: 128-bit PN */
 	pdev->rx_pn[htt_sec_type_wapi].len = 128;
