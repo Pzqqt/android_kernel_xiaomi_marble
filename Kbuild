@@ -1845,6 +1845,7 @@ endif
 HTT_DIR :=      core/dp/htt
 HTT_INC :=      -I$(WLAN_ROOT)/$(HTT_DIR)
 
+ifneq ($(CONFIG_LITHIUM), y)
 HTT_OBJS := $(HTT_DIR)/htt_tx.o \
             $(HTT_DIR)/htt.o \
             $(HTT_DIR)/htt_t2h.o \
@@ -1862,6 +1863,7 @@ endif
 
 ifeq ($(CONFIG_HL_DP_SUPPORT), y)
 HTT_OBJS += $(HTT_DIR)/htt_rx_hl.o
+endif
 endif
 
 ############## INIT-DEINIT ###########
@@ -2526,10 +2528,7 @@ OBJS +=		$(HIF_OBJS) \
 		$(CLD_TARGET_IF_OBJ) \
 		$(GLOBAL_LMAC_IF_OBJ)
 
-ifneq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HTT_OBJS)
-endif
-
 OBJS += 	$(HAL_OBJS)
 OBJS +=		$(FWLOG_OBJS)
 OBJS += 	$(EPPING_OBJS)
