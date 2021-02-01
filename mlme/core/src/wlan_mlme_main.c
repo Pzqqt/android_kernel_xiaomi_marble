@@ -1263,6 +1263,18 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 	twt_cfg->is_bcast_responder_enabled = CFG_TWT_GET_BCAST_RES(bcast_conf);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_cfg *mlme_cfg)
+{
+}
+#else
+static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_cfg *mlme_cfg)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_SAE
 static bool is_sae_sap_enabled(struct wlan_objmgr_psoc *psoc)
 {
@@ -2480,6 +2492,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_nss_chains(psoc, &mlme_cfg->nss_chains_ini_cfg);
 	mlme_init_twt_cfg(psoc, &mlme_cfg->twt_cfg);
 	mlme_init_he_cap_in_cfg(psoc, mlme_cfg);
+	mlme_init_eht_cap_in_cfg(psoc, mlme_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_product_details_cfg(&mlme_cfg->product_details);
 	mlme_init_powersave_params(psoc, &mlme_cfg->ps_params);

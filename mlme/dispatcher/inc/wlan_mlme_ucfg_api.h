@@ -3274,6 +3274,26 @@ QDF_STATUS ucfg_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * ucfg_mlme_update_tgt_eht_cap() - Update tgt EHT cap in mlme component
+ *
+ * @psoc: pointer to psoc object
+ * @cfg: pointer to config params from target
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to update
+ * EHT caps in mlme.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_update_tgt_eht_cap(struct wlan_objmgr_psoc *psoc,
+			     struct wma_tgt_cfg *cfg)
+{
+	return mlme_update_tgt_eht_caps_in_cfg(psoc, cfg);
+}
+#endif
+
 /**
  * ucfg_mlme_get_80211e_is_enabled() - Enable 802.11e feature
  * @psoc: pointer to psoc object

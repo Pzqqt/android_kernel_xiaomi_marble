@@ -938,6 +938,21 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					  struct wma_tgt_cfg *cfg);
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * mlme_update_tgt_eht_caps_in_cfg() - Update tgt eht cap in mlme component
+ *
+ * @psoc: pointer to psoc object
+ * @cfg: pointer to config params from target
+ *
+ * This api to be used by callers to update EHT caps in mlme.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+QDF_STATUS mlme_update_tgt_eht_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
+					  struct wma_tgt_cfg *cfg);
+#endif
+
 /**
  * wlan_mlme_is_ap_prot_enabled() - check if sap protection is enabled
  * @psoc: pointer to psoc object

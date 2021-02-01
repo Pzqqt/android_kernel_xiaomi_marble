@@ -897,6 +897,14 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+QDF_STATUS mlme_update_tgt_eht_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
+					   struct wma_tgt_cfg *wma_cfg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS wlan_mlme_get_num_11b_tx_chains(struct wlan_objmgr_psoc *psoc,
 					   uint16_t *value)
 {

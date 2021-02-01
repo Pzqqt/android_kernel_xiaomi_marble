@@ -1060,6 +1060,17 @@ struct wlan_mlme_he_caps {
 };
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * struct wlan_mlme_eht_caps - EHT Capabilities related config items
+ */
+struct wlan_mlme_eht_caps {
+	tDot11fIEeht_cap dot11_eht_cap;
+
+	/* Add members to store INI configuration corresponding to 11be */
+};
+#endif
+
 /**
  * struct wlan_mlme_chain_cfg - Chain info related structure
  * @max_tx_chains_2g: max tx chains supported in 2.4ghz band
@@ -2495,6 +2506,9 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
 #ifdef WLAN_FEATURE_11AX
 	struct wlan_mlme_he_caps he_caps;
+#endif
+#ifdef WLAN_FEATURE_11BE
+	struct wlan_mlme_eht_caps eht_caps;
 #endif
 	struct wlan_mlme_lfr_cfg lfr;
 	struct wlan_mlme_obss_ht40 obss_ht40;
