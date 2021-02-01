@@ -846,6 +846,10 @@ ifeq ($(CONFIG_WLAN_HANG_EVENT), y)
 	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_hang_event_notifier.o
 endif
 
+ifeq ($(CONFIG_WLAN_LRO), y)
+QDF_OBJS +=     $(QDF_LINUX_OBJ_DIR)/qdf_lro.o
+endif
+
 cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_DELAYED_WORK_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
@@ -1075,10 +1079,6 @@ endif
 UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc \
 		-I$(WLAN_COMMON_INC)/umac/cmn_services/utils/inc
 UMAC_COMMON_OBJS := $(WLAN_COMMON_ROOT)/umac/cmn_services/utils/src/wlan_utility.o
-
-ifeq ($(CONFIG_WLAN_LRO), y)
-QDF_OBJS +=     $(QDF_LINUX_OBJ_DIR)/qdf_lro.o
-endif
 
 ############ CDS (Connectivity driver services) ############
 CDS_DIR :=	core/cds
