@@ -18120,6 +18120,9 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		wma_set_peer_ucast_cipher(mac_address.bytes,
 					  ucast_cipher, cipher_cap);
 
+	cdp_peer_flush_frags(cds_get_context(QDF_MODULE_ID_SOC),
+			     wlan_vdev_get_id(vdev), mac_address.bytes);
+
 	switch (adapter->device_mode) {
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
