@@ -1951,7 +1951,7 @@ static void wlan_ipa_uc_offload_enable_disable(struct wlan_ipa_priv *ipa_ctx,
 	wlan_ipa_intrabss_enable_disable(ipa_ctx, session_id, enable);
 }
 
-#ifdef WDI3_STATS_UPDATE
+#ifdef WDI3_STATS_BW_MONITOR
 static void wlan_ipa_uc_bw_monitor(struct wlan_ipa_priv *ipa_ctx, bool stop)
 {
 	qdf_ipa_wdi_bw_info_t bw_info;
