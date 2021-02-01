@@ -2566,10 +2566,7 @@ ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
 endif
 
-ifeq ($(CONFIG_IPA_OFFLOAD), y)
 OBJS +=		$(IPA_OBJS)
-endif
-
 OBJS +=		$(PKTLOG_OBJS)
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
 OBJS +=		$(DISA_OBJS)
