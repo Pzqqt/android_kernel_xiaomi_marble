@@ -704,8 +704,8 @@ uint8_t lim_write_deferred_msg_q(struct mac_context *mac_ctx,
 			 * We reach the quota for management frames,
 			 * drop this one
 			 */
-			pe_warn("Too many queue->MsgQ Msg: %d count: %d",
-				lim_msg->type, count);
+			pe_warn_rl("Too many queue->MsgQ Msg: %d count: %d",
+				   lim_msg->type, count);
 			/* Return error, caller knows what to do */
 			return TX_QUEUE_FULL;
 		}

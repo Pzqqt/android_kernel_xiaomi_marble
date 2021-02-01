@@ -523,8 +523,7 @@ static bool def_msg_decision(struct mac_context *mac_ctx,
 	if (mac_ctx->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) {
 		/* Defer processing this message */
 		if (lim_defer_msg(mac_ctx, lim_msg) != TX_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
-					FL("Unable to Defer Msg"));
+			pe_err_rl("Unable to Defer Msg");
 			lim_log_session_states(mac_ctx);
 			lim_handle_defer_msg_error(mac_ctx, lim_msg);
 		}
@@ -1009,7 +1008,8 @@ uint32_t lim_defer_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			(mac, NO_SESSION,
 			LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DEFERRED)));
 	} else {
-		pe_err("Dropped lim message (0x%X) Message %s", pMsg->type, lim_msg_str(pMsg->type));
+		pe_err_rl("Dropped lim message (0x%X) Message %s", pMsg->type,
+			  lim_msg_str(pMsg->type));
 		MTRACE(mac_trace_msg_rx
 			(mac, NO_SESSION,
 			LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DROPPED)));
