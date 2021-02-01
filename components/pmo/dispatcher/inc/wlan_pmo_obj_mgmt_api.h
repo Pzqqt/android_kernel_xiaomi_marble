@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -271,6 +271,26 @@ QDF_STATUS pmo_register_is_device_in_low_pwr_mode(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 pmo_unregister_is_device_in_low_pwr_mode(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_pmo_get_sap_mode_bus_suspend(): API to get SAP bus suspend config
+ * @psoc: objmgr psoc handle
+ *
+ * Return true in case of peer connected SAP bus suspend is allowed
+ * else return false
+ */
+bool
+wlan_pmo_get_sap_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_pmo_get_go_mode_bus_suspend(): API to get GO bus suspend config
+ * @psoc: objmgr psoc handle
+ *
+ * Return true in case of peer connected GO bus suspend is allowed
+ * else return false
+ */
+bool
+wlan_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 static inline QDF_STATUS pmo_init(void)
@@ -420,6 +440,18 @@ static inline QDF_STATUS
 pmo_unregister_get_beacon_interval_callback(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool
+wlan_pmo_get_sap_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline bool
+wlan_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */

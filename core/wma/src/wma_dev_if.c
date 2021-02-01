@@ -4812,11 +4812,15 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	/* handle wow for sap with 1 or more peer in same way */
 	if (wma_is_vdev_in_sap_mode(wma, add_sta->smesessionId)) {
 		bool is_bus_suspend_allowed_in_sap_mode =
-			ucfg_pmo_get_sap_mode_bus_suspend(wma->psoc);
-		wma_info("sap mode: disable runtime pm and bus suspend: %d",
-			 is_bus_suspend_allowed_in_sap_mode);
-		if (!is_bus_suspend_allowed_in_sap_mode)
+			(wlan_pmo_get_sap_mode_bus_suspend(wma->psoc) &&
+				wmi_service_enabled(wma->wmi_handle,
+					wmi_service_sap_connected_d3_wow));
+		if (!is_bus_suspend_allowed_in_sap_mode) {
 			htc_vote_link_up(htc_handle);
+			wmi_info("sap d0 wow");
+		} else {
+			wmi_info("sap d3 wow");
+		}
 		wma_sap_prevent_runtime_pm(wma);
 
 		return;
@@ -4825,11 +4829,15 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	/* handle wow for p2pgo with 1 or more peer in same way */
 	if (wma_is_vdev_in_go_mode(wma, add_sta->smesessionId)) {
 		bool is_bus_suspend_allowed_in_go_mode =
-			ucfg_pmo_get_go_mode_bus_suspend(wma->psoc);
-		wma_info("p2pgo mode: disable runtime pm and bus suspend: %d",
-			 is_bus_suspend_allowed_in_go_mode);
-		if (!is_bus_suspend_allowed_in_go_mode)
+			(wlan_pmo_get_go_mode_bus_suspend(wma->psoc) &&
+				wmi_service_enabled(wma->wmi_handle,
+					wmi_service_go_connected_d3_wow));
+		if (!is_bus_suspend_allowed_in_go_mode) {
 			htc_vote_link_up(htc_handle);
+			wmi_info("p2p go d0 wow");
+		} else {
+			wmi_info("p2p go d3 wow");
+		}
 		wma_sap_prevent_runtime_pm(wma);
 
 		return;
@@ -4901,11 +4909,15 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	if (wma_is_vdev_in_sap_mode(wma, del_sta->smesessionId)) {
 		bool is_bus_suspend_allowed_in_sap_mode =
-			ucfg_pmo_get_sap_mode_bus_suspend(wma->psoc);
-		wma_info("sap mode: allow runtime pm and bus suspend: %d",
-			 is_bus_suspend_allowed_in_sap_mode);
-		if (!is_bus_suspend_allowed_in_sap_mode)
+			(wlan_pmo_get_sap_mode_bus_suspend(wma->psoc) &&
+				wmi_service_enabled(wma->wmi_handle,
+					wmi_service_sap_connected_d3_wow));
+		if (!is_bus_suspend_allowed_in_sap_mode) {
 			htc_vote_link_down(htc_handle);
+			wmi_info("sap d0 wow");
+		} else {
+			wmi_info("sap d3 wow");
+		}
 		wma_sap_allow_runtime_pm(wma);
 
 		return;
@@ -4913,11 +4925,15 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	if (wma_is_vdev_in_go_mode(wma, del_sta->smesessionId)) {
 		bool is_bus_suspend_allowed_in_go_mode =
-			ucfg_pmo_get_go_mode_bus_suspend(wma->psoc);
-		wma_info("p2pgo mode: allow runtime pm and bus suspend: %d",
-			 is_bus_suspend_allowed_in_go_mode);
-		if (!is_bus_suspend_allowed_in_go_mode)
+			(wlan_pmo_get_go_mode_bus_suspend(wma->psoc) &&
+				wmi_service_enabled(wma->wmi_handle,
+					wmi_service_go_connected_d3_wow));
+		if (!is_bus_suspend_allowed_in_go_mode) {
 			htc_vote_link_down(htc_handle);
+			wmi_info("p2p go d0 wow");
+		} else {
+			wmi_info("p2p go d3 wow");
+		}
 		wma_sap_allow_runtime_pm(wma);
 
 		return;
