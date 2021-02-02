@@ -1500,6 +1500,7 @@ void pld_disable_irq(struct device *dev, unsigned int ce_id)
 int pld_get_soc_info(struct device *dev, struct pld_soc_info *info)
 {
 	int ret = 0;
+	memset(info, 0, sizeof(*info));
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_SNOC:
