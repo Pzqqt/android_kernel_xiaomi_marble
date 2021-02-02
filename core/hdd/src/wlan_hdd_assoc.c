@@ -4022,10 +4022,6 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 					    struct csr_roam_info *roam_info)
 {
 	struct hdd_chan_change_params chan_change;
-	struct cfg80211_bss *bss;
-	struct net_device *dev = adapter->dev;
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
-	struct wiphy *wiphy = wdev->wiphy;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
@@ -4055,11 +4051,6 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	chan_change.chan_params.mhz_freq_seg1 =
 		roam_info->chan_info.band_center_freq2;
 
-	bss = wlan_hdd_cfg80211_update_bss_db(adapter, roam_info);
-	if (!bss)
-		hdd_err("%s: unable to create BSS entry", adapter->dev->name);
-	else
-		cfg80211_put_bss(wiphy, bss);
 	if ((adapter->device_mode == QDF_STA_MODE ||
 	     adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		if (!wlan_get_connected_vdev_by_bssid(
