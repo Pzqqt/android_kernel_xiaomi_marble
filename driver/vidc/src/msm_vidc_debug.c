@@ -44,6 +44,43 @@ const char *level_str(u32 level)
 		return "????";
 }
 
+const char *codec_str(void *instance)
+{
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		goto err_invalid_inst;
+	}
+
+	if (inst->codec == MSM_VIDC_H264)
+		return "h264 ";
+	else if (inst->codec == MSM_VIDC_HEVC)
+		return "hevc ";
+	else if (inst->codec == MSM_VIDC_VP9)
+		return "vp9  ";
+	else
+		return "?????";
+
+err_invalid_inst:
+	return "null  ";
+}
+
+u32 get_sid(void *instance)
+{
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		goto err_invalid_inst;
+	}
+
+	return inst->sid;
+
+err_invalid_inst:
+	return 0;
+}
+
 #define MAX_DBG_BUF_SIZE 4096
 
 struct core_inst_pair {
@@ -356,7 +393,7 @@ static ssize_t inst_info_read(struct file *file, char __user *buf,
 
 	dbuf = kzalloc(MAX_DBG_BUF_SIZE, GFP_KERNEL);
 	if (!dbuf) {
-		s_vpr_e(inst->sid, "%s: Allocation failed!\n", __func__);
+		i_vpr_e(inst, "%s: Allocation failed!\n", __func__);
 		len = -ENOMEM;
 		goto failed_alloc;
 	}
@@ -446,7 +483,7 @@ struct dentry *msm_vidc_debugfs_init_inst(void *instance, struct dentry *parent)
 
 	idata = kzalloc(sizeof(struct core_inst_pair), GFP_KERNEL);
 	if (!idata) {
-		s_vpr_e(inst->sid, "%s: Allocation failed!\n", __func__);
+		i_vpr_e(inst, "%s: Allocation failed!\n", __func__);
 		goto exit;
 	}
 
@@ -456,7 +493,7 @@ struct dentry *msm_vidc_debugfs_init_inst(void *instance, struct dentry *parent)
 	dir = debugfs_create_dir(debugfs_name, parent);
 	if (IS_ERR_OR_NULL(dir)) {
 		dir = NULL;
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: Failed to create debugfs for msm_vidc\n",
 			__func__);
 		goto failed_create_dir;
@@ -465,7 +502,7 @@ struct dentry *msm_vidc_debugfs_init_inst(void *instance, struct dentry *parent)
 	info = debugfs_create_file("info", 0444, dir,
 			idata, &inst_info_fops);
 	if (IS_ERR_OR_NULL(info)) {
-		s_vpr_e(inst->sid, "%s: debugfs_create_file: fail\n",
+		i_vpr_e(inst, "%s: debugfs_create_file: fail\n",
 			__func__);
 		goto failed_create_file;
 	}
@@ -493,7 +530,7 @@ void msm_vidc_debugfs_deinit_inst(void *instance)
 
 	dentry = inst->debugfs_root;
 	if (dentry->d_inode) {
-		s_vpr_l(inst->sid, "%s: Destroy %pK\n",
+		i_vpr_l(inst, "%s: Destroy %pK\n",
 			__func__, dentry->d_inode->i_private);
 		kfree(dentry->d_inode->i_private);
 		dentry->d_inode->i_private = NULL;
@@ -529,10 +566,10 @@ void msm_vidc_debugfs_update(void *instance,
 		if (inst->debug_count.ebd &&
 			inst->debug_count.ebd == inst->debug_count.etb) {
 			toc(inst, FRAME_PROCESSING);
-			s_vpr_p(inst->sid, "EBD: FW needs input buffers\n");
+			i_vpr_p(inst, "EBD: FW needs input buffers\n");
 		}
 		if (inst->debug_count.ftb == inst->debug_count.fbd)
-			s_vpr_p(inst->sid, "EBD: FW needs output buffers\n");
+			i_vpr_p(inst, "EBD: FW needs output buffers\n");
 		break;
 	case MSM_VIDC_DEBUGFS_EVENT_FTB:
 		inst->debug_count.ftb++;
@@ -548,13 +585,13 @@ void msm_vidc_debugfs_update(void *instance,
 		if (inst->debug_count.fbd &&
 			inst->debug_count.fbd == inst->debug_count.ftb) {
 			toc(inst, FRAME_PROCESSING);
-			s_vpr_p(inst->sid, "FBD: FW needs output buffers\n");
+			i_vpr_p(inst, "FBD: FW needs output buffers\n");
 		}
 		if (inst->debug_count.etb == inst->debug_count.ebd)
-			s_vpr_p(inst->sid, "FBD: FW needs input buffers\n");
+			i_vpr_p(inst, "FBD: FW needs input buffers\n");
 		break;
 	default:
-		s_vpr_e(inst->sid, "invalid event in debugfs: %d\n", e);
+		i_vpr_e(inst, "invalid event in debugfs: %d\n", e);
 		break;
 	}
 }

@@ -189,7 +189,7 @@ static bool __valdiate_session(struct msm_vidc_core *core,
 		}
 	}
 	if (!valid)
-		s_vpr_e(inst->sid, "%s: invalid session\n", func);
+		i_vpr_e(inst, "%s: invalid session\n", func);
 
 	return valid;
 }
@@ -2923,7 +2923,7 @@ int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 	}
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		goto unlock;
 	}
 
@@ -2966,7 +2966,7 @@ int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 	}
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		goto unlock;
 	}
 
@@ -3124,7 +3124,7 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	}
 
 	if (!is_internal_buffer(buffer->type)) {
-		s_vpr_e(inst->sid, "release not allowed for buffer type %d\n",
+		i_vpr_e(inst, "release not allowed for buffer type %d\n",
 			buffer->type);
 		goto unlock;
 	}
@@ -3177,7 +3177,7 @@ int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq)
 
 	core_lock(core, __func__);
 	if (__resume(core)) {
-		s_vpr_e(inst->sid, "Resume from power collapse failed\n");
+		i_vpr_e(inst, "Resume from power collapse failed\n");
 		rc = -EINVAL;
 		goto exit;
 	}

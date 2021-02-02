@@ -53,7 +53,7 @@ static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 		HFI_BUFFER_BIN_VP9D(size, width, height,
 			0, num_vpp_pipes);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -83,7 +83,7 @@ static u32 msm_vidc_decoder_comv_size_iris2(struct msm_vidc_inst* inst)
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_COMV_H265D(size, width, height, out_min_count);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -100,7 +100,7 @@ static u32 msm_vidc_decoder_non_comv_size_iris2(struct msm_vidc_inst* inst)
 	}
 	core = inst->core;
 	if (!core->capabilities) {
-		s_vpr_e(inst->sid, "%s: invalid core capabilities\n", __func__);
+		i_vpr_e(inst, "%s: invalid core capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
@@ -114,7 +114,7 @@ static u32 msm_vidc_decoder_non_comv_size_iris2(struct msm_vidc_inst* inst)
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_NON_COMV_H265D(size, width, height, num_vpp_pipes);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -170,7 +170,7 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 		HFI_BUFFER_LINE_VP9D(size, width, height, out_min_count,
 			is_opb, num_vpp_pipes);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -190,7 +190,7 @@ static u32 msm_vidc_decoder_persist_size_iris2(struct msm_vidc_inst *inst)
 	else if (inst->codec == MSM_VIDC_VP9)
 		HFI_BUFFER_PERSIST_VP9D(size);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -235,7 +235,7 @@ static u32 msm_vidc_decoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 				height));
 	}
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -253,7 +253,7 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	if (!core->capabilities) {
-		s_vpr_e(inst->sid, "%s: invalid core capabilities\n", __func__);
+		i_vpr_e(inst, "%s: invalid core capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
@@ -267,7 +267,7 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_BIN_H265E(size, width, height, stage, num_vpp_pipes);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -300,7 +300,7 @@ static u32 msm_vidc_encoder_comv_size_iris2(struct msm_vidc_inst* inst)
 		HFI_BUFFER_COMV_H265E(size, width, height, num_ref);
 	}
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -317,7 +317,7 @@ static u32 msm_vidc_encoder_non_comv_size_iris2(struct msm_vidc_inst* inst)
 	}
 	core = inst->core;
 	if (!core->capabilities) {
-		s_vpr_e(inst->sid, "%s: invalid core capabilities\n", __func__);
+		i_vpr_e(inst, "%s: invalid core capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
@@ -330,7 +330,7 @@ static u32 msm_vidc_encoder_non_comv_size_iris2(struct msm_vidc_inst* inst)
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_NON_COMV_H265E(size, width, height, num_vpp_pipes);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -348,7 +348,7 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	if (!core->capabilities) {
-		s_vpr_e(inst->sid, "%s: invalid core capabilities\n", __func__);
+		i_vpr_e(inst, "%s: invalid core capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
@@ -368,7 +368,7 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_LINE_H265E(size, width, height, is_tenbit, num_vpp_pipes);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -399,7 +399,7 @@ static u32 msm_vidc_encoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 	else if (inst->codec == MSM_VIDC_HEVC)
 		HFI_BUFFER_DPB_H265E(size, width, height, is_tenbit);
 
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -413,7 +413,7 @@ static u32 msm_vidc_encoder_arp_size_iris2(struct msm_vidc_inst *inst)
 	}
 
 	HFI_BUFFER_ARP_ENC(size);
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 
@@ -445,7 +445,7 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 
 	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable,
 		rot_enable, flip_enable, is_tenbit);
-	s_vpr_l(inst->sid, "%s: size %d\n", __func__, size);
+	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
 

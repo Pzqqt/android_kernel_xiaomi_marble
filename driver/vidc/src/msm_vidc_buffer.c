@@ -26,7 +26,7 @@ u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 	} else if (is_encode_session(inst)) {
 		input_min_count = MIN_ENC_INPUT_BUFFERS;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid domain\n",
+		i_vpr_e(inst, "%s: invalid domain\n",
 			__func__, inst->domain);
 		return 0;
 	}
@@ -180,7 +180,7 @@ u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 		inst->capabilities->cap[BITSTREAM_SIZE_OVERWRITE].value;
 	if (bitstream_size_overwrite) {
 		frame_size = bitstream_size_overwrite;
-		s_vpr_h(inst->sid, "client configured bitstream buffer size %d\n",
+		i_vpr_h(inst, "client configured bitstream buffer size %d\n",
 			frame_size);
 		return frame_size;
 	}
@@ -223,7 +223,7 @@ u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
 		frame_size = frame_size + (frame_size >> 2);
 
-	s_vpr_h(inst->sid, "set input buffer size to %d\n", frame_size);
+	i_vpr_h(inst, "set input buffer size to %d\n", frame_size);
 
 	return ALIGN(frame_size, SZ_4K);
 }

@@ -31,13 +31,13 @@ u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	if (!core->dt || !core->dt->allowed_clks_tbl) {
-		s_vpr_e(inst->sid, "%s: invalid params\n", __func__);
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return freq;
 	}
 	allowed_clks_tbl = core->dt->allowed_clks_tbl;
 	freq = allowed_clks_tbl[0].clock_rate;
 
-	s_vpr_l(inst->sid, "%s: rate = %lu\n", __func__, freq);
+	i_vpr_l(inst, "%s: rate = %lu\n", __func__, freq);
 	return freq;
 }
 
@@ -148,7 +148,7 @@ static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	vote_data->complexity_factor = max_cf;
 	vote_data->input_cr = min_input_cr;
 
-	s_vpr_l(inst->sid,
+	i_vpr_l(inst,
 		"Input CR = %d Recon CR = %d Complexity Factor = %d\n",
 		vote_data->input_cr, vote_data->compression_ratio,
 		vote_data->complexity_factor);
@@ -250,7 +250,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		codec = out_f->fmt.pix_mp.pixelformat;
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid session_type %#x\n",
+		i_vpr_e(inst, "%s: invalid session_type %#x\n",
 			__func__, inst->domain);
 		break;
 	}
@@ -423,7 +423,7 @@ static int msm_vidc_apply_dcvs(struct msm_vidc_inst *inst)
 	}
 
 	if (!inst->power.dcvs_mode || inst->decode_batch.enable) {
-		s_vpr_l(inst->sid, "Skip DCVS (dcvs %d, batching %d)\n",
+		i_vpr_l(inst, "Skip DCVS (dcvs %d, batching %d)\n",
 			inst->power.dcvs_mode, inst->decode_batch.enable);
 		inst->power.dcvs_flags = 0;
 		return 0;
@@ -468,7 +468,7 @@ static int msm_vidc_apply_dcvs(struct msm_vidc_inst *inst)
 			   bufs_with_fw <= power->nom_threshold))
 		power->dcvs_flags = 0;
 
-	s_vpr_p(inst->sid, "DCVS: bufs_with_fw %d th[%d %d %d] flags %#x\n",
+	i_vpr_p(inst, "DCVS: bufs_with_fw %d th[%d %d %d] flags %#x\n",
 		bufs_with_fw, power->min_threshold,
 		power->nom_threshold, power->max_threshold,
 		power->dcvs_flags);
@@ -529,14 +529,14 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 	}
 
 	if (msm_vidc_scale_clocks(inst))
-		s_vpr_e(inst->sid, "failed to scale clock\n");
+		i_vpr_e(inst, "failed to scale clock\n");
 
 	if (scale_buses) {
 		if (msm_vidc_scale_buses(inst))
-			s_vpr_e(inst->sid, "failed to scale bus\n");
+			i_vpr_e(inst, "failed to scale bus\n");
 	}
 
-	s_vpr_h(inst->sid,
+	i_vpr_h(inst,
 		"power: inst: clk %lld ddr %d llcc %d dcvs flags %#x, core: clk %lld ddr %lld llcc %lld\n",
 		inst->power.curr_freq, inst->power.ddr_bw,
 		inst->power.sys_cache_bw, inst->power.dcvs_flags,
@@ -563,7 +563,7 @@ void msm_vidc_dcvs_data_reset(struct msm_vidc_inst *inst)
 		min_count = inst->buffers.output.min_count;
 		actual_count = inst->buffers.output.actual_count;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid domain type %d\n",
+		i_vpr_e(inst, "%s: invalid domain type %d\n",
 			__func__, inst->domain);
 		return;
 	}
@@ -585,7 +585,7 @@ void msm_vidc_dcvs_data_reset(struct msm_vidc_inst *inst)
 
 	dcvs->dcvs_flags = 0;
 
-	s_vpr_p(inst->sid, "%s: DCVS: thresholds [%d %d %d] flags %#x\n",
+	i_vpr_p(inst, "%s: DCVS: thresholds [%d %d %d] flags %#x\n",
 		__func__, dcvs->min_threshold,
 		dcvs->nom_threshold, dcvs->max_threshold,
 		dcvs->dcvs_flags);
@@ -599,7 +599,7 @@ void msm_vidc_power_data_reset(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
-	s_vpr_h(inst->sid, "%s\n", __func__);
+	i_vpr_h(inst, "%s\n", __func__);
 
 	msm_vidc_dcvs_data_reset(inst);
 
@@ -608,5 +608,5 @@ void msm_vidc_power_data_reset(struct msm_vidc_inst *inst)
 
 	rc = msm_vidc_scale_power(inst, true);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: failed to scale power\n", __func__);
+		i_vpr_e(inst, "%s: failed to scale power\n", __func__);
 }

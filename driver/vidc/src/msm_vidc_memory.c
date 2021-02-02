@@ -270,21 +270,26 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 	return rc;
 };
 /*
-int msm_memory_cache_operations(struct dma_buf *dbuf,
-	enum smem_cache_ops cache_op, unsigned long offset,
-	unsigned long size, u32 sid)
+int msm_memory_cache_operations(struct msm_vidc_inst *inst,
+	struct dma_buf *dbuf, enum smem_cache_ops cache_op,
+	unsigned long offset, unsigned long size, u32 sid)
 {
 	int rc = 0;
 	unsigned long flags = 0;
 
+	if (!inst) {
+		d_vpr_e("%s: invalid parameters\n", __func__);
+		return -EINVAL;
+	}
+
 	if (!dbuf) {
-		s_vpr_e(sid, "%s: invalid params\n", __func__);
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
 	rc = dma_buf_get_flags(dbuf, &flags);
 	if (rc) {
-		s_vpr_e(sid, "%s: dma_buf_get_flags failed, err %d\n",
+		i_vpr_e(inst, "%s: dma_buf_get_flags failed, err %d\n",
 			__func__, rc);
 		return rc;
 	} else if (!(flags & ION_FLAG_CACHED)) {
@@ -310,7 +315,7 @@ int msm_memory_cache_operations(struct dma_buf *dbuf,
 				offset, size);
 		break;
 	default:
-		s_vpr_e(sid, "%s: cache (%d) operation not supported\n",
+		i_vpr_e(inst, "%s: cache (%d) operation not supported\n",
 			__func__, cache_op);
 		rc = -EINVAL;
 		break;
@@ -332,7 +337,7 @@ int msm_smem_memory_prefetch(struct msm_vidc_inst *inst)
 
 	vidc_regions = &inst->regions;
 	if (vidc_regions->num_regions > MEMORY_REGIONS_MAX) {
-		s_vpr_e(inst->sid, "%s: invalid num_regions %d, max %d\n",
+		i_vpr_e(inst, "%s: invalid num_regions %d, max %d\n",
 			__func__, vidc_regions->num_regions,
 			MEMORY_REGIONS_MAX);
 		return -EINVAL;
@@ -347,10 +352,10 @@ int msm_smem_memory_prefetch(struct msm_vidc_inst *inst)
 	rc = msm_ion_heap_prefetch(ION_SECURE_HEAP_ID, ion_region,
 		vidc_regions->num_regions);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: prefetch failed, ret: %d\n",
+		i_vpr_e(inst, "%s: prefetch failed, ret: %d\n",
 			__func__, rc);
 	else
-		s_vpr_l(inst->sid, "%s: prefetch succeeded\n", __func__);
+		i_vpr_l(inst, "%s: prefetch succeeded\n", __func__);
 
 	return rc;
 }
@@ -368,7 +373,7 @@ int msm_smem_memory_drain(struct msm_vidc_inst *inst)
 
 	vidc_regions = &inst->regions;
 	if (vidc_regions->num_regions > MEMORY_REGIONS_MAX) {
-		s_vpr_e(inst->sid, "%s: invalid num_regions %d, max %d\n",
+		i_vpr_e(inst, "%s: invalid num_regions %d, max %d\n",
 			__func__, vidc_regions->num_regions,
 			MEMORY_REGIONS_MAX);
 		return -EINVAL;
@@ -383,9 +388,9 @@ int msm_smem_memory_drain(struct msm_vidc_inst *inst)
 	rc = msm_ion_heap_drain(ION_SECURE_HEAP_ID, ion_region,
 		vidc_regions->num_regions);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: drain failed, ret: %d\n", __func__, rc);
+		i_vpr_e(inst, "%s: drain failed, ret: %d\n", __func__, rc);
 	else
-		s_vpr_l(inst->sid, "%s: drain succeeded\n", __func__);
+		i_vpr_l(inst, "%s: drain succeeded\n", __func__);
 
 	return rc;
 }

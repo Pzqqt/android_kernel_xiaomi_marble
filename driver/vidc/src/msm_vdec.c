@@ -44,7 +44,7 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 	if (inst->codec && inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat == v4l2_codec)
 		return 0;
 
-	s_vpr_h(inst->sid, "%s: codec changed from %#x to %#x\n",
+	i_vpr_h(inst, "%s: codec changed from %#x to %#x\n",
 		__func__, inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat, v4l2_codec);
 
 	inst->codec = v4l2_codec_to_driver(v4l2_codec, __func__);
@@ -72,7 +72,7 @@ static int msm_vdec_set_bitstream_resolution(struct msm_vidc_inst *inst,
 
 	resolution = inst->fmts[INPUT_PORT].fmt.pix_mp.width << 16 |
 		inst->fmts[INPUT_PORT].fmt.pix_mp.height;
-	s_vpr_h(inst->sid, "%s: width: %d height: %d\n", __func__,
+	i_vpr_h(inst, "%s: width: %d height: %d\n", __func__,
 			inst->fmts[INPUT_PORT].fmt.pix_mp.width,
 			inst->fmts[INPUT_PORT].fmt.pix_mp.height);
 	inst->subcr_params[port].bitstream_resolution = resolution;
@@ -84,7 +84,7 @@ static int msm_vdec_set_bitstream_resolution(struct msm_vidc_inst *inst,
 			&resolution,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -108,7 +108,7 @@ static int msm_vdec_set_linear_stride_scanline(struct msm_vidc_inst *inst)
 
 	payload[0] = stride_y << 16 | scanline_y;
 	payload[1] = stride_uv << 16 | scanline_uv;
-	s_vpr_h(inst->sid, "%s: stride_y: %d scanline_y: %d "
+	i_vpr_h(inst, "%s: stride_y: %d scanline_y: %d "
 		"stride_uv: %d, scanline_uv: %d", __func__,
 		stride_y, scanline_y, stride_uv, scanline_uv);
 	rc = venus_hfi_session_property(inst,
@@ -119,7 +119,7 @@ static int msm_vdec_set_linear_stride_scanline(struct msm_vidc_inst *inst)
 			&payload,
 			sizeof(u64));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -148,7 +148,7 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 
 	payload = (u64)right_offset << 48 | (u64)bottom_offset << 32 |
 		(u64)left_offset << 16 | top_offset;
-	s_vpr_h(inst->sid, "%s: left_offset: %d top_offset: %d "
+	i_vpr_h(inst, "%s: left_offset: %d top_offset: %d "
 		"right_offset: %d bottom_offset: %d", __func__,
 		left_offset, top_offset, right_offset, bottom_offset);
 	inst->subcr_params[port].crop_offsets = payload;
@@ -160,7 +160,7 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 			&payload,
 			sizeof(u64));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -173,7 +173,7 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 	u32 bitdepth = 8 << 16 | 8;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
@@ -184,7 +184,7 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 
 	inst->subcr_params[port].bit_depth = bitdepth;
 	inst->capabilities->cap[BIT_DEPTH].value = bitdepth;
-	s_vpr_h(inst->sid, "%s: bit depth: %d", __func__, bitdepth);
+	i_vpr_h(inst, "%s: bit depth: %d", __func__, bitdepth);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
 			HFI_HOST_FLAGS_NONE,
@@ -193,7 +193,7 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 			&bitdepth,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -206,13 +206,13 @@ static int msm_vdec_set_cabac(struct msm_vidc_inst *inst,
 	u32 cabac = 0;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	cabac = inst->capabilities->cap[ENTROPY_MODE].value;
 	inst->subcr_params[port].cabac = cabac;
-	s_vpr_h(inst->sid, "%s: entropy mode: %d", __func__, cabac);
+	i_vpr_h(inst, "%s: entropy mode: %d", __func__, cabac);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CABAC_SESSION,
 			HFI_HOST_FLAGS_NONE,
@@ -221,7 +221,7 @@ static int msm_vdec_set_cabac(struct msm_vidc_inst *inst,
 			&cabac,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -233,13 +233,13 @@ static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 	u32 coded_frames;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	coded_frames = inst->capabilities->cap[CODED_FRAMES].value;
 	inst->subcr_params[port].coded_frames = coded_frames;
-	s_vpr_h(inst->sid, "%s: coded frames: %d", __func__, coded_frames);
+	i_vpr_h(inst, "%s: coded frames: %d", __func__, coded_frames);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CODED_FRAMES,
 			HFI_HOST_FLAGS_NONE,
@@ -248,7 +248,7 @@ static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 			&coded_frames,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -260,13 +260,13 @@ static int msm_vdec_set_min_output_count(struct msm_vidc_inst *inst,
 	u32 min_output;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	min_output = inst->buffers.output.min_count;
 	inst->subcr_params[port].fw_min_count = min_output;
-	s_vpr_h(inst->sid, "%s: firmware min output count: %d",
+	i_vpr_h(inst, "%s: firmware min output count: %d",
 		__func__, min_output);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
@@ -276,7 +276,7 @@ static int msm_vdec_set_min_output_count(struct msm_vidc_inst *inst,
 			&min_output,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -288,12 +288,12 @@ static int msm_vdec_set_picture_order_count(struct msm_vidc_inst *inst,
 	u32 poc = 0;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	inst->subcr_params[port].pic_order_cnt = poc;
-	s_vpr_h(inst->sid, "%s: picture order count: %d", __func__, poc);
+	i_vpr_h(inst, "%s: picture order count: %d", __func__, poc);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_PIC_ORDER_CNT_TYPE,
 			HFI_HOST_FLAGS_NONE,
@@ -302,7 +302,7 @@ static int msm_vdec_set_picture_order_count(struct msm_vidc_inst *inst,
 			&poc,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -314,7 +314,7 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 	u32 colorspace, xfer_func, ycbcr_enc, color_info;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
@@ -325,7 +325,7 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 	color_info = ((ycbcr_enc << 16) & 0xFF0000) |
 		((xfer_func << 8) & 0xFF00) | (colorspace & 0xFF);
 	inst->subcr_params[port].color_info = color_info;
-	s_vpr_h(inst->sid, "%s: color info: %d", __func__, color_info);
+	i_vpr_h(inst, "%s: color info: %d", __func__, color_info);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_SIGNAL_COLOR_INFO,
 			HFI_HOST_FLAGS_NONE,
@@ -334,7 +334,7 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 			&color_info,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -346,13 +346,13 @@ static int msm_vdec_set_profile(struct msm_vidc_inst *inst,
 	u32 profile;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	profile = inst->capabilities->cap[PROFILE].value;
 	inst->subcr_params[port].profile = profile;
-	s_vpr_h(inst->sid, "%s: profile: %d", __func__, profile);
+	i_vpr_h(inst, "%s: profile: %d", __func__, profile);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_PROFILE,
 			HFI_HOST_FLAGS_NONE,
@@ -361,7 +361,7 @@ static int msm_vdec_set_profile(struct msm_vidc_inst *inst,
 			&profile,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -373,13 +373,13 @@ static int msm_vdec_set_level(struct msm_vidc_inst *inst,
 	u32 level;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	level = inst->capabilities->cap[LEVEL].value;
 	inst->subcr_params[port].level = level;
-	s_vpr_h(inst->sid, "%s: level: %d", __func__, level);
+	i_vpr_h(inst, "%s: level: %d", __func__, level);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LEVEL,
 			HFI_HOST_FLAGS_NONE,
@@ -388,7 +388,7 @@ static int msm_vdec_set_level(struct msm_vidc_inst *inst,
 			&level,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -400,13 +400,13 @@ static int msm_vdec_set_tier(struct msm_vidc_inst *inst,
 	u32 tier;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	tier = inst->capabilities->cap[HEVC_TIER].value;
 	inst->subcr_params[port].tier = tier;
-	s_vpr_h(inst->sid, "%s: tier: %d", __func__, tier);
+	i_vpr_h(inst, "%s: tier: %d", __func__, tier);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_TIER,
 			HFI_HOST_FLAGS_NONE,
@@ -415,7 +415,7 @@ static int msm_vdec_set_tier(struct msm_vidc_inst *inst,
 			&tier,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -430,7 +430,7 @@ static int msm_vdec_set_colorformat(struct msm_vidc_inst *inst)
 	pixelformat = inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat;
 	colorformat = v4l2_colorformat_to_driver(pixelformat, __func__);
 	hfi_colorformat = get_hfi_colorformat(inst, colorformat);
-	s_vpr_h(inst->sid, "%s: hfi colorformat: %d",
+	i_vpr_h(inst, "%s: hfi colorformat: %d",
 		__func__, hfi_colorformat);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_COLOR_FORMAT,
@@ -440,7 +440,7 @@ static int msm_vdec_set_colorformat(struct msm_vidc_inst *inst)
 			&hfi_colorformat,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -454,13 +454,13 @@ static int msm_vdec_set_stage(struct msm_vidc_inst *inst)
 
 	rc = call_session_op(core, decide_work_mode, inst);
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: decide_work_mode failed %d\n",
+		i_vpr_e(inst, "%s: decide_work_mode failed %d\n",
 			__func__);
 		return -EINVAL;
 	}
 
 	stage = capability->cap[STAGE].value;
-	s_vpr_h(inst->sid, "%s: stage: %d", __func__, stage);
+	i_vpr_h(inst, "%s: stage: %d", __func__, stage);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_STAGE,
 			HFI_HOST_FLAGS_NONE,
@@ -469,7 +469,7 @@ static int msm_vdec_set_stage(struct msm_vidc_inst *inst)
 			&stage,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -483,13 +483,13 @@ static int msm_vdec_set_pipe(struct msm_vidc_inst *inst)
 
 	rc = call_session_op(core, decide_work_route, inst);
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: decide_work_route failed\n",
+		i_vpr_e(inst, "%s: decide_work_route failed\n",
 			__func__);
 		return -EINVAL;
 	}
 
 	pipe = capability->cap[PIPE].value;
-	s_vpr_h(inst->sid, "%s: pipe: %d", __func__, pipe);
+	i_vpr_h(inst, "%s: pipe: %d", __func__, pipe);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_PIPE,
 			HFI_HOST_FLAGS_NONE,
@@ -498,7 +498,7 @@ static int msm_vdec_set_pipe(struct msm_vidc_inst *inst)
 			&pipe,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -510,12 +510,12 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 	u32 output_order;
 
 	if (port != INPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	output_order = inst->capabilities->cap[DISPLAY_DELAY_ENABLE].value;
-	s_vpr_h(inst->sid, "%s: output order: %d", __func__, output_order);
+	i_vpr_h(inst, "%s: output order: %d", __func__, output_order);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_DECODE_ORDER_OUTPUT,
 			HFI_HOST_FLAGS_NONE,
@@ -524,7 +524,7 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 			&output_order,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -536,7 +536,7 @@ static int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst,
 	u32 secure_mode;
 
 	secure_mode = inst->capabilities->cap[SECURE_MODE].value;
-	s_vpr_h(inst->sid, "%s: secure mode: %d", __func__, secure_mode);
+	i_vpr_h(inst, "%s: secure mode: %d", __func__, secure_mode);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_SECURE,
 			HFI_HOST_FLAGS_NONE,
@@ -545,7 +545,7 @@ static int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst,
 			&secure_mode,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -557,11 +557,11 @@ static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 	u32 thumbnail_mode = 0;
 
 	if (port != INPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid, "%s: thumbnail mode: %d", __func__, thumbnail_mode);
+	i_vpr_h(inst, "%s: thumbnail mode: %d", __func__, thumbnail_mode);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_THUMBNAIL_MODE,
 			HFI_HOST_FLAGS_NONE,
@@ -570,7 +570,7 @@ static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 			&thumbnail_mode,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -582,11 +582,11 @@ static int msm_vdec_set_realtime(struct msm_vidc_inst *inst,
 	u32 realtime = 1;  //todo
 
 	if (port != INPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid, "%s: priority: %d", __func__, realtime);
+	i_vpr_h(inst, "%s: priority: %d", __func__, realtime);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_REALTIME,
 			HFI_HOST_FLAGS_NONE,
@@ -595,7 +595,7 @@ static int msm_vdec_set_realtime(struct msm_vidc_inst *inst,
 			&realtime,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -607,12 +607,12 @@ static int msm_vdec_set_conceal_color_8bit(struct msm_vidc_inst *inst,
 	u32 conceal_color_8bit;
 
 	if (port != INPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	conceal_color_8bit = inst->capabilities->cap[CONCEAL_COLOR_8BIT].value;
-	s_vpr_h(inst->sid, "%s: conceal color 8bit: %#x",
+	i_vpr_h(inst, "%s: conceal color 8bit: %#x",
 		__func__, conceal_color_8bit);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CONCEAL_COLOR_8BIT,
@@ -622,7 +622,7 @@ static int msm_vdec_set_conceal_color_8bit(struct msm_vidc_inst *inst,
 			&conceal_color_8bit,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -634,12 +634,12 @@ static int msm_vdec_set_conceal_color_10bit(struct msm_vidc_inst *inst,
 	u32 conceal_color_10bit;
 
 	if (port != INPUT_PORT) {
-		s_vpr_e(inst->sid, "%s: invalid port %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	conceal_color_10bit = inst->capabilities->cap[CONCEAL_COLOR_8BIT].value;
-	s_vpr_h(inst->sid, "%s: conceal color 10bit: %#x",
+	i_vpr_h(inst, "%s: conceal color 10bit: %#x",
 		__func__, conceal_color_10bit);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CONCEAL_COLOR_10BIT,
@@ -649,7 +649,7 @@ static int msm_vdec_set_conceal_color_10bit(struct msm_vidc_inst *inst,
 			&conceal_color_10bit,
 			sizeof(u32));
 	if (rc)
-		s_vpr_e(inst->sid, "%s: set property failed\n", __func__);
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 
 	return rc;
 }
@@ -747,24 +747,24 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	s_vpr_h(inst->sid, "input internal buffer: min     size     reuse\n");
-	s_vpr_h(inst->sid, "bin  buffer: %d      %d      %d\n",
+	i_vpr_h(inst, "input internal buffer: min     size     reuse\n");
+	i_vpr_h(inst, "bin  buffer: %d      %d      %d\n",
 		inst->buffers.bin.min_count,
 		inst->buffers.bin.size,
 		inst->buffers.bin.reuse);
-	s_vpr_h(inst->sid, "comv  buffer: %d      %d      %d\n",
+	i_vpr_h(inst, "comv  buffer: %d      %d      %d\n",
 		inst->buffers.comv.min_count,
 		inst->buffers.comv.size,
 		inst->buffers.comv.reuse);
-	s_vpr_h(inst->sid, "non_comv  buffer: %d      %d      %d\n",
+	i_vpr_h(inst, "non_comv  buffer: %d      %d      %d\n",
 		inst->buffers.non_comv.min_count,
 		inst->buffers.non_comv.size,
 		inst->buffers.non_comv.reuse);
-	s_vpr_h(inst->sid, "line buffer: %d      %d      %d\n",
+	i_vpr_h(inst, "line buffer: %d      %d      %d\n",
 		inst->buffers.line.min_count,
 		inst->buffers.line.size,
 		inst->buffers.line.reuse);
-	s_vpr_h(inst->sid, "persist buffer: %d      %d      %d\n",
+	i_vpr_h(inst, "persist buffer: %d      %d      %d\n",
 		inst->buffers.persist.min_count,
 		inst->buffers.persist.size,
 		inst->buffers.persist.reuse);
@@ -785,8 +785,8 @@ static int msm_vdec_get_output_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	s_vpr_h(inst->sid, "output internal buffer: min     size     reuse\n");
-	s_vpr_h(inst->sid, "dpb  buffer: %d      %d      %d\n",
+	i_vpr_h(inst, "output internal buffer: min     size     reuse\n");
+	i_vpr_h(inst, "dpb  buffer: %d      %d      %d\n",
 		inst->buffers.dpb.min_count,
 		inst->buffers.dpb.size,
 		inst->buffers.dpb.reuse);
@@ -890,7 +890,7 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	s_vpr_h(inst->sid, "%s()\n",__func__);
+	i_vpr_h(inst, "%s()\n",__func__);
 
 	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_BIN);
 	if (rc)
@@ -919,7 +919,7 @@ static int msm_vdec_release_output_internal_buffers(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	s_vpr_h(inst->sid, "%s()\n",__func__);
+	i_vpr_h(inst, "%s()\n",__func__);
 
 	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
@@ -1212,7 +1212,7 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst)
 	struct v4l2_event event = {0};
 
 	if (!inst->vb2q[INPUT_PORT].streaming) {
-		s_vpr_e(inst->sid, "%s: input port not streaming\n",
+		i_vpr_e(inst, "%s: input port not streaming\n",
 			__func__);
 		return 0;
 	}
@@ -1281,7 +1281,7 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 
 	if (is_input_meta_enabled(inst) &&
 		!inst->vb2q[INPUT_META_PORT].streaming) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: Meta port must be streamed on before data port\n",
 			__func__);
 		return -EINVAL;
@@ -1344,7 +1344,7 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	return 0;
 
 error:
-	s_vpr_e(inst->sid, "%s: failed\n", __func__);
+	i_vpr_e(inst, "%s: failed\n", __func__);
 	msm_vdec_streamoff_input(inst);
 	return rc;
 }
@@ -1483,7 +1483,7 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 
 	if (is_output_meta_enabled(inst) &&
 		!inst->vb2q[OUTPUT_META_PORT].streaming) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: Meta port must be streamed on before data port\n",
 			__func__);
 		return -EINVAL;
@@ -1530,7 +1530,7 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	return 0;
 
 error:
-	s_vpr_e(inst->sid, "%s: failed\n", __func__);
+	i_vpr_e(inst, "%s: failed\n", __func__);
 	msm_vdec_streamoff_output(inst);
 	return rc;
 }
@@ -1629,7 +1629,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	if (f->type == INPUT_MPLANE) {
 		if (inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat !=
 			f->fmt.pix_mp.pixelformat) {
-			s_vpr_h(inst->sid,
+			i_vpr_h(inst,
 				"%s: codec changed from %#x to %#x\n", __func__,
 				inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat,
 				f->fmt.pix_mp.pixelformat);
@@ -1670,7 +1670,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			goto err_invalid_fmt;
 		//update_log_ctxt(inst->sid, inst->session_type,
 		//	mplane->pixelformat);
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: input: codec %#x width %d height %d size %d min_count %d extra_count %d\n",
 			__func__, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
 			f->fmt.pix_mp.height,
@@ -1702,7 +1702,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			inst->buffers.input_meta.actual_count = 0;
 			inst->buffers.input_meta.size = 0;
 		}
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: input meta: size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
 			inst->buffers.input_meta.min_count,
@@ -1748,7 +1748,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		//rc = msm_vidc_check_session_supported(inst);
 		if (rc)
 			goto err_invalid_fmt;
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: output: format %#x width %d height %d size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.pix_mp.pixelformat, fmt->fmt.pix_mp.width,
 			fmt->fmt.pix_mp.height,
@@ -1776,13 +1776,13 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			inst->buffers.output_meta.actual_count = 0;
 			inst->buffers.output_meta.size = 0;
 		}
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: output meta: size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
 			inst->buffers.output_meta.min_count,
 			inst->buffers.output_meta.extra_count);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid type %d\n", __func__, f->type);
+		i_vpr_e(inst, "%s: invalid type %d\n", __func__, f->type);
 		goto err_invalid_fmt;
 	}
 	memcpy(f, fmt, sizeof(struct v4l2_format));
@@ -1816,7 +1816,7 @@ int msm_vdec_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	s_vpr_e(inst->sid, "%s: unsupported\n", __func__);
+	i_vpr_e(inst, "%s: unsupported\n", __func__);
 	return -EINVAL;
 }
 
@@ -1842,7 +1842,7 @@ int msm_vdec_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		s->r.height = inst->crop.height;
 		break;
 	}
-	s_vpr_h(inst->sid, "%s: type %d target %d, r [%d, %d, %d, %d]\n",
+	i_vpr_h(inst, "%s: type %d target %d, r [%d, %d, %d, %d]\n",
 		__func__, s->type, s->target, s->r.top, s->r.left,
 		s->r.width, s->r.height);
 	return 0;
@@ -1876,7 +1876,7 @@ int msm_vdec_s_param(struct msm_vidc_inst *inst,
 	}
 
 	if (!timeperframe->denominator || !timeperframe->numerator) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: invalid rate for type %u\n",
 			__func__, s_parm->type);
 		input_rate = default_rate >> 16;
@@ -1887,7 +1887,7 @@ int msm_vdec_s_param(struct msm_vidc_inst *inst,
 	do_div(us_per_frame, timeperframe->denominator);
 
 	if (!us_per_frame) {
-		s_vpr_e(inst->sid, "%s: us_per_frame is zero\n",
+		i_vpr_e(inst, "%s: us_per_frame is zero\n",
 			__func__);
 		rc = -EINVAL;
 		goto exit;
@@ -1898,7 +1898,7 @@ int msm_vdec_s_param(struct msm_vidc_inst *inst,
 
 	/* Check max allowed rate */
 	if (input_rate > max_rate) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: Unsupported rate %u, max_fps %u, type: %u\n",
 			__func__, input_rate, max_rate, s_parm->type);
 		rc = -ENOTSUPP;
@@ -1907,7 +1907,7 @@ int msm_vdec_s_param(struct msm_vidc_inst *inst,
 
 set_default:
 	q16_rate = (u32)input_rate << 16;
-	s_vpr_h(inst->sid, "%s: type %u value %#x\n",
+	i_vpr_h(inst, "%s: type %u value %#x\n",
 		__func__, s_parm->type, q16_rate);
 
 	if (is_frame_rate) {
@@ -1944,7 +1944,7 @@ int msm_vdec_g_param(struct msm_vidc_inst *inst,
 			capability->cap[OPERATING_RATE].value >> 16;
 	}
 
-	s_vpr_h(inst->sid, "%s: type %u, num %u denom %u\n",
+	i_vpr_h(inst, "%s: type %u, num %u denom %u\n",
 		__func__, s_parm->type, timeperframe->numerator,
 		timeperframe->denominator);
 	return 0;
@@ -2039,7 +2039,7 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	}
 	memset(f->reserved, 0, sizeof(f->reserved));
 
-	s_vpr_h(inst->sid, "%s: index %d, %s : %#x, flags %#x, driver colorfmt %#x\n",
+	i_vpr_h(inst, "%s: index %d, %s : %#x, flags %#x, driver colorfmt %#x\n",
 		__func__, f->index, f->description, f->pixelformat, f->flags,
 		v4l2_colorformat_to_driver(f->pixelformat, __func__));
 	return rc;

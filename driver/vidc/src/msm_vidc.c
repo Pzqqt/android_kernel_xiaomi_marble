@@ -70,7 +70,7 @@ int msm_vidc_poll(void *instance, struct file *filp,
 		return -EINVAL;
 	}
 	if (inst->state == MSM_VIDC_ERROR) {
-		s_vpr_e(inst->sid, "%s: inst in error state\n", __func__);
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
 		return -EINVAL;
 	}
 
@@ -156,7 +156,7 @@ int msm_vidc_query_ctrl(void *instance, struct v4l2_queryctrl *q_ctrl)
 
 	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, q_ctrl->id);
 	if (!ctrl) {
-		s_vpr_e(inst->sid, "%s: get_ctrl failed for id %d\n",
+		i_vpr_e(inst, "%s: get_ctrl failed for id %d\n",
 			__func__, q_ctrl->id);
 		return -EINVAL;
 	}
@@ -165,7 +165,7 @@ int msm_vidc_query_ctrl(void *instance, struct v4l2_queryctrl *q_ctrl)
 	q_ctrl->default_value = ctrl->default_value;
 	q_ctrl->flags = 0;
 	q_ctrl->step = ctrl->step;
-	s_vpr_h(inst->sid,
+	i_vpr_h(inst,
 		"query ctrl: %s: min %d, max %d, default %d step %d flags %#x\n",
 		ctrl->name, q_ctrl->minimum, q_ctrl->maximum,
 		q_ctrl->default_value, q_ctrl->step, q_ctrl->flags);
@@ -187,12 +187,12 @@ int msm_vidc_query_menu(void *instance, struct v4l2_querymenu *qmenu)
 
 	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, qmenu->id);
 	if (!ctrl) {
-		s_vpr_e(inst->sid, "%s: get_ctrl failed for id %d\n",
+		i_vpr_e(inst, "%s: get_ctrl failed for id %d\n",
 			__func__, qmenu->id);
 		return -EINVAL;
 	}
 	if (ctrl->type != V4L2_CTRL_TYPE_MENU) {
-		s_vpr_e(inst->sid, "%s: ctrl: %s: type (%d) is not MENU type\n",
+		i_vpr_e(inst, "%s: ctrl: %s: type (%d) is not MENU type\n",
 			__func__, ctrl->name, ctrl->type);
 		return -EINVAL;
 	}
@@ -202,7 +202,7 @@ int msm_vidc_query_menu(void *instance, struct v4l2_querymenu *qmenu)
 	if (ctrl->menu_skip_mask & (1 << qmenu->index))
 		rc = -EINVAL;
 
-	s_vpr_h(inst->sid,
+	i_vpr_h(inst,
 		"%s: ctrl: %s: min %d, max %d, menu_skip_mask %#x, qmenu: id %d, index %d, %s\n",
 		__func__, ctrl->name, ctrl->minimum, ctrl->maximum,
 		ctrl->menu_skip_mask, qmenu->id, qmenu->index,
@@ -230,7 +230,7 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 		rc = msm_venc_s_fmt(inst, f);
 
 	if (rc)
-		s_vpr_e(inst->sid, "%s: s_fmt(%d) failed %d\n",
+		i_vpr_e(inst, "%s: s_fmt(%d) failed %d\n",
 			__func__, f->type, rc);
 	return rc;
 }
@@ -254,12 +254,12 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 		return rc;
 
 	if (f->type == INPUT_MPLANE || f->type == OUTPUT_MPLANE)
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: type %d format %#x width %d height %d size %d\n",
 			__func__, f->type, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
 			f->fmt.pix_mp.height, f->fmt.pix_mp.plane_fmt[0].sizeimage);
 	else if (f->type == INPUT_META_PLANE || f->type == OUTPUT_META_PLANE)
-		s_vpr_h(inst->sid, "%s: meta type %d size %d\n",
+		i_vpr_h(inst, "%s: meta type %d size %d\n",
 			__func__, f->type, f->fmt.meta.buffersize);
 	return 0;
 }
@@ -380,10 +380,10 @@ int msm_vidc_g_ctrl(void *instance, struct v4l2_control *control)
 			control->value = ctrl->val;
 	}
 	if (rc)
-		s_vpr_e(inst->sid, "%s: failed for control id %#x\n",
+		i_vpr_e(inst, "%s: failed for control id %#x\n",
 			__func__, control->id);
 	else
-		s_vpr_h(inst->sid, "%s: control id %#x, value %d\n",
+		i_vpr_h(inst, "%s: control id %#x, value %d\n",
 			__func__, control->id, control->value);
 	return rc;
 }
@@ -415,7 +415,7 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 
 	rc = vb2_reqbufs(&inst->vb2q[port], b);
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: vb2_reqbufs(%d) failed, %d\n",
+		i_vpr_e(inst, "%s: vb2_reqbufs(%d) failed, %d\n",
 			__func__, b->type, rc);
 		goto unlock;
 	}
@@ -453,7 +453,7 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 
 	rc = vb2_qbuf(q, mdev, b);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: failed with %d\n", __func__, rc);
+		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
 
 unlock:
 	mutex_unlock(&inst->lock);
@@ -484,7 +484,7 @@ int msm_vidc_dqbuf(void *instance, struct v4l2_buffer *b)
 	if (rc == -EAGAIN) {
 		goto unlock;
 	} else if (rc) {
-		s_vpr_e(inst->sid, "%s: failed with %d\n", __func__, rc);
+		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
 		goto unlock;
 	}
 
@@ -523,7 +523,7 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 
 	rc = vb2_streamon(&inst->vb2q[port], type);
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: vb2_streamon(%d) failed, %d\n",
+		i_vpr_e(inst, "%s: vb2_streamon(%d) failed, %d\n",
 			__func__, type, rc);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		goto unlock;
@@ -564,7 +564,7 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 
 	rc = vb2_streamoff(&inst->vb2q[port], type);
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: vb2_streamoff(%d) failed, %d\n",
+		i_vpr_e(inst, "%s: vb2_streamoff(%d) failed, %d\n",
 			__func__, type, rc);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		goto unlock;
@@ -606,7 +606,7 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 		return -EINVAL;
 	}
 	if (!inst->capabilities) {
-		s_vpr_e(inst->sid, "capabilities not available\n", __func__);
+		i_vpr_e(inst, "capabilities not available\n", __func__);
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
@@ -634,11 +634,11 @@ int msm_vidc_subscribe_event(void *instance,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	s_vpr_h(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
+	i_vpr_h(inst, "%s: type %d id %d\n", __func__, sub->type, sub->id);
 	rc = v4l2_event_subscribe(&inst->event_handler,
 		sub, MAX_EVENTS, NULL);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: fialed, type %d id %d\n",
+		i_vpr_e(inst, "%s: fialed, type %d id %d\n",
 			__func__, sub->type, sub->id);
 	return rc;
 }
@@ -654,10 +654,10 @@ int msm_vidc_unsubscribe_event(void *instance,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	s_vpr_h(inst->sid, "%s: type %d id %d\n", __func__, sub->type, sub->id);
+	i_vpr_h(inst, "%s: type %d id %d\n", __func__, sub->type, sub->id);
 	rc = v4l2_event_unsubscribe(&inst->event_handler, sub);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: fialed, type %d id %d\n",
+		i_vpr_e(inst, "%s: fialed, type %d id %d\n",
 			 __func__, sub->type, sub->id);
 	return rc;
 }
@@ -674,7 +674,7 @@ int msm_vidc_dqevent(void *instance, struct v4l2_event *event)
 	}
 	rc = v4l2_event_dequeue(&inst->event_handler, event, false);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: fialed\n", __func__);
+		i_vpr_e(inst, "%s: fialed\n", __func__);
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_dqevent);
@@ -718,7 +718,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		d_vpr_e("%s: failed to get session id\n", __func__);
 		goto error;
 	}
-	s_vpr_e(inst->sid, "Opening video instance: %d\n", session_type);
+	i_vpr_e(inst, "Opening video instance: %d\n", session_type);
 
 	inst->response_workq = create_singlethread_workqueue("response_workq");
 	if (!inst->response_workq) {
@@ -729,7 +729,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->capabilities = kzalloc(
 		sizeof(struct msm_vidc_inst_capability), GFP_KERNEL);
 	if (!inst->capabilities) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: inst capability allocation failed\n", __func__);
 		goto error;
 	}
@@ -805,7 +805,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->debugfs_root =
 		msm_vidc_debugfs_init_inst(inst, core->debugfs_root);
 	if (!inst->debugfs_root)
-		s_vpr_h(inst->sid, "%s: debugfs not available\n", __func__);
+		i_vpr_h(inst, "%s: debugfs not available\n", __func__);
 
 	return inst;
 
@@ -828,7 +828,7 @@ int msm_vidc_close(void *instance)
 
 	core = inst->core;
 
-	s_vpr_h(inst->sid, "%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 	mutex_lock(&inst->lock);
 	msm_vidc_session_close(inst);
 	msm_vidc_remove_session(inst);

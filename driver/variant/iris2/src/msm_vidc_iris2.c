@@ -556,7 +556,7 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid, "Configuring work mode = %u low latency = %u",
+	i_vpr_h(inst, "Configuring work mode = %u low latency = %u",
 		work_mode, lowlatency);
 	inst->capabilities->cap[STAGE].value = work_mode;
 
@@ -602,7 +602,7 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 		return -EINVAL;
 	}
 
-	s_vpr_h(inst->sid, "Configuring work route = %u", work_route);
+	i_vpr_h(inst, "Configuring work route = %u", work_route);
 	inst->capabilities->cap[PIPE].value = work_route;
 
 	return 0;
