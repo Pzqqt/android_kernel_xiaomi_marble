@@ -17,6 +17,8 @@
 #include "msm_vidc_buffer.h"
 #include "msm_vidc_debug.h"
 
+#define VIDEO_ARCH_LX 1
+
 #define VBIF_BASE_OFFS_IRIS2                   0x00080000
 #define CPU_BASE_OFFS_IRIS2                    0x000A0000
 #define AON_BASE_OFFS			               0x000E0000
@@ -189,6 +191,10 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 			(u32)((u64)core->iface_q_table.align_virtual_addr));
 	__write_register(core, CPU_CS_VCICMDARG1_IRIS2,
 		(u32)((u64)core->iface_q_table.align_virtual_addr >> 32));
+
+	if(core->sfr.align_device_addr)
+		__write_register(core, SFR_ADDR_IRIS2,
+			(u32)core->sfr.align_device_addr + VIDEO_ARCH_LX);
 
 	return 0;
 }
