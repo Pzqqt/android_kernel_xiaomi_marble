@@ -1498,6 +1498,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "VDEV_DISCONNECT";
 	case WOW_REASON_LOCAL_DATA_UC_DROP:
 		return "LOCAL_DATA_UC_DROP";
+	case WOW_REASON_FATAL_EVENT_WAKE:
+		return "FATAL_EVENT_WAKE";
 	case WOW_REASON_GENERIC_WAKE:
 		return "GENERIC_WAKE";
 	case WOW_REASON_TWT:
@@ -1531,6 +1533,7 @@ static bool wma_wow_reason_has_stats(enum wake_reason_e reason)
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 	case WOW_REASON_11D_SCAN:
 	case WOW_REASON_LOCAL_DATA_UC_DROP:
+	case WOW_REASON_FATAL_EVENT_WAKE:
 		return true;
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 	case WOW_REASON_WLAN_MD:
@@ -1581,7 +1584,8 @@ static void wma_wow_stats_display(struct wake_lock_stats *stats)
 
 	wma_conditional_log(is_wakeup_event_console_logs_enabled,
 			    "pno_match:%d pno_complete:%d gscan:%d low_rssi:%d"
-			    " rssi_breach:%d oem:%d ucdrop:%d scan_11d:%d",
+			    " rssi_breach:%d oem:%d ucdrop:%d scan_11d:%d"
+			    " fatal_event:%d",
 			    stats->pno_match_wake_up_count,
 			    stats->pno_complete_wake_up_count,
 			    stats->gscan_wake_up_count,
@@ -1589,7 +1593,8 @@ static void wma_wow_stats_display(struct wake_lock_stats *stats)
 			    stats->rssi_breach_wake_up_count,
 			    stats->oem_response_wake_up_count,
 			    stats->uc_drop_wake_up_count,
-			    stats->scan_11d);
+			    stats->scan_11d,
+			    stats->fatal_event_wake_up_count);
 }
 
 static void wma_print_wow_stats(t_wma_handle *wma,

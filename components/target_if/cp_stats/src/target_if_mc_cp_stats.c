@@ -1188,6 +1188,10 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 		stats->uc_drop_wake_up_count++;
 		break;
 
+	case WOW_REASON_FATAL_EVENT_WAKE:
+		stats->fatal_event_wake_up_count++;
+		break;
+
 	default:
 		break;
 	}
