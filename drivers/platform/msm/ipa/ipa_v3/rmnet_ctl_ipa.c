@@ -210,7 +210,8 @@ int ipa3_unregister_rmnet_ctl_cb(void)
 	return 0;
 }
 
-int ipa3_setup_apps_low_lat_cons_pipe(void)
+int ipa3_setup_apps_low_lat_cons_pipe(bool rmnet_config,
+	struct rmnet_ingress_param *ingress_param)
 {
 	struct ipa_sys_connect_params *ipa_low_lat_ep_cfg;
 	int ret = 0;
@@ -234,12 +235,40 @@ int ipa3_setup_apps_low_lat_cons_pipe(void)
 	}
 	ipa_low_lat_ep_cfg =
 		&rmnet_ctl_ipa3_ctx->ipa_to_apps_low_lat_ep_cfg;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
-		IPA_ENABLE_CS_DL_QMAP;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_byte_limit =
-		0;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_pkt_limit =
-		0;
+	/*
+	 * Removing bypass aggr from assign_policy
+	 * and placing it here for future enablement
+	 */
+	ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_en = IPA_BYPASS_AGGR;
+	if (rmnet_config && ingress_param) {
+		/* Open for future cs offload disablement on low lat pipe */
+		if (ingress_param->cs_offload_en) {
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
+				IPA_ENABLE_CS_DL_QMAP;
+		} else {
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
+				IPA_DISABLE_CS_OFFLOAD;
+		}
+		ipa_low_lat_ep_cfg->ext_ioctl_v2 = true;
+		ipa_low_lat_ep_cfg->int_modt = ingress_param->int_modt;
+		ipa_low_lat_ep_cfg->int_modc = ingress_param->int_modc;
+		ipa_low_lat_ep_cfg->buff_size = ingress_param->buff_size;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_byte_limit =
+			ingress_param->agg_byte_limit;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_pkt_limit =
+			ingress_param->agg_pkt_limit;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_time_limit =
+			ingress_param->agg_time_limit;
+	} else {
+		ipa_low_lat_ep_cfg->ext_ioctl_v2 = false;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
+			IPA_ENABLE_CS_DL_QMAP;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_byte_limit =
+			0;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_pkt_limit =
+			0;
+	}
+
 	ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_len = 8;
 	ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata_valid
 		= 1;
@@ -295,7 +324,8 @@ int ipa3_setup_apps_low_lat_cons_pipe(void)
 	return 0;
 }
 
-int ipa3_setup_apps_low_lat_prod_pipe(void)
+int ipa3_setup_apps_low_lat_prod_pipe(bool rmnet_config,
+	struct rmnet_egress_param *egress_param)
 {
 	struct ipa_sys_connect_params *ipa_low_lat_ep_cfg;
 	int ret = 0;
@@ -313,16 +343,47 @@ int ipa3_setup_apps_low_lat_prod_pipe(void)
 	}
 	ipa_low_lat_ep_cfg =
 		&rmnet_ctl_ipa3_ctx->apps_to_ipa_low_lat_ep_cfg;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_len = 8;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
-		IPA_ENABLE_CS_OFFLOAD_UL;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_metadata_hdr_offset
-		= 1;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_en =
-		IPA_BYPASS_AGGR;
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 1;
-	/* modem want offset at 0! */
-	ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata = 0;
+	if (rmnet_config && egress_param) {
+		/* Open for future cs offload disablement on low lat pipe */
+		IPAERR("Configuring low lat prod with rmnet config\n");
+		ipa_low_lat_ep_cfg->ext_ioctl_v2 = true;
+		ipa_low_lat_ep_cfg->int_modt = egress_param->int_modt;
+		ipa_low_lat_ep_cfg->int_modc = egress_param->int_modc;
+		if (egress_param->cs_offload_en) {
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_len = 8;
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
+				IPA_ENABLE_CS_OFFLOAD_UL;
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_metadata_hdr_offset
+				= 1;
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata_valid
+				= 1;
+			/* modem want offset at 0! */
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata = 0;
+		} else {
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
+				IPA_DISABLE_CS_OFFLOAD;
+		}
+
+		/* Open for future deaggr enablement on low lat pipe */
+		if (!egress_param->aggr_en) {
+			ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_en =
+				IPA_BYPASS_AGGR;
+		}
+	} else {
+		IPAERR("Configuring low lat prod without rmnet config\n");
+		ipa_low_lat_ep_cfg->ext_ioctl_v2 = false;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_len = 8;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en =
+			IPA_ENABLE_CS_OFFLOAD_UL;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.aggr.aggr_en =
+			IPA_BYPASS_AGGR;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.cfg.cs_metadata_hdr_offset
+			= 1;
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata_valid
+			= 1;
+		/* modem want offset at 0! */
+		ipa_low_lat_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_metadata = 0;
+	}
 	ipa_low_lat_ep_cfg->ipa_ep_cfg.mode.dst =
 		IPA_CLIENT_Q6_WAN_CONS;
 	ipa_low_lat_ep_cfg->ipa_ep_cfg.mode.mode =
