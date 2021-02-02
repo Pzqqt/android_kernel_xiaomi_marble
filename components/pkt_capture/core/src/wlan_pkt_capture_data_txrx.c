@@ -27,6 +27,7 @@
 #include <wlan_reg_services_api.h>
 #include <cds_ieee80211_common.h>
 #include <ol_txrx_htt_api.h>
+#include "wlan_policy_mgr_ucfg.h"
 #ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
 #include "dp_internal.h"
 #include "cds_utils.h"
@@ -254,10 +255,35 @@ pkt_capture_update_tx_status(
 #else
 static void
 pkt_capture_update_tx_status(
-			void *pdev,
+			void *context,
 			struct mon_rx_status *tx_status,
 			struct pkt_capture_tx_hdr_elem_t *pktcapture_hdr)
 {
+	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct wlan_objmgr_vdev *vdev = context;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t conn_count;
+	uint8_t vdev_id;
+	int i;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		pkt_capture_err("Failed to get psoc");
+		return;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	/* Update the connected channel info from policy manager */
+	conn_count = policy_mgr_get_connection_info(psoc, info);
+	for (i = 0; i < conn_count; i++) {
+		if (info[i].vdev_id == vdev_id) {
+			tx_status->chan_freq = info[0].ch_freq;
+			tx_status->chan_num = info[0].channel;
+			break;
+		}
+	}
+
 	pkt_capture_tx_get_phy_info(pktcapture_hdr, tx_status);
 
 	tx_status->tsft = (u_int64_t)(pktcapture_hdr->timestamp);
@@ -1307,7 +1333,7 @@ pkt_capture_tx_data_cb(
 		}
 
 		pkt_capture_update_tx_status(
-				ppdev,
+				context,
 				&tx_status,
 				&pktcapture_hdr);
 		/*
