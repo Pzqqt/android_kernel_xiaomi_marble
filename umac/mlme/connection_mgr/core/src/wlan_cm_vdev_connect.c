@@ -794,13 +794,14 @@ cm_copy_join_params(struct cm_vdev_join_req *join_req,
 		     req->scan_ie.len);
 
 	join_req->entry = util_scan_copy_cache_entry(req->bss->entry);
-
 	if (!join_req->entry)
 		return QDF_STATUS_E_NOMEM;
 
 	join_req->vdev_id = req->vdev_id;
 	join_req->cm_id = req->cm_id;
 	join_req->force_rsne_override = req->force_rsne_override;
+	join_req->is_wps_connection = req->is_wps_connection;
+	join_req->is_osen_connection = req->is_osen_connection;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -821,8 +822,9 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 						    rsp->connect_rsp.vdev_id,
 						    WLAN_MLME_CM_ID);
 	if (!vdev) {
-		mlme_err("vdev_id: %d cm_id 0x%x : vdev not found",
-			 rsp->connect_rsp.vdev_id, rsp->connect_rsp.cm_id);
+		mlme_err(CM_PREFIX_FMT "vdev not found",
+			 CM_PREFIX_REF(rsp->connect_rsp.vdev_id,
+				       rsp->connect_rsp.cm_id));
 		wlan_cm_free_connect_rsp(rsp);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -888,7 +890,8 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		mlme_err("vdev_id: %d psoc not found", req->vdev_id);
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -898,13 +901,13 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	qdf_mem_zero(&msg, sizeof(msg));
 	join_req = qdf_mem_malloc(sizeof(*join_req));
-
 	if (!join_req)
 		return QDF_STATUS_E_NOMEM;
 
 	status = cm_copy_join_params(join_req, req);
-
 	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "Failed to copy join req",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
 		cm_free_join_req(join_req);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -913,12 +916,14 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	status = cm_csr_handle_connect_req(vdev, req, join_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("vdev_id: %d cm_id 0x%x : fail to fill params from legacy",
-			 req->vdev_id, req->cm_id);
+		mlme_err(CM_PREFIX_FMT "fail to fill params from legacy",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
 		cm_free_join_req(join_req);
 		return QDF_STATUS_E_FAILURE;
 	}
-	mlme_debug("HT cap %x", req->ht_caps);
+
+	mlme_debug(CM_PREFIX_FMT "HT cap %x",
+		   CM_PREFIX_REF(req->vdev_id, req->cm_id), req->ht_caps);
 	if (mlme_obj->cfg.obss_ht40.is_override_ht20_40_24g &&
 	    !(req->ht_caps & WLAN_HTCAP_C_CHWIDTH40))
 		join_req->force_24ghz_in_ht20 = true;
@@ -930,8 +935,11 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	status = scheduler_post_message(QDF_MODULE_ID_MLME,
 					QDF_MODULE_ID_PE,
 					QDF_MODULE_ID_PE, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "msg post fail",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
 		cm_free_join_req(join_req);
+	}
 
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
 		wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
@@ -965,8 +973,10 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 	status = scheduler_post_message(QDF_MODULE_ID_MLME,
 					QDF_MODULE_ID_PE,
 					QDF_MODULE_ID_PE, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("vdev %d: post fail", req->vdev_id);
 		qdf_mem_free(req);
+	}
 
 	return status;
 
@@ -990,12 +1000,14 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		mlme_err("vdev_id: %d pdev not found", vdev_id);
+		mlme_err(CM_PREFIX_FMT "pdev not found",
+			 CM_PREFIX_REF(vdev_id, rsp->cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
-		mlme_err("vdev_id: %d psoc not found", vdev_id);
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(vdev_id, rsp->cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1074,7 +1086,7 @@ bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
 						    WLAN_MLME_CM_ID);
 	if (!vdev) {
-		mlme_err("vdev_id: %d: vdev not found", vdev_id);
+		mlme_err("vdev %d: vdev not found", vdev_id);
 		return false;
 	}
 	opmode = wlan_vdev_mlme_get_opmode(vdev);

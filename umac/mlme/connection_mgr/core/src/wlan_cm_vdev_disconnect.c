@@ -30,6 +30,9 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_cm_roam_api.h>
 #include "wni_api.h"
+#ifdef FEATURE_CM_ENABLE
+#include "connection_mgr/core/src/wlan_cm_roam.h"
+#endif
 
 #ifdef FEATURE_CM_ENABLE
 QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
@@ -79,7 +82,8 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		mlme_err("vdev_id: %d pdev not found", req->req.vdev_id);
+		mlme_err(CM_PREFIX_FMT "pdev not found",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
 	rso_cfg = wlan_cm_get_rso_config(vdev);
@@ -111,9 +115,11 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	status = scheduler_post_message(QDF_MODULE_ID_MLME,
 					QDF_MODULE_ID_PE,
 					QDF_MODULE_ID_PE, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "msg post fail",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		qdf_mem_free(discon_req);
-
+	}
 	return status;
 }
 
@@ -189,7 +195,8 @@ cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		mlme_err("vdev_id: %d psoc not found", vdev_id);
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(vdev_id, rsp->req.cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
 	cm_disconnect_diag_event(vdev, rsp);
@@ -267,6 +274,41 @@ static void cm_copy_peer_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 	ap_ie->ptr = discon_ie->ptr;
 }
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+static inline
+QDF_STATUS cm_fill_disconnect_resp(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_discon_rsp *resp)
+{
+	struct wlan_cm_vdev_reassoc_req req;
+
+	/* Fill from reassoc req for Handsoff disconnect */
+	if (cm_get_active_reassoc_req(vdev, &req)) {
+		resp->req.cm_id = req.cm_id;
+		resp->req.req.vdev_id = req.vdev_id;
+		qdf_copy_macaddr(&resp->req.req.bssid, &req.prev_bssid);
+		resp->req.req.source = CM_ROAM_DISCONNECT;
+	} else if (!cm_get_active_disconnect_req(vdev, &resp->req)) {
+		/* If not reassoc then fill from disconnect active */
+		return QDF_STATUS_E_FAILURE;
+	}
+	mlme_debug(CM_PREFIX_FMT "disconnect found source %d",
+		   CM_PREFIX_REF(resp->req.req.vdev_id, resp->req.cm_id),
+		   resp->req.req.source);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline
+QDF_STATUS cm_fill_disconnect_resp(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_discon_rsp *resp)
+{
+	if (!cm_get_active_disconnect_req(vdev, &resp->req))
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
@@ -287,8 +329,12 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 	}
 
 	qdf_mem_zero(&resp, sizeof(resp));
-	if (!cm_get_active_disconnect_req(vdev, &resp.req)) {
+	status = cm_fill_disconnect_resp(vdev, &resp);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Active disconnect not found for vdev %d",
+			 ind->vdev_id);
 		qdf_mem_free(ind);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -301,6 +347,6 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 
 	qdf_mem_free(ind);
 
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
