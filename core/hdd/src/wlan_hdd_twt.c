@@ -1094,8 +1094,10 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (event->params.num_additional_twt_params == 0)
+	if (event->params.num_additional_twt_params == 0) {
+		nla_nest_end(reply_skb, config_attr);
 		return QDF_STATUS_SUCCESS;
+	}
 
 	response_type = wmi_twt_add_cmd_to_vendor_twt_resp_type(event->additional_params.twt_cmd);
 	if (response_type == -EINVAL) {
@@ -1267,14 +1269,6 @@ hdd_twt_add_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 		  add_dialog_event->params.status, vdev_id,
 		  QDF_MAC_ADDR_REF(add_dialog_event->params.peer_macaddr));
 	hdd_send_twt_setup_response(adapter, add_dialog_event);
-
-	if (add_dialog_event->params.status)
-		return;
-
-	ucfg_mlme_set_twt_setup_done(
-		adapter->hdd_ctx->psoc,
-		(struct qdf_mac_addr *)add_dialog_event->params.peer_macaddr,
-		add_dialog_event->params.dialog_id, true);
 }
 
 /**

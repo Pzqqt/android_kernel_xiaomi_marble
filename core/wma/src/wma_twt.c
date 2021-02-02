@@ -207,7 +207,8 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 			return qdf_status_to_os_return(status);
 	}
 
-	wma_debug("TWT: Extract TWT add dialog event :%d", status);
+	wma_debug("TWT: Extract TWT add dialog event id:%d",
+		  add_dialog_event->params.dialog_id);
 
 	sme_msg.type = eWNI_SME_TWT_ADD_DIALOG_EVENT;
 	sme_msg.bodyptr = add_dialog_event;
