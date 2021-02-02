@@ -1204,6 +1204,11 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (mac->usr_cfg_disable_rsp_tx) {
+		pe_debug("Drop Rx pkt with user config");
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_SUCCESS;
+	}
 	pVosPkt = qdf_mem_malloc_atomic(sizeof(*pVosPkt));
 	if (!pVosPkt) {
 		qdf_nbuf_free(buf);

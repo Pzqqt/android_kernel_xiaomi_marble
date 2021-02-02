@@ -14830,6 +14830,38 @@ void sme_set_pmf_wep_cfg(mac_handle_t mac_handle, uint8_t pmf_wep)
 	mac_ctx->is_usr_cfg_pmf_wep = pmf_wep;
 }
 
+void sme_set_cfg_disable_tx(mac_handle_t mac_handle, uint8_t vdev_id,
+			    uint8_t val)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	int ret_val;
+
+	sme_debug("Block Tx %d", val);
+	if (val) {
+		if (mac->sme.tx_queue_cb) {
+			sme_debug("Blocking the Tx queue");
+			mac->sme.tx_queue_cb(mac->hdd_handle, vdev_id,
+					WLAN_STOP_ALL_NETIF_QUEUE,
+					WLAN_CONTROL_PATH);
+		}
+	} else {
+		if (mac->sme.tx_queue_cb) {
+			sme_debug("Enable the Tx queue");
+			mac->sme.tx_queue_cb(mac->hdd_handle, vdev_id,
+					WLAN_START_ALL_NETIF_QUEUE,
+					WLAN_CONTROL_PATH);
+		}
+	}
+
+	ret_val = wma_cli_set_command(vdev_id,
+			WMI_VDEV_PARAM_PROHIBIT_DATA_MGMT,
+			val, VDEV_CMD);
+	if (ret_val)
+		sme_err("Failed to set firmware, errno %d", ret_val);
+
+	mac->usr_cfg_disable_rsp_tx = val;
+}
+
 void sme_set_amsdu(mac_handle_t mac_handle, bool enable)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -14966,6 +14998,9 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_err("Failed to set enable bcast probe resp in FW, %d",
 			status);
 	mac_ctx->is_usr_cfg_pmf_wep = PMF_CORRECT_KEY;
+
+	if (mac_ctx->usr_cfg_disable_rsp_tx)
+		sme_set_cfg_disable_tx(mac_handle, vdev_id, 0);
 }
 #endif
 
