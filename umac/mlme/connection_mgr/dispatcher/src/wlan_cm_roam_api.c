@@ -1779,4 +1779,84 @@ uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 
 	return roam_scan_scheme_bitmap;
 }
+
+QDF_STATUS
+wlan_cm_update_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   uint32_t value, enum roam_fail_params states)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+
+	if (!vdev) {
+		mlme_err("vdev%d: vdev object is NULL", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	switch (states) {
+	case ROAM_TRIGGER_REASON:
+		rso_cfg->roam_trigger_reason = value;
+		break;
+	case ROAM_INVOKE_FAIL_REASON:
+		rso_cfg->roam_invoke_fail_reason = value;
+		break;
+	case ROAM_FAIL_REASON:
+		rso_cfg->roam_fail_reason = value;
+		break;
+	default:
+		break;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+uint32_t wlan_cm_get_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				 enum roam_fail_params states)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t roam_states = 0;
+	struct rso_config *rso_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+
+	if (!vdev) {
+		mlme_err("vdev%d: vdev object is NULL", vdev_id);
+		return 0;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return 0;
+	}
+
+	switch (states) {
+	case ROAM_TRIGGER_REASON:
+		roam_states = rso_cfg->roam_trigger_reason;
+		break;
+	case ROAM_INVOKE_FAIL_REASON:
+		roam_states = rso_cfg->roam_invoke_fail_reason;
+		break;
+	case ROAM_FAIL_REASON:
+		roam_states = rso_cfg->roam_fail_reason;
+		break;
+	default:
+		break;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return roam_states;
+}
 #endif
