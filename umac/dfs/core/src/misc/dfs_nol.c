@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -334,8 +334,19 @@ static os_timer_func(dfs_remove_from_nol)
 	if (dfs_switch_to_postnol_chan_if_nol_expired(dfs))
 		return;
 
-	utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
-				       DFS_AGILE_SM_EV_AGILE_START);
+	/* In case of interCAC feature, check if the user configured
+	 * desired channel is RCAC done or not.
+	 * (AP operating on an intermediate channel as desired channel
+	 * is still not CAC done). If the RCAC of the desired channel
+	 * was interrupted by radar, initiate RCAC on NOL expiry
+	 * of the channel.
+	 *
+	 * If rcac is not started by dfs_restart_rcac_on_nol_expiry() API,
+	 * initiate rcac start here.
+	 */
+	if (!dfs_restart_rcac_on_nol_expiry(dfs))
+		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
+					       DFS_AGILE_SM_EV_AGILE_START);
 }
 #else
 #ifdef CONFIG_CHAN_NUM_API
