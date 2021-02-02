@@ -3285,7 +3285,6 @@ static int drv_cmd_set_roam_mode(struct hdd_adapter *adapter,
 		roam_mode = cfg_max(CFG_LFR_FEATURE_ENABLED);
 	}
 
-	ucfg_mlme_set_lfr_enabled(hdd_ctx->psoc, (bool)roam_mode);
 	mac_handle = hdd_ctx->mac_handle;
 	if (roam_mode) {
 		ucfg_mlme_set_roam_scan_offload_enabled(hdd_ctx->psoc,
