@@ -1572,6 +1572,9 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 
+	buffers->size = 0;
+	buffers->min_count = buffers->extra_count = buffers->actual_count = 0;
+
 	return 0;
 }
 
