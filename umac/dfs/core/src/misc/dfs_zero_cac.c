@@ -2369,4 +2369,137 @@ void dfs_translate_radar_params_for_agile_chan(struct wlan_dfs *dfs,
 		}
 	}
 }
+
+#ifdef QCA_SUPPORT_ADFS_RCAC
+/*
+ * dfs_convert_wlan_phymode_to_chwidth() - Map phymode to
+ * channel width.
+ * @phymode: phymode of type wlan_phymode.
+ *
+ * Return channel width of type phy_ch_width
+ */
+static enum phy_ch_width
+dfs_convert_wlan_phymode_to_chwidth(enum wlan_phymode phymode)
+{
+		switch (phymode) {
+		case WLAN_PHYMODE_11NA_HT20:
+		case WLAN_PHYMODE_11NG_HT20:
+		case WLAN_PHYMODE_11AC_VHT20:
+		case WLAN_PHYMODE_11AC_VHT20_2G:
+		case WLAN_PHYMODE_11AXA_HE20:
+		case WLAN_PHYMODE_11AXG_HE20:
+		    return CH_WIDTH_20MHZ;
+		case WLAN_PHYMODE_11NA_HT40:
+		case WLAN_PHYMODE_11NG_HT40PLUS:
+		case WLAN_PHYMODE_11NG_HT40MINUS:
+		case WLAN_PHYMODE_11NG_HT40:
+		case WLAN_PHYMODE_11AC_VHT40:
+		case WLAN_PHYMODE_11AC_VHT40PLUS_2G:
+		case WLAN_PHYMODE_11AC_VHT40MINUS_2G:
+		case WLAN_PHYMODE_11AC_VHT40_2G:
+		case WLAN_PHYMODE_11AXG_HE40PLUS:
+		case WLAN_PHYMODE_11AXG_HE40MINUS:
+		case WLAN_PHYMODE_11AXG_HE40:
+		    return CH_WIDTH_40MHZ;
+		case WLAN_PHYMODE_11AC_VHT80:
+		case WLAN_PHYMODE_11AC_VHT80_2G:
+		case WLAN_PHYMODE_11AXA_HE80:
+		case WLAN_PHYMODE_11AXG_HE80:
+		    return CH_WIDTH_80MHZ;
+		case WLAN_PHYMODE_11AC_VHT160:
+		case WLAN_PHYMODE_11AXA_HE160:
+		    return CH_WIDTH_160MHZ;
+		case WLAN_PHYMODE_11AC_VHT80_80:
+		case WLAN_PHYMODE_11AXA_HE80_80:
+		    return CH_WIDTH_80P80MHZ;
+		default:
+		    return CH_WIDTH_INVALID;
+		}
+}
+#endif
+
+#if defined(QCA_SUPPORT_ADFS_RCAC) && \
+    defined(WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT) && \
+    defined(QCA_SUPPORT_AGILE_DFS)
+bool dfs_restart_rcac_on_nol_expiry(struct wlan_dfs *dfs)
+{
+	struct dfs_channel *chan;
+	enum phy_ch_width des_ch_width;
+	qdf_freq_t rcac_pref_freq;
+	enum wlan_phymode des_mode;
+	bool is_rcac_started = false;
+
+	/* If rcac is not enabled, exit */
+	if (!dfs_is_agile_rcac_enabled(dfs))
+		return is_rcac_started;
+	/* We have a desired autoswitch channel, but we were not able to come up
+	 * on it due to radar. After NOL expiry, we try to come up on that
+	 * channel doing RCAC.
+	 */
+	if (!dfs->dfs_precac_inter_chan_freq && !dfs->dfs_autoswitch_chan)
+		return is_rcac_started;
+
+	chan = qdf_mem_malloc(sizeof(struct dfs_channel));
+
+	if (!chan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "malloc failed");
+		return is_rcac_started;
+	}
+	rcac_pref_freq = dfs->dfs_autoswitch_chan->dfs_ch_freq;
+	des_mode = dfs->dfs_autoswitch_des_mode;
+
+	/* Find a dfs channel pointer with the desired rcac freq and mode. */
+	if (QDF_STATUS_SUCCESS !=
+	    dfs_mlme_find_dot11_chan_for_freq(dfs->dfs_pdev_obj,
+					      rcac_pref_freq, 0,
+					      des_mode,
+					      &chan->dfs_ch_freq,
+					      &chan->dfs_ch_flags,
+					      &chan->dfs_ch_flagext,
+					      &chan->dfs_ch_ieee,
+					      &chan->dfs_ch_vhtop_ch_freq_seg1,
+					      &chan->dfs_ch_vhtop_ch_freq_seg2,
+					      &chan->dfs_ch_mhz_freq_seg1,
+					      &chan->dfs_ch_mhz_freq_seg2))
+	    goto exit;
+
+	des_ch_width = dfs_convert_wlan_phymode_to_chwidth(des_mode);
+
+	/* Validate the preferred rcac channel.
+	 * The NOL list is per 20Mhz subchannel of a channel.
+	 * Therefore, until all the subchannels of the desired
+	 * channel are out of NOL, we do not start the RCAC.
+	 */
+	if (!dfs_is_rcac_chan_valid(dfs, des_ch_width, rcac_pref_freq))
+		goto exit;
+
+	/* If preCAC is not completed on the preferred rcac channel,
+	 * trigger RCAC on it.
+	 */
+	if ((WLAN_IS_CHAN_DFS(chan) ||
+		 (WLAN_IS_CHAN_MODE_160(chan) &&
+		  WLAN_IS_CHAN_DFS_CFREQ2(chan))) &&
+		!dfs_is_precac_done(dfs, chan)) {
+		/*
+		 * Since the upper layer will not do any channel
+		 * restart, the agile state machine will not
+		 * automatically be restarted. Therefore, stop
+		 * and start the the agile state machine on the
+		 * desired channel.
+		 */
+		dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+					 DFS_AGILE_SM_EV_AGILE_STOP,
+					 0, (void *)dfs);
+		dfs_set_rcac_freq(dfs, chan->dfs_ch_freq);
+		dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+					 DFS_AGILE_SM_EV_AGILE_START,
+					 0, (void *)dfs);
+		is_rcac_started = true;
+	}
+exit:
+	qdf_mem_free(chan);
+	return is_rcac_started;
+}
+#endif
+
 #endif
