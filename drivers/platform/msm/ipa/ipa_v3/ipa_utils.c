@@ -3914,13 +3914,6 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_PCIE,
 			{ 24, 20, 5 , 5 , IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0},
 			IPA_TX_INSTANCE_DL },
-	[IPA_5_0_MHI][IPA_CLIENT_ODL_DPL_CONS] = {
-			true,   IPA_v5_0_GROUP_DL,
-			false,
-			IPA_DPS_HPS_SEQ_TYPE_INVALID,
-			QMB_MASTER_SELECT_PCIE,
-			{ 25, 2 , 5 , 5 , IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0},
-			IPA_TX_INSTANCE_DL },
 	[IPA_5_0_MHI][IPA_CLIENT_MHI_QDSS_CONS] = {
 			true,   IPA_v5_0_GROUP_QDSS,
 			false,
