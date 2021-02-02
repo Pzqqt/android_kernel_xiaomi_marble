@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -161,16 +161,6 @@ static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
 	if ((clk_priv->clk_src == AUDIO_EXT_CLK_PMI) && clk_priv->clk_name) {
 		for (i = 0; i < num_parents; i++) {
 			if (!strcmp(parent_names[i], clk_priv->clk_name))
-				ret = i;
-		}
-		pr_debug("%s: parent index = %u\n", __func__, ret);
-		return ret;
-	} else if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS10) &&
-		    (clk_priv->clk_src < AUDIO_EXT_CLK_LPASS13) &&
-		     clk_priv->clk_name) {
-		for (i = 0; i < num_parents; i++) {
-			if (!strcmp(parent_names[i],
-					clk_priv->clk_name))
 				ret = i;
 		}
 		pr_debug("%s: parent index = %u\n", __func__, ret);
@@ -448,9 +438,6 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk10",
-				.parent_names = (const char *[])
-							{ "audio_lpass_mclk6" },
-				.num_parents = 1,
 				.ops = &audio_ext_clk_ops,
 			},
 		},
@@ -462,9 +449,6 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk11",
-				.parent_names = (const char *[])
-							{ "audio_lpass_mclk6" },
-				.num_parents = 1,
 				.ops = &audio_ext_clk_ops,
 			},
 		},
@@ -476,9 +460,6 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk12",
-				.parent_names = (const char *[])
-							{ "audio_lpass_mclk6" },
-				.num_parents = 1,
 				.ops = &audio_ext_clk_ops,
 			},
 		},
