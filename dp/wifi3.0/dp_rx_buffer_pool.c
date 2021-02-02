@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@ bool dp_rx_buffer_pool_refill(struct dp_soc *soc, qdf_nbuf_t nbuf, u8 mac_id)
 	qdf_nbuf_t next_nbuf, first_nbuf, refill_nbuf;
 	bool consumed = false;
 
-	if (!bufpool->is_initialized)
+	if (!bufpool->is_initialized || !pdev)
 		return consumed;
 
 	/* process only buffers of RXDMA ring */
