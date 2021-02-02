@@ -1273,6 +1273,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_USER_RNR_FRM_CTRL = 466,
 	/* enable low latency mode  */
 	OL_ATH_PARAM_ENABLE_LOW_LATENCY_MODE = 467,
+	/* Enable/disable pktlog dump upload on SSR */
+	OL_ATH_PARAM_PKTLOG_DUMP_UPLOAD_SSR = 468,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
