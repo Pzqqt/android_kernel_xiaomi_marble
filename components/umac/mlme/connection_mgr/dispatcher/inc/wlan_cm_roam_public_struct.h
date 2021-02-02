@@ -216,6 +216,20 @@ struct wlan_chan_list {
 	qdf_freq_t freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 };
 
+/*
+ * roam_fail_params: different types of params to set or get roam fail states
+ * for the vdev
+ * @ROAM_TRIGGER_REASON: Roam trigger reason(enum WMI_ROAM_TRIGGER_REASON_ID)
+ * @ROAM_INVOKE_FAIL_REASON: One of WMI_ROAM_FAIL_REASON_ID for roam failure
+ * in case of forced roam
+ * @ROAM_FAIL_REASON: One of WMI_ROAM_FAIL_REASON_ID for roam failure
+ */
+enum roam_fail_params {
+	ROAM_TRIGGER_REASON,
+	ROAM_INVOKE_FAIL_REASON,
+	ROAM_FAIL_REASON,
+};
+
 /**
  * struct rso_config - connect config to be used to send info in
  * RSO. This is the info we dont have in VDEV or CM ctx
@@ -253,6 +267,10 @@ struct wlan_chan_list {
  * @mbo_oce_enabled_ap: MBO/OCE enabled network
  * @is_single_pmk: is single pmk
  * @roam_scan_freq_lst: roam freq list
+ * @roam_fail_reason: One of WMI_ROAM_FAIL_REASON_ID
+ * @roam_trigger_reason: Roam trigger reason(enum WMI_ROAM_TRIGGER_REASON_ID)
+ * @roam_invoke_fail_reason: One of reason id from enum
+ * wmi_roam_invoke_status_error in case of forced roam
  */
 struct rso_config {
 	qdf_mutex_t cm_rso_lock;
@@ -282,6 +300,9 @@ struct rso_config {
 	bool is_single_pmk;
 	uint32_t mbo_oce_enabled_ap;
 	struct rso_chan_info roam_scan_freq_lst;
+	uint32_t roam_fail_reason;
+	uint32_t roam_trigger_reason;
+	uint32_t roam_invoke_fail_reason;
 };
 
 /**

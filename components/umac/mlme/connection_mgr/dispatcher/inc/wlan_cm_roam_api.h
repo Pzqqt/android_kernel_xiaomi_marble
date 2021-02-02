@@ -781,6 +781,32 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
  */
 uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 					     uint8_t vdev_id);
+
+/**
+ * wlan_cm_update_roam_states() - Set roam states for the vdev
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ * @value: Value to update
+ * @states: type of value to update
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_update_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   uint32_t value, enum roam_fail_params states);
+
+/**
+ * wlan_cm_get_roam_states() - Get roam states value
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ * @states: For which action get roam states
+ *
+ * Return: Roam fail reason value
+ */
+uint32_t
+wlan_cm_get_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			enum roam_fail_params states);
+
 void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 			 uint8_t vdev_id, uint8_t *psk_pmk,
 			 uint8_t pmk_len);
@@ -867,6 +893,21 @@ uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 {
 	return 0;
 }
+
+static inline QDF_STATUS
+wlan_cm_update_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   uint32_t value, enum roam_fail_params states)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint32_t
+wlan_cm_get_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			enum roam_fail_params states)
+{
+	return 0;
+}
+
 static inline void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 				       uint8_t vdev_id, uint8_t *psk_pmk,
 				       uint8_t pmk_len)
