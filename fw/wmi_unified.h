@@ -3785,7 +3785,20 @@ typedef struct {
      *      1-> MLO support
      *      2-3-> Reserved
      *      Refer to the WMI_RSRC_CFG_FLAGS2_RX_PEER_METADATA_VERSION macros.
-     *  Bits 31:6 - Reserved
+     *  Bits 6 - is_sap_connected_d3wow_enabled
+     *      Enable D3WoW for SAP w/ clients connected
+     *      0-> disable the feature
+     *      1-> enable the feature
+     *      Refer to the WMI_RSRC_CFG_FLAGS2_IS_SAP_CONNECTED_D3WOW_ENABLED
+     *      GET/SET macros.
+     *  Bits 7 - is_go_connected_d3wow_enabled
+     *      Enable D3WoW for GO w/ clients connected
+     *      0-> disable the feature
+     *      1-> enable the feature
+     *      Refer to the WMI_RSRC_CFG_FLAGS2_IS_GO_CONNECTED_D3WOW_ENABLED
+     *      GET/SET macros.
+     *
+     *  Bits 31:8 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -4079,6 +4092,16 @@ typedef struct {
     WMI_GET_BITS(flags2, 4, 2)
 #define WMI_RSRC_CFG_FLAGS2_RX_PEER_METADATA_VERSION_SET(flags2, value) \
     WMI_SET_BITS(flags2, 4, 2, value)
+
+#define WMI_RSRC_CFG_FLAGS2_IS_SAP_CONNECTED_D3WOW_ENABLED_GET(flags2) \
+    WMI_GET_BITS(flags2, 6, 1)
+#define WMI_RSRC_CFG_FLAGS2_IS_SAP_CONNECTED_D3WOW_ENABLED_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 6, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_IS_GO_CONNECTED_D3WOW_ENABLED_GET(flags2) \
+    WMI_GET_BITS(flags2, 7, 1)
+#define WMI_RSRC_CFG_FLAGS2_IS_GO_CONNECTED_D3WOW_ENABLED_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 7, 1, value)
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
