@@ -3287,9 +3287,6 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 	int32_t ucast_cipher;
 	int32_t auth_mode;
 	int32_t akm;
-	uint8_t wsc_oui[OUI_LENGTH];
-	uint32_t oui_cpu;
-	struct mlme_legacy_priv *mlme_priv;
 	tSirMacCapabilityInfo *ap_cap_info;
 	bool rsn_enabled, privacy;
 
@@ -3348,21 +3345,8 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 	session->connected_akm = lim_get_connected_akm(session, ucast_cipher,
 						       auth_mode, akm);
 
-	/* check for WPS */
-	oui_cpu = qdf_be32_to_cpu(WSC_OUI);
-	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
-	if (wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
-					    req->assoc_ie.ptr,
-					    req->assoc_ie.len))
-		session->wps_registration = true;
-
-	/* check for OSEN */
-	oui_cpu = qdf_be32_to_cpu(OSEN_OUI);
-	qdf_mem_copy(wsc_oui, &oui_cpu, OUI_LENGTH);
-	if (wlan_get_vendor_ie_ptr_from_oui(wsc_oui, OUI_LENGTH,
-					    req->assoc_ie.ptr,
-					    req->assoc_ie.len))
-		session->isOSENConnection = true;
+	session->wps_registration = req->is_wps_connection;
+	session->isOSENConnection = req->is_osen_connection;
 
 	if (lim_is_rsn_profile(session))
 		lim_fill_rsn_ie(mac_ctx, session, req);
@@ -3372,10 +3356,6 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 		lim_fill_wapi_ie(mac_ctx, session, req);
 
 	lim_update_fils_config(mac_ctx, session, req);
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
-	if (!mlme_priv)
-		return;
-	mlme_priv->connect_info.is_wps = session->wps_registration;
 }
 
 static QDF_STATUS

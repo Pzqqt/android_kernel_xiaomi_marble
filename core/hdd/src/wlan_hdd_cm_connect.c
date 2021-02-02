@@ -921,7 +921,7 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 			       sta_ctx->conn_info.chan_freq);
 	hdd_wmm_assoc(adapter, false, uapsd_mask);
 
-	if (!wlan_is_wps_connection(hdd_ctx->pdev, adapter->vdev_id) &&
+	if (!rsp->is_wps_connection &&
 	    (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
 	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
 	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||

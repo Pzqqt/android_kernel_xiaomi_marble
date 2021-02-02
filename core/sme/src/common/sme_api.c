@@ -1456,8 +1456,16 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 		  mac->mlme_cfg->lfr.ese_enabled,
 		  isEseIniFeatureEnabled);
 	mac->mlme_cfg->lfr.ese_enabled = isEseIniFeatureEnabled;
-	csr_neighbor_roam_update_fast_roaming_enabled(
-			mac, sessionId, isEseIniFeatureEnabled);
+	mlme_set_supplicant_disabled_roaming(mac->psoc, sessionId,
+					     !isEseIniFeatureEnabled);
+	if (isEseIniFeatureEnabled)
+		wlan_cm_roam_state_change(mac->pdev, sessionId,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_CONNECT);
+	else
+		wlan_cm_roam_state_change(mac->pdev, sessionId,
+				WLAN_ROAM_RSO_STOPPED,
+				REASON_SUPPLICANT_DISABLED_ROAMING);
 
 	if (true == isEseIniFeatureEnabled)
 		mac->mlme_cfg->lfr.fast_transition_enabled = true;
@@ -6363,8 +6371,16 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 		  mac->mlme_cfg->lfr.lfr_enabled,
 		  isFastRoamIniFeatureEnabled);
 	mac->mlme_cfg->lfr.lfr_enabled = isFastRoamIniFeatureEnabled;
-	csr_neighbor_roam_update_fast_roaming_enabled(mac, sessionId,
-						   isFastRoamIniFeatureEnabled);
+	mlme_set_supplicant_disabled_roaming(mac->psoc, sessionId,
+					     !isFastRoamIniFeatureEnabled);
+	if (isFastRoamIniFeatureEnabled)
+		wlan_cm_roam_state_change(mac->pdev, sessionId,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_CONNECT);
+	else
+		wlan_cm_roam_state_change(mac->pdev, sessionId,
+				WLAN_ROAM_RSO_STOPPED,
+				REASON_SUPPLICANT_DISABLED_ROAMING);
 
 	return QDF_STATUS_SUCCESS;
 }

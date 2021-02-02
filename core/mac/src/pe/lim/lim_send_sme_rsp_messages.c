@@ -298,6 +298,8 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 		qdf_mem_copy(connect_ie->assoc_rsp.ptr, pe_session->assocRsp,
 			     connect_ie->assoc_rsp.len);
 	}
+	connect_rsp->is_wps_connection = pe_session->wps_registration;
+	connect_rsp->is_osen_connection = pe_session->isOSENConnection;
 
 	if (QDF_IS_STATUS_SUCCESS(connect_status)) {
 		connect_rsp->status_code = STATUS_SUCCESS;
@@ -340,6 +342,8 @@ lim_cm_fill_join_rsp_from_connect_req(struct cm_vdev_join_req *req,
 	connect_rsp->connect_status = QDF_STATUS_E_FAILURE;
 	connect_rsp->reason = reason;
 	connect_rsp->ssid = req->entry->ssid;
+	connect_rsp->is_wps_connection = req->is_wps_connection;
+	connect_rsp->is_osen_connection = req->is_osen_connection;
 }
 
 static QDF_STATUS lim_cm_flush_connect_rsp(struct scheduler_msg *msg)

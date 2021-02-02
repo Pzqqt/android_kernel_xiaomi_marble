@@ -139,8 +139,6 @@ static inline void csr_neighbor_roam_purge_preauth_failed_list(
 bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 		uint8_t session_id, uint8_t value, uint8_t reason);
-QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(struct mac_context *mac,
-		uint8_t sessionId, const bool fastRoamEnabled);
 QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(
 		struct mac_context *mac, uint8_t sessionId,
 		uint32_t *input_chan_freq_list,

@@ -109,56 +109,6 @@ void csr_neighbor_roam_send_lfr_metric_event(
 }
 #endif
 
-/**
- * csr_neighbor_roam_update_fast_roaming_enabled() - update roaming capability
- *
- * @mac_ctx: Global MAC context
- * @session_id: Session
- * @fast_roam_enabled: Is fast roaming enabled on this device?
- *                     This capability can be changed dynamically.
- *
- * Return: None
- */
-QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(struct mac_context *mac_ctx,
-						uint8_t session_id,
-						const bool fast_roam_enabled)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo neighbor_roam_info =
-		&mac_ctx->roam.neighborRoamInfo[session_id];
-
-	switch (neighbor_roam_info->neighborRoamState) {
-	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		qdf_status = sme_acquire_global_lock(&mac_ctx->sme);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			break;
-
-		mlme_set_supplicant_disabled_roaming(mac_ctx->psoc, session_id,
-						     !fast_roam_enabled);
-		if (fast_roam_enabled) {
-			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
-						  WLAN_ROAM_RSO_ENABLED,
-						  REASON_CONNECT);
-		} else {
-			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
-					WLAN_ROAM_RSO_STOPPED,
-					REASON_SUPPLICANT_DISABLED_ROAMING);
-		}
-		sme_release_global_lock(&mac_ctx->sme);
-		break;
-	case eCSR_NEIGHBOR_ROAM_STATE_INIT:
-		sme_debug("Currently in INIT state, Nothing to do");
-		break;
-	default:
-		sme_err("Unexpected state %s, returning failure",
-			    mac_trace_get_neighbour_roam_state
-			    (neighbor_roam_info->neighborRoamState));
-		qdf_status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	return qdf_status;
-}
-
 QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 		uint8_t session_id, uint8_t value, uint8_t reason)
 {

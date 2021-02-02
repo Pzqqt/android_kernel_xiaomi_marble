@@ -13607,8 +13607,6 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	struct set_context_rsp install_key_rsp;
 	struct csr_roam_session *session;
 	int32_t rsn_cap;
-	struct mlme_legacy_priv *mlme_priv;
-	bool is_wps = false;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -13636,16 +13634,14 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 
 		return QDF_STATUS_SUCCESS;
 	}
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (mlme_priv)
-		is_wps = mlme_priv->connect_info.is_wps;
+
 	/*
 	 * For open mode authentication, send dummy install key response to
 	 * send OBSS scan and QOS event.
 	 */
 	ucast_cipher = wlan_crypto_get_param(vdev,
 					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!is_wps && (!ucast_cipher ||
+	if (!rsp->is_wps_connection && (!ucast_cipher ||
 	    (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_NONE)) == ucast_cipher)) {
 		install_key_rsp.length = sizeof(install_key_rsp);
 		install_key_rsp.status_code = eSIR_SME_SUCCESS;
@@ -13663,7 +13659,8 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 
 	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED, vdev_id);
 
-	if (!is_wps && (csr_cm_is_fils_connection(rsp) || !ucast_cipher ||
+	if (!rsp->is_wps_connection &&
+	    (csr_cm_is_fils_connection(rsp) || !ucast_cipher ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
 			  ucast_cipher ||
 	    QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_WEP_40) ||
