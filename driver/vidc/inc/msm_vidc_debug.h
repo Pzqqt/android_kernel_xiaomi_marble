@@ -9,9 +9,6 @@
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/types.h>
-#include <linux/time.h>
-
-void do_gettimeofday(struct timeval *__ddl_tv);
 
 #ifndef VIDC_DBG_LABEL
 #define VIDC_DBG_LABEL "msm_vidc"
