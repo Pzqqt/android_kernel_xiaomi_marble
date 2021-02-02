@@ -416,6 +416,8 @@ ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
 	uint16_t frxseq, rxseq, seq;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
+	void *rx_desc;
+	uint8_t index;
 
 	seq = seq_num & peer->tids_rx_reorder[tid].win_sz_mask;
 	qdf_assert(seq == 0);
@@ -428,6 +430,28 @@ ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 	fragno = qdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) &
 		IEEE80211_SEQ_FRAG_MASK;
 	more_frag = mac_hdr->i_fc[1] & IEEE80211_FC1_MORE_FRAG;
+
+	rx_desc = htt_rx_msdu_desc_retrieve(htt_pdev, frag);
+	qdf_assert(htt_rx_msdu_has_wlan_mcast_flag(htt_pdev, rx_desc));
+	index = htt_rx_msdu_is_wlan_mcast(htt_pdev, rx_desc) ?
+		txrx_sec_mcast : txrx_sec_ucast;
+
+	/*
+	 * Multicast/Broadcast frames should not be fragmented so drop
+	 * such frames.
+	 */
+	if (index != txrx_sec_ucast) {
+		ol_rx_frames_free(htt_pdev, frag);
+		return;
+	}
+
+	if (peer->security[index].sec_type != htt_sec_type_none &&
+	    !htt_rx_mpdu_is_encrypted(htt_pdev, rx_desc)) {
+		ol_txrx_err("Unencrypted fragment received in security mode %d",
+			    peer->security[index].sec_type);
+		ol_rx_frames_free(htt_pdev, frag);
+		return;
+	}
 
 	if ((!more_frag) && (!fragno) && (!rx_reorder_array_elem->head)) {
 		rx_reorder_array_elem->head = frag;
