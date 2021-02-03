@@ -1493,6 +1493,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "LOCAL_DATA_UC_DROP";
 	case WOW_REASON_GENERIC_WAKE:
 		return "GENERIC_WAKE";
+	case WOW_REASON_TWT:
+		return "TWT Event";
 	default:
 		return "unknown";
 	}
@@ -1763,6 +1765,7 @@ static bool is_piggybacked_event(int32_t reason)
 	case WOW_REASON_ROAM_HO:
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 	case WOW_REASON_VDEV_DISCONNECT:
+	case WOW_REASON_TWT:
 		return true;
 	default:
 		return false;
