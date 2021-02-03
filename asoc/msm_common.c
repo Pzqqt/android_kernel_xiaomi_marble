@@ -40,6 +40,8 @@ struct snd_card_pdata {
 #define BUF_SZ 32
 #define DIR_SZ 10
 
+#define MAX_CODEC_DAI 8
+
 static struct attribute device_state_attr = {
 	.name = "state",
 	.mode = 0660,
@@ -60,7 +62,8 @@ enum backend_id {
 
 struct chmap_pdata {
 	int id;
-	struct snd_soc_dai *dai;
+	uint32_t num_codec_dai;
+	struct snd_soc_dai *dai[MAX_CODEC_DAI];
 };
 
 #define MAX_USR_INPUT 10
@@ -378,27 +381,28 @@ int msm_channel_map_get(struct snd_kcontrol *kcontrol,
 	uint32_t rx_ch[MAX_PORT], tx_ch[MAX_PORT];
 	uint32_t rx_ch_cnt = 0, tx_ch_cnt = 0;
 	uint32_t *chmap_data = NULL;
-	int ret = 0, len = 0;
+	int ret = 0, len = 0, i = 0;
 
 	if (kctl_pdata == NULL) {
 		pr_debug("%s: chmap_pdata is not initialized\n", __func__);
 		return -EINVAL;
 	}
 
-        codec_dai = kctl_pdata->dai;
-        backend_id = kctl_pdata->id;
+	codec_dai = kctl_pdata->dai[0];
+	backend_id = kctl_pdata->id;
 
-	ret = snd_soc_dai_get_channel_map(codec_dai,
-			&tx_ch_cnt, tx_ch, &rx_ch_cnt, rx_ch);
-	if (ret || (tx_ch_cnt == 0 && rx_ch_cnt == 0)) {
-		pr_err("%s: get channel map failed for %d\n",
-				__func__, backend_id);
-		return ret;
-	}
 	switch (backend_id) {
 	case SLIM: {
 		uint32_t *chmap;
-		uint32_t ch_cnt, i;
+		uint32_t ch_cnt;
+
+		ret = snd_soc_dai_get_channel_map(codec_dai,
+				&tx_ch_cnt, tx_ch, &rx_ch_cnt, rx_ch);
+		if (ret || (tx_ch_cnt == 0 && rx_ch_cnt == 0)) {
+			pr_debug("%s: got incorrect channel map for backend_id:%d\n",
+				 __func__, backend_id);
+			return ret;
+		}
 
 		if (rx_ch_cnt) {
 			chmap = rx_ch;
@@ -420,6 +424,46 @@ int msm_channel_map_get(struct snd_kcontrol *kcontrol,
 		break;
 	}
 	case CODEC_DMA: {
+		uint32_t cur_rx_ch = 0, cur_tx_ch = 0;
+		uint32_t cur_rx_ch_cnt = 0, cur_tx_ch_cnt = 0;
+
+		for (i = 0; i < kctl_pdata->num_codec_dai; ++i) {
+			codec_dai = kctl_pdata->dai[i];
+			if(!codec_dai) {
+				continue;
+			}
+			cur_rx_ch_cnt = 0;
+			cur_tx_ch_cnt = 0;
+			cur_tx_ch = 0;
+			cur_rx_ch = 0;
+			ret = snd_soc_dai_get_channel_map(codec_dai,
+					&cur_tx_ch_cnt, &cur_tx_ch,
+					&cur_rx_ch_cnt, &cur_rx_ch);
+
+			/* DAIs that not supports get_channel_map should pass */
+			if (ret && (ret != -ENOTSUPP)) {
+				pr_err("%s: get channel map failed for backend_id:%d,"
+					 " ret:%d\n",
+					 __func__, backend_id, ret);
+				return ret;
+			}
+
+			rx_ch_cnt += cur_rx_ch_cnt;
+			tx_ch_cnt += cur_tx_ch_cnt;
+			rx_ch[0] |= cur_rx_ch;
+			tx_ch[0] |= cur_tx_ch;
+		}
+
+		/* reset return value from the loop above */
+		ret = 0;
+		if (rx_ch_cnt == 0 && tx_ch_cnt == 0) {
+			pr_debug("%s: got incorrect channel map for backend_id:%d, ",
+				"RX Channel Count:%d,"
+				"TX Channel Count:%d\n",
+				__func__, backend_id, rx_ch_cnt, tx_ch_cnt);
+			return ret;
+		}
+
 		chmap_data = kzalloc(sizeof(uint32_t) * 2, GFP_KERNEL);
 		if (!chmap_data)
 			return -ENOMEM;
@@ -466,6 +510,7 @@ int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	struct device *dev = rtd->card->dev;
 
 	int ret = 0;
+	int index = 0;
 	const char *mixer_ctl_name = CODEC_CHMAP;
 	char *mixer_str = NULL;
 	char *backend_name = NULL;
@@ -521,12 +566,20 @@ int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 			ret = -EINVAL;
 			goto free_mixer_str;
 		}
-		if (!strncmp(backend_name, "SLIM", strlen("SLIM")))
-			pdata->id = SLIM;
-		else
-			pdata->id = CODEC_DMA;
 
-		pdata->dai = codec_dai;
+		pdata->dai[0] = codec_dai;
+		pdata->num_codec_dai = 1;
+		if (!strncmp(backend_name, "SLIM", strlen("SLIM"))) {
+			pdata->id = SLIM;
+		} else {
+			pdata->id = CODEC_DMA;
+			if (rtd->num_codecs <= MAX_CODEC_DAI) {
+				pdata->num_codec_dai = rtd->num_codecs;
+				for_each_rtd_codec_dais(rtd, index, codec_dai) {
+					pdata->dai[index] = codec_dai;
+				}
+			}
+		}
 		kctl->private_data = pdata;
 free_mixer_str:
 		kfree(backend_name);
