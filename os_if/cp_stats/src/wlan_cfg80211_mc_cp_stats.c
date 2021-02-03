@@ -755,6 +755,8 @@ wlan_cfg80211_mc_twt_get_infra_cp_stats(struct wlan_objmgr_vdev *vdev,
 	out->twt_infra_cp_stats->rx_mpdu_per_sp = twt_event->rx_mpdu_per_sp;
 	out->twt_infra_cp_stats->tx_bytes_per_sp = twt_event->tx_bytes_per_sp;
 	out->twt_infra_cp_stats->rx_bytes_per_sp = twt_event->rx_bytes_per_sp;
+	qdf_mem_copy(&out->twt_infra_cp_stats->peer_macaddr, twt_peer_mac,
+		     QDF_MAC_ADDR_SIZE);
 	osif_request_put(request);
 
 	osif_debug("Exit");

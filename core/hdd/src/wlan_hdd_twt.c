@@ -2473,13 +2473,30 @@ static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 	return ret;
 }
 
-static uint32_t get_session_wake_duration(uint32_t dialog_id)
+static uint32_t get_session_wake_duration(struct hdd_context *hdd_ctx,
+					  uint32_t dialog_id,
+					  struct qdf_mac_addr *peer_macaddr)
 {
+	QDF_STATUS qdf_status;
+	struct wmi_host_twt_session_stats_info params = {0};
+
+	params.dialog_id = dialog_id;
+	qdf_mem_copy(params.peer_mac,
+		     peer_macaddr->bytes,
+		     QDF_MAC_ADDR_SIZE);
+	hdd_debug("Get_params peer mac_addr " QDF_MAC_ADDR_FMT,
+		  QDF_MAC_ADDR_REF(params.peer_mac));
+
+	qdf_status = ucfg_twt_get_peer_session_params(hdd_ctx->psoc, &params);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		return params.wake_dura_us;
+
 	return 0;
 }
 
 /**
  * hdd_twt_pack_get_stats_resp_nlmsg()- Packs and sends twt get stats response
+ * hdd_ctx: pointer to the hdd context
  * @reply_skb: pointer to response skb buffer
  * @params: Ponter to twt session parameter buffer
  * @num_session_stats: number of twt statistics
@@ -2487,13 +2504,14 @@ static uint32_t get_session_wake_duration(uint32_t dialog_id)
  * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
  */
 static QDF_STATUS
-hdd_twt_pack_get_stats_resp_nlmsg(struct sk_buff *reply_skb,
+hdd_twt_pack_get_stats_resp_nlmsg(struct hdd_context *hdd_ctx,
+				  struct sk_buff *reply_skb,
 				  struct twt_infra_cp_stats_event *params,
 				  uint32_t num_session_stats)
 {
 	struct nlattr *config_attr, *nla_params;
 	int i, attr;
-	uint32_t wake_duration;
+	uint32_t duration;
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
@@ -2525,14 +2543,17 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct sk_buff *reply_skb,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		wake_duration = get_session_wake_duration(params[i].dialog_id);
+		duration = get_session_wake_duration(hdd_ctx,
+						     params[i].dialog_id,
+						     &params[i].peer_macaddr);
+
 		attr = QCA_WLAN_VENDOR_ATTR_TWT_STATS_SESSION_WAKE_DURATION;
-		if (nla_put_u32(reply_skb, attr, wake_duration)) {
+		if (nla_put_u32(reply_skb, attr, duration)) {
 			hdd_err("get_params failed to put Wake duration");
 			return QDF_STATUS_E_INVAL;
 		}
-		hdd_debug("%d wake duration %d num sp cycles %d",
-			  params[i].dialog_id, wake_duration,
+		hdd_debug("dialog_id %d wake duration %d num sp cycles %d",
+			  params[i].dialog_id, duration,
 			  params[i].num_sp_cycles);
 
 		attr = QCA_WLAN_VENDOR_ATTR_TWT_STATS_NUM_SP_ITERATIONS;
@@ -2697,6 +2718,7 @@ hdd_twt_request_session_traffic_stats(struct hdd_adapter *adapter,
 	}
 
 	status = hdd_twt_pack_get_stats_resp_nlmsg(
+						adapter->hdd_ctx,
 						reply_skb,
 						event->twt_infra_cp_stats,
 						event->num_twt_infra_cp_stats);
