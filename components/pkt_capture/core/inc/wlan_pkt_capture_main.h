@@ -31,7 +31,7 @@
 #include "wlan_pkt_capture_priv.h"
 #include "wlan_pkt_capture_objmgr.h"
 #include "wlan_objmgr_vdev_obj.h"
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 #include "cdp_txrx_stats_struct.h"
 #endif
 
@@ -201,14 +201,14 @@ void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
 void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq);
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
- * pkt_capture_get_pktcap_mode_lithium - Get packet capture mode
+ * pkt_capture_get_pktcap_mode_v2 - Get packet capture mode
  *
  * Return: enum pkt_capture_mode
  */
 enum pkt_capture_mode
-pkt_capture_get_pktcap_mode_lithium(void);
+pkt_capture_get_pktcap_mode_v2(void);
 
 /**
  * pkt_capture_callback() - callback function for dp wdi events
