@@ -544,15 +544,6 @@ bool wlan_reg_is_world(uint8_t *country);
 enum channel_enum wlan_reg_get_chan_enum(uint8_t chan_num);
 
 /**
- * wlan_reg_get_channel_state() - Get channel state from regulatory
- * @ch: channel number.
- *
- * Return: channel state
- */
-enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
-					      uint8_t ch);
-
-/**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
  * @pdev: The physical dev to program country code or regdomain
  * @ch: channel number.

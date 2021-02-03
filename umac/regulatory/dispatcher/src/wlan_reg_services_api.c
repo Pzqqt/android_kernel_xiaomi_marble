@@ -85,20 +85,6 @@ QDF_STATUS wlan_reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
 }
 
 #ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_get_channel_state() - Get channel state from regulatory
- * @ch: channel number.
- *
- * Return: channel state
- */
-enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
-					      uint8_t ch)
-{
-	/*
-	 * Get channel state from regulatory
-	 */
-	return reg_get_channel_state(pdev, ch);
-}
 
 bool
 wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch)
