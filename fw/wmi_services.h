@@ -522,6 +522,7 @@ typedef  enum  {
     WMI_SERVICE_WAPI_CONCURRENCY_SUPPORTED = 277, /* Indicates FW support for WAPI concurrency */
     WMI_SERVICE_SAP_CONNECTED_D3WOW = 278,  /* Indicates FW support for D3WoW for SAP connected case */
     WMI_SERVICE_GO_CONNECTED_D3WOW = 279,   /* Indicates FW support for D3WoW for P2P GO connected case */
+    WMI_SERVICE_EXT_TPC_REG_SUPPORT = 280, /* Support for new 6G TPC power limits */
 
 
     WMI_MAX_EXT2_SERVICE

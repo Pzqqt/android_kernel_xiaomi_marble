@@ -15533,6 +15533,12 @@ typedef struct {
     A_UINT32 btk[ROAM_OFFLOAD_BTK_BYTES>>2]; /* BTK offload. As this 4 byte aligned, we don't declare it as tlv array */
 } wmi_roam_ese_offload_tlv_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_sae_offload_tlv_param */
+    /* SAE SPMK timeout value in seconds after which FW need to perform SAE full authentication to derive new SPMK */
+    A_UINT32 spmk_timeout;
+} wmi_roam_sae_offload_tlv_param;
+
 typedef enum {
     WMI_BL_REASON_NUD_FAILURE = 1,
     WMI_BL_REASON_STA_KICKOUT,
@@ -29748,6 +29754,7 @@ typedef enum {
     WMI_ROAM_TRIGGER_REASON_STA_KICKOUT = WMI_ROAM_TRIGGER_REASON_MAX,
     WMI_ROAM_TRIGGER_REASON_ESS_RSSI,
     WMI_ROAM_TRIGGER_REASON_WTC_BTM,
+    WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT,
 
     WMI_ROAM_TRIGGER_EXT_REASON_MAX
 } WMI_ROAM_TRIGGER_EXT_REASON_ID;

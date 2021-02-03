@@ -1135,6 +1135,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_link_set_active_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_link_set_active_resp_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_sae_offload_tlv_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2013,7 +2014,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_ese_offload_tlv_param, offload_ese_param, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tlv_buf_len_param, assoc_ie_len_param, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, assoc_ie_buf, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_fils_offload_tlv_param, offload_fils_info_param, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_fils_offload_tlv_param, offload_fils_info_param, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_sae_offload_tlv_param, offload_sae_info_param, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SCAN_MODE);
 
 /* Roam scan Rssi Threshold Cmd */
