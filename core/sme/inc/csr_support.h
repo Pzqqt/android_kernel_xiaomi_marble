@@ -311,8 +311,6 @@ QDF_STATUS csr_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 					      struct bss_description *bss_desc,
 					      tDot11fBeaconIEs **ppIEStruct);
 
-tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId);
-
 QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 		struct bss_description *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);

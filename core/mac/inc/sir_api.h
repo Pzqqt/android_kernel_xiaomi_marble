@@ -3994,7 +3994,7 @@ struct sir_qos_params {
 struct sir_sme_ext_cng_chan_req {
 	uint16_t  message_type; /* eWNI_SME_EXT_CHANGE_CHANNEL */
 	uint16_t  length;
-	uint32_t  new_channel;
+	uint32_t  new_ch_freq;
 	uint8_t   vdev_id;
 };
 

@@ -16182,18 +16182,18 @@ csr_roam_update_add_ies(struct mac_context *mac,
 }
 
 /**
- * csr_send_ext_change_channel()- function to post send ECSA
+ * csr_send_ext_change_freq()- function to post send ECSA
  * action frame to lim.
  * @mac_ctx: pointer to global mac structure
- * @channel: new channel to switch
+ * @ch_freq: new channel freq to switch
  * @session_id: senssion it should be sent on.
  *
  * This function is called to post ECSA frame to lim.
  *
  * Return: success if msg posted to LIM else return failure
  */
-QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx, uint32_t channel,
-					uint8_t session_id)
+QDF_STATUS csr_send_ext_change_freq(struct mac_context *mac_ctx,
+				    qdf_freq_t ch_freq, uint8_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sir_sme_ext_cng_chan_req *msg;
@@ -16204,7 +16204,7 @@ QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx, uint32_t cha
 
 	msg->message_type = eWNI_SME_EXT_CHANGE_CHANNEL;
 	msg->length = sizeof(*msg);
-	msg->new_channel = channel;
+	msg->new_ch_freq = ch_freq;
 	msg->vdev_id = session_id;
 	status = umac_send_mb_message_to_mac(msg);
 	return status;

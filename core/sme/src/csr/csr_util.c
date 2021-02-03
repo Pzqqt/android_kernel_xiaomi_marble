@@ -3127,18 +3127,6 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
 	return (tSirResultCodes) ret;
 }
 
-tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId)
-{
-	tSirScanType scanType = eSIR_PASSIVE_SCAN;
-	enum channel_state channelEnabledType;
-
-	channelEnabledType = wlan_reg_get_channel_state(mac->pdev, chnId);
-	if (CHANNEL_STATE_ENABLE == channelEnabledType)
-		scanType = eSIR_ACTIVE_SCAN;
-
-	return scanType;
-}
-
 enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 {
 	enum bss_type ret;

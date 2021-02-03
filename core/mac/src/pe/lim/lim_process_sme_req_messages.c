@@ -2699,10 +2699,9 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 
 	/* Enable the spectrum management if this is a DFS channel */
 	if (session->country_info_present &&
-	    lim_isconnected_on_dfs_channel(
+	    lim_isconnected_on_dfs_freq(
 			mac_ctx,
-			wlan_reg_freq_to_chan(
-			mac_ctx->pdev, session->curr_op_freq)))
+			session->curr_op_freq))
 		session->spectrumMgtEnabled = true;
 
 	ap_cap_info = (tSirMacCapabilityInfo *)&bss_desc->capabilityInfo;
@@ -4610,9 +4609,8 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	/* Enable the spectrum management if this is a DFS channel */
 	if (session_entry->country_info_present &&
-	    lim_isconnected_on_dfs_channel(
-		mac_ctx, wlan_reg_freq_to_chan(
-		mac_ctx->pdev, session_entry->curr_op_freq)))
+	    lim_isconnected_on_dfs_freq(
+		mac_ctx, session_entry->curr_op_freq))
 		session_entry->spectrumMgtEnabled = true;
 
 	session_entry->limPrevSmeState = session_entry->limSmeState;
@@ -8221,7 +8219,6 @@ static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 	struct sir_sme_ext_cng_chan_req *ext_chng_channel =
 				(struct sir_sme_ext_cng_chan_req *) msg;
 	struct pe_session *session_entry = NULL;
-	uint32_t new_ext_chan_freq;
 
 	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
@@ -8238,11 +8235,9 @@ static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 		pe_err("not an STA/CLI session");
 		return;
 	}
-	new_ext_chan_freq =
-		wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
-					     ext_chng_channel->new_channel);
 	session_entry->gLimChannelSwitch.sec_ch_offset = 0;
-	send_extended_chan_switch_action_frame(mac_ctx, new_ext_chan_freq, 0,
+	send_extended_chan_switch_action_frame(mac_ctx,
+					       ext_chng_channel->new_ch_freq, 0,
 					       session_entry);
 }
 

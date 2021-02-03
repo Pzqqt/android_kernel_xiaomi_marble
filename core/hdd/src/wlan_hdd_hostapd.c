@@ -4865,7 +4865,7 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx)
 {
 	struct hdd_cache_channels *cache_chann;
 	struct wiphy *wiphy;
-	int freq, status, rf_channel;
+	int freq, status;
 	int i;
 	struct ieee80211_channel *wiphy_channel = NULL;
 
@@ -4902,7 +4902,6 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx)
 		wiphy_channel = wlan_hdd_get_wiphy_channel(wiphy, freq);
 		if (!wiphy_channel)
 			continue;
-		rf_channel = wiphy_channel->hw_value;
 		/*
 		 * Restore the orginal states of the channels
 		 * only if we have cached non zero values
@@ -4936,7 +4935,7 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 {
 	struct hdd_cache_channels *cache_chann;
 	struct wiphy *wiphy;
-	int freq, status, rf_channel;
+	int freq, status;
 	int i;
 	struct ieee80211_channel *wiphy_channel = NULL;
 
@@ -4970,15 +4969,14 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 		wiphy_channel = wlan_hdd_get_wiphy_channel(wiphy, freq);
 		if (!wiphy_channel)
 			continue;
-		rf_channel = wiphy_channel->hw_value;
 		/*
 		 * Cache the current states of
 		 * the channels
 		 */
 		cache_chann->channel_info[i].reg_status =
-					wlan_reg_get_channel_state(
+					wlan_reg_get_channel_state_for_freq(
 							hdd_ctx->pdev,
-							rf_channel);
+							freq);
 		cache_chann->channel_info[i].wiphy_status =
 							wiphy_channel->flags;
 		hdd_debug("Disable channel %d reg_stat %d wiphy_stat 0x%x",
@@ -6441,6 +6439,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	bool srd_channel_allowed, disable_nan = true;
 	enum QDF_OPMODE vdev_opmode;
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS], i;
+	qdf_freq_t chan_freq;
 
 	hdd_enter();
 
@@ -6487,6 +6486,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		hdd_err("Invalid channel");
 		return -EINVAL;
 	}
+	chan_freq = (qdf_freq_t)params->chandef.chan->center_freq;
+
 	chandef = &params->chandef;
 	if ((adapter->device_mode == QDF_SAP_MODE ||
 	     adapter->device_mode == QDF_P2P_GO_MODE) &&
@@ -6537,8 +6538,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
 		struct sap_config *sap_cfg = &adapter->session.ap.sap_config;
 
-		if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
-					hdd_ctx->pdev, channel)) {
+		if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state_for_freq(
+					hdd_ctx->pdev, chan_freq)) {
 			hdd_err("Can't start SAP-DFS (channel=%d)with sub 20 MHz ch wd",
 				channel);
 			return -EINVAL;

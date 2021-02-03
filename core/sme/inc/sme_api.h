@@ -1701,8 +1701,8 @@ QDF_STATUS sme_set_led_flashing(mac_handle_t mac_handle, uint8_t type,
 QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag);
 QDF_STATUS sme_set_mas(uint32_t val);
 QDF_STATUS sme_set_miracast(mac_handle_t mac_handle, uint8_t filter_type);
-QDF_STATUS sme_ext_change_channel(mac_handle_t mac_handle, uint32_t channel,
-				  uint8_t session_id);
+QDF_STATUS sme_ext_change_freq(mac_handle_t mac_handle, qdf_freq_t freq,
+			       uint8_t session_id);
 
 QDF_STATUS sme_configure_stats_avg_factor(mac_handle_t mac_handle,
 					  uint8_t session_id,

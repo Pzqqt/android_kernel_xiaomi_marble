@@ -4819,11 +4819,12 @@ void pe_set_resume_channel(struct mac_context *mac, uint16_t channel,
 	mac->lim.gResumePhyCbState = phyCbState;
 }
 
-bool lim_isconnected_on_dfs_channel(struct mac_context *mac_ctx,
-		uint8_t currentChannel)
+bool lim_isconnected_on_dfs_freq(struct mac_context *mac_ctx,
+				 qdf_freq_t oper_freq)
 {
 	if (CHANNEL_STATE_DFS ==
-	    wlan_reg_get_channel_state(mac_ctx->pdev, currentChannel)) {
+	    wlan_reg_get_channel_state_for_freq(mac_ctx->pdev,
+						oper_freq)) {
 		return true;
 	} else {
 		return false;

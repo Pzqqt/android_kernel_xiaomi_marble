@@ -618,6 +618,7 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 	uint8_t num_channels;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	enum channel_state ch_state;
+	qdf_freq_t ch_freq;
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -644,11 +645,13 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 
 	/* check for NOL, first on will break the loop */
 	for (i = 0; i < num_channels; i++) {
-		ch_state = wlan_reg_get_channel_state(pdev, channels[i]);
+		ch_freq = wlan_reg_legacy_chan_to_freq(pdev, channels[i]);
+
+		ch_state = wlan_reg_get_channel_state_for_freq(pdev, ch_freq);
 		if (CHANNEL_STATE_ENABLE != ch_state &&
 		    CHANNEL_STATE_DFS != ch_state) {
-			sap_err_rl("Invalid ch num=%d, ch state=%d",
-				   channels[i], ch_state);
+			sap_err_rl("Invalid ch num=%d chfreq = %d, ch state=%d",
+				   channels[i], ch_freq, ch_state);
 			return true;
 		}
 	} /* loop for bonded channels */

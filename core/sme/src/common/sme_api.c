@@ -5939,7 +5939,7 @@ sme_update_roam_scan_home_away_time(mac_handle_t mac_handle, uint8_t vdev_id,
 }
 
 /**
- * sme_ext_change_channel()- function to post send ECSA
+ * sme_ext_change_freq()- function to post send ECSA
  * action frame to csr.
  * @mac_handle: Opaque handle to the global MAC context
  * @channel freq: new channel freq to switch
@@ -5949,19 +5949,20 @@ sme_update_roam_scan_home_away_time(mac_handle_t mac_handle, uint8_t vdev_id,
  *
  * Return: success if msg is sent else return failure
  */
-QDF_STATUS sme_ext_change_channel(mac_handle_t mac_handle, uint32_t channel,
-						uint8_t session_id)
+QDF_STATUS sme_ext_change_freq(mac_handle_t mac_handle, qdf_freq_t ch_freq,
+			       uint8_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac_ctx  = MAC_CONTEXT(mac_handle);
 	uint8_t channel_state;
 
-	sme_err("Set Channel: %d", channel);
+	sme_err("Set Channel freq: %d", ch_freq);
+
 	channel_state =
-		wlan_reg_get_channel_state(mac_ctx->pdev, channel);
+		wlan_reg_get_channel_state_for_freq(mac_ctx->pdev, ch_freq);
 
 	if (CHANNEL_STATE_DISABLE == channel_state) {
-		sme_err("Invalid channel: %d", channel);
+		sme_err("Invalid channel freq: %d", ch_freq);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -5969,8 +5970,8 @@ QDF_STATUS sme_ext_change_channel(mac_handle_t mac_handle, uint32_t channel,
 
 	if (QDF_STATUS_SUCCESS == status) {
 		/* update the channel list to the firmware */
-		status = csr_send_ext_change_channel(mac_ctx,
-						channel, session_id);
+		status = csr_send_ext_change_freq(mac_ctx,
+						  ch_freq, session_id);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 

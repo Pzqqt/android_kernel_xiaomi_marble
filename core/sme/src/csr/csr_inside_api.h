@@ -871,8 +871,8 @@ void csr_store_sae_single_pmk_to_global_cache(struct mac_context *mac,
 {}
 #endif
 
-QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx,
-				uint32_t channel, uint8_t session_id);
+QDF_STATUS csr_send_ext_change_freq(struct mac_context *mac_ctx,
+				    qdf_freq_t ch_freq, uint8_t session_id);
 
 /**
  * csr_csa_start() - request CSA IE transmission from PE

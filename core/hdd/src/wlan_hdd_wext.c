@@ -4664,6 +4664,7 @@ static int hdd_we_start_fw_profile(struct hdd_adapter *adapter, int value)
 static int hdd_we_set_channel(struct hdd_adapter *adapter, int channel)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	qdf_freq_t ch_freq;
 	QDF_STATUS status;
 
 	hdd_debug("Set Channel %d Session ID %d mode %d", channel,
@@ -4682,9 +4683,10 @@ static int hdd_we_set_channel(struct hdd_adapter *adapter, int channel)
 			adapter->device_mode);
 		return -EINVAL;
 	}
-
-	status = sme_ext_change_channel(hdd_ctx->mac_handle, channel,
-					adapter->vdev_id);
+	ch_freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+					       channel);
+	status = sme_ext_change_freq(hdd_ctx->mac_handle, ch_freq,
+				     adapter->vdev_id);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Error in change channel status %d", status);
 

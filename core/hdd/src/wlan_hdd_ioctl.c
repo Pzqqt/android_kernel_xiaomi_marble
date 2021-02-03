@@ -5656,6 +5656,7 @@ static int drv_cmd_tdls_off_channel(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	int channel;
 	enum channel_state reg_state;
+	qdf_freq_t ch_freq;
 
 	/* Move pointer to point the string */
 	value += command_len;
@@ -5663,7 +5664,10 @@ static int drv_cmd_tdls_off_channel(struct hdd_adapter *adapter,
 	ret = sscanf(value, "%d", &channel);
 	if (ret != 1)
 		return -EINVAL;
-	reg_state = wlan_reg_get_channel_state(hdd_ctx->pdev, channel);
+
+	ch_freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, channel);
+	reg_state = wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev,
+							ch_freq);
 
 	if (reg_state == CHANNEL_STATE_DFS ||
 		reg_state == CHANNEL_STATE_DISABLE ||
