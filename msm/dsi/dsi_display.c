@@ -6609,11 +6609,9 @@ int dsi_display_get_info(struct drm_connector *connector,
 	info->height_mm = phy_props.panel_height_mm;
 	info->max_width = 1920;
 	info->max_height = 1080;
-	info->qsync_min_fps =
-		display->panel->qsync_caps.qsync_min_fps;
-	info->has_qsync_min_fps_list =
-		(display->panel->qsync_caps.qsync_min_fps_list_len > 0) ?
-		true : false;
+	info->qsync_min_fps = display->panel->qsync_caps.qsync_min_fps;
+	info->has_qsync_min_fps_list = (display->panel->qsync_caps.qsync_min_fps_list_len > 0);
+	info->has_avr_step_req = (display->panel->avr_caps.avr_step_fps_list_len > 0);
 	info->poms_align_vsync = display->panel->poms_align_vsync;
 
 	switch (display->panel->panel_mode) {
@@ -7080,6 +7078,31 @@ int dsi_display_get_qsync_min_fps(void *display_dsi, u32 mode_fps)
 	return -EINVAL;
 }
 
+int dsi_display_get_avr_step_req_fps(void *display_dsi, u32 mode_fps)
+{
+	struct dsi_display *display = (struct dsi_display *)display_dsi;
+	struct dsi_panel *panel;
+	u32 i, step = 0;
+
+	if (!display || !display->panel)
+		return -EINVAL;
+
+	panel = display->panel;
+
+	/* support a single fixed rate, or rate corresponding to dfps list entry */
+	if (panel->avr_caps.avr_step_fps_list_len == 1) {
+		step = panel->avr_caps.avr_step_fps_list[0];
+	} else if (panel->avr_caps.avr_step_fps_list_len > 1) {
+		for (i = 0; i < panel->dfps_caps.dfps_list_len; i++) {
+			if (panel->dfps_caps.dfps_list[i] == mode_fps)
+				step = panel->avr_caps.avr_step_fps_list[i];
+		}
+	}
+
+	DSI_DEBUG("mode_fps %u, avr_step fps %u\n", mode_fps, step);
+	return step;
+}
+
 static bool dsi_display_match_timings(const struct dsi_display_mode *mode1,
 		struct dsi_display_mode *mode2)
 {
@@ -7094,7 +7117,6 @@ static bool dsi_display_match_timings(const struct dsi_display_mode *mode1,
 		mode1->timing.v_front_porch == mode2->timing.v_front_porch &&
 		mode1->timing.refresh_rate == mode2->timing.refresh_rate;
 }
-
 
 static bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
 		struct dsi_display_mode *mode2, unsigned int match_flags)

@@ -1239,6 +1239,38 @@ error:
 	return rc;
 }
 
+static int dsi_panel_parse_avr_caps(struct dsi_panel *panel,
+				     struct device_node *of_node)
+{
+	struct dsi_avr_capabilities *avr_caps = &panel->avr_caps;
+	struct dsi_parser_utils *utils = &panel->utils;
+	int val, rc = 0;
+
+	val = utils->count_u32_elems(utils->data, "qcom,dsi-qsync-avr-step-list");
+	if (val <= 0) {
+		DSI_DEBUG("[%s] optional avr step list not defined, val:%d\n", panel->name, val);
+		return rc;
+	} else if (val > 1 && val != panel->dfps_caps.dfps_list_len) {
+		DSI_ERR("[%s] avr step list size %d not same as dfps list %d\n",
+				val, panel->dfps_caps.dfps_list_len);
+		return -EINVAL;
+	}
+
+	avr_caps->avr_step_fps_list = kcalloc(val, sizeof(u32), GFP_KERNEL);
+	if (!avr_caps->avr_step_fps_list)
+		return -ENOMEM;
+
+	rc = utils->read_u32_array(utils->data, "qcom,dsi-qsync-avr-step-list",
+			avr_caps->avr_step_fps_list, val);
+	if (rc) {
+		kfree(avr_caps->avr_step_fps_list);
+		return rc;
+	}
+
+	avr_caps->avr_step_fps_list_len = val;
+	return rc;
+}
+
 static int dsi_panel_parse_qsync_caps(struct dsi_panel *panel,
 				     struct device_node *of_node)
 {
@@ -3509,6 +3541,10 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (rc)
 		DSI_DEBUG("failed to parse qsync features, rc=%d\n", rc);
 
+	rc = dsi_panel_parse_avr_caps(panel, of_node);
+	if (rc)
+		DSI_ERR("failed to parse AVR features, rc=%d\n", rc);
+
 	rc = dsi_panel_parse_dyn_clk_caps(panel);
 	if (rc)
 		DSI_ERR("failed to parse dynamic clk config, rc=%d\n", rc);
@@ -3594,6 +3630,7 @@ void dsi_panel_put(struct dsi_panel *panel)
 	/* free resources allocated for ESD check */
 	dsi_panel_esd_config_deinit(&panel->esd_config);
 
+	kfree(panel->avr_caps.avr_step_fps_list);
 	kfree(panel);
 }
 

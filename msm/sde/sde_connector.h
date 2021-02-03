@@ -389,6 +389,14 @@ struct sde_connector_ops {
 	 * Returns: Qsync min fps value on success
 	 */
 	int (*get_qsync_min_fps)(void *display, u32 mode_fps);
+
+	/**
+	 * get_avr_step_req - Get the required avr_step for given fps rate
+	 * @display: Pointer to private display structure
+	 * @mode_fps: Fps value in dfps list
+	 * Returns: AVR step fps value on success
+	 */
+	int (*get_avr_step_req)(void *display, u32 mode_fps);
 };
 
 /**

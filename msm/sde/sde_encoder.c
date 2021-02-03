@@ -1042,9 +1042,28 @@ static void _sde_encoder_get_qsync_fps_callback(
 static int _sde_encoder_avr_step_check(struct sde_connector *sde_conn,
 		struct sde_connector_state *sde_conn_state, u32 step)
 {
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(sde_conn_state->base.best_encoder);
 	u32 nom_fps = drm_mode_vrefresh(sde_conn_state->msm_mode.base);
-	u32 min_fps;
+	u32 min_fps, req_fps = 0;
 	u32 vtotal = sde_conn_state->msm_mode.base->vtotal;
+	bool has_panel_req = sde_enc->disp_info.has_avr_step_req;
+	u32 qsync_mode = sde_connector_get_property(&sde_conn_state->base,
+			CONNECTOR_PROP_QSYNC_MODE);
+
+	if (has_panel_req) {
+		if (!sde_conn->ops.get_avr_step_req) {
+			SDE_ERROR("unable to retrieve required step rate\n");
+			return -EINVAL;
+		}
+
+		req_fps = sde_conn->ops.get_avr_step_req(sde_conn->display, nom_fps);
+		/* when qsync is enabled, the step fps *must* be set to the panel requirement */
+		if (qsync_mode && req_fps != step) {
+			SDE_ERROR("invalid avr_step %u, panel requires %u at nominal %u fps\n",
+					step, req_fps, nom_fps);
+			return -EINVAL;
+		}
+	}
 
 	if (!step)
 		return 0;

@@ -1748,6 +1748,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.set_allowed_mode_switch = dsi_conn_set_allowed_mode_switch,
 		.set_dyn_bit_clk = dsi_conn_set_dyn_bit_clk,
 		.get_qsync_min_fps = dsi_display_get_qsync_min_fps,
+		.get_avr_step_req = dsi_display_get_avr_step_req_fps,
 		.prepare_commit = dsi_conn_prepare_commit,
 	};
 	static const struct sde_connector_ops wb_ops = {

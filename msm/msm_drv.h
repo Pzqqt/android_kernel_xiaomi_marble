@@ -767,6 +767,7 @@ struct msm_resource_caps_info {
  * @roi_caps:           Region of interest capability info
  * @qsync_min_fps	Minimum fps supported by Qsync feature
  * @has_qsync_min_fps_list True if dsi-supported-qsync-min-fps-list exits
+ * @has_avr_step_req    Panel has defined requirement for AVR steps
  * @te_source		vsync source pin information
  * @dsc_count:		max dsc hw blocks used by display (only available
  *			for dsi display)
@@ -796,6 +797,7 @@ struct msm_display_info {
 
 	uint32_t qsync_min_fps;
 	bool has_qsync_min_fps_list;
+	bool has_avr_step_req;
 
 	uint32_t te_source;
 
