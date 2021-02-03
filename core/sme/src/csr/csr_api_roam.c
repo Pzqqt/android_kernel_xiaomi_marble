@@ -17426,6 +17426,11 @@ csr_check_and_set_sae_single_pmk_cap(struct mac_context *mac_ctx,
 			qdf_mem_copy(pmk_info->pmk, pmkid_cache->pmk,
 				     pmkid_cache->pmk_len);
 			pmk_info->pmk_len = pmkid_cache->pmk_len;
+			pmk_info->spmk_timestamp = pmkid_cache->pmk_ts;
+			pmk_info->spmk_timeout_period  =
+				(pmkid_cache->pmk_lifetime *
+				 pmkid_cache->pmk_lifetime_threshold / 100);
+
 			wlan_mlme_update_sae_single_pmk(vdev, pmk_info);
 
 			qdf_mem_zero(pmk_info, sizeof(*pmk_info));

@@ -594,6 +594,9 @@ typedef struct tagPmkidCacheInfo {
 	uint8_t ssid_len;
 	uint8_t ssid[WLAN_SSID_MAX_LEN];
 	uint8_t cache_id[CACHE_ID_LEN];
+	uint32_t   pmk_lifetime;
+	uint8_t    pmk_lifetime_threshold;
+	qdf_time_t pmk_ts;
 } tPmkidCacheInfo;
 
 #ifdef FEATURE_WLAN_WAPI

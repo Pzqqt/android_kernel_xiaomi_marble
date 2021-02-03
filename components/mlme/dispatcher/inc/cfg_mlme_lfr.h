@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2455,7 +2455,8 @@
  * ROAM_TRIGGER_REASON_STA_KICKOUT BIT 15
  * ROAM_TRIGGER_REASON_ESS_RSSI    BIT 16
  * ROAM_TRIGGER_REASON_WTC_BTM     BIT 17
- * ROAM_TRIGGER_REASON_MAX         BIT 18
+ * ROAM_TRIGGER_REASON_PMK_TIMEOUT BIT 18
+ * ROAM_TRIGGER_REASON_MAX         BIT 19
  *
  * Related: none
  *
@@ -2469,7 +2470,7 @@
 			"roam_triggers", \
 			0, \
 			0xFFFFFFFF, \
-			0x3FFFF, \
+			0x7FFFF, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Bitmap of roaming triggers")
 

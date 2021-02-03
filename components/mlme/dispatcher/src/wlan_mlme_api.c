@@ -3699,6 +3699,8 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 		return "WTC BTM";
 	case WMI_ROAM_TRIGGER_REASON_NONE:
 		return "NONE";
+	case WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT:
+		return "PMK Expired";
 	default:
 		return "UNKNOWN";
 	}
@@ -3778,7 +3780,7 @@ void wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_mlme_sae_single_pmk *pmksa)
 {
 	struct mlme_legacy_priv *mlme_priv;
-	struct mlme_pmk_info pmk_info;
+	struct mlme_pmk_info *pmk_info;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
@@ -3786,15 +3788,17 @@ void wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	pmk_info = mlme_priv->mlme_roam.sae_single_pmk.pmk_info;
+	pmk_info = &mlme_priv->mlme_roam.sae_single_pmk.pmk_info;
 
 	pmksa->sae_single_pmk_ap =
 		mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap;
+	pmksa->pmk_info.spmk_timeout_period = pmk_info->spmk_timeout_period;
+	pmksa->pmk_info.spmk_timestamp = pmk_info->spmk_timestamp;
 
-	if (pmk_info.pmk_len) {
-		qdf_mem_copy(pmksa->pmk_info.pmk, pmk_info.pmk,
-			     pmk_info.pmk_len);
-		pmksa->pmk_info.pmk_len = pmk_info.pmk_len;
+	if (pmk_info->pmk_len) {
+		qdf_mem_copy(pmksa->pmk_info.pmk, pmk_info->pmk,
+			     pmk_info->pmk_len);
+		pmksa->pmk_info.pmk_len = pmk_info->pmk_len;
 		return;
 	}
 

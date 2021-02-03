@@ -2533,10 +2533,14 @@ enum pkt_origin {
  * struct mlme_pmk_info - SAE Roaming using single pmk info
  * @pmk: pmk
  * @pmk_len: pmk length
+ * @spmk_timeout_period: Time to generate new SPMK in seconds.
+ * @spmk_timestamp: System timestamp at which the Single PMK entry was added.
  */
 struct mlme_pmk_info {
 	uint8_t pmk[CFG_MAX_PMK_LEN];
 	uint8_t pmk_len;
+	uint16_t spmk_timeout_period;
+	qdf_time_t spmk_timestamp;
 };
 
 /**
