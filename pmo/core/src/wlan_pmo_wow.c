@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -412,6 +412,10 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 				 wow_bitmap_size,
 				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_VDEV_DISCONNECT_EVENT,
+				 wow_bitmap_size,
+				 bitmask);
+
+	pmo_set_wow_event_bitmap(WOW_TWT_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
 }
