@@ -58,7 +58,7 @@ void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
 	if (!inst || !vb2)
 		return;
 
-	s_vpr_e(inst->sid,
+	i_vpr_e(inst,
 		"%s: %s: idx %2d fd %d off %d size %d filled %d\n",
 		str, vb2->type == INPUT_MPLANE ? "INPUT" : "OUTPUT",
 		vb2->index, vb2->planes[0].m.fd,
@@ -258,7 +258,7 @@ int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	} else if (type == OUTPUT_META_PLANE) {
 		port = OUTPUT_META_PORT;
 	} else {
-		s_vpr_e(inst->sid, "%s: port not found for v4l2 type %d\n",
+		i_vpr_e(inst, "%s: port not found for v4l2 type %d\n",
 			func, type);
 		port = -EINVAL;
 	}
@@ -310,7 +310,7 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 		region = MSM_VIDC_SECURE_NONPIXEL;
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
+		i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 	}
 	return region;
@@ -346,7 +346,7 @@ struct msm_vidc_buffers *msm_vidc_get_buffers(
 	case MSM_VIDC_BUF_VPSS:
 		return &inst->buffers.vpss;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
+		i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 		return NULL;
 	}
@@ -382,7 +382,7 @@ struct msm_vidc_mappings *msm_vidc_get_mappings(
 	case MSM_VIDC_BUF_VPSS:
 		return &inst->mappings.vpss;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
+		i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 		return NULL;
 	}
@@ -410,7 +410,7 @@ struct msm_vidc_allocations *msm_vidc_get_allocations(
 	case MSM_VIDC_BUF_VPSS:
 		return &inst->allocations.vpss;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid driver buffer type %d\n",
+		i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
 		return NULL;
 	}
@@ -508,18 +508,18 @@ int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	}
 
 	if (!request_state) {
-		s_vpr_e(inst->sid, "%s: invalid request state\n", func);
+		i_vpr_e(inst, "%s: invalid request state\n", func);
 		return -EINVAL;
 	}
 
 	if (inst->state == MSM_VIDC_ERROR) {
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: inst is in bad state, can not change state to %s\n",
 			func, state_name(request_state));
 		return 0;
 	}
 
-	s_vpr_h(inst->sid, "%s: state changed from %s to %s\n",
+	i_vpr_h(inst, "%s: state changed from %s to %s\n",
 		   func, state_name(inst->state), state_name(request_state));
 	inst->state = request_state;
 	return 0;
@@ -552,7 +552,7 @@ bool msm_vidc_allow_s_fmt(struct msm_vidc_inst *inst, u32 type)
 
 exit:
 	if (!allow)
-		s_vpr_e(inst->sid, "%s: type %d not allowed in state %s\n",
+		i_vpr_e(inst, "%s: type %d not allowed in state %s\n",
 				__func__, type, state_name(inst->state));
 	return allow;
 }
@@ -617,7 +617,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 
 exit:
 	if (!allow)
-		s_vpr_e(inst->sid, "%s: id %d not allowed in state %s\n",
+		i_vpr_e(inst, "%s: id %d not allowed in state %s\n",
 			__func__, id, state_name(inst->state));
 	return allow;
 }
@@ -649,7 +649,7 @@ bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type)
 
 exit:
 	if (!allow)
-		s_vpr_e(inst->sid, "%s: type %d not allowed in state %s\n",
+		i_vpr_e(inst, "%s: type %d not allowed in state %s\n",
 				__func__, type, state_name(inst->state));
 	return allow;
 }
@@ -669,10 +669,10 @@ enum msm_vidc_allow msm_vidc_allow_stop(struct msm_vidc_inst *inst)
 		allow = MSM_VIDC_ALLOW;
 	} else if (inst->state == MSM_VIDC_START_INPUT) {
 		allow = MSM_VIDC_IGNORE;
-		s_vpr_e(inst->sid, "%s: stop ignored in state %s\n",
+		i_vpr_e(inst, "%s: stop ignored in state %s\n",
 			__func__, state_name(inst->state));
 	} else {
-		s_vpr_e(inst->sid, "%s: stop not allowed in state %s\n",
+		i_vpr_e(inst, "%s: stop not allowed in state %s\n",
 			__func__, state_name(inst->state));
 	}
 
@@ -690,7 +690,7 @@ bool msm_vidc_allow_start(struct msm_vidc_inst *inst)
 		inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG)
 		return true;
 
-	s_vpr_e(inst->sid, "%s: not allowed in state %s\n",
+	i_vpr_e(inst, "%s: not allowed in state %s\n",
 			__func__, state_name(inst->state));
 	return false;
 }
@@ -712,7 +712,7 @@ bool msm_vidc_allow_streamon(struct msm_vidc_inst *inst, u32 type)
 			return true;
 	}
 
-	s_vpr_e(inst->sid, "%s: type %d not allowed in state %s\n",
+	i_vpr_e(inst, "%s: type %d not allowed in state %s\n",
 			__func__, type, state_name(inst->state));
 	return false;
 }
@@ -741,7 +741,7 @@ bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type)
 			allow = false;
 	}
 	if (!allow)
-		s_vpr_e(inst->sid, "%s: type %d not allowed in state %s\n",
+		i_vpr_e(inst, "%s: type %d not allowed in state %s\n",
 				__func__, type, state_name(inst->state));
 
 	return allow;
@@ -754,7 +754,7 @@ bool msm_vidc_allow_qbuf(struct msm_vidc_inst *inst)
 		return false;
 	}
 	if (inst->state == MSM_VIDC_ERROR) {
-		s_vpr_e(inst->sid, "%s: inst in error state\n", __func__);
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
 		return false;
 	} else {
 		return true;
@@ -778,11 +778,11 @@ enum msm_vidc_allow msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
 		inst->state == MSM_VIDC_DRC_DRAIN ||
 		inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG ||
 		inst->state == MSM_VIDC_DRAIN_START_INPUT) {
-		s_vpr_h(inst->sid, "%s: defer input psc, inst state %s\n",
+		i_vpr_h(inst, "%s: defer input psc, inst state %s\n",
 				__func__, state_name(inst->state));
 		allow = MSM_VIDC_DEFER;
 	} else {
-		s_vpr_e(inst->sid, "%s: input psc in wrong state %s\n",
+		i_vpr_e(inst, "%s: input psc in wrong state %s\n",
 				__func__, state_name(inst->state));
 		allow = MSM_VIDC_DISALLOW;
 	}
@@ -801,7 +801,7 @@ bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst)
 		inst->state == MSM_VIDC_DRC_DRAIN)
 		return true;
 
-	s_vpr_e(inst->sid, "%s: not allowed in state %s\n",
+	i_vpr_e(inst, "%s: not allowed in state %s\n",
 			__func__, state_name(inst->state));
 	return false;
 }
@@ -831,7 +831,7 @@ int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 		} else if (inst->state == MSM_VIDC_START_INPUT) {
 			new_state = MSM_VIDC_START;
 		} else if (inst->state == MSM_VIDC_DRAIN_START_INPUT) {
-			s_vpr_h(inst->sid,
+			i_vpr_h(inst,
 				"%s: streamon(output) in DRAIN_START_INPUT state\n",
 				__func__);
 			new_state = MSM_VIDC_DRAIN;
@@ -839,12 +839,12 @@ int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 				resp_work = list_first_entry(&inst->response_works,
 							struct response_work, list);
 				if (resp_work->type == RESP_WORK_INPUT_PSC) {
-					s_vpr_h(inst->sid,
+					i_vpr_h(inst,
 						"%s: streamon(output) in DRAIN_START_INPUT state, input psc pending\n",
 						__func__);
 					rc = handle_session_response_work(inst, resp_work);
 					if (rc) {
-						s_vpr_e(inst->sid,
+						i_vpr_e(inst,
 							"%s: handle input psc failed\n", __func__);
 						new_state = MSM_VIDC_ERROR;
 					} else {
@@ -895,7 +895,7 @@ int msm_vidc_state_change_streamoff(struct msm_vidc_inst *inst, u32 type)
 			list_for_each_entry_safe(resp_work, dummy,
 						&inst->response_works, list) {
 				if (resp_work->type == RESP_WORK_INPUT_PSC) {
-					s_vpr_h(inst->sid,
+					i_vpr_h(inst,
 						"%s: discard pending input psc\n", __func__);
 					list_del(&resp_work->list);
 					kfree(resp_work->data);
@@ -943,7 +943,7 @@ int msm_vidc_state_change_stop(struct msm_vidc_inst *inst)
 			   inst->state == MSM_VIDC_DRC_LAST_FLAG) {
 		new_state = MSM_VIDC_DRC_DRAIN_LAST_FLAG;
 	} else {
-		s_vpr_e(inst->sid, "%s: wrong state %s\n",
+		i_vpr_e(inst, "%s: wrong state %s\n",
 			__func__, state_name(inst->state));
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return -EINVAL;
@@ -973,12 +973,12 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 			resp_work = list_first_entry(&inst->response_works,
 				struct response_work, list);
 			if (resp_work->type == RESP_WORK_INPUT_PSC) {
-				s_vpr_h(inst->sid,
+				i_vpr_h(inst,
 					"%s: start in DRC(DRAIN)_LAST_FLAG state, input psc pending\n",
 					__func__);
 				rc = handle_session_response_work(inst, resp_work);
 				if (rc) {
-					s_vpr_e(inst->sid,
+					i_vpr_e(inst,
 						"%s: handle input psc failed\n", __func__);
 					new_state = MSM_VIDC_ERROR;
 				} else {
@@ -995,11 +995,11 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 			resp_work = list_first_entry(&inst->response_works,
 				struct response_work, list);
 			if (resp_work->type == RESP_WORK_INPUT_PSC) {
-				s_vpr_h(inst->sid,
+				i_vpr_h(inst,
 					"%s: start in DRC_DRAIN_LAST_FLAG state, input psc pending\n");
 				rc = handle_session_response_work(inst, resp_work);
 				if (rc) {
-					s_vpr_e(inst->sid,
+					i_vpr_e(inst,
 						"%s: handle input psc failed\n", __func__);
 					new_state = MSM_VIDC_ERROR;
 				} else {
@@ -1011,7 +1011,7 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 			}
 		}
 	} else {
-		s_vpr_e(inst->sid, "%s: wrong state %s\n",
+		i_vpr_e(inst, "%s: wrong state %s\n",
 			__func__, state_name(inst->state));
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return -EINVAL;
@@ -1041,7 +1041,7 @@ int msm_vidc_state_change_input_psc(struct msm_vidc_inst *inst)
 	} else if (inst->state == MSM_VIDC_DRAIN) {
 		new_state = MSM_VIDC_DRC_DRAIN;
 	} else {
-		s_vpr_e(inst->sid, "%s: wrong state %s\n",
+		i_vpr_e(inst, "%s: wrong state %s\n",
 				__func__, state_name(inst->state));
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return -EINVAL;
@@ -1069,7 +1069,7 @@ int msm_vidc_state_change_last_flag(struct msm_vidc_inst *inst)
 	} else if (inst->state == MSM_VIDC_DRC_DRAIN) {
 		new_state = MSM_VIDC_DRC_DRAIN_LAST_FLAG;
 	} else {
-		s_vpr_e(inst->sid, "%s: wrong state %s\n",
+		i_vpr_e(inst, "%s: wrong state %s\n",
 				__func__, state_name(inst->state));
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return -EINVAL;
@@ -1094,12 +1094,12 @@ int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 	case V4L2_CID_MIN_BUFFERS_FOR_CAPTURE:
 		ctrl->val = inst->buffers.output.min_count +
 			inst->buffers.output.extra_count;
-		s_vpr_h(inst->sid, "g_min: output buffers %d\n", ctrl->val);
+		i_vpr_h(inst, "g_min: output buffers %d\n", ctrl->val);
 		break;
 	case V4L2_CID_MIN_BUFFERS_FOR_OUTPUT:
 		ctrl->val = inst->buffers.input.min_count +
 			inst->buffers.input.extra_count;
-		s_vpr_h(inst->sid, "g_min: input buffers %d\n", ctrl->val);
+		i_vpr_h(inst, "g_min: input buffers %d\n", ctrl->val);
 		break;
 	default:
 		break;
@@ -1162,7 +1162,7 @@ int msm_vidc_num_buffers(struct msm_vidc_inst *inst,
 	} else if (type == MSM_VIDC_BUF_INPUT) {
 		buffers = &inst->buffers.input;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid buffer type %#x\n",
+		i_vpr_e(inst, "%s: invalid buffer type %#x\n",
 				__func__, type);
 		return count;
 	}
@@ -1305,7 +1305,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 	}
 	map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
 	if (!map) {
-		s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
+		i_vpr_e(inst, "%s: alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 	INIT_LIST_HEAD(&map->list);
@@ -1379,7 +1379,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	} else {
 		buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
 		if (!buf) {
-			s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
+			i_vpr_e(inst, "%s: alloc failed\n", __func__);
 			goto error;
 		}
 		INIT_LIST_HEAD(&buf->list);
@@ -1422,7 +1422,7 @@ struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 	} else if (buf->type == MSM_VIDC_BUF_OUTPUT) {
 		buffers = &inst->buffers.output_meta;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+		i_vpr_e(inst, "%s: invalid buffer type %d\n",
 			__func__, buf->type);
 		return NULL;
 	}
@@ -1529,12 +1529,12 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	}
 
 	if (!is_internal_buffer(buffer->type)) {
-		s_vpr_e(inst->sid, "%s: buffer type %#x is not internal\n",
+		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
 			__func__, buffer->type);
 		return 0;
 	}
 
-	s_vpr_h(inst->sid,
+	i_vpr_h(inst,
 		"%s: destroy buffer_type %#x, size %d device_addr %#x\n",
 		__func__, buffer->type, buffer->buffer_size,
 		buffer->device_addr);
@@ -1629,7 +1629,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	if (!is_internal_buffer(buffer_type)) {
-		s_vpr_e(inst->sid, "%s: buffer type %#x is not internal\n",
+		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
 			__func__, buffer_type);
 		return 0;
 	}
@@ -1645,13 +1645,13 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (!buffers->size) {
-		s_vpr_e(inst->sid, "%s: invalid buffer %#x\n",
+		i_vpr_e(inst, "%s: invalid buffer %#x\n",
 			__func__, buffer_type);
 		return -EINVAL;
 	}
 	buffer = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
 	if (!buffer) {
-		s_vpr_e(inst->sid, "%s: buf alloc failed\n", __func__);
+		i_vpr_e(inst, "%s: buf alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 	INIT_LIST_HEAD(&buffer->list);
@@ -1663,7 +1663,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 
 	alloc = kzalloc(sizeof(struct msm_vidc_alloc), GFP_KERNEL);
 	if (!alloc) {
-		s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
+		i_vpr_e(inst, "%s: alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 	INIT_LIST_HEAD(&alloc->list);
@@ -1679,7 +1679,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 
 	map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
 	if (!map) {
-		s_vpr_e(inst->sid, "%s: map alloc failed\n", __func__);
+		i_vpr_e(inst, "%s: map alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 	INIT_LIST_HEAD(&map->list);
@@ -1693,7 +1693,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 
 	buffer->dmabuf = alloc->dmabuf;
 	buffer->device_addr = map->device_addr;
-	s_vpr_h(inst->sid,
+	i_vpr_h(inst,
 		"%s: created buffer_type %#x, size %d device_addr %#x\n",
 		__func__, buffer_type, buffers->size,
 		buffer->device_addr);
@@ -1718,7 +1718,7 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (buffers->reuse) {
-		s_vpr_l(inst->sid, "%s: reuse enabled for buffer type %#x\n",
+		i_vpr_l(inst, "%s: reuse enabled for buffer type %#x\n",
 			__func__, buffer_type);
 		return 0;
 	}
@@ -1744,7 +1744,7 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	if (!is_internal_buffer(buffer_type)) {
-		s_vpr_e(inst->sid, "%s: buffer type %#x is not internal\n",
+		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
 			__func__, buffer_type);
 		return 0;
 	}
@@ -1754,7 +1754,7 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (buffers->reuse) {
-		s_vpr_l(inst->sid, "%s: reuse enabled for buffer type %#x\n",
+		i_vpr_l(inst, "%s: reuse enabled for buffer type %#x\n",
 			__func__, buffer_type);
 		return 0;
 	}
@@ -1772,7 +1772,7 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		/* mark queued */
 		buffer->attr |= MSM_VIDC_ATTR_QUEUED;
 
-		s_vpr_h(inst->sid, "%s: queued buffer_type %#x, size %d\n",
+		i_vpr_h(inst, "%s: queued buffer_type %#x, size %d\n",
 			__func__, buffer_type, buffers->size);
 	}
 
@@ -1791,7 +1791,7 @@ int msm_vidc_alloc_and_queue_session_internal_buffers(struct msm_vidc_inst *inst
 
 	if (buffer_type != MSM_VIDC_BUF_ARP &&
 		buffer_type != MSM_VIDC_BUF_PERSIST) {
-		s_vpr_e(inst->sid, "%s: invalid buffer type: %d\n",
+		i_vpr_e(inst, "%s: invalid buffer type: %d\n",
 			__func__, buffer_type);
 		rc = -EINVAL;
 		goto exit;
@@ -1825,7 +1825,7 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	if (!is_internal_buffer(buffer_type)) {
-		s_vpr_e(inst->sid, "%s: buffer type %#x is not internal\n",
+		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
 			__func__, buffer_type);
 		return 0;
 	}
@@ -1835,7 +1835,7 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (buffers->reuse) {
-		s_vpr_l(inst->sid, "%s: reuse enabled for buffer type %#x\n",
+		i_vpr_l(inst, "%s: reuse enabled for buffer type %#x\n",
 			__func__, buffer_type);
 		return 0;
 	}
@@ -1853,7 +1853,7 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		/* mark pending release */
 		buffer->attr |= MSM_VIDC_ATTR_PENDING_RELEASE;
 
-		s_vpr_e(inst->sid, "%s: released buffer_type %#x, size %d\n",
+		i_vpr_e(inst, "%s: released buffer_type %#x, size %d\n",
 			__func__, buffer_type, buffers->size);
 	}
 
@@ -1882,7 +1882,7 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 
 	q = &inst->vb2q[port];
 	if (!q->streaming) {
-		s_vpr_e(inst->sid, "%s: port %d is not streaming\n",
+		i_vpr_e(inst, "%s: port %d is not streaming\n",
 			__func__, port);
 		return -EINVAL;
 	}
@@ -1971,7 +1971,7 @@ static int vb2q_init(struct msm_vidc_inst *inst,
 	q->copy_timestamp = 1;
 	rc = vb2_queue_init(q);
 	if (rc)
-		s_vpr_e(inst->sid, "%s: vb2_queue_init failed for type %d\n",
+		i_vpr_e(inst, "%s: vb2_queue_init failed for type %d\n",
 				__func__, type);
 	return rc;
 }
@@ -2094,7 +2094,7 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 	inst->packet_size = 4096;
 	inst->packet = kzalloc(inst->packet_size, GFP_KERNEL);
 	if (!inst->packet) {
-		s_vpr_e(inst->sid, "%s(): inst packet allocation failed\n", __func__);
+		i_vpr_e(inst, "%s(): inst packet allocation failed\n", __func__);
 		return -ENOMEM;
 	}
 
@@ -2104,7 +2104,7 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 
 	return 0;
 error:
-	s_vpr_e(inst->sid, "%s(): session open failed\n", __func__);
+	i_vpr_e(inst, "%s(): session open failed\n", __func__);
 	kfree(inst->packet);
 	inst->packet = NULL;
 	return rc;
@@ -2166,7 +2166,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		signal_type = SIGNAL_CMD_STOP_OUTPUT;
 		buffer_type = MSM_VIDC_BUF_OUTPUT;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid port: %d\n", __func__, port);
+		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
 		return -EINVAL;
 	}
 
@@ -2175,7 +2175,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		goto error;
 
 	core = inst->core;
-	s_vpr_h(inst->sid, "%s: wait on port: %d for time: %d ms\n",
+	i_vpr_h(inst, "%s: wait on port: %d for time: %d ms\n",
 		__func__, port, core->capabilities[HW_RESPONSE_TIMEOUT].value);
 	mutex_unlock(&inst->lock);
 	rc = wait_for_completion_timeout(
@@ -2183,7 +2183,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 			msecs_to_jiffies(
 			core->capabilities[HW_RESPONSE_TIMEOUT].value));
 	if (!rc) {
-		s_vpr_e(inst->sid, "%s: session stop timed out for port: %d\n",
+		i_vpr_e(inst, "%s: session stop timed out for port: %d\n",
 				__func__, port);
 		rc = -ETIMEDOUT;
 		msm_vidc_core_timeout(inst->core);
@@ -2195,10 +2195,10 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 	/* no more queued buffers after streamoff */
 	count = msm_vidc_num_buffers(inst, buffer_type, MSM_VIDC_ATTR_QUEUED);
 	if (!count) {
-		s_vpr_h(inst->sid, "%s: stop successful on port: %d\n",
+		i_vpr_h(inst, "%s: stop successful on port: %d\n",
 			__func__, port);
 	} else {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: %d buffers pending with firmware on port: %d\n",
 			__func__, count, port);
 		rc = -EINVAL;
@@ -2227,7 +2227,7 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 		return rc;
 
 	core = inst->core;
-	s_vpr_h(inst->sid, "%s: wait on close for time: %d ms\n",
+	i_vpr_h(inst, "%s: wait on close for time: %d ms\n",
 		__func__, core->capabilities[HW_RESPONSE_TIMEOUT].value);
 	mutex_unlock(&inst->lock);
 	rc = wait_for_completion_timeout(
@@ -2235,18 +2235,18 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 			msecs_to_jiffies(
 			core->capabilities[HW_RESPONSE_TIMEOUT].value));
 	if (!rc) {
-		s_vpr_e(inst->sid, "%s: session close timed out\n", __func__);
+		i_vpr_e(inst, "%s: session close timed out\n", __func__);
 		rc = -ETIMEDOUT;
 		msm_vidc_core_timeout(inst->core);
 	} else {
 		rc = 0;
-		s_vpr_h(inst->sid, "%s: close successful\n", __func__);
+		i_vpr_h(inst, "%s: close successful\n", __func__);
 	}
 	mutex_lock(&inst->lock);
 
 	msm_vidc_remove_session(inst);
 
-	s_vpr_h(inst->sid, "%s: free session packet data\n", __func__);
+	i_vpr_h(inst, "%s: free session packet data\n", __func__);
 	kfree(inst->packet);
 	inst->packet = NULL;
 
@@ -2260,11 +2260,11 @@ int msm_vidc_kill_session(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	if (!inst->session_id) {
-		s_vpr_e(inst->sid, "%s: already killed\n", __func__);
+		i_vpr_e(inst, "%s: already killed\n", __func__);
 		return 0;
 	}
 
-	s_vpr_e(inst->sid, "%s: killing session\n", __func__);
+	i_vpr_e(inst, "%s: killing session\n", __func__);
 	msm_vidc_session_close(inst);
 	msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 
@@ -2287,7 +2287,7 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 	for (i = 0; i < core->codecs_count; i++) {
 		if (core->inst_caps[i].domain == inst->domain &&
 			core->inst_caps[i].codec == inst->codec) {
-			s_vpr_h(inst->sid,
+			i_vpr_h(inst,
 				"%s: copied capabilities with %#x codec, %#x domain\n",
 				__func__, inst->codec, inst->domain);
 			memcpy(inst->capabilities, &core->inst_caps[i],
@@ -2295,7 +2295,7 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 		}
 	}
 	if (!inst->capabilities) {
-		s_vpr_e(inst->sid, "%s: capabilities not found\n", __func__);
+		i_vpr_e(inst, "%s: capabilities not found\n", __func__);
 		return -EINVAL;
 	}
 
@@ -2670,7 +2670,7 @@ int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
 		buffer_type[0] = MSM_VIDC_BUF_OUTPUT_META;
 		buffer_type[1] = MSM_VIDC_BUF_OUTPUT;
 	} else {
-		s_vpr_h(inst->sid, "%s: invalid buffer type %d\n",
+		i_vpr_h(inst, "%s: invalid buffer type %d\n",
 				__func__, type);
 		return -EINVAL;
 	}
@@ -2723,7 +2723,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 		if (!buffers)
 			continue;
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
-			s_vpr_h(inst->sid,
+			i_vpr_h(inst,
 				"destroying buffer: type %d idx %d fd %d addr %#x size %d\n",
 				buf->type, buf->index, buf->fd, buf->device_addr, buf->buffer_size);
 			if (is_internal_buffer(buf->type))
@@ -2739,7 +2739,7 @@ static void msm_vidc_close_helper(struct kref *kref)
 	struct msm_vidc_inst *inst = container_of(kref,
 		struct msm_vidc_inst, kref);
 
-	s_vpr_h(inst->sid, "%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 	msm_vidc_event_queue_deinit(inst);
 	msm_vidc_vb2_queue_deinit(inst);
 	msm_vidc_debugfs_deinit_inst(inst);

@@ -65,7 +65,7 @@ u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 			port = OUTPUT_PORT;
 			break;
 		default:
-			s_vpr_e(inst->sid, "%s: invalid hfi port type %d\n",
+			i_vpr_e(inst, "%s: invalid hfi port type %d\n",
 				__func__, hfi_port);
 			break;
 		}
@@ -78,12 +78,12 @@ u32 vidc_port_from_hfi(struct msm_vidc_inst *inst,
 			port = OUTPUT_PORT;
 			break;
 		default:
-			s_vpr_e(inst->sid, "%s: invalid hfi port type %d\n",
+			i_vpr_e(inst, "%s: invalid hfi port type %d\n",
 				__func__, hfi_port);
 			break;
 		}
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid domain %#x\n",
+		i_vpr_e(inst, "%s: invalid domain %#x\n",
 			__func__, inst->domain);
 	}
 
@@ -94,7 +94,7 @@ bool is_valid_hfi_port(struct msm_vidc_inst *inst, u32 port,
 	u32 buffer_type, const char *func)
 {
 	if (!inst) {
-		s_vpr_e(inst->sid, "%s: invalid params\n", func);
+		i_vpr_e(inst, "%s: invalid params\n", func);
 		return false;
 	}
 
@@ -109,7 +109,7 @@ bool is_valid_hfi_port(struct msm_vidc_inst *inst, u32 port,
 	return true;
 
 invalid:
-	s_vpr_e(inst->sid, "%s: invalid port %#x buffer_type %u\n",
+	i_vpr_e(inst, "%s: invalid port %#x buffer_type %u\n",
 			func, port, buffer_type);
 	return false;
 }
@@ -118,7 +118,7 @@ bool is_valid_hfi_buffer_type(struct msm_vidc_inst *inst,
 	u32 buffer_type, const char *func)
 {
 	if (!inst) {
-		s_vpr_e(inst->sid, "%s: invalid params\n", func);
+		i_vpr_e(inst, "%s: invalid params\n", func);
 		return false;
 	}
 
@@ -132,7 +132,7 @@ bool is_valid_hfi_buffer_type(struct msm_vidc_inst *inst,
 	    buffer_type != HFI_BUFFER_LINE &&
 	    buffer_type != HFI_BUFFER_DPB &&
 	    buffer_type != HFI_BUFFER_PERSIST) {
-		s_vpr_e(inst->sid, "%s: invalid buffer type %#x\n",
+		i_vpr_e(inst, "%s: invalid buffer type %#x\n",
 			func, buffer_type);
 		return false;
 	}
@@ -191,7 +191,7 @@ static bool check_last_flag(struct msm_vidc_inst *inst,
 
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
-		s_vpr_h(inst->sid, "%s: received last flag on FBD, index: %d\n",
+		i_vpr_h(inst, "%s: received last flag on FBD, index: %d\n",
 			__func__, buffer->index);
 		return true;
 	}
@@ -217,7 +217,7 @@ static int handle_session_info(struct msm_vidc_inst *inst,
 		break;
 	}
 
-	s_vpr_e(inst->sid, "session info (%#x): %s\n", pkt->type, info);
+	i_vpr_e(inst, "session info (%#x): %s\n", pkt->type, info);
 
 	return rc;
 }
@@ -252,7 +252,7 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 		break;
 	}
 
-	s_vpr_e(inst->sid, "session error (%#x): %s\n", pkt->type, error);
+	i_vpr_e(inst, "session error (%#x): %s\n", pkt->type, error);
 
 	rc = msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	return rc;
@@ -287,13 +287,13 @@ static int handle_session_open(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+		i_vpr_h(inst, "%s: successful\n", __func__);
 
 	return 0;
 }
@@ -302,12 +302,12 @@ static int handle_session_close(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+		i_vpr_h(inst, "%s: successful\n", __func__);
 
 	signal_session_msg_receipt(inst, SIGNAL_CMD_CLOSE);
 	return 0;
@@ -317,13 +317,13 @@ static int handle_session_start(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful for port %d\n",
+		i_vpr_h(inst, "%s: successful for port %d\n",
 			__func__, pkt->port);
 	return 0;
 }
@@ -334,12 +334,12 @@ static int handle_session_stop(struct msm_vidc_inst *inst,
 	int signal_type = -1;
 
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful for port %d\n",
+		i_vpr_h(inst, "%s: successful for port %d\n",
 			__func__, pkt->port);
 
 	if (is_encode_session(inst)) {
@@ -348,7 +348,7 @@ static int handle_session_stop(struct msm_vidc_inst *inst,
 		} else if (pkt->port == HFI_PORT_BITSTREAM) {
 			signal_type = SIGNAL_CMD_STOP_OUTPUT;
 		} else {
-			s_vpr_e(inst->sid, "%s: invalid port: %d\n",
+			i_vpr_e(inst, "%s: invalid port: %d\n",
 				__func__, pkt->port);
 			return -EINVAL;
 		}
@@ -358,12 +358,12 @@ static int handle_session_stop(struct msm_vidc_inst *inst,
 		} else if (pkt->port == HFI_PORT_BITSTREAM) {
 			signal_type = SIGNAL_CMD_STOP_INPUT;
 		} else {
-			s_vpr_e(inst->sid, "%s: invalid port: %d\n",
+			i_vpr_e(inst, "%s: invalid port: %d\n",
 				__func__, pkt->port);
 			return -EINVAL;
 		}
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid session\n", __func__);
+		i_vpr_e(inst, "%s: invalid session\n", __func__);
 		return -EINVAL;
 	}
 
@@ -376,13 +376,13 @@ static int handle_session_drain(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
 }
 
@@ -406,7 +406,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 	if (!found) {
-		s_vpr_e(inst->sid, "%s: buffer not found for idx %d addr %#x\n",
+		i_vpr_e(inst, "%s: buffer not found for idx %d addr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -417,11 +417,11 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	buf->flags = 0;
 	//todo:
 	/*if (buffer->flags & HFI_BUF_FW_FLAG_CORRUPT) {
-		s_vpr_h(inst->sid, "%s: data corrupted\n", __func__);
+		i_vpr_h(inst, "%s: data corrupted\n", __func__);
 		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;
 	}
 	if (buffer->flags & HFI_BUF_FW_FLAG_UNSUPPORTED) {
-		s_vpr_e(inst->sid, "%s: unsupported input\n", __func__);
+		i_vpr_e(inst, "%s: unsupported input\n", __func__);
 		buf->flags |= MSM_VIDC_BUF_FLAG_ERROR;
 		// TODO: move inst->state to error state
 	}*/
@@ -452,7 +452,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 	if (!found) {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -508,7 +508,7 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 	if (!found) {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -543,7 +543,7 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 	if (!found) {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -614,7 +614,7 @@ static int handle_dpb_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -643,7 +643,7 @@ static int handle_persist_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -672,7 +672,7 @@ static int handle_line_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -701,7 +701,7 @@ static int handle_non_comv_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -730,7 +730,7 @@ static int handle_comv_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -759,7 +759,7 @@ static int handle_bin_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -788,7 +788,7 @@ static int handle_arp_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		rc = msm_vidc_destroy_internal_buffer(inst, buf);
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid idx %d daddr %#x\n",
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
@@ -803,7 +803,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 	u32 buf_type = 0, port_type = 0;
 
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
@@ -841,7 +841,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 			else if (buf_type == HFI_BUFFER_DPB)
 				rc = handle_dpb_buffer(inst, buffer);
 			else
-				s_vpr_e(inst->sid, "%s: unknown bitstream port buffer type %#x\n",
+				i_vpr_e(inst, "%s: unknown bitstream port buffer type %#x\n",
 					__func__, buf_type);
 		} else if (port_type == HFI_PORT_RAW) {
 			if (buf_type == HFI_BUFFER_METADATA)
@@ -849,7 +849,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 			else if (buf_type == HFI_BUFFER_RAW)
 				rc = handle_input_buffer(inst, buffer);
 			else
-				s_vpr_e(inst->sid, "%s: unknown raw port buffer type %#x\n",
+				i_vpr_e(inst, "%s: unknown raw port buffer type %#x\n",
 					__func__, buf_type);
 		}
 	} else if (is_decode_session(inst)) {
@@ -869,7 +869,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 			else if (buf_type == HFI_BUFFER_PERSIST)
 				rc = handle_persist_buffer(inst, buffer);
 			else
-				s_vpr_e(inst->sid, "%s: unknown bitstream port buffer type %#x\n",
+				i_vpr_e(inst, "%s: unknown bitstream port buffer type %#x\n",
 					__func__, buf_type);
 		} else if (port_type == HFI_PORT_RAW) {
 			if (buf_type == HFI_BUFFER_METADATA)
@@ -879,11 +879,11 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 			else if (buf_type == HFI_BUFFER_DPB)
 				rc = handle_dpb_buffer(inst, buffer);
 			else
-				s_vpr_e(inst->sid, "%s: unknown raw port buffer type %#x\n",
+				i_vpr_e(inst, "%s: unknown raw port buffer type %#x\n",
 					__func__, buf_type);
 		}
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid session %d\n",
+		i_vpr_e(inst, "%s: invalid session %d\n",
 			__func__, inst->domain);
 		return -EINVAL;
 	}
@@ -894,7 +894,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 static int handle_port_settings_change(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	s_vpr_h(inst->sid, "%s: Received port settings change, type %d\n",
+	i_vpr_h(inst, "%s: Received port settings change, type %d\n",
 		__func__, pkt->port);
 	return 0;
 }
@@ -903,12 +903,12 @@ static int handle_session_subscribe_mode(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
 }
 
@@ -916,12 +916,12 @@ static int handle_session_delivery_mode(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		s_vpr_e(inst->sid, "%s: received session error\n", __func__);
+		i_vpr_e(inst, "%s: received session error\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
-		s_vpr_h(inst->sid, "%s: successful\n", __func__);
+		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
 }
 
@@ -948,7 +948,7 @@ static int handle_session_command(struct msm_vidc_inst *inst,
 	case HFI_CMD_DELIVERY_MODE:
 		return handle_session_delivery_mode(inst, pkt);
 	default:
-		s_vpr_e(inst->sid, "%s: Unsupported command type: %#x\n",
+		i_vpr_e(inst, "%s: Unsupported command type: %#x\n",
 			__func__, pkt->type);
 		return -EINVAL;
 	}
@@ -961,7 +961,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 	u32 port;
 	u32 *payload_ptr;
 
-	s_vpr_h(inst->sid, "%s: property type %#x\n", __func__, pkt->type);
+	i_vpr_h(inst, "%s: property type %#x\n", __func__, pkt->type);
 
 	port = vidc_port_from_hfi(inst, pkt->port);
 	payload_ptr = (u32 *)((u8 *)pkt + sizeof(struct hfi_packet));
@@ -999,7 +999,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		inst->subcr_params[port].tier = payload_ptr[0];
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid port settings property %#x\n",
+		i_vpr_e(inst, "%s: invalid port settings property %#x\n",
 			__func__, pkt->type);
 		return -EINVAL;
 	}
@@ -1133,7 +1133,7 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 		if (packet->type > HFI_CMD_BEGIN &&
 			packet->type < HFI_CMD_END) {
 			if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-				s_vpr_e(inst->sid,
+				i_vpr_e(inst,
 					"%s: invalid packet type %d in port settings change\n",
 					__func__, packet->type);
 				rc = -EINVAL;
@@ -1152,7 +1152,7 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 			packet->type < HFI_INFORMATION_END) {
 			rc = handle_session_info(inst, packet);
 		} else {
-			s_vpr_e(inst->sid, "%s: Unknown packet type: %#x\n",
+			i_vpr_e(inst, "%s: Unknown packet type: %#x\n",
 				__func__, packet->type);
 			rc = -EINVAL;
 			goto exit;
@@ -1181,7 +1181,7 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 			if (rc)
 				goto exit;
 		} else {
-			s_vpr_e(inst->sid, "%s: invalid port type: %#x\n",
+			i_vpr_e(inst, "%s: invalid port type: %#x\n",
 				__func__, hfi_port);
 		}
 	}
@@ -1336,7 +1336,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 				packet->type < HFI_INFORMATION_END) {
 			rc = handle_session_info(inst, packet);
 		} else {
-			s_vpr_e(inst->sid, "%s: Unknown packet type: %#x\n",
+			i_vpr_e(inst, "%s: Unknown packet type: %#x\n",
 				__func__, packet->type);
 			rc = -EINVAL;
 			goto exit;

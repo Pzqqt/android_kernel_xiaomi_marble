@@ -125,14 +125,14 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		vsp_cycles += mbs_per_second * base_cycles;
 
 	} else {
-		s_vpr_e(inst->sid, "%s: Unknown session type\n", __func__);
+		i_vpr_e(inst, "%s: Unknown session type\n", __func__);
 		return msm_vidc_max_freq(inst);
 	}
 
 	freq = max(vpp_cycles, vsp_cycles);
 	freq = max(freq, fw_cycles);
 
-	s_vpr_p(inst->sid, "%s: inst %pK: filled len %d required freq %llu\n",
+	i_vpr_p(inst, "%s: inst %pK: filled len %d required freq %llu\n",
 		__func__, inst, data_size, freq);
 
 	return freq;
@@ -660,7 +660,7 @@ static u64 __calculate(struct msm_vidc_inst* inst, struct vidc_bus_vote_data *d)
 		value = __calculate_decoder(d);
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: Unknown Domain %#x", __func__, d->domain);
+		i_vpr_e(inst, "%s: Unknown Domain %#x", __func__, d->domain);
 	}
 
 	return value;

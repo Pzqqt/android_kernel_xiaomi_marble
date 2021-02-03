@@ -52,6 +52,27 @@ enum vidc_msg_prio {
 #define FW_LOGSHIFT    16
 #define FW_LOGMASK     0x0FFF0000
 
+#define dprintk_inst(__level, inst, __fmt, ...) \
+	do { \
+		if (inst && (msm_vidc_debug & __level)) { \
+			pr_err(VIDC_DBG_TAG __fmt, \
+				level_str(__level), \
+				get_sid(inst), \
+				codec_str(inst), \
+				##__VA_ARGS__); \
+		} \
+	} while (0)
+
+#define i_vpr_e(inst, __fmt, ...) dprintk_inst(VIDC_ERR, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_i(inst, __fmt, ...) dprintk_inst(VIDC_INFO, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_h(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_l(inst, __fmt, ...) dprintk_inst(VIDC_LOW, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_p(inst, __fmt, ...) dprintk_inst(VIDC_PERF, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_t(inst, __fmt, ...) dprintk_inst(VIDC_PKT, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_b(inst, __fmt, ...) dprintk_inst(VIDC_BUS, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_hp(inst, __fmt, ...) \
+			dprintk_inst(VIDC_HIGH | VIDC_PERF, inst, __fmt, ##__VA_ARGS__)
+
 #define dprintk(__level, sid, __fmt, ...)	\
 	do { \
 		if (msm_vidc_debug & __level) { \
@@ -62,16 +83,6 @@ enum vidc_msg_prio {
 				##__VA_ARGS__); \
 		} \
 	} while (0)
-
-#define s_vpr_e(sid, __fmt, ...) dprintk(VIDC_ERR, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_i(sid, __fmt, ...) dprintk(VIDC_INFO, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_h(sid, __fmt, ...) dprintk(VIDC_HIGH, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_l(sid, __fmt, ...) dprintk(VIDC_LOW, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_p(sid, __fmt, ...) dprintk(VIDC_PERF, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_t(sid, __fmt, ...) dprintk(VIDC_PKT, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_b(sid, __fmt, ...) dprintk(VIDC_BUS, sid, __fmt, ##__VA_ARGS__)
-#define s_vpr_hp(sid, __fmt, ...) \
-			dprintk(VIDC_HIGH|VIDC_PERF, sid, __fmt, ##__VA_ARGS__)
 
 #define d_vpr_e(__fmt, ...)	\
 			dprintk(VIDC_ERR, DEFAULT_SID, __fmt, ##__VA_ARGS__)
@@ -101,6 +112,8 @@ enum vidc_msg_prio {
 	} while (0)
 
 const char *level_str(u32 level);
+const char *codec_str(void *instance);
+u32 get_sid(void *instance);
 
 enum msm_vidc_debugfs_event {
 	MSM_VIDC_DEBUGFS_EVENT_ETB,

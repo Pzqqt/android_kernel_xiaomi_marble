@@ -31,7 +31,7 @@ struct vb2_queue *msm_vidc_get_vb2q(struct msm_vidc_inst *inst,
 	} else if (type == OUTPUT_META_PLANE) {
 		q = &inst->vb2q[OUTPUT_META_PORT];
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+		i_vpr_e(inst, "%s: invalid buffer type %d\n",
 			__func__, type);
 	}
 	return q;
@@ -133,7 +133,7 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 	else if (port == INPUT_META_PORT || port == OUTPUT_META_PORT)
 		sizes[0] = inst->fmts[port].fmt.meta.buffersize;
 
-	s_vpr_h(inst->sid,
+	i_vpr_h(inst,
 		"queue_setup: type %d num_buffers %d sizes[0] %d\n",
 		q->type, *num_buffers, sizes[0]);
 	return rc;
@@ -154,16 +154,16 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		return -EINVAL;
 	}
 	if (q->type == INPUT_META_PLANE || q->type == OUTPUT_META_PLANE) {
-		s_vpr_h(inst->sid, "%s: nothing to start on meta port %d\n",
+		i_vpr_h(inst, "%s: nothing to start on meta port %d\n",
 			__func__, q->type);
 		return 0;
 	}
 	if (!is_decode_session(inst) && !is_encode_session(inst)) {
-		s_vpr_e(inst->sid, "%s: invalid session %d\n",
+		i_vpr_e(inst, "%s: invalid session %d\n",
 			__func__, inst->domain);
 		return -EINVAL;
 	}
-	s_vpr_h(inst->sid, "Streamon: %d\n", q->type);
+	i_vpr_h(inst, "Streamon: %d\n", q->type);
 
 	if (!inst->once_per_session_set) {
 		inst->once_per_session_set = true;
@@ -176,7 +176,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 				MSM_VIDC_BUF_ARP);
 			if (rc)
 				goto error;
-			s_vpr_h(inst->sid, "arp  buffer: %d      %d\n",
+			i_vpr_h(inst, "arp  buffer: %d      %d\n",
 				inst->buffers.arp.min_count,
 				inst->buffers.arp.size);
 		} else if(is_decode_session(inst)) {
@@ -185,7 +185,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 				MSM_VIDC_BUF_PERSIST);
 			if (rc)
 				goto error;
-			s_vpr_h(inst->sid, "persist  buffer: %d      %d\n",
+			i_vpr_h(inst, "persist  buffer: %d      %d\n",
 				inst->buffers.persist.min_count,
 				inst->buffers.persist.size);
 		*/
@@ -207,16 +207,16 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		else
 			goto error;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid type %d\n", q->type);
+		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
 
 	if (!rc)
-		s_vpr_h(inst->sid, "Streamon: %d successful\n", q->type);
+		i_vpr_h(inst, "Streamon: %d successful\n", q->type);
 	return rc;
 
 error:
-	s_vpr_h(inst->sid, "Streamon: %d failed\n", q->type);
+	i_vpr_h(inst, "Streamon: %d failed\n", q->type);
 	return -EINVAL;
 }
 
@@ -235,16 +235,16 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 		return;
 	}
 	if (q->type == INPUT_META_PLANE || q->type == OUTPUT_META_PLANE) {
-		s_vpr_h(inst->sid, "%s: nothing to stop on meta port %d\n",
+		i_vpr_h(inst, "%s: nothing to stop on meta port %d\n",
 			__func__, q->type);
 		return;
 	}
 	if (!is_decode_session(inst) && !is_encode_session(inst)) {
-		s_vpr_e(inst->sid, "%s: invalid session %d\n",
+		i_vpr_e(inst, "%s: invalid session %d\n",
 			__func__, inst->domain);
 		return;
 	}
-	s_vpr_h(inst->sid, "Streamoff: %d\n", q->type);
+	i_vpr_h(inst, "Streamoff: %d\n", q->type);
 
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
@@ -261,16 +261,16 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 		else
 			goto error;
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid type %d\n", q->type);
+		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
 
 	if (!rc)
-		s_vpr_h(inst->sid, "Streamoff: %d successful\n", q->type);
+		i_vpr_h(inst, "Streamoff: %d successful\n", q->type);
 	return;
 
 error:
-	s_vpr_e(inst->sid, "Streamoff: %d failed\n", q->type);
+	i_vpr_e(inst, "Streamoff: %d failed\n", q->type);
 	return;
 }
 

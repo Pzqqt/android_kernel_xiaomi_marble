@@ -89,7 +89,7 @@ static u32 msm_vidc_get_port_info(struct msm_vidc_inst *inst,
 
 	if (capability->cap[cap_id].flags & CAP_FLAG_INPUT_PORT &&
 		capability->cap[cap_id].flags & CAP_FLAG_OUTPUT_PORT) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: both ports enabled. Default port set: BITSTREAM\n",
 			__func__);
 		return HFI_PORT_BITSTREAM;
@@ -113,13 +113,13 @@ static const char * const * msm_vidc_get_qmenu_type(
 	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
 		return mpeg_video_blur_types;
 	default:
-		s_vpr_e(inst->sid, "%s: No available qmenu for ctrl %#x\n",
+		i_vpr_e(inst, "%s: No available qmenu for ctrl %#x\n",
 			__func__, control_id);
 		return NULL;
 	}
 }
 
-static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
+static const char *msm_vidc_get_priv_ctrl_name(struct msm_vidc_inst *inst, u32 control_id)
 {
 	switch (control_id) {
 	case V4L2_CID_MPEG_VIDC_SECURE:
@@ -205,7 +205,7 @@ static const char *msm_vidc_get_priv_ctrl_name(u32 sid, u32 control_id)
 	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP:
 		return "HEVC P Frame Max QP";
 	default:
-		s_vpr_e(sid, "%s: ctrl name not available for ctrl id %#x\n",
+		i_vpr_e(inst, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);
 		return NULL;
 	}
@@ -217,7 +217,7 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 
-	s_vpr_l(inst->sid,
+	i_vpr_l(inst,
 		"%s: hfi_id: %#x, value: %#x\n", func,
 		inst->capabilities->cap[cap_id].hfi_id,
 		*(s64 *)hfi_val);
@@ -230,7 +230,7 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 		hfi_val,
 		sizeof(payload_size));
 	if (rc)
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: failed to set cap_id: %d to fw\n",
 			__func__, cap_id);
 
@@ -266,7 +266,7 @@ static int msm_vidc_add_capid_to_list(struct msm_vidc_inst *inst,
 	if (type & FW_LIST) {
 		list_for_each_entry(curr_node, &inst->firmware.list, list) {
 			if (curr_node->cap_id == cap_id) {
-				s_vpr_e(inst->sid,
+				i_vpr_e(inst,
 					"%s: cap %d cannot be the child of two parents\n",
 					__func__, cap_id);
 				return 0;
@@ -276,7 +276,7 @@ static int msm_vidc_add_capid_to_list(struct msm_vidc_inst *inst,
 
 	entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
 	if (!entry) {
-		s_vpr_e(inst->sid, "%s: alloc failed\n", __func__);
+		i_vpr_e(inst, "%s: alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 	entry->cap_id = cap_id;
@@ -328,7 +328,7 @@ static int msm_vidc_update_cap_value(struct msm_vidc_inst* inst, u32 cap,
 	s32 adjusted_val, const char *func)
 {
 	if (inst->capabilities->cap[cap].value != adjusted_val)
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: updated database value from %#x to %#x\n",
 			func, inst->capabilities->cap[cap].value,
 			adjusted_val);
@@ -349,7 +349,7 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 		else
 			*value = inst->capabilities->cap[parent].value;
 	} else {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: missing parent %d for cap %d, please correct database\n",
 			func, parent, cap);
 		rc = -EINVAL;
@@ -367,7 +367,7 @@ static int msm_vidc_adjust_hevc_qp(struct msm_vidc_inst *inst,
 	capability = inst->capabilities;
 
 	if (inst->codec != MSM_VIDC_HEVC) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: incorrect entry in database for cap %d. fix the database\n",
 			__func__, cap_id);
 		return -EINVAL;
@@ -449,7 +449,7 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 	 * adjustment is allowed for its children.
 	 */
 	if (!(capability->cap[cap_id].flags & CAP_FLAG_DYNAMIC_ALLOWED)) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: dynamic setting of cap_id %d is not allowed\n",
 			__func__, cap_id);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
@@ -461,7 +461,7 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 	 * must have an adjust function defined
 	 */
 	if (!ctrl && !capability->cap[cap_id].adjust) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: child cap %d must have ajdust function\n",
 			__func__, capability->cap[cap_id].cap);
 		return -EINVAL;
@@ -500,7 +500,7 @@ int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid parameters\n", __func__);
 		return -EINVAL;
 	}
-	s_vpr_h(inst->sid, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
+	i_vpr_h(inst, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
 	v4l2_ctrl_handler_free(&inst->ctrl_handler);
 	kfree(inst->ctrls);
 
@@ -524,7 +524,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	capability = inst->capabilities;
 
 	if (!core->v4l2_ctrl_ops) {
-		s_vpr_e(inst->sid, "%s: no control ops\n", __func__);
+		i_vpr_e(inst, "%s: no control ops\n", __func__);
 		return -EINVAL;
 	}
 
@@ -533,20 +533,20 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			num_ctrls++;
 	}
 	if (!num_ctrls) {
-		s_vpr_e(inst->sid, "%s: no ctrls available in cap database\n",
+		i_vpr_e(inst, "%s: no ctrls available in cap database\n",
 			__func__);
 		return -EINVAL;
 	}
 	inst->ctrls = kcalloc(num_ctrls,
 		sizeof(struct v4l2_ctrl *), GFP_KERNEL);
 	if (!inst->ctrls) {
-		s_vpr_e(inst->sid, "%s: failed to allocate ctrl\n", __func__);
+		i_vpr_e(inst, "%s: failed to allocate ctrl\n", __func__);
 		return -ENOMEM;
 	}
 
 	rc = v4l2_ctrl_handler_init(&inst->ctrl_handler, num_ctrls);
 	if (rc) {
-		s_vpr_e(inst->sid, "control handler init failed, %d\n",
+		i_vpr_e(inst, "control handler init failed, %d\n",
 				inst->ctrl_handler.error);
 		return rc;
 	}
@@ -558,13 +558,13 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			continue;
 
 		if (ctrl_idx >= num_ctrls) {
-			s_vpr_e(inst->sid,
+			i_vpr_e(inst,
 				"%s: invalid ctrl %#x, max allowed %d\n",
 				__func__, capability->cap[idx].v4l2_id,
 				num_ctrls);
 			return -EINVAL;
 		}
-		s_vpr_h(inst->sid,
+		i_vpr_h(inst,
 			"%s: cap idx %d, value %d min %d max %d step_or_mask %#x flags %#x v4l2_id %#x hfi_id %#x\n",
 			__func__, idx,
 			capability->cap[idx].value,
@@ -598,10 +598,10 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 				ctrl_cfg.step =
 					capability->cap[idx].step_or_mask;
 			}
-			ctrl_cfg.name = msm_vidc_get_priv_ctrl_name(inst->sid,
+			ctrl_cfg.name = msm_vidc_get_priv_ctrl_name(inst,
 					capability->cap[idx].v4l2_id);
 			if (!ctrl_cfg.name) {
-				s_vpr_e(inst->sid, "%s: %#x ctrl name is null\n",
+				i_vpr_e(inst, "%s: %#x ctrl name is null\n",
 					__func__, ctrl_cfg.id);
 				return -EINVAL;
 			}
@@ -627,14 +627,14 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			}
 		}
 		if (!ctrl) {
-			s_vpr_e(inst->sid, "%s: invalid ctrl %#x\n", __func__,
+			i_vpr_e(inst, "%s: invalid ctrl %#x\n", __func__,
 				capability->cap[idx].v4l2_id);
 			return -EINVAL;
 		}
 
 		rc = inst->ctrl_handler.error;
 		if (rc) {
-			s_vpr_e(inst->sid,
+			i_vpr_e(inst,
 				"error adding ctrl (%#x) to ctrl handle, %d\n",
 				capability->cap[idx].v4l2_id,
 				inst->ctrl_handler.error);
@@ -650,7 +650,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 		ctrl_idx++;
 	}
 	inst->num_ctrls = num_ctrls;
-	s_vpr_h(inst->sid, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
+	i_vpr_h(inst, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
 
 	return rc;
 }
@@ -677,19 +677,19 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	}
 
 	if (inst->state == MSM_VIDC_ERROR) {
-		s_vpr_e(inst->sid, "%s: set ctrl not allowed in error state\n");
+		i_vpr_e(inst, "%s: set ctrl not allowed in error state\n");
 		/* (error name TBD); */
 		return -EINVAL;
 	}
 
 	capability = inst->capabilities;
 
-	s_vpr_h(inst->sid, "%s: state %d, name %s, id 0x%x value %d\n",
+	i_vpr_h(inst, "%s: state %d, name %s, id 0x%x value %d\n",
 		__func__, inst->state, ctrl->name, ctrl->id, ctrl->val);
 
 	cap_id = msm_vidc_get_cap_id(inst, ctrl->id);
 	if (cap_id == INST_CAP_NONE) {
-		s_vpr_e(inst->sid, "%s: could not find cap_id for ctrl %s\n",
+		i_vpr_e(inst, "%s: could not find cap_id for ctrl %s\n",
 			__func__, ctrl->name);
 		return -EINVAL;
 	}
@@ -708,7 +708,7 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	/* check if dynamic adjustment is allowed */
 	if (inst->vb2q[OUTPUT_PORT].streaming &&
 		!(capability->cap[cap_id].flags & CAP_FLAG_DYNAMIC_ALLOWED)) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: dynamic setting of cap_id %d is not allowed\n",
 			__func__, cap_id);
 		return -EBUSY;
@@ -736,7 +736,7 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	/* Dynamic set control ASAP */
 	rc = msm_vidc_set_v4l2_properties(inst);
 	if (rc) {
-		s_vpr_e(inst->sid, "%s: setting %s failed\n",
+		i_vpr_e(inst, "%s: setting %s failed\n",
 			__func__, ctrl->name);
 		goto exit;
 	}
@@ -763,7 +763,7 @@ int msm_vidc_adjust_entropy_mode(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[ENTROPY_MODE].value;
 
 	if (inst->codec != MSM_VIDC_H264) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: incorrect entry in database. fix the database\n",
 			__func__);
 		return 0;
@@ -826,7 +826,7 @@ int msm_vidc_adjust_bitrate_mode(void *instance, struct v4l2_ctrl *ctrl)
 
 update:
 	inst->hfi_rc_type = hfi_value;
-	s_vpr_h(inst->sid, "%s: hfi rc type: %#x\n",
+	i_vpr_h(inst, "%s: hfi rc type: %#x\n",
 		__func__, inst->hfi_rc_type);
 
 	return 0;
@@ -925,7 +925,7 @@ int msm_vidc_adjust_use_ltr(void *instance, struct v4l2_ctrl *ctrl)
 	} else if (adjusted_value <= 0 ||
 		adjusted_value >= (1 << ltr_count)) {
 		/* USE_LTR value should be > 0 and < (2 ^ LTR_COUNT) */
-		s_vpr_e(inst->sid, "%s: invalid value %d\n",
+		i_vpr_e(inst, "%s: invalid value %d\n",
 			__func__, adjusted_value);
 		return -EINVAL;
 	}
@@ -961,7 +961,7 @@ int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl)
 	} else if (adjusted_value < 0 ||
 		adjusted_value > (ltr_count - 1)) {
 		/* MARK_LTR value should be > 0 and <= (LTR_COUNT - 1) */
-		s_vpr_e(inst->sid, "%s: invalid value %d\n",
+		i_vpr_e(inst, "%s: invalid value %d\n",
 			__func__, adjusted_value);
 		return -EINVAL;
 	}
@@ -1048,7 +1048,7 @@ int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[TRANSFORM_8X8].value;
 
 	if (inst->codec != MSM_VIDC_H264) {
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: incorrect entry in database. fix the database\n",
 			__func__);
 		return 0;
@@ -1569,7 +1569,7 @@ int msm_vidc_set_array(void *instance,
 	 * STRUCTURE, BLOB, STRING, PACKED, ARRAY,
 	 *
 	case BITRATE_MODE:
-		s_vpr_h(inst->sid, "%s: %d\n", __func__, hfi_value);
+		i_vpr_h(inst, "%s: %d\n", __func__, hfi_value);
 		hfi_create_packet(inst->packet, inst->packet_size,
 			offset,
 			capability->cap[cap_id].hfi_id,
@@ -1580,7 +1580,7 @@ int msm_vidc_set_array(void *instance,
 	}
 	*/
 	default:
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: Unknown cap id %d, cannot set to fw\n",
 			__func__, cap_id);
 		rc = -EINVAL;
@@ -1643,14 +1643,14 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 		}
 		return 0;
 	default:
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: mapping not specified for ctrl_id: %#x\n",
 			__func__, capability->cap[cap_id].v4l2_id);
 		return -EINVAL;
 	}
 
 set_default:
-	s_vpr_e(inst->sid,
+	i_vpr_e(inst,
 		"%s: invalid value %d for ctrl id: %#x. Set default: %u\n",
 		__func__, capability->cap[cap_id].value,
 		capability->cap[cap_id].v4l2_id, *value);
@@ -1741,14 +1741,14 @@ int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 		}
 		return 0;
 	default:
-		s_vpr_e(inst->sid,
+		i_vpr_e(inst,
 			"%s: mapping not specified for ctrl_id: %#x\n",
 			__func__, capability->cap[cap_id].v4l2_id);
 		return -EINVAL;
 	}
 
 set_default:
-	s_vpr_e(inst->sid,
+	i_vpr_e(inst,
 		"%s: invalid value %d for ctrl id: %#x. Set default: %u\n",
 		__func__, capability->cap[cap_id].value,
 		capability->cap[cap_id].v4l2_id, *value);

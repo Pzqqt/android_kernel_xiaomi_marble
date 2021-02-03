@@ -26,7 +26,7 @@ u32 get_hfi_port(struct msm_vidc_inst *inst,
 			hfi_port = HFI_PORT_RAW;
 			break;
 		default:
-			s_vpr_e(inst->sid, "%s: invalid port type %d\n",
+			i_vpr_e(inst, "%s: invalid port type %d\n",
 				__func__, port);
 			break;
 		}
@@ -41,12 +41,12 @@ u32 get_hfi_port(struct msm_vidc_inst *inst,
 			hfi_port = HFI_PORT_BITSTREAM;
 			break;
 		default:
-			s_vpr_e(inst->sid, "%s: invalid port type %d\n",
+			i_vpr_e(inst, "%s: invalid port type %d\n",
 				__func__, port);
 			break;
 		}
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid domain %#x\n",
+		i_vpr_e(inst, "%s: invalid domain %#x\n",
 			__func__, inst->domain);
 	}
 
@@ -78,7 +78,7 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 			hfi_port = HFI_PORT_RAW;
 			break;
 		default:
-			s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+			i_vpr_e(inst, "%s: invalid buffer type %d\n",
 				__func__, buffer_type);
 			break;
 		}
@@ -102,12 +102,12 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 			hfi_port = HFI_PORT_NONE;
 			break;
 		default:
-			s_vpr_e(inst->sid, "%s: invalid buffer type %d\n",
+			i_vpr_e(inst, "%s: invalid buffer type %d\n",
 				__func__, buffer_type);
 			break;
 		}
 	} else {
-		s_vpr_e(inst->sid, "%s: invalid domain %#x\n",
+		i_vpr_e(inst, "%s: invalid domain %#x\n",
 			__func__, inst->domain);
 	}
 
@@ -202,7 +202,7 @@ u32 get_hfi_colorformat(struct msm_vidc_inst *inst,
 		hfi_colorformat = HFI_COLOR_FMT_NV21;
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid colorformat %d\n",
+		i_vpr_e(inst, "%s: invalid colorformat %d\n",
 			__func__, colorformat);
 		break;
 	}
@@ -227,7 +227,7 @@ u32 get_hfi_quality_mode(struct msm_vidc_inst *inst)
 		hfi_mode = HFI_MODE_POWER_SAVE;
 		break;
 	default:
-		s_vpr_e(inst->sid, "%s: invalid qulity mode %d\n", __func__,
+		i_vpr_e(inst, "%s: invalid qulity mode %d\n", __func__,
 			inst->capabilities->cap[QUALITY_MODE].value);
 		break;
 	}
