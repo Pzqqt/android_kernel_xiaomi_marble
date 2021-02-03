@@ -16417,6 +16417,7 @@ typedef enum event_type_e {
     WOW_ROAM_PMKID_REQUEST_EVENT,         /* 32 +  7 */
     WOW_DFS_CAC_COMPLETE_EVENT,           /* 32 +  8 */
     WOW_VDEV_DISCONNECT_EVENT,            /* 32 +  9 */
+    WOW_TWT_EVENT,                        /* 32 + 10 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -16489,6 +16490,7 @@ typedef enum wake_reason_e {
     WOW_REASON_LOCAL_DATA_UC_DROP,
     WOW_REASON_GENERIC_WAKE, /* A generic reason that host should be woken up */
     WOW_REASON_ERR_PKT_TRIGGERED_WAKEUP,
+    WOW_REASON_TWT,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
