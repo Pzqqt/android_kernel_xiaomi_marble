@@ -1664,7 +1664,7 @@ void dp_rx_link_desc_refill_duplicate_check(
 				struct hal_buf_info *buf_info,
 				hal_buff_addrinfo_t ring_buf_info);
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * dp_rx_deliver_to_pkt_capture() - deliver rx packet to packet capture
  * @soc : dp_soc handle

@@ -4515,7 +4515,7 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 	dp_print_napi_stats(pdev->soc);
 }
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /*
  * dp_offload_ind_handler() - offload msg handler
  * @htt_soc: HTT SOC handle

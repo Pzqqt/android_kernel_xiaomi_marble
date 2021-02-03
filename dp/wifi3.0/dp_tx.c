@@ -3897,7 +3897,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * dp_send_completion_to_pkt_capture() - send tx completion to packet capture
  * @soc: dp_soc handle

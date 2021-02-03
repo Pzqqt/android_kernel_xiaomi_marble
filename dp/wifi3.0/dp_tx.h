@@ -659,7 +659,7 @@ QDF_STATUS dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 void dp_send_completion_to_pkt_capture(struct dp_soc *soc,
 				       struct dp_tx_desc_s *desc,
 				       struct hal_tx_completion_status *ts);

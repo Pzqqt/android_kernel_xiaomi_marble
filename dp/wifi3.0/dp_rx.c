@@ -2196,7 +2196,7 @@ static inline void dp_rx_update_stats(struct dp_soc *soc,
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * dp_rx_deliver_to_pkt_capture() - deliver rx packet to packet capture
  * @soc : dp_soc handle
