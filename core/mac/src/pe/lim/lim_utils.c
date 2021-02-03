@@ -6728,6 +6728,10 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 			      struct pe_session *session_entry,
 			      tSchBeaconStruct *beacon)
 {
+	/* If HE is not supported, do not fill sta_ds and return */
+	if (!IS_DOT11_MODE_HE(session_entry->dot11mode))
+		goto out;
+
 	if (!assoc_rsp->he_cap.present && beacon && beacon->he_cap.present) {
 		/* Use beacon HE caps if assoc resp doesn't have he caps */
 		pe_debug("he_caps missing in assoc rsp");
@@ -6737,7 +6741,7 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 
 	/* assoc resp and beacon doesn't have he caps */
 	if (!assoc_rsp->he_cap.present)
-		return;
+		goto out;
 
 	sta_ds->mlmStaContext.he_capable = assoc_rsp->he_cap.present;
 
@@ -6753,18 +6757,12 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	qdf_mem_copy(&sta_ds->he_config, &assoc_rsp->he_cap,
 		     sizeof(tDot11fIEhe_cap));
 
-	/* If HE is not supported, do not fill sta_ds and return */
-	if (!IS_DOT11_MODE_HE(session_entry->dot11mode))
-		return;
-
 	/* If MCS 12/13 is supported by the assoc resp QCN IE */
 	if (assoc_rsp->qcn_ie.present &&
 	    assoc_rsp->qcn_ie.he_mcs13_attr.present) {
 		sta_ds->he_mcs_12_13_map =
 		assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_80 |
 		assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_160 << 8;
-	} else {
-		return;
 	}
 
 	/* Take intersection of the FW capability for HE MCS 12/13 */
@@ -6774,7 +6772,11 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	else
 		sta_ds->he_mcs_12_13_map &=
 			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g;
-
+out:
+	pe_debug("he_mcs_12_13_map: sta_ds 0x%x, 2g_fw 0x%x, 5g_fw 0x%x",
+		 sta_ds->he_mcs_12_13_map,
+		 mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_2g,
+		 mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g);
 	lim_update_he_mcs_12_13_map(mac_ctx->psoc,
 				    session_entry->smeSessionId,
 				    sta_ds->he_mcs_12_13_map);
