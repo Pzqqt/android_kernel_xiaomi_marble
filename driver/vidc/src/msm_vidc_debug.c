@@ -252,7 +252,6 @@ static const struct file_operations debug_level_fops = {
 
 struct dentry* msm_vidc_debugfs_init_drv()
 {
-	bool ok = false;
 	struct dentry *dir = NULL;
 
 	dir = debugfs_create_dir("msm_vidc", NULL);
@@ -261,29 +260,12 @@ struct dentry* msm_vidc_debugfs_init_drv()
 		goto failed_create_dir;
 	}
 
-#define __debugfs_create(__type, __name, __value) ({                \
-	struct dentry *f = debugfs_create_##__type(__name, 0644,    \
-		dir, __value);                                      \
-	if (IS_ERR_OR_NULL(f)) {                                    \
-		d_vpr_e("Failed creating debugfs file '%pd/%s'\n",  \
-			dir, __name);                               \
-		f = NULL;                                           \
-	}                                                           \
-	f;                                                          \
-})
-
-	ok =
-	__debugfs_create(u32, "core_clock_voting",
-			&msm_vidc_clock_voting) &&
-	__debugfs_create(bool, "disable_video_syscache",
-			&msm_vidc_syscache_disable) &&
-	__debugfs_create(bool, "lossless_encoding",
+	debugfs_create_u32("core_clock_voting", 0644, dir,
+			&msm_vidc_clock_voting);
+	debugfs_create_bool("disable_video_syscache", 0644, dir,
+			&msm_vidc_syscache_disable);
+	debugfs_create_bool("lossless_encoding", 0644, dir,
 			&msm_vidc_lossless_encode);
-
-#undef __debugfs_create
-
-	if (!ok)
-		goto failed_create_dir;
 
 	return dir;
 
