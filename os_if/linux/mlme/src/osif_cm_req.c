@@ -507,15 +507,17 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 	connect_req->vht_caps_mask = req->vht_capa_mask.vht_cap_info;
 
 	/* Copy complete ie */
-	connect_req->assoc_ie.len = req->ie_len;
-	connect_req->assoc_ie.ptr = qdf_mem_malloc(req->ie_len);
-	if (!connect_req->assoc_ie.ptr) {
-		connect_req->assoc_ie.len = 0;
-		status = QDF_STATUS_E_NOMEM;
-		goto connect_start_fail;
+	if (req->ie_len) {
+		connect_req->assoc_ie.len = req->ie_len;
+		connect_req->assoc_ie.ptr = qdf_mem_malloc(req->ie_len);
+		if (!connect_req->assoc_ie.ptr) {
+			connect_req->assoc_ie.len = 0;
+			status = QDF_STATUS_E_NOMEM;
+				goto connect_start_fail;
+		}
+		qdf_mem_copy(connect_req->assoc_ie.ptr, req->ie,
+			     connect_req->assoc_ie.len);
 	}
-	qdf_mem_copy(connect_req->assoc_ie.ptr, req->ie,
-		     connect_req->assoc_ie.len);
 
 	status = osif_cm_set_fils_info(vdev, connect_req, req);
 	if (QDF_IS_STATUS_ERROR(status))

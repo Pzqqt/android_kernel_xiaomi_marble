@@ -136,6 +136,27 @@ rel_lock:
 	return status;
 }
 
+static enum ieee80211_statuscode
+osif_get_statuscode(enum wlan_status_code status)
+{
+	return (enum ieee80211_statuscode)status;
+}
+
+static enum ieee80211_statuscode
+osif_get_connect_status_code(struct wlan_cm_connect_resp *rsp)
+{
+	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
+
+	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
+		if (rsp->status_code)
+			status = osif_get_statuscode(rsp->status_code);
+		else
+			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
+	}
+
+	return status;
+}
+
 /**
  * osif_convert_timeout_reason() - Convert to kernel specific enum
  * @timeout_reason: reason for connect timeout
@@ -285,8 +306,8 @@ static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
 		osif_connect_timeout(dev, rsp->bssid.bytes,
 				     rsp->reason);
 	} else {
-		if (QDF_IS_STATUS_ERROR(rsp->connect_status))
-			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
+		status = osif_get_connect_status_code(rsp);
+
 		__osif_connect_bss(dev, bss, rsp, status);
 	}
 }
@@ -294,13 +315,11 @@ static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
 static void osif_connect_bss(struct net_device *dev, struct cfg80211_bss *bss,
 			     struct wlan_cm_connect_resp *rsp)
 {
-	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
+	enum ieee80211_statuscode status;
 
 	osif_enter_dev(dev);
 
-	if (QDF_IS_STATUS_ERROR(rsp->connect_status))
-		status = WLAN_STATUS_UNSPECIFIED_FAILURE;
-
+	status = osif_get_connect_status_code(rsp);
 	__osif_connect_bss(dev, bss, rsp, status);
 }
 #endif /* CFG80211_CONNECT_TIMEOUT */
@@ -372,12 +391,6 @@ osif_populate_fils_params(struct cfg80211_connect_resp_params *rsp_params,
 #if defined(CFG80211_CONNECT_DONE) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 
-static enum ieee80211_statuscode
-osif_get_statuscode(enum wlan_status_code status)
-{
-	return (enum ieee80211_statuscode)status;
-}
-
 /**
  * osif_connect_done() - Wrapper API to call cfg80211_connect_done
  * @dev: network device
@@ -396,16 +409,11 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 			      struct wlan_objmgr_vdev *vdev)
 {
 	struct cfg80211_connect_resp_params conn_rsp_params;
-	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
+	enum ieee80211_statuscode status;
 
 	osif_enter_dev(dev);
 
-	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
-		if (rsp->status_code)
-			status = osif_get_statuscode(rsp->status_code);
-		else
-			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
-	}
+	status = osif_get_connect_status_code(rsp);
 	qdf_mem_zero(&conn_rsp_params, sizeof(conn_rsp_params));
 
 	if (!rsp->connect_ies.fils_ie) {
@@ -506,19 +514,13 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 					 struct vdev_osif_priv *osif_priv,
 					 struct wlan_cm_connect_resp *rsp)
 {
-	enum ieee80211_statuscode status = WLAN_STATUS_SUCCESS;
+	enum ieee80211_statuscode status;
 	size_t req_len = 0;
 	const uint8_t *req_ptr = NULL;
 	size_t rsp_len = 0;
 	const uint8_t *rsp_ptr = NULL;
 
-	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
-		if (rsp->status_code)
-			status = rsp->status_code;
-		else
-			status = WLAN_STATUS_UNSPECIFIED_FAILURE;
-	}
-
+	status = osif_get_connect_status_code(rsp);
 	osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
 				      &req_len, &req_ptr);
 	osif_cm_get_assoc_rsp_ie_data(&rsp->connect_ies.assoc_rsp,
