@@ -546,12 +546,29 @@ static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
  */
 static void hdd_set_oem_6g_supported(struct hdd_context *hdd_ctx)
 {
-	bool oem_6g_disable = 1;
+	bool oem_6g_disable = true;
+	bool is_reg_6g_support, set_wifi_pos_6g_disabled;
 
 	ucfg_mlme_get_oem_6g_supported(hdd_ctx->psoc, &oem_6g_disable);
-	ucfg_wifi_pos_set_oem_6g_supported(hdd_ctx->psoc, oem_6g_disable);
+	is_reg_6g_support = wlan_reg_is_6ghz_supported(hdd_ctx->psoc);
+	set_wifi_pos_6g_disabled = (oem_6g_disable || !is_reg_6g_support);
+
+	/**
+	 * Host uses following truth table to set wifi pos 6Ghz disable in
+	 * ucfg_wifi_pos_set_oem_6g_supported().
+	 * -----------------------------------------------------------------
+	 * oem_6g_disable INI value | reg domain 6G support | Disable 6Ghz |
+	 * -----------------------------------------------------------------
+	 *            1             |           1           |        1     |
+	 *            1             |           0           |        1     |
+	 *            0             |           1           |        0     |
+	 *            0             |           0           |        1     |
+	 * -----------------------------------------------------------------
+	 */
+	ucfg_wifi_pos_set_oem_6g_supported(hdd_ctx->psoc,
+					   set_wifi_pos_6g_disabled);
 	hdd_debug("oem 6g support is - %s",
-		  oem_6g_disable ? "Enabled" : "Disbaled");
+		  set_wifi_pos_6g_disabled ? "Disbaled" : "Enabled");
 }
 
 /**
