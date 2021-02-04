@@ -33,6 +33,21 @@ wmi_unified_infra_cp_stats_request_send(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_unified_extract_infra_cp_stats(wmi_unified_t wmi_handle,
+				   void *evt_buf, uint32_t evt_buf_len,
+				   struct infra_cp_stats_event *params)
+{
+	if (wmi_handle->ops->extract_infra_cp_stats)
+		return wmi_handle->ops->extract_infra_cp_stats(wmi_handle,
+								   evt_buf,
+								   evt_buf_len,
+								   params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,

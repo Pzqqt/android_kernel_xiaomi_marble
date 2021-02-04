@@ -38,6 +38,30 @@ QDF_STATUS
 wmi_unified_infra_cp_stats_request_send(
 				wmi_unified_t wmi_handle,
 				struct infra_cp_stats_cmd_info *param);
+
+/**
+ * wmi_unified_extract_infra_cp_stats() - extract various infra cp statistics
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @evt_buf_len: length of event buffer
+ * @params: pointer to store the extracted event info
+ *
+ * This function extracts the infra cp statistics from the event
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_extract_infra_cp_stats(wmi_unified_t wmi_handle,
+				   void *evt_buf, uint32_t evt_buf_len,
+				   struct infra_cp_stats_event *params);
+
+QDF_STATUS wmi_stats_handler(void *buff, int32_t len,
+			     struct infra_cp_stats_event *params);
+
+QDF_STATUS
+extract_infra_cp_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			   uint32_t evt_buf_len,
+			   struct infra_cp_stats_event *params);
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 /**
