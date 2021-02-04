@@ -156,6 +156,8 @@
 #define SDE_UIDLE_MAX_FPS_60 60
 #define SDE_UIDLE_MAX_FPS_90 90
 
+#define SSPP_GET_REGDMA_BASE(blk_base, top_off) ((blk_base) >= (top_off) ?\
+		(blk_base) - (top_off) : (blk_base))
 
 /*************************************************************
  *  DTSI PROPERTY INDEX
@@ -268,6 +270,7 @@ enum {
 
 enum {
 	VIG_SUBBLOCK_INDEX,
+	VIG_TOP_OFF,
 	VIG_QSEED_OFF,
 	VIG_QSEED_LEN,
 	VIG_CSC_OFF,
@@ -293,6 +296,7 @@ enum {
 
 enum {
 	DMA_SUBBLOCK_INDEX,
+	DMA_TOP_OFF,
 	DMA_IGC_PROP,
 	DMA_GC_PROP,
 	DMA_DGM_INVERSE_PMA,
@@ -675,6 +679,8 @@ static struct sde_prop_type sspp_prop[] = {
 static struct sde_prop_type vig_prop[] = {
 	[VIG_SUBBLOCK_INDEX] = {VIG_SUBBLOCK_INDEX, "cell-index", false,
                         PROP_TYPE_U32},
+	[VIG_TOP_OFF] = {VIG_TOP_OFF, "qcom,sde-vig-top-off", false,
+			PROP_TYPE_U32},
 	[VIG_QSEED_OFF] = {VIG_QSEED_OFF, "qcom,sde-vig-qseed-off", false,
 			PROP_TYPE_U32},
 	[VIG_QSEED_LEN] = {VIG_QSEED_LEN, "qcom,sde-vig-qseed-size", false,
@@ -711,6 +717,8 @@ static struct sde_prop_type rgb_prop[] = {
 
 static struct sde_prop_type dma_prop[] = {
 	[DMA_SUBBLOCK_INDEX] = {DMA_SUBBLOCK_INDEX, "cell-index", false,
+			PROP_TYPE_U32},
+	[DMA_TOP_OFF] = {DMA_TOP_OFF, "qcom,sde-dma-top-off", false,
 			PROP_TYPE_U32},
 	[DMA_IGC_PROP] = {DMA_IGC_PROP, "qcom,sde-dma-igc", false,
 			PROP_TYPE_U32_ARRAY},
@@ -1370,6 +1378,7 @@ static bool _sde_sspp_setup_vcm(struct sde_sspp_cfg *sspp,
 		blk->len = 0;
 		set_bit(type, (unsigned long *) &sspp->features_ext);
 		blk->base = PROP_VALUE_ACCESS(props->values, prop, 0);
+		blk->regdma_base = SSPP_GET_REGDMA_BASE(blk->base, sspp->sblk->top_off);
 		snprintf(blk->name, SDE_HW_BLK_NAME_LEN, "%s%u", name,
 				sspp->id - SSPP_VIG0);
 		if (versioned)
@@ -1495,6 +1504,12 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 			set_bit(SDE_PERF_SSPP_QOS_8LVL, &sspp->perf_features);
 		vig_count++;
 
+		/* Obtain sub block top, or maintain backwards compatibility */
+		if (props[0] && props[0]->exists[VIG_TOP_OFF])
+			sblk->top_off = PROP_VALUE_ACCESS(props[0]->values, VIG_TOP_OFF, 0);
+		else
+			sblk->top_off = 0x200;
+
 		sblk->format_list = sde_cfg->vig_formats;
 		sblk->virt_format_list = sde_cfg->virt_vig_formats;
 		sblk->num_fp16_igc_blk = 0;
@@ -1545,6 +1560,8 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 					props[0]->values, VIG_QSEED_OFF, 0);
 			sblk->scaler_blk.len = PROP_VALUE_ACCESS(
 					props[0]->values, VIG_QSEED_LEN, 0);
+			sblk->scaler_blk.regdma_base = SSPP_GET_REGDMA_BASE(sblk->scaler_blk.base,
+					sblk->top_off);
 			snprintf(sblk->scaler_blk.name, SDE_HW_BLK_NAME_LEN,
 					"sspp_scaler%u", sspp->id - SSPP_VIG0);
 		}
@@ -1706,6 +1723,7 @@ static void _sde_sspp_setup_dgm(struct sde_sspp_cfg *sspp,
 	blk->len = 0;
 	set_bit(type, &sspp->features);
 	blk->base = PROP_VALUE_ACCESS(props->values, prop, 0);
+	blk->regdma_base = SSPP_GET_REGDMA_BASE(blk->base, sspp->sblk->top_off);
 	snprintf(blk->name, SDE_HW_BLK_NAME_LEN, "%s%u", name,
 			sspp->id - SSPP_DMA0);
 	if (versioned)
@@ -1783,6 +1801,12 @@ static int _sde_sspp_setup_dmas(struct device_node *np,
 		if (sde_cfg->vbif_qos_nlvl == 8)
 			set_bit(SDE_PERF_SSPP_QOS_8LVL, &sspp->perf_features);
 		dma_count++;
+
+		/* Obtain sub block top, or maintain backwards compatibility */
+		if (props[0] && props[0]->exists[DMA_TOP_OFF])
+			sblk->top_off = PROP_VALUE_ACCESS(props[0]->values, DMA_TOP_OFF, 0);
+		else
+			sblk->top_off = 0x200;
 
 		sblk->num_igc_blk = dgm_count;
 		sblk->num_gc_blk = dgm_count;

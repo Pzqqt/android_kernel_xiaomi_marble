@@ -623,12 +623,14 @@ struct sde_src_blk {
 /**
  * struct sde_scaler_blk: Scaler information
  * @info:   HW register and features supported by this sub-blk
+ * @regdma_base: offset of this sub-block relative regdma top
  * @version: qseed block revision
  * @h_preload: horizontal preload
  * @v_preload: vertical preload
  */
 struct sde_scaler_blk {
 	SDE_HW_SUBBLK_INFO;
+	u32 regdma_base;
 	u32 version;
 	u32 h_preload;
 	u32 v_preload;
@@ -640,11 +642,13 @@ struct sde_csc_blk {
 
 /**
  * struct sde_pp_blk : Pixel processing sub-blk information
+ * @regdma_base: offset of this sub-block relative regdma top
  * @info:   HW register and features supported by this sub-blk
  * @version: HW Algorithm version
  */
 struct sde_pp_blk {
 	SDE_HW_SUBBLK_INFO;
+	u32 regdma_base;
 	u32 version;
 };
 
@@ -702,6 +706,7 @@ enum sde_qos_lut_usage {
  * @max_per_pipe_bw: maximum allowable bandwidth of this pipe in kBps
  * @max_per_pipe_bw_high: maximum allowable bandwidth of this pipe in kBps
  *				in case of no VFE
+ * @top_off: offset of the sub-block top register relative to sspp top
  * @src_blk:
  * @scaler_blk:
  * @csc_blk:
@@ -752,6 +757,7 @@ struct sde_sspp_sub_blks {
 	u32 smart_dma_priority;
 	u32 max_per_pipe_bw;
 	u32 max_per_pipe_bw_high;
+	u32 top_off;
 	struct sde_src_blk src_blk;
 	struct sde_scaler_blk scaler_blk;
 	struct sde_pp_blk csc_blk;

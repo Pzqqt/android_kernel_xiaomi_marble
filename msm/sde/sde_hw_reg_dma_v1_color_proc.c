@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/msm_drm_pp.h>
@@ -15,8 +15,6 @@
 
 /* Reserve space of 128 words for LUT dma payload set-up */
 #define REG_DMA_HEADERS_BUFFER_SZ (sizeof(u32) * 128)
-#define REG_DMA_VIG_SWI_DIFF 0x200
-#define REG_DMA_DMA_SWI_DIFF 0x200
 
 #define VLUT_MEM_SIZE ((128 * sizeof(u32)) + REG_DMA_HEADERS_BUFFER_SZ)
 #define VLUT_LEN (128 * sizeof(u32))
@@ -2184,7 +2182,7 @@ static void vig_gamutv5_off(struct sde_hw_pipe *ctx, void *cfg)
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
 	struct sde_reg_dma_kickoff_cfg kick_off;
-	u32 gamut_base = ctx->cap->sblk->gamut_blk.base - REG_DMA_VIG_SWI_DIFF;
+	u32 gamut_base = ctx->cap->sblk->gamut_blk.regdma_base;
 	enum sde_sspp_multirect_index idx = SDE_SSPP_RECT_0;
 
 	dma_ops = sde_reg_dma_get_ops();
@@ -2226,7 +2224,7 @@ void reg_dmav1_setup_vig_gamutv5(struct sde_hw_pipe *ctx, void *cfg)
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
 	struct sde_reg_dma_kickoff_cfg kick_off;
-	u32 gamut_base = ctx->cap->sblk->gamut_blk.base - REG_DMA_VIG_SWI_DIFF;
+	u32 gamut_base = ctx->cap->sblk->gamut_blk.regdma_base;
 	bool use_2nd_memory = false;
 	enum sde_sspp_multirect_index idx = SDE_SSPP_RECT_0;
 
@@ -2341,7 +2339,7 @@ static void vig_igcv5_off(struct sde_hw_pipe *ctx, void *cfg)
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
 	struct sde_reg_dma_kickoff_cfg kick_off;
-	u32 igc_base = ctx->cap->sblk->igc_blk[0].base - REG_DMA_VIG_SWI_DIFF;
+	u32 igc_base = ctx->cap->sblk->igc_blk[0].regdma_base;
 	enum sde_sspp_multirect_index idx = SDE_SSPP_RECT_0;
 
 	dma_ops = sde_reg_dma_get_ops();
@@ -2384,7 +2382,7 @@ static int reg_dmav1_setup_vig_igc_common(struct sde_hw_reg_dma_ops *dma_ops,
 	u32 offset = 0;
 	u32 lut_sel = 0, lut_enable = 0;
 	u32 *data = NULL, *data_ptr = NULL;
-	u32 igc_base = ctx->cap->sblk->igc_blk[0].base - REG_DMA_VIG_SWI_DIFF;
+	u32 igc_base = ctx->cap->sblk->igc_blk[0].regdma_base;
 	u32 *addr[IGC_TBL_NUM];
 
 	if (hw_cfg->len != sizeof(struct drm_msm_igc_lut)) {
@@ -2513,7 +2511,7 @@ void reg_dmav1_setup_vig_igcv6(struct sde_hw_pipe *ctx, void *cfg)
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_kickoff_cfg kick_off;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
-	u32 igc_base = ctx->cap->sblk->igc_blk[0].base - REG_DMA_VIG_SWI_DIFF;
+	u32 igc_base = ctx->cap->sblk->igc_blk[0].regdma_base;
 	enum sde_sspp_multirect_index idx = SDE_SSPP_RECT_0;
 	struct drm_msm_igc_lut *igc_lut;
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
@@ -2668,13 +2666,11 @@ void reg_dmav1_setup_dma_igcv5(struct sde_hw_pipe *ctx, void *cfg,
 			((igc_lut->c2[2 * i + 1] & IGC_DATA_MASK) << 16);
 
 	if (idx == SDE_SSPP_RECT_SOLO || idx == SDE_SSPP_RECT_0) {
-		igc_base = ctx->cap->sblk->igc_blk[0].base -
-				REG_DMA_DMA_SWI_DIFF;
+		igc_base = ctx->cap->sblk->igc_blk[0].regdma_base;
 		igc_dither_off = igc_base + DMA_1D_LUT_IGC_DITHER_OFF;
 		igc_opmode_off = DMA_DGM_0_OP_MODE_OFF;
 	} else {
-		igc_base = ctx->cap->sblk->igc_blk[1].base -
-				REG_DMA_DMA_SWI_DIFF;
+		igc_base = ctx->cap->sblk->igc_blk[1].regdma_base;
 		igc_dither_off = igc_base + DMA_1D_LUT_IGC_DITHER_OFF;
 		igc_opmode_off = DMA_DGM_1_OP_MODE_OFF;
 	}
@@ -2809,10 +2805,10 @@ void reg_dmav1_setup_dma_gcv5(struct sde_hw_pipe *ctx, void *cfg,
 	}
 
 	if (idx == SDE_SSPP_RECT_SOLO || idx == SDE_SSPP_RECT_0) {
-		gc_base = ctx->cap->sblk->gc_blk[0].base - REG_DMA_DMA_SWI_DIFF;
+		gc_base = ctx->cap->sblk->gc_blk[0].regdma_base;
 		gc_opmode_off = DMA_DGM_0_OP_MODE_OFF;
 	} else {
-		gc_base = ctx->cap->sblk->gc_blk[1].base - REG_DMA_DMA_SWI_DIFF;
+		gc_base = ctx->cap->sblk->gc_blk[1].regdma_base;
 		gc_opmode_off = DMA_DGM_1_OP_MODE_OFF;
 	}
 
@@ -3092,7 +3088,7 @@ void reg_dmav1_setup_vig_qseed3(struct sde_hw_pipe *ctx,
 		return;
 	}
 
-	offset = ctx->cap->sblk->scaler_blk.base - REG_DMA_VIG_SWI_DIFF;
+	offset = ctx->cap->sblk->scaler_blk.regdma_base;
 	dma_ops = sde_reg_dma_get_ops();
 	dma_ops->reset_reg_dma_buf(sspp_buf[idx][QSEED][ctx->idx]);
 
@@ -4321,7 +4317,7 @@ void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg)
 	int rc;
 	enum sde_sspp_multirect_index idx = SDE_SSPP_RECT_0;
 
-	u32 gamut_base = ctx->cap->sblk->gamut_blk.base - REG_DMA_VIG_SWI_DIFF;
+	u32 gamut_base = ctx->cap->sblk->gamut_blk.regdma_base;
 	u32 i, j, k = 0, len, table_select = 0;
 	u32 op_mode, scale_offset, scale_tbl_offset, transfer_size_bytes;
 	u16 *data;
