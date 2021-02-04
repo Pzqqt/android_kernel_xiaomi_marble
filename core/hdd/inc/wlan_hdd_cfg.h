@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -401,7 +401,6 @@ void hdd_restore_all_ps(struct hdd_context *hdd_ctx);
  * gEnableBmps=0
  * gRuntimePM=0
  * gWlanAutoShutdown = 0
- * gEnableSuspend=0
  * gEnableWoW=0
  *
  * Return: None
