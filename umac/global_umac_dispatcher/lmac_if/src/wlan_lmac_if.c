@@ -370,6 +370,9 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 
 	rx_ops->reg_rx_ops.reg_get_unii_5g_bitmap =
 		ucfg_reg_get_unii_5g_bitmap;
+
+	rx_ops->reg_rx_ops.reg_set_ext_tpc_supported =
+		tgt_reg_set_ext_tpc_supported;
 }
 
 #ifdef CONVERGED_P2P_ENABLE

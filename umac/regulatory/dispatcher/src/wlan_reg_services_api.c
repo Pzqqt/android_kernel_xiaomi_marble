@@ -1350,4 +1350,9 @@ wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
 {
 	return reg_decide_6g_ap_pwr_type(pdev);
 }
-#endif
+#endif /* CONFIG_BAND_6GHZ */
+
+bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_is_ext_tpc_supported(psoc);
+}
