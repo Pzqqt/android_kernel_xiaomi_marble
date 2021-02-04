@@ -96,20 +96,30 @@ QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	bool roam_scan_offload_enabled;
+	struct wlan_objmgr_vdev *vdev;
 
 	ucfg_mlme_is_roam_scan_offload_enabled(psoc,
 					       &roam_scan_offload_enabled);
 	if (!roam_scan_offload_enabled)
 		return QDF_STATUS_SUCCESS;
 
-	status = cm_roam_acquire_lock();
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return status;
+		goto release_ref;
 
 	status = cm_roam_send_rso_cmd(psoc, vdev_id,
 				      ROAM_SCAN_OFFLOAD_ABORT_SCAN,
 				      REASON_ROAM_ABORT_ROAM_SCAN);
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }

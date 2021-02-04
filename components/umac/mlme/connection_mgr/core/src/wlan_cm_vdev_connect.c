@@ -776,23 +776,22 @@ static QDF_STATUS
 cm_copy_join_params(struct cm_vdev_join_req *join_req,
 		    struct wlan_cm_vdev_connect_req *req)
 {
-	join_req->assoc_ie.ptr = qdf_mem_malloc(req->assoc_ie.len);
-
-	if (!join_req->assoc_ie.ptr)
+	if (req->assoc_ie.len) {
+		join_req->assoc_ie.ptr = qdf_mem_malloc(req->assoc_ie.len);
+		if (!join_req->assoc_ie.ptr)
 		return QDF_STATUS_E_NOMEM;
-
-	qdf_mem_copy(join_req->assoc_ie.ptr, req->assoc_ie.ptr,
-		     req->assoc_ie.len);
-	join_req->assoc_ie.len = req->assoc_ie.len;
-
-	join_req->scan_ie.ptr = qdf_mem_malloc(req->scan_ie.len);
-
-	if (!join_req->scan_ie.ptr)
-		return QDF_STATUS_E_NOMEM;
-	join_req->scan_ie.len = req->scan_ie.len;
-	qdf_mem_copy(join_req->scan_ie.ptr, req->scan_ie.ptr,
-		     req->scan_ie.len);
-
+		qdf_mem_copy(join_req->assoc_ie.ptr, req->assoc_ie.ptr,
+			     req->assoc_ie.len);
+		join_req->assoc_ie.len = req->assoc_ie.len;
+	}
+	if (req->scan_ie.len) {
+		join_req->scan_ie.ptr = qdf_mem_malloc(req->scan_ie.len);
+		if (!join_req->scan_ie.ptr)
+			return QDF_STATUS_E_NOMEM;
+		join_req->scan_ie.len = req->scan_ie.len;
+		qdf_mem_copy(join_req->scan_ie.ptr, req->scan_ie.ptr,
+			     req->scan_ie.len);
+	}
 	join_req->entry = util_scan_copy_cache_entry(req->bss->entry);
 	if (!join_req->entry)
 		return QDF_STATUS_E_NOMEM;

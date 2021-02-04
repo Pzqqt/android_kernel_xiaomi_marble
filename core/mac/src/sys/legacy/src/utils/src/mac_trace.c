@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -228,7 +228,6 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_DEAUTH_RSP);
 		CASE_RETURN_STRING(eWNI_SME_DEAUTH_IND);
 		CASE_RETURN_STRING(eWNI_SME_DISCONNECT_DONE_IND);
-		CASE_RETURN_STRING(eWNI_SME_WM_STATUS_CHANGE_NTF);
 		CASE_RETURN_STRING(eWNI_SME_START_BSS_REQ);
 		CASE_RETURN_STRING(eWNI_SME_START_BSS_RSP);
 		CASE_RETURN_STRING(eWNI_SME_ASSOC_IND);
@@ -302,7 +301,6 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_TDLS_SHOULD_TEARDOWN);
 		CASE_RETURN_STRING(eWNI_SME_TDLS_PEER_DISCONNECTED);
 #endif
-		CASE_RETURN_STRING(eWNI_SME_RESET_AP_CAPS_CHANGED);
 #ifdef WLAN_FEATURE_11W
 		CASE_RETURN_STRING(eWNI_SME_UNPROT_MGMT_FRM_IND);
 #endif

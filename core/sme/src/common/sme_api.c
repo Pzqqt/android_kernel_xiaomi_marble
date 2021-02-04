@@ -111,7 +111,8 @@ QDF_STATUS sme_release_global_lock(struct sme_context *sme)
 	return qdf_mutex_release(&sme->sme_global_lock);
 }
 
-QDF_STATUS cm_roam_acquire_lock(void)
+#ifndef FEATURE_CM_ENABLE
+QDF_STATUS cm_roam_acquire_lock(struct wlan_objmgr_vdev *vdev)
 {
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_SME);
 
@@ -121,7 +122,7 @@ QDF_STATUS cm_roam_acquire_lock(void)
 	return sme_acquire_global_lock(&mac->sme);
 }
 
-QDF_STATUS cm_roam_release_lock(void)
+QDF_STATUS cm_roam_release_lock(struct wlan_objmgr_vdev *vdev)
 {
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_SME);
 
@@ -130,6 +131,7 @@ QDF_STATUS cm_roam_release_lock(void)
 
 	return sme_release_global_lock(&mac->sme);
 }
+#endif
 
 struct mac_context *sme_get_mac_context(void)
 {
@@ -5521,9 +5523,16 @@ QDF_STATUS sme_update_channel_list(mac_handle_t mac_handle)
 
 		csr_apply_channel_power_info_wrapper(mac_ctx);
 		csr_scan_filter_results(mac_ctx);
+#ifdef FEATURE_CM_ENABLE
+		sme_release_global_lock(&mac_ctx->sme);
+		/* release the sme lock before we call cm disconnect */
+		sme_disconnect_connected_sessions(mac_ctx,
+					REASON_OPER_CHANNEL_USER_DISABLED);
+#else
 		sme_disconnect_connected_sessions(mac_ctx,
 					REASON_OPER_CHANNEL_USER_DISABLED);
 		sme_release_global_lock(&mac_ctx->sme);
+#endif
 	}
 
 	return status;
@@ -5588,6 +5597,7 @@ static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx,
 			sme_debug("Disconnect Session: %d", vdev_id);
 			/* This is temp ifdef will be removed in near future */
 #ifdef FEATURE_CM_ENABLE
+			/* do not call cm disconnect while holding Sme lock */
 			cm_disconnect(mac_ctx->psoc, vdev_id,
 				      CM_MLME_DISCONNECT, reason, NULL);
 #else
@@ -6835,132 +6845,17 @@ sme_modify_roam_cand_sel_criteria(mac_handle_t mac_handle,
 					  ENABLE_SCORING_FOR_ROAM, &src_config);
 }
 
-/**
- * sme_restore_default_roaming_params() - Restore neighbor roam config
- * @mac: mac context
- * @vdev_id: Vdev id
- *
- * Return: None
- */
-static void
-sme_restore_default_roaming_params(struct mac_context *mac, uint8_t vdev_id)
-{
-	struct wlan_objmgr_vdev *vdev;
-	struct rso_config *rso_cfg;
-	struct rso_cfg_params *cfg_params;
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(mac->psoc);
-	if (!mlme_obj)
-		return;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("vdev object is NULL for vdev %d", vdev_id);
-		return;
-	}
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return;
-	}
-	cfg_params = &rso_cfg->cfg_param;
-	cfg_params->enable_scoring_for_roam =
-			mlme_obj->cfg.roam_scoring.enable_scoring_for_roam;
-	cfg_params->empty_scan_refresh_period =
-			mlme_obj->cfg.lfr.empty_scan_refresh_period;
-	cfg_params->full_roam_scan_period =
-			mlme_obj->cfg.lfr.roam_full_scan_period;
-	cfg_params->neighbor_scan_period =
-			mlme_obj->cfg.lfr.neighbor_scan_timer_period;
-	cfg_params->neighbor_lookup_threshold =
-			mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
-	cfg_params->roam_rssi_diff =
-			mlme_obj->cfg.lfr.roam_rssi_diff;
-	cfg_params->bg_rssi_threshold =
-			mlme_obj->cfg.lfr.bg_rssi_threshold;
-
-	cfg_params->max_chan_scan_time =
-			mlme_obj->cfg.lfr.neighbor_scan_max_chan_time;
-	cfg_params->roam_scan_home_away_time =
-			mlme_obj->cfg.lfr.roam_scan_home_away_time;
-	cfg_params->roam_scan_n_probes =
-			mlme_obj->cfg.lfr.roam_scan_n_probes;
-	cfg_params->roam_scan_inactivity_time =
-			mlme_obj->cfg.lfr.roam_scan_inactivity_time;
-	cfg_params->roam_inactive_data_packet_count =
-			mlme_obj->cfg.lfr.roam_inactive_data_packet_count;
-	cfg_params->roam_scan_period_after_inactivity =
-			mlme_obj->cfg.lfr.roam_scan_period_after_inactivity;
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-}
-
-void sme_roam_reset_configs(mac_handle_t mac_handle, uint8_t vdev_id)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	sme_restore_default_roaming_params(mac, vdev_id);
-}
-
 QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
 						   uint8_t vdev_id)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status;
-	struct rso_chan_info *chan_info;
-	struct wlan_objmgr_vdev *vdev;
-	struct rso_config *rso_cfg;
-	struct rso_cfg_params *cfg_params;
 
 	if (vdev_id >= WLAN_MAX_VDEVS) {
 		sme_err("Invalid vdev_id: %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	if (!mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
-		sme_err("roam_scan_offload_enabled is not supported");
-		status = QDF_STATUS_E_INVAL;
-		goto out;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("vdev object is NULL for vdev %d", vdev_id);
-		goto out;
-	}
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		goto out;
-	}
-	cfg_params = &rso_cfg->cfg_param;
-	mac->roam.configParam.nRoamScanControl = false;
-
-	chan_info = &cfg_params->pref_chan_info;
-	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
-
-	chan_info = &cfg_params->specific_chan_info;
-	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
-	mlme_reinit_control_config_lfr_params(mac->psoc, &mac->mlme_cfg->lfr);
-
-	sme_restore_default_roaming_params(mac, vdev_id);
-
-	/* Flush static and dynamic channels in ROAM scan list in firmware */
-	wlan_roam_update_cfg(mac->psoc, vdev_id, REASON_FLUSH_CHANNEL_LIST);
-	wlan_roam_update_cfg(mac->psoc, vdev_id, REASON_SCORING_CRITERIA_CHANGED);
-
-out:
-	sme_release_global_lock(&mac->sme);
-
-	return status;
+	return csr_roam_control_restore_default_config(mac, vdev_id);
 }
 
 /*

@@ -1715,7 +1715,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case eWNI_SME_TDLS_DEL_STA_REQ:
 	case eWNI_SME_TDLS_LINK_ESTABLISH_REQ:
 #endif
-	case eWNI_SME_RESET_AP_CAPS_CHANGED:
 	case eWNI_SME_SET_HW_MODE_REQ:
 	case eWNI_SME_SET_DUAL_MAC_CFG_REQ:
 	case eWNI_SME_SET_ANTENNA_MODE_REQ:

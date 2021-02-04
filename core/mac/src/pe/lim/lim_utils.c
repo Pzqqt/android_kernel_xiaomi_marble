@@ -234,8 +234,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_DEAUTH_RSP";
 	case eWNI_SME_DEAUTH_IND:
 		return "eWNI_SME_DEAUTH_IND";
-	case eWNI_SME_WM_STATUS_CHANGE_NTF:
-		return "eWNI_SME_WM_STATUS_CHANGE_NTF";
 	case eWNI_SME_START_BSS_REQ:
 		return "eWNI_SME_START_BSS_REQ";
 	case eWNI_SME_START_BSS_RSP:
@@ -2002,6 +2000,13 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 	struct wlan_channel *des_chan;
 	struct vdev_mlme_obj *mlme_obj;
 
+	if (QDF_IS_STATUS_ERROR(status)) {
+		lim_tear_down_link_with_ap(mac, pe_session->peSessionId,
+					   REASON_CHANNEL_SWITCH_FAILED,
+					   eLIM_HOST_DISASSOC);
+		return;
+	}
+
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
@@ -2056,8 +2061,7 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 
 	sys_process_mmh_msg(mac, &mmhMsg);
 
-	if (QDF_IS_STATUS_SUCCESS(status))
-		lim_switch_channel_vdev_started(pe_session);
+	lim_switch_channel_vdev_started(pe_session);
 }
 
 void lim_switch_primary_channel(struct mac_context *mac,

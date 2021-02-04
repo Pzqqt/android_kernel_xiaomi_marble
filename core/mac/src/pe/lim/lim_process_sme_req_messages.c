@@ -6299,31 +6299,6 @@ skip_match:
 	return;
 }
 
-static void __lim_process_sme_reset_ap_caps_change(struct mac_context *mac,
-						   uint32_t *msg_buf)
-{
-	tpSirResetAPCapsChange pResetCapsChange;
-	struct pe_session *pe_session;
-	uint8_t sessionId = 0;
-
-	if (!msg_buf) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	pResetCapsChange = (tpSirResetAPCapsChange)msg_buf;
-	pe_session =
-		pe_find_session_by_bssid(mac, pResetCapsChange->bssId.bytes,
-					 &sessionId);
-	if (!pe_session) {
-		pe_err("Session does not exist for given BSSID");
-		return;
-	}
-
-	pe_session->limSentCapsChangeNtf = false;
-	return;
-}
-
 /**
  * lim_register_mgmt_frame_ind_cb() - Save the Management frame
  * indication callback in PE.
@@ -6976,10 +6951,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		lim_process_sme_tdls_del_sta_req(mac, msg_buf);
 		break;
 #endif
-	case eWNI_SME_RESET_AP_CAPS_CHANGED:
-		__lim_process_sme_reset_ap_caps_change(mac, msg_buf);
-		break;
-
 	case eWNI_SME_CHANNEL_CHANGE_REQ:
 		lim_process_sme_channel_change_request(mac, msg_buf);
 		break;

@@ -5747,9 +5747,9 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	hdd_roam_profile_init(adapter);
 	hdd_register_wext(adapter->dev);
 
+#ifndef FEATURE_CM_ENABLE
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
-	sme_roam_reset_configs(mac_handle, adapter->vdev_id);
-
+#endif
 	/* set fast roaming capability in sme session */
 	status = ucfg_user_space_enable_disable_rso(hdd_ctx->pdev,
 						    adapter->vdev_id,

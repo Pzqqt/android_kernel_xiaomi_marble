@@ -136,14 +136,25 @@ wlan_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 			     struct wlan_roam_triggers *trigger)
 {
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
-	status = cm_roam_acquire_lock();
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
+		goto release_ref;
 
 	status = cm_rso_set_roam_trigger(pdev, vdev_id, trigger);
 
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }
@@ -154,10 +165,18 @@ QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
-	status = cm_roam_acquire_lock();
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
+		goto release_ref;
 
 	if (reason == REASON_DRIVER_DISABLED && requestor)
 		mlme_set_operations_bitmap(psoc, vdev_id, requestor, false);
@@ -167,7 +186,10 @@ QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 
 	status = cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_STOPPED,
 				      REASON_DRIVER_DISABLED);
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }
@@ -178,20 +200,31 @@ QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (reason == REASON_DRIVER_ENABLED && requestor)
 		mlme_set_operations_bitmap(psoc, vdev_id, requestor, true);
 
-	status = cm_roam_acquire_lock();
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
+		goto release_ref;
 
 	mlme_debug("ROAM_CONFIG: vdev[%d] Enable roaming - requestor:%s",
 		   vdev_id, cm_roam_get_requestor_string(requestor));
 
 	status = cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_ENABLED,
 				      REASON_DRIVER_ENABLED);
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }
@@ -224,15 +257,24 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
-	status = cm_roam_acquire_lock();
-	if (QDF_IS_STATUS_ERROR(status))
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = cm_roam_acquire_lock(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto release_ref;
 
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) ||
 	    wlan_cm_host_roam_in_progress(psoc, vdev_id)) {
-		cm_roam_release_lock();
-		return QDF_STATUS_E_BUSY;
+		cm_roam_release_lock(vdev);
+		status = QDF_STATUS_E_FAILURE;
+		goto release_ref;
 	}
 
 	/* RSO stop cmd will be issued with lock held to avoid
@@ -241,7 +283,10 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	wlan_cm_disable_rso(pdev, vdev_id, REASON_DRIVER_DISABLED,
 			    RSO_INVALID_REQUESTOR);
 
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -249,22 +294,32 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+	bool roaming_in_progress = false;
+	struct wlan_objmgr_vdev *vdev;
 
-	status = cm_roam_acquire_lock();
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return roaming_in_progress;
+	}
+
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return false;
+		goto release_ref;
 
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) ||
 	    MLME_IS_ROAMING_IN_PROG(psoc, vdev_id) ||
 	    mlme_is_roam_invoke_in_progress(psoc, vdev_id) ||
-	    wlan_cm_host_roam_in_progress(psoc, vdev_id)) {
-		cm_roam_release_lock();
-		return true;
-	}
+	    wlan_cm_host_roam_in_progress(psoc, vdev_id))
+		roaming_in_progress = true;
 
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
 
-	return false;
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return roaming_in_progress;
 }
 
 QDF_STATUS wlan_cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
@@ -752,19 +807,31 @@ cm_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		   uint8_t reason)
 {
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
-	status = cm_roam_acquire_lock();
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return status;
+		goto release_ref;
 	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
 		mlme_debug("Update cfg received while ROAM RSO not started");
-		cm_roam_release_lock();
-		return QDF_STATUS_E_INVAL;
+		cm_roam_release_lock(vdev);
+		status = QDF_STATUS_E_INVAL;
+		goto release_ref;
 	}
 
 	status = cm_roam_send_rso_cmd(psoc, vdev_id,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG, reason);
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }
@@ -1175,7 +1242,9 @@ QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
 		mlme_obj->cfg.lfr.roam_rssi_diff;
 	cfg_params->bg_rssi_threshold =
 		mlme_obj->cfg.lfr.bg_rssi_threshold;
-
+#ifdef FEATURE_CM_ENABLE
+	qdf_mutex_create(&rso_cfg->cm_rso_lock);
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1184,6 +1253,9 @@ void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
 {
 	struct rso_cfg_params *cfg_params;
 
+#ifdef FEATURE_CM_ENABLE
+	qdf_mutex_destroy(&rso_cfg->cm_rso_lock);
+#endif
 	cfg_params = &rso_cfg->cfg_param;
 	if (rso_cfg->assoc_ie.ptr) {
 		qdf_mem_free(rso_cfg->assoc_ie.ptr);
@@ -1211,6 +1283,28 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 		return NULL;
 
 	return &cm_ext_obj->rso_cfg;
+}
+
+QDF_STATUS cm_roam_acquire_lock(struct wlan_objmgr_vdev *vdev)
+{
+	static struct rso_config *rso_cfg;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_INVAL;
+
+	return qdf_mutex_acquire(&rso_cfg->cm_rso_lock);
+}
+
+QDF_STATUS cm_roam_release_lock(struct wlan_objmgr_vdev *vdev)
+{
+	static struct rso_config *rso_cfg;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_INVAL;
+
+	return qdf_mutex_release(&rso_cfg->cm_rso_lock);
 }
 #else
 struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,

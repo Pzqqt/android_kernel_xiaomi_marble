@@ -1074,29 +1074,6 @@ struct assoc_cnf {
 	bool need_assoc_rsp_tx_cb;
 };
 
-/* / Enum definition for  Wireless medium status change codes */
-typedef enum eSirSmeStatusChangeCode {
-	eSIR_SME_DEAUTH_FROM_PEER,
-	eSIR_SME_DISASSOC_FROM_PEER,
-	eSIR_SME_LOST_LINK_WITH_PEER,
-	eSIR_SME_CHANNEL_SWITCH,
-	eSIR_SME_RADAR_DETECTED,
-	eSIR_SME_AP_CAPS_CHANGED,
-} tSirSmeStatusChangeCode;
-
-struct new_bss_info {
-	struct qdf_mac_addr bssId;
-	uint32_t freq;
-	uint8_t reserved;
-	tSirMacSSid ssId;
-};
-
-struct ap_new_caps {
-	uint16_t capabilityInfo;
-	struct qdf_mac_addr bssId;
-	tSirMacSSid ssId;
-};
-
 /**
  * Table below indicates what information is passed for each of
  * the Wireless Media status change notifications:
@@ -1112,27 +1089,6 @@ struct ap_new_caps {
  *                                  that STA is currently associated with
  *                                  have changed.
  */
-
-/* / Definition for Wireless medium status change notification */
-struct wm_status_change_ntf {
-	uint16_t messageType;   /* eWNI_SME_WM_STATUS_CHANGE_NTF */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	tSirSmeStatusChangeCode statusChangeCode;
-	struct qdf_mac_addr bssid;      /* Self BSSID */
-	union {
-		/* eSIR_SME_DEAUTH_FROM_PEER */
-		uint16_t deAuthReasonCode;
-		/* eSIR_SME_DISASSOC_FROM_PEER */
-		uint16_t disassocReasonCode;
-		/* none for eSIR_SME_LOST_LINK_WITH_PEER */
-		/* eSIR_SME_CHANNEL_SWITCH */
-		uint32_t new_freq;
-		/* none for eSIR_SME_RADAR_DETECTED */
-		/* eSIR_SME_AP_CAPS_CHANGED */
-		struct ap_new_caps apNewCaps;
-	} statusChangeInfo;
-};
 
 /* Definition for Disassociation request */
 struct disassoc_req {
@@ -2123,13 +2079,6 @@ enum set_antenna_mode_status {
 struct sir_antenna_mode_resp {
 	enum set_antenna_mode_status status;
 };
-
-/* Reset AP Caps Changed */
-typedef struct sSirResetAPCapsChange {
-	uint16_t messageType;
-	uint16_t length;
-	struct qdf_mac_addr bssId;
-} tSirResetAPCapsChange, *tpSirResetAPCapsChange;
 
 /* / Definition for Candidate found indication from FW */
 typedef struct sSirSmeCandidateFoundInd {

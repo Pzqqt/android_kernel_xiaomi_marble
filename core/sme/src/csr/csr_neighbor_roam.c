@@ -541,19 +541,117 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+static void
+csr_restore_default_roaming_params(struct mac_context *mac,
+				   struct wlan_objmgr_vdev *vdev)
+{
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(mac->psoc);
+	if (!mlme_obj)
+		return;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return;
+	cfg_params = &rso_cfg->cfg_param;
+	cfg_params->enable_scoring_for_roam =
+			mlme_obj->cfg.roam_scoring.enable_scoring_for_roam;
+	cfg_params->empty_scan_refresh_period =
+			mlme_obj->cfg.lfr.empty_scan_refresh_period;
+	cfg_params->full_roam_scan_period =
+			mlme_obj->cfg.lfr.roam_full_scan_period;
+	cfg_params->neighbor_scan_period =
+			mlme_obj->cfg.lfr.neighbor_scan_timer_period;
+	cfg_params->neighbor_lookup_threshold =
+			mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
+	cfg_params->roam_rssi_diff =
+			mlme_obj->cfg.lfr.roam_rssi_diff;
+	cfg_params->bg_rssi_threshold =
+			mlme_obj->cfg.lfr.bg_rssi_threshold;
+
+	cfg_params->max_chan_scan_time =
+			mlme_obj->cfg.lfr.neighbor_scan_max_chan_time;
+	cfg_params->roam_scan_home_away_time =
+			mlme_obj->cfg.lfr.roam_scan_home_away_time;
+	cfg_params->roam_scan_n_probes =
+			mlme_obj->cfg.lfr.roam_scan_n_probes;
+	cfg_params->roam_scan_inactivity_time =
+			mlme_obj->cfg.lfr.roam_scan_inactivity_time;
+	cfg_params->roam_inactive_data_packet_count =
+			mlme_obj->cfg.lfr.roam_inactive_data_packet_count;
+	cfg_params->roam_scan_period_after_inactivity =
+			mlme_obj->cfg.lfr.roam_scan_period_after_inactivity;
+}
+
+QDF_STATUS csr_roam_control_restore_default_config(struct mac_context *mac,
+						   uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct rso_chan_info *chan_info;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+
+	if (!mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
+		sme_err("roam_scan_offload_enabled is not supported");
+		goto out;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", vdev_id);
+		goto out;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		goto out;
+	}
+	cfg_params = &rso_cfg->cfg_param;
+	mac->roam.configParam.nRoamScanControl = false;
+
+	chan_info = &cfg_params->pref_chan_info;
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
+
+	chan_info = &cfg_params->specific_chan_info;
+	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
+
+	mlme_reinit_control_config_lfr_params(mac->psoc, &mac->mlme_cfg->lfr);
+
+	csr_restore_default_roaming_params(mac, vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	/* Flush static and dynamic channels in ROAM scan list in firmware */
+	wlan_roam_update_cfg(mac->psoc, vdev_id, REASON_FLUSH_CHANNEL_LIST);
+	wlan_roam_update_cfg(mac->psoc, vdev_id, REASON_SCORING_CRITERIA_CHANGED);
+
+	status = QDF_STATUS_SUCCESS;
+out:
+	return status;
+}
+
 void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 				     uint8_t vdev_id)
 {
 	struct wlan_roam_triggers triggers;
+	struct cm_roam_values_copy src_config;
 
-	sme_set_roam_config_enable(MAC_HANDLE(mac_ctx), vdev_id, 0);
+	if (mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled) {
+		src_config.bool_value = 0;
+		wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id,
+				   ROAM_CONFIG_ENABLE,
+				   &src_config);
+	}
 
 	triggers.vdev_id = vdev_id;
 	triggers.trigger_bitmap = wlan_mlme_get_roaming_triggers(mac_ctx->psoc);
 	sme_debug("Reset roam trigger bitmap to 0x%x", triggers.trigger_bitmap);
-	wlan_cm_rso_set_roam_trigger(mac_ctx->pdev, vdev_id, &triggers);
-	sme_roam_control_restore_default_config(MAC_HANDLE(mac_ctx),
-						vdev_id);
+	cm_rso_set_roam_trigger(mac_ctx->pdev, vdev_id, &triggers);
+	csr_roam_control_restore_default_config(mac_ctx, vdev_id);
 }
 #endif
 

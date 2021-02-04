@@ -96,9 +96,17 @@ typedef struct sCsrNeighborRoamControlInfo {
 QDF_STATUS csr_neighbor_roam_indicate_connect(struct mac_context *mac,
 		uint8_t sessionId, QDF_STATUS status);
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+QDF_STATUS csr_roam_control_restore_default_config(struct mac_context *mac,
+						   uint8_t vdev_id);
 void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 				     uint8_t vdev_id);
 #else
+static inline
+QDF_STATUS csr_roam_control_restore_default_config(struct mac_context *mac,
+						   uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 static inline void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 						   uint8_t vdev_id)
 {
