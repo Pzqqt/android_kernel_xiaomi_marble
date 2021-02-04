@@ -3834,7 +3834,13 @@ typedef struct {
      *      Refer to the below definitions of the
      *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_SAE_EAPOL_OFFLOAD_SUPPORT_GET
      *      and _SET macros.
-     *  Bits 31:4 - Reserved
+     *  Bit 4
+     *      This bit will be set when host is able to process the
+     *      WMI_REG_CC_EXT_EVENT.
+     *      Refer to the below definitions of the
+     *      WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_CC_EXT_SUPPORT_GET
+     *      and _SET macros.
+     *  Bits 31:5 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -4122,6 +4128,12 @@ typedef struct {
     WMI_GET_BITS(host_service_flags, 3, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_SAE_EAPOL_OFFLOAD_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 3, 1, val)
+
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_CC_EXT_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 4, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_CC_EXT_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 4, 1, val)
+
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
