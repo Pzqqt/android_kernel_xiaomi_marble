@@ -166,7 +166,7 @@ static int cvp_wait_synx(struct synx_session ssid, u32 *synx, u32 num_synx,
 		u32 *synx_state)
 {
 	int i = 0, rc = 0;
-	unsigned long timeout_ms = 2000; //1000;
+	unsigned long timeout_ms = 2000;
 	int h_synx;
 
 	while (i < num_synx) {

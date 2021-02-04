@@ -673,6 +673,7 @@ int cvp_hfi_process_msg_packet(u32 device_id, void *hdr,
 	case HFI_MSG_SESSION_CVP_WARP:
 	case HFI_MSG_SESSION_CVP_WARP_NCC:
 	case HFI_MSG_SESSION_CVP_FD:
+	case HFI_MSG_SESSION_CVP_SGM_OF:
 		pkt_func = (pkt_func_def)hfi_process_session_cvp_msg;
 		break;
 	default:

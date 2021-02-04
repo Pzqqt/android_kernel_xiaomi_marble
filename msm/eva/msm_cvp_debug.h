@@ -38,7 +38,7 @@ enum cvp_msg_prio {
 	CVP_SESS = 0x002000,
 	CVP_HFI  = 0x004000,
 	CVP_DBG  = CVP_MEM | CVP_SYNX | CVP_CORE | CVP_REG |
-		CVP_PWR | CVP_DSP | CVP_SESS | CVP_HFI,
+		CVP_PWR | CVP_DSP | CVP_SESS | CVP_HFI | CVP_PKT,
 };
 
 enum cvp_msg_out {

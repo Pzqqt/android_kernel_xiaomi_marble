@@ -52,6 +52,20 @@ const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
 	},
 	{
 		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SGM_OF_CONFIG,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_SESSION_SGM_OF_CONFIG_CMD_DONE,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SGM_OF_FRAME,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
 		.type = HFI_CMD_SESSION_CVP_WARP_NCC_CONFIG,
 		.buf_offset = 0,
 		.buf_num = 0,
@@ -2947,6 +2961,7 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_DMM_CONFIG_CMD_DONE:
 	case HAL_SESSION_WARP_CONFIG_CMD_DONE:
 	case HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE:
+	case HAL_SESSION_SGM_OF_CONFIG_CMD_DONE:
 	case HAL_SESSION_TME_CONFIG_CMD_DONE:
 	case HAL_SESSION_ODT_CONFIG_CMD_DONE:
 	case HAL_SESSION_OD_CONFIG_CMD_DONE:
@@ -2958,12 +2973,6 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_PYS_HCD_CONFIG_CMD_DONE:
 	case HAL_SESSION_DMM_PARAMS_CMD_DONE:
 	case HAL_SESSION_WARP_DS_PARAMS_CMD_DONE:
-	case HAL_SESSION_DFS_FRAME_CMD_DONE:
-	case HAL_SESSION_DMM_FRAME_CMD_DONE:
-	case HAL_SESSION_WARP_FRAME_CMD_DONE:
-	case HAL_SESSION_WARP_NCC_FRAME_CMD_DONE:
-	case HAL_SESSION_ICA_FRAME_CMD_DONE:
-	case HAL_SESSION_FD_FRAME_CMD_DONE:
 	case HAL_SESSION_PERSIST_SET_DONE:
 	case HAL_SESSION_PERSIST_REL_DONE:
 	case HAL_SESSION_FD_CONFIG_CMD_DONE:
@@ -3128,6 +3137,7 @@ static void iris_hfi_core_work_handler(struct work_struct *work)
 	struct iris_hfi_device *device;
 	int num_responses = 0, i = 0;
 	u32 intr_status;
+	static bool warning_on = true;
 
 	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
@@ -3139,9 +3149,15 @@ static void iris_hfi_core_work_handler(struct work_struct *work)
 
 
 	if (!__core_in_valid_state(device)) {
-		dprintk(CVP_WARN, "%s - Core not in init state\n", __func__);
+		if (warning_on) {
+			dprintk(CVP_WARN, "%s Core not in init state\n",
+				__func__);
+			warning_on = false;
+		}
 		goto err_no_work;
 	}
+
+	warning_on = true;
 
 	if (!device->callback) {
 		dprintk(CVP_ERR, "No interrupt callback function: %pK\n",
