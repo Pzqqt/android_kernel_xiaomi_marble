@@ -550,6 +550,56 @@ static int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static int msm_vdec_set_default_header(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 default_header = false;
+
+	if (port != INPUT_PORT) {
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	default_header = inst->capabilities->cap[DEFAULT_HEADER].value;
+	i_vpr_h(inst, "%s: default header: %d", __func__, default_header);
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_DEC_DEFAULT_HEADER,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_U32,
+			&default_header,
+			sizeof(u32));
+	if (rc)
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
+	return rc;
+}
+
+static int msm_vdec_set_rap_frame(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 rap_frame = true;
+
+	if (port != INPUT_PORT) {
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	rap_frame = inst->capabilities->cap[RAP_FRAME].value;
+	i_vpr_h(inst, "%s: start from rap frame: %d", __func__, rap_frame);
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_DEC_START_FROM_RAP_FRAME,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_U32,
+			&rap_frame,
+			sizeof(u32));
+	if (rc)
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
+	return rc;
+}
+
 static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -561,6 +611,7 @@ static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
+	thumbnail_mode = inst->capabilities->cap[THUMBNAIL_MODE].value;
 	i_vpr_h(inst, "%s: thumbnail mode: %d", __func__, thumbnail_mode);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_THUMBNAIL_MODE,
@@ -672,6 +723,14 @@ static int msm_vdec_set_input_properties(struct msm_vidc_inst *inst)
 		return rc;
 
 	rc = msm_vdec_set_thumbnail_mode(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = msm_vdec_set_default_header(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = msm_vdec_set_rap_frame(inst, INPUT_PORT);
 	if (rc)
 		return rc;
 
