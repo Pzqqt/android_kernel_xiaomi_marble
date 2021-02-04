@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_PANEL_H_
@@ -135,7 +135,7 @@ struct dp_panel {
 	u32 channel_total_slots;
 	u32 pbn;
 
-	u32 tot_dsc_blks_in_use;
+	u32 dsc_blks_in_use;
 	/* DRM connector assosiated with this panel */
 	struct drm_connector *connector;
 
