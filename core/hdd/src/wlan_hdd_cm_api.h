@@ -47,7 +47,9 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
  * wlan_hdd_cm_issue_disconnect() - initiate disconnect from osif
  * @adapter: Pointer to adapter
  * @reason: Disconnect reason code
- * @sync: true if wait for disconnect to complete is required.
+ * @sync: true if wait for disconnect to complete is required. for the
+ *        supplicant initiated disconnect or during vdev delete/change interface
+ *        sync should be true.
  *
  * This function is used to issue disconnect request to conection manager
  *

@@ -7171,6 +7171,13 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 				 * future
 				 */
 #ifdef FEATURE_CM_ENABLE
+				/*
+				 * On vdev delete wait for disconnect to
+				 * complete. i.e use sync API, so that the
+				 * vdev ref of MLME are cleaned and disconnect
+				 * complete before vdev is moved to logically
+				 * deleted.
+				 */
 				status = wlan_hdd_cm_issue_disconnect(adapter,
 								      reason,
 								      true);

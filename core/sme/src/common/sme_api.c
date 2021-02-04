@@ -8408,33 +8408,24 @@ QDF_STATUS sme_set_auto_shutdown_timer(mac_handle_t mac_handle,
 	struct auto_shutdown_cmd *auto_sh_cmd;
 	struct scheduler_msg message = {0};
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		auto_sh_cmd = qdf_mem_malloc(sizeof(*auto_sh_cmd));
-		if (!auto_sh_cmd) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
+	auto_sh_cmd = qdf_mem_malloc(sizeof(*auto_sh_cmd));
+	if (!auto_sh_cmd)
+		return QDF_STATUS_E_NOMEM;
 
-		auto_sh_cmd->timer_val = timer_val;
 
-		/* serialize the req through MC thread */
-		message.bodyptr = auto_sh_cmd;
-		message.type = WMA_SET_AUTO_SHUTDOWN_TIMER_REQ;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post Auto shutdown MSG fail", __func__);
-			qdf_mem_free(auto_sh_cmd);
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_FAILURE;
-		}
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Posted Auto shutdown MSG", __func__);
-		sme_release_global_lock(&mac->sme);
+	auto_sh_cmd->timer_val = timer_val;
+
+	/* serialize the req through MC thread */
+	message.bodyptr = auto_sh_cmd;
+	message.type = WMA_SET_AUTO_SHUTDOWN_TIMER_REQ;
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_WMA,
+					    &message);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		sme_err("Post Auto shutdown MSG fail");
+		qdf_mem_free(auto_sh_cmd);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	return status;
@@ -9226,20 +9217,13 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 	struct csr_roam_session *pCsrSession = NULL;
 	struct pe_session *pSession = NULL;
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
 	pCsrSession = CSR_GET_SESSION(mac, sessionId);
 	if (!pCsrSession) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("Session lookup fails for CSR session"));
-		sme_release_global_lock(&mac->sme);
+		sme_err("Session lookup fails for dvev %d", sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("Invalid session Id %u"), sessionId);
-		sme_release_global_lock(&mac->sme);
+		sme_err("Invalid session Id %u", sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -9248,15 +9232,13 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 				&peSessionId);
 
 	if (!pSession) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL(" Session lookup fails for BSSID"));
-		sme_release_global_lock(&mac->sme);
+		sme_err("Session lookup fails for " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(pCsrSession->connectedProfile.bssid.bytes));
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!pSession->QosMapSet.present) {
 		sme_debug("QOS Mapping IE not present");
-		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -9271,7 +9253,6 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 			dscpmapping[pSession->QosMapSet.dscp_exceptions[i][0]] =
 				pSession->QosMapSet.dscp_exceptions[i][1];
 
-	sme_release_global_lock(&mac->sme);
 	return status;
 }
 
