@@ -462,7 +462,8 @@ dp_rx_oor_handle(struct dp_soc *soc,
 	 * to stack in this case since the connection might fail due to
 	 * duplicated EAP response.
 	 */
-	if (mpdu_desc_info->mpdu_flags & HAL_MPDU_F_RETRY_BIT &&
+	if (mpdu_desc_info &&
+	    mpdu_desc_info->mpdu_flags & HAL_MPDU_F_RETRY_BIT &&
 	    peer->rx_tid[tid].ba_status == DP_RX_BA_ACTIVE) {
 		frame_mask &= ~FRAME_MASK_IPV4_EAPOL;
 		DP_STATS_INC(soc, rx.err.reo_err_oor_eapol_drop, 1);
@@ -2338,6 +2339,24 @@ done:
 					dp_2k_jump_handle(soc, nbuf,
 							  rx_tlv_hdr,
 							  peer_id, tid);
+					break;
+				case HAL_REO_ERR_REGULAR_FRAME_OOR:
+					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+									   rx_tlv_hdr)) {
+						peer_id =
+							hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
+											 rx_tlv_hdr);
+						tid =
+							hal_rx_mpdu_start_tid_get(hal_soc, rx_tlv_hdr);
+					}
+					QDF_NBUF_CB_RX_PKT_LEN(nbuf) =
+						hal_rx_msdu_start_msdu_len_get(
+									       rx_tlv_hdr);
+					nbuf->next = NULL;
+					dp_rx_oor_handle(soc, nbuf,
+							 rx_tlv_hdr,
+							 NULL,
+							 peer_id, tid);
 					break;
 				case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
 				case HAL_REO_ERR_BAR_FRAME_OOR:
