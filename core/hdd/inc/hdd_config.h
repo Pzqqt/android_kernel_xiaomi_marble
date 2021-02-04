@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -128,12 +128,18 @@ enum hdd_dot11_mode {
 			CFG_VALUE_OR_DEFAULT, \
 			"dot11 mode")
 
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT	300000
+#else
+#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT	10000
+#endif
+
 /*
  * <ini>
  * gInterfaceChangeWait - Interface change wait
  * @Min: 0,
  * @Max: 500000
- * @Default: 10000
+ * @Default: 10000 (300000 for emulation)
  *
  * Timer waiting for interface up from the upper layer. If
  * this timer expires all the cds modules shall be closed.
@@ -151,7 +157,7 @@ enum hdd_dot11_mode {
 			"gInterfaceChangeWait", \
 			0, \
 			500000, \
-			10000, \
+			CFG_INTERFACE_CHANGE_WAIT_DEFAULT, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Interface change wait")
 
