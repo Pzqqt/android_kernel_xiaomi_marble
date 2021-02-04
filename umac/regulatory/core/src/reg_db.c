@@ -253,10 +253,9 @@ enum reg_domain {
 	FCC11_WORLD = 0x19,
 	FCC13_WORLD = 0xE4,
 	FCC14_FCCB = 0xE6,
-#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	FCC15_FCCA = 0xEA,
 	FCC16_FCCA = 0xE8,
-#endif
+
 	ETSI1_WORLD = 0x37,
 	ETSI3_WORLD = 0x36,
 	ETSI4_WORLD = 0x30,
@@ -966,10 +965,8 @@ enum reg_domains_5g {
 	FCC11,
 	FCC13,
 	FCC14,
-#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	FCC15,
 	FCC16,
-#endif
 	ETSI1,
 	ETSI3,
 	ETSI4,
@@ -1036,10 +1033,9 @@ const struct reg_domain_pair g_reg_dmn_pairs[] = {
 	{FCC11_WORLD, FCC11, WORLD},
 	{FCC13_WORLD, FCC13, WORLD},
 	{FCC14_FCCB, FCC14, FCCB},
-#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 	{FCC15_FCCA, FCC15, FCCA},
 	{FCC16_FCCA, FCC16, FCCA},
-#endif
+
 	{ETSI1_WORLD, ETSI1, WORLD},
 	{ETSI3_WORLD, ETSI3, WORLD},
 	{ETSI4_WORLD, ETSI4, WORLD},
@@ -1853,7 +1849,6 @@ bool reg_etsi13_regdmn(uint8_t reg_dmn)
 	return reg_dmn == ETSI13;
 }
 
-#if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
 bool reg_fcc_regdmn(uint8_t reg_dmn)
 {
 	return ((reg_dmn == FCC3) ||
@@ -1861,12 +1856,6 @@ bool reg_fcc_regdmn(uint8_t reg_dmn)
 		(reg_dmn == FCC15) ||
 		(reg_dmn == FCC16));
 }
-#else
-bool reg_fcc_regdmn(uint8_t reg_dmn)
-{
-	return (reg_dmn == FCC3 || reg_dmn == FCC8);
-}
-#endif
 
 bool reg_en302_502_regdmn(uint16_t regdmn)
 {
