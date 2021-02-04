@@ -265,20 +265,49 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (pLinkReq->MaxTxPower.maxTxPower !=
-			mlme_obj->reg_tpc_obj.ap_constraint_power) {
+	if (wlan_reg_is_ext_tpc_supported(mac->psoc)) {
+		if (pLinkReq->MaxTxPower.maxTxPower !=
+				mlme_obj->reg_tpc_obj.ap_constraint_power) {
 
-		tx_ops = wlan_reg_get_tx_ops(mac->psoc);
+			tx_ops = wlan_reg_get_tx_ops(mac->psoc);
 
-		mlme_obj->reg_tpc_obj.ap_constraint_power =
+			mlme_obj->reg_tpc_obj.ap_constraint_power =
 					pLinkReq->MaxTxPower.maxTxPower;
-		lim_calculate_tpc(mac, pe_session, true);
+			lim_calculate_tpc(mac, pe_session, true);
 
-		if (tx_ops->set_tpc_power)
-			tx_ops->set_tpc_power(mac->psoc, pe_session->vdev_id,
-					      &mlme_obj->reg_tpc_obj);
+			if (tx_ops->set_tpc_power)
+				tx_ops->set_tpc_power(mac->psoc,
+						      pe_session->vdev_id,
+						      &mlme_obj->reg_tpc_obj);
+		}
+	} else {
+		mlme_obj->reg_tpc_obj.reg_max[0] =
+				pe_session->def_max_tx_pwr;
+		mlme_obj->reg_tpc_obj.ap_constraint_power =
+				pLinkReq->MaxTxPower.maxTxPower;
+
+		LinkReport.txPower = lim_get_max_tx_power(mac, mlme_obj);
+
+		/** If firmware updated max tx power is non zero, respond to
+		 * rrm link  measurement request with min of firmware updated
+		 * ap tx power and max power derived from lim_get_max_tx_power
+		 * API.
+		 */
+		if (mlme_obj && mlme_obj->mgmt.generic.tx_pwrlimit)
+			LinkReport.txPower = QDF_MIN(LinkReport.txPower,
+					mlme_obj->mgmt.generic.tx_pwrlimit);
+
+		if ((LinkReport.txPower != (uint8_t)pe_session->maxTxPower) &&
+		    (QDF_STATUS_SUCCESS ==
+			rrm_send_set_max_tx_power_req(mac, LinkReport.txPower,
+						      pe_session))) {
+			pe_warn("Local: %d", pe_session->maxTxPower);
+			pe_warn("Link Request TxPwr: %d Link Report TxPwr: %d",
+				LinkReport.txPower,
+				pLinkReq->MaxTxPower.maxTxPower);
+			pe_session->maxTxPower = LinkReport.txPower;
+		}
 	}
-
 	LinkReport.dialogToken = pLinkReq->DialogToken.token;
 	LinkReport.rxAntenna = 0;
 	LinkReport.txAntenna = 0;

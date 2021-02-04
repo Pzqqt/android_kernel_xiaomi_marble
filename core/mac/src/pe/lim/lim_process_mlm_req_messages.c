@@ -248,7 +248,6 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		return eSIR_SME_INVALID_PARAMETERS;
 	}
 
-	tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 	qdf_mem_copy(mlme_obj->mgmt.generic.bssid, mlm_start_req->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	if (lim_is_session_he_capable(session)) {
@@ -294,12 +293,15 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		goto peer_cleanup;
 	wma_post_vdev_start_setup(vdev_id);
 
-	lim_calculate_tpc(mac_ctx, session, false);
+	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
+		tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
-	if (tx_ops->set_tpc_power)
-		tx_ops->set_tpc_power(mac_ctx->psoc, session->vdev_id,
-				      &mlme_obj->reg_tpc_obj);
+		lim_calculate_tpc(mac_ctx, session, false);
 
+		if (tx_ops->set_tpc_power)
+			tx_ops->set_tpc_power(mac_ctx->psoc, session->vdev_id,
+					      &mlme_obj->reg_tpc_obj);
+	}
 	return eSIR_SME_SUCCESS;
 
 peer_cleanup:

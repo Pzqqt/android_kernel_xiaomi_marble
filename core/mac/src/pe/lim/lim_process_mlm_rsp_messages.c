@@ -2672,8 +2672,6 @@ static void lim_process_switch_channel_join_req(
 		goto error;
 	}
 
-	tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
-
 	bss = &session_entry->lim_join_req->bssDescription;
 	nontx_bss_id = bss->mbssid_info.profile_num;
 
@@ -2762,22 +2760,25 @@ static void lim_process_switch_channel_join_req(
 		goto error;
 	}
 
-	lim_process_tpe_ie_from_beacon(mac_ctx, session_entry, bss,
-				       &tpe_change);
+	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
+		tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session_entry->vdev);
-	if (!mlme_obj) {
-		pe_err("vdev component object is NULL");
-		goto error;
+		lim_process_tpe_ie_from_beacon(mac_ctx, session_entry, bss,
+					       &tpe_change);
+
+		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session_entry->vdev);
+		if (!mlme_obj) {
+			pe_err("vdev component object is NULL");
+			goto error;
+		}
+
+		lim_calculate_tpc(mac_ctx, session_entry, false);
+
+		if (tx_ops->set_tpc_power)
+			tx_ops->set_tpc_power(mac_ctx->psoc,
+					      session_entry->vdev_id,
+					      &mlme_obj->reg_tpc_obj);
 	}
-
-	lim_calculate_tpc(mac_ctx, session_entry, false);
-
-	if (tx_ops->set_tpc_power)
-		tx_ops->set_tpc_power(mac_ctx->psoc,
-				      session_entry->vdev_id,
-				      &mlme_obj->reg_tpc_obj);
-
 	/* include additional IE if there is */
 	lim_send_probe_req_mgmt_frame(mac_ctx, &ssId,
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,

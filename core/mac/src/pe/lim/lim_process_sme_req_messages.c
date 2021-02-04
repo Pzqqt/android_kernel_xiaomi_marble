@@ -2524,6 +2524,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	struct wlan_mlme_lfr_cfg *lfr = &mac_ctx->mlme_cfg->lfr;
 	struct cm_roam_values_copy config;
 	bool ese_ver_present;
+	int8_t reg_max;
 
 	/*
 	 * Update the capability here itself as this is used in
@@ -2722,11 +2723,26 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		&session->gLimCurrentBssUapsd,
 		&local_power_constraint, session, &is_pwr_constraint);
 
-	mlme_obj->reg_tpc_obj.ap_constraint_power = local_power_constraint;
+	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
+		mlme_obj->reg_tpc_obj.ap_constraint_power =
+						local_power_constraint;
+	} else {
+		reg_max = wlan_reg_get_channel_reg_power_for_freq(
+				mac_ctx->pdev, session->curr_op_freq);
+		if (is_pwr_constraint)
+			local_power_constraint = reg_max -
+						local_power_constraint;
+		if (!local_power_constraint)
+			local_power_constraint = reg_max;
 
-	session->maxTxPower = lim_get_max_tx_power(mac_ctx, mlme_obj);
-	session->def_max_tx_pwr = session->maxTxPower;
+		mlme_obj->reg_tpc_obj.reg_max[0] = reg_max;
+		mlme_obj->reg_tpc_obj.ap_constraint_power =
+						local_power_constraint;
+		mlme_obj->reg_tpc_obj.frequency[0] = session->curr_op_freq;
 
+		session->maxTxPower = lim_get_max_tx_power(mac_ctx, mlme_obj);
+		session->def_max_tx_pwr = session->maxTxPower;
+	}
 	session->limRFBand = lim_get_rf_band(session->curr_op_freq);
 
 	/* Initialize 11h Enable Flag */

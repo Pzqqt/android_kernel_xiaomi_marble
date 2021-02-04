@@ -710,6 +710,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	struct vdev_mlme_obj *mlme_obj;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	bool ap_constraint_change = false, tpe_change = false;
+	int8_t regMax = 0, maxTxPower = 0;
+	QDF_STATUS status;
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -721,7 +723,6 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			return;
 	}
 
-	tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 	/*
 	 * For vht session, if opermode ie or vht oper IE is present
 	 * bandwidth change will be taken care using these vht IEs.
@@ -736,36 +737,79 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 		sch_bcn_process_sta_opmode(mac_ctx, bcn, rx_pkt_info, session,
 					    &beaconParams, &sendProbeReq, pMh);
 
-	lim_parse_tpe_ie(mac_ctx, session, bcn->transmit_power_env,
-			 bcn->num_transmit_power_env, &bcn->he_op,
-			 &tpe_change);
-
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
 		return;
 	}
 
-	if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
-		get_local_power_constraint_beacon(bcn, &local_constraint);
+	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
+		tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
-		if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
-				bcn->powerConstraintPresent)
-			local_constraint =
+		lim_parse_tpe_ie(mac_ctx, session, bcn->transmit_power_env,
+				 bcn->num_transmit_power_env, &bcn->he_op,
+				 &tpe_change);
+
+		if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
+			get_local_power_constraint_beacon(bcn,
+							  &local_constraint);
+
+			if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
+			    bcn->powerConstraintPresent)
+				local_constraint =
 				bcn->localPowerConstraint.localPowerConstraints;
-	}
+		}
 
-	if (local_constraint != mlme_obj->reg_tpc_obj.ap_constraint_power) {
+		if (local_constraint !=
+				mlme_obj->reg_tpc_obj.ap_constraint_power) {
+			mlme_obj->reg_tpc_obj.ap_constraint_power =
+							local_constraint;
+			ap_constraint_change = true;
+		}
+
+		if (ap_constraint_change || tpe_change) {
+			lim_calculate_tpc(mac_ctx, session, false);
+
+			if (tx_ops->set_tpc_power)
+				tx_ops->set_tpc_power(mac_ctx->psoc,
+						      session->vdev_id,
+						      &mlme_obj->reg_tpc_obj);
+			}
+	} else {
+		/* Obtain the Max Tx power for the current regulatory  */
+		regMax = wlan_reg_get_channel_reg_power_for_freq(
+					mac_ctx->pdev, session->curr_op_freq);
+		local_constraint = regMax;
+
+		if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
+			get_local_power_constraint_beacon(bcn,
+							  &local_constraint);
+
+			if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
+			    bcn->powerConstraintPresent) {
+				local_constraint = regMax;
+				local_constraint -=
+				bcn->localPowerConstraint.localPowerConstraints;
+			}
+		}
+		mlme_obj->reg_tpc_obj.reg_max[0] = regMax;
 		mlme_obj->reg_tpc_obj.ap_constraint_power = local_constraint;
-		ap_constraint_change = true;
-	}
+		mlme_obj->reg_tpc_obj.frequency[0] = session->curr_op_freq;
 
-	if (ap_constraint_change || tpe_change) {
-		lim_calculate_tpc(mac_ctx, session, false);
+		maxTxPower = lim_get_max_tx_power(mac_ctx, mlme_obj);
 
-		if (tx_ops->set_tpc_power)
-			tx_ops->set_tpc_power(mac_ctx->psoc, session->vdev_id,
-					      &mlme_obj->reg_tpc_obj);
+		/* If maxTxPower is increased or decreased */
+		if (maxTxPower != session->maxTxPower) {
+			pe_debug("New maxTx power %d, old pwr %d",
+				 maxTxPower, session->maxTxPower);
+			pe_debug("regMax %d, local %d", regMax,
+				 local_constraint);
+			status = lim_send_set_max_tx_power_req(mac_ctx,
+							       maxTxPower,
+							       session);
+			if (status == QDF_STATUS_SUCCESS)
+				session->maxTxPower = maxTxPower;
+		}
 	}
 	/* Indicate to LIM that Beacon is received */
 	if (bcn->HTInfo.present) {
