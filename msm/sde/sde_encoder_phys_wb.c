@@ -1422,6 +1422,9 @@ static int _sde_encoder_phys_wb_wait_for_commit_done(
 		_sde_encoder_phys_wb_frame_done_helper(wb_enc, false);
 	}
 
+	if (atomic_read(&phys_enc->pending_retire_fence_cnt) > 1)
+		wait_info.count_check = 1;
+
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_retire_fence_cnt;
 	wait_info.timeout_ms = max_t(u32, wb_enc->wbdone_timeout,
