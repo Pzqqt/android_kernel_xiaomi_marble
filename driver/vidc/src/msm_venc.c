@@ -20,7 +20,7 @@
 u32 msm_venc_input_set_prop[] = {
 	HFI_PROP_COLOR_FORMAT,
 	HFI_PROP_RAW_RESOLUTION,
-	HFI_PROP_LINEAR_ALIGNMENT_FACTOR,
+	HFI_PROP_LINEAR_STRIDE_SCANLINE,
 	HFI_PROP_BUFFER_HOST_MAX_COUNT,
 };
 
@@ -75,20 +75,22 @@ static int msm_venc_set_colorformat(struct msm_vidc_inst *inst,
 	enum msm_vidc_colorformat_type colorformat;
 	u32 hfi_colorformat;
 
-	if (port != INPUT_PORT && port != OUTPUT_PORT) {
+	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
 	pixelformat = inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat;
-	if (pixelformat != V4L2_PIX_FMT_VIDC_NV12C &&
-	    pixelformat != V4L2_PIX_FMT_VIDC_TP10C) {
+	colorformat = v4l2_colorformat_to_driver(pixelformat, __func__);
+	if (!(colorformat & inst->capabilities->cap[PIX_FMTS].step_or_mask)) {
 		i_vpr_e(inst, "%s: invalid pixelformat %#x\n",
 			__func__, pixelformat);
 		return -EINVAL;
 	}
-	colorformat = v4l2_colorformat_to_driver(pixelformat, __func__);
+
 	hfi_colorformat = get_hfi_colorformat(inst, colorformat);
+	i_vpr_h(inst, "%s: hfi colorformat: %#x", __func__,
+		hfi_colorformat);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_COLOR_FORMAT,
 			HFI_HOST_FLAGS_NONE,
@@ -101,13 +103,12 @@ static int msm_venc_set_colorformat(struct msm_vidc_inst *inst,
 	return 0;
 }
 
-/* TODO: Enable when NV12 support is required */
 static int msm_venc_set_linear_alignment_factor(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
-/*	int rc = 0;
-	u32 pixelformat;
-	u32 alignment_factor[2];
+	int rc = 0;
+	u32 pixelformat, stride_y, scanline_y, stride_uv, scanline_uv;
+	u32 payload[2];
 
 	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
@@ -115,41 +116,34 @@ static int msm_venc_set_linear_alignment_factor(struct msm_vidc_inst *inst,
 	}
 
 	pixelformat = inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat;
-	if (pixelformat == V4L2_PIX_FMT_VIDC_NV12C ||
-	    pixelformat == V4L2_PIX_FMT_VIDC_TP10C ||
-		pixelformat == V4L2_PIX_FMT_VIDC_ARGB32C) {
+	if (pixelformat != V4L2_PIX_FMT_NV12 &&
+		pixelformat != V4L2_PIX_FMT_VIDC_P010) {
 		i_vpr_e(inst,
 			"%s: not a linear color fmt, property is not set\n",
 			__func__);
 		return 0;
 	}
 
-	if (pixelformat == V4L2_PIX_FMT_ARGB32) {
-		alignment_factor[0] =
-		    (rgb_stride_alignment(pixelformat, __func__) << 16) |
-		     rgb_scanline_alignment(pixelformat, __func__);
-		alignment_factor[1] = 0;
-	} else {
-		alignment_factor[0] =
-		    (y_stride_alignment(pixelformat, __func__) << 16) |
-		     y_scanline_alignment(pixelformat, __func__);
-		alignment_factor[1] =
-		    (uv_stride_alignment(pixelformat, __func__) << 16) |
-		     uv_scanline_alignment(pixelformat, __func__);
-	}
+	stride_y = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
+	scanline_y = inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+	stride_uv = stride_y;
+	scanline_uv = scanline_y / 2;
 
-	i_vpr_h(inst, "%s: payload[0]: %u payload[1]: %u\n", __func__,
-		alignment_factor[0], alignment_factor[1]);
+	payload[0] = stride_y << 16 | scanline_y;
+	payload[1] = stride_uv << 16 | scanline_uv;
+	i_vpr_h(inst, "%s: stride_y: %d scanline_y: %d "
+		"stride_uv: %d, scanline_uv: %d", __func__,
+		stride_y, scanline_y, stride_uv, scanline_uv);
 	rc = venus_hfi_session_property(inst,
-			HFI_PROP_LINEAR_ALIGNMENT_FACTOR,
+			HFI_PROP_LINEAR_STRIDE_SCANLINE,
 			HFI_HOST_FLAGS_NONE,
 			get_hfi_port(inst, port),
 			HFI_PAYLOAD_64_PACKED,
-			&alignment_factor,
+			&payload,
 			sizeof(u64));
 	if (rc)
 		return rc;
-*/
+
 	return 0;
 }
 
@@ -372,7 +366,7 @@ static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
 		case HFI_PROP_RAW_RESOLUTION:
 			rc = msm_venc_set_raw_resolution(inst, INPUT_PORT);
 			break;
-		case HFI_PROP_LINEAR_ALIGNMENT_FACTOR:
+		case HFI_PROP_LINEAR_STRIDE_SCANLINE:
 			rc = msm_venc_set_linear_alignment_factor(inst, INPUT_PORT);
 			break;
 		case HFI_PROP_BUFFER_HOST_MAX_COUNT:
@@ -384,8 +378,12 @@ static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
 			rc = -EINVAL;
 			break;
 		}
+
+		if (rc)
+			goto exit;
 	}
 
+exit:
 	return rc;
 }
 
@@ -418,8 +416,12 @@ static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
 			rc = -EINVAL;
 			break;
 		}
+
+		if (rc)
+			goto exit;
 	}
 
+exit:
 	return rc;
 }
 

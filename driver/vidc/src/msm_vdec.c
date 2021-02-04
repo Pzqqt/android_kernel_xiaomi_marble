@@ -112,7 +112,7 @@ static int msm_vdec_set_linear_stride_scanline(struct msm_vidc_inst *inst)
 		"stride_uv: %d, scanline_uv: %d", __func__,
 		stride_y, scanline_y, stride_uv, scanline_uv);
 	rc = venus_hfi_session_property(inst,
-			HFI_PROP_LINEAR_ALIGNMENT_FACTOR,
+			HFI_PROP_LINEAR_STRIDE_SCANLINE,
 			HFI_HOST_FLAGS_NONE,
 			get_hfi_port(inst, OUTPUT_PORT),
 			HFI_PAYLOAD_U64,
@@ -995,8 +995,12 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 			rc = -EINVAL;
 			break;
 		}
+
+		if (rc)
+			goto exit;
 	}
 
+exit:
 	return rc;
 }
 

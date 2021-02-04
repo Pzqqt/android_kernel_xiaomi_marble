@@ -73,9 +73,9 @@ enum hfi_color_format {
 #define HFI_BITMASK_BITSTREAM_HEIGHT                            0x0000ffff
 #define HFI_PROP_BITSTREAM_RESOLUTION                           0x03000103
 
-#define HFI_BITMASK_LINEAR_STRIDE_ALIGNMENT             0xffff0000
-#define HFI_BITMASK_LINEAR_SCANLINE_ALIGNMENT           0x0000ffff
-#define HFI_PROP_LINEAR_ALIGNMENT_FACTOR                        0x03000104
+#define HFI_BITMASK_LINEAR_STRIDE             0xffff0000
+#define HFI_BITMASK_LINEAR_SCANLINE           0x0000ffff
+#define HFI_PROP_LINEAR_STRIDE_SCANLINE                        0x03000104
 
 #define HFI_BITMASK_CROP_RIGHT_OFFSET        0xffff0000
 #define HFI_BITMASK_CROP_BOTTOM_OFFSET       0x0000ffff
