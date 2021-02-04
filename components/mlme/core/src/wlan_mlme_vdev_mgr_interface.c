@@ -692,6 +692,7 @@ bool mlme_get_bigtk_support(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->bigtk_vdev_support;
 }
 
+#ifdef FEATURE_WLAN_TDLS
 QDF_STATUS
 mlme_set_tdls_chan_switch_prohibited(struct wlan_objmgr_vdev *vdev, bool val)
 {
@@ -749,6 +750,7 @@ bool mlme_get_tdls_prohibited(struct wlan_objmgr_vdev *vdev)
 
 	return mlme_priv->connect_info.tdls_prohibited;
 }
+#endif
 
 QDF_STATUS
 mlme_set_roam_reason_better_ap(struct wlan_objmgr_vdev *vdev, bool val)
