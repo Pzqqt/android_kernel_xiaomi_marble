@@ -219,6 +219,7 @@ struct wlan_chan_list {
 /**
  * struct rso_config - connect config to be used to send info in
  * RSO. This is the info we dont have in VDEV or CM ctx
+ * @cm_rso_lock: RSO lock
  * @rsn_cap: original rsn caps from the connect req from supplicant
  * @disable_hi_rssi: disable high rssi
  * @roam_control_enable: Flag used to cache the status of roam control
@@ -254,6 +255,7 @@ struct wlan_chan_list {
  * @roam_scan_freq_lst: roam freq list
  */
 struct rso_config {
+	qdf_mutex_t cm_rso_lock;
 	uint8_t rsn_cap;
 	bool disable_hi_rssi;
 	bool roam_control_enable;

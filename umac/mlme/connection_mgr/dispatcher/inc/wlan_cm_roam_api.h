@@ -199,18 +199,20 @@ bool wlan_cm_host_roam_in_progress(struct wlan_objmgr_psoc *psoc,
 				   uint8_t vdev_id);
 
 /**
- * cm_roam_acquire_lock() - Wrapper for sme_acquire_global_lock.
+ * cm_roam_acquire_lock() - Wrapper for rso lock.
+ * @vdev: Pointer to vdev
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_roam_acquire_lock(void);
+QDF_STATUS cm_roam_acquire_lock(struct wlan_objmgr_vdev *vdev);
 
 /**
- * cm_roam_release_lock() - Wrapper for sme_release_global_lock()
+ * cm_roam_release_lock() - Wrapper for rso lock
+ * @vdev: Pointer to vdev
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_roam_release_lock(void);
+QDF_STATUS cm_roam_release_lock(struct wlan_objmgr_vdev *vdev);
 
 /**
  * cm_roam_get_requestor_string() - RSO control requestor to string api

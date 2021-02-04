@@ -480,7 +480,10 @@ QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg);
  * @reason_code: disconnect reason
  * @bssid: bssid of AP to disconnect, can be null if not known
  *
- * Context: can be called from any context
+ * Context: can be called from any context, should not hold sme global lock
+ * while calling as can lead to deadlock (disconnect access sme lock holding CM
+ * lock and thus calling cm api (which will hold CM lock) while holding sme lock
+ * can lead to deadlock)
  *
  * Return: QDF_STATUS
  */
