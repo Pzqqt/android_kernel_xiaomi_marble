@@ -1399,6 +1399,12 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	qdf_spinlock_create(&hal->register_access_lock);
 	hal->register_window = 0;
 	hal->target_type = hal_get_target_type(hal_soc_to_hal_soc_handle(hal));
+	hal->ops = qdf_mem_malloc(sizeof(*hal->ops));
+
+	if (!hal->ops) {
+		hal_err("unable to allocable memory for HAL ops");
+		goto fail3;
+	}
 
 	hal_target_based_configure(hal);
 
@@ -1411,7 +1417,12 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	hal_delayed_tcl_reg_write_init(hal);
 
 	return (void *)hal;
-
+fail3:
+	qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
+				sizeof(*hal->shadow_wrptr_mem_vaddr) *
+				HAL_MAX_LMAC_RINGS,
+				hal->shadow_wrptr_mem_vaddr,
+				hal->shadow_wrptr_mem_paddr, 0);
 fail2:
 	qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
 		sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX,
@@ -1460,6 +1471,7 @@ extern void hal_detach(void *hal_soc)
 
 	hal_delayed_reg_write_deinit(hal);
 	hal_delayed_tcl_reg_write_deinit(hal);
+	qdf_mem_free(hal->ops);
 
 	qdf_mem_free_consistent(hal->qdf_dev, hal->qdf_dev->dev,
 		sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX,
