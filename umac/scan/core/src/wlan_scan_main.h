@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -253,6 +253,7 @@ struct scan_vdev_obj {
  * @pno_wake_lock: pno wake lock
  * @pno_cb: callback to call on PNO completion
  * @mawc_params: Configuration parameters for NLO MAWC.
+ * @user_config_sched_scan_plan: if enabled set user confing sched scan plan
  */
 struct pno_def_config {
 	bool pno_offload_enabled;
@@ -271,6 +272,7 @@ struct pno_def_config {
 	qdf_wake_lock_t pno_wake_lock;
 	struct cb_handler pno_cb;
 	struct nlo_mawc_params mawc_params;
+	bool user_config_sched_scan_plan;
 };
 #endif
 
