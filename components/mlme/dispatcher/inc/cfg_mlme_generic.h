@@ -201,7 +201,7 @@ enum monitor_mode_concurrency {
  *
  * </ini>
  */
-#if defined(QCA_WIFI_NAPIER_EMULATION) || defined(QCA_WIFI_QCA6290)
+#if defined(QCA_WIFI_EMULATION) || defined(QCA_WIFI_QCA6290)
 #define CFG_PREVENT_LINK_DOWN CFG_INI_BOOL( \
 	"gPreventLinkDown", \
 	1, \
@@ -211,7 +211,7 @@ enum monitor_mode_concurrency {
 	"gPreventLinkDown", \
 	0, \
 	"Prevent Bus Link Down")
-#endif /* QCA_WIFI_NAPIER_EMULATION */
+#endif /* QCA_WIFI_EMULATION */
 
 /*
  * <ini>

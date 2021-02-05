@@ -3709,7 +3709,7 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 	if (0 == cac_dur)
 		return 0;
 
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 	cac_dur = cac_dur / 100;
 #endif
 	sap_debug("sapdfs: SAP_DFS_CHANNEL_CAC_START on CH freq %d, CAC_DUR-%d sec",

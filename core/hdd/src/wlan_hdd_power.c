@@ -86,7 +86,7 @@
 #include "wlan_hdd_thermal.h"
 #include "wlan_hdd_object_manager.h"
 /* Preprocessor definitions and constants */
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 #define HDD_SSR_BRING_UP_TIME 3000000
 #else
 #define HDD_SSR_BRING_UP_TIME 30000

@@ -693,7 +693,7 @@ scan_list_sort_error:
  *
  * Return: QDF_STATUS enumeration
  */
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 #define SCAN_CHAN_LIST_5G_LEN 6
 #define SCAN_CHAN_LIST_2G_LEN 3
 static const uint16_t
