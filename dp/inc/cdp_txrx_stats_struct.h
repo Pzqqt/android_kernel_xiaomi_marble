@@ -1939,6 +1939,7 @@ struct cdp_cfr_rcc_stats {
  * @ack_ba_comes_twice: stats counter for ack_ba_comes twice
  * @ppdu_drop: stats counter for ppdu_desc drop once threshold reached
  * @ppdu_wrap_drop: stats counter for ppdu desc drop on wrap around
+ * @peer_unauth_rx_pkt_drop: stats counter for drops due to unauthorized peer
  */
 struct cdp_pdev_stats {
 	struct {
@@ -2018,6 +2019,8 @@ struct cdp_pdev_stats {
 		uint64_t num_bufs_refilled;
 		uint64_t num_bufs_allocated;
 	} rx_refill_buff_pool;
+
+	uint32_t peer_unauth_rx_pkt_drop;
 };
 
 /* struct cdp_peer_hmwds_ast_add_status - hmwds peer ast add status
