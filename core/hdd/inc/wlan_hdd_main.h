@@ -991,6 +991,11 @@ enum hdd_mic_work_status {
 	MIC_DISABLED
 };
 
+enum hdd_work_status {
+	HDD_WORK_UNINITIALIZED,
+	HDD_WORK_INITIALIZED,
+};
+
 /**
  * struct hdd_mic_work - mic work info in HDD
  * @mic_error_work: mic error work
@@ -1217,6 +1222,7 @@ struct hdd_context;
  *			   by hdd_netdev_feature_update
  * @netdev_features_update_work: work for handling the netdev features update
  *				 for the adapter.
+ * @netdev_features_update_work_status: status for netdev_features_update_work
  * @delete_in_progress: Flag to indicate that the adapter delete is in
  *			progress, and any operation using rtnl lock inside
  *			the driver can be avoided/skipped.
@@ -1529,6 +1535,7 @@ struct hdd_adapter {
 	ol_txrx_rx_fp rx_stack;
 
 	qdf_work_t netdev_features_update_work;
+	enum hdd_work_status netdev_features_update_work_status;
 	qdf_atomic_t net_dev_hold_ref_count[NET_DEV_HOLD_ID_MAX];
 	/* Flag to indicate whether it is a pre cac adapter or not */
 	bool is_pre_cac_adapter;

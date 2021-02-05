@@ -10639,6 +10639,7 @@ QDF_STATUS hdd_adapter_feature_update_work_init(struct hdd_adapter *adapter)
 
 	status = qdf_create_work(0, &adapter->netdev_features_update_work,
 				 hdd_adapter_param_update_work, adapter);
+	adapter->netdev_features_update_work_status = HDD_WORK_INITIALIZED;
 
 	hdd_exit();
 
@@ -10649,8 +10650,14 @@ void hdd_adapter_feature_update_work_deinit(struct hdd_adapter *adapter)
 {
 	hdd_enter();
 
+	if (adapter->netdev_features_update_work_status !=
+	    HDD_WORK_INITIALIZED) {
+		hdd_debug("work not yet init");
+		return;
+	}
 	qdf_cancel_work(&adapter->netdev_features_update_work);
 	qdf_flush_work(&adapter->netdev_features_update_work);
+	adapter->netdev_features_update_work_status = HDD_WORK_UNINITIALIZED;
 
 	hdd_exit();
 }
