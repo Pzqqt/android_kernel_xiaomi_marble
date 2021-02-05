@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -129,13 +129,24 @@ reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 
 #ifdef DISABLE_CHANNEL_LIST
 /**
- * reg_restore_cached_channels() - Cache the current state of the channels
+ * reg_disable_cached_channels() - Disable cached channels
+ * @pdev: The physical dev to cache the channels for
+ */
+QDF_STATUS reg_disable_cached_channels(struct wlan_objmgr_pdev *pdev);
+/**
+ * reg_restore_cached_channels() - Restore disabled cached channels
  * @pdev: The physical dev to cache the channels for
  */
 QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev);
 #else
 static inline
 QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS reg_disable_cached_channels(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -598,20 +609,6 @@ static inline bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
 					  uint8_t chan)
 {
 	return false;
-}
-#endif
-
-#if defined(DISABLE_CHANNEL_LIST) && defined(CONFIG_REG_CLIENT)
-/**
- * set_disable_channel_state() - Set disable channel state flag
- * @pdev_priv_obj: Pointer to pdev object
- */
-void set_disable_channel_state(
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj);
-#else
-static inline void set_disable_channel_state(
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
-{
 }
 #endif
 
