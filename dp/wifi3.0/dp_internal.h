@@ -2752,4 +2752,16 @@ void dp_pdev_bkp_stats_detach(struct dp_pdev *pdev);
  */
 
 QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev);
+
+/**
+ * dp_peer_flush_frags() - Flush all fragments for a particular
+ *  peer
+ * @soc_hdl - data path soc handle
+ * @vdev_id - vdev id
+ * @peer_addr - peer mac address
+ *
+ * Return: None
+ */
+void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			 uint8_t *peer_mac);
 #endif /* #ifndef _DP_INTERNAL_H_ */
