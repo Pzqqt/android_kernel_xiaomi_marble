@@ -137,20 +137,20 @@ void dp_fisa_record_pkt(struct dp_fisa_rx_sw_ft *fisa_flow, qdf_nbuf_t nbuf,
 
 /**
  * nbuf_skip_rx_pkt_tlv() - Function to skip the TLVs and mac header from msdu
- * @hal_soc_hdl: Handle to hal_soc to get the TLV info
+ * @soc: DP soc handle
  * @nbuf: msdu for which TLVs has to be skipped
  *
  * Return: None
  */
-static void nbuf_skip_rx_pkt_tlv(hal_soc_handle_t hal_soc_hdl, qdf_nbuf_t nbuf)
+static void nbuf_skip_rx_pkt_tlv(struct dp_soc *soc, qdf_nbuf_t nbuf)
 {
 	uint8_t *rx_tlv_hdr;
 	uint32_t l2_hdr_offset;
 
 	rx_tlv_hdr = qdf_nbuf_data(nbuf);
-	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(hal_soc_hdl,
+	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc,
 							   rx_tlv_hdr);
-	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
+	qdf_nbuf_pull_head(nbuf, soc->rx_pkt_tlv_size + l2_hdr_offset);
 }
 
 /**
@@ -193,7 +193,7 @@ dp_fisa_is_ipsec_connection(struct cdp_rx_flow_tuple_info *flow_tuple_info)
 
 /**
  * get_flow_tuple_from_nbuf() - Get the flow tuple from msdu
- * @hal_soc_hdl: Handle to hal soc
+ * @soc: DP soc handle
  * @flow_tuple_info: return argument where the flow is populated
  * @nbuf: msdu from which flow tuple is extracted.
  * @rx_tlv_hdr: Pointer to msdu TLVs
@@ -201,20 +201,23 @@ dp_fisa_is_ipsec_connection(struct cdp_rx_flow_tuple_info *flow_tuple_info)
  * Return: None
  */
 static void
-get_flow_tuple_from_nbuf(hal_soc_handle_t hal_soc_hdl,
+get_flow_tuple_from_nbuf(struct dp_soc *soc,
 			 struct cdp_rx_flow_tuple_info *flow_tuple_info,
 			 qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 {
 	struct iphdr *iph;
 	struct tcphdr *tcph;
-	uint32_t ip_hdr_offset = HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr);
-	uint32_t tcp_hdr_offset = HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
-	uint32_t l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(hal_soc_hdl,
-								    rx_tlv_hdr);
+	uint32_t ip_hdr_offset;
+	uint32_t tcp_hdr_offset;
+	uint32_t l2_hdr_offset =
+			hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc,
+							   rx_tlv_hdr);
 
+	hal_rx_get_l3_l4_offsets(soc->hal_soc, rx_tlv_hdr,
+				 &ip_hdr_offset, &tcp_hdr_offset);
 	flow_tuple_info->tuple_populated = true;
 
-	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
+	qdf_nbuf_pull_head(nbuf, soc->rx_pkt_tlv_size + l2_hdr_offset);
 
 	iph = (struct iphdr *)(qdf_nbuf_data(nbuf) + ip_hdr_offset);
 	tcph = (struct tcphdr *)(qdf_nbuf_data(nbuf) + ip_hdr_offset +
@@ -242,7 +245,7 @@ get_flow_tuple_from_nbuf(hal_soc_handle_t hal_soc_hdl,
 	flow_tuple_info->l4_protocol = iph->protocol;
 	dp_fisa_debug("l4_protocol %d", flow_tuple_info->l4_protocol);
 
-	qdf_nbuf_push_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
+	qdf_nbuf_push_head(nbuf, soc->rx_pkt_tlv_size + l2_hdr_offset);
 
 	dp_fisa_debug("head_skb: %pK head_skb->next:%pK head_skb->data:%pK len %d data_len %d",
 		      nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf), nbuf->len,
@@ -507,15 +510,15 @@ dp_rx_fisa_add_ft_entry(struct dp_vdev *vdev,
 	uint32_t skid_count = 0, max_skid_length;
 	struct cdp_rx_flow_tuple_info rx_flow_tuple_info;
 	bool is_fst_updated = false;
-	bool is_flow_tcp, is_flow_udp, is_flow_ipv6;
-	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
 	uint32_t reo_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+	struct hal_proto_params proto_params;
 
-	is_flow_tcp = HAL_RX_TLV_GET_TCP_PROTO(rx_tlv_hdr);
-	is_flow_udp = HAL_RX_TLV_GET_UDP_PROTO(rx_tlv_hdr);
-	is_flow_ipv6 = HAL_RX_TLV_GET_IPV6(rx_tlv_hdr);
+	if (hal_rx_get_proto_params(fisa_hdl->soc_hdl->hal_soc, rx_tlv_hdr,
+				    &proto_params))
+		return NULL;
 
-	if (is_flow_ipv6 || !(is_flow_tcp || is_flow_udp)) {
+	if (proto_params.ipv6_proto ||
+	    !(proto_params.tcp_proto || proto_params.udp_proto)) {
 		dp_fisa_debug("Not UDP or TCP IPV4 flow");
 		return NULL;
 	}
@@ -539,7 +542,7 @@ dp_rx_fisa_add_ft_entry(struct dp_vdev *vdev,
 						      fisa_hdl->soc_hdl,
 						      hashed_flow_idx);
 			if (!rx_flow_tuple_info.tuple_populated)
-				get_flow_tuple_from_nbuf(hal_soc_hdl,
+				get_flow_tuple_from_nbuf(fisa_hdl->soc_hdl,
 							 &rx_flow_tuple_info,
 							 nbuf, rx_tlv_hdr);
 
@@ -560,8 +563,8 @@ dp_rx_fisa_add_ft_entry(struct dp_vdev *vdev,
 				     &rx_flow_tuple_info,
 				     sizeof(struct cdp_rx_flow_tuple_info));
 
-			sw_ft_entry->is_flow_tcp = is_flow_tcp;
-			sw_ft_entry->is_flow_udp = is_flow_udp;
+			sw_ft_entry->is_flow_tcp = proto_params.tcp_proto;
+			sw_ft_entry->is_flow_udp = proto_params.udp_proto;
 
 			is_fst_updated = true;
 			fisa_hdl->add_flow_count++;
@@ -569,7 +572,7 @@ dp_rx_fisa_add_ft_entry(struct dp_vdev *vdev,
 		}
 		/* else */
 		if (!rx_flow_tuple_info.tuple_populated)
-			get_flow_tuple_from_nbuf(hal_soc_hdl,
+			get_flow_tuple_from_nbuf(fisa_hdl->soc_hdl,
 						 &rx_flow_tuple_info,
 						 nbuf, rx_tlv_hdr);
 
@@ -961,19 +964,20 @@ dp_fisa_rx_queue_fst_update_work(struct dp_rx_fst *fisa_hdl, uint32_t flow_idx,
 {
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
 	struct cdp_rx_flow_tuple_info flow_tuple_info;
-	bool is_flow_tcp, is_flow_udp, is_flow_ipv6;
 	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
 	struct dp_fisa_rx_fst_update_elem *elem;
 	struct dp_fisa_rx_sw_ft *sw_ft_entry;
 	uint32_t hashed_flow_idx;
 	uint32_t reo_dest_indication;
 	bool found;
+	struct hal_proto_params proto_params;
 
-	is_flow_tcp = HAL_RX_TLV_GET_TCP_PROTO(rx_tlv_hdr);
-	is_flow_udp = HAL_RX_TLV_GET_UDP_PROTO(rx_tlv_hdr);
-	is_flow_ipv6 = HAL_RX_TLV_GET_IPV6(rx_tlv_hdr);
+	if (hal_rx_get_proto_params(fisa_hdl->soc_hdl->hal_soc, rx_tlv_hdr,
+				    &proto_params))
+		return NULL;
 
-	if (is_flow_ipv6 || !(is_flow_tcp || is_flow_udp)) {
+	if (proto_params.ipv6_proto ||
+	    !(proto_params.tcp_proto || proto_params.udp_proto)) {
 		dp_fisa_debug("Not UDP or TCP IPV4 flow");
 		return NULL;
 	}
@@ -990,7 +994,7 @@ dp_fisa_rx_queue_fst_update_work(struct dp_rx_fst *fisa_hdl, uint32_t flow_idx,
 	sw_ft_entry = &(((struct dp_fisa_rx_sw_ft *)
 				fisa_hdl->base)[hashed_flow_idx]);
 
-	get_flow_tuple_from_nbuf(hal_soc_hdl, &flow_tuple_info,
+	get_flow_tuple_from_nbuf(fisa_hdl->soc_hdl, &flow_tuple_info,
 				 nbuf, rx_tlv_hdr);
 
 	if (sw_ft_entry->is_populated && is_same_flow(
@@ -1006,8 +1010,8 @@ dp_fisa_rx_queue_fst_update_work(struct dp_rx_fst *fisa_hdl, uint32_t flow_idx,
 	qdf_mem_copy(&elem->flow_tuple_info, &flow_tuple_info,
 		     sizeof(struct cdp_rx_flow_tuple_info));
 	elem->flow_idx = flow_idx;
-	elem->is_tcp_flow = is_flow_tcp;
-	elem->is_udp_flow = is_flow_udp;
+	elem->is_tcp_flow = proto_params.tcp_proto;
+	elem->is_udp_flow = proto_params.udp_proto;
 	elem->reo_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	elem->reo_dest_indication = reo_dest_indication;
 	elem->vdev = vdev;
@@ -1199,14 +1203,12 @@ dp_rx_fisa_aggr_tcp(struct dp_rx_fst *fisa_hdl,
  *
  * Return: Offset value to transport payload
  */
-static int get_transport_payload_offset(struct dp_rx_fst *fisa_hdl,
-					uint8_t *rx_tlv_hdr)
+static inline int get_transport_payload_offset(struct dp_rx_fst *fisa_hdl,
+					       uint32_t l3_hdr_offset,
+					       uint32_t l4_hdr_offset)
 {
-	uint32_t eth_hdr_len = HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr);
-	uint32_t ip_hdr_len = HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
-
 	/* ETHERNET_HDR_LEN + ip_hdr_len + UDP/TCP; */
-	return (eth_hdr_len + ip_hdr_len + sizeof(struct udphdr));
+	return (l3_hdr_offset + l4_hdr_offset + sizeof(struct udphdr));
 }
 
 /**
@@ -1216,15 +1218,14 @@ static int get_transport_payload_offset(struct dp_rx_fst *fisa_hdl,
  *
  * Return: Offset value to transport header
  */
-static int get_transport_header_offset(struct dp_fisa_rx_sw_ft *fisa_flow,
-				       uint8_t *rx_tlv_hdr)
+static inline
+int get_transport_header_offset(struct dp_fisa_rx_sw_ft *fisa_flow,
+				uint32_t l3_hdr_offset,
+				uint32_t l4_hdr_offset)
 
 {
-	uint32_t eth_hdr_len = HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr);
-	uint32_t ip_hdr_len = HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
-
 	/* ETHERNET_HDR_LEN + ip_hdr_len */
-	return (eth_hdr_len + ip_hdr_len);
+	return (l3_hdr_offset + l4_hdr_offset);
 }
 
 /**
@@ -1246,11 +1247,16 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	struct udphdr *udp_hdr;
 	uint32_t udp_len;
 	uint32_t transport_payload_offset;
+	uint32_t l3_hdr_offset, l4_hdr_offset;
 
-	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
+	qdf_nbuf_pull_head(nbuf,
+			   fisa_hdl->soc_hdl->rx_pkt_tlv_size + l2_hdr_offset);
 
+	hal_rx_get_l3_l4_offsets(fisa_hdl->soc_hdl->hal_soc, rx_tlv_hdr,
+				 &l3_hdr_offset, &l4_hdr_offset);
 	udp_hdr = (struct udphdr *)(qdf_nbuf_data(nbuf) +
-			get_transport_header_offset(fisa_flow, rx_tlv_hdr));
+			get_transport_header_offset(fisa_flow, l3_hdr_offset,
+						    l4_hdr_offset));
 
 	udp_len = qdf_ntohs(udp_hdr->len);
 
@@ -1277,10 +1283,8 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 		fisa_flow->head_skb_udp_hdr = udp_hdr;
 		fisa_flow->cur_aggr_gso_size = udp_len - sizeof(struct udphdr);
 		fisa_flow->adjusted_cumulative_ip_length = udp_len;
-		fisa_flow->head_skb_ip_hdr_offset =
-					HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr);
-		fisa_flow->head_skb_l4_hdr_offset =
-					HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
+		fisa_flow->head_skb_ip_hdr_offset = l3_hdr_offset;
+		fisa_flow->head_skb_l4_hdr_offset = l4_hdr_offset;
 
 		fisa_flow->frags_cumulative_len = 0;
 
@@ -1288,7 +1292,8 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	}
 
 	transport_payload_offset =
-		get_transport_payload_offset(fisa_hdl, rx_tlv_hdr);
+		get_transport_payload_offset(fisa_hdl, l3_hdr_offset,
+					     l4_hdr_offset);
 
 	hex_dump_skb_data(nbuf, false);
 	qdf_nbuf_pull_head(nbuf, transport_payload_offset);
@@ -1600,11 +1605,18 @@ static bool dp_fisa_aggregation_should_stop(
 				uint16_t hal_cumulative_ip_len,
 				uint8_t *rx_tlv_hdr)
 {
-	uint32_t msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
-	uint32_t l4_hdr_offset = HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr) +
-				 HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
+	uint32_t msdu_len =
+		hal_rx_msdu_start_msdu_len_get(fisa_flow->soc_hdl->hal_soc,
+					       rx_tlv_hdr);
+	uint32_t l3_hdr_offset, l4_hdr_offset, l2_l3_hdr_len;
 	uint32_t cumulative_ip_len_delta = hal_cumulative_ip_len -
 					   fisa_flow->hal_cumultive_ip_len;
+
+	hal_rx_get_l3_l4_offsets(fisa_flow->soc_hdl->hal_soc, rx_tlv_hdr,
+				 &l3_hdr_offset, &l4_hdr_offset);
+
+	l2_l3_hdr_len = l3_hdr_offset + l4_hdr_offset;
+
 	/**
 	 * current cumulative ip length should > last cumulative_ip_len
 	 * and <= last cumulative_ip_len + 1478, also current aggregate
@@ -1617,7 +1629,7 @@ static bool dp_fisa_aggregation_should_stop(
 	    hal_cumulative_ip_len <= fisa_flow->hal_cumultive_ip_len ||
 	    cumulative_ip_len_delta > FISA_MAX_SINGLE_CUMULATIVE_IP_LEN ||
 	    (fisa_flow->last_hal_aggr_count + 1) != hal_aggr_count ||
-	    cumulative_ip_len_delta != (msdu_len - l4_hdr_offset))
+	    cumulative_ip_len_delta != (msdu_len - l2_l3_hdr_len))
 		return true;
 
 	return false;
@@ -1638,8 +1650,6 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 {
 	bool flow_aggr_cont;
 	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
-	bool flow_invalid, flow_timeout;
-	uint32_t flow_idx;
 	uint16_t hal_cumulative_ip_len;
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
 	uint32_t hal_aggr_count;
@@ -1721,8 +1731,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 		 */
 		fisa_flow->cur_aggr++;
 	}
-	hal_rx_msdu_get_flow_params(hal_soc_hdl, rx_tlv_hdr, &flow_invalid,
-				    &flow_timeout, &flow_idx);
+
 	dp_fisa_debug("nbuf %pK cumulat_ip_length %d flow %pK fl aggr cont %d",
 		      nbuf, hal_cumulative_ip_len, fisa_flow, flow_aggr_cont);
 
@@ -1909,7 +1918,7 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 			soc->skip_fisa_param.fisa_force_flush[rx_ctx_id] = 0;
 		}
 
-		qdf_nbuf_push_head(head_nbuf, RX_PKT_TLVS_LEN +
+		qdf_nbuf_push_head(head_nbuf, soc->rx_pkt_tlv_size +
 				   QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(head_nbuf));
 
 		/* Add new flow if the there is no ongoing flow */
@@ -1945,8 +1954,7 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 			goto next_msdu;
 
 pull_nbuf:
-		nbuf_skip_rx_pkt_tlv(dp_fisa_rx_hdl->soc_hdl->hal_soc,
-				     head_nbuf);
+		nbuf_skip_rx_pkt_tlv(soc, head_nbuf);
 
 deliver_nbuf: /* Deliver without FISA */
 		QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head_nbuf) = 1;
