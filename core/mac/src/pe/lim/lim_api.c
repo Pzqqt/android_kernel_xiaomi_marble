@@ -2106,6 +2106,7 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 				sizeof(bss_desc_ptr->length) + ie_len);
 
 	bss_desc_ptr->fProbeRsp = !roam_synch_ind_ptr->isBeacon;
+	bss_desc_ptr->rssi = roam_synch_ind_ptr->rssi;
 	/* Copy Timestamp */
 	bss_desc_ptr->scansystimensec = qdf_get_monotonic_boottime_ns();
 	if (parsed_frm_ptr->he_op.oper_info_6g_present) {
@@ -2142,6 +2143,11 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	qdf_mem_copy((uint8_t *) &bss_desc_ptr->bssId,
 		     (uint8_t *)roam_synch_ind_ptr->bssid.bytes,
 		     sizeof(tSirMacAddr));
+
+	qdf_mem_copy((uint8_t *)&bss_desc_ptr->seq_ctrl,
+		     (uint8_t *)&mac_hdr->seqControl,
+		     sizeof(tSirMacSeqCtl));
+
 	bss_desc_ptr->received_time =
 		      (uint64_t)qdf_mc_timer_get_system_time();
 	if (parsed_frm_ptr->mdiePresent) {
