@@ -7911,14 +7911,15 @@ typedef struct {
 } wmi_pdev_set_channel_cmd;
 
 typedef enum {
-    WMI_PKTLOG_EVENT_RX = 0x1,
-    WMI_PKTLOG_EVENT_TX = 0x2,
-    WMI_PKTLOG_EVENT_RCF = 0x4, /* Rate Control Find */
-    WMI_PKTLOG_EVENT_RCU = 0x8, /* Rate Control Update */
+    WMI_PKTLOG_EVENT_RX =  0x00000001,
+    WMI_PKTLOG_EVENT_TX =  0x00000002,
+    WMI_PKTLOG_EVENT_RCF = 0x00000004, /* Rate Control Find */
+    WMI_PKTLOG_EVENT_RCU = 0x00000008, /* Rate Control Update */
     /* 0x10 used by deprecated DBG_PRINT */
-    WMI_PKTLOG_EVENT_SMART_ANTENNA = 0x20, /* To support Smart Antenna */
-    WMI_PKTLOG_EVENT_SW = 0x40, /* To support SW defined events */
-    WMI_PKTLOG_EVENT_PHY = 0x80, /* To support PHY stats */
+    WMI_PKTLOG_EVENT_SMART_ANTENNA = 0x00000020, /* To support Smart Antenna */
+    WMI_PKTLOG_EVENT_SW =  0x00000040, /* To support SW defined events */
+    WMI_PKTLOG_EVENT_PHY = 0x00000080, /* To support PHY stats */
+    WMI_PKTLOG_EVENT_CBF = 0x00000100, /* To support CBF's filter in */
 } WMI_PKTLOG_EVENT;
 
 typedef enum {
