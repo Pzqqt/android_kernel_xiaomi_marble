@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -547,6 +547,8 @@ void reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
 		global_tbl_lookup = true;
 		if (chan_width == BW_40_MHZ)
 			behav_limit = BIT(BEHAV_NONE);
+	} else if (reg_is_5dot9_ghz_freq(pdev, freq)) {
+		global_tbl_lookup = true;
 	} else {
 		global_tbl_lookup = false;
 	}
@@ -760,6 +762,13 @@ qdf_freq_t reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
 {
 	if ((op_class >= MIN_6GHZ_OPER_CLASS) &&
 	    (op_class <= MAX_6GHZ_OPER_CLASS)) {
+		global_tbl_lookup = true;
+	} else {
+		qdf_freq_t freq = reg_chan_opclass_to_freq(chan,
+				op_class,
+				global_tbl_lookup);
+		if (freq)
+			return freq;
 		global_tbl_lookup = true;
 	}
 
