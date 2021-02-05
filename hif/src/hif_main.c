@@ -50,6 +50,7 @@
 #include <qdf_notifier.h>
 #include <qdf_hang_event_notifier.h>
 #endif
+#include <linux/cpumask.h>
 
 void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
@@ -645,6 +646,231 @@ static void hif_cpuhp_unregister(struct hif_softc *scn)
 }
 #endif /* ifdef HIF_CPU_PERF_AFFINE_MASK */
 
+#ifdef HIF_DETECTION_LATENCY_ENABLE
+/**
+ * hif_check_detection_latency(): to check if latency for tasklet/credit
+ *
+ * @scn: hif context
+ * @from_timer: if called from timer handler
+ * @bitmap_type: indicate if check tasklet or credit
+ *
+ * Return: none
+ */
+void hif_check_detection_latency(struct hif_softc *scn,
+				 bool from_timer,
+				 uint32_t bitmap_type)
+{
+	qdf_time_t ce2_tasklet_sched_time =
+		scn->latency_detect.ce2_tasklet_sched_time;
+	qdf_time_t ce2_tasklet_exec_time =
+		scn->latency_detect.ce2_tasklet_exec_time;
+	qdf_time_t credit_request_time =
+		scn->latency_detect.credit_request_time;
+	qdf_time_t credit_report_time =
+		scn->latency_detect.credit_report_time;
+	qdf_time_t curr_jiffies = qdf_system_ticks();
+	uint32_t detect_latency_threshold =
+		scn->latency_detect.detect_latency_threshold;
+	int cpu_id = qdf_get_cpu();
+
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	if (!scn->latency_detect.enable_detection)
+		return;
+
+	/* 2 kinds of check here.
+	 * from_timer==true:  check if tasklet or credit report stall
+	 * from_timer==false: check tasklet execute or credit report comes late
+	 */
+	if (bitmap_type & BIT(HIF_DETECT_TASKLET) &&
+	    (from_timer ?
+	    qdf_system_time_after(ce2_tasklet_sched_time,
+				  ce2_tasklet_exec_time) :
+	    qdf_system_time_after(ce2_tasklet_exec_time,
+				  ce2_tasklet_sched_time)) &&
+	    qdf_system_time_after(
+		curr_jiffies,
+		ce2_tasklet_sched_time +
+		qdf_system_msecs_to_ticks(detect_latency_threshold))) {
+		hif_err("tasklet ce2 latency: from_timer %d, curr_jiffies %lu, ce2_tasklet_sched_time %lu,ce2_tasklet_exec_time %lu, detect_latency_threshold %ums detect_latency_timer_timeout %ums, cpu_id %d, called: %ps",
+			from_timer, curr_jiffies, ce2_tasklet_sched_time,
+			ce2_tasklet_exec_time, detect_latency_threshold,
+			scn->latency_detect.detect_latency_timer_timeout,
+			cpu_id, (void *)_RET_IP_);
+		goto latency;
+	}
+
+	if (bitmap_type & BIT(HIF_DETECT_CREDIT) &&
+	    (from_timer ?
+	    qdf_system_time_after(credit_request_time,
+				  credit_report_time) :
+	    qdf_system_time_after(credit_report_time,
+				  credit_request_time)) &&
+	    qdf_system_time_after(
+		curr_jiffies,
+		credit_request_time +
+		qdf_system_msecs_to_ticks(detect_latency_threshold))) {
+		hif_err("credit report latency: from timer %d, curr_jiffies %lu, credit_request_time %lu,credit_report_time %lu, detect_latency_threshold %ums, detect_latency_timer_timeout %ums, cpu_id %d, called: %ps",
+			from_timer, curr_jiffies, credit_request_time,
+			credit_report_time, detect_latency_threshold,
+			scn->latency_detect.detect_latency_timer_timeout,
+			cpu_id, (void *)_RET_IP_);
+		goto latency;
+	}
+
+	return;
+
+latency:
+	qdf_check_state_before_panic(__func__, __LINE__);
+}
+
+static void hif_latency_detect_timeout_handler(void *arg)
+{
+	struct hif_softc *scn = (struct hif_softc *)arg;
+	int next_cpu;
+
+	hif_check_detection_latency(scn, true,
+				    BIT(HIF_DETECT_TASKLET) |
+				    BIT(HIF_DETECT_CREDIT));
+
+	/* it need to make sure timer start on a differnt cpu,
+	 * so it can detect the tasklet schedule stall, but there
+	 * is still chance that, after timer has been started, then
+	 * irq/tasklet happens on the same cpu, then tasklet will
+	 * execute before softirq timer, if this tasklet stall, the
+	 * timer can't detect it, we can accept this as a limition,
+	 * if tasklet stall, anyway other place will detect it, just
+	 * a little later.
+	 */
+	next_cpu = cpumask_any_but(
+			cpu_active_mask,
+			scn->latency_detect.ce2_tasklet_sched_cpuid);
+
+	if (qdf_unlikely(next_cpu >= nr_cpu_ids)) {
+		hif_debug("start timer on local");
+		/* it doesn't found a available cpu, start on local cpu*/
+		qdf_timer_mod(
+			&scn->latency_detect.detect_latency_timer,
+			scn->latency_detect.detect_latency_timer_timeout);
+	} else {
+		qdf_timer_start_on(
+			&scn->latency_detect.detect_latency_timer,
+			scn->latency_detect.detect_latency_timer_timeout,
+			next_cpu);
+	}
+}
+
+static void hif_latency_detect_timer_init(struct hif_softc *scn)
+{
+	if (!scn) {
+		hif_info_high("scn is null");
+		return;
+	}
+
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	scn->latency_detect.detect_latency_timer_timeout =
+		DETECTION_TIMER_TIMEOUT;
+	scn->latency_detect.detect_latency_threshold =
+		DETECTION_LATENCY_THRESHOLD;
+
+	hif_info("timer timeout %u, latency threshold %u",
+		 scn->latency_detect.detect_latency_timer_timeout,
+		 scn->latency_detect.detect_latency_threshold);
+
+	scn->latency_detect.is_timer_started = false;
+
+	qdf_timer_init(NULL,
+		       &scn->latency_detect.detect_latency_timer,
+		       &hif_latency_detect_timeout_handler,
+		       scn,
+		       QDF_TIMER_TYPE_SW_SPIN);
+}
+
+static void hif_latency_detect_timer_deinit(struct hif_softc *scn)
+{
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	hif_info("deinit timer");
+	qdf_timer_free(&scn->latency_detect.detect_latency_timer);
+}
+
+void hif_latency_detect_timer_start(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	hif_info_rl("start timer");
+	if (scn->latency_detect.is_timer_started) {
+		hif_info("timer has been started");
+		return;
+	}
+
+	qdf_timer_start(&scn->latency_detect.detect_latency_timer,
+			scn->latency_detect.detect_latency_timer_timeout);
+	scn->latency_detect.is_timer_started = true;
+}
+
+void hif_latency_detect_timer_stop(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	hif_info_rl("stop timer");
+
+	qdf_timer_sync_cancel(&scn->latency_detect.detect_latency_timer);
+	scn->latency_detect.is_timer_started = false;
+}
+
+void hif_latency_detect_credit_record_time(
+	enum hif_credit_exchange_type type,
+	struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (!scn) {
+		hif_err("Could not do runtime put, scn is null");
+		return;
+	}
+
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	if (HIF_REQUEST_CREDIT == type)
+		scn->latency_detect.credit_request_time = qdf_system_ticks();
+	else if (HIF_PROCESS_CREDIT_REPORT == type)
+		scn->latency_detect.credit_report_time = qdf_system_ticks();
+		hif_check_detection_latency(scn, false, BIT(HIF_DETECT_CREDIT));
+}
+
+void hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (!scn) {
+		hif_err("Could not do runtime put, scn is null");
+		return;
+	}
+
+	if (QDF_GLOBAL_MISSION_MODE != hif_get_conparam(scn))
+		return;
+
+	scn->latency_detect.enable_detection = value;
+}
+#else
+static void hif_latency_detect_timer_init(struct hif_softc *scn)
+{}
+
+static void hif_latency_detect_timer_deinit(struct hif_softc *scn)
+{}
+#endif
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 				  uint32_t mode,
 				  enum qdf_bus_type bus_type,
@@ -667,6 +893,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 	scn->qdf_dev = qdf_ctx;
 	scn->hif_con_param = mode;
 	qdf_atomic_init(&scn->active_tasklet_cnt);
+
 	qdf_atomic_init(&scn->active_grp_tasklet_cnt);
 	qdf_atomic_init(&scn->link_suspended);
 	qdf_atomic_init(&scn->tasklet_from_intr);
@@ -684,8 +911,13 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 			status, bus_type);
 		qdf_mem_free(scn);
 		scn = NULL;
+		goto out;
 	}
+
 	hif_cpuhp_register(scn);
+	hif_latency_detect_timer_init(scn);
+
+out:
 	return GET_HIF_OPAQUE_HDL(scn);
 }
 
@@ -721,6 +953,8 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 		hif_err("hif_opaque_softc is NULL");
 		return;
 	}
+
+	hif_latency_detect_timer_deinit(scn);
 
 	if (scn->athdiag_procfs_inited) {
 		athdiag_procfs_remove();
@@ -919,6 +1153,7 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 
 	hif_ut_suspend_init(scn);
 	hif_register_recovery_notifier(scn);
+	hif_latency_detect_timer_start(hif_ctx);
 
 	/*
 	 * Flag to avoid potential unallocated memory access from MSI
@@ -947,6 +1182,9 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 
 	if (!scn)
 		return;
+
+	hif_set_enable_detection(hif_ctx, false);
+	hif_latency_detect_timer_stop(hif_ctx);
 
 	hif_unregister_recovery_notifier(scn);
 

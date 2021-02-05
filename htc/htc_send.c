@@ -1186,6 +1186,9 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 							  pEndpoint->TxCredits,
 							  HTC_PACKET_QUEUE_DEPTH
 							  (tx_queue));
+					hif_latency_detect_credit_record_time(
+						HIF_REQUEST_CREDIT,
+						target->hif_dev);
 				}
 				INC_HTC_EP_STAT(pEndpoint,
 						TxCreditLowIndications, 1);
@@ -2680,6 +2683,9 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 					  pEndpoint->TxCredits + rpt_credits,
 					  HTC_PACKET_QUEUE_DEPTH(&pEndpoint->
 							TxQueue));
+			hif_latency_detect_credit_record_time(
+					HIF_PROCESS_CREDIT_REPORT,
+					target->hif_dev);
 		}
 
 		pEndpoint->TxCredits += rpt_credits;

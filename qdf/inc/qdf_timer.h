@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,6 +63,20 @@ qdf_timer_init(qdf_handle_t hdl, qdf_timer_t *timer, qdf_timer_func_t func,
 static inline void qdf_timer_start(qdf_timer_t *timer, int msec)
 {
 	__qdf_timer_start(timer, msec);
+}
+
+/**
+ * qdf_timer_start_on() - start a timer on assigned cpu
+ * @timer: timer to start
+ * @msec: Expiration period in milliseconds
+ * @cpu: cpu to attach timer
+ *
+ *
+ * Return: none
+ */
+static inline void qdf_timer_start_on(qdf_timer_t *timer, int msec, int cpu)
+{
+	__qdf_timer_start_on(timer, msec, cpu);
 }
 
 /**

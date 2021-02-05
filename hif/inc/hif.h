@@ -1731,4 +1731,51 @@ int hif_disable_grp_irqs(struct hif_opaque_softc *scn);
  * Return: 0 on success. Error code on failure.
  */
 int hif_enable_grp_irqs(struct hif_opaque_softc *scn);
+
+enum hif_credit_exchange_type {
+	HIF_REQUEST_CREDIT,
+	HIF_PROCESS_CREDIT_REPORT,
+};
+
+enum hif_detect_latency_type {
+	HIF_DETECT_TASKLET,
+	HIF_DETECT_CREDIT,
+	HIF_DETECT_UNKNOWN
+};
+
+#ifdef HIF_DETECTION_LATENCY_ENABLE
+void hif_latency_detect_credit_record_time(
+	enum hif_credit_exchange_type type,
+	struct hif_opaque_softc *hif_ctx);
+
+void hif_latency_detect_timer_start(struct hif_opaque_softc *hif_ctx);
+void hif_latency_detect_timer_stop(struct hif_opaque_softc *hif_ctx);
+void hif_check_detection_latency(struct hif_softc *scn,
+				 bool from_timer,
+				 uint32_t bitmap_type);
+void hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value);
+#else
+static inline
+void hif_latency_detect_timer_start(struct hif_opaque_softc *hif_ctx)
+{}
+
+static inline
+void hif_latency_detect_timer_stop(struct hif_opaque_softc *hif_ctx)
+{}
+
+static inline
+void hif_latency_detect_credit_record_time(
+	enum hif_credit_exchange_type type,
+	struct hif_opaque_softc *hif_ctx)
+{}
+static inline
+void hif_check_detection_latency(struct hif_softc *scn,
+				 bool from_timer,
+				 uint32_t bitmap_type)
+{}
+
+static inline
+void hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value)
+{}
+#endif
 #endif /* _HIF_H_ */

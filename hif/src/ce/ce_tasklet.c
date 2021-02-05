@@ -336,6 +336,44 @@ hif_ce_latency_stats(struct hif_softc *hif_ctx)
 }
 #endif /*CE_TASKLET_DEBUG_ENABLE*/
 
+#ifdef HIF_DETECTION_LATENCY_ENABLE
+static inline
+void hif_latency_detect_tasklet_sched(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{
+	if (tasklet_entry->ce_id != CE_ID_2)
+		return;
+
+	scn->latency_detect.ce2_tasklet_sched_cpuid = qdf_get_cpu();
+	scn->latency_detect.ce2_tasklet_sched_time = qdf_system_ticks();
+}
+
+static inline
+void hif_latency_detect_tasklet_exec(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{
+	if (tasklet_entry->ce_id != CE_ID_2)
+		return;
+
+	scn->latency_detect.ce2_tasklet_exec_time = qdf_system_ticks();
+	hif_check_detection_latency(scn, false, BIT(HIF_DETECT_TASKLET));
+}
+#else
+static inline
+void hif_latency_detect_tasklet_sched(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{}
+
+static inline
+void hif_latency_detect_tasklet_exec(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{}
+#endif
+
 /**
  * ce_tasklet() - ce_tasklet
  * @data: data
@@ -355,6 +393,8 @@ static void ce_tasklet(unsigned long data)
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 				 HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
+
+	hif_latency_detect_tasklet_exec(scn, tasklet_entry);
 
 	if (qdf_atomic_read(&scn->link_suspended)) {
 		hif_err("ce %d tasklet fired after link suspend",
@@ -382,6 +422,7 @@ static void ce_tasklet(unsigned long data)
 		}
 
 		ce_schedule_tasklet(tasklet_entry);
+		hif_latency_detect_tasklet_sched(scn, tasklet_entry);
 		return;
 	}
 
@@ -604,8 +645,12 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 		qdf_atomic_dec(&scn->active_tasklet_cnt);
 		return false;
 	}
-
+	/* keep it before tasklet_schedule, this is to happy whunt.
+	 * in whunt, tasklet may run before finished hif_tasklet_schedule.
+	 */
+	hif_latency_detect_tasklet_sched(scn, tasklet_entry);
 	tasklet_schedule(&tasklet_entry->intr_tq);
+
 	if (scn->ce_latency_stats)
 		hif_record_tasklet_sched_entry_ts(scn, tasklet_entry->ce_id);
 
