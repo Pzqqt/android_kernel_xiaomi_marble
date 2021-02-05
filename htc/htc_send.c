@@ -48,7 +48,7 @@ static unsigned int ep_debug_mask =
 	(1 << ENDPOINT_0) | (1 << ENDPOINT_1) | (1 << ENDPOINT_2);
 #endif
 
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 #define HTC_EMULATION_DELAY_IN_MS 20
 /**
  * htc_add_delay(): Adds a delay in before proceeding, only for emulation
