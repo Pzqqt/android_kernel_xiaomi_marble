@@ -595,10 +595,11 @@ void pkt_capture_msdu_process_pkts(
  *
  * Return: None
  */
-static void pkt_capture_dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding)
+static void pkt_capture_dp_rx_skip_tlvs(struct dp_soc *soc, qdf_nbuf_t nbuf,
+					uint32_t l3_padding)
 {
 	QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(nbuf) = l3_padding;
-	qdf_nbuf_pull_head(nbuf, l3_padding + RX_PKT_TLVS_LEN);
+	qdf_nbuf_pull_head(nbuf, l3_padding + soc->rx_pkt_tlv_size);
 }
 
 /**
@@ -624,11 +625,11 @@ static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 	struct wlan_objmgr_vdev *vdev = context;
 
 	hal_soc = soc->hal_soc;
-	preamble_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
+	preamble_type = hal_rx_tlv_get_pkt_type(hal_soc, rx_tlv_hdr);
 	nss = hal_rx_msdu_start_nss_get(hal_soc, rx_tlv_hdr); /* NSS */
-	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
-	mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
-	sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
+	bw = hal_rx_tlv_bw_get(hal_soc, rx_tlv_hdr);
+	mcs = hal_rx_tlv_rate_mcs_get(hal_soc, rx_tlv_hdr);
+	sgi = hal_rx_tlv_sgi_get(hal_soc, rx_tlv_hdr);
 
 	switch (preamble_type) {
 	case HAL_RX_PKT_TYPE_11A:
@@ -951,13 +952,14 @@ pkt_capture_rx_data_cb(
 		struct ethernet_hdr_t *eth_hdr;
 
 		/* push the tlvs to get rx_tlv_hdr pointer */
-		qdf_nbuf_push_head(msdu, RX_PKT_TLVS_LEN +
+		qdf_nbuf_push_head(msdu, soc->rx_pkt_tlv_size +
 				QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(msdu));
 
 		rx_tlv_hdr = qdf_nbuf_data(msdu);
 		hal_rx_msdu_metadata_get(hal_soc, rx_tlv_hdr, &msdu_metadata);
 		/* Pull rx_tlv_hdr */
-		pkt_capture_dp_rx_skip_tlvs(msdu, msdu_metadata.l3_hdr_pad);
+		pkt_capture_dp_rx_skip_tlvs(soc, msdu,
+					    msdu_metadata.l3_hdr_pad);
 
 		next_buf = qdf_nbuf_queue_next(msdu);
 		qdf_nbuf_set_next(msdu, NULL);   /* Add NULL terminator */
