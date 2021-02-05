@@ -472,7 +472,7 @@ QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
 				  qdf_nbuf_t mpdu,
 				  uint32_t msdu_timestamp)
 {
-	uint32_t data_size, hdr_size, ppdu_id;
+	uint32_t data_size, hdr_size, ppdu_id, align4byte;
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint32_t *msg_word;
 
@@ -482,7 +482,7 @@ QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
 	ppdu_id = pdev->ppdu_info.com_info.ppdu_id;
 
 	hdr_size = HTT_T2H_PPDU_STATS_IND_HDR_SIZE
-		+ sizeof(htt_ppdu_stats_tx_mgmtctrl_payload_tlv);
+		+ qdf_offsetof(htt_ppdu_stats_rx_mgmtctrl_payload_tlv, payload);
 
 	data_size = qdf_nbuf_len(mpdu);
 
@@ -495,27 +495,31 @@ QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_T2H_MSG_TYPE_PPDU_STATS_IND);
 	HTT_T2H_PPDU_STATS_MAC_ID_SET(*msg_word, mac_id);
 	HTT_T2H_PPDU_STATS_PDEV_ID_SET(*msg_word, pdev->pdev_id);
-	HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_SET(*msg_word, data_size +
-		qdf_offsetof(htt_ppdu_stats_tx_mgmtctrl_payload_tlv, payload));
+	align4byte = ((data_size +
+		qdf_offsetof(htt_ppdu_stats_rx_mgmtctrl_payload_tlv, payload)
+		+ 3) >> 2) << 2;
+	HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_SET(*msg_word, align4byte);
 	msg_word++;
 	HTT_T2H_PPDU_STATS_PPDU_ID_SET(*msg_word, ppdu_id);
 	msg_word++;
 
 	*msg_word = msdu_timestamp;
 	msg_word++;
+	/* Skip reserved field */
+	msg_word++;
 	/*
 	 * Populate MGMT_CTRL Payload TLV first
 	 */
 	HTT_STATS_TLV_TAG_SET(*msg_word,
-			      HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV);
-	HTT_STATS_TLV_LENGTH_SET(*msg_word,
-				 data_size - sizeof(htt_tlv_hdr_t) +
-				 qdf_offsetof(
-				 htt_ppdu_stats_tx_mgmtctrl_payload_tlv,
-				 payload));
+			      HTT_PPDU_STATS_RX_MGMTCTRL_PAYLOAD_TLV);
+
+	align4byte = ((data_size - sizeof(htt_tlv_hdr_t) +
+		qdf_offsetof(htt_ppdu_stats_rx_mgmtctrl_payload_tlv, payload)
+		+ 3) >> 2) << 2;
+	HTT_STATS_TLV_LENGTH_SET(*msg_word, align4byte);
 	msg_word++;
 
-	HTT_PPDU_STATS_TX_MGMTCTRL_TLV_FRAME_LENGTH_SET(
+	HTT_PPDU_STATS_RX_MGMTCTRL_TLV_FRAME_LENGTH_SET(
 		*msg_word, data_size);
 	msg_word++;
 

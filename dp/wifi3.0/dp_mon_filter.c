@@ -398,13 +398,13 @@ static QDF_STATUS dp_mon_filter_check_co_exist(struct dp_pdev *pdev)
 	 * the enable modes.
 	 */
 	if ((pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) &&
-	    (pdev->monitor_vdev || pdev->monitor_configured)) {
+	     !pdev->rx_pktlog_cbf &&
+	     (pdev->monitor_vdev || pdev->monitor_configured)) {
 		dp_mon_filter_err("%pK: Rx pktlog full/lite can't exist with modes\n"
 				  "Monitor Mode:%d", pdev->soc,
 				  pdev->monitor_configured);
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -1054,6 +1054,11 @@ void dp_mon_filter_setup_rx_pkt_log_cbf(struct dp_pdev *pdev)
 	dp_mon_filter_set_status_cbf(pdev, &filter);
 	dp_mon_filter_show_filter(pdev, mode, &filter);
 	pdev->filter[mode][srng_type] = filter;
+
+	/* Clear the filter as the same filter will be used to set the
+	 * monitor status ring
+	 */
+	qdf_mem_zero(&(filter), sizeof(struct dp_mon_filter));
 
 	filter.valid = true;
 	dp_mon_filter_set_cbf_cmn(pdev, &filter);

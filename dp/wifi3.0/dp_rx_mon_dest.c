@@ -210,7 +210,9 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		if (qdf_unlikely((rxdma_err == HAL_RXDMA_ERR_FLUSH_REQUEST) ||
 		   (rxdma_err == HAL_RXDMA_ERR_MPDU_LENGTH) ||
 		   (rxdma_err == HAL_RXDMA_ERR_OVERFLOW) ||
-		   (rxdma_err == HAL_RXDMA_ERR_FCS && dp_pdev->mcopy_mode))) {
+		   (rxdma_err == HAL_RXDMA_ERR_FCS && dp_pdev->mcopy_mode) ||
+		   (rxdma_err == HAL_RXDMA_ERR_FCS &&
+		    dp_pdev->rx_pktlog_cbf))) {
 			drop_mpdu = true;
 			dp_pdev->rx_mon_stats.dest_mpdu_drop++;
 		}
@@ -1440,7 +1442,11 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 		return QDF_STATUS_E_INVAL;
 
 	if (pdev->rx_pktlog_cbf) {
-		data = qdf_nbuf_data(mpdu);
+		if (qdf_nbuf_get_nr_frags(mpdu))
+			data = qdf_nbuf_get_frag_addr(mpdu, 0);
+		else
+			data = qdf_nbuf_data(mpdu);
+
 		rx_tlv = data - SIZE_OF_MONITOR_TLV;
 
 		/* CBF logging required, doesn't matter if it is a full mode
@@ -1455,7 +1461,6 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 			msdu_start_tlv->rx_msdu_start.ppdu_start_timestamp;
 
 		wh = (struct ieee80211_frame *)data;
-
 		type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 		subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 		if (type == IEEE80211_FC0_TYPE_MGT &&
@@ -1485,7 +1490,8 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
 
-	if (!pdev || (!pdev->monitor_vdev && !pdev->mcopy_mode))
+	if (!pdev || (!pdev->monitor_vdev && !pdev->mcopy_mode &&
+		      !pdev->rx_pktlog_cbf))
 		goto mon_deliver_fail;
 
 	/* restitch mon MPDU for delivery via monitor interface */

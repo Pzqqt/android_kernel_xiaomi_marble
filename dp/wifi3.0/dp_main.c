@@ -13054,12 +13054,13 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			}
 			if (!pdev->rx_pktlog_cbf) {
 				pdev->rx_pktlog_cbf = true;
-
+				pdev->monitor_configured = true;
 				dp_vdev_set_monitor_mode_buf_rings(pdev);
 				/*
 				 * Set the packet log lite mode filter.
 				 */
 				qdf_info("Non monitor mode: Enable destination ring");
+
 				dp_mon_filter_setup_rx_pkt_log_cbf(pdev);
 				if (dp_mon_filter_update(pdev) !=
 				    QDF_STATUS_SUCCESS) {
@@ -13067,6 +13068,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					dp_mon_filter_reset_rx_pktlog_cbf(pdev);
 					pdev->rx_pktlog_mode =
 						DP_RX_PKTLOG_DISABLED;
+					pdev->monitor_configured = false;
 					return 0;
 				}
 
@@ -13137,6 +13139,10 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			}
 
 			break;
+		case WDI_EVENT_RX_CBF:
+			pdev->rx_pktlog_cbf = false;
+			break;
+
 		default:
 			/* Nothing needs to be done for other pktlog types */
 			break;

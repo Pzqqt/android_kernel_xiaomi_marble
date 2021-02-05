@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -190,6 +190,7 @@ dp_wdi_event_sub(
 			"Invalid event in %s", __func__);
 		return -EINVAL;
 	}
+
 	dp_set_pktlog_wifi3(txrx_pdev, event, true);
 	event_index = event - WDI_EVENT_BASE;
 	wdi_sub = txrx_pdev->wdi_event_list[event_index];

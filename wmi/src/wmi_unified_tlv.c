@@ -521,6 +521,10 @@ static const uint32_t vdev_param_tlv[] = {
 };
 #endif
 
+#ifndef WMI_PKTLOG_EVENT_CBF
+#define WMI_PKTLOG_EVENT_CBF 0x100
+#endif
+
 /**
  * Populate the pktlog event tlv array, where
  * the values are the FW WMI events, which host
@@ -539,6 +543,7 @@ static const uint32_t pktlog_event_tlv[] =  {
 	[WMI_HOST_PKTLOG_EVENT_STEERING_BIT] = 0,
 	[WMI_HOST_PKTLOG_EVENT_TX_DATA_CAPTURE_BIT] = 0,
 	[WMI_HOST_PKTLOG_EVENT_PHY_LOGGING_BIT] = WMI_PKTLOG_EVENT_PHY,
+	[WMI_HOST_PKTLOG_EVENT_CBF_BIT] = WMI_PKTLOG_EVENT_CBF,
 };
 
 /**
