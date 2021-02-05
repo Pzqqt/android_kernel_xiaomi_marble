@@ -1375,6 +1375,8 @@ struct cdp_peer_ops {
 					 uint8_t *peer_mac, bool val);
 	void (*set_peer_as_tdls_peer)(struct cdp_soc_t *soc, uint8_t vdev_id,
 				      uint8_t *peer_mac, bool val);
+	void (*peer_flush_frags)(struct cdp_soc_t *soc_hdl,
+				 uint8_t vdev_id, uint8_t *peer_mac);
 };
 
 /**

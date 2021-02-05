@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -569,4 +569,24 @@ cdp_peer_set_tdls_offchan_enabled(ol_txrx_soc_handle soc, uint8_t vdev_id,
 							     peer_mac, val);
 }
 
+/**
+ * cdp_peer_flush_frags() - Flush frags on peer
+ * @soc - data path soc handle
+ * @vdev_id - virtual interface id
+ * @peer_mac - peer mac addr
+ *
+ * Return: None
+ */
+static inline void
+cdp_peer_flush_frags(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *peer_mac)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->peer_flush_frags)
+		soc->ops->peer_ops->peer_flush_frags(soc, vdev_id, peer_mac);
+}
 #endif /* _CDP_TXRX_PEER_H_ */
