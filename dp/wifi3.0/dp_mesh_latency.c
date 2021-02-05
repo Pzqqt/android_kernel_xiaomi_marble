@@ -75,6 +75,7 @@ QDF_STATUS dp_mesh_latency_update_peer_parameter(struct cdp_soc_t *soc_hdl,
 	uint8_t tid, ac, msduq;
 	struct dp_soc *dpsoc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct cdp_soc_t *cdp_soc = NULL;
+	struct dp_ast_entry *ast_entry = NULL;
 
 	if (!dpsoc) {
 		QDF_TRACE(QDF_MODULE_ID_DP_CDP, QDF_TRACE_LEVEL_ERROR,
@@ -83,18 +84,28 @@ QDF_STATUS dp_mesh_latency_update_peer_parameter(struct cdp_soc_t *soc_hdl,
 	}
 
 	cdp_soc = &dpsoc->cdp_soc;
+
+	qdf_spin_lock_bh(&dpsoc->ast_lock);
+	ast_entry = dp_peer_ast_hash_find_soc(dpsoc, peer_mac);
+	if (!ast_entry) {
+		qdf_spin_unlock_bh(&dpsoc->ast_lock);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/*
 	 * Find peer with given mac address from global soc
 	 */
-	peer = dp_peer_find_hash_find(dpsoc, peer_mac, 0,
-			DP_VDEV_ALL, DP_MOD_ID_CDP);
-
+	peer = dp_peer_get_ref_by_id(dpsoc, ast_entry->peer_id,
+			DP_MOD_ID_CDP);
 	if (!peer) {
 		/*
 		 * No WLAN client peer found with this peer mac
 		 */
+		qdf_spin_unlock_bh(&dpsoc->ast_lock);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	qdf_spin_unlock_bh(&dpsoc->ast_lock);
 
 	vdev = peer->vdev;
 	if (!vdev) {
