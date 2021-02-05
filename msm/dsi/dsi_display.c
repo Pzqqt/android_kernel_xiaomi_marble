@@ -5862,7 +5862,8 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 	}
 
 	/* initialize display in firmware callback */
-	if (!boot_disp->boot_disp_en &&
+	if (!(boot_displays[DSI_PRIMARY].boot_disp_en ||
+			boot_displays[DSI_SECONDARY].boot_disp_en) &&
 			IS_ENABLED(CONFIG_DSI_PARSER)) {
 		if (!strcmp(display->display_type, "primary"))
 			firm_req = !request_firmware_nowait(
