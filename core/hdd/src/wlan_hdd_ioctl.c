@@ -6672,7 +6672,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 		 * Restore and Free the cache channels when the command is
 		 * received with num channels as 0
 		 */
-		wlan_hdd_restore_channels(hdd_ctx, false);
+		wlan_hdd_restore_channels(hdd_ctx);
 		return 0;
 	}
 
