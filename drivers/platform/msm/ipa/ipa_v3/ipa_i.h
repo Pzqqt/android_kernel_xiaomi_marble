@@ -1062,6 +1062,10 @@ struct ipa3_repl_ctx {
  * @napi_tx: napi for eot write done handle (tx_complete) - to replace tasklet
  * @in_napi_context: an atomic variable used for non-blocking locking,
  * preventing from multiple napi_sched to be called.
+ * @int_modt: GSI event ring interrupt moderation timer
+ * @int_modc: GSI event ring interrupt moderation counter
+ * @buff_size: rx packet length
+ * @ext_ioctl_v2: specifies if it's new version of ingress/egress ioctl
  *
  * IPA context specific to the GPI pipes a.k.a LAN IN/OUT and WAN
  */
@@ -1099,6 +1103,10 @@ struct ipa3_sys_context {
 	u32 eob_drop_cnt;
 	struct napi_struct napi_tx;
 	atomic_t in_napi_context;
+	u32 int_modt;
+	u32 int_modc;
+	u32 buff_size;
+	bool ext_ioctl_v2;
 
 	/* ordering is important - mutable fields go above */
 	struct ipa3_ep_context *ep;
@@ -3147,8 +3155,10 @@ int ipa3_register_rmnet_ctl_cb(
 	void *user_data3);
 int ipa3_unregister_rmnet_ctl_cb(void);
 int ipa3_rmnet_ctl_xmit(struct sk_buff *skb);
-int ipa3_setup_apps_low_lat_prod_pipe(void);
-int ipa3_setup_apps_low_lat_cons_pipe(void);
+int ipa3_setup_apps_low_lat_prod_pipe(bool rmnet_config,
+	struct rmnet_egress_param *egress_param);
+int ipa3_setup_apps_low_lat_cons_pipe(bool rmnet_config,
+	struct rmnet_ingress_param *ingress_param);
 int ipa3_teardown_apps_low_lat_pipes(void);
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type);
 int ipa_gsi_ch20_wa(void);

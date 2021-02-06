@@ -1,7 +1,7 @@
 
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -11,6 +11,7 @@
 #include <linux/netdevice.h>
 #include <linux/msm_gsi.h>
 #include <net/sock.h>
+#include <asm/page.h>
 #include "gsi.h"
 #include "ipa_i.h"
 #include "ipa_trace.h"
@@ -98,7 +99,7 @@ static void ipa3_replenish_rx_page_cache(struct ipa3_sys_context *sys);
 static void ipa3_wq_page_repl(struct work_struct *work);
 static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys);
 static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(gfp_t flag,
-	bool is_tmp_alloc);
+	bool is_tmp_alloc, struct ipa3_sys_context *sys);
 static void ipa3_wq_handle_rx(struct work_struct *work);
 static void ipa3_wq_rx_common(struct ipa3_sys_context *sys,
 	struct gsi_chan_xfer_notify *notify);
@@ -1209,6 +1210,10 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	ep->client = sys_in->client;
 	ep->client_notify = sys_in->notify;
 	ep->sys->napi_obj = sys_in->napi_obj;
+	ep->sys->ext_ioctl_v2 = sys_in->ext_ioctl_v2;
+	ep->sys->int_modt = sys_in->int_modt;
+	ep->sys->int_modc = sys_in->int_modc;
+	ep->sys->buff_size = sys_in->buff_size;
 	ep->priv = sys_in->priv;
 	ep->keep_ipa_awake = sys_in->keep_ipa_awake;
 	atomic_set(&ep->avail_fifo_desc,
@@ -1355,9 +1360,11 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		qmap_cfg.mux_id_byte_sel = IPA_QMAP_ID_BYTE;
 		ipahal_write_reg_fields(IPA_COAL_QMAP_CFG, &qmap_cfg);
 
-		sys_in->client = IPA_CLIENT_APPS_WAN_CONS;
-		sys_in->ipa_ep_cfg = ep_cfg_copy;
-		result = ipa3_setup_sys_pipe(sys_in, &wan_handle);
+		if (!sys_in->ext_ioctl_v2) {
+			sys_in->client = IPA_CLIENT_APPS_WAN_CONS;
+			sys_in->ipa_ep_cfg = ep_cfg_copy;
+			result = ipa3_setup_sys_pipe(sys_in, &wan_handle);
+		}
 		if (result) {
 			IPAERR("failed to setup default coalescing pipe\n");
 			goto fail_repl;
@@ -2029,7 +2036,7 @@ fail_kmem_cache_alloc:
 }
 
 static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
-	gfp_t flag, bool is_tmp_alloc)
+	gfp_t flag, bool is_tmp_alloc, struct ipa3_sys_context *sys)
 {
 	struct ipa3_rx_pkt_wrapper *rx_pkt;
 
@@ -2038,9 +2045,16 @@ static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 		flag);
 	if (unlikely(!rx_pkt))
 		return NULL;
-	rx_pkt->len = PAGE_SIZE << IPA_WAN_PAGE_ORDER;
-	rx_pkt->page_data.page = __dev_alloc_pages(flag,
-		IPA_WAN_PAGE_ORDER);
+	if (sys->ext_ioctl_v2) {
+		rx_pkt->len = sys->buff_size;
+		rx_pkt->page_data.page = __dev_alloc_pages(flag,
+						get_order(sys->buff_size));
+	} else {
+		rx_pkt->len = PAGE_SIZE << IPA_WAN_PAGE_ORDER;
+		rx_pkt->page_data.page = __dev_alloc_pages(flag,
+			IPA_WAN_PAGE_ORDER);
+	}
+
 	if (unlikely(!rx_pkt->page_data.page))
 		goto fail_page_alloc;
 
@@ -2073,7 +2087,7 @@ static void ipa3_replenish_rx_page_cache(struct ipa3_sys_context *sys)
 	u32 curr;
 
 	for (curr = 0; curr < sys->page_recycle_repl->capacity; curr++) {
-		rx_pkt = ipa3_alloc_rx_pkt_page(GFP_KERNEL, false);
+		rx_pkt = ipa3_alloc_rx_pkt_page(GFP_KERNEL, false, sys);
 		if (!rx_pkt) {
 			IPAERR("ipa3_alloc_rx_pkt_page fails\n");
 			ipa_assert();
@@ -2103,7 +2117,7 @@ begin:
 		next = (curr + 1) % sys->repl->capacity;
 		if (unlikely(next == atomic_read(&sys->repl->head_idx)))
 			goto fail_kmem_cache_alloc;
-		rx_pkt = ipa3_alloc_rx_pkt_page(GFP_KERNEL, true);
+		rx_pkt = ipa3_alloc_rx_pkt_page(GFP_KERNEL, true, sys);
 		if (unlikely(!rx_pkt)) {
 			IPAERR("ipa3_alloc_rx_pkt_page fails\n");
 			break;
@@ -3991,8 +4005,10 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 				in->ipa_ep_cfg.aggr.aggr = IPA_COALESCE;
 			else
 				in->ipa_ep_cfg.aggr.aggr = IPA_GENERIC;
-			in->ipa_ep_cfg.aggr.aggr_time_limit =
-				IPA_GENERIC_AGGR_TIME_LIMIT;
+			if (in->client == IPA_CLIENT_APPS_LAN_CONS ||
+				!in->ext_ioctl_v2)
+				in->ipa_ep_cfg.aggr.aggr_time_limit =
+					IPA_GENERIC_AGGR_TIME_LIMIT;
 			if (in->client == IPA_CLIENT_APPS_LAN_CONS) {
 				INIT_WORK(&sys->repl_work, ipa3_wq_repl_rx);
 				sys->pyld_hdlr = ipa3_lan_rx_pyld_hdlr;
@@ -4052,8 +4068,6 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 				IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) {
 				INIT_WORK(&sys->repl_work, ipa3_wq_repl_rx);
 				sys->ep->status.status_en = false;
-				in->ipa_ep_cfg.aggr.aggr_en = IPA_BYPASS_AGGR;
-				in->ipa_ep_cfg.aggr.aggr_time_limit = 0;
 				sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(
 					IPA_QMAP_RX_BUFF_BASE_SZ);
 				sys->pyld_hdlr = ipa3_low_lat_rx_pyld_hdlr;
@@ -4893,6 +4907,16 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	} else {
 		gsi_evt_ring_props.int_modt = IPA_GSI_EVT_RING_INT_MODT;
 		gsi_evt_ring_props.int_modc = 1;
+	}
+
+	if (ep->sys->ext_ioctl_v2 &&
+		((ep->client == IPA_CLIENT_APPS_WAN_PROD) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_CONS) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_PROD) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS))) {
+		gsi_evt_ring_props.int_modt = ep->sys->int_modt;
+		gsi_evt_ring_props.int_modc = ep->sys->int_modc;
 	}
 
 	IPADBG("client=%d moderation threshold cycles=%u cnt=%u\n",
