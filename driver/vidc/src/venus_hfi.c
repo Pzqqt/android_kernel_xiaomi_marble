@@ -166,7 +166,7 @@ bool __core_in_valid_state(struct msm_vidc_core *core)
 	return core->state == MSM_VIDC_CORE_INIT;
 }
 
-static bool is_sys_cache_present(struct msm_vidc_core *core)
+bool is_sys_cache_present(struct msm_vidc_core *core)
 {
 	return core->dt->sys_cache_present;
 }
@@ -1759,46 +1759,62 @@ int __disable_regulators(struct msm_vidc_core *core)
 
 static int __release_subcaches(struct msm_vidc_core *core)
 {
-#if 0 // TODO
-	struct subcache_info *sinfo;
 	int rc = 0;
-	u32 c = 0;
-	u32 resource[VIDC_MAX_SUBCACHE_SIZE];
-	struct hfi_resource_syscache_info_type *sc_res_info;
-	struct hfi_resource_subcache_type *sc_res;
-	struct vidc_resource_hdr rhdr;
+	struct subcache_info* sinfo;
+	struct hfi_buffer buf;
 
 	if (msm_vidc_syscache_disable || !is_sys_cache_present(core))
 		return 0;
 
-	memset((void *)resource, 0x0, (sizeof(u32) * VIDC_MAX_SUBCACHE_SIZE));
+	if (!core->dt->sys_cache_res_set) {
+		d_vpr_h("Subcaches not set to Venus\n");
+		return 0;
+	}
 
-	sc_res_info = (struct hfi_resource_syscache_info_type *)resource;
-	sc_res = &(sc_res_info->rg_subcache_entries[0]);
+	rc = hfi_create_header(core->packet, core->packet_size,
+		0, core->header_id++);
+	if (rc)
+		return rc;
 
-	/* Release resource command to Venus */
+	memset(&buf, 0, sizeof(struct hfi_buffer));
+	buf.type = HFI_BUFFER_SUBCACHE;
+	buf.flags = HFI_BUF_HOST_FLAG_RELEASE;
+
 	venus_hfi_for_each_subcache_reverse(core, sinfo) {
-		if (sinfo->isset) {
-			/* Update the entry */
-			sc_res[c].size = sinfo->subcache->slice_size;
-			sc_res[c].sc_id = sinfo->subcache->slice_id;
-			c++;
-			sinfo->isset = false;
+		if (sinfo->isactive) {
+			buf.index = sinfo->subcache->slice_id;
+			buf.buffer_size = sinfo->subcache->slice_size;
+
+			rc = hfi_create_packet(core->packet,
+				core->packet_size,
+				HFI_CMD_BUFFER,
+				HFI_BUF_HOST_FLAG_NONE,
+				HFI_PAYLOAD_STRUCTURE,
+				HFI_PORT_NONE,
+				core->packet_id++,
+				&buf,
+				sizeof(buf));
+			if (rc)
+				return rc;
 		}
 	}
 
-	if (c > 0) {
-		d_vpr_h("Releasing %d subcaches\n", c);
-		rhdr.resource_handle = sc_res_info; /* cookie */
-		rhdr.resource_id = VIDC_RESOURCE_SYSCACHE;
+	/* Set resource to Venus for activated subcaches */
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		return rc;
 
-		rc = __core_release_resource(core, &rhdr);
-		if (rc)
-			d_vpr_e("Failed to release %d subcaches\n", c);
+	venus_hfi_for_each_subcache_reverse(core, sinfo) {
+		if (sinfo->isactive) {
+			sinfo->isset = false;
+			d_vpr_h("Release Subcache id %d size %d done\n",
+				sinfo->subcache->slice_id,
+				sinfo->subcache->slice_size);
+		}
 	}
 
 	core->dt->sys_cache_res_set = false;
-#endif
+
 	return 0;
 }
 
@@ -1857,69 +1873,76 @@ static int __enable_subcaches(struct msm_vidc_core *core)
 err_activate_fail:
 	__release_subcaches(core);
 	__disable_subcaches(core);
-	return 0;
+	return rc;
 }
 
 static int __set_subcaches(struct msm_vidc_core *core)
 {
-#if 0 // TODO
 	int rc = 0;
-	u32 c = 0;
 	struct subcache_info *sinfo;
-	u32 resource[VIDC_MAX_SUBCACHE_SIZE];
-	struct hfi_resource_syscache_info_type *sc_res_info;
-	struct hfi_resource_subcache_type *sc_res;
-	struct vidc_resource_hdr rhdr;
+	struct hfi_buffer buf;
+
+	if (msm_vidc_syscache_disable ||
+		!is_sys_cache_present(core)) {
+		return 0;
+	}
 
 	if (core->dt->sys_cache_res_set) {
 		d_vpr_h("Subcaches already set to Venus\n");
 		return 0;
 	}
 
-	memset((void *)resource, 0x0, (sizeof(u32) * VIDC_MAX_SUBCACHE_SIZE));
+	rc = hfi_create_header(core->packet, core->packet_size,
+		0, core->header_id++);
+	if (rc)
+		goto err_fail_set_subacaches;
 
-	sc_res_info = (struct hfi_resource_syscache_info_type *)resource;
-	sc_res = &(sc_res_info->rg_subcache_entries[0]);
+	memset(&buf, 0, sizeof(struct hfi_buffer));
+	buf.type = HFI_BUFFER_SUBCACHE;
+	buf.flags = HFI_BUF_HOST_FLAG_NONE;
 
 	venus_hfi_for_each_subcache(core, sinfo) {
 		if (sinfo->isactive) {
-			sc_res[c].size = sinfo->subcache->slice_size;
-			sc_res[c].sc_id = sinfo->subcache->slice_id;
-			c++;
+			buf.index = sinfo->subcache->slice_id;
+			buf.buffer_size = sinfo->subcache->slice_size;
+
+			rc = hfi_create_packet(core->packet,
+				core->packet_size,
+				HFI_CMD_BUFFER,
+				HFI_BUF_HOST_FLAG_NONE,
+				HFI_PAYLOAD_STRUCTURE,
+				HFI_PORT_NONE,
+				core->packet_id++,
+				&buf,
+				sizeof(buf));
+			if (rc)
+				goto err_fail_set_subacaches;
 		}
 	}
 
 	/* Set resource to Venus for activated subcaches */
-	if (c) {
-		d_vpr_h("Setting %d Subcaches\n", c);
-
-		rhdr.resource_handle = sc_res_info; /* cookie */
-		rhdr.resource_id = VIDC_RESOURCE_SYSCACHE;
-
-		sc_res_info->num_entries = c;
-
-		rc = __core_set_resource(core, &rhdr, (void *)sc_res_info);
-		if (rc) {
-			d_vpr_e("Failed to set subcaches %d\n", rc);
-			goto err_fail_set_subacaches;
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		goto err_fail_set_subacaches;
+		
+	venus_hfi_for_each_subcache(core, sinfo) {
+		if (sinfo->isactive) {
+			sinfo->isset = true;
+			d_vpr_h("Set Subcache id %d size %d done\n",
+				sinfo->subcache->slice_id,
+				sinfo->subcache->slice_size);
 		}
-
-		venus_hfi_for_each_subcache(core, sinfo) {
-			if (sinfo->isactive)
-				sinfo->isset = true;
-		}
-
-		d_vpr_h("Set Subcaches done to Venus\n");
-		core->dt->sys_cache_res_set = true;
 	}
+	
+	core->dt->sys_cache_res_set = true;
 
 	return 0;
 
 err_fail_set_subacaches:
 	__disable_subcaches(core);
-#endif
-	return 0;
+	return rc;
 }
+
 /*
 static int __set_ubwc_config(struct msm_vidc_core *core)
 {
@@ -2099,7 +2122,11 @@ static int __resume(struct msm_vidc_core *core)
 	}
 
 	__sys_set_debug(core, (msm_vidc_debug & FW_LOGMASK) >> FW_LOGSHIFT);
-	__enable_subcaches(core);
+	rc = __enable_subcaches(core);
+	if (rc) {
+		d_vpr_e("Failed to activate subcache\n");
+		goto err_reset_core;
+	}
 	__set_subcaches(core);
 
 	d_vpr_h("Resumed from power collapse\n");

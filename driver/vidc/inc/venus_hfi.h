@@ -17,17 +17,6 @@
 #define VIDC_MAX_SUBCACHES 			4
 #define VIDC_MAX_SUBCACHE_SIZE 		52
 
-enum vidc_resource_id {
-	VIDC_RESOURCE_NONE,
-	VIDC_RESOURCE_SYSCACHE,
-	VIDC_UNUSED_RESOURCE = 0x10000000,
-};
-
-struct vidc_resource_hdr {
-	enum vidc_resource_id resource_id;
-	void *resource_handle;
-};
-
 struct vidc_buffer_addr_info {
 	enum msm_vidc_buffer_type buffer_type;
 	u32 buffer_size;
@@ -37,17 +26,7 @@ struct vidc_buffer_addr_info {
 	u32 extradata_size;
 	u32 response_required;
 };
-#if 0
-struct hfi_resource_subcache_type {
-	u32 size;
-	u32 sc_id;
-};
 
-struct hfi_resource_syscache_info_type {
-	u32 num_entries;
-	struct hfi_resource_subcache_type rg_subcache_entries[1];
-};
-#endif
 int venus_hfi_session_property(struct msm_vidc_inst *inst,
 	u32 pkt_type, u32 flags, u32 port,
 	u32 payload_type, void *payload, u32 payload_size);
