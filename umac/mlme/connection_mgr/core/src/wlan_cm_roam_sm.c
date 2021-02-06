@@ -63,7 +63,10 @@ bool cm_state_roaming_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_ROAM_INVOKE:
 		cm_add_roam_req_to_list(cm_ctx, data);
-		/* cm_start_roam_invoke(cm_ctx); define in LFR3/FW roam file */
+		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_ROAM_STARTED);
+		cm_sm_deliver_event_sync(cm_ctx,
+					 WLAN_CM_SM_EV_ROAM_INVOKE,
+					 data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_START:
 		cm_add_roam_req_to_list(cm_ctx, data);
@@ -252,6 +255,14 @@ bool cm_subst_roam_start_event(void *ctx, uint16_t event,
 		event_handled =
 			cm_handle_connect_disconnect_in_roam(cm_ctx, event,
 							     data_len, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_INVOKE:
+		cm_send_roam_invoke_req(cm_ctx, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
+		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
+					 data_len, data);
 		break;
 	default:
 		event_handled = false;

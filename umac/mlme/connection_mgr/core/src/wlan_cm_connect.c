@@ -1626,7 +1626,7 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 	mlme_debug(CM_PREFIX_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
 				 resp->cm_id));
-	cm_remove_cmd(cm_ctx, resp->cm_id);
+	cm_remove_cmd(cm_ctx, &resp->cm_id);
 
 	return QDF_STATUS_SUCCESS;
 }

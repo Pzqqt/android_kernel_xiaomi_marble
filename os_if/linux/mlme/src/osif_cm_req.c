@@ -494,8 +494,9 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 
 	if (req->channel)
 		connect_req->chan_freq = req->channel->center_freq;
-	else
-		connect_req->chan_freq = 0;
+
+	if (req->channel_hint)
+		connect_req->chan_freq_hint = req->channel_hint->center_freq;
 
 	status = osif_cm_set_crypto_params(connect_req, req);
 	if (QDF_IS_STATUS_ERROR(status))

@@ -124,6 +124,7 @@ struct wlan_fils_con_info {
  * enum wlan_cm_source - connection manager req source
  * @CM_OSIF_CONNECT: Connect req initiated by OSIF or north bound
  * @CM_ROAMING_HOST: Roaming request initiated by host
+ * @CM_ROAMING_NUD_FAILURE: Roaming request initiated by NUD failure
  * @CM_ROAMING_FW: Roam req initiated by FW
  * @CM_OSIF_DISCONNECT: Disconnect req initiated by OSIF or north bound
  * @CM_PEER_DISCONNECT: Disconnect req initiated by peer sending deauth/disassoc
@@ -143,6 +144,7 @@ struct wlan_fils_con_info {
 enum wlan_cm_source {
 	CM_OSIF_CONNECT,
 	CM_ROAMING_HOST,
+	CM_ROAMING_NUD_FAILURE,
 	CM_ROAMING_FW,
 	CM_OSIF_DISCONNECT,
 	CM_PEER_DISCONNECT,
@@ -165,6 +167,7 @@ enum wlan_cm_source {
  * @ssid: profile SSID
  * @bssid_hint: bssid hint to connect
  * @chan_freq: channel of the AP
+ * @chan_freq_hint: channel hint
  * @crypto: crypto related info
  * @assoc_ie:Additional assoc IE to be appended in assoc req
  *           (Include RSN/WPA/WAPI/WPS ies)
@@ -194,7 +197,8 @@ struct wlan_cm_connect_req {
 	struct qdf_mac_addr prev_bssid;
 	struct wlan_ssid ssid;
 	struct qdf_mac_addr bssid_hint;
-	uint32_t chan_freq;
+	qdf_freq_t chan_freq;
+	qdf_freq_t chan_freq_hint;
 	struct wlan_cm_connect_crypto_info crypto;
 	struct element_info assoc_ie;
 	struct element_info scan_ie;
@@ -257,6 +261,7 @@ struct wlan_cm_vdev_connect_req {
  * @bssid: bssid given
  * @prev_bssid: prev AP bssid, given in case supplican want to roam to new BSSID
  * @chan_freq: channel of the AP
+ * @forced_roaming: Roaming to be done without giving bssid, and channel.
  */
 struct wlan_cm_roam_req {
 	uint8_t vdev_id;
@@ -264,6 +269,7 @@ struct wlan_cm_roam_req {
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr prev_bssid;
 	uint32_t chan_freq;
+	bool forced_roaming;
 };
 
 /**

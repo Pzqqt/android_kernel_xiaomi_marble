@@ -749,8 +749,7 @@ QDF_STATUS (*send_process_roam_synch_complete_cmd)(wmi_unified_t wmi_handle,
 		 uint8_t vdev_id);
 
 QDF_STATUS (*send_roam_invoke_cmd)(wmi_unified_t wmi_handle,
-		struct wmi_roam_invoke_cmd *roaminvoke,
-		uint32_t ch_hz);
+		struct roam_invoke_req *roaminvoke);
 
 QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
 					struct wlan_roam_triggers *triggers);

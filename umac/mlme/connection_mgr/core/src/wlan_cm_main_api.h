@@ -679,7 +679,7 @@ void cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
  *
  * Return: void
  */
-void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
 
 /**
  * cm_add_req_to_list_and_indicate_osif() - Add the request to request list in

@@ -35,6 +35,7 @@ static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 		return CONNECT_REQ_PREFIX;
 	case CM_ROAMING_HOST:
 	case CM_ROAMING_FW:
+	case CM_ROAMING_NUD_FAILURE:
 		return ROAM_REQ_PREFIX;
 	default:
 		return DISCONNECT_REQ_PREFIX;
@@ -747,7 +748,7 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
@@ -755,15 +756,15 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc) {
 		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
-			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), *cm_id));
 		return;
 	}
 
-	status = cm_delete_req_from_list(cm_ctx, cm_id);
+	status = cm_delete_req_from_list(cm_ctx, *cm_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
-	cm_remove_cmd_from_serialization(cm_ctx, cm_id);
+	cm_remove_cmd_from_serialization(cm_ctx, *cm_id);
 }
 
 void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,

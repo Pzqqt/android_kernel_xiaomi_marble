@@ -458,8 +458,7 @@ reassoc_fail:
 					wlan_vdev_get_pdev(vdev),
 					&bss_info, &mlme_info);
 	}
-
-	cm_remove_cmd(cm_ctx, resp->cm_id);
+	cm_remove_cmd(cm_ctx, &resp->cm_id);
 
 	/*
 	 * If roaming fails and conn_sm is in ROAMING state, then

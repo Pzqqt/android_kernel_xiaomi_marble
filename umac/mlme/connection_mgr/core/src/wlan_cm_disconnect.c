@@ -481,7 +481,7 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 	if (resp->req.cm_id == cm_ctx->active_cm_id)
 		cm_flush_pending_request(cm_ctx, DISCONNECT_REQ_PREFIX, false);
 
-	cm_remove_cmd(cm_ctx, resp->req.cm_id);
+	cm_remove_cmd(cm_ctx, &resp->req.cm_id);
 	mlme_debug(CM_PREFIX_FMT "disconnect count %d connect count %d",
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
 				 resp->req.cm_id),
