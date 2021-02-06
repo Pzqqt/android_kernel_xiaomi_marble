@@ -30529,15 +30529,45 @@ typedef struct {
     /* total number of TSF out of sync */
     A_UINT32 tsf_out_of_sync;
 
+    /**
+     * ANI (noise interference) level corresponding to the channel.
+     * The range of values is different for chips of different target
+     * architectures.  Helium values range from 0 to 9, while Lithium
+     * and Beryllium values range from -5 to 15.
+     * In all cases, higher values indicate more noise interference.
+     */
+    A_INT32 ani_level;
+
     /*
      * This fixed_param TLV is followed by the below TLVs:
      * List of datapath big data stats. This stat is not interpreted by
      * host. This gets directly updated on big data server and later FW
      * team will analyze this data.
      *
-     * A_UINT32 bd_datapath_stats[];
+     * A_UINT32 bd_datapath_stats[]; // DEPRECATED
+     * wmi_big_data_dp_stats_tlv_param big_data_dp_stats[];
      */
 } wmi_vdev_send_big_data_p2_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_bd_datapath_stats_tlv_param */
+    A_UINT32 tlv_header;
+
+    /* Tx power before disconnection.
+     * The units of the following tx power fields are 0.5 dBm for Helium
+     * architecture target (e.g. a value of 1 means tx power = 0.5 dBm),
+     * and are 0.25 dBm for subsequent target architectures.
+     */
+    A_UINT32 last_data_tx_pwr;
+    A_UINT32 target_power_dsss;
+    A_UINT32 target_power_ofdm;
+
+    /* Rate index of last data frame before disconnection */
+    A_UINT32 last_tx_data_rix;
+
+    /* Tx rate (in kbps) of last data frame before disconnection */
+    A_UINT32 last_tx_data_rate_kbps;
+} wmi_big_data_dp_stats_tlv_param;
 
 typedef enum {
     WMI_6GHZ_REG_LPI = 0,

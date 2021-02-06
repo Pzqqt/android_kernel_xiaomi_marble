@@ -1136,6 +1136,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_link_set_active_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_mlo_link_set_active_resp_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_sae_offload_tlv_param,
+    WMITLV_TAG_STRUC_wmi_big_data_dp_stats_tlv_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -6138,7 +6139,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SEND_BIG_DATA_EVENTID);
 /* send BIG DATA event to host P2 */
 #define WMITLV_TABLE_WMI_VDEV_SEND_BIG_DATA_P2_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_send_big_data_p2_event_fixed_param, wmi_vdev_send_big_data_p2_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, bd_datapath_stats, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, bd_datapath_stats, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_big_data_dp_stats_tlv_param, big_data_dp_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SEND_BIG_DATA_P2_EVENTID);
 
 #define WMITLV_TABLE_WMI_NAN_DMESG_EVENTID(id,op,buf,len) \
