@@ -104,8 +104,15 @@ dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
 {
 	struct dfs_emulate_bang_radar_test_cmd dfs_unit_test;
 	uint32_t packed_args = 0;
+	enum detector_id agile_detector_id = dfs_get_agile_detector_id(dfs);
 
-	if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(dfs->dfs_curchan))) {
+	/* It is possible that home/operating channel is nonDFS
+	 * and the Agile channel is DFS. Therefore, whether the
+	 * home/operating channel is a DFS or not should not affect
+	 * the agile bangradar.
+	 */
+	if ((bangradar_params->detector_id != agile_detector_id) &&
+		!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(dfs->dfs_curchan))) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			"Ignore bangradar on a NON-DFS channel");
 		return -EINVAL;
