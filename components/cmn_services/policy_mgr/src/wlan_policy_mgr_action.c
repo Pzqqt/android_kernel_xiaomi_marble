@@ -2289,9 +2289,13 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 					return QDF_STATUS_E_FAILURE;
 				}
 			} else {
-				policy_mgr_warn("Can't have concurrency on %d",
-						ch_freq);
-				return QDF_STATUS_E_FAILURE;
+				if (!(policy_mgr_sta_sap_scc_on_lte_coex_chan
+				    (psoc)) && !(policy_mgr_is_safe_channel
+				    (psoc, ch_freq))) {
+					policy_mgr_warn("Can't have concurrency due to unsafe channel %d",
+							ch_freq);
+					return QDF_STATUS_E_FAILURE;
+				}
 			}
 		}
 	}
