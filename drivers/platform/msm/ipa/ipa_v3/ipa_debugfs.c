@@ -1570,6 +1570,13 @@ nxt_clnt_cons:
 				cnt += nbytes;
 				continue;
 			case IPA_CLIENT_WLAN2_CONS:
+				client = IPA_CLIENT_WLAN2_CONS1;
+				nbytes = scnprintf(dbg_buff + cnt,
+					IPA_MAX_MSG_LEN - cnt, HEAD_FRMT_STR,
+					"Client IPA_CLIENT_WLAN2_CONS1 Stats:");
+				cnt += nbytes;
+				continue;
+			case IPA_CLIENT_WLAN2_CONS1:
 				client = IPA_CLIENT_WLAN3_CONS;
 				nbytes = scnprintf(dbg_buff + cnt,
 					IPA_MAX_MSG_LEN - cnt, HEAD_FRMT_STR,
@@ -2442,6 +2449,18 @@ static ssize_t ipa3_read_wdi3_gsi_stats(struct file *file,
 			stats.u.ring[1].ringUsageHigh,
 			stats.u.ring[1].ringUsageLow,
 			stats.u.ring[1].RingUtilCount);
+		cnt += nbytes;
+		nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
+			"TX1 ringFull=%u\n"
+			"TX1 ringEmpty=%u\n"
+			"TX1 ringUsageHigh=%u\n"
+			"TX1 ringUsageLow=%u\n"
+			"TX1 RingUtilCount=%u\n",
+			stats.u.ring[2].ringFull,
+			stats.u.ring[2].ringEmpty,
+			stats.u.ring[2].ringUsageHigh,
+			stats.u.ring[2].ringUsageLow,
+			stats.u.ring[2].RingUtilCount);
 		cnt += nbytes;
 		nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
 			"RX ringFull=%u\n"

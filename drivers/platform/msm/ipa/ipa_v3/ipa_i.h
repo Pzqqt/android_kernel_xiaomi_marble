@@ -249,7 +249,11 @@ enum {
 #define IPA_WDI_CE_RING_RES			5
 #define IPA_WDI_CE_DB_RES			6
 #define IPA_WDI_TX_DB_RES			7
-#define IPA_WDI_MAX_RES				8
+#define IPA_WDI_TX1_RING_RES		8
+#define IPA_WDI_CE1_RING_RES		9
+#define IPA_WDI_CE1_DB_RES			10
+#define IPA_WDI_TX1_DB_RES			11
+#define IPA_WDI_MAX_RES				12
 
 /* use QMAP header reserved bit to identify tethered traffic */
 #define IPA_QMAP_TETH_BIT (1 << 30)
@@ -2192,6 +2196,9 @@ struct ipa3_context {
 	bool ipa_mhi_proxy;
 	u32 num_smmu_cb_probed;
 	u32 max_num_smmu_cb;
+	u32 ipa_wdi3_2g_holb_timeout;
+	u32 ipa_wdi3_5g_holb_timeout;
+	bool is_wdi3_tx1_needed;
 };
 
 struct ipa3_plat_drv_res {
@@ -2261,6 +2268,8 @@ struct ipa3_plat_drv_res {
 	u32 ipa_wan_aggr_pkt_cnt;
 	bool ipa_mhi_proxy;
 	u32 max_num_smmu_cb;
+	u32 ipa_wdi3_2g_holb_timeout;
+	u32 ipa_wdi3_5g_holb_timeout;
 };
 
 /**
