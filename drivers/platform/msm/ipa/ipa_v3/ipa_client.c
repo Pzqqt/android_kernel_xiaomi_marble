@@ -1263,6 +1263,7 @@ static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
 	if (result) {
 		IPAERR("fail to stop UL channel - hdl=%d clnt=%d\n",
 			clnt_hdl, ep->client);
+		ipa_assert();
 		goto disable_force_clear_and_exit;
 	}
 	result = stop_in_proc ? -EFAULT : 0;
