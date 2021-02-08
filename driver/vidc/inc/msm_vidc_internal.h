@@ -160,6 +160,7 @@ enum msm_vidc_buffer_attributes {
 	MSM_VIDC_ATTR_PENDING_RELEASE           = BIT(2),
 	MSM_VIDC_ATTR_QUEUED                    = BIT(3),
 	MSM_VIDC_ATTR_DEQUEUED                  = BIT(4),
+	MSM_VIDC_ATTR_BUFFER_DONE               = BIT(5),
 };
 
 enum msm_vidc_buffer_region {

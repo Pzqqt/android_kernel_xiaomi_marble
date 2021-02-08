@@ -462,7 +462,14 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
-	if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
+	/*
+	 * reset read only flag for a zero length
+	 * buffer (if marked read only)
+	 */
+	if (buffer->flags & HFI_BUF_FW_FLAG_READONLY &&
+			!buffer->data_size)
+		buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
+	else if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
 		buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 	else
 		buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
@@ -581,7 +588,17 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
 			if (buf->attr & MSM_VIDC_ATTR_DEQUEUED) {
 				buf->attr &= ~MSM_VIDC_ATTR_DEQUEUED;
-				msm_vidc_vb2_buffer_done(inst, buf);
+				/*
+				 * do not send vb2_buffer_done when fw sends FBDs
+				 * with read only flag for second time
+				 */
+				if ((buf->attr & MSM_VIDC_ATTR_BUFFER_DONE) &&
+						buf->attr & MSM_VIDC_ATTR_READ_ONLY){
+					print_vidc_buffer(VIDC_HIGH, "vb2 done already", inst, buf);
+				} else {
+					buf->attr |= MSM_VIDC_ATTR_BUFFER_DONE;
+					msm_vidc_vb2_buffer_done(inst, buf);
+				}
 				/* do not unmap / delete read only buffer */
 				if (!(buf->attr & MSM_VIDC_ATTR_READ_ONLY))
 					msm_vidc_put_driver_buf(inst, buf);
