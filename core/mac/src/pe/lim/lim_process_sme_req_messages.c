@@ -3972,7 +3972,7 @@ static uint8_t lim_get_num_tpe_octets(uint8_t max_transmit_power_count)
 	if (!max_transmit_power_count)
 		return max_transmit_power_count;
 
-	return 1 << (max_transmit_power_count - 1);
+	return 1 << (max_transmit_power_count);
 }
 
 void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
@@ -4066,7 +4066,7 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 		vdev_mlme->reg_tpc_obj.is_psd_power = false;
 		vdev_mlme->reg_tpc_obj.eirp_power = 0;
 		vdev_mlme->reg_tpc_obj.num_pwr_levels =
-						single_tpe.max_tx_pwr_count;
+					single_tpe.max_tx_pwr_count + 1;
 
 		ch_params.ch_width = CH_WIDTH_20MHZ;
 
@@ -4268,11 +4268,18 @@ void lim_calculate_tpc(struct mac_context *mac,
 					     &ch_params);
 	start_freq = ch_params.mhz_freq_seg0 - bw_val / 2;
 
+	if (!wlan_reg_is_6ghz_chan_freq(oper_freq)) {
+		reg_max = wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
+								  oper_freq);
+	} else {
+		is_6ghz_freq = true;
+		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
+	}
+
 	if (mlme_obj->reg_tpc_obj.num_pwr_levels) {
 		is_tpe_present = true;
 		num_pwr_levels = mlme_obj->reg_tpc_obj.num_pwr_levels;
 	} else {
-		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
 		num_pwr_levels = lim_get_num_pwr_levels(is_psd_power,
 							session->ch_width);
 	}

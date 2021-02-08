@@ -42,6 +42,7 @@
 #include "wlan_reg_services_api.h"
 #include "wma.h"
 #include "wlan_pkt_capture_ucfg_api.h"
+#include "wlan_lmac_if_def.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -2272,9 +2273,11 @@ void lim_handle_add_bss_rsp(struct mac_context *mac_ctx,
 	tLimMlmStartCnf mlm_start_cnf;
 	struct pe_session *session_entry;
 	enum bss_type bss_type;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct vdev_mlme_obj *mlme_obj;
 
 	if (!add_bss_rsp) {
-		pe_err("add_bss_rspis NULL");
+		pe_err("add_bss_rsp is NULL");
 		return;
 	}
 
@@ -2294,7 +2297,24 @@ void lim_handle_add_bss_rsp(struct mac_context *mac_ctx,
 		       add_bss_rsp->vdev_id);
 		goto err;
 	}
+	if (LIM_IS_AP_ROLE(session_entry)) {
+		if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
+			mlme_obj =
+			wlan_vdev_mlme_get_cmpt_obj(session_entry->vdev);
+			if (!mlme_obj) {
+				pe_err("vdev component object is NULL");
+				goto err;
+			}
+			tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
+			lim_calculate_tpc(mac_ctx, session_entry, false);
+
+			if (tx_ops->set_tpc_power)
+				tx_ops->set_tpc_power(mac_ctx->psoc,
+						      session_entry->vdev_id,
+						      &mlme_obj->reg_tpc_obj);
+		}
+	}
 	bss_type = session_entry->bssType;
 	/* update PE session Id */
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
