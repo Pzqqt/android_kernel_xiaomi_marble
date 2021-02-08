@@ -70,6 +70,7 @@ struct msm_asoc_mach_data {
 	struct clk *lpass_audio_hw_vote;
 	int core_audio_vote_count;
 	u32 wsa_max_devs;
+	int wcd_disabled;
 };
 
 static bool is_initial_boot;
@@ -81,8 +82,8 @@ static int dmic_4_5_gpio_cnt;
 
 static void *def_wcd_mbhc_cal(void);
 
-static int msm_aux_codec_init(struct snd_soc_pcm_runtime*);
-static int msm_int_audrx_init(struct snd_soc_pcm_runtime*);
+static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime*);
+static int msm_int_wsa_init(struct snd_soc_pcm_runtime*);
 
 /*
  * Need to report LINEIN
@@ -392,6 +393,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		/* .no_host_mode = SND_SOC_DAI_LINK_NO_HOST, */
 		SND_SOC_DAILINK_REG(vi_feedback),
 	},
+#if 0
 	{
 		.name = LPASS_BE_WSA2_CDC_DMA_TX_0,
 		.stream_name = LPASS_BE_WSA2_CDC_DMA_TX_0,
@@ -401,6 +403,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		/* .no_host_mode = SND_SOC_DAI_LINK_NO_HOST, */
 		SND_SOC_DAILINK_REG(wsa2_vi_feedback),
 	},
+#endif
 };
 
 static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
@@ -457,7 +460,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx0),
-		.init = &msm_int_audrx_init,
+		.init = &msm_int_wsa_init,
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
@@ -482,6 +485,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	},
 };
 
+#if 0
 static struct snd_soc_dai_link msm_wsa2_cdc_dma_be_dai_links[] = {
 	/* WSA2 CDC DMA Backend DAI Links */
 	{
@@ -494,7 +498,6 @@ static struct snd_soc_dai_link msm_wsa2_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(wsa2_dma_rx0),
-		.init = &msm_int_audrx_init,
 	},
 	{
 		.name = LPASS_BE_WSA2_CDC_DMA_RX_1,
@@ -518,6 +521,7 @@ static struct snd_soc_dai_link msm_wsa2_cdc_dma_be_dai_links[] = {
 		SND_SOC_DAILINK_REG(wsa2_dma_tx1),
 	},
 };
+#endif
 
 static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	/* RX CDC DMA Backend DAI Links */
@@ -531,7 +535,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx0),
-		.init = &msm_aux_codec_init,
+		.init = &msm_rx_tx_codec_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
@@ -543,7 +547,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
-		.init = &msm_int_audrx_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -916,7 +919,9 @@ static struct snd_soc_dai_link msm_tdm_dai_links[] = {
 
 static struct snd_soc_dai_link msm_waipio_dai_links[
 			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
+#if 0
 			ARRAY_SIZE(msm_wsa2_cdc_dma_be_dai_links) +
+#endif
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
@@ -984,13 +989,13 @@ static int msm_populate_dai_link_component_of_node(
 					continue;
 
 				np = dai_link[i].codecs[j].of_node;
-                if (!of_device_is_available(np)) {
-                    dev_err(cdev, "%s: codec is disabled: %s\n",
-						__func__,
-						np->full_name);
-					dai_link[i].codecs[j].of_node = NULL;
-					continue;
-                }
+				if (!of_device_is_available(np)) {
+				    dev_err(cdev, "%s: codec is disabled: %s\n",
+								__func__,
+								np->full_name);
+							dai_link[i].codecs[j].of_node = NULL;
+							continue;
+				}
 
 				codecs_enabled++;
 			}
@@ -1135,21 +1140,24 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	if (!strcmp(match->data, "codec")) {
 		card = &snd_soc_card_waipio_msm;
 
-		memcpy(msm_waipio_dai_links + total_links,
-		       msm_wsa_cdc_dma_be_dai_links,
-		       sizeof(msm_wsa_cdc_dma_be_dai_links));
-		total_links += ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
-
-		memcpy(msm_waipio_dai_links + total_links,
-		       msm_wsa2_cdc_dma_be_dai_links,
-		       sizeof(msm_wsa2_cdc_dma_be_dai_links));
-		total_links += ARRAY_SIZE(msm_wsa2_cdc_dma_be_dai_links);
-
+		/* late probe uses dai link at index '0' to get wcd component */
 		memcpy(msm_waipio_dai_links + total_links,
 		       msm_rx_tx_cdc_dma_be_dai_links,
 		       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
 		total_links +=
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
+
+		memcpy(msm_waipio_dai_links + total_links,
+		       msm_wsa_cdc_dma_be_dai_links,
+		       sizeof(msm_wsa_cdc_dma_be_dai_links));
+		total_links += ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
+
+#if 0
+		memcpy(msm_waipio_dai_links + total_links,
+		       msm_wsa2_cdc_dma_be_dai_links,
+		       sizeof(msm_wsa2_cdc_dma_be_dai_links));
+		total_links += ARRAY_SIZE(msm_wsa2_cdc_dma_be_dai_links);
+#endif
 
 		memcpy(msm_waipio_dai_links + total_links,
 		       msm_va_cdc_dma_be_dai_links,
@@ -1223,7 +1231,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	return card;
 }
 
-static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
+static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 {
 	u8 spkleft_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
 	u8 spkright_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
@@ -1236,15 +1244,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	unsigned int ch_mask[WSA883X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
 	struct snd_soc_component *component = NULL;
 	struct snd_soc_dapm_context *dapm = NULL;
-	struct snd_card *card = NULL;
-	struct snd_info_entry *entry = NULL;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
-	int ret = 0;
-
-	if (codec_reg_done) {
-		return 0;
-	}
 
 	if (pdata->wsa_max_devs > 0) {
 		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
@@ -1291,6 +1292,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			component);
 	}
 
+#if 0
 	if (pdata->wsa_max_devs > 2) {
 		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.3");
 		if (!component) {
@@ -1334,6 +1336,32 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
 			component);
 	}
+#endif
+
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
+#if 0
+	snd_soc_dapm_ignore_suspend(dapm, "WSA2_SPK1 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA2_SPK2 OUT");
+#endif
+	snd_soc_dapm_ignore_suspend(dapm, "WSA AIF VI");
+	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT_WSA");
+	snd_soc_dapm_sync(dapm);
+
+	msm_common_dai_link_init(rtd);
+
+	return 0;
+}
+
+static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_component *component = NULL;
+	struct snd_soc_dapm_context *dapm = NULL;
+	struct snd_info_entry *entry = NULL;
+	struct snd_card *card = NULL;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(rtd->card);
+	int ret = 0;
 
 	component = snd_soc_rtdcom_lookup(rtd, "lpass-cdc");
 	if (!component) {
@@ -1362,15 +1390,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
 
-	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "WSA2_SPK1 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "WSA2_SPK2 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "WSA AIF VI");
-	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT_WSA");
-
-	snd_soc_dapm_sync(dapm);
-
 	lpass_cdc_set_port_map(component, ARRAY_SIZE(sm_port_map), sm_port_map);
 
 	card = rtd->card->snd_card;
@@ -1380,27 +1399,15 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		if (!entry) {
 			pr_debug("%s: Cannot create codecs module entry\n",
 				 __func__);
-			ret = 0;
-			goto err;
+			return ret;
 		}
 		pdata->codec_root = entry;
 	}
 	lpass_cdc_info_create_codec_entry(pdata->codec_root, component);
 	lpass_cdc_register_wake_irq(component, false);
-	codec_reg_done = true;
-	msm_common_dai_link_init(rtd);
 
-err:
-	return ret;
-}
-
-static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_component *component = NULL;
-	struct snd_soc_dapm_context *dapm = NULL;
-	struct snd_info_entry *entry;
-	struct snd_card *card = NULL;
-	struct msm_asoc_mach_data *pdata;
+	if (pdata->wcd_disabled)
+		goto done;
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
@@ -1450,9 +1457,11 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 	}
 #endif
+done:
 	codec_reg_done = true;
 	msm_common_dai_link_init(rtd);
-	return 0;
+
+	return ret;
 }
 
 static int waipio_ssr_enable(struct device *dev, void *data)
@@ -1576,6 +1585,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			sizeof(struct msm_asoc_mach_data), GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
+
+	of_property_read_u32(pdev->dev.of_node,
+						"qcom,wcd-disabled",
+						&pdata->wcd_disabled);
 
 	card = populate_snd_card_dailinks(&pdev->dev);
 	if (!card) {
