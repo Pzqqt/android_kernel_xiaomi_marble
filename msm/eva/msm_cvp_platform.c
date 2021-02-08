@@ -19,11 +19,6 @@
 #include "msm_cvp_internal.h"
 #include "msm_cvp_debug.h"
 
-#define DDR_TYPE_LPDDR4 0x6
-#define DDR_TYPE_LPDDR4X 0x7
-#define DDR_TYPE_LPDDR4Y 0x8
-#define DDR_TYPE_LPDDR5 0x9
-
 #define UBWC_CONFIG(mco, mlo, hbo, bslo, bso, rs, mc, ml, hbb, bsl, bsp) \
 {	\
 	.override_bit_info.max_channel_override = mco,	\

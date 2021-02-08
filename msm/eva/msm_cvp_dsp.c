@@ -85,10 +85,11 @@ static int cvp_dsp_send_cmd_hfi_queue(phys_addr_t *phys_addr,
 	cmd.msg_ptr_len = size_in_bytes;
 	cmd.ddr_type = of_fdt_get_ddrtype();
 	if (cmd.ddr_type < 0) {
-		dprintk(CVP_ERR,
-			"%s: Incorrect DDR type value %d\n",
-			__func__, cmd.ddr_type);
-		return -EINVAL;
+		dprintk(CVP_WARN,
+			"%s: Incorrect DDR type value %d, use default %d\n",
+			__func__, cmd.ddr_type, DDR_TYPE_LPDDR5);
+		/*return -EINVAL;*/
+		cmd.ddr_type =  DDR_TYPE_LPDDR5;
 	}
 
 	dprintk(CVP_DSP,
@@ -149,11 +150,20 @@ static int cvp_hyp_assign_from_dsp(void)
 static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
+	const char *edge_name = NULL;
+	int ret = 0;
 
-	if (strcmp(rpdev->dev.parent->of_node->name, "cdsp")) {
+	ret = of_property_read_string(rpdev->dev.parent->of_node,
+			"label", &edge_name);
+	if (ret) {
+		dprintk(CVP_ERR, "glink edge 'label' not found in node\n");
+		return ret;
+	}
+
+	if (strcmp(edge_name, "cdsp")) {
 		dprintk(CVP_ERR,
 			"%s: Failed to probe rpmsg device.Node name:%s\n",
-			__func__, rpdev->dev.parent->of_node->name);
+			__func__, edge_name);
 		return -EINVAL;
 	}
 
@@ -163,7 +173,7 @@ static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 	complete(&me->completions[CPU2DSP_MAX_CMD]);
 	mutex_unlock(&me->lock);
 
-	return 0;
+	return ret;
 }
 
 static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
