@@ -1958,6 +1958,7 @@ QDF_STATUS dp_rx_fisa_flush_by_vdev_id(struct dp_soc *soc, uint8_t vdev_id)
 	int ft_size = fisa_hdl->max_entries;
 	int i;
 	struct dp_vdev *vdev;
+	uint8_t reo_id;
 
 	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_RX);
 	if (qdf_unlikely(!vdev)) {
@@ -1966,14 +1967,17 @@ QDF_STATUS dp_rx_fisa_flush_by_vdev_id(struct dp_soc *soc, uint8_t vdev_id)
 	}
 
 	for (i = 0; i < ft_size; i++) {
-		dp_rx_fisa_acquire_ft_lock(fisa_hdl, sw_ft_entry[i].napi_id);
+		reo_id = sw_ft_entry[i].napi_id;
+		if (reo_id >= MAX_REO_DEST_RINGS)
+			continue;
+		dp_rx_fisa_acquire_ft_lock(fisa_hdl, reo_id);
 		if (vdev == sw_ft_entry[i].vdev) {
 			dp_fisa_debug("flushing %d %pk vdev %pK", i,
 				      &sw_ft_entry[i], vdev);
 
 			dp_rx_fisa_flush_flow_wrap(&sw_ft_entry[i]);
 		}
-		dp_rx_fisa_release_ft_lock(fisa_hdl, sw_ft_entry[i].napi_id);
+		dp_rx_fisa_release_ft_lock(fisa_hdl, reo_id);
 	}
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_RX);
 
