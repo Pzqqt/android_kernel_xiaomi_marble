@@ -1990,11 +1990,13 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 ifeq ($(CONFIG_BERYLLIUM), y)
 DP_OBJS += $(DP_SRC)/be/dp_be.o
 DP_OBJS += $(DP_SRC)/be/dp_be_tx.o
+DP_OBJS += $(DP_SRC)/be/dp_be_rx.o
 endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 DP_OBJS += $(DP_SRC)/li/dp_li.o
 DP_OBJS += $(DP_SRC)/li/dp_li_tx.o
+DP_OBJS += $(DP_SRC)/li/dp_li_rx.o
 endif
 
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
