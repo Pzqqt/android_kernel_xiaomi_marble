@@ -3079,4 +3079,13 @@ mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
  */
 bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_mlme_is_data_stall_recovery_fw_supported() - Check if data stall
+ * recovery is supported by fw
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if supported
+ */
+bool
+wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc);
 #endif /* _WLAN_MLME_API_H_ */

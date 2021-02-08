@@ -1416,26 +1416,6 @@ enum uapsd_up {
 };
 
 /**
- * struct wma_roam_invoke_cmd - roam invoke command
- * @vdev_id: vdev id
- * @bssid: mac address
- * @ch_freq: channel frequency
- * @frame_len: frame length, includs mac header, fixed params and ies
- * @frame_buf: buffer contaning probe response or beacon
- * @is_same_bssid: flag to indicate if roaming is requested for same bssid
- * @forced_roaming: Roaming to be done without giving bssid, and channel.
- */
-struct wma_roam_invoke_cmd {
-	uint32_t vdev_id;
-	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint32_t ch_freq;
-	uint32_t frame_len;
-	uint8_t *frame_buf;
-	uint8_t is_same_bssid;
-	bool forced_roaming;
-};
-
-/**
  * wma_trigger_uapsd_params() - set trigger uapsd parameter
  * @wmi_handle: wma handle
  * @vdev_id: vdev id

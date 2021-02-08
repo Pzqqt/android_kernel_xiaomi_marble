@@ -74,6 +74,7 @@
 #include "parser_api.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include <wlan_mlme_twt_api.h>
+#include "wlan_cm_roam_ucfg_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -3141,6 +3142,7 @@ QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * sme_roam_reassoc() -
  * A wrapper function to request CSR to inititiate a re-association
@@ -3183,6 +3185,7 @@ QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
 
 	return status;
 }
+#endif
 
 QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session_id,
 			       eCsrRoamDisconnectReason reason,
@@ -3497,6 +3500,7 @@ uint32_t sme_get_vht_ch_width(void)
 	return wma_get_vht_ch_width();
 }
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * sme_get_modify_profile_fields() -
  * HDD or SME - QOS calls this function to get the current values of
@@ -3534,6 +3538,7 @@ QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
 
 	return status;
 }
+#endif
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**
@@ -7443,6 +7448,7 @@ void sme_set_curr_device_mode(mac_handle_t mac_handle,
 	mac->sme.curr_device_mode = curr_device_mode;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * sme_handoff_request() - a wrapper function to Request a handoff from CSR.
  *   This is a synchronous call
@@ -7472,6 +7478,7 @@ QDF_STATUS sme_handoff_request(mac_handle_t mac_handle,
 
 	return status;
 }
+#endif
 
 /**
  * sme_add_periodic_tx_ptrn() - Add Periodic TX Pattern
@@ -13400,10 +13407,11 @@ exit:
 	return status;
 }
 #endif
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 {
-	struct wma_roam_invoke_cmd *roam_invoke_params;
+	struct roam_invoke_req *roam_invoke_params;
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
@@ -13490,7 +13498,6 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 
 	return status;
 }
-
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, uint32_t ch_freq,
@@ -13511,17 +13518,15 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_ERROR(sme_acquire_global_lock(&mac->sme)))
 		return QDF_STATUS_E_FAILURE;
 
-#ifndef FEATURE_CM_ENABLE
 	status = csr_fast_reassoc(mac_handle, profile, bssid, ch_freq, vdev_id,
-				  connected_bssid);
-#endif
+					  connected_bssid);
+
 	sme_release_global_lock(&mac->sme);
 
 	return status;
 }
-
 #endif
-
+#endif
 void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
 				   uint8_t session_id,
 				   tPmkidCacheInfo *pmk_cache_info)

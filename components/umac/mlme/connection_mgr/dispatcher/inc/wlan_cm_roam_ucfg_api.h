@@ -88,6 +88,19 @@ ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 #endif
 
 #ifdef FEATURE_CM_ENABLE
+/**
+ * ucfg_wlan_cm_roam_invoke() - Invokes Roam request
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @bssid: Pointer to bssid to look for in scan cache
+ * @ch_freq: channel on which reassoc should be send
+ *
+ * Return: true or false
+ */
+QDF_STATUS
+ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq);
+
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS
 ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,

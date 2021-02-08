@@ -8708,11 +8708,14 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 			(struct roam_offload_synch_fail *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+#ifndef FEATURE_CM_ENABLE
 	case SIR_HAL_ROAM_INVOKE:
+		wma_debug("SIR_HAL_ROAM_INVOKE - wma_process_roam_invoke");
 		wma_process_roam_invoke(wma_handle,
-			(struct wma_roam_invoke_cmd *)msg->bodyptr);
+			(struct roam_invoke_req *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+#endif
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	case SIR_HAL_SET_BASE_MACADDR_IND:
 		wma_set_base_macaddr_indicate(wma_handle,

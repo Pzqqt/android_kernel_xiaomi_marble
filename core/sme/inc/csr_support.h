@@ -316,6 +316,8 @@ tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId);
 QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 		struct bss_description *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);
+
+#ifndef FEATURE_CM_ENABLE
 /*
  * fForce -- force reassoc regardless of whether there is any change.
  * The reason is that for UAPSD-bypass, the code underneath this call determine
@@ -326,6 +328,7 @@ QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
+#endif
 
 bool csr_is_profile11r(struct mac_context *mac, struct csr_roam_profile *pProfile);
 bool csr_is_auth_type11r(struct mac_context *mac, enum csr_akm_type AuthType,

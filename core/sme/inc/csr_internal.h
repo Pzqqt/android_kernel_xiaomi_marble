@@ -871,9 +871,11 @@ static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);
+#endif
 bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id);
 
 /* Post Channel Change Indication */

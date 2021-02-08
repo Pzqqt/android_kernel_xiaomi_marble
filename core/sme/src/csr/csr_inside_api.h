@@ -192,11 +192,13 @@ QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
 				  tScanResultHandle hBSSList,
 				  enum csr_roam_reason reason, uint32_t roamId,
 				  bool fImediate, bool fClearScan);
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_roam_issue_reassoc(struct mac_context *mac, uint32_t sessionId,
 				  struct csr_roam_profile *pProfile,
 				 tCsrRoamModifyProfileFields *pModProfileFields,
 				  enum csr_roam_reason reason, uint32_t roamId,
 				  bool fImediate);
+#endif
 void csr_roam_complete(struct mac_context *mac, enum csr_roamcomplete_result Result,
 		       void *Context, uint8_t session_id);
 
@@ -637,17 +639,6 @@ csr_connect_security_valid_for_6ghz(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 #endif
-#endif
-/*
- * csr_roam_connect() -
- * To inititiate an association
- * pProfile - can be NULL to join to any open ones
- * pRoamId - to get back the request ID
- * Return QDF_STATUS
- */
-QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
-			    struct csr_roam_profile *pProfile,
-			    uint32_t *pRoamId);
 
 /*
  * csr_roam_reassoc() -
@@ -664,6 +655,18 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS csr_roam_reassoc(struct mac_context *mac, uint32_t sessionId,
 			    struct csr_roam_profile *pProfile,
 			    tCsrRoamModifyProfileFields modProfileFields,
+			    uint32_t *pRoamId);
+#endif
+
+/*
+ * csr_roam_connect() -
+ * To inititiate an association
+ * pProfile - can be NULL to join to any open ones
+ * pRoamId - to get back the request ID
+ * Return QDF_STATUS
+ */
+QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
+			    struct csr_roam_profile *pProfile,
 			    uint32_t *pRoamId);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

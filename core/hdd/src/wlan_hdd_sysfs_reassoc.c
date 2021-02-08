@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,19 +25,23 @@
 #include <wlan_hdd_includes.h>
 #include "osif_vdev_sync.h"
 #include "wlan_hdd_sysfs_reassoc.h"
+#include "wlan_cm_roam_ucfg_api.h"
 
 static ssize_t
 __wlan_hdd_store_reassoc_sysfs(struct net_device *net_dev, char const *buf,
 			       size_t count)
 {
 	struct hdd_adapter *adapter = netdev_priv(net_dev);
-	tCsrRoamModifyProfileFields mod_fields;
-	uint32_t roam_id = INVALID_ROAM_ID;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
 	uint32_t operating_ch;
-	tSirMacAddr bssid;
 	int ret;
+#ifndef FEATURE_CM_ENABLE
+	tCsrRoamModifyProfileFields mod_fields;
+	uint32_t roam_id = INVALID_ROAM_ID;
+	tSirMacAddr bssid;
+#endif
+	struct qdf_mac_addr target_bssid;
 
 	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
@@ -51,17 +55,21 @@ __wlan_hdd_store_reassoc_sysfs(struct net_device *net_dev, char const *buf,
 		return -EINVAL;
 
 	mac_handle = hdd_ctx->mac_handle;
-	operating_ch = wlan_reg_freq_to_chan(hdd_ctx->pdev,
-				adapter->session.station.conn_info.chan_freq);
-
+	operating_ch = wlan_get_operation_chan_freq(adapter->vdev);
+	wlan_mlme_get_bssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
+				    &target_bssid);
 	hdd_debug("reassoc: net_devname %s", net_dev->name);
 
+#ifdef FEATURE_CM_ENABLE
+	ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
+				 &target_bssid, operating_ch);
+#else
 	sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,
 				      &mod_fields);
 
 	if (roaming_offload_enabled(hdd_ctx)) {
 		qdf_mem_copy(bssid,
-			     &adapter->session.station.conn_info.bssid,
+			     &target_bssid,
 			     sizeof(bssid));
 		hdd_wma_send_fastreassoc_cmd(adapter,
 					     bssid, operating_ch);
@@ -69,6 +77,7 @@ __wlan_hdd_store_reassoc_sysfs(struct net_device *net_dev, char const *buf,
 		sme_roam_reassoc(mac_handle, adapter->vdev_id,
 				 NULL, mod_fields, &roam_id, 1);
 	}
+#endif
 
 	return count;
 }

@@ -74,10 +74,35 @@ target_if_cm_roam_send_vdev_set_pcl_cmd(struct wlan_objmgr_vdev *vdev,
 	return wmi_unified_vdev_set_pcl_cmd(wmi_handle, &params);
 }
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * target_if_cm_roam_send_roam_invoke_cmd  - Send roam invoke command to wmi.
+ * @vdev: VDEV object pointer
+ * @req:  Pointer to the roam invoke request msg
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_roam_invoke_cmd(struct wlan_objmgr_vdev *vdev,
+				       struct roam_invoke_req *req)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_roam_invoke_cmd(wmi_handle, req);
+}
+#endif
+
 static void
 target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
 	tx_ops->send_vdev_set_pcl_cmd = target_if_cm_roam_send_vdev_set_pcl_cmd;
+#ifdef FEATURE_CM_ENABLE
+	tx_ops->send_roam_invoke_cmd = target_if_cm_roam_send_roam_invoke_cmd;
+#endif
 }
 #else
 static inline void

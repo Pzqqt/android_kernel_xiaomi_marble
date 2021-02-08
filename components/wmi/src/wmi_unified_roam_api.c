@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -133,13 +133,11 @@ QDF_STATUS wmi_unified_roam_synch_complete_cmd(wmi_unified_t wmi_handle,
 }
 
 QDF_STATUS wmi_unified_roam_invoke_cmd(wmi_unified_t wmi_handle,
-				       struct wmi_roam_invoke_cmd *roaminvoke,
-				       uint32_t ch_hz)
+				       struct roam_invoke_req *roaminvoke)
 {
 	if (wmi_handle->ops->send_roam_invoke_cmd)
 		return wmi_handle->ops->send_roam_invoke_cmd(wmi_handle,
-							     roaminvoke,
-							     ch_hz);
+							     roaminvoke);
 
 	return QDF_STATUS_E_FAILURE;
 }

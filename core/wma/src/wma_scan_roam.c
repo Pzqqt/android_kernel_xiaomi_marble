@@ -477,7 +477,7 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-
+#ifndef FEATURE_CM_ENABLE
 /**
  * wma_process_roam_invoke() - send roam invoke command to fw.
  * @handle: wma handle
@@ -488,10 +488,9 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
  * Return: none
  */
 void wma_process_roam_invoke(WMA_HANDLE handle,
-		struct wma_roam_invoke_cmd *roaminvoke)
+		struct roam_invoke_req *roaminvoke)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	uint32_t ch_hz;
 	struct wmi_unified *wmi_handle;
 
 	if (wma_validate_handle(wma_handle))
@@ -505,16 +504,17 @@ void wma_process_roam_invoke(WMA_HANDLE handle,
 		wma_err("Invalid vdev id:%d", roaminvoke->vdev_id);
 		goto free_frame_buf;
 	}
-	ch_hz = roaminvoke->ch_freq;
+	wma_err("Sending ROAM INVOKE CMD vdev id:%d", roaminvoke->vdev_id);
+
 	wmi_unified_roam_invoke_cmd(wmi_handle,
-				(struct wmi_roam_invoke_cmd *)roaminvoke,
-				ch_hz);
+				(struct roam_invoke_req *)roaminvoke);
 free_frame_buf:
 	if (roaminvoke->frame_len) {
 		qdf_mem_free(roaminvoke->frame_buf);
 		roaminvoke->frame_buf = NULL;
 	}
 }
+#endif
 
 /**
  * wma_process_roam_synch_fail() -roam synch failure handle

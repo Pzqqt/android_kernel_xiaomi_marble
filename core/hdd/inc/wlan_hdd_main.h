@@ -3777,6 +3777,7 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 					 QDF_STATUS qdf_status);
 QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_reassoc() - perform a userspace-directed reassoc
  * @adapter:    Adapter upon which the command was received
@@ -3790,6 +3791,7 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
  */
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		uint32_t ch_freq, const handoff_src src);
+#endif
 
 int hdd_register_cb(struct hdd_context *hdd_ctx);
 void hdd_deregister_cb(struct hdd_context *hdd_ctx);

@@ -615,6 +615,19 @@ bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
  */
 void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
+/**
+ * wlan_cm_roam_invoke() - Validate and send Roam invoke req to CM
+ * @pdev: Pdev pointer
+ * @vdev_id: vdev_id
+ * @bssid: Target bssid
+ * @chan_freq: channel frequency on which reassoc should be send
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+		    struct qdf_mac_addr *bssid, qdf_freq_t chan_freq);
+
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

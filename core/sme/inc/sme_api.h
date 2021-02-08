@@ -557,11 +557,12 @@ tCsrScanResultInfo *sme_scan_result_get_next(mac_handle_t,
 QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult);
 QDF_STATUS sme_roam_connect(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_roam_profile *pProfile, uint32_t *pRoamId);
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_roam_profile *pProfile,
 		tCsrRoamModifyProfileFields modProfileFields,
 		uint32_t *pRoamId, bool fForce);
-
+#endif
 /**
  * sme_roam_disconnect() - API to request CSR to disconnect
  * @mac_handle: Opaque handle to the global MAC context
@@ -703,10 +704,12 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
 			       struct plm_req_params *req);
 #endif /*FEATURE_WLAN_ESE */
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 tCsrRoamModifyProfileFields *
 					 pModifyProfileFields);
+#endif
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS sme_register_oem_data_rsp_callback(mac_handle_t mac_handle,
@@ -1190,9 +1193,11 @@ bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
 
 QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode);
 eCsrPhyMode sme_get_phy_mode(mac_handle_t mac_handle);
+
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_handoff_request(mac_handle_t mac_handle, uint8_t sessionId,
 			       tCsrHandoffRequest *pHandoffInfo);
-
+#endif
 QDF_STATUS sme_add_periodic_tx_ptrn(mac_handle_t mac_handle,
 		tSirAddPeriodicTxPtrn *addPeriodicTxPtrnParams);
 QDF_STATUS sme_del_periodic_tx_ptrn(mac_handle_t mac_handle,
@@ -2451,7 +2456,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
 			      uint32_t *ch_freq, uint8_t vdev_id);
-#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_fast_reassoc() - invokes FAST REASSOC command
@@ -2477,7 +2482,6 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id);
-
 #else
 static inline
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
@@ -2493,9 +2497,8 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
 #endif
-
+#endif
 /**
  * sme_register_tx_queue_cb(): Register tx queue callback
  * @mac_handle: Opaque handle for MAC context

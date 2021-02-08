@@ -6913,6 +6913,8 @@ QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
 	return status;
 }
 
+#ifndef FEATURE_CM_ENABLE
+
 QDF_STATUS csr_roam_issue_reassoc(struct mac_context *mac, uint32_t sessionId,
 				  struct csr_roam_profile *pProfile,
 				  tCsrRoamModifyProfileFields
@@ -6970,6 +6972,7 @@ QDF_STATUS csr_roam_issue_reassoc(struct mac_context *mac, uint32_t sessionId,
 	}
 	return status;
 }
+#endif
 
 QDF_STATUS csr_dequeue_roam_command(struct mac_context *mac,
 			enum csr_roam_reason reason,
@@ -7337,7 +7340,7 @@ error:
 
 	return status;
 }
-#endif
+
 /**
  * csr_roam_reassoc() - process reassoc command
  * @mac_ctx:       mac global context
@@ -7357,9 +7360,8 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool fCallCallback = true;
 	uint32_t roamId = 0;
-#ifndef FEATURE_CM_ENABLE
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
-#endif
+
 	if (!profile) {
 		sme_err("No profile specified");
 		return QDF_STATUS_E_FAILURE;
@@ -7373,7 +7375,6 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 	csr_scan_abort_mac_scan(mac_ctx, session_id, INVAL_SCAN_ID);
 	csr_roam_remove_duplicate_command(mac_ctx, session_id, NULL,
 					  eCsrHddIssuedReassocToSameAP);
-#ifndef FEATURE_CM_ENABLE
 	if (csr_is_conn_state_connected(mac_ctx, session_id)) {
 		if (profile) {
 			if (profile->SSIDs.numOfSSIDs &&
@@ -7403,7 +7404,7 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 	} else {
 		sme_debug("Not connected! No need to reassoc");
 	}
-#endif
+
 	if (!fCallCallback) {
 		roamId = GET_NEXT_ROAM_ID(&mac_ctx->roam);
 		if (roam_id)
@@ -7419,6 +7420,7 @@ csr_roam_reassoc(struct mac_context *mac_ctx, uint32_t session_id,
 
 	return status;
 }
+#endif
 
 bool cm_csr_is_wait_for_key_n_change_state(uint8_t vdev_id)
 {
@@ -14717,6 +14719,7 @@ QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 	return umac_send_mb_message_to_mac(pMsg);
 }
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 		       tCsrRoamModifyProfileFields *pModProfileFields,
 		       uint32_t *pRoamId, bool fForce)
@@ -14742,6 +14745,7 @@ QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 	}
 	return status;
 }
+#endif
 
 /**
  * csr_store_oce_cfg_flags_in_vdev() - fill OCE flags from ini
@@ -16056,6 +16060,7 @@ bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id)
 	return false;
 }
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_handoff_request(struct mac_context *mac,
 			       uint8_t sessionId,
 			       tCsrHandoffRequest *pHandoffInfo)
@@ -16087,6 +16092,7 @@ QDF_STATUS csr_handoff_request(struct mac_context *mac,
 	}
 	return status;
 }
+#endif
 
 /**
  * csr_roam_channel_change_req() - Post channel change request to LIM
@@ -17130,7 +17136,7 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
 {
 	QDF_STATUS status;
-	struct wma_roam_invoke_cmd *fastreassoc;
+	struct roam_invoke_req *fastreassoc;
 	struct scheduler_msg msg = {0};
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
@@ -17191,12 +17197,12 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 		fastreassoc->is_same_bssid = true;
 
 	fastreassoc->vdev_id = vdev_id;
-	fastreassoc->bssid[0] = bssid[0];
-	fastreassoc->bssid[1] = bssid[1];
-	fastreassoc->bssid[2] = bssid[2];
-	fastreassoc->bssid[3] = bssid[3];
-	fastreassoc->bssid[4] = bssid[4];
-	fastreassoc->bssid[5] = bssid[5];
+	fastreassoc->target_bssid.bytes[0] = bssid[0];
+	fastreassoc->target_bssid.bytes[1] = bssid[1];
+	fastreassoc->target_bssid.bytes[2] = bssid[2];
+	fastreassoc->target_bssid.bytes[3] = bssid[3];
+	fastreassoc->target_bssid.bytes[4] = bssid[4];
+	fastreassoc->target_bssid.bytes[5] = bssid[5];
 
 	status = sme_get_beacon_frm(mac_handle, profile, bssid,
 				    &fastreassoc->frame_buf,

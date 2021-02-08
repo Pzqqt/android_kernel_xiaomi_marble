@@ -468,6 +468,20 @@ QDF_STATUS wlan_mlme_get_tx_chainmask_1ss(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool
+wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("MLME obj is NULL");
+		return false;
+	}
+
+	return mlme_obj->cfg.gen.data_stall_recovery_fw_support;
+}
+
 void
 wlan_mlme_update_cfg_with_tgt_caps(struct wlan_objmgr_psoc *psoc,
 				   struct mlme_tgt_caps *tgt_caps)

@@ -522,6 +522,7 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
 	return 0;
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 					const tSirMacAddr bssid,
@@ -540,7 +541,6 @@ QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 				adapter->vdev_id, connected_bssid);
 }
 #endif
-
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
 /**
  * hdd_is_fast_reassoc_allowed  - check if roaming offload init is
@@ -599,14 +599,18 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * So check both the HDD state and SME state here.
 	 * If not associated, no need to proceed with reassoc
 	 */
-	if (!hdd_cm_is_vdev_associated(adapter) ||
-	    (!sme_is_conn_state_connected(hdd_ctx->mac_handle,
-	    adapter->vdev_id))) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_warn("Not associated");
 		ret = -EINVAL;
 		goto exit;
 	}
 
+	if (!sme_is_conn_state_connected(hdd_ctx->mac_handle,
+					 adapter->vdev_id)) {
+		hdd_warn("Not in connected state");
+		ret = -EINVAL;
+		goto exit;
+	}
 	/*
 	 * if the target bssid is same as currently associated AP,
 	 * use the current connections's channel.
@@ -641,7 +645,6 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 			ret = -EPERM;
 			goto exit;
 		}
-
 		status = hdd_wma_send_fastreassoc_cmd(adapter, bssid, ch_freq);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to send fast reassoc cmd");
@@ -659,6 +662,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 exit:
 	return ret;
 }
+#endif /* FEATURE_CM_ENABLE */
 
 /**
  * hdd_parse_reassoc_v1() - parse version 1 of the REASSOC command
@@ -683,14 +687,30 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 	qdf_freq_t freq = 0;
 	tSirMacAddr bssid;
 	int ret;
+#ifdef FEATURE_CM_ENABLE
+	struct qdf_mac_addr target_bssid;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	QDF_STATUS status;
+#endif
+
 
 	ret = hdd_parse_reassoc_command_v1_data(command, bssid, &freq);
-	if (ret)
+	if (ret) {
 		hdd_err("Failed to parse reassoc command data");
-	else
-		ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
+		return ret;
+	}
+
+#ifdef FEATURE_CM_ENABLE
+	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
+	status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
+					  adapter->vdev_id,
+					  &target_bssid, freq);
+	return qdf_status_to_os_return(status);
+#else
+	ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
 
 	return ret;
+#endif
 }
 
 /**
@@ -714,6 +734,12 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 	tSirMacAddr bssid;
 	qdf_freq_t freq = 0;
 	int ret;
+#ifdef FEATURE_CM_ENABLE
+	struct qdf_mac_addr target_bssid;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	QDF_STATUS status;
+#endif
+
 
 	if (total_len < sizeof(params) + 8) {
 		hdd_err("Invalid command length");
@@ -736,7 +762,15 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 		if (!hdd_check_and_fill_freq(params.channel, &freq))
 			return -EINVAL;
 
+#ifdef FEATURE_CM_ENABLE
+		qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
+		status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
+						  adapter->vdev_id,
+						  &target_bssid, freq);
+		ret = qdf_status_to_os_return(status);
+#else
 		ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
+#endif
 	}
 
 	return ret;
@@ -4548,11 +4582,16 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	qdf_freq_t freq = 0;
 	tSirMacAddr bssid;
+#ifdef FEATURE_CM_ENABLE
+	struct qdf_mac_addr target_bssid;
+#else
 	uint32_t roam_id = INVALID_ROAM_ID;
 	tCsrRoamModifyProfileFields mod_fields;
 	tCsrHandoffRequest req;
-	struct hdd_station_ctx *sta_ctx;
 	mac_handle_t mac_handle;
+	qdf_freq_t chan_freq;
+	struct qdf_mac_addr connected_bssid;
+#endif
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -4561,7 +4600,6 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* if not associated, no need to proceed with reassoc */
@@ -4578,17 +4616,25 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
+#ifdef FEATURE_CM_ENABLE
+	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
+	ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
+				 &target_bssid, freq);
+#else
 	mac_handle = hdd_ctx->mac_handle;
+	chan_freq = wlan_get_operation_chan_freq(adapter->vdev);
+	wlan_mlme_get_bssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
+				    &connected_bssid);
 	/*
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
 	 */
-	if (!qdf_mem_cmp(bssid, sta_ctx->conn_info.bssid.bytes,
+	if (!qdf_mem_cmp(bssid, connected_bssid.bytes,
 			 QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
 			hdd_wma_send_fastreassoc_cmd(
-				adapter, bssid, sta_ctx->conn_info.chan_freq);
+				adapter, bssid, chan_freq);
 		} else {
 			sme_get_modify_profile_fields(mac_handle,
 				adapter->vdev_id,
@@ -4615,6 +4661,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	req.src = FASTREASSOC;
 	qdf_mem_copy(req.bssid.bytes, bssid, sizeof(tSirMacAddr));
 	sme_handoff_request(mac_handle, adapter->vdev_id, &req);
+#endif
 exit:
 	return ret;
 }
