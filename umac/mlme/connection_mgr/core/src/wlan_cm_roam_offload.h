@@ -108,6 +108,32 @@ cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  * Return: void
  */
 void cm_dump_freq_list(struct rso_chan_info *chan_info);
+
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_CM_ENABLE)
+/**
+ * cm_start_roam_invoke() - Validate and send Roam invoke req to CM
+ * @pdev: Pdev pointer
+ * @vdev: vdev
+ * @bssid: Target bssid
+ * @chan_freq: channel frequency on which reassoc should be send
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
+		     struct wlan_objmgr_vdev *vdev,
+		     struct qdf_mac_addr *bssid,
+		     uint32_t chan_freq);
+#else
+static inline QDF_STATUS
+cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
+		     struct wlan_objmgr_vdev *vdev,
+		     struct qdf_mac_addr *bssid,
+		     uint32_t chan_freq)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 /**

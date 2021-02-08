@@ -912,8 +912,7 @@ send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: CDF STATUS
  */
 static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
-		struct wmi_roam_invoke_cmd *roaminvoke,
-		uint32_t ch_hz)
+		struct roam_invoke_req *roaminvoke)
 {
 	wmi_roam_invoke_cmd_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
@@ -970,12 +969,12 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
 		       (sizeof(u_int32_t)));
 	channel_list = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
-	*channel_list = ch_hz;
+	*channel_list = roaminvoke->ch_freq;
 	buf_ptr += sizeof(uint32_t) + WMI_TLV_HDR_SIZE;
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
 		       (sizeof(wmi_mac_addr)));
 	bssid_list = (wmi_mac_addr *)(buf_ptr + WMI_TLV_HDR_SIZE);
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(roaminvoke->bssid, bssid_list);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(roaminvoke->target_bssid.bytes, bssid_list);
 
 	/* move to next tlv i.e. bcn_prb_buf_list */
 	buf_ptr += WMI_TLV_HDR_SIZE + sizeof(wmi_mac_addr);
@@ -999,10 +998,10 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 		     roaminvoke->frame_buf,
 		     roaminvoke->frame_len);
 
-	wmi_debug("flag:%d, MODE:%d, ap:%d, dly:%d, n_ch:%d, n_bssid:%d, ch:%d, is_same_bss:%d",
+	wmi_debug("flag:%d, MODE:%d, ap:%d, dly:%d, n_ch:%d, n_bssid:%d, ch_freq:%d, is_same_bss:%d",
 		  cmd->flags, cmd->roam_scan_mode,
 		  cmd->roam_ap_sel_mode, cmd->roam_delay,
-		  cmd->num_chan, cmd->num_bssid, ch_hz,
+		  cmd->num_chan, cmd->num_bssid, roaminvoke->ch_freq,
 		  roaminvoke->is_same_bssid);
 
 	wmi_mtrace(WMI_ROAM_INVOKE_CMDID, cmd->vdev_id, 0);

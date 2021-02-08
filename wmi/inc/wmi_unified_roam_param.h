@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -105,26 +105,6 @@ struct plm_req_params {
 	uint32_t plm_ch_freq_list[WMI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t vdev_id;
 	bool enable;
-};
-
-/**
- * struct wmi_roam_invoke_cmd - roam invoke command
- * @vdev_id: vdev id
- * @bssid: mac address
- * @channel: channel
- * @frame_len: frame length, includs mac header, fixed params and ies
- * @frame_buf: buffer contaning probe response or beacon
- * @is_same_bssid: flag to indicate if roaming is requested for same bssid
- * @forced_roaming: Roam to any bssid in any ch (here bssid & ch is not given)
- */
-struct wmi_roam_invoke_cmd {
-	uint32_t vdev_id;
-	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint32_t channel;
-	uint32_t frame_len;
-	uint8_t *frame_buf;
-	uint8_t is_same_bssid;
-	bool forced_roaming;
 };
 
 /**

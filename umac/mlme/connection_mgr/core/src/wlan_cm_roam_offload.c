@@ -36,6 +36,12 @@
 #include "wlan_p2p_cfg_api.h"
 #include "wlan_cm_vdev_api.h"
 #include "cfg_nan_api.h"
+#include "wlan_mlme_api.h"
+#ifdef FEATURE_CM_ENABLE
+#include "connection_mgr/core/src/wlan_cm_roam.h"
+#include "connection_mgr/core/src/wlan_cm_main.h"
+#include "connection_mgr/core/src/wlan_cm_sm.h"
+#endif
 
 #ifdef WLAN_FEATURE_SAE
 #define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
@@ -3615,5 +3621,245 @@ void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 	}
 	cm_roam_start_init(psoc, pdev, vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+#endif
+
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_CM_ENABLE)
+static QDF_STATUS
+cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,
+		       struct cnx_mgr *cm_ctx,
+		       struct cm_roam_req *roam_req,
+		       struct roam_invoke_req *roam_invoke_req)
+{
+	struct scan_filter *filter;
+	qdf_list_t *candidate_list;
+	uint32_t num_bss = 0;
+	qdf_list_node_t *cur_node = NULL;
+	struct scan_cache_node *candidate = NULL;
+
+	if (!roam_invoke_req)
+		return QDF_STATUS_E_FAILURE;
+
+	if (qdf_is_macaddr_zero(&roam_invoke_req->target_bssid) ||
+	    !roam_invoke_req->ch_freq)
+		return QDF_STATUS_E_FAILURE;
+
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter)
+		return QDF_STATUS_E_NOMEM;
+
+	filter->num_of_bssid = 1;
+	qdf_copy_macaddr(&filter->bssid_list[0],
+			 &roam_invoke_req->target_bssid);
+	filter->num_of_channels = 1;
+	filter->chan_freq_list[0] = roam_invoke_req->ch_freq;
+
+	candidate_list = wlan_scan_get_result(pdev, filter);
+	if (candidate_list) {
+		num_bss = qdf_list_size(candidate_list);
+		mlme_debug(CM_PREFIX_FMT "num_entries found %d",
+			   CM_PREFIX_REF(roam_req->req.vdev_id,
+					 roam_req->cm_id),
+					 num_bss);
+	}
+	qdf_mem_free(filter);
+
+	if (!candidate_list || !qdf_list_size(candidate_list)) {
+		if (candidate_list)
+			wlan_scan_purge_results(candidate_list);
+		mlme_info(CM_PREFIX_FMT "no valid candidate found, num_bss %d",
+			  CM_PREFIX_REF(roam_req->req.vdev_id,
+					roam_req->cm_id),
+					num_bss);
+
+		return QDF_STATUS_E_EMPTY;
+	}
+
+	qdf_list_peek_front(candidate_list, &cur_node);
+	candidate = qdf_container_of(cur_node,
+				     struct scan_cache_node,
+				     node);
+
+	roam_invoke_req->frame_len = candidate->entry->raw_frame.len;
+
+	if (!roam_invoke_req->frame_len)
+		return QDF_STATUS_E_INVAL;
+
+	roam_invoke_req->frame_buf = qdf_mem_malloc(roam_invoke_req->frame_len);
+
+	if (!roam_invoke_req->frame_buf) {
+		roam_invoke_req->frame_len = 0;
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_copy(roam_invoke_req->frame_buf,
+		     candidate->entry->raw_frame.ptr,
+		     roam_invoke_req->frame_len);
+
+	wlan_scan_purge_results(candidate_list);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
+				struct wlan_objmgr_vdev *vdev,
+				struct qdf_mac_addr *bssid,
+				qdf_freq_t chan_freq)
+{
+	struct cm_req *cm_req;
+	QDF_STATUS status;
+	uint8_t roam_control_bitmap;
+	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
+
+	roam_control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
+	if (roam_control_bitmap ||
+	    !MLME_IS_ROAM_INITIALIZED(psoc, vdev_id)) {
+		mlme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
+			   vdev_id, roam_control_bitmap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cm_req = qdf_mem_malloc(sizeof(*cm_req));
+	if (!cm_req)
+		return QDF_STATUS_E_NOMEM;
+
+	if (qdf_is_macaddr_zero(bssid)) {
+		if (!wlan_mlme_is_data_stall_recovery_fw_supported(psoc)) {
+			mlme_debug("FW does not support data stall recovery, aborting roam invoke");
+			qdf_mem_free(cm_req);
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+		cm_req->roam_req.req.forced_roaming = true;
+		goto send_evt;
+	}
+
+	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {
+		mlme_debug("bssid " QDF_MAC_ADDR_FMT " chan_freq %d",
+			   QDF_MAC_ADDR_REF(bssid->bytes), chan_freq);
+		qdf_mem_free(cm_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
+	cm_req->roam_req.req.chan_freq = chan_freq;
+
+send_evt:
+	if (cm_req->roam_req.req.forced_roaming)
+		cm_req->roam_req.req.source = CM_ROAMING_NUD_FAILURE;
+	else
+		cm_req->roam_req.req.source = CM_ROAMING_HOST;
+
+	cm_req->roam_req.req.vdev_id = vdev_id;
+	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_INVOKE,
+				     sizeof(*cm_req), cm_req);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(cm_req);
+
+	return status;
+}
+
+QDF_STATUS
+cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
+{
+	QDF_STATUS status;
+	struct qdf_mac_addr connected_bssid;
+	struct cm_roam_req *roam_req;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct roam_invoke_req *roam_invoke_req = NULL;
+
+	if (!req)
+		return QDF_STATUS_E_FAILURE;
+
+	roam_req = &req->roam_req;
+
+	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
+			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+		status = QDF_STATUS_E_FAILURE;
+		goto roam_err;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
+			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+		status = QDF_STATUS_E_FAILURE;
+		goto roam_err;
+	}
+
+	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &connected_bssid);
+
+	roam_invoke_req = qdf_mem_malloc(sizeof(*roam_invoke_req));
+	if (!roam_invoke_req) {
+		status = QDF_STATUS_E_NOMEM;
+		goto roam_err;
+	}
+
+	roam_invoke_req->vdev_id = roam_req->req.vdev_id;
+	if (roam_req->req.forced_roaming) {
+		roam_invoke_req->forced_roaming = true;
+		goto send_cmd;
+	}
+
+	if (qdf_is_macaddr_equal(&roam_req->req.bssid, &connected_bssid))
+		roam_invoke_req->is_same_bssid = true;
+
+	qdf_copy_macaddr(&roam_invoke_req->target_bssid, &roam_req->req.bssid);
+	roam_invoke_req->ch_freq = roam_req->req.chan_freq;
+
+	status = cm_find_roam_candidate(pdev, cm_ctx, roam_req,
+					roam_invoke_req);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "No Candidate found",
+			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+		goto roam_err;
+	}
+
+	if (wlan_cm_get_ese_assoc(pdev, roam_req->req.vdev_id)) {
+		mlme_debug(CM_PREFIX_FMT "Beacon is not required for ESE",
+			   CM_PREFIX_REF(roam_req->req.vdev_id,
+					 roam_req->cm_id));
+		if (roam_invoke_req->frame_len) {
+			qdf_mem_free(roam_invoke_req->frame_buf);
+			roam_invoke_req->frame_buf = NULL;
+			roam_invoke_req->frame_len = 0;
+		}
+	}
+send_cmd:
+	status = wlan_cm_tgt_send_roam_invoke_req(psoc, roam_invoke_req);
+
+roam_err:
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_debug(CM_PREFIX_FMT "fail to send roam invoke req",
+			   CM_PREFIX_REF(roam_req->req.vdev_id,
+					 roam_req->cm_id));
+		status = cm_sm_deliver_event_sync(cm_ctx,
+						  WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
+						  sizeof(wlan_cm_id),
+						  &roam_req->cm_id);
+		if (QDF_IS_STATUS_ERROR(status))
+			cm_remove_cmd(cm_ctx, &roam_req->cm_id);
+	}
+
+	if (roam_invoke_req) {
+		if (roam_invoke_req->frame_len)
+			qdf_mem_free(roam_invoke_req->frame_buf);
+		qdf_mem_free(roam_invoke_req);
+	}
+
+	return status;
+}
+
+bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	bool val;
+
+	wlan_mlme_get_roaming_offload(psoc, &val);
+
+	return val;
 }
 #endif

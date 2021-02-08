@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -416,3 +416,38 @@ QDF_STATUS wlan_cm_tgt_send_roam_disable_config(struct wlan_objmgr_psoc *psoc,
 
 	return status;
 }
+
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS
+wlan_cm_tgt_send_roam_invoke_req(struct wlan_objmgr_psoc *psoc,
+				 struct roam_invoke_req *roam_invoke_req)
+{
+	QDF_STATUS status;
+	struct wlan_cm_roam_tx_ops *roam_tx_ops;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    roam_invoke_req->vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	roam_tx_ops = wlan_cm_roam_get_tx_ops_from_vdev(vdev);
+
+	if (!roam_tx_ops || !roam_tx_ops->send_roam_invoke_cmd) {
+		mlme_err("CM_RSO: vdev %d send_roam_invoke_cmd is NULL",
+			 roam_invoke_req->vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = roam_tx_ops->send_roam_invoke_cmd(vdev, roam_invoke_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("CM_RSO: vdev %d fail to send roam invoke cmd",
+			   roam_invoke_req->vdev_id);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return status;
+}
+#endif

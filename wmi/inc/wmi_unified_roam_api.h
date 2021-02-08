@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -169,7 +169,6 @@ QDF_STATUS wmi_unified_roam_synch_complete_cmd(wmi_unified_t wmi_handle,
  * wmi_unified__roam_invoke_cmd() - send roam invoke command to fw.
  * @wmi_handle: wmi handle
  * @roaminvoke: roam invoke command
- * @ch_hz: channel
  *
  * Send roam invoke command to fw for fastreassoc.
  *
@@ -177,8 +176,7 @@ QDF_STATUS wmi_unified_roam_synch_complete_cmd(wmi_unified_t wmi_handle,
  */
 QDF_STATUS
 wmi_unified_roam_invoke_cmd(wmi_unified_t wmi_handle,
-			    struct wmi_roam_invoke_cmd *roaminvoke,
-			    uint32_t ch_hz);
+			    struct roam_invoke_req *roaminvoke);
 
 /**
  * wmi_unified_set_roam_triggers() - send roam trigger bitmap
