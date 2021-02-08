@@ -243,12 +243,7 @@ enum {
 	QOS_REFRESH_RATES,
 	QOS_DANGER_LUT,
 	QOS_SAFE_LUT,
-	QOS_CREQ_LUT_LINEAR,
-	QOS_CREQ_LUT_MACROTILE,
-	QOS_CREQ_LUT_NRT,
-	QOS_CREQ_LUT_CWB,
-	QOS_CREQ_LUT_MACROTILE_QSEED,
-	QOS_CREQ_LUT_LINEAR_QSEED,
+	QOS_CREQ_LUT,
 	QOS_PROP_MAX,
 };
 
@@ -650,18 +645,7 @@ static struct sde_prop_type sde_qos_prop[] = {
 			PROP_TYPE_U32_ARRAY},
 	{QOS_DANGER_LUT, "qcom,sde-danger-lut", false, PROP_TYPE_U32_ARRAY},
 	{QOS_SAFE_LUT, "qcom,sde-safe-lut", false, PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_LINEAR, "qcom,sde-qos-lut-linear", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_MACROTILE, "qcom,sde-qos-lut-macrotile", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_NRT, "qcom,sde-qos-lut-nrt", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_CWB, "qcom,sde-qos-lut-cwb", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_MACROTILE_QSEED, "qcom,sde-qos-lut-macrotile-qseed",
-			false, PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_LINEAR_QSEED, "qcom,sde-qos-lut-linear-qseed",
-			false, PROP_TYPE_U32_ARRAY},
+	{QOS_CREQ_LUT, "qcom,sde-creq-lut", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type sspp_prop[] = {
@@ -4238,7 +4222,7 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 	struct sde_prop_value *prop_value, bool *prop_exists)
 {
 	int i, j;
-	u32 qos_count = 1, index;
+	u32 qos_count = 1;
 
 	if (prop_exists[QOS_REFRESH_RATES]) {
 		qos_count = prop_count[QOS_REFRESH_RATES];
@@ -4262,7 +4246,7 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 	cfg->perf.safe_lut = kcalloc(qos_count,
 		sizeof(u64) * SDE_QOS_LUT_USAGE_MAX, GFP_KERNEL);
 	cfg->perf.creq_lut = kcalloc(qos_count,
-		sizeof(u64) * SDE_QOS_LUT_USAGE_MAX, GFP_KERNEL);
+		sizeof(u64) * SDE_QOS_LUT_USAGE_MAX * SDE_CREQ_LUT_TYPE_MAX, GFP_KERNEL);
 	if (!cfg->perf.creq_lut || !cfg->perf.safe_lut || !cfg->perf.danger_lut)
 		goto end;
 
@@ -4288,37 +4272,16 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 		}
 	}
 
-	for (i = 0; i < SDE_QOS_LUT_USAGE_MAX; i++) {
-		static const u32 prop_key[SDE_QOS_LUT_USAGE_MAX] = {
-			[SDE_QOS_LUT_USAGE_LINEAR] =
-					QOS_CREQ_LUT_LINEAR,
-			[SDE_QOS_LUT_USAGE_MACROTILE] =
-					QOS_CREQ_LUT_MACROTILE,
-			[SDE_QOS_LUT_USAGE_NRT] =
-					QOS_CREQ_LUT_NRT,
-			[SDE_QOS_LUT_USAGE_CWB] =
-					QOS_CREQ_LUT_CWB,
-			[SDE_QOS_LUT_USAGE_MACROTILE_QSEED] =
-					QOS_CREQ_LUT_MACROTILE_QSEED,
-			[SDE_QOS_LUT_USAGE_LINEAR_QSEED] =
-					QOS_CREQ_LUT_LINEAR_QSEED,
-		};
-		int key = prop_key[i];
+	if (prop_exists[QOS_CREQ_LUT] &&
+		(prop_count[QOS_CREQ_LUT] >=
+		(SDE_QOS_LUT_USAGE_MAX * qos_count * SDE_CREQ_LUT_TYPE_MAX))) {
 		u64 lut_hi, lut_lo;
 
-		if (!prop_exists[key])
-			continue;
-
-		for (j = 0; j < qos_count; j++) {
-			lut_hi = PROP_VALUE_ACCESS(prop_value, key,
-				(j * 2) + 0);
-			lut_lo = PROP_VALUE_ACCESS(prop_value, key,
-				(j * 2) + 1);
-			index = (j * SDE_QOS_LUT_USAGE_MAX) + i;
-			cfg->perf.creq_lut[index] =
-					(lut_hi << 32) | lut_lo;
-			SDE_DEBUG("creq usage:%d lut:0x%llx\n",
-				index, cfg->perf.creq_lut[index]);
+		for (j = 0; j < (qos_count * SDE_QOS_LUT_USAGE_MAX * SDE_CREQ_LUT_TYPE_MAX); j++) {
+			lut_hi = PROP_VALUE_ACCESS(prop_value, QOS_CREQ_LUT, (j * 2) + 0);
+			lut_lo = PROP_VALUE_ACCESS(prop_value, QOS_CREQ_LUT, (j * 2) + 1);
+			cfg->perf.creq_lut[j] = (lut_hi << 32) | lut_lo;
+			SDE_DEBUG("creq usage:%d lut:0x%llx\n", j, cfg->perf.creq_lut[j]);
 		}
 	}
 

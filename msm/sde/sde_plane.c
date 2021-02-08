@@ -253,9 +253,10 @@ void _sde_plane_set_qos_lut(struct drm_plane *plane,
 {
 	struct sde_plane *psde;
 	const struct sde_format *fmt = NULL;
-	u32 frame_rate, qos_count, fps_index = 0, lut_index, index;
+	u32 frame_rate, qos_count, fps_index = 0, lut_index, creq_lut_index, index;
 	struct sde_perf_cfg *perf;
 	struct sde_plane_state *pstate;
+	bool inline_rot = false;
 
 	if (!plane || !fb) {
 		SDE_ERROR("invalid arguments\n");
@@ -282,28 +283,33 @@ void _sde_plane_set_qos_lut(struct drm_plane *plane,
 		fps_index++;
 	}
 
-	if (!psde->is_rt_pipe) {
-		lut_index = SDE_QOS_LUT_USAGE_NRT;
-	} else {
-		fmt = sde_get_sde_format_ext(
-				fb->format->format,
-				fb->modifier);
+	if (psde->is_rt_pipe) {
+		fmt = sde_get_sde_format_ext(fb->format->format, fb->modifier);
+	        inline_rot = (pstate->rotation & DRM_MODE_ROTATE_90);
 
-		if (fmt && SDE_FORMAT_IS_LINEAR(fmt) &&
-		    pstate->scaler3_cfg.enable)
-			lut_index = SDE_QOS_LUT_USAGE_LINEAR_QSEED;
+		if (inline_rot && SDE_IS_IN_ROT_RESTRICTED_FMT(psde->catalog, fmt))
+			lut_index = SDE_QOS_LUT_USAGE_INLINE_RESTRICTED_FMTS;
+		else if (inline_rot)
+			lut_index = SDE_QOS_LUT_USAGE_INLINE;
 		else if (fmt && SDE_FORMAT_IS_LINEAR(fmt))
 			lut_index = SDE_QOS_LUT_USAGE_LINEAR;
-		else if (pstate->scaler3_cfg.enable)
-			lut_index = SDE_QOS_LUT_USAGE_MACROTILE_QSEED;
 		else
 			lut_index = SDE_QOS_LUT_USAGE_MACROTILE;
+
+		creq_lut_index = lut_index * SDE_CREQ_LUT_TYPE_MAX;
+		if (pstate->scaler3_cfg.enable)
+			creq_lut_index += SDE_CREQ_LUT_TYPE_QSEED;
+	} else {
+		lut_index = SDE_QOS_LUT_USAGE_NRT;
+		creq_lut_index = lut_index * SDE_CREQ_LUT_TYPE_MAX;
 	}
 
 	index = (fps_index * SDE_QOS_LUT_USAGE_MAX) + lut_index;
 	psde->pipe_qos_cfg.danger_lut = perf->danger_lut[index];
 	psde->pipe_qos_cfg.safe_lut = perf->safe_lut[index];
-	psde->pipe_qos_cfg.creq_lut = perf->creq_lut[index];
+
+	creq_lut_index += (fps_index * SDE_QOS_LUT_USAGE_MAX);
+	psde->pipe_qos_cfg.creq_lut = perf->creq_lut[creq_lut_index];
 
 	trace_sde_perf_set_qos_luts(psde->pipe - SSPP_VIG0,
 			(fmt) ? fmt->base.pixel_format : 0,

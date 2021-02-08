@@ -715,9 +715,20 @@ enum sde_qos_lut_usage {
 	SDE_QOS_LUT_USAGE_MACROTILE,
 	SDE_QOS_LUT_USAGE_NRT,
 	SDE_QOS_LUT_USAGE_CWB,
-	SDE_QOS_LUT_USAGE_MACROTILE_QSEED,
-	SDE_QOS_LUT_USAGE_LINEAR_QSEED,
+	SDE_QOS_LUT_USAGE_CWB_TILE,
+	SDE_QOS_LUT_USAGE_INLINE,
+	SDE_QOS_LUT_USAGE_INLINE_RESTRICTED_FMTS,
 	SDE_QOS_LUT_USAGE_MAX,
+};
+
+/**
+ * enum sde_creq_lut_types - define creq LUT types possible for all use cases
+ * This is second dimension to sde_qos_lut_usage enum.
+ */
+enum sde_creq_lut_types {
+	SDE_CREQ_LUT_TYPE_NOQSEED,
+	SDE_CREQ_LUT_TYPE_QSEED,
+	SDE_CREQ_LUT_TYPE_MAX,
 };
 
 /**

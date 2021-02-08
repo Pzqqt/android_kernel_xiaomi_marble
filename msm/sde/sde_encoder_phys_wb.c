@@ -181,15 +181,18 @@ static void sde_encoder_phys_wb_set_qos(struct sde_encoder_phys *phys_enc)
 
 	qos_cfg.danger_safe_en = true;
 
-	if (phys_enc->in_clone_mode)
+	if (phys_enc->in_clone_mode && (SDE_FORMAT_IS_TILE(wb_enc->wb_fmt) ||
+				SDE_FORMAT_IS_UBWC(wb_enc->wb_fmt)))
+		lut_index = SDE_QOS_LUT_USAGE_CWB_TILE;
+	else if (phys_enc->in_clone_mode)
 		lut_index = SDE_QOS_LUT_USAGE_CWB;
 	else
 		lut_index = SDE_QOS_LUT_USAGE_NRT;
-	index = (fps_index * SDE_QOS_LUT_USAGE_MAX) + lut_index;
 
+	index = (fps_index * SDE_QOS_LUT_USAGE_MAX) + lut_index;
 	qos_cfg.danger_lut = perf->danger_lut[index];
 	qos_cfg.safe_lut = (u32) perf->safe_lut[index];
-	qos_cfg.creq_lut = perf->creq_lut[index];
+	qos_cfg.creq_lut = perf->creq_lut[index * SDE_CREQ_LUT_TYPE_MAX];
 
 	SDE_DEBUG("wb_enc:%d hw idx:%d fps:%d mode:%d luts[0x%x,0x%x 0x%llx]\n",
 		DRMID(phys_enc->parent), hw_wb->idx - WB_0,
