@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -171,6 +171,8 @@ static void dp_power_clk_put(struct dp_power_private *power)
 
 		if (!pm->num_clk)
 			continue;
+
+		msm_dss_mmrm_deregister(&power->pdev->dev, pm);
 
 		msm_dss_put_clk(pm->clk_config, pm->num_clk);
 	}
@@ -482,6 +484,28 @@ static int dp_power_config_gpios(struct dp_power_private *power, bool flip,
 	return 0;
 }
 
+static int dp_power_mmrm_init(struct dp_power *dp_power, struct sde_power_handle *phandle, void *dp,
+	int (*dp_display_mmrm_callback)(struct mmrm_client_notifier_data *notifier_data))
+{
+	int rc = 0;
+	enum dp_pm_type module;
+	struct dp_power_private *power = container_of(dp_power, struct dp_power_private, dp_power);
+	struct device *dev = &power->pdev->dev;
+
+	for (module = DP_CORE_PM; module < DP_MAX_PM; module++) {
+		struct dss_module_power *pm = &power->parser->mp[module];
+		if (!pm->num_clk)
+			continue;
+
+		rc = msm_dss_mmrm_register(dev, pm, dp_display_mmrm_callback,
+					dp, &phandle->mmrm_enable);
+		if (rc)
+			DP_ERR("mmrm register failed rc=%d\n", rc);
+	}
+
+	return rc;
+}
+
 static int dp_power_client_init(struct dp_power *dp_power,
 	struct sde_power_handle *phandle, struct drm_device *drm_dev)
 {
@@ -717,6 +741,7 @@ struct dp_power *dp_power_get(struct dp_parser *parser, struct dp_pll *pll)
 	dp_power->clk_get_rate = dp_power_clk_get_rate;
 	dp_power->power_client_init = dp_power_client_init;
 	dp_power->power_client_deinit = dp_power_client_deinit;
+	dp_power->power_mmrm_init = dp_power_mmrm_init;
 
 	return dp_power;
 error:

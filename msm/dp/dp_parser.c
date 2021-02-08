@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_gpio.h>
@@ -609,6 +609,7 @@ static int dp_parser_clock(struct dp_parser *parser)
 	int core_clk_count = 0, link_clk_count = 0;
 	int strm0_clk_index = 0, strm1_clk_index = 0;
 	int strm0_clk_count = 0, strm1_clk_count = 0;
+	int clock_mmrm = 0;
 	const char *clk_name;
 	const char *core_clk = "core";
 	const char *strm0_clk = "strm0";
@@ -656,11 +657,16 @@ static int dp_parser_clock(struct dp_parser *parser)
 				&link_power->clk_config[link_clk_index];
 			strlcpy(clk->clk_name, clk_name, sizeof(clk->clk_name));
 			link_clk_index++;
-
-			if (!strcmp(clk_name, "link_clk"))
+			clock_mmrm = 0;
+			of_property_read_u32_index(dev->of_node, "clock-mmrm", i, &clock_mmrm);
+			if (clock_mmrm) {
+				clk->type = DSS_CLK_MMRM;
+				clk->mmrm.clk_id = clock_mmrm;
+			} else if (!strcmp(clk_name, "link_clk")) {
 				clk->type = DSS_CLK_PCLK;
-			else
+			} else {
 				clk->type = DSS_CLK_AHB;
+			}
 		} else if (dp_parser_check_prefix(strm0_clk, clk_name) &&
 			   strm0_clk_index < strm0_clk_count) {
 			struct dss_clk *clk =

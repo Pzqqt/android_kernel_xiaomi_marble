@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_DEBUG_H_
@@ -115,6 +115,7 @@ struct dp_debug {
  * @parser: instance of parser module
  * @ctrl: instance of controller module
  * @pll: instance of pll module
+ * @display: instance of display module
  */
 struct dp_debug_in {
 	struct device *dev;
@@ -127,6 +128,7 @@ struct dp_debug_in {
 	struct dp_parser *parser;
 	struct dp_ctrl *ctrl;
 	struct dp_pll *pll;
+	struct dp_display *display;
 };
 
 /**
