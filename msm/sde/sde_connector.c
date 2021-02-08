@@ -1823,8 +1823,10 @@ static void sde_connector_update_colorspace(struct drm_connector *connector)
 		SDE_ERROR("failed to set colorspace property for connector\n");
 }
 
-static enum drm_connector_status
-sde_connector_detect(struct drm_connector *connector, bool force)
+static int
+sde_connector_detect_ctx(struct drm_connector *connector, 
+		struct drm_modeset_acquire_ctx *ctx,
+		bool force)
 {
 	enum drm_connector_status status = connector_status_unknown;
 	struct sde_connector *c_conn;
@@ -1836,12 +1838,14 @@ sde_connector_detect(struct drm_connector *connector, bool force)
 
 	c_conn = to_sde_connector(connector);
 
-	if (c_conn->ops.detect)
-		status = c_conn->ops.detect(connector,
-				force,
-				c_conn->display);
+	if (c_conn->ops.detect_ctx)
+                status = c_conn->ops.detect_ctx(connector, ctx, force, c_conn->display);
+        else if (c_conn->ops.detect)
+                status = c_conn->ops.detect(connector, force, c_conn->display);
 
-	return status;
+	SDE_DEBUG("connector id: %d, connection status: %d\n", connector->base.id, status);
+
+	return (int)status;
 }
 
 int sde_connector_get_dpms(struct drm_connector *connector)
@@ -2423,7 +2427,6 @@ static int sde_connector_fill_modes(struct drm_connector *connector,
 
 static const struct drm_connector_funcs sde_connector_ops = {
 	.reset =                  sde_connector_atomic_reset,
-	.detect =                 sde_connector_detect,
 	.destroy =                sde_connector_destroy,
 	.fill_modes =             sde_connector_fill_modes,
 	.atomic_duplicate_state = sde_connector_atomic_duplicate_state,
@@ -2689,6 +2692,7 @@ static void sde_connector_check_status_work(struct work_struct *work)
 
 static const struct drm_connector_helper_funcs sde_connector_helper_ops = {
 	.get_modes =    sde_connector_get_modes,
+	.detect_ctx =   sde_connector_detect_ctx,
 	.mode_valid =   sde_connector_mode_valid,
 	.best_encoder = sde_connector_best_encoder,
 	.atomic_check = sde_connector_atomic_check,
@@ -2696,6 +2700,7 @@ static const struct drm_connector_helper_funcs sde_connector_helper_ops = {
 
 static const struct drm_connector_helper_funcs sde_connector_helper_ops_v2 = {
 	.get_modes =    sde_connector_get_modes,
+	.detect_ctx =   sde_connector_detect_ctx,
 	.mode_valid =   sde_connector_mode_valid,
 	.best_encoder = sde_connector_best_encoder,
 	.atomic_best_encoder = sde_connector_atomic_best_encoder,
