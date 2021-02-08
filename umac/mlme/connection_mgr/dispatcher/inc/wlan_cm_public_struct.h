@@ -352,7 +352,6 @@ enum wlan_cm_connect_fail_reason {
 
 #ifdef WLAN_FEATURE_FILS_SK
 #define CM_FILS_MAX_HLP_DATA_LEN 2048
-#define MAX_KEK_LENGTH 64
 #define MAX_TK_LENGTH 32
 #define MAX_GTK_LENGTH 255
 
@@ -407,12 +406,53 @@ struct wlan_connect_rsp_ies {
 #endif
 };
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * struct wlan_cm_connect_rsp - connect resp from VDEV mgr and will be sent to
+ * OSIF
+ * @auth_status: roam auth status (authenticated or connected)
+ * @kck_len: kck length
+ * @kck: kck info in roam sync
+ * @kek_len: kek length
+ * @kek: kek info in roam sync
+ * @replay_ctr: replay counter
+ * @subnet_change_status: if subnet has changed.
+ *                        0 = unchanged
+ *                        1 = changed
+ *                        2 = unknown
+ * @roam_reason: reason of roaming
+ * @pmk_len: fils pmk length
+ * @pmk: fils pmk info
+ * @pmkid: fils pmkid
+ * @update_erp_next_seq_num: if seq update required
+ * @next_erp_seq_num: next seq number
+ */
+struct wlan_roam_sync_info {
+	uint8_t auth_status;
+	uint8_t kck_len;
+	uint8_t kck[MAX_KCK_LEN];
+	uint8_t kek_len;
+	uint8_t kek[MAX_KEK_LENGTH];
+	uint8_t replay_ctr[REPLAY_CTR_LEN];
+	uint8_t subnet_change_status;
+	uint16_t roam_reason;
+#ifdef WLAN_FEATURE_FILS_SK
+	uint32_t pmk_len;
+	uint8_t pmk[MAX_PMK_LEN];
+	uint8_t pmkid[PMKID_LEN];
+	bool update_erp_next_seq_num;
+	uint16_t next_erp_seq_num;
+#endif
+};
+#endif
+
 /**
  * struct wlan_cm_connect_rsp - connect resp from VDEV mgr and will be sent to
  * OSIF
  * @vdev_id: vdev id
  * @is_wps_connection: if its wps connection
  * @is_osen_connection: if its osen connection
+ * @is_reassoc: if response is for reassoc/roam
  * @cm_id: Connect manager id
  * @bssid: BSSID of the ap
  * @ssid: SSID of the connection
@@ -422,12 +462,14 @@ struct wlan_connect_rsp_ies {
  * @status_code: protocol status code received in auth/assoc resp
  * @aid: aid
  * @connect_ies: connect related IE required by osif to send to kernel
+ * @roaming_info: roam sync info received
  * @is_fils_connection: is fils connection
  */
 struct wlan_cm_connect_resp {
 	uint8_t vdev_id;
 	uint8_t is_wps_connection:1,
-		is_osen_connection:1;
+		is_osen_connection:1,
+		is_reassoc:1;
 	wlan_cm_id cm_id;
 	struct qdf_mac_addr bssid;
 	struct wlan_ssid ssid;
@@ -437,34 +479,12 @@ struct wlan_cm_connect_resp {
 	enum wlan_status_code status_code;
 	uint8_t aid;
 	struct wlan_connect_rsp_ies connect_ies;
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	struct wlan_roam_sync_info *roaming_info;
+#endif
 #ifdef WLAN_FEATURE_FILS_SK
 	bool is_fils_connection;
 #endif
-};
-
-/**
- * struct wlan_cm_roam_rsp - Roam resp from VDEV mgr and will be sent to
- * OSIF
- * @vdev_id: vdev id
- * @cm_id: Connection manager id
- * @bssid: BSSID of the ap
- * @ssid: SSID of the connection
- * @freq: Channel frequency
- * @reassoc_status: Reassoc status success or failure
- * @reason: connect fail reason, valid only in case of failure
- * @status_code: protocol status code received in auth/assoc resp
- * @connect_ies: connect related IE required by osif to send to kernel
- */
-struct wlan_cm_roam_resp {
-	uint8_t vdev_id;
-	wlan_cm_id cm_id;
-	struct qdf_mac_addr bssid;
-	struct wlan_ssid ssid;
-	qdf_freq_t freq;
-	QDF_STATUS reassoc_status;
-	enum wlan_cm_connect_fail_reason reason;
-	enum wlan_status_code status_code;
-	struct wlan_connect_rsp_ies connect_ies;
 };
 
 /**

@@ -168,7 +168,7 @@ bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 				      wlan_cm_id cm_id,
-				      struct wlan_cm_roam_resp *resp)
+				      struct wlan_cm_connect_resp *resp)
 {
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req *cm_req;

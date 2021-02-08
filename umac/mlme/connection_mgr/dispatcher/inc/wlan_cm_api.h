@@ -341,16 +341,16 @@ wlan_cm_get_active_req_type(struct wlan_objmgr_vdev *vdev);
 /**
  * wlan_cm_reassoc_rsp() - Connection manager reassoc response
  * @vdev: vdev pointer
- * @resp: Reassoc response
+ * @resp: Connect response
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_roam_resp *resp);
+			       struct wlan_cm_connect_resp *resp);
 #else
 static inline
 QDF_STATUS wlan_cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_roam_resp *resp)
+			       struct wlan_cm_connect_resp *resp)
 {
 	return QDF_STATUS_SUCCESS;
 }

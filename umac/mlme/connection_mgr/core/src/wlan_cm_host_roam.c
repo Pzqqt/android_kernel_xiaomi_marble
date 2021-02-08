@@ -26,11 +26,11 @@
 
 static void
 cm_fill_roam_fail_resp_from_cm_id(struct cnx_mgr *cm_ctx,
-				  struct wlan_cm_roam_resp *resp,
+				  struct wlan_cm_connect_resp *resp,
 				  wlan_cm_id cm_id,
 				  enum wlan_cm_connect_fail_reason reason)
 {
-	resp->reassoc_status = QDF_STATUS_E_FAILURE;
+	resp->connect_status = QDF_STATUS_E_FAILURE;
 	resp->cm_id = cm_id;
 	resp->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	resp->reason = reason;
@@ -85,7 +85,7 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   enum wlan_cm_connect_fail_reason reason,
 			   bool sync)
 {
-	struct wlan_cm_roam_resp *resp;
+	struct wlan_cm_connect_resp *resp;
 	QDF_STATUS status;
 
 	resp = qdf_mem_malloc(sizeof(*resp));
@@ -266,23 +266,9 @@ roam_err:
 }
 
 bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
-				       struct wlan_cm_roam_resp *resp)
+				       struct wlan_cm_connect_resp *resp)
 {
 	return cm_check_cmid_match_list_head(cm_ctx, &resp->cm_id);
-}
-
-static QDF_STATUS
-cm_inform_if_mgr_reassoc_complete(struct wlan_objmgr_vdev *vdev,
-				  QDF_STATUS status)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-cm_inform_blm_reassoc_complete(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_roam_resp *resp)
-{
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS cm_reassoc_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
@@ -376,50 +362,9 @@ cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	return status;
 }
 
-static void
-cm_update_scan_db_on_reassoc_success(struct cnx_mgr *cm_ctx,
-				     struct wlan_cm_roam_resp *resp)
-{
-	struct element_info *bcn_probe_rsp;
-	struct cm_req *cm_req;
-	int32_t rssi;
-
-	if (!cm_is_vdev_connected(cm_ctx->vdev))
-		return;
-
-	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
-	if (!cm_req || !cm_req->roam_req.cur_candidate)
-		return;
-
-	/*
-	 * Get beacon or probe resp from connect response, and if not present
-	 * use cur candidate to get beacon or probe resp
-	 */
-	if (resp->connect_ies.bcn_probe_rsp.ptr)
-		bcn_probe_rsp = &resp->connect_ies.bcn_probe_rsp;
-	else
-		bcn_probe_rsp =
-			&cm_req->roam_req.cur_candidate->entry->raw_frame;
-
-	rssi = cm_req->roam_req.cur_candidate->entry->rssi_raw;
-
-	cm_inform_bcn_probe(cm_ctx, bcn_probe_rsp->ptr, bcn_probe_rsp->len,
-			    resp->freq, rssi, resp->cm_id);
-}
-
-inline void cm_set_fils_wep_key_on_reassoc(struct cnx_mgr *cm_ctx,
-					   struct wlan_cm_roam_resp *resp)
-{
-}
-
 QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
-			       struct wlan_cm_roam_resp *resp)
+			       struct wlan_cm_connect_resp *resp)
 {
-	enum wlan_cm_sm_state sm_state;
-	struct bss_info bss_info;
-	struct mlme_info mlme_info;
-	struct wlan_objmgr_vdev *vdev = cm_ctx->vdev;
-
 	/*
 	 * If the entry is not present in the list, it must have been cleared
 	 * already.
@@ -427,45 +372,14 @@ QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
 	if (!cm_get_req_by_cm_id(cm_ctx, resp->cm_id))
 		return QDF_STATUS_SUCCESS;
 
-	sm_state = cm_get_state(cm_ctx);
-	if (QDF_IS_STATUS_ERROR(resp->reassoc_status))
-		goto reassoc_fail;
-
-	if (QDF_IS_STATUS_SUCCESS(resp->reassoc_status) &&
-	    sm_state == WLAN_CM_S_CONNECTED) {
-		cm_update_scan_db_on_reassoc_success(cm_ctx, resp);
-		cm_set_fils_wep_key_on_reassoc(cm_ctx, resp);
-	}
-
-	mlme_cm_reassoc_complete_ind(vdev, resp);
-	mlme_cm_osif_reassoc_complete(vdev, resp);
-	cm_inform_if_mgr_reassoc_complete(vdev, resp->reassoc_status);
-	cm_inform_blm_reassoc_complete(vdev, resp);
-
-reassoc_fail:
-	/* Update scan entry in case connect is success or fails with bssid */
-	if (!qdf_is_macaddr_zero(&resp->bssid)) {
-		if (QDF_IS_STATUS_SUCCESS(resp->reassoc_status))
-			mlme_info.assoc_state  = SCAN_ENTRY_CON_STATE_ASSOC;
-		else
-			mlme_info.assoc_state = SCAN_ENTRY_CON_STATE_NONE;
-		qdf_copy_macaddr(&bss_info.bssid, &resp->bssid);
-		bss_info.freq = resp->freq;
-		bss_info.ssid.length = resp->ssid.length;
-		qdf_mem_copy(&bss_info.ssid.ssid, resp->ssid.ssid,
-			     bss_info.ssid.length);
-		wlan_scan_update_mlme_by_bssinfo(
-					wlan_vdev_get_pdev(vdev),
-					&bss_info, &mlme_info);
-	}
-	cm_remove_cmd(cm_ctx, &resp->cm_id);
-
+	resp->is_reassoc = true;
+	cm_connect_complete(cm_ctx, resp);
 	/*
 	 * If roaming fails and conn_sm is in ROAMING state, then
 	 * initiate disconnect to cleanup and move conn_sm to INIT state
 	 */
-	if (QDF_IS_STATUS_ERROR(resp->reassoc_status) &&
-	    sm_state == WLAN_CM_S_ROAMING) {
+	if (QDF_IS_STATUS_ERROR(resp->connect_status) &&
+	    cm_get_state(cm_ctx) == WLAN_CM_S_ROAMING) {
 		cm_reassoc_fail_disconnect(cm_ctx->vdev, CM_ROAM_DISCONNECT,
 					   REASON_UNSPEC_FAILURE,
 					   &resp->bssid);
@@ -477,7 +391,7 @@ reassoc_fail:
 static void
 cm_reassoc_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
-	struct wlan_cm_roam_resp *resp;
+	struct wlan_cm_connect_resp *resp;
 
 	resp = qdf_mem_malloc(sizeof(*resp));
 	if (!resp)
@@ -492,7 +406,7 @@ cm_reassoc_handle_event_post_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 static QDF_STATUS cm_reassoc_cmd_timeout(struct cnx_mgr *cm_ctx,
 					 wlan_cm_id cm_id)
 {
-	struct wlan_cm_roam_resp *resp;
+	struct wlan_cm_connect_resp *resp;
 	QDF_STATUS status;
 
 	resp = qdf_mem_malloc(sizeof(*resp));
@@ -710,7 +624,7 @@ QDF_STATUS cm_reassoc_start(struct cnx_mgr *cm_ctx,
 }
 
 QDF_STATUS cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
-			  struct wlan_cm_roam_resp *resp)
+			  struct wlan_cm_connect_resp *resp)
 {
 	struct cnx_mgr *cm_ctx;
 	QDF_STATUS qdf_status;
@@ -734,7 +648,7 @@ QDF_STATUS cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
 		goto post_err;
 	}
 
-	if (QDF_IS_STATUS_SUCCESS(resp->reassoc_status)) {
+	if (QDF_IS_STATUS_SUCCESS(resp->connect_status)) {
 		/*
 		 * On successful connection to sae single pmk AP,
 		 * clear all the single pmk AP.

@@ -39,12 +39,12 @@ QDF_STATUS cm_roam_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 /**
  * cm_reassoc_rsp() - Connection manager reassoc response
  * @vdev: vdev pointer
- * @resp: Reassoc response
+ * @resp: Connect response
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
-			  struct wlan_cm_roam_resp *resp);
+			  struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_roam_disconnect_rsp() - Connection manager api to post connect event
@@ -62,14 +62,14 @@ QDF_STATUS cm_roam_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
  * cm_reassoc_complete() - This API would be called after reassoc complete
  * request from the serialization.
  * @cm_ctx: connection manager context
- * @resp: Roam complete resp.
+ * @resp: connect resp.
  *
  * This API would be called after roam completion resp from VDEV mgr
  *
  * Return: QDF status
  */
 QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
-			       struct wlan_cm_roam_resp *resp);
+			       struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_get_active_reassoc_req() - Get copy of active reassoc request
@@ -143,12 +143,12 @@ cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
  * cm_roam_resp_cmid_match_list_head() - Check if resp cmid is same as list
  * head
  * @cm_ctx: connection manager context
- * @resp: roam resp
+ * @resp: connect resp
  *
  * Return: bool
  */
 bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
-				       struct wlan_cm_roam_resp *resp);
+				       struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_send_reassoc_start_fail() - initiate reassoc failure
@@ -167,7 +167,7 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 
 #else
 static inline QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
-					     struct wlan_cm_roam_resp *resp)
+					     struct wlan_cm_connect_resp *resp)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -234,7 +234,7 @@ QDF_STATUS cm_add_roam_req_to_list(struct cnx_mgr *cm_ctx,
 QDF_STATUS
 cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 				      wlan_cm_id cm_id,
-				      struct wlan_cm_roam_resp *resp);
+				      struct wlan_cm_connect_resp *resp);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**

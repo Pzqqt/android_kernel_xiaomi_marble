@@ -199,20 +199,6 @@ osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
- * osif_cm_reassoc_complete_cb() - Reassoc complete callback
- * @vdev: vdev pointer
- * @rsp: Reassoc response
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-osif_cm_reassoc_complete_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_roam_resp *rsp)
-{
-	return osif_reassoc_handler(vdev, rsp);
-}
-
-/**
  * osif_cm_failed_candidate_cb() - Callback to indicate failed candidate
  * @vdev: vdev pointer
  * @rsp: connect response
@@ -332,7 +318,6 @@ static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_update_id_and_src_cb = osif_cm_update_id_and_src_cb,
 	.mlme_cm_disconnect_complete_cb = osif_cm_disconnect_complete_cb,
 	.mlme_cm_disconnect_start_cb = osif_cm_disconnect_start_cb,
-	.mlme_cm_reassoc_complete_cb = osif_cm_reassoc_complete_cb,
 };
 
 /**
@@ -396,21 +381,6 @@ QDF_STATUS osif_cm_connect_comp_ind(struct wlan_objmgr_vdev *vdev,
 
 	if (osif_cm_legacy_ops)
 		cb = osif_cm_legacy_ops->connect_complete_cb;
-	if (cb)
-		ret = cb(vdev, rsp, type);
-
-	return ret;
-}
-
-QDF_STATUS osif_cm_reassoc_comp_ind(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_roam_resp *rsp,
-				    enum osif_cb_type type)
-{
-	osif_cm_reassoc_comp_cb cb = NULL;
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (osif_cm_legacy_ops)
-		cb = osif_cm_legacy_ops->reassoc_complete_cb;
 	if (cb)
 		ret = cb(vdev, rsp, type);
 

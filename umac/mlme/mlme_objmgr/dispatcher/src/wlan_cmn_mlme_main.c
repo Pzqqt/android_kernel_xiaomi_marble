@@ -345,17 +345,6 @@ QDF_STATUS mlme_cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 	return ret;
 }
 
-QDF_STATUS mlme_cm_reassoc_complete_ind(struct wlan_objmgr_vdev *vdev,
-					struct wlan_cm_roam_resp *rsp)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if ((glbl_ops) && glbl_ops->mlme_cm_ext_reassoc_complete_ind_cb)
-		ret = glbl_ops->mlme_cm_ext_reassoc_complete_ind_cb(vdev, rsp);
-
-	return ret;
-}
-
 QDF_STATUS mlme_cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 					struct wlan_cm_disconnect_req *req)
 {
@@ -416,17 +405,6 @@ QDF_STATUS mlme_cm_osif_connect_complete(struct wlan_objmgr_vdev *vdev,
 
 	if (glbl_cm_ops && glbl_cm_ops->mlme_cm_connect_complete_cb)
 		ret = glbl_cm_ops->mlme_cm_connect_complete_cb(vdev, rsp);
-
-	return ret;
-}
-
-QDF_STATUS mlme_cm_osif_reassoc_complete(struct wlan_objmgr_vdev *vdev,
-					 struct wlan_cm_roam_resp *rsp)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (glbl_cm_ops && glbl_cm_ops->mlme_cm_reassoc_complete_cb)
-		ret = glbl_cm_ops->mlme_cm_reassoc_complete_cb(vdev, rsp);
 
 	return ret;
 }

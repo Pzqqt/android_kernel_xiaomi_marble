@@ -30,18 +30,9 @@
 #include "wlan_cfg80211_scan.h"
 
 #ifdef CONN_MGR_ADV_FEATURE
-/**
- * osif_cm_get_assoc_req_ie_data() - Get the assoc req IE offset and length
- * if valid assoc req is present
- * @assoc_req: assoc req info
- * @ie_data_len: IE date length to be calculated
- * @ie_data_ptr: IE data pointer to be calculated
- *
- * Return: void
- */
-static void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
-					  size_t *ie_data_len,
-					  const uint8_t **ie_data_ptr)
+void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr)
 {
 	/* Validate IE and length */
 	if (!assoc_req->len || !assoc_req->ptr ||
@@ -52,18 +43,9 @@ static void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
 	*ie_data_ptr = assoc_req->ptr + WLAN_ASSOC_REQ_IES_OFFSET;
 }
 
-/**
- * osif_cm_get_assoc_rsp_ie_data() - Get the assoc resp IE offset and length
- * if valid assoc req is present
- * @assoc_req: assoc req info
- * @ie_data_len: IE date length to be calculated
- * @ie_data_ptr: IE data pointer to be calculated
- *
- * Return: void
- */
-static void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
-					  size_t *ie_data_len,
-					  const uint8_t **ie_data_ptr)
+void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr)
 {
 	/* Validate IE and length */
 	if (!assoc_rsp->len || !assoc_rsp->ptr ||
@@ -76,17 +58,17 @@ static void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
 
 #else
 
-static void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
-					  size_t *ie_data_len,
-					  const uint8_t **ie_data_ptr)
+void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr)
 {
 	*ie_data_len = assoc_req->len;
 	*ie_data_ptr = assoc_req->ptr;
 }
 
-static void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
-					  size_t *ie_data_len,
-					  const uint8_t **ie_data_ptr)
+void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr)
 {
 	*ie_data_len = assoc_rsp->len;
 	*ie_data_ptr = assoc_rsp->ptr;
@@ -111,20 +93,21 @@ osif_validate_connect_and_reset_src_id(struct vdev_osif_priv *osif_priv,
 				       struct wlan_cm_connect_resp *rsp)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
 	/*
-	 * Send to kernel only if last osif cookie match and
-	 * source is CM_OSIF_CONNECT or CM_OSIF_CFG_CONNECT with failure
-	 * else drop. If cookie match reset the cookie and source.
+	 * Do not send to kernel if last osif cookie doesnt match or
+	 * or source is CM_OSIF_CFG_CONNECT with success status.
+	 * If cookie matches reset the cookie and source.
 	 */
 	qdf_spinlock_acquire(&osif_priv->cm_info.cmd_id_lock);
 	if (rsp->cm_id != osif_priv->cm_info.last_id ||
-	    (osif_priv->cm_info.last_source != CM_OSIF_CONNECT &&
-	    !(osif_priv->cm_info.last_source == CM_OSIF_CFG_CONNECT &&
-	    QDF_IS_STATUS_ERROR(rsp->connect_status)))) {
-		osif_debug("Ignore as cm_id(0x%x)/src(%d) didn't match stored cm_id(0x%x)/src(%d)",
+	    (osif_priv->cm_info.last_source == CM_OSIF_CFG_CONNECT &&
+	     QDF_IS_STATUS_SUCCESS(rsp->connect_status))) {
+		osif_debug("Ignore as cm_id(0x%x)/src(%d) != cm_id(0x%x)/src(%d) OR source is CFG connect with status %d",
 			   rsp->cm_id, CM_OSIF_CONNECT,
 			   osif_priv->cm_info.last_id,
-			   osif_priv->cm_info.last_source);
+			   osif_priv->cm_info.last_source,
+			   rsp->connect_status);
 		status = QDF_STATUS_E_INVAL;
 		goto rel_lock;
 	}
@@ -567,13 +550,13 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 	struct vdev_osif_priv *osif_priv  = wlan_vdev_get_ospriv(vdev);
 	QDF_STATUS status;
 
-	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" is %s cm_id 0x%x cm_reason %d status_code %d",
+	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " Connect with " QDF_MAC_ADDR_FMT " SSID \"%.*s\" is %s cm_id 0x%x cm_reason %d status_code %d is_reassoc %d",
 		       osif_priv->wdev->netdev->name, rsp->vdev_id,
 		       QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
 		       QDF_MAC_ADDR_REF(rsp->bssid.bytes),
 		       rsp->ssid.length, rsp->ssid.ssid,
 		       rsp->connect_status ? "FAILURE" : "SUCCESS", rsp->cm_id,
-		       rsp->reason, rsp->status_code);
+		       rsp->reason, rsp->status_code, rsp->is_reassoc);
 
 	osif_check_and_unlink_bss(vdev, osif_priv, rsp);
 
@@ -584,7 +567,10 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 	}
 
 	osif_cm_connect_comp_ind(vdev, rsp, OSIF_PRE_USERSPACE_UPDATE);
-	osif_indcate_connect_results(vdev, osif_priv, rsp);
+	if (rsp->is_reassoc)
+		osif_indicate_reassoc_results(vdev, osif_priv, rsp);
+	else
+		osif_indcate_connect_results(vdev, osif_priv, rsp);
 	osif_cm_connect_comp_ind(vdev, rsp, OSIF_POST_USERSPACE_UPDATE);
 
 	return QDF_STATUS_SUCCESS;
