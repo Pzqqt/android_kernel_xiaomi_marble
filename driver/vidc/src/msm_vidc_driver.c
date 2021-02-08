@@ -1376,21 +1376,20 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 		/* for encoder, treat the repeated buffer as new buffer */
 		if (is_encode_session(inst) && vb2->type == INPUT_MPLANE)
 			found = false;
-	} else {
+	}
+	if (!found) {
 		buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
 		if (!buf) {
 			i_vpr_e(inst, "%s: alloc failed\n", __func__);
 			goto error;
 		}
-		INIT_LIST_HEAD(&buf->list);
 		buf->dmabuf = dmabuf;
+		INIT_LIST_HEAD(&buf->list);
+		list_add_tail(&buf->list, &buffers->list);
 	}
 	rc = vb2_buffer_to_driver(vb2, buf);
 	if (rc)
 		goto error;
-
-	if (!found)
-		list_add_tail(&buf->list, &buffers->list);
 
 	rc = msm_vidc_map_driver_buf(inst, buf);
 	if (rc)
