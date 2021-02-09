@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_POWER_H_
@@ -20,6 +20,7 @@
  * @clk_get_rate: get the current rate for provided clk_name
  * @power_client_init: configures clocks and regulators
  * @power_client_deinit: frees clock and regulator resources
+ * @power_mmrm_init: configures mmrm client registration
  */
 struct dp_power {
 	struct drm_device *drm_dev;
@@ -34,6 +35,9 @@ struct dp_power {
 		struct sde_power_handle *phandle,
 		struct drm_device *drm_dev);
 	void (*power_client_deinit)(struct dp_power *power);
+	int (*power_mmrm_init)(struct dp_power *power,
+                struct sde_power_handle *phandle, void *dp,
+		int (*dp_display_mmrm_callback)(struct mmrm_client_notifier_data *notifier_data));
 };
 
 /**

@@ -43,6 +43,7 @@ struct dp_debug_private {
 	struct dp_parser *parser;
 	struct dp_ctrl *ctrl;
 	struct dp_pll *pll;
+	struct dp_display *display;
 	struct mutex lock;
 };
 
@@ -616,6 +617,41 @@ static ssize_t dp_debug_write_mst_con_remove(struct file *file,
 	debug->dp_debug.mst_sim_remove_con_id = con_id;
 	debug->hpd->simulate_attention(debug->hpd, vdo);
 end:
+	return len;
+}
+
+static ssize_t dp_debug_mmrm_clk_cb_write(struct file *file,
+		 const char __user *user_buff, size_t count, loff_t *ppos)
+{
+	struct dp_debug_private *debug = file->private_data;
+	char buf[SZ_8];
+	size_t len = 0;
+	struct dss_clk_mmrm_cb mmrm_cb_data;
+	struct mmrm_client_notifier_data notifier_data;
+	struct dp_display *dp_display = debug->display;
+	int cb_type;
+
+	if (!debug)
+		return -ENODEV;
+	if (*ppos)
+		return 0;
+	len = min_t(size_t, count, SZ_8 - 1);
+	if (copy_from_user(buf, user_buff, len))
+		return 0;
+
+	buf[len] = '\0';
+
+	if (kstrtoint(buf, 10, &cb_type) != 0)
+		return 0;
+	if (cb_type != MMRM_CLIENT_RESOURCE_VALUE_CHANGE)
+		return 0;
+
+	notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
+	mmrm_cb_data.phandle = (void *)dp_display;
+	notifier_data.pvt_data = (void *)&mmrm_cb_data;
+
+	dp_display_mmrm_callback(&notifier_data);
+
 	return len;
 }
 
@@ -1889,6 +1925,11 @@ static const struct file_operations hdcp_fops = {
 	.read = dp_debug_read_hdcp,
 };
 
+static const struct file_operations mmrm_clk_cb_fops = {
+	.open = simple_open,
+	.write = dp_debug_mmrm_clk_cb_write,
+};
+
 static int dp_debug_init_mst(struct dp_debug_private *debug, struct dentry *dir)
 {
 	int rc = 0;
@@ -1980,6 +2021,13 @@ static int dp_debug_init_link(struct dp_debug_private *debug,
 	debugfs_create_u32("lane_count", 0644, dir, &debug->panel->lane_count);
 
 	debugfs_create_u32("link_bw_code", 0644, dir, &debug->panel->link_bw_code);
+
+	file = debugfs_create_file("mmrm_clk_cb", 0644, dir, debug, &mmrm_clk_cb_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs mmrm_clk_cb failed, rc=%d\n", DEBUG_NAME, rc);
+		return rc;
+	}
 
 	return rc;
 }
@@ -2429,6 +2477,7 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 	debug->parser = in->parser;
 	debug->ctrl = in->ctrl;
 	debug->pll = in->pll;
+	debug->display = in->display;
 
 	dp_debug = &debug->dp_debug;
 	dp_debug->vdisplay = 0;

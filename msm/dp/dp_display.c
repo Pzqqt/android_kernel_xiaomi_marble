@@ -1836,6 +1836,28 @@ static void dp_display_register_usb_notifier(struct dp_display_private *dp)
 		DP_DEBUG("failed to register for usb event: %d\n", rc);
 }
 
+int dp_display_mmrm_callback(struct mmrm_client_notifier_data *notifier_data)
+{
+	struct dss_clk_mmrm_cb *mmrm_cb_data = (struct dss_clk_mmrm_cb *)notifier_data->pvt_data;
+	struct dp_display *dp_display = (struct dp_display *)mmrm_cb_data->phandle;
+	struct dp_display_private *dp =
+		container_of(dp_display, struct dp_display_private, dp_display);
+	int ret = 0;
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state, notifier_data->cb_type);
+	if (notifier_data->cb_type == MMRM_CLIENT_RESOURCE_VALUE_CHANGE
+				&& dp_display_state_is(DP_STATE_ENABLED)
+				&& !dp_display_state_is(DP_STATE_ABORTED)) {
+		ret = dp_display_handle_disconnect(dp);
+		if (ret)
+			DP_ERR("mmrm callback error reducing clk, ret:%d\n", ret);
+	}
+
+	DP_DEBUG("mmrm callback handled, state: 0x%x rc:%d\n", dp->state, ret);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, notifier_data->cb_type);
+	return ret;
+}
+
 static void dp_display_deinit_sub_modules(struct dp_display_private *dp)
 {
 	dp_debug_put(dp->debug);
@@ -1940,6 +1962,13 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 		goto error_link;
 	}
 
+	rc = dp->power->power_mmrm_init(dp->power, &dp->priv->phandle,
+		(void *)&dp->dp_display, dp_display_mmrm_callback);
+	if (rc) {
+		DP_ERR("failed to initialize mmrm, rc = %d\n", rc);
+		goto error_link;
+	}
+
 	dp->link = dp_link_get(dev, dp->aux);
 	if (IS_ERR(dp->link)) {
 		rc = PTR_ERR(dp->link);
@@ -2014,6 +2043,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	debug_in.parser = dp->parser;
 	debug_in.ctrl = dp->ctrl;
 	debug_in.pll = dp->pll;
+	debug_in.display = &dp->dp_display;
 
 	dp->debug = dp_debug_get(&debug_in);
 	if (IS_ERR(dp->debug)) {

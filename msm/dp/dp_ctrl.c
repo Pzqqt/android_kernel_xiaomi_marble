@@ -641,7 +641,7 @@ static int dp_ctrl_enable_link_clock(struct dp_ctrl_private *ctrl)
 
 	DP_DEBUG("rate=%d\n", rate);
 
-	dp_ctrl_set_clock_rate(ctrl, "link_clk", type, rate);
+	dp_ctrl_set_clock_rate(ctrl, "link_clk_src", type, rate);
 
 	if (ctrl->pll->pll_cfg) {
 		ret = ctrl->pll->pll_cfg(ctrl->pll, rate);
