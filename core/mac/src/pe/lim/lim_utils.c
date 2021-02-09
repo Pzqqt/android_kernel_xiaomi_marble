@@ -70,6 +70,7 @@
 #include <wlan_blm_api.h>
 #include <lim_assoc_utils.h>
 #include "wlan_mlme_ucfg_api.h"
+#include "nan_ucfg_api.h"
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -5518,6 +5519,7 @@ static QDF_STATUS lim_send_ht_caps_ie(struct mac_context *mac_ctx,
 	uint8_t ht_caps[DOT11F_IE_HTCAPS_MIN_LEN + 2] = {0};
 	tHtCaps *p_ht_cap = (tHtCaps *)(&ht_caps[2]);
 	QDF_STATUS status_5g, status_2g;
+	bool nan_beamforming_supported;
 
 	ht_caps[0] = DOT11F_EID_HTCAPS;
 	ht_caps[1] = DOT11F_IE_HTCAPS_MIN_LEN;
@@ -5537,7 +5539,10 @@ static QDF_STATUS lim_send_ht_caps_ie(struct mac_context *mac_ctx,
 
 	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id,
 					 NSS_CHAINS_BAND_2GHZ);
-	if(device_mode == QDF_NDI_MODE) {
+
+	nan_beamforming_supported =
+		ucfg_nan_is_beamforming_supported(mac_ctx->psoc);
+	if (device_mode == QDF_NDI_MODE && !nan_beamforming_supported) {
 		p_ht_cap->txBF = 0;
 		p_ht_cap->implicitTxBF = 0;
 		p_ht_cap->explicitCSITxBF = 0;
@@ -5589,7 +5594,7 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 				       uint8_t vdev_id)
 {
 	uint8_t vht_caps[DOT11F_IE_VHTCAPS_MAX_LEN + 2] = {0};
-	bool vht_for_2g_enabled = false;
+	bool vht_for_2g_enabled = false, nan_beamforming_supported;
 	tSirMacVHTCapabilityInfo *p_vht_cap =
 			(tSirMacVHTCapabilityInfo *)(&vht_caps[2]);
 	QDF_STATUS status_5g, status_2g;
@@ -5606,7 +5611,9 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps, vdev_id,
 					  NSS_CHAINS_BAND_5GHZ);
 
-	if (device_mode == QDF_NDI_MODE) {
+	nan_beamforming_supported =
+		ucfg_nan_is_beamforming_supported(mac_ctx->psoc);
+	if (device_mode == QDF_NDI_MODE && !nan_beamforming_supported) {
 		p_vht_cap->muBeamformeeCap = 0;
 		p_vht_cap->muBeamformerCap = 0;
 		p_vht_cap->suBeamformeeCap = 0;
@@ -7424,6 +7431,7 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 				   HE_CAP_160M_MCS_MAP_LEN +
 				   HE_CAP_80P80_MCS_MAP_LEN;
 	uint8_t num_ppe_th = 0;
+	bool nan_beamforming_supported;
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
 	qdf_mem_zero(he_caps, he_cap_total_len);
@@ -7432,7 +7440,10 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
 	lim_set_he_caps(mac_ctx, session, he_caps, he_cap_total_len);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
-	if(device_mode == QDF_NDI_MODE) {
+
+	nan_beamforming_supported =
+		ucfg_nan_is_beamforming_supported(mac_ctx->psoc);
+	if (device_mode == QDF_NDI_MODE && !nan_beamforming_supported) {
 		he_cap->su_beamformee = 0;
 		he_cap->su_beamformer = 0;
 		he_cap->mu_beamformer = 0;
