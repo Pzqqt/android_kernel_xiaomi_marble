@@ -373,6 +373,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	if (status)
 		return status;
 
+	qdf_mem_zero(&params, sizeof(params));
 	ucfg_blm_dump_black_list_ap(hdd_ctx->pdev);
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
 
