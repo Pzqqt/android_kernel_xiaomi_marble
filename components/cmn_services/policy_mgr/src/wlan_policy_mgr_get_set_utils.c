@@ -1465,15 +1465,12 @@ QDF_STATUS policy_mgr_check_conn_with_mode_and_vdev_id(
 	return qdf_status;
 }
 
-void policy_mgr_soc_set_dual_mac_cfg_cb(struct wlan_objmgr_psoc *psoc,
-					enum set_hw_mode_status status,
-					uint32_t scan_config,
-					uint32_t fw_mode_config)
+void policy_mgr_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
+		uint32_t scan_config,
+		uint32_t fw_mode_config)
 {
 	policy_mgr_debug("Status:%d for scan_config:%x fw_mode_config:%x",
 			 status, scan_config, fw_mode_config);
-
-	policy_mgr_dual_mac_configuration_complete(psoc);
 }
 
 void policy_mgr_set_dual_mac_scan_config(struct wlan_objmgr_psoc *psoc,

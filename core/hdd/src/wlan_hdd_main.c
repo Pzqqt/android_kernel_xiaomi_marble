@@ -3039,23 +3039,14 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 	hdd_debug("send scan_cfg: 0x%x fw_mode_cfg: 0x%x to fw",
 		cfg.scan_config, cfg.fw_mode_config);
 
-	status = policy_mgr_reset_dual_mac_configuration(hdd_ctx->psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
 	status = sme_soc_set_dual_mac_config(cfg);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		/* wait for sme_soc_set_dual_mac_config to complete */
-		status =
-		    policy_mgr_wait_for_dual_mac_configuration(hdd_ctx->psoc);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			hdd_ctx->is_dual_mac_cfg_updated = true;
-	} else {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("sme_soc_set_dual_mac_config failed %d", status);
 		return status;
 	}
+	hdd_ctx->is_dual_mac_cfg_updated = true;
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

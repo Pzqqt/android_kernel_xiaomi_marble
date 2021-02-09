@@ -43,8 +43,6 @@
 #define PM_5_GHZ_CH_FREQ_36   (5180)
 #define CHANNEL_SWITCH_COMPLETE_TIMEOUT   (2000)
 
-#define DUAL_MAC_CONFIG_TIMEOUT   (POLICY_MGR_SER_CMD_TIMEOUT + 1000)
-
 /**
  * Policy Mgr hardware mode list bit-mask definitions.
  * Bits 4:0, 31:29 are unused.
@@ -333,8 +331,6 @@ struct policy_mgr_cfg {
  * @cfg: Policy manager config data
  * @dynamic_mcc_adaptive_sched: disable/enable mcc adaptive scheduler feature
  * @dynamic_dfs_master_disabled: current state of dynamic dfs master
- * @dual_mac_configuration_complete_evt: qdf event to synchronize dual mac
- *					 configuration setting
  */
 struct policy_mgr_psoc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -376,7 +372,6 @@ struct policy_mgr_psoc_priv_obj {
 	uint32_t valid_ch_freq_list_count;
 	bool dynamic_mcc_adaptive_sched;
 	bool dynamic_dfs_master_disabled;
-	qdf_event_t dual_mac_configuration_complete_evt;
 };
 
 /**
