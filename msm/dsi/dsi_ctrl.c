@@ -997,7 +997,7 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 	if (host_cfg->data_lanes & DSI_DATA_LANE_3)
 		num_of_lanes++;
 
-	if (split_link->split_link_enabled)
+	if (split_link->enabled)
 		num_of_lanes = split_link->lanes_per_sublink;
 
 	config->common_config.num_data_lanes = num_of_lanes;
@@ -1367,6 +1367,10 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 	if (dsi_ctrl->hw.reset_trig_ctrl)
 		dsi_hw_ops.reset_trig_ctrl(&dsi_ctrl->hw,
 				&dsi_ctrl->host_config.common_config);
+
+	if (dsi_hw_ops.splitlink_cmd_setup && split_link->enabled)
+		dsi_hw_ops.splitlink_cmd_setup(&dsi_ctrl->hw,
+				&dsi_ctrl->host_config.common_config, flags);
 
 	/*
 	 * Always enable DMA scheduling for video mode panel.
