@@ -607,11 +607,6 @@ struct msm_vidc_hfi_frame_info {
 	u32                    data_corrupt;
 };
 
-struct msm_vidc_cmd_range {
-	u32 begin;
-	u32 end;
-};
-
 struct msm_vidc_decode_vpp_delay {
 	bool                   enable;
 	u32                    size;
