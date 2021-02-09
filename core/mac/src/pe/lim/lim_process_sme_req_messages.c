@@ -4395,6 +4395,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	/* Store the reassoc handle in the session Table */
 	session_entry->pLimReAssocReq = reassoc_req;
+	session_entry->lim_join_req = reassoc_req;
 
 	status = wlan_get_parsed_bss_description_ies(mac_ctx,
 				&session_entry->pLimReAssocReq->bssDescription,
@@ -4464,6 +4465,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		session_entry->htSmpsvalue,
 		session_entry->send_smps_action,
 		session_entry->supported_nss_1x1);
+	session_entry->lim_join_req = NULL;
 	/*
 	 * Reassociate request is expected
 	 * in link established state only.
