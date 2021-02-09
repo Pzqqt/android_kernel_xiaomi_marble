@@ -7644,6 +7644,10 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 
 		hdd_adapter_abort_tx_flow(adapter);
+
+		if (adapter->device_mode == QDF_STA_MODE)
+			hdd_send_twt_del_all_sessions_to_userspace(adapter);
+
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			/* Stop tdls timers */

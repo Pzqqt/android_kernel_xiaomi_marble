@@ -1494,8 +1494,7 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (!hdd_ctx || cds_is_load_or_unload_in_progress())
 		return;
 
 	wdev = adapter->dev->ieee80211_ptr;
@@ -1527,6 +1526,39 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 	hdd_exit();
 
 	return;
+}
+
+void
+hdd_send_twt_del_all_sessions_to_userspace(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_psoc *psoc = adapter->hdd_ctx->psoc;
+	struct hdd_station_ctx *hdd_sta_ctx = NULL;
+	struct wmi_twt_del_dialog_complete_event_param params;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_cm_is_vdev_associated(adapter)) {
+		hdd_debug("Not associated, vdev %d mode %d state %d",
+			   adapter->vdev_id, adapter->device_mode,
+			   hdd_sta_ctx->conn_info.conn_state);
+		return;
+	}
+
+	if (!ucfg_mlme_is_twt_setup_done(psoc,
+					 &hdd_sta_ctx->conn_info.bssid,
+					 WLAN_ALL_SESSIONS_DIALOG_ID)) {
+		hdd_debug("No active TWT sessions, vdev_id: %d dialog_id: %d",
+			  adapter->vdev_id, WLAN_ALL_SESSIONS_DIALOG_ID);
+		return;
+	}
+
+	qdf_mem_zero(&params, sizeof(params));
+	params.vdev_id = adapter->vdev_id;
+	params.dialog_id = WLAN_ALL_SESSIONS_DIALOG_ID;
+	params.status = WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR;
+	qdf_mem_copy(params.peer_macaddr, hdd_sta_ctx->conn_info.bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	hdd_twt_del_dialog_comp_cb(psoc, &params);
 }
 
 /**
