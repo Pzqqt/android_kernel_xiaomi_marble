@@ -603,6 +603,18 @@ struct msm_vidc_subscription_params {
 	u32                    tier;
 };
 
+struct msm_vidc_frame_properties {
+	u32                    hfi_picture_type;
+	u32                    hfi_no_output;
+	u32                    hfi_cr;
+	u32                    hfi_cf;
+};
+
+struct msm_vidc_cmd_range {
+	u32 begin;
+	u32 end;
+};
+
 struct msm_vidc_decode_vpp_delay {
 	bool                   enable;
 	u32                    size;
