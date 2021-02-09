@@ -6590,17 +6590,14 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 	}
 }
 
-static void _dsi_display_populate_bit_clks(struct dsi_display *display,
-					   int start, int end, u32 *mode_idx)
+static void _dsi_display_populate_bit_clks(struct dsi_display *display, int start, int end)
 {
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
-	struct dsi_display_mode *src, *dst;
+	struct dsi_display_mode *src;
 	struct dsi_host_common_cfg *cfg;
-	struct dsi_display_mode_priv_info *priv_info;
-	int i, j, total_modes, bpp, lanes = 0;
-	size_t size = 0;
+	int i, bpp, lanes = 0;
 
-	if (!display || !mode_idx)
+	if (!display)
 		return;
 
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
@@ -6619,8 +6616,6 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 	if (cfg->data_lanes & DSI_DATA_LANE_3)
 		lanes++;
 
-	total_modes = display->panel->num_display_modes;
-
 	for (i = start; i < end; i++) {
 		src = &display->modes[i];
 		if (!src)
@@ -6634,42 +6629,9 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 
 		dsi_display_adjust_mode_timing(display, src, lanes, bpp);
 
-		src->pixel_clk_khz =
-			div_u64(src->timing.clk_rate_hz * lanes, bpp);
+		src->pixel_clk_khz = div_u64(src->timing.clk_rate_hz * lanes, bpp);
 		src->pixel_clk_khz /= 1000;
 		src->pixel_clk_khz *= display->ctrl_count;
-	}
-
-	for (i = 1; i < dyn_clk_caps->bit_clk_list_len; i++) {
-		if (*mode_idx >= total_modes)
-			return;
-		for (j = start; j < end; j++) {
-			src = &display->modes[j];
-			dst = &display->modes[*mode_idx];
-
-			if (!src || !dst) {
-				DSI_ERR("invalid mode index\n");
-				return;
-			}
-			memcpy(dst, src, sizeof(struct dsi_display_mode));
-
-			size = sizeof(struct dsi_display_mode_priv_info);
-			priv_info = kzalloc(size, GFP_KERNEL);
-			dst->priv_info = priv_info;
-			if (dst->priv_info)
-				memcpy(dst->priv_info, src->priv_info, size);
-
-			dst->timing.clk_rate_hz = dyn_clk_caps->bit_clk_list[i];
-
-			dsi_display_adjust_mode_timing(display, dst, lanes,
-									bpp);
-			dst->panel_mode_caps = DSI_OP_VIDEO_MODE;
-			dst->pixel_clk_khz =
-				div_u64(dst->timing.clk_rate_hz * lanes, bpp);
-			dst->pixel_clk_khz /= 1000;
-			dst->pixel_clk_khz *= display->ctrl_count;
-			(*mode_idx)++;
-		}
 	}
 }
 
@@ -6822,7 +6784,8 @@ int dsi_display_get_modes(struct dsi_display *display,
 		}
 		end = array_idx;
 
-		_dsi_display_populate_bit_clks(display, start, end, &array_idx);
+		_dsi_display_populate_bit_clks(display, start, end);
+
 		if (is_preferred) {
 			/* Set first timing sub mode as preferred mode */
 			display->modes[start].is_preferred = true;
