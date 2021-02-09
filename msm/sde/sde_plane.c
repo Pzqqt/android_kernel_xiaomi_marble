@@ -4276,15 +4276,18 @@ u32 sde_plane_get_ubwc_error(struct drm_plane *plane)
 {
 	u32 ubwc_error = 0;
 	struct sde_plane *psde;
+	struct sde_plane_state *pstate;
 
 	if (!plane) {
 		SDE_ERROR("invalid plane\n");
 		return 0;
 	}
 	psde = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
 
 	if (!psde->is_virtual && psde->pipe_hw->ops.get_ubwc_error)
-		ubwc_error = psde->pipe_hw->ops.get_ubwc_error(psde->pipe_hw);
+		ubwc_error = psde->pipe_hw->ops.get_ubwc_error(psde->pipe_hw,
+				pstate->multirect_index);
 
 	return ubwc_error;
 }
@@ -4292,15 +4295,53 @@ u32 sde_plane_get_ubwc_error(struct drm_plane *plane)
 void sde_plane_clear_ubwc_error(struct drm_plane *plane)
 {
 	struct sde_plane *psde;
+	struct sde_plane_state *pstate;
 
 	if (!plane) {
 		SDE_ERROR("invalid plane\n");
 		return;
 	}
 	psde = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
 
 	if (psde->pipe_hw->ops.clear_ubwc_error)
-		psde->pipe_hw->ops.clear_ubwc_error(psde->pipe_hw);
+		psde->pipe_hw->ops.clear_ubwc_error(psde->pipe_hw, pstate->multirect_index);
+}
+
+u32 sde_plane_get_meta_error(struct drm_plane *plane)
+{
+	u32 meta_error = 0;
+	struct sde_plane *psde;
+	struct sde_plane_state *pstate;
+
+	if (!plane) {
+		SDE_ERROR("invalid plane\n");
+		return 0;
+	}
+	psde = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
+
+	if (psde->pipe_hw->ops.get_meta_error)
+		meta_error = psde->pipe_hw->ops.get_meta_error(psde->pipe_hw,
+				pstate->multirect_index);
+
+	return meta_error;
+}
+
+void sde_plane_clear_meta_error(struct drm_plane *plane)
+{
+	struct sde_plane *psde;
+	struct sde_plane_state *pstate;
+
+	if (!plane) {
+		SDE_ERROR("invalid plane\n");
+		return;
+	}
+	psde = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
+
+	if (psde->pipe_hw->ops.clear_meta_error)
+		psde->pipe_hw->ops.clear_meta_error(psde->pipe_hw, pstate->multirect_index);
 }
 
 #ifdef CONFIG_DEBUG_FS
