@@ -146,26 +146,25 @@ QDF_STATUS mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
 				 uint8_t dialog_id);
 
 /**
- * mlme_twt_is_notify_done()  - Check if notify is done.
- * @psoc: Pointer to psoc object
- * @peer_mac: Pointer to peer mac address
- *
- * Return: True if notify is done
- */
-bool mlme_twt_is_notify_done(struct wlan_objmgr_psoc *psoc,
-			     struct qdf_mac_addr *peer_mac);
-
-/**
  * mlme_twt_set_wait_for_notify()  - Set wait for notify flag.
  * @psoc: Pointer to psoc object
- * @peer_mac: Pointer to peer mac address
+ * @vdev_id: VDEV identifier
  * @is_set: Set or clear notify flag
  *
  * Return: None
  */
 void mlme_twt_set_wait_for_notify(struct wlan_objmgr_psoc *psoc,
-				  struct qdf_mac_addr *peer_mac,
-				  bool is_set);
+				  uint32_t vdev_id, bool is_set);
+
+/**
+ * mlme_is_twt_notify_in_progress() - Get TWT notify in progress.
+ * @psoc: Pointer to psoc object
+ * @vdev_id: VDEV identifier
+ *
+ * Return: True if twt_notify is in progress.
+ */
+bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
+				    uint32_t vdev_id);
 
 /**
  * mlme_is_flexible_twt_enabled() - Check if flexible TWT is enabled.

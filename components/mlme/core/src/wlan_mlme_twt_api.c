@@ -219,58 +219,27 @@ bool mlme_is_twt_setup_done(struct wlan_objmgr_psoc *psoc,
 }
 
 void mlme_twt_set_wait_for_notify(struct wlan_objmgr_psoc *psoc,
-				  struct qdf_mac_addr *peer_mac,
-				  bool is_set)
+				  uint32_t vdev_id, bool is_set)
 {
-	struct peer_mlme_priv_obj *peer_priv;
-	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
 
-	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
-					   WLAN_MLME_NB_ID);
-	if (!peer) {
-		mlme_legacy_err("Peer object not found");
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_legacy_err("vdev object not found");
 		return;
 	}
 
-	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
-							  WLAN_UMAC_COMP_MLME);
-	if (!peer_priv) {
-		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
-		mlme_legacy_err("peer mlme component object is NULL");
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		mlme_legacy_err("vdev legacy private object is NULL");
 		return;
 	}
 
-	peer_priv->twt_ctx.wait_for_notify = is_set;
-
-	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
-}
-
-bool mlme_twt_is_notify_done(struct wlan_objmgr_psoc *psoc,
-			     struct qdf_mac_addr *peer_mac)
-{
-	struct peer_mlme_priv_obj *peer_priv;
-	struct wlan_objmgr_peer *peer;
-	bool notify_done;
-
-	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
-					   WLAN_MLME_NB_ID);
-	if (!peer) {
-		mlme_legacy_err("Peer object not found");
-		return false;
-	}
-
-	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
-							  WLAN_UMAC_COMP_MLME);
-	if (!peer_priv) {
-		mlme_legacy_err(" peer mlme component object is NULL");
-		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
-		return false;
-	}
-
-	notify_done = peer_priv->twt_ctx.wait_for_notify;
-	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
-
-	return notify_done;
+	mlme_priv->twt_wait_for_notify = is_set;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 }
 
 void mlme_set_twt_session_state(struct wlan_objmgr_psoc *psoc,
@@ -483,6 +452,34 @@ QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
+				    uint32_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	bool is_twt_notify_in_progress;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+
+	if (!vdev) {
+		mlme_legacy_err("vdev object not found");
+		return false;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	is_twt_notify_in_progress = mlme_priv->twt_wait_for_notify;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return is_twt_notify_in_progress;
 }
 
 bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,

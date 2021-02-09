@@ -319,6 +319,8 @@ struct wait_for_key_timer {
  * @mscs_req_info: Information related to mscs request
  * @he_config: he config
  * @he_sta_obsspd: he_sta_obsspd
+ * @twt_wait_for_notify: TWT session teardown received, wait for
+ * notify event from firmware before next TWT setup is done.
  * @rso_cfg: per vdev RSO config to be sent to FW
  * @connect_info: mlme connect information
  * @wait_key_timer: wait key timer
@@ -346,6 +348,7 @@ struct mlme_legacy_priv {
 	uint32_t hb_failure_rssi;
 	struct mlme_cfg_str opr_rate_set;
 	struct mlme_cfg_str ext_opr_rate_set;
+	bool twt_wait_for_notify;
 #ifdef WLAN_FEATURE_MSCS
 	struct mscs_req_info mscs_req_info;
 #endif

@@ -2175,8 +2175,7 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 	if (param->status == WMI_HOST_DEL_TWT_STATUS_ROAMING ||
 	    param->status == WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN)
 		mlme_twt_set_wait_for_notify(
-			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
-			true);
+			mac->psoc, param->vdev_id, true);
 
 	/* Reset the active TWT command to none */
 	mlme_set_twt_command_in_progress(
@@ -2301,12 +2300,8 @@ sme_process_twt_notify_event(struct mac_context *mac,
 			     struct wmi_twt_notify_event_param *notify_event)
 {
 	twt_notify_cb callback;
-	struct csr_roam_session *session;
 
-	session = CSR_GET_SESSION(mac, notify_event->vdev_id);
-	mlme_twt_set_wait_for_notify(mac->psoc,
-				     &session->connectedProfile.bssid,
-				     FALSE);
+	mlme_twt_set_wait_for_notify(mac->psoc, notify_event->vdev_id, false);
 	callback = mac->sme.twt_notify_cb;
 	if (callback)
 		callback(mac->psoc, notify_event);
@@ -13923,12 +13918,20 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg twt_msg = {0};
-	bool is_twt_cmd_in_progress;
+	bool is_twt_cmd_in_progress, is_twt_notify_in_progress;
 	QDF_STATUS status;
 	void *wma_handle;
 	struct wmi_twt_add_dialog_param *cmd_params;
 
 	SME_ENTER();
+
+	is_twt_notify_in_progress = mlme_is_twt_notify_in_progress(
+			mac->psoc, twt_params->vdev_id);
+
+	if (is_twt_notify_in_progress) {
+		sme_debug("Waiting for TWT Notify");
+		return QDF_STATUS_E_BUSY;
+	}
 
 	is_twt_cmd_in_progress = mlme_twt_is_command_in_progress(
 			mac->psoc,
