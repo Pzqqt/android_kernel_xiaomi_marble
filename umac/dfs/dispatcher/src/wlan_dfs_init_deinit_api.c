@@ -327,6 +327,10 @@ QDF_STATUS dfs_init(void)
 						QDF_TRACE_LEVEL_DEBUG,
 						true);
 
+	status = qdf_print_set_category_verbose(qdf_get_pidx(),
+						QDF_MODULE_ID_DFS,
+						QDF_TRACE_LEVEL_ERROR,
+						true);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
 			"Failed to set verbose for category");
@@ -502,11 +506,11 @@ QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 
 	/* DFS is NULL during unload. should we call this function before */
 	if (dfs) {
+		dfs_detach(dfs);
 		global_dfs_to_mlme.pdev_component_obj_detach(pdev,
 				WLAN_UMAC_COMP_DFS,
 				(void *)dfs);
 
-		dfs_detach(dfs);
 		dfs->dfs_pdev_obj = NULL;
 		dfs_destroy_object(dfs);
 	}
