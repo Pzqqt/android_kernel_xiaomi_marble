@@ -489,13 +489,23 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
 	/*
-	 * reset read only flag for a zero length
-	 * buffer (if marked read only)
+	 * reset data size to zero for last flag buffer.
+	 * reset RO flag for last flag buffer.
 	 */
-	if (buffer->flags & HFI_BUF_FW_FLAG_READONLY &&
-			!buffer->data_size)
-		buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
-	else if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
+	if (buffer->flags & HFI_BUF_FW_FLAG_LAST) {
+		if (buffer->data_size) {
+			i_vpr_e(inst, "%s: reset data size to zero for last flag buffer\n",
+				__func__);
+			buffer->data_size = 0;
+		}
+		if (buffer->flags & HFI_BUF_FW_FLAG_READONLY) {
+			i_vpr_e(inst, "%s: reset RO flag for last flag buffer\n",
+				__func__);
+			buffer->flags &= ~HFI_BUF_FW_FLAG_READONLY;
+		}
+	}
+
+	if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
 		buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 	else
 		buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
