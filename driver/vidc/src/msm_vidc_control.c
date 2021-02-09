@@ -818,11 +818,9 @@ int msm_vidc_adjust_bitrate_mode(void *instance, struct v4l2_ctrl *ctrl)
 			hfi_value = HFI_RC_CBR_VFR;
 		else
 			hfi_value = HFI_RC_CBR_CFR;
-	}/* TODO: CQ mode
-	else if (bitrate_mode == CQ) {
+	} else if (bitrate_mode == V4L2_MPEG_VIDEO_BITRATE_MODE_CQ) {
 		hfi_value = HFI_RC_CQ;
 	}
-	*/
 
 update:
 	inst->hfi_rc_type = hfi_value;
@@ -1236,6 +1234,34 @@ int msm_vidc_set_deblock_mode(void *instance,
 
 	hfi_value = (alpha << 16) | (beta << 8) | lf_mode;
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_constant_quality(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (msm_vidc_get_parent_value(inst, cap_id,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (rc_type != HFI_RC_CQ)
+		return 0;
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
 
 	return rc;

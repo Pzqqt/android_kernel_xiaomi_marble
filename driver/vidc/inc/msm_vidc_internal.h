@@ -276,6 +276,7 @@ enum msm_vidc_inst_capability_type {
 	LOSSLESS,
 	FRAME_SKIP_MODE,
 	FRAME_RC_ENABLE,
+	CONSTANT_QUALITY,
 	GOP_SIZE,
 	GOP_CLOSURE,
 	BLUR_TYPES,
