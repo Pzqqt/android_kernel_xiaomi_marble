@@ -773,21 +773,29 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.mcst  = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_SRP:
+		if (extn_ie->ie_len > WLAN_MAX_SRP_IE_LEN)
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.srp   = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HECAP:
 		scan_params->ie_list.hecap = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HEOP:
+		if (extn_ie->ie_len > WLAN_MAX_HEOP_IE_LEN)
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.heop  = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_ESP:
 		scan_params->ie_list.esp = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_MUEDCA:
+		if (extn_ie->ie_len > WLAN_MAX_MUEDCA_IE_LEN)
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.muedca = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HE_6G_CAP:
+		if (extn_ie->ie_len > WLAN_MAX_HE_6G_CAP_IE_LEN)
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.hecap_6g = (uint8_t *)ie;
 		break;
 	default:
@@ -804,6 +812,9 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.vendor = (uint8_t *)ie;
 
 	if (is_wpa_oui((uint8_t *)ie)) {
+		if (ie->ie_len > WLAN_VENDOR_WPA_IE_LEN)
+			return QDF_STATUS_E_INVAL;
+
 		scan_params->ie_list.wpa = (uint8_t *)ie;
 	} else if (is_wps_oui((uint8_t *)ie)) {
 		scan_params->ie_list.wps = (uint8_t *)ie;
@@ -811,19 +822,34 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		if (is_wcn_oui((uint8_t *)ie))
 			scan_params->ie_list.wcn = (uint8_t *)ie;
 	} else if (is_wme_param((uint8_t *)ie)) {
+		if (ie->ie_len > WLAN_VENDOR_WME_IE_LEN)
+			return QDF_STATUS_E_INVAL;
+
 		scan_params->ie_list.wmeparam = (uint8_t *)ie;
 	} else if (is_wme_info((uint8_t *)ie)) {
 		scan_params->ie_list.wmeinfo = (uint8_t *)ie;
 	} else if (is_atheros_oui((uint8_t *)ie)) {
+		if (ie->ie_len > WLAN_VENDOR_ATHCAPS_IE_LEN)
+			return QDF_STATUS_E_INVAL;
+
 		scan_params->ie_list.athcaps = (uint8_t *)ie;
 	} else if (is_atheros_extcap_oui((uint8_t *)ie)) {
+		if (ie->ie_len > WLAN_VENDOR_ATH_EXTCAP_IE_LEN)
+			return QDF_STATUS_E_INVAL;
+
 		scan_params->ie_list.athextcaps = (uint8_t *)ie;
 	} else if (is_sfa_oui((uint8_t *)ie)) {
+		if (ie->ie_len > WLAN_VENDOR_SFA_IE_LEN)
+			return QDF_STATUS_E_INVAL;
+
 		scan_params->ie_list.sfa = (uint8_t *)ie;
 	} else if (is_p2p_oui((uint8_t *)ie)) {
 		scan_params->ie_list.p2p = (uint8_t *)ie;
 	} else if (is_qca_son_oui((uint8_t *)ie,
 				  QCA_OUI_WHC_AP_INFO_SUBTYPE)) {
+		if (ie->ie_len > WLAN_VENDOR_SON_IE_LEN)
+			return QDF_STATUS_E_INVAL;
+
 		scan_params->ie_list.sonadv = (uint8_t *)ie;
 	} else if (is_ht_cap((uint8_t *)ie)) {
 		/* we only care if there isn't already an HT IE (ANA) */
@@ -1041,6 +1067,8 @@ util_scan_populate_bcn_ie_list(struct wlan_objmgr_pdev *pdev,
 			scan_params->ie_list.rsn = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_XRATES:
+			if (ie->ie_len > WLAN_EXT_SUPPORTED_RATES_IE_MAX_LEN)
+				goto err;
 			scan_params->ie_list.xrates = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_EXTCHANSWITCHANN:
