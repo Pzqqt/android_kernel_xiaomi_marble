@@ -13,7 +13,7 @@
 #include <linux/pid.h>
 #include <linux/sched.h>
 
-/*#define FASTRPC_DRIVER_AVAILABLE*/
+#define FASTRPC_DRIVER_AVAILABLE
 
 #ifdef FASTRPC_DRIVER_AVAILABLE
 #include <linux/fastrpc.h>
