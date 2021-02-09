@@ -155,7 +155,6 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	if (adapter->device_mode == QDF_STA_MODE) {
 		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (vdev) {
-			wlan_crypto_free_vdev_key(vdev);
 			wlan_crypto_reset_vdev_params(vdev);
 			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		}
