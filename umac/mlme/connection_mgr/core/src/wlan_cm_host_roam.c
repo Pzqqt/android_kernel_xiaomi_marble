@@ -219,6 +219,24 @@ static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
+				     struct cm_req *cm_req)
+{
+	/* start preauth process */
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
+				     struct cm_req *cm_req)
+{
+	return cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
+					sizeof(cm_req->roam_req),
+					&cm_req->roam_req);
+}
+#endif
+
 QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
 				  struct cm_req *cm_req)
 {
@@ -237,16 +255,13 @@ QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
 		goto roam_err;
 	}
 
-	status = cm_roam_get_candidates(pdev, cm_ctx,
-					&cm_req->roam_req);
+	status = cm_roam_get_candidates(pdev, cm_ctx, &cm_req->roam_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		reason = CM_NO_CANDIDATE_FOUND;
 		goto roam_err;
 	}
 
-	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
-					  sizeof(cm_req->roam_req),
-					  &cm_req->roam_req);
+	status = cm_host_roam_start(cm_ctx, cm_req);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return status;
 

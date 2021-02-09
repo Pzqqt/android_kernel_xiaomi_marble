@@ -554,12 +554,12 @@ cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
 						 true);
 		break;
 	case WLAN_CM_SS_JOIN_ACTIVE:
+	case WLAN_CM_S_ROAMING:
 		/*
-		 * In join active state, there would be no pending command, so
-		 * for new disconnect request, queue disconnect.
-		 * In disconnecting state queue the new disconnect request, and
-		 * when the old diconnect moves the SM to init it would be
-		 * dropped and required callbacks would be called.
+		 * In join active/roaming state, there would be no pending
+		 * command, so no action required. so for new disconnect
+		 * request, queue disconnect and move the state to
+		 * disconnecting.
 		 */
 		break;
 	case WLAN_CM_SS_SCAN:

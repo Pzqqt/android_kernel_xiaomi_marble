@@ -1029,9 +1029,16 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 					enum wlan_cm_sm_state cm_state_substate)
 {
 	switch (cm_state_substate) {
+	case WLAN_CM_S_ROAMING:
 	case WLAN_CM_S_CONNECTED:
 	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*
+		 * In roaming state, there would be no
+		 * pending command, so for new connect request, queue internal
+		 * disconnect. The preauth and reassoc process will be aborted
+		 * as the state machine will be moved to connecting state and
+		 * preauth/reassoc/roam start event posting will fail.
+		 *
 		 * In connected state, there would be no pending command, so
 		 * for new connect request, queue internal disconnect
 		 *
