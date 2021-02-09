@@ -4164,6 +4164,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		wlan_hdd_init_tx_rx_histogram(hdd_ctx);
 
 		hdd_set_hif_init_phase(hif_ctx, false);
+		hdd_hif_set_enable_detection(hif_ctx, true);
 
 		break;
 

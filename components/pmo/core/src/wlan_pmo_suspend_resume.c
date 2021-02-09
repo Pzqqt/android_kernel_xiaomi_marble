@@ -869,6 +869,8 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	pmo_debug("WOW enabled successfully in fw: credits:%d pending_cmds: %d",
 		host_credits, wmi_pending_cmds);
 
+	hif_latency_detect_timer_stop(pmo_core_psoc_get_hif_handle(psoc));
+
 	pmo_core_update_wow_enable_cmd_sent(psoc_ctx, true);
 
 out:
@@ -1454,6 +1456,8 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 		pmo_err("pmo cannot get the reference out of psoc");
 		goto out;
 	}
+
+	hif_latency_detect_timer_start(pmo_core_psoc_get_hif_handle(psoc));
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 	wow_mode = pmo_core_is_wow_enabled(psoc_ctx);

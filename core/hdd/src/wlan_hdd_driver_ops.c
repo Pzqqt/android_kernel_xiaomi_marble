@@ -231,6 +231,13 @@ static void hdd_hif_init_driver_state_callbacks(void *data,
 		hdd_put_consistent_mem_unaligned;
 }
 
+#ifdef HIF_DETECTION_LATENCY_ENABLE
+void hdd_hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value)
+{
+	hif_set_enable_detection(hif_ctx, value);
+}
+#endif
+
 #ifdef FORCE_WAKE
 void hdd_set_hif_init_phase(struct hif_opaque_softc *hif_ctx,
 			    bool hal_init_phase)
