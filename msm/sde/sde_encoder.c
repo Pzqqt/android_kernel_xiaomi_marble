@@ -1007,6 +1007,8 @@ static int sde_encoder_virt_atomic_check(
 	struct sde_connector_state *sde_conn_state = NULL;
 	struct sde_crtc_state *sde_crtc_state = NULL;
 	enum sde_rm_topology_name old_top;
+	enum sde_rm_topology_name top_name;
+	struct msm_display_info *disp_info;
 	int ret = 0;
 	bool qsync_dirty = false, has_modeset = false;
 
@@ -1017,6 +1019,7 @@ static int sde_encoder_virt_atomic_check(
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
+	disp_info = &sde_enc->disp_info;
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
 	sde_kms = sde_encoder_get_kms(drm_enc);
@@ -1059,6 +1062,17 @@ static int sde_encoder_virt_atomic_check(
 			conn_state, sde_enc, sde_kms, sde_conn, sde_conn_state);
 	if (ret)
 		return ret;
+
+	top_name  = sde_connector_get_property(conn_state,
+				CONNECTOR_PROP_TOPOLOGY_NAME);
+	if ((disp_info->capabilities & MSM_DISPLAY_SPLIT_LINK) && crtc_state->active) {
+		if ((top_name != SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE) &&
+			       (top_name != SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE)) {
+			SDE_ERROR_ENC(sde_enc, "Splitlink check failed, top_name:%d",
+					 top_name);
+			return -EINVAL;
+		}
+	}
 
 	ret = sde_connector_roi_v1_check_roi(conn_state);
 	if (ret) {

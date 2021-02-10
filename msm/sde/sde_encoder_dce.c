@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kthread.h>
@@ -38,6 +38,7 @@ bool sde_encoder_is_dsc_merge(struct drm_encoder *drm_enc)
 	enum sde_rm_topology_name topology;
 	struct sde_encoder_virt *sde_enc;
 	struct drm_connector *drm_conn;
+	struct sde_encoder_phys *phys_enc;
 
 	if (!drm_enc)
 		return false;
@@ -48,6 +49,10 @@ bool sde_encoder_is_dsc_merge(struct drm_encoder *drm_enc)
 
 	drm_conn = sde_enc->cur_master->connector;
 	if (!drm_conn)
+		return false;
+
+	phys_enc = sde_enc->phys_encs[0];
+	if (phys_enc->hw_intf->cfg.split_link_en)
 		return false;
 
 	topology = sde_connector_get_topology_name(drm_conn);
@@ -427,10 +432,12 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	num_dsc = def->num_comp_enc;
 	num_intf = def->num_intf;
 	mode_3d = (num_lm > num_dsc) ? BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
-	merge_3d = (mode_3d != BLEND_3D_NONE) ? true : false;
+	merge_3d = ((mode_3d != BLEND_3D_NONE) && !(enc_master->hw_intf->cfg.split_link_en)) ?
+		true : false;
 
 	dsc->half_panel_pu = _dce_check_half_panel_update(num_lm, sde_enc);
-	dsc_merge = ((num_dsc > num_intf) && !dsc->half_panel_pu) ?
+	dsc_merge = ((num_dsc > num_intf) && !dsc->half_panel_pu &&
+			!(enc_master->hw_intf->cfg.split_link_en)) ?
 			true : false;
 	disable_merge_3d = (merge_3d && dsc->half_panel_pu) ?
 			false : true;

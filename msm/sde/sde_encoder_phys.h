@@ -620,6 +620,9 @@ static inline enum sde_3d_blend_mode sde_encoder_helper_get_3d_blend_mode(
 	if (ret)
 		return BLEND_3D_NONE;
 
+	if (phys_enc->hw_intf->cfg.split_link_en)
+		return BLEND_3D_NONE;
+
 	num_lm = def.num_lm;
 	mode_3d = (num_lm > def.num_enc) ? true : false;
 	split_role = phys_enc->split_role;
