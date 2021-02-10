@@ -451,7 +451,7 @@
  * gCountryCodePriority - Priority to set country code
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set default gCountryCodePriority
  *
@@ -459,13 +459,13 @@
  *
  * Supported Feature: SAP
  *
- * Usage: Internal/External
+ * Usage: Internal
  *
  * </ini>
  */
 #define CFG_COUNTRY_CODE_PRIORITY CFG_INI_BOOL( \
 			"gCountryCodePriority", \
-			0, \
+			1, \
 			"Country code priority")
 
 /*

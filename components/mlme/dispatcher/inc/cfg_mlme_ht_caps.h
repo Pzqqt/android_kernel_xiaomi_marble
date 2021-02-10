@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,7 +81,7 @@
  * gEnableTXSTBC - Enables/disables Tx STBC capability in STA mode
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set default Tx STBC capability
  *
@@ -95,7 +95,7 @@
  */
 #define CFG_TX_STBC_ENABLE CFG_INI_BOOL( \
 		"gEnableTXSTBC", \
-		0, \
+		1, \
 		"Tx STBC capability")
 
 /*
@@ -344,7 +344,7 @@
  * ght_mpdu_density - Configuration option for HT MPDU density
  * @Min: 0
  * @Max: 7
- * @Default: 7
+ * @Default: 4
  *
  * This ini is used to set default MPDU Density
  *
@@ -370,7 +370,7 @@
 	"ght_mpdu_density", \
 	0, \
 	7, \
-	7, \
+	4, \
 	CFG_VALUE_OR_DEFAULT, \
 	"MPDU Density")
 

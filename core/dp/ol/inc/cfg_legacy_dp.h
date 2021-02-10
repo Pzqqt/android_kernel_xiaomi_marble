@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +26,7 @@
 /*
  * <ini>
  * gEnableFlowSteering - Enable rx traffic flow steering
- * @Default: false
+ * @Default: true
  *
  * Enable Rx traffic flow steering to enable Rx interrupts on multiple CEs based
  * on the flows. Different CEs<==>different IRQs<==>probably different CPUs.
@@ -40,7 +40,7 @@
  #define CFG_DP_FLOW_STEERING_ENABLED \
 		CFG_INI_BOOL( \
 		"gEnableFlowSteering", \
-		false, \
+		true, \
 		"")
 
 /*
@@ -58,7 +58,7 @@
  */
 #define CFG_DP_MAX_MSDUS_PER_RXIND \
 	CFG_INI_UINT("maxMSDUsPerRxInd", \
-	4, 32, 32, CFG_VALUE_OR_DEFAULT, \
+	4, 32, 8, CFG_VALUE_OR_DEFAULT, \
 	"Max number of MSDUs per HTT RX INORDER IND msg")
 
 /*
