@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -574,6 +574,49 @@ int dsi_parser_read_u32(const struct device_node *np,
 		goto end;
 
 	strlcpy(item, prop->value, SZ_128);
+	property = item;
+	to_int = strsep(&property, "x");
+
+	if (!property) {
+		property = to_int;
+		base = 10;
+	} else {
+		base = 16;
+	}
+
+	rc = kstrtoint(property, base, out_value);
+	if (rc) {
+		DSI_ERR("prop=%s error(%d) converting %s, base=%d\n",
+			propname, rc, property, base);
+		goto end;
+	}
+
+	DSI_DEBUG("%s=%d\n", propname, *out_value);
+end:
+	return rc;
+}
+
+int dsi_parser_read_u32_index(const struct device_node *np,
+			const char *propname, u32 index, u32 *out_value)
+{
+	struct dsi_parser_node *node = (struct dsi_parser_node *)np;
+	struct dsi_parser_prop *prop;
+	char *property, *to_int, item[SZ_128];
+	int rc = 0, base;
+
+	prop = dsi_parser_search_property(node, propname);
+	if (!prop) {
+		DSI_DEBUG("%s not found\n", propname);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	if (index >= prop->len) {
+		rc = -EINVAL;
+		goto end;
+	}
+
+	strlcpy(item, prop->items[index], SZ_128);
 	property = item;
 	to_int = strsep(&property, "x");
 
