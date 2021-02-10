@@ -792,16 +792,13 @@ void cvp_handle_cmd_response(enum hal_command_response cmd, void *data)
 	case HAL_SESSION_RELEASE_BUFFER_DONE:
 		handle_session_release_buf_done(cmd, data);
 		break;
+	case HAL_SESSION_SGM_OF_CONFIG_CMD_DONE:
 	case HAL_SESSION_DFS_CONFIG_CMD_DONE:
-	case HAL_SESSION_DFS_FRAME_CMD_DONE:
 	case HAL_SESSION_DMM_CONFIG_CMD_DONE:
 	case HAL_SESSION_DMM_PARAMS_CMD_DONE:
-	case HAL_SESSION_DMM_FRAME_CMD_DONE:
 	case HAL_SESSION_WARP_CONFIG_CMD_DONE:
 	case HAL_SESSION_WARP_DS_PARAMS_CMD_DONE:
-	case HAL_SESSION_WARP_FRAME_CMD_DONE:
 	case HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE:
-	case HAL_SESSION_WARP_NCC_FRAME_CMD_DONE:
 	case HAL_SESSION_PERSIST_SET_DONE:
 	case HAL_SESSION_PERSIST_REL_DONE:
 	case HAL_SESSION_TME_CONFIG_CMD_DONE:
@@ -815,8 +812,6 @@ void cvp_handle_cmd_response(enum hal_command_response cmd, void *data)
 	case HAL_SESSION_PYS_HCD_CONFIG_CMD_DONE:
 	case HAL_SESSION_FD_CONFIG_CMD_DONE:
 	case HAL_SESSION_MODEL_BUF_CMD_DONE:
-	case HAL_SESSION_ICA_FRAME_CMD_DONE:
-	case HAL_SESSION_FD_FRAME_CMD_DONE:
 		cvp_handle_session_cmd_done(cmd, data);
 		break;
 	default:
