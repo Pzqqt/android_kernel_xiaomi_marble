@@ -2407,7 +2407,7 @@ exit:
 	return rc;
 }
 
-static int __load_fw(struct msm_vidc_core *core)
+int __load_fw(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
@@ -2462,7 +2462,7 @@ fail_init_res:
 	return rc;
 }
 
-static void __unload_fw(struct msm_vidc_core *core)
+void __unload_fw(struct msm_vidc_core *core)
 {
 	if (!core->dt->fw_cookie)
 		return;
