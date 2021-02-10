@@ -2580,7 +2580,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 		goto unlock;
 	}
 
-	d_vpr_h("%s(): waiting for sys init done, %d ms\n", __func__,
+	d_vpr_h("%s(): waiting for sys_init_done, %d ms\n", __func__,
 		core->capabilities[HW_RESPONSE_TIMEOUT].value);
 	core_unlock(core, __func__);
 	rc = wait_for_completion_timeout(&core->init_done, msecs_to_jiffies(

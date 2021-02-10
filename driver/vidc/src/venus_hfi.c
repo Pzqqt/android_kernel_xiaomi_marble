@@ -2605,48 +2605,6 @@ static int __sys_init(struct msm_vidc_core *core)
 	return 0;
 }
 
-static int __queue_sfr_buffer(struct msm_vidc_core *core)
-{
-	int rc = 0;
-	struct hfi_buffer buf;
-
-	memset(&buf, 0, sizeof(struct hfi_buffer));
-	buf.type = HFI_BUFFER_SFR;
-	buf.index = 0;
-	buf.base_address = core->sfr.align_device_addr;
-	buf.addr_offset = 0;
-	buf.buffer_size = core->sfr.mem_size;
-	buf.data_offset = 0;
-	buf.data_size = 0;
-	buf.timestamp = 0;
-	buf.flags = 0;
-
-	rc = hfi_create_header(core->packet, core->packet_size,
-			0, core->header_id++);
-	if (rc)
-		return rc;
-
-	rc = hfi_create_packet(core->packet,
-			core->packet_size,
-			HFI_CMD_BUFFER,
-			HFI_BUF_HOST_FLAG_NONE,
-			HFI_PAYLOAD_STRUCTURE,
-			HFI_PORT_NONE,
-			core->packet_id++,
-			&buf,
-			sizeof(buf));
-	if (rc)
-		return rc;
-
-	rc = __iface_cmdq_write(core, core->packet);
-	if (rc)
-		return rc;
-
-	d_vpr_h("SFR buffer packet queued\n");
-
-	return rc;
-}
-
 static int __sys_image_version(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -2706,10 +2664,6 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 		goto error;
 
 	rc = __sys_init(core);
-	if (rc)
-		goto error;
-
-	rc = __queue_sfr_buffer(core);
 	if (rc)
 		goto error;
 
