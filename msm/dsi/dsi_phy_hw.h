@@ -7,6 +7,7 @@
 #define _DSI_PHY_HW_H_
 
 #include "dsi_defs.h"
+#include "dsi_hw.h"
 
 #define DSI_MAX_SETTINGS 8
 #define DSI_PHY_TIMING_V3_SIZE 12
@@ -20,6 +21,10 @@
 		fmt, p ? p->index : -1, ##__VA_ARGS__)
 #define DSI_PHY_WARN(p, fmt, ...)	DRM_WARN("[msm-dsi-warn]: DSI_%d: " fmt,\
 		p ? p->index : -1, ##__VA_ARGS__)
+
+#define DSI_MISC_R32(dsi_phy_hw, off) DSI_GEN_R32((dsi_phy_hw)->phy_clamp_base, off)
+#define DSI_MISC_W32(dsi_phy_hw, off, val) \
+	DSI_GEN_W32_DEBUG((dsi_phy_hw)->phy_clamp_base, (dsi_phy_hw)->index, off, val)
 
 /**
  * enum dsi_phy_version - DSI PHY version enumeration

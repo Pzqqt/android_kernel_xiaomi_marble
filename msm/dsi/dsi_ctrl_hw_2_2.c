@@ -274,11 +274,10 @@ u32 dsi_ctrl_hw_22_log_line_count(struct dsi_ctrl_hw *ctrl, bool cmd_mode)
 		return reg;
 
 	if (cmd_mode)
-		reg = readl_relaxed(ctrl->mdp_intf_base + MDP_INTF_TEAR_OFFSET
+		reg = DSI_MDP_INTF_R32(ctrl, MDP_INTF_TEAR_OFFSET
 					+ MDP_INTF_TEAR_LINE_COUNT_OFFSET);
 	else
-		reg = readl_relaxed(ctrl->mdp_intf_base
-					+ MDP_INTF_LINE_COUNT_OFFSET);
+		reg = DSI_MDP_INTF_R32(ctrl, MDP_INTF_LINE_COUNT_OFFSET);
 	return reg;
 }
 
