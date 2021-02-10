@@ -89,7 +89,7 @@ enum monitor_mode_concurrency {
  * enable_rtt_mac_randomization - Enable/Disable rtt mac randomization
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * Usage: External
  *
@@ -97,7 +97,7 @@ enum monitor_mode_concurrency {
  */
 #define CFG_ENABLE_RTT_MAC_RANDOMIZATION CFG_INI_BOOL( \
 	"enable_rtt_mac_randomization", \
-	0, \
+	1, \
 	"Enable RTT MAC randomization")
 
 #define CFG_RTT3_ENABLE CFG_BOOL( \
@@ -316,7 +316,7 @@ enum monitor_mode_concurrency {
  * gEnableLpassSupport - Enable/disable LPASS Support
  * @Min: 0 (disabled)
  * @Max: 1 (enabled)
- * @Default: 0 (disabled)
+ * @Default: 1 (disabled) if WLAN_FEATURE_LPSS is defined, 0 otherwise
  *
  * Related: None
  *
@@ -329,7 +329,7 @@ enum monitor_mode_concurrency {
 #ifdef WLAN_FEATURE_LPSS
 #define CFG_ENABLE_LPASS_SUPPORT CFG_INI_BOOL( \
 	"gEnableLpassSupport", \
-	0, \
+	1, \
 	"Enable LPASS Support")
 #else
 #define CFG_ENABLE_LPASS_SUPPORT CFG_BOOL( \

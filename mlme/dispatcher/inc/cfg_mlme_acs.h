@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,7 @@
  * acs_with_more_param- Enable acs calculation with more param.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable acs calculation with more param.
  *
@@ -43,7 +43,7 @@
 
 #define CFG_ACS_WITH_MORE_PARAM CFG_INI_BOOL( \
 		"acs_with_more_param", \
-		0, \
+		1, \
 		"Enable ACS with more param")
 
 /*
@@ -51,7 +51,7 @@
  * AutoChannelSelectWeight - ACS channel weight
  * @Min: 0
  * @Max: 0xFFFFFFFF
- * @Default: 0x000000FF
+ * @Default: 0x00fafafa
  *
  * This ini is used to adjust weight of factors in
  * acs algorithm.
@@ -75,7 +75,7 @@
 		"AutoChannelSelectWeight", \
 		0, \
 		0xFFFFFFFF, \
-		0x000000FF, \
+		0x00fafafa, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Adjust weight factor in ACS")
 
