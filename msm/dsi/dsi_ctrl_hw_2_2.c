@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/iopoll.h>
 #include "dsi_ctrl_hw.h"
 #include "dsi_ctrl_reg.h"
 #include "dsi_hw.h"
+#include "dsi_ctrl.h"
 #include "dsi_catalog.h"
 
 #define DISP_CC_MISC_CMD_REG_OFF 0x00
@@ -279,4 +280,28 @@ u32 dsi_ctrl_hw_22_log_line_count(struct dsi_ctrl_hw *ctrl, bool cmd_mode)
 		reg = readl_relaxed(ctrl->mdp_intf_base
 					+ MDP_INTF_LINE_COUNT_OFFSET);
 	return reg;
+}
+
+void dsi_ctrl_hw_22_configure_splitlink(struct dsi_ctrl_hw *ctrl,
+		struct dsi_host_common_cfg *common_cfg, u32 flags)
+{
+	u32 reg = 0;
+
+	reg = DSI_R32(ctrl, DSI_SPLIT_LINK);
+
+	/* DMA_LINK_SEL */
+	reg &= ~(0x7 << 12);
+
+	/* Send command to both sublinks unless specified */
+	if (flags & DSI_CTRL_CMD_SUBLINK0)
+		reg |= BIT(12);
+	else if (flags & DSI_CTRL_CMD_SUBLINK1)
+		reg |= BIT(13);
+	else
+		reg |= (BIT(12) | BIT(13));
+
+	DSI_W32(ctrl, DSI_SPLIT_LINK, reg);
+
+	/* Make sure the split link config is updated */
+	wmb();
 }

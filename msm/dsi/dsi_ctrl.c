@@ -1360,6 +1360,9 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 {
 	u32 hw_flags = 0;
 	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
+	struct dsi_split_link_config *split_link;
+
+	split_link = &(dsi_ctrl->host_config.common_config.split_link);
 
 	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags,
 		msg->flags);
