@@ -144,7 +144,7 @@ struct lpass_cdc_tx_macro_priv {
 	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
-	int amic_sample_rate;
+	int pcm_rate[NUM_DECIMATORS];
 };
 
 static bool lpass_cdc_tx_macro_get_data(struct snd_soc_component *component,
@@ -399,23 +399,23 @@ static void lpass_cdc_tx_macro_tx_hpf_corner_freq_callback(struct work_struct *w
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x02);
 		/* Add delay between toggle hpf gate based on sample rate */
-		switch(tx_priv->amic_sample_rate) {
-		case 8000:
+		switch (tx_priv->pcm_rate[hpf_work->decimator]) {
+		case 0:
 			usleep_range(125, 130);
 			break;
-		case 16000:
+		case 1:
 			usleep_range(62, 65);
 			break;
-		case 32000:
+		case 3:
 			usleep_range(31, 32);
 			break;
-		case 48000:
+		case 4:
 			usleep_range(20, 21);
 			break;
-		case 96000:
+		case 5:
 			usleep_range(10, 11);
 			break;
-		case 192000:
+		case 6:
 			usleep_range(5, 6);
 			break;
 		default:
@@ -877,7 +877,7 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	tx_fs_reg = LPASS_CDC_TX0_TX_PATH_CTL +
 				LPASS_CDC_TX_MACRO_TX_PATH_OFFSET * decimator;
 
-	tx_priv->amic_sample_rate = (snd_soc_component_read(component,
+	tx_priv->pcm_rate[decimator] = (snd_soc_component_read(component,
 				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
