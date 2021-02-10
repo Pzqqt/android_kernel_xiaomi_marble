@@ -1959,13 +1959,15 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 	params.vdev_id = adapter->vdev_id;
 
 	ret = wlan_cfg80211_nla_parse_nested(tb,
-					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
-					     twt_param_attr,
-					     qca_wlan_vendor_twt_add_dialog_policy);
-	if (ret)
+				      QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX,
+				      twt_param_attr,
+				      qca_wlan_vendor_twt_nudge_dialog_policy);
+	if (ret) {
+		hdd_debug("TWT: command parsing failed");
 		return ret;
+	}
 
-	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_FLOW_ID;
 	if (tb[id]) {
 		params.dialog_id = nla_get_u8(tb[id]);
 	} else {
