@@ -1762,7 +1762,7 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((ts->tid > DP_MAX_TIDS) ||
+	if ((ts->tid >= DP_MAX_TIDS) ||
 	    (peer->bss_peer && ts->tid == DP_NON_QOS_TID)) {
 		dp_tx_capture_err("%pK: peer_id %d, tid %d > NON_QOS_TID!",
 				  soc, ts->peer_id, ts->tid);
@@ -5487,7 +5487,7 @@ dp_tx_cap_proc_per_ppdu_info(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu,
 			dp_tx_print_bitmap(pdev, ppdu_desc,
 					   usr_idx,
 					   ppdu_desc->ppdu_id);
-			if (user->tid > DP_MAX_TIDS) {
+			if (user->tid >= DP_MAX_TIDS) {
 				dp_tx_capture_err("%pK: ppdu[%d] peer_id[%d] TID[%d] > NON_QOS_TID!",
 						  pdev->soc,
 						  ppdu_desc->ppdu_id,
