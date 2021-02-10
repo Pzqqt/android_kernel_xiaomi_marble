@@ -3444,6 +3444,7 @@ cppflags-y += -DMON_ENABLE_DROP_FOR_MAC
 cppflags-y += -DPCI_LINK_STATUS_SANITY
 cppflags-y += -DDP_MON_RSSI_IN_DBM
 cppflags-y += -DSYSTEM_PM_CHECK
+cppflags-y += -DDISABLE_EAPOL_INTRABSS_FWD
 endif
 
 ifeq ($(CONFIG_TX_AGGREGATION_SIZE_ENABLE), y)
