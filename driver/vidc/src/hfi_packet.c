@@ -68,14 +68,13 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_LINE:
 			hfi_port = HFI_PORT_BITSTREAM;
 			break;
-		case MSM_VIDC_BUF_PERSIST:
-			/* TODO: change to HFI_PORT_NONE */
-			hfi_port = HFI_PORT_BITSTREAM | HFI_PORT_RAW;
-			break;
 		case MSM_VIDC_BUF_OUTPUT:
 		case MSM_VIDC_BUF_OUTPUT_META:
 		case MSM_VIDC_BUF_DPB:
 			hfi_port = HFI_PORT_RAW;
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+			hfi_port = HFI_PORT_NONE;
 			break;
 		default:
 			i_vpr_e(inst, "%s: invalid buffer type %d\n",

@@ -802,10 +802,6 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
-	if (rc)
-		return rc;
-
 	i_vpr_h(inst, "input internal buffer: min     size     reuse\n");
 	i_vpr_h(inst, "bin  buffer: %d      %d      %d\n",
 		inst->buffers.bin.min_count,
@@ -823,10 +819,6 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 		inst->buffers.line.min_count,
 		inst->buffers.line.size,
 		inst->buffers.line.reuse);
-	i_vpr_h(inst, "persist buffer: %d      %d      %d\n",
-		inst->buffers.persist.min_count,
-		inst->buffers.persist.size,
-		inst->buffers.persist.reuse);
 
 	return rc;
 }
@@ -874,9 +866,6 @@ static int msm_vdec_create_input_internal_buffers(struct msm_vidc_inst *inst)
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_LINE);
 	if (rc)
 		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
-	if (rc)
-		return rc;
 
 	return 0;
 }
@@ -916,9 +905,6 @@ static int msm_vdec_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
 	if (rc)
 		return rc;
 
@@ -961,9 +947,6 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
-	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_PERSIST);
 	if (rc)
 		return rc;
 

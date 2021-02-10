@@ -852,6 +852,12 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
+	if (pkt->payload_info == HFI_PAYLOAD_NONE) {
+		i_vpr_h(inst, "%s: received hfi buffer packet without payload\n",
+			__func__);
+		return 0;
+	}
+
 	port_type = pkt->port;
 
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
