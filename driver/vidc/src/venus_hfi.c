@@ -2792,6 +2792,9 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 		goto unlock;
 	}
 
+	__sys_set_debug(core,
+		(msm_vidc_debug & FW_LOGMASK) >> FW_LOGSHIFT);
+
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_OPEN,
 				(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
