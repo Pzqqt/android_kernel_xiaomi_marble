@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -287,6 +287,7 @@ enum {
 };
 
 enum {
+	DMA_SUBBLOCK_INDEX,
 	DMA_IGC_PROP,
 	DMA_GC_PROP,
 	DMA_DGM_INVERSE_PMA,
@@ -682,6 +683,7 @@ static struct sde_prop_type rgb_prop[] = {
 };
 
 static struct sde_prop_type dma_prop[] = {
+	{DMA_SUBBLOCK_INDEX, "cell-index", false, PROP_TYPE_U32},
 	{DMA_IGC_PROP, "qcom,sde-dma-igc", false, PROP_TYPE_U32_ARRAY},
 	{DMA_GC_PROP, "qcom,sde-dma-gc", false, PROP_TYPE_U32_ARRAY},
 	{DMA_DGM_INVERSE_PMA, "qcom,sde-dma-inverse-pma", false,
@@ -1622,6 +1624,7 @@ static int _sde_sspp_setup_dmas(struct device_node *np,
 	int i = 0, j;
 	int rc = 0, dma_count = 0, dgm_count = 0;
 	struct sde_dt_props *props[SSPP_SUBBLK_COUNT_MAX] = {NULL, NULL};
+	struct sde_dt_props *props_tmp = NULL;
 	struct device_node *snp = NULL;
 	const char *type;
 
@@ -1631,23 +1634,35 @@ static int _sde_sspp_setup_dmas(struct device_node *np,
 		if (dgm_count > 0) {
 			struct device_node *dgm_snp;
 
-			if (dgm_count > SSPP_SUBBLK_COUNT_MAX)
-				dgm_count = SSPP_SUBBLK_COUNT_MAX;
+			if (dgm_count > SSPP_SUBBLK_COUNT_MAX) {
+				SDE_ERROR("too many dgm subblocks defined");
+				goto end;
+			}
 
 			for_each_child_of_node(snp, dgm_snp) {
-				if (i >= SSPP_SUBBLK_COUNT_MAX)
-					break;
-
-				props[i] = sde_get_dt_props(dgm_snp,
+				props_tmp = sde_get_dt_props(dgm_snp,
 						DMA_PROP_MAX, dma_prop,
 						ARRAY_SIZE(dma_prop), NULL);
-				if (IS_ERR(props[i])) {
-					rc = PTR_ERR(props[i]);
-					props[i] = NULL;
+				if (IS_ERR(props_tmp)) {
+					rc = PTR_ERR(props_tmp);
+					props_tmp = NULL;
+					goto end;
+				} else if (!props_tmp->exists[DMA_SUBBLOCK_INDEX]) {
+					SDE_ERROR("dgm sub-block index must be defined");
 					goto end;
 				}
 
-				i++;
+				i = PROP_VALUE_ACCESS(props_tmp->values, DMA_SUBBLOCK_INDEX, 0);
+				if (i >= SSPP_SUBBLK_COUNT_MAX) {
+					SDE_ERROR("dgm sub-block index greater than max: %d", i);
+					goto end;
+				} else if (props[i] != NULL) {
+					SDE_ERROR("dgm sub-block index already defined: %d", i);
+					goto end;
+				}
+
+				props[i] = props_tmp;
+				props_tmp = NULL;
 			}
 		}
 	}
@@ -1678,7 +1693,10 @@ static int _sde_sspp_setup_dmas(struct device_node *np,
 		sblk->num_igc_blk = dgm_count;
 		sblk->num_gc_blk = dgm_count;
 		sblk->num_dgm_csc_blk = dgm_count;
-		for (j = 0; j < dgm_count; j++) {
+		for (j = 0; j < SSPP_SUBBLK_COUNT_MAX; j++) {
+			if (props[j] == NULL)
+				continue;
+
 			if (props[j]->exists[DMA_IGC_PROP])
 				_sde_sspp_setup_dgm(sspp, props[j],
 					"sspp_dma_igc", &sblk->igc_blk[j],
@@ -1702,8 +1720,9 @@ static int _sde_sspp_setup_dmas(struct device_node *np,
 	}
 
 end:
-	for (i = 0; i < dgm_count; i++)
+	for (i = 0; i < SSPP_SUBBLK_COUNT_MAX; i++)
 		sde_put_dt_props(props[i]);
+	sde_put_dt_props(props_tmp);
 
 	return rc;
 }
