@@ -907,13 +907,13 @@ static int ipa_eth_client_unreg_intf_internal(struct ipa_eth_intf_info *intf)
 			IPA_ETH_DBG("IPv4 hdr hdl: %d IPv6 hdr hdl: %d\n",
 				hdr->hdl[0].hdl, hdr->hdl[1].hdl);
 
-			if (ipa_del_hdr(hdr)) {
+			if (ipa3_del_hdr(hdr)) {
 				IPA_ETH_ERR("fail to delete partial header\n");
 				ret = -EFAULT;
 				goto fail;
 			}
 
-			if (ipa_deregister_intf(entry->netdev_name)) {
+			if (ipa3_deregister_intf(entry->netdev_name)) {
 				IPA_ETH_ERR("fail to del interface props\n");
 				ret = -EFAULT;
 				goto fail;
