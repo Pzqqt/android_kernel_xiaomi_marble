@@ -1788,7 +1788,11 @@ QDF_STATUS (*extract_rtt_error_report_ev)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_all_stats_count)(wmi_unified_t wmi_handle, void *evt_buf,
 			   wmi_host_stats_event *stats_param);
-
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+QDF_STATUS (*extract_big_data_stats)(
+			   wmi_unified_t wmi_handle, void *evt_buf,
+			   struct big_data_stats_event *stats_param);
+#endif
 QDF_STATUS (*extract_pdev_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_pdev_stats *pdev_stats);
 

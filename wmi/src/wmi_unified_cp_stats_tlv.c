@@ -401,7 +401,7 @@ send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 					  WMI_REQUEST_STATS_CMDID);
 
 	if (ret) {
-		wmi_err("Failed to send status request to fw =%d", ret);
+		wmi_err("Failed to send stats request to fw =%d", ret);
 		wmi_buf_free(buf);
 	}
 
